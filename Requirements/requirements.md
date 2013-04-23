@@ -2,8 +2,8 @@ Major Visions
 =============
 * Faciliate easy sharing of all requirements.
 
-Major Features
-==============
+Major Features (what)
+=====================
 
 * V&S
   * Catalog major features.
@@ -62,9 +62,34 @@ Major Features
   * Upload docs, XLS.
   * Upload txt diagrams: PlantUML, graphvis. Either generate auto or upload
     accompanying graphic.
+  * Upload bin diagrams: ASTA. One bin can be responsible for multiple gfx.
   * Have a status per item (team-scoped).
     ie. Unimplemented -> Implemented -> Verified
   * Arch/Design docs should be separate from req docs.
+
+Benefits (why)
+==============
+
+* Collaboration
+  * Centralised point of access.
+    * Online edit & view.
+  * Broadcast.
+    * Interested parties can get notified of change. Live, scheduled reports.
+  * Approval.
+    * Require, track, make approval transparent.
+  * Share requirements between projects & teams.
+  * Ensure everyone has up-to-date info.
+
+* Productivity
+  * Save time entering.
+  * Save time managing (grouping, versioning, prioritising).
+  * Docs such as SRS auto-populate according to config.
+
+Quality Attributes (how)
+========================
+* Usability. Easy to use as possible.
+* Clarity. Easy to understand as possible.
+* Flexibility. Do as much as possible with as little as possible.
 
 Blah
 ====
