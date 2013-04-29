@@ -432,6 +432,16 @@ Chapter 20
 
 Chapter 21
 ==========
+* Implicit fns in a companion object are imported automatically into class.
+* Implicit params can be supplied explicitly by caller.
+* Strategy: have implicit param which takes an implicit conversion function.
+  def smaller[T](a:T, b:T)(implicit order: T=>Ordered[T]) = order(a)<b
+* Generic type ctx bounds. class Blah[T : Ordering]
+* Provide custom err msg when no implicit available via @implicitNotFound(msg="")
 
 Chapter 22
 ==========
+* reset/shift/cont
+* reset block = declare thread body and run to first shift
+* shift       = pause and switch back to main thread
+* cont()      = resume thread
