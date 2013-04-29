@@ -9,6 +9,7 @@ import net.liftweb.http.js.JsCmds
 import net.liftweb.http.js.jquery.JqJsCmds
 import net.liftweb.util.Helpers._
 import scala.xml.NodeSeq
+import scala.xml.Text
 
 /**
  * @since 29/04/13
@@ -35,8 +36,9 @@ class UCEditor extends StatefulSnippet {
   override def dispatch = { case _ => render }
 
   def render =
-    "#uce *" #> StepTemplate andThen
-      "#uce .step" #> steps.map(renderStep)
+    "#steps *" #> StepTemplate andThen
+      "#total_steps *" #> stepCount.toString &
+      ".step" #> steps.map(renderStep)
 
   private def renderStep(s: UCStep) = {
     val id = nextFuncName
@@ -50,12 +52,17 @@ class UCEditor extends StatefulSnippet {
   private def addStep(): JsCmd = {
     stepCount += 1
     val newStepHtml: NodeSeq = renderStep(NewStep)(StepTemplate)
-    JqJsCmds.AppendHtml("uce", newStepHtml)
+    JqJsCmds.AppendHtml("uce", newStepHtml) & updateStepCount
   }
 
   private def deleteStep(id: String): JsCmd = {
     stepCount -= 1
-    var r = JsCmds.SetHtml(id, NodeSeq.Empty)
-    if (stepCount == 0) addStep & r else r
+    JsCmds.SetHtml(id, NodeSeq.Empty) &
+      (if (stepCount == 0) addStep else JsCmds.Noop) &
+      updateStepCount
   }
+
+  private def updateStepCount(): JsCmd =
+    JsCmds.SetHtml("total_steps", Text(stepCount.toString))
+
 }
