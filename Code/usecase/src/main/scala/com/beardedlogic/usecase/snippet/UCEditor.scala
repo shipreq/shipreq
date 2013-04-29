@@ -3,13 +3,12 @@ package snippet
 
 import net.liftweb.http.SHtml
 import net.liftweb.http.StatefulSnippet
-import net.liftweb.http.js.JsCmd
-import net.liftweb.http.js.JsCmds._
-import net.liftweb.http.js.jquery.JqJsCmds._
-import net.liftweb.util.Helpers._
 import net.liftweb.http.Templates
+import net.liftweb.http.js.JsCmd
+import net.liftweb.http.js.JsCmds
+import net.liftweb.http.js.jquery.JqJsCmds
+import net.liftweb.util.Helpers._
 import scala.xml.NodeSeq
-import net.liftweb.util.CssSel
 
 /**
  * @since 29/04/13
@@ -30,23 +29,33 @@ object UCEditor {
 class UCEditor extends StatefulSnippet {
   import UCEditor._
 
-  private var steps = Vector(NewStep)
+  private var steps = Vector(UCStep("example 1"), UCStep("example 2"))
+  private var stepCount = steps.size
 
   override def dispatch = { case _ => render }
 
   def render =
     "#uce *" #> StepTemplate andThen
-      "#uce form" #> steps.map(renderStep)
+      "#uce .step" #> steps.map(renderStep)
 
   private def renderStep(s: UCStep) = {
+    val id = nextFuncName
     var desc = ""
-    "@desc" #> SHtml.textarea(s.desc, desc = _, "rows" -> "4") &
-      "@add" #> SHtml.ajaxSubmit("Go!", () => addStep(desc))
+    ".step [id]" #> id &
+      "@desc" #> SHtml.textarea(s.desc, desc = _, "rows" -> "4") &
+      "@add" #> SHtml.ajaxSubmit("Add", () => addStep()) &
+      "@del" #> SHtml.ajaxSubmit("Del", () => deleteStep(id))
   }
 
-  private def addStep(desc: String): JsCmd = {
-    steps = steps :+ new UCStep(desc)
+  private def addStep(): JsCmd = {
+    stepCount += 1
     val newStepHtml: NodeSeq = renderStep(NewStep)(StepTemplate)
-    Alert("Added " + desc) & AppendHtml("uce", newStepHtml)
+    JqJsCmds.AppendHtml("uce", newStepHtml)
+  }
+
+  private def deleteStep(id: String): JsCmd = {
+    stepCount -= 1
+    var r = JsCmds.SetHtml(id, NodeSeq.Empty)
+    if (stepCount == 0) addStep & r else r
   }
 }
