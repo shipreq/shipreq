@@ -16,3 +16,12 @@ Lift
 * Application:
     "#total" #> WiringUI.asText(total)
 
+
+* Ajax
+  * Singleton snippets with closures.
+  * StatefulSnippets.
+  * ajaxForm(bind( id->SHtml.tag
+
+  * Make form data-lift="form.ajax"
+  * Add <button type="submit">Submit</button>
+  * Add hidden(onSubmitCallback)
