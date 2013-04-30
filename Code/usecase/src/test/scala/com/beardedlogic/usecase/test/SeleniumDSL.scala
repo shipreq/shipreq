@@ -1,13 +1,14 @@
 package com.beardedlogic.usecase.test
 
 import SeleniumTestSupport.SeleniumDriver
-import org.scalatest.Suite
+import org.openqa.selenium.By
+import org.scalatest.{Finders, Suite}
 import org.scalatest.matchers.ShouldMatchers
 import scala.collection.JavaConversions._
 
 /**
  * Provides tests with Selenium-based DSLs.
- * 
+ *
  * @since 30/04/2013
  */
 trait SeleniumDSL extends SeleniumTestSupport { this: Suite =>
@@ -26,15 +27,19 @@ object SeleniumDSL {
    * @since 30/04/2013
    */
   class UCEditorDSL(val s: SeleniumDriver) extends ShouldMatchers with TestHelpers {
+    
+    reload
 
     // Action
-    def load = { s.get(Jetty.URL); this }
-    def assertStepCount(expected: Int) = { expectSoon { stepCount should be(expected.toString) }; this }
-    def clickAdd(row: Int) = { addButton(row).click; this }
+    def reload = { s.get(Jetty.URL); this }
 
     // Inspection
-    def stepCount = s.findElementById("total_steps").getText
-    def addButton(row: Int) = s.findElementsByCssSelector("input[value=Add]")(row)
+    private def steps = s.findElementsByCssSelector(".step")
+    def useCaseId = s.findElementById("uc_id").getText
+    def useCaseTitle = s.findElementByName("title").getText
+    def stepCount = steps.size
+    def stepText(row:Int) = steps(row).findElement(By.cssSelector("textarea")).getText
+    def stepPosition(row:Int) = steps(row).findElement(By.cssSelector(".pos")).getText
   }
 }
 

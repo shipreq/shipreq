@@ -6,7 +6,10 @@
 
 		<div id="uce" data-lift="UCEditor">
 			<div>
-				Total steps: <span id="total_steps">123</span>
+				<form data-lift="form.ajax">
+					<span id="uc_id">UC-<span id="uc_id_num">123</span></span>:
+					<input name="title" value="Use Case Title" />
+				</form>
 			</div>
 			<div id="steps">Steps go here.</div>
 		</div>

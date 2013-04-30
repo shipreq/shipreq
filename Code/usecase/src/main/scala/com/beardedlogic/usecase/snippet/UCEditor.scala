@@ -10,17 +10,23 @@ import net.liftweb.http.js.jquery.JqJsCmds
 import net.liftweb.util.Helpers._
 import scala.xml.NodeSeq
 import scala.xml.Text
+import scala.collection.mutable.{ Map => MutableMap }
+import net.liftweb.util.ClearClearable
 
 /**
  * @since 29/04/13
  */
 object UCEditor {
 
-  case class UCStep(desc: String)
+  case class Step(text: String)
+  case class StepNode(position: String, id: String, children: List[StepNode])
 
-  val StepTemplate = Templates("_step_form" :: Nil).open_!
+  val StepTemplate = ClearClearable(Templates("_step_form" :: Nil).open_!)
 
-  val NewStep = UCStep("")
+  def flattenNodes(nodes: List[StepNode]): List[StepNode] = nodes match {
+    case h :: t => h :: flattenNodes(h.children) ::: t
+    case _      => Nil
+  }
 }
 
 /**
@@ -30,39 +36,61 @@ object UCEditor {
 class UCEditor extends StatefulSnippet {
   import UCEditor._
 
-  private var steps = Vector(UCStep("example 1"), UCStep("example 2"))
-  private var stepCount = steps.size
+  val id = 1
+  var title = ""
+
+  val steps = MutableMap[String, Step]()
+  val courses: List[StepNode] = init
+
+  def init = {
+    val step01 = ("a", Step(""))
+    val step0 = ("b", Step(""))
+    steps += (step0, step01)
+    val step0Children: List[StepNode] = StepNode("1", step01._1, Nil) :: Nil
+    StepNode(s"${id}.0", step0._1, step0Children) :: Nil
+  }
 
   override def dispatch = { case _ => render }
 
   def render =
-    "#steps *" #> StepTemplate andThen
-      "#total_steps *" #> stepCount.toString &
-      ".step" #> steps.map(renderStep)
+    "#uc_id_num" #> id &
+      "@title" #> SHtml.ajaxText(title, onTitleChange(_)) &
+      "#steps *" #> StepTemplate andThen
+      ".step" #> renderSteps(courses)
 
-  private def renderStep(s: UCStep) = {
-    val id = nextFuncName
-    var desc = ""
+  private def renderSteps(nodes: List[StepNode]) =
+    flattenNodes(nodes).map(renderStep)
+
+  private def renderStep(n: StepNode) = {
+    val s = steps(n.id)
+    var todo = ""
     ".step [id]" #> id &
-      "@desc" #> SHtml.textarea(s.desc, desc = _, "rows" -> "4") &
-      "@add" #> SHtml.ajaxSubmit("Add", () => addStep()) &
-      "@del" #> SHtml.ajaxSubmit("Del", () => deleteStep(id))
+      ".posTarget" #> n.position.toString &
+      "@text" #> SHtml.textarea(s.text, todo = _, "rows" -> "4")
   }
 
-  private def addStep(): JsCmd = {
-    stepCount += 1
-    val newStepHtml: NodeSeq = renderStep(NewStep)(StepTemplate)
-    JqJsCmds.AppendHtml("uce", newStepHtml) & updateStepCount
-  }
+  def onTitleChange(title: String): JsCmd = JsCmds.Noop
 
-  private def deleteStep(id: String): JsCmd = {
-    stepCount -= 1
-    JsCmds.SetHtml(id, NodeSeq.Empty) &
-      (if (stepCount == 0) addStep else JsCmds.Noop) &
-      updateStepCount
-  }
-
-  private def updateStepCount(): JsCmd =
-    JsCmds.SetHtml("total_steps", Text(stepCount.toString))
+  //  private def renderStep(s: Step) = {
+  //    val id = nextFuncName
+  //    var desc = ""
+  //    ".step [id]" #> id &
+  //      "@desc" #> SHtml.textarea(s.desc, desc = _, "rows" -> "4") &
+  //      "@add" #> SHtml.ajaxSubmit("Add", () => addStep()) &
+  //      "@del" #> SHtml.ajaxSubmit("Del", () => deleteStep(id))
+  //  }
+  //
+  //  private def addStep(): JsCmd = {
+  //    stepCount += 1
+  //    val newStepHtml: NodeSeq = renderStep(NewStep)(StepTemplate)
+  //    JqJsCmds.AppendHtml("uce", newStepHtml) & updateStepCount
+  //  }
+  //
+  //  private def deleteStep(id: String): JsCmd = {
+  //    stepCount -= 1
+  //    JsCmds.SetHtml(id, NodeSeq.Empty) &
+  //      (if (stepCount == 0) addStep else JsCmds.Noop) &
+  //      updateStepCount
+  //  }
 
 }
