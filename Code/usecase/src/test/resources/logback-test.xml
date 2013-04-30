@@ -7,7 +7,7 @@
 		</encoder>
 	</appender>
 
-	<logger name="org.eclipse.jetty" level="INFO" />
+	<logger name="org.eclipse.jetty" level="WARN" />
 	<logger name="com.beardedlogic" level="INFO" />
 	<logger name="bootstrap.liftweb" level="INFO" />
 	<root level="WARN">
