@@ -10,24 +10,24 @@ class UCEditorTest extends WordSpec with ShouldMatchers {
     "flatten recursively" in {
 
       val c1_0_2_x =
-        StepNode("a", "1.0.2.a", Nil) ::
-          StepNode("b", "1.0.2.b", Nil) ::
+        StepNode(2, "a", "1.0.2.a", Nil) ::
+          StepNode(2, "b", "1.0.2.b", Nil) ::
           Nil
 
       val c1_0_x =
-        StepNode("1", "1.0.1", Nil) ::
-          StepNode("2", "1.0.2", c1_0_2_x) ::
-          StepNode("3", "1.0.3", Nil) ::
+        StepNode(1, "1", "1.0.1", Nil) ::
+          StepNode(1, "2", "1.0.2", c1_0_2_x) ::
+          StepNode(1, "3", "1.0.3", Nil) ::
           Nil
 
       val c1_2_x =
-        StepNode("1", "1.2.1", Nil) ::
+        StepNode(1, "1", "1.2.1", Nil) ::
           Nil
 
       val top =
-        StepNode("1.0", "1.0", c1_0_x) ::
-          StepNode("1.1", "1.1", Nil) ::
-          StepNode("1.1", "1.2", c1_2_x) ::
+        StepNode(0, "1.0", "1.0", c1_0_x) ::
+          StepNode(0, "1.1", "1.1", Nil) ::
+          StepNode(0, "1.1", "1.2", c1_2_x) ::
           Nil
 
       flattenNodes(top).map(_.id) should be(List(

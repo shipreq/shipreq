@@ -22,3 +22,4 @@ gen
 .cache
 .scala_dependencies
 release.properties
+.sass-cache
