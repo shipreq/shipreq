@@ -75,7 +75,7 @@ object SeleniumDSL {
     def clickAdd(row: Int) = { addButton(row).click(); this }
     def assertStep(row: Int)(lvl: Int, label: String, txt: String) = eventually {
       stepLevel(row) should equal(lvl)
-      stepPosition(row) should equal(label)
+      stepLabel(row) should equal(label)
       stepText(row) should equal(txt)
     }
 
@@ -85,7 +85,7 @@ object SeleniumDSL {
     def useCaseTitle = titleElem.value
     def stepCount = steps.size
     def stepText(row: Int) = stepTextElem(row).value
-    def stepPosition(row: Int) = steps(row).findElement(By.cssSelector(".pos")).getText
+    def stepLabel(row: Int) = steps(row).findElement(By.cssSelector(".label")).getText
     def stepLevel(row: Int) = {
       val lvls = for (
         l <- steps(row).getAttribute("class").split("\\s+") if l.startsWith(lvlClassPrefix)

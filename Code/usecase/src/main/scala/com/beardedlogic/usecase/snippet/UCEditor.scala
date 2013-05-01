@@ -1,17 +1,18 @@
 package com.beardedlogic.usecase
 package snippet
 
-import scala.collection.mutable.{ Map => MutableMap }
-import net.liftweb.http.{ SHtml, StatefulSnippet, Templates }
-import net.liftweb.http.js.{ JE, JsCmd, JsCmds }
+import lib.JsExt.{JqAfter, JqHide, JqId, JqSlideDownFast}
+import net.liftweb.http.{StatefulSnippet, Templates}
+import net.liftweb.http.SHtml
+import net.liftweb.http.SHtml.ElemAttr.pairToBasic
+import net.liftweb.http.js.{JE, JsCmd, JsCmds}
+import net.liftweb.http.js.JsCmds.{jsExpToJsCmd, seqJsToJs}
+import net.liftweb.http.js.JsExp.strToJsExp
 import net.liftweb.util.ClearClearable
 import net.liftweb.util.Helpers._
-import lib.JsExt._
-import net.liftweb.common._
 import scala.annotation.tailrec
+import scala.collection.mutable.{Map => MutableMap}
 import scala.xml.Text
-import net.liftweb.http.js.jquery.JqJsCmds
-import net.liftweb.http.js.JsCmds.jsExpToJsCmd
 
 /**
  * @since 29/04/13
@@ -19,11 +20,19 @@ import net.liftweb.http.js.JsCmds.jsExpToJsCmd
 object UCEditor {
 
   case class Step(text: String)
-  case class StepNode(id: String, level: Int, label: String, step: Step, children: List[StepNode])
+
+  case class StepNode(id: String,
+                      level: Int,
+                      label: String,
+                      step: Step,
+                      children: List[StepNode]) {
+    def labelId = id + "-l"
+    def stepTextId = id + "-t"
+  }
 
   def NewStep = Step("")
 
-  def StepTemplate = {
+  val StepTemplate = {
     val ExtractStepTemplate = ".step ^^" #> ""
     val index = Templates("index" :: Nil).open_!
     ExtractStepTemplate(ClearClearable(index))
@@ -37,33 +46,6 @@ object UCEditor {
     case h :: t => flattenNodes(h.children ::: t, results :+ h)
   }
 
-  /*
-  case class StepNodeAndParent(node: StepNode, parent: Option[StepNode])
-
-  def findNode(id: String)(nodes: List[StepNode], parent: Option[StepNode]): Box[StepNodeAndParent] = nodes match {
-    case h :: t if h.id == id => Full(StepNodeAndParent(h, parent))
-    case h :: t               => findNode(id)(h.children, Some(h)) or findNode(id)(t, parent)
-    case _                    => Empty
-  }
-*/
-  /*
-  def insertNode(after: Option[StepNode], insert: StepNode, rem: List[StepNode]): List[StepNode] =
-    if (after.isEmpty)
-      insert :: incrementPosition(rem)
-    else
-      insertNode(after.get, insert, rem, Nil)
-
-  @tailrec private def insertNode(
-    after: StepNode,
-    insert: StepNode,
-    nodes: List[StepNode],
-    results: List[StepNode]): List[StepNode] = nodes match {
-
-    case Nil                  => results
-    case h :: t if h == after => results ::: h :: insert :: incrementPosition(t)
-    case h :: t               => insertNode(after, insert, t, results :+ h)
-  }
-*/
   def incrementPosition(n: StepNode) = {
     // TODO pos hack
     val posHack = (n.label.toInt + 1).toString
@@ -126,17 +108,13 @@ class UCEditor extends StatefulSnippet {
   private def renderStep(n: StepNode) = (
     ".step [id]" #> n.id
     & ".step [class+]" #> s"lvl-${n.level}"
-    & ".posTarget" #> n.label
-    & ".pos [id]" #> posId(n)
-    & "@text" #> SHtml.textarea(n.step.text, (_) => (), "rows" -> "4", "id" -> stepTextId(n))
+    & ".label *" #> n.label
+    & ".label [id]" #> n.labelId
+    & "@text" #> SHtml.textarea(n.step.text, (_) => (), "rows" -> "4", "id" -> n.stepTextId)
     & ".add *" #> SHtml.ajaxButton("Add", () => onAddStep(n.id))
   )
 
-  private def renderSteps(nodes: List[StepNode]) =
-    flattenNodes(nodes).map(renderStep)
-
-  private def stepTextId(n: StepNode) = s"${n.id}-t"
-  private def posId(n: StepNode) = s"${n.id}-p"
+  private def renderSteps(nodes: List[StepNode]) = flattenNodes(nodes).map(renderStep)
 
   /**
    * When the Use Case title is changed, this will update the Normal Course title unless the user has overridden it.
@@ -144,7 +122,7 @@ class UCEditor extends StatefulSnippet {
   def onTitleChange(newTitle: String): JsCmd = {
     val oldTitle = title
     title = newTitle
-    val ncId = stepTextId(courses.head)
+    val ncId = courses.head.stepTextId
     (
       JsCmds.JsIf(
         JE.JsEq(oldTitle, JE.ValById(ncId)),
@@ -156,9 +134,7 @@ class UCEditor extends StatefulSnippet {
    * Adds a new step, shuffling down subsequent steps and renumbering if necessary.
    */
   def onAddStep(preceedingNodeId: String): JsCmd = {
-
-    val newStep = NewStep
-    val (newCourses, newNode) = insertStep(newStep, preceedingNodeId, courses)
+    val (newCourses, newNode) = insertStep(NewStep, preceedingNodeId, courses)
     if (newNode.isDefined) {
       courses = newCourses
       val n = newNode.get
@@ -167,7 +143,7 @@ class UCEditor extends StatefulSnippet {
         JqId(preceedingNodeId) ~> JqAfter(fn(StepTemplate))
         & JqId(n.id) ~> JqHide ~> JqSlideDownFast
         & (for (n <- flattenNodes(courses))
-          yield JsCmds.SetHtml(posId(n), Text(n.label + "."))) // Plus "."??? HACK
+          yield JsCmds.SetHtml(n.labelId, Text(n.label)))
       )
     } else
       JsCmds.Noop
