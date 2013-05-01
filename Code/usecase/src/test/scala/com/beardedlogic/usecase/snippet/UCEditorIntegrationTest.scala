@@ -36,11 +36,22 @@ class UCEditorIntegrationTest extends FreeSpec with ShouldMatchers with Selenium
     "when edited" - {
       "should cause the normal-course step text" - {
         "to match the use case title" - {
-          "when previously empty" in { uce.setUseCaseTitle("hehe cool").eventuallyAssertStepText(0, "hehe cool") }
-          "when previously matched" in pending
+          "when previously empty" in {
+            uce.setUseCaseTitle("hehe cool").eventuallyAssertStepText(0, "hehe cool")
+          }
+          "when previously matched automatically" in {
+            uce.setUseCaseTitle("hehe cool").eventuallyAssertStepText(0, "hehe cool")
+              .setUseCaseTitle("noo").eventuallyAssertStepText(0, "noo")
+          }
+          "when previously matched manually" in {
+            uce.setStepText(0, "override").setUseCaseTitle("hehe cool").setStepText(0, "hehe cool")
+              .setUseCaseTitle("noo").eventuallyAssertStepText(0, "noo")
+          }
         }
         "not to change" - {
-          "when previously overridden" in pending
+          "when previously overridden" in {
+            uce.setStepText(0, "what").setUseCaseTitle("noo").waitShort().stepText(0) should be("what")
+          }
         }
       }
     }

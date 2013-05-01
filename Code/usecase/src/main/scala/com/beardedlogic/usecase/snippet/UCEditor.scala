@@ -1,17 +1,13 @@
 package com.beardedlogic.usecase
 package snippet
 
+import net.liftweb.http.{ StatefulSnippet, Templates }
 import net.liftweb.http.SHtml
-import net.liftweb.http.StatefulSnippet
-import net.liftweb.http.Templates
-import net.liftweb.http.js.JsCmd
-import net.liftweb.http.js.JsCmds
-import net.liftweb.http.js.jquery.JqJsCmds
-import net.liftweb.util.Helpers._
-import scala.xml.NodeSeq
-import scala.xml.Text
-import scala.collection.mutable.{ Map => MutableMap }
+import net.liftweb.http.js.{ JE, JsCmd, JsCmds }
+import net.liftweb.http.js.JsExp.strToJsExp
 import net.liftweb.util.ClearClearable
+import net.liftweb.util.Helpers._
+import scala.collection.mutable.{ Map => MutableMap }
 
 /**
  * @since 29/04/13
@@ -72,6 +68,17 @@ class UCEditor extends StatefulSnippet {
 
   private def stepTextId(n: StepNode) = s"${n.id}-t"
 
-  def onTitleChange(title: String): JsCmd =
-    JsCmds.SetHtml(stepTextId(courses.head), Text(title))
+  /**
+   * When the Use Case title is changed, this will update the Normal Course title unless the user has overridden it.
+   */
+  def onTitleChange(newTitle: String): JsCmd = {
+    val oldTitle = title
+    title = newTitle
+    val ncId = stepTextId(courses.head)
+
+    JsCmds.JsIf(
+      JE.JsEq(oldTitle, JE.ValById(ncId)),
+      JsCmds.SetValById(ncId, newTitle)
+    )
+  }
 }

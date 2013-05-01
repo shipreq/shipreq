@@ -1,9 +1,8 @@
 package com.beardedlogic.usecase.test
 
-import com.gargoylesoftware.htmlunit.BrowserVersion
 import java.util.concurrent.TimeUnit
 import org.openqa.selenium.{ HasInputDevices, JavascriptExecutor, WebDriver }
-import org.openqa.selenium.htmlunit.HtmlUnitDriver
+import org.openqa.selenium.firefox.FirefoxDriver
 import org.openqa.selenium.internal.{ FindsByCssSelector, FindsById, FindsByLinkText, FindsByName, FindsByTagName, FindsByXPath }
 import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach, Suite }
 
@@ -20,7 +19,7 @@ object SeleniumTestSupport {
  * @since 30/04/2013
  */
 trait SeleniumTestSupport extends BeforeAndAfterAll with BeforeAndAfterEach { this: Suite =>
-  
+
   import SeleniumTestSupport.SeleniumDriver
 
   override def beforeAll() {
@@ -46,11 +45,7 @@ trait SeleniumTestSupport extends BeforeAndAfterAll with BeforeAndAfterEach { th
 
   def newSelenium() {
     releaseSelenium
-
-    val s = new HtmlUnitDriver(BrowserVersion.FIREFOX_17)
-    s.setJavascriptEnabled(true)
-    selenium = s
-
+    selenium = new FirefoxDriver
     selenium.manage.timeouts.implicitlyWait(10, TimeUnit.SECONDS)
   }
 
