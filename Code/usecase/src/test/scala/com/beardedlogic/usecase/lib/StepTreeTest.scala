@@ -1,12 +1,11 @@
-package com.beardedlogic.usecase.snippet
+package com.beardedlogic.usecase.lib
 
-import UCEditor.{Step, StepNode, flattenNodes, incrementPosition, insertStep}
+import StepTree.{ Step, StepNode, flattenNodes, incrementPosition, insertStep }
 import org.scalatest.WordSpec
 import org.scalatest.matchers.ShouldMatchers
-import scala.annotation.tailrec
 
-class UCEditorUnitTest extends WordSpec with ShouldMatchers {
-  import UCEditor._
+class StepTreeTest extends WordSpec with ShouldMatchers {
+  import StepTree._
 
   /**
    * StepNode test data.
@@ -94,21 +93,62 @@ class UCEditorUnitTest extends WordSpec with ShouldMatchers {
     }
   }
 
-  "incrementPosition(List)" should {
-    import StepNodes._
-    "do nothing with an empty list" in { incrementPosition(Nil) should be(Nil) }
-    "increment the position of all items" in { incrementPosition(ABCD) should be(ABCD2) }
+  "incrementPosition()" should {
+    val test = (lvl: Int, before: String, after: String) => {
+      val B = StepNode("blah", lvl, before, null, Nil)
+      val A = StepNode("blah", lvl, after, null, Nil)
+      incrementPosition(B) should be(A)
+    }
+    "increase numeric positions" in {
+      test(1, "1", "2")
+      test(1, "9", "10")
+      test(1, "15", "16")
+    }
+    "increase alpha positions" in {
+      test(2, "a", "b")
+      test(2, "h", "i")
+      test(2, "z", "aa")
+    }
+    "increase roman positions" in {
+      test(3, "i", "ii")
+      test(3, "iii", "iv")
+      test(3, "viii", "ix")
+    }
   }
 
   /*
-  "insertNode()" should {
-    import StepNodes._
-    "insert at the beginning" in { insertNode(None, N, ABCD) should be(N :: ABCD2) }
-    "insert after first" in { insertNode(Some(A), N, ABCD) should be(A :: N :: B2 :: C2 :: D2 :: Nil) }
-    "insert in the middle" in { insertNode(Some(B), N, ABCD) should be(A :: B :: N :: C2 :: D2 :: Nil) }
-    "insert at the end" in { insertNode(Some(D), N, ABCD) should be(ABCD :+ N) }
-  }
-  */
+   * TODO
+   * #
+   * |-- 1.0
+   *     |-- 1.0.1
+   *     |-- 1.0.2
+   *         | -- 1.0.2.a
+   *              | -- 1.0.2.a.i
+   *              | -- 1.0.2.a.ii
+   *              | -- 1.0.2.a.iii
+   *         | -- 1.0.2.b
+   *         | -- 1.0.2.c
+   *     |-- 1.0.3
+   *         | -- 1.0.3.a
+   *              | -- 1.0.3.a.i
+   *              | -- 1.0.3.a.ii
+   *              | -- 1.0.3.a.iii
+   *         | -- 1.0.3.b
+   *         | -- 1.0.3.c
+   *              | -- 1.0.3.c.i
+   *              | -- 1.0.3.c.ii
+   *              | -- 1.0.3.c.iii
+   *         | -- 1.0.3.d
+   *     |-- 1.0.4 
+   * |-- 2.0
+   *     |-- 2.0.1
+   *     |-- 2.0.2
+   *     |-- 2.0.3
+   * |-- 2.1
+   *     |-- 2.1.1
+   *     |-- 2.1.2
+   * 
+   */
 
   "insertStep()" when {
     import Steps._
