@@ -257,8 +257,8 @@ class StepTreeTest extends WordSpec with ShouldMatchers with NodeUtils {
 
   /*
     --    1.0. Step:1.0
-    --      1. Step:1
-    ?>      2. Step:2
+    [-      1. Step:1
+    [>      2. Step:2
     <-        a. Step:a
     <-          i. Step:i
     <>          ii. Step:ii
@@ -267,30 +267,47 @@ class StepTreeTest extends WordSpec with ShouldMatchers with NodeUtils {
     <>        c. Step:c
     <-          i. Step:i
     <>          ii. Step:ii
-    ?>      3. Step:3
+    [>      3. Step:3
     <-        a. Step:a
     <-          i. Step:i
     <>        b. Step:b
-    ?>      4. Step:4
-    -?    1.1. Step:1.1
-    ?-      1. Step:1
-    ?>      2. Step:2
-    ?>      3. Step:3
-    -?    1.2. Step:1.2
-    ?-      1. Step:1
-    ?>      2. Step:2
+    [>      4. Step:4
+    -}    1.1. Step:1.1
+    [-      1. Step:1
+    [>      2. Step:2
+    [>      3. Step:3
+    -}    1.2. Step:1.2
+    [-      1. Step:1
+    [>      2. Step:2
 
     Rules for increasing indent
       + Not first child
-      + Not top level (probably... allow 1.1 to become 1.0.5? 1.2 to become 1.1.4?)
 
     Rules for decreasing indent
       + Not top-level
-      + Not 1.0.1 (1.0 always needs a step?)
-      + Not 2nd-level (probably... allow 1.0.3 to become 1.1? 1.1.1 to become 1.2?)
 
     Allow 1st<->2nd level? Yes.
     Allow 1.0 without 1.0.1? Yes.
 
+    Buttons always exist. Control visibility with JS.
+      $(".inc").show()
+      $(".lvl-0 .inc").hide()
+
+Test indent of 1.1.3
+Test indent of 1.1.2
+Test indent of 1.0.4
+Test indent of 1.0.3.b
+Test indent of 1.0.3
+Test indent of 1.1
+Test indent of 1.0.2
+
+Test dec of 1.0.3.b
+Test dec of 1.0.3.a
+Test dec of 1.0.3.a.i
+Test dec of 1.0.2.a
+Test dec of 1.0.2.a.i
+Test dec of 1.0.2.a.ii
+Test dec of 1.0.2.a.iii
+Test dec of 1.1.2
    */
 }
