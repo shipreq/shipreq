@@ -80,8 +80,8 @@ class UCEditorIntegrationTest extends FreeSpec with ShouldMatchers with Selenium
   }
 
   "The << button" - {
-    lazy val u = uce
     "when page is first loaded" - {
+      lazy val u = uce
       "should not be visible for 1.0" in { u.indentDecButtonVisibility(0) should be(false) }
       "should be visible for 1.0.1" in { u.indentDecButtonVisibility(1) should be(true) }
     }
@@ -94,12 +94,39 @@ class UCEditorIntegrationTest extends FreeSpec with ShouldMatchers with Selenium
     }
     "when pressed for 1.0.2 then 1.0.1 (out of 1.0.3)" - {
       lazy val u = uce.clickAdd(1).clickAdd(1).assertStepCount(4).clickIndentDec(2).clickIndentDec(1)
+      "should leave 1.0 as is" in { u.assertStep(0)(0, "1.0") }
       "should turn 1.0.1 into 1.1" in { u.assertStep(1)(0, "1.1") }
       "should turn 1.1 into 1.2" in { u.assertStep(2)(0, "1.2") }
       "should turn 1.1.1 into 1.2.1" in { u.assertStep(3)(1, "1") }
       "should not be visible for 1.1" in { u.indentDecButtonVisibility(1) should be(false) }
       "should not be visible for 1.2" in { u.indentDecButtonVisibility(2) should be(false) }
       "should be visible for 1.0.3" in { u.indentDecButtonVisibility(3) should be(true) }
+    }
+  }
+
+  "The >> button" - {
+    "when page is first loaded" - {
+      lazy val u = uce
+      "should not be visible for 1.0" in { u.indentIncButtonVisibility(0) should be(false) }
+      "should be visible for 1.0.1" in { u.indentIncButtonVisibility(1) should be(false) }
+    }
+    "when pressed for 1.0.2 (out of 1.0.3)" - {
+      lazy val u = uce.clickAdd(1).clickAdd(1).assertStepCount(4).clickIndentInc(2)
+      "should turn 1.0.2 into 1.0.1.a" in { u.assertStep(2)(2, "a") }
+      "should turn 1.0.3 into 1.0.2" in { u.assertStep(3)(1, "2") }
+      "should not be visible for 1.0.1.a" in { u.indentIncButtonVisibility(2) should be(false) }
+      "should be visible for 1.0.2" in { u.indentIncButtonVisibility(3) should be(true) }
+    }
+    "when pressed for 1.0.3 then 1.0.2 (out of 1.0.3)" - {
+      lazy val u = uce.clickAdd(1).clickAdd(1).assertStepCount(4).clickIndentInc(3).clickIndentInc(2)
+      "should leave 1.0 as is" in { u.assertStep(0)(0, "1.0") }
+      "should leave 1.0.1 as is" in { u.assertStep(1)(1, "1") }
+      "should turn 1.0.2 into 1.0.1.a" in { u.assertStep(2)(2, "a") }
+      "should turn 1.0.3 into 1.0.1.a.i" in { u.assertStep(3)(3, "i") }
+      "should not be visible for 1.0" in { u.indentIncButtonVisibility(0) should be(false) }
+      "should not be visible for 1.0.1" in { u.indentIncButtonVisibility(1) should be(false) }
+      "should not be visible for 1.0.1.a" in { u.indentIncButtonVisibility(2) should be(false) }
+      "should not be visible for 1.0.1.a.i" in { u.indentIncButtonVisibility(3) should be(false) }
     }
   }
 }

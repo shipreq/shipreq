@@ -62,6 +62,7 @@ object SeleniumDSL {
     private def addButtons = s.findElementsByCssSelector("button.add")
     private def addButton(row: Int) = steps(row).findElement(By.cssSelector("button.add"))
     private def indentDecButton(row: Int) = steps(row).findElement(By.cssSelector("button.indentDec"))
+    private def indentIncButton(row: Int) = steps(row).findElement(By.cssSelector("button.indentInc"))
 
     // Action ----------------------------------------------------------------------------------------------------------
 
@@ -78,6 +79,7 @@ object SeleniumDSL {
       stepText(row) should equal(txt)
     }
     def clickIndentDec(row: Int) = { indentDecButton(row).click(); this }
+    def clickIndentInc(row: Int) = { indentIncButton(row).click(); this }
 
     // Inspection ------------------------------------------------------------------------------------------------------
 
@@ -93,6 +95,7 @@ object SeleniumDSL {
     }
     def addButtonCount = addButtons.size
     def indentDecButtonVisibility(row: Int) = indentDecButton(row).isDisplayed()
+    def indentIncButtonVisibility(row: Int) = indentIncButton(row).isDisplayed()
   }
 }
 

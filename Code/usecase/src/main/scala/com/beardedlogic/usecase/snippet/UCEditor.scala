@@ -44,6 +44,19 @@ class UCEditor extends StatefulSnippet {
       new StepNode(nextFuncName, 1, 1, NewStep) :: Nil
     ) :: Nil
 
+//  courses =
+//    StepNode(nextFuncName, 0, Some(id + "."), 0, NewStep,
+//      new StepNode(nextFuncName, 1, 1, NewStep) ::
+//        new StepNode(nextFuncName, 1, 2, NewStep, (
+//          new StepNode(nextFuncName, 2, 1, NewStep) ::
+//          new StepNode(nextFuncName, 2, 2, NewStep) ::
+//          new StepNode(nextFuncName, 2, 3, NewStep) ::
+//          Nil
+//        )) ::
+//        new StepNode(nextFuncName, 1, 3, NewStep) ::
+//        Nil
+//    ) :: Nil
+
   def render = (
     "#steps *" #> StepTemplate andThen
     ".step" #> renderSteps(courses)
@@ -61,6 +74,7 @@ class UCEditor extends StatefulSnippet {
     & "@text" #> SHtml.textarea(n.step.text, (_) => (), "rows" -> "2", "id" -> n.stepTextId)
     & ".add" #> SHtml.ajaxButton("Add", () => onAddStep(n.id))
     & ".indentDec" #> SHtml.ajaxButton("<<", () => onIndentDecrease(n.id))
+    & ".indentInc" #> SHtml.ajaxButton(">>", () => onIndentIncrease(n.id))
   )
 
   /**
@@ -96,6 +110,20 @@ class UCEditor extends StatefulSnippet {
    * Decreases the indentation level of a given step.
    */
   def onIndentDecrease(nodeId: String): JsCmd = indentDecrease(nodeId, courses) match {
+    case (newCourses, true) =>
+      courses = newCourses
+      val flattenedCourses = flattenNodes(courses)
+      (
+        UpdateIndentation(flattenedCourses)
+        & UpdateLabels(flattenedCourses)
+      )
+    case _ => JsCmds.Noop
+  }
+
+  /**
+   * Increases the indentation level of a given step.
+   */
+  def onIndentIncrease(nodeId: String): JsCmd = indentIncrease(nodeId, courses) match {
     case (newCourses, true) =>
       courses = newCourses
       val flattenedCourses = flattenNodes(courses)
