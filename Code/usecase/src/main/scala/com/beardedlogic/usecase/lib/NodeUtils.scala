@@ -24,9 +24,9 @@ object NodeUtils {
     val topLevelLabel = """^(\S+\.)(\d+)$""".r
 
     val lines = txt.split("""\s*[\r\n]+""").map(_.replaceFirst("\\s+$", "")).filter(!_.isEmpty)
-    val commonIndentSize = lines.map(_.replaceFirst("\\S.+","").length).min
+    val commonIndentSize = lines.map(_.replaceFirst("\\S.+", "").length).min
     val linesWithoutIndent = lines.map(_.substring(commonIndentSize))
-    
+
     for (line <- linesWithoutIndent) {
 
       // Parse line
@@ -38,7 +38,7 @@ object NodeUtils {
       // Create node
       val n =
         if (indent == 0) {
-          val topLevelLabel(labelPrefix,labelSuffix) = label
+          val topLevelLabel(labelPrefix, labelSuffix) = label
           val labelIndex = LabelMakers(0)(labelSuffix)
           val n = new StepNode(label, (labelPrefix, labelIndex), Step(stepText))
           nodes += n
@@ -87,13 +87,18 @@ object NodeUtils {
     val sb = new StringBuilder(1024, "")
     val t1 = inspectTree(nodes1).toIndexedSeq
     val t2 = inspectTree(nodes2).toIndexedSeq
-    val t1Size = t1 map (_.length) max
-    val fmt = s"%-${t1Size}s | %s\n"
+    val t1Size = (title1 +: t1) map (_.length) max
+    val t2Size = (title2 +: t2) map (_.length) max
+    val fmt = s"%-${t1Size}s | %-${t2Size}s | %s\n"
     val size = Vector(t1.size, t2.size).max
     def x(l: IndexedSeq[String], i: Int) = if (i >= l.size) "" else l(i)
-    sb ++= String.format(fmt, title1, title2) +
-      ("-" * t1Size + "-+-" + "-" * (t2 map (_.length) max) + "\n")
-    for (i <- 0 until size) sb ++= String.format(fmt, x(t1, i), x(t2, i))
+    sb ++= String.format(fmt, title1, title2, "") +
+      ("-" * t1Size + "-+-" + "-" * t2Size + "-+\n")
+    for (i <- 0 until size) {
+      val (a, b) = (x(t1, i), x(t2, i))
+      val c = if (a == b) "" else "#"
+      sb ++= String.format(fmt, a, b, c)
+    }
     sb.toString
   }
 

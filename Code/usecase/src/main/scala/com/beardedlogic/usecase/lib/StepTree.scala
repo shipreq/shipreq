@@ -114,6 +114,28 @@ object StepTree {
   }
 
   /**
+   * Removes a step and its children from a node tree.
+   *
+   * @return A tuple of 1) the new tree, 2) whether any changes were made.
+   */
+  @inline def stepRemove(id: String, nodes: List[StepNode]): Tuple2[List[StepNode], Boolean] =
+    _stepRemove(id, nodes, Nil, false)
+
+  @tailrec private def _stepRemove(id: String, nodes: List[StepNode], results: List[StepNode], found: Boolean): Tuple2[List[StepNode], Boolean] = nodes match {
+    case Nil => (results, found)
+
+    // Found.
+    case h :: t if h.id == id =>
+      (results ::: t.map(_.decrementPosition), true)
+
+    // Not found. Check children then siblings.
+    case h :: t => stepRemove(id, h.children) match {
+      case (newChildren, true) => (results ::: h.copy(children = newChildren) :: t, true)
+      case _                   => _stepRemove(id, t, results :+ h, false)
+    }
+  }
+
+  /**
    * Decreases the indent/level of a node in a tree.
    *
    * Examples:

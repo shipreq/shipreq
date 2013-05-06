@@ -346,6 +346,271 @@ class StepTreeTest extends WordSpec with ShouldMatchers with TestHelpers {
     }
   } // stepInsert()
 
+  "stepRemove()" when {
+
+    def test(id: String, expectedTreeTxt: String) {
+      val expected = parseStepTree(expectedTreeTxt)
+      val actual = stepRemove(id, Steps.BigTree)
+      actual._2 should be(true)
+      actual._1 should matchTree(expected)
+    }
+
+    "removing 1.0.1" in {
+      test("1.0.1", """
+        1.0. Step:1.0
+          1. Step:2
+            a. Step:a
+              i. Step:i
+              ii. Step:ii
+              iii. Step:iii
+            b. Step:b
+            c. Step:c
+              i. Step:i
+              ii. Step:ii
+          2. Step:3
+            a. Step:a
+              i. Step:i
+            b. Step:b
+          3. Step:4
+        1.1. Step:1.1
+          1. Step:1
+          2. Step:2
+          3. Step:3
+        1.2. Step:1.2
+          1. Step:1
+          2. Step:2
+    """)
+    }
+
+    "removing 1.0.2" in {
+      test("1.0.2", """
+        1.0. Step:1.0
+          1. Step:1
+          2. Step:3
+            a. Step:a
+              i. Step:i
+            b. Step:b
+          3. Step:4
+        1.1. Step:1.1
+          1. Step:1
+          2. Step:2
+          3. Step:3
+        1.2. Step:1.2
+          1. Step:1
+          2. Step:2
+    """)
+    }
+
+    "removing 1.0.2.a" in {
+      test("1.0.2.a", """
+        1.0. Step:1.0
+          1. Step:1
+          2. Step:2
+            a. Step:b
+            b. Step:c
+              i. Step:i
+              ii. Step:ii
+          3. Step:3
+            a. Step:a
+              i. Step:i
+            b. Step:b
+          4. Step:4
+        1.1. Step:1.1
+          1. Step:1
+          2. Step:2
+          3. Step:3
+        1.2. Step:1.2
+          1. Step:1
+          2. Step:2
+    """)
+    }
+
+    "removing 1.0.2.a.i" in {
+      test("1.0.2.a.i", """
+        1.0. Step:1.0
+          1. Step:1
+          2. Step:2
+            a. Step:a
+              i. Step:ii
+              ii. Step:iii
+            b. Step:b
+            c. Step:c
+              i. Step:i
+              ii. Step:ii
+          3. Step:3
+            a. Step:a
+              i. Step:i
+            b. Step:b
+          4. Step:4
+        1.1. Step:1.1
+          1. Step:1
+          2. Step:2
+          3. Step:3
+        1.2. Step:1.2
+          1. Step:1
+          2. Step:2
+    """)
+    }
+
+    "removing 1.0.3.a.i" in {
+      test("1.0.3.a.i", """
+        1.0. Step:1.0
+          1. Step:1
+          2. Step:2
+            a. Step:a
+              i. Step:i
+              ii. Step:ii
+              iii. Step:iii
+            b. Step:b
+            c. Step:c
+              i. Step:i
+              ii. Step:ii
+          3. Step:3
+            a. Step:a
+            b. Step:b
+          4. Step:4
+        1.1. Step:1.1
+          1. Step:1
+          2. Step:2
+          3. Step:3
+        1.2. Step:1.2
+          1. Step:1
+          2. Step:2
+    """)
+    }
+
+    "removing 1.1" in {
+      test("1.1", """
+        1.0. Step:1.0
+          1. Step:1
+          2. Step:2
+            a. Step:a
+              i. Step:i
+              ii. Step:ii
+              iii. Step:iii
+            b. Step:b
+            c. Step:c
+              i. Step:i
+              ii. Step:ii
+          3. Step:3
+            a. Step:a
+              i. Step:i
+            b. Step:b
+          4. Step:4
+        1.1. Step:1.2
+          1. Step:1
+          2. Step:2
+    """)
+    }
+
+    "removing 1.1.1" in {
+      test("1.1.1", """
+        1.0. Step:1.0
+          1. Step:1
+          2. Step:2
+            a. Step:a
+              i. Step:i
+              ii. Step:ii
+              iii. Step:iii
+            b. Step:b
+            c. Step:c
+              i. Step:i
+              ii. Step:ii
+          3. Step:3
+            a. Step:a
+              i. Step:i
+            b. Step:b
+          4. Step:4
+        1.1. Step:1.1
+          1. Step:2
+          2. Step:3
+        1.2. Step:1.2
+          1. Step:1
+          2. Step:2
+    """)
+    }
+
+    "removing 1.1.3" in {
+      test("1.1.3", """
+        1.0. Step:1.0
+          1. Step:1
+          2. Step:2
+            a. Step:a
+              i. Step:i
+              ii. Step:ii
+              iii. Step:iii
+            b. Step:b
+            c. Step:c
+              i. Step:i
+              ii. Step:ii
+          3. Step:3
+            a. Step:a
+              i. Step:i
+            b. Step:b
+          4. Step:4
+        1.1. Step:1.1
+          1. Step:1
+          2. Step:2
+        1.2. Step:1.2
+          1. Step:1
+          2. Step:2
+    """)
+    }
+
+    "removing 1.2" in {
+      test("1.2", """
+        1.0. Step:1.0
+          1. Step:1
+          2. Step:2
+            a. Step:a
+              i. Step:i
+              ii. Step:ii
+              iii. Step:iii
+            b. Step:b
+            c. Step:c
+              i. Step:i
+              ii. Step:ii
+          3. Step:3
+            a. Step:a
+              i. Step:i
+            b. Step:b
+          4. Step:4
+        1.1. Step:1.1
+          1. Step:1
+          2. Step:2
+          3. Step:3
+    """)
+    }
+
+    "removing 1.2.2" in {
+      test("1.2.2", """
+        1.0. Step:1.0
+          1. Step:1
+          2. Step:2
+            a. Step:a
+              i. Step:i
+              ii. Step:ii
+              iii. Step:iii
+            b. Step:b
+            c. Step:c
+              i. Step:i
+              ii. Step:ii
+          3. Step:3
+            a. Step:a
+              i. Step:i
+            b. Step:b
+          4. Step:4
+        1.1. Step:1.1
+          1. Step:1
+          2. Step:2
+          3. Step:3
+        1.2. Step:1.2
+          1. Step:1
+    """)
+    }
+
+  } // stepRemove()
+
   /*
     --    1.0. Step:1.0
     [-      1. Step:1
