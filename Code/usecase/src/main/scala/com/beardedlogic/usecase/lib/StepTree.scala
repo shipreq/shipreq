@@ -80,12 +80,6 @@ object StepTree {
 
     case Nil => (results, resultNode)
 
-    // Found at top-level. Add as first child.
-    case h :: t if h.id == afterId && h.level == 0 =>
-      val n = new StepNode(nextFuncName, h.level + 1, 1, step)
-      val c = n :: h.children.map(_.incrementPosition)
-      (results ::: h.copy(children = c) :: t, Some(n))
-
     // Found and has children. Add as first child.
     case h :: t if h.id == afterId && !h.children.isEmpty =>
       val n = new StepNode(nextFuncName, h.level + 1, 1, step)
@@ -97,13 +91,12 @@ object StepTree {
       val n = new StepNode(nextFuncName, h.level, h.labelIndex + 1, step)
       (results ::: h :: n :: t.map(_.incrementPosition), Some(n))
 
+    // Not found. Check children then siblings.
     case h :: t =>
       val (c, n) = insertStep(step, afterId, h.children, Nil, resultNode)
       if (n.isDefined)
-        // Found in children
         (results ::: h.copy(children = c) :: t, n)
       else
-        // Keep searching
         insertStep(step, afterId, t, results :+ h, None)
   }
 
