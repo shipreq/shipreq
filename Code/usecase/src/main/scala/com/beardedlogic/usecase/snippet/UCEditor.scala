@@ -36,8 +36,8 @@ class UCEditor extends StatefulSnippet {
   val id = 1
   var title = ""
   var courses: List[StepNode] =
-    StepNode(nextFuncName, 0, s"${id}.0", NewStep,
-      StepNode(nextFuncName, 1, LABEL_MAKERS(0)(1), NewStep, Nil) :: Nil
+    StepNode(nextFuncName, 0, Some(id + "."), 0, NewStep,
+      new StepNode(nextFuncName, 1, 1, NewStep) :: Nil
     ) :: Nil
 
   def render = (

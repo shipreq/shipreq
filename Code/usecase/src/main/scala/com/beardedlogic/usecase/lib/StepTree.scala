@@ -12,11 +12,43 @@ object StepTree {
 
   case class StepNode(id: String,
                       level: Int,
-                      label: String,
+                      labelPrefix: Option[String],
+                      labelIndex: Int,
                       step: Step,
                       children: List[StepNode]) {
-    def labelId = id + "-l"
-    def stepTextId = id + "-t"
+
+    def this(id: String,
+             level: Int,
+             labelIndex: Int,
+             step: Step,
+             children: List[StepNode] = Nil) = this(id, level, None, labelIndex, step, children)
+
+    def this(id: String,
+             label: Tuple2[String, Int],
+             step: Step,
+             children: List[StepNode] = Nil) = this(id, 0, Some(label._1), label._2, step, children)
+
+    import StepLabels.LABEL_MAKERS
+    @inline def labelMaker = LABEL_MAKERS(level)
+
+    require(level >= 0, s"Level (${level}) must be 0 or larger.")
+    require(level < LABEL_MAKERS.size, s"Level (${level}) must be less than ${LABEL_MAKERS.size}.")
+    require(labelIndex >= labelMaker.min, s"Label index (${labelIndex}) at level (${level}) must be ${labelMaker.min} or larger.")
+
+    @inline def labelSuffix = labelMaker(labelIndex)
+    val label = labelPrefix map (_ + labelSuffix) getOrElse labelSuffix
+
+    /**
+     * Increments the position of a single node.
+     *
+     * Examples:
+     *   1.0.1      --> 1.0.2
+     *   1.3.a.iii  --> 1.3.a.iv
+     */
+    @inline def incrementPosition() = copy(labelIndex = this.labelIndex + 1)
+
+    @inline def labelId = id + "-l"
+    @inline def stepTextId = id + "-t"
   }
 
   def NewStep = Step("")
@@ -27,22 +59,6 @@ object StepTree {
   @tailrec def flattenNodes(nodes: List[StepNode], results: List[StepNode] = Nil): List[StepNode] = nodes match {
     case Nil    => results
     case h :: t => flattenNodes(h.children ::: t, results :+ h)
-  }
-
-  /**
-   * Increments the position of a single node.
-   *
-   * Examples:
-   *   1.0.1      --> 1.0.2
-   *   1.3.a.iii  --> 1.3.a.iv
-   *
-   * NOTE: Top-level elements are not allowed and will cause an error.
-   */
-  def incrementPosition(n: StepNode) = {
-    require(n.level > 0, "Top-level nodes not allowed.")
-    val lm = StepLabels.LABEL_MAKERS(n.level - 1)
-    val newLabel = lm(lm(n.label) + 1)
-    n.copy(label = newLabel)
   }
 
   /**
@@ -66,14 +82,14 @@ object StepTree {
 
     // Found at top-level, add as first child
     case h :: t if h.id == afterId && h.level == 0 =>
-      val n = StepNode(nextFuncName, h.level + 1, StepLabels.LABEL_MAKERS(0)(1), step, Nil)
-      val c = n :: h.children.map(incrementPosition _)
+      val n = new StepNode(nextFuncName, h.level + 1, 1, step)
+      val c = n :: h.children.map(_.incrementPosition)
       (results ::: h.copy(children = c) :: t, Some(n))
 
     // Found, add after
     case h :: t if h.id == afterId =>
-      val n = StepNode(nextFuncName, h.level, h.label, step, Nil)
-      (results ::: h :: (n :: t).map(incrementPosition _), Some(n))
+      val n = new StepNode(nextFuncName, h.level, h.labelIndex + 1, step)
+      (results ::: h :: n :: t.map(_.incrementPosition), Some(n))
 
     case h :: t =>
       val (c, n) = insertStep(step, afterId, h.children, Nil, resultNode)
@@ -83,5 +99,63 @@ object StepTree {
       else
         // Keep searching
         insertStep(step, afterId, t, results :+ h, None)
+  }
+
+  /**
+   * Decreases the indent/level of a node in a tree.
+   *
+   * Examples:
+   *   1.0.2.a      --> 1.0.3
+   *   1.3.4.b.iii  --> 1.3.4.c
+   */
+  @inline def indentDecrease(id: String, nodes: List[StepNode]) = _indentDecrease(id, nodes, Nil, false)
+
+  @tailrec private def _indentDecrease(id: String, nodes: List[StepNode], results: List[StepNode], found: Boolean): Tuple2[List[StepNode], Boolean] = nodes match {
+    case Nil => (results, found)
+    case h :: t => findChild(id, h.children) match {
+      case Some(ChildAndSiblings(sibLeft, c, sibRight)) => // Found match in head node's children
+
+        // Build node's new children
+        var childIndex = 0
+        val childLevel = h.level + 1
+        val childLabelPrefix = c.children.headOption.map(_.labelPrefix) getOrElse None
+        val newChildren = (c.children ::: sibRight).map { n =>
+          childIndex += 1
+          n.copy(level = childLevel, labelPrefix = childLabelPrefix, labelIndex = childIndex)
+        }
+
+        // Build final list
+        val r =
+          results :::
+            h.copy(children = sibLeft) ::
+            c.copy(level = c.level - 1, labelPrefix = h.labelPrefix, labelIndex = h.labelIndex + 1, children = newChildren) ::
+            t.map(_.incrementPosition)
+        (r, true)
+
+      case None =>
+        val (childrenResults, childrenFound) = indentDecrease(id, h.children)
+        if (childrenFound)
+          (results ::: h.copy(children = childrenResults) :: t, true)
+        else
+          _indentDecrease(id, t, results :+ h, found)
+    }
+  }
+
+  private case class ChildAndSiblings(
+    siblingsLeft: List[StepNode],
+    child: StepNode,
+    siblingsRight: List[StepNode])
+
+  /**
+   * Searches a list (non-recursively) for a particular node, and if found, returns it with its left and right
+   * siblings.
+   */
+  @tailrec private def findChild(
+    id: String,
+    nodes: List[StepNode],
+    siblingsLeft: List[StepNode] = Nil): Option[ChildAndSiblings] = nodes match {
+    case Nil                  => None
+    case h :: t if h.id == id => Some(ChildAndSiblings(siblingsLeft, h, t))
+    case h :: t               => findChild(id, t, siblingsLeft :+ h)
   }
 }

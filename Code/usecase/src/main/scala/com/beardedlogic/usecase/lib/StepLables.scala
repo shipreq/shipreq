@@ -22,27 +22,29 @@ object StepLabels {
 
   private def toRoman(i: Int) = RomanNumeral(i)
 
-  class LabelMaker(private val fn: (Int) => String) {
-    private def create = {
-      var labels = MutableMap[Int, String]()
-      var indices = MutableMap[String, Int]()
-      for (i <- 1 to MAX_STEPS_PER_LEVEL) {
+  final class LabelMaker private (val min: Int, val label: Map[Int, String], val index: Map[String, Int]) {
+    def apply(i: Int) = label(i)
+    def apply(l: String) = index(l)
+  }
+  object LabelMaker {
+    def apply(min: Int, fn: (Int) => String) = {
+      val labels = MutableMap[Int, String]()
+      val indices = MutableMap[String, Int]()
+      for (i <- min to MAX_STEPS_PER_LEVEL) {
         val l = fn(i)
         labels(i) = l
         indices(l) = i
       }
-      (labels.toMap, indices.toMap)
+      new LabelMaker(min, labels.toMap, indices.toMap)
     }
-
-    val (label, index) = create
-    def apply(i: Int) = label(i)
-    def apply(l: String) = index(l)
   }
 
-  val NUMERIC = new LabelMaker(toNumeric _)
-  val ALPHA = new LabelMaker(toAlpha _)
-  val ROMAN = new LabelMaker(toRoman _)
+  val NUMERIC_0 = LabelMaker(0, toNumeric _)
+  val NUMERIC = LabelMaker(1, toNumeric _)
+  val ALPHA = LabelMaker(1, toAlpha _)
+  val ROMAN = LabelMaker(1, toRoman _)
 
   // TODO Enforce max depth
-  val LABEL_MAKERS = Vector(NUMERIC, ALPHA, ROMAN, NUMERIC)
+  // (1.)0.1.a.i.4
+  val LABEL_MAKERS = Vector(NUMERIC_0, NUMERIC, ALPHA, ROMAN, NUMERIC)
 }

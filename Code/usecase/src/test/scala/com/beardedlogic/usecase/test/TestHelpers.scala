@@ -5,6 +5,7 @@ import org.scalatest.matchers.Matcher
 import org.scalatest.matchers.MatchResult
 import lib.NodeUtils._
 import lib.StepTree._
+import org.scalatest.matchers.ShouldMatchers
 
 /**
  * @since 30/04/2013
@@ -29,7 +30,7 @@ object TestHelpers extends TestHelpers {
 
   case class TreeMatcher(expected: List[StepNode]) extends Matcher[List[StepNode]] {
     def apply(actual: List[StepNode]): MatchResult = {
-      val result = actual == expected
+      val result = removeIds(actual) == removeIds(expected)
       MatchResult(result,
         "Trees didn't match.\n" + inspectTrees("EXPECTED", expected, "ACTUAL", actual),
         "Trees matched but shouldn't have.\n" + inspectTree(actual))
@@ -40,13 +41,15 @@ object TestHelpers extends TestHelpers {
    * Old way of generating trees.
    */
   object TreeDSL {
-    
+    import lib.StepLabels.LABEL_MAKERS
+
     case class NC(val node: String, val children: List[NC])
     def $(nodes: NC*) = nodes.toList
     implicit def nodeWithoutChildren(n: String) = NC(n, Nil)
     implicit class StringAsNode(val s: String) { def ~>(children: List[NC]) = NC(s, children) }
     implicit class NCListExt(val ncs: List[NC]) {
       val regex = """^(\S+?)/(\S+)$""".r
+      val labelSplit = """^(\S+\.)?([^\.]+)$""".r
       def toStepNodes: List[StepNode] = toStepNodes(0, "", true)
       def toStepNodesN: List[StepNode] = toStepNodes(0, "", false)
       def toStepNodes(lvl: Int, idPrefix: String, genIds: Boolean): List[StepNode] = ncs.map { nc =>
@@ -56,7 +59,10 @@ object TestHelpers extends TestHelpers {
           (nc.node, "Step:" + nc.node)
         val id = idPrefix + lbl
         val ch = nc.children.toStepNodes(lvl + 1, id + ".", genIds)
-        StepNode(if (genIds) id else null, lvl, lbl, Step(txt), ch)
+        val labelSplit(lblPrefix, lblSuffix) = lbl
+        val lblIndex = LABEL_MAKERS(lvl)(lblSuffix)
+        val id2 = if (genIds) id else null
+        StepNode(id2, lvl, Option(lblPrefix), lblIndex, Step(txt), ch)
       }
     }
 
@@ -66,6 +72,6 @@ object TestHelpers extends TestHelpers {
       val ch = if (matches.isEmpty) n.children else matches(0).toStepNodes
       n.copy(children = changeChildren(ch, changes: _*))
     }
-    
+
   }
 }
