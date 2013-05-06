@@ -1,6 +1,6 @@
 package com.beardedlogic.usecase.lib
 
-import net.liftweb.http.js.{ JsExp, JsMember }
+import net.liftweb.http.js.{ JsCmd, JsCmds, JsExp, JsMember }
 import scala.xml.NodeSeq
 
 /**
@@ -9,6 +9,10 @@ import scala.xml.NodeSeq
  * @since 1/5/2013
  */
 object JsExt {
+
+  val DurationFast = 200
+  val DurationDefault = 400
+  val DurationSlow = 600
 
   /**
    * A JQuery query for an element based on the id of the element
@@ -32,4 +36,7 @@ object JsExt {
     new JsExp with JsMember { override val toJsCmd = s"slideDown(${duration})" }
 
   object JqHide extends JsExp with JsMember { override val toJsCmd = "hide()" }
+
+  def FadeOut(idExpr: JsExp, duration: Int = DurationDefault)(onComplete: JsExp => JsCmd): JsCmd =
+    JsCmds.Run(s"${idExpr.toJsCmd}.fadeOut(${duration},function(){${onComplete(idExpr).toJsCmd}});")
 }

@@ -79,6 +79,22 @@ class UCEditorIntegrationTest extends FreeSpec with ShouldMatchers with Selenium
     }
   }
 
+  "The Delete button" - {
+    "when page is first loaded" - {
+      lazy val u = uce
+      "should not be visible for 1.0" in { u.deleteButtonVisibility(0) should be(false) }
+      "should be visible for 1.0.1" in { u.deleteButtonVisibility(1) should be(true) }
+    }
+    "when pressed for 1.0.2 (out of 1.0.3)" - {
+      lazy val u = uce.clickAdd(1).clickAdd(1).assertStepCount(4)
+        .setStepText(0 -> "head", 1 -> "pre", 2 -> "del", 3 -> "post").clickDelete(2)
+      "should remove 1.0.2" in { u.assertStepCount(3) }
+      "should not affect 1.0" in { u.assertStep(0)(0, "1.0", "head") }
+      "should not affect 1.0.1" in { u.assertStep(1)(1, "1", "pre") }
+      "should turn 1.0.3 into 1.0.2" in { u.assertStep(2)(1, "2", "post") }
+    }
+  }
+
   "The << button" - {
     "when page is first loaded" - {
       lazy val u = uce

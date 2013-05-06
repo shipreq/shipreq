@@ -10,9 +10,15 @@ $indent: 1cm
   [data-lvl="#{$i}"]
     padding-left: $i * $indent
 
+// Prevent deletion of normal course first step
+.step:first-child .delete
+  display: none
+
+// Prevent indentDecrease for top-level
 .step[data-lvl="0"] .indentDec
   display: none
 
+// Prevent indentIncrease for first children
 .step:first-child,
 .step[data-lvl="0"]+.step[data-lvl="1"],
 .step[data-lvl="1"]+.step[data-lvl="2"],

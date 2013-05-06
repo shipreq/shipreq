@@ -72,7 +72,8 @@ class UCEditor extends StatefulSnippet {
     & ".label *" #> n.label
     & ".label [id]" #> n.labelId
     & "@text" #> SHtml.textarea(n.step.text, (_) => (), "rows" -> "2", "id" -> n.stepTextId)
-    & ".add" #> SHtml.ajaxButton("Add", () => onAddStep(n.id))
+    & ".add" #> SHtml.ajaxButton("Add", () => onStepAdd(n.id))
+    & ".delete" #> SHtml.ajaxButton("Delete", () => onStepRemove(n.id))
     & ".indentDec" #> SHtml.ajaxButton("<<", () => onIndentDecrease(n.id))
     & ".indentInc" #> SHtml.ajaxButton(">>", () => onIndentIncrease(n.id))
   )
@@ -94,7 +95,7 @@ class UCEditor extends StatefulSnippet {
   /**
    * Adds a new step, shuffling down subsequent steps and renumbering if necessary.
    */
-  def onAddStep(preceedingNodeId: String): JsCmd = stepInsert(NewStep, preceedingNodeId, courses) match {
+  def onStepAdd(preceedingNodeId: String): JsCmd = stepInsert(NewStep, preceedingNodeId, courses) match {
     case (newCourses, Some(newNode)) =>
       courses = newCourses
       val fn = ".step" #> renderStep(newNode)
@@ -102,6 +103,19 @@ class UCEditor extends StatefulSnippet {
         JqId(preceedingNodeId) ~> JqAfter(fn(StepTemplate))
         & JqId(newNode.id) ~> JqHide ~> JqSlideDownFast
         & UpdateLabels(flattenNodes(courses))
+      )
+    case _ => JsCmds.Noop
+  }
+
+  /**
+   * Removes a new step and all its children, shuffling up following steps and renumbering if necessary.
+   */
+  def onStepRemove(id: String): JsCmd = stepRemove(id, courses) match {
+    case (newCourses, true) =>
+      courses = newCourses
+      FadeOut(JqId(id), 240)(
+        _ ~> JqJE.JqRemove()
+          & UpdateLabels(flattenNodes(courses))
       )
     case _ => JsCmds.Noop
   }

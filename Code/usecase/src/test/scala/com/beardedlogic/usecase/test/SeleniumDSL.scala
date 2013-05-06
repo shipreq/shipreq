@@ -61,6 +61,7 @@ object SeleniumDSL {
     private def stepTextElem(row: Int) = steps(row).findElement(By.cssSelector("textarea"))
     private def addButtons = s.findElementsByCssSelector("button.add")
     private def addButton(row: Int) = steps(row).findElement(By.cssSelector("button.add"))
+    private def delButton(row: Int) = steps(row).findElement(By.cssSelector("button.delete"))
     private def indentDecButton(row: Int) = steps(row).findElement(By.cssSelector("button.indentDec"))
     private def indentIncButton(row: Int) = steps(row).findElement(By.cssSelector("button.indentInc"))
 
@@ -68,11 +69,13 @@ object SeleniumDSL {
 
     def reload = { s.get(Jetty.URL); this }
     def setUseCaseTitle(title: String) = { titleElem.typeInto(title); steps(0).click; this }
-    def setStepText(row: Int, title: String) = { stepTextElem(row).typeInto(title); titleElem.click; this }
+    def setStepText(row: Int, text: String) = { stepTextElem(row).typeInto(text); titleElem.click; this }
+    def setStepText(args : Tuple2[Int, String]*) = { for ((row,text) <- args) stepTextElem(row).typeInto(text); titleElem.click; this }
     def assertStepText(row: Int, txt: String) = eventually { stepText(row) should equal(txt) }
     def assertStepCount(expected: Int) = eventually { stepCount should equal(expected) }
     def assertAddButtonCount(expected: Int) = eventually { addButtonCount should equal(expected) }
     def clickAdd(row: Int) = { addButton(row).click(); this }
+    def clickDelete(row: Int) = { delButton(row).click(); this }
     def assertStep(row: Int)(lvl: Int, label: String, txt: String = "") = eventually {
       stepLevel(row) should equal(lvl)
       stepLabel(row) should equal(label)
@@ -94,8 +97,9 @@ object SeleniumDSL {
       lvl.toInt
     }
     def addButtonCount = addButtons.size
-    def indentDecButtonVisibility(row: Int) = indentDecButton(row).isDisplayed()
-    def indentIncButtonVisibility(row: Int) = indentIncButton(row).isDisplayed()
+    def deleteButtonVisibility(row: Int) = delButton(row).isDisplayed
+    def indentDecButtonVisibility(row: Int) = indentDecButton(row).isDisplayed
+    def indentIncButtonVisibility(row: Int) = indentIncButton(row).isDisplayed
   }
 }
 
