@@ -116,62 +116,232 @@ class StepTreeTest extends WordSpec with ShouldMatchers with TestHelpers {
   "insertStep()" when {
     import Steps._
 
-    def test(afterId: String, nodes: List[StepNode], changes: NodeChange*) {
-      val expected = removeIds(fixLevels(changeChildren(nodes, changes: _*)))
-      val r = insertStep(N, afterId, nodes)
-      r._1 should matchTree(expected)
+    def test(afterId: String, nodes: List[StepNode], expectedTreeTxt: String) {
+      val expected = parseStepTree(expectedTreeTxt)
+      val actual = insertStep(N, afterId, nodes)
+      actual._1 should matchTree(expected)
     }
 
     "tree is in initial state (1.0 & 1.0.1)" should {
       "insert before 1.0.1" in {
-        test("1.0", InitialTree, "1.0" -> $("1/N", "2/Step:1"))
+        test("1.0", InitialTree, """
+          1.0. Step:1.0
+            1. N
+            2. Step:1
+            """)
       }
 
       "insert after 1.0.1" in {
-        test("1.0.1", InitialTree, "1.0" -> $("1", "2/N"))
+        test("1.0.1", InitialTree, """
+          1.0. Step:1.0
+            1. Step:1
+            2. N
+            """)
       }
     }
 
     "tree is large and deep" when {
       "inserting after 1.0 (lvl 0) should create 1.0.1" in {
-        test("1.0", BigTree, "1.0" -> $(
-          "1/N",
-          "2/Step:1",
-          "3/Step:2" ~> BT_102,
-          "4/Step:3" ~> BT_103,
-          "5/Step:4"))
+        test("1.0", BigTree, """
+          1.0. Step:1.0
+            1. N
+            2. Step:1
+            3. Step:2
+              a. Step:a
+                i. Step:i
+                ii. Step:ii
+                iii. Step:iii
+              b. Step:b
+              c. Step:c
+                i. Step:i
+                ii. Step:ii
+            4. Step:3
+              a. Step:a
+                i. Step:i
+              b. Step:b
+            5. Step:4
+          1.1. Step:1.1
+            1. Step:1
+            2. Step:2
+            3. Step:3
+          1.2. Step:1.2
+            1. Step:1
+            2. Step:2
+        """)
       }
 
       "inserting after 1.1 (lvl 0) should create 1.1.1" in {
-        test("1.1", BigTree, "1.1" -> $("1/N", "2/Step:1", "3/Step:2", "4/Step:3"))
+        test("1.1", BigTree, """
+          1.0. Step:1.0
+            1. Step:1
+            2. Step:2
+              a. Step:a
+                i. Step:i
+                ii. Step:ii
+                iii. Step:iii
+              b. Step:b
+              c. Step:c
+                i. Step:i
+                ii. Step:ii
+            3. Step:3
+              a. Step:a
+                i. Step:i
+              b. Step:b
+            4. Step:4
+          1.1. Step:1.1
+            1. N
+            2. Step:1
+            3. Step:2
+            4. Step:3
+          1.2. Step:1.2
+            1. Step:1
+            2. Step:2
+        """)
       }
 
-      "inserting after 1.0.2 (lvl 1) should create 1.0.3" in {
-        test("1.0.2", BigTree, "1.0" -> $(
-          "1",
-          "2" ~> BT_102,
-          "3/N",
-          "4/Step:3" ~> BT_103,
-          "5/Step:4"))
+      "inserting after 1.0.2 (lvl 1) should create 1.0.2.a" in {
+        test("1.0.2", BigTree, """
+          1.0. Step:1.0
+            1. Step:1
+            2. Step:2
+              a. N
+              b. Step:a
+                i. Step:i
+                ii. Step:ii
+                iii. Step:iii
+              c. Step:b
+              d. Step:c
+                i. Step:i
+                ii. Step:ii
+            3. Step:3
+              a. Step:a
+                i. Step:i
+              b. Step:b
+            4. Step:4
+          1.1. Step:1.1
+            1. Step:1
+            2. Step:2
+            3. Step:3
+          1.2. Step:1.2
+            1. Step:1
+            2. Step:2
+        """)
       }
 
       "inserting after 1.1.2 (lvl 1) should create 1.1.3" in {
-        test("1.1.2", BigTree, "1.1" -> $("1", "2", "3/N", "4/Step:3"))
+        test("1.1.2", BigTree, """
+          1.0. Step:1.0
+            1. Step:1
+            2. Step:2
+              a. Step:a
+                i. Step:i
+                ii. Step:ii
+                iii. Step:iii
+              b. Step:b
+              c. Step:c
+                i. Step:i
+                ii. Step:ii
+            3. Step:3
+              a. Step:a
+                i. Step:i
+              b. Step:b
+            4. Step:4
+          1.1. Step:1.1
+            1. Step:1
+            2. Step:2
+            3. N
+            4. Step:3
+          1.2. Step:1.2
+            1. Step:1
+            2. Step:2
+        """)
       }
 
-      "inserting after 1.0.2.a (lvl 2) should create 1.0.2.b" in {
-        test("1.0.2.a", BigTree,
-          "1.0.2" -> $("a" ~> $("i", "ii", "iii"), "b/N", "c/Step:b", "d/Step:c" ~> $("i", "ii"))
-        )
+      "inserting after 1.0.2.a (lvl 2) should create 1.0.2.a.i" in {
+        test("1.0.2.a", BigTree, """
+          1.0. Step:1.0
+            1. Step:1
+            2. Step:2
+              a. Step:a
+                i. N
+                ii. Step:i
+                iii. Step:ii
+                iv. Step:iii
+              b. Step:b
+              c. Step:c
+                i. Step:i
+                ii. Step:ii
+            3. Step:3
+              a. Step:a
+                i. Step:i
+              b. Step:b
+            4. Step:4
+          1.1. Step:1.1
+            1. Step:1
+            2. Step:2
+            3. Step:3
+          1.2. Step:1.2
+            1. Step:1
+            2. Step:2
+        """)
       }
 
       "inserting after 1.0.2.a.i (lvl 3) should create 1.0.2.a.ii" in {
-        test("1.0.2.a.i", BigTree, "1.0.2.a" -> $("i", "ii/N", "iii/Step:ii", "iv/Step:iii"))
+        test("1.0.2.a.i", BigTree, """
+          1.0. Step:1.0
+            1. Step:1
+            2. Step:2
+              a. Step:a
+                i. Step:i
+                ii. N
+                iii. Step:ii
+                iv. Step:iii
+              b. Step:b
+              c. Step:c
+                i. Step:i
+                ii. Step:ii
+            3. Step:3
+              a. Step:a
+                i. Step:i
+              b. Step:b
+            4. Step:4
+          1.1. Step:1.1
+            1. Step:1
+            2. Step:2
+            3. Step:3
+          1.2. Step:1.2
+            1. Step:1
+            2. Step:2
+        """)
       }
 
       "inserting after 1.0.2.c.ii (lvl 3) should create 1.0.2.c.iii" in {
-        test("1.0.2.c.ii", BigTree, "1.0.2.c" -> $("i", "ii", "iii/N")
-        )
+        test("1.0.2.c.ii", BigTree, """
+          1.0. Step:1.0
+            1. Step:1
+            2. Step:2
+              a. Step:a
+                i. Step:i
+                ii. Step:ii
+                iii. Step:iii
+              b. Step:b
+              c. Step:c
+                i. Step:i
+                ii. Step:ii
+                iii. N
+            3. Step:3
+              a. Step:a
+                i. Step:i
+              b. Step:b
+            4. Step:4
+          1.1. Step:1.1
+            1. Step:1
+            2. Step:2
+            3. Step:3
+          1.2. Step:1.2
+            1. Step:1
+            2. Step:2
+        """)
       }
     }
   }
