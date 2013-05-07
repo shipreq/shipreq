@@ -123,3 +123,26 @@ __body {
 	background-image:url('/tmp/paper_fibers.png');
 	background-repeat:repeat;
 }
+
+.step .ctl button {
+	width:30px; height:30px
+}
+.step .ctl .delete {
+	background-image: url('noun_project_6188_delete.svg');
+    background-size:26px;
+	background-repeat:no-repeat;
+	background-position: center;
+}
+.step .ctl .add {
+	background-image: url('noun_project_8394_add.svg');
+    background-size:21px;
+	background-repeat:no-repeat;
+	background-position: center;
+}
+
+
+
+
+
+
+
