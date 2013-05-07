@@ -1,0 +1,127 @@
+$indent: 1cm;
+$borderRadius: 4px;
+
+/* Indent steps */
+@for $i from 0 through 8 {
+	[data-lvl="#{$i}"] {
+		padding-left: $i * $indent;
+	}
+}
+
+/* Prevent deletion of normal course first step */
+.step:first-child .delete {
+	display: none;
+}
+
+/* Prevent indentDecrease for top-level */
+.step[data-lvl="0"] .indentDec {
+	display: none;
+}
+
+/* Prevent indentIncrease for first children */
+.step:first-child,
+.step[data-lvl="0"]+.step[data-lvl="1"],
+.step[data-lvl="1"]+.step[data-lvl="2"],
+.step[data-lvl="2"]+.step[data-lvl="3"],
+.step[data-lvl="3"]+.step[data-lvl="4"],
+.step[data-lvl="4"]+.step[data-lvl="5"],
+.step[data-lvl="5"]+.step[data-lvl="6"],
+.step[data-lvl="6"]+.step[data-lvl="7"],
+.step[data-lvl="7"]+.step[data-lvl="8"] {
+	.indentInc {
+		display: none;
+	}
+}
+
+/* General styles */
+#uce {
+	margin: 1cm 1cm 0 1cm;
+	
+	form {
+		display: inline
+	}
+
+	textarea {
+		border-radius: $borderRadius;
+		-moz-border-radius: $borderRadius;
+		-webkit-border-radius: $borderRadius;
+		resize: none;
+		overflow: auto; /* removes scrollbars in Internet Explorer */
+		border: dashed 1px #ccc;
+		background: #fff;
+		padding: 4px;
+		outline: none;
+		width: 100%;
+		&:hover {
+			border: solid 1px #ccc;
+			background: #eee;
+		}
+		&:focus {
+			border: solid 1px #373;
+			background: #f8fff8;
+		}
+	}
+}
+
+/* UC Title (UC-123: Abc) */
+#uce .title {
+	&, td, input {
+		width: 100%
+	}
+	th, input {
+		font-size: 150%;
+		font-weight: bold;
+		vertical-align: middle
+	}
+	th {
+		padding-right: 0.6em
+	}
+}
+
+/* Fields and attributes */
+.ucdata {
+	margin-top: 1cm;
+	width: 100%;
+	th, td {
+		border-top: solid 2px #ddd;
+		padding-top: 6px;
+		padding-bottom: 2em;
+	}
+	th {
+		width: 20ex;
+		text-align: left;
+		vertical-align: top
+	}
+}
+
+/* Steps */
+.step {
+	overflow: hidden
+	div {
+		vertical-align: top
+	}
+	.label {
+		float: left;
+		padding-right: 1ex;
+		padding-top: 0px
+	}
+	.txt {
+		float: none;
+		width: auto;
+		overflow: hidden;
+	}
+	.ctl {
+		float: right;
+		width: 148px;
+		text-align: right;
+		padding-bottom: 1px
+	}
+	&+.step {
+		margin-top: 1ex
+	}
+	&[data-lvl="0"] {
+		.label, textarea {
+			font-weight: bold
+		}
+	}
+}
