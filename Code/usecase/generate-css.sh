@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sd=src/main/stylesheets
+sd=src/main/sass
 td=src/main/webapp/assets
 
 for f in $sd/*.s?ss; do
@@ -11,3 +11,6 @@ for f in $sd/*.s?ss; do
   echo "$s -> $t"
   sass $s --style compressed > $t
 done
+
+echo
+ls -l $td
