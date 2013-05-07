@@ -1,0 +1,125 @@
+
+.step form {
+	display: inline;
+}
+
+[data-lvl="0"] .label {
+	padding-left: 0cm;
+}
+
+[data-lvl="1"] .label {
+	padding-left: 1cm;
+}
+
+[data-lvl="2"] .label {
+	padding-left: 2cm;
+}
+
+[data-lvl="3"] .label {
+	padding-left: 3cm;
+}
+
+[data-lvl="4"] .label {
+	padding-left: 4cm;
+}
+
+[data-lvl="5"] .label {
+	padding-left: 5cm;
+}
+
+[data-lvl="6"] .label {
+	padding-left: 6cm;
+}
+
+[data-lvl="7"] .label {
+	padding-left: 7cm;
+}
+
+[data-lvl="8"] .label {
+	padding-left: 8cm;
+}
+
+.step:first-child .delete {
+	display: none;
+}
+
+.step[data-lvl="0"] .indentDec {
+	display: none;
+}
+
+.step:first-child .indentInc,.step[data-lvl="0"]+.step[data-lvl="1"] .indentInc,.step[data-lvl="1"]+.step[data-lvl="2"] .indentInc,.step[data-lvl="2"]+.step[data-lvl="3"] .indentInc,.step[data-lvl="3"]+.step[data-lvl="4"] .indentInc,.step[data-lvl="4"]+.step[data-lvl="5"] .indentInc,.step[data-lvl="5"]+.step[data-lvl="6"] .indentInc,.step[data-lvl="6"]+.step[data-lvl="7"] .indentInc,.step[data-lvl="7"]+.step[data-lvl="8"] .indentInc
+	{
+	display: none;
+}
+
+table,td,th,tr {
+	border-collapse: collapse;
+}
+
+.uce {margin:0 1cm 0 1cm}
+
+.uce .title {border-collapse:collapse; width:100%}
+.uce .title * {font-size:x-large; font-weight:bold; vertical-align:middle}
+.uce .title th {padding-right:0.5em}
+.uce .title td {width:100%}
+.uce .title td input {width:100%}
+
+table.ucdata  { margin-top:1cm; width:100%}
+table.ucdata  th,table.ucdata  td {  padding-bottom: 2em; __border-top: solid 2px #f2f2f2; __padding-top: 0.2cm;}
+table.ucdata  th { __padding-right:1.5ex; width: 20ex; text-align: left; vertical-align: top}
+table.ucdata  td {	__width: 100%}
+table.ucdata  textarea { font-family: sans-serif}
+
+table.ucdata tr:not(.nc):not(.altc):not(.exceptions) textarea { width:100% }
+
+textarea {
+	border:solid 1px #888; padding:1px
+	-moz-border-radius: 2px;
+	-webkit-border-radius: 2px;
+	border-radius: 2px;
+	background: #f4f6f9
+}
+
+.step {overflow: hidden}
+.step div {__padding-top:1ex; vertical-align: top}
+.step .label {float:left; __background-color: #ddf; padding-right:1ex; padding-top:0px}
+.step .txt {float:none; width:auto; __background-color: #dfd; overflow: hidden;}
+.step .txt textarea {width:100%}
+.step[data-lvl="0"] .label, .step[data-lvl="0"] .txt textarea {font-weight:bold}
+.step .ctl {float:right; __background-color: #fdd; width:148px; text-align:right; padding-bottom:1px}
+.step .add {text-align: center; position: relative; padding:0.6ex}
+
+xxx.step .add {display:none}
+.step .add div {display:none}
+xxx.step .add div {
+	position: absolute;
+	overflow:hidden;
+  left: 0;
+  top: 50%;
+  height: 0.5px;
+  background: #ddd;
+  width: 100%;
+  font-size:0.1px;
+  display: block;
+  z-index:-1;
+}
+
+__textarea {
+  transition: height 0.1s;
+  -webkit-transition: height 0.1s;
+}
+
+/*
+.step .add        { min-height: 6px }
+.step .add button { display:none }
+.step .add div    { background: #fff; }
+.step .add:hover        { padding:1ex }
+.step .add:hover div    { background: #888; }
+.step .add:hover button { display:inline-block }
+*/
+
+
+__body {
+	background-image:url('/tmp/paper_fibers.png');
+	background-repeat:repeat;
+}

@@ -1,0 +1,165 @@
+<html>
+<head>
+<meta content="text/html; charset=UTF-8" http-equiv="content-type">
+<link media="screen" type="text/css" href="demo.css" rel="stylesheet" />
+<script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+<script src="https://raw.github.com/jackmoore/autosize/master/jquery.autosize.js"></script>
+</head>
+<body data-lift-content-id="main">
+	<div id="main" data-lift="surround?with=default;at=content">
+
+		<div class="uce">
+			<table class="title">
+				<tr>
+					<th><span>UC-<span id="uc_id_num">123</span>:
+					</span></th>
+					<td><input name="title" value="Use Case Title" /></td>
+				</tr>
+			</table>
+
+			<table class="ucdata">
+				<tr class="actors">
+					<th>Actors</th>
+					<td><textarea rows="1">Scorer</textarea></td>
+				</tr>
+				<tr class="precond">
+					<th>Pre-conditions</th>
+					<td><textarea rows="1">1. Game configuration has been entered. This is comprised of:
+a. How many players?
+b. Who are the players?
+c. The player order.</textarea></td>
+				</tr>
+				<tr class="postcond">
+					<th>Post-conditions</th>
+					<td><textarea rows="1">1. The game is finished.</textarea></td>
+				</tr>
+				<tr class="nc">
+					<th>Normal<br />Course
+					</th>
+					<td>
+						<div id="steps">
+							<!-- ----------------------------------------------------------------------------- -->
+							<div class="step" data-lvl="0">
+								<div class="label">1.0.</div>
+								<div class="ctl">
+									<button class="indentDec">&lt;&lt;</button>
+									<button class="indentInc">&gt;&gt;</button>
+									<button class="delete">DEL</button>
+								</div>
+								<div class="txt">
+									<form data-lift="form.ajax" style="display: inline">
+										<textarea rows="1" name="text">Score a new game of Scrabble.</textarea>
+									</form>
+								</div>
+								<div class="add">
+									<button>+</button>
+									<div></div>
+								</div>
+							</div>
+							<!-- ----------------------------------------------------------------------------- -->
+							<div class="step clearable" data-lvl="1">
+								<div class="label">1.</div>
+								<div class="ctl">
+									<button class="indentDec">&lt;&lt;</button>
+									<button class="indentInc">&gt;&gt;</button>
+									<button class="delete">DEL</button>
+								</div>
+								<div class="txt">
+									<form data-lift="form.ajax" style="display: inline">
+										<textarea rows="1" name="text">System indicates which player’s turn it is.</textarea>
+									</form>
+								</div>
+								<div class="add">
+									<button>+</button>
+									<div></div>
+								</div>
+							</div>
+							<!-- ----------------------------------------------------------------------------- -->
+							<div class="step clearable" data-lvl="1">
+								<div class="label">2.</div>
+								<div class="ctl">
+									<button class="indentDec">&lt;&lt;</button>
+									<button class="indentInc">&gt;&gt;</button>
+									<button class="delete">DEL</button>
+								</div>
+								<div class="txt">
+									<form data-lift="form.ajax" style="display: inline">
+										<textarea rows="1" name="text">Scorer records result of turn; either a score for the turn, or an indication that the user lost/skipped a turn without scoring any points.</textarea>
+									</form>
+								</div>
+								<div class="add">
+									<button>+</button>
+									<div></div>
+								</div>
+							</div>
+							<!-- ----------------------------------------------------------------------------- -->
+						</div>
+					</td>
+				</tr>
+				<tr class="altc">
+					<th>Alternative<br />Courses
+					</th>
+					<td>
+						<div id="steps">
+							<div class="step" data-lvl="0">
+								<div class="label">1.1.</div>
+								<div class="ctl">
+									<button class="indentDec">&lt;&lt;</button>
+									<button class="indentInc">&gt;&gt;</button>
+									<button class="delete">DEL</button>
+								</div>
+								<div class="txt">
+									<form data-lift="form.ajax" style="display: inline">
+										<textarea rows="1" name="text">A player’s turn is challenged after the score is entered. [1.0.1, 1.0.4]</textarea>
+									</form>
+								</div>
+								<div class="add">
+									<button>+</button>
+									<div></div>
+								</div>
+							</div>
+						</div>
+					</td>
+				</tr>
+				<tr class="exceptions">
+					<th>Exceptions</th>
+					<td>More steps</td>
+				</tr>
+				<tr class="ucrel">
+					<th>Use Case<br />Relationships
+					</th>
+					<td><textarea rows="1"></textarea></td>
+				</tr>
+				<tr class="br">
+					<th>Constraints and<br />Business Rules
+					</th>
+					<td><textarea rows="1"></textarea></td>
+				</tr>
+				<tr class="freq">
+					<th>Frequency of<br />Use
+					</th>
+					<td><textarea rows="1"></textarea></td>
+				</tr>
+				<tr class="special">
+					<th>Special<br />Requirements
+					</th>
+					<td><textarea rows="1">1. The game is finished.</textarea></td>
+				</tr>
+				<tr class="assumptions">
+					<th>Assumptions</th>
+					<td><textarea rows="1">1. The game is finished.</textarea></td>
+				</tr>
+				<tr class="notes">
+					<th>Notes and Issues</th>
+					<td><textarea rows="1">1. The game is finished.</textarea></td>
+				</tr>
+			</table>
+		</div>
+	</div>
+	<script>
+		$(document).ready(function() {
+			$('textarea').autosize();
+		});
+	</script>
+</body>
+</html>
