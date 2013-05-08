@@ -86,11 +86,11 @@ $borderRadius: 4px;
 		border-top: solid 2px #ddd;
 		padding-top: 6px;
 		padding-bottom: 2em;
+		vertical-align: top
 	}
 	th {
 		width: 20ex;
 		text-align: left;
-		vertical-align: top
 	}
 }
 
@@ -116,7 +116,7 @@ $borderRadius: 4px;
 		text-align: right;
 		padding-bottom: 1px
 	}
-	&+.step {
+	&+.step, &+.stepTransport, .stepTransport+& {
 		margin-top: 1ex
 	}
 	&[data-lvl="0"] {

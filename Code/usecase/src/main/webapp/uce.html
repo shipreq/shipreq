@@ -4,6 +4,78 @@
 <link media="screen" type="text/css" href="assets/normalize.css" rel="stylesheet" />
 <link media="screen" type="text/css" href="assets/uce.css" rel="stylesheet" />
 <script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+<!-- link media="screen" type="text/css" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" rel="stylesheet" / -->
+
+<script type="text/javascript" class="clearable">
+	function dec_103_core() {
+		$('#s103').attr('data-lvl','0').find('.label').html('1.1.');
+		$('#s104 .label').html('2.');
+		$('#s11 .label').html('1.2.');
+	}
+	function dec_103_jqui() {
+		var t = $('<div class="stepTransport"></div>').uniqueId().appendTo('#template-courses-n td').append($('#s103,#s104'))
+		t.hide("drop", {direction:"down"}, 300, function(){
+			dec_103_core();
+			t.prependTo($('#template-courses-a td')).show("drop", {direction:"up"}, 300, function(){
+				t.children().prependTo($('#template-courses-a td'));
+				t.remove();
+			}); });
+	}
+	function dec_103_fadeOutSlideIn() {
+		//$('#s103,#s104').fadeOut(100,function(){ dec_103_core(); $('#s103,#s104').prependTo($('#template-courses-a td')).slideDown(400); });
+		var t = $('<div class="stepTransport"></div>').uniqueId().appendTo('#template-courses-n td').append($('#s103,#s104'))
+		t.fadeOut(100,function(){
+			dec_103_core();
+			t.prependTo($('#template-courses-a td')).slideDown(400, function(){
+				t.children().prependTo($('#template-courses-a td'));
+				t.remove();
+			}); });
+	}
+	function dec_103_slide() {
+		//var dur=200; $('#s103,#s104').slideUp(dur,function(){ dec_103_core(); $('#s103,#s104').prependTo($('#template-courses-a td')).slideDown(dur); });
+		var dur = 200
+		var tmp='tmp123'; $('<div class="stepTransport" id="'+tmp+'"></div>').appendTo('#template-courses-n td').append($('#s103,#s104'))
+		$('#'+tmp).slideUp(100,function(){
+			dec_103_core();
+			$('#'+tmp).prependTo($('#template-courses-a td')).slideDown(400, function(){
+				$('#'+tmp).children().prependTo($('#template-courses-a td'));
+				$('#'+tmp).remove();
+			}); });
+	}
+	function dec_103_fade() {
+		var dur=120; $('#s103,#s104').fadeOut(dur,function(){ dec_103_core(); $('#s103,#s104').prependTo($('#template-courses-a td')).fadeIn(dur); });
+	}
+	function dec_103_noanim() {
+		$('#s103,#s104').prependTo($('#template-courses-a td')); dec_103_core();
+	}
+	
+	function inc_11_core() {
+		$('#s11').attr('data-lvl','1').find('.label').html('5.');
+		$('#s12 .label').html('6.');
+	}
+	function inc_11_fadeOutSlideIn() {
+		$('#s11,#s12').slideUp(dur,function(){ inc_11_core(); $('#s11,#s12').appendTo($('#template-courses-n td')).slideDown(dur); });
+	}
+	function inc_11_slide() {
+		//var dur=120; $('#s11,#s12').slideUp(dur,function(){ inc_11_core(); $('#s11,#s12').appendTo($('#template-courses-n td')).slideDown(dur); });
+		var dur = 200
+		var tmp='tmp123'; $('<div class="stepTransport" id="'+tmp+'"></div>').prependTo('#template-courses-a td').append($('#s11,#s12'))
+		$('#'+tmp).slideUp(dur,function(){
+			inc_11_core();
+			$('#'+tmp).appendTo($('#template-courses-n td')).slideDown(dur, function(){
+				$('#'+tmp).children().appendTo($('#template-courses-n td'));
+				$('#'+tmp).remove();
+			}); });
+	}
+	function inc_11_fade() {
+		var dur=120; $('#s11,#s12').fadeOut(dur,function(){ inc_11_core(); $('#s11,#s12').appendTo($('#template-courses-n td')).fadeIn(dur); });
+	}
+	function inc_11_noanim() {
+		$('#s11,#s12').appendTo($('#template-courses-n td')); inc_11_core();
+	}
+</script>
+
 </head>
 <body data-lift-content-id="main">
 	<div id="main" data-lift="surround?with=default;at=content">
@@ -81,7 +153,7 @@ c. The player order.</textarea></td>
 							</div>
 						</div>
 						<!-- ----------------------------------------------------------------------------- -->
-						<div class="step" data-lvl="1">
+						<div class="step" data-lvl="1" id="s102">
 							<div class="label">2.</div>
 							<div class="ctl">
 								<button class="delete">&dash;</button>
@@ -96,13 +168,44 @@ c. The player order.</textarea></td>
 							</div>
 						</div>
 						<!-- ----------------------------------------------------------------------------- -->
+						<div class="step" data-lvl="1" id="s103">
+							<div class="label">3.</div>
+							<div class="ctl">
+								<button class="delete" onclick="dec_103_noanim(); return false;" >&dash;</button>
+								<button class="indentDec" onclick="dec_103_slide(); return false;" >«</button>
+								<button class="indentInc" onclick="dec_103_fade(); return false;" >»</button>
+								<button class="add" onclick="dec_103_fadeOutSlideIn(); return false;" >+</button>
+							</div>
+							<div class="txt">
+								<form data-lift="form.ajax" style="display: inline">
+									<textarea rows="1" name="text">System goes blah.</textarea>
+								</form>
+							</div>
+						</div>
+						<!-- ----------------------------------------------------------------------------- -->
+						<div class="step" data-lvl="1" id="s104">
+							<div class="label">4.</div>
+							<div class="ctl">
+								<button class="delete">&dash;</button>
+								<button class="indentDec">«</button>
+								<button class="indentInc">»</button>
+								<button class="add" onClick="dec_103_jqui(); return false;">+</button>
+							</div>
+							<div class="txt">
+								<form data-lift="form.ajax" style="display: inline">
+									<textarea rows="1" name="text">User consumes the produce.</textarea>
+								</form>
+							</div>
+						</div>
+						<!-- ----------------------------------------------------------------------------- -->
 					</td>
 				</tr>
 				<tr id="template-courses-a">
 					<th>Alternative<br />Courses
 					</th>
 					<td class="steps">
-						<div class="step" data-lvl="0">
+						<!-- ----------------------------------------------------------------------------- -->
+						<div class="step" data-lvl="0" id="s11">
 							<div class="label">1.1.</div>
 							<div class="ctl">
 								<button class="delete">&dash;</button>
@@ -116,6 +219,22 @@ c. The player order.</textarea></td>
 								</form>
 							</div>
 						</div>
+						<!-- ----------------------------------------------------------------------------- -->
+						<div class="step" data-lvl="1" id="s12">
+							<div class="label">2.</div>
+							<div class="ctl">
+								<button class="delete" onclick="inc_11_noanim(); return false;" >&dash;</button>
+								<button class="indentDec" onclick="inc_11_slide(); return false;" >«</button>
+								<button class="indentInc">»</button>
+								<button class="add"  onclick="inc_11_fade(); return false;">+</button>
+							</div>
+							<div class="txt">
+								<form data-lift="form.ajax" style="display: inline">
+									<textarea rows="1" name="text">A face eats itself; the lips ask how.</textarea>
+								</form>
+							</div>
+						</div>
+						<!-- ----------------------------------------------------------------------------- -->
 					</td>
 				</tr>
 				<tr id="template-courses-e">
