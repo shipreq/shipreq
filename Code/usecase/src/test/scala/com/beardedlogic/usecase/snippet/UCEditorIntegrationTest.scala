@@ -246,26 +246,26 @@ class UCEditorIntegrationTest extends FreeSpec with ShouldMatchers with Selenium
     }
   }
 
-  "The Alternate Courses addFirstStep button" - {
+  "The Alternate Courses addTailStep button" - {
     "should be visible when page first loaded" in {
-      uce.ac.assertHasAddFirstStepButton
+      uce.ac.assertHasAddTailStepButton
     }
     "when pressed" - {
-      lazy val u = uce.ac.clickAddFirstStepButton
+      lazy val u = uce.ac.clickAddTailStepButton
       "should create 1.1" in { u.assertStep(0)(0, "1.1") }
-      "should disappear" in { u.assertNoAddFirstStepButton }
+      "should disappear" in { u.assertNoAddTailStepButton }
     }
     "should disappear when 1.0.1 indented to 1.1" in {
-      uce.clickIndentDec(1).ac.assertStepCount(1).assertNoAddFirstStepButton
+      uce.clickIndentDec(1).ac.assertStepCount(1).assertNoAddTailStepButton
     }
     "should reappear when 1.1 deleted" in {
-      uce.clickIndentDec(1).ac.assertStepCount(1).clickDelete(0).assertStepCount(0).assertHasAddFirstStepButton
+      uce.clickIndentDec(1).ac.assertStepCount(1).clickDelete(0).assertStepCount(0).assertHasAddTailStepButton
     }
     "should reappear when 1.1 indented back to 1.0.1" in {
-    	uce.clickIndentDec(1).ac.assertStepCount(1).clickIndentInc(0).assertStepCount(0).assertHasAddFirstStepButton
+    	uce.clickIndentDec(1).ac.assertStepCount(1).clickIndentInc(0).assertStepCount(0).assertHasAddTailStepButton
     }
     "should create 1.1 when clicked and only 1.0 exists" in {
-    	uce.clickDelete(1).assertStepCount(1).ac.clickAddFirstStepButton.assertStepCount(1).assertStep(0)(0, "1.1")
+    	uce.clickDelete(1).assertStepCount(1).ac.clickAddTailStepButton.assertStepCount(1).assertStep(0)(0, "1.1")
     }
   }
 

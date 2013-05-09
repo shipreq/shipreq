@@ -80,8 +80,8 @@ object SeleniumDSL {
     private def delButton(row: Int) = steps(row).findElement(By.cssSelector("button.delete"))
     private def indentDecButton(row: Int) = steps(row).findElement(By.cssSelector("button.indentDec"))
     private def indentIncButton(row: Int) = steps(row).findElement(By.cssSelector("button.indentInc"))
-    private def addFirstStepButtons = courseRoot.findElements(By.cssSelector(s".${AddFirstStepClass} button")).asScala
-    private def addFirstStepButton = addFirstStepButtons.head
+    private def addTailStepButtons = courseRoot.findElements(By.cssSelector(s".${AddTailStepClass} button")).asScala
+    private def addTailStepButton = addTailStepButtons.head
 
     // Action ----------------------------------------------------------------------------------------------------------
 
@@ -107,9 +107,9 @@ object SeleniumDSL {
       deleteButtonVisibility(row) should be(del)
       this
     }
-    def assertHasAddFirstStepButton() = { addFirstStepButton.isDisplayed should be(true); this }
-    def assertNoAddFirstStepButton() = { addFirstStepButton.isDisplayed should be(false); this }
-    def clickAddFirstStepButton() = { addFirstStepButton.click(); this }
+    def assertHasAddTailStepButton() = { addTailStepButton.isDisplayed should be(true); this }
+    def assertNoAddTailStepButton() = { addTailStepButton.isDisplayed should be(false); this }
+    def clickAddTailStepButton() = { addTailStepButton.click(); this }
 
     // Inspection ------------------------------------------------------------------------------------------------------
 

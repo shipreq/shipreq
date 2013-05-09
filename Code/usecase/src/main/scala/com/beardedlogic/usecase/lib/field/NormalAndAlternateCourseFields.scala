@@ -55,7 +55,7 @@ class NormalAndAlternateCourseFields extends CourseFields {
       val newNode = StepNode(nextFuncName, 0, ncLabelPrefix, 1, NewStep, Nil)
       courses = courses :+ newNode
       (
-        JqExpr(s"#${AlternateCourseId} .${AddFirstStepClass}") ~> JqBefore(renderSingleStepXml(newNode))
+        JqExpr(s"#${AlternateCourseId} .${AddTailStepClass}") ~> JqBefore(renderSingleStepXml(newNode))
         & JqId(newNode.id) ~> JqHide ~> JqSlideDownFast
       )
     } else JsCmds.Noop

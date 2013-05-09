@@ -20,8 +20,8 @@ object CourseFields {
   val AttrLevel = "data-lvl" // TODO rename this unclear thing
 
   val AddStepTemplate = ".steps * " #> StepTemplate
-  val AddFirstStepTemplate = Template("template-courses-addFirstStep")
-  val AddFirstStepClass = "addFirstStep"
+  val AddTailStepTemplate = Template("template-courses-addTailStep")
+  val AddTailStepClass = "addTailStep"
 }
 
 abstract class CourseFields extends Field {
@@ -33,17 +33,17 @@ abstract class CourseFields extends Field {
   /**
    * Renders a list of steps and their trees of children.
    *
-   * @param addFirstStepFn If non-null, then a button will be provided in the absence of any steps that allows the user
+   * @param addTailStepFn If non-null, then a button will be provided in the absence of any steps that allows the user
    * to create the first step.
    */
-  protected def renderSteps(steps: List[StepNode], addFirstStepFn: () => JsCmd = null) = {
+  protected def renderSteps(steps: List[StepNode], addTailStepFn: () => JsCmd = null) = {
     val renderedSteps = ".step" #> flattenNodes(steps).map(renderSingleStep)
-    if (addFirstStepFn == null) {
+    if (addTailStepFn == null) {
       renderedSteps
     } else {
-      val t = "button" #> SHtml.ajaxButton("+", addFirstStepFn)
-      val addFirstStep = t(AddFirstStepTemplate)
-      renderedSteps andThen ".steps *+" #> addFirstStep // Append to .steps, after each .step
+      val t = "button" #> SHtml.ajaxButton("+", addTailStepFn)
+      val addTailStep = t(AddTailStepTemplate)
+      renderedSteps andThen ".steps *+" #> addTailStep // Append to .steps, after each .step
     }
   }
 
