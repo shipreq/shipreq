@@ -96,7 +96,7 @@ class CourseAndExceptionFields extends Field {
    * Decreases the indentation level of a given step.
    */
   def onIndentDecrease(nodeId: String): JsCmd = indentDecrease(nodeId, courses) match {
-    case (newCourses, true) =>
+    case (newCourses, Some(_)) =>
       courses = newCourses
       val flattenedCourses = flattenNodes(courses)
       val updateJs = UpdateIndentation(flattenedCourses) & UpdateLabels(flattenedCourses)

@@ -142,12 +142,16 @@ object StepTree {
    *   1.0.2.a      --> 1.0.3
    *   1.3.4.b.iii  --> 1.3.4.c
    *
-   * @return A tuple of 1) the new tree, 2) whether any changes were made.
+   * @return A tuple of 1) the new tree, 2) the new node (if any change was made).
    */
-  @inline def indentDecrease(id: String, nodes: List[StepNode]) = _indentDecrease(id, nodes, Nil, false)
+  @inline def indentDecrease(id: String, nodes: List[StepNode]) = _indentDecrease(id, nodes, Nil, None)
 
-  @tailrec private def _indentDecrease(id: String, nodes: List[StepNode], results: List[StepNode], found: Boolean): Tuple2[List[StepNode], Boolean] = nodes match {
-    case Nil => (results, found)
+  @tailrec private def _indentDecrease(
+    id: String,
+    nodes: List[StepNode],
+    results: List[StepNode],
+    newNode: Option[StepNode]): Tuple2[List[StepNode], Option[StepNode]] = nodes match {
+    case Nil => (results, newNode)
     case h :: t => findChild(id, h.children) match {
       case Some(ChildAndSiblings(sibLeft, c, sibRight)) => // Found match in head node's children
 
@@ -166,17 +170,22 @@ object StepTree {
         }
 
         // Build final list
-        val r =
+        val newChild = c.copy(
+          level = c.level - 1,
+          labelPrefix = h.labelPrefix,
+          labelIndex = h.labelIndex + 1,
+          children = newChildren)
+        val newResults =
           results :::
             h.copy(children = sibLeft) ::
-            c.copy(level = c.level - 1, labelPrefix = h.labelPrefix, labelIndex = h.labelIndex + 1, children = newChildren) ::
+            newChild ::
             t.map(_.incrementPosition)
-        (r, true)
+        (newResults, Some(newChild))
 
       // Not found. Check children then siblings.
       case None => indentDecrease(id, h.children) match {
-        case (childrenResults, true) => (results ::: h.copy(children = childrenResults) :: t, true)
-        case _                       => _indentDecrease(id, t, results :+ h, found)
+        case (childrenResults, n @ Some(_)) => (results ::: h.copy(children = childrenResults) :: t, n)
+        case _                              => _indentDecrease(id, t, results :+ h, None)
       }
     }
   }

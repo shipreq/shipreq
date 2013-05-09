@@ -655,7 +655,8 @@ class StepTreeTest extends WordSpec with ShouldMatchers with TestHelpers {
     def test(id: String, expectedTreeTxt: String) {
       val expected = parseStepTree(expectedTreeTxt)
       val actual = indentDecrease(id, Steps.BigTree)
-      actual._2 should be(true)
+      actual._2.isDefined should be(true)
+      actual._2.get.id should be(id)
       actual._1 should matchTree(expected)
     }
 
