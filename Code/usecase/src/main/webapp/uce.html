@@ -4,22 +4,95 @@
 <link media="screen" type="text/css" href="assets/normalize.css" rel="stylesheet" />
 <link media="screen" type="text/css" href="assets/uce.css" rel="stylesheet" />
 <script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
-<script src="assets/jquery.autosize.js"></script>
+<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+<!-- link media="screen" type="text/css" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" rel="stylesheet" / -->
+
+<script type="text/javascript" class="clearable">
+	function dec_103_core() {
+		$('#s103').attr('data-lvl','0').find('.label').html('1.1.');
+		$('#s104 .label').html('2.');
+		$('#s11 .label').html('1.2.');
+	}
+	function dec_103_jqui() {
+		nc_to_ac('s103', dec_103_core);
+	}
+	function dec_103_fadeOutSlideIn() {
+		//$('#s103,#s104').fadeOut(100,function(){ dec_103_core(); $('#s103,#s104').prependTo($('#courses-a td')).slideDown(400); });
+		var t = $('<div class="stepTransport"></div>').uniqueId().appendTo('#courses-n td').append($('#s103,#s104'))
+		t.fadeOut(100,function(){
+			dec_103_core();
+			t.prependTo($('#courses-a td')).slideDown(400, function(){
+				t.children().prependTo($('#courses-a td'));
+				t.remove();
+			}); });
+	}
+	function dec_103_slide() {
+		//var dur=200; $('#s103,#s104').slideUp(dur,function(){ dec_103_core(); $('#s103,#s104').prependTo($('#courses-a td')).slideDown(dur); });
+		var dur = 200
+		var tmp='tmp123'; $('<div class="stepTransport" id="'+tmp+'"></div>').appendTo('#courses-n td').append($('#s103,#s104'))
+		$('#'+tmp).slideUp(100,function(){
+			dec_103_core();
+			$('#'+tmp).prependTo($('#courses-a td')).slideDown(400, function(){
+				$('#'+tmp).children().prependTo($('#courses-a td'));
+				$('#'+tmp).remove();
+			}); });
+	}
+	function dec_103_fade() {
+		var dur=120; $('#s103,#s104').fadeOut(dur,function(){ dec_103_core(); $('#s103,#s104').prependTo($('#courses-a td')).fadeIn(dur); });
+	}
+	function dec_103_noanim() {
+		$('#s103,#s104').prependTo($('#courses-a td')); dec_103_core();
+	}
+	
+	function inc_11_core() {
+		$('#s11').attr('data-lvl','1').find('.label').html('5.');
+		$('#s12 .label').html('6.');
+	}
+	function inc_11_fadeOutSlideIn() {
+		$('#s11,#s12').slideUp(dur,function(){ inc_11_core(); $('#s11,#s12').appendTo($('#courses-n td')).slideDown(dur); });
+	}
+	function inc_11_slide() {
+		//var dur=120; $('#s11,#s12').slideUp(dur,function(){ inc_11_core(); $('#s11,#s12').appendTo($('#courses-n td')).slideDown(dur); });
+		var dur = 200
+		var tmp='tmp123'; $('<div class="stepTransport" id="'+tmp+'"></div>').prependTo('#courses-a td').append($('#s11,#s12'))
+		$('#'+tmp).slideUp(dur,function(){
+			inc_11_core();
+			$('#'+tmp).appendTo($('#courses-n td')).slideDown(dur, function(){
+				$('#'+tmp).children().appendTo($('#courses-n td'));
+				$('#'+tmp).remove();
+			}); });
+	}
+	function inc_11_fade() {
+		var dur=120; $('#s11,#s12').fadeOut(dur,function(){ inc_11_core(); $('#s11,#s12').appendTo($('#courses-n td')).fadeIn(dur); });
+	}
+	function inc_11_noanim() {
+		$('#s11,#s12').appendTo($('#courses-n td')); inc_11_core();
+	}
+</script>
+
 </head>
 <body data-lift-content-id="main">
 	<div id="main" data-lift="surround?with=default;at=content">
 
-		<div id="uce">
+		<link type="text/css" rel="stylesheet" href="/assets/uce.css" data-lift="head" />
+		<script type="text/javascript" data-lift="head" src="assets/jquery.autosize.js"></script>
+		<script type="text/javascript" data-lift="head" src="assets/uce.js"></script>
+		<script type="text/javascript" data-lift="tail">
+			$(document).ready(function() {
+				$('textarea').autosize();
+			});
+		</script>
+
+		<div id="uce" data-lift="UCEditor">
 			<table class="title">
 				<tr>
-					<th><span>UC-<span class="ucid">123</span>:
-					</span></th>
+					<th><span id="uc-id">UC-<span class="ucid">123</span></span>:</th>
 					<td><input name="title" value="Use Case Title" /></td>
 				</tr>
 			</table>
 
 			<table class="ucdata">
-				<tr>
+				<tr id="template-text">
 					<th>Actors</th>
 					<td><textarea rows="1">Scorer</textarea></td>
 				</tr>
@@ -34,91 +107,134 @@ c. The player order.</textarea></td>
 					<th>Post-conditions</th>
 					<td><textarea rows="1">1. The game is finished.</textarea></td>
 				</tr>
-				<tr class="steps">
+				<tr id="courses-n">
 					<th>Normal<br />Course
 					</th>
-					<td>
-						<div id="steps">
-							<!-- ----------------------------------------------------------------------------- -->
-							<div class="step" data-lvl="0">
-								<div class="label">1.0.</div>
-								<div class="ctl">
-									<button class="delete">&dash;</button>
-									<button class="indentDec">«</button>
-									<button class="indentInc">»</button>
-									<button class="add">+</button>
-								</div>
-								<div class="txt">
-									<form data-lift="form.ajax" style="display: inline">
-										<textarea rows="1" name="text">Score a new game of Scrabble.</textarea>
-									</form>
-								</div>
-								<!-- 
-								<div class="add">
-									<button>+</button>
-									<div></div>
-								</div>
-								 -->
+					<td class="steps">
+						<!-- ----------------------------------------------------------------------------- -->
+						<div class="step" data-lvl="0" id="template-step">
+							<div class="label">1.0.</div>
+							<div class="ctl">
+								<button class="delete">&dash;</button>
+								<button class="indentDec">«</button>
+								<button class="indentInc">»</button>
+								<button class="add">+</button>
 							</div>
-							<!-- ----------------------------------------------------------------------------- -->
-							<div class="step" data-lvl="1">
-								<div class="label">1.</div>
-								<div class="ctl">
-									<button class="delete">&dash;</button>
-									<button class="indentDec">«</button>
-									<button class="indentInc">»</button>
-									<button class="add">+</button>
-								</div>
-								<div class="txt">
-									<form data-lift="form.ajax" style="display: inline">
-										<textarea rows="1" name="text">System indicates which player’s turn it is.</textarea>
-									</form>
-								</div>
+							<div class="txt">
+								<form data-lift="form.ajax" style="display: inline">
+									<textarea rows="1" name="text">Score a new game of Scrabble.</textarea>
+								</form>
 							</div>
-							<!-- ----------------------------------------------------------------------------- -->
-							<div class="step" data-lvl="1">
-								<div class="label">2.</div>
-								<div class="ctl">
-									<button class="delete">&dash;</button>
-									<button class="indentDec">«</button>
-									<button class="indentInc">»</button>
-									<button class="add">+</button>
-								</div>
-								<div class="txt">
-									<form data-lift="form.ajax" style="display: inline">
-										<textarea rows="1" name="text">Scorer records result of turn; either a score for the turn, or an indication that the user lost/skipped a turn without scoring any points.</textarea>
-									</form>
-								</div>
+							<!-- 
+							<div class="add">
+								<button>+</button>
+								<div></div>
 							</div>
-							<!-- ----------------------------------------------------------------------------- -->
+							 -->
 						</div>
+						<!-- ----------------------------------------------------------------------------- -->
+						<div class="step" data-lvl="1">
+							<div class="label">1.</div>
+							<div class="ctl">
+								<button class="delete">&dash;</button>
+								<button class="indentDec">«</button>
+								<button class="indentInc">»</button>
+								<button class="add">+</button>
+							</div>
+							<div class="txt">
+								<form data-lift="form.ajax" style="display: inline">
+									<textarea rows="1" name="text">System indicates which player’s turn it is.</textarea>
+								</form>
+							</div>
+						</div>
+						<!-- ----------------------------------------------------------------------------- -->
+						<div class="step" data-lvl="1" id="s102">
+							<div class="label">2.</div>
+							<div class="ctl">
+								<button class="delete">&dash;</button>
+								<button class="indentDec">«</button>
+								<button class="indentInc">»</button>
+								<button class="add">+</button>
+							</div>
+							<div class="txt">
+								<form data-lift="form.ajax" style="display: inline">
+									<textarea rows="1" name="text">Scorer records result of turn; either a score for the turn, or an indication that the user lost/skipped a turn without scoring any points.</textarea>
+								</form>
+							</div>
+						</div>
+						<!-- ----------------------------------------------------------------------------- -->
+						<div class="step" data-lvl="1" id="s103">
+							<div class="label">3.</div>
+							<div class="ctl">
+								<button class="delete" onclick="dec_103_noanim(); return false;" >&dash;</button>
+								<button class="indentDec" onclick="dec_103_slide(); return false;" >«</button>
+								<button class="indentInc" onclick="dec_103_fade(); return false;" >»</button>
+								<button class="add" onclick="dec_103_fadeOutSlideIn(); return false;" >+</button>
+							</div>
+							<div class="txt">
+								<form data-lift="form.ajax" style="display: inline">
+									<textarea rows="1" name="text">System goes blah.</textarea>
+								</form>
+							</div>
+						</div>
+						<!-- ----------------------------------------------------------------------------- -->
+						<div class="step" data-lvl="1" id="s104">
+							<div class="label">4.</div>
+							<div class="ctl">
+								<button class="delete">&dash;</button>
+								<button class="indentDec">«</button>
+								<button class="indentInc">»</button>
+								<button class="add" onClick="dec_103_jqui(); return false;">+</button>
+							</div>
+							<div class="txt">
+								<form data-lift="form.ajax" style="display: inline">
+									<textarea rows="1" name="text">User consumes the produce.</textarea>
+								</form>
+							</div>
+						</div>
+						<!-- ----------------------------------------------------------------------------- -->
 					</td>
 				</tr>
-				<tr class="steps">
+				<tr id="courses-a">
 					<th>Alternative<br />Courses
 					</th>
-					<td>
-						<div id="steps">
-							<div class="step" data-lvl="0">
-								<div class="label">1.1.</div>
-								<div class="ctl">
-									<button class="delete">&dash;</button>
-									<button class="indentDec">«</button>
-									<button class="indentInc">»</button>
-									<button class="add">+</button>
-								</div>
-								<div class="txt">
-									<form data-lift="form.ajax" style="display: inline">
-										<textarea rows="1" name="text">A player’s turn is challenged after the score is entered. [1.0.1, 1.0.4]</textarea>
-									</form>
-								</div>
+					<td class="steps">
+						<!-- ----------------------------------------------------------------------------- -->
+						<div class="step" data-lvl="0" id="s11">
+							<div class="label">1.1.</div>
+							<div class="ctl">
+								<button class="delete">&dash;</button>
+								<button class="indentDec">«</button>
+								<button class="indentInc">»</button>
+								<button class="add">+</button>
+							</div>
+							<div class="txt">
+								<form data-lift="form.ajax" style="display: inline">
+									<textarea rows="1" name="text">A player’s turn is challenged after the score is entered. [1.0.1, 1.0.4]</textarea>
+								</form>
 							</div>
 						</div>
+						<!-- ----------------------------------------------------------------------------- -->
+						<div class="step" data-lvl="1" id="s12">
+							<div class="label">2.</div>
+							<div class="ctl">
+								<button class="delete" onclick="inc_11_noanim(); return false;" >&dash;</button>
+								<button class="indentDec" onclick="inc_11_slide(); return false;" >«</button>
+								<button class="indentInc">»</button>
+								<button class="add"  onclick="inc_11_fade(); return false;">+</button>
+							</div>
+							<div class="txt">
+								<form data-lift="form.ajax" style="display: inline">
+									<textarea rows="1" name="text">A face eats itself; the lips ask how.</textarea>
+								</form>
+							</div>
+						</div>
+						<!-- ----------------------------------------------------------------------------- -->
 					</td>
 				</tr>
-				<tr class="steps">
+				<tr id="courses-e">
 					<th>Exceptions</th>
-					<td>More steps</td>
+					<td class="steps">More steps</td>
 				</tr>
 				<tr>
 					<th>Use Case<br />Relationships
@@ -151,10 +267,5 @@ c. The player order.</textarea></td>
 			</table>
 		</div>
 	</div>
-	<script>
-		$(document).ready(function() {
-			$('textarea').autosize();
-		});
-	</script>
 </body>
 </html>

@@ -1,16 +1,20 @@
 package com.beardedlogic.usecase.test
 
 import java.util.concurrent.TimeUnit
-import org.openqa.selenium.{ HasInputDevices, JavascriptExecutor, WebDriver }
+import org.openqa.selenium.{HasInputDevices, JavascriptExecutor, WebDriver}
 import org.openqa.selenium.firefox.FirefoxDriver
-import org.openqa.selenium.internal.{ FindsByCssSelector, FindsById, FindsByLinkText, FindsByName, FindsByTagName, FindsByXPath }
-import org.scalatest.{ BeforeAndAfterAll, BeforeAndAfterEach, Suite }
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
 
 /**
  * @since 30/04/2013
  */
 object SeleniumTestSupport {
-  type SeleniumDriver = WebDriver with JavascriptExecutor with FindsById with FindsByLinkText with FindsByXPath with FindsByName with FindsByCssSelector with FindsByTagName with HasInputDevices
+  type SeleniumDriver = WebDriver with JavascriptExecutor with HasInputDevices
+
+  implicit class SeleniumDriverExt(d: SeleniumDriver) {
+    def disableJqueryEffects() = { d.executeScript("jQuery.fx.off = true"); d }
+    def getRel(page: String) = { d.get(Jetty.URL + page); d }
+  }
 }
 
 /**
@@ -46,7 +50,7 @@ trait SeleniumTestSupport extends BeforeAndAfterAll with BeforeAndAfterEach { th
   def newSelenium() {
     releaseSelenium
     selenium = new FirefoxDriver
-    selenium.manage.timeouts.implicitlyWait(10, TimeUnit.SECONDS)
+    selenium.manage.timeouts.implicitlyWait(1, TimeUnit.SECONDS)
   }
 
   def releaseSelenium() {

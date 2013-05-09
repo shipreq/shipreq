@@ -23,6 +23,8 @@ trait TestHelpers {
                 cond
   }
 
+  def eventuallyIf(wait: Boolean)(cond: => Any) { if (wait) eventually(cond) else cond }
+
   def matchTree(expected: List[StepNode]) = TestHelpers.TreeMatcher(expected)
 }
 
