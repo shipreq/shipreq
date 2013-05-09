@@ -2,7 +2,7 @@ package com.beardedlogic.usecase.lib
 package field
 
 import net.liftweb.http.SHtml
-import net.liftweb.http.js.{ JsCmd, JsCmds }
+import net.liftweb.http.js.{ JsCmd, JsCmds, JE }
 import net.liftweb.http.js.JsCmds.jsExpToJsCmd
 import net.liftweb.http.js.jquery.JqJE
 import net.liftweb.util.Helpers._
@@ -19,10 +19,14 @@ object CourseAndExceptionFields extends FieldDef {
 
   val StepTemplate = Template("template-step")
   val AddStepTemplate = ".steps * " #> StepTemplate
-  
-  val NormalCourseTemplate = AddStepTemplate(Template("template-courses-n"))
-  val AlternateCourseTemplate = AddStepTemplate(Template("template-courses-a"))
-  val ExceptionTemplate = AddStepTemplate(Template("template-courses-e"))
+
+  val NormalCourseId = "courses-n"
+  val AlternateCourseId = "courses-a"
+  val ExceptionCourseId = "courses-e"
+
+  val NormalCourseTemplate = AddStepTemplate(Template(NormalCourseId))
+  val AlternateCourseTemplate = AddStepTemplate(Template(AlternateCourseId))
+  val ExceptionTemplate = AddStepTemplate(Template(ExceptionCourseId))
 
   val AttrLevel = "data-lvl"
 }
@@ -93,12 +97,18 @@ class CourseAndExceptionFields extends Field {
    */
   def onIndentDecrease(nodeId: String): JsCmd = indentDecrease(nodeId, courses) match {
     case (newCourses, true) =>
+
       courses = newCourses
       val flattenedCourses = flattenNodes(courses)
-      (
-        UpdateIndentation(flattenedCourses)
-        & UpdateLabels(flattenedCourses)
-      )
+      val updateJs = UpdateIndentation(flattenedCourses) & UpdateLabels(flattenedCourses)
+
+      newCourses match {
+        case nc :: ac1 :: acN if ac1.id == nodeId => // NC moved to AC
+          JsCmds.Run(s"nc_to_ac('${nodeId}', ${JE.AnonFunc(updateJs).toJsCmd})")
+
+        case _ => updateJs
+      }
+
     case _ => JsCmds.Noop
   }
 

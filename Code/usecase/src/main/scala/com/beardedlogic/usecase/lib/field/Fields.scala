@@ -22,7 +22,8 @@ object Fields {
   val TemplateSource = ClearClearable(Templates("uce" :: Nil).open_!)
 
   private[field] def Template(id: String) = {
-    val t = s"#$id ^^" #> "" & s"#$id [id]" #> (None: Option[String])
+    var t = s"#$id ^^" #> ""
+    if (id.startsWith("template-")) t = t & s"#$id [id]" #> (None: Option[String])
     t(TemplateSource)
   }
 
