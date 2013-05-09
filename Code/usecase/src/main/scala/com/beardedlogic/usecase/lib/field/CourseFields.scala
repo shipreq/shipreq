@@ -12,57 +12,42 @@ import scala.xml._
 import JsExt._
 import StepTree._
 
-object CourseAndExceptionFields extends FieldDef {
+object CourseFields {
   import Fields.Template
 
-  def newFieldInstance = new CourseAndExceptionFields
-
   val StepTemplate = Template("template-step")
+
+  val AttrLevel = "data-lvl" // TODO rename this unclear thing
+
   val AddStepTemplate = ".steps * " #> StepTemplate
-
-  val NormalCourseId = "courses-n"
-  val AlternateCourseId = "courses-a"
-  val ExceptionCourseId = "courses-e"
-
-  val NormalCourseTemplate = AddStepTemplate(Template(NormalCourseId))
-  val AlternateCourseTemplate = AddStepTemplate(Template(AlternateCourseId))
-  val ExceptionTemplate = AddStepTemplate(Template(ExceptionCourseId))
-
   val AddFirstStepTemplate = Template("template-courses-addFirstStep")
-
-  val AttrLevel = "data-lvl"
   val AddFirstStepClass = "addFirstStep"
 }
 
-class CourseAndExceptionFields extends Field {
-  import CourseAndExceptionFields._
+abstract class CourseFields extends Field {
+  import CourseFields._
 
   val id = 1
-  val ncLabelPrefix = Some(id + ".")
-  var courses: List[StepNode] =
-    StepNode(nextFuncName, 0, ncLabelPrefix, 0, NewStep,
-      new StepNode(nextFuncName, 1, 1, NewStep) :: Nil
-    ) :: Nil
+  var courses: List[StepNode]
 
-  var coursesEmpty__tmp: List[StepNode] = Nil
-
-  def render = (
-    renderSteps(courses)(NormalCourseTemplate) ++
-    renderSteps(coursesEmpty__tmp, onFirstAddAlternateCourse _)(AlternateCourseTemplate) ++
-    renderSteps(coursesEmpty__tmp)(ExceptionTemplate)
-  )
-
-  private def renderSteps(steps: List[StepNode], addFirstStepFn: () => JsCmd = null) =
+  /**
+   * Renders a list of steps and their trees of children.
+   */
+  protected def renderSteps(steps: List[StepNode], addFirstStepFn: () => JsCmd = null) =
     if (steps.isEmpty && addFirstStepFn != null) (
+      // TODO NEEDED ANYWAY FOR AC -- change this
       ".step" #> AddFirstStepTemplate andThen
       ".step [class!]" #> "step" &
       "button" #> SHtml.ajaxButton("+", addFirstStepFn)
     )
     else (
-      ".step" #> flattenNodes(steps).map(renderStep)
+      ".step" #> flattenNodes(steps).map(renderSingleStep)
     )
 
-  private def renderStep(n: StepNode) = (
+  /**
+   * Renders a single step. Does not render step children.
+   */
+  protected def renderSingleStep(n: StepNode) = (
     ".step [id]" #> n.id
     & s".step [$AttrLevel]" #> n.level
     & ".label span *" #> n.label
@@ -74,25 +59,10 @@ class CourseAndExceptionFields extends Field {
     & ".indentInc" #> SHtml.ajaxButton("»", () => onIndentIncrease(n.id))
   )
 
-  @inline private def renderStepXml(n: StepNode) = {
-    val fn = ".step" #> renderStep(n)
+  @inline protected def renderStepXml(n: StepNode) = {
+    val fn = ".step" #> renderSingleStep(n)
     fn(StepTemplate)
   }
-
-  /**
-   * Adds the first alternate course. (ie. X.1.)
-   *
-   * The button that invokes this will only be visible (via a CSS rule) when the alternate course section is empty.
-   */
-  def onFirstAddAlternateCourse(): JsCmd =
-    if (courses.size == 1) {
-      val newNode = StepNode(nextFuncName, 0, ncLabelPrefix, 1, NewStep, Nil)
-      courses = courses :+ newNode
-      (
-        JqExpr(s"#${AlternateCourseId} .${AddFirstStepClass}") ~> JqBefore(renderStepXml(newNode))
-        & JqId(newNode.id) ~> JqHide ~> JqSlideDownFast
-      )
-    } else JsCmds.Noop
 
   /**
    * Adds a new step, shuffling down subsequent steps and renumbering if necessary.
@@ -169,7 +139,7 @@ class CourseAndExceptionFields extends Field {
   /**
    * Creates Javascript to update the indentation levels of all given nodes.
    */
-  private def UpdateIndentation(nodes: Iterable[StepNode]): JsCmd = JsCmds.Run(
+  protected def UpdateIndentation(nodes: Iterable[StepNode]): JsCmd = JsCmds.Run(
     (for (n <- nodes) yield (
       JqId(n.id) ~> JqJE.JqAttr(AttrLevel, n.level.toString) toJsCmd
     )) mkString ";\n"
@@ -178,7 +148,7 @@ class CourseAndExceptionFields extends Field {
   /**
    * Creates Javascript to update the label text of all given nodes.
    */
-  private def UpdateLabels(nodes: Iterable[StepNode]): JsCmd = JsCmds.Run(
+  protected def UpdateLabels(nodes: Iterable[StepNode]): JsCmd = JsCmds.Run(
     (for (n <- nodes) yield (
       JsCmds.SetHtml(n.labelId, Text(n.label)).toJsCmd
     )) mkString "\n"

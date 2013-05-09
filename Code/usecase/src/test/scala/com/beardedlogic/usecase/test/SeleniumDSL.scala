@@ -1,11 +1,12 @@
-package com.beardedlogic.usecase.test
+package com.beardedlogic.usecase
+package test
 
 import com.beardedlogic.usecase.snippet.UCEditor
 import org.openqa.selenium.{ By, Keys, WebElement }
 import org.scalatest.Suite
 import org.scalatest.matchers.ShouldMatchers
 import scala.collection.JavaConverters._
-import com.beardedlogic.usecase.lib.field.CourseAndExceptionFields
+import lib.field._
 
 /**
  * Provides tests with Selenium-based DSLs.
@@ -57,13 +58,16 @@ object SeleniumDSL {
    * @since 30/04/2013
    */
   class UCEditorDSL(val s: SeleniumDriver, private val givenCourseRoot: Option[Finder] = None) extends BaseDSL {
+    import CourseFields._
+    import NormalAndAlternateCourseFields._
+    import ExceptionCourseFields._
 
     val courseRoot: Finder = givenCourseRoot getOrElse s
     private def changeRoot(rootId: String) =
       new UCEditorDSL(s, Some(s.findElement(By.id(rootId)))).expectDelays(this.expectDelays)
-    def nc = changeRoot(CourseAndExceptionFields.NormalCourseId)
-    def ac = changeRoot(CourseAndExceptionFields.AlternateCourseId)
-    def ec = changeRoot(CourseAndExceptionFields.ExceptionCourseId)
+    def nc = changeRoot(NormalCourseId)
+    def ac = changeRoot(AlternateCourseId)
+    def ec = changeRoot(ExceptionCourseId)
     def root = new UCEditorDSL(s, None).expectDelays(this.expectDelays)
 
     // Internal --------------------------------------------------------------------------------------------------------
@@ -76,7 +80,7 @@ object SeleniumDSL {
     private def delButton(row: Int) = steps(row).findElement(By.cssSelector("button.delete"))
     private def indentDecButton(row: Int) = steps(row).findElement(By.cssSelector("button.indentDec"))
     private def indentIncButton(row: Int) = steps(row).findElement(By.cssSelector("button.indentInc"))
-    private def addFirstStepButtons = courseRoot.findElements(By.cssSelector(s".${CourseAndExceptionFields.AddFirstStepClass} button")).asScala
+    private def addFirstStepButtons = courseRoot.findElements(By.cssSelector(s".${AddFirstStepClass} button")).asScala
     private def addFirstStepButton = addFirstStepButtons.head
 
     // Action ----------------------------------------------------------------------------------------------------------
@@ -115,7 +119,7 @@ object SeleniumDSL {
     def stepText(row: Int) = stepTextElem(row).value
     def stepLabel(row: Int) = steps(row).findElement(By.cssSelector(".label span")).getText
     def stepLevel(row: Int) = {
-      val lvl = steps(row).getAttribute(CourseAndExceptionFields.AttrLevel)
+      val lvl = steps(row).getAttribute(AttrLevel)
       lvl should fullyMatch regex ("^\\d+$")
       lvl.toInt
     }

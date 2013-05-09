@@ -1,21 +1,9 @@
 package com.beardedlogic.usecase.lib
 package field
 
-import net.liftweb.http._
-import net.liftweb.util._
-import net.liftweb.util.Helpers._
-import scala.xml._
-import net.liftweb.http.{ StatefulSnippet, Templates }
-import net.liftweb.http.SHtml
-import net.liftweb.http.SHtml.ElemAttr.pairToBasic
-import net.liftweb.http.js.{ JE, JsCmd, JsCmds }
-import net.liftweb.http.js.JsCmds.jsExpToJsCmd
-import net.liftweb.http.js.JsExp.strToJsExp
-import net.liftweb.http.js.jquery.JqJE
+import net.liftweb.http.Templates
 import net.liftweb.util.ClearClearable
 import net.liftweb.util.Helpers._
-import scala.xml.Text
-import JsExt._
 
 object Fields {
 
@@ -43,7 +31,8 @@ object Fields {
     Actors ::
       PreConditions ::
       PostConditions ::
-      CourseAndExceptionFields ::
+      NormalAndAlternateCourseFields ::
+      ExceptionCourseFields ::
       UseCaseRelationships ::
       ConstraintsAndBusinessRules ::
       FrequencyOfUse ::

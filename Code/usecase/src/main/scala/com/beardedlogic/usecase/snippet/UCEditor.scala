@@ -16,7 +16,7 @@ class UCEditor extends StatefulSnippet {
   var title = "Untitled"
   val fields = Fields.DefaultFields.map(_.newFieldInstance)
 
-  val normalCourseTitleId = fields.collectFirst { case f: CourseAndExceptionFields => f.courses.head }.get.stepTextId
+  val normalCourseTitleId = fields.collectFirst { case f: NormalAndAlternateCourseFields => f.courses.head }.get.stepTextId
 
   def render = {
     (
