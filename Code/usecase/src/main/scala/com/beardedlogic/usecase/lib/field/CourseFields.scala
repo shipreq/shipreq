@@ -48,7 +48,7 @@ abstract class CourseFields extends Field {
   }
 
   /**
-   * Renders a single step. Does not render step children.
+   * Provides the transformation to render a single step. (Does not render step children.)
    */
   protected def renderSingleStep(n: StepNode) = (
     ".step [id]" #> n.id
@@ -62,7 +62,10 @@ abstract class CourseFields extends Field {
     & ".indentInc" #> SHtml.ajaxButton("»", () => onIndentIncrease(n.id))
   )
 
-  @inline protected def renderStepXml(n: StepNode) = {
+  /**
+   * Renders a single step into XML. (Does not render step children.)
+   */
+  @inline protected def renderSingleStepXml(n: StepNode) = {
     val fn = ".step" #> renderSingleStep(n)
     fn(StepTemplate)
   }
@@ -74,7 +77,7 @@ abstract class CourseFields extends Field {
     case (newCourses, Some(newNode)) =>
       courses = newCourses
       (
-        JqId(preceedingNodeId) ~> JqAfter(renderStepXml(newNode))
+        JqId(preceedingNodeId) ~> JqAfter(renderSingleStepXml(newNode))
         & JqId(newNode.id) ~> JqHide ~> JqSlideDownFast
         & UpdateLabels(flattenNodes(courses))
       )
@@ -88,8 +91,7 @@ abstract class CourseFields extends Field {
     case (newCourses, true) =>
       courses = newCourses
       FadeOut(JqId(id), 240)(
-        _ ~> JqJE.JqRemove()
-          & UpdateLabels(flattenNodes(courses))
+        _ ~> JqJE.JqRemove() & UpdateLabels(flattenNodes(courses))
       )
     case _ => JsCmds.Noop
   }
