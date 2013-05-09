@@ -104,18 +104,15 @@ abstract class CourseFields extends Field {
       courses = newCourses
       val flattenedCourses = flattenNodes(courses)
       val updateJs = UpdateIndentation(flattenedCourses) & UpdateLabels(flattenedCourses)
-
-      newCourses match {
-        // Move steps from NC to AC
-        case nc :: ac1 :: acN if ac1.id == nodeId =>
-          JsCmds.Run(s"nc_to_ac('${nodeId}', ${JE.AnonFunc(updateJs).toJsCmd})")
-
-        // Apply indent decrease normally
-        case _ => updateJs
-      }
+      customiseIndentDecreaseJs(nodeId, updateJs)
 
     case _ => JsCmds.Noop
   }
+
+  /**
+   * Allows customisation of the ajax response of a successful indent decrease.
+   */
+  protected def customiseIndentDecreaseJs(nodeId: String, updateJs: JsCmd): JsCmd = updateJs
 
   /**
    * Increases the indentation level of a given step.
@@ -126,20 +123,18 @@ abstract class CourseFields extends Field {
       courses = newCourses
       val flattenedCourses = flattenNodes(courses)
       val updateJs = UpdateIndentation(flattenedCourses) & UpdateLabels(flattenedCourses)
-
-      oldCourses match {
-        // Move steps from AC to NC
-        case nc :: ac1 :: acN if ac1.id == nodeId =>
-          val movedToNc = newNode :: flattenNodes(newNode.children)
-          val ids = movedToNc.map("#" + _.id).mkString(",")
-          JsCmds.Run(s"ac_to_nc('${ids}', ${JE.AnonFunc(updateJs).toJsCmd})")
-
-        // Apply indent normally
-        case _ => updateJs
-      }
+      customiseIndentIncreaseJs(nodeId, newNode, oldCourses, updateJs)
 
     case _ => JsCmds.Noop
   }
+
+  /**
+   * Allows customisation of the ajax response of a successful indent increase.
+   */
+  protected def customiseIndentIncreaseJs(nodeId: String,
+                                          newNode: StepNode,
+                                          oldCourses: List[StepNode],
+                                          updateJs: JsCmd): JsCmd = updateJs
 
   /**
    * Creates Javascript to update the indentation levels of all given nodes.

@@ -59,4 +59,26 @@ class NormalAndAlternateCourseFields extends CourseFields {
         & JqId(newNode.id) ~> JqHide ~> JqSlideDownFast
       )
     } else JsCmds.Noop
+
+  protected override def customiseIndentDecreaseJs(nodeId: String, updateJs: JsCmd): JsCmd =
+    courses match {
+      // Move steps from NC to AC
+      case nc :: ac1 :: acN if ac1.id == nodeId =>
+        JsCmds.Run(s"nc_to_ac('${nodeId}', ${JE.AnonFunc(updateJs).toJsCmd})")
+
+      // Apply indent decrease normally
+      case _ => updateJs
+    }
+
+  protected override def customiseIndentIncreaseJs(nodeId: String, newNode: StepNode, oldCourses: List[StepNode], updateJs: JsCmd): JsCmd =
+    oldCourses match {
+      // Move steps from AC to NC
+      case nc :: ac1 :: acN if ac1.id == nodeId =>
+        val movedToNc = newNode :: flattenNodes(newNode.children)
+        val ids = movedToNc.map("#" + _.id).mkString(",")
+        JsCmds.Run(s"ac_to_nc('${ids}', ${JE.AnonFunc(updateJs).toJsCmd})")
+
+      // Apply indent normally
+      case _ => updateJs
+    }
 }
