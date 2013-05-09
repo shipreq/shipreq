@@ -125,6 +125,11 @@ class UCEditorIntegrationTest extends FreeSpec with ShouldMatchers with Selenium
       "should add a new step: 1.0.2" in { u.assertStep(2)(1, "2", "") }
       "should add a new add button" in { u.assertAddButtonCount(3) }
     }
+
+    "when pressed after 1.1" in {
+      uce.clickIndentDec(1).assertStep(1)(0, "1.1")
+        .clickAdd(1).assertStep(2)(0, "1.2")
+    }
   }
 
   "The Delete button" - {

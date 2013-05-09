@@ -103,7 +103,7 @@ object StepTree {
 
     // Found. Add after.
     case h :: t if h.id == afterId =>
-      val n = new StepNode(nextFuncName, h.level, h.labelIndex + 1, step)
+      val n = StepNode(nextFuncName, h.level, h.labelPrefix, h.labelIndex + 1, step, Nil)
       (results ::: h :: n :: t.map(_.incrementPosition), Some(n))
 
     // Not found. Check children then siblings.
