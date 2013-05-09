@@ -55,8 +55,8 @@ class CourseAndExceptionFields extends Field {
   private def renderStep(n: StepNode) = (
     ".step [id]" #> n.id
     & s".step [$AttrLevel]" #> n.level
-    & ".label *" #> n.label
-    & ".label [id]" #> n.labelId
+    & ".label span *" #> n.label
+    & ".label span [id]" #> n.labelId
     & "@text" #> SHtml.textarea(n.step.text, (_) => (), "rows" -> "1", "id" -> n.stepTextId)
     & ".add" #> SHtml.ajaxButton("+", () => onStepAdd(n.id))
     & ".delete" #> SHtml.ajaxButton("-", () => onStepRemove(n.id))

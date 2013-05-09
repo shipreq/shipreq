@@ -9,7 +9,7 @@
 
 <script type="text/javascript" class="clearable">
 	function dec_103_core() {
-		$('#s103').attr('data-lvl','0').find('.label').html('1.1.');
+		$('#s103').attr('data-lvl','0').find('.label span').html('1.1.');
 		$('#s104 .label').html('2.');
 		$('#s11 .label').html('1.2.');
 	}
@@ -18,7 +18,7 @@
 	}
 
 	function inc_11_core() {
-		$('#s11').attr('data-lvl','1').find('.label').html('5.');
+		$('#s11').attr('data-lvl','1').find('.label span').html('5.');
 		$('#s12 .label').html('6.');
 	}
 	function inc_11_jqui() {
@@ -69,7 +69,7 @@ c. The player order.</textarea></td>
 					<td class="steps">
 						<!-- ----------------------------------------------------------------------------- -->
 						<div class="step" data-lvl="0" id="template-step">
-							<div class="label">1.0.</div>
+							<div class="label"><span>1.0</span>.</div>
 							<div class="ctl">
 								<button class="delete">&dash;</button>
 								<button class="indentDec">«</button>
@@ -90,7 +90,7 @@ c. The player order.</textarea></td>
 						</div>
 						<!-- ----------------------------------------------------------------------------- -->
 						<div class="step" data-lvl="1">
-							<div class="label">1.</div>
+							<div class="label"><span>1</span>.</div>
 							<div class="ctl">
 								<button class="delete">&dash;</button>
 								<button class="indentDec">«</button>
@@ -105,7 +105,7 @@ c. The player order.</textarea></td>
 						</div>
 						<!-- ----------------------------------------------------------------------------- -->
 						<div class="step" data-lvl="1" id="s102">
-							<div class="label">2.</div>
+							<div class="label"><span>2</span>.</div>
 							<div class="ctl">
 								<button class="delete">&dash;</button>
 								<button class="indentDec">«</button>
@@ -120,7 +120,7 @@ c. The player order.</textarea></td>
 						</div>
 						<!-- ----------------------------------------------------------------------------- -->
 						<div class="step" data-lvl="1" id="s103">
-							<div class="label">3.</div>
+							<div class="label"><span>3</span>.</div>
 							<div class="ctl">
 								<button class="delete">&dash;</button>
 								<button class="indentDec" onClick="dec_103_jqui(); return false;" >«</button>
@@ -135,7 +135,7 @@ c. The player order.</textarea></td>
 						</div>
 						<!-- ----------------------------------------------------------------------------- -->
 						<div class="step" data-lvl="1" id="s104">
-							<div class="label">4.</div>
+							<div class="label"><span>4</span>.</div>
 							<div class="ctl">
 								<button class="delete">&dash;</button>
 								<button class="indentDec">«</button>
@@ -157,7 +157,7 @@ c. The player order.</textarea></td>
 					<td class="steps">
 						<!-- ----------------------------------------------------------------------------- -->
 						<div class="step" data-lvl="0" id="s11">
-							<div class="label">1.1.</div>
+							<div class="label"><span>1.1</span>.</div>
 							<div class="ctl">
 								<button class="delete">&dash;</button>
 								<button class="indentDec">«</button>
@@ -172,7 +172,7 @@ c. The player order.</textarea></td>
 						</div>
 						<!-- ----------------------------------------------------------------------------- -->
 						<div class="step" data-lvl="1" id="s12">
-							<div class="label">2.</div>
+							<div class="label"><span>2</span>.</div>
 							<div class="ctl">
 								<button class="delete">&dash;</button>
 								<button class="indentDec">«</button>

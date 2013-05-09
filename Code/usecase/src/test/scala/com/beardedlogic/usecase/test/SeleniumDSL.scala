@@ -108,7 +108,7 @@ object SeleniumDSL {
     def useCaseTitle = titleElem.value
     def stepCount = steps.size
     def stepText(row: Int) = stepTextElem(row).value
-    def stepLabel(row: Int) = steps(row).findElement(By.cssSelector(".label")).getText
+    def stepLabel(row: Int) = steps(row).findElement(By.cssSelector(".label span")).getText
     def stepLevel(row: Int) = {
       val lvl = steps(row).getAttribute(CourseAndExceptionFields.AttrLevel)
       lvl should fullyMatch regex ("^\\d+$")
