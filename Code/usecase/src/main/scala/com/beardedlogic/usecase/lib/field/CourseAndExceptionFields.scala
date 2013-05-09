@@ -97,15 +97,16 @@ class CourseAndExceptionFields extends Field {
    */
   def onIndentDecrease(nodeId: String): JsCmd = indentDecrease(nodeId, courses) match {
     case (newCourses, true) =>
-
       courses = newCourses
       val flattenedCourses = flattenNodes(courses)
       val updateJs = UpdateIndentation(flattenedCourses) & UpdateLabels(flattenedCourses)
 
       newCourses match {
-        case nc :: ac1 :: acN if ac1.id == nodeId => // NC moved to AC
+        // Move steps from NC to AC
+        case nc :: ac1 :: acN if ac1.id == nodeId =>
           JsCmds.Run(s"nc_to_ac('${nodeId}', ${JE.AnonFunc(updateJs).toJsCmd})")
 
+        // Apply indent decrease normally
         case _ => updateJs
       }
 
@@ -116,13 +117,23 @@ class CourseAndExceptionFields extends Field {
    * Increases the indentation level of a given step.
    */
   def onIndentIncrease(nodeId: String): JsCmd = indentIncrease(nodeId, courses) match {
-    case (newCourses, true) =>
+    case (newCourses, Some(newNode)) =>
+      val oldCourses = courses
       courses = newCourses
       val flattenedCourses = flattenNodes(courses)
-      (
-        UpdateIndentation(flattenedCourses)
-        & UpdateLabels(flattenedCourses)
-      )
+      val updateJs = UpdateIndentation(flattenedCourses) & UpdateLabels(flattenedCourses)
+
+      oldCourses match {
+        // Move steps from AC to NC
+        case nc :: ac1 :: acN if ac1.id == nodeId =>
+          val movedToNc = newNode :: flattenNodes(newNode.children)
+          val ids = movedToNc.map("#" + _.id).mkString(",")
+          JsCmds.Run(s"ac_to_nc('${ids}', ${JE.AnonFunc(updateJs).toJsCmd})")
+
+        // Apply indent normally
+        case _ => updateJs
+      }
+
     case _ => JsCmds.Noop
   }
 

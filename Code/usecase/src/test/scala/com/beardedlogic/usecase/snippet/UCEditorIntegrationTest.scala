@@ -38,6 +38,27 @@ class UCEditorIntegrationTest extends FreeSpec with ShouldMatchers with Selenium
     .clickIndentInc(3).assertStep(3)(2, "a")
     .clickIndentInc(5).assertStep(5)(2, "a")
 
+  /**
+   * Turns an new UC into this:
+   *
+   * [0] 1.0
+   * [1]   +- 1
+   * [2] 1.1
+   * [3]   +- 1
+   * [4]   |  +- a
+   * [5]   +- 2
+   * [6] 1.2
+   * [7]   +- 1
+   */
+  def startWith_10_11x_12 = startWith103
+    .clickAdd(3).assertStepCount(5)
+    .clickAdd(4).assertStepCount(6)
+    .clickAdd(5).assertStepCount(7)
+    .clickAdd(6).assertStepCount(8)
+    .clickIndentDec(2).assertStep(2)(0, "1.1")
+    .clickIndentInc(4).assertStep(4)(2, "a")
+    .clickIndentDec(6).assertStep(6)(0, "1.2")
+
   "The editor page" - {
     "when first loaded" - {
       lazy val u = uce.expectDelays(false)
@@ -189,6 +210,34 @@ class UCEditorIntegrationTest extends FreeSpec with ShouldMatchers with Selenium
       "should not be visible for 1.0.1" in { u.indentIncButtonVisibility(1) should be(false) }
       "should not be visible for 1.0.1.a" in { u.indentIncButtonVisibility(2) should be(false) }
       "should not be visible for 1.0.1.a.i" in { u.indentIncButtonVisibility(3) should be(false) }
+    }
+
+    /*
+     * [0] 1.0
+     * [1]   +- 1
+     * [2]   +- 2
+     * [3]      +- a
+     * [4]      |  +- i
+     * [5]      +- b
+     * [6] 1.1
+     * [7]   +- 1
+     */
+    "when pressed for 1.1" in {
+      val u = startWith_10_11x_12
+        .clickIndentInc(2).assertStep(2)(1, "2") // 1.1 --> 1.0.2
+        .nc.assertStepCount(6)
+        .assertStep(3)(2, "a")
+        .assertStep(4)(3, "i")
+        .assertStep(5)(2, "b")
+        .assertButtons(2, (true, true)) // 1.0.2
+        .assertButtons(3, (true, false)) // 1.0.2.a
+        .assertButtons(4, (true, false)) // 1.0.2.a.i
+        .assertButtons(5, (true, true)) // 1.0.2.b
+        .ac.assertStepCount(2) // AC should have 1.1 and 1.1.1
+        .assertStep(0)(0, "1.1")
+        .assertStep(1)(1, "1")
+        .assertButtons(0, (false, true))
+        .assertButtons(1, (true, false))
     }
   }
 }

@@ -18,3 +18,24 @@ function nc_to_ac(stepId, rewriteFn) {
 			});
 	});
 }
+
+/**
+ * Moves steps from Alternate Courses to Normal Course.
+ * 
+ * @param stepsJqExpr A JQuery expression that selects all steps to move.
+ * @param rewriteFn The function that updates steps' labels and indents.
+ */
+function ac_to_nc(stepsJqExpr, rewriteFn) {
+	var t = $('<div class="stepTransport"></div>')
+				.uniqueId()
+				.prependTo('#courses-a td')
+				.append($(stepsJqExpr))
+	t.hide("drop", {direction : "up"}, 250, function() {
+		rewriteFn();
+		t.appendTo($('#courses-n td'))
+			.show("drop", {direction : "down"}, 250, function() {
+				t.children().appendTo($('#courses-n td'));
+				t.remove();
+			});
+	});
+}

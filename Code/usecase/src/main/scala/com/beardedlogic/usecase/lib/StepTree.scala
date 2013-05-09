@@ -206,12 +206,16 @@ object StepTree {
    *   1.0.2      --> 1.0.1.a
    *   1.3.4.b    --> 1.3.4.a.ii
    *
-   * @return A tuple of 1) the new tree, 2) whether any changes were made.
+   * @return A tuple of 1) the new tree, 2) the new node (if any change was made).
    */
-  @inline def indentIncrease(id: String, nodes: List[StepNode]) = _indentIncrease(id, false, Nil, nodes)
+  @inline def indentIncrease(id: String, nodes: List[StepNode]) = _indentIncrease(id, None, Nil, nodes)
 
-  @tailrec private def _indentIncrease(id: String, found: Boolean, results: List[StepNode], nodes: List[StepNode]): Tuple2[List[StepNode], Boolean] = nodes match {
-    case Nil => (results, found)
+  @tailrec private def _indentIncrease(
+    id: String,
+    newNode: Option[StepNode],
+    results: List[StepNode],
+    nodes: List[StepNode]): Tuple2[List[StepNode], Option[StepNode]] = nodes match {
+    case Nil => (results, newNode)
 
     case p :: c :: t if c.id == id =>
       val c2 = c.copy(
@@ -221,12 +225,12 @@ object StepTree {
         children = c.deepCopyChildren(levelChange(1))
       )
       val p2 = p.copy(children = p.children :+ c2)
-      (results ::: p2 :: t.map(_.decrementPosition), true)
+      (results ::: p2 :: t.map(_.decrementPosition), Some(c2))
 
     // Not found. Check children then siblings.
     case h :: t => indentIncrease(id, h.children) match {
-      case (childrenResults, true) => (results ::: h.copy(children = childrenResults) :: t, true)
-      case _                       => _indentIncrease(id, found, results :+ h, t)
+      case (childrenResults, n @ Some(_)) => (results ::: h.copy(children = childrenResults) :: t, n)
+      case _                              => _indentIncrease(id, None, results :+ h, t)
     }
   }
 
