@@ -125,3 +125,7 @@ $borderRadius: 4px;
 		}
 	}
 }
+.addFirstStep {
+	text-align: right;
+	.step + & { display:none; }
+}

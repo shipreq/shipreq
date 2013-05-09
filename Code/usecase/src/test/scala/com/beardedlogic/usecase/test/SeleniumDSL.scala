@@ -4,7 +4,7 @@ import com.beardedlogic.usecase.snippet.UCEditor
 import org.openqa.selenium.{ By, Keys, WebElement }
 import org.scalatest.Suite
 import org.scalatest.matchers.ShouldMatchers
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import com.beardedlogic.usecase.lib.field.CourseAndExceptionFields
 
 /**
@@ -69,13 +69,15 @@ object SeleniumDSL {
     // Internal --------------------------------------------------------------------------------------------------------
 
     private def titleElem = s.findElement(By.name("title"))
-    private def steps = courseRoot.findElements(By.cssSelector(".step"))
+    private def steps = courseRoot.findElements(By.cssSelector(".step")).asScala
     private def addButtons = courseRoot.findElements(By.cssSelector("button.add"))
     private def stepTextElem(row: Int) = steps(row).findElement(By.cssSelector("textarea"))
     private def addButton(row: Int) = steps(row).findElement(By.cssSelector("button.add"))
     private def delButton(row: Int) = steps(row).findElement(By.cssSelector("button.delete"))
     private def indentDecButton(row: Int) = steps(row).findElement(By.cssSelector("button.indentDec"))
     private def indentIncButton(row: Int) = steps(row).findElement(By.cssSelector("button.indentInc"))
+    private def addFirstStepButtons = courseRoot.findElements(By.cssSelector(s".${CourseAndExceptionFields.AddFirstStepClass} button")).asScala
+    private def addFirstStepButton = addFirstStepButtons.head
 
     // Action ----------------------------------------------------------------------------------------------------------
 
@@ -101,6 +103,9 @@ object SeleniumDSL {
       deleteButtonVisibility(row) should be(del)
       this
     }
+    def assertHasAddFirstStepButton() = { addFirstStepButton.isDisplayed should be(true); this }
+    def assertNoAddFirstStepButton() = { addFirstStepButton.isDisplayed should be(false); this }
+    def clickAddFirstStepButton() = { addFirstStepButton.click(); this }
 
     // Inspection ------------------------------------------------------------------------------------------------------
 

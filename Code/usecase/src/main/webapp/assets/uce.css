@@ -50,3 +50,6 @@
 .step .ctl { float: right; width: 148px; text-align: right; padding-bottom: 1px; }
 .step + .step, .step + .stepTransport, .stepTransport + .step { margin-top: 1ex; }
 .step[data-lvl="0"] .label, .step[data-lvl="0"] textarea { font-weight: bold; }
+
+.addFirstStep { text-align: right; }
+.step + .addFirstStep { display: none; }

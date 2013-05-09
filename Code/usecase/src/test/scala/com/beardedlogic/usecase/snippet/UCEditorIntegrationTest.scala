@@ -245,4 +245,28 @@ class UCEditorIntegrationTest extends FreeSpec with ShouldMatchers with Selenium
         .assertButtons(1, (true, false))
     }
   }
+
+  "The Alternate Courses addFirstStep button" - {
+    "should be visible when page first loaded" in {
+      uce.ac.assertHasAddFirstStepButton
+    }
+    "when pressed" - {
+      lazy val u = uce.ac.clickAddFirstStepButton
+      "should create 1.1" in { u.assertStep(0)(0, "1.1") }
+      "should disappear" in { u.assertNoAddFirstStepButton }
+    }
+    "should disappear when 1.0.1 indented to 1.1" in {
+      uce.clickIndentDec(1).ac.assertStepCount(1).assertNoAddFirstStepButton
+    }
+    "should reappear when 1.1 deleted" in {
+      uce.clickIndentDec(1).ac.assertStepCount(1).clickDelete(0).assertStepCount(0).assertHasAddFirstStepButton
+    }
+    "should reappear when 1.1 indented back to 1.0.1" in {
+    	uce.clickIndentDec(1).ac.assertStepCount(1).clickIndentInc(0).assertStepCount(0).assertHasAddFirstStepButton
+    }
+    "should create 1.1 when clicked and only 1.0 exists" in {
+    	uce.clickDelete(1).assertStepCount(1).ac.clickAddFirstStepButton.assertStepCount(1).assertStep(0)(0, "1.1")
+    }
+  }
+
 }

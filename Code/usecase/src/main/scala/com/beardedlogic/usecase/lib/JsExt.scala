@@ -18,7 +18,14 @@ object JsExt {
    * A JQuery query for an element based on the id of the element
    */
   case class JqId(id: String) extends JsExp {
-    override def toJsCmd = s"jQuery('#${id}')"
+    override def toJsCmd = s"$$('#${id}')"
+  }
+
+  /**
+   * A JQuery query for a given expression.
+   */
+  case class JqExpr(expr: String) extends JsExp {
+	  override def toJsCmd = s"$$('${expr}')"
   }
 
   /**
@@ -27,6 +34,13 @@ object JsExt {
   case class JqAfter(content: NodeSeq) extends JsExp with JsMember {
     override val toJsCmd =
       "after(" + fixHtmlFunc("inline", content) { str => str } + ")"
+  }
+  /**
+   * See http://api.jquery.com/before/
+   */
+  case class JqBefore(content: NodeSeq) extends JsExp with JsMember {
+	  override val toJsCmd =
+			  "before(" + fixHtmlFunc("inline", content) { str => str } + ")"
   }
 
   object JqSlideDown extends JsExp with JsMember { override val toJsCmd = "slideDown()" }

@@ -28,29 +28,39 @@ object CourseAndExceptionFields extends FieldDef {
   val AlternateCourseTemplate = AddStepTemplate(Template(AlternateCourseId))
   val ExceptionTemplate = AddStepTemplate(Template(ExceptionCourseId))
 
+  val AddFirstStepTemplate = Template("template-courses-addFirstStep")
+
   val AttrLevel = "data-lvl"
+  val AddFirstStepClass = "addFirstStep"
 }
 
 class CourseAndExceptionFields extends Field {
   import CourseAndExceptionFields._
 
   val id = 1
+  val ncLabelPrefix = Some(id + ".")
   var courses: List[StepNode] =
-    StepNode(nextFuncName, 0, Some(id + "."), 0, NewStep,
+    StepNode(nextFuncName, 0, ncLabelPrefix, 0, NewStep,
       new StepNode(nextFuncName, 1, 1, NewStep) :: Nil
     ) :: Nil
 
   var coursesEmpty__tmp: List[StepNode] = Nil
 
-  @inline private def renderSteps(steps: List[StepNode]) = (
-    ".step" #> flattenNodes(steps).map(renderStep)
-  )
-
   def render = (
     renderSteps(courses)(NormalCourseTemplate) ++
-    renderSteps(coursesEmpty__tmp)(AlternateCourseTemplate) ++
+    renderSteps(coursesEmpty__tmp, onFirstAddAlternateCourse _)(AlternateCourseTemplate) ++
     renderSteps(coursesEmpty__tmp)(ExceptionTemplate)
   )
+
+  private def renderSteps(steps: List[StepNode], addFirstStepFn: () => JsCmd = null) =
+    if (steps.isEmpty && addFirstStepFn != null) (
+      ".step" #> AddFirstStepTemplate andThen
+      ".step [class!]" #> "step" &
+      "button" #> SHtml.ajaxButton("+", addFirstStepFn)
+    )
+    else (
+      ".step" #> flattenNodes(steps).map(renderStep)
+    )
 
   private def renderStep(n: StepNode) = (
     ".step [id]" #> n.id
@@ -64,15 +74,34 @@ class CourseAndExceptionFields extends Field {
     & ".indentInc" #> SHtml.ajaxButton("»", () => onIndentIncrease(n.id))
   )
 
+  @inline private def renderStepXml(n: StepNode) = {
+    val fn = ".step" #> renderStep(n)
+    fn(StepTemplate)
+  }
+
+  /**
+   * Adds the first alternate course. (ie. X.1.)
+   *
+   * The button that invokes this will only be visible (via a CSS rule) when the alternate course section is empty.
+   */
+  def onFirstAddAlternateCourse(): JsCmd =
+    if (courses.size == 1) {
+      val newNode = StepNode(nextFuncName, 0, ncLabelPrefix, 1, NewStep, Nil)
+      courses = courses :+ newNode
+      (
+        JqExpr(s"#${AlternateCourseId} .${AddFirstStepClass}") ~> JqBefore(renderStepXml(newNode))
+        & JqId(newNode.id) ~> JqHide ~> JqSlideDownFast
+      )
+    } else JsCmds.Noop
+
   /**
    * Adds a new step, shuffling down subsequent steps and renumbering if necessary.
    */
   def onStepAdd(preceedingNodeId: String): JsCmd = stepInsert(NewStep, preceedingNodeId, courses) match {
     case (newCourses, Some(newNode)) =>
       courses = newCourses
-      val fn = ".step" #> renderStep(newNode)
       (
-        JqId(preceedingNodeId) ~> JqAfter(fn(StepTemplate))
+        JqId(preceedingNodeId) ~> JqAfter(renderStepXml(newNode))
         & JqId(newNode.id) ~> JqHide ~> JqSlideDownFast
         & UpdateLabels(flattenNodes(courses))
       )
