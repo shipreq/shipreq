@@ -18,7 +18,7 @@
 [data-lvl="8"] { padding-left: 8cm; }
 
 /* Prevent deletion of normal course first step */
-#courses-n .step:first-child .delete { visibility: hidden; }
+.step.noDel .delete { visibility: hidden; }
 
 /* Prevent indentDecrease for top-level */
 .step[data-lvl="0"] .indentDec { visibility: hidden; }

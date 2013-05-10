@@ -25,6 +25,11 @@ object CourseFields {
 
   def ExprForNodeAndChildren(n: StepNode) = (n :: flattenNodes(n.children)).map("#" + _.id).mkString(",")
   @inline def JqExprForNodeAndChildren(n: StepNode) = JqExpr(ExprForNodeAndChildren(n))
+
+  // TODO Move IfCssSel and PassThru elsewhere
+  val PassThru = "dpp_recommends_this_oh_well" #> ""
+  def IfCssSel(cond: => Boolean)(expr: => CssSel): CssSel = if (cond) expr else PassThru
+
 }
 
 abstract class CourseFields extends Field {
@@ -60,6 +65,7 @@ abstract class CourseFields extends Field {
   protected def renderSingleStep(n: StepNode) = (
     ".step [id]" #> n.id
     & s".step [$AttrLevel]" #> n.level
+    & IfCssSel(prohibitRemoval(n.id)) { ".step [class+]" #> "noDel" }
     & ".label span *" #> n.label
     & ".label span [id]" #> n.labelId
     & "@text" #> SHtml.textarea(n.step.text, (_) => (), "rows" -> "1", "id" -> n.stepTextId)
@@ -103,17 +109,23 @@ abstract class CourseFields extends Field {
     case _ => JsCmds.Noop
   }
 
+  def prohibitRemoval(id: String) = false
+
   /**
    * Removes a new step and all its children, shuffling up following steps and renumbering if necessary.
    */
-  def onStepRemove(id: String): JsCmd = stepRemove(id, courses) match {
-    case (newCourses, Some(node)) =>
-      courses = newCourses
-      FadeOut(JqExprForNodeAndChildren(node), 240)(
-        _ ~> JqJE.JqRemove() & UpdateLabels(flattenNodes(courses))
-      )
-    case _ => JsCmds.Noop
-  }
+  def onStepRemove(id: String): JsCmd =
+    if (prohibitRemoval(id))
+      JsCmds.Noop
+    else
+      stepRemove(id, courses) match {
+        case (newCourses, Some(node)) =>
+          courses = newCourses
+          FadeOut(JqExprForNodeAndChildren(node), 240)(
+            _ ~> JqJE.JqRemove() & UpdateLabels(flattenNodes(courses))
+          )
+        case _ => JsCmds.Noop
+      }
 
   /**
    * Decreases the indentation level of a given step.

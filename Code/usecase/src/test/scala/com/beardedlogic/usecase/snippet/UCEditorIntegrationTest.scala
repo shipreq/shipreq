@@ -173,9 +173,25 @@ class UCEditorIntegrationTest extends FreeSpec with ShouldMatchers with Selenium
       And("1.0.3.a should now be 1.0.2.a"); u.assertStep(3)(2, "a", "old 103a")
     }
 
-    "should not work for 1.0" in pending
-    "should work for 1.1" in pending
-    "should work for 1.E.1" in pending
+    "should not work for 1.0" in {
+      uce.deleteButtonVisibility(0) should be(false)
+    }
+
+    "should work for 1.1" in {
+      Given("A page with 1.1"); val u = uce.clickIndentDec(1).ac.assertStepCount(1)
+      And("it's visible for 1.1"); u.deleteButtonVisibility(0) should be(true)
+      When("clicked"); u.clickDelete(0)
+      Then("1.1 should disappear"); u.assertStepCount(0)
+      And("the addTailStep button remains"); u.assertHasAddTailStepButton
+    }
+
+    "should work for 1.E.1" in {
+      Given("A page with 1.E.1"); val u = uce.ec.clickAddTailStepButton.assertStepCount(1)
+      And("it's visible for 1.E.1"); u.deleteButtonVisibility(0) should be(true)
+      When("clicked"); u.clickDelete(0)
+      Then("1.E.1 should disappear"); u.assertStepCount(0)
+      And("the addTailStep button remains"); u.assertHasAddTailStepButton
+    }
   }
 
   "The << button" - {

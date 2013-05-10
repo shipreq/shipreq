@@ -9,7 +9,7 @@ $borderRadius: 4px;
 }
 
 /* Prevent deletion of normal course first step */
-#courses-n .step:first-child .delete {
+.step.noDel .delete {
 	visibility:hidden;
 }
 

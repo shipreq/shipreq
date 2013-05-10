@@ -52,6 +52,11 @@ class NormalAndAlternateCourseFields extends CourseFields {
   private def newTailStep() =
     StepNode(nextFuncName, 0, ncLabelPrefix, courses.size, NewStep, Nil)
 
+  /**
+   * Prevent removal of the normal course head, ie. 1.0.
+   */
+  override def prohibitRemoval(id: String) = (id == courses.head.id)
+
   protected override def customiseIndentDecreaseJs(nodeId: String, updateJs: JsCmd): JsCmd =
     courses match {
       // Move steps from NC to AC
