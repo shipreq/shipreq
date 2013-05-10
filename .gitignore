@@ -12,6 +12,7 @@
 .directory
 .metadata
 .idea
+.idea_modules
 target
 sloccount.sc
 tmp
