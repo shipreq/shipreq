@@ -5,10 +5,10 @@ import net.liftweb.http.SHtml
 import net.liftweb.http.js.{ JsCmd, JsCmds, JE }
 import net.liftweb.http.js.JsCmds.jsExpToJsCmd
 import net.liftweb.http.js.jquery.JqJE
+import net.liftweb.util.CssSel
 import net.liftweb.util.Helpers._
 import scala.annotation.tailrec
 import scala.xml._
-
 import JsExt._
 import StepTree._
 
@@ -32,18 +32,23 @@ abstract class CourseFields extends Field {
 
   /**
    * Renders a list of steps and their trees of children.
-   *
-   * @param addTailStepFn If non-null, then a button will be provided that adds top-level steps to the end of the list.
    */
-  protected def renderSteps(steps: List[StepNode], addTailStepFn: () => JsCmd = null) = {
-    val renderedSteps = ".step" #> flattenNodes(steps).map(renderSingleStep)
-    if (addTailStepFn == null) {
-      renderedSteps
-    } else {
-      val t = "button" #> SHtml.ajaxButton("+", addTailStepFn)
-      val addTailStep = t(AddTailStepTemplate)
-      renderedSteps andThen ".steps *+" #> addTailStep // Append to .steps, after each .step
-    }
+  protected def renderSteps(steps: List[StepNode]): CssSel =
+    ".step" #> flattenNodes(steps).map(renderSingleStep)
+
+  /**
+   * Renders a list of steps and their trees of children.
+   * Also renders an addTailStep button.
+   *
+   * @param addTailStepCss The CSS selector that will locate the addTailStep container.
+   * @param newStepFn A function that will create a new StepNode when called.
+   */
+  protected def renderSteps(steps: List[StepNode],
+                            addTailStepCss: String,
+                            newStepFn: () => StepNode): Function1[NodeSeq, NodeSeq] = {
+    val t = "button" #> SHtml.ajaxButton("+", () => onAddTailStep(addTailStepCss, newStepFn))
+    val addTailStep = t(AddTailStepTemplate)
+    renderSteps(steps) andThen ".steps *+" #> addTailStep // Append to .steps, after all the .step tags
   }
 
   /**
@@ -67,6 +72,18 @@ abstract class CourseFields extends Field {
   @inline protected def renderSingleStepXml(n: StepNode) = {
     val fn = ".step" #> renderSingleStep(n)
     fn(StepTemplate)
+  }
+
+  /**
+   * Adds a new top-level step to the end of the list.
+   */
+  private def onAddTailStep(addTailStepCss: String, newStepFn: () => StepNode): JsCmd = {
+    val newNode = newStepFn()
+    courses = courses :+ newNode
+    (
+      JqExpr(addTailStepCss) ~> JqBefore(renderSingleStepXml(newNode))
+      & JqId(newNode.id) ~> JqHide ~> JqSlideDownFast
+    )
   }
 
   /**

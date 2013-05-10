@@ -219,16 +219,14 @@ class UCEditorIntegrationTest extends FreeSpec with ShouldMatchers with Selenium
       "should not be visible for 1.0.1.a.i" in { u.indentIncButtonVisibility(3) should be(false) }
     }
 
-    /*
-     * [0] 1.0
-     * [1]   +- 1
-     * [2]   +- 2
-     * [3]      +- a
-     * [4]      |  +- i
-     * [5]      +- b
-     * [6] 1.1
-     * [7]   +- 1
-     */
+    // [0] 1.0
+    // [1]   +- 1
+    // [2]   +- 2
+    // [3]      +- a
+    // [4]      |  +- i
+    // [5]      +- b
+    // [6] 1.1
+    // [7]   +- 1
     "when pressed for 1.1" in {
       val u = startWith_10_11x_12
         .clickIndentInc(2).assertStep(2)(1, "2") // 1.1 --> 1.0.2
@@ -269,4 +267,24 @@ class UCEditorIntegrationTest extends FreeSpec with ShouldMatchers with Selenium
     }
   }
 
+  "The Exceptions addTailStep button" - {
+    "should be visible when there are no exception steps" in {
+      Given("A page with no exceptions yet"); val u = uce.ec.assertStepCount(0)
+      Then("it should be visible"); u.assertHasAddTailStepButton
+    }
+    
+    "should create 1.E.1 first" in {
+      Given("A page with no exceptions yet"); val u = uce.ec.assertStepCount(0)
+      When("clicked"); u.clickAddTailStepButton
+      Then("it should create 1.E.1"); u.assertStep(0)(0, "1.E.1")
+      And("remain visible"); u.assertHasAddTailStepButton
+    }
+
+    "should create 1.E.2 when 1.E.1 exists" in {
+      Given("A page with 1.E.1"); val u = uce.ec.clickAddTailStepButton.assertStepCount(1)
+      When("clicked"); u.clickAddTailStepButton
+      Then("it should create 1.E.2"); u.assertStep(1)(0, "1.E.2")
+      And("remain visible"); u.assertHasAddTailStepButton
+    }
+  }
 }

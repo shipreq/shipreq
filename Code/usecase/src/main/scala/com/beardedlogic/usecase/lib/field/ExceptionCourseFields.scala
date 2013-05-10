@@ -20,6 +20,7 @@ object ExceptionCourseFields extends FieldDef {
 
   val ExceptionCourseId = "courses-e"
   val ExceptionTemplate = AddStepTemplate(Template(ExceptionCourseId))
+  val AddTailStepCss = s"#${ExceptionCourseId} .${AddTailStepClass}"
 }
 
 /**
@@ -33,13 +34,12 @@ class ExceptionCourseFields extends CourseFields {
   var courses: List[StepNode] = Nil
 
   def render = (
-    renderSteps(courses, onFirstAdd _)(ExceptionTemplate)
+    renderSteps(courses, AddTailStepCss, newTailStep _)(ExceptionTemplate)
   )
 
   /**
-   * Adds the first alternate course. (ie. X.1.)
-   *
-   * The button that invokes this will only be visible (via a CSS rule) when the alternate course section is empty.
+   * Creates a new top-level step to add to the end of the list.
    */
-  def onFirstAdd(): JsCmd = ???
+  private def newTailStep() =
+    StepNode(nextFuncName, 0, ncLabelPrefix, courses.size + 1, NewStep, Nil)
 }

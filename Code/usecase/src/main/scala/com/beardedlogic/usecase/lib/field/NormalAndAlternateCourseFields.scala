@@ -20,6 +20,7 @@ object NormalAndAlternateCourseFields extends FieldDef {
 
   val NormalCourseId = "courses-n"
   val AlternateCourseId = "courses-a"
+  val AddTailStepCss = s"#${AlternateCourseId} .${AddTailStepClass}"
 
   val NormalCourseTemplate = AddStepTemplate(Template(NormalCourseId))
   val AlternateCourseTemplate = AddStepTemplate(Template(AlternateCourseId))
@@ -42,20 +43,14 @@ class NormalAndAlternateCourseFields extends CourseFields {
 
   def render = (
     renderSteps(courses.head :: Nil)(NormalCourseTemplate) ++
-    renderSteps(courses.tail, onAddTailStep _)(AlternateCourseTemplate)
+    renderSteps(courses.tail, AddTailStepCss, newTailStep _)(AlternateCourseTemplate)
   )
 
   /**
-   * Adds a new top-level step to the end of the list.
+   * Creates a new top-level step to add to the end of the list.
    */
-  def onAddTailStep(): JsCmd = {
-    val newNode = StepNode(nextFuncName, 0, ncLabelPrefix, courses.size, NewStep, Nil)
-    courses = courses :+ newNode
-    (
-      JqExpr(s"#${AlternateCourseId} .${AddTailStepClass}") ~> JqBefore(renderSingleStepXml(newNode))
-      & JqId(newNode.id) ~> JqHide ~> JqSlideDownFast
-    )
-  }
+  private def newTailStep() =
+    StepNode(nextFuncName, 0, ncLabelPrefix, courses.size, NewStep, Nil)
 
   protected override def customiseIndentDecreaseJs(nodeId: String, updateJs: JsCmd): JsCmd =
     courses match {
