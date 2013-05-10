@@ -50,7 +50,6 @@ trait SeleniumTestSupport extends BeforeAndAfterAll with BeforeAndAfterEach { th
   def newSelenium() {
     releaseSelenium
     selenium = new FirefoxDriver
-    selenium.manage.timeouts.implicitlyWait(1, TimeUnit.SECONDS)
   }
 
   def releaseSelenium() {
