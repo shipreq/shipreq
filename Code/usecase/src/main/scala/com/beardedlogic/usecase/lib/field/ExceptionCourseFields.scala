@@ -16,7 +16,7 @@ object ExceptionCourseFields extends FieldDef {
   import Fields.Template
   import CourseFields._
 
-  override def newFieldInstance = new ExceptionCourseFields
+  override def newFieldInstance(state: UCEditorState) = new ExceptionCourseFields(state)
 
   val ExceptionCourseId = "courses-e"
   val ExceptionTemplate = AddStepTemplate(Template(ExceptionCourseId))
@@ -26,7 +26,7 @@ object ExceptionCourseFields extends FieldDef {
 /**
  * Provides the field Exceptions, into which the user enters a hierarchy of steps.
  */
-class ExceptionCourseFields extends CourseFields {
+class ExceptionCourseFields(val state: UCEditorState) extends CourseFields {
   import ExceptionCourseFields._
   import CourseFields._
 

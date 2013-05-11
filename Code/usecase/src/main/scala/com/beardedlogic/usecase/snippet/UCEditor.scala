@@ -6,23 +6,20 @@ import net.liftweb.http.js.{JE, JsCmd, JsCmds}
 import net.liftweb.http.js.JsExp.strToJsExp
 import net.liftweb.util.Helpers._
 import scala.xml.NodeSeq
+import lib.field._
+import lib.UCEditorState
 
 class UCEditor extends StatefulSnippet {
-  import lib.field._
+
+  val state = new UCEditorState
 
   override def dispatch = { case _ => render }
 
-  val ucId = 1
-  var title = "Untitled"
-  val fields = Fields.DefaultFields.map(_.newFieldInstance)
-
-  val normalCourseTitleId = fields.collectFirst { case f: NormalAndAlternateCourseFields => f.courses.head }.get.stepTextId
-
   def render = {
     (
-      ".ucdata *" #> renderFields(fields) andThen
-      ".title .ucid *" #> ucId.toString
-      & ".title @title" #> SHtml.ajaxText(title, onTitleChange(_))
+      ".ucdata *" #> renderFields(state.fields) andThen
+      ".title .ucid *" #> state.ucId.toString
+      & ".title @title" #> SHtml.ajaxText(state.title, onTitleChange(_))
     )
   }
 
@@ -33,14 +30,14 @@ class UCEditor extends StatefulSnippet {
    * When the Use Case title is changed, this will update the Normal Course title unless the user has overridden it.
    */
   def onTitleChange(newTitle: String): JsCmd = {
-    val oldTitle = title
-    title = newTitle
+    val oldTitle = state.title
+    state.title = newTitle
     (
       JsCmds.JsIf(
         JE.JsOr(
-          JE.JsEq(JE.ValById(normalCourseTitleId), oldTitle),
-          JE.JsEq(JE.ValById(normalCourseTitleId), "")),
-        JsCmds.SetValById(normalCourseTitleId, newTitle))
+          JE.JsEq(JE.ValById(state.normalCourseTitleId), oldTitle),
+          JE.JsEq(JE.ValById(state.normalCourseTitleId), "")),
+        JsCmds.SetValById(state.normalCourseTitleId, newTitle))
     )
   }
 }

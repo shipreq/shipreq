@@ -4,9 +4,12 @@ package field
 import scala.xml.NodeSeq
 
 trait FieldDef {
-  def newFieldInstance: Field
+  def newFieldInstance(state: UCEditorState): Field
 }
 
 trait Field {
+
+  val state: UCEditorState
+
   def render: NodeSeq
 }

@@ -16,7 +16,7 @@ object NormalAndAlternateCourseFields extends FieldDef {
   import Fields.Template
   import CourseFields._
 
-  override def newFieldInstance = new NormalAndAlternateCourseFields
+  override def newFieldInstance(state: UCEditorState) = new NormalAndAlternateCourseFields(state)
 
   val NormalCourseId = "courses-n"
   val AlternateCourseId = "courses-a"
@@ -31,7 +31,7 @@ object NormalAndAlternateCourseFields extends FieldDef {
  *
  * Steps can be moved between the two.
  */
-class NormalAndAlternateCourseFields extends CourseFields {
+class NormalAndAlternateCourseFields(val state: UCEditorState) extends CourseFields {
   import NormalAndAlternateCourseFields._
   import CourseFields._
 
