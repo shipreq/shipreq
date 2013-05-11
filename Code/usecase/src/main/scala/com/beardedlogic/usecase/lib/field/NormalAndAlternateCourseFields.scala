@@ -41,7 +41,7 @@ class NormalAndAlternateCourseFields extends CourseFields {
       new StepNode(nextFuncName, 1, 1, NewStep) :: Nil
     ) :: Nil
 
-  def render = (
+  override def render = (
     renderSteps(courses.head :: Nil)(NormalCourseTemplate) ++
     renderSteps(courses.tail, AddTailStepCss, newTailStep _)(AlternateCourseTemplate)
   )

@@ -33,7 +33,7 @@ class ExceptionCourseFields extends CourseFields {
   val ncLabelPrefix = Some(id + ".E.")
   var courses: List[StepNode] = Nil
 
-  def render = (
+  override def render = (
     renderSteps(courses, AddTailStepCss, newTailStep _)(ExceptionTemplate)
   )
 
