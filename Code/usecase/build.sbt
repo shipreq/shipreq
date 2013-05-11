@@ -8,6 +8,10 @@ scalaVersion := "2.10.1"
 
 seq(com.github.siasia.WebPlugin.webSettings :_*)
 
+scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-language:postfixOps", "-language:implicitConversions")
+
+scalacOptions in Test ++= Seq("-language:reflectiveCalls")
+
 libraryDependencies ++= {
   val liftVersion = "2.5-RC5"
   Seq(

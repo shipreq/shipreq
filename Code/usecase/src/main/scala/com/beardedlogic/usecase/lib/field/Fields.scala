@@ -7,7 +7,7 @@ import net.liftweb.util.Helpers._
 
 object Fields {
 
-  val TemplateSource = ClearClearable(Templates("uce" :: Nil).open_!)
+  val TemplateSource = ClearClearable(Templates("uce" :: Nil) openOrThrowException "UC Editor template not found.")
 
   private[field] def Template(id: String) = {
     var t = s"#$id ^^" #> ""
