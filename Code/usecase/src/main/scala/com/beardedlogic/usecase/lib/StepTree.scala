@@ -66,6 +66,26 @@ object StepTree {
   def NewStep = Step("")
 
   /**
+   * Generates a map of both node IDs to labels, and labels to node IDs.
+   *
+   * Example:
+   *   1.E.1    -> FD93E
+   *   1.E.1.a  -> F93A3
+   *   FD93E    -> 1.E.1
+   *   F93A3    -> 1.E.1.a
+   */
+  def mapIdsAndFullLabels(nodes: List[StepNode], prefix: String = ""): Map[String, String] = nodes match {
+    case h :: t =>
+      val lbl = prefix + h.label
+      mapIdsAndFullLabels(t, prefix) ++
+        mapIdsAndFullLabels(h.children, lbl + ".") +
+        (h.id -> lbl) +
+        (lbl -> h.id)
+
+    case Nil => Map.empty
+  }
+
+  /**
    * Flattens a list of step nodes with children, into a single list that contains all recursive contents.
    */
   @tailrec def flattenNodes(nodes: List[StepNode], results: List[StepNode] = Nil): List[StepNode] = nodes match {

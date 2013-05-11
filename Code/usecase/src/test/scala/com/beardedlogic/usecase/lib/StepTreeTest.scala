@@ -6,6 +6,8 @@ import org.scalatest.matchers.Matcher
 import org.scalatest.matchers.MatchResult
 import scala.collection.mutable.StringBuilder
 import com.beardedlogic.usecase.test.TestHelpers
+import net.liftweb.util.Helpers._
+import scala.Some
 
 class StepTreeTest extends WordSpec with ShouldMatchers with TestHelpers {
   import NodeUtils._
@@ -46,6 +48,53 @@ class StepTreeTest extends WordSpec with ShouldMatchers with TestHelpers {
       "1.2" ~> $("1", "2")
     ).toStepNodes
     val N = Step("N")
+  }
+
+  // -------------------------------------------------------------------------------------------------------------------
+
+  "mapIdsAndFullLabels()" should {
+
+    val labelPrefix = Some("1.")
+    def oneLevel: List[StepNode] =
+      StepNode("X1", 0, labelPrefix, 0, NewStep, Nil) ::
+      StepNode("X2", 0, labelPrefix, 1, NewStep, Nil) ::
+      Nil
+
+    "map ids to labels" in {
+      val map = mapIdsAndFullLabels(oneLevel)
+      map("X1") should be("1.0")
+      map("X2") should be("1.1")
+    }
+
+    "map labels to ids" in {
+      val map = mapIdsAndFullLabels(oneLevel)
+      map("1.0") should be("X1")
+      map("1.1") should be("X2")
+    }
+
+    "map children and generate full labels" in {
+      val labelPrefix = Some("1.E.")
+      val map = mapIdsAndFullLabels(
+        StepNode("X5", 0, labelPrefix, 1, NewStep,  // 1.E.1
+          new StepNode("X3", 1, 1, NewStep, // 1.E.1.1
+            new StepNode("X4", 2, 1, NewStep, Nil) :: Nil // 1.E.1.1.a
+          ) ::
+          new StepNode("X2", 1, 2, NewStep, Nil) ::  // 1.E.1.2
+          Nil
+        ) ::
+        StepNode("X1", 0, labelPrefix, 2, NewStep, Nil) :: // 1.E.2
+        Nil)
+      map("X5") should be("1.E.1")
+      map("X3") should be("1.E.1.1")
+      map("X4") should be("1.E.1.1.a")
+      map("X2") should be("1.E.1.2")
+      map("X1") should be("1.E.2")
+      map("1.E.1") should be("X5")
+      map("1.E.1.1") should be("X3")
+      map("1.E.1.1.a") should be("X4")
+      map("1.E.1.2") should be("X2")
+      map("1.E.2") should be("X1")
+    }
   }
 
   // -------------------------------------------------------------------------------------------------------------------
