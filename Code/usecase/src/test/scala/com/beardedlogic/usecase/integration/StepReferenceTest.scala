@@ -16,12 +16,12 @@ import com.beardedlogic.usecase.test.TestHelpers
  * @since 10/05/2013
  */
 class StepReferenceTest
-    extends FunSpec
-    with ShouldMatchers
-    with SeleniumDSL
-    with TestHelpers
-    with BeforeAndAfter
-    with GivenWhenThen {
+  extends FunSpec
+          with ShouldMatchers
+          with SeleniumDSL
+          with TestHelpers
+          with BeforeAndAfter
+          with GivenWhenThen {
 
   import SeleniumDSL._
 
@@ -45,35 +45,44 @@ class StepReferenceTest
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  def given_ref_to(stepLabel: String) {
-    Given("a reference to " + stepLabel)
+  def init =  {
     u = uce // load page
     mapSteps("1.0", "1.0.1")
-    referring.typeInto(refText(stepLabel))
+    u
   }
 
-  def and_101a_exists {
-    And("1.0 ~ 1.0.1.a exist")
-    u.addButtons(1).click_>>(2)
+  def given_101_exists {
+    Given("1.0 ~ 1.0.1 exist")
+    init
+  }
+
+  def given_101a_exists {
+    Given("1.0 ~ 1.0.1.a exist")
+    init.addButtons(1).click_>>(2)
     mapSteps("1.0", "1.0.1", "1.0.1.a")
   }
 
-  def and_102_exists {
-    And("1.0 ~ 1.0.2 exist")
-    u.clickAdd(1)
+  def given_102_exists {
+    Given("1.0 ~ 1.0.2 exist")
+    init.clickAdd(1)
     mapSteps("1.0", "1.0.1", "1.0.2")
   }
 
-  def and_102a_exists {
-    And("1.0 ~ 1.0.2.a exist")
-    u.addButtons(2).click_>>(3)
+  def given_102a_exists {
+    Given("1.0 ~ 1.0.2.a exist")
+    init.addButtons(2).click_>>(3)
     mapSteps("1.0", "1.0.1", "1.0.2", "1.0.2.a")
   }
 
-  def and_103_exists {
-    And("1.0 ~ 1.0.3 exist")
-    u.addButtons(2)
+  def given_103_exists {
+    Given("1.0 ~ 1.0.3 exist")
+    init.addButtons(2)
     mapSteps("1.0", "1.0.1", "1.0.2", "1.0.3")
+  }
+
+  def and_a_ref_to(stepLabel: String) {
+    And("a there's a reference to " + stepLabel)
+    referring.typeInto(refText(stepLabel) + "\t")
   }
 
   def when_>>(stepLabel: String) { When(stepLabel + " is indented >>"); u.click_>>(labelMap(stepLabel)) }
@@ -92,49 +101,49 @@ class StepReferenceTest
     describe("should be updated when the ref target's label changes due to...") {
 
       it("direct >>") {
-        given_ref_to("1.0.2"); and_102_exists
+        given_102_exists; and_a_ref_to("1.0.2")
         when_>>("1.0.2")
         then_ref_should_be("1.0.1.a")
       }
 
       it("direct <<") {
-        given_ref_to("1.0.1")
+        given_101_exists; and_a_ref_to("1.0.1")
         when_<<("1.0.1")
         then_ref_should_be("1.1")
       }
 
       it("indirect >> of sibling") {
-        given_ref_to("1.0.3"); and_103_exists
+        given_103_exists; and_a_ref_to("1.0.3")
         when_>>("1.0.2") // 1.0.2 --> 1.0.1.a
         then_ref_should_be("1.0.2")
       }
 
       it("indirect << of sibling") {
-        given_ref_to("1.0.2"); and_102_exists
+        given_102_exists; and_a_ref_to("1.0.2")
         when_<<("1.0.1") // 1.1 <-- 1.0.1
         then_ref_should_be("1.1.1")
       }
 
       it("indirect >> of parent") {
-        given_ref_to("1.0.2.a"); and_102a_exists
+        given_102a_exists; and_a_ref_to("1.0.2.a")
         when_>>("1.0.2") // -> 1.0.1.a
         then_ref_should_be("1.0.1.a.i")
       }
 
       it("indirect << of parent") {
-        given_ref_to("1.0.1.a"); and_101a_exists
+        given_101a_exists; and_a_ref_to("1.0.1.a")
         when_<<("1.0.1") // 1.1 <-- 1.0.1
         then_ref_should_be("1.1.1")
       }
 
       it("insert before") {
-        given_ref_to("1.0.1")
+        given_101_exists; and_a_ref_to("1.0.1")
         when_+("1.0")
         then_ref_should_be("1.0.2")
       }
 
       it("delete before") {
-        given_ref_to("1.0.2"); and_102_exists
+        given_102_exists; and_a_ref_to("1.0.2")
         when_-("1.0.1")
         then_ref_should_be("1.0.1")
       }
