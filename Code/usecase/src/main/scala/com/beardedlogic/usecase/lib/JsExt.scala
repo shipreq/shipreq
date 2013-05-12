@@ -1,6 +1,7 @@
 package com.beardedlogic.usecase.lib
 
 import net.liftweb.http.js.{ JsCmd, JsCmds, JsExp, JsMember }
+import net.liftweb.util.Helpers._
 import scala.xml.NodeSeq
 
 /**
@@ -53,4 +54,16 @@ object JsExt {
 
   def FadeOut(idExpr: JsExp, duration: Int = DurationDefault)(onComplete: JsExp => JsCmd): JsCmd =
     JsCmds.Run(s"${idExpr.toJsCmd}.fadeOut(${duration},function(){${onComplete(idExpr).toJsCmd}});")
+
+  /**
+   * Sets the value of a text element or a textarea.
+   *
+   * @param newValue The new value of the target element(s).
+   * @param callLift For ajax elements, whether the client should notify us, the server, the same way it would if the
+   *                 user made a manual change.
+   */
+  case class JqSetValue(newValue: String, callLift: Boolean) extends JsExp with JsMember {
+    override val toJsCmd =
+      "val(" + newValue.encJs + (if (callLift) ").blur()" else ")")
+  }
 }

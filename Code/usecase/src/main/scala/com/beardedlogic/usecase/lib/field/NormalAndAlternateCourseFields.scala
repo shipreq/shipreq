@@ -36,7 +36,9 @@ class NormalAndAlternateCourseFields(val state: UCEditorState) extends CourseFie
   import CourseFields._
 
   val ncLabelPrefix = Some(id + ".")
-  var courses: List[StepNode] =
+
+  // This will do for now but if this is moved into init() it will cause problems with TextFields due to the stepRefMap
+  courses =
     StepNode(nextFuncName, 0, ncLabelPrefix, 0, NewStep,
       new StepNode(nextFuncName, 1, 1, NewStep) :: Nil
     ) :: Nil

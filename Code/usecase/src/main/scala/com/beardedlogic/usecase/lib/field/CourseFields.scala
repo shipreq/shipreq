@@ -30,13 +30,32 @@ object CourseFields {
   val PassThru = "dpp_recommends_this_oh_well" #> ""
   def IfCssSel(cond: => Boolean)(expr: => CssSel): CssSel = if (cond) expr else PassThru
 
+  /**
+   * Message that indicates that steps have changed.
+   */
+  case object StepChangeMsg
 }
 
 abstract class CourseFields extends Field {
   import CourseFields._
 
   val id = 1
-  var courses: List[StepNode]
+
+  private[this] var _courses: List[StepNode] = Nil
+  protected def courses_=(newCourses: List[StepNode]) {
+    _courses = newCourses
+    _stepLabelMap = null
+      msgCentre ! StepChangeMsg
+  }
+  def courses = _courses
+
+  private[this] var _stepLabelMap: Map[String, String] = Map.empty
+  def stepLabelMap = {
+    if (_stepLabelMap == null) _stepLabelMap = mapIdsAndFullLabels(courses)
+    _stepLabelMap
+  }
+
+  override def init() {}
 
   /**
    * Renders a list of steps and their trees of children.

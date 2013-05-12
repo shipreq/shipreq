@@ -1,7 +1,6 @@
 package com.beardedlogic.usecase
 package test
 
-import com.beardedlogic.usecase.snippet.UCEditor
 import org.openqa.selenium.{ By, Keys, WebElement }
 import org.scalatest.Suite
 import org.scalatest.matchers.ShouldMatchers

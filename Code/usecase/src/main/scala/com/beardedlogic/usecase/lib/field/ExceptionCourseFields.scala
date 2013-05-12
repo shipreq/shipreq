@@ -31,7 +31,6 @@ class ExceptionCourseFields(val state: UCEditorState) extends CourseFields {
   import CourseFields._
 
   val ncLabelPrefix = Some(id + ".E.")
-  var courses: List[StepNode] = Nil
 
   override def render = (
     renderSteps(courses, AddTailStepCss, newTailStep _)(ExceptionTemplate)
