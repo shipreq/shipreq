@@ -81,7 +81,7 @@ class StepReferenceTest
   }
 
   def and_a_ref_to(stepLabel: String) {
-    And("a there's a reference to " + stepLabel)
+    And("there's a reference to " + stepLabel)
     referring.typeInto(refText(stepLabel) + "\t")
   }
 
@@ -147,18 +147,21 @@ class StepReferenceTest
         when_-("1.0.1")
         then_ref_should_be("1.0.1")
       }
+
+      it("deletion") {
+        given_101_exists; and_a_ref_to("1.0.1")
+        when_-("1.0.1")
+        then_ref_should_be("DELETED")
+      }
     }
 
-    describe("should not change when different steps' labels change due to...") {
-      it(">> after") { pending }
-      it("<< after") { pending }
-      it("irrelevant >> before") { pending }
-      it("irrelevant << before") { pending }
-      it("insert after") { pending }
-      it("delete after") { pending }
+    describe("Invalid step ref links") {
+      it("should be transformed after editing") {
+        u = uce
+        referring.typeInto(refText("1.0.5") + "\t")
+        eventually { referring.value should be(refText("1.0.5?")) }
+      }
     }
-
-    // should ??? when ref deleted
 
     // should change when referenced in
     // - text
@@ -167,13 +170,7 @@ class StepReferenceTest
     // - EC
   }
 
-  describe("Invalid step ref links") {
-    // shouldn't be allowed to exist --> should be transformed on save
-    // [1.0.4] --> [?1.0.4?]
-  }
-
-  describe("Multiple step ref links") {
+  //describe("Multiple step refs") {
     // in same field
     // in different fields
-  }
 }

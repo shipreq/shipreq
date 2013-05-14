@@ -37,7 +37,7 @@ $borderRadius: 4px;
 /* General styles */
 #uce {
 	margin: 1cm 1cm 0 1cm;
-	
+
 	form {
 		display: inline
 	}
@@ -128,4 +128,23 @@ $borderRadius: 4px;
 }
 .addTailStep {
 	text-align: right;
+}
+
+#legend {
+    margin:0.5cm auto 1cm auto;
+    border: solid 1px #888;
+    background: #ffd;
+    padding: 1ex;
+    width: 400px;
+
+    dl {
+        margin: 0;
+    }
+    dt {
+        float: left;
+        width: 160px;
+    }
+    dd:not(:last-of-type) {
+        padding-bottom: 0.8ex;
+    }
 }

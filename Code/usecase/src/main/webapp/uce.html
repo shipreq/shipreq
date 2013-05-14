@@ -25,7 +25,8 @@
 		ac_to_nc('#s11,#s12', inc_11_core);
 	}
 </script>
-
+<style media="screen" type="text/css">
+</style>
 </head>
 <body data-lift-content-id="main">
 	<div id="main" data-lift="surround?with=default;at=content">
@@ -38,6 +39,14 @@
 				$('textarea').autosize();
 			});
 		</script>
+
+		<div id="legend">
+			<dl>
+				<dt><code>[1.0.1]</code></dt><dd>A link.</dd>
+				<dt><code>[1.0.1?]</code></dt><dd>A invalid link.</dd>
+				<dt><code>[DELETED]</code></dt><dd>A ex-link to a deleted step.</dd>
+			</dl>
+		</div>
 
 		<div id="uce" data-lift="comet?type=UCEditor&randomname=true">
 			<table class="title">
@@ -81,7 +90,7 @@ c. The player order.</textarea></td>
 									<textarea rows="1" name="text">Score a new game of Scrabble.</textarea>
 								</form>
 							</div>
-							<!-- 
+							<!--
 							<div class="add">
 								<button>+</button>
 								<div></div>

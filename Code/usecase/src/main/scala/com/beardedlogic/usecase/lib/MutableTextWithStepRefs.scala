@@ -18,9 +18,20 @@ object MutableTextWithStepRefs {
    *
    * Note: The braces are required for the match to complete but are not part of the matched text.
    */
-  val StepRefRegex = """(?<=\[).+?\..+?(?=\])""".r
+  val StepRefRegex = """(?<=\[)\s*?[A-Za-z0-9][A-Za-z0-9\s.]+?(?=\])""".r
+
+  /**
+   * Whitespace are dots is removed. This regex matches a dot with optional whitespace on either side.
+   */
+  val DotWithWhitespaceRegex = """\s*\.\s*""".r
 
   @inline def MakeRef(ref: String) = "[" + ref + "]"
+
+  @inline def InvalidStepRef(label: String) = label + "?"
+
+  @inline def NormaliseStepRef(label: String) = DotWithWhitespaceRegex.replaceAllIn(label.trim, ".")
+
+  val DeletedRef = MakeRef("DELETED")
 }
 
 /**
@@ -48,14 +59,13 @@ class MutableTextWithStepRefs(val msgCentre: MessageCentre,
 
   def text_=(newValue: String) {
     if (text != newValue) {
-      _text = newValue
-      findReferences()
+      _text = parseText(newValue)
     }
   }
 
   def init() {
     msgCentre.register(this)
-    findReferences()
+    _text = parseText(_text)
   }
 
   def renderTextarea = SHtml.ajaxTextarea(text, onTextChange _, "id" -> id)
@@ -65,22 +75,42 @@ class MutableTextWithStepRefs(val msgCentre: MessageCentre,
    */
   def onTextChange(newValue: String): JsCmd = {
     text = newValue
-    JsCmds.Noop
+    if (text != newValue)
+      updateTextJs
+    else
+      JsCmds.Noop
   }
 
   /**
    * Scans text for step references.
+   *
+   * Creates a map-to-ids of valid references.
+   * Removes whitespace from references.
+   * Appends a ? to invalid references.
    */
-  private def findReferences() {
+  private def parseText(text: String): String = {
     val refLookup = refLookupProvider()
     curRefsInUse = Map.empty
-    for (m <- StepRefRegex.findAllMatchIn(text)) {
-      val label = m.matched
-      if (!curRefsInUse.contains(label) && refLookup.contains(label)) {
-        curRefsInUse += (label -> refLookup(label))
+    val newText = StepRefRegex.replaceAllIn(text, m => {
+
+      // Inspect ref
+      val rawLabel = m.matched
+      if (rawLabel.indexOf('.') == -1)
+        rawLabel // ignore refs without dots
+
+      else {
+        val label = NormaliseStepRef(m.matched)
+        if (refLookup.contains(label)) {
+
+          // Match found
+          if (!curRefsInUse.contains(label)) curRefsInUse += (label -> refLookup(label))
+          label
+        } else
+          InvalidStepRef(label)
       }
-    }
+    })
     curRefLookup = refLookup
+    newText
   }
 
   override def messageHandler = {
@@ -94,21 +124,29 @@ class MutableTextWithStepRefs(val msgCentre: MessageCentre,
         var newRefsInUse = Map.empty[String, String]
         var newText = text
         for ((oldLabel, id) <- curRefsInUse) {
+
+          // Lookup each existing reference
           newRefLookup.get(id).map { newLabel =>
-            newText = newText.replace(MakeRef(oldLabel), MakeRef(newLabel))
-            newRefsInUse += (newLabel -> id)
+            if (oldLabel != newLabel)
+              newText = newText.replace(MakeRef(oldLabel), MakeRef(newLabel))
+            if (!newRefsInUse.contains(newLabel)) newRefsInUse += (newLabel -> id)
+          } orElse {
+            newText = newText.replace(MakeRef(oldLabel), DeletedRef)
+            None
           }
         }
 
         // Save and publish text changes
         if (newText != text) {
-          msgCentre ! PushToClient(JqId(id) ~> JqSetValue(newText, false))
           _text = newText
           curRefsInUse = newRefsInUse
+          msgCentre ! PushToClient(updateTextJs)
         }
 
         // Record ref lookup table so that we avoid re-processing when nothing upstream changes
         curRefLookup = newRefLookup
       }
   }
+
+  private def updateTextJs(): JsCmd = JqId(id) ~> JqSetValue(text, false)
 }
