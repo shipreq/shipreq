@@ -17,13 +17,8 @@ class UCEditor extends CometActor with Logger {
   val state = new UCEditorState(this)
 
   override def localSetup() {
-    debug("UCEditor starting.")
     state.fields.foreach { _.init }
     state.msgCentre.enabled = true
-  }
-
-  override def localShutdown() {
-    debug("UCEditor shutting down.")
   }
 
   override def render = (
@@ -53,7 +48,6 @@ class UCEditor extends CometActor with Logger {
 
   override def lowPriority = {
     case PushToClient(cmd) if cmd != JsCmds.Noop =>
-      debug(s"Updating client! $cmd") // TODO remove
       partialUpdate(cmd)
   }
 }
