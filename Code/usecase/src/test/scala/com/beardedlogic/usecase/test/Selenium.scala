@@ -15,6 +15,10 @@ object SeleniumTestSupport {
     def disableJqueryEffects() = { d.executeScript("jQuery.fx.off = true"); d }
     def getRel(page: String) = { d.get(Jetty.URL + page); d }
   }
+
+  val SeleniumDriverRef = SharedGlobal(None, newDriver _) { _.close }
+
+  def newDriver : SeleniumDriver = new FirefoxDriver
 }
 
 /**
@@ -24,40 +28,18 @@ object SeleniumTestSupport {
  */
 trait SeleniumTestSupport extends BeforeAndAfterAll with BeforeAndAfterEach { this: Suite =>
 
-  import SeleniumTestSupport.SeleniumDriver
+  import SeleniumTestSupport._
 
   override def beforeAll() {
-    Jetty.start
-    newSelenium
-  }
-
-  override def beforeEach() {
-    if (newSeleniumPerTest) newSelenium
-  }
-
-  override def afterEach() {
-    if (newSeleniumPerTest) releaseSelenium
+    Jetty.acquire
+    _s = SeleniumDriverRef.acquire
   }
 
   override def afterAll() {
-    releaseSelenium
-    Jetty.stop
+    _s = SeleniumDriverRef.release
+    Jetty.release
   }
 
-  var newSeleniumPerTest = false
-  private var selenium: SeleniumDriver = null
-
-  def newSelenium() {
-    releaseSelenium
-    selenium = new FirefoxDriver
-  }
-
-  def releaseSelenium() {
-    if (selenium != null) {
-      selenium.close
-      selenium = null
-    }
-  }
-
-  def s = selenium
+  private var _s : SeleniumDriver = null
+  def s = _s
 }

@@ -12,11 +12,17 @@ import org.eclipse.jetty.webapp.WebAppContext
  */
 object Jetty {
 
+  private val jetty = SharedGlobal(Some(1000L), newServer _) { s => s.stop; s.join }
+
+  def acquire(): Server = jetty.acquire
+
+  def release(): Server = jetty.release
+
   val PORT = 8090
   val MAX_IDLE = 10 seconds
-  val URL = "http://localhost:" + PORT + "/"
+  val URL = "http://localhost:" + PORT
 
-  private val server: Server = {
+  def newServer: Server = {
     val svr = new Server
 
     val connector = new SelectChannelConnector
@@ -34,27 +40,7 @@ object Jetty {
     svr.setHandler(context)
 
     context.setServer(svr)
+    svr.start
     svr
-  }
-
-  def start() {
-    //    if (!server.isStarted) {
-    server.start
-    //    server.setStopAtShutdown(true)
-    //      Runtime.getRuntime.addShutdownHook(new Thread(new Runnable {
-    //        override def run() {
-    //          println("Here")
-    //          if (server.isStarted()) {
-    //            server.stop
-    //            server.join
-    //          }
-    //        }
-    //      }, "Stop Jetty Hook"));
-    //    }
-  }
-
-  def stop() {
-    server.stop
-    server.join
   }
 }
