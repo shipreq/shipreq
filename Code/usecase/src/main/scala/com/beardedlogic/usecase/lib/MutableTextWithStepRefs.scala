@@ -16,27 +16,23 @@ import msg.{MessageCentre, PushToClient}
 
 object MutableTextWithStepRefs {
 
-  /**
-   * Regex that matches a reference to a step.
-   *
-   * Note: The braces are required for the match to complete but are not part of the matched text.
-   */
-  val StepRefRegex = """(?<=\[)\s*?[A-Za-z0-9][A-Za-z0-9\s.]+?(?=\])""".r
-  // TODO StepRefRegex out of sync, should use new parsers
+  val RefBraceL = '['
+  val RefBraceR = ']'
 
-  /**
-   * Whitespace are dots is removed. This regex matches a dot with optional whitespace on either side.
-   */
-  val DotWithWhitespaceRegex = """\s*\.\s*""".r
+  @inline def MakeRef(label: String) = RefBraceL + label + RefBraceR
+  @inline def MakeRef(sb: StringBuilder, label: String) {
+    sb += RefBraceL
+    sb ++= label
+    sb += RefBraceR
+  }
 
-  @inline def MakeRef(ref: String) = "[" + ref + "]"
-
-  // TODO IsInvalidStepLabel out of sync, should use new parsers
-  @inline def IsInvalidStepLabel(label: String) = label.indexOf('.') == -1
-
-  @inline def InvalidStepRef(label: String) = label + "?"
-
-  @inline def NormaliseStepRef(label: String) = DotWithWhitespaceRegex.replaceAllIn(label.trim, ".")
+  @inline def MakeInvalidRef(label: String) = label + "?"
+  @inline def MakeInvalidRef(sb: StringBuilder, label: String) = {
+    sb += RefBraceL
+    sb ++= label
+    sb += '?'
+    sb += RefBraceR
+  }
 
   val DeletedRef = MakeRef("DELETED")
 
@@ -51,24 +47,62 @@ object MutableTextWithStepRefs {
    */
   object MyLittleParser extends RegexParsers {
 
+    // Gobbles whitespace. In plain-text we need whitespace preserved.
+    @inline private def gobbleWhitespace(sb: StringBuilder, _in: Input) = {
+      var in = _in
+      while (!in.atEnd && Character.isWhitespace(in.first)) {
+        sb += in.first;
+        in = in.rest
+      }
+      in
+    }
+
     /**
-     * Non-greedily matches 0-n characters.
+     * Non-greedily matches 0-n characters, followed by another given matcher.
      *
-     * In-built parsers are all greedy; even ".*?".r won't work.
+     * (In-built parsers are all greedy; even ".*?".r won't work.)
      *
+     * @param keepText If true, whitespace at the end of the text will be preserved.
      * @param nextParser The parser that matches after this. It must succeed for this to stop.
      * @tparam T The type of the next parser.
      * @return A tuple of the characters collected here (can be an empty string), and the result of nextParser.
      */
-    def AnyTextThen[T](nextParser: Parser[T]) = Parser[Tuple2[String, T]] { in =>
+    def AnyTextThen[T](keepText: Boolean, nextParser: Parser[T]) = Parser[(String, T)] { in =>
       val sb = new StringBuilder
-      @tailrec def parse(in: Input): ParseResult[Tuple2[String, T]] =
+      @tailrec def parse(_in: Input): ParseResult[(String, T)] = {
+        val in = if (keepText) gobbleWhitespace(sb, _in) else _in
         nextParser(in) match {
           case Success(a, rest) => Success((sb.toString, a), rest)
           case e@Error(_, _)    => e // still have to propagate error
           case _ if (in.atEnd)  => Failure("end of input", in)
           case _                => sb += in.first; parse(in.rest)
         }
+      }
+      parse(in)
+    }
+
+    /**
+     * Non-greedily matches 0-n characters, optionally followed by another given matcher.
+     *
+     * In-built parsers are all greedy; even ".*?".r won't work.
+     *
+     * @param keepText If true, whitespace at the end of the text will be preserved.
+     * @param nextParser The parser that may match after this. If it succeeds, this stops; else this will collect the
+     *                   entire string.
+     * @tparam T The type of the next parser.
+     * @return A tuple of the characters collected here (can be an empty string), and the result of nextParser.
+     */
+    def AnyTextThenOptional[T](keepText: Boolean, nextParser: Parser[T]) = Parser[(String, Option[T])] { in =>
+      val sb = new StringBuilder
+      @tailrec def parse(_in: Input): ParseResult[(String, Option[T])] = {
+        val in = if (keepText) gobbleWhitespace(sb, _in) else _in
+        nextParser(in) match {
+          case Success(a, rest) => Success((sb.toString, Some(a)), rest)
+          case e@Error(_, _)    => e // still have to propagate error
+          case _ if (in.atEnd)  => Success((sb.toString, None), in)
+          case _                => sb += in.first; parse(in.rest)
+        }
+      }
       parse(in)
     }
 
@@ -87,11 +121,18 @@ object MutableTextWithStepRefs {
     //    }
     //  }
 
-    val optionallyBracedRef: Parser[String] = "[" ~> stepLabel <~ "]" | stepLabel
+    val bracedRef: Parser[String] = "[" ~> stepLabel <~ "]"
+
+    val optionallyBracedRef: Parser[String] = bracedRef | stepLabel
 
     val linkNextRefList: Parser[List[String]] = rep1sep(optionallyBracedRef, "," ?)
 
-    val textWithLinkNext: Parser[(String, List[String])] = AnyTextThen(linkNextArrow ~> linkNextRefList)
+    val textWithLinkNext: Parser[(String, List[String])] = AnyTextThen(false, linkNextArrow ~> linkNextRefList)
+
+    /**
+     * Matches Text and the first step reference. If no refs, then matches the entire input as Text.
+     */
+    val textAndPossibleRef: Parser[(String, Option[String])] = AnyTextThenOptional(true, bracedRef)
   }
 
 }
@@ -168,28 +209,29 @@ class MutableTextWithStepRefs(val msgCentre: MessageCentre,
    */
   private def parsePlainText(text: String): String = {
     val refLookup = refLookupProvider()
+    val newText = new StringBuilder
     refsInText = Map.empty
 
-    val newText = StepRefRegex.replaceAllIn(text, m => {
+    // Parse input
+    var r = parse(textAndPossibleRef, text)
+    while (r.get._2.isDefined) {
+      newText ++= r.get._1
 
-      // Inspect ref
-      val rawLabel = m.matched
-      if (IsInvalidStepLabel(rawLabel))
-        rawLabel // ignore refs without dots
+      // Check label validity
+      val label = r.get._2.get
+      if (refLookup.contains(label)) {
+        if (!refsInText.contains(label)) refsInText += (label -> refLookup(label))
+        MakeRef(newText, label)
+      } else
+        MakeRef(newText, MakeInvalidRef(label))
 
-      else {
-        val label = NormaliseStepRef(m.matched)
-        if (refLookup.contains(label)) {
+      // Continue parsing
+      r = parse(textAndPossibleRef, r.next)
+    }
+    newText ++= r.get._1
 
-          // Match found
-          if (!refsInText.contains(label)) refsInText += (label -> refLookup(label))
-          label
-        } else
-          InvalidStepRef(label)
-      }
-    })
     curRefLookup = refLookup
-    newText
+    newText.toString
   }
 
   /**
@@ -214,7 +256,7 @@ class MutableTextWithStepRefs(val msgCentre: MessageCentre,
     (left, suffix)
   }
 
-  @inline private def areAllLabelsValid(labels : Seq[String]): Boolean = {
+  @inline private def areAllLabelsValid(labels: Seq[String]): Boolean = {
     val refLookup = refLookupProvider()
     labels.find(!refLookup.contains(_)).isEmpty
   }
