@@ -1,6 +1,8 @@
 package com.beardedlogic.usecase.lib
 
+import scala.annotation.tailrec
 import scala.collection.immutable.TreeSet
+import scala.util.parsing.combinator.RegexParsers
 import net.liftweb.actor.LiftActor
 import net.liftweb.common.Logger
 import net.liftweb.http.js.{JsCmds, JsCmd}
@@ -20,6 +22,7 @@ object MutableTextWithStepRefs {
    * Note: The braces are required for the match to complete but are not part of the matched text.
    */
   val StepRefRegex = """(?<=\[)\s*?[A-Za-z0-9][A-Za-z0-9\s.]+?(?=\])""".r
+  // TODO StepRefRegex out of sync, should use new parsers
 
   /**
    * Whitespace are dots is removed. This regex matches a dot with optional whitespace on either side.
@@ -28,13 +31,7 @@ object MutableTextWithStepRefs {
 
   @inline def MakeRef(ref: String) = "[" + ref + "]"
 
-  val UnRefRegex = "^\\[(.+)\\]$".r
-
-  @inline def UnRef(ref: String) = ref match {
-    case UnRefRegex(label) => label
-    case _                 => ref
-  }
-
+  // TODO IsInvalidStepLabel out of sync, should use new parsers
   @inline def IsInvalidStepLabel(label: String) = label.indexOf('.') == -1
 
   @inline def InvalidStepRef(label: String) = label + "?"
@@ -44,9 +41,59 @@ object MutableTextWithStepRefs {
   val DeletedRef = MakeRef("DELETED")
 
   val ArrowRegex = "-->|→".r
-  val ArrowSplitRegex = s"^(.*)(?:$ArrowRegex)(.+)$$".r
   val ArrowBad = "->"
   val ArrowGood = "→"
+
+  /**
+   * My Little Pony here expresses the syntax that enables various special features to sprout from plain UC text.
+   *
+   * @since 15/05/2013
+   */
+  object MyLittleParser extends RegexParsers {
+
+    /**
+     * Non-greedily matches 0-n characters.
+     *
+     * In-built parsers are all greedy; even ".*?".r won't work.
+     *
+     * @param nextParser The parser that matches after this. It must succeed for this to stop.
+     * @tparam T The type of the next parser.
+     * @return A tuple of the characters collected here (can be an empty string), and the result of nextParser.
+     */
+    def AnyTextThen[T](nextParser: Parser[T]) = Parser[Tuple2[String, T]] { in =>
+      val sb = new StringBuilder
+      @tailrec def parse(in: Input): ParseResult[Tuple2[String, T]] =
+        nextParser(in) match {
+          case Success(a, rest) => Success((sb.toString, a), rest)
+          case e@Error(_, _)    => e // still have to propagate error
+          case _ if (in.atEnd)  => Failure("end of input", in)
+          case _                => sb += in.first; parse(in.rest)
+        }
+      parse(in)
+    }
+
+    val linkNextArrow: Parser[String] = ArrowRegex
+
+    val stepLabelComponent: Parser[String] = "[A-Za-z]+|\\d+".r // TODO remove caps?
+
+    val stepLabel: Parser[String] = stepLabelComponent ~ rep1("." ~> stepLabelComponent) ^^ {
+      case h ~ t => (h :: t).mkString(".")
+    }
+
+    // val stepLabel: Parser[String] = Parser { in =>
+    //    stepLabelUnchecked(in) match {
+    //      case s @ Success(lbl, _) => if (validLabels.contains(lbl)) s else Failure("Invalid label",in)
+    //      case x => x
+    //    }
+    //  }
+
+    val optionallyBracedRef: Parser[String] = "[" ~> stepLabel <~ "]" | stepLabel
+
+    val linkNextRefList: Parser[List[String]] = rep1sep(optionallyBracedRef, "," ?)
+
+    val textWithLinkNext: Parser[(String, List[String])] = AnyTextThen(linkNextArrow ~> linkNextRefList)
+  }
+
 }
 
 /**
@@ -58,13 +105,16 @@ object MutableTextWithStepRefs {
  * </ul>
  *
  * Make sure you call <code>init()</code> before use.
+ *
+ * @since 12/05/2013
  */
 class MutableTextWithStepRefs(val msgCentre: MessageCentre,
-                              refLookupProvider: () => Map[String, String],
+                              val refLookupProvider: () => Map[String, String],
                               val id: String = nextFuncName
                                ) extends LiftActor {
 
   import MutableTextWithStepRefs._
+  import MyLittleParser._
 
   private[lib] var curRefLookup = Map.empty[String, String]
   private[lib] var refsInText = Map.empty[String, String]
@@ -107,11 +157,8 @@ class MutableTextWithStepRefs(val msgCentre: MessageCentre,
    * Appends a ? to invalid references.
    */
   private def parseText(origText: String): String = {
-
-    var (text,textSuffix) = parseTextLinkNext(origText)
-
+    var (text, textSuffix) = parseTextLinkNext(origText)
     text = parsePlainText(text)
-
     List(text, textSuffix).filterNot(_.isEmpty).mkString(" ")
   }
 
@@ -119,7 +166,7 @@ class MutableTextWithStepRefs(val msgCentre: MessageCentre,
    * Parses a plan text.
    * Step refs are normalised in text, and recorded in curRefLookup.
    */
-  private def parsePlainText(text: String) : String = {
+  private def parsePlainText(text: String): String = {
     val refLookup = refLookupProvider()
     refsInText = Map.empty
 
@@ -149,32 +196,27 @@ class MutableTextWithStepRefs(val msgCentre: MessageCentre,
    * Scans a text string for an optional "--> 1.0.2" suffix.
    * If found (and valid), the suffix is extracted and normalised.
    */
-  private def parseTextLinkNext(text: String) : Tuple2[String,String] = {
-    var (left,suffix) = (text,"")
-    text match {
-      case ArrowSplitRegex(l,r) =>
-        val refLookup = refLookupProvider()
-        var good = true
-        var validLabels = TreeSet.empty[String]
-        for (rawLabel <- r.replaceAll("]","],").split(",") if good) {
-          val label = UnRef(NormaliseStepRef(rawLabel))
-          if (!label.isEmpty) {
-            if (IsInvalidStepLabel(label) || !refLookup.contains(label)) {
-              good = false
-            } else {
-              validLabels += label
-            }
-          }
-        }
-        if (good && validLabels.nonEmpty) {
-          val labels = validLabels.mkString(", ")
-          left = l.trim
-          suffix = s"$ArrowGood $labels"
-        }
-      case _ =>
+  private def parseTextLinkNext(text: String): (String, String) = {
+    var (left, suffix) = (text, "")
+
+    val p = parseAll(textWithLinkNext, text)
+    if (p.successful) {
+      val (actualText, labels) = p.get
+      if (areAllLabelsValid(labels)) {
+        val sortedLabels = TreeSet(labels: _*).mkString(", ")
+        left = actualText.trim
+        suffix = s"$ArrowGood $sortedLabels"
+      }
     }
+
     left = ArrowRegex.replaceAllIn(left, ArrowBad)
+
     (left, suffix)
+  }
+
+  @inline private def areAllLabelsValid(labels : Seq[String]): Boolean = {
+    val refLookup = refLookupProvider()
+    labels.find(!refLookup.contains(_)).isEmpty
   }
 
   override def messageHandler = {
