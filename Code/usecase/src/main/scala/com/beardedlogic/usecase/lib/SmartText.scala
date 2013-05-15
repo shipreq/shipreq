@@ -4,15 +4,14 @@ import scala.annotation.tailrec
 import scala.collection.immutable.TreeSet
 import scala.util.parsing.combinator.RegexParsers
 import net.liftweb.actor.LiftActor
-import net.liftweb.common.Logger
 import net.liftweb.http.js.{JsCmds, JsCmd}
 import net.liftweb.http.js.JsCmds._
 import net.liftweb.http.SHtml
 import net.liftweb.util.Helpers._
 
 import JsExt._
-import field.CourseFields.StepChangeMsg
-import msg.{MessageCentre, PushToClient}
+import msg.MessageCentre
+import msg.Messages._
 
 object SmartText {
 

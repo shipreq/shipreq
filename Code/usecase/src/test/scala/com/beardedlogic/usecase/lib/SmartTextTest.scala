@@ -2,18 +2,16 @@ package com.beardedlogic.usecase.lib
 
 import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
-import com.beardedlogic.usecase.lib.msg.{PushToClient, MessageCentre}
 import org.scalatest.mock.MockitoSugar
-import com.beardedlogic.usecase.lib.field.CourseFields.StepChangeMsg
 import org.mockito.Mockito._
 import net.liftweb.http.CometActor
 import org.scalatest.prop.{TableFor2, PropertyChecks, Checkers}
 import scala.collection.immutable.TreeSet
 
-import org.scalacheck.Arbitrary._
 import org.scalacheck.Prop._
 import org.scalacheck.Gen
-import com.beardedlogic.usecase.lib.msg.PushToClient
+import msg.MessageCentre
+import msg.Messages._
 
 object SmartTextTest extends MockitoSugar {
 

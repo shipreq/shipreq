@@ -8,7 +8,7 @@ import net.liftweb.http.js.JsExp.strToJsExp
 import net.liftweb.util.Helpers._
 import lib.UCEditorState
 import lib.field.Field
-import lib.msg.PushToClient
+import lib.msg.Messages._
 
 import net.liftweb.common.Logger
 

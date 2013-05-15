@@ -11,6 +11,7 @@ import scala.annotation.tailrec
 import scala.xml._
 import JsExt._
 import StepTree._
+import msg.Messages._
 
 object CourseFields {
   import Fields.Template
@@ -29,11 +30,6 @@ object CourseFields {
   // TODO Move IfCssSel and PassThru elsewhere
   val PassThru = "dpp_recommends_this_oh_well" #> ""
   def IfCssSel(cond: => Boolean)(expr: => CssSel): CssSel = if (cond) expr else PassThru
-
-  /**
-   * Message that indicates that steps have changed.
-   */
-  case object StepChangeMsg
 }
 
 abstract class CourseFields extends Field {

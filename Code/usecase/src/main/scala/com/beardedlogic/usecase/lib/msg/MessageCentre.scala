@@ -46,7 +46,7 @@ class MessageCentre(val cometActor: CometActor) extends LiftActor {
     subscribers = subscribers.filter(_ ne subscriber)
   }
 
-  @inline final def !(msg: CometMsg): Unit = {
+  @inline final def !(msg: CometMessage): Unit = {
     cometActor ! msg
   }
 }
