@@ -144,7 +144,7 @@ class MutableTextWithStepRefsTest
   describe("MyLittleParser") {
     import MutableTextWithStepRefs.{MyLittleParser => P}
 
-    it("should parse stepLabel") {
+    it("should parse StepLabel") {
       val examples = Table(("EXAMPLE", "PASS")
                             , ("1.0", true)
                             , ("1.0.a", true)
@@ -160,10 +160,10 @@ class MutableTextWithStepRefsTest
                             , ("X1", false)
                             , ("", false)
                           )
-      test(P.stepLabel, examples)(_.replaceAll("\\s+", ""))
+      test(P.StepLabel, examples)(_.replaceAll("\\s+", ""))
     }
 
-    it("should parse optionallyBracedRef") {
+    it("should parse OptionallyBracedRef") {
       val examples = Table(("EXAMPLE", "PASS")
                             , ("1.0", true)
                             , ("1.0.a.iii.1", true)
@@ -180,10 +180,10 @@ class MutableTextWithStepRefsTest
                             , ("[[1.0]]", false)
                             , ("", false)
                           )
-      test(P.optionallyBracedRef, examples)(_.replaceAll("[\\s\\[\\]]+", ""))
+      test(P.OptionallyBracedRef, examples)(_.replaceAll("[\\s\\[\\]]+", ""))
     }
 
-    it("should parse linkNextRefList") {
+    it("should parse FlowToRefList") {
       val examples = Table(("EXAMPLE", "PASS")
                             , ("1.0", true)
                             , ("1.0, 1.2", true)
@@ -195,12 +195,12 @@ class MutableTextWithStepRefsTest
                             , ("[1.0] 1.2. a, [1.3] [1.1]", true)
                             , ("", false)
                           )
-      test(P.linkNextRefList, examples) {
+      test(P.FlowToRefList, examples) {
         _.replace("[", ",[").replace("]", "],").replaceAll("[\\s\\[\\]]+", "").split(",+").filter(_.nonEmpty).toList
       }
     }
 
-    it("should parse textWithLinkNext") {
+    it("should parse TextAndFlowToTargets") {
 
       val examples = Table(("EXAMPLE", "TEXT", "REFS")
                             , ("omg --> 1.0", "omg", List("1.0"))
@@ -209,7 +209,7 @@ class MutableTextWithStepRefsTest
                             , ("excellent --> yo --> 1.0", "excellent --> yo", List("1.0"))
                           )
       forAll(examples) { (input, expText, expRefs) =>
-        val r = P.parseAll(P.textWithLinkNext, input)
+        val r = P.parseAll(P.TextAndFlowToTargets, input)
         r.successful should be(true)
         r.get._1 should be(expText)
         r.get._2 should be(expRefs)
@@ -227,7 +227,7 @@ class MutableTextWithStepRefsTest
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  describe("-->") {
+  describe("Flow-to parsing") {
 
     def testText(a: String, b: String) {
       subjectWithText(a).text should be(b)

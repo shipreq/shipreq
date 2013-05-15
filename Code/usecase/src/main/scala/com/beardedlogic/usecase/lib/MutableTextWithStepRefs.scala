@@ -36,9 +36,9 @@ object MutableTextWithStepRefs {
 
   val DeletedRef = MakeRef("DELETED")
 
-  val ArrowRegex = "-->|→".r
-  val ArrowBad = "->"
-  val ArrowGood = "→"
+  val FlowToArrowRegex = "-->|→".r
+  val FlowToArrowBadReplacement = "->"
+  val FlowToArrowGoodReplacement = "→"
 
   /**
    * My Little Pony here expresses the syntax that enables various special features to sprout from plain UC text.
@@ -106,33 +106,26 @@ object MutableTextWithStepRefs {
       parse(in)
     }
 
-    val linkNextArrow: Parser[String] = ArrowRegex
+    val StepLabelComponent: Parser[String] = "[A-Za-z]+|\\d+".r // TODO remove caps?
 
-    val stepLabelComponent: Parser[String] = "[A-Za-z]+|\\d+".r // TODO remove caps?
-
-    val stepLabel: Parser[String] = stepLabelComponent ~ rep1("." ~> stepLabelComponent) ^^ {
+    val StepLabel: Parser[String] = StepLabelComponent ~ rep1("." ~> StepLabelComponent) ^^ {
       case h ~ t => (h :: t).mkString(".")
     }
 
-    // val stepLabel: Parser[String] = Parser { in =>
-    //    stepLabelUnchecked(in) match {
-    //      case s @ Success(lbl, _) => if (validLabels.contains(lbl)) s else Failure("Invalid label",in)
-    //      case x => x
-    //    }
-    //  }
+    val BracedRef: Parser[String] = "[" ~> StepLabel <~ "]"
 
-    val bracedRef: Parser[String] = "[" ~> stepLabel <~ "]"
+    val OptionallyBracedRef: Parser[String] = BracedRef | StepLabel
 
-    val optionallyBracedRef: Parser[String] = bracedRef | stepLabel
+    val FlowToArrow: Parser[String] = FlowToArrowRegex
 
-    val linkNextRefList: Parser[List[String]] = rep1sep(optionallyBracedRef, "," ?)
+    val FlowToRefList: Parser[List[String]] = rep1sep(OptionallyBracedRef, "," ?)
 
-    val textWithLinkNext: Parser[(String, List[String])] = AnyTextThen(false, linkNextArrow ~> linkNextRefList)
+    val TextAndFlowToTargets: Parser[(String, List[String])] = AnyTextThen(false, FlowToArrow ~> FlowToRefList)
 
     /**
      * Matches Text and the first step reference. If no refs, then matches the entire input as Text.
      */
-    val textAndPossibleRef: Parser[(String, Option[String])] = AnyTextThenOptional(true, bracedRef)
+    val TextAndPossibleRef: Parser[(String, Option[String])] = AnyTextThenOptional(true, BracedRef)
   }
 
 }
@@ -191,21 +184,20 @@ class MutableTextWithStepRefs(val msgCentre: MessageCentre,
   }
 
   /**
-   * Scans text for step references.
-   *
-   * Creates a map-to-ids of valid references.
-   * Removes whitespace from references.
-   * Appends a ? to invalid references.
+   * Parses text submitted by user.
    */
   private def parseText(origText: String): String = {
-    var (text, textSuffix) = parseTextLinkNext(origText)
+    var (text, textSuffix) = parseTextForFlowTo(origText)
     text = parsePlainText(text)
     List(text, textSuffix).filterNot(_.isEmpty).mkString(" ")
   }
 
   /**
    * Parses a plan text.
-   * Step refs are normalised in text, and recorded in curRefLookup.
+   *
+   * Records a map-to-ids of valid references in curRefLookup.
+   * Removes whitespace from references.
+   * Appends a ? to invalid references.
    */
   private def parsePlainText(text: String): String = {
     val refLookup = refLookupProvider()
@@ -213,7 +205,7 @@ class MutableTextWithStepRefs(val msgCentre: MessageCentre,
     refsInText = Map.empty
 
     // Parse input
-    var r = parse(textAndPossibleRef, text)
+    var r = parse(TextAndPossibleRef, text)
     while (r.get._2.isDefined) {
       newText ++= r.get._1
 
@@ -226,7 +218,7 @@ class MutableTextWithStepRefs(val msgCentre: MessageCentre,
         MakeRef(newText, MakeInvalidRef(label))
 
       // Continue parsing
-      r = parse(textAndPossibleRef, r.next)
+      r = parse(TextAndPossibleRef, r.next)
     }
     newText ++= r.get._1
 
@@ -235,25 +227,26 @@ class MutableTextWithStepRefs(val msgCentre: MessageCentre,
   }
 
   /**
-   * Scans a text string for an optional "--> 1.0.2" suffix.
+   * Scans input for an optional "--> 1.0.2" suffix indicating to which steps the current step can flow.
+   *
    * If found (and valid), the suffix is extracted and normalised.
    */
-  private def parseTextLinkNext(text: String): (String, String) = {
-    var (left, suffix) = (text, "")
+  private def parseTextForFlowTo(input: String): (String, String) = {
+    var (text, suffix) = (input, "")
 
-    val p = parseAll(textWithLinkNext, text)
+    val p = parseAll(TextAndFlowToTargets, input)
     if (p.successful) {
       val (actualText, labels) = p.get
       if (areAllLabelsValid(labels)) {
         val sortedLabels = TreeSet(labels: _*).mkString(", ")
-        left = actualText.trim
-        suffix = s"$ArrowGood $sortedLabels"
+        text = actualText.trim
+        suffix = s"$FlowToArrowGoodReplacement $sortedLabels"
       }
     }
 
-    left = ArrowRegex.replaceAllIn(left, ArrowBad)
+    text = FlowToArrowRegex.replaceAllIn(text, FlowToArrowBadReplacement)
 
-    (left, suffix)
+    (text, suffix)
   }
 
   @inline private def areAllLabelsValid(labels: Seq[String]): Boolean = {
