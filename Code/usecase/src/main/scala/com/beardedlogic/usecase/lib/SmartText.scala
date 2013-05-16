@@ -37,11 +37,11 @@ object SmartText {
 
   val DeletedRef = MakeRef("DELETED")
 
-  val FlowToArrowRegex = "-->|[→➡⇨⇒⇾]".r
+  val FlowToArrowRegex = "-{2,}>|[→➡⇨⇒⇾]".r
   val FlowToArrowBadReplacement = "->"
   val FlowToArrowGoodReplacement = "➡"
 
-  val FlowFromArrowRegex = "<--|[←⬅⇦⇐⇽]".r
+  val FlowFromArrowRegex = "<-{2,}|[←⬅⇦⇐⇽]".r
   val FlowFromArrowBadReplacement = "<-"
   val FlowFromArrowGoodReplacement = "⬅"
 
@@ -301,15 +301,16 @@ class SmartStepText(override val msgCentre: MessageCentre,
   import SmartText._
   import MyLittleParser._
 
+  private[lib] var flowFromRefs = Set.empty[String]
   private[lib] var flowToRefs = Set.empty[String]
 
   /**
    * Parses text submitted by user.
    */
   override protected def parseText(origText: String): String = {
-    var (text, textSuffix) = parseTextForFlow(origText)
+    var (text, flowFromText, flowToText) = parseTextForFlow(origText)
     text = parsePlainText(text)
-    List(text, textSuffix).filterNot(_.isEmpty).mkString(" ")
+    List(text, flowFromText, flowToText).filterNot(_.isEmpty).mkString(" ")
   }
 
   /**
@@ -317,34 +318,62 @@ class SmartStepText(override val msgCentre: MessageCentre,
    *
    * If found (and valid), they are extracted and normalised.
    */
-  private def parseTextForFlow(input: String): (String, String) = {
-    var (text, suffix) = (input, "")
+  private def parseTextForFlow(input: String): (String, String, String) = {
+    var (text, flowFromText, flowToText) = (input, "", "")
 
+    // Backup and clear flow-refs
+    val prevFlowFromRefs = flowFromRefs
     val prevFlowToRefs = flowToRefs
+    flowFromRefs = Set.empty
     flowToRefs = Set.empty
 
+    // Attempt parse with flow clauses
     val p = parseAll(TextAndFlow, input)
     if (p.successful) {
       val (actualText, flowResult) = p.get
 
-      if (flowResult.to.isDefined) {
-        val labels = flowResult.to.get
-        if (areAllLabelsValid(labels)) {
-          flowToRefs = labels.map(refAndIdLookup(_)).toSet
-          val sortedLabels = TreeSet(labels: _*).mkString(", ")
-          text = actualText.trim
-          suffix = s"$FlowToArrowGoodReplacement $sortedLabels"
-        }
+      processFlowParseResult(flowResult.from, FlowFromArrowGoodReplacement) match {
+        case (_, _, false) =>
+        case (flowFromRefs2, flowFromText2, _) =>
+
+          processFlowParseResult(flowResult.to, FlowToArrowGoodReplacement) match {
+            case (_, _, false) =>
+            case (flowToRefs2, flowToText2, _) =>
+
+              // From & To clauses are valid
+              text = actualText.trim
+              flowFromRefs = flowFromRefs2
+              flowToRefs = flowToRefs2
+              flowFromText = flowFromText2
+              flowToText = flowToText2
+          }
       }
     }
 
+    if (flowFromRefs != prevFlowFromRefs) msgCentre ! FlowFromChangeMsg(flowFromRefs, stepId)
+    if (flowToRefs != prevFlowToRefs) msgCentre ! FlowToChangeMsg(stepId, flowToRefs)
+    text = FlowFromArrowRegex.replaceAllIn(text, FlowFromArrowBadReplacement)
     text = FlowToArrowRegex.replaceAllIn(text, FlowToArrowBadReplacement)
 
-    if (flowToRefs != prevFlowToRefs) {
-      msgCentre ! FlowToChangeMsg(flowToRefs, stepId)
-    }
+    (text, flowFromText, flowToText)
+  }
 
-    (text, suffix)
+  @inline private def processFlowParseResult(labelsOp: Option[List[String]], refJoin: String) = {
+    var (refs, text, allGood) = (Set.empty[String], "", true)
+    if (labelsOp.isDefined) {
+      val labels = labelsOp.get
+      if (areAllLabelsValid(labels)) {
+
+        // Success!
+        val sortedLabels = TreeSet(labels: _*).mkString(", ")
+        refs = labels.map(refAndIdLookup(_)).toSet
+        text = s"$refJoin $sortedLabels"
+
+      } else
+        // Invalid labels found
+        allGood = false
+    }
+    (refs, text, allGood)
   }
 
   override def messageHandler = thisMessageHandler orElse super.messageHandler

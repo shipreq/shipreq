@@ -5,11 +5,10 @@ import scala.collection.immutable.TreeSet
 import net.liftweb.http.CometActor
 
 import org.mockito.Mockito._
-import org.scalacheck.Prop._
-import org.scalacheck.Gen
 import org.scalatest.FunSpec
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.mock.MockitoSugar
+import org.scalatest.prop.Tables.Table
 import org.scalatest.prop._
 
 import msg.MessageCentre
@@ -22,6 +21,20 @@ object SmartTextTest extends MockitoSugar {
 
   val StepState2 = Map("S.A" -> "X1", "S.2" -> "X2", "S.4" -> "X4", "S.F" -> "X5",
                         "X1" -> "S.A", "X2" -> "S.2", "X4" -> "S.4", "X5" -> "S.F")
+
+  val StepStateX2 = Map("1.0" -> "X1", "1.2" -> "X2", "1.3" -> "X3", "3.E.1" -> "X3E1", "3.E.2" -> "X3E2",
+                        "X1" -> "1.0", "X2" -> "1.2", "X3" -> "1.3", "X3E1" -> "3.E.1", "X3E2" -> "3.E.2")
+
+  val TextWithFlowExamples = Table[String, String, List[String], List[String]](
+    ("EXAMPLE", "TEXT", "REFS-FROM", "REFS-TO")
+    , ("omg --> 1.0", "omg", Nil, List("1.0"))
+    , ("omg <-- 1.0", "omg", List("1.0"), Nil)
+    , ("omg --> 1.0 <-- 1.2", "omg", List("1.2"), List("1.0"))
+    , ("omg <-- 1.0 --> 1.2", "omg", List("1.0"), List("1.2"))
+    , ("hehe sweet! --> 1.3 [1.0]", "hehe sweet!", Nil, List("1.3", "1.0"))
+    , ("excellent yo --> 3.E.1,3.E.2", "excellent yo", Nil, List("3.E.1", "3.E.2"))
+    , ("excellent --> yo --> 1.0", "excellent --> yo", Nil, List("1.0"))
+  )
 
   class MsgCollector extends MessageCentre(mock[CometActor]) {
     val sent = new ListBuffer[Any]
@@ -37,8 +50,8 @@ object SmartTextTest extends MockitoSugar {
     m
   }
 
-  def stepFieldWithText(text: String, stepId: String = "SUBJ") = {
-    val m = new SmartStepText(mock[MessageCentre], () => StepState1, stepId, stepId + "-t")
+  def stepFieldWithText(text: String, stepId: String = "SUBJ", refLookup: Map[String,String] = StepState1) = {
+    val m = new SmartStepText(mock[MessageCentre], () => refLookup, stepId, stepId + "-t")
     m.init
     m.text = text
     m
@@ -91,7 +104,7 @@ class SmartTextTest
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  describe("text=(newText)") {
+  describe("Plain text parsing") {
     describe("internal state") {
       it("should examine the text for step refs and create map of refs -> ids") {
         val m = new SmartText(mock[MessageCentre], () => StepState1)
@@ -117,7 +130,7 @@ class SmartTextTest
       }
     }
 
-    // -------------------------------------------------------------------------------------------------------------------
+    // -----------------------------------------------------------------------------------------------------------------
 
     describe("transformations") {
       def test(input: String, expectedOutput: String = null) {
@@ -213,17 +226,7 @@ class SmartTextTest
     }
 
     it("should parse TextAndFlow") {
-      val examples = Table[String, String, List[String], List[String]](
-        ("EXAMPLE", "TEXT", "REFS-FROM", "REFS-TO")
-        , ("omg --> 1.0", "omg", Nil, List("1.0"))
-        , ("omg <-- 1.0", "omg", List("1.0"), Nil)
-        , ("omg --> 1.0 <-- 1.2", "omg", List("1.2"), List("1.0"))
-        , ("omg <-- 1.0 --> 1.2", "omg", List("1.0"), List("1.2"))
-        , ("hehe sweet! --> 1.3 [1.0]", "hehe sweet!", Nil, List("1.3", "1.0"))
-        , ("excellent yo --> 3.E.1,3.E.2", "excellent yo", Nil, List("3.E.1", "3.E.2"))
-        , ("excellent --> yo --> 1.0", "excellent --> yo", Nil, List("1.0"))
-      )
-      forAll(examples) { (input, expText, expRefsFrom, expRefsTo) =>
+      forAll(TextWithFlowExamples) { (input, expText, expRefsFrom, expRefsTo) =>
         val r = P.parseAll(P.TextAndFlow, input)
         r.successful should be(true)
         r.get._1 should be(expText)
@@ -244,11 +247,13 @@ class SmartTextTest
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  describe("Flow-to parsing") {
+  describe("Flow parsing") {
 
-    def testText(a: String, b: String) {
-      stepFieldWithText(a).text should be(b)
-      stepFieldWithText(a.replaceAll("-->", "➡")).text should be(b)
+    implicit class StringFlowExt(s: String) {
+      def fixArrows(from: Boolean) = if (from)
+        s.replace("-->", "<--").replace("➡", "⬅").replace("->", "<-")
+      else
+        s.replace("<--", "-->").replace("⬅", "➡").replace("<-", "->")
     }
 
     it("should only run on step fields (ie. you can't flow from steps into normal text fields like Actors)") {
@@ -257,7 +262,27 @@ class SmartTextTest
       textFieldWithText(input).text should be(input)
     }
 
-    describe("text transformation") {
+    it("should record flow ref IDs") {
+      // Manual test
+	  val s2 = stepFieldWithText("manual test --> 1.0 <-- 1.2", refLookup = StepStateX2)
+	  s2.flowFromRefs should be(Set("X2"))
+	  s2.flowToRefs should be(Set("X1"))
+
+	  // Use shared examples + id lookup
+      forAll(TextWithFlowExamples) { (input, expText, expRefsFrom, expRefsTo) =>
+        val s = stepFieldWithText(input, refLookup = StepStateX2)
+        s.flowFromRefs should be(expRefsFrom.map(StepStateX2(_)).toSet)
+        s.flowToRefs should be(expRefsTo.map(StepStateX2(_)).toSet)
+      }
+    }
+
+    def textTransformation(from:Boolean) {
+
+      def testText(a: String, b: String) {
+        stepFieldWithText(a.fixArrows(from)).text should be(b.fixArrows(from))
+        stepFieldWithText(a.replaceAll("-->", "➡").fixArrows(from)).text should be(b.fixArrows(from))
+      }
+
       it("should transform when invalid") {
         val examples = Table(("Before", "After")
                               , ("--> blah", "-> blah")
@@ -307,6 +332,14 @@ class SmartTextTest
                             )
         forAll(examples)(testText _)
       }
+    }
+
+    describe("text transformation: ⬅") {
+      it should behave like textTransformation(true)
+    }
+
+    describe("text transformation: ➡") {
+      it should behave like textTransformation(false)
 
       it("should parse random valid statements") {
         check(validStatementProp)
@@ -316,18 +349,20 @@ class SmartTextTest
       }
     }
 
-    describe(s"$FlowToChangeMsg broadcasting") {
+    def flowChange(from:Boolean) = {
       def test(textBefore: String, newText: String, expectedToIds: Option[Set[String]]) {
         val m = new MsgCollector
         val s = new SmartStepText(m, () => StepState1, "SUBJ", "SUBJ-t")
         s.init()
-        if (textBefore.nonEmpty) s.text = textBefore
+        if (textBefore.nonEmpty) s.text = textBefore.fixArrows(from)
         m.sent.clear()
-        s.text = newText
+        s.text = newText.fixArrows(from)
         val exp = if (expectedToIds.isEmpty) {
           List.empty
+        } else if (from) {
+          FlowFromChangeMsg(expectedToIds.get, "SUBJ") :: Nil
         } else {
-          FlowToChangeMsg(expectedToIds.get, "SUBJ") :: Nil
+          FlowToChangeMsg("SUBJ", expectedToIds.get) :: Nil
         }
         m.sent should be(exp)
       }
@@ -350,6 +385,14 @@ class SmartTextTest
       it("should not broadcast when no changes and no steps") {
         test("blah", "blah and stuff", None)
       }
+    }
+
+    describe(s"$FlowFromChangeMsg broadcasting") {
+      it should behave like flowChange(true)
+    }
+
+    describe(s"$FlowToChangeMsg broadcasting") {
+    	it should behave like flowChange(false)
     }
   }
 
@@ -491,6 +534,8 @@ class SmartTextTest
 trait SmartTextChecks {
 
   import SmartTextTest._
+  import org.scalacheck.Prop._
+  import org.scalacheck.Gen
 
   val text: Gen[String] = Gen.alphaStr suchThat (s => !s.contains("-->") && !s.contains("➡"))
   val nothing: Gen[String] = ""
