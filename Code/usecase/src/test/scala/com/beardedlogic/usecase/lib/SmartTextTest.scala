@@ -38,7 +38,7 @@ object SmartTextTest extends MockitoSugar {
   }
 
   def stepFieldWithText(text: String, stepId: String = "SUBJ") = {
-    val m = new SmartText(mock[MessageCentre], () => StepState1, stepId = Some(stepId))
+    val m = new SmartStepText(mock[MessageCentre], () => StepState1, stepId, stepId + "-t")
     m.init
     m.text = text
     m
@@ -314,7 +314,7 @@ class SmartTextTest
     describe(s"$FlowToChangeMsg broadcasting") {
       def test(textBefore: String, newText: String, expectedToIds: Option[Set[String]]) {
         val m = new MsgCollector
-        val s = new SmartText(m, () => StepState1, stepId = Some("SUBJ"))
+        val s = new SmartStepText(m, () => StepState1, "SUBJ", "SUBJ-t")
         s.init()
         if (textBefore.nonEmpty) s.text = textBefore
         m.sent.clear()
@@ -386,10 +386,13 @@ class SmartTextTest
       }
     }
 
-    def newSubject(initialText: String, initialRefsInUse: Map[String, String]) = {
+    def newSubject(initialText: String, initialRefsInUse: Map[String, String], useSmartStepText: Boolean = false) = {
       val comet = mock[CometActor]
       val msgCentre = new MessageCentre(comet)
-      val m = new SmartText(msgCentre, () => StepState2)
+      val m = if (useSmartStepText)
+        new SmartStepText(msgCentre, () => StepState2, "", "")
+      else
+        new SmartText(msgCentre, () => StepState2)
       m._text = initialText
       m.refsInText = initialRefsInUse
       m.refAndIdLookup = StepState1
@@ -412,9 +415,17 @@ class SmartTextTest
       }
     }
 
-    describe("when referenced steps change") {
+    describe(s"when referenced steps change (with $SmartText)") {
       def subject = newSubject("Umm [S.1] & [S.2] ah and [S.1]!",
                                 Map("S.1" -> "X1", "S.2" -> "X2"))
+      it should behave like textWasUpdated(subject,
+                                            "Umm [S.A] & [S.2] ah and [S.A]!",
+                                            Map("S.A" -> "X1", "S.2" -> "X2"))
+    }
+
+    describe(s"when referenced steps change (with ${classOf[SmartStepText]})") {
+      def subject = newSubject("Umm [S.1] & [S.2] ah and [S.1]!",
+                                Map("S.1" -> "X1", "S.2" -> "X2"), true)
       it should behave like textWasUpdated(subject,
                                             "Umm [S.A] & [S.2] ah and [S.A]!",
                                             Map("S.A" -> "X1", "S.2" -> "X2"))

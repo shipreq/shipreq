@@ -13,6 +13,8 @@ import JsExt._
 import msg.MessageCentre
 import msg.Messages._
 
+// =====================================================================================================================
+
 object SmartText {
 
   val RefBraceL = '['
@@ -130,6 +132,8 @@ object SmartText {
 
 }
 
+// =====================================================================================================================
+
 /**
  * Encapsulates a String to provide the following functionality:
  * <ul>
@@ -144,20 +148,17 @@ object SmartText {
  */
 class SmartText(val msgCentre: MessageCentre,
                 val refAndIdLookupProvider: () => Map[String, String],
-                val textareaId: String = nextFuncName,
-                val stepId: Option[String] = None
+                val textareaId: String = nextFuncName
                  ) extends LiftActor {
 
   import SmartText._
   import MyLittleParser._
 
-  private[this] val writeLock = new Object
-  private[lib] var refAndIdLookup = Map.empty[String, String]
-  private[lib] var refsInText = Map.empty[String, String]
-  private[lib] var refsInLinkNext = Map.empty[String, String]
-  private[lib] var flowToRefs = Set.empty[String]
+  protected val writeLock = new Object
+  protected[lib] var refAndIdLookup = Map.empty[String, String]
+  protected[lib] var refsInText = Map.empty[String, String]
 
-  private[lib] var _text = ""
+  protected[lib] var _text = ""
 
   def text = _text
 
@@ -191,14 +192,8 @@ class SmartText(val msgCentre: MessageCentre,
   /**
    * Parses text submitted by user.
    */
-  private def parseText(origText: String): String = {
-    if (stepId.isEmpty) {
-      parsePlainText(origText)
-    } else {
-      var (text, textSuffix) = parseTextForFlowTo(origText)
-      text = parsePlainText(text)
-      List(text, textSuffix).filterNot(_.isEmpty).mkString(" ")
-    }
+  protected def parseText(origText: String): String = {
+    parsePlainText(origText)
   }
 
   /**
@@ -208,7 +203,7 @@ class SmartText(val msgCentre: MessageCentre,
    * Removes whitespace from references.
    * Appends a ? to invalid references.
    */
-  private def parsePlainText(text: String): String = {
+  protected def parsePlainText(text: String): String = {
     val newText = new StringBuilder
     refsInText = Map.empty
 
@@ -233,38 +228,7 @@ class SmartText(val msgCentre: MessageCentre,
     newText.toString
   }
 
-  /**
-   * Scans input for an optional "--> 1.0.2" suffix indicating to which steps the current step can flow.
-   *
-   * If found (and valid), the suffix is extracted and normalised.
-   */
-  private def parseTextForFlowTo(input: String): (String, String) = {
-    var (text, suffix) = (input, "")
-
-    val prevFlowToRefs = flowToRefs
-    flowToRefs = Set.empty
-
-    val p = parseAll(TextAndFlowToTargets, input)
-    if (p.successful) {
-      val (actualText, labels) = p.get
-      if (areAllLabelsValid(labels)) {
-        flowToRefs = labels.map(refAndIdLookup(_)).toSet
-        val sortedLabels = TreeSet(labels: _*).mkString(", ")
-        text = actualText.trim
-        suffix = s"$FlowToArrowGoodReplacement $sortedLabels"
-      }
-    }
-
-    text = FlowToArrowRegex.replaceAllIn(text, FlowToArrowBadReplacement)
-
-    if (flowToRefs != prevFlowToRefs) {
-      msgCentre ! FlowToChangeMsg(flowToRefs, stepId.get)
-    }
-
-    (text, suffix)
-  }
-
-  @inline private def areAllLabelsValid(labels: Seq[String]): Boolean = {
+  @inline protected final def areAllLabelsValid(labels: Seq[String]): Boolean = {
     labels.find(!refAndIdLookup.contains(_)).isEmpty
   }
 
@@ -303,4 +267,68 @@ class SmartText(val msgCentre: MessageCentre,
   }
 
   private def updateTextJs(): JsCmd = JqId(textareaId) ~> JqSetValue(text, false)
+}
+
+// =====================================================================================================================
+
+/**
+ * Extended implementation for step text-fields.
+ *
+ * @param stepId The ID of the owning step.
+ */
+class SmartStepText(override val msgCentre: MessageCentre,
+                    override val refAndIdLookupProvider: () => Map[String, String],
+                    val stepId: String,
+                    override val textareaId: String
+                     ) extends SmartText(msgCentre, refAndIdLookupProvider, textareaId) {
+
+  import SmartText._
+  import MyLittleParser._
+
+  private[lib] var flowToRefs = Set.empty[String]
+
+  /**
+   * Parses text submitted by user.
+   */
+  override protected def parseText(origText: String): String = {
+    var (text, textSuffix) = parseTextForFlowTo(origText)
+    text = parsePlainText(text)
+    List(text, textSuffix).filterNot(_.isEmpty).mkString(" ")
+  }
+
+  /**
+   * Scans input for an optional "--> 1.0.2" suffix indicating to which steps the current step can flow.
+   *
+   * If found (and valid), the suffix is extracted and normalised.
+   */
+  private def parseTextForFlowTo(input: String): (String, String) = {
+    var (text, suffix) = (input, "")
+
+    val prevFlowToRefs = flowToRefs
+    flowToRefs = Set.empty
+
+    val p = parseAll(TextAndFlowToTargets, input)
+    if (p.successful) {
+      val (actualText, labels) = p.get
+      if (areAllLabelsValid(labels)) {
+        flowToRefs = labels.map(refAndIdLookup(_)).toSet
+        val sortedLabels = TreeSet(labels: _*).mkString(", ")
+        text = actualText.trim
+        suffix = s"$FlowToArrowGoodReplacement $sortedLabels"
+      }
+    }
+
+    text = FlowToArrowRegex.replaceAllIn(text, FlowToArrowBadReplacement)
+
+    if (flowToRefs != prevFlowToRefs) {
+      msgCentre ! FlowToChangeMsg(flowToRefs, stepId)
+    }
+
+    (text, suffix)
+  }
+
+  override def messageHandler = thisMessageHandler orElse super.messageHandler
+  private val thisMessageHandler: PartialFunction[Any, Unit] = {
+    case FlowToChangeMsg =>
+  }
 }

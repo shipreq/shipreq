@@ -51,14 +51,14 @@ abstract class CourseFields extends Field {
     _stepLabelMap
   }
 
-  private[this] var textFields: Map[String, SmartText] = Map.empty
+  private[this] var textFields: Map[String, SmartStepText] = Map.empty
 
   override def init() {
     for (n <- flattenNodes(courses)) createAndRegisterTextField(n)
   }
 
   private[this] def createAndRegisterTextField(n:StepNode) {
-    val f = new SmartText(msgCentre, state.stepLabelMapProvider, n.stepTextId, Some(n.id))
+    val f = new SmartStepText(msgCentre, state.stepLabelMapProvider, n.id, n.stepTextId)
     f.init
     textFields += (n.id -> f)
   }
