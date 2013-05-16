@@ -37,9 +37,9 @@ object SmartText {
 
   val DeletedRef = MakeRef("DELETED")
 
-  val FlowToArrowRegex = "-->|→".r
+  val FlowToArrowRegex = "-->|[→➡]".r
   val FlowToArrowBadReplacement = "->"
-  val FlowToArrowGoodReplacement = "→"
+  val FlowToArrowGoodReplacement = "➡"
 
   /**
    * My Little <strike>Pony</strike> Parser here expresses the syntax that enables various special features to sprout

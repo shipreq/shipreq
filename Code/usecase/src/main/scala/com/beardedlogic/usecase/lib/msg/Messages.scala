@@ -21,7 +21,7 @@ object Messages {
   /**
    * Indicates that a step's flow-to list has changed.
    *
-   * Example: If the text of step 1.7 changes from `"Blah"` or `"Blah → 1.0.2"` to `"Blah → 1.3, 1.4"`
+   * Example: If the text of step 1.7 changes from `"Blah"` or `"Blah ➡ 1.0.2"` to `"Blah ➡ 1.3, 1.4"`
    * then this message will be broadcast:
    * {{{
    * FlowToChangeMsg( [1.3, 1.4], 1.7 )

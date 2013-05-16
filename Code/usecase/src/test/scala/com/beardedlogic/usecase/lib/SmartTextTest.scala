@@ -243,12 +243,12 @@ class SmartTextTest
 
     def testText(a: String, b: String) {
       stepFieldWithText(a).text should be(b)
-      stepFieldWithText(a.replaceAll("-->", "→")).text should be(b)
+      stepFieldWithText(a.replaceAll("-->", "➡")).text should be(b)
     }
 
     it("should only run on step fields (ie. you can't flow from steps into normal text fields like Actors)") {
       val input = "--> S.1,S.1"
-      stepFieldWithText(input).text should be("→ S.1")
+      stepFieldWithText(input).text should be("➡ S.1")
       textFieldWithText(input).text should be(input)
     }
 
@@ -270,27 +270,27 @@ class SmartTextTest
 
       it("should parse a single valid ref") {
         val examples = Table(("Before", "After")
-                              , ("--> S.1", "→ S.1")
-                              , ("--> [S.1]", "→ S.1")
-                              , ("  -->   S.1  ", "→ S.1")
-                              , ("great --> S.1", "great → S.1")
-                              , ("great-->S.1", "great → S.1")
-                              , ("-->S.1", "→ S.1")
-                              , ("-->[S.1]", "→ S.1")
+                              , ("--> S.1", "➡ S.1")
+                              , ("--> [S.1]", "➡ S.1")
+                              , ("  -->   S.1  ", "➡ S.1")
+                              , ("great --> S.1", "great ➡ S.1")
+                              , ("great-->S.1", "great ➡ S.1")
+                              , ("-->S.1", "➡ S.1")
+                              , ("-->[S.1]", "➡ S.1")
                             )
         forAll(examples)(testText _)
       }
 
       it("should parse a multiple valid refs") {
         val examples = Table(("Before", "After")
-                              , ("-->S.1,S.1", "→ S.1")
-                              , ("--> S.1, S.2", "→ S.1, S.2")
-                              , ("--> S.1,S.2", "→ S.1, S.2")
-                              , ("--> S.1, [S.2]", "→ S.1, S.2")
-                              , ("--> [S.1] [S.2]", "→ S.1, S.2")
-                              , ("--> S.2, S.1", "→ S.1, S.2")
-                              , ("--> S.2, S.1, S.1", "→ S.1, S.2")
-                              , ("--> S.1, S.3, S.1", "→ S.1, S.3")
+                              , ("-->S.1,S.1", "➡ S.1")
+                              , ("--> S.1, S.2", "➡ S.1, S.2")
+                              , ("--> S.1,S.2", "➡ S.1, S.2")
+                              , ("--> S.1, [S.2]", "➡ S.1, S.2")
+                              , ("--> [S.1] [S.2]", "➡ S.1, S.2")
+                              , ("--> S.2, S.1", "➡ S.1, S.2")
+                              , ("--> S.2, S.1, S.1", "➡ S.1, S.2")
+                              , ("--> S.1, S.3, S.1", "➡ S.1, S.3")
                             )
         forAll(examples)(testText _)
       }
@@ -487,7 +487,7 @@ trait SmartTextChecks {
 
   import SmartTextTest._
 
-  val text: Gen[String] = Gen.alphaStr suchThat (s => !s.contains("-->") && !s.contains("→"))
+  val text: Gen[String] = Gen.alphaStr suchThat (s => !s.contains("-->") && !s.contains("➡"))
   val nothing: Gen[String] = ""
   val whitespace: Gen[String] = Gen.listOf(Gen.oneOf(' ', '\t')).map(_.mkString)
   val left: Gen[String] = text | nothing | whitespace
@@ -496,7 +496,7 @@ trait SmartTextChecks {
 
   val arrow = for {
     w1 <- optionalWhitespace
-    a <- Gen.oneOf("-->", "→")
+    a <- Gen.oneOf("-->", "➡")
     w2 <- optionalWhitespace
   } yield w1 + a + w2
 
@@ -521,14 +521,14 @@ trait SmartTextChecks {
   } yield (l, a, r))
 
   val invalidStatementProp = forAll(invalidStatement) { t =>
-    val exp = t.trim.replaceAll("-->|→", "->")
+    val exp = t.trim.replaceAll("-->|➡", "->")
     checkTextParsing(t, exp)
   }
 
   val validStatementProp = forAll(validStatement) { x =>
     val (l, a, steps) = x
     val t = l + a + steps.mkString(",")
-    val end = if (steps.isEmpty) "" else "→ " + TreeSet(steps: _*).map { _.replace("[", "").replace("]", "") }.mkString(", ")
+    val end = if (steps.isEmpty) "" else "➡ " + TreeSet(steps: _*).map { _.replace("[", "").replace("]", "") }.mkString(", ")
     val exp = List(l.trim, end).filter(_.nonEmpty).mkString(" ")
     checkTextParsing(t, exp)
   }
