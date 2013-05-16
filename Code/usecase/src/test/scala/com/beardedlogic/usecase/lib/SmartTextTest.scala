@@ -491,25 +491,23 @@ class SmartTextTest
       it should behave like textWasUpdated(subject, "Watch [DELETED] go.", Map.empty)
     }
 
+    def testSubject2(initialText: String) = {
+      val comet = mock[CometActor]
+      val msgCentre = new MessageCentre(comet)
+      val s = new SmartStepText(msgCentre, () => StepState2, "", "")
+      s.refAndIdLookup = StepState1
+      s.text = initialText
+      s.text should be (initialText)
+      s.sendStepChangeMsg
+      s
+    }
+
     def updateFlowRefs(from: Boolean) {
-
-      def testSubject(_initialText: String) = {
-        val initialText = _initialText.fixArrows(from)
-        val comet = mock[CometActor]
-        val msgCentre = new MessageCentre(comet)
-        val m = new SmartStepText(msgCentre, () => StepState2, "", "")
-        m.refAndIdLookup = StepState1
-        m.text = initialText
-        m.text should be (initialText)
-        m.sendStepChangeMsg
-        m
-      }
-
       def test(_initialText: String, _expectedText: String, expectedIds: Set[String]) {
         val initialText = _initialText.fixArrows(from)
         val expectedText = _expectedText.fixArrows(from)
         val changeExpected = (initialText != expectedText)
-        val s = testSubject(initialText)
+        val s = testSubject2(initialText)
         val refs = if (from) s.flowFrom.refs else s.flowTo.refs
         if (changeExpected) s.refAndIdLookup should be theSameInstanceAs(StepState2)
         refs should be(expectedIds.map(id => (id, StepState2(id))).toMap)
@@ -549,9 +547,22 @@ class SmartTextTest
     describe("Flow-to refs") {
       it should behave like updateFlowRefs(false)
     }
-    ignore("Flow-from & -to refs") {
-//      it should behave like updateFlowRefs(false)
-      // test refs & from & to
+
+    describe("Mixed clauses") {
+      it("should update all clauses and broadcast once") {
+        val examples = Table(("Before", "After")
+                            , ("Blah [S.5]. ⬅ S.2 ➡ S.6", "Blah [S.F]. ⬅ S.2 ➡ S.6")
+                            , ("Blah [S.5]. ⬅ S.1 ➡ S.5", "Blah [S.F]. ⬅ S.A ➡ S.F")
+                            , ("Blah [S.3]. ⬅ S.1 ➡ S.3", "Blah [DELETED]. ⬅ S.A")
+                            , ("Blah [S.3]. ⬅ S.3 ➡ S.1", "Blah [DELETED]. ➡ S.A")
+                            , ("Blah [S.3]. ⬅ S.3 ➡ S.3", "Blah [DELETED].")
+                          )
+        forAll(examples){ (b,a) =>
+          val s = testSubject2(b)
+          s.text should be(a)
+          assertClientUpdated(s)
+        }
+      }
     }
   }
 
