@@ -85,6 +85,7 @@ class StepReferenceTest
     referring.typeInto(refText(stepLabel) + "\t")
   }
 
+  def when_type(stepLabel: String, text: String) { When(stepLabel + " has text: " + text); u.setStepText(labelMap(stepLabel), text + "\t") }
   def when_>>(stepLabel: String) { When(stepLabel + " is indented >>"); u.click_>>(labelMap(stepLabel)) }
   def when_<<(stepLabel: String) { When(stepLabel + " is indented <<"); u.click_<<(labelMap(stepLabel)) }
   def when_+(stepLabel: String) { When("new row inserted after " + stepLabel); u.clickAdd(labelMap(stepLabel)) }
@@ -93,6 +94,13 @@ class StepReferenceTest
   def then_ref_should_be(newStepLabel: String) {
     Then("the reference should be " + newStepLabel)
     eventually { referring.value should be(refText(newStepLabel)) }
+  }
+
+  def then_step_should_be(stepLabel: String, expectedText: String) = step_should_be("Then", stepLabel, expectedText)
+  def _and_step_should_be(stepLabel: String, expectedText: String) = step_should_be("And", stepLabel, expectedText)
+  def step_should_be(prefix: String, stepLabel: String, expectedText: String) {
+    info(s"$prefix $stepLabel should have text: $expectedText")
+    u.assertStepText(labelMap(stepLabel), expectedText)
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -197,7 +205,29 @@ class StepReferenceTest
     it should behave like refsAreParsed(u.ec.clickAddTailStepButton.assertStepCount(1), u.ec.stepTextElem(0))
   }
 
-  //describe("Multiple step refs") {
-    // in same field
-    // in different fields
+  // TODO test multiple step refs in same field
+  // TODO test step refs in multiple fields
+
+  describe("Flow refs") {
+    they("should generally work") {
+      given_103_exists
+      when_type("1.0.3", "-->1.0.1")
+      then_step_should_be("1.0.3", "➡ 1.0.1")
+      _and_step_should_be("1.0.1", "⬅ 1.0.3")
+
+      when_type("1.0.2", "--> 1.0.1, 1.0.3")
+      then_step_should_be("1.0.2", "➡ 1.0.1, 1.0.3")
+      _and_step_should_be("1.0.1", "⬅ 1.0.2, 1.0.3")
+      _and_step_should_be("1.0.3", "⬅ 1.0.2 ➡ 1.0.1")
+
+      when_<<("1.0.3"); mapSteps("1.0", "1.0.1", "1.0.2", "1.1")
+      then_step_should_be("1.0.1", "⬅ 1.0.2, 1.1")
+      _and_step_should_be("1.0.2", "➡ 1.0.1, 1.1")
+      _and_step_should_be("1.1", "⬅ 1.0.2 ➡ 1.0.1")
+
+      when_-("1.0.2"); mapSteps("1.0", "1.0.1", "1.1")
+      then_step_should_be("1.0.1", "⬅ 1.1")
+      _and_step_should_be("1.1", "➡ 1.0.1")
+    }
+  }
 }
