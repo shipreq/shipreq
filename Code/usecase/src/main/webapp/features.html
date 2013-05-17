@@ -1,0 +1,244 @@
+<html>
+<head>
+<meta content="text/html; charset=UTF-8" http-equiv="content-type">
+<link media="screen" type="text/css" href="assets/normalize.css" rel="stylesheet" />
+<link media="screen" type="text/css" href="assets/uce.css" rel="stylesheet" />
+<script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+
+<link type="text/css" rel="stylesheet" href="/assets/uce.css" data-lift="head" />
+<script type="text/javascript" data-lift="head" src="assets/jquery.autosize.js"></script>
+<script type="text/javascript" data-lift="head" src="assets/uce.js"></script>
+
+<script type="text/javascript" class="clearable">
+	
+</script>
+<style media="screen" type="text/css">
+
+#features {margin: 1cm auto 0 auto; width:1000px; background:#f8f8f8}
+#features .feature {margin-bottom: 3em; overflow:hidden; width:100%}
+#features .feature .title {font-size:150%; font-family: serif; font-weight:bold; margin-bottom:1ex}
+#features .feature .desc,
+#features .feature .demo {_isplay:inline-block; vertical-align:top}
+#features .feature .desc {float:left; width:410px; background:#ccf}
+#features .feature .demo {float:right; padding:1ex; width:550px}
+.demo * {font-size:96%; cursor:pointer}
+.demo[data-running="0"] {opacity:0.6; border:solid 1px #555}
+.demo[data-running="1"] {opacity:1; border:solid 1px #900}
+.demo #uce {margin:0 !important}
+.demo #courses-n th, .demo #courses-n td {border:none !important}
+.demo .ucdata th {width:100px}
+.demo .ucdata .label {padding-top:3px}
+.demo .ucdata #courses-n .steps {padding-bottom:2ex}
+.demo .ucdata #courses-a .steps {padding-bottom:1ex}
+#uce textarea:focus,
+#uce textarea:hover {background: #fff; border: dashed 1px #ccc;}
+
+</style>
+</head>
+<body>
+
+	<div id="features">
+
+		<div class="feature">
+			<div class="title">Organise Steps Easily</div>
+			<div class="desc">
+				ACTIONS: delete, insert, indent.<br/>
+				REACTIONS: renumbers steps.<br/>
+				BENEFIT: Fast, don't have to think about org, can focus on UC.<br/>
+				PENALTY: Word numbers is fickle and annoying. If manual, easy to number steps wrong; tedious anyway.
+			</div>
+			<div class="demo" data-running="0" id="d1">
+				<table class="ucdata" id="uce">
+                <tr id="courses-n">
+                    <th>Normal<br />Course
+                    </th>
+                    <td class="steps">
+                        <div class="step noDel" data-lvl="0" id="d1-10">
+                            <div class="label"><span>1.0</span>.</div>
+                            <div class="ctl">
+                                <button class="delete">&dash;</button>
+                                <button class="indentDec">«</button>
+                                <button class="indentInc"><span>»</span></button>
+                                <button class="add">+</button>
+                            </div>
+                            <div class="txt">
+                                <textarea rows="1" name="text">User logs in.</textarea>
+                            </div>
+                        </div>
+                        <div class="step" data-lvl="1" id="d1-101">
+                            <div class="label"><span>1</span>.</div>
+                            <div class="ctl">
+                                <button class="delete">&dash;</button>
+                                <button class="indentDec">«</button>
+                                <button class="indentInc"><span>»</span></button>
+                                <button class="add">+</button>
+                            </div>
+                            <div class="txt">
+                                <textarea rows="1" name="text">User enters one of the following.</textarea>
+                            </div>
+                        </div>
+                        <div class="step" data-lvl="2" id="d1-101a">
+                            <div class="label"><span>a</span>.</div>
+                            <div class="ctl">
+                                <button class="delete">&dash;</button>
+                                <button class="indentDec">«</button>
+                                <button class="indentInc"><span>»</span></button>
+                                <button class="add">+</button>
+                            </div>
+                            <div class="txt">
+                                <textarea rows="1" name="text">Login ID.</textarea>
+                            </div>
+                        </div>
+                        <div class="step" data-lvl="2" id="d1-101b">
+                            <div class="label"><span>b</span>.</div>
+                            <div class="ctl">
+                                <button class="delete">&dash;</button>
+                                <button class="indentDec">«</button>
+                                <button class="indentInc"><span>»</span></button>
+                                <button class="add">+</button>
+                            </div>
+                            <div class="txt">
+                                <textarea rows="1" name="text">Email address.</textarea>
+                            </div>
+                        </div>
+                        <div class="step" data-lvl="1" id="d1-102">
+                            <div class="label"><span>2</span>.</div>
+                            <div class="ctl">
+                                <button class="delete">&dash;</button>
+                                <button class="indentDec">«</button>
+                                <button class="indentInc"><span>»</span></button>
+                                <button class="add">+</button>
+                            </div>
+                            <div class="txt">
+                                <textarea rows="1" name="text">System validates user's credentials.</textarea>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr id="courses-a">
+                    <th>Alternate<br />Courses
+                    </th>
+                    <td class="steps">
+                        <div class="step" data-lvl="0" id="d1-11">
+                            <div class="label"><span>1.1</span>.</div>
+                            <div class="ctl">
+                                <button class="delete">&dash;</button>
+                                <button class="indentDec">«</button>
+                                <button class="indentInc"><span>»</span></button>
+                                <button class="add">+</button>
+                            </div>
+                            <div class="txt">
+                                <textarea rows="1" name="text">Another user is already logged in.</textarea>
+                            </div>
+                        </div>
+                        <div class="addTailStep"><button>+</button></div>
+                    </td>
+                </tr>
+				</table>
+			</div>
+		</div>
+
+        <div class="feature">
+            <div class="title">Reference Steps</div>
+            <div class="desc">
+                ACTIONS: reference other steps.<br/>
+                REACTIONS: confirms validity. keeps up-to-date.<br/>
+                BENEFIT: Know that your references are correct and stay that way.<br/>
+                PENALTY: Refs often get out of date. Easy to make mistakes and not find out until later.
+            </div>
+            <div class="demo">TODO</div>
+        </div>
+
+        <div class="feature">
+            <div class="title">Flow</div>
+            <div class="desc">
+                ACTIONS: flow to & from other steps.<br/>
+                REACTIONS: Confirms validity. Keeps up-to-date.
+                           Automatically creates from-link when to-link entered, and vica-versa.<br/>
+                BENEFIT: Less typing. Know that your flow refs are correct and stay that way.<br/>
+                PENALTY: Refs often get out of date. Easy to make mistakes and not find out until later.
+                         Have to manually put in both sides.
+            </div>
+            <div class="demo">TODO</div>
+        </div>
+
+	</div>
+
+	<script type="text/javascript" data-lift="tail">
+var preActionDelay = 1000
+var postActionDelay = 1600
+
+function highlight(cssSel) {
+	$(cssSel).effect({
+		effect : 'highlight',
+		easing : 'easeInCubic',
+		duration : 2000,
+		color : 'orange'
+	})
+}
+
+function insert_after_101() {
+	highlight('#d1-101 .add')
+	window.setTimeout(function() {
+		$('#d1-101').after($('#d1-101a').clone().attr("id", "d1-101aNew"))
+		$('#d1-101aNew textarea').val('')
+		$('#d1-101aNew').hide().slideDown('slow', function() {
+			$('#d1-101a .label').html('b.')
+			$('#d1-101b .label').html('c.')
+			window.setTimeout(dec_102, postActionDelay)
+		})
+	}, preActionDelay)
+}
+
+function dec_102() {
+	highlight('#d1-102 .indentDec')
+	window.setTimeout(function() {
+		nc_to_ac('d1-102', function() {
+			$('#d1-102').attr('data-lvl', '0').find('.label span').html('1.1.');
+			$('#d1-11 .label').html('1.2')
+			window.setTimeout(inc_new_11, postActionDelay)
+		})
+	}, preActionDelay)
+}
+
+function inc_new_11() {
+	highlight('#d1-102 .indentInc')
+	window.setTimeout(function() {
+		ac_to_nc('#d1-102', function() {
+			$('#d1-102').attr('data-lvl', '1').find('.label span').html('2.');
+			$('#d1-11 .label').html('1.1')
+			window.setTimeout(delete_new_101a, postActionDelay)
+		})
+	}, preActionDelay)
+}
+
+function delete_new_101a() {
+	highlight('#d1-101aNew .delete')
+	window.setTimeout(function() {
+		$('#d1-101aNew').fadeOut('slow', function() {
+			$('#d1-101aNew').remove()
+			$('#d1-101a .label').html('a.')
+			$('#d1-101b .label').html('b.')
+			window.setTimeout(d1_finish, postActionDelay)
+		})
+	}, preActionDelay)
+}
+
+function d1_finish() {
+    $('#d1').attr('data-running', '0')
+}
+
+$(document).ready(function() {
+	$('textarea').autosize();
+	$('.demo, .demo *').click(function() {
+		if ($('#d1').attr('data-running') == "0") {
+			$('#d1').attr('data-running', '1')
+			window.setTimeout(insert_after_101, 800)
+		}
+		return false;
+	})
+});
+	</script>
+</body>
+</html>

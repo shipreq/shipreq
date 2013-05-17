@@ -48,7 +48,7 @@
 .step { overflow: hidden div; overflow-vertical-align: top; }
 .step .label { float: left; padding-right: 1ex; padding-top: 0px; }
 .step .txt { float: none; width: auto; overflow: hidden; }
-.step .ctl { float: right; width: 148px; text-align: right; padding-bottom: 1px; }
+.step .ctl { float: right; text-align: right; padding-left: 2ex; padding-bottom: 1px; }
 .step + .step, .step + .stepTransport, .stepTransport + .step { margin-top: 1ex; }
 .step[data-lvl="0"] .label, .step[data-lvl="0"] textarea { font-weight: bold; }
 

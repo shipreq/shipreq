@@ -113,8 +113,8 @@ $borderRadius: 4px;
 	}
 	.ctl {
 		float: right;
-		width: 148px;
 		text-align: right;
+		padding-left: 2ex;
 		padding-bottom: 1px
 	}
 	&+.step, &+.stepTransport, .stepTransport+& {
