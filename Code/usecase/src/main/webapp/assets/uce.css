@@ -1,3 +1,4 @@
+@charset "UTF-8";
 /* Indent steps */
 [data-lvl="0"] { padding-left: 0cm; }
 
@@ -52,6 +53,10 @@
 .step[data-lvl="0"] .label, .step[data-lvl="0"] textarea { font-weight: bold; }
 
 .addTailStep { text-align: right; }
+
+#courses-a .step:first-child .indentInc { /* ↑↱ */ }
+#courses-a .step:first-child .indentInc span { display: none; }
+#courses-a .step:first-child .indentInc:after { content: "↑"; }
 
 #legend { margin: 0.5cm auto 1cm auto; border: solid 1px #888; background: #ffd; padding: 1ex; width: 500px; }
 #legend dl { margin: 0; }

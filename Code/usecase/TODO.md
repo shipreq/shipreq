@@ -17,6 +17,5 @@ TODO
 * [ . . ] 
 
 * [C.1.0] While typing, click on step/label to insert a reference.
-* [C.2.2] Change the >> button to a ↑ for 1.1.
 * [C.1.1] View step references. (Eg. Who has refs to 1.0.4?)
 * [ . . ] 

@@ -116,7 +116,7 @@ abstract class CourseFields extends Field {
     & ".add" #> SHtml.ajaxButton("+", () => onStepAdd(n.id))
     & ".delete" #> SHtml.ajaxButton("-", () => onStepRemove(n.id))
     & ".indentDec" #> SHtml.ajaxButton("«", () => onIndentDecrease(n.id))
-    & ".indentInc" #> SHtml.ajaxButton("»", () => onIndentIncrease(n.id))
+    & ".indentInc" #> SHtml.ajaxButton(<span>»</span>, () => onIndentIncrease(n.id))
   )
 
   /**
