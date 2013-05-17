@@ -15,24 +15,6 @@
 </script>
 <style media="screen" type="text/css">
 
-#dim {
-	height:100%;
-	width:100%;
-	position:fixed;
-	left:0;
-	top:0;
-	z-index:1 !important;
-	background-color:black;
-	filter: alpha(opacity=50); /* internet explorer */
-	-khtml-opacity: 0.5;      /* khtml, old safari */
-	-moz-opacity: 0.5;       /* mozilla, netscape */
-	opacity: .5;           /* fx, safari, opera */
-	display:none
-}
-/*#dim[data-on="1"] {display:block}
-.demo  {position:relative; z-index:2; background:white; padding:1ex}
-*/
-
 h1 {text-align:center; font-family:serif; font-size:260%}
 #features {margin: 2cm auto 0 auto; width:1000px}
 #features .feature {margin-bottom: 3em; overflow:hidden; width:100%}
@@ -43,6 +25,7 @@ h1 {text-align:center; font-family:serif; font-size:260%}
 .demo * {font-size:96%; cursor:pointer}
 .demo[data-running="0"] .demo-f {opacity:0.5; border:solid 1px #555}
 .demo[data-running="1"] .demo-f {opacity:1; border:solid 1px #900}
+.demo[data-running="1"] .demo-i {font-style:italic}
 .demo-f {padding:1ex;}
 .demo-i {text-align:right; padding:0.6ex; padding-right:0}
 
@@ -58,7 +41,6 @@ h1 {text-align:center; font-family:serif; font-size:260%}
 </style>
 </head>
 <body>
-    <div id="dim"></div>
 
     <h1>Create Better Use Cases, Faster and Easier</h1>
 
@@ -193,7 +175,7 @@ h1 {text-align:center; font-family:serif; font-size:260%}
 	</div>
 
 	<script type="text/javascript" data-lift="tail">
-var readInfoTime = 1500
+var readInfoTime = 1600
 var highlightTime = 2000
 var preActionDelay = 1200
 var postActionDelay = 2000
@@ -268,7 +250,7 @@ $(document).ready(function() {
 	$('#d1,#d1 *').click(function() {
 		if ($('#d1').attr('data-running') == "0") {
 			$('#d1').attr('data-running', '1')
-			window.setTimeout(insert_after_101, 800)
+			window.setTimeout(insert_after_101, 1000)
 		}
 		return false;
 	})
