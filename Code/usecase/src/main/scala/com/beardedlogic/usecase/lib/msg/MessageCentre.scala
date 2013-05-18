@@ -1,7 +1,6 @@
 package com.beardedlogic.usecase.lib.msg
 
-import net.liftweb.actor.LiftActor
-import net.liftweb.http.{CometActor, AddAListener, ListenerManager}
+import net.liftweb.http.CometActor
 import net.liftweb.common.SimpleActor
 
 /**
@@ -15,22 +14,11 @@ import net.liftweb.common.SimpleActor
  *
  * @since 11/05/2013
  */
-class MessageCentre(val cometActor: CometActor) extends LiftActor {
+class MessageCentre(val cometActor: CometActor) {
   type Subscriber = SimpleActor[Any]
 
-  private[this] var subscribers: List[Subscriber] = Nil
+  @volatile private[this] var subscribers: List[Subscriber] = Nil
   @volatile var enabled: Boolean = false
-
-  /**
-   * Simply routes received messages to a subscribed listeners.
-   */
-  override def messageHandler = {
-    case msg if enabled => broadcast(msg)
-  }
-
-  @inline final protected def broadcast(msg: Any) {
-    subscribers foreach (_ ! msg)
-  }
 
   /**
    * Registers an actor so that it receives a copy of all messages that pass through.
@@ -44,6 +32,13 @@ class MessageCentre(val cometActor: CometActor) extends LiftActor {
    */
   def unregister(subscriber: Subscriber) {
     subscribers = subscribers.filter(_ ne subscriber)
+  }
+
+  /**
+   * Simply routes received messages to a subscribed listeners.
+   */
+  def !(msg: Any) {
+    if (enabled) subscribers foreach (_ ! msg)
   }
 
   @inline final def !(msg: CometMessage): Unit = {
