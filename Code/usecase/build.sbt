@@ -16,7 +16,6 @@ libraryDependencies ++= {
   val liftVersion = "2.5-RC6"
   Seq(
     "net.liftweb"             %% "lift-webkit"            % liftVersion,
-    "net.liftmodules"         %% "lift-jquery-module_2.5" % "2.3",
     "ch.qos.logback"          %  "logback-classic"        % "1.0.12",
     "org.scalatest"           %% "scalatest"              % "2.0.M6-SNAP16"       % "test",
     "org.mockito"             %  "mockito-core"           % "1.9.5"               % "test",
