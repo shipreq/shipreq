@@ -18,9 +18,8 @@ object ExceptionCourseFields extends FieldDef {
 
   override def newFieldInstance(state: UCEditorState) = new ExceptionCourseFields(state)
 
-  val ExceptionCourseId = "courses-e"
-  val ExceptionTemplate = AddStepTemplate(Template(ExceptionCourseId))
-  val AddTailStepCss = s"#${ExceptionCourseId} .${AddTailStepClass}"
+  val ExceptionTemplate = AddStepTemplate(Template("template-courses-e"))
+  val AddTailStepCss = s".courses-e .$AddTailStepClass"
 }
 
 /**

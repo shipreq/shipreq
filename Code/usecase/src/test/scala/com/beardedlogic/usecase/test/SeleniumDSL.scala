@@ -62,11 +62,11 @@ object SeleniumDSL {
     import ExceptionCourseFields._
 
     val courseRoot: Finder = givenCourseRoot getOrElse s
-    private def changeRoot(rootId: String) =
-      new UCEditorDSL(s, Some(s.findElement(By.id(rootId)))).expectDelays(this.expectDelays)
-    def nc = changeRoot(NormalCourseId)
-    def ac = changeRoot(AlternateCourseId)
-    def ec = changeRoot(ExceptionCourseId)
+    private def changeRoot(name: String) =
+      new UCEditorDSL(s, Some(s.findElement(By.className(name)))).expectDelays(this.expectDelays)
+    def nc = changeRoot("courses-n")
+    def ac = changeRoot("courses-a")
+    def ec = changeRoot("courses-e")
     def root = new UCEditorDSL(s, None).expectDelays(this.expectDelays)
 
     // Internal --------------------------------------------------------------------------------------------------------

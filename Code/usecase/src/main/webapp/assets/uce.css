@@ -25,19 +25,19 @@
 .step[data-lvl="0"] .indentDec { visibility: hidden; }
 
 /* Prevent indentIncrease for first children */
-#courses-n .step:first-child .indentInc, #courses-e .step:first-child .indentInc, .step[data-lvl="0"] + .step[data-lvl="1"] .indentInc, .step[data-lvl="1"] + .step[data-lvl="2"] .indentInc, .step[data-lvl="2"] + .step[data-lvl="3"] .indentInc, .step[data-lvl="3"] + .step[data-lvl="4"] .indentInc, .step[data-lvl="4"] + .step[data-lvl="5"] .indentInc, .step[data-lvl="5"] + .step[data-lvl="6"] .indentInc, .step[data-lvl="6"] + .step[data-lvl="7"] .indentInc, .step[data-lvl="7"] + .step[data-lvl="8"] .indentInc { visibility: hidden; }
+.courses-n .step:first-child .indentInc, .courses-e .step:first-child .indentInc, .step[data-lvl="0"] + .step[data-lvl="1"] .indentInc, .step[data-lvl="1"] + .step[data-lvl="2"] .indentInc, .step[data-lvl="2"] + .step[data-lvl="3"] .indentInc, .step[data-lvl="3"] + .step[data-lvl="4"] .indentInc, .step[data-lvl="4"] + .step[data-lvl="5"] .indentInc, .step[data-lvl="5"] + .step[data-lvl="6"] .indentInc, .step[data-lvl="6"] + .step[data-lvl="7"] .indentInc, .step[data-lvl="7"] + .step[data-lvl="8"] .indentInc { visibility: hidden; }
 
 /* General styles */
-#uce { margin: 1cm 1cm 0 1cm; }
-#uce form { display: inline; }
-#uce textarea { border-radius: 4px; -moz-border-radius: 4px; -webkit-border-radius: 4px; resize: none; overflow: auto; /* removes scrollbars in Internet Explorer */ border: dashed 1px #ccc; background: #fff; padding: 4px; outline: none; width: 100%; }
-#uce textarea:hover { border: solid 1px #ccc; background: #eee; }
-#uce textarea:focus { border: solid 1px #373; background: #f8fff8; }
+.uce { margin: 1cm 1cm 0 1cm; }
+.uce form { display: inline; }
+.uce textarea { border-radius: 4px; -moz-border-radius: 4px; -webkit-border-radius: 4px; resize: none; overflow: auto; /* removes scrollbars in Internet Explorer */ border: dashed 1px #ccc; background: #fff; padding: 4px; outline: none; width: 100%; }
+.uce textarea:hover { border: solid 1px #ccc; background: #eee; }
+.uce textarea:focus { border: solid 1px #373; background: #f8fff8; }
 
 /* UC Title (UC-123: Abc) */
-#uce .title, #uce .title td, #uce .title input { width: 100%; }
-#uce .title th, #uce .title input { font-size: 150%; font-weight: bold; vertical-align: middle; }
-#uce .title th { padding-right: 0.6em; }
+.uce .title, .uce .title td, .uce .title input { width: 100%; }
+.uce .title th, .uce .title input { font-size: 150%; font-weight: bold; vertical-align: middle; }
+.uce .title th { padding-right: 0.6em; }
 
 /* Fields and attributes */
 .ucdata { margin-top: 1cm; width: 100%; }
@@ -54,9 +54,9 @@
 
 .addTailStep { text-align: right; }
 
-#courses-a .step:first-child .indentInc { /* ↑↱ */ }
-#courses-a .step:first-child .indentInc span { display: none; }
-#courses-a .step:first-child .indentInc:after { content: "↑"; }
+.courses-a .step:first-child .indentInc { /* ↑↱ */ }
+.courses-a .step:first-child .indentInc span { display: none; }
+.courses-a .step:first-child .indentInc:after { content: "↑"; }
 
 #legend { margin: 0.5cm auto 1cm auto; border: solid 1px #888; background: #ffd; padding: 1ex; width: 500px; }
 #legend dl { margin: 0; }

@@ -18,12 +18,9 @@ object NormalAndAlternateCourseFields extends FieldDef {
 
   override def newFieldInstance(state: UCEditorState) = new NormalAndAlternateCourseFields(state)
 
-  val NormalCourseId = "courses-n"
-  val AlternateCourseId = "courses-a"
-  val AddTailStepCss = s"#${AlternateCourseId} .${AddTailStepClass}"
-
-  val NormalCourseTemplate = AddStepTemplate(Template(NormalCourseId))
-  val AlternateCourseTemplate = AddStepTemplate(Template(AlternateCourseId))
+  val NormalCourseTemplate = AddStepTemplate(Template("template-courses-n"))
+  val AlternateCourseTemplate = AddStepTemplate(Template("template-courses-a"))
+  val AddTailStepCss = s".courses-a .$AddTailStepClass"
 }
 
 /**
@@ -63,7 +60,7 @@ class NormalAndAlternateCourseFields(val state: UCEditorState) extends CourseFie
     courses match {
       // Move steps from NC to AC
       case nc :: ac1 :: acN if ac1.id == nodeId =>
-        JsCmds.Run(s"nc_to_ac('${nodeId}', ${JE.AnonFunc(updateJs).toJsCmd})")
+        JsCmds.Run(s"nc_to_ac('#uce','${nodeId}',${JE.AnonFunc(updateJs).toJsCmd})")
 
       // Apply indent decrease normally
       case _ => updateJs
@@ -73,7 +70,7 @@ class NormalAndAlternateCourseFields(val state: UCEditorState) extends CourseFie
     oldCourses match {
       // Move steps from AC to NC
       case nc :: ac1 :: acN if ac1.id == nodeId =>
-        JsCmds.Run(s"ac_to_nc('${ExprForNodeAndChildren(newNode)}', ${JE.AnonFunc(updateJs).toJsCmd})")
+        JsCmds.Run(s"ac_to_nc('#uce','${ExprForNodeAndChildren(newNode)}',${JE.AnonFunc(updateJs).toJsCmd})")
 
       // Apply indent normally
       case _ => updateJs

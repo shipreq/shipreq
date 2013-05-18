@@ -19,8 +19,8 @@ $borderRadius: 4px;
 }
 
 /* Prevent indentIncrease for first children */
-#courses-n .step:first-child,
-#courses-e .step:first-child,
+.courses-n .step:first-child,
+.courses-e .step:first-child,
 .step[data-lvl="0"]+.step[data-lvl="1"],
 .step[data-lvl="1"]+.step[data-lvl="2"],
 .step[data-lvl="2"]+.step[data-lvl="3"],
@@ -35,7 +35,7 @@ $borderRadius: 4px;
 }
 
 /* General styles */
-#uce {
+.uce {
 	margin: 1cm 1cm 0 1cm;
 
 	form {
@@ -65,7 +65,7 @@ $borderRadius: 4px;
 }
 
 /* UC Title (UC-123: Abc) */
-#uce .title {
+.uce .title {
 	&, td, input {
 		width: 100%
 	}
@@ -129,7 +129,7 @@ $borderRadius: 4px;
 .addTailStep {
 	text-align: right;
 }
-#courses-a .step:first-child .indentInc {
+.courses-a .step:first-child .indentInc {
 	span {display:none}
 	&:after {content:"↑"} /* ↑↱ */
 }

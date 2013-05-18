@@ -14,7 +14,7 @@
 		$('#s11 .label').html('1.2.');
 	}
 	function dec_103_jqui() {
-		nc_to_ac('s103', dec_103_core);
+		nc_to_ac('#uce', 's103', dec_103_core);
 	}
 
 	function inc_11_core() {
@@ -22,7 +22,7 @@
 		$('#s12 .label').html('6.');
 	}
 	function inc_11_jqui() {
-		ac_to_nc('#s11,#s12', inc_11_core);
+		ac_to_nc('#uce', '#s11,#s12', inc_11_core);
 	}
 </script>
 <style media="screen" type="text/css">
@@ -50,7 +50,7 @@
 			</dl>
 		</div>
 
-		<div id="uce" data-lift="comet?type=UCEditor&randomname=true">
+		<div class="uce" id="uce" data-lift="comet?type=UCEditor&randomname=true">
 			<table class="title">
 				<tr>
 					<th><span id="uc-id">UC-<span class="ucid">123</span></span>:</th>
@@ -74,7 +74,7 @@ c. The player order.</textarea></td>
 					<th>Post-conditions</th>
 					<td><textarea rows="1">1. The game is finished.</textarea></td>
 				</tr>
-				<tr id="courses-n">
+				<tr class="courses-n" id="template-courses-n">
 					<th>Normal<br />Course
 					</th>
 					<td class="steps">
@@ -162,7 +162,7 @@ c. The player order.</textarea></td>
 						<!-- ----------------------------------------------------------------------------- -->
 					</td>
 				</tr>
-				<tr id="courses-a">
+				<tr class="courses-a" id="template-courses-a">
 					<th>Alternative<br />Courses
 					</th>
 					<td class="steps">
@@ -202,7 +202,7 @@ c. The player order.</textarea></td>
 						</div>
 					</td>
 				</tr>
-				<tr id="courses-e">
+				<tr class="courses-e" id="template-courses-e">
 					<th>Exceptions</th>
 					<td class="steps">
 						<div class="addTailStep" id="template-courses-addTailStep">
