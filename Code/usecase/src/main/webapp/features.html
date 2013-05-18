@@ -23,12 +23,12 @@ h1 {text-align:center; font-family:serif; font-size:260%}
 .demo * {font-size:96%; cursor:pointer}
 .demo[data-running="0"] .demo-f {opacity:0.5; border:solid 1px #555}
 .demo[data-running="1"] .demo-f {opacity:1; border:solid 1px #900}
-.demo[data-running="1"] .demo-i {font-style:italic}
+.demo[data-running="1"] .demo-i {font-style:italic; color:#800}
 .demo-f {padding:1ex;}
 .demo-i {text-align:right; padding:0.6ex; padding-right:0}
 
 .demo .uce {margin:0 !important}
-.demo .courses-n th, .demo .courses-n td {border:none !important}
+.demo tr:first-child th, .demo tr:first-child td {border:none !important}
 .demo .ucdata {margin-top:0}
 .demo .ucdata th {width:100px}
 .demo .ucdata .label {padding-top:3px}
@@ -45,6 +45,7 @@ h1 {text-align:center; font-family:serif; font-size:260%}
 
 	<div id="features">
 
+        <!-- ======================================================================================================= -->
 		<div class="feature">
 			<div class="title">Organise Steps Easily</div>
 			<div class="desc">
@@ -147,19 +148,97 @@ h1 {text-align:center; font-family:serif; font-size:260%}
 			</div>
 		</div>
 
+        <!-- ======================================================================================================= -->
         <div class="feature">
-            <div class="title">Reference Steps</div>
+            <div class="title">Link Steps Easily</div>
             <div class="desc">
                 ACTIONS: reference other steps.<br/>
                 REACTIONS: confirms validity. keeps up-to-date.<br/>
                 BENEFIT: Know that your references are correct and stay that way.<br/>
                 PENALTY: Refs often get out of date. Easy to make mistakes and not find out until later.
             </div>
-            <div class="demo">TODO</div>
+            <div class="demo" data-running="0" id="d2">
+            <div class="demo-f uce">
+                <table class="ucdata">
+                <tr>
+                    <th>Post-conditions</th>
+                    <td><textarea rows="1" id="d2-pp">All data entered in [1.0.2] is saved.</textarea></td>
+                </tr>
+                <tr class="courses-n">
+                    <th>Normal<br />Course
+                    </th>
+                    <td class="steps">
+                        <div class="step noDel" data-lvl="0" id="d2-10">
+                            <div class="label"><span>1.0</span>.</div>
+                            <div class="ctl">
+                                <button class="delete">&dash;</button>
+                                <button class="indentDec">«</button>
+                                <button class="indentInc"><span>»</span></button>
+                                <button class="add">+</button>
+                            </div>
+                            <div class="txt">
+                                <textarea rows="1" name="text">User saves top-secret information.</textarea>
+                            </div>
+                        </div>
+                        <div class="step" data-lvl="1" id="d2-101">
+                            <div class="label"><span>1</span>.</div>
+                            <div class="ctl">
+                                <button class="delete">&dash;</button>
+                                <button class="indentDec">«</button>
+                                <button class="indentInc"><span>»</span></button>
+                                <button class="add">+</button>
+                            </div>
+                            <div class="txt">
+                                <textarea rows="1" name="text">System presents a blank form and terms of use.</textarea>
+                            </div>
+                        </div>
+                        <div class="step" data-lvl="1" id="d2-102">
+                            <div class="label"><span>2</span>.</div>
+                            <div class="ctl">
+                                <button class="delete">&dash;</button>
+                                <button class="indentDec">«</button>
+                                <button class="indentInc"><span>»</span></button>
+                                <button class="add">+</button>
+                            </div>
+                            <div class="txt">
+                                <textarea rows="1" name="text">User enters secrets.</textarea>
+                            </div>
+                        </div>
+                        <div class="step" data-lvl="1" id="d2-103">
+                            <div class="label"><span>3</span>.</div>
+                            <div class="ctl">
+                                <button class="delete">&dash;</button>
+                                <button class="indentDec">«</button>
+                                <button class="indentInc"><span>»</span></button>
+                                <button class="add">+</button>
+                            </div>
+                            <div class="txt">
+                                <textarea rows="1" name="text">System saves User's data.</textarea>
+                            </div>
+                        </div>
+                        <div class="step" data-lvl="1" id="d2-104">
+                            <div class="label"><span>4</span>.</div>
+                            <div class="ctl">
+                                <button class="delete">&dash;</button>
+                                <button class="indentDec">«</button>
+                                <button class="indentInc"><span>»</span></button>
+                                <button class="add">+</button>
+                            </div>
+                            <div class="txt">
+                                <textarea rows="1" name="text">System presents same blank form as in [1.0.1] without terms of use.</textarea>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                </table>
+            </div>
+            <div class="demo-i" id="d2-i">Click to start demo</div>
+            </div>
         </div>
 
+        <!-- ======================================================================================================= -->
         <div class="feature">
-            <div class="title">Flow</div>
+            <div class="title">Specify Flow Easily</div>
             <div class="desc">
                 ACTIONS: flow to & from other steps.<br/>
                 REACTIONS: Confirms validity. Keeps up-to-date.
@@ -179,8 +258,8 @@ var highlightTime = 2000
 var preActionDelay = 1200
 var postActionDelay = 2000
 
-function demoFeature(text, cssSel, andThen) {
-	$('#d1-i').html(text)
+function demoFeature(demoNumber, text, cssSel, andThen) {
+	$('#d'+demoNumber+'-i').html(text)
 	window.setTimeout(function(){ 
 		highlight(cssSel)
 		window.setTimeout(andThen, preActionDelay)
@@ -197,7 +276,7 @@ function highlight(cssSel) {
 }
 
 function insert_after_101() {
-	demoFeature('Insert steps anywhere.', '#d1-101 .add', function() {
+	demoFeature(1, 'Insert steps anywhere.', '#d1-101 .add', function() {
 		$('#d1-101').after($('#d1-101a').clone().attr("id", "d1-101aNew"))
 		$('#d1-101aNew textarea').val('')
 		$('#d1-101aNew').hide().slideDown('slow', function() {
@@ -209,7 +288,7 @@ function insert_after_101() {
 }
 
 function dec_102() {
-	demoFeature('Easily change indents.', '#d1-102 .indentDec', function() {
+	demoFeature(1, 'Easily change indents.', '#d1-102 .indentDec', function() {
 		nc_to_ac('#d1', 'd1-102', function() {
 			$('#d1-102').attr('data-lvl', '0').find('.label span').html('1.1');
 			$('#d1-11 .label span').html('1.2')
@@ -219,7 +298,7 @@ function dec_102() {
 }
 
 function inc_new_11() {
-	demoFeature('Move between Normal and Alternate Courses.', '#d1-102 .indentInc', function() {
+	demoFeature(1, 'Move between Normal and Alternate Courses.', '#d1-102 .indentInc', function() {
 		ac_to_nc('#d1', '#d1-102', function() {
 			$('#d1-102').attr('data-lvl', '1').find('.label span').html('2');
 			$('#d1-11 .label span').html('1.1')
@@ -229,7 +308,7 @@ function inc_new_11() {
 }
 
 function delete_new_101a() {
-	demoFeature('Notice that steps are renumbered automatically.', '#d1-101aNew .delete', function() {
+	demoFeature(1, 'Notice that steps are renumbered automatically.', '#d1-101aNew .delete', function() {
 		$('#d1-101aNew').fadeOut('slow', function() {
 			$('#d1-101aNew').remove()
 			$('#d1-101a .label span').html('a')
@@ -239,20 +318,75 @@ function delete_new_101a() {
 	})
 }
 
-function d1_finish() {
-	$('#d1-i').html('Click to start demo')
-    $('#d1').attr('data-running', '0')
+function d1_finish() { finish_demo(1) }
+
+function d2_start() {
+	demoFeature(2, 'See [1.0.1] and [1.0.2] in text? Those are recognised links.', '#d2-pp, #d2-104 textarea', d2_insert)
 }
+function d2_insert() {
+	window.setTimeout(function(){
+	    demoFeature(2, "Let's insert a step...", '#d2-10 .add', function() {
+	        $('#d2-10').after($('#d2-101').clone().attr("id", "d2-101New"))
+	        $('#d2-101New textarea').val('')
+	        $('#d2-101New').hide().slideDown('slow', function() {
+	            $('#d2-101 .label span').html('2')
+	            $('#d2-102 .label span').html('3')
+	            $('#d2-103 .label span').html('4')
+	            $('#d2-104 .label span').html('5')
+	            replaceText('#d2-pp', "1.0.2", "1.0.3")
+	            replaceText('#d2-104 textarea', "1.0.1", "1.0.2")
+	            window.setTimeout(d2_afterInsert, postActionDelay)
+	        })
+	    })
+	}, 2000)
+}
+function d2_afterInsert() {
+	demoFeature(2, 'Did you notice the links were updated automatically?', '#d2-pp, #d2-104 textarea', d2_deleteBlank)
+}
+function d2_deleteBlank() {
+    window.setTimeout(function(){
+        demoFeature(2, "Let's see that again...", '#d2-101New .delete', function() {
+            $('#d2-101New').fadeOut('slow', function() {
+                $('#d2-101New').remove()
+                $('#d2-101 .label span').html('1')
+                $('#d2-102 .label span').html('2')
+                $('#d2-103 .label span').html('3')
+                $('#d2-104 .label span').html('4')
+                replaceText('#d2-pp', "1.0.3", "1.0.2")
+                replaceText('#d2-104 textarea', "1.0.2", "1.0.1")
+                window.setTimeout(d2_afterDelete, postActionDelay)
+            })
+        })
+    }, 2000)
+}
+function d2_afterDelete() {
+    demoFeature(2, 'Once you create a link, it will always be kept up-to-date.', '#d2-pp, #d2-104 textarea', d2_finish)
+}
+function d2_finish() { window.setTimeout(function(){ finish_demo(2) }, 2000) }
+
+function replaceText(cssSel, from, to) {
+	$(cssSel).val($(cssSel).val().replace(from, to))
+}
+
+function prepare_demo(id, fn) {
+    $('#'+id+', #'+id+' *').click(function() {
+        if ($('#'+id).attr('data-running') == "0") {
+            $('#'+id).attr('data-running', '1')
+            window.setTimeout(fn, 1000)
+        }
+        return false;
+    })
+}
+function finish_demo(demoNumber) {
+    $('#d'+demoNumber+'-i').html('Click to start demo')
+    $('#d'+demoNumber).attr('data-running', '0')
+}
+
 
 $(document).ready(function() {
 	$('textarea').autosize();
-	$('#d1,#d1 *').click(function() {
-		if ($('#d1').attr('data-running') == "0") {
-			$('#d1').attr('data-running', '1')
-			window.setTimeout(insert_after_101, 1000)
-		}
-		return false;
-	})
+	prepare_demo('d1', insert_after_101)
+	prepare_demo('d2', d2_start)
 });
 	</script>
 </body>
