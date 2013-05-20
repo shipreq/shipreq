@@ -1,0 +1,60 @@
+@startuml
+
+' class DataType {
+  ' id
+  ' name
+' }
+' 
+' interface DataValue {
+  ' id
+' }
+' 
+' class DataText {
+  ' text
+' }
+' DataText --|> DataValue
+' 
+' class DataRelationType {
+  ' id
+  ' name
+' }
+' 
+' class DataRelation {
+  ' from_id
+  ' rel_id
+  ' index
+  ' to_id
+' }
+' 
+' DataRelation --> DataRelationType
+' DataRelation --> DataValue
+' DataRelation --> DataValue
+
+Data *- Version : has 1..n >
+Version *- VersionMeta : has 0..1 >
+Version *- Value : has 1 >
+
+Value --> Relation : from 0..n >
+Value <-- Relation : to 0..n <
+Data <-- Relation : (maybe) to 0..n <
+
+UseCase --|> Value
+FieldKey --|> Value
+FieldValue --|> Value
+Text --|> Value
+Step --|> Value
+File --|> Value
+
+enum DataType
+enum DataRelationType
+enum FieldDefType
+
+Data o- DataType
+Relation o- DataRelationType
+FieldKey o-- FieldDefType
+
+UseCase o-- Version : has field list 1 >
+FieldValue o-- FieldKey : has key 1 >
+Step o-- Text : has text [0..1] >
+
+@enduml
