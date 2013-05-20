@@ -37,6 +37,8 @@ h1 {text-align:center; font-family:serif; font-size:260%}
 .uce textarea:focus,
 .uce textarea:hover {background: #fff; border: dashed 1px #ccc;}
 
+textarea[data-typing="1"] { background:#cfa !important; border:solid 2px #080 !important }
+
 </style>
 </head>
 <body>
@@ -240,14 +242,124 @@ h1 {text-align:center; font-family:serif; font-size:260%}
         <div class="feature">
             <div class="title">Specify Flow Easily</div>
             <div class="desc">
-                ACTIONS: flow to & from other steps.<br/>
+                ACTIONS: flow to &amp; from other steps.<br/>
                 REACTIONS: Confirms validity. Keeps up-to-date.
                            Automatically creates from-link when to-link entered, and vica-versa.<br/>
                 BENEFIT: Less typing. Know that your flow refs are correct and stay that way.<br/>
                 PENALTY: Refs often get out of date. Easy to make mistakes and not find out until later.
                          Have to manually put in both sides.
             </div>
-            <div class="demo">TODO</div>
+			<div class="demo" data-running="0" id="d3">
+			<div class="demo-f uce">
+				<table class="ucdata">
+                <tr class="courses-n">
+                    <th>Normal<br />Course
+                    </th>
+                    <td class="steps">
+                        <div class="step noDel" data-lvl="0" id="d3-10">
+                            <div class="label"><span>1.0</span>.</div>
+                            <div class="ctl">
+                                <button class="delete">&dash;</button>
+                                <button class="indentDec">«</button>
+                                <button class="indentInc"><span>»</span></button>
+                                <button class="add">+</button>
+                            </div>
+                            <div class="txt">
+                                <textarea rows="1" name="text">User logs in.</textarea>
+                            </div>
+                        </div>
+                        <div class="step" data-lvl="1" id="d3-101">
+                            <div class="label"><span>1</span>.</div>
+                            <div class="ctl">
+                                <button class="delete">&dash;</button>
+                                <button class="indentDec">«</button>
+                                <button class="indentInc"><span>»</span></button>
+                                <button class="add">+</button>
+                            </div>
+                            <div class="txt">
+                                <textarea rows="1" name="text">System shows login form.</textarea>
+                            </div>
+                        </div>
+                        <div class="step" data-lvl="1" id="d3-102">
+                            <div class="label"><span>2</span>.</div>
+                            <div class="ctl">
+                                <button class="delete">&dash;</button>
+                                <button class="indentDec">«</button>
+                                <button class="indentInc"><span>»</span></button>
+                                <button class="add">+</button>
+                            </div>
+                            <div class="txt">
+                                <textarea rows="1" name="text">User enters email and password.</textarea>
+                            </div>
+                        </div>
+                        <div class="step" data-lvl="1" id="d3-103">
+                            <div class="label"><span>3</span>.</div>
+                            <div class="ctl">
+                                <button class="delete">&dash;</button>
+                                <button class="indentDec">«</button>
+                                <button class="indentInc"><span>»</span></button>
+                                <button class="add">+</button>
+                            </div>
+                            <div class="txt">
+                                <textarea rows="1" name="text">System logs in user.</textarea>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="courses-a">
+                    <th>Alternate<br />Courses
+                    </th>
+                    <td class="steps">
+                        <div class="addTailStep"><button>+</button></div>
+                    </td>
+                </tr>
+                <tr class="courses-e">
+                    <th>Exceptions
+                    </th>
+                    <td class="steps">
+                        <div class="step" data-lvl="0" id="d3-1e1">
+                            <div class="label"><span>1.E.1</span>.</div>
+                            <div class="ctl">
+                                <button class="delete">&dash;</button>
+                                <button class="indentDec">«</button>
+                                <button class="indentInc"><span>»</span></button>
+                                <button class="add">+</button>
+                            </div>
+                            <div class="txt">
+                                <textarea rows="1" name="text">Server can't connect to Login Service.</textarea>
+                            </div>
+                        </div>
+                        <div class="step" data-lvl="0" id="d3-1e2">
+                            <div class="label"><span>1.E.2</span>.</div>
+                            <div class="ctl">
+                                <button class="delete">&dash;</button>
+                                <button class="indentDec">«</button>
+                                <button class="indentInc"><span>»</span></button>
+                                <button class="add">+</button>
+                            </div>
+                            <div class="txt">
+                                <textarea rows="1" name="text">User credentials are invalid.</textarea>
+                            </div>
+                        </div>
+                        <div class="step" data-lvl="1" id="d3-1e21">
+                            <div class="label"><span>1</span>.</div>
+                            <div class="ctl">
+                                <button class="delete">&dash;</button>
+                                <button class="indentDec">«</button>
+                                <button class="indentInc"><span>»</span></button>
+                                <button class="add">+</button>
+                            </div>
+                            <div class="txt">
+                                <textarea rows="1" name="text">System informs the user thus.</textarea>
+                            </div>
+                        </div>
+                        <div class="addTailStep"><button>+</button></div>
+                    </td>
+                </tr>
+				</table>
+			</div>
+			<div class="demo-i" id="d3-i">Click to start demo</div>
+			</div>
         </div>
 
 	</div>
@@ -389,11 +501,85 @@ function finish_demo(demoNumber) {
     $('#d'+demoNumber).attr('data-running', '0')
 }
 
+function typeText(elem, text, fn) {
+	if (text.length > 0) {
+		var ch = text.charAt(0)
+		elem.val(elem.val() + ch).trigger('autosize')
+		window.setTimeout(function(){ typeText(elem, text.substr(1), fn) }, ch==" "?0:400)
+	} else fn()
+}
+
+function demoTextChange(elem, text, fn) {
+	elem.attr('data-typing','1')
+	window.setTimeout(function(){
+		typeText(elem, text, function() {
+			window.setTimeout(function(){
+				elem.attr('data-typing','0')
+				fn()
+			}, 400)
+		})
+	}, 1000)
+}
+
+function d3_start() {
+	$('#d3-i').html("You can create flow between steps by typing an arrow.")
+	window.setTimeout(d3_type_flowto, 2000)
+}
+function d3_type_flowto() {
+	demoTextChange($('#d3-102 textarea'), ' --> 1.E.2', d3_after_flowto)
+}
+function d3_after_flowto() {
+	$('#d3-102 textarea').val('User enters email and password. ➡ [1.E.2]').trigger('autosize')
+	$('#d3-1e2 textarea').val('User credentials are invalid. ⬅ [1.0.2]').trigger('autosize')
+	window.setTimeout(function() {
+		highlightText(3, '1.E.2 is updated automatically to show the new flow.', '#d3-1e2 textarea', d3_before_flowfrom)
+	}, 1000)
+}
+function d3_before_flowfrom() {
+	$('#d3-i').html("Arrows can be in either direction.")
+	window.setTimeout(d3_type_flowfrom, 2000)
+}
+function d3_type_flowfrom() {
+	demoTextChange($('#d3-1e1 textarea'), ' <-- 1.0.2', d3_after_flowfrom)
+}
+function d3_after_flowfrom() {
+	$('#d3-102 textarea').val('User enters email and password. ➡ [1.E.1] [1.E.2]').trigger('autosize')
+	$('#d3-1e1 textarea').val("Server can't connect to Login Service. ⬅ [1.0.2]").trigger('autosize')
+	window.setTimeout(function() {
+		highlightText(3, 'This time, 1.0.2 is updated automatically.', '#d3-102 textarea', d3_insert)
+	}, 1000)
+}
+function d3_insert() {
+	demoFeature(3, "As you'd expect, flow is kept up-to-date when the steps change.", '#d3-10 .add', function() {
+		$('#d3-10').after($('#d3-101').clone().attr("id", "d3-101New"))
+		$('#d3-101New textarea').val('')
+		$('#d3-101New').hide().slideDown('slow', function() {
+			$('#d3-101 .label span').html('2')
+			$('#d3-102 .label span').html('3')
+			$('#d3-103 .label span').html('4')
+			replaceText('#d3-1e1 textarea, #d3-1e2 textarea', "1.0.2", "1.0.3")
+			window.setTimeout(d3_afterInsert, postActionDelay)
+		})
+	})
+}
+function d3_afterInsert() {
+    highlightText(3, '1.0.2 was changed to 1.0.3. Still up-to-date.', '#d3-1e1 textarea, #d3-1e2 textarea', d3_finish)
+}
+function d3_finish() {
+	$('#d3-101New').remove()
+	$('#d3-101 .label span').html('1')
+	$('#d3-102 .label span').html('2')
+	$('#d3-103 .label span').html('3')
+	$('#d3-1e1 textarea').val("Server can't connect to Login Service.").trigger('autosize')
+	$('#d3-1e2 textarea').val('User credentials are invalid.').trigger('autosize')
+	finish_demo(3)
+}
 
 $(document).ready(function() {
 	$('textarea').autosize();
 	prepare_demo('d1', insert_after_101)
 	prepare_demo('d2', d2_start)
+	prepare_demo('d3', d3_start)
 });
 	</script>
 </body>
