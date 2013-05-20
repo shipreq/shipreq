@@ -258,12 +258,23 @@ var highlightTime = 2000
 var preActionDelay = 1200
 var postActionDelay = 2000
 
+var readInfoTimeBeforeTextHightlight = readInfoTime
+var textHighlightTime = highlightTime + 1000
+
 function demoFeature(demoNumber, text, cssSel, andThen) {
 	$('#d'+demoNumber+'-i').html(text)
 	window.setTimeout(function(){ 
 		highlight(cssSel)
 		window.setTimeout(andThen, preActionDelay)
 	}, readInfoTime)
+}
+
+function highlightText(demoNumber, text, cssSel, andThen) {
+	$('#d'+demoNumber+'-i').html(text)
+	window.setTimeout(function(){ 
+		highlight(cssSel)
+		window.setTimeout(andThen, textHighlightTime)
+	}, readInfoTimeBeforeTextHightlight)
 }
 
 function highlight(cssSel) {
@@ -321,48 +332,44 @@ function delete_new_101a() {
 function d1_finish() { finish_demo(1) }
 
 function d2_start() {
-	demoFeature(2, 'See [1.0.1] and [1.0.2] in text? Those are recognised links.', '#d2-pp, #d2-104 textarea', d2_insert)
+	highlightText(2, 'See [1.0.1] and [1.0.2] in text? Those are recognised links.', '#d2-pp, #d2-104 textarea', d2_insert)
 }
 function d2_insert() {
-	window.setTimeout(function(){
-	    demoFeature(2, "Let's insert a step...", '#d2-10 .add', function() {
-	        $('#d2-10').after($('#d2-101').clone().attr("id", "d2-101New"))
-	        $('#d2-101New textarea').val('')
-	        $('#d2-101New').hide().slideDown('slow', function() {
-	            $('#d2-101 .label span').html('2')
-	            $('#d2-102 .label span').html('3')
-	            $('#d2-103 .label span').html('4')
-	            $('#d2-104 .label span').html('5')
-	            replaceText('#d2-pp', "1.0.2", "1.0.3")
-	            replaceText('#d2-104 textarea', "1.0.1", "1.0.2")
-	            window.setTimeout(d2_afterInsert, postActionDelay)
-	        })
-	    })
-	}, 2000)
+	demoFeature(2, "Let's insert a step...", '#d2-10 .add', function() {
+		$('#d2-10').after($('#d2-101').clone().attr("id", "d2-101New"))
+		$('#d2-101New textarea').val('')
+		$('#d2-101New').hide().slideDown('slow', function() {
+			$('#d2-101 .label span').html('2')
+			$('#d2-102 .label span').html('3')
+			$('#d2-103 .label span').html('4')
+			$('#d2-104 .label span').html('5')
+			replaceText('#d2-pp', "1.0.2", "1.0.3")
+			replaceText('#d2-104 textarea', "1.0.1", "1.0.2")
+			window.setTimeout(d2_afterInsert, postActionDelay)
+		})
+	})
 }
 function d2_afterInsert() {
-	demoFeature(2, 'Did you notice the links were updated automatically?', '#d2-pp, #d2-104 textarea', d2_deleteBlank)
+	highlightText(2, 'Did you notice the links were updated automatically?', '#d2-pp, #d2-104 textarea', d2_deleteBlank)
 }
 function d2_deleteBlank() {
-    window.setTimeout(function(){
-        demoFeature(2, "Let's see that again...", '#d2-101New .delete', function() {
-            $('#d2-101New').fadeOut('slow', function() {
-                $('#d2-101New').remove()
-                $('#d2-101 .label span').html('1')
-                $('#d2-102 .label span').html('2')
-                $('#d2-103 .label span').html('3')
-                $('#d2-104 .label span').html('4')
-                replaceText('#d2-pp', "1.0.3", "1.0.2")
-                replaceText('#d2-104 textarea', "1.0.2", "1.0.1")
-                window.setTimeout(d2_afterDelete, postActionDelay)
-            })
-        })
-    }, 2000)
+	demoFeature(2, "Let's see that again...", '#d2-101New .delete', function() {
+		$('#d2-101New').fadeOut('slow', function() {
+			$('#d2-101New').remove()
+			$('#d2-101 .label span').html('1')
+			$('#d2-102 .label span').html('2')
+			$('#d2-103 .label span').html('3')
+			$('#d2-104 .label span').html('4')
+			replaceText('#d2-pp', "1.0.3", "1.0.2")
+			replaceText('#d2-104 textarea', "1.0.2", "1.0.1")
+			window.setTimeout(d2_afterDelete, postActionDelay)
+		})
+	})
 }
 function d2_afterDelete() {
-    demoFeature(2, 'Once you create a link, it will always be kept up-to-date.', '#d2-pp, #d2-104 textarea', d2_finish)
+    highlightText(2, 'Once you create a link, it will always be kept up-to-date.', '#d2-pp, #d2-104 textarea', d2_finish)
 }
-function d2_finish() { window.setTimeout(function(){ finish_demo(2) }, 2000) }
+function d2_finish() { finish_demo(2) }
 
 function replaceText(cssSel, from, to) {
 	$(cssSel).val($(cssSel).val().replace(from, to))
