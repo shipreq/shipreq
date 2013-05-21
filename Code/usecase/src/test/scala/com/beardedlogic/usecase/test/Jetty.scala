@@ -25,6 +25,7 @@ object Jetty extends Logger {
 
   def newServer: Server = {
     info("Starting Jetty")
+    System.setProperty("run.mode", "test")
     val svr = new Server
 
     val connector = new SelectChannelConnector
