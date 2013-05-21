@@ -43,6 +43,7 @@ CREATE TABLE value (
     id              BIGINT      PRIMARY KEY DEFAULT NEXTVAL('value_seq')
     ,data_id        BIGINT      NOT NULL REFERENCES data
     ,rev            INT         NOT NULL CHECK (rev > 0)
+    ,updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
     ,UNIQUE(data_id,rev)
 );
 
