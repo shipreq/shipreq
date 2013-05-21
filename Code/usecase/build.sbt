@@ -17,6 +17,8 @@ libraryDependencies ++= {
   Seq(
     "net.liftweb"             %% "lift-webkit"            % liftVersion,
     "ch.qos.logback"          %  "logback-classic"        % "1.0.12",
+    "com.typesafe.slick"      %% "slick"                  % "1.0.0",
+    //"org.postgresql"          %  "postgresql"             % "9.2-1002-jdbc4", errornously compiled for 1.7
     "org.scalatest"           %% "scalatest"              % "2.0.M6-SNAP16"       % "test",
     "org.mockito"             %  "mockito-core"           % "1.9.5"               % "test",
     "org.scalacheck"          %% "scalacheck"             % "1.10.1"              % "test",
