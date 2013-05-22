@@ -7,7 +7,7 @@ import com.beardedlogic.usecase.lib.db.DatabaseEnum
  *
  * @since 22/05/2013
  */
-sealed abstract class FieldKeyType(val ordinal: Int) extends FieldKeyType.Value
+sealed abstract class FieldKeyType(val ordinal: Short) extends FieldKeyType.Value
 object FieldKeyType extends DatabaseEnum[FieldKeyType] {
 
   override val TableName = "field_key_type"

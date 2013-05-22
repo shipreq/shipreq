@@ -7,7 +7,7 @@ import com.beardedlogic.usecase.lib.db.DatabaseEnum
  *
  * @since 22/05/2013
  */
-sealed abstract class RelationType(val ordinal: Int) extends RelationType.Value
+sealed abstract class RelationType(val ordinal: Short) extends RelationType.Value
 object RelationType extends DatabaseEnum[RelationType] {
 
   override val TableName = "relation_type"

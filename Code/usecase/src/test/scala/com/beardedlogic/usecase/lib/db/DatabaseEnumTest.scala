@@ -25,7 +25,7 @@ class DatabaseEnumTest extends FunSpec with ShouldMatchers {
 
     def verifyAllThere(implicit db: Session) {
       count should be(DataType.Values.size)
-      val found = sql"SELECT id,name FROM data_type".as[(Int,String)].list
+      val found = sql"SELECT id,name FROM data_type".as[(Short,String)].list
       for ((id,name) <- found) DataType(id).name should be(name)
     }
 

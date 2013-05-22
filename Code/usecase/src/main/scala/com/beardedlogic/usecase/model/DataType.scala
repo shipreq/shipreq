@@ -9,7 +9,7 @@ import com.beardedlogic.usecase.lib.db.DatabaseEnum
  *
  * @since 22/05/2013
  */
-sealed abstract class DataType(val ordinal: Int) extends DataType.Value
+sealed abstract class DataType(val ordinal: Short) extends DataType.Value
 
 object DataType extends DatabaseEnum[DataType] {
 

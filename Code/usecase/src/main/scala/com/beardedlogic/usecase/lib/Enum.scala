@@ -17,11 +17,11 @@ trait Enum[+V <: EnumValue] {
 
   val Values: List[V]
 
-  def apply(ordinal: Int): V = get(ordinal).get
+  def apply(ordinal: Short): V = get(ordinal).get
 
   def apply(name: String): V = get(name).get
 
-  def get(ordinal: Int): Option[V] = Values.find(_.ordinal == ordinal)
+  def get(ordinal: Short): Option[V] = Values.find(_.ordinal == ordinal)
 
   def get(name: String): Option[V] = Values.find(_.toString == name)
 }
@@ -34,7 +34,7 @@ trait Enum[+V <: EnumValue] {
  * @since 21/05/2013
  */
 trait EnumValue {
-  val ordinal: Int
+  val ordinal: Short
   def toString: String
   def name = toString
 }
