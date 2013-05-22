@@ -8,7 +8,7 @@ package com.beardedlogic.usecase.lib
  * @tparam V The type of this enum's values.
  * @since 21/05/2013
  */
-trait Enum[V <: EnumValue] {
+trait Enum[+V <: EnumValue] {
 
   /**
    * Denotes a value in an enumeration.

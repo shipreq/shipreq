@@ -7,7 +7,8 @@ import net.liftweb.common.Logger
 import net.liftweb.util.Props
 import org.postgresql.ds.PGSimpleDataSource
 import org.slf4j.LoggerFactory
-import scala.slick.session.Database
+import scala.slick.session.{Session, Database}
+import com.beardedlogic.usecase.model.{RelationType, FieldKeyType, DataType}
 
 /**
  * Database connectivity.
@@ -76,9 +77,23 @@ object DB extends Logger {
 
   def performPendingMigrations() = Flyway.migrate()
 
+  def syncEnums(implicit s: Session) = DatabaseEnum.init(DataType, FieldKeyType, RelationType)
+
+  @volatile private var initCalled = false
   def init() {
-    performPendingMigrations()
+    synchronized {
+      if (!initCalled) {
+        performPendingMigrations()
+        Slick.withTransaction { implicit s: Session =>
+          syncEnums
+        }
+        debug("Database initialised successfully.")
+        initCalled = true
+      }
+    }
   }
+
+  init()
 }
 
 class FlyWayLogger(clazz: Class[_]) extends com.googlecode.flyway.core.util.logging.Log {

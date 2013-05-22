@@ -10,7 +10,7 @@ import scala.slick.session.Session
  * @tparam V The type of this enum's values.
  * @since 22/05/2013
  */
-trait DatabaseEnum[V <: EnumValue] extends Enum[V] {
+trait DatabaseEnum[+V <: EnumValue] extends Enum[V] {
 
   val TableName: String
 }
@@ -21,9 +21,8 @@ object DatabaseEnum {
    * Propagates all declared enum values to their corresponding DB tables.
    *
    * @param types The enum types.
-   * @tparam V
    */
-  def init[V <: EnumValue](types: DatabaseEnum[V]*)(implicit s: Session) {
+  def init(types: DatabaseEnum[EnumValue]*)(implicit s: Session) {
     for {
       t <- types
       u = Q.update[(String, Int)](s"UPDATE ${t.TableName} SET name=? WHERE id=?")
