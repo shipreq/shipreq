@@ -17,8 +17,6 @@ import com.beardedlogic.usecase.model.{RelationType, FieldKeyType, DataType}
  */
 object DB extends Logger {
 
-  Misc.ensureTestModeDuringTests()
-
   @inline private def n(name: String) = s"db.$name"
   @inline private def prop(name: String) = Props.get(n(name)) ?~ s"Property not found: ${n(name)}"
   @inline private def setIfDefinedS(name: String, setFn: String => Unit) = Props.get(n(name)).foreach(setFn(_))
@@ -62,7 +60,9 @@ object DB extends Logger {
     ds
   }
 
-  val Flyway = {
+  def DatabaseName = DataSource.getDatabaseName
+
+  private val Flyway = {
     LogFactory.setLogCreator(new LogCreator {
       def createLogger(clazz: Class[_]): Log = new FlyWayLogger(clazz)
     })
@@ -93,6 +93,21 @@ object DB extends Logger {
     }
   }
 
+  /**
+   * Drops all objects (tables, views, procedures, triggers, ...) in the configured schemas.
+   *
+   * @return this
+   */
+  def wipe_!() = {
+    synchronized {
+      warn("Wiping database: " + DatabaseName)
+      Flyway.clean
+      initCalled = false
+    }
+    this
+  }
+
+  Misc.ensureTestModeDuringTests()
   init()
 }
 
