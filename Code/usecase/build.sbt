@@ -17,7 +17,7 @@ libraryDependencies ++= {
   Seq(
     "net.liftweb"             %% "lift-webkit"            % liftVersion,
     "ch.qos.logback"          %  "logback-classic"        % "1.0.12",
-    "com.typesafe.slick"      %% "slick"                  % "1.0.0",
+    "com.typesafe.slick"      %% "slick"                  % "1.0.1-RC1",
     //"org.postgresql"          %  "postgresql"             % "9.2-1002-jdbc4", errornously compiled for 1.7
     "com.googlecode.flyway"   %  "flyway-core"            % "2.1.1",
     "org.scalatest"           %% "scalatest"              % "2.0.M6-SNAP16"       % "test",
