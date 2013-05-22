@@ -15,6 +15,10 @@ import scala.slick.session.Database
  */
 object DB extends Logger {
 
+  // TODO Move elsewhere, remove dupl from Jetty
+  if((new Exception).getStackTrace.toList.find(_.getClassName.contains("scalatest")).isDefined)
+    System.setProperty("run.mode", "test")
+
   @inline private def n(name: String) = s"db.$name"
   @inline private def prop(name: String) = Props.get(n(name)) ?~ s"Property not found: ${n(name)}"
   @inline private def setIfDefinedS(name: String, setFn: String => Unit) = Props.get(n(name)).foreach(setFn(_))
