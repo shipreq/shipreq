@@ -20,10 +20,11 @@ class FieldListTest extends FunSpec with TestDatabaseSupport {
 
       val newValues = fieldList.size + 1
       val saved = assertTableDiffs("data" -> newValues, "value" -> newValues, "relation" -> fieldList.size) {
-        FieldList.save(fieldList)
+        FieldList.createWithNewData(fieldList)
       }
 
-      FieldList.load(saved.id) should be(fieldList)
+      val loaded = FieldList.find(saved.data, LatestRev)
+      loaded.get.fieldDefs should be(fieldList)
     }
   }
 }

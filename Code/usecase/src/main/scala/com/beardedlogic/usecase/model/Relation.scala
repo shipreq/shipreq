@@ -11,7 +11,7 @@ object Relation extends DBTable {
 
   def createUnchecked(from: Value[_], relationType: RelationType, index: Short, to: Value[_])(implicit s: Session) {
     Q.update[(Long, Short, Short, Long)]("INSERT INTO relation VALUES(?,?,?,?)")
-    .execute(from.id, relationType.ordinal, index, to.id)
+    .execute(from.valueId, relationType.ordinal, index, to.valueId)
   }
 
   // FieldList --[Has]--> FieldKey

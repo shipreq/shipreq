@@ -2,12 +2,31 @@ package com.beardedlogic.usecase
 package model
 
 import scala.slick.driver.PostgresDriver.simple._
-import scala.slick.jdbc.{StaticQuery => Q}
+import scala.slick.jdbc.{StaticQuery => Q, GetResult}
 import lib.db._
 import DBHelpers._
 
+/**
+ * Anything that has a value ID.
+ *
+ * @tparam T The type of value. Derivable by `value` -> `data` -> `data_type`.
+ */
+trait Value[T <: DataType] {
+  def valueId: Long
+}
+
+/**
+ * Representation of the `value` table.
+ *
+ * @tparam T The type of value. Derivable by `value` -> `data` -> `data_type`.
+ */
+case class PlainValue[T <: DataType](valueId: Long, dataId: Long, rev: Int) extends Value[T]
+
 object Value extends DBTable {
   override val TableName = "value"
+
+  val * = "id, data_id, rev"
+  implicit val GetResultPlainValue = GetResult { r => PlainValue[DataType](r.<<, r.<<, r.<<) }
 
   def createWithNewData[T <: DataType](dataType: T)(implicit s: Session): PlainValue[T] =
     create(Data.create(dataType), 1)
@@ -17,19 +36,17 @@ object Value extends DBTable {
                 .first(data.id, rev)
     PlainValue(newId, data.id, rev)
   }
+
+  def find[T <: DataType](data: Data[T], rev: Revision)(implicit s: Session): Option[PlainValue[T]] = {
+    Q.query[Long, PlainValue[DataType]](s"select ${*} from $TableName where data_id=? ${rev.querySuffix}")
+    .firstOption(data.id)
+    .asInstanceOf[Option[PlainValue[T]]]
+  }
 }
 
-trait Value[T <: DataType] {
-  def id: Long
-  def dataId: Long
-  def rev: Int
-}
+sealed trait Revision {def querySuffix: String}
 
-trait ValueExt[T <: DataType] extends Value[T] {
-  val value: Value[T]
-  @inline def id = value.id
-  @inline def dataId = value.dataId
-  @inline def rev = value.rev
-}
+case object LatestRev extends Revision {override val querySuffix = "ORDER BY rev DESC LIMIT 1"}
 
-case class PlainValue[T <: DataType](id: Long, dataId: Long, rev: Int) extends Value[T]
+case class ExactRev(rev: Int) extends Revision {override def querySuffix = s"AND rev = $rev"}
+

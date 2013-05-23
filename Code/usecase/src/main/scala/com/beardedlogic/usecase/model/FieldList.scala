@@ -9,21 +9,41 @@ import scala.slick.jdbc.{StaticQuery => Q}
  * Corresponds to the data type [[com.beardedlogic.usecase.model.DataType.FieldList]], which basically boils down to a
  * single `List[FieldDef]`s.
  */
+case class FieldList(value: PlainValue[DataType.FieldList], fieldKeys: List[FieldKey])
+  extends Value[DataType.FieldList] {
+  def valueId = value.valueId
+  def data = Data(value.dataId, DataType.FieldList)
+  val fieldDefs = fieldKeys.map(_.fieldDef)
+}
 
 object FieldList {
 
-  def save(fieldList: List[FieldDef])(implicit s: Session): Value[DataType.FieldList.type] = s.withTransaction {
-    val fieldListRecord = Value.createWithNewData(DataType.FieldList)
-    var index = 0
-    for (f <- fieldList) {
-      val fieldKey = FieldKey.createWithNewData(f.fieldKeyType, f.fieldKeyData)
-      Relation.create(fieldListRecord, RelationType.Has, index.toShort, fieldKey.value)
-      index += 1
-    }
-    fieldListRecord
+  def createWithNewData(fields: List[FieldDef], idOpt: Option[Long] = None)(implicit s: Session) = {
+    val data = Data.create(DataType.FieldList, idOpt)
+    create(data, 1, fields)
   }
 
-  def load(fieldListId: Long)(implicit s: Session): List[FieldDef] = {
-    FieldKey.selectByFieldList(fieldListId).map(x => x._1.fieldDef(x._2))
+  def create(data: Data[DataType.FieldList], rev: Int, fields: List[FieldDef])
+    (implicit s: Session): FieldList = s.withTransaction {
+
+    val value = Value.create(data, rev)
+
+    var fieldKeys = List.empty[FieldKey]
+    var index = 0
+    for (f <- fields) {
+      val fieldKey = FieldKey.createWithNewData(f.fieldKeyType, f.fieldKeyData)
+      Relation.create(value, RelationType.Has, index.toShort, fieldKey)
+      fieldKeys :+= fieldKey
+      index += 1
+    }
+
+    FieldList(value, fieldKeys)
+  }
+
+  def find(data: Data[DataType.FieldList], rev: Revision)(implicit s: Session): Option[FieldList] = {
+    Value.find(data, rev).map { value =>
+      val fieldKeys = FieldKey.listByFieldList(value)
+      FieldList(value, fieldKeys)
+    }
   }
 }
