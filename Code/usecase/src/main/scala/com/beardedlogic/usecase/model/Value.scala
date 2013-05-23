@@ -28,13 +28,23 @@ object Value extends DBTable {
   val * = "id, data_id, rev"
   implicit val GetResultPlainValue = GetResult { r => PlainValue[DataType](r.<<, r.<<, r.<<) }
 
-  def createWithNewData[T <: DataType](dataType: T)(implicit s: Session): PlainValue[T] =
-    create(Data.create(dataType), 1)
+  val InsertWithExactRev = Q.query[(Long, Int), Long](s"INSERT INTO $TableName(data_id, rev) VALUES(?,?) RETURNING id")
+  val InsertWithLatestRev = Q.query[(Long, Long), (Long, Int)]( """
+                              insert into value(data_id,rev)
+                              select ?,coalesce(max(rev)+1,1) from value where data_id=?
+                              returning id, rev """.sql)
 
-  def create[T <: DataType](data: Data[T], rev: Int)(implicit s: Session): PlainValue[T] = {
-    val newId = Q.query[(Long, Int), Long](s"INSERT INTO $TableName(data_id, rev) VALUES(?,?) RETURNING id")
-                .first(data.id, rev)
-    PlainValue(newId, data.id, rev)
+  def createWithNewData[T <: DataType](dataType: T)(implicit s: Session): PlainValue[T] =
+    create(Data.create(dataType), ExactRev(1))
+
+  def create[T <: DataType](data: Data[T], rev: Revision)(implicit s: Session): PlainValue[T] = rev match {
+    case ExactRev(revNum) =>
+      val newId = InsertWithExactRev.first(data.id, revNum)
+      PlainValue(newId, data.id, revNum)
+
+    case LatestRev =>
+      val (newId, newRev) = InsertWithLatestRev.first(data.id, data.id)
+      PlainValue(newId, data.id, newRev)
   }
 
   def find[T <: DataType](data: Data[T], rev: Revision)(implicit s: Session): Option[PlainValue[T]] = {

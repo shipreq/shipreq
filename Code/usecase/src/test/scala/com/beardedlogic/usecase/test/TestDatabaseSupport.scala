@@ -6,6 +6,8 @@ import org.scalatest.{Outcome, Suite}
 import scala.slick.jdbc.{StaticQuery => Q}
 import scala.slick.session.Session
 import lib.db.DB
+import scala.util.Random
+import net.liftweb.common.Logger
 
 object TestDatabaseSupport {
 
@@ -20,9 +22,11 @@ object TestDatabaseSupport {
       }
     }
   }
+
+  val Random = new Random()
 }
 
-trait TestDatabaseSupport extends ShouldMatchers {
+trait TestDatabaseSupport extends ShouldMatchers with Logger {
   self: Suite =>
 
   TestDatabaseSupport.init()
@@ -41,15 +45,16 @@ trait TestDatabaseSupport extends ShouldMatchers {
   var dbVar: Session = null
   implicit def db = dbVar
 
+  def randomId = -TestDatabaseSupport.Random.nextLong().abs
+
   def countRowsIn(table: String) = Q.queryNA[Int](s"select count(*) from $table").first
 
   def assertTableDiffs[T](expectations: (String, Int)*)(block: => T) = {
     def count = expectations.map { case (t, _) => (t -> countRowsIn(t)) }.toMap
     val before = count
-    val expected = expectations.map { case (t, delta) => (t, delta + before(t)) }.toMap
     val result = block
-    val after = count
-    after should be(expected)
+    val after = count.map { case (t, newCount) => (t, newCount - before(t)) }.toMap
+    after should be(expectations.toMap)
     result
   }
 
