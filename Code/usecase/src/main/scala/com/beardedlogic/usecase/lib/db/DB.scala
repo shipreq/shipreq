@@ -109,8 +109,6 @@ object DB extends Logger {
     }
     this
   }
-
-  init()
 }
 
 class FlyWayLogger(clazz: Class[_]) extends com.googlecode.flyway.core.util.logging.Log {
