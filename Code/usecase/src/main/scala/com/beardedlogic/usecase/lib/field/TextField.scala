@@ -1,18 +1,21 @@
-package com.beardedlogic.usecase.lib
+package com.beardedlogic.usecase
+package lib
 package field
 
 import net.liftweb.util.Helpers._
+import model.FieldKeyType
 
 /**
  * Text field definition.
  *
  * @param title Name/title of the field. E.g. "Pre-Conditions"
- * @param hint Optional help text to display when the field is unpopulated.
  */
-case class TextFieldDef(title: String,
-                        hint: Option[String]) extends FieldDef {
+case class TextFieldDef(title: String) extends FieldDef {
 
   override def newFieldInstance(state: UCEditorState) = new TextField(this, state)
+
+  override def fieldKeyType = FieldKeyType.Text
+  override def fieldKeyData = Some(title)
 }
 
 object TextField {

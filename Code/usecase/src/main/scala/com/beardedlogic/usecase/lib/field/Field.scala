@@ -1,11 +1,21 @@
-package com.beardedlogic.usecase.lib
+package com.beardedlogic.usecase
+package lib
 package field
 
 import scala.xml.NodeSeq
-import net.liftweb.actor.LiftActor
+import model.FieldKeyType
+import model.FieldKey.FieldKeyData
 
 trait FieldDef {
+
   def newFieldInstance(state: UCEditorState): Field
+
+  def fieldKeyType: FieldKeyType
+
+  /**
+   * The arbitrary data stored in the database that comprises this field key's state.
+   */
+  def fieldKeyData: FieldKeyData
 }
 
 /**

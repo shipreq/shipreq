@@ -5,7 +5,7 @@ import org.scalatest.fixture.FunSpec
 import org.scalatest.matchers.ShouldMatchers
 import scala.slick.jdbc.{StaticQuery => Q}
 import scala.slick.session.Session
-import com.beardedlogic.usecase.lib.field.TextFieldDef
+import com.beardedlogic.usecase.lib.field._
 import Q.interpolation
 
 class FieldListTest extends FunSpec with ShouldMatchers {
@@ -22,28 +22,29 @@ class FieldListTest extends FunSpec with ShouldMatchers {
   }
 
   describe("FieldList") {
-
     it("should save") { implicit db: Session =>
 
-      val f1 = TextFieldDef("Opeth", None)
-      val f2 = TextFieldDef("Heritage", None)
-      val f3 = TextFieldDef("Haxprocess", None)
-      val fieldList = f1 :: f2 :: f3 :: Nil
+      val fieldList =
+        NormalAndAlternateCourseFields ::
+          TextFieldDef("Opeth") ::
+          TextFieldDef("Heritage") ::
+          TextFieldDef("Haxprocess") ::
+          ExceptionCourseFields ::
+          Nil
 
-      val saved =
-      assertTableDiffs("data"->4, "value" -> 4, "relation" -> 3) {
+      val newValues = fieldList.size + 1
+      val saved = assertTableDiffs("data" -> newValues, "value" -> newValues, "relation" -> fieldList.size) {
         FieldList.save(fieldList)
       }
 
-      FieldList.load(saved.id) should be (fieldList)
-
+      FieldList.load(saved.id) should be(fieldList)
     }
   }
 
-  def assertTableDiffs[T](expectations: (String,Int)*)(block : => T)(implicit db: Session) = {
-    def count = expectations.map{case (t,_) => (t -> countRowsIn(t)) }.toMap
+  def assertTableDiffs[T](expectations: (String, Int)*)(block: => T)(implicit db: Session) = {
+    def count = expectations.map { case (t, _) => (t -> countRowsIn(t)) }.toMap
     val before = count
-    val expected = expectations.map{case (t,delta) => (t, delta + before(t)) }.toMap
+    val expected = expectations.map { case (t, delta) => (t, delta + before(t)) }.toMap
     val result = block
     val after = count
     after should be(expected)

@@ -1,22 +1,19 @@
-package com.beardedlogic.usecase.lib
+package com.beardedlogic.usecase
+package lib
 package field
 
-import net.liftweb.http.SHtml
-import net.liftweb.http.js.{ JsCmd, JsCmds, JE }
-import net.liftweb.http.js.JsCmds.jsExpToJsCmd
-import net.liftweb.http.js.jquery.JqJE
 import net.liftweb.util.Helpers._
-import scala.annotation.tailrec
-import scala.xml._
-
-import JsExt._
 import StepTree._
+import model.FieldKeyType
 
 object ExceptionCourseFields extends FieldDef {
   import Fields.Template
   import CourseFields._
 
   override def newFieldInstance(state: UCEditorState) = new ExceptionCourseFields(state)
+
+  override def fieldKeyType = FieldKeyType.ExceptionCourses
+  override def fieldKeyData = None
 
   val ExceptionTemplate = AddStepTemplate(Template("template-courses-e"))
   val AddTailStepCss = s".courses-e .$AddTailStepClass"
@@ -27,9 +24,8 @@ object ExceptionCourseFields extends FieldDef {
  */
 class ExceptionCourseFields(val state: UCEditorState) extends CourseFields {
   import ExceptionCourseFields._
-  import CourseFields._
 
-  val ncLabelPrefix = Some(id + ".E.")
+  val ncLabelPrefix = Some(s"$id.E.")
 
   override def render = (
     renderSteps(courses, AddTailStepCss, newTailStep _)(ExceptionTemplate)

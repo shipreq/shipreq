@@ -1,22 +1,21 @@
-package com.beardedlogic.usecase.lib
+package com.beardedlogic.usecase
+package lib
 package field
 
-import net.liftweb.http.SHtml
 import net.liftweb.http.js.{ JsCmd, JsCmds, JE }
-import net.liftweb.http.js.JsCmds.jsExpToJsCmd
-import net.liftweb.http.js.jquery.JqJE
 import net.liftweb.util.Helpers._
-import scala.annotation.tailrec
-import scala.xml._
 
-import JsExt._
 import StepTree._
+import model.FieldKeyType
 
 object NormalAndAlternateCourseFields extends FieldDef {
   import Fields.Template
   import CourseFields._
 
   override def newFieldInstance(state: UCEditorState) = new NormalAndAlternateCourseFields(state)
+
+  override def fieldKeyType = FieldKeyType.NormalAndAlternateCourses
+  override def fieldKeyData = None
 
   val NormalCourseTemplate = AddStepTemplate(Template("template-courses-n"))
   val AlternateCourseTemplate = AddStepTemplate(Template("template-courses-a"))
@@ -32,7 +31,7 @@ class NormalAndAlternateCourseFields(val state: UCEditorState) extends CourseFie
   import NormalAndAlternateCourseFields._
   import CourseFields._
 
-  val ncLabelPrefix = Some(id + ".")
+  val ncLabelPrefix = Some(s"$id.")
 
   // This will do for now but if this is moved into init() it will cause problems with TextFields due to the stepRefMap
   courses =

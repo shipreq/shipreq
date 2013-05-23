@@ -16,8 +16,7 @@ object FieldList {
     val fieldListRecord = Value.createWithNewData(DataType.FieldList)
     var index = 0
     for (f <- fieldList) {
-      val tf = f.asInstanceOf[TextFieldDef]
-      val fieldKey = FieldKey.createWithNewData(FieldKeyType.Text, Some(tf.title)) // TODO hardcoded for text
+      val fieldKey = FieldKey.createWithNewData(f.fieldKeyType, f.fieldKeyData)
       Relation.create(fieldListRecord, RelationType.Has, index.toShort, fieldKey.value)
       index += 1
     }
@@ -25,6 +24,6 @@ object FieldList {
   }
 
   def load(fieldListId: Long)(implicit s: Session): List[FieldDef] = {
-    FieldKey.selectByFieldList(fieldListId).map { case (_, data) => TextFieldDef(data.get, None) }
+    FieldKey.selectByFieldList(fieldListId).map(x => x._1.fieldDef(x._2))
   }
 }
