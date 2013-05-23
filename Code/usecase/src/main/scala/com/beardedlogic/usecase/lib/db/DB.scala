@@ -17,6 +17,9 @@ import com.beardedlogic.usecase.model.{RelationType, FieldKeyType, DataType}
  */
 object DB extends Logger {
 
+  // This needs to be up here before the vals
+  Misc.ensureTestModeDuringTests()
+
   @inline private def n(name: String) = s"db.$name"
   @inline private def prop(name: String) = Props.get(n(name)) ?~ s"Property not found: ${n(name)}"
   @inline private def setIfDefinedS(name: String, setFn: String => Unit) = Props.get(n(name)).foreach(setFn(_))
@@ -107,7 +110,6 @@ object DB extends Logger {
     this
   }
 
-  Misc.ensureTestModeDuringTests()
   init()
 }
 

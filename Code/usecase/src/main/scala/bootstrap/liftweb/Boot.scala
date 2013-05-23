@@ -3,7 +3,7 @@ package bootstrap.liftweb
 import net.liftweb.http.{ Html5Properties, LiftRules, Req }
 import net.liftweb.sitemap.{ Menu, SiteMap }
 import com.beardedlogic.usecase.lib.db.DB
-
+import com.beardedlogic.usecase.lib.Misc
 
 /**
  * A class that's instantiated early and run.  It allows the application
@@ -11,6 +11,8 @@ import com.beardedlogic.usecase.lib.db.DB
  */
 class Boot {
   def boot {
+
+    Misc.ensureTestModeDuringTests()
 
     // App package path
     LiftRules.addToPackages("com.beardedlogic.usecase")
