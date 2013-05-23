@@ -10,17 +10,10 @@
         </filter>
 	</appender>
 
-    <appender name="FILE.DBG" class="ch.qos.logback.core.FileAppender">
-        <file>log/dev-${byDay}.dbg</file>
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %-5level [%-50logger{50}] {%thread} %msg%n</pattern>
-        </encoder>
-    </appender>
-
     <appender name="FILE.LOG" class="ch.qos.logback.core.FileAppender">
         <file>log/dev-${byDay}.log</file>
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %-5level [%-40logger{40}] %msg%n</pattern>
+            <pattern>%d{HH:mm:ss.SSS} %-5level [%-50logger{50}] {%thread} %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -34,11 +27,12 @@
         </filter>
     </appender>
 
+    <logger name="scala.slick.compiler" level="WARN" />
+    <logger name="scala.slick.session" level="DEBUG" />
     <logger name="com.beardedlogic" level="DEBUG" />
     <!--logger name="com.googlecode.flyway" level="INFO" /-->
 	<root level="DEBUG">
         <appender-ref ref="STDOUT" />
-        <appender-ref ref="FILE.DBG" />
         <appender-ref ref="FILE.LOG" />
         <appender-ref ref="FILE.ERR" />
 	</root>

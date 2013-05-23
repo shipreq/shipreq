@@ -58,7 +58,7 @@ object DB extends Logger {
 
   val DataSource = {
     val ds = loadDataSource().openOrThrowException("A database connection is mandatory.")
-    debug("Connecting to database: " + ds.getDatabaseName)
+    info("Connecting to database: " + ds.getDatabaseName)
     ds.getConnection.close() // test the data source validity
     ds
   }
