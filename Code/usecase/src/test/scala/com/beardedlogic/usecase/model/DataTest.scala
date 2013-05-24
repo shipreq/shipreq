@@ -1,28 +1,16 @@
 package com.beardedlogic.usecase.model
 
-import org.scalatest.fixture.FunSpec
-import org.scalatest.matchers.ShouldMatchers
-import scala.slick.session.Session
-import com.beardedlogic.usecase.lib.db.DB
+import org.scalatest.FunSpec
+import com.beardedlogic.usecase.test.TestDatabaseSupport
 
-class DataTest extends FunSpec with ShouldMatchers {
-
-  type FixtureParam = Session
-
-  override protected def withFixture(test: OneArgTest) = {
-    DB.Slick.withTransaction { implicit db: Session =>
-      try withFixture(test.toNoArgTest(db))
-      finally db.rollback()
-    }
-  }
+class DataTest extends FunSpec with TestDatabaseSupport {
 
   describe("Data") {
-
-    it("should insert and read back") { implicit db: Session =>
+    it("should insert and read back") {
       val id1 = Data.create(DataType.UseCase).id
       val id2 = Data.create(DataType.FieldList).id
-      Data.find(id1) should be(Data(id1, DataType.UseCase): Data[_])
-      Data.find(id2) should be(Data(id2, DataType.FieldList): Data[_])
+      Data.find(id1) should be(Some(Data(id1, DataType.UseCase)): Option[Data[_]])
+      Data.find(id2) should be(Some(Data(id2, DataType.FieldList)): Option[Data[_]])
     }
   }
 }
