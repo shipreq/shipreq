@@ -36,7 +36,7 @@ object FieldList {
     var index = 0
     for (f <- fields) {
       val fieldKey = FieldKey.create(f.fieldKeyType, f.fieldKeyData, reuseFieldKeys)
-      Relation.create(value, RelationType.Has, index.toShort, fieldKey)
+      Relation.fieldList_has_fieldKey(value, index.toShort, fieldKey)
       fieldKeys :+= fieldKey
       index += 1
     }

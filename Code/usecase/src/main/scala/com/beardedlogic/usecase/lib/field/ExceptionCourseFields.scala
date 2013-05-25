@@ -4,13 +4,14 @@ package field
 
 import net.liftweb.util.Helpers._
 import StepTree._
-import model.FieldKeyType
+import model.{FieldKey, FieldKeyType}
 
 object ExceptionCourseFields extends FieldDef {
   import Fields.Template
   import CourseFields._
 
-  override def newFieldInstance(state: UCEditorState) = new ExceptionCourseFields(state)
+  override def newFieldInstance(state: UCEditorState, fieldKey: FieldKey) =
+    new ExceptionCourseFields(state, fieldKey)
 
   override def fieldKeyType = FieldKeyType.ExceptionCourses
   override def fieldKeyData = None
@@ -22,7 +23,7 @@ object ExceptionCourseFields extends FieldDef {
 /**
  * Provides the field Exceptions, into which the user enters a hierarchy of steps.
  */
-class ExceptionCourseFields(val state: UCEditorState) extends CourseFields {
+class ExceptionCourseFields(override val state: UCEditorState, override val fieldKey: FieldKey) extends CourseFields {
   import ExceptionCourseFields._
 
   val ncLabelPrefix = Some(s"$id.E.")

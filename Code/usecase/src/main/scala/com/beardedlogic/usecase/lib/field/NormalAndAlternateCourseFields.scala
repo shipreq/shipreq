@@ -6,13 +6,14 @@ import net.liftweb.http.js.{ JsCmd, JsCmds, JE }
 import net.liftweb.util.Helpers._
 
 import StepTree._
-import model.FieldKeyType
+import model.{FieldKey, FieldKeyType}
 
 object NormalAndAlternateCourseFields extends FieldDef {
   import Fields.Template
   import CourseFields._
 
-  override def newFieldInstance(state: UCEditorState) = new NormalAndAlternateCourseFields(state)
+  override def newFieldInstance(state: UCEditorState, fieldKey: FieldKey) =
+    new NormalAndAlternateCourseFields(state, fieldKey)
 
   override def fieldKeyType = FieldKeyType.NormalAndAlternateCourses
   override def fieldKeyData = None
@@ -27,7 +28,7 @@ object NormalAndAlternateCourseFields extends FieldDef {
  *
  * Steps can be moved between the two.
  */
-class NormalAndAlternateCourseFields(val state: UCEditorState) extends CourseFields {
+class NormalAndAlternateCourseFields(override val state: UCEditorState, override val fieldKey: FieldKey) extends CourseFields {
   import NormalAndAlternateCourseFields._
   import CourseFields._
 

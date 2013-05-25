@@ -49,7 +49,7 @@ object DataType extends DatabaseEnum[DataType] {
   /**
    * A single or composite value to a corresponding [[com.beardedlogic.usecase.model.DataType.FieldKey]].
    */
-  case object FieldValue extends DataType(103)
+  case object FieldValue extends DataType(103) with StepParent
   type FieldValue = FieldValue.type
 
   /**
@@ -57,7 +57,7 @@ object DataType extends DatabaseEnum[DataType] {
    *
    * Children are specified using [[com.beardedlogic.usecase.model.RelationType.Has]]
    */
-  case object Step extends DataType(104)
+  case object Step extends DataType(104) with StepParent
   type Step = Step.type
 
   val Values = List(UseCase, FieldList, FieldKey, FieldValue, Step)

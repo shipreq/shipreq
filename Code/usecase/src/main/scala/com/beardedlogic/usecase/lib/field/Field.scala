@@ -2,13 +2,15 @@ package com.beardedlogic.usecase
 package lib
 package field
 
+import scala.slick.session.Session
 import scala.xml.NodeSeq
-import model.FieldKeyType
-import model.FieldKey.FieldKeyData
+import model.{FieldKey, FieldValue, FieldKeyType, FieldSaveCtx}
+import FieldKey.FieldKeyData
+import FieldValue.FieldValueData
 
 trait FieldDef {
 
-  def newFieldInstance(state: UCEditorState): Field
+  def newFieldInstance(state: UCEditorState, fieldKey: FieldKey): Field
 
   def fieldKeyType: FieldKeyType
 
@@ -25,13 +27,36 @@ trait Field {
 
   val state: UCEditorState
 
+  val fieldKey: FieldKey
+
   @inline final def msgCentre = state.msgCentre
 
   /**
    * Called once after all fields have been created. Invocation is synchronous and must complete before the first
    * render is performed.
    */
-  def init() : Unit
+  def init(): Unit
 
   def render(): NodeSeq
+
+  /**
+   * Gives a field a chance to opt-out of storing a value in the database.
+   * If a field is blank, then there's no point saving it.
+   */
+  def save_? : Boolean
+
+  /**
+   * Saves `Data` and `Value` rows for any additional data required.
+   */
+  def presave(ctx: FieldSaveCtx)(implicit db: Session): Unit
+
+  /**
+   * Continues saving state to database.
+   *
+   * Once this is called, the `Data` and `Value` rows for all fields will have been saved, the IDs known.
+   *
+   * @return A single, arbitrary data string that will be stored in `field_value.data`. The format and mechanism of this
+   *         value can be decided by the field type.
+   */
+  def save(ctx: FieldSaveCtx)(implicit db: Session): FieldValueData
 }

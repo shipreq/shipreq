@@ -1,4 +1,5 @@
-package com.beardedlogic.usecase.lib
+package com.beardedlogic.usecase
+package lib
 package field
 
 import net.liftweb.http.SHtml
@@ -7,11 +8,13 @@ import net.liftweb.http.js.JsCmds.jsExpToJsCmd
 import net.liftweb.http.js.jquery.JqJE
 import net.liftweb.util.CssSel
 import net.liftweb.util.Helpers._
-import scala.annotation.tailrec
+import scala.slick.session.Session
 import scala.xml._
 import JsExt._
 import StepTree._
 import msg.Messages._
+import model._
+import FieldValue.FieldValueData
 
 object CourseFields {
   import Fields.Template
@@ -38,7 +41,7 @@ abstract class CourseFields extends Field {
   val id = 1
 
   private[this] var _courses: List[StepNode] = Nil
-  protected def courses_=(newCourses: List[StepNode]) {
+  def courses_=(newCourses: List[StepNode]) {
     _courses = newCourses
     _stepLabelMap = null
       msgCentre ! StepChangeMsg
@@ -55,6 +58,34 @@ abstract class CourseFields extends Field {
 
   override def init() {
     for (n <- flattenNodes(courses)) createAndRegisterTextField(n)
+  }
+
+  override def save_? : Boolean = courses.nonEmpty
+
+  override def presave(ctx:FieldSaveCtx)(implicit db: Session) {
+    for (n <- flattenNodes(courses)) {
+      val value = Value.createWithNewData(DataType.Step)
+      ctx.stepValues += (n.id -> value)
+    }
+  }
+
+  override def save(ctx:FieldSaveCtx)(implicit db: Session): FieldValueData = {
+    saveNodes(courses, ctx, ctx.fieldValues(this), 0)
+    None
+  }
+
+  private def saveNodes(courses: List[StepNode], ctx: FieldSaveCtx, parent: Value[_ <: StepParent], index: Int)
+    (implicit db: Session): Unit = courses match {
+    case h :: t =>
+      // TODO references, same as text fields
+      val value = ctx.stepValues(h.id)
+      model.Step.create(value, h.step.text)
+      Relation.stepParent_has_step(parent, index.toShort, value)
+
+      saveNodes(h.children, ctx, value, 0)
+      saveNodes(t, ctx, parent, index + 1)
+
+    case _ =>
   }
 
   private[this] def createAndRegisterTextField(n:StepNode) {
