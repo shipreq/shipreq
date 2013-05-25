@@ -24,8 +24,8 @@ Getting Started
     sudo systemctl restart postgresql
 
 * Setting up local DBs
-    sudo -u postgres psql < create_db-dev.sql
-    sudo -u postgres psql < create_db-test.sql
+    sudo -u postgres psql < db-create-dev.sql
+    sudo -u postgres psql < db-create-test.sql
 
 Running and Developing
 ======================
