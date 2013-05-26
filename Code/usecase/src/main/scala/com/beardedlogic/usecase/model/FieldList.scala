@@ -30,7 +30,7 @@ trait FieldListAccessor extends DatabaseAccessor {
     var index = 0
     for (f <- fields) {
       val fieldKey = findOrCreateInitialFieldKey(f.fieldKeyType, f.fieldKeyData)
-      fieldList_has_fieldKey(value, index.toShort, fieldKey)
+      relate_fieldList_has_fieldKey(value, index.toShort, fieldKey)
       fieldKeys :+= fieldKey
       index += 1
     }

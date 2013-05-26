@@ -79,7 +79,7 @@ abstract class CourseFields extends Field {
       // TODO references, same as text fields
       val value = ctx.stepValues(h.id)
       ctx.db.createStep(value, h.step.text)
-      ctx.db.stepParent_has_step(parent, index.toShort, value)
+      ctx.db.relate_stepParent_has_step(parent, index.toShort, value)
 
       saveNodes(h.children, ctx, value, 0)
       saveNodes(t, ctx, parent, index + 1)

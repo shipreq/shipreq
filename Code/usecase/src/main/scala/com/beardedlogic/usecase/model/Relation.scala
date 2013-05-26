@@ -1,9 +1,7 @@
 package com.beardedlogic.usecase
 package model
 
-import scala.slick.driver.PostgresDriver.simple._
 import scala.slick.jdbc.{StaticQuery => Q}
-import lib.db._
 
 trait RelationAccessor extends DatabaseAccessor {
 
@@ -17,19 +15,19 @@ trait RelationAccessor extends DatabaseAccessor {
     .execute(from.valueId, relationType.ordinal, index, to.valueId)
   }
 
-  @inline def fieldList_has_fieldKey(
+  @inline def relate_fieldList_has_fieldKey(
     from: Value[DataType.FieldList],
     index: Short,
     to: Value[DataType.FieldKey]
     ) = createRelationUnchecked(from, RelationType.Has, index, to)
 
-  @inline def stepParent_has_step(
+  @inline def relate_stepParent_has_step(
     from: Value[_ <: StepParent],
     index: Short,
     to: Value[DataType.Step]
     ) = createRelationUnchecked(from, RelationType.Has, index, to)
 
-  @inline def usecase_has_fieldValue(
+  @inline def relate_usecase_has_fieldValue(
     from: Value[DataType.UseCase],
     to: Value[DataType.FieldValue]
     ) = createRelationUnchecked(from, RelationType.Has, INDEX_NA, to)
