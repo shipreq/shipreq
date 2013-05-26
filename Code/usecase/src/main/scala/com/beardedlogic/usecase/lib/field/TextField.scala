@@ -52,9 +52,9 @@ class TextField(val fd: TextFieldDef, override val state: UCEditorState, overrid
   // TODO Change references
   // TODO References
 
-  override def presave(ctx:FieldSaveCtx)(implicit db: Session) {}
+  override def presave(ctx:FieldSaveCtx) {}
 
-  override def save(ctx:FieldSaveCtx)(implicit db: Session): FieldValueData = {
+  override def save(ctx:FieldSaveCtx): FieldValueData = {
     Some(value.text)
   }
 }

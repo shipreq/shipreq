@@ -15,9 +15,9 @@ object ReservedIds {
 }
 
 object Defaults extends Logger {
-  private[this] implicit var s = DB.Slick.createSession()
+  private[this] var dao = DAO.get
 
-  val FieldList = {
+  val FieldList = dao.withTransaction {
     //  val DateCreated = TextFieldDef("Date Created")
     //  val DateLastUpdated = TextFieldDef("Date Last Updated")
     val fields: List[FieldDef] =
@@ -33,12 +33,13 @@ object Defaults extends Logger {
         TextFieldDef("Assumptions") ::
         TextFieldDef("Notes and Issues") ::
         Nil
-    model.FieldList.ensureSavedAndLatest(ReservedIds.DefaultFieldList, fields)
+
+    dao.syncFieldList(ReservedIds.DefaultFieldList, fields)
   }
   debug(s"Default field list: ${FieldList.dataId}/${FieldList.valueId}")
 
-  s.close()
-  s= null
+  dao.close()
+  dao= null
 
   def init() {
     debug("Defaults initialised successfully.")

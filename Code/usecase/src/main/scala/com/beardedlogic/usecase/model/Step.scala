@@ -1,17 +1,15 @@
 package com.beardedlogic.usecase.model
 
-import com.beardedlogic.usecase.lib.db.DBTable
-import scala.slick.driver.PostgresDriver.simple._
 import scala.slick.jdbc.{StaticQuery => Q}
 
-object Step extends DBTable {
+object StepAccessor {
+  val Insert = Q.update[(Long, String)]("INSERT INTO step VALUES(?,?)")
+}
 
-  override val TableName = "step"
+trait StepAccessor extends DatabaseAccessor {
+  import StepAccessor._
 
-  private val Insert = Q.update[(Long, String)](
-    s"INSERT INTO $TableName VALUES(?,?)")
-
-  def create(value: Value[DataType.Step], text: String)(implicit s: Session): Unit = {
+  def createStep(value: Value[DataType.Step], text: String): Unit = {
     Insert.execute(value.valueId, text)
   }
 }

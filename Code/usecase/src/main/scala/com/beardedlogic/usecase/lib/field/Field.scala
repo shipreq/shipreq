@@ -2,7 +2,6 @@ package com.beardedlogic.usecase
 package lib
 package field
 
-import scala.slick.session.Session
 import scala.xml.NodeSeq
 import model.{FieldKey, FieldValue, FieldKeyType, FieldSaveCtx}
 import FieldKey.FieldKeyData
@@ -48,7 +47,7 @@ trait Field {
   /**
    * Saves `Data` and `Value` rows for any additional data required.
    */
-  def presave(ctx: FieldSaveCtx)(implicit db: Session): Unit
+  def presave(ctx: FieldSaveCtx): Unit
 
   /**
    * Continues saving state to database.
@@ -58,5 +57,5 @@ trait Field {
    * @return A single, arbitrary data string that will be stored in `field_value.data`. The format and mechanism of this
    *         value can be decided by the field type.
    */
-  def save(ctx: FieldSaveCtx)(implicit db: Session): FieldValueData
+  def save(ctx: FieldSaveCtx): FieldValueData
 }

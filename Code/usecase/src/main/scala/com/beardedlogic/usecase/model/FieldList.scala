@@ -17,26 +17,27 @@ case class FieldList(value: PlainValue[DataType.FieldList], fieldKeys: List[Fiel
   val fieldDefs = fieldKeys.map(_.fieldDef)
 }
 
-object FieldList {
+trait FieldListAccessor extends DatabaseAccessor {
+  self:DataAccessor with ValueAccessor with RelationAccessor with FieldKeyAccessor =>
 
-  def createWithNewData(fields: List[FieldDef], idOpt: Option[Long] = None)(implicit s: Session) = {
-    val data = Data.create(DataType.FieldList, idOpt)
-    create(data, fields, ExactRev(1), false)
+  def createFieldListWithNewData(fields: List[FieldDef], idOpt: Option[Long] = None) = {
+    val data = createData(DataType.FieldList, idOpt)
+    createFieldList(data, fields, ExactRev(1), false)
   }
 
-  def create(
+  def createFieldList(
     data: Data[DataType.FieldList],
     fields: List[FieldDef],
     rev: Revision = LatestRev,
-    reuseFieldKeys: Boolean = true)(implicit s: Session): FieldList = {
+    reuseFieldKeys: Boolean = true): FieldList = {
 
-    val value = Value.create(data, rev)
+    val value = createValue(data, rev)
 
     var fieldKeys = List.empty[FieldKey]
     var index = 0
     for (f <- fields) {
-      val fieldKey = FieldKey.create(f.fieldKeyType, f.fieldKeyData, reuseFieldKeys)
-      Relation.fieldList_has_fieldKey(value, index.toShort, fieldKey)
+      val fieldKey = createFieldKey(f.fieldKeyType, f.fieldKeyData, reuseFieldKeys)
+      fieldList_has_fieldKey(value, index.toShort, fieldKey)
       fieldKeys :+= fieldKey
       index += 1
     }
@@ -44,9 +45,9 @@ object FieldList {
     FieldList(value, fieldKeys)
   }
 
-  def find(data: Data[DataType.FieldList], rev: Revision)(implicit s: Session): Option[FieldList] = {
-    Value.find(data, rev).map { value =>
-      val fieldKeys = FieldKey.listByFieldList(value)
+  def findFieldList(data: Data[DataType.FieldList], rev: Revision): Option[FieldList] = {
+    findValue(data, rev).map { value =>
+      val fieldKeys = listFieldKeysByFieldList(value)
       FieldList(value, fieldKeys)
     }
   }
@@ -57,15 +58,14 @@ object FieldList {
    * @param id The data ID for the field list.
    * @param fields The field list to save.
    */
-  def ensureSavedAndLatest(id: Long, fields: List[FieldDef])
-    (implicit s: Session): FieldList = s.withTransaction {
-    val dataOp = Data.find(id, DataType.FieldList)
-    val latestOp = dataOp.flatMap(find(_, LatestRev))
+  def syncFieldList(id: Long, fields: List[FieldDef]): FieldList = db.withTransaction {
+    val dataOp = findData(id, DataType.FieldList)
+    val latestOp = dataOp.flatMap(findFieldList(_, LatestRev))
 
     (dataOp, latestOp) match {
-      case (None, _)                                       => FieldList.createWithNewData(fields, Some(id))
+      case (None, _)                                       => createFieldListWithNewData(fields, Some(id))
       case (_, Some(latest)) if latest.fieldDefs == fields => latest
-      case (Some(data), _)                                 => create(data, fields)
+      case (Some(data), _)                                 => createFieldList(data, fields)
     }
   }
 }

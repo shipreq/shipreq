@@ -8,6 +8,7 @@ import scala.slick.session.Session
 import lib.db.DB
 import scala.util.Random
 import net.liftweb.common.Logger
+import com.beardedlogic.usecase.model.DAO
 
 object TestDatabaseSupport {
 
@@ -32,17 +33,22 @@ trait TestDatabaseSupport extends ShouldMatchers with Logger {
   override protected def withFixture(test: NoArgTest): Outcome = {
     TestDatabaseSupport.init()
     DB.Slick.withTransaction { s: Session =>
-      this.dbVar = s
+      this.sessionVar = s
+      this.dbVar = new DAO(s)
       try test()
       finally {
         s.rollback()
+        this.sessionVar = null
         this.dbVar = null
       }
     }
   }
 
-  var dbVar: Session = null
-  implicit def db = dbVar
+  var sessionVar: Session = null
+  implicit def session = sessionVar
+
+  var dbVar: DAO = null
+  def db = dbVar
 
   def randomId = -TestDatabaseSupport.Random.nextLong().abs
 

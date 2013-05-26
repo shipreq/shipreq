@@ -1,8 +1,7 @@
 package com.beardedlogic.usecase
 package lib.db
 
-import scala.slick.driver.PostgresDriver.simple._
-import scala.slick.jdbc.{StaticQuery => Q, GetResult}
+import scala.slick.jdbc.GetResult
 import lib.EnumValue
 
 object DBHelpers {
@@ -22,10 +21,4 @@ object DBHelpers {
   implicit class SqlStringExt(val s: String) extends AnyVal {
     def sql = LeadingWhitespace.replaceAllIn(s, " ").trim
   }
-}
-
-trait DBTable {
-  val TableName: String
-
-  def count(implicit s: Session) = Q.queryNA[Int](s"SELECT COUNT(1) FROM $TableName").first
 }

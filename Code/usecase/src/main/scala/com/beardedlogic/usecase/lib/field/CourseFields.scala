@@ -62,25 +62,24 @@ abstract class CourseFields extends Field {
 
   override def save_? : Boolean = courses.nonEmpty
 
-  override def presave(ctx:FieldSaveCtx)(implicit db: Session) {
+  override def presave(ctx:FieldSaveCtx) {
     for (n <- flattenNodes(courses)) {
-      val value = Value.createWithNewData(DataType.Step)
+      val value = ctx.db.createValueWithNewData(DataType.Step)
       ctx.stepValues += (n.id -> value)
     }
   }
 
-  override def save(ctx:FieldSaveCtx)(implicit db: Session): FieldValueData = {
+  override def save(ctx:FieldSaveCtx): FieldValueData = {
     saveNodes(courses, ctx, ctx.fieldValues(this), 0)
     None
   }
 
-  private def saveNodes(courses: List[StepNode], ctx: FieldSaveCtx, parent: Value[_ <: StepParent], index: Int)
-    (implicit db: Session): Unit = courses match {
+  private def saveNodes(courses: List[StepNode], ctx: FieldSaveCtx, parent: Value[_ <: StepParent], index: Int): Unit = courses match {
     case h :: t =>
       // TODO references, same as text fields
       val value = ctx.stepValues(h.id)
-      model.Step.create(value, h.step.text)
-      Relation.stepParent_has_step(parent, index.toShort, value)
+      ctx.db.createStep(value, h.step.text)
+      ctx.db.stepParent_has_step(parent, index.toShort, value)
 
       saveNodes(h.children, ctx, value, 0)
       saveNodes(t, ctx, parent, index + 1)

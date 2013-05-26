@@ -8,27 +8,26 @@ import DBHelpers._
 
 case class Data[T <: DataType](id: Long, dataType: T)
 
-object Data extends DBTable {
-  override val TableName = "data"
+trait DataAccessor extends DatabaseAccessor {
 
-  def create[T <: DataType](dataType: T, idOpt: Option[Long] = None)(implicit s: Session): Data[T] = idOpt match {
+  def createData[T <: DataType](dataType: T, idOpt: Option[Long] = None): Data[T] = idOpt match {
     case Some(id) =>
-      Q.update[(Long, Short)](s"INSERT INTO $TableName(id, type_id) VALUES(?,?)").execute(id, dataType)
+      Q.update[(Long, Short)]("INSERT INTO data(id, type_id) VALUES(?,?)").execute(id, dataType)
       Data(id, dataType)
 
     case None =>
-      val id = Q.query[Short, Int](s"INSERT INTO $TableName(type_id) VALUES(?) RETURNING id").first(dataType)
+      val id = Q.query[Short, Int]("INSERT INTO data(type_id) VALUES(?) RETURNING id").first(dataType)
       Data(id, dataType)
   }
 
-  def find(id: Long)(implicit s: Session): Option[Data[_ <: DataType]] = {
-    Q.query[Long, Short](s"SELECT type_id FROM $TableName WHERE id=?")
+  def findData(id: Long): Option[Data[_ <: DataType]] = {
+    Q.query[Long, Short]("SELECT type_id FROM data WHERE id=?")
     .firstOption(id)
     .map(Data(id, _))
   }
 
-  def find[T <: DataType](id: Long, dataType: T)(implicit s: Session): Option[Data[T]] = {
-    Q.query[(Long, Short), Short](s"SELECT id FROM $TableName WHERE id=? AND type_id=?")
+  def findData[T <: DataType](id: Long, dataType: T): Option[Data[T]] = {
+    Q.query[(Long, Short), Short]("SELECT id FROM data WHERE id=? AND type_id=?")
     .firstOption(id, dataType)
     .map(Data(_, dataType))
   }

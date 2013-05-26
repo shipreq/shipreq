@@ -1,34 +1,36 @@
 package com.beardedlogic.usecase
 package model
 
-import scala.slick.driver.PostgresDriver.simple._
-import scala.slick.jdbc.{GetResult, StaticQuery => Q}
-import lib.db._
-import DBHelpers._
-import com.beardedlogic.usecase.lib.field.Field
 import scala.collection.mutable.{Map => MutableMap}
+import scala.slick.jdbc.{StaticQuery => Q}
+import lib.field.Field
+import FieldValue.FieldValueData
 
 case class FieldValue(
   valueId: Long,
   fieldKey: FieldKey,
-  fieldData: FieldValue.FieldValueData
+  fieldData: FieldValueData
   ) extends Value[DataType.FieldValue]
 
-object FieldValue extends DBTable {
-
-  override val TableName = "field_value"
-
+object FieldValue {
   type FieldValueData = Option[String]
+}
 
-  private val Insert = Q.update[(Long, Long, FieldValueData)](
-    s"INSERT INTO $TableName VALUES(?,?,?)")
+object FieldValueAccessor {
+  val Insert = Q.update[(Long, Long, FieldValueData)]("INSERT INTO field_value VALUES(?,?,?)")
+}
 
-  def createWithNewData(fields: List[Field])(implicit s: Session): List[FieldValue] = s.withTransaction {
-    val saveCtx = new FieldSaveCtx
+trait FieldValueAccessor extends DatabaseAccessor {
+  self: DAO =>
+
+  import FieldValueAccessor._
+
+  def createFieldValue(fields: List[Field]): List[FieldValue] = db.withTransaction {
+    val saveCtx = new FieldSaveCtx(this)
 
     // Pre-Save (data & value tables)
     for (field <- fields if field.save_?) {
-      val value = Value.createWithNewData(DataType.FieldValue)
+      val value = createValueWithNewData(DataType.FieldValue)
       saveCtx.fieldValues += (field -> value)
       field.presave(saveCtx)
     }
@@ -45,7 +47,7 @@ object FieldValue extends DBTable {
   }
 }
 
-class FieldSaveCtx {
+class FieldSaveCtx(val db: DAO) {
 
   /**
    * `Value` instances for all fields that will be saved in the current transaction.

@@ -23,7 +23,7 @@ class FieldValueTest extends FunSpec with TestDatabaseSupport {
       val tf = newTextField
       tf.value.setTextFromUser("Yay!")
       val fv = assertTableDiffs("field_value" -> 1, "value" -> 1, "data" -> 1) {
-        FieldValue.createWithNewData(tf :: Nil)
+        db.createFieldValue(tf :: Nil)
       }
       fv.size should be(1)
       fv.head.fieldKey should be(textFieldKey)
@@ -33,7 +33,7 @@ class FieldValueTest extends FunSpec with TestDatabaseSupport {
     it("should NOP when text is blank") {
       val tf = newTextField
       tf.value.setTextFromUser("")
-      val fv = assertTableDiffs() { FieldValue.createWithNewData(tf :: Nil) }
+      val fv = assertTableDiffs() { db.createFieldValue(tf :: Nil) }
       fv should be('empty)
     }
   }
@@ -51,7 +51,7 @@ class FieldValueTest extends FunSpec with TestDatabaseSupport {
           )) :: Nil
 
       val fv = assertTableDiffs("field_value" -> 1, "step" -> 5, "value" -> 6, "data" -> 6, "relation" -> 5) {
-        FieldValue.createWithNewData(f :: Nil)
+        db.createFieldValue(f :: Nil)
       }
       fv.size should be(1)
       fv.head.fieldKey should be(ncacFieldKey)

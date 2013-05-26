@@ -1,61 +1,64 @@
 package com.beardedlogic.usecase
 package model
 
-import scala.slick.driver.PostgresDriver.simple._
 import scala.slick.jdbc.{GetResult, StaticQuery => Q}
 import lib.db._
 import DBHelpers._
 import FieldKey.FieldKeyData
-import net.liftweb.common.Logger
 
 case class FieldKey(valueId: Long, fieldKeyType: FieldKeyType, fieldKeyData: FieldKeyData)
   extends Value[DataType.FieldKey] {
   def fieldDef = fieldKeyType.fieldDef(fieldKeyData)
 }
 
-object FieldKey extends DBTable {
-  override val TableName = "field_key"
-
+object FieldKey {
   type FieldKeyData = Option[String]
+}
+
+object FieldKeyAccessor {
 
   implicit val GetResultFieldKey = GetResult { r => FieldKey(r.<<, r.<<, r.<<) }
 
-  private val SelectIdToReuse = Q.query[(Short, FieldKeyData), Long](
-    s"SELECT id FROM $TableName WHERE type_id=? AND data IS NOT DISTINCT FROM ?")
+  val SelectIdToReuse = Q.query[(Short, FieldKeyData), Long](
+    "SELECT id FROM field_key WHERE type_id=? AND data IS NOT DISTINCT FROM ?")
 
-  private val Insert = Q.update[(Long, Short, FieldKeyData)](
-    s"INSERT INTO $TableName(id, type_id, data) VALUES(?,?,?)")
+  val Insert = Q.update[(Long, Short, FieldKeyData)](
+    "INSERT INTO field_key(id, type_id, data) VALUES(?,?,?)")
 
-  private val SelectByFieldList = Q.query[(Long, Short), FieldKey]( """
+  val SelectByFieldList = Q.query[(Long, Short), FieldKey]( """
       SELECT fk.id, fk.type_id, fk.data
       FROM field_key fk, relation r
       WHERE fk.id = r.to_id
         AND r.from_id = ?
         AND r.type_id = ?
       ORDER BY r.index """.sql)
+}
 
-  // -------------------------------------------------------------------------------------------------------------------
+trait FieldKeyAccessor extends DatabaseAccessor {
+  self: ValueAccessor =>
 
-  def create(
+  import FieldKeyAccessor._
+
+  def createFieldKey(
     fieldKeyType: FieldKeyType,
     fieldKeyData: FieldKeyData,
-    reuseFieldKeys: Boolean = true)(implicit s: Session) = {
+    reuseFieldKeys: Boolean = true) = {
 
     if (reuseFieldKeys)
       SelectIdToReuse.firstOption(fieldKeyType, fieldKeyData)
       .map(FieldKey(_, fieldKeyType, fieldKeyData))
-      .getOrElse(createWithNewData(fieldKeyType, fieldKeyData))
+      .getOrElse(createFieldKeyWithNewData(fieldKeyType, fieldKeyData))
     else
-      createWithNewData(fieldKeyType, fieldKeyData)
+      createFieldKeyWithNewData(fieldKeyType, fieldKeyData)
   }
 
-  def createWithNewData(fieldKeyType: FieldKeyType, fieldKeyData: FieldKeyData)(implicit s: Session) = {
-    val fkv = Value.createWithNewData(DataType.FieldKey)
+  def createFieldKeyWithNewData(fieldKeyType: FieldKeyType, fieldKeyData: FieldKeyData) = {
+    val fkv = createValueWithNewData(DataType.FieldKey)
     Insert.first(fkv.valueId, fieldKeyType, fieldKeyData)
     FieldKey(fkv.valueId, fieldKeyType, fieldKeyData)
   }
 
-  def listByFieldList(fieldList: Value[DataType.FieldList])(implicit s: Session): List[FieldKey] =
+  def listFieldKeysByFieldList(fieldList: Value[DataType.FieldList]): List[FieldKey] =
     SelectByFieldList.list(fieldList.valueId, RelationType.Has)
 }
 

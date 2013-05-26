@@ -1,7 +1,6 @@
 package com.beardedlogic.usecase
 package model
 
-import scala.slick.driver.PostgresDriver.simple._
 import scala.slick.jdbc.{StaticQuery => Q, GetResult}
 import lib.db._
 import DBHelpers._
@@ -22,22 +21,27 @@ trait Value[T <: DataType] {
  */
 case class PlainValue[T <: DataType](valueId: Long, dataId: Long, rev: Int) extends Value[T]
 
-object Value extends DBTable {
-  override val TableName = "value"
+object ValueAccessor {
 
   val * = "id, data_id, rev"
   implicit val GetResultPlainValue = GetResult { r => PlainValue[DataType](r.<<, r.<<, r.<<) }
 
-  val InsertWithExactRev = Q.query[(Long, Int), Long](s"INSERT INTO $TableName(data_id, rev) VALUES(?,?) RETURNING id")
+  val InsertWithExactRev = Q.query[(Long, Int), Long]("INSERT INTO value(data_id, rev) VALUES(?,?) RETURNING id")
   val InsertWithLatestRev = Q.query[(Long, Long), (Long, Int)]( """
                               insert into value(data_id,rev)
                               select ?,coalesce(max(rev)+1,1) from value where data_id=?
                               returning id, rev """.sql)
+}
 
-  def createWithNewData[T <: DataType](dataType: T)(implicit s: Session): PlainValue[T] =
-    create(Data.create(dataType), ExactRev(1))
+trait ValueAccessor extends DatabaseAccessor {
+  self: DataAccessor =>
 
-  def create[T <: DataType](data: Data[T], rev: Revision)(implicit s: Session): PlainValue[T] = rev match {
+  import ValueAccessor._
+
+  def createValueWithNewData[T <: DataType](dataType: T): PlainValue[T] =
+    createValue(createData(dataType), ExactRev(1))
+
+  def createValue[T <: DataType](data: Data[T], rev: Revision): PlainValue[T] = rev match {
     case ExactRev(revNum) =>
       val newId = InsertWithExactRev.first(data.id, revNum)
       PlainValue(newId, data.id, revNum)
@@ -47,8 +51,8 @@ object Value extends DBTable {
       PlainValue(newId, data.id, newRev)
   }
 
-  def find[T <: DataType](data: Data[T], rev: Revision)(implicit s: Session): Option[PlainValue[T]] = {
-    Q.query[Long, PlainValue[DataType]](s"select ${*} from $TableName where data_id=? ${rev.querySuffix}")
+  def findValue[T <: DataType](data: Data[T], rev: Revision): Option[PlainValue[T]] = {
+    Q.query[Long, PlainValue[DataType]](s"select ${*} from value where data_id=? ${rev.querySuffix}")
     .firstOption(data.id)
     .asInstanceOf[Option[PlainValue[T]]]
   }
@@ -59,4 +63,3 @@ sealed trait Revision {def querySuffix: String}
 case object LatestRev extends Revision {override val querySuffix = "ORDER BY rev DESC LIMIT 1"}
 
 case class ExactRev(rev: Int) extends Revision {override def querySuffix = s"AND rev = $rev"}
-
