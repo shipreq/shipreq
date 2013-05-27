@@ -66,6 +66,13 @@ trait TestDatabaseSupport extends ShouldMatchers with Logger {
     "usecase",
     "step"
   )
+  val ValueTables = List(
+    "value",
+    "field_key",
+    "field_value",
+    "usecase",
+    "step"
+  )
 
   def assertTableDiffs[T](expectations: (String, Int)*)(block: => T) = {
     val specTables = expectations.map(_._1)
@@ -98,6 +105,11 @@ trait TestDatabaseSupport extends ShouldMatchers with Logger {
         case "relation_type"  => truncate("relation")
         case "field_key_type" => truncate("field_key")
         case _                =>
+      }
+      if (ValueTables.contains(table)) {
+        Q.updateNA(s"delete from relation where from_id in (select id from $table) OR to_id in (select id from $table)").execute
+        if (table != "value")
+          Q.updateNA(s"delete from value where id in (select id from $table)").execute
       }
       Q.updateNA(s"delete from $table").execute
     }
