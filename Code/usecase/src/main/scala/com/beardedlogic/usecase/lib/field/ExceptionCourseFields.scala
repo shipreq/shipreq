@@ -23,10 +23,10 @@ object ExceptionCourseFields extends FieldDef {
 /**
  * Provides the field Exceptions, into which the user enters a hierarchy of steps.
  */
-class ExceptionCourseFields(override val state: UCEditorState, override val fieldKey: FieldKey) extends CourseFields {
+class ExceptionCourseFields(override val uceState: UCEditorState, override val fieldKey: FieldKey) extends CourseFields {
   import ExceptionCourseFields._
 
-  val rootLabelPrefix = Some(s"${state.ucNumber}.E.")
+  val rootLabelPrefix = Some(s"${uceState.ucNumber}.E.")
 
   override def labelPrefixForLevel(level: Int) = if (level==0) rootLabelPrefix else None
   override def firstLabelIndexForLevel(level: Int) = 1

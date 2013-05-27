@@ -3,13 +3,12 @@ package lib
 package field
 
 import scala.xml.NodeSeq
-import model.{FieldKey, FieldValue, FieldKeyType, FieldLoadCtx, FieldSaveCtx}
+import model.{FieldLoadCtx, FieldKey, FieldKeyType}
 import FieldKey.FieldKeyData
-import FieldValue.FieldValueData
 
 trait FieldDef {
 
-  def newFieldInstance(state: UCEditorState, fieldKey: FieldKey): Field
+  def newFieldInstance(state: UCEditorState, fieldKey: FieldKey): Field[_]
 
   def fieldKeyType: FieldKeyType
 
@@ -21,14 +20,16 @@ trait FieldDef {
 
 /**
  * Stateful instance of a Use Case Editor field (or fields).
+ *
+ * @tparam S Type of the field state object.
  */
-trait Field {
+trait Field[S] {
 
-  val state: UCEditorState
+  val uceState: UCEditorState
 
   val fieldKey: FieldKey
 
-  @inline final def msgCentre = state.msgCentre
+  @inline final def msgCentre = uceState.msgCentre
 
   /**
    * Called once after all fields have been created. Invocation is synchronous and must complete before the first
@@ -38,31 +39,10 @@ trait Field {
 
   def render(): NodeSeq
 
-  /**
-   * Sets this object's state to a previously saved state, as provided by the load context.
-   *
-   * @param ctx A big blob of data for all fields, from which this field should find and use its own data.
-   */
-  def load(ctx: FieldLoadCtx): Unit
+  def state: S
+  def state_=(newState: S): Unit
+  def stateDao: FieldStateMiniDao[S]
 
-  /**
-   * Gives a field a chance to opt-out of storing a value in the database.
-   * If a field is blank, then there's no point saving it.
-   */
-  def save_? : Boolean
-
-  /**
-   * Saves `Data` and `Value` rows for any additional data required.
-   */
-  def presave(ctx: FieldSaveCtx): Unit
-
-  /**
-   * Continues saving state to database.
-   *
-   * Once this is called, the `Data` and `Value` rows for all fields will have been saved, the IDs known.
-   *
-   * @return A single, arbitrary data string that will be stored in `field_value.data`. The format and mechanism of this
-   *         value can be decided by the field type.
-   */
-  def save(ctx: FieldSaveCtx): FieldValueData
+  // TODO remove?
+  def load(ctx: FieldLoadCtx) { state = stateDao.load(ctx) }
 }

@@ -8,13 +8,11 @@ import net.liftweb.http.js.JsCmds.jsExpToJsCmd
 import net.liftweb.http.js.jquery.JqJE
 import net.liftweb.util.CssSel
 import net.liftweb.util.Helpers._
-import scala.slick.session.Session
 import scala.xml._
 import JsExt._
 import StepTree._
 import msg.Messages._
-import model._
-import FieldValue.FieldValueData
+import CourseFields._
 
 object CourseFields {
   import Fields.Template
@@ -33,10 +31,11 @@ object CourseFields {
   // TODO Move IfCssSel and PassThru elsewhere
   val PassThru = "dpp_recommends_this_oh_well" #> ""
   def IfCssSel(cond: => Boolean)(expr: => CssSel): CssSel = if (cond) expr else PassThru
+
+  type CourseFieldState = List[StepNode]
 }
 
-abstract class CourseFields extends Field {
-  import CourseFields._
+abstract class CourseFields extends Field[CourseFieldState] {
 
   private[this] var _courses: List[StepNode] = Nil
   def courses_=(newCourses: List[StepNode]) {
@@ -61,64 +60,13 @@ abstract class CourseFields extends Field {
   def labelPrefixForLevel(level: Int): Option[String]
   def firstLabelIndexForLevel(level: Int): Int
 
-  override def load(ctx: FieldLoadCtx) {
-    courses = (
-                for {
-                  fv <- ctx.fieldValues.get(fieldKey.valueId)
-                  has <- ctx.relations.get(RelationType.Has)
-                } yield unpackSteps(fv.valueId, 0, has, ctx.stepData)
-                ).getOrElse(List.empty[StepNode])
-  }
+  override def state = courses
+  override def state_=(newState: CourseFieldState) = courses = newState
+  override val stateDao = new CourseFieldStateMiniDao(this)
 
-  /**
-   * When loading, turns data from the `FieldLoadCtx` into a tree of `StepNode`s.
-   *
-   * @param parentId The value ID of this level's step parent.
-   */
-  private def unpackSteps(parentId: Long, level: Int, relations: Map[Long, List[Long]], stepData: Map[Long, String]): List[StepNode] = {
-    relations.get(parentId)
-    .map { ids =>
-      val labelPrefix = labelPrefixForLevel(level)
-      var labelIndex = firstLabelIndexForLevel(level)
-      ids.map { id =>
-        val children = unpackSteps(id, level + 1, relations, stepData)
-        val step = Step(stepData.getOrElse(id, ""))
-        val sn = new StepNode(s"v$id", level, labelPrefix, labelIndex, step, children)
-        labelIndex += 1
-        sn
-      }
-    }.getOrElse(List.empty[StepNode])
-  }
-
-  override def save_? : Boolean = courses.nonEmpty
-
-  override def presave(ctx:FieldSaveCtx) {
-    for (n <- flattenNodes(courses)) {
-      val value = ctx.db.createInitialValue(DataType.Step)
-      ctx.stepValues += (n.id -> value)
-    }
-  }
-
-  override def save(ctx:FieldSaveCtx): FieldValueData = {
-    saveNodes(courses, ctx, ctx.fieldValues(this), 0)
-    None
-  }
-
-  private def saveNodes(courses: List[StepNode], ctx: FieldSaveCtx, parent: Value[_ <: StepParent], index: Int): Unit = courses match {
-    case h :: t =>
-      // TODO references, same as text fields
-      val value = ctx.stepValues(h.id)
-      ctx.db.createStep(value, h.step.text)
-      ctx.db.relate_stepParent_has_step(parent, index.toShort, value)
-
-      saveNodes(h.children, ctx, value, 0)
-      saveNodes(t, ctx, parent, index + 1)
-
-    case _ =>
-  }
 
   private[this] def createAndRegisterTextField(n:StepNode) {
-    val f = new SmartStepText(msgCentre, state.stepLabelMapProvider, n.id, n.stepTextId)
+    val f = new SmartStepText(msgCentre, uceState.stepLabelMapProvider, n.id, n.stepTextId)
     f.init
     textFields += (n.id -> f)
   }

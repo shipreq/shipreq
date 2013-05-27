@@ -46,20 +46,20 @@ trait FieldValueAccessor extends DatabaseAccessor {
 
   import FieldValueAccessor._
 
-  def createInitialFieldValues(fields: List[Field]): List[FieldValue] = db.withTransaction {
+  def createInitialFieldValues(fields: List[Field[_]]): List[FieldValue] = db.withTransaction {
     val saveCtx = new FieldSaveCtx(this)
 
     // Pre-Save (data & value tables)
-    for (field <- fields if field.save_?) {
+    for (field <- fields.asInstanceOf[List[Field[Any]]] if field.stateDao.save_?(field.state)) {
       val value = createInitialValue(DataType.FieldValue)
       saveCtx.fieldValues += (field -> value)
-      field.presave(saveCtx)
+      field.stateDao.presave(field.state, saveCtx)
     }
 
     // Save (value-ext & relation tables)
     var results = List.empty[FieldValue]
     for ((field, value) <- saveCtx.fieldValues) {
-      val data = field.save(saveCtx)
+      val data = field.asInstanceOf[Field[Any]].stateDao.save(field.state, saveCtx)
       val fv = FieldValue(value.valueId, field.fieldKey.valueId, data)
       Insert.execute(fv)
       results :+= fv
@@ -94,7 +94,7 @@ class FieldSaveCtx(val db: DAO) {
   /**
    * `Value` instances for all fields that will be saved in the current transaction.
    */
-  val fieldValues = MutableMap.empty[Field, Value[DataType.FieldValue]]
+  val fieldValues = MutableMap.empty[Field[_], Value[DataType.FieldValue]]
 
   /**
    * Key is the step node ID.

@@ -27,7 +27,7 @@ class UCEditor extends CometActor with Logger {
           & ".title @title" #> SHtml.ajaxText(state.title, onTitleChange(_))
       )
 
-  @inline def renderFields(fields: List[Field]) =
+  @inline def renderFields(fields: List[Field[_]]) =
     fields.map(_.render).foldLeft(NodeSeq.Empty)(_ ++: _)
 
   // TODO Title -> NC change should be done via actors

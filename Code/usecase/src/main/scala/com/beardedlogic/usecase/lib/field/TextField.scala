@@ -20,9 +20,21 @@ case class TextFieldDef(title: String) extends FieldDef {
 }
 
 object TextField {
+
   import Fields.Template
 
   val TextTemplate = Template("template-text")
+
+  class StateDao(val fieldKey: FieldKey) extends FieldStateMiniDao[String] {
+    override def load(ctx: FieldLoadCtx) =
+      ctx.fieldValues.get(fieldKey.valueId).map(_.fieldData).flatten.getOrElse("")
+
+    override def save_?(state: String): Boolean = state.nonEmpty
+    override def presave(state: String, ctx: FieldSaveCtx) {}
+    override def save(state: String, ctx: FieldSaveCtx) = Some(state)
+    // TODO Change references
+    // TODO References
+  }
 }
 
 /**
@@ -30,10 +42,12 @@ object TextField {
  *
  * @param fd Identity of this text field.
  */
-class TextField(val fd: TextFieldDef, override val state: UCEditorState, override val fieldKey: FieldKey) extends Field {
+class TextField(val fd: TextFieldDef, override val uceState: UCEditorState, override val fieldKey: FieldKey)
+  extends Field[String] {
+
   import TextField._
 
-  val value = new SmartText(state.msgCentre, state.stepLabelMapProvider)
+  val value = new SmartText(uceState.msgCentre, uceState.stepLabelMapProvider)
 
   override def init() {
     value.init()
@@ -43,22 +57,10 @@ class TextField(val fd: TextFieldDef, override val state: UCEditorState, overrid
 
   def renderExpr = (
     "th *" #> fd.title
-    & "textarea" #> value.renderTextarea
-  )
+      & "textarea" #> value.renderTextarea
+    )
 
-  override def load(ctx: FieldLoadCtx) {
-    val txt = ctx.fieldValues.get(fieldKey.valueId).map(_.fieldData).flatten.getOrElse("")
-    value.setTextFromUser(txt)
-  }
-
-  override def save_? : Boolean = value.text.nonEmpty
-
-  // TODO Change references
-  // TODO References
-
-  override def presave(ctx:FieldSaveCtx) {}
-
-  override def save(ctx:FieldSaveCtx): FieldValueData = {
-    Some(value.text)
-  }
+  override def state = value.text
+  override def state_=(newState: String) = value.setTextFromUser(newState)
+  override val stateDao = new StateDao(fieldKey)
 }

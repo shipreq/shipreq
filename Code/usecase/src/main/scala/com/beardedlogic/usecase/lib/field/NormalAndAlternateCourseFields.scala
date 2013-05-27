@@ -28,11 +28,11 @@ object NormalAndAlternateCourseFields extends FieldDef {
  *
  * Steps can be moved between the two.
  */
-class NormalAndAlternateCourseFields(override val state: UCEditorState, override val fieldKey: FieldKey) extends CourseFields {
+class NormalAndAlternateCourseFields(override val uceState: UCEditorState, override val fieldKey: FieldKey) extends CourseFields {
   import NormalAndAlternateCourseFields._
   import CourseFields._
 
-  val rootLabelPrefix = Some(s"${state.ucNumber}.")
+  val rootLabelPrefix = Some(s"${uceState.ucNumber}.")
 
   // This will do for now but if this is moved into init() it will cause problems with TextFields due to the stepRefMap
   courses =
