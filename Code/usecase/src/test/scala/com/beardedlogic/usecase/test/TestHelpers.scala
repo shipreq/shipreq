@@ -64,7 +64,7 @@ object TestHelpers extends TestHelpers {
         val labelSplit(lblPrefix, lblSuffix) = lbl
         val lblIndex = LabelMakers(lvl)(lblSuffix)
         val id2 = if (genIds) id else null
-        StepNode(id2, lvl, Option(lblPrefix), lblIndex, Step(txt), ch)
+        StepNode(id2, lvl, lblIndex, Step(txt), ch)
       }
     }
 

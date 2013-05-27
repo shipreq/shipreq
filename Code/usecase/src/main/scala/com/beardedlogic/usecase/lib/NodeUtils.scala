@@ -40,7 +40,7 @@ object NodeUtils {
         if (indent == 0) {
           val topLevelLabel(labelPrefix, labelSuffix) = label
           val labelIndex = LabelMakers(0)(labelSuffix)
-          val n = new StepNode(label, (labelPrefix, labelIndex), Step(stepText))
+          val n = new StepNode(label, 0, labelIndex, Step(stepText))
           nodes += n
           n
         } else {

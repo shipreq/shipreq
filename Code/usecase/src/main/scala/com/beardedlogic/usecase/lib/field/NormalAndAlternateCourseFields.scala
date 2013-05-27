@@ -32,15 +32,13 @@ class NormalAndAlternateCourseFields(override val uceState: UCEditorState, overr
   import NormalAndAlternateCourseFields._
   import CourseFields._
 
-  val rootLabelPrefix = Some(s"${uceState.ucNumber}.")
-
   // This will do for now but if this is moved into init() it will cause problems with TextFields due to the stepRefMap
   courses =
-    StepNode(nextFuncName, 0, rootLabelPrefix, 0, NewStep,
+    StepNode(nextFuncName, 0, 0, NewStep,
       new StepNode(nextFuncName, 1, 1, NewStep) :: Nil
     ) :: Nil
 
-  override def labelPrefixForLevel(level: Int) = if (level==0) rootLabelPrefix else None
+  override val rootLabelPrefix = Some(s"${uceState.ucNumber}.")
   override def firstLabelIndexForLevel(level: Int) = if (level==0) 0 else 1
 
   override def render = (
@@ -52,7 +50,7 @@ class NormalAndAlternateCourseFields(override val uceState: UCEditorState, overr
    * Creates a new top-level step to add to the end of the list.
    */
   private def newTailStep() =
-    StepNode(nextFuncName, 0, rootLabelPrefix, courses.size, NewStep, Nil)
+    StepNode(nextFuncName, 0, courses.size, NewStep, Nil)
 
   /**
    * Prevent removal of the normal course head, ie. 1.0.

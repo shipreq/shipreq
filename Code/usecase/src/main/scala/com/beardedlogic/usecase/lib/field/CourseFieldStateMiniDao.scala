@@ -29,12 +29,11 @@ class CourseFieldStateMiniDao(val field: CourseFields) extends FieldStateMiniDao
   private def unpackSteps(parentId: Long, level: Int, relations: Map[Long, List[Long]], stepData: Map[Long, String]): List[StepNode] = {
     relations.get(parentId)
     .map { ids =>
-      val labelPrefix = field.labelPrefixForLevel(level)
       var labelIndex = field.firstLabelIndexForLevel(level)
       ids.map { id =>
         val children = unpackSteps(id, level + 1, relations, stepData)
         val step = Step(stepData.getOrElse(id, ""))
-        val sn = new StepNode(s"v$id", level, labelPrefix, labelIndex, step, children)
+        val sn = new StepNode(s"v$id", level, labelIndex, step, children)
         labelIndex += 1
         sn
       }

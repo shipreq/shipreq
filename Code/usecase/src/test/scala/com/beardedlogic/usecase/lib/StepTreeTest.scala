@@ -54,36 +54,34 @@ class StepTreeTest extends WordSpec with ShouldMatchers with TestHelpers {
 
   "mapIdsAndFullLabels()" should {
 
-    val labelPrefix = Some("1.")
     def oneLevel: List[StepNode] =
-      StepNode("X1", 0, labelPrefix, 0, NewStep, Nil) ::
-      StepNode("X2", 0, labelPrefix, 1, NewStep, Nil) ::
+      StepNode("X1", 0, 0, NewStep, Nil) ::
+      StepNode("X2", 0, 1, NewStep, Nil) ::
       Nil
 
     "map ids to labels" in {
-      val map = mapIdsAndFullLabels(oneLevel)
+      val map = mapIdsAndFullLabels(oneLevel, "1.")
       map("X1") should be("1.0")
       map("X2") should be("1.1")
     }
 
     "map labels to ids" in {
-      val map = mapIdsAndFullLabels(oneLevel)
+      val map = mapIdsAndFullLabels(oneLevel, "1.")
       map("1.0") should be("X1")
       map("1.1") should be("X2")
     }
 
     "map children and generate full labels" in {
-      val labelPrefix = Some("1.E.")
       val map = mapIdsAndFullLabels(
-        StepNode("X5", 0, labelPrefix, 1, NewStep,  // 1.E.1
+        StepNode("X5", 0, 1, NewStep,  // 1.E.1
           new StepNode("X3", 1, 1, NewStep, // 1.E.1.1
             new StepNode("X4", 2, 1, NewStep, Nil) :: Nil // 1.E.1.1.a
           ) ::
           new StepNode("X2", 1, 2, NewStep, Nil) ::  // 1.E.1.2
           Nil
         ) ::
-        StepNode("X1", 0, labelPrefix, 2, NewStep, Nil) :: // 1.E.2
-        Nil)
+        StepNode("X1", 0, 2, NewStep, Nil) :: // 1.E.2
+        Nil, "1.E.")
       map("X5") should be("1.E.1")
       map("X3") should be("1.E.1.1")
       map("X4") should be("1.E.1.1.a")
@@ -118,9 +116,9 @@ class StepTreeTest extends WordSpec with ShouldMatchers with TestHelpers {
           Nil
 
       val top =
-        new StepNode("1.0", ("1.", 0), null, c1_0_x) ::
-          new StepNode("1.1", ("1.", 1), null) ::
-          new StepNode("1.2", ("1.", 2), null, c1_2_x) ::
+        new StepNode("1.0", 0, 0, null, c1_0_x) ::
+          new StepNode("1.1", 0, 1, null) ::
+          new StepNode("1.2", 0, 2, null, c1_2_x) ::
           Nil
 
       flattenNodes(top).map(_.id) should be(List(
@@ -154,9 +152,9 @@ class StepTreeTest extends WordSpec with ShouldMatchers with TestHelpers {
       test(3, "viii", "ix")
     }
     "increase top-level positions" in {
-      val before = new StepNode("blah", ("1.", 1), null)
-      val after = new StepNode("blah", ("1.", 2), null)
-      after.label should be("1.2")
+      val before = new StepNode("blah", 0, 1, null)
+      val after = new StepNode("blah", 0, 2, null)
+      after.label should be("2")
       before.incrementPosition() should be(after)
     }
   }

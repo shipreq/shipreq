@@ -39,7 +39,7 @@ class CourseFieldsText extends FunSpec with ShouldMatchers with MockitoSugar wit
 
     it("should clear courses when no field value exists") {
       val ec = new ExceptionCourseFields(mockUCES, Key_EC)
-      ec.courses = StepNode("id", 0, Some("Blah"), 0, NewStep, Nil) :: Nil
+      ec.courses = StepNode("id", 0, 0, NewStep, Nil) :: Nil
       ec.load(new FieldLoadCtx(Map(1L -> Value_NC), Relations, StepValueMap))
       ec.courses should be('empty)
     }
@@ -48,8 +48,8 @@ class CourseFieldsText extends FunSpec with ShouldMatchers with MockitoSugar wit
       val ec = new ExceptionCourseFields(mockUCES, Key_EC)
       ec.load(LoadCtx)
       val expected =
-        StepNode(NodeId(201), 0, Some("1.E."), 1, Step("EC 1E1"), List(new StepNode(NodeId(211), 1, 1, Step("EC 1E11")))) ::
-          StepNode(NodeId(202), 0, Some("1.E."), 2, Step("EC 1E2"), Nil) ::
+        StepNode(NodeId(201), 0, 1, Step("EC 1E1"), List(new StepNode(NodeId(211), 1, 1, Step("EC 1E11")))) ::
+          StepNode(NodeId(202), 0, 2, Step("EC 1E2"), Nil) ::
           Nil
       ec.courses should matchTree(expected)
       ec.courses should be(expected)

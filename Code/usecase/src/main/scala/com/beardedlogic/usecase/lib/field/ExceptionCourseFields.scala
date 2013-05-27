@@ -26,9 +26,7 @@ object ExceptionCourseFields extends FieldDef {
 class ExceptionCourseFields(override val uceState: UCEditorState, override val fieldKey: FieldKey) extends CourseFields {
   import ExceptionCourseFields._
 
-  val rootLabelPrefix = Some(s"${uceState.ucNumber}.E.")
-
-  override def labelPrefixForLevel(level: Int) = if (level==0) rootLabelPrefix else None
+  override val rootLabelPrefix = Some(s"${uceState.ucNumber}.E.")
   override def firstLabelIndexForLevel(level: Int) = 1
 
   override def render = (
@@ -39,5 +37,5 @@ class ExceptionCourseFields(override val uceState: UCEditorState, override val f
    * Creates a new top-level step to add to the end of the list.
    */
   private def newTailStep() =
-    StepNode(nextFuncName, 0, rootLabelPrefix, courses.size + 1, NewStep, Nil)
+    StepNode(nextFuncName, 0, courses.size + 1, NewStep, Nil)
 }

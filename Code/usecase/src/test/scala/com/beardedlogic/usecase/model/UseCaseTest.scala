@@ -31,7 +31,7 @@ class UseCaseTest extends FunSpec with TestDatabaseSupport with TestHelpers {
   it("should save and load in full") {
     // TODO Share sample courses. Create TestData or something.
     val ncSteps =
-      StepNode(nextFuncName, 0, Some("2."), 0, Step2("I'm the title"), (
+      StepNode(nextFuncName, 0, 0, Step2("I'm the title"), (
         new StepNode(nextFuncName, 1, 1, Step2("First")) ::
           new StepNode(nextFuncName, 1, 2, NewStep) ::
           new StepNode(nextFuncName, 1, 3, Step2("Finally"), (
@@ -39,8 +39,8 @@ class UseCaseTest extends FunSpec with TestDatabaseSupport with TestHelpers {
             )) :: Nil
         )) :: Nil
     val ecSteps =
-      StepNode(nextFuncName, 0, Some("2.E."), 1, Step2("EC 1E1"), List(new StepNode(nextFuncName, 1, 1, Step2("EC 1E11")))) ::
-        StepNode(nextFuncName, 0, Some("2.E."), 2, Step2("EC 1E2"), Nil) ::
+      StepNode(nextFuncName, 0, 1, Step2("EC 1E1"), List(new StepNode(nextFuncName, 1, 1, Step2("EC 1E11")))) ::
+        StepNode(nextFuncName, 0, 2, Step2("EC 1E2"), Nil) ::
         Nil
 
     val uce = new UCEditorState(2, null)

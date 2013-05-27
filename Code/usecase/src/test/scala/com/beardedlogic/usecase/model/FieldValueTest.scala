@@ -44,7 +44,7 @@ class FieldValueTest extends FunSpec with TestDatabaseSupport {
   describe("Course fields") {
     def testSave(f: CourseFields) = {
       f.courses =
-        StepNode(nextFuncName, 0, None, 0, Step2("I'm the title"), (
+        StepNode(nextFuncName, 0, 0, Step2("I'm the title"), (
           new StepNode(nextFuncName, 1, 1, Step2("First")) ::
             new StepNode(nextFuncName, 1, 2, NewStep) ::
             new StepNode(nextFuncName, 1, 3, Step2("Finally"), (

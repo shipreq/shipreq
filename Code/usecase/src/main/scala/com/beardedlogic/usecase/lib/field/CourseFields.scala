@@ -47,7 +47,7 @@ abstract class CourseFields extends Field[CourseFieldState] {
 
   private[this] var _stepLabelMap: Map[String, String] = Map.empty
   def stepLabelMap = {
-    if (_stepLabelMap == null) _stepLabelMap = mapIdsAndFullLabels(courses)
+    if (_stepLabelMap == null) _stepLabelMap = mapIdsAndFullLabels(courses, rootLabelPrefix.getOrElse(""))
     _stepLabelMap
   }
 
@@ -57,8 +57,10 @@ abstract class CourseFields extends Field[CourseFieldState] {
     for (n <- flattenNodes(courses)) createAndRegisterTextField(n)
   }
 
-  def labelPrefixForLevel(level: Int): Option[String]
+  def rootLabelPrefix: Option[String]
   def firstLabelIndexForLevel(level: Int): Int
+  @inline def labelPrefixForLevel(level: Int) = if (level==0) rootLabelPrefix else None
+  @inline def labelFor(node: StepNode) = labelPrefixForLevel(node.level).map(_ + node.label).getOrElse(node.label)
 
   override def state = courses
   override def state_=(newState: CourseFieldState) = courses = newState
@@ -118,7 +120,7 @@ abstract class CourseFields extends Field[CourseFieldState] {
     ".step [id]" #> n.id
     & s".step [$AttrLevel]" #> n.level
     & IfCssSel(prohibitRemoval(n.id)) { ".step [class+]" #> "noDel" }
-    & ".label span *" #> n.label
+    & ".label span *" #> labelFor(n)
     & ".label span [id]" #> n.labelId
     & "@text" #> textFields(n.id).renderTextarea
     & ".add" #> SHtml.ajaxButton("+", () => onStepAdd(n.id))
@@ -235,7 +237,7 @@ abstract class CourseFields extends Field[CourseFieldState] {
    */
   protected def UpdateLabels(nodes: Iterable[StepNode]): JsCmd = JsCmds.Run(
     (for (n <- nodes) yield (
-      JsCmds.SetHtml(n.labelId, Text(n.label)).toJsCmd
+      JsCmds.SetHtml(n.labelId, Text(labelFor(n))).toJsCmd
     )) mkString "\n"
   )
 }

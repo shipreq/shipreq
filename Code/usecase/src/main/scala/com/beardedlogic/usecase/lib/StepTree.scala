@@ -13,21 +13,9 @@ object StepTree {
 
   case class StepNode(id: String,
                       level: Int,
-                      labelPrefix: Option[String],
                       labelIndex: Int,
                       step: Step,
-                      children: List[StepNode]) {
-
-    def this(id: String,
-             level: Int,
-             labelIndex: Int,
-             step: Step,
-             children: List[StepNode] = Nil) = this(id, level, None, labelIndex, step, children)
-
-    def this(id: String,
-             label: Tuple2[String, Int],
-             step: Step,
-             children: List[StepNode] = Nil) = this(id, 0, Some(label._1), label._2, step, children)
+                      children: List[StepNode] = Nil) {
 
     import StepLabels.LabelMakers
     @inline def labelMaker = LabelMakers(level)
@@ -36,8 +24,7 @@ object StepTree {
     require(level < LabelMakers.size, s"Level (${level}) must be less than ${LabelMakers.size}.")
     require(labelIndex >= labelMaker.min, s"Label index (${labelIndex}) at level (${level}) must be ${labelMaker.min} or larger.")
 
-    @inline def labelSuffix = labelMaker(labelIndex)
-    val label = labelPrefix map (_ + labelSuffix) getOrElse labelSuffix
+    @inline def label = labelMaker(labelIndex)
 
     /**
      * Increments the position of this node.
@@ -126,7 +113,7 @@ object StepTree {
         (results ::: h.copy(children = c) :: t, Some(n))
       } else {
         // Add at the same level
-        val n = StepNode(nextFuncName, h.level, h.labelPrefix, h.labelIndex + 1, step, Nil)
+        val n = StepNode(nextFuncName, h.level, h.labelIndex + 1, step, Nil)
         (results ::: h :: n :: t.map(_.incrementPosition), Some(n))
       }
 
@@ -186,21 +173,19 @@ object StepTree {
         // Build node's new children
         var childIndex = 0
         val childLevel = h.level + 1
-        val childLabelPrefix = c.children.headOption.map(_.labelPrefix) getOrElse None
         val levelChangeFn = levelChange(-1)
         val cL = c.children.map { n =>
           childIndex += 1
-          n.copy(level = childLevel, labelPrefix = childLabelPrefix, labelIndex = childIndex, children = n.deepCopyChildren(levelChangeFn))
+          n.copy(level = childLevel, labelIndex = childIndex, children = n.deepCopyChildren(levelChangeFn))
         }
         val newChildren = cL ::: sibRight.map { n =>
           childIndex += 1
-          n.copy(level = childLevel, labelPrefix = childLabelPrefix, labelIndex = childIndex)
+          n.copy(level = childLevel, labelIndex = childIndex)
         }
 
         // Build final list
         val newChild = c.copy(
           level = c.level - 1,
-          labelPrefix = h.labelPrefix,
           labelIndex = h.labelIndex + 1,
           children = newChildren)
         val newResults =
@@ -257,7 +242,6 @@ object StepTree {
     case p :: c :: t if c.id == id =>
       val c2 = c.copy(
         level = c.level + 1,
-        labelPrefix = None,
         labelIndex = p.children.size + 1,
         children = c.deepCopyChildren(levelChange(1))
       )
