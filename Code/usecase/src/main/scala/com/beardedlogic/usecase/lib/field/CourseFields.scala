@@ -38,8 +38,6 @@ object CourseFields {
 abstract class CourseFields extends Field {
   import CourseFields._
 
-  val id = 1
-
   private[this] var _courses: List[StepNode] = Nil
   def courses_=(newCourses: List[StepNode]) {
     _courses = newCourses
@@ -58,6 +56,38 @@ abstract class CourseFields extends Field {
 
   override def init() {
     for (n <- flattenNodes(courses)) createAndRegisterTextField(n)
+  }
+
+  def labelPrefixForLevel(level: Int): Option[String]
+  def firstLabelIndexForLevel(level: Int): Int
+
+  override def load(ctx: FieldLoadCtx) {
+    courses = (
+                for {
+                  fv <- ctx.fieldValues.get(fieldKey.valueId)
+                  has <- ctx.relations.get(RelationType.Has)
+                } yield unpackSteps(fv.valueId, 0, has, ctx.stepData)
+                ).getOrElse(List.empty[StepNode])
+  }
+
+  /**
+   * When loading, turns data from the `FieldLoadCtx` into a tree of `StepNode`s.
+   *
+   * @param parentId The value ID of this level's step parent.
+   */
+  private def unpackSteps(parentId: Long, level: Int, relations: Map[Long, List[Long]], stepData: Map[Long, String]): List[StepNode] = {
+    relations.get(parentId)
+    .map { ids =>
+      val labelPrefix = labelPrefixForLevel(level)
+      var labelIndex = firstLabelIndexForLevel(level)
+      ids.map { id =>
+        val children = unpackSteps(id, level + 1, relations, stepData)
+        val step = Step(stepData.getOrElse(id, ""))
+        val sn = new StepNode(s"v$id", level, labelPrefix, labelIndex, step, children)
+        labelIndex += 1
+        sn
+      }
+    }.getOrElse(List.empty[StepNode])
   }
 
   override def save_? : Boolean = courses.nonEmpty

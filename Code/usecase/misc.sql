@@ -1,8 +1,10 @@
 select * from data_type;
 select * from data;
 select * from value;
+select * from step;
 select * from relation;
 
+-- Inspect values
 select
   dt.name "data_type"
   ,v.data_id
@@ -13,6 +15,50 @@ from value v, data d, data_type dt
 where v.data_id = d.id
   and d.type_id = dt.id
 order by data_type, data_id, rev;
+
+-- Inspect field values
+select
+  v.data_id
+  ,dt.name "data_type"
+  ,fkt.name "field_type"
+  ,v.rev
+  ,v.id "value_id"
+  ,fk.data "field_key_data"
+  ,coalesce(s.text,fv.text) "field_value_data"
+  ,v.updated_at
+from value v
+left join data d             on v.data_id = d.id
+left join data_type dt       on d.type_id = dt.id
+left join field_value fv     on v.id = fv.id
+left join field_key fk       on (fv.field_key_id = fk.id OR v.id = fk.id)
+left join field_key_type fkt on fk.type_id = fkt.id
+left join step s             on s.id = v.id
+order by data_id, data_type, rev;
+
+
+
+--  val fieldValues: Map[FieldKey, FieldValue],
+--  val stepData: Map[Long, String],
+--  val relations: Map[RelationType, Map[Long, List[Long]]]
+
+--case class FieldValue(
+--  valueId: Long,
+--  fieldKeyId: Long,
+--  fieldData: FieldValueData
+--  ) extends Value[DataType.FieldValue]
+
+
+insert into data values(666,100)
+insert into value values(666,666,1)
+insert into relation values(666,200,-1,1012);
+insert into relation values(666,200,-1,1013);
+insert into relation values(666,200,-1,1019);
+
+explain (format yaml) select id, text from step where id in (select to_id from tmp);
+
+
+rollback
+
 
 
 SELECT fk.type_id, fk.data

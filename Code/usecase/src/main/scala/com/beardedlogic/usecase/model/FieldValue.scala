@@ -2,13 +2,15 @@ package com.beardedlogic.usecase
 package model
 
 import scala.collection.mutable.{Map => MutableMap}
-import scala.slick.jdbc.{StaticQuery => Q}
+import scala.slick.jdbc.{GetResult, SetParameter, StaticQuery => Q}
+import scala.slick.session.PositionedParameters
+import lib.db.DBHelpers._
 import lib.field.Field
 import FieldValue.FieldValueData
 
 case class FieldValue(
   valueId: Long,
-  fieldKey: FieldKey,
+  fieldKeyId: Long,
   fieldData: FieldValueData
   ) extends Value[DataType.FieldValue]
 
@@ -17,7 +19,26 @@ object FieldValue {
 }
 
 object FieldValueAccessor {
-  val Insert = Q.update[(Long, Long, FieldValueData)]("INSERT INTO field_value VALUES(?,?,?)")
+
+  implicit val GetResultFieldValue = GetResult(r => FieldValue(r.<<, r.<<, r.<<))
+
+  implicit object SetParameterFieldValue extends SetParameter[FieldValue] {
+    def apply(v: FieldValue, pp: PositionedParameters) {
+      pp.setLong(v.valueId)
+      pp.setLong(v.fieldKeyId)
+      pp.setStringOption(v.fieldData)
+    }
+  }
+
+  val Insert = Q.update[FieldValue]("INSERT INTO field_value VALUES(?,?,?)")
+
+  val SelectByOwner = Q.query[Long, FieldValue]( s"""
+      select fv.id, fv.field_key_id, fv.text
+      from field_value fv, relation r
+      where fv.id = r.to_id
+      and r.type_id = 200
+      and r.from_id = ?
+      """.sql)
 }
 
 trait FieldValueAccessor extends DatabaseAccessor {
@@ -25,7 +46,7 @@ trait FieldValueAccessor extends DatabaseAccessor {
 
   import FieldValueAccessor._
 
-  def createInitialFieldValue(fields: List[Field]): List[FieldValue] = db.withTransaction {
+  def createInitialFieldValues(fields: List[Field]): List[FieldValue] = db.withTransaction {
     val saveCtx = new FieldSaveCtx(this)
 
     // Pre-Save (data & value tables)
@@ -39,11 +60,32 @@ trait FieldValueAccessor extends DatabaseAccessor {
     var results = List.empty[FieldValue]
     for ((field, value) <- saveCtx.fieldValues) {
       val data = field.save(saveCtx)
-      Insert.execute(value.valueId, field.fieldKey.valueId, data)
-      results :+= FieldValue(value.valueId, field.fieldKey, data)
+      val fv = FieldValue(value.valueId, field.fieldKey.valueId, data)
+      Insert.execute(fv)
+      results :+= fv
     }
 
     results
+  }
+
+  def getFieldLoadCtxFor(ownerId: Long): FieldLoadCtx = {
+
+    // Load field values
+    var fieldValues = Map.empty[Long, FieldValue]
+    SelectByOwner.foreach(ownerId, { fv =>
+      fieldValues += (fv.fieldKeyId -> fv)
+    })
+
+    // Load relations and extended field value data (ie. steps)
+    val (hasRelations, stepData) =
+      withTmpTableOfRecursiveHasRelations(ownerId, { case (tmpTable, hasRelations) =>
+        val stepData = mapStepTextById(s"WHERE id IN (SELECT to_id FROM $tmpTable)")
+        (hasRelations, stepData)
+      })
+    val relations = Map((RelationType.Has: RelationType) -> hasRelations)
+
+    // Bundle
+    new FieldLoadCtx(fieldValues, relations, stepData)
   }
 }
 
@@ -59,3 +101,21 @@ class FieldSaveCtx(val db: DAO) {
    */
   val stepValues = MutableMap.empty[String, Value[DataType.Step]]
 }
+
+class FieldLoadCtx(
+
+  /**
+   * A map of field key IDs to field values.
+   */
+  val fieldValues: Map[Long, FieldValue],
+
+  /**
+   * For each relation type, a map of from-IDs to to-IDs (in the order specified in the `index` column).
+   */
+  val relations: Map[RelationType, Map[Long, List[Long]]],
+
+  /**
+   * A map of step IDs to step `text`.
+   */
+  val stepData: Map[Long, String]
+)

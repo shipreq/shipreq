@@ -7,10 +7,17 @@ object StepAccessor {
 }
 
 trait StepAccessor extends DatabaseAccessor {
+
   import StepAccessor._
 
   def createStep(value: Value[DataType.Step], text: String): Unit = {
     Insert.execute(value.valueId, text)
+  }
+
+  def mapStepTextById(sqlCond: String): Map[Long, String] = {
+    val map = Map.newBuilder[Long, String]
+    Q.queryNA[(Long, String)]("SELECT id,text FROM step " + sqlCond).foreach(map += _)
+    map.result
   }
 }
 

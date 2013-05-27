@@ -13,30 +13,30 @@ class FieldValueTest extends FunSpec with TestDatabaseSupport {
   def getFieldKey(t: FieldKeyType) = Defaults.FieldList.fieldKeys.find(_.fieldKeyType == t).get
 
   def textFieldKey = getFieldKey(FieldKeyType.Text)
-  def newTextField = textFieldKey.fieldDef.newFieldInstance(new UCEditorState(null), textFieldKey).asInstanceOf[TextField]
+  def newTextField = textFieldKey.fieldDef.newFieldInstance(new UCEditorState(1, null), textFieldKey).asInstanceOf[TextField]
 
   def ncacFieldKey = getFieldKey(FieldKeyType.NormalAndAlternateCourses)
-  def newNcAcField = ncacFieldKey.fieldDef.newFieldInstance(new UCEditorState(null), ncacFieldKey).asInstanceOf[NormalAndAlternateCourseFields]
+  def newNcAcField = ncacFieldKey.fieldDef.newFieldInstance(new UCEditorState(1, null), ncacFieldKey).asInstanceOf[NormalAndAlternateCourseFields]
 
   def ecFieldKey = getFieldKey(FieldKeyType.ExceptionCourses)
-  def newEcField = ecFieldKey.fieldDef.newFieldInstance(new UCEditorState(null), ecFieldKey).asInstanceOf[ExceptionCourseFields]
+  def newEcField = ecFieldKey.fieldDef.newFieldInstance(new UCEditorState(1, null), ecFieldKey).asInstanceOf[ExceptionCourseFields]
 
   describe("Text fields") {
     it("should insert when has text") {
       val tf = newTextField
       tf.value.setTextFromUser("Yay!")
       val fv = assertTableDiffs("field_value" -> 1, "value" -> 1, "data" -> 1) {
-        db.createInitialFieldValue(tf :: Nil)
+        db.createInitialFieldValues(tf :: Nil)
       }
       fv.size should be(1)
-      fv.head.fieldKey should be(textFieldKey)
+      fv.head.fieldKeyId should be(textFieldKey.valueId)
       fv.head.fieldData should be(Some("Yay!"))
     }
 
     it("should NOP when text is blank") {
       val tf = newTextField
       tf.value.setTextFromUser("")
-      val fv = assertTableDiffs() { db.createInitialFieldValue(tf :: Nil) }
+      val fv = assertTableDiffs() { db.createInitialFieldValues(tf :: Nil) }
       fv should be('empty)
     }
   }
@@ -53,10 +53,10 @@ class FieldValueTest extends FunSpec with TestDatabaseSupport {
           )) :: Nil
 
       val fv = assertTableDiffs("field_value" -> 1, "step" -> 5, "value" -> 6, "data" -> 6, "relation" -> 5) {
-        db.createInitialFieldValue(f :: Nil)
+        db.createInitialFieldValues(f :: Nil)
       }
       fv.size should be(1)
-      fv.head.fieldKey should be(f.fieldKey)
+      fv.head.fieldKeyId should be(f.fieldKey.valueId)
       fv.head.fieldData should be(None)
     }
 
@@ -67,7 +67,7 @@ class FieldValueTest extends FunSpec with TestDatabaseSupport {
       val f = newEcField
       f.courses = Nil
 
-      val fv = assertTableDiffs() { db.createInitialFieldValue(f :: Nil) }
+      val fv = assertTableDiffs() { db.createInitialFieldValues(f :: Nil) }
       fv should be('empty)
     }
   }

@@ -3,7 +3,6 @@ package lib
 package field
 
 import net.liftweb.util.Helpers._
-import scala.slick.session.Session
 import model._
 import FieldValue.FieldValueData
 
@@ -46,6 +45,11 @@ class TextField(val fd: TextFieldDef, override val state: UCEditorState, overrid
     "th *" #> fd.title
     & "textarea" #> value.renderTextarea
   )
+
+  override def load(ctx: FieldLoadCtx) {
+    val txt = ctx.fieldValues.get(fieldKey.valueId).map(_.fieldData).flatten.getOrElse("")
+    value.setTextFromUser(txt)
+  }
 
   override def save_? : Boolean = value.text.nonEmpty
 

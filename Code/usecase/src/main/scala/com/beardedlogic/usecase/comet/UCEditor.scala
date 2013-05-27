@@ -14,7 +14,7 @@ import net.liftweb.common.Logger
 
 class UCEditor extends CometActor with Logger {
 
-  val state = new UCEditorState(this)
+  val state = new UCEditorState(1, this)
 
   override def localSetup() {
     state.fields.foreach { _.init }
@@ -23,7 +23,7 @@ class UCEditor extends CometActor with Logger {
 
   override def render = (
       ".ucdata *" #> renderFields(state.fields) andThen
-        ".title .ucid *" #> state.ucId.toString
+        ".title .ucid *" #> state.ucNumber.toString
           & ".title @title" #> SHtml.ajaxText(state.title, onTitleChange(_))
       )
 

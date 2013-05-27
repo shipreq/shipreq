@@ -3,7 +3,7 @@ package lib
 package field
 
 import scala.xml.NodeSeq
-import model.{FieldKey, FieldValue, FieldKeyType, FieldSaveCtx}
+import model.{FieldKey, FieldValue, FieldKeyType, FieldLoadCtx, FieldSaveCtx}
 import FieldKey.FieldKeyData
 import FieldValue.FieldValueData
 
@@ -37,6 +37,13 @@ trait Field {
   def init(): Unit
 
   def render(): NodeSeq
+
+  /**
+   * Sets this object's state to a previously saved state, as provided by the load context.
+   *
+   * @param ctx A big blob of data for all fields, from which this field should find and use its own data.
+   */
+  def load(ctx: FieldLoadCtx): Unit
 
   /**
    * Gives a field a chance to opt-out of storing a value in the database.
