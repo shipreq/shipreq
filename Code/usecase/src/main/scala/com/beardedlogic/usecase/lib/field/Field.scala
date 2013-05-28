@@ -8,7 +8,7 @@ import FieldKey.FieldKeyData
 
 trait FieldDef[S] {
 
-  def newFieldInstance(state: UCEditorState, fieldKey: FieldKey): Field[S]
+  def newFieldInstance(ucCtx: UseCaseCtx, fieldKey: FieldKey): Field[S]
 
   def fieldKeyType: FieldKeyType
 
@@ -27,11 +27,11 @@ trait FieldDef[S] {
  */
 trait Field[S] {
 
-  val uceState: UCEditorState
+  val ucCtx: UseCaseCtx
 
   val fieldKey: FieldKey
 
-  @inline final def msgCentre = uceState.msgCentre
+  @inline final def msgCentre = ucCtx.msgCentre
 
   /**
    * Called once after all fields have been created. Invocation is synchronous and must complete before the first

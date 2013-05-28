@@ -31,9 +31,9 @@ class CourseFieldsText extends FunSpec with ShouldMatchers with MockitoSugar wit
 
     def mockUCES = {
       val msg = mock[MessageCentre]
-      val u = mock[UCEditorState]
+      val u = mock[UseCaseCtx]
       when(u.msgCentre).thenReturn(msg)
-      when(u.ucNumber).thenReturn(1: Short)
+      when(u.number).thenReturn(1: Short)
       u
     }
 

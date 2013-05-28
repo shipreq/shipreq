@@ -5,16 +5,15 @@ import scala.xml.NodeSeq
 import net.liftweb.http.{CometActor, SHtml, StatefulSnippet}
 import net.liftweb.http.js.{JE, JsCmd, JsCmds}
 import net.liftweb.http.js.JsExp.strToJsExp
-import net.liftweb.util.Helpers._
-import lib.UCEditorState
 import lib.field.Field
+import lib.UseCaseCtx
 import lib.msg.Messages._
 
 import net.liftweb.common.Logger
 
 class UCEditor extends CometActor with Logger {
 
-  val state = new UCEditorState(1, this)
+  val state = new UseCaseCtx(this)
 
   override def localSetup() {
     state.fields.foreach { _.init }
@@ -23,7 +22,7 @@ class UCEditor extends CometActor with Logger {
 
   override def render = (
       ".ucdata *" #> renderFields(state.fields) andThen
-        ".title .ucid *" #> state.ucNumber.toString
+        ".title .ucid *" #> state.number.toString
           & ".title @title" #> SHtml.ajaxText(state.title, onTitleChange(_))
       )
 

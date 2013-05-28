@@ -10,8 +10,8 @@ import CourseFields._
 object ExceptionCourseFields extends FieldDef[CourseFieldState] {
   import Fields.Template
 
-  override def newFieldInstance(state: UCEditorState, fieldKey: FieldKey) =
-    new ExceptionCourseFields(state, fieldKey)
+  override def newFieldInstance(ucCtx: UseCaseCtx, fieldKey: FieldKey) =
+    new ExceptionCourseFields(ucCtx, fieldKey)
 
   override def fieldKeyType = FieldKeyType.ExceptionCourses
   override def fieldKeyData = None
@@ -26,10 +26,10 @@ object ExceptionCourseFields extends FieldDef[CourseFieldState] {
 /**
  * Provides the field Exceptions, into which the user enters a hierarchy of steps.
  */
-class ExceptionCourseFields(override val uceState: UCEditorState, override val fieldKey: FieldKey) extends CourseFields {
+class ExceptionCourseFields(override val ucCtx: UseCaseCtx, override val fieldKey: FieldKey) extends CourseFields {
   import ExceptionCourseFields._
 
-  override val rootLabelPrefix = Some(s"${uceState.ucNumber}.E.")
+  override val rootLabelPrefix = Some(s"${ucCtx.number}.E.")
   override def startingLabelIndices = EC_StartingLabelIndices
 
   override def render = (

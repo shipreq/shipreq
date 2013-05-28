@@ -14,7 +14,7 @@ import TextField._
  */
 case class TextFieldDef(title: String) extends FieldDef[String] {
 
-  override def newFieldInstance(state: UCEditorState, fieldKey: FieldKey) = new TextField(this, state, fieldKey)
+  override def newFieldInstance(ucCtx: UseCaseCtx, fieldKey: FieldKey) = new TextField(this, ucCtx, fieldKey)
 
   override def fieldKeyType = FieldKeyType.Text
   override def fieldKeyData = Some(title)
@@ -47,10 +47,10 @@ object TextField {
  *
  * @param fd Identity of this text field.
  */
-class TextField(val fd: TextFieldDef, override val uceState: UCEditorState, override val fieldKey: FieldKey)
+class TextField(val fd: TextFieldDef, override val ucCtx: UseCaseCtx, override val fieldKey: FieldKey)
   extends Field[String] {
 
-  val value = new SmartText(uceState.msgCentre, uceState.stepLabelMapProvider)
+  val value = new SmartText(ucCtx.msgCentre, ucCtx.stepLabelMapProvider)
 
   override def init() {
     value.init()

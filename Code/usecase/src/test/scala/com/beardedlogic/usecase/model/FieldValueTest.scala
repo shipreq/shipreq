@@ -4,7 +4,7 @@ package model
 import test.TestDatabaseSupport
 import net.liftweb.util.Helpers._
 import org.scalatest.FunSpec
-import lib.{UCEditorState, Defaults}
+import lib.{UseCaseCtx, Defaults}
 import lib.field._
 import lib.StepTree.{Step => Step2, _}
 
@@ -13,13 +13,13 @@ class FieldValueTest extends FunSpec with TestDatabaseSupport {
   def getFieldKey(t: FieldKeyType) = Defaults.FieldList.fieldKeys.find(_.fieldKeyType == t).get
 
   def textFieldKey = getFieldKey(FieldKeyType.Text)
-  def newTextField = textFieldKey.fieldDef.newFieldInstance(new UCEditorState(1, null), textFieldKey).asInstanceOf[TextField]
+  def newTextField = textFieldKey.fieldDef.newFieldInstance(new UseCaseCtx(null), textFieldKey).asInstanceOf[TextField]
 
   def ncacFieldKey = getFieldKey(FieldKeyType.NormalAndAlternateCourses)
-  def newNcAcField = ncacFieldKey.fieldDef.newFieldInstance(new UCEditorState(1, null), ncacFieldKey).asInstanceOf[NormalAndAlternateCourseFields]
+  def newNcAcField = ncacFieldKey.fieldDef.newFieldInstance(new UseCaseCtx(null), ncacFieldKey).asInstanceOf[NormalAndAlternateCourseFields]
 
   def ecFieldKey = getFieldKey(FieldKeyType.ExceptionCourses)
-  def newEcField = ecFieldKey.fieldDef.newFieldInstance(new UCEditorState(1, null), ecFieldKey).asInstanceOf[ExceptionCourseFields]
+  def newEcField = ecFieldKey.fieldDef.newFieldInstance(new UseCaseCtx(null), ecFieldKey).asInstanceOf[ExceptionCourseFields]
 
   describe("Text fields") {
     it("should insert when has text") {

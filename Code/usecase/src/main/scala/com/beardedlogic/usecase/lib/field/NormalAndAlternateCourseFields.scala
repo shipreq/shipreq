@@ -11,8 +11,8 @@ import CourseFields._
 object NormalAndAlternateCourseFields extends FieldDef[CourseFieldState] {
   import Fields.Template
 
-  override def newFieldInstance(state: UCEditorState, fieldKey: FieldKey) =
-    new NormalAndAlternateCourseFields(state, fieldKey)
+  override def newFieldInstance(ucCtx: UseCaseCtx, fieldKey: FieldKey) =
+    new NormalAndAlternateCourseFields(ucCtx, fieldKey)
 
   override def fieldKeyType = FieldKeyType.NormalAndAlternateCourses
   override def fieldKeyData = None
@@ -30,7 +30,7 @@ object NormalAndAlternateCourseFields extends FieldDef[CourseFieldState] {
  *
  * Steps can be moved between the two.
  */
-class NormalAndAlternateCourseFields(override val uceState: UCEditorState, override val fieldKey: FieldKey) extends CourseFields {
+class NormalAndAlternateCourseFields(override val ucCtx: UseCaseCtx, override val fieldKey: FieldKey) extends CourseFields {
   import NormalAndAlternateCourseFields._
 
   // This will do for now but if this is moved into init() it will cause problems with TextFields due to the stepRefMap
@@ -39,7 +39,7 @@ class NormalAndAlternateCourseFields(override val uceState: UCEditorState, overr
       new StepNode(nextFuncName, 1, 1, NewStep) :: Nil
     ) :: Nil
 
-  override val rootLabelPrefix = Some(s"${uceState.ucNumber}.")
+  override val rootLabelPrefix = Some(s"${ucCtx.number}.")
   override def startingLabelIndices = NCAC_StartingLabelIndices
 
   override def render = (
