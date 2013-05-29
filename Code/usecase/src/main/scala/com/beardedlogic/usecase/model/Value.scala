@@ -21,6 +21,14 @@ trait Value[T <: DataType] {
  */
 case class PlainValue[T <: DataType](valueId: Long, dataId: Long, rev: Int) extends Value[T]
 
+sealed trait Revision {def querySuffix: String}
+
+case object LatestRev extends Revision {override val querySuffix = "ORDER BY rev DESC LIMIT 1"}
+
+case class ExactRev(rev: Int) extends Revision {override def querySuffix = s"AND rev = $rev"}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 object ValueAccessor {
 
   val * = "id, data_id, rev"
@@ -41,14 +49,20 @@ trait ValueAccessor extends DatabaseAccessor {
   def createInitialValue[T <: DataType](dataType: T): PlainValue[T] =
     createValue(createData(dataType), ExactRev(1))
 
-  def createValue[T <: DataType](data: Data[T], rev: Revision): PlainValue[T] = rev match {
+  def createValue[T <: DataType](data: Data[T], rev: Revision): PlainValue[T] =
+    createValueUnchecked(data.id, rev).asInstanceOf[PlainValue[T]]
+
+  def createValue[T <: DataType](value: PlainValue[T], rev: Revision): PlainValue[T] =
+    createValueUnchecked(value.dataId, rev).asInstanceOf[PlainValue[T]]
+
+  def createValueUnchecked(dataId: Long, rev: Revision): PlainValue[_ <: DataType] = rev match {
     case ExactRev(revNum) =>
-      val newId = InsertWithExactRev.first(data.id, revNum)
-      PlainValue(newId, data.id, revNum)
+      val newId = InsertWithExactRev.first(dataId, revNum)
+      PlainValue(newId, dataId, revNum)
 
     case LatestRev =>
-      val (newId, newRev) = InsertWithLatestRev.first(data.id, data.id)
-      PlainValue(newId, data.id, newRev)
+      val (newId, newRev) = InsertWithLatestRev.first(dataId, dataId)
+      PlainValue(newId, dataId, newRev)
   }
 
   def findValue[T <: DataType](data: Data[T], rev: Revision): Option[PlainValue[T]] = {
@@ -57,9 +71,3 @@ trait ValueAccessor extends DatabaseAccessor {
     .asInstanceOf[Option[PlainValue[T]]]
   }
 }
-
-sealed trait Revision {def querySuffix: String}
-
-case object LatestRev extends Revision {override val querySuffix = "ORDER BY rev DESC LIMIT 1"}
-
-case class ExactRev(rev: Int) extends Revision {override def querySuffix = s"AND rev = $rev"}

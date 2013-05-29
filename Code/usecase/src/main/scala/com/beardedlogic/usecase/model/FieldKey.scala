@@ -15,6 +15,8 @@ object FieldKey {
   type FieldKeyData = Option[String]
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+
 object FieldKeyAccessor {
 
   implicit val GetResultFieldKey = GetResult { r => FieldKey(r.<<, r.<<, r.<<) }
@@ -54,4 +56,3 @@ trait FieldKeyAccessor extends DatabaseAccessor {
   def findAllFieldKeysByFieldList(fieldList: Value[DataType.FieldList]): List[FieldKey] =
     SelectByFieldList.list(fieldList.valueId, RelationType.Has)
 }
-
