@@ -7,9 +7,9 @@ import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.mock.MockitoSugar
 import model.{FieldValue, FieldLoadCtx, FieldKeyType, FieldKey}
 
-class TextFieldText extends FunSpec with ShouldMatchers with MockitoSugar {
+class TextFieldTest extends FunSpec with ShouldMatchers with MockitoSugar {
 
-  describe("load()") {
+  describe("Loading") {
     val ATextFieldDef = new TextFieldDef("ah")
     val Key_1 = new FieldKey(1, FieldKeyType.Text, Some("AH"))
     val Key_2 = new FieldKey(2, FieldKeyType.Text, Some("AH2"))

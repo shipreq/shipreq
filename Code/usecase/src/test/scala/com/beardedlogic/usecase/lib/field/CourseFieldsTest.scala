@@ -11,9 +11,9 @@ import model._
 import msg.MessageCentre
 import test.TestHelpers
 
-class CourseFieldsText extends FunSpec with ShouldMatchers with MockitoSugar with TestHelpers {
+class CourseFieldsTest extends FunSpec with ShouldMatchers with MockitoSugar with TestHelpers {
 
-  describe("load()") {
+  describe("Loading") {
     val Key_NC = new FieldKey(1, FieldKeyType.NormalAndAlternateCourses, None)
     val Key_EC = new FieldKey(2, FieldKeyType.ExceptionCourses, None)
     val Value_NC = new FieldValue(10, Key_NC.valueId, None)
