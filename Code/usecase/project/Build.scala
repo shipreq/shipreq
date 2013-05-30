@@ -10,6 +10,7 @@ object B extends Build {
     .settings(
       testOptions in Test := Seq(Tests.Filter(normalTestFilter)),
       testOptions in SeleniumTest := Seq(Tests.Filter(seleniumTestFilter)),
+      parallelExecution in Test := false, // TODO Fix dealock issue later
       parallelExecution in SeleniumTest := false
     )
 
