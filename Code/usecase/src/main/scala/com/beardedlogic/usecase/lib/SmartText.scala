@@ -184,9 +184,12 @@ class SmartText(val msgCentre: MessageCentre,
   protected[lib] var _textWithNormalisedRefs = "".hasNormalisedRefs
 
   def text = _text
+  private var _allowBroadcasting = false
+  final def allowBroadcasting_? = _allowBroadcasting
 
   def init() {
     msgCentre.register(this)
+    _allowBroadcasting = true
     refAndIdLookup = refAndIdLookupProvider()
     _text = parseText(_text)
   }
@@ -214,6 +217,7 @@ class SmartText(val msgCentre: MessageCentre,
     refAndIdLookup = refAndIdLookupProvider()
     _textWithNormalisedRefs = newValueWithNRefs
 
+    // Realised normalised refs
     val newValue = NormalisedRefRegex.replaceAllIn(newValueWithNRefs, { m =>
       val dataIdText = m.group(1)
       val dataId = dataIdText.toLong.tag[StepId]
@@ -221,7 +225,17 @@ class SmartText(val msgCentre: MessageCentre,
       .getOrElse(InvalidNormalisedRef(dataIdText))
     })
 
-    _text = parseText(newValue)
+    // Parse text as normal
+    disableBroadcasting {
+      _text = parseText(newValue)
+    }
+  }
+
+  def disableBroadcasting[T](block: => T) = {
+    val i = _allowBroadcasting
+    _allowBroadcasting = false
+    try block
+    finally _allowBroadcasting = i
   }
 
   /**
@@ -231,7 +245,7 @@ class SmartText(val msgCentre: MessageCentre,
    */
   @inline protected def internalSetTextAndPush(newText: String) {
     _text = newText
-    msgCentre ! PushToClient(updateTextJs)
+    if (allowBroadcasting_?) msgCentre ! PushToClient(updateTextJs)
   }
 
   /**
@@ -395,7 +409,7 @@ class SmartStepText(override val msgCentre: MessageCentre,
     override def arrow = FlowFromArrow
     override def arrowReplacement = FlowFromArrowBadReplacement
     override def get(pr : ParseResult[FlowParseResult]) = pr.get.from
-    override def broadcast() { msgCentre ! FlowFromChangeMsg(refs.keySet, stepId) }
+    override def broadcast() { if (allowBroadcasting_?) msgCentre ! FlowFromChangeMsg(refs.keySet, stepId) }
   }
 
   /** Indicates into which steps this step flows. */
@@ -403,7 +417,7 @@ class SmartStepText(override val msgCentre: MessageCentre,
     override def arrow = FlowToArrow
     override def arrowReplacement = FlowToArrowBadReplacement
     override def get(pr : ParseResult[FlowParseResult]) = pr.get.to
-    override def broadcast() { msgCentre ! FlowToChangeMsg(stepId, refs.keySet) }
+    override def broadcast() { if (allowBroadcasting_?) msgCentre ! FlowToChangeMsg(stepId, refs.keySet) }
   }
 
   private[lib] var textWithoutFlow = ""

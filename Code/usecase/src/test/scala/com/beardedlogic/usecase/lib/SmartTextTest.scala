@@ -132,8 +132,22 @@ class SmartTextTest
       verify(msgCentre, never).!(any[Any])
     }
 
+    it("should set text with normalised flow refs") {
+      val msgCentre = mock[MessageCentre]
+      val m = new SmartStepText(msgCentre, () => StepState1, "XX", "XXt")
+      m.init()
+      val savedSteps = Map(100.tag[StepId] -> "X2", 104.tag[StepId] -> "X1", 108.tag[StepId] -> "X3")
+      val ntext = "He [D.108] he ⬅ [D.100] ➡ [D.104]".hasNormalisedRefs
+      m.setTextFromLoad(ntext, savedSteps)
+      m.text should be("He [S.3] he ⬅ [S.2] ➡ [S.1]")
+      m._textWithNormalisedRefs should be(ntext)
+      m.refsInText should be(Map("S.3" -> "X3"))
+      m.flowFrom.refs should be(Map("X2" -> "S.2"))
+      m.flowTo.refs should be(Map("X1" -> "S.1"))
+      verify(msgCentre, never).!(any[Any])
+    }
+
     // TODO doesn't test parsing on text change
-    // TODO doesn't test parsing of flow refs
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -481,11 +495,15 @@ class SmartTextTest
       val msgCentre = new MessageCentre(comet)
       val m = if (useSmartStepText) {
         val s2 = new SmartStepText(msgCentre, () => StepState2, "", "")
+        s2.init
         // dont put flow stuff here
         s2.textWithoutFlow = initialText
         s2
-      } else
-        new SmartText(msgCentre, () => StepState2)
+      } else {
+        val m = new SmartText(msgCentre, () => StepState2)
+        m.init
+        m
+      }
       m._text = initialText
       m.refsInText = initialRefsInUse
       m.refAndIdLookup = StepState1
@@ -533,6 +551,7 @@ class SmartTextTest
       val comet = mock[CometActor]
       val msgCentre = new MessageCentre(comet)
       val s = new SmartStepText(msgCentre, () => StepState2, "", "")
+      s.init
       s.refAndIdLookup = StepState1
       s.text = initialText
       s.text should be (initialText)
