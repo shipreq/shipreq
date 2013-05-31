@@ -28,15 +28,65 @@ class UseCaseCtx(cometActor: CometActor) {
 
   val normalCourseTitleId = ncacField.get.courses.head.stepTextId
 
-  private[lib] var _savedSteps = Map.empty[Long_StepId, String @@ LocalStepId]
-  def savedSteps =  _savedSteps
+  private[lib] var _savedSteps = Map.empty[Long_StepDataId, String @@ LocalStepId]
+  def savedSteps = _savedSteps
 
   // -------------------------------------------------------------------------------------------------------------------
+
+  def restoreCheckpoint(checkpoint: UseCaseSaveCheckpoint) {
+    // TODO restoreCheckpoint only works before init. Undo not yet supported because no HTML is updated.
+
+    // Set the number & title
+    this.number = checkpoint.uc.number
+    this.title = checkpoint.uc.title
+
+    var finaliseStateFns: List[() => Unit] = List.empty
+    val fields2 = fields.asInstanceOf[List[Field[Any]]]
+    for (f <- fields2) {
+      val state = checkpoint.fieldStates.get(f.fieldKey)
+      if (state.isDefined) {
+        finaliseStateFns :+= f.setState(state.get)
+      }
+//    If S didn't exist
+//      F.state = None
+//        Clear courses, stepLabelMap, textFields
+    }
+
+//    Build ucCtx . map of stepDataId  →  Step Node ID
+    _savedSteps = checkpoint.saveCtx.stepValues.map{
+      case (localStepId, stepValue) => (stepValue.taggedDataId -> localStepId)
+    }.toMap
+
+    for (fn <- finaliseStateFns) fn()
+  }
 }
 
 case class UseCaseSaveCheckpoint(
-  data: Data[DataType.UseCase],
-  uc: UseCase,
+  uc: UseCaseWithValue,
   saveCtx: FieldSaveCtx,
   fieldStates: Map[FieldKey, Any]
   )
+
+object UseCaseLoader {
+
+  def loadCheckpoint(valueId: Long, dao: DAO): Option[UseCaseSaveCheckpoint] = {
+
+    // Load use case
+    dao.findUseCaseWithValue(valueId).map { uc =>
+      val fieldList = Defaults.FieldList // TODO hardcoded fieldlist
+
+      val saveCtx = new MutableFieldSaveCtx
+      // TODO populate field values
+
+      // Load field states
+      val loadCtx = dao.getFieldLoadCtxFor(valueId)
+      val fieldStates = Map.newBuilder[FieldKey, Any]
+      for (fk <- fieldList.fieldKeys) {
+        val fs = fk.fieldDef.stateLoader(fk).load(loadCtx, saveCtx)
+        fieldStates += (fk -> fs)
+      }
+
+      UseCaseSaveCheckpoint(uc, saveCtx.immutable, fieldStates.result)
+    }
+  }
+}

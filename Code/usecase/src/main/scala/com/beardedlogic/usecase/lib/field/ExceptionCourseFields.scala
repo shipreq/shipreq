@@ -29,7 +29,7 @@ object ExceptionCourseFields extends FieldDef[CourseFieldState] {
 class ExceptionCourseFields(override val ucCtx: UseCaseCtx, override val fieldKey: FieldKey) extends CourseFields {
   import ExceptionCourseFields._
 
-  override val rootLabelPrefix = Some(s"${ucCtx.number}.E.")
+  override def recalcRootLabelPrefix = Some(s"${ucCtx.number}.E.")
   override def startingLabelIndices = EC_StartingLabelIndices
 
   override def render = (

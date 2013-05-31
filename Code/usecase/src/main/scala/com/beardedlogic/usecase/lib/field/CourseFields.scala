@@ -72,7 +72,9 @@ abstract class CourseFields extends Field[CourseFieldState] {
     for (n <- flattenNodes(courses)) createAndRegisterTextField(n)
   }
 
-  def rootLabelPrefix: Option[String]
+  protected def recalcRootLabelPrefix: Option[String]
+  private [this] var _rootLabelPrefix = recalcRootLabelPrefix
+  final def rootLabelPrefix = _rootLabelPrefix
   @inline def labelPrefixForLevel(level: Int) = if (level == 0) rootLabelPrefix else None
   @inline def labelFor(node: StepNode) = labelPrefixForLevel(node.level).map(_ + node.label).getOrElse(node.label)
   def startingLabelIndices: StartingLabelIndices
@@ -246,6 +248,7 @@ abstract class CourseFields extends Field[CourseFieldState] {
   )
 
   override def setState(newState: CourseFieldState) = {
+    _rootLabelPrefix = recalcRootLabelPrefix
     courses = buildNodesFromState(newState.courses, 0)
     syncTextFieldMap
     () => {

@@ -3,24 +3,24 @@ package model
 
 import scala.slick.jdbc.{StaticQuery => Q, GetResult}
 import lib.TypeTags._
+import StepAccessor._
 
 object StepAccessor {
-
   val Insert = Q.update[(Long, String)]("INSERT INTO step VALUES(?,?)")
-
-  implicit val GetResultStepValueId = GetResult(r => tag[StepId](r.nextLong))
+  implicit val GetResultPlainValue = ValueAccessor.GetValueResult[DataType.Step]
 }
 
 trait StepAccessor extends DatabaseAccessor {
-  import StepAccessor._
 
   def createStep(value: Value[DataType.Step], text: String): Unit = {
     Insert.execute(value.valueId, text)
   }
 
-  def mapStepTextById(sqlCond: String): Map[Long_StepId, String] = {
-    val map = Map.newBuilder[Long_StepId, String]
-    Q.queryNA[(Long_StepId, String)]("SELECT id,text FROM step " + sqlCond).foreach(map += _)
+  def findAllStepValuesAndText(sqlCond: String): Map[Long_StepValueId, (PlainValue[DataType.Step], String)] = {
+    val map = Map.newBuilder[Long_StepValueId, (PlainValue[DataType.Step], String)]
+    Q.queryNA[(PlainValue[DataType.Step], String)](
+      s"SELECT v.${ValueAccessor.*}, text FROM step s INNER JOIN value v on v.id=s.id ${sqlCond}"
+    ).foreach(r => map += (tag[StepValueId](r._1.valueId) -> r))
     map.result
   }
 }

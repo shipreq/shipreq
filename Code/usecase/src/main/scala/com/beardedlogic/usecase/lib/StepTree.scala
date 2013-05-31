@@ -48,6 +48,8 @@ object StepTree {
     @inline def labelId = id + "-l"
     @inline def stepTextId = id + "-t"
 
+    def apply(childIndex: Int) = children(childIndex)
+
     def deepCopy(fn: (StepNode, List[StepNode]) => StepNode): StepNode = fn(this, deepCopyChildren(fn))
     @inline def deepCopyChildren(fn: (StepNode, List[StepNode]) => StepNode) = children.map { _.deepCopy(fn) }
   }

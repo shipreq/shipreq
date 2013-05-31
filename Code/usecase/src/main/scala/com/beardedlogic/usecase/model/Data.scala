@@ -30,4 +30,7 @@ trait DataAccessor extends DatabaseAccessor {
     .firstOption(id, dataType)
     .map(Data(_, dataType))
   }
+
+  def findData[T <: DataType](value: PlainValue[T]): Option[Data[T]] =
+    findData(value.dataId).asInstanceOf[Option[Data[T]]]
 }

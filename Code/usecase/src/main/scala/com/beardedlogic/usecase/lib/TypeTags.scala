@@ -8,6 +8,7 @@ import java.lang.{Long => JLong}
  * @since 30/05/2013
  */
 object TypeTags {
+  // TODO doc TypeTags
 
   sealed trait TypeTag
   type Tagged[T <: TypeTag] = {type Tag = T}
@@ -32,6 +33,16 @@ object TypeTags {
   type Long_FieldKeyId = JLong @@ FieldKeyId
   @inline final implicit def FieldKeyToId(v: Value[DataType.FieldKey]) = tag[FieldKeyId](v.valueId)
 
-  trait StepId extends TypeTag
-  type Long_StepId = JLong @@ StepId
+  trait StepValueId extends TypeTag
+  type Long_StepValueId = JLong @@ StepValueId
+  @inline final implicit def StepValueIdExtractor(v: PlainValue[DataType.Step]) = v.valueId.tag[StepValueId]
+
+  trait StepDataId extends TypeTag
+  type Long_StepDataId = JLong @@ StepDataId
+  @inline final implicit def StepDataIdExtractor(v: PlainValue[DataType.Step]) = v.dataId.tag[StepDataId]
+
+  implicit class StepValueExt(val v: PlainValue[DataType.Step]) extends AnyVal {
+    def taggedDataId: Long_StepDataId = StepDataIdExtractor(v)
+    def taggedValueId: Long_StepValueId = StepValueIdExtractor(v)
+  }
 }

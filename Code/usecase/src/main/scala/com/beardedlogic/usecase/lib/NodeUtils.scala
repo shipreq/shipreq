@@ -22,7 +22,7 @@ object NodeUtils {
     val nodes = new MutableList[StepNode]
     val parents = MutableMap[Int, StepNode]()
     val children = MutableMap[StepNode, MutableList[StepNode]]()
-    val lineRegex = """^\s*(\S+?)\. (\S+)$""".r
+    val lineRegex = """^\s*(\S+?)\. (\S[^\r\n]*?)\s*$""".r
     val topLevelLabel = """^(\S+\.)(\d+)$""".r
 
     val lines = txt.split("""\s*[\r\n]+""").map(_.replaceFirst("\\s+$", "")).filter(!_.isEmpty)

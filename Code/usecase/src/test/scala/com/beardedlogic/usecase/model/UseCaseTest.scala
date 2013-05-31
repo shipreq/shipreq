@@ -1,14 +1,27 @@
 package com.beardedlogic.usecase
 package model
 
-import net.liftweb.util.Helpers._
 import org.scalatest.FunSpec
-import com.beardedlogic.usecase.test.{TestHelpers, TestDatabaseSupport}
+import test.{TestHelpers, TestDatabaseSupport}
 import lib.UseCaseCtx
 import lib.field._
+import lib.Defaults
 import lib.StepTree.{Step => Step2, _}
+import scala.slick.jdbc.{StaticQuery => Q}
+import Q.interpolation
 
 class UseCaseTest extends FunSpec with TestDatabaseSupport with TestHelpers {
+
+  describe("findUseCaseWithValue") {
+    it("should load when found") {
+      val value = db.createInitialValue(DataType.UseCase)
+      val vid = value.valueId
+      sqlu"INSERT INTO usecase VALUES(${vid}, 'ah', 7, ${Defaults.FieldList.valueId})".execute
+
+      val uc = db.findUseCaseWithValue(vid).get
+      uc should be(UseCaseWithValue(value, "ah", 7.toShort, Defaults.FieldList.valueId))
+    }
+  }
 
   /*
   // TODO Share sample courses. Create TestData or something.

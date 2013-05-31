@@ -129,7 +129,7 @@ class SmartTextTest
       val msgCentre = mock[MessageCentre]
       val m = new SmartText(msgCentre, () => StepState1)
       m.init()
-      m.setTextFromLoad("Hehe [D.100]".hasNormalisedRefs, Map(100.tag[StepId] -> "X2"))
+      m.setTextFromLoad("Hehe [D.100]".hasNormalisedRefs, Map(100.tag[StepDataId] -> "X2"))
       m.text should be("Hehe [S.2]")
       m._textWithNormalisedRefs should be("Hehe [D.100]")
       m.refsInText should be(Map("S.2" -> "X2"))
@@ -140,7 +140,7 @@ class SmartTextTest
       val msgCentre = mock[MessageCentre]
       val m = new SmartStepText(msgCentre, () => StepState1, "XX", "XXt")
       m.init()
-      val savedSteps = Map(100.tag[StepId] -> "X2", 104.tag[StepId] -> "X1", 108.tag[StepId] -> "X3")
+      val savedSteps = Map(100.tag[StepDataId] -> "X2", 104.tag[StepDataId] -> "X1", 108.tag[StepDataId] -> "X3")
       val ntext = "He [D.108] he ⬅ [D.100] ➡ [D.104]".hasNormalisedRefs
       m.setTextFromLoad(ntext, savedSteps)
       m.text should be("He [S.3] he ⬅ [S.2] ➡ [S.1]")
@@ -208,7 +208,7 @@ class SmartTextTest
       }
 
       it("should not recognise normalised DB refs") {
-        val id = tag[StepId](100)
+        val id = tag[StepDataId](100)
         test(s"${SmartText.MakeNormalisedRef(id)} doesn't exist.", "[D.100?] doesn't exist.")
       }
 

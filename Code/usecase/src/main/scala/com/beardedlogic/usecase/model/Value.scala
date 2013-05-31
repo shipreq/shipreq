@@ -32,7 +32,10 @@ case class ExactRev(rev: Int) extends Revision {override def querySuffix = s"AND
 object ValueAccessor {
 
   val * = "id, data_id, rev"
-  implicit val GetResultPlainValue = GetResult { r => PlainValue[DataType](r.<<, r.<<, r.<<) }
+
+  def GetValueResult[T <: DataType] = GetResult { r => PlainValue[T](r.<<, r.<<, r.<<) }
+
+  implicit val GetResultPlainValue = GetValueResult[DataType]
 
   val InsertWithExactRev = Q.query[(Long, Int), Long]("INSERT INTO value(data_id, rev) VALUES(?,?) RETURNING id")
   val InsertWithLatestRev = Q.query[(Long, Long), (Long, Int)]( """

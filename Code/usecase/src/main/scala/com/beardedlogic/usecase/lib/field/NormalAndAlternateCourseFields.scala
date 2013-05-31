@@ -39,7 +39,7 @@ class NormalAndAlternateCourseFields(override val ucCtx: UseCaseCtx, override va
       StepNode(newLocalStepId, 1, 1, NewStep) :: Nil
     ) :: Nil
 
-  override val rootLabelPrefix = Some(s"${ucCtx.number}.")
+  override def recalcRootLabelPrefix = Some(s"${ucCtx.number}.")
   override def startingLabelIndices = NCAC_StartingLabelIndices
 
   override def render = (

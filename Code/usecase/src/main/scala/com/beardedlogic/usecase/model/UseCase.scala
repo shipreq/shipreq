@@ -4,6 +4,7 @@ package model
 import scala.slick.jdbc.{GetResult, SetParameter, StaticQuery => Q}
 import scala.slick.session.PositionedParameters
 import lib._
+import db.DBHelpers._
 
 case class UseCase(
   valueId: Long,
@@ -11,10 +12,21 @@ case class UseCase(
   number: Short,
   fieldListId: Long) extends Value[DataType.UseCase]
 
+case class UseCaseWithValue(
+  value: PlainValue[DataType.UseCase],
+  title: String,
+  number: Short,
+  fieldListId: Long) extends Value[DataType.UseCase] {
+
+  final def valueId = value.valueId
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 
 object UseCaseAccessor {
+  implicit val GetResultPlainValue = ValueAccessor.GetValueResult[DataType.UseCase]
   implicit val GetResultUseCase = GetResult(r => UseCase(r.<<, r.<<, r.<<, r.<<))
+  implicit val GetResultUseCaseWithValue = GetResult(r => UseCaseWithValue(GetResultPlainValue(r), r.<<, r.<<, r.<<))
 
   implicit object SetParameterUseCase extends SetParameter[UseCase] {
     def apply(v: UseCase, pp: PositionedParameters) {
@@ -27,6 +39,11 @@ object UseCaseAccessor {
 
   val Insert = Q.update[UseCase]("INSERT INTO usecase VALUES(?,?,?,?)")
   val Select = Q.query[Long, UseCase]("SELECT id, title, number, field_list_id FROM usecase WHERE id=?")
+  val SelectWithValue = Q.query[Long, UseCaseWithValue](s"""
+    SELECT v.${ValueAccessor.*}, title, number, field_list_id
+    FROM value v, usecase u
+    WHERE u.id=? AND v.id = u.id
+    """.sql)
 }
 
 trait UseCaseAccessor extends DatabaseAccessor {
@@ -42,4 +59,5 @@ trait UseCaseAccessor extends DatabaseAccessor {
   }
 
   def findUseCase(valueId: Long): Option[UseCase] = Select.firstOption(valueId)
+  def findUseCaseWithValue(valueId: Long): Option[UseCaseWithValue] = SelectWithValue.firstOption(valueId)
 }

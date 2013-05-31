@@ -30,8 +30,8 @@ object TextField {
   val TextTemplate = Template("template-text")
 
   class StateLoader(val fieldKey: FieldKey) extends FieldStateLoader[String @@ NormalisedRefs] {
-    override def load(ctx: FieldLoadCtx) =
-      ctx.fieldValues.get(fieldKey).map(_.fieldData).flatten.getOrElse("").hasNormalisedRefs
+    override def load(loadCtx: FieldLoadCtx, saveCtx: MutableFieldSaveCtx) =
+      loadCtx.fieldValues.get(fieldKey).map(_.fieldData).flatten.getOrElse("").hasNormalisedRefs
   }
 }
 

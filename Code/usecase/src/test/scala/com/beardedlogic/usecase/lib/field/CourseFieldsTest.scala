@@ -84,7 +84,7 @@ class CourseFieldsTest extends FunSpec with TestHelpers {
       val ucCtx = mockUseCaseCtx
       val cf = new NormalAndAlternateCourseFields(ucCtx, Key_NC)
       val fn = cf.setState(CourseFieldState(Tree2))
-      when(ucCtx.savedSteps).thenReturn(Map(tag[StepId](800) -> "X8".asLocalStepId))
+      when(ucCtx.savedSteps).thenReturn(Map(800.tag[StepDataId] -> "X8".asLocalStepId))
       when(ucCtx.stepLabelMap).thenReturn(cf.stepLabelMap)
       fn()
       val tf = cf.test__textFields

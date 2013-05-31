@@ -38,7 +38,7 @@ object SmartText {
   }
 
   val NormalisedRefRegex = "\\[D\\.(\\d+?)\\]".r
-  def MakeNormalisedRef(dataId: Long_StepId) = MakeRef("D." + dataId)
+  def MakeNormalisedRef(dataId: Long_StepDataId) = MakeRef("D." + dataId)
   def MakeInvalidNormalisedRef(dataId: String) = MakeRef("D." + dataId)
 
   val DeletedRef = MakeRef("DELETED")
@@ -215,14 +215,14 @@ class SmartText(val msgCentre: MessageCentre,
    *                          human-readable labels.
    * @param savedSteps A map of step data-to-node ids.
    */
-  def setTextFromLoad(newValueWithNRefs: String @@ NormalisedRefs, savedSteps: Map[Long_StepId, String]) {
+  def setTextFromLoad(newValueWithNRefs: String @@ NormalisedRefs, savedSteps: Map[Long_StepDataId, String]) {
     refAndIdLookup = refAndIdLookupProvider()
     _textWithNormalisedRefs = newValueWithNRefs
 
     // Realised normalised refs
     val newValue = NormalisedRefRegex.replaceAllIn(newValueWithNRefs, { m =>
       val dataIdText = m.group(1)
-      val dataId = dataIdText.toLong.tag[StepId]
+      val dataId = dataIdText.toLong.tag[StepDataId]
       savedSteps.get(dataId).flatMap(nodeId => refAndIdLookup.get(nodeId)).map(MakeRef(_)).getOrElse{
         warn(s"Unable to realise normalised step reference. ❚ Text: $newValueWithNRefs ❚ DataId: $dataId ❚ SavedSteps: $savedSteps ❚ RefAndIdLookup: $refAndIdLookup")
         MakeInvalidNormalisedRef(dataIdText)
