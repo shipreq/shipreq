@@ -7,6 +7,8 @@ object BiMap {
   def apply[A, B](ab: Map[A, B]): BiMap[A, B] = BiMap(ab, ab.map(e => e._2 -> e._1))
 
   def apply[A, B](pairs: Tuple2[A, B]*): BiMap[A, B] = BiMap(Map(pairs: _*))
+
+  def flatten[T](pairs: Tuple2[T, T]*): Map[T, T] = Map((pairs ++ pairs.map(t => (t._2, t._1))): _*)
 }
 
 /**

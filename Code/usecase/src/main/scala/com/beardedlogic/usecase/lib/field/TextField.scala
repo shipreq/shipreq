@@ -6,7 +6,7 @@ import net.liftweb.util.Helpers._
 import model._
 import TextField._
 import TypeTags._
-
+import FieldValue.FieldValueData
 
 /**
  * Text field definition.
@@ -59,4 +59,21 @@ class TextField(val fd: TextFieldDef, override val ucCtx: UseCaseCtx, override v
   override def setState(newState: String @@ NormalisedRefs): () => Unit = {
     () => value.setTextFromLoad(newState, ucCtx.savedSteps)
   }
+
+  override def save_? : Boolean = value.text.nonEmpty
+
+  override def presave(
+    lastSave: Option[(FieldSaveCtx, String @@ NormalisedRefs)],
+    saveCtx: MutableFieldSaveCtx,
+    dao: DAO): Boolean = {
+
+    value.recalcTextWithNormalisedRefs(ucCtx.savedSteps.ba)
+    lastSave match {
+      case None                    => true
+      case Some((_, previousText)) => previousText != value.textWithNormalisedRefs
+    }
+  }
+
+  override def save(combinedSaveCtx: FieldSaveCtx, newSaveCtx: FieldSaveCtx, dao: DAO): (FieldValueData, String @@ NormalisedRefs) =
+    (Some(value.textWithNormalisedRefs), value.textWithNormalisedRefs)
 }

@@ -3,8 +3,9 @@ package lib
 package field
 
 import scala.xml.NodeSeq
-import model.{FieldLoadCtx, FieldKey, FieldKeyType}
+import model._
 import FieldKey.FieldKeyData
+import FieldValue.FieldValueData
 
 /**
  * @tparam S Field State type.
@@ -50,4 +51,36 @@ trait Field[S] {
    * @return A function to be invoked after all fields have had their states similarly set.
    */
   def setState(newState: S): () => Unit
+
+  // TODO update doco here
+
+  /**
+   * Gives a field a chance to opt-out of storing a value in the database.
+   * If a field is blank, then there's no point saving it.
+   */
+  def save_? : Boolean
+
+  /**
+   * Saves `Data` and `Value` rows for any additional data required.
+   */
+  def presave(
+    lastSave: Option[(FieldSaveCtx, S)],
+    saveCtx: MutableFieldSaveCtx,
+    dao: DAO
+  ): Boolean
+
+
+  /**
+   * Continues saving state to database.
+   *
+   * Once this is called, the `Data` and `Value` rows for all fields will have been saved, the IDs known.
+   *
+   * @return A single, arbitrary data string that will be stored in `field_value.data`. The format and mechanism of this
+   *         value can be decided by the field type.
+   */
+  def save(
+    combinedSaveCtx: FieldSaveCtx,
+    newSaveCtx: FieldSaveCtx,
+    dao: DAO
+  ): (FieldValueData, S)
 }

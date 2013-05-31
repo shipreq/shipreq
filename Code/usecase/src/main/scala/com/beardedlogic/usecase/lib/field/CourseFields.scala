@@ -8,14 +8,16 @@ import net.liftweb.http.js.JsCmds.jsExpToJsCmd
 import net.liftweb.http.js.jquery.JqJE
 import net.liftweb.util.CssSel
 import net.liftweb.util.Helpers.{strToSuperArrowAssoc => _, _}
+import scala.annotation.tailrec
 import scala.xml._
+
 import JsExt._
 import StepTree._
 import TypeTags._
-import msg.Messages._
-import TypeTags._
 import CourseFields._
-import scala.annotation.tailrec
+import msg.Messages._
+import model._
+import FieldValue.FieldValueData
 
 object CourseFields {
   import Fields.Template
@@ -272,4 +274,18 @@ abstract class CourseFields extends Field[CourseFieldState] {
     }
     iter(state, level, startingLabelIndices.startingLabelIndex(level), Nil)
   }
+
+  override def save_? : Boolean = ???
+
+  override def presave(
+    lastSave: Option[(FieldSaveCtx, CourseFieldState)],
+    saveCtx: MutableFieldSaveCtx,
+    dao: DAO
+    ): Boolean = ???
+
+  override def save(
+    combinedSaveCtx: FieldSaveCtx,
+    newSaveCtx: FieldSaveCtx,
+    dao: DAO
+    ): (FieldValueData, CourseFieldState) = ???
 }

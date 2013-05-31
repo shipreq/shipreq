@@ -3,21 +3,25 @@ package lib
 package field
 
 import org.scalatest.FunSpec
-import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.mock.MockitoSugar
 import org.mockito.Mockito._
-import model.{FieldValue, FieldLoadCtx, FieldKeyType, FieldKey}
+import model._
 import msg.MessageCentre
 import TypeTags._
+import test.TestHelpers
 
-class TextFieldTest extends FunSpec with ShouldMatchers with MockitoSugar {
+class TextFieldTest extends FunSpec with TestHelpers {
+
+  def sampleTextField = {
+    val tf = new TextField(mock[TextFieldDef], mockUseCaseCtx, mock[FieldKey])
+    when(tf.ucCtx.savedSteps).thenReturn(BiMap(111.tag[StepDataId] -> "X1".asLocalStepId, 222.tag[StepDataId] -> "X2".asLocalStepId))
+    when(tf.ucCtx.stepLabelMap).thenReturn(BiMap.flatten("X1" -> "4.1", "X2" -> "4.2"))
+    tf.init
+    tf
+  }
 
   describe("Setting state") {
     it("should accept simple text") {
-      val ucCtx = mock[UseCaseCtx]
-      when(ucCtx.msgCentre).thenReturn(mock[MessageCentre])
-      when(ucCtx.stepLabelMapProvider).thenReturn(() => Map.empty[String, String])
-      val tf = new TextField(mock[TextFieldDef], ucCtx, mock[FieldKey])
+      val tf = sampleTextField
       tf.value.refsInText += ("A" -> "B".asLocalStepId)
 
       tf.setState("Hehe!".hasNormalisedRefs)()
@@ -27,18 +31,94 @@ class TextFieldTest extends FunSpec with ShouldMatchers with MockitoSugar {
     }
 
     it("should accept text with normalised refs") {
-      val ucCtx = mock[UseCaseCtx]
-      when(ucCtx.msgCentre).thenReturn(mock[MessageCentre])
-      when(ucCtx.stepLabelMapProvider).thenReturn(() => ucCtx.stepLabelMap)
-      val tf = new TextField(mock[TextFieldDef], ucCtx, mock[FieldKey])
-
+      val tf = sampleTextField
       val fn = tf.setState("Hehe! [D.100]".hasNormalisedRefs)
-      when(ucCtx.savedSteps).thenReturn(BiMap(100.tag[StepDataId] -> "X1".asLocalStepId))
-      when(ucCtx.stepLabelMap).thenReturn(Map("X1" -> "5.4", "5.4" -> "X1"))
+      when(tf.ucCtx.savedSteps).thenReturn(BiMap(100.tag[StepDataId] -> "X1".asLocalStepId))
+      when(tf.ucCtx.stepLabelMap).thenReturn(BiMap.flatten("X1" -> "5.4"))
       fn()
 
       tf.value.text should be("Hehe! [5.4]")
       tf.value.refsInText should be(Map("5.4" -> "X1"))
+    }
+  }
+
+  describe("Saving") {
+    describe("save_?()") {
+      it("should not save when no text") {
+        val tf = sampleTextField
+        tf.save_? should be(false)
+      }
+      it("should save when has text") {
+        val tf = sampleTextField
+        tf.value.setTextFromUser("Hello!")
+        tf.save_? should be(true)
+      }
+    }
+
+    def testPresave(tf: TextField, lastSave: Option[(FieldSaveCtx, String @@ NormalisedRefs)], expectChange: Boolean) {
+      val saveCtx = mock[MutableFieldSaveCtx]
+      val dao = mock[DAO]
+      tf.save_? should be(true)
+      tf.presave(lastSave, saveCtx, dao) should be(expectChange)
+      verifyZeroInteractions(saveCtx)
+      verifyZeroInteractions(dao)
+    }
+
+    describe("presave() with no old state") {
+      it("should save simple text") {
+        val tf = sampleTextField
+        tf.value.setTextFromUser("Hello!")
+        testPresave(tf, None, true)
+      }
+    }
+
+    describe("presave() with old state") {
+      it("should save simple text when it differs") {
+        val tf = sampleTextField
+        tf.value.setTextFromUser("Hello!")
+        testPresave(tf, Some(mock[FieldSaveCtx], "ah".hasNormalisedRefs), true)
+      }
+      it("should not save simple text when unchanged") {
+        val tf = sampleTextField
+        tf.value.setTextFromUser("Hello!")
+        testPresave(tf, Some(mock[FieldSaveCtx], "Hello!".hasNormalisedRefs), false)
+      }
+      it("should not save text with refs matches unchanged, normalised text") {
+        val tf = sampleTextField
+        tf.value.setTextFromUser("Hello! [4.1]")
+        tf.value.text should be("Hello! [4.1]")
+        testPresave(tf, Some(mock[FieldSaveCtx], "Hello! [D.111]".hasNormalisedRefs), false)
+      }
+      it("should save text with refs matches differs") {
+        val tf = sampleTextField
+        tf.value.setTextFromUser("Hello! [4.1]")
+        tf.value.text should be("Hello! [4.1]")
+        testPresave(tf, Some(mock[FieldSaveCtx], "Hello! [D.222]".hasNormalisedRefs), true)
+      }
+    }
+
+    describe("save()") {
+      def testSave(text: String, expectedSaveText: String) {
+        val saveCtx = mock[MutableFieldSaveCtx]
+        val dao = mock[DAO]
+        val tf = sampleTextField
+        tf.value.setTextFromUser(text)
+        tf.value.text should be(text)
+        tf.save_? should be(true)
+        tf.presave(None, saveCtx, dao) should be(true)
+        val r = tf.save(null, null, dao)
+        r._1 should be(Some(expectedSaveText))
+        r._2 should be(expectedSaveText)
+        verifyZeroInteractions(saveCtx)
+        verifyZeroInteractions(dao)
+      }
+
+      it("should save simple text") {
+        testSave("Hello", "Hello")
+      }
+      it("should text with normalised refs") {
+        testSave("Hello [4.1]", "Hello [D.111]")
+      }
     }
   }
 

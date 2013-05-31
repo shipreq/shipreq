@@ -184,6 +184,7 @@ class SmartText(val msgCentre: MessageCentre,
 
   protected[lib] var _text = ""
   protected[lib] var _textWithNormalisedRefs = "".hasNormalisedRefs
+  def textWithNormalisedRefs: String @@ NormalisedRefs = _textWithNormalisedRefs
 
   def text = _text
   private var _allowBroadcasting = false
@@ -233,6 +234,23 @@ class SmartText(val msgCentre: MessageCentre,
     disableBroadcasting {
       _text = parseText(newValue)
     }
+  }
+
+  def recalcTextWithNormalisedRefs(savedSteps: Map[String @@ LocalStepId, Long_StepDataId]) {
+    _textWithNormalisedRefs = normaliseRefs(text, savedSteps, refsInText)
+  }
+
+  protected def normaliseRefs(
+    text: String,
+    savedSteps: Map[String @@ LocalStepId, Long_StepDataId],
+    refs: Map[String, String @@ LocalStepId]): String @@ NormalisedRefs = {
+
+    var r = text
+    for {
+      (label, localId) <- refs
+      dataId <- savedSteps.get(localId)
+    } r = r.replace(MakeRef(label), MakeNormalisedRef(dataId))
+    r.hasNormalisedRefs
   }
 
   def disableBroadcasting[T](block: => T) = {
