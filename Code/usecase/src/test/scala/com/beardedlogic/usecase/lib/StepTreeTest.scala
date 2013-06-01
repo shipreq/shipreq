@@ -95,9 +95,7 @@ class StepTreeTest extends WordSpec with ShouldMatchers with TestHelpers {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  "flattenNodes()" should {
-    "flatten recursively" in {
-
+  "TreeNodeLike stuff" should {
       val c1_0_2_x =
         new StepNode("1.0.2.a", 2, 1, null) ::
           new StepNode("1.0.2.b", 2, 2, null) ::
@@ -119,10 +117,23 @@ class StepTreeTest extends WordSpec with ShouldMatchers with TestHelpers {
           new StepNode("1.2", 0, 2, null, c1_2_x) ::
           Nil
 
-      flattenNodes(top).map(_.id) should be(List(
+      val ids = List(
         "1.0", "1.0.1", "1.0.2", "1.0.2.a", "1.0.2.b", "1.0.3",
         "1.1",
-        "1.2", "1.2.1"))
+        "1.2", "1.2.1").sorted
+
+    "node.foreach()" in {
+      var list = List.empty[String]
+      top(0).foreach(list :+= _.id)
+      list.sorted should be(ids.filter(_.startsWith("1.0")))
+    }
+    "foreachNode()" in {
+      var list = List.empty[String]
+      top.foreachNode(list :+= _.id)
+      list.sorted should be(ids)
+    }
+    "mapEachNode()" in {
+      top.mapEachNode(_.id.asInstanceOf[String]).sorted should be(ids)
     }
   }
 

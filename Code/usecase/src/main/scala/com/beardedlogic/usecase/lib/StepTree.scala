@@ -9,6 +9,27 @@ import TypeTags._
  */
 object StepTree {
 
+  /**
+   * Anything that has a list of children of itself can be considered a tree node. This adds normal collection-esque
+   * support to tree nodes so that typical functions such as foreach, map, etc. are available.
+   *
+   * @since 1/06/2013
+   */
+  trait TreeNodeLike[T <: TreeNodeLike[T]] extends Traversable[T] {
+    self: T =>
+    val children: List[T]
+
+    override def foreach[U](fn: T => U) {
+      fn(this)
+      children.foreach(_.foreach(fn))
+    }
+  }
+
+  implicit class TreeNodeListExt[T <: TreeNodeLike[T]](val tree: List[T]) extends AnyVal {
+    def foreachNode[U](fn: T => U) { tree.foreach(_.foreach(fn)) }
+    def mapEachNode[R](fn: T => R): List[R] = tree.flatMap(_.map(fn))
+  }
+
   // TODO Step.text not being used. Maybe Step itself is useless. Step node ids and an external map probably better.
   case class Step(text: String)
 
@@ -16,7 +37,8 @@ object StepTree {
                       level: Int,
                       labelIndex: Int,
                       step: Step,
-                      children: List[StepNode] = Nil) {
+                      children: List[StepNode] = Nil)
+    extends TreeNodeLike[StepNode] {
 
     import StepLabels.LabelMakers
     @inline def labelMaker = LabelMakers(level)
@@ -26,6 +48,9 @@ object StepTree {
     require(labelIndex >= labelMaker.min, s"Label index (${labelIndex}) at level (${level}) must be ${labelMaker.min} or larger.")
 
     @inline def label = labelMaker(labelIndex)
+
+    // Manually specify else it will recurse forever because this is Traversable
+    override def toString = s"StepNode($id, $level.$labelIndex, $step, $children)"
 
     /**
      * Increments the position of this node.
@@ -74,15 +99,6 @@ object StepTree {
         (lbl -> h.id)
 
     case Nil => Map.empty
-  }
-
-  // TODO replace flattenNodes() with a recursive-map fn
-  /**
-   * Flattens a list of step nodes with children, into a single list that contains all recursive contents.
-   */
-  @tailrec def flattenNodes(nodes: List[StepNode], results: List[StepNode] = Nil): List[StepNode] = nodes match {
-    case Nil    => results
-    case h :: t => flattenNodes(h.children ::: t, results :+ h)
   }
 
   /**

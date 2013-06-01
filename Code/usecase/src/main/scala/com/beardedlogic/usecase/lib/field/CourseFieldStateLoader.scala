@@ -52,22 +52,15 @@ object CourseFieldState {
 }
 
 case class CourseFieldState(courses: List[StepState]) {
-
-  val stepMap = {
-    val map = Map.newBuilder[String @@ LocalStepId, StepState]
-    courses.foreach(_.deepForeach(ss => map += (ss.id -> ss)))
-    map.result
-  }
+  val stepMap: Map[String @@ LocalStepId, StepState] = courses.mapEachNode(ss => (ss.id -> ss)).toMap
 }
 
 case class StepState(
   id: String @@ LocalStepId,
   text: String @@ NormalisedRefs,
-  children: List[StepState]
-  ) {
+  children: List[StepState])
+  extends TreeNodeLike[StepState] {
 
-  def deepForeach(fn: StepState => Any) {
-    fn(this)
-    children foreach (_ deepForeach fn)
-  }
+  // Manually specify else it will recurse forever because this is Traversable
+  override def toString = s"StepState($id, '$text', $children)"
 }

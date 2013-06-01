@@ -30,7 +30,7 @@ object CourseFields {
   val AddTailStepTemplate = Template("template-courses-addTailStep")
   val AddTailStepClass = "addTailStep"
 
-  def ExprForNodeAndChildren(n: StepNode) = (n :: flattenNodes(n.children)).map("#" + _.id).mkString(",")
+  def ExprForNodeAndChildren(n: StepNode) = n.map("#" + _.id).mkString(",")
   @inline def JqExprForNodeAndChildren(n: StepNode) = JqExpr(ExprForNodeAndChildren(n))
 
   // TODO Move IfCssSel and PassThru elsewhere
@@ -71,7 +71,7 @@ abstract class CourseFields extends Field[CourseFieldState] {
   def test__textFields = textFields
 
   override def init() {
-    for (n <- flattenNodes(courses)) createAndRegisterTextField(n)
+    courses.foreachNode(createAndRegisterTextField(_))
   }
 
   protected def recalcRootLabelPrefix: Option[String]
@@ -90,7 +90,7 @@ abstract class CourseFields extends Field[CourseFieldState] {
   private[this] def syncTextFieldMap() {
     val oldTextFields = textFields
     textFields = Map.empty
-    for (n <- flattenNodes(courses)) {
+    courses.foreachNode{ n =>
       val id = n.id
       if (oldTextFields.contains(id)) {
         textFields += (id -> oldTextFields(id))
@@ -104,7 +104,7 @@ abstract class CourseFields extends Field[CourseFieldState] {
    * Renders a list of steps and their trees of children.
    */
   protected def renderSteps(steps: List[StepNode]): CssSel =
-    ".step" #> flattenNodes(steps).map(renderSingleStep)
+    ".step" #> steps.mapEachNode(renderSingleStep)
 
   /**
    * Renders a list of steps and their trees of children.
@@ -168,7 +168,7 @@ abstract class CourseFields extends Field[CourseFieldState] {
       (
         JqId(preceedingNodeId) ~> JqAfter(renderSingleStepXml(newNode))
         & JqId(newNode.id) ~> JqHide ~> JqSlideDownFast
-        & UpdateLabels(flattenNodes(courses))
+        & UpdateLabels(courses)
       )
     case _ => JsCmds.Noop
   }
@@ -186,7 +186,7 @@ abstract class CourseFields extends Field[CourseFieldState] {
         case (newCourses, Some(node)) =>
           courses = newCourses
           FadeOut(JqExprForNodeAndChildren(node), 240)(
-            _ ~> JqJE.JqRemove() & UpdateLabels(flattenNodes(courses))
+            _ ~> JqJE.JqRemove() & UpdateLabels(courses)
           )
         case _ => JsCmds.Noop
       }
@@ -197,8 +197,7 @@ abstract class CourseFields extends Field[CourseFieldState] {
   def onIndentDecrease(nodeId: String @@ LocalStepId): JsCmd = indentDecrease(nodeId, courses) match {
     case (newCourses, Some(_)) =>
       courses = newCourses
-      val flattenedCourses = flattenNodes(courses)
-      val updateJs = UpdateIndentation(flattenedCourses) & UpdateLabels(flattenedCourses)
+      val updateJs = UpdateIndentation(courses) & UpdateLabels(courses)
       customiseIndentDecreaseJs(nodeId, updateJs)
 
     case _ => JsCmds.Noop
@@ -216,8 +215,7 @@ abstract class CourseFields extends Field[CourseFieldState] {
     case (newCourses, Some(newNode)) =>
       val oldCourses = courses
       courses = newCourses
-      val flattenedCourses = flattenNodes(courses)
-      val updateJs = UpdateIndentation(flattenedCourses) & UpdateLabels(flattenedCourses)
+      val updateJs = UpdateIndentation(courses) & UpdateLabels(courses)
       customiseIndentIncreaseJs(nodeId, newNode, oldCourses, updateJs)
 
     case _ => JsCmds.Noop
@@ -234,19 +232,19 @@ abstract class CourseFields extends Field[CourseFieldState] {
   /**
    * Creates Javascript to update the indentation levels of all given nodes.
    */
-  protected def UpdateIndentation(nodes: Iterable[StepNode]): JsCmd = JsCmds.Run(
-    (for (n <- nodes) yield (
+  protected def UpdateIndentation(nodes: List[StepNode]): JsCmd = JsCmds.Run(
+    nodes.mapEachNode(n =>
       JqId(n.id) ~> JqJE.JqAttr(AttrLevel, n.level.toString) toJsCmd
-    )) mkString ";\n"
+    ) mkString ";\n"
   )
 
   /**
    * Creates Javascript to update the label text of all given nodes.
    */
-  protected def UpdateLabels(nodes: Iterable[StepNode]): JsCmd = JsCmds.Run(
-    (for (n <- nodes) yield (
+  protected def UpdateLabels(nodes: List[StepNode]): JsCmd = JsCmds.Run(
+    nodes.mapEachNode(n =>
       JsCmds.SetHtml(n.labelId, Text(labelFor(n))).toJsCmd
-    )) mkString "\n"
+    ) mkString "\n"
   )
 
   override def setState(newState: CourseFieldState) = {

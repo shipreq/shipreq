@@ -18,7 +18,6 @@ FUNC TODO
 TECH TODO
 =========
 * [M.0.3] [PERF] Combined stepLabelMap is horribly ineffecient.
-* [S.0.1] [PERF] Replace flattenNodes() with deepMap()
 * [S.0.1] [CODE] Remove Step. StepNode is enough.
 * [C.0.0] [CODE] Title-to-NC sync should be done via msging.
 
