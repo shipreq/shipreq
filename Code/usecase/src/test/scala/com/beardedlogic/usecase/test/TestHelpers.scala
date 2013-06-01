@@ -9,13 +9,14 @@ import lib.StepTree._
 import lib.TypeTags._
 import lib.UseCaseCtx
 import lib.msg.MessageCentre
+import net.liftweb.http.LiftRules
 
 /**
  * @since 30/04/2013
  */
 trait TestHelpers extends MockitoSugar with ShouldMatchers {
 
-  (new bootstrap.liftweb.Boot).configureLift
+  if (!LiftRules.doneBoot) (new bootstrap.liftweb.Boot).configureLift
 
   def eventually(cond: => Any) {
     val test = (sleep: Int) => try { cond; true } catch { case _: Throwable => Thread.sleep(sleep); false }
