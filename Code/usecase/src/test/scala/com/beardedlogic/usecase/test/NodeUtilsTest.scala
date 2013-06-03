@@ -1,12 +1,11 @@
-package com.beardedlogic.usecase.lib
+package com.beardedlogic.usecase
+package test
 
 import org.scalatest.WordSpec
 import org.scalatest.matchers.ShouldMatchers
-import com.beardedlogic.usecase.test.TestHelpers
 
 class NodeUtilsTest extends WordSpec with ShouldMatchers with TestHelpers {
   import NodeUtils._
-  import StepTree._
   import TestHelpers.TreeDSL._
 
   val BT_102 = $("a" ~> $("i", "ii", "iii"), "b", "c" ~> $("i", "ii"))

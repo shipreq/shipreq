@@ -2,12 +2,11 @@ package com.beardedlogic.usecase
 package lib
 package field
 
-import StepTree._
+import tree.TreeNodeLike
+import tree.TreeOps._
 import model._
 import CourseFields._
 import TypeTags._
-import CourseFieldState._
-import scala.annotation.tailrec
 
 class CourseFieldStateLoader(val fieldKey: FieldKey, val li: StartingLabelIndices) extends FieldStateLoader[CourseFieldState] {
 
@@ -46,9 +45,6 @@ class CourseFieldStateLoader(val fieldKey: FieldKey, val li: StartingLabelIndice
       }
     }.getOrElse(List.empty[StepState])
   }
-}
-
-object CourseFieldState {
 }
 
 case class CourseFieldState(courses: List[StepState]) {

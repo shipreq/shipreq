@@ -33,6 +33,13 @@ class UseCaseCtx(cometActor: CometActor) {
 
   private[lib] var _savedSteps = BiMap.empty[Long_StepDataId, String @@ LocalStepId]
   def savedSteps = _savedSteps
+  def recalcSavedSteps(saveCtx: FieldSaveCtx) {
+    _savedSteps = BiMap(saveCtx.stepValues.map {
+      case (localStepId, stepValue) => (stepValue.taggedDataId -> localStepId)
+    })
+  }
+
+  def init() { fields.foreach(_.init) }
 
   // -------------------------------------------------------------------------------------------------------------------
 
@@ -55,9 +62,7 @@ class UseCaseCtx(cometActor: CometActor) {
     }
 
     // Build ucCtx . map of stepDataId  →  Step Node ID
-    _savedSteps = BiMap(checkpoint.saveCtx.stepValues.map {
-      case (localStepId, stepValue) => (stepValue.taggedDataId -> localStepId)
-    })
+    recalcSavedSteps(checkpoint.saveCtx)
 
     for (fn <- finaliseStateFns) fn()
 
@@ -114,6 +119,7 @@ class UseCaseCtx(cometActor: CometActor) {
     if (changesDetected) {
       val saveCtx2 = saveCtx1.immutable
       val combinedSaveCtx = if (lastSave.isEmpty) saveCtx2 else saveCtx2.combineWith(lastSave.get.saveCtx)
+      recalcSavedSteps(combinedSaveCtx)
 
       // Create new usecase
       val ucValue = if (lastSave.isEmpty)

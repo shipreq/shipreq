@@ -3,7 +3,6 @@ package lib
 package field
 
 import net.liftweb.http.js.{ JsCmd, JsCmds, JE }
-import StepTree._
 import TypeTags._
 import model.{FieldKey, FieldKeyType}
 import CourseFields._
@@ -33,11 +32,9 @@ object NormalAndAlternateCourseFields extends FieldDef[CourseFieldState] {
 class NormalAndAlternateCourseFields(override val ucCtx: UseCaseCtx, override val fieldKey: FieldKey) extends CourseFields {
   import NormalAndAlternateCourseFields._
 
-  // This will do for now but if this is moved into init() it will cause problems with TextFields due to the stepRefMap
+  // TODO This will do for now but if this is moved into init() it will cause problems with TextFields due to the stepRefMap
   courses =
-    StepNode(newLocalStepId, 0, 0, NewStep,
-      StepNode(newLocalStepId, 1, 1, NewStep) :: Nil
-    ) :: Nil
+    StepNodeBuilder(0, 0, List(StepNodeBuilder(1, 1))) :: Nil
 
   override def recalcRootLabelPrefix = Some(s"${ucCtx.number}.")
   override def startingLabelIndices = NCAC_StartingLabelIndices
@@ -50,8 +47,7 @@ class NormalAndAlternateCourseFields(override val ucCtx: UseCaseCtx, override va
   /**
    * Creates a new top-level step to add to the end of the list.
    */
-  private def newTailStep() =
-    StepNode(newLocalStepId, 0, courses.size, NewStep, Nil)
+  private def newTailStep() = StepNodeBuilder(0, courses.size)
 
   /**
    * Prevent removal of the normal course head, ie. 1.0.

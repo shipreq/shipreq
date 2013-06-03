@@ -3,17 +3,15 @@ package lib
 package field
 
 import org.scalatest.FunSpec
-import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.mock.MockitoSugar
 import org.mockito.Mockito._
-import StepTree._
 import model._
-import msg.MessageCentre
-import test.TestHelpers
+import test._
+import test.NodeUtils._
+import TestHelpers._
 import CourseFields._
 import TypeTags._
-import NodeUtils._
 import net.liftweb.http.CometActor
+import tree.TreeOps._
 
 class CourseFieldsTest extends FunSpec with TestHelpers {
 
@@ -55,7 +53,7 @@ class CourseFieldsTest extends FunSpec with TestHelpers {
     it("should build a matching tree (NC/AC)") {
       val cf = new NormalAndAlternateCourseFields(mockUseCaseCtx, Key_NC)
       cf.setState(CourseFieldState(Tree1))()
-      cf.courses should matchTree(NodeTree1)
+      cf.coursesWithText should matchTree(NodeTree1)
       cf.stepLabelMap("X1") should be("1.0")
       cf.stepLabelMap("X2") should be("1.0.1")
       cf.stepLabelMap("X7") should be("1.0.2.b")
@@ -64,7 +62,7 @@ class CourseFieldsTest extends FunSpec with TestHelpers {
     it("should build a matching tree (EC)") {
       val cf = new ExceptionCourseFields(mockUseCaseCtx, Key_EC)
       cf.setState(CourseFieldState(Tree1))()
-      cf.courses should matchTree(parseStepTree( """
+      cf.coursesWithText should matchTree(parseStepTree( """
         1.E.1. Root
           1. T1
             a. T2
@@ -144,9 +142,8 @@ class CourseFieldsTest extends FunSpec with TestHelpers {
       expectedUpdates: Seq[String],
       useTextAsId: Boolean
       ) {
-      val sliFn = StartingRootLabelIndexAt0.startingLabelIndex _
-      val before = buildState(parseStepTree(treeBefore, useTextAsId), sliFn)
-      val after = buildState(parseStepTree(treeAfter, useTextAsId), sliFn)
+      val before = buildStateForTest(parseStepTree(treeBefore, useTextAsId))
+      val after = buildStateForTest(parseStepTree(treeAfter, useTextAsId))
       val oldState = CourseFieldState(before)
       val (oldStepValues, mockStepValuesByName) = lastSave2For(oldState)
       val saveCtx = new MutableFieldSaveCtx
@@ -251,10 +248,9 @@ class CourseFieldsTest extends FunSpec with TestHelpers {
       }
     }
 
-    def sampleCF(courses: List[StepNode]) = {
+    def sampleCF(courses: List[StepNodeWithText]) = {
       val cf = new ExceptionCourseFields(new UseCaseCtx(mock[CometActor]), Key_EC)
-      cf.courses = courses
-      cf.init
+      cf.setCoursesWithTextAndInit(courses)
       cf.recalcCurrentState()
       cf
     }
@@ -286,9 +282,9 @@ class CourseFieldsTest extends FunSpec with TestHelpers {
 
       it("should save delta and return true when changed since last save") {
         val (saveCtx, dao) = mockSaveCtxAndDao
-        val before = buildState(parseStepTree("1.0. Root\n  1. Same Child\n1.1. Other"), StartingRootLabelIndexAt0.startingLabelIndex _)
         val after = parseStepTree("1.0. XXX\n  1. Same Child\n1.1. Other")
         val cf = sampleCF(after)
+        val before = cf.buildStateForTest(parseStepTree("1.0. Root\n  1. Same Child\n1.1. Other"))
         cf.presave(lastSaveFor(CourseFieldState(before)), saveCtx, dao) should be(true)
         verify(dao, times(1)).createValue(any[PlainValue[DataType.Step]], any[Revision])
         verifyNoMoreInteractions(dao)
@@ -330,11 +326,10 @@ class CourseFieldsTest extends FunSpec with TestHelpers {
                 2. T4
                   a. T5
                   b. T6 """
-        val sliFn = StartingRootLabelIndexAt0.startingLabelIndex _
-        val before = buildState(parseStepTree(treeBefore, true), sliFn)
-        val after = buildState(parseStepTree(treeAfter, true), sliFn)
-        val cf = sampleCF(buildNodes(after, sliFn))
-        val (oldStepValues, mockStepValuesByName) = lastSave2For(CourseFieldState(before))
+        val after = parseStepTree(treeAfter, true)
+        val cf = sampleCF(after)
+        val before = cf.buildStateForTest(parseStepTree(treeBefore, true))
+        val (oldStepValues, _) = lastSave2For(CourseFieldState(before))
         val oldSaveCtx = FieldSaveCtx(Map.empty, oldStepValues)
 
         val newFieldValues = Map(cf.fieldKey -> mock[PlainValue[DataType.FieldValue]])

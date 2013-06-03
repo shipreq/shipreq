@@ -1,15 +1,18 @@
-package com.beardedlogic.usecase.lib
+package com.beardedlogic.usecase
+package lib
 
 import org.scalatest.WordSpec
 import org.scalatest.matchers.ShouldMatchers
 import com.beardedlogic.usecase.test.TestHelpers
 import TypeTags._
+import tree._
+import TreeOps._
+import test._
+import NodeUtils._
+import TestHelpers.TreeDSL._
+import StepLabels.LabelMakers
 
 class StepTreeTest extends WordSpec with ShouldMatchers with TestHelpers {
-  import NodeUtils._
-  import StepTree._
-  import TestHelpers.TreeDSL._
-  import StepLabels.LabelMakers
 
   implicit def autoTagLocalStepIds(s: String) = s.asLocalStepId
 
@@ -17,19 +20,19 @@ class StepTreeTest extends WordSpec with ShouldMatchers with TestHelpers {
    * StepNode test data.
    */
   object StepNodes {
-    val A = new StepNode("id.A", 1, 1, null)
-    val B = new StepNode("id.B", 1, 2, null)
-    val C = new StepNode("id.C", 1, 3, null)
-    val D = new StepNode("id.D", 1, 4, null)
+    val A = new StepNodeWithText("id.A", 1, 1, null)
+    val B = new StepNodeWithText("id.B", 1, 2, null)
+    val C = new StepNodeWithText("id.C", 1, 3, null)
+    val D = new StepNodeWithText("id.D", 1, 4, null)
     val ABCD = A :: B :: C :: D :: Nil
 
-    val A2 = new StepNode("id.A", 1, 2, null)
-    val B2 = new StepNode("id.B", 1, 3, null)
-    val C2 = new StepNode("id.C", 1, 4, null)
-    val D2 = new StepNode("id.D", 1, 5, null)
+    val A2 = new StepNodeWithText("id.A", 1, 2, null)
+    val B2 = new StepNodeWithText("id.B", 1, 3, null)
+    val C2 = new StepNodeWithText("id.C", 1, 4, null)
+    val D2 = new StepNodeWithText("id.D", 1, 5, null)
     val ABCD2 = A2 :: B2 :: C2 :: D2 :: Nil
 
-    val N = new StepNode("id.N", 1, 66, null)
+    val N = new StepNodeWithText("id.N", 1, 66, null)
   }
 
   /**
@@ -45,17 +48,20 @@ class StepTreeTest extends WordSpec with ShouldMatchers with TestHelpers {
       "1.1" ~> $("1", "2", "3"),
       "1.2" ~> $("1", "2")
     ).toStepNodes
-    val N = Step("N")
+    val N = "N"
+  }
+  def NewStep = ""
+
+  val NBuilder = new TreeNodeBuilder[StepNodeWithText] {
+    def apply(level: Int, labelIndex: Int, children: List[StepNodeWithText]) =
+      StepNodeWithText("id.N", level, labelIndex, "N", children)
   }
 
   // -------------------------------------------------------------------------------------------------------------------
 
   "mapIdsAndFullLabels()" should {
 
-    def oneLevel: List[StepNode] =
-      StepNode("X1", 0, 0, NewStep, Nil) ::
-      StepNode("X2", 0, 1, NewStep, Nil) ::
-      Nil
+    def oneLevel: List[StepNode] = StepNode("X1", 0, 0) :: StepNode("X2", 0, 1) :: Nil
 
     "map ids to labels" in {
       val map = mapIdsAndFullLabels(oneLevel, "1.")
@@ -71,14 +77,14 @@ class StepTreeTest extends WordSpec with ShouldMatchers with TestHelpers {
 
     "map children and generate full labels" in {
       val map = mapIdsAndFullLabels(
-        StepNode("X5", 0, 1, NewStep,  // 1.E.1
-          new StepNode("X3", 1, 1, NewStep, // 1.E.1.1
-            new StepNode("X4", 2, 1, NewStep, Nil) :: Nil // 1.E.1.1.a
+        StepNode("X5", 0, 1,  // 1.E.1
+          new StepNode("X3", 1, 1, // 1.E.1.1
+            new StepNode("X4", 2, 1, Nil) :: Nil // 1.E.1.1.a
           ) ::
-          new StepNode("X2", 1, 2, NewStep, Nil) ::  // 1.E.1.2
+          new StepNode("X2", 1, 2, Nil) ::  // 1.E.1.2
           Nil
         ) ::
-        StepNode("X1", 0, 2, NewStep, Nil) :: // 1.E.2
+        StepNode("X1", 0, 2, Nil) :: // 1.E.2
         Nil, "1.E.")
       map("X5") should be("1.E.1")
       map("X3") should be("1.E.1.1")
@@ -97,24 +103,24 @@ class StepTreeTest extends WordSpec with ShouldMatchers with TestHelpers {
 
   "TreeNodeLike stuff" should {
       val c1_0_2_x =
-        new StepNode("1.0.2.a", 2, 1, null) ::
-          new StepNode("1.0.2.b", 2, 2, null) ::
+        new StepNodeWithText("1.0.2.a", 2, 1, null) ::
+          new StepNodeWithText("1.0.2.b", 2, 2, null) ::
           Nil
 
       val c1_0_x =
-        new StepNode("1.0.1", 1, 1, null) ::
-          new StepNode("1.0.2", 1, 2, null, c1_0_2_x) ::
-          new StepNode("1.0.3", 1, 3, null) ::
+        new StepNodeWithText("1.0.1", 1, 1, null) ::
+          new StepNodeWithText("1.0.2", 1, 2, null, c1_0_2_x) ::
+          new StepNodeWithText("1.0.3", 1, 3, null) ::
           Nil
 
       val c1_2_x =
-        new StepNode("1.2.1", 1, 1, null) ::
+        new StepNodeWithText("1.2.1", 1, 1, null) ::
           Nil
 
       val top =
-        new StepNode("1.0", 0, 0, null, c1_0_x) ::
-          new StepNode("1.1", 0, 1, null) ::
-          new StepNode("1.2", 0, 2, null, c1_2_x) ::
+        new StepNodeWithText("1.0", 0, 0, null, c1_0_x) ::
+          new StepNodeWithText("1.1", 0, 1, null) ::
+          new StepNodeWithText("1.2", 0, 2, null, c1_2_x) ::
           Nil
 
       val ids = List(
@@ -141,8 +147,8 @@ class StepTreeTest extends WordSpec with ShouldMatchers with TestHelpers {
     val test = (lvl: Int, before: String, after: String) => {
       val beforeIndex = LabelMakers(lvl)(before)
       val afterIndex = LabelMakers(lvl)(after)
-      val B = new StepNode("blah", lvl, beforeIndex, null)
-      val A = new StepNode("blah", lvl, afterIndex, null)
+      val B = new StepNodeWithText("blah", lvl, beforeIndex, null)
+      val A = new StepNodeWithText("blah", lvl, afterIndex, null)
       B.incrementPosition() should be(A)
     }
     "increase numeric positions" in {
@@ -161,8 +167,8 @@ class StepTreeTest extends WordSpec with ShouldMatchers with TestHelpers {
       test(3, "viii", "ix")
     }
     "increase top-level positions" in {
-      val before = new StepNode("blah", 0, 1, null)
-      val after = new StepNode("blah", 0, 2, null)
+      val before = new StepNodeWithText("blah", 0, 1, null)
+      val after = new StepNodeWithText("blah", 0, 2, null)
       after.label should be("2")
       before.incrementPosition() should be(after)
     }
@@ -173,9 +179,9 @@ class StepTreeTest extends WordSpec with ShouldMatchers with TestHelpers {
   "stepInsert()" when {
     import Steps._
 
-    def test(afterId: String, nodes: List[StepNode], expectedTreeTxt: String) {
+    def test(afterId: String, nodes: List[StepNodeWithText], expectedTreeTxt: String) {
       val expected = parseStepTree(expectedTreeTxt)
-      val actual = stepInsert(N, afterId, nodes)
+      val actual = stepInsert(afterId, nodes, NBuilder)
       actual._2.isDefined should be(true)
       actual._1 should matchTree(expected)
     }

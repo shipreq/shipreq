@@ -2,8 +2,6 @@ package com.beardedlogic.usecase
 package lib
 package field
 
-import net.liftweb.util.Helpers._
-import StepTree._
 import model.{FieldKey, FieldKeyType}
 import CourseFields._
 
@@ -39,6 +37,5 @@ class ExceptionCourseFields(override val ucCtx: UseCaseCtx, override val fieldKe
   /**
    * Creates a new top-level step to add to the end of the list.
    */
-  private def newTailStep() =
-    StepNode(newLocalStepId, 0, courses.size + 1, NewStep, Nil)
+  private def newTailStep() = StepNodeBuilder(0, courses.size + 1)
 }

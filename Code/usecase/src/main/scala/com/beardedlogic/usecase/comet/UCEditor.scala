@@ -16,7 +16,7 @@ class UCEditor extends CometActor with Logger {
   val state = new UseCaseCtx(this)
 
   override def localSetup() {
-    state.fields.foreach { _.init }
+    state.init
     state.msgCentre.enabled = true
   }
 

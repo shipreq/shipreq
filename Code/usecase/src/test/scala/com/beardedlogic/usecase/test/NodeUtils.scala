@@ -1,27 +1,29 @@
-package com.beardedlogic.usecase.lib
+package com.beardedlogic.usecase
+package test
 
 import scala.collection.mutable.MutableList
 import scala.collection.mutable.{ Map => MutableMap }
+import lib._
 import TypeTags._
+import StepLabels.LabelMakers
 
 /**
  * @since 06/05/2013
  */
 object NodeUtils {
-  import StepTree.{ Step, StepNode }
-  import StepLabels.LabelMakers
 
-  // TODO This shouldn't be here
+  implicit def StepNodeWithTextToStepNode(a: StepNodeWithText): StepNode = a.toStepNode
+
   /**
    * Parses a textual representation of a tree.
    *
    * Each line must match the format "<indent><label>. <step text>"
    * Indents must be spaces in multiples of 2.
    */
-  def parseStepTree(txt: String, useTextAsId: Boolean = false): List[StepNode] = {
-    val nodes = new MutableList[StepNode]
-    val parents = MutableMap[Int, StepNode]()
-    val children = MutableMap[StepNode, MutableList[StepNode]]()
+  def parseStepTree(txt: String, useTextAsId: Boolean = false): List[StepNodeWithText] = {
+    val nodes = new MutableList[StepNodeWithText]
+    val parents = MutableMap[Int, StepNodeWithText]()
+    val children = MutableMap[StepNodeWithText, MutableList[StepNodeWithText]]()
     val lineRegex = """^\s*(\S+?)\. (\S[^\r\n]*?)\s*$""".r
     val topLevelLabel = """^(\S+\.)(\d+)$""".r
     val manualIdRegex = "^(.+)(?:\\|id=(.+))\\s*$".r
@@ -37,6 +39,7 @@ object NodeUtils {
       if (indentSize % 2 != 0) throw new RuntimeException("Odd indent size: " + line)
       val indent = indentSize >> 1
       var lineRegex(label, stepText) = line
+      if (stepText == "_") stepText = ""
 
       // Parse manual id, eg. "1.0. Root|id=6"
       val manualIdMatcher = manualIdRegex.pattern.matcher(stepText)
@@ -51,22 +54,22 @@ object NodeUtils {
         if (indent == 0) {
           val topLevelLabel(labelPrefix, labelSuffix) = label
           val labelIndex = LabelMakers(0)(labelSuffix)
-          val n = new StepNode(idOverride.getOrElse(label).asLocalStepId, 0, labelIndex, Step(stepText))
+          val n = StepNodeWithText(idOverride.getOrElse(label).asLocalStepId, 0, labelIndex, stepText)
           nodes += n
           n
         } else {
           val p = parents(indent - 1)
           val labelIndex = LabelMakers(indent)(label)
-          val n = new StepNode(idOverride.getOrElse(s"${p.id}.${label}").asLocalStepId, indent, labelIndex, Step(stepText))
+          val n = StepNodeWithText(idOverride.getOrElse(s"${p.id}.${label}").asLocalStepId, indent, labelIndex, stepText)
           children(p) += n
           n
         }
       parents(indent) = n
-      children(n) = new MutableList[StepNode]
+      children(n) = new MutableList[StepNodeWithText]
     }
 
     // Convert to immutable tree
-    def addChildren(n: StepNode): StepNode = {
+    def addChildren(n: StepNodeWithText): StepNodeWithText = {
       val nKey = n.copy(children = Nil)
       val ch = children(nKey).map { addChildren(_) }.toList
       n.copy(children = ch)
@@ -77,16 +80,16 @@ object NodeUtils {
   /**
    * Recursively sets all IDs to null.
    */
-  def removeIds(l: List[StepNode]): List[StepNode] =
+  def removeIds(l: List[StepNodeWithText]): List[StepNodeWithText] =
     l.map((n) => n.copy(id = null, children = removeIds(n.children)))
 
   /**
    * Builds a textual representation of a tree.
    */
-  def inspectTree(tree: List[StepNode], indent: String = "", res: List[String] = Nil): List[String] = tree match {
+  def inspectTree(tree: List[StepNodeWithText], indent: String = "", res: List[String] = Nil): List[String] = tree match {
     case Nil => res
     case h :: t =>
-      val s = s"${indent}${h.label}. ${h.step.text}"
+      val s = s"${indent}${h.label}. ${h.text}"
       val ch = inspectTree(h.children, indent + "  ")
       inspectTree(t, indent, res ::: s :: ch)
   }
@@ -94,7 +97,7 @@ object NodeUtils {
   /**
    * Builds a side-by-side, textual representation of two trees.
    */
-  def inspectTrees(title1: String, nodes1: List[StepNode], title2: String, nodes2: List[StepNode]): String = {
+  def inspectTrees(title1: String, nodes1: List[StepNodeWithText], title2: String, nodes2: List[StepNodeWithText]): String = {
     val sb = new StringBuilder(1024, "")
     val t1 = inspectTree(nodes1).toIndexedSeq
     val t2 = inspectTree(nodes2).toIndexedSeq
@@ -116,12 +119,12 @@ object NodeUtils {
   /**
    * Prints a tree to stdout.
    */
-  def printTree(tree: List[StepNode]) { inspectTree(tree).foreach { println(_) } }
+  def printTree(tree: List[StepNodeWithText]) { inspectTree(tree).foreach { println(_) } }
 
   /**
    * Prints two trees, side-by-side, to stdout.
    */
-  def printTrees(title1: String, nodes1: List[StepNode], title2: String, nodes2: List[StepNode]) {
+  def printTrees(title1: String, nodes1: List[StepNodeWithText], title2: String, nodes2: List[StepNodeWithText]) {
     print(inspectTrees(title1, nodes1, title2, nodes2))
   }
 

@@ -1,16 +1,15 @@
 package com.beardedlogic.usecase
 package lib
 
-import net.liftweb.util.Helpers.nextFuncName
 import org.scalatest.FunSpec
 import scala.slick.jdbc.{StaticQuery => Q}
 import Q.interpolation
 import test.{TestHelpers, TestDatabaseSupport}
+import test.NodeUtils._
+import TestHelpers._
 import field._
 import TypeTags._
 import model._
-import NodeUtils._
-import StepTree.{Step => Step2, _}
 
 class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
 
@@ -49,7 +48,7 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
       loaded.title should be("ahh")
       loaded.number should be(3)
       loaded.fields.filter(_.fieldKey == txt_fk).head.asInstanceOf[TextField].value.text should be("Hehe!")
-      loaded.ncacField.get.courses should matchTree(parseStepTree("3.0. Root\n  1. Child"))
+      loaded.ncacField.get.coursesWithText should matchTree(parseStepTree("3.0. Root\n  1. Child"))
     }
 
     it("should load a manually-saved UC with refs") {
@@ -98,33 +97,34 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
   // -------------------------------------------------------------------------------------------------------------------
 
   // TODO Share sample courses. Create TestData or something.
-  val NcSteps =
-    StepNode(nextFuncName, 0, 0, Step2("I'm the title"), (
-      StepNode(nextFuncName, 1, 1, Step2("First")) ::
-        StepNode(nextFuncName, 1, 2, NewStep) ::
-        StepNode(nextFuncName, 1, 3, Step2("Finally"), (
-          StepNode(nextFuncName, 2, 1, Step2("Sweet")) :: Nil
-          )) :: Nil
-      )) :: Nil
+  lazy val NcSteps = parseStepTree("""
+      1.0. I'm the title
+        1. First
+        2. _
+        3. Finally
+      1.1. Sweet
+                                   """)
 
-  val EcSteps =
-    StepNode(nextFuncName, 0, 1, Step2("EC 1E1"), List(StepNode(nextFuncName, 1, 1, Step2("EC 1E11")))) ::
-      StepNode(nextFuncName, 0, 2, Step2("EC 1E2")) ::
-      Nil
+  lazy val EcSteps = parseStepTree("""
+      1.E.1. EC-1E1
+        1. EC-1E1-1
+      1.E.2. EC-1E2 """)
 
   def sampleCtx = {
     val uc = new UseCaseCtx(null)
     uc.title = "YES!"
     uc.textFields(0).value.setTextFromUser("blah")
     uc.textFields(2).value.setTextFromUser("hehe")
-    uc.ncacField.get.courses = NcSteps
-    uc.ecField.get.courses = EcSteps
+    uc.ncacField.get.setCoursesWithText(NcSteps)
+    uc.ecField.get.setCoursesWithText(EcSteps)
+    uc.init
     uc
   }
 
   describe("Saving (first-time)") {
     it("should set lastSave (on first save)") {
       val uc = new UseCaseCtx(null)
+      uc.init
       uc.lastSave should be('empty)
       uc.save(db)
       uc.lastSave should not be ('empty)
@@ -244,8 +244,33 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
       loaded.textFields(0).value.text should be("blah")
       loaded.textFields(1).value.text should be("")
       loaded.textFields(2).value.text should be("hehe")
-      loaded.ncacField.get.courses should matchTree(NcSteps)
-      loaded.ecField.get.courses should matchTree(EcSteps)
+      loaded.ncacField.get.coursesWithText should matchTree(NcSteps)
+      loaded.ecField.get.coursesWithText should matchTree(EcSteps)
+    }
+
+    it("should normalise and de-normalise refs") {
+      // Save first
+      val saved = sampleCtx
+      saved.textFields(0).value.setTextFromUser("Text like [1.0]")
+      saved.ncacField.get.test__textFields.values.head.setTextFromUser("Step like [1.0.1]")
+      saved.save(db)
+      saved.lastSave.get.fieldStates.toString should include("Text like")
+      saved.lastSave.get.fieldStates.toString should include("Step like")
+      val valueId = saved.lastSave.get.uc.valueId
+
+      // Confirm stored normalised in DB
+      sql"select text from field_value where text like ${"Text like%"}".as[String].first should not be("Text like [1.0]")
+      sql"select text from step where text like ${"Step like%"}".as[String].first should not be("Step like [1.0.1]")
+
+      // Then load back
+      val loaded = new UseCaseCtx(null)
+      load(loaded, valueId)
+      loaded.title should be(saved.title)
+      loaded.number should be(saved.number)
+      loaded.textFields(0).value.text should be("Text like [1.0]")
+      loaded.ecField.get.coursesWithText should matchTree(EcSteps)
+      val stepTexts = loaded.ncacField.get.test__textFields.values.map(_.text)
+      stepTexts.filter(_.startsWith("Step like")).headOption should be(Some("Step like [1.0.1]"))
     }
   }
 

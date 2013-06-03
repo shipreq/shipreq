@@ -8,11 +8,10 @@ import net.liftweb.http.js.JsCmds.jsExpToJsCmd
 import net.liftweb.http.js.jquery.JqJE
 import net.liftweb.util.CssSel
 import net.liftweb.util.Helpers.{strToSuperArrowAssoc => _, _}
-import scala.annotation.tailrec
 import scala.xml._
 
 import JsExt._
-import StepTree._
+import tree.TreeOps._
 import TypeTags._
 import CourseFields._
 import msg.Messages._
@@ -48,19 +47,6 @@ object CourseFields {
   object StartingLabelIndicesAt1 extends StartingLabelIndices {
     override def startingLabelIndex(level: Int) = 1
   }
-
-  /** Converts StepStates to a node tree. */
-  def buildNodes(state: List[StepState], startingIndexForLevel: Int => Int): List[StepNode] =
-    convertNodeTree[StepState, StepNode](state, {
-      case (node, level, index, children) => StepNode(node.id, level, index, Step(node.text), children)
-    }, startingIndexForLevel)
-
-  /** Builds StepStates from a node tree. */
-  def buildState(nodes: List[StepNode], startingIndexForLevel: Int => Int): List[StepState] =
-    convertNodeTree[StepNode, StepState](nodes, {
-      // TODO ss.step.text.hasNormalisedRefs = bullshit?
-      case (ss, level, index, children) => StepState(ss.id, ss.step.text.hasNormalisedRefs, children)
-    }, startingIndexForLevel)
 
   /**
    * Compares old and current states. When a difference is discovered a new `value` is inserted and stored in
@@ -138,7 +124,7 @@ abstract class CourseFields extends Field[CourseFieldState] {
   def test__textFields = textFields
 
   override def init() {
-    courses.foreachNode(createAndRegisterTextField(_))
+    syncTextFieldMap
   }
 
   protected def recalcRootLabelPrefix: Option[String]
@@ -149,9 +135,9 @@ abstract class CourseFields extends Field[CourseFieldState] {
   def startingLabelIndices: StartingLabelIndices
 
   private[this] def createAndRegisterTextField(n: StepNode) {
-    val f = new SmartStepText(msgCentre, ucCtx.stepLabelMapProvider, n.id, n.stepTextId)
-    f.init
-    textFields += (n.id -> f)
+    val t = new SmartStepText(msgCentre, ucCtx.stepLabelMapProvider, n.id, n.stepTextId)
+    t.init
+    textFields += (n.id -> t)
   }
 
   private[this] def syncTextFieldMap() {
@@ -228,7 +214,7 @@ abstract class CourseFields extends Field[CourseFieldState] {
   /**
    * Adds a new step, shuffling down subsequent steps and renumbering if necessary.
    */
-  def onStepAdd(preceedingNodeId: String @@ LocalStepId): JsCmd = stepInsert(NewStep, preceedingNodeId, courses) match {
+  def onStepAdd(preceedingNodeId: String @@ LocalStepId): JsCmd = stepInsert(preceedingNodeId, courses, StepNodeBuilder) match {
     case (newCourses, Some(newNode)) =>
       courses = newCourses
       createAndRegisterTextField(newNode)
@@ -316,15 +302,19 @@ abstract class CourseFields extends Field[CourseFieldState] {
 
   override def setState(newState: CourseFieldState) = {
     _rootLabelPrefix = recalcRootLabelPrefix
-    courses = buildNodes(newState.courses, startingLabelIndices.startingLabelIndex _)
+
+    courses = convertNodeTree[StepState, StepNode](newState.courses, { case (node, level, index, children) =>
+      StepNode(node.id, level, index, children)
+    }, startingLabelIndices.startingLabelIndex _)
+
     syncTextFieldMap
+
     () => {
       val stepMap = newState.stepMap
       val savedSteps = ucCtx.savedSteps
       for ((id, tf) <- textFields) {
         val txt = stepMap(id).text
         tf.setTextFromLoad(txt, savedSteps)
-        // TODO The Step() instances in courses keep their normalised refs. Is this good? Bad? Is Step() even needed?
       }
     }
   }
@@ -337,8 +327,10 @@ abstract class CourseFields extends Field[CourseFieldState] {
     dao: DAO
     ): Boolean = {
 
-    recalcCurrentState()
+    // TODO recalcTextWithNormalisedRefs in both presave() and save()
     textFields.foreach(_._2.recalcTextWithNormalisedRefs(ucCtx.savedSteps.ba))
+    recalcCurrentState()
+
     lastSave match {
 
       // No previous save, add everything for first time
@@ -360,6 +352,10 @@ abstract class CourseFields extends Field[CourseFieldState] {
     newSaveCtx: FieldSaveCtx,
     dao: DAO
     ): (FieldValueData, CourseFieldState) = {
+
+    // TODO copy&paste
+    textFields.foreach(_._2.recalcTextWithNormalisedRefs(ucCtx.savedSteps.ba))
+    recalcCurrentState()
 
     // Create steps
     for {
@@ -389,5 +385,11 @@ abstract class CourseFields extends Field[CourseFieldState] {
    */
   private[this] var _stateCache: CourseFieldState = null
   @inline final def currentState = _stateCache
-  def recalcCurrentState() {_stateCache = CourseFieldState(buildState(courses, startingLabelIndices.startingLabelIndex _)) }
+  def recalcCurrentState() { _stateCache = CourseFieldState(buildStateList) }
+
+  /** Builds StepStates from a node tree. */
+  def buildStateList: List[StepState] =
+    convertNodeTree[StepNode, StepState](courses, { case (ss, level, index, children) =>
+      StepState(ss.id, textFields(ss.id).textWithNormalisedRefs, children)
+    }, startingLabelIndices.startingLabelIndex _)
 }

@@ -67,6 +67,7 @@ class TextField(val fd: TextFieldDef, override val ucCtx: UseCaseCtx, override v
     saveCtx: MutableFieldSaveCtx,
     dao: DAO): Boolean = {
 
+    // TODO recalcTextWithNormalisedRefs in both presave() and save()
     value.recalcTextWithNormalisedRefs(ucCtx.savedSteps.ba)
     lastSave match {
       case None                    => true
@@ -74,6 +75,8 @@ class TextField(val fd: TextFieldDef, override val ucCtx: UseCaseCtx, override v
     }
   }
 
-  override def save(combinedSaveCtx: FieldSaveCtx, newSaveCtx: FieldSaveCtx, dao: DAO): (FieldValueData, String @@ NormalisedRefs) =
+  override def save(combinedSaveCtx: FieldSaveCtx, newSaveCtx: FieldSaveCtx, dao: DAO): (FieldValueData, String @@ NormalisedRefs) = {
+    value.recalcTextWithNormalisedRefs(ucCtx.savedSteps.ba)
     (Some(value.textWithNormalisedRefs), value.textWithNormalisedRefs)
+  }
 }

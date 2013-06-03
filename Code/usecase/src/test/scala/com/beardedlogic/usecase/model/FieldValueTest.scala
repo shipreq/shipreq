@@ -1,21 +1,12 @@
 package com.beardedlogic.usecase
 package model
 
-import test.{TestHelpers, TestDatabaseSupport}
+import test.TestHelpers
 import net.liftweb.util.Helpers._
 import org.scalatest.FunSpec
-import lib.{UseCaseCtx, Defaults}
-import lib.field._
-import lib.StepTree.{Step => Step2, _}
 import lib.TypeTags._
 
-//class FieldValueTest extends FunSpec with TestDatabaseSupport {
 class FieldValueTest extends FunSpec with TestHelpers {
-
-//  class FieldSaveCtx(
-//    val fieldValues: Map[FieldKey, PlainValue[DataType.FieldValue]],
-//    val stepValues: Map[String @@ LocalStepId, PlainValue[DataType.Step]]
-//    )
 
   implicit def autoTypeStepValues(m: Map[String, PlainValue[DataType.Step]]) = m.asInstanceOf[Map[String @@ LocalStepId, PlainValue[DataType.Step]]]
   def SVMap(pairs: (String,PlainValue[DataType.Step])*) = autoTypeStepValues(Map(pairs:_*))
