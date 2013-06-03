@@ -240,6 +240,7 @@ class SmartText(val msgCentre: MessageCentre,
     _textWithNormalisedRefs = normaliseRefs(text, savedSteps, refsInText)
   }
 
+  // TODO doesn't normalise flow refs
   protected def normaliseRefs(
     text: String,
     savedSteps: Map[String @@ LocalStepId, Long_StepDataId],
