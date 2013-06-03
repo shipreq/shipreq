@@ -23,6 +23,7 @@ object TreeOps {
    * FD93E    -> 1.E.1
    * F93A3    -> 1.E.1.a
    */
+  @deprecated("Use mapIdsToFullLabels() and a BiMap")
   def mapIdsAndFullLabels[T <: TreeNode[T]](nodes: List[T], prefix: String = ""): Map[String, String] = nodes match {
     case h :: t =>
       val lbl = prefix + h.label
@@ -30,6 +31,23 @@ object TreeOps {
         mapIdsAndFullLabels(h.children, lbl + ".") +
         (h.id -> lbl) +
         (lbl -> h.id)
+
+    case Nil => Map.empty
+  }
+
+  /**
+   * Generates a map of node IDs to labels.
+   *
+   * Example:
+   * FD93E    -> 1.E.1
+   * F93A3    -> 1.E.1.a
+   */
+  def mapIdsToFullLabels[T <: TreeNode[T]](nodes: List[T], prefix: String = ""): Map[String @@ LocalStepId, String] = nodes match {
+    case h :: t =>
+      val lbl = prefix + h.label
+      mapIdsToFullLabels(t, prefix) ++
+        mapIdsToFullLabels(h.children, lbl + ".") +
+        (h.id -> lbl)
 
     case Nil => Map.empty
   }

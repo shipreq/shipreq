@@ -89,7 +89,7 @@ class CourseFieldsTest extends FunSpec with TestHelpers {
       val cf = new NormalAndAlternateCourseFields(ucCtx, Key_NC)
       val fn = cf.setState(CourseFieldState(Tree2))
       when(ucCtx.savedSteps).thenReturn(BiMap(800.tag[StepDataId] -> "X8".asLocalStepId))
-      when(ucCtx.stepLabelMap).thenReturn(cf.stepLabelMap)
+      when(ucCtx.stepLabelMap).thenReturn(BiMap(cf.stepLabelMap))
       fn()
       val tf = cf.test__textFields
       tf.keySet should be(Set("X1", "X2", "X3", "X4", "X5", "X6", "X7", "X8"))

@@ -14,7 +14,7 @@ class TextFieldTest extends FunSpec with TestHelpers {
   def sampleTextField = {
     val tf = new TextField(mock[TextFieldDef], mockUseCaseCtx, mock[FieldKey])
     when(tf.ucCtx.savedSteps).thenReturn(BiMap(111.tag[StepDataId] -> "X1".asLocalStepId, 222.tag[StepDataId] -> "X2".asLocalStepId))
-    when(tf.ucCtx.stepLabelMap).thenReturn(BiMap.flatten("X1" -> "4.1", "X2" -> "4.2"))
+    when(tf.ucCtx.stepLabelMap).thenReturn(BiMap("X1".asLocalStepId -> "4.1", "X2".asLocalStepId -> "4.2"))
     tf.init
     tf
   }
@@ -34,7 +34,7 @@ class TextFieldTest extends FunSpec with TestHelpers {
       val tf = sampleTextField
       val fn = tf.setState("Hehe! [D.100]".hasNormalisedRefs)
       when(tf.ucCtx.savedSteps).thenReturn(BiMap(100.tag[StepDataId] -> "X1".asLocalStepId))
-      when(tf.ucCtx.stepLabelMap).thenReturn(BiMap.flatten("X1" -> "5.4"))
+      when(tf.ucCtx.stepLabelMap).thenReturn(BiMap("X1".asLocalStepId -> "5.4"))
       fn()
 
       tf.value.text should be("Hehe! [5.4]")

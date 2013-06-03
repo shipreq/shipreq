@@ -171,7 +171,7 @@ object SmartText {
  * @since 12/05/2013
  */
 class SmartText(val msgCentre: MessageCentre,
-                val refAndIdLookupProvider: () => Map[String, String],
+                val refAndIdLookupProvider: () => BiMap[String @@ LocalStepId, String],
                 val textareaId: String = nextFuncName
                  ) extends LiftActor with Logger {
 
@@ -179,7 +179,7 @@ class SmartText(val msgCentre: MessageCentre,
   import MyLittleParser._
 
   protected val writeLock = new Object
-  protected[lib] var refAndIdLookup = Map.empty[String, String]
+  protected[lib] var refAndIdLookup = BiMap.empty[String @@ LocalStepId, String]
   protected[lib] var refsInText = Map.empty[String, String @@ LocalStepId]
 
   protected[lib] var _text = ""
@@ -221,7 +221,7 @@ class SmartText(val msgCentre: MessageCentre,
     val newValue = NormalisedRefRegex.replaceAllIn(newValueWithNRefs, { m =>
       val dataIdText = m.group(1)
       val dataId = dataIdText.toLong.tag[StepDataId]
-      savedSteps.ab.get(dataId).flatMap(nodeId => refAndIdLookup.get(nodeId)).map(MakeRef(_)).getOrElse{
+      savedSteps.ab.get(dataId).flatMap(nodeId => refAndIdLookup.ab.get(nodeId)).map(MakeRef(_)).getOrElse{
         warn(s"Unable to realise normalised step reference. ❚ Text: $newValueWithNRefs ❚ DataId: $dataId ❚ SavedSteps: $savedSteps ❚ RefAndIdLookup: $refAndIdLookup")
         MakeInvalidNormalisedRef(dataIdText)
       }
@@ -307,8 +307,8 @@ class SmartText(val msgCentre: MessageCentre,
 
       // Check label validity
       val label = r.get._2.get
-      if (refAndIdLookup.contains(label)) {
-        if (!refsInText.contains(label)) refsInText += (label -> refAndIdLookup(label).asLocalStepId)
+      if (refAndIdLookup.ba.contains(label)) {
+        if (!refsInText.contains(label)) refsInText += (label -> refAndIdLookup.ba(label))
         MakeRef(newText, label)
       } else
         MakeInvalidRef(newText, label)
@@ -322,7 +322,7 @@ class SmartText(val msgCentre: MessageCentre,
   }
 
   @inline protected final def areAllLabelsValid(labels: Seq[String]): Boolean = {
-    labels.find(!refAndIdLookup.contains(_)).isEmpty
+    labels.find(!refAndIdLookup.ba.contains(_)).isEmpty
   }
 
   override def messageHandler = {
@@ -359,7 +359,7 @@ class SmartText(val msgCentre: MessageCentre,
     for ((oldLabel, id) <- refsInText) {
 
       // Lookup each existing reference
-      refAndIdLookup.get(id).map { newLabel =>
+      refAndIdLookup.ab.get(id).map { newLabel =>
         if (oldLabel != newLabel)
           newText = newText.replace(MakeRef(oldLabel), MakeRef(newLabel))
         if (!newRefsInText.contains(newLabel))
@@ -385,7 +385,7 @@ class SmartText(val msgCentre: MessageCentre,
  * @param stepId The ID of the owning step.
  */
 class SmartStepText(override val msgCentre: MessageCentre,
-                    override val refAndIdLookupProvider: () => Map[String, String],
+                    override val refAndIdLookupProvider: () => BiMap[String @@ LocalStepId, String],
                     val stepId: String @@ LocalStepId,
                     override val textareaId: String
                      ) extends SmartText(msgCentre, refAndIdLookupProvider, textareaId) {
@@ -500,7 +500,7 @@ class SmartStepText(override val msgCentre: MessageCentre,
 
       case Some(labels) if (areAllLabelsValid(labels)) =>
         Some(() => f.broadcastIfChanges {
-          f.refs = labels.map(l => (refAndIdLookup(l).asLocalStepId, l)).toMap
+          f.refs = labels.map(l => (refAndIdLookup.ba(l), l)).toMap
           f.rebuildText
         })
 
@@ -521,14 +521,14 @@ class SmartStepText(override val msgCentre: MessageCentre,
    */
   private def updateFlowReferences(f: Flow) {
     val changeFound = f.refs.nonEmpty && f.refs.exists { kp =>
-      refAndIdLookup.get(kp._1).map(_ != kp._2).getOrElse(true)
+      refAndIdLookup.ab.get(kp._1).map(_ != kp._2).getOrElse(true)
     }
     if (changeFound) {
       var newLabels = TreeSet.empty[String]
       var newRefs = Map.empty[String @@ LocalStepId, String]
       for ((id,_) <- f.refs) {
-        if (refAndIdLookup.contains(id)) {
-          val l = refAndIdLookup(id)
+        if (refAndIdLookup.ab.contains(id)) {
+          val l = refAndIdLookup.ab(id)
           newRefs += (id -> l)
           newLabels += l
         } else {
@@ -553,7 +553,7 @@ class SmartStepText(override val msgCentre: MessageCentre,
   }
 
   private def addRef(f: Flow, id: String @@ LocalStepId) {
-    f.refs += (id -> refAndIdLookup(id))
+    f.refs += (id -> refAndIdLookup.ab(id))
     f.rebuildText
     internalSetTextAndPush(buildFullText)
   }

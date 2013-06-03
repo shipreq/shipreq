@@ -23,14 +23,26 @@ object SmartTextTest extends MockitoSugar {
   implicit def autoTagLocalStepId(m: Map[String, String]) = m.asInstanceOf[Map[String, String @@ LocalStepId]]
   implicit def autoBiMap[A,B](m: Map[A, B]) = BiMap(m)
 
-  val StepState1 = Map("S.1" -> "X1", "S.2" -> "X2", "S.3" -> "X3", "S.5" -> "X5", "S.6" -> "X6",
-                        "X1" -> "S.1", "X2" -> "S.2", "X3" -> "S.3", "X5" -> "S.5", "X6" -> "S.6")
+  val StepState1 = BiMap(
+    "X1".asLocalStepId -> "S.1",
+    "X2".asLocalStepId -> "S.2",
+    "X3".asLocalStepId -> "S.3",
+    "X5".asLocalStepId -> "S.5",
+    "X6".asLocalStepId -> "S.6")
 
-  val StepState2 = Map("S.A" -> "X1", "S.2" -> "X2", "S.4" -> "X4", "S.F" -> "X5", "S.6" -> "X6",
-                        "X1" -> "S.A", "X2" -> "S.2", "X4" -> "S.4", "X5" -> "S.F", "X6" -> "S.6")
+  val StepState2 = BiMap(
+    "X1".asLocalStepId -> "S.A",
+    "X2".asLocalStepId -> "S.2",
+    "X4".asLocalStepId -> "S.4",
+    "X5".asLocalStepId -> "S.F",
+    "X6".asLocalStepId -> "S.6")
 
-  val StepStateX2 = Map("1.0" -> "X1", "1.2" -> "X2", "1.3" -> "X3", "3.E.1" -> "X3E1", "3.E.2" -> "X3E2",
-                        "X1" -> "1.0", "X2" -> "1.2", "X3" -> "1.3", "X3E1" -> "3.E.1", "X3E2" -> "3.E.2")
+  val StepStateX2 = BiMap(
+    "X1".asLocalStepId -> "1.0",
+    "X2".asLocalStepId -> "1.2",
+    "X3".asLocalStepId -> "1.3",
+    "X3E1".asLocalStepId -> "3.E.1",
+    "X3E2".asLocalStepId -> "3.E.2")
 
   val TextWithFlowExamples = Table[String, String, List[String], List[String]](
     ("EXAMPLE", "TEXT", "REFS-FROM", "REFS-TO")
@@ -74,7 +86,7 @@ object SmartTextTest extends MockitoSugar {
     m
   }
 
-  def stepFieldWithText(text: String, stepId: String = "SUBJ", refLookup: Map[String,String] = StepState1) = {
+  def stepFieldWithText(text: String, stepId: String = "SUBJ", refLookup: BiMap[String @@ LocalStepId, String] = StepState1) = {
     val m = new SmartStepText(mock[MessageCentre], () => refLookup, stepId, stepId + "-t")
     m.init
     m.setTextFromUser(text)
@@ -98,7 +110,7 @@ class SmartTextTest
 
   import SmartTextTest._
 
-  class RefLookupProvider(var value: Map[String, String])
+  class RefLookupProvider(var value: BiMap[String @@ LocalStepId, String])
 
   def assertClientUpdated(subject: SmartText, expected: Boolean = true) {
     verify(subject.msgCentre.cometActor, if (expected) times(1) else never).!(any[PushToClient])
@@ -328,8 +340,8 @@ class SmartTextTest
       // Use shared examples + id lookup
       forAll(TextWithFlowExamples) { (input, expText, expRefsFrom, expRefsTo) =>
         val s = stepFieldWithText(input, refLookup = StepStateX2)
-        s.flowFrom.refs should be(expRefsFrom.map(l => (StepStateX2(l), l)).toMap)
-        s.flowTo.refs should be(expRefsTo.map(l => (StepStateX2(l), l)).toMap)
+        s.flowFrom.refs should be(expRefsFrom.map(l => (StepStateX2.ba(l), l)).toMap)
+        s.flowTo.refs should be(expRefsTo.map(l => (StepStateX2.ba(l), l)).toMap)
       }
     }
 
@@ -572,7 +584,7 @@ class SmartTextTest
         val s = testSubject2(initialText)
         val refs = if (from) s.flowFrom.refs else s.flowTo.refs
         if (changeExpected) s.refAndIdLookup should be theSameInstanceAs(StepState2)
-        refs should be(expectedIds.map(id => (id, StepState2(id))).toMap)
+        refs should be(expectedIds.map(id => (id, StepState2.ab(id))).toMap)
         s.text should be(expectedText)
         assertClientUpdated(s, changeExpected)
       }
@@ -671,7 +683,7 @@ class SmartTextTest
           mc.sent.clear
           s !!! FlowToChangeMsg("X1", flowToTargets)
           s.text should be (textAfter)
-          s.flowFrom.refs should be(refsAfter.map(id => (id,StepState1(id))).toMap)
+          s.flowFrom.refs should be(refsAfter.map(id => (id,StepState1.ab(id))).toMap)
           s.flowTo should be(flowToBefore)
           assertClientUpdated(s, textBefore != textAfter)
           mc.sent should be ('empty)
@@ -690,7 +702,7 @@ class SmartTextTest
           mc.sent.clear
           s !!! FlowFromChangeMsg(flowFromSources, "X1")
           s.text should be (textAfter.fixArrows(false))
-          s.flowTo.refs should be(refsAfter.map(id => (id,StepState1(id))).toMap)
+          s.flowTo.refs should be(refsAfter.map(id => (id,StepState1.ab(id))).toMap)
           s.flowFrom should be(flowFromBefore)
           assertClientUpdated(s, textBefore != textAfter)
           mc.sent should be ('empty)

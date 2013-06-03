@@ -44,14 +44,14 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
   def mockUseCaseCtx: UseCaseCtx = {
     val u = mock[UseCaseCtx]
     when(u.msgCentre).thenReturn(mock[MessageCentre])
-    when(u.stepLabelMapProvider).thenReturn(() => Option(u.stepLabelMap).getOrElse(Map.empty[String,String]))
+    when(u.stepLabelMapProvider).thenReturn(() => Option(u.stepLabelMap).getOrElse(BiMap.empty))
     when(u.number).thenReturn(1: Short)
     u
   }
 
-  def mockUseCaseCtx(stepLabelMap: Map[String,String]): UseCaseCtx = {
+  def mockUseCaseCtx(stepLabelMap: Map[String @@ LocalStepId,String]): UseCaseCtx = {
     val u = mockUseCaseCtx
-    when(u.stepLabelMap).thenReturn(stepLabelMap)
+    when(u.stepLabelMap).thenReturn(BiMap(stepLabelMap))
     u
   }
 
