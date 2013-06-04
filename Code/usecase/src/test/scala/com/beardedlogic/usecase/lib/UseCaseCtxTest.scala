@@ -155,9 +155,6 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
       uc.lastSave should (if (expectUpdate) (not be (lastSave)) else be(lastSave))
     }
 
-    def FVs = 4 // 2 text fields + NC/AC + EC
-    def FVsPlus(plus: Int) = FVs + plus
-
     it("should do nothing when no changes") {
       testUpdate(expectUpdate = false, test = { uc =>
         assertTableDiffs() { uc.save(db) }
@@ -203,42 +200,49 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
       val uc = sampleCtx
       def save = uc.save(db)
       def assertNoSubsequentUpdates = 2.times{ assertTableDiffs() { save } }
-      def assertUpdate(expectations: (String, Int)*) = { assertTableDiffs(expectations: _*)(save); assertNoSubsequentUpdates }
-
+      def assertUpdate(expectations: Seq[(String, Int)]) = { assertTableDiffs(expectations: _*)(save); assertNoSubsequentUpdates }
       save; assertNoSubsequentUpdates
-
-      // Change title
-      uc.title = "zzzzzzzzz"
-      assertUpdate("usecase" -> 1, "value" -> 1, "relation" -> FVs)
-
-      // Change text field
-      uc.textFields(0).value.setTextFromUser("jjjjjjjjjj")
-      assertUpdate("usecase" -> 1, "field_value" -> 1, "value" -> 2, "relation" -> FVs)
-
-      // Clear text field
-      uc.textFields(0).value.setTextFromUser("")
-      assertUpdate("usecase" -> 1, "value" -> 1, "relation" -> FVsPlus(-1))
-
-      // Restore text field
-      uc.textFields(0).value.setTextFromUser("Back!")
-      // TODO A new FV is created when text is deleted and restored. Should it not maintain the FV audit trail?
-      assertUpdate("usecase" -> 1, "field_value" -> 1, "value" -> 2, "data" -> 1, "relation" -> FVs)
-
-      // Reorder @ L1
-      val ncac = uc.ncacField.get
-      val c = ncac.courses
-      ncac.courses = c.reverse
-      assertUpdate("usecase" -> 1, "field_value" -> 1, "value" -> 2, "relation" -> FVsPlus(c.size))
-
-      // Step text change @ L2
-      ncac.test__textFields(c(0)(0).id).setTextFromUser("Roar.")
-      // 1.0.1: New step + value -- S:1 V:1
-      // 1.0: New step + value   -- S:1 V:1
-      // 1.0 has 3 children      --         R:3
-      // FV has 2 steps          --     V:1 R:2
-      // Usecase + value         --     V:1
-      assertUpdate("usecase" -> 1, "field_value" -> 1, "step" -> 2, "value" -> 4, "relation" -> FVsPlus(5))
+      simulateMultipleUpdates(uc, assertUpdate)
     }
+  }
+
+  def FVs = 4 // 2 text fields + NC/AC + EC
+  def FVsPlus(plus: Int) = FVs + plus
+
+  def simulateMultipleUpdates(uc: UseCaseCtx, testUpdateFn: Seq[(String, Int)] => Any) = {
+    def testUpdate(expectations: (String, Int)*) = testUpdateFn(expectations)
+
+    // Change title
+    uc.title = "zzzzzzzzz"
+    testUpdate("usecase" -> 1, "value" -> 1, "relation" -> FVs)
+
+    // Change text field
+    uc.textFields(0).value.setTextFromUser("jjjjjjjjjj")
+    testUpdate("usecase" -> 1, "field_value" -> 1, "value" -> 2, "relation" -> FVs)
+
+    // Clear text field
+    uc.textFields(0).value.setTextFromUser("")
+    testUpdate("usecase" -> 1, "value" -> 1, "relation" -> FVsPlus(-1))
+
+    // Restore text field
+    uc.textFields(0).value.setTextFromUser("Back!")
+    // TODO A new FV is created when text is deleted and restored. Should it not maintain the FV audit trail?
+    testUpdate("usecase" -> 1, "field_value" -> 1, "value" -> 2, "data" -> 1, "relation" -> FVs)
+
+    // Reorder @ L1
+    val ncac = uc.ncacField.get
+    val c = ncac.courses
+    ncac.courses = c.reverse
+    testUpdate("usecase" -> 1, "field_value" -> 1, "value" -> 2, "relation" -> FVsPlus(c.size))
+
+    // Step text change @ L2
+    ncac.test__textFields(c(0)(0).id).setTextFromUser("Roar.")
+    // 1.0.1: New step + value -- S:1 V:1
+    // 1.0: New step + value   -- S:1 V:1
+    // 1.0 has 3 children      --         R:3
+    // FV has 2 steps          --     V:1 R:2
+    // Usecase + value         --     V:1
+    testUpdate("usecase" -> 1, "field_value" -> 1, "step" -> 2, "value" -> 4, "relation" -> FVsPlus(5))
   }
 
   describe("Saving then Loading") {
@@ -249,13 +253,26 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
       saved.save(db)
       (countRowsIn("value") - valueRows) should be > 10
 
-      // Then load back
+      // Then load back (testing manually)
       val loaded = loadAndAssertShallow(saved)
       loaded.textFields(0).value.text should be("blah")
       loaded.textFields(1).value.text should be("")
       loaded.textFields(2).value.text should be("hehe")
       loaded.ncacField.get.coursesWithText should matchTree(NcSteps)
       loaded.ecField.get.coursesWithText should matchTree(EcSteps)
+
+      // Quick sanity check on loadAndAssertDeep
+      loadAndAssertDeep(saved)
+    }
+
+    it("should load in full after multiple updates") {
+      val uc = sampleCtx
+      def testFn(expectations: Seq[(String, Int)]) = {
+        assertTableDiffs(expectations: _*)(uc.save(db))
+        loadAndAssertDeep(uc)
+      }
+      uc.save(db)
+      simulateMultipleUpdates(uc, testFn)
     }
 
     it("should normalise and de-normalise refs in text") {
@@ -314,6 +331,13 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
     load(loaded, valueIdOf(saved))
     loaded.title should be(saved.title)
     loaded.number should be(saved.number)
+    loaded
+  }
+
+  def loadAndAssertDeep(saved: UseCaseCtx) = {
+    val loaded = loadAndAssertShallow(saved)
+    for ((s,l) <- saved.textFields.zip(loaded.textFields)) l.value.text should be(s.value.text)
+    for ((s,l) <- saved.courseFields.zip(loaded.courseFields)) l.coursesWithText should matchTree(s.coursesWithText)
     loaded
   }
 }
