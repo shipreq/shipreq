@@ -63,6 +63,10 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
 
 object TestHelpers extends TestHelpers {
 
+  implicit class MyRichInt(val i: Int) extends AnyVal {
+    def times(block: => Any) { 1 to i foreach(_ => block) }
+  }
+
   implicit class CourseFieldExt(val cf: CourseFields) extends AnyVal {
 
     def coursesWithText: List[StepNodeWithText] = convertNodeTree[StepNode, StepNodeWithText](cf.courses, {

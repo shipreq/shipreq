@@ -155,7 +155,7 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
       uc.lastSave should (if (expectUpdate) (not be (lastSave)) else be(lastSave))
     }
 
-    def FVs = 4
+    def FVs = 4 // 2 text fields + NC/AC + EC
     def FVsPlus(plus: Int) = FVs + plus
 
     it("should do nothing when no changes") {
@@ -201,32 +201,44 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
 
     it("should behave the same on updates after updates") {
       val uc = sampleCtx
-      uc.save(db)
-      assertTableDiffs() { uc.save(db) }
-      assertTableDiffs() { uc.save(db) }
+      def save = uc.save(db)
+      def assertNoSubsequentUpdates = 2.times{ assertTableDiffs() { save } }
+      def assertUpdate(expectations: (String, Int)*) = { assertTableDiffs(expectations: _*)(save); assertNoSubsequentUpdates }
 
+      save; assertNoSubsequentUpdates
+
+      // Change title
       uc.title = "zzzzzzzzz"
-      assertTableDiffs("usecase" -> 1, "value" -> 1, "relation" -> FVs) { uc.save(db) }
+      assertUpdate("usecase" -> 1, "value" -> 1, "relation" -> FVs)
 
-      assertTableDiffs() { uc.save(db) }
-      assertTableDiffs() { uc.save(db) }
-
+      // Change text field
       uc.textFields(0).value.setTextFromUser("jjjjjjjjjj")
-      assertTableDiffs("usecase" -> 1, "field_value" -> 1, "value" -> 2, "relation" -> FVs) { uc.save(db) }
+      assertUpdate("usecase" -> 1, "field_value" -> 1, "value" -> 2, "relation" -> FVs)
 
-      assertTableDiffs() { uc.save(db) }
-      assertTableDiffs() { uc.save(db) }
-
+      // Clear text field
       uc.textFields(0).value.setTextFromUser("")
-      assertTableDiffs("usecase" -> 1, "value" -> 1, "relation" -> FVsPlus(-1)) { uc.save(db) }
+      assertUpdate("usecase" -> 1, "value" -> 1, "relation" -> FVsPlus(-1))
 
-      assertTableDiffs() { uc.save(db) }
-      assertTableDiffs() { uc.save(db) }
+      // Restore text field
+      uc.textFields(0).value.setTextFromUser("Back!")
+      // TODO A new FV is created when text is deleted and restored. Should it not maintain the FV audit trail?
+      assertUpdate("usecase" -> 1, "field_value" -> 1, "value" -> 2, "data" -> 1, "relation" -> FVs)
+
+      // Reorder @ L1
+      val ncac = uc.ncacField.get
+      val c = ncac.courses
+      ncac.courses = c.reverse
+      assertUpdate("usecase" -> 1, "field_value" -> 1, "value" -> 2, "relation" -> FVsPlus(c.size))
+
+      // Step text change @ L2
+      ncac.test__textFields(c(0)(0).id).setTextFromUser("Roar.")
+      // 1.0.1: New step + value -- S:1 V:1
+      // 1.0: New step + value   -- S:1 V:1
+      // 1.0 has 3 children      --         R:3
+      // FV has 2 steps          --     V:1 R:2
+      // Usecase + value         --     V:1
+      assertUpdate("usecase" -> 1, "field_value" -> 1, "step" -> 2, "value" -> 4, "relation" -> FVsPlus(5))
     }
-
-    // TODO save when 1 step text change
-
-    // TODO save when step order change
   }
 
   describe("Saving then Loading") {
@@ -236,13 +248,9 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
       val valueRows = countRowsIn("value")
       saved.save(db)
       (countRowsIn("value") - valueRows) should be > 10
-      val valueId = saved.lastSave.get.uc.valueId
 
       // Then load back
-      val loaded = new UseCaseCtx(null)
-      load(loaded, valueId)
-      loaded.title should be(saved.title)
-      loaded.number should be(saved.number)
+      val loaded = loadAndAssertShallow(saved)
       loaded.textFields(0).value.text should be("blah")
       loaded.textFields(1).value.text should be("")
       loaded.textFields(2).value.text should be("hehe")
@@ -258,17 +266,13 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
       saved.save(db)
       saved.lastSave.get.fieldStates.toString should include("Text like")
       saved.lastSave.get.fieldStates.toString should include("Step like")
-      val valueId = saved.lastSave.get.uc.valueId
 
       // Confirm stored normalised in DB
       sql"select text from field_value where text like ${"Text like%"}".as[String].first should not be("Text like [1.0]")
       sql"select text from step where text like ${"Step like%"}".as[String].first should not be("Step like [1.0.1]")
 
       // Then load back
-      val loaded = new UseCaseCtx(null)
-      load(loaded, valueId)
-      loaded.title should be(saved.title)
-      loaded.number should be(saved.number)
+      val loaded = loadAndAssertShallow(saved)
       loaded.textFields(0).value.text should be("Text like [1.0]")
       loaded.ecField.get.coursesWithText should matchTree(EcSteps)
       val stepTexts = loaded.ncacField.get.test__textFields.values.map(_.text)
@@ -283,17 +287,13 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
       saved.save(db)
       saved.lastSave.get.fieldStates.toString should include("➡")
       saved.lastSave.get.fieldStates.toString should include("⬅")
-      val valueId = saved.lastSave.get.uc.valueId
 
       // Confirm stored normalised in DB
       sql"select text from step where text like ${"%⬅%"}".as[String].first should not include("[1.")
       sql"select text from step where text like ${"%➡%"}".as[String].first should not include("[1.")
 
       // Then load back
-      val loaded = new UseCaseCtx(null)
-      load(loaded, valueId)
-      loaded.title should be(saved.title)
-      loaded.number should be(saved.number)
+      val loaded = loadAndAssertShallow(saved)
       loaded.ecField.get.coursesWithText should matchTree(EcSteps)
       val stepTexts = loaded.ncacField.get.test__textFields.values.map(_.text)
       stepTexts.filter(_.contains("➡")).headOption should be(Some("Flow like ➡ [1.0.1]"))
@@ -301,9 +301,19 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
     }
   }
 
-  def load(ucCtx: UseCaseCtx, valueId: Long) {
+  def valueIdOf(uc: UseCaseCtx) = uc.lastSave.get.uc.valueId
+
+  def load(target: UseCaseCtx, valueId: Long) {
     val checkpoint = UseCaseLoader.loadCheckpoint(valueId, db)
     checkpoint should not be (None)
-    ucCtx.restoreCheckpoint(checkpoint.get)
+    target.restoreCheckpoint(checkpoint.get)
+  }
+
+  def loadAndAssertShallow(saved: UseCaseCtx) = {
+    val loaded = new UseCaseCtx(null)
+    load(loaded, valueIdOf(saved))
+    loaded.title should be(saved.title)
+    loaded.number should be(saved.number)
+    loaded
   }
 }
