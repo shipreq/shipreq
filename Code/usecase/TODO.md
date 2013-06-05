@@ -19,7 +19,7 @@ TECH TODO
 =========
 
 * [M.1.5] [FAIL] Tests fail in parallel due to DB deadlock.
-* [M.1.5] [FAIL] Tests fail intermittently due to DB RI violation.
+* [M.0.5] [FAIL] UseCaseCtx intermittent failure. See below.
 
 * [S.1.1] [TEST] Change CourseField step manipulations into pure + web funcs.
 * [S.0.4] [FAIL] When fields are loaded but no FV exists, fields should be cleared. (Will affect in-place loading.)
@@ -36,6 +36,11 @@ TECH TODO
 
 NOTES
 =====
+
+1. UseCaseCtx intermittent failure.
+  [info] - should behave the same on updates after updates *** FAILED ***
+  [info]   "New step is [1.[2?]]" was not equal to "New step is [1.[0]]" (UseCaseCtxTest.scala:261)
+
 
 Legend: [M/S/C] [Benefit 0-none,5-max] [Penalty 0-none,5-severe]
 
