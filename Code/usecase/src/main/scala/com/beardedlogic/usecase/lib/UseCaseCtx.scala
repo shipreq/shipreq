@@ -23,7 +23,7 @@ class UseCaseCtx(cometActor: CometActor) {
 
   // TODO hardcoded fieldlist
   val fieldList = Defaults.FieldList
-  val fields = fieldList.fieldKeys.map(k => k.fieldDef.newFieldInstance(this, k))
+  val fields = fieldList.get.fieldKeys.map(k => k.fieldDef.newFieldInstance(this, k))
   @inline final def genericFields = fields.asInstanceOf[List[Field[Any]]]
 
   val courseFields: List[CourseFields] = fields.collect { case f: CourseFields => f }
@@ -128,7 +128,7 @@ class UseCaseCtx(cometActor: CometActor) {
         dao.createInitialValue(DataType.UseCase)
       else
         dao.createValue(lastSave.get.uc.value, LatestRev)
-      val uc = dao.createUseCase(ucValue, title, number, fieldList)
+      val uc = dao.createUseCase(ucValue, title, number, fieldList.get)
 
       // Save new field values
       var newFieldStates = lastSave.map(_.fieldStates).getOrElse(Map.empty[FieldKey, Any])
@@ -169,7 +169,7 @@ object UseCaseLoader {
 
     // Load use case
     dao.findUseCaseWithValue(valueId).map { uc =>
-      val fieldList = Defaults.FieldList // TODO hardcoded fieldlist
+      val fieldList = Defaults.FieldList.get // TODO hardcoded fieldlist
 
       val saveCtx = new MutableFieldSaveCtx
       // TODO populate field values

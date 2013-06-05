@@ -18,8 +18,6 @@ sloccount.sc
 tmp
 log
 
-bin
-gen
 .cache
 .scala_dependencies
 release.properties

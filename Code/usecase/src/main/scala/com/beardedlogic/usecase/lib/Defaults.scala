@@ -3,7 +3,6 @@ package lib
 
 import field._
 import model._
-import db.DB
 import net.liftweb.common.Logger
 
 /**
@@ -15,33 +14,32 @@ object ReservedIds {
 }
 
 object Defaults extends Logger {
-  private[this] var dao = DAO.get
 
-  val FieldList = dao.withTransaction {
-    //  val DateCreated = TextFieldDef("Date Created")
-    //  val DateLastUpdated = TextFieldDef("Date Last Updated")
-    val fields: List[FieldDef[_]] =
-      TextFieldDef("Actors") ::
-        TextFieldDef("Pre-Conditions") ::
-        TextFieldDef("Post-Conditions") ::
-        NormalAndAlternateCourseFields ::
-        ExceptionCourseFields ::
-        TextFieldDef("Use Case Relationships") ::
-        TextFieldDef("Constraints and Business Rules") ::
-        TextFieldDef("Frequency of Use") ::
-        TextFieldDef("Special Requirements") ::
-        TextFieldDef("Assumptions") ::
-        TextFieldDef("Notes and Issues") ::
-        Nil
+  /** This is only exposed for tests */
+  val FieldListDefs: List[FieldDef[_]] =
+    TextFieldDef("Actors") ::
+      TextFieldDef("Pre-Conditions") ::
+      TextFieldDef("Post-Conditions") ::
+      NormalAndAlternateCourseFields ::
+      ExceptionCourseFields ::
+      TextFieldDef("Use Case Relationships") ::
+      TextFieldDef("Constraints and Business Rules") ::
+      TextFieldDef("Frequency of Use") ::
+      TextFieldDef("Special Requirements") ::
+      TextFieldDef("Assumptions") ::
+      TextFieldDef("Notes and Issues") ::
+      Nil
 
-    dao.syncFieldList(ReservedIds.DefaultFieldList, fields)
-  }
-  debug(s"Default field list: ${FieldList.dataId}/${FieldList.valueId}")
-
-  dao.close()
-  dao= null
+  val FieldList = CachedFunction.eager1WithInitial[DAO, FieldList](dao => {
+    val fl = dao.syncFieldList(ReservedIds.DefaultFieldList, FieldListDefs)
+    debug(s"Default field list: ${fl.dataId}:${fl.valueId}")
+    fl
+  })(null)
 
   def init() {
+    DAO.withTransaction { dao =>
+      FieldList.refresh(dao)
+    }
     debug("Defaults initialised successfully.")
   }
 }

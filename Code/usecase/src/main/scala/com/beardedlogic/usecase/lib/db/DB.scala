@@ -52,7 +52,7 @@ object DB extends Logger {
     setIfDefinedS("ssl_factory", ds.setSslfactory(_))
     setIfDefinedB("tcp_keep_alive", ds.setTcpKeepAlive(_))
     setIfDefinedI("unknown_length", ds.setUnknownLength(_))
-    prop("log_level").foreach(l => ds.setLogLevel(Level.valueOf(l.toUpperCase).toInt))
+    prop("log_level").orElse(prop("loglevel")).foreach(l => ds.setLogLevel(Level.valueOf(l.toUpperCase).toInt))
     ds
   }
 

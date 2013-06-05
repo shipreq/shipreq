@@ -5,7 +5,7 @@ import net.liftweb.http.LiftRules
 import org.scalatest.matchers.{ShouldMatchers, Matcher, MatchResult}
 import org.scalatest.mock.MockitoSugar
 import org.mockito.Mockito._
-import lib.{CachedFunction, CachedFunction1, BiMap, StepNode, UseCaseCtx}
+import lib.{CachedFunction, Defaults, BiMap, StepNode, UseCaseCtx}
 import NodeUtils._
 import lib.tree._
 import lib.field._
@@ -13,7 +13,7 @@ import TreeOps._
 import lib.field.CourseFields
 import lib.TypeTags._
 import lib.msg.MessageCentre
-import model.{FieldSaveCtx, FieldKey}
+import com.beardedlogic.usecase.model._
 
 /**
  * @since 30/04/2013
@@ -22,6 +22,18 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
   import TestHelpers._
 
   if (!LiftRules.doneBoot) (new bootstrap.liftweb.Boot).configureLift
+  if (Defaults.FieldList.get == null) Defaults.FieldList << mockFieldList(Defaults.FieldListDefs)
+
+  def mockFieldList(defs: List[FieldDef[_]]): FieldList = {
+    val pv = PlainValue[DataType.FieldList](-666, -1, 1)
+    var i = -999
+    val keys = defs.map {
+      case d: TextFieldDef                        => i -= 1; FieldKey(i, FieldKeyType.Text, Some(d.title))
+      case _: NormalAndAlternateCourseFields.type => FieldKey(-1100, FieldKeyType.NormalAndAlternateCourses, None)
+      case _: ExceptionCourseFields.type          => FieldKey(-1101, FieldKeyType.ExceptionCourses, None)
+    }
+    FieldList(pv, keys)
+  }
 
   def eventually(cond: => Any) {
     val test = (sleep: Int) => try { cond; true } catch { case _: Throwable => Thread.sleep(sleep); false }

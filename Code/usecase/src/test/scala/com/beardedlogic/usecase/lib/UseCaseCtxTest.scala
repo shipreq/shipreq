@@ -21,16 +21,16 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
       // Create UC
       val uc = db.createInitialValue(DataType.UseCase)
       val uc_id = uc.valueId
-      sqlu"INSERT INTO usecase VALUES(${uc_id}, 'ahh', 3, ${Defaults.FieldList.valueId})".execute
+      sqlu"INSERT INTO usecase VALUES(${uc_id}, 'ahh', 3, ${Defaults.FieldList.get.valueId})".execute
 
       // Create Text FV
-      val txt_fk = Defaults.FieldList.fieldKeys.filter(_.fieldKeyType == FieldKeyType.Text).head
+      val txt_fk = Defaults.FieldList.get.fieldKeys.filter(_.fieldKeyType == FieldKeyType.Text).head
       val txt_fv = db.createInitialValue(DataType.FieldValue)
       db.createFieldValue(txt_fv, txt_fk, Some("Hehe!"))
       db.relate_usecase_has_fieldValue(uc, txt_fv)
 
       // Create course FV
-      val c_fk = Defaults.FieldList.fieldKeys.filter(_.fieldKeyType == FieldKeyType.NormalAndAlternateCourses).head
+      val c_fk = Defaults.FieldList.get.fieldKeys.filter(_.fieldKeyType == FieldKeyType.NormalAndAlternateCourses).head
       val c_fv = db.createInitialValue(DataType.FieldValue)
       val s1, s2 = db.createInitialValue(DataType.Step)
       db.createFieldValue(c_fv, c_fk, None)
@@ -57,10 +57,10 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
       // Create UC
       val uc = db.createInitialValue(DataType.UseCase)
       val uc_id = uc.valueId
-      sqlu"INSERT INTO usecase VALUES(${uc_id}, 'ahh', 3, ${Defaults.FieldList.valueId})".execute
+      sqlu"INSERT INTO usecase VALUES(${uc_id}, 'ahh', 3, ${Defaults.FieldList.get.valueId})".execute
 
       // Create course FV
-      val c_fk = Defaults.FieldList.fieldKeys.filter(_.fieldKeyType == FieldKeyType.NormalAndAlternateCourses).head
+      val c_fk = Defaults.FieldList.get.fieldKeys.filter(_.fieldKeyType == FieldKeyType.NormalAndAlternateCourses).head
       val c_fv = db.createInitialValue(DataType.FieldValue)
       val s1, s2, s3 = db.createInitialValue(DataType.Step)
       db.createFieldValue(c_fv, c_fk, None)
@@ -73,7 +73,7 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
       db.relate_stepParent_has_step(s1, 0, s2)
 
       // Create Text FV
-      val txt_fk = Defaults.FieldList.fieldKeys.filter(_.fieldKeyType == FieldKeyType.Text).head
+      val txt_fk = Defaults.FieldList.get.fieldKeys.filter(_.fieldKeyType == FieldKeyType.Text).head
       val txt_fv = db.createInitialValue(DataType.FieldValue)
       db.createFieldValue(txt_fv, txt_fk, Some(s"look at [D.${s2.dataId}] and [D.${s3.dataId}]!"))
       db.relate_usecase_has_fieldValue(uc, txt_fv)
