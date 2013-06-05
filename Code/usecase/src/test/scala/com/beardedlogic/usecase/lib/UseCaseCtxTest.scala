@@ -206,11 +206,14 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
     }
   }
 
+  def fixTopLevelIndices(nodes: List[StepNode]): List[StepNode] = for ((n, i) <- nodes.zipWithIndex) yield n.copy(labelIndex = i)
   def FVs = 4 // 2 text fields + NC/AC + EC
   def FVsPlus(plus: Int) = FVs + plus
 
   def simulateMultipleUpdates(uc: UseCaseCtx, testUpdateFn: Seq[(String, Int)] => Any) = {
     def testUpdate(expectations: (String, Int)*) = testUpdateFn(expectations)
+
+    uc.msgCentre.enabled = true
 
     // Change title
     uc.title = "zzzzzzzzz"
@@ -231,12 +234,11 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
 
     // Reorder @ L1
     val ncac = uc.ncacField.get
-    val c = ncac.courses
-    ncac.courses = c.reverse
-    testUpdate("usecase" -> 1, "field_value" -> 1, "value" -> 2, "relation" -> FVsPlus(c.size))
+    ncac.courses = fixTopLevelIndices(ncac.courses.reverse)
+    testUpdate("usecase" -> 1, "field_value" -> 1, "value" -> 2, "relation" -> FVsPlus(ncac.courses.size))
 
     // Step text change @ L2
-    ncac.test__textFields(c(0)(0).id).setTextFromUser("Roar.")
+    ncac.test__textFields(ncac.courses(1)(0).id).setTextFromUser("Roar.")
     // 1.0.1: New step + value -- S:1 V:1
     // 1.0: New step + value   -- S:1 V:1
     // 1.0 has 3 children      --         R:3
@@ -253,6 +255,11 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
     // FV has 3 steps --     V:1     FV:1 R:3
     // UC             --     V:1          R:FVs
     testUpdate("usecase" -> 1, "field_value" -> 2, "step" -> 1, "value" -> 4, "data" -> 1, "relation" -> FVsPlus(3))
+
+    // Reorder to step referred to by others
+    ncac.courses = fixTopLevelIndices(ncac.courses.reverse)
+    eventually(uc.textFields(0).value.text should be("New step is [1.0]"))
+    testUpdate("usecase" -> 1, "field_value" -> 1, "value" -> 2, "relation" -> FVsPlus(ncac.courses.size))
   }
 
   describe("Saving then Loading") {
