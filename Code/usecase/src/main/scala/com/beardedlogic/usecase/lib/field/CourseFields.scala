@@ -209,8 +209,8 @@ abstract class CourseFields extends Field[CourseFieldState] {
   }
 
   /** Callback for user to add a new top-level step to the end of the list. */
-  protected def onAddTailStep(addTailStepCss: String): JsCmd = JavaScriptReaction{ reactor =>
-    val newNode = addTailStep(reactor)
+  protected def onAddTailStep(addTailStepCss: String): JsCmd = JavaScriptReaction{ implicit reactor =>
+    val newNode = addTailStep
     reactor << JqExpr(addTailStepCss) ~> JqBefore(renderSingleStepXml(newNode))
     reactor << JqId(newNode.id) ~> JqHide ~> JqSlideDownFast
   }
@@ -226,8 +226,8 @@ abstract class CourseFields extends Field[CourseFieldState] {
         r
       case _ => None
     }
-  protected def onStepAdd(preceedingNodeId: String @@ LocalId): JsCmd = JavaScriptReaction { reactor =>
-    stepAdd(preceedingNodeId)(reactor) foreach { newNode =>
+  protected def onStepAdd(preceedingNodeId: String @@ LocalId): JsCmd = JavaScriptReaction { implicit reactor =>
+    stepAdd(preceedingNodeId) foreach { newNode =>
       reactor << JqId(preceedingNodeId) ~> JqAfter(renderSingleStepXml(newNode))
       reactor << JqId(newNode.id) ~> JqHide ~> JqSlideDownFast
       reactor << UpdateLabels(courses)
@@ -239,12 +239,12 @@ abstract class CourseFields extends Field[CourseFieldState] {
   /**
    * Removes a new step and all its children, shuffling up following steps and renumbering if necessary.
    */
-  protected def onStepRemove(id: String @@ LocalId): JsCmd = JavaScriptReaction { reactor =>
+  protected def onStepRemove(id: String @@ LocalId): JsCmd = JavaScriptReaction { implicit reactor =>
     if (!prohibitRemoval(id))
       stepRemove(id, courses) match {
         case (newCourses, Some(node)) =>
           // TODO fields aren't being removed
-          setCourses(newCourses)(reactor)
+          setCourses(newCourses)
           reactor << FadeOut(JqExprForNodeAndChildren(node), 240)(_ ~> JqJE.JqRemove() & UpdateLabels(courses))
         case _ =>
       }
@@ -258,8 +258,8 @@ abstract class CourseFields extends Field[CourseFieldState] {
       case (newCourses, Some(_)) => setCourses(newCourses); true
       case _                     => false
     }
-  protected def onIndentDecrease(nodeId: String @@ LocalId): JsCmd = JavaScriptReaction { reactor =>
-    if (stepIndentDecrease(nodeId)(reactor)) {
+  protected def onIndentDecrease(nodeId: String @@ LocalId): JsCmd = JavaScriptReaction { implicit reactor =>
+    if (stepIndentDecrease(nodeId)) {
       val updateJs = UpdateIndentation(courses) & UpdateLabels(courses)
       reactor << customiseIndentDecreaseJs(nodeId, updateJs)
     }
@@ -273,11 +273,11 @@ abstract class CourseFields extends Field[CourseFieldState] {
   /**
    * Increases the indentation level of a given step.
    */
-  protected def onIndentIncrease(nodeId: String @@ LocalId): JsCmd = JavaScriptReaction { reactor =>
+  protected def onIndentIncrease(nodeId: String @@ LocalId): JsCmd = JavaScriptReaction { implicit reactor =>
     indentIncrease(nodeId, courses) match {
       case (newCourses, Some(newNode)) =>
         val oldCourses = courses
-        setCourses(newCourses)(reactor)
+        setCourses(newCourses)
         val updateJs = UpdateIndentation(courses) & UpdateLabels(courses)
         reactor << customiseIndentIncreaseJs(nodeId, newNode, oldCourses, updateJs)
       case _ =>

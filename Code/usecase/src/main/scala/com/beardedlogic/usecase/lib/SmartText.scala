@@ -474,17 +474,16 @@ class SmartStepText(override val msgCentre: MessageCentre,
     text
   }
 
-  // TODO Does reactor need to be made explicit here?
   private def processFlowParseResult(labelsOp: Option[List[String @@ Label]], f: Flow): Option[Reactor => Unit] =
     labelsOp match {
       case None =>
-        Some(reactor => f.clearAndBroadcast(reactor))
+        Some(implicit reactor => f.clearAndBroadcast)
 
       case Some(labels) if (areAllLabelsValid(labels)) =>
-        Some(reactor => f.broadcastIfChanges {
+        Some(implicit reactor => f.broadcastIfChanges {
           f.refs = labels.map(l => (refAndIdLookup.get.ba(l), l)).toMap
           f.rebuildText
-        }(reactor))
+        })
 
       case _ => None // Labels are invalid
     }
