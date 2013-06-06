@@ -52,8 +52,6 @@ trait Field[S] {
    */
   def setState(newState: S): () => Unit
 
-  // TODO update doco here
-
   /**
    * Gives a field a chance to opt-out of storing a value in the database.
    * If a field is blank, then there's no point saving it.
@@ -61,7 +59,10 @@ trait Field[S] {
   def save_? : Boolean
 
   /**
-   * Saves `Data` and `Value` rows for any additional data required.
+   * Saves `data` and `value` rows for any additional data required.
+   *
+   * If a previous save is provided, the function should compare current and previous states to determine whether
+   * anything needs to be saved.
    *
    * @return Whether the field's state has changed since the last save.
    */
@@ -75,8 +76,12 @@ trait Field[S] {
   /**
    * Continues saving state to database.
    *
-   * Once this is called, the `Data` and `Value` rows for all fields will have been saved, the IDs known.
+   * Because `presave()` is called on all fields before any fields reach this method, all `data` and `value` rows will
+   * have been saved, the IDs known.
    *
+   * @param combinedSaveCtx The save context of all new rows on top of the save context for the previous save. Rows
+   *                        being reused will be found here.
+   * @param newSaveCtx The save context for all new rows. Rows being reused will not be found here.
    * @return A single, arbitrary data string that will be stored in `field_value.data`. The format and mechanism of this
    *         value can be decided by the field type.
    */
