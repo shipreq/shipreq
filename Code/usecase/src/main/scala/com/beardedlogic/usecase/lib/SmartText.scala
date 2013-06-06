@@ -136,7 +136,7 @@ object SmartText {
       parse(in)
     }
 
-    val StepLabelComponent: Parser[String] = "[A-Za-z]+|\\d+".r // TODO remove caps?
+    val StepLabelComponent: Parser[String] = "[A-Za-z]+|\\d+".r
 
     val StepLabel: Parser[String] = StepLabelComponent ~ rep1("." ~> StepLabelComponent) ^^ {
       case h ~ t => (h :: t).mkString(".")
@@ -190,12 +190,11 @@ class SmartText(val msgCentre: MessageCentre,
   import SmartText._
   import MyLittleParser._
 
-  // TODO check this. I doubt I've kept this class thread-safe properly
+  // TODO Revise SmartText.writeLock strategy
   protected val writeLock = new Object
-  protected[lib] val refAndIdLookup = masterRefAndIdLookup.dependentCopyLazy
-  protected[lib] var refsInText = Map.empty[String @@ LocalId, String @@ Label]
-
   protected[lib] var _text = ""
+  protected[lib] var refsInText = Map.empty[String @@ LocalId, String @@ Label]
+  protected[lib] val refAndIdLookup = masterRefAndIdLookup.dependentCopyLazy
 
   def text = _text
 
@@ -206,17 +205,6 @@ class SmartText(val msgCentre: MessageCentre,
   }
 
   def renderTextarea = SHtml.ajaxTextarea(text, onTextChange _, "id" -> textareaId)
-
-  /**
-   * Normalises and parses text from the user.
-   */
-  def setTextFromUser(newValueRaw: String)(implicit reactor: Reactor) {
-    val newValue = newValueRaw.trim
-    if (text != newValue) {
-      _text = parseText(newValue)
-      if (text != newValue) reactToTextUpdate
-    }
-  }
 
   /**
    * Restores internal state to a previous state. Usually called when loading from DB.
@@ -254,6 +242,17 @@ class SmartText(val msgCentre: MessageCentre,
   def onTextChange(newValue: String): JsCmd = writeLock.synchronized {
     refAndIdLookup.invalidate // Shouldn't be needed but no harm and provides extra safety
     JavaScriptReaction { setTextFromUser(newValue)(_) }
+  }
+
+  /**
+   * Normalises and parses text from the user.
+   */
+  def setTextFromUser(newValueRaw: String)(implicit reactor: Reactor) {
+    val newValue = newValueRaw.trim
+    if (text != newValue) {
+      _text = parseText(newValue)
+      if (text != newValue) reactToTextUpdate
+    }
   }
 
   /**
@@ -296,10 +295,6 @@ class SmartText(val msgCentre: MessageCentre,
     newText.toString
   }
 
-  @inline protected final def areAllLabelsValid(labels: Seq[String @@ Label]): Boolean = {
-    labels.find(!refAndIdLookup.get.ba.contains(_)).isEmpty
-  }
-
   override def messageHandler(reactor: Reactor): PartialFunction[Message, Unit] = {
 
     // Update step references when they change
@@ -321,6 +316,9 @@ class SmartText(val msgCentre: MessageCentre,
     _text = newText
     reactToTextUpdate
   }
+
+  @inline protected final def areAllLabelsValid(labels: Seq[String @@ Label]): Boolean =
+    labels.find(!refAndIdLookup.get.ba.contains(_)).isEmpty
 
   /** Checks if this field has any step references */
   protected def haveAnyRefs = refsInText.nonEmpty
@@ -527,23 +525,32 @@ class SmartStepText(override val msgCentre: MessageCentre,
 
     // Add or Remove flow references
     case FlowFromChangeMsg(_, id) if id == stepId => // Ignore self-ref
-    case FlowToChangeMsg(id, _) if id == stepId => // Ignore self-ref
-    case FlowToChangeMsg(id, toIds) if (toIds.contains(stepId) && !flowFrom.refs.contains(id)) => addRef(flowFrom, id)
-    case FlowToChangeMsg(id, toIds) if (!toIds.contains(stepId) && flowFrom.refs.contains(id)) => removeRef(flowFrom, id)
-    case FlowFromChangeMsg(fromIds, id) if (fromIds.contains(stepId) && !flowTo.refs.contains(id)) => addRef(flowTo, id)
-    case FlowFromChangeMsg(fromIds, id) if (!fromIds.contains(stepId) && flowTo.refs.contains(id)) => removeRef(flowTo, id)
+    case FlowToChangeMsg(id, _) if id == stepId   => // Ignore self-ref
+    case FlowToChangeMsg(id, toIds)               => processFlowChangeMsg(toIds, id, flowFrom)
+    case FlowFromChangeMsg(fromIds, id)           => processFlowChangeMsg(fromIds, id, flowTo)
+  }
+
+  private def processFlowChangeMsg(manyIds: Set[String @@ LocalId], oneId: String @@ LocalId, f: Flow)(implicit reactor: Reactor) {
+    // Confusing but performant way of writing the following:
+    //   case FlowToChangeMsg(id, toIds) if (toIds.contains(stepId) && !flowFrom.refs.contains(id)) => addRef(flowFrom, id)
+    //   case FlowToChangeMsg(id, toIds) if (!toIds.contains(stepId) && flowFrom.refs.contains(id)) => removeRef(flowFrom, id)
+    //   case FlowFromChangeMsg(fromIds, id) if (fromIds.contains(stepId) && !flowTo.refs.contains(id)) => addRef(flowTo, id)
+    //   case FlowFromChangeMsg(fromIds, id) if (!fromIds.contains(stepId) && flowTo.refs.contains(id)) => removeRef(flowTo, id)
+    val a = manyIds.contains(stepId)
+    val b = f.refs.contains(oneId)
+    if (a != b) {
+      if (a) addRef(f, oneId) else removeRef(f, oneId)
+      f.rebuildText
+      internalSetTextAndReact(buildFullText)
+    }
   }
 
   private def addRef(f: Flow, id: String @@ LocalId)(implicit reactor: Reactor) {
     f.refs += (id -> refAndIdLookup.get.ab(id))
-    f.rebuildText
-    internalSetTextAndReact(buildFullText)
   }
 
   private def removeRef(f: Flow, id: String @@ LocalId)(implicit reactor: Reactor) {
     f.refs -= id
-    f.rebuildText
-    internalSetTextAndReact(buildFullText)
   }
 
   override def textWithNormalisedRefs(savedSteps: Map[String @@ LocalId, Long_StepDataId]): String @@ NormalisedRefs = {

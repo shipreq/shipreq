@@ -108,21 +108,13 @@ object CourseFields {
 abstract class CourseFields extends Field[CourseFieldState] {
 
   private[this] var _courses: List[StepNode] = Nil
-  def setCourses(newCourses: List[StepNode])(implicit reactor: Reactor) {
-    _courses = newCourses
-    stepLabelMap.invalidate
-    ucCtx.stepLabelMap.invalidate
-    msgCentre ! StepChangeMsg
-  }
-  def courses = _courses
-
-  val stepLabelMap = CachedFunction.lazy0(
-    mapIdsToFullLabels(courses, rootLabelPrefix.get.getOrElse(""))
-  )
-
-  // TODO fields aren't being removed
   private[this] var textFields: Map[String @@ LocalId, SmartStepText] = Map.empty
+
+  def courses = _courses
   def test__textFields = textFields
+
+  val stepLabelMap = CachedFunction.lazy0(mapIdsToFullLabels(courses, rootLabelPrefix.get.getOrElse("")))
+  val rootLabelPrefix = CachedFunction.eager0(recalcRootLabelPrefix)
 
   override def init() {
     syncTextFieldMap
@@ -130,10 +122,16 @@ abstract class CourseFields extends Field[CourseFieldState] {
   }
 
   protected def recalcRootLabelPrefix: Option[String]
-  val rootLabelPrefix = CachedFunction.eager0(recalcRootLabelPrefix)
   @inline def labelPrefixForLevel(level: Int) = if (level == 0) rootLabelPrefix.get else None
   @inline def labelFor(node: StepNode) = labelPrefixForLevel(node.level).map(_ + node.label).getOrElse(node.label)
   def startingLabelIndices: StartingLabelIndices
+
+  def setCourses(newCourses: List[StepNode])(implicit reactor: Reactor) {
+    _courses = newCourses
+    stepLabelMap.invalidate
+    ucCtx.stepLabelMap.invalidate
+    msgCentre ! StepChangeMsg
+  }
 
   private[this] def createAndRegisterTextField(n: StepNode) {
     val t = new SmartStepText(msgCentre, ucCtx.stepLabelMap, n.id, n.stepTextId)
@@ -245,6 +243,7 @@ abstract class CourseFields extends Field[CourseFieldState] {
     if (!prohibitRemoval(id))
       stepRemove(id, courses) match {
         case (newCourses, Some(node)) =>
+          // TODO fields aren't being removed
           setCourses(newCourses)(reactor)
           reactor << FadeOut(JqExprForNodeAndChildren(node), 240)(_ ~> JqJE.JqRemove() & UpdateLabels(courses))
         case _ =>
