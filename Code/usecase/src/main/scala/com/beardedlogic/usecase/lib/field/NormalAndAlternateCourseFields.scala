@@ -43,15 +43,17 @@ class NormalAndAlternateCourseFields(override val ucCtx: UseCaseCtx, override va
 
   override def render = (
     renderSteps(courses.head :: Nil)(NormalCourseTemplate) ++
-    renderSteps(courses.tail, AddTailStepCss)(AlternateCourseTemplate)
+    renderStepsWithAddTailStep(courses.tail)(AlternateCourseTemplate)
   )
 
-  override protected def newTailStep() = StepNodeBuilder(0, courses.size)
+  override protected def buildNewTailStep() = StepNodeBuilder(0, courses.size)
+
+  override def tailStepCss = AddTailStepCss
 
   /**
    * Prevent removal of the normal course head, ie. 1.0.
    */
-  override def prohibitRemoval(id: String @@ LocalId) = (id == courses.head.id)
+  override def prohibitRemoval_?(id: String @@ LocalId) = (id == courses.head.id)
 
   protected override def customiseIndentDecreaseJs(nodeId: String @@ LocalId, updateJs: JsCmd): JsCmd =
     courses match {

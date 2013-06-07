@@ -30,9 +30,9 @@ class ExceptionCourseFields(override val ucCtx: UseCaseCtx, override val fieldKe
   override def recalcRootLabelPrefix = Some(s"${ucCtx.number}.E.")
   override def startingLabelIndices = EC_StartingLabelIndices
 
-  override def render = (
-    renderSteps(courses, AddTailStepCss)(ExceptionTemplate)
-  )
+  override def render = renderStepsWithAddTailStep(courses)(ExceptionTemplate)
 
-  override protected def newTailStep() = StepNodeBuilder(0, courses.size + 1)
+  override protected def buildNewTailStep() = StepNodeBuilder(0, courses.size + 1)
+
+  override def tailStepCss = AddTailStepCss
 }

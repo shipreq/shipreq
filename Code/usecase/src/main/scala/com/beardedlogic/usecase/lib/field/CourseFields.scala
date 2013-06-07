@@ -161,14 +161,11 @@ abstract class CourseFields extends Field[CourseFieldState] {
   /**
    * Renders a list of steps and their trees of children.
    * Also renders an addTailStep button.
-   *
-   * @param addTailStepCss The CSS selector that will locate the addTailStep container.
    */
-  protected def renderSteps(steps: List[StepNode],
-                            addTailStepCss: String): NodeSeq => NodeSeq = {
-    val t = "button" #> SHtml.ajaxButton("+", () => onAddTailStep(addTailStepCss))
-    val addTailStep = t(AddTailStepTemplate)
-    renderSteps(steps) andThen ".steps *+" #> addTailStep // Append to .steps, after all the .step tags
+  protected def renderStepsWithAddTailStep(steps: List[StepNode]): NodeSeq => NodeSeq = {
+    val t = "button" #> SHtml.ajaxButton("+", () => JavaScriptReaction(addTailStep(_)))
+    val addTailStepTmpl = t(AddTailStepTemplate)
+    renderSteps(steps) andThen ".steps *+" #> addTailStepTmpl // Append to .steps, after all the .step tags
   }
 
   /**
@@ -177,14 +174,14 @@ abstract class CourseFields extends Field[CourseFieldState] {
   protected def renderSingleStep(n: StepNode) = (
     ".step [id]" #> n.id
     & s".step [$AttrLevel]" #> n.level
-    & IfCssSel(prohibitRemoval(n.id)) { ".step [class+]" #> "noDel" }
+    & IfCssSel(prohibitRemoval_?(n.id)) { ".step [class+]" #> "noDel" }
     & ".label span *" #> labelFor(n)
     & ".label span [id]" #> n.labelId
     & "@text" #> textFields(n.id).renderTextarea
-    & ".add" #> SHtml.ajaxButton("+", () => onStepAdd(n.id))
-    & ".delete" #> SHtml.ajaxButton("-", () => onStepRemove(n.id))
-    & ".indentDec" #> SHtml.ajaxButton("«", () => onIndentDecrease(n.id))
-    & ".indentInc" #> SHtml.ajaxButton(<span>»</span>, () => onIndentIncrease(n.id))
+    & ".add" #> SHtml.ajaxButton("+", () => JavaScriptReaction(addStep(n.id)(_)))
+    & ".delete" #> SHtml.ajaxButton("-", () => JavaScriptReaction(removeStep(n.id)(_)))
+    & ".indentDec" #> SHtml.ajaxButton("«", () => JavaScriptReaction(decreaseIndent(n.id)(_)))
+    & ".indentInc" #> SHtml.ajaxButton(<span>»</span>, () => JavaScriptReaction(increaseIndent(n.id)(_)))
   )
 
   /**
@@ -196,97 +193,85 @@ abstract class CourseFields extends Field[CourseFieldState] {
   }
 
   /** Creates a new top-level step to add to the end of the list. */
-  protected def newTailStep(): StepNode
+  protected def buildNewTailStep(): StepNode
 
-  // TODO change all CourseField step manipulations into pure + web funcs (and rename to improve consistency)
+  /** A CSS expression that selects the container of the add-tail-step button. */
+  def tailStepCss: String
 
   /** Adds a new top-level step to the end of the list. */
   def addTailStep(implicit reactor: Reactor): StepNode = {
-    val newNode = newTailStep()
+    val newNode = buildNewTailStep()
     setCourses(courses :+ newNode)
     createAndRegisterTextField(newNode)
+    reactor(JavaScript)(
+      JqExpr(tailStepCss) ~> JqBefore(renderSingleStepXml(newNode))
+        & JqId(newNode.id) ~> JqHide ~> JqSlideDownFast
+    )
     newNode
   }
 
-  /** Callback for user to add a new top-level step to the end of the list. */
-  protected def onAddTailStep(addTailStepCss: String): JsCmd = JavaScriptReaction{ implicit reactor =>
-    val newNode = addTailStep
-    reactor << JqExpr(addTailStepCss) ~> JqBefore(renderSingleStepXml(newNode))
-    reactor << JqId(newNode.id) ~> JqHide ~> JqSlideDownFast
-  }
-
-  /**
-   * Adds a new step, shuffling down subsequent steps and renumbering if necessary.
-   */
-  def stepAdd[R](preceedingNodeId: String @@ LocalId)(implicit reactor: Reactor): Option[StepNode] =
+  /** Adds a new step, shuffling down subsequent steps and renumbering if necessary. */
+  def addStep[R](preceedingNodeId: String @@ LocalId)(implicit reactor: Reactor): Option[StepNode] =
     stepInsert(preceedingNodeId, courses, StepNodeBuilder) match {
       case (newCourses, r@Some(newNode)) =>
         setCourses(newCourses)
         createAndRegisterTextField(newNode)
+        reactor(JavaScript)(
+          JqId(preceedingNodeId) ~> JqAfter(renderSingleStepXml(newNode))
+            & JqId(newNode.id) ~> JqHide ~> JqSlideDownFast
+            & UpdateLabels(courses)
+        )
         r
       case _ => None
     }
-  protected def onStepAdd(preceedingNodeId: String @@ LocalId): JsCmd = JavaScriptReaction { implicit reactor =>
-    stepAdd(preceedingNodeId) foreach { newNode =>
-      reactor << JqId(preceedingNodeId) ~> JqAfter(renderSingleStepXml(newNode))
-      reactor << JqId(newNode.id) ~> JqHide ~> JqSlideDownFast
-      reactor << UpdateLabels(courses)
-    }
-  }
 
-  def prohibitRemoval(id: String @@ LocalId) = false
-
-  /**
-   * Removes a new step and all its children, shuffling up following steps and renumbering if necessary.
-   */
-  protected def onStepRemove(id: String @@ LocalId): JsCmd = JavaScriptReaction { implicit reactor =>
-    if (!prohibitRemoval(id))
+  /** Removes a new step and all its children, shuffling up following steps and renumbering if necessary. */
+  def removeStep(id: String @@ LocalId)(implicit reactor: Reactor): Option[StepNode] =
+    if (!prohibitRemoval_?(id))
       stepRemove(id, courses) match {
-        case (newCourses, Some(node)) =>
+        case (newCourses, r@Some(node)) =>
           // TODO fields aren't being removed
           setCourses(newCourses)
-          reactor << FadeOut(JqExprForNodeAndChildren(node), 240)(_ ~> JqJE.JqRemove() & UpdateLabels(courses))
-        case _ =>
+          reactor(JavaScript)(
+            FadeOut(JqExprForNodeAndChildren(node), 240)(_ ~> JqJE.JqRemove() & UpdateLabels(courses))
+          )
+          r
+        case _ => None
       }
-  }
+    else None
 
-  /**
-   * Decreases the indentation level of a given step.
-   */
-  def stepIndentDecrease(nodeId: String @@ LocalId)(implicit reactor: Reactor): Boolean =
+  /** Decreases the indentation level of a given step. */
+  def decreaseIndent(nodeId: String @@ LocalId)(implicit reactor: Reactor): Boolean =
     indentDecrease(nodeId, courses) match {
-      case (newCourses, Some(_)) => setCourses(newCourses); true
-      case _                     => false
+      case (newCourses, Some(_)) =>
+        setCourses(newCourses)
+        reactor(JavaScript)(
+          customiseIndentDecreaseJs(nodeId, UpdateIndentation(courses) & UpdateLabels(courses))
+        )
+        true
+      case _ => false
     }
-  protected def onIndentDecrease(nodeId: String @@ LocalId): JsCmd = JavaScriptReaction { implicit reactor =>
-    if (stepIndentDecrease(nodeId)) {
-      val updateJs = UpdateIndentation(courses) & UpdateLabels(courses)
-      reactor << customiseIndentDecreaseJs(nodeId, updateJs)
-    }
-  }
 
-  /**
-   * Allows customisation of the ajax response of a successful indent decrease.
-   */
-  protected def customiseIndentDecreaseJs(nodeId: String @@ LocalId, updateJs: JsCmd): JsCmd = updateJs
-
-  /**
-   * Increases the indentation level of a given step.
-   */
-  protected def onIndentIncrease(nodeId: String @@ LocalId): JsCmd = JavaScriptReaction { implicit reactor =>
+  /** Increases the indentation level of a given step. */
+  def increaseIndent(nodeId: String @@ LocalId)(implicit reactor: Reactor): Boolean =
     indentIncrease(nodeId, courses) match {
       case (newCourses, Some(newNode)) =>
         val oldCourses = courses
         setCourses(newCourses)
-        val updateJs = UpdateIndentation(courses) & UpdateLabels(courses)
-        reactor << customiseIndentIncreaseJs(nodeId, newNode, oldCourses, updateJs)
-      case _ =>
+        reactor(JavaScript)(
+          customiseIndentIncreaseJs(nodeId, newNode, oldCourses, UpdateIndentation(courses) & UpdateLabels(courses))
+        )
+        true
+      case _ => false
     }
-  }
 
-  /**
-   * Allows customisation of the ajax response of a successful indent increase.
-   */
+  def prohibitRemoval_?(id: String @@ LocalId) = false
+
+  /** Allows customisation of the ajax response of a successful indent decrease. */
+  protected def customiseIndentDecreaseJs(nodeId: String @@ LocalId, updateJs: JsCmd): JsCmd = updateJs
+
+
+  /** Allows customisation of the ajax response of a successful indent increase. */
   protected def customiseIndentIncreaseJs(nodeId: String @@ LocalId,
                                           newNode: StepNode,
                                           oldCourses: List[StepNode],
