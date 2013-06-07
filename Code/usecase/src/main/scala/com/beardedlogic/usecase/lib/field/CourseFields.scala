@@ -18,7 +18,7 @@ import msg._
 import Messages.StepChangeMsg
 import model._
 import FieldValue.FieldValueData
-import StepLabels.MaxStepsPerLevel
+import StepLabels.{MaxStepsPerLevel, MaxStepDepth}
 
 object CourseFields {
   import Fields.Template
@@ -274,14 +274,18 @@ abstract class CourseFields extends Field[CourseFieldState] {
     def invalid(l: List[StepNode]): Boolean = {
       if (l.isEmpty) false
       else if (l.last.labelIndex > MaxStepsPerLevel) {reactToMaxStepViolation; true }
+      else if (l.head.level >= MaxStepDepth) {reactToMaxLevelViolation; true }
       else l.exists(n => invalid(n.children))
     }
     !invalid(courses)
   }
 
   private def reactToMaxStepViolation(implicit reactor: Reactor) {
-    reactor(JavaScript)(JsCmds.Alert(s"You can't have more than $MaxStepsPerLevel steps in the same level." +
-      "\nMaybe you should rethink the structure of your use case(s)."))
+    reactor(JavaScript)(JsCmds.Alert(s"That would cause you to have ${MaxStepsPerLevel + 1} steps at the same level, which exceeds the maximum allowed."))
+  }
+
+  private def reactToMaxLevelViolation(implicit reactor: Reactor) {
+    reactor(JavaScript)(JsCmds.Alert(s"That would cause your steps to be ${MaxStepDepth + 1} levels deep, which exceeds the maximum allowed."))
   }
 
   def prohibitRemoval_?(id: String @@ LocalId) = false

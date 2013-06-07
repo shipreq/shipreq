@@ -9,8 +9,6 @@ FEATURE TODO
 FUNC TODO
 =========
 
-* [M.0.5] Enforce max indent.
-
 * [S.4.2] Allow step reordering, probably via drag-n-drop.
 * [S.3.0] Keyboard shortcuts for step editing (ie. nav & indent)
 * [S.1.3] Text field values shouldn't lose audit trail when text is cleared.

@@ -19,10 +19,11 @@ case class StepNode(id: String @@ LocalId,
   children: List[StepNode] = Nil)
   extends TreeNode[StepNode] {
 
+  // TODO Remove tight label maker coupling from StepNode
   // TODO Disable in prod
   require(level >= 0, s"Level (${level}) must be 0 or larger.")
-  require(level < LabelMakers.size, s"Level (${level}) must be less than ${LabelMakers.size}.")
-  require(labelIndex >= labelMaker.min, s"Label index (${labelIndex}) at level (${level}) must be ${labelMaker.min} or larger.")
+//  require(level < LabelMakers.size, s"Level (${level}) must be less than ${LabelMakers.size}.")
+//  require(labelIndex >= labelMaker.min, s"Label index (${labelIndex}) at level (${level}) must be ${labelMaker.min} or larger.")
 
   @inline final def labelMaker = LabelMakers(level)
   override final def label = labelMaker(labelIndex)

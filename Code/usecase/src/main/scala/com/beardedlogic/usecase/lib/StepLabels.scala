@@ -48,7 +48,8 @@ object StepLabels {
   final val ALPHA = LabelMaker(1, toAlpha _)
   final val ROMAN = LabelMaker(1, toRoman _)
 
-  // TODO Enforce max depth
   // (1.)0.1.a.i.4
   final val LabelMakers = Vector(NUMERIC_0, NUMERIC, ALPHA, ROMAN, NUMERIC)
+
+  final val MaxStepDepth = LabelMakers.size
 }

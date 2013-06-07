@@ -10,19 +10,14 @@
 
 [data-lvl="4"] { padding-left: 4cm; }
 
-[data-lvl="5"] { padding-left: 5cm; }
-
-[data-lvl="6"] { padding-left: 6cm; }
-
-[data-lvl="7"] { padding-left: 7cm; }
-
-[data-lvl="8"] { padding-left: 8cm; }
-
 /* Prevent deletion of normal course first step */
 .step.noDel .delete { visibility: hidden; }
 
 /* Prevent indentDecrease for top-level */
 .step[data-lvl="0"] .indentDec { visibility: hidden; }
+
+/* Prevent indentIncrease for deepest children */
+[data-lvl="4"] .indentInc { visibility: hidden; }
 
 /* Prevent indentIncrease for first children */
 .courses-n .step:first-child .indentInc, .courses-e .step:first-child .indentInc, .step[data-lvl="0"] + .step[data-lvl="1"] .indentInc, .step[data-lvl="1"] + .step[data-lvl="2"] .indentInc, .step[data-lvl="2"] + .step[data-lvl="3"] .indentInc, .step[data-lvl="3"] + .step[data-lvl="4"] .indentInc, .step[data-lvl="4"] + .step[data-lvl="5"] .indentInc, .step[data-lvl="5"] + .step[data-lvl="6"] .indentInc, .step[data-lvl="6"] + .step[data-lvl="7"] .indentInc, .step[data-lvl="7"] + .step[data-lvl="8"] .indentInc { visibility: hidden; }

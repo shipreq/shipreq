@@ -46,27 +46,35 @@ class CourseFieldsTest extends FunSpec with TestHelpers {
         1.1. Other """
   lazy val NodeTree1 = parseStepTree(Tree1Text)
 
+  def assertCourseChangeRejected(cf: CourseFields)(test: Reactor => Boolean) {
+    val c = cf.courses
+    val t = cf.test__textFields
+    val js = JavaScriptReaction { r => test(r) should be(false) }.toJsCmd
+    cf.courses should be theSameInstanceAs(c)
+    cf.test__textFields should be theSameInstanceAs(t)
+    js should include("alert")
+  }
+
   describe("Adding steps") {
     def testMaxSteps(cf: CourseFields, topStartsAtZero: Boolean) {
-      def test(maxSteps: Int, lvl: Int, tree: => List[StepNode])(addStep: Reactor => Any) {
+      def test(maxSteps: Int, lvl: Int, tree: => List[StepNode])(addStep: Reactor => Boolean) {
         maxSteps times { addStep(NoReaction) }
         tree.size should be(maxSteps)
         tree.last.labelIndex should be(MaxStepsPerLevel)
 
-        val js = JavaScriptReaction { r => addStep(r) }.toJsCmd
+        assertCourseChangeRejected(cf)(addStep(_))
         tree.size should be(maxSteps)
-        js should include("alert")
       }
 
       // Top level
       val topMax = MaxStepsPerLevel + (if (topStartsAtZero) 1 else 0)
       test(topMax, 1, cf.courses)(cf.addTailStep(_))
       // Level 2
-      test(MaxStepsPerLevel, 2, cf.courses(0).children)(cf.addStep(cf.courses(0).id)(_))
+      test(MaxStepsPerLevel, 2, cf.courses(0).children)(cf.addStep(cf.courses(0).id)(_).isDefined)
       // Level 3
       val t3 = cf.courses(0)(-1)
       cf.increaseIndent(t3.id)
-      test(MaxStepsPerLevel, 3, cf.courses(0)(-1).children)(cf.addStep(t3.id)(_))
+      test(MaxStepsPerLevel, 3, cf.courses(0)(-1).children)(cf.addStep(t3.id)(_).isDefined)
     }
 
     it("should not add when it reaches the max steps per level (NC/AC)") {
@@ -104,25 +112,41 @@ class CourseFieldsTest extends FunSpec with TestHelpers {
       cf
     }
 
-    //    it("should increase the deepest level allowed") pending
-    //    it("should increase a step which has children at the lowest level") pending
+    def ecWithDeepestLevel = {
+      val cf = new ExceptionCourseFields(mockUseCaseCtx, Key_EC)
+      var last: StepNode = null
+      (MaxStepDepth + 1) times {
+        cf.addTailStep
+        last = cf.courses.last
+        MaxStepDepth times { cf.increaseIndent(last.id) }
+      }
+      (cf,last)
+    }
 
     it("should decrease a step when it causes a breach of max steps per level") {
       val cf = ecWithThreeFullLevels
-      val c = cf.courses
-      cf.decreaseIndent(c.last(0).id) should be(false) // L0 <-- L1
-      cf.courses should be theSameInstanceAs (c)
-      cf.decreaseIndent(c.last(-1)(0).id) should be(false) // L1 <-- L2
-      cf.courses should be theSameInstanceAs (c)
+      assertCourseChangeRejected(cf)(cf.decreaseIndent(cf.courses.last(0).id)(_)) // L0 <-- L1
+      assertCourseChangeRejected(cf)(cf.decreaseIndent(cf.courses.last(-1)(0).id)(_)) // L1 <-- L2
     }
 
     it("should increase a step when it causes a breach of max steps per level") {
       val cf = ecWithThreeFullLevels
       cf.removeStep(cf.courses(3).id)
       cf.addTailStep
-      val c = cf.courses
-      cf.increaseIndent(c.last.id) should be(false) // L0 --> L1
-      cf.courses should be theSameInstanceAs (c)
+      assertCourseChangeRejected(cf)(cf.increaseIndent(cf.courses.last.id)(_)) // L0 --> L1
+    }
+
+    it("should not increase the deepest level allowed") {
+      val (cf, last) = ecWithDeepestLevel
+      val n = cf.addStep(last.id).get
+      assertCourseChangeRejected(cf)(cf.increaseIndent(n.id)(_))
+    }
+
+    it("should increase a step which has children at the lowest level") {
+      val (cf, _) = ecWithDeepestLevel
+      val n = cf.addStep(cf.courses(0).id).get // add 1.0.1
+      cf.decreaseIndent(n.id) // dec 1.0.1 into 1.1
+      assertCourseChangeRejected(cf)(cf.increaseIndent(n.id)(_)) // inc 1.1 with its new children
     }
   }
 
