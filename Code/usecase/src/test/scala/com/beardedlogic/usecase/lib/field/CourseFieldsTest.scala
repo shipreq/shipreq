@@ -11,6 +11,7 @@ import TestHelpers._
 import TypeTags._
 import net.liftweb.http.CometActor
 import tree.TreeOps._
+import msg.NoReaction
 
 class CourseFieldsTest extends FunSpec with TestHelpers {
 
@@ -18,6 +19,7 @@ class CourseFieldsTest extends FunSpec with TestHelpers {
   // Covered in UseCaseTest: save() with data refs
   // Covered in UseCaseTest: compare() with new steps
 
+  implicit def reactor = NoReaction
   implicit def CachedFunctionDelegation[R](c : CachedFunctionLike[R]): R = c.get
   implicit def autoTagLocalStepIds(s: String) = s.asLocalId
   implicit def autoTagNormalisedRefs(s: String) = s.hasNormalisedRefs
@@ -50,6 +52,21 @@ class CourseFieldsTest extends FunSpec with TestHelpers {
       x.stepMap("X2") should be(T1)
       x.stepMap("X4") should be(StepState("X4", "T3", Nil))
       x.stepMap("X1") should be(Tree1.head)
+    }
+  }
+
+  describe("Step removal") {
+    it("should remove step from courses") {
+      val cf = new NormalAndAlternateCourseFields(mockUseCaseCtx, Key_NC)
+      cf.removeStep(cf.courses(0)(0).id)
+      cf.courses should have size(1)
+    }
+    it("should remove step from text-field map") {
+      val cf = new NormalAndAlternateCourseFields(mockUseCaseCtx, Key_NC)
+      cf.init
+      cf.test__textFields should have size(2)
+      cf.removeStep(cf.courses(0)(0).id)
+      cf.test__textFields should have size(1)
     }
   }
 

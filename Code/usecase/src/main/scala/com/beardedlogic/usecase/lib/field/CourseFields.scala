@@ -230,8 +230,8 @@ abstract class CourseFields extends Field[CourseFieldState] {
     if (!prohibitRemoval_?(id))
       stepRemove(id, courses) match {
         case (newCourses, r@Some(node)) =>
-          // TODO fields aren't being removed
           setCourses(newCourses)
+          textFields -= id
           reactor(JavaScript)(
             FadeOut(JqExprForNodeAndChildren(node), 240)(_ ~> JqJE.JqRemove() & UpdateLabels(courses))
           )
