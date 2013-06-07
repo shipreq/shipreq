@@ -15,27 +15,6 @@ object TreeOps {
   }
 
   /**
-   * Generates a map of both node IDs to labels, and labels to node IDs.
-   *
-   * Example:
-   * 1.E.1    -> FD93E
-   * 1.E.1.a  -> F93A3
-   * FD93E    -> 1.E.1
-   * F93A3    -> 1.E.1.a
-   */
-  @deprecated("Use mapIdsToFullLabels() and a BiMap")
-  def mapIdsAndFullLabels[T <: TreeNode[T]](nodes: List[T], prefix: String = ""): Map[String, String] = nodes match {
-    case h :: t =>
-      val lbl = prefix + h.label
-      mapIdsAndFullLabels(t, prefix) ++
-        mapIdsAndFullLabels(h.children, lbl + ".") +
-        (h.id -> lbl) +
-        (lbl -> h.id)
-
-    case Nil => Map.empty
-  }
-
-  /**
    * Generates a map of node IDs to labels.
    *
    * Example:
