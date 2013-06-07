@@ -18,6 +18,7 @@ import msg._
 import Messages.StepChangeMsg
 import model._
 import FieldValue.FieldValueData
+import StepLabels.MaxStepsPerLevel
 
 object CourseFields {
   import Fields.Template
@@ -199,21 +200,24 @@ abstract class CourseFields extends Field[CourseFieldState] {
   def tailStepCss: String
 
   /** Adds a new top-level step to the end of the list. */
-  def addTailStep(implicit reactor: Reactor): StepNode = {
+  def addTailStep(implicit reactor: Reactor): Boolean = {
     val newNode = buildNewTailStep()
-    setCourses(courses :+ newNode)
-    createAndRegisterTextField(newNode)
-    reactor(JavaScript)(
-      JqExpr(tailStepCss) ~> JqBefore(renderSingleStepXml(newNode))
-        & JqId(newNode.id) ~> JqHide ~> JqSlideDownFast
-    )
-    newNode
+    val newCourses = courses :+ newNode
+    if (validateCourses(newCourses)) {
+      setCourses(newCourses)
+      createAndRegisterTextField(newNode)
+      reactor(JavaScript)(
+        JqExpr(tailStepCss) ~> JqBefore(renderSingleStepXml(newNode))
+          & JqId(newNode.id) ~> JqHide ~> JqSlideDownFast
+      )
+      true
+    } else false
   }
 
   /** Adds a new step, shuffling down subsequent steps and renumbering if necessary. */
   def addStep[R](preceedingNodeId: String @@ LocalId)(implicit reactor: Reactor): Option[StepNode] =
     stepInsert(preceedingNodeId, courses, StepNodeBuilder) match {
-      case (newCourses, r@Some(newNode)) =>
+      case (newCourses, r@Some(newNode)) if (validateCourses(newCourses)) =>
         setCourses(newCourses)
         createAndRegisterTextField(newNode)
         reactor(JavaScript)(
@@ -243,7 +247,7 @@ abstract class CourseFields extends Field[CourseFieldState] {
   /** Decreases the indentation level of a given step. */
   def decreaseIndent(nodeId: String @@ LocalId)(implicit reactor: Reactor): Boolean =
     indentDecrease(nodeId, courses) match {
-      case (newCourses, Some(_)) =>
+      case (newCourses, Some(_)) if (validateCourses(newCourses)) =>
         setCourses(newCourses)
         reactor(JavaScript)(
           customiseIndentDecreaseJs(nodeId, UpdateIndentation(courses) & UpdateLabels(courses))
@@ -255,7 +259,7 @@ abstract class CourseFields extends Field[CourseFieldState] {
   /** Increases the indentation level of a given step. */
   def increaseIndent(nodeId: String @@ LocalId)(implicit reactor: Reactor): Boolean =
     indentIncrease(nodeId, courses) match {
-      case (newCourses, Some(newNode)) =>
+      case (newCourses, Some(newNode)) if (validateCourses(newCourses)) =>
         val oldCourses = courses
         setCourses(newCourses)
         reactor(JavaScript)(
@@ -264,6 +268,21 @@ abstract class CourseFields extends Field[CourseFieldState] {
         true
       case _ => false
     }
+
+  /** Validates courses are legal. If not, a reaction is provided and `false` returned. */
+  def validateCourses(courses: List[StepNode])(implicit reactor: Reactor): Boolean = {
+    def invalid(l: List[StepNode]): Boolean = {
+      if (l.isEmpty) false
+      else if (l.last.labelIndex > MaxStepsPerLevel) {reactToMaxStepViolation; true }
+      else l.exists(n => invalid(n.children))
+    }
+    !invalid(courses)
+  }
+
+  private def reactToMaxStepViolation(implicit reactor: Reactor) {
+    reactor(JavaScript)(JsCmds.Alert(s"You can't have more than $MaxStepsPerLevel steps in the same level." +
+      "\nMaybe you should rethink the structure of your use case(s)."))
+  }
 
   def prohibitRemoval_?(id: String @@ LocalId) = false
 

@@ -11,7 +11,8 @@ import TestHelpers._
 import TypeTags._
 import net.liftweb.http.CometActor
 import tree.TreeOps._
-import msg.NoReaction
+import msg._
+import StepLabels._
 
 class CourseFieldsTest extends FunSpec with TestHelpers {
 
@@ -45,17 +46,38 @@ class CourseFieldsTest extends FunSpec with TestHelpers {
         1.1. Other """
   lazy val NodeTree1 = parseStepTree(Tree1Text)
 
-  describe("CourseFieldState") {
-    it("should build a step map") {
-      val x = CourseFieldState(Tree1)
-      x.stepMap.size should be(8)
-      x.stepMap("X2") should be(T1)
-      x.stepMap("X4") should be(StepState("X4", "T3", Nil))
-      x.stepMap("X1") should be(Tree1.head)
+  describe("Adding steps") {
+    def testMaxSteps(cf: CourseFields, topStartsAtZero: Boolean) {
+      def test(maxSteps: Int, lvl: Int, tree: => List[StepNode])(addStep: Reactor => Any) {
+        maxSteps times { addStep(NoReaction) }
+        tree.size should be(maxSteps)
+        tree.last.labelIndex should be(MaxStepsPerLevel)
+
+        val js = JavaScriptReaction { r => addStep(r) }.toJsCmd
+        tree.size should be(maxSteps)
+        js should include("alert")
+      }
+
+      // Top level
+      val topMax = MaxStepsPerLevel + (if (topStartsAtZero) 1 else 0)
+      test(topMax, 1, cf.courses)(cf.addTailStep(_))
+      // Level 2
+      test(MaxStepsPerLevel, 2, cf.courses(0).children)(cf.addStep(cf.courses(0).id)(_))
+      // Level 3
+      val t3 = cf.courses(0)(-1)
+      cf.increaseIndent(t3.id)
+      test(MaxStepsPerLevel, 3, cf.courses(0)(-1).children)(cf.addStep(t3.id)(_))
+    }
+
+    it("should not add when it reaches the max steps per level (NC/AC)") {
+      testMaxSteps(new NormalAndAlternateCourseFields(mockUseCaseCtx, Key_NC), true)
+    }
+    it("should not add when it reaches the max steps per level (EC)") {
+      testMaxSteps(new ExceptionCourseFields(mockUseCaseCtx, Key_EC), false)
     }
   }
 
-  describe("Step removal") {
+  describe("Removing steps") {
     it("should remove step from courses") {
       val cf = new NormalAndAlternateCourseFields(mockUseCaseCtx, Key_NC)
       cf.removeStep(cf.courses(0)(0).id)
@@ -67,6 +89,50 @@ class CourseFieldsTest extends FunSpec with TestHelpers {
       cf.test__textFields should have size(2)
       cf.removeStep(cf.courses(0)(0).id)
       cf.test__textFields should have size(1)
+    }
+  }
+
+  describe("Indenting steps") {
+    def ecWithThreeFullLevels = {
+      val cf = new ExceptionCourseFields(mockUseCaseCtx, Key_EC)
+      MaxStepsPerLevel.times(cf.addTailStep) // Creates (1-99)
+      MaxStepsPerLevel.times(cf.addStep(cf.courses.last.id)) // Creates 99.(1-99)
+      cf.increaseIndent(cf.courses.last(-1).id) // Creates 99.98.a
+      cf.addStep(cf.courses.last.id) // Creates 99.99
+      MaxStepsPerLevel.times(cf.addStep(cf.courses.last(-1)(-1).id)) // Creates 99.98.(a-xx)
+      cf.test__textFields.size should be(MaxStepsPerLevel * 3)
+      cf
+    }
+
+    //    it("should increase the deepest level allowed") pending
+    //    it("should increase a step which has children at the lowest level") pending
+
+    it("should decrease a step when it causes a breach of max steps per level") {
+      val cf = ecWithThreeFullLevels
+      val c = cf.courses
+      cf.decreaseIndent(c.last(0).id) should be(false) // L0 <-- L1
+      cf.courses should be theSameInstanceAs (c)
+      cf.decreaseIndent(c.last(-1)(0).id) should be(false) // L1 <-- L2
+      cf.courses should be theSameInstanceAs (c)
+    }
+
+    it("should increase a step when it causes a breach of max steps per level") {
+      val cf = ecWithThreeFullLevels
+      cf.removeStep(cf.courses(3).id)
+      cf.addTailStep
+      val c = cf.courses
+      cf.increaseIndent(c.last.id) should be(false) // L0 --> L1
+      cf.courses should be theSameInstanceAs (c)
+    }
+  }
+
+  describe("CourseFieldState") {
+    it("should build a step map") {
+      val x = CourseFieldState(Tree1)
+      x.stepMap.size should be(8)
+      x.stepMap("X2") should be(T1)
+      x.stepMap("X4") should be(StepState("X4", "T3", Nil))
+      x.stepMap("X1") should be(Tree1.head)
     }
   }
 

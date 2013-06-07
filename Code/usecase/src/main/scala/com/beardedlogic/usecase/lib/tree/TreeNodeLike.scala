@@ -11,7 +11,7 @@ trait TreeNodeLike[T <: TreeNodeLike[T]] extends Traversable[T] {
 
   val children: List[T]
 
-  def apply(childIndex: Int) = children(childIndex)
+  def apply(childIndex: Int) = if (childIndex >= 0) children(childIndex) else children(children.size + childIndex)
 
   override def foreach[U](fn: T => U) {
     fn(this)

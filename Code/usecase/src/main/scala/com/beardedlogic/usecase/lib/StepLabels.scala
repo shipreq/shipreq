@@ -8,8 +8,7 @@ import TypeTags._
  */
 object StepLabels {
 
-  // TODO Enforce max steps/level
-  val MaxStepsPerLevel = 99
+  final val MaxStepsPerLevel = 99
 
   private def toNumeric(i: Int) = i.toString
 
@@ -44,12 +43,12 @@ object StepLabels {
     }
   }
 
-  val NUMERIC_0 = LabelMaker(0, toNumeric _)
-  val NUMERIC = LabelMaker(1, toNumeric _)
-  val ALPHA = LabelMaker(1, toAlpha _)
-  val ROMAN = LabelMaker(1, toRoman _)
+  final val NUMERIC_0 = LabelMaker(0, toNumeric _)
+  final val NUMERIC = LabelMaker(1, toNumeric _)
+  final val ALPHA = LabelMaker(1, toAlpha _)
+  final val ROMAN = LabelMaker(1, toRoman _)
 
   // TODO Enforce max depth
   // (1.)0.1.a.i.4
-  val LabelMakers = Vector(NUMERIC_0, NUMERIC, ALPHA, ROMAN, NUMERIC)
+  final val LabelMakers = Vector(NUMERIC_0, NUMERIC, ALPHA, ROMAN, NUMERIC)
 }

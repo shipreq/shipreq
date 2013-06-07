@@ -9,7 +9,6 @@ FEATURE TODO
 FUNC TODO
 =========
 
-* [M.0.5] Enforce max step count.
 * [M.0.5] Enforce max indent.
 
 * [S.4.2] Allow step reordering, probably via drag-n-drop.
