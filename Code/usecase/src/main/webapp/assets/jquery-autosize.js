@@ -1,25 +1,23 @@
 /*!
-	jQuery Autosize v1.16.7
+	jQuery Autosize v1.16.15
 	(c) 2013 Jack Moore - jacklmoore.com
-	updated: 2013-03-20
+	updated: 2013-06-07
 	license: http://www.opensource.org/licenses/mit-license.php
 */
-
-
 (function ($) {
 	var
 	defaults = {
 		className: 'autosizejs',
 		append: '',
-		callback: false
+		callback: false,
+		resizeDelay: 10
 	},
 	hidden = 'hidden',
 	borderBox = 'border-box',
 	lineHeight = 'lineHeight',
-	supportsScrollHeight,
 
-	// border:0 is unnecessary, but avoids a bug in FireFox on OSX (http://www.jacklmoore.com/autosize#comment-851)
-	copy = '<textarea tabindex="-1" style="position:absolute; top:-999px; left:0; right:auto; bottom:auto; border:0; -moz-box-sizing:content-box; -webkit-box-sizing:content-box; box-sizing:content-box; word-wrap:break-word; height:0 !important; min-height:0 !important; width: 0; overflow:hidden;"/>',
+	// border:0 is unnecessary, but avoids a bug in FireFox on OSX
+	copy = '<textarea tabindex="-1" style="position:absolute; top:-999px; left:0; right:auto; bottom:auto; border:0; -moz-box-sizing:content-box; -webkit-box-sizing:content-box; box-sizing:content-box; word-wrap:break-word; height:0 !important; min-height:0 !important; overflow:hidden; transition:none; -webkit-transition:none; -moz-transition:none;"/>',
 
 	// line-height is conditionally included because IE7/IE8/old Opera do not return the correct value.
 	copyStyle = [
@@ -53,10 +51,6 @@
 
 		if (mirror.parentNode !== document.body) {
 			$(document.body).append(mirror);
-
-			mirror.value = "\n\n\n";
-			mirror.scrollTop = 9e4;
-			supportsScrollHeight = mirror.scrollHeight === mirror.scrollTop + mirror.clientHeight;
 		}
 
 		return this.each(function () {
@@ -64,7 +58,7 @@
 			ta = this,
 			$ta = $(ta),
 			minHeight,
-			active,
+			maxHeight,
 			resize,
 			boxOffset = 0,
 			callback = $.isFunction(options.callback);
@@ -78,7 +72,8 @@
 				boxOffset = $ta.outerHeight() - $ta.height();
 			}
 
-			minHeight = Math.max(parseInt($ta.css('minHeight'), 10) - boxOffset, $ta.height());
+			// IE8 and lower return 'auto', which parses to NaN, if no min-height is set.
+			minHeight = Math.max(parseInt($ta.css('minHeight'), 10) - boxOffset || 0, $ta.height());
 
 			resize = ($ta.css('resize') === 'none' || $ta.css('resize') === 'vertical') ? 'none' : 'horizontal';
 
@@ -92,6 +87,7 @@
 			function initMirror() {
 				mirrored = ta;
 				mirror.className = options.className;
+				maxHeight = parseInt($ta.css('maxHeight'), 10);
 
 				// mirror is a duplicate textarea located off-screen that
 				// is automatically updated to contain the same text as the
@@ -101,6 +97,15 @@
 				$.each(copyStyle, function(i, val){
 					mirror.style[val] = $ta.css(val);
 				});
+
+				// The textarea overflow is probably now hidden, but Chrome doesn't reflow the text to account for the
+				// new space made available by removing the scrollbars. This workaround causes Chrome to reflow the text.
+				if (oninput in ta) {
+					var width = ta.style.width;
+					ta.style.width = '0px';
+					var discard = ta.offsetWidth; // trigger a reflow
+					ta.style.width = width;
+				}
 			}
 
 			// Using mainly bare JS in this function because it is going
@@ -112,50 +117,37 @@
 					initMirror();
 				}
 
-				// the active flag keeps IE from tripping all over itself.  Otherwise
-				// actions in the adjust function will cause IE to call adjust again.
-				if (!active) {
-					active = true;
-					mirror.value = ta.value + options.append;
-					mirror.style.overflowY = ta.style.overflowY;
-					original = parseInt(ta.style.height,10);
+				mirror.value = ta.value + options.append;
+				mirror.style.overflowY = ta.style.overflowY;
+				original = parseInt(ta.style.height,10);
 
-					// Update the width in case the original textarea width has changed
-					// A floor of 0 is needed because IE8 returns a negative value for hidden textareas, raising an error.
-					mirror.style.width = Math.max($ta.width(), 0) + 'px';
+				// Update the width in case the original textarea width has changed
+				// A floor of 0 is needed because IE8 returns a negative value for hidden textareas, raising an error.
+				mirror.style.width = Math.max($ta.width(), 0) + 'px';
 
-					if (supportsScrollHeight) {
-						height = mirror.scrollHeight;
-					} else { // IE6 & IE7
-						mirror.scrollTop = 0;
-						mirror.scrollTop = 9e4;
-						height = mirror.scrollTop;
+				// Needed for IE8 and lower to reliably return the correct scrollTop
+				mirror.scrollTop = 0;
+
+				mirror.scrollTop = 9e4;
+
+				// Using scrollTop rather than scrollHeight because scrollHeight is non-standard and includes padding.
+				height = mirror.scrollTop;
+
+				if (maxHeight && height > maxHeight) {
+					height = maxHeight;
+					overflow = 'scroll';
+				} else if (height < minHeight) {
+					height = minHeight;
+				}
+
+				height += boxOffset;
+				ta.style.overflowY = overflow || hidden;
+
+				if (original !== height) {						
+					ta.style.height = height + 'px';
+					if (callback) {
+						options.callback.call(ta,ta);
 					}
-
-					var maxHeight = parseInt($ta.css('maxHeight'), 10);
-					// Opera returns '-1px' when max-height is set to 'none'.
-					maxHeight = maxHeight && maxHeight > 0 ? maxHeight : 9e4;
-					if (height > maxHeight) {
-						height = maxHeight;
-						overflow = 'scroll';
-					} else if (height < minHeight) {
-						height = minHeight;
-					}
-					height += boxOffset;
-					ta.style.overflowY = overflow || hidden;
-
-					if (original !== height) {
-						ta.style.height = height + 'px';
-						if (callback) {
-							options.callback.call(ta,ta);
-						}
-					}
-
-					// This small timeout gives IE a chance to draw it's scrollbar
-					// before adjust can be run again (prevents an infinite loop).
-					setTimeout(function () {
-						active = false;
-					}, 1);
 				}
 			}
 
@@ -167,23 +159,34 @@
 					ta[oninput] = ta.onkeyup = adjust;
 				} else {
 					// IE7 / IE8
-					ta[onpropertychange] = adjust;
+					ta[onpropertychange] = function(){
+						if(event.propertyName === 'value'){
+							adjust();
+						}
+					};
 				}
 			} else {
 				// Modern Browsers
 				ta[oninput] = adjust;
 			}
 
-			$(window).on('resize', function(){
-				active = false;
-				adjust();
-			});
+			// Set options.resizeDelay to false if using fixed-width textarea elements.
+			// Uses a timeout and width check to reduce the amount of times adjust needs to be called after window resize.
+			if (options.resizeDelay !== false) {
+				var timeout;
+				var width = $(ta).width();
+				$(window).on('resize.autosize', function() {
+					clearTimeout(timeout);
+					timeout = setTimeout(function(){
+						if ($(ta).width() !== width) {
+							adjust();
+						}
+					}, parseInt(options.resizeDelay,10));
+				});
+			}
 
 			// Allow for manual triggering if needed.
-			$ta.on('autosize', function(){
-				active = false;
-				adjust();
-			});
+			$ta.on('autosize', adjust);
 
 			// Call adjust in case the textarea already contains text.
 			adjust();
