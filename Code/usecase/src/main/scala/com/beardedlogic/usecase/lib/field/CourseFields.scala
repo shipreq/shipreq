@@ -106,7 +106,7 @@ object CourseFields {
 
 // =====================================================================================================================
 
-abstract class CourseFields extends Field[CourseFieldState] {
+abstract class CourseFields extends Field[CourseFieldState] with SnippetHelpers {
 
   private[this] var _courses: List[StepNode] = Nil
   private[this] var textFields: Map[String @@ LocalId, SmartStepText] = Map.empty
@@ -164,7 +164,7 @@ abstract class CourseFields extends Field[CourseFieldState] {
    * Also renders an addTailStep button.
    */
   protected def renderStepsWithAddTailStep(steps: List[StepNode]): NodeSeq => NodeSeq = {
-    val t = "button" #> SHtml.ajaxButton("+", () => JavaScriptReaction(addTailStep(_)))
+    val t = "button" #> SHtml.ajaxButton("+", jsCallback(addTailStep(_)))
     val addTailStepTmpl = t(AddTailStepTemplate)
     renderSteps(steps) andThen ".steps *+" #> addTailStepTmpl // Append to .steps, after all the .step tags
   }
@@ -179,10 +179,10 @@ abstract class CourseFields extends Field[CourseFieldState] {
     & ".label span *" #> labelFor(n)
     & ".label span [id]" #> n.labelId
     & "@text" #> textFields(n.id).renderTextarea
-    & ".add" #> SHtml.ajaxButton("+", () => JavaScriptReaction(addStep(n.id)(_)))
-    & ".delete" #> SHtml.ajaxButton("-", () => JavaScriptReaction(removeStep(n.id)(_)))
-    & ".indentDec" #> SHtml.ajaxButton("«", () => JavaScriptReaction(decreaseIndent(n.id)(_)))
-    & ".indentInc" #> SHtml.ajaxButton(<span>»</span>, () => JavaScriptReaction(increaseIndent(n.id)(_)))
+    & ".add" #> SHtml.ajaxButton("+", jsCallback(addStep(n.id)(_)))
+    & ".delete" #> SHtml.ajaxButton("-", jsCallback(removeStep(n.id)(_)))
+    & ".indentDec" #> SHtml.ajaxButton("«", jsCallback(decreaseIndent(n.id)(_)))
+    & ".indentInc" #> SHtml.ajaxButton(<span>»</span>, jsCallback(increaseIndent(n.id)(_)))
   )
 
   /**
