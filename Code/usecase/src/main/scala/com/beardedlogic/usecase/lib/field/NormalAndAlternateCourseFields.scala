@@ -9,7 +9,7 @@ import CourseFields._
 import msg.NoReactionOrNewMessages
 
 object NormalAndAlternateCourseFields extends FieldDef[CourseFieldState] {
-  import Fields.Template
+  import TemplateCache._
 
   override def newFieldInstance(ucCtx: UseCaseCtx, fieldKey: FieldKey) =
     new NormalAndAlternateCourseFields(ucCtx, fieldKey)
@@ -20,8 +20,8 @@ object NormalAndAlternateCourseFields extends FieldDef[CourseFieldState] {
   def NCAC_StartingLabelIndices = StartingRootLabelIndexAt0
   override def stateLoader(fieldKey: FieldKey) = new CourseFieldStateLoader(fieldKey, NCAC_StartingLabelIndices)
 
-  val NormalCourseTemplate = AddStepTemplate(Template("template-courses-n"))
-  val AlternateCourseTemplate = AddStepTemplate(Template("template-courses-a"))
+  val NormalCourseTemplate = AddStepTemplate(UseCaseEditorTemplate.extract("template-courses-n"))
+  val AlternateCourseTemplate = AddStepTemplate(UseCaseEditorTemplate.extract("template-courses-a"))
   val AddTailStepCss = s".courses-a .$AddTailStepClass"
 }
 

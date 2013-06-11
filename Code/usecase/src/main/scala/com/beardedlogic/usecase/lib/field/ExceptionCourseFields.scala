@@ -6,7 +6,7 @@ import model.{FieldKey, FieldKeyType}
 import CourseFields._
 
 object ExceptionCourseFields extends FieldDef[CourseFieldState] {
-  import Fields.Template
+  import TemplateCache._
 
   override def newFieldInstance(ucCtx: UseCaseCtx, fieldKey: FieldKey) =
     new ExceptionCourseFields(ucCtx, fieldKey)
@@ -17,7 +17,7 @@ object ExceptionCourseFields extends FieldDef[CourseFieldState] {
   def EC_StartingLabelIndices = StartingLabelIndicesAt1
   override def stateLoader(fieldKey: FieldKey) = new CourseFieldStateLoader(fieldKey, EC_StartingLabelIndices)
 
-  val ExceptionTemplate = AddStepTemplate(Template("template-courses-e"))
+  val ExceptionTemplate = AddStepTemplate(UseCaseEditorTemplate.extract("template-courses-e"))
   val AddTailStepCss = s".courses-e .$AddTailStepClass"
 }
 

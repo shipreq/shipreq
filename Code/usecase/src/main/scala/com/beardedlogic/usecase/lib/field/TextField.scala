@@ -24,10 +24,9 @@ case class TextFieldDef(title: String) extends FieldDef[String @@ NormalisedRefs
 }
 
 object TextField {
+  import TemplateCache._
 
-  import Fields.Template
-
-  val TextTemplate = Template("template-text")
+  val TextTemplate = UseCaseEditorTemplate.extract("template-text")
 
   class StateLoader(val fieldKey: FieldKey) extends FieldStateLoader[String @@ NormalisedRefs] {
     override def load(loadCtx: FieldLoadCtx, saveCtx: MutableFieldSaveCtx) =

@@ -21,14 +21,14 @@ import FieldValue.FieldValueData
 import StepLabels.{MaxStepsPerLevel, MaxStepDepth}
 
 object CourseFields {
-  import Fields.Template
+  import TemplateCache._
 
-  val StepTemplate = Template("template-step")
+  val StepTemplate = UseCaseEditorTemplate.extract("template-step")
 
   val AttrLevel = "data-lvl" // TODO rename this unclear thing
 
   val AddStepTemplate = ".steps * " #> StepTemplate
-  val AddTailStepTemplate = Template("template-courses-addTailStep")
+  val AddTailStepTemplate = UseCaseEditorTemplate.extract("template-courses-addTailStep")
   val AddTailStepClass = "addTailStep"
 
   def ExprForNodeAndChildren(n: StepNode) = n.map("#" + _.id).mkString(",")
