@@ -57,7 +57,7 @@ class FieldValueTest extends FunSpec with TestHelpers {
     it("should insert when has text") {
       val tf = newTextField
       tf.value.setTextFromUser("Yay!")
-      val fv = assertTableDiffs("field_value" -> 1, "value" -> 1, "data" -> 1) {
+      val fv = assertTableDiffs('field_value -> 1, 'value -> 1, 'data -> 1) {
         db.createInitialFieldValues(tf :: Nil)
       }
       fv.size should be(1)
@@ -84,7 +84,7 @@ class FieldValueTest extends FunSpec with TestHelpers {
               )) :: Nil
           )) :: Nil
 
-      val fv = assertTableDiffs("field_value" -> 1, "step" -> 5, "value" -> 6, "data" -> 6, "relation" -> 5) {
+      val fv = assertTableDiffs('field_value -> 1, 'step -> 5, 'value -> 6, 'data -> 6, 'relation -> 5) {
         db.createInitialFieldValues(f :: Nil)
       }
       fv.size should be(1)

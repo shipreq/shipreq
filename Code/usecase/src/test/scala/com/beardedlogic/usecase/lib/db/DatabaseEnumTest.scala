@@ -12,7 +12,7 @@ class DatabaseEnumTest extends FunSpec with TestDatabaseSupport {
   // TODO DatabaseEnum disabled cos it's wiping all tables and causing DB deadlocks
   ignore("DatabaseEnum.init()") {
 
-    def count = countRowsIn("data_type")
+    def count = countRowsIn('data_type)
 
     def verifyAllThere() {
       count should be(DataType.Values.size)
@@ -21,14 +21,14 @@ class DatabaseEnumTest extends FunSpec with TestDatabaseSupport {
     }
 
     it("should insert new items") {
-      truncate("data_type")
+      truncate('data_type)
       count should be(0)
       DatabaseEnum.init(DataType)
       verifyAllThere
     }
 
     it("should update existing") {
-      truncate("data_type")
+      truncate('data_type)
       val v = DataType.UseCase
       sqlu"INSERT INTO data_type(id,name) VALUES(${v.ordinal},'bullshit')".execute
       count should be(1)

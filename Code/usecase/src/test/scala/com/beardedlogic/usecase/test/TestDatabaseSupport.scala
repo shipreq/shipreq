@@ -64,29 +64,29 @@ trait TestDatabaseSupport extends ShouldMatchers with Logger {
 
   def randomId = -TestDatabaseSupport.Random.nextLong().abs
 
-  def countRowsIn(table: String) = Q.queryNA[Int](s"select count(*) from $table").first
+  def countRowsIn(table: Symbol) = Q.queryNA[Int](s"select count(*) from ${table.name}").first
 
   val Tables = List(
-    "data_type",
-    "relation_type",
-    "field_key_type",
-    "data",
-    "value",
-    "relation",
-    "field_key",
-    "field_value",
-    "usecase",
-    "step"
+    'data_type,
+    'relation_type,
+    'field_key_type,
+    'data,
+    'value,
+    'relation,
+    'field_key,
+    'field_value,
+    'usecase,
+    'step
   )
   val ValueTables = List(
-    "value",
-    "field_key",
-    "field_value",
-    "usecase",
-    "step"
+    'value,
+    'field_key,
+    'field_value,
+    'usecase,
+    'step
   )
 
-  def assertTableDiffs[T](expectations: (String, Int)*)(block: => T) = {
+  def assertTableDiffs[T](expectations: (Symbol, Int)*)(block: => T) = {
     val specTables = expectations.map(_._1)
     val unspecTables = Tables.filter(!specTables.contains(_)).map((_,0))
     val fullExp = expectations ++ unspecTables
@@ -107,23 +107,24 @@ trait TestDatabaseSupport extends ShouldMatchers with Logger {
     result
   }
 
-  def truncate(tables: String*) {
+  def truncate(tables: Symbol*) {
     tables.foreach { table =>
     // Dependents first
-      table.toLowerCase.trim match {
-        case "data_type"      => truncate("data")
-        case "data"           => truncate("value")
-        case "value"          => truncate("relation", "field_key", "field_value", "usecase")
-        case "relation_type"  => truncate("relation")
-        case "field_key_type" => truncate("field_key")
+      table match {
+        case 'data_type      => truncate('data)
+        case 'data           => truncate('value)
+        case 'value          => truncate('relation, 'field_key, 'field_value, 'usecase)
+        case 'relation_type  => truncate('relation)
+        case 'field_key_type => truncate('field_key)
         case _                =>
       }
+      val tableName = table.name
       if (ValueTables.contains(table)) {
-        Q.updateNA(s"delete from relation where from_id in (select id from $table) OR to_id in (select id from $table)").execute
+        Q.updateNA(s"delete from relation where from_id in (select id from $tableName) OR to_id in (select id from $tableName)").execute
         if (table != "value")
-          Q.updateNA(s"delete from value where id in (select id from $table)").execute
+          Q.updateNA(s"delete from value where id in (select id from $tableName)").execute
       }
-      Q.updateNA(s"delete from $table").execute
+      Q.updateNA(s"delete from $tableName").execute
     }
   }
 }

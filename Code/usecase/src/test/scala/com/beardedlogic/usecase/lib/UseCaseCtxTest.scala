@@ -137,13 +137,13 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
     it("should save when empty") {
       val uc = new UseCaseCtx(null)
       uc.courseFields.foreach(_ setCourses Nil)
-      assertTableDiffs("usecase" -> 1, "data" -> 1, "value" -> 1) { uc.save(db) }
+      assertTableDiffs('usecase -> 1, 'data -> 1, 'value -> 1) { uc.save(db) }
     }
 
     it("should save with 2 text fields") {
       val uc = sampleCtx
       uc.courseFields.foreach(_ setCourses Nil)
-      assertTableDiffs("usecase" -> 1, "data" -> 3, "value" -> 3, "field_value" -> 2, "relation" -> 2) { uc.save(db) }
+      assertTableDiffs('usecase -> 1, 'data -> 3, 'value -> 3, 'field_value -> 2, 'relation -> 2) { uc.save(db) }
     }
   }
 
@@ -166,35 +166,35 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
     it("should save a title change") {
       testUpdate { uc =>
         uc.title = "zzzzzzzzz"
-        assertTableDiffs("usecase" -> 1, "value" -> 1, "relation" -> FVs) { uc.save(db) }
+        assertTableDiffs('usecase -> 1, 'value -> 1, 'relation -> FVs) { uc.save(db) }
       }
     }
 
     it("should save a UC-number change") {
       testUpdate { uc =>
         uc.number = 666
-        assertTableDiffs("usecase" -> 1, "value" -> 1, "relation" -> FVs) { uc.save(db) }
+        assertTableDiffs('usecase -> 1, 'value -> 1, 'relation -> FVs) { uc.save(db) }
       }
     }
 
     it("should save a text update") {
       testUpdate { uc =>
         uc.textFields(0).value.setTextFromUser("jjjjjjjjjj")
-        assertTableDiffs("usecase" -> 1, "field_value" -> 1, "value" -> 2, "relation" -> FVs) { uc.save(db) }
+        assertTableDiffs('usecase -> 1, 'field_value -> 1, 'value -> 2, 'relation -> FVs) { uc.save(db) }
       }
     }
 
     it("should save a text removal") {
       testUpdate { uc =>
         uc.textFields(0).value.setTextFromUser("")
-        assertTableDiffs("usecase" -> 1, "value" -> 1, "relation" -> FVsPlus(-1)) { uc.save(db) }
+        assertTableDiffs('usecase -> 1, 'value -> 1, 'relation -> FVsPlus(-1)) { uc.save(db) }
       }
     }
 
     it("should save a new text") {
       testUpdate { uc =>
         uc.textFields(3).value.setTextFromUser("jjjjjjjjjj")
-        assertTableDiffs("usecase" -> 1, "field_value" -> 1, "value" -> 2, "data" -> 1, "relation" -> FVsPlus(1)) { uc.save(db) }
+        assertTableDiffs('usecase -> 1, 'field_value -> 1, 'value -> 2, 'data -> 1, 'relation -> FVsPlus(1)) { uc.save(db) }
       }
     }
 
@@ -202,7 +202,7 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
       val uc = sampleCtx
       def save = uc.save(db)
       def assertNoSubsequentUpdates = 2.times{ assertTableDiffs() { save } }
-      def assertUpdate(expectations: Seq[(String, Int)]) = { assertTableDiffs(expectations: _*)(save); assertNoSubsequentUpdates }
+      def assertUpdate(expectations: Seq[(Symbol, Int)]) = { assertTableDiffs(expectations: _*)(save); assertNoSubsequentUpdates }
       save; assertNoSubsequentUpdates
       simulateMultipleUpdates(uc, assertUpdate)
     }
@@ -212,32 +212,32 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
   def FVs = 4 // 2 text fields + NC/AC + EC
   def FVsPlus(plus: Int) = FVs + plus
 
-  def simulateMultipleUpdates(uc: UseCaseCtx, testUpdateFn: Seq[(String, Int)] => Any) = {
-    def testUpdate(expectations: (String, Int)*) = testUpdateFn(expectations)
+  def simulateMultipleUpdates(uc: UseCaseCtx, testUpdateFn: Seq[(Symbol, Int)] => Any) = {
+    def testUpdate(expectations: (Symbol, Int)*) = testUpdateFn(expectations)
 
     uc.msgCentre.enabled = true
 
     // Change title
     uc.title = "zzzzzzzzz"
-    testUpdate("usecase" -> 1, "value" -> 1, "relation" -> FVs)
+    testUpdate('usecase -> 1, 'value -> 1, 'relation -> FVs)
 
     // Change text field
     uc.textFields(0).value.setTextFromUser("jjjjjjjjjj")
-    testUpdate("usecase" -> 1, "field_value" -> 1, "value" -> 2, "relation" -> FVs)
+    testUpdate('usecase -> 1, 'field_value -> 1, 'value -> 2, 'relation -> FVs)
 
     // Clear text field
     uc.textFields(0).value.setTextFromUser("")
-    testUpdate("usecase" -> 1, "value" -> 1, "relation" -> FVsPlus(-1))
+    testUpdate('usecase -> 1, 'value -> 1, 'relation -> FVsPlus(-1))
 
     // Restore text field
     uc.textFields(0).value.setTextFromUser("Back!")
     // TODO A new FV is created when text is deleted and restored. Should it not maintain the FV audit trail?
-    testUpdate("usecase" -> 1, "field_value" -> 1, "value" -> 2, "data" -> 1, "relation" -> FVs)
+    testUpdate('usecase -> 1, 'field_value -> 1, 'value -> 2, 'data -> 1, 'relation -> FVs)
 
     // Reorder @ L1
     val ncac = uc.ncacField.get
     ncac setCourses fixTopLevelIndices(ncac.courses.reverse)
-    testUpdate("usecase" -> 1, "field_value" -> 1, "value" -> 2, "relation" -> FVsPlus(ncac.courses.size))
+    testUpdate('usecase -> 1, 'field_value -> 1, 'value -> 2, 'relation -> FVsPlus(ncac.courses.size))
 
     // Step text change @ L2
     ncac.test__textFields(ncac.courses(1)(0).id).setTextFromUser("Roar.")
@@ -246,7 +246,7 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
     // 1.0 has 3 children      --         R:3
     // FV has 2 steps          --     V:1 R:2
     // Usecase + value         --     V:1
-    testUpdate("usecase" -> 1, "field_value" -> 1, "step" -> 2, "value" -> 4, "relation" -> FVsPlus(5))
+    testUpdate('usecase -> 1, 'field_value -> 1, 'step -> 2, 'value -> 4, 'relation -> FVsPlus(5))
 
     // Ref to new (empty) step
     ncac.addTailStep
@@ -256,12 +256,12 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
     // Text update    --     V:1     FV:1
     // FV has 3 steps --     V:1     FV:1 R:3
     // UC             --     V:1          R:FVs
-    testUpdate("usecase" -> 1, "field_value" -> 2, "step" -> 1, "value" -> 4, "data" -> 1, "relation" -> FVsPlus(3))
+    testUpdate('usecase -> 1, 'field_value -> 2, 'step -> 1, 'value -> 4, 'data -> 1, 'relation -> FVsPlus(3))
 
     // Reorder to step referred to by others
     ncac setCourses fixTopLevelIndices(ncac.courses.reverse)
     eventually(uc.textFields(0).value.text should be("New step is [1.0]"))
-    testUpdate("usecase" -> 1, "field_value" -> 1, "value" -> 2, "relation" -> FVsPlus(ncac.courses.size))
+    testUpdate('usecase -> 1, 'field_value -> 1, 'value -> 2, 'relation -> FVsPlus(ncac.courses.size))
 
     // NOP update to text with ref
     uc.textFields(0).value.setTextFromUser("New step is [1.0]")
@@ -272,9 +272,9 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
     it("should load in full after saving") {
       // Save first
       val saved = sampleCtx
-      val valueRows = countRowsIn("value")
+      val valueRows = countRowsIn('value)
       saved.save(db)
-      (countRowsIn("value") - valueRows) should be > 10
+      (countRowsIn('value) - valueRows) should be > 10
 
       // Then load back (testing manually)
       val loaded = loadAndAssertShallow(saved)
@@ -290,7 +290,7 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
 
     it("should load in full after multiple updates") {
       val uc = sampleCtx
-      def testFn(expectations: Seq[(String, Int)]) = {
+      def testFn(expectations: Seq[(Symbol, Int)]) = {
         assertTableDiffs(expectations: _*)(uc.save(db))
         loadAndAssertDeep(uc)
       }
