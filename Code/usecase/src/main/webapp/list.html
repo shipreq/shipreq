@@ -8,9 +8,8 @@
 <script type="text/javascript" src="assets/jquery-ui.js"></script>
 <script type="text/javascript" src="assets/jquery-autosize.js"></script>
 <script type="text/javascript" src="assets/jquery-timeago.js"></script>
+<script type="text/javascript" src="assets/knockout.js"></script>
 
-<script type="text/javascript" class="clearable">
-</script>
 <style media="screen" type="text/css">
 </style>
 </head>
@@ -19,12 +18,6 @@
 
 		<link type="text/css" rel="stylesheet" href="/assets/list.css" data-lift="head" />
 		<script type="text/javascript" data-lift="head" src="assets/jquery-timeago.js"></script>
-		<script type="text/javascript" data-lift="tail">
-			$(document).ready(function() {
-				$("abbr.timeago").timeago();
-				$('textarea').autosize();
-			});
-		</script>
 
 
 		<div data-lift="List">
@@ -32,24 +25,47 @@
 				<button>+ New UC</button>
 			</div>
 
-			<div class="uc_list">
-				<div class="uc">
-					<a href="uce">UC-1: Eat food</a>
-					<div class="last_updated">Last updated <abbr class="timeago" title="2013-06-10T16:55:00+10:00"></abbr>.</div>
-				</div>
-				<div class="uc clearable">
-					<a href="uce">UC-2: Drink stuff</a>
-					<div class="last_updated">Last updated <abbr class="timeago" title="2013-06-08T12:55:00+10:00"></abbr>.</div>
-				</div>
-				<div class="uc edit clearable">
-					<span class="num">UC-3:</span>
-					<input class="save" type="submit" value="Save"/>
-					<div class="title"><textarea rows="1">Untitled</textarea></div>
+			<div class="no_ucs" data-bind="visible: noUseCases">
+				No use cases defined yet. Add some!
+			</div>
 
+			<div class="some_ucs" data-bind="visible: someUseCases">
+				<div class="uc_list" data-bind="foreach: useCases">
+					<div class="uc">
+						<a href="uce">UC-<span data-bind="text: number"></span>: <span data-bind="text: title"></span></a>
+						<div class="last_updated">Last updated <abbr class="timeago" data-bind="attr: {title:updatedAt}"></abbr>.</div>
+					</div>
 				</div>
 			</div>
+
+			<!--
+			<div class="uc edit clearable">
+				<span class="num">UC-3:</span>
+				<input class="save" type="submit" value="Save"/>
+				<div class="title"><textarea rows="1">Untitled</textarea></div>
+			</div>
+			-->
 		</div>
 
+		<script type="text/javascript" data-lift="tail">
+			function UseCaseIndexModel(ucs) {
+				this.useCases = ko.observableArray(ucs)
+				this.noUseCases = ko.computed(function(){ return this.useCases().length == 0 }, this);
+				this.someUseCases = ko.computed(function(){ return !this.noUseCases() }, this);
+			}
+			$(document).ready(function() {
+				$("abbr.timeago").timeago();
+				$('textarea').autosize();
+			});
+		</script>
+		<script type="text/javascript" class="clearable">
+			ko.applyBindings(new UseCaseIndexModel([
+				{ number: 1, title: "Eat meat", updatedAt: "2013-06-10T16:55:00+10:00" },
+				{ number: 2, title: "Drink beer", updatedAt: "2013-06-12T10:21:00+10:00" },
+				{ number: 3, title: "Get warm", updatedAt: "2013-01-01T10:21:00+10:00" },
+			]))
+			// ko.applyBindings(new UseCaseIndexModel([]))
+		</script>
 	</div>
 </body>
 </html>
