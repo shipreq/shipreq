@@ -208,7 +208,7 @@ abstract class CourseFields extends Field[CourseFieldState] with SnippetHelpers 
       createAndRegisterTextField(newNode)
       reactor(JavaScript)(
         JqExpr(tailStepCss) ~> JqBefore(renderSingleStepXml(newNode))
-          & JqId(newNode.id) ~> JqHide ~> JqSlideDownFast
+          & JqId(newNode.id) ~> JqHide ~> JqSlideDown(Fast)
       )
       true
     } else false
@@ -222,7 +222,7 @@ abstract class CourseFields extends Field[CourseFieldState] with SnippetHelpers 
         createAndRegisterTextField(newNode)
         reactor(JavaScript)(
           JqId(preceedingNodeId) ~> JqAfter(renderSingleStepXml(newNode))
-            & JqId(newNode.id) ~> JqHide ~> JqSlideDownFast
+            & JqId(newNode.id) ~> JqHide ~> JqSlideDown(Fast)
             & UpdateLabels(courses)
         )
         r
@@ -237,7 +237,7 @@ abstract class CourseFields extends Field[CourseFieldState] with SnippetHelpers 
           setCourses(newCourses)
           textFields -= id
           reactor(JavaScript)(
-            FadeOut(JqExprForNodeAndChildren(node), 240)(_ ~> JqJE.JqRemove() & UpdateLabels(courses))
+            FadeOutThen(JqExprForNodeAndChildren(node), 240.ms)(_ ~> JqJE.JqRemove() & UpdateLabels(courses))
           )
           r
         case _ => None
