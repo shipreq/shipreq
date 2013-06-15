@@ -49,4 +49,20 @@ object DAO {
   }
 
   def get = new DAO(DB.Slick.createSession())
+
+  trait DaoMonad[L] {
+    protected def exec[T](f: DAO => T): T
+    def foreach[T](f: DAO => T): Unit = exec(f(_))
+    def map[T](f: DAO => T): T = exec(f(_))
+    def flatMap[LL >: L, T](f: DAO => Either[LL,T]): Either[LL,T] = exec(f(_))
+  }
+
+  /** Provides a DAO and new session in a for-comprehension. */
+  def forSession[L] = new DaoMonad[L] {
+    protected override def exec[T](f: DAO => T): T = DAO.withSession(f(_))
+  }
+  /** Provides a DAO and new transaction in a for-comprehension. */
+  def forTransaction[L] = new DaoMonad[L] {
+    protected override def exec[T](f: DAO => T): T = DAO.withTransaction(f(_))
+  }
 }

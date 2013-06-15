@@ -18,6 +18,8 @@ case class UseCase(
     this.title == that.title &&
     this.number == that.number &&
     this.fieldListId == that.fieldListId
+
+  def toSummary(updatedAt: String) = UseCaseSummary(valueId, number, title, updatedAt)
 }
 
 // These fields names need to match the attributes in list.html

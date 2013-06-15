@@ -24,6 +24,7 @@ libraryDependencies ++= {
     "org.scalatest"           %% "scalatest"              % "2.0.M6-SNAP16"       % "test",
     "org.mockito"             %  "mockito-core"           % "1.9.5"               % "test",
     "org.scalacheck"          %% "scalacheck"             % "1.10.1"              % "test",
+    "net.liftweb"             %% "lift-testkit"           % liftVersion           % "test",
     "org.seleniumhq.selenium" %  "selenium-java"          % "2.32.0"              % "test" excludeAll(
       ExclusionRule(name = "selenium-android-driver"),
       ExclusionRule(name = "selenium-htmlunit-driver"),

@@ -2,9 +2,10 @@ package bootstrap.liftweb
 
 import net.liftweb.http.{ Html5Properties, LiftRules, Req }
 import net.liftweb.sitemap.{ Menu, SiteMap }
-import com.beardedlogic.usecase.lib
+import com.beardedlogic.usecase._
 import lib.db.DB
 import lib.{Misc, Defaults}
+import api.UseCaseApi
 
 /**
  * A class that's instantiated early and run.  It allows the application
@@ -26,6 +27,9 @@ class Boot {
     def sitemap(): SiteMap = SiteMap(
       Menu.i("Home") / "index"
     )
+
+    // Register APIs
+    LiftRules.statelessDispatch.append(UseCaseApi)
 
     // Use HTML5 for rendering
     LiftRules.htmlProperties.default.set((r: Req) => new Html5Properties(r.userAgent))
