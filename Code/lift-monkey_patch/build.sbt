@@ -4,10 +4,10 @@ name := "lift-monkey_patch"
 
 version := "1"
 
-scalaVersion := "2.10.1"
+scalaVersion := "2.10.2"
 
 libraryDependencies ++= {
-  val liftVersion = "2.5-RC5"
+  val liftVersion = "2.5"
   Seq(
     "net.liftweb"             %% "lift-webkit"            % liftVersion
   )
