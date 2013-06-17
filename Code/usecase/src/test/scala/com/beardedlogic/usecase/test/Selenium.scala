@@ -14,6 +14,7 @@ object SeleniumTestSupport {
   implicit class SeleniumDriverExt(d: SeleniumDriver) {
     def disableJqueryEffects() = { d.executeScript("jQuery.fx.off = true"); d }
     def getRel(page: String) = { d.get(Jetty.URL + page); d }
+    def ensureNoTestFuncIds() = { if (d.getPageSource.contains("lift_ajaxHandler(&quot;f0000000")) throw new IllegalStateException("FFS. Test func IDs are on again :("); d }
   }
 
   val SeleniumDriverRef = SharedGlobal(None, newDriver _) { _.close }

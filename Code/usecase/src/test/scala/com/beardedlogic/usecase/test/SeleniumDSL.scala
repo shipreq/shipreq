@@ -58,8 +58,6 @@ object SeleniumDSL {
    */
   class UCEditorDSL(val s: SeleniumDriver, private val givenCourseRoot: Option[Finder] = None) extends BaseDSL {
     import CourseFields._
-    import NormalAndAlternateCourseFields._
-    import ExceptionCourseFields._
 
     val courseRoot: Finder = givenCourseRoot getOrElse s
     private def changeRoot(name: String) =
@@ -83,7 +81,7 @@ object SeleniumDSL {
 
     // Action ----------------------------------------------------------------------------------------------------------
 
-    def reload = { s.getRel("/uce").disableJqueryEffects; this }
+    def reload = { s.getRel("/uce").ensureNoTestFuncIds.disableJqueryEffects; this }
     def setUseCaseTitle(title: String) = { titleElem.typeInto(title); steps(0).click; this }
     def setStepText(row: Int, text: String) = { stepTextElem(row).typeInto(text); titleElem.click; this }
     def setStepText(args: Tuple2[Int, String]*) = { for ((row, text) <- args) stepTextElem(row).typeInto(text); titleElem.click; this }

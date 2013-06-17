@@ -14,6 +14,8 @@ import lib.field.CourseFields
 import lib.TypeTags._
 import lib.msg._
 import model._
+import java.io.File
+import org.apache.commons.io.FileUtils
 
 /**
  * @since 30/04/2013
@@ -70,6 +72,14 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
   def buildStateForTest(nodes: List[StepNodeWithText]): List[StepState] = {
     val cf = new NormalAndAlternateCourseFields(new UseCaseCtx(null), mock[FieldKey])
     cf.buildStateForTest(nodes)
+  }
+
+  def createTempDir(prefix: String, suffix: String = ""): File = {
+    val tmpDir = File.createTempFile(prefix, suffix)
+    tmpDir.delete
+    tmpDir.mkdir
+    FileUtils.forceDeleteOnExit(tmpDir)
+    tmpDir
   }
 }
 

@@ -6,6 +6,8 @@ import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.server.nio.SelectChannelConnector
 import org.eclipse.jetty.webapp.WebAppContext
 import com.beardedlogic.usecase.lib.Misc
+import java.io.File
+import org.apache.commons.io.FileUtils
 
 /**
  * Starts up an instance of Jetty than runs the webapp.
@@ -27,6 +29,12 @@ object Jetty extends Logger {
   val URL = "http://localhost:" + PORT
 
   def newServer: Server = {
+    // Manually create an exploded WAR
+    // Could use sbt or a real WAR but then we can't easily/quickly run single tests from IDE
+    val tmpWarDir = TestHelpers.createTempDir("usecase-test-war")
+    FileUtils.copyDirectory(new File("src/main/webapp"), tmpWarDir)
+    FileUtils.copyDirectory(new File("target/scala-2.10/resource_managed/main"), tmpWarDir)
+
     info("Starting Jetty")
     val svr = new Server
 
@@ -38,10 +46,7 @@ object Jetty extends Logger {
 
     val context = new WebAppContext
     context.setContextPath("/")
-    context.setWar("src/main/webapp")
-    // context.setClassLoader(Thread.currentThread().getContextClassLoader());
-    // context.setDescriptor("src/main/webapp/WEB-INF/web.xml")
-    // context.setResourceBase("src/main/webapp")
+    context.setWar(tmpWarDir.getAbsolutePath)
     svr.setHandler(context)
 
     context.setServer(svr)

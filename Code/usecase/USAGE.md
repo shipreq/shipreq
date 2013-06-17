@@ -27,6 +27,10 @@ Getting Started
     sudo -u postgres psql < db-create-dev.sql
     sudo -u postgres psql < db-create-test.sql
 
+* Building local fork of Lift.
+    Check out git@github.com:japgolly/framework.git or git://github.com/japgolly/framework.git somewhere.
+    ./golly
+
 Running and Developing
 ======================
 
