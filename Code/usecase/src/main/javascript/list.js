@@ -5,7 +5,7 @@ function UseCaseSummary(uc) {
 
     m.editMode = ko.observable(false)
 
-    m.save = submitJsonForm(apiUrls.updateUseCaseHeader(uc.valueId), 'PUT', function(result) {
+    m.save = submitJsonForm(apiUrls.updateUseCaseHeader(uc.valueId), function(result) {
         var n = UseCaseSummary(result)
         VM.useCases.replace(m,n)
         $(document).enhanceDom()

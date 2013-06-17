@@ -8,7 +8,7 @@
 // require "vendor/jquery-serializeObject.js"
 
 var apiUrls = new function() {
-    this.updateUseCaseHeader = function(id){ return "/api/usecase/"+id }
+    this.updateUseCaseHeader = function(id){ return {url: "/api/usecase/"+id, type: 'PUT' }}
 }
 
 function ajaxErrorHandler(xhr, textStatus, errorThrown) {
@@ -24,11 +24,11 @@ function ajaxErrorHandler(xhr, textStatus, errorThrown) {
     alert(msg)
 }
 
-function submitJsonForm(url, type, successCallback) {
+function submitJsonForm(apiUrl, successCallback) {
     return function(form) {
         $.ajax({
-            url: url,
-            type: type,
+            url: apiUrl.url,
+            type: apiUrl.type,
             contentType: 'application/json',
             dataType: 'json',
             data: JSON.stringify($(form).serializeObject()),
