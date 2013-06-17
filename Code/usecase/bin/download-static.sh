@@ -7,7 +7,7 @@ echo $?
 
 v=1.10.1
 echo "Downloading v$v of jQuery -- http://jquery.com/download/"
-curl -s http://code.jquery.com/jquery-$v.min.js -o src/main/javascript/vendor/jquery.js
+curl -s http://code.jquery.com/jquery-$v.min.js -o src/main/webapp/js/vendor/jquery.js
 echo $?
 
 v=2.2.1

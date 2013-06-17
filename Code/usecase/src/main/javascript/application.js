@@ -1,4 +1,7 @@
-// require "vendor/jquery.js"
+// JQuery is required separately.
+// - 1) It's 93KB, separation allows for me parallelism.
+// - 2) Will probably switch to CDN later.
+
 // require "vendor/jquery-ui.js"
 // require "vendor/jquery-autosize.js"
 // require "vendor/jquery-timeago.js"
