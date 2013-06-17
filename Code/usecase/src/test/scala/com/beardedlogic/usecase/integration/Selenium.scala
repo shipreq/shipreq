@@ -1,8 +1,8 @@
-package com.beardedlogic.usecase.test
+package com.beardedlogic.usecase.integration
 
-import java.util.concurrent.TimeUnit
-import org.openqa.selenium.{HasInputDevices, JavascriptExecutor, WebDriver}
+import com.beardedlogic.usecase.test.{SharedGlobal, Jetty}
 import org.openqa.selenium.firefox.FirefoxDriver
+import org.openqa.selenium.{HasInputDevices, JavascriptExecutor, WebDriver}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
 
 /**

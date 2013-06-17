@@ -1,11 +1,11 @@
 package com.beardedlogic.usecase
-package test
+package integration
 
 import org.openqa.selenium.{ By, Keys, WebElement }
 import org.scalatest.Suite
 import org.scalatest.matchers.ShouldMatchers
 import scala.collection.JavaConverters._
-import lib.field._
+import test.TestHelpers
 
 /**
  * Provides tests with Selenium-based DSLs.
@@ -13,6 +13,7 @@ import lib.field._
  * @since 30/04/2013
  */
 trait SeleniumDSL extends SeleniumTestSupport { this: Suite =>
+
   import SeleniumDSL._
 
   def uce = new UCEditorDSL(s).tap { _.reload }
@@ -22,6 +23,7 @@ trait SeleniumDSL extends SeleniumTestSupport { this: Suite =>
  * @since 30/04/2013
  */
 object SeleniumDSL {
+
   import SeleniumTestSupport._
 
   val CTRL_A = Keys.chord(Keys.CONTROL, "a")
@@ -57,7 +59,7 @@ object SeleniumDSL {
    * @since 30/04/2013
    */
   class UCEditorDSL(val s: SeleniumDriver, private val givenCourseRoot: Option[Finder] = None) extends BaseDSL {
-    import CourseFields._
+    import lib.field.CourseFields._
 
     val courseRoot: Finder = givenCourseRoot getOrElse s
     private def changeRoot(name: String) =

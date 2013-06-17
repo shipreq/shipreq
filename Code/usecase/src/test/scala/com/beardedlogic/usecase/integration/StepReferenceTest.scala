@@ -1,7 +1,5 @@
 package com.beardedlogic.usecase.integration
 
-import com.beardedlogic.usecase.test.SeleniumDSL
-import org.scalatest.FreeSpec
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.GivenWhenThen
 import org.scalatest.FunSpec
