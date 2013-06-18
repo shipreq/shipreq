@@ -29,6 +29,17 @@ case class ExactRev(rev: Int) extends Revision {override def querySuffix = s"AND
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+class LatestRevSubquery {
+  private var whereClause = ""
+  def where(cond: String) = { whereClause = s" WHERE $cond"; this }
+  def toSql = s"SELECT id, row_number() OVER (PARTITION BY data_id ORDER BY rev DESC) rn FROM value${whereClause}"
+  private var _withTableAlias = ""
+  def withTableAlias = {if (_withTableAlias.isEmpty) throw new IllegalStateException("WITH alias not provided yet."); else _withTableAlias }
+  def withTableAlias(tableAlias: String) = {_withTableAlias = tableAlias; this }
+  def toWithClause = s"WITH $withTableAlias AS ($toSql)"
+  def applyWithTableAsValueIdFilter(valueIdExpr: String) = s"$valueIdExpr in (select id from $withTableAlias where rn = 1)"
+}
+
 object ValueAccessor {
 
   val * = "id, data_id, rev"

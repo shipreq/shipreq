@@ -52,4 +52,9 @@ object ApiHelpers {
   }
 
   implicit def eitherLiftResponse(e: Either[LiftResponse, LiftResponse]) = e.merge
+
+  implicit class AnyExt(val x: Any) extends AnyVal {
+    def toJson(implicit formats: Formats) = Extraction.decompose(x)
+    def toJsonResponse(implicit formats: Formats) = JsonResponse(x.toJson)
+  }
 }

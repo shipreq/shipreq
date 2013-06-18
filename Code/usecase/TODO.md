@@ -23,7 +23,6 @@ FUNC TODO
 TECH TODO
 =========
 
-* [S.3.4] [SAFE] Make the latest-value-rev query reusable.
 * [S.3.0] [PERF] Use pickling for JSON serialisation.
 * [S.2.4] [PERF] DB connection pooling.
 * [S.1.1] [DEMO] Show flow deletion in flow demo.

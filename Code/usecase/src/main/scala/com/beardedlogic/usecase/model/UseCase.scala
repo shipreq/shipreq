@@ -59,7 +59,7 @@ object UseCaseAccessor {
     WHERE u.id=? AND v.id = u.id
     """.sql)
 
-  private def SelectLatestSql(dataIdSql: String) =  s"""
+  private def SelectLatestSql(dataIdSql: String) = s"""
     with history as (
       select id, rev, data_id, row_number() over (order by rev desc) rn
       from value
@@ -74,20 +74,22 @@ object UseCaseAccessor {
   val SelectLatestByDataId = Q.query[Long, UseCase](SelectLatestSql("?"))
   val SelectLatestByValueId = Q.query[Long, UseCase](SelectLatestSql("(select data_id from value where id = ?)"))
 
-  val SelectSummaries = Q.queryNA[UseCaseSummary]( s"""
-    with t1 as (
-      select id, row_number() over (partition by data_id order by rev desc) rn
-      from value v
-      where data_id in (select id from data where type_id = ${DataType.UseCase.ordinal})
-    )
-    select v.id, number, title, to_iso8601_str(updated_at)
-    from usecase u, value v
-    where u.id in (select id from t1 where rn = 1)
+  private def SelectSummariesSql(innerCond: String) = {
+    val latestRevs = new LatestRevSubquery().where(innerCond).withTableAlias("t")
+    s"""
+      ${latestRevs.toWithClause}
+      select v.id, number, title, to_iso8601_str(updated_at)
+      from usecase u, value v
+      where ${latestRevs.applyWithTableAsValueIdFilter("u.id")}
       and u.id=v.id
-    order by number
-    """.sql)
+      order by number
+      """.sql
+  }
+  val SelectSummaries = Q.queryNA[UseCaseSummary](SelectSummariesSql(
+    s"data_id in (select id from data where type_id = ${DataType.UseCase.ordinal})"))
+  val SelectSummary = Q.query[Long, UseCaseSummary](SelectSummariesSql(s"data_id=?"))
 
-  val UpdateTitleDirectly = Q.update[(String,Long)]("UPDATE usecase SET title=? WHERE id=?")
+  val UpdateTitleDirectly = Q.update[(String, Long)]("UPDATE usecase SET title=? WHERE id=?")
 
   // TODO Model correction & validation: move, rename, do something
   def normaliseWhitespaceInSingleLineString(str: String) = str.replaceAll("\\s+", " ").trim
@@ -135,6 +137,7 @@ trait UseCaseAccessor extends DatabaseAccessor {
   def findLatestUseCaseByDataId(dataId: Long): Option[UseCase] = SelectLatestByDataId.firstOption(dataId)
   def findLatestUseCaseByValueId(valueId: Long): Option[UseCase] = SelectLatestByValueId.firstOption(valueId)
 
+  def findUseCaseSummary(uc: UseCase): Option[UseCaseSummary] = SelectSummary.firstOption(uc.value.dataId)
   def findAllUseCaseSummaries(): List[UseCaseSummary] = SelectSummaries.list
 
   /**
@@ -152,10 +155,9 @@ trait UseCaseAccessor extends DatabaseAccessor {
 
     val tgt = correct(tgtUseCase)
     findLatestUseCase(tgt) match {
-
       // NOP
       case Some(latest) if tgt.stateEquals(latest) =>
-       (DbOpResult.AlreadyUpToDate, Some(latest))
+        (DbOpResult.AlreadyUpToDate, Some(latest))
 
       // Rev #1 title update
       case Some(latest) if latest.value.rev == 1 && tgt.copy(title = Defaults.Title).stateEquals(latest) => {

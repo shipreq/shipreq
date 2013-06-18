@@ -22,8 +22,6 @@ class UseCaseApiTest extends FunSpec with ApiTest with PropertyChecks {
     })
   }
 
-  def ignoreUpdatedAt(ucs: UseCaseSummary) = ucs.copy(updatedAt = null)
-
   // TODO Test UCC.save corrects UC titles too
   describe("PUT /api/usecase/ID.json") {
     def testSuccess(title: String, expectedTitleAfterSave: String): Option[UseCaseSummary] =
@@ -36,7 +34,7 @@ class UseCaseApiTest extends FunSpec with ApiTest with PropertyChecks {
       } yield {
         uc2.number should equal(uc1.number)
         uc2.title should equal(expectedTitleAfterSave)
-        dao.findAllUseCaseSummaries().map(ignoreUpdatedAt) should contain(ignoreUpdatedAt(uc2))
+        dao.findAllUseCaseSummaries() should contain(uc2)
         uc2
       }
 

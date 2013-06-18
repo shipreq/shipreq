@@ -5,7 +5,6 @@ import net.liftweb.http._
 import net.liftweb.http.rest.RestHelper
 import net.liftweb.json._
 import net.liftweb.util.Helpers._
-import lib.Misc.currentTimeAsIso8601Str
 import model._
 import model.DbOpResult._
 import ApiHelpers._
@@ -25,7 +24,7 @@ object UseCaseApi extends RestHelper {
     } yield {
       val tgt = uc.copy(title = input.title)
       dao.updateUseCaseHeader(tgt) match {
-        case (_, Some(uc)) => JsonResponse(Extraction.decompose(uc.toSummary(currentTimeAsIso8601Str)))
+        case (_, Some(uc)) => dao.findUseCaseSummary(uc).get.toJsonResponse
         case (StaleRevision, _) => PreconditionRequiredResponse()
       }
     }
