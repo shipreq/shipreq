@@ -25,18 +25,25 @@ case class UseCase(
 
 // These fields names need to match the attributes in list.html
 case class UseCaseSummary(
-  valueId: Long,
+  id: String,
   number: Short,
   title: String,
-  updatedAt: String
-)
+  updatedAt: String) {
+  def valueId = ExternalId.toInternal(id)
+}
+object UseCaseSummary {
+  def apply(valueId: Long,
+    number: Short,
+    title: String,
+    updatedAt: String) = new UseCaseSummary(ExternalId.toExternal(valueId), number, title, updatedAt)
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 object UseCaseAccessor {
   implicit val GetResultPlainValue = ValueAccessor.GetValueResult[DataType.UseCase]
   implicit val GetResultUseCase = GetResult(r => UseCase(GetResultPlainValue(r), r.<<, r.<<, r.<<))
-  implicit val GetResultUseCaseSummary = GetResult(r => UseCaseSummary(r.<<, r.<<, r.<<, r.<<))
+  implicit val GetResultUseCaseSummary = GetResult(r => UseCaseSummary(r.nextLong, r.nextShort, r.nextString, r.nextString))
 
   implicit object SetParameterUseCase extends SetParameter[UseCase] {
     def apply(v: UseCase, pp: PositionedParameters) {

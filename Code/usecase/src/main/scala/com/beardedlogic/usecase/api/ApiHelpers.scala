@@ -3,11 +3,16 @@ package api
 
 import net.liftweb.http._
 import net.liftweb.json._
+import lib.ExternalId
 
 /**
  * @since 15/06/2013
  */
 object ApiHelpers {
+
+  object AsExtId {
+    def unapply(str: String): Option[Long] = ExternalId.toInternalOpt(str)
+  }
 
   /**
    * The server does not meet one of the preconditions that the requester put on the request.

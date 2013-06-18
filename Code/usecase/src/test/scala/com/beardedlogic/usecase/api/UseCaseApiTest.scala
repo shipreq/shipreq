@@ -5,7 +5,7 @@ import org.scalatest.FunSpec
 import org.scalatest.prop._
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json._
-import lib.Defaults
+import lib.{ExternalId, Defaults}
 import model.{UseCase, UseCaseSummary, DAO}
 import ApiTestHelpers._
 
@@ -13,7 +13,7 @@ class UseCaseApiTest extends FunSpec with ApiTest with PropertyChecks {
 
   def goodRequestData(title: String): JValue = ("title" -> title)
 
-  def urlFor(uc: UseCase) = "/api/usecase/" + uc.valueId
+  def urlFor(uc: UseCase) = "/api/usecase/" + ExternalId.toExternal(uc.valueId)
 
   def withUc[U](block: (DAO, UseCase) => U): U = {
     DAO.withSession(dao => {
@@ -23,7 +23,7 @@ class UseCaseApiTest extends FunSpec with ApiTest with PropertyChecks {
   }
 
   // TODO Test UCC.save corrects UC titles too
-  describe("PUT /api/usecase/ID.json") {
+  describe("PUT /api/usecase/ID") {
     def testSuccess(title: String, expectedTitleAfterSave: String): Option[UseCaseSummary] =
       withUc((dao, uc1) => testSuccess2(dao, uc1, title, expectedTitleAfterSave))
 
@@ -66,6 +66,7 @@ class UseCaseApiTest extends FunSpec with ApiTest with PropertyChecks {
 
     it("should 404 when UC not found") {
       jsonPut("/api/usecase/987654321", goodRequestData("blah")) ! 404
+      jsonPut("/api/usecase/__", goodRequestData("blah")) ! 404
     }
 
     it("should 400 when input data invalid") {

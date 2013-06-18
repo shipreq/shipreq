@@ -3,6 +3,9 @@ package com.beardedlogic.usecase.lib
 object ExternalId {
 
   val Base62 = new BaseX("0atxlQwnj7y3zFZNVBqJ42AcriYEeMu8SdU91HgfTsb6GhmWkX5KopCIRLvOPD", 4)
+  require(Base62.base.longValue == 62)
+
+  private final val ExternalIdRegex = "^[a-zA-Z0-9]{4,11}$".r.pattern
 
   @inline private final def splitLong(x: Long): (Int, Int) = ((x >>> 32).toInt, (x.toInt & 0xffffffff))
   @inline private final def joinInts(a: Int, b: Int): Long = (a.toLong << 32L) | (b & 0xffffffffL)
@@ -23,6 +26,10 @@ object ExternalId {
     b = xorness(b)
     joinInts(a, b)
   }
+
+  def toInternalOpt(external: String): Option[Long] =
+    if (ExternalIdRegex.matcher(external).matches) Some(toInternal(external))
+    else None
 
   // -------------------------------------------------------------------------------------------------------------------
   // http://stackoverflow.com/questions/8554286/obfuscating-an-id

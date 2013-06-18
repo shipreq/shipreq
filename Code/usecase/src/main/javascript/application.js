@@ -8,7 +8,7 @@
 // require "vendor/jquery-serializeObject.js"
 
 var apiUrls = new function() {
-    this.updateUseCaseHeader = function(valueId){ return {url: "/api/usecase/"+valueId, type: 'PUT' }}
+    this.updateUseCaseHeader = function(id){ return {url: "/api/usecase/"+id, type: 'PUT' }}
 }
 
 function ajaxErrorHandler(xhr, textStatus, errorThrown) {

@@ -12,7 +12,7 @@ import ApiHelpers._
 object UseCaseApi extends RestHelper {
 
   serve(List("api") prefix {
-    case "usecase" :: AsLong(valueId) :: Nil JsonPut json -> _ => updateUseCase(valueId, json)
+    case "usecase" :: AsExtId(valueId) :: Nil JsonPut json -> _ => updateUseCase(valueId, json)
   })
 
   case class UpdateUseCaseInput(title: String)
