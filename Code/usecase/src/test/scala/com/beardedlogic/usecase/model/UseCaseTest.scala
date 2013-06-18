@@ -6,6 +6,7 @@ import test.{TestHelpers, TestDatabaseSupport}
 import lib.Defaults
 import scala.slick.jdbc.{StaticQuery => Q}
 import Q.interpolation
+import DbOpResult._
 
 class UseCaseTest extends FunSpec with TestDatabaseSupport with TestHelpers {
 
@@ -35,34 +36,32 @@ class UseCaseTest extends FunSpec with TestDatabaseSupport with TestHelpers {
     def assertAuditedUpdate(src: UseCase, relationRows: Int = 0): UseCase = {
       assertTableDiffs('value -> 1, 'usecase -> 1, 'relation -> relationRows) {
         val tgt = src.copy(title = "omg")
-        val (res, newUc) = db.updateUseCaseHeader(tgt)
-        res should be(DbOpResult.NewRevision)
-        newUc should not be ('empty)
-        assertUC(newUc.get.valueId, tgt, 1)
-        newUc.get
+        val r = db.updateUseCaseHeader(tgt)
+        r.successCodeOpt should be(Some(NewRevision))
+        val newUc = r.dataOpt.get
+        assertUC(newUc.valueId, tgt, 1)
+        newUc
       }
     }
 
     def assertNOP(uc: UseCase, expected: UseCase) {
-      val (res, newUc) = assertTableDiffs() {db.updateUseCaseHeader(uc)}
-      res should be(DbOpResult.AlreadyUpToDate)
-      newUc should be(Some(expected))
+      val r = assertTableDiffs() {db.updateUseCaseHeader(uc)}
+      r should be (Success(AlreadyUpToDate, expected))
     }
 
     def createTwoRevs = {
       val rev1 = db.createInitialUseCase("Haha", FL)
-      val (_, rev2_) = db.updateUseCaseHeader(rev1.copy(title = "wow"))
-      val rev2 = db.findUseCase(rev2_.get.valueId).get
+      val rev2s = db.updateUseCaseHeader(rev1.copy(title = "wow")).dataOpt.get
+      val rev2 = db.findUseCase(rev2s.valueId).get
       (rev1, rev2)
     }
 
     it("should do a direct update when rev #1 and title default") {
       val rev1 = db.createInitialUseCase(Defaults.Title, FL)
       val tgt = rev1.copy(title = "omg")
-      val (res, newUc) = assertTableDiffs() {db.updateUseCaseHeader(tgt)}
-      res should be(DbOpResult.DirectUpdate)
-      newUc should be(Some(tgt))
-      assertUC(newUc.get.valueId, tgt, 0)
+      val r = assertTableDiffs() {db.updateUseCaseHeader(tgt)}
+      r should be (Success(DirectUpdate, tgt))
+      assertUC(r.dataOpt.get.valueId, tgt, 0)
     }
 
     it("should do an audited update when rev #1 and non-default title changes") {
@@ -96,9 +95,8 @@ class UseCaseTest extends FunSpec with TestDatabaseSupport with TestHelpers {
 
     it("should stop when target UC is not the latest revision available") {
       val (rev1, rev2) = createTwoRevs
-      val (res, ucId) = assertTableDiffs() {db.updateUseCaseHeader(rev1.copy(title = "aahh"))}
-      res should be(DbOpResult.StaleRevision)
-      ucId should be(None)
+      val r = assertTableDiffs() {db.updateUseCaseHeader(rev1.copy(title = "aahh"))}
+      r should be(StaleRevision)
     }
   }
 }

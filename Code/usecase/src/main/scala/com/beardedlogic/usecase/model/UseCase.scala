@@ -5,6 +5,7 @@ import scala.slick.jdbc.{GetResult, SetParameter, StaticQuery => Q}
 import scala.slick.session.PositionedParameters
 import lib._
 import db.DBHelpers._
+import DbOpResult._
 
 case class UseCase(
   value: PlainValue[DataType.UseCase],
@@ -150,19 +151,19 @@ trait UseCaseAccessor extends DatabaseAccessor {
    * @return A result indicator, and a resulting `UseCase` if successful. Possible results are:
    *         AlreadyUpToDate, DirectUpdate, NewRevision, StaleRevision.
    */
-  def updateUseCaseHeader(tgtUseCase: UseCase): (DbOpResult, Option[UseCase]) = withTransaction {
+  def updateUseCaseHeader(tgtUseCase: UseCase): DbOpResult[UseCase] = withTransaction {
     // TODO locking? race conditions here? ensure DB mutex
 
     val tgt = correct(tgtUseCase)
     findLatestUseCase(tgt) match {
       // NOP
       case Some(latest) if tgt.stateEquals(latest) =>
-        (DbOpResult.AlreadyUpToDate, Some(latest))
+        Success(AlreadyUpToDate, latest)
 
       // Rev #1 title update
       case Some(latest) if latest.value.rev == 1 && tgt.copy(title = Defaults.Title).stateEquals(latest) => {
         UpdateTitleDirectly.execute(tgt.title, tgt.valueId)
-        (DbOpResult.DirectUpdate, Some(tgt))
+        Success(DirectUpdate, tgt)
       }
 
       // Audited Update (ensuring not stale)
@@ -171,10 +172,10 @@ trait UseCaseAccessor extends DatabaseAccessor {
         val newUc = tgt.copy(value = newValue)
         createCorrectedUseCase(newUc)
         propagateRelations(latest, newUc)
-        (DbOpResult.NewRevision, Some(newUc))
+        Success(NewRevision, newUc)
       }
 
-      case _ => (DbOpResult.StaleRevision, None)
+      case _ => StaleRevision
     }
   }
 }

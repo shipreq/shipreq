@@ -24,8 +24,8 @@ object UseCaseApi extends RestHelper {
     } yield {
       val tgt = uc.copy(title = input.title)
       dao.updateUseCaseHeader(tgt) match {
-        case (_, Some(uc)) => dao.findUseCaseSummary(uc).get.toJsonResponse
-        case (StaleRevision, _) => PreconditionRequiredResponse()
+        case Success(_, uc) => dao.findUseCaseSummary(uc).get.toJsonResponse
+        case StaleRevision => PreconditionRequiredResponse()
       }
     }
 }
