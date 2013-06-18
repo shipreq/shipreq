@@ -1,14 +1,13 @@
 package com.beardedlogic.usecase
 package lib
 
-import net.liftweb.http.CometActor
 import field.{NormalAndAlternateCourseFields => NCAC, ExceptionCourseFields => EC, _}
 import model._
 import msg.MessageCentre
 import TypeTags._
 
-// TODO Does UseCaseCtx need a cometActor ref anymore?
-class UseCaseCtx(val cometActor: CometActor) {
+// TODO Remove cometActor from UseCaseCtx
+class UseCaseCtx(val cometActor: AnyRef = null) {
 
   val msgCentre = new MessageCentre
 

@@ -1,25 +1,24 @@
 package com.beardedlogic.usecase
-package comet
+package snippet
 
 import scala.xml.NodeSeq
-import net.liftweb.http.{CometActor, SHtml}
-import net.liftweb.http.js.{JE, JsCmd, JsCmds}
-import net.liftweb.http.js.JsExp.strToJsExp
-import lib.field.Field
-import lib.UseCaseCtx
-
 import net.liftweb.common.Logger
+import net.liftweb.http.js.JsExp.strToJsExp
+import net.liftweb.http.js.{JE, JsCmd, JsCmds}
+import net.liftweb.http.{StatefulSnippet, SHtml}
+import net.liftweb.util.Helpers._
+import lib.UseCaseCtx
+import lib.field.Field
 
-class UCEditor extends CometActor with Logger {
+class UCEditor extends StatefulSnippet with Logger {
 
-  val state = new UseCaseCtx(this)
+  val state = new UseCaseCtx
+  state.init
+  state.msgCentre.enabled = true
 
-  override def localSetup() {
-    state.init
-    state.msgCentre.enabled = true
-  }
+  def dispatch = {case "render" => render}
 
-  override def render = (
+  def render = (
       ".ucdata *" #> renderFields(state.fields) andThen
         ".title .ucid *" #> state.number.toString
           & ".title @title" #> SHtml.ajaxText(state.title, onTitleChange(_))
