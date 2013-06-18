@@ -9,12 +9,22 @@
     .uc {
       margin-bottom: 1.5em;
 
-      a {
-        font-size: 200%;
+      .ctls {
+        float: left;
+        padding-top:4px;
       }
-      .last_updated {
-        font-size: 70%;
-        color: #222;
+
+      .data {
+        overflow:hidden;
+        padding-left:2ex;
+
+        a {
+          font-size: 200%;
+        }
+        .last_updated {
+          font-size: 70%;
+          color: #222;
+        }
       }
     }
   }

@@ -1,8 +1,10 @@
 .ucindex { margin-left: auto; margin-right: auto; width: 700px; }
 .ucindex .new_uc { text-align: center; margin: 1em auto 1em auto; }
 .ucindex .uc_list .uc { margin-bottom: 1.5em; }
-.ucindex .uc_list .uc a { font-size: 200%; }
-.ucindex .uc_list .uc .last_updated { font-size: 70%; color: #222; }
+.ucindex .uc_list .uc .ctls { float: left; padding-top: 4px; }
+.ucindex .uc_list .uc .data { overflow: hidden; padding-left: 2ex; }
+.ucindex .uc_list .uc .data a { font-size: 200%; }
+.ucindex .uc_list .uc .data .last_updated { font-size: 70%; color: #222; }
 .ucindex .uc.edit { overflow: hidden; }
 .ucindex .uc.edit .num { float: left; }
 .ucindex .uc.edit .save { float: right; }

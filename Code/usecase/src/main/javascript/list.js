@@ -5,6 +5,8 @@ function UseCaseSummary(uc) {
 
     m.editMode = ko.observable(false)
 
+    m.enterEditMode = function(){ m.editMode(true); $("."+m.cssClass+" textarea").select().focus() }
+
     m.save = submitJsonForm(apiUrls.updateUseCaseHeader(uc.valueId), function(result) {
         var n = UseCaseSummary(result)
         VM.useCases.replace(m,n)
@@ -29,5 +31,5 @@ $(document).on('new-uc', function(event, data) {
     m.editMode(true)
     VM.useCases.push(m)
     $(document).enhanceDom();
-    $("."+m.cssClass+" textarea").select().focus()
+    m.enterEditMode()
 });
