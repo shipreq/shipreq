@@ -27,9 +27,13 @@ object ExternalId {
     joinInts(a, b)
   }
 
+  def isValidExternalId(str: String): Boolean = ExternalIdRegex.matcher(str).matches
+
   def toInternalOpt(external: String): Option[Long] =
-    if (ExternalIdRegex.matcher(external).matches) Some(toInternal(external))
+    if (isValidExternalId(external)) Some(toInternal(external))
     else None
+
+  def unapply(str: String): Option[Long] = ExternalId.toInternalOpt(str)
 
   // -------------------------------------------------------------------------------------------------------------------
   // http://stackoverflow.com/questions/8554286/obfuscating-an-id
@@ -51,4 +55,10 @@ object ExternalId {
     t = (u ^ (u >> bits1)) & mask1
     u ^ t ^ (t << bits1)
   }
+}
+
+object ExternalIdStr {
+  def unapply(str: String): Option[String] =
+    if (ExternalId.isValidExternalId(str)) Some(str)
+    else None
 }

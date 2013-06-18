@@ -5,6 +5,7 @@ import net.liftweb.http._
 import net.liftweb.http.rest.RestHelper
 import net.liftweb.json._
 import net.liftweb.util.Helpers._
+import lib.ExternalId
 import model._
 import model.DbOpResult._
 import ApiHelpers._
@@ -12,7 +13,7 @@ import ApiHelpers._
 object UseCaseApi extends RestHelper {
 
   serve(List("api") prefix {
-    case "usecase" :: AsExtId(valueId) :: Nil JsonPut json -> _ => updateUseCase(valueId, json)
+    case "usecase" :: ExternalId(valueId) :: Nil JsonPut json -> _ => updateUseCase(valueId, json)
   })
 
   case class UpdateUseCaseInput(title: String)

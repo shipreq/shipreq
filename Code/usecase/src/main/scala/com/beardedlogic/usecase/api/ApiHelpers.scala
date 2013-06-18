@@ -10,10 +10,6 @@ import lib.ExternalId
  */
 object ApiHelpers {
 
-  object AsExtId {
-    def unapply(str: String): Option[Long] = ExternalId.toInternalOpt(str)
-  }
-
   /**
    * The server does not meet one of the preconditions that the requester put on the request.
    */
