@@ -1,6 +1,7 @@
 package com.beardedlogic.usecase.model
 
 import scala.slick.driver.PostgresDriver.simple._
+import java.sql.Connection
 import com.beardedlogic.usecase.lib.db.DB
 
 /**
@@ -45,28 +46,47 @@ object DAO {
   }
 
   def withSession[T](block: DAO => T): T = {
-    DB.Slick.withSession { db => block(new DAO(db)) }
+    DB.Slick.withSession { s => block(new DAO(s)) }
   }
 
   def withTransaction[T](block: DAO => T): T = {
-    DB.Slick.withTransaction { db => block(new DAO(db)) }
+    DB.Slick.withTransaction(s => {
+      s.conn.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ)
+      block(new DAO(s))
+    })
   }
 
   def get = new DAO(DB.Slick.createSession())
 
-  trait DaoMonad[L] {
+  trait DaoMonad {
     protected def exec[T](f: DAO => T): T
     def foreach[T](f: DAO => T): Unit = exec(f(_))
     def map[T](f: DAO => T): T = exec(f(_))
-    def flatMap[LL >: L, T](f: DAO => Either[LL,T]): Either[LL,T] = exec(f(_))
   }
+  trait DaoMonad1[M[_]] extends DaoMonad {def flatMap[T](f: DAO => M[T]): M[T] = exec(f(_))}
+  trait DaoMonadR[L, M[L, _]] extends DaoMonad {def flatMap[T](f: DAO => M[L, T]): M[L, T] = exec(f(_))}
+  trait DaoMonadL[R, M[_, R]] extends DaoMonad {def flatMap[T](f: DAO => M[T, R]): M[T, R] = exec(f(_))}
 
   /** Provides a DAO and new session in a for-comprehension. */
-  def forSession[L] = new DaoMonad[L] {
+  def forSession[M[_]] = new DaoMonad1[M] {
     protected override def exec[T](f: DAO => T): T = DAO.withSession(f(_))
   }
   /** Provides a DAO and new transaction in a for-comprehension. */
-  def forTransaction[L] = new DaoMonad[L] {
+  def forTransaction[M[_]] = new DaoMonad1[M] {
     protected override def exec[T](f: DAO => T): T = DAO.withTransaction(f(_))
+  }
+
+  def forTransactionLeft[R, M[_, R]] = new DaoMonadL[R, M] {
+    protected override def exec[T](f: DAO => T): T = DAO.withTransaction(f(_))
+  }
+  def forSessionLeft[R, M[_, R]] = new DaoMonadL[R, M] {
+    protected override def exec[T](f: DAO => T): T = DAO.withSession(f(_))
+  }
+
+  def forTransactionRight[L, M[L, _]] = new DaoMonadR[L, M] {
+    protected override def exec[T](f: DAO => T): T = DAO.withTransaction(f(_))
+  }
+  def forSessionRight[L, M[L, _]] = new DaoMonadR[L, M] {
+    protected override def exec[T](f: DAO => T): T = DAO.withSession(f(_))
   }
 }

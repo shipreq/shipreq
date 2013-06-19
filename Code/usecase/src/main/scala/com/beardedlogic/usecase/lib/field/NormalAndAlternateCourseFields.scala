@@ -34,12 +34,16 @@ class NormalAndAlternateCourseFields(override val ucCtx: UseCaseCtx, override va
   import NormalAndAlternateCourseFields._
 
   // TODO This will do for now but if this is moved into init() it will cause problems with TextFields due to the stepRefMap
-  setCourses(
-    StepNodeBuilder(0, 0, List(StepNodeBuilder(1, 1))) :: Nil
-  )(NoReactionOrNewMessages)
+  setCourses(defaultState)(NoReactionOrNewMessages)
+  def defaultState = StepNodeBuilder(0, 0, List(StepNodeBuilder(1, 1))) :: Nil
 
   override def recalcRootLabelPrefix = Some(s"${ucCtx.number}.")
   override def startingLabelIndices = NCAC_StartingLabelIndices
+
+  override def init() {
+    if (courses.isEmpty) setCourses(defaultState)(NoReactionOrNewMessages) // Does this cause probs like above TODO implies?
+    super.init
+  }
 
   override def render = (
     renderSteps(courses.head :: Nil)(NormalCourseTemplate) ++

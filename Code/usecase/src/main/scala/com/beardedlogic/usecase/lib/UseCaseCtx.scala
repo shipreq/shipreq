@@ -165,24 +165,25 @@ case class UseCaseSaveCheckpoint(
 
 object UseCaseLoader {
 
-  def loadCheckpoint(valueId: Long, dao: DAO): Option[UseCaseSaveCheckpoint] = {
+  def loadCheckpoint(valueId: Long, dao: DAO): Option[UseCaseSaveCheckpoint] =
+    dao.findUseCase(valueId).map(loadCheckpoint(_, dao))
+
+  def loadCheckpoint(uc: UseCase, dao: DAO): UseCaseSaveCheckpoint = {
 
     // Load use case
-    dao.findUseCase(valueId).map { uc =>
-      val fieldList = Defaults.FieldList.get // TODO hardcoded fieldlist
+    val fieldList = Defaults.FieldList.get // TODO hardcoded fieldlist
 
-      val saveCtx = new MutableFieldSaveCtx
-      // TODO populate field values
+    val saveCtx = new MutableFieldSaveCtx
+    // TODO populate field values
 
-      // Load field states
-      val loadCtx = dao.getFieldLoadCtxFor(valueId)
-      val fieldStates = Map.newBuilder[FieldKey, Any]
-      for (fk <- fieldList.fieldKeys) {
-        val fs = fk.fieldDef.stateLoader(fk).load(loadCtx, saveCtx)
-        fieldStates += (fk -> fs)
-      }
-
-      UseCaseSaveCheckpoint(uc, saveCtx.immutable, fieldStates.result)
+    // Load field states
+    val loadCtx = dao.getFieldLoadCtxFor(uc.valueId)
+    val fieldStates = Map.newBuilder[FieldKey, Any]
+    for (fk <- fieldList.fieldKeys) {
+      val fs = fk.fieldDef.stateLoader(fk).load(loadCtx, saveCtx)
+      fieldStates += (fk -> fs)
     }
+
+    UseCaseSaveCheckpoint(uc, saveCtx.immutable, fieldStates.result)
   }
 }

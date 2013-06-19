@@ -6,6 +6,7 @@ import com.beardedlogic.usecase._
 import lib.db.DB
 import lib.{ExternalIdStr, Misc, Defaults}
 import api.UseCaseApi
+import com.beardedlogic.usecase.snippet.UCEditor
 
 /**
  * A class that's instantiated early and run.  It allows the application
@@ -34,7 +35,7 @@ class Boot {
     // Routing
     LiftRules.statelessRewrite.append {
       case RewriteRequest(ParsePath("usecase" :: ExternalIdStr(id) :: Nil, "", true, false), GetRequest, _) =>
-        RewriteResponse("uce" :: Nil, Map("id" -> id))
+        RewriteResponse("uce" :: Nil, Map(UCEditor.ParamId -> id))
     }
 
     // Use HTML5 for rendering

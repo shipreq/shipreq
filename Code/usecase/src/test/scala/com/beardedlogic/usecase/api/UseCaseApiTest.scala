@@ -7,9 +7,10 @@ import net.liftweb.json.JsonDSL._
 import net.liftweb.json._
 import lib.{ExternalId, Defaults}
 import model.{UseCase, UseCaseSummary, DAO}
-import ApiTestHelpers._
+import test.LiveTest
+import test.LiveTestHelpers._
 
-class UseCaseApiTest extends FunSpec with ApiTest with PropertyChecks {
+class UseCaseLiveTest extends FunSpec with LiveTest with PropertyChecks {
 
   def goodRequestData(title: String): JValue = ("title" -> title)
 

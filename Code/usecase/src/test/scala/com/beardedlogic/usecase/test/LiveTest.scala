@@ -1,20 +1,21 @@
 package com.beardedlogic.usecase
-package api
+package test
 
 import org.apache.commons.httpclient.{HttpMethodBase, HttpClient}
 import org.scalatest.{Suite, BeforeAndAfterAll}
 import net.liftweb.http.testing._
 import net.liftweb.json._
-import test.{TestDatabaseSupport, Jetty, TestHelpers}
-import ApiTestHelpers._
+import LiveTestHelpers._
 
 /**
- * Configures a test case to test APIs, and provides helpful functionality to aid in the testing.
+ * A test case that requires connectivity to a running Jetty instance.
  */
-trait ApiTest extends TestHelpers with TestKit with ApiTestHelpers with BeforeAndAfterAll {
+trait LiveTest extends TestHelpers with TestKit with LiveTestHelpers with BeforeAndAfterAll with TestDatabaseSupport {
   self: Suite =>
 
   override def baseUrl = Jetty.Default.url
+
+  override val wrapTestsInTransaction = false
 
   implicit val reportError = new ReportFailure {
     def fail(msg: String): Nothing = self.fail(s"Error: '$msg'")
@@ -30,7 +31,7 @@ trait ApiTest extends TestHelpers with TestKit with ApiTestHelpers with BeforeAn
   }
 }
 
-object ApiTestHelpers {
+object LiveTestHelpers {
 
   implicit val JsonFormats = DefaultFormats.lossless
 
@@ -47,22 +48,19 @@ object ApiTestHelpers {
   implicit def string2byteArray(s: String): Array[Byte] = s.getBytes("UTF-8")
 
   implicit class HttpResponseExt(val r: HttpResponse) extends AnyVal {
-
     def map[T](f: HttpResponse => T): T = f(r)
     def flatMap[T](f: HttpResponse => Option[T]): Option[T] = f(r)
-
+    def responseText = r.bodyAsString.openOrThrowException(s"Unable to read body from ${r.body}")
     /**
      * Converts the response body to JSON and then to a Scala class.
+     *
+     * Result will never be `Empty`. It's `Some()` so that it can be used in for-comprehensions.
      */
-    def expectJson[T](implicit m: Manifest[T]): Some[T] = {
-      val body = r.bodyAsString.openOrThrowException(s"Unable to read body from ${r.body}")
-      val t: T = parse(body).extract[T]
-      Some(t)
-    }
+    def expectJson[T](implicit m: Manifest[T]): Some[T] = Some(parse(responseText).extract[T])
   }
 }
 
-trait ApiTestHelpers {
+trait LiveTestHelpers {
   self: TestKit =>
 
   def jsonPut(url: String, value: JValue)(implicit capture: (String, HttpClient, HttpMethodBase) => ResponseType): self.ResponseType =

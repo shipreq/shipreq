@@ -1,5 +1,7 @@
 package com.beardedlogic.usecase.lib
 
+import net.liftweb.common.{Full, Empty, Box}
+
 object ExternalId {
 
   val Base62 = new BaseX("0atxlQwnj7y3zFZNVBqJ42AcriYEeMu8SdU91HgfTsb6GhmWkX5KopCIRLvOPD", 4)
@@ -31,11 +33,13 @@ object ExternalId {
 
   def isValidExternalId(str: String): Boolean = ExternalIdRegex.matcher(str).matches
 
-  def toInternalOpt(external: String): Option[Long] =
-    if (isValidExternalId(external)) Some(toInternal(external))
-    else None
+  def toInternalOpt(external: String): Option[Long] = if (isValidExternalId(external)) Some(toInternal(external)) else None
 
-  def unapply(str: String): Option[Long] = ExternalId.toInternalOpt(str)
+  def toInternalBox(external: String): Box[Long] = if (isValidExternalId(external)) Full(toInternal(external)) else Empty
+
+  def parse(str: String): Box[Long] = toInternalBox(str)
+
+  def unapply(str: String): Option[Long] = toInternalOpt(str)
 
   // -------------------------------------------------------------------------------------------------------------------
   // http://stackoverflow.com/questions/8554286/obfuscating-an-id
@@ -60,7 +64,5 @@ object ExternalId {
 }
 
 object ExternalIdStr {
-  def unapply(str: String): Option[String] =
-    if (ExternalId.isValidExternalId(str)) Some(str)
-    else None
+  def unapply(str: String): Option[String] = if (ExternalId.isValidExternalId(str)) Some(str) else None
 }

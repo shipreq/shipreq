@@ -4,8 +4,8 @@ package api
 import net.liftweb.http._
 import net.liftweb.http.rest.RestHelper
 import net.liftweb.json._
-import net.liftweb.util.Helpers._
 import lib.ExternalId
+import lib.HttpResponses.PreconditionRequiredResponse
 import model._
 import model.DbOpResult._
 import ApiHelpers._
@@ -20,7 +20,7 @@ object UseCaseApi extends RestHelper {
   def updateUseCase(valueId: Long, json: JValue): Either[LiftResponse, LiftResponse] =
     for {
       input <- json.parseInput[UpdateUseCaseInput]
-      dao <- DAO.forTransaction
+      dao <- DAO.forTransactionRight
       uc <- dao.findUseCase(valueId) ~> NotFoundResponse()
     } yield {
       val tgt = uc.copy(title = input.title)
