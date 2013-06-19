@@ -1,14 +1,14 @@
-package com.beardedlogic.usecase.snippet
+package com.beardedlogic.usecase
+package snippet
 
 import org.scalatest.FunSpec
-import com.beardedlogic.usecase.test.TestDatabaseSupport
-import com.beardedlogic.usecase.lib.msg.NoReaction
-import com.beardedlogic.usecase.model.{UseCaseSummary, UseCase}
+import lib.msg.NoReaction
+import model.UseCaseSummary
+import test.TestDatabaseSupport
 
-class UseCaseIndexTest extends FunSpec with TestDatabaseSupport {
+class UseCaseIndexSnippetTest extends FunSpec with TestDatabaseSupport {
 
-  describe("New UC") {
-
+  describe("createNewUseCase()") {
     def createNewUseCase: UseCaseSummary = assertTableDiffs('data -> 1, 'value -> 1, 'usecase -> 1) {
       UseCaseIndex.createNewUseCase(NoReaction, db)
     }
