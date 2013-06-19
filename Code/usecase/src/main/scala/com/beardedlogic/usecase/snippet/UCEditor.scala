@@ -1,15 +1,18 @@
 package com.beardedlogic.usecase
 package snippet
 
-import scala.xml.NodeSeq
+import scala.xml.{Text, NodeSeq}
 import net.liftweb.common._
 import net.liftweb.http.js.JsExp.strToJsExp
 import net.liftweb.http.js.{JE, JsCmd, JsCmds}
+import net.liftweb.http.js.jquery.JqJE
 import net.liftweb.http._
 import net.liftweb.util.Helpers._
 import lib._
 import field.Field
 import model.DAO
+import msg.{JavaScript, Reactor}
+import JsExt.JqExpr
 
 object UCEditor {
   final val ParamId = "id"
@@ -43,10 +46,21 @@ class UCEditor extends StatefulSnippet with SnippetHelpers {
       ".ucdata *" #> renderFields(state.fields) andThen
         ".title .ucid *" #> state.number.toString
           & ".title @title" #> SHtml.ajaxText(state.title, onTitleChange(_))
+          & ".rev *" #> revText
+          & ".saveUseCase" #> SHtml.ajaxButton("Save", jsCallbackWithDao(saveUpdate))
       )
 
   @inline def renderFields(fields: List[Field[_]]) =
     fields.map(_.render).foldLeft(NodeSeq.Empty)(_ ++: _)
+
+  def saveUpdate(r: Reactor, dao: DAO) {
+    state.save(dao)
+    r(JavaScript)(
+      JqExpr(".rev") ~> JqJE.JqHtml(Text(revText))
+    )
+  }
+
+  def revText = state.lastSave.map(_.uc.value.rev).getOrElse(0).toString
 
   // TODO Title -> NC change should be done via actors
   /**
