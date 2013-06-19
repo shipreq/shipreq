@@ -1,21 +1,20 @@
 package com.beardedlogic.usecase
 package test
 
-import net.liftweb.http.LiftRules
+import java.io.File
+import org.apache.commons.io.FileUtils
 import org.scalatest.matchers.{ShouldMatchers, Matcher, MatchResult}
 import org.scalatest.mock.MockitoSugar
 import org.mockito.Mockito._
-import lib.{CachedFunction, Defaults, BiMap, StepNode, UseCaseCtx}
+import net.liftweb.http.LiftRules
+import lib._
 import NodeUtils._
 import lib.tree._
 import lib.field._
 import TreeOps._
-import lib.field.CourseFields
 import lib.TypeTags._
 import lib.msg._
 import model._
-import java.io.File
-import org.apache.commons.io.FileUtils
 
 /**
  * @since 30/04/2013
@@ -23,6 +22,7 @@ import org.apache.commons.io.FileUtils
 trait TestHelpers extends MockitoSugar with ShouldMatchers {
   import TestHelpers._
 
+  Misc.ensureTestModeDuringTests()
   if (!LiftRules.doneBoot) (new bootstrap.liftweb.Boot).configureLift
   if (Defaults.FieldList.get == null) Defaults.FieldList << mockFieldList(Defaults.FieldListDefs)
 
