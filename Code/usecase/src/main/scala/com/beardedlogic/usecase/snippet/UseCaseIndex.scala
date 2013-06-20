@@ -46,7 +46,7 @@ object UseCaseIndex extends SnippetHelpers {
   def createNewUseCase(reactor: Reactor, dao: DAO): UseCaseSummary = {
     val uc = dao.createInitialUseCase(Defaults.Title, Defaults.FieldList.get)
 //    val uc = UseCase(PlainValue(1, 2, 3), "UNTITLED", 4, 1000)
-    val ucs = UseCaseSummary(uc.value.dataId, uc.valueId, uc.number, uc.title, Misc.currentTimeAsIso8601Str)
+    val ucs = UseCaseSummary(uc.dataId, uc.valueId, uc.number, uc.title, Misc.currentTimeAsIso8601Str)
     reactor(JavaScript)(JsTriggerJson("new-uc", ucs))
     ucs
   }

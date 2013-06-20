@@ -25,7 +25,7 @@ class UseCaseIndexTest extends FunSuite
 
   def assertLinkUrl() {
     val valueId = db.findAllUseCaseSummaries.head.valueId
-    val dataId = db.findUseCase(valueId).get.value.dataId
+    val dataId = db.findUseCase(valueId).get.dataId
     dsl.row(0).linkUrl should be(baseUrl + "/usecase/" + ExternalId(dataId))
   }
 

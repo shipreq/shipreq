@@ -26,7 +26,7 @@ class UseCaseTest extends FunSpec with TestDatabaseSupport with TestHelpers {
   describe("updateUseCaseHeader") {
     def assertUC(id: Long, expected: UseCase, revOffset: Int) {
       val uc = db.findUseCase(id).get
-      uc.value.dataId should be(expected.value.dataId)
+      uc.dataId should be(expected.dataId)
       uc.value.rev should be(expected.value.rev + revOffset)
       uc.title should be(expected.title)
       uc.number should be(expected.number)

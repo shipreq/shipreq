@@ -144,11 +144,11 @@ trait UseCaseAccessor extends DatabaseAccessor {
 
   def findUseCase(valueId: Long): Option[UseCase] = Select.firstOption(valueId)
 
-  def findLatestUseCase(uc: UseCase): Option[UseCase] = findLatestUseCaseByDataId(uc.value.dataId)
+  def findLatestUseCase(uc: UseCase): Option[UseCase] = findLatestUseCaseByDataId(uc.dataId)
   def findLatestUseCaseByDataId(dataId: Long): Option[UseCase] = SelectLatestByDataId.firstOption(dataId)
   def findLatestUseCaseByValueId(valueId: Long): Option[UseCase] = SelectLatestByValueId.firstOption(valueId)
 
-  def findUseCaseSummary(uc: UseCase): Option[UseCaseSummary] = SelectSummary.firstOption(uc.value.dataId)
+  def findUseCaseSummary(uc: UseCase): Option[UseCaseSummary] = SelectSummary.firstOption(uc.dataId)
   def findAllUseCaseSummaries(): List[UseCaseSummary] = SelectSummaries.list
 
   /**
