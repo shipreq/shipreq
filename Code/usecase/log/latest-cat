@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+
+latest = `ls -1rt *.log | tail -1`.chomp
+puts File.read(latest).split(/^(?=\d\d:\d\d:\d\d)/).sort

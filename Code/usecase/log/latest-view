@@ -1,0 +1,4 @@
+#!/bin/bash
+
+./latest | fgrep -v ' [org.eclipse.jetty.' > /tmp/l
+vim /tmp/l
