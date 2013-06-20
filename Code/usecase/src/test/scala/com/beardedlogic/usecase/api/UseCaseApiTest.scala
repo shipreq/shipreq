@@ -5,12 +5,13 @@ import org.scalatest.FunSpec
 import org.scalatest.prop._
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json._
+import net.liftweb.http.testing.HttpResponse
 import lib.{ExternalId, Defaults}
 import model.{UseCase, UseCaseSummary, DAO}
 import test.LiveTest
 import test.LiveTestHelpers._
 
-class UseCaseLiveTest extends FunSpec with LiveTest with PropertyChecks {
+class UseCaseApiTest extends FunSpec with LiveTest with PropertyChecks {
 
   def goodRequestData(title: String): JValue = ("title" -> title)
 
@@ -77,6 +78,18 @@ class UseCaseLiveTest extends FunSpec with LiveTest with PropertyChecks {
     // TODO test 428
     ignore("should 428 when UC rev not latest") {
       withUc((dao, uc1) => {
+      })
+    }
+
+    it("should withstand current updates") {
+      withUc((dao, uc) => {
+        (1 to 100).par.map{i=> {
+          //          import sys.process._
+          //          val cmd = s"""curl -X PUT -H Content-Type:application/json --data {"title":"asd$i"} -w %{http_code} http://localhost:8080${urlFor(uc)}""" #| "tail -1" #| "perl -pe s/\\D+//g"
+          //          val code = cmd.!!.trim.toInt
+          val code = jsonPut(urlFor(uc), goodRequestData("asdg"+i)).asInstanceOf[HttpResponse].code
+          Seq(200,428) should contain(code)
+        }}
       })
     }
   }

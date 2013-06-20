@@ -14,7 +14,8 @@ case class UseCase(
   number: Short,
   fieldListId: Long) extends Value[DataType.UseCase] {
 
-  final def valueId = value.valueId
+  @inline final def dataId = value.dataId
+  @inline final def valueId = value.valueId
 
   def stateEquals(that: UseCase): Boolean =
     this.title == that.title &&
