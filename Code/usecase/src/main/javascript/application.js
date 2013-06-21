@@ -47,20 +47,36 @@ function ajaxErrorHandler(xhr, textStatus, errorThrown) {
     alert(msg)
 }
 
+/** A map of pending AJAX requests. Used to prevent duplicate form submissions. */
+PendingAjax = {}
+
 function submitJsonForm(apiUrl, successCallback) {
-    return function(form) {
-        $.ajax({
-            url: apiUrl.url,
-            type: apiUrl.type,
-            contentType: 'application/json',
-            dataType: 'json',
-            data: JSON.stringify($(form).serializeObject()),
-            error: ajaxErrorHandler,
-            success: function(data, textStatus, xhr) {
-                var result = JSON.parse(xhr.responseText)
-                successCallback(result)
-            }
-        })
+    return function (form) {
+        var formData = JSON.stringify($(form).serializeObject())
+        var ajaxKey = apiUrl.type + "@" + apiUrl.url + ":" + formData
+        if (PendingAjax[ajaxKey] != 1) {
+            // console.debug("PendingAjax: Locking " + ajaxKey)
+            PendingAjax[ajaxKey] = 1
+
+            var completeFn = function (ajaxKey2) {
+                return function (xhr, textStatus) {
+                    // console.debug("PendingAjax: Unlocking " + ajaxKey2)
+                    PendingAjax[ajaxKey2] = 0
+                }
+            }(ajaxKey)
+
+            $.ajax({
+                url: apiUrl.url,
+                type: apiUrl.type,
+                contentType: 'application/json',
+                dataType: 'json',
+                data: formData,
+                complete: completeFn,
+                error: ajaxErrorHandler,
+                success: successCallback
+            })
+        }
+        else console.debug("Ignoring repeated " + ajaxKey)
     }
 }
 
