@@ -7,6 +7,7 @@ object B extends Build {
     Project("root", file("."))
     .configs(SeleniumTest)
     .settings(inConfig(SeleniumTest)(Defaults.testSettings): _*)
+    .settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*) // Dependency graph
     .settings(
       testOptions in Test := Seq(Tests.Filter(normalTestFilter)),
       testOptions in SeleniumTest := Seq(Tests.Filter(seleniumTestFilter)),

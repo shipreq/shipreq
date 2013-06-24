@@ -19,3 +19,7 @@ resolvers += Resolver.url("sbt-plugin-releases",url("http://scalasbt.artifactory
 
 // SBT Javascript Plugin
 addSbtPlugin("com.untyped" %% "sbt-js" % "0.5")
+
+// Dependency graph
+addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.7.3")
+
