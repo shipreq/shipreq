@@ -45,3 +45,62 @@ Lift
   * Make form data-lift="form.ajax"
   * Add <button type="submit">Submit</button>
   * Add hidden(onSubmitCallback)
+
+* Surround JS + CSS in <lift:with-resource-id> to append ?XXX to the links and
+  avoid client caching. Suffix changes on Lift boot.
+
+* LiftRules.viewDispatch matches a request URL and returns Either[() =>
+  Box[NodeSeq], LiftView]
+
+* class Hello extends LiftView { override def dispatch = {case "cool" => cool _}}
+  will automatically serve /Hello/cool
+
+* RequestVar can share data between snippets on same page (ie. req/resp).
+  object sample extends RequestVar[Box[String]](Empty) // Define
+  sample.is.openOr("")      // Read
+  sample(Box.!!(newValue))) // Write
+  sample.is.choice(...)(...)
+
+* SessionVar is used the same way as RequestVar.
+
+* SiteMap
+  * Simple : Menu("Home") / "index" = Menu(Loc("Home",List("index"),"Home"))
+  * Menu(Loc(ID, TemplatePath, Title))
+  * Loc == location == template (not URL?)
+  * Loc >> xxx allows rules & attributes to be applied to a page.
+  * >> Hidden = Don't display in rendered site map HTML
+  * >> If(cond, resp) = Used to require certain conditions to access
+  * >> Unless(cond, resp) = Used to bar access in certain conditions
+  * >> Test(req => cond) = If a condition isn't met, render a 404
+  * >> Title(x=>Text(title)) = Dynamic title
+  * >> EarlyResponse(resp) = Repond with a given LiftResponse; forget rest of
+    rendering pipeline.
+  * >> TestAccess(action) = If Empty returned, page is renderable and appears in
+    sitemap rendering. If a RedirectResponse is returned, page redirects on
+    access and the link is hidden from the sitemap rendering.
+  * Custom LocParams can be created by extending UserLocParam.
+
+* URLs with params in path
+  * Example to match /user/1/photo/7
+  * Menu.param[(User,Photo)]
+  * Title = Loc.LinkText(x => Text(s"User: ${x._1}, Photo: ${x._2}"))
+  * Param extraction (Menu.param arg #3)
+    1) String => Box[T]
+    2) PartialFunction + extractors: { case User(u) :: Photo(p) :: Nil => Full((u,p)); case _=>Empty }
+  * URL generation (Menu.param arg #4) = T => String/List[String]
+    (x: (User,Photo)) => x._1.id.toString :: x._2.id.toString :: Nil
+  * Path = "user" / * / "photo" / *
+
+* Authentication
+  * LocParams If/Unless/TestAccess
+  * LiftRules.authentication = Http{Basic,Digest}Authentication
+  * LiftRules.authentication = HttpBasicAuthentication("yourRealm"){
+      case (username, pwd, req) =>
+        if (username & pwd are valid) {
+        // HARDCODED EXAMPLE: if(un == "admin" && pwd == "password"){
+          userRoles(AuthRole("admin"))
+          true
+        } else false
+    }
+    object userRoles extends SessionVar[Box[List[Role]]](List.Empty)
+  * >> HttpAuthProtected(req => Full(AuthRole("admin")))
