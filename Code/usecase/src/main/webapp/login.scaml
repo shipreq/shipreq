@@ -1,0 +1,18 @@
+%div(data-lift="surround?with=default;at=content")
+  %h1 Login Bro!
+  %div#login(data-lift="Login?form=post")
+
+    %div.who
+      %label(for="who") Username or Email:
+      %input#who(type="text")
+
+    %div.password
+      %label(for="password") Password:
+      %input#password(type="password")
+
+    %div.remember
+      %input#remember(type="checkbox")
+      %label(for="remember") Remember Me?
+
+    %div.submit
+      %input(type="submit" value="Login")

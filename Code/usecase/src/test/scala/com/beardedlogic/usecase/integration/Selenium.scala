@@ -46,5 +46,8 @@ trait SeleniumTestSupport extends BeforeAndAfterAll with BeforeAndAfterEach { th
 
   private var _s : SeleniumDriver = null
   def s = _s
+
   def baseUrl = SeleniumJetty.url
+
+  def currentUrl = s.getCurrentUrl.replaceFirst("^http://[^/]+", "")
 }

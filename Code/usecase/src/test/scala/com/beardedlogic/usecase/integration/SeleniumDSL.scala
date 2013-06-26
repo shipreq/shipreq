@@ -6,8 +6,6 @@ import org.scalatest.Suite
 import org.scalatest.matchers.ShouldMatchers
 import scala.collection.JavaConverters._
 import test.TestHelpers
-import org.openqa.selenium.remote.RemoteWebElement
-import org.openqa.selenium.interactions.Actions
 
 /**
  * Provides tests with Selenium-based DSLs.
@@ -16,11 +14,15 @@ import org.openqa.selenium.interactions.Actions
  */
 trait SeleniumDSL extends SeleniumTestSupport { this: Suite =>
 
+  // TODO refactor all of the Selenium tests.
+
   import SeleniumDSL._
 
   def uce = new UCEditorDSL(s).tap { _.reload }
 
   def listDsl = new UseCaseIndexDSL(s).tap { _.reload }
+
+  def gotoLogin = new LoginDSL(s).tap { _.reload }
 }
 
 /**
@@ -166,7 +168,21 @@ object SeleniumDSL {
       def assertEditText(txt: String) = { eventually {editTextarea.value should be(txt)}; this }
 //      def enterText(txt: String) = { println("ready?"); Thread.sleep(3000); new Actions(s).moveToElement(elem).click().perform(); println("done"); Thread.sleep(3000);elem.sendKeys(txt + "\n"); UseCaseIndexDSL.this }
     }
-
   }
 
+  // ===================================================================================================================
+
+  class LoginDSL(val s: SeleniumDriver) extends BaseDSL {
+    def reload = { s.getRel("/login").disableJqueryEffects; this }
+
+    def usernameElem = s.findElement(By.id("who"))
+    def passwordElem = s.findElement(By.id("password"))
+    def rememberMeElem = s.findElement(By.id("remember"))
+
+    def enterUsername(username: String) = {usernameElem.typeInto(username); this}
+    def enterPassword(password: String) = {passwordElem.typeInto(password); this}
+    def setRememberMe(on: Boolean) = {if (rememberMeElem.isSelected != on) rememberMeElem.click(); this}
+
+    def login() = s.findElement(By.cssSelector(".submit input")).click()
+  }
 }

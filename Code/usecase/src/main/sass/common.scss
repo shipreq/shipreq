@@ -4,5 +4,31 @@ textarea {
   outline: none;
 }
 
-abbr.timeago[title] {border-bottom:none !important}
+abbr.timeago[title] {
+  border-bottom: none !important
+}
 
+#login {
+  width: 260px;
+  margin-left: auto;
+  margin-right: auto;
+
+  .who, .password {
+    label {
+      display: block;
+    }
+    input {
+      width: 100%;
+      margin-bottom: 1em;
+    }
+  }
+
+  .remember {
+    text-align: right;
+  }
+
+  .submit {
+    text-align: right;
+    margin-top: 1em
+  }
+}

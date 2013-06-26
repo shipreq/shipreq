@@ -1,3 +1,9 @@
 textarea { resize: none; overflow: auto; /* removes scrollbars in Internet Explorer */ outline: none; }
 
 abbr.timeago[title] { border-bottom: none !important; }
+
+#login { width: 260px; margin-left: auto; margin-right: auto; }
+#login .who label, #login .password label { display: block; }
+#login .who input, #login .password input { width: 100%; margin-bottom: 1em; }
+#login .remember { text-align: right; }
+#login .submit { text-align: right; margin-top: 1em; }
