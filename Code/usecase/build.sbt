@@ -29,8 +29,6 @@ libraryDependencies ++= {
     "com.google.code.findbugs"  % "jsr305"                 % "2.0.1", // required by Guava
     "org.fusesource.scalate"   %% "scalate-core"           % "1.6.1",
     "org.fusesource.scalamd"   %% "scalamd"                % "1.6", // markdown
-    // [provided]
-    "javax.servlet" % "servlet-api" % "2.5" % "provided", // required by liftmodule-scaml-jade
     // [test]
     "org.scalatest"               %% "scalatest"              % "2.0.M6-SNAP16"       % "test",
     "org.mockito"                 %  "mockito-core"           % "1.9.5"               % "test",
@@ -45,7 +43,7 @@ libraryDependencies ++= {
       ExclusionRule(name = "selenium-safari-driver")
     ),
     "org.eclipse.jetty"           %  "jetty-webapp"           % "8.1.10.v20130312"    % "container,test",
-    "org.eclipse.jetty.orbit"     %  "javax.servlet"          % "3.0.0.v201112011016" % "container,test" artifacts Artifact("javax.servlet", "jar", "jar")
+    "org.eclipse.jetty.orbit"     %  "javax.servlet"          % "3.0.0.v201112011016" % "container,test,provided" artifacts Artifact("javax.servlet", "jar", "jar")
   )
 }
 
