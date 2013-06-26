@@ -18,12 +18,13 @@ libraryDependencies ++= {
   val shiroVersion = "1.2.2"
   Seq(
     "net.liftweb"              %% "lift-webkit"            % liftVersion,
-    "ch.qos.logback"            % "logback-classic"        % "1.0.12",
+    "ch.qos.logback"            % "logback-classic"        % "1.0.13",
     "com.typesafe.slick"       %% "slick"                  % "1.0.1",
     //"org.postgresql"          % "postgresql"             % "9.2-1002-jdbc4", errornously compiled for 1.7
     "com.googlecode.flyway"     % "flyway-core"            % "2.1.1",
     "org.apache.shiro"          % "shiro-core"             % shiroVersion,
     "org.apache.shiro"          % "shiro-web"              % shiroVersion,
+    "org.slf4j"                 % "jcl-over-slf4j"         % "1.7.5", // required by Shiro (in place of commons-logging)
     "com.google.guava"          % "guava"                  % "14.0.1",
     "com.google.code.findbugs"  % "jsr305"                 % "2.0.1", // required by Guava
     "org.scalatest"               %% "scalatest"              % "2.0.M6-SNAP16"       % "test",
