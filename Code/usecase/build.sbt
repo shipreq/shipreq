@@ -27,6 +27,11 @@ libraryDependencies ++= {
     "org.slf4j"                 % "jcl-over-slf4j"         % "1.7.5", // required by Shiro (in place of commons-logging)
     "com.google.guava"          % "guava"                  % "14.0.1",
     "com.google.code.findbugs"  % "jsr305"                 % "2.0.1", // required by Guava
+    "org.fusesource.scalate"   %% "scalate-core"           % "1.6.1",
+    "org.fusesource.scalamd"   %% "scalamd"                % "1.6", // markdown
+    // [provided]
+    "javax.servlet" % "servlet-api" % "2.5" % "provided", // required by liftmodule-scaml-jade
+    // [test]
     "org.scalatest"               %% "scalatest"              % "2.0.M6-SNAP16"       % "test",
     "org.mockito"                 %  "mockito-core"           % "1.9.5"               % "test",
     "org.scalacheck"              %% "scalacheck"             % "1.10.1"              % "test",

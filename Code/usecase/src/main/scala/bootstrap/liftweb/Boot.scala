@@ -1,6 +1,7 @@
 package bootstrap.liftweb
 
 import net.liftweb.http._
+import net.liftmodules.scamljade.ScamlJade
 import com.beardedlogic.usecase._
 import lib.{ExternalIdStr, Misc, Defaults}
 import lib.db.DB
@@ -42,6 +43,9 @@ class Boot {
 
     // Force requests to be UTF-8
     LiftRules.early.append(_.setCharacterEncoding("UTF-8"))
+
+    // Add support for HAML/Jade template (must be after other LiftRules)
+    ScamlJade.init(List("scaml", "html"))
   }
 
   def initDatabase() {
