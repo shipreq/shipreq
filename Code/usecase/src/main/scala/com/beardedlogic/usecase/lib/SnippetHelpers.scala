@@ -6,6 +6,7 @@ import com.beardedlogic.usecase.lib.msg.{JavaScriptReaction, Reactor}
 import com.beardedlogic.usecase.model.DAO
 import net.liftweb.http.{ResponseShortcutException, LiftResponse}
 import com.beardedlogic.usecase.lib.HttpResponses.ShouldNeverHappenResponse
+import com.beardedlogic.usecase.lib.security.Oshiro
 
 /**
  * @since 11/06/2013
@@ -27,4 +28,6 @@ trait SnippetHelpers extends Logger {
   def responseImmediately(response: LiftResponse): Nothing = throw ResponseShortcutException.shortcutResponse(response)
 
   def shouldNeverHappen_! = responseImmediately(ShouldNeverHappenResponse())
+
+  def loggedInUser = Oshiro.loggedInUser
 }

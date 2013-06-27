@@ -23,6 +23,8 @@ object UserAccessor {
 
   val GetDescAndCredentialsByUsername = Q.query[String, (UserDescriptor, PasswordAndSalt)](s"SELECT $UserDescCols,$PwdAndSaltCols FROM usr WHERE username=?")
   val GetDescAndCredentialsByEmail = Q.query[String, (UserDescriptor, PasswordAndSalt)](s"SELECT $UserDescCols,$PwdAndSaltCols FROM usr WHERE email=? AND password IS NOT NULL")
+
+  val UpdateOnLogin = Q.update[(String, Long)]("UPDATE usr SET login_count = login_count + 1, last_login_at = NOW(), last_login_ip = ? WHERE id=?")
 }
 
 trait UserAccessor extends DatabaseAccessor {
@@ -36,4 +38,6 @@ trait UserAccessor extends DatabaseAccessor {
   def findUserDescAndCredentialsByUsername(username: String) = GetDescAndCredentialsByUsername.firstOption(username)
 
   def findUserDescAndCredentialsByEmail(email: String) = GetDescAndCredentialsByEmail.firstOption(email)
+
+  def updateUserOnLogin(id: Long, ipAddr: String): Unit = UpdateOnLogin.execute(ipAddr, id)
 }
