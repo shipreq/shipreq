@@ -1,18 +1,17 @@
 package com.beardedlogic.usecase.integration
 
-import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.GivenWhenThen
 import org.scalatest.FunSpec
+import support.SeleniumTest
 
 /**
  * Tests the use case editor.
  *
  * @since 29/04/2013
  */
-class UCEditorTest extends FunSpec with ShouldMatchers with SeleniumDSL with GivenWhenThen {
+class UCEditorTest extends FunSpec with SeleniumTest {
 
   describe("The editor page when first loaded") {
-    lazy val u = uce.expectDelays(false)
+    lazy val u = goto.useCaseEditor.expectDelays(false)
     it("should have a pre-populated UC ID") { u.useCaseId should be("UC-1") }
     it("should have a title of 'Untitled'") { u.useCaseTitle should be("Untitled") }
     it("should have 2 steps") { u.stepCount should be(2) }
@@ -26,24 +25,24 @@ class UCEditorTest extends FunSpec with ShouldMatchers with SeleniumDSL with Giv
   describe("A change to the use case title") {
     describe("when 1.0 is empty") {
       it("should set 1.0 to the UC title") {
-        uce.setUseCaseTitle("hehe cool").assertStepText(0, "hehe cool")
+        goto.useCaseEditor.setUseCaseTitle("hehe cool").assertStepText(0, "hehe cool")
       }
     }
     describe("when 1.0 was matched manually") {
       it("should set 1.0 to the UC title") {
-        uce.setStepText(0, "override").setUseCaseTitle("hehe cool").setStepText(0, "hehe cool")
+        goto.useCaseEditor.setStepText(0, "override").setUseCaseTitle("hehe cool").setStepText(0, "hehe cool")
           .setUseCaseTitle("noo").assertStepText(0, "noo")
       }
     }
     describe("when 1.0 was matched automatically") {
       it("should set 1.0 to the UC title") {
-        uce.setUseCaseTitle("hehe cool").assertStepText(0, "hehe cool")
+        goto.useCaseEditor.setUseCaseTitle("hehe cool").assertStepText(0, "hehe cool")
           .setUseCaseTitle("noo").assertStepText(0, "noo")
       }
     }
     describe("when 1.0 is overridden") {
       it("should not affect 1.0") {
-        uce.setStepText(0, "what").setUseCaseTitle("noo").assertStepText(0, "what")
+        goto.useCaseEditor.setStepText(0, "what").setUseCaseTitle("noo").assertStepText(0, "what")
       }
     }
   }

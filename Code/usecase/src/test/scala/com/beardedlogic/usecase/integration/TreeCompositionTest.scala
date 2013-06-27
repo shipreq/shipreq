@@ -1,17 +1,16 @@
 package com.beardedlogic.usecase.integration
 
 import org.scalatest.FreeSpec
-import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.GivenWhenThen
+import support.SeleniumTest
 
 /**
  * @since 29/04/2013
  */
-class TreeCompositionTest extends FreeSpec with ShouldMatchers with SeleniumDSL with GivenWhenThen {
+class TreeCompositionTest extends FreeSpec with SeleniumTest {
 
-  def startWith_11 = uce.click_<<(1).assertStep(1)(0, "1.1")
+  def startWith_11 = goto.useCaseEditor.click_<<(1).assertStep(1)(0, "1.1")
 
-  def given_1E1_exists = uce.ec.clickAddTailStepButton.assertStepCount(1)
+  def given_1E1_exists = goto.useCaseEditor.ec.clickAddTailStepButton.assertStepCount(1)
 
   /**
    * Turns an new UC into this:
@@ -21,7 +20,7 @@ class TreeCompositionTest extends FreeSpec with ShouldMatchers with SeleniumDSL 
    * [2]   +-- 2
    * [3]   +-- 3
    */
-  def startWith103 = uce.clickAdd(1).assertStepCount(3).clickAdd(2).assertStepCount(4)
+  def startWith103 = goto.useCaseEditor.clickAdd(1).assertStepCount(3).clickAdd(2).assertStepCount(4)
 
   /**
    * Turns an new UC into this:
@@ -81,7 +80,7 @@ class TreeCompositionTest extends FreeSpec with ShouldMatchers with SeleniumDSL 
 
   "The Add button" - {
     "when pressed for 1.0" - {
-      lazy val u = uce.setStepText(0, "NC").setStepText(1, "blah").clickAdd(0)
+      lazy val u = goto.useCaseEditor.setStepText(0, "NC").setStepText(1, "blah").clickAdd(0)
       "should not affect 1.0" in { u.assertStep(0)(0, "1.0", "NC") }
       "should renumber 1.0.1 to 1.0.2" in { u.assertStep(2)(1, "2", "blah") }
       "should add a new step: 1.0.1" in { u.assertStep(1)(1, "1", "") }
@@ -89,7 +88,7 @@ class TreeCompositionTest extends FreeSpec with ShouldMatchers with SeleniumDSL 
     }
 
     "when pressed for 1.0.1" - {
-      lazy val u = uce.setStepText(0, "NC").setStepText(1, "blah").clickAdd(1)
+      lazy val u = goto.useCaseEditor.setStepText(0, "NC").setStepText(1, "blah").clickAdd(1)
       "should not affect 1.0" in { u.assertStep(0)(0, "1.0", "NC") }
       "should not affect 1.0.1" in { u.assertStep(1)(1, "1", "blah") }
       "should add a new step: 1.0.2" in { u.assertStep(2)(1, "2", "") }
@@ -105,7 +104,7 @@ class TreeCompositionTest extends FreeSpec with ShouldMatchers with SeleniumDSL 
 
   "The Delete button" - {
     "when page is first loaded" - {
-      lazy val u = uce
+      lazy val u = goto.useCaseEditor
       "should not be visible for 1.0" in { u.deleteButtonVisibility(0) should be(false) }
       "should be visible for 1.0.1" in { u.deleteButtonVisibility(1) should be(true) }
     }
@@ -127,7 +126,7 @@ class TreeCompositionTest extends FreeSpec with ShouldMatchers with SeleniumDSL 
     }
 
     "should not work for 1.0" in {
-      uce.deleteButtonVisibility(0) should be(false)
+      goto.useCaseEditor.deleteButtonVisibility(0) should be(false)
     }
 
     "should work for 1.1" in {
@@ -151,7 +150,7 @@ class TreeCompositionTest extends FreeSpec with ShouldMatchers with SeleniumDSL 
 
   "The << button" - {
     "when page is first loaded" - {
-      lazy val u = uce.expectDelays(false)
+      lazy val u = goto.useCaseEditor.expectDelays(false)
       "should not be visible for 1.0" in { u.indentDecButtonVisibility(0) should be(false) }
       "should be visible for 1.0.1" in { u.indentDecButtonVisibility(1) should be(true) }
     }
@@ -197,7 +196,7 @@ class TreeCompositionTest extends FreeSpec with ShouldMatchers with SeleniumDSL 
 
   "The >> button" - {
     "when page is first loaded" - {
-      lazy val u = uce
+      lazy val u = goto.useCaseEditor
       "should not be visible for 1.0" in { u.indentIncButtonVisibility(0) should be(false) }
       "should be visible for 1.0.1" in { u.indentIncButtonVisibility(1) should be(false) }
     }
@@ -254,12 +253,12 @@ class TreeCompositionTest extends FreeSpec with ShouldMatchers with SeleniumDSL 
 
   "The Alternate Courses addTailStep button" - {
     "should be visible when there are no AC steps" in {
-      Given("A page with no AC steps yet"); val u = uce.ac.assertStepCount(0)
+      Given("A page with no AC steps yet"); val u = goto.useCaseEditor.ac.assertStepCount(0)
       Then("it should be visible"); u.assertHasAddTailStepButton
     }
 
     "should create 1.1 first" in {
-      Given("A page with no AC steps yet"); val u = uce.ac.assertStepCount(0)
+      Given("A page with no AC steps yet"); val u = goto.useCaseEditor.ac.assertStepCount(0)
       When("clicked"); u.clickAddTailStepButton
       Then("it should create 1.1"); u.assertStep(0)(0, "1.1")
       And("remain visible"); u.assertHasAddTailStepButton
@@ -277,12 +276,12 @@ class TreeCompositionTest extends FreeSpec with ShouldMatchers with SeleniumDSL 
 
   "The Exceptions addTailStep button" - {
     "should be visible when there are no exception steps" in {
-      Given("A page with no exceptions yet"); val u = uce.ec.assertStepCount(0)
+      Given("A page with no exceptions yet"); val u = goto.useCaseEditor.ec.assertStepCount(0)
       Then("it should be visible"); u.assertHasAddTailStepButton
     }
 
     "should create 1.E.1 first" in {
-      Given("A page with no exceptions yet"); val u = uce.ec.assertStepCount(0)
+      Given("A page with no exceptions yet"); val u = goto.useCaseEditor.ec.assertStepCount(0)
       When("clicked"); u.clickAddTailStepButton
       Then("it should create 1.E.1"); u.assertStep(0)(0, "1.E.1")
       And("remain visible"); u.assertHasAddTailStepButton

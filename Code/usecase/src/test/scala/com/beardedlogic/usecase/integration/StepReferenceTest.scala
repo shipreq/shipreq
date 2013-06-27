@@ -1,29 +1,20 @@
 package com.beardedlogic.usecase.integration
 
-import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.GivenWhenThen
-import org.scalatest.FunSpec
-import org.scalatest.BeforeAndAfter
-import org.openqa.selenium.WebElement
 import org.openqa.selenium.By
-import com.beardedlogic.usecase.test.TestHelpers
+import org.openqa.selenium.WebElement
+import org.scalatest.BeforeAndAfter
+import org.scalatest.FunSpec
+import support._
+import SeleniumDSL._
 
 /**
  * Tests that references to steps are updated when the steps' labels/positions change.
  *
  * @since 10/05/2013
  */
-class StepReferenceTest
-  extends FunSpec
-          with ShouldMatchers
-          with SeleniumDSL
-          with TestHelpers
-          with BeforeAndAfter
-          with GivenWhenThen {
+class StepReferenceTest  extends FunSpec with SeleniumTest with BeforeAndAfter {
 
-  import SeleniumDSL._
-
-  var u: UCEditorDSL = null
+  var u: UseCaseEditorDSL = null
   var labelMap: Map[String, Int] = null
 
   after {
@@ -31,7 +22,7 @@ class StepReferenceTest
     labelMap = null
   }
 
-  def referring = s.findElement(By.cssSelector(".ucdata textarea"))
+  def referring = selenium.findElement(By.cssSelector(".ucdata textarea"))
 
   def refText(stepLabel: String) = s"Look at [${stepLabel}]. Good."
 
@@ -44,7 +35,7 @@ class StepReferenceTest
   // -------------------------------------------------------------------------------------------------------------------
 
   def init = {
-    u = uce // load page
+    u = goto.useCaseEditor // load page
     mapSteps("1.0", "1.0.1")
     u
   }
@@ -163,7 +154,7 @@ class StepReferenceTest
 
     describe("Invalid step ref links") {
       it("should be transformed after editing") {
-        u = uce
+        u = goto.useCaseEditor
         referring.typeInto(refText("1.0.5") + "\t")
         eventually { referring.value should be(refText("1.0.5?")) }
       }
@@ -172,14 +163,14 @@ class StepReferenceTest
 
   def refsAreParsed(setup: => Any, field: => WebElement, fieldAfterInsert: => WebElement = null) = {
     it("should transform on edit") {
-      u = uce
+      u = goto.useCaseEditor
       setup
       field.typeInto("I am [  1.0.1]\t")
       eventually { field.value should be("I am [1.0.1]") }
     }
 
     it("should update as refs change") {
-      u = uce
+      u = goto.useCaseEditor
       setup
       field.typeInto("I like [1.0.1]\t")
       u.clickAdd(0)

@@ -1,9 +1,11 @@
-package com.beardedlogic.usecase.integration
+package com.beardedlogic.usecase
+package integration.support
 
-import com.beardedlogic.usecase.test.{TestDatabaseSupport, SharedGlobal, Jetty}
 import org.openqa.selenium.firefox.FirefoxDriver
 import org.openqa.selenium.{HasInputDevices, JavascriptExecutor, WebDriver}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
+import test.{TestDatabaseSupport, SharedGlobal, Jetty}
+import SeleniumTestSupport._
 
 /**
  * @since 30/04/2013
@@ -29,25 +31,21 @@ object SeleniumTestSupport {
  *
  * @since 30/04/2013
  */
-trait SeleniumTestSupport extends BeforeAndAfterAll with BeforeAndAfterEach { this: Suite =>
-
-  import SeleniumTestSupport._
+trait SeleniumTestSupport extends BeforeAndAfterAll { this: Suite =>
 
   override def beforeAll() {
     TestDatabaseSupport.init()
     SeleniumJetty.acquire
-    _s = SeleniumDriverRef.acquire
+    _selenium = SeleniumDriverRef.acquire
   }
 
   override def afterAll() {
-    _s = SeleniumDriverRef.release
+    _selenium = SeleniumDriverRef.release
     SeleniumJetty.release
   }
 
-  private var _s : SeleniumDriver = null
-  def s = _s
+  private var _selenium : SeleniumDriver = null
+  def selenium = _selenium
 
   def baseUrl = SeleniumJetty.url
-
-  def currentUrl = s.getCurrentUrl.replaceFirst("^http://[^/]+", "")
 }
