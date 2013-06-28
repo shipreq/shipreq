@@ -3,7 +3,7 @@ package mail
 
 import net.liftweb.util.Mailer.{MailTypes, PlainMailBodyType, Subject}
 import app.AppConfig._
-import app.Urls
+import app.AppSiteMap._
 
 object RegistrationEmails {
   type Mail = (Subject, List[MailTypes])
@@ -31,7 +31,7 @@ Somebody, probably you, has tried to re-register your email address.
 As you already have a registered account, no action has been taken.
 
 To login or reset your password, simply click on the following link:
-$BaseUrl${Urls.login}
+$BaseUrl${Login.loc.calcDefaultHref}
 
 If you were not expecting this message, please ignore and delete it.
 

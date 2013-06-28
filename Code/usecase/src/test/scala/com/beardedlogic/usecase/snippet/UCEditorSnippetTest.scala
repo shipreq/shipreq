@@ -3,7 +3,7 @@ package snippet
 
 import org.scalatest.FunSpec
 import test.{LiveTestHelpers, LiveTest}
-import app.Urls
+import app.AppSiteMap.Urls
 import lib.msg.NoReaction
 import LiveTestHelpers._
 

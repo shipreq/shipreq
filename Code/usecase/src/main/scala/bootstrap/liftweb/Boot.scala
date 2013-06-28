@@ -3,13 +3,14 @@ package bootstrap.liftweb
 import net.liftweb.http._
 import net.liftmodules.scamljade.ScamlJade
 import net.liftweb.util.{Props, Mailer}
-import javax.mail.{Authenticator,PasswordAuthentication}
+import javax.mail.{Authenticator, PasswordAuthentication}
 
 import com.beardedlogic.usecase._
 import lib.{ExternalIdStr, Defaults}
 import lib.db.DB
 import lib.security.Oshiro
 import api.UseCaseApi
+import app.AppSiteMap
 import snippet.UCEditor
 
 /**
@@ -33,6 +34,9 @@ class Boot {
 
     // Register APIs
     LiftRules.statelessDispatch.append(UseCaseApi)
+
+    // Register route whitelist
+    LiftRules.setSiteMap(AppSiteMap.sitemap)
 
     // Routing
     // TODO should be done via sitemap
