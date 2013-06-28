@@ -2,6 +2,9 @@ package bootstrap.liftweb
 
 import net.liftweb.http._
 import net.liftmodules.scamljade.ScamlJade
+import net.liftweb.util.{Props, Mailer}
+import javax.mail.{Authenticator,PasswordAuthentication}
+
 import com.beardedlogic.usecase._
 import lib.{ExternalIdStr, Defaults}
 import lib.db.DB
@@ -22,6 +25,8 @@ class Boot {
   def configureLift() {
 
     Oshiro.init()
+
+    initMailer()
 
     // App package path
     LiftRules.addToPackages("com.beardedlogic.usecase")
@@ -49,5 +54,14 @@ class Boot {
   def initDatabase() {
     DB.init()
     Defaults.init()
+  }
+
+  def initMailer() {
+    Mailer.authenticator = for {
+      user <- Props.get("mail.smtp.username")
+      pass <- Props.get("mail.smtp.password")
+    } yield new Authenticator {
+        override def getPasswordAuthentication = new PasswordAuthentication(user, pass)
+      }
   }
 }
