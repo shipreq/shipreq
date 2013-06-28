@@ -20,8 +20,6 @@ object Jetty {
  */
 class Jetty(val port: Int) extends Logger {
 
-  Misc.ensureTestModeDuringTests()
-
   private val instance = SharedGlobal(Some(15000L), newServer _)(stopServer(_))
   val maxIdle = 10 seconds
   val url = "http://localhost:" + port

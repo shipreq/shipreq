@@ -22,7 +22,6 @@ import model._
 trait TestHelpers extends MockitoSugar with ShouldMatchers {
   import TestHelpers._
 
-  Misc.ensureTestModeDuringTests()
   if (!LiftRules.doneBoot) (new bootstrap.liftweb.Boot).configureLift
   if (Defaults.FieldList.get == null) Defaults.FieldList << mockFieldList(Defaults.FieldListDefs)
 

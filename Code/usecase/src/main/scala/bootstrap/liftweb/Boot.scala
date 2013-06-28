@@ -3,7 +3,7 @@ package bootstrap.liftweb
 import net.liftweb.http._
 import net.liftmodules.scamljade.ScamlJade
 import com.beardedlogic.usecase._
-import lib.{ExternalIdStr, Misc, Defaults}
+import lib.{ExternalIdStr, Defaults}
 import lib.db.DB
 import lib.security.Oshiro
 import api.UseCaseApi
@@ -20,8 +20,6 @@ class Boot {
   }
 
   def configureLift() {
-
-    Misc.ensureTestModeDuringTests()
 
     Oshiro.init()
 

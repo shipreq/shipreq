@@ -21,14 +21,6 @@ object Misc extends Misc {
     df.setTimeZone(tz)
     df
   }
-
-  /**
-   * Run running single tests from the IDE. the run-mode is still development. This changes it to test.
-   */
-  def ensureTestModeDuringTests() {
-    if (Thread.currentThread.getStackTrace.toList.find(_.getClassName.contains("scalatest")).isDefined)
-      System.setProperty("run.mode", "test")
-  }
 }
 
 trait Misc {
