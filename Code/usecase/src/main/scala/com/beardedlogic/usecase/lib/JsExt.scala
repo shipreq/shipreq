@@ -109,6 +109,9 @@ object JsExt {
   /** Selects all text within an element. */
   object JqSelect extends JsExp with JsMember {override val toJsCmd = "select()"}
 
+  /** Display or hide the matched elements. */
+  object JqToggle extends JsExp with JsMember {override val toJsCmd = "toggle()"}
+
   /** Get the descendants of each element in the current set of matched elements, filtered by a selector. */
   def JqFind(selector: String) = new JsExp with JsMember {override val toJsCmd = s"find(${selector.encJs})"}
 }

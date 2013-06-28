@@ -6,7 +6,6 @@ import org.apache.shiro.authc._
 import org.scalatest.{BeforeAndAfterAll, FunSpec}
 import test.TestDatabaseSupport
 import test.fixture.UserFixture
-import com.beardedlogic.usecase.model.UserDescriptor
 
 class OshiroTest extends FunSpec with TestDatabaseSupport with BeforeAndAfterAll with UserFixture {
 
@@ -41,7 +40,7 @@ class OshiroTest extends FunSpec with TestDatabaseSupport with BeforeAndAfterAll
     }
 
     it("should deny when user hasnt completed registration") {
-      intercept[UnknownAccountException](login(pendingUser1.email, ""))
+      intercept[UnknownAccountException](login(userWithCurrentToken.email, ""))
     }
   }
 

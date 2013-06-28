@@ -103,7 +103,7 @@ object UseCaseAccessor {
   val UpdateTitleDirectly = Q.update[(String, Long)]("UPDATE usecase SET title=? WHERE id=?")
 
   // TODO Model correction & validation: move, rename, do something
-  def normaliseWhitespaceInSingleLineString(str: String) = str.replaceAll("\\s+", " ").trim
+  def normaliseWhitespaceInSingleLineString(str: String) = Misc.WhitespaceRegex.replaceAllIn(str, " ").trim
   def correctUseCaseTitle(title: String) = {
     var t = normaliseWhitespaceInSingleLineString(title)
     if (t.isEmpty) t = Defaults.Title

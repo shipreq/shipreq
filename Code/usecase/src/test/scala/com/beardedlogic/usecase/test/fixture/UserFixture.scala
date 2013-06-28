@@ -7,8 +7,12 @@ import lib.db.DB
 import lib.security.PasswordAndSalt
 import test.TestDatabaseSupport
 import com.beardedlogic.usecase.model.UserDescriptor
+import net.liftweb.util.Helpers._
+import java.sql.Date
 
 trait UserFixture {
+
+  implicit def timeSpanToSqlDate(t: TimeSpan): Date = new Date(t.toDate.getTime)
 
   case class TestUser(username: String, email: String, password: String) {
     var id = 0L
@@ -18,14 +22,15 @@ trait UserFixture {
     def toUserDescriptor = UserDescriptor(id, username, email)
   }
 
-  case class PendingTestUser(email: String, token: String)
+  case class PendingTestUser(email: String, token: String, tokenCreatedAt: Date)
 
   val user1 = TestUser("golly", "g@g.com", "hello1234")
   val user2 = TestUser("deepti", "d@d.com", "harvest321")
   val users = List(user1, user2)
 
-  val pendingUser1 = PendingTestUser("a@a.com", "12345678901234567890")
-  val pendingUsers = List(pendingUser1)
+  val userWithCurrentToken = PendingTestUser("a@p.com", "abc123abc123", 5.minutes.ago)
+  val userWithExpiredToken = PendingTestUser("b@p.com", "poi098poi098", 4.weeks.ago)
+  val pendingUsers = List(userWithCurrentToken, userWithExpiredToken)
 
   def initUserFixture() {
     TestDatabaseSupport.init()
@@ -38,7 +43,9 @@ trait UserFixture {
     for (u <- users) u.id = i1.first(u.username, u.email, u.hashedPassword, u.salt)(db)
 
     // Insert mock users (pending confirmation)
-    val i2 = Q.update[(String, String)]("INSERT INTO usr(email, confirmation_token, confirmation_sent_at) VALUES(?,?,NOW())")
-    pendingUsers.foreach(u => i2.execute(u.email, u.token)(db))
+    pendingUsers.foreach(u => insert(u)(db))
   }
+
+  val insertPending = Q.update[(String, String, Date)]("INSERT INTO usr(email, confirmation_token, confirmation_sent_at) VALUES(?,?,?)")
+  def insert(user: PendingTestUser)(implicit db: Session) { insertPending.execute(user.email, user.token, user.tokenCreatedAt) }
 }

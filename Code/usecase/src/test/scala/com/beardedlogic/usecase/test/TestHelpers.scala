@@ -82,6 +82,15 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
     FileUtils.forceDeleteOnExit(tmpDir)
     tmpDir
   }
+
+  def testListOfZeroOrOne[T](expectation: Option[Any], actual: List[T])(testFn: T => Any) {
+    if (expectation.isEmpty)
+      actual should be('empty)
+    else {
+      actual should have size (1)
+      testFn(actual(0))
+    }
+  }
 }
 
 object TestHelpers extends TestHelpers {

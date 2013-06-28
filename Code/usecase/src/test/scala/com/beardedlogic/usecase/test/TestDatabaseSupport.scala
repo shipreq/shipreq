@@ -1,15 +1,17 @@
 package com.beardedlogic.usecase
 package test
 
+import java.sql.Connection
+import net.liftweb.common.Logger
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.{Exceptional, Outcome, Suite}
 import scala.slick.jdbc.{StaticQuery => Q}
 import scala.slick.session.Session
-import lib.db.DB
 import scala.util.Random
-import net.liftweb.common.Logger
-import com.beardedlogic.usecase.model.DAO
-import java.sql.Connection
+import Q.interpolation
+import lib.db.{DaoProvider, DB}
+import model.DAO
+import com.beardedlogic.usecase.lib.SnippetHelpers
 
 object TestDatabaseSupport {
 
@@ -28,7 +30,7 @@ object TestDatabaseSupport {
   val Random = new Random()
 }
 
-trait TestDatabaseSupport extends ShouldMatchers with Logger {
+trait TestDatabaseSupport extends TestHelpers with ShouldMatchers with Logger {
   self: Suite =>
 
   override protected def withFixture(test: NoArgTest): Outcome = {
@@ -39,7 +41,10 @@ trait TestDatabaseSupport extends ShouldMatchers with Logger {
         this.sessionVar = s
         this.dbVar = new DAO(s)
         s.conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE)
-        try test()
+        try {
+          beforeEachWithDao()
+          test()
+        }
         finally {
           if (wrapTestsInTransaction) s.rollback()
           this.sessionVar = null
@@ -56,6 +61,8 @@ trait TestDatabaseSupport extends ShouldMatchers with Logger {
     finally debug(s"DB Test end: ${test.name}")
   }
 
+  def beforeEachWithDao() {}
+
   val wrapTestsInTransaction = true
 
   var sessionVar: Session = null
@@ -63,6 +70,12 @@ trait TestDatabaseSupport extends ShouldMatchers with Logger {
 
   var dbVar: DAO = null
   def db = dbVar
+
+  def testDaoProvider = new TestDaoProvider(db)
+
+  class SnippetTesterWithDao[S <: SnippetHelpers](snippet: S) extends SnippetTester(snippet) {
+    snippet.daoProvider = testDaoProvider
+  }
 
   def randomId = -TestDatabaseSupport.Random.nextLong().abs
 
@@ -78,7 +91,8 @@ trait TestDatabaseSupport extends ShouldMatchers with Logger {
     'field_key,
     'field_value,
     'usecase,
-    'step
+    'step,
+    'usr
   )
   val ValueTables = List(
     'value,
@@ -129,4 +143,12 @@ trait TestDatabaseSupport extends ShouldMatchers with Logger {
       Q.updateNA(s"delete from $tableName").execute
     }
   }
+
+  def lookupConfirmationToken(email: String) = sql"select confirmation_token from usr where email = $email".as[String].firstOption
+}
+
+class TestDaoProvider(dao: DAO) extends DaoProvider {
+  override def get = dao
+  override def withSession[T](block: DAO => T): T = block(dao)
+  override def withTransaction[T](block: DAO => T): T = block(dao)
 }

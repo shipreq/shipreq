@@ -1,0 +1,16 @@
+%div(data-lift="surround?with=default;at=content")
+  %h1 Sign up mate!
+  %div#login(data-lift="Register1")
+
+    %div#register1Form
+      %form(data-lift="form.ajax")
+        %div
+          %label(for="email") Email Address:
+          %input#email(type="text")
+
+        %div.submit
+          %input(type="submit" value="Create Account")
+
+    %div#emailSent.hidden
+      %p An email has been sent to you to for verification.
+      %p Please check your email and follow the instruction therein.

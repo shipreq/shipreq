@@ -2,3 +2,5 @@ db.appname=UseCaseEditor
 db.database=usecase_dev
 db.username=usecase_dev
 db.password=uced
+
+mail.from=default@props.com

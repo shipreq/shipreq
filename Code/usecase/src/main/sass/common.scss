@@ -1,3 +1,7 @@
+.hidden {
+  display: none;
+}
+
 textarea {
   resize: none;
   overflow: auto; /* removes scrollbars in Internet Explorer */

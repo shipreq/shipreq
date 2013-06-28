@@ -9,7 +9,7 @@ import lib.SnippetHelpers
 import model.DAO
 
 class Login extends StatefulSnippet with SnippetHelpers {
-  override def dispatch = { case "render" => render }
+  override def dispatch = { case _ => render }
 
   private var usernameOrEmail, password = ""
   private var rememberMe = true
