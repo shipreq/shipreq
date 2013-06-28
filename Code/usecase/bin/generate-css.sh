@@ -1,7 +1,7 @@
 #!/bin/bash
 
 sd=src/main/sass
-td=src/main/webapp/assets
+td=src/main/webapp/css
 
 for f in $sd/*.s?ss; do
   sf=${f##*/}

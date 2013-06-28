@@ -2,7 +2,7 @@
 
 v=2.1.2
 echo "Downloading v$v of normalize.css -- http://necolas.github.io/normalize.css/"
-curl -s http://necolas.github.io/normalize.css/$v/normalize.css -o src/main/webapp/assets/normalize.css
+curl -s http://necolas.github.io/normalize.css/$v/normalize.css -o src/main/webapp/css/normalize.css
 echo $?
 
 v=1.10.1
