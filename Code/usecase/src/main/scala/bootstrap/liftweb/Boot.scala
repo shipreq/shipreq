@@ -58,8 +58,8 @@ class Boot {
 
   def initMailer() {
     Mailer.authenticator = for {
-      user <- Props.get("mail.smtp.username")
-      pass <- Props.get("mail.smtp.password")
+      user <- Props.get("mail.user")
+      pass <- Props.get("mail.password")
     } yield new Authenticator {
         override def getPasswordAuthentication = new PasswordAuthentication(user, pass)
       }
