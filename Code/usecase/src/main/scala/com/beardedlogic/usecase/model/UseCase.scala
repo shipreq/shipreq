@@ -101,15 +101,6 @@ object UseCaseAccessor {
   val SelectSummary = Q.query[Long, UseCaseSummary](SelectSummariesSql(s"data_id=?"))
 
   val UpdateTitleDirectly = Q.update[(String, Long)]("UPDATE usecase SET title=? WHERE id=?")
-
-  // TODO Model correction & validation: move, rename, do something
-  def normaliseWhitespaceInSingleLineString(str: String) = Misc.WhitespaceRegex.replaceAllIn(str, " ").trim
-  def correctUseCaseTitle(title: String) = {
-    var t = normaliseWhitespaceInSingleLineString(title)
-    if (t.isEmpty) t = Defaults.Title
-    t
-  }
-  def correct(uc: UseCase) = uc.copy(title = correctUseCaseTitle(uc.title))
 }
 
 trait UseCaseAccessor extends DatabaseAccessor {
@@ -123,7 +114,7 @@ trait UseCaseAccessor extends DatabaseAccessor {
     number: Short,
     fieldList: FieldList): UseCase = {
 
-    val uc = correct(UseCase(value, title, number, fieldList.valueId))
+    val uc = InputCorrection.correct(UseCase(value, title, number, fieldList.valueId))
     createCorrectedUseCase(uc)
     uc
   }
@@ -136,7 +127,7 @@ trait UseCaseAccessor extends DatabaseAccessor {
   // TODO New-UC: Lacking appropriate number uniqueness constraint
   def createInitialUseCase(title: String, fieldList: FieldList): UseCase = withTransaction {
     // TODO need a usecase state so we can call correct() instead of correctUseCaseTitle(). Would also make stateEquals() redundant
-    val correctedTitle = correctUseCaseTitle(title)
+    val correctedTitle = InputCorrection.useCaseTitle(title)
     val v = createInitialValue(DataType.UseCase)
     val number = InsertNext.first(v.valueId, correctedTitle, fieldList.valueId)
     UseCase(v, correctedTitle, number, fieldList.valueId)
@@ -164,7 +155,7 @@ trait UseCaseAccessor extends DatabaseAccessor {
   def updateUseCaseHeader(tgtUseCase: UseCase): DbOpResult[UseCase] = withTransaction {
     // TODO locking? race conditions here? ensure DB mutex
 
-    val tgt = correct(tgtUseCase)
+    val tgt = InputCorrection.correct(tgtUseCase)
     findLatestUseCase(tgt) match {
       // NOP
       case Some(latest) if tgt.stateEquals(latest) =>

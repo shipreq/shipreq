@@ -13,8 +13,6 @@ object Misc extends Misc {
 
   final val WhitespaceRegex = "\\s+".r
 
-  final val ValidEmailRegex = "^[^&<>]+@[^&<>]+$".r.pattern
-
   private final val ISO8601Format = {
     val tz = TimeZone.getTimeZone("UTC")
     val df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
@@ -27,13 +25,11 @@ trait Misc {
 
   def currentTimeAsIso8601Str: String = ISO8601Format.synchronized(ISO8601Format.format(new Date))
 
-  def randomString(length: Int): String = RNG.alphanumeric.take(length).mkString
+  def isConfirmationTokenExpired_?(dateIssued: Date): Boolean = TokenLifespan.ago.after(dateIssued)
+
+  def normaliseWhitespaceInSingleLineString(str: String) = Misc.WhitespaceRegex.replaceAllIn(str, " ").trim
 
   def randomConfirmationToken = randomString(ConfirmationTokenLength)
 
-  def normaliseEmail(email: String) = WhitespaceRegex.replaceAllIn(email, "")
-
-  def isEmailValid_?(email: String) = ValidEmailRegex.matcher(email).matches
-
-  def isConfirmationTokenExpired_?(dateIssued: Date): Boolean = TokenLifespan.ago.after(dateIssued)
+  def randomString(length: Int): String = RNG.alphanumeric.take(length).mkString
 }

@@ -2,16 +2,16 @@ package com.beardedlogic.usecase
 package snippet
 
 import net.liftweb.http.js.JsCmds
-import net.liftweb.http.{S, StatefulSnippet, SHtml}
+import net.liftweb.http.{S, SHtml}
 import net.liftweb.util.Helpers._
 import net.liftweb.util.Mailer._
 
-import lib.JsExt._
-import com.beardedlogic.usecase.lib.{SingleOpStatefulSnippet, SnippetHelpers}
-import lib.msg.{JavaScript, Reactor}
+import app.AppSiteMap
+import lib._
+import JsExt._
 import mail.RegistrationEmails
 import model.{DAO, UserRegistrationInfo}
-import com.beardedlogic.usecase.app.AppSiteMap
+import msg.{JavaScript, Reactor}
 
 /**
  * Takes an email address, validates it, creates a new user, sends an email with a verification-token in it.
@@ -29,8 +29,8 @@ class Register1 extends SingleOpStatefulSnippet {
     )
 
   def onSubmit(implicit reactor: Reactor) {
-    val email = normaliseEmail(emailInput)
-    if (!isEmailValid_?(email)) {
+    val email = InputCorrection.email(emailInput)
+    if (!Validate.email(email)) {
       error("Please enter a valid email address.")
     } else {
       val mail: Mail = daoProvider.withTransaction(dao =>
