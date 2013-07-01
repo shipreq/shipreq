@@ -2,10 +2,13 @@ package com.beardedlogic.usecase
 package model
 
 import org.joda.time.DateTime
-import scala.slick.jdbc.{StaticQuery => Q, GetResult}
+import org.postgresql.util.PSQLException
+import scala.slick.jdbc.{StaticQuery => Q, SetParameter, GetResult}
+import scala.slick.session.PositionedParameters
 import lib.db.DBHelpers._
 import lib.security.PasswordAndSalt
 import UserAccessor._
+import DbOpResult._
 
 case class UserDescriptor(
   id: Long,
@@ -28,6 +31,13 @@ object UserAccessor {
   implicit val GetResultPasswordAndSalt = GetResult(r => PasswordAndSalt(r.nextString, r.nextString))
   implicit val GetResultUserRegistrationInfo = GetResult(r => UserRegistrationInfo(r.<<, r.<<, r.<<, r.<<))
 
+  implicit object SetParameterPasswordAndSalt extends SetParameter[PasswordAndSalt] {
+    def apply(v: PasswordAndSalt, pp: PositionedParameters) {
+      pp.setString(v.hashedPassword)
+      pp.setString(v.salt)
+    }
+  }
+
   val UserDescCols = "id,username,email"
   val PwdAndSaltCols = "password, password_salt"
 
@@ -43,6 +53,14 @@ object UserAccessor {
   val UpdateOnLogin = Q.update[(String, Long)]("UPDATE usr SET login_count = login_count + 1, last_login_at = NOW(), last_login_ip = ? WHERE id=?")
 
   val InsertUnconfirmed = Q.update[(String, String)]("INSERT INTO usr(email, confirmation_token, confirmation_sent_at) VALUES(?,?,NOW())")
+
+  val Register = Q.query[(String, PasswordAndSalt, String, String), Long]( """
+    UPDATE usr SET username = ?
+      ,password = ?, password_salt = ?, password_changed_at = NOW()
+      ,confirmation_token = NULL, confirmed_at = NOW()
+      ,login_count = 1, last_login_at = NOW(), last_login_ip = ?
+    WHERE confirmation_token = ?
+    RETURNING id""".sql)
 }
 
 trait UserAccessor extends DatabaseAccessor {
@@ -67,4 +85,14 @@ trait UserAccessor extends DatabaseAccessor {
   def updateUserOnLogin(id: Long, ipAddr: String): Unit = UpdateOnLogin.execute(ipAddr, id)
 
   def updateUserConfirmationToken(id: Long, token: String): Unit = UpdateConfirmationToken.execute(token, id)
+
+  def registerUser(token: String)(username: String, ps: PasswordAndSalt, ipAddr: String): DbOpResult[Long] =
+    try {
+      Register.firstOption(username, ps, ipAddr, token) match {
+        case Some(id) => Success(DirectUpdate, id)
+        case _ => NothingUpdated
+      }
+    } catch {
+      case e: PSQLException if e.getMessage.contains("usr_username_key") => ConstraintViolation
+    }
 }

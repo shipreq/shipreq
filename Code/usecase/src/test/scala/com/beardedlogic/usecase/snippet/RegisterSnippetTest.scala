@@ -3,8 +3,14 @@ package snippet
 
 import net.liftweb.common.Empty
 import net.liftweb.http.{ResponseShortcutException, LiftSession, S}
+import net.liftweb.util.Helpers.intToTimeSpanBuilder
 import net.liftweb.util.StringHelpers
+import org.apache.shiro.SecurityUtils
+import org.apache.shiro.authc.UsernamePasswordToken
+import org.postgresql.util.PSQLException
 import org.scalatest.FunSpec
+
+import lib.security.Oshiro
 import test.TestDatabaseSupport
 import test.fixture.UserFixture
 
@@ -17,6 +23,7 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
 
   override def beforeEachWithDao() {
     initUserFixture(session)
+    SecurityUtils.getSubject.logout() // TODO Should this not be elsewhere?
   }
 
   def assertSingleError(substring: String) {
@@ -72,19 +79,20 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
   }
 
   class Reg2Tester(token: String) extends SnippetTesterWithDao(new Register2(token)) {
+    def onSubmit_() = snippet.onSubmit(js.reactor)
   }
 
   describe("Register2.validateToken") {
     it("should redirect to Register1 with error when token is invalid") {
       inMockSession {
-        intercept[ResponseShortcutException]{ new Reg2Tester("blah").snippet.validateToken }
+        intercept[ResponseShortcutException] {new Reg2Tester("blah").snippet.validateToken}
         assertSingleError("invalid")
       }
     }
 
     it("should redirect to Register1 with error when token has expired") {
       inMockSession {
-        intercept[ResponseShortcutException]{ new Reg2Tester(userWithExpiredToken.token).snippet.validateToken }
+        intercept[ResponseShortcutException] {new Reg2Tester(userWithExpiredToken.token).snippet.validateToken}
         assertSingleError("expired")
       }
     }
@@ -92,20 +100,83 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
     it("should render new-user form when token is valid") {
       inMockSession {
         new Reg2Tester(userWithCurrentToken.token).snippet.validateToken
-        S.errors should be ('empty)
+        S.errors should be('empty)
       }
     }
   }
 
   describe("Register2 POST") {
-//    it("should reject a taken username")
-//    it("should reject an invalid username")
-//    it("should reject an invalid password")
-//    it("should reject when passwords dont match")
+    def tester = {
+      val t = new Reg2Tester(userWithCurrentToken.token)
+      t.snippet.usernameInput = "crazy50"
+      t.snippet.password1Input = "abcd5678"
+      t.snippet.password2Input = t.snippet.password1Input
+      t
+    }
+
+    def assertUnconfirmed() {
+      val reg = db.findUserRegistrationInfo(userWithCurrentToken.email).get
+      reg.confirmationSentAt should be(Some(userWithCurrentToken.tokenCreatedAt))
+      reg.confirmedAt should be(None)
+      reg.confirmationToken should be(Some(userWithCurrentToken.token))
+    }
+
+    def testFailure(mutate: Register2 => Any) {
+      val t = tester
+      mutate(t.snippet)
+      t.onSubmit_
+      assertUnconfirmed()
+    }
+
+    it("should reject an invalid username") {
+      testFailure(_.usernameInput = "9000")
+    }
+
+    it("should reject an invalid password") {
+      testFailure(s => {s.password1Input = "abcd"; s.password2Input = "abcd"})
+    }
+
+    it("should reject when passwords dont match") {
+      testFailure(_.password1Input = "987654321zcbsdfg")
+    }
+
+    it("should reject a taken username") {
+      val t = tester
+      t.snippet.usernameInput = user2.username
+      t.onSubmit_
+      try {assertUnconfirmed()}
+      catch {case e: PSQLException if e.getMessage.contains("transaction is aborted") =>}
+    }
+
     describe("when form details valid") {
-      //    it("should create user")
-      //    it("should login")
-      //    it("should hash password so that login auth works with same plaintext password")
+      it("should create user") {
+        tester.onSubmit_
+        val reg = db.findUserRegistrationInfo(userWithCurrentToken.email).get
+        reg.confirmationSentAt should be(Some(userWithCurrentToken.tokenCreatedAt))
+        reg.confirmedAt should not be (None)
+        reg.confirmedAt.get.after(1.minute.ago) should be(true)
+        reg.confirmationToken should be(None)
+
+        val (user, pwd) = db.findUserDescAndCredentials(userWithCurrentToken.email).get
+        user.username should be("crazy50")
+        pwd.hashedPassword should not be ("abcd5678")
+      }
+
+      it("should login") {
+        Oshiro.loggedInUser should be(None)
+        tester.onSubmit_
+        Oshiro.loggedInUser should not be (None)
+        val user = Oshiro.loggedInUser.get
+        user.username should be("crazy50")
+        user.email should be(userWithCurrentToken.email)
+      }
+
+      it("should hash password so that login auth works with same plaintext password") {
+        val subj = SecurityUtils.getSubject
+        tester.onSubmit_
+        subj.logout()
+        subj.login(new UsernamePasswordToken("crazy50", "abcd5678"))
+      }
     }
   }
 }

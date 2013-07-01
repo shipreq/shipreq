@@ -44,15 +44,7 @@ class Login extends StatefulSnippet with SnippetHelpers {
   }
 
   def onSuccessfulLogin() {
-    DAO.withSession(_.updateUserOnLogin(loggedInUser.get.id, clientIp.getOrElse("?")))
+    DAO.withSession(_.updateUserOnLogin(loggedInUser.get.id, clientIp_Or_?))
     S.redirectTo("/")
   }
-
-  def clientIp: Option[String] = (
-    S.originalRequest.map(_.remoteAddr)
-      or S.containerRequest.map(_.remoteAddress)
-      or S.request.map(_.remoteAddr)
-    // println("X-Real-IP: " + req.header("X-Real-IP"))
-    // println("X-Forwarded-For: " + req.header("X-Forwarded-For"))
-    )
 }

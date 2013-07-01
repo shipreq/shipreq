@@ -5,13 +5,17 @@ import net.liftweb.http.js.JsCmds
 import net.liftweb.http.{S, SHtml}
 import net.liftweb.util.Helpers._
 import net.liftweb.util.Mailer._
+import org.apache.shiro.SecurityUtils
+import org.apache.shiro.authc.UsernamePasswordToken
 
 import app.AppSiteMap
 import lib._
 import JsExt._
 import mail.RegistrationEmails
 import model.{DAO, UserRegistrationInfo}
+import model.DbOpResult.{NothingUpdated, ConstraintViolation, Success}
 import msg.{JavaScript, Reactor}
+import security.PasswordAndSalt
 
 /**
  * Takes an email address, validates it, creates a new user, sends an email with a verification-token in it.
@@ -98,6 +102,33 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
     }
 
   def onSubmit(implicit reactor: Reactor) {
+    val username = InputCorrection.username(usernameInput)
+    val password1 = InputCorrection.password(password1Input); password1Input = ""
+    val password2 = InputCorrection.password(password2Input); password2Input = ""
 
+    val failures = List(
+      Validate.username(username)
+      , Validate.password(password1)
+      , Validate.password2(password1, password2)
+    ).filter(_.isDefined).map(_.get)
+
+    if (failures.nonEmpty)
+      error(failures.mkString("\n"))
+    else {
+      // Update user
+      val ps = PasswordAndSalt.hashWithRandomSalt(password1)
+      daoProvider.withSession(_.registerUser(token)(username, ps, clientIp_Or_?)) match {
+        case ConstraintViolation => error("Username is already taken.")
+        case NothingUpdated => error("Username is already taken.")
+        case Success(_,_) =>
+          // Login on success
+          SecurityUtils.getSubject.login(new UsernamePasswordToken(username, password1))
+        case r => warn("Unexpected result: " + r); shouldNeverHappen_!
+      }
+    }
+  }
+
+  private def error(errMsg: String)(implicit reactor: Reactor) {
+    reactor(JavaScript)(JsCmds.Alert(errMsg))
   }
 }

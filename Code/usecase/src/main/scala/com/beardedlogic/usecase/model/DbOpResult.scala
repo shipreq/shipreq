@@ -48,4 +48,10 @@ object DbOpResult {
   /** The data used in the request is now out-of-date, therefore the operation was aborted. */
   case object StaleRevision extends Failure
 
+  /** A database CONSTRAINT was violated. */
+  case object ConstraintViolation extends Failure
+
+  /** An UPDATE statement didn't affect anything, ie. nothing matched the UPDATE's WHERE clause. */
+  case object NothingUpdated extends Failure
+
 }

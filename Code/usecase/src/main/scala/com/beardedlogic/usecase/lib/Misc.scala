@@ -2,6 +2,7 @@ package com.beardedlogic.usecase.lib
 
 import java.util.{Date, TimeZone}
 import java.text.SimpleDateFormat
+import net.liftweb.http.S
 import org.joda.time.DateTime
 import scala.util.Random
 import com.beardedlogic.usecase.app.AppConfig
@@ -23,6 +24,16 @@ object Misc extends Misc {
 }
 
 trait Misc {
+
+  def clientIp: Option[String] = (
+    S.originalRequest.map(_.remoteAddr)
+      or S.containerRequest.map(_.remoteAddress)
+      or S.request.map(_.remoteAddr)
+    // println("X-Real-IP: " + req.header("X-Real-IP"))
+    // println("X-Forwarded-For: " + req.header("X-Forwarded-For"))
+    )
+
+  def clientIp_Or_? = clientIp.getOrElse("?")
 
   def currentTimeAsIso8601Str: String = ISO8601Format.synchronized(ISO8601Format.format(new Date))
 

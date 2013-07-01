@@ -22,6 +22,9 @@ object Validate {
     RequiresAlphaAndNumber
   )
 
+  final def password2(password1: String, password2: String): Option[String] =
+    if (password1 == password2) None else Some("Passwords don't match.")
+
   final val username = Validator[String]("Username",
     HasLengthInRange(UsernameLength),
     ValidCharValidation("a-z0-9_",   "can only contain letters, numbers and underscores."),
