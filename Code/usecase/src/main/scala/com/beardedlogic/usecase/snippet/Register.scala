@@ -2,23 +2,23 @@ package com.beardedlogic.usecase
 package snippet
 
 import net.liftweb.http.js.JsCmds
-import net.liftweb.http.{StatefulSnippet, SHtml}
+import net.liftweb.http.{S, StatefulSnippet, SHtml}
 import net.liftweb.util.Helpers._
 import net.liftweb.util.Mailer._
 
 import lib.JsExt._
-import lib.SnippetHelpers
+import com.beardedlogic.usecase.lib.{SingleOpStatefulSnippet, SnippetHelpers}
 import lib.msg.{JavaScript, Reactor}
 import mail.RegistrationEmails
 import model.{DAO, UserRegistrationInfo}
+import com.beardedlogic.usecase.app.AppSiteMap
 
 /**
  * Takes an email address, validates it, creates a new user, sends an email with a verification-token in it.
  *
  * @since 27/06/2013
  */
-class Register1 extends StatefulSnippet with SnippetHelpers {
-  override def dispatch = { case _ => render }
+class Register1 extends SingleOpStatefulSnippet {
 
   var emailInput = ""
 
@@ -67,4 +67,37 @@ class Register1 extends StatefulSnippet with SnippetHelpers {
   }
 
   private def onAlreadyRegistered() = RegistrationEmails.AlreadyRegistered
+}
+
+/**
+ *
+ * @since 1/07/2013
+ */
+class Register2(token: String) extends SingleOpStatefulSnippet {
+
+  var usernameInput = ""
+  var password1Input = ""
+  var password2Input = ""
+
+  def render = {
+    validateToken()
+    "" #> ""
+  }
+
+  def validateToken(): Unit =
+    daoProvider.withSession(_.findUserConfirmationTokenIssuedDate(token)) match {
+      case None =>
+        S.error("Invalid registration token. Please re-register your email address.")
+        S.redirectTo(AppSiteMap.Register1.loc.calcDefaultHref)
+
+      case Some(issued) if isConfirmationTokenExpired_?(issued) =>
+        S.error("Your registration token has expired. Please re-register your email address to get a new token.")
+        S.redirectTo(AppSiteMap.Register1.loc.calcDefaultHref)
+
+      case _ => // valid
+    }
+
+  def onSubmit(implicit reactor: Reactor) {
+
+  }
 }

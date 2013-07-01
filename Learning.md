@@ -90,6 +90,18 @@ Lift
   * URL generation (Menu.param arg #4) = T => String/List[String]
     (x: (User,Photo)) => x._1.id.toString :: x._2.id.toString :: Nil
   * Path = "user" / * / "photo" / *
+  * Template file will match Path with "star" being used in-place of "*".
+    Eg. user/star/photo/star.html
+  * Full example:
+      lazy val menu = Menu.params[(User, UserPost)](
+        "AUserPost",
+        Loc.LinkText(tpl => Text("Post: "+tpl._2.title)),
+        {
+          case User(u) :: UserPost(up) :: Nil => Full(u -> up)
+          case _ => Empty
+        },
+        (tpl: (User, UserPost)) => tpl._1.id.is.toString :: tpl._2.id.is.toString :: Nil
+      ) / "users" / * / "posts" / *
 
 * Authentication
   * LocParams If/Unless/TestAccess

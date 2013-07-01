@@ -2,24 +2,11 @@ package com.beardedlogic.usecase
 package snippet
 
 import net.liftweb.common.Empty
-import net.liftweb.http.{LiftSession, S}
+import net.liftweb.http.{ResponseShortcutException, LiftSession, S}
 import net.liftweb.util.StringHelpers
 import org.scalatest.FunSpec
 import test.TestDatabaseSupport
 import test.fixture.UserFixture
-
-/*
-Screen 2:
-Token
-- not provided => show screen #1
-- valid => show form
-- invalid => Alert invalid, show screen #1
-- expired => Alert expired, show screen #1
-
-Form
-: Username
-: Password 1 & 2
-*/
 
 class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixture {
 
@@ -32,34 +19,23 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
     initUserFixture(session)
   }
 
-  class Req1Tester extends SnippetTesterWithDao(new Register1) {
+  def assertSingleError(substring: String) {
+    S.errors.size should be(1)
+    S.errors(0)._1.toString.toLowerCase should include(substring.toLowerCase)
+  }
 
+  class Reg1Tester extends SnippetTesterWithDao(new Register1) {
     def submit(email: String, usrTableDiff: Int) = {
       snippet.emailInput = email
       assertTableDiffs('usr -> usrTableDiff) {snippet.onSubmit(js.reactor)}
-      this
-    }
-
-    def assertError(errorMsg: Option[String]) = {
-      if (errorMsg.isDefined)
-        jsReaction should include(errorMsg.get)
-      else
-        jsReaction.toLowerCase should not include ("alert")
-      this
-    }
-
-    def assertEmail(emailFrags: Option[List[String]]) = {
-      testListOfZeroOrOne(emailFrags, mailer.sent)(mail =>
-        for (f <- emailFrags.get) mail.getContent.toString should include(f)
-      )
       this
     }
   }
 
   def testSuccess(email: String, usrTableDiff: Int, tokenChange: Boolean) {
     val tokenBefore = lookupConfirmationToken(email)
-    val tester = new Req1Tester()
-    tester.submit(email, usrTableDiff).assertError(None)
+    val tester = new Reg1Tester()
+    tester.submit(email, usrTableDiff).assertJsAlert(None)
     val token = lookupConfirmationToken(email)
     token should not be ('empty)
     if (tokenChange)
@@ -69,10 +45,10 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
     tester.assertEmail(Some(List(token.get)))
   }
 
-  describe("Request1.onSubmit") {
+  describe("Register1.onSubmit") {
     it("when email is invalid -- should reject request") {
-      new Req1Tester().submit("not_an_email", 0)
-      .assertError(Some("valid email"))
+      new Reg1Tester().submit("not_an_email", 0)
+      .assertJsAlert(Some("valid email"))
       .assertEmail(None)
     }
 
@@ -89,9 +65,47 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
     }
 
     it("when a email belongs to registered account -- should email with link to reset password") {
-      new Req1Tester().submit(user1.email, 0)
-      .assertError(None)
+      new Reg1Tester().submit(user1.email, 0)
+      .assertJsAlert(None)
       .assertEmail(Some(List("/login")))
+    }
+  }
+
+  class Reg2Tester(token: String) extends SnippetTesterWithDao(new Register2(token)) {
+  }
+
+  describe("Register2.validateToken") {
+    it("should redirect to Register1 with error when token is invalid") {
+      inMockSession {
+        intercept[ResponseShortcutException]{ new Reg2Tester("blah").snippet.validateToken }
+        assertSingleError("invalid")
+      }
+    }
+
+    it("should redirect to Register1 with error when token has expired") {
+      inMockSession {
+        intercept[ResponseShortcutException]{ new Reg2Tester(userWithExpiredToken.token).snippet.validateToken }
+        assertSingleError("expired")
+      }
+    }
+
+    it("should render new-user form when token is valid") {
+      inMockSession {
+        new Reg2Tester(userWithCurrentToken.token).snippet.validateToken
+        S.errors should be ('empty)
+      }
+    }
+  }
+
+  describe("Register2 POST") {
+//    it("should reject a taken username")
+//    it("should reject an invalid username")
+//    it("should reject an invalid password")
+//    it("should reject when passwords dont match")
+    describe("when form details valid") {
+      //    it("should create user")
+      //    it("should login")
+      //    it("should hash password so that login auth works with same plaintext password")
     }
   }
 }

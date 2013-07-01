@@ -35,6 +35,8 @@ object UserAccessor {
 
   val GetRegistrationInfo = Q.query[String, UserRegistrationInfo]("SELECT id, confirmation_token, confirmation_sent_at, confirmed_at FROM usr WHERE email=?")
 
+  val GetConfirmationTokenIssuedDate = Q.query[String, Date]("SELECT confirmation_sent_at FROM usr WHERE confirmation_token=?")
+
   val UpdateConfirmationToken = Q.update[(String, Long)]("UPDATE usr SET confirmation_token = ?, confirmation_sent_at = NOW() WHERE id=?")
 
   val UpdateOnLogin = Q.update[(String, Long)]("UPDATE usr SET login_count = login_count + 1, last_login_at = NOW(), last_login_ip = ? WHERE id=?")
@@ -55,6 +57,8 @@ trait UserAccessor extends DatabaseAccessor {
   def findUserDescAndCredentialsByEmail(email: String) = GetDescAndCredentialsByEmail.firstOption(email)
 
   def findUserRegistrationInfo(email: String) = GetRegistrationInfo.firstOption(email)
+
+  def findUserConfirmationTokenIssuedDate(token: String) = GetConfirmationTokenIssuedDate.firstOption(token)
 
   /** Creates an unconfirmed user account. No username, no password until email confirmed. */
   def createUser(email: String, token: String): Unit = InsertUnconfirmed.execute(email, token)
