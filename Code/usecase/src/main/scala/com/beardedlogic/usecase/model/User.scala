@@ -1,10 +1,11 @@
 package com.beardedlogic.usecase
 package model
 
+import org.joda.time.DateTime
 import scala.slick.jdbc.{StaticQuery => Q, GetResult}
+import lib.db.DBHelpers._
 import lib.security.PasswordAndSalt
 import UserAccessor._
-import java.sql.Date
 
 case class UserDescriptor(
   id: Long,
@@ -14,8 +15,8 @@ case class UserDescriptor(
 case class UserRegistrationInfo(
   id: Long,
   confirmationToken: Option[String],
-  confirmationSentAt: Option[Date],
-  confirmedAt: Option[Date]
+  confirmationSentAt: Option[DateTime],
+  confirmedAt: Option[DateTime]
   )
 
 /**
@@ -35,7 +36,7 @@ object UserAccessor {
 
   val GetRegistrationInfo = Q.query[String, UserRegistrationInfo]("SELECT id, confirmation_token, confirmation_sent_at, confirmed_at FROM usr WHERE email=?")
 
-  val GetConfirmationTokenIssuedDate = Q.query[String, Date]("SELECT confirmation_sent_at FROM usr WHERE confirmation_token=?")
+  val GetConfirmationTokenIssuedDate = Q.query[String, DateTime]("SELECT confirmation_sent_at FROM usr WHERE confirmation_token=?")
 
   val UpdateConfirmationToken = Q.update[(String, Long)]("UPDATE usr SET confirmation_token = ?, confirmation_sent_at = NOW() WHERE id=?")
 

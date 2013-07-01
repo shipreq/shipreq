@@ -2,6 +2,7 @@ package com.beardedlogic.usecase.lib
 
 import java.util.{Date, TimeZone}
 import java.text.SimpleDateFormat
+import org.joda.time.DateTime
 import scala.util.Random
 import com.beardedlogic.usecase.app.AppConfig
 import AppConfig._
@@ -25,7 +26,7 @@ trait Misc {
 
   def currentTimeAsIso8601Str: String = ISO8601Format.synchronized(ISO8601Format.format(new Date))
 
-  def isConfirmationTokenExpired_?(dateIssued: Date): Boolean = TokenLifespan.ago.after(dateIssued)
+  def isConfirmationTokenExpired_?(dateIssued: DateTime): Boolean = TokenLifespan.ago.isAfter(dateIssued)
 
   def normaliseWhitespaceInSingleLineString(str: String) = Misc.WhitespaceRegex.replaceAllIn(str, " ").trim
 

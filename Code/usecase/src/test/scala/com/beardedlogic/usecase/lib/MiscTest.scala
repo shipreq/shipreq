@@ -16,10 +16,10 @@ class MiscTest extends FunSpec with ShouldMatchers with Misc {
 
   describe("isConfirmationTokenExpired_?") {
     it("should consider 1-day-old valid") {
-      isConfirmationTokenExpired_?(1.day.ago.toDate) should be(false)
+      isConfirmationTokenExpired_?(1.day.ago) should be(false)
     }
     it("should consider 1-week-old expired") {
-      isConfirmationTokenExpired_?(1.week.ago.toDate) should be(true)
+      isConfirmationTokenExpired_?(1.week.ago) should be(true)
     }
   }
 }

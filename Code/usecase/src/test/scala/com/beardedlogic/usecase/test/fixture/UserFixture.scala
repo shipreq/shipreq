@@ -1,18 +1,20 @@
 package com.beardedlogic.usecase
 package test.fixture
 
+import java.sql.Timestamp
+import net.liftweb.util.Helpers._
+import org.joda.time.DateTime
 import scala.slick.jdbc.{StaticQuery => Q}
 import scala.slick.session.Session
+
 import lib.db.DB
 import lib.security.PasswordAndSalt
+import model.UserDescriptor
 import test.TestDatabaseSupport
-import com.beardedlogic.usecase.model.UserDescriptor
-import net.liftweb.util.Helpers._
-import java.sql.Date
 
 trait UserFixture {
 
-  implicit def timeSpanToSqlDate(t: TimeSpan): Date = new Date(t.toDate.getTime)
+  implicit def timeSpanToTimestamp(t: DateTime): Timestamp = new Timestamp(t.getMillis)
 
   case class TestUser(username: String, email: String, password: String) {
     var id = 0L
@@ -22,7 +24,7 @@ trait UserFixture {
     def toUserDescriptor = UserDescriptor(id, username, email)
   }
 
-  case class PendingTestUser(email: String, token: String, tokenCreatedAt: Date)
+  case class PendingTestUser(email: String, token: String, tokenCreatedAt: DateTime)
 
   val user1 = TestUser("golly", "g@g.com", "hello1234")
   val user2 = TestUser("deepti", "d@d.com", "harvest321")
@@ -46,6 +48,6 @@ trait UserFixture {
     pendingUsers.foreach(u => insert(u)(db))
   }
 
-  val insertPending = Q.update[(String, String, Date)]("INSERT INTO usr(email, confirmation_token, confirmation_sent_at) VALUES(?,?,?)")
+  val insertPending = Q.update[(String, String, Timestamp)]("INSERT INTO usr(email, confirmation_token, confirmation_sent_at) VALUES(?,?,?)")
   def insert(user: PendingTestUser)(implicit db: Session) { insertPending.execute(user.email, user.token, user.tokenCreatedAt) }
 }
