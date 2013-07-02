@@ -51,7 +51,11 @@ trait SnippetHelpers extends Misc with Logger {
   }
 
   def reactWithError(errMsg: Seq[String])(implicit reactor: Reactor) {
-    reactWithError(errMsg.mkString("\n"))
+    errMsg match {
+      case Nil                =>
+      case singleError :: Nil => reactWithError(singleError)
+      case _                  => reactWithError(errMsg.mkString("\n"))
+    }
   }
 }
 
