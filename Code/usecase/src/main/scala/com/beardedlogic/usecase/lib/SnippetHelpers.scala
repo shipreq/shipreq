@@ -31,10 +31,11 @@ trait SnippetHelpers extends Misc with Logger {
         f(r, dao)
       ))
 
-  // TODO typo: should be respond
-  def responseImmediately(response: LiftResponse): Nothing = throw ResponseShortcutException.shortcutResponse(response)
+  def respondImmediately(response: LiftResponse): Nothing = throw ResponseShortcutException.shortcutResponse(response)
 
-  def shouldNeverHappen_! = responseImmediately(ShouldNeverHappenResponse())
+  def shouldNeverHappen_! = respondImmediately(ShouldNeverHappenResponse())
+
+  def shouldNeverHappen_!(msg: String) = respondImmediately(ShouldNeverHappenResponse(msg))
 
   def loggedInUser = Oshiro.loggedInUser
 

@@ -33,8 +33,8 @@ object HttpResponses {
   /**
    * Analogous to IllegalStateException.
    */
-  case class ShouldNeverHappenResponse() extends LiftResponse with HeaderDefaults {
-    def toResponse = InMemoryResponse("Unexpected branch encountered.".getBytes("UTF-8"), headers, cookies, 500)
+  case class ShouldNeverHappenResponse(msg: String = "Unexpected branch encountered.") extends LiftResponse with HeaderDefaults {
+    def toResponse = InMemoryResponse(msg.getBytes("UTF-8"), headers, cookies, 500)
   }
 
 }

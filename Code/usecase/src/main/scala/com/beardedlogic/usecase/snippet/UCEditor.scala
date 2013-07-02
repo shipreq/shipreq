@@ -34,7 +34,7 @@ class UCEditor extends StatefulSnippet with SnippetHelpers {
     } yield UseCaseLoader.loadCheckpoint(uc, dao, lock))
     match {
       case Full(cp)                               => state.restoreCheckpoint(cp)
-      case ParamFailure(_, _, _, r: LiftResponse) => responseImmediately(r)
+      case ParamFailure(_, _, _, r: LiftResponse) => respondImmediately(r)
       case _                                      => shouldNeverHappen_!
     }
 
