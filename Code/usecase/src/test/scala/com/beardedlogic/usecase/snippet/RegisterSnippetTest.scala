@@ -85,21 +85,21 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
   describe("Register2.validateToken") {
     it("should redirect to Register1 with error when token is invalid") {
       inMockSession {
-        intercept[ResponseShortcutException] {new Reg2Tester("blah").snippet.validateToken}
+        intercept[ResponseShortcutException] {new Reg2Tester("blah").snippet.validateToken_!}
         assertSingleError("invalid")
       }
     }
 
     it("should redirect to Register1 with error when token has expired") {
       inMockSession {
-        intercept[ResponseShortcutException] {new Reg2Tester(userWithExpiredToken.token).snippet.validateToken}
+        intercept[ResponseShortcutException] {new Reg2Tester(userWithExpiredToken.token).snippet.validateToken_!}
         assertSingleError("expired")
       }
     }
 
     it("should render new-user form when token is valid") {
       inMockSession {
-        new Reg2Tester(userWithCurrentToken.token).snippet.validateToken
+        new Reg2Tester(userWithCurrentToken.token).snippet.validateToken_!
         S.errors should be('empty)
       }
     }
@@ -126,6 +126,7 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
       mutate(t.snippet)
       t.onSubmit_
       assertUnconfirmed()
+      t.assertJsAlert(Some(""))
     }
 
     it("should reject an invalid username") {
@@ -176,6 +177,13 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
         tester.onSubmit_
         subj.logout()
         subj.login(new UsernamePasswordToken("crazy50", "abcd5678"))
+      }
+
+      it("should hide the form and show the success") {
+        val t = tester
+        t.onSubmit_
+        t.assertJsAlert(None)
+        t.jsReaction should include("toggle")
       }
     }
   }

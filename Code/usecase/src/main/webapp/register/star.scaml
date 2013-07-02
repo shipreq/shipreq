@@ -1,0 +1,24 @@
+%div(data-lift="surround?with=default;at=content")
+  %h1 Sign up 2/2
+
+  %div#register2(data-lift="Register2")
+    %form(data-lift="form.ajax")
+
+      %div.username
+        %label(for="username") Username:
+        %input#username(type="text")
+
+      %div.password1
+        %label(for="password1") Password:
+        %input#password1(type="password")
+
+      %div.password2
+        %label(for="password2") Confirm password:
+        %input#password2(type="password")
+
+      %div.submit
+        %input(type="submit")
+
+  %div#regComplete.hidden
+    %p You have successfully created an account.
+    %p You are now logged in.

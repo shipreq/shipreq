@@ -1,7 +1,7 @@
 package com.beardedlogic.usecase
 package snippet
 
-import net.liftweb.http.js.JsCmds
+import net.liftweb.http.js.JsCmd
 import net.liftweb.http.{S, SHtml}
 import net.liftweb.util.Helpers._
 import net.liftweb.util.Mailer._
@@ -10,12 +10,12 @@ import org.apache.shiro.authc.UsernamePasswordToken
 
 import app.AppSiteMap
 import lib._
-import JsExt._
 import mail.RegistrationEmails
-import model.{DAO, UserRegistrationInfo}
 import model.DbOpResult.{NothingUpdated, ConstraintViolation, Success}
+import model.{DAO, UserRegistrationInfo}
 import msg.{JavaScript, Reactor}
 import security.PasswordAndSalt
+import JsExt._
 
 /**
  * Takes an email address, validates it, creates a new user, sends an email with a verification-token in it.
@@ -70,6 +70,8 @@ class Register1 extends SingleOpStatefulSnippet {
 }
 
 /**
+ * Validates a token from email (part of the URL) and presents the user with a username/password form. Upon form
+ * submission the user account is activated.
  *
  * @since 1/07/2013
  */
@@ -79,12 +81,7 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
   var password1Input = ""
   var password2Input = ""
 
-  def render = {
-    validateToken()
-    "" #> ""
-  }
-
-  def validateToken(): Unit =
+  def validateToken_!(): Unit =
     daoProvider.withSession(_.findUserConfirmationTokenIssuedDate(token)) match {
       case None =>
         S.error("Invalid registration token. Please re-register your email address.")
@@ -97,31 +94,54 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
       case _ => // valid
     }
 
+  def render = {
+    validateToken_!
+    (
+      "#username" #> SHtml.ajaxText(usernameInput, onUsernameChange)
+        & "#password1" #> SHtml.onSubmit(password1Input = _)
+        & "#password2" #> SHtml.onSubmit(password2Input = _)
+        & ":submit" #> SHtml.ajaxSubmit("Create Account", jsCallback(onSubmit(_)))
+      )
+  }
+
+  // TODO onUsernameChange(): This should be pure JS
+  def onUsernameChange(input: String): JsCmd = {
+    usernameInput = InputCorrection.username(input)
+    JqId("username") ~> JqSetValue(usernameInput, false)
+  }
+
   def onSubmit(implicit reactor: Reactor) {
     val username = InputCorrection.username(usernameInput)
-    val password1 = InputCorrection.password(password1Input); password1Input = ""
-    val password2 = InputCorrection.password(password2Input); password2Input = ""
+    val password1 = InputCorrection.password(password1Input)
+    val password2 = InputCorrection.password(password2Input)
+    password1Input = "" // Let's not keep the plaintext passwords around
+    password2Input = ""
 
     val failures = List(
       Validate.username(username)
       , Validate.password(password1)
       , Validate.password2(password1, password2)
     ).filter(_.isDefined).map(_.get)
+    if (failures.nonEmpty) reactWithError(failures) else {
 
-    if (failures.nonEmpty)
-      reactWithError(failures)
-    else {
       // Update user
       val ps = PasswordAndSalt.hashWithRandomSalt(password1)
       daoProvider.withSession(_.registerUser(token)(username, ps, clientIp_Or_?)) match {
+
         case ConstraintViolation => reactWithError("Username is already taken.")
-        case NothingUpdated => reactWithError("Username is already taken.")
-        case Success(_,_) =>
-          // Login on success
+
+        case NothingUpdated =>
+          S.error("Your registration token disappeared.")
+          S.redirectTo(AppSiteMap.Login.loc.calcDefaultHref)
+
+        // Registration complete
+        case Success(_, _) =>
+          info(s"Registered new user: $username")
           SecurityUtils.getSubject.login(new UsernamePasswordToken(username, password1))
+          reactor(JavaScript)(JqExpr("#regComplete,#register2") ~> JqToggle)
+
         case r => warn("Unexpected result: " + r); shouldNeverHappen_!
       }
     }
   }
-
 }
