@@ -7,7 +7,8 @@ object AppConfig {
 
   final val AppName = "Golly's Use Case Editor"
 
-  final val BaseUrl = "http://www.TODO.com"
+  // TODO BaseUrl hardcoded to localhost
+  final val BaseUrl = "http://localhost:8080"
 
   /** Number of characters in tokens used for email & reset-password verification. */
   final val ConfirmationTokenLength = 49

@@ -4,6 +4,7 @@ package mail
 import net.liftweb.util.Mailer.{MailTypes, PlainMailBodyType, Subject}
 import app.AppConfig._
 import app.AppSiteMap._
+import app.AppSiteMap.Implicits._
 
 object RegistrationEmails {
   type Mail = (Subject, List[MailTypes])
@@ -18,7 +19,7 @@ object RegistrationEmails {
 Your email address has been used to register a $AppName account.
 
 To continue your registration, simply click on the following link:
-$BaseUrl${Register2.calcHref(token)}
+${Register2.absoluteUrl(token)}
 
 If you were not expecting this message, please ignore and delete it.
 
@@ -31,7 +32,7 @@ Somebody, probably you, has tried to re-register your email address.
 As you already have a registered account, no action has been taken.
 
 To login or reset your password, simply click on the following link:
-$BaseUrl${Login.loc.calcDefaultHref}
+${Login.absoluteUrl}
 
 If you were not expecting this message, please ignore and delete it.
 
