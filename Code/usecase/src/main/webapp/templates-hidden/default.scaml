@@ -7,5 +7,18 @@
     %script(type="text/javascript" src="/js/vendor/jquery.js")
     %script(type="text/javascript" src="/js/application.js")
   %body
+    %div
+
+      %div(data-lift="Authenticated")
+        You're logged in.
+        Hello <span data-lift="LoggedInUser.username"></span> (<span data-lift="LoggedInUser.email"></span>)!
+        %h3 LOGOUT LINK PENDING
+        -# %a(data-lift="Link.to?name=Logout")
+
+      %div(data-lift="Authenticated.not")
+        You're not logged in.
+        %a(data-lift="Link.to?name=Login")
+        %a(data-lift="Link.to?name=Register1")
+
     %div(data-lift="Notices")
     %div#content CONTENT GOES HERE

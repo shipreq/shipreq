@@ -18,8 +18,13 @@ object Oshiro {
   final val RNG = new SecureRandomNumberGenerator()
 
   def init() {
+
+    // Init Shiro proper
     val securityManager = factory.getInstance
     SecurityUtils.setSecurityManager(securityManager)
+
+    // Init snippets
+    ShiroSnippets.init()
   }
 
   def loggedInUser: Option[UserDescriptor] = {

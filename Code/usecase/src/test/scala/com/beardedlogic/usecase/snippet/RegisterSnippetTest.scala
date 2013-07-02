@@ -16,11 +16,6 @@ import test.fixture.UserFixture
 
 class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixture {
 
-  def inMockSession[U](block: => U): U = {
-    val session: LiftSession = new LiftSession("", StringHelpers.randomString(20), Empty)
-    S.initIfUninitted(session) {block}
-  }
-
   override def beforeEachWithDao() {
     initUserFixture(session)
     SecurityUtils.getSubject.logout() // TODO Should this not be elsewhere?

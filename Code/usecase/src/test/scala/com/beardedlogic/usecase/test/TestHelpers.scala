@@ -6,7 +6,10 @@ import org.apache.commons.io.FileUtils
 import org.scalatest.matchers.{ShouldMatchers, Matcher, MatchResult}
 import org.scalatest.mock.MockitoSugar
 import org.mockito.Mockito._
-import net.liftweb.http.LiftRules
+import net.liftweb.common.Empty
+import net.liftweb.http.{S, LiftSession, LiftRules}
+import net.liftweb.util.StringHelpers
+
 import lib._
 import NodeUtils._
 import lib.tree._
@@ -90,6 +93,14 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
       testFn(actual(0))
     }
   }
+
+  def inMockSession[U](block: => U): U = {
+    val session: LiftSession = new LiftSession("", StringHelpers.randomString(20), Empty)
+    S.initIfUninitted(session) {block}
+  }
+
+  def withSessionAttrs[U](attrs: (String, String)*)(block: => U): U = inMockSession {withSessionAttrs(Map(attrs: _*))(block)}
+  def withSessionAttrs[U](attrs: Map[String, String])(block: => U): U = S.withAttrs(S.mapToAttrs(attrs))(block)
 }
 
 object TestHelpers extends TestHelpers {
