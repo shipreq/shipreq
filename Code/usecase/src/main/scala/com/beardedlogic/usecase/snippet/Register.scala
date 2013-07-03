@@ -30,7 +30,7 @@ class Register1 extends SingleOpStatefulSnippet {
   def render = (
     "#email" #> SHtml.onSubmit(emailInput = _)
       // & "form *+" #> SHtml.hidden(jsCallback(onSubmit(_)))
-      & ":submit" #> SHtml.ajaxSubmit("Create Account", jsCallback(onSubmit(_)))
+      & ":submit" #> SHtml.ajaxSubmit("Register", jsCallback(onSubmit(_)))
     )
 
   def onSubmit(implicit reactor: Reactor) {

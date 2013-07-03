@@ -1,10 +1,5 @@
 #!/bin/bash
 
-v=2.1.2
-echo "Downloading v$v of normalize.css -- http://necolas.github.io/normalize.css/"
-curl -s http://necolas.github.io/normalize.css/$v/normalize.css -o src/main/webapp/css/normalize.css
-echo $?
-
 v=1.10.1
 echo "Downloading v$v of jQuery -- http://jquery.com/download/"
 curl -s http://code.jquery.com/jquery-$v.min.js -o src/main/webapp/js/vendor/jquery.js

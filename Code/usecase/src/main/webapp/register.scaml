@@ -1,16 +1,13 @@
 %div(data-lift="surround?with=default;at=content")
-  %h1 Sign up mate!
-  %div#login(data-lift="Register1")
+  .centred_form#register1Form(data-lift="Register1")
 
-    %div#register1Form
-      %form(data-lift="form.ajax")
-        %div
-          %label(for="email") Email Address:
-          %input#email(type="email")
+    %form(data-lift="form.ajax")
+      %h2 Create Account
+      .controls
+        %input#email.span4(type="email" placeholder="Email Address")
+      .controls.text-right.full-width
+        %button.btn.btn-primary(type="submit") XXX
 
-        %div.submit
-          %input(type="submit" value="Create Account")
-
-    %div#emailSent.hidden
-      %p An email has been sent to you to for verification.
-      %p Please check your email and follow the instruction therein.
+  #emailSent.hidden
+    %p An email has been sent to you to for verification.
+    %p Please check your email and follow the instruction therein.

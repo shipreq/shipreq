@@ -1,18 +1,16 @@
 %div(data-lift="surround?with=default;at=content")
-  %h1 Login Bro!
-  %div#login(data-lift="Login?form=post")
+  .centred_form(data-lift="Login?form=post")
+    %h2 Login
 
-    %div.who
-      %label(for="who") Username or Email:
-      %input#who(type="text")
+    .controls
+      %input#who.span4(type="text" placeholder="Username or Email")
 
-    %div.password
-      %label(for="password") Password:
-      %input#password(type="password")
+    .controls
+      %input#password.span4(type="password" placeholder="Password")
 
-    %div.remember
-      %input#remember(type="checkbox")
-      %label(for="remember") Remember Me?
-
-    %div.submit
-      %input(type="submit" value="Login")
+    .controls.controls-row
+      %label.checkbox.span3(style="margin-left:0")
+        %input#remember(type="checkbox")
+        Remember Me?
+      .span1(style="margin-left:0")
+        %button.btn.btn-primary(type="submit") Login

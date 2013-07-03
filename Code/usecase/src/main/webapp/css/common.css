@@ -1,13 +1,23 @@
+html, body { height: 100%; }
+
+.container { width: auto; max-width: 780px; }
+
+#body { min-height: 100%; height: auto !important; height: 100%; margin: 0 auto -30px; }
+
+#footer-push, #footer { height: 30px; }
+
+#footer { background-color: #f5f5f5; }
+
+#footer .container p { margin: 5px 0; }
+
+.alert { margin: 20px auto 20px auto; max-width: 482.06651px; }
+
 .hidden { display: none; }
 
-textarea { resize: none; overflow: auto; /* removes scrollbars in Internet Explorer */ outline: none; }
+textarea { resize: none; overflow: auto; outline: none; }
 
 abbr.timeago[title] { border-bottom: none !important; }
 
-#notices { margin: 1cm auto 1cm auto; width: 550px; padding: 1.5ex; border: solid 1px black; text-align: center; }
-
-#login { width: 260px; margin-left: auto; margin-right: auto; }
-#login .who label, #login .password label { display: block; }
-#login .who input, #login .password input { width: 100%; margin-bottom: 1em; }
-#login .remember { text-align: right; }
-#login .submit { text-align: right; margin-top: 1em; }
+.centred_form { width: 300px; margin: 1cm auto 1cm auto; }
+.centred_form h2 { margin-bottom: 0.6em; }
+.centred_form .controls { margin-top: 2px; }
