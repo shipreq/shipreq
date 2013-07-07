@@ -1,0 +1,47 @@
+digraph G {
+
+{
+  node [style=filled, fillcolor="#ccffcc"]
+  SalesArgs
+  DeployLocally
+  Hosting
+  Name
+}
+{
+  node [style=filled, fillcolor="#dddddd"]
+  AcceptPayment
+  Legal
+  TODO
+  PlanBeyondUC
+}
+
+Promote
+HowMoney [label="How can I make money?"]
+Funding
+AccountPlan [label="Plan for accounts free/paid, public/private, etc"]
+GetUsers
+RelScope [label="Release & Scope plan"]
+Deploy
+PlanUcF [label="Plan more UC features"]
+BusModel
+SalesPitch
+Domain
+TalkToC
+// MarketResearch
+
+{Domain; Deploy; SalesPitch; SalesArgs; Name} -> Promote
+{Hosting;Name} -> Domain
+{PlanUcF; TalkToC; MarketResearch} -> HowMoney
+{SalesArgs; PlanUcF} -> TalkToC
+{SalesPitch; PlanUcF; BusModel} -> Funding
+{BusModel; PlanUcF} -> RelScope
+{MarketResearch; SalesArgs; PlanUcF} -> SalesPitch
+{MarketResearch; PlanUcF; TalkToC} -> BusModel
+{Hosting} -> Deploy
+{Promote; AccountPlan} -> GetUsers
+{BusModel; RelScope} -> AccountPlan
+DeployLocally -> UsePrivately; UsePrivately -> PlanUcF
+{Legal; Deploy; AccountPlan; AcceptPayment; GetUsers} -> Profit
+TalkToC -> MarketResearch
+
+}
