@@ -9,7 +9,6 @@ import com.beardedlogic.usecase._
 import lib.{ExternalIdStr, Defaults}
 import lib.db.DB
 import lib.security.Oshiro
-import api.UseCaseApi
 import app.AppSiteMap
 import snippet.UCEditor
 
@@ -31,9 +30,6 @@ class Boot {
 
     // App package path
     LiftRules.addToPackages("com.beardedlogic.usecase")
-
-    // Register APIs
-    LiftRules.statelessDispatch.append(UseCaseApi)
 
     // Register route whitelist
     LiftRules.setSiteMap(AppSiteMap.sitemap)
