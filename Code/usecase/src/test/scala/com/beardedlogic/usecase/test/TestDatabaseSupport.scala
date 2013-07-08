@@ -11,7 +11,7 @@ import scala.util.Random
 import Q.interpolation
 import lib.db.{DaoProvider, DB}
 import model.DAO
-import com.beardedlogic.usecase.lib.SnippetHelpers
+import com.beardedlogic.usecase.lib.{DI, SnippetHelpers}
 import com.beardedlogic.usecase.lib.security.AppSecurityRealm
 
 object TestDatabaseSupport {
@@ -41,15 +41,14 @@ trait TestDatabaseSupport extends TestHelpers with ShouldMatchers with Logger {
       val outcome = DB.withInstance(wrapTestsInTransaction) { s: Session =>
         this.sessionVar = s
         this.dbVar = new DAO(s)
-        val origAppSecurityRealmDaoProvider = AppSecurityRealm.daoProvider
         s.conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE)
         try {
-          AppSecurityRealm.daoProvider = testDaoProvider
-          beforeEachWithDao()
-          test()
+          DI.DaoProvider.doWith(testDaoProvider) {
+            beforeEachWithDao()
+            test()
+          }
         }
         finally {
-          AppSecurityRealm.daoProvider = origAppSecurityRealmDaoProvider
           if (wrapTestsInTransaction) s.rollback()
           this.sessionVar = null
           this.dbVar = null
@@ -76,10 +75,6 @@ trait TestDatabaseSupport extends TestHelpers with ShouldMatchers with Logger {
   def db = dbVar
 
   def testDaoProvider = new TestDaoProvider(db)
-
-  class SnippetTesterWithDao[S <: SnippetHelpers](snippet: S) extends SnippetTester(snippet) {
-    snippet.daoProvider = testDaoProvider
-  }
 
   def randomId = -TestDatabaseSupport.Random.nextLong().abs
 

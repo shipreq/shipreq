@@ -41,7 +41,7 @@ object Defaults extends Logger {
   })(null)
 
   def init() {
-    DAO.withTransaction { dao =>
+    DI.DaoProvider.withTransaction { dao =>
       FieldList.refresh(dao)
     }
     debug("Defaults initialised successfully.")

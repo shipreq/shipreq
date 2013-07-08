@@ -1,17 +1,15 @@
 package com.beardedlogic.usecase
 package snippet
 
-import net.liftweb.common.Empty
-import net.liftweb.http.{ResponseShortcutException, LiftSession, S}
+import net.liftweb.http.{ResponseShortcutException, S}
 import net.liftweb.util.Helpers.intToTimeSpanBuilder
-import net.liftweb.util.StringHelpers
 import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc.UsernamePasswordToken
 import org.postgresql.util.PSQLException
 import org.scalatest.FunSpec
 
 import lib.security.Oshiro
-import test.TestDatabaseSupport
+import test.{SnippetTester, TestDatabaseSupport}
 import test.fixture.UserFixture
 
 class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixture {
@@ -26,7 +24,7 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
     S.errors(0)._1.toString.toLowerCase should include(substring.toLowerCase)
   }
 
-  class Reg1Tester extends SnippetTesterWithDao(new Register1) {
+  class Reg1Tester extends SnippetTester(new Register1) {
     def submit(email: String, usrTableDiff: Int) = {
       snippet.emailInput = email
       assertTableDiffs('usr -> usrTableDiff) {snippet.onSubmit(js.reactor)}
@@ -73,7 +71,7 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
     }
   }
 
-  class Reg2Tester(token: String) extends SnippetTesterWithDao(new Register2(token)) {
+  class Reg2Tester(token: String) extends SnippetTester(new Register2(token)) {
     def onSubmit_() = snippet.onSubmit(js.reactor)
   }
 

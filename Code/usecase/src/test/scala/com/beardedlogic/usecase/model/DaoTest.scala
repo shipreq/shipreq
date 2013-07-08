@@ -6,6 +6,8 @@ import org.scalatest.matchers.ShouldMatchers
 
 class DaoTest extends FunSuite with ShouldMatchers with BeforeAndAfterAll {
 
+  def DAO = DefaultDaoProvider
+
   override def beforeAll() {
     TestDatabaseSupport.init()
   }

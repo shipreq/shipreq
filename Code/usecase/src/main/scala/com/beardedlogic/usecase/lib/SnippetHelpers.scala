@@ -9,7 +9,6 @@ import net.liftweb.util.{CssSel, Mailer}
 import scala.xml.{Elem, Text, NodeSeq, UnprefixedAttribute}
 
 import com.beardedlogic.usecase.app.AppConfig
-import com.beardedlogic.usecase.lib.db.DaoProvider
 import com.beardedlogic.usecase.lib.security.Oshiro
 import com.beardedlogic.usecase.model.DAO
 import com.beardedlogic.usecase.snippet.Notices
@@ -27,7 +26,7 @@ object SnippetHelpers {
  *
  * @since 11/06/2013
  */
-trait SnippetHelpers extends Misc with Logger {
+trait SnippetHelpers extends Misc with DI with Logger {
 
   @inline implicit final def jsExpToJsCmd(in: JsExp) = in.cmd
 
@@ -61,8 +60,6 @@ trait SnippetHelpers extends Misc with Logger {
   def shouldNeverHappen_!(msg: String) = respondImmediately(ShouldNeverHappenResponse(msg))
 
   def loggedInUser = Oshiro.loggedInUser
-
-  var daoProvider: DaoProvider = DAO
 
   type Mail = (Subject, List[MailTypes])
   var mailer: Mailer = Mailer

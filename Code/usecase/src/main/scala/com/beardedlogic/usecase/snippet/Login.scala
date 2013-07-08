@@ -45,7 +45,7 @@ class Login extends StatefulSnippet with SnippetHelpers {
   }
 
   def onSuccessfulLogin() {
-    DAO.withSession(_.updateUserOnLogin(loggedInUser.get.id, clientIp_Or_?))
+    daoProvider.withSession(_.updateUserOnLogin(loggedInUser.get.id, clientIp_Or_?))
     S.redirectTo(AppSiteMap.HomeRelativeUrl)
   }
 }

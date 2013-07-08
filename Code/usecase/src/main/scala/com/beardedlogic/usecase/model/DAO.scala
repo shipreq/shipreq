@@ -41,7 +41,7 @@ class DAO(_session: Session)
   def rollback() = db.rollback
 }
 
-object DAO extends DaoProvider {
+object DefaultDaoProvider extends DaoProvider {
   override def get: DAO = new DAO(DB.Slick.createSession())
   override def withSession[T](block: DAO => T): T = DB.Slick.withSession(initConnAndExec(_, block))
   override def withTransaction[T](block: DAO => T): T = DB.Slick.withTransaction(initConnAndExec(_, block))

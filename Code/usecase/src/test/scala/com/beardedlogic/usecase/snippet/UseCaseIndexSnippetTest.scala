@@ -51,9 +51,7 @@ class UseCaseIndexSnippetTest extends FunSpec with TestDatabaseSupport with Prop
     def test(params: Map[String, String]) = {
       val js = new JavaScriptReaction
       val r = withSessionParams(params) {
-        DI.DaoProvider.doWith(testDaoProvider) {
-          UseCaseIndex.updateUseCaseHeader(js.reactor)
-        }
+        UseCaseIndex.updateUseCaseHeader(js.reactor)
       }
       (r, js)
     }

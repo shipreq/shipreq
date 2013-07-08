@@ -7,7 +7,6 @@ import net.liftweb.http.js.JsCmds
 import net.liftweb.json.Serialization.{write => jsonWrite}
 import net.liftweb.util.Helpers._
 import net.liftweb.util.{CssSel, ClearClearable}
-import net.liftweb.util.SimpleInjector
 
 import lib._
 import model.DbOpResult.{StaleRevision, Success}
@@ -15,12 +14,6 @@ import model.{DAO, UseCaseSummary}
 import util.{ErrorMessages, Reactor, JavaScript}
 import util.HtmlTransformExt._
 import util.JsExt.JsonTrigger
-import com.beardedlogic.usecase.lib.db.DaoProvider
-
-// TODO Use Lift's Injectors for better testing. Remove Dao & Mailer from StatefulXxxx, use new DI everywhere
-object DI extends SimpleInjector {
-  final val DaoProvider = new Inject[DaoProvider](DAO){}
-}
 
 object UseCaseIndex extends SnippetHelpers {
 
@@ -33,7 +26,7 @@ object UseCaseIndex extends SnippetHelpers {
     "#initVM" #> JsCmds.Script(js)
   }
 
-  def render = DI.DaoProvider.vend.withSession(dao =>
+  def render = daoProvider.withSession(dao =>
     ClearClearable
       & InitKoViewModel("UCIViewModel", dao.findAllUseCaseSummaries)
       & ".new_uc button" #> SHtml.ajaxButton("+ New UC", jsCallbackWithDao(createNewUseCase))
@@ -54,7 +47,7 @@ object UseCaseIndex extends SnippetHelpers {
       dataId   <- ExternalId.unapply(S.param("dataEid"))  ?~ ErrorMessages.BadRequest
       valueId  <- ExternalId.unapply(S.param("valueEid")) ?~ ErrorMessages.BadRequest
       lock     <- Locks.UseCase.forWrite(dataId)
-      dao      <- DI.DaoProvider.vend.forTransaction
+      dao      <- daoProvider.forTransaction
       uc       <- dao.findUseCase(dataId, valueId)        ?~ "Use case not found."
       newUc     = uc.copy(title = newTitle)
       savedUc  <- dao.updateUseCaseHeader(newUc) match {
