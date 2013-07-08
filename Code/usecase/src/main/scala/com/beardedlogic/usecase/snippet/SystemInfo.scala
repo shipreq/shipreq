@@ -29,4 +29,6 @@ object SystemInfo {
     case "jvm.version"        => Properties.javaVmVersion
     case "scala.version"      => Properties.versionNumberString
   }
+
+  // TODO uptime, memory/gc, load?, users online, row counts
 }
