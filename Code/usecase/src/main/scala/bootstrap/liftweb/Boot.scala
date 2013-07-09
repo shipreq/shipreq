@@ -17,6 +17,9 @@ import snippet.UCEditor
  * to modify lift's environment
  */
 class Boot {
+
+  LiftRules.configureLogging()
+
   def boot {
     configureLift
     initDatabase
