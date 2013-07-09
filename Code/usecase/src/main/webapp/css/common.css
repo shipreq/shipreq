@@ -12,6 +12,8 @@ html, body { height: 100%; }
 
 .alert { margin: 20px auto 20px auto; max-width: 482.06651px; }
 
+.alert p:last-child { margin-bottom: 0; }
+
 .hidden { display: none; }
 
 textarea { resize: none; overflow: auto; outline: none; }

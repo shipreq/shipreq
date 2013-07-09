@@ -29,6 +29,7 @@ html, body { height: 100% } // Cannot have any padding or margin here
 // Generic
 
 .alert { margin:20px auto 20px auto; max-width: $pageWidth/1.61803398875 }
+.alert p:last-child {margin-bottom: 0}
 
 .hidden { display: none }
 
