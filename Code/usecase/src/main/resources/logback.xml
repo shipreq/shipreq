@@ -1,40 +1,17 @@
 <configuration>
-    <timestamp key="byDay" datePattern="yyyyMMdd"/>
+
+    <!-- This is picked up by the Shiro servlet filter. -->
+    <!-- Lift switches over to a runmode-based cfg on boot. -->
 
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
 			<pattern>%d{HH:mm:ss.SSS} %-5level [%-32logger{32}] %msg%n</pattern>
 		</encoder>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
-        </filter>
 	</appender>
-
-    <appender name="FILE.LOG" class="ch.qos.logback.core.FileAppender">
-        <file>log/dev-${byDay}.log</file>
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %-5level [%-50logger{50}] {%thread} %msg%n</pattern>
-        </encoder>
-    </appender>
-
-    <appender name="FILE.ERR" class="ch.qos.logback.core.FileAppender">
-        <file>log/dev-${byDay}.err</file>
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %-5level [%-40logger{40}] %msg%n</pattern>
-        </encoder>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>ERROR</level>
-        </filter>
-    </appender>
 
     <logger name="org.apache.commons" level="WARN" />
     <logger name="scala.slick.compiler" level="WARN" />
-    <logger name="scala.slick.session" level="DEBUG" />
-    <logger name="com.beardedlogic" level="DEBUG" />
-    <!--logger name="com.googlecode.flyway" level="INFO" /-->
-	<root level="DEBUG">
+	<root level="INFO">
         <appender-ref ref="STDOUT" />
-        <appender-ref ref="FILE.LOG" />
-        <appender-ref ref="FILE.ERR" />
 	</root>
 </configuration>
