@@ -40,7 +40,7 @@ libraryDependencies ++= {
       ExclusionRule(name = "selenium-iphone-driver"),
       ExclusionRule(name = "selenium-safari-driver")
     ),
-    "org.eclipse.jetty"           %  "jetty-webapp"           % "8.1.10.v20130312"    % "container,test",
+    "org.eclipse.jetty"           %  "jetty-webapp"           % "8.1.11.v20130520"    % "container,test",
     "org.eclipse.jetty.orbit"     %  "javax.servlet"          % "3.0.0.v201112011016" % "container,test,provided" artifacts Artifact("javax.servlet", "jar", "jar")
   )
 }
