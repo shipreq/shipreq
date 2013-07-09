@@ -6,8 +6,11 @@ import net.liftweb.sitemap.Loc._
 import com.beardedlogic.usecase.model.{UseCaseSummary, UseCase}
 import com.beardedlogic.usecase.lib.ExternalId
 import AppConfig.BaseUrl
-import net.liftweb.http.{RedirectResponse, LiftResponse}
+import net.liftweb.http.{Templates, RedirectResponse, LiftResponse}
 import org.apache.shiro.SecurityUtils
+import net.liftweb.sitemap.Loc.EarlyResponse
+import com.beardedlogic.usecase.model.UseCase
+import net.liftweb.common.Full
 
 object AppSiteMap {
 
@@ -21,7 +24,10 @@ object AppSiteMap {
 
   val Register1 = Menu(Loc("Register1", List("register"), "Register"))
 
-  val Register2 = Menu.param[String]("Register2", "Register", token => Full(token), t => t) / "register" / * >> Hidden
+  val Register2 = (Menu.param[String]("Register2", "Register", token => Full(token), t => t) / "register" / *
+    >> Hidden
+    >> UseTemplate("register2")
+    )
 
   val UseCaseIndex = Menu.i("Use Cases") / "list"
 
@@ -34,6 +40,11 @@ object AppSiteMap {
   def logout(): Box[LiftResponse] = {
     SecurityUtils.getSubject.logout()
     Full(RedirectResponse(HomeRelativeUrl))
+  }
+
+  def UseTemplate(path: String) = {
+    val pathAsList = List(path.split("/"): _*)
+    Loc.TemplateBox(() => Templates(pathAsList))
   }
 
   object Urls {
