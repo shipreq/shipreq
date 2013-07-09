@@ -19,8 +19,6 @@ FUNC TODO
 * [S.1.2] [UCE ] Flow parsing fails both sides if either side has an error.
 * [S.1.2] [UCE ] Flow parsing does weird things when flow exists then an edit with bad flow clause(s) comes in.
 * [S.0.5] [ACCT] Password reset (when not logged in).
-* [S.0.5] [UX  ] Style the login/register success boxes.
-* [S.0.5] [UX  ] Use bootstrap alert div instead of alert() for JS error (login/register).
 
 * [C.4.4] [UCI ] Reorder UCs. Might be superceded by better UC org func such as grouping.
 * [C.3.4] [ACCT] Add JS validation to register2 (ie. account creation).
@@ -43,7 +41,6 @@ TECH TODO
 * [S.0.5] [SAFE] Thread-safety of SmartText (and possibly Field) is a worry.
 * [S.0.5] [FAIL] When converting LoadCtx into a SaveCtx, fieldValues isn't being converted. (Will affect in-place loading.)
 * [S.0.4] [FAIL] When fields are loaded but no FV exists, fields should be cleared. (Will affect in-place loading.)
-* [S.0.1] [SAFE] PUT /api/usecase/ID should acquire write-lock earlier.
 
 * [C.2.0] [PERF] DAO should cache certain actions and execute in bulk.
 * [C.1.1] [TEST] Remove UseCaseCtx.init().
