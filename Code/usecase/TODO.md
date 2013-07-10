@@ -1,3 +1,5 @@
+Legend: [M/S/C] [Benefit 0-none,5-max] [Penalty 0-none,5-severe]
+
 FEATURE TODO
 ============
 
@@ -47,28 +49,4 @@ TECH TODO
 * [C.1.0] [RUSE] Improve reusability of CachedFunction classes (and switch tests back on).
 * [C.0.0] [ARCH] Title-to-NC sync should be done via msging.
 * [C.0.0] [FAIL] DatabaseEnumTest disabled due to DB deadlocks.
-
-
-NOTES
-=====
-
-Legend: [M/S/C] [Benefit 0-none,5-max] [Penalty 0-none,5-severe]
-
-← ↑ → ↓ ↔ ↕ ↖ ↗ ↘ ↙
-⬅ ⬆ ⬇ ⬈ ⬉ ⬊ ⬋ ⬌
-
-<-- ok --> BAD
-<-- BAD --> ok
---> BAD <-- ok
---> ok <-- BAD
-
-<-- 1.0.1 --> 9.99
-<-- 9.99 --> 1.0.1
---> 9.99 <-- 1.0.1
---> 1.0.1 <-- 9.99
-
-1) Has: Blah ⬅ 1.1 ➡ 1.1
-2) Type: Blah ⬅ 11.0.1
-3) Get: Blah <- 11.0.1 ⬅ 1.1 ➡ 1.1
-   Exp: Blah <- 11.0.1
 
