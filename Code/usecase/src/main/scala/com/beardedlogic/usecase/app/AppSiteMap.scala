@@ -42,10 +42,7 @@ object AppSiteMap {
     Full(RedirectResponse(HomeRelativeUrl))
   }
 
-  def UseTemplate(path: String) = {
-    val pathAsList = List(path.split("/"): _*)
-    Loc.TemplateBox(() => Templates(pathAsList))
-  }
+  def UseTemplate(path: String) = TemplateBox(() => Templates(path.split("/").toList))
 
   object Urls {
     // TODO viewUseCase() should be UseCaseEditor() and should use a Loc
