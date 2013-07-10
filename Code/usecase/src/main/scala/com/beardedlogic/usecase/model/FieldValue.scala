@@ -1,7 +1,6 @@
 package com.beardedlogic.usecase
 package model
 
-import scala.collection.mutable.{Map => MutableMap}
 import scala.slick.jdbc.{GetResult, SetParameter, StaticQuery => Q}
 import scala.slick.session.PositionedParameters
 import lib.db.DBHelpers._
@@ -13,6 +12,17 @@ case class FieldValue(
   fieldKeyId: Long,
   fieldData: FieldValueData
   ) extends Value[DataType.FieldValue] {
+
+  def fieldKeyIdTagged = tag[FieldKeyId](fieldKeyId)
+}
+
+class FieldValueFull(
+  valueId: Long,
+  dataId: Long,
+  rev: Short,
+  val fieldKeyId: Long,
+  val fieldData: FieldValueData
+  ) extends PlainValue[DataType.FieldValue](valueId, dataId, rev) {
 
   def fieldKeyIdTagged = tag[FieldKeyId](fieldKeyId)
 }
@@ -47,7 +57,7 @@ case class FieldSaveCtx(
 }
 
 case class FieldLoadCtx(
-  val fieldValues: Map[Long_FieldKeyId, FieldValue],
+  val fieldValues: Map[Long_FieldKeyId, FieldValueFull],
   /** For each relation type, a map of from-IDs to to-IDs (in the order specified in the `index` column). */
   val relations: Map[RelationType, Map[Long, List[Long]]],
   val stepData: Map[Long_StepValueId, (PlainValue[DataType.Step], String)]
@@ -58,6 +68,7 @@ case class FieldLoadCtx(
 object FieldValueAccessor {
 
   implicit val GetResultFieldValue = GetResult(r => FieldValue(r.<<, r.<<, r.<<))
+  implicit val GetResultFieldValueFull = GetResult(r => new FieldValueFull(r.<<, r.<<, r.<<, r.<<, r.<<))
 
   implicit object SetParameterFieldValue extends SetParameter[FieldValue] {
     def apply(v: FieldValue, pp: PositionedParameters) {
@@ -69,11 +80,11 @@ object FieldValueAccessor {
 
   val Insert = Q.update[FieldValue]("INSERT INTO field_value VALUES(?,?,?)")
 
-  val SelectByOwner = Q.query[Long, FieldValue]( s"""
-      select fv.id, fv.field_key_id, fv.text
-      from field_value fv, relation r
+  val SelectByOwner = Q.query[Long, FieldValueFull]( s"""
+      select fv.id, v.data_id, v.rev, fv.field_key_id, fv.text
+      from field_value fv, relation r, value v
       where fv.id = r.to_id
-      and r.type_id = 200
+      and r.type_id = ${RelationType.Has.ordinal}
       and r.from_id = ?
       """.sql)
 }
@@ -92,7 +103,7 @@ trait FieldValueAccessor extends DatabaseAccessor {
   def getFieldLoadCtxFor(ownerId: Long): FieldLoadCtx = {
 
     // Load field values
-    var fieldValues = Map.empty[Long_FieldKeyId, FieldValue]
+    var fieldValues = Map.empty[Long_FieldKeyId, FieldValueFull]
     SelectByOwner.foreach(ownerId, { fv =>
       fieldValues += (fv.fieldKeyIdTagged -> fv)
     })

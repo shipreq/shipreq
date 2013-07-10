@@ -11,7 +11,7 @@ import TestHelpers._
 import field._
 import TypeTags._
 import model._
-import com.beardedlogic.usecase.util.NoReaction
+import util.NoReaction
 
 class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
 
@@ -365,5 +365,35 @@ class UseCaseCtxTest extends FunSpec with TestDatabaseSupport with TestHelpers {
     for ((s,l) <- saved.textFields.zip(loaded.textFields)) l.value.text should be(s.value.text)
     for ((s,l) <- saved.courseFields.zip(loaded.courseFields)) l.coursesWithText should matchTree(s.coursesWithText)
     loaded
+  }
+
+  describe("Real-life failures") {
+    it("Save wiping all unchanged fields") {
+      truncateAll
+      runSqlScript("testdata-01.sql")
+
+      // Load UC, should have 15 steps in total
+      val origValueId = 1043
+      val uc = new UseCaseCtx(null)
+      uc.restoreCheckpoint(loadCheckpoint(origValueId))
+      uc.init
+      uc.stepLabelMap.get.ab.size should be(15)
+
+      // Change 'Frequency of Use' field & save
+      val newFreqValue = "P(50%): Never (provided a default project is created on signup, else once).\nP(90%): 0 to 10 times."
+      uc.textFields.find(_.value.text.startsWith("P(50%): 0 times")).get.value.setTextFromUser(newFreqValue)
+      uc.save(db)
+
+      // Reload
+      val savedValueId = db.findLatestUseCaseByValueId(origValueId).get.valueId
+      savedValueId should not be (origValueId)
+      val uc2 = new UseCaseCtx(null)
+      uc2.restoreCheckpoint(loadCheckpoint(savedValueId))
+      uc2.init
+
+      // Confirm data
+      uc2.stepLabelMap.get.ab.size should be(15)
+      uc2.textFields.find(_.value.text.startsWith("P(50%)")).get.value.text should be(newFreqValue)
+    }
   }
 }

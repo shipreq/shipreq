@@ -5,9 +5,10 @@ import field.{NormalAndAlternateCourseFields => NCAC, ExceptionCourseFields => E
 import model._
 import TypeTags._
 import util.{MessageCentre, CachedFunction, BiMap}
+import net.liftweb.common.Logger
 
 // TODO Remove cometActor from UseCaseCtx
-class UseCaseCtx(val cometActor: AnyRef = null) {
+class UseCaseCtx(val cometActor: AnyRef = null) extends Logger {
 
   val msgCentre = new MessageCentre
 
@@ -82,12 +83,14 @@ class UseCaseCtx(val cometActor: AnyRef = null) {
       for (f <- genericFields) {
         val fk = f.fieldKey
         val oldFV: Option[PlainValue[DataType.FieldValue]] = lastSave.flatMap(_.saveCtx.fieldValues.get(fk))
+        trace(s"$f - fk=$fk, oldFV=$oldFV")
 
         // Check if field has anything to save
         if (!f.save_?) {
           if (oldFV.isDefined) {
             changesDetected = true
             removeOldFVs += oldFV.get
+            trace(s"$f - Nothing to save anymore. Used to be, thus removal required.")
           }
         } else {
           // Compare state and presave
@@ -102,12 +105,14 @@ class UseCaseCtx(val cometActor: AnyRef = null) {
               dao.createInitialValue(DataType.FieldValue)
             else
               dao.createValue(oldFV.get, LatestRev)
+            trace(s"$f - New value created: rev=${newValue.rev}, id=${newValue.valueId}")
             saveCtx1.fieldValues += (fk -> newValue)
             changesDetected = true
             UCsFVs += newValue
           } else {
             // Reuse the existing field value
             oldFV.foreach(UCsFVs += _)
+            trace(s"$f - Reuse.")
           }
         }
       }
@@ -176,14 +181,19 @@ object UseCaseLoader {
     val fieldList = Defaults.FieldList.get // TODO hardcoded fieldlist
 
     val saveCtx = new MutableFieldSaveCtx
-    // TODO populate field values
 
-    // Load field states
+    // Load fields
     val loadCtx = dao.getFieldLoadCtxFor(uc.valueId)
     val fieldStates = Map.newBuilder[FieldKey, Any]
     for (fk <- fieldList.fieldKeys) {
+
+      // Load field states
+      // (saveCtx.stepValues populated here by field-loaders)
       val fs = fk.fieldDef.stateLoader(fk).load(loadCtx, saveCtx)
       fieldStates += (fk -> fs)
+
+      // Add field values
+      for (fv <- loadCtx.fieldValues.get(fk.taggedId)) saveCtx.fieldValues += (fk -> fv)
     }
 
     UseCaseSaveCheckpoint(uc, saveCtx.immutable, fieldStates.result)

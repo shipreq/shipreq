@@ -1,18 +1,20 @@
 package com.beardedlogic.usecase
 package test
 
+import com.googlecode.flyway.core.dbsupport.{SqlScript, DbSupportFactory}
 import java.sql.Connection
 import net.liftweb.common.Logger
+import org.apache.commons.io.IOUtils
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.{Exceptional, Outcome, Suite}
 import scala.slick.jdbc.{StaticQuery => Q}
 import scala.slick.session.Session
 import scala.util.Random
 import Q.interpolation
+
 import lib.db.{DaoProvider, DB}
+import lib.DI
 import model.DAO
-import com.beardedlogic.usecase.lib.{DI, SnippetHelpers}
-import com.beardedlogic.usecase.lib.security.AppSecurityRealm
 
 object TestDatabaseSupport {
 
@@ -122,6 +124,8 @@ trait TestDatabaseSupport extends TestHelpers with ShouldMatchers with Logger {
     result
   }
 
+  def truncateAll() = truncate(Tables: _*)
+
   def truncate(tables: Symbol*) {
     tables.foreach { table =>
     // Dependents first
@@ -144,6 +148,16 @@ trait TestDatabaseSupport extends TestHelpers with ShouldMatchers with Logger {
   }
 
   def lookupConfirmationToken(email: String) = sql"select confirmation_token from usr where email = $email".as[String].firstOption
+
+  /**
+   * Loads an SQL script on the classpath, and runs it.
+   */
+  def runSqlScript(filename: String) {
+    val dbSupport = DbSupportFactory.createDbSupport(session.conn)
+    val sqlFull = IOUtils.toString(getClass.getResource(filename.replaceFirst("^/?", "/")))
+    val script = new SqlScript(sqlFull, dbSupport)
+    script.execute(dbSupport.getJdbcTemplate)
+  }
 }
 
 class TestDaoProvider(dao: DAO) extends DaoProvider {

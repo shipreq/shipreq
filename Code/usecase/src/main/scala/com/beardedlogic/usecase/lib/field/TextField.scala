@@ -77,4 +77,6 @@ class TextField(val fd: TextFieldDef, override val ucCtx: UseCaseCtx, override v
     val txt = value.textWithNormalisedRefs(ucCtx)
     (Some(txt), txt)
   }
+
+  override def toString = s"TextField[${fd.title}]"
 }
