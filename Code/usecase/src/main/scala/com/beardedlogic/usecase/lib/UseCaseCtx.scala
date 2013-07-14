@@ -19,7 +19,7 @@ class UseCaseCtx(val cometActor: AnyRef = null) extends Logger {
 
   // This needs to be before fields as they reference it immediately to hand to SmartText
   val stepLabelMap = CachedFunction.lazy0(
-    BiMap(courseFields.foldLeft(Map.empty[String @@ LocalId, String @@ Label]) { _ ++ _.stepLabelMap.get })
+    BiMap(courseFields.foldLeft(Map.empty[LocalIdStr, LabelStr]) { _ ++ _.stepLabelMap.get })
   )
 
   // TODO hardcoded fieldlist
@@ -35,7 +35,7 @@ class UseCaseCtx(val cometActor: AnyRef = null) extends Logger {
 
   val normalCourseTitleId = ncacField.get.courses.head.stepTextId
 
-  val savedSteps = CachedFunction.eager1WithInitial[FieldSaveCtx, BiMap[Long_StepDataId, String @@ LocalId]](
+  val savedSteps = CachedFunction.eager1WithInitial[FieldSaveCtx, BiMap[Long_StepDataId, LocalIdStr]](
     (saveCtx: FieldSaveCtx) => {
       BiMap(saveCtx.stepValues.map {
         case (localStepId, stepValue) => (stepValue.taggedDataId -> localStepId)

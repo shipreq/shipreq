@@ -27,24 +27,26 @@ object TypeTags {
 
   /** A transient ID used as glue between internal components and/or the client. */
   trait LocalId extends TypeTag[String]
+  type LocalIdStr = String @@ LocalId
 
   /** A textual label for a tree node. Eg. "1.0.2.a" */
   trait Label extends TypeTag[String]
+  type LabelStr = String @@ Label
 
   implicit class StringTypeExt(val s: String) extends AnyVal {
     def hasNormalisedRefs = s.asInstanceOf[String @@ NormalisedRefs]
-    def asLocalId = s.asInstanceOf[String @@ LocalId]
-    def asLabel = s.asInstanceOf[String @@ Label]
+    def asLocalId = s.asInstanceOf[LocalIdStr]
+    def asLabel = s.asInstanceOf[LabelStr]
   }
 
   implicit class StringTypeExt2[M[_]](val s: M[String]) extends AnyVal {
-    def asLocalIds = s.asInstanceOf[M[String @@ LocalId]]
-    def asLabels = s.asInstanceOf[M[String @@ Label]]
+    def asLocalIds = s.asInstanceOf[M[LocalIdStr]]
+    def asLabels = s.asInstanceOf[M[LabelStr]]
   }
 
   implicit class StringTypeExt3[M[_]](val s: M[List[String]]) extends AnyVal {
-    def asLocalIds = s.asInstanceOf[M[List[String @@ LocalId]]]
-    def asLabels = s.asInstanceOf[M[List[String @@ Label]]]
+    def asLocalIds = s.asInstanceOf[M[List[LocalIdStr]]]
+    def asLabels = s.asInstanceOf[M[List[LabelStr]]]
   }
 
   // -------------------------------------------------------------------------------------------------------------------

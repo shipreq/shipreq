@@ -93,7 +93,7 @@ object SmartTextTest extends MockitoSugar {
     m
   }
 
-  def stepFieldWithText(text: String, stepId: String @@ LocalId = "SUBJ".asLocalId, refLookup: BiMap[String @@ LocalId, String @@ Label] = StepState1) = {
+  def stepFieldWithText(text: String, stepId: LocalIdStr = "SUBJ".asLocalId, refLookup: BiMap[LocalIdStr, LabelStr] = StepState1) = {
     val m = new SmartStepText(mock[MessageCentre], CachedFunction.eager0(refLookup), stepId, stepId + "-t")
     m.init
     m.setTextFromUser(text)(NoReaction)
@@ -525,7 +525,7 @@ class SmartTextTest
       }
     }
 
-    def newSubject(initialText: String, initialRefsInUse: Map[String @@ LocalId, String @@ Label], useSmartStepText: Boolean = false) = {
+    def newSubject(initialText: String, initialRefsInUse: Map[LocalIdStr, LabelStr], useSmartStepText: Boolean = false) = {
       val msgCentre = new MsgCollector
       val m = if (useSmartStepText) {
         val s2 = new SmartStepText(msgCentre, CachedFunction.eager0(StepState2), "".asLocalId, "")
@@ -699,7 +699,7 @@ class SmartTextTest
           mc.sent.clear
           s.sendMsg(FlowToChangeMsg("X1".asLocalId, flowToTargets.asLocalIds))(mc.reactionCollector)
           s.text should be (textAfter)
-          s.flowFrom.refs should be(idsAfter.asInstanceOf[Set[String @@ LocalId]].map(id => (id,StepState1.ab(id))).toMap)
+          s.flowFrom.refs should be(idsAfter.asInstanceOf[Set[LocalIdStr]].map(id => (id,StepState1.ab(id))).toMap)
           s.flowTo should be(flowToBefore)
           assertReaction(s, textBefore != textAfter)
           mc.sent should be ('empty)
@@ -718,7 +718,7 @@ class SmartTextTest
           mc.sent.clear
           s .sendMsg(FlowFromChangeMsg(flowFromSources.asLocalIds, "X1".asLocalId))(mc.reactionCollector)
           s.text should be (textAfter.fixArrows(false))
-          s.flowTo.refs should be(idsAfter.asInstanceOf[Set[String @@ LocalId]].map(id => (id,StepState1.ab(id))).toMap)
+          s.flowTo.refs should be(idsAfter.asInstanceOf[Set[LocalIdStr]].map(id => (id,StepState1.ab(id))).toMap)
           s.flowFrom should be(flowFromBefore)
           assertReaction(s, textBefore != textAfter)
           mc.sent should be ('empty)

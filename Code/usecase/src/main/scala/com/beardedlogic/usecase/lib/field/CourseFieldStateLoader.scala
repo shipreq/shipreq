@@ -48,11 +48,11 @@ class CourseFieldStateLoader(val fieldKey: FieldKey, val li: StartingLabelIndice
 
 // TODO CourseFieldState redundant now that StepStateTree exists
 case class CourseFieldState(courses: StepStateTree) {
-  val stepMap: Map[String @@ LocalId, StepState] = courses.mapRecursive(ss => (ss.id -> ss)).toMap
+  val stepMap: Map[LocalIdStr, StepState] = courses.mapRecursive(ss => (ss.id -> ss)).toMap
 }
 
 case class StepState(
-  id: String @@ LocalId,
+  id: LocalIdStr,
   text: String @@ NormalisedRefs,
   children: List[StepState])
   extends TreeNodeLike[StepState] {

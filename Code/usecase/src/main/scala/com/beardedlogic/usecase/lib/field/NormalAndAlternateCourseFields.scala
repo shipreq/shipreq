@@ -58,9 +58,9 @@ class NormalAndAlternateCourseFields(override val ucCtx: UseCaseCtx, override va
   /**
    * Prevent removal of the normal course head, ie. 1.0.
    */
-  override def prohibitRemoval_?(id: String @@ LocalId) = (id == courses.head.id)
+  override def prohibitRemoval_?(id: LocalIdStr) = (id == courses.head.id)
 
-  protected override def customiseIndentDecreaseJs(nodeId: String @@ LocalId, updateJs: JsCmd): JsCmd =
+  protected override def customiseIndentDecreaseJs(nodeId: LocalIdStr, updateJs: JsCmd): JsCmd =
     courses.nodes match {
       // Move steps from NC to AC
       case nc :: ac1 :: acN if ac1.id == nodeId =>
@@ -70,7 +70,7 @@ class NormalAndAlternateCourseFields(override val ucCtx: UseCaseCtx, override va
       case _ => updateJs
     }
 
-  protected override def customiseIndentIncreaseJs(nodeId: String @@ LocalId, newNode: StepNode, oldCourses: StepTree, updateJs: JsCmd): JsCmd =
+  protected override def customiseIndentIncreaseJs(nodeId: LocalIdStr, newNode: StepNode, oldCourses: StepTree, updateJs: JsCmd): JsCmd =
     oldCourses.nodes match {
       // Move steps from AC to NC
       case nc :: ac1 :: acN if ac1.id == nodeId =>

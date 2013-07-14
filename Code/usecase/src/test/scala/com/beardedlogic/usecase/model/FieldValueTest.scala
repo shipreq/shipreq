@@ -8,7 +8,7 @@ import lib.TypeTags._
 
 class FieldValueTest extends FunSpec with TestHelpers {
 
-  implicit def autoTypeStepValues(m: Map[String, PlainValue[DataType.Step]]) = m.asInstanceOf[Map[String @@ LocalId, PlainValue[DataType.Step]]]
+  implicit def autoTypeStepValues(m: Map[String, PlainValue[DataType.Step]]) = m.asInstanceOf[Map[LocalIdStr, PlainValue[DataType.Step]]]
   def SVMap(pairs: (String,PlainValue[DataType.Step])*) = autoTypeStepValues(Map(pairs:_*))
 
   val FK1 = new FieldKey(11, FieldKeyType.Text, Some("Ah1"))

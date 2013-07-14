@@ -59,7 +59,7 @@ object CourseFields {
    */
   def compareAndSaveChanges(
     oldState: CourseFieldState,
-    oldStepValues: Map[String @@ LocalId, PlainValue[DataType.Step]],
+    oldStepValues: Map[LocalIdStr, PlainValue[DataType.Step]],
     newState: StepStateTree,
     saveCtx: MutableFieldSaveCtx,
     dao: DAO
@@ -106,7 +106,7 @@ object CourseFields {
 abstract class CourseFields extends Field[CourseFieldState] with SnippetHelpers {
 
   private[this] var _courses = StepTree.empty
-  private[this] var textFields: Map[String @@ LocalId, SmartStepText] = Map.empty
+  private[this] var textFields: Map[LocalIdStr, SmartStepText] = Map.empty
 
   def courses = _courses
   def test__textFields = textFields
@@ -212,7 +212,7 @@ abstract class CourseFields extends Field[CourseFieldState] with SnippetHelpers 
   }
 
   /** Adds a new step, shuffling down subsequent steps and renumbering if necessary. */
-  def addStep[R](preceedingNodeId: String @@ LocalId)(implicit reactor: Reactor): Option[StepNode] =
+  def addStep[R](preceedingNodeId: LocalIdStr)(implicit reactor: Reactor): Option[StepNode] =
     stepInsert(preceedingNodeId, courses, StepNodeBuilder) match {
       case (newCourses, r@Some(newNode)) if (validateCourses(newCourses)) =>
         setCourses(StepTree(newCourses))
@@ -227,7 +227,7 @@ abstract class CourseFields extends Field[CourseFieldState] with SnippetHelpers 
     }
 
   /** Removes a new step and all its children, shuffling up following steps and renumbering if necessary. */
-  def removeStep(id: String @@ LocalId)(implicit reactor: Reactor): Option[StepNode] =
+  def removeStep(id: LocalIdStr)(implicit reactor: Reactor): Option[StepNode] =
     if (!prohibitRemoval_?(id))
       stepRemove(id, courses) match {
         case (newCourses, r@Some(node)) =>
@@ -242,7 +242,7 @@ abstract class CourseFields extends Field[CourseFieldState] with SnippetHelpers 
     else None
 
   /** Decreases the indentation level of a given step. */
-  def decreaseIndent(nodeId: String @@ LocalId)(implicit reactor: Reactor): Boolean =
+  def decreaseIndent(nodeId: LocalIdStr)(implicit reactor: Reactor): Boolean =
     indentDecrease(nodeId, courses) match {
       case (newCourses, Some(_)) if (validateCourses(newCourses)) =>
         setCourses(StepTree(newCourses))
@@ -254,7 +254,7 @@ abstract class CourseFields extends Field[CourseFieldState] with SnippetHelpers 
     }
 
   /** Increases the indentation level of a given step. */
-  def increaseIndent(nodeId: String @@ LocalId)(implicit reactor: Reactor): Boolean =
+  def increaseIndent(nodeId: LocalIdStr)(implicit reactor: Reactor): Boolean =
     indentIncrease(nodeId, courses) match {
       case (newCourses, Some(newNode)) if (validateCourses(newCourses)) =>
         val oldCourses = courses
@@ -285,14 +285,14 @@ abstract class CourseFields extends Field[CourseFieldState] with SnippetHelpers 
     reactor(JavaScript)(JsCmds.Alert(s"That would cause your steps to be ${MaxStepDepth + 1} levels deep, which exceeds the maximum allowed."))
   }
 
-  def prohibitRemoval_?(id: String @@ LocalId) = false
+  def prohibitRemoval_?(id: LocalIdStr) = false
 
   /** Allows customisation of the ajax response of a successful indent decrease. */
-  protected def customiseIndentDecreaseJs(nodeId: String @@ LocalId, updateJs: JsCmd): JsCmd = updateJs
+  protected def customiseIndentDecreaseJs(nodeId: LocalIdStr, updateJs: JsCmd): JsCmd = updateJs
 
 
   /** Allows customisation of the ajax response of a successful indent increase. */
-  protected def customiseIndentIncreaseJs(nodeId: String @@ LocalId,
+  protected def customiseIndentIncreaseJs(nodeId: LocalIdStr,
                                           newNode: StepNode,
                                           oldCourses: StepTree,
                                           updateJs: JsCmd): JsCmd = updateJs

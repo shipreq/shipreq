@@ -62,14 +62,14 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
 
   def mockUseCaseCtx: UseCaseCtx = {
     val u = mock[UseCaseCtx]
-    when(u.savedSteps).thenReturn(CachedFunction.static1[FieldSaveCtx, BiMap[Long_StepDataId, String @@ LocalId]](BiMap.empty))
-    when(u.stepLabelMap).thenReturn(CachedFunction.lazy0(BiMap.empty[String @@ LocalId, String @@ Label]))
+    when(u.savedSteps).thenReturn(CachedFunction.static1[FieldSaveCtx, BiMap[Long_StepDataId, LocalIdStr]](BiMap.empty))
+    when(u.stepLabelMap).thenReturn(CachedFunction.lazy0(BiMap.empty[LocalIdStr, LabelStr]))
     when(u.msgCentre).thenReturn(mock[MessageCentre])
     when(u.number).thenReturn(1: Short)
     u
   }
 
-  def mockUseCaseCtx(stepLabelMap: Map[String @@ LocalId, String @@ Label]): UseCaseCtx = {
+  def mockUseCaseCtx(stepLabelMap: Map[LocalIdStr, LabelStr]): UseCaseCtx = {
     val u = mockUseCaseCtx
     when(u.stepLabelMap).thenReturn(CachedFunction.lazy0(BiMap(stepLabelMap)))
     u
@@ -152,7 +152,7 @@ object TestHelpers extends TestHelpers {
 
     def coursesWithText: List[StepNodeWithText] = convertNodeTree[StepNode, StepNodeWithText](cf.courses, {
       case (n, lvl, lbl, children) =>
-        val savedSteps = try cf.ucCtx.savedSteps.get.ba catch {case _: Throwable => Map.empty[String @@ LocalId, Long_StepDataId]}
+        val savedSteps = try cf.ucCtx.savedSteps.get.ba catch {case _: Throwable => Map.empty[LocalIdStr, Long_StepDataId]}
         val txt = cf.test__textFields.get(n.id).map(_.textWithNormalisedRefs(savedSteps)).getOrElse("".hasNormalisedRefs)
         StepNodeWithText(n.id, lvl, lbl, txt, children)
     }, cf.startingLabelIndices.startingLabelIndex _)
@@ -160,7 +160,7 @@ object TestHelpers extends TestHelpers {
     def setCoursesWithTextAndInit(nodes: List[StepNodeWithText]) {
       cf.setCourses(StepTree(nodes.map(_.toStepNode)))(NoReactionOrNewMessages)
       cf.init
-      val savedSteps = BiMap.empty[Long_StepDataId, String @@ LocalId]
+      val savedSteps = BiMap.empty[Long_StepDataId, LocalIdStr]
       TreeLike(nodes).foreachRecursive(n => cf.test__textFields(n.id).setTextFromLoad(n.text.hasNormalisedRefs, savedSteps))
     }
 

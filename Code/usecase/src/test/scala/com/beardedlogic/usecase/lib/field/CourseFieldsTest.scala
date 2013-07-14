@@ -24,7 +24,7 @@ class CourseFieldsTest extends FunSpec with TestHelpers {
   implicit def CachedFunctionDelegation[R](c : CachedFunctionLike[R]): R = c.get
   implicit def autoTagLocalStepIds(s: String) = s.asLocalId
   implicit def autoTagNormalisedRefs(s: String) = s.hasNormalisedRefs
-  implicit def autoTypeStepValues(m: Map[String, PlainValue[DataType.Step]]) = m.asInstanceOf[Map[String @@ LocalId, PlainValue[DataType.Step]]]
+  implicit def autoTypeStepValues(m: Map[String, PlainValue[DataType.Step]]) = m.asInstanceOf[Map[LocalIdStr, PlainValue[DataType.Step]]]
   def SVMap(pairs: (String,PlainValue[DataType.Step])*) = autoTypeStepValues(Map(pairs:_*))
 
   val Key_NC = new FieldKey(1, FieldKeyType.NormalAndAlternateCourses, None)
@@ -215,10 +215,10 @@ class CourseFieldsTest extends FunSpec with TestHelpers {
   }
 
   def lastSave2For(state: CourseFieldState) = {
-    val oldStepValuesB = Map.newBuilder[String @@ LocalId, PlainValue[DataType.Step]]
+    val oldStepValuesB = Map.newBuilder[LocalIdStr, PlainValue[DataType.Step]]
     val mockStepValuesByNameB = Map.newBuilder[String @@ NormalisedRefs, PlainValue[DataType.Step]]
     var i = 0
-    //val savedSteps = new BiMapBuilder[Long_StepDataId, String @@ LocalId]
+    //val savedSteps = new BiMapBuilder[Long_StepDataId, LocalIdStr]
     state.courses.foreachRecursive { ss =>
       i += 1
       val dataId = (i * 1000).tag[StepDataId]
