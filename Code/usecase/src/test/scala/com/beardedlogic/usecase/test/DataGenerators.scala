@@ -77,7 +77,7 @@ object DataGenerators extends Logger {
 
   def containsSpecial(s: String): Boolean = {
     lazy val s2 = removeAllWhitespace(s)
-    FlowTo.ArrowRegex.matches(s) || FlowFrom.ArrowRegex.matches(s) || NormalisedRefRegex.matches(s2)
+    FlowToStyle.arrowRegex.matches(s) || FlowFromStyle.arrowRegex.matches(s) || NormalisedRefRegex.matches(s2)
   }
 
   def doesntContainSpecial(s: String) = !containsSpecial(s)
@@ -88,8 +88,8 @@ object DataGenerators extends Logger {
 
   val arrowStem = Gen.choose(2, 10).map("-" * _)
 
-  val flowFromArrow = flowAndArrow("<" + _, FlowFrom.UnicodeArrows)
-  val flowToArrow = flowAndArrow(_ + ">", FlowTo.UnicodeArrows)
+  val flowFromArrow = flowAndArrow("<" + _, FlowFromStyle.unicodeArrows)
+  val flowToArrow = flowAndArrow(_ + ">", FlowToStyle.unicodeArrows)
 
   def flowAndArrow(stemMap: String => String, unicodeArrows: List[Char]) =
     withOptionalSurroundingWhitespace(Gen.oneOf(

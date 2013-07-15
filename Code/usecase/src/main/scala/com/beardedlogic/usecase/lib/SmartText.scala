@@ -44,28 +44,28 @@ object SmartText {
   val DeletedRef = MakeRef("DELETED")
 
   sealed trait FlowStyle {
-    val Arrow: String
-    val UnicodeArrows: List[Char]
-    val ArrowRegex: Regex
-    val ArrowBadRegex: Regex
-    val ArrowBadReplacement: String
-    def replaceAllArrowsWithBad(input: String): String = ArrowBadRegex.replaceAllIn(input, ArrowBadReplacement)
+    val arrow: String
+    val unicodeArrows: List[Char]
+    val arrowRegex: Regex
+    val arrowBadRegex: Regex
+    val arrowBadReplacement: String
+    def replaceAllArrowsWithBad(input: String): String = arrowBadRegex.replaceAllIn(input, arrowBadReplacement)
   }
 
-  object FlowFrom extends FlowStyle {
-    override val Arrow = "⬅"
-    override val UnicodeArrows = (Arrow + "←⇦⇐⇽").toList
-    override val ArrowRegex = s"<-{2,}|[${UnicodeArrows.mkString}]".r
-    override val ArrowBadRegex = s"(?:<-|[${UnicodeArrows.mkString}])-*".r
-    override val ArrowBadReplacement = "<-"
+  object FlowFromStyle extends FlowStyle {
+    override val arrow = "⬅"
+    override val unicodeArrows = (arrow + "←⇦⇐⇽").toList
+    override val arrowRegex = s"<-{2,}|[${unicodeArrows.mkString}]".r
+    override val arrowBadRegex = s"(?:<-|[${unicodeArrows.mkString}])-*".r
+    override val arrowBadReplacement = "<-"
   }
 
-  object FlowTo extends FlowStyle {
-    override val Arrow = "➡"
-    override val UnicodeArrows = (Arrow + "→⇨⇒⇾").toList
-    override val ArrowRegex = s"-{2,}>|[${UnicodeArrows.mkString}]".r
-    override val ArrowBadRegex = s"-*(?:->|[${UnicodeArrows.mkString}])".r
-    override val ArrowBadReplacement = "->"
+  object FlowToStyle extends FlowStyle {
+    override val arrow = "➡"
+    override val unicodeArrows = (arrow + "→⇨⇒⇾").toList
+    override val arrowRegex = s"-{2,}>|[${unicodeArrows.mkString}]".r
+    override val arrowBadRegex = s"-*(?:->|[${unicodeArrows.mkString}])".r
+    override val arrowBadReplacement = "->"
   }
 
   @inline def MakeFlowText(arrow: String, labels: TreeSet[LabelStr]) =
@@ -166,9 +166,9 @@ object SmartText {
 
     val FlowRefList: Parser[List[String]] = rep1sep(OptionallyBracedRef, "," ?)
 
-    val FlowFromClause: Parser[List[String]] = FlowFrom.ArrowRegex ~> FlowRefList
+    val FlowFromClause: Parser[List[String]] = FlowFromStyle.arrowRegex ~> FlowRefList
 
-    val FlowToClause: Parser[List[String]] = FlowTo.ArrowRegex ~> FlowRefList
+    val FlowToClause: Parser[List[String]] = FlowToStyle.arrowRegex ~> FlowRefList
 
     val TextAndFlow: Parser[(String, FlowParseResult)] =
       AnyTextThen(false,
@@ -421,19 +421,19 @@ class SmartStepText(override val msgCentre: MessageCentre,
       for (lbl <- refs.values) s += lbl
       s
     }
-    final def rebuildText() { text = MakeFlowTextOrEmpty(style.Arrow, sortedLabels) }
+    final def rebuildText() { text = MakeFlowTextOrEmpty(style.arrow, sortedLabels) }
   }
 
   /** Indicates which steps flow into this step. */
   final class FlowFrom extends Flow {
-    override def style = SmartText.FlowFrom
+    override def style = SmartText.FlowFromStyle
     override def get(pr : ParseResult[FlowParseResult]) = pr.get.from
     override def flowChangeMsg = FlowFromChangeMsg(refs.keySet, stepId)
   }
 
   /** Indicates into which steps this step flows. */
   final class FlowTo extends Flow {
-    override def style = SmartText.FlowTo
+    override def style = SmartText.FlowToStyle
     override def get(pr : ParseResult[FlowParseResult]) = pr.get.to
     override def flowChangeMsg = FlowToChangeMsg(stepId, refs.keySet)
   }
@@ -484,8 +484,8 @@ class SmartStepText(override val msgCentre: MessageCentre,
       flowTo.clearAndBroadcast
     }
 
-    text = FlowFrom.replaceAllArrowsWithBad(text)
-    text = FlowTo.replaceAllArrowsWithBad(text)
+    text = FlowFromStyle.replaceAllArrowsWithBad(text)
+    text = FlowToStyle.replaceAllArrowsWithBad(text)
     text
   }
 
@@ -530,7 +530,7 @@ class SmartStepText(override val msgCentre: MessageCentre,
         // orElse: step deleted, just omit
       }
       f.refs = newRefs
-      f.text = MakeFlowTextOrEmpty(f.style.Arrow, newLabels)
+      f.text = MakeFlowTextOrEmpty(f.style.arrow, newLabels)
     }
   }
 

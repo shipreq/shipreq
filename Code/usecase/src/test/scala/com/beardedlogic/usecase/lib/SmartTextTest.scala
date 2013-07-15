@@ -797,7 +797,7 @@ trait SmartTextChecks {
   } yield (l, a, r)
 
   val invalidStatementProp = forAllNoShrink(invalidStatement) { t =>
-    val exp = FlowTo.replaceAllArrowsWithBad(t.trim)
+    val exp = FlowToStyle.replaceAllArrowsWithBad(t.trim)
     checkTextParsing(t, exp)
   }
 
