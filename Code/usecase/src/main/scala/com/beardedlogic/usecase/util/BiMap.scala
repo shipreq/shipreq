@@ -2,7 +2,9 @@ package com.beardedlogic.usecase.util
 
 object BiMap {
 
-  def empty[A, B] = BiMap(Map.empty[A, B], Map.empty[B, A])
+  private val empty_ = BiMap(Map.empty[Any, Any], Map.empty[Any, Any])
+
+  def empty[A, B] = empty_.asInstanceOf[BiMap[A, B]]
 
   def apply[A, B](ab: Map[A, B]): BiMap[A, B] = BiMap(ab, ab.map(e => e._2 -> e._1))
 
