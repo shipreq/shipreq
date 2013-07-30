@@ -3,6 +3,7 @@ package test
 
 import java.io.File
 import org.apache.commons.io.FileUtils
+import org.mockito.Mockito.when
 import org.scalatest.matchers.{ShouldMatchers, Matcher, MatchResult}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.prop.Tables.Table
@@ -12,7 +13,7 @@ import net.liftweb.mocks.MockHttpServletRequest
 import net.liftweb.mockweb.MockWeb
 import net.liftweb.util.StringHelpers
 import net.liftweb.util.Helpers.stringToSuper
-import scalaz.Lens
+import scalaz.{NonEmptyList, Lens}
 
 import lib.change._
 import lib.tree._
@@ -25,6 +26,7 @@ import util._
 import Types._
 import NodeUtils._
 import TreeOps._
+import Changes.ExistingStepLabelsChanged
 
 /**
  * @since 30/04/2013
@@ -47,6 +49,12 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
 
   def flowFromClause(refs: (LocalIdStr, LabelStr)*) = if (refs.isEmpty) None else Some(FlowFromClause(Map(refs: _*)))
   def flowToClause(refs: (LocalIdStr, LabelStr)*) = if (refs.isEmpty) None else Some(FlowToClause(Map(refs: _*)))
+
+  def MockExistingStepLabelsChanged = {
+    val m = mock[ExistingStepLabelsChanged]
+    when(m.asOnlyChange).thenReturn(NonEmptyList(m))
+    m
+  }
 
   val X0 = "X0".asLocalId
   val X1 = "X1".asLocalId

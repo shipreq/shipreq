@@ -5,8 +5,8 @@ import org.scalatest.FunSpec
 import scala.slick.jdbc.{StaticQuery => Q}
 import Q.interpolation
 
-import change.Changes.{StepTreeChanged, StepTextChanged}
-import change.{Changes, NoChange, Change}
+import change.Changes.StepTextChanged
+import change.{NoChange, Change}
 import field._
 import model.{UseCaseHeader, DataType}
 import test.{LoadedTestData, TestDatabaseSupport, TestData, TestHelpers}
@@ -68,7 +68,7 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
       val original = MockUc2a.UC
       val updated = lens.stepField.set((original, NCF), MockUc2b.NcSfv).regenerateStepsAndLabels
       TF1.lens.get(updated) should not be (MockUc2b.TFV1)
-      val done = updated.respondToChanges(Changes.StepTreeChanged.asOnlyChange).gimme
+      val done = updated.respondToChanges(MockExistingStepLabelsChanged.asOnlyChange).gimme
       TF1.lens.get(done) should be(MockUc2b.TFV1)
     }
   }
@@ -370,7 +370,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
 
     def reverseTopLevelNodes(f: StepField, uc: UseCase): UseCase = {
       def reverse(v: StepFieldValue) = v.copy(tree = StepTree(fixTopLevelIndices(v.tree.nodes.reverse)))
-      NCF.lens.mod(reverse, uc).regenerateStepsAndLabels.afterRespondingToChange(StepTreeChanged)
+      NCF.lens.mod(reverse, uc).regenerateStepsAndLabels.afterRespondingToChange(MockExistingStepLabelsChanged)
     }
 
     it("should load in full after multiple updates") {

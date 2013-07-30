@@ -80,11 +80,10 @@ case class FreeText(text: String, refs: Map[LocalIdStr, LabelStr]) extends Parse
     FreeText.parseCorrected(newText) @: textChanged
   }
 
-  override def respondToChange(c: Change)(implicit stepsAndLabels: StepAndLabelBiMap) =
-    c match {
-      case StepTreeChanged => updateRefs // Update step references when they change
-      case _ => NoChange
-    }
+  override def respondToChange(c: Change)(implicit stepsAndLabels: StepAndLabelBiMap) = c match {
+    case _: ExistingStepLabelsChanged => updateRefs // Update step references when they change
+    case _ => NoChange
+  }
 
   /** Updates `refs` and creates a copy of `text` in which all references are up-to-date. */
   def updateRefs(implicit stepsAndLabels: StepAndLabelBiMap): ChangeResult[FreeText, Change] = {

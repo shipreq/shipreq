@@ -139,15 +139,15 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
       }
     }
 
-    describe(s"Responding to a $StepTreeChanged") {
+    describe("Responding to a ExistingStepLabelsChanged") {
       it("should do nothing if text has no refs") {
         val x = T.parse("hehe")
-        x.respondToChange(StepTreeChanged)(StepState2) should be(NoChange)
+        x.respondToChange(MockExistingStepLabelsChanged)(StepState2) should be(NoChange)
       }
 
       def test(before: String)(textAfter: String, refsAfter: Refs) {
         val x = T.parse(before)
-        val y = x.respondToChange(StepTreeChanged)(StepState2)
+        val y = x.respondToChange(MockExistingStepLabelsChanged)(StepState2)
         T.assert(y.getOrElse(x), textAfter, refsAfter)
       }
 
@@ -176,7 +176,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
         )
         forAll(examples)((before: String, after: String) => {
           val x = T.parse(before)
-          val y = x.respondToChange(StepTreeChanged)(StepState2).getOrElse(x)
+          val y = x.respondToChange(MockExistingStepLabelsChanged)(StepState2).getOrElse(x)
           y.text should be(after)
         })
       }
@@ -202,7 +202,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
 
       it("should produce one when main clause is affected") {
         val a = parse("Look at [S.1]")
-        a.respondToChange(StepTreeChanged)(StepState2) match {
+        a.respondToChange(MockExistingStepLabelsChanged)(StepState2) match {
           case Changed(b, changes) =>
             b should be(StepText(X0, FreeText("Look at [S.A]", Map(X1 -> SA)), None, None))
             changes.list should contain(StepTextChanged(X0))
@@ -219,7 +219,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
 
       it("should not produce one when nothing changes") {
         val a = parse("Look at [S.1]")
-        a.respondToChange(StepTreeChanged)(StepState1) match {
+        a.respondToChange(MockExistingStepLabelsChanged)(StepState1) match {
           case NoChange =>
           case x => fail(s"NoChange expected, got: $x")
         }
@@ -323,10 +323,10 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
         })
       }
 
-      describe(s"Responding to a $StepTreeChanged") {
+      describe(s"Responding to a $MockExistingStepLabelsChanged") {
         def test(textBefore: String, textAfter: String, refsAfter: Set[LocalIdStr]) {
           val x = parse(F.forceArrows(textBefore))
-          val y = x.respondToChange(StepTreeChanged)(StepState2).getOrElse(x)
+          val y = x.respondToChange(MockExistingStepLabelsChanged)(StepState2).getOrElse(x)
           F.get(x) should not be (None)
           y.text should be(F.forceArrows(textAfter))
           assertFlowClause(F.get(y), mapToLabels(refsAfter, StepState2))

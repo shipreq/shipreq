@@ -201,7 +201,7 @@ case class StepText(
   override def respondToChange(c: Change)(implicit stepsAndLabels: StepAndLabelBiMap) = c match {
 
     // Update step references when they change
-    case StepTreeChanged => updateRefs
+    case _: ExistingStepLabelsChanged => updateRefs
 
     // Add or Remove flow references
     case FlowFromChange(fromIds, id) => processFlowChange(FlowTo, flowToClause, withFlowTo, fromIds, id)

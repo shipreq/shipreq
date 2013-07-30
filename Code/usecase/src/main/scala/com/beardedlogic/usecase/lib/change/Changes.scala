@@ -5,25 +5,45 @@ import com.beardedlogic.usecase.lib.{StepTree, StepNode}
 
 object Changes {
 
+  /**
+   * Indicates a change in the use case title.
+   *
+   * @param before The title pre-change.
+   * @param after The title post-change.
+   */
   case class TitleChanged(before: String, after: String) extends Change
 
+  /**
+   * Indicates that a text field's value has changed.
+   *
+   * No contextual info required because TextFields only have a single text value, and changes are automatically
+   * paired to change-source (ie. the TextField).
+   */
   case object TextChanged extends Change
 
+  /**
+   * Indicates that a step's text has changed.
+   *
+   * @param id The ID of the step node.
+   */
   case class StepTextChanged(id: LocalIdStr) extends Change
 
-  /** Indicates that one or more steps have changed. */
-  // TODO Make this a ExistingStepLabelChanged trait
-  case object StepTreeChanged extends Change
+  /**
+   * Indicates that the label of one or more existing steps, has changed.
+   *
+   * Consequentially, any step references will need to be verified and possibly updated.
+   */
+  sealed trait ExistingStepLabelsChanged extends Change
 
   case class TailStepAdded(node: StepNode) extends Change
 
-  case class StepAdded(precedingNodeId: LocalIdStr, node: StepNode) extends Change
+  case class StepAdded(precedingNodeId: LocalIdStr, node: StepNode) extends ExistingStepLabelsChanged
 
-  case class StepRemoved(node: StepNode) extends Change
+  case class StepRemoved(node: StepNode) extends ExistingStepLabelsChanged
 
-  case class StepIndentIncreased(node: StepNode, oldTree: StepTree) extends Change
+  case class StepIndentIncreased(node: StepNode, oldTree: StepTree) extends ExistingStepLabelsChanged
 
-  case class StepIndentDecreased(node: StepNode, oldTree: StepTree) extends Change
+  case class StepIndentDecreased(node: StepNode, oldTree: StepTree) extends ExistingStepLabelsChanged
 
   /**
    * Indicates that a step's flow-from list has changed.

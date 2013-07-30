@@ -83,7 +83,7 @@ abstract class StepField extends Field with StepFieldValueLoader {
     else {
       val tailStep = StepNodeBuilder(0, labelIndex)
       val newSfv = lens.get.withNewStep(StepTree(curNodes :+ tailStep), tailStep.id)
-      val cr = Changed(newSfv, StepTreeChanged + TailStepAdded(tailStep))
+      val cr = newSfv @: TailStepAdded(tailStep)
       uc.update(this, cr)
     }
   }
@@ -93,7 +93,7 @@ abstract class StepField extends Field with StepFieldValueLoader {
       sfv => stepInsert(precedingNodeId, sfv.tree, StepNodeBuilder),
       (sfv, newNodes, newNode) => {
         val newSfv = sfv.withNewStep(StepTree(newNodes), newNode.id)
-        Changed(newSfv, StepTreeChanged + StepAdded(precedingNodeId, newNode))
+        newSfv @: StepAdded(precedingNodeId, newNode)
       }
     )
 
@@ -107,7 +107,7 @@ abstract class StepField extends Field with StepFieldValueLoader {
           var newTextmap = sfv.textmap
           removedNode.foreachRecursive(n => newTextmap -= n.id)
           val newSfv = sfv.copy(tree = StepTree(newNodes), textmap = newTextmap)
-          val cr = Changed(newSfv, StepTreeChanged + StepRemoved(removedNode))
+          val cr = newSfv @: StepRemoved(removedNode)
           uc.update(this, cr)
         case _ => NoChange
       }
@@ -118,7 +118,7 @@ abstract class StepField extends Field with StepFieldValueLoader {
       sfv => indentDecrease(id, sfv.tree),
       (sfv, newNodes, tgtNode) => {
         val newSfv = sfv.copy(tree = StepTree(newNodes))
-        Changed(newSfv, StepTreeChanged + StepIndentDecreased(tgtNode, sfv.tree))
+        newSfv @: StepIndentDecreased(tgtNode, sfv.tree)
       }
     )
 
@@ -127,7 +127,7 @@ abstract class StepField extends Field with StepFieldValueLoader {
       sfv => indentIncrease(id, sfv.tree),
       (sfv, newNodes, tgtNode) => {
         val newSfv = sfv.copy(tree = StepTree(newNodes))
-        Changed(newSfv, StepTreeChanged + StepIndentIncreased(tgtNode, sfv.tree))
+        newSfv @: StepIndentIncreased(tgtNode, sfv.tree)
       }
     )
 
