@@ -10,38 +10,42 @@ import net.liftweb.http.SHtml
 import net.liftweb.util.Helpers._
 import JsCmds.Noop
 
-import lib.Types._
 import lib.change._
 import lib.field._
-import lib.{UcChangeSource, UseCase}
-import model._
+import lib.UcChangeSource
 import util.JsExt._
 import Changes._
-
-trait RendererHelper {
-  val uce: UseCaseEditor
-
-  @inline final def textFieldIds = uce.textFieldIds
-  @inline final def state = uce.state
-  @inline final def uch = state.uc.header
-  @inline final def fields = state.uc.fields
-  @inline final implicit def fieldValues = state.uc.fieldValues
-
-  // % as in "mod(ify)"
-  @inline final def %(f: UseCase => UcUpdateResult): JsCmd = uce.update(f)
-  @inline final def =>%(f: UseCase => UcUpdateResult) = () => uce.update(f)
-
-  @inline final def withDao[R](f: DAO => R): R = uce.daoProvider.withTransaction(f)
-  @inline final def daoCallback[R](f: DAO => R) = () => withDao(f)
-}
+import Renderer._
 
 object Renderer {
-  def TitleId = "uc-title"
+
+  object Templates {
+    import util.TemplateCache._
+
+    final val EntirePage = LoadTemplate(List("uce"))
+
+    final val TextField = EntirePage.extract("template-text")
+    final val Step = EntirePage.extract("template-step")
+    final val AddTailStep = EntirePage.extract("template-courses-addTailStep")
+
+    private def addStepTemplate = ".steps * " #> Templates.Step
+    private def extractStepTemplate(name: String) = addStepTemplate(EntirePage.extract(name))
+    final val NormalCourse = extractStepTemplate("template-courses-n")
+    final val AlternateCourses = extractStepTemplate("template-courses-a")
+    final val ExceptionCourses = extractStepTemplate("template-courses-e")
+  }
+
+  final val AddTailStepClass = "addTailStep"
+  final val AlternateCourseAddTailStepCss = s".courses-a .$AddTailStepClass"
+  final val ExceptionCourseAddTailStepCss = s".courses-e .$AddTailStepClass"
+
+  final val StepLevelAttribute = "data-lvl"
+  final val StepLevelAttributeCss = s".step [$StepLevelAttribute]"
+
+  final val TitleId = "uc-title"
 }
 
 case class Renderer(uce: UseCaseEditor) extends RendererHelper {
-
-  import Renderer._
 
   // *************************************
   // *             Rendering             *

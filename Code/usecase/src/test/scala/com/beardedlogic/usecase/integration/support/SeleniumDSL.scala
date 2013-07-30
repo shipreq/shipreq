@@ -57,7 +57,7 @@ trait BaseDSL extends ShouldMatchers {
  * @since 30/04/2013
  */
 class UseCaseEditorDSL(val s: SeleniumDriver, private val givenCourseRoot: Option[Finder] = None) extends BaseDSL {
-  import snippet.uce.Templates.{AddTailStepClass, StepLevelAttribute}
+  import snippet.uce.Renderer.{AddTailStepClass, StepLevelAttribute}
 
   override val url = "/uce"
 

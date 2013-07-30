@@ -53,7 +53,6 @@ class UseCaseEditorTest extends FunSpec with TestDatabaseSupport with TestHelper
     uce.update2(ECF.addStep(last.id)) // Creates 99.99
     MaxStepsPerLevel.times(uce.update2(ECF.addStep(last(-1)(-1).id))) // Creates 99.98.(a-xx)
     tree.sizeRecursive should be(MaxStepsPerLevel * 3)
-    uce.uc.pp
     uce
   }
 
@@ -104,7 +103,7 @@ class UseCaseEditorTest extends FunSpec with TestDatabaseSupport with TestHelper
   def assertFailResponse(resp: String): Unit = resp should include("alert(")
 
   describe("Full-page rendering") {
-    lazy val xml = inMockSession(UCE1.dispatch("render")(Templates.EntirePage))
+    lazy val xml = inMockSession(UCE1.dispatch("render")(Renderer.Templates.EntirePage))
     lazy val html = xml.toString
 
     it("should render the title") {

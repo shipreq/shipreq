@@ -10,8 +10,6 @@ import net.liftweb.http.js.jquery.JqJsCmds.jsExpToJsCmd
 import net.liftweb.http.SHtml
 import net.liftweb.util.CssSel
 
-//import net.liftweb.http._
-
 import net.liftweb.util.Helpers._
 import JsCmds.Noop
 
@@ -21,8 +19,7 @@ import util.HtmlTransformExt._
 import util.JsExt._
 import lib.field._
 import lib.Types._
-
-import Templates._
+import Renderer._
 
 object StepFieldRenderer {
   @inline final def ExprForNodeAndChildren(n: StepNode) = n.mapRecursive("#" + _.id).mkString(",")
@@ -64,8 +61,8 @@ object NormalCourseFieldConfig extends StepFieldRenderConfig {
   override def prohibitRemoval_?(id: LocalIdStr, tree: StepTree) = (id == tree.head.id)
 
   override def render(r: StepFieldRenderer) =
-    r.renderSteps(r.tree.head)(NormalCourseTemplate) ++
-      r.renderStepsWithAddTailStep(r.tree.tailAsTreeLike)(AlternateCourseTemplate)
+    r.renderSteps(r.tree.head)(Templates.NormalCourse) ++
+      r.renderStepsWithAddTailStep(r.tree.tailAsTreeLike)(Templates.AlternateCourses)
 
   override def customiseDecIndentJs(node: StepNode, newTree: StepTree, js: JsCmd) =
     newTree.nodes match {
@@ -97,7 +94,7 @@ object ExceptionCourseFieldConfig extends StepFieldRenderConfig {
   override def prohibitRemoval_?(id: LocalIdStr, tree: StepTree) = false
 
   override def render(r: StepFieldRenderer) =
-    r.renderStepsWithAddTailStep(r.tree)(ExceptionCourseTemplate)
+    r.renderStepsWithAddTailStep(r.tree)(Templates.ExceptionCourses)
 
   override def customiseDecIndentJs(node: StepNode, newTree: StepTree, js: JsCmd) = js
   override def customiseIncIndentJs(oldTree: StepTree, node: StepNode, js: JsCmd) = js
@@ -136,7 +133,7 @@ case class StepFieldRenderer(
    */
   def renderStepsWithAddTailStep(steps: TreeLike[StepNode]): NodeSeq => NodeSeq = {
     val t = "button" #> SHtml.ajaxButton("+", =>%(f.addTailStep))
-    val addTailStepTmpl = t(AddTailStepTemplate)
+    val addTailStepTmpl = t(Templates.AddTailStep)
     renderSteps(steps) andThen ".steps *+" #> addTailStepTmpl // Append to .steps, after all the .step tags
   }
 
@@ -165,7 +162,7 @@ case class StepFieldRenderer(
    */
   @inline final def renderSingleStepXml(n: StepNode) = {
     val fn = ".step" #> renderSingleStep(n)
-    fn(StepTemplate)
+    fn(Templates.Step)
   }
 
   // **************************************
