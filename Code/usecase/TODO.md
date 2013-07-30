@@ -39,13 +39,8 @@ TECH TODO
 * [S.1.3] [PERF] Shiro caching.
 * [S.1.1] [DEMO] Show flow deletion in flow demo.
 * [S.1.1] [TEST] When SBT 0.13 comes out, shutdown Jetty et al in SBT hook.
-* [S.1.1] [TEST] Fix test using UserFixture breaking other tests.
-* [S.0.5] [SAFE] Thread-safety of SmartText (and possibly Field) is a worry.
-* [S.0.5] [FAIL] When converting LoadCtx into a SaveCtx, fieldValues isn't being converted. (Will affect in-place loading.)
-* [S.0.4] [FAIL] When fields are loaded but no FV exists, fields should be cleared. (Will affect in-place loading.)
+* [S.0.5] [BUG ] When fields are loaded but no FV exists, fields should be cleared. (Will affect in-place loading.)
 
 * [C.2.0] [PERF] DAO should cache certain actions and execute in bulk.
-* [C.1.1] [TEST] Remove UseCaseCtx.init().
 * [C.1.0] [RUSE] Improve reusability of CachedFunction classes (and switch tests back on).
-* [C.0.0] [FAIL] DatabaseEnumTest disabled due to DB deadlocks.
 
