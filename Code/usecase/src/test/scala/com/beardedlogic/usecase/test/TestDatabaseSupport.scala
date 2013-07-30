@@ -71,7 +71,10 @@ trait TestDatabaseSupport extends TestHelpers with ShouldMatchers with Logger {
   val wrapTestsInTransaction = true
 
   var sessionVar: Session = null
-  implicit def session = sessionVar
+  implicit def session = {
+    if (sessionVar == null) throw new IllegalStateException("Trying to access DB session outside of test.")
+    sessionVar
+  }
 
   var dbVar: DAO = null
   def db = dbVar

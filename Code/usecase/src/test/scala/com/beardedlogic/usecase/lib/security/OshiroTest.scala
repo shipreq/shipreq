@@ -13,7 +13,12 @@ class OshiroTest extends FunSpec with TestDatabaseSupport with BeforeAndAfterAll
 
   override def beforeAll {
     super.beforeAll
-    initUserFixture()
+    initUserFixtureWithoutTransaction
+  }
+
+  override def afterAll {
+    deleteUserFixtureWithoutTransaction
+    super.afterAll
   }
 
   def subject = SecurityUtils.getSubject

@@ -12,7 +12,12 @@ class LoginTest extends FunSuite with SeleniumTest with UserFixture {
 
   override def beforeAll {
     super.beforeAll
-    initUserFixture()
+    initUserFixtureWithoutTransaction
+  }
+
+  override def afterAll {
+    deleteUserFixtureWithoutTransaction
+    super.afterAll
   }
 
   def loginCountFor(u: TestUser) = DB.withInstance(false)(db => LoginCount.first(u.id)(db))
