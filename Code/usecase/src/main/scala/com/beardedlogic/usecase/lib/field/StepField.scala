@@ -25,6 +25,28 @@ object StepField {
   object StartingLabelIndicesAt1 extends StartingLabelIndices {
     override def startingLabelIndex(level: Int) = 1
   }
+
+  @inline final def resultIfTreeIsValid(steps: List[StepNode], validResult: => UcUpdateResult): UcUpdateResult =
+    validateTree(steps) match {
+      case Some(error) => ChangeFailure(error)
+      case _ => validResult
+    }
+
+  def validateTree(steps: List[StepNode]): Option[String] = {
+    @inline def check(l: List[StepNode]): Option[String] = {
+      if (l.isEmpty) None
+      else if (l.last.labelIndex > MaxStepsPerLevel) MaxStepViolationMsg
+      else if (l.head.level >= MaxStepDepth) MaxLevelViolationMsg
+      else checkChildren(l)
+    }
+    @tailrec def checkChildren(nodes: List[StepNode]):Option[String] = nodes match {
+      case Nil => None
+      case h :: t =>
+        val r = check(h.children)
+        if (r.isDefined) r else checkChildren(t)
+    }
+    check(steps)
+  }
 }
 
 // =====================================================================================================================
@@ -124,28 +146,6 @@ abstract class StepField extends Field with StepFieldValueLoader {
         })
       case _ => NoChange
     }
-  }
-
-  @inline final def resultIfTreeIsValid(steps: List[StepNode], validResult: => UcUpdateResult): UcUpdateResult =
-    validateTree(steps) match {
-      case Some(error) => ChangeFailure(error)
-      case _ => validResult
-    }
-
-  def validateTree(steps: List[StepNode]): Option[String] = {
-    @inline def check(l: List[StepNode]): Option[String] = {
-      if (l.isEmpty) None
-      else if (l.last.labelIndex > MaxStepsPerLevel) MaxStepViolationMsg
-      else if (l.head.level >= MaxStepDepth) MaxLevelViolationMsg
-      else checkChildren(l)
-    }
-    @tailrec def checkChildren(nodes: List[StepNode]):Option[String] = nodes match {
-      case Nil => None
-      case h :: t =>
-        val r = check(h.children)
-        if (r.isDefined) r else checkChildren(t)
-    }
-    check(steps)
   }
 }
 
