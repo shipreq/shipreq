@@ -197,8 +197,8 @@ class StepFieldTest extends FunSpec with TestHelpers {
     }
 
     def testUpdate(treeBefore: String, treeAfter: String, expectedUpdates: Seq[String], useTextAsId: Boolean) {
-      val before = buildStateForTest(NCF, parseStepTree(treeBefore, useTextAsId))
-      val after = buildStateForTest(NCF, parseStepTree(treeAfter, useTextAsId))
+      val before = parseStepTree(treeBefore, useTextAsId).toNState(NCF)
+      val after = parseStepTree(treeAfter, useTextAsId).toNState(NCF)
       val (oldStepValues, mockStepValuesByName) = lastSave2For(before)
       val saveCtx = new MutableFieldSaveCtx
       val dao = mock[DAO]
@@ -335,7 +335,7 @@ class StepFieldTest extends FunSpec with TestHelpers {
       it("should save delta and return true when changed since last save") {
         val (saveCtx, dao) = mockSaveCtxAndDao
         val s = ECF.valueSaver(parseStepTree("1.0. XXX\n  1. Same Child\n1.1. Other").toStepFieldValue(ECF))
-        val prev = buildStateForTest(ECF, parseStepTree("1.0. Root\n  1. Same Child\n1.1. Other"))
+        val prev = parseStepTree("1.0. Root\n  1. Same Child\n1.1. Other").toNState(ECF)
         s.presave(dao, lastSaveFor(prev), EmptySavedSteps)(saveCtx) should be(true)
         verify(dao, times(1)).createValue(any[PlainValue[DataType.Step]], any[Revision])
         verifyNoMoreInteractions(dao)
@@ -374,7 +374,7 @@ class StepFieldTest extends FunSpec with TestHelpers {
                   b. T6 """
         val after = parseStepTree(treeAfter, true)
         val s = ECF.valueSaver(after.toStepFieldValue(ECF))
-        val before = buildStateForTest(ECF, parseStepTree(treeBefore, true))
+        val before = parseStepTree(treeBefore, true).toNState(ECF)
         val (oldStepValues, _) = lastSave2For(before)
         val oldSaveCtx = FieldSaveCtx(Map.empty, oldStepValues)
 

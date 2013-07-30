@@ -165,14 +165,6 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
 
   def any[T](implicit m: Manifest[T]) = org.mockito.Matchers.any(m.runtimeClass.asInstanceOf[Class[T]])
 
-  // TODO rename
-  def buildStateForTest(f: StepField, nodes: List[StepNodeWithText]) = NormalisedStepTree(
-    convertNodeTree[StepNodeWithText, NormalisedStep](nodes
-    , {(n, _, _, children) => NormalisedStep(n.id, n.text.hasNormalisedRefs, children)}
-    , f.sli.startingLabelIndex _
-    )
-  )
-
   @tailrec final def deepestLast[N <: TreeNodeLike[N]](n: N): N =
     if (n.children.isEmpty) n else deepestLast(n.children.last)
 
@@ -348,6 +340,13 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
 
     def toStepFieldValue(f: StepField, savedSteps: SavedSteps = EmptySavedSteps, stepsAndLabels: StepAndLabelBiMap = EmptyStepAndLabelBiMap) =
       StepFieldValue(f, toStepTree, toTextmap(savedSteps, stepsAndLabels))
+
+    def toNState(f: StepField) = NormalisedStepTree(
+      convertNodeTree[StepNodeWithText, NormalisedStep](x
+      , {(n, _, _, children) => NormalisedStep(n.id, n.text.hasNormalisedRefs, children)}
+      , f.sli.startingLabelIndex _
+      )
+    )
   }
 
 
