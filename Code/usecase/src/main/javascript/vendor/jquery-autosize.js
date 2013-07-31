@@ -1,10 +1,18 @@
 /*!
-	Autosize v1.17.1 - 2013-06-23
+	Autosize v1.17.2 - 2013-07-30
 	Automatically adjust textarea height based on user input.
 	(c) 2013 Jack Moore - http://www.jacklmoore.com/autosize
 	license: http://www.opensource.org/licenses/mit-license.php
 */
-(function ($) {
+(function (factory) {
+	if (typeof define === 'function' && define.amd) {
+		// AMD. Register as an anonymous module.
+		define(['jquery'], factory);
+	} else {
+		// Browser globals: jQuery or jQuery-like library, such as Zepto
+		factory(window.jQuery || window.$);
+	}
+}(function ($) {
 	var
 	defaults = {
 		className: 'autosizejs',
@@ -162,7 +170,7 @@
 
 				height += boxOffset;
 
-				if (original !== height) {						
+				if (original !== height) {
 					ta.style.height = height + 'px';
 					if (callback) {
 						options.callback.call(ta,ta);
@@ -211,9 +219,9 @@
 
 			// Event for manual triggering that also forces the styles to update as well.
 			// Should only be needed if one of typography styles of the textarea change, and the textarea is already the target of the adjust method.
-			$ta.on('autosize.resizeIncludeStyle', function() { 
-				mirrored = null; 
-				adjust(); 
+			$ta.on('autosize.resizeIncludeStyle', function() {
+				mirrored = null;
+				adjust();
 			});
 
 			$ta.on('autosize.destroy', function(){
@@ -231,4 +239,4 @@
 			adjust();
 		});
 	};
-}(window.jQuery || window.Zepto));
+}));
