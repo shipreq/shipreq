@@ -1,13 +1,7 @@
-$indent: 1cm;
-$borderRadius: 4px;
 $maxStepDepth: 4;
 
-/* Indent steps */
-@for $i from 0 through $maxStepDepth {
-	[data-lvl="#{$i}"] {
-		padding-left: $i * $indent;
-	}
-}
+// =====================================================================================================================
+// Control rules
 
 /* Prevent deletion of normal course first step */
 .step.noDel .delete { visibility:hidden; }
@@ -25,15 +19,13 @@ $maxStepDepth: 4;
 .step[data-lvl="1"]+.step[data-lvl="2"],
 .step[data-lvl="2"]+.step[data-lvl="3"],
 .step[data-lvl="3"]+.step[data-lvl="4"],
-.step[data-lvl="4"]+.step[data-lvl="5"],
-.step[data-lvl="5"]+.step[data-lvl="6"],
-.step[data-lvl="6"]+.step[data-lvl="7"],
-.step[data-lvl="7"]+.step[data-lvl="8"] {
+.step[data-lvl="4"]+.step[data-lvl="5"] {
 	.indentInc {
 		visibility:hidden;
 	}
 }
 
+// =====================================================================================================================
 /* General styles */
 .uce {
 	margin: 1cm 1cm 0 1cm;
@@ -42,13 +34,12 @@ $maxStepDepth: 4;
 		display: inline
 	}
 
+	textarea, input[type="text"] {
+		color: #2d2d2d;
+	}
+
 	textarea {
-		border-radius: $borderRadius;
-		-moz-border-radius: $borderRadius;
-		-webkit-border-radius: $borderRadius;
 		border: dashed 1px #ccc;
-		background: #fff;
-		padding: 4px;
 		width: 100%;
 		&:hover {
 			border: solid 1px #ccc;
@@ -57,10 +48,12 @@ $maxStepDepth: 4;
 		&:focus {
 			border: solid 1px #373;
 			background: #f8fff8;
+			color: #000;
 		}
 	}
 }
 
+// =====================================================================================================================
 /* UC Title (UC-123: Abc) */
 .uce .title {
 	&, td, input {
@@ -76,43 +69,49 @@ $maxStepDepth: 4;
 	}
 }
 
+// =====================================================================================================================
 /* Fields and attributes */
-.ucdata {
+table.fieldFrame {
 	margin-top: 1cm;
 	width: 100%;
-	th, td {
-		border-top: solid 2px #ddd;
-		padding-top: 6px;
-		padding-bottom: 2em;
-		vertical-align: top
+	tr.fieldFrame {
+		&>th {
+			color: #555;
+			font-weight: normal;
+			width: 20ex;
+			text-align: left;
+			line-height: 125%;
+		}
+		&>th, &>td {
+			//border-top: solid 2px #ddd;
+			//padding-top: 6px;
+			padding-bottom: 1.5em;
+		}
 	}
-	th {
-		width: 20ex;
-		text-align: left;
-	}
+	th, td {vertical-align: top}
 }
 
+// =====================================================================================================================
 /* Steps */
-.step {
-	overflow: hidden
-	div {
-		vertical-align: top
-	}
-	.label {
-		float: left;
-		padding-right: 1ex;
-		padding-top: 0px
+
+[data-lvl="0"] .lbl { padding-left:  0ex; width: 5ex } // 123.0
+[data-lvl="1"] .lbl { padding-left:  4ex; width: 3ex } // 99.
+[data-lvl="2"] .lbl { padding-left:  7ex; width: 3ex } // cv.
+[data-lvl="3"] .lbl { padding-left: 10ex; width: 4ex } // xviii.
+[data-lvl="4"] .lbl { padding-left: 14ex; width: 3ex } // 99.
+
+table.step {
+	width: 100%;
+	.lbl {
+		padding-top: 4px;
+		color: #444;
 	}
 	.txt {
-		float: none;
-		width: auto;
 		overflow: hidden;
 	}
 	.ctl {
-		float: right;
 		text-align: right;
-		padding-left: 2ex;
-		padding-bottom: 1px
+		width: 110px;
 	}
 	&+.step, &+.stepTransport, .stepTransport+& {
 		margin-top: 1ex
@@ -123,6 +122,7 @@ $maxStepDepth: 4;
 		}
 	}
 }
+
 .addTailStep {
 	text-align: right;
 }
@@ -130,6 +130,8 @@ $maxStepDepth: 4;
 	span {display:none}
 	&:after {content:"↑"} /* ↑↱ */
 }
+
+// =====================================================================================================================
 
 #legend {
     margin:0.5cm auto 1cm auto;
@@ -148,4 +150,15 @@ $maxStepDepth: 4;
     dd:not(:last-of-type) {
         padding-bottom: 0.8ex;
     }
+}
+
+// =====================================================================================================================
+
+.debug {
+  tr.fieldFrame > td { background: #eef}
+  .step {
+    .lbl {background: #ffb}
+    .txt {background: #bfb}
+    .ctl {background: #bfb}
+  }
 }

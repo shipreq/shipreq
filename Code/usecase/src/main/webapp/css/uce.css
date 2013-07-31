@@ -1,15 +1,4 @@
 @charset "UTF-8";
-/* Indent steps */
-[data-lvl="0"] { padding-left: 0cm; }
-
-[data-lvl="1"] { padding-left: 1cm; }
-
-[data-lvl="2"] { padding-left: 2cm; }
-
-[data-lvl="3"] { padding-left: 3cm; }
-
-[data-lvl="4"] { padding-left: 4cm; }
-
 /* Prevent deletion of normal course first step */
 .step.noDel .delete { visibility: hidden; }
 
@@ -20,14 +9,15 @@
 [data-lvl="4"] .indentInc { visibility: hidden; }
 
 /* Prevent indentIncrease for first children */
-.courses-n .step:first-child .indentInc, .courses-e .step:first-child .indentInc, .step[data-lvl="0"] + .step[data-lvl="1"] .indentInc, .step[data-lvl="1"] + .step[data-lvl="2"] .indentInc, .step[data-lvl="2"] + .step[data-lvl="3"] .indentInc, .step[data-lvl="3"] + .step[data-lvl="4"] .indentInc, .step[data-lvl="4"] + .step[data-lvl="5"] .indentInc, .step[data-lvl="5"] + .step[data-lvl="6"] .indentInc, .step[data-lvl="6"] + .step[data-lvl="7"] .indentInc, .step[data-lvl="7"] + .step[data-lvl="8"] .indentInc { visibility: hidden; }
+.courses-n .step:first-child .indentInc, .courses-e .step:first-child .indentInc, .step[data-lvl="0"] + .step[data-lvl="1"] .indentInc, .step[data-lvl="1"] + .step[data-lvl="2"] .indentInc, .step[data-lvl="2"] + .step[data-lvl="3"] .indentInc, .step[data-lvl="3"] + .step[data-lvl="4"] .indentInc, .step[data-lvl="4"] + .step[data-lvl="5"] .indentInc { visibility: hidden; }
 
 /* General styles */
 .uce { margin: 1cm 1cm 0 1cm; }
 .uce form { display: inline; }
-.uce textarea { border-radius: 4px; -moz-border-radius: 4px; -webkit-border-radius: 4px; border: dashed 1px #ccc; background: #fff; padding: 4px; width: 100%; }
+.uce textarea, .uce input[type="text"] { color: #2d2d2d; }
+.uce textarea { border: dashed 1px #ccc; width: 100%; }
 .uce textarea:hover { border: solid 1px #ccc; background: #eee; }
-.uce textarea:focus { border: solid 1px #373; background: #f8fff8; }
+.uce textarea:focus { border: solid 1px #373; background: #f8fff8; color: #000; }
 
 /* UC Title (UC-123: Abc) */
 .uce .title, .uce .title td, .uce .title input { width: 100%; }
@@ -35,17 +25,28 @@
 .uce .title th { padding-right: 0.6em; }
 
 /* Fields and attributes */
-.ucdata { margin-top: 1cm; width: 100%; }
-.ucdata th, .ucdata td { border-top: solid 2px #ddd; padding-top: 6px; padding-bottom: 2em; vertical-align: top; }
-.ucdata th { width: 20ex; text-align: left; }
+table.fieldFrame { margin-top: 1cm; width: 100%; }
+table.fieldFrame tr.fieldFrame > th { color: #555; font-weight: normal; width: 20ex; text-align: left; line-height: 125%; }
+table.fieldFrame tr.fieldFrame > th, table.fieldFrame tr.fieldFrame > td { padding-bottom: 1.5em; }
+table.fieldFrame th, table.fieldFrame td { vertical-align: top; }
 
 /* Steps */
-.step { overflow: hidden div; overflow-vertical-align: top; }
-.step .label { float: left; padding-right: 1ex; padding-top: 0px; }
-.step .txt { float: none; width: auto; overflow: hidden; }
-.step .ctl { float: right; text-align: right; padding-left: 2ex; padding-bottom: 1px; }
-.step + .step, .step + .stepTransport, .stepTransport + .step { margin-top: 1ex; }
-.step[data-lvl="0"] .label, .step[data-lvl="0"] textarea { font-weight: bold; }
+[data-lvl="0"] .lbl { padding-left: 0ex; width: 5ex; }
+
+[data-lvl="1"] .lbl { padding-left: 4ex; width: 3ex; }
+
+[data-lvl="2"] .lbl { padding-left: 7ex; width: 3ex; }
+
+[data-lvl="3"] .lbl { padding-left: 10ex; width: 4ex; }
+
+[data-lvl="4"] .lbl { padding-left: 14ex; width: 3ex; }
+
+table.step { width: 100%; }
+table.step .lbl { padding-top: 4px; color: #444; }
+table.step .txt { overflow: hidden; }
+table.step .ctl { text-align: right; width: 110px; }
+table.step + .step, table.step + .stepTransport, .stepTransport + table.step { margin-top: 1ex; }
+table.step[data-lvl="0"] .label, table.step[data-lvl="0"] textarea { font-weight: bold; }
 
 .addTailStep { text-align: right; }
 
@@ -57,3 +58,8 @@
 #legend dl { margin: 0; }
 #legend dt { float: left; width: 170px; }
 #legend dd:not(:last-of-type) { padding-bottom: 0.8ex; }
+
+.debug tr.fieldFrame > td { background: #eef; }
+.debug .step .lbl { background: #ffb; }
+.debug .step .txt { background: #bfb; }
+.debug .step .ctl { background: #bfb; }

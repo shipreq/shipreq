@@ -53,7 +53,7 @@ case class Renderer(uce: UseCaseEditor) extends RendererHelper {
 
 
   def render = (
-    ".ucdata *" #> renderFields andThen
+    ".fieldFrame *" #> renderFields andThen
       ".title .ucid *" #> uch.number.toString
         & ".rev *" #> state.currentRevision
         & ".title @title" #> SHtml.ajaxText(uch.title, i => %(_.updateTitle(i)), "id" -> TitleId)

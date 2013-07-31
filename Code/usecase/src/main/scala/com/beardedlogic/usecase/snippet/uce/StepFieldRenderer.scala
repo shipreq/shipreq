@@ -147,8 +147,8 @@ case class StepFieldRenderer(
       ".step [id]" #> id
         & StepLevelAttributeCss #> n.level
         & IfCssSel(cfg.prohibitRemoval_?(id, tree)) {".step [class+]" #> "noDel"}
-        & ".label span *" #> labelFor(n)
-        & ".label span [id]" #> labelId(id)
+        & ".lbl span *" #> labelFor(n)
+        & ".lbl span [id]" #> labelId(id)
         & "@text" #> SHtml.ajaxTextarea(text(id), i => %(f.updateText(id, i)), "id" -> textareaId(id))
         & ".add" #> SHtml.ajaxButton("+", =>%%(f.addStep))
         & ".delete" #> SHtml.ajaxButton("-", =>%%(f.removeStep))

@@ -1,0 +1,69 @@
+%div(data-lift="surround?with=default;at=content")
+  %link(data-lift="head" href="/css/uce.css" rel="stylesheet" type="text/css")
+  %script(data-lift="head" src="/js/uce.js" type="text/javascript")
+  #legend
+    %dl
+      %dt
+        %code [1.0.1]
+      %dd A link.
+      %dt
+        %code [1.0.1?]
+      %dd A invalid link.
+      %dt
+        %code [DELETED]
+      %dd A ex-link to a deleted step.
+      %dt
+        %code --> [1.1] [1.2]
+      %dd Indicates the current step flows to others.
+      %dt
+        %code <-- [1.1] [1.2]
+      %dd Indicates that other steps flow here.
+  #uce.uce(data-lift="uce/UseCaseEditor")
+    %div
+      %div
+        Revision:
+        %span.rev 123
+      %button.saveUseCase Save
+    %table.title
+      %tr
+        %th
+          <span id="uc-id">UC-<span class="ucid">123</span></span>:
+        %td
+          %input(name="title" value="Use Case Title")
+    %table.fieldFrame
+
+      %tr.fieldFrame#template-text
+        %th Actors
+        %td
+          %textarea(rows=1) Scorer
+
+      %tr.fieldFrame#template-courses-n.courses-n
+        %th
+          Normal<br/>Course
+        %td.steps
+          %table#template-step.step(data-lvl=0)
+            %tr
+              %td.lbl
+                <span>1.0</span>.
+              %td.txt
+                %form(data-lift="form.ajax" style="display: inline")
+                  %textarea(name="text" rows=1) Score a new game of Scrabble.
+              %td.ctl
+                %button.delete ‐
+                %button.indentDec «
+                %button.indentInc
+                  %span »
+                %button.add +
+
+      %tr.fieldFrame#template-courses-a.courses-a
+        %th
+          Alternative<br/>Courses
+        %td.steps
+          .addTailStep
+            %button +
+
+      %tr.fieldFrame#template-courses-e.courses-e
+        %th Exceptions
+        %td.steps
+          #template-courses-addTailStep.addTailStep
+            %button +

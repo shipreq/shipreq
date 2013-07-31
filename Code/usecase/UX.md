@@ -4,6 +4,7 @@ USAGE NOTES
 * Enter in step creates new line. I want a new step.
 * Creating new step via button doesn't focus new step. I have to click to type.
 * UCE screen is too narrow. Use all width man!
+* Title doesn't have autosize.
 * Textarea height doesn't increase when flow added.
 * Textarea text not trimmed after edit.
 * Need a way to click step to insert ref, rather than type.

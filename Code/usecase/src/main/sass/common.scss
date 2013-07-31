@@ -34,6 +34,10 @@ html, body { height: 100% } // Cannot have any padding or margin here
 .hidden { display: none }
 
 textarea {
+  margin-bottom: 0;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
   resize: none;
   overflow: auto; // removes scrollbars in Internet Explorer
   outline: none;
