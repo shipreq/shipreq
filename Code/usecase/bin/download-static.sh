@@ -24,3 +24,9 @@ v=1.3.4
 echo "Downloading v$v of jquery.liveQuery.js -- http://plugins.jquery.com/livequery/"
 curl -s https://raw.github.com/hazzik/livequery/$v/jquery.livequery.min.js -o src/main/javascript/vendor/jquery-livequery.js
 echo $?
+
+v=1.12.0
+echo "Downloading v$v of QUnit -- http://qunitjs.com/"
+curl -s http://code.jquery.com/qunit/qunit-$v.js -o vendor/qunit/qunit.js && \
+curl -s http://code.jquery.com/qunit/qunit-$v.css -o vendor/qunit/qunit.css
+echo $?
