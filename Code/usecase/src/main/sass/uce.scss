@@ -39,7 +39,6 @@ $maxStepDepth: 4;
 	}
 
 	textarea {
-		border: dashed 1px #ccc;
 		width: 100%;
 		&:hover {
 			border: solid 1px #ccc;
@@ -56,10 +55,10 @@ $maxStepDepth: 4;
 // =====================================================================================================================
 /* UC Title (UC-123: Abc) */
 .uce .title {
-	&, td, input {
+	&, td, textarea {
 		width: 100%
 	}
-	th, input {
+	th, textarea {
 		font-size: 150%;
 		font-weight: bold;
 		vertical-align: middle
@@ -89,6 +88,9 @@ table.fieldFrame {
 		}
 	}
 	th, td {vertical-align: top}
+	textarea {
+		border: dashed 1px #ccc;
+	}
 }
 
 // =====================================================================================================================

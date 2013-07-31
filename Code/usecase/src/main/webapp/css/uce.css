@@ -15,13 +15,13 @@
 .uce { margin: 1cm 1cm 0 1cm; }
 .uce form { display: inline; }
 .uce textarea, .uce input[type="text"] { color: #2d2d2d; }
-.uce textarea { border: dashed 1px #ccc; width: 100%; }
+.uce textarea { width: 100%; }
 .uce textarea:hover { border: solid 1px #ccc; background: #eee; }
 .uce textarea:focus { border: solid 1px #373; background: #f8fff8; color: #000; }
 
 /* UC Title (UC-123: Abc) */
-.uce .title, .uce .title td, .uce .title input { width: 100%; }
-.uce .title th, .uce .title input { font-size: 150%; font-weight: bold; vertical-align: middle; }
+.uce .title, .uce .title td, .uce .title textarea { width: 100%; }
+.uce .title th, .uce .title textarea { font-size: 150%; font-weight: bold; vertical-align: middle; }
 .uce .title th { padding-right: 0.6em; }
 
 /* Fields and attributes */
@@ -29,6 +29,7 @@ table.fieldFrame { margin-top: 1cm; width: 100%; }
 table.fieldFrame tr.fieldFrame > th { color: #555; font-weight: normal; width: 20ex; text-align: left; line-height: 125%; }
 table.fieldFrame tr.fieldFrame > th, table.fieldFrame tr.fieldFrame > td { padding-bottom: 1.5em; }
 table.fieldFrame th, table.fieldFrame td { vertical-align: top; }
+table.fieldFrame textarea { border: dashed 1px #ccc; }
 
 /* Steps */
 [data-lvl="0"] .lbl { padding-left: 0ex; width: 5ex; }

@@ -7,6 +7,8 @@
 // require "vendor/jquery-timeago.js"
 // require "vendor/jquery-serializeObject.js"
 // require "vendor/jquery-livequery.js"
+// require "vendor/mousetrap.js"
+// require "vendor/mousetrap-global-bind.js"
 
 var urls = new function() {
     this.viewUseCase = function(id){ return "/usecase/"+id }

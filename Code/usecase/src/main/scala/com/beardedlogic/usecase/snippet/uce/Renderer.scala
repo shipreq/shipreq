@@ -56,7 +56,7 @@ case class Renderer(uce: UseCaseEditor) extends RendererHelper {
     ".fieldFrame *" #> renderFields andThen
       ".title .ucid *" #> uch.number.toString
         & ".rev *" #> state.currentRevision
-        & ".title @title" #> SHtml.ajaxText(uch.title, i => %(_.updateTitle(i)), "id" -> TitleId)
+        & ".title @title" #> SHtml.ajaxTextarea(uch.title, i => %(_.updateTitle(i)), "id" -> TitleId, "rows" -> "1")
         & ".saveUseCase" #> SHtml.ajaxButton("Save", daoCallback(uce.onSave))
     )
 
