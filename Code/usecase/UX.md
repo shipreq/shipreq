@@ -17,3 +17,12 @@ USAGE NOTES
 * Nice to have search/replace over UC(s).
 * Nice to have BA in steps reference BA in actors. Change actors, steps change too.
 
+
+Keyboard Shortcuts
+==================
+* Finish editing         -- ESC
+* Nav up/down            -- Alt + Up/Down
+* Change indent          -- Alt + Left/Right
+* Add next step & focus  -- Alt + Enter
+* Add next child & focus -- Alt + Shift + Enter
+
