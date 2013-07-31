@@ -2,16 +2,13 @@ package com.beardedlogic.usecase
 package snippet.uce
 
 import scala.xml.{Text, NodeSeq}
-import net.liftweb.common._
 import net.liftweb.http.js.JsExp.strToJsExp
-import net.liftweb.http.js.{JE, JsCmd, JsCmds}
+import net.liftweb.http.js.{JsExp, JE, JsCmd, JsCmds}
 import net.liftweb.http.js.jquery.JqJE
 import net.liftweb.http.js.jquery.JqJsCmds.jsExpToJsCmd
 import net.liftweb.http.SHtml
 import net.liftweb.util.CssSel
-
 import net.liftweb.util.Helpers._
-import JsCmds.Noop
 
 import com.beardedlogic.usecase.lib.tree.TreeLike
 import com.beardedlogic.usecase.lib._
@@ -169,6 +166,11 @@ case class StepFieldRenderer(
   // *             Javascript             *
   // **************************************
 
+  @inline private def JqLabel(id: LocalIdStr): JsExp = JqId(labelId(id))
+  @inline private def JqLabel(n: StepNode): JsExp = JqLabel(n.id)
+  @inline private def JqStepText(id: LocalIdStr): JsExp = JqId(textareaId(id))
+  @inline private def JqStepText(n: StepNode): JsExp = JqStepText(n.id)
+
   /** Creates Javascript to update the indentation levels of all given nodes. */
   protected def jsUpdateIndentation(nodes: StepTree): JsCmd = JsCmds.Run(
     nodes.mapRecursive(n =>
@@ -179,21 +181,24 @@ case class StepFieldRenderer(
   /** Creates Javascript to update the label text of all given nodes. */
   protected def jsUpdateLabels(nodes: StepTree): JsCmd = JsCmds.Run(
     nodes.mapRecursive(n =>
-      JqId(labelId(n.id)) ~> JqHtml(Text(labelFor(n))) toJsCmd
+      JqLabel(n) ~> JqHtml(Text(labelFor(n))) toJsCmd
     ) mkString "\n"
   )
 
   def jsUpdateStepFieldText(id: LocalIdStr): JsCmd =
-    JqId(textareaId(id)) ~> JqSetValue(text(id), false)
+    JqStepText(id) ~> JqSetValue(text(id), false)
+
+  @inline private def jsShowNewStep(node: StepNode) =
+    JqId(node.id) ~> JqHide ~> JqSlideDown(Fast).andThen(JqStepText(node) ~> JqFocus)
 
   def jsAddTailStep(node: StepNode): JsCmd = (
     JqExpr(cfg.tailStepCss) ~> JqBefore(renderSingleStepXml(node))
-      & JqId(node.id) ~> JqHide ~> JqSlideDown(Fast)
+      & jsShowNewStep(node)
     )
 
   def jsAddStep(precedingNodeId: LocalIdStr, node: StepNode): JsCmd = (
     JqId(precedingNodeId) ~> JqAfter(renderSingleStepXml(node))
-      & JqId(node.id) ~> JqHide ~> JqSlideDown(Fast)
+      & jsShowNewStep(node)
       & jsUpdateLabels(f.value.tree)
     )
 

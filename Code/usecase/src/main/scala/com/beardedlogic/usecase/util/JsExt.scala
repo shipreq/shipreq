@@ -30,6 +30,23 @@ object JsExt {
     def ms = JqDuration(i)
   }
 
+  trait JsMethod extends JsExp with JsMember
+
+  /**
+   * Many jQuery functions allow the last argument to be a callback that is invoked when the function completes.
+   * This trait marks functions with that behaviour and allows a callback to be added on.
+   */
+  trait JsMethodWithOptionalOnCompleteCallback extends JsMethod {
+    def andThen(onComplete: => JsCmd) = {
+      val cmd1 = toJsCmd
+      assume(cmd1.last == ')', s"JS should end with right parenthesis. Got: $cmd1")
+      assume(cmd1.length > 2, s"JS should be at least 3 chars in length. Got: $cmd1")
+      val comma = if (cmd1(cmd1.length - 2) == '(') "" else ","
+      val js = cmd1.substring(0, cmd1.length - 1) + comma + s"function(){${onComplete.toJsCmd}})"
+      new JsMethod {override val toJsCmd = js}
+    }
+  }
+
   // -------------------------------------------------------------------------------------------------------------------
 
   /** A JQuery query for an element based on the id of the element. ie. `$('#id')`*/
@@ -51,7 +68,7 @@ object JsExt {
    *
    * @see http://api.jquery.com/html/
    */
-  case class JqHtml(content: NodeSeq) extends JsExp with JsMember {
+  case class JqHtml(content: NodeSeq) extends JsMethod {
     override val toJsCmd =
       "html(" + fixHtmlFunc("inline", content) { str => str } + ")"
   }
@@ -61,7 +78,7 @@ object JsExt {
    *
    * @see http://api.jquery.com/after/
    */
-  case class JqAfter(content: NodeSeq) extends JsExp with JsMember {
+  case class JqAfter(content: NodeSeq) extends JsMethod {
     override val toJsCmd =
       "after(" + fixHtmlFunc("inline", content) { str => str } + ")"
   }
@@ -71,7 +88,7 @@ object JsExt {
    *
    * @see http://api.jquery.com/before/
    */
-  case class JqBefore(content: NodeSeq) extends JsExp with JsMember {
+  case class JqBefore(content: NodeSeq) extends JsMethod {
     override val toJsCmd =
       "before(" + fixHtmlFunc("inline", content) { str => str } + ")"
   }
@@ -81,7 +98,7 @@ object JsExt {
    *
    * @see http://api.jquery.com/append/
    */
-  case class JqAppend(content: NodeSeq) extends JsExp with JsMember {
+  case class JqAppend(content: NodeSeq) extends JsMethod {
     override val toJsCmd =
       "append(" + fixHtmlFunc("inline", content) { str => str } + ")"
   }
@@ -91,7 +108,7 @@ object JsExt {
    *
    * @see http://api.jquery.com/prepend/
    */
-  case class JqPrepend(content: NodeSeq) extends JsExp with JsMember {
+  case class JqPrepend(content: NodeSeq) extends JsMethod {
     override val toJsCmd =
       "prepend(" + fixHtmlFunc("inline", content) { str => str } + ")"
   }
@@ -104,7 +121,7 @@ object JsExt {
    * @param expr The elements to receive the new content.
    * @see http://api.jquery.com/appendTo/
    */
-  def JqAppendTo(expr: String) = new JsExp with JsMember {override val toJsCmd = s"appendTo(${expr.encJs})"}
+  def JqAppendTo(expr: String) = new JsMethod {override val toJsCmd = s"appendTo(${expr.encJs})"}
 
   /**
    * Insert every element in the set of matched elements to the end of the target.
@@ -114,13 +131,13 @@ object JsExt {
    * @param expr The elements to receive the new content.
    * @see http://api.jquery.com/prependTo/
    */
-  def JqPrependTo(expr: String) = new JsExp with JsMember {override val toJsCmd = s"prependTo(${expr.encJs})"}
+  def JqPrependTo(expr: String) = new JsMethod {override val toJsCmd = s"prependTo(${expr.encJs})"}
 
-  def JqSlideDown(duration: JqDurationExpr = DefaultDuration) = new JsExp with JsMember {
+  def JqSlideDown(duration: JqDurationExpr = DefaultDuration) = new JsMethodWithOptionalOnCompleteCallback {
     override val toJsCmd = "slideDown(" + duration.asOnlyArg + ")"
   }
 
-  def JqFadeIn(duration: JqDurationExpr = DefaultDuration) = new JsExp with JsMember {
+  def JqFadeIn(duration: JqDurationExpr = DefaultDuration) = new JsMethodWithOptionalOnCompleteCallback {
     override val toJsCmd = "fadeIn(" + duration.asOnlyArg + ")"
   }
 
@@ -131,7 +148,7 @@ object JsExt {
    * @param callLift For ajax elements, whether the client should notify us, the server, the same way it would if the
    *                 user made a manual change.
    */
-  def JqSetValue(newValue: String, callLift: Boolean) = new JsExp with JsMember {
+  def JqSetValue(newValue: String, callLift: Boolean) = new JsMethod {
     override val toJsCmd = "val(" + newValue.encJs + (if (callLift) ").blur()" else ")")
   }
 
@@ -141,23 +158,23 @@ object JsExt {
     JsCmds.Run(s"${idExpr.toJsCmd}.fadeOut(${duration.asOptionalNonLastArg}function(){${onComplete(idExpr).toJsCmd}});")
 
   /** Gives an element keyboard focus. */
-  object JqFocus extends JsExp with JsMember {override val toJsCmd = "focus()"}
+  object JqFocus extends JsMethod {override val toJsCmd = "focus()"}
 
   /** Selects all text within an element. */
-  object JqSelect extends JsExp with JsMember {override val toJsCmd = "select()"}
+  object JqSelect extends JsMethod {override val toJsCmd = "select()"}
 
   /** Display or hide the matched elements. */
-  object JqToggle extends JsExp with JsMember {override val toJsCmd = "toggle()"}
+  object JqToggle extends JsMethod {override val toJsCmd = "toggle()"}
 
-  object JqHide extends JsExp with JsMember { override val toJsCmd = "hide()" }
+  object JqHide extends JsMethod { override val toJsCmd = "hide()" }
 
-  object JqRemove extends JsExp with JsMember {override val toJsCmd = "remove()"}
+  object JqRemove extends JsMethod {override val toJsCmd = "remove()"}
 
   /** Get the descendants of each element in the current set of matched elements, filtered by a selector. */
-  def JqFind(selector: String) = new JsExp with JsMember {override val toJsCmd = s"find(${selector.encJs})"}
+  def JqFind(selector: String) = new JsMethod {override val toJsCmd = s"find(${selector.encJs})"}
 
   /** Causes matches elements to flash. */
-  def JqHighlight(duration: JqDurationExpr = DefaultDuration) = new JsExp with JsMember {
+  def JqHighlight(duration: JqDurationExpr = DefaultDuration) = new JsMethodWithOptionalOnCompleteCallback {
     override val toJsCmd = "effect('highlight'" + duration.asOptionalLastArg + ")"
   }
 

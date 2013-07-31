@@ -1,21 +1,41 @@
 package com.beardedlogic.usecase.lib
 
-import org.scalatest.FunSuite
+import org.scalatest.FreeSpec
 import org.scalatest.matchers.ShouldMatchers
 import com.beardedlogic.usecase.util.JsExt
 import JsExt._
+import net.liftweb.http.js.{JsMember, JsCmd, JsCmds}
 
-class JsExtTest extends FunSuite with ShouldMatchers {
+class JsExtTest extends FreeSpec with ShouldMatchers {
 
-  test("JqFadeIn with duration: default") {
-    JqFadeIn().toJsCmd should equal("fadeIn()")
+  implicit class JsMemberExt(val x: JsMember) {
+    def ==>(expectedJs: String) = x.toJsCmd should equal(expectedJs)
   }
 
-  test("JqFadeIn with duration: fast") {
-    JqFadeIn(Fast).toJsCmd should equal("fadeIn('fast')")
+  lazy val DummyJsCmd = new JsCmd {
+    override def toJsCmd = "dummy"
   }
 
-  test("JqFadeIn with duration: milliseconds") {
-    JqFadeIn(210.ms).toJsCmd should equal("fadeIn(210)")
+  "JqDurationExpr" - {
+    "JqFadeIn with duration: default" in {
+      JqFadeIn() ==> "fadeIn()"
+    }
+
+    "JqFadeIn with duration: fast" in {
+      JqFadeIn(Fast) ==> "fadeIn('fast')"
+    }
+
+    "JqFadeIn with duration: milliseconds" in {
+      JqFadeIn(210.ms) ==> "fadeIn(210)"
+    }
+  }
+
+  "JsMethodWithOptionalOnCompleteCallback" - {
+    "JqSlideDown with no args" in {
+      JqSlideDown().andThen(DummyJsCmd) ==> "slideDown(function(){dummy})"
+    }
+    "JqSlideDown with a duration" in {
+      JqSlideDown(150.ms).andThen(DummyJsCmd) ==> "slideDown(150,function(){dummy})"
+    }
   }
 }
