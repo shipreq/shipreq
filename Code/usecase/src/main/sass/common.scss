@@ -1,24 +1,34 @@
+// Width & height include border and padding.
+@mixin box-sizing-border {
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Layout
 // Taken from twitter.github.io/bootstrap/examples/sticky-footer.html
 
 $pageWidth: 780px;
 $pageMarginHoriz: 30px;
+$pageMarginTop: 4px;
 $footerHeight: 26px;
 
 html, body { height: 100% } // Cannot have any padding or margin here
 
 // Wrapper for page content to push down footer
 #body {
+	@include box-sizing-border;
 	min-height: 100%;
 	height: auto !important;
 	height: 100%;
-	margin-top: 4px;
-	margin-bottom: $footerHeight*-1; // Negative indent footer by it's height
+	padding-top: $pageMarginTop;
+	margin-bottom: $footerHeight * -1; // Negative indent footer by it's height
 }
 
 // Footer
 #footer-push, #footer { height: $footerHeight }
+#footer { @include box-sizing-border; }
 
 // Container for the main content and footer content.
 .content {
@@ -40,10 +50,8 @@ html, body { height: 100% } // Cannot have any padding or margin here
 .hidden { display: none }
 
 textarea {
+	@include box-sizing-border;
 	margin-bottom: 0;
-	-webkit-box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	box-sizing: border-box;
 	resize: none;
 	overflow: auto; // removes scrollbars in Internet Explorer
 	outline: none;

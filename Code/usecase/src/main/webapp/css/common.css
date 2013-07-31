@@ -1,8 +1,10 @@
 html, body { height: 100%; }
 
-#body { min-height: 100%; height: auto !important; height: 100%; margin-top: 4px; margin-bottom: -26px; }
+#body { -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; min-height: 100%; height: auto !important; height: 100%; padding-top: 4px; margin-bottom: -26px; }
 
 #footer-push, #footer { height: 26px; }
+
+#footer { -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; }
 
 .content { width: auto; margin-left: 30px; margin-right: 30px; }
 
@@ -12,7 +14,7 @@ html, body { height: 100%; }
 
 .hidden { display: none; }
 
-textarea { margin-bottom: 0; -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; resize: none; overflow: auto; outline: none; }
+textarea { -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; margin-bottom: 0; resize: none; overflow: auto; outline: none; }
 
 abbr.timeago[title] { border-bottom: none !important; }
 
