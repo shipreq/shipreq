@@ -121,7 +121,6 @@ case class UseCase(
 
   def pp() = { println(toPrettyString); this }
 
-
   def regenerateStepsAndLabels: UseCase =
     copy(stepsAndLabels = generateStepAndLabelBiMap(this))
 
@@ -173,9 +172,10 @@ case class UseCase(
 
   def update[V](cr: ChangeResultF[V, Change], changeMapFn: Change => (UcChangeDomain, Change))(implicit l: AppliedLens[UseCase, V]): UcUpdateResult =
     cr.flatMapF((newValue, changes) => {
-      val update1 = l.set(newValue).regenerateStepsAndLabels
-      val update2 = update1.respondToChanges(changes)
-      addChangesToResult(update1, update2, changes.map(changeMapFn))
+      val update1 = l.set(newValue)
+      val update2 = correctStepsAndLabelsAfterUpdate(this, update1)
+      val update3 = update2.respondToChanges(changes)
+      addChangesToResult(update2, update3, changes.map(changeMapFn))
     })
 
   // TODO input-correction not sent back to client when state stays the same
