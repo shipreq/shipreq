@@ -109,7 +109,7 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
   // TODO onUsernameChange(): This should be pure JS
   def onUsernameChange(input: String): JsCmd = {
     usernameInput = InputCorrection.username(input)
-    JqId("username") ~> JqSetValue(usernameInput, false)
+    JqId("username") ~> JqSetValue(usernameInput)
   }
 
   def onSubmit(implicit reactor: Reactor) {

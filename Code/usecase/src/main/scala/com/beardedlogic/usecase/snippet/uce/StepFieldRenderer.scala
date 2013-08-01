@@ -186,7 +186,7 @@ case class StepFieldRenderer(
   )
 
   def jsUpdateStepFieldText(id: LocalIdStr): JsCmd =
-    JqStepText(id) ~> JqSetValue(text(id), false)
+    JqStepText(id) ~> JqSetTextarea(text(id))
 
   @inline private def jsShowNewStep(node: StepNode) =
     JqId(node.id) ~> JqHide ~> JqSlideDown(Fast).andThen(JqStepText(node) ~> JqFocus)

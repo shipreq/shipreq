@@ -109,8 +109,8 @@ case class Renderer(uce: UseCaseEditor) extends RendererHelper {
     JqExpr(".rev") ~> JqJE.JqHtml(Text(state.currentRevision))
 
   def jsUpdateTitle: JsCmd =
-    JqId(TitleId) ~> JqSetValue(uch.title, false)
+    JqId(TitleId) ~> JqSetTextarea(uch.title)
 
   def jsUpdateTextField(f: TextField): JsCmd =
-    JqId(textFieldIds(f)) ~> JqSetValue(f.value.text, false)
+    JqId(textFieldIds(f)) ~> JqSetTextarea(f.value.text)
 }

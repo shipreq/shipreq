@@ -145,11 +145,19 @@ object JsExt {
    * Sets the value of a text element or a textarea.
    *
    * @param newValue The new value of the target element(s).
-   * @param callLift For ajax elements, whether the client should notify us, the server, the same way it would if the
-   *                 user made a manual change.
    */
-  def JqSetValue(newValue: String, callLift: Boolean) = new JsMethod {
-    override val toJsCmd = "val(" + newValue.encJs + (if (callLift) ").blur()" else ")")
+  def JqSetValue(newValue: String) = new JsMethod {
+    override val toJsCmd = JqSetValueJs(newValue)
+  }
+  def JqSetValueJs(newValue: String) = "val(" + newValue.encJs + ")"
+
+  /**
+   * Sets the value of a textarea.
+   *
+   * @param newValue The new value of the target element(s).
+   */
+  def JqSetTextarea(newValue: String) = new JsMethod {
+    override val toJsCmd = JqSetValueJs(newValue) + ".trigger('autosize.resize')"
   }
 
   // Unlike everything else here, this doesn't extend JqId() ~>. This is a full cmd.
