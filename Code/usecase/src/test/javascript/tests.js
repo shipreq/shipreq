@@ -68,9 +68,9 @@ function assertLosesFocus(elementId, fn) {
 
 function testEach(data, fn) {
     if (data.length)
-        return function(){ for (i = 0; i < data.length; i++) { fn(data[i]) }}
+        return function(){ for (var i = 0; i < data.length; i++) { fn(data[i]) }}
     else
-        return function(){ for (e in data) { fn(data[e]) }}
+        return function(){ for (var e in data) { fn(data[e]) }}
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
