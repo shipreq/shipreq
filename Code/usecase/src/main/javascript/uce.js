@@ -104,6 +104,8 @@ function changeFocus(tgtFn) {
 
 function blurFn(sel) { return $(sel).blur() }
 
+// ---------------------------------------------------------------------------------------------------------------------
+
 /**
  * Returns the full label (eg. "1.0.2.a") of a step.
  *
@@ -132,12 +134,37 @@ function configureUceTextarea(e) {
     e.on('focus', autoSetTypingMode)
     e.on('blur', autoSetTypingMode)
 }
+
+function inTypingMode() { return $('#uce').hasClass('typing') }
+
 function setTypingMode(on) {
     var e = $('#uce')
     var c = 'typing'
     if (on) e.addClass(c); else e.removeClass(c)
 }
+
 function autoSetTypingMode() { setTypingMode(getFocusedInputField()) }
+
+function onLabelClick(event) {
+    if (inTypingMode()) {
+        var label = getFullLabel(event.toElement)
+        if (label && label.length > 0) {
+            withFocusedInputField(function(focused){
+                focused = $(focused)
+                var ref = makeRef(label)
+                var fullText = focused.val()
+                var sel = focused.getSelection()
+                var before = fullText.substr(0, sel.start)
+                var after = fullText.substring(sel.end, fullText.length)
+                if (before.match(/\S$/)) ref = " " +ref
+                if (after.match(/^\S/)) ref += " "
+                focused.replaceSelectedText(ref)
+            })
+        }
+        event.preventDefault();
+        event.stopPropagation();
+    }
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -155,15 +182,11 @@ function onAltEnter() {
     })
 }
 
-$(document).ready(function() {
+function uceSetup() {
     Mousetrap.bindGlobal('alt+down',  onAltDown);
     Mousetrap.bindGlobal('alt+up',    onAltUp);
     Mousetrap.bindGlobal('alt+enter', onAltEnter);
     Mousetrap.bindGlobal('esc',       onEscape);
-
-    $('.step .lbl, .step .lbl *').bind('mousedown',function(e){
-        e.preventDefault();
-        e.stopPropagation();
-//        console.log( getFullLabel(e.toElement) )
-    })
-});
+    $('.step .lbl, .step .lbl *').bindOnce('mousedown',onLabelClick)
+}
+$(document).ready(uceSetup)

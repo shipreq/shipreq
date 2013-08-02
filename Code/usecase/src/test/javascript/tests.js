@@ -27,28 +27,43 @@ var ids = {
     ,tf8: {txt: "F8085850464365THSLV"}
 }
 
+function testSetup() {
+    liftAjax.clear()
+    enhanceDom()
+    uceSetup()
+}
+
+function stdModule(name) {
+    module(name, {setup: testSetup })
+}
+
 function $id(id) {
     if (id.substr) return $("#" + id)
     throw "ID string expected. Got: "+id
 }
 
+function assertFocus(element, expected, msg) {
+    if (!msg) msg = "Element should " + (expected ? "" : "not ") + "have focus."
+    equal($(element).is(':focus'), expected, msg)
+}
+
 function setFocus(elementId) {
     var e = $id(elementId)
     e.focus()
-    equal( e.is(':focus'), true, "Element should get focus." )
+    assertFocus(e, true, "Element should get focus." )
     return e
 }
 
 function assertRetainsFocus(elementId, fn) {
     var e = setFocus(elementId)
     fn()
-    equal( e.is(':focus'), true, "Element should retain focus." )
+    assertFocus(e, true, "Element should retain focus.")
 }
 
 function assertLosesFocus(elementId, fn) {
     var e = setFocus(elementId)
     fn()
-    equal( e.is(':focus'), false, "Element should lose focus." )
+    assertFocus(e, false, "Element should lose focus." )
 }
 
 function testEach(data, fn) {
@@ -60,7 +75,7 @@ function testEach(data, fn) {
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-module("Inspection")
+stdModule("Inspection")
 
 var elementsBelow = [
     [ids.tf8,       ids.title],
@@ -94,7 +109,7 @@ test("getFullLabel", testEach(ids, function(e) {
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-module("Keyboard shortcuts", {setup: function(){ liftAjax.clear() } })
+stdModule("Keyboard shortcuts")
 function testFocusChange(name, fn, from, to) {
     test(name, function(){
         assertLosesFocus(from, fn)
@@ -121,17 +136,69 @@ test("[Alt + Enter] Does nothing when a text field is focused", function() {
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-module('Typing helpers', {setup: enhanceDom})
+
+stdModule('Typing helpers')
 
 function assertTypingMode(on) {
-    var v = $('#uce').hasClass('typing')
+    var v = inTypingMode()
     if (on) equal(v, true, "Typing-mode should be on.")
     else equal(v, false, "Typing-mode should be off.")
 }
+
+/** Types a string of text into the target element. */
+function type(tgt, str) {
+    for (var i = 0; i < str.length; i++) Syn.type(str[i], tgt)
+}
+/** Press a bunch of special keys. */
+function pressEach(tgt, keyArray) {
+    for (var i = 0; i < keyArray.length; i++) Syn.type("["+keyArray[i]+"]", tgt)
+}
+
+var Left = "left"
+var Shift = "shift"
+var ShiftUp = "shift-up"
 
 test("Typing-mode should be on when an input field has focus", function() {
     assertTypingMode(false)
     setFocus(ids.tf2.txt);             assertTypingMode(true)
     var e = setFocus(ids.s_1_0_2.txt); assertTypingMode(true)
     e.blur();                          assertTypingMode(false)
+})
+
+test("Clicking a label should insert a reference when typing", function(){
+    var data = [
+        ["", [], "*"]
+        ,["asd", [], "asd *"]
+        ,["asd ", [], "asd *"]
+        ,["asd", [Left, Left, Left], "* asd"]
+        ,[" sd", [Left, Left, Left], "* sd"]
+        ,["asd", [Left], "as * d"]
+        ,["as d", [Left], "as * d"]
+        ,["as d", [Left, Left], "as * d"]
+        ,["as  d", [Left, Left], "as * d"]
+        ,["asd", [Shift, Left, ShiftUp], "as *"]
+        ,["asd", [Left, Left, Shift, Left, ShiftUp], "* sd"]
+        ,["asd", [Left, Shift, Left, ShiftUp], "a * d"]
+        ,["a sd", [Left, Shift, Left, ShiftUp], "a * d"]
+        ,["as d", [Left, Left, Shift, Left, ShiftUp], "a * d"]
+        ,["a s d", [Left, Left, Shift, Left, ShiftUp], "a * d"]
+    ]
+    for (var d = 0; d < data.length; d++) {
+        var inputText = data[d][0]
+        var keysBeforeClick = data[d][1]
+        var afterText = data[d][2]
+
+        var e = setFocus(ids.tf2.txt)
+        type(e, inputText)
+        pressEach(e, keysBeforeClick)
+        assertTypingMode(true)
+        Syn.click({}, ids.s_1_0_2.lbl)
+        equal(e.val(), afterText.replace('*', '[1.0.2]'), "Text has reference.")
+        assertFocus(e, true)
+        equal(liftAjax.log.length, 0, "There should be no AJAX requests.")
+
+        e.blur()
+        e.val("")
+        liftAjax.clear()
+    }
 })

@@ -125,6 +125,15 @@ table.step {
 	}
 }
 
+.typing {
+	.step .lbl { &, & * {
+		&:hover {
+			// User can click labels when typing to insert a reference
+			cursor: pointer;
+		}
+	}}
+}
+
 .addTailStep {
 	text-align: right;
 }

@@ -49,6 +49,8 @@ table.step .ctl { text-align: right; width: 110px; }
 table.step + .step, table.step + .stepTransport, .stepTransport + table.step { margin-top: 1ex; }
 table.step[data-lvl="0"] .label, table.step[data-lvl="0"] textarea { font-weight: bold; }
 
+.typing .step .lbl:hover, .typing .step .lbl *:hover { cursor: pointer; }
+
 .addTailStep { text-align: right; }
 
 .courses-a .step:first-child .indentInc { /* ↑↱ */ }

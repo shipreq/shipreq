@@ -7,6 +7,7 @@
 // require "vendor/jquery-timeago.js"
 // require "vendor/jquery-serializeObject.js"
 // require "vendor/jquery-livequery.js"
+// require "vendor/jquery-rangyinputs.js"
 // require "vendor/mousetrap.js"
 // require "vendor/mousetrap-global-bind.js"
 
@@ -108,9 +109,10 @@ function registerDomEnhancementsWithLiveQuery() {
 }
 $(document).ready(registerDomEnhancementsWithLiveQuery)
 
-// Provide JQuery fns to apply DomEnhancements
 function enhanceDom() { $(document).enhanceDom() }
 (function ($) {
+
+    // Provide JQuery fn to apply DomEnhancements
     $.fn.enhanceDom = function () {
         for (var i=0; i < DomEnhancements.length; i++) {
             var e = DomEnhancements[i]
@@ -118,4 +120,9 @@ function enhanceDom() { $(document).enhanceDom() }
         }
         return this;
     };
+
+    $.fn.bindOnce = function (a,b) {
+        this.unbind(a,b)
+        this.bind(a,b)
+    }
 }(jQuery));
