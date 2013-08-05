@@ -151,12 +151,11 @@ test("[Alt + Left] Decreases indent of selected step if allowed", function() {
     equal( liftAjax.lastA(), "focus=true&F80858504645200DF1L=true", "Dec-step RPC should be called." )
 })
 
-// TODO css visibility based JS tests disabled
-//test("[Alt + Left] Does nothing when selected step's indent can't be decreased", function() {
-//    focusActAssertNoAjaxCalls(ids.s_1_0.txt, onAltLeft)
-//    focusActAssertNoAjaxCalls(ids.s_1_e_1.txt, onAltLeft)
-//    focusActAssertNoAjaxCalls(ids.s_1_e_2.txt, onAltLeft)
-//})
+test("[Alt + Left] Does nothing when selected step's indent can't be decreased", function() {
+    focusActAssertNoAjaxCalls(ids.s_1_0.txt, onAltLeft)
+    focusActAssertNoAjaxCalls(ids.s_1_e_1.txt, onAltLeft)
+    focusActAssertNoAjaxCalls(ids.s_1_e_2.txt, onAltLeft)
+})
 
 test("[Alt + Left] Does nothing when non-step fields are selected", function() {
     focusActAssertNoAjaxCalls(ids.title.txt, onAltLeft)
@@ -169,11 +168,11 @@ test("[Alt + Right] Increases indent of selected step if allowed", function() {
     equal( liftAjax.lastA(), "focus=true&F808585046459HVUE4T=true", "Inc-step RPC should be called." )
 })
 
-//test("[Alt + Right] Does nothing when selected step's indent can't be decreased", function() {
-//    focusActAssertNoAjaxCalls(ids.s_1_0.txt, onAltRight)
-//    focusActAssertNoAjaxCalls(ids.s_1_0_2_a.txt, onAltRight)
-//    focusActAssertNoAjaxCalls(ids.s_1_e_1.txt, onAltRight)
-//})
+test("[Alt + Right] Does nothing when selected step's indent can't be decreased", function() {
+    focusActAssertNoAjaxCalls(ids.s_1_0.txt, onAltRight)
+    focusActAssertNoAjaxCalls(ids.s_1_0_2_a.txt, onAltRight)
+    focusActAssertNoAjaxCalls(ids.s_1_e_1.txt, onAltRight)
+})
 
 test("[Alt + Right] Does nothing when non-step fields are selected", function() {
     focusActAssertNoAjaxCalls(ids.title.txt, onAltRight)

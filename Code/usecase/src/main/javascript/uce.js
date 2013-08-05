@@ -91,14 +91,19 @@ function getStepContainer(innerElement) {
     return $(innerElement).parents('.step')
 }
 
+/** Filter predicate that returns true for visible elements. */
+function visible(i,e) {return $(e).filter(':visible').css('visibility') != 'hidden'}
+
+function findSingleVisibleChild(parent, childCss) { return parent.find(childCss).filter(visible)[0] }
+
 /** Searches the given step-container's tree of elements for the add-step button. */
-function getAddStepButton(stepContainer) { return stepContainer.find('button.add:visible')[0] }
+function getAddStepButton(stepContainer) { return findSingleVisibleChild(stepContainer, 'button.add') }
 
 /** Searches the given step-container's tree of elements for the increment-indent button. */
-function getIncIndentButton(stepContainer) { return stepContainer.find('button.indentInc:visible')[0] }
+function getIncIndentButton(stepContainer) { return findSingleVisibleChild(stepContainer, 'button.indentInc') }
 
 /** Searches the given step-container's tree of elements for the decrement-indent button. */
-function getDecIndentButton(stepContainer) { return stepContainer.find('button.indentDec:visible')[0] }
+function getDecIndentButton(stepContainer) { return findSingleVisibleChild(stepContainer, 'button.indentDec') }
 
 /**
  * Changes the keyboard focus to another.
