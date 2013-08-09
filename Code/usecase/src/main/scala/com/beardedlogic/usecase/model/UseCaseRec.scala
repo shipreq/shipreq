@@ -34,8 +34,11 @@ case class UseCaseSummary(
 // ---------------------------------------------------------------------------------------------------------------------
 
 object UseCaseAccessor {
-//  implicit val GetResultUseCase = GetResult(r => UseCaseRev(GetResultPlainValue(r), UseCaseHeader(r.<<, r.<<), r.<<))
-  implicit val GetResultUseCaseSummary = GetResult(r => new UseCaseSummary(r.nextLong, r.nextLong, r.nextShort, r.nextString, r.nextString))
+
+  implicit val GRUseCaseRev = GetResult(r => UseCaseRev(r.<<, r.<<, r.<<, UseCaseHeader(r.<<, r.<<)))
+
+  implicit val GRUseCaseSummary = GetResult(r =>
+    new UseCaseSummary(r.nextLong, r.nextLong, r.nextShort, r.nextString, r.nextString))
 
   val CopyUcFieldsBetweenRevs = Q.update[(UseCaseRevId, UseCaseRevId)]( s"""
     insert into uc_field
