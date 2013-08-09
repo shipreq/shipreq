@@ -5,20 +5,16 @@ import scala.slick.jdbc.{GetResult, SetParameter, StaticQuery => Q}
 import scala.slick.session.PositionedParameters
 import lib._
 import db.DBHelpers._
+import db.DbOpResult
 import DbOpResult._
 import ExternalId.{toExternal, toInternal}
+import Types._
 
-case class UseCaseRec(
-  value: PlainValue[DataType.UseCase],
-  header: UseCaseHeader,
-  fieldListId: Long) extends Value[DataType.UseCase] {
-
-  @inline final def dataId = value.dataId
-  @inline final def valueId = value.valueId
-
-  def stateEquals(that: UseCaseRec): Boolean =
-    this.header == that.header &&
-    this.fieldListId == that.fieldListId
+case class UseCaseRev(
+  identId: UseCaseIdentId,
+  rev: Short,
+  id: UseCaseRevId,
+  header: UseCaseHeader) {
 
   def withTitle(newTitle: String) =
     if (header.title == newTitle) this
@@ -26,81 +22,62 @@ case class UseCaseRec(
 }
 
 // These fields names need to match the attributes in list.html
+// TODO Update UseCaseSummary field names & list.html
 case class UseCaseSummary(
   dataEid: String,
   valueEid: String,
   number: Short,
   title: String,
   updatedAt: String) {
-  def dataId = toInternal(dataEid)
-  def valueId = toInternal(valueEid)
-}
-object UseCaseSummary {
-  def apply(dataId: Long,
+
+  def this(dataId: Long,
     valueId: Long,
     number: Short,
     title: String,
-    updatedAt: String) = new UseCaseSummary(toExternal(dataId), toExternal(valueId), number, title, updatedAt)
+    updatedAt: String) = this(toExternal(dataId), toExternal(valueId), number, title, updatedAt)
+
+  def dataId = toInternal(dataEid)
+  def valueId = toInternal(valueEid)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 object UseCaseAccessor {
-  implicit val GetResultPlainValue = ValueAccessor.GetValueResult[DataType.UseCase]
-  implicit val GetResultUseCase = GetResult(r => UseCaseRec(GetResultPlainValue(r), UseCaseHeader(r.<<, r.<<), r.<<))
-  implicit val GetResultUseCaseSummary = GetResult(r => UseCaseSummary(r.nextLong, r.nextLong, r.nextShort, r.nextString, r.nextString))
+//  implicit val GetResultUseCase = GetResult(r => UseCaseRev(GetResultPlainValue(r), UseCaseHeader(r.<<, r.<<), r.<<))
+  implicit val GetResultUseCaseSummary = GetResult(r => new UseCaseSummary(r.nextLong, r.nextLong, r.nextShort, r.nextString, r.nextString))
 
-  implicit object SetParameterUseCase extends SetParameter[UseCaseRec] {
-    def apply(v: UseCaseRec, pp: PositionedParameters) {
-      pp.setLong(v.valueId)
-      pp.setString(v.header.title)
-      pp.setShort(v.header.number)
-      pp.setLong(v.fieldListId)
-    }
-  }
+  val CopyUcFieldsBetweenRevs = Q.update[(UseCaseRevId, UseCaseRevId)]( s"""
+    insert into uc_field
+    select ?, label, parent_rev_id, index, text_rev_id
+    from uc_field where uc_rev_id = ?
+  """.sql)
 
-  val Insert = Q.update[UseCaseRec]("INSERT INTO usecase VALUES(?,?,?,?)")
+  val InsertIdent = Q.queryNA[UseCaseIdentId]("INSERT INTO usecase DEFAULT VALUES RETURNING id")
 
-  val NextNumber = "select coalesce(max(number),0)+1 from usecase"
-  val InsertNext = Q.query[(Long, String, Long), Short](s"INSERT INTO usecase VALUES(?,?,($NextNumber),?) RETURNING number")
+  val InsertRev = Q.query[(UseCaseIdentId, Short, Short, String), UseCaseRevId](
+    "INSERT INTO usecase_rev(ident_id, rev, number, title) VALUES(?,?,?,?) RETURNING id")
 
-  private val fieldSelection = s"v.${ValueAccessor.*}, title, number, field_list_id"
+  private val NextNumberSql = "select coalesce(max(number),0)+1 from usecase_rev where id in (select latest_rev_id from usecase)"
 
-  private val selectSql = s"SELECT $fieldSelection FROM value v, usecase u WHERE u.id=? AND v.id = u.id"
-  val Select = Q.query[Long, UseCaseRec](selectSql)
-  val Select2 = Q.query[(Long, Long), UseCaseRec](s"$selectSql AND v.data_id=?")
+  val InsertRevWithNextNumber = Q.query[(UseCaseIdentId, Short, String), (UseCaseRevId, Short)](
+    s"INSERT INTO usecase_rev(ident_id, rev, number, title) VALUES(?,?,($NextNumberSql),?) RETURNING id, number")
 
-  private def SelectLatestSql(dataIdSql: String) = s"""
-    with history as (
-      select id, rev, data_id, row_number() over (order by rev desc) rn
-      from value
-      where data_id = $dataIdSql
-    )
-    select $fieldSelection
-    from history v, usecase u
-    where v.id = u.id
-      and v.rn = 1
-    """.sql
+  private val RevFields = s"ident_id, rev, id, title, number"
 
-  val SelectLatestByDataId = Q.query[Long, UseCaseRec](SelectLatestSql("?"))
-  val SelectLatestByValueId = Q.query[Long, UseCaseRec](SelectLatestSql("(select data_id from value where id = ?)"))
+  val SelectLatestRevId = Q.query[UseCaseIdentId, UseCaseRevId](s"SELECT latest_rev_id FROM usecase WHERE id=?")
 
-  private def SelectSummariesSql(innerCond: String) = {
-    val latestRevs = new LatestRevSubquery().where(innerCond).withTableAlias("t")
-    s"""
-      ${latestRevs.toWithClause}
-      select data_id, v.id, number, title, to_iso8601_str(updated_at)
-      from usecase u, value v
-      where ${latestRevs.applyWithTableAsValueIdFilter("u.id")}
-      and u.id=v.id
-      order by number
-      """.sql
-  }
-  val SelectSummaries = Q.queryNA[UseCaseSummary](SelectSummariesSql(
-    s"data_id in (select id from data where type_id = ${DataType.UseCase.ordinal})"))
-  val SelectSummary = Q.query[Long, UseCaseSummary](SelectSummariesSql(s"data_id=?"))
+  val SelectRevById = Q.query[UseCaseRevId, UseCaseRev](s"SELECT $RevFields FROM usecase_rev WHERE id=?")
 
-  val UpdateTitleDirectly = Q.update[(String, Long)]("UPDATE usecase SET title=? WHERE id=?")
+  val SelectLatestRev = Q.query[UseCaseIdentId, UseCaseRev](
+    s"SELECT $RevFields FROM usecase u, usecase_rev r WHERE r.id=latest_rev_id AND u.id=?")
+
+  val SelectSummaries = Q.queryNA[UseCaseSummary]( s"""
+    select ident_id, r.id, number, title, to_iso8601_str(created_at)
+    from usecase u, usecase_rev r
+    where r.id = latest_rev_id
+    order by number """.sql)
+
+  val UpdateTitleDirectly = Q.update[(String, UseCaseRevId)]("UPDATE usecase_rev SET title=? WHERE id=?")
 }
 
 trait UseCaseAccessor extends DatabaseAccessor {
@@ -108,36 +85,41 @@ trait UseCaseAccessor extends DatabaseAccessor {
 
   import UseCaseAccessor._
 
-  /** Creates a single `usecase` row. Doesn't create a new `value`. */
-  def createUseCase(value: PlainValue[DataType.UseCase], header: UseCaseHeader, fieldList: FieldListRec): UseCaseRec = {
+  /** Creates a single `usecase_rev` row. Doesn't create a new `usecase`. */
+  def createUseCase(ucId: UseCaseIdentId, rev: Short, header: UseCaseHeader): UseCaseRev = {
     val uch = InputCorrection.correct(header)
-    val uc = UseCaseRec(value, uch, fieldList.valueId)
-    createCorrectedUseCase(uc)
-    uc
+    createUseCaseRevWithoutCorrection(ucId, rev, uch)
   }
 
-  /** Creates a single `usecase` row. Doesn't create a new `value`. */
-  private def createCorrectedUseCase(uc: UseCaseRec): Unit = Insert.execute(uc)
+  /** Creates a single `usecase_rev` row. Doesn't create a new `usecase`. */
+  private def createUseCaseRevWithoutCorrection(ucId: UseCaseIdentId, rev: Short, h: UseCaseHeader): UseCaseRev = {
+    val id = InsertRev.first(ucId, rev, h.number, h.title)
+    UseCaseRev(ucId, rev, id, h)
+  }
 
-  // TODO New-UC has GLOBAL scope.
-  // TODO New-UC: Use table locking for mutex?
-  // TODO New-UC: Lacking appropriate number uniqueness constraint
-  def createInitialUseCase(title: String, fieldList: FieldListRec): UseCaseRec = withTransaction {
+  /**
+   * Creates a `usecase` and a rev-#1 `usecase_rev`. The UC number is determined automatically.
+   *
+   * @param title The new UC title.
+   */
+  def createInitialUseCase(title: String): UseCaseRev = withTransaction {
+    // TODO New-UC has GLOBAL scope.
+    // TODO New-UC: Use table locking for mutex?
+    // TODO New-UC: Lacking appropriate number uniqueness constraint
     // TODO need a usecase state so we can call correct() instead of correctUseCaseTitle(). Would also make stateEquals() redundant
+    val identId = InsertIdent.first()
     val correctedTitle = InputCorrection.useCaseTitle(title)
-    val v = createInitialValue(DataType.UseCase)
-    val number = InsertNext.first(v.valueId, correctedTitle, fieldList.valueId)
-    UseCaseRec(v, UseCaseHeader(correctedTitle, number), fieldList.valueId)
+    val rev = 1: Short
+    val (id, number) = InsertRevWithNextNumber.first(identId, rev, correctedTitle)
+    UseCaseRev(identId, rev, id, UseCaseHeader(correctedTitle, number))
   }
 
-  def findUseCase(valueId: Long): Option[UseCaseRec] = Select.firstOption(valueId)
-  def findUseCase(dataId: Long, valueId: Long): Option[UseCaseRec] = Select2.firstOption(valueId, dataId)
+  def findLatestUseCaseRevId(ucId: UseCaseIdentId): Option[UseCaseRevId] = SelectLatestRevId.firstOption(ucId)
 
-  def findLatestUseCase(uc: UseCaseRec): Option[UseCaseRec] = findLatestUseCaseByDataId(uc.dataId)
-  def findLatestUseCaseByDataId(dataId: Long): Option[UseCaseRec] = SelectLatestByDataId.firstOption(dataId)
-  def findLatestUseCaseByValueId(valueId: Long): Option[UseCaseRec] = SelectLatestByValueId.firstOption(valueId)
+  def findUseCase(revId: UseCaseRevId): Option[UseCaseRev] = SelectRevById.firstOption(revId)
 
-  def findUseCaseSummary(uc: UseCaseRec): Option[UseCaseSummary] = SelectSummary.firstOption(uc.dataId)
+  def findLatestUseCase(ucId: UseCaseIdentId): Option[UseCaseRev] = SelectLatestRev.firstOption(ucId)
+
   def findAllUseCaseSummaries(): List[UseCaseSummary] = SelectSummaries.list
 
   /**
@@ -146,36 +128,37 @@ trait UseCaseAccessor extends DatabaseAccessor {
    * When updating just the title of an Untitled rev #1 UC, the update is direct. In all other cases requiring an
    * update, a new revision is created.
    *
-   * @param tgtUseCase An existing use case with updated values.
-   * @return A result indicator, and a resulting `UseCaseRec` if successful. Possible results are:
+   * @param ucId The `usecase` id to update. (Note: not the `usecase_rev` id.)
+   * @param header Header with updated values.
+   * @return A result indicator, and a resulting `UseCaseRev` if successful. Possible results are:
    *         AlreadyUpToDate, DirectUpdate, NewRevision, StaleRevision.
    */
-  def updateUseCaseHeader(tgtUseCase: UseCaseRec): DbOpResult[UseCaseRec] = withTransaction {
+  def updateUseCaseHeader(ucId: UseCaseIdentId, header: UseCaseHeader): DbOpResult[UseCaseRev] = withTransaction {
     // TODO locking? race conditions here? ensure DB mutex
+    val newHeader = InputCorrection.correct(header)
 
-    val h = InputCorrection.correct(tgtUseCase.header)
-    val tgt = tgtUseCase.copy(header = h)
-    findLatestUseCase(tgt) match {
-      // NOP
-      case Some(latest) if tgt.stateEquals(latest) =>
-        Success(AlreadyUpToDate, latest)
+    findLatestUseCase(ucId) match {
+      case None => NothingUpdated
+      case Some(latest) =>
 
-      // Rev #1 title update
-      case Some(latest) if latest.value.rev == 1 && tgt.withTitle(Defaults.Title).stateEquals(latest) => {
-        UpdateTitleDirectly.execute(tgt.header.title, tgt.valueId)
-        Success(DirectUpdate, tgt)
-      }
+        // NOP
+        if (latest.header == newHeader)
+          Success(AlreadyUpToDate, latest)
 
-      // Audited Update (ensuring not stale)
-      case Some(latest) if latest.valueId == tgt.valueId => {
-        val newValue = createValue(tgt.value, LatestRev)
-        val newUc = tgt.copy(value = newValue)
-        createCorrectedUseCase(newUc)
-        propagateRelations(latest, newUc)
-        Success(NewRevision, newUc)
-      }
+        // Rev #1 title update
+        else if (latest.rev == 1 && latest.header == newHeader.copy(title = Defaults.Title)) {
+          UpdateTitleDirectly.execute(newHeader.title, latest.id)
+          Success(DirectUpdate, latest.copy(header = newHeader))
+        }
 
-      case _ => StaleRevision
+        // Audited update
+        else {
+          val newRev = createUseCaseRevWithoutCorrection(ucId, latest.rev + 1, newHeader)
+          copyUcFieldsBetweenRevs(latest, newRev)
+          Success(NewRevision, newRev)
+        }
     }
   }
+
+  def copyUcFieldsBetweenRevs(from: UseCaseRevId, to: UseCaseRevId): Unit = CopyUcFieldsBetweenRevs.execute(to, from)
 }

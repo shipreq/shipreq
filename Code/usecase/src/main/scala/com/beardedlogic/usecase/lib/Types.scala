@@ -82,9 +82,19 @@ object Types {
   // Long tags
 
   /** Marks a Long value as corresponding to `field_key.id`. */
-  trait FieldKeyId extends TypeTag[Long]
-  type Long_FieldKeyId = JLong @@ FieldKeyId
-  @inline final implicit def FieldKeyToId(r: FieldKeyRec) = tag[FieldKeyId](r.id)
+  trait FieldKeyIdTag extends TypeTag[Long]
+  type FieldKeyId = JLong @@ FieldKeyIdTag
+  @inline final implicit def FieldKeyToId(r: FieldKeyRec) = tag[FieldKeyIdTag](r.id)
+
+  /** Marks a Long value as corresponding to `usecase.id` and `usecase_rev.ident_id`. */
+  trait UseCaseIdentIdTag extends TypeTag[Long]
+  type UseCaseIdentId = JLong @@ UseCaseIdentIdTag
+  @inline final implicit def UseCaseRevToIdentId(r: UseCaseRev) = tag[UseCaseIdentIdTag](r.identId)
+
+  /** Marks a Long value as corresponding to `usecase_rev.id`. */
+  trait UseCaseRevIdTag extends TypeTag[Long]
+  type UseCaseRevId = JLong @@ UseCaseRevIdTag
+  @inline final implicit def UseCaseRevToId(r: UseCaseRev) = tag[UseCaseRevIdTag](r.id)
 
   implicit class LongTypeExt(val x: Long) extends AnyVal {
     def tag[T <: TypeTag[Long]] = JLong.valueOf(x).asInstanceOf[JLong @@ T]

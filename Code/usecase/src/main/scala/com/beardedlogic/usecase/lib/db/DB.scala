@@ -8,7 +8,6 @@ import net.liftweb.util.Props
 import org.postgresql.ds.PGSimpleDataSource
 import org.slf4j.LoggerFactory
 import scala.slick.session.{Session, Database}
-import com.beardedlogic.usecase.model.{RelationType, FieldKeyType, DataType}
 
 /**
  * Database connectivity.

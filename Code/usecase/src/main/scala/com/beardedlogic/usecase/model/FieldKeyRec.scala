@@ -6,53 +6,36 @@ import lib.db._
 import lib.Types._
 import DBHelpers._
 
-// TODO shouldn't this be typed by FieldKeyType?
-case class FieldKeyRec(valueId: Long, fieldKeyType: FieldKeyType, fieldKeyData: FieldKeyRecData)
-  extends Value[DataType.FieldKey] {
-
-  def fieldDefn = fieldKeyType.fieldDefn(fieldKeyData)
+// TODO type FieldKeyRec by FieldKeyType?
+case class FieldKeyRec(id: FieldKeyId, fkType: FieldKeyType, data: FieldKeyRecData) {
+  def fieldDefn = fkType.fieldDefn(data)
   def field = fieldDefn.field(this)
-  def taggedId = tag[FieldKeyId](valueId)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 object FieldKeyAccessor {
 
-  implicit val GetResultFieldKey = GetResult { r => FieldKeyRec(r.<<, r.<<, r.<<) }
+  implicit val GetResultFieldKey = GetResult {r => FieldKeyRec(r.<<, r.<<, r.<<)}
 
-  val SelectIdToReuse = Q.query[(Short, FieldKeyRecData), Long](
+  val SelectIdToReuse = Q.query[(FieldKeyType, FieldKeyRecData), FieldKeyId](
     "SELECT id FROM field_key WHERE type_id=? AND data IS NOT DISTINCT FROM ?")
 
-  val Insert = Q.update[(Long, Short, FieldKeyRecData)](
-    "INSERT INTO field_key(id, type_id, data) VALUES(?,?,?)")
-
-  val SelectByFieldList = Q.query[(Long, Short), FieldKeyRec]( """
-      SELECT fk.id, fk.type_id, fk.data
-      FROM field_key fk, relation r
-      WHERE fk.id = r.to_id
-        AND r.from_id = ?
-        AND r.type_id = ?
-      ORDER BY r.index """.sql)
+  val Insert = Q.query[(FieldKeyType, FieldKeyRecData), FieldKeyId](
+    "INSERT INTO field_key(type_id, data) VALUES(?,?) RETURNING id")
 }
 
 trait FieldKeyAccessor extends DatabaseAccessor {
-  self: ValueAccessor =>
-
   import FieldKeyAccessor._
 
-  def findOrCreateInitialFieldKey(fieldKeyType: FieldKeyType, fieldKeyData: FieldKeyRecData) = db.withTransaction {
-    SelectIdToReuse.firstOption(fieldKeyType, fieldKeyData)
-    .map(FieldKeyRec(_, fieldKeyType, fieldKeyData))
-    .getOrElse(createInitialFieldKey(fieldKeyType, fieldKeyData))
+  def findOrCreateFieldKey(fkType: FieldKeyType, data: FieldKeyRecData): FieldKeyRec = db.withTransaction {
+    SelectIdToReuse.firstOption(fkType, data)
+    .map(FieldKeyRec(_, fkType, data))
+    .getOrElse(createFieldKey(fkType, data))
   }
 
-  def createInitialFieldKey(fieldKeyType: FieldKeyType, fieldKeyData: FieldKeyRecData) = {
-    val fkv = createInitialValue(DataType.FieldKey)
-    Insert.first(fkv.valueId, fieldKeyType, fieldKeyData)
-    FieldKeyRec(fkv.valueId, fieldKeyType, fieldKeyData)
+  def createFieldKey(fkType: FieldKeyType, data: FieldKeyRecData): FieldKeyRec = {
+    val id = Insert.first(fkType, data)
+    FieldKeyRec(id, fkType, data)
   }
-
-  def findAllFieldKeysByFieldList(fieldList: Value[DataType.FieldList]): List[FieldKeyRec] =
-    SelectByFieldList.list(fieldList.valueId, RelationType.Has)
 }

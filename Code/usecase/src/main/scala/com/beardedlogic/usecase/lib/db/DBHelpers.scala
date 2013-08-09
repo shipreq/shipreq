@@ -9,6 +9,7 @@ object DBHelpers {
   import model._
 
   @inline implicit def shortToFieldKeyType(ordinal: Short): FieldKeyType = FieldKeyType(ordinal)
+  @inline implicit def int2short(i: Int): Short = i.toShort
 
   implicit val GetResultFieldKeyType = GetResult(r => FieldKeyType(r.nextShort))
 
@@ -21,4 +22,5 @@ object DBHelpers {
   implicit class SqlStringExt(val s: String) extends AnyVal {
     def sql = LeadingWhitespace.replaceAllIn(s, " ").trim
   }
+
 }
