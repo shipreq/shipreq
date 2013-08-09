@@ -7,6 +7,7 @@ import change.{Change, ChangeResultF}
 import field.Field
 import model._
 import util.{AppliedLens, LazyVal, BiMap}
+import net.liftweb.common.Box
 
 /**
  * @since 30/05/2013
@@ -44,6 +45,8 @@ object Types {
   @inline final def tag[T <: TypeTag[Long]](long: JLong) = long.asInstanceOf[JLong @@ T]
   @inline final def tag[T <: TypeTag[Long]](long: scala.Long) = JLong.valueOf(long).asInstanceOf[JLong @@ T]
   @inline final def tag[T <: TypeTag[Long]](long: Int) = JLong.valueOf(long).asInstanceOf[JLong @@ T]
+  @inline final def tag[T <: TypeTag[Long]](m: Box[scala.Long]) = m.map(_.tag[T])
+  @inline final def tag[T <: TypeTag[Long]](m: Option[scala.Long]) = m.map(_.tag[T])
 
   implicit def taggedStringOrdering[T <: TypeTag[String]] = implicitly[Ordering[String]].asInstanceOf[Ordering[String @@ T]]
 

@@ -10,16 +10,7 @@ import DbOpResult._
 import ExternalId.{toExternal, toInternal}
 import Types._
 
-case class UseCaseRev(
-  identId: UseCaseIdentId,
-  rev: Short,
-  id: UseCaseRevId,
-  header: UseCaseHeader) {
-
-  def withTitle(newTitle: String) =
-    if (header.title == newTitle) this
-    else copy(header = header.copy(title = newTitle))
-}
+case class UseCaseRev(identId: UseCaseIdentId, rev: Short, id: UseCaseRevId, header: UseCaseHeader)
 
 // These fields names need to match the attributes in list.html
 // TODO Update UseCaseSummary field names & list.html
@@ -30,11 +21,11 @@ case class UseCaseSummary(
   title: String,
   updatedAt: String) {
 
-  def this(dataId: Long,
-    valueId: Long,
-    number: Short,
-    title: String,
-    updatedAt: String) = this(toExternal(dataId), toExternal(valueId), number, title, updatedAt)
+  def this(dataId: Long, valueId: Long, number: Short, title: String, updatedAt: String) =
+    this(toExternal(dataId), toExternal(valueId), number, title, updatedAt)
+
+  def this(uc: UseCaseRev, updatedAt: String) =
+    this(uc.identId, uc.id, uc.header.number, uc.header.title, updatedAt)
 
   def dataId = toInternal(dataEid)
   def valueId = toInternal(valueEid)
@@ -129,17 +120,16 @@ trait UseCaseAccessor extends DatabaseAccessor {
    * update, a new revision is created.
    *
    * @param ucId The `usecase` id to update. (Note: not the `usecase_rev` id.)
-   * @param header Header with updated values.
    * @return A result indicator, and a resulting `UseCaseRev` if successful. Possible results are:
-   *         AlreadyUpToDate, DirectUpdate, NewRevision, StaleRevision.
+   *         AlreadyUpToDate, DirectUpdate, NewRevision, NothingUpdated.
    */
-  def updateUseCaseHeader(ucId: UseCaseIdentId, header: UseCaseHeader): DbOpResult[UseCaseRev] = withTransaction {
+  def updateUseCaseHeader(ucId: UseCaseIdentId, modFn: UseCaseHeader => UseCaseHeader): DbOpResult[UseCaseRev] = withTransaction {
     // TODO locking? race conditions here? ensure DB mutex
-    val newHeader = InputCorrection.correct(header)
 
     findLatestUseCase(ucId) match {
       case None => NothingUpdated
       case Some(latest) =>
+        val newHeader = InputCorrection.correct(modFn(latest.header))
 
         // NOP
         if (latest.header == newHeader)
