@@ -9,7 +9,7 @@ import net.liftweb.util.Helpers._
 import net.liftweb.util.{CssSel, ClearClearable}
 
 import lib._
-import model.DbOpResult.{StaleRevision, Success}
+import db.DbOpResult.{StaleRevision, Success}
 import model.{DAO, UseCaseSummary}
 import util.{ErrorMessages, Reactor, JavaScript}
 import util.HtmlTransformExt._

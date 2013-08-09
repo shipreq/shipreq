@@ -6,6 +6,7 @@ import test.{TestHelpers, TestDatabaseSupport}
 import lib.{Defaults, UseCaseHeader}
 import scala.slick.jdbc.{StaticQuery => Q}
 import Q.interpolation
+import lib.db.DbOpResult
 import DbOpResult._
 
 class UseCaseRecTest extends FunSpec with TestDatabaseSupport with TestHelpers {

@@ -12,7 +12,7 @@ import app.AppSiteMap
 import AppSiteMap.Implicits._
 import lib._
 import mail.RegistrationEmails
-import model.DbOpResult.{NothingUpdated, ConstraintViolation, Success}
+import db.DbOpResult.{NothingUpdated, ConstraintViolation, Success}
 import model.{DAO, UserRegistrationInfo}
 import security.PasswordAndSalt
 import util.{JsExt, Reactor, JavaScript}

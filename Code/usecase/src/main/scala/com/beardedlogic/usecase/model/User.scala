@@ -7,8 +7,9 @@ import scala.slick.jdbc.{StaticQuery => Q, SetParameter, GetResult}
 import scala.slick.session.PositionedParameters
 import lib.db.DBHelpers._
 import lib.security.PasswordAndSalt
-import UserAccessor._
+import lib.db.DbOpResult
 import DbOpResult._
+import UserAccessor._
 
 case class UserDescriptor(
   id: Long,
