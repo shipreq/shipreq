@@ -84,22 +84,7 @@ object Types {
   /** Marks a Long value as corresponding to `field_key.id`. */
   trait FieldKeyId extends TypeTag[Long]
   type Long_FieldKeyId = JLong @@ FieldKeyId
-  @inline final implicit def FieldKeyToId(v: Value[DataType.FieldKey]) = tag[FieldKeyId](v.valueId)
-
-  /** Marks a Long value as corresponding to `step.id`. */
-  trait StepValueId extends TypeTag[Long]
-  type Long_StepValueId = JLong @@ StepValueId
-  @inline final implicit def StepValueIdExtractor(v: PlainValue[DataType.Step]) = v.valueId.tag[StepValueId]
-
-  /** Marks a Long value as corresponding to `data.id` of a Step. */
-  trait StepDataId extends TypeTag[Long]
-  type Long_StepDataId = JLong @@ StepDataId
-  @inline final implicit def StepDataIdExtractor(v: PlainValue[DataType.Step]) = v.dataId.tag[StepDataId]
-
-  implicit class StepValueExt(val v: PlainValue[DataType.Step]) extends AnyVal {
-    def taggedDataId: Long_StepDataId = StepDataIdExtractor(v)
-    def taggedValueId: Long_StepValueId = StepValueIdExtractor(v)
-  }
+  @inline final implicit def FieldKeyToId(r: FieldKeyRec) = tag[FieldKeyId](r.id)
 
   implicit class LongTypeExt(val x: Long) extends AnyVal {
     def tag[T <: TypeTag[Long]] = JLong.valueOf(x).asInstanceOf[JLong @@ T]
