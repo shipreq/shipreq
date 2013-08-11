@@ -6,7 +6,7 @@ import scala.slick.jdbc.{StaticQuery => Q}
 import Q.interpolation
 import org.postgresql.util.PSQLException
 
-class DbConstraintTest extends FunSpec with TestDatabaseSupport {
+class DbTriggerTest extends FunSpec with TestDatabaseSupport {
 
   class SampleFKs {
     val txtFieldTypeId = sql"INSERT INTO field_key_type VALUES(30,'txt',1) RETURNING id".as[Short].first
