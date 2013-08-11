@@ -22,6 +22,7 @@ object DBHelpers {
 
   implicit class PositionedResultExt(val r: PositionedResult) extends AnyVal {
     def nextId[T <: JLong @@ TypeTag[Long]](): T = r.nextObject.asInstanceOf[T]
+    def nextId_?[T <: JLong @@ TypeTag[Long]](): Option[T] = r.nextObjectOption.asInstanceOf[Option[T]]
   }
 
   private def GRTaggedLong[T <: JLong @@ TypeTag[Long]]: GetResult[T] = GetResult(_.nextId[T])

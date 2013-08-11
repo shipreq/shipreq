@@ -27,8 +27,8 @@ case class UseCaseSummary(
   def this(uc: UseCaseRev, updatedAt: String) =
     this(uc.identId, uc.id, uc.header.number, uc.header.title, updatedAt)
 
-  def dataId = toInternal(dataEid)
-  def valueId = toInternal(valueEid)
+  def dataId: UseCaseIdentId = toInternal(dataEid).tag[UseCaseIdentIdTag]
+  def valueId: UseCaseRevId = toInternal(valueEid).tag[UseCaseRevIdTag]
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -39,12 +39,6 @@ object UseCaseAccessor {
 
   implicit val GRUseCaseSummary = GetResult(r =>
     new UseCaseSummary(r.nextLong, r.nextLong, r.nextShort, r.nextString, r.nextString))
-
-  val CopyUcFieldsBetweenRevs = Q.update[(UseCaseRevId, UseCaseRevId)]( s"""
-    insert into uc_field
-    select ?, label, parent_rev_id, index, text_rev_id
-    from uc_field where uc_rev_id = ?
-  """.sql)
 
   val InsertIdent = Q.queryNA[UseCaseIdentId]("INSERT INTO usecase DEFAULT VALUES RETURNING id")
 
@@ -152,6 +146,4 @@ trait UseCaseAccessor extends DatabaseAccessor {
         }
     }
   }
-
-  def copyUcFieldsBetweenRevs(from: UseCaseRevId, to: UseCaseRevId): Unit = CopyUcFieldsBetweenRevs.execute(to, from)
 }

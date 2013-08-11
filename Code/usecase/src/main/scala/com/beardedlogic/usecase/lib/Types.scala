@@ -15,26 +15,6 @@ import net.liftweb.common.Box
 object Types {
 
   // -------------------------------------------------------------------------------------------------------------------
-  // Typedefs
-
-  type FieldKeyRecData = Option[String]
-  type FieldValueRecData = Option[String]
-
-  type SavedSteps = BiMap[Long_StepDataId, LocalIdStr]
-  def EmptySavedSteps: SavedSteps = BiMap.empty
-
-  type StepAndLabelBiMap = LazyVal[BiMap[LocalIdStr, LabelStr]]
-  final val EmptyStepAndLabelBiMap: StepAndLabelBiMap = LazyVal <~ BiMap.empty
-
-  type FieldStates = Map[Field, Field#State]
-  type FieldValues = Map[Field, Field#Value]
-
-  type UcUpdateResult = ChangeResultF[UseCase, (UcChangeDomain, Change)]
-
-  // Due to http://youtrack.jetbrains.com/issue/SCL-5900
-  @inline final def alens[A1, A2, B](l: LensFamily[A1, A2, B, B], key: A1) = AppliedLens(l, key)
-
-  // -------------------------------------------------------------------------------------------------------------------
   // Type tags
 
   // TODO Use Scalaz TypeTags
@@ -84,6 +64,10 @@ object Types {
   // -------------------------------------------------------------------------------------------------------------------
   // Long tags
 
+  implicit class LongTypeExt(val x: Long) extends AnyVal {
+    def tag[T <: TypeTag[Long]] = JLong.valueOf(x).asInstanceOf[JLong @@ T]
+  }
+
   /** Marks a Long value as corresponding to `field_key.id`. */
   trait FieldKeyIdTag extends TypeTag[Long]
   type FieldKeyId = JLong @@ FieldKeyIdTag
@@ -99,7 +83,33 @@ object Types {
   type UseCaseRevId = JLong @@ UseCaseRevIdTag
   @inline final implicit def UseCaseRevToId(r: UseCaseRev) = tag[UseCaseRevIdTag](r.id)
 
-  implicit class LongTypeExt(val x: Long) extends AnyVal {
-    def tag[T <: TypeTag[Long]] = JLong.valueOf(x).asInstanceOf[JLong @@ T]
-  }
+  /** Marks a Long value as corresponding to `text.id` and `text_rev.ident_id`. */
+  trait TextIdentIdTag extends TypeTag[Long]
+  type TextIdentId = JLong @@ TextIdentIdTag
+  @inline final implicit def TextRevToIdentId(r: TextRev) = tag[TextIdentIdTag](r.identId)
+
+  /** Marks a Long value as corresponding to `text_rev.id`. */
+  trait TextRevIdTag extends TypeTag[Long]
+  type TextRevId = JLong @@ TextRevIdTag
+  @inline final implicit def TextRevToId(r: TextRev) = tag[TextRevIdTag](r.id)
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Typedefs
+
+  type FieldKeyRecData = Option[String]
+  type FieldValueRecData = Option[String]
+
+  type SavedSteps = BiMap[TextIdentId, LocalIdStr]
+  def EmptySavedSteps: SavedSteps = BiMap.empty
+
+  type StepAndLabelBiMap = LazyVal[BiMap[LocalIdStr, LabelStr]]
+  final val EmptyStepAndLabelBiMap: StepAndLabelBiMap = LazyVal <~ BiMap.empty
+
+  type FieldStates = Map[Field, Field#State]
+  type FieldValues = Map[Field, Field#Value]
+
+  type UcUpdateResult = ChangeResultF[UseCase, (UcChangeDomain, Change)]
+
+  // Due to http://youtrack.jetbrains.com/issue/SCL-5900
+  @inline final def alens[A1, A2, B](l: LensFamily[A1, A2, B, B], key: A1) = AppliedLens(l, key)
 }

@@ -81,11 +81,11 @@ object ParsingUtils extends Logger {
     lazy val localIdsToLabels = stepsAndLabels.get.ab
 
     NormalisedRefRegex.replaceAllIn(text, m => {
-      val dataIdText = m.group(1)
-      val dataId = dataIdText.toLong.tag[StepDataId]
-      dbIdsToLocalIds.get(dataId).flatMap(nodeId => localIdsToLabels.get(nodeId)).map(makeRef(_)).getOrElse {
-        warn(s"Unable to realise normalised step reference. ❚ Text: $text ❚ DataId: $dataId ❚ DbIdsToLocalIds: $dbIdsToLocalIds ❚ LocalIdsToLabels: $localIdsToLabels")
-        makeInvalidNormalisedRef(dataIdText)
+      val idText = m.group(1)
+      val textIdentId = idText.toLong.tag[TextIdentIdTag]
+      dbIdsToLocalIds.get(textIdentId).flatMap(nodeId => localIdsToLabels.get(nodeId)).map(makeRef(_)).getOrElse {
+        warn(s"Unable to realise normalised step reference. ❚ Text: $text ❚ TextIdentId: $textIdentId ❚ DbIdsToLocalIds: $dbIdsToLocalIds ❚ LocalIdsToLabels: $localIdsToLabels")
+        makeInvalidNormalisedRef(idText)
       }
     })
   }

@@ -23,14 +23,11 @@ trait DatabaseAccessor {
  * Single, monolithic interface to the database.
  */
 class DAO(_session: Session)
-  extends DataAccessor
-          with ValueAccessor
-          with FieldKeyAccessor
-          with FieldValueAccessor
+  extends FieldKeyAccessor
           with FieldListAccessor
-          with StepAccessor
+          with TextAccessor
+          with UcFieldAccessor
           with UseCaseAccessor
-          with RelationAccessor
           with UserAccessor {
 
   override implicit val db = _session

@@ -106,19 +106,21 @@ def truncate(tables: Symbol*): Unit = ???
   def countRowsIn2(table: Table) = Q.queryNA[Int](s"select count(*) from ${table.name}").first
 
   sealed trait Table {def name: String; override def toString = name}
-  object tFieldKeyType extends Table {def name = "field_key_type"}
-  object tFieldKey extends Table {def name = "field_key"}
-  object tUsecase extends Table {def name = "usecase"}
-  object tUsecaseRev extends Table {def name = "usecase_rev"}
-  object tText extends Table {def name = "text"}
-  object tTextRev extends Table {def name = "text_rev"}
-  object tUcField extends Table {def name = "uc_field"}
-  object tUsr extends Table {def name = "usr"}
-  val Tables = List(tFieldKeyType, tFieldKey, tUsecase, tUsecaseRev, tText, tTextRev, tUcField, tUsr)
+  object Tables {
+    object FieldKeyType extends Table {def name = "field_key_type"}
+    object FieldKey extends Table {def name = "field_key"}
+    object Usecase extends Table {def name = "usecase"}
+    object UsecaseRev extends Table {def name = "usecase_rev"}
+    object Text extends Table {def name = "text"}
+    object TextRev extends Table {def name = "text_rev"}
+    object UcField extends Table {def name = "uc_field"}
+    object Usr extends Table {def name = "usr"}
+    val All = List(FieldKeyType, FieldKey, Usecase, UsecaseRev, Text, TextRev, UcField, Usr)
+  }
 
   def assertTableDiffs2[T](expectations: (Table, Int)*)(block: => T) = {
     val specTables = expectations.map(_._1)
-    val unspecTables = Tables.filter(!specTables.contains(_)).map((_,0))
+    val unspecTables = Tables.All.filter(!specTables.contains(_)).map((_,0))
     val fullExp = expectations ++ unspecTables
     val fullExpMap = fullExp.toMap
 
@@ -137,18 +139,19 @@ def truncate(tables: Symbol*): Unit = ???
     result
   }
 
-  def truncateAll() = truncate2(Tables: _*)
+  def truncateAll() = truncate2(Tables.All: _*)
 
   def truncate2(tables: Table*) {
+    import Tables._
     tables.foreach { table =>
     // Dependents first
       table match {
-        case tFieldKeyType => truncate2(tFieldKey)
-        case tFieldKey     => truncate2(tText)
-        case tUsecase      => truncate2(tUsecaseRev)
-        case tUsecaseRev   => Q.updateNA(s"update usecase set latest_rev_id = NULL").execute; truncate2(tUcField)
-        case tText         => truncate2(tTextRev)
-        case tTextRev      => truncate2(tUcField)
+        case FieldKeyType => truncate2(FieldKey)
+        case FieldKey     => truncate2(Text)
+        case Usecase      => truncate2(UsecaseRev)
+        case UsecaseRev   => Q.updateNA(s"update usecase set latest_rev_id = NULL").execute; truncate2(UcField)
+        case Text         => truncate2(TextRev)
+        case TextRev      => truncate2(UcField)
         case _             =>
       }
       val tableName = table.name

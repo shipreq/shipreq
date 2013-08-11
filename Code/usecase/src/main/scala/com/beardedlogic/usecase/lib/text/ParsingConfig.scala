@@ -57,9 +57,9 @@ object ParsingConfig {
     sb += RefBraceR
   }
 
-  @inline def makeInvalidNormalisedRef(dataId: String) = makeRef("D." + dataId)
+  @inline def makeInvalidNormalisedRef(textIdentId: String) = makeRef("D." + textIdentId)
 
-  @inline def makeNormalisedRef(dataId: Long_StepDataId) = makeRef("D." + dataId)
+  @inline def makeNormalisedRef(textIdentId: TextIdentId) = makeRef("D." + textIdentId)
 
   @inline def makeRef(label: String) = RefBraceL + label + RefBraceR
 

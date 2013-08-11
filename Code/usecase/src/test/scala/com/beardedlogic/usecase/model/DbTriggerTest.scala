@@ -102,7 +102,7 @@ class DbTriggerTest extends FunSpec with TestDatabaseSupport {
   def linkStep(ucRevId: Long, index: Int, txtRevId: Long, parent: Long) =
     sqlu"INSERT INTO uc_field VALUES($ucRevId, ${s"$parent.$index.$txtRevId"}, $parent, $index, $txtRevId)".execute
 
-  describe(tUcField.name) {
+  describe(Tables.UcField.name) {
     class Data(fk: SampleFKs) {
       val uc = new SampleUC(fk)
 

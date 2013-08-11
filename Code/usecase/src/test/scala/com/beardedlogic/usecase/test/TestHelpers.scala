@@ -39,8 +39,8 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
 
   type Refs = Map[LocalIdStr, LabelStr]
 
-  def savedSteps(tuples: (Int, LocalIdStr)*): BiMap[Long_StepDataId, LocalIdStr] =
-    BiMap.apply(tuples.map(t => (t._1.toLong.tag[StepDataId], t._2)): _*)
+  def savedSteps(tuples: (Int, LocalIdStr)*): BiMap[TextIdentId, LocalIdStr] =
+    BiMap.apply(tuples.map(t => (t._1.toLong.tag[TextIdentIdTag], t._2)): _*)
 
   def mapToLabels(i: Traversable[LocalIdStr], stepState: StepAndLabelBiMap = StepState1) = i.map(id => (id, stepState.get.ab(id))).toMap
   def mapFromLabels(i: Traversable[LocalIdStr], stepState: StepAndLabelBiMap = StepState1) = i.map(id => (stepState.get.ab(id), id)).toMap
@@ -118,10 +118,10 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
   lazy val TF3 = mockTextField("Stuff #3", 333)
   lazy val TF4 = mockTextField("Stuff #4", 444)
 
-  lazy val NCF = NormalCourseField(FieldKeyRec(55, NormalCourseFieldDefinition.fieldKeyType, NormalCourseFieldDefinition.fieldKeyData))
-  lazy val ECF = ExceptionCourseField(FieldKeyRec(66, ExceptionCourseFieldDefinition.fieldKeyType, ExceptionCourseFieldDefinition.fieldKeyData))
+  lazy val NCF = NormalCourseField(FieldKeyRec(55.tag[FieldKeyIdTag], NormalCourseFieldDefinition.fieldKeyType, NormalCourseFieldDefinition.fieldKeyData))
+  lazy val ECF = ExceptionCourseField(FieldKeyRec(66.tag[FieldKeyIdTag], ExceptionCourseFieldDefinition.fieldKeyType, ExceptionCourseFieldDefinition.fieldKeyData))
 
-  val EmptyLoadCtx = new FieldLoadCtx(Map.empty, Map.empty, Map.empty)
+  val EmptyLoadCtx = new FieldLoadCtx(List.empty)
 
   // -------------------------------------------------------------------------------------------------------------------
 
@@ -135,7 +135,7 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
 
   def mockTextField(title: String, id: Long) = {
     val defn = TextFieldDefinition(title)
-    TextField(defn, FieldKeyRec(id, FieldKeyType.Text, defn.fieldKeyData))
+    TextField(defn, FieldKeyRec(id.tag[FieldKeyIdTag], FieldKeyType.Text, defn.fieldKeyData))
   }
 
 //  def mockFieldList(defs: List[FieldDefinition]): FieldListRec = {
@@ -305,6 +305,16 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
   }
   def matchTree(expected: List[StepNodeWithText]) = TextTreeMatcher(expected)
 
+  // ===================================================================================================================
+
+  /**
+   * Extensions for: Any
+   */
+  implicit class AnyExt[T](val v: T) {
+    // Equality assertion with type equivalence ala Specs2
+    def ====(that: T): Unit = v should be(that)
+  }
+
   /**
    * Extensions for: Int
    */
@@ -348,7 +358,6 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
       )
     )
   }
-
 
   /**
    * Extensions for: TextField
