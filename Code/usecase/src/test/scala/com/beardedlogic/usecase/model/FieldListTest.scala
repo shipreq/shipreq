@@ -4,6 +4,8 @@ package model
 import org.scalatest.FunSpec
 import lib.field._
 import test.TestDatabaseSupport
+import scala.slick.jdbc.{StaticQuery => Q}
+import Q.interpolation
 
 class FieldListTest extends FunSpec with TestDatabaseSupport {
 
@@ -23,50 +25,25 @@ class FieldListTest extends FunSpec with TestDatabaseSupport {
       ExceptionCourseFieldDefinition ::
       Nil
 
-
-  describe("FieldList") {
-    it("should save") {
-      truncate('field_key)
-      val fieldList = fl1
-      val newValues = fieldList.size + 1
-      val saved = assertTableDiffs(
-        'data -> newValues,
-        'value -> newValues,
-        'relation -> fieldList.size,
-        'field_key -> fieldList.size) {
-        db.createInitialFieldList(fieldList)
-      }
-      val loaded = db.findFieldList(saved.data, LatestRev)
-      loaded.get.fieldDefns should be(fieldList)
+  describe("syncFieldList") {
+    it("should save when never saved before") {
+      sqlu" UPDATE field_key SET data='hehe' WHERE data IS NULL ".execute
+      val fl = assertTableDiffs2(Tables.FieldKey -> fl1.size) {db.syncFieldList(fl1)}
+      fl.fieldDefns ==== fl1
     }
 
-    describe("ensureSavedAndLatest") {
-      it("should save when never saved before") {
-        val id = randomId
-        val r = db.syncFieldList(id, fl1)
-        r.data should be(Data(id,DataType.FieldList))
-        r.fieldDefns should be(fl1)
+    it("should use existing when already saved") {
+      val save1 = db.syncFieldList(fl1)
+      assertTableDiffs2() {
+        val save2 = db.syncFieldList(fl1)
+        save2 ==== save1
       }
+    }
 
-      it("should use existing when already saved") {
-        val save1 = db.createInitialFieldList(fl1)
-        assertTableDiffs('data -> 0, 'value -> 0, 'relation -> 0) {
-          val save2 = db.syncFieldList(save1.dataId, fl1)
-          save2 should be(save1)
-        }
-      }
-
-      it("should save differences when it differs") {
-        val save1 = db.createInitialFieldList(fl1)
-        // expect: 1 new field key (data+value)
-        // expect: 1 new field list value (value)
-        // expect: 5 new relations
-        val save2 = assertTableDiffs('data -> 1, 'value -> 2, 'relation -> 5, 'field_key -> 1) {
-          db.syncFieldList(save1.dataId, fl2)
-        }
-        save2.data should be(save1.data)
-        save2.fieldDefns should be(fl2)
-      }
+    it("should save differences when it differs") {
+      val save1 = db.syncFieldList(fl1)
+      val save2 = assertTableDiffs2(Tables.FieldKey -> 1) {db.syncFieldList(fl2)}
+      save2.fieldDefns ==== fl2
     }
   }
 }
