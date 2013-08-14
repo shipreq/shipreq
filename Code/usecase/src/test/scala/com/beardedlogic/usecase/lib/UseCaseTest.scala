@@ -296,7 +296,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
     describe("First-time save") {
 
       it("should save when empty") {
-        assertTableDiffs2(Tables.Usecase -> 1, Tables.UsecaseRev -> 1) {save(EmptyUcWithoutNCF, None, db)}
+        assertTableDiffs(Tables.Usecase -> 1, Tables.UsecaseRev -> 1) {save(EmptyUcWithoutNCF, None, db)}
       }
 
       it("should return a valid ctx") {
@@ -305,7 +305,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
       }
 
       it("should save with 2 text fields") {
-        assertTableDiffs2(Usecase -> 1, UsecaseRev -> 1, Text -> 2, TextRev -> 2, UcField -> 2) {
+        assertTableDiffs(Usecase -> 1, UsecaseRev -> 1, Text -> 2, TextRev -> 2, UcField -> 2) {
           save(removeNcField(MockUc1.sampleTextOnlyUC), None, db)
         }
       }
@@ -317,7 +317,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
         val cp1 = save(uc1, None, db)
         cp1 should not be (None)
         val uc2 = mutate(uc1)
-        val cp2 = assertTableDiffs2(expectedTableDiffs: _*) {save(uc2, cp1, db)}
+        val cp2 = assertTableDiffs(expectedTableDiffs: _*) {save(uc2, cp1, db)}
         cp2 should not be (None)
       }
 
@@ -325,7 +325,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
         val uc1 = sampleUC
         val cp1 = save(uc1, None, db)
         cp1 should not be (None)
-        assertTableDiffs2() {save(uc1, cp1, db)} should be(None)
+        assertTableDiffs() {save(uc1, cp1, db)} should be(None)
       }
 
       it("should save a title change") {
@@ -383,7 +383,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
 
       def testUpdate(mutate: UseCase => UseCase, expectedTableDiffs: (Table, Int)*) = {
         val newUc = mutate(prevSave.uc)
-        val cpSaveOp = assertTableDiffs2(expectedTableDiffs: _*) {save(newUc, Some(prevSave), db)}
+        val cpSaveOp = assertTableDiffs(expectedTableDiffs: _*) {save(newUc, Some(prevSave), db)}
         if (expectedTableDiffs.isEmpty) {
           cpSaveOp should be(None)
         } else {

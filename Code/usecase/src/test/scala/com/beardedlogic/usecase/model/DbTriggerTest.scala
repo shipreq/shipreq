@@ -9,8 +9,8 @@ import org.postgresql.util.PSQLException
 class DbTriggerTest extends FunSpec with TestDatabaseSupport {
 
   class SampleFKs {
-    val txtFieldTypeId = sql"INSERT INTO field_key_type VALUES(30,'txt',1) RETURNING id".as[Short].first
-    val stepFieldTypeId = sql"INSERT INTO field_key_type VALUES(31,'stp',NULL) RETURNING id".as[Short].first
+    val txtFieldTypeId = sql"INSERT INTO field_key_type VALUES(3250,'txt',1) RETURNING id".as[Short].first
+    val stepFieldTypeId = sql"INSERT INTO field_key_type VALUES(3251,'stp',NULL) RETURNING id".as[Short].first
     val txtField1 = sql"INSERT INTO field_key(type_id,data) VALUES($txtFieldTypeId,'TF1') RETURNING id".as[Long].first
     val txtField2 = sql"INSERT INTO field_key(type_id,data) VALUES($txtFieldTypeId,'TF1') RETURNING id".as[Long].first
     val ncId = sql"INSERT INTO field_key(type_id,data) VALUES($stepFieldTypeId,'NC') RETURNING id".as[Long].first

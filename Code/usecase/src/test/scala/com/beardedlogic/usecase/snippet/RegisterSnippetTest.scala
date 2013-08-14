@@ -27,7 +27,7 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
   class Reg1Tester extends SnippetTester(new Register1) {
     def submit(email: String, usrTableDiff: Int) = {
       snippet.emailInput = email
-      assertTableDiffs('usr -> usrTableDiff) {snippet.onSubmit(js.reactor)}
+      assertTableDiffs(Tables.Usr -> usrTableDiff) {snippet.onSubmit(js.reactor)}
       this
     }
   }

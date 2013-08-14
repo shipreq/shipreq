@@ -28,7 +28,7 @@ class UseCaseRevTest extends FunSpec with TestDatabaseSupport {
 
     def assertAuditedUpdate(src: UseCaseRev, relationRows: Int = 0): UseCaseRev = {
       import Tables._
-      assertTableDiffs2(UsecaseRev -> 1, UcField -> relationRows) {
+      assertTableDiffs(UsecaseRev -> 1, UcField -> relationRows) {
         val r = db.updateUseCaseHeader(src, _.copy(title = "omg"))
         r.successCodeOpt ==== Some(NewRevision)
         val newUc = r.dataOpt.get
@@ -38,7 +38,7 @@ class UseCaseRevTest extends FunSpec with TestDatabaseSupport {
     }
 
     def assertNOP(uc: UseCaseRev, expected: UseCaseRev) {
-      val r = assertTableDiffs2() {db.updateUseCaseHeader(uc, h => h)}
+      val r = assertTableDiffs() {db.updateUseCaseHeader(uc, h => h)}
       r should be(Success(AlreadyUpToDate, expected))
     }
 
@@ -52,7 +52,7 @@ class UseCaseRevTest extends FunSpec with TestDatabaseSupport {
     it("should do a direct update when rev #1 and title default") {
       val rev1 = db.createInitialUseCase(Defaults.Title)
       val tgt = rev1.withTitle("omg")
-      val r = assertTableDiffs2() {db.updateUseCaseHeader(rev1, _ => tgt.header)}
+      val r = assertTableDiffs() {db.updateUseCaseHeader(rev1, _ => tgt.header)}
       r ==== Success(DirectUpdate, tgt)
       assertUC(r.dataOpt.get, tgt, 0)
     }
@@ -93,7 +93,7 @@ class UseCaseRevTest extends FunSpec with TestDatabaseSupport {
 
     // it("should stop when target UC is not the latest revision available") {
     //   val (rev1, _) = createTwoRevs
-    //   val r = assertTableDiffs2() {db.updateUseCaseHeader(rev1, _.copy(title = "aahh"))}
+    //   val r = assertTableDiffs() {db.updateUseCaseHeader(rev1, _.copy(title = "aahh"))}
     //   r ==== StaleRevision
     // }
   }
