@@ -1,13 +1,12 @@
-package com.beardedlogic.usecase.lib.field
+package com.beardedlogic.usecase.lib
+package field
 
 import scala.annotation.tailrec
-import com.beardedlogic.usecase.lib.StepLabels.{MaxStepsPerLevel, MaxStepDepth}
-import com.beardedlogic.usecase.lib.Types._
-import com.beardedlogic.usecase.lib.change._
-import com.beardedlogic.usecase.lib.UseCaseHeader
-import com.beardedlogic.usecase.lib.tree.TreeOps._
-import com.beardedlogic.usecase.lib.{UseCase, StepNodeBuilder, StepNode, StepTree}
 import com.beardedlogic.usecase.model._
+import StepLabels.{MaxStepsPerLevel, MaxStepDepth}
+import tree.TreeOps._
+import Types._
+import change._
 import Changes._
 import StepField._
 
@@ -55,9 +54,8 @@ object StepField {
 /**
  * Abstract field that consists of a tree of structured StepTexts.
  */
-abstract class StepField extends Field with StepFieldValueLoader {
+abstract class StepField extends Field with StepFieldPersistenceMixin {
   override type Value = StepFieldValue
-  override type State = NormalisedStepTree
 
   def rootLabelPrefix(uch: UseCaseHeader): String
 
@@ -68,9 +66,7 @@ abstract class StepField extends Field with StepFieldValueLoader {
   /** If this is true, then title changes will be propagated to the root course text when safe. */
   def preferTitleInRoot_?() = false
 
-  override def valueSaver(v: StepFieldValue) = new StepFieldValueSaver(v, rec, sli)
-
-  override def toString = s"${getClass.getSimpleName}[#${rec.valueId}]"
+  override def toString = s"${getClass.getSimpleName}[#${rec.id}]"
 
   def updateText(id: LocalIdStr, newText: String)(uc: UseCase): UcUpdateResult = {
     implicit val lens = alens(FieldLenses.uc.stepText, (uc, this, id))
@@ -169,11 +165,14 @@ case class NormalCourseField(override val rec: FieldKeyRec) extends StepField {
   import NormalCourseField._
   override val defn = NormalCourseFieldDefinition
   override val empty = StepFieldValue.forTree(this, EmptyTree)
-  override val defaultValue = StepFieldValue.forTree(this, DefaultTree)
   override def rootLabelPrefix(uch: UseCaseHeader) = s"${uch.number}."
   override val sli = StartingRootLabelIndexAt0
   override def prohibitRemoval_?(v: Value, id: LocalIdStr) = v.tree(0).id == id
   override def preferTitleInRoot_?() = true
+  override val defaultLoadValue = {
+    val sfv = StepFieldValue.forTree(this, DefaultTree)
+    (Some(sfv.tree), () => sfv)
+  }
 }
 
 // =====================================================================================================================
@@ -187,8 +186,8 @@ case object ExceptionCourseFieldDefinition extends FieldDefinition {
 case class ExceptionCourseField(override val rec: FieldKeyRec) extends StepField {
   override val defn = ExceptionCourseFieldDefinition
   override val empty = StepFieldValue.empty(this)
-  override val defaultValue = empty
   override def rootLabelPrefix(uch: UseCaseHeader) = s"${uch.number}.E."
   override val sli = StartingLabelIndicesAt1
   override def prohibitRemoval_?(v: Value, id: LocalIdStr) = false
+  override val defaultLoadValue = (None, empty _)
 }

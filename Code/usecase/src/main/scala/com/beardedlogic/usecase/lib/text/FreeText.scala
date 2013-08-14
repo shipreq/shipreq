@@ -68,7 +68,7 @@ object FreeText extends Parser[FreeText] {
  */
 case class FreeText(text: String, refs: Map[LocalIdStr, LabelStr]) extends ParsedText[FreeText] {
 
-  override def textWithNormalisedRefs(savedSteps: SavedSteps) = normaliseRefs(text, refs, savedSteps)
+  override def textWithNormalisedRefs(implicit savedSteps: SavedSteps) = normaliseRefs(text, refs, savedSteps)
 
   override def hasRefs_? = refs.nonEmpty
 

@@ -54,7 +54,7 @@ case class StepText(
     m
   }
 
-  override def textWithNormalisedRefs(savedSteps: SavedSteps) = normaliseRefs(text, allRefs, savedSteps)
+  override def textWithNormalisedRefs(implicit savedSteps: SavedSteps) = normaliseRefs(text, allRefs, savedSteps)
 
   override val hasRefs_? = mainClause.hasRefs_? || flowHasRefs_?(flowFromClause) || flowHasRefs_?(flowToClause)
 

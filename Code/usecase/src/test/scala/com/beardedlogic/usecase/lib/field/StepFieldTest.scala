@@ -1,74 +1,46 @@
 package com.beardedlogic.usecase
-package lib.field
+package lib
+package field
 
 import org.scalatest.FunSpec
 import org.mockito.Mockito._
 import model._
-import lib.Types._
-import lib.UseCaseHeader
-import lib.UseCaseFns._
-import lib.text.StepText
+import Types._
+import UseCaseFns._
+import text.StepText
 import test.NodeUtils._
-import test.TestHelpers
+import com.beardedlogic.usecase.test.{TestData, TestHelpers}
+import com.beardedlogic.usecase.util.{BiMap, LazyVal, BiMapBuilder}
 
-// Covered in UseCaseTest: presave() with data refs
-// Covered in UseCaseTest: save() with data refs
-// Covered in UseCaseTest: compare() with new steps
-
-class StepFieldTest extends FunSpec with TestHelpers {
+class StepFieldTest extends FunSpec with TestHelpers with TestData {
   type V = StepFieldValue
-  type S = NormalisedStepTree
+
+  import StepFieldPersistence.SavedData
 
   implicit def autoTagLocalStepIds(s: String) = s.asLocalId
   implicit def autoTagNormalisedRefs(s: String) = s.hasNormalisedRefs
-  implicit def autoTypeStepValues(m: Map[String, PlainValue[DataType.Step]]) = m.asInstanceOf[Map[LocalIdStr, PlainValue[DataType.Step]]]
-  def SVMap(pairs: (String, PlainValue[DataType.Step])*) = autoTypeStepValues(Map(pairs: _*))
 
-  val EC2 = ExceptionCourseField(FieldKeyRec(662, ExceptionCourseFieldDefinition.fieldKeyType, ExceptionCourseFieldDefinition.fieldKeyData))
+  val ucId = 123L.tag[UseCaseIdentIdTag]
 
-  val UCH = UseCaseHeader("Hello", 9)
-
-  val NS1 = NormalisedStep(X2, "T1", List(NormalisedStep(X3, "T2", Nil), NormalisedStep(X4, "T3", Nil)))
-  val NS4 = NormalisedStep(X5, "T4", List(NormalisedStep(X6, "T5", Nil), NormalisedStep(X7, "T6", Nil)))
-  val Tree1State = NormalisedStepTree(NormalisedStep(X1, "Root", List(NS1, NS4)) :: NormalisedStep(X8, "Other", Nil) :: Nil)
-  val Tree1bState = NormalisedStepTree(NormalisedStep(X1, "", List(NS1, NS4)) :: NormalisedStep(X8, "Other", Nil) :: Nil)
-  val Tree2State = NormalisedStepTree(NormalisedStep(X1, "Root [D.143]", List(NS1, NS4)) :: NormalisedStep(X8, "Other", Nil) :: Nil)
-
-  val Tree1Text = """
-        9.0. Root
-          1. T1
-            a. T2
-            b. T3
-          2. T4
-            a. T5
-            b. T6
-        9.1. Other """
-  lazy val Tree1TextTree = parseStepTree(Tree1Text)
-  lazy val Tree1 = Tree1TextTree.toStepTree
-  lazy val Tree1FieldValue = Tree1TextTree.toStepFieldValue(ECF)
-  // local-ids differ from Tree1State
-  lazy val Tree1FieldValueState = ECF.valueSaver(Tree1FieldValue).normalisedState(EmptySavedSteps)
-
-  def lastSaveFor(state: NormalisedStepTree) = {
-    val (stepValues, _) = lastSave2For(state)
-    val saveCtx = new FieldSaveCtx(null, stepValues)
-    Some(saveCtx, state)
+  def valueSaver(f: StepField, sfv: StepFieldValue) = {
+    val stepsAndLabels: StepAndLabelBiMap = LazyVal <~ BiMap(UseCaseFns.generateStepAndLabelMap(f, sfv.tree, UCH))
+    f.valueSaver(sfv, stepsAndLabels)
   }
 
-  def lastSave2For(state: NormalisedStepTree) = {
-    val oldStepValuesB = Map.newBuilder[LocalIdStr, PlainValue[DataType.Step]]
-    val mockStepValuesByNameB = Map.newBuilder[TextWithNormalisedRefs, PlainValue[DataType.Step]]
-    var i = 0
-    //val savedSteps = new BiMapBuilder[Long_StepDataId, LocalIdStr]
-    state.foreachRecursive(ss => {
-      i += 1
-      val dataId = (i * 1000).tag[StepDataId]
-      val sv = PlainValue[DataType.Step](i, dataId, 1)
-      oldStepValuesB += (ss.id -> sv)
-      mockStepValuesByNameB += (ss.text -> sv)
-      //savedSteps += (dataId -> ss.id)
-    })
-    (oldStepValuesB.result, mockStepValuesByNameB.result)
+  import MockUc3._
+  val T1 = 401L.tag[TextIdentIdTag]
+  val T2 = 402L.tag[TextIdentIdTag]
+  val T3 = 403L.tag[TextIdentIdTag]
+  val T4 = 404L.tag[TextIdentIdTag]
+  val T5 = 405L.tag[TextIdentIdTag]
+  val MockSavedSteps: SavedSteps = {
+    val b = new BiMapBuilder[TextIdentId, LocalIdStr]
+    b += (T1 -> X1)
+    b += (T2 -> X2)
+    b += (T3 -> X3)
+    b += (T4 -> X4)
+    b += (T5 -> X5)
+    b.result
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -83,335 +55,157 @@ class StepFieldTest extends FunSpec with TestHelpers {
     }
   }
 
-  describe("NormalisedStepTree") {
-    it("should build a step map") {
-      val x = Tree1State
-      x.stepMap.size should be(8)
-      x.stepMap(X2) should be(NS1)
-      x.stepMap(X4) should be(NormalisedStep(X4, "T3", Nil))
-      x.stepMap(X1) should be(Tree1State.head)
-    }
-  }
-
   describe("Loading") {
-    def denormalise(f: StepField, s: S, savedSteps: SavedSteps) = {
-      val (stepTreeOp, fn) = f.denormalise(s, savedSteps)
-      val stepLabelMap = stepTreeOp.map(generateStepAndLabelMap(f, _, UCH)).getOrElse(Map.empty)
-      val stepsAndLabels = generateStepAndLabelBiMap(Seq(stepLabelMap))
-      val tree = fn(stepsAndLabels)
-      val txtTree = tree.toTextTree(f, savedSteps)
-      (stepLabelMap, tree, txtTree)
+    implicit def int_to_textrevid(id: Int): TextRevId = id.toLong.tag[TextRevIdTag]
+    implicit def int_to_textident(id: Int): TextIdentId = id.toLong.tag[TextIdentIdTag]
+    implicit def parent(rel: UcFieldTextWithFK): Option[TextRevId] = Some(rel.id)
+    val N70 = UcFieldTextWithFK(NCF, UcFieldText(Some("x.0"), None, 0, TextRev(10, 1, 100, "I'm the root [D.703]")))
+    val N701 = UcFieldTextWithFK(NCF, UcFieldText(Some("x.0.1"), N70, 0, TextRev(11, 1, 101, "I was inserted")))
+    val N702 = UcFieldTextWithFK(NCF, UcFieldText(Some("x.0.2"), N70, 1, TextRev(12, 1, 102, "blar")))
+    val N702a = UcFieldTextWithFK(NCF, UcFieldText(Some("x.0.2.a"), N702, 0, TextRev(13, 1, 103, "deeper")))
+    val N703 = UcFieldTextWithFK(NCF, UcFieldText(Some("x.0.3"), N70, 2, TextRev(703, 1, 104, "last")))
+    val F201 = UcFieldTextWithFK(ECF, UcFieldText(Some("x.E.1"), None, 0, TextRev(201, 1, 21, "EC 1E1")))
+    val F202 = UcFieldTextWithFK(ECF, UcFieldText(Some("x.E.2"), None, 1, TextRev(202, 1, 22, "EC 1E2")))
+    val F211 = UcFieldTextWithFK(ECF, UcFieldText(Some("x.E.1.1"), Some(201), 0, TextRev(211, 1, 23, "EC 1E11")))
+    val F_* = List(N70, N701, N702, N702a, N703, F201, F202, F211)
+    val LoadCtx = FieldLoadCtx(F_*)
+
+    def load(f: StepField, ctx: FieldLoadCtx, uch: UseCaseHeader = UCH) = {
+      val r = f.load(ctx)
+      val savedSteps: SavedSteps = BiMap.swapped(r.savedSteps)
+      val stepAndLabels = r.stepTree
+                          .map(t => generateStepAndLabelBiMap(generateStepAndLabelMap(f, t, uch) :: Nil))
+                          .getOrElse(EmptyStepAndLabelBiMap)
+      r.phase2(savedSteps, stepAndLabels)
     }
 
-
-    describe("denormalise()") {
-      it("should build a matching tree (NC/AC)") {
-        val (stepLabelMap, _, txtTree) = denormalise(NCF, Tree1State, EmptySavedSteps)
-        txtTree should matchTree(Tree1TextTree)
-        stepLabelMap(X1) should be("9.0")
-        stepLabelMap(X2) should be("9.0.1")
-        stepLabelMap(X7) should be("9.0.2.b")
-      }
-
-      it("should build a matching tree (EC)") {
-        val (stepLabelMap, _, txtTree) = denormalise(ECF, Tree1State, EmptySavedSteps)
-        txtTree should matchTree(parseStepTree( """
-          9.E.1. Root
-            1. T1
-              a. T2
-              b. T3
-            2. T4
-              a. T5
-              b. T6
-          9.E.2. Other """))
-        stepLabelMap(X1) should be("9.E.1")
-        stepLabelMap(X2) should be("9.E.1.1")
-        stepLabelMap(X7) should be("9.E.1.2.b")
-      }
-
-      it("should create a StepText for each step") {
-        val (_, tree, _) = denormalise(NCF, Tree1State, EmptySavedSteps)
-        tree.textmap.keySet should be(Set(X1, X2, X3, X4, X5, X6, X7, X8))
-        tree.textmap(X2).text should be("T1")
-      }
-
-      it("should realise normalised refs") {
-        val (_, tree, _) = denormalise(NCF, Tree2State, SavedSteps1)
-        tree.textmap(X1).text should be("Root [9.0.1.a]")
-      }
-
-      it("should create empty StepTexts for blank steps") {
-        val (_, tree, _) = denormalise(NCF, Tree1bState, EmptySavedSteps)
-        tree.textmap(X1) should be(StepText.empty(X1))
-      }
+    it("should build a field value") {
+      val (sfv, _) = load(NCF, LoadCtx)
+      sfv.norm ==== NcSfv.norm
     }
 
-    describe("load()") {
-      val Value_NC = new FieldValueFullRec(10, 1, 1, NCF.rec.valueId, None)
-      val Value_EC = new FieldValueFullRec(20, 2, 1, ECF.rec.valueId, None)
-      val FieldValueMap = Map(NCF.rec.taggedId -> Value_NC, ECF.rec.taggedId -> Value_EC)
-      val StepData = Map(100L -> "Root NC", 201L -> "EC 1E1", 202L -> "EC 1E2", 211L -> "EC 1E11")
-                     .map {case (id, str) => (id.tag[StepValueId] ->(PlainValue[DataType.Step](id, id * 10, 1), str))}
-      val Relations = Map((RelationType.Has: RelationType) -> Map(
-        Value_NC.valueId -> List(100L),
-        Value_EC.valueId -> List(201L, 202L)
-        , 201L -> List(211L)
-      ))
-      val LoadCtx = new FieldLoadCtx(FieldValueMap, Relations, StepData)
-
-      it("should create an empty tree when no field values exist") {
-        val normalisedStepTree = EC2.load(LoadCtx, new MutableFieldSaveCtx)
-        normalisedStepTree should be(NormalisedStepTree(List.empty))
-      }
-
-      it("should load a single node") {
-        val normalisedStepTree = NCF.load(LoadCtx, new MutableFieldSaveCtx)
-        normalisedStepTree should be(NormalisedStepTree(List(NormalisedStep("s100", "Root NC", Nil))))
-      }
-
-      it("should load a tree") {
-        val normalisedStepTree = ECF.load(LoadCtx, new MutableFieldSaveCtx)
-        normalisedStepTree should be(NormalisedStepTree(
-          NormalisedStep("s201", "EC 1E1", List(NormalisedStep("s211", "EC 1E11", Nil)))
-            :: NormalisedStep("s202", "EC 1E2", Nil)
-            :: Nil
-        ))
-      }
+    it("should retain used relations as SavedData") {
+      val (_, sdOpt) = load(NCF, LoadCtx)
+      sdOpt.get.values.toSet ==== List(N70, N701, N702, N702a, N703).map(_.rel).toSet
     }
 
-    describe("Default values") {
-      def defaultSfvFor(f: StepField) = {
-        val normalisedStepTree = f.load(EmptyLoadCtx, new MutableFieldSaveCtx)
-        val (_,sfv,_) = denormalise(f, normalisedStepTree, EmptySavedSteps)
-        sfv
-      }
-      it("should be empty for NC") {
-        val sfv = defaultSfvFor(NCF)
-        sfv.tree.size should be(1)
-        sfv.tree.sizeRecursive should be(2)
-      }
-      it("should be empty for EC") {
-        defaultSfvFor(ECF).tree.size should be(0)
-      }
+    it("should realise normalised refs") {
+      val (sfv, _) = load(NCF, LoadCtx)
+      sfv.textmap(sfv.tree(0).id).text ==== "I'm the root [7.0.3]"
+    }
+
+    // TODO test empty steps
+
+    it("should use a default tree instead of a blank tree for NC") {
+      val (sfv, _) = load(NCF, EmptyLoadCtx)
+      sfv.tree.sizeRecursive should be(2)
+      sfv.tree.size should be(1)
+    }
+
+    it("should allow a blank tree for EC") {
+      val (sfv, _) = load(ECF, EmptyLoadCtx)
+      sfv.tree.size should be(0)
     }
   }
-
-  describe("Comparison") {
-    import StepFieldValueSaver.compareAndSaveChanges
-
-    it("should do nothing when no changes") {
-      val oldStepValues = Tree1State.mapRecursive(ss => {
-        val id = ss.id.replace("X", "").toLong
-        (ss.id -> PlainValue[DataType.Step](id, id * 1000, 1))
-      }).toMap
-      val saveCtx = new MutableFieldSaveCtx
-      val dao = mock[DAO]
-
-      val changedDetected = compareAndSaveChanges(dao, Tree1State, oldStepValues, Tree1State)(saveCtx)
-
-      changedDetected should be(false)
-      saveCtx.stepValues.result should be('empty)
-      verifyZeroInteractions(dao)
-    }
-
-    def testUpdate(treeBefore: String, treeAfter: String, expectedUpdates: Seq[String], useTextAsId: Boolean) {
-      val before = parseStepTree(treeBefore, useTextAsId).toNState(NCF)
-      val after = parseStepTree(treeAfter, useTextAsId).toNState(NCF)
-      val (oldStepValues, mockStepValuesByName) = lastSave2For(before)
-      val saveCtx = new MutableFieldSaveCtx
-      val dao = mock[DAO]
-      when(dao.createValue(any[PlainValue[DataType.Step]], any[Revision])).thenReturn(mock[PlainValue[DataType.Step]])
-
-      val changedDetected = compareAndSaveChanges(dao, before, oldStepValues, after)(saveCtx)
-
-      changedDetected should be(true)
-      val updatedStepValues = saveCtx.stepValues.result
-      updatedStepValues.size should be(expectedUpdates.size)
-      for (name <- expectedUpdates) verify(dao).createValue(mockStepValuesByName(name), LatestRev)
-      verifyNoMoreInteractions(dao)
-    }
-
-    it("should reuse matching and update changed (top-level, no children)") {
-      testUpdate(
-        "9.0. Root\n9.1. TII\n1.2. End",
-        "9.0. xxxx\n9.1. TII\n1.2. xxx",
-        List("Root", "End"), false)
-    }
-
-    it("should reuse matching and update changed (top-level, with children)") {
-      testUpdate(
-        "9.0. Root\n  1. TII\n1.2. End",
-        "9.0. xxxx\n  1. TII\n1.2. End",
-        List("Root"), false)
-    }
-
-    it("should reuse matching and update changed (2nd-level only, no children)") {
-      testUpdate(
-        "9.0. Root\n  1. TII\n1.2. End",
-        "9.0. Root\n  1. xxx\n1.2. End",
-        List("Root", "TII"), false)
-    }
-
-    it("should reuse matching and update changed (2nd-level only, with children)") {
-      testUpdate(
-        "9.0. Root\n  1. TII\n    a. Omg\n1.2. End",
-        "9.0. Root\n  1. xxx\n    a. Omg\n1.2. End",
-        List("Root", "TII"), false)
-    }
-
-    it("should reuse matching and update changed (Text change @ L3)") {
-      testUpdate(Tree1Text, """
-        9.0. Root
-          1. T1
-            a. T2000
-            b. T3
-          2. T4
-            a. T5
-            b. T6
-        9.1. Other """,
-        List("Root", "T1", "T2"), false)
-    }
-
-    it("should reuse matching and update changed (Text change @ L1)") {
-      testUpdate(Tree1Text, """
-              9.0. RUT
-                1. T1
-                  a. T2
-                  b. T3
-                2. T4
-                  a. T5
-                  b. T6
-              9.1. Other """,
-        List("Root"), false)
-    }
-
-    it("should reuse matching and update changed (Reorder @ L3)") {
-      testUpdate(Tree1Text, """
-              9.0. Root
-                1. T1
-                  a. T3
-                  b. T2
-                2. T4
-                  a. T5
-                  b. T6
-              9.1. Other """,
-        List("Root", "T1"), true)
-    }
-
-    it("should reuse matching and update changed (Reorder @ L1)") {
-      testUpdate(Tree1Text, """
-              9.0. Other
-              9.1. Root
-                1. T1
-                  a. T2
-                  b. T3
-                2. T4
-                  a. T5
-                  b. T6 """,
-        List(), true) // Still expect changedDetected = true
-    }
-
-    // TODO check compare() with deleted steps
-  } // end describe Comparison
 
   describe("Saving") {
-    // TODO test normalisedState
 
     describe("record_required_?()") {
       it("should not save when no steps") {
-        ECF.valueSaver(ECF.empty).record_required_? should be(false)
+        valueSaver(ECF, ECF.empty).record_required_? ==== false
       }
       it("should save when has steps") {
-        ECF.valueSaver(StepFieldValue.forTree(ECF, Tree1)).record_required_? should be(true)
+        valueSaver(ECF, NcSfv).record_required_? ==== true
       }
     }
 
     describe("presave()") {
-      def mockSaveCtxAndDao = {
+      def mockDao = {
         val dao = mock[DAO]
-        when(dao.createInitialValue(DataType.Step)).thenReturn(mock[PlainValue[DataType.Step]])
-        (new MutableFieldSaveCtx, dao)
+        when(dao.createInitialText(any, any)).thenAnswer(mockCreateInitialTextAnswer(657))
+        dao
       }
 
-      it("should create 1 Step Value for each node and populate saveCtx.stepValues") {
-        val (saveCtx, dao) = mockSaveCtxAndDao
-        val s = ECF.valueSaver(Tree1FieldValue)
-        s.presave(dao, None, EmptySavedSteps)(saveCtx) should be(true)
-        verify(dao, times(8)).createInitialValue(DataType.Step)
+      it("should save a new text row for each node") {
+        val dao = mockDao
+        val s = valueSaver(NCF, NcSfv)
+        val newlySavedSteps = s.presave(dao, ucId, None)
+        verify(dao, times(5)).createInitialText(ucId, NCF.rec.id)
         verifyNoMoreInteractions(dao)
-        saveCtx.stepValues.result.size should be(8)
+        newlySavedSteps.keys ==== NcStepText.keys
       }
 
-      it("should NOP do return false when no differences") {
-        val (saveCtx, dao) = mockSaveCtxAndDao
-        val s = ECF.valueSaver(Tree1FieldValue)
-        s.presave(dao, lastSaveFor(Tree1FieldValueState), EmptySavedSteps)(saveCtx) should be(false)
+      it("should NOP when no differences") {
+        val dao = mockDao
+        val s = valueSaver(NCF, NcSfv)
+
+        val newlySavedSteps = s.presave(dao, ucId, Some(MockSavedSteps))
         verifyZeroInteractions(dao)
-        saveCtx.stepValues.result.size should be(0)
+        newlySavedSteps.size ==== 0
       }
 
-      it("should save delta and return true when changed since last save") {
-        val (saveCtx, dao) = mockSaveCtxAndDao
-        val s = ECF.valueSaver(parseStepTree("1.0. XXX\n  1. Same Child\n1.1. Other").toStepFieldValue(ECF))
-        val prev = parseStepTree("1.0. Root\n  1. Same Child\n1.1. Other").toNState(ECF)
-        s.presave(dao, lastSaveFor(prev), EmptySavedSteps)(saveCtx) should be(true)
-        verify(dao, times(1)).createValue(any[PlainValue[DataType.Step]], any[Revision])
+      it("should save a new text row for new steps") {
+        val dao = mockDao
+        val prev = parseStepTree("1.0. Root\n  1. Same Child\n1.1. Other").toStepTree
+        val newTree = "1.0. XXX\n  1. Same Child\n  2. NEW CHILD\n1.1. Other2\n1.2. NEW ROOT STEP"
+        val s = valueSaver(ECF, parseStepTree(newTree).toStepFieldValue(ECF))
+
+        val newlySavedSteps = s.presave(dao, ucId, Some(mockSavedStepsFor(prev)))
+        verify(dao, times(2)).createInitialText(ucId, ECF.rec.id)
         verifyNoMoreInteractions(dao)
-        saveCtx.stepValues.result.size should be(1)
+        newlySavedSteps.keys ==== Set("1.0.2", "1.2")
       }
     }
 
     describe("save()") {
-      it("should create step & relation rows") {
-        val s = ECF.valueSaver(Tree1FieldValue)
-        val (stepValues, mockStepValuesByName) = lastSave2For(Tree1FieldValueState)
-        val fieldValues = Map(ECF.rec -> mock[PlainValue[DataType.FieldValue]])
-        val saveCtx = FieldSaveCtx(fieldValues, stepValues)
+      val ucRevId = 123L.tag[UseCaseRevIdTag]
+
+      def mockDao = {
         val dao = mock[DAO]
+        when(dao.createTextRev(any, any, any)).thenAnswer(mockCreateTextRevAnswer)
+        when(dao.linkUcToStep(any, any, any, any, any)).thenAnswer(mockLinkUcToStepAnswer)
+        dao
+      }
 
-        val (fd, state) = s.save(dao, EmptySavedSteps, saveCtx, saveCtx)
+      def firstSavedDataOfNcf = valueSaver(NCF, NcSfv).save(mockDao, ucId, ucRevId, None)(MockSavedSteps)
 
-        fd should be(None)
-        state should be(Tree1FieldValueState)
-        for ((name, v) <- mockStepValuesByName) verify(dao).createStep(v, name)
-        verify(dao, times(8)).relate_stepParent_has_step(any[Value[_ <: StepParent]], any[Short], any[Value[DataType.Step]])
+      it("should create a text_rev and uc_field row for each step when 1st save") {
+        val dao = mockDao
+        val s = valueSaver(NCF, NcSfv)
+        val savedTextRevs  = s.save(dao, ucId, ucRevId, None)(MockSavedSteps)
+
+        savedTextRevs.size ==== 5
+        verify(dao, times(5)).createTextRev(any, any, any)
+        verify(dao, times(5)).linkUcToStep(any, any, any, any, any)
         verifyNoMoreInteractions(dao)
       }
 
-      it("should link to reusable steps") {
-        val treeBefore = Tree1Text
-        val treeAfter = """
-              1.0. Other
-              1.1. New!!
-              1.2. RootX|id=Root
-                1. T1000|id=T1
-                  a. T2
-                  b. T3
-                2. T4
-                  a. T5
-                  b. T6 """
-        val after = parseStepTree(treeAfter, true)
-        val s = ECF.valueSaver(after.toStepFieldValue(ECF))
-        val before = parseStepTree(treeBefore, true).toNState(ECF)
-        val (oldStepValues, _) = lastSave2For(before)
-        val oldSaveCtx = FieldSaveCtx(Map.empty, oldStepValues)
-
-        val newFieldValues = Map(ECF.rec -> mock[PlainValue[DataType.FieldValue]])
-        val newStepValues = SVMap(
-          "New!!" -> new PlainValue[DataType.Step](90, 90, 1),
-          "Root" -> new PlainValue[DataType.Step](91, 92, 2),
-          "T1" -> new PlainValue[DataType.Step](91, 92, 2)
+      it("should link reusable steps and save new steps") {
+        val sfv2 = NcSfv.copy(
+          tree = StepTree(NcSfv.tree.nodes :+ StepNode(X8, 0, 1, Nil)),
+          textmap = NcSfv.textmap + (X8 -> StepText(X8, freeText("AHHH"), None, None))
         )
-        val saveCtx = FieldSaveCtx(newFieldValues, newStepValues)
-        val dao = mock[DAO]
+        val T8 = 408L.tag[TextIdentIdTag]
+        val mockSavedSteps2: SavedSteps = BiMap(MockSavedSteps.ab + (T8 -> X8))
 
-        val (fd, state) = s.save(dao, EmptySavedSteps, saveCtx.combineWith(oldSaveCtx), saveCtx)
+        val dao = mockDao
+        val s = valueSaver(NCF, sfv2)
+        val savedTextRevs = s.save(dao, ucId, ucRevId, Some(firstSavedDataOfNcf))(mockSavedSteps2)
 
-        fd should be(None)
-        state should be(s.normalisedState(EmptySavedSteps))
-        for ((id, v) <- newStepValues) verify(dao).createStep(v, if (id == "Root") "RootX" else if (id == "T1") "T1000" else id)
-        verify(dao, times(3 + 2 + 2)) // FV->[Other,New,RootX] + RootX->[T1000,T4] + T1000->[T2,T3]
-        .relate_stepParent_has_step(any[Value[_ <: StepParent]], any[Short], any[Value[DataType.Step]])
+        verify(dao, times(1)).createTextRev(T8, 1, "AHHH")
+        verify(dao, times(6)).linkUcToStep(any, any, any, any, any)
+        verifyNoMoreInteractions(dao)
+        savedTextRevs.size ==== 6 // savedTextRevs should include reused too
+      }
+
+      it("should link reusable steps and updated changed steps") {
+        val sfv2 = NcSfv.copy(textmap = NcSfv.textmap + (X2 -> StepText(X2, freeText("DIFF"), None, None)))
+        val dao = mockDao
+        val s = valueSaver(NCF, sfv2)
+        s.save(dao, ucId, ucRevId, Some(firstSavedDataOfNcf))(MockSavedSteps)
+
+        verify(dao, times(1)).createTextRev(T2, 2, "DIFF")
+        verify(dao, times(5)).linkUcToStep(any, any, any, any, any)
         verifyNoMoreInteractions(dao)
       }
     }

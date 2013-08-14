@@ -5,60 +5,68 @@ import Types._
 import field._
 import model._
 import util.BiMap
-import text.ParsingUtils._
 import UseCaseFns._
-import Misc.AnyExt
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+case class FieldLoadCtx(fieldData: List[UcFieldTextWithFK])
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+case class FieldLoadResult[+V <: Field#Value, +SD <: Field#SavedData](
+  savedSteps: Map[LocalIdStr, TextIdentId],
+  stepTree: Option[StepTree],
+  phase2: (SavedSteps, StepAndLabelBiMap) => (V, Option[SD]))
+
+object FieldLoadResult {
+  def noSteps[V <: Field#Value, SD <: Field#SavedData](phase2: (SavedSteps, StepAndLabelBiMap) => (V, Option[SD])) =
+    FieldLoadResult(Map.empty, None, phase2)
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 
 case class UseCaseSaveCheckpoint(
   uc: UseCase,
-  rec: PlainValue[DataType.UseCase],
-  saveCtx: FieldSaveCtx,
-  fieldStates: FieldStates,
-  savedSteps: SavedSteps)
+  rec: UseCaseRev,
+  savedSteps: SavedSteps,
+  savedData: Map[Field, Field#SavedData])
+
+// ---------------------------------------------------------------------------------------------------------------------
 
 object UseCasePersistence {
 
-  def load(ucRec: UseCaseRec, dao: DAO, lock: Locks.ReadLockToken): UseCaseSaveCheckpoint = {
+  def load(ucRev: UseCaseRev, dao: DAO, lock: Locks.ReadLockToken): UseCaseSaveCheckpoint = {
+
+    @inline def uch = ucRev.header
     val fieldList = Defaults.FieldList.get.fields // TODO hardcoded fieldlist
+    val loadCtx = FieldLoadCtx(dao.findAllUcFieldData(ucRev.id))
 
-    // Load use case fields
-    val (saveCtx, fieldStates) = {
-      val mutableSaveCtx = new MutableFieldSaveCtx
-      val loadCtx = dao.getFieldLoadCtxFor(ucRec.valueId)
-      val fieldStates = Map.newBuilder[Field, Field#State]
-      for (f <- fieldList) {
-        // Load field states
-        // (saveCtx.stepValues populated here by field-loaders)
-        val fs = f.load(loadCtx, mutableSaveCtx)
-        fieldStates += (f -> fs)
+    var loadResults = List.empty[(Field, FieldLoadResult[Field#Value, Field#SavedData])]
+    var stepAndLabelMaps = List.empty[Map[LocalIdStr, LabelStr]]
+    var savedStepMap = Map.empty[LocalIdStr, TextIdentId]
 
-        // Add field values to saveCtx
-        for (fvrec <- loadCtx.fieldValues.get(f.rec.taggedId)) mutableSaveCtx.fieldValues += (f.rec -> fvrec)
-      }
-      (mutableSaveCtx.immutable, fieldStates.result)
+    for (f <- fieldList) {
+      val r = f.load(loadCtx)
+      loadResults +:= (f -> r)
+      for (tree <- r.stepTree) stepAndLabelMaps +:= generateStepAndLabelMap(f, tree, uch)
+      if (r.savedSteps.nonEmpty) savedStepMap ++= r.savedSteps
     }
 
-    // Assemble and denormalise
-    implicit val savedSteps = generateSavedSteps(saveCtx)
+    val savedSteps: SavedSteps = BiMap.swapped(savedStepMap)
+    val stepAndLabels = generateStepAndLabelBiMap(stepAndLabelMaps)
+    val fieldValues = Map.newBuilder[Field, Field#Value]
+    val savedData = Map.newBuilder[Field, Field#SavedData]
 
-    // Phase 1
-    val (fieldValueFns, stepsAndLabels) = {
-      var stepAndLabelMaps = List.empty[Map[LocalIdStr, LabelStr]]
-      val fieldValueFns = Map.newBuilder[Field, StepAndLabelBiMap => Field#Value]
-      for ((f, s) <- fieldStates) {
-        val (stepTreeOp, fn) = f.denormalise(f.castState(s), savedSteps)
-        stepTreeOp.map(stepAndLabelMaps :+= generateStepAndLabelMap(f, _, ucRec.header))
-        fieldValueFns += (f -> fn)
-      }
-      (fieldValueFns.result, generateStepAndLabelBiMap(stepAndLabelMaps))
+    for ((f, r) <- loadResults) {
+      val (fv, sdOpt) = r.phase2(savedSteps, stepAndLabels)
+      fieldValues += (f -> fv)
+      for (sd <- sdOpt) savedData += (f -> sd)
     }
 
-    // Phase 2
-    val fieldValues = for ((f, fn) <- fieldValueFns) yield (f -> fn(stepsAndLabels))
+    val uc = UseCase(uch, fieldList, fieldValues.result, stepAndLabels)
+    val cp = UseCaseSaveCheckpoint(uc, ucRev, savedSteps, savedData.result)
 
-    // Final results
-    val uc = UseCase(ucRec.header, fieldList, fieldValues, stepsAndLabels)
-    UseCaseSaveCheckpoint(uc, ucRec.value, saveCtx, fieldStates, savedSteps)
+    cp
   }
 
   // ===================================================================================================================
@@ -71,117 +79,77 @@ object UseCasePersistence {
    * @return A checkpoint is there was anything to save, else `None` if UC was already up-to-date.
    */
   def save(uc: UseCase, prevSave: Option[UseCaseSaveCheckpoint], dao: DAO): Option[UseCaseSaveCheckpoint] = {
-    type TopLevelRelations = Set[Value[DataType.FieldValue]]
-    type ObsoleteFVs = Set[PlainValue[DataType.FieldValue]]
+    type ValueSavers = Map[Field, FieldValueSaver[_]]
 
-    def presave() : Option[(FieldSaveCtx, ObsoleteFVs, TopLevelRelations)] = {
-      var changesDetected = false
-      val saveCtx = new MutableFieldSaveCtx
-      var topLvlRels: TopLevelRelations = Set.empty
-      var obsoleteFVs: ObsoleteFVs = Set.empty
-      val oldSavedSteps = prevSave.map(_.savedSteps).getOrElse(BiMap.empty)
+    val allSavers: ValueSavers =
+      uc.fieldValues.map { case (f, v_) =>
+        val v = f.castValue(v_)
+        val s = f.valueSaver(v, uc.stepsAndLabels)
+        (f -> s)
+      }.toMap
 
-      // Check fields for changes and presave
-      for ((field, fv_) <- uc.fieldValues) {
-        val fv = field.castValue(fv_)
-        val saver = field.valueSaver(fv)
-        val fkrec = field.rec
-        val oldFV: Option[PlainValue[DataType.FieldValue]] = prevSave.flatMap(_.saveCtx.fieldValues.get(fkrec))
-        trace(s"$field - fkrec=$fkrec, oldFV=$oldFV")
+    def getPrevSaveDataFor[F <: Field, S <: f.SavedData forSome {val f : F}](f: F): Option[S] =
+      prevSave.flatMap(_.savedData.get(f).asInstanceOf[Option[S]])
 
-        // Check if field has anything to save
-        if (!saver.record_required_?) {
-          if (oldFV.isDefined) {
-            changesDetected = true
-            obsoleteFVs += oldFV.get
-            trace(s"$field - Nothing to save anymore. Used to be, thus removal required.")
-          }
-        } else {
-          // Compare state and presave
-          val previous = for {
-            ls <- prevSave
-            fs <- ls.fieldStates.get(field)
-          } yield (ls.saveCtx, field.castState(fs))
-          val fieldChanged = saver.presave(dao, previous, oldSavedSteps)(saveCtx)
-          if (fieldChanged) {
-            // Field changed, presave a new field value
-            val newValue = if (oldFV.isEmpty)
-              dao.createInitialValue(DataType.FieldValue)
-            else
-              dao.createValue(oldFV.get, LatestRev)
-            trace(s"$field - New value created: rev=${newValue.rev}, id=${newValue.valueId}")
-            saveCtx.fieldValues += (fkrec -> newValue)
-            changesDetected = true
-            topLvlRels += newValue
-          } else {
-            // Reuse the existing field value
-            oldFV.foreach(topLvlRels += _)
-            trace(s"$field - Reuse.")
-          }
+    def isSaveRequired_?(savers: ValueSavers) : Boolean = {
+
+      def isSaveRequired_?(cp: UseCaseSaveCheckpoint): Boolean =
+        (uc.header != cp.uc.header) || uc.fields.exists(fieldRequiresSave_?(cp))
+
+      def fieldRequiresSave_?(cp: UseCaseSaveCheckpoint)(f: Field): Boolean = {
+        val saver = f.saver(savers)
+        cp.savedData.get(f) match {
+          case Some(sd_) => saver.differsFromPrevSave_?(f.castSavedData(sd_))(cp.savedSteps)
+          case _         => saver.record_required_?
         }
       }
 
-      // Check for changes to the use case itself
-      changesDetected ||= prevSave.map(_.uc.header != uc.header).getOrElse(true)
-
-      if (changesDetected) Some(saveCtx.immutable, obsoleteFVs, topLvlRels)
-      else None
-    }
-
-    def save(newSaveCtx: FieldSaveCtx, obsoleteFVs: ObsoleteFVs, topLvlRels: TopLevelRelations): UseCaseSaveCheckpoint = {
-      // Prepare data
-      val combinedSaveCtx = newSaveCtx.modIf(prevSave.nonEmpty)(_.combineWith(prevSave.get.saveCtx))
-      val savedSteps = generateSavedSteps(combinedSaveCtx)
-
-      // Save UseCase
-      val ucRec = saveHeader()
-      val newFieldStates = saveNewFieldValues(savedSteps, combinedSaveCtx, newSaveCtx)
-      saveRelations(ucRec, topLvlRels)
-
-      // Create checkpoint
-      val finalSaveCtx = combinedSaveCtx.modIf(obsoleteFVs.nonEmpty)(
-        x => x.copy(fieldValues = x.fieldValues.filterNot(e => obsoleteFVs.contains(e._2)))
-      )
-      UseCaseSaveCheckpoint(uc, ucRec.value, finalSaveCtx, newFieldStates, savedSteps)
-    }
-
-    def saveHeader() : UseCaseRec = {
-      val ucValue = if (prevSave.isEmpty)
-        dao.createInitialValue(DataType.UseCase)
-      else
-        dao.createValue(prevSave.get.rec, LatestRev)
-      // TODO using default FieldList
-      dao.createUseCase(ucValue, uc.header, Defaults.FieldList.get)
-    }
-
-    def saveNewFieldValues(savedSteps: SavedSteps, combinedSaveCtx: FieldSaveCtx, newSaveCtx: FieldSaveCtx) : FieldStates = {
-      var newFieldStates = prevSave.map(_.fieldStates).getOrElse(Map.empty)
-      for {
-        (field, fv_) <- uc.fieldValues
-        fvRec <- newSaveCtx.fieldValues.get(field.rec)
-      } {
-        val fv = field.castValue(fv_)
-        val saver = field.valueSaver(fv)
-        val (fieldData, fieldState) = saver.save(dao, savedSteps, combinedSaveCtx, newSaveCtx)
-        dao.createFieldValue(fvRec, field.rec, fieldData)
-        newFieldStates += (field -> fieldState)
+      prevSave match {
+        case Some(cp) => isSaveRequired_?(cp)
+        case _ => true
       }
-      newFieldStates
     }
 
-    def saveRelations(ucRec: UseCaseRec, topLvlRels: TopLevelRelations): Unit = {
-      // TODO make bulk insert
-      for (fv <- topLvlRels)
-        dao.relate_usecase_has_fieldValue(ucRec, fv)
+    def selectFieldsRequiringSave(savers: ValueSavers): ValueSavers =
+      savers.filter {case (f, s) => getPrevSaveDataFor(f).isDefined || s.record_required_?}
+
+    def saveUcHeader(): UseCaseRev = prevSave match {
+      case Some(cp) => dao.createUseCase(cp.rec.identId, (cp.rec.rev + 1).toShort, uc.header)
+      case _ => dao.createInitialUseCase(uc.header)
     }
 
-    def perform(): Option[UseCaseSaveCheckpoint] = dao.withTransaction {
-      for ((saveCtx, obsoleteFVs, topLvlRels) <- presave)
-      yield save(saveCtx, obsoleteFVs, topLvlRels)
+    def presave(ucId: UseCaseIdentId, savers: ValueSavers): SavedSteps = {
+      val prevSavedSteps = prevSave.map(_.savedSteps)
+      var newSavedSteps: Map[LocalIdStr, TextIdentId] = prevSavedSteps.map(_.ba).getOrElse(Map.empty)
+      for ((f, s) <- savers) newSavedSteps ++= s.presave(dao, ucId, prevSavedSteps)
+      BiMap.swapped(newSavedSteps)
     }
 
-    // Safely save
-    prevSave.map(p => Locks.UseCase.withWriteLock(p.rec.dataId)(perform))
-    .getOrElse(perform)
+    def save(savers: ValueSavers, ucId: UseCaseIdentId, ucRevId: UseCaseRevId)(implicit savedSteps: SavedSteps): Map[Field, Field#SavedData] = {
+      var savedData = Map.empty[Field, Field#SavedData]
+      for ((f, s_) <- savers) {
+        val s = s_.asInstanceOf[FieldValueSaver[f.SavedData]]
+        val d = s.save(dao, ucId, ucRevId, getPrevSaveDataFor(f))
+        savedData += (f -> d)
+      }
+      savedData
+    }
+
+    def withUseCaseWriteLock[R](fn: => R): R =
+      prevSave.map(cp => Locks.UseCase.withWriteLock(cp.rec)(fn)).getOrElse(fn)
+
+    def performSave(): UseCaseSaveCheckpoint =
+      dao.withTransaction {
+        val ucRev = saveUcHeader()
+        val savers = selectFieldsRequiringSave(allSavers)
+        implicit val newSavedSteps = presave(ucRev.identId, savers)
+        val savedData = save(savers, ucRev.identId, ucRev.id)
+        UseCaseSaveCheckpoint(uc, ucRev, newSavedSteps, savedData)
+      }
+
+    if (isSaveRequired_?(allSavers))
+      Some(withUseCaseWriteLock(performSave))
+    else
+      None
   }
 }

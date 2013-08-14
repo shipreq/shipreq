@@ -1,6 +1,6 @@
 package com.beardedlogic.usecase
 package stress
-
+/*
 import org.scalacheck.Gen
 import scala.slick.jdbc.{StaticQuery => Q}
 
@@ -86,3 +86,4 @@ object StressData {
     threadLocalDb.closeAll
   }
 }
+*/

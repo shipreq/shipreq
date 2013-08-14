@@ -4,6 +4,8 @@ package test
 import java.io.File
 import org.apache.commons.io.FileUtils
 import org.mockito.Mockito.when
+import org.mockito.invocation.InvocationOnMock
+import org.mockito.stubbing.Answer
 import org.scalatest.matchers.{ShouldMatchers, Matcher, MatchResult}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.prop.Tables.Table
@@ -112,6 +114,8 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
     X3E2 -> "3.E.2".asLabel)
 
   implicit def FieldToFKRec(f: Field): FieldKeyRec = f.rec
+  implicit def FieldToFkId(f: Field): FieldKeyId = f.rec.id
+  implicit def SfvToStepTree(sfv: StepFieldValue): StepTree = sfv.tree
 
   lazy val TF1 = mockTextField("Stuff #1", 111)
   lazy val TF2 = mockTextField("Stuff #2", 222)
@@ -124,6 +128,46 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
   val EmptyLoadCtx = new FieldLoadCtx(List.empty)
 
   // -------------------------------------------------------------------------------------------------------------------
+
+  def mockSavedStepsFor(tree: StepTree): SavedSteps = {
+    val savedSteps = new BiMapBuilder[TextIdentId, LocalIdStr]
+    var i = 0
+    tree.foreachRecursive(s => {
+      i += 1
+      val textIdentId = (i * 1000).tag[TextIdentIdTag]
+      savedSteps += (textIdentId -> s.id)
+    })
+    savedSteps.result
+  }
+
+  def mockCreateInitialTextAnswer(startingId: Long) = new Answer[TextIdentId] {
+    var id = startingId - 1
+    override def answer(invocation: InvocationOnMock) = {
+      id += 1
+      id.tag[TextIdentIdTag]
+    }
+  }
+
+  def mockCreateTextRevAnswer = new Answer[TextRev] {
+    override def answer(i: InvocationOnMock) = {
+      val identId = i.getArguments()(0).asInstanceOf[TextIdentId]
+      val rev = i.getArguments()(1).asInstanceOf[Short]
+      val text = i.getArguments()(2).asInstanceOf[TextWithNormalisedRefs]
+      val id = (identId*10).tag[TextRevIdTag]
+      TextRev(identId, rev, id, text)
+    }
+  }
+
+  def mockLinkUcToStepAnswer = new Answer[UcFieldText] {
+    override def answer(i: InvocationOnMock) = {
+      val uc = i.getArguments()(0).asInstanceOf[UseCaseRevId]
+      val label = i.getArguments()(1).asInstanceOf[LabelStr]
+      val index = i.getArguments()(2).asInstanceOf[Short]
+      val parentId = i.getArguments()(3).asInstanceOf[Option[TextRevId]]
+      val text = i.getArguments()(4).asInstanceOf[TextRev]
+      UcFieldText(Some(label), parentId, index, text)
+    }
+  }
 
   val stepTreeLens = {
     import LensFns._
@@ -350,13 +394,6 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
 
     def toStepFieldValue(f: StepField, savedSteps: SavedSteps = EmptySavedSteps, stepsAndLabels: StepAndLabelBiMap = EmptyStepAndLabelBiMap) =
       StepFieldValue(f, toStepTree, toTextmap(savedSteps, stepsAndLabels))
-
-    def toNState(f: StepField) = NormalisedStepTree(
-      convertNodeTree[StepNodeWithText, NormalisedStep](x
-      , {(n, _, _, children) => NormalisedStep(n.id, n.text.hasNormalisedRefs, children)}
-      , f.sli.startingLabelIndex _
-      )
-    )
   }
 
   /**
@@ -404,6 +441,13 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
    */
   implicit class RefsExt(val v: Refs) {
     def norm = normaliseRefs(v)
+  }
+
+  /**
+   * Extensions for: UseCaseRev
+   */
+  implicit class UseCaseRevExt(val v: UseCaseRev) {
+    def withTitle(t: String) = v.copy(header = v.header.copy(title = t))
   }
 
   /**

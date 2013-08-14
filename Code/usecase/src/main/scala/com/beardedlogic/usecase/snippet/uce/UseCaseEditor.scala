@@ -1,24 +1,16 @@
 package com.beardedlogic.usecase
 package snippet.uce
 
-import scala.xml.{Text, NodeSeq}
-import net.liftweb.common._
-import net.liftweb.http.js.JsExp.strToJsExp
-import net.liftweb.http.js.{JE, JsCmd, JsCmds}
-import net.liftweb.http.js.jquery.JqJE
-import net.liftweb.http.js.jquery.JqJsCmds.jsExpToJsCmd
+import net.liftweb.http.js.{JsCmd, JsCmds}
 import net.liftweb.http._
 import net.liftweb.util.Helpers._
 import JsCmds.Noop
 
-import com.beardedlogic.usecase.lib._
-import lib.field._
+import lib._
+import change._
+import field._
 import model._
-import lib.Types._
-import com.beardedlogic.usecase.util.JsExt.JqExpr
-import com.beardedlogic.usecase.lib.text.FreeText
-import net.liftweb.util.CssSel
-import com.beardedlogic.usecase.lib.change._
+import Types._
 
 case class State(uc: UseCase, prevSave: Option[UseCaseSaveCheckpoint]) {
   def currentRevision = prevSave.map(_.rec.rev.toString).getOrElse("0")
@@ -30,7 +22,7 @@ object UseCaseEditor {
     val h = UseCaseHeader(Defaults.Title, 1)
     val fl = Defaults.FieldList.get.fields
     val ncf = UseCaseFns.filter[NormalCourseField](fl).head
-    val fv = fl.map(f => (f ~> f.empty)).toMap + (ncf ~> ncf.defaultValue)
+    val fv = fl.map(f => (f ~> f.empty)).toMap + (ncf ~> ncf.defaultLoadValue._2.apply)
     val sl = UseCaseFns.generateStepAndLabelBiMap(fv, h)
     val uc = UseCase(h, fl, fv, sl)
     State(uc, None)

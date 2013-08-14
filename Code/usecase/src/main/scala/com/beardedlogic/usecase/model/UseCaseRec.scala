@@ -1,8 +1,7 @@
 package com.beardedlogic.usecase
 package model
 
-import scala.slick.jdbc.{GetResult, SetParameter, StaticQuery => Q}
-import scala.slick.session.PositionedParameters
+import scala.slick.jdbc.{GetResult, StaticQuery => Q}
 import lib._
 import db.DBHelpers._
 import db.DbOpResult
@@ -47,17 +46,18 @@ object UseCaseAccessor {
 
   private val NextNumberSql = "select coalesce(max(number),0)+1 from usecase_rev where id in (select latest_rev_id from usecase)"
 
-  val InsertRevWithNextNumber = Q.query[(UseCaseIdentId, Short, String), (UseCaseRevId, Short)](
-    s"INSERT INTO usecase_rev(ident_id, rev, number, title) VALUES(?,?,($NextNumberSql),?) RETURNING id, number")
+  val InsertInitialRevWithNextNumber = Q.query[(UseCaseIdentId, String), (UseCaseRevId, Short)](
+    s"INSERT INTO usecase_rev(ident_id, rev, number, title) VALUES(?,1,($NextNumberSql),?) RETURNING id, number")
 
-  private val RevFields = s"ident_id, rev, id, title, number"
 
   val SelectLatestRevId = Q.query[UseCaseIdentId, UseCaseRevId](s"SELECT latest_rev_id FROM usecase WHERE id=?")
 
-  val SelectRevById = Q.query[UseCaseRevId, UseCaseRev](s"SELECT $RevFields FROM usecase_rev WHERE id=?")
+  private val r_* = s"r.ident_id, r.rev, r.id, r.title, r.number"
+
+  val SelectRevById = Q.query[UseCaseRevId, UseCaseRev](s"SELECT ${r_*} FROM usecase_rev r WHERE r.id=?")
 
   val SelectLatestRev = Q.query[UseCaseIdentId, UseCaseRev](
-    s"SELECT $RevFields FROM usecase u, usecase_rev r WHERE r.id=latest_rev_id AND u.id=?")
+    s"SELECT ${r_*} FROM usecase u, usecase_rev r WHERE r.id=latest_rev_id AND u.id=?")
 
   val SelectSummaries = Q.queryNA[UseCaseSummary]( s"""
     select ident_id, r.id, number, title, to_iso8601_str(created_at)
@@ -86,20 +86,33 @@ trait UseCaseAccessor extends DatabaseAccessor {
   }
 
   /**
+   * Creates a new `usecase` row. If a `usecase_rev` row is not inserted before the end of the transaction, then the
+   * transaction will fail because `usecase.latest_rev_id` will be `NULL`.
+   */
+  def createUseCaseIdent(): UseCaseIdentId = InsertIdent.first()
+
+  // TODO Remove createInitialUseCase(header) after anonymous UC editing is removed
+  def createInitialUseCase(header: UseCaseHeader): UseCaseRev = withTransaction {
+    val identId = createUseCaseIdent()
+    val h = InputCorrection.correct(header)
+    val rev = 1: Short
+    createUseCaseRevWithoutCorrection(identId, rev, h)
+  }
+
+  // TODO New-UC has GLOBAL scope.
+  // TODO New-UC: Use table locking for mutex?
+  // TODO New-UC: Lacking appropriate number uniqueness constraint
+  // TODO need a usecase state so we can call correct() instead of correctUseCaseTitle(). Would also make stateEquals() redundant
+  /**
    * Creates a `usecase` and a rev-#1 `usecase_rev`. The UC number is determined automatically.
    *
    * @param title The new UC title.
    */
   def createInitialUseCase(title: String): UseCaseRev = withTransaction {
-    // TODO New-UC has GLOBAL scope.
-    // TODO New-UC: Use table locking for mutex?
-    // TODO New-UC: Lacking appropriate number uniqueness constraint
-    // TODO need a usecase state so we can call correct() instead of correctUseCaseTitle(). Would also make stateEquals() redundant
-    val identId = InsertIdent.first()
+    val identId = createUseCaseIdent()
     val correctedTitle = InputCorrection.useCaseTitle(title)
-    val rev = 1: Short
-    val (id, number) = InsertRevWithNextNumber.first(identId, rev, correctedTitle)
-    UseCaseRev(identId, rev, id, UseCaseHeader(correctedTitle, number))
+    val (id, number) = InsertInitialRevWithNextNumber.first(identId, correctedTitle)
+    UseCaseRev(identId, 1, id, UseCaseHeader(correctedTitle, number))
   }
 
   def findLatestUseCaseRevId(ucId: UseCaseIdentId): Option[UseCaseRevId] = SelectLatestRevId.firstOption(ucId)

@@ -120,12 +120,12 @@ object DataGenerators extends Logger {
   case class StepPlaceholderTree(override val nodes: List[StepPlaceholderNode], sli: StartingLabelIndices) extends TreeRoot[StepPlaceholderNode] {
     lazy val labels = mapRecursive(_.label)
 
-    lazy val stepStateTree = NormalisedStepTree(
-      convertNodeTree[StepPlaceholderNode, NormalisedStep](nodes
-      , {case (node, level, index, children) => NormalisedStep(node.label.replace('.', '_').asLocalId, "".hasNormalisedRefs, children)}
-      , sli.startingLabelIndex _
-      )
-    )
+//    lazy val stepStateTree = NormalisedStepTree(
+//      convertNodeTree[StepPlaceholderNode, NormalisedStep](nodes
+//      , {case (node, level, index, children) => NormalisedStep(node.label.replace('.', '_').asLocalId, "".hasNormalisedRefs, children)}
+//      , sli.startingLabelIndex _
+//      )
+//    )
   }
 
   private def numberOfSteps(startingIndex: Int): Gen[Int] = {

@@ -3,6 +3,7 @@ package lib.field
 
 import org.scalatest.FunSpec
 import org.mockito.Mockito._
+import lib.FieldLoadCtx
 import lib.Types._
 import lib.text.FreeText
 import model._
@@ -10,13 +11,16 @@ import test.TestHelpers
 
 class TextFieldTest extends FunSpec with TestHelpers {
   type V = FreeText
-  type S = TextWithNormalisedRefs
 
   def parseExact(txt: String)(implicit stepsAndLabels: StepAndLabelBiMap) = {
     val v = FreeText.parse(txt)
     v.text should be(txt)
     v
   }
+
+  val TI1 = 201L.tag[TextIdentIdTag]
+  val TR1 = 301L.tag[TextRevIdTag]
+  val TR2 = 302L.tag[TextRevIdTag]
 
   describe("Field.apply()") {
     it("should lookup the field value and cast result") {
@@ -30,100 +34,116 @@ class TextFieldTest extends FunSpec with TestHelpers {
     }
   }
 
+  def ucFieldText(fkId: FieldKeyId, id: TextRevId, text: String) =
+    UcFieldTextWithFK(fkId, UcFieldText(None, None, -1, TextRev((id * 10000).tag[TextIdentIdTag], 1, id, text.hasNormalisedRefs)))
+
   describe("Loading") {
-    describe("load") {
-      val Value_1 = new FieldValueFullRec(11, 1, 1, TF1.rec.valueId, Some("Jord"))
-      val Value_2 = new FieldValueFullRec(22, 2, 1, TF2.rec.valueId, Some("puls"))
-      val DbFieldValues = Map(TF1.rec.taggedId -> Value_1, TF2.rec.taggedId -> Value_2)
-      val LoadCtx = new FieldLoadCtx(DbFieldValues, null, null)
+    val V1 = ucFieldText(TF1.rec, TR1, "Jord")
+    val V2 = ucFieldText(TF2.rec, TR2, "puls")
+    val LoadCtx = FieldLoadCtx(List(V1, V2))
+    def load(f: TextField, ctx: FieldLoadCtx) = f.load(ctx).phase2(EmptySavedSteps, EmptyStepAndLabelBiMap)
+    def loadV(f: TextField, ctx: FieldLoadCtx): FreeText = load(f, ctx)._1
+    def loadSD(f: TextField, ctx: FieldLoadCtx) = load(f, ctx)._2
 
-      it("should return a blank string when no field value exists") {
-        TF1.load(FieldLoadCtx(Map.empty, null, null), null) should be("")
-      }
-
-      it("should return the loaded field value when available") {
-        TF1.load(LoadCtx, null) should be("Jord")
-        TF2.load(LoadCtx, null) should be("puls")
-      }
+    it("should return a blank string when there is no value") {
+      loadV(TF1, EmptyLoadCtx).text ==== ""
     }
 
-    describe("denormalise") {
-      it("should accept simple text") {
-        val t = TF1.denormalise("Hehe!".hasNormalisedRefs, EmptySavedSteps)._2(EmptyStepAndLabelBiMap)
-        t should be(FreeText("Hehe!", Map.empty))
-      }
+    it("should return the loaded field value when available") {
+      loadV(TF1, LoadCtx).text ==== "Jord"
+      loadV(TF2, LoadCtx).text ==== "puls"
+    }
 
-      it("should accept text with normalised refs") {
-        val t = TF1.denormalise("look at [D.143]".hasNormalisedRefs, SavedSteps1)._2(StepState1)
-        t should be(FreeText("look at [S.3]", Map(X3 -> S3)))
-      }
+    it("should not return SavedData when there is no value") {
+      loadSD(TF1, EmptyLoadCtx) ==== None
+    }
+
+    it("should return the TextRev as SavedData when found") {
+      loadSD(TF1, LoadCtx) ==== Some(V1.textRev)
+      loadSD(TF2, LoadCtx) ==== Some(V2.textRev)
+    }
+
+    it("should denormalise text with refs") {
+      val V3 = ucFieldText(TF1.rec, TR1, "look at [D.143]")
+      val t = TF1.load(FieldLoadCtx(List(V3))).phase2(SavedSteps1, StepState1)._1
+      t should be(FreeText("look at [S.3]", Map(X3 -> S3)))
     }
   }
 
   describe("Saving") {
     implicit def ss = StepState1
+    val ucId = 123L.tag[UseCaseIdentIdTag]
 
-    def saver(v: V) = TF1.valueSaver(v)
+    def saver(v: V) = TF1.valueSaver(v, EmptyStepAndLabelBiMap)
 
     describe("record_required_?") {
       it("should not require a record when no text") {
-        saver(FreeText.empty).record_required_? should be(false)
+        saver(FreeText.empty).record_required_? ==== false
       }
       it("should require a record when text is present") {
-        saver(FreeText.parse("hello")).record_required_? should be(true)
+        saver(parseExact("hello")).record_required_? ==== true
       }
     }
 
-    def testPresave(v: V, prevSave: Option[S], expectChange: Boolean, savedSteps: SavedSteps = SavedSteps1) {
-      val saveCtx = mock[MutableFieldSaveCtx]
-      val dao = mock[DAO]
-      val s = saver(v)
-      s.record_required_? should be(true)
-      s.presave(dao, prevSave.map((mock[FieldSaveCtx], _)), savedSteps)(saveCtx) should be(expectChange)
-      verifyZeroInteractions(saveCtx)
-      verifyZeroInteractions(dao)
-    }
+    describe("differsFromPrevSave_?") {
+      implicit def ss = SavedSteps1
+      implicit def sl = StepState1
 
-    describe("presave (on first save)") {
-      it("should save simple text") {
-        testPresave(FreeText.parse("Hello"), None, true, EmptySavedSteps)
+      it("should compare simple text") {
+        saver(parseExact("ah")).differsFromPrevSave_?(TextRev(TI1, 1, TR1, "ah".hasNormalisedRefs)) ==== false
+        saver(parseExact("ah")).differsFromPrevSave_?(TextRev(TI1, 1, TR1, "30".hasNormalisedRefs)) ==== true
       }
-    }
 
-    describe("presave (with a previous save)") {
-      it("should save simple text when it differs") {
-        testPresave(FreeText.parse("Hello!"), Some("ah".hasNormalisedRefs), true)
-      }
-      it("should not save simple text when unchanged") {
-        testPresave(FreeText.parse("Hello!"), Some("Hello!".hasNormalisedRefs), false)
-      }
-      it("should not save text with refs matches unchanged, normalised text") {
-        testPresave(parseExact("Hello! [S.1]"), Some("Hello! [D.141]".hasNormalisedRefs), false)
-      }
-      it("should save text with refs matches differs") {
-        testPresave(parseExact("Hello! [S.1]"), Some("Hello! [D.222]".hasNormalisedRefs), true)
+      it("should normalise refs before comparison") {
+        val tr = TextRev(TI1, 1, TR1, "look at [D.141]".hasNormalisedRefs)
+        saver(FreeText.parse("look at [S.1]")).differsFromPrevSave_?(tr) ==== false
+        saver(FreeText.parse("look at [S.2]")).differsFromPrevSave_?(tr) ==== true
       }
     }
 
     describe("save") {
-      def testSave(text: String, expectedSaveText: String) {
-        val saveCtx = mock[MutableFieldSaveCtx]
+      val ucRevId = 321L.tag[UseCaseRevIdTag]
+
+      def mockDao = {
         val dao = mock[DAO]
-        val s = saver(parseExact(text))
-        s.record_required_? should be(true)
-        s.presave(dao, None, EmptySavedSteps)(saveCtx) should be(true)
-        val r = s.save(dao, SavedSteps1, null, null)
-        r._1 should be(Some(expectedSaveText))
-        r._2 should be(expectedSaveText)
-        verifyZeroInteractions(saveCtx)
-        verifyZeroInteractions(dao)
+        when(dao.createInitialText(any, any)).thenAnswer(mockCreateInitialTextAnswer(657))
+        when(dao.createTextRev(any, any, any)).thenAnswer(mockCreateTextRevAnswer)
+        dao
       }
 
-      it("should save simple text") {
-        testSave("Hello", "Hello")
+      implicit val iss = EmptySavedSteps
+
+      it("should create a text + text_rev row for first time") {
+        val dao = mockDao
+        val tr = saver(parseExact("hello")).save(dao, ucId, ucRevId, None)
+        tr.rev ==== 1
+        tr.identId.toLong ==== 657
+        tr.text.toString ==== "hello"
+        verify(dao, times(1)).createInitialText(any, any)
+        verify(dao, times(1)).createTextRev(any, any, any)
+        verify(dao, times(1)).linkUcToText(any, any)
+        verifyNoMoreInteractions(dao)
       }
-      it("should text with normalised refs") {
-        testSave("Hello [S.2]", "Hello [D.142]")
+
+      it("should update changed text") {
+        val dao = mockDao
+        val prev = TextRev(TI1, 2, TR1, "OLD".hasNormalisedRefs)
+        val tr = saver(parseExact("hello")).save(dao, ucId, ucRevId, Some(prev))
+        tr.rev ==== 3
+        tr.identId ==== TI1
+        tr.text.toString ==== "hello"
+        verify(dao, times(1)).createTextRev(any, any, any)
+        verify(dao, times(1)).linkUcToText(any, any)
+        verifyNoMoreInteractions(dao)
+      }
+
+      it("should reuse unchanged text") {
+        val dao = mockDao
+        val prev = TextRev(TI1, 2, TR1, "hello".hasNormalisedRefs)
+        val tr = saver(parseExact("hello")).save(dao, ucId, ucRevId, Some(prev))
+        tr ==== prev
+        verify(dao, times(1)).linkUcToText(any, any)
+        verifyNoMoreInteractions(dao)
       }
     }
   }

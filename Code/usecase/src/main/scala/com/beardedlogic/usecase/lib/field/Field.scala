@@ -1,9 +1,9 @@
-package com.beardedlogic.usecase.lib.field
+package com.beardedlogic.usecase.lib
+package field
 
-import com.beardedlogic.usecase.lib.Types._
 import com.beardedlogic.usecase.model._
-import com.beardedlogic.usecase.lib.{StepTree, UcChangeDomain}
-import com.beardedlogic.usecase.lib.change.ChangeResponder
+import change.ChangeResponder
+import Types._
 
 trait FieldDefinition {
 
@@ -26,8 +26,8 @@ trait Field extends UcChangeDomain {
   /** The type of this field's values. */
   type Value <: ChangeResponder[Value]
 
-  /** The type of this field's normalised state. */
-  type State
+  /** The type of data that encapsulates all records saved by this field. */
+  type SavedData
 
   val defn: FieldDefinition
 
@@ -36,7 +36,9 @@ trait Field extends UcChangeDomain {
 
   @inline final def castValue(v: Field#Value) = v.asInstanceOf[Value]
 
-  @inline final def castState(s: Field#State) = s.asInstanceOf[State]
+  @inline final def castSavedData(s: Field#SavedData) = s.asInstanceOf[SavedData]
+
+  @inline final def saver(savers: Map[Field, FieldValueSaver[_]]) = savers(this).asInstanceOf[FieldValueSaver[SavedData]]
 
   @inline final def apply(fieldValues: FieldValues): Value = castValue(fieldValues(this))
 
@@ -49,48 +51,43 @@ trait Field extends UcChangeDomain {
   def empty: Value
 
   /**
-   * Builds a field value state a previously saved state, as provided by the load context.
+   * Loads a field value from the database.
    *
    * @param loadCtx A big blob of data for all fields, from which this field should find and use its own data.
-   * @param mutableSaveCtx After loading, a load ctx is transformed into a save ctx so that it can be used as a save
-   *                       checkpoint. Fields should update the saveCtx as required as they process the load ctx.
    */
-  def load(loadCtx: FieldLoadCtx, mutableSaveCtx: MutableFieldSaveCtx): State
+  def load(loadCtx: FieldLoadCtx): FieldLoadResult[Value, SavedData]
 
-  def denormalise(s: State, savedSteps: SavedSteps): (Option[StepTree], StepAndLabelBiMap => Value)
-
-  def valueSaver(v: Value): FieldValueSaver[State]
+  def valueSaver(v: Value, stepsAndLabels: StepAndLabelBiMap): FieldValueSaver[SavedData]
 }
 
-trait FieldValueSaver[S] {
+trait FieldValueSaver[SavedData] {
 
   /**
    * Gives a field a chance to opt-out of storing a value in the database.
    * If a field is blank, then there's no point saving it.
+   *
+   * Note: This is ignored if the field was saved previously. To do otherwise would be to lose audit trail.
    */
   def record_required_? : Boolean
 
   /**
-   * Saves `data` and `value` rows for any additional data required.
+   * Compares the current field value to the previous saved data.
    *
-   * If a previous save is provided, the function should compare current and previous states to determine whether
-   * anything needs to be saved.
-   *
-   * @return Whether the field's state has changed since the last save.
+   * @return Whether the field value has changed.
    */
-  def presave(dao: DAO, prevSave: Option[(FieldSaveCtx, S)], savedSteps: SavedSteps)(saveCtx: MutableFieldSaveCtx): Boolean
+  def differsFromPrevSave_?(prev: SavedData)(implicit savedSteps: SavedSteps): Boolean
 
   /**
-   * Continues saving state to database.
+   * Creates identity rows (`text.id`) for steps.
    *
-   * Because `presave()` is called on all fields before any fields reach this method, all `data` and `value` rows will
-   * have been saved, the IDs known.
-   *
-   * @param combinedSaveCtx The save context of all new rows on top of the save context for the previous save. Rows
-   *                        being reused will be found here.
-   * @param newSaveCtx The save context for all new rows. Rows being reused will not be found here.
-   * @return A single, arbitrary data string that will be stored in `field_value.data`. The format and mechanism of this
-   *         value can be decided by the field type.
+   * @return A map of new saved steps.
    */
-  def save(dao: DAO, savedSteps: SavedSteps, combinedSaveCtx: FieldSaveCtx, newSaveCtx: FieldSaveCtx): (FieldValueRecData, S)
+  def presave(dao: DAO, ucId: UseCaseIdentId, prevSavedSteps: Option[SavedSteps]): Map[LocalIdStr, TextIdentId]
+
+  /**
+   * Saves field value(s) to the database and links them to the provided UC.
+   *
+   * @return Data that will be passed back in on subsequent saves to facilitate data reuse (in the DB).
+   */
+  def save(dao: DAO, ucId: UseCaseIdentId, ucRevId: UseCaseRevId, prevSave: Option[SavedData])(implicit savedSteps: SavedSteps): SavedData
 }

@@ -105,7 +105,6 @@ object Types {
   type StepAndLabelBiMap = LazyVal[BiMap[LocalIdStr, LabelStr]]
   final val EmptyStepAndLabelBiMap: StepAndLabelBiMap = LazyVal <~ BiMap.empty
 
-  type FieldStates = Map[Field, Field#State]
   type FieldValues = Map[Field, Field#Value]
 
   type UcUpdateResult = ChangeResultF[UseCase, (UcChangeDomain, Change)]

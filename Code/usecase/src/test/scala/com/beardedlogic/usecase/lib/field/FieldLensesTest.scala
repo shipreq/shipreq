@@ -7,6 +7,7 @@ import com.beardedlogic.usecase.test.NodeUtils._
 import com.beardedlogic.usecase.test.{TestData, TestHelpers}
 
 class FieldLensesTest extends FunSpec with TestHelpers with TestData {
+  import MockUc1._
 
   def testFieldValueSet[F <: Field {type Value = V}, V](before: UseCase)(field: F, newValue: V)(after: UseCase) {
     field(after.fieldValues) should be(newValue)

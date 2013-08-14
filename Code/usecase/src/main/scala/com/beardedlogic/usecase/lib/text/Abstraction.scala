@@ -20,7 +20,7 @@ trait ParsedText[Self <: ParsedText[Self]] extends ChangeResponder[Self] {
   @inline final def isEmpty = text.isEmpty
   @inline final def nonEmpty = text.nonEmpty
 
-  def textWithNormalisedRefs(savedSteps: SavedSteps): TextWithNormalisedRefs
+  def textWithNormalisedRefs(implicit savedSteps: SavedSteps): TextWithNormalisedRefs
 
   //  def refs: Refs
 

@@ -26,29 +26,31 @@ trait TestData extends TestHelpers {
     UseCase(UCH, FL, fvs, generateStepAndLabelBiMap(fvs, UCH))
   }
 
-  lazy val sampleTextOnlyUC = ucWithValues(
-    TF1 -> freeText("blah"),
-    TF3 -> freeText("hehe")
-  )
+  object MockUc1 {
+    lazy val sampleTextOnlyUC = ucWithValues(
+      TF1 -> freeText("blah"),
+      TF3 -> freeText("hehe")
+    )
 
-  lazy val NcSteps = parseStepTree( """
-      7.0. I'm the title
-        1. First
-        2. _
-        3. Finally
-      7.1. Sweet """)
-  lazy val EcSteps = parseStepTree( """
-      7.E.1. EC-1E1
-        1. EC-1E1-1
-      7.E.2. EC-1E2 """)
-  lazy val NcSfv = NcSteps.toStepFieldValue(NCF)
-  lazy val EcSfv = EcSteps.toStepFieldValue(ECF)
-  lazy val sampleUC = ucWithValues(
-    TF1 -> freeText("blah"),
-    TF3 -> freeText("hehe"),
-    NCF -> NcSfv,
-    ECF -> EcSfv
-  )
+    lazy val NcSteps = parseStepTree( """
+        7.0. I'm the title
+          1. First
+          2. _
+          3. Finally
+        7.1. Sweet """)
+    lazy val EcSteps = parseStepTree( """
+        7.E.1. EC-1E1
+          1. EC-1E1-1
+        7.E.2. EC-1E2 """)
+    lazy val NcSfv = NcSteps.toStepFieldValue(NCF)
+    lazy val EcSfv = EcSteps.toStepFieldValue(ECF)
+    lazy val sampleUC = ucWithValues(
+      TF1 -> freeText("blah"),
+      TF3 -> freeText("hehe"),
+      NCF -> NcSfv,
+      ECF -> EcSfv
+    )
+  }
 
   object MockUc2a {
     lazy val NcStepTree = StepTree(StepNode(X1, 0, 0, List(StepNode(X2, 1, 1, StepNode(X4, 2, 1, Nil) :: Nil))) :: Nil)
@@ -108,6 +110,4 @@ trait LoadedTestData extends TestData {
   lazy override val TF2 = TxtFields(1)
   lazy override val TF3 = TxtFields(2)
   lazy override val TF4 = TxtFields(3)
-  def FVs = 4 // 2 text fields + NC/AC + EC
-  def FVsPlus(plus: Int) = FVs + plus
 }

@@ -1,9 +1,9 @@
-package com.beardedlogic.usecase.lib.field
+package com.beardedlogic.usecase.lib
+package field
 
-import com.beardedlogic.usecase.lib.Types._
-import com.beardedlogic.usecase.lib.text.FreeText
 import com.beardedlogic.usecase.model._
-import com.beardedlogic.usecase.lib.UseCase
+import text.FreeText
+import Types._
 
 // =====================================================================================================================
 
@@ -17,19 +17,23 @@ case class TextFieldDefinition(title: String) extends FieldDefinition {
 
 case class TextField(override val defn: TextFieldDefinition, override val rec: FieldKeyRec) extends Field {
   override type Value = FreeText
-  override type State = TextWithNormalisedRefs
+  override type SavedData = TextRev
 
   override def empty = FreeText.empty
 
-  override def load(loadCtx: FieldLoadCtx, mutableSaveCtx: MutableFieldSaveCtx) =
-    loadCtx.fieldValues.get(rec).flatMap(_.fieldData).getOrElse("").hasNormalisedRefs
+  override def valueSaver(v: FreeText, stepsAndLabels: StepAndLabelBiMap) =
+    new TextFieldValueSaver(v, rec, stepsAndLabels)
 
-  override def denormalise(normalisedState: TextWithNormalisedRefs, savedSteps: SavedSteps) =
-    (None, (stepsAndLabels: StepAndLabelBiMap) => FreeText.load(normalisedState)(savedSteps, stepsAndLabels))
+  override def load(loadCtx: FieldLoadCtx) = {
+    val sd = loadCtx.fieldData.find(_.fkId == rec.id).map(_.textRev)
+    val text = sd.map(_.text).getOrElse("".hasNormalisedRefs)
+    FieldLoadResult.noSteps[Value, SavedData]((savedSteps, stepsAndLabels) => {
+      val fv = FreeText.load(text)(savedSteps, stepsAndLabels)
+      (fv,sd)
+    })
+  }
 
-  override def valueSaver(v: FreeText) = new TextFieldValueSaver(v)
-
-  override def toString = s"${getClass.getSimpleName}[#${rec.valueId}:${defn.title}]"
+  override def toString = s"${getClass.getSimpleName}[#${rec.id}:${defn.title}]"
 
   def updateText(newText: String)(uc: UseCase): UcUpdateResult = {
     implicit val lens = alens(FieldLenses.uc.textField, (uc, this))
@@ -39,23 +43,34 @@ case class TextField(override val defn: TextFieldDefinition, override val rec: F
 
 // =====================================================================================================================
 
-class TextFieldValueSaver(val v: FreeText) extends FieldValueSaver[TextWithNormalisedRefs] {
-  type S = TextWithNormalisedRefs
+class TextFieldValueSaver(val v: FreeText, val fkId: FieldKeyId, val stepsAndLabels: StepAndLabelBiMap) extends FieldValueSaver[TextRev] {
+  type SavedData = TextRev
 
-  def state(savedSteps: SavedSteps): S = v.textWithNormalisedRefs(savedSteps)
+  def textWithNormalisedRefs(implicit savedSteps: SavedSteps) = v.textWithNormalisedRefs(savedSteps)
 
   override def record_required_? = v.text.nonEmpty
 
-  override def presave(dao: DAO, prevSave: Option[(FieldSaveCtx, S)], savedSteps: SavedSteps)(saveCtx: MutableFieldSaveCtx) = {
-    prevSave match {
-      case None => true
-      case Some((_, previousText)) => previousText != state(savedSteps)
-    }
-  }
+  override def differsFromPrevSave_?(prev: SavedData)(implicit savedSteps: SavedSteps): Boolean =
+    textWithNormalisedRefs != prev.text
 
-  override def save(dao: DAO, savedSteps: SavedSteps, combinedSaveCtx: FieldSaveCtx, newSaveCtx: FieldSaveCtx) = {
-    // Required again because normalised refs may be different after presave
-    val ntxt = state(savedSteps)
-    (Some(ntxt), ntxt)
+  override def presave(dao: DAO, ucId: UseCaseIdentId, prevSavedSteps: Option[SavedSteps]) = Map.empty
+
+  override def save(dao: DAO, ucId: UseCaseIdentId, ucRevId: UseCaseRevId, prevSave: Option[SavedData])(implicit savedSteps: SavedSteps): SavedData = {
+    val curText = textWithNormalisedRefs
+
+    val textRev = prevSave match {
+      // Reuse
+      case Some(prev) if prev.text == curText => prev
+      // Update step
+      case Some(prev) => dao.createTextRev(prev.identId, (prev.rev + 1).toShort, curText)
+      // New step
+      case None =>
+        val textIdentId = dao.createInitialText(ucId, fkId)
+        dao.createTextRev(textIdentId, 1: Short, curText)
+    }
+
+    dao.linkUcToText(ucRevId, textRev)
+
+    textRev
   }
 }

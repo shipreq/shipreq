@@ -26,7 +26,7 @@ class UseCaseEditorTest extends FunSpec with TestDatabaseSupport with TestHelper
       (this, inMockSession {unquoteJs(update(f).toJsCmd).trim})
   }
 
-  lazy val State1 = State(sampleUC, None)
+  lazy val State1 = State(MockUc1.sampleUC, None)
   lazy val State2a = State(MockUc2a.UC, None)
   lazy val State2b = State(MockUc2b.UC, None)
   lazy val State3 = State(MockUc3.UC, None)
@@ -107,7 +107,7 @@ class UseCaseEditorTest extends FunSpec with TestDatabaseSupport with TestHelper
     lazy val html = xml.toString
 
     it("should render the title") {
-      html should include(sampleUC.header.title)
+      html should include(MockUc1.sampleUC.header.title)
     }
 
     it("should render text fields") {
@@ -182,6 +182,7 @@ class UseCaseEditorTest extends FunSpec with TestDatabaseSupport with TestHelper
         resp should not include(X2)
       }
       it("should be able to affect the text of empty steps") {
+        import MockUc1._
         val (uce,resp) = UCE1.update2(NCF.updateText(NcSfv.tree(0).id, "bananas --> 7.0.2"))
         resp should include("⬅ [7.0]")
         resp should include(NcSfv.tree(0)(1).id)
@@ -253,7 +254,7 @@ class UseCaseEditorTest extends FunSpec with TestDatabaseSupport with TestHelper
         assertIdAndAction(resp, X1, "root [7.0.4]")
       }
       it should behave like(itRespectsMaxSteps("NC", UCE2b _, NCF.addStep(X3), "7.0.99"))
-      it should behave like(itRespectsMaxSteps("EC", UCE1 _, ECF.addStep(EcSfv.tree(1).id), "7.E.2.99"))
+      it should behave like(itRespectsMaxSteps("EC", UCE1 _, ECF.addStep(MockUc1.EcSfv.tree(1).id), "7.E.2.99"))
     }
 
     describe("remove a step") {
@@ -289,7 +290,7 @@ class UseCaseEditorTest extends FunSpec with TestDatabaseSupport with TestHelper
         resp should not include("ac_to_nc")
       }
       it("should transition from AC to NC when node is 7.1") {
-        val (_,resp) = UCE1.update2(NCF.increaseIndent(NcSfv.tree(1).id))
+        val (_,resp) = UCE1.update2(NCF.increaseIndent(MockUc1.NcSfv.tree(1).id))
         resp should include("ac_to_nc")
       }
       it("should fail when it causes a breach of max steps per level") {
@@ -333,7 +334,7 @@ class UseCaseEditorTest extends FunSpec with TestDatabaseSupport with TestHelper
         assertIdAndAction(resp, X4, "attr")
       }
       it("should not transition from NC to AC when creating 7.E.2") {
-        val id = EcSfv.tree(0)(0).id
+        val id = MockUc1.EcSfv.tree(0)(0).id
         val (_,resp) = UCE1.update2(ECF.decreaseIndent(id))
         resp should not include("nc_to_ac")
         assertIdAndAction(resp, id, "attr")

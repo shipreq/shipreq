@@ -61,8 +61,8 @@ case class StepFieldValue(field: StepField, tree: StepTree, textmap: Map[LocalId
     }
   }
 
-  def getNormalisedText(id: LocalIdStr, savedSteps: SavedSteps): TextWithNormalisedRefs =
-    textmap.get(id).map(_.textWithNormalisedRefs(savedSteps)).getOrElse("".hasNormalisedRefs)
+  def getNormalisedText(id: LocalIdStr)(implicit savedSteps: SavedSteps): TextWithNormalisedRefs =
+    textmap.get(id).map(_.textWithNormalisedRefs).getOrElse("".hasNormalisedRefs)
 
   def withNewStep(newTree: StepTree, stepId: LocalIdStr) =
     copy(tree = newTree, textmap = textmap + (stepId -> StepText.empty(stepId)))
@@ -76,11 +76,3 @@ case class StepFieldValue(field: StepField, tree: StepTree, textmap: Map[LocalId
     copy(tree = newTree, textmap = newTextmap)
   }
 }
-
-// ---------------------------------------------------------------------------------------------------------------------
-
-case class NormalisedStepTree(override val nodes: List[NormalisedStep]) extends TreeRoot[NormalisedStep] {
-  lazy val stepMap: Map[LocalIdStr, NormalisedStep] = mapRecursive(ss => (ss.id -> ss)).toMap
-}
-
-case class NormalisedStep(id: LocalIdStr, text: TextWithNormalisedRefs, children: List[NormalisedStep]) extends TreeNodeLike[NormalisedStep]
