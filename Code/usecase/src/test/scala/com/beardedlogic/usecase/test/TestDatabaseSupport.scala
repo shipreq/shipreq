@@ -114,20 +114,27 @@ trait TestDatabaseSupport extends TestHelpers with ShouldMatchers with Logger {
     val All = List(FieldKeyType, FieldKey, Usecase, UsecaseRev, Text, TextRev, UcField, Usr)
   }
 
-  def assertTableDiffs[T](expectations: (Table, Int)*)(block: => T) = {
+  def countAllTableRows = Tables.All.map(t => (t -> countRowsIn(t))).toMap
+
+  def collectTableDiffs[T](fn: => T): (T, Map[Table, Int]) = {
+    val before = countAllTableRows
+    val result = fn
+    val after = countAllTableRows
+    val diff = after.map {case (t, newCount) => (t, newCount - before(t))}.toMap
+    (result, diff)
+  }
+
+  def assertTableDiffs[T](expectations: (Table, Int)*)(fn: => T) = {
+    val (result, diff) = collectTableDiffs(fn)
+
     val specTables = expectations.map(_._1)
     val unspecTables = Tables.All.filter(!specTables.contains(_)).map((_,0))
     val fullExp = expectations ++ unspecTables
     val fullExpMap = fullExp.toMap
 
-    def count = fullExp.map { case (t, _) => (t -> countRowsIn(t)) }.toMap
-    val before = count
-    val result = block
-    val after = count.map { case (t, newCount) => (t, newCount - before(t)) }.toMap
-
-    if (after != fullExp) {
-      val badKeys = after.keys.filter(k=> after(k) != fullExpMap(k)).toSet
-      val a = after.filter(e => badKeys.contains(e._1))
+    if (diff != fullExp) {
+      val badKeys = diff.keys.filter(k => diff(k) != fullExpMap(k)).toSet
+      val a = diff.filter(e => badKeys.contains(e._1))
       val e= fullExpMap.filter(e => badKeys.contains(e._1))
       a should be(e)
     }

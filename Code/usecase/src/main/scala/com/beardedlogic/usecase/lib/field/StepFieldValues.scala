@@ -5,7 +5,6 @@ import com.beardedlogic.usecase.lib.Types._
 import com.beardedlogic.usecase.lib.change._
 import com.beardedlogic.usecase.lib.text.StepText
 import com.beardedlogic.usecase.lib.tree.TreeOps._
-import com.beardedlogic.usecase.lib.tree.{TreeRoot, TreeNodeLike}
 import Changes._
 
 object StepFieldValue {
@@ -74,5 +73,14 @@ case class StepFieldValue(field: StepField, tree: StepTree, textmap: Map[LocalId
     var newTextmap = Map.empty[LocalIdStr, StepText]
     for (n <- newTree) newTextmap += (n.id -> textmap.get(n.id).getOrElse(StepText.empty(n.id)))
     copy(tree = newTree, textmap = newTextmap)
+  }
+
+  def textByLabels(implicit stepsAndLabels: StepAndLabelBiMap): Map[LabelStr, String] =
+    for ((id,t) <- textmap) yield (stepsAndLabels.get.ab(id), t.text)
+
+  def toPrettyString: String = {
+    val lines = s"StepFieldValue: $field, ${textmap.size} steps." +:
+      textmap.map {case (id, t) => "    %-16s = %s".format(id, t.text)}.toList.sorted
+    lines.mkString("\n")
   }
 }

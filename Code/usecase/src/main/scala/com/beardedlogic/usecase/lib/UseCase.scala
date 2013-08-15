@@ -47,6 +47,11 @@ object UseCaseFns {
   def mergeStepAndLabelMaps(maps: Iterable[Map[LocalIdStr, LabelStr]]): Map[LocalIdStr, LabelStr] =
     (Map.empty[LocalIdStr, LabelStr] /: maps)(_ ++ _)
 
+  def generateStepAndLabelBiMap(uch: UseCaseHeader, trees: (StepField, StepTree)*): StepAndLabelBiMap =
+    generateStepAndLabelBiMap(trees.map {
+      case (f, t) => generateStepAndLabelMap(f, t, uch)
+    })
+
   def generateStepAndLabelBiMap(maps: Iterable[Map[LocalIdStr, LabelStr]]): StepAndLabelBiMap =
     LazyVal(() => BiMap(mergeStepAndLabelMaps(maps)))
 
@@ -104,8 +109,12 @@ case class UseCase(
   implicit protected def stepsAndLabelsImplicit = stepsAndLabels
 
   def toPrettyString: String = {
+    def printFieldValue(v: Field#Value): String = v match {
+      case sfv: StepFieldValue => sfv.toPrettyString
+      case _ => v.toString
+    }
     val line = "-" * 98
-    val fieldsPP = fields.map(f => s"  F: $f\n  V: ${fieldValues(f)}\n").mkString("\n")
+    val fieldsPP = fields.map(f => s"  F: $f\n  V: ${printFieldValue(fieldValues(f))}\n").mkString("\n")
     val snl = stepsAndLabels.get.ab.map {case (id, lbl) => "  %-16s <-- %s".format(lbl, id)}.toList.sorted.mkString("\n")
     (s">$line>\n"
       + s"Header: $header\n"
@@ -113,8 +122,6 @@ case class UseCase(
       + s"StepsAndLabels (${stepsAndLabels.get.size}):\n$snl\n"
       + s"<$line<")
     .replace(FreeText.empty.toString, "FreeText.empty")
-    .replace(filter[NormalCourseField](fields).head.empty.toString, "StepFieldValue.empty")
-    .replace(filter[ExceptionCourseField](fields).head.empty.toString, "StepFieldValue.empty")
   }
 
   def pp() = { println(toPrettyString); this }

@@ -6,17 +6,18 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Prop, Arbitrary, Gen}
 import scala.util.matching.Regex
 
-import lib.Misc.removeAllWhitespace
-import lib.field._
-import lib.tree._
-import lib.{Types}
-import util.NoReaction
+import lib._
+import field._
+import model.FieldListRec
+import tree._
+import text.{StepText, FreeText}
+import Misc.removeAllWhitespace
+import StepField.StartingLabelIndices
 
-import lib.StepLabels._
-import lib.text.ParsingConfig._
+import StepLabels._
+import text.ParsingConfig._
 import TreeOps._
 import Types._
-import com.beardedlogic.usecase.lib.field.StepField.StartingLabelIndices
 
 object DataGenerators extends Logger {
 
@@ -120,38 +121,38 @@ object DataGenerators extends Logger {
   case class StepPlaceholderTree(override val nodes: List[StepPlaceholderNode], sli: StartingLabelIndices) extends TreeRoot[StepPlaceholderNode] {
     lazy val labels = mapRecursive(_.label)
 
-//    lazy val stepStateTree = NormalisedStepTree(
-//      convertNodeTree[StepPlaceholderNode, NormalisedStep](nodes
-//      , {case (node, level, index, children) => NormalisedStep(node.label.replace('.', '_').asLocalId, "".hasNormalisedRefs, children)}
-//      , sli.startingLabelIndex _
-//      )
-//    )
-  }
-
-  private def numberOfSteps(startingIndex: Int): Gen[Int] = {
-    val max = MaxStepsPerLevel + 1 - startingIndex
-    Gen.frequency(
-      (80, Gen.choose(1, 4))
-      , (80, Gen.choose(0, 3))
-      //      ,(1, Gen.value(max))
+    lazy val stepTree = StepTree(
+      convertNodeTree[StepPlaceholderNode, StepNode](nodes
+      , {case (node, level, index, children) => StepNode(node.label.replace('.', '_').asLocalId, level, index, children)}
+      , sli.startingLabelIndex _
+      )
     )
   }
 
-  def stepPlaceholderTree(prefix: String, sli: StartingLabelIndices): Gen[StepPlaceholderTree] = {
-    def go(prefix: String, level: Int, labels: List[LabelMaker]): Gen[List[StepPlaceholderNode]] =
+  private def numberOfSteps(minSteps: Int, startingIndex: Int): Gen[Int] = {
+    //val max = MaxStepsPerLevel + 1 - startingIndex
+    Gen.frequency(
+      (100, Gen.choose(minSteps, 3))
+      ,(3, Gen.choose(minSteps, 20))
+      //,(1, Gen.value(max))
+    )
+  }
+
+  def stepPlaceholderTree(prefix: String, sli: StartingLabelIndices, minSteps: Int): Gen[StepPlaceholderTree] = {
+    def go(prefix: String, level: Int, labels: List[LabelMaker], minSteps: Int): Gen[List[StepPlaceholderNode]] =
       labels match {
         case Nil => Nil
         case labelMaker :: nextLabels =>
-          numberOfSteps(sli.startingLabelIndex(level)).flatMap(size => {
+          numberOfSteps(minSteps, sli.startingLabelIndex(level)).flatMap(size => {
             val listOfGens = (0 to (size - 1)).toList.map(i => {
               val ind = i + sli.startingLabelIndex(level)
               val lbl = prefix + labelMaker(ind)
-              go(lbl + ".", level + 1, nextLabels).map(StepPlaceholderNode(lbl, _))
+              go(lbl + ".", level + 1, nextLabels, 0).map(StepPlaceholderNode(lbl, _))
             })
             Gen.sequence[List, StepPlaceholderNode](listOfGens)
           })
       }
-    go(prefix, 0, LabelMakerList).map(StepPlaceholderTree(_, sli))
+    go(prefix, 0, LabelMakerList, minSteps).map(StepPlaceholderTree(_, sli))
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -192,61 +193,63 @@ object DataGenerators extends Logger {
 
   val useCaseTitle = arbitrary[String]
 
-  val useCaseNumber = arbitrary[Short] suchThat (_ > 0)
+  val useCaseNumber = Gen.posNum[Short]
 
-  /*
-  val useCase: Gen[UseCase] = {
-    implicit val reactor = NoReaction
+  val useCaseHeader = for {
+    number <- useCaseNumber
+    title <- useCaseTitle
+  } yield UseCaseHeader(title, number)
+
+  def useCaseGen(fieldList: => FieldListRec): Gen[UseCase] = {
+    import UseCaseFns._
+    val NCF = fieldList.NCF
+    val ECF = fieldList.ECF
+
     for {
-      title <- useCaseTitle
-      num <- useCaseNumber
-      ncac <- stepPlaceholderTree(NCAC_LabelPrefix(num), NCAC_StartingLabelIndices)
-      ec <- stepPlaceholderTree(EC_LabelPrefix(num), EC_StartingLabelIndices)
-      steps = StepPlaceholderTree(ncac.nodes ::: ec.nodes, null)
-      uc = new UseCaseCtx(null)
+      h <- useCaseHeader
+      nc <- stepPlaceholderTree(NCF.rootLabelPrefix(h),  NCF.sli, 1)
+      ec <- stepPlaceholderTree(ECF.rootLabelPrefix(h),  ECF.sli, 0)
+      steps = StepPlaceholderTree(nc.nodes ::: ec.nodes, null)
       refdep = new RefDependentGen(steps)
-      textFields <- Gen.listOfN(uc.textFields.size, refdep.textFieldText)
-      stepTextFields <- Gen.listOfN(steps.sizeRecursive, refdep.stepText)
+      textFieldTexts <- Gen.listOfN(fieldList.textFields.size, refdep.textFieldText)
+      stepTexts <- Gen.listOfN(steps.sizeRecursive, refdep.stepText)
     } yield {
       trace(s"Creating UC with ${steps.sizeRecursive} steps.")
 
-      // Basics
-      uc.title = title
-      uc.number = num
-
-      // Tree structure
-      val ncacField = uc.ncacField.get
-      val ecField = uc.ecField.get
-      ncacField.setState(ncac.courseFieldState)
-      ecField.setState(ec.courseFieldState)
-      uc.stepLabelMap.invalidate
-      assume(uc.stepLabelMap.get.bs == steps.labels.toSet)
+      // Steps and Labels
+      implicit val stepsAndLabels = generateStepAndLabelBiMap(h, (NCF -> nc.stepTree), (ECF -> ec.stepTree))
+      assume(stepsAndLabels.get.bs == steps.labels.toSet)
 
       // Text fields
-      uc.textFields.zip(textFields).foreach {
+      val textFieldValues: FieldValues = fieldList.textFields.zip(textFieldTexts).map {
         case (f, text) =>
-          trace(s"t> text[${f.fd.title}] << ${text.replace("\n", "\\n")}")
-          f.value.setTextFromUser(text)
-          trace(s"t> text[${f.fd.title}] >> ${f.value.text.replace("\n", "\\n")}")
-      }
+          //trace(s"t> text[${f.defn.title}] << ${text.replace("\n", "\\n")}")
+          val v = FreeText.parse(text)
+          //trace(s"t> text[${f.defn.title}] >> ${v.text.replace("\n", "\\n")}")
+          (f ~> v)
+        }.toMap
 
       // Step text
-      val totalStepTree = TreeLike(ncacField.courses.nodes ::: ecField.courses.nodes)
-      val stepFields = ncacField.test__textFields ++ ecField.test__textFields
-      val stepIt = stepTextFields.iterator
-      totalStepTree.foreachRecursive(node => {
-        val txt = stepIt.next
-        trace(s"  step[${node.id}] << ${txt.replace("\n", "\\n")}")
-        stepFields(node.id).setTextFromUser(txt)
-        val after = stepFields(node.id).text
-        if (txt.contains("⬅")) require(after.contains("⬅"), s"Left-flow lost!\nWas: $txt\nNow: $after")
-        trace(s"  step[${node.id}] >> ${after.replace("\n", "\\n")}")
-      })
+      def stepFieldValue(f: StepField, tree: StepTree): StepFieldValue = {
+        val textIter = stepTexts.iterator
+        val textmap = tree.mapRecursive(s => {
+          val txt = textIter.next
+          //trace(s"  step[${node.id}] << ${txt.replace("\n", "\\n")}")
+          val v = StepText.parse(s.id, txt)
+          //val after = stepFields(node.id).text
+          //if (txt.contains("⬅")) require(after.contains("⬅"), s"Left-flow lost!\nWas: $txt\nNow: $after")
+          //trace(s"  step[${node.id}] >> ${after.replace("\n", "\\n")}")
+          (s.id -> v)
+        }).toMap
+        StepFieldValue(f, tree, textmap)
+      }
+      val stepFieldValues: FieldValues = Map(
+        (NCF ~> stepFieldValue(NCF, nc.stepTree)),
+        (ECF ~> stepFieldValue(ECF, ec.stepTree))
+      )
 
-      uc
+      val fieldValues = stepFieldValues ++ textFieldValues
+      UseCase(h, fieldList.fields, fieldValues, stepsAndLabels)
     }
   }
-
-  implicit lazy val arbUseCase: Arbitrary[UseCase] = Arbitrary(useCase)
-  */
 }
