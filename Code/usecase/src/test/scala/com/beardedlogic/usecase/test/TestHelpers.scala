@@ -264,12 +264,17 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
     }
   }
 
-  def time[U](logFn: Float => Any)(fn: => U): U = {
+  class Timer {
     val start = System.currentTimeMillis
+    def elapsedMs = System.currentTimeMillis - start
+    def elapsedSec = elapsedMs.toFloat / 1000f
+    def elapsedSec2dp = "%.2f".format(elapsedSec)
+  }
+
+  def time[U](logFn: Float => Any)(fn: => U): U = {
+    val t = new Timer
     val result = fn
-    val end = System.currentTimeMillis
-    val time = (end - start).toFloat / 1000f
-    logFn(time)
+    logFn(t.elapsedSec)
     result
   }
 
@@ -357,6 +362,10 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
   implicit class AnyExt[T](val v: T) {
     // Equality assertion with type equivalence ala Specs2
     def ====(that: T): Unit = v should be(that)
+
+    def pp(): T = {println(v); v}
+    def pp(name: String): T = {println(s"$name: $v"); v}
+    def pp(f: T => String): T = {println(f(v)); v}
   }
 
   /**

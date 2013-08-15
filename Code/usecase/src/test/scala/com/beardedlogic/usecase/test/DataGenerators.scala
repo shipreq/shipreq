@@ -7,6 +7,7 @@ import org.scalacheck.{Prop, Arbitrary, Gen}
 import scala.util.matching.Regex
 
 import lib._
+import change.NoChange
 import field._
 import model.FieldListRec
 import tree._
@@ -14,6 +15,7 @@ import text.{StepText, FreeText}
 import Misc.removeAllWhitespace
 import StepField.StartingLabelIndices
 
+import TestHelpers.AnyExt
 import StepLabels._
 import text.ParsingConfig._
 import TreeOps._
@@ -158,9 +160,14 @@ object DataGenerators extends Logger {
   // -------------------------------------------------------------------------------------------------------------------
   // Data that depends on valid step refs
 
-  class RefDependentGen(steps: StepPlaceholderTree) {
+  object RefDependentGen {
+    def apply(tree: StepPlaceholderTree) = new RefDependentGen(tree.labels)
+    def apply(uc: UseCase) = new RefDependentGen(uc.stepsAndLabels.get.ba.keys.toSeq)
+  }
 
-    val validRef = Gen.oneOf(steps.labels)
+  class RefDependentGen(labels: Seq[String]) {
+
+    val validRef = Gen.oneOf(labels)
 
     val validRefWithBraces = withBraces(validRef)
 
@@ -210,7 +217,7 @@ object DataGenerators extends Logger {
       nc <- stepPlaceholderTree(NCF.rootLabelPrefix(h),  NCF.sli, 1)
       ec <- stepPlaceholderTree(ECF.rootLabelPrefix(h),  ECF.sli, 0)
       steps = StepPlaceholderTree(nc.nodes ::: ec.nodes, null)
-      refdep = new RefDependentGen(steps)
+      refdep = RefDependentGen(steps)
       textFieldTexts <- Gen.listOfN(fieldList.textFields.size, refdep.textFieldText)
       stepTexts <- Gen.listOfN(steps.sizeRecursive, refdep.stepText)
     } yield {
@@ -252,4 +259,68 @@ object DataGenerators extends Logger {
       UseCase(h, fieldList.fields, fieldValues, stepsAndLabels)
     }
   }
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Use Case mutation
+
+  case class UseCaseMutator(fn: UseCase => UcUpdateResult) {
+    def apply(uc: UseCase) = fn(uc)
+  }
+
+  object UseCaseMutators {
+
+    private def mutateField(fn: (UseCase, RefDependentGen) => Gen[UcUpdateResult]): Gen[UseCaseMutator] = Gen(prms =>
+      Some(UseCaseMutator(uc => {
+        val refdep = RefDependentGen(uc)
+        val g = fn(uc, refdep)
+        g.apply(prms).getOrElse(NoChange)
+      })))
+
+    private def mutateStepNoText(fn: (StepField, LocalIdStr) => UseCase => UcUpdateResult) =
+      mutateField((uc, refdep) =>
+        for {
+          f <- Gen.oneOf(UseCaseFns.filter[StepField](uc.fields))
+          id <- Gen.oneOf(f(uc.fieldValues).textmap.keys.toSeq)
+        } yield fn(f, id)(uc)
+      )
+
+    private def mutateStep(fn: (StepField, LocalIdStr, String) => UseCase => UcUpdateResult) =
+      mutateField((uc, refdep) =>
+        for {
+          f <- Gen.oneOf(UseCaseFns.filter[StepField](uc.fields))
+          id <- Gen.oneOf(f(uc.fieldValues).textmap.keys.toSeq)
+          txt <- refdep.stepText
+        } yield fn(f, id, txt)(uc)
+      )
+
+    val MutateTitle = for (title <- useCaseTitle) yield UseCaseMutator(_.updateTitle(title))
+
+    val MutateTextField = mutateField((uc, refdep) =>
+      for {
+        f <- Gen.oneOf(UseCaseFns.filter[TextField](uc.fields))
+        txt <- refdep.textFieldText
+      } yield f.updateText(txt)(uc)
+    )
+
+    val MutateStepText = mutateStep((f, id, txt) => f.updateText(id, txt))
+    val AddStep = mutateStepNoText((f, id) => f.addStep(id))
+    val RemoveStep = mutateStepNoText((f, id) => f.removeStep(id))
+    val DecreaseIdent = mutateStepNoText((f, id) => f.decreaseIndent(id))
+    val IncreaseIdent = mutateStepNoText((f, id) => f.increaseIndent(id))
+  }
+
+  val useCaseMutator: Gen[UseCaseMutator] = {
+    import UseCaseMutators._
+    Gen.frequency(
+      (1, MutateTitle)
+      , (10, MutateTextField)
+      , (50, MutateStepText)
+      , (15, AddStep)
+      , (15, RemoveStep)
+      , (10, DecreaseIdent)
+      , (10, IncreaseIdent)
+    )
+  }
+
+  implicit lazy val arbUseCaseMutator: Arbitrary[UseCaseMutator] = Arbitrary(useCaseMutator)
 }

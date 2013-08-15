@@ -1,11 +1,12 @@
 package com.beardedlogic.usecase
 package law
 
-import org.scalacheck.{Arbitrary, Prop}
+import org.scalacheck.{Gen, Arbitrary, Prop}
 import org.scalacheck.Prop._
 import org.scalatest.FunSuite
 import org.scalatest.prop._
 import lib._
+import change.Changed
 import field._
 import model._
 import test.TestDatabaseSupport
@@ -16,12 +17,50 @@ import UseCaseFns._
 class UseCaseLaws extends FunSuite with TestDatabaseSupport with Checkers {
 
   def runs = 10
+  def mutationsPerRun = runs
+  def mutationRuns = 1
 
+  test("Mutate and save") {check(MutateAndSave, MinSuccessful(mutationRuns))}
   test("load(save(uc)) = uc") {check(SaveAndLoad, MinSuccessful(runs))}
-
   test("save(save(uc)) = NOP") {check(SecondSaveIsNop, MinSuccessful(runs))}
 
   // -------------------------------------------------------------------------------------------------------------------
+
+  lazy val MutateAndSave = forAll((uc0: UseCase, mutations: List[UseCaseMutator]) => dbProp {
+    val timer = new Timer
+    var uc = uc0
+    var prevSave = save(uc, None)
+    var curRev = 1
+    var result: Prop = true
+
+    def saveChangedUc(newUc: UseCase): Unit = {
+      val newResult: Prop =
+        save(newUc, prevSave) match {
+          case Some(cp) => checkNewRev(newUc, cp)
+          case None => checkNopSave(newUc)
+        }
+      result = result ==> newResult
+      uc = newUc
+    }
+
+    def checkNewRev(newUc: UseCase, cp: UseCaseSaveCheckpoint): Prop = {
+      curRev += 1
+      prevSave = Some(cp)
+      val ucRev = cp.rec
+      equal("UC revision")(curRev, ucRev.rev) && load(ucRev).uc <==> newUc
+    }
+
+    def checkNopSave(newUc: UseCase): Prop = load(prevSave.get.rec).uc <==> newUc
+
+    // Perform mutations
+    for (m <- mutations) m(uc) match {
+      case Changed(newUc, changes) => saveChangedUc(newUc); trace(s"Changes: $changes")
+      case _ =>
+    }
+
+    info(s"Mutated and saved to rev $curRev with ${uc.stepsAndLabels.get.size} steps in ${timer.elapsedSec2dp} sec.")
+    result
+  })
 
   lazy val SaveAndLoad = forAll((uc: UseCase) => timedDbProp("SaveAndLoad", uc) {
     uc <==> saveAndLoad(uc).uc
@@ -51,6 +90,7 @@ class UseCaseLaws extends FunSuite with TestDatabaseSupport with Checkers {
   override val wrapTestsInTransaction = false
 
   implicit lazy val arbUseCase: Arbitrary[UseCase] = Arbitrary(useCaseGen(Defaults.FieldList.get))
+  implicit lazy val arbUseCaseMutators: Arbitrary[List[UseCaseMutator]] = Arbitrary(Gen.listOfN(mutationsPerRun, useCaseMutator))
 
   def all(ps: Seq[Prop]) = Prop.all(ps: _*)
 
@@ -59,10 +99,11 @@ class UseCaseLaws extends FunSuite with TestDatabaseSupport with Checkers {
   def equal[T](name: => String)(a: T, b: T): Prop = (a == b) :|| failMsg(name)(a, b)
 
   def timedProp(name: String, uc: UseCase)(f: => Prop): Prop =
-    time(t => debug("%s: %6d steps in %.2f sec.".format(name, uc.stepsAndLabels.get.size, t)))(f)
+    time(t => info("%s: %6d steps in %.2f sec.".format(name, uc.stepsAndLabels.get.size, t)))(f)
 
-  def timedDbProp(name: String, uc: UseCase)(f: => Prop): Prop =
-    timedProp(name, uc) {rollbackAfter(f)}
+  def timedDbProp(name: String, uc: UseCase)(f: => Prop): Prop = timedProp(name, uc)(dbProp(f))
+
+  def dbProp(f: => Prop): Prop = rollbackAfter(f)
 
   implicit class UseCaseExt(val x: UseCase) {
     def <==>(y: UseCase): Prop = equalUseCases(x, y)

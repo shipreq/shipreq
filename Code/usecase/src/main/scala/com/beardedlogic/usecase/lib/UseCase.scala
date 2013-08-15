@@ -34,7 +34,7 @@ object UseCaseFns {
   def keyByField(f: Field)(c: Change) = (f -> c)
 
   def filter[F <: Field](fields: List[Field])(implicit m: ClassTag[F]): List[F] =
-    fields.filter(_.getClass.isAssignableFrom(m.runtimeClass)).asInstanceOf[List[F]]
+    fields.filter(f => m.runtimeClass.isAssignableFrom(f.getClass)).asInstanceOf[List[F]]
 
   // TODO Minimise computation with savedSteps + StepAndLabelBiMap
 
