@@ -12,7 +12,8 @@ object Defaults extends Logger {
   val Title = "Untitled"
 
   val FieldListDefns: List[FieldDefinition] =
-    TextFieldDefinition("Actors") ::
+    TextFieldDefinition("Description") ::
+      TextFieldDefinition("Actors") ::
       TextFieldDefinition("Pre-Conditions") ::
       TextFieldDefinition("Post-Conditions") ::
       NormalCourseFieldDefinition ::
