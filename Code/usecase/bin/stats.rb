@@ -15,7 +15,7 @@ def searchSrc(dp, ratio=true, &cmdFn)
   v = %w[src/main src/test].map{|dir| `#{cmdFn.call(dir)}`.chomp.to_i }
   o = v[0]>v[1] ? ">" : "<"
   r = "%#{dp}d %s %#{dp}d = %#{dp}d" % [v[0], o, v[1], v[0]+v[1]]
-  r += "  (%.2f|%.2f)" % [v[0].to_f/v[1].to_f, v[1].to_f/v[0].to_f] if ratio
+  r += "  (%.2f)" % [v[1].to_f/v[0].to_f] if ratio
   r
 end
 
