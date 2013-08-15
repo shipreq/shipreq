@@ -17,21 +17,14 @@ object Types {
   // -------------------------------------------------------------------------------------------------------------------
   // Type tags
 
-  // TODO Use Scalaz TypeTags
   sealed trait TypeTag[B]
   type Tagged[T <: TypeTag[_]] = {type Tag = T}
   type @@[O, T <: TypeTag[_]] = O with T
 
-  @inline final def tag[T <: TypeTag[Long]](long: JLong) = long.asInstanceOf[JLong @@ T]
-  @inline final def tag[T <: TypeTag[Long]](long: scala.Long) = JLong.valueOf(long).asInstanceOf[JLong @@ T]
-  @inline final def tag[T <: TypeTag[Long]](long: Int) = JLong.valueOf(long).asInstanceOf[JLong @@ T]
-  @inline final def tag[T <: TypeTag[Long]](m: Box[scala.Long]) = m.map(_.tag[T])
-  @inline final def tag[T <: TypeTag[Long]](m: Option[scala.Long]) = m.map(_.tag[T])
-
-  implicit def taggedStringOrdering[T <: TypeTag[String]] = implicitly[Ordering[String]].asInstanceOf[Ordering[String @@ T]]
-
   // -------------------------------------------------------------------------------------------------------------------
   // String tags
+
+  implicit def taggedStringOrdering[T <: TypeTag[String]] = implicitly[Ordering[String]].asInstanceOf[Ordering[String @@ T]]
 
   /** Indicates that references to steps are in normalised form. Eg. [D.112] instead of [3.0.1] */
   trait NormalisedRefs extends TypeTag[String]
@@ -64,34 +57,43 @@ object Types {
   // -------------------------------------------------------------------------------------------------------------------
   // Long tags
 
-  implicit class LongTypeExt(val x: Long) extends AnyVal {
-    def tag[T <: TypeTag[Long]] = JLong.valueOf(x).asInstanceOf[JLong @@ T]
+  implicit class JLongTypeExt(val x: JLong) extends AnyVal {
+    def tag[T <: TypeTag[Long]] = x.asInstanceOf[JLong @@ T]
+  }
+  implicit class LongTypeExt(val x: scala.Long) extends AnyVal {
+    def tag[T <: TypeTag[Long]] = JLong.valueOf(x).tag[T]
+  }
+  implicit class LongOptionExt(val x: Option[Long]) extends AnyVal {
+    def tag[T <: TypeTag[Long]] = x.map(_.tag[T])
+  }
+  implicit class LongBoxExt(val x: Box[scala.Long]) extends AnyVal {
+    def tag[T <: TypeTag[Long]] = x.map(_.tag[T])
   }
 
   /** Marks a Long value as corresponding to `field_key.id`. */
   trait FieldKeyIdTag extends TypeTag[Long]
   type FieldKeyId = JLong @@ FieldKeyIdTag
-  @inline final implicit def FieldKeyToId(r: FieldKeyRec) = tag[FieldKeyIdTag](r.id)
+  @inline final implicit def FieldKeyToId(r: FieldKeyRec) = r.id.tag[FieldKeyIdTag]
 
   /** Marks a Long value as corresponding to `usecase.id` and `usecase_rev.ident_id`. */
   trait UseCaseIdentIdTag extends TypeTag[Long]
   type UseCaseIdentId = JLong @@ UseCaseIdentIdTag
-  @inline final implicit def UseCaseRevToIdentId(r: UseCaseRev) = tag[UseCaseIdentIdTag](r.identId)
+  @inline final implicit def UseCaseRevToIdentId(r: UseCaseRev) = r.identId.tag[UseCaseIdentIdTag]
 
   /** Marks a Long value as corresponding to `usecase_rev.id`. */
   trait UseCaseRevIdTag extends TypeTag[Long]
   type UseCaseRevId = JLong @@ UseCaseRevIdTag
-  @inline final implicit def UseCaseRevToId(r: UseCaseRev) = tag[UseCaseRevIdTag](r.id)
+  @inline final implicit def UseCaseRevToId(r: UseCaseRev) = r.id.tag[UseCaseRevIdTag]
 
   /** Marks a Long value as corresponding to `text.id` and `text_rev.ident_id`. */
   trait TextIdentIdTag extends TypeTag[Long]
   type TextIdentId = JLong @@ TextIdentIdTag
-  @inline final implicit def TextRevToIdentId(r: TextRev) = tag[TextIdentIdTag](r.identId)
+  @inline final implicit def TextRevToIdentId(r: TextRev) = r.identId.tag[TextIdentIdTag]
 
   /** Marks a Long value as corresponding to `text_rev.id`. */
   trait TextRevIdTag extends TypeTag[Long]
   type TextRevId = JLong @@ TextRevIdTag
-  @inline final implicit def TextRevToId(r: TextRev) = tag[TextRevIdTag](r.id)
+  @inline final implicit def TextRevToId(r: TextRev) = r.id.tag[TextRevIdTag]
 
   // -------------------------------------------------------------------------------------------------------------------
   // Typedefs
