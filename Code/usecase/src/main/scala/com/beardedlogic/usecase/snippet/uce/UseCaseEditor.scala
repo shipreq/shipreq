@@ -1,6 +1,7 @@
 package com.beardedlogic.usecase
 package snippet.uce
 
+import net.liftweb.common._
 import net.liftweb.http.js.{JsCmd, JsCmds}
 import net.liftweb.http._
 import net.liftweb.util.Helpers._
@@ -12,13 +13,17 @@ import field._
 import model._
 import Types._
 
-case class State(uc: UseCase, prevSave: Option[UseCaseSaveCheckpoint]) {
-  def currentRevision = prevSave.map(_.rec.rev.toString).getOrElse("0")
-}
+object UseCaseEditor extends StaticSnippetHelpers with DI {
 
-object UseCaseEditor {
+  case class State(uc: UseCase, prevSave: Option[UseCaseSaveCheckpoint]) {
+    def currentRevision = prevSave.map(_.rec.rev.toString).getOrElse("0")
+  }
+  object State {
+    def apply(cp: UseCaseSaveCheckpoint): State = State(cp.uc, Some(cp))
+  }
+
   // TODO Delete UCE . initial state
-  val InitialState: State = {
+  val DefaultInitialState: State = {
     val h = UseCaseHeader(Defaults.Title, 1)
     val fl = Defaults.FieldList.get.fields
     val ncf = UseCaseFns.filter[NormalCourseField](fl).head
@@ -27,23 +32,37 @@ object UseCaseEditor {
     val uc = UseCase(h, fl, fv, sl)
     State(uc, None)
   }
+
+  def loadLatest(ucId: UseCaseIdentId): State = {
+    val tryToLoad = for {
+      lock   <- Locks.UseCase.forRead(ucId)
+      dao    <- daoProvider.forTransaction
+      ucRec  <- Box(dao.findLatestUseCase(ucId)) ~> NotFoundResponse()
+    } yield UseCasePersistence.load(ucRec, dao, lock)
+    tryToLoad match {
+      case Full(cp)                               => State(cp)
+      case ParamFailure(_, _, _, r: LiftResponse) => respondImmediately(r)
+      case _                                      => shouldNeverHappen_!
+    }
+  }
 }
 
-class UseCaseEditor extends StatefulSnippet with SnippetHelpers {
+import UseCaseEditor._
 
-  import UseCaseEditor._
+class UseCaseEditor(initialState: UseCaseEditor.State) extends StatefulSnippet with SnippetHelpers {
 
-  private var state__ = InitialState
+  def this() = this(DefaultInitialState)
+  def this(ucId: UseCaseIdentId) = this(loadLatest(ucId))
+
+  private var state__ = initialState
+
+  protected def setState(newState: State): Unit = state__ = newState
 
   @inline final def state = state__
   @inline final def uc = state.uc
   @inline final def uch = uc.header
   @inline final def fields = uc.fields
   @inline final def fieldValues = uc.fieldValues
-
-  protected def setState(newState: State): Unit = {
-    state__ = newState
-  }
 
   val textFieldIds: Map[Field, LocalIdStr] =
     UseCaseFns.filter[TextField](fields)

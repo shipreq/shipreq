@@ -9,6 +9,7 @@ import lib.StepLabels.{MaxStepDepth, MaxStepsPerLevel}
 import lib.{StepNode, UseCase}
 import Renderer.TitleId
 import test.{LoadedTestData, TestHelpers, TestDatabaseSupport}
+import UseCaseEditor._
 
 class UseCaseEditorTest extends FunSpec with TestDatabaseSupport with TestHelpers with LoadedTestData {
 
@@ -19,7 +20,7 @@ class UseCaseEditorTest extends FunSpec with TestDatabaseSupport with TestHelper
   def unquoteJs(in: String): String =
     "\\\\u([0-9a-f]{4})".r.replaceAllIn(in, m => Integer.parseInt(m.group(1), 16).toChar.toString).replace("\\\"","\"")
 
-  class UseCaseEditor2 extends UseCaseEditor {
+  class UseCaseEditor2(state: State) extends UseCaseEditor(state) {
     def setState2(newState: State) = { super.setState(newState); this }
 
     def update2(f: UseCase => UcUpdateResult): (UseCaseEditor2, String) =
@@ -31,10 +32,10 @@ class UseCaseEditorTest extends FunSpec with TestDatabaseSupport with TestHelper
   lazy val State2b = State(MockUc2b.UC, None)
   lazy val State3 = State(MockUc3.UC, None)
 
-  def UCE1 = new UseCaseEditor2().setState2(State1)
-  def UCE2a = new UseCaseEditor2().setState2(State2a)
-  def UCE2b = new UseCaseEditor2().setState2(State2b)
-  def UCE3 = new UseCaseEditor2().setState2(State3)
+  def UCE1 = new UseCaseEditor2(State1)
+  def UCE2a = new UseCaseEditor2(State2a)
+  def UCE2b = new UseCaseEditor2(State2b)
+  def UCE3 = new UseCaseEditor2(State3)
 
   /**
    * Creates UCE with UC with EC like:
@@ -44,7 +45,7 @@ class UseCaseEditorTest extends FunSpec with TestDatabaseSupport with TestHelper
    * 1.E.99.99.cu
    */
   def uceWithThreeFullLevelsOfEC = {
-    val uce = new UseCaseEditor2()
+    val uce = new UseCaseEditor2(State2a)
     def tree = ECF(uce.fieldValues).tree
     def last = tree.nodes.last
     MaxStepsPerLevel.times(uce.update2(ECF.addTailStep)) // Creates (1-99)
@@ -67,7 +68,7 @@ class UseCaseEditorTest extends FunSpec with TestDatabaseSupport with TestHelper
    * 1.E.1.1.a.i.2
    */
   def uceWithDeepestLevelEC = {
-    val uce = new UseCaseEditor2()
+    val uce = new UseCaseEditor2(State2a)
     def tree = ECF(uce.fieldValues).tree
     var last: StepNode = null
     (MaxStepDepth + 1) times {
@@ -145,7 +146,7 @@ class UseCaseEditorTest extends FunSpec with TestDatabaseSupport with TestHelper
   describe("AJAX callbacks") {
 
     describe("title change") {
-      lazy val (uce,resp) = new UseCaseEditor2().update2(_.updateTitle("  bananas  "))
+      lazy val (uce,resp) = new UseCaseEditor2(State1).update2(_.updateTitle("  bananas  "))
       it("should update the editor state") {
         uce.uc.header.title should be("bananas")
       }
@@ -155,7 +156,7 @@ class UseCaseEditorTest extends FunSpec with TestDatabaseSupport with TestHelper
     }
 
     describe("text field change") {
-      lazy val (uce,resp) = new UseCaseEditor2().update2(TF1.updateText("bananas"))
+      lazy val (uce,resp) = new UseCaseEditor2(State1).update2(TF1.updateText("bananas"))
       it("should update the editor state") {
         TF1(uce.fieldValues).text should be("bananas")
       }

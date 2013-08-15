@@ -17,8 +17,19 @@ import com.beardedlogic.usecase.util.JsExt._
 import com.beardedlogic.usecase.util.{ErrorMessages, Reactor, JavaScriptReaction, JavaScript}
 import SnippetHelpers._
 
-object SnippetHelpers {
+object SnippetHelpers extends StaticSnippetHelpers {
   final val DefaultAjaxErrorId = "ajaxErr"
+}
+
+trait StaticSnippetHelpers {
+
+  def respondImmediately(response: LiftResponse): Nothing = throw ResponseShortcutException.shortcutResponse(response)
+
+  def shouldNeverHappen_! = respondImmediately(ShouldNeverHappenResponse())
+
+  def shouldNeverHappen_!(msg: String) = respondImmediately(ShouldNeverHappenResponse(msg))
+
+  def loggedInUser = Oshiro.loggedInUser
 }
 
 /**
@@ -26,7 +37,7 @@ object SnippetHelpers {
  *
  * @since 11/06/2013
  */
-trait SnippetHelpers extends Misc with DI with Logger {
+trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with Logger {
 
   @inline implicit final def jsExpToJsCmd(in: JsExp) = in.cmd
 
@@ -39,7 +50,7 @@ trait SnippetHelpers extends Misc with DI with Logger {
 //    def ~~>(errMsg: NodeSeq) = box ~> reactWithError(errMsg)
 //  }
 
-  protected implicit val jsonFormats = Serialization.formats(NoTypeHints)
+  protected implicit lazy val jsonFormats = Serialization.formats(NoTypeHints)
 
   // -------------------------------------------------------------------------------------------------------------------
 
@@ -52,14 +63,6 @@ trait SnippetHelpers extends Misc with DI with Logger {
       daoProvider.withTransaction(dao =>
         f(r, dao)
       ))
-
-  def respondImmediately(response: LiftResponse): Nothing = throw ResponseShortcutException.shortcutResponse(response)
-
-  def shouldNeverHappen_! = respondImmediately(ShouldNeverHappenResponse())
-
-  def shouldNeverHappen_!(msg: String) = respondImmediately(ShouldNeverHappenResponse(msg))
-
-  def loggedInUser = Oshiro.loggedInUser
 
   type Mail = (Subject, List[MailTypes])
   var mailer: Mailer = Mailer

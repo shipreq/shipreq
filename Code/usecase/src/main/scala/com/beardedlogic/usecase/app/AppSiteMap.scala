@@ -4,13 +4,18 @@ import net.liftweb.common._
 import net.liftweb.http.{Templates, RedirectResponse, LiftResponse}
 import net.liftweb.sitemap._
 import net.liftweb.sitemap.Loc._
+import net.liftweb.util.Props
+import net.liftweb.util.Props.RunModes.{Development, Test => TestMode}
 import org.apache.shiro.SecurityUtils
-import com.beardedlogic.usecase.model.{UseCaseSummary, UseCaseRev}
 import com.beardedlogic.usecase.lib.ExternalId
 import com.beardedlogic.usecase.lib.Types._
 import AppConfig.BaseUrl
 
 object AppSiteMap {
+
+  // Menu.i(NAME_AND_TITLE) / PATH_FOR_URL_AND_TEMPLATE
+  // Menu(Loc(NAME, PATH_FOR_URL_AND_TEMPLATE, TITLE))
+  // Menu.param[PARAM_TYPE(S)](NAME, TITLE, URL_TO_PARAM, PARAM_TO_URL) / PATH_FOR_URL_AND_TEMPLATE
 
   val HomeRelativeUrl = "/"
 
@@ -29,25 +34,28 @@ object AppSiteMap {
 
   val UseCaseIndex = Menu.i("Use Cases") / "list"
 
-  val UseCaseEditor = Menu.i("Use Case Editor") / "uce"
+  val UseCaseEditor = Menu_UcIdParam("uce", "Use Case Editor") / "usecase" / * >> Hidden >> UseTemplate("uce")
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  val sitemap = SiteMap(Home, Login, Logout, Register1, Register2, UseCaseIndex, UseCaseEditor)
+  val sitemap = {
+    var pages = List[ConvertableToMenu](Home, Login, Logout, Register1, Register2, UseCaseIndex, UseCaseEditor)
+    Props.mode match {
+      case Development | TestMode => pages +:= Menu.i("Use Case Editor (demo)") / "uce"
+      case _ =>
+    }
+    SiteMap(pages: _*)
+  }
 
   def logout(): Box[LiftResponse] = {
     SecurityUtils.getSubject.logout()
     Full(RedirectResponse(HomeRelativeUrl))
   }
 
-  def UseTemplate(path: String) = TemplateBox(() => Templates(path.split("/").toList))
+  private def Menu_UcIdParam(name: String, linkText: Loc.LinkText[UseCaseIdentId]) =
+    Menu.param[UseCaseIdentId](name, linkText, ExternalId.parse(_).tag[UseCaseIdentIdTag], ExternalId.toExternal(_))
 
-  object Urls {
-    // TODO viewUseCase() should be UseCaseEditor() and should use a Loc
-    def viewUseCase(uc: UseCaseRev): String = viewUseCase(uc.identId)
-    def viewUseCase(ucs: UseCaseSummary): String = viewUseCase(ucs.id)
-    def viewUseCase(id: UseCaseIdentId): String = "/usecase/" + ExternalId(id)
-  }
+  private def UseTemplate(path: String) = TemplateBox(() => Templates(path.split("/").toList))
 
   object Implicits {
 

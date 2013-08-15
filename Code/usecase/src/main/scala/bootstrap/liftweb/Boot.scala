@@ -6,7 +6,7 @@ import net.liftweb.util.{Props, Mailer}
 import javax.mail.{Authenticator, PasswordAuthentication}
 
 import com.beardedlogic.usecase._
-import lib.{ExternalIdStr, Defaults}
+import lib.Defaults
 import lib.db.DB
 import lib.security.Oshiro
 import app.AppSiteMap
@@ -37,13 +37,6 @@ class Boot {
 
     // Register route whitelist
     LiftRules.setSiteMap(AppSiteMap.sitemap)
-
-    // Routing
-    // TODO should be done via sitemap
-//    LiftRules.statelessRewrite.append {
-//      case RewriteRequest(ParsePath("usecase" :: ExternalIdStr(id) :: Nil, "", true, false), GetRequest, _) =>
-//        RewriteResponse("uce" :: Nil, Map(UCEditor.ParamId -> id))
-//    }
 
     // Use HTML5 for rendering
     LiftRules.htmlProperties.default.set((r: Req) => new Html5Properties(r.userAgent))
