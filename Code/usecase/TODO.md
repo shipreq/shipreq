@@ -13,6 +13,8 @@ FEATURE TODO
     P(90%) = 0 to 20 times per game.
     P(99%) = 0 to 100 times per game.
 * [C] Nice to have BA in steps reference BA in actors. Change actors, steps change too.
+* [C] Make pre/post-condition fields sharable/AOP-style. Instead of writing the
+  same conditions in all UCs, define them one and select UCs they apply to.
 
 FUNC TODO
 =========
@@ -34,6 +36,7 @@ FUNC TODO
 * [C.4.4] [UCI ] Reorder UCs. Might be superceded by better UC org func such as grouping.
 * [C.3.4] [ACCT] Add JS validation to register2 (ie. account creation).
 * [C.3.3] [UCE ] Support in-place DB updating (ie. no history disabled)
+* [C.2.1] [UCE ] Delete step via KB shortcut.
 * [C.2.1] [ACCT] Add JS email corrector/validator like mailcheck.js.
 * [C.1.1] [UCE ] Alt+Shift+Enter to create next & indent.
 * [C.1.1] [UCE ] View step references. (Eg. Who has refs to 1.0.4?)
