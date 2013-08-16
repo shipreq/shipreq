@@ -76,7 +76,7 @@ class UseCaseRevTest extends FunSpec with TestDatabaseSupport {
       db.linkUcToText(uc1, txt2)
 
       val uc2 = assertAuditedUpdate(uc1, 2)
-      db.findAllUcFieldData(uc2).map(_.textRev) ==== List(txt1, txt2)
+      db.findAllUcFieldData(uc2).map(_.textRev).map(_.toString).sorted ==== List(txt1, txt2).map(_.toString).sorted
     }
 
     it("should do nothing when rev #1 and no change") {
