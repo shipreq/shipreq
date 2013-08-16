@@ -237,6 +237,6 @@ $(document).on('focus', "#uce textarea", autoSetTypingMode)
 $(document).on('blur',  "#uce textarea", autoSetTypingMode)
 $(document).on('mousedown', ".step .lbl, .step .lbl *", onLabelClick)
 
-window.onbeforeunload = function() {
-    return "ANY UNSAVED CHANGES WILL BE LOST."
-}
+//window.onbeforeunload = function() {
+//    return "ANY UNSAVED CHANGES WILL BE LOST."
+//}
