@@ -1,0 +1,65 @@
+digraph G {
+rankdir=LR
+node[fontname="Lucida Sans Unicode",fontsize=10]
+
+// concentrate=true
+// graph [remincross=true, overlap="false"]
+// mclimit=20.0
+// nslimit=20.0
+// graph [mclimit=20.0]
+// ratio="compress"
+
+START [shape=circle,style=filled,color=black,fontsize=1,height=.3]
+
+subgraph cluster_n {
+  node [style=filled,color=green]
+  "2.0"   [label="2.0\nReference\nother UCs."]
+  "2.0.1" [label="2.0.1\nBA enters [UC-123]\nsomewhere in\ntheir UC's fields."]
+  "2.0.2" [label="2.0.2\nSystem validates\nthat UC-123 exists."]
+  "2.0.3" [label="2.0.3\nSystem changes the\nreference to include\nthe UC's title."]
+  "2.0.4" [label="2.0.4\nSystem sends\nupdated field value\nback to BA's screen."]
+  "2.0" -> "2.0.1" -> "2.0.2" -> "2.0.3" -> "2.0.4"
+}
+
+subgraph cluster_a {
+  node [style=filled,color=lightblue]
+  "2.1"   [label="2.1\nReference already\nincludes a title."]
+  "2.1.1" [label="2.1.1\nSystem ignores title\nbefore further processing."]
+  "2.1" -> "2.1.1"
+}
+
+subgraph cluster_e {
+  node [style=filled,color=red]
+  "2.E.1"   [label="2.E.1\nReferenced UC\ndoesn't exist."]
+  "2.E.1.1" [label="2.E.1.1\nSystem changes appends\na question mark to the\ninside of the reference."]
+  "2.E.2"   [label="2.E.2\nBA references UC in\na step's flow clause."]
+  "2.E.1" -> "2.E.1.1"
+  "2.E.2"
+}
+
+// { START; "2.0" } -> "2.1" [style=invis]
+// { START; "2.0" } -> "2.E.1" [style=invis]
+// { START; "2.0" } -> "2.E.2" [style=invis]
+
+// compound=true
+// START -> "2.1" [lhead=cluster_a,style=invis]
+// START -> "2.E.1" [lhead=cluster_e,style=invis]
+// "2.0" -> "2.1" [style=invis]
+// "2.0" -> "2.E.1" [style=invis]
+
+
+"2.1.1" -> "2.0.2"
+"2.0.1" -> "2.1"
+"2.0.2" -> "2.E.1" // Hit 2.E.1 before 2.E.2 or else lines cross
+"2.0.1" -> "2.E.2"
+"2.E.1.1" -> "2.0.4"
+"2.E.2" -> "2.E.1.1"
+
+END [shape=doublecircle,style=filled,color=black,fontsize=1,height=.3]
+
+START -> { "2.0" }
+{ "2.0.4" } -> END
+
+graph [label="UC-2: Reference other UCs"]
+
+}

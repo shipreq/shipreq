@@ -1,0 +1,35 @@
+digraph G {
+rankdir=LR
+
+subgraph cluster_0 {
+node [style=filled,color=lightblue]
+"2.1" -> "2.1.1" -> "2.1.2"
+
+}; subgraph cluster_1 {
+node [style=filled,color=green]
+"2.0" -> "2.0.1" -> "2.0.2" -> "2.0.3" -> "2.0.4"
+
+}; subgraph cluster_2 {
+
+node [style=filled,color=red]
+"2.E.1" -> "2.E.1.1" -> "2.E.1.2"
+"2.E.2" -> "2.E.2.1"
+
+}
+
+"2.0.1" -> "2.1"
+"2.0.1" -> "2.E.2"
+"2.0.2" -> "2.E.1"
+"2.1.2" -> "2.0.2"
+"2.E.1.2" -> "2.0.4"
+"2.E.2.1" -> "2.E.1.1"
+
+START [shape=circle,style=filled,color=black,fontsize=1,height=.3]
+END [shape=doublecircle,style=filled,color=black,fontsize=1,height=.3]
+
+START -> { "2.0" }
+{ "2.0.4" } -> END
+
+graph [label="UC-2: Reference other UCs"]
+
+}
