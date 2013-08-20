@@ -1,0 +1,83 @@
+<html>
+<head>
+	<meta content="text/html; charset=UTF-8" http-equiv="content-type">
+
+	<script type="text/javascript" src="../js/vendor/jquery.js"></script>
+	<script type="text/javascript" src="../../javascript/vendor/jquery-ui.js"></script>
+	<script type="text/javascript" src="../../javascript/vendor/jquery-autosize.js"></script>
+	<script type="text/javascript" src="../js/vendor/viz.js"></script>
+
+	<!--<link media="screen" type="text/css" href="../css/vendor/bootstrap.css" rel="stylesheet"/>-->
+	<link media="screen" type="text/css" href="../css/uce.css" rel="stylesheet"/>
+	<style media="screen" type="text/css">
+	</style>
+
+	<title>JS Graphviz Demo</title>
+
+</head>
+<body>
+
+<h1>JS Graphviz Demo</h1>
+
+<h3>UC2 (content in JS)</h3>
+<div id="uc2">HERE</div>
+
+<h3>UC5 (content in &lt;script&gt;)</h3>
+<div id="uc5">HERE</div>
+
+<script type="text/vnd.graphviz" id="uc5-content">
+	digraph G {
+	rankdir=LR
+
+	subgraph cluster_0 {
+	node [style=filled,color=lightblue]
+	"5.1" -> "5.1.1" -> "5.1.2"
+	"5.2" -> "5.2.1" -> "5.2.2" -> "5.2.3" -> "5.2.4" -> "5.2.5"
+
+	}; subgraph cluster_1 {
+	node [style=filled,color=green]
+	"5.0" -> "5.0.1" -> "5.0.2" -> "5.0.3" -> "5.0.4" -> "5.0.5" -> "5.0.6" -> "5.0.7" -> "5.0.8" -> "5.0.9" -> "5.0.10"
+
+	}; subgraph cluster_2 {
+
+	node [style=filled,color=red]
+	"5.E.1" -> "5.E.1.1"
+	"5.E.2" -> "5.E.2.1"
+
+	}
+
+	"5.0.1" -> "5.1"
+	"5.0.7" -> "5.E.1"
+	"5.0.9" -> "5.E.2"
+	"5.1.1" -> "5.2"
+	"5.1.2" -> "5.0.5"
+	"5.2.5" -> "5.0.4"
+	"5.E.2.1" -> "5.0.8"
+
+	START [shape=circle,style=filled,color=black,fontsize=1,height=.3]
+	END [shape=doublecircle,style=filled,color=black,fontsize=1,height=.3]
+	"UC-4" [shape=cds,style=filled]
+
+	START -> { "5.0" }
+	{ "5.E.1.1" } -> END
+	{ "5.0.10" } -> "UC-4"
+
+	graph [label="UC-5: Share UCs (for reading)"]
+
+	}
+</script>
+
+<script type="text/javascript">
+
+	var uc2Content = 'digraph G {;rankdir=LR;subgraph cluster_0 {;node [style=filled,color=lightblue];"2.1"->"2.1.1"->"2.1.2";}; subgraph cluster_1 {;node [style=filled,color=green];"2.0"->"2.0.1"->"2.0.2"->"2.0.3"->"2.0.4";}; subgraph cluster_2 {;node [style=filled,color=red];"2.E.1"->"2.E.1.1"->"2.E.1.2";"2.E.2"->"2.E.2.1";};"2.0.1"->"2.1";"2.0.1"->"2.E.2";"2.0.2"->"2.E.1";"2.1.2"->"2.0.2";"2.E.1.2"->"2.0.4";"2.E.2.1"->"2.E.1.1";START [shape=circle,style=filled,color=black,fontsize=1,height=.3];END [shape=doublecircle,style=filled,color=black,fontsize=1,height=.3];START->{ "2.0" };{ "2.0.4" }->END;graph [label="UC-2: Reference other UCs"];}'
+
+	$(document).ready(function () {
+		var uc5svg = Viz($('#uc5-content').html(), 'svg')
+		$('#uc5').html(uc5svg)
+
+		var uc2svg = Viz(uc2Content, 'svg')
+		$('#uc2').html(uc2svg)
+	});
+</script>
+</body>
+</html>

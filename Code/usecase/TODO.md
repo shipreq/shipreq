@@ -19,6 +19,7 @@ FEATURE TODO
 FUNC TODO
 =========
 
+* [M.0.5] [LEGL] Check all licences and attribute as required.
 * [M.0.5] [LEGL] Add terms of service.
 * [M.0.5] [UCE ] Fix: Accidently hit back without saving, progress is lost.
 
