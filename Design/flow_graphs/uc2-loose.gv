@@ -1,0 +1,34 @@
+digraph G {
+// rankdir=LR
+
+edge[weight=9]
+node [style=filled,color=green]
+"2.0" -> "2.0.1" -> "2.0.2" -> "2.0.3" -> "2.0.4"
+
+edge[weight=1]
+node [style=filled,color=lightblue]
+"2.1" -> "2.1.1" -> "2.1.2"
+
+node [style=filled,color=red]
+"2.E.1" -> "2.E.1.1" -> "2.E.1.2"
+"2.E.2" -> "2.E.2.1"
+
+"2.0.1" -> "2.1"
+"2.1.2" -> "2.0.2"
+"2.E.1.2" -> "2.0.4"
+"2.E.2.1" -> "2.E.1.1"
+{edge[color=red]
+"2.0.1" -> "2.E.2"
+"2.0.2" -> "2.E.1"
+}
+
+START [shape=circle,style=filled,color=black,fontsize=1,height=.3]
+END [shape=doublecircle,style=filled,color=black,fontsize=1,height=.3]
+
+edge[weight=9]
+START -> { "2.0" }
+{ "2.0.4" } -> END
+
+graph [label="UC-2: Reference other UCs"]
+
+}

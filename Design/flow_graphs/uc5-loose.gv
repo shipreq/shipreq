@@ -1,0 +1,38 @@
+digraph G {
+// rankdir=LR
+
+{ edge[weight=9]
+node [style=filled,color=green]
+"5.0" -> "5.0.1" -> "5.0.2" -> "5.0.3" -> "5.0.4" -> "5.0.5" -> "5.0.6" -> "5.0.7" -> "5.0.8" -> "5.0.9" -> "5.0.10"
+}
+
+{node [style=filled,color=lightblue]
+"5.1" -> "5.1.1" -> "5.1.2"
+"5.2" -> "5.2.1" -> "5.2.2" -> "5.2.3" -> "5.2.4" -> "5.2.5"
+}
+
+{node [style=filled,color=red]
+"5.E.1" -> "5.E.1.1"
+"5.E.2" -> "5.E.2.1"
+}
+
+"5.0.1" -> "5.1"
+"5.0.7" -> "5.E.1"
+"5.0.9" -> "5.E.2"
+"5.1.1" -> "5.2"
+"5.1.2" -> "5.0.5"
+"5.2.5" -> "5.0.4"
+"5.E.2.1" -> "5.0.8"
+
+START [shape=circle,style=filled,color=black,fontsize=1,height=.3]
+END [shape=doublecircle,style=filled,color=black,fontsize=1,height=.3]
+"UC-4" [shape=cds,style=filled]
+
+edge[weight=9]
+START -> { "5.0" }
+{ "5.E.1.1" } -> END
+{ "5.0.10" } -> "UC-4"
+
+graph [label="UC-5: Share UCs (for reading)"]
+
+}
