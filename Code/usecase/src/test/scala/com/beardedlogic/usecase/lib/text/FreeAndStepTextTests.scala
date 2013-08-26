@@ -49,7 +49,7 @@ object FreeAndStepTextTests extends TestHelpers {
     type Clause <: FlowClause
     def other: FlowTester
     def get(t: StepText): Option[FlowClause]
-    def change(src: LocalIdStr, tgt: Set[LocalIdStr]): Change
+    def change(src: LocalStepId, tgt: Set[LocalStepId]): Change
     def forceArrows(str: String): String
     def style: FlowStyle
     def obj: Flow[Clause]
@@ -60,7 +60,7 @@ object FreeAndStepTextTests extends TestHelpers {
     val FlowRightReplace = "(-+)>".r
     override def other = FlowToTester
     override def get(t: StepText) = t.flowFromClause
-    override def change(src: LocalIdStr, tgt: Set[LocalIdStr]) = FlowFromChange(tgt, src)
+    override def change(src: LocalStepId, tgt: Set[LocalStepId]) = FlowFromChange(tgt, src)
     override def forceArrows(s: String) = FlowRightReplace.replaceAllIn(s, "<" + _.group(1)).replace("➡", "⬅")
     override def style = FlowFromStyle
     override def obj = FlowFrom
@@ -71,7 +71,7 @@ object FreeAndStepTextTests extends TestHelpers {
     val FlowLeftReplace = "<(-+)".r
     override def other = FlowFromTester
     override def get(t: StepText) = t.flowToClause
-    override def change(src: LocalIdStr, tgt: Set[LocalIdStr]) = FlowToChange(src, tgt)
+    override def change(src: LocalStepId, tgt: Set[LocalStepId]) = FlowToChange(src, tgt)
     override def forceArrows(s: String) = FlowLeftReplace.replaceAllIn(s, _.group(1) + ">").replace("⬅", "➡")
     override def style = FlowToStyle
     override def obj = FlowTo
@@ -267,7 +267,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
 
       it("should sort refs with parents preceding children") {
         val orderedLabels = List("1.0", "1.0.1", "1.0.1.a", "1.0.1.a.2", "1.0.1.c", "1.0.2", "1.1", "1.E.1")
-        val refs: Refs = orderedLabels.map(x => (s"id/$x".asLocalId, x.asLabel)).toMap
+        val refs: Refs = orderedLabels.map(x => (s"id/$x".asLocalStepId, x.asLabel)).toMap
         val flow = F.obj.create(refs).get
         F.obj.toText(flow).replaceAll("[^0-9a-zE\\. ]", "").trim should be(orderedLabels.mkString(" "))
       }
@@ -337,7 +337,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
       }
 
       describe(s"Responding to a $MockExistingStepLabelsChanged") {
-        def test(textBefore: String, textAfter: String, refsAfter: Set[LocalIdStr]) {
+        def test(textBefore: String, textAfter: String, refsAfter: Set[LocalStepId]) {
           val x = parse(F.forceArrows(textBefore))
           val y = x.respondToChange(MockExistingStepLabelsChanged)(StepState2).getOrElse(x)
           F.get(x) should not be (None)
@@ -364,7 +364,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
       }
 
       describe("Updating flow text") {
-        def test(textBefore: String, refsBefore: Set[LabelStr])(newText: String, expectedToIds: Option[Set[LocalIdStr]]) {
+        def test(textBefore: String, refsBefore: Set[LabelStr])(newText: String, expectedToIds: Option[Set[LocalStepId]]) {
           val x = parse(F.forceArrows(textBefore))
           val cr = x.update(F.forceArrows(newText))(StepState1)
           assertFlowClause(F.get(x), mapFromIds(refsBefore))
@@ -477,8 +477,8 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
       // ToMe means that X1 has been pointed at X0.
       // ToNone means that X1 does not point at X0.
       val ToMe = Set(X0)
-      val ToNone = Set.empty[LocalIdStr]
-      val examples: TableFor4[String, Set[LocalIdStr], String, Set[LocalIdStr]] =
+      val ToNone = Set.empty[LocalStepId]
+      val examples: TableFor4[String, Set[LocalStepId], String, Set[LocalStepId]] =
         Table(("X0 TEXT BEFORE", "MSG FLOW TARGETS", "X0 TEXT AFTER", "X0 FLOW REFS AFTER")
           , ("hehe", ToMe, "hehe ⬅ [S.1]", Set(X1)) // add first
           , ("hehe ⬅ [S.2]", ToMe, "hehe ⬅ [S.1] [S.2]", Set(X1, X2)) // append
@@ -488,8 +488,8 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
         )
 
       def testFlowMsgProcessing(F: FlowTester
-        , textBefore: String, flowTargets: Set[LocalIdStr], textAfter: String, refsAfter: Set[LocalIdStr]) {
-        def test(flowTargets: Set[LocalIdStr]) {
+        , textBefore: String, flowTargets: Set[LocalStepId], textAfter: String, refsAfter: Set[LocalStepId]) {
+        def test(flowTargets: Set[LocalStepId]) {
           val change = F.other.change(X1, flowTargets)
           val x = parse(F.forceArrows(textBefore))
           val y = x.respondToChange(change)(StepState1).getOrElse(x)
@@ -504,10 +504,10 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
         test(flowTargets ++ Set(X2, X3, X5, X6))
       }
 
-      def testFlowMsgProcessingFrom(textBefore: String, flowTargets: Set[LocalIdStr], textAfter: String, refsAfter: Set[LocalIdStr]) =
+      def testFlowMsgProcessingFrom(textBefore: String, flowTargets: Set[LocalStepId], textAfter: String, refsAfter: Set[LocalStepId]) =
         testFlowMsgProcessing(FlowFromTester, textBefore, flowTargets, textAfter, refsAfter)
 
-      def testFlowMsgProcessingTo(textBefore: String, flowTargets: Set[LocalIdStr], textAfter: String, refsAfter: Set[LocalIdStr]) =
+      def testFlowMsgProcessingTo(textBefore: String, flowTargets: Set[LocalStepId], textAfter: String, refsAfter: Set[LocalStepId]) =
         testFlowMsgProcessing(FlowToTester, textBefore, flowTargets, textAfter, refsAfter)
 
       it(s"update flow-from clause when $FlowToChange received") {

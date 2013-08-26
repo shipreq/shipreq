@@ -28,7 +28,7 @@ object ParsingUtils extends Logger {
    */
   def migrateRefsToNewStepTree(ft: FreeText)(implicit stepsAndLabels: StepAndLabelBiMap): Option[FreeText] = {
     lazy val idsToLabels = stepsAndLabels.get.ab
-    var newRefs = Map.empty[LocalIdStr, LabelStr]
+    var newRefs = Map.empty[LocalStepId, LabelStr]
     var newText = ft.text
     var changed = false
 
@@ -56,7 +56,7 @@ object ParsingUtils extends Logger {
    *
    * Example: converts [4.0.1.b] to [D.1045].
    */
-  def normaliseRefs(text: String, refs: Map[LocalIdStr, LabelStr], savedSteps: SavedSteps): TextWithNormalisedRefs = {
+  def normaliseRefs(text: String, refs: Map[LocalStepId, LabelStr], savedSteps: SavedSteps): TextWithNormalisedRefs = {
     val localToDb = savedSteps.ba
     var r = text
     for {

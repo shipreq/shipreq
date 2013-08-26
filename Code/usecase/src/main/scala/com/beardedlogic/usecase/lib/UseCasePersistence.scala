@@ -14,7 +14,7 @@ case class FieldLoadCtx(fieldData: List[UcFieldTextWithFK])
 // ---------------------------------------------------------------------------------------------------------------------
 
 case class FieldLoadResult[+V <: Field#Value, +SD <: Field#SavedData](
-  savedSteps: Map[LocalIdStr, TextIdentId],
+  savedSteps: Map[LocalStepId, TextIdentId],
   stepTree: Option[StepTree],
   phase2: (SavedSteps, StepAndLabelBiMap) => (V, Option[SD]))
 
@@ -42,8 +42,8 @@ object UseCasePersistence {
     val loadCtx = FieldLoadCtx(dao.findAllUcFieldData(ucRev.id))
 
     var loadResults = List.empty[(Field, FieldLoadResult[Field#Value, Field#SavedData])]
-    var stepAndLabelMaps = List.empty[Map[LocalIdStr, LabelStr]]
-    var savedStepMap = Map.empty[LocalIdStr, TextIdentId]
+    var stepAndLabelMaps = List.empty[Map[LocalStepId, LabelStr]]
+    var savedStepMap = Map.empty[LocalStepId, TextIdentId]
 
     for (f <- fieldList) {
       val r = f.load(loadCtx)
@@ -120,7 +120,7 @@ object UseCasePersistence {
 
     def presave(ucId: UseCaseIdentId, savers: ValueSavers): SavedSteps = {
       val prevSavedSteps = prevSave.map(_.savedSteps)
-      var newSavedSteps: Map[LocalIdStr, TextIdentId] = prevSavedSteps.map(_.ba).getOrElse(Map.empty)
+      var newSavedSteps: Map[LocalStepId, TextIdentId] = prevSavedSteps.map(_.ba).getOrElse(Map.empty)
       for ((f, s) <- savers) newSavedSteps ++= s.presave(dao, ucId, prevSavedSteps)
       BiMap.swapped(newSavedSteps)
     }

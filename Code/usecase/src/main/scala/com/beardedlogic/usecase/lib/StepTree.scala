@@ -19,7 +19,7 @@ object StepTree {
 /**
  * A step with a 0-n list of child steps.
  */
-case class StepNode(id: LocalIdStr, level: Int, labelIndex: Int, children: List[StepNode] = Nil) extends TreeNode[StepNode] {
+case class StepNode(id: LocalStepId, level: Int, labelIndex: Int, children: List[StepNode] = Nil) extends TreeNode[StepNode] {
 
   // TODO Remove tight label maker coupling from StepNode
   // TODO Disable in prod
@@ -33,7 +33,7 @@ case class StepNode(id: LocalIdStr, level: Int, labelIndex: Int, children: List[
   // Manually specify else it will recurse forever because this is Traversable
   override def toString = s"StepNode($id, $level.$labelIndex, $children)"
 
-  override def copy(id: LocalIdStr = this.id,
+  override def copy(id: LocalStepId = this.id,
     level: Int = this.level,
     labelIndex: Int = this.labelIndex,
     children: List[StepNode] = this.children
@@ -42,5 +42,5 @@ case class StepNode(id: LocalIdStr, level: Int, labelIndex: Int, children: List[
 
 object StepNodeBuilder extends TreeNodeBuilder[StepNode] {
   def apply(level: Int, labelIndex: Int, children: List[StepNode] = Nil) =
-    StepNode(nextFuncName.asLocalId, level, labelIndex, children)
+    StepNode(nextFuncName.asLocalStepId, level, labelIndex, children)
 }

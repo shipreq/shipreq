@@ -6,7 +6,7 @@ import com.beardedlogic.usecase.lib.change._
 import Changes._
 import ParsingUtils._
 
-case class StepTextFactory(stepId: LocalIdStr) extends Parser[StepText] {
+case class StepTextFactory(stepId: LocalStepId) extends Parser[StepText] {
   override def empty = StepText.empty(stepId)
 
   override def load(text: TextWithNormalisedRefs)(implicit savedSteps: SavedSteps, stepsAndLabels: StepAndLabelBiMap) =
@@ -19,21 +19,21 @@ case class StepTextFactory(stepId: LocalIdStr) extends Parser[StepText] {
 object StepText {
   def correctInput(input: String): String = input.trim
 
-  def empty(stepId: LocalIdStr) = StepText(stepId, FreeText.empty, None, None)
+  def empty(stepId: LocalStepId) = StepText(stepId, FreeText.empty, None, None)
 
-  def load(stepId: LocalIdStr, text: TextWithNormalisedRefs)(implicit savedSteps: SavedSteps, stepsAndLabels: StepAndLabelBiMap) = {
+  def load(stepId: LocalStepId, text: TextWithNormalisedRefs)(implicit savedSteps: SavedSteps, stepsAndLabels: StepAndLabelBiMap) = {
     val e = empty(stepId)
     e.updateCorrected(realiseNormalisedRefs(text)).getOrElse(e)
   }
 
-  def parse(stepId: LocalIdStr, text: String)(implicit stepsAndLabels: StepAndLabelBiMap) = {
+  def parse(stepId: LocalStepId, text: String)(implicit stepsAndLabels: StepAndLabelBiMap) = {
     val e = empty(stepId)
     e.update(text).getOrElse(e)
   }
 }
 
 case class StepText(
-  stepId: LocalIdStr,
+  stepId: LocalStepId,
   mainClause: FreeText,
   flowFromClause: Option[FlowFromClause],
   flowToClause: Option[FlowToClause])
@@ -240,7 +240,7 @@ case class StepText(
       if (!changeFound) NoChange
       else {
         var newLabels = TreeSet.empty[LabelStr]
-        var newRefs = Map.empty[LocalIdStr, LabelStr]
+        var newRefs = Map.empty[LocalStepId, LabelStr]
         for ((id, _) <- c.refs)
           localIdsToLabels.get(id).map(l => {
             newRefs += (id -> l)
@@ -252,7 +252,7 @@ case class StepText(
   }
 
   private def processFlowChange[C <: FlowClause, F <: Flow[C]](
-    f: F, co: Option[C], updateFn: Option[C] => StepText, manyIds: Set[LocalIdStr], oneId: LocalIdStr)
+    f: F, co: Option[C], updateFn: Option[C] => StepText, manyIds: Set[LocalStepId], oneId: LocalStepId)
     (implicit stepsAndLabels: StepAndLabelBiMap): ChangeResult[StepText, Change] =
 
     if (oneId == stepId) NoChange

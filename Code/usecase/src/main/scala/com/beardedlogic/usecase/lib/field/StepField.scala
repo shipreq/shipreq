@@ -61,14 +61,14 @@ abstract class StepField extends Field with StepFieldPersistenceMixin {
 
   def sli: StartingLabelIndices
 
-  def prohibitRemoval_?(v: Value, id: LocalIdStr): Boolean
+  def prohibitRemoval_?(v: Value, id: LocalStepId): Boolean
 
   /** If this is true, then title changes will be propagated to the root course text when safe. */
   def preferTitleInRoot_?() = false
 
   override def toString = s"${getClass.getSimpleName}[#${rec.id}]"
 
-  def updateText(id: LocalIdStr, newText: String)(uc: UseCase): UcUpdateResult = {
+  def updateText(id: LocalStepId, newText: String)(uc: UseCase): UcUpdateResult = {
     implicit val lens = alens(FieldLenses.uc.stepText, (uc, this, id))
     uc.update(this, lens.get.update(newText)(uc.stepsAndLabels))
   }
@@ -87,7 +87,7 @@ abstract class StepField extends Field with StepFieldPersistenceMixin {
     }
   }
 
-  def addStep(precedingNodeId: LocalIdStr)(uc: UseCase): UcUpdateResult =
+  def addStep(precedingNodeId: LocalStepId)(uc: UseCase): UcUpdateResult =
     updateTree(uc,
       sfv => stepInsert(precedingNodeId, sfv.tree, StepNodeBuilder),
       (sfv, newNodes, newNode) => {
@@ -96,7 +96,7 @@ abstract class StepField extends Field with StepFieldPersistenceMixin {
       }
     )
 
-  def removeStep(id: LocalIdStr)(uc: UseCase): UcUpdateResult = {
+  def removeStep(id: LocalStepId)(uc: UseCase): UcUpdateResult = {
     implicit val lens = alens(FieldLenses.uc.stepField, (uc, this))
     val sfv = lens.get
     if (prohibitRemoval_?(sfv, id)) NoChange
@@ -112,7 +112,7 @@ abstract class StepField extends Field with StepFieldPersistenceMixin {
       }
   }
 
-  def decreaseIndent(id: LocalIdStr)(uc: UseCase): UcUpdateResult =
+  def decreaseIndent(id: LocalStepId)(uc: UseCase): UcUpdateResult =
     updateTree(uc,
       sfv => indentDecrease(id, sfv.tree),
       (sfv, newNodes, tgtNode) => {
@@ -121,7 +121,7 @@ abstract class StepField extends Field with StepFieldPersistenceMixin {
       }
     )
 
-  def increaseIndent(id: LocalIdStr)(uc: UseCase): UcUpdateResult =
+  def increaseIndent(id: LocalStepId)(uc: UseCase): UcUpdateResult =
     updateTree(uc,
       sfv => indentIncrease(id, sfv.tree),
       (sfv, newNodes, tgtNode) => {
@@ -167,7 +167,7 @@ case class NormalCourseField(override val rec: FieldKeyRec) extends StepField {
   override val empty = StepFieldValue.forTree(this, EmptyTree)
   override def rootLabelPrefix(uch: UseCaseHeader) = s"${uch.number}."
   override val sli = StartingRootLabelIndexAt0
-  override def prohibitRemoval_?(v: Value, id: LocalIdStr) = v.tree(0).id == id
+  override def prohibitRemoval_?(v: Value, id: LocalStepId) = v.tree(0).id == id
   override def preferTitleInRoot_?() = true
   override val defaultLoadValue = {
     val sfv = StepFieldValue.forTree(this, DefaultTree)
@@ -188,6 +188,6 @@ case class ExceptionCourseField(override val rec: FieldKeyRec) extends StepField
   override val empty = StepFieldValue.empty(this)
   override def rootLabelPrefix(uch: UseCaseHeader) = s"${uch.number}.E."
   override val sli = StartingLabelIndicesAt1
-  override def prohibitRemoval_?(v: Value, id: LocalIdStr) = false
+  override def prohibitRemoval_?(v: Value, id: LocalStepId) = false
   override val defaultLoadValue = (None, empty _)
 }

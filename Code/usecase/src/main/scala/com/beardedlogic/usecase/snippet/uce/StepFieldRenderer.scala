@@ -25,10 +25,10 @@ object StepFieldRenderer {
   @inline final def JqExprForNodeAndChildren(n: StepNode) = JqExpr(ExprForNodeAndChildren(n))
 
   /** ID of the HTML attribute that contains a step's label (eg. "1.0.4.b") */
-  @inline final def labelId(id: LocalIdStr): String = (id: String) + "-l"
+  @inline final def labelId(id: LocalStepId): String = (id: String) + "-l"
 
   /** ID of the textarea that contains a step's text. */
-  @inline final def textareaId(id: LocalIdStr): String = (id: String) + "-t"
+  @inline final def textareaId(id: LocalStepId): String = (id: String) + "-t"
 }
 
 import StepFieldRenderer._
@@ -40,7 +40,7 @@ trait StepFieldRenderConfig {
   /** A CSS expression that selects the container of the add-tail-step button. */
   def tailStepCss: String
 
-  def prohibitRemoval_?(id: LocalIdStr, tree: StepTree): Boolean
+  def prohibitRemoval_?(id: LocalStepId, tree: StepTree): Boolean
 
   def render(r: StepFieldRenderer): NodeSeq
 
@@ -57,7 +57,7 @@ object NormalCourseFieldConfig extends StepFieldRenderConfig {
 
   override def tailStepCss = AlternateCourseAddTailStepCss
 
-  override def prohibitRemoval_?(id: LocalIdStr, tree: StepTree) = (id == tree.head.id)
+  override def prohibitRemoval_?(id: LocalStepId, tree: StepTree) = (id == tree.head.id)
 
   override def render(r: StepFieldRenderer) =
     r.renderSteps(r.tree.head)(Templates.NormalCourse) ++
@@ -90,7 +90,7 @@ object ExceptionCourseFieldConfig extends StepFieldRenderConfig {
 
   override def tailStepCss = ExceptionCourseAddTailStepCss
 
-  override def prohibitRemoval_?(id: LocalIdStr, tree: StepTree) = false
+  override def prohibitRemoval_?(id: LocalStepId, tree: StepTree) = false
 
   override def render(r: StepFieldRenderer) =
     r.renderStepsWithAddTailStep(r.tree)(Templates.ExceptionCourses)
@@ -114,7 +114,7 @@ case class StepFieldRenderer(
   @inline final def labelFor(node: StepNode) = labelPrefixForLevel(node.level) + node.label
 
   /** The text value of a step. */
-  @inline final def text(id: LocalIdStr): String = f.value.textmap.get(id).map(_.text).getOrElse("")
+  @inline final def text(id: LocalStepId): String = f.value.textmap.get(id).map(_.text).getOrElse("")
 
   // *************************************
   // *             Rendering             *
@@ -141,7 +141,7 @@ case class StepFieldRenderer(
    */
   def renderSingleStep(n: StepNode) = {
     val id = n.id
-    @inline def =>%%(fn: LocalIdStr => UseCase => UcUpdateResult) = =>%(fn(id))
+    @inline def =>%%(fn: LocalStepId => UseCase => UcUpdateResult) = =>%(fn(id))
     (
       ".step [id]" #> id
         & StepLevelAttributeCss #> n.level
@@ -168,9 +168,9 @@ case class StepFieldRenderer(
   // *             Javascript             *
   // **************************************
 
-  @inline private def JqLabel(id: LocalIdStr): JsExp = JqId(labelId(id))
+  @inline private def JqLabel(id: LocalStepId): JsExp = JqId(labelId(id))
   @inline private def JqLabel(n: StepNode): JsExp = JqLabel(n.id)
-  @inline private def JqStepText(id: LocalIdStr): JsExp = JqId(textareaId(id))
+  @inline private def JqStepText(id: LocalStepId): JsExp = JqId(textareaId(id))
   @inline private def JqStepText(n: StepNode): JsExp = JqStepText(n.id)
 
   /** Creates Javascript to update the indentation levels of all given nodes. */
@@ -187,7 +187,7 @@ case class StepFieldRenderer(
     ) mkString "\n"
   )
 
-  def jsUpdateStepFieldText(id: LocalIdStr): JsCmd =
+  def jsUpdateStepFieldText(id: LocalStepId): JsCmd =
     JqStepText(id) ~> JqSetTextarea(text(id))
 
   @inline private def jsShowNewStep(node: StepNode) =
@@ -198,7 +198,7 @@ case class StepFieldRenderer(
       & jsShowNewStep(node)
     )
 
-  def jsAddStep(precedingNodeId: LocalIdStr, node: StepNode): JsCmd = (
+  def jsAddStep(precedingNodeId: LocalStepId, node: StepNode): JsCmd = (
     JqId(precedingNodeId) ~> JqAfter(renderSingleStepXml(node))
       & jsShowNewStep(node)
       & jsUpdateLabels(f.value.tree)

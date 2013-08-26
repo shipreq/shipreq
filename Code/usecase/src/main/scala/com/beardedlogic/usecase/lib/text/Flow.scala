@@ -10,9 +10,9 @@ sealed trait Flow[Clause <: FlowClause] {
 
   def style: FlowStyle
 
-  def createPotentiallyEmpty(refs: Map[LocalIdStr, LabelStr]): Clause
+  def createPotentiallyEmpty(refs: Map[LocalStepId, LabelStr]): Clause
 
-  def create(refs: Map[LocalIdStr, LabelStr]): Option[Clause] =
+  def create(refs: Map[LocalStepId, LabelStr]): Option[Clause] =
     if (refs.isEmpty) None
     else Some(createPotentiallyEmpty(refs))
 
@@ -24,10 +24,10 @@ sealed trait Flow[Clause <: FlowClause] {
 
 sealed trait FlowClause {
 
-  val refs: Map[LocalIdStr, LabelStr]
+  val refs: Map[LocalStepId, LabelStr]
 
   /** Returns a function that produces a Change to indicate that a flow clause has changed. */
-  def flowChangeFn: LocalIdStr => Change
+  def flowChangeFn: LocalStepId => Change
 
   def sortedLabels: SortedSet[LabelStr] = {
     var s = TreeSet.empty[LabelStr]
@@ -40,10 +40,10 @@ sealed trait FlowClause {
 
 object FlowFrom extends Flow[FlowFromClause] {
   override def style = FlowFromStyle
-  override def createPotentiallyEmpty(refs: Map[LocalIdStr, LabelStr]) = FlowFromClause(refs)
+  override def createPotentiallyEmpty(refs: Map[LocalStepId, LabelStr]) = FlowFromClause(refs)
 }
 
-case class FlowFromClause(refs: Map[LocalIdStr, LabelStr]) extends FlowClause {
+case class FlowFromClause(refs: Map[LocalStepId, LabelStr]) extends FlowClause {
   override def flowChangeFn = stepId => FlowFromChange(refs.keySet, stepId)
 }
 
@@ -51,9 +51,9 @@ case class FlowFromClause(refs: Map[LocalIdStr, LabelStr]) extends FlowClause {
 
 object FlowTo extends Flow[FlowToClause] {
   override def style = FlowToStyle
-  override def createPotentiallyEmpty(refs: Map[LocalIdStr, LabelStr]) = FlowToClause(refs)
+  override def createPotentiallyEmpty(refs: Map[LocalStepId, LabelStr]) = FlowToClause(refs)
 }
 
-case class FlowToClause(refs: Map[LocalIdStr, LabelStr]) extends FlowClause {
+case class FlowToClause(refs: Map[LocalStepId, LabelStr]) extends FlowClause {
   override def flowChangeFn = stepId => FlowToChange(stepId, refs.keySet)
 }

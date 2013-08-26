@@ -26,7 +26,7 @@ object Changes {
    *
    * @param id The ID of the step node.
    */
-  case class StepTextChanged(id: LocalIdStr) extends Change
+  case class StepTextChanged(id: LocalStepId) extends Change
 
   /**
    * Indicates that the label of one or more existing steps, has changed.
@@ -37,7 +37,7 @@ object Changes {
 
   case class TailStepAdded(node: StepNode) extends Change
 
-  case class StepAdded(precedingNodeId: LocalIdStr, node: StepNode) extends ExistingStepLabelsChanged
+  case class StepAdded(precedingNodeId: LocalStepId, node: StepNode) extends ExistingStepLabelsChanged
 
   case class StepRemoved(node: StepNode) extends ExistingStepLabelsChanged
 
@@ -57,7 +57,7 @@ object Changes {
    * @param fromIds The IDs of all steps that now flow to the target.
    * @param toId The ID of the step that issued the change, the step to which the from-steps now flow.
    */
-  case class FlowFromChange(fromIds: Set[LocalIdStr], toId: LocalIdStr) extends Change
+  case class FlowFromChange(fromIds: Set[LocalStepId], toId: LocalStepId) extends Change
 
   /**
    * Indicates that a step's flow-to list has changed.
@@ -71,6 +71,6 @@ object Changes {
    * @param fromId The ID of the step that issued the change, the step from which steps now flow out.
    * @param toIds The IDs of all steps that the source step now flows to.
    */
-  case class FlowToChange(fromId: LocalIdStr, toIds: Set[LocalIdStr]) extends Change
+  case class FlowToChange(fromId: LocalStepId, toIds: Set[LocalStepId]) extends Change
 
 }

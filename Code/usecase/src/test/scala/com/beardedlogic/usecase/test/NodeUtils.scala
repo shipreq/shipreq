@@ -54,13 +54,13 @@ object NodeUtils {
         if (indent == 0) {
           val topLevelLabel(labelPrefix, labelSuffix) = label
           val labelIndex = LabelMakers(0)(labelSuffix)
-          val n = StepNodeWithText(idOverride.getOrElse(label).asLocalId, 0, labelIndex, stepText)
+          val n = StepNodeWithText(idOverride.getOrElse(label).asLocalStepId, 0, labelIndex, stepText)
           nodes += n
           n
         } else {
           val p = parents(indent - 1)
           val labelIndex = LabelMakers(indent)(label)
-          val n = StepNodeWithText(idOverride.getOrElse(s"${p.id}.${label}").asLocalId, indent, labelIndex, stepText)
+          val n = StepNodeWithText(idOverride.getOrElse(s"${p.id}.${label}").asLocalStepId, indent, labelIndex, stepText)
           children(p) += n
           n
         }

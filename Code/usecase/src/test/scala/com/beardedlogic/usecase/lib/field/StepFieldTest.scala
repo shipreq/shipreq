@@ -17,7 +17,7 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
 
   import StepFieldPersistence.SavedData
 
-  implicit def autoTagLocalStepIds(s: String) = s.asLocalId
+  implicit def autoTagLocalStepIds(s: String) = s.asLocalStepId
   implicit def autoTagNormalisedRefs(s: String) = s.hasNormalisedRefs
 
   val ucId = 123L.tag[UseCaseIdentIdTag]
@@ -34,7 +34,7 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
   val T4 = 404L.tag[TextIdentIdTag]
   val T5 = 405L.tag[TextIdentIdTag]
   val MockSavedSteps: SavedSteps = {
-    val b = new BiMapBuilder[TextIdentId, LocalIdStr]
+    val b = new BiMapBuilder[TextIdentId, LocalStepId]
     b += (T1 -> X1)
     b += (T2 -> X2)
     b += (T3 -> X3)

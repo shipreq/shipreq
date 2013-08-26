@@ -18,7 +18,7 @@ object FieldLenses {
 
   // Step field lenses
   object sfv {
-    val stepText = KeyedLens[StepFieldValue, LocalIdStr, StepText](
+    val stepText = KeyedLens[StepFieldValue, LocalStepId, StepText](
       sfv => id => newValue => sfv.copy(textmap = sfv.textmap + (id -> newValue)),
       sfv => id => sfv.textmap(id)
     )

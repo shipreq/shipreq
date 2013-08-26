@@ -86,14 +86,14 @@ class UseCaseEditorTest extends FunSpec with TestDatabaseSupport with TestHelper
     uce.uc should be theSameInstanceAs(oldUC)
   }
 
-  def assertIdAndAction(resp: String, id: LocalIdStr, actionStr: String): Unit =
+  def assertIdAndAction(resp: String, id: AnyLocalId, actionStr: String): Unit =
     assertIdAndActionR(resp, id, Pattern.quote(actionStr).r)
 
-  def assertIdAndActionR(resp: String, id: LocalIdStr, actionRegex: Regex): Unit =
+  def assertIdAndActionR(resp: String, id: AnyLocalId, actionRegex: Regex): Unit =
     resp should include regex(s"""$id[^;\n]+?$actionRegex""")
 
-  def assertIdRelabeled(resp: String, id: LocalIdStr, newLabel: String) {
-    assertIdAndActionR(resp, s"$id-l".asLocalId, s"""['"]$newLabel['"]""".r)
+  def assertIdRelabeled(resp: String, id: AnyLocalId, newLabel: String) {
+    assertIdAndActionR(resp, s"$id-l".tag[LocalIdTag], s"""['"]$newLabel['"]""".r)
   }
 
   def assertNewStepFound(resp: String) {
@@ -151,7 +151,7 @@ class UseCaseEditorTest extends FunSpec with TestDatabaseSupport with TestHelper
         uce.uc.header.title should be("bananas")
       }
       it("should set the title via ajax") {
-        assertIdAndActionR(resp, TitleId.asLocalId, """['"]bananas['"]""".r)
+        assertIdAndActionR(resp, TitleId.tag[LocalIdTag], """['"]bananas['"]""".r)
       }
     }
 

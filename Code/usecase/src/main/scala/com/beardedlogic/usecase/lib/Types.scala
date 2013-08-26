@@ -30,9 +30,16 @@ object Types {
   trait NormalisedRefs extends TypeTag[String]
   type TextWithNormalisedRefs = String @@ NormalisedRefs
 
-  /** A transient ID used as glue between internal components and/or the client. */
-  trait LocalId extends TypeTag[String]
-  type LocalIdStr = String @@ LocalId
+  trait LocalIdTag extends TypeTag[String]
+  type AnyLocalId = String @@ LocalIdTag
+
+  /** A transient ID used to identify a TextField's . */
+  trait LocalTextFieldIdTag extends LocalIdTag
+  type LocalTextFieldId = String @@ LocalTextFieldIdTag
+
+  /** A transient ID used to identify a single step node in memory. */
+  trait LocalStepIdTag extends LocalIdTag
+  type LocalStepId = String @@ LocalStepIdTag
 
   /** A textual label for a tree node. Eg. "1.0.2.a" */
   trait Label extends TypeTag[String]
@@ -40,17 +47,18 @@ object Types {
 
   implicit class StringTypeExt(val s: String) extends AnyVal {
     def hasNormalisedRefs = s.asInstanceOf[TextWithNormalisedRefs]
-    def asLocalId = s.asInstanceOf[LocalIdStr]
+    def asLocalStepId = s.asInstanceOf[LocalStepId]
     def asLabel = s.asInstanceOf[LabelStr]
+    def tag[T <: TypeTag[String]] = s.asInstanceOf[String @@ T]
   }
 
   implicit class StringTypeExt2[M[_]](val s: M[String]) extends AnyVal {
-    def asLocalIds = s.asInstanceOf[M[LocalIdStr]]
+    def asLocalStepIds = s.asInstanceOf[M[LocalStepId]]
     def asLabels = s.asInstanceOf[M[LabelStr]]
   }
 
   implicit class StringTypeExt3[M[_]](val s: M[List[String]]) extends AnyVal {
-    def asLocalIds = s.asInstanceOf[M[List[LocalIdStr]]]
+    def asLocalStepIds = s.asInstanceOf[M[List[LocalStepId]]]
     def asLabels = s.asInstanceOf[M[List[LabelStr]]]
   }
 
@@ -101,10 +109,10 @@ object Types {
   type FieldKeyRecData = Option[String]
   type FieldValueRecData = Option[String]
 
-  type SavedSteps = BiMap[TextIdentId, LocalIdStr]
+  type SavedSteps = BiMap[TextIdentId, LocalStepId]
   def EmptySavedSteps: SavedSteps = BiMap.empty
 
-  type StepAndLabelBiMap = LazyVal[BiMap[LocalIdStr, LabelStr]]
+  type StepAndLabelBiMap = LazyVal[BiMap[LocalStepId, LabelStr]]
   final val EmptyStepAndLabelBiMap: StepAndLabelBiMap = LazyVal <~ BiMap.empty
 
   type FieldValues = Map[Field, Field#Value]

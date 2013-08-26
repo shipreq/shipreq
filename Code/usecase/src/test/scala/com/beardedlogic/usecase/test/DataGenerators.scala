@@ -125,7 +125,7 @@ object DataGenerators extends Logger {
 
     lazy val stepTree = StepTree(
       convertNodeTree[StepPlaceholderNode, StepNode](nodes
-      , {case (node, level, index, children) => StepNode(node.label.replace('.', '_').asLocalId, level, index, children)}
+      , {case (node, level, index, children) => StepNode(node.label.replace('.', '_').asLocalStepId, level, index, children)}
       , sli.startingLabelIndex _
       )
     )
@@ -276,7 +276,7 @@ object DataGenerators extends Logger {
         g.apply(prms).getOrElse(NoChange)
       })))
 
-    private def mutateStepNoText(fn: (StepField, LocalIdStr) => UseCase => UcUpdateResult) =
+    private def mutateStepNoText(fn: (StepField, LocalStepId) => UseCase => UcUpdateResult) =
       mutateField((uc, refdep) =>
         for {
           f <- Gen.oneOf(UseCaseFns.filter[StepField](uc.fields))
@@ -284,7 +284,7 @@ object DataGenerators extends Logger {
         } yield fn(f, id)(uc)
       )
 
-    private def mutateStep(fn: (StepField, LocalIdStr, String) => UseCase => UcUpdateResult) =
+    private def mutateStep(fn: (StepField, LocalStepId, String) => UseCase => UcUpdateResult) =
       mutateField((uc, refdep) =>
         for {
           f <- Gen.oneOf(UseCaseFns.filter[StepField](uc.fields))

@@ -26,8 +26,8 @@ private[field] trait StepFieldPersistenceMixin extends Field {
 
   override def load(loadCtx: FieldLoadCtx) = {
 
-    val normTextMap = Map.newBuilder[LocalIdStr, TextWithNormalisedRefs]
-    val savedStepMap = Map.newBuilder[LocalIdStr, TextIdentId]
+    val normTextMap = Map.newBuilder[LocalStepId, TextWithNormalisedRefs]
+    val savedStepMap = Map.newBuilder[LocalStepId, TextIdentId]
     val savedData = Map.newBuilder[TextIdentId, UcFieldText]
 
     // NOTE: Depends on ORDER BY index
@@ -40,7 +40,7 @@ private[field] trait StepFieldPersistenceMixin extends Field {
           // New node
           case h :: t if (h.fkId == rec.id && h.parentId == parentId) =>
             val children = parseRels(allRels, level + 1, Some(h.id))
-            val idStr = s"s${h.id}".asLocalId
+            val idStr = s"s${h.id}".asLocalStepId // TODO exposing DB ids
             normTextMap += (idStr -> h.text)
             savedStepMap += (idStr -> h.textRev.identId)
             savedData += (h.textRev.identId -> h.rel)
@@ -108,18 +108,18 @@ class StepFieldValueSaver(
     foundChange
   }
 
-  override def presave(dao: DAO, ucId: UseCaseIdentId, prevSavedSteps: Option[SavedSteps]): Map[LocalIdStr, TextIdentId] = {
+  override def presave(dao: DAO, ucId: UseCaseIdentId, prevSavedSteps: Option[SavedSteps]): Map[LocalStepId, TextIdentId] = {
 
-    var stepIds = Map.empty[LocalIdStr, TextIdentId]
+    var stepIds = Map.empty[LocalStepId, TextIdentId]
 
-    def newStep(localId: LocalIdStr): Unit = {
+    def newStep(localId: LocalStepId): Unit = {
       val id = dao.createInitialText(ucId, fieldKeyRec)
       stepIds += (localId -> id)
     }
 
     def presaveAll(): Unit = v.tree.foreachRecursive(n => newStep(n.id))
 
-    def presaveNew(savedSteps: Map[LocalIdStr, TextIdentId]): Unit = {
+    def presaveNew(savedSteps: Map[LocalStepId, TextIdentId]): Unit = {
       v.tree.foreachRecursive(n =>
         savedSteps.get(n.id) match {
           case None => newStep(n.id)

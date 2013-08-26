@@ -28,7 +28,7 @@ object FreeText extends Parser[FreeText] {
     lazy val labelsToIds = stepsAndLabels.get.ba
 
     val newText = new StringBuilder
-    var refs = Map.empty[LocalIdStr, LabelStr]
+    var refs = Map.empty[LocalStepId, LabelStr]
 
     // Parse input
     var r = Grammar.parse(Grammar.TextAndPossibleRef, text)
@@ -66,7 +66,7 @@ object FreeText extends Parser[FreeText] {
  * @since 12/05/2013 (as SmartText)
  * @since 16/07/2013 (as FreeText)
  */
-case class FreeText(text: String, refs: Map[LocalIdStr, LabelStr]) extends ParsedText[FreeText] {
+case class FreeText(text: String, refs: Map[LocalStepId, LabelStr]) extends ParsedText[FreeText] {
 
   override def textWithNormalisedRefs(implicit savedSteps: SavedSteps) = normaliseRefs(text, refs, savedSteps)
 

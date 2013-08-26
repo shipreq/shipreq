@@ -7,7 +7,6 @@ import Types._
 import change._
 import field._
 import text.FreeText
-import model._
 import util.{AppliedLens, LazyVal, BiMap}
 import Changes._
 import tree.TreeOps._
@@ -38,21 +37,21 @@ object UseCaseFns {
 
   // TODO Minimise computation with savedSteps + StepAndLabelBiMap
 
-  def extractStepAndLabelMaps(fieldValues: FieldValues, uch: UseCaseHeader): Iterable[Map[LocalIdStr, LabelStr]] =
+  def extractStepAndLabelMaps(fieldValues: FieldValues, uch: UseCaseHeader): Iterable[Map[LocalStepId, LabelStr]] =
     fieldValues.map {
       case (f, v: StepFieldValue) => generateStepAndLabelMap(f, v.tree, uch)
-      case _ => Map.empty[LocalIdStr, LabelStr]
+      case _ => Map.empty[LocalStepId, LabelStr]
     }
 
-  def mergeStepAndLabelMaps(maps: Iterable[Map[LocalIdStr, LabelStr]]): Map[LocalIdStr, LabelStr] =
-    (Map.empty[LocalIdStr, LabelStr] /: maps)(_ ++ _)
+  def mergeStepAndLabelMaps(maps: Iterable[Map[LocalStepId, LabelStr]]): Map[LocalStepId, LabelStr] =
+    (Map.empty[LocalStepId, LabelStr] /: maps)(_ ++ _)
 
   def generateStepAndLabelBiMap(uch: UseCaseHeader, trees: (StepField, StepTree)*): StepAndLabelBiMap =
     generateStepAndLabelBiMap(trees.map {
       case (f, t) => generateStepAndLabelMap(f, t, uch)
     })
 
-  def generateStepAndLabelBiMap(maps: Iterable[Map[LocalIdStr, LabelStr]]): StepAndLabelBiMap =
+  def generateStepAndLabelBiMap(maps: Iterable[Map[LocalStepId, LabelStr]]): StepAndLabelBiMap =
     LazyVal(() => BiMap(mergeStepAndLabelMaps(maps)))
 
   def generateStepAndLabelBiMap(fieldValues: FieldValues, uch: UseCaseHeader): StepAndLabelBiMap =
@@ -60,7 +59,7 @@ object UseCaseFns {
 
   def generateStepAndLabelBiMap(uc: UseCase): StepAndLabelBiMap = generateStepAndLabelBiMap(uc.fieldValues, uc.header)
 
-  def generateStepAndLabelMap(field: Field, tree: StepTree, uch: UseCaseHeader): Map[LocalIdStr, LabelStr] =
+  def generateStepAndLabelMap(field: Field, tree: StepTree, uch: UseCaseHeader): Map[LocalStepId, LabelStr] =
     field match {
       case f: StepField => mapIdsToFullLabels(tree.nodes, f.rootLabelPrefix(uch))
       case f => throw new IllegalStateException(s"Don't know how to generateStepAndLabelMap for field: $f")

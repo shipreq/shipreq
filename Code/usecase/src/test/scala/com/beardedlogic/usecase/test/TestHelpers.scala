@@ -39,19 +39,19 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
   if (!LiftRules.doneBoot) (new bootstrap.liftweb.Boot).configureLift
   //if (Defaults.FieldList.get == null) Defaults.FieldList << mockFieldList(Defaults.FieldListDefns)
 
-  type Refs = Map[LocalIdStr, LabelStr]
+  type Refs = Map[LocalStepId, LabelStr]
 
-  def savedSteps(tuples: (Int, LocalIdStr)*): BiMap[TextIdentId, LocalIdStr] =
+  def savedSteps(tuples: (Int, LocalStepId)*): BiMap[TextIdentId, LocalStepId] =
     BiMap.apply(tuples.map(t => (t._1.toLong.tag[TextIdentIdTag], t._2)): _*)
 
-  def mapToLabels(i: Traversable[LocalIdStr], stepState: StepAndLabelBiMap = StepState1) = i.map(id => (id, stepState.get.ab(id))).toMap
-  def mapFromLabels(i: Traversable[LocalIdStr], stepState: StepAndLabelBiMap = StepState1) = i.map(id => (stepState.get.ab(id), id)).toMap
+  def mapToLabels(i: Traversable[LocalStepId], stepState: StepAndLabelBiMap = StepState1) = i.map(id => (id, stepState.get.ab(id))).toMap
+  def mapFromLabels(i: Traversable[LocalStepId], stepState: StepAndLabelBiMap = StepState1) = i.map(id => (stepState.get.ab(id), id)).toMap
 
   def mapToIds(i: Traversable[LabelStr], stepState: StepAndLabelBiMap = StepState1) = i.map(l => (l, stepState.get.ba(l))).toMap
   def mapFromIds(i: Traversable[LabelStr], stepState: StepAndLabelBiMap = StepState1) = i.map(l => (stepState.get.ba(l), l)).toMap
 
-  def flowFromClause(refs: (LocalIdStr, LabelStr)*) = if (refs.isEmpty) None else Some(FlowFromClause(Map(refs: _*)))
-  def flowToClause(refs: (LocalIdStr, LabelStr)*) = if (refs.isEmpty) None else Some(FlowToClause(Map(refs: _*)))
+  def flowFromClause(refs: (LocalStepId, LabelStr)*) = if (refs.isEmpty) None else Some(FlowFromClause(Map(refs: _*)))
+  def flowToClause(refs: (LocalStepId, LabelStr)*) = if (refs.isEmpty) None else Some(FlowToClause(Map(refs: _*)))
 
   def MockExistingStepLabelsChanged = {
     val m = mock[ExistingStepLabelsChanged]
@@ -59,18 +59,18 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
     m
   }
 
-  val X0 = "X0".asLocalId
-  val X1 = "X1".asLocalId
-  val X2 = "X2".asLocalId
-  val X3 = "X3".asLocalId
-  val X4 = "X4".asLocalId
-  val X5 = "X5".asLocalId
-  val X6 = "X6".asLocalId
-  val X7 = "X7".asLocalId
-  val X8 = "X8".asLocalId
-  val X9 = "X9".asLocalId
-  val X3E1 = "X3E1".asLocalId
-  val X3E2 = "X3E2".asLocalId
+  val X0 = "X0".asLocalStepId
+  val X1 = "X1".asLocalStepId
+  val X2 = "X2".asLocalStepId
+  val X3 = "X3".asLocalStepId
+  val X4 = "X4".asLocalStepId
+  val X5 = "X5".asLocalStepId
+  val X6 = "X6".asLocalStepId
+  val X7 = "X7".asLocalStepId
+  val X8 = "X8".asLocalStepId
+  val X9 = "X9".asLocalStepId
+  val X3E1 = "X3E1".asLocalStepId
+  val X3E2 = "X3E2".asLocalStepId
 
   val S0 = "S.0".asLabel
   val S1 = "S.1".asLabel
@@ -130,7 +130,7 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
   // -------------------------------------------------------------------------------------------------------------------
 
   def mockSavedStepsFor(tree: StepTree): SavedSteps = {
-    val savedSteps = new BiMapBuilder[TextIdentId, LocalIdStr]
+    val savedSteps = new BiMapBuilder[TextIdentId, LocalStepId]
     var i = 0
     tree.foreachRecursive(s => {
       i += 1
@@ -313,15 +313,15 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
   def normaliseFlowToClause(c: FlowToClause): FlowToClause = c.copy(refs = c.refs.norm)
 
   def normaliseRefs(r: Refs): Refs = r.map {
-    case (id, ref) => (ref.asLocalId -> ref)
+    case (id, lbl) => (lbl.asLocalStepId -> lbl)
   }
 
   def normaliseStepFieldValue(s: StepFieldValue): StepFieldValue = {
-    var newTextmap = Map.empty[LocalIdStr, StepText]
+    var newTextmap = Map.empty[LocalStepId, StepText]
     // Add treeroot map
     val newNodes = s.tree.nodes.map(n => n.deepCopy[StepNode] {
       (stepNode, children) =>
-        val newId = s"id/${stepNode.level}.${stepNode.labelIndex}".asLocalId
+        val newId = s"id/${stepNode.level}.${stepNode.labelIndex}".asLocalStepId
         s.textmap.get(stepNode.id).map(
           txt => newTextmap += (newId -> txt.copy(stepId = newId).norm)
         )
@@ -396,7 +396,7 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers {
     def toStepTree = StepTree(x.map(_.toStepNode))
 
     def toTextmap(savedSteps: SavedSteps = EmptySavedSteps, stepsAndLabels: StepAndLabelBiMap = EmptyStepAndLabelBiMap) =
-      TreeLike(x).mapRecursive[(LocalIdStr, StepText)](n => {
+      TreeLike(x).mapRecursive[(LocalStepId, StepText)](n => {
         val t = StepText.load(n.id, n.text.hasNormalisedRefs)(savedSteps, stepsAndLabels)
         (n.id, t)
       }).toMap

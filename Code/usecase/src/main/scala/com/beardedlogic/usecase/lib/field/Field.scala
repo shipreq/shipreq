@@ -82,7 +82,7 @@ trait FieldValueSaver[SavedData] {
    *
    * @return A map of new saved steps.
    */
-  def presave(dao: DAO, ucId: UseCaseIdentId, prevSavedSteps: Option[SavedSteps]): Map[LocalIdStr, TextIdentId]
+  def presave(dao: DAO, ucId: UseCaseIdentId, prevSavedSteps: Option[SavedSteps]): Map[LocalStepId, TextIdentId]
 
   /**
    * Saves field value(s) to the database and links them to the provided UC.

@@ -27,7 +27,7 @@ object TreeDSL {
       val labelSplit(lblPrefix, lblSuffix) = lbl
       val lblIndex = LabelMakers(lvl)(lblSuffix)
       val id2 = if (genIds) id else null
-      StepNodeWithText(id2.asLocalId, lvl, lblIndex, txt, ch)
+      StepNodeWithText(id2.asLocalStepId, lvl, lblIndex, txt, ch)
     }
   }
 

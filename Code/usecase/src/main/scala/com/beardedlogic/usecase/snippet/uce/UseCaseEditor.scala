@@ -64,9 +64,9 @@ class UseCaseEditor(initialState: UseCaseEditor.State) extends StatefulSnippet w
   @inline final def fields = uc.fields
   @inline final def fieldValues = uc.fieldValues
 
-  val textFieldIds: Map[Field, LocalIdStr] =
+  val textFieldIds: Map[Field, LocalTextFieldId] =
     UseCaseFns.filter[TextField](fields)
-    .map(f => (f -> nextFuncName.asLocalId))
+    .map(f => (f -> nextFuncName.tag[LocalTextFieldIdTag]))
     .toMap
 
   val renderer = Renderer(this)

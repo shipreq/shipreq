@@ -11,13 +11,13 @@ import Types._
 trait TreeNode[T <: TreeNode[T]] extends TreeNodeLike[T] {
   self: T =>
 
-  val id: LocalIdStr
+  val id: LocalStepId
   val level: Int
   val labelIndex: Int
 
   def label: LabelStr
 
-  def copy(id: LocalIdStr = this.id,
+  def copy(id: LocalStepId = this.id,
     level: Int = this.level,
     labelIndex: Int = this.labelIndex,
     children: List[T] = this.children

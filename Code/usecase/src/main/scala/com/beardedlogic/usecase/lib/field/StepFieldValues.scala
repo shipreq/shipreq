@@ -21,7 +21,7 @@ object StepFieldValue {
  * @param textmap Optional text values for nodes (ie. steps). If an entry doesn't exist for a node then that step is
  *                considered to have no text.
  */
-case class StepFieldValue(field: StepField, tree: StepTree, textmap: Map[LocalIdStr, StepText]) extends ChangeResponder[StepFieldValue] {
+case class StepFieldValue(field: StepField, tree: StepTree, textmap: Map[LocalStepId, StepText]) extends ChangeResponder[StepFieldValue] {
 
   assume(textmap.keySet == tree.mapRecursive(_.id).toSet, "There must be a StepText for all steps.")
 
@@ -60,17 +60,17 @@ case class StepFieldValue(field: StepField, tree: StepTree, textmap: Map[LocalId
     }
   }
 
-  def getNormalisedText(id: LocalIdStr)(implicit savedSteps: SavedSteps): TextWithNormalisedRefs =
+  def getNormalisedText(id: LocalStepId)(implicit savedSteps: SavedSteps): TextWithNormalisedRefs =
     textmap.get(id).map(_.textWithNormalisedRefs).getOrElse("".hasNormalisedRefs)
 
-  def withNewStep(newTree: StepTree, stepId: LocalIdStr) =
+  def withNewStep(newTree: StepTree, stepId: LocalStepId) =
     copy(tree = newTree, textmap = textmap + (stepId -> StepText.empty(stepId)))
 
   /**
    * Makes a copy with a new tree. New steps will have empty text added to the textmap; old, removed.
    */
   def withNewTree(newTree: StepTree) = {
-    var newTextmap = Map.empty[LocalIdStr, StepText]
+    var newTextmap = Map.empty[LocalStepId, StepText]
     for (n <- newTree) newTextmap += (n.id -> textmap.get(n.id).getOrElse(StepText.empty(n.id)))
     copy(tree = newTree, textmap = newTextmap)
   }
