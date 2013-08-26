@@ -29,7 +29,7 @@ class FieldLensesTest extends FunSpec with TestHelpers with TestData {
     }
     it("should set the title") {
       val uc = lens.title.set(sampleTextOnlyUC, "No")
-      uc.header should be(UseCaseHeader("No", 7))
+      uc.header should be(UseCaseHeader(7, "No"))
       uc should be(sampleTextOnlyUC.copy(header = uc.header))
     }
     it should behave like aLowLevelOperation(lens.title =>= {_ + "!"})
@@ -41,7 +41,7 @@ class FieldLensesTest extends FunSpec with TestHelpers with TestData {
     }
     it("should set the number") {
       val uc = lens.number.set(sampleTextOnlyUC, 3)
-      uc.header should be(UseCaseHeader("YES!", 3))
+      uc.header should be(UseCaseHeader(3, "YES!"))
       assertUseCasesMatchIgnoringStepsAndLabels(uc, sampleTextOnlyUC.copy(header = uc.header))
     }
     it should behave like aLowLevelOperation(lens.number =>= {_ => 123})

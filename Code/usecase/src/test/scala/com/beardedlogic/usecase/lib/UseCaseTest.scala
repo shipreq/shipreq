@@ -244,7 +244,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
     it("should load a simple, manually-saved UC") {
       // Create UC
       val ucIdentId = db.createUseCaseIdent
-      val ucRevId = db.createUseCase(ucIdentId, 1, UseCaseHeader("ahh", 3))
+      val ucRevId = db.createUseCase(ucIdentId, 1, UseCaseHeader(3, "ahh"))
 
       // Create Text FV
       val txtRev = createInitialTextRev(ucIdentId, TF1, "Hehe")
@@ -260,7 +260,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
       val loaded = loadRev(ucRevId).uc
 
       // Verify
-      loaded.header should be(UseCaseHeader("ahh", 3))
+      loaded.header should be(UseCaseHeader(3, "ahh"))
       TF1(loaded.fieldValues).text should be("Hehe")
       assertStepTree(loaded, NCF, "3.0. Root\n  1. Child")
     }
@@ -268,7 +268,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
     it("should load a manually-saved UC with refs") {
       // Create UC
       val ucIdentId = db.createUseCaseIdent
-      val ucRevId = db.createUseCase(ucIdentId, 1, UseCaseHeader("ahh", 3))
+      val ucRevId = db.createUseCase(ucIdentId, 1, UseCaseHeader(3, "ahh"))
 
       // Create course FV
       val s1 = createInitialTextRev(ucIdentId, NCF, "Root")
@@ -286,7 +286,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
       val loaded = loadRev(ucRevId).uc
 
       // Verify
-      loaded.header should be(UseCaseHeader("ahh", 3))
+      loaded.header should be(UseCaseHeader(3, "ahh"))
       TF3(loaded.fieldValues).text should be("look at [3.0.1] and [3.1]!")
       assertStepTree(loaded, NCF, "3.0. Root\n  1. Child [3.0]\n3.1. Other [3.0.1]")
     }

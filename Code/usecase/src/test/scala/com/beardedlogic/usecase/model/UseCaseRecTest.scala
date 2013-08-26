@@ -12,7 +12,7 @@ class UseCaseRevTest extends FunSpec with TestDatabaseSupport {
 
   describe("findUseCase") {
     it("should load when found") {
-      val uch = UseCaseHeader("ah", 17)
+      val uch = UseCaseHeader(17, "ah")
       val saved = db.createInitialUseCase(uch)
       db.findUseCase(saved).get ==== saved
     }

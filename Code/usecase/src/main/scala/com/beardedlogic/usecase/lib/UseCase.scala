@@ -16,8 +16,7 @@ import tree.TreeOps._
 trait UcChangeDomain
 
 object UseCaseHeader extends UcChangeDomain
-// TODO Reverse params of UseCaseHeader
-case class UseCaseHeader(title: String, number: Short)
+case class UseCaseHeader(number: Short, title: String)
 
 // =====================================================================================================================
 

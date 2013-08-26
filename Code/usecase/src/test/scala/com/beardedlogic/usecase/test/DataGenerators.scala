@@ -205,7 +205,7 @@ object DataGenerators extends Logger {
   val useCaseHeader = for {
     number <- useCaseNumber
     title <- useCaseTitle
-  } yield UseCaseHeader(title, number)
+  } yield UseCaseHeader(number, title)
 
   def useCaseGen(fieldList: => FieldListRec): Gen[UseCase] = {
     import UseCaseFns._

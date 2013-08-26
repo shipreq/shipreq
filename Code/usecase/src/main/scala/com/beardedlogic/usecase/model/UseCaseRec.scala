@@ -49,7 +49,7 @@ object UseCaseAccessor {
 
   val SelectLatestRevId = Q.query[UseCaseIdentId, UseCaseRevId](s"SELECT latest_rev_id FROM usecase WHERE id=?")
 
-  private val r_* = s"r.ident_id, r.rev, r.id, r.title, r.number"
+  private val r_* = s"r.ident_id, r.rev, r.id, r.number, r.title"
 
   val SelectRevById = Q.query[UseCaseRevId, UseCaseRev](s"SELECT ${r_*} FROM usecase_rev r WHERE r.id=?")
 
@@ -109,7 +109,7 @@ trait UseCaseAccessor extends DatabaseAccessor {
     val identId = createUseCaseIdent()
     val correctedTitle = InputCorrection.useCaseTitle(title)
     val (id, number) = InsertInitialRevWithNextNumber.first(identId, correctedTitle)
-    UseCaseRev(identId, 1, id, UseCaseHeader(correctedTitle, number))
+    UseCaseRev(identId, 1, id, UseCaseHeader(number, correctedTitle))
   }
 
   def findLatestUseCaseRevId(ucId: UseCaseIdentId): Option[UseCaseRevId] = SelectLatestRevId.firstOption(ucId)
