@@ -2,12 +2,13 @@ package com.beardedlogic.usecase
 package lib
 
 import java.lang.{Long => JLong}
-import scalaz.LensFamily
+import net.liftweb.common.Box
+import net.liftweb.http.js.{JsCmd, JsCmds}
+import scalaz.{Monoid, LensFamily}
 import change.{Change, ChangeResultF}
 import field.Field
-import model._
+import model.{FieldKeyRec, TextRev, UseCaseRev}
 import util.{AppliedLens, LazyVal, BiMap}
-import net.liftweb.common.Box
 
 /**
  * @since 30/05/2013
@@ -121,4 +122,16 @@ object Types {
 
   // Due to http://youtrack.jetbrains.com/issue/SCL-5900
   @inline final def alens[A1, A2, B](l: LensFamily[A1, A2, B, B], key: A1) = AppliedLens(l, key)
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Type class instances
+
+  implicit object JsCmdMonoid extends Monoid[JsCmd] {
+    import JsCmds.{_Noop => Noop}
+    override def zero = Noop
+    override def append(a: JsCmd, b: => JsCmd) =
+      if (a eq Noop) b
+      else if (b eq Noop) a
+      else a & b
+  }
 }

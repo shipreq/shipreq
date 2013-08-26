@@ -2,16 +2,16 @@ package com.beardedlogic.usecase
 package snippet.uce
 
 import scala.xml.{Text, NodeSeq}
-import scalaz.{Memo, NonEmptyList}
+import scalaz.{Foldable, Memo, NonEmptyList}
 import net.liftweb.http.js.{JsCmd, JsCmds}
 import net.liftweb.http.js.jquery.JqJE
 import net.liftweb.http.js.jquery.JqJsCmds.jsExpToJsCmd
 import net.liftweb.http.SHtml
 import net.liftweb.util.Helpers._
-import JsCmds.Noop
 
 import lib.change._
 import lib.field._
+import lib.Types.JsCmdMonoid
 import lib.UcChangeDomain
 import util.JsExt._
 import Changes._
@@ -87,22 +87,19 @@ case class Renderer(uce: UseCaseEditor) extends RendererHelper {
   def jsRespondChangeFailure(errorMessage: String): JsCmd =
     JsCmds.Alert(errorMessage)
 
-  def jsRespondToChanges(changes: NonEmptyList[(UcChangeDomain, Change)]): JsCmd = {
-    var js = Noop
-    for (c <- changes.list) {
-      c match {
-        case (_,            TitleChanged(_, _))                 => js &= jsUpdateTitle
-        case (f: TextField, TextChanged)                        => js &= jsUpdateTextField(f)
-        case (f: StepField, StepTextChanged(id))                => js &= stepRenderers(f).jsUpdateStepFieldText(id)
-        case (f: StepField, TailStepAdded(node))                => js &= stepRenderers(f).jsAddTailStep(node)
-        case (f: StepField, StepAdded(precedingId, node))       => js &= stepRenderers(f).jsAddStep(precedingId, node)
-        case (f: StepField, StepRemoved(node))                  => js &= stepRenderers(f).jsRemoveStep(node)
-        case (f: StepField, StepIndentIncreased(node, oldTree)) => js &= stepRenderers(f).jsIncIndent(node, oldTree)
-        case (f: StepField, StepIndentDecreased(node, _))       => js &= stepRenderers(f).jsDecIndent(node)
-        case _ =>
-      }
-    }
-    js
+  def jsRespondToChanges(changes: NonEmptyList[(UcChangeDomain, Change)]): JsCmd =
+    Foldable[NonEmptyList].foldMap(changes)(jsRespondToChange)
+
+  def jsRespondToChange(change: (UcChangeDomain, Change)): JsCmd = change match {
+    case (_,            TitleChanged(_, _))                 => jsUpdateTitle
+    case (f: TextField, TextChanged)                        => jsUpdateTextField(f)
+    case (f: StepField, StepTextChanged(id))                => stepRenderers(f).jsUpdateStepFieldText(id)
+    case (f: StepField, TailStepAdded(node))                => stepRenderers(f).jsAddTailStep(node)
+    case (f: StepField, StepAdded(precedingId, node))       => stepRenderers(f).jsAddStep(precedingId, node)
+    case (f: StepField, StepRemoved(node))                  => stepRenderers(f).jsRemoveStep(node)
+    case (f: StepField, StepIndentIncreased(node, oldTree)) => stepRenderers(f).jsIncIndent(node, oldTree)
+    case (f: StepField, StepIndentDecreased(node, _))       => stepRenderers(f).jsDecIndent(node)
+    case _                                                  => JsCmds.Noop
   }
 
   def jsUpdateRevision: JsCmd =
