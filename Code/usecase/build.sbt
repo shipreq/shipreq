@@ -7,7 +7,7 @@ baseVersion := "0.2.0"
 scalaVersion := "2.10.2"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-language:postfixOps", "-language:implicitConversions",
-  "-language:higherKinds")
+  "-language:higherKinds", "-language:existentials")
 
 scalacOptions in Test ++= Seq("-language:reflectiveCalls")
 
