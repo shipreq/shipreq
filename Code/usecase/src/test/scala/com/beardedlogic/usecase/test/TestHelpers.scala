@@ -36,6 +36,8 @@ import Changes.ExistingStepLabelsChanged
  */
 trait TestHelpers extends MockitoSugar with ShouldMatchers with DebugImplicits {
 
+  val Cores = Math.max(1, Runtime.getRuntime().availableProcessors - 1)
+
   if (!LiftRules.doneBoot) (new bootstrap.liftweb.Boot).configureLift
   //if (Defaults.FieldList.get == null) Defaults.FieldList << mockFieldList(Defaults.FieldListDefns)
 

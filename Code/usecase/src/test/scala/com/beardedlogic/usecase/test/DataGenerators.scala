@@ -20,6 +20,7 @@ import StepLabels._
 import text.ParsingConfig._
 import TreeOps._
 import Types._
+import UseCaseFns.generateStepAndLabelBiMap
 
 object DataGenerators extends Logger {
 
@@ -196,6 +197,40 @@ object DataGenerators extends Logger {
   }
 
   // -------------------------------------------------------------------------------------------------------------------
+  // Step Field Values
+
+  case class NcSfv(h: UseCaseHeader, sfv: StepFieldValue, stepsAndLabels: StepAndLabelBiMap)
+
+  def stepFieldValue(stepTexts: List[String], f: StepField, tree: StepTree)(implicit sl: StepAndLabelBiMap): StepFieldValue = {
+    val textIter = stepTexts.iterator
+    val textmap = tree.mapRecursive(s => {
+      val txt = textIter.next
+      //trace(s"  step[${node.id}] << ${txt.replace("\n", "\\n")}")
+      val v = StepText.parse(s.id, txt)
+      //val after = stepFields(node.id).text
+      //if (txt.contains("⬅")) require(after.contains("⬅"), s"Left-flow lost!\nWas: $txt\nNow: $after")
+      //trace(s"  step[${node.id}] >> ${after.replace("\n", "\\n")}")
+      (s.id -> v)
+    }).toMap
+    StepFieldValue(f, tree, textmap)
+  }
+
+  def genNcSfv(NCF: => NormalCourseField): Gen[NcSfv] = {
+    val ncf = NCF
+    for {
+      h <- arbitrary[UseCaseHeader]
+      nc <- stepPlaceholderTree(ncf.rootLabelPrefix(h), ncf.sli, 1)
+      steps = StepPlaceholderTree(nc.nodes, null)
+      refdep = RefDependentGen(steps)
+      stepTexts <- Gen.listOfN(steps.sizeRecursive, refdep.stepText)
+    } yield {
+      implicit val stepsAndLabels = generateStepAndLabelBiMap(h, (ncf -> nc.stepTree))
+      val sfv = stepFieldValue(stepTexts, ncf, nc.stepTree)
+      NcSfv(h, sfv, stepsAndLabels)
+    }
+  }
+
+  // -------------------------------------------------------------------------------------------------------------------
   // Use Case
 
   val useCaseTitle = arbitrary[String]
@@ -207,13 +242,14 @@ object DataGenerators extends Logger {
     title <- useCaseTitle
   } yield UseCaseHeader(number, title)
 
+  implicit val arbUCH = Arbitrary(useCaseHeader)
+
   def useCaseGen(fieldList: => FieldListRec): Gen[UseCase] = {
-    import UseCaseFns._
     val NCF = fieldList.NCF
     val ECF = fieldList.ECF
 
     for {
-      h <- useCaseHeader
+      h <- arbitrary[UseCaseHeader]
       nc <- stepPlaceholderTree(NCF.rootLabelPrefix(h),  NCF.sli, 1)
       ec <- stepPlaceholderTree(ECF.rootLabelPrefix(h),  ECF.sli, 0)
       steps = StepPlaceholderTree(nc.nodes ::: ec.nodes, null)
@@ -237,22 +273,9 @@ object DataGenerators extends Logger {
         }.toMap
 
       // Step text
-      def stepFieldValue(f: StepField, tree: StepTree): StepFieldValue = {
-        val textIter = stepTexts.iterator
-        val textmap = tree.mapRecursive(s => {
-          val txt = textIter.next
-          //trace(s"  step[${node.id}] << ${txt.replace("\n", "\\n")}")
-          val v = StepText.parse(s.id, txt)
-          //val after = stepFields(node.id).text
-          //if (txt.contains("⬅")) require(after.contains("⬅"), s"Left-flow lost!\nWas: $txt\nNow: $after")
-          //trace(s"  step[${node.id}] >> ${after.replace("\n", "\\n")}")
-          (s.id -> v)
-        }).toMap
-        StepFieldValue(f, tree, textmap)
-      }
       val stepFieldValues: FieldValues = Map(
-        (NCF ~> stepFieldValue(NCF, nc.stepTree)),
-        (ECF ~> stepFieldValue(ECF, ec.stepTree))
+        (NCF ~> stepFieldValue(stepTexts, NCF, nc.stepTree)),
+        (ECF ~> stepFieldValue(stepTexts, ECF, ec.stepTree))
       )
 
       val fieldValues = stepFieldValues ++ textFieldValues
