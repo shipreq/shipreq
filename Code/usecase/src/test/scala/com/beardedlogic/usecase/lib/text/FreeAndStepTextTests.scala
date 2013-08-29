@@ -84,6 +84,8 @@ object FreeAndStepTextTests extends TestHelpers {
 
 class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks with Checkers {
 
+  implicit override val generatorDrivenConfig = PropertyCheckConfig(minSuccessful = Cores * 40, workers = Cores)
+
   import FreeAndStepTextTests._
 
   def aTextWithRefs[T <: ParsedText[T]](T: Tester[T]) {

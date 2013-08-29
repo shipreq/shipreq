@@ -5,7 +5,7 @@ import org.scalatest.FunSpec
 import scala.slick.jdbc.{StaticQuery => Q}
 import Q.interpolation
 
-import change.Changes.StepTextChanged
+import change.Changes.{TextChanged, StepTextChanged}
 import change.{NoChange, Change}
 import field._
 import test.{LoadedTestData, TestDatabaseSupport, TestData, TestHelpers}
@@ -65,10 +65,9 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
   }
 
   describe("respondToChanges()") {
-    case object FakeChange extends Change
 
     it("should return NoChange if no changes") {
-      MockUc1.sampleUC.respondToChanges(FakeChange.asOnlyChange) should be(NoChange)
+      MockUc1.sampleUC.respondToChanges(TextChanged.asOnlyChange) should be(NoChange)
     }
 
     it("should return a new UC if a FreeText changes") {

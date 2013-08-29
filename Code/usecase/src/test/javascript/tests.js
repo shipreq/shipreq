@@ -1,3 +1,5 @@
+function setupViz() {} // Shadow this out. WebWorkers not allowed from localhost.
+
 var liftAjax = {
     log: []
     ,lift_ajaxHandler: function(a, b, c, d){
