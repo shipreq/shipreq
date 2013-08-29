@@ -13,13 +13,13 @@ import db.DbOpResult.{NothingUpdated, Success}
 import model.{DAO, UseCaseSummary}
 import util.{ErrorMessages, Reactor, JavaScript}
 import util.HtmlTransformExt._
-import util.JsExt.JsonTrigger
+import util.JsExt.JsJsonTrigger
 import Types._
 
 object UseCaseIndex extends SnippetHelpers {
 
-  object NewUseCase extends JsonTrigger[UseCaseSummary]("new-uc")
-  object UseCaseUpdated extends JsonTrigger[UseCaseSummary]("upd-uc")
+  final val NewUseCase = JsJsonTrigger[UseCaseSummary]("new-uc")
+  final val UseCaseUpdated = JsJsonTrigger[UseCaseSummary]("upd-uc")
 
   def InitKoViewModel(vmClassName: String, model: AnyRef): CssSel = {
     val json = jsonWrite(model)

@@ -7,6 +7,7 @@ import net.liftweb.json.Formats
 import net.liftweb.json.Serialization.{write => jsonWrite}
 import net.liftweb.util.Helpers._
 import scala.xml.NodeSeq
+import scalaz.Cord
 
 /**
  * Custom Javascript and JQuery extensions.
@@ -31,6 +32,8 @@ object JsExt {
   }
 
   trait JsMethod extends JsExp with JsMember
+
+  implicit def cord2jsExp(c: Cord): JsExp = JE.Str(c.toString)
 
   /**
    * Many jQuery functions allow the last argument to be a callback that is invoked when the function completes.
@@ -201,7 +204,7 @@ object JsExt {
   final val JqSubmitThisFormAndStop = JqSubmitThisForm.toJsCmd + "; return false"
 
   /**
-   * Invokes a JavaScript trigger with JSON data.
+   * Invokes a JavaScript trigger.
    *
    * The JavaScript should define triggers as follows:
    * {{{
@@ -210,10 +213,24 @@ object JsExt {
    * });
    * }}}
    */
-  def JsTriggerJson(triggerName: String, data: AnyRef)(implicit jsonFormats: Formats): JsCmd =
-    JsCmds.Run(s"$$(document).trigger('$triggerName',${jsonWrite(data)})")
+  abstract class JsTrigger(triggerName: String) {
+    private val jsFirstHalf = s"$$(document).trigger(${triggerName.encJs},"
+    protected def go(data: JsExp): JsCmd = JsCmds.Run(s"${jsFirstHalf}${data.toJsCmd})")
+  }
 
-  abstract class JsonTrigger[T <: AnyRef](val triggerName: String) {
-    def trigger(triggerData: T)(implicit jsonFormats: Formats) = JsTriggerJson(triggerName, triggerData)
+  /** Invokes a JavaScript trigger with JSON data. */
+  case class JsJsonTrigger[T <: AnyRef](triggerName: String) extends JsTrigger(triggerName) {
+    def trigger(data: T)(implicit jsonFormats: Formats) = go(JE.JsRaw(jsonWrite(data)))
+  }
+
+  /** Invokes a JavaScript trigger with textual data. */
+  case class JsTextTrigger[T <: AnyRef](triggerName: String) extends JsTrigger(triggerName) {
+    def trigger(text: String): JsCmd = go(JE.Str(text))
+    def trigger(text: Cord): JsCmd = go(text)
+  }
+
+  /** Sets a global JS variable to the value denoted by a given JS expression. */
+  def JsSetGlobalVar(varName: String, valueExpr: JsExp) = new JsCmd {
+    override def toJsCmd = s"$varName=${valueExpr.toJsCmd}"
   }
 }

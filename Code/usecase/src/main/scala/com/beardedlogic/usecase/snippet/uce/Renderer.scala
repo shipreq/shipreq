@@ -2,17 +2,19 @@ package com.beardedlogic.usecase
 package snippet.uce
 
 import scala.xml.{Text, NodeSeq}
-import scalaz.{Foldable, Memo, NonEmptyList}
+import scalaz.{Memo, NonEmptyList}
+import scalaz.syntax.foldable._
+import scalaz.syntax.monoid._
 import net.liftweb.http.js.{JsCmd, JsCmds}
 import net.liftweb.http.js.jquery.JqJE
 import net.liftweb.http.js.jquery.JqJsCmds.jsExpToJsCmd
-import net.liftweb.http.SHtml
+import net.liftweb.http.{S, SHtml}
 import net.liftweb.util.Helpers._
 
 import lib.change._
 import lib.field._
 import lib.Types.JsCmdMonoid
-import lib.UcChangeDomain
+import lib.{FlowGraph, UcChangeDomain}
 import util.JsExt._
 import Changes._
 import Renderer._
@@ -43,6 +45,8 @@ object Renderer {
   final val StepLevelAttributeCss = s".step [$StepLevelAttribute]"
 
   final val TitleId = "uc-title"
+
+  final val FlowGraphTrigger = JsTextTrigger("flowgraph-update")
 }
 
 case class Renderer(uce: UseCaseEditor) extends RendererHelper {
@@ -51,14 +55,15 @@ case class Renderer(uce: UseCaseEditor) extends RendererHelper {
   // *             Rendering             *
   // *************************************
 
-
-  def render = (
-    ".fieldFrame *" #> renderFields andThen
+  def render = {
+    S.appendGlobalJs(JsSetGlobalVar("InitialFlowGraph", flowGraph))
+    ".fieldFrame *" #> renderFields andThen (
       ".title .ucid *" #> uch.number.toString
         & ".rev *" #> state.currentRevision
         & ".title @title" #> SHtml.ajaxTextarea(uch.title, i => %(_.updateTitle(i)), "id" -> TitleId, "rows" -> "1")
         & ".saveUseCase" #> SHtml.ajaxButton("Save", daoCallback(uce.onSave))
-    )
+      )
+  }
 
   def renderFields: NodeSeq =
     (NodeSeq.Empty /: fields.map(renderField))(_ ++: _)
@@ -79,6 +84,7 @@ case class Renderer(uce: UseCaseEditor) extends RendererHelper {
     case f: ExceptionCourseField => StepFieldRenderer(uce, f, ExceptionCourseFieldConfig)
   }
 
+  def flowGraph = FlowGraph.render(uc)
 
   // **************************************
   // *             Javascript             *
@@ -88,7 +94,7 @@ case class Renderer(uce: UseCaseEditor) extends RendererHelper {
     JsCmds.Alert(errorMessage)
 
   def jsRespondToChanges(changes: NonEmptyList[(UcChangeDomain, Change)]): JsCmd =
-    Foldable[NonEmptyList].foldMap(changes)(jsRespondToChange)
+    changes.foldMap(jsRespondToChange) |+| jsRedrawFlowDiagram(changes)
 
   def jsRespondToChange(change: (UcChangeDomain, Change)): JsCmd = change match {
     case (_,            TitleChanged(_, _))                 => jsUpdateTitle
@@ -101,6 +107,22 @@ case class Renderer(uce: UseCaseEditor) extends RendererHelper {
     case (f: StepField, StepIndentDecreased(node, _))       => stepRenderers(f).jsDecIndent(node)
     case _                                                  => JsCmds.Noop
   }
+
+  def jsRedrawFlowDiagram(changes: NonEmptyList[(UcChangeDomain, Change)]): JsCmd = {
+    def matches(t: (UcChangeDomain, Change)): Boolean = t._2 match {
+      case FlowFromChange(_, _)         => true
+      case FlowToChange(_, _)           => true
+      case TailStepAdded(_)             => true
+      case _: ExistingStepLabelsChanged => true
+      case TitleChanged(_, _)           => false
+      case TextChanged                  => false
+      case StepTextChanged(_)           => false
+    }
+    if (matches(changes.head) || changes.tail.exists(matches)) jsDrawFlowDiagram
+    else JsCmds.Noop
+  }
+
+  def jsDrawFlowDiagram: JsCmd = FlowGraphTrigger.trigger(flowGraph)
 
   def jsUpdateRevision: JsCmd =
     JqExpr(".rev") ~> JqJE.JqHtml(Text(state.currentRevision))

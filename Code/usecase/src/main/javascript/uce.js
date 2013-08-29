@@ -1,3 +1,30 @@
+// ---------------------------------------------------------------------------------------------------------------------
+// FlowGraph rendering
+
+// Globals:
+//   VizWorker - The WebWorker that turns DOT into an SVG.
+//   InitialFlowGraph - The initial DOT to render on page load.
+
+function setupViz() {
+    VizWorker = new Worker('/js/viz-worker.js')
+    VizWorker.onmessage = function(ev) {
+        var d = ev.data
+        $(d.id).html(d.svg)
+    }
+
+    if (typeof InitialFlowGraph === 'string')
+        $(document).trigger('flowgraph-update',InitialFlowGraph)
+
+    //var x = 'digraph G {;rankdir=LR;subgraph cluster_0 {;node [style=filled,color=lightblue];"2.1"->"2.1.1"->"2.1.2";}; subgraph cluster_1 {;node [style=filled,color=green];"2.0"->"2.0.1"->"2.0.2"->"2.0.3"->"2.0.4";}; subgraph cluster_2 {;node [style=filled,color=red];"2.E.1"->"2.E.1.1"->"2.E.1.2";"2.E.2"->"2.E.2.1";};"2.0.1"->"2.1";"2.0.1"->"2.E.2";"2.0.2"->"2.E.1";"2.1.2"->"2.0.2";"2.E.1.2"->"2.0.4";"2.E.2.1"->"2.E.1.1";START [shape=circle,style=filled,color=black,fontsize=1,height=.3];END [shape=doublecircle,style=filled,color=black,fontsize=1,height=.3];START->{ "2.0" };{ "2.0.4" }->END;graph [label="UC-2: Reference other UCs"];}'
+    //$(document).trigger('flowgraph-update',x)
+}
+
+$(document).on('flowgraph-update', function(event, data) {
+    VizWorker.postMessage({id:'#flowgraph', dot:data})
+});
+
+// ---------------------------------------------------------------------------------------------------------------------
+
 /**
  * Moves a step (and its future children) from Normal Course to Alternate Courses.
  *
@@ -123,6 +150,7 @@ function changeFocus(tgtFn) {
 function blurFn(sel) { return $(sel).blur() }
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Feature: Click a step label while during textarea-input to insert a reference.
 
 /**
  * Returns the full label (eg. "1.0.2.a") of a step.
@@ -212,7 +240,13 @@ function clickLiftAjaxButtonWithExtraArgs(button, args) {
  */
  function clickWithFocusFlag(button){ clickLiftAjaxButtonWithExtraArgs(button, 'focus=true') }
 
+// Install event handlers so that users can click-to-insert step labels while typing
+$(document).on('focus', "#uce textarea", autoSetTypingMode)
+$(document).on('blur',  "#uce textarea", autoSetTypingMode)
+$(document).on('mousedown', ".step .lbl, .step .lbl *", onLabelClick)
+
 // ---------------------------------------------------------------------------------------------------------------------
+// Keyboard shortcuts
 
 function onEscape()   { withFocusedInputField(blurFn) }
 function onAltDown()  { changeFocus(getElementBelow) }
@@ -223,7 +257,7 @@ function onAltEnter() { clickFocusedStepsButton(getAddStepButton) }
 
 function bindKeys(keys, fn) { Mousetrap.bindGlobal(keys, function(){ fn(); return false }) }
 
-function uceSetup() {
+function setupKeyBindings() {
     bindKeys('alt+right', onAltRight);
     bindKeys('alt+left',  onAltLeft);
     bindKeys('alt+down',  onAltDown);
@@ -231,11 +265,14 @@ function uceSetup() {
     bindKeys('alt+enter', onAltEnter);
     bindKeys('esc',       onEscape);
 }
-$(document).ready(uceSetup)
 
-$(document).on('focus', "#uce textarea", autoSetTypingMode)
-$(document).on('blur',  "#uce textarea", autoSetTypingMode)
-$(document).on('mousedown', ".step .lbl, .step .lbl *", onLabelClick)
+// ---------------------------------------------------------------------------------------------------------------------
+
+function uceSetup() {
+    setupKeyBindings()
+    setupViz()
+}
+$(document).ready(uceSetup)
 
 //window.onbeforeunload = function() {
 //    return "ANY UNSAVED CHANGES WILL BE LOST."

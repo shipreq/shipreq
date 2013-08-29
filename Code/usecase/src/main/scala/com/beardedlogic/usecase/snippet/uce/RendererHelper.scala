@@ -9,10 +9,11 @@ private [uce] trait RendererHelper {
   val uce: UseCaseEditor
 
   @inline final def textFieldIds = uce.textFieldIds
-  @inline final def state = uce.state
-  @inline final def uch = state.uc.header
-  @inline final def fields = state.uc.fields
-  @inline final implicit def fieldValues = state.uc.fieldValues
+  @inline final def state = uce.state // TODO fix this shit. UCE is not RT.
+  @inline final def uc = state.uc
+  @inline final def uch = uc.header
+  @inline final def fields = uc.fields
+  @inline final implicit def fieldValues = uc.fieldValues
 
   // % as in "mod(ify)"
   @inline final def %(f: UseCase => UcUpdateResult): JsCmd = uce.update(f)
