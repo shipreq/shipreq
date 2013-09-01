@@ -161,7 +161,7 @@ function blurFn(sel) { return $(sel).blur() }
 function getFullLabel(element) {
     var curStep = getStepContainer(element)
     var result = curStep.find('.lbl span').text()
-    var lvl = curStep.data('lvl')
+    var lvl = curStep.attr('data-lvl')
     if (lvl > 0) {
         // Get all steps before current
         var steps = curStep.parent('.steps').find('.step:not(#' + curStep.attr('id') + ' ~ *)')

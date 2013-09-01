@@ -1,4 +1,5 @@
 function setupViz() {} // Shadow this out. WebWorkers not allowed from localhost.
+jQuery.fx.off = true
 
 var liftAjax = {
     log: []
@@ -248,4 +249,23 @@ test("Clicking a label should insert a reference when typing", function(){
         e.val("")
         liftAjax.clear()
     }
+})
+
+test("Label detection should work after a step label change", function(){
+    var i = ids.s_1_0_3
+    var e = setFocus(i.txt)
+    e.val("")
+    Syn.click({}, i.lbl)
+    equal(e.val(), '[1.0.3]', "Text has reference.")
+    e.blur()
+
+    // Mock indent-decrease
+    nc_to_ac('#uce', i.cont, function() {
+        $id(i.cont).attr("data-lvl", "0")
+        $id(i.lbl).html("1.1")},function() {})
+
+    e.val("")
+    setFocus(i.txt)
+    Syn.click({}, i.lbl)
+    equal(e.val(), '[1.1]', "Text has correct reference.")
 })
