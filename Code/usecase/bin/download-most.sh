@@ -45,7 +45,7 @@ curl -s http://code.jquery.com/qunit/qunit-$v.js -o vendor/qunit/qunit.js && \
 curl -s http://code.jquery.com/qunit/qunit-$v.css -o vendor/qunit/qunit.css
 echo $?
 
-echo "Downloading Viz.js"
-curl -s https://raw.github.com/mdaines/viz.js/master/viz.js -o src/main/webapp/js/vendor/viz.js
-echo $?
+#echo "Downloading Viz.js"
+#curl -s https://raw.github.com/mdaines/viz.js/master/viz.js -o src/main/webapp/js/vendor/viz.js
+#echo $?
 
