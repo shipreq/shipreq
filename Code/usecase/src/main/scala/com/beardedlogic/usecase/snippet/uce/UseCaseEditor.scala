@@ -55,9 +55,6 @@ class UseCaseEditor(initialState: UseCaseEditor.State) extends StatefulSnippet w
   def this(ucId: UseCaseIdentId) = this(loadLatest(ucId))
 
   private var state__ = initialState
-
-  protected def setState(newState: State): Unit = state__ = newState
-
   @inline final def state = state__
   @inline final def uc = state.uc
   @inline final def uch = uc.header
@@ -69,7 +66,13 @@ class UseCaseEditor(initialState: UseCaseEditor.State) extends StatefulSnippet w
     .map(f => (f -> nextFuncName.tag[LocalTextFieldIdTag]))
     .toMap
 
-  val renderer = Renderer(this)
+  private var renderer__ = Renderer(state, textFieldIds, update, save)
+  @inline final def renderer = renderer__
+
+  protected def setState(newState: State): Unit = {
+    state__ = newState
+    renderer__ = renderer__.copy(state = newState)
+  }
 
   override def dispatch = { case _ => renderer.render }
 
@@ -84,12 +87,13 @@ class UseCaseEditor(initialState: UseCaseEditor.State) extends StatefulSnippet w
       case ChangeFailure(err) => renderer.jsRespondChangeFailure(err)
     }
 
-  def onSave(dao: DAO): JsCmd = {
-    UseCasePersistence.save(uc, state.prevSave, dao) match {
-      case thisSave@Some(cp) =>
-        setState(State(cp.uc, thisSave))
-        renderer.jsUpdateRevision
-      case None => Noop
-    }
-  }
+  def save(): JsCmd =
+    daoProvider.withTransaction(dao => {
+      UseCasePersistence.save(uc, state.prevSave, dao) match {
+        case thisSave@Some(cp) =>
+          setState(State(cp.uc, thisSave))
+          renderer.jsUpdateRevision
+        case None => Noop
+      }
+    })
 }

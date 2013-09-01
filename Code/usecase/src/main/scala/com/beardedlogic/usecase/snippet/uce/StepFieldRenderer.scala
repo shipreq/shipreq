@@ -102,7 +102,8 @@ object ExceptionCourseFieldConfig extends StepFieldRenderConfig {
 // -------------------------------------------------------------------------------------------------------------------
 
 case class StepFieldRenderer(
-  uce: UseCaseEditor,
+  state: UseCaseEditor.State,
+  updateUC: (UseCase => UcUpdateResult) => JsCmd,
   f: StepField,
   cfg: StepFieldRenderConfig
   ) extends RendererHelper {

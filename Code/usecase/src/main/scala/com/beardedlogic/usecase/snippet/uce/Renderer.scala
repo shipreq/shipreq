@@ -13,8 +13,8 @@ import net.liftweb.util.Helpers._
 
 import lib.change._
 import lib.field._
-import lib.Types.JsCmdMonoid
-import lib.{FlowGraph, UcChangeDomain}
+import lib.Types._
+import lib.{FlowGraph, UcChangeDomain, UseCase}
 import util.JsExt._
 import Changes._
 import Renderer._
@@ -49,7 +49,12 @@ object Renderer {
   final val FlowGraphTrigger = JsTextTrigger("flowgraph-update")
 }
 
-case class Renderer(uce: UseCaseEditor) extends RendererHelper {
+case class Renderer(
+  state: UseCaseEditor.State,
+  textFieldIds: Map[Field, LocalTextFieldId],
+  updateUC: (UseCase => UcUpdateResult) => JsCmd,
+  save: () => JsCmd
+  ) extends RendererHelper {
 
   // *************************************
   // *             Rendering             *
@@ -61,7 +66,7 @@ case class Renderer(uce: UseCaseEditor) extends RendererHelper {
       ".title .ucid *" #> uch.number.toString
         & ".rev *" #> state.currentRevision
         & ".title @title" #> SHtml.ajaxTextarea(uch.title, i => %(_.updateTitle(i)), "id" -> TitleId, "rows" -> "1")
-        & ".saveUseCase" #> SHtml.ajaxButton("Save", daoCallback(uce.onSave))
+        & ".saveUseCase" #> SHtml.ajaxButton("Save", save)
       )
   }
 
@@ -80,8 +85,8 @@ case class Renderer(uce: UseCaseEditor) extends RendererHelper {
     )
 
   val stepRenderers = Memo.immutableListMapMemo[StepField, StepFieldRenderer] {
-    case f: NormalCourseField => StepFieldRenderer(uce, f, NormalCourseFieldConfig)
-    case f: ExceptionCourseField => StepFieldRenderer(uce, f, ExceptionCourseFieldConfig)
+    case f: NormalCourseField => StepFieldRenderer(state, updateUC, f, NormalCourseFieldConfig)
+    case f: ExceptionCourseField => StepFieldRenderer(state, updateUC, f, ExceptionCourseFieldConfig)
   }
 
   def flowGraph = FlowGraph.render(uc)
