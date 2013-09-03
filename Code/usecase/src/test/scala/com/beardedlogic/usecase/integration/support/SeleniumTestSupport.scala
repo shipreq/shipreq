@@ -2,8 +2,9 @@ package com.beardedlogic.usecase
 package integration.support
 
 import org.openqa.selenium.firefox.FirefoxDriver
-import org.openqa.selenium.{HasInputDevices, JavascriptExecutor, WebDriver}
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
+import org.openqa.selenium.{JavascriptExecutor, WebDriver}
+import org.openqa.selenium.interactions.HasInputDevices
+import org.scalatest.{BeforeAndAfterAll, Suite}
 import test.{TestDatabaseSupport, SharedGlobal, Jetty}
 import SeleniumTestSupport._
 

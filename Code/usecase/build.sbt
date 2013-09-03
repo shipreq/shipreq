@@ -34,7 +34,7 @@ libraryDependencies ++= {
     "org.scalacheck"              %% "scalacheck"             % "1.10.1"              % "test",
     "net.liftweb"                 %% "lift-testkit"           % liftVersion           % "test",
     "org.apache.directory.studio" % "org.apache.commons.io"   % "2.4"                 % "test",
-    "org.seleniumhq.selenium"     %  "selenium-java"          % "2.33.0"              % "test" excludeAll(
+    "org.seleniumhq.selenium"     %  "selenium-java"          % "2.35.0"              % "test" excludeAll(
       ExclusionRule(name = "selenium-android-driver"),
       ExclusionRule(name = "selenium-htmlunit-driver"),
       ExclusionRule(name = "selenium-ie-driver"),

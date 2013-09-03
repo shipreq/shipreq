@@ -209,7 +209,7 @@ class TreeCompositionTest extends FreeSpec with SeleniumTest {
     }
     "when pressed for 1.0.3 then 1.0.2 (out of 1.0.3)" - {
       lazy val u = startWith103.click_>>(3).click_>>(2)
-      "should leave 1.0 as is" in { u.assertStep(0)(0, "1.0") }
+      "should leave 1.0 as is" in { u.assertStep(0)(0, "1.0", "Untitled") }
       "should leave 1.0.1 as is" in { u.assertStep(1)(1, "1") }
       "should turn 1.0.2 into 1.0.1.a" in { u.assertStep(2)(2, "a") }
       "should turn 1.0.3 into 1.0.1.a.i" in { u.assertStep(3)(3, "i") }

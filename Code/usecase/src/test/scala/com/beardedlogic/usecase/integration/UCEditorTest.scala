@@ -15,7 +15,7 @@ class UCEditorTest extends FunSpec with SeleniumTest {
     it("should have a pre-populated UC ID") { u.useCaseId should be("UC-1") }
     it("should have a title of 'Untitled'") { u.useCaseTitle should be("Untitled") }
     it("should have 2 steps") { u.stepCount should be(2) }
-    it("should have a step: 1.0") { u.assertStep(0)(0, "1.0", "") }
+    it("should have a step: 1.0") { u.assertStep(0)(0, "1.0", "Untitled") }
     it("should have a step: 1.0.1") { u.assertStep(1)(1, "1", "") }
     it("should have 2 Add buttons") { u.addButtonCount should be(2) }
   }
