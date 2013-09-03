@@ -1,21 +1,5 @@
 Legend: [M/S/C] [Benefit 0-none,5-max] [Penalty 0-none,5-severe]
 
-FEATURE TODO
-============
-
-* [M] User management.
-* [M] Use Case CRUD interface.
-* [M] Usage limits per user (or team, etc).
-* [S] Subscriptions.
-* [S] Be nice to see/insert field templates/examples.
-  Eg. 'Frequency Of Use' should have
-    P(50%) = Not used.
-    P(90%) = 0 to 20 times per game.
-    P(99%) = 0 to 100 times per game.
-* [C] Nice to have BA in steps reference BA in actors. Change actors, steps change too.
-* [C] Make pre/post-condition fields sharable/AOP-style. Instead of writing the
-  same conditions in all UCs, define them one and select UCs they apply to.
-
 FUNC TODO
 =========
 
