@@ -47,6 +47,10 @@ object Renderer {
   final val TitleId = "uc-title"
 
   final val FlowGraphTrigger = JsTextTrigger("flowgraph-update")
+
+  case object JsUpdatePageTitle extends JsCmd {
+    override def toJsCmd = "updatePageTitle()"
+  }
 }
 
 case class Renderer(
@@ -133,7 +137,7 @@ case class Renderer(
     JqExpr(".rev") ~> JqJE.JqHtml(Text(state.currentRevision))
 
   def jsUpdateTitle: JsCmd =
-    JqId(TitleId) ~> JqSetTextarea(uch.title)
+    JqId(TitleId) ~> JqSetTextarea(uch.title) & JsUpdatePageTitle
 
   def jsUpdateTextField(f: TextField): JsCmd =
     JqId(textFieldIds(f)) ~> JqSetTextarea(f.value.text)

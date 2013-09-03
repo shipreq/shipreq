@@ -25,6 +25,10 @@ $(document).on('flowgraph-update', function(event, data) {
 
 // ---------------------------------------------------------------------------------------------------------------------
 
+function updatePageTitle() {
+    document.title = $('#uc-id').text() +": "+ $('#uc-title').val()
+}
+
 /**
  * Moves a step (and its future children) from Normal Course to Alternate Courses.
  *
@@ -271,6 +275,7 @@ function setupKeyBindings() {
 function uceSetup() {
     setupKeyBindings()
     setupViz()
+    updatePageTitle()
 }
 $(document).ready(uceSetup)
 
