@@ -1,7 +1,6 @@
 Work Schedule
 =============
 
-* Minimise flow graphs
 * Fix: Accidently hit back without saving, progress is lost.
 
 * Plan project management

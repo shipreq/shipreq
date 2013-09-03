@@ -77,8 +77,8 @@ object FlowGraph {
     import StepTreeZipper._
 
     implicit def focus2node(f: AnyFocus): Node = f.label
-    implicit def focusS2nodeS[F <: AnyFocus](s: List[F]): List[Node] = s map focus2node
-    //implicit def focusF2nodeS[F[_]: Functor](f: F[AnyFocus]): List[Node] = f map focus2node toList
+    implicit def focusS2nodeS(s: List[AnyFocus]): List[Node] = s map focus2node
+    implicit def focusL2implicitFL(s: List[NonEmptyList[AnyFocus]]): List[ImplicitFlow] = s map (_ map focus2node)
 
     def model(uc: UseCase): FlowGraphModel = {
       val labels = uc.stepsAndLabels.get.ab
@@ -108,30 +108,45 @@ object FlowGraph {
 
     private def processZ(implicit c: Category, dz: DeepZipper): FlowGraphModel = {
       implicit val fzs = flattenTopNodes(dz)
-      val i = IntraCatData(headNodes, implicitFlows)
-      val sd = SocialData(explicitFlows, startNodes, endNodes)
+      implicit val dzL = dz.toList
+      val implicitFlowsF = implicitFlows
+      val i = IntraCatData(headNodes, implicitFlowsF)
+      val sd = SocialData(explicitFlows, startNodes, endNodes(implicitFlowsF))
       FlowGraphModel(Map(c -> i), sd)
     }
 
     def flattenTopNodes(dz: DeepZipper): List[FlatZipper] = dz map (_.flat) toList
 
-    def headNodes(implicit z: DeepZipper): List[Node] = z.toList
+    def headNodes(implicit z: List[DeepFocus]): List[Node] = z
 
-    def implicitFlows(implicit tops: List[FlatZipper]): List[ImplicitFlow] = tops map implicitFlow
-    def implicitFlow(z: FlatZipper): ImplicitFlow = NonEmptyList[Node](z.focus, z.rights map focus2node: _*)
+    def implicitFlows(implicit z: List[DeepFocus]): List[NonEmptyList[AnyFocus]] = {
+      def implicitFlowL0(f: DeepFocus) = NonEmptyList[AnyFocus](f, implicitFlowLn(f.down, true): _*)
+      def implicitFlowLn(o: Option[DeepZipper], force: Boolean): List[AnyFocus] = o match {
+        case None => Nil
+        case Some(z) =>
+          val children = z.toStream.map(f => implicitFlowLn(f.down, false))
+          if (force || displayN(z) || children.exists(_.nonEmpty))
+            z.toStream.zip(children).foldRight(List.empty[AnyFocus]) {case ((n, ns), acc) => n :: ns ::: acc}
+          else
+            Nil
+      }
+      def displayN(z: DeepZipper) = display1(z.focus) || z.rights.exists(display1)
+      def display1(f: DeepFocus) = f.flowFromClause.isDefined || f.flowToClause.isDefined
+      z map implicitFlowL0
+    }
 
     def explicitFlows(implicit tops: List[FlatZipper]): List[ExplicitFlow] = tops map explicitFlow flatten
     def explicitFlow(z: FlatZipper): List[ExplicitFlow] = z.toList map explicitFlow flatten
     def explicitFlow(y: AnyFocus): List[ExplicitFlow] =
       y.flowToClause map (_.refs.values.toList strengthL focus2node(y)) getOrElse List.empty
 
-    def startNodes(implicit c: Category, dz: DeepZipper): List[Node] = c match {
-      case NC => List(dz.focus.label)
-      case AC | EC => dz.toList filter (_.flowFromClause.isEmpty)
+    def startNodes(implicit c: Category, dzL: List[DeepFocus]): List[Node] = c match {
+      case NC => List(dzL.head.label)
+      case AC | EC => dzL filter (_.flowFromClause.isEmpty)
     }
 
-    def endNodes(implicit c: Category, tops: List[FlatZipper]): List[Node] = {
-      val ends = tops map (_.end.focus)
+    def endNodes(implicitFlows: List[NonEmptyList[AnyFocus]])(implicit c: Category): List[Node] = {
+      val ends = implicitFlows map (_.last)
       c match {
         case NC => ends
         case AC | EC => ends filter (_.flowToClause.isEmpty)
