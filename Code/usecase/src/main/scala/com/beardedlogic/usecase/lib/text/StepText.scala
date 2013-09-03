@@ -2,7 +2,7 @@ package com.beardedlogic.usecase.lib.text
 
 import scala.collection.immutable.TreeSet
 import scalaz.{NonEmptyList, Cord}
-import com.beardedlogic.usecase.lib.Misc.SingleSpace
+import com.beardedlogic.usecase.lib.Misc.{CordExt, SingleSpace}
 import com.beardedlogic.usecase.lib.Types._
 import com.beardedlogic.usecase.lib.change._
 import com.beardedlogic.usecase.lib.text.Grammar.{InvalidRefToken, PotentiallyValidRef, ParsedFlowClause}
@@ -96,18 +96,19 @@ case class StepText(
     (newClause, changes)
   }
 
-  private case class TextAndRefs(text: String, from: Flow.Refs, to: Flow.Refs)
+  private case class TextAndRefsC(text: Cord, from: Flow.Refs, to: Flow.Refs)
+  private case class TextAndRefsS(text: String, from: Flow.Refs, to: Flow.Refs)
 
   /**
    * Scans input for optional flow clauses such as `"--> 1.0.2"`, `"<-- 1.4, 1.5"`.
    *
    * If found (and valid), they are extracted and normalised.
    */
-  private def parseTextForFlow(input: String)(implicit stepsAndLabels: StepAndLabelBiMap): TextAndRefs = {
+  private def parseTextForFlow(input: String)(implicit stepsAndLabels: StepAndLabelBiMap): TextAndRefsS = {
 
     val labelLookup = stepsAndLabels.get.ba
 
-    def parseFlowClause(acc: TextAndRefs, clause: ParsedFlowClause): TextAndRefs = {
+    def parseFlowClause(acc: TextAndRefsC, clause: ParsedFlowClause): TextAndRefsC = {
 
       def validateEachRef = {
         var bad = List.empty[Cord]
@@ -128,13 +129,13 @@ case class StepText(
       val (bad, good) = validateEachRef
 
       // Add bad refs back into text
-      val newText: String =
+      val newText: Cord =
         if (bad.isEmpty) acc.text
         else {
           val badRefs = bad.foldRight(Cord.empty)((e, a) => a ++ SingleSpace ++ e)
           val badClause: Cord = clause.style.arrowBadReplacement +: badRefs
           val badClause2: Cord = if (acc.text.isEmpty) badClause else SingleSpace ++ badClause
-          (acc.text +: badClause2).toString
+          acc.text ++ badClause2
         }
 
       // Combine results
@@ -152,13 +153,14 @@ case class StepText(
 
       // Flow clauses found
       val (text, flowClauses) = parseResult.get
-      val z = TextAndRefs(text, Map.empty, Map.empty)
-      flowClauses.foldLeft(z)(parseFlowClause)
+      val z = TextAndRefsC(text, Map.empty, Map.empty)
+      val r = flowClauses.foldLeft(z)(parseFlowClause)
+      TextAndRefsS(r.text.toString, r.from, r.to)
 
     } else {
 
       // No flow clauses detected
-      TextAndRefs(input.trim, Map.empty, Map.empty)
+      TextAndRefsS(input, Map.empty, Map.empty)
     }
   }
 

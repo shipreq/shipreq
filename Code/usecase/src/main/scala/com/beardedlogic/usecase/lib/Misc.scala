@@ -28,6 +28,11 @@ object Misc extends Misc {
   implicit class AnyExt[V](val v: V) extends AnyVal {
     def modIf[VV >: V](cond: Boolean)(mod: V => VV): VV = if (cond) mod(v) else v
   }
+
+  implicit class CordExt[V](val c: Cord) extends AnyVal {
+    def isEmpty: Boolean = !nonEmpty
+    def nonEmpty: Boolean = c.self.iterator.exists(_.nonEmpty)
+  }
 }
 
 trait Misc {
