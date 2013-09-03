@@ -6,7 +6,6 @@ import lib.db._
 import lib.Types._
 import DBHelpers._
 
-// TODO type FieldKeyRec by FieldKeyType?
 case class FieldKeyRec(id: FieldKeyId, fkType: FieldKeyType, data: FieldKeyRecData) {
   def fieldDefn = fkType.fieldDefn(data)
   def field = fieldDefn.field(this)

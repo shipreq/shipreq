@@ -187,7 +187,6 @@ case class UseCase(
       addChangesToResult(update2, update3, changes.map(changeMapFn))
     })
 
-  // TODO input-correction not sent back to client when state stays the same
   def updateTitle(input: String): UcUpdateResult = {
     implicit val lens = alens(FieldLenses.uc.title, this)
     val newTitle = InputCorrection.useCaseTitle(input)
