@@ -15,7 +15,7 @@ object B extends Build {
   lazy val root =
     Project("root", file("."))
     .configs(SeleniumTest)
-    .settings(com.github.siasia.WebPlugin.webSettings: _*)
+    .settings(com.earldouglas.xsbtwebplugin.WebPlugin.webSettings: _*)
     .settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*) // Dependency graph
     .settings(inConfig(SeleniumTest)(Defaults.testSettings): _*)
     .settings(
