@@ -4,7 +4,7 @@ import org.scalatest.FunSuite
 import scalaz.syntax.equal._
 import com.beardedlogic.usecase.test.TestData
 import change.Changes.StepAdded
-import field.FieldLenses
+import Lenses._
 import UseCaseEquality._
 
 class UseCaseEqualityTest extends FunSuite with TestData {
@@ -31,17 +31,15 @@ class UseCaseEqualityTest extends FunSuite with TestData {
   }
 
   test("Changes in header") {
-    testStringChange(uc => f => lens.title.mod(f, uc))
+    testStringChange(uc => f => ucTitleL.mod(f, uc))
   }
 
   test("Changes in text field text") {
-    val l = TF1.lens >=> FieldLenses.freeText
-    testStringChange(uc => f => l.mod(s => (f(s), uc.stepsAndLabels), uc))
+    testStringChange(uc => f => ucTextFieldTextL.mod(s => (f(s), uc.stepsAndLabels), (uc, TF1)))
   }
 
   test("Changes in step text") {
-    val l = lens.stepText >=> FieldLenses.stepText
-    testStringChange(uc => f => l.mod(s => (f(s), uc.stepsAndLabels), (uc, NCF, X5)))
+    testStringChange(uc => f => ucStepTextTextL.mod(s => (f(s), uc.stepsAndLabels), (uc, (NCF, X5))))
   }
 
   test("Changes in step tree") {

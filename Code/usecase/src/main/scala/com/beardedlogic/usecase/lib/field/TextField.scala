@@ -36,7 +36,7 @@ case class TextField(override val defn: TextFieldDefinition, override val rec: F
   override def toString = s"${getClass.getSimpleName}[#${rec.id}:${defn.title}]"
 
   def updateText(newText: String)(uc: UseCase): UcUpdateResult = {
-    implicit val lens = alens(FieldLenses.uc.textField, (uc, this))
+    implicit val lens = alens(Lenses.ucTextFieldL, (uc, this))
     uc.update(this, lens.get.update(newText)(uc.stepsAndLabels))
   }
 }

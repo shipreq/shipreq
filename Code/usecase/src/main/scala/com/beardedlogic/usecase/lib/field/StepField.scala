@@ -10,6 +10,7 @@ import change._
 import Changes._
 import StepField._
 import text.StepText
+import Lenses._
 
 object StepField {
   def MaxStepViolationMsg = Some(s"That would cause you to have ${MaxStepsPerLevel + 1} steps at the same level, which exceeds the maximum allowed.")
@@ -70,12 +71,12 @@ abstract class StepField extends Field with StepFieldPersistenceMixin {
   override def toString = s"${getClass.getSimpleName}[#${rec.id}]"
 
   def updateText(id: LocalStepId, newText: String)(uc: UseCase): UcUpdateResult = {
-    implicit val lens = alens(FieldLenses.uc.stepText, (uc, this, id))
+    implicit val lens = alens(ucStepTextInstL, (uc, (this, id)))
     uc.update(this, lens.get.update(newText)(uc.stepsAndLabels))
   }
 
   def addTailStep(uc: UseCase): UcUpdateResult = {
-    implicit val lens = alens(FieldLenses.uc.stepField, (uc, this))
+    implicit val lens = alens(ucStepFieldL, (uc, this))
     val curNodes = lens.get.tree.nodes
     val labelIndex = sli.startingLabelIndex(0) + curNodes.size
     if (labelIndex > MaxStepsPerLevel)
@@ -98,7 +99,7 @@ abstract class StepField extends Field with StepFieldPersistenceMixin {
     )
 
   def removeStep(id: LocalStepId)(uc: UseCase): UcUpdateResult = {
-    implicit val lens = alens(FieldLenses.uc.stepField, (uc, this))
+    implicit val lens = alens(ucStepFieldL, (uc, this))
     val sfv = lens.get
     if (prohibitRemoval_?(sfv, id)) NoChange
     else
@@ -136,7 +137,7 @@ abstract class StepField extends Field with StepFieldPersistenceMixin {
     newFn: (StepFieldValue, List[StepNode], StepNode) => Changed[StepFieldValue, Change]
     ): UcUpdateResult = {
 
-    implicit val lens = alens(FieldLenses.uc.stepField, (uc, this))
+    implicit val lens = alens(ucStepFieldL, (uc, this))
     val sfv = lens.get
     updateFn(sfv) match {
       case (newNodes, Some(tgtNode: StepNode)) =>
@@ -171,10 +172,9 @@ case class NormalCourseField(override val rec: FieldKeyRec) extends StepField {
   override def prohibitRemoval_?(v: Value, id: LocalStepId) = v.tree(0).id == id
   override def preferTitleInRoot_?() = true
   override def defaultLoadValue(h: UseCaseHeader) = {
-    val v1 = StepFieldValue.forTree(this, DefaultTree)
-    val id = v1.tree.head.id
-    val txt = StepText.parse(id, h.title)(EmptyStepAndLabelBiMap)
-    val sfv = FieldLenses.sfv.stepText.set((v1, id), txt)
+    val sfv1 = StepFieldValue.forTree(this, DefaultTree)
+    val id = sfv1.tree.head.id
+    val sfv = sfvStepTextTextL.set((sfv1, id), (h.title, EmptyStepAndLabelBiMap))
     (Some(sfv.tree), () => sfv)
   }
 }

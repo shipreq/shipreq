@@ -1,8 +1,9 @@
-package com.beardedlogic.usecase.lib.field
+package com.beardedlogic.usecase.lib
 
 import org.scalatest.FunSpec
-import com.beardedlogic.usecase.lib.{UseCase, UseCaseHeader}
-import com.beardedlogic.usecase.lib.text.FreeText
+import Lenses._
+import field.Field
+import text.FreeText
 import com.beardedlogic.usecase.test.NodeUtils._
 import com.beardedlogic.usecase.test.{TestData, TestHelpers}
 
@@ -25,26 +26,26 @@ class FieldLensesTest extends FunSpec with TestHelpers with TestData {
 
   describe("title") {
     it("should get the title") {
-      lens.title.get(sampleUC) should be("YES!")
+      ucTitleL.get(sampleUC) should be("YES!")
     }
     it("should set the title") {
-      val uc = lens.title.set(sampleTextOnlyUC, "No")
+      val uc = ucTitleL.set(sampleTextOnlyUC, "No")
       uc.header should be(UseCaseHeader(7, "No"))
       uc should be(sampleTextOnlyUC.copy(header = uc.header))
     }
-    it should behave like aLowLevelOperation(lens.title =>= {_ + "!"})
+    it should behave like aLowLevelOperation(ucTitleL =>= {_ + "!"})
   }
 
   describe("number") {
     it("should get the number") {
-      lens.number.get(sampleUC) should be(7)
+      ucNumberL.get(sampleUC) should be(7)
     }
     it("should set the number") {
-      val uc = lens.number.set(sampleTextOnlyUC, 3)
+      val uc = ucNumberL.set(sampleTextOnlyUC, 3)
       uc.header should be(UseCaseHeader(3, "YES!"))
       assertUseCasesMatchIgnoringStepsAndLabels(uc, sampleTextOnlyUC.copy(header = uc.header))
     }
-    it should behave like aLowLevelOperation(lens.number =>= {_ => 123})
+    it should behave like aLowLevelOperation(ucNumberL =>= {_ => 123})
   }
 
   describe("textField") {

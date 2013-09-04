@@ -27,6 +27,8 @@ import model._
 import util._
 
 import Types._
+import Lenses._
+import LensFns._
 import NodeUtils._
 import TreeOps._
 import Changes.ExistingStepLabelsChanged
@@ -170,8 +172,7 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers with DebugImplicits {
   }
 
   val stepTreeLens = {
-    import LensFns._
-    FieldLenses.uc.stepField >@==> scalaz.Lens.lensg[StepFieldValue, StepTree](
+    ucStepFieldL >@=> Lens.lensg[StepFieldValue, StepTree](
       sfv => t => sfv.withNewTree(t),
       sfv => sfv.tree
     )
@@ -406,8 +407,8 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers with DebugImplicits {
    */
   implicit class TextFieldExt(val f: TextField) {
     def lens = Lens.lensg[UseCase, FreeText](
-      u => v => FieldLenses.uc.textField.set((u, f), v),
-      u => FieldLenses.uc.textField.get(u, f))
+      u => v => ucTextFieldL.set((u, f), v),
+      u => ucTextFieldL.get(u, f))
   }
 
   /**
@@ -415,9 +416,9 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers with DebugImplicits {
    */
   implicit class StepFieldExt(val f: StepField) {
     def lens = Lens.lensg[UseCase, StepFieldValue](
-      u => v => FieldLenses.uc.stepField.set((u, f), v),
-      u => FieldLenses.uc.stepField.get(u, f))
-    def getTextTree(uc: UseCase) = lens.get(uc).toTextTree(f)
+      u => v => ucStepFieldL.set((u, f), v),
+      u => ucStepFieldL.get(u, f))
+    def getTextTree(uc: UseCase) = ucStepFieldL.get(uc, f).toTextTree(f)
   }
 
   /**

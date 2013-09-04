@@ -10,8 +10,6 @@ import text.{FlowFrom, FlowTo, StepText, FreeText}
 
 trait TestData extends TestHelpers {
 
-  def lens = FieldLenses.uc
-
   // TODO Create TestData MockUc1
   // TODO Move TestData into TestHelpers?
 

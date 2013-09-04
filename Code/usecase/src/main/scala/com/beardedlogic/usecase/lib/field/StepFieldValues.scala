@@ -1,6 +1,6 @@
 package com.beardedlogic.usecase.lib.field
 
-import com.beardedlogic.usecase.lib.StepTree
+import com.beardedlogic.usecase.lib.{Lenses, StepTree}
 import com.beardedlogic.usecase.lib.Types._
 import com.beardedlogic.usecase.lib.change._
 import com.beardedlogic.usecase.lib.text.StepText
@@ -30,7 +30,7 @@ case class StepFieldValue(field: StepField, tree: StepTree, textmap: Map[LocalSt
     def allowTitleChange_? = field.preferTitleInRoot_? && tree.nonEmpty
 
     def changeRootToTitle(before: String, after: String) = {
-      val lens = alens(FieldLenses.sfv.stepText, (this, tree(0).id))
+      val lens = alens(Lenses.sfvStepTextInstL, (this, tree(0).id))
       val curText = lens.get.mainClause.text
       if (curText.isEmpty || curText == before)
         lens.get.updateMainClause(after).map(lens.set)

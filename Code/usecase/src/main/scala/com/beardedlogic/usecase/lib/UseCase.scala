@@ -188,7 +188,7 @@ case class UseCase(
     })
 
   def updateTitle(input: String): UcUpdateResult = {
-    implicit val lens = alens(FieldLenses.uc.title, this)
+    implicit val lens = alens(Lenses.ucTitleL, this)
     val newTitle = InputCorrection.useCaseTitle(input)
     if (lens.get == newTitle) NoChange
     else update(newTitle @: TitleChanged(lens.get, newTitle), c => (UseCaseHeader, c))

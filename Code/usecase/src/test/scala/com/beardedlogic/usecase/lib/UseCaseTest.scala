@@ -11,6 +11,7 @@ import field._
 import test.{LoadedTestData, TestDatabaseSupport, TestData, TestHelpers}
 import text.{FlowToClause, FlowFromClause, StepText, FreeText}
 import Types._
+import Lenses._
 import UseCaseFns._
 import UseCasePersistence._
 
@@ -38,12 +39,12 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
     }
 
     it("should not recalc when only the title has changed") {
-      assertDoesntRecalc(lens.title.set(_, "asdfklghj"))
+      assertDoesntRecalc(ucTitleL.set(_, "asdfklghj"))
     }
 
     it("should not recalc when only a step text changes") {
-      assertDoesntRecalc(uc => lens.stepText.mod(
-        _.update("okyjidf")(uc.stepsAndLabels).gimme, (uc, NCF, NcSfv.textmap.keySet.head)
+      assertDoesntRecalc(uc => ucStepTextInstL.mod(
+        _.update("okyjidf")(uc.stepsAndLabels).gimme, (uc, (NCF, NcSfv.textmap.keySet.head))
       ))
     }
 
@@ -60,7 +61,7 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
     }
 
     it("should recalc when the UC number changes") {
-      assertRecalc(lens.number.set(_, 654))
+      assertRecalc(ucNumberL.set(_, 654))
     }
   }
 
@@ -72,7 +73,7 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
 
     it("should return a new UC if a FreeText changes") {
       val original = MockUc2a.UC
-      val updated = lens.stepField.set((original, NCF), MockUc2b.NcSfv).regenerateStepsAndLabels
+      val updated = ucStepFieldL.set((original, NCF), MockUc2b.NcSfv).regenerateStepsAndLabels
       TF1.lens.get(updated) should not be (MockUc2b.TFV1)
       val done = updated.respondToChanges(MockExistingStepLabelsChanged.asOnlyChange).gimme
       TF1.lens.get(done) should be(MockUc2b.TFV1)
@@ -187,7 +188,7 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
       v.tree(0).children.size should be(3)
     }
     it("should should have blank text") {
-      lens.stepText.get(uc, NCF, v.tree(0)(0).id).isEmpty should be(true)
+      ucStepTextInstL.get(uc, (NCF, v.tree(0)(0).id)) should be('empty)
     }
     it("should update the step label map") {
       assertStepsAndLabelsRegen(uc)
@@ -335,11 +336,11 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
       }
 
       it("should save a title change") {
-        testUpdateSucceeds(lens.title.set(_, "zz"), UsecaseRev -> 1, UcField -> rels)
+        testUpdateSucceeds(ucTitleL.set(_, "zz"), UsecaseRev -> 1, UcField -> rels)
       }
 
       it("should save a UC-number change") {
-        testUpdateSucceeds(lens.number.set(_, 666), UsecaseRev -> 1, UcField -> rels)
+        testUpdateSucceeds(ucNumberL.set(_, 666), UsecaseRev -> 1, UcField -> rels)
       }
 
       it("should save a text update") {
@@ -400,7 +401,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
       }
 
       // Change title
-      testUpdate(lens.title.set(_, "zzzzzzzzz"), UsecaseRev -> 1, UcField -> rels)
+      testUpdate(ucTitleL.set(_, "zzzzzzzzz"), UsecaseRev -> 1, UcField -> rels)
 
       // Change text field
       testUpdate(uc => TF1.lens.set(uc, freeText("jjj")), UsecaseRev -> 1, TextRev -> 1, UcField -> rels)
@@ -417,7 +418,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
       // Step text change @ L2
       testUpdate(uc => {
         val stepId = NCF.lens.get(uc).tree(1)(0).id
-        lens.stepText.mod(_.update("Roar.")(uc.stepsAndLabels).gimme, (uc, NCF, stepId))
+        ucStepTextInstL.mod(_.update("Roar.")(uc.stepsAndLabels).gimme, (uc, (NCF, stepId)))
       }, UsecaseRev -> 1, TextRev -> 1, UcField -> rels)
 
       // Add new (empty) step, link from text field
@@ -454,7 +455,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
       val loaded = reload(cp).uc
       val ltree = NCF.lens.get(loaded).tree
       TF1.lens.get(loaded).text should be("Text like [7.0]")
-      lens.stepText.get(loaded, NCF, ltree(0).id).text should be("Step like [7.0.1]")
+      ucStepTextTextL.get(loaded, (NCF, ltree(0).id)) ==== "Step like [7.0.1]"
     }
 
     it("should normalise and de-normalise refs in flow") {
@@ -469,8 +470,8 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
       // Then load back
       val loaded = reload(cp).uc
       val ltree = NCF.lens.get(loaded).tree
-      lens.stepText.get(loaded, NCF, ltree(1).id).text should be("Flow like ➡ [7.0.1]")
-      lens.stepText.get(loaded, NCF, ltree(0)(0).id).text should be("First ⬅ [7.1]")
+      ucStepTextTextL.get(loaded, (NCF, ltree(1).id)) ==== "Flow like ➡ [7.0.1]"
+      ucStepTextTextL.get(loaded, (NCF, ltree(0)(0).id)) ==== "First ⬅ [7.1]"
     }
   }
 }
