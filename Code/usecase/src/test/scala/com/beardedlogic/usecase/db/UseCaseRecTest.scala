@@ -1,10 +1,9 @@
 package com.beardedlogic.usecase
-package model
+package db
 
 import org.scalatest.FunSpec
 import test.TestDatabaseSupport
 import lib.{Defaults, UseCaseHeader}
-import lib.db.DbOpResult
 import lib.Types._
 import DbOpResult._
 

@@ -1,8 +1,7 @@
 package com.beardedlogic.usecase.lib
 
 import net.liftweb.util.SimpleInjector
-import com.beardedlogic.usecase.lib.db.{DB, DaoProvider}
-import com.beardedlogic.usecase.model.{DAO, DefaultDaoProvider}
+import com.beardedlogic.usecase.db.{DB, DaoProvider, DAO, DefaultDaoProvider}
 
 // TODO Use DI for Mailer testing
 

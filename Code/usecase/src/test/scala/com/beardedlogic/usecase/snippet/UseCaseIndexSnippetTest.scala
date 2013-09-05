@@ -5,7 +5,7 @@ import org.scalatest.FunSpec
 import org.scalatest.prop.PropertyChecks
 import lib.{ExternalId, Defaults}
 import lib.Types._
-import model.{UseCaseRev, UseCaseSummary}
+import db.{UseCaseRev, UseCaseSummary}
 import test.TestDatabaseSupport
 import util.{ErrorMessages, JavaScriptReaction, NoReaction}
 

@@ -1,8 +1,8 @@
-package com.beardedlogic.usecase.model
+package com.beardedlogic.usecase
+package db
 
 import scala.slick.driver.PostgresDriver.simple._
 import java.sql.Connection
-import com.beardedlogic.usecase.lib.db.{DaoProvider, DB}
 
 /**
  * Provides database connectivity.

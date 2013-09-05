@@ -4,14 +4,13 @@ import net.liftweb.http._
 import net.liftmodules.scamljade.ScamlJade
 import net.liftweb.util.{Props, Mailer}
 import javax.mail.{Authenticator, PasswordAuthentication}
+import scala.slick.session.Session
 
 import com.beardedlogic.usecase._
-import lib.Defaults
-import lib.db.DB
-import lib.security.Oshiro
 import app.AppSiteMap
-import scala.slick.session.Session
-import com.beardedlogic.usecase.model.FieldKeyType
+import db.{DB, FieldKeyType}
+import lib.Defaults
+import lib.security.Oshiro
 
 /**
  * A class that's instantiated early and run.  It allows the application

@@ -3,7 +3,7 @@ package com.beardedlogic.usecase.stress
 import java.util.concurrent.atomic.AtomicLong
 import scala.slick.jdbc.StaticQuery
 import scala.slick.session.Session
-import com.beardedlogic.usecase.lib.db.DB
+import com.beardedlogic.usecase.db.DB
 
 object StressTestHelpers {
 

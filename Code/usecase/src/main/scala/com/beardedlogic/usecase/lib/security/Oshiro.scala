@@ -3,7 +3,7 @@ package com.beardedlogic.usecase.lib.security
 import org.apache.shiro.SecurityUtils
 import org.apache.shiro.config.IniSecurityManagerFactory
 import org.apache.shiro.crypto.SecureRandomNumberGenerator
-import com.beardedlogic.usecase.model.UserDescriptor
+import com.beardedlogic.usecase.db.UserDescriptor
 
 /**
  * Apache城との橋になる「お城」。

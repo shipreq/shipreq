@@ -10,7 +10,7 @@ import net.liftweb.util.{CssSel, ClearClearable}
 
 import lib._
 import db.DbOpResult.{NothingUpdated, Success}
-import model.{DAO, UseCaseSummary}
+import db.{DAO, UseCaseSummary}
 import util.{ErrorMessages, Reactor, JavaScript}
 import util.HtmlTransformExt._
 import util.JsExt.JsJsonTrigger

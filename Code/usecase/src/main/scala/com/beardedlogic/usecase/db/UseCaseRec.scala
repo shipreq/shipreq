@@ -1,13 +1,12 @@
 package com.beardedlogic.usecase
-package model
+package db
 
 import scala.slick.jdbc.{GetResult, StaticQuery => Q}
-import lib._
-import db.DBHelpers._
-import db.DbOpResult
+import lib.{Defaults, InputCorrection, UseCaseHeader}
+import lib.ExternalId.{toExternal, toInternal}
+import DBHelpers._
 import DbOpResult._
-import ExternalId.{toExternal, toInternal}
-import Types._
+import lib.Types._
 
 case class UseCaseRev(identId: UseCaseIdentId, rev: Short, id: UseCaseRevId, header: UseCaseHeader)
 

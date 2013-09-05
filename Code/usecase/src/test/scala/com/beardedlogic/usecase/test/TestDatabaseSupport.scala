@@ -12,9 +12,8 @@ import scala.slick.session.Session
 import scala.util.Random
 import Q.interpolation
 
-import lib.db.{DaoProvider, DB}
+import db.{DAO, DaoProvider, DB}
 import lib.DI
-import model.DAO
 
 object TestDatabaseSupport {
 

@@ -1,7 +1,6 @@
 package com.beardedlogic.usecase
 package lib
 
-import model._
 import Misc._
 
 /**

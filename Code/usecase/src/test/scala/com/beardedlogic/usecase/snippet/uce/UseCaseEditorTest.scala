@@ -10,7 +10,7 @@ import com.beardedlogic.usecase.lib.{UseCaseSaveCheckpoint, StepNode, UseCase}
 import Renderer.TitleId
 import test.{CssTestHelpers, TestData, LoadedTestData, TestHelpers, TestDatabaseSupport}
 import UseCaseEditor._
-import model.UseCaseRev
+import db.UseCaseRev
 import org.mockito.Mockito.when
 import xml.{Node, NodeSeq}
 import net.liftweb.http.js.JsCmd

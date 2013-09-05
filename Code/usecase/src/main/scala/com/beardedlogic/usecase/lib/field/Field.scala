@@ -1,7 +1,7 @@
 package com.beardedlogic.usecase.lib
 package field
 
-import com.beardedlogic.usecase.model._
+import com.beardedlogic.usecase.db._
 import change.ChangeResponder
 import Types._
 

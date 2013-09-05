@@ -4,7 +4,6 @@ package lib
 import java.util.regex.Pattern
 import scala.annotation.tailrec
 import app.AppConfig._
-import model._
 
 /**
  * Validates data.

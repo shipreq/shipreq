@@ -1,8 +1,8 @@
 package com.beardedlogic.usecase
-package model
+package db
 
 import scala.reflect.ClassTag
-import com.beardedlogic.usecase.lib.field._
+import lib.field._
 
 case class FieldListRec(fieldKeys: List[FieldKeyRec]) {
   val fields = fieldKeys.map(_.field)

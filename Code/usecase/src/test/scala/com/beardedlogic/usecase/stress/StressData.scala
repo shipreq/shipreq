@@ -6,7 +6,7 @@ import scala.slick.jdbc.{StaticQuery => Q}
 
 import lib.Misc
 import lib.security.PasswordAndSalt
-import model.DataType
+import db.DataType
 import test.TestDatabaseSupport
 import StressTestHelpers._
 

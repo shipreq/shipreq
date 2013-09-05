@@ -8,7 +8,7 @@ import org.scalatest.prop._
 import lib._
 import change.Changed
 import field._
-import model._
+import db._
 import test.TestDatabaseSupport
 import test.DataGenerators._
 import Types._

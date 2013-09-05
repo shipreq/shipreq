@@ -2,7 +2,7 @@ package com.beardedlogic.usecase.lib
 package field
 
 import scala.annotation.tailrec
-import com.beardedlogic.usecase.model._
+import com.beardedlogic.usecase.db._
 import text.StepText
 import StepField.StartingLabelIndices
 import Types._

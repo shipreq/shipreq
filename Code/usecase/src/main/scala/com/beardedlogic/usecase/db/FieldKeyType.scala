@@ -1,5 +1,5 @@
 package com.beardedlogic.usecase
-package model
+package db
 
 import scala.slick.jdbc.{StaticQuery => Q}
 import scala.slick.session.Session

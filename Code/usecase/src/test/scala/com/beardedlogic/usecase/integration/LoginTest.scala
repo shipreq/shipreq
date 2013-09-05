@@ -2,7 +2,7 @@ package com.beardedlogic.usecase.integration
 
 import org.scalatest.FunSuite
 import scala.slick.jdbc.StaticQuery
-import com.beardedlogic.usecase.lib.db.DB
+import com.beardedlogic.usecase.db.DB
 import com.beardedlogic.usecase.test.fixture.UserFixture
 import support.SeleniumTest
 

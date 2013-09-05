@@ -23,7 +23,7 @@ import lib.tree._
 import lib.field._
 import lib.text._
 import lib._
-import model._
+import db._
 import util._
 
 import Types._

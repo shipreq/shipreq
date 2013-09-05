@@ -6,7 +6,7 @@ import org.mockito.Mockito._
 import com.beardedlogic.usecase.lib.{UseCaseHeader, FieldLoadCtx}
 import lib.Types._
 import lib.text.FreeText
-import model._
+import db._
 import test.TestHelpers
 
 class TextFieldTest extends FunSpec with TestHelpers {

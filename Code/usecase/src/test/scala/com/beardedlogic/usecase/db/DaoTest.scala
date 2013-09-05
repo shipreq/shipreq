@@ -1,4 +1,4 @@
-package com.beardedlogic.usecase.model
+package com.beardedlogic.usecase.db
 
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import com.beardedlogic.usecase.test.TestDatabaseSupport

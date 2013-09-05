@@ -1,4 +1,5 @@
-package com.beardedlogic.usecase.lib.db
+package com.beardedlogic.usecase
+package db
 
 import DbOpResult._
 

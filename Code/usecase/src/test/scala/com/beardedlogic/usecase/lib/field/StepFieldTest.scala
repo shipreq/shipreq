@@ -4,7 +4,7 @@ package field
 
 import org.scalatest.FunSpec
 import org.mockito.Mockito._
-import model._
+import db._
 import Types._
 import UseCaseFns._
 import text.StepText

@@ -4,7 +4,7 @@ import net.liftweb.http.{LiftRules, DispatchSnippet}
 import org.apache.shiro.SecurityUtils.{getSubject => subject}
 import scala.xml.{Text, NodeSeq}
 import Oshiro.loggedInUser
-import com.beardedlogic.usecase.model.UserDescriptor
+import com.beardedlogic.usecase.db.UserDescriptor
 
 object ShiroSnippets {
 

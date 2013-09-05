@@ -3,7 +3,7 @@ package lib
 
 import net.liftweb.common.Logger
 import field._
-import model._
+import db._
 import util.LazyVal
 
 object Defaults extends Logger {

@@ -7,7 +7,7 @@ import net.liftweb.http.js.{JsCmd, JsCmds}
 import scalaz.{Monoid, LensFamily}
 import change.{Change, ChangeResultF}
 import field.Field
-import model.{FieldKeyRec, TextRev, UseCaseRev}
+import db.{FieldKeyRec, TextRev, UseCaseRev}
 import util.{AppliedLens, LazyVal, BiMap}
 
 /**

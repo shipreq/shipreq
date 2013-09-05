@@ -1,4 +1,4 @@
-package com.beardedlogic.usecase.lib
+package com.beardedlogic.usecase
 package db
 
 import ch.qos.logback.classic.Level

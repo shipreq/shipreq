@@ -1,13 +1,12 @@
 package com.beardedlogic.usecase
-package model
+package db
 
 import org.joda.time.DateTime
 import org.postgresql.util.PSQLException
 import scala.slick.jdbc.{StaticQuery => Q, SetParameter, GetResult}
 import scala.slick.session.PositionedParameters
-import lib.db.DBHelpers._
 import lib.security.PasswordAndSalt
-import lib.db.DbOpResult
+import DBHelpers._
 import DbOpResult._
 import UserAccessor._
 

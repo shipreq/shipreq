@@ -1,8 +1,7 @@
 package com.beardedlogic.usecase
-package model
+package db
 
 import scala.slick.jdbc.{GetResult, StaticQuery => Q}
-import lib.db._
 import lib.Types._
 import DBHelpers._
 

@@ -3,7 +3,7 @@ package lib
 
 import Types._
 import field._
-import model._
+import db._
 import util.BiMap
 import UseCaseFns._
 

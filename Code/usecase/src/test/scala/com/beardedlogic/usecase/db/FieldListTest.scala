@@ -1,5 +1,5 @@
 package com.beardedlogic.usecase
-package model
+package db
 
 import org.scalatest.FunSpec
 import lib.field._

@@ -7,9 +7,9 @@ import org.joda.time.DateTime
 import scala.slick.jdbc.{StaticQuery => Q}
 import scala.slick.session.Session
 
-import lib.db.DB
+import db.DB
 import lib.security.PasswordAndSalt
-import model.UserDescriptor
+import db.UserDescriptor
 import test.TestDatabaseSupport
 
 trait UserFixture {

@@ -10,7 +10,7 @@ import scala.xml.{Elem, Text, NodeSeq, UnprefixedAttribute}
 
 import com.beardedlogic.usecase.app.AppConfig
 import com.beardedlogic.usecase.lib.security.Oshiro
-import com.beardedlogic.usecase.model.DAO
+import com.beardedlogic.usecase.db.DAO
 import com.beardedlogic.usecase.snippet.Notices
 import com.beardedlogic.usecase.util.HttpResponses.ShouldNeverHappenResponse
 import com.beardedlogic.usecase.util.JsExt._

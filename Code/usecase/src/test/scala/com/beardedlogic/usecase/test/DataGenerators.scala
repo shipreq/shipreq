@@ -9,7 +9,7 @@ import scala.util.matching.Regex
 import lib._
 import change.NoChange
 import field._
-import model.FieldListRec
+import db.FieldListRec
 import tree._
 import text.{StepText, FreeText}
 import Misc.removeAllWhitespace
