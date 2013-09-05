@@ -5,7 +5,6 @@ FUNC TODO
 
 * [M.0.5] [LEGL] Check all licences and attribute as required.
 * [M.0.5] [LEGL] Add terms of service.
-* [M.0.5] [UCE ] Fix: Accidently hit back without saving, progress is lost.
 
 * [S.2.1] [ACCT] Change username & password (when logged in).
 * [S.0.5] [ACCT] Password reset (when not logged in).

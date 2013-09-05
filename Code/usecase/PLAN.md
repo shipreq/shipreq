@@ -1,8 +1,6 @@
 Work Schedule
 =============
 
-* Fix: Accidently hit back without saving, progress is lost.
-
 * Plan project management
 * UC-7: Create a Project
 * Edit project

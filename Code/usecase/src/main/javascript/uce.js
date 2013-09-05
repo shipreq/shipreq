@@ -271,6 +271,18 @@ function setupKeyBindings() {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Prevent losing unsaved changes
+
+function saveButton() { return $('#save') }
+
+function promptWhenLeaving() {
+    var s = saveButton()
+    return (s.size() > 0 && s.attr('disabled') === undefined) ? "You have unsaved changes." : undefined
+}
+
+window.onbeforeunload = promptWhenLeaving
+
+// ---------------------------------------------------------------------------------------------------------------------
 
 function uceSetup() {
     setupKeyBindings()
@@ -278,7 +290,3 @@ function uceSetup() {
     updatePageTitle()
 }
 $(document).ready(uceSetup)
-
-//window.onbeforeunload = function() {
-//    return "ANY UNSAVED CHANGES WILL BE LOST."
-//}

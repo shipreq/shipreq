@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>ReqRepo Test Suite</title>
+  <title>ReqRepo JS Test Suite</title>
 	<link rel="stylesheet" href="../../../vendor/qunit/qunit.css">
 	<link rel="stylesheet" href="../../main/webapp/css/uce.css">
 </head>
@@ -26,13 +26,15 @@
   <div id="qunit-fixture">
 
   <div id="uce" class="uce">
-  <div>
+
+  <div class="save">
 	  <div>
 		  Revision:
-		  <span class="rev">13</span>
+		  <span class="rev">9</span>
 	  </div>
-	  <button class="saveUseCase" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046505UMSB3H=true&quot;, null, null, null); return false;">Save</button>
+	  <button class="save" onclick="liftAjax.lift_ajaxHandler(&quot;F76378003897VRUY0V=true&quot;, null, null, null); return false;" id="save" disabled="disabled">Save</button>
   </div>
+
   <table class="title">
 	  <tbody><tr>
 		  <th><span id="uc-id">UC-<span class="ucid">1</span></span>:

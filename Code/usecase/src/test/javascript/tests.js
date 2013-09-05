@@ -1,4 +1,5 @@
 function setupViz() {} // Shadow this out. WebWorkers not allowed from localhost.
+function updatePageTitle() {} // Shadow this out. I like my test title.
 jQuery.fx.off = true
 
 var liftAjax = {
@@ -184,7 +185,6 @@ test("[Alt + Right] Does nothing when non-step fields are selected", function() 
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-
 stdModule('Typing helpers')
 
 function assertTypingMode(on) {
@@ -268,4 +268,22 @@ test("Label detection should work after a step label change", function(){
     setFocus(i.txt)
     Syn.click({}, i.lbl)
     equal(e.val(), '[1.1]', "Text has correct reference.")
+})
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+stdModule('Misc')
+
+test("Prompts before leaving page when unsaved changes", function() {
+    // Save button disabled - no unsaved changes
+    saveButton().attr('disabled', 'disabled')
+    equal('undefined', typeof promptWhenLeaving())
+
+    // Save button enabled - there are unsaved changes
+    saveButton().removeAttr('disabled')
+    equal('string', typeof promptWhenLeaving())
+
+    // Save button doesn't exist
+    saveButton().remove()
+    equal('undefined', typeof promptWhenLeaving())
 })
