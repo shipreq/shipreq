@@ -25,7 +25,7 @@ case class UserRegistrationInfo(
 /**
  * @since 26/06/2013
  */
-object UserAccessor {
+private[db] object UserAccessor {
 
   implicit val GetResultUserDescriptor = GetResult(r => UserDescriptor(r.<<, r.<<, r.<<))
   implicit val GetResultPasswordAndSalt = GetResult(r => PasswordAndSalt(r.nextString, r.nextString))
@@ -63,7 +63,7 @@ object UserAccessor {
     RETURNING id""".sql)
 }
 
-trait UserAccessor extends DatabaseAccessor {
+private[db] trait UserAccessor extends DatabaseAccessor {
 
   def findUserDescAndCredentials(usernameOrEmail: String): Option[(UserDescriptor, PasswordAndSalt)] =
     if (usernameOrEmail.indexOf('@') == -1)

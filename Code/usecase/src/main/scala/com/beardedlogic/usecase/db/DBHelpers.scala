@@ -9,7 +9,7 @@ import scala.slick.jdbc.{SetParameter, GetResult}
 import scala.slick.session.{PositionedParameters, PositionedResult}
 import lib.Types._
 
-object DBHelpers {
+private[db] object DBHelpers {
 
   @inline implicit def shortToFieldKeyType(ordinal: Short): FieldKeyType = FieldKeyType(ordinal)
   @inline implicit def int2short(i: Int): Short = i.toShort

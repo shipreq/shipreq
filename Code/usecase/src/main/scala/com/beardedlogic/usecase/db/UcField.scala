@@ -19,7 +19,7 @@ case class UcFieldText(label: Option[String], parentId: Option[TextRevId], index
   @inline final def text = textRev.text
 }
 
-object UcFieldAccessor {
+private[db] object UcFieldAccessor {
   import TextAccessor.{tr_*, GRTextRev}
 
   implicit val GRUcFieldText= GetResult(r => UcFieldText(r.<<, r.<<, r.<<, r.<<))
@@ -46,7 +46,7 @@ object UcFieldAccessor {
     "INSERT INTO uc_field(uc_rev_id, label, parent_rev_id, index, text_rev_id) VALUES(?,?,?,?,?)")
 }
 
-trait UcFieldAccessor extends DatabaseAccessor {
+private[db] trait UcFieldAccessor extends DatabaseAccessor {
   import UcFieldAccessor._
 
   def linkUcToText(uc: UseCaseRevId, txt: TextRevId): Unit = InsertText.execute(uc, txt)

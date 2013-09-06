@@ -106,7 +106,7 @@ object DB extends Logger {
   }
 }
 
-class FlyWayLogger(clazz: Class[_]) extends com.googlecode.flyway.core.util.logging.Log {
+private[db] class FlyWayLogger(clazz: Class[_]) extends com.googlecode.flyway.core.util.logging.Log {
   val log = LoggerFactory.getLogger(Logger.loggerNameFor(clazz))
   def debug(message: String) {log.debug(message)}
   def info(message: String) {log.info(message)}

@@ -12,7 +12,7 @@ case class FieldKeyRec(id: FieldKeyId, fkType: FieldKeyType, data: FieldKeyRecDa
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-object FieldKeyAccessor {
+private[db] object FieldKeyAccessor {
 
   implicit val GetResultFieldKey = GetResult {r => FieldKeyRec(r.<<, r.<<, r.<<)}
 
@@ -23,7 +23,7 @@ object FieldKeyAccessor {
     "INSERT INTO field_key(type_id, data) VALUES(?,?) RETURNING id")
 }
 
-trait FieldKeyAccessor extends DatabaseAccessor {
+private[db] trait FieldKeyAccessor extends DatabaseAccessor {
   import FieldKeyAccessor._
 
   def findOrCreateFieldKey(fkType: FieldKeyType, data: FieldKeyRecData): FieldKeyRec = db.withTransaction {

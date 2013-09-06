@@ -28,7 +28,7 @@ case class UseCaseSummary(
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-object UseCaseAccessor {
+private[db] object UseCaseAccessor {
 
   implicit val GRUseCaseRev = GetResult(r => UseCaseRev(r.<<, r.<<, r.<<, UseCaseHeader(r.<<, r.<<)))
 
@@ -64,7 +64,7 @@ object UseCaseAccessor {
   val UpdateTitleDirectly = Q.update[(String, UseCaseRevId)]("UPDATE usecase_rev SET title=? WHERE id=?")
 }
 
-trait UseCaseAccessor extends DatabaseAccessor {
+private[db] trait UseCaseAccessor extends DatabaseAccessor {
   self: DAO =>
 
   import UseCaseAccessor._

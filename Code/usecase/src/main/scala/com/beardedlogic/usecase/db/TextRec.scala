@@ -7,7 +7,7 @@ import DBHelpers._
 
 case class TextRev(identId: TextIdentId, rev: Short, id: TextRevId, text: TextWithNormalisedRefs)
 
-object TextAccessor {
+private[db] object TextAccessor {
 
   val tr_* = "tr.ident_id, tr.rev, tr.id, tr.text"
 
@@ -20,7 +20,7 @@ object TextAccessor {
     "INSERT INTO text_rev(ident_id, rev, text) VALUES(?,?,?) RETURNING id")
 }
 
-trait TextAccessor extends DatabaseAccessor {
+private[db] trait TextAccessor extends DatabaseAccessor {
   import TextAccessor._
 
   def createInitialText(ucId: UseCaseIdentId, fkId: FieldKeyId): TextIdentId = InsertIdent.first(ucId, fkId)

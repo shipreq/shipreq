@@ -18,7 +18,7 @@ object FieldListRec {
   def fromFields(fields: List[Field]) = apply(fields map (_.rec))
 }
 
-trait FieldListAccessor extends DatabaseAccessor {
+private[db] trait FieldListAccessor extends DatabaseAccessor {
   self: FieldKeyAccessor =>
 
   /**
