@@ -1,0 +1,74 @@
+digraph G {
+
+  node [shape=none]
+  edge [fontsize=9]
+
+  { node[fontcolor=gray]
+    SavedStepsAndLabels [label="<SavedSteps,StepsAndLabels>"]
+    TwnrSsSal [label="<TextWithNormalisedRefs,SavedSteps,StepsAndLabels>"]
+    InputTextStepsAndLabels [label="<InputText,StepsAndLabels>"]
+    UcNumberAndFVs [label="<UcNumber,FieldValueMap>"]
+    PTSS [label="<ParsedText,SavedSteps>"]
+    FFV [label="<Field,FieldValue>"]
+  }
+
+  // FreeText
+  // StepText
+  ParsedText
+  // {FreeText; StepText} -> ParsedText
+
+  InputText
+
+  TextWithNormalisedRefs
+
+  SavedSteps -> {TextIdentId; LocalStepId} // n->1
+  StepsAndLabels -> {LocalStepId; LabelStr} // n->1
+
+  LabelStr
+  LocalStepId
+
+  // FlowClause
+
+  Field
+
+  InputTextStepsAndLabels -> {StepsAndLabels; InputText}
+  InputTextStepsAndLabels -> ParsedText [label="parse"]
+
+  TwnrSsSal -> {TextWithNormalisedRefs,SavedStepsAndLabels}
+  TwnrSsSal -> ParsedText [label="load"]
+  SavedStepsAndLabels -> {StepsAndLabels; SavedSteps}
+
+  PTSS -> {ParsedText; SavedSteps; TextWithNormalisedRefs}
+
+  // UseCase -> {FieldList; Header; FieldValueMap; StepsAndLabels}
+  UseCase -> {FieldList; UcTitle}
+
+  // Header -> {UcNumber; UcTitle}
+
+  FieldList -> Field // n->1
+  FieldValueMap -> FFV // n->1
+
+  FFV -> {Field; FieldValue}
+
+  UseCase -> UcNumberAndFVs -> {UcNumber; FieldValueMap}
+  UcNumberAndFVs -> StepsAndLabels [label="generate"]
+
+  ParsedText -> InputTextStepsAndLabels [label=s]
+
+FieldValue -> FreeTextOrSFV
+{SFV,ParsedText} -> FreeTextOrSFV
+
+node[fontcolor=red]
+edge[color=red]
+SFV -> {Field; TextMap; StepTree}
+StepTree -> StepNode -> LocalStepId
+TextMap -> {LocalStepId; ParsedText}
+StepTreeUcNumber [label="<StepTree,UcNumber>"]
+StepTreeUcNumber -> {StepTree;UcNumber; StepsAndLabels}
+
+
+
+
+graph[label="parse ∘ s = 1[ParsedText], s :: section of parse"]
+
+}
