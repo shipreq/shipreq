@@ -90,21 +90,20 @@ class StepFieldValueSaver(
 
   override def record_required_? = v.tree.nonEmpty
 
-  // TODO Step.differsFromPrevSave_? inefficient
   override def differsFromPrevSave_?(prev: SavedData)(implicit savedSteps: SavedSteps): Boolean = {
     val labelsByLocalId = stepsAndLabels.get.ab
 
-    def different_?(cur: StepNode)(prev: UcFieldText) =
+    @inline def different_?(cur: StepNode, prev: UcFieldText) =
       labelsByLocalId(cur.id) != prev.label.get ||
       v.textmap(cur.id).textWithNormalisedRefs(savedSteps) != prev.text
 
-    var foundChange = false
-    v.tree.foreachRecursive(n =>
-      foundChange ||= savedSteps.ba.get(n.id)
-                      .flatMap(txtIdentId => prev.get(txtIdentId))
-                      .map(different_?(n))
-                      .getOrElse(true)
+    val foundChange = v.tree.iteratorRecursive.exists(n =>
+      savedSteps.ba.get(n.id)
+        .flatMap(txtIdentId => prev.get(txtIdentId))
+        .map(prev => different_?(n, prev))
+        .getOrElse(true)
     )
+
     foundChange
   }
 

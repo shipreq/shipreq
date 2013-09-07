@@ -22,6 +22,10 @@ trait TreeLike[+N <: TreeNodeLike[N]] {
     foreachRecursive(_ => size += 1)
     size
   }
+
+  def toStreamRecursive: Stream[N] = nodes.toStream.flatMap(_.toStreamRecursive)
+
+  def iteratorRecursive: Iterator[N] = toStreamRecursive.iterator
 }
 
 object TreeLike {
@@ -65,6 +69,8 @@ trait TreeNodeLike[+N <: TreeNodeLike[N]] extends TreeLike[N] {
   }
 
   override def mapRecursive[R](fn: N => R): List[R] = fn(this) :: super.mapRecursive(fn)
+
+  override def toStreamRecursive: Stream[N] = this #:: children.toStream.flatMap(_.toStreamRecursive)
 
   def deepCopy[R](fn: (N, List[R]) => R): R = {
     val copiedChildren = deepCopyChildren(fn)
