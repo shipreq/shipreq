@@ -1,8 +1,7 @@
 digraph G {
   compound=true
 
-  AnonHome -> {Register; Login}
-  {Register; Login} -> AnonHome
+  AnonHome -> {Register; Login} [dir=both]
 
   Login -> LoggedInHome
   Logout -> AnonHome
@@ -11,27 +10,20 @@ digraph G {
   subgraph clusterLoggedIn {
     X [style=invis]
 
-    {node[style=filled fillcolor=lightblue] ProjectL; ProjectU; ProjectC; ProjectD; ProjectR}
-    {node[style=filled fillcolor=limegreen] UseCaseL; UseCaseU; UseCaseC; UseCaseD; UseCaseR}
-    {node[style=filled fillcolor=tomato] ShareL; ShareU; ShareC; ShareD; ShareR}
+    {node[style=filled fillcolor=lightblue] ProjectL; {rank=same; ProjectU; ProjectC; ProjectD; ProjectR}}
+    {node[style=filled fillcolor=limegreen] UseCaseL; {rank=same; UseCaseU; UseCaseC; UseCaseD; UseCaseR}}
+    {node[style=filled fillcolor=tomato] ShareL; {rank=same; ShareU; ShareC; ShareD; ShareR}}
 
-    ProjectL -> {rank=same; ProjectU; ProjectC; ProjectD; ProjectR}
-
-    {ProjectU;ProjectD} -> ProjectL
+    ProjectL -> {ProjectC; ProjectR; ProjectU; ProjectD} [dir=both]
     ProjectC -> ProjectR
-    ProjectR -> ProjectL
 
-    ProjectR -> UseCaseL -> {rank=same; UseCaseU; UseCaseC; UseCaseD; UseCaseR}
-    {UseCaseU;UseCaseD} -> UseCaseL
+    ProjectR -> UseCaseL -> {UseCaseC; UseCaseR; UseCaseU; UseCaseD} [dir=both]
     UseCaseC -> UseCaseU
-
-    UseCaseR -> UseCaseL -> ProjectR
 
     ProjectR -> PresMode
     PresMode [label="PresMode\n(all UCs)"]
 
-    ProjectR -> ShareL -> {rank=same; ShareU; ShareC; ShareD; ShareR}
-    {ShareU; ShareD; ShareR} -> ShareL
+    ProjectR -> ShareL -> {ShareC; ShareR; ShareU; ShareD} [dir=both]
     ShareC -> ShareR -> {ShareU; ShareD}
     ShareL -> ShareUrl -> PresMode
     ShareR -> ShareUrl [style=invis]
