@@ -1,0 +1,45 @@
+digraph G {
+  compound=true
+
+  AnonHome -> {Register; Login}
+  {Register; Login} -> AnonHome
+
+  Login -> LoggedInHome
+  Logout -> AnonHome
+  LoggedInHome -> Logout
+
+  subgraph clusterLoggedIn {
+    X [style=invis]
+
+    {node[style=filled fillcolor=lightblue] ProjectL; ProjectU; ProjectC; ProjectD; ProjectR}
+    {node[style=filled fillcolor=limegreen] UseCaseL; UseCaseU; UseCaseC; UseCaseD; UseCaseR}
+    {node[style=filled fillcolor=tomato] ShareL; ShareU; ShareC; ShareD; ShareR}
+
+    ProjectL -> {rank=same; ProjectU; ProjectC; ProjectD; ProjectR}
+
+    {ProjectU;ProjectD} -> ProjectL
+    ProjectC -> ProjectR
+    ProjectR -> ProjectL
+
+    ProjectR -> UseCaseL -> {rank=same; UseCaseU; UseCaseC; UseCaseD; UseCaseR}
+    {UseCaseU;UseCaseD} -> UseCaseL
+    UseCaseC -> UseCaseU
+
+    UseCaseR -> UseCaseL -> ProjectR
+
+    ProjectR -> PresMode
+    PresMode [label="PresMode\n(all UCs)"]
+
+    ProjectR -> ShareL -> {rank=same; ShareU; ShareC; ShareD; ShareR}
+    {ShareU; ShareD; ShareR} -> ShareL
+    ShareC -> ShareR -> {ShareU; ShareD}
+    ShareL -> ShareUrl -> PresMode
+    ShareR -> ShareUrl [style=invis]
+
+    ProjectR -> GenPDF
+    ShareUrl -> GenPDF
+  }
+
+  X -> {LoggedInHome; Logout} [ltail=clusterLoggedIn]
+  LoggedInHome -> ProjectL
+}
