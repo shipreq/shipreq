@@ -17,9 +17,9 @@
  * Mousetrap is a simple keyboard shortcut library for Javascript with
  * no external dependencies
  *
- * @version 1.4.4
+ * @version 1.4.5
  */
-(function() {
+(function(window, document, undefined) {
 
     /**
      * mapping of special keycodes to their corresponding keys
@@ -911,7 +911,7 @@
             }
 
             // stop for input, select, and textarea
-            return element.tagName == 'INPUT' || element.tagName == 'SELECT' || element.tagName == 'TEXTAREA' || (element.contentEditable && element.contentEditable == 'true');
+            return element.tagName == 'INPUT' || element.tagName == 'SELECT' || element.tagName == 'TEXTAREA' || element.isContentEditable;
         },
 
         /**
@@ -927,4 +927,4 @@
     if (typeof define === 'function' && define.amd) {
         define(Mousetrap);
     }
-}) ();
+}) (window, document);

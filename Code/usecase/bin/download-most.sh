@@ -23,7 +23,7 @@ echo "Downloading jQuery.liveQuery"
 curl -s https://raw.github.com/hazzik/livequery/master/dist/jquery.livequery.min.js -o src/main/javascript/vendor/jquery-livequery.js
 echo $?
 
-v=2.2.1
+v=2.3.0
 echo "Downloading v$v of Knockout.js -- http://knockoutjs.com/"
 curl -s http://knockoutjs.com/downloads/knockout-$v.js -o src/main/javascript/vendor/knockout.js
 echo $?
