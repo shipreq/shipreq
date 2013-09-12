@@ -1,6 +1,7 @@
 package com.beardedlogic.usecase.lib
 
-import net.liftweb.common.{Failure, Full, Box, Logger}
+import scalaz.syntax.monoid._
+import net.liftweb.common.{Failure, Full, Box, Logger, Empty}
 import net.liftweb.http.js.{JsCmd, JsExp}
 import net.liftweb.http.{StatefulSnippet, ResponseShortcutException, LiftResponse}
 import net.liftweb.json.{NoTypeHints, Serialization}
@@ -10,11 +11,11 @@ import scala.xml.{Elem, Text, NodeSeq, UnprefixedAttribute}
 
 import com.beardedlogic.usecase.app.AppConfig
 import com.beardedlogic.usecase.lib.security.Oshiro
-import com.beardedlogic.usecase.db.DAO
 import com.beardedlogic.usecase.snippet.Notices
 import com.beardedlogic.usecase.util.HttpResponses.ShouldNeverHappenResponse
 import com.beardedlogic.usecase.util.JsExt._
-import com.beardedlogic.usecase.util.{ErrorMessages, Reactor, JavaScriptReaction, JavaScript}
+import com.beardedlogic.usecase.util.ErrorMessages
+import Types.JsCmdMonoid
 import SnippetHelpers._
 
 object SnippetHelpers extends StaticSnippetHelpers {
@@ -45,24 +46,9 @@ trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with Logger 
   @inline implicit def ConvertSeqStringToNodes(i: Seq[String]) = i.map(Text(_))
   @inline implicit def OptionToBox[T](option: Option[T]): Box[T] = Box(option)
 
-//  implicit class BoxExt[T](val box: Box[T]) extends AnyVal {
-//    def ~~>(errMsg: String) = box ~> reactWithError(errMsg)
-//    def ~~>(errMsg: NodeSeq) = box ~> reactWithError(errMsg)
-//  }
-
   protected implicit lazy val jsonFormats = Serialization.formats(NoTypeHints)
 
   // -------------------------------------------------------------------------------------------------------------------
-
-  type JsCallback = () => JsCmd
-
-  def jsCallback(f: => Reactor => Any): JsCallback = () => JavaScriptReaction(f(_))
-
-  def jsCallbackWithDao(f: => (Reactor, DAO) => Any): JsCallback =
-    jsCallback(r =>
-      daoProvider.withTransaction(dao =>
-        f(r, dao)
-      ))
 
   type Mail = (Subject, List[MailTypes])
   var mailer: Mailer = Mailer
@@ -73,35 +59,27 @@ trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with Logger 
   // -------------------------------------------------------------------------------------------------------------------
   // Error propagation
 
-  def removeError(id: String = DefaultAjaxErrorId)(implicit reactor: Reactor) {
-    reactor(JavaScript)(JqId(id) ~> JqRemove)
+  def jsClearError(id: String = DefaultAjaxErrorId): JsCmd = JqId(id) ~> JqRemove
+
+  def jsShowError(errMsg: NodeSeq, id: String = DefaultAjaxErrorId): JsCmd =
+    jsClearAndShowError(id, Notices.renderSingle(Notices.ErrorClasses, errMsg))
+
+  def jsShowErrors(errMsgs: Seq[NodeSeq], id: String = DefaultAjaxErrorId): JsCmd = errMsgs match {
+    case Nil                => jsClearError(id)
+    case singleError :: Nil => jsShowError(singleError, id)
+    case _                  => jsClearAndShowError(id, Notices.renderMsgs(Notices.ErrorClasses, errMsgs).asInstanceOf[Elem])
   }
 
-  def reactWithError(errMsg: NodeSeq, id: String = DefaultAjaxErrorId)(implicit reactor: Reactor) =
-    _reactWithError(id, Notices.renderSingle(Notices.ErrorClasses, errMsg))
-
-  def reactWithErrors(errMsgs: Seq[NodeSeq], id: String = DefaultAjaxErrorId)(implicit reactor: Reactor) {
-    errMsgs match {
-      case Nil                => removeError(id)
-      case singleError :: Nil => reactWithError(singleError, id)
-      case _                  => _reactWithError(id, Notices.renderMsgs(Notices.ErrorClasses, errMsgs).asInstanceOf[Elem])
-    }
-  }
-
-  private def _reactWithError(id: String, jsErrNode: => Elem)(implicit reactor: Reactor) {
-    removeError(id)
-    reactor(JavaScript) {
+  private def jsClearAndShowError(id: String, jsErrNode: => Elem): JsCmd =
+    jsClearError(id) & {
       val errNode = jsErrNode % new UnprefixedAttribute("id", id, xml.Null)
       JqExpr(errNode) ~> JqAppendTo("#notices") ~> JqHighlight()
     }
-  }
 
-  def reactToOptionalError(box: Box[_], id: String = DefaultAjaxErrorId)(implicit reactor: Reactor) {
-    box match {
-      case Full(_)            => removeError()
-      case Failure(err, _, _) => reactWithError(err, id)
-      case _                  => reactWithError(ErrorMessages.Generic, id)
-    }
+  def jsPossibleError[T](box: Box[T], id: String = DefaultAjaxErrorId)(successJs: T => JsCmd): JsCmd = box match {
+    case Full(v)            => jsClearError() |+| successJs(v)
+    case Empty              => jsShowError(ErrorMessages.Generic, id)
+    case Failure(err, _, _) => jsShowError(err, id)
   }
 }
 

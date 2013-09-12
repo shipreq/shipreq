@@ -7,14 +7,15 @@ import lib.{ExternalId, Defaults}
 import lib.Types._
 import db.{UseCaseRev, UseCaseSummary}
 import test.TestDatabaseSupport
-import util.{ErrorMessages, JavaScriptReaction, NoReaction}
+import util.ErrorMessages
+import net.liftweb.http.js.JsCmd
 
 class UseCaseIndexSnippetTest extends FunSpec with TestDatabaseSupport with PropertyChecks {
   import Tables._
 
   describe("#createNewUseCase") {
     def createNewUseCase: UseCaseSummary = assertTableDiffs(Usecase -> 1, UsecaseRev -> 1) {
-      UseCaseIndex.createNewUseCase(NoReaction, db)
+      UseCaseIndex.create()
     }
 
     it("should create the first as \"1. Untitled\"") {
@@ -36,13 +37,14 @@ class UseCaseIndexSnippetTest extends FunSpec with TestDatabaseSupport with Prop
   }
 
   // TODO Test ucCtx.save corrects UC titles too
-  describe("#updateUseCaseHeader") {
-    def assertUpdateTriggered(js: JavaScriptReaction) {
-      js.result.toString should (include(UseCaseIndex.UseCaseUpdated.triggerName) and include("trigger"))
+
+  describe("#update") {
+    def assertUpdateTriggered(js: JsCmd) {
+      js.toJsCmd should (include(UseCaseIndex.TriggerUpdate.triggerName) and include("trigger"))
     }
 
-    def assertUpdateNotTriggered(js: JavaScriptReaction) {
-      js.result.toString should not include ("trigger")
+    def assertUpdateNotTriggered(js: JsCmd) {
+      js.toJsCmd should not include ("trigger")
     }
 
     def assertSummaryInAll(x: UseCaseSummary): Unit =
@@ -56,11 +58,11 @@ class UseCaseIndexSnippetTest extends FunSpec with TestDatabaseSupport with Prop
       Map("eid" -> ExternalId(id), "title" -> newTitle)
 
     def test(params: Map[String, String]) = {
-      val js = new JavaScriptReaction
-      val r = withSessionParams(params) {
-        UseCaseIndex.updateUseCaseHeader(js.reactor)
+      withSessionParams(params) {
+        val m = UseCaseIndex.update
+        val js = UseCaseIndex.onUpdate(m)
+        (m, js)
       }
-      (r, js)
     }
 
     def testSuccess(newTitle: String, expectedTitleAfterSave: String): UseCaseSummary =

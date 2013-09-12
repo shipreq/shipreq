@@ -3,22 +3,23 @@ package snippet
 
 import net.liftweb.common.{Full, Failure, Box}
 import net.liftweb.http.{S, SHtml}
-import net.liftweb.http.js.JsCmds
+import net.liftweb.http.js.{JsCmd, JsCmds}
 import net.liftweb.json.Serialization.{write => jsonWrite}
 import net.liftweb.util.Helpers._
 import net.liftweb.util.{CssSel, ClearClearable}
 
 import lib._
 import db.{DAO, UseCaseSummary, UseCaseHeaderUpdateResult}
-import util.{ErrorMessages, Reactor, JavaScript}
+import util.ErrorMessages
 import util.HtmlTransformExt._
 import util.JsExt.JsJsonTrigger
 import Types._
+import UseCaseHeaderUpdateResult._
 
 object UseCaseIndex extends SnippetHelpers {
 
-  final val NewUseCase = JsJsonTrigger[UseCaseSummary]("new-uc")
-  final val UseCaseUpdated = JsJsonTrigger[UseCaseSummary]("upd-uc")
+  final val TriggerAdd = JsJsonTrigger[UseCaseSummary]("uc-add")
+  final val TriggerUpdate = JsJsonTrigger[UseCaseSummary]("uc-upd")
 
   def InitKoViewModel(vmClassName: String, model: AnyRef): CssSel = {
     val json = jsonWrite(model)
@@ -29,20 +30,22 @@ object UseCaseIndex extends SnippetHelpers {
   def render = daoProvider.withSession(dao =>
     ClearClearable
       & InitKoViewModel("UCIViewModel", dao.findAllUseCaseSummaries)
-      & ".new_uc button" #> SHtml.ajaxButton("+ New UC", jsCallbackWithDao(createNewUseCase))
-      & ".edit form" #> reusableAjaxForm(jsCallback(updateUseCaseHeader(_)))
+      & ".new_uc button" #> SHtml.ajaxButton("+ New UC", onNew _)
+      & ".edit form" #> reusableAjaxForm(onUpdate)
   )
 
-  def createNewUseCase(reactor: Reactor, dao: DAO): UseCaseSummary = {
+  def onNew(): JsCmd = TriggerAdd.trigger(create())
+
+  def create(): UseCaseSummary = daoProvider.withTransaction { dao =>
     val uc = dao.createInitialUseCase(Defaults.Title)
-    val ucs = new UseCaseSummary(uc, Misc.currentTimeAsIso8601Str)
-    reactor(JavaScript)(NewUseCase.trigger(ucs))
-    ucs
+    new UseCaseSummary(uc, Misc.currentTimeAsIso8601Str)
   }
 
-  def updateUseCaseHeader(implicit reactor: Reactor): Box[UseCaseSummary] = {
-    import UseCaseHeaderUpdateResult._
-    val result: Box[UseCaseSummary] = for {
+  def onUpdate(): JsCmd = onUpdate(update)
+  def onUpdate(x: Box[UseCaseSummary]): JsCmd = jsPossibleError(x)(m => TriggerUpdate.trigger(m))
+
+  def update(): Box[UseCaseSummary] =
+    for {
       newTitle <- S.param("title")                                          ?~ ErrorMessages.BadRequest
       ucId     <- ExternalId.unapply(S.param("eid")).tag[UseCaseIdentIdTag] ?~ ErrorMessages.BadRequest
       lock     <- Locks.UseCase.forWrite(ucId)
@@ -53,13 +56,5 @@ object UseCaseIndex extends SnippetHelpers {
                     case AlreadyUpToDate(r) => Full(r)
                     case UseCaseNotFound    => Failure("Use case not found.")
                   }
-    } yield {
-      val ucs = new UseCaseSummary(savedUc, Misc.currentTimeAsIso8601Str)
-      reactor(JavaScript)(UseCaseUpdated.trigger(ucs))
-      ucs
-    }
-
-    reactToOptionalError(result)
-    result
-  }
+    } yield new UseCaseSummary(savedUc, Misc.currentTimeAsIso8601Str)
 }

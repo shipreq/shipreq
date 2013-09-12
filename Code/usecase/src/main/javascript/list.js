@@ -22,14 +22,14 @@ $(document).ready(function() {
     ko.applyBindings(VM)
 });
 
-$(document).on('new-uc', function(event, data) {
+$(document).on('uc-add', function(event, data) {
     var m = UseCaseSummary(data)
     m.editMode(true)
     VM.useCases.push(m)
     m.enterEditMode()
 });
 
-$(document).on('upd-uc', function(event, data) {
+$(document).on('uc-upd', function(event, data) {
     var n = UseCaseSummary(data)
     var m = VM.findByDataEid(n.eid())
     VM.useCases.replace(m,n)
