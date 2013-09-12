@@ -11,6 +11,7 @@ import org.scalatest.FunSpec
 import lib.security.Oshiro
 import test.{SnippetTester, TestDatabaseSupport}
 import test.fixture.UserFixture
+import net.liftweb.http.js.JsCmd
 
 class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixture {
 
@@ -27,15 +28,15 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
   class Reg1Tester extends SnippetTester(new Register1) {
     def submit(email: String, usrTableDiff: Int) = {
       snippet.emailInput = email
-      assertTableDiffs(Tables.Usr -> usrTableDiff) {snippet.onSubmit(js.reactor)}
-      this
+      val js = assertTableDiffs(Tables.Usr -> usrTableDiff) {snippet.onSubmit()}
+      (js, this)
     }
   }
 
   def testSuccess(email: String, usrTableDiff: Int, tokenChange: Boolean) {
     val tokenBefore = lookupConfirmationToken(email)
     val tester = new Reg1Tester()
-    tester.submit(email, usrTableDiff).assertJsAlert(None)
+    tester.submit(email, usrTableDiff)._1.assertJsAlert(None)
     val token = lookupConfirmationToken(email)
     token should not be ('empty)
     if (tokenChange)
@@ -47,9 +48,9 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
 
   describe("Register1.onSubmit") {
     it("when email is invalid -- should reject request") {
-      new Reg1Tester().submit("not_an_email", 0)
-      .assertJsAlert(Some("Email"))
-      .assertEmail(None)
+      val (js,t) = new Reg1Tester().submit("not_an_email", 0)
+      js.assertJsAlert(Some("Email"))
+      t.assertEmail(None)
     }
 
     it("when a pending, valid token exists -- should resend email") {
@@ -65,14 +66,14 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
     }
 
     it("when a email belongs to registered account -- should email with link to reset password") {
-      new Reg1Tester().submit(user1.email, 0)
-      .assertJsAlert(None)
-      .assertEmail(Some(List("/login")))
+      val (js,t) = new Reg1Tester().submit(user1.email, 0)
+      js.assertJsAlert(None)
+      t.assertEmail(Some(List("/login")))
     }
   }
 
   class Reg2Tester(token: String) extends SnippetTester(new Register2(token)) {
-    def onSubmit_() = snippet.onSubmit(js.reactor)
+    def onSubmit_() = snippet.onSubmit()
   }
 
   describe("Register2.validateToken") {
@@ -117,9 +118,9 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
     def testFailure(mutate: Register2 => Any) {
       val t = tester
       mutate(t.snippet)
-      t.onSubmit_
+      val js = t.onSubmit_
       assertUnconfirmed()
-      t.assertJsAlert(Some(""))
+      js.assertJsAlert(Some(""))
     }
 
     it("should reject an invalid username") {
@@ -174,9 +175,9 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
 
       it("should hide the form and show the success") {
         val t = tester
-        t.onSubmit_
-        t.assertJsAlert(None)
-        t.jsReaction should include("toggle")
+        val js = t.onSubmit_
+        js.assertJsAlert(None)
+        js.toJsCmd should include("toggle")
       }
     }
   }

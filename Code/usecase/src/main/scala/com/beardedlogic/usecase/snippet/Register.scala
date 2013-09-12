@@ -15,9 +15,8 @@ import Types._
 import mail.RegistrationEmails
 import db.{DAO, UserRegistrationInfo, UserRegistrationResult}
 import security.PasswordAndSalt
-import util.{JsExt, Reactor, JavaScript}
+import util.JsExt._
 import util.HtmlTransformExt.ajaxSubmitOnClick
-import JsExt._
 
 /**
  * Takes an email address, validates it, creates a new user, sends an email with a verification-token in it.
@@ -30,13 +29,13 @@ class Register1 extends SingleOpStatefulSnippet {
 
   def render = (
     "#email" #> SHtml.onSubmit(emailInput = _)
-      & ":submit" #> ajaxSubmitOnClick(jsCallback(onSubmit(_)))
+      & ":submit" #> ajaxSubmitOnClick(onSubmit)
     )
 
-  def onSubmit(implicit reactor: Reactor) {
+  def onSubmit(): JsCmd = {
     val email = InputCorrection.email(emailInput)
     Validate.email(email) match {
-      case Some(errmsg) => reactWithError(errmsg)
+      case Some(errmsg) => jsShowError(errmsg)
       case None =>
         val mail: Mail = daoProvider.withTransaction(dao =>
           dao.findUserRegistrationInfo(email) match {
@@ -46,9 +45,8 @@ class Register1 extends SingleOpStatefulSnippet {
             case Some(UserRegistrationInfo(id, _, _, _)) => onTokenExpired(id, dao)
           }
         )
-        removeError()
-        reactor(JavaScript)(JqExpr("#emailSent,#register1Form") ~> JqToggle)
         sendMail(mail, To(email))
+        jsClearError() & JqExpr("#emailSent,#register1Form") ~> JqToggle
     }
   }
 
@@ -102,7 +100,7 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
       "#username" #> SHtml.ajaxText(usernameInput, onUsernameChange)
         & "#password1" #> SHtml.onSubmit(password1Input = _)
         & "#password2" #> SHtml.onSubmit(password2Input = _)
-        & ":submit" #> ajaxSubmitOnClick(jsCallback(onSubmit(_)))
+        & ":submit" #> ajaxSubmitOnClick(onSubmit)
       )
   }
 
@@ -112,7 +110,7 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
     JqId("username") ~> JqSetValue(usernameInput)
   }
 
-  def onSubmit(implicit reactor: Reactor) {
+  def onSubmit(): JsCmd = {
     val username = InputCorrection.username(usernameInput)
     val password1 = InputCorrection.password(password1Input)
     val password2 = InputCorrection.password(password2Input)
@@ -124,14 +122,17 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
       , Validate.password(password1)
       , Validate.password2(password1, password2)
     ).filter(_.isDefined).map(_.get)
-    if (failures.nonEmpty) reactWithErrors(failures) else {
+
+    if (failures.nonEmpty)
+      jsShowErrors(failures)
+    else {
       import UserRegistrationResult._
 
       // Update user
       val ps = PasswordAndSalt.hashWithRandomSalt(password1)
       daoProvider.withSession(_.registerUser(token)(username, ps, clientIp_Or_?)) match {
 
-        case UsernameTaken => reactWithError("Username is already taken.")
+        case UsernameTaken => jsShowError("Username is already taken.")
 
         case NoMatchingConfToken =>
           S.error("Your registration token disappeared.")
@@ -141,8 +142,7 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
         case Success(_) =>
           info(s"Registered new user: $username")
           SecurityUtils.getSubject.login(new UsernamePasswordToken(username, password1))
-          removeError()
-          reactor(JavaScript)(JqExpr("#regComplete,#register2") ~> JqToggle)
+          jsClearError() & JqExpr("#regComplete,#register2") ~> JqToggle
       }
     }
   }

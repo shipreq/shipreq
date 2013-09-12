@@ -32,6 +32,7 @@ import LensFns._
 import NodeUtils._
 import TreeOps._
 import Changes.ExistingStepLabelsChanged
+import net.liftweb.http.js.JsCmd
 
 /**
  * @since 30/04/2013
@@ -42,6 +43,8 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers with DebugImplicits {
 
   if (!LiftRules.doneBoot) (new bootstrap.liftweb.Boot).configureLift
   //if (Defaults.FieldList.get == null) Defaults.FieldList << mockFieldList(Defaults.FieldListDefns)
+
+  implicit def JsCmdToStr(js: JsCmd): String = js.toJsCmd
 
   type Refs = Map[LocalStepId, LabelStr]
 
@@ -245,7 +248,6 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers with DebugImplicits {
     MockWeb.testS(req)(block)
   }
 
-  def assertJsAlert(js: JavaScriptReaction, errorMsg: Option[String]) { assertJsAlert(js.result.toJsCmd, errorMsg) }
   def assertJsAlert(jsReaction: String, errorMsg: Option[String]) {
     if (errorMsg.isDefined) {
       jsReaction.toLowerCase should include ("alert")
@@ -254,7 +256,6 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers with DebugImplicits {
       jsReaction.toLowerCase should not include ("alert")
   }
 
-  def assertJsErrorNotice(js: JavaScriptReaction, errorMsg: Option[String]) { assertJsErrorNotice(js.result.toJsCmd, errorMsg) }
   def assertJsErrorNotice(jsReaction: String, errorMsg: Option[String]) {
     if (errorMsg.isDefined) {
       jsReaction.toLowerCase should (include ("#notices") and include("alert-error"))
@@ -370,6 +371,14 @@ trait TestHelpers extends MockitoSugar with ShouldMatchers with DebugImplicits {
    */
   implicit class MyRichInt(val i: Int) {
     def times(block: => Any) { 1 to i foreach(_ => block) }
+  }
+
+  /**
+   * Extensions for: JsCmd
+   */
+  implicit class MyRichJsCmd(val j: JsCmd) {
+    def assertJsAlert(errorMsg: Option[String]) = TestHelpers.this.assertJsAlert(j.toJsCmd, errorMsg)
+    def assertJsErrorNotice(errorMsg: Option[String]) = TestHelpers.this.assertJsErrorNotice(j.toJsCmd, errorMsg)
   }
 
   /**
