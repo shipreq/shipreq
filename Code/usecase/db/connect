@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -z "$1" ] && echo "USAGE: $(basename "$0") [dev|test|prod]" && exit 1
+sudo_opt=
+case "$1" in
+  dev)  db=usecase_dev ;;
+  test) db=usecase_test ;;
+  prod) db=usecase_prod ; sudo_opt='-k' ;;
+  *) echo -e "Unknown db: '$1'.\nExpected [dev|test|prod]." >&2; exit 1
+esac
+
+echo "Connecting to $db..."
+sudo -u postgres $sudo_opt psql -d $db -U $db
