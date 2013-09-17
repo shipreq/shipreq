@@ -162,6 +162,61 @@
 		$('#shareL').append($('#shareL').html())
 	</script>
 
+<!--------------------------------------------------------------------------------------------------------------------->
+<hr class="page-new">
+<h1 id="page-shareCU">Share Use Cases</h1>
+
+	<form class="form-horizontal" role="form">
+		<div class="form-group">
+			<label for="inputName1" class="col-sm-2 control-label">Share Name</label>
+			<div class="col-sm-10">
+				<input type="text" class="form-control" id="inputName1" placeholder="Name">
+			</div>
+		</div>
+		<div class="form-group">
+			<label for="inputPassword1" class="col-sm-2 control-label">Password</label>
+			<div class="col-sm-5">
+				<input type="password" class="form-control" id="inputPassword1" placeholder="Password">
+			</div>
+			<div class="col-sm-5">
+				<input type="password" class="form-control" id="inputPassword2" placeholder="Confirm Password">
+			</div>
+		</div>
+		<div class="form-group">
+			<label for="inputWelcome" class="col-sm-2 control-label">Welcome Text</label>
+			<div class="col-sm-10">
+				<textarea class="form-control" id="inputWelcome" rows="6" placeholder="Any additional text to display to viewers who access the share."></textarea>
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-2 control-label">Content</label>
+			<div class="col-sm-10">
+				<div class="radio">
+					<label>
+						<input type="radio" name="optionsRadios" id="optionsRadios1" value="option1" >
+						All use cases
+					</label>
+				</div>
+				<div class="radio">
+					<label>
+						<input type="radio" name="optionsRadios" id="optionsRadios2" value="option2" checked>
+						Only certain use cases
+					</label>
+				</div>
+				<ul id="ucFilter">
+					<li class="checkbox"><label><input type="checkbox" checked>UC-1: Eat stuff</label></li>
+					<li class="checkbox"><label><input type="checkbox" checked>UC-2: Drink drinks</label></li>
+					<li class="checkbox"><label><input type="checkbox" checked>UC-3: Make coffee</label></li>
+				</ul>
+			</div>
+		</div>
+		<div class="form-group">
+			<div class="col-sm-offset-2 col-sm-10">
+				<button type="submit" class="btn btn-success">Create Share</button>
+			</div>
+		</div>
+	</form>
+
 <div class="page-new"></div>
 </div></body>
 </html>
