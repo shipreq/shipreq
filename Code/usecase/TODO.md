@@ -6,11 +6,12 @@ FUNC TODO
 * [M.0.5] [LEGL] Check all licences and attribute as required.
 * [M.0.5] [LEGL] Add terms of service.
 
+* [S.2.5] [UCE ] Step is lost if accidentally deleted. No undo.
 * [S.2.1] [ACCT] Change username & password (when logged in).
 * [S.0.5] [ACCT] Password reset (when not logged in).
 * [S.0.2] [UCE ] Text not corrected when post-correction matches prev value. (Title, text, step)
 
-* [C.4.4] [UCE ] Symlink steps (and have flow targets point back). Eg "@sameas/@Copy [1.E.1.1]"
+* [C.4.4] [UCE ] Symlink steps (and have flow targets point back). Eg "@sameas/@Copy [1.E.1.1]" What about children steps?
 * [C.3.4] [ACCT] Add JS validation to register2 (ie. account creation).
 * [C.3.3] [UCI ] Reorder UCs. Might be superceded by better UC org func such as grouping.
 * [C.2.4] [UCE ] Reorder steps, probably via drag-n-drop.
