@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>ReqRepo Prototype</title>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script type="text/javascript" src="../js/vendor/jquery.js"></script>
+	<script type="text/javascript" src="../js/vendor/bootstrap.js"></script>
+	<link type="text/css" rel="stylesheet" href="prototype.css" />
+	<link type="text/css" rel="stylesheet" href="../css/vendor/bootstrap.css" />
+	<!--<style media="screen" type="text/css"></style>-->
+</head>
+<body><div class="container">
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<h1>Your Projects</h1>
+
+	<div id="projectL">
+		<div class="project">
+			<a class="title" href="#page-projectR">Card/Board</a>
+			<div class="details uc">12 Use Cases. Last modified <abbr class="timeago" title="2013/05/22 13:45">3 days ago</abbr>.</div>
+			<div class="details shares">1 share with 8 views. Last viewed <abbr class="timeago" title="2013/05/22 13:45">2 weeks ago</abbr>.</div>
+		</div>
+		<div class="project">
+			<a class="title" href="#page-projectR">Shared Expenses</a>
+			<div class="details uc">8 Use Cases. Last modified <abbr class="timeago" title="2013/05/22 13:45">8 months ago</abbr>.</div>
+			<div class="details shares">3 shares with 2409 views. Last viewed <abbr class="timeago" title="2013/05/22 13:45">1 hour ago</abbr>.</div>
+		</div>
+	</div>
+
+	<form class="form-inline" id="projectC">
+		<div class="form-group col-xs-6">
+			<input type="input" class="form-control" placeholder="Project Name">
+		</div>
+		<button type="submit" class="btn btn-success">Create Project</button>
+	</form>
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<hr class="page-new">
+	<h1 id="page-projectR">
+		Shared Expenses
+		<button class="btn btn-default" style="margin-left:2em">Edit</button>
+		<button class="btn btn-danger">Delete</button>
+	</h1>
+
+	<!-- Use Case Panel -->
+	<div class="panel panel-default" id="ucl-p">
+		<div class="panel-heading">
+			<h3 class="panel-title">Use Cases</h3>
+		</div>
+		<div class="panel-body">
+
+			<!-- New Use Case -->
+			<form class="form-inline" id="usecaseC">
+				<div class="form-group col-xs-9">
+					<input type="input" class="form-control" placeholder="Use Case Title">
+				</div>
+				<button type="submit" class="btn btn-success">Create Use Case</button>
+			</form>
+
+			<!-- Use Case List -->
+			<div id="ucl">
+				<div class="uc">
+					<div class="row view-mode">
+						<div class="lctls col-md-1"><button class="btn btn-sm btn-default edit">Edit</button></div>
+						<div class="mid col-md-11 view">
+							<a class="title" href="page-uce">UC-1: Create Report for Month-End</a>
+							<p class="detail">Last updated <abbr class="timeago" title="2013/05/22 13:45">8 months ago</abbr>.</p>
+						</div>
+					</div>
+					<div class="row edit-mode hidden2">
+						<div class="lctls col-md-1"><button class="btn btn-sm btn-primary update">Update</button></div>
+						<div class="mid col-md-9">
+							<form>
+								<input class="form-control" type="text" value="UC-1: Create Report for Month-End">
+							</form>
+						</div>
+						<div class="col-md-1"><button class="btn btn-sm btn-danger delete">Delete</button></div>
+						<div class="col-md-1"><button class="btn btn-sm btn-default cancel">Cancel</button></div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+	</div>
+	<script type="text/javascript">
+		$('#ucl').append($('#ucl').html())
+		$('#ucl').append($('#ucl').html())
+		function ucModeToggle(el) {	$(el).parents('.uc').find('.view-mode,.edit-mode').toggle() }
+		$('#ucl').find('button.edit,button.cancel,button.update').click(function(){ ucModeToggle(this) })
+	</script>
+
+	<!-- Shares -->
+	<div class="panel panel-default" id="shares">
+		<div class="panel-heading">
+			<h3 class="panel-title">Shares</h3>
+		</div>
+
+		<div class="panel-body">
+			<button type="submit" class="btn btn-success ull-right">Share Use Cases</button>
+		</div>
+
+		<ul id="shareL" class="list-unstyled _list-group">
+			<li class="share list-unstyled _list-group-item">
+				<div class="name pull-left">
+					<a href="#shareUrl">Use Case Editor v1.0</a>
+				</div>
+				<div class="ctls btn-group pull-right">
+					<button class="btn btn-sm btn-default edit">Edit</button>
+					<button class="btn btn-sm btn-default chgpwd">Change Password</button>
+					<button class="btn btn-sm btn-danger delete">Delete</button>
+				</div>
+				<div class="clearfix"></div>
+				<!--<div class="desc">This is for milestones 1-4, email UCs have been removed and pushed to M5.</div>-->
+				<div class="url">
+					<div class="input-group">
+						<span class="input-group-addon">Copy</span>
+						<input type="text" class="form-control input-sm urltxt" value="http://www.reqrepo.com/share/n4m90N76h3hah" readonly onclick="$(this).select()">
+					</div>
+					<div class="hide input-group">
+						<span class="input-group-addon">Copy</span>
+						<p class="form-control input-sm urltxt">http://www.reqrepo.com/share/n4m90N76h3hah</p>
+					</div>
+				</div>
+				<div class="views">30 views. Last viewed 3 days ago.</div>
+			</li>
+		</ul>
+
+	</div>
+	<script type="text/javascript">
+		$('#shareL').append($('#shareL').html())
+	</script>
+
+<div class="page-new"></div>
+</div></body>
+</html>

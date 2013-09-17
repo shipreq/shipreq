@@ -1,0 +1,28 @@
+.page-new {margin-top:1000px}
+.hidden2 {display:none}
+
+#projectL {margin:4ex 8ex 6ex 6ex}
+#projectL .project {margin-top:4ex}
+#projectL .project .title {font-size:250%}
+#projectL .project .details {color:#444}
+
+#projectC {margin-top:6ex}
+#projectC .form-group {padding-left:0}
+
+#ucl-p {margin-top:6ex}
+#ucl-p h3 {font-weight:bold}
+#ucl {margin: 5ex 4ex 0 4ex}
+#ucl .lctls {text-align:right}
+#ucl .lctls, #ucl .mid {margin-bottom:2ex}
+#ucl .view-mode .view a.title {font-size:120%; line-height:1em; color:#4183C4; font-weight:bold}
+#ucl .view-mode .view .detail {font-size:70%; color:#888}
+
+#usecaseC {margin-top:2ex}
+
+#shares h3 {font-weight:bold}
+#shares .name {_padding-top:1ex; _background:#fef}
+#shares .name a {font-size:140%; font-weight:bold; color:#4183C4}
+#shares .url {width:56ex; margin-top:1ex}
+#shares .url .urltxt {font-family:monospace; background:white; cursor:text}
+#shares .views {_background:#eef; font-size:100%; color:#888; margin-top:1ex}
+#shares li {padding:2ex}
