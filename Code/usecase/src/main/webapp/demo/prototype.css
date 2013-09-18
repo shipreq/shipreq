@@ -35,3 +35,28 @@
 #shares td.r {vertical-align:top; _background:#fef}
 
 #page-shareCU {margin-bottom:2.5ex}
+
+#page-presmode nav ol {margin-left:1ex}
+#page-presmode nav a {font-size:110%; line-height:1.6em}
+#page-presmode main {margin-top:4em}
+#page-presmode main article + article {margin-top:6em}
+#page-presmode .fvs th, #page-presmode .fvs td {vertical-align:top}
+#page-presmode .fvs > tr {border-top:1px solid #ccc; border-bottom:1px solid #ccc}
+#page-presmode .fvs > tr > th {width:18ex; font-weight:normal}
+#page-presmode .fvs > tr > td {padding-left:2ex}
+#page-presmode .fvs > tr > th ,
+#page-presmode .fvs > tr > td {padding-top:0.3ex; padding-bottom:0.3ex}
+#page-presmode .fvs img {width:100%; max-width:100%}
+#page-presmode .fvs td > ul {padding-left:2ex}
+#page-presmode *:not(a) {color:black !important}
+#page-presmode .steps th {white-space:nowrap}
+#page-presmode .steps td {width:100%}
+#page-presmode .steps * {line-height:1.168em}
+#page-presmode .steps .lvl-0 >tbody> tr:not(.ind) td {font-weight:bold; padding-left:0.5ex}
+#page-presmode .steps .ind table {margin-left:2ex}
+#page-presmode .steps .ind .ind table {margin-left:5ex}
+#page-presmode .steps .ind th {font-weight:normal}
+#page-presmode .steps .ind td {padding-left:1.2ex}
+#page-presmode .fvs a.step:not(:hover) ,
+#page-presmode .fvs a.uc:not(:hover) {_color:black; _text-decoration:underline; border-bottom:1px dotted}
+#page-presmode .steps .highlight {_font-weight:bold; background:#ffc}
