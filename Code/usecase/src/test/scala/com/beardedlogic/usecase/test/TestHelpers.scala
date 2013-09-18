@@ -263,11 +263,11 @@ trait TestHelpers2 extends MockitoSugar with ShouldMatchers with DebugImplicits 
 
   def assertJsErrorNotice(jsReaction: String, errorMsg: Option[String]) {
     if (errorMsg.isDefined) {
-      jsReaction.toLowerCase should (include ("#notices") and include("alert-error"))
+      jsReaction.toLowerCase should (include ("#notices") and include("alert-danger"))
       jsReaction should include(errorMsg.get.encJs.replaceAll("^\"|\"$", ""))
     } else {
       jsReaction.toLowerCase should not include ("#notices")
-      jsReaction.toLowerCase should not include ("alert-error")
+      jsReaction.toLowerCase should not include ("alert-danger")
     }
   }
 
