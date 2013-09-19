@@ -1,11 +1,10 @@
 package com.beardedlogic.usecase.integration.support
 
-import org.scalatest.{Suite, GivenWhenThen}
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.{Informing, Suite, GivenWhenThen}
 import com.beardedlogic.usecase.test.TestHelpers
 
-trait SeleniumTest extends SeleniumTestSupport with ShouldMatchers with TestHelpers with GivenWhenThen {
-  this: Suite =>
+trait SeleniumTest extends SeleniumTestSupport with TestHelpers with GivenWhenThen {
+  this: Suite with Informing =>
 
   def currentUrl = selenium.getCurrentUrl.replaceFirst("^http://[^/]+", "")
 

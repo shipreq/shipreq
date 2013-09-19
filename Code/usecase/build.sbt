@@ -29,7 +29,7 @@ libraryDependencies ++= {
     "org.fusesource.scalate"   %% "scalate-core"           % "1.6.1",
     "org.fusesource.scalamd"   %% "scalamd"                % "1.6", // markdown
     // [test]
-    "org.scalatest"               %% "scalatest"              % "2.0.M6-SNAP16"       % "test",
+    "org.scalatest"               %% "scalatest"              % "2.0.M8"              % "test",
     "org.mockito"                 %  "mockito-core"           % "1.9.5"               % "test",
     "org.scalacheck"              %% "scalacheck"             % "1.10.1"              % "test",
     "net.liftweb"                 %% "lift-testkit"           % liftVersion           % "test",
