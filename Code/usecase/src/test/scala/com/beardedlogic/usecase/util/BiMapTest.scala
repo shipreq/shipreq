@@ -1,8 +1,7 @@
-package com.beardedlogic.usecase.lib
+package com.beardedlogic.usecase.util
 
 import org.scalatest.FunSuite
 import org.scalatest.Matchers
-import com.beardedlogic.usecase.util.BiMapBuilder
 
 class BiMapTest extends FunSuite with Matchers {
 
