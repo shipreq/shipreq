@@ -51,7 +51,7 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
       val tf2 = freeText("2")
       val m: FieldValues = Map(TF2 ~> tf1, TF3 ~> tf2, NCF ~> NCF.empty)
       val r2: StepFieldValue = NCF(m)
-      r2 should be(NCF.empty)
+      r2 ==== NCF.empty
     }
   }
 

@@ -70,7 +70,7 @@ class UseCaseIndexSnippetTest extends FunSpec with TestDatabaseSupport with Prop
 
     def testSuccess2(uc1: UseCaseRev, newTitle: String, expectedTitleAfterSave: String): UseCaseSummary = {
       val (r, js) = test(params(uc1, newTitle))
-      r should be('defined)
+      r shouldBe defined
       val uc2 = r.openOrThrowException("required")
       assertJsErrorNotice(js, None)
       assertUpdateTriggered(js)
@@ -82,7 +82,7 @@ class UseCaseIndexSnippetTest extends FunSpec with TestDatabaseSupport with Prop
 
     def testFailure(uc: UseCaseRev, errorMsgFrag: String, params: Map[String, String]) {
       val (r, js) = assertTableDiffs()(test(params))
-      r should be('empty)
+      r shouldBe empty
       assertJsErrorNotice(js, Some(errorMsgFrag))
       assertUpdateNotTriggered(js)
       db.findUseCase(uc.id) should be(Some(uc))

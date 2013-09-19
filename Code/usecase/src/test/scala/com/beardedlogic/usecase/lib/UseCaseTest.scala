@@ -20,7 +20,7 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
   describe("filter()") {
     it("should filter a field list by TextField") {
       val x = filter[TextField](FL)
-      x should be(List(TF1, TF2, TF3))
+      x ==== List(TF1, TF2, TF3)
     }
   }
 
@@ -57,7 +57,7 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
       val uc2 = correctStepsAndLabelsAfterUpdate(sampleUC, uc1)
       uc2 should not be theSameInstanceAs(uc1)
       uc2.stepsAndLabels.get should not be (uc1.stepsAndLabels.get)
-      uc2.copy(stepsAndLabels = uc1.stepsAndLabels) should be(uc1)
+      uc2.copy(stepsAndLabels = uc1.stepsAndLabels) ==== uc1
     }
 
     it("should recalc when the UC number changes") {
@@ -68,7 +68,7 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
   describe("respondToChanges()") {
 
     it("should return NoChange if no changes") {
-      MockUc1.sampleUC.respondToChanges(TextChanged.asOnlyChange) should be(NoChange)
+      MockUc1.sampleUC.respondToChanges(TextChanged.asOnlyChange) ==== NoChange
     }
 
     it("should return a new UC if a FreeText changes") {
@@ -76,7 +76,7 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
       val updated = ucStepFieldL.set((original, NCF), MockUc2b.NcSfv).regenerateStepsAndLabels
       TF1.lens.get(updated) should not be (MockUc2b.TFV1)
       val done = updated.respondToChanges(MockExistingStepLabelsChanged.asOnlyChange).gimme
-      TF1.lens.get(done) should be(MockUc2b.TFV1)
+      TF1.lens.get(done) ==== MockUc2b.TFV1
     }
   }
 
@@ -93,14 +93,14 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
           val v1 = sfvWithText(f, stepTextBefore)
           val expected = StepText(X1, freeText("Goat"), stepTextBefore.flowFromClause, stepTextBefore.flowToClause)
           val (uc2, c) = ucWithValues(f -> v1).updateTitle("Goat").openChange
-          f(uc2.fieldValues) should be(v1.copy(textmap = Map(X1 -> expected)))
+          f(uc2.fieldValues) ==== v1.copy(textmap = Map(X1 -> expected))
           c.map(_._2) should contain(StepTextChanged(X1))
         }
 
         def testDoesntChange(f: StepField, stepTextBefore: StepText) {
           val v1 = sfvWithText(f, stepTextBefore)
           val (uc2, c) = ucWithValues(f -> v1).updateTitle("Goat").openChange
-          f(uc2.fieldValues) should be(v1)
+          f(uc2.fieldValues) ==== v1
           c.map(_._2) should not contain(StepTextChanged(X1))
         }
 
@@ -132,20 +132,20 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
   describe("updateStepFieldText()") {
     it("should update the step text") {
       val uc = NCF.updateText(X2, "great")(MockUc2b.UC).gimme
-      NCF.lens.get(uc).textmap should be(MockUc2b.NcStepText + (X2 -> StepText(X2, freeText("great"), None, None)))
+      NCF.lens.get(uc).textmap ==== MockUc2b.NcStepText + (X2 -> StepText(X2, freeText("great"), None, None))
     }
     it("should cause other steps to mirror flows") {
       val uc = NCF.updateText(X2, " greater --> [ 7.0] ")(MockUc2b.UC).gimme
       val textmap = NCF.lens.get(uc).textmap
-      textmap(X2) should be(StepText(X2, freeText("greater"), None, flowToClause(X1 -> "7.0".asLabel)))
-      textmap(X1) should be(StepText(X1, freeText("I'm the root"), flowFromClause(X2 -> "7.0.2".asLabel), None))
+      textmap(X2) ==== StepText(X2, freeText("greater"), None, flowToClause(X1 -> "7.0".asLabel))
+      textmap(X1) ==== StepText(X1, freeText("I'm the root"), flowFromClause(X2 -> "7.0.2".asLabel), None)
     }
   }
 
   describe("updateTextFieldText()") {
     def test(f: TextField) {
       val uc = f.updateText("The Refusal, Karnivool [7.0]")(MockUc2b.UC).gimme
-      f.lens.get(uc) should be (FreeText("The Refusal, Karnivool [7.0]", Map(X1 -> "7.0".asLabel)))
+      f.lens.get(uc) ==== FreeText("The Refusal, Karnivool [7.0]", Map(X1 -> "7.0".asLabel))
     }
     it("should update existing text") {
       test(TF1)
@@ -159,10 +159,10 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
     def test(uc1: UseCase, f: StepField, expecetedTopLevel: Int, expectedLabelIndex: Int, expectedLabel: String) {
       val uc2 = f.addTailStep(uc1).gimme
       val tree = f.lens.get(uc2).tree
-      tree.nodes.size should be(expecetedTopLevel)
+      tree.nodes.size ==== expecetedTopLevel
       val newNode = tree.nodes.last
-      newNode.copy(id = null) should be(StepNode(null, 0, expectedLabelIndex, Nil))
-      uc2.stepsAndLabels.get.ab(newNode.id) should be(expectedLabel)
+      newNode.copy(id = null) ==== StepNode(null, 0, expectedLabelIndex, Nil)
+      uc2.stepsAndLabels.get.ab(newNode.id) should === (expectedLabel)
       assertStepsAndLabelsRegen(uc2)
     }
 
@@ -183,18 +183,18 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
     lazy val uc = NCF.addStep(X1)(MockUc2b.UC).gimme // insert 7.0.1
     lazy val v = NCF.lens.get(uc)
     it("should add a step") {
-      v.tree.sizeRecursive should be(5)
-      v.tree.size should be(1)
-      v.tree(0).children.size should be(3)
+      v.tree.sizeRecursive ==== 5
+      v.tree.size ==== 1
+      v.tree(0).children.size ==== 3
     }
     it("should should have blank text") {
-      ucStepTextInstL.get(uc, (NCF, v.tree(0)(0).id)) should be('empty)
+      ucStepTextInstL.get(uc, (NCF, v.tree(0)(0).id)) shouldBe empty
     }
     it("should update the step label map") {
       assertStepsAndLabelsRegen(uc)
     }
     it("should update refs in text") {
-      TF1.lens.get(uc) should be(FreeText("Linking to [7.0.3]", Map(X2 -> "7.0.3".asLabel)))
+      TF1.lens.get(uc) ==== FreeText("Linking to [7.0.3]", Map(X2 -> "7.0.3".asLabel))
     }
   }
 
@@ -202,19 +202,19 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
     lazy val uc = NCF.removeStep(X2)(MockUc2b.UC).gimme // delete 7.0.2
     lazy val v = NCF.lens.get(uc)
     it("should remove the step from the tree") {
-      v.tree.sizeRecursive should be (2)
+      v.tree.sizeRecursive ==== 2
     }
     it("should remove the step text of deleted node and children") {
-      v.textmap.keySet should be(Set(X1, X3))
+      v.textmap.keySet ==== Set(X1, X3)
     }
     it("should update the step label map") {
-      uc.stepsAndLabels.get.ab should be (Map(X1 -> "7.0".asLabel, X3 -> "7.0.1".asLabel))
+      uc.stepsAndLabels.get.ab ==== Map(X1 -> "7.0".asLabel, X3 -> "7.0.1".asLabel)
     }
     it("should update refs to the step") {
-      TF1.lens.get(uc) should be (FreeText("Linking to [DELETED]",Map.empty))
+      TF1.lens.get(uc) ==== FreeText("Linking to [DELETED]",Map.empty)
     }
     it("should not allow removal of the root NC node") {
-      NCF.removeStep(X1)(MockUc2a.UC) should be (NoChange)
+      NCF.removeStep(X1)(MockUc2a.UC) ==== NoChange
     }
     it("should allow removal of the root NC node") {
       import MockUc1._
@@ -267,8 +267,8 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
       val loaded = loadRev(ucRevId).uc
 
       // Verify
-      loaded.header should be(UseCaseHeader(3, "ahh"))
-      TF1(loaded.fieldValues).text should be("Hehe")
+      loaded.header ==== UseCaseHeader(3, "ahh")
+      TF1(loaded.fieldValues).text ==== "Hehe"
       assertStepTree(loaded, NCF, "3.0. Root\n  1. Child")
     }
 
@@ -293,8 +293,8 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
       val loaded = loadRev(ucRevId).uc
 
       // Verify
-      loaded.header should be(UseCaseHeader(3, "ahh"))
-      TF3(loaded.fieldValues).text should be("look at [3.0.1] and [3.1]!")
+      loaded.header ==== UseCaseHeader(3, "ahh")
+      TF3(loaded.fieldValues).text ==== "look at [3.0.1] and [3.1]!"
       assertStepTree(loaded, NCF, "3.0. Root\n  1. Child [3.0]\n3.1. Other [3.0.1]")
     }
   }
@@ -332,7 +332,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
         val uc1 = sampleUC
         val cp1 = save(uc1, None, db)
         cp1 should not be (None)
-        assertTableDiffs() {save(uc1, cp1, db)} should be(None)
+        assertTableDiffs() {save(uc1, cp1, db)} ==== None
       }
 
       it("should save a title change") {
@@ -370,12 +370,12 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
 
       // Then load back (testing manually)
       val loaded = loadRev(saved.rec).uc
-      TF1.lens.get(loaded).text should be("blah")
-      TF2.lens.get(loaded).text should be("")
-      TF3.lens.get(loaded).text should be("hehe")
+      TF1.lens.get(loaded).text ==== "blah"
+      TF2.lens.get(loaded).text ==== ""
+      TF3.lens.get(loaded).text ==== "hehe"
       NCF.getTextTree(loaded) should matchTree(NcSteps)
       ECF.getTextTree(loaded) should matchTree(EcSteps)
-      loaded.header should be(saved.uc.header)
+      loaded.header ==== saved.uc.header
     }
 
     def reverseTopLevelNodes(f: StepField, uc: UseCase): UseCase = {
@@ -392,7 +392,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
         val newUc = mutate(prevSave.uc)
         val cpSaveOp = assertTableDiffs(expectedTableDiffs: _*) {save(newUc, Some(prevSave), db)}
         if (expectedTableDiffs.isEmpty) {
-          cpSaveOp should be(None)
+          cpSaveOp ==== None
         } else {
           val cpLoad = reload(cpSaveOp.get)
           assertUseCasesMatch(cpLoad.uc, newUc)
@@ -426,14 +426,14 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
         val uc2 = NCF.addTailStep(uc).gimme
         val newText = "New step is [7.2]"
         val uc3 = TF1.lens.mod(t => t.update(newText)(uc2.stepsAndLabels).gimme, uc2)
-        TF1.lens.get(uc3).text should be(newText)
+        TF1.lens.get(uc3).text ==== newText
         uc3
       }, UsecaseRev -> 1, Text -> 1, TextRev -> 2, UcField -> (rels + 1))
 
       // Reorder @ L1 (affects linking text field)
       testUpdate(uc => {
         val uc2 = reverseTopLevelNodes(NCF, uc)
-        TF1.lens.get(uc2).text should be("New step is [7.0]")
+        TF1.lens.get(uc2).text ==== "New step is [7.0]"
         uc2
       }, UsecaseRev -> 1, UcField -> (rels + 1))
 
@@ -454,7 +454,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
       // Then load back
       val loaded = reload(cp).uc
       val ltree = NCF.lens.get(loaded).tree
-      TF1.lens.get(loaded).text should be("Text like [7.0]")
+      TF1.lens.get(loaded).text ==== "Text like [7.0]"
       ucStepTextTextL.get(loaded, (NCF, ltree(0).id)) ==== "Step like [7.0.1]"
     }
 

@@ -11,38 +11,38 @@ class FieldLensesTest extends FunSpec with TestHelpers with TestData {
   import MockUc1._
 
   def testFieldValueSet[F <: Field {type Value = V}, V](before: UseCase)(field: F, newValue: V)(after: UseCase) {
-    field(after.fieldValues) should be(newValue)
-    after.fieldValues should be(before.fieldValues + (field ~> newValue))
+    field(after.fieldValues) ==== newValue
+    after.fieldValues should === (before.fieldValues + (field ~> newValue))
   }
 
   def aLowLevelOperation(set: UseCase => UseCase) {
     it("should not recalculate the steps-and-labels bimap") {
       val uc1 = sampleUC
       val uc2 = set(uc1)
-      uc2.stepsAndLabels should be theSameInstanceAs (uc1.stepsAndLabels)
+      uc2.stepsAndLabels shouldBe theSameInstanceAs (uc1.stepsAndLabels)
       uc2 should not be theSameInstanceAs(uc1)
     }
   }
 
   describe("title") {
     it("should get the title") {
-      ucTitleL.get(sampleUC) should be("YES!")
+      ucTitleL.get(sampleUC) ==== "YES!"
     }
     it("should set the title") {
       val uc = ucTitleL.set(sampleTextOnlyUC, "No")
-      uc.header should be(UseCaseHeader(7, "No"))
-      uc should be(sampleTextOnlyUC.copy(header = uc.header))
+      uc.header ==== UseCaseHeader(7, "No")
+      uc ==== sampleTextOnlyUC.copy(header = uc.header)
     }
     it should behave like aLowLevelOperation(ucTitleL =>= {_ + "!"})
   }
 
   describe("number") {
     it("should get the number") {
-      ucNumberL.get(sampleUC) should be(7)
+      ucNumberL.get(sampleUC) ==== 7
     }
     it("should set the number") {
       val uc = ucNumberL.set(sampleTextOnlyUC, 3)
-      uc.header should be(UseCaseHeader(3, "YES!"))
+      uc.header ==== UseCaseHeader(3, "YES!")
       assertUseCasesMatchIgnoringStepsAndLabels(uc, sampleTextOnlyUC.copy(header = uc.header))
     }
     it should behave like aLowLevelOperation(ucNumberL =>= {_ => 123})
@@ -50,16 +50,16 @@ class FieldLensesTest extends FunSpec with TestHelpers with TestData {
 
   describe("textField") {
     it("should get the text field value") {
-      TF1.lens.get(sampleUC) should be(freeText("blah"))
-      TF2.lens.get(sampleUC) should be(FreeText.empty)
-      TF3.lens.get(sampleUC) should be(freeText("hehe"))
+      TF1.lens.get(sampleUC) ==== freeText("blah")
+      TF2.lens.get(sampleUC) ==== FreeText.empty
+      TF3.lens.get(sampleUC) ==== freeText("hehe")
     }
     it("should set the text field value") {
       val newValue = freeText("cool")
       val uc = TF1.lens.set(sampleUC, newValue)
       testFieldValueSet(sampleUC)(TF1, newValue)(uc)
-      TF3(uc.fieldValues) should be(freeText("hehe"))
-      uc should be(sampleUC.copy(fieldValues = uc.fieldValues))
+      TF3(uc.fieldValues) ==== freeText("hehe")
+      uc ==== sampleUC.copy(fieldValues = uc.fieldValues)
     }
     it should behave like aLowLevelOperation(TF1.lens.set(_, freeText("woah")))
   }
@@ -67,9 +67,9 @@ class FieldLensesTest extends FunSpec with TestHelpers with TestData {
   describe("stepField") {
     def newValue = parseStepTree("1.0. A\n  1. _\n  2. Good").toStepFieldValue(NCF)
     it("should get the text field value") {
-      NCF.lens.get(sampleUC) should be(NcSteps.toStepFieldValue(NCF))
-      ECF.lens.get(sampleUC) should be(EcSteps.toStepFieldValue(ECF))
-      NCF.lens.get(sampleTextOnlyUC) should be(NCF.empty)
+      NCF.lens.get(sampleUC) ==== NcSteps.toStepFieldValue(NCF)
+      ECF.lens.get(sampleUC) ==== EcSteps.toStepFieldValue(ECF)
+      NCF.lens.get(sampleTextOnlyUC) ==== NCF.empty
     }
     it("should set the text field value") {
       val uc = NCF.lens.set(sampleUC, newValue)

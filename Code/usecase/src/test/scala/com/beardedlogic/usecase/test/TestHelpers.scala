@@ -227,7 +227,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
 
   def testListOfZeroOrOne[T](expectation: Option[Any], actual: List[T])(testFn: T => Any) {
     if (expectation.isEmpty)
-      actual should be('empty)
+      actual shouldBe empty
     else {
       actual should have size (1)
       testFn(actual(0))

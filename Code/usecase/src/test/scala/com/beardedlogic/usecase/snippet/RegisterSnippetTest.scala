@@ -93,7 +93,7 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
     it("should render new-user form when token is valid") {
       inMockSession {
         new Reg2Tester(userWithCurrentToken.token).snippet.validateToken_!
-        S.errors should be('empty)
+        S.errors shouldBe empty
       }
     }
   }
