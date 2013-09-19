@@ -2,7 +2,7 @@ package com.beardedlogic.usecase
 package integration.support
 
 import org.openqa.selenium.{ By, Keys, WebElement }
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import scala.collection.JavaConverters._
 import SeleniumTestSupport._
 import SeleniumDSL._
@@ -34,7 +34,7 @@ object SeleniumDSL {
  *
  * @since 1/05/2013
  */
-trait BaseDSL extends ShouldMatchers {
+trait BaseDSL extends Matchers {
   var expectDelays = true
 
   def s: SeleniumDriver

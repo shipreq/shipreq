@@ -1,10 +1,10 @@
 package com.beardedlogic.usecase.lib
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import com.beardedlogic.usecase.util.BiMapBuilder
 
-class BiMapTest extends FunSuite with ShouldMatchers {
+class BiMapTest extends FunSuite with Matchers {
 
   test("Adding & retrieving") {
     val b = new BiMapBuilder[String,Int]

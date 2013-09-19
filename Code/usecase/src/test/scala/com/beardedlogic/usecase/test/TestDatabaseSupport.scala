@@ -6,7 +6,6 @@ import java.sql.Connection
 import net.liftweb.common.Logger
 import org.apache.commons.io.IOUtils
 import org.postgresql.util.PSQLException
-import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.{Exceptional, Outcome, Suite}
 import scala.slick.jdbc.{StaticQuery => Q}
 import scala.slick.session.Session
@@ -34,7 +33,7 @@ object TestDatabaseSupport {
 
 }
 
-trait TestDatabaseSupport extends TestHelpers with ShouldMatchers with Logger {
+trait TestDatabaseSupport extends TestHelpers with Logger {
   self: Suite =>
 
   override protected def withFixture(test: NoArgTest): Outcome = {

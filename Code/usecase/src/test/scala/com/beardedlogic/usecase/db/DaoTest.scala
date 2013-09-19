@@ -2,9 +2,9 @@ package com.beardedlogic.usecase.db
 
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import com.beardedlogic.usecase.test.TestDatabaseSupport
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
-class DaoTest extends FunSuite with ShouldMatchers with BeforeAndAfterAll {
+class DaoTest extends FunSuite with Matchers with BeforeAndAfterAll {
 
   def DAO = DefaultDaoProvider
 

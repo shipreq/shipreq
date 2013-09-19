@@ -2,7 +2,6 @@ package com.beardedlogic.usecase
 package lib
 
 import org.scalatest.WordSpec
-import org.scalatest.matchers.ShouldMatchers
 import Types._
 import tree._
 import TreeOps._
@@ -11,7 +10,7 @@ import NodeUtils._
 import TreeDSL._
 import StepLabels.LabelMakers
 
-class StepTreeTest extends WordSpec with ShouldMatchers with TestHelpers {
+class StepTreeTest extends WordSpec with TestHelpers {
 
   case class StepTreeWithText(override val nodes: List[StepNodeWithText]) extends TreeRoot[StepNodeWithText]
   implicit def autoTagLocalStepIds(s: String) = s.asLocalStepId

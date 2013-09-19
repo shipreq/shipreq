@@ -3,11 +3,11 @@ package com.beardedlogic.usecase.lib
 import org.scalacheck.Prop._
 import org.scalatest.FunSuite
 import org.scalatest.prop.Checkers
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import ExternalId.UseCase._
 import Types._
 
-class ExternalIdTest extends FunSuite with Checkers with ShouldMatchers {
+class ExternalIdTest extends FunSuite with Checkers with Matchers {
 
   implicit override val generatorDrivenConfig = PropertyCheckConfig(minSuccessful = 10000)
 

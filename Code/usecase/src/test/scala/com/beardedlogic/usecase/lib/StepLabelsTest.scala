@@ -1,9 +1,9 @@
 package com.beardedlogic.usecase.lib
 
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.WordSpec
 
-class StepLabelsTest extends WordSpec with ShouldMatchers {
+class StepLabelsTest extends WordSpec with Matchers {
   import StepLabels._
 
   "numeric" should {

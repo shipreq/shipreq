@@ -9,7 +9,8 @@ import org.mockito.Mockito.when
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
 import org.scalatest.{BeforeAndAfterEach, Suite, BeforeAndAfterAll}
-import org.scalatest.matchers.{ShouldMatchers, Matcher, MatchResult}
+import org.scalatest.Matchers
+import org.scalatest.matchers.{Matcher, MatchResult}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.prop.Tables.Table
 import net.liftweb.common.{Failure, Box, Empty}
@@ -40,7 +41,7 @@ import Changes.ExistingStepLabelsChanged
 /**
  * @since 30/04/2013
  */
-trait TestHelpers2 extends MockitoSugar with ShouldMatchers with DebugImplicits {
+trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
 
   val Cores = Math.max(1, Runtime.getRuntime().availableProcessors - 1)
 

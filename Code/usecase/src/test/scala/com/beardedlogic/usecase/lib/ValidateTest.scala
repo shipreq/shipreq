@@ -1,10 +1,10 @@
 package com.beardedlogic.usecase.lib
 
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.prop._
 
-class ValidateTest extends FunSuite with ShouldMatchers with PropertyChecks {
+class ValidateTest extends FunSuite with Matchers with PropertyChecks {
 
   test("Validators should prefix failure message with the field name") {
     Validate.password("").get should startWith("Password must")

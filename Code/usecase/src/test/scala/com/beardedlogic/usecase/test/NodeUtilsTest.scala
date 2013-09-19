@@ -2,9 +2,8 @@ package com.beardedlogic.usecase
 package test
 
 import org.scalatest.WordSpec
-import org.scalatest.matchers.ShouldMatchers
 
-class NodeUtilsTest extends WordSpec with ShouldMatchers with TestHelpers {
+class NodeUtilsTest extends WordSpec with TestHelpers {
   import NodeUtils._
   import TreeDSL._
 

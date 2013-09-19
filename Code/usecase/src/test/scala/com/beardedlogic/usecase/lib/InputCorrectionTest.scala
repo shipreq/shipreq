@@ -1,10 +1,10 @@
 package com.beardedlogic.usecase.lib
 
 import org.scalatest.FunSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import InputCorrection._
 
-class InputCorrectionTest extends FunSpec with ShouldMatchers with Misc {
+class InputCorrectionTest extends FunSpec with Matchers with Misc {
 
   describe("#email") {
     it("should remove whitespace") {

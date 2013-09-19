@@ -1,12 +1,12 @@
 package com.beardedlogic.usecase.lib
 
 import org.scalatest.FunSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import net.liftweb.util.Helpers._
 import Misc._
 import scalaz.Cord
 
-class MiscTest extends FunSpec with ShouldMatchers with Misc {
+class MiscTest extends FunSpec with Matchers with Misc {
 
   describe("#randomConfirmationToken") {
     it("should return different values each time") {

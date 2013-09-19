@@ -3,9 +3,9 @@ package com.beardedlogic.usecase.lib
 import java.lang.{Long => JLong}
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import org.scalatest.FunSuite
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 
-class LockingTest extends FunSuite with ShouldMatchers {
+class LockingTest extends FunSuite with Matchers {
 
   class TestLockManager extends LockManager[JLong] {
     def getLock_(id: Long): ReentrantReadWriteLock = super.getLock(id)

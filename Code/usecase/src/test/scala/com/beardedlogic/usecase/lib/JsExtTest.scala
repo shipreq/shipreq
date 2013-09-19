@@ -1,12 +1,11 @@
 package com.beardedlogic.usecase.lib
 
 import org.scalatest.FreeSpec
-import org.scalatest.matchers.ShouldMatchers
-import com.beardedlogic.usecase.util.JsExt
-import JsExt._
-import net.liftweb.http.js.{JsMember, JsCmd, JsCmds}
+import org.scalatest.Matchers
+import net.liftweb.http.js.{JsMember, JsCmd}
+import com.beardedlogic.usecase.util.JsExt._
 
-class JsExtTest extends FreeSpec with ShouldMatchers {
+class JsExtTest extends FreeSpec with Matchers {
 
   implicit class JsMemberExt(val x: JsMember) {
     def ==>(expectedJs: String) = x.toJsCmd should equal(expectedJs)
