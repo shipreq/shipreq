@@ -2,7 +2,6 @@ package com.beardedlogic.usecase
 package db
 
 import scala.slick.driver.PostgresDriver.simple._
-import java.sql.Connection
 
 /**
  * Provides database connectivity.
@@ -16,7 +15,7 @@ import java.sql.Connection
  * - `sync`: Syncs the database to a given object. If DB is up-to-date, nothing happens, else a new value is created.
  */
 trait DatabaseAccessor {
-  implicit def db: Session
+  implicit def session: Session
 }
 
 /**
@@ -30,21 +29,7 @@ class DAO(_session: Session)
           with UseCaseAccessor
           with UserAccessor {
 
-  override implicit val db = _session
+  override implicit final val session = _session
 
-  def conn = db.conn
-  def withTransaction[T](f: => T): T = db.withTransaction(f)
-  def close() = db.close
-  def rollback() = db.rollback
-}
-
-object DefaultDaoProvider extends DaoProvider {
-  override def get: DAO = new DAO(DB.Slick.createSession())
-  override def withSession[T](block: DAO => T): T = DB.Slick.withSession(initConnAndExec(_, block))
-  override def withTransaction[T](block: DAO => T): T = DB.Slick.withTransaction(initConnAndExec(_, block))
-
-  @inline private def initConnAndExec[T](s: Session, block: DAO => T): T = {
-    s.conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE)
-    block(new DAO(s))
-  }
+  def withTransaction[T](f: => T): T = session.withTransaction(f)
 }

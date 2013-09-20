@@ -2,7 +2,7 @@ package com.beardedlogic.usecase.integration
 
 import org.scalatest.FunSuite
 import scala.slick.jdbc.StaticQuery
-import com.beardedlogic.usecase.db.DB
+import com.beardedlogic.usecase.test.TestDB
 import com.beardedlogic.usecase.test.fixture.UserFixture
 import support.SeleniumTest
 
@@ -20,7 +20,7 @@ class LoginTest extends FunSuite with SeleniumTest with UserFixture {
     super.afterAll
   }
 
-  def loginCountFor(u: TestUser) = DB.withInstance(false)(db => LoginCount.first(u.id)(db))
+  def loginCountFor(u: TestUser) = TestDB.withInstance(false)(db => LoginCount.first(u.id)(db))
 
   test("Failed login") {
     goto.login

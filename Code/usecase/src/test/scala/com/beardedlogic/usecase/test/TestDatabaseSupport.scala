@@ -8,36 +8,40 @@ import org.apache.commons.io.IOUtils
 import org.postgresql.util.PSQLException
 import org.scalatest.{Exceptional, Outcome, Suite}
 import scala.slick.jdbc.{StaticQuery => Q}
-import scala.slick.session.Session
+import slick.session.{Database, Session}
 import scala.util.Random
 import Q.interpolation
 
 import db.{DAO, DaoProvider, DB}
 import lib.DI
 
-object TestDatabaseSupport {
+object TestDB {
 
   @volatile private var ready = false
 
-  def init() {
-    synchronized {
-      if (!ready) {
-        ready = true
-        DB.wipe_!
-        (new bootstrap.liftweb.Boot).boot
-      }
+  def init(): Unit = synchronized {
+    if (!ready) {
+      ready = true
+      DB.wipe_!
+      (new bootstrap.liftweb.Boot).boot
     }
   }
 
   val Random = new Random()
 
+  val Slick = Database.forDataSource(DB.DataSource)
+
+  def withInstance[T](useTransaction: Boolean)(block: Session => T): T = {
+    init()
+    if (useTransaction) Slick.withTransaction(block) else Slick.withSession(block)
+  }
 }
 
 trait TestDatabaseSupport extends TestHelpers with Logger {
   self: Suite =>
 
   override protected def withFixture(test: NoArgTest): Outcome = {
-    TestDatabaseSupport.init()
+    TestDB.init()
     debug(s"DB Test start: ${test.name}")
     try {
       val outcome = withTransactionInternal(wrapTestsInTransaction, wrapTestsInTransaction) {
@@ -55,7 +59,7 @@ trait TestDatabaseSupport extends TestHelpers with Logger {
   }
 
   private def withTransactionInternal[U](transaction: Boolean, rollback: Boolean)(fn: => U): U =
-    DB.withInstance(transaction) { s: Session =>
+    TestDB.withInstance(transaction) { s: Session =>
       val oldSessionVar = this.sessionVar
       val oldDbVar = this.dbVar
       try {
@@ -90,13 +94,13 @@ trait TestDatabaseSupport extends TestHelpers with Logger {
 
   def rollbackAfter[U](fn: => U): U = db.withTransaction {
     val result = fn
-    db.rollback()
+    db.session.rollback()
     result
   }
 
   def testDaoProvider = new TestDaoProvider(db)
 
-  def randomId = -TestDatabaseSupport.Random.nextLong().abs
+  def randomId = -TestDB.Random.nextLong().abs
 
   def countRowsIn(table: Table) = Q.queryNA[Int](s"select count(*) from ${table.name}").first
 

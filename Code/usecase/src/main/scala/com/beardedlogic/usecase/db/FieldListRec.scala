@@ -26,7 +26,7 @@ private[db] trait FieldListAccessor extends DatabaseAccessor {
    *
    * @param fields The field list to save.
    */
-  def syncFieldList(fields: List[FieldDefinition]): FieldListRec = db.withTransaction {
+  def syncFieldList(fields: List[FieldDefinition]): FieldListRec = session.withTransaction {
     val fkRecs = fields.map(f => findOrCreateFieldKey(f.fieldKeyType, f.fieldKeyData))
     FieldListRec(fkRecs)
   }

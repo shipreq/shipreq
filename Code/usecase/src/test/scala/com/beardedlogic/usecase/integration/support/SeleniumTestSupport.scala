@@ -5,7 +5,7 @@ import org.openqa.selenium.firefox.FirefoxDriver
 import org.openqa.selenium.{JavascriptExecutor, WebDriver}
 import org.openqa.selenium.interactions.HasInputDevices
 import org.scalatest.{BeforeAndAfterAll, Suite}
-import test.{TestDatabaseSupport, SharedGlobal, Jetty}
+import test.{TestDB, SharedGlobal, Jetty}
 import SeleniumTestSupport._
 
 /**
@@ -35,7 +35,7 @@ object SeleniumTestSupport {
 trait SeleniumTestSupport extends BeforeAndAfterAll { this: Suite =>
 
   override def beforeAll() {
-    TestDatabaseSupport.init()
+    TestDB.init()
     SeleniumJetty.acquire
     _selenium = SeleniumDriverRef.acquire
   }

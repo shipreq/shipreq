@@ -26,7 +26,7 @@ private[db] object FieldKeyAccessor {
 private[db] trait FieldKeyAccessor extends DatabaseAccessor {
   import FieldKeyAccessor._
 
-  def findOrCreateFieldKey(fkType: FieldKeyType, data: FieldKeyRecData): FieldKeyRec = db.withTransaction {
+  def findOrCreateFieldKey(fkType: FieldKeyType, data: FieldKeyRecData): FieldKeyRec = session.withTransaction {
     SelectIdToReuse.firstOption(fkType, data)
     .map(FieldKeyRec(_, fkType, data))
     .getOrElse(createFieldKey(fkType, data))

@@ -22,7 +22,7 @@ trait LiveTest extends TestHelpers with TestKit with LiveTestHelpers with Before
   }
 
   override def beforeAll() {
-    TestDatabaseSupport.init()
+    TestDB.init()
     Jetty.Default.acquire
   }
 

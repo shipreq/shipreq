@@ -10,7 +10,7 @@ import scala.slick.session.Session
 import db.DB
 import lib.security.PasswordAndSalt
 import db.UserDescriptor
-import test.{TestHelpers, TestDatabaseSupport}
+import test.{TestDB, TestHelpers}
 import lib.Types._
 
 trait UserFixture {
@@ -38,8 +38,7 @@ trait UserFixture {
   val pendingUsers = List(userWithCurrentToken, userWithExpiredToken)
 
   def initUserFixtureWithoutTransaction(): Unit = {
-    TestDatabaseSupport.init()
-    DB.withInstance(true)(initUserFixture(_))
+    TestDB.withInstance(true)(initUserFixture(_))
   }
 
   def initUserFixture(implicit db: Session): Unit = {
@@ -51,7 +50,7 @@ trait UserFixture {
     pendingUsers.foreach(u => insert(u)(db))
   }
 
-  def deleteUserFixtureWithoutTransaction(): Unit = DB.withInstance(false)(deleteUserFixture(_))
+  def deleteUserFixtureWithoutTransaction(): Unit = TestDB.withInstance(false)(deleteUserFixture(_))
 
   def deleteUserFixture(implicit db: Session): Unit = {
     users foreach deleteUser

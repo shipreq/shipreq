@@ -20,12 +20,12 @@ class Boot {
 
   LiftRules.configureLogging()
 
-  def boot {
-    configureLift
-    initDatabase
+  def boot(): Unit = {
+    configureLift()
+    initDatabase()
   }
 
-  def configureLift() {
+  def configureLift(): Unit = {
 
     Oshiro.init()
 
@@ -47,17 +47,12 @@ class Boot {
     ScamlJade.init(List("scaml", "html"))
   }
 
-  def initDatabase() {
-    def initDbModels(): Unit = DB.Slick.withTransaction { implicit s: Session =>
-      FieldKeyType.init
-    }
-
+  def initDatabase(): Unit = {
     DB.init()
-    initDbModels()
     Defaults.init()
   }
 
-  def initMailer() {
+  def initMailer(): Unit = {
     Mailer.authenticator = for {
       user <- Props.get("mail.user")
       pass <- Props.get("mail.password")

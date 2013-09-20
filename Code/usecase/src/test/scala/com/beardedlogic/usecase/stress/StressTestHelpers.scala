@@ -3,7 +3,7 @@ package com.beardedlogic.usecase.stress
 import java.util.concurrent.atomic.AtomicLong
 import scala.slick.jdbc.StaticQuery
 import scala.slick.session.Session
-import com.beardedlogic.usecase.db.DB
+import com.beardedlogic.usecase.test.TestDB
 
 object StressTestHelpers {
 
@@ -28,7 +28,7 @@ object StressTestHelpers {
     private val sessionLock = new Object
     private var sessions = List.empty[Session]
     override def initialValue() = {
-      val s = DB.Slick.createSession()
+      val s = TestDB.Slick.createSession()
       sessionLock.synchronized {sessions :+= s}
       s
     }
