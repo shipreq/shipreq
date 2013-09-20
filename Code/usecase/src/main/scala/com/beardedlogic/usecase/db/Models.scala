@@ -7,6 +7,9 @@ import lib.{ExternalId, UseCaseHeader}
 import scala.reflect.ClassTag
 import lib.field._
 
+// ===================================================================================================================
+// Fields
+
 case class FieldKeyRec(id: FieldKeyId, fkType: FieldKeyType, data: FieldKeyRecData) {
   def fieldDefn = fkType.fieldDefn(data)
   def field = fieldDefn.field(this)

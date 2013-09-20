@@ -10,7 +10,6 @@ import lib.field.FieldDefinition
 import lib.security.PasswordAndSalt
 import lib.{Defaults, InputCorrection, UseCaseHeader}
 import lib.Types._
-import DBHelpers._
 
 /**
  * Database interface.
@@ -30,8 +29,11 @@ import DBHelpers._
  * - `perform`: Perform specialised business-logic (as opposed to CRUD-like operations).
  */
 class Dao(_session: Session) {
+  import DbHelpers._
   import Sql._
+
   implicit final val session = _session
+
   final def withTransaction[T](f: => T): T = session.withTransaction(f)
 
   // ===================================================================================================================
@@ -205,6 +207,7 @@ class Dao(_session: Session) {
  * SQL for all functions exposed in the DAO.
  */
 private[db] final object Sql {
+  import DbHelpers._
 
   implicit val GR_FieldKey = GetResult {r => FieldKeyRec(r.<<, r.<<, r.<<)}
   implicit val GR_PasswordAndSalt = GetResult(r => PasswordAndSalt(r.nextString, r.nextString))
