@@ -53,9 +53,9 @@ class TextFieldValueSaver(val v: FreeText, val fkId: FieldKeyId, val stepsAndLab
   override def differsFromPrevSave_?(prev: SavedData)(implicit savedSteps: SavedSteps): Boolean =
     textWithNormalisedRefs != prev.text
 
-  override def presave(dao: DAO, ucId: UseCaseIdentId, prevSavedSteps: Option[SavedSteps]) = Map.empty
+  override def presave(dao: Dao, ucId: UseCaseIdentId, prevSavedSteps: Option[SavedSteps]) = Map.empty
 
-  override def save(dao: DAO, ucId: UseCaseIdentId, ucRevId: UseCaseRevId, prevSave: Option[SavedData])(implicit savedSteps: SavedSteps): SavedData = {
+  override def save(dao: Dao, ucId: UseCaseIdentId, ucRevId: UseCaseRevId, prevSave: Option[SavedData])(implicit savedSteps: SavedSteps): SavedData = {
     val curText = textWithNormalisedRefs
 
     val textRev = prevSave match {

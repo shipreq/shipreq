@@ -97,12 +97,12 @@ object DB extends Logger {
   private val Slick = Database.forDataSource(DataSource)
 
   object DaoProvider extends DaoProvider {
-    override def get: DAO = new DAO(Slick.createSession())
-    override def withSession[T](block: DAO => T): T = Slick.withSession(initConnAndExec(_, block))
-    override def withTransaction[T](block: DAO => T): T = Slick.withTransaction(initConnAndExec(_, block))
-    @inline private def initConnAndExec[T](s: Session, block: DAO => T): T = {
+    override def get: Dao = new Dao(Slick.createSession())
+    override def withSession[T](block: Dao => T): T = Slick.withSession(initConnAndExec(_, block))
+    override def withTransaction[T](block: Dao => T): T = Slick.withTransaction(initConnAndExec(_, block))
+    @inline private def initConnAndExec[T](s: Session, block: Dao => T): T = {
       s.conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE)
-      block(new DAO(s))
+      block(new Dao(s))
     }
   }
 

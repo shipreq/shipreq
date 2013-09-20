@@ -12,7 +12,7 @@ import slick.session.{Database, Session}
 import scala.util.Random
 import Q.interpolation
 
-import db.{DAO, DaoProvider, DB}
+import db.{Dao, DaoProvider, DB}
 import lib.DI
 
 object TestDB {
@@ -64,7 +64,7 @@ trait TestDatabaseSupport extends TestHelpers with Logger {
       val oldDaoVar = this.daoVar
       try {
         this.sessionVar = s
-        this.daoVar = new DAO(s)
+        this.daoVar = new Dao(s)
         s.conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE)
         DI.DaoProvider.doWith(testDaoProvider) {
           fn
@@ -87,7 +87,7 @@ trait TestDatabaseSupport extends TestHelpers with Logger {
     sessionVar
   }
 
-  var daoVar: DAO = null
+  var daoVar: Dao = null
   def dao = daoVar
 
   def withNewTransaction[U](fn: => U): U = withTransactionInternal(true, true)(fn)
@@ -182,8 +182,8 @@ trait TestDatabaseSupport extends TestHelpers with Logger {
   }
 }
 
-class TestDaoProvider(dao: DAO) extends DaoProvider {
+class TestDaoProvider(dao: Dao) extends DaoProvider {
   override def get = dao
-  override def withSession[T](block: DAO => T): T = block(dao)
-  override def withTransaction[T](block: DAO => T): T = block(dao)
+  override def withSession[T](block: Dao => T): T = block(dao)
+  override def withTransaction[T](block: Dao => T): T = block(dao)
 }

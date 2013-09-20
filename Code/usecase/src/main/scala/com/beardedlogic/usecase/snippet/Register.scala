@@ -13,7 +13,7 @@ import AppSiteMap.Implicits._
 import lib._
 import Types._
 import mail.RegistrationEmails
-import db.{DAO, UserRegistrationInfo, UserRegistrationResult}
+import db.{Dao, UserRegistrationInfo, UserRegistrationResult}
 import security.PasswordAndSalt
 import util.JsExt._
 import util.HtmlTransformExt.ajaxSubmitOnClick
@@ -50,7 +50,7 @@ class Register1 extends SingleOpStatefulSnippet {
     }
   }
 
-  private def onNewUser(email: String, dao: DAO): Mail = {
+  private def onNewUser(email: String, dao: Dao): Mail = {
     val token = randomConfirmationToken
     dao.createUser(email, token)
     RegistrationEmails.LinkToCompleteRegistration(token)
@@ -60,7 +60,7 @@ class Register1 extends SingleOpStatefulSnippet {
     RegistrationEmails.LinkToCompleteRegistration(token)
   }
 
-  private def onTokenExpired(id: UserId, dao: DAO): Mail = {
+  private def onTokenExpired(id: UserId, dao: Dao): Mail = {
     val token = randomConfirmationToken
     dao.updateUserConfirmationToken(id, token)
     RegistrationEmails.LinkToCompleteRegistration(token)

@@ -46,8 +46,8 @@ class LockManager[LockKey <: JLong] extends Logger {
   final def withReadLockToken[U](id: LockKey)(block:ReadLockToken => U): U = withLock(getLock(id).readLock)(block(ReadLockToken))
   final def withWriteLockToken[U](id: LockKey)(block:WriteLockToken => U): U = withLock(getLock(id).writeLock)(block(WriteLockToken))
 
-//  @inline final def withReadLockAndTransaction[U](id: LockKey, dao: DAO)(block: ReadLockToken => U): U = withReadLock(id)(dao.withTransaction(block))
-//  @inline final def withWriteLockAndTransaction[U](id: LockKey, dao: DAO)(block: WriteLockToken => U): U = withWriteLock(id)(dao.withTransaction(block))
+//  @inline final def withReadLockAndTransaction[U](id: LockKey, dao: Dao)(block: ReadLockToken => U): U = withReadLock(id)(dao.withTransaction(block))
+//  @inline final def withWriteLockAndTransaction[U](id: LockKey, dao: Dao)(block: WriteLockToken => U): U = withWriteLock(id)(dao.withTransaction(block))
 
   def forRead[M[_]](id: LockKey) = new ResourceLeaseMonad1[ReadLockToken, M] {protected override def exec[T](f: ReadLockToken => T): T = withReadLockToken(id)(f(_))}
   def forReadLeft[R, M[_, R]](id: LockKey) = new ResourceLeaseMonadL[ReadLockToken, R, M] {protected override def exec[T](f: ReadLockToken => T): T = withReadLockToken(id)(f(_))}

@@ -21,7 +21,7 @@ trait DatabaseAccessor {
 /**
  * Single, monolithic interface to the database.
  */
-class DAO(_session: Session)
+class Dao(_session: Session)
   extends FieldKeyAccessor
           with FieldListAccessor
           with TextAccessor

@@ -107,7 +107,7 @@ class StepFieldValueSaver(
     foundChange
   }
 
-  override def presave(dao: DAO, ucId: UseCaseIdentId, prevSavedSteps: Option[SavedSteps]): Map[LocalStepId, TextIdentId] = {
+  override def presave(dao: Dao, ucId: UseCaseIdentId, prevSavedSteps: Option[SavedSteps]): Map[LocalStepId, TextIdentId] = {
 
     var stepIds = Map.empty[LocalStepId, TextIdentId]
 
@@ -137,7 +137,7 @@ class StepFieldValueSaver(
     stepIds
   }
 
-  override def save(dao: DAO, ucId: UseCaseIdentId, ucRevId: UseCaseRevId, prevSave: Option[SavedData])
+  override def save(dao: Dao, ucId: UseCaseIdentId, ucRevId: UseCaseRevId, prevSave: Option[SavedData])
     (implicit savedSteps: SavedSteps): SavedData = {
 
     val labelLookup = stepsAndLabels.get.ab

@@ -35,7 +35,7 @@ case class UseCaseSaveCheckpoint(
 
 object UseCasePersistence {
 
-  def load(ucRev: UseCaseRev, dao: DAO, lock: Locks.ReadLockToken): UseCaseSaveCheckpoint = {
+  def load(ucRev: UseCaseRev, dao: Dao, lock: Locks.ReadLockToken): UseCaseSaveCheckpoint = {
 
     @inline def uch = ucRev.header
     val fieldList = Defaults.FieldList.get.fields // TODO hardcoded fieldlist
@@ -78,7 +78,7 @@ object UseCasePersistence {
    *
    * @return A checkpoint is there was anything to save, else `None` if UC was already up-to-date.
    */
-  def save(uc: UseCase, prevSave: Option[UseCaseSaveCheckpoint], dao: DAO): Option[UseCaseSaveCheckpoint] = {
+  def save(uc: UseCase, prevSave: Option[UseCaseSaveCheckpoint], dao: Dao): Option[UseCaseSaveCheckpoint] = {
     type ValueSavers = Map[Field, FieldValueSaver[_]]
 
     val allSavers: ValueSavers =

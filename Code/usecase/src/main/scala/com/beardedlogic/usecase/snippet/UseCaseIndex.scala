@@ -9,7 +9,7 @@ import net.liftweb.util.Helpers._
 import net.liftweb.util.{CssSel, ClearClearable}
 
 import lib._
-import db.{DAO, UseCaseSummary, UseCaseHeaderUpdateResult}
+import db.{Dao, UseCaseSummary, UseCaseHeaderUpdateResult}
 import util.ErrorMessages
 import util.HtmlTransformExt._
 import util.JsExt.JsJsonTrigger

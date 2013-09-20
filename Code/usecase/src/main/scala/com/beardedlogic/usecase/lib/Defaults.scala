@@ -28,7 +28,7 @@ object Defaults extends Logger {
 
   val FieldList: LazyVal[FieldListRec] = LazyDbVal(_.syncFieldList(FieldListDefns))
 
-  private def LazyDbVal[V](fn: DAO => V) = LazyVal <~ DI.DaoProvider.withTransaction(fn)
+  private def LazyDbVal[V](fn: Dao => V) = LazyVal <~ DI.DaoProvider.withTransaction(fn)
 
   def init(): Unit = {
     FieldList.get

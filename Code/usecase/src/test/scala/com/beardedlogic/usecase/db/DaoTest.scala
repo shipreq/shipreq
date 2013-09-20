@@ -6,20 +6,20 @@ import org.scalatest.Matchers
 
 class DaoTest extends FunSuite with Matchers with BeforeAndAfterAll {
 
-  def DAO = DB.DaoProvider
+  def Dao = DB.DaoProvider
 
   override def beforeAll() {
     TestDB.init()
   }
 
   test("New session should not be in a transaction") {
-    DAO.withSession(_.session.conn.getAutoCommit shouldBe true)
+    Dao.withSession(_.session.conn.getAutoCommit shouldBe true)
   }
   test("New transaction should be in a transaction") {
-    DAO.withTransaction(_.session.conn.getAutoCommit shouldBe false)
+    Dao.withTransaction(_.session.conn.getAutoCommit shouldBe false)
   }
   test("Session -> transaction") {
-    DAO.withSession(d => {
+    Dao.withSession(d => {
       d.session.conn.getAutoCommit shouldBe true
       d.withTransaction(d.session.conn.getAutoCommit shouldBe false)
       d.session.conn.getAutoCommit shouldBe true

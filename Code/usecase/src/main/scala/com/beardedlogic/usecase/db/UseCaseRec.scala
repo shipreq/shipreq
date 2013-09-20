@@ -64,7 +64,7 @@ private[db] object UseCaseAccessor {
 }
 
 private[db] trait UseCaseAccessor extends DatabaseAccessor {
-  self: DAO =>
+  self: Dao =>
 
   import UseCaseAccessor._
 
