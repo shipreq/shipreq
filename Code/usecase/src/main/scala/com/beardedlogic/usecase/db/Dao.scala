@@ -4,7 +4,7 @@ package db
 import org.joda.time.DateTime
 import org.postgresql.util.PSQLException
 import scala.slick.driver.PostgresDriver.simple._
-import scala.slick.jdbc.{StaticQuery => Q, SetParameter, GetResult}
+import scala.slick.jdbc.{StaticQuery, SetParameter, GetResult}
 import scala.slick.session.PositionedParameters
 import lib.field.FieldDefinition
 import lib.security.PasswordAndSalt
@@ -208,6 +208,7 @@ class Dao(_session: Session) {
  */
 private[db] final object Sql {
   import DbHelpers._
+  import StaticQuery.{query, queryNA, update, updateNA}
 
   implicit val GR_FieldKey = GetResult {r => FieldKeyRec(r.<<, r.<<, r.<<)}
   implicit val GR_PasswordAndSalt = GetResult(r => PasswordAndSalt(r.nextString, r.nextString))
@@ -232,28 +233,28 @@ private[db] final object Sql {
   private val UserDescCols = "id,username,email"
   private val PwdAndSaltCols = "password, password_salt"
 
-  val GetUserDescCredByUsername = Q.query[String, (UserDescriptor, PasswordAndSalt)](
+  val GetUserDescCredByUsername = query[String, (UserDescriptor, PasswordAndSalt)](
     s"SELECT $UserDescCols,$PwdAndSaltCols FROM usr WHERE username=?")
 
-  val GetUserDescCredByEmail = Q.query[String, (UserDescriptor, PasswordAndSalt)](
+  val GetUserDescCredByEmail = query[String, (UserDescriptor, PasswordAndSalt)](
     s"SELECT $UserDescCols,$PwdAndSaltCols FROM usr WHERE email=? AND password IS NOT NULL")
 
-  val GetUserRegInfo = Q.query[String, UserRegistrationInfo](
+  val GetUserRegInfo = query[String, UserRegistrationInfo](
     "SELECT id, confirmation_token, confirmation_sent_at, confirmed_at FROM usr WHERE email=?")
 
-  val GetConfirmationTokenIssuedDate = Q.query[String, DateTime](
+  val GetConfirmationTokenIssuedDate = query[String, DateTime](
     "SELECT confirmation_sent_at FROM usr WHERE confirmation_token=?")
 
-  val UpdateConfirmationToken = Q.update[(String, UserId)](
+  val UpdateConfirmationToken = update[(String, UserId)](
     "UPDATE usr SET confirmation_token = ?, confirmation_sent_at = NOW() WHERE id=?")
 
-  val LogUserLogin = Q.update[(String, UserId)](
+  val LogUserLogin = update[(String, UserId)](
     "UPDATE usr SET login_count = login_count + 1, last_login_at = NOW(), last_login_ip = ? WHERE id=?")
 
-  val InsertUserPlaceholder = Q.update[(String, String)](
+  val InsertUserPlaceholder = update[(String, String)](
     "INSERT INTO usr(email, confirmation_token, confirmation_sent_at) VALUES(?,?,NOW())")
 
-  val RegisterUser = Q.query[(String, PasswordAndSalt, String, String), UserId]( """
+  val RegisterUser = query[(String, PasswordAndSalt, String, String), UserId]( """
     UPDATE usr SET username = ?
       ,password = ?, password_salt = ?, password_changed_at = NOW()
       ,confirmation_token = NULL, confirmed_at = NOW()
@@ -269,56 +270,56 @@ private[db] final object Sql {
   private val NextUseCaseNumber =
     "select coalesce(max(number),0)+1 from usecase_rev where id in (select latest_rev_id from usecase)"
 
-  val InsertUseCaseIdent = Q.queryNA[UseCaseIdentId]("INSERT INTO usecase DEFAULT VALUES RETURNING id")
+  val InsertUseCaseIdent = queryNA[UseCaseIdentId]("INSERT INTO usecase DEFAULT VALUES RETURNING id")
 
-  val InsertUseCaseRev = Q.query[(UseCaseIdentId, Short, Short, String), UseCaseRevId](
+  val InsertUseCaseRev = query[(UseCaseIdentId, Short, Short, String), UseCaseRevId](
     "INSERT INTO usecase_rev(ident_id, rev, number, title) VALUES(?,?,?,?) RETURNING id")
 
-  val InsertUseCaseRev1WithAutoNumber = Q.query[(UseCaseIdentId, String), (UseCaseRevId, Short)](
+  val InsertUseCaseRev1WithAutoNumber = query[(UseCaseIdentId, String), (UseCaseRevId, Short)](
     s"INSERT INTO usecase_rev(ident_id, rev, number, title) VALUES(?,1,($NextUseCaseNumber),?) RETURNING id, number")
 
-  val SelectLatestUseCaseRevId = Q.query[UseCaseIdentId, UseCaseRevId](s"SELECT latest_rev_id FROM usecase WHERE id=?")
+  val SelectLatestUseCaseRevId = query[UseCaseIdentId, UseCaseRevId](s"SELECT latest_rev_id FROM usecase WHERE id=?")
 
-  val SelectUseCaseRev = Q.query[UseCaseRevId, UseCaseRev](s"SELECT ${ucrev_*} FROM usecase_rev r WHERE r.id=?")
+  val SelectUseCaseRev = query[UseCaseRevId, UseCaseRev](s"SELECT ${ucrev_*} FROM usecase_rev r WHERE r.id=?")
 
-  val SelectLatestUseCaseRevByIdent = Q.query[UseCaseIdentId, UseCaseRev](
+  val SelectLatestUseCaseRevByIdent = query[UseCaseIdentId, UseCaseRev](
     s"SELECT ${ucrev_*} FROM usecase u, usecase_rev r WHERE r.id=latest_rev_id AND u.id=?")
 
-  val SelectUseCaseSummaries = Q.queryNA[UseCaseSummary]( s"""
+  val SelectUseCaseSummaries = queryNA[UseCaseSummary]( s"""
     SELECT ident_id, number, title, to_iso8601_str(created_at)
     FROM usecase u, usecase_rev r
     WHERE r.id = latest_rev_id
     ORDER BY number """.sql)
 
-  val UpdateUseCaseTitleDirect = Q.update[(String, UseCaseRevId)]("UPDATE usecase_rev SET title=? WHERE id=?")
+  val UpdateUseCaseTitleDirect = update[(String, UseCaseRevId)]("UPDATE usecase_rev SET title=? WHERE id=?")
 
   // ###################################################################################################################
   // Text
 
   private val textrev_* = "tr.ident_id, tr.rev, tr.id, tr.text"
 
-  val InsertTextIdent = Q.query[(UseCaseIdentId, FieldKeyId), TextIdentId](
+  val InsertTextIdent = query[(UseCaseIdentId, FieldKeyId), TextIdentId](
     "INSERT INTO text(uc_id, fk_id) VALUES(?,?) RETURNING id")
 
-  val InsertTextRev = Q.query[(TextIdentId, Short, TextWithNormalisedRefs), TextRevId](
+  val InsertTextRev = query[(TextIdentId, Short, TextWithNormalisedRefs), TextRevId](
     "INSERT INTO text_rev(ident_id, rev, text) VALUES(?,?,?) RETURNING id")
 
   // ###################################################################################################################
   // uc_field
 
-  val LinkUcToText = Q.update[(UseCaseRevId, TextRevId)]("INSERT INTO uc_field(uc_rev_id, text_rev_id) VALUES(?,?)")
+  val LinkUcToText = update[(UseCaseRevId, TextRevId)]("INSERT INTO uc_field(uc_rev_id, text_rev_id) VALUES(?,?)")
 
-  val LinkUcToStep = Q.update[(UseCaseRevId, LabelStr, Option[TextRevId], Short, TextRevId)](
+  val LinkUcToStep = update[(UseCaseRevId, LabelStr, Option[TextRevId], Short, TextRevId)](
     "INSERT INTO uc_field(uc_rev_id, label, parent_rev_id, index, text_rev_id) VALUES(?,?,?,?,?)")
 
-  val CopyUcFieldsBetweenRevs = Q.update[(UseCaseRevId, UseCaseRevId)]("""
+  val CopyUcFieldsBetweenRevs = update[(UseCaseRevId, UseCaseRevId)]("""
     INSERT INTO uc_field
     SELECT ?, label, parent_rev_id, index, text_rev_id
       FROM uc_field where uc_rev_id = ?
     """.sql)
 
   // Step loading depends on ORDER BY index
-  val SelectUcFields = Q.query[UseCaseRevId, UcFieldTextWithFK](s"""
+  val SelectUcFields = query[UseCaseRevId, UcFieldTextWithFK](s"""
     SELECT fk_id, label, parent_rev_id, index, ${textrev_*}
       FROM uc_field f, text_rev tr, text t
      WHERE text_rev_id = tr.id and tr.ident_id = t.id
@@ -328,10 +329,10 @@ private[db] final object Sql {
   // ###################################################################################################################
   // Fields
 
-  val SelectReusableFieldKeyId = Q.query[(FieldKeyType, FieldKeyRecData), FieldKeyId](
+  val SelectReusableFieldKeyId = query[(FieldKeyType, FieldKeyRecData), FieldKeyId](
     "SELECT id FROM field_key WHERE type_id=? AND data IS NOT DISTINCT FROM ?")
 
-  val InsertFieldKey = Q.query[(FieldKeyType, FieldKeyRecData), FieldKeyId](
+  val InsertFieldKey = query[(FieldKeyType, FieldKeyRecData), FieldKeyId](
     "INSERT INTO field_key(type_id, data) VALUES(?,?) RETURNING id")
 }
 
