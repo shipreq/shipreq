@@ -48,11 +48,11 @@ class UseCaseIndexSnippetTest extends FunSpec with TestDatabaseSupport with Prop
     }
 
     def assertSummaryInAll(x: UseCaseSummary): Unit =
-      db.findAllUseCaseSummaries().map(ignoreTimestamp) should contain(ignoreTimestamp(x))
+      dao.findAllUseCaseSummaries().map(ignoreTimestamp) should contain(ignoreTimestamp(x))
 
     def ignoreTimestamp(x: UseCaseSummary) = x.copy(updatedAt = "IGNORED")
 
-    def newUc = db.createInitialUseCase(Defaults.Title)
+    def newUc = dao.createInitialUseCase(Defaults.Title)
 
     def params(id: UseCaseIdentId, newTitle: String) =
       Map("eid" -> ExternalId.UseCase(id), "title" -> newTitle)
@@ -85,7 +85,7 @@ class UseCaseIndexSnippetTest extends FunSpec with TestDatabaseSupport with Prop
       r shouldBe empty
       assertJsErrorNotice(js, Some(errorMsgFrag))
       assertUpdateNotTriggered(js)
-      db.findUseCase(uc.id) should be(Some(uc))
+      dao.findUseCase(uc.id) should be(Some(uc))
     }
 
     it("should update new new UC") {
@@ -107,7 +107,7 @@ class UseCaseIndexSnippetTest extends FunSpec with TestDatabaseSupport with Prop
     it("should appear to update when no change") {
       val uc1 = newUc
       val uc2s = testSuccess2(uc1, "hello", "hello")
-      val uc2 = db.findLatestUseCase(uc2s.parseId.get).get
+      val uc2 = dao.findLatestUseCase(uc2s.parseId.get).get
       assertTableDiffs(){ testSuccess2(uc2, uc2.header.title, uc2.header.title) }
       assertSummaryInAll(uc2s)
     }

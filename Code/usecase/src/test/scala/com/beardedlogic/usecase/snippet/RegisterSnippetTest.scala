@@ -108,7 +108,7 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
     }
 
     def assertUnconfirmed() {
-      val reg = db.findUserRegistrationInfo(userWithCurrentToken.email).get
+      val reg = dao.findUserRegistrationInfo(userWithCurrentToken.email).get
       reg.confirmationSentAt should be(Some(userWithCurrentToken.tokenCreatedAt))
       reg.confirmedAt should be(None)
       reg.confirmationToken should be(Some(userWithCurrentToken.token))
@@ -145,13 +145,13 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
     describe("when form details valid") {
       it("should create user") {
         tester.onSubmit_
-        val reg = db.findUserRegistrationInfo(userWithCurrentToken.email).get
+        val reg = dao.findUserRegistrationInfo(userWithCurrentToken.email).get
         reg.confirmationSentAt should be(Some(userWithCurrentToken.tokenCreatedAt))
         reg.confirmedAt should not be (None)
         reg.confirmedAt.get.after(1.minute.ago) should be(true)
         reg.confirmationToken should be(None)
 
-        val (user, pwd) = db.findUserDescAndCredentials(userWithCurrentToken.email).get
+        val (user, pwd) = dao.findUserDescAndCredentials(userWithCurrentToken.email).get
         user.username should be("crazy50")
         pwd.hashedPassword should not be ("abcd5678")
       }

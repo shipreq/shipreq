@@ -76,10 +76,10 @@ class UseCaseLaws extends FunSuite with TestDatabaseSupport with Checkers {
   // -------------------------------------------------------------------------------------------------------------------
 
   def save(uc: UseCase, prev: Option[UseCaseSaveCheckpoint]): Option[UseCaseSaveCheckpoint] =
-    UseCasePersistence.save(uc, prev, db)
+    UseCasePersistence.save(uc, prev, dao)
 
   def load(ucRev: UseCaseRev) =
-    Locks.UseCase.withReadLockToken(ucRev)(UseCasePersistence.load(ucRev, db, _))
+    Locks.UseCase.withReadLockToken(ucRev)(UseCasePersistence.load(ucRev, dao, _))
 
   def saveAndLoad(uc: UseCase, prev: Option[UseCaseSaveCheckpoint] = None) =
     load(save(uc, prev).getOrElse(prev.get).rec)

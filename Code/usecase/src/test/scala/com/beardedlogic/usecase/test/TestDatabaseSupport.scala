@@ -61,10 +61,10 @@ trait TestDatabaseSupport extends TestHelpers with Logger {
   private def withTransactionInternal[U](transaction: Boolean, rollback: Boolean)(fn: => U): U =
     TestDB.withInstance(transaction) { s: Session =>
       val oldSessionVar = this.sessionVar
-      val oldDbVar = this.dbVar
+      val oldDaoVar = this.daoVar
       try {
         this.sessionVar = s
-        this.dbVar = new DAO(s)
+        this.daoVar = new DAO(s)
         s.conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE)
         DI.DaoProvider.doWith(testDaoProvider) {
           fn
@@ -73,7 +73,7 @@ trait TestDatabaseSupport extends TestHelpers with Logger {
       finally {
         if (rollback) s.rollback()
         this.sessionVar = oldSessionVar
-        this.dbVar = oldDbVar
+        this.daoVar = oldDaoVar
       }
     }
 
@@ -87,18 +87,18 @@ trait TestDatabaseSupport extends TestHelpers with Logger {
     sessionVar
   }
 
-  var dbVar: DAO = null
-  def db = dbVar
+  var daoVar: DAO = null
+  def dao = daoVar
 
   def withNewTransaction[U](fn: => U): U = withTransactionInternal(true, true)(fn)
 
-  def rollbackAfter[U](fn: => U): U = db.withTransaction {
+  def rollbackAfter[U](fn: => U): U = dao.withTransaction {
     val result = fn
-    db.session.rollback()
+    dao.session.rollback()
     result
   }
 
-  def testDaoProvider = new TestDaoProvider(db)
+  def testDaoProvider = new TestDaoProvider(dao)
 
   def randomId = -TestDB.Random.nextLong().abs
 
