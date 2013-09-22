@@ -15,7 +15,7 @@ class StepTreeZipperTest extends FunSpec with TestHelpers with GeneratorDrivenPr
   implicit lazy val arbNcSfv: Arbitrary[NcSfv] = Arbitrary(genNcSfv(NCF))
 
   describe("DeepZipper") {
-    def deepB(v: NcSfv) = StepTreeZipper.DeepBuilder(v.sfv.textmap, v.stepsAndLabels.get.ab)
+    def deepB(v: NcSfv) = StepTreeZipper.DeepBuilder(v.sfv.textmap, v.stepsAndLabels.value.ab)
     def deep(v: NcSfv) = deepB(v).build(v.sfv.tree.head, v.sfv.tree.tail)
 
     it("length") {
@@ -43,14 +43,14 @@ class StepTreeZipperTest extends FunSpec with TestHelpers with GeneratorDrivenPr
   }
 
   describe("FlatZipper") {
-    def flatB(v: NcSfv) = StepTreeZipper.FlatBuilder(v.sfv.textmap, v.stepsAndLabels.get.ab)
+    def flatB(v: NcSfv) = StepTreeZipper.FlatBuilder(v.sfv.textmap, v.stepsAndLabels.value.ab)
     def flat(v: NcSfv) = flatB(v).build(v.sfv.tree.head, v.sfv.tree.tail)
 
     it("length") {
       forAll((v: NcSfv) => flat(v).length ==== v.sfv.tree.sizeRecursive)
     }
     it("covers all labels") {
-      forAll((v: NcSfv) => flat(v).toStream.map(_.label).toList.sorted ==== v.stepsAndLabels.get.bs.toList.sorted)
+      forAll((v: NcSfv) => flat(v).toStream.map(_.label).toList.sorted ==== v.stepsAndLabels.value.bs.toList.sorted)
     }
   }
 }

@@ -81,7 +81,7 @@ object FlowGraph {
     implicit def focusL2implicitFL(s: List[NonEmptyList[AnyFocus]]): List[ImplicitFlow] = s map (_ map focus2node)
 
     def model(uc: UseCase): FlowGraphModel = {
-      val labels = uc.stepsAndLabels.get.ab
+      val labels = uc.stepsAndLabels.value.ab
       def zipBuilder(sfv: StepFieldValue) = DeepBuilder(sfv.textmap, labels)
 
       uc.fieldValues.toList foldMap {

@@ -8,7 +8,7 @@ import Inspection._
 
 class InspectionTest extends FunSuite with TestData {
 
-  val imports = "import com.beardedlogic.usecase, usecase.db._, usecase.lib, lib._, field._, tree._, text._, usecase.util._, Types._;"
+  val imports = "import scalaz.{Name,Need,Value}, com.beardedlogic.usecase, usecase.db._, usecase.lib, lib._, field._, tree._, text._, usecase.util._, Types._;"
 
   def eval[T](code: String): T = new Eval(None).apply(imports + code)
 

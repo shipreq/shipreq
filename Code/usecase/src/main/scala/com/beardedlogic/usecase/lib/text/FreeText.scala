@@ -25,7 +25,7 @@ object FreeText extends Parser[FreeText] {
    * 3) Appends a ? to invalid references.
    */
   def parseCorrected(text: String)(implicit stepsAndLabels: StepAndLabelBiMap) = {
-    lazy val labelsToIds = stepsAndLabels.get.ba
+    lazy val labelsToIds = stepsAndLabels.value.ba
 
     val newText = new StringBuilder
     var refs = Map.empty[LocalStepId, LabelStr]

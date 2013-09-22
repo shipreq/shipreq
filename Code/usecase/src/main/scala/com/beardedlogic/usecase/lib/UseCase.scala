@@ -2,12 +2,12 @@ package com.beardedlogic.usecase
 package lib
 
 import scala.reflect.ClassTag
-import scalaz.NonEmptyList
+import scalaz.{Need, NonEmptyList}
 import Types._
 import change._
 import field._
 import text.FreeText
-import util.{AppliedLens, LazyVal, BiMap}
+import util.{AppliedLens, BiMap}
 import Changes._
 import tree.TreeOps._
 
@@ -57,7 +57,7 @@ object UseCaseFns {
     })
 
   def generateStepAndLabelBiMap(maps: Iterable[Map[LocalStepId, LabelStr]]): StepAndLabelBiMap =
-    LazyVal(() => BiMap(mergeStepAndLabelMaps(maps)))
+    Need(BiMap(mergeStepAndLabelMaps(maps)))
 
   def generateStepAndLabelBiMap(fieldValues: FieldValues, uch: UseCaseHeader): StepAndLabelBiMap =
     generateStepAndLabelBiMap(extractStepAndLabelMaps(fieldValues, uch))
@@ -124,11 +124,11 @@ case class UseCase(
     }
     val line = "-" * 98
     val fieldsPP = fields.map(f => s"  F: $f\n  V: ${printFieldValue(fieldValues(f))}\n").mkString("\n")
-    val snl = stepsAndLabels.get.ab.map {case (id, lbl) => "  %-16s <-- %s".format(lbl, id)}.toList.sorted.mkString("\n")
+    val snl = stepsAndLabels.value.ab.map {case (id, lbl) => "  %-16s <-- %s".format(lbl, id)}.toList.sorted.mkString("\n")
     (s">$line>\n"
       + s"Header: $header\n"
       + s"Fields:\n$fieldsPP\n"
-      + s"StepsAndLabels (${stepsAndLabels.get.size}):\n$snl\n"
+      + s"StepsAndLabels (${stepsAndLabels.value.size}):\n$snl\n"
       + s"<$line<")
     .replace(FreeText.empty.toString, "FreeText.empty")
   }

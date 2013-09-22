@@ -163,7 +163,7 @@ object DataGenerators extends Logger {
 
   object RefDependentGen {
     def apply(tree: StepPlaceholderTree) = new RefDependentGen(tree.labels)
-    def apply(uc: UseCase) = new RefDependentGen(uc.stepsAndLabels.get.ba.keys.toSeq)
+    def apply(uc: UseCase) = new RefDependentGen(uc.stepsAndLabels.value.ba.keys.toSeq)
   }
 
   class RefDependentGen(labels: Seq[String]) {
@@ -261,7 +261,7 @@ object DataGenerators extends Logger {
 
       // Steps and Labels
       implicit val stepsAndLabels = generateStepAndLabelBiMap(h, (NCF -> nc.stepTree), (ECF -> ec.stepTree))
-      assume(stepsAndLabels.get.bs == steps.labels.toSet)
+      assume(stepsAndLabels.value.bs == steps.labels.toSet)
 
       // Text fields
       val textFieldValues: FieldValues = fieldList.textFields.zip(textFieldTexts).map {

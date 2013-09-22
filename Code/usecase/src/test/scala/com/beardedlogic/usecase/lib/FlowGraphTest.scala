@@ -189,7 +189,7 @@ class FlowGraphTest extends FunSpec with TestData with PropertyChecks {
   // println(render(model(x)))
 
   // val sfv = NcSfv
-  // val b = DeepBuilder(sfv.textmap, UC.stepsAndLabels.get.ab)
+  // val b = DeepBuilder(sfv.textmap, UC.stepsAndLabels.value.ab)
   // val dz = b.build(sfv.tree.head, Nil)
   // implicit val fzs = flattenTopNodes(dz)
   // }

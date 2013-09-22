@@ -4,13 +4,14 @@ package field
 
 import org.scalatest.FunSpec
 import org.mockito.Mockito._
+import scalaz.Need
 import db._
 import Types._
 import UseCaseFns._
 import text.StepText
 import test.NodeUtils._
-import com.beardedlogic.usecase.test.{TestData, TestHelpers}
-import com.beardedlogic.usecase.util.{BiMap, LazyVal, BiMapBuilder}
+import test.{TestData, TestHelpers}
+import util.{BiMap, BiMapBuilder}
 
 class StepFieldTest extends FunSpec with TestHelpers with TestData {
   type V = StepFieldValue
@@ -23,7 +24,7 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
   val ucId = 123L.tag[UseCaseIdentIdTag]
 
   def valueSaver(f: StepField, sfv: StepFieldValue) = {
-    val stepsAndLabels: StepAndLabelBiMap = LazyVal <~ BiMap(UseCaseFns.generateStepAndLabelMap(f, sfv.tree, UCH))
+    val stepsAndLabels: StepAndLabelBiMap = Need(BiMap(UseCaseFns.generateStepAndLabelMap(f, sfv.tree, UCH)))
     f.valueSaver(sfv, stepsAndLabels)
   }
 

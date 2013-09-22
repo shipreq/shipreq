@@ -58,7 +58,7 @@ class UseCaseLaws extends FunSuite with TestDatabaseSupport with Checkers {
       case _ =>
     }
 
-    info(s"Mutated and saved to rev $curRev with ${uc.stepsAndLabels.get.size} steps in ${timer.elapsedSec2dp} sec.")
+    info(s"Mutated and saved to rev $curRev with ${uc.stepsAndLabels.value.size} steps in ${timer.elapsedSec2dp} sec.")
     result
   })
 
@@ -89,7 +89,7 @@ class UseCaseLaws extends FunSuite with TestDatabaseSupport with Checkers {
   // Each check pass will run in its own transaction
   override val wrapTestsInTransaction = false
 
-  implicit lazy val arbUseCase: Arbitrary[UseCase] = Arbitrary(useCaseGen(Defaults.FieldList.get))
+  implicit lazy val arbUseCase: Arbitrary[UseCase] = Arbitrary(useCaseGen(Defaults.FieldList.value))
   implicit lazy val arbUseCaseMutators: Arbitrary[List[UseCaseMutator]] = Arbitrary(Gen.listOfN(mutationsPerRun, useCaseMutator))
 
   def all(ps: Seq[Prop]) = Prop.all(ps: _*)
@@ -99,7 +99,7 @@ class UseCaseLaws extends FunSuite with TestDatabaseSupport with Checkers {
   def equal[T](name: => String)(a: T, b: T): Prop = (a == b) :|| failMsg(name)(a, b)
 
   def timedProp(name: String, uc: UseCase)(f: => Prop): Prop =
-    time(t => info("%s: %6d steps in %.2f sec.".format(name, uc.stepsAndLabels.get.size, t)))(f)
+    time(t => info("%s: %6d steps in %.2f sec.".format(name, uc.stepsAndLabels.value.size, t)))(f)
 
   def timedDbProp(name: String, uc: UseCase)(f: => Prop): Prop = timedProp(name, uc)(dbProp(f))
 

@@ -9,7 +9,7 @@ object ParsingUtils extends Logger {
   @inline def areLabelsValid_?(labels: Seq[LabelStr])(implicit stepsAndLabels: StepAndLabelBiMap): Boolean = {
     if (labels.isEmpty) true
     else {
-      val validLabels = stepsAndLabels.get.ba
+      val validLabels = stepsAndLabels.value.ba
       !labels.exists(!validLabels.contains(_))
     }
   }
@@ -27,7 +27,7 @@ object ParsingUtils extends Logger {
    * Keeps a map of step references (ie. step-id to label) up-to-date when the step tree structure changes.
    */
   def migrateRefsToNewStepTree(ft: FreeText)(implicit stepsAndLabels: StepAndLabelBiMap): Option[FreeText] = {
-    lazy val idsToLabels = stepsAndLabels.get.ab
+    lazy val idsToLabels = stepsAndLabels.value.ab
     var newRefs = Map.empty[LocalStepId, LabelStr]
     var newText = ft.text
     var changed = false
@@ -78,7 +78,7 @@ object ParsingUtils extends Logger {
     stepsAndLabels: StepAndLabelBiMap): String = {
 
     val dbIdsToLocalIds = savedSteps.ab
-    lazy val localIdsToLabels = stepsAndLabels.get.ab
+    lazy val localIdsToLabels = stepsAndLabels.value.ab
 
     NormalisedRefRegex.replaceAllIn(text, m => {
       val idText = m.group(1)

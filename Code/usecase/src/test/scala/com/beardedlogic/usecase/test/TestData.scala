@@ -128,7 +128,7 @@ trait TestData extends TestHelpers2 {
  * Uses real fields with real DB FK entries.
  */
 trait LoadedTestData extends TestData {
-  lazy val FLRec = Defaults.FieldList.get
+  lazy val FLRec = Defaults.FieldList.value
   override lazy val FL = FLRec.fields
   lazy val TxtFields = filter[TextField](FL)
   lazy override val NCF = filter[NormalCourseField](FL).head

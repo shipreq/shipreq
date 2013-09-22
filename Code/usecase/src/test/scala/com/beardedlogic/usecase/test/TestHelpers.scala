@@ -20,7 +20,7 @@ import net.liftweb.mocks.MockHttpServletRequest
 import net.liftweb.mockweb.MockWeb
 import net.liftweb.util.StringHelpers
 import net.liftweb.util.Helpers.stringToSuper
-import scalaz.{NonEmptyList, Lens}
+import scalaz.{Lens, NonEmptyList, Value}
 import scala.annotation.tailrec
 
 import lib.change._
@@ -52,11 +52,11 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
   def savedSteps(tuples: (Int, LocalStepId)*): BiMap[TextIdentId, LocalStepId] =
     BiMap.apply(tuples.map(t => (t._1.toLong.tag[TextIdentIdTag], t._2)): _*)
 
-  def mapToLabels(i: Traversable[LocalStepId], stepState: StepAndLabelBiMap = StepState1) = i.map(id => (id, stepState.get.ab(id))).toMap
-  def mapFromLabels(i: Traversable[LocalStepId], stepState: StepAndLabelBiMap = StepState1) = i.map(id => (stepState.get.ab(id), id)).toMap
+  def mapToLabels(i: Traversable[LocalStepId], stepState: StepAndLabelBiMap = StepState1) = i.map(id => (id, stepState.value.ab(id))).toMap
+  def mapFromLabels(i: Traversable[LocalStepId], stepState: StepAndLabelBiMap = StepState1) = i.map(id => (stepState.value.ab(id), id)).toMap
 
-  def mapToIds(i: Traversable[LabelStr], stepState: StepAndLabelBiMap = StepState1) = i.map(l => (l, stepState.get.ba(l))).toMap
-  def mapFromIds(i: Traversable[LabelStr], stepState: StepAndLabelBiMap = StepState1) = i.map(l => (stepState.get.ba(l), l)).toMap
+  def mapToIds(i: Traversable[LabelStr], stepState: StepAndLabelBiMap = StepState1) = i.map(l => (l, stepState.value.ba(l))).toMap
+  def mapFromIds(i: Traversable[LabelStr], stepState: StepAndLabelBiMap = StepState1) = i.map(l => (stepState.value.ba(l), l)).toMap
 
   def flowFromClause(refs: (LocalStepId, LabelStr)*) = if (refs.isEmpty) None else Some(FlowFromClause(Map(refs: _*)))
   def flowToClause(refs: (LocalStepId, LabelStr)*) = if (refs.isEmpty) None else Some(FlowToClause(Map(refs: _*)))
@@ -100,8 +100,8 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
     146 -> X6
   )
 
-  val StepState1: StepAndLabelBiMap = LazyVal <~ BiMap(X1 -> S1, X2 -> S2, X3 -> S3, X5 -> S5, X6 -> S6, X0 -> S0)
-  val StepState2: StepAndLabelBiMap = LazyVal <~ BiMap(X1 -> SA, X2 -> S2, X4 -> S4, X5 -> SF, X6 -> S6)
+  val StepState1: StepAndLabelBiMap = Value(BiMap(X1 -> S1, X2 -> S2, X3 -> S3, X5 -> S5, X6 -> S6, X0 -> S0))
+  val StepState2: StepAndLabelBiMap = Value(BiMap(X1 -> SA, X2 -> S2, X4 -> S4, X5 -> SF, X6 -> S6))
 
   val TextWithFlowExamples = Table[String, String, List[String], List[String]](
     ("EXAMPLE", "TEXT", "REFS-FROM", "REFS-TO")
@@ -114,12 +114,12 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
     , ("excellent --> yo --> 1.0", "excellent --> yo", Nil, List("1.0"))
   )
 
-  val StepStateB: StepAndLabelBiMap = LazyVal <~ BiMap(
+  val StepStateB: StepAndLabelBiMap = Value(BiMap(
     X1 -> "1.0".asLabel,
     X2 -> "1.2".asLabel,
     X3 -> "1.3".asLabel,
     X3E1 -> "3.E.1".asLabel,
-    X3E2 -> "3.E.2".asLabel)
+    X3E2 -> "3.E.2".asLabel))
 
   implicit def FieldToFKRec(f: Field): FieldKeyRec = f.rec
   implicit def FieldToFkId(f: Field): FieldKeyId = f.rec.id
@@ -290,7 +290,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
     for ((n, i) <- nodes.zipWithIndex) yield n.copy(labelIndex = i)
 
   def assertStepsAndLabelsRegen(uc: UseCase) {
-    uc.stepsAndLabels.get should be(UseCaseFns.generateStepAndLabelBiMap(uc.fieldValues, uc.header).get)
+    uc.stepsAndLabels.value ==== UseCaseFns.generateStepAndLabelBiMap(uc.fieldValues, uc.header).value
   }
 
   def assertUseCasesMatchIgnoringStepsAndLabels(actual: UseCase, expected: UseCase) {

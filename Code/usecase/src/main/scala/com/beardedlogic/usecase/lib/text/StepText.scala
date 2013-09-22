@@ -106,7 +106,7 @@ case class StepText(
    */
   private def parseTextForFlow(input: String)(implicit stepsAndLabels: StepAndLabelBiMap): TextAndRefsS = {
 
-    val labelLookup = stepsAndLabels.get.ba
+    val labelLookup = stepsAndLabels.value.ba
 
     def parseFlowClause(acc: TextAndRefsC, clause: ParsedFlowClause): TextAndRefsC = {
 
@@ -201,7 +201,7 @@ case class StepText(
   private def updateRefs[C <: FlowClause, F <: Flow[C]](f: F, co: Option[C])(implicit stepsAndLabels: StepAndLabelBiMap)
   : ChangeResult[Option[C], Change] = co match {
     case Some(c) =>
-      lazy val localIdsToLabels = stepsAndLabels.get.ab
+      lazy val localIdsToLabels = stepsAndLabels.value.ab
       val changeFound = c.refs.exists {case (localId, label) => localIdsToLabels.get(localId).map(_ != label).getOrElse(true)}
       if (!changeFound) NoChange
       else {
@@ -230,7 +230,7 @@ case class StepText(
       else {
         // Update required
         val newRefs = if (a)
-          clauseRefs + (oneId -> stepsAndLabels.get.ab(oneId))
+          clauseRefs + (oneId -> stepsAndLabels.value.ab(oneId))
         else
           clauseRefs - oneId
         updateFn(f.create(newRefs)) @: textChanged

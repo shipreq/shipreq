@@ -4,11 +4,11 @@ package lib
 import java.lang.{Long => JLong}
 import net.liftweb.common.Box
 import net.liftweb.http.js.{JsCmd, JsCmds}
-import scalaz.{Monoid, LensFamily}
+import scalaz.{LensFamily, Monoid, Name, Value}
 import change.{Change, ChangeResultF}
 import field.Field
 import db.{UserRegistrationInfo, UserDescriptor, FieldKeyRec, TextRev, UseCaseRev}
-import util.{AppliedLens, LazyVal, BiMap}
+import util.{AppliedLens, BiMap}
 
 /**
  * @since 30/05/2013
@@ -119,8 +119,8 @@ object Types {
   type SavedSteps = BiMap[TextIdentId, LocalStepId]
   def EmptySavedSteps: SavedSteps = BiMap.empty
 
-  type StepAndLabelBiMap = LazyVal[BiMap[LocalStepId, LabelStr]]
-  final val EmptyStepAndLabelBiMap: StepAndLabelBiMap = LazyVal <~ BiMap.empty
+  type StepAndLabelBiMap = Name[BiMap[LocalStepId, LabelStr]]
+  final val EmptyStepAndLabelBiMap: StepAndLabelBiMap = Value(BiMap.empty)
 
   type FieldValues = Map[Field, Field#Value]
 

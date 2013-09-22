@@ -38,7 +38,7 @@ object UseCasePersistence {
   def load(ucRev: UseCaseRev, dao: Dao, lock: Locks.ReadLockToken): UseCaseSaveCheckpoint = {
 
     @inline def uch = ucRev.header
-    val fieldList = Defaults.FieldList.get.fields // TODO hardcoded fieldlist
+    val fieldList = Defaults.FieldList.value.fields // TODO hardcoded fieldlist
     val loadCtx = FieldLoadCtx(uch, dao.findAllUcFieldData(ucRev.id))
 
     var loadResults = List.empty[(Field, FieldLoadResult[Field#Value, Field#SavedData])]

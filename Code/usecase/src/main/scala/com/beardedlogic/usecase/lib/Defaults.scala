@@ -2,9 +2,9 @@ package com.beardedlogic.usecase
 package lib
 
 import net.liftweb.common.Logger
+import scalaz.{Name, Need}
 import field._
 import db._
-import util.LazyVal
 
 object Defaults extends Logger {
 
@@ -26,12 +26,12 @@ object Defaults extends Logger {
       TextFieldDefinition("Notes and Issues") ::
       Nil
 
-  val FieldList: LazyVal[FieldListRec] = LazyDbVal(_.syncFieldList(FieldListDefns))
+  val FieldList: Name[FieldListRec] = dbVal(_.syncFieldList(FieldListDefns))
 
-  private def LazyDbVal[V](fn: Dao => V) = LazyVal <~ DI.DaoProvider.withTransaction(fn)
+  private def dbVal[V](fn: Dao => V): Name[V] = Need(DI.DaoProvider.withTransaction(fn))
 
   def init(): Unit = {
-    FieldList.get
+    FieldList.value
     debug("Defaults initialised successfully.")
   }
 }

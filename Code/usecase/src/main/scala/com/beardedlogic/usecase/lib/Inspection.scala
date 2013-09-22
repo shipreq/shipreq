@@ -4,14 +4,14 @@ package lib
 import java.lang.{Long => JLong}
 import org.apache.commons.lang3.StringEscapeUtils.escapeJava
 import scala.reflect.runtime.universe.{TypeTag => ReflectTypeTag}
-import scalaz.{Cord, Show}
+import scalaz.{Cord, Show, Name, Need, Value}
 import scalaz.syntax.show._
 
 import db.{FieldKeyType, FieldKeyRec}
 import Types._
 import field._
 import text._
-import util.{BiMap, LazyVal}
+import util.BiMap
 
 /**
  * Typeclasses of `scalaz.Show` that returns code that can be pasted back into Scala.
@@ -34,11 +34,15 @@ object Inspection {
   private val eol: Cord = "\n"
 
   private implicit class StringExt(val s: String) extends AnyVal {
-    @inline def <>(body: Cord): Cord = (s: Cord) ++ `(` ++ body ++ `)`
-    @inline def <*>[T](f: T => Cord): Show[T] = Show.show(t => s <> f(t))
+    @inline def <>(body: Cord): Cord = (s: Cord) <> body
+    @inline def <*>[T](f: T => Cord): Show[T] = {
+      val c: Cord = s
+      Show.show(t => c <> f(t))
+    }
   }
 
   private implicit class CordExt(val c: Cord) extends AnyVal {
+    @inline def <>(body: Cord): Cord = c ++ `(` ++ body ++ `)`
     @inline def ++>(next: Cord): Cord = c ++ `,` ++ next
   }
 
@@ -55,7 +59,6 @@ object Inspection {
   implicit val str: Show[String] = Show.show(`"` ++ escapeJava(_) ++ `"`)
 
   implicit def listShow[A: Show]: Show[List[A]] =
-    //"List" <*> (as => Cord.mkCord(`,`, as.map(Show[A].show): _*))
     Show.show(l =>
       if (l.isEmpty) nil
       else "List" <> Cord.mkCord(`,`, l.map(Show[A].show): _*))
@@ -66,9 +69,11 @@ object Inspection {
         case (k, v) => Cord(K show k, `->`, V show v)
       }: _*))
 
-  implicit def lazyValShow[A: Show]: Show[LazyVal[A]] = Show.show(a => "LazyVal <~ " +: Show[A].show(a.get))
-
   implicit def bimapShow[K: Show, V: Show]: Show[BiMap[K, V]] = Show.show(b => "Bi" +: b.ab.show)
+
+  implicit def nameShow[A: Show]: Show[Name[A]] = "Name" <*> (_.value.show)
+  implicit def needShow[A: Show]: Show[Need[A]] = "Need" <*> (_.value.show)
+  implicit def valueShow[A: Show]: Show[Value[A]] = "Value" <*> (_.value.show)
 
   // ===================================================================================================================
   // Type tags

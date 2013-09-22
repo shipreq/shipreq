@@ -91,7 +91,7 @@ class StepFieldValueSaver(
   override def record_required_? = v.tree.nonEmpty
 
   override def differsFromPrevSave_?(prev: SavedData)(implicit savedSteps: SavedSteps): Boolean = {
-    val labelsByLocalId = stepsAndLabels.get.ab
+    val labelsByLocalId = stepsAndLabels.value.ab
 
     @inline def different_?(cur: StepNode, prev: UcFieldText) =
       labelsByLocalId(cur.id) != prev.label.get ||
@@ -140,7 +140,7 @@ class StepFieldValueSaver(
   override def save(dao: Dao, ucId: UseCaseIdentId, ucRevId: UseCaseRevId, prevSave: Option[SavedData])
     (implicit savedSteps: SavedSteps): SavedData = {
 
-    val labelLookup = stepsAndLabels.get.ab
+    val labelLookup = stepsAndLabels.value.ab
     val textIdentIds = savedSteps.ba
     val prevSaveData = prevSave.getOrElse(Map.empty)
 

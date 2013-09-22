@@ -211,7 +211,7 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
       it(s"should not exceed the max-steps limit ($name)") {
         val uce = uceFn()
         var i=0
-        def atMax = uce.uc.stepsAndLabels.get.ba.contains(labelAtMax.asLabel)
+        def atMax = uce.uc.stepsAndLabels.value.ba.contains(labelAtMax.asLabel)
         while (!atMax && i<110) {
           i+=1
           val oldUc = uce.uc
@@ -298,7 +298,7 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
     describe("indenting a step") {
       lazy val (uce,resp) = UCE3.update2(NCF.increaseIndent(X5))
       it("should update the state"){
-        uce.uc.stepsAndLabels.get.ab(X5) should be("7.0.2.b")
+        uce.uc.stepsAndLabels.value.ab(X5) should be("7.0.2.b")
       }
       it("should update the client"){
         assertIdAndAction(resp, X5, "attr")
@@ -337,7 +337,7 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
     describe("decreasing a step indent") {
       lazy val (uce,resp) = UCE3.update2(NCF.decreaseIndent(X5))
       it("should update the state"){
-        uce.uc.stepsAndLabels.get.ab(X5) should be("7.1")
+        uce.uc.stepsAndLabels.value.ab(X5) should be("7.1")
       }
       it("should update the client"){
         assertIdAndAction(resp, X5, "attr")

@@ -56,7 +56,7 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
       val uc1 = mod(sampleUC)
       val uc2 = correctStepsAndLabelsAfterUpdate(sampleUC, uc1)
       uc2 should not be theSameInstanceAs(uc1)
-      uc2.stepsAndLabels.get should not be (uc1.stepsAndLabels.get)
+      uc2.stepsAndLabels.value should not be (uc1.stepsAndLabels.value)
       uc2.copy(stepsAndLabels = uc1.stepsAndLabels) ==== uc1
     }
 
@@ -162,7 +162,7 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
       tree.nodes.size ==== expecetedTopLevel
       val newNode = tree.nodes.last
       newNode.copy(id = null) ==== StepNode(null, 0, expectedLabelIndex, Nil)
-      uc2.stepsAndLabels.get.ab(newNode.id) should === (expectedLabel)
+      uc2.stepsAndLabels.value.ab(newNode.id) should === (expectedLabel)
       assertStepsAndLabelsRegen(uc2)
     }
 
@@ -208,7 +208,7 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
       v.textmap.keySet ==== Set(X1, X3)
     }
     it("should update the step label map") {
-      uc.stepsAndLabels.get.ab ==== Map(X1 -> "7.0".asLabel, X3 -> "7.0.1".asLabel)
+      uc.stepsAndLabels.value.ab ==== Map(X1 -> "7.0".asLabel, X3 -> "7.0.1".asLabel)
     }
     it("should update refs to the step") {
       TF1.lens.get(uc) ==== FreeText("Linking to [DELETED]",Map.empty)

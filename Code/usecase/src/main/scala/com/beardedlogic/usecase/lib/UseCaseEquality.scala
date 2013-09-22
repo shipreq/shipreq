@@ -31,7 +31,7 @@ object UseCaseEquality {
     case f: StepField => sfvTextOnly.equal(f.castValue(a), f.castValue(b))
   }
 
-  implicit val stepAndLabels: Equal[StepAndLabelBiMap] = Equal.equalBy(_.get.ab)
+  implicit val stepAndLabels: Equal[StepAndLabelBiMap] = Equal.equalBy(_.value.ab)
 
   implicit val uch: Equal[UseCaseHeader] = Equal.equalA
 
