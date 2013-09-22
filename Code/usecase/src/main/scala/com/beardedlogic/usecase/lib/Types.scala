@@ -53,14 +53,14 @@ object Types {
     def tag[T <: TypeTag[String]] = s.asInstanceOf[String @@ T]
   }
 
-  implicit class StringTypeExt2[M[_]](val s: M[String]) extends AnyVal {
-    def asLocalStepIds = s.asInstanceOf[M[LocalStepId]]
-    def asLabels = s.asInstanceOf[M[LabelStr]]
+  implicit class StringTypeExt2[F[_]](val s: F[String]) extends AnyVal {
+    def asLocalStepIds = s.asInstanceOf[F[LocalStepId]]
+    def asLabels = s.asInstanceOf[F[LabelStr]]
   }
 
-  implicit class StringTypeExt3[M[_]](val s: M[List[String]]) extends AnyVal {
-    def asLocalStepIds = s.asInstanceOf[M[List[LocalStepId]]]
-    def asLabels = s.asInstanceOf[M[List[LabelStr]]]
+  implicit class StringTypeExt3[G[_], F[G]](val s: F[G[String]]) extends AnyVal {
+    def asLocalStepIds = s.asInstanceOf[F[G[LocalStepId]]]
+    def asLabels = s.asInstanceOf[F[G[LabelStr]]]
   }
 
   // -------------------------------------------------------------------------------------------------------------------
