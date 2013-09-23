@@ -14,27 +14,101 @@
 <body><div class="container">
 
 <!--------------------------------------------------------------------------------------------------------------------->
-<h1>Your Projects</h1>
+<div id="page-home" class="row">
+	<!--<h1>Home Page</h1>-->
 
-	<div id="projectC" class="input-group">
-		<span class="input-group-btn">
-			<button type="submit" class="btn btn-success">Create</button>
-		</span>
-		<input type="input" class="form-control" placeholder="Project Name">
+	<nav role="navigation" class="col-sm-2">
+		<ul class="nav nav-pills nav-stacked">
+			<li class="active"><a data-toggle="tab" href="#projects-tab">Projects</a></li>
+			<li><a data-toggle="tab" href="#user-account">User Account</a></li>
+		</ul>
+	</nav>
+
+	<div class="tab-content col-sm-10">
+
+		<!-- Projects Tab -->
+		<section id="projects-tab" class="tab-pane fade in active">
+			<!--<div class="panel panel-default">-->
+				<!--<div class="panel-heading">-->
+					<!--<h3 class="panel-title">Projects</h3>-->
+				<!--</div>-->
+				<!--<div class="panel-body">-->
+
+					<div id="projectC" class="input-group">
+						<span class="input-group-btn">
+							<button type="submit" class="btn btn-lg btn-success">Create</button>
+						</span>
+						<input type="text" class="input-lg form-control" placeholder="Project Name">
+					</div>
+
+					<div id="projectL">
+						<div class="project">
+							<a class="title" href="#page-projectR">Card/Board</a>
+							<div class="details uc">12 Use Cases. Last modified <abbr class="timeago" title="2013/05/22 13:45">3 days ago</abbr>.</div>
+							<div class="details shares">1 share with 8 views. Last viewed <abbr class="timeago" title="2013/05/22 13:45">2 weeks ago</abbr>.</div>
+						</div>
+						<div class="project">
+							<a class="title" href="#page-projectR">Shared Expenses</a>
+							<div class="details uc">8 Use Cases. Last modified <abbr class="timeago" title="2013/05/22 13:45">8 months ago</abbr>.</div>
+							<div class="details shares">3 shares with 2409 views. Last viewed <abbr class="timeago" title="2013/05/22 13:45">1 hour ago</abbr>.</div>
+						</div>
+					</div>
+
+				<!--</div>-->
+			<!--</div>-->
+		</section>
+
+		<!-- User Account Tab -->
+		<section id="user-account" class="tab-pane fade">
+			<div class="panel panel-default">
+
+				<div class="panel-heading">
+					<h3 class="panel-title">Account Details</h3>
+				</div>
+				<div class="panel-body">
+					<form class="form-horizontal">
+						<div class="form-group">
+							<label class="col-xs-4 control-label">Username</label>
+							<div class="col-xs-7"><p class="form-control-static">golly</p></div>
+							<!--<div class="col-xs-1"><button class="btn btn-default">Edit</button></div>-->
+						</div>
+						<div class="form-group">
+							<label class="col-xs-4 control-label">Email</label>
+							<div class="col-xs-7"><p class="form-control-static">email@example.com</p></div>
+							<div class="col-xs-1"><button class="btn btn-default">Edit</button></div>
+						</div>
+						<div class="form-group">
+							<label class="col-xs-4 control-label">Password</label>
+							<div class="col-xs-7"><p class="form-control-static">************</p></div>
+							<div class="col-xs-1"><button class="btn btn-default">Edit</button></div>
+						</div>
+						<div class="form-group">
+							<label class="col-xs-4 control-label">Account Created</label>
+							<div class="col-xs-8"><p class="form-control-static">2013-08-25</p></div>
+						</div>
+					</form>
+				</div>
+			</div>
+
+			<section id="useraccount-ctls">
+				<div class="btn-group">
+					<!--<button class="btn btn-default" onclick="return false">Change Email Address</button>-->
+					<!--<button class="btn btn-default" onclick="return false">Change Password</button>-->
+					<button class="btn btn-danger" onclick="return false">Delete Account</button>
+				</div>
+			</section>
+
+
+		</section>
 	</div>
 
-	<div id="projectL">
-		<div class="project">
-			<a class="title" href="#page-projectR">Card/Board</a>
-			<div class="details uc">12 Use Cases. Last modified <abbr class="timeago" title="2013/05/22 13:45">3 days ago</abbr>.</div>
-			<div class="details shares">1 share with 8 views. Last viewed <abbr class="timeago" title="2013/05/22 13:45">2 weeks ago</abbr>.</div>
-		</div>
-		<div class="project">
-			<a class="title" href="#page-projectR">Shared Expenses</a>
-			<div class="details uc">8 Use Cases. Last modified <abbr class="timeago" title="2013/05/22 13:45">8 months ago</abbr>.</div>
-			<div class="details shares">3 shares with 2409 views. Last viewed <abbr class="timeago" title="2013/05/22 13:45">1 hour ago</abbr>.</div>
-		</div>
-	</div>
+	<script>
+		$('#page-home nav a').click(function (e) {
+			e.preventDefault()
+			$(this).tab('show')
+		})
+	</script>
+</div>
 
 <!--------------------------------------------------------------------------------------------------------------------->
 <div id="page-projectR" style="display:none">

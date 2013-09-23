@@ -8,13 +8,14 @@
 #page-projectR2 nav {margin-top:6ex}
 #projectR2-shares {padding-top:2ex}
 
-#projectL {margin:4ex 8ex 6ex 6ex}
+#page-home {margin-top:4ex}
+#page-home .tab-content {padding-left:8ex}
+#projectC .form-group {padding-left:0}
 #projectL .project {margin-top:4ex}
 #projectL .project .title {font-size:250%}
 #projectL .project .details {color:#444}
 
-#projectC {margin-top:6ex}
-#projectC .form-group {padding-left:0}
+#useraccount-ctls {text-align:right}
 
 #ucl-p {margin-top:6ex}
 #ucl-p h3 {font-weight:bold}
