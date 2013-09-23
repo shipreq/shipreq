@@ -293,7 +293,7 @@
 
 	<script type="text/javascript">
 		$('#page-projectR2 nav').before($('#page-projectR .proj-ctls').clone())
-		$('#projectR2-ucs').before($('#ucl-p .panel-body').html())
+		$('#projectR2-ucs').prepend($('#ucl-p .panel-body').html())
 		$('#projectR2-shares').append($('#shares .panel-body').html())
 		$('#projectR2-shares').append($('#shareL').clone())
 		$('#page-projectR2 nav a').click(function (e) {
@@ -393,7 +393,7 @@
 	</form>
 
 	<script>
-		$('#pdf-uc-selection').replaceWith($('#uc-selection'))
+		$('#pdf-uc-selection').replaceWith($('#uc-selection').clone())
 	</script>
 
 <!--------------------------------------------------------------------------------------------------------------------->
