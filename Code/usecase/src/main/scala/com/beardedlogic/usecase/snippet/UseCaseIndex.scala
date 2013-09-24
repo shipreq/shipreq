@@ -42,7 +42,7 @@ object UseCaseIndex extends SnippetHelpers {
   }
 
   def onUpdate(): JsCmd = onUpdate(update)
-  def onUpdate(x: Box[UseCaseSummary]): JsCmd = jsPossibleError(x)(m => TriggerUpdate.trigger(m))
+  def onUpdate(x: Box[UseCaseSummary]): JsCmd = jsPossibleError(x)(TriggerUpdate.trigger)
 
   def update(): Box[UseCaseSummary] =
     for {
