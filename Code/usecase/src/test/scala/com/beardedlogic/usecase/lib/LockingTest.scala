@@ -7,7 +7,7 @@ import org.scalatest.Matchers
 
 class LockingTest extends FunSuite with Matchers {
 
-  class TestLockManager extends LockManager[JLong] {
+  class TestLockManager extends RWLockManager[JLong, UseCase] {
     def getLock_(id: Long): ReentrantReadWriteLock = super.getLock(id)
   }
 
@@ -48,7 +48,7 @@ class LockingTest extends FunSuite with Matchers {
 
   test("withWriteLock") {
     val t = new TestLockManager
-    val x = t.withWriteLock(123){
+    val x = t.write(123){_ =>
       runInAnotherThread(t.getLock_(123).writeLock.tryLock) should be(false)
       666
     }

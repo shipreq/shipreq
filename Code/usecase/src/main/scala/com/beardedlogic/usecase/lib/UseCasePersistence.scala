@@ -4,7 +4,7 @@ package lib
 import Types._
 import field._
 import db._
-import util.BiMap
+import util.{BiMap, LockTokenR}
 import UseCaseFns._
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -35,7 +35,7 @@ case class UseCaseSaveCheckpoint(
 
 object UseCasePersistence {
 
-  def load(ucRev: UseCaseRev, dao: Dao, lock: Locks.ReadLockToken): UseCaseSaveCheckpoint = {
+  def load(ucRev: UseCaseRev, dao: Dao, lock: LockTokenR[UseCase]): UseCaseSaveCheckpoint = {
 
     @inline def uch = ucRev.header
     val fieldList = Defaults.FieldList.value.fields // TODO hardcoded fieldlist
@@ -136,7 +136,7 @@ object UseCasePersistence {
     }
 
     def withUseCaseWriteLock[R](fn: => R): R =
-      prevSave.map(cp => Locks.UseCase.withWriteLock(cp.rec)(fn)).getOrElse(fn)
+      prevSave.map(cp => Locks.useCase.write(cp.rec)(_ => fn)).getOrElse(fn)
 
     def performSave(): UseCaseSaveCheckpoint =
       dao.withTransaction {

@@ -34,7 +34,7 @@ object UseCaseEditor extends StaticSnippetHelpers with DI {
 
   def loadLatest(ucId: UseCaseIdentId): State = {
     val tryToLoad = for {
-      lock   <- Locks.UseCase.forRead(ucId)
+      lock   <- Locks.useCase.readM(ucId)
       dao    <- daoProvider.forTransaction
       ucRec  <- Box(dao.findUseCaseLatestRev(ucId)) ~> NotFoundResponse()
     } yield UseCasePersistence.load(ucRec, dao, lock)

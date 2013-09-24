@@ -7,10 +7,9 @@ import Types._
 import change._
 import field._
 import text.FreeText
-import util.{AppliedLens, BiMap}
+import util.{AppliedLens, BiMap, LockToken}
 import Changes._
 import tree.TreeOps._
-
 
 /** Narrows down the scope of a change. Paired with changes to indicate where (eg. which field) the change occurred. */
 trait UcChangeDomain
@@ -109,7 +108,7 @@ case class UseCase(
   header: UseCaseHeader,
   fields: List[Field],
   fieldValues: FieldValues,
-  stepsAndLabels: StepAndLabelBiMap) {
+  stepsAndLabels: StepAndLabelBiMap) extends LockToken.Subject {
 
   assume(fieldValues.keySet == fields.toSet, "There must be a field value for all fields.")
 

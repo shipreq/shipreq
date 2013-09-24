@@ -48,9 +48,9 @@ object UseCaseIndex extends SnippetHelpers {
     for {
       newTitle <- S.param("title")                          ?~ ErrorMessages.BadRequest
       ucId     <- ExternalId.UseCase.parseB(S.param("eid")) ?~ ErrorMessages.BadRequest
-      lock     <- Locks.UseCase.forWrite(ucId)
+      _        <- Locks.useCase.writeM(ucId)
       dao      <- daoProvider.forTransaction
-      savedUc  <- dao.updateUseCaseHeader(ucId, _.copy(title= newTitle)) match {
+      savedUc  <- dao.updateUseCaseHeader(ucId, _.copy(title = newTitle)) match {
                     case NewRevision(r)     => Full(r)
                     case DirectUpdate(r)    => Full(r)
                     case AlreadyUpToDate(r) => Full(r)

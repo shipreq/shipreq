@@ -232,7 +232,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
 
   def loadRev(revId: UseCaseRevId): UseCaseSaveCheckpoint = {
     val rec = dao.findUseCaseRev(revId).get
-    Locks.UseCase.withReadLockToken(rec.identId)(load(rec, dao, _))
+    Locks.useCase.read(rec.identId)(load(rec, dao, _))
   }
 
   def reload(cp: UseCaseSaveCheckpoint) = loadRev(cp.rec)
