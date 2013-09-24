@@ -32,6 +32,7 @@ TECH TODO
 * [S.0.5] [BUG ] When fields are loaded but no FV exists, fields should be cleared. (Will affect in-place loading.)
 
 * [C.3.3] [CODE] Seal Field trait.
+* [C.2.2] [CODE] Using tagged types for DB model attributes requiring validation/correction.
 * [C.2.0] [PERF] DAO should cache certain actions and execute in bulk.
 * [C.1.1] [DEMO] Show flow deletion in flow demo.
 
