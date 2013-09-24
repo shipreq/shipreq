@@ -1,2 +1,17 @@
 %div(data-lift="surround?with=default;at=content")
-  %h1.text-center(style="margin-top:1cm") Welcome.
+  /
+
+  #anon-home(data-lift="Authenticated.not")
+    %h1.text-center(style="margin-top:1cm") Welcome, Guest.
+
+  #user-home(data-lift="Authenticated")
+    %h1 Your Projects
+
+    %section#project-hub
+
+      %section#project-new
+        %form(data-lift="form.ajax")
+          .input-group(data-lift="ProjectCreate")
+            %span.input-group-btn
+              %button(type="submit" class="btn btn-lg btn-success") Create
+            %input(type="text" class="input-lg form-control enterSubmitsForm" placeholder="Project Name" required)

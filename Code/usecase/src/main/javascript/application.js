@@ -68,6 +68,7 @@ function isVisible(e) {
 
 var urls = new function() {
     this.viewUseCase = function(id){ return "/usecase/"+id }
+    this.project = function(id){ return "/project/"+id }
 };
 
 // Add a global event handler to make Enter submit the current form, for any elements with class 'enterSubmitsForm'.

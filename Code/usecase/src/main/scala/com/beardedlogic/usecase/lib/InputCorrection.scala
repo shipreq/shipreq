@@ -18,6 +18,8 @@ object InputCorrection {
 
   def usernameOrEmail(input: String) = if (input.indexOf('@') == -1) username(input) else email(input)
 
+  def projectName(name: String) = normaliseWhitespaceInSingleLineString(name)
+
   def useCaseTitle(title: String) = {
     var t = normaliseWhitespaceInSingleLineString(title)
     if (t.isEmpty) t = Defaults.Title

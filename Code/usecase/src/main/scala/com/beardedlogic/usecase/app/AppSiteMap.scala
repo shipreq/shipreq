@@ -1,5 +1,6 @@
 package com.beardedlogic.usecase.app
 
+import java.lang.{Long => JLong}
 import net.liftweb.common._
 import net.liftweb.http.{Templates, RedirectResponse, LiftResponse}
 import net.liftweb.sitemap._
@@ -10,6 +11,9 @@ import org.apache.shiro.SecurityUtils
 import com.beardedlogic.usecase.lib.ExternalId
 import com.beardedlogic.usecase.lib.Types._
 import AppConfig.BaseUrl
+import net.liftweb.sitemap.Loc.EarlyResponse
+import net.liftweb.common.Full
+import net.liftweb.sitemap.Loc.TemplateBox
 
 object AppSiteMap {
 
@@ -32,14 +36,21 @@ object AppSiteMap {
     >> UseTemplate("register2")
     )
 
+  val Project = MenuWithIdParam(ExternalId.Project)("project", "Project") / "project" / * >> Hidden >> UseTemplate("project")
+
   val UseCaseIndex = Menu.i("Use Cases") / "list"
 
-  val UseCaseEditor = Menu_UcIdParam("uce", "Use Case Editor") / "usecase" / * >> Hidden >> UseTemplate("uce")
+  val UseCaseEditor = MenuWithIdParam(ExternalId.UseCase)("uce", "Use Case Editor") / "usecase" / * >> Hidden >> UseTemplate("uce")
 
   // -------------------------------------------------------------------------------------------------------------------
 
+  val AllProdPages = List[ConvertableToMenu](
+    Home, Login, Logout, Register1, Register2,
+    Project, UseCaseIndex, UseCaseEditor
+  )
+
   val sitemap = {
-    var pages = List[ConvertableToMenu](Home, Login, Logout, Register1, Register2, UseCaseIndex, UseCaseEditor)
+    var pages = AllProdPages
     Props.mode match {
       case Development | TestMode => pages +:= Menu.i("Use Case Editor (demo)") / "uce"
       case _ =>
@@ -52,8 +63,8 @@ object AppSiteMap {
     Full(RedirectResponse(HomeRelativeUrl))
   }
 
-  private def Menu_UcIdParam(name: String, linkText: Loc.LinkText[UseCaseIdentId]) =
-    Menu.param[UseCaseIdentId](name, linkText, ExternalId.UseCase.parseB(_), ExternalId.UseCase.toExternal(_))
+  private def MenuWithIdParam[Tag <: ExteralisableIdTag](eidGen: ExternalId[Tag])(name: String, linkText: Loc.LinkText[JLong @@ Tag]) =
+    Menu.param[JLong @@ Tag](name, linkText, eidGen.parseB(_), eidGen.toExternal(_))
 
   private def UseTemplate(path: String) = TemplateBox(() => Templates(path.split("/").toList))
 

@@ -73,6 +73,28 @@ class Dao(_session: Session) {
   def logUserLogin(id: UserId, ipAddr: String): Unit = LogUserLogin.execute(ipAddr, id)
 
   // ===================================================================================================================
+  // Project
+
+  private[this] def saveProject[R](rawName: String, f: String => R)(invalidName: R, nameAlreadyInUse: R): R = {
+    val name = InputCorrection.projectName(rawName)
+    if (name.isEmpty)
+      invalidName
+    else try
+      f(name)
+    catch {
+      case e: PSQLException if e.getMessage.contains("_usr_id_name_") => nameAlreadyInUse
+    }
+  }
+
+  def createProject(usrId: UserId, rawName: String): CreateProjectResult = {
+    import CreateProjectResult._
+    saveProject[CreateProjectResult](rawName, name => {
+      val id = CreateProject.first(usrId, name)
+      Success(id)
+    })(InvalidName, NameAlreadyInUse)
+  }
+
+  // ===================================================================================================================
   // Use Case
 
   /**
@@ -266,6 +288,12 @@ private[db] final object Sql {
     RETURNING id""".sql)
 
   // ###################################################################################################################
+  // Project
+
+  @Insert val CreateProject = query[(UserId, String), ProjectId](
+    "INSERT INTO project(usr_id, name) VALUES(?,?) RETURNING id")
+
+  // ###################################################################################################################
   // Use Case
 
   private val ucrev_* = s"r.ident_id, r.rev, r.id, r.number, r.title"
@@ -352,4 +380,11 @@ object UseCaseHeaderUpdateResult {
   case class DirectUpdate(result: UseCaseRev) extends UseCaseHeaderUpdateResult
   case class AlreadyUpToDate(result: UseCaseRev) extends UseCaseHeaderUpdateResult
   case object UseCaseNotFound extends UseCaseHeaderUpdateResult
+}
+
+sealed trait CreateProjectResult
+object CreateProjectResult {
+  case class Success(id: ProjectId) extends CreateProjectResult
+  case object InvalidName extends CreateProjectResult
+  case object NameAlreadyInUse extends CreateProjectResult
 }

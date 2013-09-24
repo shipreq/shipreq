@@ -14,7 +14,7 @@ import org.scalatest.matchers.{Matcher, MatchResult}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.prop.Tables.Table
 import net.liftweb.common.{Failure, Box, Empty}
-import net.liftweb.http.{S, LiftSession, LiftRules}
+import net.liftweb.http.{ResponseShortcutException, S, LiftSession, LiftRules}
 import net.liftweb.http.js.JsCmd
 import net.liftweb.mocks.MockHttpServletRequest
 import net.liftweb.mockweb.MockWeb
@@ -270,6 +270,12 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
       jsReaction.toLowerCase should not include ("#notices")
       jsReaction.toLowerCase should not include ("alert-danger")
     }
+  }
+
+  def assertRedirect(block: => Any): ResponseShortcutException = {
+    val err = intercept[ResponseShortcutException](block)
+    err.redirectTo should not be empty
+    err
   }
 
   class Timer {

@@ -19,7 +19,7 @@ import com.beardedlogic.usecase.snippet.Notices
 import com.beardedlogic.usecase.util.HttpResponses.ShouldNeverHappenResponse
 import com.beardedlogic.usecase.util.JsExt._
 import com.beardedlogic.usecase.util.ErrorMessages
-import Types.JsCmdMonoid
+import com.beardedlogic.usecase.lib.Types.{UserId, JsCmdMonoid}
 import SnippetHelpers._
 
 // TODO Needs rework between static & stateful
@@ -56,6 +56,10 @@ trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with Logger 
     case Some(user) => user
     case None => respondImmediately(RedirectResponse(Login.relativeUrl))
   }
+
+  @inline final def currentUserId_!() : UserId = currentUser_!.id
+
+  def requireLogin_!(): Unit = currentUser_!
 
   // -------------------------------------------------------------------------------------------------------------------
 
