@@ -23,7 +23,7 @@ object InputCorrection {
 
   def useCaseTitle(title: String) = {
     var t = normaliseWhitespaceInSingleLineString(title)
-    if (t.isEmpty) t = Defaults.Title
+    if (t.isEmpty) t = Defaults.title
     t
   }
 }

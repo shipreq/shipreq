@@ -106,8 +106,8 @@ class UseCaseIndexSnippetTest extends FunSpec with TestDatabaseSupport with Prop
         , ("what     about", "what about")
         , ("what\tabout", "what about")
         , ("\tgreat  work\n", "great work")
-        , ("", Defaults.Title) // NOP actually
-        , ("    ", Defaults.Title) // NOP actually
+        , ("", Defaults.title) // NOP actually
+        , ("    ", Defaults.title) // NOP actually
       )
       forAll(examples)(testSuccess(_, _))
     }

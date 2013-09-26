@@ -28,8 +28,8 @@ class UseCaseIndexTest extends FunSuite with SeleniumTest with BeforeAndAfter wi
   }
 
   test("adding UC") {
-    dsl.clickNewUc().assertItemCount(1, 1).row(0).assertEditText(Defaults.Title)
-    assertDatabase((1, Defaults.Title))
+    dsl.clickNewUc().assertItemCount(1, 1).row(0).assertEditText(Defaults.title)
+    assertDatabase((1, Defaults.title))
     10.times(keyboard.sendKeys(Keys.BACK_SPACE))
     keyboard.sendKeys("OMG\n")
     dsl.assertItemCount(1, 0).row(0).assertLinkText("UC-1: OMG")

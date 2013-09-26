@@ -82,7 +82,7 @@ class UseCaseRevTest extends FunSpec with TestDatabaseSupport {
     }
 
     it("should do nothing when rev #1 and no change") {
-      val rev1 = dao.createUseCaseIdentAndRev1(Defaults.Title)
+      val rev1 = dao.createUseCaseIdentAndRev1(Defaults.title)
       assertNOP(rev1, rev1)
       assertNOP(rev1.withTitle(""), rev1)
     }

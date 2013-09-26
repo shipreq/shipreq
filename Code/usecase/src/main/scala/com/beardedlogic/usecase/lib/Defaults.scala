@@ -8,14 +8,12 @@ import db._
 
 object Defaults extends Logger {
 
-  // TODO Change defaults to lowercase
-
   /** Default title of new use cases. */
-  val Title = "Untitled"
+  val title = "Untitled"
 
-  val useCaseHeader = UseCaseHeader(Title)
+  val useCaseHeader = UseCaseHeader(title)
 
-  val FieldListDefns: List[FieldDefinition] =
+  val fieldListDefns: List[FieldDefinition] =
     TextFieldDefinition("Description") ::
       TextFieldDefinition("Actors") ::
       TextFieldDefinition("Pre-Conditions") ::
@@ -30,12 +28,12 @@ object Defaults extends Logger {
       TextFieldDefinition("Notes and Issues") ::
       Nil
 
-  val FieldList: Name[FieldListRec] = dbVal(_.syncFieldList(FieldListDefns))
+  val fieldList: Name[FieldListRec] = dbVal(_.syncFieldList(fieldListDefns))
 
   private def dbVal[V](fn: Dao => V): Name[V] = Need(DI.DaoProvider.withTransaction(fn))
 
   def init(): Unit = {
-    FieldList.value
+    fieldList.value
     debug("Defaults initialised successfully.")
   }
 }

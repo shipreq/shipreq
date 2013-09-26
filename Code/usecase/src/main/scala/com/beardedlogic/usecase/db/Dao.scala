@@ -162,7 +162,7 @@ class Dao(_session: Session) {
           AlreadyUpToDate(latest)
 
         // Rev #1 title update
-        else if (latest.rev == 1 && latest.header == newHeader.copy(title = Defaults.Title)) {
+        else if (latest.rev == 1 && latest.header == newHeader.copy(title = Defaults.title)) {
           UpdateUseCaseTitleDirect.execute(newHeader.title, latest.id)
           DirectUpdate(latest.copy(header = newHeader))
         }

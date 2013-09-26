@@ -39,7 +39,7 @@ object UseCasePersistence {
 
     @inline def uch = ucRev.header
     @inline def ucn = ucRev.ident.number
-    val fieldList = Defaults.FieldList.value.fields // TODO hardcoded fieldlist
+    val fieldList = Defaults.fieldList.value.fields // TODO hardcoded fieldlist
     val loadCtx = FieldLoadCtx(uch, dao.findAllUcFieldData(ucRev.id))
 
     var loadResults = List.empty[(Field, FieldLoadResult[Field#Value, Field#SavedData])]
