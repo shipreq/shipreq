@@ -2,7 +2,7 @@ package com.beardedlogic.usecase.lib.text
 
 import scala.collection.immutable.TreeSet
 import scalaz.{NonEmptyList, Cord}
-import com.beardedlogic.usecase.lib.Misc.{CordExt, SingleSpace}
+import com.beardedlogic.usecase.lib.Misc.SingleSpace
 import com.beardedlogic.usecase.lib.Types._
 import com.beardedlogic.usecase.lib.change._
 import com.beardedlogic.usecase.lib.text.Grammar.{InvalidRefToken, PotentiallyValidRef, ParsedFlowClause}

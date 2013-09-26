@@ -29,7 +29,7 @@ import lib.Types._
  * - `perform`: Perform specialised business-logic (as opposed to CRUD-like operations).
  */
 class Dao(_session: Session) {
-  import DbHelpers._
+  import lib.Misc.ShortExt
   import Sql._
 
   implicit final val session = _session
@@ -166,7 +166,7 @@ class Dao(_session: Session) {
 
         // Audited update
         else {
-          val newRev = createUseCaseRevWithoutCorrection(latest.ident, latest.rev + 1, newHeader)
+          val newRev = createUseCaseRevWithoutCorrection(latest.ident, latest.rev +! 1, newHeader)
           linkUcToSameFieldsAsOtherUc(latest, newRev)
           NewRevision(newRev)
         }
@@ -224,7 +224,7 @@ class Dao(_session: Session) {
  * SQL for all functions exposed in the DAO.
  */
 private[db] final object Sql {
-  import DbHelpers._
+  import SqlHelpers._
   import StaticQuery.{query, queryNA, update, updateNA}
 
   implicit val GR_FieldKey = GetResult {r => FieldKeyRec(r.<<, r.<<, r.<<)}

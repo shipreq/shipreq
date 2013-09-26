@@ -9,10 +9,9 @@ import scala.slick.jdbc.{SetParameter, GetResult}
 import scala.slick.session.{PositionedParameters, PositionedResult}
 import lib.Types._
 
-private[db] object DbHelpers {
+private[db] object SqlHelpers {
 
   @inline implicit def shortToFieldKeyType(ordinal: Short): FieldKeyType = FieldKeyType(ordinal)
-  @inline implicit def int2short(i: Int): Short = i.toShort
 
   implicit def TimestampToDateTime(t: Timestamp): DateTime = new DateTime(t)
   implicit val GR_DateTime = GetResult(r => TimestampToDateTime(r.nextTimestamp))
