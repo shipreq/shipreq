@@ -163,7 +163,7 @@ object Inspection {
 
   implicit val uchShow: Show[UseCaseHeader] = "UseCaseHeader" <*> (_.title.show)
 
-  implicit val ucShow: Show[UseCase] = "UseCase.shortcut" <*> (x => {
+  implicit val ucShow: Show[UseCase] = "UseCase.as" <*> (x => {
     val fvTuples = x.fields.map(f => f.show ++ `~>` ++ x.fieldValues(f).show ++ eol)
     x.number.show ++> x.header.show ++ eol ++> fvTuples.show ++> x.stepsAndLabels.show
   })
