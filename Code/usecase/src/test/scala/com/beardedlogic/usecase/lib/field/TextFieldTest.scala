@@ -107,7 +107,7 @@ class TextFieldTest extends FunSpec with TestHelpers {
       val ucRevId = 321L.tag[UseCaseRevIdTag]
 
       def mockDao = {
-        val dao = mock[Dao]
+        val dao = mock[DaoT]
         when(dao.createTextIdent(any, any)).thenAnswer(mockCreateInitialTextAnswer(657))
         when(dao.createTextRev(any, any, any)).thenAnswer(mockCreateTextRevAnswer)
         dao

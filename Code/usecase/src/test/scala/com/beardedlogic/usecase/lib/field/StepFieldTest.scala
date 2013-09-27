@@ -121,7 +121,7 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
 
     describe("presave()") {
       def mockDao = {
-        val dao = mock[Dao]
+        val dao = mock[DaoT]
         when(dao.createTextIdent(any, any)).thenAnswer(mockCreateInitialTextAnswer(657))
         dao
       }
@@ -161,7 +161,7 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
       val ucRevId = 123L.tag[UseCaseRevIdTag]
 
       def mockDao = {
-        val dao = mock[Dao]
+        val dao = mock[DaoT]
         when(dao.createTextRev(any, any, any)).thenAnswer(mockCreateTextRevAnswer)
         when(dao.linkUcToStep(any, any, any, any, any)).thenAnswer(mockLinkUcToStepAnswer)
         dao

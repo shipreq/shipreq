@@ -30,7 +30,7 @@ object Defaults extends Logger {
 
   val fieldList: Name[FieldListRec] = dbVal(_.syncFieldList(fieldListDefns))
 
-  private def dbVal[V](fn: Dao => V): Name[V] = Need(DI.DaoProvider.withTransaction(fn))
+  private def dbVal[V](fn: DaoT => V): Name[V] = Need(DI.DaoProvider.withTransaction(fn))
 
   def init(): Unit = {
     fieldList.value

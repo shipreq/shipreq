@@ -35,7 +35,7 @@ case class UseCaseSaveCheckpoint(
 
 object UseCasePersistence {
 
-  def load(ucRev: UseCaseRev, dao: Dao, lock: LockTokenR[UseCase]): UseCaseSaveCheckpoint = {
+  def load(ucRev: UseCaseRev, dao: DaoT, lock: LockTokenR[UseCase]): UseCaseSaveCheckpoint = {
 
     @inline def uch = ucRev.header
     @inline def ucn = ucRev.ident.number
@@ -79,7 +79,7 @@ object UseCasePersistence {
    *
    * @return A checkpoint is there was anything to save, else `None` if UC was already up-to-date.
    */
-  def save(uc: UseCase, prevSave: UseCaseSaveCheckpoint, dao: Dao): Option[UseCaseSaveCheckpoint] = {
+  def save(uc: UseCase, prevSave: UseCaseSaveCheckpoint, dao: DaoT): Option[UseCaseSaveCheckpoint] = {
     type ValueSavers = Map[Field, FieldValueSaver[_]]
 
     val allSavers: ValueSavers =
@@ -135,14 +135,13 @@ object UseCasePersistence {
     // Maybe required a (PotentialLock :: id -> concrete lock) where PotentialLock :: lock
     def withLock[R](fn: => R): R = Locks.useCase.write(prevSave.rec)(_ => fn)
 
-    def performSave(): UseCaseSaveCheckpoint =
-      dao.withTransaction {
-        val ucRev = saveUcHeader()
-        val savers = selectFieldsRequiringSave(allSavers)
-        implicit val newSavedSteps = presave(ucRev.identId, savers)
-        val savedData = save(savers, ucRev.identId, ucRev.id)
-        UseCaseSaveCheckpoint(uc, ucRev, newSavedSteps, savedData)
-      }
+    def performSave(): UseCaseSaveCheckpoint = {
+      val ucRev = saveUcHeader()
+      val savers = selectFieldsRequiringSave(allSavers)
+      implicit val newSavedSteps = presave(ucRev.identId, savers)
+      val savedData = save(savers, ucRev.identId, ucRev.id)
+      UseCaseSaveCheckpoint(uc, ucRev, newSavedSteps, savedData)
+    }
 
     if (isSaveRequired_?(allSavers))
       Some(withLock(performSave))

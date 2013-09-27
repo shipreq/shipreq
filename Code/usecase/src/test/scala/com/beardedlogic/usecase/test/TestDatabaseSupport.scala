@@ -12,7 +12,7 @@ import slick.session.{Database, Session}
 import scala.util.Random
 import Q.interpolation
 
-import db.{CreateProjectResult, UseCaseRev, Dao, DaoProvider, DB}
+import db.{DaoS, DaoT, DaoProvider, DB, UseCaseRev}
 import com.beardedlogic.usecase.lib.{Locks, UseCasePersistence, UseCase, DI, UseCaseSaveCheckpoint}
 import lib.Types._
 
@@ -65,7 +65,7 @@ trait TestDatabaseSupport extends TestHelpers with Logger {
       val oldDaoVar = this.daoVar
       try {
         this.sessionVar = s
-        this.daoVar = new Dao(s)
+        this.daoVar = db.Shim.newDaoT(s)
         s.conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE)
         DI.DaoProvider.doWith(testDaoProvider) {
           fn
@@ -88,12 +88,12 @@ trait TestDatabaseSupport extends TestHelpers with Logger {
     sessionVar
   }
 
-  var daoVar: Dao = null
+  var daoVar: DaoT = null
   def dao = daoVar
 
   def withNewTransaction[U](fn: => U): U = withTransactionInternal(true, true)(fn)
 
-  def rollbackAfter[U](fn: => U): U = dao.withTransaction {
+  def rollbackAfter[U](fn: => U): U = dao.session.withTransaction {
     val result = fn
     dao.session.rollback()
     result
@@ -222,8 +222,7 @@ trait TestDatabaseSupport extends TestHelpers with Logger {
 
 }
 
-class TestDaoProvider(dao: Dao) extends DaoProvider {
-  override def get = dao
-  override def withSession[T](block: Dao => T): T = block(dao)
-  override def withTransaction[T](block: Dao => T): T = block(dao)
+class TestDaoProvider(dao: DaoT) extends DaoProvider {
+  override def withSession[T](block: DaoS => T): T = block(dao)
+  override def withTransaction[T](block: DaoT => T): T = block(dao)
 }

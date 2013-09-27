@@ -18,11 +18,4 @@ class DaoProviderTest extends FunSuite with Matchers with BeforeAndAfterAll {
   test("New transaction should be in a transaction") {
     dp.withTransaction(_.session.conn.getAutoCommit shouldBe false)
   }
-  test("Session -> transaction") {
-    dp.withSession(d => {
-      d.session.conn.getAutoCommit shouldBe true
-      d.withTransaction(d.session.conn.getAutoCommit shouldBe false)
-      d.session.conn.getAutoCommit shouldBe true
-    })
-  }
 }
