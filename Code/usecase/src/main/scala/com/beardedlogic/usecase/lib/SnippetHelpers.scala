@@ -70,7 +70,7 @@ trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with Logger 
 
   def toJson[T <: AnyRef](data: T): Json[T] = Serialization.write(data).tag[JsonTag[T]]
 
-  def currentUser_!() : UserDescriptor = Oshiro.loggedInUser match {
+  final def currentUser_!(): UserDescriptor = securityProvider.loggedInUser match {
     case Some(user) => user
     case None => respondImmediately(RedirectResponse(AppSiteMap.Login.relativeUrl))
   }

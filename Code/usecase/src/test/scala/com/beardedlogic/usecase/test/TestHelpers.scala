@@ -29,6 +29,7 @@ import lib.field._
 import lib.text._
 import lib._
 import db._
+import security.SecurityProvider
 import util._
 
 import Types._
@@ -37,6 +38,11 @@ import LensFns._
 import NodeUtils._
 import TreeOps._
 import Changes.ExistingStepLabelsChanged
+
+case class FixedUser(ud: Option[UserDescriptor]) extends SecurityProvider {
+  override def loggedInUser = ud
+  def install[R](fn: => R): R = DI.SecurityProvider.doWith(this)(fn)
+}
 
 /**
  * @since 30/04/2013
@@ -66,6 +72,9 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
     when(m.asOnlyChange).thenReturn(NonEmptyList(m))
     m
   }
+
+  val UD1 = UserDescriptor(5001.tag[UserId], "U1", "U1@TEST")
+  val UD2 = UserDescriptor(5002.tag[UserId], "U2", "U2@TEST")
 
   val X0 = "X0".asLocalStepId
   val X1 = "X1".asLocalStepId
@@ -134,6 +143,9 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
   lazy val ECF = ExceptionCourseField(FieldKeyRec(66.tag[FieldKeyIdTag], ExceptionCourseFieldDefinition.fieldKeyType, ExceptionCourseFieldDefinition.fieldKeyData))
 
   // -------------------------------------------------------------------------------------------------------------------
+
+  def withUserLoggedIn[R](loggedInUser: Option[UserDescriptor])(fn: => R): R =
+    FixedUser(loggedInUser).install(fn)
 
   def mockSavedStepsFor(tree: StepTree): SavedSteps = {
     val savedSteps = new BiMapBuilder[TextIdentId, LocalStepId]

@@ -2,6 +2,7 @@ package com.beardedlogic.usecase.lib
 
 import net.liftweb.util.SimpleInjector
 import com.beardedlogic.usecase.db.{DB, DaoProvider, DaoS, DaoT}
+import security.{Oshiro, SecurityProvider}
 
 // TODO Use DI for Mailer testing
 
@@ -17,6 +18,8 @@ object DI extends SimpleInjector {
     override def withSession[T](block: DaoS => T): T = vend.withSession(block)
     override def withTransaction[T](block: DaoT => T): T = vend.withTransaction(block)
   }
+
+  final val SecurityProvider = new Inject[SecurityProvider](Oshiro) {}
 }
 
 /**
@@ -24,4 +27,5 @@ object DI extends SimpleInjector {
  */
 trait DI {
   def daoProvider = DI.DaoProvider.vend
+  def securityProvider = DI.SecurityProvider.vend
 }

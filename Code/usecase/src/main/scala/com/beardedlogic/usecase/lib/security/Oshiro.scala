@@ -8,7 +8,7 @@ import com.beardedlogic.usecase.db.UserDescriptor
 /**
  * Apache城との橋になる「お城」。
  */
-object Oshiro {
+object Oshiro extends SecurityProvider {
   private val factory = new IniSecurityManagerFactory("classpath:shiro.ini")
   private val ini = factory.getIni
 
@@ -27,7 +27,7 @@ object Oshiro {
     ShiroSnippets.init()
   }
 
-  def loggedInUser: Option[UserDescriptor] = {
+  override def loggedInUser: Option[UserDescriptor] = {
     val x = SecurityUtils.getSubject.getPrincipal
     if (x == null) None
     else x.asInstanceOf[Some[UserDescriptor]]
