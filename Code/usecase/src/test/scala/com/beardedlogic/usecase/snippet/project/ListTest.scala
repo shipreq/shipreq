@@ -1,13 +1,12 @@
 package com.beardedlogic.usecase.snippet.project
 
-import com.beardedlogic.usecase.test.TestHelpers
 import org.scalatest.FunSuite
-import com.beardedlogic.usecase.util.TemplateCache._
+import com.beardedlogic.usecase.test.TestHelpers
 import com.beardedlogic.usecase.db.ProjectSummary
 import com.beardedlogic.usecase.lib.Types._
 
 class ListTest extends FunSuite with TestHelpers {
-  lazy val html = ExtractFromTemplate("project-list", LoadTemplate("index" :: Nil))
+  lazy val html = loadTemplate("loggedin/index", "project-list")
 
   import list.renderProjectList
 
