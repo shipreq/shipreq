@@ -1,0 +1,16 @@
+%div(data-lift="surround?with=default;at=content")
+  /
+
+  %header(data-lift="project/header")
+    %h1 Project Name
+
+    %nav.btn-group
+      %button.btn.btn-default(onclick="alert('PENDING');return false") Read Use Cases
+      %button.btn.btn-default(onclick="alert('PENDING');return false") Generate PDF
+      .btn-group
+        %button.btn.btn-default.edit Rename Project
+        %button.btn.btn-default.dropdown-toggle(data-toggle="dropdown" type="button")
+          %span.caret
+        %ul.dropdown-menu(role="menu")
+          %li
+            %a.delete(href="#" onclick="alert('PENDING');return false") Delete Project

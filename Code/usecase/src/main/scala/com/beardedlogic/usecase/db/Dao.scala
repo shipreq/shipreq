@@ -96,6 +96,8 @@ sealed trait DaoS {
     })(InvalidName, NameAlreadyInUse)
   }
 
+  def findProject(id: ProjectId): Option[Project] = FindProject.firstOption(id)
+
   def summariseProjects(userId: UserId): List[ProjectSummary] = SummariseProjects.list(userId)
 
   // ===================================================================================================================

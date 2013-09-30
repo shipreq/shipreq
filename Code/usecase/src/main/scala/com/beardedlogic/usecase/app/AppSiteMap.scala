@@ -36,7 +36,7 @@ object AppSiteMap {
     >> UseTemplate("register2")
     )
 
-  val Project = MenuWithIdParam(ExternalId.Project)("project", "Project") / "project" / * >> Hidden >> UseTemplate("project")
+  val Project = MenuWithIdParam(ExternalId.Project)("project", "Project") / "project" / * >> Hidden >> UseTemplate("loggedin/project")
 
   val UseCaseIndex = Menu.i("Use Cases") / "list"
 

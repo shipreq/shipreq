@@ -67,3 +67,8 @@ case class UcFieldText(label: Option[String], parentId: Option[TextRevId], index
   @inline final def id = textRev.id
   @inline final def text = textRev.text
 }
+
+// ===================================================================================================================
+// Project
+
+case class Project(name: String, owner: UserId)
