@@ -1,0 +1,33 @@
+.row
+  %nav.col-sm-2(role="navigation")
+    %ul.nav.nav-pills.nav-stacked
+      %li.active
+        %a(data-toggle="tab" href="#project-hub") Projects
+      %li
+        %a(data-toggle="tab" href="#useracct-hub") User Account
+
+  .tab-content.col-sm-10
+
+    #project-hub.tab-pane.fade.in.active
+
+      %section#project-new
+        %form(data-lift="form.ajax")
+          .input-group(data-lift="project/create")
+            %span.input-group-btn
+              %button(type="submit" class="btn btn-lg btn-success") Create
+            %input(type="text" class="input-lg form-control enterSubmitsForm" placeholder="Project Name" required)
+
+      %section#project-list(data-lift="project/list")
+        %h3.none You don't have any projects. Create one above!
+        %ol.list-unstyled
+          %li
+            %a.title Project Name
+            .details
+              .uc
+                %span.qty 12 Use Cases.
+                %span.mod Last modified <abbr class="timeago2" title="2013-09-02T15:57:35.773674+10:00"></abbr>.
+              .shares
+                PENDING: Shares
+
+    #useracct-hub.tab-pane.fade
+      %h1(style="margin-top:0") User Account [PENDING]
