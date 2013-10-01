@@ -4,7 +4,7 @@ name := "usecase_editor"
 
 baseVersion := "0.2.0"
 
-scalaVersion := "2.10.2"
+scalaVersion := "2.10.3"
 
 scalacOptions ++= Seq("-Xcheckinit", "-unchecked", "-deprecation", "-feature", "-language:postfixOps", "-language:implicitConversions",
   "-language:higherKinds", "-language:existentials")
