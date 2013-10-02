@@ -14,7 +14,7 @@ import scala.xml.{Elem, Text, NodeSeq, UnprefixedAttribute}
 import com.beardedlogic.usecase.app.{AppConfig, AppSiteMap}
 import com.beardedlogic.usecase.lib.security.Oshiro
 import com.beardedlogic.usecase.db.UserDescriptor
-import com.beardedlogic.usecase.snippet.Notices
+import com.beardedlogic.usecase.snippet.{AlertTypeSuccess, AlertTypeError, Notices}
 import com.beardedlogic.usecase.util.HttpResponses.ShouldNeverHappenResponse
 import com.beardedlogic.usecase.util.JsExt._
 import com.beardedlogic.usecase.util.ErrorMessages
@@ -93,25 +93,35 @@ trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with Logger 
   def jsClearError(id: String = DefaultAjaxErrorId): JsCmd = JqId(id) ~> JqRemove
 
   def jsShowError(errMsg: NodeSeq, id: String = DefaultAjaxErrorId): JsCmd =
-    jsClearAndShowError(id, Notices.renderSingle(Notices.ErrorClasses, errMsg))
+    jsClearAndShowError(id, Notices.renderSingle(AlertTypeError, errMsg))
 
   def jsShowErrors(errMsgs: Seq[NodeSeq], id: String = DefaultAjaxErrorId): JsCmd = errMsgs match {
     case Nil                => jsClearError(id)
     case singleError :: Nil => jsShowError(singleError, id)
-    case _                  => jsClearAndShowError(id, Notices.renderMsgs(Notices.ErrorClasses, errMsgs).asInstanceOf[Elem])
+    case _                  => jsClearAndShowError(id, Notices.renderMsgs(AlertTypeError, errMsgs))
   }
 
-  private def jsClearAndShowError(id: String, jsErrNode: => Elem): JsCmd =
-    jsClearError(id) & {
-      val errNode = jsErrNode % new UnprefixedAttribute("id", id, xml.Null)
-      JqExpr(errNode) ~> JqAppendTo("#notices") ~> JqHighlight()
+  @inline private def appendAlert(alert: NodeSeq): JsCmd =
+    JqExpr(alert) ~> JqAppendTo("#notices") ~> JqHighlight()
+
+  private def jsClearAndShowError(id: String, jsErrXml: => NodeSeq): JsCmd = {
+    val jsNewAlert: JsCmd = jsErrXml match {
+      case e : Elem => appendAlert(e % new UnprefixedAttribute("id", id, xml.Null))
+      case NodeSeq.Empty => Noop
+      case _ => warn("Don't know how to add id to: " + jsErrXml.getClass); appendAlert(jsErrXml)
     }
+
+    jsClearError(id) |+| jsNewAlert
+  }
 
   def jsPossibleError[T](box: Box[T], id: String = DefaultAjaxErrorId)(successJs: T => JsCmd, failureJs: => JsCmd = Noop): JsCmd = box match {
     case Full(v)            => jsClearError() |+| successJs(v)
     case Empty              => jsShowError(ErrorMessages.Generic, id) |+| failureJs
     case Failure(err, _, _) => jsShowError(err, id) |+| failureJs
   }
+
+  def jsShowAlertSuccess(content: NodeSeq): JsCmd =
+    appendAlert(Notices.renderSingle(AlertTypeSuccess, content))
 }
 
 /**
