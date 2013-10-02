@@ -31,6 +31,8 @@ class Header(projectId: ProjectId) extends SingleOpStatefulSnippet {
 
   private[snippet] var projectName = project.name
 
+  implicit def alertId = "phdra".tag[AlertIdTag]
+
   def render = (
     "#project-title" #> (
       "h1 *" #> project.name &
@@ -51,7 +53,7 @@ class Header(projectId: ProjectId) extends SingleOpStatefulSnippet {
   }
 
   def jsRenamed(newName: String): JsCmd = (
-    jsClearError()
+    jsClearError
     & jsShowAlertSuccess("Project renamed successfully.")
     & TriggerProjectUpdated.trigger(newName)
   )

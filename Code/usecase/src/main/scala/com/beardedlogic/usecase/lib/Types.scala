@@ -18,7 +18,7 @@ object Types {
   // -------------------------------------------------------------------------------------------------------------------
   // Type tags
 
-  sealed trait TypeTag[B]
+  trait TypeTag[B]
   // type Tagged[T <: TypeTag[_]] = {type Tag = T}
   type @@[O, T <: TypeTag[_]] = O with T
 

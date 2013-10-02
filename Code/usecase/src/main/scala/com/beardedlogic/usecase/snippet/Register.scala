@@ -46,7 +46,7 @@ class Register1 extends SingleOpStatefulSnippet {
           }
         )
         sendMail(mail, To(email))
-        jsClearError() & JqExpr("#emailSent,#register1Form") ~> JqToggle
+        jsClearError & JqExpr("#emailSent,#register1Form") ~> JqToggle
     }
   }
 
@@ -142,7 +142,7 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
         case Success(_) =>
           info(s"Registered new user: $username")
           SecurityUtils.getSubject.login(new UsernamePasswordToken(username, password1))
-          jsClearError() & JqExpr("#regComplete,#register2") ~> JqToggle
+          jsClearError & JqExpr("#regComplete,#register2") ~> JqToggle
       }
     }
   }
