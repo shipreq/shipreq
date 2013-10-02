@@ -1,14 +1,13 @@
 package com.beardedlogic.usecase.snippet.project
 
 import net.liftweb.http.js.JsCmd
-import net.liftweb.http.{S, SHtml}
+import net.liftweb.http.SHtml
 import net.liftweb.util.Helpers._
 
 import com.beardedlogic.usecase.app.AppSiteMap
 import com.beardedlogic.usecase.db.CreateProjectResult
 import com.beardedlogic.usecase.lib.SingleOpStatefulSnippet
 import com.beardedlogic.usecase.util.HtmlTransformExt.ajaxSubmitOnClick
-import AppSiteMap.Implicits._
 
 /**
  * Form to create a new project.
@@ -28,7 +27,7 @@ class Create extends SingleOpStatefulSnippet {
   def onSubmit(): JsCmd = {
     import CreateProjectResult._
     daoProvider.withSession(_.createProject(currentUserId_!, projectName)) match {
-      case Success(id)      => S.redirectTo(AppSiteMap.Project.relativeUrl(id))
+      case Success(id)      => redirectTo(AppSiteMap.Project)(id)
       case InvalidName      => jsShowError("Invalid project name.")
       case NameAlreadyInUse => jsShowError("You already have a project with that name.")
     }

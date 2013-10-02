@@ -4,7 +4,7 @@ import scalaz.syntax.monoid._
 import net.liftweb.common.{ParamFailure, Failure, Full, Box, Logger, Empty}
 import net.liftweb.http.js.{JsCmd, JsExp}
 import net.liftweb.http.js.JsCmds.Noop
-import net.liftweb.http.{NotFoundResponse, RedirectResponse, StatefulSnippet, ResponseShortcutException, LiftResponse}
+import net.liftweb.http.{S, NotFoundResponse, RedirectResponse, StatefulSnippet, ResponseShortcutException, LiftResponse}
 import net.liftweb.json.{NoTypeHints, Serialization}
 import net.liftweb.sitemap.Menu
 import net.liftweb.util.Mailer.{MailTypes, From, Subject}
@@ -12,7 +12,6 @@ import net.liftweb.util.{CssSel, Mailer}
 import scala.xml.{Elem, Text, NodeSeq, UnprefixedAttribute}
 
 import com.beardedlogic.usecase.app.{AppConfig, AppSiteMap}
-import com.beardedlogic.usecase.lib.security.Oshiro
 import com.beardedlogic.usecase.db.UserDescriptor
 import com.beardedlogic.usecase.snippet.{AlertTypeSuccess, AlertTypeError, Notices}
 import com.beardedlogic.usecase.util.HttpResponses.ShouldNeverHappenResponse
@@ -29,10 +28,10 @@ object SnippetHelpers extends StaticSnippetHelpers {
 
 trait StaticSnippetHelpers extends Logger {
 
-  def redirectHome: Nothing = throw ResponseShortcutException.redirect(AppSiteMap.HomeRelativeUrl)
-  def redirectTo(page: Menu): Nothing = throw ResponseShortcutException.redirect(page.relativeUrl)
-  def redirectTo(page: Menu.Menuable): Nothing = throw ResponseShortcutException.redirect(page.relativeUrl)
-  def redirectTo[T](page: Menu.ParamMenuable[T])(arg: T): Nothing = throw ResponseShortcutException.redirect(page.relativeUrl(arg))
+  def redirectHome                                      : Nothing = S.redirectTo(AppSiteMap.HomeRelativeUrl)
+  def redirectTo(page: Menu)                            : Nothing = S.redirectTo(page.relativeUrl)
+  def redirectTo(page: Menu.Menuable)                   : Nothing = S.redirectTo(page.relativeUrl)
+  def redirectTo[T](page: Menu.ParamMenuable[T])(arg: T): Nothing = S.redirectTo(page.relativeUrl(arg))
 
   def respondImmediately(response: LiftResponse): Nothing = throw ResponseShortcutException.shortcutResponse(response)
 

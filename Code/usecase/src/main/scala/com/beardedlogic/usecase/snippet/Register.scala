@@ -9,7 +9,6 @@ import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc.UsernamePasswordToken
 
 import app.AppSiteMap
-import AppSiteMap.Implicits._
 import lib._
 import Types._
 import mail.RegistrationEmails
@@ -85,11 +84,11 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
     daoProvider.withSession(_.findUserConfirmationTokenIssuedDate(token)) match {
       case None =>
         S.error("Invalid registration token. Please re-register your email address.")
-        S.redirectTo(AppSiteMap.Register1.relativeUrl)
+        redirectTo(AppSiteMap.Register1)
 
       case Some(issued) if isConfirmationTokenExpired_?(issued) =>
         S.error("Your registration token has expired. Please re-register your email address to get a new token.")
-        S.redirectTo(AppSiteMap.Register1.relativeUrl)
+        redirectTo(AppSiteMap.Register1)
 
       case _ => // valid
     }
@@ -136,7 +135,7 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
 
         case NoMatchingConfToken =>
           S.error("Your registration token disappeared.")
-          S.redirectTo(AppSiteMap.Login.relativeUrl)
+          redirectTo(AppSiteMap.Login)
 
         // Registration complete
         case Success(_) =>
