@@ -1,16 +1,25 @@
 %div(data-lift="surround?with=default;at=content")
-  /
+  %script(type="text/javascript" src="/js/project.js" data-lift="tail")
 
   %header(data-lift="project/header")
-    %h1 Project Name
+
+    %section#project-title
+      %h1 Project Name
+      .form.hidden2
+        %form(data-lift="form.ajax")
+          .input-group
+            %input(type="text" class="input-lg form-control enterSubmitsForm title" required)
+            %span.input-group-btn
+              %button.btn.btn-lg.btn-default.cancel Cancel
+              %button.btn.btn-lg.btn-primary.update(type="submit") Rename
 
     %nav.btn-group
-      %button.btn.btn-default(onclick="alert('PENDING');return false") Read Use Cases
-      %button.btn.btn-default(onclick="alert('PENDING');return false") Generate PDF
+      %button.btn.btn-default.readucs Read Use Cases
+      %button.btn.btn-default.genpdf Generate PDF
       .btn-group
-        %button.btn.btn-default.edit Rename Project
+        %button.btn.btn-default.update Rename Project
         %button.btn.btn-default.dropdown-toggle(data-toggle="dropdown" type="button")
           %span.caret
         %ul.dropdown-menu(role="menu")
           %li
-            %a.delete(href="#" onclick="alert('PENDING');return false") Delete Project
+            %a.delete(href="#") Delete Project

@@ -95,3 +95,9 @@ html, body { height: 100% } // Cannot have any padding or margin here
     .details {color: #444}
   }
 }
+
+#project-title {
+  margin-bottom: 1.8ex;
+  h1 {margin-bottom: 0}
+  input.title {font-weight:bold}
+}

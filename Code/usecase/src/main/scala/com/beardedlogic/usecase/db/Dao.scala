@@ -96,6 +96,16 @@ sealed trait DaoS {
     })(InvalidName, NameAlreadyInUse)
   }
 
+  def updateProject(id: ProjectId, usrId: UserId, rawName: String): UpdateProjectResult = {
+    import UpdateProjectResult._
+    saveProject[UpdateProjectResult](rawName, name => {
+      if (RenameProject.first(name, id, usrId) == 0)
+        ProjectNotFound
+      else
+        Success(name)
+    })(InvalidName, NameAlreadyInUse)
+  }
+
   def findProject(id: ProjectId): Option[Project] = FindProject.firstOption(id)
 
   def summariseProjects(userId: UserId): List[ProjectSummary] = SummariseProjects.list(userId)
@@ -259,4 +269,12 @@ object CreateProjectResult {
   case class Success(id: ProjectId) extends CreateProjectResult
   case object InvalidName extends CreateProjectResult
   case object NameAlreadyInUse extends CreateProjectResult
+}
+
+sealed trait UpdateProjectResult
+object UpdateProjectResult {
+  case class Success(name: String) extends UpdateProjectResult
+  case object InvalidName extends UpdateProjectResult
+  case object NameAlreadyInUse extends UpdateProjectResult
+  case object ProjectNotFound extends UpdateProjectResult
 }

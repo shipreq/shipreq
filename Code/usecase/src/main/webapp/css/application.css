@@ -29,3 +29,7 @@ html, body { height: 100%; }
 #project-list li { margin-top: 1.8em; }
 #project-list li .title { font-size: 250%; }
 #project-list li .details { color: #444; }
+
+#project-title { margin-bottom: 1.8ex; }
+#project-title h1 { margin-bottom: 0; }
+#project-title input.title { font-weight: bold; }

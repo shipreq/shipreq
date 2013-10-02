@@ -145,6 +145,75 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
   // ===================================================================================================================
 
   describe("Project") {
+    import Tables.{Project => TProject}
+
+    def newUserAndProject(projectName: String) = {
+      val u = newUserId
+      val p = dao.createProject(u, projectName).gimme
+      (u, p)
+    }
+
+    describe("create") {
+      import CreateProjectResult._
+
+      it("should create a new project") {
+        val u = newUserId
+        assertTableDiffs(TProject -> 1) {dao.createProject(u, "Blah")}
+      }
+
+      it("should correct the project name") {
+        val (u, p) = newUserAndProject("    Blah Blah   ")
+        dao.findProject(p).get.name ==== "Blah Blah"
+      }
+
+      it("should reject invalid names") {
+        val u = newUserId
+        dao.createProject(u, "   ") ==== InvalidName
+      }
+
+      it("should reject duplicate project names") {
+        val (u, _) = newUserAndProject("Yay")
+        val (_, _) = newUserAndProject("Yay")
+        dao.createProject(u, "Yay") ==== NameAlreadyInUse
+      }
+    }
+
+    describe("update") {
+      import UpdateProjectResult._
+
+      it("should update the project name") {
+        val (u, p) = newUserAndProject("A")
+        assertTableDiffs()(dao.updateProject(p, u, "B")) ==== Success("B")
+        dao.findProject(p).get.name ==== "B"
+      }
+
+      it("should correct the project name") {
+        val (u, p) = newUserAndProject("A")
+        dao.updateProject(p, u, "  C C  ") ==== Success("C C")
+        dao.findProject(p).get.name ==== "C C"
+      }
+
+      it("should reject invalid names") {
+        val (u, p) = newUserAndProject("A")
+        dao.updateProject(p, u, "   ") ==== InvalidName
+      }
+
+      it("should reject duplicate names") {
+        val (u, p1) = newUserAndProject("A")
+        val p2 = dao.createProject(u, "B").gimme
+        dao.updateProject(p2, u, "A") ==== NameAlreadyInUse
+      }
+
+      it("should fail when project not found") {
+        dao.updateProject(0.tag[ProjectIdTag], 0.tag[UserIdTag], "A") ==== ProjectNotFound
+      }
+
+      it("should fail when project doesnt belong to user") {
+        val (u, p) = newUserAndProject("A")
+        dao.updateProject(p, newUserId, "B") ==== ProjectNotFound
+      }
+    }
+
     describe("summariseProjects") {
 
       def summariseWithNoise(userId: UserId) = {

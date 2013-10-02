@@ -62,21 +62,35 @@ function isVisible(e) {
     $.fn.selfOrParent = function (css) {
         return ((this.filter(css).length != 0) ? this : (this.parents(css)));
     };
+
+    $.fn.show2 = function () {
+        return $(this).removeClass('hidden2');
+    };
+
+    $.fn.hide2 = function () {
+        return $(this).addClass('hidden2');
+    };
+
+    $.fn.setVis = function (show) {
+        if (show === undefined) show = true
+        return show ? $(this).show2() : $(this).hide2()
+    };
 }(jQuery));
 
 // =====================================================================================================================
 
 var urls = new function() {
     this.viewUseCase = function(id){ return "/usecase/"+id }
-    this.project = function(id){ return "/project/"+id }
 };
+
+function PENDING() { alert('PENDING'); return false }
 
 // Add a global event handler to make Enter submit the current form, for any elements with class 'enterSubmitsForm'.
 $(document).keypress(function (e) {
     if (e.which === 13 && e.target.classList.contains('enterSubmitsForm')) {
         e.preventDefault();
         e.stopPropagation();
-        $(e.target).parents("form").find("input[type=submit]:visible:first").focus().click();
+        $(e.target).parents("form").find("[type=submit]:visible:first").focus().click();
     }
 })
 

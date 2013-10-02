@@ -225,6 +225,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
   def eventuallyIf(wait: Boolean)(cond: => Any) { if (wait) eventually(cond) else cond }
 
   def any[T](implicit m: Manifest[T]) = org.mockito.Matchers.any(m.runtimeClass.asInstanceOf[Class[T]])
+  def meq[T](v: T) = org.mockito.Matchers.eq(v)
 
   def countOccurrences(str1: String, str2: String): Int = {
     @tailrec def count(pos: Int, c: Int): Int = {

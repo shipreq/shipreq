@@ -224,7 +224,7 @@ object JsExt {
   }
 
   /** Invokes a JavaScript trigger with textual data. */
-  case class JsTextTrigger[T <: AnyRef](triggerName: String) extends JsTrigger(triggerName) {
+  case class JsTextTrigger(triggerName: String) extends JsTrigger(triggerName) {
     def trigger(text: String): JsCmd = go(JE.Str(text))
     def trigger(text: Cord): JsCmd = go(text)
   }

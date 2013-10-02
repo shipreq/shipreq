@@ -81,6 +81,9 @@ private[db] final object Sql {
 
   val FindProject = query[ProjectId, Project]("SELECT name,usr_id FROM project WHERE id=?")
 
+  @Update val RenameProject = update[(String, ProjectId, UserId)](
+    "UPDATE project SET name=? WHERE id=? AND usr_id=?")
+
   val SummariseProjects = query[UserId, ProjectSummary]( s"""
     SELECT p.id, p.name, count(r.created_at), to_iso8601_str(max(r.created_at))
     FROM project p
