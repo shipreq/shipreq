@@ -1,15 +1,17 @@
 package com.beardedlogic.usecase.app
 
+import java.lang.{Long => JLong}
 import net.liftweb.common._
 import net.liftweb.http.{Templates, RedirectResponse, LiftResponse}
-import net.liftweb.sitemap._
 import net.liftweb.sitemap.Loc._
+import net.liftweb.sitemap._
 import net.liftweb.util.Props
 import net.liftweb.util.Props.RunModes.{Development, Test => TestMode}
 import org.apache.shiro.SecurityUtils
-import com.beardedlogic.usecase.lib.ExternalId
-import com.beardedlogic.usecase.lib.Types._
+
 import AppConfig.BaseUrl
+import com.beardedlogic.usecase.lib.Types._
+import com.beardedlogic.usecase.lib.{ExternalId, ExternalIdConverter}
 
 object AppSiteMap {
 
@@ -28,18 +30,23 @@ object AppSiteMap {
   val Register1 = Menu(Loc("Register1", List("register"), "Register"))
 
   val Register2 = (Menu.param[String]("Register2", "Register", token => Full(token), t => t) / "register" / *
-    >> Hidden
-    >> UseTemplate("register2")
-    )
+    >> Hidden >> UseTemplate("register2"))
 
-  val UseCaseIndex = Menu.i("Use Cases") / "list"
+  val Project = (MenuWithIdParam(ExternalId.Project)("project", "Project") / "project" / *
+    >> Hidden >> UseTemplate("loggedin/project"))
 
-  val UseCaseEditor = Menu_UcIdParam("uce", "Use Case Editor") / "usecase" / * >> Hidden >> UseTemplate("uce")
+  val UseCaseEditor = (MenuWithIdParam(ExternalId.UseCase)("uce", "Use Case Editor") / "usecase" / *
+    >> Hidden >> UseTemplate("uce"))
 
   // -------------------------------------------------------------------------------------------------------------------
 
+  val AllProdPages = List[ConvertableToMenu](
+    Home, Login, Logout, Register1, Register2,
+    Project, UseCaseEditor
+  )
+
   val sitemap = {
-    var pages = List[ConvertableToMenu](Home, Login, Logout, Register1, Register2, UseCaseIndex, UseCaseEditor)
+    var pages = AllProdPages
     Props.mode match {
       case Development | TestMode => pages +:= Menu.i("Use Case Editor (demo)") / "uce"
       case _ =>
@@ -52,8 +59,8 @@ object AppSiteMap {
     Full(RedirectResponse(HomeRelativeUrl))
   }
 
-  private def Menu_UcIdParam(name: String, linkText: Loc.LinkText[UseCaseIdentId]) =
-    Menu.param[UseCaseIdentId](name, linkText, ExternalId.UseCase.parseB(_), ExternalId.UseCase.toExternal(_))
+  private def MenuWithIdParam[Tag <: ExteralisableIdTag](eidGen: ExternalIdConverter[Tag])(name: String, linkText: Loc.LinkText[JLong @@ Tag]) =
+    Menu.param[JLong @@ Tag](name, linkText, eidGen.parseB(_), eidGen.toExternal(_))
 
   private def UseTemplate(path: String) = TemplateBox(() => Templates(path.split("/").toList))
 

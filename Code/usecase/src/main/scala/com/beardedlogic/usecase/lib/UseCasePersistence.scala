@@ -35,10 +35,11 @@ case class UseCaseSaveCheckpoint(
 
 object UseCasePersistence {
 
-  def load(ucRev: UseCaseRev, dao: Dao, lock: LockTokenR[UseCase]): UseCaseSaveCheckpoint = {
+  def load(ucRev: UseCaseRev, dao: DaoT, lock: LockTokenR[UseCase]): UseCaseSaveCheckpoint = {
 
     @inline def uch = ucRev.header
-    val fieldList = Defaults.FieldList.value.fields // TODO hardcoded fieldlist
+    @inline def ucn = ucRev.ident.number
+    val fieldList = Defaults.fieldList.value.fields // TODO hardcoded fieldlist
     val loadCtx = FieldLoadCtx(uch, dao.findAllUcFieldData(ucRev.id))
 
     var loadResults = List.empty[(Field, FieldLoadResult[Field#Value, Field#SavedData])]
@@ -48,7 +49,7 @@ object UseCasePersistence {
     for (f <- fieldList) {
       val r = f.load(loadCtx)
       loadResults +:= (f -> r)
-      for (tree <- r.stepTree) stepAndLabelMaps +:= generateStepAndLabelMap(f, tree, uch)
+      for (tree <- r.stepTree) stepAndLabelMaps +:= generateStepAndLabelMap(ucn, f, tree)
       if (r.savedSteps.nonEmpty) savedStepMap ++= r.savedSteps
     }
 
@@ -63,7 +64,7 @@ object UseCasePersistence {
       for (sd <- sdOpt) savedData += (f -> sd)
     }
 
-    val uc = UseCase(uch, fieldList, fieldValues.result, stepAndLabels)
+    val uc = UseCase(ucRev.ident, uch, fieldList, fieldValues.result, stepAndLabels)
     val cp = UseCaseSaveCheckpoint(uc, ucRev, savedSteps, savedData.result)
 
     cp
@@ -78,7 +79,7 @@ object UseCasePersistence {
    *
    * @return A checkpoint is there was anything to save, else `None` if UC was already up-to-date.
    */
-  def save(uc: UseCase, prevSave: Option[UseCaseSaveCheckpoint], dao: Dao): Option[UseCaseSaveCheckpoint] = {
+  def save(uc: UseCase, prevSave: UseCaseSaveCheckpoint, dao: DaoT): Option[UseCaseSaveCheckpoint] = {
     type ValueSavers = Map[Field, FieldValueSaver[_]]
 
     val allSavers: ValueSavers =
@@ -89,7 +90,7 @@ object UseCasePersistence {
       }.toMap
 
     def getPrevSaveDataFor[F <: Field, S <: f.SavedData forSome {val f : F}](f: F): Option[S] =
-      prevSave.flatMap(_.savedData.get(f).asInstanceOf[Option[S]])
+      prevSave.savedData.get(f).asInstanceOf[Option[S]]
 
     def isSaveRequired_?(savers: ValueSavers) : Boolean = {
 
@@ -100,28 +101,23 @@ object UseCasePersistence {
         val saver = f.saver(savers)
         cp.savedData.get(f) match {
           case Some(sd_) => saver.differsFromPrevSave_?(f.castSavedData(sd_))(cp.savedSteps)
-          case _         => saver.record_required_?
+          case None      => saver.record_required_?
         }
       }
 
-      prevSave match {
-        case Some(cp) => isSaveRequired_?(cp)
-        case None     => true
-      }
+      isSaveRequired_?(prevSave)
     }
 
     def selectFieldsRequiringSave(savers: ValueSavers): ValueSavers =
       savers.filter {case (f, s) => getPrevSaveDataFor(f).isDefined || s.record_required_?}
 
-    def saveUcHeader(): UseCaseRev = prevSave match {
-      case Some(cp) => dao.createUseCaseRev(cp.rec.identId, (cp.rec.rev + 1).toShort, uc.header)
-      case None     => dao.createUseCaseIdentAndRev1(uc.header)
-    }
+    def saveUcHeader(): UseCaseRev =
+      dao.createUseCaseRev(prevSave.rec.ident, (prevSave.rec.rev + 1).toShort, uc.header)
 
     def presave(ucId: UseCaseIdentId, savers: ValueSavers): SavedSteps = {
-      val prevSavedSteps = prevSave.map(_.savedSteps)
-      var newSavedSteps: Map[LocalStepId, TextIdentId] = prevSavedSteps.map(_.ba).getOrElse(Map.empty)
-      for ((f, s) <- savers) newSavedSteps ++= s.presave(dao, ucId, prevSavedSteps)
+      var newSavedSteps: Map[LocalStepId, TextIdentId] = prevSave.savedSteps.ba
+      val someSavedSteps = Some(prevSave.savedSteps)
+      for ((f, s) <- savers) newSavedSteps ++= s.presave(dao, ucId, someSavedSteps)
       BiMap.swapped(newSavedSteps)
     }
 
@@ -135,20 +131,20 @@ object UseCasePersistence {
       savedData
     }
 
-    def withUseCaseWriteLock[R](fn: => R): R =
-      prevSave.map(cp => Locks.useCase.write(cp.rec)(_ => fn)).getOrElse(fn)
+    // TODO UCP.save's lock acquisition should be externalised.
+    // Maybe required a (PotentialLock :: id -> concrete lock) where PotentialLock :: lock
+    def withLock[R](fn: => R): R = Locks.useCase.write(prevSave.rec)(_ => fn)
 
-    def performSave(): UseCaseSaveCheckpoint =
-      dao.withTransaction {
-        val ucRev = saveUcHeader()
-        val savers = selectFieldsRequiringSave(allSavers)
-        implicit val newSavedSteps = presave(ucRev.identId, savers)
-        val savedData = save(savers, ucRev.identId, ucRev.id)
-        UseCaseSaveCheckpoint(uc, ucRev, newSavedSteps, savedData)
-      }
+    def performSave(): UseCaseSaveCheckpoint = {
+      val ucRev = saveUcHeader()
+      val savers = selectFieldsRequiringSave(allSavers)
+      implicit val newSavedSteps = presave(ucRev.identId, savers)
+      val savedData = save(savers, ucRev.identId, ucRev.id)
+      UseCaseSaveCheckpoint(uc, ucRev, newSavedSteps, savedData)
+    }
 
     if (isSaveRequired_?(allSavers))
-      Some(withUseCaseWriteLock(performSave))
+      Some(withLock(performSave))
     else
       None
   }

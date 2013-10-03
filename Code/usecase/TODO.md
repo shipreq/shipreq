@@ -3,6 +3,8 @@ Legend: [M/S/C] [Benefit 0-none,5-max] [Penalty 0-none,5-severe]
 FUNC TODO
 =========
 
+* [M.3.3] [PROJ] Delete use cases.
+* [M.2.2] [PROJ] Delete projects.
 * [M.0.5] [LEGL] Check all licences and attribute as required.
 * [M.0.5] [LEGL] Add terms of service.
 
@@ -28,10 +30,12 @@ TECH TODO
 * [S.2.4] [PERF] DB connection pooling.
 * [S.1.3] [PERF] Shiro caching.
 * [S.1.3] [PERF] Textareas' blur shouldn't send a request when input doesn't change.
+* [S.1.2] [TEST] Test UseCaseCrudl.
 * [S.1.1] [TEST] When SBT 0.13 comes out, shutdown Jetty et al in SBT hook.
 * [S.0.5] [BUG ] When fields are loaded but no FV exists, fields should be cleared. (Will affect in-place loading.)
 
 * [C.3.3] [CODE] Seal Field trait.
+* [C.2.2] [CODE] Using tagged types for DB model attributes requiring validation/correction.
 * [C.2.0] [PERF] DAO should cache certain actions and execute in bulk.
 * [C.1.1] [DEMO] Show flow deletion in flow demo.
 

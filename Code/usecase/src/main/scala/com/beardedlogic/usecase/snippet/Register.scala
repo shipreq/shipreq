@@ -9,11 +9,10 @@ import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc.UsernamePasswordToken
 
 import app.AppSiteMap
-import AppSiteMap.Implicits._
 import lib._
 import Types._
 import mail.RegistrationEmails
-import db.{Dao, UserRegistrationInfo, UserRegistrationResult}
+import db.{DaoT, UserRegistrationInfo, UserRegistrationResult}
 import security.PasswordAndSalt
 import util.JsExt._
 import util.HtmlTransformExt.ajaxSubmitOnClick
@@ -46,11 +45,11 @@ class Register1 extends SingleOpStatefulSnippet {
           }
         )
         sendMail(mail, To(email))
-        jsClearError() & JqExpr("#emailSent,#register1Form") ~> JqToggle
+        jsClearError & JqExpr("#emailSent,#register1Form") ~> JqToggle
     }
   }
 
-  private def onNewUser(email: String, dao: Dao): Mail = {
+  private def onNewUser(email: String, dao: DaoT): Mail = {
     val token = randomConfirmationToken
     dao.createUserPlaceholder(email, token)
     RegistrationEmails.LinkToCompleteRegistration(token)
@@ -60,7 +59,7 @@ class Register1 extends SingleOpStatefulSnippet {
     RegistrationEmails.LinkToCompleteRegistration(token)
   }
 
-  private def onTokenExpired(id: UserId, dao: Dao): Mail = {
+  private def onTokenExpired(id: UserId, dao: DaoT): Mail = {
     val token = randomConfirmationToken
     dao.updateUserConfirmationToken(id, token)
     RegistrationEmails.LinkToCompleteRegistration(token)
@@ -85,11 +84,11 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
     daoProvider.withSession(_.findUserConfirmationTokenIssuedDate(token)) match {
       case None =>
         S.error("Invalid registration token. Please re-register your email address.")
-        S.redirectTo(AppSiteMap.Register1.relativeUrl)
+        redirectTo(AppSiteMap.Register1)
 
       case Some(issued) if isConfirmationTokenExpired_?(issued) =>
         S.error("Your registration token has expired. Please re-register your email address to get a new token.")
-        S.redirectTo(AppSiteMap.Register1.relativeUrl)
+        redirectTo(AppSiteMap.Register1)
 
       case _ => // valid
     }
@@ -136,13 +135,13 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
 
         case NoMatchingConfToken =>
           S.error("Your registration token disappeared.")
-          S.redirectTo(AppSiteMap.Login.relativeUrl)
+          redirectTo(AppSiteMap.Login)
 
         // Registration complete
         case Success(_) =>
           info(s"Registered new user: $username")
           SecurityUtils.getSubject.login(new UsernamePasswordToken(username, password1))
-          jsClearError() & JqExpr("#regComplete,#register2") ~> JqToggle
+          jsClearError & JqExpr("#regComplete,#register2") ~> JqToggle
       }
     }
   }

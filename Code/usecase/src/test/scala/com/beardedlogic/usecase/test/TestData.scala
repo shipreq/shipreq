@@ -4,6 +4,7 @@ package test
 import lib._
 import Types._
 import UseCaseFns._
+import db.UseCaseHeader
 import field._
 import test.NodeUtils._
 import text.{FlowFrom, FlowTo, StepText, FreeText}
@@ -15,14 +16,15 @@ trait TestData extends TestHelpers2 {
 
   lazy val FL: List[Field] = List(TF1, TF2, NCF, ECF, TF3)
   lazy val EmptyFieldValues: FieldValues = FL.map(f => (f ~> f.empty)).toMap
-  lazy val UCH = UseCaseHeader(7, "YES!")
+  lazy val UCN = (7:Short).tag[UseCaseNumberTag]
+  lazy val UCH = UseCaseHeader("YES!")
   lazy val EmptyLoadCtx = FieldLoadCtx(UCH, List.empty)
-  lazy val EmptyUC = UseCase(UCH, FL, EmptyFieldValues, EmptyStepAndLabelBiMap)
+  lazy val EmptyUC = UseCase(UCN, UCH, FL, EmptyFieldValues, EmptyStepAndLabelBiMap)
   lazy val EmptyUcWithoutNCF = removeNcField(EmptyUC)
 
   def ucWithValues(values: (Any, Any)*): UseCase = {
     val fvs = EmptyFieldValues ++ Map(values: _*).asInstanceOf[FieldValues]
-    UseCase(UCH, FL, fvs, generateStepAndLabelBiMap(fvs, UCH))
+    UseCase(UCN, UCH, FL, fvs, generateStepAndLabelBiMap(UCN, fvs))
   }
 
   object MockUc1 {
@@ -128,7 +130,7 @@ trait TestData extends TestHelpers2 {
  * Uses real fields with real DB FK entries.
  */
 trait LoadedTestData extends TestData {
-  lazy val FLRec = Defaults.FieldList.value
+  lazy val FLRec = Defaults.fieldList.value
   override lazy val FL = FLRec.fields
   lazy val TxtFields = filter[TextField](FL)
   lazy override val NCF = filter[NormalCourseField](FL).head

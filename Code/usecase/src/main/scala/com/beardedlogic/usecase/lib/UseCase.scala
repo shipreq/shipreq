@@ -4,6 +4,7 @@ package lib
 import scala.reflect.ClassTag
 import scalaz.{Need, NonEmptyList}
 import Types._
+import db.{UseCaseIdent, UseCaseHeader}
 import change._
 import field._
 import text.FreeText
@@ -13,9 +14,6 @@ import tree.TreeOps._
 
 /** Narrows down the scope of a change. Paired with changes to indicate where (eg. which field) the change occurred. */
 trait UcChangeDomain
-
-object UseCaseHeader extends UcChangeDomain
-case class UseCaseHeader(number: Short, title: String)
 
 // =====================================================================================================================
 
@@ -41,33 +39,34 @@ object UseCaseFns {
 
   // TODO Minimise computation with savedSteps + StepAndLabelBiMap
 
-  def extractStepAndLabelMaps(fieldValues: FieldValues, uch: UseCaseHeader): Iterable[Map[LocalStepId, LabelStr]] =
+  def extractStepAndLabelMaps(ucn: UseCaseNumber, fieldValues: FieldValues): Iterable[Map[LocalStepId, LabelStr]] =
     fieldValues.map {
-      case (f, v: StepFieldValue) => generateStepAndLabelMap(f, v.tree, uch)
+      case (f, v: StepFieldValue) => generateStepAndLabelMap(ucn, f, v.tree)
       case _ => Map.empty[LocalStepId, LabelStr]
     }
 
   def mergeStepAndLabelMaps(maps: Iterable[Map[LocalStepId, LabelStr]]): Map[LocalStepId, LabelStr] =
     (Map.empty[LocalStepId, LabelStr] /: maps)(_ ++ _)
 
-  def generateStepAndLabelBiMap(uch: UseCaseHeader, trees: (StepField, StepTree)*): StepAndLabelBiMap =
-    generateStepAndLabelBiMap(trees.map {
-      case (f, t) => generateStepAndLabelMap(f, t, uch)
-    })
+  def generateStepAndLabelMap(ucn: UseCaseNumber, field: Field, tree: StepTree): Map[LocalStepId, LabelStr] =
+    field match {
+      case f: StepField => mapIdsToFullLabels(tree.nodes, f.rootLabelPrefix(ucn))
+      case f => throw new IllegalStateException(s"Don't know how to generateStepAndLabelMap for field: $f")
+    }
 
   def generateStepAndLabelBiMap(maps: Iterable[Map[LocalStepId, LabelStr]]): StepAndLabelBiMap =
     Need(BiMap(mergeStepAndLabelMaps(maps)))
 
-  def generateStepAndLabelBiMap(fieldValues: FieldValues, uch: UseCaseHeader): StepAndLabelBiMap =
-    generateStepAndLabelBiMap(extractStepAndLabelMaps(fieldValues, uch))
+  def generateStepAndLabelBiMap(ucn: UseCaseNumber, trees: (StepField, StepTree)*): StepAndLabelBiMap =
+    generateStepAndLabelBiMap(trees.map {
+      case (f, t) => generateStepAndLabelMap(ucn, f, t)
+    })
 
-  def generateStepAndLabelBiMap(uc: UseCase): StepAndLabelBiMap = generateStepAndLabelBiMap(uc.fieldValues, uc.header)
+  def generateStepAndLabelBiMap(ucn: UseCaseNumber, fieldValues: FieldValues): StepAndLabelBiMap =
+    generateStepAndLabelBiMap(extractStepAndLabelMaps(ucn, fieldValues))
 
-  def generateStepAndLabelMap(field: Field, tree: StepTree, uch: UseCaseHeader): Map[LocalStepId, LabelStr] =
-    field match {
-      case f: StepField => mapIdsToFullLabels(tree.nodes, f.rootLabelPrefix(uch))
-      case f => throw new IllegalStateException(s"Don't know how to generateStepAndLabelMap for field: $f")
-    }
+  def generateStepAndLabelBiMap(uc: UseCase): StepAndLabelBiMap =
+    generateStepAndLabelBiMap(uc.number, uc.fieldValues)
 
   /**
    * When a use case is updated, sometimes the stepsAndLabels map needs to be updated, other times it can be reused.
@@ -79,9 +78,7 @@ object UseCaseFns {
    */
   def correctStepsAndLabelsAfterUpdate(original: UseCase, updated: UseCase): UseCase = {
 
-    def reusable = (original eq updated) || (ucNumbersMatch && fieldValuesReusable)
-
-    def ucNumbersMatch = original.header.number == updated.header.number
+    def reusable = (original eq updated) || fieldValuesReusable
 
     def fieldValuesReusable = (original.fieldValues eq updated.fieldValues) || !relevantFieldValuesDiffer
 
@@ -98,13 +95,14 @@ object UseCaseFns {
 }
 
 object UseCase {
-  def shortcut(header: UseCaseHeader, fieldValues: Seq[(Field, Field#Value)], stepsAndLabels: StepAndLabelBiMap): UseCase =
-    UseCase(header, fieldValues.map(_._1).toList, fieldValues.toMap, stepsAndLabels)
+  def as(number: UseCaseNumber, header: UseCaseHeader, fieldValues: Seq[(Field, Field#Value)], stepsAndLabels: StepAndLabelBiMap): UseCase =
+    UseCase(number, header, fieldValues.map(_._1).toList, fieldValues.toMap, stepsAndLabels)
 }
 
 // =====================================================================================================================
 
 case class UseCase(
+  number: UseCaseNumber,
   header: UseCaseHeader,
   fields: List[Field],
   fieldValues: FieldValues,

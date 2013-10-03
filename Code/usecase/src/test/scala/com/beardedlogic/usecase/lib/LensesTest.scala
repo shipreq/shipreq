@@ -4,6 +4,7 @@ import org.scalatest.FunSpec
 import Lenses._
 import field.Field
 import text.FreeText
+import com.beardedlogic.usecase.db.UseCaseHeader
 import com.beardedlogic.usecase.test.NodeUtils._
 import com.beardedlogic.usecase.test.{TestData, TestHelpers}
 
@@ -12,7 +13,7 @@ class FieldLensesTest extends FunSpec with TestHelpers with TestData {
 
   def testFieldValueSet[F <: Field {type Value = V}, V](before: UseCase)(field: F, newValue: V)(after: UseCase) {
     field(after.fieldValues) ==== newValue
-    after.fieldValues should === (before.fieldValues + (field ~> newValue))
+    after.fieldValues ==== (before.fieldValues + (field ~> newValue))
   }
 
   def aLowLevelOperation(set: UseCase => UseCase) {
@@ -30,22 +31,10 @@ class FieldLensesTest extends FunSpec with TestHelpers with TestData {
     }
     it("should set the title") {
       val uc = ucTitleL.set(sampleTextOnlyUC, "No")
-      uc.header ==== UseCaseHeader(7, "No")
+      uc.header ==== UseCaseHeader("No")
       uc ==== sampleTextOnlyUC.copy(header = uc.header)
     }
     it should behave like aLowLevelOperation(ucTitleL =>= {_ + "!"})
-  }
-
-  describe("number") {
-    it("should get the number") {
-      ucNumberL.get(sampleUC) ==== 7
-    }
-    it("should set the number") {
-      val uc = ucNumberL.set(sampleTextOnlyUC, 3)
-      uc.header ==== UseCaseHeader(3, "YES!")
-      assertUseCasesMatchIgnoringStepsAndLabels(uc, sampleTextOnlyUC.copy(header = uc.header))
-    }
-    it should behave like aLowLevelOperation(ucNumberL =>= {_ => 123})
   }
 
   describe("textField") {

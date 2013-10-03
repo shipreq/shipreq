@@ -2,6 +2,7 @@ package com.beardedlogic.usecase
 package lib
 
 import Misc._
+import db.UseCaseHeader
 
 /**
  * Corrects undesirable user input.
@@ -18,9 +19,11 @@ object InputCorrection {
 
   def usernameOrEmail(input: String) = if (input.indexOf('@') == -1) username(input) else email(input)
 
+  def projectName(name: String) = normaliseWhitespaceInSingleLineString(name)
+
   def useCaseTitle(title: String) = {
     var t = normaliseWhitespaceInSingleLineString(title)
-    if (t.isEmpty) t = Defaults.Title
+    if (t.isEmpty) t = Defaults.title
     t
   }
 }

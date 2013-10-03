@@ -1,7 +1,8 @@
-package com.beardedlogic.usecase.lib
+package com.beardedlogic.usecase
+package lib
 package field
 
-import com.beardedlogic.usecase.db._
+import db.{DaoT, FieldKeyType, FieldKeyRec}
 import change.ChangeResponder
 import Types._
 
@@ -82,12 +83,12 @@ trait FieldValueSaver[SavedData] {
    *
    * @return A map of new saved steps.
    */
-  def presave(dao: Dao, ucId: UseCaseIdentId, prevSavedSteps: Option[SavedSteps]): Map[LocalStepId, TextIdentId]
+  def presave(dao: DaoT, ucId: UseCaseIdentId, prevSavedSteps: Option[SavedSteps]): Map[LocalStepId, TextIdentId]
 
   /**
    * Saves field value(s) to the database and links them to the provided UC.
    *
    * @return Data that will be passed back in on subsequent saves to facilitate data reuse (in the DB).
    */
-  def save(dao: Dao, ucId: UseCaseIdentId, ucRevId: UseCaseRevId, prevSave: Option[SavedData])(implicit savedSteps: SavedSteps): SavedData
+  def save(dao: DaoT, ucId: UseCaseIdentId, ucRevId: UseCaseRevId, prevSave: Option[SavedData])(implicit savedSteps: SavedSteps): SavedData
 }

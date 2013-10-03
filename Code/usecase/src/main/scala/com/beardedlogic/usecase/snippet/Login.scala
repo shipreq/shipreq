@@ -7,7 +7,6 @@ import net.liftweb.util.Helpers._
 import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc._
 import scala.xml.Text
-import app.AppSiteMap
 import lib.{InputCorrection, SingleOpStatefulSnippet}
 import util.HtmlTransformExt.ajaxSubmitOnClick
 import Login._
@@ -47,7 +46,7 @@ class Login extends SingleOpStatefulSnippet {
 
   def onSuccessfulLogin(): Nothing = {
     // TODO update login count async
-    daoProvider.withSession(_.logUserLogin(loggedInUser.get.id, clientIp_Or_?))
-    S.redirectTo(AppSiteMap.HomeRelativeUrl)
+    daoProvider.withSession(_.logUserLogin(currentUserId_!, clientIp_Or_?))
+    redirectHome
   }
 }

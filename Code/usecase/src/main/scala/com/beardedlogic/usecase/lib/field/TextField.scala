@@ -1,7 +1,8 @@
-package com.beardedlogic.usecase.lib
+package com.beardedlogic.usecase
+package lib
 package field
 
-import com.beardedlogic.usecase.db._
+import db.{DaoT, FieldKeyType, FieldKeyRec, TextRev}
 import text.FreeText
 import Types._
 
@@ -53,9 +54,9 @@ class TextFieldValueSaver(val v: FreeText, val fkId: FieldKeyId, val stepsAndLab
   override def differsFromPrevSave_?(prev: SavedData)(implicit savedSteps: SavedSteps): Boolean =
     textWithNormalisedRefs != prev.text
 
-  override def presave(dao: Dao, ucId: UseCaseIdentId, prevSavedSteps: Option[SavedSteps]) = Map.empty
+  override def presave(dao: DaoT, ucId: UseCaseIdentId, prevSavedSteps: Option[SavedSteps]) = Map.empty
 
-  override def save(dao: Dao, ucId: UseCaseIdentId, ucRevId: UseCaseRevId, prevSave: Option[SavedData])(implicit savedSteps: SavedSteps): SavedData = {
+  override def save(dao: DaoT, ucId: UseCaseIdentId, ucRevId: UseCaseRevId, prevSave: Option[SavedData])(implicit savedSteps: SavedSteps): SavedData = {
     val curText = textWithNormalisedRefs
 
     val textRev = prevSave match {

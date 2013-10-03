@@ -1,2 +1,8 @@
 %div(data-lift="surround?with=default;at=content")
-  %h1.text-center(style="margin-top:1cm") Welcome.
+  /
+
+  #anon-home(data-lift="Authenticated.not")
+    %h1.text-center(style="margin-top:1cm") Welcome, Guest.
+
+  #user-home(data-lift="Authenticated")
+    %div(data-lift="embed?what=loggedin/index")

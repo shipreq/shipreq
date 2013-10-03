@@ -17,23 +17,22 @@ class DbTriggerTest extends FunSpec with TestDatabaseSupport {
     val ecId = sql"INSERT INTO field_key(type_id,data) VALUES($stepFieldTypeId,'EC') RETURNING id".as[Long].first
   }
 
-  case class SampleUC(fks: SampleFKs) {
-
+  case class SampleUC(ucn: Short, fks: SampleFKs) {
     import fks._
-
-    val uc = sql"INSERT INTO usecase DEFAULT VALUES RETURNING id".as[Long].first
+    val projectId = newProjectId().longValue
+    val ucId: Long = sql"INSERT INTO usecase(project_id,number) VALUES($projectId,$ucn) RETURNING id".as[Long].first
     def insertText(fkId: Long) = SampleText(this, fkId)
     val txt1 = insertText(txtField1)
     val txt2 = insertText(txtField2)
     val ncStep1, ncStep2, ncStep3, ncStep4 = insertText(ncId)
     val ecStep1 = insertText(ecId)
-    def latestRevId = sql"SELECT latest_rev_id FROM usecase WHERE id = $uc".as[Long].first
-    def insertRev(rev: Int, number: Short, title: String): Long =
-      sql"INSERT INTO usecase_rev(ident_id,rev,number,title) VALUES($uc,$rev,$number,$title) RETURNING id".as[Long].first
+    def latestRevId = sql"SELECT latest_rev_id FROM usecase WHERE id = $ucId".as[Long].first
+    def insertRev(rev: Int, title: String): Long =
+      sql"INSERT INTO usecase_rev(ident_id,rev,title) VALUES($ucId,$rev,$title) RETURNING id".as[Long].first
   }
 
   case class SampleText(uc: SampleUC, fkId: Long) {
-    def ucId = uc.uc
+    def ucId = uc.ucId
     val id = sql"INSERT INTO text(uc_id,fk_id) VALUES($ucId,$fkId) RETURNING id".as[Long].first
     def insertRev(rev: Int, text: String): Long =
       sql"INSERT INTO text_rev(ident_id,rev,text) VALUES($id,$rev,$text) RETURNING id".as[Long].first
@@ -42,8 +41,8 @@ class DbTriggerTest extends FunSpec with TestDatabaseSupport {
   it("Only 1 value per-UC per-text-field allowed") {
     // TODO remove manual field_key stuff
     val fk = new SampleFKs
-    val smp = new SampleUC(fk)
-    new SampleUC(fk) // Ensure other UCs = no prob
+    val smp = new SampleUC(1, fk)
+    new SampleUC(2, fk) // Ensure other UCs = no prob
 
     // UC already has a value for text-field #1
     intercept[PSQLException] {smp.insertText(fk.txtField1)}
@@ -52,31 +51,31 @@ class DbTriggerTest extends FunSpec with TestDatabaseSupport {
   it("usecase.latest_rev_id") {
     val TMP = -1
     val fk = new SampleFKs
-    val smp = new SampleUC(fk)
-    val smp2 = new SampleUC(fk)
+    val smp = new SampleUC(9, fk)
+    val smp2 = new SampleUC(8, fk)
 
     // INSERT
     smp.latestRevId should be(TMP)
-    val rev2 = smp.insertRev(2, 9, "ah")
+    val rev2 = smp.insertRev(2, "ah")
     smp.latestRevId should be(rev2)
-    val rev1 = smp.insertRev(1, 9, "ah")
+    val rev1 = smp.insertRev(1, "ah")
     smp.latestRevId should be(rev2)
-    val rev3 = smp.insertRev(3, 9, "ah")
+    val rev3 = smp.insertRev(3, "ah")
     smp.latestRevId should be(rev3)
 
     // UC-SCOPE
     smp2.latestRevId should be(TMP)
-    val revB1 = smp2.insertRev(2, 8, "qwe")
+    val revB1 = smp2.insertRev(2, "qwe")
     smp2.latestRevId should be(revB1)
 
     // UPDATE rev
-    sqlu"UPDATE usecase_rev set rev=rev+5000 WHERE ident_id = ${smp.uc} AND id = $rev2".execute
+    sqlu"UPDATE usecase_rev set rev=rev+5000 WHERE ident_id = ${smp.ucId} AND id = $rev2".execute
     smp.latestRevId should be(rev2)
-    sqlu"UPDATE usecase_rev set rev=rev-5000 WHERE ident_id = ${smp.uc} AND id = $rev2".execute
+    sqlu"UPDATE usecase_rev set rev=rev-5000 WHERE ident_id = ${smp.ucId} AND id = $rev2".execute
     smp.latestRevId should be(rev3)
 
     // UPDATE ident_id
-    sqlu"UPDATE usecase_rev set ident_id = ${smp2.uc} WHERE ident_id = ${smp.uc} AND id = $rev3".execute
+    sqlu"UPDATE usecase_rev set ident_id = ${smp2.ucId} WHERE ident_id = ${smp.ucId} AND id = $rev3".execute
     smp.latestRevId should be(rev2)
     smp2.latestRevId should be(rev3)
 
@@ -87,9 +86,9 @@ class DbTriggerTest extends FunSpec with TestDatabaseSupport {
     smp2.latestRevId should be(TMP)
 
     // UPDATE ident_id of latest rev
-    val revB2 = smp2.insertRev(8, 8, "qwe")
+    val revB2 = smp2.insertRev(8, "qwe")
     smp2.latestRevId should be(revB2)
-    sqlu"UPDATE usecase_rev set ident_id = ${smp.uc} WHERE ident_id = ${smp2.uc} AND id = $revB2".execute
+    sqlu"UPDATE usecase_rev set ident_id = ${smp.ucId} WHERE ident_id = ${smp2.ucId} AND id = $revB2".execute
     smp2.latestRevId should be(TMP)
   }
 
@@ -104,9 +103,9 @@ class DbTriggerTest extends FunSpec with TestDatabaseSupport {
 
   describe(Tables.UcField.name) {
     class Data(fk: SampleFKs) {
-      val uc = new SampleUC(fk)
+      val uc = new SampleUC(1, fk)
 
-      val ucr = uc.insertRev(1, 1, "My UC")
+      val ucr = uc.insertRev(1, "My UC")
       val t1r = uc.txt1.insertRev(1, "text 1")
       val t2r = uc.txt2.insertRev(1, "text 2")
       linkText(ucr, t1r)

@@ -11,9 +11,9 @@
 #page-home {margin-top:4ex}
 #page-home .tab-content {padding-left:8ex}
 #projectC .form-group {padding-left:0}
-#projectL .project {margin-top:4ex}
-#projectL .project .title {font-size:250%}
-#projectL .project .details {color:#444}
+#projectL li {margin-top:4ex}
+#projectL li .title {font-size:250%}
+#projectL li .details {color:#444}
 
 #useraccount-ctls {text-align:right}
 

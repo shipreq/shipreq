@@ -15,6 +15,13 @@
 // Functional JS
 // http://dailyjs.com/2012/09/14/functional-programming/
 
+/*
+  Partial Application
+  ===================
+  var plus_two = function(x,y) { return x+y; };
+  var add_three = plus_two.p(3);
+  add_three(4); // 7
+ */
 Function.prototype.p = function() {
     var args = Array.prototype.slice.call(arguments);
     var f = this;
@@ -24,6 +31,14 @@ Function.prototype.p = function() {
     };
 };
 
+/*
+  Composition
+  ===========
+  var greet = function(s) { return 'hi, ' + s; };
+  var exclaim = function(s) { return s + '!'; };
+  var excited_greeting = greet.c(exclaim);
+  excited_greeting('Pickman') // hi, Pickman!
+ */
 Function.prototype.c = function(g) {
     var f = this;
     return function() {
@@ -32,11 +47,29 @@ Function.prototype.c = function(g) {
     };
 };
 
+/*
+  Flipping
+  ========
+  var div = function(x,y) { return x / y; };
+  div(1, 2) // 0.5
+  div.f()(1,2) // 2
+ */
 Function.prototype.f = function() {
     var f = this;
     return function() {
         var args = Array.prototype.slice.call(arguments);
         return f.apply(this, args.reverse());
+    };
+};
+
+/*
+Curries a function so that the first arg is the "this" that one would get if it were done by hand.
+ */
+Function.prototype.withThis = function() {
+    var f = this;
+    return function() {
+        var args = Array.prototype.slice.call(arguments);
+        return f.apply(this, [this].concat(args));
     };
 };
 
@@ -62,26 +95,47 @@ function isVisible(e) {
     $.fn.selfOrParent = function (css) {
         return ((this.filter(css).length != 0) ? this : (this.parents(css)));
     };
+
+    $.fn.show2 = function () {
+        return $(this).removeClass('hidden2');
+    };
+
+    $.fn.hide2 = function () {
+        return $(this).addClass('hidden2');
+    };
+
+    $.fn.setVis = function (show) {
+        if (show === undefined) show = true
+        return show ? $(this).show2() : $(this).hide2()
+    };
+
+    $.fn.scrollTo = function (duration) {
+        //if (show === undefined) show = true
+        var t = $(this)
+        $('html,body').animate({ scrollTop: t.first().offset().top }, duration)
+        return t
+    };
 }(jQuery));
 
 // =====================================================================================================================
 
-var urls = new function() {
-    this.viewUseCase = function(id){ return "/usecase/"+id }
-};
+function PENDING() { alert('PENDING'); return false }
 
 // Add a global event handler to make Enter submit the current form, for any elements with class 'enterSubmitsForm'.
 $(document).keypress(function (e) {
     if (e.which === 13 && e.target.classList.contains('enterSubmitsForm')) {
         e.preventDefault();
         e.stopPropagation();
-        $(e.target).parents("form").find("input[type=submit]:visible:first").focus().click();
+        var b = $(e.target).parents("form").find("[type=submit]:visible")
+        //console.log(b)
+        b.first().focus().click();
     }
 })
 
 DomEnhancements = [
-    {css: "abbr.timeago", apply: function(x){ x.timeago() }},
-    {css: "textarea",     apply: function(x){ x.autosize() }}
+    {css: "abbr.timeago",  apply: function(x){ x.timeago() }},
+    {css: "abbr.timeago2", apply: function(x){ x.timeago2() }},
+    {css: "textarea",      apply: function(x){ x.autosize() }}
 ];
 
 function registerDomEnhancementsWithLiveQuery() {
@@ -99,7 +153,24 @@ function registerDomEnhancementsWithLiveQuery() {
 $(document).ready(registerDomEnhancementsWithLiveQuery)
 
 function enhanceDom() { $(document).enhanceDom() }
+
 (function ($) {
+
+    // Customised impl of timeago.
+    // Attr should have ISO8601 in the title and nothing in the text.
+    // After using this, a "3. days ago"-like expression will be visible with a locale-friendly string shown
+    // when hovered over.
+    $.fn.timeago2 = function () {
+        var e = $(this)
+        var isotime = e.attr('title')
+        if (typeof isotime === 'string') {
+            var d = new Date(isotime)
+            //var t = d.toLocaleString()
+            var t = d.toLocaleDateString() + ' @ ' + d.toLocaleTimeString()
+            e.html(t).timeago()
+        }
+    }
+
     // Provide JQuery fn to apply DomEnhancements
     $.fn.enhanceDom = function () {
         for (var i=0; i < DomEnhancements.length; i++) {
@@ -108,4 +179,5 @@ function enhanceDom() { $(document).enhanceDom() }
         }
         return this;
     };
+
 }(jQuery));

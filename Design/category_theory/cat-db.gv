@@ -3,28 +3,49 @@ digraph G {
   node [shape=none]
   edge [fontsize=9]
 
-  { node[fontcolor=gray]
-    // SavedStepsAndLabels [label="<SavedSteps,StepsAndLabels>"]
+subgraph cluster0 {
+  {node[fontcolor=red]
+    usecase
+    usecase_rev
   }
-
-field_key_type
-field_key
-usecase
-usecase_rev
-text
-text_rev
-uc_field
+  {node[fontcolor=blue]
+    text
+    text_rev
+    field_key
+    field_key_type
+  }
+  uc_field
+}
 usr
 project
 
-usecase -> project -> usr
-field_key -> field_key_type
-usecase_rev -> usecase [label="uci"]
-text -> {usecase;field_key}
-text_rev -> text
-uc_field -> {usecase_rev;text_rev}
-uc_field -> text_rev
-usecase -> usecase_rev [label="uclatest"]
+{edge[color="#80000"]
+  usecase_rev -> usecase [label="uci"]
+  usecase -> usecase_rev [label="uclatest"]
+}
+{edge[color="#8888dd"]
+  text_rev -> text
+  text -> field_key
+  field_key -> field_key_type
+}
 
-graph[label="uci ∘ uclatest = 1[usecase], uci :: retraction"]
+usecase -> project
+project -> usr
+text -> usecase
+uc_field -> usecase_rev
+uc_field -> text_rev
+uc_field -> text_rev
+
+graph[label="
+uci ∘ uclatest = 1[usecase], uci :: retraction
+
+CROSS-TABLE CONSTRAINTS
+count(uc.text/f) = field_key_type.max_text_per_uc
+ucf{ uc_rev.uc = text_rev.text.uc }
+ucf{ uc_rev.uc = parent_rev.text.uc }
+ucf{ text_rev.text.fk = parent_rev.text.fk }
+ucf{ text_rev.text.fk : text where label is NULL }
+ucf{ text_rev.text.fk : step where label is not NULL }
+
+"]
 }

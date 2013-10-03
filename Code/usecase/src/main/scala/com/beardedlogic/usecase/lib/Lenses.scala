@@ -6,12 +6,12 @@ import Types._
 import field.{TextField, StepField, StepFieldValue}
 import text.{StepText, FreeText}
 import util.LensFns._
+import db.UseCaseHeader
 
 object Lenses {
 
   // Header lenses
   val uchTitleL = lensg[UseCaseHeader, String](h => t => h.copy(title = t), _.title)
-  val uchNumberL = lensg[UseCaseHeader, Short](h => n => h.copy(number = n), _.number)
 
   // Text field lenses
   val freeTextTextL = lensFamilyg[FreeText, FreeText, String, (String, StepAndLabelBiMap)](
@@ -31,7 +31,7 @@ object Lenses {
 
   // Use Case lenses
 
-  val ucHeaderL = lensg[UseCase, UseCaseHeader](u => h => u.copy(h), _.header)
+  val ucHeaderL = lensg[UseCase, UseCaseHeader](u => h => u.copy(header = h), _.header)
 
   val ucTextFieldL = KeyedLens[UseCase, TextField, FreeText](
     uc => f => v => uc.copy(fieldValues = uc.fieldValues + (f ~> v)),
@@ -45,7 +45,6 @@ object Lenses {
 
   val sfvStepTextTextL = sfvStepTextInstL >@=> stepTextTextL
   val ucTitleL = ucHeaderL >=> uchTitleL
-  val ucNumberL = ucHeaderL >=> uchNumberL
   val ucStepTextInstL = ucStepFieldL >@=@> sfvStepTextInstL
   val ucStepTextTextL = ucStepTextInstL >@=> stepTextTextL
   val ucTextFieldTextL = ucTextFieldL >@=> freeTextTextL

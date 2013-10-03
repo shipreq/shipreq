@@ -20,17 +20,17 @@ class UseCaseLaws extends FunSuite with TestDatabaseSupport with Checkers {
   def mutationsPerRun = runs
   def mutationRuns = 1
 
-  test("Mutate and save") {check(MutateAndSave, MinSuccessful(mutationRuns))}
-  test("load(save(uc)) = uc") {check(SaveAndLoad, MinSuccessful(runs))}
-  test("save(save(uc)) = NOP") {check(SecondSaveIsNop, MinSuccessful(runs))}
+  test("Mutate and save") {check(MutateAndSaveP, MinSuccessful(mutationRuns))}
+  test("load(save(uc)) = uc") {check(SaveAndLoadP, MinSuccessful(runs))}
+  test("save(save(uc)) = NOP") {check(SecondSaveIsNopP, MinSuccessful(runs))}
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  lazy val MutateAndSave = forAll((uc0: UseCase, mutations: List[UseCaseMutator]) => dbProp {
+  lazy val MutateAndSaveP = forAll((uc0: UseCase, mutations: List[UseCaseMutator]) => dbProp {
     val timer = new Timer
     var uc = uc0
     var prevSave = save(uc, None)
-    var curRev = 1
+    var curRev: Int = prevSave.get.rec.rev
     var result: Prop = true
 
     def saveChangedUc(newUc: UseCase): Unit = {
@@ -39,7 +39,7 @@ class UseCaseLaws extends FunSuite with TestDatabaseSupport with Checkers {
           case Some(cp) => checkNewRev(newUc, cp)
           case None => checkNopSave(newUc)
         }
-      result = result ==> newResult
+      result ++= newResult
       uc = newUc
     }
 
@@ -62,11 +62,11 @@ class UseCaseLaws extends FunSuite with TestDatabaseSupport with Checkers {
     result
   })
 
-  lazy val SaveAndLoad = forAll((uc: UseCase) => timedDbProp("SaveAndLoad", uc) {
+  lazy val SaveAndLoadP = forAll((uc: UseCase) => timedDbProp("SaveAndLoad", uc) {
     uc <==> saveAndLoad(uc).uc
   })
 
-  lazy val SecondSaveIsNop = forAll((uc: UseCase) => timedDbProp("SecondSaveIsNop", uc) {
+  lazy val SecondSaveIsNopP = forAll((uc: UseCase) => timedDbProp("SecondSaveIsNop", uc) {
     val cp1 = saveAndLoad(uc)
     val (save2, diffs) = collectTableDiffs {save(cp1.uc, Some(cp1))}
     val tableChanges = diffs.filterNot {case (_, diff) => diff == 0}
@@ -75,11 +75,8 @@ class UseCaseLaws extends FunSuite with TestDatabaseSupport with Checkers {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  def save(uc: UseCase, prev: Option[UseCaseSaveCheckpoint]): Option[UseCaseSaveCheckpoint] =
-    UseCasePersistence.save(uc, prev, dao)
-
-  def load(ucRev: UseCaseRev) =
-    Locks.useCase.read(ucRev)(UseCasePersistence.load(ucRev, dao, _))
+  val load = loadUseCase _
+  def save(uc: UseCase, prev: Option[UseCaseSaveCheckpoint], projectId: => ProjectId = newProjectId()) = saveUseCase(uc, prev, projectId)
 
   def saveAndLoad(uc: UseCase, prev: Option[UseCaseSaveCheckpoint] = None) =
     load(save(uc, prev).getOrElse(prev.get).rec)
@@ -89,8 +86,11 @@ class UseCaseLaws extends FunSuite with TestDatabaseSupport with Checkers {
   // Each check pass will run in its own transaction
   override val wrapTestsInTransaction = false
 
-  implicit lazy val arbUseCase: Arbitrary[UseCase] = Arbitrary(useCaseGen(Defaults.FieldList.value))
-  implicit lazy val arbUseCaseMutators: Arbitrary[List[UseCaseMutator]] = Arbitrary(Gen.listOfN(mutationsPerRun, useCaseMutator))
+  implicit lazy val arbUseCase: Arbitrary[UseCase] =
+    Arbitrary(useCaseGen(Defaults.fieldList.value, (1:Short).tag[UseCaseNumberTag]))
+
+  implicit lazy val arbUseCaseMutators: Arbitrary[List[UseCaseMutator]] =
+    Arbitrary(Gen.listOfN(mutationsPerRun, useCaseMutator))
 
   def all(ps: Seq[Prop]) = Prop.all(ps: _*)
 

@@ -57,13 +57,18 @@ object JsExt {
     override def toJsCmd = s"$$('#${id}')"
   }
 
-  /** A JQuery query for a given expression. ie. `$(expr)` */
+  /**
+   * A JQuery query for a given expression.
+   *
+   * `JqExpr("body")` yields `$("body")`
+   * `JqExpr(<p class="yay">hello</p>)` yields `$("<p class=\"yay\">hello</p>")`
+   */
   class JqExpr private(expr: String) extends JsExp {
     override def toJsCmd = s"$$(${expr})"
   }
   object JqExpr extends HtmlFixer {
     def apply(expr: String): JqExpr = new JqExpr(expr.encJs)
-    def apply(content: NodeSeq): JqExpr = new JqExpr(fixHtmlFunc("inline", content) { str => str })
+    def apply(content: NodeSeq): JqExpr = new JqExpr(fixHtmlFunc("inline", content)(identity))
   }
 
   /**
@@ -73,7 +78,7 @@ object JsExt {
    */
   case class JqHtml(content: NodeSeq) extends JsMethod {
     override val toJsCmd =
-      "html(" + fixHtmlFunc("inline", content) { str => str } + ")"
+      "html(" + fixHtmlFunc("inline", content)(identity) + ")"
   }
 
   /**
@@ -83,7 +88,7 @@ object JsExt {
    */
   case class JqAfter(content: NodeSeq) extends JsMethod {
     override val toJsCmd =
-      "after(" + fixHtmlFunc("inline", content) { str => str } + ")"
+      "after(" + fixHtmlFunc("inline", content)(identity) + ")"
   }
 
   /**
@@ -93,7 +98,7 @@ object JsExt {
    */
   case class JqBefore(content: NodeSeq) extends JsMethod {
     override val toJsCmd =
-      "before(" + fixHtmlFunc("inline", content) { str => str } + ")"
+      "before(" + fixHtmlFunc("inline", content)(identity) + ")"
   }
 
   /**
@@ -103,7 +108,7 @@ object JsExt {
    */
   case class JqAppend(content: NodeSeq) extends JsMethod {
     override val toJsCmd =
-      "append(" + fixHtmlFunc("inline", content) { str => str } + ")"
+      "append(" + fixHtmlFunc("inline", content)(identity) + ")"
   }
 
   /**
@@ -113,7 +118,7 @@ object JsExt {
    */
   case class JqPrepend(content: NodeSeq) extends JsMethod {
     override val toJsCmd =
-      "prepend(" + fixHtmlFunc("inline", content) { str => str } + ")"
+      "prepend(" + fixHtmlFunc("inline", content)(identity) + ")"
   }
 
   /**
@@ -218,15 +223,20 @@ object JsExt {
     protected def go(data: JsExp): JsCmd = JsCmds.Run(s"${jsFirstHalf}${data.toJsCmd})")
   }
 
-  /** Invokes a JavaScript trigger with JSON data. */
+  /** Invokes a JavaScript trigger that expects JSON data. */
   case class JsJsonTrigger[T <: AnyRef](triggerName: String) extends JsTrigger(triggerName) {
     def trigger(data: T)(implicit jsonFormats: Formats) = go(JE.JsRaw(jsonWrite(data)))
   }
 
-  /** Invokes a JavaScript trigger with textual data. */
-  case class JsTextTrigger[T <: AnyRef](triggerName: String) extends JsTrigger(triggerName) {
+  /** Invokes a JavaScript trigger that expects textual data. */
+  case class JsTextTrigger(triggerName: String) extends JsTrigger(triggerName) {
     def trigger(text: String): JsCmd = go(JE.Str(text))
     def trigger(text: Cord): JsCmd = go(text)
+  }
+
+  /** Invokes a JavaScript trigger that expects a string of HTML. */
+  case class JsHtmlTrigger(triggerName: String) extends JsTrigger(triggerName) {
+    def trigger(data: NodeSeq): JsCmd = go(JqExpr(data))
   }
 
   /** Sets a global JS variable to the value denoted by a given JS expression. */

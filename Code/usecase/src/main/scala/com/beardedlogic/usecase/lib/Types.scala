@@ -1,13 +1,13 @@
 package com.beardedlogic.usecase
 package lib
 
-import java.lang.{Long => JLong}
+import java.lang.{Long => JLong, Short => JShort}
 import net.liftweb.common.Box
 import net.liftweb.http.js.{JsCmd, JsCmds}
 import scalaz.{LensFamily, Monoid, Name, Value}
 import change.{Change, ChangeResultF}
 import field.Field
-import db.{UserRegistrationInfo, UserDescriptor, FieldKeyRec, TextRev, UseCaseRev}
+import db.{UseCaseIdent, UserRegistrationInfo, UserDescriptor, FieldKeyRec, TextRev, UseCaseRev}
 import util.{AppliedLens, BiMap}
 
 /**
@@ -18,7 +18,7 @@ object Types {
   // -------------------------------------------------------------------------------------------------------------------
   // Type tags
 
-  sealed trait TypeTag[B]
+  trait TypeTag[B]
   // type Tagged[T <: TypeTag[_]] = {type Tag = T}
   type @@[O, T <: TypeTag[_]] = O with T
 
@@ -26,6 +26,9 @@ object Types {
   // String tags
 
   implicit def taggedStringOrdering[T <: TypeTag[String]] = implicitly[Ordering[String]].asInstanceOf[Ordering[String @@ T]]
+
+  sealed trait JsonTag[T] extends TypeTag[String]
+  type Json[T] = String @@ JsonTag[T]
 
   /** Indicates that references to steps are in normalised form. Eg. [D.112] instead of [3.0.1] */
   sealed trait TextWithNormalisedRefsTag extends TypeTag[String]
@@ -46,14 +49,6 @@ object Types {
   sealed trait LabelTag extends TypeTag[String]
   type LabelStr = String @@ LabelTag
 
-  /** An ExternalID string for a UseCaseIdentId */
-  sealed trait UseCaseIdentEITag extends TypeTag[String]
-  type UseCaseIdentEI = String @@ UseCaseIdentEITag
-
-  /** An ExternalID string for a TextRevId */
-  sealed trait TextRevEITag extends TypeTag[String]
-  type TextRevEI = String @@ TextRevEITag
-
   implicit class StringTypeExt(val s: String) extends AnyVal {
     def hasNormalisedRefs = s.asInstanceOf[TextWithNormalisedRefs]
     def asLocalStepId = s.asInstanceOf[LocalStepId]
@@ -72,6 +67,27 @@ object Types {
   }
 
   // -------------------------------------------------------------------------------------------------------------------
+  // Short tags
+
+  implicit class JShortTypeExt(val x: JShort) extends AnyVal {
+    def tag[T <: TypeTag[Short]] = x.asInstanceOf[JShort @@ T]
+  }
+  implicit class ShortTypeExt(val x: scala.Short) extends AnyVal {
+    def tag[T <: TypeTag[Short]] = JShort.valueOf(x).tag[T]
+  }
+  implicit class ShortOptionExt(val x: Option[Short]) extends AnyVal {
+    def tag[T <: TypeTag[Short]] = x.map(_.tag[T])
+  }
+  implicit class ShortBoxExt(val x: Box[scala.Short]) extends AnyVal {
+    def tag[T <: TypeTag[Short]] = x.map(_.tag[T])
+  }
+
+  /** Marks a Short value as corresponding to `usecase.number`. */
+  sealed trait UseCaseNumberTag extends TypeTag[Short]
+  type UseCaseNumber = JShort @@ UseCaseNumberTag
+  @inline final implicit def UcIdentToUcN(u: UseCaseIdent): UseCaseNumber = u.number
+
+  // -------------------------------------------------------------------------------------------------------------------
   // Long tags
 
   implicit class JLongTypeExt(val x: JLong) extends AnyVal {
@@ -87,22 +103,10 @@ object Types {
     def tag[T <: TypeTag[Long]] = x.map(_.tag[T])
   }
 
-  sealed trait ExteralisableIdTag extends TypeTag[Long] {
-    type EITag <: TypeTag[String]
-    type EI = String @@ EITag
-  }
-
   /** Marks a Long value as corresponding to `field_key.id`. */
   sealed trait FieldKeyIdTag extends TypeTag[Long]
   type FieldKeyId = JLong @@ FieldKeyIdTag
   @inline final implicit def FieldKeyToId(r: FieldKeyRec): FieldKeyId = r.id
-
-  /** Marks a Long value as corresponding to `usecase.id` and `usecase_rev.ident_id`. */
-  sealed trait UseCaseIdentIdTag extends ExteralisableIdTag {
-    override type EITag = UseCaseIdentEITag
-  }
-  type UseCaseIdentId = JLong @@ UseCaseIdentIdTag
-  @inline final implicit def UseCaseRevToIdentId(r: UseCaseRev): UseCaseIdentId = r.identId
 
   /** Marks a Long value as corresponding to `usecase_rev.id`. */
   sealed trait UseCaseRevIdTag extends TypeTag[Long]
@@ -114,18 +118,52 @@ object Types {
   type TextIdentId = JLong @@ TextIdentIdTag
   @inline final implicit def TextRevToIdentId(r: TextRev): TextIdentId = r.identId
 
-  /** Marks a Long value as corresponding to `text_rev.id`. */
-  sealed trait TextRevIdTag extends ExteralisableIdTag {
-    override type EITag = TextRevEITag
-  }
-  type TextRevId = JLong @@ TextRevIdTag
-  @inline final implicit def TextRevToId(r: TextRev): TextRevId = r.id
-
   /** Marks a Long value as corresponding to `usr.id`. */
   sealed trait UserIdTag extends TypeTag[Long]
   type UserId = JLong @@ UserIdTag
   @inline final implicit def UserToId1(a: UserDescriptor): UserId = a.id
   @inline final implicit def UserToId2(a: UserRegistrationInfo): UserId = a.id
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Externalisable ID tags
+
+  sealed trait ExteralisableIdTag extends TypeTag[Long] {
+    type EITag <: TypeTag[String]
+    type EI = String @@ EITag
+  }
+
+  /** Marks a Long value as corresponding to `usecase.id` and `usecase_rev.ident_id`. */
+  sealed trait UseCaseIdentIdTag extends ExteralisableIdTag {
+    override type EITag = UseCaseIdentEITag
+  }
+  sealed trait UseCaseIdentEITag extends TypeTag[String]
+  type UseCaseIdentId = JLong @@ UseCaseIdentIdTag
+  type UseCaseIdentEI = String @@ UseCaseIdentEITag
+  @inline final implicit def UseCaseRevToIdentId(r: UseCaseRev): UseCaseIdentId = r.identId
+  @inline final implicit def UseCaseIdentToIdentId(i: UseCaseIdent): UseCaseIdentId = i.identId
+
+  /** Marks a Long value as corresponding to `text_rev.id`. */
+  sealed trait TextRevIdTag extends ExteralisableIdTag {
+    override type EITag = TextRevEITag
+  }
+  sealed trait TextRevEITag extends TypeTag[String]
+  type TextRevId = JLong @@ TextRevIdTag
+  type TextRevEI = String @@ TextRevEITag
+  @inline final implicit def TextRevToId(r: TextRev): TextRevId = r.id
+
+  /** Marks a Long value as corresponding to `project.id`. */
+  trait ProjectIdTag extends ExteralisableIdTag {
+    override type EITag = ProjectEITag
+  }
+  sealed trait ProjectEITag extends TypeTag[String]
+  type ProjectId = JLong @@ ProjectIdTag
+  type ProjectEI = String @@ ProjectEITag
+
+  object AutoExternaliseIds {
+    implicit def autoExternaliseId_P(id: ProjectId): ProjectEI = ExternalId.Project(id)
+    implicit def autoExternaliseId_UC(id: UseCaseIdentId): UseCaseIdentEI = ExternalId.UseCase(id)
+    implicit def autoExternaliseId_TR(id: TextRevId): TextRevEI = ExternalId.TextRev(id)
+  }
 
   // -------------------------------------------------------------------------------------------------------------------
   // Typedefs

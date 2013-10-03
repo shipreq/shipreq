@@ -7,11 +7,12 @@ import Types._
 
 object ExternalId {
   // util.Random.shuffle(x.toList).mkString
-  final val UseCase = new ExternalId[UseCaseIdentIdTag]("0atxlQwnj7y3zFZNVBqJ42AcriYEeMu8SdU91HgfTsb6GhmWkX5KopCIRLvOPD")
-  final val TextRev = new ExternalId[TextRevIdTag]("eBM0xKQuO2Zy43AnWGPmkbXN9HprwV7ItSi1CdETv6D5UYRscjJzhFgoLflqa8")
+  final val Project = new ExternalIdConverter[ProjectIdTag]("F4XBvt0i2cnHQ6dIaAomLjPE3MOrsbxReq1W9pgZyzNY7SkGf5UlwJCTKuVD8h")
+  final val UseCase = new ExternalIdConverter[UseCaseIdentIdTag]("0atxlQwnj7y3zFZNVBqJ42AcriYEeMu8SdU91HgfTsb6GhmWkX5KopCIRLvOPD")
+  final val TextRev = new ExternalIdConverter[TextRevIdTag]("eBM0xKQuO2Zy43AnWGPmkbXN9HprwV7ItSi1CdETv6D5UYRscjJzhFgoLflqa8")
 }
 
-final class ExternalId[Tag <: ExteralisableIdTag](val dictionaryStr: String) {
+final class ExternalIdConverter[Tag <: ExteralisableIdTag](val dictionaryStr: String) {
   type Id = JLong @@ Tag
   type EI = Tag#EI
 

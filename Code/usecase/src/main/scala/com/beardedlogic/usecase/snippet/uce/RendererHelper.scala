@@ -9,6 +9,7 @@ private [uce] trait RendererHelper {
   def modifyUC: (UseCase => UcUpdateResult) => JsCmd
 
   @inline final def uc = state.uc
+  @inline final def ucNumber = uc.number
   @inline final def uch = uc.header
   @inline final def fields = uc.fields
   @inline final implicit def fieldValues = uc.fieldValues

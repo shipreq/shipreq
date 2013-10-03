@@ -12,8 +12,9 @@ import slick.session.{Database, Session}
 import scala.util.Random
 import Q.interpolation
 
-import db.{Dao, DaoProvider, DB}
-import lib.DI
+import db.{DaoS, DaoT, DaoProvider, DB, UseCaseRev}
+import com.beardedlogic.usecase.lib.{Locks, UseCasePersistence, UseCase, DI, UseCaseSaveCheckpoint}
+import lib.Types._
 
 object TestDB {
 
@@ -64,7 +65,7 @@ trait TestDatabaseSupport extends TestHelpers with Logger {
       val oldDaoVar = this.daoVar
       try {
         this.sessionVar = s
-        this.daoVar = new Dao(s)
+        this.daoVar = db.Shim.newDaoT(s)
         s.conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE)
         DI.DaoProvider.doWith(testDaoProvider) {
           fn
@@ -87,12 +88,12 @@ trait TestDatabaseSupport extends TestHelpers with Logger {
     sessionVar
   }
 
-  var daoVar: Dao = null
+  var daoVar: DaoT = null
   def dao = daoVar
 
   def withNewTransaction[U](fn: => U): U = withTransactionInternal(true, true)(fn)
 
-  def rollbackAfter[U](fn: => U): U = dao.withTransaction {
+  def rollbackAfter[U](fn: => U): U = dao.session.withTransaction {
     val result = fn
     dao.session.rollback()
     result
@@ -102,12 +103,15 @@ trait TestDatabaseSupport extends TestHelpers with Logger {
 
   def randomId = -TestDB.Random.nextLong().abs
 
+  def randomStr: String = TestDB.Random.nextString(32)
+
   def countRowsIn(table: Table) = Q.queryNA[Int](s"select count(*) from ${table.name}").first
 
   sealed trait Table {def name: String; override def toString = name}
   object Tables {
     object FieldKeyType extends Table {def name = "field_key_type"}
     object FieldKey extends Table {def name = "field_key"}
+    object Project extends Table {def name = "project"}
     object Usecase extends Table {def name = "usecase"}
     object UsecaseRev extends Table {def name = "usecase_rev"}
     object Text extends Table {def name = "text"}
@@ -180,10 +184,45 @@ trait TestDatabaseSupport extends TestHelpers with Logger {
     val script = new SqlScript(sqlFull, dbSupport)
     script.execute(dbSupport.getJdbcTemplate)
   }
+
+  /**
+   * When a new UC is saved it gets given the number available UC number. Use this to correct the UC number after the
+   * fact.
+   *
+   * @param n The new UC number.
+   */
+  def forceUcNumber(cp: UseCaseSaveCheckpoint, n: Int): UseCaseSaveCheckpoint = {
+    val ucn = n.toShort.tag[UseCaseNumberTag]
+    val uc_ = cp.uc.copy(number = ucn)
+    val rec_ = cp.rec.copy(ident = cp.rec.ident.copy(number = ucn))
+    sqlu"UPDATE usecase set number=${ucn.toShort} where id = ${rec_.ident.identId.toLong}".execute
+    cp.copy(uc = uc_, rec = rec_)
+  }
+
+  def newProjectId(userId: UserId = getOrCreateUserId): ProjectId =
+    dao.createProject(userId, randomStr).gimme
+
+  def getOrCreateUserId(): UserId =
+    sql"select id from usr where username is not null".as[Long].firstOption.map(_.tag[UserIdTag]).getOrElse(newUserId)
+
+  def newUserId(): UserId =
+    sql"INSERT INTO usr(username, email, password, password_salt, password_changed_at, confirmation_sent_at, confirmed_at) VALUES($randomStr,$randomStr,0,0,NOW(),NOW(),NOW()) RETURNING id".
+    as[Long].first.tag[UserIdTag]
+
+  def saveUseCase(uc: UseCase, prev: Option[UseCaseSaveCheckpoint], projectId: => ProjectId = newProjectId()): Option[UseCaseSaveCheckpoint] = prev match {
+    case Some(cp) => UseCasePersistence.save(uc, cp, dao)
+    case None =>
+      val ucr = dao.createUseCaseIdentAndRev1(projectId, uc.header)
+      val someCp = Some(loadUseCase(ucr))
+      saveUseCase(uc, someCp, projectId).orElse(someCp)
+  }
+
+  def loadUseCase(ucRev: UseCaseRev) =
+    Locks.useCase.read(ucRev)(UseCasePersistence.load(ucRev, dao, _))
+
 }
 
-class TestDaoProvider(dao: Dao) extends DaoProvider {
-  override def get = dao
-  override def withSession[T](block: Dao => T): T = block(dao)
-  override def withTransaction[T](block: Dao => T): T = block(dao)
+class TestDaoProvider(dao: DaoT) extends DaoProvider {
+  override def withSession[T](block: DaoS => T): T = block(dao)
+  override def withTransaction[T](block: DaoT => T): T = block(dao)
 }

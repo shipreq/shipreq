@@ -4,8 +4,19 @@ package db
 import org.joda.time.DateTime
 import scala.reflect.ClassTag
 import lib.Types._
-import lib.UseCaseHeader
+import lib.UcChangeDomain
 import lib.field._
+
+// ===================================================================================================================
+// User
+
+case class UserDescriptor(id: UserId, username: String, email: String)
+
+case class UserRegistrationInfo(
+  id: UserId,
+  confirmationToken: Option[String],
+  confirmationSentAt: Option[DateTime],
+  confirmedAt: Option[DateTime])
 
 // ===================================================================================================================
 // Fields
@@ -29,6 +40,18 @@ object FieldListRec {
   def fromFields(fields: List[Field]) = apply(fields map (_.rec))
 }
 
+// ===================================================================================================================
+// UC & Text
+
+case class UseCaseIdent(identId: UseCaseIdentId, number: UseCaseNumber)
+
+case class UseCaseRev(ident: UseCaseIdent, rev: Short, id: UseCaseRevId, header: UseCaseHeader) {
+  @inline final def identId = ident.identId
+}
+
+case class UseCaseHeader(title: String)
+object UseCaseHeader extends UcChangeDomain
+
 case class TextRev(identId: TextIdentId, rev: Short, id: TextRevId, text: TextWithNormalisedRefs)
 
 case class UcFieldTextWithFK(fkId: FieldKeyId, rel: UcFieldText) {
@@ -45,12 +68,7 @@ case class UcFieldText(label: Option[String], parentId: Option[TextRevId], index
   @inline final def text = textRev.text
 }
 
-case class UseCaseRev(identId: UseCaseIdentId, rev: Short, id: UseCaseRevId, header: UseCaseHeader)
+// ===================================================================================================================
+// Project
 
-case class UserDescriptor(id: UserId, username: String, email: String)
-
-case class UserRegistrationInfo(
-  id: UserId,
-  confirmationToken: Option[String],
-  confirmationSentAt: Option[DateTime],
-  confirmedAt: Option[DateTime])
+case class Project(name: String, owner: UserId)

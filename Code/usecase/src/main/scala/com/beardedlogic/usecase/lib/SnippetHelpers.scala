@@ -1,28 +1,47 @@
 package com.beardedlogic.usecase.lib
 
 import scalaz.syntax.monoid._
-import net.liftweb.common.{Failure, Full, Box, Logger, Empty}
+import net.liftweb.common.{ParamFailure, Failure, Full, Box, Logger, Empty}
 import net.liftweb.http.js.{JsCmd, JsExp}
-import net.liftweb.http.{StatefulSnippet, ResponseShortcutException, LiftResponse}
-import net.liftweb.json.{NoTypeHints, Serialization}
+import net.liftweb.http.js.JsCmds.Noop
+import net.liftweb.http.{S, NotFoundResponse, RedirectResponse, StatefulSnippet, ResponseShortcutException, LiftResponse}
+import net.liftweb.json.{NoTypeHints, Serialization, Serializer}
+import net.liftweb.sitemap.Menu
 import net.liftweb.util.Mailer.{MailTypes, From, Subject}
 import net.liftweb.util.{CssSel, Mailer}
 import scala.xml.{Elem, Text, NodeSeq, UnprefixedAttribute}
 
-import com.beardedlogic.usecase.app.AppConfig
-import com.beardedlogic.usecase.lib.security.Oshiro
-import com.beardedlogic.usecase.snippet.Notices
+import com.beardedlogic.usecase.app.{AppConfig, AppSiteMap}
+import com.beardedlogic.usecase.db.UserDescriptor
+import com.beardedlogic.usecase.snippet.{AlertTypeSuccess, AlertTypeError, Notices}
 import com.beardedlogic.usecase.util.HttpResponses.ShouldNeverHappenResponse
 import com.beardedlogic.usecase.util.JsExt._
 import com.beardedlogic.usecase.util.ErrorMessages
-import Types.JsCmdMonoid
-import SnippetHelpers._
+import AppSiteMap.Implicits._
+import Types._
+
+// TODO Needs rework between static & stateful
 
 object SnippetHelpers extends StaticSnippetHelpers {
   final val DefaultAjaxErrorId = "ajaxErr"
+
+  final val JqExprJsonSerializer: Serializer[JqExpr] = new Serializer[JqExpr] {
+    import net.liftweb.json._
+    def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), JqExpr] = ???
+    def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
+      case expr: JqExpr => JString(expr.toJsCmd)
+    }
+  }
+
+  final val DefaultJsonFormat = Serialization.formats(NoTypeHints) + JqExprJsonSerializer
 }
 
-trait StaticSnippetHelpers {
+trait StaticSnippetHelpers extends Logger {
+
+  def redirectHome                                      : Nothing = S.redirectTo(AppSiteMap.HomeRelativeUrl)
+  def redirectTo(page: Menu)                            : Nothing = S.redirectTo(page.relativeUrl)
+  def redirectTo(page: Menu.Menuable)                   : Nothing = S.redirectTo(page.relativeUrl)
+  def redirectTo[T](page: Menu.ParamMenuable[T])(arg: T): Nothing = S.redirectTo(page.relativeUrl(arg))
 
   def respondImmediately(response: LiftResponse): Nothing = throw ResponseShortcutException.shortcutResponse(response)
 
@@ -30,7 +49,21 @@ trait StaticSnippetHelpers {
 
   def shouldNeverHappen_!(msg: String) = respondImmediately(ShouldNeverHappenResponse(msg))
 
-  def loggedInUser = Oshiro.loggedInUser
+  def requireResultO_![T](o: Option[T], fallbackErrorReaction: => Nothing = redirectHome): T = o match {
+    case Some(t) => t
+    case None    => fallbackErrorReaction
+  }
+
+  def requireResult_![T](box: Box[T], fallbackErrorReaction: => Nothing = redirectHome): T = box match {
+    case Full(t)                                 => t
+    case Empty                                   => fallbackErrorReaction
+    case ParamFailure(_, _, _, r: LiftResponse)  => respondImmediately(r)
+    case ParamFailure(_, _, _, m: Menu)          => redirectTo(m)
+    case ParamFailure(_, _, _, m: Menu.Menuable) => redirectTo(m)
+    case ParamFailure(_, _, _, NotFoundResponse) => respondImmediately(NotFoundResponse())
+    case _                                       => error(s"Don't know how to react to $box"); shouldNeverHappen_!
+  }
+
 }
 
 /**
@@ -39,6 +72,7 @@ trait StaticSnippetHelpers {
  * @since 11/06/2013
  */
 trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with Logger {
+  import SnippetHelpers._
 
   @inline implicit final def jsExpToJsCmd(in: JsExp) = in.cmd
 
@@ -46,7 +80,18 @@ trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with Logger 
   @inline implicit def ConvertSeqStringToNodes(i: Seq[String]) = i.map(Text(_))
   @inline implicit def OptionToBox[T](option: Option[T]): Box[T] = Box(option)
 
-  protected implicit lazy val jsonFormats = Serialization.formats(NoTypeHints)
+  protected implicit lazy val jsonFormats = DefaultJsonFormat
+
+  def toJson[T <: AnyRef](data: T): Json[T] = Serialization.write(data).tag[JsonTag[T]]
+
+  final def currentUser_!(): UserDescriptor = securityProvider.loggedInUser match {
+    case Some(user) => user
+    case None => respondImmediately(RedirectResponse(AppSiteMap.Login.relativeUrl))
+  }
+
+  @inline final def currentUserId_!() : UserId = currentUser_!.id
+
+  def requireLogin_!(): Unit = currentUser_!
 
   // -------------------------------------------------------------------------------------------------------------------
 
@@ -57,30 +102,48 @@ trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with Logger 
   def sendMail(mail: Mail, additional: MailTypes*): Unit = sendMail(mail._1, (mail._2 ++ additional): _*)
 
   // -------------------------------------------------------------------------------------------------------------------
-  // Error propagation
+  // Error propagation and Alerts
 
-  def jsClearError(id: String = DefaultAjaxErrorId): JsCmd = JqId(id) ~> JqRemove
+  sealed trait AlertIdTag extends TypeTag[String]
+  type AlertId = String @@ AlertIdTag
 
-  def jsShowError(errMsg: NodeSeq, id: String = DefaultAjaxErrorId): JsCmd =
-    jsClearAndShowError(id, Notices.renderSingle(Notices.ErrorClasses, errMsg))
+  @inline private def defaultErrAlertId = DefaultAjaxErrorId.tag[AlertIdTag]
 
-  def jsShowErrors(errMsgs: Seq[NodeSeq], id: String = DefaultAjaxErrorId): JsCmd = errMsgs match {
-    case Nil                => jsClearError(id)
-    case singleError :: Nil => jsShowError(singleError, id)
-    case _                  => jsClearAndShowError(id, Notices.renderMsgs(Notices.ErrorClasses, errMsgs).asInstanceOf[Elem])
-  }
+  @inline private def appendAlert(alert: NodeSeq): JsCmd =
+    JqExpr(alert) ~> JqAppendTo("#notices") ~> JqHighlight()
 
-  private def jsClearAndShowError(id: String, jsErrNode: => Elem): JsCmd =
-    jsClearError(id) & {
-      val errNode = jsErrNode % new UnprefixedAttribute("id", id, xml.Null)
-      JqExpr(errNode) ~> JqAppendTo("#notices") ~> JqHighlight()
+  private def applyAlertId(alert: NodeSeq)(implicit id: AlertId): NodeSeq =
+    if (id eq null) alert
+    else alert match {
+      case NodeSeq.Empty => NodeSeq.Empty
+      case e: Elem => e % new UnprefixedAttribute("id", id, xml.Null)
+      case _ => warn("Don't know how to add id to: " + alert.getClass); alert
     }
 
-  def jsPossibleError[T](box: Box[T], id: String = DefaultAjaxErrorId)(successJs: T => JsCmd): JsCmd = box match {
-    case Full(v)            => jsClearError() |+| successJs(v)
-    case Empty              => jsShowError(ErrorMessages.Generic, id)
-    case Failure(err, _, _) => jsShowError(err, id)
+  @inline private def jsClearAndShowError(alert: => NodeSeq)(implicit id: AlertId): JsCmd =
+    jsClearError |+| appendAlert(applyAlertId(alert))
+
+  def jsClearError(implicit id: AlertId = defaultErrAlertId): JsCmd =
+    JqId(id) ~> JqRemove
+
+  def jsShowError(errMsg: NodeSeq)(implicit id: AlertId = defaultErrAlertId): JsCmd =
+    jsClearAndShowError(Notices.renderSingle(AlertTypeError, errMsg))
+
+  def jsShowErrors(errMsgs: Seq[NodeSeq])(implicit id: AlertId = defaultErrAlertId): JsCmd = errMsgs match {
+    case Nil                => jsClearError
+    case singleError :: Nil => jsShowError(singleError)
+    case _                  => jsClearAndShowError(Notices.renderMsgs(AlertTypeError, errMsgs))
   }
+
+  def jsPossibleError[T](box: Box[T])(successJs: T => JsCmd, failureJs: => JsCmd = Noop)(implicit id: AlertId = defaultErrAlertId): JsCmd =
+    box match {
+      case Full(v)            => jsClearError |+| successJs(v)
+      case Empty              => jsShowError(ErrorMessages.Generic) |+| failureJs
+      case Failure(err, _, _) => jsShowError(err) |+| failureJs
+    }
+
+  def jsShowAlertSuccess(content: NodeSeq)(implicit id: AlertId = null): JsCmd =
+    appendAlert(applyAlertId(Notices.renderSingle(AlertTypeSuccess, content)))
 }
 
 /**

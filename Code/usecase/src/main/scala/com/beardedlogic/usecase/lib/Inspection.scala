@@ -1,13 +1,13 @@
 package com.beardedlogic.usecase
 package lib
 
-import java.lang.{Long => JLong}
+import java.lang.{Long => JLong, Short => JShort}
 import org.apache.commons.lang3.StringEscapeUtils.escapeJava
 import scala.reflect.runtime.universe.{TypeTag => ReflectTypeTag}
 import scalaz.{Cord, Show, Name, Need, Value}
 import scalaz.syntax.show._
 
-import db.{FieldKeyType, FieldKeyRec}
+import db.{UseCaseIdent, UseCaseHeader, FieldKeyType, FieldKeyRec}
 import Types._
 import field._
 import text._
@@ -32,6 +32,7 @@ object Inspection {
   private val `)`: Cord = ")"
   private val nil: Cord = "Nil"
   private val eol: Cord = "\n"
+  private val `:Short)`: Cord = ":Short)"
 
   private implicit class StringExt(val s: String) extends AnyVal {
     @inline def <>(body: Cord): Cord = (s: Cord) <> body
@@ -57,6 +58,8 @@ object Inspection {
   implicit def optionInstance[A: Show]: Show[Option[A]] = scalaz.std.option.optionShow
 
   implicit val str: Show[String] = Show.show(`"` ++ escapeJava(_) ++ `"`)
+  implicit val jlong: Show[JLong] = Show.show(_.toString)
+  implicit val jshort: Show[JShort] = Show.show(`(` ++ _.toString ++ `:Short)`)
 
   implicit def listShow[A: Show]: Show[List[A]] =
     Show.show(l =>
@@ -80,22 +83,25 @@ object Inspection {
 
   private def getTagName(tag: ReflectTypeTag[_]): String = tag.tpe.toString.replaceFirst("^.+\\.","")
 
-  private def taggedStr[Tag <: TypeTag[String]](implicit tt: ReflectTypeTag[Tag]): Show[String @@ Tag] = {
+  private def taggedType[Base, TagTgt, Tag <: TypeTag[TagTgt]](implicit tt: ReflectTypeTag[Tag], baseShow: Show[Base]): Show[Base @@ Tag] = {
     val tagClass = getTagName(tt)
     val tagSuffix: Cord = s".tag[$tagClass]"
-    Show.show(s => str.show(s) ++ tagSuffix)
+    Show.show(s => {
+      val b: Base = s
+      baseShow.show(b) ++ tagSuffix
+    })
   }
 
-  private def taggedLong[Tag <: TypeTag[Long]](implicit tt: ReflectTypeTag[Tag]): Show[JLong @@ Tag] = {
-    val tagClass = getTagName(tt)
-    val tagSuffix: Cord = s".tag[$tagClass]"
-    Show.show(s => s.toString +: tagSuffix)
-  }
+  private def taggedStr[Tag <: TypeTag[String]](implicit tt: ReflectTypeTag[Tag]): Show[String @@ Tag] = taggedType[String, String, Tag]
+  private def taggedShort[Tag <: TypeTag[Short]](implicit tt: ReflectTypeTag[Tag]): Show[JShort @@ Tag] = taggedType[JShort, Short, Tag]
+  private def taggedLong[Tag <: TypeTag[Long]](implicit tt: ReflectTypeTag[Tag]): Show[JLong @@ Tag] = taggedType[JLong, Long, Tag]
 
   implicit val textWithNRefs   : Show[TextWithNormalisedRefs] = taggedStr[TextWithNormalisedRefsTag]
   implicit val localTextFieldId: Show[LocalTextFieldId]       = taggedStr[LocalTextFieldIdTag]
   implicit val localStepId     : Show[LocalStepId]            = taggedStr[LocalStepIdTag]
   implicit val labelStr        : Show[LabelStr]               = taggedStr[LabelTag]
+
+  implicit val useCaseNumber: Show[UseCaseNumber] = taggedShort[UseCaseNumberTag]
 
   implicit val fieldKeyId : Show[FieldKeyId]     = taggedLong[FieldKeyIdTag]
   implicit val ucIdentId  : Show[UseCaseIdentId] = taggedLong[UseCaseIdentIdTag]
@@ -153,10 +159,12 @@ object Inspection {
   // ===================================================================================================================
   // Use Case
 
-  implicit val uchShow: Show[UseCaseHeader] = "UseCaseHeader" <*> (x => x.number.show ++> x.title.show)
+  implicit val uciShow: Show[UseCaseIdent] = "UseCaseIdent" <*> (x => x.identId.show ++> x.number.show)
 
-  implicit val ucShow: Show[UseCase] = "UseCase.shortcut" <*> (x => {
+  implicit val uchShow: Show[UseCaseHeader] = "UseCaseHeader" <*> (_.title.show)
+
+  implicit val ucShow: Show[UseCase] = "UseCase.as" <*> (x => {
     val fvTuples = x.fields.map(f => f.show ++ `~>` ++ x.fieldValues(f).show ++ eol)
-    x.header.show ++ eol ++> fvTuples.show ++> x.stepsAndLabels.show
+    x.number.show ++> x.header.show ++ eol ++> fvTuples.show ++> x.stepsAndLabels.show
   })
 }

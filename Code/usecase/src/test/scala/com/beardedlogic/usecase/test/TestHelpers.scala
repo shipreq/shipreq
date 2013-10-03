@@ -14,7 +14,7 @@ import org.scalatest.matchers.{Matcher, MatchResult}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.prop.Tables.Table
 import net.liftweb.common.{Failure, Box, Empty}
-import net.liftweb.http.{S, LiftSession, LiftRules}
+import net.liftweb.http.{ResponseShortcutException, S, LiftSession, LiftRules}
 import net.liftweb.http.js.JsCmd
 import net.liftweb.mocks.MockHttpServletRequest
 import net.liftweb.mockweb.MockWeb
@@ -29,6 +29,7 @@ import lib.field._
 import lib.text._
 import lib._
 import db._
+import security.SecurityProvider
 import util._
 
 import Types._
@@ -37,6 +38,11 @@ import LensFns._
 import NodeUtils._
 import TreeOps._
 import Changes.ExistingStepLabelsChanged
+
+case class FixedUser(ud: Option[UserDescriptor]) extends SecurityProvider {
+  override def loggedInUser = ud
+  def install[R](fn: => R): R = DI.SecurityProvider.doWith(this)(fn)
+}
 
 /**
  * @since 30/04/2013
@@ -66,6 +72,9 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
     when(m.asOnlyChange).thenReturn(NonEmptyList(m))
     m
   }
+
+  val UD1 = UserDescriptor(5001.tag[UserId], "U1", "U1@TEST")
+  val UD2 = UserDescriptor(5002.tag[UserId], "U2", "U2@TEST")
 
   val X0 = "X0".asLocalStepId
   val X1 = "X1".asLocalStepId
@@ -134,6 +143,9 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
   lazy val ECF = ExceptionCourseField(FieldKeyRec(66.tag[FieldKeyIdTag], ExceptionCourseFieldDefinition.fieldKeyType, ExceptionCourseFieldDefinition.fieldKeyData))
 
   // -------------------------------------------------------------------------------------------------------------------
+
+  def withUserLoggedIn[R](loggedInUser: Option[UserDescriptor])(fn: => R): R =
+    FixedUser(loggedInUser).install(fn)
 
   def mockSavedStepsFor(tree: StepTree): SavedSteps = {
     val savedSteps = new BiMapBuilder[TextIdentId, LocalStepId]
@@ -213,6 +225,15 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
   def eventuallyIf(wait: Boolean)(cond: => Any) { if (wait) eventually(cond) else cond }
 
   def any[T](implicit m: Manifest[T]) = org.mockito.Matchers.any(m.runtimeClass.asInstanceOf[Class[T]])
+  def meq[T](v: T) = org.mockito.Matchers.eq(v)
+
+  def countOccurrences(str1: String, str2: String): Int = {
+    @tailrec def count(pos: Int, c: Int): Int = {
+      val idx = str1 indexOf(str2, pos)
+      if (idx == -1) c else count(idx + str2.size, c + 1)
+    }
+    count(0, 0)
+  }
 
   @tailrec final def deepestLast[N <: TreeNodeLike[N]](n: N): N =
     if (n.children.isEmpty) n else deepestLast(n.children.last)
@@ -272,6 +293,12 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
     }
   }
 
+  def assertRedirect(block: => Any): ResponseShortcutException = {
+    val err = intercept[ResponseShortcutException](block)
+    err.redirectTo should not be empty
+    err
+  }
+
   class Timer {
     val start = System.currentTimeMillis
     def elapsedMs = System.currentTimeMillis - start
@@ -290,7 +317,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
     for ((n, i) <- nodes.zipWithIndex) yield n.copy(labelIndex = i)
 
   def assertStepsAndLabelsRegen(uc: UseCase) {
-    uc.stepsAndLabels.value ==== UseCaseFns.generateStepAndLabelBiMap(uc.fieldValues, uc.header).value
+    uc.stepsAndLabels.value ==== UseCaseFns.generateStepAndLabelBiMap(uc).value
   }
 
   def assertUseCasesMatchIgnoringStepsAndLabels(actual: UseCase, expected: UseCase) {
@@ -377,6 +404,13 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
    */
   implicit class MyRichInt(val i: Int) {
     def times(block: => Any) { 1 to i foreach(_ => block) }
+  }
+
+  /**
+   * Extensions for: String
+   */
+  implicit class MyRichString(val self: String) {
+    def occurrences(of: String) = countOccurrences(self, of)
   }
 
   /**
@@ -496,6 +530,13 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
     def openFailure(r: ChangeResultF[_, _]): String = r match {
       case ChangeFailure(err) => err
       case _ => fail(s"ChangeFailure expected. Got: $r")
+    }
+  }
+
+  implicit class CreateProjectResultExt(r: CreateProjectResult) {
+    def gimme: ProjectId = r match {
+      case CreateProjectResult.Success(x) => x
+      case x => fail("Failed to create random project id: " + x)
     }
   }
 }

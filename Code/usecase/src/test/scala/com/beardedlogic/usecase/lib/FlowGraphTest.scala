@@ -23,14 +23,14 @@ class FlowGraphTest extends FunSpec with TestData with PropertyChecks {
 
   implicit def testTreeToDeepZipper(nodes: List[StepNodeWithText]): DeepZipper = {
     val tree = nodes.toStepTree
-    val b = DeepBuilder(nodes.toTextmap(), generateStepAndLabelMap(NCF, tree, UCH))
+    val b = DeepBuilder(nodes.toTextmap(), generateStepAndLabelMap(UCN, NCF, tree))
     b.build(tree.nodes.head, tree.nodes.tail)
   }
 
   def deepZipperFor(t: List[StepNodeWithText]): DeepZipper = {
     val tree = t.toStepTree
     val textmap = t.toTextmap()
-    val b = DeepBuilder(textmap, generateStepAndLabelMap(NCF, tree, UCH))
+    val b = DeepBuilder(textmap, generateStepAndLabelMap(UCN, NCF, tree))
     b.build(tree.nodes.head, tree.nodes.tail)
   }
 

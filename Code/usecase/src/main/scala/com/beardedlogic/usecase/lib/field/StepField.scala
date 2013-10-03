@@ -59,7 +59,7 @@ object StepField {
 abstract class StepField extends Field with StepFieldPersistenceMixin {
   override type Value = StepFieldValue
 
-  def rootLabelPrefix(uch: UseCaseHeader): String
+  def rootLabelPrefix(ucn: UseCaseNumber): String
 
   def sli: StartingLabelIndices
 
@@ -167,7 +167,7 @@ case class NormalCourseField(override val rec: FieldKeyRec) extends StepField {
   import NormalCourseField._
   override val defn = NormalCourseFieldDefinition
   override val empty = StepFieldValue.forTree(this, EmptyTree)
-  override def rootLabelPrefix(uch: UseCaseHeader) = s"${uch.number}."
+  override def rootLabelPrefix(ucn: UseCaseNumber) = s"${ucn}."
   override val sli = StartingRootLabelIndexAt0
   override def prohibitRemoval_?(v: Value, id: LocalStepId) = v.tree(0).id == id
   override def preferTitleInRoot_?() = true
@@ -190,7 +190,7 @@ case object ExceptionCourseFieldDefinition extends FieldDefinition {
 case class ExceptionCourseField(override val rec: FieldKeyRec) extends StepField {
   override val defn = ExceptionCourseFieldDefinition
   override val empty = StepFieldValue.empty(this)
-  override def rootLabelPrefix(uch: UseCaseHeader) = s"${uch.number}.E."
+  override def rootLabelPrefix(ucn: UseCaseNumber) = s"${ucn}.E."
   override val sli = StartingLabelIndicesAt1
   override def prohibitRemoval_?(v: Value, id: LocalStepId) = false
   override def defaultLoadValue(h: UseCaseHeader) = defaultLoadValue_

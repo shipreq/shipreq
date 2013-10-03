@@ -108,7 +108,7 @@ case class StepFieldRenderer(
   modifyUC: (UseCase => UcUpdateResult) => JsCmd
   ) extends RendererHelper {
 
-  val rootLabelPrefix = f.rootLabelPrefix(uch)
+  val rootLabelPrefix = f.rootLabelPrefix(ucNumber)
   val tree = f.value.tree
 
   @inline final def labelPrefixForLevel(level: Int) = if (level == 0) rootLabelPrefix else ""

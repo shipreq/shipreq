@@ -1,4 +1,5 @@
-package com.beardedlogic.usecase.lib
+package com.beardedlogic.usecase
+package lib
 
 import scalaz.Equal
 import scalaz.std.map._
@@ -7,6 +8,7 @@ import scalaz.syntax.equal._
 import field._
 import text._
 import Types._
+import db.UseCaseHeader
 
 object UseCaseEquality {
 

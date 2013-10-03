@@ -29,9 +29,8 @@ object Misc extends Misc {
     def modIf[VV >: V](cond: Boolean)(mod: V => VV): VV = if (cond) mod(v) else v
   }
 
-  implicit class CordExt[V](val c: Cord) extends AnyVal {
-    def isEmpty: Boolean = !nonEmpty
-    def nonEmpty: Boolean = c.self.iterator.exists(_.nonEmpty)
+  implicit class ShortExt[V](val a: Short) extends AnyVal {
+    def +!(b: Int = 1): Short = (a + b).toShort
   }
 }
 

@@ -1,14 +1,13 @@
 package bootstrap.liftweb
 
+import javax.mail.{Authenticator, PasswordAuthentication}
 import net.liftweb.http._
 import net.liftmodules.scamljade.ScamlJade
 import net.liftweb.util.{Props, Mailer}
-import javax.mail.{Authenticator, PasswordAuthentication}
-import scala.slick.session.Session
 
 import com.beardedlogic.usecase._
 import app.AppSiteMap
-import db.{DB, FieldKeyType}
+import db.DB
 import lib.Defaults
 import lib.security.Oshiro
 
@@ -22,6 +21,7 @@ class Boot {
 
   def boot(): Unit = {
     configureLift()
+    preloadTemplates()
     initDatabase()
   }
 
@@ -59,5 +59,10 @@ class Boot {
     } yield new Authenticator {
         override def getPasswordAuthentication = new PasswordAuthentication(user, pass)
       }
+  }
+
+  def preloadTemplates(): Unit = {
+    snippet.uce.Renderer.Templates
+    snippet.UseCaseCrudlConsts
   }
 }

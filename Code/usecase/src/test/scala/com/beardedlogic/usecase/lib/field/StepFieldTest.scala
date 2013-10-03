@@ -16,15 +16,13 @@ import util.{BiMap, BiMapBuilder}
 class StepFieldTest extends FunSpec with TestHelpers with TestData {
   type V = StepFieldValue
 
-  import StepFieldPersistence.SavedData
-
   implicit def autoTagLocalStepIds(s: String) = s.asLocalStepId
   implicit def autoTagNormalisedRefs(s: String) = s.hasNormalisedRefs
 
   val ucId = 123L.tag[UseCaseIdentIdTag]
 
   def valueSaver(f: StepField, sfv: StepFieldValue) = {
-    val stepsAndLabels: StepAndLabelBiMap = Need(BiMap(UseCaseFns.generateStepAndLabelMap(f, sfv.tree, UCH)))
+    val stepsAndLabels: StepAndLabelBiMap = Need(BiMap(UseCaseFns.generateStepAndLabelMap(UCN, f, sfv.tree)))
     f.valueSaver(sfv, stepsAndLabels)
   }
 
@@ -71,11 +69,11 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
     val F_* = List(N70, N701, N702, N702a, N703, F201, F202, F211)
     val LoadCtx = FieldLoadCtx(UCH, F_*)
 
-    def load(f: StepField, ctx: FieldLoadCtx, uch: UseCaseHeader = UCH) = {
+    def load(f: StepField, ctx: FieldLoadCtx, uch: UseCaseHeader = UCH, ucn: UseCaseNumber = UCN) = {
       val r = f.load(ctx)
       val savedSteps: SavedSteps = BiMap.swapped(r.savedSteps)
       val stepAndLabels = r.stepTree
-                          .map(t => generateStepAndLabelBiMap(generateStepAndLabelMap(f, t, uch) :: Nil))
+                          .map(t => generateStepAndLabelBiMap(generateStepAndLabelMap(ucn, f, t) :: Nil))
                           .getOrElse(EmptyStepAndLabelBiMap)
       r.phase2(savedSteps, stepAndLabels)
     }
@@ -123,7 +121,7 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
 
     describe("presave()") {
       def mockDao = {
-        val dao = mock[Dao]
+        val dao = mock[DaoT]
         when(dao.createTextIdent(any, any)).thenAnswer(mockCreateInitialTextAnswer(657))
         dao
       }
@@ -163,7 +161,7 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
       val ucRevId = 123L.tag[UseCaseRevIdTag]
 
       def mockDao = {
-        val dao = mock[Dao]
+        val dao = mock[DaoT]
         when(dao.createTextRev(any, any, any)).thenAnswer(mockCreateTextRevAnswer)
         when(dao.linkUcToStep(any, any, any, any, any)).thenAnswer(mockLinkUcToStepAnswer)
         dao
