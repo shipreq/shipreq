@@ -6,26 +6,30 @@ function renameSectionSel() { return $('#project-title .form') }
 function renameInputSel() { return $('#project-title input.title') }
 function renameInputSet(value) { renameInputSel().val(value) }
 
-function ucListSel() { return $('#usecase-list') }
-function ucLiSel(className) { return ucListSel().find('.'+className) }
+function ucListSection() { return $('#usecase-list') }
+function ucListSectionRefreshMode() {
+    var empty = ucListSel().children().length == 0
+    ucListSection().find('.none').setVis(empty)
+    ucListSel().setVis(!empty)
+}
 
+function ucListSel() { return ucListSection().children('ul') }
+
+function ucLiSel(className) { return ucListSel().find('.'+className) }
 function ucLiModeSet(el, viewMode) {
     var p = $(el).parents('.uc')
     p.find('.view-mode').setVis(viewMode)
     p.find('.edit-mode').setVis(!viewMode)
     return p
 }
-
 function ucLiModeView(el) {
     ucLiModeSet(el, true)
     return false;
 }
-
 function ucLiModeEdit(el) {
     ucLiModeSet(el, false).find('.edit-mode :text').focus().select()
     return false;
 }
-
 
 function renameCtlsVisibility(show) {
     titleSel().setVis(!show)
@@ -54,6 +58,7 @@ $(document).on('usecase-created', function(event, data) {
     d.appendTo(ucListSel()).scrollTo(300).effect('highlight',1000)
     $('#usecase-new :text').val("")
     ucliPrepare(d)
+    ucListSectionRefreshMode()
 });
 
 $(document).on('usecase-updated', function(event, data) {
@@ -77,4 +82,5 @@ $(document).ready(function() {
     $('nav .genpdf').click(PENDING)
     $('nav .delete').click(PENDING)
     ucliPrepare(ucListSel())
+    ucListSectionRefreshMode()
 })
