@@ -23,16 +23,6 @@ echo "Downloading jQuery.liveQuery"
 curl -s https://raw.github.com/hazzik/livequery/master/dist/jquery.livequery.min.js -o src/main/javascript/vendor/jquery-livequery.js
 echo $?
 
-v=2.3.0
-echo "Downloading v$v of Knockout.js -- http://knockoutjs.com/"
-curl -s http://knockoutjs.com/downloads/knockout-$v.js -o src/main/javascript/vendor/knockout.js
-echo $?
-
-v=2.4.1
-echo "Downloading v$v of KO mapping -- https://github.com/SteveSanderson/knockout.mapping/tree/master/build/output"
-curl -s https://raw.github.com/SteveSanderson/knockout.mapping/$v/build/output/knockout.mapping-latest.js -o src/main/javascript/vendor/knockout-mapping.js
-echo $?
-
 echo "Downloading Mousetrap"
 curl -s https://raw.github.com/ccampbell/mousetrap/master/mousetrap.js -o src/main/javascript/vendor/mousetrap.js && \
 curl -s https://raw.github.com/ccampbell/mousetrap/master/plugins/global-bind/mousetrap-global-bind.js -o src/main/javascript/vendor/mousetrap-global-bind.js

@@ -26,8 +26,7 @@ object HtmlTransformExt {
   }
 
   /**
-   * Enhances a form so that it is reusable, meaning that the form can be duplicated on the client-side, especially
-   * by Knockout JS.
+   * Enhances a form so that it is reusable, meaning that the form can be duplicated on the client-side.
    *
    * @param onSubmitFn The function to call when the form is submitted.
    */

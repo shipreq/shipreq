@@ -3,17 +3,15 @@ package com.beardedlogic.usecase.app
 import java.lang.{Long => JLong}
 import net.liftweb.common._
 import net.liftweb.http.{Templates, RedirectResponse, LiftResponse}
-import net.liftweb.sitemap._
 import net.liftweb.sitemap.Loc._
+import net.liftweb.sitemap._
 import net.liftweb.util.Props
 import net.liftweb.util.Props.RunModes.{Development, Test => TestMode}
 import org.apache.shiro.SecurityUtils
+
+import AppConfig.BaseUrl
 import com.beardedlogic.usecase.lib.Types._
 import com.beardedlogic.usecase.lib.{ExternalId, ExternalIdConverter}
-import AppConfig.BaseUrl
-import net.liftweb.sitemap.Loc.EarlyResponse
-import net.liftweb.common.Full
-import net.liftweb.sitemap.Loc.TemplateBox
 
 object AppSiteMap {
 
@@ -32,21 +30,19 @@ object AppSiteMap {
   val Register1 = Menu(Loc("Register1", List("register"), "Register"))
 
   val Register2 = (Menu.param[String]("Register2", "Register", token => Full(token), t => t) / "register" / *
-    >> Hidden
-    >> UseTemplate("register2")
-    )
+    >> Hidden >> UseTemplate("register2"))
 
-  val Project = MenuWithIdParam(ExternalId.Project)("project", "Project") / "project" / * >> Hidden >> UseTemplate("loggedin/project")
+  val Project = (MenuWithIdParam(ExternalId.Project)("project", "Project") / "project" / *
+    >> Hidden >> UseTemplate("loggedin/project"))
 
-  val UseCaseIndex = Menu.i("Use Cases") / "list"
-
-  val UseCaseEditor = MenuWithIdParam(ExternalId.UseCase)("uce", "Use Case Editor") / "usecase" / * >> Hidden >> UseTemplate("uce")
+  val UseCaseEditor = (MenuWithIdParam(ExternalId.UseCase)("uce", "Use Case Editor") / "usecase" / *
+    >> Hidden >> UseTemplate("uce"))
 
   // -------------------------------------------------------------------------------------------------------------------
 
   val AllProdPages = List[ConvertableToMenu](
     Home, Login, Logout, Register1, Register2,
-    Project, UseCaseIndex, UseCaseEditor
+    Project, UseCaseEditor
   )
 
   val sitemap = {
