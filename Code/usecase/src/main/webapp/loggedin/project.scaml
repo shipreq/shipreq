@@ -23,3 +23,70 @@
         %ul.dropdown-menu(role="menu")
           %li
             %a.delete(href="#") Delete Project
+
+  %main#project-main
+    %nav
+      %ul.nav.nav-tabs
+        %li.active
+          %a(data-toggle="tab" href="#tab-ucs") Use Cases
+        %li
+          %a(data-toggle="tab" href="#tab-shares") Shares
+
+    .tab-content
+      %section#tab-ucs.tab-pane.fade.in.active(data-lift="UseCaseCrudl")
+
+        / Use Case: New
+        #usecase-new
+          %form(data-lift="form.ajax")
+            .input-group
+              %span.input-group-btn
+                %button.btn.btn-success(type="submit") Create
+              %input.form-control.enterSubmitsForm(type="text" placeholder="Use Case Title" required)
+
+        / Use Case List
+        %ul#usecase-list.list-unstyled
+          %li.uc#template-li
+            %table
+              %tr.view-mode
+                %td.l
+                  .btn-group
+                    %button.btn.btn-sm.btn-default.update Rename
+                    %button.btn.btn-sm.btn-default.dropdown-toggle(data-toggle="dropdown" type="button")
+                      %span.caret
+                    %ul.dropdown-menu(role="menu")
+                      %li
+                        %a.delete(href="#" onclick="return false") Delete
+                %td.r.view
+                  %a.title UC-X: Blah Blah
+                  %p.detail Last updated <abbr class="timeago2" title="2013-09-02T15:57:35.773674+10:00"></abbr>.
+
+              /
+                %tr.edit-mode.hidden2
+                  %td.l
+                    .btn-group
+                      %button.btn.tn-sm.btn-primary.update Update
+                      / <button class="btn btn-sm btn-default cancel">Cancel</button>
+                      / <button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
+                      / <ul class="dropdown-menu" role="menu">
+                      / <li><a href="#" class="danger">Delete</a></li>
+                      / </ul>
+                    / <button class="btn btn-sm btn-default cancel">Cancel</button>
+                  %td.r
+                    .input-group
+                      / <span class="input-group-btn">
+                      / <button class="btn tn-sm btn-default cancel">Cancel</button>
+                      / <button class="btn tn-sm btn-primary update">Update</button>
+                      / </span>
+                      %input.form-control(type="text" value="Create Report for Month-End")/
+                      %span.input-group-btn
+                        %button.btn.tn-sm.btn-default.cancel Cancel
+                        / <button class="btn tn-sm btn-primary update">Update</button>
+
+        /
+          .checkbox.show-deleted-ucs
+            %label
+              %input(type="checkbox")/
+              Show deleted
+
+      %section#tab-shares.tab-pane.fade
+        %pre PENDING

@@ -63,5 +63,6 @@ class Boot {
 
   def preloadTemplates(): Unit = {
     snippet.uce.Renderer.Templates
+    snippet.UseCaseCrudlConsts
   }
 }

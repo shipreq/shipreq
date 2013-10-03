@@ -37,7 +37,7 @@ abbr.timeago[title] { border-bottom: none !important }
 // Layout
 // Taken from twitter.github.io/bootstrap/examples/sticky-footer.html
 
-$pag7eWidth: 780px;
+$pageWidth: 780px;
 $pageMarginHoriz: 30px;
 $pageMarginTop: 4px;
 $footerHeight: 26px;
@@ -100,4 +100,42 @@ html, body { height: 100% } // Cannot have any padding or margin here
   margin-bottom: 1.8ex;
   h1 {margin-bottom: 0}
   input.title {font-weight:bold}
+}
+
+#project-main {
+  margin-top: 6ex;
+  .tab-pane {margin-top:3ex}
+}
+
+#usecase-list {
+  margin-top: 4ex;
+  table {
+    width: 100%
+  }
+  td.l {
+    vertical-align: top;
+    text-align: right;
+    padding-right: 1.6ex;
+    width: 17ex
+  }
+  td.l .dropdown-menu * {
+    text-align: left;
+    padding-right: 0
+  }
+  td.r {
+    vertical-align: top;
+    padding-bottom: 2ex;
+  }
+  .view-mode .view {
+    a.title {
+      font-size: 120%;
+      line-height: 1em;
+      color: #4183C4;
+      font-weight: bold
+    }
+    .detail {
+      font-size: 70%;
+      color: #888
+    }
+  }
 }

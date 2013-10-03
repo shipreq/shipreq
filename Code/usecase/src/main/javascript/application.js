@@ -75,6 +75,13 @@ function isVisible(e) {
         if (show === undefined) show = true
         return show ? $(this).show2() : $(this).hide2()
     };
+
+    $.fn.scrollTo = function (duration) {
+        //if (show === undefined) show = true
+        var t = $(this)
+        $('html,body').animate({ scrollTop: t.first().offset().top }, duration)
+        return t
+    };
 }(jQuery));
 
 // =====================================================================================================================

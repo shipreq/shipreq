@@ -17,7 +17,7 @@ case class ProjectSummary(
 
 // NOTE: These fields names need to match the attributes in list.html
 case class UseCaseSummary(
-  eid: UseCaseIdentEI,
+  eid: UseCaseIdentEI, // TODO UseCaseSummary EID not needed anymore
   number: UseCaseNumber,
   title: String,
   updatedAt: String) {

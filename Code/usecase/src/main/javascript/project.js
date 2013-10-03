@@ -28,6 +28,11 @@ $(document).on('project-updated', function(event, data) {
     renameCancel()
 });
 
+$(document).on('usecase-created', function(event, data) {
+    $(data).appendTo('#usecase-list').scrollTo(300).effect('highlight',1000)
+    $('#usecase-new :text').val("")
+});
+
 $(document).ready(function() {
     $('#project-title button.cancel').click(renameCancel)
     $('nav .update').click(renameStart)
