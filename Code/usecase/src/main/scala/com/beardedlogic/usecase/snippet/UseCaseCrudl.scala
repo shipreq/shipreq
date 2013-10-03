@@ -2,15 +2,15 @@ package com.beardedlogic.usecase
 package snippet
 
 import net.liftweb.http.SHtml
-import net.liftweb.http.js.JsCmd
+import net.liftweb.http.js.{JsCmds, JsCmd}
 import net.liftweb.util.Helpers._
 
 import app.AppSiteMap
-import db.{UseCaseHeader, UseCaseSummary}
-import lib.{Misc, SingleOpStatefulSnippet}
+import db.{UseCaseRev, UseCaseHeaderUpdateResult, UseCaseHeader, UseCaseSummary}
+import lib.{ExternalId, Misc, SingleOpStatefulSnippet}
 import util.NonEmptyTemplate
 import util.HtmlTransformExt.ajaxSubmitOnClick
-import util.JsExt.JsHtmlTrigger
+import util.JsExt.{JsTextTrigger, JqExpr, JsJsonTrigger, JsHtmlTrigger}
 import lib.Types._
 import AppSiteMap.Implicits._
 
@@ -18,6 +18,11 @@ object UseCaseCrudlConsts {
   val ListItemTemplate = NonEmptyTemplate.load("loggedin/project").quickExtract("template-li")
 
   final val TriggerCreated = JsHtmlTrigger("usecase-created")
+
+  final val TriggerUpdated = JsJsonTrigger[UpdateDTO]("usecase-updated")
+  case class UpdateDTO(eid: UseCaseIdentEI, li: JqExpr)
+
+  final val TriggerUpdateNop = JsTextTrigger("usecase-update-nop")
 }
 
 /**
@@ -40,14 +45,16 @@ class UseCaseCrudl(projectId: ProjectId) extends SingleOpStatefulSnippet {
   // -------------------------------------------------------------------------------------------------------------------
   // List
 
-  def renderList(ucs: List[UseCaseSummary]) = "li *" #> ucs.map(renderListItem)
+  def renderList(ucs: List[UseCaseSummary]) = "li" #> ucs.map(renderListItem)
 
   def renderListItem(uc: UseCaseSummary) = (
+    "li [class+]" #> uc.eid &
     "a .title" #> (
       "* *" #> s"UC-${uc.number}: ${uc.title}" &
       "* [href]" #> AppSiteMap.UseCaseEditor.relativeUrl(uc.parseId.get)
     ) &
-    ".detail abbr [title]" #> uc.updatedAt
+    ".detail abbr [title]" #> uc.updatedAt &
+    renderEditItem(uc)
   )
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -57,8 +64,8 @@ class UseCaseCrudl(projectId: ProjectId) extends SingleOpStatefulSnippet {
 
   def renderCreate = "#usecase-new" #> (
     ":text" #> SHtml.onSubmit(createTitle = _) &
-      ":submit" #> ajaxSubmitOnClick(onCreate)
-    )
+    ":submit" #> ajaxSubmitOnClick(onCreate)
+  )
 
   def onCreate(): JsCmd = {
     val h = UseCaseHeader(createTitle)
@@ -69,4 +76,39 @@ class UseCaseCrudl(projectId: ProjectId) extends SingleOpStatefulSnippet {
     TriggerCreated.trigger(li)
   }
 
+  // -------------------------------------------------------------------------------------------------------------------
+  // Update
+
+  def renderEditItem(uc: UseCaseSummary) = {
+    var title = ""
+    val updateFn = () => onUpdate(uc.parseId.get, title)
+    ".edit-mode" #> (
+      ":text [value]" #> uc.title &
+      ":text" #> SHtml.onSubmit(title = _) &
+      ":submit" #> ajaxSubmitOnClick(updateFn)
+    )
+  }
+
+  def onUpdate(id: UseCaseIdentId, newTitle: String): JsCmd = {
+    val eid = ExternalId.UseCase(id)
+    update(id, newTitle) match {
+      case None =>
+        TriggerUpdateNop.trigger(eid)
+      case Some(ucRev) =>
+        val ucs = new UseCaseSummary(ucRev, Misc.currentTimeAsIso8601Str)
+        val li = renderListItem(ucs)(ListItemTemplate)
+        val dto = UpdateDTO(eid, JqExpr(li))
+        TriggerUpdated.trigger(dto)
+    }
+  }
+
+  def update(id: UseCaseIdentId, newTitle: String): Option[UseCaseRev] = {
+    import UseCaseHeaderUpdateResult._
+    daoProvider.withTransaction(_.updateUseCaseHeader(id, _.copy(title = newTitle))) match {
+      case NewRevision(r)     => Some(r)
+      case DirectUpdate(r)    => Some(r)
+      case AlreadyUpToDate(r) => None
+      case UseCaseNotFound    => redirectTo(AppSiteMap.Project)(projectId)
+    }
+  }
 }

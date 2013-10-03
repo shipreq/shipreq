@@ -47,6 +47,7 @@
         %ul#usecase-list.list-unstyled
           %li.uc#template-li
             %table
+
               %tr.view-mode
                 %td.l
                   .btn-group
@@ -60,27 +61,15 @@
                   %a.title UC-X: Blah Blah
                   %p.detail Last updated <abbr class="timeago2" title="2013-09-02T15:57:35.773674+10:00"></abbr>.
 
-              /
-                %tr.edit-mode.hidden2
-                  %td.l
-                    .btn-group
-                      %button.btn.tn-sm.btn-primary.update Update
-                      / <button class="btn btn-sm btn-default cancel">Cancel</button>
-                      / <button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
-                      / <ul class="dropdown-menu" role="menu">
-                      / <li><a href="#" class="danger">Delete</a></li>
-                      / </ul>
-                    / <button class="btn btn-sm btn-default cancel">Cancel</button>
-                  %td.r
+              %tr.edit-mode.hidden2
+                %td.l
+                %td.r
+                  %form(data-lift="form.ajax")
                     .input-group
-                      / <span class="input-group-btn">
-                      / <button class="btn tn-sm btn-default cancel">Cancel</button>
-                      / <button class="btn tn-sm btn-primary update">Update</button>
-                      / </span>
-                      %input.form-control(type="text" value="Create Report for Month-End")/
+                      %input.form-control.enterSubmitsForm(type="text")
                       %span.input-group-btn
                         %button.btn.tn-sm.btn-default.cancel Cancel
-                        / <button class="btn tn-sm btn-primary update">Update</button>
+                        %button.btn.tn-sm.btn-primary.update(type="submit") Rename
 
         /
           .checkbox.show-deleted-ucs

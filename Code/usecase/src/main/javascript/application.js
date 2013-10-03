@@ -15,6 +15,13 @@
 // Functional JS
 // http://dailyjs.com/2012/09/14/functional-programming/
 
+/*
+  Partial Application
+  ===================
+  var plus_two = function(x,y) { return x+y; };
+  var add_three = plus_two.p(3);
+  add_three(4); // 7
+ */
 Function.prototype.p = function() {
     var args = Array.prototype.slice.call(arguments);
     var f = this;
@@ -24,6 +31,14 @@ Function.prototype.p = function() {
     };
 };
 
+/*
+  Composition
+  ===========
+  var greet = function(s) { return 'hi, ' + s; };
+  var exclaim = function(s) { return s + '!'; };
+  var excited_greeting = greet.c(exclaim);
+  excited_greeting('Pickman') // hi, Pickman!
+ */
 Function.prototype.c = function(g) {
     var f = this;
     return function() {
@@ -32,11 +47,29 @@ Function.prototype.c = function(g) {
     };
 };
 
+/*
+  Flipping
+  ========
+  var div = function(x,y) { return x / y; };
+  div(1, 2) // 0.5
+  div.f()(1,2) // 2
+ */
 Function.prototype.f = function() {
     var f = this;
     return function() {
         var args = Array.prototype.slice.call(arguments);
         return f.apply(this, args.reverse());
+    };
+};
+
+/*
+Curries a function so that the first arg is the "this" that one would get if it were done by hand.
+ */
+Function.prototype.withThis = function() {
+    var f = this;
+    return function() {
+        var args = Array.prototype.slice.call(arguments);
+        return f.apply(this, [this].concat(args));
     };
 };
 
@@ -97,7 +130,9 @@ $(document).keypress(function (e) {
     if (e.which === 13 && e.target.classList.contains('enterSubmitsForm')) {
         e.preventDefault();
         e.stopPropagation();
-        $(e.target).parents("form").find("[type=submit]:visible:first").focus().click();
+        var b = $(e.target).parents("form").find("[type=submit]:visible")
+        //console.log(b)
+        b.first().focus().click();
     }
 })
 

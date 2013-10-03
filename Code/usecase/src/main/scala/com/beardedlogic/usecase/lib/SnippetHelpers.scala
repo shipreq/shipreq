@@ -5,7 +5,7 @@ import net.liftweb.common.{ParamFailure, Failure, Full, Box, Logger, Empty}
 import net.liftweb.http.js.{JsCmd, JsExp}
 import net.liftweb.http.js.JsCmds.Noop
 import net.liftweb.http.{S, NotFoundResponse, RedirectResponse, StatefulSnippet, ResponseShortcutException, LiftResponse}
-import net.liftweb.json.{NoTypeHints, Serialization}
+import net.liftweb.json.{NoTypeHints, Serialization, Serializer}
 import net.liftweb.sitemap.Menu
 import net.liftweb.util.Mailer.{MailTypes, From, Subject}
 import net.liftweb.util.{CssSel, Mailer}
@@ -24,6 +24,16 @@ import Types._
 
 object SnippetHelpers extends StaticSnippetHelpers {
   final val DefaultAjaxErrorId = "ajaxErr"
+
+  final val JqExprJsonSerializer: Serializer[JqExpr] = new Serializer[JqExpr] {
+    import net.liftweb.json._
+    def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), JqExpr] = ???
+    def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
+      case expr: JqExpr => JString(expr.toJsCmd)
+    }
+  }
+
+  final val DefaultJsonFormat = Serialization.formats(NoTypeHints) + JqExprJsonSerializer
 }
 
 trait StaticSnippetHelpers extends Logger {
@@ -70,7 +80,7 @@ trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with Logger 
   @inline implicit def ConvertSeqStringToNodes(i: Seq[String]) = i.map(Text(_))
   @inline implicit def OptionToBox[T](option: Option[T]): Box[T] = Box(option)
 
-  protected implicit lazy val jsonFormats = Serialization.formats(NoTypeHints)
+  protected implicit lazy val jsonFormats = DefaultJsonFormat
 
   def toJson[T <: AnyRef](data: T): Json[T] = Serialization.write(data).tag[JsonTag[T]]
 
