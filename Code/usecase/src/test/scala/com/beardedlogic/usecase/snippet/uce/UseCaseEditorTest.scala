@@ -116,7 +116,7 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
   def assertFailResponse(resp: String): Unit = resp should include("alert(")
 
   def render(uce: UseCaseEditor) = {
-    lazy val xml = inMockSession(uce.dispatch("render")(Renderer.Templates.EntirePage))
+    lazy val xml = inMockSession(uce.dispatch("render")(Renderer.Templates.EntirePage.get))
     lazy val html = xml.toString
     (xml, html)
   }

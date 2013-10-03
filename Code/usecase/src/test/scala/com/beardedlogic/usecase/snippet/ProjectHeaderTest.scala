@@ -5,12 +5,13 @@ import org.scalatest.FunSuite
 import com.beardedlogic.usecase.db.{Project, UserDescriptor, UpdateProjectResult}
 import com.beardedlogic.usecase.test.{MockDaoProvider, TestHelpers}
 import com.beardedlogic.usecase.lib.Types._
+import com.beardedlogic.usecase.util.NonEmptyTemplate
 import UpdateProjectResult._
 import ProjectHeaderConsts._
 
 class ProjectHeaderTest extends FunSuite with TestHelpers {
 
-  lazy val html = loadTemplate("loggedin/project")
+  lazy val html = NonEmptyTemplate.load("loggedin/project").get
 
   def run[R](
     loggedInUser: Option[UserDescriptor] = Some(UD1),

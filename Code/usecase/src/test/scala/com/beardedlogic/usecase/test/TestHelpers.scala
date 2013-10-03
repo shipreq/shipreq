@@ -560,12 +560,4 @@ trait TestHelpers extends TestHelpers2 with BeforeAndAfterAll with BeforeAndAfte
 
   /** Logout performed before each test when true, and once before all tests when false. */
   var logoutBeforeEach = true
-
-  def loadTemplate(path: String, id: String = null) = {
-    import TemplateCache._
-    var x = LoadTemplate(path.split("/").toList)
-    if (id != null) x = ExtractFromTemplate(id, x)
-    x
-  }
-
 }

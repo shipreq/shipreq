@@ -4,9 +4,10 @@ import org.scalatest.FunSuite
 import com.beardedlogic.usecase.test.TestHelpers
 import com.beardedlogic.usecase.db.ProjectSummary
 import com.beardedlogic.usecase.lib.Types._
+import com.beardedlogic.usecase.util.NonEmptyTemplate
 
 class ProjectListTest extends FunSuite with TestHelpers {
-  lazy val html = loadTemplate("loggedin/index", "project-list")
+  lazy val html = NonEmptyTemplate.load("loggedin/index").extract("#project-list").get
 
   import ProjectList.renderProjectList
 

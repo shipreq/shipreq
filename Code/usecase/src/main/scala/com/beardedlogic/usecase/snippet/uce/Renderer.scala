@@ -23,16 +23,16 @@ import Renderer._
 object Renderer {
 
   object Templates {
-    import util.TemplateCache._
+    import util.NonEmptyTemplate
 
-    final val EntirePage = LoadTemplate(List("uce"))
+    final val EntirePage = NonEmptyTemplate.load("uce")
 
-    final val TextField = EntirePage.extract("template-text")
-    final val Step = EntirePage.extract("template-step")
-    final val AddTailStep = EntirePage.extract("template-courses-addTailStep")
+    final val TextField = EntirePage.quickExtract("template-text")
+    final val Step = EntirePage.quickExtract("template-step")
+    final val AddTailStep = EntirePage.quickExtract("template-courses-addTailStep")
 
     private def addStepTemplate = ".steps * " #> Templates.Step
-    private def extractStepTemplate(name: String) = addStepTemplate(EntirePage.extract(name))
+    private def extractStepTemplate(name: String) = addStepTemplate(EntirePage.quickExtract(name))
     final val NormalCourse = extractStepTemplate("template-courses-n")
     final val AlternateCourses = extractStepTemplate("template-courses-a")
     final val ExceptionCourses = extractStepTemplate("template-courses-e")
