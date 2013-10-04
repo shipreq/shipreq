@@ -47,11 +47,21 @@ object AppSiteMap {
   )
 
   val sitemap = {
-    var pages = AllProdPages
-    Props.mode match {
-      case Development | TestMode => pages +:= Menu.i("Use Case Editor (demo)") / "uce"
-      case _ =>
+    def anonUce = Menu.i("Use Case Editor (demo)") / "uce"
+
+    def autoLogin = Menu.i("x") / "x" >> EarlyResponse(() => {
+      val loginToken = new org.apache.shiro.authc.UsernamePasswordToken("golly", "asdasd123")
+      org.apache.shiro.SecurityUtils.getSubject.login(loginToken)
+      Full(RedirectResponse(HomeRelativeUrl))
+    })
+
+    val additionalPages: List[ConvertableToMenu] = Props.mode match {
+      case Development => List(anonUce, autoLogin)
+      case TestMode    => List(anonUce)
+      case _           => List.empty
     }
+
+    val pages = AllProdPages ++ additionalPages
     SiteMap(pages: _*)
   }
 
