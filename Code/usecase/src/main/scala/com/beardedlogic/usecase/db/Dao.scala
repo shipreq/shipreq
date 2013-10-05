@@ -117,21 +117,6 @@ sealed trait DaoS {
   // ===================================================================================================================
   // Use Case
 
-  /**
-   * Creates a new `usecase` row. If a `usecase_rev` row is not inserted before the end of the transaction, then the
-   * transaction will fail because `usecase.latest_rev_id` will be `NULL`.
-   */
-  def createUseCaseIdent(projectId: ProjectId): UseCaseIdent = InsertUseCaseIdent.first(projectId, projectId)
-
-  /**
-   * Same as `#createUseCaseIdent` except uses a manually-provided UC number.
-   * This should only be used in tests.
-   */
-  def createUseCaseIdentWithForcedNumber(projectId: ProjectId, ucn: UseCaseNumber): UseCaseIdent = {
-    val id = InsertUseCaseIdentForceNum.first(projectId, ucn)
-    UseCaseIdent(id, ucn)
-  }
-
   protected def createUseCaseRevWithoutCorrection(ident: UseCaseIdent, rev: Short, h: UseCaseHeader): UseCaseRev = {
     val id = InsertUseCaseRev.first(ident, rev, h.title)
     UseCaseRev(ident, rev, id, h)
@@ -194,6 +179,21 @@ sealed trait DaoS {
 sealed trait DaoT extends DaoS {
   import lib.Misc.ShortExt
   import Sql._
+
+  /**
+   * Creates a new `usecase` row. If a `usecase_rev` row is not inserted before the end of the transaction, then the
+   * transaction will fail because `usecase.latest_rev_id` will be `NULL`.
+   */
+  def createUseCaseIdent(projectId: ProjectId): UseCaseIdent = InsertUseCaseIdent.first(projectId, projectId)
+
+  /**
+   * Same as `#createUseCaseIdent` except uses a manually-provided UC number.
+   * This should only be used in tests.
+   */
+  def createUseCaseIdentWithForcedNumber(projectId: ProjectId, ucn: UseCaseNumber): UseCaseIdent = {
+    val id = InsertUseCaseIdentForceNum.first(projectId, ucn)
+    UseCaseIdent(id, ucn)
+  }
 
   def createUseCaseIdentAndRev1(projectId: ProjectId, header: UseCaseHeader, lock: Lock.Write[UseCaseNumbers]): UseCaseRev = {
     val ident = createUseCaseIdent(projectId)
