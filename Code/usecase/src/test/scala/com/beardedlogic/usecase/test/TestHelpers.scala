@@ -546,7 +546,11 @@ object TestHelpers extends TestHelpers2
 trait TestHelpers extends TestHelpers2 with BeforeAndAfterAll with BeforeAndAfterEach {
   this: Suite =>
 
-  if (!LiftRules.doneBoot) (new bootstrap.liftweb.Boot).configureLift
+  if (!LiftRules.doneBoot) {
+    val b = new bootstrap.liftweb.Boot
+    b.configureLift
+    b.preloadTemplates
+  }
 
   override def beforeAll(): Unit = {
     if (!logoutBeforeEach) logout()

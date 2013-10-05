@@ -2,10 +2,9 @@ package com.beardedlogic.usecase
 package test
 
 import org.apache.commons.httpclient.{HttpMethodBase, HttpClient}
-import org.scalatest.{Suite, BeforeAndAfterAll}
+import org.scalatest.{Matchers, Suite, BeforeAndAfterAll}
 import net.liftweb.http.testing._
 import net.liftweb.json._
-import LiveTestHelpers._
 
 /**
  * A test case that requires connectivity to a running Jetty instance.
@@ -28,26 +27,36 @@ trait LiveTest extends TestHelpers with TestKit with LiveTestHelpers with Before
 
   override def afterAll() {
     Jetty.Default.release
+    TestDB.reinitOnNextUse()
   }
 }
 
-object LiveTestHelpers {
+trait LiveTestHelpers {
+  self: TestKit with Matchers =>
 
   implicit val JsonFormats = DefaultFormats.lossless
 
-  implicit class ResponseTypeExt(val r: TestResponse) extends AnyVal {
-    /**
-     * Checks the result code of a HTTP request.
-     */
-    def !(code: Int)(implicit errorFunc: ReportFailure) = {
-      val r2 = r.asInstanceOf[HttpResponse]
-      r !(code, s"Expected $code. Got ${r2.code}")
+  implicit class ResponseTypeExt(val r: TestResponse) {
+
+    def asHttpResponse = r.asInstanceOf[HttpResponse]
+
+    /** Checks the result code of a HTTP request. */
+    def !(code: Int)(implicit errorFunc: ReportFailure) =
+      r.!(code, s"Expected $code. Got ${asHttpResponse.code}")
+
+    def shouldRedirect(implicit errorFunc: ReportFailure) =
+      r.!(302, s"Expected redirect (302). Got ${asHttpResponse.code}")
+
+    def shouldRedirectTo(url: String)(implicit errorFunc: ReportFailure) = {
+      shouldRedirect
+      asHttpResponse.headers.get("Location").flatMap(_.headOption) shouldBe Some(url)
+      asHttpResponse
     }
   }
 
   implicit def string2byteArray(s: String): Array[Byte] = s.getBytes("UTF-8")
 
-  implicit class HttpResponseExt(val r: HttpResponse) extends AnyVal {
+  implicit class HttpResponseExt(val r: HttpResponse) {
     def map[T](f: HttpResponse => T): T = f(r)
     def flatMap[T](f: HttpResponse => Option[T]): Option[T] = f(r)
     def responseText = r.bodyAsString.openOrThrowException(s"Unable to read body from ${r.body}")
@@ -58,10 +67,6 @@ object LiveTestHelpers {
      */
     def expectJson[T](implicit m: Manifest[T]): Some[T] = Some(parse(responseText).extract[T])
   }
-}
-
-trait LiveTestHelpers {
-  self: TestKit =>
 
   def jsonPut(url: String, value: JValue)(implicit capture: (String, HttpClient, HttpMethodBase) => ResponseType): self.ResponseType =
     put(url, compact(render(value)), "application/json")

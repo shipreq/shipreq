@@ -16,7 +16,7 @@ private[db] final object Sql {
 
   implicit val GR_FieldKey = GetResult {r => FieldKeyRec(r.<<, r.<<, r.<<)}
   implicit val GR_PasswordAndSalt = GetResult(r => PasswordAndSalt(r.nextString, r.nextString))
-  implicit val GR_Project = GetResult(r => Project(r.<<, r.<<))
+  implicit val GR_Project = GetResult(r => Project(r.<<, r.<<, r.<<))
   implicit val GR_ProjectSummary = GetResult(r => ProjectSummary(r.nextId[ProjectId], r.<<, r.<<, r.<<))
   implicit val GR_TextRev = GetResult(r => TextRev(r.<<, r.<<, r.<<, r.<<))
   implicit val GR_UcFieldText= GetResult(r => UcFieldText(r.<<, r.<<, r.<<, r.<<))
@@ -78,7 +78,12 @@ private[db] final object Sql {
   @Insert val CreateProject = query[(UserId, String), ProjectId](
     "INSERT INTO project(usr_id, name) VALUES(?,?) RETURNING id")
 
-  val FindProject = query[ProjectId, Project]("SELECT name,usr_id FROM project WHERE id=?")
+  private val project_* = s"id,name,usr_id"
+
+  val FindProject = query[ProjectId, Project](s"SELECT ${project_*} FROM project WHERE id=?")
+
+  val FindProjectByUc = query[UseCaseIdentId, Project](
+    s"SELECT ${project_*} FROM project WHERE id = (SELECT project_id FROM usecase u WHERE u.id=?)")
 
   @Update val RenameProject = update[(String, ProjectId, UserId)](
     "UPDATE project SET name=? WHERE id=? AND usr_id=?")

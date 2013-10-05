@@ -108,6 +108,8 @@ sealed trait DaoS {
 
   def findProject(id: ProjectId): Option[Project] = FindProject.firstOption(id)
 
+  def findProjectByUc(ucId: UseCaseIdentId): Option[Project] = FindProjectByUc.firstOption(ucId)
+
   def summariseProjects(userId: UserId): List[ProjectSummary] = SummariseProjects.list(userId)
 
   // ===================================================================================================================

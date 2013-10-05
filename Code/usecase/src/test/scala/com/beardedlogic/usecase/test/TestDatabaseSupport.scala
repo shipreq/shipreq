@@ -24,9 +24,11 @@ object TestDB {
     if (!ready) {
       ready = true
       DB.wipe_!
-      (new bootstrap.liftweb.Boot).boot
+      (new bootstrap.liftweb.Boot).initDatabase()
     }
   }
+
+  def reinitOnNextUse(): Unit = ready = false
 
   val Random = new Random()
 
@@ -91,7 +93,7 @@ trait TestDatabaseSupport extends TestHelpers with Logger {
   var daoVar: DaoT = null
   def dao = daoVar
 
-  def withNewTransaction[U](fn: => U): U = withTransactionInternal(true, true)(fn)
+  def withNewTransaction[U](fn: => U, commit: Boolean = true): U = withTransactionInternal(true, !commit)(fn)
 
   def rollbackAfter[U](fn: => U): U = dao.session.withTransaction {
     val result = fn

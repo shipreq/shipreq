@@ -3,7 +3,7 @@ package app
 
 import java.lang.{Long => JLong}
 import net.liftweb.common._
-import net.liftweb.http.{Templates, RedirectResponse, LiftResponse}
+import net.liftweb.http.{S, Templates, RedirectResponse, LiftResponse, PlainTextResponse}
 import net.liftweb.sitemap.Loc._
 import net.liftweb.sitemap._
 import net.liftweb.util.Props
@@ -12,7 +12,7 @@ import net.liftweb.util.Props.RunModes.{Development, Test => TestMode}
 import AppConfig.BaseUrl
 import lib.Types._
 import lib.{ExternalId, ExternalIdConverter}
-import security.Oshiro
+import security.{PermissionCheck, Oshiro}
 
 object AppSiteMap {
 
@@ -34,10 +34,12 @@ object AppSiteMap {
     >> Hidden >> UseTemplate("register2"))
 
   val Project = (MenuWithIdParam(ExternalId.Project)("project", "Project") / "project" / *
-    >> AuthenticationRequired >> UseTemplate("loggedin/project"))
+    >> AuthenticationRequired >> ProjectPermissionRequired
+    >> UseTemplate("loggedin/project"))
 
   val UseCaseEditor = (MenuWithIdParam(ExternalId.UseCase)("uce", "Use Case Editor") / "usecase" / *
-    >> AuthenticationRequired >> UseTemplate("uce"))
+    >> AuthenticationRequired >> ProjectPermissionRequired
+    >> UseTemplate("uce"))
 
   // -------------------------------------------------------------------------------------------------------------------
 
@@ -47,17 +49,26 @@ object AppSiteMap {
   )
 
   val sitemap = {
+    import org.apache.shiro.authc.UsernamePasswordToken, org.apache.shiro.SecurityUtils.getSubject
+
     def anonUce = Menu.i("Use Case Editor (demo)") / "uce"
 
     def autoLogin = Menu.i("x") / "x" >> EarlyResponse(() => {
-      val loginToken = new org.apache.shiro.authc.UsernamePasswordToken("golly", "asdasd123")
-      org.apache.shiro.SecurityUtils.getSubject.login(loginToken)
-      Full(RedirectResponse(HomeRelativeUrl))
+      getSubject.login(new UsernamePasswordToken("golly", "asdasd123"))
+      Full(redirectHomeResp)
+    })
+
+    def apiLogin = Menu.i("login.api") / "login.api" >> EarlyResponse(() => for {
+      u <- S.param("user")
+      p <- S.param("pass")
+    } yield {
+      getSubject.login(new UsernamePasswordToken(u, p))
+      PlainTextResponse("OK")
     })
 
     val additionalPages: List[ConvertableToMenu] = Props.mode match {
       case Development => List(anonUce, autoLogin)
-      case TestMode    => List(anonUce)
+      case TestMode    => List(anonUce, apiLogin)
       case _           => List.empty
     }
 
@@ -88,9 +99,11 @@ object AppSiteMap {
   // -------------------------------------------------------------------------------------------------------------------
   import Implicits._
 
+  def redirectHomeResp = RedirectResponse(HomeRelativeUrl)
+
   def logout(): Box[LiftResponse] = {
     Oshiro.logout()
-    Full(RedirectResponse(HomeRelativeUrl))
+    Full(redirectHomeResp)
   }
 
   private def MenuWithIdParam[Tag <: ExteralisableIdTag](eidGen: ExternalIdConverter[Tag])(name: String, linkText: Loc.LinkText[JLong @@ Tag]) =
@@ -100,4 +113,10 @@ object AppSiteMap {
 
   private def AuthenticationRequired =
     If(() => Oshiro.isAuthenticated, () => RedirectResponse(Login.relativeUrl))
+
+  private def PermissionRequired(check: PermissionCheck => PermissionCheck, failResp: LiftResponse = redirectHomeResp) =
+    If(() => check(PermissionCheck.userCan).expect, () => failResp)
+
+  private def ProjectPermissionRequired =
+    PermissionRequired(_.readAndUpdate(RequestVars.SoleProject))
 }

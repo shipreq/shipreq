@@ -1,31 +1,38 @@
 package com.beardedlogic.usecase
 package security
 
+import scalaz.{\/, -\/, \/-}
+import net.liftweb.common.Logger
 import db.UserDescriptor
 import lib.DI
-import lib.Types._
+import lib.Types.UserId
 
 object PermissionCheck {
 
-  val Denied = new PermissionCheck(None)
+  private val DeniedNoUser = new PermissionCheck(-\/("User not logged in."))
 
   def userCan: PermissionCheck =
     DI.SecurityProvider.vend.loggedInUser match {
-      case None => Denied
-      case m@Some(_) => new PermissionCheck(m)
+      case None    => DeniedNoUser
+      case Some(u) => new PermissionCheck(\/-(u))
     }
 }
 
-class PermissionCheck(m: Option[UserDescriptor]) extends Permissions {
-  import PermissionCheck._
+class PermissionCheck(s: String \/ UserDescriptor) extends Permissions with Logger {
 
-  def isDenied: Boolean = m.isEmpty
+  def isDenied: Boolean = s.isLeft
   def isAllowed: Boolean = !isDenied
-  def andIfNotThen(f: => Nothing): Unit = if (isDenied) f
 
-  protected final def check(f: UserId => Boolean): PermissionCheck =
-    m match {
-      case None => this
-      case Some(u) => if (f(u)) this else Denied
+  def andIfNotThen(f: => Nothing): Unit = if (isDenied) f
+  def expect(): Boolean =
+    s match {
+      case -\/(msg) => warn(s"Permission denied: $msg"); false
+      case \/-(_)   => true
+    }
+
+  protected final def check(f: UserId => Boolean)(failMsg: UserId => String): PermissionCheck =
+    s match {
+      case -\/(_) => this
+      case \/-(u) => if (f(u)) this else new PermissionCheck(-\/(failMsg(u)))
     }
 }

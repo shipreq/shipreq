@@ -71,4 +71,4 @@ case class UcFieldText(label: Option[String], parentId: Option[TextRevId], index
 // ===================================================================================================================
 // Project
 
-case class Project(name: String, owner: UserId)
+case class Project(id: ProjectId, name: String, owner: UserId)

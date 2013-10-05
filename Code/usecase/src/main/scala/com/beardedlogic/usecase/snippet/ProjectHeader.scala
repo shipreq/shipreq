@@ -11,6 +11,7 @@ import lib.Types._
 import security.PermissionCheck
 import util.HtmlTransformExt.ajaxSubmitOnClick
 import util.JsExt.JsTextTrigger
+import app.RequestVars
 
 private[snippet] object ProjectHeaderConsts {
   final val TriggerProjectUpdated = JsTextTrigger("project-updated")
@@ -21,13 +22,11 @@ private[snippet] object ProjectHeaderConsts {
  *
  * @since 30/09/2013
  */
-class ProjectHeader(projectId: ProjectId) extends SingleOpStatefulSnippet {
+class ProjectHeader extends SingleOpStatefulSnippet {
   import ProjectHeaderConsts._
   implicit def alertId = "phdra".tag[AlertIdTag]
 
-  val project = requireResultO_!(daoProvider.withSession(_.findProject(projectId)))
-  PermissionCheck.userCan readAndUpdate project andIfNotThen redirectHome
-
+  val project = RequestVars.SoleProject.get
   var projectName = project.name
 
   def render = (
@@ -41,7 +40,7 @@ class ProjectHeader(projectId: ProjectId) extends SingleOpStatefulSnippet {
 
   def onRename(): JsCmd = {
     import UpdateProjectResult._
-    daoProvider.withSession(_.updateProject(projectId, currentUserId_!, projectName)) match {
+    daoProvider.withSession(_.updateProject(project.id, currentUserId_!, projectName)) match {
       case Success(newName) => jsRenamed(newName)
       case InvalidName      => jsShowError("Invalid project name.")
       case NameAlreadyInUse => jsShowError("You already have a project with that name.")
