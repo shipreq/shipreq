@@ -19,11 +19,10 @@ class ProjectCreate extends SingleOpStatefulSnippet {
 
   private[snippet] var projectName = ""
 
-  def render = {
-    requireLogin_!
+  def render = (
     ":text" #> SHtml.onSubmit(projectName = _) &
     ":submit" #> ajaxSubmitOnClick(onSubmit)
-  }
+  )
 
   def onSubmit(): JsCmd = {
     import CreateProjectResult._

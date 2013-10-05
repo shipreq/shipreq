@@ -91,8 +91,6 @@ trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with Logger 
 
   @inline final def currentUserId_!() : UserId = currentUser_!.id
 
-  def requireLogin_!(): Unit = currentUser_!
-
   // -------------------------------------------------------------------------------------------------------------------
 
   type Mail = (Subject, List[MailTypes])

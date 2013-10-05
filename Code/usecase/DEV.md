@@ -17,9 +17,8 @@ Examples:
 Security
 ========
 
-Restricted pages should be protected in `AppSiteMap`.
-
-Permissions should be checked via the `PermissionCheck` DSL.
+Pages are protected in `AppSiteMap`. This includes both authentication and authorisation.
+Snippets do not include security logic; they simply render and perform business logic.
 
 Available methods:
   * `Oshiro.logout`.
@@ -27,7 +26,7 @@ Available methods:
   * `Oshiro.isAuthenticated` returns a value if a user is authenticated.
   * `SnippetHelpers.currentUser_!` returns a user if authenticated or remembered, else redirects.
   * `SnippetHelpers.currentUserId_!` returns a UserId if authenticated or remembered, else redirects.
-  * `SnippetHelpers.requireLogin_!` redirects unless user is authenticated or remembered.
+  * `PermissionCheck.userCan`.
 
 Available snippets:
   * `Authenticated`
