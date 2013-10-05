@@ -1,53 +1,48 @@
 package com.beardedlogic.usecase
 package lib
 
-import com.google.common.cache.{CacheBuilder, CacheLoader}
-import java.util.concurrent.locks.{Lock, ReentrantReadWriteLock}
-import java.util.concurrent.{TimeoutException, TimeUnit}
-import java.lang.{Long => JLong}
-import net.liftweb.common.Logger
-
+import app.RequestVars.SoleProject
+import util.{DefaultLockProvider, LockToken, LockProvider}
+import LockProvider._
 import Types._
-import util.{LockToken, LockTokenR, LockTokenW, ResourceLeaseMonad1}
 
 object Locks {
-  /** R/W locks keyed by use case data id. */
-  val useCase = new RWLockManager[UseCaseIdentId, UseCase]
-}
 
-class RWLockManager[LockKey <: JLong, S <: LockToken.Subject] private[lib]() extends LockToken.Factory with Logger {
+  sealed trait SingleUseCase extends LockToken
 
-  private class LockCreator extends CacheLoader[JLong, ReentrantReadWriteLock] {
-    override def load(key: JLong) = new ReentrantReadWriteLock
-  }
+  sealed trait UseCaseNumbers extends SingleUseCase
 
-  private val lockCache = CacheBuilder.newBuilder()
-                          .concurrencyLevel(32)
-                          .initialCapacity(0x1000)
-                          .weakValues()
-                          .build(new LockCreator)
+  /**
+   * Locks a project so that UC numbers are stable.
+   *
+   * Write-access blocks SingleUseCase write-access.
+   */
+  val UseCaseNumbers = DefaultLockProvider.simple[ProjectId, UseCaseNumbers]
 
-  @inline protected def getLock(id: LockKey): ReentrantReadWriteLock =
-    lockCache.get(id)
+  /**
+   * Locks a single UC.
+   *
+   * Any access here blocks UseCaseNumbers write-access.
+   */
+  val SingleUseCase: LockProvider[UseCaseIdentId, SingleUseCase, Ø, UseCaseNumbers, SingleUseCase] =
+    new DefaultLockProvider[UseCaseIdentId, SingleUseCase, Ø, UseCaseNumbers, SingleUseCase] {
 
-  @inline private def useLock[R, Token <: LockTokenR[S]](lock: Lock, token: Token)(block: Token => R): R = {
-    if (!lock.tryLock(30, TimeUnit.SECONDS)) throw new TimeoutException()
-    try block(token) finally lock.unlock
-  }
+      private val UCL = DefaultLockProvider.simple[UseCaseIdentId, SingleUseCase]
 
-  def read[U](id: LockKey)(block: LockTokenR[S] => U): U =
-    useLock(getLock(id).readLock, newLockR)(block)
+      def pid: ProjectId = SoleProject.is.id
 
-  def write[U](id: LockKey)(block: LockTokenW[S] => U): U =
-    useLock(getLock(id).writeLock, newLockW)(block)
+      override def read[U](id: UseCaseIdentId)(block: RL => U): U =
+        UseCaseNumbers.shareAccess(pid)(l1 =>
+          UCL.read(id)(l2 => {
+            val l = merge(l1, l2)
+            block(l)
+          }))
 
-  def readM[M[_]](id: LockKey): ResourceLeaseMonad1[LockTokenR[S], M] =
-    new ResourceLeaseMonad1[LockTokenR[S], M] {
-      protected override def exec[T](f: LockTokenR[S] => T): T = read(id)(f(_))
-    }
-
-  def writeM[M[_]](id: LockKey): ResourceLeaseMonad1[LockTokenW[S], M] =
-    new ResourceLeaseMonad1[LockTokenW[S], M] {
-      protected override def exec[T](f: LockTokenW[S] => T): T = write(id)(f(_))
+      override def write[U](id: UseCaseIdentId)(block: WL => U): U =
+        UseCaseNumbers.shareAccess(pid)(l1 =>
+          UCL.write(id)(l2 => {
+            val l = merge(l1, l2)
+            block(l)
+          }))
     }
 }

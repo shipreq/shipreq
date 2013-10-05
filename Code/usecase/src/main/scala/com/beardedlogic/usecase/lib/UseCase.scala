@@ -4,11 +4,11 @@ package lib
 import scala.reflect.ClassTag
 import scalaz.{Need, NonEmptyList}
 import Types._
-import db.{UseCaseIdent, UseCaseHeader}
+import db.UseCaseHeader
 import change._
 import field._
 import text.FreeText
-import util.{AppliedLens, BiMap, LockToken}
+import util.{AppliedLens, BiMap}
 import Changes._
 import tree.TreeOps._
 
@@ -106,7 +106,7 @@ case class UseCase(
   header: UseCaseHeader,
   fields: List[Field],
   fieldValues: FieldValues,
-  stepsAndLabels: StepAndLabelBiMap) extends LockToken.Subject {
+  stepsAndLabels: StepAndLabelBiMap) {
 
   assume(fieldValues.keySet == fields.toSet, "There must be a field value for all fields.")
 
