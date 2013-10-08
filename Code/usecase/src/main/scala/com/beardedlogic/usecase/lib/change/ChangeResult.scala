@@ -2,7 +2,6 @@ package com.beardedlogic.usecase.lib.change
 
 import scalaz.NonEmptyList
 
-// TODO Add tests for ChangeResult
 object ChangeResult {
 
   private def nel[C](changes: List[C]) = NonEmptyList.nel(changes.head, changes.tail)
