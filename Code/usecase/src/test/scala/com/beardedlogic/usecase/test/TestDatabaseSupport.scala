@@ -30,8 +30,6 @@ object TestDB {
 
   def reinitOnNextUse(): Unit = ready = false
 
-  val Random = new Random()
-
   val Slick = Database.forDataSource(DB.DataSource)
 
   def withInstance[T](useTransaction: Boolean)(block: Session => T): T = {
@@ -40,7 +38,7 @@ object TestDB {
   }
 }
 
-trait TestDatabaseSupport extends TestHelpers with Logger {
+trait TestDatabaseSupport extends TestHelpers with TestDatabaseHelpers {
   self: Suite =>
 
   override protected def withFixture(test: NoArgTest): Outcome = {
@@ -95,17 +93,25 @@ trait TestDatabaseSupport extends TestHelpers with Logger {
 
   def withNewTransaction[U](fn: => U, commit: Boolean = true): U = withTransactionInternal(true, !commit)(fn)
 
-  def rollbackAfter[U](fn: => U): U = dao.session.withTransaction {
-    val result = fn
-    dao.session.rollback()
-    result
+}
+
+trait TestDatabaseHelpers extends TestHelpers2 {
+  implicit def session: Session
+  def dao: DaoT
+
+  def rollbackAfter[U](fn: => U): U = {
+    dao.session.withTransaction {
+      val result = fn
+      dao.session.rollback()
+      result
+    }
   }
 
   def testDaoProvider = new TestDaoProvider(dao)
 
-  def randomId = -TestDB.Random.nextLong().abs
+  def randomId = -rnd.nextLong().abs
 
-  def randomStr: String = TestDB.Random.nextString(32)
+  def randomStr: String = rnd.nextString(32)
 
   def countRowsIn(table: Table) = Q.queryNA[Int](s"select count(*) from ${table.name}").first
 
@@ -227,6 +233,13 @@ trait TestDatabaseSupport extends TestHelpers with Logger {
 
   def updateUseCaseHeader(ucId: UseCaseIdentId, modFn: UseCaseHeader => UseCaseHeader)(implicit projectId: ProjectId) =
     Locks.SingleUseCase.write(ucId, projectId)(dao.updateUseCaseHeader(ucId, modFn, _))
+}
+
+object TestDatabaseHelpers {
+  def apply(s: Session): TestDatabaseHelpers = new TestDatabaseHelpers {
+    override implicit def session = s
+    override val dao = db.Shim.newDaoT(s)
+  }
 }
 
 class TestDaoProvider(dao: DaoT) extends DaoProvider {

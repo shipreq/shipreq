@@ -1,12 +1,13 @@
 package com.beardedlogic.usecase
 package law
 
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Gen, Arbitrary, Prop}
-import org.scalacheck.Prop._
 import org.scalatest.FunSuite
 import org.scalatest.prop._
+import Prop._
+
 import lib._
-import change.Changed
 import field._
 import test.TestDatabaseSupport
 import test.DataGenerators._
@@ -15,51 +16,96 @@ import UseCaseFns._
 
 class UseCaseLaws extends FunSuite with TestDatabaseSupport with Checkers {
 
-  def runs = 10
-  def mutationsPerRun = runs
-  def mutationRuns = 1
+  // Each check pass will run in its own transaction
+  override val wrapTestsInTransaction = false
 
-  test("Mutate and save") {check(MutateAndSaveP, MinSuccessful(mutationRuns))}
-  test("load(save(uc)) = uc") {check(SaveAndLoadP, MinSuccessful(runs))}
-  test("save(save(uc)) = NOP") {check(SecondSaveIsNopP, MinSuccessful(runs))}
+  implicit override val generatorDrivenConfig = PropertyCheckConfig(minSuccessful = 10, workers = 1)
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  lazy val MutateAndSaveP = forAll((uc0: UseCase, mutations: List[UseCaseMutator]) => dbProp {
-    val timer = new Timer
-    var uc = uc0
-    val pid = newProjectId()
-    var prevSave = save(uc, None, pid)
-    var curRev: Int = prevSave.get.rec.rev
-    var result: Prop = true
+  test("load (save uc) = uc") {check(SaveAndLoadP)}
 
-    def saveChangedUc(newUc: UseCase): Unit = {
-      val newResult: Prop =
-        save(newUc, prevSave, pid) match {
-          case Some(cp) => checkNewRev(newUc, cp)
-          case None => checkNopSave(newUc)
-        }
-      result ++= newResult
-      uc = newUc
+  test("save (save uc) = NOP") {check(SecondSaveIsNopP)}
+
+  test("(mutate a = mutate a) && (mutate b = mutate b)") {check(ConsistentMutationPerUseCaseInstance)}
+
+  test("m x ⇒ load (save (m x)) = m x") {
+    try check(IncrementalSaveAndLoad) finally IncrementalSaveAndLoad.system.uninit()
+  }
+
+  test("Caught Failure #1") {
+    import scalaz.Name, db._, field._, text._, util._
+
+    def testSave(uc: UseCase, projectId: ProjectId, prev: Option[UseCaseSaveCheckpoint] = None) = {
+      val cpO = save(uc, prev, projectId)
+      val l = load(cpO.getOrElse(prev.get).rec, projectId)
+      assertUseCasesLookSameToUser(l.uc, uc)
+      cpO
     }
 
-    def checkNewRev(newUc: UseCase, cp: UseCaseSaveCheckpoint): Prop = {
-      curRev += 1
-      prevSave = Some(cp)
-      val ucRev = cp.rec
-      equal("UC revision")(curRev, ucRev.rev) && load(ucRev, pid).uc <==> newUc
+    // ###### UC 1/3 ######
+    val uc1 = UseCase.as((1:Short).tag[UseCaseNumberTag],UseCaseHeader("Do Stuff")
+      ,List(TextField(TextFieldDefinition("Description"),FieldKeyRec(10.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Description")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Actors"),FieldKeyRec(11.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Actors")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Pre-Conditions"),FieldKeyRec(12.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Pre-Conditions")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Post-Conditions"),FieldKeyRec(13.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Post-Conditions")))~>FreeText.empty
+        ,NormalCourseField(FieldKeyRec(14.tag[FieldKeyIdTag],FieldKeyType.NormalAndAlternateCourses,None))~>StepFieldValue(NormalCourseField(FieldKeyRec(14.tag[FieldKeyIdTag],FieldKeyType.NormalAndAlternateCourses,None)),StepTree(List(StepNode("F1197205450689KYVCAS".tag[LocalStepIdTag],0,0,List(StepNode("F1197205450688HDKO1W".tag[LocalStepIdTag],1,1,Nil))))),Map("F1197205450689KYVCAS".tag[LocalStepIdTag]->StepText("F1197205450689KYVCAS".tag[LocalStepIdTag],FreeText("Do Stuff",Map()),None,None),"F1197205450688HDKO1W".tag[LocalStepIdTag]->StepText.empty("F1197205450688HDKO1W".tag[LocalStepIdTag])))
+        ,ExceptionCourseField(FieldKeyRec(15.tag[FieldKeyIdTag],FieldKeyType.ExceptionCourses,None))~>StepFieldValue(ExceptionCourseField(FieldKeyRec(15.tag[FieldKeyIdTag],FieldKeyType.ExceptionCourses,None)),StepTree(Nil),Map())
+        ,TextField(TextFieldDefinition("Use Case Relationships"),FieldKeyRec(16.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Use Case Relationships")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Constraints and Business Rules"),FieldKeyRec(17.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Constraints and Business Rules")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Frequency of Use"),FieldKeyRec(18.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Frequency of Use")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Special Requirements"),FieldKeyRec(19.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Special Requirements")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Assumptions"),FieldKeyRec(20.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Assumptions")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Notes and Issues"),FieldKeyRec(21.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Notes and Issues")))~>FreeText.empty
+      ),Name(BiMap("F1197205450688HDKO1W".tag[LocalStepIdTag]->"1.0.1".tag[LabelTag],"F1197205450689KYVCAS".tag[LocalStepIdTag]->"1.0".tag[LabelTag])))
+    // ###### UC 2/3 ######
+    val uc2 = UseCase.as((1:Short).tag[UseCaseNumberTag],UseCaseHeader("Do Stuff")
+      ,List(TextField(TextFieldDefinition("Description"),FieldKeyRec(10.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Description")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Actors"),FieldKeyRec(11.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Actors")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Pre-Conditions"),FieldKeyRec(12.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Pre-Conditions")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Post-Conditions"),FieldKeyRec(13.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Post-Conditions")))~>FreeText.empty
+        ,NormalCourseField(FieldKeyRec(14.tag[FieldKeyIdTag],FieldKeyType.NormalAndAlternateCourses,None))~>StepFieldValue(NormalCourseField(FieldKeyRec(14.tag[FieldKeyIdTag],FieldKeyType.NormalAndAlternateCourses,None)),StepTree(List(StepNode("F1197205450689KYVCAS".tag[LocalStepIdTag],0,0,List(StepNode("F1197205450688HDKO1W".tag[LocalStepIdTag],1,1,Nil))))),Map("F1197205450689KYVCAS".tag[LocalStepIdTag]->StepText("F1197205450689KYVCAS".tag[LocalStepIdTag],FreeText("Do Stuff",Map()),None,None),"F1197205450688HDKO1W".tag[LocalStepIdTag]->StepText.empty("F1197205450688HDKO1W".tag[LocalStepIdTag])))
+        ,ExceptionCourseField(FieldKeyRec(15.tag[FieldKeyIdTag],FieldKeyType.ExceptionCourses,None))~>StepFieldValue(ExceptionCourseField(FieldKeyRec(15.tag[FieldKeyIdTag],FieldKeyType.ExceptionCourses,None)),StepTree(Nil),Map())
+        ,TextField(TextFieldDefinition("Use Case Relationships"),FieldKeyRec(16.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Use Case Relationships")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Constraints and Business Rules"),FieldKeyRec(17.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Constraints and Business Rules")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Frequency of Use"),FieldKeyRec(18.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Frequency of Use")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Special Requirements"),FieldKeyRec(19.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Special Requirements")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Assumptions"),FieldKeyRec(20.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Assumptions")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Notes and Issues"),FieldKeyRec(21.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Notes and Issues")))~>FreeText.empty
+      ),Name(BiMap("F1197205450688HDKO1W".tag[LocalStepIdTag]->"1.0.1".tag[LabelTag],"F1197205450689KYVCAS".tag[LocalStepIdTag]->"1.0".tag[LabelTag])))
+    // ###### UC 3/3 ######
+    val uc3 = UseCase.as((1:Short).tag[UseCaseNumberTag],UseCaseHeader("Do Stuff")
+      ,List(TextField(TextFieldDefinition("Description"),FieldKeyRec(10.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Description")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Actors"),FieldKeyRec(11.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Actors")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Pre-Conditions"),FieldKeyRec(12.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Pre-Conditions")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Post-Conditions"),FieldKeyRec(13.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Post-Conditions")))~>FreeText.empty
+        ,NormalCourseField(FieldKeyRec(14.tag[FieldKeyIdTag],FieldKeyType.NormalAndAlternateCourses,None))~>StepFieldValue(NormalCourseField(FieldKeyRec(14.tag[FieldKeyIdTag],FieldKeyType.NormalAndAlternateCourses,None)),StepTree(List(StepNode("F1197205450689KYVCAS".tag[LocalStepIdTag],0,0,Nil))),Map("F1197205450689KYVCAS".tag[LocalStepIdTag]->StepText("F1197205450689KYVCAS".tag[LocalStepIdTag],FreeText("Do Stuff",Map()),None,None)))
+        ,ExceptionCourseField(FieldKeyRec(15.tag[FieldKeyIdTag],FieldKeyType.ExceptionCourses,None))~>StepFieldValue(ExceptionCourseField(FieldKeyRec(15.tag[FieldKeyIdTag],FieldKeyType.ExceptionCourses,None)),StepTree(Nil),Map())
+        ,TextField(TextFieldDefinition("Use Case Relationships"),FieldKeyRec(16.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Use Case Relationships")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Constraints and Business Rules"),FieldKeyRec(17.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Constraints and Business Rules")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Frequency of Use"),FieldKeyRec(18.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Frequency of Use")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Special Requirements"),FieldKeyRec(19.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Special Requirements")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Assumptions"),FieldKeyRec(20.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Assumptions")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Notes and Issues"),FieldKeyRec(21.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Notes and Issues")))~>FreeText.empty
+      ),Name(BiMap("F1197205450689KYVCAS".tag[LocalStepIdTag]->"1.0".tag[LabelTag])))
+
+    rollbackAfter{
+      val pid = newProjectId()
+      val ui = dao.createUseCaseIdentWithForcedNumber(pid, uc1.number)
+      val r1 = dao.createUseCaseRev(ui, 1:Short, uc1.header)
+      val cp1 = Some(load(r1, pid))
+
+      val cp2 = testSave(uc2, pid, cp1)
+      val cp3 = testSave(uc3, pid, cp2)
     }
+  }
 
-    def checkNopSave(newUc: UseCase): Prop = load(prevSave.get.rec, pid).uc <==> newUc
+  // -------------------------------------------------------------------------------------------------------------------
 
-    // Perform mutations
-    for (m <- mutations) m(uc) match {
-      case Changed(newUc, changes) => saveChangedUc(newUc); trace(s"Changes: $changes")
-      case _ =>
-    }
-
-    info(s"Mutated and saved to rev $curRev with ${uc.stepsAndLabels.value.size} steps in ${timer.elapsedSec2dp} sec.")
-    result
+  lazy val ConsistentMutationPerUseCaseInstance = forAll((a: UseCase, b: UseCase, m: UseCaseMutator) => {
+    val aa = tryMutate(a, m)
+    val bb = tryMutate(b, m)
+    (aa =/= bb) ==> ((tryMutate(a, m) <==> aa) && (tryMutate(b, m) <==> bb))
   })
 
   lazy val SaveAndLoadP = forAll((uc: UseCase) => timedDbProp("SaveAndLoad", uc) {
@@ -77,6 +123,8 @@ class UseCaseLaws extends FunSuite with TestDatabaseSupport with Checkers {
 
   // -------------------------------------------------------------------------------------------------------------------
 
+  def tryMutate(uc: UseCase, m: UseCaseMutator): UseCase = m(uc)._1.gimmeOrElse(uc)
+
   val load = loadUseCase _
   def save = saveUseCase _
 
@@ -85,14 +133,11 @@ class UseCaseLaws extends FunSuite with TestDatabaseSupport with Checkers {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  // Each check pass will run in its own transaction
-  override val wrapTestsInTransaction = false
-
   implicit lazy val arbUseCase: Arbitrary[UseCase] =
     Arbitrary(useCaseGen(Defaults.fieldList.value, (1:Short).tag[UseCaseNumberTag]))
 
-  implicit lazy val arbUseCaseMutators: Arbitrary[List[UseCaseMutator]] =
-    Arbitrary(Gen.listOfN(mutationsPerRun, useCaseMutator))
+//  implicit lazy val arbUseCaseMutators: Arbitrary[List[UseCaseMutator]] =
+//    Arbitrary(Gen.listOfN(mutationsPerRun, useCaseMutator))
 
   def all(ps: Seq[Prop]) = Prop.all(ps: _*)
 
@@ -105,41 +150,24 @@ class UseCaseLaws extends FunSuite with TestDatabaseSupport with Checkers {
 
   def timedDbProp(name: String, uc: UseCase)(f: => Prop): Prop = timedProp(name, uc)(dbProp(f))
 
-  def dbProp(f: => Prop): Prop = rollbackAfter(f)
+  def dbProp[R](f: => R): R = rollbackAfter(f)
 
   implicit class UseCaseExt(val x: UseCase) {
-    def <==>(y: UseCase): Prop = equalUseCases(x, y)
-    def =/=(y: UseCase): Prop = equalUseCases(x, y).flatMap(_.failure :| "Use cases are supposed to differ.")
+    def <==>(y: UseCase): Prop = useCasesEqual(x, y)
+    def =/=(y: UseCase): Prop = useCasesDiffer(x, y)
     def textFields: List[TextField] = filter[TextField](x.fields)
     def stepFields: List[StepField] = filter[StepField](x.fields)
   }
 
-  def makeSingleLine(t: String) = t.replace("\n", "\\n")
-
-  def extractStepText(u: UseCase)(f: StepField): Map[LabelStr, String] =
-    f(u.fieldValues).textByLabels(u.stepsAndLabels) mapValues makeSingleLine
-
-  def equalHeader(a: UseCase, b: UseCase) = equal("Header")(a.header, b.header)
-
-  def equalTextFields(a: UseCase, b: UseCase) = all(
-    for ((fa, fb) <- a.textFields.zip(b.textFields))
-    yield equal("Text field")(fa(a.fieldValues).text, fb(b.fieldValues).text)
-  )
-
-  def equalStepFields(a: UseCase, b: UseCase) = {
-    val z = Map.empty[LabelStr, String]
-    val aSteps = a.stepFields.map(extractStepText(a)).foldLeft(z)(_ ++ _)
-    val bSteps = b.stepFields.map(extractStepText(b)).foldLeft(z)(_ ++ _)
-    val sizeProp = equal("Step count")(aSteps.size, bSteps.size)
-    val stepProp = equal("Steps")(aSteps, bSteps)
-    //    val stepProps = for ((al, at) <- aSteps) yield equal("Step field")(x, y)
-    //    all {sizeProp +: stepProps.toList}
-    sizeProp && stepProp
+  def useCasesEqual(a: UseCase, b: UseCase): Prop = {
+    val aa = a.userView
+    val bb = b.userView
+    (aa == bb) :|| s"Use cases don't match.\nA:\n$aa\nB:\n$bb"
   }
 
-  def equalUseCases(a: UseCase, b: UseCase) = (
-    equalHeader(a, b)
-      && equalTextFields(a, b)
-      && equalStepFields(a, b)
-    )
+  def useCasesDiffer(a: UseCase, b: UseCase): Prop = {
+    val aa = a.userView
+    val bb = b.userView
+    (aa != bb) :|| s"Use cases should differ.\n$aa"
+  }
 }

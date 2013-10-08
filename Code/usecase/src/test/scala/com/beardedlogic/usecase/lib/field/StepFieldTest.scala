@@ -57,6 +57,8 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
   describe("Loading") {
     implicit def int_to_textrevid(id: Int): TextRevId = id.toLong.tag[TextRevIdTag]
     implicit def int_to_textident(id: Int): TextIdentId = id.toLong.tag[TextIdentIdTag]
+    implicit def autoLabel(x: String): LabelStr = x.asLabel
+    implicit def autoLabelO(x: Option[String]): Option[LabelStr] = x.asLabels
     implicit def parent(rel: UcFieldTextWithFK): Option[TextRevId] = Some(rel.id)
     val N70 = UcFieldTextWithFK(NCF, UcFieldText(Some("x.0"), None, 0, TextRev(10, 1, 100, "I'm the root [D.703]")))
     val N701 = UcFieldTextWithFK(NCF, UcFieldText(Some("x.0.1"), N70, 0, TextRev(11, 1, 101, "I was inserted")))

@@ -92,19 +92,25 @@ class StepFieldValueSaver(
 
   override def differsFromPrevSave_?(prev: SavedData)(implicit savedSteps: SavedSteps): Boolean = {
     val labelsByLocalId = stepsAndLabels.value.ab
+    val labelsToLocalId = stepsAndLabels.value.ba
 
     @inline def different_?(cur: StepNode, prev: UcFieldText) =
       labelsByLocalId(cur.id) != prev.label.get ||
       v.textmap(cur.id).textWithNormalisedRefs(savedSteps) != prev.text
 
-    val foundChange = v.tree.iteratorRecursive.exists(n =>
+    def anyNewOrModified = v.tree.iteratorRecursive.exists(n =>
       savedSteps.ba.get(n.id)
         .flatMap(txtIdentId => prev.get(txtIdentId))
         .map(prev => different_?(n, prev))
         .getOrElse(true)
     )
 
-    foundChange
+    def anyRemoved = prev.exists(_._2.label match {
+      case None => false
+      case Some(lbl) => labelsToLocalId.get(lbl).map(!v.textmap.contains(_)).getOrElse(true)
+    })
+
+    anyNewOrModified || anyRemoved
   }
 
   override def presave(dao: DaoT, ucId: UseCaseIdentId, prevSavedSteps: Option[SavedSteps]): Map[LocalStepId, TextIdentId] = {

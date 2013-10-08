@@ -4,7 +4,9 @@ package test
 import net.liftweb.common.Logger
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Prop, Arbitrary, Gen}
+import scala.annotation.tailrec
 import scala.util.matching.Regex
+import scalaz.syntax.show._
 
 import lib._
 import field._
@@ -14,8 +16,6 @@ import db.{UseCaseHeader, FieldListRec}
 import text.{StepText, FreeText}
 import Misc.removeAllWhitespace
 import StepField.StartingLabelIndices
-
-import TestHelpers.AnyExt
 import StepLabels._
 import text.ParsingConfig._
 import TreeOps._
@@ -23,6 +23,7 @@ import Types._
 import UseCaseFns.generateStepAndLabelBiMap
 
 object DataGenerators extends Logger {
+  import TestHelpers._
 
   implicit class RegexExt(val x: Regex) extends AnyVal {
     def matches(str: String) = x.pattern.matcher(str).matches()
@@ -288,64 +289,106 @@ object DataGenerators extends Logger {
   // -------------------------------------------------------------------------------------------------------------------
   // Use Case mutation
 
-  case class UseCaseMutator(name: String, fn: UseCase => UcUpdateResult) {
-    def apply(uc: UseCase) = fn(uc)
-    override def toString = s"UseCaseMutator($name)"
+  type UcMutationResult = (UcUpdateResult, String)
+  private val EmptyUcMutationResult: UcMutationResult = (NoChange, "NoChange")
+
+  case class UseCaseMutator(newFn: UseCase => UcMutationResult) {
+    val cache = scalaz.Memo.immutableListMapMemo[UseCase, UcMutationResult](uc => newFn(uc))
+    def apply(uc: UseCase) = cache(uc)
+    override def toString = s"UseCaseMutator@${hashCode.toHexString}"
   }
 
   object UseCaseMutators {
+    import Inspection._
 
-    private def mutateField(name: String, fn: (UseCase, RefDependentGen) => Gen[UcUpdateResult]): Gen[UseCaseMutator] = Gen(prms =>
-      Some(UseCaseMutator(name, uc => {
-        val refdep = RefDependentGen(uc)
-        val g = fn(uc, refdep)
-        g.apply(prms).getOrElse(NoChange)
-      })))
+    private def findChangableStep(sfv: StepFieldValue, eval: LocalStepId => UcUpdateResult): Option[(LocalStepId, UcUpdateResult)] =
+      findTransformable(sfv.textmap.keys.toIndexedSeq, eval)(_.getChanges.nonEmpty)
 
-    private def mutateStepNoText(name: String, fn: (StepField, LocalStepId) => UseCase => UcUpdateResult) =
-      mutateField(name, (uc, refdep) =>
-        for {
-          f <- Gen.oneOf(UseCaseFns.filter[StepField](uc.fields))
-          id <- Gen.oneOf(f(uc.fieldValues).textmap.keys.toSeq)
-        } yield fn(f, id)(uc)
-      )
+    private def fieldMutator(fn: (UseCase, RefDependentGen) => Gen[Option[UcMutationResult]]): Gen[UseCaseMutator] =
+      Gen(prms => Some(
+        UseCaseMutator(uc => {
+          val refdep = RefDependentGen(uc)
+          val g = fn(uc, refdep)
+          g.apply(prms).flatten.getOrElse(EmptyUcMutationResult)
+        })))
 
-    private def mutateStep(name: String, fn: (StepField, LocalStepId, String) => UseCase => UcUpdateResult) =
-      mutateField(name, (uc, refdep) =>
-        for {
-          f <- Gen.oneOf(UseCaseFns.filter[StepField](uc.fields))
-          id <- Gen.oneOf(f(uc.fieldValues).textmap.keys.toSeq)
-          txt <- refdep.stepText
-        } yield fn(f, id, txt)(uc)
-      )
+    private def mutateStepNoText(fn: (StepField, LocalStepId) => UseCase => UcUpdateResult, desc: (UseCase, StepField, LocalStepId) => String): Gen[UseCaseMutator] =
+      fieldMutator((uc, refdep) => {
+        val perField = UseCaseFns.filter[StepField](uc.fields).toStream.map(f =>
+          for ((id, r) <- findChangableStep(f(uc.fieldValues), fn(f, _)(uc))) yield (r, desc(uc, f, id))
+        )
+        val result = perField.filter(_.isDefined).headOption.flatten
+        result
+      })
 
-    val MutateTitle = for (title <- useCaseTitle) yield UseCaseMutator("Title", _.updateTitle(title))
+    private def mutateStep(fn: (StepField, LocalStepId, String) => UseCase => UcUpdateResult, desc: (UseCase, StepField, LocalStepId, String) => String): Gen[UseCaseMutator] =
+      fieldMutator((uc, refdep) =>
+        refdep.stepText.flatMap(txt => {
+          val perField = UseCaseFns.filter[StepField](uc.fields).toStream.map(f =>
+            for ((id, r) <- findChangableStep(f(uc.fieldValues), fn(f, _, txt)(uc))) yield (r, desc(uc, f, id, txt))
+          )
+          val result = perField.filter(_.isDefined).headOption.flatten
+          result
+        }))
 
-    val MutateTextField = mutateField("TextField", (uc, refdep) =>
+    // -----------------------------------------------------
+    // Mutation implementations
+
+    val MutateTitle =
+      for (title <- useCaseTitle)
+      yield UseCaseMutator(uc => (uc.updateTitle(title), s"[/] Change UC title to ${title.shows}"))
+
+    val MutateTextField = fieldMutator((uc, refdep) =>
       for {
         f <- Gen.oneOf(UseCaseFns.filter[TextField](uc.fields))
         txt <- refdep.textFieldText
-      } yield f.updateText(txt)(uc)
+      } yield
+        Some(f.updateText(txt)(uc), s"[=] Change TextField [${f.defn.title}] to ${txt.shows}")
     )
 
-    val MutateStepText = mutateStep("StepText", (f, id, txt) => f.updateText(id, txt))
-    val AddStep = mutateStepNoText("AddStep", (f, id) => f.addStep(id))
-    val RemoveStep = mutateStepNoText("RemoveStep", (f, id) => f.removeStep(id))
-    val DecreaseIdent = mutateStepNoText("DecreaseIdent", (f, id) => f.decreaseIndent(id))
-    val IncreaseIdent = mutateStepNoText("IncreaseIdent", (f, id) => f.increaseIndent(id))
+    val MutateStepText = mutateStep(_.updateText(_, _), (uc, f, id, txt) => s"[=] Change step text ${id.withLabel(uc)} to ${txt.shows}")
+    val AddStep = mutateStepNoText(_.addStep(_), (uc, _, id) => s"[+] Add step ${id.withLabel(uc)}")
+    val RemoveStep = mutateStepNoText(_.removeStep(_), (uc, _, id) => s"[-] Remove step ${id.withLabel(uc)}")
+    val DecreaseIdent = mutateStepNoText(_.decreaseIndent(_), (uc, _, id) => s"[<] Dec step ${id.withLabel(uc)}")
+    val IncreaseIdent = mutateStepNoText(_.increaseIndent(_), (uc, _, id) => s"[>] Inc step ${id.withLabel(uc)}")
+  }
+
+  // TODO no add tail step
+
+  /**
+   * Same as `Gen.frequency` except if the selected generator cannot provide, it is removed from the freq map and we
+   * try again.
+   */
+  def frequencyTrialAndError[I, O](gs: (Int, Gen[I])*)(eval: I => O)(test: O => Boolean): Gen[(I, O)] = {
+    Gen(prms => {
+      @tailrec def go(remaining: List[(Int, Gen[I])]): Option[(I, O)] = remaining match {
+        case Nil => None
+        case _ =>
+          val gen = Gen.frequency(gs: _*)
+          gen(prms).map(i => (i, eval(i))) match {
+            case r@Some((i, o)) if test(o) => r
+            case _ => go(remaining.filterNot(_._2 eq gen))
+          }
+      }
+      go(gs.toList)
+    })
   }
 
   val useCaseMutator: Gen[UseCaseMutator] = {
     import UseCaseMutators._
-    Gen.frequency(
-      (1, MutateTitle)
-      , (10, MutateTextField)
-      , (50, MutateStepText)
-      , (15, AddStep)
-      , (15, RemoveStep)
-      , (10, DecreaseIdent)
-      , (10, IncreaseIdent)
-    )
+    Gen(prms => Some(UseCaseMutator(uc => {
+      val x = frequencyTrialAndError(
+        (1, MutateTitle)
+        , (20, MutateTextField)
+        , (50, MutateStepText)
+        , (18, AddStep)
+        , (10, RemoveStep)
+        , (10, DecreaseIdent)
+        , (10, IncreaseIdent)
+      )(_.apply(uc))(_._1.getChanges.nonEmpty)
+      val result: UcMutationResult = x(prms).map(_._2).getOrElse(EmptyUcMutationResult)
+      result
+    })))
   }
 
   implicit lazy val arbUseCaseMutator: Arbitrary[UseCaseMutator] = Arbitrary(useCaseMutator)

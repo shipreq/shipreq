@@ -13,7 +13,7 @@ import org.scalatest.Matchers
 import org.scalatest.matchers.{Matcher, MatchResult}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.prop.Tables.Table
-import net.liftweb.common.{Failure, Box, Empty}
+import net.liftweb.common.{Logger, Failure, Box, Empty}
 import net.liftweb.http.{ResponseShortcutException, S, LiftSession, LiftRules}
 import net.liftweb.http.js.JsCmd
 import net.liftweb.mocks.MockHttpServletRequest
@@ -22,6 +22,7 @@ import net.liftweb.util.StringHelpers
 import net.liftweb.util.Helpers.stringToSuper
 import scalaz.{Lens, NonEmptyList, Value}
 import scala.annotation.tailrec
+import scala.util.Random
 
 import lib.change._
 import lib.tree._
@@ -44,10 +45,14 @@ case class FixedUser(ud: Option[UserDescriptor]) extends SecurityProvider {
   def install[R](fn: => R): R = DI.SecurityProvider.doWith(this)(fn)
 }
 
+private object TestHelperConsts {
+  val Random = new Random()
+}
+
 /**
  * @since 30/04/2013
  */
-trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
+trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with Logger {
 
   val Cores = Math.max(1, Runtime.getRuntime().availableProcessors - 1)
 
@@ -141,6 +146,8 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
 
   lazy val NCF = NormalCourseField(FieldKeyRec(55.tag[FieldKeyIdTag], NormalCourseFieldDefinition.fieldKeyType, NormalCourseFieldDefinition.fieldKeyData))
   lazy val ECF = ExceptionCourseField(FieldKeyRec(66.tag[FieldKeyIdTag], ExceptionCourseFieldDefinition.fieldKeyType, ExceptionCourseFieldDefinition.fieldKeyData))
+
+  def rnd = TestHelperConsts.Random
 
   // -------------------------------------------------------------------------------------------------------------------
 
@@ -246,6 +253,21 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
     tmpDir
   }
 
+  def findTransformable[I, O](inputs: IndexedSeq[I], eval: I => O)(test: O => Boolean): Option[(I, O)] = {
+    val listSize = inputs.length
+    @tailrec def go(attemptsRem: Int, pos: Int): Option[(I, O)] = {
+      if (attemptsRem == 0) None
+      else {
+        val i = inputs(pos)
+        val o = eval(i)
+        if (test(o)) Some((i, o))
+        else go(attemptsRem - 1, (pos + 1) % listSize)
+      }
+    }
+    if (listSize == 0) None else go(listSize, rnd.nextInt(listSize))
+  }
+
+
   def testListOfZeroOrOne[T](expectation: Option[Any], actual: List[T])(testFn: T => Any) {
     if (expectation.isEmpty)
       actual shouldBe empty
@@ -324,11 +346,15 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
     actual.copy(stepsAndLabels = EmptyStepAndLabelBiMap) should be(expected.copy(stepsAndLabels = EmptyStepAndLabelBiMap))
   }
 
+  // TODO deprecate assertUseCasesMatch and rely on userView?
   def assertUseCasesMatch(actual: UseCase, expected: UseCase) {
     actual.header should be(expected.header)
     actual.fields should be(expected.fields)
     actual.fieldValues.norm should be(expected.fieldValues.norm)
   }
+
+  def assertUseCasesLookSameToUser(actual: UseCase, expected: UseCase): Unit =
+    actual.userView ==== expected.userView
 
   def freeText(txt: String) = FreeText(txt, Map.empty)
 
@@ -411,6 +437,14 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
    */
   implicit class MyRichString(val self: String) {
     def occurrences(of: String) = countOccurrences(self, of)
+  }
+
+  /**
+   * Extensions for: LocalStepId
+   */
+  implicit class LocalStepIdExt(val id: LocalStepId) {
+    def withLabel(uc: UseCase): String =
+      uc.stepsAndLabels.value.ab.get(id).map(l => s"{$id:$l}").getOrElse(s"{$id:LABEL NOT FOUND}")
   }
 
   /**
@@ -521,6 +555,8 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits {
    */
   implicit class ChangeResultFExt[V, C](val r: ChangeResultF[V, C]) {
     def gimme: V = openChange._1
+
+    def gimmeOrElse(d: V): V = try gimme catch {case _: Throwable => d}
 
     def openChange: (V, List[C]) = r match {
       case Changed(v, c) => (v, c.list)
