@@ -2,7 +2,7 @@ package com.beardedlogic.usecase
 package lib
 
 import scala.reflect.ClassTag
-import scalaz.{Need, NonEmptyList}
+import scalaz.{Need, NonEmptyList, -\/, \/-}
 import scalaz.syntax.show._
 import Types._
 import db.UseCaseHeader
@@ -225,8 +225,10 @@ case class UseCase(
 
   def updateTitle(input: String): UcUpdateResult = {
     implicit val lens = alens(Lenses.ucTitleL, this)
-    val newTitle = InputCorrection.useCaseTitle(input)
-    if (lens.get == newTitle) NoChange
-    else update(newTitle @: TitleChanged(lens.get, newTitle), c => (UseCaseHeader, c))
+    InputValidator.useCaseTitle.correctAndValidate(input) match {
+      case -\/(err) => ChangeFailure(err)
+      case \/-(newTitle) if newTitle == lens.get => NoChange
+      case \/-(newTitle) => update(newTitle @: TitleChanged(lens.get, newTitle), c => (UseCaseHeader, c))
+    }
   }
 }

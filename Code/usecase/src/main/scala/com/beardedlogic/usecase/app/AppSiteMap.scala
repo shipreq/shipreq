@@ -1,7 +1,6 @@
 package com.beardedlogic.usecase
 package app
 
-import java.lang.{Long => JLong}
 import net.liftweb.common._
 import net.liftweb.http.{S, Templates, RedirectResponse, LiftResponse, PlainTextResponse}
 import net.liftweb.sitemap.Loc._

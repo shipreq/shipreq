@@ -44,7 +44,7 @@ class UseCaseLaws extends FunSuite with TestDatabaseSupport with Checkers {
     }
 
     // ###### UC 1/3 ######
-    val uc1 = UseCase.as((1:Short).tag[UseCaseNumberTag],UseCaseHeader("Do Stuff")
+    val uc1 = UseCase.as((1:Short).tag[UseCaseNumberTag],UseCaseHeader("Do Stuff".validated)
       ,List(TextField(TextFieldDefinition("Description"),FieldKeyRec(10.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Description")))~>FreeText.empty
         ,TextField(TextFieldDefinition("Actors"),FieldKeyRec(11.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Actors")))~>FreeText.empty
         ,TextField(TextFieldDefinition("Pre-Conditions"),FieldKeyRec(12.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Pre-Conditions")))~>FreeText.empty
@@ -59,7 +59,7 @@ class UseCaseLaws extends FunSuite with TestDatabaseSupport with Checkers {
         ,TextField(TextFieldDefinition("Notes and Issues"),FieldKeyRec(21.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Notes and Issues")))~>FreeText.empty
       ),Name(BiMap("F1197205450688HDKO1W".tag[LocalStepIdTag]->"1.0.1".tag[LabelTag],"F1197205450689KYVCAS".tag[LocalStepIdTag]->"1.0".tag[LabelTag])))
     // ###### UC 2/3 ######
-    val uc2 = UseCase.as((1:Short).tag[UseCaseNumberTag],UseCaseHeader("Do Stuff")
+    val uc2 = UseCase.as((1:Short).tag[UseCaseNumberTag],UseCaseHeader("Do Stuff".validated)
       ,List(TextField(TextFieldDefinition("Description"),FieldKeyRec(10.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Description")))~>FreeText.empty
         ,TextField(TextFieldDefinition("Actors"),FieldKeyRec(11.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Actors")))~>FreeText.empty
         ,TextField(TextFieldDefinition("Pre-Conditions"),FieldKeyRec(12.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Pre-Conditions")))~>FreeText.empty
@@ -74,7 +74,7 @@ class UseCaseLaws extends FunSuite with TestDatabaseSupport with Checkers {
         ,TextField(TextFieldDefinition("Notes and Issues"),FieldKeyRec(21.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Notes and Issues")))~>FreeText.empty
       ),Name(BiMap("F1197205450688HDKO1W".tag[LocalStepIdTag]->"1.0.1".tag[LabelTag],"F1197205450689KYVCAS".tag[LocalStepIdTag]->"1.0".tag[LabelTag])))
     // ###### UC 3/3 ######
-    val uc3 = UseCase.as((1:Short).tag[UseCaseNumberTag],UseCaseHeader("Do Stuff")
+    val uc3 = UseCase.as((1:Short).tag[UseCaseNumberTag],UseCaseHeader("Do Stuff".validated)
       ,List(TextField(TextFieldDefinition("Description"),FieldKeyRec(10.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Description")))~>FreeText.empty
         ,TextField(TextFieldDefinition("Actors"),FieldKeyRec(11.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Actors")))~>FreeText.empty
         ,TextField(TextFieldDefinition("Pre-Conditions"),FieldKeyRec(12.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Pre-Conditions")))~>FreeText.empty

@@ -11,7 +11,7 @@ import slick.session.{Database, Session}
 import Q.interpolation
 
 import db.{UseCaseHeader, DaoS, DaoT, DaoProvider, DB, UseCaseRev}
-import com.beardedlogic.usecase.lib.{Defaults, Locks, UseCasePersistence, UseCase, DI, UseCaseSaveCheckpoint}
+import com.beardedlogic.usecase.lib.{InputValidator, Defaults, Locks, UseCasePersistence, UseCase, DI, UseCaseSaveCheckpoint}
 import lib.Types._
 
 object TestDB {
@@ -206,8 +206,11 @@ trait TestDatabaseHelpers extends TestHelpers2 {
     cp.copy(uc = uc_, rec = rec_)
   }
 
+  def randomUCTitle: String @@ Validated =
+    findSuitable(InputValidator.useCaseTitle.correctAndValidate(randomStr).toOption)(_.isDefined).get
+
   def newProjectId(userId: UserId = getOrCreateUserId): ProjectId =
-    dao.createProject(userId, randomStr).gimme
+    dao.createProject(userId, randomUCTitle).gimme
 
   def getOrCreateUserId(): UserId =
     sql"select id from usr where username is not null".as[Long].firstOption.map(_.tag[UserIdTag]).getOrElse(newUserId)

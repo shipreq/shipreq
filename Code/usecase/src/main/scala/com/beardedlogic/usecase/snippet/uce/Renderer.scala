@@ -112,7 +112,7 @@ case class Renderer(
   // **************************************
 
   def jsRespondChangeFailure(errorMessage: String): JsCmd =
-    JsCmds.Alert(errorMessage)
+    JsCmds.Alert(errorMessage) // TODO can do better than this
 
   def jsRespondToChanges(changes: NonEmptyList[(UcChangeDomain, Change)]): JsCmd =
     changes.foldMap(jsRespondToChange)    |+|

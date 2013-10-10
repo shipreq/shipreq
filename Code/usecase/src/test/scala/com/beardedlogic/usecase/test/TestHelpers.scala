@@ -267,6 +267,11 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
     if (listSize == 0) None else go(listSize, rnd.nextInt(listSize))
   }
 
+  def findSuitable[T](get: => T)(check: T => Boolean): T = {
+    var t = get
+    while (!check(t)) t = get
+    t
+  }
 
   def testListOfZeroOrOne[T](expectation: Option[Any], actual: List[T])(testFn: T => Any) {
     if (expectation.isEmpty)
@@ -426,6 +431,13 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
   }
 
   /**
+   * Extensions for: AnyRef
+   */
+  implicit class AnyRefExt2[T <: AnyRef](val v: T) {
+    def validated = v.tag[Validated]
+  }
+
+  /**
    * Extensions for: Int
    */
   implicit class MyRichInt(val i: Int) {
@@ -547,7 +559,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
    * Extensions for: UseCaseRev
    */
   implicit class UseCaseRevExt(val v: UseCaseRev) {
-    def withTitle(t: String) = v.copy(header = v.header.copy(title = t))
+    def withTitle(t: String @@ Validated) = v.copy(header = v.header.copy(title = t))
   }
 
   /**

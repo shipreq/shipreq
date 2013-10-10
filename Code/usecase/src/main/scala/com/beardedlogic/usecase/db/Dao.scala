@@ -3,8 +3,9 @@ package db
 
 import org.postgresql.util.PSQLException
 import scala.slick.driver.PostgresDriver.simple._
+import scalaz.{-\/,\/-}
 import lib.field.FieldDefinition
-import lib.{Defaults, InputCorrection}
+import lib.{InputValidator, Defaults}
 import lib.Locks.{UseCaseNumbers, SingleUseCase}
 import lib.Types._
 import security.PasswordAndSalt
@@ -44,9 +45,9 @@ sealed trait DaoS {
   // User
 
   /** Creates an unconfirmed user account. No username, no password until email confirmed. */
-  def createUserPlaceholder(email: String, token: String): Unit = InsertUserPlaceholder.execute(email, token)
+  def createUserPlaceholder(email: String @@ Validated, token: String): Unit = InsertUserPlaceholder.execute(email, token)
 
-  def performUserRegistration(token: String)(username: String, ps: PasswordAndSalt, ipAddr: String): UserRegistrationResult = {
+  def performUserRegistration(token: String)(username: String @@ Validated, ps: PasswordAndSalt, ipAddr: String): UserRegistrationResult = {
     import UserRegistrationResult._
     try {
       RegisterUser.firstOption(username, ps, ipAddr, token) match {
@@ -79,33 +80,26 @@ sealed trait DaoS {
   // ===================================================================================================================
   // Project
 
-  private[this] def saveProject[R](rawName: String, f: String => R)(invalidName: R, nameAlreadyInUse: R): R = {
-    val name = InputCorrection.projectName(rawName)
-    if (name.isEmpty)
-      invalidName
-    else try
-      f(name)
+  private[this] def saveProject[R](name: String @@ Validated, saveFn: String => R)(nameAlreadyInUse: R): R =
+    try saveFn(name)
     catch {
       case e: PSQLException if e.getMessage.contains("_usr_id_name_") => nameAlreadyInUse
     }
-  }
 
-  def createProject(usrId: UserId, rawName: String): CreateProjectResult = {
+  def createProject(usrId: UserId, name: String @@ Validated): CreateProjectResult = {
     import CreateProjectResult._
-    saveProject[CreateProjectResult](rawName, name => {
+    saveProject[CreateProjectResult](name, name => {
       val id = CreateProject.first(usrId, name)
       Success(id)
-    })(InvalidName, NameAlreadyInUse)
+    })(NameAlreadyInUse)
   }
 
-  def updateProject(id: ProjectId, usrId: UserId, rawName: String): UpdateProjectResult = {
+  def updateProject(id: ProjectId, usrId: UserId, name: String @@ Validated): UpdateProjectResult = {
     import UpdateProjectResult._
-    saveProject[UpdateProjectResult](rawName, name => {
-      if (RenameProject.first(name, id, usrId) == 0)
-        ProjectNotFound
-      else
-        Success(name)
-    })(InvalidName, NameAlreadyInUse)
+    saveProject[UpdateProjectResult](name, name => {
+      if (RenameProject.first(name, id, usrId) == 0) ProjectNotFound
+      else Success
+    })(NameAlreadyInUse)
   }
 
   def findProject(id: ProjectId): Option[Project] = FindProject.firstOption(id)
@@ -117,14 +111,9 @@ sealed trait DaoS {
   // ===================================================================================================================
   // Use Case
 
-  protected def createUseCaseRevWithoutCorrection(ident: UseCaseIdent, rev: Short, h: UseCaseHeader): UseCaseRev = {
-    val id = InsertUseCaseRev.first(ident, rev, h.title)
-    UseCaseRev(ident, rev, id, h)
-  }
-
   def createUseCaseRev(ucIdent: UseCaseIdent, rev: Short, header: UseCaseHeader): UseCaseRev = {
-    val uch = InputCorrection.correct(header)
-    createUseCaseRevWithoutCorrection(ucIdent, rev, uch)
+    val id = InsertUseCaseRev.first(ucIdent, rev, header.title)
+    UseCaseRev(ucIdent, rev, id, header)
   }
 
   def findUseCaseRev(revId: UseCaseRevId): Option[UseCaseRev] = SelectUseCaseRev.firstOption(revId)
@@ -197,9 +186,8 @@ sealed trait DaoT extends DaoS {
 
   def createUseCaseIdentAndRev1(projectId: ProjectId, header: UseCaseHeader, lock: Lock.Write[UseCaseNumbers]): UseCaseRev = {
     val ident = createUseCaseIdent(projectId)
-    val h = InputCorrection.correct(header)
     val rev = 1: Short
-    createUseCaseRevWithoutCorrection(ident, rev, h)
+    createUseCaseRev(ident, rev, header)
   }
 
   /**
@@ -213,25 +201,14 @@ sealed trait DaoT extends DaoS {
 
     findUseCaseLatestRev(ucId) match {
       case None => UseCaseNotFound
-
       case Some(latest) =>
-        val newHeader = InputCorrection.correct(modFn(latest.header))
-
-        // NOP
-        if (latest.header == newHeader)
+        val h = modFn(latest.header)
+        if (h == latest.header)
           AlreadyUpToDate(latest)
-
-        // Rev #1 title update
-        else if (latest.rev == 1 && latest.header == newHeader.copy(title = Defaults.title)) {
-          UpdateUseCaseTitleDirect.execute(newHeader.title, latest.id)
-          DirectUpdate(latest.copy(header = newHeader))
-        }
-
-        // Audited update
         else {
-          val newRev = createUseCaseRevWithoutCorrection(latest.ident, latest.rev +! 1, newHeader)
+          val newRev = createUseCaseRev(latest.ident, latest.rev +! 1, h)
           linkUcToSameFieldsAsOtherUc(latest, newRev)
-          NewRevision(newRev)
+          Success(newRev)
         }
     }
   }
@@ -259,8 +236,7 @@ object UserRegistrationResult {
 
 sealed trait UseCaseHeaderUpdateResult
 object UseCaseHeaderUpdateResult {
-  case class NewRevision(result: UseCaseRev) extends UseCaseHeaderUpdateResult
-  case class DirectUpdate(result: UseCaseRev) extends UseCaseHeaderUpdateResult
+  case class Success(result: UseCaseRev) extends UseCaseHeaderUpdateResult
   case class AlreadyUpToDate(result: UseCaseRev) extends UseCaseHeaderUpdateResult
   case object UseCaseNotFound extends UseCaseHeaderUpdateResult
 }
@@ -268,14 +244,12 @@ object UseCaseHeaderUpdateResult {
 sealed trait CreateProjectResult
 object CreateProjectResult {
   case class Success(id: ProjectId) extends CreateProjectResult
-  case object InvalidName extends CreateProjectResult
   case object NameAlreadyInUse extends CreateProjectResult
 }
 
 sealed trait UpdateProjectResult
 object UpdateProjectResult {
-  case class Success(name: String) extends UpdateProjectResult
-  case object InvalidName extends UpdateProjectResult
+  case object Success extends UpdateProjectResult
   case object NameAlreadyInUse extends UpdateProjectResult
   case object ProjectNotFound extends UpdateProjectResult
 }

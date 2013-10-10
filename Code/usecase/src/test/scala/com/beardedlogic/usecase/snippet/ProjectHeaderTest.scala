@@ -17,7 +17,7 @@ class ProjectHeaderTest extends FunSuite with TestHelpers {
   def run[R](
     loggedInUser: Option[UserDescriptor] = Some(UD1),
     project: Project = Project(123456.tag[ProjectIdTag], "Grrr", UD1.id),
-    updateResult: UpdateProjectResult = Success("YAY")
+    updateResult: UpdateProjectResult = Success
     )(fn: ProjectHeader => R = identity[ProjectHeader] _): R = {
 
     val uid: UserId = loggedInUser.map(_.id).getOrElse((-1).tag[UserIdTag])
@@ -40,7 +40,7 @@ class ProjectHeaderTest extends FunSuite with TestHelpers {
   }
 
   test("Successful rename") {
-    val js = run()(_.onRename())
+    val js = run()(p => {p.projectNameInput = "YAY"; p.onRename})
     js.toString should (include("YAY") and include(TriggerProjectUpdated.triggerName))
   }
 }

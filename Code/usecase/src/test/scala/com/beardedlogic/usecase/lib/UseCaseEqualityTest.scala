@@ -5,6 +5,7 @@ import scalaz.syntax.equal._
 import com.beardedlogic.usecase.test.TestData
 import change.Changes.StepAdded
 import Lenses._
+import Types.{@@, Validated}
 import UseCaseEquality._
 
 class UseCaseEqualityTest extends FunSuite with TestData {
@@ -31,7 +32,7 @@ class UseCaseEqualityTest extends FunSuite with TestData {
   }
 
   test("Changes in header") {
-    testStringChange(uc => f => ucTitleL.mod(f, uc))
+    testStringChange(uc => f => ucTitleL.mod(f.asInstanceOf[String @@ Validated => String @@ Validated], uc))
   }
 
   test("Changes in text field text") {

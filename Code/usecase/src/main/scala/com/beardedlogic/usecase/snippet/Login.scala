@@ -7,7 +7,8 @@ import net.liftweb.util.Helpers._
 import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc._
 import scala.xml.Text
-import lib.{InputCorrection, SingleOpStatefulSnippet}
+import scalaz.{-\/,\/-}
+import lib.{InputValidator, SingleOpStatefulSnippet}
 import util.HtmlTransformExt.ajaxSubmitOnClick
 import Login._
 
@@ -17,20 +18,21 @@ object Login {
 
 class Login extends SingleOpStatefulSnippet {
 
-  private var usernameOrEmail, password = ""
+  private var usernameOrEmailInput, passwordInput = ""
 
   // TODO What about when user already logged in?
 
   def render = (
-    "#who" #> SHtml.onSubmit(i => usernameOrEmail = InputCorrection.usernameOrEmail(i)) &
-    "#password" #> SHtml.onSubmit(i => password = InputCorrection.password(i)) &
+    "#who" #> SHtml.onSubmit(usernameOrEmailInput = _) &
+    "#password" #> SHtml.onSubmit(passwordInput = _) &
     ":submit" #> ajaxSubmitOnClick(onLoginAttempt)
-    )
+  )
 
   def onLoginAttempt(): JsCmd = {
-    if (usernameOrEmail.isEmpty || password.isEmpty)
-      jsShowError(InvalidLogin)
-    else {
+    val possibleJs = for {
+      usernameOrEmail <- InputValidator.usernameOrEmail.correctAndValidate(usernameOrEmailInput)
+      password        <- InputValidator.password.correctAndValidate(passwordInput)
+    } yield {
       val loginToken = new UsernamePasswordToken(usernameOrEmail, password)
       loginToken.setRememberMe(false)
       try {
@@ -40,6 +42,7 @@ class Login extends SingleOpStatefulSnippet {
         case _: AuthenticationException => jsShowError(InvalidLogin)
       }
     }
+    possibleJs | jsShowError(InvalidLogin)
   }
 
   def onSuccessfulLogin(): Nothing = {

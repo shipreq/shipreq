@@ -83,7 +83,7 @@ object Inspection {
 
   private def getTagName(tag: ReflectTypeTag[_]): String = tag.tpe.toString.replaceFirst("^.+\\.","")
 
-  private def taggedType[Base, TagTgt, Tag <: TypeTag[TagTgt]](implicit tt: ReflectTypeTag[Tag], baseShow: Show[Base]): Show[Base @@ Tag] = {
+  private def taggedType[Base <: AnyRef, Tag <: TypeTag[Base]](implicit tt: ReflectTypeTag[Tag], baseShow: Show[Base]): Show[Base @@ Tag] = {
     val tagClass = getTagName(tt)
     val tagSuffix: Cord = s".tag[$tagClass]"
     Show.show(s => {
@@ -92,9 +92,12 @@ object Inspection {
     })
   }
 
-  private def taggedStr[Tag <: TypeTag[String]](implicit tt: ReflectTypeTag[Tag]): Show[String @@ Tag] = taggedType[String, String, Tag]
-  private def taggedShort[Tag <: TypeTag[Short]](implicit tt: ReflectTypeTag[Tag]): Show[JShort @@ Tag] = taggedType[JShort, Short, Tag]
-  private def taggedLong[Tag <: TypeTag[Long]](implicit tt: ReflectTypeTag[Tag]): Show[JLong @@ Tag] = taggedType[JLong, Long, Tag]
+  private def taggedAnyRef[T <: AnyRef, Tag <: TypeTag[AnyRef]](implicit t: Show[T], tt: ReflectTypeTag[Tag]): Show[T @@ Tag] = taggedType[T, Tag]
+  private def taggedStr[Tag <: TypeTag[String]](implicit tt: ReflectTypeTag[Tag]): Show[String @@ Tag] = taggedType[String, Tag]
+  private def taggedShort[Tag <: TypeTag[JShort]](implicit tt: ReflectTypeTag[Tag]): Show[JShort @@ Tag] = taggedType[JShort, Tag]
+  private def taggedLong[Tag <: TypeTag[JLong]](implicit tt: ReflectTypeTag[Tag]): Show[JLong @@ Tag] = taggedType[JLong, Tag]
+
+  implicit def validatedType[T <: AnyRef](implicit t: Show[T]): Show[T @@ Validated] = taggedAnyRef[T, Validated]
 
   implicit val textWithNRefs   : Show[TextWithNormalisedRefs] = taggedStr[TextWithNormalisedRefsTag]
   implicit val localTextFieldId: Show[LocalTextFieldId]       = taggedStr[LocalTextFieldIdTag]

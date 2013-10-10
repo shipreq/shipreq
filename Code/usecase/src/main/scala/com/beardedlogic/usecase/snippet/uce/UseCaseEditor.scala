@@ -8,6 +8,7 @@ import net.liftweb.util.Helpers._
 import JsCmds.Noop
 
 import app.RequestVars.SoleProject
+import db.UseCaseHeader
 import lib._
 import change._
 import field._
@@ -25,7 +26,7 @@ object UseCaseEditor extends StaticSnippetHelpers with DI {
   // TODO Delete UCE . initial state
   val DefaultInitialState: State = {
     val ucn = (0:Short).tag[UseCaseNumberTag]
-    val h = Defaults.useCaseHeader
+    val h = UseCaseHeader("DEMO".tag[Validated])
     val fl = Defaults.fieldList.value.fields
     val ncf = UseCaseFns.filter[NormalCourseField](fl).head
     val fv = fl.map(f => (f ~> f.empty)).toMap + (ncf ~> ncf.defaultLoadValue(h)._2.apply)

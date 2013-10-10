@@ -3,15 +3,10 @@ package lib
 
 import net.liftweb.common.Logger
 import scalaz.{Name, Need}
-import field._
 import db._
+import field._
 
 object Defaults extends Logger {
-
-  /** Default title of new use cases. */
-  val title = "Untitled"
-
-  val useCaseHeader = UseCaseHeader(title)
 
   val fieldListDefns: List[FieldDefinition] =
     TextFieldDefinition("Description") ::

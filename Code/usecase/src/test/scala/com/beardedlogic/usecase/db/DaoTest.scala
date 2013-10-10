@@ -10,7 +10,7 @@ import lib.Types._
 import AutoExternaliseIds._
 
 class DaoTest extends FunSpec with TestDatabaseSupport {
-  implicit def str2uch(title: String): UseCaseHeader = UseCaseHeader(title)
+  implicit def str2uch(title: String @@ Validated): UseCaseHeader = UseCaseHeader(title)
 
   describe("FieldList") {
     lazy val fl1 =
@@ -58,7 +58,7 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
 
     describe("findUseCase") {
       it("should load when found") {
-        val saved = createUseCaseIdentAndRev1(newProjectId(), "ah")
+        val saved = createUseCaseIdentAndRev1(newProjectId(), "ah".validated)
         dao.findUseCaseRev(saved).get ==== saved
       }
     }
@@ -76,40 +76,34 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
       def assertAuditedUpdate(src: UseCaseRev, relationRows: Int = 0)(implicit projectId: ProjectId): UseCaseRev = {
         import Tables._
         assertTableDiffs(UsecaseRev -> 1, UcField -> relationRows) {
-          val r = updateUseCaseHeader(src, _.copy(title = "omg"))
+          val r = updateUseCaseHeader(src, _.copy(title = "omg".validated))
           r match {
-            case NewRevision(n) => assertUC(n, src.withTitle("omg"), 1); n
-            case _ => fail("Expected NewRevision. Got " + r)
+            case Success(n) => assertUC(n, src.withTitle("omg".validated), 1); n
+            case _ => fail("Expected Success. Got " + r)
           }
         }
       }
 
       def assertNOP(uc: UseCaseRev, expected: UseCaseRev)(implicit projectId: ProjectId) {
-        val r = assertTableDiffs() {updateUseCaseHeader(uc, h => h)}
-        r ==== AlreadyUpToDate(expected)
+        assertTableDiffs() {
+          val r = updateUseCaseHeader(uc, identity)
+          r ==== AlreadyUpToDate(expected)
+        }
       }
 
       def createTwoRevs(implicit projectId: ProjectId) = {
-        val rev1 = createUseCaseIdentAndRev1(projectId, "Haha")
-        val rev2s = updateUseCaseHeader(rev1, _.copy(title = "wow")) match {
-          case NewRevision(x) => x
-          case _ => fail("Expected NewRevision.")
+        val rev1 = createUseCaseIdentAndRev1(projectId, "Haha".validated)
+        val rev2s = updateUseCaseHeader(rev1, _.copy(title = "wow".validated)) match {
+          case Success(x) => x
+          case _ => fail("Expected Success.")
         }
         val rev2 = dao.findUseCaseRev(rev2s).get
         (rev1, rev2)
       }
 
-      it("should do a direct update when rev #1 and title default") {
-        implicit val pid = newProjectId()
-        val rev1 = createUseCaseIdentAndRev1(pid, Defaults.useCaseHeader)
-        val tgt = rev1.withTitle("omg")
-        val r = assertTableDiffs() {updateUseCaseHeader(rev1, _ => tgt.header)}
-        r ==== DirectUpdate(tgt)
-      }
-
       it("should do an audited update when rev #1 and non-default title changes") {
         implicit val pid = newProjectId()
-        assertAuditedUpdate(createUseCaseIdentAndRev1(pid, "Haha"))
+        assertAuditedUpdate(createUseCaseIdentAndRev1(pid, "Haha".validated))
       }
 
       it("should do an audited update when rev #2+") {
@@ -121,7 +115,7 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
       it("should copy relationships when performing an audited update") {
         val fk1 = dao.createFieldKey(FieldKeyType.Text, Some("THE OCEAN"))
         val fk2 = dao.createFieldKey(FieldKeyType.Text, Some("PELAGIAL"))
-        val uc1 = createUseCaseIdentAndRev1(newProjectId(), "Haha")
+        val uc1 = createUseCaseIdentAndRev1(newProjectId(), "Haha".validated)
         val txt1 = dao.createTextRev(dao.createTextIdent(uc1, fk1), 1, "mesopelagic".hasNormalisedRefs)
         val txt2 = dao.createTextRev(dao.createTextIdent(uc1, fk2), 1, "bathyalpelagic".hasNormalisedRefs)
         dao.linkUcToText(uc1, txt1)
@@ -134,16 +128,14 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
 
       it("should do nothing when rev #1 and no change") {
         implicit val pid = newProjectId()
-        val rev1 = createUseCaseIdentAndRev1(pid, Defaults.useCaseHeader)
+        val rev1 = createUseCaseIdentAndRev1(pid, "YAY".validated)
         assertNOP(rev1, rev1)
-        assertNOP(rev1.withTitle(""), rev1)
       }
 
       it("should do nothing when rev #2 and no change") {
         implicit val pid = newProjectId()
         val (_, rev2) = createTwoRevs
         assertNOP(rev2, rev2)
-        assertNOP(rev2.withTitle(rev2.header.title + "  "), rev2)
       }
     }
   }
@@ -153,7 +145,7 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
   describe("Project") {
     import Tables.{Project => TProject}
 
-    def newUserAndProject(projectName: String) = {
+    def newUserAndProject(projectName: String @@ Validated) = {
       val u = newUserId
       val p = dao.createProject(u, projectName).gimme
       (u, p)
@@ -164,23 +156,14 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
 
       it("should create a new project") {
         val u = newUserId
-        assertTableDiffs(TProject -> 1) {dao.createProject(u, "Blah")}
-      }
-
-      it("should correct the project name") {
-        val (u, p) = newUserAndProject("    Blah Blah   ")
-        dao.findProject(p).get.name ==== "Blah Blah"
-      }
-
-      it("should reject invalid names") {
-        val u = newUserId
-        dao.createProject(u, "   ") ==== InvalidName
+        assertTableDiffs(TProject -> 1) {dao.createProject(u, "Blah".validated)}
       }
 
       it("should reject duplicate project names") {
-        val (u, _) = newUserAndProject("Yay")
-        val (_, _) = newUserAndProject("Yay")
-        dao.createProject(u, "Yay") ==== NameAlreadyInUse
+        val t = "Yay".validated
+        val (u, _) = newUserAndProject(t)
+        val (_, _) = newUserAndProject(t)
+        dao.createProject(u, t) ==== NameAlreadyInUse
       }
     }
 
@@ -188,35 +171,24 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
       import UpdateProjectResult._
 
       it("should update the project name") {
-        val (u, p) = newUserAndProject("A")
-        assertTableDiffs()(dao.updateProject(p, u, "B")) ==== Success("B")
+        val (u, p) = newUserAndProject("A".validated)
+        assertTableDiffs()(dao.updateProject(p, u, "B".validated)) ==== Success
         dao.findProject(p).get.name ==== "B"
       }
 
-      it("should correct the project name") {
-        val (u, p) = newUserAndProject("A")
-        dao.updateProject(p, u, "  C C  ") ==== Success("C C")
-        dao.findProject(p).get.name ==== "C C"
-      }
-
-      it("should reject invalid names") {
-        val (u, p) = newUserAndProject("A")
-        dao.updateProject(p, u, "   ") ==== InvalidName
-      }
-
       it("should reject duplicate names") {
-        val (u, p1) = newUserAndProject("A")
-        val p2 = dao.createProject(u, "B").gimme
-        dao.updateProject(p2, u, "A") ==== NameAlreadyInUse
+        val (u, p1) = newUserAndProject("A".validated)
+        val p2 = dao.createProject(u, "B".validated).gimme
+        dao.updateProject(p2, u, "A".validated) ==== NameAlreadyInUse
       }
 
       it("should fail when project not found") {
-        dao.updateProject(0.tag[ProjectIdTag], 0.tag[UserIdTag], "A") ==== ProjectNotFound
+        dao.updateProject(0.tag[ProjectIdTag], 0.tag[UserIdTag], "A".validated) ==== ProjectNotFound
       }
 
       it("should fail when project doesnt belong to user") {
-        val (u, p) = newUserAndProject("A")
-        dao.updateProject(p, newUserId, "B") ==== ProjectNotFound
+        val (u, p) = newUserAndProject("A".validated)
+        dao.updateProject(p, newUserId, "B".validated) ==== ProjectNotFound
       }
     }
 
@@ -233,12 +205,12 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
 
       it("should return a summary for each project the user has") {
         val u = newUserId
-        val p1 = dao.createProject(u, "Bereft").gimme
+        val p1 = dao.createProject(u, "Bereft".validated).gimme
         val s1 = ProjectSummary(p1, "Bereft", 0, None)
         summariseWithNoise(u) ==== List(s1)
-        val p2 = dao.createProject(u, "Apple").gimme
+        val p2 = dao.createProject(u, "Apple".validated).gimme
         dao.summariseProjects(u) ==== List(ProjectSummary(p2, "Apple", 0, None), s1)
-        createUseCaseIdentAndRev1(p2, "yo")
+        createUseCaseIdentAndRev1(p2, "yo".validated)
         val r = dao.summariseProjects(u)
         r.map(_.copy(ucUpdatedAt = None)) ==== List(ProjectSummary(p2, "Apple", 1, None), s1)
         r(0).ucUpdatedAt shouldBe defined

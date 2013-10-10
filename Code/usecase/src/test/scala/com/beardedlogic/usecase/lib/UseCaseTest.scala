@@ -40,7 +40,7 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
     }
 
     it("should not recalc when only the title has changed") {
-      assertDoesntRecalc(ucTitleL.set(_, "asdfklghj"))
+      assertDoesntRecalc(ucTitleL.set(_, "asdfklghj".validated))
     }
 
     it("should not recalc when only a step text changes") {
@@ -240,7 +240,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
   describe("Loading") {
     it("should set NC.0 to the title for new UCs") {
       val pid = newProjectId()
-      val x = createUseCaseIdentAndRev1(pid, UseCaseHeader("Hello"))
+      val x = createUseCaseIdentAndRev1(pid, UseCaseHeader("Hello".validated))
       val y = loadRev(x, pid)
       val sfv = NCF.lens.get(y.uc)
       sfv.textmap(sfv.tree.head.id).text ==== x.header.title
@@ -250,7 +250,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
       // Create UC
       val pid = newProjectId()
       val ucIdent = dao.createUseCaseIdentWithForcedNumber(pid, (3:Short).tag[UseCaseNumberTag])
-      val ucRev = dao.createUseCaseRev(ucIdent, 1, UseCaseHeader("ahh"))
+      val ucRev = dao.createUseCaseRev(ucIdent, 1, UseCaseHeader("ahh".validated))
 
       // Create Text FV
       val txtRev = createInitialTextRev(ucIdent, TF1, "Hehe")
@@ -266,7 +266,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
       val loaded = loadRev(ucRev, pid).uc
 
       // Verify
-      loaded.header ==== UseCaseHeader("ahh")
+      loaded.header ==== UseCaseHeader("ahh".validated)
       TF1(loaded.fieldValues).text ==== "Hehe"
       assertStepTree(loaded, NCF, "3.0. Root\n  1. Child")
     }
@@ -275,7 +275,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
       // Create UC
       val pid = newProjectId()
       val ucIdent = dao.createUseCaseIdentWithForcedNumber(pid, (3:Short).tag[UseCaseNumberTag])
-      val ucRev = dao.createUseCaseRev(ucIdent, 1, UseCaseHeader("ahh"))
+      val ucRev = dao.createUseCaseRev(ucIdent, 1, UseCaseHeader("ahh".validated))
 
       // Create course FV
       val s1 = createInitialTextRev(ucIdent, NCF, "Root")
@@ -293,7 +293,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
       val loaded = loadRev(ucRev, pid).uc
 
       // Verify
-      loaded.header ==== UseCaseHeader("ahh")
+      loaded.header ==== UseCaseHeader("ahh".validated)
       TF3(loaded.fieldValues).text ==== "look at [3.0.1] and [3.1]!"
       assertStepTree(loaded, NCF, "3.0. Root\n  1. Child [3.0]\n3.1. Other [3.0.1]")
     }
@@ -345,7 +345,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
       }
 
       it("should save a title change") {
-        testUpdateSucceeds(ucTitleL.set(_, "zz"), UsecaseRev -> 1, UcField -> rels)
+        testUpdateSucceeds(ucTitleL.set(_, "zz".validated), UsecaseRev -> 1, UcField -> rels)
       }
 
       it("should save a text update") {
@@ -407,7 +407,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
       }
 
       // Change title
-      testUpdate(ucTitleL.set(_, "zzzzzzzzz"), UsecaseRev -> 1, UcField -> rels)
+      testUpdate(ucTitleL.set(_, "zzzzzzzzz".validated), UsecaseRev -> 1, UcField -> rels)
 
       // Change text field
       testUpdate(uc => TF1.lens.set(uc, freeText("jjj")), UsecaseRev -> 1, TextRev -> 1, UcField -> rels)

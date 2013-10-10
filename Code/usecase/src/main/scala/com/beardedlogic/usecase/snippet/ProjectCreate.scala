@@ -4,10 +4,11 @@ package snippet
 import net.liftweb.http.js.JsCmd
 import net.liftweb.http.SHtml
 import net.liftweb.util.Helpers._
+import scalaz.{-\/,\/-}
 
 import app.AppSiteMap
 import db.CreateProjectResult
-import lib.SingleOpStatefulSnippet
+import com.beardedlogic.usecase.lib.{InputValidator, SingleOpStatefulSnippet}
 import util.HtmlTransformExt.ajaxSubmitOnClick
 
 /**
@@ -17,19 +18,22 @@ import util.HtmlTransformExt.ajaxSubmitOnClick
  */
 class ProjectCreate extends SingleOpStatefulSnippet {
 
-  private[snippet] var projectName = ""
+  private[snippet] var projectNameInput = ""
 
   def render = (
-    ":text" #> SHtml.onSubmit(projectName = _) &
+    ":text" #> SHtml.onSubmit(projectNameInput = _) &
     ":submit" #> ajaxSubmitOnClick(onSubmit)
   )
 
   def onSubmit(): JsCmd = {
     import CreateProjectResult._
-    daoProvider.withSession(_.createProject(currentUserId_!, projectName)) match {
-      case Success(id)      => redirectTo(AppSiteMap.Project)(id)
-      case InvalidName      => jsShowError("Invalid project name.")
-      case NameAlreadyInUse => jsShowError("You already have a project with that name.")
+    InputValidator.projectName.correctAndValidate(projectNameInput) match {
+      case -\/(err) => jsShowError(err)
+      case \/-(name) =>
+        daoProvider.withSession(_.createProject(currentUserId_!, name)) match {
+          case Success(id)      => redirectTo(AppSiteMap.Project)(id)
+          case NameAlreadyInUse => jsShowError("You already have a project with that name.")
+        }
     }
   }
 }

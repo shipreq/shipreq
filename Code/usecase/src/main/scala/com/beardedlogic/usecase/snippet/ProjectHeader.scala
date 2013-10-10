@@ -4,11 +4,11 @@ package snippet
 import net.liftweb.http.js.JsCmd
 import net.liftweb.http.SHtml
 import net.liftweb.util.Helpers._
+import scalaz.{\/-, -\/}
 
 import db.UpdateProjectResult
-import lib.SingleOpStatefulSnippet
+import lib.{InputValidator, SingleOpStatefulSnippet}
 import lib.Types._
-import security.PermissionCheck
 import util.HtmlTransformExt.ajaxSubmitOnClick
 import util.JsExt.JsTextTrigger
 import app.RequestVars
@@ -27,24 +27,27 @@ class ProjectHeader extends SingleOpStatefulSnippet {
   implicit def alertId = "phdra".tag[AlertIdTag]
 
   val project = RequestVars.SoleProject.get
-  var projectName = project.name
+  var projectNameInput = project.name
 
   def render = (
     "#project-title" #> (
       "h1 *" #> project.name &
       "input .title [value]" #> project.name &
-      "input .title" #> SHtml.onSubmit(projectName = _) &
+      "input .title" #> SHtml.onSubmit(projectNameInput = _) &
       "button .update" #> ajaxSubmitOnClick(onRename)
     )
   )
 
   def onRename(): JsCmd = {
     import UpdateProjectResult._
-    daoProvider.withSession(_.updateProject(project.id, currentUserId_!, projectName)) match {
-      case Success(newName) => jsRenamed(newName)
-      case InvalidName      => jsShowError("Invalid project name.")
-      case NameAlreadyInUse => jsShowError("You already have a project with that name.")
-      case ProjectNotFound  => redirectHome
+    InputValidator.projectName.correctAndValidate(projectNameInput) match {
+      case -\/(err) => jsShowError(err)
+      case \/-(name) =>
+        daoProvider.withSession(_.updateProject(project.id, currentUserId_!, name)) match {
+          case Success          => jsRenamed(name)
+          case NameAlreadyInUse => jsShowError("You already have a project with that name.")
+          case ProjectNotFound  => redirectHome
+        }
     }
   }
 

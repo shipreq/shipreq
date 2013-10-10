@@ -29,7 +29,7 @@ class PermissionTest extends FunSpec with LiveTest with UserFixture {
   // -------------------------------------------------------------------------------------------------------------------
 
   lazy val pid = newProjectId(user1.id)
-  lazy val ucId = withNewTransaction(createUseCaseIdentAndRev1(pid, UseCaseHeader("Hello")))
+  lazy val ucId = withNewTransaction(createUseCaseIdentAndRev1(pid, UseCaseHeader("Hello".validated)))
 
   describe("/") {
     it("anon") {

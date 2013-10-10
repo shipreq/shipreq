@@ -255,6 +255,9 @@ object DataGenerators extends Logger {
   // Use Case
 
   val useCaseTitle = arbitrary[String]
+                     .map(InputValidator.useCaseTitle.correctAndValidate(_).toOption)
+                     .suchThat(_.isDefined)
+                     .map(_.get)
 
   val useCaseNumber = Gen.posNum[Short].map(_.tag[UseCaseNumberTag])
 

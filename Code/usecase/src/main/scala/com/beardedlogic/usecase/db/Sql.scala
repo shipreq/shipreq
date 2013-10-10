@@ -13,6 +13,7 @@ import security.PasswordAndSalt
 private[db] final object Sql {
   import SqlHelpers._
   import StaticQuery.{query, queryNA, update, updateNA}
+  implicit def autotag[T <: AnyRef](t: T): T @@ Validated = t.tag[Validated]
 
   implicit val GR_FieldKey = GetResult {r => FieldKeyRec(r.<<, r.<<, r.<<)}
   implicit val GR_PasswordAndSalt = GetResult(r => PasswordAndSalt(r.nextString, r.nextString))
@@ -22,7 +23,7 @@ private[db] final object Sql {
   implicit val GR_UcFieldText= GetResult(r => UcFieldText(r.nextStringOption.asLabels, r.<<, r.<<, r.<<))
   implicit val GR_UcFieldTextWithFK = GetResult(r => UcFieldTextWithFK(r.<<, r.<<))
   implicit val GR_UseCaseIdent = GetResult {r => UseCaseIdent(r.<<, r.<<)}
-  implicit val GR_UseCaseRev = GetResult(r => UseCaseRev(r.<<, r.<<, r.<<, UseCaseHeader(r.<<)))
+  implicit val GR_UseCaseRev = GetResult(r => UseCaseRev(r.<<, r.<<, r.<<, UseCaseHeader(r.nextString)))
   implicit val GR_UseCaseSummary = GetResult(r => UseCaseSummary(r.nextId[UseCaseIdentId], r.<<, r.<<, r.<<))
   implicit val GR_UserDescriptor = GetResult(r => UserDescriptor(r.<<, r.<<, r.<<))
   implicit val GR_UserRegistrationInfo = GetResult(r => UserRegistrationInfo(r.<<, r.<<, r.<<, r.<<))
@@ -128,8 +129,6 @@ private[db] final object Sql {
     FROM usecase u, usecase_rev r
     WHERE r.id = latest_rev_id and project_id = ?
     ORDER BY number """.sql)
-
-  @Update val UpdateUseCaseTitleDirect = update[(String, UseCaseRevId)]("UPDATE usecase_rev SET title=? WHERE id=?")
 
   // ###################################################################################################################
   // Text

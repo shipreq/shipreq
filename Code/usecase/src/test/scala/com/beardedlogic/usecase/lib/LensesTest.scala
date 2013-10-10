@@ -7,9 +7,11 @@ import text.FreeText
 import com.beardedlogic.usecase.db.UseCaseHeader
 import com.beardedlogic.usecase.test.NodeUtils._
 import com.beardedlogic.usecase.test.{TestData, TestHelpers}
+import Types._
 
 class FieldLensesTest extends FunSpec with TestHelpers with TestData {
   import MockUc1._
+  implicit def autotagV[T <: AnyRef](t: T): T @@ Validated = t.tag[Validated]
 
   def testFieldValueSet[F <: Field {type Value = V}, V](before: UseCase)(field: F, newValue: V)(after: UseCase) {
     field(after.fieldValues) ==== newValue

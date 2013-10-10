@@ -49,7 +49,7 @@ case class UseCaseRev(ident: UseCaseIdent, rev: Short, id: UseCaseRevId, header:
   @inline final def identId = ident.identId
 }
 
-case class UseCaseHeader(title: String)
+case class UseCaseHeader(title: String @@ Validated)
 object UseCaseHeader extends UcChangeDomain
 
 case class TextRev(identId: TextIdentId, rev: Short, id: TextRevId, text: TextWithNormalisedRefs)

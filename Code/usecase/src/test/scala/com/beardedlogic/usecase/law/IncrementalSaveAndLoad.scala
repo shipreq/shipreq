@@ -7,7 +7,7 @@ import test.{TestDatabaseHelpers, TestDB}
 import db.UseCaseHeader
 import lib.{UseCase, UseCaseSaveCheckpoint}
 import lib.change.{Changed, ChangeFailure, NoChange}
-import lib.Types.ProjectId
+import lib.Types._
 
 /**
  * Mutate UC, save, load and compare, repeat.
@@ -43,7 +43,7 @@ object IncrementalSaveAndLoad extends Commands {
         val pid = db.newProjectId()
         SystemInvariants(pid, db)
       }
-      val rev1 = db.createUseCaseIdentAndRev1(pid, UseCaseHeader("Do Stuff"))
+      val rev1 = db.createUseCaseIdentAndRev1(pid, UseCaseHeader("Do Stuff".tag[Validated]))
       cp = db.loadUseCase(rev1, pid)
       history = (cp.uc, "Starting point.") :: Nil
     }

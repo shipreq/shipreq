@@ -15,7 +15,7 @@ class ProjectCreateTest extends FunSuite with TestDatabaseSupport with UserFixtu
 
   def create(n: String): JsCmd = {
     val s = new ProjectCreate
-    s.projectName = n
+    s.projectNameInput = n
     s.onSubmit
   }
 
@@ -28,17 +28,17 @@ class ProjectCreateTest extends FunSuite with TestDatabaseSupport with UserFixtu
 
   test("Creation fails with empty name") {
     for (n <- Seq("", "  ")) {
-      assertJsErrorNotice(create(n), Some("Invalid"))
+      assertJsErrorNotice(create(n), Some("blank"))
     }
   }
 
   test("Creation fails when project exists") {
-    dao.createProject(user1.id, "hehe")
+    dao.createProject(user1.id, "hehe".validated)
     assertJsErrorNotice(create("hehe"), Some("already"))
   }
 
   test("Allows same project name between different users") {
-    dao.createProject(user2.id, "hehe")
+    dao.createProject(user2.id, "hehe".validated)
     testSuccess
   }
 }

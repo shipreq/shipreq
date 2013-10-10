@@ -1,7 +1,6 @@
 package com.beardedlogic.usecase
 package db
 
-import java.lang.{Long => JLong, Short => JShort}
 import java.sql.Timestamp
 import org.joda.time.DateTime
 import scala.Long
@@ -18,23 +17,23 @@ private[db] object SqlHelpers {
   implicit val GR_DateTimeOption = GetResult(r => r.nextTimestampOption.map(TimestampToDateTime))
 
   implicit class PositionedResultExt(val r: PositionedResult) extends AnyVal {
-    def nextId[T <: JLong @@ TypeTag[Long]](): T = r.nextObject.asInstanceOf[T]
-    def nextId_?[T <: JLong @@ TypeTag[Long]](): Option[T] = r.nextObjectOption.asInstanceOf[Option[T]]
-    def nextTShort[Tag <: TypeTag[Short]](): JShort @@ Tag = r.nextShort.tag[Tag]
-    def nextTShort_?[Tag <: TypeTag[Short]](): Option[JShort @@ Tag] = r.nextShortOption.map(_.tag[Tag])
+    def nextId[T <: JLong @@ TypeTag[JLong]](): T = r.nextObject.asInstanceOf[T]
+    def nextId_?[T <: JLong @@ TypeTag[JLong]](): Option[T] = r.nextObjectOption.asInstanceOf[Option[T]]
+    def nextTShort[Tag <: TypeTag[JShort]](): JShort @@ Tag = r.nextShort.tag[Tag]
+    def nextTShort_?[Tag <: TypeTag[JShort]](): Option[JShort @@ Tag] = r.nextShortOption.map(_.tag[Tag])
   }
 
-  private def GR_TaggedLong[T <: JLong @@ TypeTag[Long]]: GetResult[T] = GetResult(_.nextId[T])
-  private def SP_TaggedLong[T <: JLong @@ TypeTag[Long]]: SetParameter[T] = new SetParameter[T] {
+  private def GR_TaggedLong[T <: JLong @@ TypeTag[JLong]]: GetResult[T] = GetResult(_.nextId[T])
+  private def SP_TaggedLong[T <: JLong @@ TypeTag[JLong]]: SetParameter[T] = new SetParameter[T] {
     def apply(v: T, pp: PositionedParameters): Unit = pp.setLong(v)
   }
-  private def GR_TaggedLongOpt[T <: JLong @@ TypeTag[Long]]: GetResult[Option[T]] = GetResult(_.nextId_?[T])
-  private def SP_TaggedLongOpt[T <: JLong @@ TypeTag[Long]] = new SetParameter[Option[T]] {
+  private def GR_TaggedLongOpt[T <: JLong @@ TypeTag[JLong]]: GetResult[Option[T]] = GetResult(_.nextId_?[T])
+  private def SP_TaggedLongOpt[T <: JLong @@ TypeTag[JLong]] = new SetParameter[Option[T]] {
     def apply(v: Option[T], pp: PositionedParameters): Unit = pp.setObjectOption(v, java.sql.Types.BIGINT)
   }
 
-  private def GR_TaggedShort[Tag <: TypeTag[Short]]: GetResult[JShort @@ Tag] = GetResult(_.nextTShort[Tag])
-  private def SP_TaggedShort[Tag <: TypeTag[Short]]: SetParameter[JShort @@ Tag] = new SetParameter[JShort @@ Tag] {
+  private def GR_TaggedShort[Tag <: TypeTag[JShort]]: GetResult[JShort @@ Tag] = GetResult(_.nextTShort[Tag])
+  private def SP_TaggedShort[Tag <: TypeTag[JShort]]: SetParameter[JShort @@ Tag] = new SetParameter[JShort @@ Tag] {
     def apply(v: JShort @@ Tag, pp: PositionedParameters): Unit = pp.setShort(v)
   }
 

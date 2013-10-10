@@ -11,7 +11,7 @@ import db.UseCaseHeader
 object Lenses {
 
   // Header lenses
-  val uchTitleL = lensg[UseCaseHeader, String](h => t => h.copy(title = t), _.title)
+  val uchTitleL = lensg[UseCaseHeader, String @@ Validated](h => t => h.copy(title = t), _.title)
 
   // Text field lenses
   val freeTextTextL = lensFamilyg[FreeText, FreeText, String, (String, StepAndLabelBiMap)](

@@ -1,6 +1,5 @@
 package com.beardedlogic.usecase.lib
 
-import java.lang.{Long => JLong}
 import net.liftweb.common.{Full, Empty, Box}
 import com.beardedlogic.usecase.util.BaseX
 import Types._

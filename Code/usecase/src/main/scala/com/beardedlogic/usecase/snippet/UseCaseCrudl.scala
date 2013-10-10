@@ -4,10 +4,11 @@ package snippet
 import net.liftweb.http.SHtml
 import net.liftweb.http.js.{JsCmds, JsCmd}
 import net.liftweb.util.Helpers._
+import scalaz.{\/, -\/, \/-}
 
 import app.AppSiteMap
 import db.{UseCaseRev, UseCaseHeaderUpdateResult, UseCaseHeader, UseCaseSummary}
-import lib.{Locks, ExternalId, Misc, SingleOpStatefulSnippet}
+import lib.{InputValidator, Locks, ExternalId, Misc, SingleOpStatefulSnippet}
 import util.NonEmptyTemplate
 import util.HtmlTransformExt.ajaxSubmitOnClick
 import util.JsExt.{JsTextTrigger, JqExpr, JsJsonTrigger, JsHtmlTrigger}
@@ -67,21 +68,20 @@ class UseCaseCrudl(projectId: ProjectId) extends SingleOpStatefulSnippet {
     ":submit" #> ajaxSubmitOnClick(onCreate)
   )
 
-  def onCreate(): JsCmd = {
-    val ucs = create(createTitle)
-    val li = renderListItem(ucs)(ListItemTemplate)
-    TriggerCreated.trigger(li)
-  }
+  def onCreate(): JsCmd =
+    create(createTitle) match {
+      case -\/(err) => jsShowError(err)
+      case \/-(ucs) => jsClearError & TriggerCreated.trigger(renderListItem(ucs)(ListItemTemplate))
+    }
 
-  def create(title: String): UseCaseSummary = {
-    val h = UseCaseHeader(title)
-    // TODO createUseCaseIdentAndRev1 never returns an error
-    val ucRev =
-      Locks.UseCaseNumbers.write(projectId)(lock =>
-        daoProvider.withTransaction(
-          _.createUseCaseIdentAndRev1(projectId, h, lock)))
-    new UseCaseSummary(ucRev, Misc.currentTimeAsIso8601Str)
-  }
+  def create(titleInput: String): String \/ UseCaseSummary =
+    InputValidator.useCaseTitle.correctAndValidate(titleInput).map(newTitle => {
+      val h = UseCaseHeader(newTitle)
+      val ucRev = Locks.UseCaseNumbers.write(projectId)(lock =>
+        daoProvider.withTransaction(_.createUseCaseIdentAndRev1(projectId, h, lock))
+      )
+      new UseCaseSummary(ucRev, Misc.currentTimeAsIso8601Str)
+    })
 
   // -------------------------------------------------------------------------------------------------------------------
   // Update
@@ -96,27 +96,26 @@ class UseCaseCrudl(projectId: ProjectId) extends SingleOpStatefulSnippet {
     )
   }
 
-  def onUpdate(uc: UseCaseSummary, newTitle: String): JsCmd = {
+  def onUpdate(uc: UseCaseSummary, newTitle: String): JsCmd =
     update(uc.id, newTitle) match {
-      case None =>
-        TriggerUpdateNop.trigger(uc.eid)
-      case Some(ucRev) =>
+      case -\/(err)  => jsShowError(err)
+      case \/-(None) => jsClearError & TriggerUpdateNop.trigger(uc.eid)
+      case \/-(Some(ucRev)) =>
         val ucs = new UseCaseSummary(ucRev, Misc.currentTimeAsIso8601Str)
         val li = renderListItem(ucs)(ListItemTemplate)
         val dto = UpdateDTO(uc.eid, JqExpr(li))
-        TriggerUpdated.trigger(dto)
+        jsClearError & TriggerUpdated.trigger(dto)
     }
-  }
 
-  def update(id: UseCaseIdentId, newTitle: String): Option[UseCaseRev] = {
+  def update(id: UseCaseIdentId, titleInput: String): String \/ Option[UseCaseRev] = {
     import UseCaseHeaderUpdateResult._
-    Locks.SingleUseCase.write(id, projectId)(lock =>
-      daoProvider.withTransaction(
-        _.updateUseCaseHeader(id, _.copy(title = newTitle), lock) match {
-          case NewRevision(r)     => Some(r)
-          case DirectUpdate(r)    => Some(r)
-          case AlreadyUpToDate(r) => None
-          case UseCaseNotFound    => redirectTo(AppSiteMap.Project)(projectId)
-        }))
+    InputValidator.useCaseTitle.correctAndValidate(titleInput).map(newTitle =>
+      Locks.SingleUseCase.write(id, projectId)(lock =>
+        daoProvider.withTransaction(_.updateUseCaseHeader(id, _.copy(title = newTitle), lock))
+      ) match {
+        case Success(r)         => Some(r)
+        case AlreadyUpToDate(r) => None
+        case UseCaseNotFound    => redirectTo(AppSiteMap.Project)(projectId)
+      })
   }
 }

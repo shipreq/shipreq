@@ -18,7 +18,7 @@ class TextFieldTest extends FunSpec with TestHelpers {
     v
   }
 
-  val UCH = UseCaseHeader("AH")
+  val UCH = UseCaseHeader("AH".validated)
   val EmptyLoadCtx = FieldLoadCtx(UCH, List.empty)
   val TI1 = 201L.tag[TextIdentIdTag]
   val TR1 = 301L.tag[TextRevIdTag]

@@ -7,6 +7,7 @@ import net.liftweb.util.Helpers._
 import net.liftweb.util.Mailer._
 import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc.UsernamePasswordToken
+import scalaz.{\/, -\/, \/-}
 
 import app.AppSiteMap
 import lib._
@@ -32,10 +33,9 @@ class Register1 extends SingleOpStatefulSnippet {
     )
 
   def onSubmit(): JsCmd = {
-    val email = InputCorrection.email(emailInput)
-    Validate.email(email) match {
-      case Some(errmsg) => jsShowError(errmsg)
-      case None =>
+    InputValidator.email.correctAndValidate(emailInput) match {
+      case -\/(err) => jsShowError(err)
+      case \/-(email) =>
         val mail: Mail = daoProvider.withTransaction(dao =>
           dao.findUserRegistrationInfo(email) match {
             case None => onNewUser(email, dao)
@@ -49,7 +49,7 @@ class Register1 extends SingleOpStatefulSnippet {
     }
   }
 
-  private def onNewUser(email: String, dao: DaoT): Mail = {
+  private def onNewUser(email: String @@ Validated, dao: DaoT): Mail = {
     val token = randomConfirmationToken
     dao.createUserPlaceholder(email, token)
     RegistrationEmails.LinkToCompleteRegistration(token)
@@ -105,32 +105,35 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
 
   // TODO onUsernameChange(): This should be pure JS
   def onUsernameChange(input: String): JsCmd = {
-    usernameInput = InputCorrection.username(input)
+    usernameInput = InputValidator.username.correct(input)
     JqId("username") ~> JqSetValue(usernameInput)
   }
 
-  def onSubmit(): JsCmd = {
-    val username = InputCorrection.username(usernameInput)
-    val password1 = InputCorrection.password(password1Input)
-    val password2 = InputCorrection.password(password2Input)
-    password1Input = "" // Let's not keep the plaintext passwords around
-    password2Input = ""
+  // TODO MOVE
+  def collectErrors(es: Seq[String \/ Any]): List[String] =
+    es.foldRight(List.empty[String])((e: String \/ Any, r: List[String]) => e match {
+      case -\/(err) => err :: r
+      case \/-(_) => r
+    })
 
-    val failures = List(
-      Validate.username(username)
-      , Validate.password(password1)
-      , Validate.password2(password1, password2)
-    ).filter(_.isDefined).map(_.get)
+  def onSubmit(): JsCmd = try {
+    import UserRegistrationResult._
 
-    if (failures.nonEmpty)
-      jsShowErrors(failures)
-    else {
-      import UserRegistrationResult._
+    val usernameE = InputValidator.username.correctAndValidate(usernameInput)
+    val password1C = InputValidator.password.correct(password1Input)
+    val password1E = InputValidator.password.validate(password1C)
+    val password2E =
+      if (password1C == InputValidator.password.correct(password2Input)) password1E
+      else -\/("Passwords don't match.")
 
+    val possibleJs = for {
+      username <- usernameE
+      password <- password1E
+      _        <- password2E
+    } yield {
       // Update user
-      val ps = PasswordAndSalt.hashWithRandomSalt(password1)
+      val ps = PasswordAndSalt.hashWithRandomSalt(password)
       daoProvider.withSession(_.performUserRegistration(token)(username, ps, clientIp_Or_?)) match {
-
         case UsernameTaken => jsShowError("Username is already taken.")
 
         case NoMatchingConfToken =>
@@ -140,9 +143,14 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
         // Registration complete
         case Success(_) =>
           info(s"Registered new user: $username")
-          SecurityUtils.getSubject.login(new UsernamePasswordToken(username, password1))
+          SecurityUtils.getSubject.login(new UsernamePasswordToken(username, password))
           jsClearError & JqExpr("#regComplete,#register2") ~> JqToggle
       }
     }
+
+    possibleJs | jsShowErrors(collectErrors(List(usernameE, password1E, password2E)))
+  } finally {
+    password1Input = "" // Let's not keep the plaintext passwords around
+    password2Input = ""
   }
 }

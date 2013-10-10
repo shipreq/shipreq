@@ -51,6 +51,9 @@ object ParsingConfig {
     override val arrowBadReplacement = "->"
   }
 
+  val AnyValidArrowRegex =
+    "(?:" + List(FlowFromStyle.arrowRegex, FlowToStyle.arrowRegex).map(_.pattern.pattern).mkString("|") + ")"
+
   @inline private def makeRef_(sb: StringBuilder)(fn: => Any): Unit = { sb += RefBraceL; fn; sb += RefBraceR }
   @inline def makeRef(sb: StringBuilder, label: String) = makeRef_(sb)(sb ++= label)
   @inline def makeRef(label: String) = RefBraceL + label + RefBraceR
