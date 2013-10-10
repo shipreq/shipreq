@@ -19,8 +19,8 @@ class ProjectListTest extends FunSuite with TestHelpers {
   }
 
   test("Projects") {
-    val p1 = ProjectSummary(1.tag[ProjectIdTag], "Empty", 0, None)
-    val p2 = ProjectSummary(2.tag[ProjectIdTag], "Hello", 2, Some("2013-05-20T15:57:35.773674+10:00"))
+    val p1 = ProjectSummary(1.tag[IsProjectId], "Empty", 0, None)
+    val p2 = ProjectSummary(2.tag[IsProjectId], "Hello", 2, Some("2013-05-20T15:57:35.773674+10:00"))
     val r = renderProjectList(p1 :: p2 :: Nil)(html).toString
     r should (includeProjects and (not(includeNone))
       and include("Empty") and include("0 Use Cases")

@@ -133,7 +133,7 @@ sealed trait DaoS {
   def linkUcToText(uc: UseCaseRevId, txt: TextRevId): Unit =
     LinkUcToText.execute(uc, txt)
 
-  def linkUcToStep(uc: UseCaseRevId, label: LabelStr, index: Short, parentId: Option[TextRevId], text: TextRev): UcFieldText = {
+  def linkUcToStep(uc: UseCaseRevId, label: StepLabel, index: Short, parentId: Option[TextRevId], text: TextRev): UcFieldText = {
     LinkUcToStep.execute(uc, label, parentId, index, text.id)
     UcFieldText(Some(label), parentId, index, text)
   }

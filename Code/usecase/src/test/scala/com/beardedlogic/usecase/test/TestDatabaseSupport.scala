@@ -199,7 +199,7 @@ trait TestDatabaseHelpers extends TestHelpers2 {
    * @param n The new UC number.
    */
   def forceUcNumber(cp: UseCaseSaveCheckpoint, n: Int): UseCaseSaveCheckpoint = {
-    val ucn = n.toShort.tag[UseCaseNumberTag]
+    val ucn = n.toShort.tag[IsUseCaseNumber]
     val uc_ = cp.uc.copy(number = ucn)
     val rec_ = cp.rec.copy(ident = cp.rec.ident.copy(number = ucn))
     sqlu"UPDATE usecase set number=${ucn.toShort} where id = ${rec_.ident.identId.toLong}".execute
@@ -213,11 +213,11 @@ trait TestDatabaseHelpers extends TestHelpers2 {
     dao.createProject(userId, randomUCTitle).gimme
 
   def getOrCreateUserId(): UserId =
-    sql"select id from usr where username is not null".as[Long].firstOption.map(_.tag[UserIdTag]).getOrElse(newUserId)
+    sql"select id from usr where username is not null".as[Long].firstOption.map(_.tag[IsUserId]).getOrElse(newUserId)
 
   def newUserId(): UserId =
     sql"INSERT INTO usr(username, email, password, password_salt, password_changed_at, confirmation_sent_at, confirmed_at) VALUES($randomStr,$randomStr,0,0,NOW(),NOW(),NOW()) RETURNING id".
-    as[Long].first.tag[UserIdTag]
+    as[Long].first.tag[IsUserId]
 
   def saveUseCase(uc: UseCase, prev: Option[UseCaseSaveCheckpoint], projectId: ProjectId): Option[UseCaseSaveCheckpoint] = prev match {
     case Some(cp) => UseCasePersistence.save(uc, cp, Locks.SingleUseCase.writeP(cp.rec, projectId), dao)

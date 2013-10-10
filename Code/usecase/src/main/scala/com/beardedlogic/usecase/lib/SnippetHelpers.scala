@@ -82,7 +82,7 @@ trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with Logger 
 
   protected implicit lazy val jsonFormats = DefaultJsonFormat
 
-  def toJson[T <: AnyRef](data: T): Json[T] = Serialization.write(data).tag[JsonTag[T]]
+  def toJson[T <: AnyRef](data: T): Json[T] = Serialization.write(data).tag[IsJsonFor[T]]
 
   final def currentUser_!(): UserDescriptor = securityProvider.loggedInUser match {
     case Some(user) => user

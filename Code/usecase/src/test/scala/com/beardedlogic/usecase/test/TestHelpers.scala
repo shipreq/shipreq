@@ -58,19 +58,19 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
 
   implicit def JsCmdToStr(js: JsCmd): String = js.toJsCmd
 
-  type Refs = Map[LocalStepId, LabelStr]
+  type Refs = Map[LocalStepId, StepLabel]
 
   def savedSteps(tuples: (Int, LocalStepId)*): BiMap[TextIdentId, LocalStepId] =
-    BiMap.apply(tuples.map(t => (t._1.toLong.tag[TextIdentIdTag], t._2)): _*)
+    BiMap.apply(tuples.map(t => (t._1.toLong.tag[IsTextIdentId], t._2)): _*)
 
   def mapToLabels(i: Traversable[LocalStepId], stepState: StepAndLabelBiMap = StepState1) = i.map(id => (id, stepState.value.ab(id))).toMap
   def mapFromLabels(i: Traversable[LocalStepId], stepState: StepAndLabelBiMap = StepState1) = i.map(id => (stepState.value.ab(id), id)).toMap
 
-  def mapToIds(i: Traversable[LabelStr], stepState: StepAndLabelBiMap = StepState1) = i.map(l => (l, stepState.value.ba(l))).toMap
-  def mapFromIds(i: Traversable[LabelStr], stepState: StepAndLabelBiMap = StepState1) = i.map(l => (stepState.value.ba(l), l)).toMap
+  def mapToIds(i: Traversable[StepLabel], stepState: StepAndLabelBiMap = StepState1) = i.map(l => (l, stepState.value.ba(l))).toMap
+  def mapFromIds(i: Traversable[StepLabel], stepState: StepAndLabelBiMap = StepState1) = i.map(l => (stepState.value.ba(l), l)).toMap
 
-  def flowFromClause(refs: (LocalStepId, LabelStr)*) = if (refs.isEmpty) None else Some(FlowFromClause(Map(refs: _*)))
-  def flowToClause(refs: (LocalStepId, LabelStr)*) = if (refs.isEmpty) None else Some(FlowToClause(Map(refs: _*)))
+  def flowFromClause(refs: (LocalStepId, StepLabel)*) = if (refs.isEmpty) None else Some(FlowFromClause(Map(refs: _*)))
+  def flowToClause(refs: (LocalStepId, StepLabel)*) = if (refs.isEmpty) None else Some(FlowToClause(Map(refs: _*)))
 
   def MockExistingStepLabelsChanged = {
     val m = mock[ExistingStepLabelsChanged]
@@ -144,8 +144,8 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
   lazy val TF3 = mockTextField("Stuff #3", 333)
   lazy val TF4 = mockTextField("Stuff #4", 444)
 
-  lazy val NCF = NormalCourseField(FieldKeyRec(55.tag[FieldKeyIdTag], NormalCourseFieldDefinition.fieldKeyType, NormalCourseFieldDefinition.fieldKeyData))
-  lazy val ECF = ExceptionCourseField(FieldKeyRec(66.tag[FieldKeyIdTag], ExceptionCourseFieldDefinition.fieldKeyType, ExceptionCourseFieldDefinition.fieldKeyData))
+  lazy val NCF = NormalCourseField(FieldKeyRec(55.tag[IsFieldKeyId], NormalCourseFieldDefinition.fieldKeyType, NormalCourseFieldDefinition.fieldKeyData))
+  lazy val ECF = ExceptionCourseField(FieldKeyRec(66.tag[IsFieldKeyId], ExceptionCourseFieldDefinition.fieldKeyType, ExceptionCourseFieldDefinition.fieldKeyData))
 
   def rnd = TestHelperConsts.Random
 
@@ -159,7 +159,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
     var i = 0
     tree.foreachRecursive(s => {
       i += 1
-      val textIdentId = (i * 1000).tag[TextIdentIdTag]
+      val textIdentId = (i * 1000).tag[IsTextIdentId]
       savedSteps += (textIdentId -> s.id)
     })
     savedSteps.result
@@ -169,7 +169,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
     var id = startingId - 1
     override def answer(invocation: InvocationOnMock) = {
       id += 1
-      id.tag[TextIdentIdTag]
+      id.tag[IsTextIdentId]
     }
   }
 
@@ -178,7 +178,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
       val identId = i.getArguments()(0).asInstanceOf[TextIdentId]
       val rev = i.getArguments()(1).asInstanceOf[Short]
       val text = i.getArguments()(2).asInstanceOf[TextWithNormalisedRefs]
-      val id = (identId*10).tag[TextRevIdTag]
+      val id = (identId*10).tag[IsTextRevId]
       TextRev(identId, rev, id, text)
     }
   }
@@ -186,7 +186,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
   def mockLinkUcToStepAnswer = new Answer[UcFieldText] {
     override def answer(i: InvocationOnMock) = {
       val uc = i.getArguments()(0).asInstanceOf[UseCaseRevId]
-      val label = i.getArguments()(1).asInstanceOf[LabelStr]
+      val label = i.getArguments()(1).asInstanceOf[StepLabel]
       val index = i.getArguments()(2).asInstanceOf[Short]
       val parentId = i.getArguments()(3).asInstanceOf[Option[TextRevId]]
       val text = i.getArguments()(4).asInstanceOf[TextRev]
@@ -203,7 +203,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
 
   def mockTextField(title: String, id: Long) = {
     val defn = TextFieldDefinition(title)
-    TextField(defn, FieldKeyRec(id.tag[FieldKeyIdTag], FieldKeyType.Text, defn.fieldKeyData))
+    TextField(defn, FieldKeyRec(id.tag[IsFieldKeyId], FieldKeyType.Text, defn.fieldKeyData))
   }
 
 //  def mockFieldList(defs: List[FieldDefinition]): FieldListRec = {

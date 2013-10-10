@@ -43,7 +43,7 @@ trait UserFixture {
   def initUserFixture(implicit db: Session): Unit = {
     // Insert mock users (registered)
     val i1 = Q.query[(String, String, String, String), Long]("INSERT INTO usr(username, email, password, password_salt, password_changed_at, confirmation_sent_at, confirmed_at) VALUES(?,?,?,?,NOW(),NOW(),NOW()) RETURNING id")
-    for (u <- users) u._id = Some(i1.first(u.username, u.email, u.hashedPassword, u.salt)(db).tag[UserIdTag])
+    for (u <- users) u._id = Some(i1.first(u.username, u.email, u.hashedPassword, u.salt)(db).tag[IsUserId])
 
     // Insert mock users (pending confirmation)
     pendingUsers.foreach(u => insert(u)(db))

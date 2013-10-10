@@ -94,7 +94,7 @@ class GrammarTest extends FunSpec with TestHelpers with PropertyChecks {
   }
 
   def validRefS(x: RefToken): String = validRef(x)
-  def validRef(x: RefToken): LabelStr = x match {
+  def validRef(x: RefToken): StepLabel = x match {
     case PotentiallyValidRef(lbl) => lbl
     case _ => fail("Expected result: " + x)
   }

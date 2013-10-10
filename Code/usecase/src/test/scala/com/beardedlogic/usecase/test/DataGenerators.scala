@@ -259,7 +259,7 @@ object DataGenerators extends Logger {
                      .suchThat(_.isDefined)
                      .map(_.get)
 
-  val useCaseNumber = Gen.posNum[Short].map(_.tag[UseCaseNumberTag])
+  val useCaseNumber = Gen.posNum[Short].map(_.tag[IsUseCaseNumber])
 
   val useCaseHeader = for {
     title <- useCaseTitle

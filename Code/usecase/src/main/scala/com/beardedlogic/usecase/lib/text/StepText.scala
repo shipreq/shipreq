@@ -205,8 +205,8 @@ case class StepText(
       val changeFound = c.refs.exists {case (localId, label) => localIdsToLabels.get(localId).map(_ != label).getOrElse(true)}
       if (!changeFound) NoChange
       else {
-        var newLabels = TreeSet.empty[LabelStr]
-        var newRefs = Map.empty[LocalStepId, LabelStr]
+        var newLabels = TreeSet.empty[StepLabel]
+        var newRefs = Map.empty[LocalStepId, StepLabel]
         for ((id, _) <- c.refs)
           localIdsToLabels.get(id).map(l => {
             newRefs += (id -> l)

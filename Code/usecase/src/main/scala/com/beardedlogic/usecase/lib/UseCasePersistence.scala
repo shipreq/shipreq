@@ -44,7 +44,7 @@ object UseCasePersistence {
     val loadCtx = FieldLoadCtx(uch, dao.findAllUcFieldData(ucRev.id))
 
     var loadResults = List.empty[(Field, FieldLoadResult[Field#Value, Field#SavedData])]
-    var stepAndLabelMaps = List.empty[Map[LocalStepId, LabelStr]]
+    var stepAndLabelMaps = List.empty[Map[LocalStepId, StepLabel]]
     var savedStepMap = Map.empty[LocalStepId, TextIdentId]
 
     for (f <- fieldList) {

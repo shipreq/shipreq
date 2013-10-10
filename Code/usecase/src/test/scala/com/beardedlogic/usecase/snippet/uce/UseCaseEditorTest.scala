@@ -105,7 +105,7 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
     resp should include regex(s"""$id[^;\n]+?$actionRegex""")
 
   def assertIdRelabeled(resp: String, id: AnyLocalId, newLabel: String) {
-    assertIdAndActionR(resp, s"$id-l".tag[LocalIdTag], s"""['"]$newLabel['"]""".r)
+    assertIdAndActionR(resp, s"$id-l".tag[IsLocalId], s"""['"]$newLabel['"]""".r)
   }
 
   def assertNewStepFound(resp: String) {
@@ -168,7 +168,7 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
         uce.uc.header.title should be("bananas")
       }
       it("should set the title via ajax") {
-        assertIdAndActionR(resp, TitleId.tag[LocalIdTag], """['"]bananas['"]""".r)
+        assertIdAndActionR(resp, TitleId.tag[IsLocalId], """['"]bananas['"]""".r)
       }
     }
 

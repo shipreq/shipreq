@@ -98,7 +98,7 @@ object Grammar extends RegexParsers {
   val TextAndFlows: Parser[(String, List[ParsedFlowClause])] = AnyTextThen(false, rep1(FlowClause))
 
   sealed trait RefToken
-  case class PotentiallyValidRef(label: LabelStr) extends RefToken
+  case class PotentiallyValidRef(label: StepLabel) extends RefToken
   case class InvalidRefToken(token: String) extends RefToken
 
   case class ParsedFlowClause(style: FlowStyle, refs: List[RefToken])

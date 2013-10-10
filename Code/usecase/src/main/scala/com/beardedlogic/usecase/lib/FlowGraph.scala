@@ -23,7 +23,7 @@ object FlowGraph {
   // =====================================================================================================================
   // Data types
 
-  type Node = LabelStr
+  type Node = StepLabel
   type ExplicitFlow = (Node, Node)
   type ImplicitFlow = NonEmptyList[Node]
 

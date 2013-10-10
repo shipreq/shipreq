@@ -105,7 +105,7 @@ object AppSiteMap {
     Full(redirectHomeResp)
   }
 
-  private def MenuWithIdParam[Tag <: ExteralisableIdTag](eidGen: ExternalIdConverter[Tag])(name: String, linkText: Loc.LinkText[JLong @@ Tag]) =
+  private def MenuWithIdParam[Tag <: IsExteralisableId](eidGen: ExternalIdConverter[Tag])(name: String, linkText: Loc.LinkText[JLong @@ Tag]) =
     Menu.param[JLong @@ Tag](name, linkText, eidGen.parseB(_), eidGen.toExternal(_))
 
   private def UseTemplate(path: String) = TemplateBox(() => Templates(path.split("/").toList))

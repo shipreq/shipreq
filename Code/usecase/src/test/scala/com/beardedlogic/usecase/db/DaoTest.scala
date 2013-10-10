@@ -183,7 +183,7 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
       }
 
       it("should fail when project not found") {
-        dao.updateProject(0.tag[ProjectIdTag], 0.tag[UserIdTag], "A".validated) ==== ProjectNotFound
+        dao.updateProject(0.tag[IsProjectId], 0.tag[IsUserId], "A".validated) ==== ProjectNotFound
       }
 
       it("should fail when project doesnt belong to user") {

@@ -20,7 +20,7 @@ object ParsingConfig {
     val arrowBadRegex: Regex
     val arrowBadReplacement: String
     final def replaceAllArrowsWithBad(input: String) = arrowBadRegex.replaceAllIn(input, arrowBadReplacement)
-    final def makeFlowText(labels: SortedSet[LabelStr]) = {
+    final def makeFlowText(labels: SortedSet[StepLabel]) = {
       val expSize = labels.size * 24 + 2
       val sb = new StringBuilder(expSize)
       sb.append(arrow)
@@ -32,7 +32,7 @@ object ParsingConfig {
       assume(r.length <= expSize, s"Flow text string builder exceeded pre-alloc space. (Exp: $expSize. Got: ${r.length}.)")
       r
     }
-    final def makeFlowTextOrEmpty(labels: SortedSet[LabelStr]) = if (labels.isEmpty) "" else makeFlowText(labels)
+    final def makeFlowTextOrEmpty(labels: SortedSet[StepLabel]) = if (labels.isEmpty) "" else makeFlowText(labels)
   }
 
   case object FlowFromStyle extends FlowStyle {

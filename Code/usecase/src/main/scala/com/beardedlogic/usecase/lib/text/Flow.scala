@@ -7,7 +7,7 @@ import com.beardedlogic.usecase.lib.Types._
 import ParsingConfig.{FlowToStyle, FlowFromStyle, FlowStyle}
 
 object Flow {
-  type Refs = Map[LocalStepId, LabelStr]
+  type Refs = Map[LocalStepId, StepLabel]
 }
 import Flow.Refs
 
@@ -33,8 +33,8 @@ sealed trait FlowClause {
 
   val refs: Refs
 
-  def sortedLabels: SortedSet[LabelStr] = {
-    var s = TreeSet.empty[LabelStr]
+  def sortedLabels: SortedSet[StepLabel] = {
+    var s = TreeSet.empty[StepLabel]
     for (lbl <- refs.values) s += lbl
     s
   }

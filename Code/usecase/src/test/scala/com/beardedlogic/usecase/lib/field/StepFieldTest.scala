@@ -19,7 +19,7 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
   implicit def autoTagLocalStepIds(s: String) = s.asLocalStepId
   implicit def autoTagNormalisedRefs(s: String) = s.hasNormalisedRefs
 
-  val ucId = 123L.tag[UseCaseIdentIdTag]
+  val ucId = 123L.tag[IsUseCaseIdentId]
 
   def valueSaver(f: StepField, sfv: StepFieldValue) = {
     val stepsAndLabels: StepAndLabelBiMap = Need(BiMap(UseCaseFns.generateStepAndLabelMap(UCN, f, sfv.tree)))
@@ -27,11 +27,11 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
   }
 
   import MockUc3._
-  val T1 = 401L.tag[TextIdentIdTag]
-  val T2 = 402L.tag[TextIdentIdTag]
-  val T3 = 403L.tag[TextIdentIdTag]
-  val T4 = 404L.tag[TextIdentIdTag]
-  val T5 = 405L.tag[TextIdentIdTag]
+  val T1 = 401L.tag[IsTextIdentId]
+  val T2 = 402L.tag[IsTextIdentId]
+  val T3 = 403L.tag[IsTextIdentId]
+  val T4 = 404L.tag[IsTextIdentId]
+  val T5 = 405L.tag[IsTextIdentId]
   val MockSavedSteps: SavedSteps = {
     val b = new BiMapBuilder[TextIdentId, LocalStepId]
     b += (T1 -> X1)
@@ -55,10 +55,10 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
   }
 
   describe("Loading") {
-    implicit def int_to_textrevid(id: Int): TextRevId = id.toLong.tag[TextRevIdTag]
-    implicit def int_to_textident(id: Int): TextIdentId = id.toLong.tag[TextIdentIdTag]
-    implicit def autoLabel(x: String): LabelStr = x.asLabel
-    implicit def autoLabelO(x: Option[String]): Option[LabelStr] = x.asLabels
+    implicit def int_to_textrevid(id: Int): TextRevId = id.toLong.tag[IsTextRevId]
+    implicit def int_to_textident(id: Int): TextIdentId = id.toLong.tag[IsTextIdentId]
+    implicit def autoLabel(x: String): StepLabel = x.asLabel
+    implicit def autoLabelO(x: Option[String]): Option[StepLabel] = x.asLabelC
     implicit def parent(rel: UcFieldTextWithFK): Option[TextRevId] = Some(rel.id)
     val N70 = UcFieldTextWithFK(NCF, UcFieldText(Some("x.0"), None, 0, TextRev(10, 1, 100, "I'm the root [D.703]")))
     val N701 = UcFieldTextWithFK(NCF, UcFieldText(Some("x.0.1"), N70, 0, TextRev(11, 1, 101, "I was inserted")))
@@ -160,7 +160,7 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
     }
 
     describe("save()") {
-      val ucRevId = 123L.tag[UseCaseRevIdTag]
+      val ucRevId = 123L.tag[IsUseCaseRevId]
 
       def mockDao = {
         val dao = mock[DaoT]
@@ -187,7 +187,7 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
           tree = StepTree(NcSfv.tree.nodes :+ StepNode(X8, 0, 1, Nil)),
           textmap = NcSfv.textmap + (X8 -> StepText(X8, freeText("AHHH"), None, None))
         )
-        val T8 = 408L.tag[TextIdentIdTag]
+        val T8 = 408L.tag[IsTextIdentId]
         val mockSavedSteps2: SavedSteps = BiMap(MockSavedSteps.ab + (T8 -> X8))
 
         val dao = mockDao

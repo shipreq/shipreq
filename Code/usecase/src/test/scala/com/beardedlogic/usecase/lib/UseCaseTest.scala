@@ -249,7 +249,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
     it("should load a simple, manually-saved UC") {
       // Create UC
       val pid = newProjectId()
-      val ucIdent = dao.createUseCaseIdentWithForcedNumber(pid, (3:Short).tag[UseCaseNumberTag])
+      val ucIdent = dao.createUseCaseIdentWithForcedNumber(pid, (3:Short).tag[IsUseCaseNumber])
       val ucRev = dao.createUseCaseRev(ucIdent, 1, UseCaseHeader("ahh".validated))
 
       // Create Text FV
@@ -274,7 +274,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
     it("should load a manually-saved UC with refs") {
       // Create UC
       val pid = newProjectId()
-      val ucIdent = dao.createUseCaseIdentWithForcedNumber(pid, (3:Short).tag[UseCaseNumberTag])
+      val ucIdent = dao.createUseCaseIdentWithForcedNumber(pid, (3:Short).tag[IsUseCaseNumber])
       val ucRev = dao.createUseCaseRev(ucIdent, 1, UseCaseHeader("ahh".validated))
 
       // Create course FV

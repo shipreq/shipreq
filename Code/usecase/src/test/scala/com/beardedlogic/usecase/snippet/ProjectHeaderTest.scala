@@ -16,11 +16,11 @@ class ProjectHeaderTest extends FunSuite with TestHelpers {
 
   def run[R](
     loggedInUser: Option[UserDescriptor] = Some(UD1),
-    project: Project = Project(123456.tag[ProjectIdTag], "Grrr", UD1.id),
+    project: Project = Project(123456.tag[IsProjectId], "Grrr", UD1.id),
     updateResult: UpdateProjectResult = Success
     )(fn: ProjectHeader => R = identity[ProjectHeader] _): R = {
 
-    val uid: UserId = loggedInUser.map(_.id).getOrElse((-1).tag[UserIdTag])
+    val uid: UserId = loggedInUser.map(_.id).getOrElse((-1).tag[IsUserId])
     MockDaoProvider(dao => {
       when(dao.updateProject(meq(project.id), meq(uid), any)).thenReturn(updateResult)
     }).install {

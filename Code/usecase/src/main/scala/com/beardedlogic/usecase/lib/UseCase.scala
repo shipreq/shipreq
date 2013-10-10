@@ -40,22 +40,22 @@ object UseCaseFns {
 
   // TODO Minimise computation with savedSteps + StepAndLabelBiMap
 
-  def extractStepAndLabelMaps(ucn: UseCaseNumber, fieldValues: FieldValues): Iterable[Map[LocalStepId, LabelStr]] =
+  def extractStepAndLabelMaps(ucn: UseCaseNumber, fieldValues: FieldValues): Iterable[Map[LocalStepId, StepLabel]] =
     fieldValues.map {
       case (f, v: StepFieldValue) => generateStepAndLabelMap(ucn, f, v.tree)
-      case _ => Map.empty[LocalStepId, LabelStr]
+      case _ => Map.empty[LocalStepId, StepLabel]
     }
 
-  def mergeStepAndLabelMaps(maps: Iterable[Map[LocalStepId, LabelStr]]): Map[LocalStepId, LabelStr] =
-    (Map.empty[LocalStepId, LabelStr] /: maps)(_ ++ _)
+  def mergeStepAndLabelMaps(maps: Iterable[Map[LocalStepId, StepLabel]]): Map[LocalStepId, StepLabel] =
+    (Map.empty[LocalStepId, StepLabel] /: maps)(_ ++ _)
 
-  def generateStepAndLabelMap(ucn: UseCaseNumber, field: Field, tree: StepTree): Map[LocalStepId, LabelStr] =
+  def generateStepAndLabelMap(ucn: UseCaseNumber, field: Field, tree: StepTree): Map[LocalStepId, StepLabel] =
     field match {
       case f: StepField => mapIdsToFullLabels(tree.nodes, f.rootLabelPrefix(ucn))
       case f => throw new IllegalStateException(s"Don't know how to generateStepAndLabelMap for field: $f")
     }
 
-  def generateStepAndLabelBiMap(maps: Iterable[Map[LocalStepId, LabelStr]]): StepAndLabelBiMap =
+  def generateStepAndLabelBiMap(maps: Iterable[Map[LocalStepId, StepLabel]]): StepAndLabelBiMap =
     Need(BiMap(mergeStepAndLabelMaps(maps)))
 
   def generateStepAndLabelBiMap(ucn: UseCaseNumber, trees: (StepField, StepTree)*): StepAndLabelBiMap =

@@ -257,7 +257,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
         assert(parsef(input), output, Map.empty)
 
       /** Combines flow text with different arrows and main clauses. Asserts text, subject flow, & other flow is empty. */
-      def testFlowText(flowClauseText: String, expFlowClauseText: String, refLabels: Traversable[LabelStr]) = {
+      def testFlowText(flowClauseText: String, expFlowClauseText: String, refLabels: Traversable[StepLabel]) = {
         for ((m1, m2) <- List(("", ""), ("hehe", "hehe "), ("hehe ", "hehe "))) {
           for (a <- List("<--", "<---", "⬅", "⬅ ")) {
             for (aw <- List("", " ", "    ")) {
@@ -425,7 +425,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
       }
 
       describe("Updating flow text") {
-        def test(textBefore: String, refsBefore: Set[LabelStr])(newText: String, expectedToIds: Option[Set[LocalStepId]]) {
+        def test(textBefore: String, refsBefore: Set[StepLabel])(newText: String, expectedToIds: Option[Set[LocalStepId]]) {
           val x = parse(F.forceArrows(textBefore))
           val cr = x.update(F.forceArrows(newText))(StepState1)
           assertFlowClause(F.get(x), mapFromIds(refsBefore))
@@ -483,8 +483,8 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
         forAll(TextWithFlowExamples)((input, expText, expRefsFrom, expRefsTo) => {
           val x = new StepTextFactory(X0).parse(input)(StepStateB)
           x.mainClause.text should be(expText.replaceAll("-->", FlowToStyle.arrowBadReplacement))
-          assertFlowClause(x.flowFromClause, mapFromIds(expRefsFrom.asLabels, StepStateB))
-          assertFlowClause(x.flowToClause, mapFromIds(expRefsTo.asLabels, StepStateB))
+          assertFlowClause(x.flowFromClause, mapFromIds(expRefsFrom.asLabelC, StepStateB))
+          assertFlowClause(x.flowToClause, mapFromIds(expRefsTo.asLabelC, StepStateB))
         })
       }
 

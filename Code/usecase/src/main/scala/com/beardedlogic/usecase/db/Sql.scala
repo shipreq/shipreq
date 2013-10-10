@@ -20,7 +20,7 @@ private[db] final object Sql {
   implicit val GR_Project = GetResult(r => Project(r.<<, r.<<, r.<<))
   implicit val GR_ProjectSummary = GetResult(r => ProjectSummary(r.nextId[ProjectId], r.<<, r.<<, r.<<))
   implicit val GR_TextRev = GetResult(r => TextRev(r.<<, r.<<, r.<<, r.<<))
-  implicit val GR_UcFieldText= GetResult(r => UcFieldText(r.nextStringOption.asLabels, r.<<, r.<<, r.<<))
+  implicit val GR_UcFieldText= GetResult(r => UcFieldText(r.nextStringOption.asLabelC, r.<<, r.<<, r.<<))
   implicit val GR_UcFieldTextWithFK = GetResult(r => UcFieldTextWithFK(r.<<, r.<<))
   implicit val GR_UseCaseIdent = GetResult {r => UseCaseIdent(r.<<, r.<<)}
   implicit val GR_UseCaseRev = GetResult(r => UseCaseRev(r.<<, r.<<, r.<<, UseCaseHeader(r.nextString)))
@@ -147,7 +147,7 @@ private[db] final object Sql {
   @Insert val LinkUcToText = update[(UseCaseRevId, TextRevId)](
     "INSERT INTO uc_field(uc_rev_id, text_rev_id) VALUES(?,?)")
 
-  @Insert val LinkUcToStep = update[(UseCaseRevId, LabelStr, Option[TextRevId], Short, TextRevId)](
+  @Insert val LinkUcToStep = update[(UseCaseRevId, StepLabel, Option[TextRevId], Short, TextRevId)](
     "INSERT INTO uc_field(uc_rev_id, label, parent_rev_id, index, text_rev_id) VALUES(?,?,?,?,?)")
 
   @Insert val CopyUcFieldsBetweenRevs = update[(UseCaseRevId, UseCaseRevId)]("""

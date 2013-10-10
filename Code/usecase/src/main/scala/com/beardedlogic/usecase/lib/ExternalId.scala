@@ -6,12 +6,12 @@ import Types._
 
 object ExternalId {
   // util.Random.shuffle(x.toList).mkString
-  final val Project = new ExternalIdConverter[ProjectIdTag]("F4XBvt0i2cnHQ6dIaAomLjPE3MOrsbxReq1W9pgZyzNY7SkGf5UlwJCTKuVD8h")
-  final val UseCase = new ExternalIdConverter[UseCaseIdentIdTag]("0atxlQwnj7y3zFZNVBqJ42AcriYEeMu8SdU91HgfTsb6GhmWkX5KopCIRLvOPD")
-  final val TextRev = new ExternalIdConverter[TextRevIdTag]("eBM0xKQuO2Zy43AnWGPmkbXN9HprwV7ItSi1CdETv6D5UYRscjJzhFgoLflqa8")
+  final val Project = new ExternalIdConverter[IsProjectId]("F4XBvt0i2cnHQ6dIaAomLjPE3MOrsbxReq1W9pgZyzNY7SkGf5UlwJCTKuVD8h")
+  final val UseCase = new ExternalIdConverter[IsUseCaseIdentId]("0atxlQwnj7y3zFZNVBqJ42AcriYEeMu8SdU91HgfTsb6GhmWkX5KopCIRLvOPD")
+  final val TextRev = new ExternalIdConverter[IsTextRevId]("eBM0xKQuO2Zy43AnWGPmkbXN9HprwV7ItSi1CdETv6D5UYRscjJzhFgoLflqa8")
 }
 
-final class ExternalIdConverter[Tag <: ExteralisableIdTag](val dictionaryStr: String) {
+final class ExternalIdConverter[Tag <: IsExteralisableId](val dictionaryStr: String) {
   type Id = JLong @@ Tag
   type EI = Tag#EI
 

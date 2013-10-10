@@ -17,7 +17,7 @@ object StepTreeZipper {
 
   sealed trait Builder {
     def textmap: Map[LocalStepId, StepText]
-    def labels: Map[LocalStepId, LabelStr]
+    def labels: Map[LocalStepId, StepLabel]
 
     sealed trait StepNodeView {
       def node: StepNode
@@ -25,7 +25,7 @@ object StepTreeZipper {
       def value: StepText = textmap(id)
       def level: Int = node.level
       def labelIndex: Int = node.labelIndex
-      def label: LabelStr = labels(id)
+      def label: StepLabel = labels(id)
       def text: String = value.text
       def flowFromClause = value.flowFromClause
       def flowToClause = value.flowToClause
@@ -37,7 +37,7 @@ object StepTreeZipper {
    * Builds a zipper comprised of the top level of steps. (eg. 1.0, 1.1, 1.2).
    * In order to descend into a step's children, `down()` will provide a new zipper.
    */
-  case class DeepBuilder(textmap: Map[LocalStepId, StepText], labels: Map[LocalStepId, LabelStr]) extends Builder {
+  case class DeepBuilder(textmap: Map[LocalStepId, StepText], labels: Map[LocalStepId, StepLabel]) extends Builder {
     type TreeZipper = Zipper[Focus]
     type Parent = Option[TreeZipper]
 
@@ -76,7 +76,7 @@ object StepTreeZipper {
    * Builds a zipper comprised of all steps in the step tree, children before siblings.
    * (eg. 1.0, 1.0.1, 1.0.2, 1.0.2.a, 1.0.2.b, 1.0.3, 1.1).
    */
-  case class FlatBuilder(textmap: Map[LocalStepId, StepText], labels: Map[LocalStepId, LabelStr]) extends Builder {
+  case class FlatBuilder(textmap: Map[LocalStepId, StepText], labels: Map[LocalStepId, StepLabel]) extends Builder {
     type TreeZipper = Zipper[Focus]
 
     case class Focus(node: StepNode) extends StepNodeView

@@ -63,7 +63,7 @@ case class UcFieldTextWithFK(fkId: FieldKeyId, rel: UcFieldText) {
   @inline final def text = textRev.text
 }
 
-case class UcFieldText(label: Option[LabelStr], parentId: Option[TextRevId], index: Short, textRev: TextRev) {
+case class UcFieldText(label: Option[StepLabel], parentId: Option[TextRevId], index: Short, textRev: TextRev) {
   @inline final def id = textRev.id
   @inline final def text = textRev.text
 }

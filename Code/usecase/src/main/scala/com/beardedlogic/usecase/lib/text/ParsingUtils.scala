@@ -6,7 +6,7 @@ import ParsingConfig._
 
 object ParsingUtils extends Logger {
 
-  @inline def areLabelsValid_?(labels: Seq[LabelStr])(implicit stepsAndLabels: StepAndLabelBiMap): Boolean = {
+  @inline def areLabelsValid_?(labels: Seq[StepLabel])(implicit stepsAndLabels: StepAndLabelBiMap): Boolean = {
     if (labels.isEmpty) true
     else {
       val validLabels = stepsAndLabels.value.ba
@@ -28,7 +28,7 @@ object ParsingUtils extends Logger {
    */
   def migrateRefsToNewStepTree(ft: FreeText)(implicit stepsAndLabels: StepAndLabelBiMap): Option[FreeText] = {
     lazy val idsToLabels = stepsAndLabels.value.ab
-    var newRefs = Map.empty[LocalStepId, LabelStr]
+    var newRefs = Map.empty[LocalStepId, StepLabel]
     var newText = ft.text
     var changed = false
 
@@ -56,7 +56,7 @@ object ParsingUtils extends Logger {
    *
    * Example: converts [4.0.1.b] to [D.1045].
    */
-  def normaliseRefs(text: String, refs: Map[LocalStepId, LabelStr], savedSteps: SavedSteps): TextWithNormalisedRefs = {
+  def normaliseRefs(text: String, refs: Map[LocalStepId, StepLabel], savedSteps: SavedSteps): TextWithNormalisedRefs = {
     val localToDb = savedSteps.ba
     var r = text
     for {
@@ -82,7 +82,7 @@ object ParsingUtils extends Logger {
 
     NormalisedRefRegex.replaceAllIn(text, m => {
       val idText = m.group(1)
-      val textIdentId = idText.toLong.tag[TextIdentIdTag]
+      val textIdentId = idText.toLong.tag[IsTextIdentId]
       dbIdsToLocalIds.get(textIdentId).flatMap(nodeId => localIdsToLabels.get(nodeId)).map(makeRef(_)).getOrElse {
         warn(s"Unable to realise normalised step reference. ❚ Text: $text ❚ TextIdentId: $textIdentId ❚ DbIdsToLocalIds: $dbIdsToLocalIds ❚ LocalIdsToLabels: $localIdsToLabels")
         makeInvalidNormalisedRef(idText)

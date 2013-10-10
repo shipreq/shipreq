@@ -75,6 +75,6 @@ case class StepFieldValue(field: StepField, tree: StepTree, textmap: Map[LocalSt
     copy(tree = newTree, textmap = newTextmap)
   }
 
-  def textByLabels(implicit stepsAndLabels: StepAndLabelBiMap): Map[LabelStr, String] =
+  def textByLabels(implicit stepsAndLabels: StepAndLabelBiMap): Map[StepLabel, String] =
     for ((id,t) <- textmap) yield (stepsAndLabels.value.ab(id), t.text)
 }

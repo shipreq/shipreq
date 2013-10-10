@@ -25,7 +25,7 @@ object UseCaseEditor extends StaticSnippetHelpers with DI {
 
   // TODO Delete UCE . initial state
   val DefaultInitialState: State = {
-    val ucn = (0:Short).tag[UseCaseNumberTag]
+    val ucn = (0:Short).tag[IsUseCaseNumber]
     val h = UseCaseHeader("DEMO".tag[Validated])
     val fl = Defaults.fieldList.value.fields
     val ncf = UseCaseFns.filter[NormalCourseField](fl).head
@@ -63,7 +63,7 @@ class UseCaseEditor(initialState: UseCaseEditor.State) extends StatefulSnippet w
 
   val textFieldIds: Map[Field, LocalTextFieldId] =
     UseCaseFns.filter[TextField](fields)
-    .map(f => (f -> nextFuncName.tag[LocalTextFieldIdTag]))
+    .map(f => (f -> nextFuncName.tag[IsLocalTextFieldId]))
     .toMap
 
   private var renderer__ = Renderer(state, textFieldIds, update, state.prevSave.map(_ => save _))

@@ -19,7 +19,7 @@ object TreeOps {
    * FD93E    -> 1.E.1
    * F93A3    -> 1.E.1.a
    */
-  def mapIdsToFullLabels[T <: TreeNode[T]](nodes: List[T], prefix: String = ""): Map[LocalStepId, LabelStr] = nodes match {
+  def mapIdsToFullLabels[T <: TreeNode[T]](nodes: List[T], prefix: String = ""): Map[LocalStepId, StepLabel] = nodes match {
     case h :: t =>
       val lbl = prefix + h.label
       mapIdsToFullLabels(t, prefix) ++

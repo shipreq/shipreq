@@ -99,19 +99,19 @@ object Inspection {
 
   implicit def validatedType[T <: AnyRef](implicit t: Show[T]): Show[T @@ Validated] = taggedAnyRef[T, Validated]
 
-  implicit val textWithNRefs   : Show[TextWithNormalisedRefs] = taggedStr[TextWithNormalisedRefsTag]
-  implicit val localTextFieldId: Show[LocalTextFieldId]       = taggedStr[LocalTextFieldIdTag]
-  implicit val localStepId     : Show[LocalStepId]            = taggedStr[LocalStepIdTag]
-  implicit val labelStr        : Show[LabelStr]               = taggedStr[LabelTag]
+  implicit val textWithNRefs   : Show[TextWithNormalisedRefs] = taggedStr[HasNormalisedRefs]
+  implicit val localTextFieldId: Show[LocalTextFieldId]       = taggedStr[IsLocalTextFieldId]
+  implicit val localStepId     : Show[LocalStepId]            = taggedStr[IsLocalStepId]
+  implicit val labelStr        : Show[StepLabel]              = taggedStr[IsStepLabel]
 
-  implicit val useCaseNumber: Show[UseCaseNumber] = taggedShort[UseCaseNumberTag]
+  implicit val useCaseNumber: Show[UseCaseNumber] = taggedShort[IsUseCaseNumber]
 
-  implicit val fieldKeyId : Show[FieldKeyId]     = taggedLong[FieldKeyIdTag]
-  implicit val ucIdentId  : Show[UseCaseIdentId] = taggedLong[UseCaseIdentIdTag]
-  implicit val ucRevId    : Show[UseCaseRevId]   = taggedLong[UseCaseRevIdTag]
-  implicit val textIdentId: Show[TextIdentId]    = taggedLong[TextIdentIdTag]
-  implicit val textRevId  : Show[TextRevId]      = taggedLong[TextRevIdTag]
-  implicit val userId     : Show[UserId]         = taggedLong[UserIdTag]
+  implicit val fieldKeyId : Show[FieldKeyId]     = taggedLong[IsFieldKeyId]
+  implicit val ucIdentId  : Show[UseCaseIdentId] = taggedLong[IsUseCaseIdentId]
+  implicit val ucRevId    : Show[UseCaseRevId]   = taggedLong[IsUseCaseRevId]
+  implicit val textIdentId: Show[TextIdentId]    = taggedLong[IsTextIdentId]
+  implicit val textRevId  : Show[TextRevId]      = taggedLong[IsTextRevId]
+  implicit val userId     : Show[UserId]         = taggedLong[IsUserId]
 
   // ===================================================================================================================
   // Fields and values

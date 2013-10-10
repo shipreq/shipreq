@@ -11,7 +11,7 @@ class ExternalIdTest extends FunSuite with Checkers with Matchers {
 
   implicit override val generatorDrivenConfig = PropertyCheckConfig(minSuccessful = 10000)
 
-  implicit def autoTagLongs(x: Long) = x.tag[UseCaseIdentIdTag]
+  implicit def autoTagLongs(x: Long) = x.tag[IsUseCaseIdentId]
 
   // println((100 to 150).map(toExternal(_)).mkString("\n"))
   // println(toExternal(Long.MaxValue))

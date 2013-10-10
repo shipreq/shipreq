@@ -44,50 +44,50 @@ class UseCaseLaws extends FunSuite with TestDatabaseSupport with Checkers {
     }
 
     // ###### UC 1/3 ######
-    val uc1 = UseCase.as((1:Short).tag[UseCaseNumberTag],UseCaseHeader("Do Stuff".validated)
-      ,List(TextField(TextFieldDefinition("Description"),FieldKeyRec(10.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Description")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Actors"),FieldKeyRec(11.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Actors")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Pre-Conditions"),FieldKeyRec(12.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Pre-Conditions")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Post-Conditions"),FieldKeyRec(13.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Post-Conditions")))~>FreeText.empty
-        ,NormalCourseField(FieldKeyRec(14.tag[FieldKeyIdTag],FieldKeyType.NormalAndAlternateCourses,None))~>StepFieldValue(NormalCourseField(FieldKeyRec(14.tag[FieldKeyIdTag],FieldKeyType.NormalAndAlternateCourses,None)),StepTree(List(StepNode("F1197205450689KYVCAS".tag[LocalStepIdTag],0,0,List(StepNode("F1197205450688HDKO1W".tag[LocalStepIdTag],1,1,Nil))))),Map("F1197205450689KYVCAS".tag[LocalStepIdTag]->StepText("F1197205450689KYVCAS".tag[LocalStepIdTag],FreeText("Do Stuff",Map()),None,None),"F1197205450688HDKO1W".tag[LocalStepIdTag]->StepText.empty("F1197205450688HDKO1W".tag[LocalStepIdTag])))
-        ,ExceptionCourseField(FieldKeyRec(15.tag[FieldKeyIdTag],FieldKeyType.ExceptionCourses,None))~>StepFieldValue(ExceptionCourseField(FieldKeyRec(15.tag[FieldKeyIdTag],FieldKeyType.ExceptionCourses,None)),StepTree(Nil),Map())
-        ,TextField(TextFieldDefinition("Use Case Relationships"),FieldKeyRec(16.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Use Case Relationships")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Constraints and Business Rules"),FieldKeyRec(17.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Constraints and Business Rules")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Frequency of Use"),FieldKeyRec(18.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Frequency of Use")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Special Requirements"),FieldKeyRec(19.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Special Requirements")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Assumptions"),FieldKeyRec(20.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Assumptions")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Notes and Issues"),FieldKeyRec(21.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Notes and Issues")))~>FreeText.empty
-      ),Name(BiMap("F1197205450688HDKO1W".tag[LocalStepIdTag]->"1.0.1".tag[LabelTag],"F1197205450689KYVCAS".tag[LocalStepIdTag]->"1.0".tag[LabelTag])))
+    val uc1 = UseCase.as((1:Short).tag[IsUseCaseNumber],UseCaseHeader("Do Stuff".validated)
+      ,List(TextField(TextFieldDefinition("Description"),FieldKeyRec(10.tag[IsFieldKeyId],FieldKeyType.Text,Some("Description")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Actors"),FieldKeyRec(11.tag[IsFieldKeyId],FieldKeyType.Text,Some("Actors")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Pre-Conditions"),FieldKeyRec(12.tag[IsFieldKeyId],FieldKeyType.Text,Some("Pre-Conditions")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Post-Conditions"),FieldKeyRec(13.tag[IsFieldKeyId],FieldKeyType.Text,Some("Post-Conditions")))~>FreeText.empty
+        ,NormalCourseField(FieldKeyRec(14.tag[IsFieldKeyId],FieldKeyType.NormalAndAlternateCourses,None))~>StepFieldValue(NormalCourseField(FieldKeyRec(14.tag[IsFieldKeyId],FieldKeyType.NormalAndAlternateCourses,None)),StepTree(List(StepNode("F1197205450689KYVCAS".tag[IsLocalStepId],0,0,List(StepNode("F1197205450688HDKO1W".tag[IsLocalStepId],1,1,Nil))))),Map("F1197205450689KYVCAS".tag[IsLocalStepId]->StepText("F1197205450689KYVCAS".tag[IsLocalStepId],FreeText("Do Stuff",Map()),None,None),"F1197205450688HDKO1W".tag[IsLocalStepId]->StepText.empty("F1197205450688HDKO1W".tag[IsLocalStepId])))
+        ,ExceptionCourseField(FieldKeyRec(15.tag[IsFieldKeyId],FieldKeyType.ExceptionCourses,None))~>StepFieldValue(ExceptionCourseField(FieldKeyRec(15.tag[IsFieldKeyId],FieldKeyType.ExceptionCourses,None)),StepTree(Nil),Map())
+        ,TextField(TextFieldDefinition("Use Case Relationships"),FieldKeyRec(16.tag[IsFieldKeyId],FieldKeyType.Text,Some("Use Case Relationships")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Constraints and Business Rules"),FieldKeyRec(17.tag[IsFieldKeyId],FieldKeyType.Text,Some("Constraints and Business Rules")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Frequency of Use"),FieldKeyRec(18.tag[IsFieldKeyId],FieldKeyType.Text,Some("Frequency of Use")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Special Requirements"),FieldKeyRec(19.tag[IsFieldKeyId],FieldKeyType.Text,Some("Special Requirements")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Assumptions"),FieldKeyRec(20.tag[IsFieldKeyId],FieldKeyType.Text,Some("Assumptions")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Notes and Issues"),FieldKeyRec(21.tag[IsFieldKeyId],FieldKeyType.Text,Some("Notes and Issues")))~>FreeText.empty
+      ),Name(BiMap("F1197205450688HDKO1W".tag[IsLocalStepId]->"1.0.1".tag[IsStepLabel],"F1197205450689KYVCAS".tag[IsLocalStepId]->"1.0".tag[IsStepLabel])))
     // ###### UC 2/3 ######
-    val uc2 = UseCase.as((1:Short).tag[UseCaseNumberTag],UseCaseHeader("Do Stuff".validated)
-      ,List(TextField(TextFieldDefinition("Description"),FieldKeyRec(10.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Description")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Actors"),FieldKeyRec(11.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Actors")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Pre-Conditions"),FieldKeyRec(12.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Pre-Conditions")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Post-Conditions"),FieldKeyRec(13.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Post-Conditions")))~>FreeText.empty
-        ,NormalCourseField(FieldKeyRec(14.tag[FieldKeyIdTag],FieldKeyType.NormalAndAlternateCourses,None))~>StepFieldValue(NormalCourseField(FieldKeyRec(14.tag[FieldKeyIdTag],FieldKeyType.NormalAndAlternateCourses,None)),StepTree(List(StepNode("F1197205450689KYVCAS".tag[LocalStepIdTag],0,0,List(StepNode("F1197205450688HDKO1W".tag[LocalStepIdTag],1,1,Nil))))),Map("F1197205450689KYVCAS".tag[LocalStepIdTag]->StepText("F1197205450689KYVCAS".tag[LocalStepIdTag],FreeText("Do Stuff",Map()),None,None),"F1197205450688HDKO1W".tag[LocalStepIdTag]->StepText.empty("F1197205450688HDKO1W".tag[LocalStepIdTag])))
-        ,ExceptionCourseField(FieldKeyRec(15.tag[FieldKeyIdTag],FieldKeyType.ExceptionCourses,None))~>StepFieldValue(ExceptionCourseField(FieldKeyRec(15.tag[FieldKeyIdTag],FieldKeyType.ExceptionCourses,None)),StepTree(Nil),Map())
-        ,TextField(TextFieldDefinition("Use Case Relationships"),FieldKeyRec(16.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Use Case Relationships")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Constraints and Business Rules"),FieldKeyRec(17.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Constraints and Business Rules")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Frequency of Use"),FieldKeyRec(18.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Frequency of Use")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Special Requirements"),FieldKeyRec(19.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Special Requirements")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Assumptions"),FieldKeyRec(20.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Assumptions")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Notes and Issues"),FieldKeyRec(21.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Notes and Issues")))~>FreeText.empty
-      ),Name(BiMap("F1197205450688HDKO1W".tag[LocalStepIdTag]->"1.0.1".tag[LabelTag],"F1197205450689KYVCAS".tag[LocalStepIdTag]->"1.0".tag[LabelTag])))
+    val uc2 = UseCase.as((1:Short).tag[IsUseCaseNumber],UseCaseHeader("Do Stuff".validated)
+      ,List(TextField(TextFieldDefinition("Description"),FieldKeyRec(10.tag[IsFieldKeyId],FieldKeyType.Text,Some("Description")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Actors"),FieldKeyRec(11.tag[IsFieldKeyId],FieldKeyType.Text,Some("Actors")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Pre-Conditions"),FieldKeyRec(12.tag[IsFieldKeyId],FieldKeyType.Text,Some("Pre-Conditions")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Post-Conditions"),FieldKeyRec(13.tag[IsFieldKeyId],FieldKeyType.Text,Some("Post-Conditions")))~>FreeText.empty
+        ,NormalCourseField(FieldKeyRec(14.tag[IsFieldKeyId],FieldKeyType.NormalAndAlternateCourses,None))~>StepFieldValue(NormalCourseField(FieldKeyRec(14.tag[IsFieldKeyId],FieldKeyType.NormalAndAlternateCourses,None)),StepTree(List(StepNode("F1197205450689KYVCAS".tag[IsLocalStepId],0,0,List(StepNode("F1197205450688HDKO1W".tag[IsLocalStepId],1,1,Nil))))),Map("F1197205450689KYVCAS".tag[IsLocalStepId]->StepText("F1197205450689KYVCAS".tag[IsLocalStepId],FreeText("Do Stuff",Map()),None,None),"F1197205450688HDKO1W".tag[IsLocalStepId]->StepText.empty("F1197205450688HDKO1W".tag[IsLocalStepId])))
+        ,ExceptionCourseField(FieldKeyRec(15.tag[IsFieldKeyId],FieldKeyType.ExceptionCourses,None))~>StepFieldValue(ExceptionCourseField(FieldKeyRec(15.tag[IsFieldKeyId],FieldKeyType.ExceptionCourses,None)),StepTree(Nil),Map())
+        ,TextField(TextFieldDefinition("Use Case Relationships"),FieldKeyRec(16.tag[IsFieldKeyId],FieldKeyType.Text,Some("Use Case Relationships")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Constraints and Business Rules"),FieldKeyRec(17.tag[IsFieldKeyId],FieldKeyType.Text,Some("Constraints and Business Rules")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Frequency of Use"),FieldKeyRec(18.tag[IsFieldKeyId],FieldKeyType.Text,Some("Frequency of Use")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Special Requirements"),FieldKeyRec(19.tag[IsFieldKeyId],FieldKeyType.Text,Some("Special Requirements")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Assumptions"),FieldKeyRec(20.tag[IsFieldKeyId],FieldKeyType.Text,Some("Assumptions")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Notes and Issues"),FieldKeyRec(21.tag[IsFieldKeyId],FieldKeyType.Text,Some("Notes and Issues")))~>FreeText.empty
+      ),Name(BiMap("F1197205450688HDKO1W".tag[IsLocalStepId]->"1.0.1".tag[IsStepLabel],"F1197205450689KYVCAS".tag[IsLocalStepId]->"1.0".tag[IsStepLabel])))
     // ###### UC 3/3 ######
-    val uc3 = UseCase.as((1:Short).tag[UseCaseNumberTag],UseCaseHeader("Do Stuff".validated)
-      ,List(TextField(TextFieldDefinition("Description"),FieldKeyRec(10.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Description")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Actors"),FieldKeyRec(11.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Actors")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Pre-Conditions"),FieldKeyRec(12.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Pre-Conditions")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Post-Conditions"),FieldKeyRec(13.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Post-Conditions")))~>FreeText.empty
-        ,NormalCourseField(FieldKeyRec(14.tag[FieldKeyIdTag],FieldKeyType.NormalAndAlternateCourses,None))~>StepFieldValue(NormalCourseField(FieldKeyRec(14.tag[FieldKeyIdTag],FieldKeyType.NormalAndAlternateCourses,None)),StepTree(List(StepNode("F1197205450689KYVCAS".tag[LocalStepIdTag],0,0,Nil))),Map("F1197205450689KYVCAS".tag[LocalStepIdTag]->StepText("F1197205450689KYVCAS".tag[LocalStepIdTag],FreeText("Do Stuff",Map()),None,None)))
-        ,ExceptionCourseField(FieldKeyRec(15.tag[FieldKeyIdTag],FieldKeyType.ExceptionCourses,None))~>StepFieldValue(ExceptionCourseField(FieldKeyRec(15.tag[FieldKeyIdTag],FieldKeyType.ExceptionCourses,None)),StepTree(Nil),Map())
-        ,TextField(TextFieldDefinition("Use Case Relationships"),FieldKeyRec(16.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Use Case Relationships")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Constraints and Business Rules"),FieldKeyRec(17.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Constraints and Business Rules")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Frequency of Use"),FieldKeyRec(18.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Frequency of Use")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Special Requirements"),FieldKeyRec(19.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Special Requirements")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Assumptions"),FieldKeyRec(20.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Assumptions")))~>FreeText.empty
-        ,TextField(TextFieldDefinition("Notes and Issues"),FieldKeyRec(21.tag[FieldKeyIdTag],FieldKeyType.Text,Some("Notes and Issues")))~>FreeText.empty
-      ),Name(BiMap("F1197205450689KYVCAS".tag[LocalStepIdTag]->"1.0".tag[LabelTag])))
+    val uc3 = UseCase.as((1:Short).tag[IsUseCaseNumber],UseCaseHeader("Do Stuff".validated)
+      ,List(TextField(TextFieldDefinition("Description"),FieldKeyRec(10.tag[IsFieldKeyId],FieldKeyType.Text,Some("Description")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Actors"),FieldKeyRec(11.tag[IsFieldKeyId],FieldKeyType.Text,Some("Actors")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Pre-Conditions"),FieldKeyRec(12.tag[IsFieldKeyId],FieldKeyType.Text,Some("Pre-Conditions")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Post-Conditions"),FieldKeyRec(13.tag[IsFieldKeyId],FieldKeyType.Text,Some("Post-Conditions")))~>FreeText.empty
+        ,NormalCourseField(FieldKeyRec(14.tag[IsFieldKeyId],FieldKeyType.NormalAndAlternateCourses,None))~>StepFieldValue(NormalCourseField(FieldKeyRec(14.tag[IsFieldKeyId],FieldKeyType.NormalAndAlternateCourses,None)),StepTree(List(StepNode("F1197205450689KYVCAS".tag[IsLocalStepId],0,0,Nil))),Map("F1197205450689KYVCAS".tag[IsLocalStepId]->StepText("F1197205450689KYVCAS".tag[IsLocalStepId],FreeText("Do Stuff",Map()),None,None)))
+        ,ExceptionCourseField(FieldKeyRec(15.tag[IsFieldKeyId],FieldKeyType.ExceptionCourses,None))~>StepFieldValue(ExceptionCourseField(FieldKeyRec(15.tag[IsFieldKeyId],FieldKeyType.ExceptionCourses,None)),StepTree(Nil),Map())
+        ,TextField(TextFieldDefinition("Use Case Relationships"),FieldKeyRec(16.tag[IsFieldKeyId],FieldKeyType.Text,Some("Use Case Relationships")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Constraints and Business Rules"),FieldKeyRec(17.tag[IsFieldKeyId],FieldKeyType.Text,Some("Constraints and Business Rules")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Frequency of Use"),FieldKeyRec(18.tag[IsFieldKeyId],FieldKeyType.Text,Some("Frequency of Use")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Special Requirements"),FieldKeyRec(19.tag[IsFieldKeyId],FieldKeyType.Text,Some("Special Requirements")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Assumptions"),FieldKeyRec(20.tag[IsFieldKeyId],FieldKeyType.Text,Some("Assumptions")))~>FreeText.empty
+        ,TextField(TextFieldDefinition("Notes and Issues"),FieldKeyRec(21.tag[IsFieldKeyId],FieldKeyType.Text,Some("Notes and Issues")))~>FreeText.empty
+      ),Name(BiMap("F1197205450689KYVCAS".tag[IsLocalStepId]->"1.0".tag[IsStepLabel])))
 
     rollbackAfter{
       val pid = newProjectId()
@@ -134,7 +134,7 @@ class UseCaseLaws extends FunSuite with TestDatabaseSupport with Checkers {
   // -------------------------------------------------------------------------------------------------------------------
 
   implicit lazy val arbUseCase: Arbitrary[UseCase] =
-    Arbitrary(useCaseGen(Defaults.fieldList.value, (1:Short).tag[UseCaseNumberTag]))
+    Arbitrary(useCaseGen(Defaults.fieldList.value, (1:Short).tag[IsUseCaseNumber]))
 
 //  implicit lazy val arbUseCaseMutators: Arbitrary[List[UseCaseMutator]] =
 //    Arbitrary(Gen.listOfN(mutationsPerRun, useCaseMutator))

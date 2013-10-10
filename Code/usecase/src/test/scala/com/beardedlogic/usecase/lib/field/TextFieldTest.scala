@@ -20,9 +20,9 @@ class TextFieldTest extends FunSpec with TestHelpers {
 
   val UCH = UseCaseHeader("AH".validated)
   val EmptyLoadCtx = FieldLoadCtx(UCH, List.empty)
-  val TI1 = 201L.tag[TextIdentIdTag]
-  val TR1 = 301L.tag[TextRevIdTag]
-  val TR2 = 302L.tag[TextRevIdTag]
+  val TI1 = 201L.tag[IsTextIdentId]
+  val TR1 = 301L.tag[IsTextRevId]
+  val TR2 = 302L.tag[IsTextRevId]
 
   describe("Field.apply()") {
     it("should lookup the field value and cast result") {
@@ -37,7 +37,7 @@ class TextFieldTest extends FunSpec with TestHelpers {
   }
 
   def ucFieldText(fkId: FieldKeyId, id: TextRevId, text: String) =
-    UcFieldTextWithFK(fkId, UcFieldText(None, None, -1, TextRev((id * 10000).tag[TextIdentIdTag], 1, id, text.hasNormalisedRefs)))
+    UcFieldTextWithFK(fkId, UcFieldText(None, None, -1, TextRev((id * 10000).tag[IsTextIdentId], 1, id, text.hasNormalisedRefs)))
 
   describe("Loading") {
     val V1 = ucFieldText(TF1.rec, TR1, "Jord")
@@ -74,7 +74,7 @@ class TextFieldTest extends FunSpec with TestHelpers {
 
   describe("Saving") {
     implicit def ss = StepState1
-    val ucId = 123L.tag[UseCaseIdentIdTag]
+    val ucId = 123L.tag[IsUseCaseIdentId]
 
     def saver(v: V) = TF1.valueSaver(v, EmptyStepAndLabelBiMap)
 
@@ -104,7 +104,7 @@ class TextFieldTest extends FunSpec with TestHelpers {
     }
 
     describe("save") {
-      val ucRevId = 321L.tag[UseCaseRevIdTag]
+      val ucRevId = 321L.tag[IsUseCaseRevId]
 
       def mockDao = {
         val dao = mock[DaoT]
