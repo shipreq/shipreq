@@ -9,6 +9,9 @@ object ParsingConfig {
   val RefBraceL = '['
   val RefBraceR = ']'
 
+  val RefBraceLs = RefBraceL.toString
+  val RefBraceRs = RefBraceR.toString
+
   val DeletedRef = makeRef("DELETED")
 
   val NormalisedRefRegex = "\\[D\\.(\\d+?)\\]".r

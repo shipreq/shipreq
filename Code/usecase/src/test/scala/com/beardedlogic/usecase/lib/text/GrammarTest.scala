@@ -11,33 +11,44 @@ import Grammar._
 class GrammarTest extends FunSpec with TestHelpers with PropertyChecks {
   val G = Grammar
 
-  describe("Grammar") {
-    def test[T](parser: G.Parser[T], examples: TableFor2[String, Boolean])(expect: String => T) {
-      forAll(examples)((input, pass) => {
-        val r = G.parseAll(parser, input)
-        r.successful should be(pass)
-        if (pass) r.get should be(expect(input))
-      })
+  def test[T](parser: G.Parser[T], examples: TableFor2[String, Boolean])(expect: String => T) {
+    forAll(examples)((input, pass) => {
+      val r = G.parseAll(parser, input)
+      r.successful should be(pass)
+      if (pass) r.get should be(expect(input))
+    })
+  }
+
+  it("should parse StepLabels") {
+    val examples = Table(("EXAMPLE", "PASS")
+      , ("1.0", true)
+      , ("1.0.a", true)
+      , ("1.0.a.iii", true)
+      , ("1.0.a.iii.1", true)
+      , ("1.E.2", true)
+      , ("13.E.20.ba.xiv.23", true)
+      , ("13. E . 20  .ba.xiv.23", true)
+      , ("1.", false)
+      , (".0", false)
+      , ("1", false)
+      , ("1..0", false)
+      , ("X1", false)
+      , ("", false)
+    )
+    test(G.StepLabel, examples)(_.replaceAll("\\s+", ""))
+  }
+
+  describe("FlowParsers") {
+    import FlowParsers._
+
+    def validRefS(x: RefToken): String = validRefL(x)
+
+    def validRefL(x: RefToken): StepLabel = x match {
+      case PotentiallyValidRef(lbl) => lbl
+      case _ => fail("Expected result: " + x)
     }
 
-    it("should parse StepLabel") {
-      val examples = Table(("EXAMPLE", "PASS")
-        , ("1.0", true)
-        , ("1.0.a", true)
-        , ("1.0.a.iii", true)
-        , ("1.0.a.iii.1", true)
-        , ("1.E.2", true)
-        , ("13.E.20.ba.xiv.23", true)
-        , ("13. E . 20  .ba.xiv.23", true)
-        , ("1.", false)
-        , (".0", false)
-        , ("1", false)
-        , ("1..0", false)
-        , ("X1", false)
-        , ("", false)
-      )
-      test(G.StepLabel, examples)(_.replaceAll("\\s+", ""))
-    }
+    def validRef(x: String) = PotentiallyValidRef(x.asLabel)
 
     it("should parse ValidRef") {
       val examples = Table(("EXAMPLE", "PASS")
@@ -56,7 +67,7 @@ class GrammarTest extends FunSpec with TestHelpers with PropertyChecks {
         , ("[[1.0]]", false)
         , ("", false)
       )
-      test(G.ValidRef, examples)(i => validRef(i.replaceAll("[\\s\\[\\]]+", "")))
+      test(ValidRef, examples)(i => validRef(i.replaceAll("[\\s\\[\\]]+", "")))
     }
 
     it("should parse FlowRefList") {
@@ -72,7 +83,7 @@ class GrammarTest extends FunSpec with TestHelpers with PropertyChecks {
         , ("", false)
 
       )
-      test(G.FlowRefList, examples) {
+      test(FlowRefList, examples) {
         _.replace("[", ",[").replace("]", "],").replaceAll("[\\s\\[\\]]+", "").split(",+").filter(_.nonEmpty).toList.map(validRef)
       }
     }
@@ -81,7 +92,7 @@ class GrammarTest extends FunSpec with TestHelpers with PropertyChecks {
       forAll(TextWithFlowExamples) {
         (input, expText, expRefsFrom, expRefsTo) =>
           withClue(s"Input='$input'.") {
-            val r = G.parseAll(G.TextAndFlows, input)
+            val r = G.parseAll(TextAndFlowClauses, input)
             withClue("Parse result should be successful.") {r.successful ==== true}
             r.get._1 should be(expText)
             val flowResults = r.get._2
@@ -92,12 +103,4 @@ class GrammarTest extends FunSpec with TestHelpers with PropertyChecks {
       }
     }
   }
-
-  def validRefS(x: RefToken): String = validRef(x)
-  def validRef(x: RefToken): StepLabel = x match {
-    case PotentiallyValidRef(lbl) => lbl
-    case _ => fail("Expected result: " + x)
-  }
-
-  def validRef(x: String) = PotentiallyValidRef(x.asLabel)
 }

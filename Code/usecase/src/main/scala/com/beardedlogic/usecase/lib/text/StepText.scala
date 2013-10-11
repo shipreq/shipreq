@@ -5,7 +5,6 @@ import scalaz.{NonEmptyList, Cord}
 import com.beardedlogic.usecase.lib.Misc.SingleSpace
 import com.beardedlogic.usecase.lib.Types._
 import com.beardedlogic.usecase.lib.change._
-import com.beardedlogic.usecase.lib.text.Grammar.{InvalidRefToken, PotentiallyValidRef, ParsedFlowClause}
 import com.beardedlogic.usecase.lib.text.ParsingConfig.{FlowToStyle, FlowFromStyle, makeInvalidRef}
 import Changes._
 import ParsingUtils._
@@ -105,6 +104,7 @@ case class StepText(
    * If found (and valid), they are extracted and normalised.
    */
   private def parseTextForFlow(input: String)(implicit stepsAndLabels: StepAndLabelBiMap): TextAndRefsS = {
+    import Grammar.FlowParsers._
 
     val labelLookup = stepsAndLabels.value.ba
 
@@ -148,7 +148,7 @@ case class StepText(
     }
 
     // Parse flow clauses
-    val parseResult = Grammar.parseAll(Grammar.TextAndFlows, input)
+    val parseResult = Grammar.parseAll(TextAndFlowClauses, input)
     if (parseResult.successful) {
 
       // Flow clauses found
