@@ -16,6 +16,22 @@ object ParsingConfig {
 
   val NormalisedRefRegex = "\\[D\\.(\\d+?)\\]".r
 
+  @inline def makeRef(label: String) = RefBraceL + label + RefBraceR
+
+  val NormalisationPrefix = "D."
+  @inline def makeNormalisedRef(textIdentId: TextIdentId) = makeRef(NormalisationPrefix + textIdentId)
+
+  val InvalidRefSuffix = '?'
+  @inline def makeInvalidLabel(label: String) = label + InvalidRefSuffix
+  @inline def makeInvalidRef(label: String) = makeRef(makeInvalidLabel(label))
+  @inline def makeInvalidNormalisedRef(textIdentId: String) = makeInvalidRef(NormalisationPrefix + textIdentId)
+
+  implicit class StringBuilderPCExt(val sb: StringBuilder) extends AnyVal {
+    def braced(fn: => Unit): StringBuilder = { sb += RefBraceL; fn; sb += RefBraceR; sb }
+    def appendRef(label: String): StringBuilder = braced(sb ++= label)
+    def appendInvalidRef(label: String): StringBuilder = braced {sb ++= label; sb += InvalidRefSuffix}
+  }
+
   sealed trait FlowStyle {
     val arrow: String
     val unicodeArrows: List[Char]
@@ -24,15 +40,12 @@ object ParsingConfig {
     val arrowBadReplacement: String
     final def replaceAllArrowsWithBad(input: String) = arrowBadRegex.replaceAllIn(input, arrowBadReplacement)
     final def makeFlowText(labels: SortedSet[StepLabel]) = {
-      val expSize = labels.size * 24 + 2
+      val expSize = labels.size * 20 + 2
       val sb = new StringBuilder(expSize)
       sb.append(arrow)
-      labels.foreach(l => {
-        sb.append(' ')
-        makeRef(sb, l)
-      })
+      labels.foreach(l => sb.append(' ').appendRef(l))
       val r = sb.toString
-      assume(r.length <= expSize, s"Flow text string builder exceeded pre-alloc space. (Exp: $expSize. Got: ${r.length}.)")
+      //assume(r.length <= expSize, s"Flow text string builder exceeded pre-alloc space. (Exp: $expSize. Got: ${r.length}.)")
       r
     }
     final def makeFlowTextOrEmpty(labels: SortedSet[StepLabel]) = if (labels.isEmpty) "" else makeFlowText(labels)
@@ -56,17 +69,4 @@ object ParsingConfig {
 
   val AnyValidArrowRegex =
     "(?:" + List(FlowFromStyle.arrowRegex, FlowToStyle.arrowRegex).map(_.pattern.pattern).mkString("|") + ")"
-
-  @inline private def makeRef_(sb: StringBuilder)(fn: => Any): Unit = { sb += RefBraceL; fn; sb += RefBraceR }
-  @inline def makeRef(sb: StringBuilder, label: String) = makeRef_(sb)(sb ++= label)
-  @inline def makeRef(label: String) = RefBraceL + label + RefBraceR
-
-  val NormalisationPrefix = "D."
-  @inline def makeNormalisedRef(textIdentId: TextIdentId) = makeRef(NormalisationPrefix + textIdentId)
-
-  val InvalidRefSuffix = '?'
-  @inline def makeInvalidLabel(label: String) = label + InvalidRefSuffix
-  @inline def makeInvalidRef(label: String) = makeRef(makeInvalidLabel(label))
-  @inline def makeInvalidRef(sb: StringBuilder, label: String) = makeRef_(sb) {sb ++= label; sb += InvalidRefSuffix}
-  @inline def makeInvalidNormalisedRef(textIdentId: String) = makeInvalidRef(NormalisationPrefix + textIdentId)
 }

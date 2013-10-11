@@ -41,20 +41,22 @@ object FreeText extends Parser[FreeText] {
           newText ++= txt
           parseRef(ref)
           go(parseG(TextAndPossibleRef, next))
-        //TODO case Error(_, _) =>
-        //TODO case Failure(_, _) =>
+        case NoSuccess(_, _) =>
+          error(s"TextAndPossibleRef failure shouldn't be possible. Got: $pr. Text: ${text.inspect}")
       }
     }
 
     def parseRef(ref: FreeTextRefToken): Unit = ref match {
-      case StepLabelRefToken(label) =>
-        // Check label validity
-        val id = labelsToIds.get(label)
-        if (id.isDefined) {
-          if (!refs.contains(id.get)) refs += (id.get -> label)
-          makeRef(newText, label)
-        } else
-          makeInvalidRef(newText, label)
+      case StepLabelRefToken(label) => parseStepLabel(label)
+    }
+
+    def parseStepLabel(label: StepLabel): Unit = {
+      val id = labelsToIds.get(label)
+      if (id.isDefined) {
+        refs += (id.get -> label)
+        newText.appendRef(label)
+      } else
+        newText.appendInvalidRef(label)
     }
 
     go(parseG(TextAndPossibleRef, text))

@@ -33,10 +33,11 @@ object Types {
     def tag[T <: TypeTag[A]] = a.asInstanceOf[A @@ T]
   }
 
-  implicit class StringTypeTagExt(val s: String) extends AnyVal {
+  implicit class StringGeneralExt(val s: String) extends AnyVal {
     def hasNormalisedRefs = s.asInstanceOf[TextWithNormalisedRefs]
     def asLocalStepId = s.asInstanceOf[LocalStepId]
     def asLabel = s.asInstanceOf[StepLabel]
+    def inspect = Inspection.str.shows(s)
   }
 
   implicit class StringTypeTagExt2[F[_]](val s: F[String]) extends AnyVal {
