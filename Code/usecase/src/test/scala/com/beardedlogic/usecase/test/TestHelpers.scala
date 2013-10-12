@@ -498,9 +498,9 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
   implicit class TextTreeExt(val x: List[StepNodeWithText]) {
     def toStepTree = StepTree(x.map(_.toStepNode))
 
-    def toTextmap(savedSteps: SavedSteps = EmptySavedSteps, stepsAndLabels: StepAndLabelBiMap = EmptyStepAndLabelBiMap) =
+    def toTextmap(savedSteps: SavedSteps = EmptySavedSteps, sl: StepAndLabelBiMap = EmptyStepAndLabelBiMap) =
       TreeLike(x).mapRecursive[(LocalStepId, StepText)](n => {
-        val t = StepText.load(n.id, n.text.hasNormalisedRefs)(savedSteps, UcParsingCtx(stepsAndLabels, UseCaseRelations.Empty))
+        val t = StepText.load(n.id, n.text.hasNormalisedRefs)(savedSteps, UcParsingCtx.Empty.copy(stepsAndLabels = sl))
         (n.id, t)
       }).toMap
 

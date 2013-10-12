@@ -59,7 +59,7 @@ object UseCasePersistence {
     val fieldValues = Map.newBuilder[Field, Field#Value]
     val savedData = Map.newBuilder[Field, Field#SavedData]
     val rels = UseCaseRelations.Empty // TODO EMPTY RELATIONS
-    val ctx = UcParsingCtx(stepAndLabels, rels)
+    val ctx = UcParsingCtx(ucn, uch.title, stepAndLabels, rels)
 
     for ((f, r) <- loadResults) {
       val (fv, sdOpt) = r.phase2(savedSteps, ctx)
@@ -67,7 +67,7 @@ object UseCasePersistence {
       for (sd <- sdOpt) savedData += (f -> sd)
     }
 
-    val uc = UseCase(ucRev.ident, uch, fieldList, fieldValues.result, stepAndLabels)
+    val uc = UseCase(ucn, uch, fieldList, fieldValues.result, stepAndLabels)
     val cp = UseCaseSaveCheckpoint(uc, ucRev, savedSteps, savedData.result)
 
     cp

@@ -3,6 +3,7 @@ package com.beardedlogic.usecase.lib.text
 import scala.collection.immutable.SortedSet
 import scala.util.matching.Regex
 import com.beardedlogic.usecase.lib.Types._
+import com.beardedlogic.usecase.lib.Misc
 
 object ParsingConfig {
 
@@ -26,10 +27,16 @@ object ParsingConfig {
   @inline def makeInvalidRef(label: String) = makeRef(makeInvalidLabel(label))
   @inline def makeInvalidNormalisedRef(textIdentId: String) = makeInvalidRef(NormalisationPrefix + textIdentId)
 
+  type SBEffect = StringBuilder => Unit
   implicit class StringBuilderPCExt(val sb: StringBuilder) extends AnyVal {
-    def braced(fn: => Unit): StringBuilder = { sb += RefBraceL; fn; sb += RefBraceR; sb }
-    def appendRef(label: String): StringBuilder = braced(sb ++= label)
-    def appendInvalidRef(label: String): StringBuilder = braced {sb ++= label; sb += InvalidRefSuffix}
+    def braced(fn: SBEffect): StringBuilder = {sb += RefBraceL; fn(sb); sb += RefBraceR; sb}
+
+    def appendRef(refInner: String) = braced(_ append refInner)
+    def appendRef2(refInner: SBEffect) = braced(refInner)
+
+    def appendInvalidRef(refInner: String) = braced(_ append refInner append InvalidRefSuffix)
+    def appendInvalidRef2(refInner: SBEffect, suffix: SBEffect = Misc.NoEffect1) =
+      braced(sb => {refInner(sb); sb += InvalidRefSuffix; suffix(sb)})
   }
 
   sealed trait FlowStyle {

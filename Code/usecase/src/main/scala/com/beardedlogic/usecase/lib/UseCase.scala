@@ -16,12 +16,17 @@ import tree.TreeOps._
 /** Narrows down the scope of a change. Paired with changes to indicate where (eg. which field) the change occurred. */
 trait UcChangeDomain
 
-case class UcParsingCtx(stepsAndLabels: StepAndLabelBiMap, rels: UseCaseRelations) {
+case class UcParsingCtx(ucn: UseCaseNumber, title: String, stepsAndLabels: StepAndLabelBiMap, rels: UseCaseRelations) {
   def getIdsToLabels: Map[LocalStepId, StepLabel] = stepsAndLabels.value.ab
   def getLabelsToIds: Map[StepLabel, LocalStepId] = stepsAndLabels.value.ba
+
+  def update(uc: UseCase): UcParsingCtx = UcParsingCtx(uc, rels)
 }
 object UcParsingCtx {
-  val Empty = UcParsingCtx(EmptyStepAndLabelBiMap, UseCaseRelations.Empty)
+  val Empty = UcParsingCtx((0:Short).tag[IsUseCaseNumber], "", EmptyStepAndLabelBiMap, UseCaseRelations.Empty)
+
+  def apply(uc: UseCase, rels: UseCaseRelations) =
+    new UcParsingCtx(uc.number, uc.header.title, uc.stepsAndLabels, rels)
 }
 
 // =====================================================================================================================
@@ -176,7 +181,7 @@ case class UseCase(
 case class UseCaseUpdater(uc: UseCase, rels: UseCaseRelations) {
 
   @inline final def stepsAndLabels = uc.stepsAndLabels
-  implicit val ctx = UcParsingCtx(stepsAndLabels, rels)
+  implicit val ctx = UcParsingCtx(uc, rels)
 
   /**
    * Passes a list of changes to all parts of a UC that respond to changes, allowing the components to transform

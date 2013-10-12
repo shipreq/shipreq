@@ -12,8 +12,8 @@ import test.TestHelpers
 class TextFieldTest extends FunSpec with TestHelpers {
   type V = FreeText
 
-  def parseExact(txt: String)(implicit stepsAndLabels: StepAndLabelBiMap) = {
-    implicit val ctx = UcParsingCtx(stepsAndLabels, UseCaseRelations.Empty)
+  def parseExact(txt: String)(implicit sl: StepAndLabelBiMap) = {
+    implicit val ctx = UcParsingCtx.Empty.copy(stepsAndLabels = sl)
     val v = FreeText.parse(txt)
     v.text should be(txt)
     v
@@ -68,7 +68,7 @@ class TextFieldTest extends FunSpec with TestHelpers {
 
     it("should denormalise text with refs") {
       val V3 = ucFieldText(TF1.rec, TR1, "look at [D.143]")
-      val t = TF1.load(FieldLoadCtx(UCH, List(V3))).phase2(SavedSteps1, UcParsingCtx(StepState1, UseCaseRelations.Empty))._1
+      val t = TF1.load(FieldLoadCtx(UCH, List(V3))).phase2(SavedSteps1, UcParsingCtx.Empty.copy(stepsAndLabels = StepState1))._1
       t should be(FreeText("look at [S.3]", Map(X3 -> S3)))
     }
   }
@@ -91,7 +91,7 @@ class TextFieldTest extends FunSpec with TestHelpers {
     describe("differsFromPrevSave_?") {
       implicit def ss = SavedSteps1
       implicit def sl = StepState1
-      implicit val ctx = UcParsingCtx(sl, UseCaseRelations.Empty)
+      implicit val ctx = UcParsingCtx.Empty.copy(stepsAndLabels = sl)
 
       it("should compare simple text") {
         saver(parseExact("ah")).differsFromPrevSave_?(TextRev(TI1, 1, TR1, "ah".hasNormalisedRefs)) ==== false

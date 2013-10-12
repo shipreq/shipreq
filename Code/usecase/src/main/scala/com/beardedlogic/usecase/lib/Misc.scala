@@ -18,6 +18,8 @@ object Misc extends Misc {
 
   final val WhitespaceRegex = "\\s+".r
 
+  final val NoEffect1: (Any => Unit) = _ => ()
+
   private final val ISO8601Format = {
     val tz = TimeZone.getTimeZone("UTC")
     val df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")

@@ -11,7 +11,7 @@ import xml.NodeSeq
 import db.UseCaseRev
 import lib.Types._
 import lib.StepLabels.{MaxStepDepth, MaxStepsPerLevel}
-import lib.{UseCaseUpdater, UseCaseSaveCheckpoint, StepNode, UseCase}
+import lib.{UseCaseRelations, UseCaseUpdater, UseCaseSaveCheckpoint, StepNode, UseCase}
 import Renderer.TitleId
 import test.{CssTestHelpers, TestData, TestHelpers}
 import UseCaseEditor._
@@ -24,7 +24,7 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
 
   implicit def js2str(js: JsCmd): String = unquoteJs(js.toJsCmd).trim
 
-  class UseCaseEditor2(state: State) extends UseCaseEditor(state) {
+  class UseCaseEditor2(state: State) extends UseCaseEditor(state, UseCaseRelations.Empty) {
     def setState2(newState: State) = { super.setState(newState); this }
 
     override def update(m: UcModifier): JsCmd = inMockSession {super.update(m)}

@@ -221,8 +221,7 @@ object DataGenerators extends Logger {
 
   case class NcSfv(h: UseCaseHeader, sfv: StepFieldValue, stepsAndLabels: StepAndLabelBiMap)
 
-  def stepFieldValue(stepTexts: List[String], f: StepField, tree: StepTree)(implicit sl: StepAndLabelBiMap): StepFieldValue = {
-    implicit val ctx = UcParsingCtx(sl, UseCaseRelations.Empty)
+  def stepFieldValue(stepTexts: List[String], f: StepField, tree: StepTree)(implicit ctx: UcParsingCtx): StepFieldValue = {
     val textIter = stepTexts.iterator
     val textmap = tree.mapRecursive(s => {
       val txt = textIter.next
@@ -246,8 +245,9 @@ object DataGenerators extends Logger {
       refdep = RefDependentGen(steps)
       stepTexts <- Gen.listOfN(steps.sizeRecursive, refdep.stepText)
     } yield {
-      implicit val stepsAndLabels = generateStepAndLabelBiMap(ucn, (ncf -> nc.stepTree))
-      val sfv = stepFieldValue(stepTexts, ncf, nc.stepTree)
+      val stepsAndLabels = generateStepAndLabelBiMap(ucn, (ncf -> nc.stepTree))
+      val ctx = UcParsingCtx(ucn, uch.title, stepsAndLabels, UseCaseRelations.Empty)
+      val sfv = stepFieldValue(stepTexts, ncf, nc.stepTree)(ctx)
       NcSfv(uch, sfv, stepsAndLabels)
     }
   }
@@ -288,7 +288,7 @@ object DataGenerators extends Logger {
       // Parsing context
       implicit val stepsAndLabels = generateStepAndLabelBiMap(ucn, (NCF -> nc.stepTree), (ECF -> ec.stepTree))
       assume(stepsAndLabels.value.bs == steps.labels.toSet)
-      implicit val ctx = UcParsingCtx(stepsAndLabels, UseCaseRelations.Empty)
+      implicit val ctx = UcParsingCtx(ucn, h.title, stepsAndLabels, UseCaseRelations.Empty)
 
       // Text fields
       val textFieldValues: FieldValues = fieldList.textFields.zip(textFieldTexts).map {
@@ -316,7 +316,7 @@ object DataGenerators extends Logger {
   type UcMutationResult = (UcUpdateResult, String)
   private val EmptyUcMutationResult: UcMutationResult = (NoChange, "NoChange")
 
-  implicit def ucTc(uc: UseCase) = UcParsingCtx(uc.stepsAndLabels, UseCaseRelations.Empty)
+  implicit def ucTc(uc: UseCase) = UcParsingCtx(uc, UseCaseRelations.Empty)
   implicit def uTuc(u: UseCaseUpdater) = u.uc
 
   case class UseCaseMutator(newFn: UseCaseUpdater => UcMutationResult) {

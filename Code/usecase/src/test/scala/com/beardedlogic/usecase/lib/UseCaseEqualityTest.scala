@@ -10,7 +10,7 @@ import UseCaseEquality._
 
 class UseCaseEqualityTest extends FunSuite with TestData {
 
-  implicit def autoCtx(sl: StepAndLabelBiMap) = UcParsingCtx(sl, UseCaseRelations.Empty)
+  implicit def autoCtx(sl: StepAndLabelBiMap) = UcParsingCtx.Empty.copy(stepsAndLabels = sl)
   implicit def ucTu(uc: UseCase) = UseCaseUpdater(uc, UseCaseRelations.Empty)
 
   def assertEqual(a: UseCase, b: UseCase): Unit = {

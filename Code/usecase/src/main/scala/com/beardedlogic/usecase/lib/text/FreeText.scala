@@ -50,17 +50,33 @@ object FreeText extends Parser[FreeText] {
       }
     }
 
+    @inline
     def parseRef(ref: FreeTextRefToken): Unit = ref match {
-      case StepLabelRefToken(label) => parseStepLabel(label)
+      case StepLabelRefToken(label) => appendStepRef(label)
+      case UseCaseRefToken(num, ot) => appendUseCaseRef(num, ot)
     }
 
-    def parseStepLabel(label: StepLabel): Unit = {
-      val id = labelsToIds.get(label)
-      if (id.isDefined) {
-        refs += (id.get -> label)
-        newText.appendRef(label)
-      } else
-        newText.appendInvalidRef(label)
+    @inline
+    def appendStepRef(label: StepLabel): Unit =
+      labelsToIds.get(label) match {
+        case Some(id) =>
+          refs += (id -> label)
+          newText.appendRef(label)
+        case None =>
+          newText.appendInvalidRef(label)
+      }
+
+    @inline
+    def appendUseCaseRef(num: UseCaseNumber, ot: Option[String]): Unit = {
+      @inline def appendValidRef(title: String) =
+        newText.appendRef2(_.append("UC-").append(num.toInt).append(": ").append(title))
+      if (num == ctx.ucn)
+        appendValidRef(ctx.title)
+      else ctx.rels.findUcTitle(num) match {
+        case Some(title) => appendValidRef(title)
+        case None =>
+          newText.appendInvalidRef2(_.append("UC-").append(num.toInt), sb => ot.foreach(title => sb append ": " append title))
+      }
     }
 
     go(parseG(TextAndPossibleRef, text))

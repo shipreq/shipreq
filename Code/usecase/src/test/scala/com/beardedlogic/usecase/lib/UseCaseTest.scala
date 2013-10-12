@@ -18,7 +18,7 @@ import UseCasePersistence._
 
 class UseCaseTest extends FunSpec with TestHelpers with TestData {
 
-  implicit def autoCtx(sl: StepAndLabelBiMap) = UcParsingCtx(sl, UseCaseRelations.Empty)
+  implicit def autoCtx(sl: StepAndLabelBiMap) = UcParsingCtx.Empty.copy(stepsAndLabels = sl)
   implicit def ucTu(uc: UseCase) = UseCaseUpdater(uc, UseCaseRelations.Empty)
 
   describe("filter()") {
@@ -230,7 +230,7 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
   import MockUc1._
   val rels = 2 + 5 + 3 // 2 text fields + 5 NC steps + 3 EC steps
 
-  implicit def autoCtx(sl: StepAndLabelBiMap) = UcParsingCtx(sl, UseCaseRelations.Empty)
+  implicit def autoCtx(sl: StepAndLabelBiMap) = UcParsingCtx.Empty.copy(stepsAndLabels = sl)
   implicit def ucTu(uc: UseCase) = UseCaseUpdater(uc, UseCaseRelations.Empty)
 
   def loadRev(revId: UseCaseRevId, projectId: ProjectId): UseCaseSaveCheckpoint = {

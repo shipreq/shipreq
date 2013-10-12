@@ -6,9 +6,10 @@ import org.scalatest.prop._
 import scala.collection.immutable.TreeSet
 import scalaz.syntax.apply._
 import scalaz.std.list.listInstance
+import db.UseCaseSummary
 import lib.change._
 import lib.Types._
-import lib.{UseCaseRelations, UcParsingCtx}
+import lib.{CachedUseCaseRelations, UcParsingCtx}
 import util._
 import test.{TestHelpers2, TestHelpers}
 import Changes._
@@ -16,7 +17,16 @@ import ParsingConfig._
 
 object FreeAndStepTextTests extends TestHelpers2 {
 
-  implicit def autoCtx(sl: StepAndLabelBiMap) = UcParsingCtx(sl, UseCaseRelations.Empty)
+  implicit def autoCtx(sl: StepAndLabelBiMap) = UcParsingCtx((3:Short).tag[IsUseCaseNumber], "New Third", sl, Rels)
+  implicit def autoNum(i: Int) = i.toShort.tag[IsUseCaseNumber]
+  implicit def autoUCId(i: Int) = i.toLong.tag[IsUseCaseIdentId]
+
+  val UCS = List(
+    UseCaseSummary(100, 1, "First", "X"),
+    UseCaseSummary(200, 2, "Second", "X"),
+    UseCaseSummary(300, 3, "Old Third", "X")
+  )
+  val Rels = CachedUseCaseRelations(UCS)
 
   def assertFlowClause(c: Option[FlowClause], refs: Refs) {
     if (refs.isEmpty)
@@ -111,34 +121,57 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
         test("  should  trim  whitespace  ", "should  trim  whitespace", Map.empty)
       }
 
-      it("should detect valid refs") {
-        test("Umm [S.1] only", None, Map(X1 -> S1))
-        test("Umm [S.1] & [S.3] ah and [S.1]!", None, Map(X1 -> S1, X3 -> S3))
+      describe("Step refs") {
+        it("should detect valid step refs") {
+          test("Umm [S.1] only", None, Map(X1 -> S1))
+          test("Umm [S.1] & [S.3] ah and [S.1]!", None, Map(X1 -> S1, X3 -> S3))
+        }
+
+        it("should remove whitespace from step refs") {
+          test("[ S.1]", "[S.1]", Map(X1 -> S1))
+          test("[S.1 ]", "[S.1]", Map(X1 -> S1))
+          test("[ S.1 ]", "[S.1]", Map(X1 -> S1))
+          test("[S .1]", "[S.1]", Map(X1 -> S1))
+          test("[S. 1]", "[S.1]", Map(X1 -> S1))
+          test("[S . 1]", "[S.1]", Map(X1 -> S1))
+          test("This is [S . 1] and [ S.1 ] together!", "This is [S.1] and [S.1] together!", Map(X1 -> S1))
+        }
+
+        it("should add ? to invalid step refs") {
+          test("[1.0.9] doesn't exist.", "[1.0.9?] doesn't exist.", Map.empty)
+        }
+
+        it("should ignore existing invalid step refs") {
+          test("[1.0.9?] doesn't exist.", None, Map.empty)
+        }
+
+        it("should ignore invalid refs without dots") {
+          test("[DELETED]", None, Map.empty)
+          test("[123]", None, Map.empty)
+        }
       }
 
-      it("should remove whitespace from refs") {
-        test("[ S.1]", "[S.1]", Map(X1 -> S1))
-        test("[S.1 ]", "[S.1]", Map(X1 -> S1))
-        test("[ S.1 ]", "[S.1]", Map(X1 -> S1))
-        test("[S .1]", "[S.1]", Map(X1 -> S1))
-        test("[S. 1]", "[S.1]", Map(X1 -> S1))
-        test("[S . 1]", "[S.1]", Map(X1 -> S1))
-        test("This is [S . 1] and [ S.1 ] together!", "This is [S.1] and [S.1] together!", Map(X1 -> S1))
+      describe("Use Case refs") {
+        it("should parse valid UC refs (numbers only)") {
+          test("[UC 1]", "[UC-1: First]", Map.empty)
+          test("[UC - 1]", "[UC-1: First]", Map.empty)
+          test("[UC- 1]", "[UC-1: First]", Map.empty)
+          test("[UC -1]", "[UC-1: First]", Map.empty)
+          test("[UC-1]", "[UC-1: First]", Map.empty)
+          test("[ UC-1 ]", "[UC-1: First]", Map.empty)
+          test("[ UC  1 ]", "[UC-1: First]", Map.empty)
+          test("[UC2]", "[UC-2: Second]", Map.empty)
+        }
+        it("should parse valid UC refs (with title)") {
+          test("[UC-1: Bullshit]", "[UC-1: First]", Map.empty)
+          test("[UC-1 : Bullshit ]", "[UC-1: First]", Map.empty)
+          test("[ UC 2: Blah blah blah] and [UC-1:FFS]", "[UC-2: Second] and [UC-1: First]", Map.empty)
+        }
+        it("should use the current title when referencing current use case") {
+          test("[UC-3]", "[UC-3: New Third]", Map.empty)
+        }
       }
-
-      it("should add ? to invalid step refs") {
-        test("[1.0.9] doesn't exist.", "[1.0.9?] doesn't exist.", Map.empty)
-      }
-
-      it("should ignore existing invalid step refs") {
-        test("[1.0.9?] doesn't exist.", None, Map.empty)
-      }
-
-      it("should ignore invalid refs without dots") {
-        test("[DELETED]", None, Map.empty)
-        test("[123]", None, Map.empty)
-      }
-    }
+    } // end parsing
 
     describe("Loading free text") {
       it("should load simple text") {
@@ -510,7 +543,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
 
     describe("text()") {
       it("should combine clauses") {
-        implicit val ctx = UcParsingCtx(StepState1, UseCaseRelations.Empty)
+        implicit val ctx = UcParsingCtx.Empty.copy(stepsAndLabels = StepState1)
         val X1_S1 = Some(Map(X1 -> S1))
         val examples: TableFor4[String, Option[Refs], Option[Refs], String] = Table(("MAIN", "FROM", "TO", "EXPECTED")
           , ("", None, None, "")
