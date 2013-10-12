@@ -38,25 +38,26 @@ object FreeAndStepTextTests extends TestHelpers2 {
   abstract class Tester[T <: ParsedText[T]](val parser: Parser[T]) {
     def parse(text: String) = parser.parse(text)(StepState1)
     def refs(t: T): Refs
-    def assert(subject: T, text: String, refs: Refs): Unit
+    def assert(subject: T, text: String, refs: Refs, refsOwnUc: Boolean): Unit
   }
 
   object FreeTextTester extends Tester[FreeText](FreeText) {
     override def refs(t: FreeText) = t.refs
-    override def assert(subject: FreeText, text: String, refs: Refs) {
-      subject.text should be(text)
-      subject.refs should be(refs)
+    override def assert(subject: FreeText, text: String, refs: Refs, refsOwnUc: Boolean) {
+      subject.text ==== text
+      subject.refs ==== refs
+      subject.refsOwnUc ==== refsOwnUc
     }
   }
 
   object StepTextTester extends Tester[StepText](new StepTextFactory(X0)) {
     override def refs(t: StepText) = t.allRefs
-    override def assert(subject: StepText, text: String, refs: Refs) {
-      subject.text should be(text)
-      subject.allRefs should be(refs)
-      subject.flowFromClause should be(None)
-      subject.flowToClause should be(None)
-      FreeTextTester.assert(subject.mainClause, text, refs)
+    override def assert(subject: StepText, text: String, refs: Refs, refsOwnUc: Boolean) {
+      subject.text ==== text
+      subject.allRefs ==== refs
+      subject.flowFromClause shouldBe None
+      subject.flowToClause shouldBe None
+      FreeTextTester.assert(subject.mainClause, text, refs, refsOwnUc)
     }
   }
 
@@ -106,15 +107,15 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
   def aTextWithRefs[T <: ParsedText[T]](T: Tester[T]) {
     implicit def StrToSomeStr(s: String) = Some(s)
 
-    def test(input: String, output: Option[String], refs: Refs) {
+    def test(input: String, output: Option[String], refs: Refs = Map.empty, refsOwnUc: Boolean = false) {
       val x = T.parse(input)
-      T.assert(x, output.getOrElse(input), refs)
+      T.assert(x, output.getOrElse(input), refs, refsOwnUc)
     }
 
     describe("Parsing free text") {
       it("should parse plain text") {
-        test("", None, Map.empty)
-        test("nothing", None, Map.empty)
+        test("", None)
+        test("nothing", None)
       }
 
       it("should trim whitespace") {
@@ -138,37 +139,38 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
         }
 
         it("should add ? to invalid step refs") {
-          test("[1.0.9] doesn't exist.", "[1.0.9?] doesn't exist.", Map.empty)
+          test("[1.0.9] doesn't exist.", "[1.0.9?] doesn't exist.")
         }
 
         it("should ignore existing invalid step refs") {
-          test("[1.0.9?] doesn't exist.", None, Map.empty)
+          test("[1.0.9?] doesn't exist.", None)
         }
 
         it("should ignore invalid refs without dots") {
-          test("[DELETED]", None, Map.empty)
-          test("[123]", None, Map.empty)
+          test("[DELETED]", None)
+          test("[123]", None)
         }
       }
 
       describe("Use Case refs") {
         it("should parse valid UC refs (numbers only)") {
-          test("[UC 1]", "[UC-1: First]", Map.empty)
-          test("[UC - 1]", "[UC-1: First]", Map.empty)
-          test("[UC- 1]", "[UC-1: First]", Map.empty)
-          test("[UC -1]", "[UC-1: First]", Map.empty)
-          test("[UC-1]", "[UC-1: First]", Map.empty)
-          test("[ UC-1 ]", "[UC-1: First]", Map.empty)
-          test("[ UC  1 ]", "[UC-1: First]", Map.empty)
-          test("[UC2]", "[UC-2: Second]", Map.empty)
+          test("[UC 1]", "[UC-1: First]")
+          test("[UC - 1]", "[UC-1: First]")
+          test("[UC- 1]", "[UC-1: First]")
+          test("[UC -1]", "[UC-1: First]")
+          test("[UC-1]", "[UC-1: First]")
+          test("[ UC-1 ]", "[UC-1: First]")
+          test("[ UC  1 ]", "[UC-1: First]")
+          test("[UC2]", "[UC-2: Second]")
         }
         it("should parse valid UC refs (with title)") {
-          test("[UC-1: Bullshit]", "[UC-1: First]", Map.empty)
-          test("[UC-1 : Bullshit ]", "[UC-1: First]", Map.empty)
-          test("[ UC 2: Blah blah blah] and [UC-1:FFS]", "[UC-2: Second] and [UC-1: First]", Map.empty)
+          test("[UC-1: Bullshit]", "[UC-1: First]")
+          test("[UC-1 : Bullshit ]", "[UC-1: First]")
+          test("[ UC 2: Blah blah blah] and [UC-1:FFS]", "[UC-2: Second] and [UC-1: First]")
         }
         it("should use the current title when referencing current use case") {
-          test("[UC-3]", "[UC-3: New Third]", Map.empty)
+          test("[UC-3]", "[UC-3: New Third]", Map.empty, true)
+          test("[UC-1][UC-3]", "[UC-1: First][UC-3: New Third]", Map.empty, true)
         }
       }
     } // end parsing
@@ -176,12 +178,12 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
     describe("Loading free text") {
       it("should load simple text") {
         val x = T.parser.load("Hehe".hasNormalisedRefs)(BiMap.empty, StepState1)
-        T.assert(x, "Hehe", Map.empty)
+        T.assert(x, "Hehe", Map.empty, false)
       }
 
       it("should set text with normalised refs") {
         val x = T.parser.load("Hehe [D.100]".hasNormalisedRefs)(savedSteps(100 -> X2), StepState1)
-        T.assert(x, "Hehe [S.2]", Map(X2 -> S2))
+        T.assert(x, "Hehe [S.2]", Map(X2 -> S2), false)
       }
     }
 
@@ -194,7 +196,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
       def test(before: String)(textAfter: String, refsAfter: Refs) {
         val x = T.parse(before)
         val y = x.respondToChange(MockExistingStepLabelsChanged)(StepState2)
-        T.assert(y.getOrElse(x), textAfter, refsAfter)
+        T.assert(y.getOrElse(x), textAfter, refsAfter, false)
       }
 
       it("should update refs") {
@@ -250,7 +252,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
         val a = parse("Look at [S.1]")
         a.respondToChange(MockExistingStepLabelsChanged)(StepState2) match {
           case Changed(b, changes) =>
-            b should be(StepText(X0, FreeText("Look at [S.A]", Map(X1 -> SA)), None, None))
+            b should be(StepText(X0, FreeText("Look at [S.A]", Map(X1 -> SA), false), None, None))
             changes.list should contain(StepTextChanged(X0))
           case x => fail(s"Change expected, got: $x")
         }

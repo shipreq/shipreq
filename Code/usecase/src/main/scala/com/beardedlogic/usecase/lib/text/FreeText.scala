@@ -22,19 +22,13 @@ object FreeText extends Parser[FreeText] {
   override def parse(text: String)(implicit ctx: UcParsingCtx) =
     parseCorrected(correctInput(text))
 
-  /**
-   * Parses plain text and does the following:
-   *
-   * 1) Records a map of ids-to-labels, of valid references.
-   * 2) Removes whitespace from references.
-   * 3) Appends a ? to invalid references.
-   */
   def parseCorrected(text: String)(implicit ctx: UcParsingCtx) = {
     import Grammar.{parse => parseG, _}
     lazy val labelsToIds = ctx.getLabelsToIds
 
     val newText = new StringBuilder
     var refs = Map.empty[LocalStepId, StepLabel]
+    var refsOwnUc = false
 
     @tailrec
     def go(pr: ParseResult[(String, Option[FreeTextRefToken])]): Unit = {
@@ -70,9 +64,10 @@ object FreeText extends Parser[FreeText] {
     def appendUseCaseRef(num: UseCaseNumber, ot: Option[String]): Unit = {
       @inline def appendValidRef(title: String) =
         newText.appendRef2(_.append("UC-").append(num.toInt).append(": ").append(title))
-      if (num == ctx.ucn)
+      if (num == ctx.ucn) {
+        refsOwnUc = true
         appendValidRef(ctx.title)
-      else ctx.rels.findUcTitle(num) match {
+      } else ctx.rels.findUcTitle(num) match {
         case Some(title) => appendValidRef(title)
         case None =>
           newText.appendInvalidRef2(_.append("UC-").append(num.toInt), sb => ot.foreach(title => sb append ": " append title))
@@ -80,7 +75,7 @@ object FreeText extends Parser[FreeText] {
     }
 
     go(parseG(TextAndPossibleRef, text))
-    FreeText(newText.toString, refs)
+    FreeText(newText.toString, refs, refsOwnUc)
   }
 }
 
@@ -97,7 +92,7 @@ object FreeText extends Parser[FreeText] {
  * @since 12/05/2013 (as SmartText)
  * @since 16/07/2013 (as FreeText)
  */
-case class FreeText(text: String, refs: Map[LocalStepId, StepLabel]) extends ParsedText[FreeText] {
+case class FreeText(text: String, refs: Map[LocalStepId, StepLabel], refsOwnUc: Boolean) extends ParsedText[FreeText] {
 
   override def textWithNormalisedRefs(implicit savedSteps: SavedSteps) = normaliseRefs(text, refs, savedSteps)
 

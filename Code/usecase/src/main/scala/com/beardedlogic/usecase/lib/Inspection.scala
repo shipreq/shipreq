@@ -135,7 +135,7 @@ object Inspection {
 
   implicit val freeText: Show[FreeText] = {
     val empty: Cord = "FreeText.empty"
-    Show.show(x => if (x.isEmpty) empty else "FreeText" <> x.text.show ++> x.refs.show)
+    Show.show(x => if (x.isEmpty) empty else "FreeText" <> x.text.show ++> x.refs.show ++> x.refsOwnUc.show)
   }
 
   implicit val flowFromClause: Show[FlowFromClause] = "FlowFromClause" <*> (_.refs.show)

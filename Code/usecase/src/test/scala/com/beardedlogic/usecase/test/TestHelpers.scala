@@ -361,7 +361,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
   def assertUseCasesLookSameToUser(actual: UseCase, expected: UseCase): Unit =
     actual.userView ==== expected.userView
 
-  def freeText(txt: String) = FreeText(txt, Map.empty)
+  def freeText(txt: String) = FreeText(txt, Map.empty, false)
 
   def normaliseFieldValues(fieldValues: FieldValues): FieldValues = fieldValues.mapValues{
     case v: StepFieldValue => v.norm.asInstanceOf[Field#Value]

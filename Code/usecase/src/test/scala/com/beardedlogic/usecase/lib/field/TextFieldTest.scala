@@ -69,7 +69,7 @@ class TextFieldTest extends FunSpec with TestHelpers {
     it("should denormalise text with refs") {
       val V3 = ucFieldText(TF1.rec, TR1, "look at [D.143]")
       val t = TF1.load(FieldLoadCtx(UCH, List(V3))).phase2(SavedSteps1, UcParsingCtx.Empty.copy(stepsAndLabels = StepState1))._1
-      t should be(FreeText("look at [S.3]", Map(X3 -> S3)))
+      t should be(FreeText("look at [S.3]", Map(X3 -> S3), false))
     }
   }
 

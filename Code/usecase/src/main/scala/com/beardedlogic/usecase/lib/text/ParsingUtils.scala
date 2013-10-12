@@ -47,7 +47,7 @@ object ParsingUtils extends Logger {
       }
     }
 
-    if (changed) Some(FreeText(newText, newRefs))
+    if (changed) Some(FreeText(newText, newRefs, ft.refsOwnUc))
     else None
   }
 
