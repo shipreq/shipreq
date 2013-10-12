@@ -70,13 +70,13 @@ abstract class StepField extends Field with StepFieldPersistenceMixin {
 
   override def toString = s"${getClass.getSimpleName}[#${rec.id}]"
 
-  def updateText(id: LocalStepId, newText: String)(uc: UseCase): UcUpdateResult = {
-    implicit val lens = alens(ucStepTextInstL, (uc, (this, id)))
-    uc.update(this, lens.get.update(newText)(uc.stepsAndLabels))
+  def updateText(id: LocalStepId, newText: String)(u: UseCaseUpdater): UcUpdateResult = {
+    implicit val lens = alens(ucStepTextInstL, (u.uc, (this, id)))
+    u.update(this, lens.get.update(newText)(u.ctx))
   }
 
-  def addTailStep(uc: UseCase): UcUpdateResult = {
-    implicit val lens = alens(ucStepFieldL, (uc, this))
+  def addTailStep(u: UseCaseUpdater): UcUpdateResult = {
+    implicit val lens = alens(ucStepFieldL, (u.uc, this))
     val curNodes = lens.get.tree.nodes
     val labelIndex = sli.startingLabelIndex(0) + curNodes.size
     if (labelIndex > MaxStepsPerLevel)
@@ -85,12 +85,12 @@ abstract class StepField extends Field with StepFieldPersistenceMixin {
       val tailStep = StepNodeBuilder(0, labelIndex)
       val newSfv = lens.get.withNewStep(StepTree(curNodes :+ tailStep), tailStep.id)
       val cr = newSfv @: TailStepAdded(tailStep)
-      uc.update(this, cr)
+      u.update(this, cr)
     }
   }
 
-  def addStep(precedingNodeId: LocalStepId)(uc: UseCase): UcUpdateResult =
-    updateTree(uc,
+  def addStep(precedingNodeId: LocalStepId)(u: UseCaseUpdater): UcUpdateResult =
+    updateTree(u,
       sfv => stepInsert(precedingNodeId, sfv.tree, StepNodeBuilder),
       (sfv, newNodes, newNode) => {
         val newSfv = sfv.withNewStep(StepTree(newNodes), newNode.id)
@@ -98,8 +98,8 @@ abstract class StepField extends Field with StepFieldPersistenceMixin {
       }
     )
 
-  def removeStep(id: LocalStepId)(uc: UseCase): UcUpdateResult = {
-    implicit val lens = alens(ucStepFieldL, (uc, this))
+  def removeStep(id: LocalStepId)(u: UseCaseUpdater): UcUpdateResult = {
+    implicit val lens = alens(ucStepFieldL, (u.uc, this))
     val sfv = lens.get
     if (prohibitRemoval_?(sfv, id)) NoChange
     else
@@ -109,13 +109,13 @@ abstract class StepField extends Field with StepFieldPersistenceMixin {
           removedNode.foreachRecursive(n => newTextmap -= n.id)
           val newSfv = sfv.copy(tree = StepTree(newNodes), textmap = newTextmap)
           val cr = newSfv @: StepRemoved(removedNode)
-          uc.update(this, cr)
+          u.update(this, cr)
         case _ => NoChange
       }
   }
 
-  def decreaseIndent(id: LocalStepId)(uc: UseCase): UcUpdateResult =
-    updateTree(uc,
+  def decreaseIndent(id: LocalStepId)(u: UseCaseUpdater): UcUpdateResult =
+    updateTree(u,
       sfv => indentDecrease(id, sfv.tree),
       (sfv, newNodes, tgtNode) => {
         val newSfv = sfv.copy(tree = StepTree(newNodes))
@@ -123,8 +123,8 @@ abstract class StepField extends Field with StepFieldPersistenceMixin {
       }
     )
 
-  def increaseIndent(id: LocalStepId)(uc: UseCase): UcUpdateResult =
-    updateTree(uc,
+  def increaseIndent(id: LocalStepId)(u: UseCaseUpdater): UcUpdateResult =
+    updateTree(u,
       sfv => indentIncrease(id, sfv.tree),
       (sfv, newNodes, tgtNode) => {
         val newSfv = sfv.copy(tree = StepTree(newNodes))
@@ -132,18 +132,18 @@ abstract class StepField extends Field with StepFieldPersistenceMixin {
       }
     )
 
-  private def updateTree(uc: UseCase,
+  private def updateTree(u: UseCaseUpdater,
     updateFn: StepFieldValue => (List[StepNode], Option[StepNode]),
     newFn: (StepFieldValue, List[StepNode], StepNode) => Changed[StepFieldValue, Change]
     ): UcUpdateResult = {
 
-    implicit val lens = alens(ucStepFieldL, (uc, this))
+    implicit val lens = alens(ucStepFieldL, (u.uc, this))
     val sfv = lens.get
     updateFn(sfv) match {
       case (newNodes, Some(tgtNode: StepNode)) =>
         resultIfTreeIsValid(newNodes, {
           val cr = newFn(sfv, newNodes, tgtNode)
-          uc.update(this, cr)
+          u.update(this, cr)
         })
       case _ => NoChange
     }
@@ -174,7 +174,7 @@ case class NormalCourseField(override val rec: FieldKeyRec) extends StepField {
   override def defaultLoadValue(h: UseCaseHeader) = {
     val sfv1 = StepFieldValue.forTree(this, DefaultTree)
     val id = sfv1.tree.head.id
-    val sfv = sfvStepTextTextL.set((sfv1, id), (h.title, EmptyStepAndLabelBiMap))
+    val sfv = sfvStepTextTextL.set((sfv1, id), (h.title, UcParsingCtx.Empty))
     (Some(sfv.tree), () => sfv)
   }
 }

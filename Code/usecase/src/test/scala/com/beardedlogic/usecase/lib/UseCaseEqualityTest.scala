@@ -5,10 +5,13 @@ import scalaz.syntax.equal._
 import com.beardedlogic.usecase.test.TestData
 import change.Changes.StepAdded
 import Lenses._
-import Types.{@@, Validated}
+import Types.{@@, Validated, StepAndLabelBiMap}
 import UseCaseEquality._
 
 class UseCaseEqualityTest extends FunSuite with TestData {
+
+  implicit def autoCtx(sl: StepAndLabelBiMap) = UcParsingCtx(sl, UseCaseRelations.Empty)
+  implicit def ucTu(uc: UseCase) = UseCaseUpdater(uc, UseCaseRelations.Empty)
 
   def assertEqual(a: UseCase, b: UseCase): Unit = {
     assert(a ≟ b, "UseCases should be equal.\nA:\n$a\nB:\n$b")

@@ -77,7 +77,7 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
       val stepAndLabels = r.stepTree
                           .map(t => generateStepAndLabelBiMap(generateStepAndLabelMap(ucn, f, t) :: Nil))
                           .getOrElse(EmptyStepAndLabelBiMap)
-      r.phase2(savedSteps, stepAndLabels)
+      r.phase2(savedSteps, UcParsingCtx(stepAndLabels, UseCaseRelations.Empty))
     }
 
     it("should build a field value") {

@@ -3,7 +3,7 @@ package lib.field
 
 import org.scalatest.FunSpec
 import org.mockito.Mockito._
-import com.beardedlogic.usecase.lib.FieldLoadCtx
+import com.beardedlogic.usecase.lib.{UseCaseRelations, UcParsingCtx, FieldLoadCtx}
 import lib.Types._
 import lib.text.FreeText
 import db._
@@ -13,6 +13,7 @@ class TextFieldTest extends FunSpec with TestHelpers {
   type V = FreeText
 
   def parseExact(txt: String)(implicit stepsAndLabels: StepAndLabelBiMap) = {
+    implicit val ctx = UcParsingCtx(stepsAndLabels, UseCaseRelations.Empty)
     val v = FreeText.parse(txt)
     v.text should be(txt)
     v
@@ -43,7 +44,7 @@ class TextFieldTest extends FunSpec with TestHelpers {
     val V1 = ucFieldText(TF1.rec, TR1, "Jord")
     val V2 = ucFieldText(TF2.rec, TR2, "puls")
     val LoadCtx = FieldLoadCtx(UCH, List(V1, V2))
-    def load(f: TextField, ctx: FieldLoadCtx) = f.load(ctx).phase2(EmptySavedSteps, EmptyStepAndLabelBiMap)
+    def load(f: TextField, ctx: FieldLoadCtx) = f.load(ctx).phase2(EmptySavedSteps, UcParsingCtx.Empty)
     def loadV(f: TextField, ctx: FieldLoadCtx): FreeText = load(f, ctx)._1
     def loadSD(f: TextField, ctx: FieldLoadCtx) = load(f, ctx)._2
 
@@ -67,7 +68,7 @@ class TextFieldTest extends FunSpec with TestHelpers {
 
     it("should denormalise text with refs") {
       val V3 = ucFieldText(TF1.rec, TR1, "look at [D.143]")
-      val t = TF1.load(FieldLoadCtx(UCH, List(V3))).phase2(SavedSteps1, StepState1)._1
+      val t = TF1.load(FieldLoadCtx(UCH, List(V3))).phase2(SavedSteps1, UcParsingCtx(StepState1, UseCaseRelations.Empty))._1
       t should be(FreeText("look at [S.3]", Map(X3 -> S3)))
     }
   }
@@ -90,6 +91,7 @@ class TextFieldTest extends FunSpec with TestHelpers {
     describe("differsFromPrevSave_?") {
       implicit def ss = SavedSteps1
       implicit def sl = StepState1
+      implicit val ctx = UcParsingCtx(sl, UseCaseRelations.Empty)
 
       it("should compare simple text") {
         saver(parseExact("ah")).differsFromPrevSave_?(TextRev(TI1, 1, TR1, "ah".hasNormalisedRefs)) ==== false

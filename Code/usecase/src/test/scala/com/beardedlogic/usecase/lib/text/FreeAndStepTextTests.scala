@@ -8,12 +8,15 @@ import scalaz.syntax.apply._
 import scalaz.std.list.listInstance
 import lib.change._
 import lib.Types._
+import lib.{UseCaseRelations, UcParsingCtx}
 import util._
 import test.{TestHelpers2, TestHelpers}
 import Changes._
 import ParsingConfig._
 
 object FreeAndStepTextTests extends TestHelpers2 {
+
+  implicit def autoCtx(sl: StepAndLabelBiMap) = UcParsingCtx(sl, UseCaseRelations.Empty)
 
   def assertFlowClause(c: Option[FlowClause], refs: Refs) {
     if (refs.isEmpty)
@@ -507,7 +510,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
 
     describe("text()") {
       it("should combine clauses") {
-        implicit val ss = StepState1
+        implicit val ctx = UcParsingCtx(StepState1, UseCaseRelations.Empty)
         val X1_S1 = Some(Map(X1 -> S1))
         val examples: TableFor4[String, Option[Refs], Option[Refs], String] = Table(("MAIN", "FROM", "TO", "EXPECTED")
           , ("", None, None, "")

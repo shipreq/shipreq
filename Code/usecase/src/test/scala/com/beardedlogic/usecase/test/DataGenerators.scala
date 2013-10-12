@@ -6,7 +6,7 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Prop, Arbitrary, Gen}
 import scala.annotation.tailrec
 import scala.util.matching.Regex
-import scalaz.syntax.show._
+import scalaz.Memo
 
 import lib._
 import field._
@@ -222,6 +222,7 @@ object DataGenerators extends Logger {
   case class NcSfv(h: UseCaseHeader, sfv: StepFieldValue, stepsAndLabels: StepAndLabelBiMap)
 
   def stepFieldValue(stepTexts: List[String], f: StepField, tree: StepTree)(implicit sl: StepAndLabelBiMap): StepFieldValue = {
+    implicit val ctx = UcParsingCtx(sl, UseCaseRelations.Empty)
     val textIter = stepTexts.iterator
     val textmap = tree.mapRecursive(s => {
       val txt = textIter.next
@@ -284,9 +285,10 @@ object DataGenerators extends Logger {
     } yield {
       trace(s"Creating UC with ${steps.sizeRecursive} steps.")
 
-      // Steps and Labels
+      // Parsing context
       implicit val stepsAndLabels = generateStepAndLabelBiMap(ucn, (NCF -> nc.stepTree), (ECF -> ec.stepTree))
       assume(stepsAndLabels.value.bs == steps.labels.toSet)
+      implicit val ctx = UcParsingCtx(stepsAndLabels, UseCaseRelations.Empty)
 
       // Text fields
       val textFieldValues: FieldValues = fieldList.textFields.zip(textFieldTexts).map {
@@ -314,19 +316,21 @@ object DataGenerators extends Logger {
   type UcMutationResult = (UcUpdateResult, String)
   private val EmptyUcMutationResult: UcMutationResult = (NoChange, "NoChange")
 
-  case class UseCaseMutator(newFn: UseCase => UcMutationResult) {
-    val cache = scalaz.Memo.immutableListMapMemo[UseCase, UcMutationResult](uc => newFn(uc))
+  implicit def ucTc(uc: UseCase) = UcParsingCtx(uc.stepsAndLabels, UseCaseRelations.Empty)
+  implicit def uTuc(u: UseCaseUpdater) = u.uc
+
+  case class UseCaseMutator(newFn: UseCaseUpdater => UcMutationResult) {
+    val cache = Memo.immutableListMapMemo[UseCase, UcMutationResult](uc => newFn(UseCaseUpdater(uc, UseCaseRelations.Empty)))
     def apply(uc: UseCase) = cache(uc)
     override def toString = s"UseCaseMutator@${hashCode.toHexString}"
   }
 
   object UseCaseMutators {
-    import Inspection._
 
     private def findChangableStep(sfv: StepFieldValue, eval: LocalStepId => UcUpdateResult): Option[(LocalStepId, UcUpdateResult)] =
       findTransformable(sfv.textmap.keys.toIndexedSeq, eval)(_.getChanges.nonEmpty)
 
-    private def fieldMutator(fn: (UseCase, RefDependentGen) => Gen[Option[UcMutationResult]]): Gen[UseCaseMutator] =
+    private def fieldMutator(fn: (UseCaseUpdater, RefDependentGen) => Gen[Option[UcMutationResult]]): Gen[UseCaseMutator] =
       Gen(prms => Some(
         UseCaseMutator(uc => {
           val refdep = RefDependentGen(uc)
@@ -334,46 +338,48 @@ object DataGenerators extends Logger {
           g.apply(prms).flatten.getOrElse(EmptyUcMutationResult)
         })))
 
-    private def mutateStepNoText(fn: (StepField, LocalStepId) => UseCase => UcUpdateResult, desc: (UseCase, StepField, LocalStepId) => String): Gen[UseCaseMutator] =
-      fieldMutator((uc, refdep) => {
+    private def mutateStepNoText(fn: (StepField, LocalStepId) => UseCaseUpdater => UcUpdateResult, desc: (UseCase, StepField, LocalStepId) => String): Gen[UseCaseMutator] =
+      fieldMutator((u, refdep) => {
+        val uc = u.uc
         val perField = UseCaseFns.filter[StepField](uc.fields).toStream.map(f =>
-          for ((id, r) <- findChangableStep(f(uc.fieldValues), fn(f, _)(uc))) yield (r, desc(uc, f, id))
+          for ((id, r) <- findChangableStep(f(uc.fieldValues), fn(f, _)(u))) yield (r, desc(uc, f, id))
         )
         val result = perField.filter(_.isDefined).headOption.flatten
         result
       })
 
-    private def mutateStep(fn: (StepField, LocalStepId, String) => UseCase => UcUpdateResult, desc: (UseCase, StepField, LocalStepId, String) => String): Gen[UseCaseMutator] =
-      fieldMutator((uc, refdep) =>
+    private def mutateStep(fn: (StepField, LocalStepId, String) => UseCaseUpdater => UcUpdateResult, desc: (UseCase, StepField, LocalStepId, String) => String): Gen[UseCaseMutator] =
+      fieldMutator((u, refdep) => {
+        val uc = u.uc
         refdep.stepText.flatMap(txt => {
           val perField = UseCaseFns.filter[StepField](uc.fields).toStream.map(f =>
-            for ((id, r) <- findChangableStep(f(uc.fieldValues), fn(f, _, txt)(uc))) yield (r, desc(uc, f, id, txt))
+            for ((id, r) <- findChangableStep(f(uc.fieldValues), fn(f, _, txt)(u))) yield (r, desc(uc, f, id, txt))
           )
           val result = perField.filter(_.isDefined).headOption.flatten
           result
-        }))
+        })})
 
     // -----------------------------------------------------
     // Mutation implementations
 
     val MutateTitle =
       for (title <- useCaseTitle)
-      yield UseCaseMutator(uc => (uc.updateTitle(title), s"[/] Change UC title to ${title.shows}"))
+      yield UseCaseMutator(u => (u.updateTitle(title), s"[/] Change UC title to ${title.inspect}"))
 
-    val MutateTextField = fieldMutator((uc, refdep) =>
+    val MutateTextField = fieldMutator((u, refdep) =>
       for {
-        f <- Gen.oneOf(UseCaseFns.filter[TextField](uc.fields))
+        f <- Gen.oneOf(UseCaseFns.filter[TextField](u.uc.fields))
         txt <- refdep.textFieldText
       } yield
-        Some(f.updateText(txt)(uc), s"[=] Change TextField [${f.defn.title}] to ${txt.shows}")
+        Some(f.updateText(txt)(u), s"[=] Change TextField [${f.defn.title}] to ${txt.inspect}")
     )
 
-    val AddTailStep = fieldMutator((uc, refdep) =>
-      for (f <- Gen.oneOf(UseCaseFns.filter[StepField](uc.fields)))
-      yield Some(f.addTailStep(uc),s"[+] Add tail step to ${f.getClass.getSimpleName}")
+    val AddTailStep = fieldMutator((u, refdep) =>
+      for (f <- Gen.oneOf(UseCaseFns.filter[StepField](u.uc.fields)))
+      yield Some(f.addTailStep(u),s"[+] Add tail step to ${f.getClass.getSimpleName}")
     )
 
-    val MutateStepText = mutateStep(_.updateText(_, _), (uc, f, id, txt) => s"[=] Change step text ${id.withLabel(uc)} to ${txt.shows}")
+    val MutateStepText = mutateStep(_.updateText(_, _), (uc, f, id, txt) => s"[=] Change step text ${id.withLabel(uc)} to ${txt.inspect}")
     val AddStep = mutateStepNoText(_.addStep(_), (uc, _, id) => s"[+] Add step ${id.withLabel(uc)}")
     val RemoveStep = mutateStepNoText(_.removeStep(_), (uc, _, id) => s"[-] Remove step ${id.withLabel(uc)}")
     val DecreaseIdent = mutateStepNoText(_.decreaseIndent(_), (uc, _, id) => s"[<] Dec step ${id.withLabel(uc)}")

@@ -24,7 +24,7 @@ object UseCaseEditor {
   }
 
   case class UcModifier(
-    updateFn: UseCase => UcUpdateResult,
+    updateFn: UseCaseUpdater => UcUpdateResult,
     nopFn: Option[Renderer => JsCmd],
     errFn: Option[String => JsCmd])
 }
@@ -76,18 +76,23 @@ class UseCaseEditor(initialState: UseCaseEditor.State) extends StatefulSnippet w
     .map(f => (f -> nextFuncName.tag[IsLocalTextFieldId]))
     .toMap
 
+  val rels =  UseCaseRelations.Empty // TODO EMPTY RELATIONS
+
   private var renderer__ = Renderer(state, textFieldIds, update, state.prevSave.map(_ => save _))
+  private var ucUpdater__ = UseCaseUpdater(uc, rels)
   @inline final def renderer = renderer__
+  @inline final def ucUpdater = ucUpdater__
 
   protected def setState(newState: State): Unit = {
     state__ = newState
     renderer__ = renderer__.copy(state = newState)
+    ucUpdater__ = UseCaseUpdater(uc, rels)
   }
 
   override def dispatch = { case _ => renderer.render }
 
   def update(m: UcModifier): JsCmd =
-    m.updateFn(uc) match {
+    m.updateFn(ucUpdater) match {
       case Changed(newUc, changes) =>
         setState(State(newUc, state.prevSave, allowSave(state, newUc)))
         renderer.jsRespondToChanges(changes)

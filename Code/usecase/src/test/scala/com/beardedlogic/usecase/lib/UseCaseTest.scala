@@ -18,6 +18,9 @@ import UseCasePersistence._
 
 class UseCaseTest extends FunSpec with TestHelpers with TestData {
 
+  implicit def autoCtx(sl: StepAndLabelBiMap) = UcParsingCtx(sl, UseCaseRelations.Empty)
+  implicit def ucTu(uc: UseCase) = UseCaseUpdater(uc, UseCaseRelations.Empty)
+
   describe("filter()") {
     it("should filter a field list by TextField") {
       val x = filter[TextField](FL)
@@ -81,7 +84,7 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
     describe("Responding to changes") {
       describe("A title change") {
 
-        implicit def stepsAndLabels = EmptyStepAndLabelBiMap
+        implicit def ctx = UcParsingCtx.Empty
 
         def sfvWithText(f: StepField, stepText: StepText) =
           StepFieldValue(f, StepTree(StepNode(X1, 0, 0, Nil) :: Nil), Map(X1 -> stepText))
@@ -226,6 +229,9 @@ class UseCaseTest2 extends FunSpec with TestDatabaseSupport with TestHelpers wit
   import Tables._
   import MockUc1._
   val rels = 2 + 5 + 3 // 2 text fields + 5 NC steps + 3 EC steps
+
+  implicit def autoCtx(sl: StepAndLabelBiMap) = UcParsingCtx(sl, UseCaseRelations.Empty)
+  implicit def ucTu(uc: UseCase) = UseCaseUpdater(uc, UseCaseRelations.Empty)
 
   def loadRev(revId: UseCaseRevId, projectId: ProjectId): UseCaseSaveCheckpoint = {
     val rec = dao.findUseCaseRev(revId).get

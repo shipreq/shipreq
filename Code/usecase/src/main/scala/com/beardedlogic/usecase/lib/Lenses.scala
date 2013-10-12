@@ -14,7 +14,7 @@ object Lenses {
   val uchTitleL = lensg[UseCaseHeader, String @@ Validated](h => t => h.copy(title = t), _.title)
 
   // Text field lenses
-  val freeTextTextL = lensFamilyg[FreeText, FreeText, String, (String, StepAndLabelBiMap)](
+  val freeTextTextL = lensFamilyg[FreeText, FreeText, String, (String, UcParsingCtx)](
     _ => input => FreeText.parse(input._1)(input._2),
     _.text)
 
@@ -25,7 +25,7 @@ object Lenses {
     sfv => id => sfv.textmap(id)
   )
 
-  val stepTextTextL = lensFamilyg[StepText, StepText, String, (String, StepAndLabelBiMap)](
+  val stepTextTextL = lensFamilyg[StepText, StepText, String, (String, UcParsingCtx)](
     v => input => StepText.parse(v.stepId, input._1)(input._2),
     _.text)
 

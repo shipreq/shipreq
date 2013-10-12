@@ -17,10 +17,10 @@ case class FieldLoadCtx(header: UseCaseHeader, fieldData: List[UcFieldTextWithFK
 case class FieldLoadResult[+V <: Field#Value, +SD <: Field#SavedData](
   savedSteps: Map[LocalStepId, TextIdentId],
   stepTree: Option[StepTree],
-  phase2: (SavedSteps, StepAndLabelBiMap) => (V, Option[SD]))
+  phase2: (SavedSteps, UcParsingCtx) => (V, Option[SD]))
 
 object FieldLoadResult {
-  def noSteps[V <: Field#Value, SD <: Field#SavedData](phase2: (SavedSteps, StepAndLabelBiMap) => (V, Option[SD])) =
+  def noSteps[V <: Field#Value, SD <: Field#SavedData](phase2: (SavedSteps, UcParsingCtx) => (V, Option[SD])) =
     FieldLoadResult(Map.empty, None, phase2)
 }
 
@@ -58,9 +58,11 @@ object UseCasePersistence {
     val stepAndLabels = generateStepAndLabelBiMap(stepAndLabelMaps)
     val fieldValues = Map.newBuilder[Field, Field#Value]
     val savedData = Map.newBuilder[Field, Field#SavedData]
+    val rels = UseCaseRelations.Empty // TODO EMPTY RELATIONS
+    val ctx = UcParsingCtx(stepAndLabels, rels)
 
     for ((f, r) <- loadResults) {
-      val (fv, sdOpt) = r.phase2(savedSteps, stepAndLabels)
+      val (fv, sdOpt) = r.phase2(savedSteps, ctx)
       fieldValues += (f -> fv)
       for (sd <- sdOpt) savedData += (f -> sd)
     }

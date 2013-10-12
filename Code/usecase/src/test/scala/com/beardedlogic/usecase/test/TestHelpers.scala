@@ -500,7 +500,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
 
     def toTextmap(savedSteps: SavedSteps = EmptySavedSteps, stepsAndLabels: StepAndLabelBiMap = EmptyStepAndLabelBiMap) =
       TreeLike(x).mapRecursive[(LocalStepId, StepText)](n => {
-        val t = StepText.load(n.id, n.text.hasNormalisedRefs)(savedSteps, stepsAndLabels)
+        val t = StepText.load(n.id, n.text.hasNormalisedRefs)(savedSteps, UcParsingCtx(stepsAndLabels, UseCaseRelations.Empty))
         (n.id, t)
       }).toMap
 

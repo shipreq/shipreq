@@ -1,6 +1,6 @@
 package com.beardedlogic.usecase.lib.field
 
-import com.beardedlogic.usecase.lib.{Lenses, StepTree}
+import com.beardedlogic.usecase.lib.{UcParsingCtx, Lenses, StepTree}
 import com.beardedlogic.usecase.lib.Types._
 import com.beardedlogic.usecase.lib.change._
 import com.beardedlogic.usecase.lib.text.StepText
@@ -25,7 +25,7 @@ case class StepFieldValue(field: StepField, tree: StepTree, textmap: Map[LocalSt
 
   assume(textmap.keySet == tree.mapRecursive(_.id).toSet, "There must be a StepText for all steps.")
 
-  override def respondToChange(c: Change)(implicit stepsAndLabels: StepAndLabelBiMap): ChangeResult[StepFieldValue, Change] = {
+  override def respondToChange(c: Change)(implicit ctx: UcParsingCtx): ChangeResult[StepFieldValue, Change] = {
 
     def allowTitleChange_? = field.preferTitleInRoot_? && tree.nonEmpty
 

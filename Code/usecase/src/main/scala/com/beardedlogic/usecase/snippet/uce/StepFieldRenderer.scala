@@ -143,7 +143,7 @@ case class StepFieldRenderer(
    */
   def renderSingleStep(n: StepNode) = {
     val id = n.id
-    @inline def %%(fn: LocalStepId => UseCase => UcUpdateResult) = UcModifier(fn(id), None, None)
+    @inline def %%(fn: LocalStepId => UseCaseUpdater => UcUpdateResult) = UcModifier(fn(id), None, None)
     (
       ".step [id]" #> id
         & StepLevelAttributeCss #> n.level

@@ -1,6 +1,7 @@
 package com.beardedlogic.usecase.lib.text
 
 import scala.annotation.tailrec
+import com.beardedlogic.usecase.lib.UcParsingCtx
 import com.beardedlogic.usecase.lib.Types._
 import com.beardedlogic.usecase.lib.change._
 import Changes._
@@ -9,14 +10,17 @@ import ParsingUtils._
 
 object FreeText extends Parser[FreeText] {
 
-  override val empty: FreeText = parseCorrected("")(EmptyStepAndLabelBiMap)
+  override val empty: FreeText = parseCorrected("")(UcParsingCtx.Empty)
 
   def correctInput(input: String) = input.trim
 
-  override def load(text: TextWithNormalisedRefs)(implicit savedSteps: SavedSteps, stepsAndLabels: StepAndLabelBiMap) =
+  override def load(text: TextWithNormalisedRefs)(implicit savedSteps: SavedSteps, ctx: UcParsingCtx) = {
+    implicit val stepsAndLabels = ctx.stepsAndLabels
     parseCorrected(realiseNormalisedRefs(text))
+  }
 
-  override def parse(text: String)(implicit stepsAndLabels: StepAndLabelBiMap) = parseCorrected(correctInput(text))
+  override def parse(text: String)(implicit ctx: UcParsingCtx) =
+    parseCorrected(correctInput(text))
 
   /**
    * Parses plain text and does the following:
@@ -25,9 +29,9 @@ object FreeText extends Parser[FreeText] {
    * 2) Removes whitespace from references.
    * 3) Appends a ? to invalid references.
    */
-  def parseCorrected(text: String)(implicit stepsAndLabels: StepAndLabelBiMap) = {
+  def parseCorrected(text: String)(implicit ctx: UcParsingCtx) = {
     import Grammar.{parse => parseG, _}
-    lazy val labelsToIds = stepsAndLabels.value.ba
+    lazy val labelsToIds = ctx.getLabelsToIds
 
     val newText = new StringBuilder
     var refs = Map.empty[LocalStepId, StepLabel]
@@ -87,19 +91,19 @@ case class FreeText(text: String, refs: Map[LocalStepId, StepLabel]) extends Par
 
   protected def textChanged = TextChanged
 
-  override protected def updateCorrected(newText: String)(implicit stepsAndLabels: StepAndLabelBiMap) = {
+  override protected def updateCorrected(newText: String)(implicit ctx: UcParsingCtx) = {
     FreeText.parseCorrected(newText) @: textChanged
   }
 
-  override def respondToChange(c: Change)(implicit stepsAndLabels: StepAndLabelBiMap) = c match {
+  override def respondToChange(c: Change)(implicit ctx: UcParsingCtx) = c match {
     case _: ExistingStepLabelsChanged => updateRefs // Update step references when they change
     case _ => NoChange
   }
 
   /** Updates `refs` and creates a copy of `text` in which all references are up-to-date. */
-  def updateRefs(implicit stepsAndLabels: StepAndLabelBiMap): ChangeResult[FreeText, Change] = {
+  def updateRefs(implicit ctx: UcParsingCtx): ChangeResult[FreeText, Change] = {
     if (!hasRefs_?) NoChange
-    else migrateRefsToNewStepTree(this) match {
+    else migrateRefsToNewStepTree(this)(ctx.stepsAndLabels) match {
       case Some(updated) => updated @: textChanged
       case _ => NoChange
     }

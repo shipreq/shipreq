@@ -16,6 +16,14 @@ import tree.TreeOps._
 /** Narrows down the scope of a change. Paired with changes to indicate where (eg. which field) the change occurred. */
 trait UcChangeDomain
 
+case class UcParsingCtx(stepsAndLabels: StepAndLabelBiMap, rels: UseCaseRelations) {
+  def getIdsToLabels: Map[LocalStepId, StepLabel] = stepsAndLabels.value.ab
+  def getLabelsToIds: Map[StepLabel, LocalStepId] = stepsAndLabels.value.ba
+}
+object UcParsingCtx {
+  val Empty = UcParsingCtx(EmptyStepAndLabelBiMap, UseCaseRelations.Empty)
+}
+
 // =====================================================================================================================
 
 object UseCaseFns {
@@ -95,12 +103,14 @@ object UseCaseFns {
   }
 }
 
+import UseCaseFns._
+
+// =====================================================================================================================
+
 object UseCase {
   def as(number: UseCaseNumber, header: UseCaseHeader, fieldValues: Seq[(Field, Field#Value)], stepsAndLabels: StepAndLabelBiMap): UseCase =
     UseCase(number, header, fieldValues.map(_._1).toList, fieldValues.toMap, stepsAndLabels)
 }
-
-// =====================================================================================================================
 
 case class UseCase(
   number: UseCaseNumber,
@@ -111,17 +121,13 @@ case class UseCase(
 
   assume(fieldValues.keySet == fields.toSet, "There must be a field value for all fields.")
 
-  import UseCaseFns._
-
   implicit protected def stepsAndLabelsImplicit = stepsAndLabels
 
-  // -------------------------------------------------------------------------------------------------------------------
+  def regenerateStepsAndLabels: UseCase =
+    copy(stepsAndLabels = generateStepAndLabelBiMap(this))
 
   /** Returns Scala code that can be used to recreate this use case. */
-  def inspect = {
-    import Inspection._
-    this.shows
-  }
+  def inspect: String = Inspection.ucShow.shows(this)
 
   /** Returns a textual view of the entire use case that includes internal IDs. */
   def devView: String = {
@@ -163,11 +169,14 @@ case class UseCase(
   }
 
   override def toString = inspect
+}
 
-  // -------------------------------------------------------------------------------------------------------------------
+// =====================================================================================================================
 
-  def regenerateStepsAndLabels: UseCase =
-    copy(stepsAndLabels = generateStepAndLabelBiMap(this))
+case class UseCaseUpdater(uc: UseCase, rels: UseCaseRelations) {
+
+  @inline final def stepsAndLabels = uc.stepsAndLabels
+  implicit val ctx = UcParsingCtx(stepsAndLabels, rels)
 
   /**
    * Passes a list of changes to all parts of a UC that respond to changes, allowing the components to transform
@@ -193,8 +202,8 @@ case class UseCase(
 
     val changeAllFields = {
       var totalChanges = List.empty[(Field, Change)]
-      var fvs = this.fieldValues
-      for (f <- this.fields; origFv <- this.fieldValues.get(f))
+      var fvs = uc.fieldValues
+      for (f <- uc.fields; origFv <- uc.fieldValues.get(f))
         changeField(origFv) match {
           case Changed(newFv, newChanges) =>
             fvs += (f -> newFv)
@@ -204,13 +213,11 @@ case class UseCase(
       ChangeResult <~ (fvs, totalChanges)
     }
 
-    changeAllFields.map(newFVs => copy(fieldValues = newFVs))
+    changeAllFields.map(newFVs => uc.copy(fieldValues = newFVs))
   }
 
   def afterRespondingToChange(change: Change): UseCase = afterRespondingToChanges(change.asOnlyChange)
-  def afterRespondingToChanges(changes: NonEmptyList[Change]): UseCase = respondToChanges(changes).getOrElse(this)
-
-  // ------------------------------------------------------------------------------------------------------------
+  def afterRespondingToChanges(changes: NonEmptyList[Change]): UseCase = respondToChanges(changes).getOrElse(uc)
 
   @inline final def update[V](f: Field, cr: ChangeResultF[V, Change])(implicit l: AppliedLens[UseCase, V]): UcUpdateResult =
     update(cr, keyByField(f) _)
@@ -218,13 +225,13 @@ case class UseCase(
   def update[V](cr: ChangeResultF[V, Change], changeMapFn: Change => (UcChangeDomain, Change))(implicit l: AppliedLens[UseCase, V]): UcUpdateResult =
     cr.flatMapF((newValue, changes) => {
       val update1 = l.set(newValue)
-      val update2 = correctStepsAndLabelsAfterUpdate(this, update1)
-      val update3 = update2.respondToChanges(changes)
+      val update2 = correctStepsAndLabelsAfterUpdate(uc, update1)
+      val update3 = copy(uc = update2).respondToChanges(changes)
       addChangesToResult(update2, update3, changes.map(changeMapFn))
     })
 
   def updateTitle(input: String): UcUpdateResult = {
-    implicit val lens = alens(Lenses.ucTitleL, this)
+    implicit val lens = alens(Lenses.ucTitleL, uc)
     InputValidator.useCaseTitle.correctAndValidate(input) match {
       case -\/(err) => ChangeFailure(err)
       case \/-(newTitle) if newTitle == lens.get => NoChange

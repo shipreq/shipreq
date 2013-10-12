@@ -11,7 +11,7 @@ import xml.NodeSeq
 import db.UseCaseRev
 import lib.Types._
 import lib.StepLabels.{MaxStepDepth, MaxStepsPerLevel}
-import lib.{UseCaseSaveCheckpoint, StepNode, UseCase}
+import lib.{UseCaseUpdater, UseCaseSaveCheckpoint, StepNode, UseCase}
 import Renderer.TitleId
 import test.{CssTestHelpers, TestData, TestHelpers}
 import UseCaseEditor._
@@ -29,7 +29,7 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
 
     override def update(m: UcModifier): JsCmd = inMockSession {super.update(m)}
 
-    def update2(f: UseCase => UcUpdateResult): (UseCaseEditor2, String) = (this, update(UcModifier(f, None, None)))
+    def update2(f: UseCaseUpdater => UcUpdateResult): (UseCaseEditor2, String) = (this, update(UcModifier(f, None, None)))
   }
 
   def mockRev = {
@@ -93,7 +93,7 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
     (uce,last)
   }
 
-  def assertUpdateFails(uce: UseCaseEditor2, f: UseCase => UcUpdateResult): Unit = {
+  def assertUpdateFails(uce: UseCaseEditor2, f: UseCaseUpdater => UcUpdateResult): Unit = {
     val oldUC = uce.uc
     val (_,resp) = uce.update2(f)
     assertFailResponse(resp)
@@ -230,7 +230,7 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
       }
     }
 
-    def itRespectsMaxSteps(name: String, uceFn: => () => UseCaseEditor2, addFn: => UseCase => UcUpdateResult, labelAtMax: String) = {
+    def itRespectsMaxSteps(name: String, uceFn: => () => UseCaseEditor2, addFn: => UseCaseUpdater => UcUpdateResult, labelAtMax: String) = {
       it(s"should not exceed the max-steps limit ($name)") {
         val uce = uceFn()
         var i=0
