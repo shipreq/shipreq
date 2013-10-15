@@ -12,17 +12,4 @@
     %script(type="text/javascript" src="/js/application.js")
 
   %body
-    #ly-hdrbody
-      .ly-content
-
-        #content CONTENT AND NOTICES GO HERE
-
-      #ly-footer-push
-    %footer#ly-footer
-      .ly-content
-        v<param data-lift="SystemInfo?name=build.version.full" >
-        @ <param data-lift="SystemInfo?name=build.time">
-        | <param data-lift="SystemInfo?name=run.mode.short">
-        | Scala v<param data-lift="SystemInfo?name=scala.version">
-        | Java v<param data-lift="SystemInfo?name=java.version">
-        | JVM v<param data-lift="SystemInfo?name=jvm.version">
+    #content CONTENT AND NOTICES GO HERE

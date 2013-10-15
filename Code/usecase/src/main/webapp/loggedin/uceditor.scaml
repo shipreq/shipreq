@@ -2,6 +2,116 @@
   %link(data-lift="head" href="/css/uce.css" rel="stylesheet" type="text/css")
   %script(data-lift="head" src="/js/uce.js" type="text/javascript")
 
+  %header
+    %nav.navbar.navbar-default(role="navigation" data-lift="uce/Navbar")
+      %ul.nav.navbar-nav
+        %li
+          %a(data-lift="Link.home")
+        %li
+          %a.project
+        %li.active.dropdown.ucs
+          %a.active-uc.dropdown-toggle(data-toggle="dropdown" href="#")
+            UC-<span class="num">123</span>: <span class="cur-uc-title">BLAH</span>
+            %b.caret
+          %ul.dropdown-menu
+            %li
+              %a(href="#") UC-<span class="num">123</span>: <span class="title">BLAH</span>
+      %ul.nav.navbar-nav.navbar-right
+        %li
+          %a(data-lift="Link.to?name=Logout")
+        %li.dropdown
+          %a.dropdown-toggle(data-toggle="dropdown" href="#")
+            Cool Features
+            %b.caret
+          %ul.dropdown-menu
+            %li
+              %a(data-toggle="modal" href="#help-refs") Links & References
+            %li
+              %a(data-toggle="modal" href="#help-kb") Keyboard Shortcuts
+
+  #help-refs.modal.fade.help-modal(aria-hidden="true" role="dialog" tabindex="-1")
+    .modal-dialog
+      .modal-content
+        .modal-header
+          %button.close(aria-hidden="true" data-dismiss="modal" type="button") &times;
+          %h4.modal-title Links & References
+        .modal-body
+
+          %h4 Referencing a Step
+          %p
+            In order to refer to a step, type the step number with square brackets around it into your text.
+          .code
+            %code Example: This is a reference to [1.0.1].
+          %p
+            If the step number later changes, the reference will be updated automatically.
+
+          %h4 Referencing a Use Case
+          %p
+            In order to refer to a use case, type
+            %code [UC123]
+            or
+            %code [UC-123]
+            where 123 is the number of the use case you want to refer to.
+            The system will verify that the use case number is valid, and insert the use case's title.
+          %p.gap
+            Example, you type:
+          .code
+            %code Refer to [UC4].
+          The system will validate UC-4 and replace it with this:
+          .code
+            %code Refer to [UC-4: Manager requests Month-End Report].
+
+          %h4 Step Flow
+          %p
+            You can indicate execution paths by typing an arrow proceded by one or more steps, at the end of a step's text.
+          .code
+            %code -->
+            indicates that the current step flows to other steps.
+          .code
+            %code <--
+            indicates that other steps flow to the current one.
+          %p.gap
+            Example, you type:
+          .code
+            %code This jumps forward to another step. --> 1.4
+          The system will validate and replace it with:
+          .code
+            %code This jumps forward to another step. ➡ [1.4]
+          %p.gap
+            As with normal step references, if the step numbers change your flow will be updated automatically.
+
+          %h4 Invalid References
+          %p
+            If you enter a reference for something that doesn't exist, a question mark will be added to it.
+          .code
+            %code Example: The reference [1.8?] is invalid.
+          %p
+            If the subject of a valid reference is later deleted, then those references will be automatically changed to <code>[DELETED]</code>.
+
+        .modal-footer
+          %button.btn.btn-default(data-dismiss="modal" type="button") Close
+
+  #help-kb.modal.fade.help-modal(aria-hidden="true" role="dialog" tabindex="-1")
+    .modal-dialog
+      .modal-content
+        .modal-header
+          %button.close(aria-hidden="true" data-dismiss="modal" type="button") &times;
+          %h4.modal-title Keyboard Shortcuts
+        .modal-body
+          When typing, you can press the following key combinations to get things done faster.
+          %table.mvmt
+            %tr
+              %th Alt + Enter
+              %td Create next step.
+            %tr
+              %th Alt + Up/Down
+              %td Move cursor to previous/next field.
+            %tr
+              %th Alt + Left/Right
+              %td Increase/decrease step indent.
+        .modal-footer
+          %button.btn.btn-default(data-dismiss="modal" type="button") Close
+
   %main#uce.uce(data-lift="uce/UseCaseEditor")
 
     %table.title

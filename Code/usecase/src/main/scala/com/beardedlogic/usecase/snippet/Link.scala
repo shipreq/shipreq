@@ -9,7 +9,12 @@ import com.beardedlogic.usecase.lib.SnippetHelpers
  * Creates a link to a page. Throws an error is the page is not found.
  */
 object Link extends DispatchSnippet with SnippetHelpers {
-  override def dispatch = { case "to" => to }
+  override def dispatch = {
+    case "home" => home
+    case "to" => to
+  }
+
+  def home(input: NodeSeq): NodeSeq = <a href="/">Home</a>
 
   def to(text: NodeSeq): NodeSeq =
     for {

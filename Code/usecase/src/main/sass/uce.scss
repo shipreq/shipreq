@@ -158,11 +158,44 @@ table.step {
 }
 
 // =====================================================================================================================
+// Help
+
+#help-refs {
+  .modal-dialog {
+    width: 85%;
+    max-width: 94ex;
+  }
+  .modal-body {
+    h4 {
+      color: #d07;
+      ont-weight: bold;
+      margin: 0 0 0.3ex 0
+    }
+    h4:not(:first-child) {margin-top: 3ex; }
+    ul {padding-left: 16px;}
+    li+li {margin-top: 2.5ex;}
+    p {margin-bottom: 0;}
+    p.gap {margin-top: 1ex;}
+    div.code {margin-left: 3ex;}
+    code {
+      color: #00c;
+      background: #ddd
+    }
+  }
+}
+
+#help-kb {
+  .mvmt {
+    margin-left: 4ex;
+    margin-top: 2em;
+    td {padding-left: 4ex; line-height:2em}
+  }
+}
+
+// =====================================================================================================================
 // Other
 
 .save-row {text-align:right; padding-top:8px}
-
-// =====================================================================================================================
 
 .debug {
 	.typing {border: solid 2px #d88}

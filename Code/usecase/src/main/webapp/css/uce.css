@@ -52,6 +52,19 @@ table.step[data-lvl="0"] .label, table.step[data-lvl="0"] textarea { font-weight
 #flowgraph svg { max-width: 100%; cursor: default; }
 #flowgraph svg g.step { cursor: pointer; }
 
+#help-refs .modal-dialog { width: 85%; max-width: 94ex; }
+#help-refs .modal-body h4 { color: #d07; ont-weight: bold; margin: 0 0 0.3ex 0; }
+#help-refs .modal-body h4:not(:first-child) { margin-top: 3ex; }
+#help-refs .modal-body ul { padding-left: 16px; }
+#help-refs .modal-body li + li { margin-top: 2.5ex; }
+#help-refs .modal-body p { margin-bottom: 0; }
+#help-refs .modal-body p.gap { margin-top: 1ex; }
+#help-refs .modal-body div.code { margin-left: 3ex; }
+#help-refs .modal-body code { color: #00c; background: #dddddd; }
+
+#help-kb .mvmt { margin-left: 4ex; margin-top: 2em; }
+#help-kb .mvmt td { padding-left: 4ex; line-height: 2em; }
+
 .save-row { text-align: right; padding-top: 8px; }
 
 .debug .typing { border: solid 2px #d88; }

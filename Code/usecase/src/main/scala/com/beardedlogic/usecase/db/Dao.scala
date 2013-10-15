@@ -123,6 +123,7 @@ sealed trait DaoS {
   def findUseCaseLatestRev(ucId: UseCaseIdentId): Option[UseCaseRev] = SelectLatestUseCaseRev.firstOption(ucId)
 
   def summariseUseCases(projectId: ProjectId): List[UseCaseSummary] = SummariseUseCases.list(projectId)
+  def summariseUseCases2(projectId: ProjectId): List[UseCaseSummary2] = SummariseUseCases2.list(projectId)
 
   // ===================================================================================================================
   // uc_field

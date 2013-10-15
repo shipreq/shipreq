@@ -164,7 +164,9 @@ case class Renderer(
     if (enable) SaveButtonEnableJs else SaveButtonDisableJs
 
   def jsUpdateTitle: JsCmd =
-    JqId(TitleId) ~> JqSetTextarea(uch.title) & JsUpdatePageTitle
+    JqId(TitleId) ~> JqSetTextarea(uch.title) &
+    JqExpr(".cur-uc-title") ~> JqHtml(Text(uch.title)) &
+    JsUpdatePageTitle
 
   def jsUpdateTextField(f: TextField): JsCmd =
     JqId(textFieldIds(f)) ~> JqSetTextarea(f.value.text)

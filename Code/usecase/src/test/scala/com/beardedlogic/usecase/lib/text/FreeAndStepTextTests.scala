@@ -6,7 +6,7 @@ import org.scalatest.prop._
 import scala.collection.immutable.TreeSet
 import scalaz.syntax.apply._
 import scalaz.std.list.listInstance
-import db.UseCaseSummary
+import db.UseCaseSummary2
 import lib.change._
 import lib.Types._
 import lib.{CachedUseCaseRelations, UcParsingCtx}
@@ -23,9 +23,9 @@ object FreeAndStepTextTests extends TestHelpers2 {
   implicit def autoUCId(i: Int) = i.toLong.tag[IsUseCaseIdentId]
 
   val UCS = List(
-    UseCaseSummary(100, 1, "First", "X"),
-    UseCaseSummary(200, 2, "Second", "X"),
-    UseCaseSummary(300, 3, "Old Third", "X")
+    new UseCaseSummary2(100, 1, "First", "X"),
+    new UseCaseSummary2(200, 2, "Second", "X"),
+    new UseCaseSummary2(300, 3, "Old Third", "X")
   )
   val Rels = CachedUseCaseRelations(UCS)
 

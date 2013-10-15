@@ -7,7 +7,7 @@ import net.liftweb.util.Helpers._
 import scalaz.{\/, -\/, \/-}
 
 import app.AppSiteMap
-import db.{UseCaseRev, UseCaseHeaderUpdateResult, UseCaseHeader, UseCaseSummary}
+import db.{UseCaseRev, UseCaseHeaderUpdateResult, UseCaseHeader, UseCaseSummary2}
 import lib.{InputValidator, Locks, ExternalId, Misc, SingleOpStatefulSnippet}
 import util.NonEmptyTemplate
 import util.HtmlTransformExt.ajaxSubmitOnClick
@@ -39,16 +39,16 @@ class UseCaseCrudl(projectId: ProjectId) extends SingleOpStatefulSnippet {
   import UseCaseCrudlConsts._
 
   def render = {
-    val ucs = daoProvider.withSession(_.summariseUseCases(projectId))
+    val ucs = daoProvider.withSession(_.summariseUseCases2(projectId))
     renderCreate & renderList(ucs)
   }
 
   // -------------------------------------------------------------------------------------------------------------------
   // List
 
-  def renderList(ucs: List[UseCaseSummary]) = "li" #> ucs.map(renderListItem)
+  def renderList(ucs: List[UseCaseSummary2]) = "li" #> ucs.map(renderListItem)
 
-  def renderListItem(uc: UseCaseSummary) = (
+  def renderListItem(uc: UseCaseSummary2) = (
     "li [class+]" #> uc.eid &
     "a .title" #> (
       "* *" #> s"UC-${uc.number}: ${uc.title}" &
@@ -74,19 +74,19 @@ class UseCaseCrudl(projectId: ProjectId) extends SingleOpStatefulSnippet {
       case \/-(ucs) => jsClearError & TriggerCreated.trigger(renderListItem(ucs)(ListItemTemplate))
     }
 
-  def create(titleInput: String): String \/ UseCaseSummary =
+  def create(titleInput: String): String \/ UseCaseSummary2 =
     InputValidator.useCaseTitle.correctAndValidate(titleInput).map(newTitle => {
       val h = UseCaseHeader(newTitle)
       val ucRev = Locks.UseCaseNumbers.write(projectId)(lock =>
         daoProvider.withTransaction(_.createUseCaseIdentAndRev1(projectId, h, lock))
       )
-      new UseCaseSummary(ucRev, Misc.currentTimeAsIso8601Str)
+      new UseCaseSummary2(ucRev, Misc.currentTimeAsIso8601Str)
     })
 
   // -------------------------------------------------------------------------------------------------------------------
   // Update
 
-  def renderEditItem(uc: UseCaseSummary) = {
+  def renderEditItem(uc: UseCaseSummary2) = {
     var title = ""
     val updateFn = () => onUpdate(uc, title)
     ".edit-mode" #> (
@@ -96,12 +96,12 @@ class UseCaseCrudl(projectId: ProjectId) extends SingleOpStatefulSnippet {
     )
   }
 
-  def onUpdate(uc: UseCaseSummary, newTitle: String): JsCmd =
+  def onUpdate(uc: UseCaseSummary2, newTitle: String): JsCmd =
     update(uc.id, newTitle) match {
       case -\/(err)  => jsShowError(err)
       case \/-(None) => jsClearError & TriggerUpdateNop.trigger(uc.eid)
       case \/-(Some(ucRev)) =>
-        val ucs = new UseCaseSummary(ucRev, Misc.currentTimeAsIso8601Str)
+        val ucs = new UseCaseSummary2(ucRev, Misc.currentTimeAsIso8601Str)
         val li = renderListItem(ucs)(ListItemTemplate)
         val dto = UpdateDTO(uc.eid, JqExpr(li))
         jsClearError & TriggerUpdated.trigger(dto)
