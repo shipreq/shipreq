@@ -3,7 +3,7 @@
 
 .courses-n .step:first-child .indentInc, .courses-e .step:first-child .indentInc, .step[data-lvl="0"] + .step[data-lvl="1"] .indentInc, .step[data-lvl="1"] + .step[data-lvl="2"] .indentInc, .step[data-lvl="2"] + .step[data-lvl="3"] .indentInc, .step[data-lvl="3"] + .step[data-lvl="4"] .indentInc, .step[data-lvl="4"] + .step[data-lvl="5"] .indentInc { visibility: hidden !important; }
 
-.uce { margin: 1cm 1cm 0 1cm; }
+.uce { margin: 1.4em 0.6cm 0 0.6cm; }
 .uce form { display: inline; }
 .uce textarea, .uce input[type="text"] { color: #2d2d2d; }
 .uce textarea { width: 100%; }
@@ -11,11 +11,13 @@
 .uce textarea:focus { border: solid 1px #373; background: #f8fff8; color: #000; }
 
 .uce .title, .uce .title td, .uce .title textarea { width: 100%; }
-.uce .title th, .uce .title textarea { font-size: 150%; font-weight: bold; vertical-align: middle; }
-.uce .title th { padding-right: 0.6em; }
+.uce .title th { white-space: nowrap; }
+.uce .title th, .uce .title td { vertical-align: middle; }
+.uce .title h2 { margin: 0; padding-right: 1ex; }
+.uce .title textarea { font-weight: bold; font-size: 150%; }
 
-table.fieldFrame { margin-top: 1cm; width: 100%; }
-table.fieldFrame tr.fieldFrame > th { color: #555; font-weight: normal; width: 20ex; text-align: left; line-height: 125%; }
+table.fieldFrame { margin-top: 22px; width: 100%; }
+table.fieldFrame tr.fieldFrame > th { color: #555; font-weight: normal; width: 20.5ex; text-align: left; line-height: 125%; padding-right: 1ex; }
 table.fieldFrame tr.fieldFrame > th, table.fieldFrame tr.fieldFrame > td { padding-bottom: 1.5em; }
 table.fieldFrame th, table.fieldFrame td { vertical-align: top; }
 table.fieldFrame textarea { border: dashed 1px #ccc; }
@@ -31,15 +33,17 @@ table.fieldFrame textarea { border: dashed 1px #ccc; }
 [data-lvl="4"] .lbl { padding-left: 14ex; width: 3ex; }
 
 table.step { width: 100%; }
-table.step .lbl { padding-top: 4px; color: #444; }
+table.step .lbl { padding-top: 4px; padding-right: 0.8ex; color: #444; }
 table.step .txt { overflow: hidden; }
-table.step .ctl { text-align: right; width: 110px; }
+table.step .ctl { text-align: right; width: 116px; }
 table.step + .step, table.step + .stepTransport, .stepTransport + table.step { margin-top: 1ex; }
 table.step[data-lvl="0"] .label, table.step[data-lvl="0"] textarea { font-weight: bold; }
 
 .typing .step .lbl:hover, .typing .step .lbl *:hover { cursor: pointer; }
 
 .addTailStep { text-align: right; }
+
+.addTailStep button, table.step .ctl button { font-size: 16px; line-height: 16px; padding: 4px; width: 26px; }
 
 .courses-a .step:first-child .indentInc { /* ↑↱ */ }
 .courses-a .step:first-child .indentInc span { display: none; }
@@ -48,10 +52,7 @@ table.step[data-lvl="0"] .label, table.step[data-lvl="0"] textarea { font-weight
 #flowgraph svg { max-width: 100%; cursor: default; }
 #flowgraph svg g.step { cursor: pointer; }
 
-#legend { margin: 0.5cm auto 1cm auto; border: solid 1px #888; background: #ffd; padding: 1ex; width: 500px; }
-#legend dl { margin: 0; }
-#legend dt { float: left; width: 170px; }
-#legend dd:not(:last-of-type) { padding-bottom: 0.8ex; }
+.save-row { text-align: right; padding-top: 8px; }
 
 .debug .typing { border: solid 2px #d88; }
 .debug tr.fieldFrame > td { background: #eef; }

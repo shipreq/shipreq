@@ -7,7 +7,8 @@ import net.liftweb.http.js.JsExp.strToJsExp
 import net.liftweb.http.js.{JsExp, JE, JsCmd, JsCmds}
 import net.liftweb.http.js.jquery.JqJE
 import net.liftweb.http.js.jquery.JqJsCmds.jsExpToJsCmd
-import net.liftweb.http.{S, SHtml}
+import net.liftweb.http.S
+import net.liftweb.http.SHtml.ajaxTextarea
 import net.liftweb.util.CssSel
 import net.liftweb.util.Helpers._
 import JsCmds.Noop
@@ -15,6 +16,7 @@ import JsCmds.Noop
 import com.beardedlogic.usecase.lib.tree.TreeLike
 import com.beardedlogic.usecase.lib._
 import util.HtmlTransformExt._
+import util.HtmlTransformExt.ajaxOnClick
 import util.JsExt._
 import lib.field._
 import lib.Types._
@@ -133,7 +135,7 @@ case class StepFieldRenderer(
    * Also renders an addTailStep button.
    */
   def renderStepsWithAddTailStep(steps: TreeLike[StepNode]): NodeSeq => NodeSeq = {
-    val t = "button" #> SHtml.ajaxButton("+", UcModifier(f.addTailStep, None, None))
+    val t = "button" #> ajaxOnClick(UcModifier(f.addTailStep, None, None))
     val addTailStepTmpl = t(Templates.AddTailStep)
     renderSteps(steps) andThen ".steps *+" #> addTailStepTmpl // Append to .steps, after all the .step tags
   }
@@ -150,11 +152,11 @@ case class StepFieldRenderer(
         & IfCssSel(cfg.prohibitRemoval_?(id, tree)) {".step [class+]" #> "noDel"}
         & ".lbl span *" #> labelFor(n)
         & ".lbl span [id]" #> labelId(id)
-        & "@text" #> SHtml.ajaxTextarea(text(id), modText(id)(_), "id" -> textareaId(id))
-        & ".add" #> SHtml.ajaxButton("+", %%(f.addStep))
-        & ".delete" #> SHtml.ajaxButton("-", %%(f.removeStep))
-        & ".indentDec" #> SHtml.ajaxButton("«", %%(f.decreaseIndent))
-        & ".indentInc" #> SHtml.ajaxButton(<span>»</span>, %%(f.increaseIndent))
+        & "@text" #> ajaxTextarea(text(id), modText(id)(_), "id" -> textareaId(id))
+        & ".add" #> ajaxOnClick(%%(f.addStep))
+        & ".delete" #> ajaxOnClick(%%(f.removeStep))
+        & ".indentDec" #> ajaxOnClick(%%(f.decreaseIndent))
+        & ".indentInc" #> ajaxOnClick(%%(f.increaseIndent))
       )
   }
 

@@ -29,21 +29,7 @@
 .breadcrumb .dropdown-menu :not(.current) {color:rgb(42, 100, 150)}
 .breadcrumb .dropdown-menu .current {color:#999}
 
-.save-row {text-align:right; padding-top:8px}
 
-table.fieldFrame { margin-top: 22px; width: 100%; }
-textarea {
-    overflow:hidden !important;
-    resize:none;
-}
-table.step .ctl { text-align: right; width: 116px; }
-.addTailStep button, table.step .ctl button {font-size:16px; line-height:16px; padding:4px; width:26px}
-.title th, .title td {vertical-align:middle}
-.title th {white-space:nowrap;}
-.title th h2 {margin:0; padding-right:1ex}
-table.fieldFrame tr.fieldFrame > th {padding-right:1ex}
-.uce { margin: 1.4em 0.9cm 0 0.9cm; }
-table.step .lbl { padding-right:0.8ex; }
 
 /**********************************************************************************************************************/
 

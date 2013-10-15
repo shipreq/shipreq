@@ -38,7 +38,7 @@ object AppSiteMap {
 
   val UseCaseEditor = (MenuWithIdParam(ExternalId.UseCase)("uce", "Use Case Editor") / "usecase" / *
     >> AuthenticationRequired >> ProjectPermissionRequired
-    >> UseTemplate("uce"))
+    >> UseTemplate("loggedin/uceditor"))
 
   // -------------------------------------------------------------------------------------------------------------------
 
@@ -50,7 +50,7 @@ object AppSiteMap {
   val sitemap = {
     import org.apache.shiro.authc.UsernamePasswordToken, org.apache.shiro.SecurityUtils.getSubject
 
-    def anonUce = Menu.i("Use Case Editor (demo)") / "uce"
+    def anonUce = Menu.i("Use Case Editor (demo)") / "uce" >> UseTemplate("loggedin/uceditor")
 
     def autoLogin = Menu.i("x") / "x" >> EarlyResponse(() => {
       getSubject.login(new UsernamePasswordToken("golly", "asdasd123"))

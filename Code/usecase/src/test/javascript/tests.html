@@ -25,25 +25,22 @@
   <div id="qunit"></div>
   <div id="qunit-fixture">
 
-  <div id="uce" class="uce">
-
-  <div class="save">
-	  <div>
-		  Revision:
-		  <span class="rev">9</span>
-	  </div>
-	  <button class="save" onclick="liftAjax.lift_ajaxHandler(&quot;F76378003897VRUY0V=true&quot;, null, null, null); return false;" id="save" disabled="disabled">Save</button>
-  </div>
+  <main id="uce" class="uce">
 
   <table class="title">
 	  <tbody><tr>
-		  <th><span id="uc-id">UC-<span class="ucid">1</span></span>:
+		  <th>
+			  <h2 id="uc-id">UC-<span class="ucid">1</span>:</h2>
 		  </th>
 		  <td>
-			  <textarea name="title" id="uc-title" onblur="liftAjax.lift_ajaxHandler('F808585046507BLGHAB=' + encodeURIComponent(this.value), null, null, null)">Do stuff</textarea>
+			  <textarea name="title" id="uc-title" rows="1" class="form-control input-lg" onblur="liftAjax.lift_ajaxHandler('F256137130201WVMV54=' + encodeURIComponent(this.value), null, null, null)">Do stuff</textarea>
 		  </td>
 	  </tr>
 	  </tbody></table>
+  <div class="save-row">
+	  <button class="btn btn-lg btn-success" onclick="liftAjax.lift_ajaxHandler(&quot;F256137130202A0PTU3=true&quot;, null, null, null); return false;" id="save" disabled="disabled">Save</button>
+  </div>
+
   <table class="fieldFrame"><tr class="fieldFrame">
 	  <th>Actors</th>
 	  <td>
@@ -73,12 +70,12 @@
 					  <textarea name="text" rows="1" id="s1049-t" onblur="liftAjax.lift_ajaxHandler('F80858504644424LJEH=' + encodeURIComponent(this.value), null, null, null)">Do stuff!!! ⬅ [1.0.3]</textarea>
 				  </form>
 			  </td>
-			  <td class="ctl">
-				  <button class="delete" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046445TWVWUG=true&quot;, null, null, null); return false;">-</button>
-				  <button class="indentDec" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046446J2VA44=true&quot;, null, null, null); return false;">«</button>
-				  <button class="indentInc" onclick="liftAjax.lift_ajaxHandler(&quot;F8085850464471EKC0L=true&quot;, null, null, null); return false;"><span>»</span></button>
-				  <button class="add" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046448JYBBM2=true&quot;, null, null, null); return false;">+</button>
-			  </td>
+			  <td class="ctl"><div class="btn-group">
+				  <button class="btn btn-default btn-sm delete" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046445TWVWUG=true&quot;, null, null, null); return false;">-</button>
+				  <button class="btn btn-default btn-sm indentDec" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046446J2VA44=true&quot;, null, null, null); return false;">«</button>
+				  <button class="btn btn-default btn-sm indentInc" onclick="liftAjax.lift_ajaxHandler(&quot;F8085850464471EKC0L=true&quot;, null, null, null); return false;"><span>»</span></button>
+				  <button class="btn btn-default btn-sm add" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046448JYBBM2=true&quot;, null, null, null); return false;">+</button>
+			  </div></td>
 		  </tr>
 		  </tbody></table><table class="step" id="s1046" data-lvl="1">
 		  <tbody><tr>
@@ -90,12 +87,12 @@
 					  <textarea name="text" rows="1" id="s1046-t" onblur="liftAjax.lift_ajaxHandler('F80858504645004DKLT=' + encodeURIComponent(this.value), null, null, null)"></textarea>
 				  </form>
 			  </td>
-			  <td class="ctl">
-				  <button class="delete" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046451RCS5JT=true&quot;, null, null, null); return false;">-</button>
-				  <button class="indentDec" onclick="liftAjax.lift_ajaxHandler(&quot;F80858504645200DF1L=true&quot;, null, null, null); return false;">«</button>
-				  <button class="indentInc" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046453JTBCT4=true&quot;, null, null, null); return false;"><span>»</span></button>
-				  <button class="add" onclick="liftAjax.lift_ajaxHandler(&quot;F80858504645403UGSM=true&quot;, null, null, null); return false;">+</button>
-			  </td>
+			  <td class="ctl"><div class="btn-group">
+				  <button class="btn btn-default btn-sm delete" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046451RCS5JT=true&quot;, null, null, null); return false;">-</button>
+				  <button class="btn btn-default btn-sm indentDec" onclick="liftAjax.lift_ajaxHandler(&quot;F80858504645200DF1L=true&quot;, null, null, null); return false;">«</button>
+				  <button class="btn btn-default btn-sm indentInc" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046453JTBCT4=true&quot;, null, null, null); return false;"><span>»</span></button>
+				  <button class="btn btn-default btn-sm add" onclick="liftAjax.lift_ajaxHandler(&quot;F80858504645403UGSM=true&quot;, null, null, null); return false;">+</button>
+			  </div></td>
 		  </tr>
 		  </tbody></table><table class="step" id="s1048" data-lvl="1">
 		  <tbody><tr>
@@ -107,12 +104,12 @@
 					  <textarea name="text" rows="1" id="s1048-t" onblur="liftAjax.lift_ajaxHandler('F808585046456QFIGBB=' + encodeURIComponent(this.value), null, null, null)"></textarea>
 				  </form>
 			  </td>
-			  <td class="ctl">
-				  <button class="delete" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046457PFFC4U=true&quot;, null, null, null); return false;">-</button>
-				  <button class="indentDec" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046458OA30LI=true&quot;, null, null, null); return false;">«</button>
-				  <button class="indentInc" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046459HVUE4T=true&quot;, null, null, null); return false;"><span>»</span></button>
-				  <button class="add" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046460B5VDGB=true&quot;, null, null, null); return false;">+</button>
-			  </td>
+			  <td class="ctl"><div class="btn-group">
+				  <button class="btn btn-default btn-sm delete" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046457PFFC4U=true&quot;, null, null, null); return false;">-</button>
+				  <button class="btn btn-default btn-sm indentDec" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046458OA30LI=true&quot;, null, null, null); return false;">«</button>
+				  <button class="btn btn-default btn-sm indentInc" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046459HVUE4T=true&quot;, null, null, null); return false;"><span>»</span></button>
+				  <button class="btn btn-default btn-sm add" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046460B5VDGB=true&quot;, null, null, null); return false;">+</button>
+			  </div></td>
 		  </tr>
 		  </tbody></table><table class="step" id="s1047" data-lvl="2">
 		  <tbody><tr>
@@ -124,12 +121,12 @@
 					  <textarea name="text" rows="1" id="s1047-t" onblur="liftAjax.lift_ajaxHandler('F808585046462QWHVTA=' + encodeURIComponent(this.value), null, null, null)"></textarea>
 				  </form>
 			  </td>
-			  <td class="ctl">
-				  <button class="delete" onclick="liftAjax.lift_ajaxHandler(&quot;F8085850464635O4TTK=true&quot;, null, null, null); return false;">-</button>
-				  <button class="indentDec" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046464LG0PJO=true&quot;, null, null, null); return false;">«</button>
-				  <button class="indentInc" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046465JSKCCG=true&quot;, null, null, null); return false;"><span>»</span></button>
-				  <button class="add" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046466KKU4YK=true&quot;, null, null, null); return false;">+</button>
-			  </td>
+			  <td class="ctl"><div class="btn-group">
+				  <button class="btn btn-default btn-sm delete" onclick="liftAjax.lift_ajaxHandler(&quot;F8085850464635O4TTK=true&quot;, null, null, null); return false;">-</button>
+				  <button class="btn btn-default btn-sm indentDec" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046464LG0PJO=true&quot;, null, null, null); return false;">«</button>
+				  <button class="btn btn-default btn-sm indentInc" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046465JSKCCG=true&quot;, null, null, null); return false;"><span>»</span></button>
+				  <button class="btn btn-default btn-sm add" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046466KKU4YK=true&quot;, null, null, null); return false;">+</button>
+			  </div></td>
 		  </tr>
 		  </tbody></table><table class="step" id="s1028" data-lvl="1">
 		  <tbody><tr>
@@ -141,12 +138,12 @@
 					  <textarea name="text" rows="1" id="s1028-t" onblur="liftAjax.lift_ajaxHandler('F808585046468MN5JSD=' + encodeURIComponent(this.value), null, null, null)">And then... ➡ [1.0]</textarea>
 				  </form>
 			  </td>
-			  <td class="ctl">
-				  <button class="delete" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046469XVQQVS=true&quot;, null, null, null); return false;">-</button>
-				  <button class="indentDec" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046470AMO235=true&quot;, null, null, null); return false;">«</button>
-				  <button class="indentInc" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046471YXAJVW=true&quot;, null, null, null); return false;"><span>»</span></button>
-				  <button class="add" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046472R3NUQ2=true&quot;, null, null, null); return false;">+</button>
-			  </td>
+			  <td class="ctl"><div class="btn-group">
+				  <button class="btn btn-default btn-sm delete" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046469XVQQVS=true&quot;, null, null, null); return false;">-</button>
+				  <button class="btn btn-default btn-sm indentDec" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046470AMO235=true&quot;, null, null, null); return false;">«</button>
+				  <button class="btn btn-default btn-sm indentInc" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046471YXAJVW=true&quot;, null, null, null); return false;"><span>»</span></button>
+				  <button class="btn btn-default btn-sm add" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046472R3NUQ2=true&quot;, null, null, null); return false;">+</button>
+			  </div></td>
 		  </tr>
 		  </tbody></table></td>
   </tr><tr class="fieldFrame courses-a">
@@ -163,12 +160,12 @@
 					  <textarea name="text" rows="1" id="s1050-t" onblur="liftAjax.lift_ajaxHandler('F8085850464750CX4P1=' + encodeURIComponent(this.value), null, null, null)">⬅ [1.E.1] [1.E.2]</textarea>
 				  </form>
 			  </td>
-			  <td class="ctl">
-				  <button class="delete" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046476MGJYEC=true&quot;, null, null, null); return false;">-</button>
-				  <button class="indentDec" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046477ZXQOQZ=true&quot;, null, null, null); return false;">«</button>
-				  <button class="indentInc" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046478STCD1T=true&quot;, null, null, null); return false;"><span>»</span></button>
-				  <button class="add" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046479Z1MIWY=true&quot;, null, null, null); return false;">+</button>
-			  </td>
+			  <td class="ctl"><div class="btn-group">
+				  <button class="btn btn-default btn-sm delete" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046476MGJYEC=true&quot;, null, null, null); return false;">-</button>
+				  <button class="btn btn-default btn-sm indentDec" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046477ZXQOQZ=true&quot;, null, null, null); return false;">«</button>
+				  <button class="btn btn-default btn-sm indentInc" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046478STCD1T=true&quot;, null, null, null); return false;"><span>»</span></button>
+				  <button class="btn btn-default btn-sm add" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046479Z1MIWY=true&quot;, null, null, null); return false;">+</button>
+			  </div></td>
 		  </tr>
 		  </tbody></table><div class="addTailStep">
 		  <button onclick="liftAjax.lift_ajaxHandler(&quot;F8085850464734P2BUK=true&quot;, null, null, null); return false;">+</button>
@@ -185,12 +182,12 @@
 					  <textarea name="text" rows="1" id="s1043-t" onblur="liftAjax.lift_ajaxHandler('F808585046482LMFCZP=' + encodeURIComponent(this.value), null, null, null)">Big Error ➡ [1.1]</textarea>
 				  </form>
 			  </td>
-			  <td class="ctl">
-				  <button class="delete" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046483PHLVNU=true&quot;, null, null, null); return false;">-</button>
-				  <button class="indentDec" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046484E3RHTJ=true&quot;, null, null, null); return false;">«</button>
-				  <button class="indentInc" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046485HCR444=true&quot;, null, null, null); return false;"><span>»</span></button>
-				  <button class="add" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046486DGKNEX=true&quot;, null, null, null); return false;">+</button>
-			  </td>
+			  <td class="ctl"><div class="btn-group">
+				  <button class="btn btn-default btn-sm delete" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046483PHLVNU=true&quot;, null, null, null); return false;">-</button>
+				  <button class="btn btn-default btn-sm indentDec" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046484E3RHTJ=true&quot;, null, null, null); return false;">«</button>
+				  <button class="btn btn-default btn-sm indentInc" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046485HCR444=true&quot;, null, null, null); return false;"><span>»</span></button>
+				  <button class="btn btn-default btn-sm add" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046486DGKNEX=true&quot;, null, null, null); return false;">+</button>
+			  </div></td>
 		  </tr>
 		  </tbody></table><table class="step" id="s1044" data-lvl="0">
 		  <tbody><tr>
@@ -202,12 +199,12 @@
 					  <textarea name="text" rows="1" id="s1044-t" onblur="liftAjax.lift_ajaxHandler('F808585046488UYFCR0=' + encodeURIComponent(this.value), null, null, null)">Some other error ➡ [1.1]</textarea>
 				  </form>
 			  </td>
-			  <td class="ctl">
-				  <button class="delete" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046489CF0332=true&quot;, null, null, null); return false;">-</button>
-				  <button class="indentDec" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046490JLCDKM=true&quot;, null, null, null); return false;">«</button>
-				  <button class="indentInc" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046491C5IXY3=true&quot;, null, null, null); return false;"><span>»</span></button>
-				  <button class="add" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046492LLLDZ2=true&quot;, null, null, null); return false;">+</button>
-			  </td>
+			  <td class="ctl"><div class="btn-group">
+				  <button class="btn btn-default btn-sm delete" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046489CF0332=true&quot;, null, null, null); return false;">-</button>
+				  <button class="btn btn-default btn-sm indentDec" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046490JLCDKM=true&quot;, null, null, null); return false;">«</button>
+				  <button class="btn btn-default btn-sm indentInc" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046491C5IXY3=true&quot;, null, null, null); return false;"><span>»</span></button>
+				  <button class="btn btn-default btn-sm add" onclick="liftAjax.lift_ajaxHandler(&quot;F808585046492LLLDZ2=true&quot;, null, null, null); return false;">+</button>
+			  </div></td>
 		  </tr>
 		  </tbody></table><div class="addTailStep">
 		  <button onclick="liftAjax.lift_ajaxHandler(&quot;F808585046480KWP1CX=true&quot;, null, null, null); return false;">+</button>
@@ -243,7 +240,7 @@
 		  <textarea rows="1" id="F8085850464365THSLV" onblur="liftAjax.lift_ajaxHandler('F808585046504XALR1W=' + encodeURIComponent(this.value), null, null, null)"></textarea>
 	  </td>
   </tr></table>
-  </div>
+  </main>
 
   </div>
 </body>

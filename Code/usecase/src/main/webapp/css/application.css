@@ -3,7 +3,7 @@
 
 .hidden2 { display: none; }
 
-textarea { -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; margin-bottom: 0; resize: none; overflow: auto; outline: none; }
+textarea { -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; margin-bottom: 0; resize: none; overflow: hidden; outline: none; }
 
 abbr.timeago[title] { border-bottom: none !important; }
 

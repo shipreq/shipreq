@@ -26,7 +26,7 @@ object Renderer {
   object Templates {
     import util.NonEmptyTemplate
 
-    final val EntirePage = NonEmptyTemplate.load("uce")
+    final val EntirePage = NonEmptyTemplate.load("loggedin/uceditor")
 
     final val TextField = EntirePage.quickExtract("template-text")
     final val Step = EntirePage.quickExtract("template-step")
@@ -74,17 +74,14 @@ case class Renderer(
     S.appendGlobalJs(JsSetGlobalVar("InitialFlowGraph", flowGraph))
     ".fieldFrame *" #> renderFields andThen (
       ".title .ucid *" #> ucNumber.toString &
-      ".title @title" #> SHtml.ajaxTextarea(uch.title, modTitle(_), "id" -> TitleId, "rows" -> "1") &
+      ".title @title" #> SHtml.ajaxTextarea(uch.title, modTitle(_), "id" -> TitleId, "rows" -> "1", "class" -> "form-control input-lg") &
       renderSaveCont
     )
   }
 
   def renderSaveCont: CssSel = saveUC match {
-    case None =>
-      ".save" #> ""
-    case Some(saveFn) =>
-      ".save .rev *" #> state.currentRevision.toString &
-      ".save button" #> SHtml.ajaxButton("Save", saveFn, "id" -> SaveButtonId, "disabled" -> "disabled")
+    case None =>         ".save-row" #> ""
+    case Some(saveFn) => ".save-row button" #> SHtml.ajaxButton("Save", saveFn, "id" -> SaveButtonId, "disabled" -> "disabled")
   }
 
   def renderFields: NodeSeq =

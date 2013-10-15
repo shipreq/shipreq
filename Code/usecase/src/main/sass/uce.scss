@@ -11,7 +11,7 @@ $maxStepDepth: 4;
 
 // Prevent indentIncrease for deepest children
 [data-lvl="#{$maxStepDepth}"] .indentInc {
-  visibility:hidden !important
+	visibility:hidden !important
 }
 
 // Prevent indentIncrease for first children
@@ -31,7 +31,7 @@ $maxStepDepth: 4;
 // General styles
 
 .uce {
-	margin: 1cm 1cm 0 1cm;
+	margin: 1.4em 0.6cm 0 0.6cm;
 
 	form {
 		display: inline
@@ -59,32 +59,27 @@ $maxStepDepth: 4;
 // UC Title (UC-123: Abc)
 
 .uce .title {
-	&, td, textarea {
-		width: 100%
-	}
-	th, textarea {
-		font-size: 150%;
-		font-weight: bold;
-		vertical-align: middle
-	}
-	th {
-		padding-right: 0.6em
-	}
+	&, td, textarea {width: 100%}
+	th {white-space:nowrap}
+	th, td {vertical-align:middle}
+	h2 {margin:0; padding-right:1ex}
+	textarea {font-weight: bold; font-size:150%}
 }
 
 // =====================================================================================================================
 // Fields and attributes
 
 table.fieldFrame {
-	margin-top: 1cm;
+	margin-top: 22px;
 	width: 100%;
 	tr.fieldFrame {
 		&>th {
 			color: #555;
 			font-weight: normal;
-			width: 20ex;
+			width: 20.5ex;
 			text-align: left;
 			line-height: 125%;
+			padding-right: 1ex;
 		}
 		&>th, &>td {
 			//border-top: solid 2px #ddd;
@@ -111,6 +106,7 @@ table.step {
 	width: 100%;
 	.lbl {
 		padding-top: 4px;
+		padding-right:0.8ex;
 		color: #444;
 	}
 	.txt {
@@ -118,7 +114,7 @@ table.step {
 	}
 	.ctl {
 		text-align: right;
-		width: 110px;
+		width: 116px;
 	}
 	&+.step, &+.stepTransport, .stepTransport+& {
 		margin-top: 1ex
@@ -142,46 +138,38 @@ table.step {
 .addTailStep {
 	text-align: right;
 }
+
+.addTailStep button, table.step .ctl button {
+	font-size: 16px;
+	line-height: 16px;
+	padding: 4px;
+	width: 26px
+}
+
 .courses-a .step:first-child .indentInc {
 	span {display:none}
 	&:after {content:"↑"} /* ↑↱ */
 }
 
 #flowgraph svg {
-  max-width:100%;
-  cursor:default;
-  g.step {cursor: pointer}
+	max-width:100%;
+	cursor:default;
+	g.step {cursor: pointer}
 }
 
 // =====================================================================================================================
+// Other
 
-#legend {
-    margin:0.5cm auto 1cm auto;
-    border: solid 1px #888;
-    background: #ffd;
-    padding: 1ex;
-    width: 500px;
-
-    dl {
-        margin: 0;
-    }
-    dt {
-        float: left;
-        width: 170px;
-    }
-    dd:not(:last-of-type) {
-        padding-bottom: 0.8ex;
-    }
-}
+.save-row {text-align:right; padding-top:8px}
 
 // =====================================================================================================================
 
 .debug {
 	.typing {border: solid 2px #d88}
-  tr.fieldFrame > td { background: #eef}
-  .step {
-    .lbl {background: #ffb}
-    .txt {background: #bfb}
-    .ctl {background: #bfb}
-  }
+	tr.fieldFrame > td { background: #eef}
+	.step {
+		.lbl {background: #ffb}
+		.txt {background: #bfb}
+		.ctl {background: #bfb}
+	}
 }

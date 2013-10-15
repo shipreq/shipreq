@@ -1,7 +1,7 @@
 package com.beardedlogic.usecase.util
 
-import net.liftweb.http.S
-import net.liftweb.http.js.JsCmd
+import net.liftweb.http.{SHtml, S}
+import net.liftweb.http.js.{JE, JsCmd}
 import net.liftweb.util.{Helpers, CssSel}
 import net.liftweb.util.Helpers.strToCssBindPromoter
 import JsExt._
@@ -45,5 +45,18 @@ object HtmlTransformExt {
     val funcName = "z" + Helpers.nextFuncName
     S.addFunctionMap(funcName, (func))
     "* [onclick]" #> s"liftAjax.lift_uriSuffix='$funcName=_';return true"
+  }
+
+  /**
+   * Transforms an element so that it invokes an ajax function when clicked.
+   *
+   * Dismantled from `SHtml.ajaxButton()`.
+   */
+  def ajaxOnClick(func: () => JsCmd): CssSel = {
+    val funcName = Helpers.nextFuncName
+    S.addFunctionMap(funcName, (func))
+    // val js = SHtml.makeAjaxCall(JE.Str(funcName + "=true")).toJsCmd + ";return false"
+    val js = s"""liftAjax.lift_ajaxHandler("$funcName=true", null, null, null);return false"""
+    "* [onclick]" #> js
   }
 }

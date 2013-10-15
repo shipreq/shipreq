@@ -21,7 +21,7 @@ textarea {
   @include box-sizing-border;
   margin-bottom: 0;
   resize: none;
-  overflow: auto; // removes scrollbars in Internet Explorer
+  overflow: hidden; // removes scrollbars in Internet Explorer, removes blank space from firefox
   outline: none;
 }
 

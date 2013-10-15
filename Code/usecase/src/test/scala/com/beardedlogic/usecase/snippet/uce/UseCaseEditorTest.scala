@@ -397,13 +397,11 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
 
       it("should be removed when UC is anonymous") {
         lazy val (xml, html) = render(UceAnon)
-        html should not include("Revision")
         saveButtonO(xml) ==== None
       }
 
       it("should be disabled when UC is loaded") {
         lazy val (xml, html) = render(UCE2b)
-        html should include("Revision")
         saveButton(xml).toString.toLowerCase should include ("disabled")
       }
     }

@@ -1,0 +1,28 @@
+!!! 5
+%html(lang="en")
+  %head
+    %meta(http-equiv="content-type" content="text/html; charset=UTF-8")
+    %meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    %link(type="text/css" rel="stylesheet" href="/css/vendor/bootstrap.css")
+    /%link(type="text/css" rel="stylesheet" href="/css/vendor/bootstrap-theme.css")
+    %link(type="text/css" rel="stylesheet" href="/css/application.css")
+    -# TODO Move javascript to end of page to speed up load?
+    %script(type="text/javascript" src="/js/vendor/jquery.js")
+    %script(type="text/javascript" src="/js/vendor/bootstrap.js")
+    %script(type="text/javascript" src="/js/application.js")
+
+  %body
+    #ly-hdrbody
+      .ly-content
+
+        #content CONTENT AND NOTICES GO HERE
+
+      #ly-footer-push
+    %footer#ly-footer
+      .ly-content
+        v<param data-lift="SystemInfo?name=build.version.full" >
+        @ <param data-lift="SystemInfo?name=build.time">
+        | <param data-lift="SystemInfo?name=run.mode.short">
+        | Scala v<param data-lift="SystemInfo?name=scala.version">
+        | Java v<param data-lift="SystemInfo?name=java.version">
+        | JVM v<param data-lift="SystemInfo?name=jvm.version">

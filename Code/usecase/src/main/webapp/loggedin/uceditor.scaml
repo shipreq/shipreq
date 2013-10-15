@@ -1,0 +1,56 @@
+%div(data-lift="surround?with=blank;at=content")
+  %link(data-lift="head" href="/css/uce.css" rel="stylesheet" type="text/css")
+  %script(data-lift="head" src="/js/uce.js" type="text/javascript")
+
+  %main#uce.uce(data-lift="uce/UseCaseEditor")
+
+    %table.title
+      %tr
+        %th
+          %h2#uc-id UC-<span class="ucid">123</span>:
+        %td
+          %input.form-control.input-lg(name="title")
+
+    .save-row
+      %button.btn.btn-lg.btn-success Save
+
+    %table.fieldFrame
+
+      %tr.fieldFrame#template-text
+        %th Actors
+        %td
+          %textarea(rows=1) Scorer
+
+      %tr.fieldFrame#template-courses-n.courses-n
+        %th
+          Normal<br/>Course
+        %td.steps
+          %table#template-step.step(data-lvl=0)
+            %tr
+              %td.lbl
+                <span>1.0</span>.
+              %td.txt
+                %form(data-lift="form.ajax" style="display: inline")
+                  %textarea(name="text" rows=1) Score a new game of Scrabble.
+              %td.ctl
+                .btn-group
+                  %button.btn.btn-default.btn-sm.delete ‐
+                  %button.btn.btn-default.btn-sm.indentDec «
+                  %button.btn.btn-default.btn-sm.indentInc
+                    %span »
+                  %button.btn.btn-default.btn-sm.add +
+
+      %tr.fieldFrame#template-courses-a.courses-a
+        %th
+          Alternative<br/>Courses
+        %td.steps
+          .addTailStep
+            %button.btn.btn-default.btn-sm +
+
+      %tr.fieldFrame#template-courses-e.courses-e
+        %th Exceptions
+        %td.steps
+          #template-courses-addTailStep.addTailStep
+            %button.btn.btn-default.btn-sm +
+
+    #flowgraph
