@@ -2,27 +2,16 @@ package com.beardedlogic.usecase
 package feature.uc
 package field
 
-import db.{DaoT, FieldKeyType, FieldKeyRec}
+import db.FieldKeyRec
 import lib.Types._
 import change.{UcChangeDomain, ChangeResponder}
-
-trait FieldDefinition {
-
-  /** The type (enum) of this field. */
-  val fieldKeyType: FieldKeyType
-
-  /** Arbitrary data (to store in the database) that comprises this field key's state. */
-  val fieldKeyData: FieldKeyRecData
-
-  def field(rec: FieldKeyRec): Field
-}
 
 /**
  * Represents a field that a use case can have. Eg. "Frequency of Use", "Exception Courses"
  *
  * This does not include the value of the field.
  */
-trait Field extends UcChangeDomain {
+sealed trait Field extends UcChangeDomain {
 
   /** The type of this field's values. */
   type Value <: ChangeResponder[Value]
@@ -61,34 +50,16 @@ trait Field extends UcChangeDomain {
   def valueSaver(v: Value, stepsAndLabels: StepAndLabelBiMap): FieldValueSaver[SavedData]
 }
 
-trait FieldValueSaver[SavedData] {
+// =====================================================================================================================
+// Instances
 
-  /**
-   * Gives a field a chance to opt-out of storing a value in the database.
-   * If a field is blank, then there's no point saving it.
-   *
-   * Note: This is ignored if the field was saved previously. To do otherwise would be to lose audit trail.
-   */
-  def record_required_? : Boolean
+case class TextField(override val defn: TextFieldDefinition, override val rec: FieldKeyRec)
+  extends Field with TextFieldLike
 
-  /**
-   * Compares the current field value to the previous saved data.
-   *
-   * @return Whether the field value has changed.
-   */
-  def differsFromPrevSave_?(prev: SavedData)(implicit savedSteps: SavedSteps): Boolean
+sealed abstract class StepField extends Field with StepFieldLike
 
-  /**
-   * Creates identity rows (`text.id`) for steps.
-   *
-   * @return A map of new saved steps.
-   */
-  def presave(dao: DaoT, ucId: UseCaseIdentId, prevSavedSteps: Option[SavedSteps]): Map[LocalStepId, TextIdentId]
+case class NormalCourseField(override val rec: FieldKeyRec)
+  extends StepField with NormalCourseFieldLike
 
-  /**
-   * Saves field value(s) to the database and links them to the provided UC.
-   *
-   * @return Data that will be passed back in on subsequent saves to facilitate data reuse (in the DB).
-   */
-  def save(dao: DaoT, ucId: UseCaseIdentId, ucRevId: UseCaseRevId, prevSave: Option[SavedData])(implicit savedSteps: SavedSteps): SavedData
-}
+case class ExceptionCourseField(override val rec: FieldKeyRec)
+  extends StepField with ExceptionCourseFieldLike

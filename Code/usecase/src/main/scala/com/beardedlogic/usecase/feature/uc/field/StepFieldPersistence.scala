@@ -7,15 +7,15 @@ import com.beardedlogic.usecase.lib.Types._
 import com.beardedlogic.usecase.feature.ExternalId
 import step.{StepNode, StepTree}
 import text.StepText
-import StepField.StartingLabelIndices
+import StepFieldConsts.StartingLabelIndices
 import StepFieldPersistence._
 
 object StepFieldPersistence {
   type SavedData = Map[TextIdentId, UcFieldText]
 }
 
-private[field] trait StepFieldPersistenceMixin extends Field {
-  this: StepField =>
+private[field] trait StepFieldPersistenceMixin {
+  this: Field with StepField with StepFieldLike =>
 
   override type SavedData = StepFieldPersistence.SavedData
 
@@ -24,7 +24,7 @@ private[field] trait StepFieldPersistenceMixin extends Field {
 
   def defaultLoadValue(h: UseCaseHeader): (Option[StepTree], () => StepFieldValue)
 
-  // =====================================================================================================================
+  // ===================================================================================================================
 
   override def load(loadCtx: FieldLoadCtx) = {
 

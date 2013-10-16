@@ -17,7 +17,7 @@ import feature.uc.change.{UseCaseUpdater, NoChange}
 import feature.uc.field._
 import feature.uc.step._
 import text.{StepText, FreeText}
-import StepField.StartingLabelIndices
+import StepFieldConsts.StartingLabelIndices
 import StepLabels._
 import text.ParsingConfig._
 import TreeOps._

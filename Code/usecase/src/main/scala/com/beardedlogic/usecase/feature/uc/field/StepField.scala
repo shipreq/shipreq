@@ -9,10 +9,10 @@ import step.{StepTree, StepNodeBuilder, StepNode}
 import step.TreeOps._
 import change._
 import Changes._
-import StepField._
 import Lenses._
+import StepFieldConsts._
 
-object StepField {
+object StepFieldConsts {
   def MaxStepViolationMsg = Some(s"That would cause you to have ${MaxStepsPerLevel + 1} steps at the same level, which exceeds the maximum allowed.")
   def MaxLevelViolationMsg = Some(s"That would cause your steps to be ${MaxStepDepth + 1} levels deep, which exceeds the maximum allowed.")
 
@@ -56,7 +56,7 @@ object StepField {
 /**
  * Abstract field that consists of a tree of structured StepTexts.
  */
-abstract class StepField extends Field with StepFieldPersistenceMixin {
+trait StepFieldLike extends StepFieldPersistenceMixin { this: Field with StepField =>
   override type Value = StepFieldValue
 
   def rootLabelPrefix(ucn: UseCaseNumber): String
@@ -158,13 +158,13 @@ case object NormalCourseFieldDefinition extends FieldDefinition {
   override def field(rec: FieldKeyRec) = NormalCourseField(rec)
 }
 
-object NormalCourseField {
+object NormalCourseFieldConsts {
   final val EmptyTree = StepTree(StepNodeBuilder(0, 0, Nil) :: Nil)
   final val DefaultTree = StepTree(StepNodeBuilder(0, 0, List(StepNodeBuilder(1, 1))) :: Nil)
 }
 
-case class NormalCourseField(override val rec: FieldKeyRec) extends StepField {
-  import NormalCourseField._
+trait NormalCourseFieldLike extends StepFieldLike { this: Field with StepField =>
+  import NormalCourseFieldConsts._
   override val defn = NormalCourseFieldDefinition
   override val empty = StepFieldValue.forTree(this, EmptyTree)
   override def rootLabelPrefix(ucn: UseCaseNumber) = s"${ucn}."
@@ -187,7 +187,7 @@ case object ExceptionCourseFieldDefinition extends FieldDefinition {
   override def field(rec: FieldKeyRec) = ExceptionCourseField(rec)
 }
 
-case class ExceptionCourseField(override val rec: FieldKeyRec) extends StepField {
+trait ExceptionCourseFieldLike extends StepFieldLike { this: Field with StepField =>
   override val defn = ExceptionCourseFieldDefinition
   override val empty = StepFieldValue.empty(this)
   override def rootLabelPrefix(ucn: UseCaseNumber) = s"${ucn}.E."

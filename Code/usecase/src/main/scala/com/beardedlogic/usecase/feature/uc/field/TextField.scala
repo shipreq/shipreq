@@ -17,7 +17,7 @@ case class TextFieldDefinition(title: String) extends FieldDefinition {
 
 // =====================================================================================================================
 
-case class TextField(override val defn: TextFieldDefinition, override val rec: FieldKeyRec) extends Field {
+trait TextFieldLike { this: Field with TextField =>
   override type Value = FreeText
   override type SavedData = TextRev
 
