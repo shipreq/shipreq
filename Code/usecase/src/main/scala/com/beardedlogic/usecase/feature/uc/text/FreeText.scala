@@ -1,6 +1,5 @@
 package com.beardedlogic.usecase.feature.uc.text
 
-import scala.annotation.tailrec
 import com.beardedlogic.usecase.lib.Types._
 import com.beardedlogic.usecase.feature.uc.UcParsingCtx
 import com.beardedlogic.usecase.feature.uc.change._
@@ -24,28 +23,16 @@ object FreeText extends Parser[FreeText] {
 
   def parseCorrected(text: String @@ InputCorrected)(implicit ctx: UcParsingCtx) = {
     import Grammar.{parse => parseG, _}
+    import FreeTextToken._
     lazy val labelsToIds = ctx.getLabelsToIds
 
     val newText = new StringBuilder
     var refs = Map.empty[LocalStepId, StepLabel]
     var refsOwnUc = false
 
-    @tailrec
-    def go(pr: ParseResult[(String, Option[FreeTextRefToken])]): Unit = {
-      pr match {
-        case Success((txt, None), _) =>
-          newText ++= txt
-        case Success((txt, Some(ref)), next) =>
-          newText ++= txt
-          parseRef(ref)
-          go(parseG(TextAndPossibleRef, next))
-        case NoSuccess(_, _) =>
-          error(s"TextAndPossibleRef failure shouldn't be possible. Got: $pr. Text: ${text.inspect}")
-      }
-    }
-
     @inline
-    def parseRef(ref: FreeTextRefToken): Unit = ref match {
+    def parseToken(ref: FreeTextToken): Unit = ref match {
+      case PlainTextToken(txt)      => newText.append(txt)
       case StepLabelRefToken(label) => appendStepRef(label)
       case UseCaseRefToken(num, ot) => appendUseCaseRef(num, ot)
     }
@@ -72,7 +59,12 @@ object FreeText extends Parser[FreeText] {
         }
     }
 
-    go(parseG(TextAndPossibleRef, text))
+    parseG(FreeTextParsers.TextAndRefs, text) match {
+      case Success(terms, _) => terms foreach parseToken
+      case pr @ NoSuccess(_, _) =>
+        throw new RuntimeException(s"FreeText parsing failure shouldn't be possible. Got: $pr. Text: ${text.inspect}")
+    }
+
     FreeText(newText.toString, refs, refsOwnUc)
   }
 }

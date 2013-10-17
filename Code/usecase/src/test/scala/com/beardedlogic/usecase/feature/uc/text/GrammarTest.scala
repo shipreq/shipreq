@@ -35,7 +35,7 @@ class GrammarTest extends FunSpec with TestHelpers with PropertyChecks {
       , ("X1", false)
       , ("", false)
     )
-    test(G.StepLabel, examples)(_.replaceAll("\\s+", ""))
+    test(G.FreeTextParsers.StepLabel, examples)(_.replaceAll("\\s+", ""))
   }
 
   describe("FlowParsers") {

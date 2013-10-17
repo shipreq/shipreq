@@ -38,10 +38,10 @@ object Grammar extends RegexParsers {
     @tailrec def parse(_in: Input): ParseResult[(String, T)] = {
       val in = if (keepText) gobbleWhitespace(sb, _in) else _in
       nextParser(in) match {
-        case Success(a, rest) => Success((sb.toString, a), rest)
-        case e@Error(_, _)    => e // still have to propagate error
-        case _ if (in.atEnd)  => Failure("end of input", in)
-        case _                => sb += in.first; parse(in.rest)
+        case   Success(a, rest)          => Success((sb.toString, a), rest)
+        case e@Error(_, _)               => e
+        case f@Failure(_,_) if in.atEnd  => f
+        case   Failure(_,_) if !in.atEnd => sb += in.first; parse(in.rest)
       }
     }
     parse(in)
@@ -63,10 +63,11 @@ object Grammar extends RegexParsers {
     @tailrec def parse(_in: Input): ParseResult[(String, Option[T])] = {
       val in = if (keepText) gobbleWhitespace(sb, _in) else _in
       nextParser(in) match {
-        case Success(a, rest) => Success((sb.toString, Some(a)), rest)
-        case e@Error(_, _)    => e // still have to propagate error
-        case _ if (in.atEnd)  => Success((sb.toString, None), in)
-        case _                => sb += in.first; parse(in.rest)
+        case   Success(a, rest)                        => Success((sb.toString, Some(a)), rest)
+        case e@Error(_, _)                             => e
+        case   Failure(_,_) if in.atEnd && !sb.isEmpty => Success((sb.toString, None), in)
+        case f@Failure(_,_) if in.atEnd && sb.isEmpty  => f
+        case   Failure(_,_) if !in.atEnd               => sb += in.first; parse(in.rest)
       }
     }
     parse(in)
@@ -77,43 +78,48 @@ object Grammar extends RegexParsers {
   private def optionallyBraced[T](inner: Parser[T]): Parser[T] = (braced(inner) | inner)
 
   // -------------------------------------------------------------------------------------------------------------------
-  // Step label (Eg. "1.2", "3.E.2.a")
-
-  case class StepLabelRefToken(label: StepLabel) extends FreeTextRefToken
-
-  val StepLabel: Parser[String] = {
-    val level: Parser[String] = "[A-Za-z]+|\\d+".r
-    level ~ rep1("." ~> level) ^^ {case h ~ t => (h :: t).mkString(".")}
-  }
-
-  val StepLabelRef: Parser[StepLabelRefToken] = braced(StepLabel) ^^ (s => StepLabelRefToken(s.asLabel))
-
-  // -------------------------------------------------------------------------------------------------------------------
-  // Use Case ref. (Eg. "UC-3", "UC 8", "UC-123: Do Stuff")
-
-  case class UseCaseRefToken(number: UseCaseNumber, title: Option[String]) extends FreeTextRefToken
-
-  val UseCaseRef: Parser[UseCaseRefToken] = braced(
-    "UC" ~> opt("-") ~> "\\d+".r ~ opt(":" ~> s"[^${Pattern quote RefBraceRs}]+".r) ^^ {
-      case num ~ title => UseCaseRefToken(num.toShort.tag[IsUseCaseNumber], title)
-    })
-
-  // -------------------------------------------------------------------------------------------------------------------
   // Free Text
 
-  sealed trait FreeTextRefToken
+  sealed trait FreeTextToken
+  object FreeTextToken {
+    case class PlainTextToken(text: String) extends FreeTextToken
+    case class StepLabelRefToken(label: StepLabel) extends FreeTextToken
+    case class UseCaseRefToken(number: UseCaseNumber, title: Option[String]) extends FreeTextToken
+  }
 
-  val FreeTextRef: Parser[FreeTextRefToken] = StepLabelRef | UseCaseRef
+  object FreeTextParsers {
+    import FreeTextToken._
 
-  /**
-   * Matches Text and the first step reference. If no refs, then matches the entire input as Text.
-   */
-  val TextAndPossibleRef: Parser[(String, Option[FreeTextRefToken])] = anyTextThenOptional(true, FreeTextRef)
+    val StepLabel: Parser[String] = {
+      val level: Parser[String] = "[A-Za-z]+|\\d+".r
+      level ~ rep1("." ~> level) ^^ {case h ~ t => (h :: t).mkString(".")}
+    }
+
+    val StepLabelRef: Parser[StepLabelRefToken] = braced(StepLabel) ^^ (s => StepLabelRefToken(s.asLabel))
+
+    val UseCaseRef: Parser[UseCaseRefToken] = braced(
+      "UC" ~> opt("-") ~> "\\d+".r ~ opt(":" ~> s"[^${Pattern quote RefBraceRs}]+".r) ^^ {
+        case num ~ title => UseCaseRefToken(num.toShort.tag[IsUseCaseNumber], title)
+      })
+
+    val Ref: Parser[FreeTextToken] = StepLabelRef | UseCaseRef
+
+    val TextAndRefs: Parser[List[FreeTextToken]] =
+      rep(anyTextThenOptional(true, Ref)) ^^ (
+        _.foldRight(List.empty[FreeTextToken])((r, b) => {
+          var acc = b
+          if (r._2.isDefined) acc = r._2.get :: acc
+          if (r._1.nonEmpty) acc = PlainTextToken(r._1) :: acc
+          acc
+        }))
+  }
 
   // -------------------------------------------------------------------------------------------------------------------
   // Step Text
 
   object FlowParsers {
+    import FreeTextParsers._
+
     val ValidRef: Parser[PotentiallyValidRef] = optionallyBraced(StepLabel) ^^ {
       case r => PotentiallyValidRef(r.asLabel)
     }
