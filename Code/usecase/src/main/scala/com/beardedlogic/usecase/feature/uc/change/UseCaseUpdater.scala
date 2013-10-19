@@ -16,13 +16,6 @@ trait UcChangeDomain
 
 object UseCaseUpdateFns {
 
-  def addChangesToResult(beforeTransform: UseCase, transformResult: UcUpdateResult, changes: NonEmptyList[(UcChangeDomain, Change)]): UcUpdateResult =
-    transformResult match {
-      case NoChange => Changed(beforeTransform, changes)
-      case Changed(v,c) => Changed(v, c append changes)
-      case f@ChangeFailure(_) => f
-    }
-
   def keyByField(f: Field)(c: Change) = (f -> c)
 }
 
@@ -66,21 +59,22 @@ case class UseCaseUpdater(uc: UseCase, rels: UseCaseRelations) {
       ChangeResult <~ (fvs, totalChanges)
     }
 
-    changeAllFields.map(newFVs => uc.copy(fieldValues = newFVs))
+    changeAllFields.mapValue(newFVs => uc.copy(fieldValues = newFVs))
   }
 
   def afterRespondingToChange(change: Change): UseCase = afterRespondingToChanges(change.asOnlyChange)
-  def afterRespondingToChanges(changes: NonEmptyList[Change]): UseCase = respondToChanges(changes).getOrElse(uc)
+  def afterRespondingToChanges(changes: NonEmptyList[Change]): UseCase = respondToChanges(changes).getValueOrElse(uc)
 
   @inline final def update[V](f: Field, cr: ChangeResultF[V, Change])(implicit l: AppliedLens[UseCase, V]): UcUpdateResult =
     update(cr, keyByField(f) _)
 
   def update[V](cr: ChangeResultF[V, Change], changeMapFn: Change => (UcChangeDomain, Change))(implicit l: AppliedLens[UseCase, V]): UcUpdateResult =
     cr.flatMapF((newValue, changes) => {
-      val update1 = l.set(newValue)
-      val update2 = correctStepsAndLabelsAfterUpdate(uc, update1)
-      val update3 = copy(uc = update2).respondToChanges(changes)
-      addChangesToResult(update2, update3, changes.map(changeMapFn))
+      val uc1 = l.set(newValue)
+      val uc2 = correctStepsAndLabelsAfterUpdate(uc, uc1)
+      val cr1 = Changed(uc2, changes.map(changeMapFn))
+      val cr2 = copy(uc = uc2).respondToChanges(changes)
+      cr1 appendF cr2
     })
 
   def updateTitle(input: String): UcUpdateResult = {

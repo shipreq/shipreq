@@ -239,7 +239,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
       def test(before: String)(textAfter: String, refsAfter: Refs) {
         val x = T.parse(before)
         val y = x.respondToChange(MockExistingStepLabelsChanged)(StepState2)
-        T.oldAssert(y.getOrElse(x), textAfter, refsAfter, false)
+        T.oldAssert(y.getValueOrElse(x), textAfter, refsAfter, false)
       }
 
       it("should update refs") {
@@ -267,7 +267,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
         )
         forAll(examples)((before: String, after: String) => {
           val x = T.parse(before)
-          val y = x.respondToChange(MockExistingStepLabelsChanged)(StepState2).getOrElse(x)
+          val y = x.respondToChange(MockExistingStepLabelsChanged)(StepState2).getValueOrElse(x)
           y.text should be(after)
         })
       }
@@ -491,7 +491,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
       describe("Responding to a MockExistingStepLabelsChanged") {
         def test(textBefore: String, textAfter: String, refsAfter: Set[LocalStepId]) {
           val x = parse(F.forceArrows(textBefore))
-          val y = x.respondToChange(MockExistingStepLabelsChanged)(StepState2).getOrElse(x)
+          val y = x.respondToChange(MockExistingStepLabelsChanged)(StepState2).getValueOrElse(x)
           F.get(x) should not be (None)
           y.text should be(F.forceArrows(textAfter))
           assertFlowClause(F.get(y), mapToLabels(refsAfter, StepState2))
@@ -648,7 +648,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
         def test(flowTargets: Set[LocalStepId]) {
           val change = F.other.change(X1, flowTargets)
           val x = parse(F.forceArrows(textBefore))
-          val y = x.respondToChange(change)(StepState1).getOrElse(x)
+          val y = x.respondToChange(change)(StepState1).getValueOrElse(x)
           y.text should be(F.forceArrows(textAfter))
           if (refsAfter.isEmpty)
             F.get(y) should be(None)

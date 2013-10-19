@@ -34,7 +34,7 @@ case class StepFieldValue(field: StepField, tree: StepTree, textmap: Map[LocalSt
       val lens = alens(Lenses.sfvStepTextInstL, (this, tree(0).id))
       val curText = lens.get.mainClause.text
       if (curText.isEmpty || curText == before)
-        lens.get.updateMainClause(after).map(lens.set)
+        lens.get.updateMainClause(after).mapValue(lens.set)
       else
         NoChange
     }

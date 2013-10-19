@@ -253,7 +253,7 @@ class UseCasePersistenceTest extends FunSpec with TestDatabaseSupport with TestH
       }, UsecaseRev -> 1, UcField -> (rels + 1))
 
       // NOP update to text with ref
-      testUpdate(uc => TF1.updateText("New step is [7.0]")(uc).getOrElse(uc))
+      testUpdate(uc => TF1.updateText("New step is [7.0]")(uc).getValueOrElse(uc))
     }
 
     it("should normalise and de-normalise refs in text") {

@@ -28,12 +28,12 @@ object StepText {
   def load(stepId: LocalStepId, text: NormalisedText)(implicit savedSteps: SavedSteps, ctx: UcParsingCtx) = {
     implicit val stepsAndLabels = ctx.stepsAndLabels
     val e = empty(stepId)
-    e.updateCorrected(realiseNormalisedStepRefs(text)).getOrElse(e)
+    e.updateCorrected(realiseNormalisedStepRefs(text)).getValueOrElse(e)
   }
 
   def parse(stepId: LocalStepId, text: String)(implicit ctx: UcParsingCtx) = {
     val e = empty(stepId)
-    e.update(text).getOrElse(e)
+    e.update(text).getValueOrElse(e)
   }
 }
 
@@ -75,16 +75,17 @@ case class StepText(
     val (from, c1) = updateFlowClause(FlowFrom, flowFromClause, p.from)
     val (to, c2) = updateFlowClause(FlowTo, flowToClause, p.to)
     val changes = NonEmptyList.apply[Change](textChanged, c1 ::: c2: _*)
-    val main = mainClause.update(invalidateFlowArrows(p.text)).getOrElse(mainClause)
+    val main = mainClause.update(invalidateFlowArrows(p.text)).getValueOrElse(mainClause)
     val newVal = copy(mainClause = main, flowFromClause = from, flowToClause = to)
     Changed(newVal, changes)
   }
 
   def updateMainClause(newMainClauseText: String)(implicit ctx: UcParsingCtx): ChangeResult[StepText, Change] =
-    mainClause.
-    update(newMainClauseText).
-    mapChanges(_.map(convertFreeTextChange)).
-    map(m => copy(mainClause = m))
+    mainClause.update(newMainClauseText)
+      .mapEachChange(convertFreeTextChange)
+      .mapValue(replaceMainClause)
+
+  private def replaceMainClause(ft: FreeText): StepText = copy(mainClause = ft)
 
   def updateFlowClause[C <: FlowClause, F <: Flow[C]](flow: F, oldClause: Option[C], newRefs: Flow.Refs): (Option[C], List[Change]) = {
     val newClause = flow.create(newRefs)
@@ -176,7 +177,7 @@ case class StepText(
     case FlowToChange(id, toIds) => processFlowChange(FlowFrom, flowFromClause, withFlowFrom, toIds, id)
 
     // Delegate to the main clause
-    case _ => mainClause.respondToChange(c).map(ft => copy(mainClause = ft))
+    case _ => mainClause.respondToChange(c).mapValue(replaceMainClause)
   }
 
   private def withFlowFrom(from: Option[FlowFromClause]) = copy(flowFromClause = from)

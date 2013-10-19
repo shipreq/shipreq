@@ -1,6 +1,7 @@
 package com.beardedlogic.usecase.feature.uc.change
 
-import scalaz.NonEmptyList
+import scalaz.{Monoid, NonEmptyList}
+import scalaz.syntax.monoid._
 
 object ChangeResult {
 
@@ -22,9 +23,9 @@ object ChangeResult {
     val changes = collectChanges(ca, cb, cc)
     if (changes.isEmpty) NoChange
     else {
-      val va = ca.getOrElse(da)
-      val vb = cb.getOrElse(db)
-      val vc = cc.getOrElse(dc)
+      val va = ca.getValueOrElse(da)
+      val vb = cb.getValueOrElse(db)
+      val vc = cc.getValueOrElse(dc)
       val r = f(va, vb, vc)
       Changed(r, nel(changes))
     }
@@ -38,59 +39,151 @@ object ChangeResult {
     }
     found
   }
+
+  def apply[V, C](newValue: Option[V], changes: NonEmptyList[C]): ChangeResult[V, C] =
+    newValue match {
+      case None    => NoChange
+      case Some(v) => Changed(v, changes)
+    }
+
+  def apply[V, C](newValue: V, changes: List[C]): ChangeResult[V, C] =
+    changes match {
+      case Nil    => NoChange
+      case h :: t => Changed(newValue, NonEmptyList.nel(h, t))
+    }
+
+  implicit def changeResultMonoid[V, C] = changeResultMonoidInstance.asInstanceOf[Monoid[ChangeResult[V, C]]]
+  private object changeResultMonoidInstance extends Monoid[ChangeResult[Any, Any]] {
+    type F = ChangeResult[Any, Any]
+    override def zero = NoChange
+    override def append(f1: F, f2: => F): F = (f1, f2) match {
+      case (a, NoChange) => a
+      case (NoChange, b) => b
+      case (Changed(_, c1), Changed(v, c2)) => Changed(v, c1 append c2)
+    }
+  }
+
+  implicit def changeResultFMonoid[V, C] = changeResultFMonoidInstance.asInstanceOf[Monoid[ChangeResultF[V, C]]]
+  private object changeResultFMonoidInstance extends Monoid[ChangeResultF[Any, Any]] {
+    type F = ChangeResultF[Any, Any]
+    override def zero = NoChange
+    override def append(f1: F, f2: => F): F = (f1, f2) match {
+      case (a@ChangeFailure(_), _) => a
+      case (_, b@ChangeFailure(_)) => b
+      case (a, NoChange) => a
+      case (NoChange, b) => b
+      case (Changed(_, c1), Changed(v, c2)) => Changed(v, c1 append c2)
+    }
+  }
 }
+
+import ChangeResult._
 
 /**
  * The result of a potential change, or failure to change.
  */
 sealed trait ChangeResultF[+V, +C] {
-  def failure: Boolean
-  def success: Boolean
+  def isFailure: Boolean
+
+  def getValue: Option[V]
+  def getValueOrElse[VV >: V](other: => VV): VV
   def getChanges: List[C]
-  def getOrElse[V2 >: V](b: => V2): V2
-  def flatMapF[V2, C2](f: (V, NonEmptyList[C]) => ChangeResultF[V2, C2]): ChangeResultF[V2, C2]
-  def map[R](f: V => R): ChangeResultF[R, C]
-  def mapChanges[C2](f: NonEmptyList[C] => NonEmptyList[C2]): ChangeResultF[V, C2]
+  def getChangesOrElse[CC >: C](other: NonEmptyList[CC]): NonEmptyList[CC]
+
+  def mapF[A, B]        (f: (V,NonEmptyList[C]) => (A,NonEmptyList[B])): ChangeResultF[A, B]
+  def flatMapF[A, B]    (f: (V,NonEmptyList[C]) => ChangeResultF[A, B]): ChangeResultF[A, B]
+  def mapValueF[A]      (f: V                   => A                  ): ChangeResultF[A, C]
+  def flatMapValueF[A]  (f: V                   => Option[A]          ): ChangeResultF[A, C]
+  def mapChangesF[B]    (f: NonEmptyList[C]     => NonEmptyList[B]    ): ChangeResultF[V, B]
+  def flatMapChangesF[B](f: NonEmptyList[C]     => List[B]            ): ChangeResultF[V, B]
+  def mapEachChangeF[B] (f: C                   => B                  ): ChangeResultF[V, B] = mapChangesF(_ map f)
+
+  final def castUpF[VV >: V, CC >: C]: ChangeResultF[VV, CC] = this
+
+  def appendF[VV >: V, CC >: C](that: ChangeResultF[VV, CC]): ChangeResultF[VV, CC] =
+    castUpF[VV, CC] |+| that
+  def andThenF[VV >: V, CC >: C](defaultValue: => VV, f: VV => ChangeResultF[VV, CC]): ChangeResultF[VV, CC] =
+    appendF(f(getValueOrElse(defaultValue)))
 }
 
 /**
  * The result of a potential change. (Cannot fail.)
  */
 sealed trait ChangeResult[+V, +C] extends ChangeResultF[V, C] {
-  def reusable: Boolean
-  override def failure = false
-  override def success = true
-  override def map[R](f: V => R): ChangeResult[R, C]
-  override def mapChanges[C2](f: NonEmptyList[C] => NonEmptyList[C2]): ChangeResult[V, C2]
-  def flatMap[V2, C2](f: (V, NonEmptyList[C]) => ChangeResult[V2, C2]): ChangeResult[V2, C2]
+  override def isFailure = false
+  def map[A, B]        (f: (V,NonEmptyList[C]) => (A,NonEmptyList[B])): ChangeResult[A, B]
+  def flatMap[A, B]    (f: (V,NonEmptyList[C]) => ChangeResult[A, B] ): ChangeResult[A, B]
+  def mapValue[A]      (f: V                   => A                  ): ChangeResult[A, C]
+  def flatMapValue[A]  (f: V                   => Option[A]          ): ChangeResult[A, C]
+  def mapChanges[B]    (f: NonEmptyList[C]     => NonEmptyList[B]    ): ChangeResult[V, B]
+  def flatMapChanges[B](f: NonEmptyList[C]     => List[B]            ): ChangeResult[V, B]
+  def mapEachChange[B] (f: C                   => B                  ): ChangeResult[V, B] = mapChanges(_ map f)
+
+  final def castUp[VV >: V, CC >: C]: ChangeResult[VV, CC] = this
+
+  def append[VV >: V, CC >: C](that: ChangeResult[VV, CC]): ChangeResult[VV, CC] =
+    castUp[VV, CC] |+| that
+  def andThen[VV >: V, CC >: C](defaultValue: => VV, f: VV => ChangeResult[VV, CC]): ChangeResult[VV, CC] =
+    append(f(getValueOrElse(defaultValue)))
 }
 
-final case class ChangeFailure(errorMessage: String) extends ChangeResultF[Nothing, Nothing] {
-  override def failure = true
-  override def success = false
+trait NoChangeOrFailure {
+  this: ChangeResultF[Nothing, Nothing] =>
+  type V = Nothing
+  type C = Nothing
+
+  override def getValue = None
+  override def getValueOrElse[VV >: V](other: => VV) = other
   override def getChanges = List.empty
-  override def getOrElse[V2](b: => V2) = b
-  override def flatMapF[V2, C2](f: (Nothing, NonEmptyList[Nothing]) => ChangeResultF[V2, C2]) = this
-  override def map[R](f: Nothing => R) = this
-  override def mapChanges[C2](f: NonEmptyList[Nothing] => NonEmptyList[C2]) = this
+  override def getChangesOrElse[CC >: C](other: NonEmptyList[CC]) = other
+
+  override def mapF[A, B]        (f: (V,NonEmptyList[C]) => (A,NonEmptyList[B])) = this
+  override def flatMapF[A, B]    (f: (V,NonEmptyList[C]) => ChangeResultF[A, B]) = this
+  override def mapValueF[A]      (f: V                   => A                  ) = this
+  override def flatMapValueF[A]  (f: V                   => Option[A]          ) = this
+  override def mapChangesF[B]    (f: NonEmptyList[C]     => NonEmptyList[B]    ) = this
+  override def flatMapChangesF[B](f: NonEmptyList[C]     => List[B]            ) = this
 }
 
-final case object NoChange extends ChangeResult[Nothing, Nothing] {
-  override def reusable = true
-  override def getChanges = List.empty
-  override def getOrElse[V2](b: => V2) = b
-  override def flatMapF[V2, C2](f: (Nothing, NonEmptyList[Nothing]) => ChangeResultF[V2, C2]) = this
-  override def flatMap[V2, C2](f: (Nothing, NonEmptyList[Nothing]) => ChangeResult[V2, C2]) = this
-  override def map[R](f: Nothing => R) = this
-  override def mapChanges[C2](f: NonEmptyList[Nothing] => NonEmptyList[C2]) = this
+/**
+ * Indicates an error occurred attempting to perform a change.
+ */
+final case class ChangeFailure(errorMessage: String) extends ChangeResultF[Nothing, Nothing] with NoChangeOrFailure {
+  override def isFailure = true
 }
 
+/**
+ * Indicates that the change process completed without having an effect.
+ */
+final case object NoChange extends ChangeResult[Nothing, Nothing] with NoChangeOrFailure {
+  override def map[A, B]        (f: (V,NonEmptyList[C]) => (A,NonEmptyList[B])) = this
+  override def flatMap[A, B]    (f: (V,NonEmptyList[C]) => ChangeResult[A, B] ) = this
+  override def mapValue[A]      (f: V                   => A                  ) = this
+  override def flatMapValue[A]  (f: V                   => Option[A]          ) = this
+  override def mapChanges[B]    (f: NonEmptyList[C]     => NonEmptyList[B]    ) = this
+  override def flatMapChanges[B](f: NonEmptyList[C]     => List[B]            ) = this
+}
+
+/**
+ * Indicates that one or more changes were performed successfully.
+ */
 final case class Changed[+V, +C](newValue: V, changes: NonEmptyList[C]) extends ChangeResult[V, C] {
-  override def reusable = false
+  override def getValue = Some(newValue)
+  override def getValueOrElse[VV >: V](other: => VV) = newValue
   override def getChanges = changes.list
-  override def getOrElse[V2 >: V](b: => V2) = newValue
-  override def flatMapF[V2, C2](f: (V, NonEmptyList[C]) => ChangeResultF[V2, C2]) = f(newValue, changes)
-  override def flatMap[V2, C2](f: (V, NonEmptyList[C]) => ChangeResult[V2, C2]) = f(newValue, changes)
-  override def map[R](f: V => R) = Changed(f(newValue), changes)
-  override def mapChanges[C2](f: NonEmptyList[C] => NonEmptyList[C2]) = Changed(newValue, f(changes))
+  override def getChangesOrElse[CC >: C](other: NonEmptyList[CC]) = changes
+
+  override def map[A, B]        (f: (V,NonEmptyList[C]) => (A,NonEmptyList[B])) = {val r=f(newValue, changes); Changed(r._1, r._2)}
+  override def flatMap[A, B]    (f: (V,NonEmptyList[C]) => ChangeResult[A, B] ) = f(newValue, changes)
+  override def mapValue[A]      (f: V                   => A                  ) = Changed(f(newValue), changes)
+  override def flatMapValue[A]  (f: V                   => Option[A]          ) = ChangeResult(f(newValue), changes)
+  override def mapChanges[B]    (f: NonEmptyList[C]     => NonEmptyList[B]    ) = Changed(newValue, f(changes))
+  override def flatMapChanges[B](f: NonEmptyList[C]     => List[B]            ) = ChangeResult(newValue, f(changes))
+
+  override def mapF[A, B]        (f: (V,NonEmptyList[C]) => (A,NonEmptyList[B])) = map(f)
+  override def flatMapF[A, B]    (f: (V,NonEmptyList[C]) => ChangeResultF[A, B]) = f(newValue, changes)
+  override def mapValueF[A]      (f: V                   => A                  ) = mapValue(f)
+  override def flatMapValueF[A]  (f: V                   => Option[A]          ) = flatMapValue(f)
+  override def mapChangesF[B]    (f: NonEmptyList[C]     => NonEmptyList[B]    ) = mapChanges(f)
+  override def flatMapChangesF[B](f: NonEmptyList[C]     => List[B]            ) = flatMapChanges(f)
 }
