@@ -54,14 +54,17 @@ object FreeAndStepTextTests extends TestHelpers2 {
       oldStyleRefs(terms(t)) ==== refs
       filterTerms[UseCaseSelfRef](terms(t)).nonEmpty ==== refsOwnUc
     }
+    def textChanged: Change
   }
 
   object FreeTextTester extends Tester[FreeText](FreeText) {
     override def terms(t: FreeText) = t.terms
+    override def textChanged = TextChanged
   }
 
   object StepTextTester extends Tester[StepText](new StepTextFactory(X0)) {
     override def terms(t: StepText) = t.mainClause.terms
+    override def textChanged = StepTextChanged(X0)
     override def oldAssert(subject: StepText, text: String, refs: Refs, refsOwnUc: Boolean): Unit = {
       subject.text ==== text
       oldStyleRefs(terms(subject)) ==== refs
@@ -279,7 +282,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
         T.oldAssert(x, "Look [UC-3: New Third].", Map.empty, true)
         val (y, changes) = x.respondToChange(TitleChanged("New Third", "GREAT"))(autoCtx(StepState1).copy(title = "GREAT")).openChange
         y.text ==== "Look [UC-3: GREAT]."
-        changes shouldBe List(TextChanged)
+        changes shouldBe List(T.textChanged)
       }
     }
   } // end aTextWithRefs

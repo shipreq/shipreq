@@ -81,11 +81,7 @@ case class StepText(
   }
 
   def updateMainClause(newMainClauseText: String)(implicit ctx: UcParsingCtx): ChangeResult[StepText, Change] =
-    mainClause.update(newMainClauseText)
-      .mapEachChange(convertFreeTextChange)
-      .mapValue(replaceMainClause)
-
-  private def replaceMainClause(ft: FreeText): StepText = copy(mainClause = ft)
+    convertFreeTextChangeResult(mainClause.update(newMainClauseText))
 
   def updateFlowClause[C <: FlowClause, F <: Flow[C]](flow: F, oldClause: Option[C], newRefs: Flow.Refs): (Option[C], List[Change]) = {
     val newClause = flow.create(newRefs)
@@ -168,7 +164,6 @@ case class StepText(
   }
 
   override def respondToChange(c: Change)(implicit ctx: UcParsingCtx) = c match {
-
     // Update step references when they change
     case _: ExistingStepLabelsChanged => updateAfterStepTreeChange
 
@@ -177,14 +172,14 @@ case class StepText(
     case FlowToChange(id, toIds) => processFlowChange(FlowFrom, flowFromClause, withFlowFrom, toIds, id)
 
     // Delegate to the main clause
-    case _ => mainClause.respondToChange(c).mapValue(replaceMainClause)
+    case _ => convertFreeTextChangeResult(mainClause.respondToChange(c))
   }
 
   private def withFlowFrom(from: Option[FlowFromClause]) = copy(flowFromClause = from)
   private def withFlowTo(to: Option[FlowToClause]) = copy(flowToClause = to)
 
   def updateAfterStepTreeChange(implicit ctx: UcParsingCtx): ChangeResult[StepText, Change] = {
-    val main = mainClause.updateAfterStepTreeChange.mapChanges(_.map(convertFreeTextChange))
+    val main = mainClause.updateAfterStepTreeChange.mapEachChange(convertFreeTextChange)
     val from = updateAfterStepTreeChange(FlowFrom, flowFromClause)
     val to = updateAfterStepTreeChange(FlowTo, flowToClause)
 
@@ -192,10 +187,15 @@ case class StepText(
       (m, f, t) => copy(mainClause = m, flowFromClause = f, flowToClause = t))
     }
 
+  private def convertFreeTextChangeResult(r: ChangeResult[FreeText, Change]): ChangeResult[StepText, Change] =
+    r.mapEachChange(convertFreeTextChange).mapValue(replaceMainClause)
+
   private def convertFreeTextChange(c: Change): Change = c match {
     case TextChanged => textChanged
     case _ => c
   }
+
+  private def replaceMainClause(ft: FreeText): StepText = copy(mainClause = ft)
 
   /**
    * Removes invalid references and creates a new flow clause (text).

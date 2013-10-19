@@ -2,14 +2,17 @@ package com.beardedlogic.usecase
 package feature.uc
 
 import org.scalatest.FunSpec
+import scalaz.Name
 import lib.Types._
 import change.Changes.{TextChanged, StepTextChanged}
 import change.{UseCaseUpdater, NoChange}
+import db.{FieldKeyRec, FieldKeyType, UseCaseHeader}
 import field._
 import step.{StepTree, StepNode}
 import test.{TestData, TestHelpers}
 import text.{FlowToClause, FlowFromClause, StepText, FreeText}
 import text.FreeTextTerms._
+import util.BiMap
 import Lenses._
 import UseCaseFns._
 
@@ -122,6 +125,34 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
         it("should not change the EC root text") {
           testDoesntChange(ECF, StepText.empty(X1))
         }
+
+        it("should update self-refs in NC steps") {
+          val NCF = NormalCourseField(FieldKeyRec(14.tag[IsFieldKeyId],FieldKeyType.NormalAndAlternateCourses,None))
+          val uc1 = UseCase.as((1:Short).tag[IsUseCaseNumber],UseCaseHeader("Hehe".tag[Validated])
+            ,List(TextField(TextFieldDefinition("Description"),FieldKeyRec(10.tag[IsFieldKeyId],FieldKeyType.Text,Some("Description")))~>FreeText.empty
+            ,TextField(TextFieldDefinition("Actors"),FieldKeyRec(11.tag[IsFieldKeyId],FieldKeyType.Text,Some("Actors")))~>FreeText.empty
+            ,TextField(TextFieldDefinition("Pre-Conditions"),FieldKeyRec(12.tag[IsFieldKeyId],FieldKeyType.Text,Some("Pre-Conditions")))~>FreeText.empty
+            ,TextField(TextFieldDefinition("Post-Conditions"),FieldKeyRec(13.tag[IsFieldKeyId],FieldKeyType.Text,Some("Post-Conditions")))~>FreeText.empty
+            ,NCF~>StepFieldValue(NormalCourseField(FieldKeyRec(14.tag[IsFieldKeyId],FieldKeyType.NormalAndAlternateCourses,None)),StepTree(List(StepNode("wVaEE".tag[IsLocalStepId],0,0,List(StepNode("wEGJZ".tag[IsLocalStepId],1,1,Nil))))),Map(
+                "wEGJZ".tag[IsLocalStepId]->StepText("wEGJZ".tag[IsLocalStepId],FreeText(List(PlainText("Link to "),UseCaseSelfRef((1:Short).tag[IsUseCaseNumber],"Hehe"))),None,None),
+                "wVaEE".tag[IsLocalStepId]->StepText("wVaEE".tag[IsLocalStepId],FreeText(List(PlainText("Hehe"))),None,None)
+              ))
+            ,ExceptionCourseField(FieldKeyRec(15.tag[IsFieldKeyId],FieldKeyType.ExceptionCourses,None))~>StepFieldValue(ExceptionCourseField(FieldKeyRec(15.tag[IsFieldKeyId],FieldKeyType.ExceptionCourses,None)),StepTree(Nil),Map())
+            ,TextField(TextFieldDefinition("Use Case Relationships"),FieldKeyRec(16.tag[IsFieldKeyId],FieldKeyType.Text,Some("Use Case Relationships")))~>FreeText.empty
+            ,TextField(TextFieldDefinition("Constraints and Business Rules"),FieldKeyRec(17.tag[IsFieldKeyId],FieldKeyType.Text,Some("Constraints and Business Rules")))~>FreeText.empty
+            ,TextField(TextFieldDefinition("Frequency of Use"),FieldKeyRec(18.tag[IsFieldKeyId],FieldKeyType.Text,Some("Frequency of Use")))~>FreeText.empty
+            ,TextField(TextFieldDefinition("Special Requirements"),FieldKeyRec(19.tag[IsFieldKeyId],FieldKeyType.Text,Some("Special Requirements")))~>FreeText.empty
+            ,TextField(TextFieldDefinition("Assumptions"),FieldKeyRec(20.tag[IsFieldKeyId],FieldKeyType.Text,Some("Assumptions")))~>FreeText.empty
+            ,TextField(TextFieldDefinition("Notes and Issues"),FieldKeyRec(21.tag[IsFieldKeyId],FieldKeyType.Text,Some("Notes and Issues")))~>FreeText.empty
+            ),Name(BiMap("wEGJZ".tag[IsLocalStepId]->"1.0.1".tag[IsStepLabel],"wVaEE".tag[IsLocalStepId]->"1.0".tag[IsStepLabel])))
+
+          val stepId = "wEGJZ".tag[IsLocalStepId]
+          val cr = UseCaseUpdater(uc1, ctx.rels).updateTitle("GREAT")
+          val uc2 = cr.gimme
+          NCF(uc2.fieldValues).textmap(stepId).text ==== "Link to [UC-1: GREAT]"
+          cr.getChanges.map(_._2) should contain(StepTextChanged(stepId))
+        }
+
       }
     }
   }

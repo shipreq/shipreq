@@ -26,10 +26,12 @@ case class StepFieldValue(field: StepField, tree: StepTree, textmap: Map[LocalSt
 
   assume(textmap.keySet == tree.mapRecursive(_.id).toSet, "There must be a StepText for all steps.")
 
-  override def respondToChange(c: Change)(implicit ctx: UcParsingCtx): ChangeResult[StepFieldValue, Change] = {
+  override def respondToChange(c: Change)(implicit ctx: UcParsingCtx): ChangeResult[StepFieldValue, Change] =
+    respondToChangeByDelegation(c)
+    .andThen(this, _.respondToChangeInternally(c))
 
+  private def respondToChangeInternally(c: Change)(implicit ctx: UcParsingCtx): ChangeResult[StepFieldValue, Change] = {
     def allowTitleChange_? = field.preferTitleInRoot_? && tree.nonEmpty
-
     def changeRootToTitle(before: String, after: String) = {
       val lens = alens(Lenses.sfvStepTextInstL, (this, tree(0).id))
       val curText = lens.get.mainClause.text
@@ -38,27 +40,26 @@ case class StepFieldValue(field: StepField, tree: StepTree, textmap: Map[LocalSt
       else
         NoChange
     }
-
-    def delegateChangeToStepTexts = {
-      // Delegate msg to all StepText instances
-      var newTextmap = textmap
-      var changes = List.empty[Change]
-      for ((id, curVal) <- textmap)
-        curVal.respondToChange(c) match {
-          case Changed(newVal, h) =>
-            newTextmap += (id -> newVal)
-            changes ++= h.list
-          case NoChange =>
-        }
-
-      // Copy if changed
-      ChangeResult <~(copy(textmap = newTextmap), changes)
-    }
-
     c match {
       case TitleChanged(before, after) if allowTitleChange_? => changeRootToTitle(before, after)
-      case _ => delegateChangeToStepTexts
+      case _ => NoChange
     }
+  }
+
+  private def respondToChangeByDelegation(c: Change)(implicit ctx: UcParsingCtx): ChangeResult[StepFieldValue, Change] = {
+    // Delegate msg to all StepText instances
+    var newTextmap = textmap
+    var changes = List.empty[Change]
+    for ((id, curVal) <- textmap)
+      curVal.respondToChange(c) match {
+        case Changed(newVal, h) =>
+          newTextmap += (id -> newVal)
+          changes ++= h.list
+        case NoChange =>
+      }
+
+    // Copy if changed
+    ChangeResult <~(copy(textmap = newTextmap), changes)
   }
 
   def getNormalisedText(id: LocalStepId)(implicit savedSteps: SavedSteps): NormalisedText =
