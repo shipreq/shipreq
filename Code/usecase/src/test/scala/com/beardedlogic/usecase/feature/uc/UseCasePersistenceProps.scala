@@ -124,7 +124,7 @@ class UseCasePersistenceProps extends FunSuite with TestDatabaseSupport with Che
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  def tryMutate(uc: UseCase, m: UseCaseMutator): UseCase = m(uc)._1.gimmeOrElse(uc)
+  def tryMutate(uc: UseCase, m: UseCaseMutator): UseCase = m(uc)._1.getValueOrElse(uc)
 
   val load = loadUseCase _
   def save = saveUseCase _

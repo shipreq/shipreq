@@ -578,8 +578,6 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
   implicit class ChangeResultFExt[V, C](val r: ChangeResultF[V, C]) {
     def gimme: V = openChange._1
 
-    def gimmeOrElse(d: V): V = try gimme catch {case _: Throwable => d}
-
     def openChange: (V, List[C]) = r match {
       case Changed(v, c) => (v, c.list)
       case _ => fail(s"Change expected. Got: $r")
