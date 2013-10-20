@@ -112,6 +112,7 @@ object Types {
   sealed trait IsUseCaseNumber extends TypeTag[JShort]
   type UseCaseNumber = JShort @@ IsUseCaseNumber
   @inline final implicit def UcIdentToUcN(u: UseCaseIdent): UseCaseNumber = u.number
+  @inline final implicit def UcToUcN(u: UseCase): UseCaseNumber = u.number
 
   // -------------------------------------------------------------------------------------------------------------------
   // Long tags
@@ -196,6 +197,11 @@ object Types {
 
   // Due to http://youtrack.jetbrains.com/issue/SCL-5900
   @inline final def alens[A1, A2, B](l: LensFamily[A1, A2, B, B], key: A1) = AppliedLens(l, key)
+
+  // ===================================================================================================================
+  // Handy Conversions
+
+  implicit def uc2fieldValues(uc: UseCase): FieldValues = uc.fieldValues
 
   // ===================================================================================================================
   // Type class instances

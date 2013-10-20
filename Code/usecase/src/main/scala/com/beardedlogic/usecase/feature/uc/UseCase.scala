@@ -24,12 +24,15 @@ object UcParsingCtx {
   }
 
   def apply(uc: UseCase, rels: UseCaseRelations) =
-    new UcParsingCtx(uc.number, uc.header.title, uc.stepsAndLabels, rels)
+    new UcParsingCtx(uc.number, uc.title, uc.stepsAndLabels, rels)
 }
 
 // =====================================================================================================================
 
 object UseCaseFns {
+
+  def reqId(n: UseCaseNumber) = s"UC-$n"
+  def fullName(n: UseCaseNumber, title: String) = s"UC-$n: $title"
 
   def isF[F <: Field](a: Field)(implicit m: ClassTag[F]): Boolean =
     m.runtimeClass.isAssignableFrom(a.getClass)
@@ -117,6 +120,8 @@ case class UseCase(
 
   implicit protected def stepsAndLabelsImplicit = stepsAndLabels
 
+  @inline final def title = header.title
+
   def regenerateStepsAndLabels: UseCase =
     copy(stepsAndLabels = generateStepAndLabelBiMap(this))
 
@@ -159,8 +164,11 @@ case class UseCase(
     val lineS = s">$line>"
     val lineE = s"<$line<"
     val fieldsStr = fields.map(f => printF(f, fieldValues(f))).mkString("\n")
-    s"\n$lineS\nUC-$number: ${header.title}\n$lineS\n$fieldsStr\n$lineE"
+    s"\n$lineS\n$fullName\n$lineS\n$fieldsStr\n$lineE"
   }
 
   override def toString = inspect
+
+  def reqId = UseCaseFns.reqId(this)
+  def fullName = UseCaseFns.fullName(number, title)
 }

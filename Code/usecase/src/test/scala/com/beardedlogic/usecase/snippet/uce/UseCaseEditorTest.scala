@@ -129,7 +129,7 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
     lazy val (_, html) = render(UCE1)
 
     it("should render the title") {
-      html should include(MockUc1.sampleUC.header.title)
+      html should include(MockUc1.sampleUC.title)
     }
 
     it("should render text fields") {
@@ -169,7 +169,7 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
     describe("title change") {
       lazy val (uce,resp) = new UseCaseEditor2(State1).update2(_.updateTitle("  bananas  "))
       it("should update the editor state") {
-        uce.uc.header.title should be("bananas")
+        uce.uc.title should be("bananas")
       }
       it("should set the title via ajax") {
         assertIdAndActionR(resp, TitleId.tag[IsLocalId], """['"]bananas['"]""".r)

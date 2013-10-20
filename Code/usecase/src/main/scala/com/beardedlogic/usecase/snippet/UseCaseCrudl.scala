@@ -52,7 +52,7 @@ class UseCaseCrudl(projectId: ProjectId) extends SingleOpStatefulSnippet {
   def renderListItem(uc: UseCaseSummary2) = (
     "li [class+]" #> uc.eid &
     "a .title" #> (
-      "* *" #> s"UC-${uc.number}: ${uc.title}" &
+      "* *" #> uc.fullName &
       "* [href]" #> AppSiteMap.UseCaseEditor.relativeUrl(uc.id)
     ) &
     ".detail abbr [title]" #> uc.updatedAt &

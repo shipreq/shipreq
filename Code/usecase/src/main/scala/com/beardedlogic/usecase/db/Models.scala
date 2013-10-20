@@ -47,6 +47,7 @@ case class UseCaseIdent(identId: UseCaseIdentId, number: UseCaseNumber, projectI
 
 case class UseCaseRev(ident: UseCaseIdent, rev: Short, id: UseCaseRevId, header: UseCaseHeader) {
   @inline final def identId = ident.identId
+  @inline final def title = header.title
 }
 
 case class UseCaseHeader(title: String @@ Validated)
