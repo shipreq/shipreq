@@ -5,6 +5,7 @@ import scala.xml.{Text, NodeSeq}
 import scalaz.{Memo, NonEmptyList}
 import scalaz.syntax.foldable._
 import scalaz.syntax.monoid._
+import net.liftweb.common.Logger
 import net.liftweb.http.js.{JsCmd, JsCmds}
 import net.liftweb.http.js.jquery.JqJE
 import net.liftweb.http.js.jquery.JqJsCmds.jsExpToJsCmd
@@ -64,7 +65,7 @@ case class Renderer(
   textFieldIds: Map[Field, LocalTextFieldId],
   modifyUC: UcModifier => JsCmd,
   saveUC: Option[() => JsCmd]
-  ) extends RendererHelper {
+  ) extends RendererHelper with Logger {
 
   // *************************************
   // *             Rendering             *
@@ -138,18 +139,23 @@ case class Renderer(
     case (f: StepField, StepRemoved(node))                  => stepRenderers(f).jsRemoveStep(node)
     case (f: StepField, StepIndentIncreased(node, oldTree)) => stepRenderers(f).jsIncIndent(node, oldTree)
     case (f: StepField, StepIndentDecreased(node, _))       => stepRenderers(f).jsDecIndent(node)
-    case _                                                  => JsCmds.Noop
+
+    case (_: StepField, FlowFromChange(_,_) | FlowToChange(_,_)) =>
+      JsCmds.Noop
+    case _ =>
+      warn(s"Don't know how to respond to change: $change")
+      JsCmds.Noop
   }
 
   def jsRedrawFlowDiagram(changes: NonEmptyList[(UcChangeDomain, Change)]): JsCmd = {
     def matches(t: (UcChangeDomain, Change)): Boolean = t._2 match {
-      case FlowFromChange(_, _)         => true
-      case FlowToChange(_, _)           => true
-      case TailStepAdded(_)             => true
-      case _: ExistingStepLabelsChanged => true
-      case TitleChanged(_, _)           => false
-      case TextChanged                  => false
-      case StepTextChanged(_)           => false
+      case FlowFromChange(_, _)
+         | FlowToChange(_, _)
+         | TailStepAdded(_)
+         | _: ExistingStepLabelsChanged => true
+      case TitleChanged(_, _)
+         | TextChanged
+         | StepTextChanged(_)           => false
     }
     if (matches(changes.head) || changes.tail.exists(matches)) jsDrawFlowDiagram
     else JsCmds.Noop
