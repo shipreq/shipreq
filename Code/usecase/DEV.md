@@ -46,6 +46,14 @@ Use Case Textual Features
     * `FreeText.parseCorrected()`
     * `StepText.updateCorrected()`
     * `FreeText.parseTextForFlow()`
+* Anything that can be parsed in text fields, or in the main clause of step fields normally requires the following:
+    * A new token in `Grammar.FreeTextToken`
+    * Logic in `Grammar` to capture the new token when parsing text.
+    * A new term in `FreeTextTerm`.
+    * Logic in `FreeText.parseCorrected()` to validate and transform the new token into an appropriate term.
+    * Make sure the FreeText laws are not satisfied: See `TextProps` in `FreeAndStepTextTests.scala`.
 * Data available to parse-result translation is provided via `UcParsingCtx`.
-* To change text in reaction to other changes, add a case to `respondToChange()` in `FreeText`/`StepText`.
+* To change text in reaction to other changes
+    * Add a case to `respondToChange()` in `FreeText`/`StepText`.
+    * Perform the reaction in `TextProps.arbState` in `FreeAndStepTextTests.scala`.
 
