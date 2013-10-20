@@ -1,7 +1,6 @@
 package com.beardedlogic.usecase.feature.uc.change
 
-import scalaz.{Monoid, NonEmptyList}
-import scalaz.syntax.monoid._
+import scalaz.NonEmptyList
 
 object ChangeResult {
 
@@ -51,33 +50,7 @@ object ChangeResult {
       case Nil    => NoChange
       case h :: t => Changed(newValue, NonEmptyList.nel(h, t))
     }
-
-  implicit def changeResultMonoid[V, C] = changeResultMonoidInstance.asInstanceOf[Monoid[ChangeResult[V, C]]]
-  private object changeResultMonoidInstance extends Monoid[ChangeResult[Any, Any]] {
-    type F = ChangeResult[Any, Any]
-    override def zero = NoChange
-    override def append(f1: F, f2: => F): F = (f1, f2) match {
-      case (a, NoChange) => a
-      case (NoChange, b) => b
-      case (Changed(_, c1), Changed(v, c2)) => Changed(v, c1 append c2)
-    }
-  }
-
-  implicit def changeResultFMonoid[V, C] = changeResultFMonoidInstance.asInstanceOf[Monoid[ChangeResultF[V, C]]]
-  private object changeResultFMonoidInstance extends Monoid[ChangeResultF[Any, Any]] {
-    type F = ChangeResultF[Any, Any]
-    override def zero = NoChange
-    override def append(f1: F, f2: => F): F = (f1, f2) match {
-      case (a@ChangeFailure(_), _) => a
-      case (_, b@ChangeFailure(_)) => b
-      case (a, NoChange) => a
-      case (NoChange, b) => b
-      case (Changed(_, c1), Changed(v, c2)) => Changed(v, c1 append c2)
-    }
-  }
 }
-
-import ChangeResult._
 
 /**
  * The result of a potential change, or failure to change.
@@ -98,10 +71,16 @@ sealed trait ChangeResultF[+V, +C] {
   def flatMapChangesF[B](f: NonEmptyList[C]     => List[B]            ): ChangeResultF[V, B]
   def mapEachChangeF[B] (f: C                   => B                  ): ChangeResultF[V, B] = mapChangesF(_ map f)
 
-  final def castUpF[VV >: V, CC >: C]: ChangeResultF[VV, CC] = this
-
+  /** NOTE: This is not commutative. When two changed values are encountered, `that`'s is chosen over `this`'s. */
   def appendF[VV >: V, CC >: C](that: ChangeResultF[VV, CC]): ChangeResultF[VV, CC] =
-    castUpF[VV, CC] |+| that
+    (this, that) match {
+      case (a@ChangeFailure(_), _) => a
+      case (_, b@ChangeFailure(_)) => b
+      case (a, NoChange) => a
+      case (NoChange, b) => b
+      case (Changed(_, c1), Changed(v, c2)) => Changed(v, c1 append c2)
+    }
+
   def andThenF[VV >: V, CC >: C](defaultValue: => VV, f: VV => ChangeResultF[VV, CC]): ChangeResultF[VV, CC] =
     appendF(f(getValueOrElse(defaultValue)))
 }
@@ -119,10 +98,14 @@ sealed trait ChangeResult[+V, +C] extends ChangeResultF[V, C] {
   def flatMapChanges[B](f: NonEmptyList[C]     => List[B]            ): ChangeResult[V, B]
   def mapEachChange[B] (f: C                   => B                  ): ChangeResult[V, B] = mapChanges(_ map f)
 
-  final def castUp[VV >: V, CC >: C]: ChangeResult[VV, CC] = this
-
+  /** NOTE: This is not commutative. When two changed values are encountered, `that`'s is chosen over `this`'s. */
   def append[VV >: V, CC >: C](that: ChangeResult[VV, CC]): ChangeResult[VV, CC] =
-    castUp[VV, CC] |+| that
+    (this, that) match {
+      case (a, NoChange) => a
+      case (NoChange, b) => b
+      case (Changed(_, c1), Changed(v, c2)) => Changed(v, c1 append c2)
+    }
+
   def andThen[VV >: V, CC >: C](defaultValue: => VV, f: VV => ChangeResult[VV, CC]): ChangeResult[VV, CC] =
     append(f(getValueOrElse(defaultValue)))
 }
