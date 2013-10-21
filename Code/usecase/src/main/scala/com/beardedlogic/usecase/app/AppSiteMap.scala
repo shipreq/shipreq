@@ -10,7 +10,6 @@ import net.liftweb.util.Props.RunModes.{Development, Test => TestMode}
 import scalaz.{Name, Need, NonEmptyList}
 
 import AppConfig.BaseUrl
-import RequestVars.{DeriveProjectIdFromProject, DeriveProjectFromProjectId, DeriveProjectFromUseCaseId}
 import lib.Types._
 import feature.{ExternalId, ExternalIdConverter, Navbar, NavbarElem}
 import security.{PermissionCheck, Oshiro}
@@ -18,6 +17,11 @@ import security.{PermissionCheck, Oshiro}
 object AppSiteMap {
   type PM[T] = Menu.ParamMenuable[T]
 
+  private implicit class RequestVarNExt[T](val rv: RequestVar[Name[T]]) extends AnyVal {
+    def setByParam(pm: PM[T], desc: String) = setReqVar(rv, pm, desc)
+  }
+
+  // -------------------------------------------------------------------------------------------------------------------
   // Menu.i(NAME_AND_TITLE) / PATH_FOR_URL_AND_TEMPLATE
   // Menu(Loc(NAME, PATH_FOR_URL_AND_TEMPLATE, TITLE))
   // Menu.param[PARAM_TYPE(S)](NAME, TITLE, URL_TO_PARAM, PARAM_TO_URL) / PATH_FOR_URL_AND_TEMPLATE
@@ -41,8 +45,8 @@ object AppSiteMap {
     >> UseTemplate("loggedin/project")
     >> UsesNavbar(Navbar.Home, Navbar.CurrentProject)
     >> PerformEffects {
-        setReqVar(RequestVars.ProjectId, Project, "Project --> ProjectId")
-        DeriveProjectFromProjectId()
+        RequestVars.ProjectId.setByParam(Project, "Project --> ProjectId")
+        RequestVars.Project.deriveFromProjectId()
       }
   )
 
@@ -52,9 +56,9 @@ object AppSiteMap {
     >> UseTemplate("loggedin/uceditor")
     >> UsesNavbar(Navbar.Home, Navbar.CurrentProject, Navbar.UseCaseDropdown)
     >> PerformEffects {
-        setReqVar(RequestVars.UseCaseId, UseCaseEditor, "UseCaseEditor --> SoleUseCaseId")
-        DeriveProjectFromUseCaseId()
-        DeriveProjectIdFromProject()
+        RequestVars.UseCaseId.setByParam(UseCaseEditor, "UseCaseEditor --> SoleUseCaseId")
+        RequestVars.Project.deriveFromUseCaseId()
+        RequestVars.ProjectId.deriveFromProject()
       }
   )
 
@@ -64,8 +68,8 @@ object AppSiteMap {
     >> UseTemplate("loggedin/read_own_ucs")
     >> UsesNavbar(Navbar.Home, Navbar.CurrentProject, Navbar.StaticText("Use Cases"))
     >> PerformEffects {
-        setReqVar(RequestVars.ProjectId, ReadOwnUcs, "ReadOwnUcs --> ProjectId")
-        DeriveProjectFromProjectId()
+        RequestVars.ProjectId.setByParam(ReadOwnUcs, "ReadOwnUcs --> ProjectId")
+        RequestVars.Project.deriveFromProjectId()
       }
   )
 

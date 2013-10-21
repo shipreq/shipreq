@@ -17,9 +17,14 @@ object RequestVars extends Logger {
 
   object Navbar extends RequestVar[Navbar](fail("Navbar"))
 
-  object ProjectId extends RequestVar[Name[ProjectId]](fail("ProjectId"))
+  object ProjectId extends RequestVar[Name[ProjectId]](fail("ProjectId")) {
+    def deriveFromProject(): Unit = ProjectId.set(Need(Project.get.value.id))
+  }
 
-  object Project extends RequestVar[Name[Project]](fail("SoleProject"))
+  object Project extends RequestVar[Name[Project]](fail("SoleProject")) {
+    def deriveFromProjectId(): Unit = Project.set(requireDbData("Project")(_.findProject(ProjectId.get.value)))
+    def deriveFromUseCaseId(): Unit = Project.set(requireDbData("Project")(_.findProjectByUc(UseCaseId.get.value)))
+  }
 
   object UseCaseId extends RequestVar[Name[UseCaseIdentId]](fail("SoleUseCaseId"))
 
@@ -29,19 +34,6 @@ object RequestVars extends Logger {
   object UseCases extends RequestVar[List[UseCaseSummary]](
     DaoProvider.withSession(_.summariseUseCases(ProjectId.get.value))
   )
-
-  def DeriveProjectFromProjectId(): Unit =
-    Project.set(Need(
-      requireDbData("Project")(_.findProject(ProjectId.get.value))
-    ))
-
-  def DeriveProjectIdFromProject(): Unit =
-    ProjectId.set(Need(Project.get.value.id))
-
-  def DeriveProjectFromUseCaseId(): Unit =
-    Project.set(Need(
-      requireDbData("Project")(_.findProjectByUc(UseCaseId.get.value))
-    ))
 
   // -------------------------------------------------------------------------------------------------------------------
   // Helpers
@@ -56,7 +48,6 @@ object RequestVars extends Logger {
     redirectHome
   }
 
-  private def requireDbData[T](name: String)(f: DaoS => Option[T]): T =
-    DaoProvider.withSession(f) getOrElse notFound(name)
-
+  private def requireDbData[T](name: String)(f: DaoS => Option[T]): Need[T] =
+    Need(DaoProvider.withSession(f) getOrElse notFound(name))
 }
