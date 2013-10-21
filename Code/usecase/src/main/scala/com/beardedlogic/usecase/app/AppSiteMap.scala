@@ -48,6 +48,7 @@ object AppSiteMap {
   val ReadOwnUcs = (MenuWithIdParam(ExternalId.Project)("readOwnUcs", "Read Use Cases") / "project" / * / "read"
     >> AuthenticationRequired >> ProjectPermissionRequired
     >> UseTemplate("loggedin/read_own_ucs")
+    >> UsesNavbar(Navbar.Home, Navbar.CurrentProject, Navbar.StaticText("Use Cases"))
   )
 
   // -------------------------------------------------------------------------------------------------------------------

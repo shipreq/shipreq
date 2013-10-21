@@ -76,4 +76,9 @@ object Navbar {
     def dropdownLi(uc: UseCaseSummary): NodeSeq =
       <li><a href={AppSiteMap.UseCaseEditor.relativeUrl(uc.id)}>{uc.fullName}</a></li>
   }
+
+  case class StaticText(text: String) extends NavbarElem {
+    override val render = <a>{text}</a> % DudLinkAttr
+    override def renderActive = render
+  }
 }
