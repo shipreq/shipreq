@@ -7,10 +7,11 @@ import net.liftweb.sitemap.Loc._
 import net.liftweb.sitemap._
 import net.liftweb.util.Props
 import net.liftweb.util.Props.RunModes.{Development, Test => TestMode}
+import scalaz.NonEmptyList
 
 import AppConfig.BaseUrl
 import lib.Types._
-import feature.{ExternalId, ExternalIdConverter}
+import feature.{ExternalId, ExternalIdConverter, Navbar, NavbarElem}
 import security.{PermissionCheck, Oshiro}
 
 object AppSiteMap {
@@ -34,15 +35,20 @@ object AppSiteMap {
 
   val Project = (MenuWithIdParam(ExternalId.Project)("project", "Project") / "project" / *
     >> AuthenticationRequired >> ProjectPermissionRequired
-    >> UseTemplate("loggedin/project"))
+    >> UseTemplate("loggedin/project")
+    >> UsesNavbar(Navbar.Home, Navbar.CurrentProject)
+  )
 
   val UseCaseEditor = (MenuWithIdParam(ExternalId.UseCase)("uce", "Use Case Editor") / "usecase" / *
     >> AuthenticationRequired >> ProjectPermissionRequired
-    >> UseTemplate("loggedin/uceditor"))
+    >> UseTemplate("loggedin/uceditor")
+    >> UsesNavbar(Navbar.Home, Navbar.CurrentProject, Navbar.UseCaseDropdown)
+  )
 
   val ReadOwnUcs = (MenuWithIdParam(ExternalId.Project)("readOwnUcs", "Read Use Cases") / "project" / * / "read"
     >> AuthenticationRequired >> ProjectPermissionRequired
-    >> UseTemplate("loggedin/read_own_ucs"))
+    >> UseTemplate("loggedin/read_own_ucs")
+  )
 
   // -------------------------------------------------------------------------------------------------------------------
 
@@ -122,4 +128,14 @@ object AppSiteMap {
 
   private def ProjectPermissionRequired =
     PermissionRequired(_.readAndUpdate(RequestVars.SoleProject))
+
+  private def UsesNavbar(h: NavbarElem, t: NavbarElem*) = {
+    val elems = NonEmptyList(h, t: _*)
+    val navbar = Navbar(elems.reverse)
+    Test(_ => {
+      RequestVars.Navbar.set(navbar)
+      true
+    })
+  }
+
 }

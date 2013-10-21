@@ -1,20 +1,30 @@
 package com.beardedlogic.usecase
 package app
 
-import net.liftweb.common.{Box, Full}
+import net.liftweb.common.{Logger, Box}
 import net.liftweb.http.RequestVar
 import db.{UseCaseSummary, Project}
 import DI.DaoProvider
 import lib.Types._
 import lib.SnippetHelpers._
+import feature.Navbar
 
-object RequestVars {
+object RequestVars extends Logger {
 
-  object SoleProject extends RequestVar[Project](discoverProject openOr redirectHome)
+  object Navbar extends RequestVar[Navbar](fail("Navbar"))
+
+  object SoleProject extends RequestVar[Project](discoverProject openOr fail("SoleProject"))
 
   object UseCases extends RequestVar[List[UseCaseSummary]](loadUseCases)
 
+  object SoleUseCaseId extends RequestVar[UseCaseIdentId](urlProvidedUseCaseId openOr fail("SoleUseCaseId"))
+
   // -------------------------------------------------------------------------------------------------------------------
+
+  private def fail(name: String): Nothing = {
+    warn("No value available to RequestVar: " + name)
+    redirectHome
+  }
 
   private def urlProvidedProjectId: Box[ProjectId] =
     AppSiteMap.Project.currentValue or
