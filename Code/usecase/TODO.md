@@ -10,6 +10,7 @@ FUNC TODO
 
 * [S.2.5] [UCE ] Step is lost if accidentally deleted. No undo.
 * [S.2.1] [ACCT] Change username & password (when logged in).
+* [S.1.1] [UX  ] Pages don't have acceptable titles.
 * [S.0.5] [ACCT] Password reset (when not logged in).
 
 * [C.2.4] [UCE ] Make step labels fade into links when clickable, else users wont know to click.
