@@ -115,6 +115,13 @@ function isVisible(e) {
         $('html,body').animate({ scrollTop: t.first().offset().top }, duration)
         return t
     };
+    $.fn.addClassOnHover = function (tgt, className) {
+        tgt = $(tgt)
+        $(this).hover(
+            function(){tgt.addClass(className)},
+            function(){tgt.removeClass(className)}
+        )
+    };
 }(jQuery));
 
 // =====================================================================================================================
@@ -181,3 +188,12 @@ function enhanceDom() { $(document).enhanceDom() }
     };
 
 }(jQuery));
+
+
+$(document).ready(function(){
+
+    // When refs are hovered over, highlight the reference step.
+    $('.ucs-published .steps tr')
+        .filter(function(i,e){return e.id.substr(0,4)=="step"})
+        .each(function(i,e){ $('.ucs-published a.step[href=#'+e.id+']').addClassOnHover('#'+e.id,'highlight') })
+})

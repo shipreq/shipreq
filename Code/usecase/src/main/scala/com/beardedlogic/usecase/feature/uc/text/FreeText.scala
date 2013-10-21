@@ -7,15 +7,24 @@ import Changes._
 import ParsingConfig._
 import ParsingUtils._
 
+// =====================================================================================================================
+
 sealed trait FreeTextTerm
 
 object FreeTextTerms {
   case class PlainText(text: String) extends FreeTextTerm
+
   case object DeletedRef extends FreeTextTerm
+
   case class StepRef(id: LocalStepId, label: StepLabel) extends FreeTextTerm
   case class InvalidStepRef(label: StepLabel) extends FreeTextTerm
-  case class UseCaseRef(num: UseCaseNumber, title: String) extends FreeTextTerm
-  case class UseCaseSelfRef(num: UseCaseNumber, title: String) extends FreeTextTerm
+
+  sealed abstract class AnyUseCaseRef extends FreeTextTerm {
+    def num: UseCaseNumber
+    def title: String
+  }
+  case class UseCaseRef(num: UseCaseNumber, title: String) extends AnyUseCaseRef
+  case class UseCaseSelfRef(num: UseCaseNumber, title: String) extends AnyUseCaseRef
   case class InvalidUseCaseRef(num: UseCaseNumber, title: Option[String]) extends FreeTextTerm
 }
 

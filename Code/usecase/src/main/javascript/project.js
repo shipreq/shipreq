@@ -95,7 +95,6 @@ $(document).on('usecase-update-nop', function(event, data) {
 $(document).ready(function() {
     $('#project-title button.cancel').click(renameCancel)
     $('nav .update').click(renameStart)
-    $('nav .readucs').click(PENDING)
     $('nav .genpdf').click(PENDING)
     $('nav .delete').click(PENDING)
     ucliPrepare(ucListSel())

@@ -26,6 +26,9 @@ final object ParsingConfig {
   @inline def makeUseCaseRef(num: UseCaseNumber, title: String): String =
     new StringBuilder(title.length + 10).appendUseCaseRef(num, title).toString
 
+  @inline def makeInvalidUseCaseRef(num: UseCaseNumber, title: Option[String]): String =
+    new StringBuilder(title.getOrElse("").length + 12).appendInvalidUseCaseRef(num, title).toString
+
   val ValidUseCaseRefRegex = "\\[UC-(\\d+?): (.+?)\\]".r
   def makeNormalisedUseCaseRef(m: Regex.Match): String = RefBraceLs + "UC-" + m.group(1) + RefBraceRs
 

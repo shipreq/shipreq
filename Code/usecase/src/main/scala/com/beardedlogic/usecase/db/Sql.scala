@@ -125,6 +125,8 @@ private[db] final object Sql {
   val SelectLatestUseCaseRev = query[UseCaseIdentId, UseCaseRev](
     s"SELECT ${ucrev_*} FROM usecase u, usecase_rev r WHERE r.id=latest_rev_id AND u.id=?")
 
+  val SelectLatestUseCaseRevsByProject = query[ProjectId, UseCaseRev](summariseUseCaseSql(ucrev_*))
+
   private def summariseUseCaseSql(select: String) =
     s"SELECT $select FROM usecase u, usecase_rev r WHERE r.id = latest_rev_id and project_id = ? ORDER BY number"
 

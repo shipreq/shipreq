@@ -44,3 +44,5 @@ UNTESTED
 ========
 * [U] ChangeResult
 * [I] /project
+* [U] Publisher (page, JS, generation)
+* [U] Navbar

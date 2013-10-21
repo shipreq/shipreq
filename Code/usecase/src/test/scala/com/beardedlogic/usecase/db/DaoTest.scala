@@ -149,6 +149,12 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
       (u, p)
     }
 
+    def newUserProjectAndUseCase(projectName: String @@ Validated, ucName: String @@ Validated) = {
+      val (u, p) = newUserAndProject(projectName)
+      val uc = createUseCaseIdentAndRev1(p, ucName)
+      (u, p, uc)
+    }
+
     describe("create") {
       import CreateProjectResult._
 
@@ -213,6 +219,14 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
         r.map(_.copy(ucUpdatedAt = None)) ==== List(ProjectSummary(p2, "Apple", 1, None), s1)
         r(0).ucUpdatedAt shouldBe defined
       }
+    }
+
+    it("findAllLatestUseCaseRevsByProject") {
+      newUserProjectAndUseCase("IGNORED".validated, "IGNORED".validated)
+      val (_,p,_) = newUserProjectAndUseCase("P1".validated, "YAY".validated)
+      dao.findAllLatestUseCaseRevsByProject(p).map(_.title) shouldBe List("YAY")
+      createUseCaseIdentAndRev1(p, "yo".validated)
+      dao.findAllLatestUseCaseRevsByProject(p).map(_.title) shouldBe List("YAY", "yo")
     }
   }
 }

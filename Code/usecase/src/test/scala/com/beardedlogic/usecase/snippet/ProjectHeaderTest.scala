@@ -2,6 +2,7 @@ package com.beardedlogic.usecase.snippet
 
 import org.mockito.Mockito.when
 import org.scalatest.FunSuite
+import scalaz.Value
 import com.beardedlogic.usecase.app.RequestVars
 import com.beardedlogic.usecase.db.{Project, UserDescriptor, UpdateProjectResult}
 import com.beardedlogic.usecase.test.{MockDaoProvider, TestHelpers}
@@ -26,7 +27,7 @@ class ProjectHeaderTest extends FunSuite with TestHelpers {
     }).install {
       withUserLoggedIn(loggedInUser) {
         inMockSession {
-          RequestVars.SoleProject.set(project)
+          RequestVars.Project.set(Value(project))
           val h = new ProjectHeader
           fn(h)
         }

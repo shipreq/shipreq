@@ -2,15 +2,7 @@
   %script(type="text/javascript" src="/js/project.js" data-lift="tail")
 
   %header
-    %nav.navbar.navbar-default(role="navigation" data-lift="ProjectNavbar")
-      %ul.nav.navbar-nav
-        %li
-          %a(data-lift="Link.home")
-        %li.active
-          %a.project(href="#" onclick="return !1") CURRENT PROJECT
-      %ul.nav.navbar-nav.navbar-right
-        %li
-          %a(data-lift="Link.to?name=Logout")
+    %div(data-lift="embed?what=navbar")
 
   %section#notices(data-lift="Notices")
 
@@ -28,7 +20,7 @@
                 %button.btn.btn-lg.btn-primary.update(type="submit") Rename
 
       %nav.btn-group
-        %button.btn.btn-default.readucs Read Use Cases
+        %a.btn.btn-default.readucs Read Use Cases
         %button.btn.btn-default.genpdf Generate PDF
         .btn-group
           %button.btn.btn-default.update Rename Project
@@ -60,7 +52,8 @@
 
           / Use Case List
           %section#usecase-list
-            %h3.none.hidden2 You don't have any use cases.<br>Create one whenever you're ready!
+            .none.hidden2
+              %h3 Create your first use case above.
             %ul.list-unstyled
               %li.uc#template-li
                 %table

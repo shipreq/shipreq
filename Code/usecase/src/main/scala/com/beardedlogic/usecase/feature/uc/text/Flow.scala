@@ -31,6 +31,9 @@ sealed trait Flow[Clause <: FlowClause] {
 
 sealed trait FlowClause {
 
+  type Self <: FlowClause
+  def flowObj: Flow[Self]
+
   val refs: Refs
 
   def sortedLabels: SortedSet[StepLabel] = {
@@ -48,7 +51,10 @@ case object FlowFrom extends Flow[FlowFromClause] {
   override protected def change(stepId: LocalStepId, refs: Refs) = FlowFromChange(refs.keySet, stepId)
 }
 
-case class FlowFromClause(refs: Refs) extends FlowClause
+case class FlowFromClause(refs: Refs) extends FlowClause {
+  override type Self = FlowFromClause
+  override def flowObj = FlowFrom
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -58,4 +64,7 @@ case object FlowTo extends Flow[FlowToClause] {
   override protected def change(stepId: LocalStepId, refs: Refs) = FlowToChange(stepId, refs.keySet)
 }
 
-case class FlowToClause(refs: Refs) extends FlowClause
+case class FlowToClause(refs: Refs) extends FlowClause {
+  override type Self = FlowToClause
+  override def flowObj = FlowTo
+}

@@ -3,19 +3,9 @@
   %script(data-lift="head" src="/js/uce.js" type="text/javascript")
 
   %header
-    %nav.navbar.navbar-default(role="navigation" data-lift="uce/Navbar")
+    %nav.navbar.navbar-default(role="navigation")
       %ul.nav.navbar-nav
-        %li
-          %a(data-lift="Link.home")
-        %li
-          %a.project
-        %li.active.dropdown.ucs
-          %a.active-uc.dropdown-toggle(data-toggle="dropdown" href="#")
-            UC-<span class="num">123</span>: <span class="cur-uc-title">BLAH</span>
-            %b.caret
-          %ul.dropdown-menu
-            %li
-              %a(href="#") UC-<span class="num">123</span>: <span class="title">BLAH</span>
+        %li(data-lift="Navbar")
       %ul.nav.navbar-nav.navbar-right
         %li.dropdown
           %a.dropdown-toggle(data-toggle="dropdown" href="#")

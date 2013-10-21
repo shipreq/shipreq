@@ -146,3 +146,51 @@ html, body { height: 100% } // Cannot have any padding or margin here
     }
   }
 }
+
+.ucs-published {
+  color:#222;
+  margin: 0 auto 0 auto;
+  padding: 2ex 6ex 6ex 6ex;
+  max-width: 144ex;
+  h2,h3 {color:#000}
+
+  nav {
+    ol {margin-left:1ex}
+    a {font-size:110%; line-height:1.6em}
+  }
+
+  main {
+    margin-top:5em;
+    article + article {margin-top:8em}
+
+    .fvs {
+      width: 100%;
+
+      th, td {vertical-align:top}
+      & > tr {border-top:1px solid #ccc; border-bottom:1px solid #ccc}
+      & > tr > th {width:18ex; font-weight:normal}
+      & > tr > td {padding-left:2ex}
+      & > tr > th , & > tr > td {padding-top:0.3ex; padding-bottom:0.3ex}
+
+      td > ul {padding-left:2ex}
+      //img {width:100%; max-width:100%}
+      a.step:not(:hover), a.uc:not(:hover) {border-bottom:1px dotted}
+      .bad.ref {
+        color:#c00;
+        cursor:no-drop;
+      }
+      .steps {
+        th {white-space:nowrap}
+        td {width:100%}
+        * {line-height:1.168em}
+        .lvl-0 > tbody > tr:not(.ind) td {font-weight:bold; padding-left:0.5ex}
+        //.lvl-0 > tbody > tr.ind + tr:not(.ind) {td,th {padding-top:0.5em}}
+        .ind table {margin-left:2ex}
+        .ind .ind table {margin-left:5ex}
+        .ind th {font-weight:normal}
+        .ind td {padding-left:1.2ex}
+        .highlight {_font-weight:bold; background:#ffc}
+      }
+    }
+  }
+}

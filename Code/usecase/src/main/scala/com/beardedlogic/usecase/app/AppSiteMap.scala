@@ -2,19 +2,26 @@ package com.beardedlogic.usecase
 package app
 
 import net.liftweb.common._
-import net.liftweb.http.{S, Templates, RedirectResponse, LiftResponse, PlainTextResponse}
+import net.liftweb.http.{RequestVar, S, Templates, RedirectResponse, LiftResponse, PlainTextResponse}
 import net.liftweb.sitemap.Loc._
 import net.liftweb.sitemap._
 import net.liftweb.util.Props
 import net.liftweb.util.Props.RunModes.{Development, Test => TestMode}
+import scalaz.{Name, Need, NonEmptyList}
 
 import AppConfig.BaseUrl
 import lib.Types._
-import feature.{ExternalId, ExternalIdConverter}
+import feature.{ExternalId, ExternalIdConverter, Navbar, NavbarElem}
 import security.{PermissionCheck, Oshiro}
 
 object AppSiteMap {
+  type PM[T] = Menu.ParamMenuable[T]
 
+  private implicit class RequestVarNExt[T](val rv: RequestVar[Name[T]]) extends AnyVal {
+    def setByParam(pm: PM[T], desc: String) = setReqVar(rv, pm, desc)
+  }
+
+  // -------------------------------------------------------------------------------------------------------------------
   // Menu.i(NAME_AND_TITLE) / PATH_FOR_URL_AND_TEMPLATE
   // Menu(Loc(NAME, PATH_FOR_URL_AND_TEMPLATE, TITLE))
   // Menu.param[PARAM_TYPE(S)](NAME, TITLE, URL_TO_PARAM, PARAM_TO_URL) / PATH_FOR_URL_AND_TEMPLATE
@@ -32,25 +39,54 @@ object AppSiteMap {
   val Register2 = (Menu.param[String]("Register2", "Register", token => Full(token), t => t) / "register" / *
     >> Hidden >> UseTemplate("register2"))
 
-  val Project = (MenuWithIdParam(ExternalId.Project)("project", "Project") / "project" / *
+  val Project: PM[ProjectId] = (
+    MenuWithIdParam(ExternalId.Project)("project", "Project") / "project" / *
     >> AuthenticationRequired >> ProjectPermissionRequired
-    >> UseTemplate("loggedin/project"))
+    >> UseTemplate("loggedin/project")
+    >> UsesNavbar(Navbar.Home, Navbar.CurrentProject)
+    >> PerformEffects {
+        RequestVars.ProjectId.setByParam(Project, "Project --> ProjectId")
+        RequestVars.Project.deriveFromProjectId()
+      }
+  )
 
-  val UseCaseEditor = (MenuWithIdParam(ExternalId.UseCase)("uce", "Use Case Editor") / "usecase" / *
+  val UseCaseEditor: PM[UseCaseIdentId] = (
+    MenuWithIdParam(ExternalId.UseCase)("uce", "Use Case Editor") / "usecase" / *
     >> AuthenticationRequired >> ProjectPermissionRequired
-    >> UseTemplate("loggedin/uceditor"))
+    >> UseTemplate("loggedin/uceditor")
+    >> UsesNavbar(Navbar.Home, Navbar.CurrentProject, Navbar.UseCaseDropdown)
+    >> PerformEffects {
+        RequestVars.UseCaseId.setByParam(UseCaseEditor, "UseCaseEditor --> SoleUseCaseId")
+        RequestVars.Project.deriveFromUseCaseId()
+        RequestVars.ProjectId.deriveFromProject()
+      }
+  )
+
+  val ReadOwnUcs: PM[ProjectId] = (
+    MenuWithIdParam(ExternalId.Project)("readOwnUcs", "Read Use Cases") / "project" / * / "read"
+    >> AuthenticationRequired >> ProjectPermissionRequired
+    >> UseTemplate("loggedin/read_own_ucs")
+    >> UsesNavbar(Navbar.Home, Navbar.CurrentProject, Navbar.StaticText("Use Cases"))
+    >> PerformEffects {
+        RequestVars.ProjectId.setByParam(ReadOwnUcs, "ReadOwnUcs --> ProjectId")
+        RequestVars.Project.deriveFromProjectId()
+      }
+  )
 
   // -------------------------------------------------------------------------------------------------------------------
 
   val AllProdPages = List[ConvertableToMenu](
     Home, Login, Logout, Register1, Register2,
-    Project, UseCaseEditor
+    Project, UseCaseEditor, ReadOwnUcs
   )
 
   val sitemap = {
     import org.apache.shiro.authc.UsernamePasswordToken, org.apache.shiro.SecurityUtils.getSubject
 
-    def anonUce = Menu.i("Use Case Editor (demo)") / "uce" >> UseTemplate("loggedin/uceditor")
+    def anonUce = (Menu.i("Use Case Editor Demo") / "uce"
+      >> UseTemplate("loggedin/uceditor")
+      >> UsesNavbar(Navbar.Home, Navbar.StaticText("Use Case Editor Demo"))
+    )
 
     def autoLogin = Menu.i("x") / "x" >> EarlyResponse(() => {
       getSubject.login(new UsernamePasswordToken("golly", "asdasd123"))
@@ -117,5 +153,21 @@ object AppSiteMap {
     If(() => check(PermissionCheck.userCan).expect, () => failResp)
 
   private def ProjectPermissionRequired =
-    PermissionRequired(_.readAndUpdate(RequestVars.SoleProject))
+    PermissionRequired(_.readAndUpdate(RequestVars.Project.get.value))
+
+  private def UsesNavbar(h: NavbarElem, t: NavbarElem*) = {
+    val elems = NonEmptyList(h, t: _*)
+    val navbar = Navbar(elems.reverse)
+    PerformEffects(RequestVars.Navbar.set(navbar))
+  }
+
+  private def PerformEffects(f: => Unit) = Test(_ => {f; true})
+
+  private def setReqVar[T](v: RequestVar[Name[T]], m: PM[T], desc: String): Unit =
+    v.set(Need(
+      m.currentValue match {
+        case Full(t) => t
+        case b@_ => throw new IllegalStateException(s"RequestVar get failed, menu param unavailable. ($desc: $b)")
+      }
+    ))
 }

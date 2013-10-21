@@ -1,0 +1,31 @@
+digraph G {
+
+{ node[style=filled fillcolor=yellow]
+
+  UCL [label="[UC]"]; UCL -> UC
+  UC -> {FFV; Title; Num}
+  FFV [label="F x FV"]; FFV -> {F; FV}
+  LFFV [label="LogicalF x FV"]; LFFV -> {LogicalF; FV}
+  FFV -> LFFV
+  F -> LogicalF
+  FV -> SubFV
+}
+
+{ node[style=filled fillcolor="#90ff90"]
+
+  Doc [fillcolor=green]
+  RenderedSubFV [fillcolor=green]
+  ArticleL [label="[Article]"]; ArticleL -> Article
+  TocEntryL [label="[TocEntry]"]; TocEntryL -> TocEntry
+  Doc -> {TOC; ArticleL}
+  TOC -> TocEntryL
+  TocEntry -> {Title; Num}
+  Article -> {Title; Num}
+
+  LFFV -> RenderedF
+  SubFV -> RenderedSubFV
+  RenderedF -> RenderedSubFV
+  Article -> RenderedF
+}
+
+}
