@@ -3,7 +3,7 @@ package com.beardedlogic.usecase.lib
 import com.beardedlogic.usecase.db.{Project, UseCaseIdent, UserRegistrationInfo, UserDescriptor, FieldKeyRec, TextRev, UseCaseRev}
 import com.beardedlogic.usecase.feature.uc.change.{Change, ChangeResultF}
 import com.beardedlogic.usecase.feature.uc.field.Field
-import com.beardedlogic.usecase.feature.uc.UseCase
+import com.beardedlogic.usecase.feature.uc.{UseCaseSaveCheckpoint, UseCase}
 import com.beardedlogic.usecase.feature.uc.change.UcChangeDomain
 import com.beardedlogic.usecase.feature.{ExternalId, Inspection}
 import com.beardedlogic.usecase.util.{AppliedLens, BiMap}
@@ -16,6 +16,15 @@ import scalaz.{LensFamily, Monoid, Name, Value}
  * @since 30/05/2013
  */
 object Types {
+
+  // ===================================================================================================================
+  // Handy Conversions
+
+  @inline final implicit def uc2fieldValues(uc: UseCase): FieldValues = uc.fieldValues
+  @inline final implicit def ucr2ui(u: UseCaseRev): UseCaseIdent = u.ident
+  @inline final implicit def cp2uc(u: UseCaseSaveCheckpoint): UseCase = u.uc
+  @inline final implicit def cp2ucr(u: UseCaseSaveCheckpoint): UseCaseRev = u.rec
+  @inline final implicit def cp2uci(u: UseCaseSaveCheckpoint): UseCaseIdent = u.rec
 
   // ===================================================================================================================
   // Type tags
@@ -155,6 +164,7 @@ object Types {
   type UseCaseIdentEI = String @@ IsUseCaseIdentEI
   @inline final implicit def UseCaseRevToIdentId(r: UseCaseRev): UseCaseIdentId = r.identId
   @inline final implicit def UseCaseIdentToIdentId(i: UseCaseIdent): UseCaseIdentId = i.identId
+  @inline final implicit def cp2uid(u: UseCaseSaveCheckpoint): UseCaseIdentId = u.rec
 
   /** Marks a Long value as corresponding to `text_rev.id`. */
   sealed trait IsTextRevId extends IsExteralisableId {
@@ -173,6 +183,9 @@ object Types {
   type ProjectId = JLong @@ IsProjectId
   type ProjectEI = String @@ IsProjectEI
   @inline final implicit def p2pid(p: Project): ProjectId = p.id
+  @inline final implicit def uci2pid(u: UseCaseIdent): ProjectId = u.projectId
+  @inline final implicit def ucr2pid(u: UseCaseRev): ProjectId = u.projectId
+  @inline final implicit def cp2pid(u: UseCaseSaveCheckpoint): ProjectId = u.rec
 
   object AutoExternaliseIds {
     implicit def aei_P (id: ProjectId)     : ProjectEI      = ExternalId.Project(id)
@@ -198,11 +211,6 @@ object Types {
 
   // Due to http://youtrack.jetbrains.com/issue/SCL-5900
   @inline final def alens[A1, A2, B](l: LensFamily[A1, A2, B, B], key: A1) = AppliedLens(l, key)
-
-  // ===================================================================================================================
-  // Handy Conversions
-
-  implicit def uc2fieldValues(uc: UseCase): FieldValues = uc.fieldValues
 
   // ===================================================================================================================
   // Type class instances
