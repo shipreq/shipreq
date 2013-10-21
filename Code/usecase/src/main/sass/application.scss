@@ -149,14 +149,12 @@ html, body { height: 100% } // Cannot have any padding or margin here
 
 .ucs-published {
   color:#222;
-  margin: 1cm;
-  margin-bottom: 0;
-  padding-bottom: 1cm;
-
+  margin: 0 auto 0 auto;
+  padding: 2ex 6ex 6ex 6ex;
+  max-width: 144ex;
   h2,h3 {color:#000}
 
   nav {
-    margin-top:6ex;
     ol {margin-left:1ex}
     a {font-size:110%; line-height:1.6em}
   }
@@ -166,6 +164,8 @@ html, body { height: 100% } // Cannot have any padding or margin here
     article + article {margin-top:8em}
 
     .fvs {
+      width: 100%;
+
       th, td {vertical-align:top}
       & > tr {border-top:1px solid #ccc; border-bottom:1px solid #ccc}
       & > tr > th {width:18ex; font-weight:normal}
@@ -181,6 +181,7 @@ html, body { height: 100% } // Cannot have any padding or margin here
         td {width:100%}
         * {line-height:1.168em}
         .lvl-0 > tbody > tr:not(.ind) td {font-weight:bold; padding-left:0.5ex}
+        //.lvl-0 > tbody > tr.ind + tr:not(.ind) {td,th {padding-top:0.5em}}
         .ind table {margin-left:2ex}
         .ind .ind table {margin-left:5ex}
         .ind th {font-weight:normal}

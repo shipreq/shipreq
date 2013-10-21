@@ -43,13 +43,13 @@ html, body { height: 100%; }
 #usecase-list .view-mode .view a.title { font-size: 120%; line-height: 1em; color: #4183C4; font-weight: bold; }
 #usecase-list .view-mode .view .detail { font-size: 70%; color: #888888; }
 
-.ucs-published { color: #222; margin: 1cm; margin-bottom: 0; padding-bottom: 1cm; }
+.ucs-published { color: #222; margin: 0 auto 0 auto; padding: 2ex 6ex 6ex 6ex; max-width: 144ex; }
 .ucs-published h2, .ucs-published h3 { color: #000; }
-.ucs-published nav { margin-top: 6ex; }
 .ucs-published nav ol { margin-left: 1ex; }
 .ucs-published nav a { font-size: 110%; line-height: 1.6em; }
 .ucs-published main { margin-top: 5em; }
 .ucs-published main article + article { margin-top: 8em; }
+.ucs-published main .fvs { width: 100%; }
 .ucs-published main .fvs th, .ucs-published main .fvs td { vertical-align: top; }
 .ucs-published main .fvs > tr { border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; }
 .ucs-published main .fvs > tr > th { width: 18ex; font-weight: normal; }
