@@ -4,7 +4,6 @@ import com.beardedlogic.usecase.db.{Project, UseCaseIdent, UserRegistrationInfo,
 import com.beardedlogic.usecase.feature.uc.change.{Change, ChangeResultF}
 import com.beardedlogic.usecase.feature.uc.field.Field
 import com.beardedlogic.usecase.feature.uc.{UseCaseSaveCheckpoint, UseCase}
-import com.beardedlogic.usecase.feature.uc.change.UcChangeDomain
 import com.beardedlogic.usecase.feature.{ExternalId, Inspection}
 import com.beardedlogic.usecase.util.{AppliedLens, BiMap}
 import java.lang.{Long => JJLong, Short => JJShort}
@@ -207,7 +206,7 @@ object Types {
 
   type FieldValues = Map[Field, Field#Value]
 
-  type UcUpdateResult = ChangeResultF[UseCase, (UcChangeDomain, Change)]
+  type UcUpdateResult = ChangeResultF[UseCase, Change]
 
   // Due to http://youtrack.jetbrains.com/issue/SCL-5900
   @inline final def alens[A1, A2, B](l: LensFamily[A1, A2, B, B], key: A1) = AppliedLens(l, key)

@@ -26,7 +26,7 @@ object Lenses {
   )
 
   val stepTextTextL = lensFamilyg[StepText, StepText, String, (String, UcParsingCtx)](
-    v => input => StepText.parse(v.stepId, input._1)(input._2),
+    _ => input => StepText.parse(input._1)(input._2),
     _.text)
 
   // Use Case lenses

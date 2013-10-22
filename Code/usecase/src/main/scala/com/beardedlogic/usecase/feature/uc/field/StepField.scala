@@ -4,10 +4,11 @@ package field
 import scala.annotation.tailrec
 import com.beardedlogic.usecase.db._
 import com.beardedlogic.usecase.lib.Types._
+import change._
 import step.StepLabels.{MaxStepsPerLevel, MaxStepDepth}
 import step.{StepTree, StepNodeBuilder, StepNode}
 import step.TreeOps._
-import change._
+import text.StepTextUpdater
 import Changes._
 import Lenses._
 import StepFieldConsts._
@@ -70,9 +71,13 @@ trait StepFieldLike extends StepFieldPersistenceMixin { this: Field with StepFie
 
   override def toString = s"${getClass.getSimpleName}[#${rec.id}]"
 
+  override def changeResponder(sfv: StepFieldValue) = sfv
+
   def updateText(id: LocalStepId, newText: String)(u: UseCaseUpdater): UcUpdateResult = {
     implicit val lens = alens(ucStepTextInstL, (u.uc, (this, id)))
-    u.update(this, lens.get.update(newText)(u.ctx))
+    val updater = StepTextUpdater(this, id, lens.get)
+    val cr = updater.update(newText)(u.ctx)
+    u.update(this, cr)
   }
 
   def addTailStep(u: UseCaseUpdater): UcUpdateResult = {
@@ -84,7 +89,7 @@ trait StepFieldLike extends StepFieldPersistenceMixin { this: Field with StepFie
     else {
       val tailStep = StepNodeBuilder(0, labelIndex)
       val newSfv = lens.get.withNewStep(StepTree(curNodes :+ tailStep), tailStep.id)
-      val cr = newSfv @: TailStepAdded(tailStep)
+      val cr = newSfv @: TailStepAdded(this, tailStep)
       u.update(this, cr)
     }
   }
@@ -94,7 +99,7 @@ trait StepFieldLike extends StepFieldPersistenceMixin { this: Field with StepFie
       sfv => stepInsert(precedingNodeId, sfv.tree, StepNodeBuilder),
       (sfv, newNodes, newNode) => {
         val newSfv = sfv.withNewStep(StepTree(newNodes), newNode.id)
-        newSfv @: StepAdded(precedingNodeId, newNode)
+        newSfv @: StepAdded(this, precedingNodeId, newNode)
       }
     )
 
@@ -108,7 +113,7 @@ trait StepFieldLike extends StepFieldPersistenceMixin { this: Field with StepFie
           var newTextmap = sfv.textmap
           removedNode.foreachRecursive(n => newTextmap -= n.id)
           val newSfv = sfv.copy(tree = StepTree(newNodes), textmap = newTextmap)
-          val cr = newSfv @: StepRemoved(removedNode)
+          val cr = newSfv @: StepRemoved(this, removedNode)
           u.update(this, cr)
         case _ => NoChange
       }
@@ -119,7 +124,7 @@ trait StepFieldLike extends StepFieldPersistenceMixin { this: Field with StepFie
       sfv => indentDecrease(id, sfv.tree),
       (sfv, newNodes, tgtNode) => {
         val newSfv = sfv.copy(tree = StepTree(newNodes))
-        newSfv @: StepIndentDecreased(tgtNode, sfv.tree)
+        newSfv @: StepIndentDecreased(this, tgtNode, sfv.tree)
       }
     )
 
@@ -128,7 +133,7 @@ trait StepFieldLike extends StepFieldPersistenceMixin { this: Field with StepFie
       sfv => indentIncrease(id, sfv.tree),
       (sfv, newNodes, tgtNode) => {
         val newSfv = sfv.copy(tree = StepTree(newNodes))
-        newSfv @: StepIndentIncreased(tgtNode, sfv.tree)
+        newSfv @: StepIndentIncreased(this, tgtNode, sfv.tree)
       }
     )
 

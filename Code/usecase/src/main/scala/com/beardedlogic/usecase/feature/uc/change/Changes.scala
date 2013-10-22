@@ -1,16 +1,14 @@
-package com.beardedlogic.usecase.feature.uc.change
+package com.beardedlogic.usecase.feature.uc
+package change
 
 import scalaz.NonEmptyList
 import com.beardedlogic.usecase.lib.Types._
-import com.beardedlogic.usecase.feature.uc.step.{StepTree, StepNode}
+import field.{StepField, TextField}
+import step.{StepTree, StepNode}
 
 sealed trait Change {
   val asOnlyChange = NonEmptyList(this)
   def @:[V](newValue: V) = Changed(newValue, asOnlyChange)
-  def +(otherChange: Change): NonEmptyList[Change] = NonEmptyList(this, otherChange)
-  def +:(otherChange: Change): NonEmptyList[Change] = NonEmptyList(otherChange, this)
-  def ++(otherChanges: NonEmptyList[Change]): NonEmptyList[Change] = this <:: otherChanges
-  def ++(otherChanges: List[Change]): NonEmptyList[Change] = NonEmptyList.nel(this, otherChanges)
 }
 
 object Changes {
@@ -29,14 +27,14 @@ object Changes {
    * No contextual info required because TextFields only have a single text value, and changes are automatically
    * paired to change-source (ie. the TextField).
    */
-  case object TextChanged extends Change
+  case class TextChanged(f: TextField) extends Change
 
   /**
    * Indicates that a step's text has changed.
    *
    * @param id The ID of the step node.
    */
-  case class StepTextChanged(id: LocalStepId) extends Change
+  case class StepTextChanged(f: StepField, id: LocalStepId) extends Change
 
   /**
    * Indicates that the label of one or more existing steps, has changed.
@@ -45,15 +43,15 @@ object Changes {
    */
   sealed trait ExistingStepLabelsChanged extends Change
 
-  case class TailStepAdded(node: StepNode) extends Change
+  case class TailStepAdded(f: StepField, node: StepNode) extends Change
 
-  case class StepAdded(precedingNodeId: LocalStepId, node: StepNode) extends ExistingStepLabelsChanged
+  case class StepAdded(f: StepField, precedingNodeId: LocalStepId, node: StepNode) extends ExistingStepLabelsChanged
 
-  case class StepRemoved(node: StepNode) extends ExistingStepLabelsChanged
+  case class StepRemoved(f: StepField, node: StepNode) extends ExistingStepLabelsChanged
 
-  case class StepIndentIncreased(node: StepNode, oldTree: StepTree) extends ExistingStepLabelsChanged
+  case class StepIndentIncreased(f: StepField, node: StepNode, oldTree: StepTree) extends ExistingStepLabelsChanged
 
-  case class StepIndentDecreased(node: StepNode, oldTree: StepTree) extends ExistingStepLabelsChanged
+  case class StepIndentDecreased(f: StepField, node: StepNode, oldTree: StepTree) extends ExistingStepLabelsChanged
 
   /**
    * Indicates that a step's flow-from list has changed.

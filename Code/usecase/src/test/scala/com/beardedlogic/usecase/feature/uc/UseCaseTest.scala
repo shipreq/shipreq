@@ -47,13 +47,14 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
     }
 
     it("should not recalc when only a step text changes") {
+      val id = NcSfv.textmap.keySet.head
       assertDoesntRecalc(uc => ucStepTextInstL.mod(
-        _.update("okyjidf")(uc.stepsAndLabels).gimme, (uc, (NCF, NcSfv.textmap.keySet.head))
+        _.updater(NCF, id).update("okyjidf")(uc.stepsAndLabels).gimme, (uc, (NCF, id))
       ))
     }
 
     it("should not recalc when only a text field changes") {
-      assertDoesntRecalc(uc => TF1.lens.mod(_.update("okyjidf")(uc.stepsAndLabels).gimme, uc))
+      assertDoesntRecalc(uc => TF1.lens.mod(_.updater(TF1).update("okyjidf")(uc.stepsAndLabels).gimme, uc))
     }
 
     def assertRecalc(mod: UseCase => UseCase) {
@@ -68,7 +69,7 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
   describe("respondToChanges()") {
 
     it("should return NoChange if no changes") {
-      MockUc1.sampleUC.respondToChanges(TextChanged.asOnlyChange) ==== NoChange
+      MockUc1.sampleUC.respondToChanges(TextChanged(TF4).asOnlyChange) ==== NoChange
     }
 
     it("should return a new UC if a FreeText changes") {
@@ -91,39 +92,39 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
 
         def testChanges(f: StepField, stepTextBefore: StepText) {
           val v1 = sfvWithText(f, stepTextBefore)
-          val expected = StepText(X1, freeText("Goat"), stepTextBefore.flowFromClause, stepTextBefore.flowToClause)
+          val expected = StepText(freeText("Goat"), stepTextBefore.flowFromClause, stepTextBefore.flowToClause)
           val (uc2, c) = ucWithValues(f -> v1).updateTitle("Goat").openChange
           f(uc2.fieldValues) ==== v1.copy(textmap = Map(X1 -> expected))
-          c.map(_._2) should contain(StepTextChanged(X1))
+          c should contain(StepTextChanged(f, X1))
         }
 
         def testDoesntChange(f: StepField, stepTextBefore: StepText) {
           val v1 = sfvWithText(f, stepTextBefore)
           val (uc2, c) = ucWithValues(f -> v1).updateTitle("Goat").openChange
           f(uc2.fieldValues) ==== v1
-          c.map(_._2) should not contain(StepTextChanged(X1))
+          c should not contain(StepTextChanged(f, X1))
         }
 
         it("should change the NC root text if it matches the old title") {
-          testChanges(NCF, StepText.parse(X1, UCH.title))
+          testChanges(NCF, StepText.parse(UCH.title))
         }
 
         it("should change the NC root text if empty") {
-          testChanges(NCF, StepText.empty(X1))
+          testChanges(NCF, StepText.empty)
         }
 
         it("should preserve the NC root text flow when changing") {
           val f = Some(FlowFromClause(Map(X2 -> "X2".asLabel)))
           val t = Some(FlowToClause(Map(X3 -> "X333".asLabel)))
-          testChanges(NCF, StepText(X1, freeText(UCH.title), f, t))
+          testChanges(NCF, StepText(freeText(UCH.title), f, t))
         }
 
         it("should not change the NC root text if it has some other value") {
-          testDoesntChange(NCF, StepText.parse(X1, "some other value"))
+          testDoesntChange(NCF, StepText.parse("some other value"))
         }
 
         it("should not change the EC root text") {
-          testDoesntChange(ECF, StepText.empty(X1))
+          testDoesntChange(ECF, StepText.empty)
         }
 
         it("should update self-refs in NC steps") {
@@ -134,8 +135,8 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
             ,TextField(TextFieldDefinition("Pre-Conditions"),FieldKeyRec(12.tag[IsFieldKeyId],FieldKeyType.Text,Some("Pre-Conditions")))~>FreeText.empty
             ,TextField(TextFieldDefinition("Post-Conditions"),FieldKeyRec(13.tag[IsFieldKeyId],FieldKeyType.Text,Some("Post-Conditions")))~>FreeText.empty
             ,NCF~>StepFieldValue(NormalCourseField(FieldKeyRec(14.tag[IsFieldKeyId],FieldKeyType.NormalAndAlternateCourses,None)),StepTree(List(StepNode("wVaEE".tag[IsLocalStepId],0,0,List(StepNode("wEGJZ".tag[IsLocalStepId],1,1,Nil))))),Map(
-                "wEGJZ".tag[IsLocalStepId]->StepText("wEGJZ".tag[IsLocalStepId],FreeText(List(PlainText("Link to "),UseCaseSelfRef((1:Short).tag[IsUseCaseNumber],"Hehe"))),None,None),
-                "wVaEE".tag[IsLocalStepId]->StepText("wVaEE".tag[IsLocalStepId],FreeText(List(PlainText("Hehe"))),None,None)
+                "wEGJZ".tag[IsLocalStepId]->StepText(FreeText(List(PlainText("Link to "),UseCaseSelfRef((1:Short).tag[IsUseCaseNumber],"Hehe"))),None,None),
+                "wVaEE".tag[IsLocalStepId]->StepText(FreeText(List(PlainText("Hehe"))),None,None)
               ))
             ,ExceptionCourseField(FieldKeyRec(15.tag[IsFieldKeyId],FieldKeyType.ExceptionCourses,None))~>StepFieldValue(ExceptionCourseField(FieldKeyRec(15.tag[IsFieldKeyId],FieldKeyType.ExceptionCourses,None)),StepTree(Nil),Map())
             ,TextField(TextFieldDefinition("Use Case Relationships"),FieldKeyRec(16.tag[IsFieldKeyId],FieldKeyType.Text,Some("Use Case Relationships")))~>FreeText.empty
@@ -150,7 +151,7 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
           val cr = UseCaseUpdater(uc1, ctx.rels).updateTitle("GREAT")
           val uc2 = cr.gimme
           NCF(uc2.fieldValues).textmap(stepId).text ==== "Link to [UC-1: GREAT]"
-          cr.getChanges.map(_._2) should contain(StepTextChanged(stepId))
+          cr.getChanges should contain(StepTextChanged(NCF, stepId))
         }
 
       }
@@ -160,13 +161,13 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
   describe("updateStepFieldText()") {
     it("should update the step text") {
       val uc = NCF.updateText(X2, "great")(MockUc2b.UC).gimme
-      NCF.lens.get(uc).textmap ==== MockUc2b.NcStepText + (X2 -> StepText(X2, freeText("great"), None, None))
+      NCF.lens.get(uc).textmap ==== MockUc2b.NcStepText + (X2 -> StepText(freeText("great"), None, None))
     }
     it("should cause other steps to mirror flows") {
       val uc = NCF.updateText(X2, " greater --> [ 7.0] ")(MockUc2b.UC).gimme
       val textmap = NCF.lens.get(uc).textmap
-      textmap(X2) ==== StepText(X2, freeText("greater"), None, flowToClause(X1 -> "7.0".asLabel))
-      textmap(X1) ==== StepText(X1, freeText("I'm the root"), flowFromClause(X2 -> "7.0.2".asLabel), None)
+      textmap(X2) ==== StepText(freeText("greater"), None, flowToClause(X1 -> "7.0".asLabel))
+      textmap(X1) ==== StepText(freeText("I'm the root"), flowFromClause(X2 -> "7.0.2".asLabel), None)
     }
   }
 

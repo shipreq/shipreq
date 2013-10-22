@@ -4,18 +4,6 @@ import scalaz.NonEmptyList
 
 object ChangeResult {
 
-  private def nel[C](changes: List[C]) = NonEmptyList.nel(changes.head, changes.tail)
-
-  /**
-   * Creates either a NoChange or Changed.
-   *
-   * @param v The changed value (if changes is non-empty).
-   * @param changes Potentially-empty list changes.
-   */
-  def <~[V, C](v: => V, changes: List[C]): ChangeResult[V, C] =
-    if (changes.isEmpty) NoChange
-    else Changed(v, nel(changes))
-
   def map3[A, B, C, H, R](ca: ChangeResult[A, H], cb: ChangeResult[B, H], cc: ChangeResult[C, H])
     (da: => A, db: => B, dc: => C)(f: (A, B, C) => R): ChangeResult[R, H] = {
 
@@ -26,7 +14,7 @@ object ChangeResult {
       val vb = cb.getValueOrElse(db)
       val vc = cc.getValueOrElse(dc)
       val r = f(va, vb, vc)
-      Changed(r, nel(changes))
+      Changed(r, NonEmptyList.nel(changes.head, changes.tail))
     }
   }
 
@@ -45,7 +33,7 @@ object ChangeResult {
       case Some(v) => Changed(v, changes)
     }
 
-  def apply[V, C](newValue: V, changes: List[C]): ChangeResult[V, C] =
+  def apply[V, C](newValue: => V, changes: List[C]): ChangeResult[V, C] =
     changes match {
       case Nil    => NoChange
       case h :: t => Changed(newValue, NonEmptyList.nel(h, t))

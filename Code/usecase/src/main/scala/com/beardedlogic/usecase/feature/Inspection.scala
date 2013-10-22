@@ -162,10 +162,12 @@ object Inspection {
 
   implicit val flowToClause: Show[FlowToClause] = "FlowToClause" <*> (_.refs.show)
 
-  implicit val stepText: Show[StepText] = Show.show(x =>
-    if (x.isEmpty) "StepText.empty" <> x.stepId.show
-    else "StepText" <> x.stepId.show ++> x.mainClause.show ++> x.flowFromClause.show ++> x.flowToClause.show
-  )
+  implicit val stepText: Show[StepText] = {
+    val empty: Cord = "StepText.empty"
+    Show.show(x => if (x.isEmpty) empty else
+      "StepText" <> x.mainClause.show ++> x.flowFromClause.show ++> x.flowToClause.show
+    )
+  }
 
   implicit val stepTree: Show[StepTree] = "StepTree" <*> (_.nodes.show)
 

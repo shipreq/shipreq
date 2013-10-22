@@ -233,14 +233,14 @@ class UseCasePersistenceTest extends FunSpec with TestDatabaseSupport with TestH
       // Step text change @ L2
       testUpdate(uc => {
         val stepId = NCF.lens.get(uc).tree(1)(0).id
-        ucStepTextInstL.mod(_.update("Roar.")(uc.stepsAndLabels).gimme, (uc, (NCF, stepId)))
+        ucStepTextInstL.mod(_.updater(NCF, stepId).update("Roar.")(uc.stepsAndLabels).gimme, (uc, (NCF, stepId)))
       }, UsecaseRev -> 1, TextRev -> 1, UcField -> rels)
 
       // Add new (empty) step, link from text field
       testUpdate(uc => {
         val uc2 = NCF.addTailStep(uc).gimme
         val newText = "New step is [7.2]"
-        val uc3 = TF1.lens.mod(t => t.update(newText)(uc2.stepsAndLabels).gimme, uc2)
+        val uc3 = TF1.lens.mod(t => t.updater(TF1).update(newText)(uc2.stepsAndLabels).gimme, uc2)
         TF1.lens.get(uc3).text ==== newText
         uc3
       }, UsecaseRev -> 1, Text -> 1, TextRev -> 2, UcField -> (rels + 1))

@@ -125,40 +125,38 @@ case class Renderer(
   def jsRespondChangeFailure(errorMessage: String): JsCmd =
     JsCmds.Alert(errorMessage) // TODO can do better than this
 
-  def jsRespondToChanges(changes: NonEmptyList[(UcChangeDomain, Change)]): JsCmd =
+  def jsRespondToChanges(changes: NonEmptyList[Change]): JsCmd =
     changes.foldMap(jsRespondToChange)    |+|
     jsRedrawFlowDiagram(changes)          |+|
     jsEnableSaveButton(state.saveEnabled)
 
-  def jsRespondToChange(change: (UcChangeDomain, Change)): JsCmd = change match {
-    case (_,            TitleChanged(_, _))                 => jsUpdateTitle
-    case (f: TextField, TextChanged)                        => jsUpdateTextField(f)
-    case (f: StepField, StepTextChanged(id))                => stepRenderers(f).jsUpdateStepFieldText(id)
-    case (f: StepField, TailStepAdded(node))                => stepRenderers(f).jsAddTailStep(node)
-    case (f: StepField, StepAdded(precedingId, node))       => stepRenderers(f).jsAddStep(precedingId, node)
-    case (f: StepField, StepRemoved(node))                  => stepRenderers(f).jsRemoveStep(node)
-    case (f: StepField, StepIndentIncreased(node, oldTree)) => stepRenderers(f).jsIncIndent(node, oldTree)
-    case (f: StepField, StepIndentDecreased(node, _))       => stepRenderers(f).jsDecIndent(node)
-
-    case (_: StepField, FlowFromChange(_,_) | FlowToChange(_,_)) =>
-      JsCmds.Noop
-    case _ =>
-      warn(s"Don't know how to respond to change: $change")
-      JsCmds.Noop
+  def jsRespondToChange(change: Change): JsCmd = change match {
+    case TitleChanged(_, _)                    => jsUpdateTitle
+    case TextChanged(f)                        => jsUpdateTextField(f)
+    case StepTextChanged(f, id)                => stepRenderers(f).jsUpdateStepFieldText(id)
+    case TailStepAdded(f, node)                => stepRenderers(f).jsAddTailStep(node)
+    case StepAdded(f, precedingId, node)       => stepRenderers(f).jsAddStep(precedingId, node)
+    case StepRemoved(f, node)                  => stepRenderers(f).jsRemoveStep(node)
+    case StepIndentIncreased(f, node, oldTree) => stepRenderers(f).jsIncIndent(node, oldTree)
+    case StepIndentDecreased(f, node, _)       => stepRenderers(f).jsDecIndent(node)
+    case FlowToChange(_,_)
+       | FlowFromChange(_,_) => JsCmds.Noop
   }
 
-  def jsRedrawFlowDiagram(changes: NonEmptyList[(UcChangeDomain, Change)]): JsCmd = {
-    def matches(t: (UcChangeDomain, Change)): Boolean = t._2 match {
+  def jsRedrawFlowDiagram(changes: NonEmptyList[Change]): JsCmd = {
+    def matches(c: Change): Boolean = c match {
       case FlowFromChange(_, _)
          | FlowToChange(_, _)
-         | TailStepAdded(_)
+         | TailStepAdded(_, _)
          | _: ExistingStepLabelsChanged => true
       case TitleChanged(_, _)
-         | TextChanged
-         | StepTextChanged(_)           => false
+         | TextChanged(_)
+         | StepTextChanged(_, _)        => false
     }
-    if (matches(changes.head) || changes.tail.exists(matches)) jsDrawFlowDiagram
-    else JsCmds.Noop
+    if (matches(changes.head) || changes.tail.exists(matches))
+      jsDrawFlowDiagram
+    else
+      JsCmds.Noop
   }
 
   def jsDrawFlowDiagram: JsCmd = FlowGraphTrigger.trigger(flowGraph)

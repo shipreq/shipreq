@@ -4,17 +4,17 @@ package field
 
 import db.FieldKeyRec
 import lib.Types._
-import change.{UcChangeDomain, ChangeResponder}
+import change.ChangeResponder
 
 /**
  * Represents a field that a use case can have. Eg. "Frequency of Use", "Exception Courses"
  *
  * This does not include the value of the field.
  */
-sealed trait Field extends UcChangeDomain {
+sealed trait Field {
 
   /** The type of this field's values. */
-  type Value <: ChangeResponder[Value]
+  type Value
 
   /** The type of data that encapsulates all records saved by this field. */
   type SavedData
@@ -39,6 +39,8 @@ sealed trait Field extends UcChangeDomain {
   @inline final def value(implicit fieldValues: FieldValues) = apply(fieldValues)
 
   def empty: Value
+
+  def changeResponder(v: Value): ChangeResponder[Value]
 
   /**
    * Loads a field value from the database.

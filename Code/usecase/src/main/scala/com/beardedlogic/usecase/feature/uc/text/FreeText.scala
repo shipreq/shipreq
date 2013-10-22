@@ -36,7 +36,8 @@ object FreeText {
 
   val empty: FreeText = parseCorrected("".tag[InputCorrected])(UcParsingCtx.Empty)
 
-  def correctInput(input: String): String @@ InputCorrected = input.trim.tag[InputCorrected]
+  def correctInput(input: String): String @@ InputCorrected =
+    input.trim.tag[InputCorrected]
 
   def load(text: NormalisedText)(implicit savedSteps: SavedSteps, ctx: UcParsingCtx): FreeText = {
     implicit val stepsAndLabels = ctx.stepsAndLabels
@@ -92,11 +93,7 @@ object FreeText {
 
 // =====================================================================================================================
 
-/**
- * @since 12/05/2013 (as SmartText)
- * @since 16/07/2013 (as FreeText)
- */
-case class FreeText(terms: List[FreeTextTerm]) extends ParsedText[FreeText] {
+case class FreeText(terms: List[FreeTextTerm]) extends ParsedText {
 
   val (text, stepRefs, hasUcSelfRef_?) = {
     var stepRefMap = Map.empty[LocalStepId, StepLabel]
@@ -117,26 +114,28 @@ case class FreeText(terms: List[FreeTextTerm]) extends ParsedText[FreeText] {
   def hasStepRefs_? = stepRefs.nonEmpty
 
   override def normalisedText(implicit savedSteps: SavedSteps) = normalise(text, stepRefs, savedSteps)
+}
 
-  override protected def correctInput(input: String) = FreeText.correctInput(input)
+// =====================================================================================================================
 
-  protected def textChanged = TextChanged
+case class FreeTextUpdater(t: FreeText, textChanged: Change) extends ParsedTextUpdater[FreeText] {
 
-  override protected def updateCorrected(newText: String @@ InputCorrected)(implicit ctx: UcParsingCtx) = {
+  override def correctInput(input: String) = FreeText.correctInput(input)
+
+  override def updateCorrected(newText: String @@ InputCorrected)(implicit ctx: UcParsingCtx) =
     FreeText.parseCorrected(newText) @: textChanged
-  }
 
   override def respondToChange(c: Change)(implicit ctx: UcParsingCtx) = c match {
-    case _: ExistingStepLabelsChanged                => updateAfterStepTreeChange
-    case TitleChanged(_, newTitle) if hasUcSelfRef_? => updateUcSelfRefs(newTitle)
-    case _                                           => NoChange
+    case _: ExistingStepLabelsChanged                  => updateAfterStepTreeChange
+    case TitleChanged(_, newTitle) if t.hasUcSelfRef_? => updateUcSelfRefs(newTitle)
+    case _                                             => NoChange
   }
 
   /**
    * Updates references when the step tree structure changes.
    */
   def updateAfterStepTreeChange(implicit ctx: UcParsingCtx): ChangeResult[FreeText, Change] =
-    if (!hasStepRefs_?)
+    if (!t.hasStepRefs_?)
       NoChange
     else {
       import FreeTextTerms._
@@ -144,7 +143,7 @@ case class FreeText(terms: List[FreeTextTerm]) extends ParsedText[FreeText] {
 
       var changed = false
       val newTerms: List[FreeTextTerm] =
-        terms.map(unchanged => unchanged match {
+        t.terms.map(unchanged => unchanged match {
           case StepRef(id, oldLabel) =>
             idsToLabels.get(id) match {
               case None                                   => changed = true; DeletedRef
@@ -160,15 +159,17 @@ case class FreeText(terms: List[FreeTextTerm]) extends ParsedText[FreeText] {
                | InvalidUseCaseRef(_, _) => unchanged
         })
 
-      if (changed) FreeText(newTerms) @: textChanged
-      else NoChange
+      if (changed)
+        t.copy(terms = newTerms) @: textChanged
+      else
+        NoChange
     }
 
   def updateUcSelfRefs(newTitle: String): ChangeResult[FreeText, Change] = {
-    val newTerms = terms.map(t => t match {
+    val newTerms = t.terms.map(t => t match {
       case UseCaseSelfRef(num, _) => UseCaseSelfRef(num, newTitle)
       case _ => t
     })
-    FreeText(newTerms) @: textChanged
+    t.copy(terms = newTerms) @: textChanged
   }
 }

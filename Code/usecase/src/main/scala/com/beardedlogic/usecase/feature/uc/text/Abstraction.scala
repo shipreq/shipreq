@@ -4,23 +4,23 @@ import com.beardedlogic.usecase.lib.Types._
 import com.beardedlogic.usecase.feature.uc.change._
 import com.beardedlogic.usecase.feature.uc.UcParsingCtx
 
-trait ParsedText[Self <: ParsedText[Self]] extends ChangeResponder[Self] {
-  this: Self =>
-
+trait ParsedText {
   val text: String
-
   @inline final def isEmpty = text.isEmpty
   @inline final def nonEmpty = text.nonEmpty
-
   def normalisedText(implicit savedSteps: SavedSteps): NormalisedText
+}
 
-  def update(input: String)(implicit ctx: UcParsingCtx): ChangeResult[Self, Change] = {
+trait ParsedTextUpdater[T <: ParsedText] extends ChangeResponder[T] {
+  def t: T
+  def correctInput(input: String): String @@ InputCorrected
+  def updateCorrected(newText: String @@ InputCorrected)(implicit ctx: UcParsingCtx): ChangeResult[T, Change]
+
+  final def update(input: String)(implicit ctx: UcParsingCtx): ChangeResult[T, Change] = {
     val newText = correctInput(input)
-    if (text == newText) NoChange
-    else updateCorrected(newText)
+    if (t.text == newText)
+      NoChange
+    else
+      updateCorrected(newText)
   }
-
-  protected def correctInput(input: String): String @@ InputCorrected
-
-  protected def updateCorrected(newText: String @@ InputCorrected)(implicit ctx: UcParsingCtx): ChangeResult[Self, Change]
 }

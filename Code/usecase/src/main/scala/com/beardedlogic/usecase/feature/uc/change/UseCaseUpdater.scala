@@ -1,23 +1,14 @@
 package com.beardedlogic.usecase.feature.uc
 package change
 
+import scala.collection.mutable.ListBuffer
 import scalaz.{NonEmptyList, -\/, \/-}
-import com.beardedlogic.usecase.db.UseCaseHeader
 import com.beardedlogic.usecase.feature.InputValidator
 import com.beardedlogic.usecase.lib.Types._
 import com.beardedlogic.usecase.util.AppliedLens
 import field._
 import Changes._
-import UseCaseUpdateFns._
 import UseCaseFns._
-
-/** Narrows down the scope of a change. Paired with changes to indicate where (eg. which field) the change occurred. */
-trait UcChangeDomain
-
-object UseCaseUpdateFns {
-
-  def keyByField(f: Field)(c: Change) = (f -> c)
-}
 
 case class UseCaseUpdater(uc: UseCase, rels: UseCaseRelations) {
 
@@ -33,30 +24,32 @@ case class UseCaseUpdater(uc: UseCase, rels: UseCaseRelations) {
    */
   def respondToChanges(changes: NonEmptyList[Change]): UcUpdateResult = {
 
-    def changeField(fieldValue: Field#Value): ChangeResult[Field#Value, Change] = {
-      var fieldChanges = List.empty[Change]
-      var fv = fieldValue
+    def changeField(f: Field, fieldValue: Field#Value): ChangeResult[Field#Value, Change] = {
+      val changesOccurred = new ListBuffer[Change]
+      var fv = f castValue fieldValue
+      var changeResponder = f.changeResponder(fv)
       for (c <- changes.list)
-        fv.respondToChange(c) match {
+        changeResponder.respondToChange(c) match {
           case Changed(newFv, newChanges) =>
             fv = newFv
-            fieldChanges ++= newChanges.list
+            changesOccurred ++= newChanges.list
+            changeResponder = f.changeResponder(fv)
           case NoChange =>
         }
-      ChangeResult <~ (fv, fieldChanges)
+      ChangeResult(fv, changesOccurred.result)
     }
 
     val changeAllFields = {
-      var totalChanges = List.empty[(Field, Change)]
+      val changesOccurred = new ListBuffer[Change]
       var fvs = uc.fieldValues
       for (f <- uc.fields; origFv <- uc.fieldValues.get(f))
-        changeField(origFv) match {
+        changeField(f, origFv) match {
           case Changed(newFv, newChanges) =>
             fvs += (f -> newFv)
-            totalChanges ++= newChanges.list.map(keyByField(f))
+            changesOccurred ++= newChanges.list
           case NoChange =>
         }
-      ChangeResult <~ (fvs, totalChanges)
+      ChangeResult(fvs, changesOccurred.result)
     }
 
     changeAllFields.mapValue(newFVs => uc.copy(fieldValues = newFVs))
@@ -66,13 +59,13 @@ case class UseCaseUpdater(uc: UseCase, rels: UseCaseRelations) {
   def afterRespondingToChanges(changes: NonEmptyList[Change]): UseCase = respondToChanges(changes).getValueOrElse(uc)
 
   @inline final def update[V](f: Field, cr: ChangeResultF[V, Change])(implicit l: AppliedLens[UseCase, V]): UcUpdateResult =
-    update(cr, keyByField(f) _)
+    update(cr)
 
-  def update[V](cr: ChangeResultF[V, Change], changeMapFn: Change => (UcChangeDomain, Change))(implicit l: AppliedLens[UseCase, V]): UcUpdateResult =
+  def update[V](cr: ChangeResultF[V, Change])(implicit l: AppliedLens[UseCase, V]): UcUpdateResult =
     cr.flatMapF((newValue, changes) => {
       val uc1 = l.set(newValue)
       val uc2 = correctStepsAndLabelsAfterUpdate(uc, uc1)
-      val cr1 = Changed(uc2, changes.map(changeMapFn))
+      val cr1 = Changed(uc2, changes)
       val cr2 = copy(uc = uc2).respondToChanges(changes)
       cr1 appendF cr2
     })
@@ -82,7 +75,7 @@ case class UseCaseUpdater(uc: UseCase, rels: UseCaseRelations) {
     InputValidator.useCaseTitle.correctAndValidate(input) match {
       case -\/(err) => ChangeFailure(err)
       case \/-(newTitle) if newTitle == lens.get => NoChange
-      case \/-(newTitle) => update(newTitle @: TitleChanged(lens.get, newTitle), c => (UseCaseHeader, c))
+      case \/-(newTitle) => update(newTitle @: TitleChanged(lens.get, newTitle))
     }
   }
 }

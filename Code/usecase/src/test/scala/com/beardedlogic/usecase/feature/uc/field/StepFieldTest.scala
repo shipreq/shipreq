@@ -186,7 +186,7 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
       it("should link reusable steps and save new steps") {
         val sfv2 = NcSfv.copy(
           tree = StepTree(NcSfv.tree.nodes :+ StepNode(X8, 0, 1, Nil)),
-          textmap = NcSfv.textmap + (X8 -> StepText(X8, freeText("AHHH"), None, None))
+          textmap = NcSfv.textmap + (X8 -> StepText(freeText("AHHH"), None, None))
         )
         val T8 = 408L.tag[IsTextIdentId]
         val mockSavedSteps2: SavedSteps = BiMap(MockSavedSteps.ab + (T8 -> X8))
@@ -202,7 +202,7 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
       }
 
       it("should link reusable steps and updated changed steps") {
-        val sfv2 = NcSfv.copy(textmap = NcSfv.textmap + (X2 -> StepText(X2, freeText("DIFF"), None, None)))
+        val sfv2 = NcSfv.copy(textmap = NcSfv.textmap + (X2 -> StepText(freeText("DIFF"), None, None)))
         val dao = mockDao
         val s = valueSaver(NCF, sfv2)
         s.save(dao, ucId, ucRevId, Some(firstSavedDataOfNcf))(MockSavedSteps)

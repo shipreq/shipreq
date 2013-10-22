@@ -5,14 +5,14 @@ import com.beardedlogic.usecase.feature.uc.{UcParsingCtx, Lenses}
 import com.beardedlogic.usecase.feature.uc.change._
 import com.beardedlogic.usecase.feature.uc.step.StepTree
 import com.beardedlogic.usecase.feature.uc.step.TreeOps._
-import com.beardedlogic.usecase.feature.uc.text.StepText
+import com.beardedlogic.usecase.feature.uc.text.{StepTextUpdater, StepText}
 import Changes._
 
 object StepFieldValue {
   final def empty(field: StepField) = apply(field, StepTree.empty, Map.empty)
 
   def forTree(field: StepField, tree: StepTree) =
-    apply(field, tree, tree.mapRecursive(n => (n.id -> StepText.empty(n.id))).toMap)
+    apply(field, tree, tree.mapRecursive(n => (n.id -> StepText.empty)).toMap)
 }
 
 /**
@@ -33,10 +33,12 @@ case class StepFieldValue(field: StepField, tree: StepTree, textmap: Map[LocalSt
   private def respondToChangeInternally(c: Change)(implicit ctx: UcParsingCtx): ChangeResult[StepFieldValue, Change] = {
     def allowTitleChange_? = field.preferTitleInRoot_? && tree.nonEmpty
     def changeRootToTitle(before: String, after: String) = {
-      val lens = alens(Lenses.sfvStepTextInstL, (this, tree(0).id))
-      val curText = lens.get.mainClause.text
+      val id = tree(0).id
+      val lens = alens(Lenses.sfvStepTextInstL, (this, id))
+      val t = lens.get
+      val curText = t.mainClause.text
       if (curText.isEmpty || curText == before)
-        lens.get.updateMainClause(after).mapValue(lens.set)
+        StepTextUpdater(field, id, t).updateMainClause(after).mapValue(lens.set)
       else
         NoChange
     }
@@ -51,7 +53,7 @@ case class StepFieldValue(field: StepField, tree: StepTree, textmap: Map[LocalSt
     var newTextmap = textmap
     var changes = List.empty[Change]
     for ((id, curVal) <- textmap)
-      curVal.respondToChange(c) match {
+      StepTextUpdater(field, id, curVal).respondToChange(c) match {
         case Changed(newVal, h) =>
           newTextmap += (id -> newVal)
           changes ++= h.list
@@ -59,21 +61,21 @@ case class StepFieldValue(field: StepField, tree: StepTree, textmap: Map[LocalSt
       }
 
     // Copy if changed
-    ChangeResult <~(copy(textmap = newTextmap), changes)
+    ChangeResult(copy(textmap = newTextmap), changes)
   }
 
   def getNormalisedText(id: LocalStepId)(implicit savedSteps: SavedSteps): NormalisedText =
     textmap.get(id).map(_.normalisedText).getOrElse("".tag[IsNormalised])
 
   def withNewStep(newTree: StepTree, stepId: LocalStepId) =
-    copy(tree = newTree, textmap = textmap + (stepId -> StepText.empty(stepId)))
+    copy(tree = newTree, textmap = textmap + (stepId -> StepText.empty))
 
   /**
    * Makes a copy with a new tree. New steps will have empty text added to the textmap; old, removed.
    */
   def withNewTree(newTree: StepTree) = {
     var newTextmap = Map.empty[LocalStepId, StepText]
-    for (n <- newTree) newTextmap += (n.id -> textmap.get(n.id).getOrElse(StepText.empty(n.id)))
+    for (n <- newTree) newTextmap += (n.id -> textmap.get(n.id).getOrElse(StepText.empty))
     copy(tree = newTree, textmap = newTextmap)
   }
 

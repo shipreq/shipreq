@@ -264,7 +264,7 @@ object DataGenerators extends Logger {
     val textmap = tree.mapRecursive(s => {
       val txt = textIter.next
       //trace(s"  step[${node.id}] << ${txt.replace("\n", "\\n")}")
-      val v = StepText.parse(s.id, txt)
+      val v = StepText.parse(txt)
       //val after = stepFields(node.id).text
       //if (txt.contains("⬅")) require(after.contains("⬅"), s"Left-flow lost!\nWas: $txt\nNow: $after")
       //trace(s"  step[${node.id}] >> ${after.replace("\n", "\\n")}")

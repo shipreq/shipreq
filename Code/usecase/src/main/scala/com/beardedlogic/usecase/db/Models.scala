@@ -4,7 +4,6 @@ package db
 import org.joda.time.DateTime
 import scala.reflect.ClassTag
 import lib.Types._
-import feature.uc.change.UcChangeDomain
 import feature.uc.field._
 
 // ===================================================================================================================
@@ -51,7 +50,6 @@ case class UseCaseRev(ident: UseCaseIdent, rev: Short, id: UseCaseRevId, header:
 }
 
 case class UseCaseHeader(title: String @@ Validated)
-object UseCaseHeader extends UcChangeDomain
 
 case class TextRev(identId: TextIdentId, rev: Short, id: TextRevId, text: NormalisedText)
 

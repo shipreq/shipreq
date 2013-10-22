@@ -41,7 +41,7 @@ import Lenses._
 import LensFns._
 import NodeUtils._
 import TreeOps._
-import Changes.ExistingStepLabelsChanged
+import change.Changes.{TextChanged, ExistingStepLabelsChanged}
 
 case class FixedUser(ud: Option[UserDescriptor]) extends SecurityProvider {
   override def loggedInUser = ud
@@ -399,7 +399,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
       (stepNode, children) =>
         val newId = s"id/${stepNode.level}.${stepNode.labelIndex}".asLocalStepId
         s.textmap.get(stepNode.id).map(
-          txt => newTextmap += (newId -> txt.copy(stepId = newId).norm)
+          txt => newTextmap += (newId -> txt.norm)
         )
         stepNode.copy(id = newId, children = children)
     })
@@ -510,7 +510,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
 
     def toTextmap(savedSteps: SavedSteps = EmptySavedSteps, sl: StepAndLabelBiMap = EmptyStepAndLabelBiMap) =
       TreeLike(x).mapRecursive[(LocalStepId, StepText)](n => {
-        val t = StepText.load(n.id, n.text.tag[IsNormalised])(savedSteps, UcParsingCtx.Empty.copy(stepsAndLabels = sl))
+        val t = StepText.load(n.text.tag[IsNormalised])(savedSteps, UcParsingCtx.Empty.copy(stepsAndLabels = sl))
         (n.id, t)
       }).toMap
 
@@ -549,6 +549,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
    */
   implicit class FreeTextExt(val v: FreeText) {
     def norm = normaliseFreeText(v)
+    def updater(f: TextField) = FreeTextUpdater(v, TextChanged(f))
   }
 
   /**
@@ -556,6 +557,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
    */
   implicit class StepTextExt(val v: StepText) {
     def norm = normaliseStepText(v)
+    def updater(f: StepField, id: LocalStepId) = StepTextUpdater(f, id, v)
   }
 
   /**

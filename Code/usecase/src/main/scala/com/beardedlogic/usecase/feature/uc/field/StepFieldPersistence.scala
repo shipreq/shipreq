@@ -68,7 +68,7 @@ private[field] trait StepFieldPersistenceMixin {
       // Use loaded value
       val stepTree = StepTree(stepNodes)
       FieldLoadResult[Value, SavedData](savedStepMap.result, Some(stepTree), (savedSteps, stepsAndLabels) => {
-        val textmap = for ((id, txt) <- normTextMap.result) yield (id -> StepText.load(id, txt)(savedSteps, stepsAndLabels))
+        val textmap = for ((id, txt) <- normTextMap.result) yield (id -> StepText.load(txt)(savedSteps, stepsAndLabels))
         val sfv = StepFieldValue(this, stepTree, textmap)
         (sfv, Some(savedData.result))
       })

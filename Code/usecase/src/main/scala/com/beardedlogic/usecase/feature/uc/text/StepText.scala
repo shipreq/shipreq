@@ -2,40 +2,41 @@ package com.beardedlogic.usecase.feature.uc.text
 
 import scala.collection.immutable.TreeSet
 import scalaz.{NonEmptyList, Cord}
-import com.beardedlogic.usecase.lib.Misc.SingleSpace
-import com.beardedlogic.usecase.lib.Types._
+import com.beardedlogic.usecase.db.{FieldKeyType, FieldKeyRec}
 import com.beardedlogic.usecase.feature.uc.UcParsingCtx
 import com.beardedlogic.usecase.feature.uc.change._
+import com.beardedlogic.usecase.feature.uc.field.{NormalCourseField, StepField}
 import com.beardedlogic.usecase.feature.uc.text.ParsingConfig.{FlowToStyle, FlowFromStyle, makeInvalidStepRef}
+import com.beardedlogic.usecase.lib.Misc.SingleSpace
+import com.beardedlogic.usecase.lib.Types._
 import Changes._
 import ParsingUtils._
 
 object StepText {
-  def correctInput(input: String): String @@ InputCorrected = input.trim.tag[InputCorrected]
+  def correctInput(input: String): String @@ InputCorrected =
+    input.trim.tag[InputCorrected]
 
-  def empty(stepId: LocalStepId): StepText = StepText(stepId, FreeText.empty, None, None)
+  val empty = StepText(FreeText.empty, None, None)
 
-  def load(stepId: LocalStepId, text: NormalisedText)(implicit savedSteps: SavedSteps, ctx: UcParsingCtx): StepText = {
+  def load(text: NormalisedText)(implicit savedSteps: SavedSteps, ctx: UcParsingCtx): StepText = {
     implicit val stepsAndLabels = ctx.stepsAndLabels
-    val e = empty(stepId)
-    e.updateCorrected(realiseNormalisedStepRefs(text)).getValueOrElse(e)
+    parseCorrected(realiseNormalisedStepRefs(text))
   }
 
-  def parse(stepId: LocalStepId, text: String)(implicit ctx: UcParsingCtx): StepText = {
-    val e = empty(stepId)
-    e.update(text).getValueOrElse(e)
-  }
+  def parse(text: String)(implicit ctx: UcParsingCtx): StepText =
+    parseCorrected(correctInput(text))
+
+  def parseCorrected(text: String @@ InputCorrected)(implicit ctx: UcParsingCtx): StepText =
+    EmptyUpdater.updateCorrected(text).getValueOrElse(empty)
+
+  private val fakeStepField: StepField = NormalCourseField(FieldKeyRec(0.tag[IsFieldKeyId], FieldKeyType.NormalAndAlternateCourses, None))
+  private val fakeStepId: LocalStepId = "".asLocalStepId
+  private val EmptyUpdater = StepTextUpdater(fakeStepField, fakeStepId, empty)
 }
 
-/**
- * Represents the value of a single step in a `StepField`.
- */
-case class StepText(
-  stepId: LocalStepId,
-  mainClause: FreeText,
-  flowFromClause: Option[FlowFromClause],
-  flowToClause: Option[FlowToClause])
-  extends ParsedText[StepText] {
+// =====================================================================================================================
+
+case class StepText(mainClause: FreeText, flowFromClause: Option[FlowFromClause], flowToClause: Option[FlowToClause]) extends ParsedText {
 
   override val text = {
     var t = List.empty[String]
@@ -55,23 +56,30 @@ case class StepText(
   override def normalisedText(implicit savedSteps: SavedSteps) = normalise(text, allStepRefs, savedSteps)
 
   val hasStepRefs_? = mainClause.hasStepRefs_? || flowHasRefs_?(flowFromClause) || flowHasRefs_?(flowToClause)
+}
 
-  override protected def correctInput(input: String) = StepText.correctInput(input)
+// =====================================================================================================================
 
-  protected def textChanged = StepTextChanged(stepId)
+case class StepTextUpdater(field: StepField, stepId: LocalStepId, t: StepText) extends ParsedTextUpdater[StepText] {
 
-  override protected[text] def updateCorrected(newText: String @@ InputCorrected)(implicit ctx: UcParsingCtx) = {
-    val p = parseTextForFlow(newText)
-    val (from, c1) = updateFlowClause(FlowFrom, flowFromClause, p.from)
-    val (to, c2) = updateFlowClause(FlowTo, flowToClause, p.to)
-    val changes = NonEmptyList.apply[Change](textChanged, c1 ::: c2: _*)
-    val main = mainClause.update(invalidateFlowArrows(p.text)).getValueOrElse(mainClause)
-    val newVal = copy(mainClause = main, flowFromClause = from, flowToClause = to)
+  override def correctInput(input: String) = StepText.correctInput(input)
+
+  private def textChanged = StepTextChanged(field, stepId)
+
+  private def mainClauseUpdater = FreeTextUpdater(t.mainClause, textChanged)
+
+  override def updateCorrected(newText: String @@ InputCorrected)(implicit ctx: UcParsingCtx) = {
+    val p          = parseTextForFlow(newText)
+    val (from, c1) = updateFlowClause(FlowFrom, t.flowFromClause, p.from)
+    val (to, c2)   = updateFlowClause(FlowTo, t.flowToClause, p.to)
+    val changes    = NonEmptyList.apply[Change](textChanged, c1 ::: c2: _*)
+    val main       = mainClauseUpdater.update(invalidateFlowArrows(p.text)).getValueOrElse(t.mainClause)
+    val newVal     = t.copy(mainClause = main, flowFromClause = from, flowToClause = to)
     Changed(newVal, changes)
   }
 
   def updateMainClause(newMainClauseText: String)(implicit ctx: UcParsingCtx): ChangeResult[StepText, Change] =
-    convertFreeTextChangeResult(mainClause.update(newMainClauseText))
+    convertFreeTextChangeResult(mainClauseUpdater update newMainClauseText)
 
   def updateFlowClause[C <: FlowClause, F <: Flow[C]](flow: F, oldClause: Option[C], newRefs: Flow.Refs): (Option[C], List[Change]) = {
     val newClause = flow.create(newRefs)
@@ -158,34 +166,29 @@ case class StepText(
     case _: ExistingStepLabelsChanged => updateAfterStepTreeChange
 
     // Add or Remove flow references
-    case FlowFromChange(fromIds, id) => processFlowChange(FlowTo, flowToClause, withFlowTo, fromIds, id)
-    case FlowToChange(id, toIds) => processFlowChange(FlowFrom, flowFromClause, withFlowFrom, toIds, id)
+    case FlowFromChange(fromIds, id) => processFlowChange(FlowTo, t.flowToClause, withFlowTo, fromIds, id)
+    case FlowToChange(id, toIds) => processFlowChange(FlowFrom, t.flowFromClause, withFlowFrom, toIds, id)
 
     // Delegate to the main clause
-    case _ => convertFreeTextChangeResult(mainClause.respondToChange(c))
+    case _ => convertFreeTextChangeResult(mainClauseUpdater respondToChange c)
   }
 
-  private def withFlowFrom(from: Option[FlowFromClause]) = copy(flowFromClause = from)
-  private def withFlowTo(to: Option[FlowToClause]) = copy(flowToClause = to)
+  private def withFlowFrom(from: Option[FlowFromClause]) = t.copy(flowFromClause = from)
+  private def withFlowTo(to: Option[FlowToClause]) = t.copy(flowToClause = to)
 
   def updateAfterStepTreeChange(implicit ctx: UcParsingCtx): ChangeResult[StepText, Change] = {
-    val main = mainClause.updateAfterStepTreeChange.mapEachChange(convertFreeTextChange)
-    val from = updateAfterStepTreeChange(FlowFrom, flowFromClause)
-    val to = updateAfterStepTreeChange(FlowTo, flowToClause)
+    val main = mainClauseUpdater.updateAfterStepTreeChange
+    val from = updateAfterStepTreeChange(FlowFrom, t.flowFromClause)
+    val to = updateAfterStepTreeChange(FlowTo, t.flowToClause)
 
-    ChangeResult.map3(main, from, to)(mainClause, flowFromClause, flowToClause)(
-      (m, f, t) => copy(mainClause = m, flowFromClause = f, flowToClause = t))
+    ChangeResult.map3(main, from, to)(t.mainClause, t.flowFromClause, t.flowToClause)(
+      (m, fr, to) => t.copy(mainClause = m, flowFromClause = fr, flowToClause = to))
     }
 
   private def convertFreeTextChangeResult(r: ChangeResult[FreeText, Change]): ChangeResult[StepText, Change] =
-    r.mapEachChange(convertFreeTextChange).mapValue(replaceMainClause)
+    r.mapValue(replaceMainClause)
 
-  private def convertFreeTextChange(c: Change): Change = c match {
-    case TextChanged => textChanged
-    case _ => c
-  }
-
-  private def replaceMainClause(ft: FreeText): StepText = copy(mainClause = ft)
+  private def replaceMainClause(ft: FreeText): StepText = t.copy(mainClause = ft)
 
   /**
    * Removes invalid references and creates a new flow clause (text).

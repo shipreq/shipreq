@@ -59,9 +59,9 @@ trait TestData extends TestHelpers2 {
   object MockUc2a {
     lazy val NcStepTree = StepTree(StepNode(X1, 0, 0, List(StepNode(X2, 1, 1, StepNode(X4, 2, 1, Nil) :: Nil))) :: Nil)
     lazy val NcStepText = Map(
-      X1 -> StepText(X1, freeText("I'm the root"), None, None), // 7.0
-      X2 -> StepText(X2, freeText("blar"), None, None), // 7.0.1
-      X4 -> StepText(X4, freeText("deeper"), None, None) // 7.0.1.a
+      X1 -> StepText(freeText("I'm the root"), None, None), // 7.0
+      X2 -> StepText(freeText("blar"), None, None), // 7.0.1
+      X4 -> StepText(freeText("deeper"), None, None) // 7.0.1.a
     )
     lazy val NcSfv = StepFieldValue(NCF, NcStepTree, NcStepText)
     lazy val TFV1 = FreeText(PlainText("Linking to ") :: StepRef(X2, "7.0.1".asLabel) :: Nil)
@@ -72,10 +72,10 @@ trait TestData extends TestHelpers2 {
   object MockUc2b {
     lazy val NcStepTree = StepTree(StepNode(X1, 0, 0, List(StepNode(X3, 1, 1, Nil), StepNode(X2, 1, 2, StepNode(X4, 2, 1, Nil) :: Nil))) :: Nil)
     lazy val NcStepText = Map(
-      X1 -> StepText(X1, freeText("I'm the root"), None, None), // 7.0
-      X3 -> StepText(X3, freeText("I was inserted"), None, None), // 7.0.1
-      X2 -> StepText(X2, freeText("blar"), None, None), // 7.0.2
-      X4 -> StepText(X4, freeText("deeper"), None, None) // 7.0.2.a
+      X1 -> StepText(freeText("I'm the root"), None, None), // 7.0
+      X3 -> StepText(freeText("I was inserted"), None, None), // 7.0.1
+      X2 -> StepText(freeText("blar"), None, None), // 7.0.2
+      X4 -> StepText(freeText("deeper"), None, None) // 7.0.2.a
     )
     lazy val NcSfv = StepFieldValue(NCF, NcStepTree, NcStepText)
     lazy val TFV1 = FreeText(PlainText("Linking to ") :: StepRef(X2, "7.0.2".asLabel) :: Nil)
@@ -89,11 +89,11 @@ trait TestData extends TestHelpers2 {
         StepNode(X5, 1, 3, Nil) :: Nil
     lazy val NcStepTree = StepTree(StepNode(X1, 0, 0, X1sChildren) :: Nil)
     lazy val NcStepText = Map(
-      X1 -> StepText(X1, FreeText(PlainText("I'm the root ") :: StepRef(X5, "7.0.3".asLabel) :: Nil), None, None), // 7.0
-      X3 -> StepText(X3, freeText("I was inserted"), None, None), // 7.0.1
-      X2 -> StepText(X2, freeText("blar"), None, None), // 7.0.2
-      X4 -> StepText(X4, freeText("deeper"), None, None), // 7.0.2.a
-      X5 -> StepText(X5, freeText("last"), None, None) // 7.0.3
+      X1 -> StepText(FreeText(PlainText("I'm the root ") :: StepRef(X5, "7.0.3".asLabel) :: Nil), None, None), // 7.0
+      X3 -> StepText(freeText("I was inserted"), None, None), // 7.0.1
+      X2 -> StepText(freeText("blar"), None, None), // 7.0.2
+      X4 -> StepText(freeText("deeper"), None, None), // 7.0.2.a
+      X5 -> StepText(freeText("last"), None, None) // 7.0.3
     )
     lazy val NcSfv = StepFieldValue(NCF, NcStepTree, NcStepText)
     lazy val TFV1 = FreeText(PlainText("Linking to ") :: StepRef(X2, "7.0.2".asLabel) :: Nil)
@@ -113,14 +113,14 @@ trait TestData extends TestHelpers2 {
       StepNode(X7, 0, 2, StepNode(X8, 1, 1, Nil) :: Nil) ::
       Nil)
     lazy val NcStepText = Map(
-      X1 -> StepText(X1, FreeText(PlainText("I'm the root ") :: StepRef(X5, "7.0.3"):: Nil), None, None), // 7.0
-      X3 -> StepText(X3, freeText("I was inserted"), FlowFrom.create(Map(X4 -> "7.0.2.a")), None), // 7.0.1 <- 2a
-      X2 -> StepText(X2, freeText("blar"), None, None), // 7.0.2
-      X4 -> StepText(X4, freeText("deeper"), None, FlowTo.create(Map(X3 -> "7.0.1", X6 -> "7.1"))), // 7.0.2.a
-      X5 -> StepText(X5, freeText("last"), None, None), // 7.0.3
-      X6 -> StepText(X6, freeText("AC 1"), FlowFrom.create(Map(X4 -> "7.0.2.a")), None), // 7.1
-      X7 -> StepText(X7, freeText("AC 2"), None, None), // 7.2
-      X8 -> StepText(X8, freeText("AC 2.1"), None, FlowTo.create(Map(X5 -> "7.0.3"))) // 7.2.1
+      X1 -> StepText(FreeText(PlainText("I'm the root ") :: StepRef(X5, "7.0.3"):: Nil), None, None), // 7.0
+      X3 -> StepText(freeText("I was inserted"), FlowFrom.create(Map(X4 -> "7.0.2.a")), None), // 7.0.1 <- 2a
+      X2 -> StepText(freeText("blar"), None, None), // 7.0.2
+      X4 -> StepText(freeText("deeper"), None, FlowTo.create(Map(X3 -> "7.0.1", X6 -> "7.1"))), // 7.0.2.a
+      X5 -> StepText(freeText("last"), None, None), // 7.0.3
+      X6 -> StepText(freeText("AC 1"), FlowFrom.create(Map(X4 -> "7.0.2.a")), None), // 7.1
+      X7 -> StepText(freeText("AC 2"), None, None), // 7.2
+      X8 -> StepText(freeText("AC 2.1"), None, FlowTo.create(Map(X5 -> "7.0.3"))) // 7.2.1
     )
     lazy val NcSfv = StepFieldValue(NCF, NcStepTree, NcStepText)
 

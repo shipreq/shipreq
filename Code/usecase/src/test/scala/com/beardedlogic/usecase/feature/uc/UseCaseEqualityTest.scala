@@ -54,7 +54,7 @@ class UseCaseEqualityTest extends FunSuite with TestData {
 
     val (c, cl) = NCF.addStep(X2)(b).openChange
     assertNotEqual(b, c)
-    val cn = cl.collectFirst {case (_, StepAdded(_, n)) => n}.get
+    val cn = cl.collectFirst {case StepAdded(NCF, _, n) => n}.get
 
     val d = NCF.removeStep(cn.id)(c).gimme
     assertNotEqual(c, d)

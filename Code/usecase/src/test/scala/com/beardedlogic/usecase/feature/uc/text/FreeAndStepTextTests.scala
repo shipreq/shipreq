@@ -3,6 +3,7 @@ package feature.uc.text
 
 import org.scalatest.FunSpec
 import org.scalatest.prop._
+import scala.reflect.ClassTag
 import scalaz.syntax.apply._
 import scalaz.std.list.listInstance
 import db.UseCaseSummary2
@@ -14,8 +15,6 @@ import test.{TestHelpers2, TestHelpers}
 import Changes._
 import ParsingConfig._
 import FreeTextTerms._
-import reflect.ClassTag
-import feature.uc.step.StepNode
 
 object FreeAndStepTextTests extends TestHelpers2 {
 
@@ -33,6 +32,15 @@ object FreeAndStepTextTests extends TestHelpers2 {
   val Rels = CachedUseCaseRelations(UCS)
   val Ctx1: UcParsingCtx = autoCtx(StepState1)
 
+  implicit class FreeTextExt2(val v: FreeText) {
+    def updater = FreeTextUpdater(v, TextChanged(TF1))
+  }
+
+  implicit class StepTextExt2(val v: StepText) {
+    def updater = StepTextUpdater(NCF, X0, v)
+  }
+
+
   def filterTerms[A <: FreeTextTerm](ts: List[FreeTextTerm])(implicit m: ClassTag[A]): List[A] =
     ts.filter(a => m.runtimeClass.isAssignableFrom(a.getClass)).map(_.asInstanceOf[A])
 
@@ -45,9 +53,10 @@ object FreeAndStepTextTests extends TestHelpers2 {
       c.get.refs should be(refs)
   }
 
-  abstract class Tester[T <: ParsedText[T]] {
+  abstract class Tester[T <: ParsedText] {
     def parse(text: String)(implicit ctx: UcParsingCtx): T
     def load(text: NormalisedText)(implicit savedSteps: SavedSteps, ctx: UcParsingCtx): T
+    def updater(t:T): ParsedTextUpdater[T]
     def terms(t: T): List[FreeTextTerm]
     def assertTerms(t: T, expectedTerms: FreeTextTerm*): Unit = terms(t) shouldBe expectedTerms.toList
     def assertText(t: T, expectedText: String): Unit = t.text shouldBe expectedText
@@ -63,17 +72,19 @@ object FreeAndStepTextTests extends TestHelpers2 {
   object FreeTextTester extends Tester[FreeText] {
     override def parse(text: String)(implicit ctx: UcParsingCtx) = FreeText.parse(text)
     override def load(text: NormalisedText)(implicit savedSteps: SavedSteps, ctx: UcParsingCtx) = FreeText.load(text)
+    override def updater(t: FreeText) = FreeTextUpdater(t, TextChanged(TF1))
     override def terms(t: FreeText) = t.terms
-    override def textChanged = TextChanged
+    override def textChanged = TextChanged(TF1)
     override def mapTerms(t: FreeText, f: FreeTextTerm => FreeTextTerm) = FreeText(t.terms map f)
   }
 
   object StepTextTester extends Tester[StepText] {
     val id = X0
-    override def parse(text: String)(implicit ctx: UcParsingCtx) = StepText.parse(id, text)
-    override def load(text: NormalisedText)(implicit savedSteps: SavedSteps, ctx: UcParsingCtx) = StepText.load(id, text)
+    override def parse(text: String)(implicit ctx: UcParsingCtx) = StepText.parse(text)
+    override def load(text: NormalisedText)(implicit savedSteps: SavedSteps, ctx: UcParsingCtx) = StepText.load(text)
+    override def updater(t: StepText) = StepTextUpdater(NCF, id, t)
     override def terms(t: StepText) = t.mainClause.terms
-    override def textChanged = StepTextChanged(id)
+    override def textChanged = StepTextChanged(NCF, id)
     override def oldAssert(subject: StepText, text: String, refs: Refs, refsOwnUc: Boolean): Unit = {
       subject.text ==== text
       oldStyleRefs(terms(subject)) ==== refs
@@ -129,7 +140,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
   implicit override val generatorDrivenConfig = PropertyCheckConfig(minSuccessful = Cores * 50, workers = Cores)
   implicit val Ctx = Ctx1
 
-  def aTextWithRefs[T <: ParsedText[T]](T: Tester[T]) {
+  def aTextWithRefs[T <: ParsedText](T: Tester[T]) {
     implicit def StrToSomeStr(s: String) = Some(s)
 
     def testText(input: String, output: Option[String]): Unit = {
@@ -261,13 +272,13 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
 
     describe("Responding to a ExistingStepLabelsChanged") {
       it("should do nothing if text has no refs") {
-        val x = T.parse("hehe")
+        val x = T.updater(T.parse("hehe"))
         x.respondToChange(MockExistingStepLabelsChanged)(StepState2) should be(NoChange)
       }
 
       def test(before: String)(textAfter: String, refsAfter: Refs) {
         val x = T.parse(before)
-        val y = x.respondToChange(MockExistingStepLabelsChanged)(StepState2)
+        val y = T.updater(x).respondToChange(MockExistingStepLabelsChanged)(StepState2)
         T.oldAssert(y.getValueOrElse(x), textAfter, refsAfter, false)
       }
 
@@ -296,7 +307,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
         )
         forAll(examples)((before: String, after: String) => {
           val x = T.parse(before)
-          val y = x.respondToChange(MockExistingStepLabelsChanged)(StepState2).getValueOrElse(x)
+          val y = T.updater(x).respondToChange(MockExistingStepLabelsChanged)(StepState2).getValueOrElse(x)
           y.text should be(after)
         })
       }
@@ -306,14 +317,14 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
       it("should change UC refs to self") {
         val x = T.parse("Look [UC-3].")
         T.oldAssert(x, "Look [UC-3: New Third].", Map.empty, true)
-        val (y, changes) = x.respondToChange(TitleChanged("New Third", "GREAT"))(Ctx1.copy(title = "GREAT")).openChange
+        val (y, changes) = T.updater(x).respondToChange(TitleChanged("New Third", "GREAT"))(Ctx1.copy(title = "GREAT")).openChange
         y.text ==== "Look [UC-3: GREAT]."
         changes shouldBe List(T.textChanged)
       }
     }
   } // end aTextWithRefs
 
-  def obeysLaws[T <: ParsedText[T]](P: TextProps[T]) {
+  def obeysLaws[T <: ParsedText](P: TextProps[T]) {
     describe("Laws") {
       it("t = parse t.text") {check(P.reparse)}
       it("t = load t.normalisedText") {check(P.reload)}
@@ -329,7 +340,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
     it should behave like aTextWithRefs(StepTextTester)
     it should behave like obeysLaws(StepTextProps)
 
-    def parse(input: String, stepState: StepAndLabelBiMap = StepState1) = StepText.parse(X0, input)(stepState)
+    def parse(input: String, stepState: StepAndLabelBiMap = StepState1) = StepText.parse(input)(stepState)
 
     def testTextToText(input: String, output: String, stepState: StepAndLabelBiMap = StepState1) = {
       val x = parse(input, stepState)
@@ -341,24 +352,24 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
 
       it("should produce one when main clause is affected") {
         val a = parse("Look at [S.1]")
-        a.respondToChange(MockExistingStepLabelsChanged)(StepState2) match {
+        a.updater.respondToChange(MockExistingStepLabelsChanged)(StepState2) match {
           case Changed(b, changes) =>
-            b should be(StepText(X0, FreeText(PlainText("Look at ") :: StepRef(X1, SA) :: Nil), None, None))
-            changes.list should contain(StepTextChanged(X0))
+            b should be(StepText( FreeText(PlainText("Look at ") :: StepRef(X1, SA) :: Nil), None, None))
+            changes.list should contain(StepTextChanged(NCF, X0))
           case x => fail(s"Change expected, got: $x")
         }
       }
 
       it("should produce one when flow is affected") {
-        parse("Hehe").respondToChange(FlowToChange(X5, Set(X0)))(StepState1) match {
-          case Changed(b, changes) => changes.list should contain(StepTextChanged(X0))
+        parse("Hehe").updater.respondToChange(FlowToChange(X5, Set(X0)))(StepState1) match {
+          case Changed(b, changes) => changes.list should contain(StepTextChanged(NCF, X0))
           case x => fail(s"Change expected, got: $x")
         }
       }
 
       it("should not produce one when nothing changes") {
         val a = parse("Look at [S.1]")
-        a.respondToChange(MockExistingStepLabelsChanged)(StepState1) match {
+        a.updater.respondToChange(MockExistingStepLabelsChanged)(StepState1) match {
           case NoChange =>
           case x => fail(s"NoChange expected, got: $x")
         }
@@ -529,9 +540,9 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
       describe("Responding to a MockExistingStepLabelsChanged") {
         def test(textBefore: String, textAfter: String, refsAfter: Set[LocalStepId]) {
           val x = parse(F.forceArrows(textBefore))
-          val y = x.respondToChange(MockExistingStepLabelsChanged)(StepState2).getValueOrElse(x)
+          val y = x.updater.respondToChange(MockExistingStepLabelsChanged)(StepState2).getValueOrElse(x)
           F.get(x) should not be (None)
-          y.text should be(F.forceArrows(textAfter))
+          y.text shouldBe F.forceArrows(textAfter)
           assertFlowClause(F.get(y), mapToLabels(refsAfter, StepState2))
         }
 
@@ -556,11 +567,11 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
       describe("Updating flow text") {
         def test(textBefore: String, refsBefore: Set[StepLabel])(newText: String, expectedToIds: Option[Set[LocalStepId]]) {
           val x = parse(F.forceArrows(textBefore))
-          val cr = x.update(F.forceArrows(newText))(StepState1)
+          val cr = x.updater.update(F.forceArrows(newText))(StepState1)
           assertFlowClause(F.get(x), mapFromIds(refsBefore))
-          var expectedChanges: List[Change] = StepTextChanged(x.stepId) :: Nil
+          var expectedChanges: List[Change] = StepTextChanged(NCF, X0) :: Nil
             if (expectedToIds.nonEmpty) expectedChanges :+= F.change(X0, expectedToIds.get)
-          cr.getChanges should be(expectedChanges)
+          cr.getChanges shouldBe expectedChanges
         }
 
         it("should produce a flow-change when steps first added") {
@@ -601,7 +612,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
 
     describe("Parsing text with flow") {
       it("should parse both flows") {
-        val x = StepText.parse(X0, "He [S.3] he ⬅ [S.2] ➡ [S.1]")(StepState1)
+        val x = StepText.parse("He [S.3] he ⬅ [S.2] ➡ [S.1]")(StepState1)
         x.text should be("He [S.3] he ⬅ [S.2] ➡ [S.1]")
         oldStyleRefs(x.mainClause) shouldBe Map("X3" -> "S.3")
         assertFlowClause(x.flowFromClause, Map(X2 -> S2))
@@ -610,7 +621,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
 
       it("should parse TextWithFlowExamples") {
         forAll(TextWithFlowExamples)((input, expText, expRefsFrom, expRefsTo) => {
-          val x = StepText.parse(X0, input)(StepStateB)
+          val x = StepText.parse(input)(StepStateB)
           x.mainClause.text should be(expText.replaceAll("-->", FlowToStyle.arrowBadReplacement))
           assertFlowClause(x.flowFromClause, mapFromIds(expRefsFrom.asLabelC, StepStateB))
           assertFlowClause(x.flowToClause, mapFromIds(expRefsTo.asLabelC, StepStateB))
@@ -645,7 +656,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
           , ("", X1_S1, X1_S1, "⬅ [S.1] ➡ [S.1]")
         )
         forAll(examples)((main: String, from: Option[Refs], to: Option[Refs], expected: String) => {
-          val x = StepText(X0, FreeText.parse(main)(ctx), from.map(FlowFromClause), to.map(FlowToClause))
+          val x = StepText(FreeText.parse(main)(ctx), from.map(FlowFromClause), to.map(FlowToClause))
           x.text should be(expected)
         })
       }
@@ -654,7 +665,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
     describe("Loading text with flow") {
       it("should normalise refs in all clauses") {
         val save = savedSteps(100 -> X2, 104 -> X1, 108 -> X3)
-        val x = StepText.load(X0, "He [D.108] he ⬅ [D.100] ➡ [D.104]".tag[IsNormalised])(save, StepState1)
+        val x = StepText.load("He [D.108] he ⬅ [D.100] ➡ [D.104]".tag[IsNormalised])(save, StepState1)
         x.text should be("He [S.3] he ⬅ [S.2] ➡ [S.1]")
         oldStyleRefs(x.mainClause) shouldBe Map("X3" -> "S.3")
         x.flowFromClause should be(Some(FlowFromClause(Map(X2 -> S2))))
@@ -682,7 +693,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
         def test(flowTargets: Set[LocalStepId]) {
           val change = F.other.change(X1, flowTargets)
           val x = parse(F.forceArrows(textBefore))
-          val y = x.respondToChange(change)(StepState1).getValueOrElse(x)
+          val y = x.updater.respondToChange(change)(StepState1).getValueOrElse(x)
           y.text should be(F.forceArrows(textAfter))
           if (refsAfter.isEmpty)
             F.get(y) should be(None)
@@ -713,7 +724,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
         for (f <- FlowTesters) {
           val x = parse(f.forceArrows(txt))
           val change = f.change(X0, Set(X0))
-          x.respondToChange(change)(StepState1) should be(NoChange)
+          x.updater.respondToChange(change)(StepState1) shouldBe NoChange
         }
       }
     }
@@ -722,12 +733,12 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
 
 // =====================================================================================================================
 
-import org.scalacheck.{Arbitrary, Gen, Prop, Commands}
+import org.scalacheck.{Arbitrary, Gen, Prop}
 import Arbitrary.arbitrary
 import Prop._
 import test.DataGenerators.UcDataGenCtx
 
-abstract class TextProps[T <: ParsedText[T]](T: Tester[T]) {
+abstract class TextProps[T <: ParsedText](T: Tester[T]) {
   import T.{load, parse}
 
 //  implicit val Ctx = Ctx1
