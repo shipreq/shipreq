@@ -22,9 +22,9 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
 
   val ucId = 123L.tag[IsUseCaseIdentId]
 
-  def valueSaver(f: StepField, sfv: StepFieldValue) = {
+  def saver(f: StepField, sfv: StepFieldValue) = {
     val stepsAndLabels: StepAndLabelBiMap = Need(BiMap(UseCaseFns.generateStepAndLabelMap(UCN, f, sfv.tree)))
-    f.valueSaver(sfv, stepsAndLabels)
+    f.saver(sfv, stepsAndLabels)
   }
 
   import MockUc3._
@@ -115,10 +115,10 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
 
     describe("record_required_?()") {
       it("should not save when no steps") {
-        valueSaver(ECF, ECF.empty).record_required_? ==== false
+        saver(ECF, ECF.empty).record_required_? ==== false
       }
       it("should save when has steps") {
-        valueSaver(ECF, NcSfv).record_required_? ==== true
+        saver(ECF, NcSfv).record_required_? ==== true
       }
     }
 
@@ -131,7 +131,7 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
 
       it("should save a new text row for each node") {
         val dao = mockDao
-        val s = valueSaver(NCF, NcSfv)
+        val s = saver(NCF, NcSfv)
         val newlySavedSteps = s.presave(dao, ucId, None)
         verify(dao, times(5)).createTextIdent(ucId, NCF.rec.id)
         verifyNoMoreInteractions(dao)
@@ -140,7 +140,7 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
 
       it("should NOP when no differences") {
         val dao = mockDao
-        val s = valueSaver(NCF, NcSfv)
+        val s = saver(NCF, NcSfv)
 
         val newlySavedSteps = s.presave(dao, ucId, Some(MockSavedSteps))
         verifyZeroInteractions(dao)
@@ -151,7 +151,7 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
         val dao = mockDao
         val prev = parseStepTree("1.0. Root\n  1. Same Child\n1.1. Other").toStepTree
         val newTree = "1.0. XXX\n  1. Same Child\n  2. NEW CHILD\n1.1. Other2\n1.2. NEW ROOT STEP"
-        val s = valueSaver(ECF, parseStepTree(newTree).toStepFieldValue(ECF))
+        val s = saver(ECF, parseStepTree(newTree).toStepFieldValue(ECF))
 
         val newlySavedSteps = s.presave(dao, ucId, Some(mockSavedStepsFor(prev)))
         verify(dao, times(2)).createTextIdent(ucId, ECF.rec.id)
@@ -170,11 +170,11 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
         dao
       }
 
-      def firstSavedDataOfNcf = valueSaver(NCF, NcSfv).save(mockDao, ucId, ucRevId, None)(MockSavedSteps)
+      def firstSavedDataOfNcf = saver(NCF, NcSfv).save(mockDao, ucId, ucRevId, None)(MockSavedSteps)
 
       it("should create a text_rev and uc_field row for each step when 1st save") {
         val dao = mockDao
-        val s = valueSaver(NCF, NcSfv)
+        val s = saver(NCF, NcSfv)
         val savedTextRevs  = s.save(dao, ucId, ucRevId, None)(MockSavedSteps)
 
         savedTextRevs.size ==== 5
@@ -192,7 +192,7 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
         val mockSavedSteps2: SavedSteps = BiMap(MockSavedSteps.ab + (T8 -> X8))
 
         val dao = mockDao
-        val s = valueSaver(NCF, sfv2)
+        val s = saver(NCF, sfv2)
         val savedTextRevs = s.save(dao, ucId, ucRevId, Some(firstSavedDataOfNcf))(mockSavedSteps2)
 
         verify(dao, times(1)).createTextRev(T8, 1, "AHHH")
@@ -204,7 +204,7 @@ class StepFieldTest extends FunSpec with TestHelpers with TestData {
       it("should link reusable steps and updated changed steps") {
         val sfv2 = NcSfv.copy(textmap = NcSfv.textmap + (X2 -> StepText(freeText("DIFF"), None, None)))
         val dao = mockDao
-        val s = valueSaver(NCF, sfv2)
+        val s = saver(NCF, sfv2)
         s.save(dao, ucId, ucRevId, Some(firstSavedDataOfNcf))(MockSavedSteps)
 
         verify(dao, times(1)).createTextRev(T2, 2, "DIFF")

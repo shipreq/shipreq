@@ -95,13 +95,13 @@ object UseCasePersistence {
    * @return A checkpoint is there was anything to save, else `None` if UC was already up-to-date.
    */
   def save(uc: UseCase, prevSave: UseCaseSaveCheckpoint, preparedLock: PreparedLock.Write[SingleUseCase], dao: DaoT) : Option[UseCaseSaveCheckpoint] = {
-    type ValueSavers = Map[Field, FieldValueSaver[_]]
+    type ValueSavers = Map[Field, FieldValueSaver[Field#SavedData]]
 
     val allSavers: ValueSavers =
       uc.fieldValues.map { case (f, v_) =>
-        val v = f.castValue(v_)
-        val s = f.valueSaver(v, uc.stepsAndLabels)
-        (f -> s)
+        val v = f.castV(v_)
+        val s = f.saver(v, uc.stepsAndLabels)
+        (f pairS2 s)
       }.toMap
 
     def getPrevSaveDataFor[F <: Field, S <: f.SavedData forSome {val f : F}](f: F): Option[S] =
@@ -113,9 +113,9 @@ object UseCasePersistence {
         (uc.header != cp.uc.header) || uc.fields.exists(fieldRequiresSave_?(cp))
 
       def fieldRequiresSave_?(cp: UseCaseSaveCheckpoint)(f: Field): Boolean = {
-        val saver = f.saver(savers)
+        val saver = f.castS2(savers(f))
         cp.savedData.get(f) match {
-          case Some(sd_) => saver.differsFromPrevSave_?(f.castSavedData(sd_))(cp.savedSteps)
+          case Some(sd_) => saver.differsFromPrevSave_?(f.castS(sd_))(cp.savedSteps)
           case None      => saver.record_required_?
         }
       }

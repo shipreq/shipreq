@@ -155,8 +155,8 @@ case class UseCase(
   def userView: String = {
     def text(t: String) = "⟦" + t.replaceAll("\n","\n\t\t") + "⟧"
     def printF(f: Field, v: Field#Value): String = f match {
-      case tf: TextField => "%-30s: %s".format(tf.defn.title, text(tf.castValue(v).text))
-      case sf: StepField => "%s\n%s".format(sf.getClass.getSimpleName, printSFV(sf.castValue(v)))
+      case tf: TextField => "%-30s: %s".format(tf.defn.title, text(tf.castV(v).text))
+      case sf: StepField => "%s\n%s".format(sf.getClass.getSimpleName, printSFV(sf.castV(v)))
     }
     def printSFV(sfv: StepFieldValue): String =
         sfv.textByLabels.map{case (l,t) => "  %-18s: %s".format(l, text(t))}.toList.sorted.mkString("\n")

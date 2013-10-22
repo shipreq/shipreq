@@ -89,7 +89,7 @@ object FlowGraph {
 
       uc.fieldValues.toList foldMap {
         case (f: NormalCourseField, fv) =>
-          val sfv = f.castValue(fv)
+          val sfv = f.castV(fv)
           val b = zipBuilder(sfv)
           val ncNode :: acNodes = sfv.tree.nodes
           val nc = processZ(NC, b.build(ncNode, Nil))
@@ -97,7 +97,7 @@ object FlowGraph {
           nc |+| ac
 
         case (f: ExceptionCourseField, fv) =>
-          val sfv = f.castValue(fv)
+          val sfv = f.castV(fv)
           processUnlessEmpty(EC, sfv.tree.nodes, zipBuilder(sfv))
 
         case _ => zero

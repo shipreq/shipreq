@@ -26,7 +26,7 @@ case class UseCaseUpdater(uc: UseCase, rels: UseCaseRelations) {
 
     def changeField(f: Field, fieldValue: Field#Value): ChangeResult[Field#Value, Change] = {
       val changesOccurred = new ListBuffer[Change]
-      var fv = f castValue fieldValue
+      var fv = f castV fieldValue
       var changeResponder = f.changeResponder(fv)
       for (c <- changes.list)
         changeResponder.respondToChange(c) match {

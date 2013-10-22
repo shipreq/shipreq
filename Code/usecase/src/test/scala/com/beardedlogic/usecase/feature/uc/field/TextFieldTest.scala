@@ -78,7 +78,7 @@ class TextFieldTest extends FunSpec with TestHelpers {
     implicit def ss = StepState1
     val ucId = 123L.tag[IsUseCaseIdentId]
 
-    def saver(v: V) = TF1.valueSaver(v, EmptyStepAndLabelBiMap)
+    def saver(v: V) = TF1.saver(v, EmptyStepAndLabelBiMap)
 
     describe("record_required_?") {
       it("should not require a record when no text") {

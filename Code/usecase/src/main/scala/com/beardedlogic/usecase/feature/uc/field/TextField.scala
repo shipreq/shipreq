@@ -24,7 +24,7 @@ trait TextFieldLike { this: Field with TextField =>
 
   override def empty = FreeText.empty
 
-  override def valueSaver(v: FreeText, stepsAndLabels: StepAndLabelBiMap) =
+  override def saver(v: FreeText, stepsAndLabels: StepAndLabelBiMap) =
     new TextFieldValueSaver(v, rec, stepsAndLabels)
 
   override def load(loadCtx: FieldLoadCtx) = {

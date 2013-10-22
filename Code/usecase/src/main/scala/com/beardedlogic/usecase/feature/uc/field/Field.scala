@@ -24,18 +24,16 @@ sealed trait Field {
   /** The DB record used to reference this field. */
   val rec: FieldKeyRec
 
-  @inline final def castValue(v: Field#Value) = v.asInstanceOf[Value]
+  @inline final def castV(v: Field#Value) = v.asInstanceOf[Value]
+  @inline final def castS(s: Field#SavedData) = s.asInstanceOf[SavedData]
+  @inline final def castS2[M[_]](saver: M[Field#SavedData]): M[SavedData] = saver.asInstanceOf[M[SavedData]]
 
-  @inline final def castSavedData(s: Field#SavedData) = s.asInstanceOf[SavedData]
+  @inline final def ~>(v: Value): (Field, Field#Value) = this -> v
+  @inline final def pairS(sd: SavedData): (Field, Field#SavedData) = this -> sd
+  @inline final def pairS2[M[_]](sd: M[SavedData]): (Field, M[Field#SavedData]) = this -> sd.asInstanceOf[M[Field#SavedData]]
 
-  @inline final def saver(savers: Map[Field, FieldValueSaver[_]]) = savers(this).asInstanceOf[FieldValueSaver[SavedData]]
-
-  @inline final def apply(fieldValues: FieldValues): Value = castValue(fieldValues(this))
-
+  @inline final def apply(fieldValues: FieldValues): Value = castV(fieldValues(this))
   @inline final def get(fieldValues: FieldValues): Option[Value] = fieldValues.get(this).asInstanceOf[Option[Value]]
-
-  @inline final def ~>(fieldValue: Value): (Field, Field#Value) = this -> fieldValue
-
   @inline final def value(implicit fieldValues: FieldValues) = apply(fieldValues)
 
   def empty: Value
@@ -49,19 +47,14 @@ sealed trait Field {
    */
   def load(loadCtx: FieldLoadCtx): FieldLoadResult[Value, SavedData]
 
-  def valueSaver(v: Value, stepsAndLabels: StepAndLabelBiMap): FieldValueSaver[SavedData]
+  def saver(v: Value, stepsAndLabels: StepAndLabelBiMap): FieldValueSaver[SavedData]
 }
 
 // =====================================================================================================================
 // Instances
 
-case class TextField(override val defn: TextFieldDefinition, override val rec: FieldKeyRec)
-  extends Field with TextFieldLike
+case class TextField(override val defn: TextFieldDefinition, override val rec: FieldKeyRec) extends Field with TextFieldLike
 
 sealed abstract class StepField extends Field with StepFieldLike
-
-case class NormalCourseField(override val rec: FieldKeyRec)
-  extends StepField with NormalCourseFieldLike
-
-case class ExceptionCourseField(override val rec: FieldKeyRec)
-  extends StepField with ExceptionCourseFieldLike
+case class NormalCourseField(override val rec: FieldKeyRec) extends StepField with NormalCourseFieldLike
+case class ExceptionCourseField(override val rec: FieldKeyRec) extends StepField with ExceptionCourseFieldLike

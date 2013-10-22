@@ -19,7 +19,7 @@ private[field] trait StepFieldPersistenceMixin {
 
   override type SavedData = StepFieldPersistence.SavedData
 
-  override def valueSaver(v: StepFieldValue, stepsAndLabels: StepAndLabelBiMap) =
+  override def saver(v: StepFieldValue, stepsAndLabels: StepAndLabelBiMap) =
     new StepFieldValueSaver(v, rec, sli, stepsAndLabels)
 
   def defaultLoadValue(h: UseCaseHeader): (Option[StepTree], () => StepFieldValue)
