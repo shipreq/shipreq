@@ -129,26 +129,18 @@ function focusedEditorTextInput() { return allEditorTextInputsQ().filter(':focus
 //   VizWorker - The WebWorker that turns DOT into an SVG.
 //   InitialFlowGraph - The initial DOT to render on page load.
 
-function setupViz() {
-    VizWorker = new Worker('/js/viz-worker.js')
-    VizWorker.onmessage = function(ev) {
-        var d = ev.data
-        $(d.id).html(d.svg)
-
-        // Find step nodes in flow graph
-        var stepNodes = $(d.id).find('g.node').filterE(isValidLabel.c(titleOfFlowgraphNode))
-        stepNodes.eachE(function(e){
-            e=$(e); e.attr("class",e.attr("class")+" step")
-        })
+function setupVizForUce() {
+    setupViz(function(d){
 
         // Clicking a node selects the step text
-        stepNodes.click(function(ev){
+        d.stepNodes.click(function(ev){
             var label = titleOfFlowgraphNode($(ev.target).selfOrParent('g.node'))
             if (isValidLabel(label)) {
                 $(textInputOfStep(stepRootOfLabel(label))).focus().select()
             }
         })
-    }
+
+    })
 
     if (typeof InitialFlowGraph === 'string')
         $(document).trigger('flowgraph-update',InitialFlowGraph)
@@ -162,7 +154,7 @@ function titleOfFlowgraphNode(node) {
 }
 
 $(document).on('flowgraph-update', function(event, data) {
-    VizWorker.postMessage({id:'.flowgraph-img', dot:data})
+    VizWorker.postMessage({tgt:'.flowgraph td', dot:data})
 });
 
 // =====================================================================================================================
@@ -355,7 +347,7 @@ window.onbeforeunload = promptWhenLeaving
 
 function uceSetup() {
     setupKeyBindings()
-    setupViz()
+    setupVizForUce()
     updatePageTitle()
 }
 $(document).ready(uceSetup)

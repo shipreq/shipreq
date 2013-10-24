@@ -48,8 +48,7 @@ table.step[data-lvl="0"] .label, table.step[data-lvl="0"] textarea { font-weight
 .courses-a .step:first-child .indentInc span { display: none; }
 .courses-a .step:first-child .indentInc:after { content: "↑"; }
 
-#flowgraph svg { max-width: 100%; cursor: default; }
-#flowgraph svg g.step { cursor: pointer; }
+.flowgraph svg g.step { cursor: pointer; }
 
 #help-refs .modal-dialog { width: 85%; max-width: 94ex; }
 #help-refs .modal-body h4 { color: #d07; ont-weight: bold; margin: 0 0 0.3ex 0; }

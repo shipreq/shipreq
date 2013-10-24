@@ -101,4 +101,10 @@ class HtmlPublisher(input: Input) extends GenericPublisher(input) {
 
   def flowRef(l: StepLabel): X = stepRef(l)
   def flowRefSep: X = Text(", ")
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Other fields
+
+  def flowGraphField(f: LogicalFlowGraphField) =
+    <tr class="flowgraph"><th>Flow Graph</th><td data-dot={f.dot.value}></td></tr>
 }

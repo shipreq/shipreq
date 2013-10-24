@@ -152,9 +152,7 @@ table.step {
 	&:after {content:"↑"} /* ↑↱ */
 }
 
-#flowgraph svg {
-	max-width:100%;
-	cursor:default;
+.flowgraph svg {
 	g.step {cursor: pointer}
 }
 

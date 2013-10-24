@@ -33,16 +33,17 @@ abbr.timeago[title] { border-bottom: none !important }
   h2 { margin-bottom: 0.6em }
 }
 
-.flowgraph-img svg, svg.flowgraph-img {
+.flowgraph svg {
   //vertical-align: top;
   //max-width:100%;
   //width:auto;
-  max-width: 100% !important; /* Set a maxium relative to the parent */
+  max-width: 100% !important; /* Set a maximum relative to the parent */
   width: auto\9 !important; /* IE7-8 need help adjusting responsive images */
   //height: auto; /* Scale the height according to the width, otherwise you get stretching */
   border: 0;
   //display: block;
   -ms-interpolation-mode: bicubic;
+  cursor:default;
 }
 
 // =====================================================================================================================

@@ -7,11 +7,13 @@ import com.beardedlogic.usecase.feature.uc.text.FreeTextTerms._
 import com.beardedlogic.usecase.feature.uc.text.{FlowClause, FreeTextTerm, StepText, FreeText}
 import com.beardedlogic.usecase.lib.Types._
 import net.liftweb.util.TimeHelpers.logTime
-import scalaz.{Traverse, Monoid}
+import scalaz.{Name, Need, Traverse, Monoid}
 import scalaz.syntax.foldable._
 import scalaz.syntax.monoid._
+import com.beardedlogic.usecase.feature.FlowGraph
 
 sealed trait LogicalField
+case class LogicalFlowGraphField(dot: Name[String]) extends LogicalField
 case class LogicalTextField(title: String, value: FreeText) extends LogicalField
 case class LogicalStepField(title: String, value: Option[StepTreeZipper.DeepZipper]) extends LogicalField
 
@@ -69,6 +71,9 @@ abstract class GenericPublisher(input: Input) {
       case f: ExceptionCourseField =>
         val v = f(uc)
         LogicalStepField("Exceptions", buildStepTreeZipper(uc, v, v.tree.nodes)) :: Nil
+
+      case f: FlowGraphField =>
+        LogicalFlowGraphField(Need(FlowGraph.render(uc).toString)) :: Nil
     }
 
   def buildStepTreeZipper(uc: UseCase, v: StepFieldValue, nodes: List[StepNode]): Option[StepTreeZipper.DeepZipper] =
@@ -81,8 +86,9 @@ abstract class GenericPublisher(input: Input) {
     }
 
   def field(f: LogicalField): X = f match {
-    case f @ LogicalTextField(_, _) => textField(f)
-    case f @ LogicalStepField(_, _) => stepField(f)
+    case f: LogicalTextField      => textField(f)
+    case f: LogicalStepField      => stepField(f)
+    case f: LogicalFlowGraphField => flowGraphField(f)
   }
 
   def fieldTitle(title: String): X
@@ -160,4 +166,9 @@ abstract class GenericPublisher(input: Input) {
       case Some(c) => flowClause(c)
     }
   def flowClause(c: FlowClause): X
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Other fields
+
+  def flowGraphField(f: LogicalFlowGraphField): X
 }

@@ -122,7 +122,34 @@ function isVisible(e) {
             function(){tgt.removeClass(className)}
         )
     };
+    $.fn.attrAdd = function (name, newValue) {
+        var t = $(this);
+        var e = t.attr(name);
+        e = (e === undefined) ? '' : (e+' ');
+        t.attr(name, e + newValue);
+        return t;
+    };
 }(jQuery));
+
+// =====================================================================================================================
+
+function setupViz(callback) {
+    VizWorker = new Worker('/js/viz-worker.js')
+    VizWorker.onmessage = function(ev) {
+        var d = ev.data
+        $(d.tgt).html(d.svg)
+
+        // Find step nodes in flow graph
+        d.stepNodes = $(d.tgt).find('g.node').filterE(isValidLabel.c(titleOfFlowgraphNode))
+        d.stepNodes.eachE(function(e){
+            // $(e).addClass("step") // Doesn't work for svg children
+            $(e).attrAdd("class", "step")
+        })
+
+        if (callback !== undefined)
+            callback(d)
+    }
+}
 
 // =====================================================================================================================
 
