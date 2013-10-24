@@ -24,13 +24,32 @@ def wcFiles(arg)           arg + "| xargs wc -l | tail -1 | perl -pe 's/\D+//g'"
 def wcFilesInDir(dir)      wcFiles("find #{dir} -type f") end
 def wcFilesByType(dir,pat) wcFiles("find #{dir} -name '#{pat}'") end
 
-puts "main.html  - #{searchMain(5){ wcFilesByType 'src/main', '*.html' }}"
-puts "main.scaml - #{searchMain(5){ wcFilesByType 'src/main', '*.scaml' }}"
-puts "main.sass  - #{searchMain(5){ wcFilesInDir 'src/main/sass' }}"
-puts "main.sql   - #{searchMain(5){ wcFilesInDir 'src/main/resources/db_migrations' }}"
-puts
-puts "Scala      - #{searchSrc(5){|dir| wcFilesInDir("#{dir}/scala") }}"
-puts "JavaScript - #{searchSrc(5){|dir| wcFiles "find #{dir}/javascript -name '*.js' | fgrep -v vendor" }}"
+def getLoc(clocOut, title) clocOut.scan(/(?<=\n)#{title}[^\r\n]+?(\d+)[\r\n]/)[0][0].to_i end
+
+`cloc -help &>/dev/null`
+if $?.exitstatus == 127
+  puts "main.html  - #{searchMain(5){ wcFilesByType 'src/main', '*.html' }}"
+  puts "main.scaml - #{searchMain(5){ wcFilesByType 'src/main', '*.scaml' }}"
+  puts "main.sass  - #{searchMain(5){ wcFilesInDir 'src/main/sass' }}"
+  puts "main.sql   - #{searchMain(5){ wcFilesInDir 'src/main/resources/db_migrations' }}"
+  puts
+  puts "Scala      - #{searchSrc(5){|dir| wcFilesInDir("#{dir}/scala") }}"
+  puts "JavaScript - #{searchSrc(5){|dir| wcFiles "find #{dir}/javascript -name '*.js' | fgrep -v vendor" }}"
+else
+  puts "MAIN"
+  main= `cloc --exclude-dir=vendor,_scalate,liftmodule-scaml-jade src/main | sed -n '/^-/,$p'`
+  puts main
+  puts
+  puts "TEST"
+  test= `cloc --exclude-dir=vendor,_scalate,liftmodule-scaml-jade src/test | sed -n '/^-/,$p'`
+  puts test
+  puts
+  m= getLoc(main,'Scala')
+  t= getLoc(test,'Scala')
+  printf("Scala Test:Code ratio = %.02f\n", (t.to_f/m.to_f))
+  puts "Scala total LOC: #{m+t}"
+end
+
 puts
 puts "TODO.Func  - #{countTodoFileContents `cat TODO.md | sed '0,/FUNC TODO/d; /TECH TODO/,$d'`.split(/[\r\n]+/)}"
 puts "TODO.Tech  - #{countTodoFileContents `cat TODO.md | sed '0,/TECH TODO/d'`.split(/[\r\n]+/)}"
