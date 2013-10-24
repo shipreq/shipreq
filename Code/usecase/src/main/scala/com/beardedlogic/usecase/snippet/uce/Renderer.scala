@@ -143,7 +143,7 @@ case class Renderer(
     case StepRemoved(f, node)                  => stepRenderers(f).jsRemoveStep(node)
     case StepIndentIncreased(f, node, oldTree) => stepRenderers(f).jsIncIndent(node, oldTree)
     case StepIndentDecreased(f, node, _)       => stepRenderers(f).jsDecIndent(node)
-    case FlowGraphChanged                      => jsDrawFlowDiagram
+    case FlowGraphChanged                      => jsDrawFlowDiagram // TODO prevent dupls
     case FlowToChange(_,_)
        | FlowFromChange(_,_) => JsCmds.Noop
   }
