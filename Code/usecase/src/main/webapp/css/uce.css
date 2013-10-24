@@ -15,7 +15,7 @@
 .uce .title h2 { margin: 0; padding-right: 1ex; }
 .uce .title textarea { font-weight: bold; font-size: 150%; }
 
-table.fieldFrame { margin-top: 22px; width: 100%; }
+table.fieldFrame { margin-top: 22px; width: 100%; table-layout: fixed; }
 table.fieldFrame tr.fieldFrame > th { color: #555; font-weight: normal; width: 20.5ex; text-align: left; line-height: 125%; padding-right: 1ex; }
 table.fieldFrame tr.fieldFrame > th, table.fieldFrame tr.fieldFrame > td { padding-bottom: 1.5em; }
 table.fieldFrame th, table.fieldFrame td { vertical-align: top; }

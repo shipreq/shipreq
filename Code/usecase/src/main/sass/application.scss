@@ -33,6 +33,18 @@ abbr.timeago[title] { border-bottom: none !important }
   h2 { margin-bottom: 0.6em }
 }
 
+.flowgraph-img svg, svg.flowgraph-img {
+  //vertical-align: top;
+  //max-width:100%;
+  //width:auto;
+  max-width: 100% !important; /* Set a maxium relative to the parent */
+  width: auto\9 !important; /* IE7-8 need help adjusting responsive images */
+  //height: auto; /* Scale the height according to the width, otherwise you get stretching */
+  border: 0;
+  //display: block;
+  -ms-interpolation-mode: bicubic;
+}
+
 // =====================================================================================================================
 // Layout
 // Taken from twitter.github.io/bootstrap/examples/sticky-footer.html
@@ -173,7 +185,6 @@ html, body { height: 100% } // Cannot have any padding or margin here
       & > tr > th , & > tr > td {padding-top:0.3ex; padding-bottom:0.3ex}
 
       td > ul {padding-left:2ex}
-      //img {width:100%; max-width:100%}
       a.step:not(:hover), a.uc:not(:hover) {border-bottom:1px dotted}
       .bad.ref {
         color:#c00;

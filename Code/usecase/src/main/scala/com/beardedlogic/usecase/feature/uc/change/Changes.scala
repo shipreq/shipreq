@@ -41,7 +41,7 @@ object Changes {
    *
    * Consequentially, any step references will need to be verified and possibly updated.
    */
-  sealed trait ExistingStepLabelsChanged extends Change
+  sealed abstract class ExistingStepLabelsChanged extends Change
 
   case class TailStepAdded(f: StepField, node: StepNode) extends Change
 
@@ -81,4 +81,8 @@ object Changes {
    */
   case class FlowToChange(fromId: LocalStepId, toIds: Set[LocalStepId]) extends Change
 
+  /**
+   * Indicates that the flow graph has changed and should be redrawn.
+   */
+  case object FlowGraphChanged extends Change
 }

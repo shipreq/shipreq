@@ -162,7 +162,7 @@ function titleOfFlowgraphNode(node) {
 }
 
 $(document).on('flowgraph-update', function(event, data) {
-    VizWorker.postMessage({id:'#flowgraph', dot:data})
+    VizWorker.postMessage({id:'.flowgraph-img', dot:data})
 });
 
 // =====================================================================================================================

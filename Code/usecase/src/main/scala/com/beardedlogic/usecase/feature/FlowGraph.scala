@@ -8,7 +8,7 @@ import scalaz.syntax.foldable._
 import scalaz.syntax.functor._
 import scalaz.syntax.monoid._
 import uc.UseCase
-import uc.field.{TextField, StepFieldValue, ExceptionCourseField, NormalCourseField}
+import uc.field._
 import uc.step.{StepNode, StepTreeZipper}
 import lib.Types._
 
@@ -87,21 +87,26 @@ object FlowGraph {
       val labels = uc.stepsAndLabels.value.ab
       def zipBuilder(sfv: StepFieldValue) = DeepBuilder(sfv.textmap, labels)
 
-      uc.fieldValues.toList foldMap {
-        case (_: TextField, _) => zero
+      uc.fieldValues.toList foldMap (p => {
+        val fv = p._2
+        p._1 match {
+          case TextField(_, _) => zero
 
-        case (f: NormalCourseField, fv) =>
-          val sfv = f.castV(fv)
-          val b = zipBuilder(sfv)
-          val ncNode :: acNodes = sfv.tree.nodes
-          val nc = processZ(NC, b.build(ncNode, Nil))
-          val ac = processUnlessEmpty(AC, acNodes, b)
-          nc |+| ac
+          case f: NormalCourseField =>
+            val sfv = f.castV(fv)
+            val b = zipBuilder(sfv)
+            val ncNode :: acNodes = sfv.tree.nodes
+            val nc = processZ(NC, b.build(ncNode, Nil))
+            val ac = processUnlessEmpty(AC, acNodes, b)
+            nc |+| ac
 
-        case (f: ExceptionCourseField, fv) =>
-          val sfv = f.castV(fv)
-          processUnlessEmpty(EC, sfv.tree.nodes, zipBuilder(sfv))
-      }
+          case f: ExceptionCourseField =>
+            val sfv = f.castV(fv)
+            processUnlessEmpty(EC, sfv.tree.nodes, zipBuilder(sfv))
+
+          case FlowGraphField(_) => zero
+        }
+      })
     }
 
     private def processUnlessEmpty(c: Category, nodes: List[StepNode], b: => DeepBuilder) = nodes match {

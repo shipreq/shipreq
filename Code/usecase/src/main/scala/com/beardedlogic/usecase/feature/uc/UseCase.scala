@@ -157,6 +157,7 @@ case class UseCase(
     def printF(f: Field, v: Field#Value): String = f match {
       case tf: TextField => "%-30s: %s".format(tf.defn.title, text(tf.castV(v).text))
       case sf: StepField => "%s\n%s".format(sf.getClass.getSimpleName, printSFV(sf.castV(v)))
+      case fg: FlowGraphField => "<FlowGraph>"
     }
     def printSFV(sfv: StepFieldValue): String =
         sfv.textByLabels.map{case (l,t) => "  %-18s: %s".format(l, text(t))}.toList.sorted.mkString("\n")

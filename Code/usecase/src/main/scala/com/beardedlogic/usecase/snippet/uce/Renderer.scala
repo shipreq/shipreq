@@ -38,6 +38,7 @@ object Renderer {
     final val NormalCourse = extractStepTemplate("template-courses-n")
     final val AlternateCourses = extractStepTemplate("template-courses-a")
     final val ExceptionCourses = extractStepTemplate("template-courses-e")
+    final val FlowGraph = extractStepTemplate("template-flowgraph")
   }
 
   final val AddTailStepClass = "addTailStep"
@@ -72,7 +73,6 @@ case class Renderer(
   // *************************************
 
   def render = {
-    S.appendGlobalJs(JsSetGlobalVar("InitialFlowGraph", flowGraph))
     ".fieldFrame *" #> renderFields andThen (
       ".title .ucid *" #> ucNumber.toString &
       ".title @title" #> SHtml.ajaxTextarea(uch.title, modTitle(_), "id" -> TitleId, "rows" -> "1", "class" -> "form-control input-lg") &
@@ -88,9 +88,10 @@ case class Renderer(
   def renderFields: NodeSeq =
     (NodeSeq.Empty /: fields.map(renderField))(_ ++: _)
 
-  def renderField(f: Field): NodeSeq = f match {
-    case tf: TextField => renderTextField(tf)(Templates.TextField)
-    case sf: StepField => stepRenderers(sf).render
+  def renderField(ff: Field): NodeSeq = ff match {
+    case f: TextField      => renderTextField(f)(Templates.TextField)
+    case f: StepField      => stepRenderers(f).render
+    case _: FlowGraphField => renderFlowGraphField()
   }
 
   def renderTextField(f: TextField) = (
@@ -103,7 +104,12 @@ case class Renderer(
     case f: ExceptionCourseField => StepFieldRenderer(f, ExceptionCourseFieldConfig, state, modifyUC)
   }
 
-  def flowGraph = FlowGraph.render(uc)
+  def renderFlowGraphField(): NodeSeq = {
+    S.appendGlobalJs(JsSetGlobalVar("InitialFlowGraph", flowGraphDot))
+    Templates.FlowGraph
+  }
+
+  def flowGraphDot = FlowGraph.render(uc)
 
   // **************************************
   // *             Modifiers              *
@@ -126,7 +132,6 @@ case class Renderer(
 
   def jsRespondToChanges(changes: NonEmptyList[Change]): JsCmd =
     changes.foldMap(jsRespondToChange)    |+|
-    jsRedrawFlowDiagram(changes)          |+|
     jsEnableSaveButton(state.saveEnabled)
 
   def jsRespondToChange(change: Change): JsCmd = change match {
@@ -138,27 +143,13 @@ case class Renderer(
     case StepRemoved(f, node)                  => stepRenderers(f).jsRemoveStep(node)
     case StepIndentIncreased(f, node, oldTree) => stepRenderers(f).jsIncIndent(node, oldTree)
     case StepIndentDecreased(f, node, _)       => stepRenderers(f).jsDecIndent(node)
+    case FlowGraphChanged                      => jsDrawFlowDiagram
     case FlowToChange(_,_)
        | FlowFromChange(_,_) => JsCmds.Noop
   }
 
-  def jsRedrawFlowDiagram(changes: NonEmptyList[Change]): JsCmd = {
-    def matches(c: Change): Boolean = c match {
-      case FlowFromChange(_, _)
-         | FlowToChange(_, _)
-         | TailStepAdded(_, _)
-         | _: ExistingStepLabelsChanged => true
-      case TitleChanged(_, _)
-         | TextChanged(_)
-         | StepTextChanged(_, _)        => false
-    }
-    if (matches(changes.head) || changes.tail.exists(matches))
-      jsDrawFlowDiagram
-    else
-      JsCmds.Noop
-  }
-
-  def jsDrawFlowDiagram: JsCmd = FlowGraphTrigger.trigger(flowGraph)
+  def jsDrawFlowDiagram: JsCmd =
+    FlowGraphTrigger.trigger(flowGraphDot)
 
   def jsUpdateRevision: JsCmd =
     JqExpr(".save .rev") ~> JqJE.JqHtml(Text(state.currentRevision.toString))

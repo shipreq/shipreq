@@ -47,3 +47,5 @@ case class TextField(override val defn: TextFieldDefinition, override val rec: F
 sealed abstract class StepField extends Field with StepFieldLike
 case class NormalCourseField(override val rec: FieldKeyRec) extends StepField with NormalCourseFieldLike
 case class ExceptionCourseField(override val rec: FieldKeyRec) extends StepField with ExceptionCourseFieldLike
+
+case class FlowGraphField(override val rec: FieldKeyRec) extends Field with FlowGraphFieldLike

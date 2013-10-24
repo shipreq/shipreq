@@ -132,6 +132,7 @@ object Inspection {
     case f: TextField            => "TextField" <> f.defn.show ++> f.rec.show
     case f: NormalCourseField    => "NormalCourseField" <> f.rec.show
     case f: ExceptionCourseField => "ExceptionCourseField" <> f.rec.show
+    case f: FlowGraphField       => "FlowGraphField" <> f.rec.show
   }
   implicit val field: Show[Field] = Show.show(fieldM)
   implicit val stepField: Show[StepField] = Show.show(fieldM)

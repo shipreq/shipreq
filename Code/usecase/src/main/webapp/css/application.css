@@ -10,6 +10,8 @@ abbr.timeago[title] { border-bottom: none !important; }
 .centred_form { width: 300px; margin: 1cm auto 1cm auto; }
 .centred_form h2 { margin-bottom: 0.6em; }
 
+.flowgraph-img svg, svg.flowgraph-img { max-width: 100% !important; /* Set a maxium relative to the parent */ width: auto\9 !important; /* IE7-8 need help adjusting responsive images */ border: 0; -ms-interpolation-mode: bicubic; }
+
 html, body { height: 100%; }
 
 #ly-default #ly-hdrbody { -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; min-height: 100%; height: auto !important; height: 100%; padding-top: 4px; margin-bottom: -26px; }

@@ -71,6 +71,8 @@ $maxStepDepth: 4;
 table.fieldFrame {
 	margin-top: 22px;
 	width: 100%;
+  table-layout: fixed; // Prevents Firefox from ignoring max-width on flow graphs
+
 	tr.fieldFrame {
 		&>th {
 			color: #555;

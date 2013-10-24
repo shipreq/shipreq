@@ -29,8 +29,9 @@ object UseCaseEquality {
   )
 
   def equalFieldValues(ff: Field, a: Field#Value, b: Field#Value) = ff match {
-    case f: TextField => f.castV(a) === f.castV(b)
-    case f: StepField => sfvTextOnly.equal(f.castV(a), f.castV(b))
+    case f: TextField      => f.castV(a) === f.castV(b)
+    case f: StepField      => sfvTextOnly.equal(f.castV(a), f.castV(b))
+    case f: FlowGraphField => true
   }
 
   implicit val stepAndLabels: Equal[StepAndLabelBiMap] = Equal.equalBy(_.value.ab)

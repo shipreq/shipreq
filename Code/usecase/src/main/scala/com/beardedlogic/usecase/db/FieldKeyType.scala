@@ -47,6 +47,17 @@ object FieldKeyType {
     override def maxTextPerUc = None
   }
 
+  /**
+   * A field that displays a flow graph.
+   */
+  case object FlowGraph extends FieldKeyType(33) {
+    override def name = "FlowGraph"
+    override def fieldDefn(data: FieldKeyRecData) = FlowGraphFieldDefinition
+    override def maxTextPerUc = Some(0: Short)
+  }
+
+  val Values = List(Text, NormalAndAlternateCourses, ExceptionCourses, FlowGraph)
+
   // -------------------------------------------------------------------------------------------------------------------
 
   // Lookup by ID. Hardcoded for speed. Will be replaced when Scala 2.11 arrives with real enums.
@@ -55,8 +66,6 @@ object FieldKeyType {
     case NormalAndAlternateCourses.id => NormalAndAlternateCourses
     case ExceptionCourses.id => ExceptionCourses
   }
-
-  val Values = List(Text, NormalAndAlternateCourses, ExceptionCourses)
 
   assume(Values.map(_.id).distinct.size == Values.size, "Duplicate IDs detected.")
   assume(Values.map(_.name).distinct.size == Values.size, "Duplicate names detected.")
