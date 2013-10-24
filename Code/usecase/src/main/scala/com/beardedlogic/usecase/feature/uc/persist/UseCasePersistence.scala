@@ -57,12 +57,13 @@ final object UseCasePersistence {
 
   type SavedDataByField = List[FieldAndSavedData]
 
-  def persist(field: Field): FieldPersistence[field.type] = {
-    val fp: FieldPersistence[_] = field match {
-      case f: TextField => TextFieldPersistence(f)
-      case f: StepField => StepFieldPersistence(f)
+  def persist(field: Field): Option[FieldPersistence[field.type]] = {
+    val fp: Option[FieldPersistence[_]] = field match {
+      case f: TextField      => Some(TextFieldPersistence(f))
+      case f: StepField      => Some(StepFieldPersistence(f))
+      case f: FlowGraphField => None
     }
-    fp.asInstanceOf[FieldPersistence[field.type]]
+    fp.asInstanceOf[Option[FieldPersistence[field.type]]]
   }
 
   // ===================================================================================================================
@@ -75,33 +76,39 @@ final object UseCasePersistence {
     val fieldList = Defaults.fieldList.value.fields // TODO hardcoded fieldlist
     val loadCtx = FieldLoadCtx(uch, dao.findAllUcFieldData(ucRev.id))
 
+    var transientFields = List.empty[Field]
     var loadResults = List.empty[FieldAndLoadResult]
     var stepAndLabelMaps = List.empty[Map[LocalStepId, StepLabel]]
     var savedStepMap = Map.empty[LocalStepId, TextIdentId]
+    for (f <- fieldList)
+      persist(f) match {
+        case Some(p) =>
+          val r = p.load(loadCtx)
+          loadResults ::= FieldAndLoadResult(f)(p)(r)
+          for (tree <- r.stepTree)
+            stepAndLabelMaps ::= generateStepAndLabelMap(ucn, f, tree)
+          if (r.savedSteps.nonEmpty)
+            savedStepMap ++= r.savedSteps
 
-    for (f <- fieldList) {
-      val p = persist(f)
-      val r = p.load(loadCtx)
-      loadResults = FieldAndLoadResult(f)(p)(r) :: loadResults
-      for (tree <- r.stepTree)
-        stepAndLabelMaps ::= generateStepAndLabelMap(ucn, f, tree)
-      if (r.savedSteps.nonEmpty)
-        savedStepMap ++= r.savedSteps
-    }
+        case None =>
+          transientFields ::= f
+      }
 
     val savedSteps: SavedSteps = BiMap.swapped(savedStepMap)
     val stepAndLabels = generateStepAndLabelBiMap(stepAndLabelMaps)
     val rels = CachedUseCaseRelations(dao.summariseUseCases(projectId))
     val ctx = UcParsingCtx(ucn, uch.title, stepAndLabels, rels)
 
-    var fieldValues = Map.empty[Field, Field#Value]
     var savedData = List.empty[FieldAndSavedData]
+    var fieldValues = Map.empty[Field, Field#Value]
     for (fr  <- loadResults) {
       val (fv, sdOpt) = fr.get.phase2(savedSteps, ctx)
       fieldValues += (fr.f -> fv)
       for (sd <- sdOpt)
         savedData ::= FieldAndSavedData(fr.f)(sd)
     }
+    for (f <- transientFields)
+      fieldValues += (f -> f.empty)
 
     val uc = UseCase(ucn, uch, fieldList, fieldValues, stepAndLabels)
     val cp = UseCaseSaveCheckpoint(uc, ucRev, savedSteps, savedData)
@@ -129,12 +136,14 @@ final object UseCasePersistence {
     type ValueSavers = Iterable[FieldAndSaver]
 
     val allSavers: ValueSavers =
-      uc.fieldValues.map { case (f, v_) =>
-        val v = f.castV(v_)
-        val p = persist(f)
-        val s = p.saver(v, uc.stepsAndLabels)
-        FieldAndSaver(f)(p)(s)
-      }
+      uc.fieldValues.toStream.map(ffv => {
+        val f = ffv._1
+        persist(f).map(p => {
+          val v = f.castV(ffv._2)
+          val s = p.saver(v, uc.stepsAndLabels)
+          FieldAndSaver(f)(p)(s)
+        })
+      }).filter(_.isDefined).map(_.get)
 
     def getPrevSaveDataFor(f: Field) = get(f, prevSave.savedData)
 

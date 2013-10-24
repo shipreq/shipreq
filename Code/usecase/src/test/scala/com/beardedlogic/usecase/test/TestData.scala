@@ -18,7 +18,7 @@ trait TestData extends TestHelpers2 {
   // TODO Create TestData MockUc1
   // TODO Move TestData into TestHelpers?
 
-  lazy val FL: List[Field] = List(TF1, TF2, NCF, ECF, TF3)
+  lazy val FL: List[Field] = List(TF1, TF2, NCF, ECF, TF3, FGF)
   lazy val EmptyFieldValues: FieldValues = FL.map(f => (f ~> f.empty)).toMap
   lazy val UCN = (7:Short).tag[IsUseCaseNumber]
   lazy val UCH = UseCaseHeader("YES!".validated)

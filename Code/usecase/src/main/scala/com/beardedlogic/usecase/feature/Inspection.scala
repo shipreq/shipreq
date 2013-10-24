@@ -35,6 +35,7 @@ object Inspection {
   private val nil: Cord = "Nil"
   private val eol: Cord = "\n"
   private val `:Short)`: Cord = ":Short)"
+  private val `()`: Cord = "()"
 
   private implicit class StringExt(val s: String) extends AnyVal {
     @inline def <>(body: Cord): Cord = (s: Cord) <> body
@@ -60,6 +61,7 @@ object Inspection {
   implicit def booleanInstance = scalaz.std.anyVal.booleanInstance
   implicit def optionInstance[A: Show]: Show[Option[A]] = scalaz.std.option.optionShow
 
+  implicit val unit: Show[Unit] = Show.show(_ => `()`)
   implicit val str: Show[String] = Show.show(`"` ++ escapeJava(_) ++ `"`)
   implicit val jlong: Show[JLong] = Show.show(_.toString)
   implicit val jshort: Show[JShort] = Show.show(`(` ++ _.toString ++ `:Short)`)
@@ -177,10 +179,13 @@ object Inspection {
 
   implicit val sfv: Show[StepFieldValue] = "StepFieldValue" <*> (x => x.field.show ++> x.tree.show ++> x.textmap.show)
 
-  implicit val fieldValue: Show[Field#Value] = Show.show(_ match {
-    case v: FreeText       => Show[FreeText].show(v)
-    case v: StepFieldValue => Show[StepFieldValue].show(v)
-  })
+  def showFieldValue(ff: Field, v: Field#Value): Cord =
+    ff match {
+      case f: TextField            => f.castV(v).show
+      case f: NormalCourseField    => f.castV(v).show
+      case f: ExceptionCourseField => f.castV(v).show
+      case f: FlowGraphField       => f.castV(v).show
+    }
 
   // ===================================================================================================================
   // Use Case
@@ -190,7 +195,7 @@ object Inspection {
   implicit val uchShow: Show[UseCaseHeader] = "UseCaseHeader" <*> (_.title.show)
 
   implicit val ucShow: Show[UseCase] = "UseCase.as" <*> (x => {
-    val fvTuples = x.fields.map(f => f.show ++ `~>` ++ x.fieldValues(f).show ++ eol)
+    val fvTuples = x.fields.map(f => f.show ++ `~>` ++ showFieldValue(f, x.fieldValues(f)) ++ eol)
     x.number.show ++> x.header.show ++ eol ++> fvTuples.show ++> x.stepsAndLabels.show
   })
 }

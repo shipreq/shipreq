@@ -151,6 +151,8 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
   lazy val NCF = NormalCourseField(FieldKeyRec(55.tag[IsFieldKeyId], NormalCourseFieldDefinition.fieldKeyType, NormalCourseFieldDefinition.fieldKeyData))
   lazy val ECF = ExceptionCourseField(FieldKeyRec(66.tag[IsFieldKeyId], ExceptionCourseFieldDefinition.fieldKeyType, ExceptionCourseFieldDefinition.fieldKeyData))
 
+  lazy val FGF = FlowGraphField(FieldKeyRec(707.tag[IsFieldKeyId], FlowGraphFieldDefinition.fieldKeyType, FlowGraphFieldDefinition.fieldKeyData))
+
   def rnd = TestHelperConsts.Random
 
   // -------------------------------------------------------------------------------------------------------------------

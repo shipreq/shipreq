@@ -312,7 +312,8 @@ object DataGenerators extends Logger {
   implicit val arbUCH = Arbitrary(useCaseHeader)
   implicit val arbUCN = Arbitrary(useCaseNumber)
 
-  def useCaseGen(fieldList: => FieldListRec, ucnGen: Gen[UseCaseNumber] = useCaseNumber, existingUcs: Seq[UseCaseNumber] = List.empty): Gen[UseCase] = {
+  def useCaseGen(fieldList_ : => FieldListRec, ucnGen: Gen[UseCaseNumber] = useCaseNumber, existingUcs: Seq[UseCaseNumber] = List.empty): Gen[UseCase] = {
+    val fieldList = fieldList_
     val NCF = fieldList.NCF
     val ECF = fieldList.ECF
 
@@ -342,13 +343,16 @@ object DataGenerators extends Logger {
           (f ~> v)
         }.toMap
 
-      // Step text
-      val stepFieldValues: FieldValues = Map(
-        (NCF ~> stepFieldValue(stepTexts, NCF, nc.stepTree)),
-        (ECF ~> stepFieldValue(stepTexts, ECF, ec.stepTree))
-      )
-
-      val fieldValues = stepFieldValues ++ textFieldValues
+      val fieldValues: FieldValues =
+        fieldList.fields.map(ff => {
+          val r: (Field, Field#Value) = ff match {
+            case f: NormalCourseField    => (f ~> stepFieldValue(stepTexts, f, nc.stepTree))
+            case f: ExceptionCourseField => (f ~> stepFieldValue(stepTexts, f, ec.stepTree))
+            case f: TextField            => (f -> textFieldValues(f))
+            case f: FlowGraphField       => (f ~> f.empty)
+          }
+          r
+        }).toMap
       UseCase(ucn, h, fieldList.fields, fieldValues, stepsAndLabels)
     }
   }

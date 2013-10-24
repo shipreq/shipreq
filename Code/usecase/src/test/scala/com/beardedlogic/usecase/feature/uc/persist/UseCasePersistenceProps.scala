@@ -53,6 +53,7 @@ class UseCasePersistenceProps extends FunSuite with TestDatabaseSupport with Che
         ,TextField(TextFieldDefinition("Post-Conditions"),FieldKeyRec(13.tag[IsFieldKeyId],FieldKeyType.Text,Some("Post-Conditions")))~>FreeText.empty
         ,NormalCourseField(FieldKeyRec(14.tag[IsFieldKeyId],FieldKeyType.NormalAndAlternateCourses,None))~>StepFieldValue(NormalCourseField(FieldKeyRec(14.tag[IsFieldKeyId],FieldKeyType.NormalAndAlternateCourses,None)),StepTree(List(StepNode("F1197205450689KYVCAS".tag[IsLocalStepId],0,0,List(StepNode("F1197205450688HDKO1W".tag[IsLocalStepId],1,1,Nil))))),Map("F1197205450689KYVCAS".tag[IsLocalStepId]->StepText(FreeText(List(PlainText("Do Stuff"))),None,None),"F1197205450688HDKO1W".tag[IsLocalStepId]->StepText.empty))
         ,ExceptionCourseField(FieldKeyRec(15.tag[IsFieldKeyId],FieldKeyType.ExceptionCourses,None))~>StepFieldValue(ExceptionCourseField(FieldKeyRec(15.tag[IsFieldKeyId],FieldKeyType.ExceptionCourses,None)),StepTree(Nil),Map())
+        ,FlowGraphField(FieldKeyRec(33.tag[IsFieldKeyId],FieldKeyType.FlowGraph,None))~>()
         ,TextField(TextFieldDefinition("Use Case Relationships"),FieldKeyRec(16.tag[IsFieldKeyId],FieldKeyType.Text,Some("Use Case Relationships")))~>FreeText.empty
         ,TextField(TextFieldDefinition("Constraints and Business Rules"),FieldKeyRec(17.tag[IsFieldKeyId],FieldKeyType.Text,Some("Constraints and Business Rules")))~>FreeText.empty
         ,TextField(TextFieldDefinition("Frequency of Use"),FieldKeyRec(18.tag[IsFieldKeyId],FieldKeyType.Text,Some("Frequency of Use")))~>FreeText.empty
@@ -68,6 +69,7 @@ class UseCasePersistenceProps extends FunSuite with TestDatabaseSupport with Che
         ,TextField(TextFieldDefinition("Post-Conditions"),FieldKeyRec(13.tag[IsFieldKeyId],FieldKeyType.Text,Some("Post-Conditions")))~>FreeText.empty
         ,NormalCourseField(FieldKeyRec(14.tag[IsFieldKeyId],FieldKeyType.NormalAndAlternateCourses,None))~>StepFieldValue(NormalCourseField(FieldKeyRec(14.tag[IsFieldKeyId],FieldKeyType.NormalAndAlternateCourses,None)),StepTree(List(StepNode("F1197205450689KYVCAS".tag[IsLocalStepId],0,0,List(StepNode("F1197205450688HDKO1W".tag[IsLocalStepId],1,1,Nil))))),Map("F1197205450689KYVCAS".tag[IsLocalStepId]->StepText(FreeText(List(PlainText("Do Stuff"))),None,None),"F1197205450688HDKO1W".tag[IsLocalStepId]->StepText.empty))
         ,ExceptionCourseField(FieldKeyRec(15.tag[IsFieldKeyId],FieldKeyType.ExceptionCourses,None))~>StepFieldValue(ExceptionCourseField(FieldKeyRec(15.tag[IsFieldKeyId],FieldKeyType.ExceptionCourses,None)),StepTree(Nil),Map())
+        ,FlowGraphField(FieldKeyRec(33.tag[IsFieldKeyId],FieldKeyType.FlowGraph,None))~>()
         ,TextField(TextFieldDefinition("Use Case Relationships"),FieldKeyRec(16.tag[IsFieldKeyId],FieldKeyType.Text,Some("Use Case Relationships")))~>FreeText.empty
         ,TextField(TextFieldDefinition("Constraints and Business Rules"),FieldKeyRec(17.tag[IsFieldKeyId],FieldKeyType.Text,Some("Constraints and Business Rules")))~>FreeText.empty
         ,TextField(TextFieldDefinition("Frequency of Use"),FieldKeyRec(18.tag[IsFieldKeyId],FieldKeyType.Text,Some("Frequency of Use")))~>FreeText.empty
@@ -83,6 +85,7 @@ class UseCasePersistenceProps extends FunSuite with TestDatabaseSupport with Che
         ,TextField(TextFieldDefinition("Post-Conditions"),FieldKeyRec(13.tag[IsFieldKeyId],FieldKeyType.Text,Some("Post-Conditions")))~>FreeText.empty
         ,NormalCourseField(FieldKeyRec(14.tag[IsFieldKeyId],FieldKeyType.NormalAndAlternateCourses,None))~>StepFieldValue(NormalCourseField(FieldKeyRec(14.tag[IsFieldKeyId],FieldKeyType.NormalAndAlternateCourses,None)),StepTree(List(StepNode("F1197205450689KYVCAS".tag[IsLocalStepId],0,0,Nil))),Map("F1197205450689KYVCAS".tag[IsLocalStepId]->StepText(FreeText(List(PlainText("Do Stuff"))),None,None)))
         ,ExceptionCourseField(FieldKeyRec(15.tag[IsFieldKeyId],FieldKeyType.ExceptionCourses,None))~>StepFieldValue(ExceptionCourseField(FieldKeyRec(15.tag[IsFieldKeyId],FieldKeyType.ExceptionCourses,None)),StepTree(Nil),Map())
+        ,FlowGraphField(FieldKeyRec(33.tag[IsFieldKeyId],FieldKeyType.FlowGraph,None))~>()
         ,TextField(TextFieldDefinition("Use Case Relationships"),FieldKeyRec(16.tag[IsFieldKeyId],FieldKeyType.Text,Some("Use Case Relationships")))~>FreeText.empty
         ,TextField(TextFieldDefinition("Constraints and Business Rules"),FieldKeyRec(17.tag[IsFieldKeyId],FieldKeyType.Text,Some("Constraints and Business Rules")))~>FreeText.empty
         ,TextField(TextFieldDefinition("Frequency of Use"),FieldKeyRec(18.tag[IsFieldKeyId],FieldKeyType.Text,Some("Frequency of Use")))~>FreeText.empty
