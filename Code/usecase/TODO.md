@@ -31,12 +31,10 @@ TECH TODO
 * [S.2.4] [PERF] DB connection pooling.
 * [S.1.3] [PERF] Shiro caching.
 * [S.1.3] [PERF] Textareas' blur shouldn't send a request when input doesn't change.
-* [S.1.2] [TEST] Test UseCaseCrudl.
 * [S.1.1] [TEST] When SBT 0.13 comes out, shutdown Jetty et al in SBT hook.
 * [S.0.5] [BUG ] When fields are loaded but no FV exists, fields should be cleared. (Will affect in-place loading.)
+* [S.0.5] [TEST] Check \r on input from mac/windows. TextMarkup only respects \n.
 
-* [C.3.3] [CODE] Seal Field trait.
-* [C.2.2] [CODE] Using tagged types for DB model attributes requiring validation/correction.
 * [C.2.0] [PERF] DAO should cache certain actions and execute in bulk.
 * [C.1.1] [DEMO] Show flow deletion in flow demo.
 
@@ -46,3 +44,4 @@ UNTESTED
 * [I] /project
 * [U] Publisher (page, JS, generation)
 * [U] Navbar
+* [U] UseCaseCrudl
