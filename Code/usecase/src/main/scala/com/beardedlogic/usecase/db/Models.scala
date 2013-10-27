@@ -57,7 +57,7 @@ class UseCaseSummary2(id: UseCaseIdentId, number: UseCaseNumber, title: String, 
 
 case class UseCaseIdent(identId: UseCaseIdentId, number: UseCaseNumber, projectId: ProjectId)
 
-case class UseCaseRev(ident: UseCaseIdent, rev: Short, id: UseCaseRevId, header: UseCaseHeader) {
+case class UseCaseRev(ident: UseCaseIdent, rev: Short, id: UseCaseRevId, header: UseCaseHeader, createdAt: String @@ ISO8601) {
   @inline final def identId = ident.identId
   @inline final def title = header.title
 }

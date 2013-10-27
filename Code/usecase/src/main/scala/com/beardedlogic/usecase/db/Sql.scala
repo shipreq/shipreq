@@ -23,7 +23,7 @@ private[db] final object Sql {
   implicit val GR_UcFieldText= GetResult(r => UcFieldText(r.nextStringOption.asLabelC, r.<<, r.<<, r.<<))
   implicit val GR_UcFieldTextWithFK = GetResult(r => UcFieldTextWithFK(r.<<, r.<<))
   implicit val GR_UseCaseIdent = GetResult {r => UseCaseIdent(r.<<, r.<<, r.<<)}
-  implicit val GR_UseCaseRev = GetResult(r => UseCaseRev(r.<<, r.<<, r.<<, UseCaseHeader(r.nextString)))
+  implicit val GR_UseCaseRev = GetResult(r => UseCaseRev(r.<<, r.<<, r.<<, UseCaseHeader(r.nextString), r.<<))
   val GR_UseCaseSummary2 = GetResult(r => new UseCaseSummary2(r.nextId[UseCaseIdentId], r.<<, r.<<, r.<<))
   val GR_UseCaseSummary = GetResult(r => new UseCaseSummary(r.nextId[UseCaseIdentId], r.<<, r.<<))
   implicit val GR_UserDescriptor = GetResult(r => UserDescriptor(r.<<, r.<<, r.<<))
@@ -102,7 +102,7 @@ private[db] final object Sql {
   // ###################################################################################################################
   // Use Case
 
-  private val ucrev_* = s"r.ident_id, u.number, u.project_id, r.rev, r.id, r.title"
+  private val ucrev_* = s"r.ident_id, u.number, u.project_id, r.rev, r.id, r.title, to_iso8601_str(r.created_at)"
 
   @Insert val InsertUseCaseIdent = {
     val NextUseCaseNumber = "(SELECT coalesce(max(number),0)+1 from usecase where project_id=?)"
@@ -113,8 +113,8 @@ private[db] final object Sql {
   @Insert val InsertUseCaseIdentForceNum = query[(ProjectId, UseCaseNumber), UseCaseIdentId](
     "INSERT INTO usecase(project_id,number) VALUES(?,?) RETURNING id")
 
-  @Insert val InsertUseCaseRev = query[(UseCaseIdentId, Short, String), UseCaseRevId](
-    "INSERT INTO usecase_rev(ident_id, rev, title) VALUES(?,?,?) RETURNING id")
+  @Insert val InsertUseCaseRev = query[(UseCaseIdentId, Short, String), (UseCaseRevId, String @@ ISO8601)](
+    "INSERT INTO usecase_rev(ident_id, rev, title) VALUES(?,?,?) RETURNING id, to_iso8601_str(created_at)")
 
   val SelectUseCaseRev = query[UseCaseRevId, UseCaseRev](
     s"SELECT ${ucrev_*} FROM usecase u, usecase_rev r WHERE u.id=r.ident_id AND r.id=?")

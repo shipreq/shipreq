@@ -233,7 +233,7 @@ trait TestDatabaseHelpers extends TestHelpers2 {
   def loadUseCase(ucRev: UseCaseRev, projectId: ProjectId) =
     Locks.UseCaseNumbers.readP(projectId)(UseCasePersistence.load(ucRev, dao, _))
 
-  def createUseCaseIdentAndRev1(projectId: ProjectId, header: UseCaseHeader) =
+  def createUseCaseIdentAndRev1(projectId: ProjectId, header: UseCaseHeader): UseCaseRev =
     Locks.UseCaseNumbers.write(projectId)(dao.createUseCaseIdentAndRev1(projectId, header, _))
 
   def updateUseCaseHeader(ucId: UseCaseIdentId, modFn: UseCaseHeader => UseCaseHeader)(implicit projectId: ProjectId) =

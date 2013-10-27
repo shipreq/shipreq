@@ -3,7 +3,6 @@ package db
 
 import org.postgresql.util.PSQLException
 import scala.slick.driver.PostgresDriver.simple._
-import scalaz.{-\/,\/-}
 import feature.uc.field.FieldDefinition
 import lib.Locks.{UseCaseNumbers, SingleUseCase}
 import lib.Types._
@@ -111,8 +110,8 @@ sealed trait DaoS {
   // Use Case
 
   def createUseCaseRev(ucIdent: UseCaseIdent, rev: Short, header: UseCaseHeader): UseCaseRev = {
-    val id = InsertUseCaseRev.first(ucIdent, rev, header.title)
-    UseCaseRev(ucIdent, rev, id, header)
+    val (id, createdAt) = InsertUseCaseRev.first(ucIdent, rev, header.title)
+    UseCaseRev(ucIdent, rev, id, header, createdAt)
   }
 
   def findUseCaseRev(revId: UseCaseRevId): Option[UseCaseRev] = SelectUseCaseRev.firstOption(revId)
