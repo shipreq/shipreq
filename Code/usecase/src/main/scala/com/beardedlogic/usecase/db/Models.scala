@@ -4,7 +4,9 @@ package db
 import org.joda.time.DateTime
 import scala.reflect.ClassTag
 import lib.Types._
+import feature.ExternalId
 import feature.uc.field._
+import feature.uc.UseCaseFns
 
 // ===================================================================================================================
 // User
@@ -42,6 +44,17 @@ object FieldListRec {
 // ===================================================================================================================
 // UC & Text
 
+class UseCaseSummary(val id: UseCaseIdentId, val number: UseCaseNumber, val title: String) {
+  def this(ucr: UseCaseRev) = this(ucr.identId, ucr.ident.number, ucr.title)
+  final def eid = ExternalId.UseCase.toExternal(id)
+  final def fullName = UseCaseFns.fullName(number, title)
+}
+
+class UseCaseSummary2(id: UseCaseIdentId, number: UseCaseNumber, title: String, val updatedAt: String)
+  extends UseCaseSummary(id, number, title) {
+  def this(ucr: UseCaseRev, updatedAt: String) = this(ucr.identId, ucr.ident.number, ucr.title, updatedAt)
+}
+
 case class UseCaseIdent(identId: UseCaseIdentId, number: UseCaseNumber, projectId: ProjectId)
 
 case class UseCaseRev(ident: UseCaseIdent, rev: Short, id: UseCaseRevId, header: UseCaseHeader) {
@@ -71,3 +84,9 @@ case class UcFieldText(label: Option[StepLabel], parentId: Option[TextRevId], in
 // Project
 
 case class Project(id: ProjectId, name: String, owner: UserId)
+
+case class ProjectSummary(
+  id: ProjectId,
+  name: String,
+  ucCount: Int,
+  ucUpdatedAt: Option[String])
