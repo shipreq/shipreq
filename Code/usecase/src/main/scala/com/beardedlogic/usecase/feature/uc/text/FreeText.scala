@@ -26,6 +26,8 @@ object FreeTextTerms {
   case class UseCaseRef(num: UseCaseNumber, title: String) extends AnyUseCaseRef
   case class UseCaseSelfRef(num: UseCaseNumber, title: String) extends AnyUseCaseRef
   case class InvalidUseCaseRef(num: UseCaseNumber, title: Option[String]) extends FreeTextTerm
+
+  case class MathTexTerm(tex: String) extends FreeTextTerm
 }
 
 import FreeTextTerms._
@@ -64,6 +66,7 @@ object FreeText {
       case UseCaseRefToken(true, num, ot)  => parseUseCaseRef(num, ot)
       case UseCaseRefToken(false, num, ot) => InvalidUseCaseRef(num, ot)
       case DeletedRefToken                 => DeletedRef
+      case MathTexToken(inner)             => MathTexTerm(inner)
     }
 
     @inline
@@ -83,7 +86,7 @@ object FreeText {
           case None    => InvalidUseCaseRef(num, ot)
         }
 
-    parseG(FreeTextParsers.TextAndRefs, text) match {
+    parseG(FreeTextParsers.TextAndTokens, text) match {
       case Success(tokens, _) => FreeText(parseTokens(tokens))
       case Failure(_, _)      => FreeText(Nil)
       case e@Error(_, _)      => throw new RuntimeException(s"FreeText parsing error occurred: $e. Text: ${text.inspect}")
@@ -107,6 +110,7 @@ case class FreeText(terms: List[FreeTextTerm]) extends ParsedText {
       case UseCaseRef(num, title)     => sb.appendUseCaseRef(num, title)
       case UseCaseSelfRef(num, title) => sb.appendUseCaseRef(num, title); hasUcSelfRef = true
       case InvalidUseCaseRef(num, ot) => sb.appendInvalidUseCaseRef(num, ot)
+      case MathTexTerm(tex)           => sb.appendMathTexTerm(tex)
     })
     (sb.toString, stepRefMap, hasUcSelfRef)
   }
@@ -155,6 +159,7 @@ class FreeTextUpdater(textChanged: Change) extends ParsedTextUpdater[FreeText] w
           case PlainText(_)
                | InvalidStepRef(_)
                | DeletedRef
+               | MathTexTerm(_)
                | UseCaseRef(_, _)
                | UseCaseSelfRef(_, _)
                | InvalidUseCaseRef(_, _) => unchanged

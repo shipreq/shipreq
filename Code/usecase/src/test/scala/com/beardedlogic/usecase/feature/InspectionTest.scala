@@ -6,6 +6,7 @@ import scalaz.syntax.show._
 import com.beardedlogic.usecase.test.TestData
 import com.beardedlogic.usecase.feature.uc.UseCase
 import Inspection._
+import uc.text.FreeTextTerms.MathTexTerm
 
 class InspectionTest extends FunSuite with TestData {
 
@@ -22,5 +23,11 @@ class InspectionTest extends FunSuite with TestData {
       parsedUc.devView ==== uc.devView
       parsedUc.inspect ==== uc.inspect
     }
+  }
+
+  test("MathTexTerm") {
+    val x = MathTexTerm("YAY{}()\"!")
+    val y: MathTexTerm = eval(x.shows)
+    x ==== y
   }
 }

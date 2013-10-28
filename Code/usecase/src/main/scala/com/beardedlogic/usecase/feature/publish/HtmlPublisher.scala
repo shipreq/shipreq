@@ -84,6 +84,7 @@ class HtmlPublisher(input: Input) extends GenericPublisher(input) {
   override def fttDeletedRef                              = <span class="bad ref">{DeletedRefStr}</span>
   override def fttInvalidStepRef(t: InvalidStepRef)       = <span class="bad ref">{makeInvalidStepRef(t.label)}</span>
   override def fttInvalidUseCaseRef(t: InvalidUseCaseRef) = <span class="bad ref">{makeInvalidUseCaseRef(t.num, t.title)}</span>
+  override def fttMathTex(value: MathTexTerm)             = <script type="math/tex">{value.tex}</script>
 
   def stepRef(l: StepLabel): X = <a class="step" href={stepHref(l)}>{l}</a>
 

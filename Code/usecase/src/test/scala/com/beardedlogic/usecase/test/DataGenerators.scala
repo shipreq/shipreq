@@ -233,9 +233,22 @@ object DataGenerators extends Logger {
 
     val invalidUcRefInner = possibleUcRefTitleSuffix.map(s"UC-${maxUcn + 1}?" + _)
 
-    val textRef = withBraces(validStep | invalidStep | validUcRefInner | invalidUcRefInner | DeletedRefInner)
+    val mathTex = mkStringWithWhitespace(
+      plainText
+      .map(_.replace("|}", "}"))
+      .map("{|" :: "math.tex" :: ":" :: _ :: "|}" :: Nil)
+    )
 
-    val textFieldText = Gen.listOf(nothing | plainText | textRef).map(_.mkString)
+    val textToken = (
+      mathTex
+        | withBraces(validStep)
+        | withBraces(invalidStep)
+        | withBraces(validUcRefInner)
+        | withBraces(invalidUcRefInner)
+        | withBraces(DeletedRefInner)
+      )
+
+    val textFieldText = Gen.listOf(nothing | plainText | textToken).map(_.mkString)
 
     val validFlowRef = validStep | validStepRef
     val validFlowRefs = mkStringWithWhitespace(Gen.listOf(validFlowRef))
