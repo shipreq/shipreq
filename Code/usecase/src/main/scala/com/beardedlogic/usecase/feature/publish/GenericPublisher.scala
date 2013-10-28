@@ -1,26 +1,17 @@
 package com.beardedlogic.usecase.feature.publish
 
+import net.liftweb.util.TimeHelpers.logTime
+import scalaz.{Need, Traverse, Monoid}
+import scalaz.syntax.foldable._
+import scalaz.syntax.monoid._
+
 import com.beardedlogic.usecase.feature.uc.UseCase
 import com.beardedlogic.usecase.feature.uc.field._
 import com.beardedlogic.usecase.feature.uc.step.{StepNode, StepTreeZipper}
 import com.beardedlogic.usecase.feature.uc.text.FreeTextTerms._
 import com.beardedlogic.usecase.feature.uc.text.{FlowClause, FreeTextTerm, StepText, FreeText}
 import com.beardedlogic.usecase.lib.Types._
-import net.liftweb.util.TimeHelpers.logTime
-import scalaz.{Name, Need, Traverse, Monoid}
-import scalaz.syntax.foldable._
-import scalaz.syntax.monoid._
 import com.beardedlogic.usecase.feature.FlowGraph
-
-// =====================================================================================================================
-
-sealed trait LogicalField
-case class LogicalLastUpdatedField(when: String @@ ISO8601) extends LogicalField
-case class LogicalFlowGraphField(dot: Name[String]) extends LogicalField
-case class LogicalTextField(title: String, value: FreeText) extends LogicalField
-case class LogicalStepField(title: String, value: Option[StepTreeZipper.DeepZipper]) extends LogicalField
-
-// =====================================================================================================================
 
 abstract class GenericPublisher(input: Input) {
 
@@ -56,29 +47,29 @@ abstract class GenericPublisher(input: Input) {
   def fields(uc: UseCase): X =
     getLogicalFields(uc) foldMap field
 
-  def getLogicalFields(uc: UseCase): List[LogicalField] =
-    LogicalLastUpdatedField(input.revMap(uc).createdAt) ::
+  def getLogicalFields(uc: UseCase): List[OutputField] =
+    OF_LastUpdated(input.revMap(uc).createdAt) ::
     uc.fields.foldMap(extractLogicalFields(uc))
 
-  def extractLogicalFields(uc: UseCase)(ff: Field): List[LogicalField] =
+  def extractLogicalFields(uc: UseCase)(ff: Field): List[OutputField] =
     ff match {
       case f: TextField =>
-        LogicalTextField(f.defn.title, f(uc)) :: Nil
+        OF_Text(f.defn.title, f(uc)) :: Nil
 
       case f: NormalCourseField =>
         val v = f(uc)
         val n :: a = v.tree.nodes
         List(
-          LogicalStepField("Normal Course", buildStepTreeZipper(uc, v, n :: Nil)),
-          LogicalStepField("Alternative Courses", buildStepTreeZipper(uc, v, a))
+          OF_Step("Normal Course", buildStepTreeZipper(uc, v, n :: Nil)),
+          OF_Step("Alternative Courses", buildStepTreeZipper(uc, v, a))
         )
 
       case f: ExceptionCourseField =>
         val v = f(uc)
-        LogicalStepField("Exceptions", buildStepTreeZipper(uc, v, v.tree.nodes)) :: Nil
+        OF_Step("Exceptions", buildStepTreeZipper(uc, v, v.tree.nodes)) :: Nil
 
       case f: FlowGraphField =>
-        LogicalFlowGraphField(Need(FlowGraph.render(uc).toString)) :: Nil
+        OF_FlowGraph(Need(FlowGraph.render(uc).toString)) :: Nil
     }
 
   def buildStepTreeZipper(uc: UseCase, v: StepFieldValue, nodes: List[StepNode]): Option[StepTreeZipper.DeepZipper] =
@@ -90,11 +81,11 @@ abstract class GenericPublisher(input: Input) {
         Some(zipper)
     }
 
-  def field(f: LogicalField): X = f match {
-    case f: LogicalTextField        => textField(f)
-    case f: LogicalStepField        => stepField(f)
-    case f: LogicalFlowGraphField   => flowGraphField(f)
-    case f: LogicalLastUpdatedField => lastUpdatedField(f)
+  def field(f: OutputField): X = f match {
+    case f: OF_Text        => textField(f)
+    case f: OF_Step        => stepField(f)
+    case f: OF_FlowGraph   => flowGraphField(f)
+    case f: OF_LastUpdated => lastUpdatedField(f)
   }
 
   def fieldTitle(title: String): X
@@ -102,7 +93,7 @@ abstract class GenericPublisher(input: Input) {
   // -------------------------------------------------------------------------------------------------------------------
   // Text field
 
-  def textField(f: LogicalTextField): X = textFieldSurround(textFieldTitle(f.title), textFieldValue(f.value))
+  def textField(f: OF_Text): X = textFieldSurround(textFieldTitle(f.title), textFieldValue(f.value))
   def textFieldSurround(title: X, value: X): X
 
   final def textFieldTitle(title: String): X = textFieldTitleSurround(textFieldTitleInner(title))
@@ -158,14 +149,14 @@ abstract class GenericPublisher(input: Input) {
   // -------------------------------------------------------------------------------------------------------------------
   // Step fields
 
-  def stepField(f: LogicalStepField): X = stepFieldSurround(stepFieldTitle(f.title), stepFieldValue(f))
+  def stepField(f: OF_Step): X = stepFieldSurround(stepFieldTitle(f.title), stepFieldValue(f))
   def stepFieldSurround(title: X, value: X): X
 
   final def stepFieldTitle(title: String): X = stepFieldTitleSurround(stepFieldTitleInner(title))
   def stepFieldTitleSurround(title: X): X
   def stepFieldTitleInner(title: String): X = fieldTitle(title)
 
-  final def stepFieldValue(f: LogicalStepField): X = f.value match {
+  final def stepFieldValue(f: OF_Step): X = f.value match {
     case None    => stepFieldValueEmpty
     case Some(v) => stepFieldValueSurround(stepFieldValueGeneration(v))
   }
@@ -197,6 +188,6 @@ abstract class GenericPublisher(input: Input) {
   // -------------------------------------------------------------------------------------------------------------------
   // Other fields
 
-  def lastUpdatedField(f: LogicalLastUpdatedField): X
-  def flowGraphField(f: LogicalFlowGraphField): X
+  def lastUpdatedField(f: OF_LastUpdated): X
+  def flowGraphField(f: OF_FlowGraph): X
 }

@@ -120,11 +120,11 @@ class HtmlPublisher(input: Input) extends GenericPublisher(input) {
   // -------------------------------------------------------------------------------------------------------------------
   // Other fields
 
-  override def lastUpdatedField(f: LogicalLastUpdatedField) =
+  override def lastUpdatedField(f: OF_LastUpdated) =
     <tr class="lastupdated"><th>Last Updated</th><td>
       <time class="showdate" datetime={f.when}></time>
     </td></tr>
 
-  override def flowGraphField(f: LogicalFlowGraphField) =
+  override def flowGraphField(f: OF_FlowGraph) =
     <tr class="flowgraph"><th>Flow Graph</th><td data-dot={f.dot.value}></td></tr>
 }
