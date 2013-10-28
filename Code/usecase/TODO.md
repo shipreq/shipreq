@@ -12,6 +12,7 @@ FUNC TODO
 * [S.2.1] [ACCT] Change username & password (when logged in).
 * [S.1.1] [UX  ] Pages don't have acceptable titles.
 * [S.0.5] [ACCT] Password reset (when not logged in).
+* [S.0.5] [UCE ] Step refs are case-sensitive. [5.e.1] should work in place of [5.E.1].
 
 * [C.2.4] [UCE ] Make step labels fade into links when clickable, else users wont know to click.
 * [C.4.4] [UCE ] Symlink steps (and have flow targets point back). Eg "@sameas/@Copy [1.E.1.1]" What about children steps?
@@ -21,8 +22,10 @@ FUNC TODO
 * [C.2.1] [UCE ] Delete step via KB shortcut.
 * [C.2.1] [ACCT] Add JS email corrector/validator like mailcheck.js.
 * [C.2.1] [UCE ] Search and replace.
+* [C.2.0] [UX  ] When a user account is created, a default project called "Untitled Project" should be created.
 * [C.1.1] [UCE ] Alt+Shift+Enter to create next & indent.
 * [C.1.1] [UCE ] View step references. (Eg. Who has refs to 1.0.4?)
+* [C.0.1] [UX  ] System shouldn't provide a means to read UCs when no UCs exist.
 
 TECH TODO
 =========
