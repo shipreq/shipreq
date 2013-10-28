@@ -236,7 +236,7 @@ object DataGenerators extends Logger {
     val mathTex = mkStringWithWhitespace(
       plainText
       .map(_.replace("|}", "}"))
-      .map("{|" :: "math.tex" :: ":" :: _ :: "|}" :: Nil)
+      .map("{|" :: "math" :: ":" :: _ :: "|}" :: Nil)
     )
 
     val textToken = (

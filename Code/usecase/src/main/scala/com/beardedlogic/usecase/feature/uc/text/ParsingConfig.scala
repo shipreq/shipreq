@@ -47,7 +47,7 @@ final object ParsingConfig {
       sb.append("UC-").append(num.toInt).append(InvalidRefSuffix)
       if (title.isDefined) sb.append(": ").append(title.get)
     }
-    def appendMathTexTerm(tex: String) = sb.append("{|math.tex: ").append(tex).append(" |}")
+    def appendMathTexTerm(tex: String) = sb.append("{|math: ").append(tex).append(" |}")
   }
 
   sealed trait FlowStyle {

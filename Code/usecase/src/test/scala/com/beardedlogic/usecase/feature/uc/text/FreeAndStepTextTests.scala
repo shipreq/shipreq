@@ -240,8 +240,8 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
         }
       }
 
-      it("should parse math.tex") {
-        testBoth("This {| Math.tex:   YAY  |} is cool!", "This {|math.tex: YAY |} is cool!",
+      it("should parse math") {
+        testBoth("This {| Math:   YAY  |} is cool!", "This {|math: YAY |} is cool!",
           PlainText("This "), MathTexTerm("YAY"), PlainText(" is cool!"))
       }
     } // end parsing

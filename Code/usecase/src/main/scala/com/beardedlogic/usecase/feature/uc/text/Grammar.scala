@@ -111,7 +111,7 @@ object Grammar extends RegexParsers {
       }
 
     val MathTex: Parser[MathTexToken] =
-      "{|" ~> """(?i)math\s*?\.\s*?tex""".r ~> ":" ~> """(\S.*?)(?=\s*\|\})""".r <~ "|}" ^^ {
+      "{|" ~> """(?i)math""".r ~> ":" ~> """(\S.*?)(?=\s*\|\})""".r <~ "|}" ^^ {
         case inner => MathTexToken(inner)
       }
 

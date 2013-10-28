@@ -52,17 +52,17 @@ class GrammarTest extends FunSpec with TestHelpers with PropertyChecks {
     test(G.FreeTextParsers.StepLabel, examples)(_.replaceAll("\\s+", ""))
   }
 
-  it("should parse math.tex") {
+  it("should parse math") {
     implicit def autoResult(s: String) = Some(MathTexToken(s))
     val e = """\left( \sum_{k=1}^n a_k b_k \right)^2 \leq \left( \sum_{k=1}^n a_k^2 \right) \left( \sum_{k=1}^n b_k^2 \right)"""
     val examples = Table[String, Option[MathTexToken]](("IN", "OUT")
-      , ("{|math.tex: 1+1|}", "1+1")
-      , ("{|MATH.TEX: 1+3|}", "1+3")
-      , ("{|  math.tex  :   1+2  |}", "1+2")
-      , (s"{|math.tex: $e |}", e)
-      , ("{|math.tex: 1+1|", None)
-      , ("{|math.tex: 1+1 }", None)
-      , ("{|math.tex:    |}", None)
+      , ("{|math: 1+1|}", "1+1")
+      , ("{|MATH: 1+3|}", "1+3")
+      , ("{|  math  :   1+2  |}", "1+2")
+      , (s"{|math: $e |}", e)
+      , ("{|math: 1+1|", None)
+      , ("{|math: 1+1 }", None)
+      , ("{|math:    |}", None)
     )
     test2(G.FreeTextParsers.MathTex, examples)
   }
