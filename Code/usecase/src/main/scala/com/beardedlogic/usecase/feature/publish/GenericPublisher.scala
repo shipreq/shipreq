@@ -12,10 +12,15 @@ import scalaz.syntax.foldable._
 import scalaz.syntax.monoid._
 import com.beardedlogic.usecase.feature.FlowGraph
 
+// =====================================================================================================================
+
 sealed trait LogicalField
+case class LogicalLastUpdatedField(when: String @@ ISO8601) extends LogicalField
 case class LogicalFlowGraphField(dot: Name[String]) extends LogicalField
 case class LogicalTextField(title: String, value: FreeText) extends LogicalField
 case class LogicalStepField(title: String, value: Option[StepTreeZipper.DeepZipper]) extends LogicalField
+
+// =====================================================================================================================
 
 abstract class GenericPublisher(input: Input) {
 
@@ -26,9 +31,7 @@ abstract class GenericPublisher(input: Input) {
 
   @inline final def zero = xMonoid.zero
 
-  @inline final def useCases = input.useCases
-
-  // TODO <tr><th>Last Updated</th><td>2013-09-11 <abbr class="timeago" title="2013/05/22 13:45">(3 minutes ago)</abbr></td></tr>
+  @inline final def useCases = input.sortedUseCases
 
   // -------------------------------------------------------------------------------------------------------------------
   // High-level
@@ -51,11 +54,13 @@ abstract class GenericPublisher(input: Input) {
   // Fields
 
   def fields(uc: UseCase): X =
-    uc.fields.foldMap(f =>
-      toLogicalFields(uc)(f).foldMap(
-        field))
+    getLogicalFields(uc) foldMap field
 
-  def toLogicalFields(uc: UseCase)(ff: Field): List[LogicalField] =
+  def getLogicalFields(uc: UseCase): List[LogicalField] =
+    LogicalLastUpdatedField(input.revMap(uc).createdAt) ::
+    uc.fields.foldMap(extractLogicalFields(uc))
+
+  def extractLogicalFields(uc: UseCase)(ff: Field): List[LogicalField] =
     ff match {
       case f: TextField =>
         LogicalTextField(f.defn.title, f(uc)) :: Nil
@@ -86,9 +91,10 @@ abstract class GenericPublisher(input: Input) {
     }
 
   def field(f: LogicalField): X = f match {
-    case f: LogicalTextField      => textField(f)
-    case f: LogicalStepField      => stepField(f)
-    case f: LogicalFlowGraphField => flowGraphField(f)
+    case f: LogicalTextField        => textField(f)
+    case f: LogicalStepField        => stepField(f)
+    case f: LogicalFlowGraphField   => flowGraphField(f)
+    case f: LogicalLastUpdatedField => lastUpdatedField(f)
   }
 
   def fieldTitle(title: String): X
@@ -191,5 +197,6 @@ abstract class GenericPublisher(input: Input) {
   // -------------------------------------------------------------------------------------------------------------------
   // Other fields
 
+  def lastUpdatedField(f: LogicalLastUpdatedField): X
   def flowGraphField(f: LogicalFlowGraphField): X
 }

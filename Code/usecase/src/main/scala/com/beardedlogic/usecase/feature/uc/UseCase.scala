@@ -107,6 +107,10 @@ import UseCaseFns._
 object UseCase {
   def as(number: UseCaseNumber, header: UseCaseHeader, fieldValues: Seq[(Field, Field#Value)], stepsAndLabels: StepAndLabelBiMap): UseCase =
     UseCase(number, header, fieldValues.map(_._1).toList, fieldValues.toMap, stepsAndLabels)
+
+  implicit object ordering extends Ordering[UseCase] {
+    def compare(x: UseCase, y: UseCase): Int = x.number compareTo y.number
+  }
 }
 
 case class UseCase(

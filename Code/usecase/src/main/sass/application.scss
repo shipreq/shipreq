@@ -186,6 +186,7 @@ html, body { height: 100% } // Cannot have any padding or margin here
       & > tr > th , & > tr > td {padding-top:0.3ex; padding-bottom:0.3ex}
 
       td > ul {padding-left:2ex}
+
       a.step:not(:hover), a.uc:not(:hover) {border-bottom:1px dotted}
       .bad.ref {
         color:#c00;

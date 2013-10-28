@@ -168,6 +168,7 @@ $(document).keypress(function (e) {
 DomEnhancements = [
     {css: "abbr.timeago",  apply: function(x){ x.timeago() }},
     {css: "abbr.timeago2", apply: function(x){ x.timeago2() }},
+    {css: "time.showdate", apply: function(x){ x.showdate() }},
     {css: "textarea",      apply: function(x){ x.autosize() }}
 ];
 
@@ -202,6 +203,20 @@ function enhanceDom() { $(document).enhanceDom() }
             var t = d.toLocaleDateString() + ' @ ' + d.toLocaleTimeString()
             e.html(t).timeago()
         }
+        else console.warn("timeago2 failed on ", e)
+    }
+
+    $.fn.showdate = function () {
+        var e = $(this)
+        var isotime = e.attr('datetime')
+        if (typeof isotime === 'string') {
+            var d = new Date(isotime)
+            var show = d.toLocaleDateString()
+            var ago = $.timeago(d)
+            e.attr('title', ago)
+            e.html(show)
+        }
+        else console.warn("showdate failed on ", e)
     }
 
     // Provide JQuery fn to apply DomEnhancements

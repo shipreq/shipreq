@@ -115,12 +115,12 @@ final object UseCasePersistence {
     (cp, rels)
   }
 
-  def loadAll(projectId: ProjectId, dao: DaoT, lock: Lock.Read[UseCaseNumbers]): List[UseCase] =
+  def loadAll(projectId: ProjectId, dao: DaoT, lock: Lock.Read[UseCaseNumbers]): List[(UseCaseRev, UseCase)] =
     loadAll(dao.findAllLatestUseCaseRevsByProject(projectId), dao, lock)
 
-  def loadAll(ucRevs: List[UseCaseRev], dao: DaoT, lock: Lock.Read[UseCaseNumbers]): List[UseCase] =
+  def loadAll(ucRevs: List[UseCaseRev], dao: DaoT, lock: Lock.Read[UseCaseNumbers]): List[(UseCaseRev, UseCase)] =
     logTime(s"UseCasePersistence.loadAll(${ucRevs.size} UCs)")(
-      ucRevs.map(load(_, dao, lock)._1.uc)
+      ucRevs.map(r => (r, load(r, dao, lock)._1.uc))
     )
 
   // ===================================================================================================================
