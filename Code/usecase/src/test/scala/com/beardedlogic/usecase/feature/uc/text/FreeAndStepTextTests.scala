@@ -239,6 +239,11 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
           testBoth("[UC-123?: Haha] doesn't exist.", None, InvalidUseCaseRef(123, "Haha"), PlainText(" doesn't exist."))
         }
       }
+
+      it("should parse math") {
+        testBoth("This {| Math:   YAY  |} is cool!", "This {|math: YAY |} is cool!",
+          PlainText("This "), MathTexTerm("YAY"), PlainText(" is cool!"))
+      }
     } // end parsing
 
     describe("Loading text") {
@@ -771,6 +776,7 @@ abstract class TextProps[T <: ParsedText](T: Tester[T]) {
     case PlainText(_)
        | InvalidStepRef(_)
        | DeletedRef
+       | MathTexTerm(_)
        | UseCaseSelfRef(_, _)
        | InvalidUseCaseRef(_, _) => t
   }
@@ -791,7 +797,7 @@ object FreeTextProps extends TextProps(FreeTextTester) {
 }
 
 object StepTextProps extends TextProps(StepTextTester) {
-  override implicit val arbInput: Arbitrary[String] = Arbitrary(ctxGen.textFieldText)
+  override implicit val arbInput: Arbitrary[String] = Arbitrary(ctxGen.textFieldText) // TODO
   override def equal(a: StepText, b: StepText) =
     (a.text             == b.text            ) :| "Text differs" &&
     (a.mainClause.terms == b.mainClause.terms) :| "Main clause terms differ." &&

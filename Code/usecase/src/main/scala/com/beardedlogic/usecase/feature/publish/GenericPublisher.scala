@@ -131,13 +131,14 @@ abstract class GenericPublisher(input: Input) {
   def betweenMarkupTokens(a: MarkupToken, b: MarkupToken): X
 
   final def term(term: FreeTextTerm): X = term match {
-    case t@PlainText(_)            => fttPlainText(t)
-    case t@StepRef(_, _)           => fttStepRef(t)
-    case t@InvalidStepRef(_)       => fttInvalidStepRef(t)
-    case t@DeletedRef              => fttDeletedRef
-    case t@UseCaseRef(_, _   )     => fttUseCaseRef(t)
-    case t@UseCaseSelfRef(_, _)    => fttUseCaseSelfRef(t)
-    case t@InvalidUseCaseRef(_, _) => fttInvalidUseCaseRef(t)
+    case t: PlainText         => fttPlainText(t)
+    case t: StepRef           => fttStepRef(t)
+    case t: InvalidStepRef    => fttInvalidStepRef(t)
+    case t@ DeletedRef        => fttDeletedRef
+    case t: UseCaseRef        => fttUseCaseRef(t)
+    case t: UseCaseSelfRef    => fttUseCaseSelfRef(t)
+    case t: InvalidUseCaseRef => fttInvalidUseCaseRef(t)
+    case t: MathTexTerm       => fttMathTex(t)
   }
 
   def fttPlainText(value: PlainText)                : X
@@ -148,6 +149,7 @@ abstract class GenericPublisher(input: Input) {
   def fttUseCaseRef(value: UseCaseRef)              : X = fttAnyUseCaseRef(value)
   def fttUseCaseSelfRef(value: UseCaseSelfRef)      : X = fttAnyUseCaseRef(value)
   def fttInvalidUseCaseRef(value: InvalidUseCaseRef): X
+  def fttMathTex(value: MathTexTerm)                : X
 
   // -------------------------------------------------------------------------------------------------------------------
   // Step fields

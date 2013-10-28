@@ -146,14 +146,16 @@ object Inspection {
   implicit val fttUseCaseRef       : Show[UseCaseRef]        = "UseCaseRef" <*> (x => x.num.show ++> x.title.show)
   implicit val fttUseCaseSelfRef   : Show[UseCaseSelfRef]    = "UseCaseSelfRef" <*> (x => x.num.show ++> x.title.show)
   implicit val fttInvalidUseCaseRef: Show[InvalidUseCaseRef] = "InvalidUseCaseRef" <*> (x => x.num.show ++> x.title.show)
+  implicit val fttMathTexTerm      : Show[MathTexTerm]       = "MathTexTerm" <*> (_.tex.show)
   implicit val freeTextTerm: Show[FreeTextTerm] = Show.show(_ match {
-    case t@PlainText(_)            => t.show
-    case t@StepRef(_, _)           => t.show
-    case t@InvalidStepRef(_)       => t.show
-    case t@DeletedRef              => t.show
-    case t@UseCaseRef(_, _   )     => t.show
-    case t@UseCaseSelfRef(_, _)    => t.show
-    case t@InvalidUseCaseRef(_, _) => t.show
+    case t: PlainText         => t.show
+    case t: StepRef           => t.show
+    case t: InvalidStepRef    => t.show
+    case t@ DeletedRef        => t.show
+    case t: UseCaseRef        => t.show
+    case t: UseCaseSelfRef    => t.show
+    case t: InvalidUseCaseRef => t.show
+    case t: MathTexTerm       => t.show
   })
 
   implicit val freeText: Show[FreeText] = {

@@ -86,6 +86,7 @@ object Grammar extends RegexParsers {
     case class StepRefToken(seemsValid: Boolean, label: StepLabel) extends FreeTextToken
     case class UseCaseRefToken(seemsValid: Boolean, number: UseCaseNumber, title: Option[String]) extends FreeTextToken
     case object DeletedRefToken extends FreeTextToken
+    case class MathTexToken(text: String) extends FreeTextToken
   }
 
   object FreeTextParsers {
@@ -105,15 +106,20 @@ object Grammar extends RegexParsers {
       }
 
     val RefInner_UseCase: Parser[UseCaseRefToken] =
-      "[Uu][Cc]".r ~> opt("-") ~> "\\d+".r ~ opt(InvalidRefSuffix) ~ opt(":" ~> s"[^${Pattern quote RefBraceRs}]+".r) ^^ {
+      "(?i)UC".r ~> opt("-") ~> "\\d+".r ~ opt(InvalidRefSuffix) ~ opt(":" ~> s"[^${Pattern quote RefBraceRs}]+".r) ^^ {
         case num ~ invalid ~ title => UseCaseRefToken(invalid.isEmpty, num.toShort.tag[IsUseCaseNumber], title)
       }
 
-    val Ref: Parser[FreeTextToken] =
-      braced(RefInner_Step | RefInner_UseCase | RefInner_Deleted)
+    val MathTex: Parser[MathTexToken] =
+      "{|" ~> """(?i)math""".r ~> ":" ~> """(\S.*?)(?=\s*\|\})""".r <~ "|}" ^^ {
+        case inner => MathTexToken(inner)
+      }
 
-    val TextAndRefs: Parser[List[FreeTextToken]] =
-      rep(anyTextThenOptional(true, Ref)) ^^ (
+    val Token: Parser[FreeTextToken] =
+      braced(RefInner_Step | RefInner_UseCase | RefInner_Deleted) | MathTex
+
+    val TextAndTokens: Parser[List[FreeTextToken]] =
+      rep(anyTextThenOptional(true, Token)) ^^ (
         _.foldRight(List.empty[FreeTextToken])((r, b) => {
           var acc = b
           if (r._2.isDefined) acc = r._2.get :: acc

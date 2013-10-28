@@ -15,6 +15,8 @@
             %li
               %a(data-toggle="modal" href="#help-refs") Links & References
             %li
+              %a(data-toggle="modal" href="#help-markup") Special Markup
+            %li
               %a(data-toggle="modal" href="#help-kb") Keyboard Shortcuts
         %li
           %a(data-lift="Link.to?name=Logout")
@@ -77,6 +79,36 @@
             %code Example: The reference [1.8?] is invalid.
           %p
             If the subject of a valid reference is later deleted, then those references will be automatically changed to <code>[DELETED]</code>.
+
+        .modal-footer
+          %button.btn.btn-default(data-dismiss="modal" type="button") Close
+
+  #help-markup.modal.fade.help-modal(aria-hidden="true" role="dialog" tabindex="-1")
+    .modal-dialog
+      .modal-content
+        .modal-header
+          %button.close(aria-hidden="true" data-dismiss="modal" type="button") &times;
+          %h4.modal-title Special Markup
+        .modal-body
+
+          %h4 Lists
+          %p
+            Simply start a line with an asterisk and a space, and it will be interpreted as a list item.
+          .code
+            %code * This is item 1.
+            %br
+            %code * This is item 2.
+
+          %h4 Mathematical Notation
+          %p
+            You can write mathematical notation using <a href="http://en.wikipedia.org/wiki/TeX">TeX</a> notation.
+            Start by declaring your block of math by typing
+            %code {|math:
+            , enter your math in TeX format, and finally end the block by typing <code>|}</code>.
+          %p.gap
+            Example:
+          .code
+            %code Pythagoras' theorem is {|math: a^2 + b^2 = c^2 |}
 
         .modal-footer
           %button.btn.btn-default(data-dismiss="modal" type="button") Close

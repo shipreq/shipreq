@@ -50,6 +50,7 @@ object TextMarkup {
       t match {
         case PlainText(txt) => prependText(txt, lines)
         case DeletedRef
+             | _: MathTexTerm
              | _: StepRef
              | _: InvalidStepRef
              | _: UseCaseRef
