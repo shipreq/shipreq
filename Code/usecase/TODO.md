@@ -8,6 +8,7 @@ FUNC TODO
 * [M.0.5] [LEGL] Check all licences and attribute as required.
 * [M.0.5] [LEGL] Add terms of service.
 
+* [S.4.1] [PUBL] Show aggregated last-update-date.
 * [S.3.4] [UCE ] Save button doesn't from disabled to enabled when text changes, only after blur. Confusing for user.
 * [S.2.5] [UCE ] Step is lost if accidentally deleted. No undo.
 * [S.2.1] [ACCT] Change username & password (when logged in).
