@@ -4,7 +4,7 @@ package db
 import org.joda.time.DateTime
 import scala.reflect.ClassTag
 import lib.Types._
-import feature.ExternalId
+import feature.{UcFilter, ExternalId}
 import feature.uc.field._
 import feature.uc.UseCaseFns
 
@@ -90,3 +90,22 @@ case class ProjectSummary(
   name: String,
   ucCount: Int,
   ucUpdatedAt: Option[String @@ ISO8601])
+
+// ===================================================================================================================
+// Shares
+
+case class Share(
+  id: ShareId,
+  projectId: ProjectId,
+  urlToken: ShareUrlToken,
+  name: String,
+  preface: Option[String],
+  ucFilterJson: Json[UcFilter])
+
+case class ShareSummary(
+  id: ShareId,
+  urlToken: ShareUrlToken,
+  name: String,
+  ucFilterJson: Json[UcFilter],
+  viewCount: Long,
+  lastViewedAt: Option[String @@ ISO8601])

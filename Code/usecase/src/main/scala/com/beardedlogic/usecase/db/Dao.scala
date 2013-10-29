@@ -166,6 +166,15 @@ sealed trait DaoS {
     val id = InsertFieldKey.first(fkType, data)
     FieldKeyRec(id, fkType, data)
   }
+
+  // ===================================================================================================================
+  // Shares
+
+  def logShareView(shareId: ShareId, ip: Option[String]): Unit = LogShareView.execute(shareId, ip)
+
+  def summariseShares(projectId: ProjectId): List[ShareSummary] = SummariseShares.list(projectId)
+
+  def findShare(id: ShareId): Option[Share] = SelectShare.firstOption(id)
 }
 
 // #####################################################################################################################

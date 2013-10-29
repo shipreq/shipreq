@@ -156,12 +156,9 @@ class DbTriggerTest extends FunSpec with TestDatabaseSupport {
       val a, b = newShare()
       def viewCounts = (shareViewCount(a), shareViewCount(b))
       viewCounts shouldBe (0,0)
-      sqlu"INSERT INTO share_view_log(share_id) VALUES($a)".execute
-      viewCounts shouldBe (1,0)
-      sqlu"INSERT INTO share_view_log(share_id) VALUES($a)".execute
-      viewCounts shouldBe (2,0)
-      sqlu"INSERT INTO share_view_log(share_id) VALUES($b)".execute
-      viewCounts shouldBe (2,1)
+      dao.logShareView(a, None); viewCounts shouldBe (1,0)
+      dao.logShareView(a, None); viewCounts shouldBe (2,0)
+      dao.logShareView(b, None); viewCounts shouldBe (2,1)
     }
   }
 }

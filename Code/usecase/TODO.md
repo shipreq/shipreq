@@ -49,3 +49,4 @@ UNTESTED
 * [U] Publisher (page, JS, generation)
 * [U] Navbar
 * [U] UseCaseCrudl
+* [U] Share DAO

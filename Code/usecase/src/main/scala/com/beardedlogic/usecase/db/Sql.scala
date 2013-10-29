@@ -33,6 +33,9 @@ private[db] final object Sql {
   implicit val GR_UserDescriptor = GetResult(r => UserDescriptor(r.<<, r.<<, r.<<))
   implicit val GR_UserRegistrationInfo = GetResult(r => UserRegistrationInfo(r.<<, r.<<, r.<<, r.<<))
 
+  implicit val GR_Share = GetResult(r => Share(r.<<, r.<<, r.<<, r.<<, r.<<, r.<<))
+  implicit val GR_ShareSummary = GetResult(r => ShareSummary(r.<<, r.<<, r.<<, r.<<, r.<<, r.<<))
+
   implicit object SP_PasswordAndSalt extends SetParameter[PasswordAndSalt] {
     def apply(v: PasswordAndSalt, pp: PositionedParameters) {
       pp.setString(v.hashedPassword)
@@ -196,4 +199,15 @@ private[db] final object Sql {
 
   @Insert val InsertFieldKey = query[(FieldKeyType, FieldKeyRecData), FieldKeyId](
     "INSERT INTO field_key(type_id, data) VALUES(?,?) RETURNING id")
+
+  // ###################################################################################################################
+  // Shares
+
+  @Insert val LogShareView = update[(ShareId, Option[String])]("INSERT INTO share_view_log(share_id,ip) VALUES(?,?)")
+
+  val SelectShare = query[ShareId, Share](
+    "SELECT id, project_id, url_token, name, preface, uc_filter FROM share WHERE id=?")
+
+  val SummariseShares = query[ProjectId, ShareSummary](
+    "SELECT id, url_token, name, uc_filter, view_count, to_iso8601_str(last_viewed_at) FROM share WHERE project_id=?")
 }
