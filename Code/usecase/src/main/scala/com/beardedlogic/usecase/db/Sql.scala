@@ -4,6 +4,10 @@ package db
 import org.joda.time.DateTime
 import scala.slick.jdbc.{StaticQuery, SetParameter, GetResult}
 import scala.slick.session.PositionedParameters
+import scalaz.std.string.stringInstance
+import scalaz.syntax.foldable._
+import scalaz.NonEmptyList
+import scalaz.NonEmptyList.nonEmptyList
 import lib.Types._
 import security.PasswordAndSalt
 
@@ -38,6 +42,8 @@ private[db] final object Sql {
 
   private[this] case class Update() extends scala.annotation.StaticAnnotation
   private[this] case class Insert() extends scala.annotation.StaticAnnotation
+
+  private def idsToSql(ids: NonEmptyList[JLong]): String = ids.map(_.toString).intercalate(",")
 
   // ###################################################################################################################
   // User
@@ -127,8 +133,18 @@ private[db] final object Sql {
 
   val SelectLatestUseCaseRevsByProject = query[ProjectId, UseCaseRev](summariseUseCaseSql(ucrev_*))
 
-  private def summariseUseCaseSql(select: String) =
-    s"SELECT $select FROM usecase u, usecase_rev r WHERE r.id = latest_rev_id and project_id = ? ORDER BY number"
+  def SelectLatestUseCaseRevsArb(where: String) =
+    query[ProjectId, UseCaseRev](summariseUseCaseSql(ucrev_*, Some(where)))
+
+  private def summariseUseCaseSql(select: String, where: Option[String] = None) = {
+    val w = where match {
+      case None       => ""
+      case Some(cond) => s" and ($cond)"
+    }
+    s"SELECT $select FROM usecase u, usecase_rev r WHERE r.id = latest_rev_id and project_id = ?$w ORDER BY number"
+  }
+
+  def UseCaseIdentIdIn(ids: NonEmptyList[UseCaseIdentId]) = s"ident_id in (${idsToSql(ids)})"
 
   val SummariseUseCases = {
     implicit val v = GR_UseCaseSummary

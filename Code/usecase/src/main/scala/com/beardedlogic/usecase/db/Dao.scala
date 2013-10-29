@@ -3,6 +3,7 @@ package db
 
 import org.postgresql.util.PSQLException
 import scala.slick.driver.PostgresDriver.simple._
+import scalaz.NonEmptyList.nel
 import feature.uc.field.FieldDefinition
 import lib.Locks.{UseCaseNumbers, SingleUseCase}
 import lib.Types._
@@ -121,6 +122,12 @@ sealed trait DaoS {
   def findUseCaseLatestRev(ucId: UseCaseIdentId): Option[UseCaseRev] = SelectLatestUseCaseRev.firstOption(ucId)
 
   def findAllLatestUseCaseRevsByProject(pid: ProjectId): List[UseCaseRev] = SelectLatestUseCaseRevsByProject.list(pid)
+
+  def findAllLatestUseCaseRevs(pid: ProjectId, ids: List[UseCaseIdentId]): List[UseCaseRev] = ids match {
+    case Nil       => List.empty
+    case id :: Nil => findUseCaseLatestRev(id).toList
+    case h :: t    => SelectLatestUseCaseRevsArb(UseCaseIdentIdIn(nel(h, t))).list(pid)
+  }
 
   def summariseUseCases(projectId: ProjectId): List[UseCaseSummary] = SummariseUseCases.list(projectId)
   def summariseUseCases2(projectId: ProjectId): List[UseCaseSummary2] = SummariseUseCases2.list(projectId)

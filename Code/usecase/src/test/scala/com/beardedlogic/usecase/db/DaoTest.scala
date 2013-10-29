@@ -257,5 +257,17 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
       createUseCaseIdentAndRev1(p, "yo".validated)
       dao.findAllLatestUseCaseRevsByProject(p).map(_.title) shouldBe List("YAY", "yo")
     }
+
+    it("findAllLatestUseCaseRevs(pid,ids)") {
+      newUserProjectAndUseCase("IGNORED".validated, "IGNORED".validated)
+      val (_,p,u1) = newUserProjectAndUseCase("P1".validated, "U1".validated)
+      val u2 = createUseCaseIdentAndRev1(p, "U2".validated)
+      val u3 = createUseCaseIdentAndRev1(p, "U3".validated)
+      val u4 = createUseCaseIdentAndRev1(p, "U4".validated)
+
+      dao.findAllLatestUseCaseRevs(p, Nil) shouldBe Nil
+      dao.findAllLatestUseCaseRevs(p, List(u2)) shouldBe List(u2)
+      dao.findAllLatestUseCaseRevs(p, List(u1, u3, u4)) shouldBe List(u1, u3, u4)
+    }
   }
 }
