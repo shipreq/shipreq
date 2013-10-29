@@ -152,6 +152,9 @@ object Types {
   @inline final implicit def UserToId1(a: UserDescriptor): UserId = a.id
   @inline final implicit def UserToId2(a: UserRegistrationInfo): UserId = a.id
 
+  sealed trait IsShareId extends TypeTag[JLong]
+  type ShareId = JLong @@ IsShareId
+
   // -------------------------------------------------------------------------------------------------------------------
   // Externalisable ID tags
 

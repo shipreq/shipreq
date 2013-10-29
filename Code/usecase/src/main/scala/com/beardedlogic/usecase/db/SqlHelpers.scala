@@ -7,7 +7,7 @@ import scala.slick.jdbc.{SetParameter, GetResult}
 import scala.slick.session.{PositionedParameters, PositionedResult}
 import lib.Types._
 
-private[db] object SqlHelpers {
+object SqlHelpers {
 
   @inline implicit def shortToFieldKeyType(ordinal: Short): FieldKeyType = FieldKeyType(ordinal)
 
@@ -57,6 +57,8 @@ private[db] object SqlHelpers {
   implicit val SP_UserId = SP_TaggedLong[UserId]
   implicit val GR_ProjectId = GR_TaggedLong[ProjectId]
   implicit val SP_ProjectId = SP_TaggedLong[ProjectId]
+  implicit val GR_ShareId = GR_TaggedLong[ShareId]
+  implicit val SP_ShareId = SP_TaggedLong[ShareId]
 
   implicit val GR_NormalisedText = GR_TaggedString[IsNormalised]
   implicit val GR_ISO8601 = GR_TaggedString[ISO8601]
@@ -67,7 +69,7 @@ private[db] object SqlHelpers {
     def apply(v: FieldKeyType, pp: PositionedParameters): Unit = pp.setShort(v.id)
   }
 
-  val LeadingWhitespace = """[\r\n]+\s*""".r
+  private[this] val LeadingWhitespace = """[\r\n]+\s*""".r
 
   implicit class SqlStringExt(val s: String) extends AnyVal {
     def sql = LeadingWhitespace.replaceAllIn(s, " ").trim

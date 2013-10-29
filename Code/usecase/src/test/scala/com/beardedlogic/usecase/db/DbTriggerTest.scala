@@ -1,10 +1,11 @@
 package com.beardedlogic.usecase.db
 
-import com.beardedlogic.usecase.test.TestDatabaseSupport
 import org.scalatest.FunSpec
 import scala.slick.jdbc.{StaticQuery => Q}
 import Q.interpolation
 import org.postgresql.util.PSQLException
+import com.beardedlogic.usecase.db.SqlHelpers.SP_ShareId
+import com.beardedlogic.usecase.test.TestDatabaseSupport
 
 class DbTriggerTest extends FunSpec with TestDatabaseSupport {
 
@@ -145,6 +146,22 @@ class DbTriggerTest extends FunSpec with TestDatabaseSupport {
 
     it("Steps cannot be used as text") {
       testErr((d1, d2) => linkText(d1.ucr, d1.s4))
+    }
+  }
+
+  describe(Tables.ShareViewLog.name) {
+    def shareViewCount(shareId: Long): Long = sql"SELECT view_count FROM share WHERE id = $shareId".as[Long].first
+
+    it("should update agg view stats by trigger") {
+      val a, b = newShare()
+      def viewCounts = (shareViewCount(a), shareViewCount(b))
+      viewCounts shouldBe (0,0)
+      sqlu"INSERT INTO share_view_log(share_id) VALUES($a)".execute
+      viewCounts shouldBe (1,0)
+      sqlu"INSERT INTO share_view_log(share_id) VALUES($a)".execute
+      viewCounts shouldBe (2,0)
+      sqlu"INSERT INTO share_view_log(share_id) VALUES($b)".execute
+      viewCounts shouldBe (2,1)
     }
   }
 }
