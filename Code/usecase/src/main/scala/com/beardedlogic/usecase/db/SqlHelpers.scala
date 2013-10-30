@@ -3,6 +3,7 @@ package db
 
 import java.sql.Timestamp
 import org.joda.time.DateTime
+import org.postgresql.util.PGobject
 import scala.slick.jdbc.{SetParameter, GetResult}
 import scala.slick.session.{PositionedParameters, PositionedResult}
 import lib.Types._
@@ -45,7 +46,12 @@ object SqlHelpers {
 
   private def GR_Json[T]: GetResult[Json[T]] = GetResult(_.nextString.tag[IsJsonFor[T]])
   private def SP_Json[T]: SetParameter[Json[T]] = new SetParameter[Json[T]] {
-    def apply(v: Json[T], pp: PositionedParameters): Unit = pp.setString(v)
+    def apply(v: Json[T], pp: PositionedParameters): Unit = {
+      val jo = new PGobject()
+      jo.setType("json")
+      jo.setValue(v)
+      pp.setObject(jo, java.sql.Types.OTHER)
+    }
   }
 
   implicit val GR_UseCaseNumber = GR_TaggedShort[UseCaseNumber]

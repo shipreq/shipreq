@@ -7,6 +7,8 @@ import slick.jdbc.{StaticQuery => Q}
 import Q.interpolation
 import lib.Types._
 import feature.uc.field.{TextFieldDefinition, NormalCourseFieldDefinition, ExceptionCourseFieldDefinition}
+import security.PasswordAndSalt
+import feature.{UcFilter, All}
 
 class DaoTest extends FunSpec with TestDatabaseSupport {
   implicit def str2uch(title: String @@ Validated): UseCaseHeader = UseCaseHeader(title)
@@ -268,6 +270,40 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
       dao.findAllLatestUseCaseRevs(p, Nil) shouldBe Nil
       dao.findAllLatestUseCaseRevs(p, List(u2)) shouldBe List(u2)
       dao.findAllLatestUseCaseRevs(p, List(u1, u3, u4)) shouldBe List(u1, u3, u4)
+    }
+  }
+
+  // ===================================================================================================================
+
+  describe("Share") {
+    val FilterAllJson = UcFilter.toJson(All: UcFilter)
+
+    it("create.load = id") {
+      val pid = newProjectId()
+      val s = dao.createShare(pid, PasswordAndSalt.hashWithRandomSalt("volition"), "NAME", Some("pref"), FilterAllJson)
+      s.name shouldBe "NAME"
+      s.preface shouldBe Some("pref")
+      s.ucFilterJson shouldBe FilterAllJson
+      s.projectId shouldBe pid
+
+      dao.findShare(s.id) shouldBe Some(s)
+    }
+
+    it("create should retry when token taken") {
+      val firstToken: ShareUrlToken = "abcdefgh".tag
+      val pid = newProjectId()
+      val a = dao.createShare(pid, PasswordAndSalt.hashWithRandomSalt("v"), "n", None, FilterAllJson, () => firstToken)
+      a.urlToken shouldBe firstToken
+
+      var nextToken = firstToken
+      val secondToken: ShareUrlToken = "987654321".tag
+      val fn = () => {
+        val use = nextToken
+        nextToken = secondToken
+        use
+      }
+      val b = dao.createShare(pid, PasswordAndSalt.hashWithRandomSalt("v"), "n", None, FilterAllJson, fn)
+      b.urlToken shouldBe secondToken
     }
   }
 }

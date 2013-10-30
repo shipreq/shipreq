@@ -9,6 +9,7 @@ import scalaz.syntax.foldable._
 import scalaz.NonEmptyList
 import scalaz.NonEmptyList.nonEmptyList
 import lib.Types._
+import feature.UcFilter
 import security.PasswordAndSalt
 
 /**
@@ -202,6 +203,10 @@ private[db] final object Sql {
 
   // ###################################################################################################################
   // Shares
+
+  @Insert val InsertShare = query[(ProjectId, ShareUrlToken, PasswordAndSalt, String, Option[String], Json[UcFilter]), ShareId](
+    "INSERT INTO share(project_id, url_token, password, password_salt, name, preface, uc_filter)"
+      + " VALUES(?,?,?,?,?,?,?) RETURNING id")
 
   @Insert val LogShareView = update[(ShareId, Option[String])]("INSERT INTO share_view_log(share_id,ip) VALUES(?,?)")
 

@@ -5,7 +5,10 @@ import org.postgresql.util.PSQLException
 import scala.slick.driver.PostgresDriver.simple._
 import scalaz.NonEmptyList.nel
 import feature.uc.field.FieldDefinition
+import feature.UcFilter
 import lib.Locks.{UseCaseNumbers, SingleUseCase}
+import lib.Misc.retry
+import lib.ShareUrlTokenGen
 import lib.Types._
 import security.PasswordAndSalt
 import util.Lock
@@ -39,6 +42,26 @@ sealed trait DaoS {
   import Sql._
 
   implicit val session: Session
+
+  /** "Safe" in the sense that an error rolls back the inner transaction without aborting the outer one. */
+  private[this] def inSafeTransaction[T](f: => T): T = {
+    val conn = session.conn
+    val oldAutoCommit = conn.getAutoCommit
+    conn.setAutoCommit(false)
+    val sp = conn.setSavepoint()
+
+    try {
+      val result = f
+      conn.commit
+      result
+    } catch {
+      case e: Throwable =>
+        conn.rollback(sp)
+        throw e
+    } finally {
+      conn.setAutoCommit(oldAutoCommit)
+    }
+  }
 
   // ===================================================================================================================
   // User
@@ -169,6 +192,19 @@ sealed trait DaoS {
 
   // ===================================================================================================================
   // Shares
+
+  def createShare(
+    projectId: ProjectId, ps: PasswordAndSalt,
+    name: String, preface: Option[String], ucFilterJson: Json[UcFilter],
+    urlTokenFn: () => ShareUrlToken = ShareUrlTokenGen.fn)
+  : Share =
+    retry(12) { // Chance of error when 200,000 tokens in use = 0.0000002% ^ 12 (6E-105%)
+      inSafeTransaction {
+        val urlToken = urlTokenFn()
+        val id = InsertShare.first(projectId, urlToken, ps, name, preface, ucFilterJson)
+        Share(id, projectId, urlToken, name, preface, ucFilterJson)
+      }
+    }
 
   def logShareView(shareId: ShareId, ip: Option[String]): Unit = LogShareView.execute(shareId, ip)
 

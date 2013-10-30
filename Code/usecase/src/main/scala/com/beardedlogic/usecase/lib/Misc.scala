@@ -2,17 +2,18 @@ package com.beardedlogic.usecase.lib
 
 import java.util.{Date, TimeZone}
 import java.text.SimpleDateFormat
+import net.liftweb.common.Logger
 import net.liftweb.http.S
 import org.joda.time.DateTime
+import scala.annotation.tailrec
 import scala.util.Random
 import scalaz.Cord
 
 import com.beardedlogic.usecase.app.AppConfig
 import Types._
 import AppConfig._
-import Misc._
 
-object Misc extends Misc {
+object Misc extends Misc with Logger {
 
   final val RNG = new Random()
 
@@ -39,6 +40,7 @@ object Misc extends Misc {
 }
 
 trait Misc {
+  import Misc._
 
   def clientIp: Option[String] = (
     S.originalRequest.map(_.remoteAddr)
@@ -63,4 +65,16 @@ trait Misc {
   def removeAllWhitespace(input: String) = WhitespaceRegex.replaceAllIn(input, "")
 
   //def modIf[V, VV >: V](v: V, cond: Boolean)(mod: V => VV): VV = if (cond) mod(v) else v
+
+  @tailrec
+  final def retry[T](n: Int, firstError: Option[Throwable] = None)(fn: => T): T = {
+    import scala.util.{Try, Success, Failure}
+    Try { fn } match {
+      case Success(result)      => result
+      case Failure(e) if n > 0  => retry(n - 1, firstError orElse Some(e))(fn)
+      case Failure(e) if n <= 0 =>
+        firstError.foreach(debug("First retry failure.", _))
+        throw e
+    }
+  }
 }
