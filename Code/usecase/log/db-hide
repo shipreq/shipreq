@@ -1,0 +1,3 @@
+#!/bin/bash
+
+fgrep --line-buffered -v '[scala.slick.' "$@"
