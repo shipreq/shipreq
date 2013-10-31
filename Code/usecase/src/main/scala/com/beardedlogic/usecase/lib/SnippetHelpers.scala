@@ -160,5 +160,5 @@ trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with Logger 
  */
 abstract class SingleOpStatefulSnippet extends StatefulSnippet with SnippetHelpers {
   override def dispatch = { case _ => render }
-  def render: CssSel
+  def render: NodeSeq => NodeSeq
 }

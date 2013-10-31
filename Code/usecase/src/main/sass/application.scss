@@ -46,6 +46,8 @@ abbr.timeago[title] { border-bottom: none !important }
   cursor:default;
 }
 
+[data-clipboard-text], [data-clipboard-target] {cursor:pointer}
+
 // =====================================================================================================================
 // Layout
 // Taken from twitter.github.io/bootstrap/examples/sticky-footer.html

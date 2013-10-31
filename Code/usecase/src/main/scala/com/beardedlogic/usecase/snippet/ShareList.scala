@@ -39,7 +39,8 @@ class ShareList(projectId: ProjectId) extends SingleOpStatefulSnippet {
   def renderShare(s: ShareSummary) = (
     ".name a *" #> s.name
     & ".name a [href]" #> urlFor(s)
-    & ".urltxt [value]" #> urlFor(s)
+    & ".url :text [value]" #> urlFor(s)
+    & ".url .copy [data-clipboard-text]" #> urlFor(s)
     & ".ucdesc *" #> descMatchingUcs(UcFilter.fromJson(s.ucFilterJson))
     & ".views .v" #> descViewCount(s.viewCount)
     & ".views .r" #> renderViewRecency(s.lastViewedAt)

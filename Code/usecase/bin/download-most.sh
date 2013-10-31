@@ -18,6 +18,11 @@ echo "Downloading jQuery.liveQuery"
 curl -s https://raw.github.com/hazzik/livequery/master/dist/jquery.livequery.min.js -o src/main/javascript/vendor/jquery-livequery.js
 echo $?
 
+echo "Downloading ZeroClipboard"
+curl -s https://raw.github.com/zeroclipboard/zeroclipboard/master/ZeroClipboard.js -o src/main/javascript/vendor/ZeroClipboard.js && \
+curl -s https://raw.github.com/zeroclipboard/zeroclipboard/master/ZeroClipboard.swf -o src/main/webapp/js/vendor/ZeroClipboard.swf
+echo $?
+
 echo "Downloading Mousetrap"
 curl -s https://raw.github.com/ccampbell/mousetrap/master/mousetrap.js -o src/main/javascript/vendor/mousetrap.js && \
 curl -s https://raw.github.com/ccampbell/mousetrap/master/plugins/global-bind/mousetrap-global-bind.js -o src/main/javascript/vendor/mousetrap-global-bind.js

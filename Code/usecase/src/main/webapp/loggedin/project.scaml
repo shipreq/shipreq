@@ -89,6 +89,7 @@
 
         /---------------------------------------------------------------------------------------------------------------
         %section#tab-shares.tab-pane.fade(data-lift="ShareList")
+          %script(type="text/javascript" src="/js/zeroclipboard.js" data-lift="tail")
 
           %a.btn.btn-success.create Share Use Cases
 
@@ -111,8 +112,8 @@
                       %a(href="#shareUrl") Use Case Editor v1.0
                     .url
                       .input-group
-                        %input.form-control.input-sm.urltxt(type="text" value="http=//www.reqrepo.com/share/xxxxxxxxxxxxx" readonly)
-                        %span.input-group-addon Copy
+                        %input.form-control.input-sm.urltxt(type="text" value="http://www.reqrepo.com/share/xxxxxxxxxxxxx" readonly)
+                        %span.input-group-addon.copy(title="Copy URL to clipboard") Copy
                     .under.ucdesc 8 use cases: 1-4, 6, 7.
                     .under.views
                       %span.v 1000000 views!

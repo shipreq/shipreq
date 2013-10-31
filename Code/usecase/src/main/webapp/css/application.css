@@ -12,6 +12,8 @@ abbr.timeago[title] { border-bottom: none !important; }
 
 .flowgraph svg { max-width: 100% !important; /* Set a maximum relative to the parent */ width: auto\9 !important; /* IE7-8 need help adjusting responsive images */ border: 0; -ms-interpolation-mode: bicubic; cursor: default; }
 
+[data-clipboard-text], [data-clipboard-target] { cursor: pointer; }
+
 html, body { height: 100%; }
 
 #ly-default #ly-hdrbody { -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; min-height: 100%; height: auto !important; height: 100%; padding-top: 4px; margin-bottom: -26px; }
