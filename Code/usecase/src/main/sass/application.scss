@@ -166,6 +166,39 @@ html, body { height: 100% } // Cannot have any padding or margin here
   .form-group.submit { text-align: right }
 }
 
+#share-list{
+  h3 {font-weight:bold}
+  .name a {font-size:140%; font-weight:bold; color:#4183C4}
+  .url {
+    width: 56ex;
+    margin-top: 0.2ex;
+    .urltxt {
+      font-family: monospace;
+      background: white;
+      cursor: text
+    }
+  }
+  .url + .under {margin-top:0.5ex}
+  .under {font-size:100%; color:#888; }
+  li {padding-top:4.4ex}
+  table {width:100%}
+  td.l {
+    vertical-align: top;
+    text-align: right;
+    padding-top: 0.6ex;
+    padding-right: 2.4ex;
+    width: 15ex;
+    .dropdown-menu * {
+      text-align: left;
+      padding-right: 0;
+      padding-top: 0.6ex
+    }
+  }
+  td.r {
+    vertical-align: top;
+  }
+}
+
 .ucs-published {
   color:#222;
   margin: 0 auto 0 auto;

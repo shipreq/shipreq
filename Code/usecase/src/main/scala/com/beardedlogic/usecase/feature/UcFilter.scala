@@ -10,7 +10,7 @@ import scalaz.std.list.listInstance
 import scalaz.std.nodeseq.nodeSeqInstance
 
 import com.beardedlogic.usecase.lib.Types._
-import com.beardedlogic.usecase.db.{DaoS, UseCaseRev}
+import com.beardedlogic.usecase.db.{DaoS, BasicUseCaseInfo}
 import com.beardedlogic.usecase.lib.SnippetHelpers.shouldNeverHappen_swallowInProd
 
 /**
@@ -39,7 +39,7 @@ object UcFilters {
 object UcFilter {
   import UcFilters._
 
-  type UseCases = List[UseCaseRev]
+  type UseCases = List[BasicUseCaseInfo]
 
   def init(ucs: UseCases, selected: UcFilter): NonEmptyList[UcFilter] =
     selected match {
@@ -169,7 +169,7 @@ object UcFilter {
       else
         <ol class="ucs">{ucs foldMap ucCheckbox(selectedIds, idWhitelist)}</ol>
 
-    def ucCheckbox(selectedIds: List[UseCaseIdentId], namePrefix: String)(uc: UseCaseRev): NodeSeq = {
+    def ucCheckbox(selectedIds: List[UseCaseIdentId], namePrefix: String)(uc: BasicUseCaseInfo): NodeSeq = {
       val selected = selectedIds.contains(uc.identId)
       val name = ucParamName(namePrefix, uc)
       <li class="checkbox"><label><input type="checkbox" name={name} value="1" checked={checkedAttr(selected)}/> {uc.fullName}</label></li>

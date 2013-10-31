@@ -252,6 +252,8 @@ $(document).ready(function(){
 
     ucFilterForm.setup()
 
+    $('#share-list .urltxt').click(function(){ $(this).select() });
+
     // When refs are hovered over, highlight the reference step.
     $('.ucs-published .steps tr')
         .filter(function(i,e){return e.id.substr(0,4)=="step"})

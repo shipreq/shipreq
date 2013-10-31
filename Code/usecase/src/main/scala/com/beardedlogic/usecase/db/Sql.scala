@@ -219,5 +219,6 @@ private[db] final object Sql {
     s"SELECT ${share_*}, password, password_salt FROM share WHERE url_token=?")
 
   val SummariseShares = query[ProjectId, ShareSummary](
-    "SELECT id, url_token, name, uc_filter, view_count, to_iso8601_str(last_viewed_at) FROM share WHERE project_id=?")
+    "SELECT id, url_token, name, uc_filter, view_count, to_iso8601_str(last_viewed_at)" +
+      " FROM share WHERE project_id=? ORDER by name")
 }

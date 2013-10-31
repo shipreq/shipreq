@@ -1,6 +1,6 @@
 package com.beardedlogic.usecase.lib
 
-import com.beardedlogic.usecase.db.{Project, UseCaseIdent, UserRegistrationInfo, UserDescriptor, FieldKeyRec, TextRev, UseCaseRev}
+import com.beardedlogic.usecase.db.{BasicUseCaseInfo, Project, UseCaseIdent, UserRegistrationInfo, UserDescriptor, FieldKeyRec, TextRev, UseCaseRev}
 import com.beardedlogic.usecase.feature.uc.change.{Change, ChangeResultF}
 import com.beardedlogic.usecase.feature.uc.field.Field
 import com.beardedlogic.usecase.feature.uc.UseCase
@@ -176,7 +176,7 @@ object Types {
   sealed trait IsUseCaseIdentEI extends TypeTag[String]
   type UseCaseIdentId = JLong @@ IsUseCaseIdentId
   type UseCaseIdentEI = String @@ IsUseCaseIdentEI
-  @inline final implicit def UseCaseRevToIdentId(r: UseCaseRev): UseCaseIdentId = r.identId
+  @inline final implicit def BasicUseCaseInfoToIdentId(r: BasicUseCaseInfo): UseCaseIdentId = r.identId
   @inline final implicit def UseCaseIdentToIdentId(i: UseCaseIdent): UseCaseIdentId = i.identId
   @inline final implicit def cp2uid(u: UseCaseSaveCheckpoint): UseCaseIdentId = u.rec
 

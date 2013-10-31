@@ -48,6 +48,18 @@ html, body { height: 100%; }
 #share-create h1 { margin-bottom: 1em; }
 #share-create .form-group.submit { text-align: right; }
 
+#share-list h3 { font-weight: bold; }
+#share-list .name a { font-size: 140%; font-weight: bold; color: #4183C4; }
+#share-list .url { width: 56ex; margin-top: 0.2ex; }
+#share-list .url .urltxt { font-family: monospace; background: white; cursor: text; }
+#share-list .url + .under { margin-top: 0.5ex; }
+#share-list .under { font-size: 100%; color: #888; }
+#share-list li { padding-top: 4.4ex; }
+#share-list table { width: 100%; }
+#share-list td.l { vertical-align: top; text-align: right; padding-top: 0.6ex; padding-right: 2.4ex; width: 15ex; }
+#share-list td.l .dropdown-menu * { text-align: left; padding-right: 0; padding-top: 0.6ex; }
+#share-list td.r { vertical-align: top; }
+
 .ucs-published { color: #222; margin: 0 auto 0 auto; padding: 2ex 6ex 6ex 6ex; max-width: 144ex; }
 .ucs-published h2, .ucs-published h3 { color: #000; }
 .ucs-published nav ol { margin-left: 1ex; }
