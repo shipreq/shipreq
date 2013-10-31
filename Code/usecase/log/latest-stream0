@@ -1,0 +1,4 @@
+#!/bin/bash
+
+/usr/bin/clear >&2
+exec "$(dirname "$0")"/latest-stream 0
