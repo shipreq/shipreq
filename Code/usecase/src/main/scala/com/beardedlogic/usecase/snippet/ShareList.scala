@@ -36,15 +36,17 @@ class ShareList(projectId: ProjectId) extends SingleOpStatefulSnippet {
     else
       "#share-list li .share" #> shares.map(renderShare)
 
-  def renderShare(s: ShareSummary) = (
-    ".name a *" #> s.name
-    & ".name a [href]" #> urlFor(s)
-    & ".url :text [value]" #> urlFor(s)
-    & ".url .copy [data-clipboard-text]" #> urlFor(s)
+  def renderShare(s: ShareSummary) = {
+    val absUrl = AppSiteMap.ShareView.absoluteUrl(s.urlToken)
+    val relUrl = AppSiteMap.ShareView.relativeUrl(s.urlToken)
+    (".name a *" #> s.name
+    & ".name a [href]" #> relUrl
+    & ".url :text [value]" #> absUrl
+    & ".url .copy [data-clipboard-text]" #> absUrl
     & ".ucdesc *" #> descMatchingUcs(UcFilter.fromJson(s.ucFilterJson))
     & ".views .v" #> descViewCount(s.viewCount)
     & ".views .r" #> renderViewRecency(s.lastViewedAt)
-  )
+  )}
 
   def descMatchingUcs(f: UcFilter): String = {
     val m = UcFilter.apply(f, ucs)
@@ -69,6 +71,4 @@ class ShareList(projectId: ProjectId) extends SingleOpStatefulSnippet {
     case None => "*" #> ""
     case Some(at) => "abbr [title]" #> at
   }
-
-  def urlFor(s: ShareSummary): String = "http://blahblahblah/" + s.urlToken
 }

@@ -29,6 +29,10 @@ class HtmlPublisher(input: Input) extends GenericPublisher(input) {
   // -------------------------------------------------------------------------------------------------------------------
   // High-level
 
+  override def docHeader(title: X, preface: X): X = <header>{title}{preface}</header>
+  override def docHeaderTitle(t: String) = <h1>{t}</h1>
+  override def docHeaderPreface(p: X) = <p>{p}</p>
+
   override def tocSurround(entries: X) =
     <nav>
       <h2>Table of Contents</h2>

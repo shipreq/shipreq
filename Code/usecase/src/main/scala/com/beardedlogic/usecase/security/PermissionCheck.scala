@@ -10,6 +10,7 @@ import app.DI
 object PermissionCheck {
 
   private val DeniedNoUser = new PermissionCheck(-\/("User not logged in."))
+  private val SomeUnit = Some(())
 
   def userCan: PermissionCheck =
     DI.SecurityProvider.vend.loggedInUser match {
@@ -19,9 +20,13 @@ object PermissionCheck {
 }
 
 class PermissionCheck(s: String \/ UserDescriptor) extends Permissions with Logger {
+  import PermissionCheck.SomeUnit
 
   def isDenied: Boolean = s.isLeft
   def isAllowed: Boolean = !isDenied
+
+  def toOption: Option[Unit] =
+    if (isDenied) None else SomeUnit
 
   def andIfNotThen(f: => Nothing): Unit = if (isDenied) f
   def expect(): Boolean =

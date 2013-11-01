@@ -6,7 +6,7 @@ import UseCase.ordering
 
 case class DocHeader(
   title: String,
-  desc: Option[String])
+  preface: Option[String])
 
 class Input(val header: Option[DocHeader], ucInput: List[(UseCaseRev, UseCase)]) {
   val sortedUseCases: List[UseCase] = ucInput.map(_._2).sorted

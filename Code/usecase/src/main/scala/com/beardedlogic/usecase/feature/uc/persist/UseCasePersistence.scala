@@ -120,8 +120,11 @@ final object UseCasePersistence {
   }
 
   def loadAll(projectId: ProjectId, dao: DaoT, lock: Lock.Read[UseCaseNumbers]): List[(UseCaseRev, UseCase)] =
+    loadAll(projectId, identity, dao, lock)
+
+  def loadAll(projectId: ProjectId, ucFilter: List[UseCaseRev] => List[UseCaseRev], dao: DaoT, lock: Lock.Read[UseCaseNumbers]): List[(UseCaseRev, UseCase)] =
     logTime {
-      val ucRevs = dao.findAllLatestUseCaseRevsByProject(projectId)
+      val ucRevs = ucFilter(dao.findAllLatestUseCaseRevsByProject(projectId))
       val rels = CachedUseCaseRelations(dao.summariseUseCases(projectId))
       val ucs = ucRevs.map(r => (r, load(r, rels, dao, lock).uc))
       val logMsg = s"UseCasePersistence.loadAll(${ucRevs.size} UCs)"

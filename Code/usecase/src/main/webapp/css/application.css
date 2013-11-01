@@ -64,6 +64,8 @@ html, body { height: 100%; }
 
 .ucs-published { color: #222; margin: 0 auto 0 auto; padding: 2ex 6ex 6ex 6ex; max-width: 144ex; }
 .ucs-published h2, .ucs-published h3 { color: #000; }
+.ucs-published > header { margin-bottom: 3em; }
+.ucs-published > header h1 { font-weight: bold; }
 .ucs-published nav ol { margin-left: 1ex; }
 .ucs-published nav a { font-size: 110%; line-height: 1.6em; }
 .ucs-published main { margin-top: 5em; }

@@ -62,6 +62,11 @@ object AppSiteMap {
       }
   )
 
+  val ShareView: PM[ShareUrlToken] = (
+    Menu.param[ShareUrlToken]("share-view", "_", i => Full(i.tag), o => o) / "share" / *
+    >> UseTemplate("share-list")
+  )
+
   val ReadOwnUcs: PM[ProjectId] = (
     MenuWithIdParam(ExternalId.Project)("readOwnUcs") / "project" / * / "read"
     >> AuthenticationRequired >> ProjectPermissionRequired
@@ -89,7 +94,7 @@ object AppSiteMap {
 
   val AllProdPages = List[ConvertableToMenu](
     Home, Login, Logout, Register1, Register2,
-    Project, UseCaseEditor, ReadOwnUcs, ShareCreate
+    Project, UseCaseEditor, ReadOwnUcs, ShareCreate, ShareView
   )
 
   val sitemap = {

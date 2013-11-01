@@ -208,8 +208,14 @@ private[db] final object Sql {
   val SelectShare = query[ShareId, Share](
     s"SELECT ${share_*} FROM share WHERE id=?")
 
-  val SelectShareByUrl = query[ShareUrlToken, (Share, PasswordAndSalt)](
+  val SelectShareAndPasswordByUrl = query[ShareUrlToken, (Share, PasswordAndSalt)](
     s"SELECT ${share_*}, password, password_salt FROM share WHERE url_token=?")
+
+  val SelectShareAndProjectByUrl = query[ShareUrlToken, (Share, Project)](s"""
+    SELECT ${share_* inTable "s"}, ${project_* inTable "p"}
+    FROM share s, project p
+    WHERE url_token=? AND s.project_id = p.id
+    """.sql)
 
   val SummariseShares = query[ProjectId, ShareSummary](
     "SELECT id, url_token, name, uc_filter, view_count, to_iso8601_str(last_viewed_at)" +

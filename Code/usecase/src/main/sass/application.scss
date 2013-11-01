@@ -208,6 +208,11 @@ html, body { height: 100% } // Cannot have any padding or margin here
   max-width: 144ex;
   h2,h3 {color:#000}
 
+  & > header {
+    margin-bottom:3em;
+    h1 { font-weight: bold; }
+  }
+
   nav {
     ol {margin-left:1ex}
     a {font-size:110%; line-height:1.6em}

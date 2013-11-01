@@ -95,7 +95,9 @@ trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with Logger 
 
   def toJson[T <: AnyRef](data: T): Json[T] = Serialization.write(data).tag[IsJsonFor[T]]
 
-  final def currentUser_!(): UserDescriptor = securityProvider.loggedInUser match {
+  @inline final def currentUser: Option[UserDescriptor] = securityProvider.loggedInUser
+
+  final def currentUser_!(): UserDescriptor = currentUser match {
     case Some(user) => user
     case None => respondImmediately(RedirectResponse(AppSiteMap.Login.relativeUrl))
   }

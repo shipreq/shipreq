@@ -50,3 +50,4 @@ UNTESTED
 * [U] Navbar
 * [U] UseCaseCrudl
 * [U] ShareCreate
+* [U] ShareView

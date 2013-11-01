@@ -94,5 +94,9 @@ object SqlHelpers {
 
   implicit class SqlStringExt(val s: String) extends AnyVal {
     def sql = LeadingWhitespace.replaceAllIn(s, " ").trim
+    def inTable(table: String) = {
+      val p = table + "."
+      """(^|,)\s*""".r.replaceAllIn(s, _.group(0)+p)
+    }
   }
 }

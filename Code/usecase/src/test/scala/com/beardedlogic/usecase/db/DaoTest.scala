@@ -315,5 +315,13 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
       r.map(_._1) shouldBe Some(s)
       r.get._2.matches("volition") shouldBe true
     }
+
+    it("findShareAndProject") {
+      val pid = newProjectId()
+      val s = createShare(pid)
+      val r = dao.findShareAndProject(s.urlToken)
+      r.map(_._1) shouldBe Some(s)
+      r.get._2 shouldBe dao.findProject(pid).get
+    }
   }
 }

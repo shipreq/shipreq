@@ -99,7 +99,7 @@ object UcFilter {
   // -------------------------------------------------------------------------------------------------------------------
   // Application
 
-  def apply(f: UcFilter, ucs: UseCases): UseCases = f match {
+  def apply[U <: BasicUseCaseInfo](f: UcFilter, ucs: List[U]): List[U] = f match {
     case All            => ucs
     case Whitelist(ids) => ucs.filter(uc => ids.contains(uc.identId))
   }
