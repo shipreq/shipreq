@@ -21,6 +21,7 @@ object Misc extends Misc with Logger {
   final val SingleSpace = Cord(" ")
 
   final val WhitespaceRegex = "\\s+".r
+  final val NormaliseCRLFs = "\r\n?".r
 
   final val NoEffect1: (Any => Unit) = _ => ()
 
@@ -56,6 +57,8 @@ trait Misc {
   def currentTimeAsIso8601Str: String @@ ISO8601 = ISO8601Format.synchronized(ISO8601Format.format(new Date)).tag[ISO8601]
 
   def isConfirmationTokenExpired_?(dateIssued: DateTime): Boolean = TokenLifespan.ago.isAfter(dateIssued)
+
+  def normaliseCRLFs(str: String) = Misc.NormaliseCRLFs.replaceAllIn(str, "\n")
 
   def normaliseWhitespaceInSingleLineString(str: String) = Misc.WhitespaceRegex.replaceAllIn(str, " ").trim
 

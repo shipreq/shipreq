@@ -3,6 +3,7 @@ package com.beardedlogic.usecase.feature.uc.text
 import scala.collection.immutable.TreeSet
 import scalaz.{NonEmptyList, Cord}
 import com.beardedlogic.usecase.db.{FieldKeyType, FieldKeyRec}
+import com.beardedlogic.usecase.feature.InputValidator
 import com.beardedlogic.usecase.feature.uc.UcParsingCtx
 import com.beardedlogic.usecase.feature.uc.change._
 import com.beardedlogic.usecase.feature.uc.field.{NormalCourseField, StepField}
@@ -14,7 +15,7 @@ import ParsingUtils._
 
 object StepText {
   def correctInput(input: String): String @@ InputCorrected =
-    input.trim.tag[InputCorrected]
+    InputValidator.stepFieldText.correct(input)
 
   val empty = StepText(FreeText.empty, None, None)
 

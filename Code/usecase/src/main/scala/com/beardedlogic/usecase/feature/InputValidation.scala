@@ -29,7 +29,7 @@ sealed trait InputCorrectionOnly[T <: AnyRef] extends InputValidator[T, T] {
 }
 
 sealed trait unrestrictedMultiLineString extends InputCorrectionOnly[String] {
-  override def correct(input: String) = input.trim.tag
+  override def correct(input: String) = normaliseCRLFs(input).trim.tag
 }
 
 final object InputValidator {
@@ -110,4 +110,7 @@ final object InputValidator {
 
   object sharePreface extends unrestrictedMultiLineString
 
+  object textFieldText extends unrestrictedMultiLineString
+
+  object stepFieldText extends unrestrictedMultiLineString
 }
