@@ -78,7 +78,7 @@ final object UseCasePersistence {
     projectId: ProjectId,
      ucRevsFn: DaoT => ProjectId => C[UseCaseRev],
       loadCtx: DaoT => C[UseCaseRev] => UseCaseRev => FieldLoadCtx,
-       relsFn: DaoT => ProjectId => UseCaseRelations = {d => p => CachedUseCaseRelations(d.summariseUseCases(p))}
+       relsFn: DaoT => ProjectId => UseCaseRelations = loadRels
     ) {
 
     def filter(f: C[UseCaseRev] => C[UseCaseRev]): Loader[C] =
@@ -106,6 +106,9 @@ final object UseCasePersistence {
     Loader[List](projectId
       , _.findAllLatestUseCaseRevsByProject
       , d => ucs => serveBulkLoadCtxs(d findAllUcFieldData ucs.map(_.id)))
+
+  private val loadRels: DaoT => ProjectId => UseCaseRelations =
+    d => p => CachedUseCaseRelations(d.summariseUseCases(p))
 
   private def serveBulkLoadCtxs(bulk: List[(UseCaseRevId, UcFieldTextWithFK)]): UseCaseRev => FieldLoadCtx =
     u => {
