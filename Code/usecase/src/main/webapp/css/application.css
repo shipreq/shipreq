@@ -82,6 +82,7 @@ html, body { height: 100%; }
 .ucs-published main .fvs tr.lastupdated { margin-top: 0 !important; border-top: none !important; }
 .ucs-published main .fvs tr.lastupdated * { padding-bottom: 0.3em !important; }
 .ucs-published main .fvs tr.rev, .ucs-published main .fvs tr.rev *, .ucs-published main .fvs tr.lastupdated, .ucs-published main .fvs tr.lastupdated * { line-height: 1.1em !important; }
+.ucs-published main .fvs .uc.outofscope, .ucs-published main .fvs .uc.outofscope * { color: #c00 !important; }
 .ucs-published main .fvs a.step:not(:hover), .ucs-published main .fvs a.uc:not(:hover) { border-bottom: 1px dotted; }
 .ucs-published main .fvs .bad.ref { color: #c00; cursor: no-drop; }
 .ucs-published main .fvs .steps th { white-space: nowrap; }

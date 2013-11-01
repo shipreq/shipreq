@@ -25,6 +25,8 @@ abstract class GenericPublisher(input: Input) {
 
   @inline final def useCases = input.sortedUseCases
 
+  @inline final def inScope(num: UseCaseNumber) = useCases.exists(_.number == num)
+
   final def plainText(value: String): X =
     plainText(List(PlainText(value)))
 
@@ -158,11 +160,15 @@ abstract class GenericPublisher(input: Input) {
   def fttDeletedRef                                 : X
   def fttStepRef(value: StepRef)                    : X
   def fttInvalidStepRef(value: InvalidStepRef)      : X
-  def fttAnyUseCaseRef(value: AnyUseCaseRef)        : X
-  def fttUseCaseRef(value: UseCaseRef)              : X = fttAnyUseCaseRef(value)
-  def fttUseCaseSelfRef(value: UseCaseSelfRef)      : X = fttAnyUseCaseRef(value)
+  def fttUseCaseRefOutOfScope(value: UseCaseRef)    : X
+  def fttUseCaseRefInScope(value: AnyUseCaseRef)    : X
+  def fttUseCaseSelfRef(value: UseCaseSelfRef)      : X = fttUseCaseRefInScope(value)
   def fttInvalidUseCaseRef(value: InvalidUseCaseRef): X
   def fttMathTex(value: MathTexTerm)                : X
+
+  final def fttUseCaseRef(r: UseCaseRef) =
+    if (inScope(r.num)) fttUseCaseRefInScope(r)
+    else                fttUseCaseRefOutOfScope(r)
 
   // -------------------------------------------------------------------------------------------------------------------
   // Step fields

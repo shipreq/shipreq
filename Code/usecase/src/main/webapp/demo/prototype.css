@@ -58,6 +58,9 @@
 #page-presmode .fvs img {width:100%; max-width:100%}
 #page-presmode .fvs td > ul {padding-left:2ex}
 #page-presmode *:not(a):not(button) {color:black !important}
+#page-presmode .uc.outofscope {color:#c00 !important}
+#page-presmode .uc.outofscope sup {color:#c00 !important}
+/*#page-presmode .uc.outofscope sup {color:#444 !important}*/
 #page-presmode .steps th {white-space:nowrap}
 #page-presmode .steps td {width:100%}
 #page-presmode .steps * {line-height:1.168em}

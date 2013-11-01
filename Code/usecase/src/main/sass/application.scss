@@ -249,6 +249,10 @@ html, body { height: 100% } // Cannot have any padding or margin here
         }
       }
 
+      .uc.outofscope {
+        &,* {color:#c00 !important}
+      }
+
       a.step:not(:hover), a.uc:not(:hover) {border-bottom:1px dotted}
       .bad.ref {
         color:#c00;
