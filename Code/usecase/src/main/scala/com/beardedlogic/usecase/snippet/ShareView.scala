@@ -23,6 +23,8 @@ class ShareView(token: ShareUrlToken) extends SingleOpStatefulSnippet {
 
   type OSP = Option[(Share, Project)]
 
+  // TODO opens 2 DB connections
+
   def loadIfCurrentUserIsOwner: OSP =
     for {
       _      <- currentUser
@@ -30,19 +32,15 @@ class ShareView(token: ShareUrlToken) extends SingleOpStatefulSnippet {
       _      <- PermissionCheck.userCan.readAndUpdate(p).toOption
     } yield (s, p)
 
-  def initialPage(osp: OSP): Page = {
+  def pageFor(osp: OSP): Page =
     osp match {
       case None         => PasswordRequired
       case Some((s, p)) => postAuthPage(s, p)
     }
-  }
 
   def postAuthPage(s: Share, p: Project): PostAuthPage = {
     val f = UcFilter.fromJson(s.ucFilterJson)
-    val ucs =
-      DI.DaoProvider.withTransaction(dao =>
-        Locks.UseCaseNumbers.read(p)(lock =>
-          UseCasePersistence.loadAll(p).filter(UcFilter(f)).run(dao, lock)))
+    val ucs = loadUcs(p, f)
     val h = DocHeader(s.name, s.preface)
     val i = new Input(Some(h), ucs)
     val q = new HtmlPublisher(i)
@@ -53,8 +51,17 @@ class ShareView(token: ShareUrlToken) extends SingleOpStatefulSnippet {
       ShowUcs(q.doc)
   }
 
-  def render =
-    initialPage(loadIfCurrentUserIsOwner) match {
+  var loadUcs = (p: ProjectId, f: UcFilter) =>
+    DI.DaoProvider.withTransaction(dao =>
+      Locks.UseCaseNumbers.read(p)(lock =>
+        UseCasePersistence.loadAll(p).filter(UcFilter(f)).run(dao, lock)))
+
+  def initialPage = pageFor(loadIfCurrentUserIsOwner)
+
+  def render = renderPage(initialPage)
+
+  def renderPage(page: Page) =
+    page match {
       case PasswordRequired =>
         "#passwordRequired ^^" #> ""
 
