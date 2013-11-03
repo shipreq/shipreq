@@ -10,8 +10,8 @@ initialize ~= { _ =>
   sys.props("scalac.patmat.analysisBudget") = "off"
 }
 
-scalacOptions ++= Seq("-Xcheckinit", "-unchecked", "-deprecation", "-feature", "-language:postfixOps", "-language:implicitConversions",
-  "-language:higherKinds", "-language:existentials")
+scalacOptions ++= Seq("-Xcheckinit", "-unchecked", "-deprecation", "-Yno-generic-signatures",
+  "-feature", "-language:postfixOps", "-language:implicitConversions", "-language:higherKinds", "-language:existentials")
 
 scalacOptions in Test ++= Seq("-language:reflectiveCalls")
 
