@@ -13,7 +13,7 @@ import com.beardedlogic.usecase.feature.UcFilter
 import com.beardedlogic.usecase.feature.publish.{DocHeader, HtmlPublisher, Input}
 import com.beardedlogic.usecase.feature.uc.persist.UseCasePersistence
 import com.beardedlogic.usecase.lib.Types._
-import com.beardedlogic.usecase.lib.{Locks, SingleOpStatefulSnippet}
+import com.beardedlogic.usecase.lib.{LogShareView, Locks, SingleOpStatefulSnippet}
 import com.beardedlogic.usecase.security.PermissionCheck
 import com.beardedlogic.usecase.util.HtmlTransformExt.ajaxSubmitOnClick
 import ShareView._
@@ -106,15 +106,16 @@ class ShareView(token: ShareUrlToken) extends SingleOpStatefulSnippet {
       (s, p) <- daoProvider.withSession(_ findShareAndPassword token)
       if p matches password
     } yield {
-      onAuth(p.hashedPassword)
+      onAuth(s, p.hashedPassword)
       JsCmds.Reload
     }
     possibleJs getOrElse jsShowError(Text("Access denied. Please verify the URL and password."))
   }
 
-  def onAuth(hashedPassword: String @@ Hashed): Unit = {
+  def onAuth(s: Share, hashedPassword: String @@ Hashed): Unit = {
     val newAuthEntry = (token, (DateTime.now, hashedPassword))
     AuthMapVar.atomicUpdate(_ + newAuthEntry)
-    // Log view
+
+    statLogger ! LogShareView(s)
   }
 }

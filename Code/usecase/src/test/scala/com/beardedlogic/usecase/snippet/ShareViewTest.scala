@@ -1,12 +1,13 @@
 package com.beardedlogic.usecase.snippet
 
 import org.joda.time.DateTime
-import org.mockito.Mockito.when
+import org.mockito.Mockito.{when, verify}
 import org.scalatest.FunSpec
+import com.beardedlogic.usecase.app.DI
 import com.beardedlogic.usecase.db.{UserDescriptor, UseCaseIdent, UseCaseRev, Project, Share}
 import com.beardedlogic.usecase.feature.uc.persist.UseCaseSaveCheckpoint
 import com.beardedlogic.usecase.feature.{UcFilters, UcFilter}
-import com.beardedlogic.usecase.lib.Misc
+import com.beardedlogic.usecase.lib.{LogShareView, StatLogger, Misc}
 import com.beardedlogic.usecase.lib.Types._
 import com.beardedlogic.usecase.security.PasswordAndSalt
 import com.beardedlogic.usecase.test.{TestData, TestHelpers, MockDaoProvider}
@@ -182,23 +183,40 @@ class ShareViewTest extends FunSpec with TestHelpers with TestData {
       }
     }
 
-    it("should grant access when password correct") {
-      val oldAuthMap: AuthMap = Map("qwe".tag -> (DateTime.now minusHours 4, "roar".tag))
-      val o = oldAuthMap.head
-      setupValidShare {
-        AuthMapVar.set(oldAuthMap)
+    describe("When password correct") {
+      it("should reload the page") {
+        setupValidShare {
+          val js = subject.onSubmitPassword("correct").toJsCmd
+          assertJsErrorNotice(js, None)
+          js should include("reload")
+        }
+      }
 
-        val js = subject.onSubmitPassword("correct").toJsCmd
+      it("should update the authmap") {
+        val oldAuthMap: AuthMap = Map("qwe".tag -> (DateTime.now minusHours 4, "roar".tag))
+        val o = oldAuthMap.head
+        setupValidShare {
+          AuthMapVar.set(oldAuthMap)
+          subject.onSubmitPassword("correct")
 
-        assertJsErrorNotice(js, None)
+          val a = AuthMapVar.get
+          a should have size 2
+          a.get(o._1) shouldBe Some(o._2)
+          a.get(URL) shouldBe defined
+          a(URL)._1.isAfterNow shouldBe false
+          a(URL)._1.isAfter(DateTime.now minusSeconds 1) shouldBe true
+          a(URL)._2 shouldBe PS.hashedPassword
+        }
+      }
 
-        val a = AuthMapVar.get
-        a should have size 2
-        a.get(o._1) shouldBe Some(o._2)
-        a.get(URL) shouldBe defined
-        a(URL)._1.isAfterNow shouldBe false
-        a(URL)._1.isAfter(DateTime.now minusSeconds 1) shouldBe true
-        a(URL)._2 shouldBe PS.hashedPassword
+      it("should log the view") {
+        val mockSL = mock[StatLogger]
+        DI.StatLogger.doWith(mockSL) {
+          setupValidShare {
+            subject.onSubmitPassword("correct")
+          }
+        }
+        verify(mockSL).!(any[LogShareView])
       }
     }
   }

@@ -45,9 +45,9 @@ trait Misc {
   import Misc._
 
   def clientIp: Option[String] = (
-    S.originalRequest.map(_.remoteAddr)
+    S.originalRequest.filter(_.request ne null).map(_.remoteAddr)
       or S.containerRequest.map(_.remoteAddress)
-      or S.request.map(_.remoteAddr)
+      or S.request.filter(_.request ne null).map(_.remoteAddr)
     // println("X-Real-IP: " + req.header("X-Real-IP"))
     // println("X-Forwarded-For: " + req.header("X-Forwarded-For"))
     )

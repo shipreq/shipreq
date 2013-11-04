@@ -1,6 +1,6 @@
 package com.beardedlogic.usecase.lib
 
-import com.beardedlogic.usecase.db.{BasicUseCaseInfo, Project, UseCaseIdent, UserRegistrationInfo, UserDescriptor, FieldKeyRec, TextRev, UseCaseRev}
+import com.beardedlogic.usecase.db.{Share, BasicUseCaseInfo, Project, UseCaseIdent, UserRegistrationInfo, UserDescriptor, FieldKeyRec, TextRev, UseCaseRev}
 import com.beardedlogic.usecase.feature.uc.change.{Change, ChangeResultF}
 import com.beardedlogic.usecase.feature.uc.field.Field
 import com.beardedlogic.usecase.feature.uc.UseCase
@@ -160,6 +160,7 @@ object Types {
 
   sealed trait IsShareId extends TypeTag[JLong]
   type ShareId = JLong @@ IsShareId
+  @inline final implicit def ShareToId(s: Share): ShareId = s.id
 
   // -------------------------------------------------------------------------------------------------------------------
   // Externalisable ID tags

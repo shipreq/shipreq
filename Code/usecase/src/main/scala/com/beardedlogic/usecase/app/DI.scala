@@ -4,6 +4,7 @@ package app
 import net.liftweb.util.SimpleInjector
 import db.{DB, DaoProvider, DaoS, DaoT}
 import security.{SecurityProvider, Oshiro}
+import lib.{StatLoggerActor, StatLogger}
 
 // TODO Use DI for Mailer testing
 
@@ -21,6 +22,8 @@ object DI extends SimpleInjector {
   }
 
   final val SecurityProvider = new Inject[SecurityProvider](Oshiro) {}
+
+  final val StatLogger = new Inject[StatLogger](StatLoggerActor) {}
 }
 
 /**
@@ -29,4 +32,5 @@ object DI extends SimpleInjector {
 trait DI {
   def daoProvider = DI.DaoProvider.vend
   def securityProvider = DI.SecurityProvider.vend
+  def statLogger = DI.StatLogger.vend
 }
