@@ -8,7 +8,7 @@
 
   %main#project-main.ly-blank-body(data-lift="project/ActivateTab")
 
-    %header(data-lift="ProjectHeader")
+    %header(data-lift="project/ProjectHeader")
       %section#project-title
         %h1 Project Name
         .form.hidden2
@@ -40,7 +40,7 @@
       .tab-content
 
         /---------------------------------------------------------------------------------------------------------------
-        %section#tab-ucs.tab-pane.fade.in.active(data-lift="UseCaseCrudl")
+        %section#tab-ucs.tab-pane.fade.in.active(data-lift="project/UseCaseCrudl")
 
           / Use Case: New
           %section#usecase-new
@@ -88,7 +88,7 @@
                 Show deleted
 
         /---------------------------------------------------------------------------------------------------------------
-        %section#tab-shares.tab-pane.fade(data-lift="ShareList")
+        %section#tab-shares.tab-pane.fade(data-lift="project/ShareList")
           %script(type="text/javascript" src="/js/zeroclipboard.js" data-lift="tail")
 
           %a.btn.btn-success.create Share Use Cases

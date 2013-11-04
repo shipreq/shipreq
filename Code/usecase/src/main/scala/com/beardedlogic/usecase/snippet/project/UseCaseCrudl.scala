@@ -1,5 +1,5 @@
 package com.beardedlogic.usecase
-package snippet
+package snippet.project
 
 import net.liftweb.http.SHtml
 import net.liftweb.http.js.JsCmd

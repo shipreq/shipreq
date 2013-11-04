@@ -1,4 +1,4 @@
-package com.beardedlogic.usecase.snippet
+package com.beardedlogic.usecase.snippet.project
 
 import org.mockito.Mockito.when
 import org.scalatest.FunSuite
