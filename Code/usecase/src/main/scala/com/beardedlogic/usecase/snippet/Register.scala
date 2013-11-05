@@ -118,7 +118,7 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
     ifValid(v)(r => {
       val (username, password) = r
       val ps = PasswordAndSalt.createWithRandomSalt(password)
-      daoProvider.withSession(_.performUserRegistration(token)(username, ps, clientIp_Or_?)) match {
+      daoProvider.withSession(_.performUserRegistration(token)(username, ps, clientIp.getOrElse("?"))) match {
 
         case UsernameTaken => jsShowError("Username is already taken.")
 

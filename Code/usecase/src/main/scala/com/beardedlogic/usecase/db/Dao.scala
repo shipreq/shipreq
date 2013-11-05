@@ -97,7 +97,7 @@ sealed trait DaoS {
 
   def findUserConfirmationTokenIssuedDate(token: String) = GetConfirmationTokenIssuedDate.firstOption(token)
 
-  def logUserLogin(id: UserId, ipAddr: String): Unit = LogUserLogin.execute(ipAddr, id)
+  def logUserLogin(id: UserId, ip: Option[String]): Unit = LogUserLogin.execute(id, ip)
 
   // ===================================================================================================================
   // Project

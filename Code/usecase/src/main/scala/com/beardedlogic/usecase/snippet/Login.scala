@@ -8,7 +8,7 @@ import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc._
 import scala.xml.Text
 import scalaz.{Failure, Success}
-import lib.SingleOpStatefulSnippet
+import lib.{LogUserLogin, SingleOpStatefulSnippet}
 import feature.validation.Validator
 import util.HtmlTransformExt.ajaxSubmitOnClick
 import Login._
@@ -50,8 +50,7 @@ class Login extends SingleOpStatefulSnippet {
   }
 
   def onSuccessfulLogin(): Nothing = {
-    // TODO update login count async
-    daoProvider.withSession(_.logUserLogin(currentUserId_!, clientIp_Or_?))
+    statLogger ! LogUserLogin(currentUserId_!)
     redirectHome
   }
 }

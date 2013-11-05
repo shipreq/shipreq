@@ -133,7 +133,8 @@ trait TestDatabaseHelpers extends TestHelpers2 {
     object Usr extends Table {def name = "usr"}
     object Share extends Table {def name = "share"}
     object ShareViewLog extends Table {def name = "share_view_log"}
-    val All = List(FieldKeyType, FieldKey, Usecase, UsecaseRev, Text, TextRev, UcField, Usr, Share, ShareViewLog)
+    object UsrLoginLog extends Table {def name = "usr_login_log"}
+    val All = List(FieldKeyType, FieldKey, Usecase, UsecaseRev, Text, TextRev, UcField, Usr, Share, ShareViewLog, UsrLoginLog)
   }
 
   def countAllTableRows = Tables.All.map(t => (t -> countRowsIn(t))).toMap
@@ -185,6 +186,7 @@ trait TestDatabaseHelpers extends TestHelpers2 {
         case Usr          => truncate(Project)
         case UcField
           | Share
+          | UsrLoginLog
           | ShareViewLog  => // No one keys to these tables
       }
       val tableName = table.name

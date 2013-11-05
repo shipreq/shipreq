@@ -61,8 +61,6 @@ trait Misc {
     // println("X-Forwarded-For: " + req.header("X-Forwarded-For"))
     )
 
-  def clientIp_Or_? = clientIp.getOrElse("?")
-
   def currentTimeAsIso8601Str: String @@ ISO8601 = ISO8601Format.synchronized(ISO8601Format.format(new Date)).tag[ISO8601]
 
   def isConfirmationTokenExpired_?(dateIssued: DateTime): Boolean = TokenLifespan.ago.isAfter(dateIssued)

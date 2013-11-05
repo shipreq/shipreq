@@ -67,8 +67,8 @@ private[db] final object Sql {
   @Update val UpdateConfirmationToken = update[(String, UserId)](
     "UPDATE usr SET confirmation_token = ?, confirmation_sent_at = NOW() WHERE id=?")
 
-  @Update val LogUserLogin = update[(String, UserId)](
-    "UPDATE usr SET login_count = login_count + 1, last_login_at = NOW(), last_login_ip = ? WHERE id=?")
+  @Insert val LogUserLogin = update[(UserId, Option[String])](
+    "INSERT INTO usr_login_log(usr_id,ip) VALUES(?,?)")
 
   @Insert val InsertUserPlaceholder = update[(String, String)](
     "INSERT INTO usr(email, confirmation_token, confirmation_sent_at) VALUES(?,?,NOW())")

@@ -161,4 +161,17 @@ class DbTriggerTest extends FunSpec with TestDatabaseSupport {
       dao.logShareView(b, None); viewCounts shouldBe (2,1)
     }
   }
+
+  describe(Tables.UsrLoginLog.name) {
+    def loginCount(userId: Long): Long = sql"SELECT login_count FROM usr WHERE id = $userId".as[Long].first
+
+    it("should update agg view stats by trigger") {
+      val a, b = newUserId()
+      def viewCounts = (loginCount(a), loginCount(b))
+      viewCounts shouldBe (0,0)
+      dao.logUserLogin(a, None); viewCounts shouldBe (1,0)
+      dao.logUserLogin(a, None); viewCounts shouldBe (2,0)
+      dao.logUserLogin(b, None); viewCounts shouldBe (2,1)
+    }
+  }
 }
