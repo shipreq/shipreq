@@ -2,9 +2,7 @@ package com.beardedlogic.usecase.feature.validation
 
 import scala.xml.NodeSeq
 import scalaz.{Monoid, Semigroup, NonEmptyList}
-import NonEmptyList.nonEmptyList
-import scalaz.std.map.mapMonoid
-import scalaz.syntax.semigroup._
+import com.beardedlogic.usecase.lib.ScalazSubset._
 import VFailure._
 
 object VFailure {

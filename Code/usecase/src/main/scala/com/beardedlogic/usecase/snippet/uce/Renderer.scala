@@ -3,8 +3,6 @@ package snippet.uce
 
 import scala.xml.{Text, NodeSeq}
 import scalaz.{Memo, NonEmptyList}
-import scalaz.syntax.foldable._
-import scalaz.syntax.monoid._
 import net.liftweb.common.Logger
 import net.liftweb.http.js.{JsCmd, JsCmds}
 import net.liftweb.http.js.jquery.JqJE
@@ -16,6 +14,7 @@ import net.liftweb.util.Helpers._
 import feature.uc.change._
 import feature.uc.field._
 import feature.FlowGraph
+import lib.ScalazSubset._
 import lib.Types._
 import util.JsExt._
 import Changes._

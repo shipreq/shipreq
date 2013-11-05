@@ -1,9 +1,8 @@
 package com.beardedlogic.usecase.feature.uc.change
 
-import com.beardedlogic.usecase.feature.uc.UcParsingCtx
 import scalaz.NonEmptyList
-import scalaz.NonEmptyList.nonEmptyList
-import scalaz.syntax.foldable._
+import com.beardedlogic.usecase.feature.uc.UcParsingCtx
+import com.beardedlogic.usecase.lib.ScalazSubset._
 
 
 trait ChangeResponder[V] {

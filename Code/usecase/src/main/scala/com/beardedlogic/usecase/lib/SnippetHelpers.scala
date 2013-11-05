@@ -1,6 +1,5 @@
 package com.beardedlogic.usecase.lib
 
-import scalaz.syntax.monoid._
 import net.liftweb.common.{ParamFailure, Failure => FailBox, Full, Box, Logger, Empty}
 import net.liftweb.http.js.{JsCmd, JsExp}
 import net.liftweb.http.js.JsCmds.Noop
@@ -19,6 +18,7 @@ import com.beardedlogic.usecase.util.HttpResponses.ShouldNeverHappenResponse
 import com.beardedlogic.usecase.util.JsExt._
 import com.beardedlogic.usecase.util.ErrorMessages
 import AppSiteMap.Implicits._
+import ScalazSubset._
 import Types._
 
 // TODO Needs rework between static & stateful

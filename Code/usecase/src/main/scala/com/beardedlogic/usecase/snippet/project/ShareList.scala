@@ -3,11 +3,10 @@ package snippet.project
 
 import net.liftweb.util.CssSel
 import net.liftweb.util.Helpers._
-import scalaz.NonEmptyList.nel
-import scalaz.std.list.listInstance
 
 import app.{RequestVars, AppSiteMap}
 import AppSiteMap.Implicits._
+import lib.ScalazSubset._
 import lib.Types._
 import lib.SingleOpStatefulSnippet
 import db.ShareSummary

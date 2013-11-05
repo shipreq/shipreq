@@ -2,8 +2,7 @@ package com.beardedlogic.usecase.feature.validation
 
 import scala.xml.{Text, NodeSeq}
 import scalaz.{Cord, Monoid, NonEmptyList}
-import scalaz.std.list.listInstance
-import scalaz.syntax.foldable._
+import com.beardedlogic.usecase.lib.ScalazSubset._
 import VFailure.ErrorMsg
 
 trait GenericVFailureRenderer {
@@ -40,7 +39,7 @@ trait GenericVFailureRenderer {
 object VFailureHtmlRenderer extends GenericVFailureRenderer {
   override type I = NodeSeq
   override type O = NodeSeq
-  override implicit def iMonoid = scalaz.std.nodeseq.nodeSeqInstance
+  override def iMonoid = scalaz.std.nodeseq.nodeSeqInstance
   override protected def finalise(i: I) = i
 
   override protected def renderTopLevelN(is: List[I]) =

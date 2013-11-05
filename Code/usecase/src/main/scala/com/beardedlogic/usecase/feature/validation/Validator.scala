@@ -1,11 +1,10 @@
 package com.beardedlogic.usecase.feature.validation
 
 import com.beardedlogic.usecase.app.AppConfig._
+import com.beardedlogic.usecase.lib.ScalazSubset._
 import com.beardedlogic.usecase.lib.Types._
 import com.beardedlogic.usecase.lib.Misc._
 import com.beardedlogic.usecase.feature.uc.text.ParsingConfig.AnyValidArrowRegexStr
-import scalaz.std.tuple._
-import scalaz.syntax.bifunctor._
 import scalaz.{Validation, Success, Failure}
 import Constraints._
 

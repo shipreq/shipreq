@@ -5,9 +5,9 @@ import com.beardedlogic.usecase.feature.uc.UseCaseFns.{fullName, reqId}
 import com.beardedlogic.usecase.feature.uc.step.{StepNode, StepTreeZipper}
 import com.beardedlogic.usecase.feature.uc.text.FreeTextTerms._
 import com.beardedlogic.usecase.feature.uc.text.{FlowClause, ParsingConfig, StepText}
+import com.beardedlogic.usecase.lib.ScalazSubset._
 import com.beardedlogic.usecase.lib.Types._
 import scala.xml.{NodeSeq, Text}
-import scalaz.syntax.foldable._
 import ParsingConfig._
 import MarkupTokens._
 
@@ -17,7 +17,7 @@ object HtmlPublisher extends Publisher[NodeSeq] {
 
 class HtmlPublisher(input: Input) extends GenericPublisher(input) {
   type X = NodeSeq
-  implicit val xMonoid = scalaz.std.nodeseq.nodeSeqInstance
+  override def xMonoid = scalaz.std.nodeseq.nodeSeqInstance
 
   @inline private def ucId(n: UseCaseNumber) = reqId(n)
   @inline private def ucHref(n: UseCaseNumber) = "#" + ucId(n)

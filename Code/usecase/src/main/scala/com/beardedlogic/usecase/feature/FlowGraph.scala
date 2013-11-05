@@ -2,15 +2,11 @@ package com.beardedlogic.usecase
 package feature
 
 import scalaz.{Cord, Monoid, Foldable, Functor, NonEmptyList}
-import scalaz.std.list.listInstance
-import scalaz.std.option.optionInstance
-import scalaz.syntax.foldable._
-import scalaz.syntax.functor._
-import scalaz.syntax.monoid._
+import lib.ScalazSubset._
+import lib.Types._
 import uc.UseCase
 import uc.field._
 import uc.step.{StepNode, StepTreeZipper}
-import lib.Types._
 
 /**
  * Creates a DOT graph of the steps in a UseCase, and how one flows through them.

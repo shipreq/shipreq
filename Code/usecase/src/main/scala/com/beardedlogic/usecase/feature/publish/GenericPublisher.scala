@@ -2,14 +2,13 @@ package com.beardedlogic.usecase.feature.publish
 
 import net.liftweb.util.TimeHelpers.logTime
 import scalaz.{Need, Traverse, Monoid}
-import scalaz.syntax.foldable._
-import scalaz.syntax.monoid._
 
 import com.beardedlogic.usecase.feature.uc.UseCase
 import com.beardedlogic.usecase.feature.uc.field._
 import com.beardedlogic.usecase.feature.uc.step.{StepNode, StepTreeZipper}
 import com.beardedlogic.usecase.feature.uc.text.FreeTextTerms._
 import com.beardedlogic.usecase.feature.uc.text.{FlowClause, FreeTextTerm, StepText, FreeText}
+import com.beardedlogic.usecase.lib.ScalazSubset._
 import com.beardedlogic.usecase.lib.Types._
 import com.beardedlogic.usecase.feature.FlowGraph
 import com.beardedlogic.usecase.db.UseCaseRev

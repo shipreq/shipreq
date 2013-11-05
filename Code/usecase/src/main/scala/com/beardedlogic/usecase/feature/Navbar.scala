@@ -1,14 +1,12 @@
 package com.beardedlogic.usecase.feature
 
 import scalaz.NonEmptyList
-import scalaz.std.nodeseq._
-import scalaz.std.list._
-import scalaz.syntax.foldable._
 import scala.xml.{Attribute, Elem, NodeSeq, Null, Text}
 
 import com.beardedlogic.usecase.app.{AppSiteMap, RequestVars}
 import com.beardedlogic.usecase.db.UseCaseSummary
 import com.beardedlogic.usecase.lib.SnippetHelpers.shouldNeverHappen_!
+import com.beardedlogic.usecase.lib.ScalazSubset._
 import AppSiteMap.Implicits._
 
 /**

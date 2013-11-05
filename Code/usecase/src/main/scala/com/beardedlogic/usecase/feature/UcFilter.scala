@@ -5,13 +5,10 @@ import net.liftweb.http.S
 import net.liftweb.json._
 import scala.xml.{Text, NodeSeq}
 import scalaz.{MonadPlus, NonEmptyList}
-import scalaz.syntax.monadPlus._
-import scalaz.syntax.foldable._
-import scalaz.std.list.listInstance
-import scalaz.std.nodeseq.nodeSeqInstance
 
+import com.beardedlogic.usecase.lib.ScalazSubset._
 import com.beardedlogic.usecase.lib.Types._
-import com.beardedlogic.usecase.db.{DaoS, BasicUseCaseInfo}
+import com.beardedlogic.usecase.db.BasicUseCaseInfo
 import com.beardedlogic.usecase.lib.SnippetHelpers.shouldNeverHappen_swallowInProd
 
 /**

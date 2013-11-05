@@ -4,15 +4,12 @@ package persist
 
 import net.liftweb.util.TimeHelpers.logTime
 import scalaz.{Functor, Foldable}
-import scalaz.std.list.listInstance
-import scalaz.syntax.foldable._
-import scalaz.syntax.functor._
-import scalaz.Scalaz.Id
 
 import app.Defaults
 import db._
 import field._
 import lib.Locks.{SingleUseCase, UseCaseNumbers}
+import lib.ScalazSubset._
 import lib.Types._
 import util.{PreparedLock, BiMap, Lock}
 import UseCaseFns._

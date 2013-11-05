@@ -3,12 +3,10 @@ package db
 
 import org.postgresql.util.PSQLException
 import scala.slick.driver.PostgresDriver.simple._
-import scalaz.NonEmptyList.nel
-import scalaz.std.list.listInstance
-import scalaz.syntax.functor._
 import feature.uc.field.FieldDefinition
 import feature.UcFilter
 import lib.Locks.{UseCaseNumbers, SingleUseCase}
+import lib.ScalazSubset._
 import lib.Misc.retry
 import lib.ShareUrlTokenGen
 import lib.Types._

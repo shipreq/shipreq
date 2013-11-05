@@ -5,13 +5,13 @@ import net.liftweb.http.{SessionVar, SHtml}
 import net.liftweb.util.Helpers._
 import org.joda.time.DateTime
 import scala.xml.{Text, NodeSeq}
-import scalaz.std.list.listInstance
 
 import com.beardedlogic.usecase.app.{AppConfig, DI}
 import com.beardedlogic.usecase.db.Share
 import com.beardedlogic.usecase.feature.UcFilter
 import com.beardedlogic.usecase.feature.publish.{DocHeader, HtmlPublisher, Input}
 import com.beardedlogic.usecase.feature.uc.persist.UseCasePersistence
+import com.beardedlogic.usecase.lib.ScalazSubset._
 import com.beardedlogic.usecase.lib.Types._
 import com.beardedlogic.usecase.lib.{LogShareView, Locks, SingleOpStatefulSnippet}
 import com.beardedlogic.usecase.security.PermissionCheck

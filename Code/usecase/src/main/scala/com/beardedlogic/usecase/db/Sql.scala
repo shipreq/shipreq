@@ -4,10 +4,8 @@ package db
 import org.joda.time.DateTime
 import scala.slick.jdbc.{StaticQuery, SetParameter, GetResult}
 import scala.slick.session.PositionedParameters
-import scalaz.std.string.stringInstance
-import scalaz.syntax.foldable._
 import scalaz.NonEmptyList
-import scalaz.NonEmptyList.nonEmptyList
+import lib.ScalazSubset._
 import lib.Types._
 import feature.UcFilter
 import security.PasswordAndSalt
