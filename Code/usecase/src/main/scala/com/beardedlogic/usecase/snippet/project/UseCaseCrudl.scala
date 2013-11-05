@@ -4,16 +4,15 @@ package snippet.project
 import net.liftweb.http.SHtml
 import net.liftweb.http.js.JsCmd
 import net.liftweb.util.Helpers._
-import scalaz.{\/, -\/, \/-}
 
 import app.{RequestVars, AppSiteMap}
 import db.{UseCaseRev, UseCaseHeaderUpdateResult, UseCaseHeader, UseCaseSummary}
-import feature.InputValidator
+import feature.validation.Validator
 import lib.{Locks, Misc, SingleOpStatefulSnippet}
+import lib.Types._
 import util.NonEmptyTemplate
 import util.HtmlTransformExt.ajaxSubmitOnClick
 import util.JsExt.{JsTextTrigger, JqExpr, JsJsonTrigger, JsHtmlTrigger}
-import lib.Types._
 import AppSiteMap.Implicits._
 
 object UseCaseCrudlConsts {
@@ -70,17 +69,14 @@ class UseCaseCrudl(projectId: ProjectId) extends SingleOpStatefulSnippet {
   )
 
   def onCreate(): JsCmd =
-    create(createTitle) match {
-      case -\/(err) => jsShowError(err)
-      case \/-(ucs) => jsClearError & TriggerCreated.trigger(renderListItem(ucs)(ListItemTemplate))
-    }
+    ifValid(create(createTitle))(ucs =>
+      jsClearError & TriggerCreated.trigger(renderListItem(ucs)(ListItemTemplate)))
 
-  def create(titleInput: String): String \/ UseCaseSummary =
-    InputValidator.useCaseTitle.correctAndValidate(titleInput).map(newTitle => {
+  def create(titleInput: String): ValidationResultU[UseCaseSummary] =
+    Validator.useCaseTitle.correctAndValidate(titleInput).map(newTitle => {
       val h = UseCaseHeader(newTitle)
       val ucRev = Locks.UseCaseNumbers.write(projectId)(lock =>
-        daoProvider.withTransaction(_.createUseCaseIdentAndRev1(projectId, h, lock))
-      )
+        daoProvider.withTransaction(_.createUseCaseIdentAndRev1(projectId, h, lock)))
       new UseCaseSummary(ucRev, Misc.currentTimeAsIso8601Str)
     })
 
@@ -98,19 +94,19 @@ class UseCaseCrudl(projectId: ProjectId) extends SingleOpStatefulSnippet {
   }
 
   def onUpdate(uc: UseCaseSummary, newTitle: String): JsCmd =
-    update(uc.id, newTitle) match {
-      case -\/(err)  => jsShowError(err)
-      case \/-(None) => jsClearError & TriggerUpdateNop.trigger(uc.eid)
-      case \/-(Some(ucRev)) =>
+    ifValid(update(uc.id, newTitle)){
+      case None =>
+        jsClearError & TriggerUpdateNop.trigger(uc.eid)
+      case Some(ucRev) =>
         val ucs = new UseCaseSummary(ucRev, Misc.currentTimeAsIso8601Str)
         val li = renderListItem(ucs)(ListItemTemplate)
         val dto = UpdateDTO(uc.eid, JqExpr(li))
         jsClearError & TriggerUpdated.trigger(dto)
     }
 
-  def update(id: UseCaseIdentId, titleInput: String): String \/ Option[UseCaseRev] = {
+  def update(id: UseCaseIdentId, titleInput: String): ValidationResultU[Option[UseCaseRev]] = {
     import UseCaseHeaderUpdateResult._
-    InputValidator.useCaseTitle.correctAndValidate(titleInput).map(newTitle =>
+    Validator.useCaseTitle.correctAndValidate(titleInput).map(newTitle =>
       Locks.SingleUseCase.write(id, projectId)(lock =>
         daoProvider.withTransaction(_.updateUseCaseHeader(id, _.copy(title = newTitle), lock))
       ) match {

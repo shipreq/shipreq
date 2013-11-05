@@ -1,37 +1,32 @@
 package com.beardedlogic.usecase
-package feature
+package feature.validation
 
 import org.scalatest.FunSuite
 import org.scalatest.Matchers
 import org.scalatest.prop._
-import scalaz.{-\/, \/-}
+import scalaz.{Failure, Success}
 import lib.Types._
 
-class ValidateTest extends FunSuite with Matchers with PropertyChecks {
-  def IV = InputValidator
+class ValidatorTest extends FunSuite with Matchers with PropertyChecks {
+  def V = Validator
 
-  test("Validators should prefix failure message with the field name") {
-    IV.password.correctAndValidate("").swap.toOption.get should startWith("Password must")
-    IV.username.correctAndValidate("").swap.toOption.get should (startWith("Username can only") or startWith("Username must"))
-  }
-
-  def testV(iv: InputValidator[String, String], examples: TableFor2[Option[String], String]) {
+  def testV(v: Validator[String, String], examples: TableFor2[Option[String], String]) {
     forAll(examples) {
       (failureFrag, input) =>
-        iv.validate(input.tag[InputCorrected]) match {
-          case -\/(e) => e should include(failureFrag.getOrElse("Validation failed but was expected to pass."))
-          case \/-(_) => failureFrag shouldBe None
+        v.validate(input.tag[InputCorrected]) match {
+          case Failure(f) => f.toText should include(failureFrag.getOrElse("Validation failed but was expected to pass."))
+          case Success(_) => failureFrag shouldBe None
         }
     }
   }
 
   test("Email correction") {
-    IV.email.correct("hehe") shouldBe "hehe"
-    IV.email.correct(" he  he ") shouldBe "hehe" // removes ALL whitespace
+    V.email.correct("hehe") shouldBe "hehe"
+    V.email.correct(" he  he ") shouldBe "hehe" // removes ALL whitespace
   }
 
   test("Email validation") {
-    testV(IV.email, Table(("Failure Frag", "Input")
+    testV(V.email, Table(("Failure Frag", "Input")
       , (None, "hehe@asd.com")
       , (None, "ffs+yay@gmail.com")
       , (Some("invalid"), "heheasd.com")
@@ -48,7 +43,7 @@ class ValidateTest extends FunSuite with Matchers with PropertyChecks {
   }
 
   test("Password validation") {
-    testV(IV.password, Table(("Failure Frag", "Input")
+    testV(V.password, Table(("Failure Frag", "Input")
       , (None, "abc12345")
       , (None, "abc12345" * 10)
       , (None, "12345678a")
@@ -73,14 +68,19 @@ class ValidateTest extends FunSuite with Matchers with PropertyChecks {
     ))
   }
 
+  test("Password pair validation") {
+    Validator.passwords.correctAndValidate("qweqwe123", "qweqwe123h").isFailure shouldBe true
+    Validator.passwords.correctAndValidate("qweqwe123", "qweqwe123").isFailure shouldBe false
+  }
+
   test("Username correction") {
-    IV.username.correct("HEHE") shouldBe "hehe"
-    IV.username.correct("  ahah  ") shouldBe "ahah"
-    IV.username.correct("  Heh  ") shouldBe "heh"
+    V.username.correct("HEHE") shouldBe "hehe"
+    V.username.correct("  ahah  ") shouldBe "ahah"
+    V.username.correct("  Heh  ") shouldBe "heh"
   }
 
   test("Username validation") {
-    testV(IV.username, Table(("Failure Frag", "Input")
+    testV(V.username, Table(("Failure Frag", "Input")
       , (None, "abc")
       , (None, "a" * 32)
       , (Some("can only contain"), "@#$%::P1_")
@@ -91,7 +91,7 @@ class ValidateTest extends FunSuite with Matchers with PropertyChecks {
   }
 
   test("UseCaseTitle validation") {
-    testV(IV.useCaseTitle, Table(("Failure Frag", "Input")
+    testV(V.useCaseTitle, Table(("Failure Frag", "Input")
       , (None, "hello")
       , (None, "hello >")
       , (None, "hello -")

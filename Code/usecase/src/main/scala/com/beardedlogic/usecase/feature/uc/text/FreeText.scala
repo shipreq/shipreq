@@ -1,7 +1,7 @@
 package com.beardedlogic.usecase.feature.uc.text
 
 import com.beardedlogic.usecase.lib.Types._
-import com.beardedlogic.usecase.feature.InputValidator
+import com.beardedlogic.usecase.feature.validation.Validator
 import com.beardedlogic.usecase.feature.uc.UcParsingCtx
 import com.beardedlogic.usecase.feature.uc.change._
 import Changes._
@@ -40,7 +40,7 @@ object FreeText {
   val empty: FreeText = parseCorrected("".tag[InputCorrected])(UcParsingCtx.Empty)
 
   def correctInput(input: String): String @@ InputCorrected =
-    InputValidator.textFieldText.correct(input)
+    Validator.textFieldText.correct(input)
 
   def load(text: NormalisedText)(implicit savedSteps: SavedSteps, ctx: UcParsingCtx): FreeText = {
     implicit val stepsAndLabels = ctx.stepsAndLabels

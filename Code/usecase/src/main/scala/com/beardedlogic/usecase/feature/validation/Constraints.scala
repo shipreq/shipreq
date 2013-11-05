@@ -1,33 +1,6 @@
-package com.beardedlogic.usecase
-package util
+package com.beardedlogic.usecase.feature.validation
 
 import java.util.regex.Pattern
-import scala.annotation.tailrec
-import scalaz.{\/, -\/, \/-}
-import lib.Types.{@@, InputCorrected, Validated, AnyRefTypeTagExt}
-
-/**
- * Collection of constraints that apply to a subject.
- * @param fieldName The field name. Prepend to validation failure messages.
- */
-class Validator[T <: AnyRef](fieldName: String, constraints: List[Constraint[T]]) {
-  def apply(input: T @@ InputCorrected) = Validator.findFirstFailure(input, fieldName, constraints)
-}
-
-object Validator {
-  def apply[T <: AnyRef](fieldName: String, constraints: Constraint[T]*) = new Validator[T](fieldName, constraints.toList)
-
-  @tailrec def findFirstFailure[T <: AnyRef](input: T @@ InputCorrected, fieldName: String, constraints: List[Constraint[T]]): String \/ (T @@ Validated) =
-    constraints match {
-      case Nil => \/-(input.tag[Validated])
-      case h :: t => h(input) match {
-        case Some(err) => -\/(s"$fieldName $err")
-        case None => findFirstFailure(input, fieldName, t)
-      }
-    }
-}
-
-// =====================================================================================================================
 
 trait Constraint[T <: AnyRef] extends (T => Option[String]) {
   final def apply(t: T): Option[String] = if (isValid(t)) None else failureResult
@@ -46,7 +19,7 @@ final object Constraints {
     override def isValid(t: T) = !v.isValid(t)
     override val failureResult = errMsg match {
       case x@Some(_) => x
-      case None => v.failureResult
+      case None      => v.failureResult
     }
   }
 

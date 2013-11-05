@@ -10,7 +10,8 @@ import com.beardedlogic.usecase.util.{AppliedLens, BiMap}
 import java.lang.{Long => JJLong, Short => JJShort}
 import net.liftweb.common.Box
 import net.liftweb.http.js.{JsCmd, JsCmds}
-import scalaz.{LensFamily, Monoid, Name, Value}
+import scalaz.{Validation, LensFamily, Monoid, Name, Value}
+import com.beardedlogic.usecase.feature.validation.VFailure
 
 /**
  * @since 30/05/2013
@@ -32,7 +33,7 @@ object Types {
   type JLong = JJLong
   type JShort = JJShort
   trait TypeTag[-O <: AnyRef]
-  type @@[O <: AnyRef, T <: TypeTag[O]] = O with T
+  type @@[+O <: AnyRef, T <: TypeTag[O]] = O with T
 
   // -------------------------------------------------------------------------------------------------------------------
   // Implicits
@@ -213,6 +214,9 @@ object Types {
 
   type FieldKeyRecData = Option[String]
   type FieldValueRecData = Option[String]
+
+  type ValidationResultU[+R]          = Validation[VFailure, R]
+  type ValidationResult[+R <: AnyRef] = Validation[VFailure, R @@ Validated]
 
   type SavedSteps = BiMap[TextIdentId, LocalStepId]
   def EmptySavedSteps: SavedSteps = BiMap.empty

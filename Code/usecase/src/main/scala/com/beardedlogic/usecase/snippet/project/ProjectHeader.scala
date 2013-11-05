@@ -7,8 +7,8 @@ import net.liftweb.util.Helpers._
 import scalaz.{\/-, -\/}
 
 import app.{AppSiteMap, RequestVars}
-import db.UpdateProjectResult
-import feature.InputValidator
+import db.UpdateProjectResult._
+import feature.validation.Validator
 import lib.SingleOpStatefulSnippet
 import lib.Types._
 import util.HtmlTransformExt.ajaxSubmitOnClick
@@ -41,18 +41,14 @@ class ProjectHeader extends SingleOpStatefulSnippet {
     "a .readucs [href]" #> AppSiteMap.ReadOwnUcs.relativeUrl(project)
   )
 
-  def onRename(): JsCmd = {
-    import UpdateProjectResult._
-    InputValidator.projectName.correctAndValidate(projectNameInput) match {
-      case -\/(err) => jsShowError(err)
-      case \/-(name) =>
-        daoProvider.withSession(_.updateProject(project.id, currentUserId_!, name)) match {
-          case DbSuccess        => jsRenamed(name)
-          case NameAlreadyInUse => jsShowError("You already have a project with that name.")
-          case ProjectNotFound  => redirectHome
-        }
-    }
-  }
+  def onRename(): JsCmd =
+    ifValid(Validator.projectName.correctAndValidate(projectNameInput))(name =>
+      daoProvider.withSession(_.updateProject(project.id, currentUserId_!, name)) match {
+        case DbSuccess        => jsRenamed(name)
+        case NameAlreadyInUse => jsShowError("You already have a project with that name.")
+        case ProjectNotFound  => redirectHome
+      }
+    )
 
   def jsRenamed(newName: String): JsCmd = (
     jsClearError

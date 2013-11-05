@@ -1,45 +1,49 @@
-package com.beardedlogic.usecase
-package feature
+package com.beardedlogic.usecase.feature.validation
 
-import scalaz.{\/, -\/, \/-}
+import com.beardedlogic.usecase.app.AppConfig._
+import com.beardedlogic.usecase.lib.Types._
+import com.beardedlogic.usecase.lib.Misc._
+import com.beardedlogic.usecase.feature.uc.text.ParsingConfig.AnyValidArrowRegexStr
 import scalaz.std.tuple._
 import scalaz.syntax.bifunctor._
+import scalaz.{Validation, Success, Failure}
+import Constraints._
 
-import app.AppConfig._
-import lib.Misc._
-import lib.Types._
-import feature.uc.text.ParsingConfig.AnyValidArrowRegexStr
-import util.Constraints._
-import util.Validator
+sealed trait Validator[I <: AnyRef, O <: AnyRef] {
 
-sealed trait InputValidator[I <: AnyRef, O <: AnyRef] {
   def correct(input: I): I @@ InputCorrected
-  def validate(input: I @@ InputCorrected): String \/ (O @@ Validated)
-  final def correctAndValidate(input: I): String \/ (O @@ Validated) = validate(correct(input))
-  final def isValid(input: I @@ InputCorrected) = validate(input).isRight
+
+  def validate(input: I @@ InputCorrected): ValidationResult[O]
+
+  final def correctAndValidate(input: I): ValidationResult[O] =
+    validate(correct(input))
+
+  final def isValid(input: I @@ InputCorrected): Boolean =
+    validate(input).isSuccess
 }
 
-sealed trait InputValidatorV[T <: AnyRef] extends InputValidator[T, T] {
-  protected def validator: Validator[T]
-  final override def validate(input: T @@ InputCorrected) = validator(input)
+sealed trait InputValidatorV[T <: AnyRef] extends Validator[T, T] {
+  protected def validator: ConstraintValidator[T]
+  final override def validate(input: T @@ InputCorrected) = validator.validate(input)
 }
 
-sealed trait InputCorrectionOnly[T <: AnyRef] extends InputValidator[T, T] {
-  final override def validate(input: T @@ InputCorrected) = \/-(input.tag)
+sealed trait InputCorrectionOnly[T <: AnyRef] extends Validator[T, T] {
+  final override def validate(input: T @@ InputCorrected) = Success(input.tag)
 }
 
 sealed trait unrestrictedMultiLineString extends InputCorrectionOnly[String] {
   override def correct(input: String) = normaliseCRLFs(input).trim.tag
 }
 
-final object InputValidator {
+final object Validator {
+  val Ap = Validation.ValidationApplicative[VFailure](VFailure.semigroup)
 
   // -------------------------------------------------------------------------------------------------------------------
 
   object username
     extends InputValidatorV[String] {
     override def correct(input: String) = input.trim.toLowerCase.tag
-    override protected val validator = Validator[String]("Username",
+    override protected val validator = ConstraintValidator[String]("Username",
       HasLengthInRange(UsernameLength),
       CharWhitelist.charRegex("a-z0-9_", "can only contain letters, numbers and underscores."),
       StartsWith.regex("[a-z]",          "must start with a letter."),
@@ -50,13 +54,13 @@ final object InputValidator {
   object email
     extends InputValidatorV[String] {
     override def correct(input: String) = removeAllWhitespace(input).tag
-    override protected val validator = Validator[String]("Email address",
+    override protected val validator = ConstraintValidator[String]("Email address",
       MatchesRegex("^_+@_+?\\._+$".replace("_", "[^&<>]").r, "is invalid.") // loose validation
     )
   }
 
   object usernameOrEmail
-    extends InputValidator[String, String] {
+    extends Validator[String, String] {
     @inline private def underlying(input: String) = if (input.indexOf('@') == -1) username else email
     override def correct(input: String) = underlying(input).correct(input)
     override def validate(input: String @@ InputCorrected) = underlying(input).validate(input)
@@ -65,23 +69,23 @@ final object InputValidator {
   object password
     extends InputValidatorV[String] {
     override def correct(input: String) = input.tag
-    override protected val validator = Validator[String]("Password",
+    override protected val validator = ConstraintValidator[String]("Password",
       HasLengthInRange(PasswordLength),
       ContainsAlphaAndNumber
     )
   }
 
   object passwords
-    extends InputValidator[(String, String), String] {
+    extends Validator[(String, String), String] {
     override def correct(input: (String, String)) = input.umap(password.correct).tag
     override def validate(input: (String, String) @@ InputCorrected) = {
       password.validate(input._1.tag) match {
-        case err@ -\/(_) => err
-        case \/-(_) =>
+        case f@ Failure(_) => f
+        case s@ Success(_) =>
           if (input._1 != input._2)
-            -\/("Passwords don't match.")
+            Failure(VFailure.looseMsg("Passwords don't match."))
           else
-            \/-(input._1.tag)
+            s
       }
     }
   }
@@ -89,13 +93,13 @@ final object InputValidator {
   object projectName
     extends InputValidatorV[String] {
     override def correct(input: String) = normaliseWhitespaceInSingleLineString(input).tag
-    override protected val validator = Validator[String]("Project name", NonEmpty)
+    override protected val validator = ConstraintValidator[String]("Project name", NonEmpty)
   }
 
   object useCaseTitle
     extends InputValidatorV[String] {
     override def correct(input: String) = normaliseWhitespaceInSingleLineString(input).tag
-    override protected val validator = Validator[String]("Use case title",
+    override protected val validator = ConstraintValidator[String]("Use case title",
       NonEmpty,
       CharBlacklist("[]⦋⦌［］", "cannot include square brackets."),
       Not(Contain.regex(AnyValidArrowRegexStr, "cannot include arrows."))
@@ -105,7 +109,7 @@ final object InputValidator {
   object shareName
     extends InputValidatorV[String] {
     override def correct(input: String) = normaliseWhitespaceInSingleLineString(input).tag
-    override protected val validator = Validator[String]("Share name", NonEmpty)
+    override protected val validator = ConstraintValidator[String]("Share name", NonEmpty)
   }
 
   object sharePreface extends unrestrictedMultiLineString

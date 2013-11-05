@@ -1,18 +1,19 @@
 package com.beardedlogic.usecase.lib
 
 import scalaz.syntax.monoid._
-import net.liftweb.common.{ParamFailure, Failure, Full, Box, Logger, Empty}
+import net.liftweb.common.{ParamFailure, Failure => FailBox, Full, Box, Logger, Empty}
 import net.liftweb.http.js.{JsCmd, JsExp}
 import net.liftweb.http.js.JsCmds.Noop
 import net.liftweb.http.{S, NotFoundResponse, RedirectResponse, StatefulSnippet, ResponseShortcutException, LiftResponse}
 import net.liftweb.json.{NoTypeHints, Serialization, Serializer}
 import net.liftweb.sitemap.Menu
 import net.liftweb.util.Mailer.{MailTypes, From, Subject}
-import net.liftweb.util.{Props, CssSel, Mailer}
+import net.liftweb.util.{Props, Mailer}
 import scala.xml.{Elem, Text, NodeSeq, UnprefixedAttribute}
 
 import com.beardedlogic.usecase.app.{DI, AppConfig, AppSiteMap}
 import com.beardedlogic.usecase.db.UserDescriptor
+import com.beardedlogic.usecase.feature.validation.VFailure
 import com.beardedlogic.usecase.snippet.{AlertTypeSuccess, AlertTypeError, Notices}
 import com.beardedlogic.usecase.util.HttpResponses.ShouldNeverHappenResponse
 import com.beardedlogic.usecase.util.JsExt._
@@ -140,6 +141,9 @@ trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with Logger 
   def jsShowError(errMsg: NodeSeq)(implicit id: AlertId = defaultErrAlertId): JsCmd =
     jsClearAndShowError(Notices.renderSingle(AlertTypeError, errMsg))
 
+  def jsShowFailure(vf: VFailure)(implicit id: AlertId = defaultErrAlertId): JsCmd =
+    jsShowError(vf.toHtml)
+
   def jsShowErrors(errMsgs: Seq[NodeSeq])(implicit id: AlertId = defaultErrAlertId): JsCmd = errMsgs match {
     case Nil                => jsClearError
     case singleError :: Nil => jsShowError(singleError)
@@ -150,11 +154,17 @@ trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with Logger 
     box match {
       case Full(v)            => jsClearError |+| successJs(v)
       case Empty              => jsShowError(ErrorMessages.Generic) |+| failureJs
-      case Failure(err, _, _) => jsShowError(err) |+| failureJs
+      case FailBox(err, _, _) => jsShowError(err) |+| failureJs
     }
 
   def jsShowAlertSuccess(content: NodeSeq)(implicit id: AlertId = null): JsCmd =
     appendAlert(applyAlertId(Notices.renderSingle(AlertTypeSuccess, content)))
+
+  def ifValid[T](v: ValidationResultU[T])(f: T => JsCmd): JsCmd =
+    v match {
+      case scalaz.Failure(f) => jsShowFailure(f)
+      case scalaz.Success(s) => f(s)
+    }
 }
 
 /**

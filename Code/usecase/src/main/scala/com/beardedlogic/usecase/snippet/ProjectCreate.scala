@@ -4,12 +4,12 @@ package snippet
 import net.liftweb.http.js.JsCmd
 import net.liftweb.http.SHtml
 import net.liftweb.util.Helpers._
-import scalaz.{-\/,\/-}
+import scalaz.{Failure, Success}
 
 import app.AppSiteMap
 import db.CreateProjectResult
-import feature.InputValidator
 import lib.SingleOpStatefulSnippet
+import feature.validation.Validator
 import util.HtmlTransformExt.ajaxSubmitOnClick
 
 /**
@@ -28,11 +28,11 @@ class ProjectCreate extends SingleOpStatefulSnippet {
 
   def onSubmit(): JsCmd = {
     import CreateProjectResult._
-    InputValidator.projectName.correctAndValidate(projectNameInput) match {
-      case -\/(err) => jsShowError(err)
-      case \/-(name) =>
+    Validator.projectName.correctAndValidate(projectNameInput) match {
+      case Failure(f)    => jsShowFailure(f)
+      case Success(name) =>
         daoProvider.withSession(_.createProject(currentUserId_!, name)) match {
-          case DbSuccess(id)      => redirectTo(AppSiteMap.Project)(id)
+          case DbSuccess(id)    => redirectTo(AppSiteMap.Project)(id)
           case NameAlreadyInUse => jsShowError("You already have a project with that name.")
         }
     }

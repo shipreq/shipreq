@@ -15,9 +15,10 @@ import db.{UseCaseHeader, DaoS, DaoT, DaoProvider, DB, UseCaseRev}
 import db.SqlHelpers.SP_ProjectId
 import lib.Types._
 import lib.Locks
+import feature.UcFilters
 import feature.uc.UseCase
 import feature.uc.persist.{UseCaseSaveCheckpoint, UseCasePersistence}
-import feature.{UcFilters, InputValidator}
+import feature.validation.Validator
 import security.PasswordAndSalt
 
 object TestDB {
@@ -218,7 +219,7 @@ trait TestDatabaseHelpers extends TestHelpers2 {
   }
 
   def randomUCTitle: String @@ Validated =
-    findSuitable(InputValidator.useCaseTitle.correctAndValidate(randomStr).toOption)(_.isDefined).get
+    findSuitable(Validator.useCaseTitle.correctAndValidate(randomStr))(_.isSuccess).getOrElse(???)
 
   def newProjectId(userId: UserId = getOrCreateUserId): ProjectId =
     dao.createProject(userId, randomUCTitle).gimme

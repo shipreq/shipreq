@@ -7,14 +7,13 @@ import net.liftweb.util.Helpers._
 import net.liftweb.util.Mailer._
 import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc.UsernamePasswordToken
-import scalaz.{\/, -\/, \/-}
 
 import app.AppSiteMap
-import feature.InputValidator
 import lib.SingleOpStatefulSnippet
 import lib.Types._
 import mail.RegistrationEmails
 import db.{DaoT, UserRegistrationInfo, UserRegistrationResult}
+import feature.validation.Validator
 import security.PasswordAndSalt
 import util.JsExt._
 import util.HtmlTransformExt.ajaxSubmitOnClick
@@ -34,20 +33,18 @@ class Register1 extends SingleOpStatefulSnippet {
     )
 
   def onSubmit(): JsCmd = {
-    InputValidator.email.correctAndValidate(emailInput) match {
-      case -\/(err) => jsShowError(err)
-      case \/-(email) =>
-        val mail: Mail = daoProvider.withTransaction(dao =>
-          dao.findUserRegistrationInfo(email) match {
-            case None => onNewUser(email, dao)
-            case Some(UserRegistrationInfo(_, _, _, Some(_))) => onAlreadyRegistered()
-            case Some(UserRegistrationInfo(_, Some(token), Some(issued), _)) if !isConfirmationTokenExpired_?(issued) => onTokenReusable(token)
-            case Some(UserRegistrationInfo(id, _, _, _)) => onTokenExpired(id, dao)
-          }
-        )
-        sendMail(mail, To(email))
-        jsClearError & JqExpr("#emailSent,#register1Form") ~> JqToggle
-    }
+    ifValid(Validator.email.correctAndValidate(emailInput))(email => {
+      val mail: Mail = daoProvider.withTransaction(dao =>
+        dao.findUserRegistrationInfo(email) match {
+          case None => onNewUser(email, dao)
+          case Some(UserRegistrationInfo(_, _, _, Some(_))) => onAlreadyRegistered()
+          case Some(UserRegistrationInfo(_, Some(token), Some(issued), _)) if !isConfirmationTokenExpired_?(issued) => onTokenReusable(token)
+          case Some(UserRegistrationInfo(id, _, _, _)) => onTokenExpired(id, dao)
+        }
+      )
+      sendMail(mail, To(email))
+      jsClearError & JqExpr("#emailSent,#register1Form") ~> JqToggle
+    })
   }
 
   private def onNewUser(email: String @@ Validated, dao: DaoT): Mail = {
@@ -106,23 +103,23 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
 
   // TODO onUsernameChange(): This should be pure JS
   def onUsernameChange(input: String): JsCmd = {
-    usernameInput = InputValidator.username.correct(input)
+    usernameInput = Validator.username.correct(input)
     JqId("username") ~> JqSetValue(usernameInput)
   }
 
   def onSubmit(): JsCmd = try {
     import UserRegistrationResult._
 
-    val usernameV = InputValidator.username.correctAndValidate(usernameInput)
-    val passwordsV = InputValidator.passwords.correctAndValidate(password1Input, password2Input)
+    val v = Validator.Ap.apply2(
+      Validator.username.correctAndValidate(usernameInput),
+      Validator.passwords.correctAndValidate(password1Input, password2Input)
+    )(Tuple2.apply)
 
-    val possibleJs = for {
-      username <- usernameV
-      password <- passwordsV
-    } yield {
-      // Update user
+    ifValid(v)(r => {
+      val (username, password) = r
       val ps = PasswordAndSalt.createWithRandomSalt(password)
       daoProvider.withSession(_.performUserRegistration(token)(username, ps, clientIp_Or_?)) match {
+
         case UsernameTaken => jsShowError("Username is already taken.")
 
         case NoMatchingConfToken =>
@@ -135,9 +132,7 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
           SecurityUtils.getSubject.login(new UsernamePasswordToken(username, password))
           jsClearError & JqExpr("#regComplete,#register2") ~> JqToggle
       }
-    }
-
-    possibleJs | jsShowErrors(collectErrors(List(usernameV, passwordsV)))
+    })
   } finally {
     password1Input = "" // Let's not keep the plaintext passwords around
     password2Input = ""

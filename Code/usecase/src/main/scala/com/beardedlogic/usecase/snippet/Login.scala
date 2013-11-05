@@ -1,15 +1,15 @@
 package com.beardedlogic.usecase
 package snippet
 
-import net.liftweb.http.{S, SHtml}
+import net.liftweb.http.SHtml
 import net.liftweb.http.js.JsCmd
 import net.liftweb.util.Helpers._
 import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc._
 import scala.xml.Text
-import scalaz.{-\/,\/-}
+import scalaz.{Failure, Success}
 import lib.SingleOpStatefulSnippet
-import feature.InputValidator
+import feature.validation.Validator
 import util.HtmlTransformExt.ajaxSubmitOnClick
 import Login._
 
@@ -30,20 +30,23 @@ class Login extends SingleOpStatefulSnippet {
   )
 
   def onLoginAttempt(): JsCmd = {
-    val possibleJs = for {
-      usernameOrEmail <- InputValidator.usernameOrEmail.correctAndValidate(usernameOrEmailInput)
-      password        <- InputValidator.password.correctAndValidate(passwordInput)
-    } yield {
-      val loginToken = new UsernamePasswordToken(usernameOrEmail, password)
-      loginToken.setRememberMe(false)
-      try {
-        SecurityUtils.getSubject.login(loginToken)
-        onSuccessfulLogin()
-      } catch {
-        case _: AuthenticationException => jsShowError(InvalidLogin)
-      }
+    val v = Validator.Ap.apply2(
+      Validator.usernameOrEmail.correctAndValidate(usernameOrEmailInput),
+      Validator.password.correctAndValidate(passwordInput)
+    )(new UsernamePasswordToken(_, _))
+
+    v match {
+      case Success(loginToken) =>
+        loginToken.setRememberMe(false)
+        try {
+          SecurityUtils.getSubject.login(loginToken)
+          onSuccessfulLogin()
+        } catch {
+          case _: AuthenticationException => jsShowError(InvalidLogin)
+        }
+      case Failure(f) =>
+        jsShowError(InvalidLogin)
     }
-    possibleJs | jsShowError(InvalidLogin)
   }
 
   def onSuccessfulLogin(): Nothing = {

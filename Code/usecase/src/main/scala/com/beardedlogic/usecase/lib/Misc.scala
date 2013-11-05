@@ -100,13 +100,6 @@ trait Misc {
   def filterCovar[T](list: List[_])(implicit m: ClassTag[T]): List[T] =
     list.filter(isCovar[T]).asInstanceOf[List[T]]
 
-  // TODO Replace (String \/ X) with ValidationNel
-  def collectErrors(es: Seq[String \/ Any]): List[String] =
-    es.foldRight(List.empty[String])((e: String \/ Any, r: List[String]) => e match {
-      case -\/(err) => err :: r
-      case \/-(_) => r
-    })
-
   def nonEmptyString(s: String): Option[String] =
     if (s.isEmpty) None else Some(s)
 }

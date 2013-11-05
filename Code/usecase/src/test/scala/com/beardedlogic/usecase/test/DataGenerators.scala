@@ -11,7 +11,6 @@ import scalaz.Memo
 import db.{UseCaseHeader, FieldListRec}
 import lib.Misc._
 import lib.Types._
-import feature.InputValidator
 import feature.uc._
 import feature.uc.change.{UseCaseUpdater, NoChange}
 import feature.uc.field._
@@ -22,6 +21,7 @@ import StepLabels._
 import text.ParsingConfig._
 import TreeOps._
 import UseCaseFns.generateStepAndLabelBiMap
+import feature.validation.Validator
 
 object DataGenerators extends Logger {
   import TestHelpers._
@@ -312,7 +312,7 @@ object DataGenerators extends Logger {
                      .map(usecasetitleRemoval.replaceAllIn(_, ""))
                      .map(AnyValidArrowRegex.replaceAllIn(_, ""))
                      .map(s => if (s.isEmpty) "X" else s)
-                     .map(InputValidator.useCaseTitle.correctAndValidate(_).toOption)
+                     .map(Validator.useCaseTitle.correctAndValidate(_).toOption)
                      .suchThat(_.isDefined)
                      .map(_.get)
 
