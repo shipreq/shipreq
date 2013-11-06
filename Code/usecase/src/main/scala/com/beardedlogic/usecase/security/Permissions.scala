@@ -1,10 +1,19 @@
 package com.beardedlogic.usecase
 package security
 
-import db.Project
+import Permission.Ctx
 
-trait Permissions {
-  this: PermissionCheck =>
+object Permissions {
 
-  def readAndUpdate(p: Project) = check(_ == p.owner)(u => s"User #$u is not the owner of $p")
+  val accessProject: Permission = new TypicalPermission {
+    override def name = "accessProject"
+    override def check(ctx: Ctx) =
+      for {
+        u <- ctx.user
+        p <- ctx.project
+      } yield
+        u.id == p.owner
+  }
+
+  val viewShare = accessProject
 }

@@ -12,7 +12,7 @@ import scalaz.{Name, Need, NonEmptyList}
 import AppConfig.BaseUrl
 import lib.Types._
 import feature.{ExternalId, ExternalIdConverter, Navbar, NavbarElem}
-import security.{PermissionCheck, Oshiro}
+import security.{Permissions, Permission, Oshiro}
 
 object AppSiteMap {
   type PM[T] = Menu.ParamMenuable[T]
@@ -167,11 +167,11 @@ object AppSiteMap {
   private def AuthenticationRequired =
     If(() => Oshiro.isAuthenticated, () => RedirectResponse(Login.relativeUrl))
 
-  private def PermissionRequired(check: PermissionCheck => PermissionCheck, failResp: LiftResponse = redirectHomeResp) =
-    If(() => check(PermissionCheck.userCan).expect, () => failResp)
+  private def PermissionRequired(checker: => Permission.Checker, failResp: LiftResponse = redirectHomeResp) =
+    If(() => checker.isPass, () => failResp)
 
   private def ProjectPermissionRequired =
-    PermissionRequired(_.readAndUpdate(RequestVars.Project.get.value))
+    PermissionRequired(Permissions.accessProject.using(project = Some(RequestVars.Project.get.value)))
 
   private def UsesNavbar(h: NavbarElem, t: NavbarElem*) = {
     val elems = NonEmptyList(h, t: _*)

@@ -14,7 +14,7 @@ import com.beardedlogic.usecase.feature.uc.persist.UseCasePersistence
 import com.beardedlogic.usecase.lib.ScalazSubset._
 import com.beardedlogic.usecase.lib.Types._
 import com.beardedlogic.usecase.lib.{LogShareView, Locks, SingleOpStatefulSnippet}
-import com.beardedlogic.usecase.security.PermissionCheck
+import com.beardedlogic.usecase.security.Permissions
 import com.beardedlogic.usecase.util.HtmlTransformExt.ajaxSubmitOnClick
 import ShareView._
 
@@ -51,7 +51,7 @@ class ShareView(token: ShareUrlToken) extends SingleOpStatefulSnippet {
     for {
       _       <- currentUser
       (s, pr) <- daoProvider.withSession(_ findShareAndProject token)
-      _       <- PermissionCheck.userCan.readAndUpdate(pr).toOption
+      _       <- Permissions.accessProject.using(project = Some(pr)).pass
     } yield s
 
   def pageFor(o: LoadResult): Page =
