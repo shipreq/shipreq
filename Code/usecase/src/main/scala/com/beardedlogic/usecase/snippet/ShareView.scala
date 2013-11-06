@@ -51,7 +51,7 @@ class ShareView(token: ShareUrlToken) extends SingleOpStatefulSnippet {
     for {
       _       <- currentUser
       (s, pr) <- daoProvider.withSession(_ findShareAndProject token)
-      _       <- Permissions.accessProject.using(project = Some(pr)).pass
+      _       <- Permissions.viewShare.using(project = Some(pr), share = Some(s)).pass
     } yield s
 
   def pageFor(o: LoadResult): Page =

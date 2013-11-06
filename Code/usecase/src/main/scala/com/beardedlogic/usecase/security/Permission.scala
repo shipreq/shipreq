@@ -1,8 +1,9 @@
 package com.beardedlogic.usecase
 package security
 
-import scalaz.Semigroup
+import scalaz.{Name, Semigroup}
 import net.liftweb.common.Logger
+import net.liftweb.http.RequestVar
 import app.DI
 import db.{Share, UserDescriptor, Project}
 import Permission._
@@ -37,6 +38,10 @@ final object Permission {
     def pass: Option[Pass] =
       if (isPass) SomePass else None
   }
+
+  implicit class RequestVarPermExt[T](val r: RequestVar[T]) extends AnyVal {
+    def some[V](implicit ev: T <:< Name[V]): Some[V] = Some(r.get.value)
+  }
 }
 
 trait Permission {
@@ -53,6 +58,8 @@ trait Permission {
 }
 
 trait TypicalPermission extends Permission {
+  protected val logger = Logger.apply(Permissions.getClass.getCanonicalName.replace("$", "") + "." + name)
+
   def check(ctx: Ctx): Option[Boolean]
 
   def name: String
@@ -64,6 +71,14 @@ trait TypicalPermission extends Permission {
       case Some(false) => failedCheck
       case None        => failedCtx
     }
+
+  @specialized
+  protected final def cmp[A](a: A, b: A, msg: String): Boolean = {
+    val r = a == b
+    logger.debug(s"[$msg] = [$a == $b] = $r")
+    r
+  }
+
 }
 
 final class AndPermission(a: Permission, b: Permission) extends Permission {

@@ -13,6 +13,7 @@ import AppConfig.BaseUrl
 import lib.Types._
 import feature.{ExternalId, ExternalIdConverter, Navbar, NavbarElem}
 import security.{Permissions, Permission, Oshiro}
+import Permission.RequestVarPermExt
 
 object AppSiteMap {
   type PM[T] = Menu.ParamMenuable[T]
@@ -171,7 +172,7 @@ object AppSiteMap {
     If(() => checker.isPass, () => failResp)
 
   private def ProjectPermissionRequired =
-    PermissionRequired(Permissions.accessProject.using(project = Some(RequestVars.Project.get.value)))
+    PermissionRequired(Permissions.accessProject.using(project = RequestVars.Project.some))
 
   private def UsesNavbar(h: NavbarElem, t: NavbarElem*) = {
     val elems = NonEmptyList(h, t: _*)
