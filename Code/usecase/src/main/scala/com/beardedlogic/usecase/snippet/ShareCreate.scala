@@ -7,62 +7,75 @@ import com.beardedlogic.usecase.app.AppSiteMap
 import com.beardedlogic.usecase.feature.{UcFilters, UcFilter}
 import com.beardedlogic.usecase.feature.validation.Validator
 import com.beardedlogic.usecase.lib.{NoticeFlash, SingleOpStatefulSnippet}
-import com.beardedlogic.usecase.lib.Types.ProjectId
+import com.beardedlogic.usecase.lib.Types._
 import com.beardedlogic.usecase.security.PasswordAndSalt
 import com.beardedlogic.usecase.util.HtmlTransformExt.ajaxSubmitOnClick
 import project.ActivateTab
+
+/**
+ * Shared between ShareCreate and ShareEdit.
+ * Both display a similar form and perform similar validations.
+ */
+private[snippet] abstract class ShareCreateBase extends SingleOpStatefulSnippet {
+
+  def projectId: ProjectId
+
+  var nameInput = ""
+  var prefaceInput = ""
+
+  protected def render2(f: UcFilter) = {
+    val ucs = daoProvider.withSession(_ findAllLatestUseCaseRevsByProject projectId)
+    val (ucFilterXml, ucFilterFn) = UcFilter.render(f, ucs)
+    def readHttpParamsAndBuildUcFilterJson(): Json[UcFilter] = UcFilter.toJson(ucFilterFn())
+    (
+      "#shareName" #> SHtml.onSubmit(nameInput = _)
+      & "#preface" #> SHtml.onSubmit(prefaceInput = _)
+      & "#uc-filters" #> ucFilterXml
+      & ":submit" #> ajaxSubmitOnClick(() => onSubmit(readHttpParamsAndBuildUcFilterJson))
+    )
+  }
+
+  def onSubmit(ucFilterJson: () => Json[UcFilter]): JsCmd
+
+  def nameV = Validator.shareName.correctAndValidate(nameInput)
+  def prefaceV = Validator.sharePreface.correctAndValidate(prefaceInput)
+
+  def goBackToShareList(): Nothing = {
+    ActivateTab.SharesTab.setInFlash()
+    redirectTo(AppSiteMap.Project)(projectId)
+  }
+}
 
 /**
  * Allows a user to create a new share.
  *
  * @since 30/10/2013
  */
-class ShareCreate(projectId: ProjectId) extends SingleOpStatefulSnippet {
+class ShareCreate(val projectId: ProjectId) extends ShareCreateBase {
 
-  var nameInput = ""
   var password1Input = ""
   var password2Input = ""
-  var prefaceInput = ""
 
-  def render = {
-    val ucs = daoProvider.withSession(_.findAllLatestUseCaseRevsByProject(projectId))
-    val (ucFilterXml, ucFilterFn) = UcFilter.render(UcFilters.All, ucs)
-
-    (
-      "#shareName" #> SHtml.onSubmit(nameInput = _)
+  def render = (
+    render2(UcFilters.All)
       & "#password1" #> SHtml.onSubmit(password1Input = _)
       & "#password2" #> SHtml.onSubmit(password2Input = _)
-      & "#preface" #> SHtml.onSubmit(prefaceInput = _)
-      & "#uc-filters" #> ucFilterXml
-      & ":submit" #> ajaxSubmitOnClick(() => onSubmit(ucFilterFn))
     )
-  }
 
-  def onSubmit(ucFilterFn: () => UcFilter): JsCmd = try {
-    val v = Validator.Ap.apply3(
-      Validator.shareName.correctAndValidate(nameInput),
-      Validator.passwords.correctAndValidate(password1Input, password2Input),
-      Validator.sharePreface.correctAndValidate(prefaceInput)
-    )(Tuple3.apply)
+  def onSubmit(ucFilterJson: () => Json[UcFilter]): JsCmd = {
+    val v = try
+      Validator.Ap.apply3(nameV, Validator.passwords.correctAndValidate(password1Input, password2Input), prefaceV)(Tuple3.apply)
+    finally {
+      password1Input = "" // Let's not keep the plaintext passwords around
+      password2Input = ""
+    }
 
     ifValid(v)(r => {
-      val (name, password, prefaceT) = r
-      val ucFilter = ucFilterFn()
+      val (name, password, preface) = r
       val ps = PasswordAndSalt.createWithRandomSalt(password)
-      val preface = nonEmptyString(prefaceT)
-      val ucFilterJson = UcFilter.toJson(ucFilter)
-      daoProvider.withSession(_.createShare(projectId, ps, name, preface, ucFilterJson))
-      postCreation()
+      daoProvider.withSession(_.createShare(projectId, ps, name, preface, ucFilterJson()))
+      NoticeFlash.notices.addS("Share created successfully.")
+      goBackToShareList()
     })
-
-  } finally {
-    password1Input = "" // Let's not keep the plaintext passwords around
-    password2Input = ""
-  }
-
-  def postCreation(): Nothing = {
-    NoticeFlash.notices.addS("Share created successfully.")
-    ActivateTab.SharesTab.setInFlash()
-    redirectTo(AppSiteMap.Project)(projectId)
   }
 }

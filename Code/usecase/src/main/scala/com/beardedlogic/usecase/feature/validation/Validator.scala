@@ -8,33 +8,39 @@ import com.beardedlogic.usecase.feature.uc.text.ParsingConfig.AnyValidArrowRegex
 import scalaz.{Validation, Success, Failure}
 import Constraints._
 
-sealed trait Validator[I <: AnyRef, O <: AnyRef] {
+sealed trait Validator[I <: AnyRef, C <: AnyRef, V <: AnyRef] {
 
-  def correct(input: I): I @@ InputCorrected
+  def correct(input: I): C @@ InputCorrected
 
-  def validate(input: I @@ InputCorrected): ValidationResult[O]
+  def validate(input: C @@ InputCorrected): ValidationResult[V]
 
-  final def correctAndValidate(input: I): ValidationResult[O] =
+  final def correctAndValidate(input: I): ValidationResult[V] =
     validate(correct(input))
 
-  final def isValid(input: I @@ InputCorrected): Boolean =
+  final def isValid(input: C @@ InputCorrected): Boolean =
     validate(input).isSuccess
 }
 
-sealed trait InputValidatorV[T <: AnyRef] extends Validator[T, T] {
-  protected def validator: ConstraintValidator[T]
-  final override def validate(input: T @@ InputCorrected) = validator.validate(input)
-}
-
-sealed trait InputCorrectionOnly[T <: AnyRef] extends Validator[T, T] {
-  final override def validate(input: T @@ InputCorrected) = Success(input.tag)
-}
-
-sealed trait unrestrictedMultiLineString extends InputCorrectionOnly[String] {
-  override def correct(input: String) = normaliseCRLFs(input).trim.tag
-}
-
 final object Validator {
+
+  sealed trait InputValidatorV[T <: AnyRef] extends Validator[T, T, T] {
+    protected def validator: ConstraintValidator[T]
+    final override def validate(input: T @@ InputCorrected) = validator.validate(input)
+  }
+
+  sealed trait InputCorrectionOnly[I <: AnyRef, O <: AnyRef] extends Validator[I, O, O] {
+    final override def validate(input: O @@ InputCorrected) = Success(input.tag)
+  }
+
+  sealed trait UnrestrictedMultiLineString extends InputCorrectionOnly[String, String] {
+    override def correct(input: String) = correctMultiLineString(input)
+  }
+  private def correctMultiLineString(input: String) = normaliseCRLFs(input).trim.tag[InputCorrected]
+
+  sealed trait OptionalMultiLineString extends InputCorrectionOnly[String, Option[String]] {
+    override def correct(input: String) = nonEmptyString(correctMultiLineString(input)).tag
+  }
+
   val Ap = Validation.ValidationApplicative[VFailure](VFailure.semigroup)
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -59,7 +65,7 @@ final object Validator {
   }
 
   object usernameOrEmail
-    extends Validator[String, String] {
+    extends Validator[String, String, String] {
     @inline private def underlying(input: String) = if (input.indexOf('@') == -1) username else email
     override def correct(input: String) = underlying(input).correct(input)
     override def validate(input: String @@ InputCorrected) = underlying(input).validate(input)
@@ -75,7 +81,7 @@ final object Validator {
   }
 
   object passwords
-    extends Validator[(String, String), String] {
+    extends Validator[(String, String), (String, String), String] {
     override def correct(input: (String, String)) = input.umap(password.correct).tag
     override def validate(input: (String, String) @@ InputCorrected) = {
       password.validate(input._1.tag) match {
@@ -111,9 +117,9 @@ final object Validator {
     override protected val validator = ConstraintValidator[String]("Share name", NonEmpty)
   }
 
-  object sharePreface extends unrestrictedMultiLineString
+  object sharePreface extends OptionalMultiLineString
 
-  object textFieldText extends unrestrictedMultiLineString
+  object textFieldText extends UnrestrictedMultiLineString
 
-  object stepFieldText extends unrestrictedMultiLineString
+  object stepFieldText extends UnrestrictedMultiLineString
 }
