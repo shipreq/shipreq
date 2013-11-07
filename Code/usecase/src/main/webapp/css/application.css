@@ -74,7 +74,7 @@ html, body { height: 100%; }
 .ucs-published > .none { text-align: center; margin-top: 10em; font-style: italic; }
 .ucs-published main { margin-top: 5em; }
 .ucs-published main article + article { margin-top: 8em; }
-.ucs-published main .fvs { width: 100%; }
+.ucs-published main .fvs { width: 100%; table-layout: fixed; }
 .ucs-published main .fvs th, .ucs-published main .fvs td { vertical-align: top; }
 .ucs-published main .fvs > tr { border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; }
 .ucs-published main .fvs > tr > th { width: 18ex; font-weight: normal; }

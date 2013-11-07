@@ -235,6 +235,7 @@ html, body { height: 100% } // Cannot have any padding or margin here
 
     .fvs {
       width: 100%;
+      table-layout: fixed; // Prevents Firefox from ignoring max-width on flow graphs
 
       th, td {vertical-align:top}
       & > tr {border-top:1px solid #ccc; border-bottom:1px solid #ccc}
