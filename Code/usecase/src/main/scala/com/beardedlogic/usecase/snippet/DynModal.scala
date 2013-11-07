@@ -25,6 +25,9 @@ object DynModal extends StaticSnippetHelpers {
 
   val Trigger = JsHtmlTrigger("dynmodal")
 
+  private def run(template: NodeSeq)(transform: NodeSeq => NodeSeq): JsCmd =
+    Trigger.trigger(transform(template))
+
   // -------------------------------------------------------------------------------------------------------------------
 
   val ChangePasswordTemplate = NonEmptyTemplate.load("templates-hidden/dynmodal-change_password").get
@@ -45,15 +48,12 @@ object DynModal extends StaticSnippetHelpers {
         JsModalHide & successFn(newPassword))
     }
 
-    val transform = (
+    run(ChangePasswordTemplate)(
       ".modal-title *" #> title
       & "#dynmodal-password1" #> SHtml.onSubmit(password1Input = _)
       & "#dynmodal-password2" #> SHtml.onSubmit(password2Input = _)
       & ":submit" #> ajaxSubmitOnClick(onSubmit)
     )
-    val html = transform(ChangePasswordTemplate)
-
-    Trigger.trigger(html)
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -75,13 +75,10 @@ object DynModal extends StaticSnippetHelpers {
       case None    => ".modal-header" #> ""
       case Some(t) => ".modal-title *" #> t
     }
-    val transform = (
-        titleTransform
-        & ".modal-body *" #> body
-        & ".btn-danger" #> ("* *" #> buttonLabel & ajaxOnClick(onSubmit))
-      )
-    val html = transform(ConfirmDangerTemplate)
-
-    Trigger.trigger(html)
+    run(ConfirmDangerTemplate)(
+      titleTransform
+      & ".modal-body *" #> body
+      & ".btn-danger" #> ("* *" #> buttonLabel & ajaxOnClick(onSubmit))
+    )
   }
 }
