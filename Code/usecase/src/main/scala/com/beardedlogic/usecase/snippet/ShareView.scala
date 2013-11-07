@@ -37,7 +37,7 @@ class ShareView(token: ShareUrlToken) extends SingleOpStatefulSnippet {
 
   def render = renderPage(initialPage)
 
-  def initialPage = pageFor(loadIfAlreadyAuth or loadIfCurrentUserIsOwner)
+  def initialPage = pageFor(loadIfAlreadyAuth orElse loadIfCurrentUserIsOwner)
 
   def loadIfAlreadyAuth: LoadResult =
     for {

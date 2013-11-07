@@ -4,7 +4,6 @@ package snippet.project
 import net.liftweb.http.js.JsCmd
 import net.liftweb.http.SHtml
 import net.liftweb.util.Helpers._
-import scalaz.{\/-, -\/}
 
 import app.{AppSiteMap, RequestVars}
 import db.UpdateProjectResult._
@@ -26,7 +25,7 @@ private[snippet] object ProjectHeaderConsts {
  */
 class ProjectHeader extends SingleOpStatefulSnippet {
   import ProjectHeaderConsts._
-  implicit def alertId = "phdra".tag[AlertIdTag]
+  override implicit def errorAlertId = "phdra".tag
 
   val project = RequestVars.Project.get.value
   var projectNameInput = project.name
@@ -52,7 +51,7 @@ class ProjectHeader extends SingleOpStatefulSnippet {
 
   def jsRenamed(newName: String): JsCmd = (
     jsClearError
-    & jsShowAlertSuccess("Project renamed successfully.")
+    & jsShowNotice("Project renamed successfully.")
     & TriggerProjectUpdated.trigger(newName)
   )
 }
