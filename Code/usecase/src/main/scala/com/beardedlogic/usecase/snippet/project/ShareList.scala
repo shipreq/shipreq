@@ -54,7 +54,7 @@ class ShareList(projectId: ProjectId) extends SingleOpStatefulSnippet {
       & ".l" #> (
         ".edit [href]" #> AppSiteMap.ShareEdit.relativeUrl(s.urlToken)
         & ".chgpwd" #> ajaxOnClick(() => DynModal.passwordChanger("Change Share Password")(onPasswordChange(s)))
-        & ".delete" #> ajaxOnClick(() => DynModal.confirmDanger(DeleteModalBody, "Delete Share")(onDelete(s)))
+        & ".delete" #> ajaxOnClick(() => DynModal.confirmDanger(Some(s.name), DeleteModalBody, "Delete Share")(onDelete(s)))
       )
       & ".r" #> (
         ".name a *" #> s.name

@@ -67,12 +67,17 @@ object DynModal extends StaticSnippetHelpers {
    * @param buttonLabel The label that appears on the button to proceed with the dangerous operation.
    * @param successFn Callback that reacts to successful confirmation.
    */
-  def confirmDanger(body: NodeSeq, buttonLabel: String)(successFn: => JsCmd): JsCmd = {
+  def confirmDanger(title: Option[String], body: NodeSeq, buttonLabel: String)(successFn: => JsCmd): JsCmd = {
 
     def onSubmit(): JsCmd = JsModalHide & successFn
 
+    val titleTransform = title match {
+      case None    => ".modal-header" #> ""
+      case Some(t) => ".modal-title *" #> t
+    }
     val transform = (
-        ".modal-body *" #> body
+        titleTransform
+        & ".modal-body *" #> body
         & ".btn-danger" #> ("* *" #> buttonLabel & ajaxOnClick(onSubmit))
       )
     val html = transform(ConfirmDangerTemplate)
