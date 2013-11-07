@@ -73,9 +73,6 @@
 #page-presmode .fvs a.uc:not(:hover) {_color:black; _text-decoration:underline; border-bottom:1px dotted}
 #page-presmode .steps .highlight {_font-weight:bold; background:#ffc}
 
-
-
-
 .spinner {
     display: inline-block;
     opacity: 0;
@@ -100,3 +97,10 @@ button:not(.active) .when-active {display:inline}
 button.active {opacity:0.85}
 button.active .when-not-active {display:inline}
 button.active .when-active {display:none}
+
+#dynamic-modal .modal-dialog {
+    width: 400px;
+}
+#dynamic-modal .submit {
+    text-align: right;
+}

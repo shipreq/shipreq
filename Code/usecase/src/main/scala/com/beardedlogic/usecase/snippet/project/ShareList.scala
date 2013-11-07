@@ -1,17 +1,21 @@
 package com.beardedlogic.usecase
 package snippet.project
 
+import net.liftweb.http.js._
 import net.liftweb.util.CssSel
 import net.liftweb.util.Helpers._
 
 import app.{RequestVars, AppSiteMap}
-import AppSiteMap.Implicits._
-import lib.ScalazSubset._
-import lib.Types._
-import lib.SingleOpStatefulSnippet
 import db.ShareSummary
 import feature.UcFilter
+import lib.ScalazSubset._
+import lib.SingleOpStatefulSnippet
+import lib.Types._
+import security.PasswordAndSalt
+import snippet.DynModal
 import util.ConciseIntListDesc
+import util.HtmlTransformExt.ajaxOnClick
+import AppSiteMap.Implicits._
 
 /**
  * Displays a list of a user's shares.
@@ -41,6 +45,7 @@ class ShareList(projectId: ProjectId) extends SingleOpStatefulSnippet {
     val relUrl = AppSiteMap.ShareView.relativeUrl(s.urlToken)
     ".l" #> (
       ".edit [href]" #> AppSiteMap.ShareEdit.relativeUrl(s.urlToken)
+      & ".chgpwd" #> ajaxOnClick(() => DynModal.passwordChanger("Change Share Password", onPasswordChange(s)))
     ) &
     ".r" #> (
       ".name a *" #> s.name
@@ -75,5 +80,11 @@ class ShareList(projectId: ProjectId) extends SingleOpStatefulSnippet {
   def renderViewRecency(lastViewedAt: Option[String @@ ISO8601]): CssSel = lastViewedAt match {
     case None => "*" #> ""
     case Some(at) => "abbr [title]" #> at
+  }
+
+  def onPasswordChange(s: ShareId)(newPassword: String @@ Validated): JsCmd = {
+    val ps = PasswordAndSalt.createWithRandomSalt(newPassword)
+    daoProvider.withSession(_.updateSharePassword(s, ps))
+    jsShowNotice("Password updated successfully.")
   }
 }

@@ -61,8 +61,9 @@ class Boot {
   }
 
   def preloadTemplates(): Unit = {
-    snippet.uce.Renderer.Templates
-    snippet.project.UseCaseCrudlConsts
+    snippet.DynModal
     snippet.ShareEditConsts
+    snippet.project.UseCaseCrudlConsts
+    snippet.uce.Renderer.Templates
   }
 }

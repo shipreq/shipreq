@@ -215,6 +215,9 @@ sealed trait DaoS {
   def updateShare(id: ShareId, name: String, preface: Option[String], ucFilterJson: Json[UcFilter]): Unit =
     UpdateShare.execute(name, preface, ucFilterJson, id)
 
+  def updateSharePassword(id: ShareId, ps: PasswordAndSalt): Unit =
+    UpdateSharePassword.execute(ps, id)
+
   def findShare(id: ShareId): Option[Share] =
     SelectShare.firstOption(id)
 

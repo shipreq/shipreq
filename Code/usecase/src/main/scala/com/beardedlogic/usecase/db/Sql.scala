@@ -212,6 +212,9 @@ private[db] final object Sql {
   @Update val UpdateShare = update[(String, Option[String], Json[UcFilter], ShareId)](
     "UPDATE share SET name=?, preface=?, uc_filter=? WHERE id=?")
 
+  @Update val UpdateSharePassword = update[(PasswordAndSalt, ShareId)](
+    "UPDATE share SET password=?, password_salt=?, password_changed_at=NOW() WHERE id=?")
+
   @Insert val LogShareView = update[(ShareId, Option[String])]("INSERT INTO share_view_log(share_id,ip) VALUES(?,?)")
 
   val share_* = "id, project_id, url_token, name, preface, uc_filter"

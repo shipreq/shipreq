@@ -145,6 +145,20 @@ function setupViz(callback) {
 
 // =====================================================================================================================
 
+$(document).on('dynmodal', function (event, data) {
+    $(data)
+        .appendTo("body")
+        .on('hidden.bs.modal', function () {
+            $(this).remove();
+        })
+        .on('shown.bs.modal', function () {
+            $('#dynmodal-password1').focus();
+        })
+        .modal('show');
+});
+
+// =====================================================================================================================
+
 function PENDING() { alert('PENDING'); return false }
 
 // Add a global event handler to make Enter submit the current form, for any elements with class 'enterSubmitsForm'.

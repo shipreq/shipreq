@@ -110,6 +110,11 @@ html, body { height: 100% } // Cannot have any padding or margin here
 
 .loginInfo { text-align: center }
 
+#dynmodal.password-change .modal-dialog {
+  width: 410px;
+  .submit { text-align: right; }
+}
+
 #project-list {
   margin-top: 3em;
   li {

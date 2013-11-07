@@ -27,6 +27,9 @@ html, body { height: 100%; }
 
 .loginInfo { text-align: center; }
 
+#dynmodal.password-change .modal-dialog { width: 410px; }
+#dynmodal.password-change .modal-dialog .submit { text-align: right; }
+
 #project-list { margin-top: 3em; }
 #project-list li { margin-top: 1.8em; }
 #project-list li .title { font-size: 250%; }

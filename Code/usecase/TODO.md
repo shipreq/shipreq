@@ -52,4 +52,5 @@ UNTESTED
 * [U] UseCaseCrudl
 * [U] ShareCreate
 * [U] ShareEdit
+* [U] Password changing: ShareList, DynModal
 * [U] project/ActivateTab
