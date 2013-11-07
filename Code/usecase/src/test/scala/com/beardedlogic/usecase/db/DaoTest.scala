@@ -8,7 +8,7 @@ import Q.interpolation
 import lib.Types._
 import feature.uc.field.{TextFieldDefinition, NormalCourseFieldDefinition, ExceptionCourseFieldDefinition}
 import security.PasswordAndSalt
-import feature.{UcFilter, UcFilters}
+import feature.UcFilters
 
 class DaoTest extends FunSpec with TestDatabaseSupport {
   implicit def str2uch(title: String @@ Validated): UseCaseHeader = UseCaseHeader(title)
@@ -241,14 +241,18 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
       it("should return a summary for each project the user has") {
         val u = newUserId
         val p1 = dao.createProject(u, "Bereft".validated).gimme
-        val s1 = ProjectSummary(p1, "Bereft", 0, None)
+        val s1 = ProjectSummary(p1, "Bereft", 0, None, 0, 0, None)
         summariseWithNoise(u) ==== List(s1)
         val p2 = dao.createProject(u, "Apple".validated).gimme
-        dao.summariseProjects(u) ==== List(ProjectSummary(p2, "Apple", 0, None), s1)
+        dao.summariseProjects(u) ==== List(ProjectSummary(p2, "Apple", 0, None, 0, 0, None), s1)
+
+        // + use case
         createUseCaseIdentAndRev1(p2, "yo".validated)
         val r = dao.summariseProjects(u)
-        r.map(_.copy(ucUpdatedAt = None)) ==== List(ProjectSummary(p2, "Apple", 1, None), s1)
+        r.map(_.copy(ucUpdatedAt = None)) ==== List(ProjectSummary(p2, "Apple", 1, None, 0, 0, None), s1)
         r(0).ucUpdatedAt shouldBe defined
+
+        // TODO summariseProjects doesn't test shares (or even UCs properly)
       }
     }
 

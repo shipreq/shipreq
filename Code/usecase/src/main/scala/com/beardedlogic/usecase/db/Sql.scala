@@ -21,7 +21,7 @@ private[db] final object Sql {
   implicit val GR_FieldKey = GetResult {r => FieldKeyRec(r.<<, r.<<, r.<<)}
   implicit val GR_PasswordAndSalt = GetResult(r => PasswordAndSalt.restore(r.nextString.tag, r.<<))
   implicit val GR_Project = GetResult(r => Project(r.<<, r.<<, r.<<))
-  implicit val GR_ProjectSummary = GetResult(r => ProjectSummary(r.nextId[ProjectId], r.<<, r.<<, r.<<))
+  implicit val GR_ProjectSummary = GetResult(r => ProjectSummary(r.nextId[ProjectId], r.<<, r.<<, r.<<, r.<<, r.<<, r.<<))
   implicit val GR_TextRev = GetResult(r => TextRev(r.<<, r.<<, r.<<, r.<<))
   implicit val GR_UcFieldText= GetResult(r => UcFieldText(r.nextStringOption.asLabelC, r.<<, r.<<, r.<<))
   implicit val GR_UcFieldTextWithFK = GetResult(r => UcFieldTextWithFK(r.<<, r.<<))
@@ -99,13 +99,38 @@ private[db] final object Sql {
     "UPDATE project SET name=? WHERE id=? AND usr_id=?")
 
   val SummariseProjects = query[UserId, ProjectSummary]( s"""
-    SELECT p.id, p.name, count(r.created_at), to_iso8601_str(max(r.created_at))
-    FROM project p
-    LEFT JOIN usecase u on p.id = u.project_id
-    LEFT JOIN usecase_rev r on r.id = u.latest_rev_id
-    WHERE p.usr_id = ?
-    GROUP BY p.id, p.name
-    ORDER BY p.name """.sql)
+    with projects as (
+      select id, name from project where usr_id = ?
+    ), ucs as (
+      select p.id
+        ,count(1) uc_count
+        ,to_iso8601_str(max(r.created_at)) uc_last_updated_at
+      from projects p
+      inner join usecase     u on u.project_id = p.id
+      inner join usecase_rev r on r.id = u.latest_rev_id
+      group by p.id
+    ), shares as (
+      select p.id
+        ,count(1) sh_count
+        ,sum(s.view_count) sh_views
+        ,to_iso8601_str(max(s.last_viewed_at)) sh_last_viewed_at
+      from projects p, share s
+      where p.id = s.project_id
+      group by p.id
+    )
+    select
+      p.id
+      ,p.name
+      ,uc_count
+      ,uc_last_updated_at
+      ,sh_count
+      ,sh_views
+      ,sh_last_viewed_at
+    from projects p
+    left join ucs    u on u.id = p.id
+    left join shares s on s.id = p.id
+    order by p.name
+    """.sql)
 
   // ###################################################################################################################
   // Use Case

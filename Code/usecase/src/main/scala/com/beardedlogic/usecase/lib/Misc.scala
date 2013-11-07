@@ -100,4 +100,10 @@ trait Misc {
 
   def nonEmptyString(s: String): Option[String] =
     if (s.isEmpty) None else Some(s)
+
+  def pluralise(singular: String, plural: String)(c: Long): String =
+    if (c == 1)
+      s"1 $singular"
+    else
+      s"$c $plural"
 }

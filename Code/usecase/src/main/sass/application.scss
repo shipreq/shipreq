@@ -127,7 +127,10 @@ html, body { height: 100% } // Cannot have any padding or margin here
   li {
     margin-top: 1.8em;
     .title {font-size: 250%}
-    .details {color: #444}
+    .details {
+      color: #333;
+      .t {color: #777;}
+    }
   }
 }
 

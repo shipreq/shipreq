@@ -23,23 +23,34 @@ object ProjectList extends SnippetHelpers {
   def renderProjectList(ps: List[ProjectSummary]) =
     if (ps.isEmpty)
       "ol" #> ""
-    else (
-      ".none" #> "" &
-      "li *" #> ps.map(p =>
-        ".title *" #> p.name &
-        "a [href]" #> AppSiteMap.Project.relativeUrl(p.id) &
-        ".uc .qty" #> useCaseCount(p.ucCount) &
-        useCaseLastMod(p.ucUpdatedAt)
-      )
-    )
+    else
+      ".none" #> "" & "li *" #> ps.map(renderProject)
 
-  def useCaseCount(count: Int): String = count match {
-    case 1 => "1 Use Case."
-    case _ => s"$count Use Cases."
+  def renderProject(p: ProjectSummary) = (
+    ".title *" #> p.name
+    & "a [href]" #> AppSiteMap.Project.relativeUrl(p.id)
+    & ".uc" #> (
+      ".c" #> useCaseCount(p.ucCount)
+      & detailTimeSpan(p.ucUpdatedAt)
+    )
+    & ".shares" #> (
+      ".c" #> shareCount(p.shareCount, p.shareViews)
+      & detailTimeSpan(p.shareLastViewedAt)
+    )
+  )
+
+  val useCaseCount = pluralise("use case.", "use cases.") _
+
+  def shareCount(count: Long, views: Long): String = count match {
+    case 0 => "0 shares."
+    case 1 => s"1 share with ${shareViews(views)}"
+    case _ => s"$count shares with ${shareViews(views)}"
   }
 
-  def useCaseLastMod(whenO: Option[String]) = whenO match {
-    case None => ".uc .mod" #> ""
-    case Some(when) => ".uc .mod abbr [title]" #> when
+  val shareViews = pluralise("view.", "views.") _
+
+  def detailTimeSpan(whenO: Option[String]) = whenO match {
+    case None       => ".t" #> ""
+    case Some(when) => ".t abbr [title]" #> when
   }
 }

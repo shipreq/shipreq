@@ -97,8 +97,11 @@ case class Project(id: ProjectId, name: String, owner: UserId)
 case class ProjectSummary(
   id: ProjectId,
   name: String,
-  ucCount: Int,
-  ucUpdatedAt: Option[String @@ ISO8601])
+  ucCount: Long,
+  ucUpdatedAt: Option[String @@ ISO8601],
+  shareCount: Long,
+  shareViews: Long,
+  shareLastViewedAt: Option[String @@ ISO8601])
 
 // ===================================================================================================================
 // Shares
