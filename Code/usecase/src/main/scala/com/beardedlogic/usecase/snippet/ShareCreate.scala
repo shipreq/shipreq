@@ -74,7 +74,7 @@ class ShareCreate(val projectId: ProjectId) extends ShareCreateBase {
       val (name, password, preface) = r
       val ps = PasswordAndSalt.createWithRandomSalt(password)
       daoProvider.withSession(_.createShare(projectId, ps, name, preface, ucFilterJson()))
-      NoticeFlash.notices.addS("Share created successfully.")
+      NoticeFlash.notices.addS(s"Created Share: $name")
       goBackToShareList()
     })
   }

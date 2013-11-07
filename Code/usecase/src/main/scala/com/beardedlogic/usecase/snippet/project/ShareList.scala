@@ -53,7 +53,7 @@ class ShareList(projectId: ProjectId) extends SingleOpStatefulSnippet {
       "li [id+]" #> shareLiId(s)
       & ".l" #> (
         ".edit [href]" #> AppSiteMap.ShareEdit.relativeUrl(s.urlToken)
-        & ".chgpwd" #> ajaxOnClick(() => DynModal.passwordChanger("Change Share Password")(onPasswordChange(s)))
+        & ".chgpwd" #> ajaxOnClick(() => DynModal.passwordChanger(s.name)(onPasswordChange(s)))
         & ".delete" #> ajaxOnClick(() => DynModal.confirmDanger(Some(s.name), DeleteModalBody, "Delete Share")(onDelete(s)))
       )
       & ".r" #> (
@@ -94,14 +94,14 @@ class ShareList(projectId: ProjectId) extends SingleOpStatefulSnippet {
     case Some(at) => "abbr [title]" #> at
   }
 
-  def onPasswordChange(s: ShareId)(newPassword: String @@ Validated): JsCmd = {
+  def onPasswordChange(s: ShareSummary)(newPassword: String @@ Validated): JsCmd = {
     val ps = PasswordAndSalt.createWithRandomSalt(newPassword)
     daoProvider.withSession(_.updateSharePassword(s, ps))
-    jsShowNotice("Password updated successfully.")
+    jsShowNotice(s"Updated Share Password: ${s.name}")
   }
 
   def onDelete(s: ShareSummary): JsCmd = {
     daoProvider.withSession(_ deleteShare s)
-    FadeOutThen(JqId(shareLiId(s)), Slow)(_ ~> JqRemove & jsShowNotice("Share deleted successfully."))
+    FadeOutThen(JqId(shareLiId(s)), Slow)(_ ~> JqRemove & jsShowNotice(s"Deleted Share: ${s.name}"))
   }
 }
