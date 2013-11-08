@@ -1,6 +1,7 @@
 package com.beardedlogic.usecase.feature.publish
 
 import scala.annotation.tailrec
+import scala.util.matching.Regex
 import scalaz.{\/, -\/, \/-, NonEmptyList => NEL}
 import NEL.nel
 import com.beardedlogic.usecase.feature.uc.text.FreeTextTerm
@@ -118,7 +119,6 @@ object TextMarkup {
                     acc :+ nonLi
                 }
             }
-
         }
 
       case BlankLine =>
@@ -131,41 +131,28 @@ object TextMarkup {
       case UL(_) => acc :+ -\/(t)
     }
 
-  def toLIcont(line: NonBlankLine): Option[MarkupToken] = {
+  def toLI(line: NonBlankLine): MarkupToken \/ LI =
+    parsePlainText(line, ParseListItem, -\/(_), l => \/-(LI(List(l))))
+
+  def toLIcont(line: NonBlankLine): Option[MarkupToken] =
+    parsePlainText(line, ParseListItemCont, _ => None, Some(_))
+
+  private def parsePlainText[R](line: NonBlankLine, parser: Regex, fail: NonBlankLine => R, pass: Line => R): R = {
     line.content.head match {
       case PlainText(lineStartText) =>
         lineStartText match {
-          case ParseListItemCont(txt) =>
+          case parser(matchedTxt) =>
 
             // Matched
-            val newLine = if (txt.isEmpty)
+            val newLine = if (matchedTxt.isEmpty)
               Line(line.content.tail)
             else
-              NonBlankLine(nel(PlainText(txt), line.content.tail))
-            Some(newLine)
+              NonBlankLine(nel(PlainText(matchedTxt), line.content.tail))
+            pass(newLine)
 
-          case _ => None // doesn't match regex
+          case _ => fail(line) // doesn't match regex
         }
-      case _ => None // Not a PlainText
-    }
-  }
-
-  def toLI(line: NonBlankLine): MarkupToken \/ LI = {
-    line.content.head match {
-      case PlainText(lineStartText) =>
-        lineStartText match {
-          case ParseListItem(liStartText) =>
-
-            // Matched
-            val newLine = if (liStartText.isEmpty)
-                Line(line.content.tail)
-              else
-                NonBlankLine(nel(PlainText(liStartText), line.content.tail))
-            \/-(LI(newLine :: Nil))
-
-          case _ => -\/(line) // doesn't match regex
-        }
-      case _ => -\/(line) // Not a PlainText
+      case _ => fail(line) // Not a PlainText
     }
   }
 
