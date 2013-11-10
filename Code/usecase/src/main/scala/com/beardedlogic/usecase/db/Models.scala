@@ -13,6 +13,8 @@ import feature.uc.UseCaseFns
 
 case class UserDescriptor(id: UserId, username: String, email: String)
 
+case class UserSupplementalInfo(registeredAt: String @@ ISO8601)
+
 case class UserRegistrationInfo(
   id: UserId,
   confirmationToken: Option[String],

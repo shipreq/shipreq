@@ -30,5 +30,39 @@
                 %span.c xxx
                 %span.t Last viewed <abbr class="timeago2" title="2013-09-02T15:57:35.773674+10:00"></abbr>.
 
-    #useracct-hub.tab-pane.fade
-      %h1(style="margin-top:0") User Account [PENDING]
+    #useracct-hub.tab-pane.fade(data-lift="UserAccount")
+
+      .panel.panel-default
+        .panel-heading
+          %h3.panel-title Account Details
+        .panel-body
+          %form.form-horizontal
+
+            .form-group
+              %label.col-xs-4.control-label Username
+              .col-xs-7
+                %p.form-control-static.username xxx
+
+            .form-group
+              %label.col-xs-4.control-label Email
+              .col-xs-7
+                %p.form-control-static.email xxx
+              .col-xs-1
+                /%button.btn.btn-default Edit
+
+            .form-group
+              %label.col-xs-4.control-label Password
+              .col-xs-7
+                %p.form-control-static ************
+              .col-xs-1
+                /%button.btn.btn-default Edit
+
+            .form-group
+              %label.col-xs-4.control-label Account Created
+              .col-xs-8
+                %p.form-control-static.registeredAt
+                  %time.showdate
+
+      %section#useracct-ctls
+        .btn-group
+          %button.btn.btn-danger Delete Account

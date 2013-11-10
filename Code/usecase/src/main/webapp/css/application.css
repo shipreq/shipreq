@@ -46,6 +46,8 @@ html, body { height: 100%; }
 #project-body { margin-top: 6ex; }
 #project-body .tab-pane { margin-top: 3ex; }
 
+#useracct-ctls { text-align: right; }
+
 #usecase-list { margin-top: 4ex; }
 #usecase-list table { width: 100%; }
 #usecase-list td.l { vertical-align: top; text-align: right; padding-right: 1.6ex; width: 17ex; }

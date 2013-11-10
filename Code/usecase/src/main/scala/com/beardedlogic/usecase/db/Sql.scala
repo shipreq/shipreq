@@ -30,6 +30,7 @@ private[db] final object Sql {
   implicit val GR_UseCaseSummary = GetResult(r => UseCaseSummary(r.nextId[UseCaseIdentId], r.<<, r.<<, r.<<))
   implicit val GR_UserDescriptor = GetResult(r => UserDescriptor(r.<<, r.<<, r.<<))
   implicit val GR_UserRegistrationInfo = GetResult(r => UserRegistrationInfo(r.<<, r.<<, r.<<, r.<<))
+  implicit val GR_UserSupplementalInfo = GetResult(r => UserSupplementalInfo(r.<<))
 
   implicit val GR_Share = GetResult(r => Share(r.<<, r.<<, r.<<, r.<<, r.<<, r.<<))
   implicit val GR_ShareSummary = GetResult(r => ShareSummary(r.<<, r.<<, r.<<, r.<<, r.<<, r.<<))
@@ -81,6 +82,9 @@ private[db] final object Sql {
       ,login_count = 1, last_login_at = NOW(), last_login_ip = ?
     WHERE confirmation_token = ?
     RETURNING id""".sql)
+
+  val GetUserSupplementalInfo = query[UserId, UserSupplementalInfo](
+    "SELECT confirmed_at FROM usr WHERE id=?")
 
   // ###################################################################################################################
   // Project

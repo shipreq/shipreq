@@ -127,7 +127,6 @@ html, body { height: 100% } // Cannot have any padding or margin here
   }
 }
 
-
 #project-list {
   margin-top: 3em;
   li {
@@ -149,6 +148,10 @@ html, body { height: 100% } // Cannot have any padding or margin here
 #project-body {
   margin-top: 6ex;
   .tab-pane {margin-top:3ex}
+}
+
+#useracct-ctls {
+  text-align:right;
 }
 
 #usecase-list {

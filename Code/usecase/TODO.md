@@ -55,3 +55,4 @@ UNTESTED
 * [U] Password changing: ShareList, DynModal
 * [U] Share deletion (inc DynModal)
 * [U] project/ActivateTab
+* [U] UserAccount
