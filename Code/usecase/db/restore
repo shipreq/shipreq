@@ -1,0 +1,17 @@
+#!/bin/bash
+
+dbdir="$(dirname "$0")"
+
+case "$1" in
+  dev)  db=usecase_dev ;;
+  test) db=usecase_test ;;
+  prod) db=usecase_prod ;;
+  *) echo -e "Unknown db: '$1'.\nExpected [dev|test|prod]." >&2; exit 1
+esac
+
+f="$dbdir"/dump-$1.sql
+[ ! -e "$f" ] && echo "Dump not found: $f" && exit 1
+
+#cat "$f" | "$dbdir"/sql-trns-dbname $1 | sudo -u postgres psql
+cat "$f" | sudo -u postgres psql
+

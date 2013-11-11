@@ -1,0 +1,15 @@
+#!/bin/bash
+
+dbdir="$(dirname "$0")"
+
+case "$1" in
+  dev)  db=usecase_dev ;;
+  test) db=usecase_test ;;
+  prod) db=usecase_prod ;;
+  *) echo -e "Unknown db: '$1'.\nExpected [dev|test|prod]." >&2; exit 1
+esac
+
+f="$dbdir"/dump-$1.sql
+
+sudo -u postgres pg_dump --encoding=UTF-8 --blobs --clean --create $db > "$f" \
+  && ls -l "$f"
