@@ -18,7 +18,9 @@ case class UseCaseSaveCheckpoint(
   uc: UseCase,
   rec: UseCaseRev,
   savedSteps: SavedSteps,
-  savedData: UseCasePersistence.SavedDataByField)
+  savedData: UseCasePersistence.SavedDataByField) {
+  @inline final def ucAndRev = (uc, rec)
+}
 
 final object UseCasePersistence {
 

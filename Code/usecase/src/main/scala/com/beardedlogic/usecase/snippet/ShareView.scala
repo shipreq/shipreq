@@ -10,7 +10,7 @@ import com.beardedlogic.usecase.app.{AppConfig, DI}
 import com.beardedlogic.usecase.db.Share
 import com.beardedlogic.usecase.feature.UcFilter
 import com.beardedlogic.usecase.feature.publish.{DocHeader, HtmlPublisher, Input}
-import com.beardedlogic.usecase.feature.uc.persist.UseCasePersistence
+import com.beardedlogic.usecase.feature.uc.persist.{UseCaseSaveCheckpoint, UseCasePersistence}
 import com.beardedlogic.usecase.lib.ScalazSubset._
 import com.beardedlogic.usecase.lib.Types._
 import com.beardedlogic.usecase.lib.{LogShareView, Locks, SingleOpStatefulSnippet}
@@ -61,7 +61,7 @@ class ShareView(token: ShareUrlToken) extends SingleOpStatefulSnippet {
     }
 
   def postAuthPage(s: Share): PostAuthPage = {
-    val ucs = loadUcs(s.projectId, s.ucFilter)
+    val ucs = loadUcs(s.projectId, s.ucFilter).map(_.ucAndRev)
     val h = DocHeader(s.name, s.preface)
     val i = new Input(Some(h), ucs)
     val q = new HtmlPublisher(i)
@@ -72,7 +72,7 @@ class ShareView(token: ShareUrlToken) extends SingleOpStatefulSnippet {
       ShowUcs(q.doc)
   }
 
-  var loadUcs = (p: ProjectId, f: UcFilter) =>
+  var loadUcs: (ProjectId, UcFilter) => List[UseCaseSaveCheckpoint] = (p, f) =>
     DI.DaoProvider.withTransaction(dao =>
       Locks.UseCaseNumbers.read(p)(lock =>
         UseCasePersistence.loadAll(p).filter(UcFilter(f)).run(dao, lock)))

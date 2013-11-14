@@ -18,6 +18,7 @@ object ReadOwnUcs {
       DI.DaoProvider.withTransaction(dao =>
         Locks.UseCaseNumbers.read(project)(lock =>
           UseCasePersistence.loadAll(project).run(dao, lock)))
+      .map(_.ucAndRev)
 
     if (ucs.isEmpty)
       "a [href]" #> AppSiteMap.Project.relativeUrl(project)

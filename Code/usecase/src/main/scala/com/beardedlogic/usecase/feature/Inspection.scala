@@ -84,6 +84,8 @@ object Inspection {
   implicit def needShow[A: Show]: Show[Need[A]] = "Need" <*> (_.value.show)
   implicit def valueShow[A: Show]: Show[Value[A]] = "Value" <*> (_.value.show)
 
+  implicit def tuple2[A: Show, B: Show]: Show[Tuple2[A, B]] = Show.show(t => Cord(`(`, t._1.show, `,`, t._2.show, `)`))
+
   implicit val datetimeShow: Show[DateTime] = "new DateTime" <*> (_.getMillis.show)
 
   // ===================================================================================================================
