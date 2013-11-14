@@ -1,4 +1,5 @@
 #!/bin/bash
 
-./latest-cat | fgrep -v ' [org.eclipse.jetty.' > /tmp/l
+logdir="$(dirname "$0")"
+"$(dirname "$0")"/latest-cat | fgrep -v ' [org.eclipse.jetty.' > /tmp/l
 vim /tmp/l
