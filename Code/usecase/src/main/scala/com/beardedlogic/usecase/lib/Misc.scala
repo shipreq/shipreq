@@ -3,7 +3,7 @@ package com.beardedlogic.usecase.lib
 import net.liftweb.common.Logger
 import net.liftweb.http.S
 import org.joda.time.{DateTimeUtils, Period, DateTime}
-import org.joda.time.format.ISODateTimeFormat
+import org.joda.time.format.DateTimeFormat
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
 import scala.util.Random
@@ -24,7 +24,8 @@ final object Misc extends Misc with Logger {
 
   val NoEffect1: (Any => Unit) = _ => ()
 
-  val Iso8601Format = ISODateTimeFormat.dateTime.withZoneUTC
+//  val Iso8601Format = ISODateTimeFormat.dateTime.withZoneUTC
+  val Iso8601Format = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZoneUTC
 
   implicit class AnyExt[V](val v: V) extends AnyVal {
     def modIf[VV >: V](cond: Boolean)(mod: V => VV): VV = if (cond) mod(v) else v
