@@ -51,9 +51,9 @@ libraryDependencies ++= {
   )
 }
 
-
-
 initialCommands += "import scalaz._, com.beardedlogic.usecase._, db._, lib.Types._, feature.uc, uc._, uc.field._, uc.step._, uc.text._, FreeTextTerms._, util._"
+
+ideaExcludeFolders ++= Seq("vendor", "src/main/javascript/vendor", "src/main/webapp/WEB-INF/_scalate", "src/main/webapp/css/vendor", "src/main/webapp/js/vendor")
 
 EclipseKeys.executionEnvironment := Some(EclipseExecutionEnvironment.JavaSE17)
 
