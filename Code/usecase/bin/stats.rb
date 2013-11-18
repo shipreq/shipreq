@@ -41,7 +41,7 @@ else
   puts main
   puts
   puts "TEST"
-  test= `cloc --exclude-dir=vendor,_scalate,liftmodule-scaml-jade src/test | sed -n '/^-/,$p'`
+  test= `cloc --exclude-dir=vendor,_scalate,liftmodule-scaml-jade src/test src/it | sed -n '/^-/,$p'`
   puts test
   puts
   m= getLoc(main,'Scala')

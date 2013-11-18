@@ -13,8 +13,6 @@ initialize ~= { _ =>
 scalacOptions ++= Seq("-Xcheckinit", "-unchecked", "-deprecation", "-Yno-generic-signatures",
   "-feature", "-language:postfixOps", "-language:implicitConversions", "-language:higherKinds", "-language:existentials")
 
-scalacOptions in Test ++= Seq("-language:reflectiveCalls")
-
 libraryDependencies ++= {
   val liftVersion = "2.5.1-golly-2"
   val shiroVersion = "1.2.2"
@@ -41,7 +39,7 @@ libraryDependencies ++= {
     "net.liftweb"                %% "lift-testkit"           % liftVersion           % "test",
     "org.apache.directory.studio" % "org.apache.commons.io"  % "2.4"                 % "test",
     "com.twitter"                %% "util-eval"              % "6.5.0"               % "test",
-    "org.seleniumhq.selenium"     % "selenium-java"          % "2.35.0"              % "test" excludeAll(
+    "org.seleniumhq.selenium"     % "selenium-java"          % "2.35.0"              % "it" excludeAll(
       ExclusionRule(name = "selenium-android-driver"),
       ExclusionRule(name = "selenium-htmlunit-driver"),
       ExclusionRule(name = "selenium-ie-driver"),
@@ -53,40 +51,3 @@ libraryDependencies ++= {
 }
 
 initialCommands += "import scalaz._, com.beardedlogic.usecase._, db._, lib.Types._, feature.uc, uc._, uc.field._, uc.step._, uc.text._, FreeTextTerms._, util._"
-
-ideaExcludeFolders ++= Seq("vendor", "src/main/javascript/vendor", "src/main/webapp/WEB-INF/_scalate", "src/main/webapp/css/vendor", "src/main/webapp/js/vendor")
-
-EclipseKeys.executionEnvironment := Some(EclipseExecutionEnvironment.JavaSE17)
-
-EclipseKeys.withSource := true
-
-EclipseKeys.createSrc := EclipseCreateSrc.Default + EclipseCreateSrc.Resource
-
-// Prevent src/main/java appearing in .classpath
-unmanagedSourceDirectories in Compile <<= (scalaSource in Compile)(Seq(_))
-
-// Prevent src/test/java appearing in .classpath
-unmanagedSourceDirectories in Test <<= (scalaSource in Test)(Seq(_))
-
-// Put webapp on test classpath so templates load
-unmanagedResourceDirectories in Test <+= (baseDirectory) { _ / "src/main/webapp" }
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Javascript
-
-seq(jsSettings : _*)
-
-// Minify JS as part of compile task
-(compile in Compile) <<= compile in Compile dependsOn (JsKeys.js in Compile)
-
-// Minify JS in src/main/javascript
-(sourceDirectory in (Compile, JsKeys.js)) <<= (sourceDirectory in Compile)(_ / "javascript")
-
-// Put minified JS in js/
-(resourceManaged in (Compile,JsKeys.js)) <<= (resourceManaged in Compile)( _ / "js")
-
-// Put Javascript in WAR root
-(webappResources in Compile) <+= (resourceManaged in Compile)
-
-// Puts Javascript in WEB-INF/classes
-// (resourceGenerators in Compile) <+= (JsKeys.js in Compile)
