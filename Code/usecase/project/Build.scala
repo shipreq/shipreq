@@ -73,9 +73,10 @@ object B extends Build {
     parallelExecution in Test := false
   )
 
+  lazy val IntegrationTest = config("it") extend(Test)
   def integrationTestSettings = (p: Project) =>
     p.configs(IntegrationTest)
-    .settings(Defaults.itSettings: _*)
+    .settings(inConfig(IntegrationTest)(Defaults.testSettings): _*)
     .settings(
       parallelExecution in IntegrationTest := false
     )
