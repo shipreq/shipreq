@@ -28,6 +28,7 @@ libraryDependencies ++= {
     "org.apache.shiro"          % "shiro-core"             % shiroVersion,
     "org.apache.shiro"          % "shiro-web"              % shiroVersion,
     "org.slf4j"                 % "jcl-over-slf4j"         % "1.7.5", // required by Shiro (in place of commons-logging)
+    "com.jolbox"                % "bonecp"                 % "0.8.0.RELEASE",
     "com.google.guava"          % "guava"                  % "15.0",
     "com.google.code.findbugs"  % "jsr305"                 % "2.0.2", // required by Guava
     "org.fusesource.scalate"   %% "scalate-core"           % "1.6.1",

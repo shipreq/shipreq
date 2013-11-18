@@ -44,7 +44,6 @@ TECH TODO
 =========
 
 * [S.3.5] [PERF] Add proper DB indexes.
-* [S.2.4] [PERF] DB connection pooling.
 * [S.1.3] [PERF] Shiro caching.
 * [S.1.3] [PERF] Textareas' blur shouldn't send a request when input doesn't change.
 * [S.1.1] [TEST] When SBT 0.13 comes out, shutdown Jetty et al in SBT hook.

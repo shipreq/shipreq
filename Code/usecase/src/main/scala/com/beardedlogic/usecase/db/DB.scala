@@ -3,7 +3,7 @@ package db
 
 import ch.qos.logback.classic.Level
 import com.googlecode.flyway.core.util.logging.{Log, LogCreator, LogFactory}
-import java.sql.Connection
+import com.jolbox.bonecp.BoneCPDataSource
 import net.liftweb.common.Logger
 import net.liftweb.util.Props
 import org.postgresql.ds.PGSimpleDataSource
@@ -20,12 +20,15 @@ object DB extends Logger {
   // ===================================================================================================================
   // Connection
 
+  private case class PropScope(run: String => String)
+  @inline private def prop(name: String)(implicit n: PropScope) = Props.get(n.run(name)) ?~ s"Property not found: ${n.run(name)}"
+  @inline private def setIfDefinedS(name: String, f: String  => Unit)(implicit n: PropScope) = Props get n.run(name) foreach f
+  @inline private def setIfDefinedI(name: String, f: Int     => Unit)(implicit n: PropScope) = Props getInt n.run(name) foreach f
+  @inline private def setIfDefinedL(name: String, f: Long    => Unit)(implicit n: PropScope) = Props getLong n.run(name) foreach f
+  @inline private def setIfDefinedB(name: String, f: Boolean => Unit)(implicit n: PropScope) = Props getBool n.run(name) foreach f
+
   private def loadDataSource() = {
-    @inline def n(name: String) = s"db.$name"
-    @inline def prop(name: String) = Props.get(n(name)) ?~ s"Property not found: ${n(name)}"
-    @inline def setIfDefinedS(name: String, setFn: String => Unit) = Props.get(n(name)).foreach(setFn(_))
-    @inline def setIfDefinedI(name: String, setFn: Int => Unit) = Props.getInt(n(name)).foreach(setFn(_))
-    @inline def setIfDefinedB(name: String, setFn: Boolean => Unit) = Props.getBool(n(name)).foreach(setFn(_))
+    implicit val scope = PropScope(name => s"db.$name")
     for {
       database <- prop("database")
       username <- prop("username")
@@ -34,37 +37,83 @@ object DB extends Logger {
       val ds = new PGSimpleDataSource
       ds.setDatabaseName(database)
       ds.setUser(username)
-      ds.setPassword(password)
-      setIfDefinedS("appname", ds.setApplicationName(_))
-      setIfDefinedB("binary_transfer", ds.setBinaryTransfer(_))
-      setIfDefinedS("binary_transfer_disable", ds.setBinaryTransferDisable(_))
-      setIfDefinedS("binary_transfer_enable", ds.setBinaryTransferEnable(_))
-      setIfDefinedS("compatible", ds.setCompatible(_))
-      setIfDefinedI("login_timeout", ds.setLoginTimeout(_))
-      setIfDefinedI("port", ds.setPortNumber(_))
-      setIfDefinedI("prepare_threshold", ds.setPrepareThreshold(_))
-      setIfDefinedI("protocol_ver", ds.setProtocolVersion(_))
-      setIfDefinedI("recv_buffer_size", ds.setReceiveBufferSize(_))
-      setIfDefinedI("send_buffer_size", ds.setSendBufferSize(_))
-      setIfDefinedS("host", ds.setServerName(_))
-      setIfDefinedI("socket_timeout", ds.setSocketTimeout(_))
-      setIfDefinedB("ssl", ds.setSsl(_))
-      setIfDefinedS("ssl_factory", ds.setSslfactory(_))
-      setIfDefinedB("tcp_keep_alive", ds.setTcpKeepAlive(_))
-      setIfDefinedI("unknown_length", ds.setUnknownLength(_))
+//      ds.setPassword(password)
+      setIfDefinedS("appname",                 ds.setApplicationName)
+      setIfDefinedB("binary_transfer",         ds.setBinaryTransfer)
+      setIfDefinedS("binary_transfer_disable", ds.setBinaryTransferDisable)
+      setIfDefinedS("binary_transfer_enable",  ds.setBinaryTransferEnable)
+      setIfDefinedS("compatible",              ds.setCompatible)
+      setIfDefinedI("login_timeout",           ds.setLoginTimeout)
+      setIfDefinedI("port",                    ds.setPortNumber)
+      setIfDefinedI("prepare_threshold",       ds.setPrepareThreshold)
+      setIfDefinedI("protocol_ver",            ds.setProtocolVersion)
+      setIfDefinedI("recv_buffer_size",        ds.setReceiveBufferSize)
+      setIfDefinedI("send_buffer_size",        ds.setSendBufferSize)
+      setIfDefinedS("host",                    ds.setServerName)
+      setIfDefinedI("socket_timeout",          ds.setSocketTimeout)
+      setIfDefinedB("ssl",                     ds.setSsl)
+      setIfDefinedS("ssl_factory",             ds.setSslfactory)
+      setIfDefinedB("tcp_keep_alive",          ds.setTcpKeepAlive)
+      setIfDefinedI("unknown_length",          ds.setUnknownLength)
       prop("log_level").orElse(prop("loglevel")).foreach(l => ds.setLogLevel(Level.valueOf(l.toUpperCase).toInt))
-      ds
+
+      {
+        implicit val scope = PropScope(name => s"db.pool.$name")
+        val pool = new BoneCPDataSource()
+        pool.setJdbcUrl(ds.getUrl)
+        pool.setUsername(username)
+        pool.setPassword(password)
+        pool.setDefaultTransactionIsolation("SERIALIZABLE")
+        pool.setDefaultAutoCommit(true)
+        pool.setLogStatementsEnabled(false)
+
+        setIfDefinedI("acquireIncrement",                  pool.setAcquireIncrement)
+        setIfDefinedI("acquireRetryAttempts",              pool.setAcquireRetryAttempts)
+        setIfDefinedL("acquireRetryDelayInMs",             pool.setAcquireRetryDelayInMs)
+        setIfDefinedB("closeConnectionWatch",              pool.setCloseConnectionWatch)
+        setIfDefinedL("closeConnectionWatchTimeoutInMs",   pool.setCloseConnectionWatchTimeoutInMs)
+        setIfDefinedS("connectionHookClassName",           pool.setConnectionHookClassName)
+        setIfDefinedS("connectionTestStatement",           pool.setConnectionTestStatement)
+        setIfDefinedL("connectionTimeoutInMs",             pool.setConnectionTimeoutInMs)
+        setIfDefinedS("defaultCatalog",                    pool.setDefaultCatalog)
+        setIfDefinedB("disableConnectionTracking",         pool.setDisableConnectionTracking)
+        setIfDefinedB("disableJMX",                        pool.setDisableJMX)
+        setIfDefinedB("externalAuth",                      pool.setExternalAuth)
+        setIfDefinedL("idleConnectionTestPeriodInMinutes", pool.setIdleConnectionTestPeriodInMinutes)
+        setIfDefinedL("idleConnectionTestPeriodInSeconds", pool.setIdleConnectionTestPeriodInSeconds)
+        setIfDefinedL("idleMaxAgeInMinutes",               pool.setIdleMaxAgeInMinutes)
+        setIfDefinedL("idleMaxAgeInSeconds",               pool.setIdleMaxAgeInSeconds)
+        setIfDefinedS("initSQL",                           pool.setInitSQL)
+        setIfDefinedB("lazyInit",                          pool.setLazyInit)
+        setIfDefinedB("logStatementsEnabled",              pool.setLogStatementsEnabled)
+        setIfDefinedL("maxConnectionAgeInSeconds",         pool.setMaxConnectionAgeInSeconds)
+        setIfDefinedI("maxConnectionsPerPartition",        pool.setMaxConnectionsPerPartition)
+        setIfDefinedI("minConnectionsPerPartition",        pool.setMinConnectionsPerPartition)
+        setIfDefinedI("partitionCount",                    pool.setPartitionCount)
+        setIfDefinedI("poolAvailabilityThreshold",         pool.setPoolAvailabilityThreshold)
+        setIfDefinedS("poolName",                          pool.setPoolName)
+        setIfDefinedL("queryExecuteTimeLimitInMs",         pool.setQueryExecuteTimeLimitInMs)
+        setIfDefinedS("serviceOrder",                      pool.setServiceOrder)
+        setIfDefinedI("statementsCacheSize",               pool.setStatementsCacheSize)
+        setIfDefinedB("statisticsEnabled",                 pool.setStatisticsEnabled)
+        setIfDefinedB("transactionRecoveryEnabled",        pool.setTransactionRecoveryEnabled)
+
+        pool
+      }
     }
   }
 
   val DataSource = {
     val ds = loadDataSource().openOrThrowException("A database connection is mandatory.")
-    info("Connecting to database: " + ds.getDatabaseName)
-    ds.getConnection.close() // test the data source validity
+    info("Connecting to database: " + getDatabaseName(ds))
+    debug("Database pool config: " + ds.getConfig)
+    ds.getConfig
+    ds.getConnection().close() // test the data source validity
     ds
   }
 
-  def DatabaseName = DataSource.getDatabaseName
+  private def getDatabaseName(ds: BoneCPDataSource) = ds.getJdbcUrl.replaceFirst("\\?.*", "").replaceFirst("^.+//", "")
+  val DatabaseName = getDatabaseName(DataSource)
 
   // ===================================================================================================================
   // Schema
@@ -100,7 +149,6 @@ object DB extends Logger {
     override def withSession[T](block: DaoS => T): T = Slick.withSession(initConnAndExec(_, block))
     override def withTransaction[T](block: DaoT => T): T = Slick.withTransaction(initConnAndExec(_, block))
     @inline private def initConnAndExec[T](s: Session, block: Dao => T): T = {
-      s.conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE)
       block(new Dao(s))
     }
   }

@@ -1,7 +1,16 @@
-db.appname=UseCaseEditor
-db.database=usecase_dev
-db.username=usecase_dev
-db.password=uced
+db.appname  = WEBAPP
+db.database = usecase_dev
+db.username = usecase_dev
+db.password = uced
+
+db.pool.partitionCount             = 4
+db.pool.minConnectionsPerPartition = 0
+db.pool.maxConnectionsPerPartition = 4
+db.pool.acquireIncrement           = 2 // per-partition
+db.pool.logStatementsEnabled       = true
+db.pool.disableJMX                 = false
+db.pool.statisticsEnabled          = true
+db.pool.statementsCacheSize        = 64
 
 mail.from=default@props.com
 mail.smtp.host=smtp.gmail.com
