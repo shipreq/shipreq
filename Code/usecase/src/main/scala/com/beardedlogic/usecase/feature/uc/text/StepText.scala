@@ -74,7 +74,7 @@ class StepTextUpdater(field: StepField, stepId: LocalStepId) extends ParsedTextU
   def updateMainClause(t: StepText, newMainClauseText: String)(implicit ctx: UcParsingCtx): ChangeResult[StepText, Change] =
     convert(t, mainClauseUpdater.update(_, newMainClauseText))
 
-  override def updateCorrected(t: StepText, newText: String @@ InputCorrected)(implicit ctx: UcParsingCtx) = {
+  override protected def updateCorrected2(t: StepText, newText: String @@ InputCorrected)(implicit ctx: UcParsingCtx) = {
     val p          = parseTextForFlow(newText)
     val (from, c1) = updateFlowClause(FlowFrom, t.flowFromClause, p.from)
     val (to, c2)   = updateFlowClause(FlowTo, t.flowToClause, p.to)

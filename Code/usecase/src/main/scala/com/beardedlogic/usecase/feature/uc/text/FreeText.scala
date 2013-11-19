@@ -127,7 +127,7 @@ class FreeTextUpdater(textChanged: Change) extends ParsedTextUpdater[FreeText] w
 
   override def correctInput(input: String) = FreeText.correctInput(input)
 
-  override def updateCorrected(t: FreeText, newText: String @@ InputCorrected)(implicit ctx: UcParsingCtx) =
+  override protected def updateCorrected2(t: FreeText, newText: String @@ InputCorrected)(implicit ctx: UcParsingCtx) =
     FreeText.parseCorrected(newText) @: textChanged
 
   override def respondToChange(t: FreeText, c: Change)(implicit  ctx: UcParsingCtx) =

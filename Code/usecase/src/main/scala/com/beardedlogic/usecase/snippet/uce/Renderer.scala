@@ -95,9 +95,9 @@ case class Renderer(
   }
 
   def renderTextField(f: TextField) = (
-    "th *" #> f.defn.title
-      & "textarea" #> SHtml.ajaxTextarea(f.value.text, modTextField(f)(_), "id" -> textFieldIds(f))
-    )
+    "th *" #> f.defn.title &
+    "textarea" #> SHtml.ajaxTextarea(f.value.text, modTextField(f)(_), "id" -> textFieldIds(f))
+  )
 
   val stepRenderers = Memo.immutableListMapMemo[StepField, StepFieldRenderer] {
     case f: NormalCourseField => StepFieldRenderer(f, NormalCourseFieldConfig, state, modifyUC)
@@ -116,12 +116,16 @@ case class Renderer(
   // **************************************
 
   def modTitle(input: String) =
-    UcModifier(_.updateTitle(input),
+    UcModifier(
+      _.updateTitle(input),
       Some(_.jsUpdateTitle),
-      Some(err => jsRespondChangeFailure(err) & JqId(TitleId) ~> JqFocus ~> JqSelect))
+      Some(JqId(TitleId)))
 
   def modTextField(f: TextField)(input: String) =
-    UcModifier(f.updateText(input), Some(_.jsUpdateTextField(f)), None)
+    UcModifier(
+      f.updateText(input),
+      Some(_.jsUpdateTextField(f)),
+      Some(JqId(textFieldIds(f))))
 
   // **************************************
   // *             Javascript             *

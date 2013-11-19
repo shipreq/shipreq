@@ -4,7 +4,7 @@ package field
 import scala.annotation.tailrec
 import com.beardedlogic.usecase.db._
 import com.beardedlogic.usecase.lib.Types._
-import com.beardedlogic.usecase.feature.validation.VFailure
+import com.beardedlogic.usecase.feature.validation.{Validator, VFailure}
 import change._
 import step.StepLabels.{MaxStepsPerLevel, MaxStepDepth}
 import step.{StepTree, StepNodeBuilder, StepNode}
@@ -77,12 +77,13 @@ trait StepFieldLike { this: Field with StepField =>
 
   override val changeResponder = new StepFieldValueChangeResponder(this)
 
-  def updateText(id: LocalStepId, newText: String)(u: UseCaseUpdater): UcUpdateResult = {
-    implicit val lens = alens(ucStepTextInstL, (u.uc, (this, id)))
-    val updater = new StepTextUpdater(this, id)
-    val cr = updater.update(lens.get, newText)(u.ctx)
-    u.update(this, cr)
-  }
+  def updateText(id: LocalStepId, newText: String)(u: UseCaseUpdater): UcUpdateResult =
+    ChangeResult.fromValidation(Validator.stepFieldText.correctAndValidate(newText))(t => {
+      implicit val lens = alens(ucStepTextInstL, (u.uc, (this, id)))
+      val updater = new StepTextUpdater(this, id)
+      val cr = updater.updateCorrected(lens.get, t)(u.ctx)
+      u.update(this, cr)
+    })
 
   def addTailStep(u: UseCaseUpdater): UcUpdateResult = {
     implicit val lens = alens(ucStepFieldL, (u.uc, this))

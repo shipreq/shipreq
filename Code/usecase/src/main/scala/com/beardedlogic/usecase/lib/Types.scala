@@ -97,7 +97,7 @@ object Types {
 
   sealed trait InputCorrected extends TypeTag[AnyRef]
 
-  sealed trait Validated extends TypeTag[AnyRef]
+  sealed trait Validated extends InputCorrected
 
   // -------------------------------------------------------------------------------------------------------------------
   // String tags

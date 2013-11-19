@@ -2,20 +2,22 @@ package com.beardedlogic.usecase
 package snippet.uce
 
 import net.liftweb.common._
-import net.liftweb.http.js.{JsCmd, JsCmds}
 import net.liftweb.http._
-import net.liftweb.util.Helpers._
+import net.liftweb.http.js.{JsExp, JsCmd, JsCmds}
+import net.liftweb.util.Helpers.nextFuncName
 import JsCmds.Noop
 
 import app.{Defaults, DI, RequestVars}
 import db.UseCaseHeader
 import lib.{Misc, SnippetHelpers, Locks, StaticSnippetHelpers}
+import lib.ScalazSubset._
 import lib.Types._
 import feature.uc._
 import feature.uc.change._
 import feature.uc.field._
 import feature.uc.persist.{UseCasePersistence, UseCaseSaveCheckpoint}
 import feature.validation.VFailure
+import util.JsExt.JqFocus
 
 object UseCaseEditor {
 
@@ -29,7 +31,8 @@ object UseCaseEditor {
   case class UcModifier(
     updateFn: UseCaseUpdater => UcUpdateResult,
     nopFn: Option[Renderer => JsCmd],
-    errFn: Option[VFailure => JsCmd])
+    focusOnErr: Option[JsExp],
+    errFn: Option[VFailure => JsCmd] = None)
 }
 
 import UseCaseEditor._
@@ -110,7 +113,9 @@ class UseCaseEditor(initialState: UseCaseEditor.State, val rels: UseCaseRelation
         m.nopFn.map(_(renderer)) getOrElse Noop
 
       case ChangeFailure(vf) =>
-        m.errFn.map(_(vf)) getOrElse renderer.jsRespondChangeFailure(vf)
+        val a = m.errFn.map(_(vf)) getOrElse renderer.jsRespondChangeFailure(vf)
+        val b = m.focusOnErr.map[JsCmd](_ ~> JqFocus) getOrElse Noop
+        a |+| b
     }
 
   def save(): JsCmd = state.prevSave match {

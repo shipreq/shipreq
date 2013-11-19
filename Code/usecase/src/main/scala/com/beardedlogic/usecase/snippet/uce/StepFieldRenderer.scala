@@ -173,7 +173,10 @@ case class StepFieldRenderer(
   // **************************************
 
   def modText(id: LocalStepId)(input: String) =
-    UcModifier(f.updateText(id, input), Some(_.stepRenderers(f).jsUpdateStepFieldText(id)), None)
+    UcModifier(
+      f.updateText(id, input),
+      Some(_.stepRenderers(f).jsUpdateStepFieldText(id)),
+      Some(JqId(textareaId(id))))
 
   // **************************************
   // *             Javascript             *
