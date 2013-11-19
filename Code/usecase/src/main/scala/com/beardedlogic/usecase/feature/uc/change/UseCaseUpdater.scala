@@ -62,11 +62,18 @@ case class UseCaseUpdater(uc: UseCase, rels: UseCaseRelations) {
 
   def updateTitle(input: String): UcUpdateResult = {
     implicit val lens = alens(Lenses.ucTitleL, uc)
-    ChangeResult.fromValidation(Validator.useCaseTitle.correctAndValidate(input))(newTitle =>
-      if (newTitle == lens.get)
-        NoChange
-      else
-        update(newTitle @: TitleChanged(lens.get, newTitle))
-    )
+    def validator = Validator.useCaseTitle
+    val c = validator.correct(input)
+
+    if (c.isEmpty)
+      // If the user clears the title field, restore the title back to its value before they cleared it
+      NoChange
+    else
+      ChangeResult.fromValidation(validator.validate(c))(newTitle =>
+        if (newTitle == lens.get)
+          NoChange
+        else
+          update(newTitle @: TitleChanged(lens.get, newTitle))
+      )
   }
 }
