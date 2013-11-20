@@ -2,7 +2,7 @@ package com.beardedlogic.usecase.lib
 
 import scalaz.{NonEmptyListFunctions, IdInstances}
 import scalaz.std.{StringInstances, OptionInstances, TupleInstances, NodeSeqInstances, MapInstances, ListInstances, FunctionInstances}
-import scalaz.syntax.{ToMonadOps, ToMonadPlusOps, ToFunctorOps, ToFoldableOps, ToBifunctorOps, ToMonoidOps, ToSemigroupOps}
+import scalaz.syntax.{ToShowOps, ToMonadOps, ToMonadPlusOps, ToFunctorOps, ToFoldableOps, ToBifunctorOps, ToMonoidOps, ToSemigroupOps}
 
 final object ScalazSubset
 
@@ -15,6 +15,7 @@ final object ScalazSubset
           with ToBifunctorOps
           with ToFoldableOps
           with ToFunctorOps
+          with ToShowOps
 
           with FunctionInstances
           with ListInstances
