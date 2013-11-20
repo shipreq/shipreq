@@ -37,11 +37,13 @@ class ShareViewTest extends FunSpec with TestHelpers with TestData {
 
   def setupValidShare[U](f: => U): U =
     inMockSession {
-      MockDaoProvider(dao => {
-        when(dao.findShareAndPassword(URL)).thenReturn(Some(share, PS))
-        when(dao.findShareAndProject(URL)).thenReturn(Some(share, project))
-      }).install {
-        f
+      DI.StatLogger.doWith(mock[StatLogger]) {
+        MockDaoProvider(dao => {
+          when(dao.findShareAndPassword(URL)).thenReturn(Some(share, PS))
+          when(dao.findShareAndProject(URL)).thenReturn(Some(share, project))
+        }).install {
+          f
+        }
       }
     }
 
@@ -210,13 +212,10 @@ class ShareViewTest extends FunSpec with TestHelpers with TestData {
       }
 
       it("should log the view") {
-        val mockSL = mock[StatLogger]
-        DI.StatLogger.doWith(mockSL) {
-          setupValidShare {
-            subject.onSubmitPassword("correct")
-          }
+        setupValidShare {
+          subject.onSubmitPassword("correct")
+          verify(DI.StatLogger.vend).!(any[LogShareView])
         }
-        verify(mockSL).!(any[LogShareView])
       }
     }
   }
