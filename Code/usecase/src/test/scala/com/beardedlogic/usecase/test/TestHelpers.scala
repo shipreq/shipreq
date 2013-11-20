@@ -599,16 +599,19 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
   }
 }
 
-object TestHelpers extends TestHelpers2
+object TestHelpers extends TestHelpers2 {
+  def initLift(): Unit =
+    if (!LiftRules.doneBoot) {
+      val b = new bootstrap.liftweb.Boot
+      b.configureLift
+      b.preloadTemplates
+    }
+}
 
 trait TestHelpers extends TestHelpers2 with BeforeAndAfterAll with BeforeAndAfterEach {
   this: Suite =>
 
-  if (!LiftRules.doneBoot) {
-    val b = new bootstrap.liftweb.Boot
-    b.configureLift
-    b.preloadTemplates
-  }
+  TestHelpers.initLift()
 
   override def beforeAll(): Unit = {
     if (!logoutBeforeEach) logout()

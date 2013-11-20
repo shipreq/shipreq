@@ -164,7 +164,7 @@ class StepFieldSaver(
       }
     }
 
-    val savedData = Map.newBuilder[TextIdentId, UcFieldText]
+    var savedData = prevSaveData
     def saveAndLinkSteps(steps: List[StepNode], parent: Option[TextRevId]): Unit = {
       var index = 0
       for (step <- steps) {
@@ -179,6 +179,6 @@ class StepFieldSaver(
 
     saveAndLinkSteps(v.tree.nodes, None)
 
-    savedData.result
+    savedData
   }
 }

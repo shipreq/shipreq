@@ -1,0 +1,54 @@
+================================================================================================
+1. Test par save & load
+
+* Deterministic script
+* Scopes: User -> Project -> UC
+* Unit test
+
+Plan:
+- Generate 100 UCs
+- Prepare:
+  - User U, project P, use case A
+  - User U, project P, use case B (same|same|diff)
+  - User U, project Q, use case C (same|diff|diff)
+  - User V, project R, use case D (diff|diff|diff)
+- For each stream above, generate a UC rev order
+- 1 thread per stream, save then load
+
+================================================================================================
+2. Prod/smoke test (op=>bool)
+
+Test all moving parts of prod.
+- Send an email
+- Login -> / -> project -> UCE -> read all UCs -> logout
+
+Create test data, save as migration.
+Create app to perform above actions.
+
+================================================================================================
+3. Profile prod ([op, Req/s])
+
+Operations:
+- /
+- login
+- project page
+- load UCE
+- save UC
+- publish as html
+
+Actions:
+- /               -> hit direct
+- login           -> fake route, buslogic only, use 2nd test account
+- project page    -> 
+- load UCE        -> fake route, buslogic only, load existing UC from use 2nd test account
+- save UC         -> fake route, buslogic only, return a time in milliseconds spent on setup/teardown
+- publish as html -> real with test account? in-memory data with fake route?
+
+
+
+================================================================================================
+4. Prod inspection
+
+- ping
+- get system info
+- get db info (inc current time)

@@ -28,6 +28,7 @@ object TestDB {
   def init(): Unit = synchronized {
     if (!ready) {
       ready = true
+      TestHelpers.initLift()
       DB.wipe_!
       Defaults.uninit()
       (new bootstrap.liftweb.Boot).initDatabase()
@@ -42,6 +43,9 @@ object TestDB {
     init()
     if (useTransaction) Slick.withTransaction(block) else Slick.withSession(block)
   }
+
+  def withDbHelpers[R](transaction: Boolean)(f: TestDatabaseHelpers => R): R =
+    withInstance(transaction)(s => f(TestDatabaseHelpers(s)))
 }
 
 trait TestDatabaseSupport extends TestHelpers with TestDatabaseHelpers {
@@ -232,6 +236,9 @@ trait TestDatabaseHelpers extends TestHelpers2 {
   def newUserId(): UserId =
     sql"INSERT INTO usr(username, email, password, password_salt, password_changed_at, confirmation_sent_at, confirmed_at) VALUES($randomStr,$randomStr,0,0,NOW(),NOW(),NOW()) RETURNING id".
     as[Long].first.tag[IsUserId]
+
+  def deleteUser(u: UserId): Unit =
+    Q.update[Long]("DELETE FROM usr WHERE id=?").execute(u)
 
   def newShare(projectId: ProjectId = newProjectId()): ShareId =
     dao.createShare(projectId, PasswordAndSalt.createWithRandomSalt(randomStr), randomStr, None, UcFilters.All.json).id
