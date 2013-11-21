@@ -1,7 +1,6 @@
 package com.beardedlogic.usecase.feature.uc.persist
 
 import org.scalatest.FunSuite
-import scala.collection.parallel.immutable.ParSeq
 import com.beardedlogic.usecase.app.DI
 import com.beardedlogic.usecase.feature.uc.UseCase
 import com.beardedlogic.usecase.lib.Locks
@@ -13,7 +12,7 @@ import TestDB.withDbHelpers
 class ParSave extends FunSuite with TestHelpers with DI {
 
   // Number of UC revisions to save
-  val count = 10
+  val count = 8
 
   var setupData: SetupData = null
 
@@ -50,15 +49,16 @@ class ParSave extends FunSuite with TestHelpers with DI {
   }
 
   test("Concurrent saving and loading") {
-    val ucs1 = GenerateUCs.generate(count, (1: Short).tag)
-    val ucs2 = GenerateUCs.generate(count, (2: Short).tag)
-    implicit def x(ucs: ParSeq[UseCase]): List[UseCase] = rnd.shuffle(ucs.toList)
+    val ucs1 = GenerateUCs.generate(count, (1: Short).tag).toList
+    val ucs2 = GenerateUCs.generate(count, (2: Short).tag).toList
+    val ucs3 = GenerateUCs.generate(count, (3: Short).tag).toList
 
     val t1 = TestThread("[1]", setupData.u, setupData.p, ucs1)
     val t2 = TestThread("[2]", setupData.u, setupData.p, ucs2)
-    val t3 = TestThread("[3]", setupData.u, setupData.q, ucs1)
-    val t4 = TestThread("[4]", setupData.v, setupData.r, ucs1)
-    val results = List(t1, t2, t3, t4).par.map(_.run).toList
+    val t3 = TestThread("[3]", setupData.u, setupData.p, ucs3)
+    val tq = TestThread("[Q]", setupData.u, setupData.q, rnd.shuffle(ucs1))
+    val tv = TestThread("[V]", setupData.v, setupData.r, rnd.shuffle(ucs1))
+    val results = List(t1, t2, t3, tq, tv).par.map(_.run).toList
 
     val errors = results.filter(_.isDefined).map(_.get)
     errors.headOption.foreach(error("Error", _))
