@@ -1,0 +1,5 @@
+#!/bin/bash
+
+pacman -Syyu
+p yaourt git colordiff wget bash-completion traceroute zip unzip
+yy jdk
