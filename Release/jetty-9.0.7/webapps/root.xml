@@ -5,6 +5,7 @@
 	<Set name="contextPath">/</Set>
 	<Set name="war"><Property name="jetty.webapps"/>/root.war</Set>
 	<Set name="extractWAR">true</Set>
+	<Set name="tempDirectory"><Property name="jetty.home" default="."/>/work</Set>
 
 </Configure>
 

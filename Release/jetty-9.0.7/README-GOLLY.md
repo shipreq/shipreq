@@ -28,3 +28,9 @@ Config
 * Additional properties files are also added to the classpath by dropping them in resources/
   This is where Prod properties, DB connection and logging config will be found.
 
+
+Requirements
+============
+* log/
+* work/
+
