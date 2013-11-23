@@ -1,0 +1,13 @@
+#!/bin/bash
+
+u=ec2-rr
+h=/home/$u
+
+groupadd app
+
+useradd -m -g app -s /bin/bash $u \
+  && mkdir -m 700 $h/.ssh \
+  && cp /root/.ssh/authorized_keys $h/.ssh \
+  && chown $u:app $h/.ssh $h/.ssh/authorized_keys \
+  && ls -la $h
+

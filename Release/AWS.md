@@ -34,6 +34,4 @@ Instance Setup
 * ssh root@$ec
   ./init-packages
   ./init-instance_store
-  groupadd app
-  useradd -m -g app -s /bin/bash ec2-rr
-
+  ./init-user
