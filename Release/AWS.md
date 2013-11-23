@@ -33,7 +33,10 @@ Instance Setup
 * root/deploy $ec
 * ssh root@$ec
   ./init-packages
-  ./init-instance_store
+  ./fix-yaourt-micro     # Only if running a micro instance
+  ./init-packages2
+  ./init-instance_store  # Unless running a micro instance
   ./init-user
+  reboot
 * user/deploy $ec
 * ssh `cat username`@$ec

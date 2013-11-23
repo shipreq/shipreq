@@ -2,4 +2,3 @@
 
 pacman -Syu
 pacman -S --needed yaourt git colordiff wget bash-completion traceroute zip unzip
-yaourt -S --needed --noconfirm jdk
