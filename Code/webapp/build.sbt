@@ -1,8 +1,8 @@
-organization := "com.beardedlogic"
+organization := "com.beardedlogic.shipreq"
 
-name := "usecase_editor"
+name := "webapp"
 
-baseVersion := "0.2.0"
+baseVersion := "1.0.0" // SNAPSHOT applied in Build.scala
 
 scalaVersion := "2.10.3"
 

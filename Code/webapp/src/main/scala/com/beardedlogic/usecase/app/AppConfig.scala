@@ -6,7 +6,7 @@ import org.joda.time.Period
 
 final object AppConfig {
 
-  val AppName = "Golly's Use Case Editor"
+  val AppName = "ShipReq"
 
   // TODO BaseUrl hardcoded to localhost
   val BaseUrl = "http://localhost:8080"

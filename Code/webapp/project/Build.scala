@@ -25,7 +25,7 @@ object B extends Build {
       Seq(outFile)
     }
     p.settings(
-      version <<= (baseVersion, buildRev) {(ver,rev) => ver + "-SNAPSHOT-" + rev.substring(0, 8)},
+      version <<= (baseVersion, buildRev) {(ver,rev) => s"$ver-SNAPSHOT-${rev.substring(0, 8)}"},
       buildRev := Process("git rev-parse HEAD").lines.head.trim,
       resourceGenerators in Compile <+= (resourceManaged in Compile, baseVersion, version, buildRev) map createBuildProps
     )
@@ -94,6 +94,7 @@ object B extends Build {
       integrationTestSettings
     )
     .settings(
+      startYear := Some(2013),
       clear := { println("\033[2J\033[;H") },
       // Prevent src/main/java appearing in .classpath
       unmanagedSourceDirectories in Compile <<= (scalaSource in Compile)(Seq(_))
