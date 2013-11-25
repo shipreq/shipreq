@@ -1,0 +1,31 @@
+<configuration>
+
+	<timestamp key="bySecond" datePattern="yyyyMMddHHmmss"/>
+
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%-5level [%-34logger{34}] %msg%n</pattern>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>WARN</level>
+		</filter>
+	</appender>
+
+	<appender name="FILE.LOG" class="ch.qos.logback.core.FileAppender">
+		<file>log/test-${bySecond}.log</file>
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} %-5level [%-50logger{50}] {%thread} %msg%n</pattern>
+		</encoder>
+	</appender>
+
+    <logger name="net.liftmodules.scamljade" level="INFO" />
+    <logger name="org.fusesource.scalate" level="INFO" />
+    <logger name="org.apache.commons" level="WARN" />
+	<logger name="scala.slick.compiler" level="WARN" />
+	<logger name="scala.slick.session" level="DEBUG" />
+	<logger name="com.beardedlogic" level="DEBUG" />
+	<root level="DEBUG">
+		<appender-ref ref="STDOUT" />
+		<appender-ref ref="FILE.LOG" />
+	</root>
+</configuration>
