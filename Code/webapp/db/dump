@@ -9,7 +9,15 @@ case "$1" in
   *) echo -e "Unknown db: '$1'.\nExpected [dev|test|prod]." >&2; exit 1
 esac
 
-f="$dbdir"/dump-$1.sql
+fix_fks=$("$dbdir"/fix-fk_ids_in_dump "$1")
+[ ! -x "$fix_fks" ] && echo "Failed: fix-fk_ids_in_dump" && exit 1
 
-sudo -u postgres pg_dump --encoding=UTF-8 --blobs --clean --create $db > "$f" \
-  && ls -l "$f"
+f1="$dbdir"/dump-$1.sql
+f2="$dbdir"/dump-$1-d.sql
+dump="sudo -u postgres pg_dump --encoding=UTF-8 --blobs"
+
+echo "Dump #1..." \
+  && $dump --clean --create $db > "$f1" \
+  && echo && echo "Dump #2..." \
+  && $dump --data-only --column-inserts --disable-triggers $db | $fix_fks > "$f2" \
+  && echo && ls -l "$f1" "$f2"

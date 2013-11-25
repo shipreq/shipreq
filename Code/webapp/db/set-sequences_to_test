@@ -1,0 +1,7 @@
+#!/bin/bash
+
+[ -z "$1" ] && echo "USAGE: $(basename "$0") <next seq number>" && exit 1
+
+for s in field_key_seq project_seq share_seq text_rev_seq text_seq usecase_rev_seq usecase_seq usr_seq; do
+  echo "ALTER SEQUENCE $s NO MINVALUE INCREMENT BY -1 RESTART WITH $1;"
+done

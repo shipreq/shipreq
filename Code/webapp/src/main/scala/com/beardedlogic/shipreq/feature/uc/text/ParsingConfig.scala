@@ -17,7 +17,7 @@ final object ParsingConfig {
   val DeletedRefStr = RefBraceL + DeletedRefInner + RefBraceR
 
   val NormalisationPrefix = "D."
-  val NormalisedRefRegex = "\\[D\\.(\\d+?)\\]".r
+  val NormalisedRefRegex = "\\[D\\.(-?\\d+?)\\]".r
 
   @inline def makeStepRef(label: StepLabel) = RefBraceL + label + RefBraceR
   @inline def makeInvalidStepRef(label: String) = RefBraceL + label + InvalidRefSuffix + RefBraceR
