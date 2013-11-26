@@ -1,0 +1,22 @@
+db.appname  = WEBAPP_PILOT
+db.database = usecase_dev
+db.username = usecase_dev
+db.password = uced
+
+db.pool.partitionCount             = 4
+db.pool.minConnectionsPerPartition = 0
+db.pool.maxConnectionsPerPartition = 8
+db.pool.acquireIncrement           = 2 // per-partition
+db.pool.logStatementsEnabled       = true
+db.pool.disableJMX                 = true
+db.pool.statisticsEnabled          = false
+db.pool.statementsCacheSize        = 128
+
+mail.from=default@props.com
+mail.smtp.host=smtp.gmail.com
+mail.smtp.socketFactory.port=465
+mail.smtp.socketFactory.class=javax.net.ssl.SSLSocketFactory
+mail.smtp.auth=true
+mail.smtp.port=465
+mail.user=yoar.mum@gmail.com
+mail.password=6vJDhVXYm8G95uXj3gPq

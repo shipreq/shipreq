@@ -2,14 +2,14 @@
     <timestamp key="byDay" datePattern="yyyyMMdd"/>
 
     <appender name="FILE.LOG" class="ch.qos.logback.core.FileAppender">
-        <file>log/reqrepo-${byDay}.log</file>
+        <file>log/shipreq-${byDay}.log</file>
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} %-5level [%-50logger{50}] {%thread} %msg%n</pattern>
         </encoder>
     </appender>
 
     <appender name="FILE.ERR" class="ch.qos.logback.core.FileAppender">
-        <file>log/reqrepo-${byDay}.err</file>
+        <file>log/shipreq-${byDay}.err</file>
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} %-5level [%-40logger{40}] %msg%n</pattern>
         </encoder>

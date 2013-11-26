@@ -1,7 +1,10 @@
 Getting Started
 ===============
+
 * Decrypt the SSL passwords.
     cd start.d && ./decrypt
+
+* Install webapps/shipreq.war
 
 
 Usage
