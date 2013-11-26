@@ -12,6 +12,7 @@ Top-Level Features
 * Collaborate
   * Composition
   * Change Management
+* Text -> Graphics
 
 Other Features
 ==============
@@ -38,6 +39,8 @@ Ideas
 * Instant feedback during UC editing.
   * Fields should display similar to publish-mode when not being edited.
   * Field being edited should display a live preview.
+
+* Markup for numbered/ordered lists. "#. abc" instead of "* abc"
 
 * UC -> FR,CO,BR extraction.
 
