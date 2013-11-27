@@ -5,9 +5,8 @@ if [ $# -ne 1 ]; then
   exit 1
 fi
 
-url="$1"
-[ -e "$url" ] && url="$(cat "$url" | sed '/^ *$/d' | head -1)"
-echo "URL: $url"
+source "$(dirname "$0")/lib.sh" || exit 1
+eval_url "$1"
+cd_gatling
 
-cd "$(dirname "$0")/gatling"
 JAVA_OPTS="-Dbaseurl=$url" bin/gatling.sh -s SmokeTest -nr -rf /tmp

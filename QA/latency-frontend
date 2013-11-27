@@ -7,6 +7,5 @@ fi
 
 source "$(dirname "$0")/lib.sh" || exit 1
 eval_url "$1"
-cd_gatling
 
-JAVA_OPTS="-Dbaseurl=$url" bin/gatling.sh -s StressTest
+ab -n 500 $url/diag/ping

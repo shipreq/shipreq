@@ -55,6 +55,7 @@ UNTESTED
 * [U] UserAccount: View, pw change
 * [U] Project deletion
 * [U] Runtime props
+* [U] DiagnosticEndpoints
 
 MORE
 ====

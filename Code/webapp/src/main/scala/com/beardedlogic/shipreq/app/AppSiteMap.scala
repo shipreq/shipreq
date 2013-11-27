@@ -11,7 +11,7 @@ import scalaz.{Name, Need, NonEmptyList}
 
 import AppConfig.BaseUrl
 import lib.Types._
-import feature.{ExternalId, ExternalIdConverter, Navbar, NavbarElem}
+import feature.{DiagnosticEndpoints, ExternalId, ExternalIdConverter, Navbar, NavbarElem}
 import security.{Permissions, Permission, Oshiro}
 import Permission.RequestVarPermExt
 
@@ -107,10 +107,10 @@ object AppSiteMap {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  val AllProdPages = List[ConvertableToMenu](
+  val AllProdPages: List[ConvertableToMenu] = List(
     Home, Login, Logout, Register1, Register2,
     Project, UseCaseEditor, ReadOwnUcs, ShareCreate, ShareEdit, ShareView
-  )
+  ) ++ DiagnosticEndpoints.Endpoints
 
   val sitemap = {
     import org.apache.shiro.authc.UsernamePasswordToken, org.apache.shiro.SecurityUtils.getSubject
