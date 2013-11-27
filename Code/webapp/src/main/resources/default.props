@@ -1,3 +1,5 @@
+server.url = http://localhost:8080
+
 db.appname  = WEBAPP
 db.database = usecase_dev
 db.username = usecase_dev

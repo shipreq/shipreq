@@ -1,3 +1,5 @@
+server.url = http://localhost:8090
+
 db.appname  = TESTS
 db.database = usecase_test
 db.username = usecase_test

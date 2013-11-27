@@ -5,7 +5,6 @@ import ch.qos.logback.classic.Level
 import com.googlecode.flyway.core.util.logging.{Log, LogCreator, LogFactory}
 import com.jolbox.bonecp.BoneCPDataSource
 import net.liftweb.common.Logger
-import net.liftweb.util.Props
 import org.postgresql.ds.PGSimpleDataSource
 import org.slf4j.LoggerFactory
 import scala.slick.session.{Session, Database}
@@ -20,42 +19,36 @@ object DB extends Logger {
   // ===================================================================================================================
   // Connection
 
-  private case class PropScope(run: String => String)
-  @inline private def prop(name: String)(implicit n: PropScope) = Props.get(n.run(name)) ?~ s"Property not found: ${n.run(name)}"
-  @inline private def setIfDefinedS(name: String, f: String  => Unit)(implicit n: PropScope) = Props get n.run(name) foreach f
-  @inline private def setIfDefinedI(name: String, f: Int     => Unit)(implicit n: PropScope) = Props getInt n.run(name) foreach f
-  @inline private def setIfDefinedL(name: String, f: Long    => Unit)(implicit n: PropScope) = Props getLong n.run(name) foreach f
-  @inline private def setIfDefinedB(name: String, f: Boolean => Unit)(implicit n: PropScope) = Props getBool n.run(name) foreach f
-
   private def loadDataSource() = {
+    import util.RuntimeProps._
     implicit val scope = PropScope(name => s"db.$name")
     for {
-      database <- prop("database")
-      username <- prop("username")
-      password <- prop("password")
+      database <- wantS("database")
+      username <- wantS("username")
+      password <- wantS("password")
     } yield {
       val ds = new PGSimpleDataSource
       ds.setDatabaseName(database)
       ds.setUser(username)
 //      ds.setPassword(password)
-      setIfDefinedS("appname",                 ds.setApplicationName)
-      setIfDefinedB("binary_transfer",         ds.setBinaryTransfer)
-      setIfDefinedS("binary_transfer_disable", ds.setBinaryTransferDisable)
-      setIfDefinedS("binary_transfer_enable",  ds.setBinaryTransferEnable)
-      setIfDefinedS("compatible",              ds.setCompatible)
-      setIfDefinedI("login_timeout",           ds.setLoginTimeout)
-      setIfDefinedI("port",                    ds.setPortNumber)
-      setIfDefinedI("prepare_threshold",       ds.setPrepareThreshold)
-      setIfDefinedI("protocol_ver",            ds.setProtocolVersion)
-      setIfDefinedI("recv_buffer_size",        ds.setReceiveBufferSize)
-      setIfDefinedI("send_buffer_size",        ds.setSendBufferSize)
-      setIfDefinedS("host",                    ds.setServerName)
-      setIfDefinedI("socket_timeout",          ds.setSocketTimeout)
-      setIfDefinedB("ssl",                     ds.setSsl)
-      setIfDefinedS("ssl_factory",             ds.setSslfactory)
-      setIfDefinedB("tcp_keep_alive",          ds.setTcpKeepAlive)
-      setIfDefinedI("unknown_length",          ds.setUnknownLength)
-      prop("log_level").orElse(prop("loglevel")).foreach(l => ds.setLogLevel(Level.valueOf(l.toUpperCase).toInt))
+      useIfDefinedS("appname",                 ds.setApplicationName)
+      useIfDefinedB("binary_transfer",         ds.setBinaryTransfer)
+      useIfDefinedS("binary_transfer_disable", ds.setBinaryTransferDisable)
+      useIfDefinedS("binary_transfer_enable",  ds.setBinaryTransferEnable)
+      useIfDefinedS("compatible",              ds.setCompatible)
+      useIfDefinedI("login_timeout",           ds.setLoginTimeout)
+      useIfDefinedI("port",                    ds.setPortNumber)
+      useIfDefinedI("prepare_threshold",       ds.setPrepareThreshold)
+      useIfDefinedI("protocol_ver",            ds.setProtocolVersion)
+      useIfDefinedI("recv_buffer_size",        ds.setReceiveBufferSize)
+      useIfDefinedI("send_buffer_size",        ds.setSendBufferSize)
+      useIfDefinedS("host",                    ds.setServerName)
+      useIfDefinedI("socket_timeout",          ds.setSocketTimeout)
+      useIfDefinedB("ssl",                     ds.setSsl)
+      useIfDefinedS("ssl_factory",             ds.setSslfactory)
+      useIfDefinedB("tcp_keep_alive",          ds.setTcpKeepAlive)
+      useIfDefinedI("unknown_length",          ds.setUnknownLength)
+      wantS("log_level").orElse(wantS("loglevel")).foreach(l => ds.setLogLevel(Level.valueOf(l.toUpperCase).toInt))
 
       {
         implicit val scope = PropScope(name => s"db.pool.$name")
@@ -67,36 +60,36 @@ object DB extends Logger {
         pool.setDefaultAutoCommit(true)
         pool.setLogStatementsEnabled(false)
 
-        setIfDefinedI("acquireIncrement",                  pool.setAcquireIncrement)
-        setIfDefinedI("acquireRetryAttempts",              pool.setAcquireRetryAttempts)
-        setIfDefinedL("acquireRetryDelayInMs",             pool.setAcquireRetryDelayInMs)
-        setIfDefinedB("closeConnectionWatch",              pool.setCloseConnectionWatch)
-        setIfDefinedL("closeConnectionWatchTimeoutInMs",   pool.setCloseConnectionWatchTimeoutInMs)
-        setIfDefinedS("connectionHookClassName",           pool.setConnectionHookClassName)
-        setIfDefinedS("connectionTestStatement",           pool.setConnectionTestStatement)
-        setIfDefinedL("connectionTimeoutInMs",             pool.setConnectionTimeoutInMs)
-        setIfDefinedS("defaultCatalog",                    pool.setDefaultCatalog)
-        setIfDefinedB("disableConnectionTracking",         pool.setDisableConnectionTracking)
-        setIfDefinedB("disableJMX",                        pool.setDisableJMX)
-        setIfDefinedB("externalAuth",                      pool.setExternalAuth)
-        setIfDefinedL("idleConnectionTestPeriodInMinutes", pool.setIdleConnectionTestPeriodInMinutes)
-        setIfDefinedL("idleConnectionTestPeriodInSeconds", pool.setIdleConnectionTestPeriodInSeconds)
-        setIfDefinedL("idleMaxAgeInMinutes",               pool.setIdleMaxAgeInMinutes)
-        setIfDefinedL("idleMaxAgeInSeconds",               pool.setIdleMaxAgeInSeconds)
-        setIfDefinedS("initSQL",                           pool.setInitSQL)
-        setIfDefinedB("lazyInit",                          pool.setLazyInit)
-        setIfDefinedB("logStatementsEnabled",              pool.setLogStatementsEnabled)
-        setIfDefinedL("maxConnectionAgeInSeconds",         pool.setMaxConnectionAgeInSeconds)
-        setIfDefinedI("maxConnectionsPerPartition",        pool.setMaxConnectionsPerPartition)
-        setIfDefinedI("minConnectionsPerPartition",        pool.setMinConnectionsPerPartition)
-        setIfDefinedI("partitionCount",                    pool.setPartitionCount)
-        setIfDefinedI("poolAvailabilityThreshold",         pool.setPoolAvailabilityThreshold)
-        setIfDefinedS("poolName",                          pool.setPoolName)
-        setIfDefinedL("queryExecuteTimeLimitInMs",         pool.setQueryExecuteTimeLimitInMs)
-        setIfDefinedS("serviceOrder",                      pool.setServiceOrder)
-        setIfDefinedI("statementsCacheSize",               pool.setStatementsCacheSize)
-        setIfDefinedB("statisticsEnabled",                 pool.setStatisticsEnabled)
-        setIfDefinedB("transactionRecoveryEnabled",        pool.setTransactionRecoveryEnabled)
+        useIfDefinedI("acquireIncrement",                  pool.setAcquireIncrement)
+        useIfDefinedI("acquireRetryAttempts",              pool.setAcquireRetryAttempts)
+        useIfDefinedL("acquireRetryDelayInMs",             pool.setAcquireRetryDelayInMs)
+        useIfDefinedB("closeConnectionWatch",              pool.setCloseConnectionWatch)
+        useIfDefinedL("closeConnectionWatchTimeoutInMs",   pool.setCloseConnectionWatchTimeoutInMs)
+        useIfDefinedS("connectionHookClassName",           pool.setConnectionHookClassName)
+        useIfDefinedS("connectionTestStatement",           pool.setConnectionTestStatement)
+        useIfDefinedL("connectionTimeoutInMs",             pool.setConnectionTimeoutInMs)
+        useIfDefinedS("defaultCatalog",                    pool.setDefaultCatalog)
+        useIfDefinedB("disableConnectionTracking",         pool.setDisableConnectionTracking)
+        useIfDefinedB("disableJMX",                        pool.setDisableJMX)
+        useIfDefinedB("externalAuth",                      pool.setExternalAuth)
+        useIfDefinedL("idleConnectionTestPeriodInMinutes", pool.setIdleConnectionTestPeriodInMinutes)
+        useIfDefinedL("idleConnectionTestPeriodInSeconds", pool.setIdleConnectionTestPeriodInSeconds)
+        useIfDefinedL("idleMaxAgeInMinutes",               pool.setIdleMaxAgeInMinutes)
+        useIfDefinedL("idleMaxAgeInSeconds",               pool.setIdleMaxAgeInSeconds)
+        useIfDefinedS("initSQL",                           pool.setInitSQL)
+        useIfDefinedB("lazyInit",                          pool.setLazyInit)
+        useIfDefinedB("logStatementsEnabled",              pool.setLogStatementsEnabled)
+        useIfDefinedL("maxConnectionAgeInSeconds",         pool.setMaxConnectionAgeInSeconds)
+        useIfDefinedI("maxConnectionsPerPartition",        pool.setMaxConnectionsPerPartition)
+        useIfDefinedI("minConnectionsPerPartition",        pool.setMinConnectionsPerPartition)
+        useIfDefinedI("partitionCount",                    pool.setPartitionCount)
+        useIfDefinedI("poolAvailabilityThreshold",         pool.setPoolAvailabilityThreshold)
+        useIfDefinedS("poolName",                          pool.setPoolName)
+        useIfDefinedL("queryExecuteTimeLimitInMs",         pool.setQueryExecuteTimeLimitInMs)
+        useIfDefinedS("serviceOrder",                      pool.setServiceOrder)
+        useIfDefinedI("statementsCacheSize",               pool.setStatementsCacheSize)
+        useIfDefinedB("statisticsEnabled",                 pool.setStatisticsEnabled)
+        useIfDefinedB("transactionRecoveryEnabled",        pool.setTransactionRecoveryEnabled)
 
         pool
       }

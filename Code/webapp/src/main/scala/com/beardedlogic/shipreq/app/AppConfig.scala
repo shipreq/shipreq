@@ -1,15 +1,15 @@
 package com.beardedlogic.shipreq.app
 
 import net.liftweb.util.Helpers._
-import net.liftweb.util.Props
 import org.joda.time.Period
+import com.beardedlogic.shipreq.util.RuntimeProps._
 
 final object AppConfig {
+  implicit def PropScope = GlobalScope
 
   val AppName = "ShipReq"
 
-  // TODO BaseUrl hardcoded to localhost
-  val BaseUrl = "http://localhost:8080"
+  val BaseUrl = needS("server.url")
 
   /** A short amount of time, unnoticeable to humans, to sleep in order to frustrate automated security attacks. */
   val AttackFrustrationDelayMs: Long = 120
@@ -17,7 +17,7 @@ final object AppConfig {
   /** Number of characters in tokens used for email & reset-password verification. */
   val ConfirmationTokenLength = 49
 
-  val MailFromAddress = Props.get("mail.from").openOrThrowException("Property not specified: mail.from")
+  val MailFromAddress = needS("mail.from")
 
   /** Passwords' min & max lengths. */
   val PasswordLength = 8 to 128
