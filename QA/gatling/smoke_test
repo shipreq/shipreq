@@ -1,10 +1,12 @@
 #!/bin/bash
 
 if [ $# -ne 1 ]; then
-  echo "Usage: $0 <url>"
+  echo "Usage: $0 <url or url file>"
   exit 1
 fi
 
 url="$1"
+[ -e "$url" ] && url="$(cat "$url" | sed '/^ *$/d' | head -1)"
+echo "URL: $url"
 
 JAVA_OPTS="-Dbaseurl=$url" bin/gatling.sh -s SmokeTest -nr -rf /tmp

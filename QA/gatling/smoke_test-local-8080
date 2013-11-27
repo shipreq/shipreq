@@ -1,2 +1,0 @@
-#!/bin/bash
-"$(dirname "$0")/smoke_test" http://localhost:8080

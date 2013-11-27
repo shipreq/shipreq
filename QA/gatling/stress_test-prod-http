@@ -1,2 +1,0 @@
-#!/bin/bash
-"$(dirname "$0")/stress_test" http://www.shipreq.com
