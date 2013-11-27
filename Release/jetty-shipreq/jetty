@@ -1,4 +1,4 @@
 #!/bin/bash
 
 cd "$(dirname "$0")"
-java -jar jetty-inst/start.jar "$@"
+authbind --deep java -jar jetty-inst/start.jar "$@"
