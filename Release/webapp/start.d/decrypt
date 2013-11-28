@@ -1,3 +1,0 @@
-#!/bin/bash
-
-gpg -o ssl-passwords.ini -d ssl-passwords.ini.gpg

@@ -1,10 +1,11 @@
 Getting Started
 ===============
 
-* Decrypt the SSL passwords.
-    cd start.d && ./decrypt
+* Decrypt passwords and sensitive settings.
+    ./secrets-decrypt
 
 * Install webapps/shipreq.war
+    ../install-latest_war
 
 
 Usage

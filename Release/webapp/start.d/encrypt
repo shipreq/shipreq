@@ -1,4 +1,0 @@
-#!/bin/bash
-
-gpg --cipher-algo AES256 --symmetric ssl-passwords.ini
-gpgconf --reload gpg-agent
