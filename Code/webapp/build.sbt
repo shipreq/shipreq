@@ -14,7 +14,7 @@ scalacOptions ++= Seq("-Xcheckinit", "-unchecked", "-deprecation", "-Yno-generic
   "-feature", "-language:postfixOps", "-language:implicitConversions", "-language:higherKinds", "-language:existentials")
 
 libraryDependencies ++= {
-  val liftVersion = "2.5.1-golly-2"
+  val liftVersion = "2.6-M2-golly-1"
   val shiroVersion = "1.2.2"
   Seq(
     "net.liftweb"              %% "lift-webkit"            % liftVersion,
