@@ -49,6 +49,11 @@ private[db] final object Sql {
   private def idsToSql(ids: NonEmptyList[JLong]): String = ids.map(_.toString).intercalate(",")
 
   // ###################################################################################################################
+  // Diagnostics
+
+  val DiagSelectNow = queryNA[DateTime]("select now()")
+
+  // ###################################################################################################################
   // User
 
   private val UserDescCols = "id,username,email"

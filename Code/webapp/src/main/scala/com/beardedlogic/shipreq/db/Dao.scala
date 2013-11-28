@@ -31,6 +31,7 @@ import util.Lock
  * - `delete`: Delete data and usually its dependents. Returns unit.
  *
  * - `perform`: Perform specialised business-logic (as opposed to CRUD-like operations).
+ * - `diag`: Diagnostic functions.
  */
 private[db] class Dao(_session: Session) extends DaoT {
   implicit final val session = _session
@@ -63,6 +64,11 @@ sealed trait DaoS {
       conn.setAutoCommit(oldAutoCommit)
     }
   }
+
+  // ===================================================================================================================
+  // Diagnostics
+
+  def diagSelectNow() = DiagSelectNow.first
 
   // ===================================================================================================================
   // User
