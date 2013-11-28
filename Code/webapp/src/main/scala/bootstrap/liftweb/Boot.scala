@@ -2,7 +2,6 @@ package bootstrap.liftweb
 
 import javax.mail.{Authenticator, PasswordAuthentication}
 import net.liftweb.http._
-import net.liftmodules.scamljade.ScamlJade
 import net.liftweb.util.{Props, Mailer}
 
 import com.beardedlogic.shipreq._
