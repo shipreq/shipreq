@@ -53,8 +53,8 @@ object ScamlJade extends Loggable {
 
     // Plug into the resource read pipeline
     val defaultGetResource = LiftRules.getResource
-    def preprocessor(name: String): Box[java.net.URL] = {
-      if (!name.contains("/_resources") && (name.endsWith(".jade") || name.endsWith(".scaml"))) preprocess(name)
+    def preprocessor(name: String): Box[URL] = {
+      if (!name.contains("/_resources") && (/*name.endsWith(".jade") ||*/ name.endsWith(".scaml"))) preprocess(name)
       else defaultGetResource(name)
     }
     LiftRules.getResource = preprocessor
@@ -70,6 +70,7 @@ object ScamlJade extends Loggable {
         val writer = new PrintWriter(new OutputStreamWriter(fos))
         writer.print(rawTemplate)
         writer.close()
+        file.deleteOnExit()
         Full(file.toURI.toURL)
       } else {
         Empty
@@ -157,7 +158,7 @@ class ScamlJadeRenderer extends TemplateEngine with Loggable {
     def realFile(uri: String): File = {
       def findFile(uri: String): File = {
         val path = context.realPath(uri)
-        logger.debug("realPath for: " + uri + " is: " + path)
+        //logger.debug("realPath for: " + uri + " is: " + path)
 
         var answer: File = null
         if (path != null) {
