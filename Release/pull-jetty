@@ -3,7 +3,8 @@
 [ -z "$1" ] && echo "Usage: $0 <public DNS>" && exit 1
 
 cd "$(dirname "$0")"
+ec="$1"
 shift
 
-rsync "$@" -vzrRlptSihOJ --skip-compress={jar,war} --exclude={log,work,'*'.war} `cat username`@"$ec":webapp .
+rsync "$@" -vzrRlptSihOJ --skip-compress={jar,war} --exclude={log,work,'*.war','.*.sw?'} $(<username)@"$ec":webapp .
 
