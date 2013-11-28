@@ -47,8 +47,7 @@ object AppSiteMap {
     MenuWithIdParam(ExternalId.Project)("project") / "project" / *
     >> AuthenticationRequired >> ProjectPermissionRequired
     >> UseTemplate("loggedin/project")
-    >> UsesNavbar(Navbar.Home, Navbar.CurrentProject)
-    >> PerformEffects {
+    >> SetNavbarAndPerformEffects(Navbar.Home, Navbar.CurrentProject) {
         RequestVars.ProjectId.setByParam(Project, "Project --> ProjectId")
         RequestVars.Project.deriveFromProjectId()
       }
@@ -58,8 +57,7 @@ object AppSiteMap {
     MenuWithIdParam(ExternalId.Project)("share-create") / "project" / * / "share"
     >> AuthenticationRequired >> ProjectPermissionRequired
     >> UseTemplate("loggedin/share-create")
-    >> UsesNavbar(Navbar.Home, Navbar.CurrentProject, Navbar.StaticText("Share Use Cases"))
-    >> PerformEffects {
+    >> SetNavbarAndPerformEffects(Navbar.Home, Navbar.CurrentProject, Navbar.StaticText("Share Use Cases")) {
         RequestVars.ProjectId.setByParam(ShareCreate, "ShareCreate --> ProjectId")
         RequestVars.Project.deriveFromProjectId()
       }
@@ -70,8 +68,7 @@ object AppSiteMap {
     >> AuthenticationRequired
     >> PermissionRequired(Permissions.editShare.using(project = RequestVars.Project.some, share = RequestVars.Share.some))
     >> UseTemplate("loggedin/share-edit")
-    >> UsesNavbar(Navbar.Home, Navbar.CurrentProject, Navbar.StaticText("Edit Share"))
-    >> PerformEffects {
+    >> SetNavbarAndPerformEffects(Navbar.Home, Navbar.CurrentProject, Navbar.StaticText("Edit Share")) {
         val token = Need(ShareEdit.currentValue.get)
         RequestVars.deriveShareAndProjectFromShareUrlToken(token)
       }
@@ -86,8 +83,7 @@ object AppSiteMap {
     MenuWithIdParam(ExternalId.Project)("readOwnUcs") / "project" / * / "read"
     >> AuthenticationRequired >> ProjectPermissionRequired
     >> UseTemplate("loggedin/read_own_ucs")
-    >> UsesNavbar(Navbar.Home, Navbar.CurrentProject, Navbar.StaticText("Use Cases"))
-    >> PerformEffects {
+    >> SetNavbarAndPerformEffects(Navbar.Home, Navbar.CurrentProject, Navbar.StaticText("Use Cases")) {
         RequestVars.ProjectId.setByParam(ReadOwnUcs, "ReadOwnUcs --> ProjectId")
         RequestVars.Project.deriveFromProjectId()
       }
@@ -97,8 +93,7 @@ object AppSiteMap {
     MenuWithIdParam(ExternalId.UseCase)("uce") / "usecase" / *
     >> AuthenticationRequired >> ProjectPermissionRequired
     >> UseTemplate("loggedin/uceditor")
-    >> UsesNavbar(Navbar.Home, Navbar.CurrentProject, Navbar.UseCaseDropdown)
-    >> PerformEffects {
+    >> SetNavbarAndPerformEffects(Navbar.Home, Navbar.CurrentProject, Navbar.UseCaseDropdown) {
         RequestVars.UseCaseId.setByParam(UseCaseEditor, "UseCaseEditor --> SoleUseCaseId")
         RequestVars.Project.deriveFromUseCaseId()
         RequestVars.ProjectId.deriveFromProject()
@@ -117,7 +112,7 @@ object AppSiteMap {
 
     def anonUce = (Menu.i("Use Case Editor Demo") / "uce"
       >> UseTemplate("loggedin/uceditor")
-      >> UsesNavbar(Navbar.Home, Navbar.StaticText("Use Case Editor Demo"))
+      >> SetNavbarAndPerformEffects(Navbar.Home, Navbar.StaticText("Use Case Editor Demo")){}
     )
 
     def autoLogin = Menu.i("x") / "x" >> EarlyResponse(() => {
@@ -188,10 +183,14 @@ object AppSiteMap {
   private def ProjectPermissionRequired =
     PermissionRequired(Permissions.accessProject.using(project = RequestVars.Project.some))
 
-  private def UsesNavbar(h: NavbarElem, t: NavbarElem*) = {
+  private def buildNavbar(h: NavbarElem, t: NavbarElem*) = {
     val elems = NonEmptyList(h, t: _*)
-    val navbar = Navbar(elems.reverse)
-    PerformEffects(RequestVars.Navbar.set(navbar))
+    Navbar(elems.reverse)
+  }
+
+  private def SetNavbarAndPerformEffects(h: NavbarElem, t: NavbarElem*)(f: => Unit) = {
+    val navbar = buildNavbar(h, t: _*)
+    PerformEffects {f; RequestVars.Navbar.set(navbar)}
   }
 
   private def PerformEffects(f: => Unit) = Test(_ => {f; true})
