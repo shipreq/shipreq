@@ -8,7 +8,7 @@ rm -rf $tmp
 mkdir -p $tmp
 cd $tmp
 
-v=3.0.0
+v=3.0.0 # Keep this version in sync with the CDNs in default.scaml & blank.scaml
 
 wget https://github.com/twbs/bootstrap/releases/download/v$v/bootstrap-$v-dist.zip
 unzip bootstrap-$v-dist.zip \
