@@ -1,15 +1,3 @@
-// JQuery is required separately.
-// - 1) It's 93KB, separation allows for me parallelism.
-// - 2) Will probably switch to CDN later.
-
-// require "vendor/jquery-ui.js"
-// require "vendor/jquery-autosize.js"
-// require "vendor/jquery-timeago.js"
-// require "vendor/jquery-livequery.js"
-// require "vendor/jquery-rangyinputs.js"
-// require "vendor/mousetrap.js"
-// require "vendor/mousetrap-global-bind.js"
-
 // =====================================================================================================================
 // Functional JS
 // http://dailyjs.com/2012/09/14/functional-programming/
