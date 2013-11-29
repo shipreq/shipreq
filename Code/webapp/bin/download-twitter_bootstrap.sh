@@ -12,7 +12,7 @@ v=3.0.0
 
 wget https://github.com/twbs/bootstrap/releases/download/v$v/bootstrap-$v-dist.zip
 unzip bootstrap-$v-dist.zip \
-  && cp -pv dist/js/bootstrap.min.js         "$rr"/src/main/webapp/js/vendor/bootstrap.js \
+  && cp -pv dist/js/bootstrap.min.js         "$rr"/src/main/javascript/vendor/bootstrap.js \
   && cp -pv dist/css/bootstrap.min.css       "$rr"/src/main/webapp/css/vendor/bootstrap.css \
   && cp -pv dist/css/bootstrap-theme.min.css "$rr"/src/main/webapp/css/vendor/bootstrap-theme.css
 
