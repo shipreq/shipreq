@@ -9,5 +9,5 @@ echo "Found: $s"
 
 echo "Installing..."
 cp -p $d/$s webapp/webapps/shipreq.war \
-  && echo && webapp/compress_static_resources_in_war \
-  && echo && webapp/inspect-war
+  && echo && webapp/war-compress_static_resources \
+  && echo && webapp/war-inspect

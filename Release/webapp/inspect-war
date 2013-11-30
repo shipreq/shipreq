@@ -1,7 +1,0 @@
-#!/bin/bash
-
-f="$(dirname "$0")/webapps/shipreq.war"
-echo "WAR: $f"
-[ ! -e "$f" ] && echo "File not found." && exit 1
-stat -L -c 'Size: %s' "$f"
-unzip -p "$f" build.properties | sort

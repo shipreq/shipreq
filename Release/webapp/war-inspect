@@ -1,0 +1,10 @@
+#!/bin/bash
+
+f="$(dirname "$0")/webapps/shipreq.war"
+#echo "WAR: $f"
+[ ! -e "$f" ] && echo "File not found: $f" && exit 1
+
+stat -L -c 'Size: %s bytes.' "$f"
+unzip -l "$f" '*.gz' | tail -1 | awk '{print "GZ: " $2 " files => " $1 " bytes." }'
+unzip -p "$f" build.properties | sort
+
