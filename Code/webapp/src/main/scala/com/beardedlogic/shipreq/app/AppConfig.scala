@@ -43,4 +43,14 @@ final object AppConfig {
 
   /** Maximum time a flash variable will be retained. (default) */
   val FlashVarTTL = Period.seconds(12)
+
+  /**
+   * Whether or not new registrations are allowed.
+   * (Registration tokens already issued will still be accepted.)
+   */
+  var AllowRegister: () => Boolean = { // non-volatile var allowed because modification will only occur in test-mode.
+    val v = get[Boolean]("app.allow.register") openOr true
+    () => v
+  }
+
 }

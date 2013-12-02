@@ -7,7 +7,7 @@ import net.liftweb.util.Helpers._
 import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc.UsernamePasswordToken
 
-import app.AppSiteMap
+import app.{AppConfig, AppSiteMap}
 import lib.MailHelpers.MailContent
 import lib.SingleOpStatefulSnippet
 import lib.Types._
@@ -27,10 +27,13 @@ class Register1 extends SingleOpStatefulSnippet {
 
   var emailInput = ""
 
-  def render = (
-    "#email" #> SHtml.onSubmit(emailInput = _)
-      & ":submit" #> ajaxSubmitOnClick(onSubmit)
-    )
+  def render =
+    if (AppConfig.AllowRegister())
+      ("#registrationDisabled" #> "" &
+        "#email" #> SHtml.onSubmit(emailInput = _) &
+        ":submit" #> ajaxSubmitOnClick(onSubmit))
+    else
+      "#register1Form" #> ""
 
   def onSubmit(): JsCmd = {
     securityProvider.enforceHumanSpeed()

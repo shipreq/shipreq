@@ -1,6 +1,7 @@
 package bootstrap.liftweb
 
 import javax.mail.{Authenticator, PasswordAuthentication}
+import net.liftweb.common.Logger
 import net.liftweb.http._
 import net.liftweb.util.{Props, Mailer}
 
@@ -17,10 +18,14 @@ class Boot {
 
   LiftRules.configureLogging()
 
+  val packageRoot = "com.beardedlogic.shipreq"
+  lazy val logger = Logger(s"$packageRoot.Boot")
+
   def boot(): Unit = {
     configureLift()
     preloadTemplates()
     initDatabase()
+    logImportantSettings()
   }
 
   def configureLift(): Unit = {
@@ -30,7 +35,7 @@ class Boot {
     initMailer()
 
     // App package path
-    LiftRules.addToPackages("com.beardedlogic.shipreq")
+    LiftRules.addToPackages(packageRoot)
 
     // Register route whitelist
     LiftRules.setSiteMap(AppSiteMap.sitemap)
@@ -66,5 +71,10 @@ class Boot {
     snippet.project.ShareListConsts
     snippet.project.UseCaseCrudlConsts
     snippet.uce.Renderer.Templates
+  }
+
+  def logImportantSettings(): Unit = {
+    import com.beardedlogic.shipreq.app.AppConfig._
+    logger.info(s"Signup allowed: ${AllowRegister()}")
   }
 }

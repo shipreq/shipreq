@@ -1,13 +1,17 @@
 %div(data-lift="surround?with=default;at=content")
-  .centred_form#register1Form(data-lift="Register1")
+  %div(data-lift="Register1")
 
-    %h2 Create Account
-    %form(data-lift="form.ajax")
-      .form-group
-        %input.form-control#email(type="email" placeholder="Email Address")
-      .form-group
-        %button.btn.btn-primary(type="submit") Register
+    #registrationDisabled.alert.alert-info
+      %h2 Registration is temporarily disabled.
 
-  #emailSent.hidden2.alert.alert-success
-    %p An email has been sent to you to for verification.
-    %p Please check your email and follow the instruction therein.
+    .centred_form#register1Form
+      %h2 Create Account
+      %form(data-lift="form.ajax")
+        .form-group
+          %input.form-control#email(type="email" placeholder="Email Address" required)
+        .form-group
+          %button.btn.btn-primary(type="submit") Register
+
+    #emailSent.hidden2.alert.alert-success
+      %p An email has been sent to you to for verification.
+      %p Please check your email and follow the instruction therein.
