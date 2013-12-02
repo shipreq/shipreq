@@ -1,5 +1,6 @@
 import io.gatling.core.Predef._
 import io.gatling.core.session.Expression
+import io.gatling.core.structure.ChainBuilder
 import io.gatling.http.Predef._
 import io.gatling.jdbc.Predef._
 import io.gatling.http.Headers.Names._
@@ -7,6 +8,8 @@ import io.gatling.http.Headers.Values._
 import scala.concurrent.duration._
 import bootstrap._
 import assertions._
+
+import ShipReq._
 
 object ShipReq {
 
@@ -23,7 +26,7 @@ object ShipReq {
     .userAgentHeader("Mozilla/5.0 (X11; Linux x86_64; rv:25.0) Gecko/20100101 Firefox/25.0")
     .disableFollowRedirect
 
-  val userClicked = Map("""Accept""" -> """text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8""")
+  val userClicked = Map("Accept" -> """text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8""")
 
   val loginPostHeaders = Map(
     """Accept""" -> """text/javascript, application/javascript, application/ecmascript, application/x-ecmascript, */*; q=0.01""",
@@ -32,27 +35,42 @@ object ShipReq {
     """Pragma""" -> """no-cache""",
     """X-Requested-With""" -> """XMLHttpRequest""")
 
-  val jsHeaders = Map("""If-Modified-Since""" -> """Mon, 18 Nov 2000 21:22:03 GMT""")
-
-  //val commonJs = List("vendor/jquery","vendor/bootstrap", "application").map(j => s"/js/$j.js")
-
-  def getJsOnce(name: String) = {
-    val key = s"js_loaded_$name"
-    doIf(s => !s.contains(key))(
-      exec(getJs(s"/js/$name.js")))
-      .exec(_.set(key, true))
+  def getOnce(keyPrefix: String, run: String => ChainBuilder)(name: String) = {
+    val key = s"loaded_${keyPrefix}_$name"
+    doIf(s => !s.contains(key))(exec(run(name))).exec(_.set(key, true))
   }
+  
+  // ----------
+  // --  JS  --
+  // ----------
+
+  val jsHeaders = Map("Accept" -> "*/*")
+
+  val getJsOnce = getOnce("js", n => getJs(s"/js/$n.js")) _
 
   def getJs(url: String) =
     exec(http("JS: " + url.replace("/js/", "").replaceFirst("\\?.*$", "")).get(url).headers(jsHeaders).check(status is 200))
+  
+  val getLiftAjax = exec(http("JS: liftAjax").get("/ajax_request/liftAjax.js").headers(jsHeaders).check(status is 200))
 
-  //  def getCss(url: String) =
-  //    exec(http("CSS: " + url.replace("/css/", "").replaceFirst("\\?.*$", "")).get(url).headers(jsHeaders).check(status is 200))
+  // -----------
+  // --  CSS  --
+  // -----------
 
-  val commonJs =
-    exec(getJsOnce("vendor/jquery"))
-      .exec(getJsOnce("vendor/bootstrap"))
-      .exec(getJsOnce("application"))
+  val cssHeaders = Map("Accept" -> "text/css,*/*;q=0.1")
+
+  val getCssOnce = getOnce("css", n => getCss(s"/css/$n.css")) _
+
+  def getCss(url: String) =
+    exec(http("CSS: " + url.replace("/css/", "").replaceFirst("\\?.*$", "")).get(url).headers(cssHeaders).check(status is 200))
+
+  // -------------------------------------------------------------------------------------------------------------------
+
+  val getCommonDeps =
+      exec(pause(30 millis))
+      .exec(getCssOnce("application"))
+      .exec(getJsOnce("all"))
+      .exec(getLiftAjax)
 
   def home(loggedIn: Boolean) = {
     val r = regex("Test Project")
@@ -61,11 +79,8 @@ object ShipReq {
     else
       ("Home (anon)", r.notExists)
     exec(http("Home").get("/").headers(userClicked).check(status is 200, respTest))
-      .exec(getLiftAjax)
-      .exec(commonJs)
+      .exec(getCommonDeps)
   }
-
-  val getLiftAjax = exec(pause(30 millis).exec(http("JS: liftAjax").get("/ajax_request/liftAjax.js")))
 
   val getLogin =
     exec(http("Login GET").get("/login").headers(userClicked)
@@ -76,8 +91,7 @@ object ShipReq {
         , regex("""password"[^>]+?name="([A-Za-z0-9]+)"""").saveAs("login_post_password") //
         , regex("""liftAjax.lift_uriSuffix='([A-Za-z0-9]+?)=_';return true""").saveAs("login_post_submit") //
         ))
-      .exec(getLiftAjax)
-      .exec(commonJs)
+      .exec(getCommonDeps)
 
   def postLogin(user: TestUser) =
     exec(http("Login POST").post("/ajax_request/${login_post_url}-00/").headers(loginPostHeaders)
@@ -96,25 +110,21 @@ object ShipReq {
   def project(id: String) =
     group("Project Overview")(
       exec(http(s"Project: $id").get(s"/project/$id").headers(userClicked).check(status is 200))
-        .exec(getLiftAjax)
-        .exec(commonJs)
+        .exec(getCommonDeps)
         .exec(getJsOnce("zeroclipboard"))
         .exec(getJsOnce("project")))
 
   def usecaseEditor(id: String) =
     group("UseCase Editor")(
       exec(http(s"UCE: $id").get(s"/usecase/$id").headers(userClicked).check(status is 200))
-        .exec(getLiftAjax)
-        .exec(commonJs)
+        .exec(getCommonDeps)
         .exec(getJsOnce("uce")))
 
   def readUsecases(project: String) =
     group("Read UCs")(
       exec(http(s"Read UCs: $project").get(s"/project/$project/read").headers(userClicked).check(status is 200))
         .pause(20 millis)
-        .exec(getLiftAjax)
-        .exec(commonJs)
-        .exec(getJsOnce("publish"))
+        .exec(getCommonDeps)
         .exec(getJs("/js/vendor/mathjax/MathJax.js?config=default"))
         .pause(40 millis)
         .exec(getJs("/js/vendor/mathjax/config/default.js")))
@@ -132,8 +142,6 @@ object ShipReq {
     .pause(200 millis).exec(readUsecases("j8NA940XXv9"))
     .pause(200 millis).exec(logout)
 }
-
-import ShipReq._
 
 class SmokeTest extends Simulation {
   setUp(smokeTest.inject(atOnce(1 users))).protocols(httpProtocol)
