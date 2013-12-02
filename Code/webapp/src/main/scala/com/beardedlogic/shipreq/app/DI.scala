@@ -7,8 +7,6 @@ import db.{DB, DaoProvider, DaoS, DaoT}
 import security.{SecurityProvider, Oshiro}
 import lib.{StatLoggerActor, StatLogger}
 
-// TODO Use DI for Mailer testing
-
 /**
  * Houses and provides access to global resources. Not exactly "dependency injection" but serves a similar enough
  * purpose.
