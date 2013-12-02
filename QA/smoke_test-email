@@ -1,6 +1,6 @@
 #!/bin/bash
 
-addr='japgolly@gmail.com'
+addr='japgolly+test@gmail.com'
 if [ $# -lt 1 -o $# -gt 2 ]; then
   echo "Usage: $0 <url or url file> [<email address>]"
   echo "Default email address: $addr"
@@ -14,16 +14,18 @@ tmp2=$tmp-2
 source "$(dirname "$0")/lib.sh" || exit 1
 eval_url "$1"
 [ -n "$2" ] && addr="$2"
-u="$url/diag/mail?to=$addr"
+u="$url/diag/mail"
 
 echo "URL: $u"
-curl -D $tmp2 "$u" >$tmp1 2>/dev/null
+curl -kD $tmp2 "$u" --data-urlencode "to=$addr" >$tmp1 2>/dev/null
 
 if [ -n "$(fgrep '200 OK' $tmp2)" ]; then
+  echo "SUCCESS"
   cat $tmp1
   r=0
 else
   echo
+  echo "FAILURE"
   cat $tmp2
   cat $tmp1
   r=1
