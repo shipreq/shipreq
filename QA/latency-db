@@ -11,5 +11,5 @@ eval_url "$1"
 u="$url/diag/db.csv$q"
 
 echo "URL: $u"
-curl "$u"
+curl -k "$u"
 
