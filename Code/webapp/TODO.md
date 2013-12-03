@@ -7,15 +7,19 @@ FUNC TODO
 * [M.0.5] [LEGL] Check all licences and attribute as required.
 * [M.0.5] [LEGL] Add terms of service.
 
-* [S.0.5] [PERF] Cascaded deletion VERY slow with non-trivial amount of data.
 * [S.4.1] [UA  ] Integrate feedback.js.
 * [S.3.4] [UCE ] Save button doesn't from disabled to enabled when text changes, only after blur. Confusing for user.
 * [S.2.5] [UCE ] Step is lost if accidentally deleted. No undo.
 * [S.2.1] [ACCT] Change username.
-* [S.1.1] [UX  ] Pages don't have acceptable titles.
+* [S.2.2] [UX  ] Pages don't have acceptable titles.
+* [S.0.5] [PERF] Cascaded deletion VERY slow with non-trivial amount of data.
 * [S.0.5] [ACCT] Password reset (when not logged in).
 * [S.0.5] [UCE ] Step refs are case-sensitive. [5.e.1] should work in place of [5.E.1].
+* [S.0.5] [FAIL] Robustness: Handle DB going down.
+* [S.1.1] [READ] Markup for http links.
+* [S.1.1] [READ] Markup for mailto links.
 
+* [C.2.2] [UX  ] Put spinning shit in Flow Graph until viz loads and renders it.
 * [C.2.4] [UCE ] Make step labels fade into links when clickable, else users wont know to click.
 * [C.4.4] [UCE ] Symlink steps (and have flow targets point back). Eg "@sameas/@Copy [1.E.1.1]" What about children steps?
 * [C.3.4] [ACCT] Add JS validation to register2 (ie. account creation).
