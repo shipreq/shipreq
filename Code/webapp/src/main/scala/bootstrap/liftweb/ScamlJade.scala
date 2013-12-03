@@ -60,17 +60,31 @@ object ScamlJade extends Loggable {
     LiftRules.getResource = preprocessor
   }
 
+  val newTempFile: () => File =
+    Option(System.getProperty("work.dir")) match {
+      case None =>
+        () => {
+          val f = File.createTempFile("lift_scaml_", ".tmp.html")
+          f.deleteOnExit()
+          f
+        }
+      case Some(d) => {
+        val path = """\$\{\s*(.+?)\s*\}""".r.replaceAllIn(d, m => System.getProperty(m.group(1)))
+        val dir = new File(path)
+        () => File.createTempFile("lift_scaml_", ".tmp.html", dir)
+      }
+    }
+
   def preprocess(name: String): Box[URL] = {
     var fos: FileOutputStream = null
     try {
       if (renderer.canLoad(name)) {
         val rawTemplate = renderer.layout(name)
-        val file: File = File.createTempFile("lift_scaml_jade", "preprocess")
+        val file: File = newTempFile()
         fos = new FileOutputStream(file)
         val writer = new PrintWriter(new OutputStreamWriter(fos))
         writer.print(rawTemplate)
         writer.close()
-        file.deleteOnExit()
         Full(file.toURI.toURL)
       } else {
         Empty
@@ -80,7 +94,6 @@ object ScamlJade extends Loggable {
         throw scala.xml.dtd.ValidationException(e.getMessage)
     } finally {
       if (fos != null) fos.close
-      Empty
     }
   }
 }
