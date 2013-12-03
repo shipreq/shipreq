@@ -10,7 +10,9 @@ ip="$2"
 [ "$ip" == myip ] && ip="$(curl -s http://ifconfig.me)"
 
 echo "=== Adding"
-ec2-authorize "$name" -P tcp -p 22 --cidr "$ip"/32
+for port in 22 5432; do
+  ec2-authorize "$name" -P tcp -p $port --cidr "$ip"/32
+done
 echo
 
 echo "=== Confirmation"

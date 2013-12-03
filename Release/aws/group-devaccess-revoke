@@ -1,0 +1,16 @@
+#!/bin/bash
+
+[ -z "$1" ] && echo "Usage: $0 <group name>" && exit 1
+name="$1"
+
+echo "=== Removing"
+for port in 22 5432; do
+  ec2-describe-group "$name" | grep "tcp	$port	" | awk '{print $10}' | while read ip; do
+    ec2-revoke "$name" -P tcp -p $port -s "$ip"
+  done
+done
+echo
+
+echo "=== Confirmation"
+ec2-describe-group "$1"
+
