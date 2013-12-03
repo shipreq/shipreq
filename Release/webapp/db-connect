@@ -1,0 +1,16 @@
+#!/bin/bash
+
+props="$(dirname "$0")/resources/production.shipreq.props"
+[ ! -e "$props" ] && echo "File not found: $props" && exit 1
+
+propcontent="$(<$props)"
+function prop {
+  echo "$propcontent" | egrep '^ *'"$1"' *=' | perl -pe 's/^.+?=\s*//'
+}
+
+echo "PASSWORD: $(prop db.password)"
+psql \
+  -h "$(prop db.host)" \
+  -d "$(prop db.database)" \
+  -U "$(prop db.username)"
+
