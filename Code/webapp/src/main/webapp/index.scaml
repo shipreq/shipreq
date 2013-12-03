@@ -1,8 +1,15 @@
 %div(data-lift="surround?with=default;at=content")
   /
 
-  #anon-home(data-lift="Authenticated.not")
-    %h1.text-center(style="margin-top:1cm") Welcome, Guest.
-
   #user-home(data-lift="Authenticated")
     %div(data-lift="embed?what=loggedin/index")
+
+  #anon-home(data-lift="Authenticated.not")
+    %h1.text-center(style="margin-top:2em")
+      Welcome to <x data-lift="Prop.appName"></x>!
+    %p.text-center(style="margin-top:2.4em")
+      This site is in its early stages and is not currently open to the public.
+    %p.text-center
+      If you would like to get in touch, please send an email to <a href="mailto:bearded.logic@gmail.com">bearded.logic@gmail.com</a>.
+    %p.text-center(style="margin-top:3cm")
+      %img(src="/img/anchor.svg" style="width:240px; opacity:0.08; filter:alpha(opacity=8)")

@@ -11,7 +11,7 @@ mkdir $tmp
 cd $tmp || exit 1
 
 echo "Extracting..."
-unzip -q "$war" {css,js}/'*'
+unzip -q "$war" {css,js}/'*' 'img/*.svg'
 find -name '*.gz' -exec rm {} +
 
 echo "Compressing..."
