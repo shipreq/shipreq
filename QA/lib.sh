@@ -1,6 +1,7 @@
 # Set a global 'url' var
 function eval_url {
   url="$1"
+  [ ! -e "$url" ] && [ -e "url-$url" ] && url="url-$url"
   [ -e "$url" ] && url="$(cat "$url" | sed '/^ *$/d' | head -1)"
 }
 
