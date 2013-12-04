@@ -8,6 +8,7 @@ import com.beardedlogic.shipreq.util.RuntimePropReaders._
 final object AppConfig {
   implicit def PropScope = GlobalScope
 
+  // Make sure this is in sync with application.js
   val AppName = "ShipReq"
 
   val BaseUrl = need[String]("server.url")

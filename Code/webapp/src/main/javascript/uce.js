@@ -213,7 +213,7 @@ function ac_to_nc(containerId, stepsJqExpr, rewriteFn, completionFn) {
 }
 
 function updatePageTitle() {
-    document.title = $('#uc-id').text() +" "+ $('#uc-title').val()
+    document.title = mkTitle($('#uc-id').text() +" "+ $('#uc-title').val())
 }
 
 /**

@@ -86,13 +86,13 @@ class ShareViewTest extends FunSpec with TestHelpers with TestData {
     }
 
     it("should render the ZeroUcs page") {
-      val html = subject.renderPage(ZeroUcs(<xxx/>))(template).toString
+      val html = subject.renderPage(ZeroUcs("TITLE", <xxx/>))(template).toString
       assertFrag(html, false, true, true)
       html should include("xxx")
     }
 
     it("should render the ShowUcs page") {
-      val html = subject.renderPage(ShowUcs(<xxx/>))(template).toString
+      val html = subject.renderPage(ShowUcs("TITLE", <xxx/>))(template).toString
       assertFrag(html, false, true)
       html should include("xxx")
     }

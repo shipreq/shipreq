@@ -7,6 +7,7 @@ import net.liftweb.sitemap.Loc._
 import net.liftweb.sitemap._
 import net.liftweb.util.Props
 import net.liftweb.util.Props.RunModes.{Development, Test => TestMode}
+import scala.xml.{Text, NodeSeq}
 import scalaz.{Name, Need, NonEmptyList}
 
 import AppConfig.BaseUrl
@@ -24,27 +25,30 @@ object AppSiteMap {
     def setByParam(pm: PM[T], desc: String) = setReqVar(rv, pm, desc)
   }
 
+  val HomeRelativeUrl = "/"
+
   // -------------------------------------------------------------------------------------------------------------------
   // Menu.i(NAME_AND_TITLE) / PATH_FOR_URL_AND_TEMPLATE
   // Menu(Loc(NAME, PATH_FOR_URL_AND_TEMPLATE, TITLE))
   // Menu.param[PARAM_TYPE(S)](NAME, TITLE, URL_TO_PARAM, PARAM_TO_URL) / PATH_FOR_URL_AND_TEMPLATE
 
-  val HomeRelativeUrl = "/"
+  val Home = pageWithStaticUrl("home", defaultTitle, "Home")(_ / "index")
 
-  val Home = Menu.i("Home") / "index"
+  val Login = pageWithStaticUrl("login", mkTitle("Login"), "Login")(_ / "login")
 
-  val Login = Menu.i("Login") / "login"
+  val Logout = pageWithStaticUrl("logout", defaultTitle, "Logout")(_ / "logout" >> EarlyResponse(logout))
 
-  val Logout = Menu.i("Logout") / "logout" >> EarlyResponse(logout)
-
-  val Register1 = Menu(Loc("Register1", List("register"), "Register"))
+  val Register1 = pageWithStaticUrl("register1", mkTitle("Register"), "Register")(_ / "register")
 
   val Register2 = (
-    Menu.param[String]("Register2", "_", i => Full(i), o => o) / "register" / *
-    >> Hidden >> UseTemplate("register2"))
+    Menu.param[String]("register2", "", i => Full(i), o => o) / "register" / *
+    >> StaticTitle(mkTitle("Register"))
+    >> Hidden >> UseTemplate("register2")
+  )
 
   val Project: PM[ProjectId] = (
     MenuWithIdParam(ExternalId.Project)("project") / "project" / *
+    >> TitleFromProjectName
     >> AuthenticationRequired >> ProjectPermissionRequired
     >> UseTemplate("loggedin/project")
     >> SetNavbarAndPerformEffects(Navbar.Home, Navbar.CurrentProject) {
@@ -55,6 +59,7 @@ object AppSiteMap {
 
   val ShareCreate: PM[ProjectId] = (
     MenuWithIdParam(ExternalId.Project)("share-create") / "project" / * / "share"
+    >> StaticTitle(mkTitle("New Share"))
     >> AuthenticationRequired >> ProjectPermissionRequired
     >> UseTemplate("loggedin/share-create")
     >> SetNavbarAndPerformEffects(Navbar.Home, Navbar.CurrentProject, Navbar.StaticText("Share Use Cases")) {
@@ -65,6 +70,7 @@ object AppSiteMap {
 
   val ShareEdit: PM[ShareUrlToken] = (
     Menu.param[ShareUrlToken]("share-edit", "_", i => Full(i.tag), o => o) / "share" / * / "edit"
+    >> TitleFromShareName
     >> AuthenticationRequired
     >> PermissionRequired(Permissions.editShare.using(project = RequestVars.Project.some, share = RequestVars.Share.some))
     >> UseTemplate("loggedin/share-edit")
@@ -81,6 +87,7 @@ object AppSiteMap {
 
   val ReadOwnUcs: PM[ProjectId] = (
     MenuWithIdParam(ExternalId.Project)("readOwnUcs") / "project" / * / "read"
+    >> DynamicTitle(mkTitle("Use Cases | " + RequestVars.Project.get.value.name))
     >> AuthenticationRequired >> ProjectPermissionRequired
     >> UseTemplate("loggedin/read_own_ucs")
     >> SetNavbarAndPerformEffects(Navbar.Home, Navbar.CurrentProject, Navbar.StaticText("Use Cases")) {
@@ -149,6 +156,7 @@ object AppSiteMap {
     }
 
     implicit class MenuableExt(val menu: Menu.Menuable) extends AnyVal {
+
       def relativeUrl: String = if (menu eq Home) "/" else menu.loc.calcDefaultHref
       def absoluteUrl: String = BaseUrl + relativeUrl
     }
@@ -169,10 +177,34 @@ object AppSiteMap {
     Full(redirectHomeResp)
   }
 
-  private def MenuWithIdParam[Tag <: IsExteralisableId](eidGen: ExternalIdConverter[Tag])(name: String) =
-    Menu.param[JLong @@ Tag](name, "_", eidGen.parseB(_), eidGen.toExternal(_))
+  @inline final def defaultTitle = AppConfig.AppName
 
-  private def UseTemplate(path: String) = TemplateBox(() => Templates(path.split("/").toList))
+  @inline final def mkTitle(title: String): String = s"$title | ${AppConfig.AppName}"
+
+  private def StaticTitle[T](title: String) = {
+    val titleXml: NodeSeq = Text(title)
+    Title[T](_ => titleXml)
+  }
+
+  private def DynamicTitle[T](title: => String) =
+    Title[T](_ => Text(title))
+
+  private def pageWithStaticUrl(name: String, title: String, linkText: String)(f: Menu.PreMenu => Menu.Menuable): Menu.Menuable =
+    f(Menu(name, linkText)) >> StaticTitle(title)
+
+  private def projectName = RequestVars.Project.get.value.name
+  private def shareName = RequestVars.Share.get.value.name
+
+  private def TitleFromProjectName[T] = DynamicTitle[T](mkTitle(projectName))
+  private def TitleFromShareName[T] = DynamicTitle[T](mkTitle(shareName))
+
+  private def MenuWithIdParam[Tag <: IsExteralisableId](eidGen: ExternalIdConverter[Tag])(name: String) =
+    Menu.param[JLong @@ Tag](name, "", eidGen.parseB(_), eidGen.toExternal(_))
+
+  private def UseTemplate(path: String) = {
+    val t = path.split("/").toList
+    TemplateBox(() => Templates(t))
+  }
 
   private def AuthenticationRequired =
     If(() => Oshiro.isAuthenticated, () => RedirectResponse(Login.relativeUrl))

@@ -8,7 +8,7 @@ class LinkSnippetTest extends FunSpec with TestHelpers {
   describe("#to") {
 
     it("should render a link to the named page") {
-      withSessionAttrs("name" -> "Register1") {
+      withSessionAttrs("name" -> "register1") {
         Link.to(<div></div>).toString ==== """<a href="/register">Register</a>"""
       }
     }

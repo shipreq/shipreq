@@ -247,4 +247,9 @@ object JsExt {
   object JqEnable extends JsMethod {override val toJsCmd = "removeAttr('disabled')"}
 
   object JqDisable extends JsMethod {override val toJsCmd = "attr('disabled','disabled')"}
+
+  def JsSetPageTitle(title: String): JsCmd = JsSetPageTitle(JE.Str(title))
+  def JsSetPageTitle(title: JsExp): JsCmd = new JsCmd {
+    override def toJsCmd = s"document.title=${title.toJsCmd}"
+  }
 }

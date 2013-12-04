@@ -165,6 +165,14 @@ $(document).on('dynmodal', function (event, data) {
 
 function PENDING() { alert('PENDING'); return false }
 
+// Make sure this is in sync with AppConfig.scala
+AppConfig = {
+    AppName: "ShipReq"
+}
+
+// Make sure this is in sync with AppSiteMap#mkTitle
+function mkTitle(title) { return title + " | " + AppConfig.AppName}
+
 // Add a global event handler to make Enter submit the current form, for any elements with class 'enterSubmitsForm'.
 $(document).keypress(function (e) {
     if (e.which === 13 && e.target.classList.contains('enterSubmitsForm')) {

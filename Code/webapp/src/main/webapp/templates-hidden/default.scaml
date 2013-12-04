@@ -10,6 +10,7 @@
     -#%script(type="text/javascript" src="/js/vendor/jquery.js")
     %script(type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js")
     %script(type="text/javascript" src="/js/all.js")
+    <title data-lift="Menu.title"></title>
 
   %body#ly-default
     #ly-hdrbody
@@ -19,13 +20,13 @@
           .loginInfo
             %div(data-lift="Authenticated")
               Logged in as <b>@<span data-lift="LoggedInUser.username"></span></b>.
-              %a(data-lift="Link.to?name=Logout")
+              %a(data-lift="Link.to?name=logout")
 
             %div(data-lift="Authenticated.not")
               You're not logged in.
-              %a(data-lift="Link.to?name=Login")
+              %a(data-lift="Link.to?name=login")
               or
-              %a(data-lift="Link.to?name=Register1")
+              %a(data-lift="Link.to?name=register1")
 
           %section#notices(data-lift="Notices")
 
