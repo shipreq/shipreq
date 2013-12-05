@@ -1,0 +1,4 @@
+#!/bin/bash
+
+f="$(dirname "$0")/webapps/shipreq.war"
+zip -d "$f" 'WEB-INF/_scalate/*' 'demo/*'
