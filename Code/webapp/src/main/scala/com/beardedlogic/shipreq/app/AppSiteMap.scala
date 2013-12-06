@@ -107,14 +107,14 @@ object AppSiteMap {
       }
   )
 
-  val Admin = pageWithStaticUrl("admin", mkTitle("Admin"), "")(_ / "sir" / "stats" >> AdminOnly >> Hidden)
+  val AdminStats = pageWithStaticUrl("admin.stats", mkTitle("Stats"), "")(_ / "sir" / "stats" >> AdminOnly >> Hidden)
 
   // -------------------------------------------------------------------------------------------------------------------
 
   val AllProdPages: List[ConvertableToMenu] = List(
     Home, Login, Logout, Register1, Register2
     , Project, UseCaseEditor, ReadOwnUcs, ShareCreate, ShareEdit, ShareView
-    , Admin
+    , AdminStats
   ) ++ DiagnosticEndpoints.Endpoints
 
   val sitemap = {

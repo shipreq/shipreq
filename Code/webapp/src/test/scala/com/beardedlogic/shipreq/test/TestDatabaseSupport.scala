@@ -73,9 +73,11 @@ trait TestDatabaseSupport extends TestHelpers with TestDatabaseHelpers {
     TestDB.withInstance(transaction) { s: Session =>
       val oldSessionVar = this.sessionVar
       val oldDaoVar = this.daoVar
+      val oldAdminDaoVar = this.adminDaoVar
       try {
         this.sessionVar = s
         this.daoVar = db.Shim.newDaoT(s)
+        this.adminDaoVar = db.Shim.newAdminDao(s)
         // s.conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE)
         DI.DaoProvider.doWith(testDaoProvider) {
           fn
@@ -85,6 +87,7 @@ trait TestDatabaseSupport extends TestHelpers with TestDatabaseHelpers {
         if (rollback) s.rollback()
         this.sessionVar = oldSessionVar
         this.daoVar = oldDaoVar
+        this.adminDaoVar = oldAdminDaoVar
       }
     }
 
@@ -99,7 +102,9 @@ trait TestDatabaseSupport extends TestHelpers with TestDatabaseHelpers {
   }
 
   var daoVar: DaoT = null
+  var adminDaoVar: AdminDao = null
   def dao = daoVar
+  def adminDao = adminDaoVar
 
   def withNewTransaction[U](fn: => U, commit: Boolean = true): U = withTransactionInternal(true, !commit)(fn)
 }
@@ -107,6 +112,7 @@ trait TestDatabaseSupport extends TestHelpers with TestDatabaseHelpers {
 trait TestDatabaseHelpers extends TestHelpers2 {
   implicit def session: Session
   def dao: DaoT
+  def adminDao: AdminDao
 
   def rollbackAfter[U](fn: => U): U = {
     dao.session.withTransaction {
@@ -116,7 +122,7 @@ trait TestDatabaseHelpers extends TestHelpers2 {
     }
   }
 
-  def testDaoProvider = new TestDaoProvider(dao)
+  def testDaoProvider = new TestDaoProvider(dao, adminDao)
 
   def randomId = -rnd.nextLong().abs
 
@@ -265,11 +271,12 @@ object TestDatabaseHelpers {
   def apply(s: Session): TestDatabaseHelpers = new TestDatabaseHelpers {
     override implicit def session = s
     override val dao = db.Shim.newDaoT(s)
+    override val adminDao = db.Shim.newAdminDao(s)
   }
 }
 
-class TestDaoProvider(dao: DaoT) extends DaoProvider {
-  override def withAdminDao[T](block: AdminDao => T): T = ???
+class TestDaoProvider(dao: DaoT, adminDao: AdminDao) extends DaoProvider {
+  override def withAdminDao[T](block: AdminDao => T): T = block(adminDao)
   override def withSession[T](block: DaoS => T): T = block(dao)
   override def withTransaction[T](block: DaoT => T): T = block(dao)
 }
