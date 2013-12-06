@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_0.dtd">
+<Configure class="org.eclipse.jetty.server.handler.MovedContextHandler">
+	<Set name="contextPath">/</Set>
+	<Set name="newContextURL">http://shipreq.com</Set>
+	<Set name="permanent">true</Set>
+	<Set name="discardPathInfo">false</Set>
+	<Set name="discardQuery">false</Set>
+
+	<Set name="virtualHosts">
+		<Array type="String">
+			<Item>www.shipreq.com</Item>
+		</Array>
+	</Set>
+</Configure>
+
