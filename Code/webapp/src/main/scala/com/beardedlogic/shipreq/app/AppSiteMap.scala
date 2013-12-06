@@ -34,6 +34,8 @@ object AppSiteMap {
 
   val Home = pageWithStaticUrl("home", defaultTitle, "Home")(_ / "index")
 
+  val About = pageWithStaticUrl("about", mkTitle("About"), "About")(_ / "about")
+
   val Login = pageWithStaticUrl("login", mkTitle("Login"), "Login")(_ / "login")
 
   val Logout = pageWithStaticUrl("logout", defaultTitle, "Logout")(_ / "logout" >> EarlyResponse(logout))
@@ -112,7 +114,7 @@ object AppSiteMap {
   // -------------------------------------------------------------------------------------------------------------------
 
   val AllProdPages: List[ConvertableToMenu] = List(
-    Home, Login, Logout, Register1, Register2
+    Home, About, Login, Logout, Register1, Register2
     , Project, UseCaseEditor, ReadOwnUcs, ShareCreate, ShareEdit, ShareView
     , AdminStats
   ) ++ DiagnosticEndpoints.Endpoints

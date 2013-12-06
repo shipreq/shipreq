@@ -3,7 +3,6 @@ Legend: [M/S/C] [Benefit 0-none,5-max] [Penalty 0-none,5-severe]
 FUNC TODO
 =========
 
-* [M.0.5=5] [LEGL] Check all licences and attribute as required.
 * [M.0.5=5] [LEGL] Add terms of service.
 * [M.3.2=5] [PROJ] Delete use cases.
 

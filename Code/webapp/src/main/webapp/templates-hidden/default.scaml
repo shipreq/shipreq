@@ -21,9 +21,10 @@
               %a(data-lift="Link.to?name=logout")
 
             %div(data-lift="Authenticated.not")
-              You're not logged in.
+              %a(data-lift="Link.to?name=home")
+              |
               %a(data-lift="Link.to?name=login")
-              or
+              |
               %a(data-lift="Link.to?name=register1")
 
           %section#notices(data-lift="Notices")
@@ -34,3 +35,4 @@
     %footer#ly-footer
       .ly-content
         &copy; 2013 Bearded Logic
+        | <a data-lift="Link.to?name=about"></a>
