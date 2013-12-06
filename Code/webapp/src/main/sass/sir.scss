@@ -4,7 +4,11 @@
 
 #sir-stats {
   .h {
-    color: #00d
+    color: #00c;
+  }
+
+  td, th {
+    text-align: left;
   }
 
   pre {
@@ -29,7 +33,7 @@
     td {
       padding-top: 5px;
       padding-boittom: 3px;
-   }
+    }
     th, td {
       vertical-align: top;
       border-bottom: solid 1px #ccc;
