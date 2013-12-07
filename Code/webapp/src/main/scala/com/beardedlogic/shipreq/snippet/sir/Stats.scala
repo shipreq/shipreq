@@ -1,7 +1,8 @@
 package com.beardedlogic.shipreq.snippet.sir
 
 import com.beardedlogic.shipreq.feature.SessionStats
-import com.beardedlogic.shipreq.lib.SnippetHelpers
+import com.beardedlogic.shipreq.lib.{Misc, SnippetHelpers}
+import com.beardedlogic.shipreq.util.{ExpireAfter, CacheFn}
 import java.util.ResourceBundle
 import net.liftweb.http.LiftRules
 import net.liftweb.util.Helpers._
@@ -13,8 +14,6 @@ import scala.util.Properties
 import scala.xml.{NodeSeq, Text}
 
 object Stats extends SnippetHelpers {
-
-  // TODO Reduce query impact - cache with timeout or ajax buttons to initially retrieve & refresh
 
   object Build {
     private val props = ResourceBundle.getBundle("build")
@@ -51,14 +50,25 @@ object Stats extends SnippetHelpers {
     case Error(m)      => <span class="err">{m}</span>
   }
 
-  def render =
-    "section" #> allStats.map{ case (section,subStats) =>
-      ".h *" #> section &
-      "tr" #> subStats.map{case (key, value) =>
-        "th *" #> key &
-        "td *" #> formatValue(value)
+  val cache = CacheFn(renderFn)(ExpireAfter(Period seconds 10))
+
+  def render(in: NodeSeq): NodeSeq =
+    cache.value(in)
+
+  def renderFn = {
+    val stats = allStats
+    val evalTime = Misc.currentTimeAsIso8601Str
+    (
+      "time [datetime]" #> evalTime andThen
+      "section" #> stats.map{ case (section,subStats) =>
+        ".h *" #> section &
+        "tr" #> subStats.map{case (key, value) =>
+          "th *" #> key &
+          "td *" #> formatValue(value)
+        }
       }
-    }
+    )
+  }
 
   def allStats: List[(String, List[(String, StatValue)])] = daoProvider.withAdminDao(dao => {
     val userCount = dao.statsCountUsers

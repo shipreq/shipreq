@@ -43,7 +43,7 @@ object DisableCache extends CachePolicy[Any] {
 /**
  * Caches a value.
  */
-case class CacheVar[T](policy: CachePolicy[T]) {
+class CacheVar[T](val policy: CachePolicy[T]) {
   private[this] val lock = new Object
   private var state: Option[(Some[T], policy.S)] = None
 
@@ -70,13 +70,16 @@ case class CacheVar[T](policy: CachePolicy[T]) {
       state = Some(Some(value), policy.write(value))
     }
 }
+object CacheVar {
+  def apply[T](policy: CachePolicy[T]) = new CacheVar[T](policy)
+}
 
 // =====================================================================================================================
 
 /**
  * Caches the result of a function. When the cached value expires, the function is simply re-evaluated.
  */
-case class CacheFn[T](policy: CachePolicy[T])(f: => T) {
+class CacheFn[T](f: => T)(val policy: CachePolicy[T]) {
   private[this] val lock = new Object
   private var state: Option[(T, policy.S)] = None
 
@@ -96,4 +99,7 @@ case class CacheFn[T](policy: CachePolicy[T])(f: => T) {
       state = Some(value, policy.write(value))
       value
     }
+}
+object CacheFn {
+  def apply[T](f: => T)(policy: CachePolicy[T]) = new CacheFn[T](f)(policy)
 }

@@ -33,7 +33,7 @@ class MicroCacheTest extends FunSpec with Matchers {
   }
 
   describe("CacheFn") {
-    def newCacheFn(policy: CachePolicy[Any]) = { val f = fn; CacheFn[Int](policy)(f()) }
+    def newCacheFn(policy: CachePolicy[Any]) = { val f = fn; CacheFn[Int](f())(policy) }
 
     it("NeverExpire policy: should always return the same value") {
       val c = newCacheFn(NeverExpire)
