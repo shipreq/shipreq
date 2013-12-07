@@ -1,0 +1,99 @@
+package com.beardedlogic.shipreq.util
+
+import org.joda.time.{DateTime, Period}
+
+trait CachePolicy[-T] {
+  /** Type of state this policy uses. */
+  type S
+  /** Called when the cache is written to, ie. a new value is installed. */
+  def write(value: T): S
+  /** Determines whether a cached item has expired. */
+  def expired(state: S): Boolean
+}
+
+/**
+ * Values are cached for a maximum time period.
+ */
+case class ExpireAfter(period: Period) extends CachePolicy[Any] {
+  override type S                     = DateTime
+  override def write(value: Any)      = DateTime.now.plus(period)
+  override def expired(expiryTime: S) = expiryTime.isBeforeNow
+}
+
+/**
+ * Cached values never expire.
+ */
+object NeverExpire extends CachePolicy[Any] {
+  override type S                     = Unit
+  override def write(value: Any)      = ()
+  override def expired(expiryTime: S) = false
+}
+
+/**
+ * Values are never cached.
+ */
+object DisableCache extends CachePolicy[Any] {
+  override type S                     = Unit
+  override def write(value: Any)      = ()
+  override def expired(expiryTime: S) = true
+}
+
+// =====================================================================================================================
+
+/**
+ * Caches a value.
+ */
+case class CacheVar[T](policy: CachePolicy[T]) {
+  private[this] val lock = new Object
+  private var state: Option[(Some[T], policy.S)] = None
+
+  def get: Option[T] =
+    lock.synchronized {
+      state match {
+        case None                              => None
+        case Some((_, p)) if policy.expired(p) => {state = None; None}
+        case Some((v, _))                      => v
+      }
+    }
+
+  def getOrSet(f: => T): T =
+    lock.synchronized {
+      get getOrElse {
+        val v = f
+        set(v)
+        v
+      }
+    }
+
+  def set(value: T): Unit =
+    lock.synchronized {
+      state = Some(Some(value), policy.write(value))
+    }
+}
+
+// =====================================================================================================================
+
+/**
+ * Caches the result of a function. When the cached value expires, the function is simply re-evaluated.
+ */
+case class CacheFn[T](policy: CachePolicy[T])(f: => T) {
+  private[this] val lock = new Object
+  private var state: Option[(T, policy.S)] = None
+
+  def value: T =
+    lock.synchronized {
+      state match {
+        case None                              => refresh()
+        case Some((_, p)) if policy.expired(p) => refresh()
+        case Some((v, _))                      => v
+      }
+    }
+
+  /** Ignore cache policy and force a refresh of the underlying cache value. */
+  def refresh(): T =
+    lock.synchronized {
+      val value = f
+      state = Some(value, policy.write(value))
+      value
+    }
+}
