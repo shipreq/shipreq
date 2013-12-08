@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /register/
+Disallow: /project/
+Disallow: /usecase/
+Disallow: /share/
+
