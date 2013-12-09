@@ -288,7 +288,7 @@ html, body { height: 100% } // Cannot have any padding or margin here
       width: 100%;
       table-layout: fixed; // Prevents Firefox from ignoring max-width on flow graphs
 
-      th, td {vertical-align:top}
+      th, td {vertical-align:top; text-align: left;}
       & > tr {border-top:1px solid #ccc; border-bottom:1px solid #ccc}
       & > tr > th {width:18ex; font-weight:normal}
       & > tr > td {padding-left:2ex}
