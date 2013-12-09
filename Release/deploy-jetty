@@ -5,6 +5,6 @@
 cd "$(dirname "$0")"
 
 rsync -vzrRlptSihOJ --skip-compress=jar \
-  --exclude={demo-base,log,work,'*.war','.*.sw?',production.golly.props,'*localhost*'} \
+  --exclude={jetty.pid,jetty.state,demo-base,log,work,'*.war','.*.sw?',production.golly.props,'*localhost*'} \
   jetty-9.1.0 webapp $(<username)@"$1":
 
