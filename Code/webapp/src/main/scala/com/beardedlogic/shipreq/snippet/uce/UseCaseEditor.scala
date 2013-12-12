@@ -130,7 +130,7 @@ class UseCaseEditor(initialState: UseCaseEditor.State, val rels: UseCaseRelation
   protected def setState(newState: State): Unit = {
     state__ = newState
     renderer__ = renderer__.copy(state = newState)
-    ucUpdater__ = UseCaseUpdater(uc, rels)
+    ucUpdater__ = ucUpdater__.copy(uc = newState.uc)
   }
 
   override def dispatch = { case _ => renderer.render }

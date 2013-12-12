@@ -32,6 +32,6 @@ trait TextFieldLike { this: Field with TextField =>
     ChangeResult.fromValidation(Validator.textFieldText.correctAndValidate(newText))(t => {
       implicit val lens = alens(Lenses.ucTextFieldL, (u.uc, this))
       val cr = changeResponder.updateCorrected(lens.get, t)(u.ctx)
-      u.update(this, cr)
+      u.update(cr)
     })
 }

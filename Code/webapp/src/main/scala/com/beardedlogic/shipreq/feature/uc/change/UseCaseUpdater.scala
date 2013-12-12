@@ -48,9 +48,9 @@ case class UseCaseUpdater(uc: UseCase, rels: UseCaseRelations) {
   def afterRespondingToChange(change: Change): UseCase = afterRespondingToChanges(change.asOnlyChange)
   def afterRespondingToChanges(changes: NonEmptyList[Change]): UseCase = respondToChanges(changes).getValueOrElse(uc)
 
-  @inline final def update[V](f: Field, cr: ChangeResultF[V, Change])(implicit l: AppliedLens[UseCase, V]): UcUpdateResult =
-    update(cr)
-
+  /**
+   * This is the core update process. All kinds of UC updates funnel through this method.
+   */
   def update[V](cr: ChangeResultF[V, Change])(implicit l: AppliedLens[UseCase, V]): UcUpdateResult =
     cr.flatMapF((newValue, changes) => {
       val uc1 = l.set(newValue)

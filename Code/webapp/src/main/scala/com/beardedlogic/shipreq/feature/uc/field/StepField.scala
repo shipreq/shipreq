@@ -82,7 +82,7 @@ trait StepFieldLike { this: Field with StepField =>
       implicit val lens = alens(ucStepTextInstL, (u.uc, (this, id)))
       val updater = new StepTextUpdater(this, id)
       val cr = updater.updateCorrected(lens.get, t)(u.ctx)
-      u.update(this, cr)
+      u.update(cr)
     })
 
   def addTailStep(u: UseCaseUpdater): UcUpdateResult = {
@@ -95,7 +95,7 @@ trait StepFieldLike { this: Field with StepField =>
       val tailStep = StepNodeBuilder(0, labelIndex)
       val newSfv = lens.get.withNewStep(StepTree(curNodes :+ tailStep), tailStep.id)
       val cr = newSfv @: TailStepAdded(this, tailStep)
-      u.update(this, cr)
+      u.update(cr)
     }
   }
 
@@ -119,7 +119,7 @@ trait StepFieldLike { this: Field with StepField =>
           removedNode.foreachRecursive(n => newTextmap -= n.id)
           val newSfv = sfv.copy(tree = StepTree(newNodes), textmap = newTextmap)
           val cr = newSfv @: StepRemoved(this, removedNode)
-          u.update(this, cr)
+          u.update(cr)
         case (_, None) => NoChange
       }
   }
@@ -153,7 +153,7 @@ trait StepFieldLike { this: Field with StepField =>
       case (newNodes, Some(tgtNode: StepNode)) =>
         resultIfTreeIsValid(newNodes, {
           val cr = newFn(sfv, newNodes, tgtNode)
-          u.update(this, cr)
+          u.update(cr)
         })
       case (_, None) => NoChange
     }
