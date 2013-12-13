@@ -11,7 +11,8 @@ import xml.NodeSeq
 import db.UseCaseRev
 import lib.Types._
 import feature.uc._
-import change.UseCaseUpdater
+import change.{ChangeConstraint, UseCaseUpdater}
+import field.{StepField, ExceptionCourseField, NormalCourseField}
 import persist.UseCaseSaveCheckpoint
 import step.StepNode
 import step.StepLabels.{MaxStepDepth, MaxStepsPerLevel}
@@ -19,6 +20,8 @@ import Renderer.TitleId
 import test.{CssTestHelpers, TestData, TestHelpers}
 import UseCaseEditor._
 import UseCaseEditorFns._
+import com.beardedlogic.shipreq.lib.Misc
+import app.AppConfig
 
 class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssTestHelpers {
 
@@ -27,11 +30,14 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
 
   implicit def js2str(js: JsCmd): String = unquoteJs(js.toJsCmd).trim
 
-  class UseCaseEditor2(state: State, rels: UseCaseRelations = UseCaseRelations.Empty) extends UseCaseEditor(state, rels) {
+  class UseCaseEditor2(
+    state: State
+    , rels: UseCaseRelations = UseCaseRelations.Empty
+    , changeConstraint: Option[ChangeConstraint] = None)
+    extends UseCaseEditor(state, rels, changeConstraint) {
+
     def setState2(newState: State) = { super.setState(newState); this }
-
     override def update(m: UcModifier): JsCmd = inMockSession {super.update(m)}
-
     def update2(f: UseCaseUpdater => UcUpdateResult): (UseCaseEditor2, String) = (this, update(UcModifier(f, None, None)))
   }
 
@@ -48,7 +54,7 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
   lazy val State2b = loadedState(MockUc2b.UC)
   lazy val State3 = loadedState(MockUc3.UC)
 
-  def UceDemo = new UseCaseEditor2(UseCaseEditorDemo.state, UseCaseEditorDemo.relations)
+  def UceDemo = new UseCaseEditor2(UseCaseEditorDemo.state, UseCaseEditorDemo.relations, UseCaseEditorDemo.changeConstraint)
   def UCE1 = new UseCaseEditor2(State1)
   def UCE2a = new UseCaseEditor2(State2a)
   def UCE2b = new UseCaseEditor2(State2b)
@@ -239,21 +245,35 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
       }
     }
 
-    def itRespectsMaxSteps(name: String, uceFn: => () => UseCaseEditor2, addFn: => UseCaseUpdater => UcUpdateResult, labelAtMax: String) = {
-      it(s"should not exceed the max-steps limit ($name)") {
-        val uce = uceFn()
-        var i=0
-        def atMax = uce.uc.stepsAndLabels.value.ba.contains(labelAtMax.asLabel)
-        while (!atMax && i<110) {
-          i+=1
-          val oldUc = uce.uc
-          val (_, resp) = uce.update2(addFn)
-          if (uce.uc eq oldUc) fail(s"AddFn didn't add. (attempt: $i)\nResponse: $resp\n${uce.uc}")
-        }
+    def testMaxSteps(uce: UseCaseEditor2, addFn: => UseCaseUpdater => UcUpdateResult, atMax: UseCase => Boolean) {
+      var i = 0
+      while (!atMax(uce.uc) && i < 110) {
+        i += 1
         val oldUc = uce.uc
-        val (n,resp) = uce.update2(addFn)
-        assertFailResponse(resp)
-        uce.uc should be theSameInstanceAs(oldUc)
+        val (_, resp) = uce.update2(addFn)
+        if (uce.uc eq oldUc) fail(s"AddFn didn't add. (attempt: $i)\nResponse: $resp\n${uce.uc}")
+      }
+      val oldUc = uce.uc
+      val (n, resp) = uce.update2(addFn)
+      assertFailResponse(resp)
+      uce.uc should be theSameInstanceAs (oldUc)
+    }
+
+    def itRespectsMaxStepsPossible(name: String, uceFn: => () => UseCaseEditor2, addFn: => UseCaseUpdater => UcUpdateResult, labelAtMax: String) = {
+      it(s"should not exceed the max-steps limit ($name)") {
+        testMaxSteps(uceFn(), addFn, _.stepsAndLabels.value.ba.contains(labelAtMax.asLabel))
+      }
+    }
+
+    def itRespectsMaxStepConstraint(name: String, testNCF: Boolean, addFn: StepField => (UseCaseUpdater => UcUpdateResult)) = {
+      it(s"should not exceed a step limit imposed by check-constraints ($name)") {
+        val uce = UceDemo
+        val fl = uce.uc.fields
+        val ncf = Misc.filterCovar[NormalCourseField](fl).head
+        val ecf = Misc.filterCovar[ExceptionCourseField](fl).head
+        val addField = if (testNCF) ncf else ecf
+        val sizeFn = (uc: UseCase) => ncf(uc).tree.sizeRecursive + ecf(uc).tree.sizeRecursive
+        testMaxSteps(uce, addFn(addField), sizeFn(_) == AppConfig.DemoUseCaseMaxSteps)
       }
     }
 
@@ -278,8 +298,10 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
         stepTreeLens.get(uce.uc, ECF).nodes.size should be(3)
         assertTailStepAdded(resp, "7.E.3", ".courses-e")
       }
-      it should behave like(itRespectsMaxSteps("NC", UCE1 _, NCF.addTailStep, "7.99"))
-      it should behave like(itRespectsMaxSteps("EC", UCE1 _, ECF.addTailStep, "7.E.99"))
+      it should behave like(itRespectsMaxStepsPossible("NC", UCE1 _, NCF.addTailStep, "7.99"))
+      it should behave like(itRespectsMaxStepsPossible("EC", UCE1 _, ECF.addTailStep, "7.E.99"))
+      it should behave like(itRespectsMaxStepConstraint("NC", true, f => f.addTailStep))
+      it should behave like(itRespectsMaxStepConstraint("EC", false, f => f.addTailStep))
     }
 
     describe("adding a step") {
@@ -303,8 +325,10 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
       it("should update referencing step field text") {
         assertIdAndAction(resp, X1, "root [7.0.4]")
       }
-      it should behave like(itRespectsMaxSteps("NC", UCE2b _, NCF.addStep(X3), "7.0.99"))
-      it should behave like(itRespectsMaxSteps("EC", UCE1 _, ECF.addStep(MockUc1.EcSfv.tree(1).id), "7.E.2.99"))
+      it should behave like(itRespectsMaxStepsPossible("NC", UCE2b _, NCF.addStep(X3), "7.0.99"))
+      it should behave like(itRespectsMaxStepsPossible("EC", UCE1 _, ECF.addStep(MockUc1.EcSfv.tree(1).id), "7.E.2.99"))
+      it should behave like(itRespectsMaxStepConstraint("NC", true, f => f.addStep("F898146860208051SD4".tag)))
+      it should behave like(itRespectsMaxStepConstraint("EC", false, f => f.addStep("F898146860506XT0ZUD".tag)))
     }
 
     describe("remove a step") {

@@ -48,6 +48,8 @@ final object AppConfig {
 
   val QuoteCachePolicy = ExpireAfter(Period minutes 30)
 
+  val DemoUseCaseMaxSteps = 50
+
   /**
    * Whether or not new registrations are allowed.
    * (Registration tokens already issued will still be accepted.)

@@ -7,7 +7,7 @@ import net.liftweb.http.js.{JsExp, JsCmd, JsCmds}
 import net.liftweb.util.Helpers.nextFuncName
 import JsCmds.Noop
 
-import app.{Defaults, DI, RequestVars}
+import app.{AppConfig, Defaults, DI, RequestVars}
 import db.{UseCaseSummary, UseCaseHeader}
 import lib.{Misc, SnippetHelpers, Locks, StaticSnippetHelpers}
 import lib.ScalazSubset._
@@ -77,6 +77,7 @@ object UseCaseEditorDemo {
 
   val relations: UseCaseRelations = CachedUseCaseRelations(List(ucs1, ucs2, ucs3))
   val state = State(useCase, None, false)
+  val changeConstraint = Some(LimitTotalNumberOfSteps(AppConfig.DemoUseCaseMaxSteps))
 }
 
 // =====================================================================================================================
@@ -101,13 +102,14 @@ object UseCaseEditorFns extends StaticSnippetHelpers with DI {
 
 import UseCaseEditorFns._
 
-class UseCaseEditor(initialState: UseCaseEditor.State, val rels: UseCaseRelations) extends StatefulSnippet with SnippetHelpers {
+class UseCaseEditor(initialState: UseCaseEditor.State, val rels: UseCaseRelations, val changeConstraint: Option[ChangeConstraint])
+  extends StatefulSnippet with SnippetHelpers {
 
   // Constructor for demo page
-  def this() = this(UseCaseEditorDemo.state, UseCaseEditorDemo.relations)
+  def this() = this(UseCaseEditorDemo.state, UseCaseEditorDemo.relations, UseCaseEditorDemo.changeConstraint)
 
   // Constructor for real page
-  def this(p: (State, UseCaseRelations)) = this(p._1, p._2)
+  def this(p: (State, UseCaseRelations)) = this(p._1, p._2, None)
   def this(ucId: UseCaseIdentId) = this(loadLatest(ucId))
 
   private var state__ = initialState
@@ -135,9 +137,12 @@ class UseCaseEditor(initialState: UseCaseEditor.State, val rels: UseCaseRelation
 
   override def dispatch = { case _ => renderer.render }
 
-  def update(m: UcModifier): JsCmd =
-    m.updateFn(ucUpdater) match {
-      case Changed(newUc, changes) =>
+  def update(m: UcModifier): JsCmd = {
+    val r1 = m.updateFn(ucUpdater)
+    val r2 = changeConstraint.map(_ apply r1) getOrElse r1
+    r2 match {
+
+      case a@Changed(newUc, changes) =>
         setState(State(newUc, state.prevSave, allowSave(state, newUc)))
         renderer.jsRespondToChanges(changes)
 
@@ -149,6 +154,7 @@ class UseCaseEditor(initialState: UseCaseEditor.State, val rels: UseCaseRelation
         val b = m.focusOnErr.map[JsCmd](_ ~> JqFocus) getOrElse Noop
         a |+| b
     }
+  }
 
   def save(): JsCmd = state.prevSave match {
     case Some(cp) =>

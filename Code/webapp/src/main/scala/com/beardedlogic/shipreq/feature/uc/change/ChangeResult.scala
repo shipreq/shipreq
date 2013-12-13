@@ -146,21 +146,21 @@ final case object NoChange extends ChangeResult[Nothing, Nothing] with NoChangeO
 /**
  * Indicates that one or more changes were performed successfully.
  */
-final case class Changed[+V, +C](newValue: V, changes: NonEmptyList[C]) extends ChangeResult[V, C] {
-  override def getValue = Some(newValue)
-  override def getValueOrElse[VV >: V](other: => VV) = newValue
+final case class Changed[+V, +C](value: V, changes: NonEmptyList[C]) extends ChangeResult[V, C] {
+  override def getValue = Some(value)
+  override def getValueOrElse[VV >: V](other: => VV) = value
   override def getChanges = changes.list
   override def getChangesOrElse[CC >: C](other: NonEmptyList[CC]) = changes
 
-  override def map[A, B]        (f: (V,NonEmptyList[C]) => (A,NonEmptyList[B])) = {val r=f(newValue, changes); Changed(r._1, r._2)}
-  override def flatMap[A, B]    (f: (V,NonEmptyList[C]) => ChangeResult[A, B] ) = f(newValue, changes)
-  override def mapValue[A]      (f: V                   => A                  ) = Changed(f(newValue), changes)
-  override def flatMapValue[A]  (f: V                   => Option[A]          ) = ChangeResult(f(newValue), changes)
-  override def mapChanges[B]    (f: NonEmptyList[C]     => NonEmptyList[B]    ) = Changed(newValue, f(changes))
-  override def flatMapChanges[B](f: NonEmptyList[C]     => List[B]            ) = ChangeResult(newValue, f(changes))
+  override def map[A, B]        (f: (V,NonEmptyList[C]) => (A,NonEmptyList[B])) = {val r=f(value, changes); Changed(r._1, r._2)}
+  override def flatMap[A, B]    (f: (V,NonEmptyList[C]) => ChangeResult[A, B] ) = f(value, changes)
+  override def mapValue[A]      (f: V                   => A                  ) = Changed(f(value), changes)
+  override def flatMapValue[A]  (f: V                   => Option[A]          ) = ChangeResult(f(value), changes)
+  override def mapChanges[B]    (f: NonEmptyList[C]     => NonEmptyList[B]    ) = Changed(value, f(changes))
+  override def flatMapChanges[B](f: NonEmptyList[C]     => List[B]            ) = ChangeResult(value, f(changes))
 
   override def mapF[A, B]        (f: (V,NonEmptyList[C]) => (A,NonEmptyList[B])) = map(f)
-  override def flatMapF[A, B]    (f: (V,NonEmptyList[C]) => ChangeResultF[A, B]) = f(newValue, changes)
+  override def flatMapF[A, B]    (f: (V,NonEmptyList[C]) => ChangeResultF[A, B]) = f(value, changes)
   override def mapValueF[A]      (f: V                   => A                  ) = mapValue(f)
   override def flatMapValueF[A]  (f: V                   => Option[A]          ) = flatMapValue(f)
   override def mapChangesF[B]    (f: NonEmptyList[C]     => NonEmptyList[B]    ) = mapChanges(f)

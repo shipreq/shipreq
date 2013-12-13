@@ -120,6 +120,7 @@ case class UseCase(
   implicit protected def stepsAndLabelsImplicit = stepsAndLabels
 
   @inline final def title = header.title
+  @inline final def totalStepCount = stepsAndLabels.value.size
 
   def regenerateStepsAndLabels: UseCase =
     copy(stepsAndLabels = generateStepAndLabelBiMap(this))
