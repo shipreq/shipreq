@@ -319,7 +319,7 @@ sealed trait DaoT extends DaoS {
  */
 sealed class AdminDao(_session: Session) extends DaoS {
   import AdminSql._
-  implicit final val session = _session
+  implicit val session = _session
 
   def diagSelectNow() = DiagSelectNow.first
 

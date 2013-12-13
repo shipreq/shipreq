@@ -5,12 +5,11 @@ import scalaz.{Name, Need}
 import net.liftweb.common.Logger
 import net.liftweb.http.RequestVar
 import db.{Share, DaoS, UseCaseSummary, Project}
-import DI.DaoProvider
 import lib.Types._
 import lib.SnippetHelpers._
 import feature.Navbar
 
-object RequestVars extends Logger {
+object RequestVars extends Logger with DI {
 
   // -------------------------------------------------------------------------------------------------------------------
   // Manually set
@@ -40,7 +39,7 @@ object RequestVars extends Logger {
   // Derived
 
   object UseCases extends RequestVar[List[UseCaseSummary]](
-    DaoProvider.withSession(_.summariseUseCases(ProjectId.get.value))
+    daoProvider.withSession(_.summariseUseCases(ProjectId.get.value))
   )
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -57,7 +56,7 @@ object RequestVars extends Logger {
   }
 
   private def requireDbData[T](name: String)(f: => DaoS => Option[T]): Need[T] =
-    Need(DaoProvider.withSession(f) getOrElse notFound(name))
+    Need(daoProvider.withSession(f) getOrElse notFound(name))
 
   def deriveShareAndProjectFromShareUrlToken(token: Name[ShareUrlToken]): Unit = {
     val both = requireDbData("Share & Project")(_ findShareAndProject token.value)

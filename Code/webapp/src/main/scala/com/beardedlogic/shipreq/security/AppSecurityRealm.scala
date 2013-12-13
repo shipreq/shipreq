@@ -3,14 +3,14 @@ package security
 
 import org.apache.shiro.realm.AuthenticatingRealm
 import org.apache.shiro.authc._
-import app.DI.DaoProvider
+import app.DI
 
 /**
  * Bridge between Shiro and this app. Performs authentication checks.
  *
  * @since 25/06/2013
  */
-class AppSecurityRealm extends AuthenticatingRealm {
+class AppSecurityRealm extends AuthenticatingRealm with DI {
 
   override protected def doGetAuthenticationInfo(token: AuthenticationToken) = {
     // Parse input
@@ -18,7 +18,7 @@ class AppSecurityRealm extends AuthenticatingRealm {
     val usernameOrEmail = userPassToken.getUsername
 
     // Query database
-    val result = DaoProvider.withSession(_.findUserDescAndCredentials(usernameOrEmail))
+    val result = daoProvider.withSession(_ findUserDescAndCredentials usernameOrEmail)
     if (result.isEmpty) throw new UnknownAccountException("No account found for [" + usernameOrEmail + "]")
     val (user, cred) = result.get
 

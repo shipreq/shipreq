@@ -15,11 +15,7 @@ import lib.{StatLoggerImpl, StatLogger}
  */
 object DI extends SimpleInjector {
 
-  final val DaoProvider = new Inject[DaoProvider](DB.DaoProvider) with DaoProvider {
-    override def withAdminDao[T](block: AdminDao => T): T = vend.withAdminDao(block)
-    override def withSession[T](block: DaoS => T): T = vend.withSession(block)
-    override def withTransaction[T](block: DaoT => T): T = vend.withTransaction(block)
-  }
+  final val DaoProvider = new Inject[DaoProvider](DB.DaoProvider) {}
 
   final val SecurityProvider = new Inject[SecurityProvider](Oshiro) {}
 

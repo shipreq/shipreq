@@ -2,11 +2,11 @@ package com.beardedlogic.shipreq
 package test
 
 import com.googlecode.flyway.core.dbsupport.{SqlScript, DbSupportFactory}
-import java.sql.Connection
 import org.apache.commons.io.IOUtils
 import org.postgresql.util.PSQLException
 import org.scalatest.{Exceptional, Outcome, Suite}
 import scala.slick.jdbc.{StaticQuery => Q}
+import scalaz.Need
 import slick.session.{Database, Session}
 import Q.interpolation
 
@@ -276,6 +276,8 @@ object TestDatabaseHelpers {
 }
 
 class TestDaoProvider(dao: DaoT, adminDao: AdminDao) extends DaoProvider {
+  override protected def createSession(): DaoS = ???
+  override def withLazySession[T](block: Need[DaoS] => T): T = block(Need(dao))
   override def withAdminDao[T](block: AdminDao => T): T = block(adminDao)
   override def withSession[T](block: DaoS => T): T = block(dao)
   override def withTransaction[T](block: DaoT => T): T = block(dao)

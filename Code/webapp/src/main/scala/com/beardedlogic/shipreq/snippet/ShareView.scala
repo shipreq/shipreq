@@ -5,10 +5,11 @@ import net.liftweb.http.{SessionVar, SHtml}
 import net.liftweb.util.Helpers._
 import org.joda.time.DateTime
 import scala.xml.{Text, NodeSeq}
+import scalaz.Need
 
 import com.beardedlogic.shipreq.app.AppSiteMap.mkTitle
-import com.beardedlogic.shipreq.app.{AppConfig, DI}
-import com.beardedlogic.shipreq.db.Share
+import com.beardedlogic.shipreq.app.AppConfig
+import com.beardedlogic.shipreq.db.{DaoS, Share}
 import com.beardedlogic.shipreq.feature.UcFilter
 import com.beardedlogic.shipreq.feature.publish.{DocHeader, HtmlPublisher, Input}
 import com.beardedlogic.shipreq.feature.uc.persist.{UseCaseSaveCheckpoint, UseCasePersistence}
@@ -39,24 +40,25 @@ object ShareView {
 
 class ShareView(token: ShareUrlToken) extends SingleOpStatefulSnippet {
 
-  // TODO opens too many separate DB connections
-
   def render = renderPage(initialPage)
 
-  def initialPage = pageFor(loadIfAlreadyAuth orElse loadIfCurrentUserIsOwner)
+  def initialPage =
+    pageFor(
+      daoProvider.withLazySession(dao =>
+        loadIfAlreadyAuth(dao) orElse loadIfCurrentUserIsOwner(dao)))
 
-  def loadIfAlreadyAuth: LoadResult =
+  def loadIfAlreadyAuth(dao: Need[DaoS]): LoadResult =
     for {
       (authTime, authPass) <- AuthMapVar.get.get(token)
                               if authTime <= AppConfig.ShareViewAuthPeriod
-      (s, ps)              <- daoProvider.withSession(_ findShareAndPassword token)
+      (s, ps)              <- dao.value.findShareAndPassword(token)
                               if ps.hashedPassword == authPass
     } yield s
 
-  def loadIfCurrentUserIsOwner: LoadResult =
+  def loadIfCurrentUserIsOwner(dao: Need[DaoS]): LoadResult =
     for {
       _       <- currentUser
-      (s, pr) <- daoProvider.withSession(_ findShareAndProject token)
+      (s, pr) <- dao.value.findShareAndProject(token)
       _       <- Permissions.viewShare.using(project = Some(pr), share = Some(s)).pass
     } yield s
 
@@ -79,7 +81,7 @@ class ShareView(token: ShareUrlToken) extends SingleOpStatefulSnippet {
   }
 
   var loadUcs: (ProjectId, UcFilter) => List[UseCaseSaveCheckpoint] = (p, f) =>
-    DI.DaoProvider.withTransaction(dao =>
+    daoProvider.withTransaction(dao =>
       Locks.UseCaseNumbers.read(p)(lock =>
         UseCasePersistence.loadAll(p).filter(UcFilter(f)).run(dao, lock)))
 

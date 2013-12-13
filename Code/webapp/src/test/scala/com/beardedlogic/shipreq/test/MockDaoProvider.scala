@@ -1,9 +1,11 @@
 package com.beardedlogic.shipreq
 package test
 
+import org.mockito.Mockito.when
 import org.scalatest.mock.MockitoSugar
-import db.{AdminDao, DaoS, DaoT, DaoProvider}
+import slick.session.Session
 import app.DI
+import db.{AdminDao, DaoS, DaoT, DaoProvider}
 
 /**
  * [[com.beardedlogic.shipreq.db.DaoProvider]] that creates and uses a mock DAO.
@@ -17,8 +19,12 @@ import app.DI
  * }}}
  */
 class MockDaoProvider extends DaoProvider with MockitoSugar {
+  val session = mock[Session]
   val dao = mock[DaoT]
   val adminDao = mock[AdminDao]
+  for (d <- List(dao, adminDao)) when(d.session).thenReturn(session)
+
+  override protected def createSession(): DaoS = dao
   override def withSession[T](block: DaoS => T): T = block(dao)
   override def withTransaction[T](block: DaoT => T): T = block(dao)
   override def withAdminDao[T](block: AdminDao => T): T = block(adminDao)

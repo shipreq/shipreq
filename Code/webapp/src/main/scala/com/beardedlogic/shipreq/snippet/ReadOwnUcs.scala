@@ -9,13 +9,13 @@ import com.beardedlogic.shipreq.lib.Types._
 import com.beardedlogic.shipreq.feature.publish.{Input, HtmlPublisher}
 import AppSiteMap.Implicits._
 
-object ReadOwnUcs {
+object ReadOwnUcs extends DI {
 
   def render: CssSel = {
     val project = RequestVars.Project.get.value
 
     val ucs =
-      DI.DaoProvider.withTransaction(dao =>
+      daoProvider.withTransaction(dao =>
         Locks.UseCaseNumbers.read(project)(lock =>
           UseCasePersistence.loadAll(project).run(dao, lock)))
       .map(_.ucAndRev)

@@ -17,10 +17,10 @@ trait StatLogger {
   def updateSessionStatsOnLogin(bs: Box[LiftSession], user: UserDescriptor): Unit
 }
 
-object StatLoggerImpl extends StatLogger with SpecializedLiftActor[StatLoggerCmd] {
+object StatLoggerImpl extends StatLogger with SpecializedLiftActor[StatLoggerCmd] with DI {
 
   protected def dao(f: DaoS => Unit): Unit =
-    DI.DaoProvider.withSession(f)
+    daoProvider.withSession(f)
 
   protected def messageHandler: PartialFunction[StatLoggerCmd, Unit] = {
     case LogShareView(id, ip) => dao(_.logShareView(id, ip))
