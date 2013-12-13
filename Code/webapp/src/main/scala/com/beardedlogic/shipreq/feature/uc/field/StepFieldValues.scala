@@ -13,6 +13,8 @@ object StepFieldValue {
 
   def forTree(field: StepField, tree: StepTree) =
     apply(field, tree, tree.mapRecursive(n => (n.id -> StepText.empty)).toMap)
+
+  val addFullStop = "(?<=[a-zA-Z0-9])$".r.pattern
 }
 
 /**
@@ -54,14 +56,20 @@ class StepFieldValueChangeResponder(field: StepField) extends SeqChangeResponder
     .andThen(sfv, respondToChangeInternally(_, c))
 
   private def respondToChangeInternally(sfv: StepFieldValue, c: Change)(implicit ctx: UcParsingCtx): R = {
-    def allowTitleChange_? = field.preferTitleInRoot_? && sfv.tree.nonEmpty
-    def changeRootToTitle(before: String, after: String) = {
+
+    def allowTitleChange_? =
+      field.preferTitleInRoot_? && sfv.tree.nonEmpty
+
+    def titleToMainClause(t: String) =
+      StepFieldValue.addFullStop.matcher(t).replaceFirst(".")
+
+    def changeRootToTitle(oldTitle: String, newTitle: String) = {
       val id = sfv.tree(0).id
       val lens = alens(Lenses.sfvStepTextInstL, (sfv, id))
-      val t = lens.get
-      val curText = t.mainClause.text
-      if (curText.isEmpty || curText == before)
-        new StepTextUpdater(field, id).updateMainClause(t, after).mapValue(lens.set)
+      val step = lens.get
+      val curMainClause = step.mainClause.text
+      if (curMainClause.isEmpty || curMainClause == titleToMainClause(oldTitle))
+        new StepTextUpdater(field, id).updateMainClause(step, titleToMainClause(newTitle)).mapValue(lens.set)
       else
         NoChange
     }

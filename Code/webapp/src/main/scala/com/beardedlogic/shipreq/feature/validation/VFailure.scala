@@ -41,6 +41,8 @@ class VFailure private(
   def toText: String = VFailureTextRenderer render this
   def toHtml: NodeSeq = VFailureHtmlRenderer render this
 
+  override def toString = toText
+
   /*
   private def copy(
     looseMsgs: List[ErrorMsg] = this.looseMsgs,

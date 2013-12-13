@@ -84,10 +84,13 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
         def sfvWithText(f: StepField, stepText: StepText) =
           StepFieldValue(f, StepTree(StepNode(X1, 0, 0, Nil) :: Nil), Map(X1 -> stepText))
 
-        def testChanges(f: StepField, stepTextBefore: StepText) {
+        def testChanges(f: StepField, stepTextBefore: StepText): Unit =
+          testChanges2(f, stepTextBefore, "Goat!", "Goat!")
+
+        def testChanges2(f: StepField, stepTextBefore: StepText, newTitle: String, stepTextExp: String): Unit = {
           val v1 = sfvWithText(f, stepTextBefore)
-          val expected = StepText(freeText("Goat"), stepTextBefore.flowFromClause, stepTextBefore.flowToClause)
-          val (uc2, c) = ucWithValues(f -> v1).updateTitle("Goat").openChange
+          val (uc2, c) = ucWithValues(f -> v1).updateTitle(newTitle).openChange
+          val expected = StepText(freeText(stepTextExp), stepTextBefore.flowFromClause, stepTextBefore.flowToClause)
           f(uc2.fieldValues) ==== v1.copy(textmap = Map(X1 -> expected))
           c should contain(StepTextChanged(f, X1))
         }
@@ -115,6 +118,14 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
 
         it("should not change the NC root text if it has some other value") {
           testDoesntChange(NCF, StepText.parse("some other value"))
+        }
+
+        it("should append a full-stop when last character is alphanumeric") {
+          testChanges2(NCF, StepText.parse(UCH.title), "(TEST) Good work", "(TEST) Good work.")
+          testChanges2(NCF, StepText.parse(UCH.title), "(TEST) GOOD WORK", "(TEST) GOOD WORK.")
+          testChanges2(NCF, StepText.parse(UCH.title), "Eat 50", "Eat 50.")
+          testChanges2(NCF, StepText.parse(UCH.title), "Eat 50.", "Eat 50.")
+          testChanges2(NCF, StepText.parse(UCH.title), "Eat 50?", "Eat 50?")
         }
 
         it("should not change the EC root text") {
