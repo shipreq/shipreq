@@ -66,7 +66,7 @@ trait FTTRenderer[X] {
 trait SeparateUcRefsByScope[X] {
   this: FTTRenderer[X] =>
   def inScope(num: UseCaseNumber): Boolean
-  final def fttUseCaseRef(r: UseCaseRef) =
+  final override def fttUseCaseRef(r: UseCaseRef) =
     if (inScope(r.num))
       fttUseCaseRefInScope(r)
     else
@@ -112,8 +112,7 @@ trait StepFlowRenderer[X] {
   def flowRefSep: X
 }
 
-class TypicalStepRenderer[X](lr: LinkRenderer[X], fr: StepFlowRenderer[X])
-  (implicit xm: Monoid[X], mtr: MarkupTokenRenderer[X])
+class TypicalStepRenderer[X](lr: LinkRenderer[X], fr: StepFlowRenderer[X])(implicit xm: Monoid[X], mtr: MarkupTokenRenderer[X])
   extends StepRenderer[X] {
 
   def step(value: StepText): X =
