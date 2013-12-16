@@ -3,16 +3,11 @@ digraph G {
 {
   node [style=filled, fillcolor="#ccffcc"]
   SalesArgs
-  DeployLocally
-  Hosting
-  Name
 }
 {
   node [style=filled, fillcolor="#dddddd"]
   AcceptPayment
   Legal
-  TODO
-  PlanBeyondUC
 }
 
 Promote
@@ -21,25 +16,20 @@ Funding
 AccountPlan [label="Plan for accounts free/paid,\npublic/private, etc"]
 GetUsers
 RelScope [label="Release & Scope plan"]
-Deploy
 PlanUcF [label="Plan more UC features"]
 BusModel
 SalesPitch
-Domain
 TalkToC
 
-{Domain; Deploy; SalesPitch; SalesArgs; Name} -> Promote
-{Hosting;Name} -> Domain
+{SalesPitch; SalesArgs} -> Promote
 {PlanUcF; TalkToC; MarketResearch} -> HowMoney
 {SalesArgs; PlanUcF} -> TalkToC
 {SalesPitch; BusModel} -> Funding
 {PlanUcF} -> RelScope
 {MarketResearch; SalesArgs; PlanUcF} -> SalesPitch
-{MarketResearch; PlanUcF; TalkToC; RelScope} -> BusModel
-{Hosting} -> Deploy
-{Promote; Deploy; AccountPlan} -> GetUsers
+{MarketResearch; PlanUcF; TalkToC} -> BusModel
+{Promote; AccountPlan} -> GetUsers
 {BusModel} -> AccountPlan
-DeployLocally -> UsePrivately; UsePrivately -> PlanUcF
 {Legal; AccountPlan; AcceptPayment; GetUsers} -> Profit
 TalkToC -> MarketResearch
 
