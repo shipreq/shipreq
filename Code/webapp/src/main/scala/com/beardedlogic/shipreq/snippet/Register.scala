@@ -10,7 +10,7 @@ import org.joda.time.DateTime
 
 import app.{AppConfig, AppSiteMap}
 import lib.MailHelpers.MailContent
-import lib.SingleOpStatefulSnippet
+import lib.{SnippetHelpers, SingleOpStatefulSnippet}
 import lib.Types._
 import mail.RegistrationEmails
 import db.{DaoT, UserRegistrationInfo, UserRegistrationResult}
@@ -29,21 +29,25 @@ object Register {
  *
  * @since 27/06/2013
  */
-class Register1 extends SingleOpStatefulSnippet {
+object Register1 extends SnippetHelpers {
 
-  var emailInput = ""
+  def render = {
+    var emailInput = ""
 
-  def render =
+    def onSubmit(): JsCmd = {
+      securityProvider.enforceHumanSpeed()
+      perform(emailInput)
+    }
+
     if (Permissions.userRegistration.using().isPass)
       ("#registrationDisabled" #> "" &
         "#email" #> SHtml.onSubmit(emailInput = _) &
         ":submit" #> ajaxSubmitOnClick(onSubmit))
     else
       "#register1Form" #> ""
+  }
 
-  def onSubmit(): JsCmd = {
-    securityProvider.enforceHumanSpeed()
-
+  def perform(emailInput: String): JsCmd =
     ifValid(Validator.email.correctAndValidate(emailInput))(emailAddr => {
       val mail: MailContent = daoProvider.withTransaction(dao =>
         dao.findUserRegistrationInfo(emailAddr) match {
@@ -54,7 +58,6 @@ class Register1 extends SingleOpStatefulSnippet {
       sendMail(mail addressedTo emailAddr)
       jsClearError & JqExpr("#emailSent,#register1Form") ~> JqToggle
     })
-  }
 
   def performPreRegistation(u: UserRegistrationInfo, dao: DaoT): MailContent =
     u match {

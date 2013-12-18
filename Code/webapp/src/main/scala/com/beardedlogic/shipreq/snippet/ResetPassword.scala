@@ -11,7 +11,7 @@ import app.AppConfig.PasswordResetTokenLifespan
 import db.{Dao, DaoT, UserRegistrationInfo, ResetPasswordInfo}
 import feature.validation.Validator
 import lib.MailHelpers.MailContent
-import lib.SingleOpStatefulSnippet
+import lib.SnippetHelpers
 import lib.Types._
 import mail.PasswordResetEmails
 import util.HtmlTransformExt.ajaxSubmitOnClick
@@ -22,21 +22,23 @@ object ResetPassword {
   def isTokenExpired(dateIssued: DateTime): Boolean = PasswordResetTokenLifespan.ago.isAfter(dateIssued)
 }
 
-class ResetPassword1 extends SingleOpStatefulSnippet {
+object ResetPassword1 extends SnippetHelpers {
 
-  var emailInput = ""
+  def render = {
+    var emailInput = ""
 
-  def render = (
-    "#email" #> SHtml.onSubmit(emailInput = _) &
-    ":submit" #> ajaxSubmitOnClick(onSubmit)
-  )
+    def onSubmit(): JsCmd = {
+      securityProvider.enforceHumanSpeed()
+      perform(emailInput)
+    }
 
-  def onSubmit(): JsCmd = {
-    securityProvider.enforceHumanSpeed()
-    onSubmit(emailInput)
+    (
+      "#email" #> SHtml.onSubmit(emailInput = _) &
+      ":submit" #> ajaxSubmitOnClick(onSubmit)
+    )
   }
 
-  def onSubmit(emailInput: String): JsCmd = {
+  def perform(emailInput: String): JsCmd = {
     val email = Validator.email.correct(emailInput)
     daoProvider.withTransaction(dao =>
       Dao.withTransactionLevel(dao, Connection.TRANSACTION_SERIALIZABLE) {
@@ -46,7 +48,7 @@ class ResetPassword1 extends SingleOpStatefulSnippet {
             ifValid(Validator.email.validate(email))(_ => jsEmailSent)
 
           case Some((u@UserRegistrationInfo(_, _, _, None), _)) =>
-            send(email, (new Register1).performPreRegistation(u, dao))
+            send(email, Register1.performPreRegistation(u, dao))
 
           case Some((UserRegistrationInfo(id, _, _, Some(_)), ResetPasswordInfo(Some(token), Some(issued)))) if !isTokenExpired(issued) =>
             send(email, reuseToken(id, token, dao))
@@ -60,7 +62,7 @@ class ResetPassword1 extends SingleOpStatefulSnippet {
     jsEmailSent
   }
 
-  def jsEmailSent: JsCmd =
+  val jsEmailSent: JsCmd =
     jsClearError & JqExpr("#resetpw1Form,#resetpwTokenSent") ~> JqToggle
 
   private def issueNewToken(id: UserId, dao: DaoT): MailContent = {
