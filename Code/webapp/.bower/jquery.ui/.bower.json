@@ -1,0 +1,14 @@
+{
+  "name": "jquery.ui",
+  "homepage": "https://github.com/jquery/jquery-ui",
+  "version": "1.10.3",
+  "_release": "1.10.3",
+  "_resolution": {
+    "type": "version",
+    "tag": "1.10.3",
+    "commit": "457b275880b63b05b16b7c9ee6c22f29f682ebc8"
+  },
+  "_source": "git://github.com/jquery/jquery-ui.git",
+  "_target": "~1.10",
+  "_originalSource": "jquery.ui"
+}

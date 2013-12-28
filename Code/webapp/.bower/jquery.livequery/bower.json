@@ -1,0 +1,39 @@
+{
+  "name": "jquery.livequery",
+  "version": "1.3.6",
+  "homepage": "https://github.com/hazzik/livequery",
+  "author": {
+    "name": "Brandon Aaron",
+    "email": "brandon.aaron@gmail.com",
+    "url": "http://brandonaaron.net/"
+  },
+  "maintainers": [
+    {
+      "name": "Alexander I. Zaytsev",
+      "email": "hazzik@gmail.com",
+      "url": "http://hazzik.ru"
+    }
+  ],
+  "description": "Live Query utilizes the power of jQuery selectors by firing callbacks for matched elements auto-magically, even after the page has been loaded and the DOM updated.",
+  "keywords": [
+    "jquery",
+    "live",
+    "query",
+    "livequery",
+    "dom",
+    "dom-mutation",
+    "dom-events",
+    "new-elements"
+  ],
+  "licenses": [ "MIT", "GPLv2" ],
+  "dependencies": {
+    "jquery": ">=1.3"
+  },
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

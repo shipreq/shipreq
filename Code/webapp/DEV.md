@@ -1,19 +1,3 @@
-Javascript
-==========
-
-Javascript is stored in both `src/main/javascript` and `src/main/webapp/js`, the difference being that the former gets
-run through Google Closure and the latter is used as-is.
-
-When `sbt compile` or `sbt js` is run, Google Closure is used to transform the JS in `src/main/javascript`.
-It aggregates via directives `// require "xxx.js"`, and minimises.
-The results are saved to `target/scala-2.10/resource_managed/main/js/`
-
-From the webapp, all Javascript lives in `/js`.
-Examples:
-    `src/main/javascript/project.js`      --> `/js/project.js'
-    `src/main/webapp/js/vendor/jquery.js` --> `/js/vendor/jquery.js'
-
-
 Security
 ========
 

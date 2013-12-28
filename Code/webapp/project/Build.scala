@@ -43,26 +43,10 @@ object B extends Build {
   def intellijSettings = (p: Project) => p.settings(
     ideaExcludeFolders := List(
       ".idea", ".idea_modules", ".sass-cache", ".settings", "WEB-INF", "_scalate", "vendor",
-      "src/main/webapp/WEB-INF/_scalate", "src/main/javascript/vendor",
+      "node_modules", ".bower",
+      "src/main/webapp/WEB-INF/_scalate",
       "src/main/webapp/css/vendor", "src/main/webapp/js/vendor")
   )
-
-  def javascriptSettings = (p: Project) => {
-    import com.untyped.sbtjs.Plugin._
-    p.settings(jsSettings: _*)
-    .settings(
-      // Minify JS as part of compile task
-      (compile in Compile) <<= compile in Compile dependsOn (JsKeys.js in Compile),
-      // Minify JS in src/main/javascript
-      (sourceDirectory in (Compile, JsKeys.js)) <<= (sourceDirectory in Compile)(_ / "javascript"),
-      // Put minified JS in js/
-      (resourceManaged in (Compile,JsKeys.js)) <<= (resourceManaged in Compile)( _ / "js"),
-      // Put Javascript in WAR root
-      (webappResources in Compile) <+= (resourceManaged in Compile)
-      // Puts Javascript in WEB-INF/classes
-      // (resourceGenerators in Compile) <+= (JsKeys.js in Compile)
-    )
-  }
 
   lazy val releaseMode: Boolean = {
     val mode = System.getProperty("MODE", "").trim
@@ -115,7 +99,6 @@ object B extends Build {
       buildPropertyFileGeneration,
       eclipseSettings,
       intellijSettings,
-      javascriptSettings,
       if (releaseMode) releaseSettings else debugSettings,
       warSettings,
       testSettings,

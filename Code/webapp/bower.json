@@ -1,0 +1,16 @@
+{
+  "name": "shipreq",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "bootstrap": "~3.0",
+    "jquery": ">=1.10 <2.0",
+    "jquery-autosize": "*",
+    "jquery-timeago": "*",
+    "jquery-rangyinputs": "https://github.com/timdown/rangyinputs.git",
+    "zeroclipboard": "*",
+    "jquery.livequery": "*",
+    "mousetrap": "*",
+    "jquery.ui": "~1.10"
+  }
+}

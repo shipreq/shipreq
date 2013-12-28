@@ -1,5 +1,7 @@
 #!/bin/bash
 cd "$(dirname "$0")"
-bin/generate-css.sh
+grunt
+echo
+git st .
 echo
 sbt -DMODE=release clean package test

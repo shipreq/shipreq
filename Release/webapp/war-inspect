@@ -6,5 +6,5 @@ f="$(dirname "$0")/webapps/shipreq.war"
 
 stat -L -c 'Size: %s bytes.' "$f"
 unzip -l "$f" '*.gz' | tail -1 | awk '{print "GZ: " $2 " files => " $1 " bytes." }'
-unzip -p "$f" build.properties | sort
+unzip -p "$f" WEB-INF/classes/build.properties | sort
 

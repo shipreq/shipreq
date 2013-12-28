@@ -1,11 +1,18 @@
 Getting Started
 ===============
 
-### Building
+### Libraries
 
 * Building local fork of Lift.
     Check out git@github.com:japgolly/framework.git or git://github.com/japgolly/framework.git somewhere.
     ./golly
+
+### Client-Side Tooling
+
+* yaourt -S --needed --noconfirm nodejs-{bower,grunt-cli}
+* npm install
+* bower list
+* grunt
 
 ### Database
 
@@ -37,8 +44,30 @@ Getting Started
 * Generate IDEA files
     sbt gen-idea
 
+
 Running and Developing
 ======================
+
+### Client-Side
+
+* 3rd-Party Dependency Updates
+  1. bower list
+  2. bower update
+  3. grunt
+
+* New 3rd-Party Dependencies
+  1. Edit bower.json
+  2. bower install
+  3. Edit Gruntfile.js
+  4. grunt
+
+* Javascript Updates
+  1. grunt js
+
+* Stylesheet Updates
+  1. grunt css
+
+### Server-Side
 
 * Start WebServer
     sbt
@@ -51,19 +80,15 @@ Running and Developing
     sbt
     ~; container:start; container:reload /
 
-* Stylesheet changes
-  1. Edit SASS in src/main/sass
-  2. Run `bin/generate-css.sh`
-  3. Optionally spot-check new CSS in src/main/webapp/assets
+* Build WAR file
+    sbt package
+
 
 Testing
 =======
 
-* Running quick tests
+* Running tests
     sbt test
-
-* Running Selenium tests
-    sbt selenium:test
 
 * Running JS tests
     Load `src/test/javascript/tests.html` in a browser.
