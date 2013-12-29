@@ -20,14 +20,14 @@ module.exports = function(grunt) {
     cfg: {
       css: {
         src: 'src/main/styles',
-        out: 'src/main/webapp/css',
+        out: 'src/main/webapp/assets',
         tmp: 'target/css',
         bootstrap_cust: 'vendor/boostrap.css',
         app_only: '<%= cfg.css.tmp %>/app-only.css',
       },
       js: {
         src: 'src/main/javascript',
-        out: 'src/main/webapp/js',
+        out: 'src/main/webapp/assets',
         tmp: 'target/js',
       },
     },
@@ -41,15 +41,20 @@ module.exports = function(grunt) {
       tmp: ['<%= cfg.js.tmp %>', '<%= cfg.css.tmp %>'],
 
       // Delete previously-generated CSS
-      css: ['<%= cfg.css.out %>'],
+      css: {
+        expand: true,
+        cwd: '<%= cfg.css.out %>',
+        src: ['**/*.css', '!vendor/**/*'],
+        filter: 'isFile',
+      },
 
       // Delete previously-generated JS
       js: {
         expand: true,
         cwd: '<%= cfg.js.out %>',
-        src: ['**/*', '!vendor/mathjax/**/*', '!vendor/viz.js', '!vendor/jquery.js', '!vendor/ZeroClipboard.swf'],
+        src: ['**/*.js', '!vendor/**/*'],
         filter: 'isFile',
-      }
+      },
     },
 
     // *****************************************************************************************************************
@@ -58,8 +63,8 @@ module.exports = function(grunt) {
       // Copies required 3rd-party files
       vendor: {
         files: [
-          {dest:'src/main/webapp/js/vendor/jquery.js',         src:'.bower/jquery/jquery.min.js',            nonull:true},
-          {dest:'src/main/webapp/js/vendor/ZeroClipboard.swf', src:'.bower/zeroclipboard/ZeroClipboard.swf', nonull:true},
+          {src:'.bower/jquery/jquery.min.js', dest:'<%= cfg.js.out %>/vendor/jquery.js', nonull:true},
+          {src:'.bower/zeroclipboard/ZeroClipboard.swf', dest:'src/main/webapp/assets/vendor/ZeroClipboard.swf', nonull:true},
         ]
       },
     },

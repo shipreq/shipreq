@@ -18,8 +18,7 @@
     </servlet>
     <servlet-mapping>
         <servlet-name>static</servlet-name>
-        <url-pattern>/css/*</url-pattern>
-        <url-pattern>/js/*</url-pattern>
+        <url-pattern>/assets/*</url-pattern>
     </servlet-mapping>
 
     <!-- =========================================================================================================== -->

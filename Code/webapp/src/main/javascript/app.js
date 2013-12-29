@@ -122,7 +122,7 @@ function isVisible(e) {
 
 function setupViz(callback) {
     if (typeof(VizWorker) == 'undefined') {
-        VizWorker = new Worker('/js/viz-worker.js')
+        VizWorker = new Worker('/assets/viz-worker.js')
         VizWorker.onmessage = function(ev) {
             var d = ev.data
             $(d.tgt).html(d.svg)

@@ -1,6 +1,6 @@
 // require "vendor/ZeroClipboard.js"
 
-ZeroClipboard.setDefaults( { moviePath: '/js/vendor/ZeroClipboard.swf' } );
+ZeroClipboard.setDefaults( { moviePath: '/assets/vendor/ZeroClipboard.swf' } );
 clip = new ZeroClipboard( $("[data-clipboard-text], [data-clipboard-target]") );
 
 clip.on( 'complete', function ( client, args ) {
