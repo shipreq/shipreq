@@ -33,10 +33,14 @@ module.exports = function(grunt) {
     },
 
     // *****************************************************************************************************************
+    // TODO should be able to delete ALL vendor stuff
     clean: {
 
       // Delete temp dirs
       tmp: ['<%= cfg.js.tmp %>', '<%= cfg.css.tmp %>'],
+
+      // Delete MathJax copy
+      mathjax: ['src/main/webapp/assets/vendor/mathjax'],
 
       // Delete previously-generated CSS
       css: {
@@ -64,6 +68,25 @@ module.exports = function(grunt) {
           {src:'.bower/jquery/jquery.min.js', dest:'<%= cfg.js.out %>/vendor/jquery.js', nonull:true},
           {src:'.bower/zeroclipboard/ZeroClipboard.swf', dest:'src/main/webapp/assets/vendor/ZeroClipboard.swf', nonull:true},
         ]
+      },
+
+      // Copies MathJax files
+      mathjax: {
+        files: [{
+          expand: true,
+          cwd: 'vendor/MathJax-2.2',
+          src: [
+            'extensions/**/*',
+            'fonts/HTML-CSS/**/*', '!fonts/HTML-CSS/TeX/png/**/*', '!fonts/HTML-CSS/TeX/svg/**/*',
+            'images/**/*',
+            'jax/element/**/*',
+            'jax/input/TeX/**/*',
+            'jax/output/HTML-CSS/**/*',
+            'localization/en/**/*',
+            'MathJax.js',
+          ],
+          dest: 'src/main/webapp/assets/vendor/mathjax',
+        }]
       },
     },
 
@@ -218,13 +241,11 @@ module.exports = function(grunt) {
   // *******************************************************************************************************************
   // Task definitions
 
-  // Task #0: clean
-  // Task #2: js     - Builds js. Run whenever homemade js changes.
-  // Task #3: css    - Builds css. Run whenever homemade css changes.
-  grunt.registerTask('vendor' , ['copy:vendor','less:bootstrap'                          ]);
-  grunt.registerTask('js'     , ['clean:js'   ,'concat:js'     ,'uglify'                 ]);
-  grunt.registerTask('css'    , ['clean:css'  ,'sass'          ,'concat:app_css','cssmin']);
-  grunt.registerTask('default', ['clean:tmp'  ,'vendor'        ,'js'            ,'css'   ]);
+  grunt.registerTask('vendor' , ['copy:vendor'  ,'less:bootstrap'                        ]);
+  grunt.registerTask('mathjax', ['clean:mathjax','copy:mathjax'                          ]);
+  grunt.registerTask('js'     , ['clean:js'     ,'concat:js'   ,'uglify'                 ]);
+  grunt.registerTask('css'    , ['clean:css'    ,'sass'        ,'concat:app_css','cssmin']);
+  grunt.registerTask('default', ['clean:tmp'    ,'vendor'      ,'js'            ,'css'   ]);
 };
 
 // vim:sw=2 ts=2 et:
