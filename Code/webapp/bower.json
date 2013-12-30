@@ -12,6 +12,7 @@
     "jquery.livequery": "*",
     "mousetrap": "*",
     "jquery.ui": "~1.10",
-    "qunit": "*"
+    "qunit": "*",
+    "syn": "~3.3.1"
   }
 }
