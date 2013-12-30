@@ -31,7 +31,7 @@ module.exports = function(grunt) {
         tmp: 'target/js',
       },
       mathjax: {
-        src: 'vendor/MathJax-2.2',
+        src: '.bower/MathJax',
         out: 'src/main/webapp/assets/vendor/mathjax',
       },
     },

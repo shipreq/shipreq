@@ -13,6 +13,7 @@
     "mousetrap": "*",
     "jquery.ui": "~1.10",
     "qunit": "*",
-    "syn": "~3.3.1"
+    "syn": "*",
+    "MathJax": "*"
   }
 }
