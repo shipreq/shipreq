@@ -32,8 +32,6 @@ module.exports = function(grunt) {
       },
     },
 
-    // TODO ZeroClipboard.swf shouldn't be in js/vendor
-
     // *****************************************************************************************************************
     clean: {
 
@@ -193,6 +191,25 @@ module.exports = function(grunt) {
           src: ['**/*.css'],
           ext: '.css',
         }]
+      },
+    },
+
+    // *****************************************************************************************************************
+    watch: {
+      options: {
+        spawn: false,
+      },
+      bootstrap_less: {
+        files: ['<%= cfg.css.src %>/bootstrap.less'],
+        tasks: ['less:bootstrap','css'],
+      },
+      css: {
+        files: ['<%= cfg.css.src %>/**/*.s?ss'],
+        tasks: ['css'],
+      },
+      js: {
+        files: ['<%= cfg.js.src %>/**/*.js'],
+        tasks: ['js'],
       },
     },
 

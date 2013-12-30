@@ -61,11 +61,11 @@ Running and Developing
   3. Edit Gruntfile.js
   4. grunt
 
-* Javascript Updates
-  1. grunt js
+* JS & CSS Development
 
-* Stylesheet Updates
-  1. grunt css
+Simply run `grunt watch` and edit away.
+To build manually, run `grunt js` or `grunt css`.
+
 
 ### Server-Side
 
