@@ -253,8 +253,17 @@ module.exports = function(grunt) {
       },
       js: {
         files: ['<%= cfg.js.src %>/**/*.js'],
-        tasks: ['js'],
+        tasks: ['js','qunit'],
       },
+      qunit: {
+        files: ['src/test/javascript/**/*'],
+        tasks: ['qunit'],
+      },
+    },
+
+    // *****************************************************************************************************************
+    qunit: {
+      all: ['src/test/javascript/**/*.html'],
     },
 
   });
@@ -266,8 +275,10 @@ module.exports = function(grunt) {
   grunt.registerTask('mathjax', ['clean:mathjax','copy:mathjax','uglify:mathjax'         ]);
   grunt.registerTask('js'     , ['clean:js'     ,'concat:js'   ,'uglify:own'             ]);
   grunt.registerTask('css'    , ['clean:css'    ,'sass'        ,'concat:app_css','cssmin']);
-  grunt.registerTask('default', ['clean:tmp'    ,'vendor'      ,'js'            ,'css'   ]);
-  grunt.registerTask('all'    , ['mathjax'      ,'default'                               ]);
+  grunt.registerTask('test'   , ['qunit'                                                 ]);
+
+  grunt.registerTask('default', ['clean:tmp','vendor','js','css','test']);
+  grunt.registerTask('all'    , ['mathjax','default']);
 };
 
 // vim:sw=2 ts=2 et:

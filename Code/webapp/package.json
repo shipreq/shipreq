@@ -10,6 +10,7 @@
     "grunt-contrib-jshint": "*",
     "grunt-contrib-less": "*",
     "grunt-contrib-sass": "*",
+    "grunt-contrib-qunit": "*",
     "grunt-contrib-uglify": "*",
     "grunt-contrib-watch": "*",
     "matchdep": "*"

@@ -1,3 +1,8 @@
+// https://github.com/ariya/phantomjs/issues/10427
+function filterFocus(e) {
+    return $(e).filterE(function(e){ return e === document.activeElement })
+}
+
 function setupViz() {} // Shadow this out. WebWorkers not allowed from localhost.
 function updatePageTitle() {} // Shadow this out. I like my test title.
 jQuery.fx.off = true
@@ -51,9 +56,15 @@ function fail(msg) {ok(false, msg)}
 
 //function assertConsumesEvent(fn){ equal(fn(), false, "Event handler should return false to consume event.") }
 
+function assertNoFocus(msg) {
+    if (!msg) msg = "Nothing should be focused."
+    var somethingHasFocus = document.activeElement && document.activeElement.tagName.toLowerCase() != 'body'
+    equal(somethingHasFocus, false, msg)
+}
+
 function assertFocus(element, expected, msg) {
     if (!msg) msg = "Element should " + (expected ? "" : "not ") + "have focus."
-    equal($(element).is(':focus'), expected, msg)
+    equal($(element)[0] === document.activeElement, expected, msg)
 }
 
 function setFocus(elementId) {
@@ -159,10 +170,11 @@ test("stepRootOfLabel", testEach(ids, function(e) {
 // ---------------------------------------------------------------------------------------------------------------------
 
 stdModule("Keyboard shortcuts")
+
 function testFocusChange(name, fn, from, to) {
     test(name, function(){
         assertLosesFocus(from, fn)
-        equal( $id(to).is(':focus'), true, "Target didn't get focus." )
+        assertFocus($id(to), true, "Target didn't get focus.")
     })
 }
 testFocusChange("[Alt + Down] Move focus to next", onAltDown, ids.s_1_0.txt, ids.s_1_0_1.txt)
@@ -170,7 +182,7 @@ testFocusChange("[Alt + Up] Move focus to previous",  onAltUp, ids.s_1_0.txt, id
 
 test("[Esc] Drops focus", function(){
     assertLosesFocus(ids.s_1_0.txt, onEscape)
-    equal( $(':focus').length, 0, "Nothing should have focus." )
+    assertNoFocus()
 })
 
 test("[Alt + Enter] Creates a new step when a step is selected", function() {
@@ -227,13 +239,17 @@ function assertTypingMode(on) {
     else equal(v, false, "Typing-mode should be off.")
 }
 
-/** Types a string of text into the target element. */
+// Types a string of text into the target element.
 function type(tgt, str) {
     for (var i = 0; i < str.length; i++) Syn.type(str[i], tgt)
 }
-/** Press a bunch of special keys. */
+// Press a bunch of special keys.
 function pressEach(tgt, keyArray) {
     for (var i = 0; i < keyArray.length; i++) Syn.type("["+keyArray[i]+"]", tgt)
+}
+
+function click(id) {
+    Syn.click({}, id)
 }
 
 var Left = "left"
@@ -274,7 +290,7 @@ test("Clicking a label should insert a reference when typing", function(){
         type(e, inputText)
         pressEach(e, keysBeforeClick)
         assertTypingMode(true)
-        Syn.click({}, ids.s_1_0_2.lbl)
+        click(ids.s_1_0_2.lbl)
         equal(e.val(), afterText.replace('*', '[1.0.2]'), "Text has reference.")
         assertFocus(e, true)
         equal(liftAjax.log.length, 0, "There should be no AJAX requests.")
@@ -289,8 +305,8 @@ test("Label detection should work after a step label change", function(){
     var i = ids.s_1_0_3
     var e = setFocus(i.txt)
     e.val("")
-    Syn.click({}, i.lbl)
-    equal(e.val(), '[1.0.3]', "Text has reference.")
+    click(i.lbl)
+    equal(e.val(), '[1.0.3]', "Click should have inserted a reference.")
     e.blur()
 
     // Mock indent-decrease
@@ -300,7 +316,7 @@ test("Label detection should work after a step label change", function(){
 
     e.val("")
     setFocus(i.txt)
-    Syn.click({}, i.lbl)
+    click(i.lbl)
     equal(e.val(), '[1.1]', "Text has correct reference.")
 })
 

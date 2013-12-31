@@ -69,6 +69,15 @@ function isVisible(e) {
     return $(e).filter(':visible').css('visibility') != 'hidden'
 }
 
+/**
+ * Filter's a jQuery selection so that only the element with focus is selected.
+ * Tests will override this due to an issue in PhantomJS.
+ *   https://github.com/ariya/phantomjs/issues/10427
+ */
+function filterFocus(e) {
+    return $(e).filter(':focus')
+}
+
 (function ($) {
     // JQuery's filter() provides the index as the fn arg. This uses the element.
     $.fn.filterE = function (fn) {

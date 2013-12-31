@@ -138,7 +138,7 @@ function nextEditorTextInput(elementId) { return editorTextInputSibling(elementI
  *
  * @return HTMLTextAreaElement
  */
-function focusedEditorTextInput() { return allEditorTextInputsQ().filter(':focus')[0] }
+function focusedEditorTextInput() { return filterFocus(allEditorTextInputsQ())[0] }
 
 // =====================================================================================================================
 // FlowGraph rendering
