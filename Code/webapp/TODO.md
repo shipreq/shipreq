@@ -32,13 +32,16 @@ FUNC TODO
 TECH TODO
 =========
 
+* [S.4.5=9] [    ] Google Analytics
 * [S.3.5=8] [PERF] Add proper DB indexes.
 * [S.0.5=5] [BUG ] When fields are loaded but no FV exists, fields should be cleared. (Will affect in-place loading.)
 * [S.1.3=4] [PERF] Textareas' blur shouldn't send a request when input doesn't change.
 * [S.0.3=3] [SEC ] Secure /diag endpoints.
+* [S.0.2=2] [PERF] Serve robots.txt via HTTP.
 
 * [C.2.0=2] [PERF] DAO should cache certain actions and execute in bulk.
 * [C.1.1=2] [DEMO] Show flow deletion in flow demo.
+* [C.0.1=1] [SEC ] Add a HSTS header (HTTP Strict Transport Security)
 * [C.0.1=1] [PERF] Shiro caching.
 * [C.0.0=0] [TEST] Shutdown Jetty et al in SBT hook.
 
