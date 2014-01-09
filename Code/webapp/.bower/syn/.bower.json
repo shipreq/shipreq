@@ -40,7 +40,6 @@
     "commit": "f93c35829044e599b00bdc5b2c4a63a73a98e6a6"
   },
   "_source": "git://github.com/bitovi/syn.git",
-  "_target": "~3.3.1",
-  "_originalSource": "syn",
-  "_direct": true
+  "_target": "*",
+  "_originalSource": "syn"
 }

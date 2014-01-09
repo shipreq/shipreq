@@ -1,3 +1,18 @@
+1.13.0 / 2014-01-04
+==================
+
+  * Tests: Stop using the expected argument in test() calls
+  * Logging: Add runtime property to testDone, deprecate duration
+  * Assert: Remove raises (deprecated 2012), replace with failed assertion
+  * Grunt: Add non-browser test as grunt task. Runs existing tests in node.
+  * Export: Only export to the variable that we check for.
+  * Core: Properly check for existence of document
+  * Core: Remove triggerEvent, which isn't used or documented anywhere.
+  * Core: Silence addEvent in non-browser env
+  * The Grand QUnit Split of 2013
+  * Use `id` function for selection elements in two places that were not using it. Closes gh-463
+  * Add bower.json. Fixes #461
+
 1.12.0 / 2013-06-21
 ===================
 
