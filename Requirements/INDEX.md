@@ -1,34 +1,34 @@
-Project Start
-=============
+`study-software_requirements_2ed.md`
+  * Summary of entire requirements process described in Software Requirements (2nd Edition).
 
-`UCE-HighLevelReq.ods`
+Phase #1: Project Start
+=======================
+
+`phase-1/UCE-HighLevelReq.ods`
   * Envisioned models and functions for UCE 1.0.
   * Incomplete and differs from actual 1.0: -shares, +quotas, +subscriptions.
 
-`UCE-UCs.ods`
+`phase-1/UCE-UCs.ods`
   * Use cases for UCE 1.0.
   * Massively incomplete. Abandoned due to frustrations of manual UC authoring.
 
-`UCE-mockups.ods`
+`phase-1/UCE-mockups.ods`
   * UI mockups for UCE 1.0.
   * Massively incomplete. Abandoned.
 
-`process.md`
-  * Summary of entire requirements process described in Software Requirements (2nd Edition).
-
-`requirements-all.md`
+`phase-1/requirements-all.md`
   * Brainstorm of all envisioned features.
   * Benefits of product.
   * Quality attributes.
 
-`requirements-shortlist.md`
+`phase-1/requirements-shortlist.md`
   * Feature subset under consideration.
 
-`use_case_editor.md`
+`phase-1/use_case_editor.md`
   * Imagined UCE prototype.
 
-Post UCE 1.0
-============
+Phase #2: Post UCE 1.0
+======================
 
 `feature-organisation.ods`
   * Supplimental analysis of the organisation feature. Contains:
