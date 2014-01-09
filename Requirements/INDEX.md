@@ -40,9 +40,8 @@ Phase #2: Post UCE 1.0
   * Version and analysis/impl status for each feature.
   * Analysis of feature intersection.
 
-`prelim-nnn.odt`
-  * Preliminary requirements gathering interviews.
-  * Actually: elicitation, analysis.
+`interview-nnn.odt`
+  * Requirements gathering interviews. (prelim & elicitation)
 
 `project-attributes.ods`
   * Top 5 project attributes.
@@ -51,4 +50,4 @@ Phase #2: Post UCE 1.0
 
 `reqs.ods`
   * Intermediary location of requirements analysis.
-  * Extraction of initial requirements from `prelim-nnn` files.
+  * Extraction of initial requirements from `interview-nnn` files.
