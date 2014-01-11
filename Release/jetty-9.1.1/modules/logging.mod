@@ -6,7 +6,7 @@
 etc/jetty-logging.xml
 
 [files]
-logs/
+#logs/
 
 [ini-template]
 ## Logging Configuration

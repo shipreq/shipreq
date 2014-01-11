@@ -9,7 +9,7 @@ server
 etc/jetty-requestlog.xml
 
 [files]
-logs/
+#logs/
 
 [ini-template]
 ## Request Log Configuration
