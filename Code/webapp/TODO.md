@@ -4,6 +4,7 @@ FUNC TODO
 =========
 
 * [M.2.5=7] [LEGL] Add terms of service.
+* [M.2.4=6] [UX  ] Mark or remove buttons/links to unimplemented functionality.
 * [M.3.2=5] [PROJ] Delete use cases.
 * [M.0.5=5] [UCE ] Unicode flow arrows didn't work on Dad's computer.
 
