@@ -46,9 +46,6 @@ class Boot {
     // Register route whitelist
     LiftRules.setSiteMap(AppSiteMap.sitemap)
 
-    // Use HTML5 for rendering
-    LiftRules.htmlProperties.default.set((r: Req) => new Html5Properties(r.userAgent))
-
     // Force requests to be UTF-8
     LiftRules.early.append(_ setCharacterEncoding "UTF-8")
 
