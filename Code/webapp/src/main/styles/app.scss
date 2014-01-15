@@ -344,6 +344,14 @@ html, body { height: 100% } // Cannot have any padding or margin here
         .ind th {font-weight:normal}
         .ind td {padding-left:1.2ex}
         .highlight {_font-weight:bold; background:#ffc}
+        .flow {
+          font-family: _dejavu;
+          * {
+            // Refs needn't use DejaVu
+            // This should use the same value as in bootstrap-vars.less
+            font-family: Arimo, Arial, 'Arial Unicode MS', 'Helvetica Neue', Helvetica, sans-serif;
+          }
+        }
       }
     }
   }

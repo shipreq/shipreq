@@ -152,7 +152,12 @@ class About {
     Attribution("PostgreSQL JDBC driver",
       "http://jdbc.postgresql.org/",
       Some(Text("Copyright (c) 1997-2011, PostgreSQL Global Development Group.")),
-      Set (BSD_3))
+      Set(BSD_3))
+    ,
+    Attribution("DejaVu fonts",
+      "http://dejavu-fonts.org/",
+      Some(<xml:group>Copyright © 2003 by Bitstream, Inc. All Rights Reserved. Bitstream Vera is a trademark of Bitstream, Inc. Glyphs imported from <a href="http://dejavu-fonts.org/wiki/Bitstream_Vera_derivatives#Arev_Fonts">Arev fonts</a> are copyright © 2006 by Tavmjong Bah. All Rights Reserved.</xml:group>),
+      Set.empty)
     )
 
     val renderedRows = alist.sortBy(_.name.toLowerCase).map(_.render)

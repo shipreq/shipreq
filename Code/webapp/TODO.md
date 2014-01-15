@@ -4,7 +4,6 @@ FUNC TODO
 =========
 
 * [M.2.5=7] [LEGL] Add terms of service.
-* [M.0.5=5] [UCE ] Unicode flow arrows didn't work on Dad's computer.
 
 * [S.5.4=9] [UA  ] Allow users to provide feedback.
 * [S.2.5=7] [UCE ] Step is lost if accidentally deleted. No undo.
