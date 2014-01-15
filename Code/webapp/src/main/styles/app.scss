@@ -387,3 +387,17 @@ blockquote.rndquote {
     }
   }
 }
+
+.browser-warning {
+  .t {
+    padding: 4px;
+    width: 100%;
+    background: #ff9;
+    font-size: 1.25em;
+  }
+  a {
+    color: #d00;
+  }
+  margin: 1ex;
+  border: solid 1px #cdcd75;
+}

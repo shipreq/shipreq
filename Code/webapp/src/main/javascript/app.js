@@ -333,4 +333,10 @@ $(document).ready(function(){
     $('.unimplemented').click(function(){
         alert("Sorry. This action isn't available yet.\n\nIt will be enabled in a future update of this site.");
     });
+
+    // Add a warning about untested browsers
+    if (!navigator.userAgent.match(/Chrome|Firefox/i))
+        $('body').prepend(
+            '<div class="browser-warning"><div class="t"><strong>WARNING:</strong> This site has so far only been tested on <a href="//www.google.com/chrome">Chrome</a> and <a href="//www.mozilla.org/en-US/firefox">Firefox</a>. Your browser may not display this site properly.</div></div>'
+        );
 })
