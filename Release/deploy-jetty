@@ -4,7 +4,10 @@
 
 cd "$(dirname "$0")"
 
+jetty=$(ls -1 | egrep '^jetty-9.*' | sort | tail -1)
+[ ! -e "$jetty" ] && echo "Jetty not found: $jetty" && exit 2
+
 rsync -vzrRlptSihOJ --skip-compress=jar \
   --exclude={jetty.pid,jetty.state,demo-base,log,work,'*.war','.*.sw?',production.golly.props,'*localhost*'} \
-  jetty-9.1.0 webapp $(<username)@"$1":
+  $jetty webapp $(<username)@"$1":
 
