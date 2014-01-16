@@ -13,6 +13,8 @@ FUNC TODO
 * [S.0.5=5] [FAIL] Robustness: Handle DB going down.
 * [S.0.3=3] [ACCT] Change email.
 * [S.0.2=2] [ACCT] Delete account.
+* [S.0.2=2] [UX  ] Page for 404 errors.
+* [S.0.2=2] [UX  ] Page for 5xx errors.
 
 * [C.3.4=7] [ACCT] Add JS validation to register2 (ie. account creation).
 * [C.2.4=6] [UCE ] Make step labels fade into links when clickable, else users wont know to click.
