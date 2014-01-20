@@ -89,7 +89,7 @@ test( "allow form submit on enter when menu is not active", function() {
 	test( "down arrow moves focus - contenteditable", function() {
 		arrowsMoveFocus( "#autocomplete-contenteditable", false );
 	});
-	
+
 	test( "up arrow moves cursor - input", function() {
 		arrowsNavigateElement( "#autocomplete", true, false );
 	});
@@ -144,7 +144,7 @@ test( "allow form submit on enter when menu is not active", function() {
 		element.autocomplete( "search" );
 		element.simulate( "keydown", { keyCode: ( isKeyUp ? $.ui.keyCode.UP : $.ui.keyCode.DOWN ) } );
 	}
-	
+
 	function arrowsNavigateElement( id, isKeyUp, shouldMove ) {
 		expect( 1 );
 
@@ -190,6 +190,34 @@ asyncTest( "handle race condition", function() {
 			"correct results displayed" );
 		start();
 	}
+});
+
+asyncTest( "simultaneous searches (#9334)", function() {
+	expect( 2 );
+	var element = $( "#autocomplete" ).autocomplete({
+			source: function( request, response ) {
+				setTimeout(function() {
+					response([ request.term ]);
+				});
+			},
+			response: function() {
+				ok( true, "response from first instance" );
+			}
+		}),
+		element2 = $( "#autocomplete-textarea" ).autocomplete({
+			source: function( request, response ) {
+				setTimeout(function() {
+					response([ request.term ]);
+				});
+			},
+			response: function() {
+				ok( true, "response from second instance" );
+				start();
+			}
+		});
+
+	element.autocomplete( "search", "test" );
+	element2.autocomplete( "search", "test" );
 });
 
 test( "ARIA", function() {

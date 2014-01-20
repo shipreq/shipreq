@@ -2,7 +2,7 @@
  * jQuery UI Tabs @VERSION
  * http://jqueryui.com
  *
- * Copyright 2013 jQuery Foundation and other contributors
+ * Copyright 2014 jQuery Foundation and other contributors
  * Released under the MIT license.
  * http://jquery.org/license
  *
@@ -22,6 +22,10 @@ function getNextTabId() {
 }
 
 function isLocal( anchor ) {
+	// support: IE7
+	// IE7 doesn't normalize the href property when set via script (#9317)
+	anchor = anchor.cloneNode( false );
+
 	return anchor.hash.length > 1 &&
 		decodeURIComponent( anchor.href.replace( rhash, "" ) ) ===
 			decodeURIComponent( location.href.replace( rhash, "" ) );
@@ -150,7 +154,6 @@ $.widget( "ui.tabs", {
 	},
 
 	_tabKeydown: function( event ) {
-		/*jshint maxcomplexity:15*/
 		var focusedTab = $( this.document[0].activeElement ).closest( "li" ),
 			selectedIndex = this.tabs.index( focusedTab ),
 			goingForward = true;
@@ -438,7 +441,7 @@ $.widget( "ui.tabs", {
 
 	// allow overriding how to find the list for rare usage scenarios (#7715)
 	_getList: function() {
-		return this.element.find( "ol,ul" ).eq( 0 );
+		return this.tablist || this.element.find( "ol,ul" ).eq( 0 );
 	},
 
 	_createPanel: function( id ) {

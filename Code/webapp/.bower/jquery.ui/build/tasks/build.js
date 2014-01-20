@@ -2,8 +2,7 @@ module.exports = function( grunt ) {
 
 "use strict";
 
-var path = require( "path" ),
-	fs = require( "fs" );
+var fs = require( "fs" );
 
 function expandFiles( files ) {
 	return grunt.util._.pluck( grunt.file.expandMapping( files ), "src" ).filter(function(filepath) {
@@ -132,87 +131,41 @@ grunt.registerMultiTask( "copy", "Copy files to destination folder and replace @
 	}
 });
 
-
-grunt.registerMultiTask( "zip", "Create a zip file for release", function() {
-	var done = this.async(),
-		dest = this.data.dest;
-	grunt.util.spawn({
-		cmd: "zip",
-		args: [ "-r", dest, this.data.src ],
-		opts: {
-			cwd: "dist"
-		}
-	}, function( err ) {
-		if ( err ) {
-			grunt.log.error( err );
-			done();
-			return;
-		}
-		grunt.log.writeln( "Zipped " + dest );
-		done();
-	});
-});
-
-grunt.registerMultiTask( "md5", "Create list of md5 hashes for CDN uploads", function() {
-	// remove dest file before creating it, to make sure itself is not included
-	if ( fs.existsSync( this.data.dest ) ) {
-		fs.unlinkSync( this.data.dest );
-	}
-	var crypto = require( "crypto" ),
-		dir = this.filesSrc + "/",
-		hashes = [];
-	expandFiles( dir + "**/*" ).forEach(function( fileName ) {
-		var hash = crypto.createHash( "md5" );
-		hash.update( grunt.file.read( fileName, "ascii" ) );
-		hashes.push( fileName.replace( dir, "" ) + " " + hash.digest( "hex" ) );
-	});
-	grunt.file.write( this.data.dest, hashes.join( "\n" ) + "\n" );
-	grunt.log.writeln( "Wrote " + this.data.dest + " with " + hashes.length + " hashes" );
-});
-
-grunt.registerTask( "generate_themes", function() {
-	var download, done,
-		distFolder = "dist/" + grunt.template.process( grunt.config( "files.dist" ), grunt.config() ),
-		target = "dist/" + grunt.template.process( grunt.config( "files.themes" ), grunt.config() ) + "/";
-
-	try {
-		require.resolve( "download.jqueryui.com" );
-	} catch( error ) {
-		throw new Error( "You need to manually install download.jqueryui.com for this task to work" );
-	}
-
-	download = require( "download.jqueryui.com" )({
-		config: {
-			"jqueryUi": {
-				"stable": { "path": path.resolve( __dirname + "/../../" + distFolder ) }
-			},
-			"jquery": "skip"
-		}
-	});
-
-	done = this.async();
-	download.buildThemesBundle(function( error, files ) {
-		if ( error ) {
-			grunt.log.error( error );
-			return done( false );
-		}
-
-		done(
-			files.every(function( file ) {
-				try {
-					grunt.file.write( target + file.path, file.data );
-				} catch( err ) {
-					grunt.log.error( err );
-					return false;
-				}
-				return true;
-			}) && grunt.log.writeln( "Generated at " + target )
-		);
-	});
-});
-
 grunt.registerTask( "clean", function() {
 	require( "rimraf" ).sync( "dist" );
+});
+
+grunt.registerTask( "asciilint", function() {
+	var valid = true,
+		files = grunt.file.expand({ filter: "isFile" }, "ui/*.js" );
+	files.forEach(function( filename ) {
+		var i, c,
+			text = grunt.file.read( filename );
+
+		// Ensure files use only \n for line endings, not \r\n
+		if ( /\x0d\x0a/.test( text ) ) {
+			grunt.log.error( filename + ": Incorrect line endings (\\r\\n)" );
+			valid = false;
+		}
+
+		// Ensure only ASCII chars so script tags don't need a charset attribute
+		if ( text.length !== Buffer.byteLength( text, "utf8" ) ) {
+			grunt.log.error( filename + ": Non-ASCII characters detected:" );
+			for ( i = 0; i < text.length; i++ ) {
+				c = text.charCodeAt( i );
+				if ( c > 127 ) {
+					grunt.log.error( "- position " + i + ": " + c );
+					grunt.log.error( "-- " + text.substring( i - 20, i + 20 ) );
+					break;
+				}
+			}
+			valid = false;
+		}
+	});
+	if ( valid ) {
+		grunt.log.ok( files.length + " files lint free." );
+	}
+	return valid;
 });
 
 };
