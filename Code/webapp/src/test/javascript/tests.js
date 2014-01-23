@@ -322,7 +322,7 @@ test("Label detection should work after a step label change", function(){
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-stdModule('Misc')
+stdModule('UCE Misc')
 
 test("Prompts before leaving page when unsaved changes", function() {
     // Save button disabled - no unsaved changes
@@ -379,3 +379,21 @@ test("Whitelist -> All", function() {
     clickUcFilter(ids.ucFilter.all)
     testUcFilterForm(true)
 })
+
+// =====================================================================================================================
+
+stdModule('Misc')
+
+test("URL sanitisation for Google Analytics", function() {
+    equal('/', urlPathForGA('https://shipreq.com'));
+    equal('/', urlPathForGA('https://shipreq.com/'));
+    equal('/login', urlPathForGA('https://shipreq.com/login'));
+    equal('/register/___', urlPathForGA('https://shipreq.com/register/bacdefasdklj349o875dkjfsunYUGygASDF'));
+    equal('/resetpw/___', urlPathForGA('https://shipreq.com/resetpw/bacdefasdklj349o875dkjfsunYUGygASDF'));
+    equal('/project/___', urlPathForGA('https://shipreq.com/project/cUz0'));
+    equal('/project/___/read', urlPathForGA('https://shipreq.com/project/cUz0/read'));
+    equal('/usecase/___', urlPathForGA('https://shipreq.com/usecase/cUz0'));
+    equal('/share/___', urlPathForGA('https://shipreq.com/share/cUz0'));
+    equal('/share/___/edit', urlPathForGA('https://shipreq.com/share/cUz0/edit'));
+})
+
