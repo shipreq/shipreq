@@ -319,6 +319,7 @@ $(document).ready(function(){
 
     registerDomEnhancementsWithLiveQuery();
 
+    GA.setup();
     ucFilterForm.setup();
     publishedUcs.setup();
 
