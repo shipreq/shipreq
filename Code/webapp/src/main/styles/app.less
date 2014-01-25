@@ -1,3 +1,5 @@
+@charset "UTF-8";
+
 // Bootstrap fix
 .navbar-nav.navbar-right:last-child {
   margin-right: 0 !important;
@@ -7,7 +9,7 @@
 // Generic & shared
 
 // Makes width & height attributes include border and padding
-@mixin box-sizing-border {
+.mixin-box-sizing-border() {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
@@ -23,7 +25,7 @@
 .hidden2 { display: none }
 
 textarea {
-  @include box-sizing-border;
+  .mixin-box-sizing-border();
   margin-bottom: 0;
   resize: none;
   overflow: hidden; // removes scrollbars in Internet Explorer, removes blank space from firefox
@@ -67,10 +69,10 @@ time.showdate, time.showdatetime {
 // Layout
 // Taken from twitter.github.io/bootstrap/examples/sticky-footer.html
 
-$pageWidth: 780px;
-$pageMarginHoriz: 30px;
-$pageMarginTop: 4px;
-$footerHeight: 26px;
+@pageWidth: 780px;
+@pageMarginHoriz: 30px;
+@pageMarginTop: 4px;
+@footerHeight: 26px;
 
 html, body { height: 100% } // Cannot have any padding or margin here
 
@@ -78,18 +80,18 @@ html, body { height: 100% } // Cannot have any padding or margin here
 
   // Wrapper for page content to push down footer
   #ly-hdrbody {
-    @include box-sizing-border;
+    .mixin-box-sizing-border();
     min-height: 100%;
     height: auto !important;
     height: 100%;
-    padding-top: $pageMarginTop;
-    margin-bottom: $footerHeight * -1; // Negative indent footer by it's height
+    padding-top: @pageMarginTop;
+    margin-bottom: @footerHeight * -1; // Negative indent footer by it's height
   }
 
   // Footer
-  #ly-footer, #ly-footer-push { height: $footerHeight }
+  #ly-footer, #ly-footer-push { height: @footerHeight }
   #ly-footer {
-    @include box-sizing-border;
+    .mixin-box-sizing-border();
 
     background-color: #f5f5f5;
     border-top: solid 1px #ececec;
@@ -104,10 +106,10 @@ html, body { height: 100% } // Cannot have any padding or margin here
 
   // Container for the main content and footer content.
   .ly-content {
-    //	Fixed width disabled ==> width: auto; max-width: $pageWidth; margin-left: auto; margin-right: auto;
+    //	Fixed width disabled ==> width: auto; max-width: @pageWidth; margin-left: auto; margin-right: auto;
     width: auto;
-    margin-left: $pageMarginHoriz;
-    margin-right: $pageMarginHoriz;
+    margin-left: @pageMarginHoriz;
+    margin-right: @pageMarginHoriz;
   }
 
   #content {

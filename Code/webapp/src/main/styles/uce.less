@@ -1,4 +1,6 @@
-$maxStepDepth: 4;
+@charset "UTF-8";
+
+@maxStepDepth: 4;
 
 // =====================================================================================================================
 // Control rules
@@ -10,7 +12,7 @@ $maxStepDepth: 4;
 .step[data-lvl="0"] .indentDec ,
 
 // Prevent indentIncrease for deepest children
-[data-lvl="#{$maxStepDepth}"] .indentInc {
+[data-lvl="@{maxStepDepth}"] .indentInc {
 	visibility:hidden !important
 }
 

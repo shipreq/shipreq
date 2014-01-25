@@ -202,17 +202,11 @@ module.exports = function(grunt) {
         src: ['<%= cfg.css.src %>/bootstrap.less'],
         dest: '<%= cfg.css.bootstrap_cust %>',
       },
-    },
-
-    // *****************************************************************************************************************
-    // TODO sass requires ruby, just switch over to less. It's already required for bootstrap.
-    sass: {
-      options: {style: 'compact'},
 
       // Generate app.css but keep separate because it will be merged with 3rd-party CSS later
       app: {
         nonull: true,
-        src: '<%= cfg.css.src %>/app.scss',
+        src: '<%= cfg.css.src %>/app.less',
         dest: '<%= cfg.css.app_only %>',
       },
 
@@ -222,10 +216,11 @@ module.exports = function(grunt) {
           expand: true,
           cwd : '<%= cfg.css.src %>',
           dest: '<%= cfg.css.out %>',
-          src: ['**/*.s?ss', '!app.s?ss'],
+          src: ['**/*.less', '!app.less', '!bootstrap*'],
           ext: '.css',
         }]
       },
+
     },
 
     // *****************************************************************************************************************
@@ -282,11 +277,11 @@ module.exports = function(grunt) {
   // *******************************************************************************************************************
   // Task definitions
 
-  grunt.registerTask('vendor' , ['clean:vendor' ,'copy:vendor' ,'less:bootstrap'         ]);
-  grunt.registerTask('mathjax', ['clean:mathjax','copy:mathjax','uglify:mathjax'         ]);
-  grunt.registerTask('js'     , ['clean:js'     ,'concat:js'   ,'uglify:own'             ]);
-  grunt.registerTask('css'    , ['clean:css'    ,'sass'        ,'concat:app_css','cssmin']);
-  grunt.registerTask('test'   , ['qunit'                                                 ]);
+  grunt.registerTask('vendor' , ['clean:vendor' ,'copy:vendor' ,'less:bootstrap'                          ]);
+  grunt.registerTask('mathjax', ['clean:mathjax','copy:mathjax','uglify:mathjax'                          ]);
+  grunt.registerTask('js'     , ['clean:js'     ,'concat:js'   ,'uglify:own'                              ]);
+  grunt.registerTask('css'    , ['clean:css'    ,'less:app'    ,'less:other'    ,'concat:app_css','cssmin']);
+  grunt.registerTask('test'   , ['qunit'                                                                  ]);
 
   grunt.registerTask('default', ['clean:tmp','vendor','js','css','test']);
   grunt.registerTask('all'    , ['mathjax','default']);
