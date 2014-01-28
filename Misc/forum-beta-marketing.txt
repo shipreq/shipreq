@@ -1,0 +1,80 @@
+Hello,
+
+I'm working on a new requirements development and management tool
+that is online, modern, and a joy to use unlike a lot of existing tools in this space.
+
+It's currently in the beta phase and registrations are not open to the public.
+
+I created it because I'm unhappy with the sad state of affairs in the software industry.
+I want to do my part to improve the industry by facilitating and encouraging more requirements.
+My tools does that by ... / Unsatisfied with the existing tools I set out to write a tool that would make requirements a joy to write.
+
+Right now, it's a mean use case editor with some sharing functionality.
+Many more features are planned and will be coming soon.
+You can create a bunch of use cases.
+Once you have some use cases in the system you can create a password-protected share and give it to your clients and collegues so they can read whichever use cases you decided to share.
+
+You can see an example of what the use cases look like here:
+  Share URL: https://shipreq.com/share/LwUFLgXS
+  Password:  ShowMePlease-pr1vbeta
+
+
+You can see and use a demonstration of the use case editor here:
+  https://shipreq.com/demo/editor
+Feel free to experiment.
+
+
+It targets the area that I personally found most tedious without a good tool: use cases.
+The use case editor comes with a bunch of features that making authoring use cases fun and fast. Here are a few that I really enjoy:
+* Course step numbers are managed automatically.
+* References to other steps are validated and kept up-to-date when the step numbers change.
+* Flow between steps is super-easy to describe.
+* You get a flow-graph diagram that visualises all the paths through the use case.
+
+I would really appreciate any feedback.
+If you'd like a (free) private beta account send me a PM with your name and email address.
+
+========================================================================================================================
+2014-01-28: Vernon did "things".
+
+I'm working on a new requirements development and management tool
+that is online, modern, and a joy to use.
+
+It's currently in closed beta phase
+
+I'm unhappy with the sad state of affairs in the software industry.
+
+I want to do my part to improve the industry by facilitating and encouraging more requirements engineering.
+
+My tools does that by ... / Unsatisfied with the existing tools I set out to write a tool that would make requirements a joy to write.
+
+?????WTF
+
+It's a mean use case editor with collaboration tools.
+More features are planned and will be coming soon.
+You can create a bunch of use cases.
+Once you have some use cases in the system you can create a password-protected share and give it to your clients and collegues so they can read whichever use cases you decided to share.
+
+??No
+
+You can see an example of what the use cases look like here:
+  Share URL: https://shipreq.com/share/LwUFLgXS
+  Password:  ShowMePlease-pr1vbeta
+
+
+Interactive Demo:
+  https://shipreq.com/demo/editor
+
+
+It targets the area that I personally found most tedious without a good tool: use cases.
+The use case editor comes with a bunch of features that making authoring use cases fun and fast. Here are a few that I really enjoy:
+* Course step numbers are managed automatically.
+* References to other steps are validated and kept up-to-date when the step numbers change.
+* Flow between steps is super-easy to describe.
+* You get a flow-graph diagram that visualises all the paths through the use case.
+
+Feedback: <link>
+
+Beta Applications:
+ <link>
+
