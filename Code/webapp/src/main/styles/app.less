@@ -49,9 +49,9 @@ abbr.timeago[title] { border-bottom: none !important }
   //vertical-align: top;
   //max-width:100%;
   //width:auto;
-  max-width: 100% !important; /* Set a maximum relative to the parent */
-  width: auto\9 !important; /* IE7-8 need help adjusting responsive images */
-  //height: auto; /* Scale the height according to the width, otherwise you get stretching */
+  max-width: 100% !important; // Set a maximum relative to the parent
+  width: auto\9 !important; // IE7-8 need help adjusting responsive images
+  //height: auto; // Scale the height according to the width, otherwise you get stretching
   border: 0;
   //display: block;
   -ms-interpolation-mode: bicubic;
@@ -64,6 +64,11 @@ time.showdate, time.showdatetime {
   border-bottom: 1px dotted #aaa;
   //box-sizing: border-box;
   cursor: help;
+}
+
+.dropdown-menu > li {
+  text-align: left; // Is inherit by default
+  padding-right: 0; // Is inherit by default
 }
 
 // =====================================================================================================================
@@ -196,10 +201,6 @@ html, body { height: 100% } // Cannot have any padding or margin here
     padding-right: 1.6ex;
     width: 17ex
   }
-  td.l .dropdown-menu * {
-    text-align: left;
-    padding-right: 0
-  }
   td.r {
     vertical-align: top;
     padding-bottom: 2ex;
@@ -237,7 +238,7 @@ html, body { height: 100% } // Cannot have any padding or margin here
   }
   .url + .under {margin-top:0.5ex}
   .under {font-size:100%; color:#888; }
-  li {padding-top:4.4ex}
+  .share {padding-top:4.4ex}
   table {width:100%}
   td.l {
     vertical-align: top;
@@ -245,11 +246,6 @@ html, body { height: 100% } // Cannot have any padding or margin here
     padding-top: 0.6ex;
     padding-right: 2.4ex;
     width: 15ex;
-    .dropdown-menu * {
-      text-align: left;
-      padding-right: 0;
-      padding-top: 0.6ex
-    }
   }
   td.r {
     vertical-align: top;
@@ -319,7 +315,7 @@ html, body { height: 100% } // Cannot have any padding or margin here
       tr.rev {
         margin-bottom:0 !important;
         border-bottom:none !important;
-        * { padding-top:0.3em !important;}
+        &>th,&>td { padding-top:0.3em;}
       }
       tr.lastupdated {
         margin-top:0 !important;
@@ -327,14 +323,12 @@ html, body { height: 100% } // Cannot have any padding or margin here
         th { padding-bottom:0.3em !important;}
       }
       tr.rev, tr.lastupdated {
-        &,* {
+        &>th,&>td {
           line-height: 1.1em !important;
         }
       }
 
-      .uc.outofscope {
-        &,* {color:#c00 !important}
-      }
+      .uc.outofscope { color: #c00; }
 
       a.step:not(:hover), a.uc:not(:hover) {border-bottom:1px dotted}
       .steps {

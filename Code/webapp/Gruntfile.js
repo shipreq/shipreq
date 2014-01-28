@@ -14,6 +14,14 @@ module.exports = function(grunt) {
     return { src: srcs, dest: jsConcat(name), nonull: true };
   }
 
+  var cssminSpec = {
+    expand: true,
+    cwd : '<%= cfg.css.tmp %>',
+    dest: '<%= cfg.css.out %>',
+    src: ['**/*.css', '!app-only*'],
+    ext: '.css',
+  }
+
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
 
@@ -112,6 +120,9 @@ module.exports = function(grunt) {
           dest: '<%= cfg.mathjax.out %>',
         }]
       },
+
+      // Copies CSS files without minimising
+      debug_css: { files: [cssminSpec] },
     },
 
     // *****************************************************************************************************************
@@ -233,16 +244,8 @@ module.exports = function(grunt) {
         // dest: '<%= cfg.css.bootstrap_cust %>'
       // },
 
-      // Shrink CSS files in-place
-      all: {
-        files: [{
-          expand: true,
-          cwd : '<%= cfg.css.tmp %>',
-          dest: '<%= cfg.css.out %>',
-          src: ['**/*.css', '!app-only*'],
-          ext: '.css',
-        }]
-      },
+      // Shrink CSS files
+      all: { files: [cssminSpec] },
     },
 
     // *****************************************************************************************************************
@@ -294,7 +297,7 @@ module.exports = function(grunt) {
   grunt.registerTask('vendor'  , ['clean:vendor', 'copy:vendor', 'less:bootstrap']);
   grunt.registerTask('mathjax' , ['clean:mathjax', 'copy:mathjax', 'uglify:mathjax']);
   grunt.registerTask('js'      , ['clean:js_tmp', 'clean:js', 'concat:js', 'uglify:own']);
-  grunt.registerTask('css'     , ['clean:css_tmp', 'clean:css', 'less:app', 'less:other', 'concat:app_css', 'cssmin']);
+  grunt.registerTask('css'     , ['clean:css_tmp', 'clean:css', 'less:app', 'less:other', 'concat:app_css', 'cssmin']); // copy:debug_css
   grunt.registerTask('test'    , ['qunit']);
   grunt.registerTask('default' , ['vendor', 'js', 'css', 'test']);
   grunt.registerTask('all'     , ['mathjax', 'default']);
