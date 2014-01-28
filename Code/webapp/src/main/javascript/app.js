@@ -319,6 +319,7 @@ $(document).ready(function(){
 
     registerDomEnhancementsWithLiveQuery();
 
+    GA.setupEventStats();
     ucFilterForm.setup();
     publishedUcs.setup();
 
@@ -330,7 +331,7 @@ $(document).ready(function(){
         .each(function(i,e){ $('.ucs-published a.step[href=#'+e.id+']').addClassOnHover('#'+e.id,'highlight') })
     ;
 
-    $('.unimplemented').click(function(){
+    $('body').on('click', '.unimplemented', function(){
         alert("Sorry. This action isn't available yet.\n\nIt will be enabled in a future update of this site.");
     });
 

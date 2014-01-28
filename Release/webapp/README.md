@@ -7,6 +7,9 @@ Getting Started
 * Install webapps/shipreq.war
     ../install-latest_war
 
+* Install required packages:
+    sudo pacman -Syu parallel pigz
+
 
 Usage
 =====

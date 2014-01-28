@@ -42,7 +42,7 @@ object B extends Build {
 
   def intellijSettings = (p: Project) => p.settings(
     ideaExcludeFolders := List(
-      ".idea", ".idea_modules", ".sass-cache", ".settings", "WEB-INF", "_scalate", "vendor",
+      ".idea", ".idea_modules", ".settings", "WEB-INF", "_scalate", "vendor",
       "node_modules", ".bower",
       "src/main/webapp/WEB-INF/_scalate",
       "src/main/webapp/css/vendor", "src/main/webapp/js/vendor")

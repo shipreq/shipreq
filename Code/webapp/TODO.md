@@ -5,14 +5,10 @@ FUNC TODO
 
 * [S.5.4=9] [UA  ] Allow users to provide feedback.
 * [S.2.5=7] [UCE ] Step is lost if accidentally deleted. No undo.
-* [S.2.4=6] [UX  ] Mark or remove buttons/links to unimplemented functionality.
 * [S.3.2=5] [PROJ] Delete use cases.
 * [S.2.3=5] [UCE ] Save button doesn't from disabled to enabled when text changes, only after blur. Confusing for user.
-* [S.0.5=5] [FAIL] Robustness: Handle DB going down.
 * [S.0.3=3] [ACCT] Change email.
 * [S.0.2=2] [ACCT] Delete account.
-* [S.0.2=2] [UX  ] Page for 404 errors.
-* [S.0.2=2] [UX  ] Page for 5xx errors.
 
 * [C.3.4=7] [ACCT] Add JS validation to register2 (ie. account creation).
 * [C.2.4=6] [UCE ] Make step labels fade into links when clickable, else users wont know to click.
@@ -36,10 +32,13 @@ TECH TODO
 =========
 
 * [S.3.5=8] [PERF] Add proper DB indexes.
+* [S.0.5=5] [FAIL] Robustness: Handle DB going down.
 * [S.0.5=5] [BUG ] When fields are loaded but no FV exists, fields should be cleared. (Will affect in-place loading.)
 * [S.1.3=4] [PERF] Textareas' blur shouldn't send a request when input doesn't change.
 * [S.0.3=3] [SEC ] Secure /diag endpoints.
 * [S.0.2=2] [PERF] Serve robots.txt via HTTP.
+* [S.0.2=2] [UX  ] Page for 404 errors.
+* [S.0.2=2] [UX  ] Page for 5xx errors.
 
 * [C.2.0=2] [PERF] DAO should cache certain actions and execute in bulk.
 * [C.1.1=2] [DEMO] Show flow deletion in flow demo.

@@ -7,4 +7,4 @@ JETTY_BASE="$(pwd)"
 JETTY_HOME="$JETTY_HOME" \
 JETTY_BASE="$JETTY_BASE" \
 JETTY_LOGS="$JETTY_BASE/log" \
-authbind --deep "$JETTY_HOME/bin/jetty.sh" "$@"
+$(./authbind) "$JETTY_HOME/bin/jetty.sh" "$@"

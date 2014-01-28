@@ -12,4 +12,5 @@ cp -p $d/$s webapp/webapps/shipreq.war \
   && echo && webapp/war-compress_static_resources \
   && echo && webapp/war-enable_gzip \
   && echo && webapp/war-force_https \
-  && echo && webapp/war-inspect
+  && echo && echo "--------------------------------------------------------------------------------" \
+  && webapp/war-inspect

@@ -1,0 +1,232 @@
+@charset "UTF-8";
+
+@maxStepDepth: 4;
+
+// =====================================================================================================================
+// Control rules
+
+// Prevent deletion of normal course first step
+.step.noDel .delete ,
+
+// Prevent indentDecrease for top-level
+.step[data-lvl="0"] .indentDec ,
+
+// Prevent indentIncrease for deepest children
+[data-lvl="@{maxStepDepth}"] .indentInc {
+	visibility:hidden !important
+}
+
+// Prevent indentIncrease for first children
+.courses-n .step:first-child,
+.courses-e .step:first-child,
+.step[data-lvl="0"]+.step[data-lvl="1"],
+.step[data-lvl="1"]+.step[data-lvl="2"],
+.step[data-lvl="2"]+.step[data-lvl="3"],
+.step[data-lvl="3"]+.step[data-lvl="4"],
+.step[data-lvl="4"]+.step[data-lvl="5"] {
+	.indentInc {
+		visibility:hidden !important;
+	}
+}
+
+// =====================================================================================================================
+// General styles
+
+.uce {
+
+	form {
+		display: inline
+	}
+
+	textarea, input[type="text"] {
+		color: #2d2d2d;
+	}
+
+	textarea {
+		width: 100%;
+		&:hover {
+			border: solid 1px #ccc;
+			background: #eee;
+		}
+		&:focus {
+			border: solid 1px #373;
+			background: #f8fff8;
+			color: #000;
+		}
+	}
+}
+
+// =====================================================================================================================
+// UC Title (UC-123: Abc)
+
+.uce .title {
+	&, td, textarea {width: 100%}
+	th {white-space:nowrap}
+	th, td {vertical-align:middle}
+	h2 {margin:0; padding-right:1ex}
+	textarea {font-weight: bold; font-size:150%}
+}
+
+// =====================================================================================================================
+// Fields and attributes
+
+table.fieldFrame {
+	margin-top: 22px;
+	width: 100%;
+  table-layout: fixed; // Prevents Firefox from ignoring max-width on flow graphs
+
+	tr.fieldFrame {
+		&>th {
+			color: #555;
+			font-weight: normal;
+			width: 20.5ex;
+			text-align: left;
+			line-height: 125%;
+			padding-right: 1ex;
+		}
+		&>th, &>td {
+			//border-top: solid 2px #ddd;
+			//padding-top: 6px;
+			padding-bottom: 1.5em;
+		}
+	}
+	th, td {vertical-align: top}
+	textarea {
+		border: dashed 1px #ccc;
+	}
+
+  .txtAndPub {
+    .fvpub {
+      border: dashed 1px #ccc;
+      padding: 2px;
+      min-height: 26px;
+      &, * {
+        cursor: pointer !important;
+      }
+      & > ul {
+        margin-left: 1ex;
+        margin-bottom: 0;
+      }
+    }
+    textarea {display: none}
+  }
+}
+
+// =====================================================================================================================
+// Steps
+
+[data-lvl="0"] .lbl { padding-left:  0  ; width: 5ex } // 123.0
+[data-lvl="1"] .lbl { padding-left:  4ex; width: 3ex } // 99.
+[data-lvl="2"] .lbl { padding-left:  7ex; width: 3ex } // cv.
+[data-lvl="3"] .lbl { padding-left: 10ex; width: 4ex } // xviii.
+[data-lvl="4"] .lbl { padding-left: 14ex; width: 3ex } // 99.
+
+[data-lvl="0"] {
+  .lbl, .fvpub {
+    font-weight: bold;
+  }
+}
+
+table.step {
+	width: 100%;
+	.lbl {
+		padding-top: 4px;
+		padding-right:0.8ex;
+		color: #444;
+	}
+
+	.txt {
+		overflow: hidden;
+	}
+	.ctl {
+		text-align: right;
+		width: 116px;
+	}
+	&+.step, &+.stepTransport, .stepTransport+& {
+		margin-top: 1ex
+	}
+	&[data-lvl="0"] {
+		.label, textarea {
+			font-weight: bold
+		}
+	}
+}
+
+.typing {
+	.step .lbl { &, & * {
+		&:hover {
+			// User can click labels when typing to insert a reference
+			cursor: pointer;
+		}
+	}}
+}
+
+.addTailStep {
+	text-align: right;
+}
+
+.addTailStep button, table.step .ctl button {
+	font-size: 16px;
+	line-height: 16px;
+	padding: 4px;
+	width: 26px
+}
+
+.courses-a .step:first-child .indentInc {
+	span {display:none}
+	&:after {content:"↑"} // ↑↱
+}
+
+.flowgraph svg {
+	g.step {cursor: pointer}
+}
+
+// =====================================================================================================================
+// Help
+
+#help-refs {
+  .modal-dialog {
+    width: 85%;
+    max-width: 94ex;
+  }
+  .modal-body {
+    h4 {
+      color: #d07;
+      font-weight: bold;
+      margin: 0 0 0.3ex 0
+    }
+    h4:not(:first-child) {margin-top: 3ex; }
+    ul {padding-left: 16px;}
+    li+li {margin-top: 2.5ex;}
+    p {margin-bottom: 0;}
+    .gap {margin-top: 1ex;}
+    .code {margin-left: 3ex;}
+    code {
+      color: #00c;
+      background: #ddd
+    }
+  }
+}
+
+#help-kb {
+  .mvmt {
+    margin-left: 4ex;
+    margin-top: 2em;
+    td {padding-left: 4ex; line-height:2em}
+  }
+}
+
+// =====================================================================================================================
+// Other
+
+.save-row {text-align:right; padding-top:8px}
+
+.debug {
+	.typing {border: solid 2px #d88}
+	tr.fieldFrame > td { background: #eef}
+	.step {
+		.lbl {background: #ffb}
+		.txt {background: #bfb}
+		.ctl {background: #bfb}
+	}
+}

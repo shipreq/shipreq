@@ -1,3 +1,3 @@
 #!/bin/bash
 
-yaourt -S --needed --noconfirm authbind jdk
+yaourt -S --needed --noconfirm jdk

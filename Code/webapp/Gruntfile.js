@@ -14,6 +14,14 @@ module.exports = function(grunt) {
     return { src: srcs, dest: jsConcat(name), nonull: true };
   }
 
+  var cssminSpec = {
+    expand: true,
+    cwd : '<%= cfg.css.tmp %>',
+    dest: '<%= cfg.css.out %>',
+    src: ['**/*.css', '!app-only*'],
+    ext: '.css',
+  }
+
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
 
@@ -44,7 +52,8 @@ module.exports = function(grunt) {
     clean: {
 
       // Delete temp dirs
-      tmp: ['<%= cfg.js.tmp %>', '<%= cfg.css.tmp %>'],
+      css_tmp: ['<%= cfg.css.tmp %>'],
+      js_tmp: ['<%= cfg.js.tmp %>'],
 
       // Delete vendor assets
       vendor: {
@@ -111,6 +120,9 @@ module.exports = function(grunt) {
           dest: '<%= cfg.mathjax.out %>',
         }]
       },
+
+      // Copies CSS files without minimising
+      debug_css: { files: [cssminSpec] },
     },
 
     // *****************************************************************************************************************
@@ -156,7 +168,7 @@ module.exports = function(grunt) {
       app_css: {
         nonull: true,
         src: [ '<%= cfg.css.bootstrap_cust %>', '<%= cfg.css.app_only %>'],
-        dest: '<%= cfg.css.out %>/app.css',
+        dest: '<%= cfg.css.tmp %>/app.css',
       },
     },
 
@@ -202,17 +214,11 @@ module.exports = function(grunt) {
         src: ['<%= cfg.css.src %>/bootstrap.less'],
         dest: '<%= cfg.css.bootstrap_cust %>',
       },
-    },
-
-    // *****************************************************************************************************************
-    // TODO sass requires ruby, just switch over to less. It's already required for bootstrap.
-    sass: {
-      options: {style: 'compact'},
 
       // Generate app.css but keep separate because it will be merged with 3rd-party CSS later
       app: {
         nonull: true,
-        src: '<%= cfg.css.src %>/app.scss',
+        src: '<%= cfg.css.src %>/app.less',
         dest: '<%= cfg.css.app_only %>',
       },
 
@@ -221,11 +227,12 @@ module.exports = function(grunt) {
         files: [{
           expand: true,
           cwd : '<%= cfg.css.src %>',
-          dest: '<%= cfg.css.out %>',
-          src: ['**/*.s?ss', '!app.s?ss'],
+          dest: '<%= cfg.css.tmp %>',
+          src: ['**/*.less', '!app.*', '!bootstrap*', '!webfonts.*'],
           ext: '.css',
         }]
       },
+
     },
 
     // *****************************************************************************************************************
@@ -237,15 +244,24 @@ module.exports = function(grunt) {
         // dest: '<%= cfg.css.bootstrap_cust %>'
       // },
 
-      // Shrink CSS files in-place
+      // Shrink CSS files
+      all: { files: [cssminSpec] },
+    },
+
+    // *****************************************************************************************************************
+    csslint: {
+      options: {
+        ids: false,                      // disagree
+        'unique-headings': false,        // disagree
+        'qualified-headings': false,     // disagree
+        'overqualified-elements': false, // disagree
+        important: false,                // using sparingly
+        'box-model': false,              // I'm aware
+        'adjoining-classes': false,      // Fuck IE 6/7
+        'box-sizing': false,             // Fuck IE 6/7
+      },
       all: {
-        files: [{
-          expand: true,
-          cwd : '<%= cfg.css.out %>',
-          dest: '<%= cfg.css.out %>',
-          src: ['**/*.css'],
-          ext: '.css',
-        }]
+        src: ['<%= cfg.css.tmp %>/**/*.css', '!**/app.css'],
       },
     },
 
@@ -254,12 +270,8 @@ module.exports = function(grunt) {
       options: {
         spawn: false,
       },
-      bootstrap_less: {
-        files: ['<%= cfg.css.src %>/bootstrap.less'],
-        tasks: ['less:bootstrap','css'],
-      },
       css: {
-        files: ['<%= cfg.css.src %>/**/*.s?ss'],
+        files: ['<%= cfg.css.src %>/**/*.less'],
         tasks: ['css'],
       },
       js: {
@@ -282,14 +294,14 @@ module.exports = function(grunt) {
   // *******************************************************************************************************************
   // Task definitions
 
-  grunt.registerTask('vendor' , ['clean:vendor' ,'copy:vendor' ,'less:bootstrap'         ]);
-  grunt.registerTask('mathjax', ['clean:mathjax','copy:mathjax','uglify:mathjax'         ]);
-  grunt.registerTask('js'     , ['clean:js'     ,'concat:js'   ,'uglify:own'             ]);
-  grunt.registerTask('css'    , ['clean:css'    ,'sass'        ,'concat:app_css','cssmin']);
-  grunt.registerTask('test'   , ['qunit'                                                 ]);
-
-  grunt.registerTask('default', ['clean:tmp','vendor','js','css','test']);
-  grunt.registerTask('all'    , ['mathjax','default']);
+  grunt.registerTask('vendor'  , ['clean:vendor', 'copy:vendor', 'less:bootstrap']);
+  grunt.registerTask('mathjax' , ['clean:mathjax', 'copy:mathjax', 'uglify:mathjax']);
+  grunt.registerTask('js'      , ['clean:js_tmp', 'clean:js', 'concat:js', 'uglify:own']);
+  grunt.registerTask('css'     , ['clean:css_tmp', 'clean:css', 'less:app', 'less:other', 'concat:app_css', 'cssmin']); // copy:debug_css
+  grunt.registerTask('test'    , ['qunit']);
+  grunt.registerTask('default' , ['vendor', 'js', 'css', 'test']);
+  grunt.registerTask('all'     , ['mathjax', 'default']);
+  grunt.registerTask('lint-css', ['css', 'csslint']);
 };
 
 // vim:sw=2 ts=2 et:

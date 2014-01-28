@@ -322,7 +322,7 @@ test("Label detection should work after a step label change", function(){
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-stdModule('Misc')
+stdModule('UCE Misc')
 
 test("Prompts before leaving page when unsaved changes", function() {
     // Save button disabled - no unsaved changes
@@ -379,3 +379,20 @@ test("Whitelist -> All", function() {
     clickUcFilter(ids.ucFilter.all)
     testUcFilterForm(true)
 })
+
+// =====================================================================================================================
+
+stdModule('Misc')
+
+test("URL sanitisation for Google Analytics", function() {
+    equal('/', GA.path('/'));
+    equal('/login', GA.path('/login'));
+    equal('/register/___', GA.path('/register/bacdefasdklj349o875dkjfsunYUGygASDF'));
+    equal('/resetpw/___', GA.path('/resetpw/bacdefasdklj349o875dkjfsunYUGygASDF'));
+    equal('/project/___', GA.path('/project/cUz0'));
+    equal('/project/___/read', GA.path('/project/cUz0/read'));
+    equal('/usecase/___', GA.path('/usecase/cUz0'));
+    equal('/share/___', GA.path('/share/cUz0'));
+    equal('/share/___/edit', GA.path('/share/cUz0/edit'));
+})
+

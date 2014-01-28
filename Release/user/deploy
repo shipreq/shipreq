@@ -1,9 +1,0 @@
-#!/bin/bash
-
-[ -z "$1" ] && echo "Usage: $0 <public DNS>" && exit 1
-
-cd "$(dirname "$0")"
-u=$(cat ../username)
-
-find . -type f '!' -name "$(basename "$0")" \
-  | xargs -I{} scp {} $u@"$1":

@@ -30,14 +30,14 @@ def getLoc(clocOut, title) clocOut.scan(/(?<=\n)#{title}[^\r\n]+?(\d+)[\r\n]/)[0
 if $?.exitstatus == 127
   puts "main.html  - #{searchMain(5){ wcFilesByType 'src/main', '*.html' }}"
   puts "main.scaml - #{searchMain(5){ wcFilesByType 'src/main', '*.scaml' }}"
-  puts "main.sass  - #{searchMain(5){ wcFilesInDir 'src/main/sass' }}"
+  puts "main.style  - #{searchMain(5){ wcFilesInDir 'src/main/styles' }}"
   puts "main.sql   - #{searchMain(5){ wcFilesInDir 'src/main/resources/db_migrations' }}"
   puts
   puts "Scala      - #{searchSrc(5){|dir| wcFilesInDir("#{dir}/scala") }}"
   puts "JavaScript - #{searchSrc(5){|dir| wcFiles "find #{dir}/javascript -name '*.js' | fgrep -v vendor" }}"
 else
   puts "MAIN"
-  main= `cloc --exclude-dir=vendor,_scalate,liftmodule-scaml-jade src/main | sed -n '/^-/,$p'`
+  main= `cloc --exclude-dir=vendor,_scalate,liftmodule-scaml-jade,assets src/main | sed -n '/^-/,$p'`
   puts main
   puts
   puts "TEST"

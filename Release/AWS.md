@@ -19,7 +19,7 @@ Create a New Instance
 
 * AWS console. https://console.aws.amazon.com/ec2/v2/home
 * EC2
-* In top right: N. Virginia
+* In top right: Sydney
 * Launch Instance
   * Community AMIs
   * Go to https://www.uplinklabs.net/projects/arch-linux-on-ec2/
@@ -41,9 +41,7 @@ Instance Setup
   ./fix-yaourt-micro     # Only if running a micro instance
   ./init-packages2
   ./init-instance_store  # Unless running a micro instance
-  ./init-user
   reboot
-* user/deploy $ec
 * ./deploy-jetty $ec
 * ./deploy-war $ec
 * ssh $(<username)@$ec
