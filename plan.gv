@@ -3,30 +3,28 @@ digraph G {
   lp [label="Landing Page"];
   lp_mob [label="Prototype mobile version"];
   lp_impl [label="Implement"];
-
+  buscards [label="Business cards"];
   mark [label="Find a marketer"];
   // mark_online [label="Seek marketer online"];
   askcont [label="Ask contacts"];
   netev [label="Ask at networking event"];
-
   getusers [label="Get Users"];
   busplan [label="Business Plan"];
   busplan_online [label="Research busplans online"];
   sbc [label="SBC workshop"];
   qusers [label="Question users"];
-
   NEIS;
   eoi [label="Expressions of Interest"];
 
   lp_mob -> lp_impl -> lp;
   {askcont; netev} -> mark;
   {lp; mark} -> getusers -> qusers;
-
   {sbc; busplan_online; askcont; netev; qusers} -> busplan;
-
   {busplan; Centrelink; eoi} -> NEIS;
   getusers -> eoi;
+  logo -> {buscards; lp_impl}
+  {buscards; lp} -> netev;
 
-  START -> {Centrelink; netev; askcont; lp_mob; sbc; busplan_online} [color=red];
+  START -> {Centrelink; logo; askcont; lp_mob; sbc; busplan_online} [color=red];
 
 }
