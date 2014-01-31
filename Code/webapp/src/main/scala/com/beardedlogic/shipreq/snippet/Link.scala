@@ -6,6 +6,8 @@ import com.beardedlogic.shipreq.app.AppSiteMap.Implicits._
 import com.beardedlogic.shipreq.lib.{Misc, SnippetHelpers}
 import net.liftweb.http.DispatchSnippet
 import net.liftweb.sitemap.{Loc, SiteMap}
+import net.liftweb.util.Props
+import net.liftweb.util.Props.RunModes.{Test, Development}
 import scala.xml.{Elem, NodeSeq, Text}
 
 /**
@@ -13,30 +15,43 @@ import scala.xml.{Elem, NodeSeq, Text}
  */
 object Link extends DispatchSnippet with SnippetHelpers {
 
+  private type R = NodeSeq => NodeSeq
+
   override def dispatch = {
-    case "App" => appLink
-    case name  => linkTo(name)
+    case "App"    => appLink
+    case "jquery" => jqueryLink
+    case name     => ToPage(name)
   }
 
-  val appLink: NodeSeq => NodeSeq = {
-    val v = <a href={AppSiteMap.Home.absoluteUrl}>{AppConfig.AppName}</a>
-    _ => v
-  }
+  private def staticLink(link: NodeSeq): R = _ => link
 
-  def linkTo(name: String): NodeSeq => NodeSeq = {
-    val loc = SiteMap.findLoc(name) openOrThrowException s"Unable to generate link to $name"
-    linkMemo(loc)
-  }
+  val appLink =
+    staticLink(<a href={AppSiteMap.Home.absoluteUrl}>{AppConfig.AppName}</a>)
 
-  private val linkMemo =
-    Misc.newMemo[Loc[_], NodeSeq => NodeSeq](Equiv.reference)(generateLink)
-
-  def generateLink(loc: Loc[_]): NodeSeq => NodeSeq = {
-      val linkText = loc.linkText openOr Text(loc.name)
-      val link = <a href={loc.relativeUrl}>{linkText}</a>
-      n => n match {
-        case <a>{customTitle}</a> => <a href={loc.relativeUrl}>{customTitle}</a>
-        case _                    => link
-      }
+  val jqueryLink = {
+    val jqueryUrl = Props.mode match {
+      case Development | Test => "/assets/vendor/jquery.js"
+      case _                  => s"//ajax.googleapis.com/ajax/libs/jquery/${AppConfig.jQueryVersion}/jquery.min.js"
     }
+    staticLink(<script src={jqueryUrl} type="text/javascript"></script>)
+  }
+
+  object ToPage {
+    def apply(name: String): R = {
+      val loc = SiteMap.findLoc(name) openOrThrowException s"Unable to generate link to $name"
+      pageLinkMemo(loc)
+    }
+
+    private val pageLinkMemo =
+      Misc.newMemo[Loc[_], R](Equiv.reference)(generatePageLink)
+
+    private def generatePageLink(loc: Loc[_]): R = {
+        val linkText = loc.linkText openOr Text(loc.name)
+        val link = <a href={loc.relativeUrl}>{linkText}</a>
+        n => n match {
+          case <a>{customTitle}</a> => <a href={loc.relativeUrl}>{customTitle}</a>
+          case _                    => link
+        }
+      }
+  }
 }

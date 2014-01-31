@@ -22,6 +22,8 @@ module.exports = function(grunt) {
     ext: '.css',
   }
 
+  var jQueryVersion = grunt.file.readJSON('.bower/jquery/bower.json').version;
+
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
 
@@ -173,6 +175,18 @@ module.exports = function(grunt) {
     },
 
     // *****************************************************************************************************************
+    replace: {
+      jquery: {
+        src:  'src/main/scala/com/beardedlogic/shipreq/app/AppConfig.scala',
+        overwrite: true,
+        replacements: [{
+          from: /(jQueryVersion *= *")[^"]+/i,
+          to: '$1' + jQueryVersion,
+        }],
+      },
+    },
+
+    // *****************************************************************************************************************
     uglify: {
       options: {
         // mangle: false,
@@ -294,7 +308,7 @@ module.exports = function(grunt) {
   // *******************************************************************************************************************
   // Task definitions
 
-  grunt.registerTask('vendor'  , ['clean:vendor', 'copy:vendor', 'less:bootstrap']);
+  grunt.registerTask('vendor'  , ['clean:vendor', 'copy:vendor', 'less:bootstrap', 'replace:jquery']);
   grunt.registerTask('mathjax' , ['clean:mathjax', 'copy:mathjax', 'uglify:mathjax']);
   grunt.registerTask('js'      , ['clean:js_tmp', 'clean:js', 'concat:js', 'uglify:own']);
   grunt.registerTask('css'     , ['clean:css_tmp', 'clean:css', 'less:app', 'less:other', 'concat:app_css', 'cssmin']); // copy:debug_css

@@ -13,6 +13,7 @@
     "grunt-contrib-qunit": "*",
     "grunt-contrib-uglify": "*",
     "grunt-contrib-watch": "*",
+    "grunt-text-replace": "*",
     "matchdep": "*"
   }
 }
