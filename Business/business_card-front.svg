@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="333.07086"
+   height="205.51181"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.4 r9939"
+   sodipodi:docname="business_card-side_a.svg">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1"
+     inkscape:cx="166.53543"
+     inkscape:cy="102.75591"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer2"
+     showgrid="true"
+     units="mm"
+     borderlayer="true"
+     inkscape:showpageshadow="true"
+     showborder="true"
+     inkscape:window-width="1200"
+     inkscape:window-height="1797"
+     inkscape:window-x="0"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Guides"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-846.85042)"
+     style="opacity:0.25;display:none"
+     sodipodi:insensitive="true">
+    <rect
+       y="846.8504"
+       x="0"
+       height="205.51181"
+       width="333.07086"
+       id="rect3809"
+       style="fill:#000000;fill-opacity:1;stroke:none" />
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke:none"
+       id="rect2989"
+       width="322.44095"
+       height="194.8819"
+       x="5.3149567"
+       y="852.16541" />
+    <rect
+       y="857.48035"
+       x="10.629913"
+       height="184.25197"
+       width="311.81104"
+       id="rect3759"
+       style="fill:#ffffff;fill-opacity:1;stroke:#ff8812;stroke-opacity:1" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Foreground"
+     style="display:inline">
+    <text
+       sodipodi:linespacing="125%"
+       id="text4973"
+       y="113.59029"
+       x="64.94268"
+       style="font-size:11.48054695px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Sans"
+       xml:space="preserve"><tspan
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arimo;-inkscape-font-specification:Arimo Italic"
+         y="113.59029"
+         x="64.94268"
+         id="tspan4975"
+         sodipodi:role="line">Founder, Software Developer, Visionary</tspan></text>
+    <g
+       id="g4453"
+       transform="matrix(0.01421251,0,0,0.01421251,21.455528,158.39704)">
+      <g
+         id="Layer_1" />
+      <g
+         id="Layer_2">
+        <linearGradient
+           y2="960"
+           x2="480"
+           y1="-2.1550481e-08"
+           x1="480"
+           gradientUnits="userSpaceOnUse"
+           id="SVGID_1_">
+          <stop
+             id="stop4441"
+             style="stop-color:#5C95E6"
+             offset="0" />
+          <stop
+             id="stop4443"
+             style="stop-color:#4875B4"
+             offset="1" />
+        </linearGradient>
+        <path
+           id="path4445"
+           d="M 960,960 H 0 V 0 H 960 V 960 z M 130.92,838.597 H 280.278 V 358.781 H 130.92 v 479.816 z m 74.726,-718.345 c -47.922,0 -86.565,38.772 -86.565,86.449 0,47.723 38.643,86.49 86.565,86.49 47.751,0 86.47,-38.767 86.47,-86.49 0,-47.677 -38.719,-86.449 -86.47,-86.449 M 373.908,838.597 H 522.943 V 601.201 c 0,-62.554 11.832,-123.165 89.494,-123.165 76.463,0 77.56,71.586 77.56,127.279 V 838.597 H 839.081 V 575.41 c 0,-129.227 -27.936,-228.557 -178.912,-228.557 -72.594,0 -121.306,39.754 -141.197,77.505 h -2.03 V 358.78 H 373.908 v 479.817 z"
+           stroke-miterlimit="10"
+           inkscape:connector-curvature="0"
+           style="fill:url(#SVGID_1_);stroke:#000000;stroke-miterlimit:10" />
+      </g>
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:25.13703536999999955px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#3c0478;fill-opacity:1;stroke:none;display:inline;font-family:Sans"
+       x="76.805992"
+       y="51.042053"
+       id="text4059"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4061"
+         x="76.805992"
+         y="51.042053"
+         style="font-size:36px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;fill:#3c0478;fill-opacity:1;font-family:Minion Pro;-inkscape-font-specification:Minion Pro Bold">David Barri</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:13.47539710999999940px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#121212;fill-opacity:1;stroke:none;display:inline;font-family:Sans"
+       x="98.154976"
+       y="97.889122"
+       id="text4075"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4077"
+         x="98.154976"
+         y="97.889122"
+         style="font-size:19.57550621000000035px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Arimo;-inkscape-font-specification:Arimo;fill:#121212;fill-opacity:1">Bearded Logic</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:25.13703536999999955px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#202020;fill-opacity:1;stroke:none;display:inline;font-family:Sans"
+       x="43.07806"
+       y="168.58012"
+       id="text4079"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4081"
+         x="43.07806"
+         y="168.58012"
+         style="font-size:13px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;letter-spacing:0.50000000000000000px;fill:#202020;fill-opacity:1;font-family:Arimo;-inkscape-font-specification:Arimo">au.linkedin.com/in/dbarri</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14.03808021999999944px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0.50000000000000000px;word-spacing:0px;fill:#202020;fill-opacity:1;stroke:none;display:inline;font-family:Sans"
+       x="43.07806"
+       y="189.8075"
+       id="text4083"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4085"
+         x="43.07806"
+         y="189.8075"
+         style="font-size:13px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#202020;fill-opacity:1;font-family:Arimo;-inkscape-font-specification:Arimo;letter-spacing:0.50000000000000000px"
+         dx="0">bearded.logic@gmail.com</tspan></text>
+    <g
+       id="g3317"
+       transform="matrix(0.01165377,0,0,-0.00984006,7.1238273,198.95067)"
+       style="stroke:#9b5050;stroke-opacity:1">
+      <path
+         inkscape:connector-curvature="0"
+         d="m 644.25,644.25 1703,0 0,1253 -1703,0 0,-1253 z"
+         style="fill:none;stroke:#9b5050;stroke-width:127.72899628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-opacity:1;stroke-dasharray:none"
+         id="path3319" />
+      <path
+         inkscape:connector-curvature="0"
+         d="m 660.25,1881.25 735,-744 c 54.06,-55.01 153.14,-54.36 206,-1 l 735,739"
+         style="fill:none;stroke:#9b5050;stroke-width:127.72899628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-opacity:1;stroke-dasharray:none"
+         id="path3321" />
+      <path
+         inkscape:connector-curvature="0"
+         d="m 685.25,685.25 563,576"
+         style="fill:none;stroke:#9b5050;stroke-width:127.72899628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-opacity:1;stroke-dasharray:none"
+         id="path3323" />
+      <path
+         inkscape:connector-curvature="0"
+         d="m 2300.25,692.25 -548,561"
+         style="fill:none;stroke:#9b5050;stroke-width:127.72899628;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-opacity:1;stroke-dasharray:none"
+         id="path3325" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer4"
+     inkscape:label="B" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer3"
+     inkscape:label="A"
+     style="display:none">
+    <text
+       xml:space="preserve"
+       style="font-size:11.48054695px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Sans"
+       x="90.482414"
+       y="114.51609"
+       id="text4071"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4073"
+         x="90.482414"
+         y="114.51609"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arimo;-inkscape-font-specification:Arimo Italic">Founder, Developer, Dreamer</tspan></text>
+  </g>
+</svg>
