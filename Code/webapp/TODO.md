@@ -3,11 +3,15 @@ Legend: [M/S/C] [Benefit 0-none,5-max] [Penalty 0-none,5-severe]
 FUNC TODO
 =========
 
+* [S.5.4=9] [UCE ] Replace <= and >= with ≤ and ≥.
+* [S.5.4=9] [UCE ] Tab/shift-tab should move between input fields just like alt+up/down.
 * [S.5.4=9] [UA  ] Allow users to provide feedback.
 * [S.2.5=7] [UCE ] Step is lost if accidentally deleted. No undo.
+* [S.3.3=6] [UCE ] Speed up JS animation. I felt a little annoyed waiting after delete-step.
 * [S.3.2=5] [PROJ] Delete use cases.
 * [S.2.3=5] [UCE ] Save button doesn't from disabled to enabled when text changes, only after blur. Confusing for user.
 * [S.0.3=3] [ACCT] Change email.
+* [S.0.3=3] [UCE ] Replace tabs with spaces.
 * [S.0.2=2] [ACCT] Delete account.
 
 * [C.3.4=7] [ACCT] Add JS validation to register2 (ie. account creation).
