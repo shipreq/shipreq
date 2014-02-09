@@ -1,0 +1,2 @@
+src/main/webapp/assets/*.css  diff=cssmin
+vendor/bootstrap.css          diff=cssmin
