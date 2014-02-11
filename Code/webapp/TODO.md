@@ -26,6 +26,7 @@ FUNC TODO
 * [C.2.1=3] [ACCT] Add JS email corrector/validator like mailcheck.js.
 * [C.2.1=3] [UCE ] Search and replace.
 * [C.2.1=3] [READ] Markup for ordered lists. (eg "#. abc")
+* [C.2.1=3] [READ] Collapse/expand steps.
 * [C.2.0=2] [UX  ] When a user account is created, a default project called "Untitled Project" should be created.
 * [C.1.1=2] [UCE ] Alt+Shift+Enter to create next & indent.
 * [C.1.1=2] [UCE ] View step references. (Eg. Who has refs to 1.0.4?)
