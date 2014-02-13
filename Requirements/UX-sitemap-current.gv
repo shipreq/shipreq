@@ -1,0 +1,32 @@
+digraph G {
+
+{ edge[dir=both,color=grey]
+  rank=same;
+  HomeA -> {About; ToS; Privacy; Login; Register}
+  About -> {ToS; Privacy; Login; Register}
+  ToS -> {Privacy; Login; Register}
+  Privacy -> {Login; Register}
+  Login -> {Register}
+  Register
+}
+
+ShareView1
+Login -> ResetPW
+ResetPW -> {HomeA; About; ToS; Privacy; Login; Register} [color=grey]
+// Register2 -> {HomeA; About; ToS; Privacy; Login; Register} [color=grey]
+
+node [style=filled,color=green]
+HomeL [label="HomeL (projects)"]
+Login -> HomeL
+// Register2 -> HomeL
+Logout -> HomeA
+
+HomeL -> {Logout; UseCases; Account}
+UseCases -> {UCE; Read}
+UseCases -> {Shares}
+UCE -> {UCE; UseCases; HomeL}
+Shares -> {ShareCreate; ShareEdit; ShareView2}
+{ShareCreate; ShareEdit} -> UseCases
+ShareView1 -> ShareView2
+
+}

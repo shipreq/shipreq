@@ -35,10 +35,9 @@ Phase #2: Post UCE 1.0
 `ideas.md`
   * Quick-and-easy dumping ground for project ideas. Predates `major_features.ods` which is a subset.
 
-`feature-organisation.ods`
-  * Supplimental analysis of the organisation feature. Contains:
-    * Analysis of envisioned org-units and attributes.
-    * Analysis of org-units relationships.
+`analysis-mf*`
+  * Analysis of a Major Feature.
+  * Extraction of initial requirements from `interview-nnn` files.
 
 `interviews.ods`
   * Summary of contents of `interview-nnn` files.
@@ -52,5 +51,17 @@ Phase #2: Post UCE 1.0
   * Prioritisation of attributes.
 
 `reqs.ods`
-  * Intermediary location of requirements analysis.
-  * Extraction of initial requirements from `interview-nnn` files.
+  * Requirements list.
+
+`UX-mf*.uml`
+  * A sketch of the UX when the user performs a function pertaining to the Major Feature indicated in the filename.
+    A state diagram is used and should be interpreted a little differently:
+    The top half of a state is what the user sees on the screen.
+    The bottom half of a state is what the user wants to do once on the screen.
+
+`UX-sitemap-current.gv`
+  * The sitemap as it is currently implemented.
+
+`UX-sitemap-future.md`
+  * Ideas about what the sitemap will be like when more Major Features are added.
+
