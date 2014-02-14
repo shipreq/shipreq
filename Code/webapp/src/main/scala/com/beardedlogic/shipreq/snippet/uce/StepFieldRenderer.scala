@@ -235,7 +235,7 @@ case class StepFieldRenderer(
     )
 
   def jsRemoveStep(node: StepNode): JsCmd =
-    FadeOutThen(JqExprForNodeAndChildren(node), 240.ms)(_ ~> JqJE.JqRemove() & jsUpdateLabels(f.value.tree))
+    FadeOutThen(JqExprForNodeAndChildren(node), 160.ms)(_ ~> JqJE.JqRemove() & jsUpdateLabels(f.value.tree))
 
   def jsDecIndent(node: StepNode): JsCmd = {
     val newTree = f.value.tree
