@@ -40,3 +40,19 @@ where/how to store intersection problems?
 
 user stories, how to cater for them? Will likely share most of UC functionality.
 
+
+Shanelle's Feedback
+===================
+
+For some projects, there is massive overlap in reqs between clients. Like copying a project in its entirity and then
+modify.
+
+some people might only like it for certian periods or time, stop start stop start etc
+low-usage tier for the downtimes
+
+don't forget flow graph merged with text in pres-mode. Different dep on end-user & industry. Marketting dudes prefer
+visual. >>> Different views/representations for different ppl. Maybe even different field sets (!).
+
+Service-provided system-wide populated templates. Want reqs for a cash register app whatever, sell, copy, then they're
+free to modify.
+
