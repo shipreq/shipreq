@@ -3,13 +3,13 @@ Legend: [M/S/C] [Benefit 0-none,5-max] [Penalty 0-none,5-severe]
 FUNC TODO
 =========
 
-* [S.5.4=9] [UCE ] Tab/shift-tab should move between input fields just like alt+up/down.
 * [S.5.4=9] [UA  ] Allow users to provide feedback.
 * [S.2.5=7] [UCE ] Step is lost if accidentally deleted. No undo.
-* [S.3.2=5] [PROJ] Delete use cases.
-* [S.2.3=5] [UCE ] Save button doesn't from disabled to enabled when text changes, only after blur. Confusing for user.
-* [S.2.2=4] [UCE ] Either replace consecutive whitespace or maintain it when rendering to HTML.
+* [S.3.4=7] [PROJ] Delete use cases.
+* [S.0.5=5] [UCE ] With slow connections, UX is bad when text field loses focus. Appears to lose changes.
+* [S.3.2=5] [UCE ] Tab/shift-tab should move between input fields just like alt+up/down.
 * [S.0.3=3] [ACCT] Change email.
+* [S.0.2=2] [UCE ] Save button doesn't from disabled to enabled when text changes, only after blur. Confusing for user.
 * [S.0.2=2] [ACCT] Delete account.
 
 * [C.3.4=7] [ACCT] Add JS validation to register2 (ie. account creation).
@@ -29,6 +29,7 @@ FUNC TODO
 * [C.1.1=2] [UCE ] View step references. (Eg. Who has refs to 1.0.4?)
 * [C.1.1=2] [READ] Markup for mailto links.
 * [C.0.2=2] [ACCT] Change username.
+* [C.0.2=2] [UCE ] Either replace consecutive whitespace or maintain it when rendering to HTML.
 * [C.0.1=1] [UX  ] System shouldn't provide a means to read UCs when no UCs exist.
 
 TECH TODO
