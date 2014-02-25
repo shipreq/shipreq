@@ -284,8 +284,12 @@ module.exports = function(grunt) {
       options: {
         spawn: false,
       },
+      bootstrap: {
+        files: ['<%= cfg.css.src %>/**/*bootstrap*.less'],
+        tasks: ['less:bootstrap','css'],
+      },
       css: {
-        files: ['<%= cfg.css.src %>/**/*.less'],
+        files: ['<%= cfg.css.src %>/**/*.less', '!*bootstrap*'],
         tasks: ['css'],
       },
       js: {
