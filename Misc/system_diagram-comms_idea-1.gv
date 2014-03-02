@@ -1,0 +1,77 @@
+digraph G {
+  compound=true
+  labelloc=t
+  label="ShipReq System Diagram"
+
+  // -----------------------------------------------------------------------------------------------
+
+  me [shape=proteinstab style=filled fillcolor="#aabbff" label="\nStaff"]
+  tbird [label="Thunderbird"]
+
+  subgraph cluster_usr {
+    style=filled
+    fillcolor="#eeeeaa"
+    node [style=filled fillcolor="#ccaa66"]
+
+    label="Userland"
+    usr_web [label="User's\nweb browser" shape=tab]
+    usr_email [label="User's\nemail" shape=folder]
+  }
+
+  subgraph cluster_net {
+    style=filled
+    fillcolor="#e2ffe2"
+    node [style=filled fillcolor="#55cc55"]
+    label=""
+
+    gandi [label="gandi.net"]
+    mailchimp [label="MailChimp"]
+    mandrill [label="Mandrill"]
+
+    { node[shape=folder style=filled]
+      eaddr_shipreq [label="shipreq\n@gmail.com" fillcolor="#aabbff"]
+    }
+
+    subgraph cluster_aws {
+      fillcolor="#ccddcc"
+      label="Amazon Web Services"
+      aws_r53 [label="Route 53"]
+      aws_ec2 [label="EC2"]
+      aws_rds [label="RDS"]
+    }
+
+    subgraph cluster_crm {
+      fillcolor="#ccddcc"
+      label="Insightly"
+      crm_mail [label="Mailbox" shape=folder]
+      crm_web [label="Web interface" shape=tab]
+    }
+  }
+
+  // -----------------------------------------------------------------------------------------------
+
+  usr_web -> gandi [color="#996644"]
+  usr_email -> gandi [color="#996644"]
+  gandi -> aws_r53 [label="DNS:*"]
+  aws_r53 -> aws_r53 [label="DNS:www" dir=back]
+  aws_r53 -> aws_ec2 [label="DNS:APEX"]
+  aws_ec2 -> aws_rds [label="Database\n(postgresql)"]
+  aws_ec2 -> mandrill [label="Outgoing email\n(SMTP)"]
+  // mandrill -> eaddr_shipreq
+  mandrill -> usr_email
+  // eaddr_shipreq -> usr_email [label="One-on-one\nconversation"]
+  mailchimp -> mandrill [style=dotted]
+  aws_ec2 -> mailchimp [label="Update\nmailing list"]
+  tbird -> mandrill [label="send"]
+  tbird -> eaddr_shipreq [label="recv"]
+  mandrill -> eaddr_shipreq
+  gandi -> eaddr_shipreq [label="Fwd email"]
+  eaddr_shipreq -> crm_mail [label="Auto fwd"]
+  crm_mail -> crm_web [style=dotted]
+
+  { edge[color="#445599" fontcolor="#182866"]
+    me -> tbird [label="Send email\nIF WE CAN SEND\nMAIL FROM CRM THIS\nBECOMES OBSOLETE" fontcolor=red]
+    me -> mailchimp [label="Broadcast comms"]
+    me -> crm_web [label="Read incoming comms\nManage comms work-queue\nManage network"]
+  }
+}
