@@ -24,7 +24,6 @@ digraph G {
     fillcolor="#ccddcc"
     label="Amazon Web Services"
     aws_r53 [label="Route 53"]
-    aws_ec2 [label="EC2"]
     aws_rds [label="RDS"]
     aws_ses [label="SES"]
     {node[fillcolor=pink]
@@ -52,34 +51,35 @@ digraph G {
     label="Insightly"
     crm_mail [label="Mailbox" shape=folder style=filled fillcolor="#aabbff"]
     crm_web [label="Web interface" shape=tab]
+    crm_api [label="API"]
   }
 
   // -----------------------------------------------------------------------------------------------
 
   gandi_dns -> aws_r53 [label="Delegates DNS"]
-  aws_r53 -> aws_r53 [label="DNS:www" dir=back]
-  aws_r53 -> aws_ec2 [label="DNS:APEX"] // TODO aws_r53 -> wb instead?
+  aws_r53:w -> aws_r53:w [label="DNS:www " dir=back]
+  aws_r53 -> wb [label="DNS:APEX"]
 
   // Webapp
-  aws_ec2 -> wb [dir=back arrowtail=dot style=dotted]
   wb -> aws_ses
   wb -> aws_rds
+  wb -> crm_api [label="Push contact data"] // TODO Should be external agent, not the webapp
 
   // MailChimp
-  aws_ec2 -> mc2crm [dir=back arrowtail=dot style=dotted]
-    mc2crm -> aws_ses,aws_rds,mc_api
-    mc2crm -> crm_mail [style=dashed]
-  wb -> mc_api [taillabel="Push contact data"] // TODO Should be external agent, not the webapp
+  mc2crm -> aws_ses,aws_rds,mc_api
+  mc2crm -> crm_mail [style=dashed]
+  wb -> mc_api [label="Push contact data"] // TODO Should be external agent, not the webapp
   mc_web -> ea_news,ea_notice [style=dashed]
 
   // Email forwarding
   aws_r53 -> gandi_mx [label="DNS:MX"]
   gandi_mx -> ea_contact,ea_news,ea_notice [label="Catch"]
-  gandi_mx -> gmail,fd_mail,crm_mail [label="Fwd"]
+  gandi_mx -> fd_mail,crm_mail [label="Fwd"]
+  gmail -> gandi_mx [label="Fwd" dir=back]
 
   // Email [se|si]
   wb -> ea_contact [style=dashed]
-  wb -> crm_mail [taillabel="BCC" style=dashed]
+  wb -> crm_mail [label="BCC" style=dashed]
 
   // Email [f]
   fd_web -> crm_mail [label="Auto-BCC" style=dashed]
