@@ -1,0 +1,104 @@
+digraph G {
+  compound=true
+  labelloc=t
+  label="ShipReq System Diagram"
+
+  // -----------------------------------------------------------------------------------------------
+
+  me [shape=proteinstab style=filled fillcolor="#aabbff" label="\nStaff"]
+
+  subgraph cluster_usr {
+    style=filled
+    fillcolor="#eeeeaa"
+    node [style=filled fillcolor="#ccaa66"]
+
+    label="Userland"
+    usr_web [label="User's\nweb browser" shape=tab]
+    usr_email [label="User's\nemail" shape=folder]
+  }
+
+  subgraph cluster_internet {
+    style=filled
+    fillcolor="#e2ffe2"
+    node [style=filled fillcolor="#55cc55"]
+    label=""
+
+    { node[shape=folder style=filled fillcolor="#aabbff"]
+      gmail [label="shipreq\n@gmail.com"]
+    }
+
+    mc [label="MailChimp"]
+    mc_to_crm [label="Custom tool\nMailChimp to Insightly"]
+
+    subgraph cluster_gandi {
+      fillcolor="#ccddcc"
+      label="gandi.net"
+      gandi_dns [label="DNS"]
+      gandi_mx [label="Mail fwd"]
+    }
+
+    subgraph cluster_aws {
+      fillcolor="#ccddcc"
+      // node[shape=rect]
+      label="Amazon Web Services"
+      aws_r53 [label="Route 53"]
+      aws_ec2 [label="EC2"]
+      aws_rds [label="RDS"]
+      aws_ses [label="SES"]
+    }
+
+    subgraph cluster_fd {
+      fillcolor="#ccddcc"
+      label="Freskdesk"
+      fd_mail [label="Mailbox" shape=folder style=filled fillcolor="#aabbff"]
+      fd_web [label="Web interface" shape=tab]
+    }
+
+    subgraph cluster_crm {
+      fillcolor="#ccddcc"
+      label="Insightly"
+      crm_mail [label="Mailbox" shape=folder style=filled fillcolor="#aabbff"]
+      crm_web [label="Web interface" shape=tab]
+    }
+  }
+
+  // -----------------------------------------------------------------------------------------------
+
+  usr_web -> gandi_dns [color="#996644"]
+  gandi_dns -> aws_r53 [label="DNS:*"]
+  aws_r53 -> aws_r53 [label="DNS:www" dir=back]
+  aws_r53 -> aws_ec2 [label="DNS:APEX"]
+  aws_ec2 -> aws_rds [label="Database\n(postgresql)"]
+  aws_ec2 -> aws_ses [label="Outgoing email\n(SMTP)"]
+  // aws_ses -> {eaddr_blogic; usr_email}
+  // eaddr_blogic -> usr_email [label="One-on-one\nconversation"]
+  // me -> eaddr_blogic
+
+  // EMAIL
+  { edge[color="#182888"]
+    // Mail forwarding (mail@shipreq.com)
+    aws_r53 -> gandi_mx [label="DNS:MX"]
+    gandi_mx -> {gmail; crm_mail; fd_mail}
+
+    // [se] System to user
+    aws_ses -> usr_email [color=red]
+    aws_ses -> crm_mail [label="BCC" style=dashed]
+
+    // [si] System from user
+    aws_ses -> aws_r53
+    // TODO MAYBE WB forwards to Insightly?
+
+    // [b] Bulk broadcast
+    mc -> usr_email [color=red]
+    me -> mc_to_crm -> {mc,crm_mail}
+
+    // [f] Private CM from Freshdesk
+    fd_web -> usr_email [color=red]
+    fd_web -> crm_mail [label="BCC" style=dashed]
+
+    // [u] User reply
+    usr_email -> aws_r53
+  }
+
+  me -> {fd_web; crm_web; mc}
+}
