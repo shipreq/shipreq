@@ -24,9 +24,9 @@ digraph G {
     fillcolor="#e8e8e8"
     label="gandi.net"
     gandi_mx [label="Mail fwd"]
-    ea_contact [label="contact@\nshipreq.com" shape=folder style=filled fillcolor="#aabbff"]
-    ea_news [label="news@\nshipreq.com" shape=folder style=filled fillcolor="#aabbff"]
-    ea_notice [label="notice@\nshipreq.com" shape=folder style=filled fillcolor="#aabbff"]
+    ea_contact [label="contact@\nshipreq.com" shape=folder style=filled fillcolor="#a8aab8"]
+    ea_news [label="news@\nshipreq.com" shape=folder style=filled fillcolor="#a8aab8"]
+    ea_notice [label="notice@\nshipreq.com" shape=folder style=filled fillcolor="#a8aab8"]
   }
 
   subgraph cluster_aws {

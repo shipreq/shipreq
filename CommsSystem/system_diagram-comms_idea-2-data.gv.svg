@@ -105,7 +105,7 @@
 </g>
 <!-- ea_contact -->
 <g id="node6" class="node"><title>ea_contact</title>
-<polygon fill="#aabbff" stroke="black" points="452.5,-353 449.5,-357 428.5,-357 425.5,-353 369.5,-353 369.5,-315 452.5,-315 452.5,-353"/>
+<polygon fill="#a8aab8" stroke="black" points="452.5,-353 449.5,-357 428.5,-357 425.5,-353 369.5,-353 369.5,-315 452.5,-315 452.5,-353"/>
 <text text-anchor="middle" x="411" y="-337.8" font-family="Times,serif" font-size="14.00">contact@</text>
 <text text-anchor="middle" x="411" y="-322.8" font-family="Times,serif" font-size="14.00">shipreq.com</text>
 </g>
@@ -121,7 +121,7 @@
 </g>
 <!-- ea_news -->
 <g id="node7" class="node"><title>ea_news</title>
-<polygon fill="#aabbff" stroke="black" points="248.5,-353 245.5,-357 224.5,-357 221.5,-353 165.5,-353 165.5,-315 248.5,-315 248.5,-353"/>
+<polygon fill="#a8aab8" stroke="black" points="248.5,-353 245.5,-357 224.5,-357 221.5,-353 165.5,-353 165.5,-315 248.5,-315 248.5,-353"/>
 <text text-anchor="middle" x="207" y="-337.8" font-family="Times,serif" font-size="14.00">news@</text>
 <text text-anchor="middle" x="207" y="-322.8" font-family="Times,serif" font-size="14.00">shipreq.com</text>
 </g>
@@ -132,7 +132,7 @@
 </g>
 <!-- ea_notice -->
 <g id="node8" class="node"><title>ea_notice</title>
-<polygon fill="#aabbff" stroke="black" points="350.5,-353 347.5,-357 326.5,-357 323.5,-353 267.5,-353 267.5,-315 350.5,-315 350.5,-353"/>
+<polygon fill="#a8aab8" stroke="black" points="350.5,-353 347.5,-357 326.5,-357 323.5,-353 267.5,-353 267.5,-315 350.5,-315 350.5,-353"/>
 <text text-anchor="middle" x="309" y="-337.8" font-family="Times,serif" font-size="14.00">notice@</text>
 <text text-anchor="middle" x="309" y="-322.8" font-family="Times,serif" font-size="14.00">shipreq.com</text>
 </g>

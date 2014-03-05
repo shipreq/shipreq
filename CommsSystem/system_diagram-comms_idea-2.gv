@@ -4,7 +4,7 @@ digraph G {
   label="ShipReq System Diagram\n(arrows denote a component's knowledge of another)"
   style=filled fillcolor="#e2ffe2"
   node [style=filled fillcolor="#55cc55"]
-  edge [minlen=2]
+  // edge [minlen=2]
 
   // -----------------------------------------------------------------------------------------------
 
@@ -15,9 +15,9 @@ digraph G {
     label="gandi.net"
     gandi_dns [label="DNS"]
     gandi_mx [label="Mail fwd"]
-    ea_contact [label="contact@\nshipreq.com" shape=folder style=filled fillcolor="#aabbff"]
-    ea_news [label="news@\nshipreq.com" shape=folder style=filled fillcolor="#aabbff"]
-    ea_notice [label="notice@\nshipreq.com" shape=folder style=filled fillcolor="#aabbff"]
+    ea_contact [label="contact@\nshipreq.com" shape=folder style=filled fillcolor="#a8aab8"]
+    ea_news [label="news@\nshipreq.com" shape=folder style=filled fillcolor="#a8aab8"]
+    ea_notice [label="notice@\nshipreq.com" shape=folder style=filled fillcolor="#a8aab8"]
   }
 
   subgraph cluster_aws {
