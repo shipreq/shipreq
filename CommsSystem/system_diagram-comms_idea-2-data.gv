@@ -1,0 +1,95 @@
+digraph G {
+  compound=true
+  labelloc=t
+  label="ShipReq System Diagram\n(arrows denote flow of data from one component to another)\n(ignores which component instigates the data transfer)"
+  style=filled fillcolor="#e2ffe2"
+  node [style=filled fillcolor="#55cc55"]
+  edge [minlen=2]
+
+  // -----------------------------------------------------------------------------------------------
+
+  gmail [label="shipreq@\ngmail.com" shape=folder style=filled fillcolor="#aabbff"]
+
+  subgraph cluster_usr {
+    style=filled
+    fillcolor="#eeeeaa"
+    node [style=filled fillcolor="#ccaa66"]
+
+    label="Userland"
+    usr_web [label="User's\nweb browser" shape=tab]
+    usr_email [label="User's\nemail" shape=folder fillcolor="#ccaaaa"]
+  }
+  subgraph cluster_gandi {
+    fillcolor="#e8e8e8"
+    label="gandi.net"
+    // gandi_dns [label="DNS"]
+    gandi_mx [label="Mail fwd"]
+    ea_contact [label="contact@\nshipreq.com" shape=folder style=filled fillcolor="#aabbff"]
+    ea_news [label="news@\nshipreq.com" shape=folder style=filled fillcolor="#aabbff"]
+    ea_notice [label="notice@\nshipreq.com" shape=folder style=filled fillcolor="#aabbff"]
+  }
+
+  subgraph cluster_aws {
+    fillcolor="#e8e8e8"
+    label="Amazon Web Services"
+    // aws_r53 [label="Route 53"]
+    aws_rds [label="RDS"]
+    aws_ses [label="SES"]
+    {node[fillcolor=pink]
+      wb  [label="webapp"]
+      worker [label="Backend task\nprocessor"]
+    }
+  }
+
+  subgraph cluster_mc {
+    fillcolor="#e8e8e8"
+    label="MailChimp"
+    mc_api [label="API"]
+    mc_web [label="Web interface" shape=tab]
+  }
+
+  subgraph cluster_fd {
+    fillcolor="#e8e8e8"
+    label="Freshdesk"
+    fd_mail [label="Mailbox" shape=folder style=filled fillcolor="#aabbff"]
+    fd_web [label="Web interface" shape=tab]
+  }
+
+  subgraph cluster_crm {
+    fillcolor="#e8e8e8"
+    label="Insightly"
+    crm_mail [label="Mailbox" shape=folder style=filled fillcolor="#aabbff"]
+    crm_web [label="Web interface" shape=tab]
+    crm_api [label="API"]
+  }
+
+  // -----------------------------------------------------------------------------------------------
+
+  wb -> aws_rds [dir=both]
+  worker -> aws_rds [dir=both]
+  worker -> mc_api [dir=both] //label="Push contact data\nQuery"]
+  worker -> crm_api //[label="Push contact data\nLog MailChimp broadcasts"]
+  crm_api -> crm_web
+  mc_api -> mc_web
+  wb -> usr_web [constraint=false dir=both]
+
+  // Email flows
+  {edge[color="#5566aa"]
+    worker -> aws_ses
+    mc_web -> usr_email
+    gandi_mx -> ea_contact,ea_news,ea_notice [dir=back] //label="Catch"]
+    gandi_mx -> fd_mail,crm_mail //[label="Fwd"]
+    gmail -> gandi_mx [dir=back] //label="Fwd"]
+    worker -> usr_email
+    worker -> ea_contact
+    worker -> crm_mail //[label="BCC" style=dashed]
+    fd_web -> crm_mail //[label="Auto-BCC" style=dashed]
+    fd_web -> usr_email
+    usr_email -> usr_web
+    crm_mail -> crm_web
+    fd_mail -> fd_web
+    // usr_email -> ea_contact,ea_news,ea_notice
+    usr_email -> gandi_mx
+  }
+
+}
