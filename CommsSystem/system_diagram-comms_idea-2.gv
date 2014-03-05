@@ -28,7 +28,7 @@ digraph G {
     aws_ses [label="SES"]
     {node[fillcolor=pink]
       wb  [label="webapp"]
-      mc2crm [label="Custom tool:\nMailChimp\nto Insightly"]
+      worker [label="Backend task\nprocessor"]
     }
   }
 
@@ -61,14 +61,13 @@ digraph G {
   aws_r53 -> wb [label="DNS:APEX"]
 
   // Webapp
-  wb -> aws_ses
   wb -> aws_rds
-  wb -> crm_api [label="Push contact data"] // TODO Should be external agent, not the webapp
+  wb -> ea_contact [style=dashed]
 
   // MailChimp
-  mc2crm -> aws_ses,aws_rds,mc_api
-  mc2crm -> crm_mail [style=dashed]
-  wb -> mc_api [label="Push contact data"] // TODO Should be external agent, not the webapp
+  worker -> aws_ses,aws_rds
+  worker -> mc_api [taillabel="Push contact data\nQuery"]
+  worker -> crm_api [label="Push contact data\nLog MailChimp broadcasts"]
   mc_web -> ea_news,ea_notice [style=dashed]
 
   // Email forwarding
@@ -78,8 +77,8 @@ digraph G {
   gmail -> gandi_mx [label="Fwd" dir=back]
 
   // Email [se|si]
-  wb -> ea_contact [style=dashed]
-  wb -> crm_mail [label="BCC" style=dashed]
+  worker -> ea_contact [style=dashed]
+  worker -> crm_mail [label="BCC" style=dashed]
 
   // Email [f]
   fd_web -> crm_mail [label="Auto-BCC" style=dashed]
