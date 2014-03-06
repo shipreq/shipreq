@@ -12,7 +12,7 @@ libraryDependencies ++= {
     "org.scala-lang"            % "scalap"                 % scalaDepsVersion,
     // [main]
     "net.liftweb"              %% "lift-webkit"            % liftVersion,
-    "org.scalaz"               %% "scalaz-core"            % "7.1.0-M4",
+    "org.scalaz"               %% "scalaz-core"            % "7.1.0-M5",
     "ch.qos.logback"            % "logback-classic"        % "1.0.13",
     "com.typesafe.slick"       %% "slick"                  % "1.0.1",
     "org.postgresql"            % "postgresql"             % "9.3-1100-jdbc41",
