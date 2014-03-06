@@ -28,11 +28,18 @@ class Jetty(val port: Int) extends Logger {
   private def newServer: Server = {
     info("Starting Jetty")
 
+    // Determine webapp project root dir
+    def tryPrefix(prefix: String): Option[String] =
+      if (new File(prefix + "src/main/webapp").exists) Some(prefix) else None
+    val webappProjectRoot: String =
+      tryPrefix("") orElse tryPrefix("webapp/") get
+    def file(relPath: String) = new File(webappProjectRoot + relPath)
+
     // Manually create an exploded WAR
     // Could use sbt or a real WAR but then we can't easily/quickly run single tests from IDE
     val tmpWarDir = TestHelpers.createTempDir("usecase-test-war")
-    FileUtils.copyDirectory(new File("src/main/webapp"), tmpWarDir)
-    FileUtils.copyDirectory(new File("target/scala-2.10/resource_managed/main"), tmpWarDir)
+    FileUtils.copyDirectory(file("src/main/webapp"), tmpWarDir)
+    FileUtils.copyDirectory(file("target/scala-2.10/resource_managed/main"), tmpWarDir)
 
     val svr = new Server
     val http = new ServerConnector(svr, new HttpConnectionFactory(new HttpConfiguration))

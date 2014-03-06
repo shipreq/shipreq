@@ -107,13 +107,13 @@ object ScamlJade extends Loggable {
 class ScamlJadeRenderer extends TemplateEngine with Loggable {
   bindings = List(Binding("context", classOf[DefaultRenderContext].getName, true, isImplicit = true))
 
-  if (useWebInfWorkingDirectory) {
-    val path = realPath("WEB-INF")
-    if (path ne null) {
-      workingDirectory = new File(path, "_scalate")
-      workingDirectory.mkdirs
-    }
-  }
+//  if (useWebInfWorkingDirectory) {
+//    val path = realPath("WEB-INF")
+//    if (path ne null) {
+//      workingDirectory = new File(path, "_scalate")
+//      workingDirectory.mkdirs
+//    }
+//  }
   classpath = buildClassPath
   resourceLoader = new LiftResourceLoader(this)
   layoutStrategy = new DefaultLayoutStrategy(this, "/WEB-INF/scalate/layouts/default.scaml", "/WEB-INF/scalate/layouts/default.ssp")

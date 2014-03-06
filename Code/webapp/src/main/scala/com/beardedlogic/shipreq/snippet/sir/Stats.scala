@@ -18,8 +18,7 @@ object Stats extends SnippetHelpers {
   object Build {
     private val props = ResourceBundle.getBundle("build")
     private def get(key: String) = props.getString("build." + key)
-    val VersionBase = get("version.base")
-    val VersionFull = get("version.full")
+    val Version     = get("version")
     val Revision    = get("revision")
     val TimeStr     = get("time")
     val Time        = new DateTime(new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(TimeStr))
@@ -74,8 +73,7 @@ object Stats extends SnippetHelpers {
     val userCount = dao.statsCountUsers
     List(
       "System & Environment" -> List(
-        "build.version.base"   -> Str(Build.VersionBase)
-        , "build.version.full" -> Str(Build.VersionFull)
+          "build.version"      -> Str(Build.Version)
         , "build.revision"     -> Str(Build.Revision)
         , "build.time"         -> Str(Build.TimeStr)
         , "java.version"       -> Str(Properties.javaVersion)

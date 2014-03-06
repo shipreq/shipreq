@@ -1,7 +1,7 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 grunt
-echo
+echo '--------------------------------------------------------------------------------'
 git st .
-echo
-sbt -DMODE=release clean package test
+echo '--------------------------------------------------------------------------------'
+cd .. && sbt -DMODE=release 'project webapp' clean package test

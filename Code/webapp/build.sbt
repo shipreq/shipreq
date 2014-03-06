@@ -1,17 +1,4 @@
-organization := "com.beardedlogic.shipreq"
-
 name := "webapp"
-
-baseVersion := "1.0.0" // SNAPSHOT applied in Build.scala
-
-scalaVersion := "2.10.3"
-
-initialize ~= { _ =>
-  sys.props("scalac.patmat.analysisBudget") = "off"
-}
-
-scalacOptions ++= Seq("-unchecked", "-deprecation", "-Yno-generic-signatures",
-  "-feature", "-language:postfixOps", "-language:implicitConversions", "-language:higherKinds", "-language:existentials")
 
 libraryDependencies ++= {
   val liftVersion = "2.6-M2-golly-1"
