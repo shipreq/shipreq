@@ -15,7 +15,7 @@ libraryDependencies ++= {
     "org.scalaz"               %% "scalaz-core"            % "7.1.0-M5",
     "ch.qos.logback"            % "logback-classic"        % "1.0.13",
     "com.typesafe.slick"       %% "slick"                  % "1.0.1",
-    "org.postgresql"            % "postgresql"             % "9.3-1100-jdbc41",
+    "org.postgresql"            % "postgresql"             % "9.3-1101-jdbc41",
     "com.googlecode.flyway"     % "flyway-core"            % "2.2.1",
     "org.apache.shiro"          % "shiro-core"             % shiroVersion,
     "org.apache.shiro"          % "shiro-web"              % shiroVersion,
