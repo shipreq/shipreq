@@ -1,6 +1,6 @@
-package com.beardedlogic.shipreq.feature.publish
+package shipreq.webapp.feature.publish
 
-import scalaz._, com.beardedlogic.shipreq._, db._, lib.Types._, feature.uc, uc._, uc.field._, uc.step._, uc.text._, FreeTextTerms._, util._
+import scalaz._, shipreq.webapp._, db._, lib.Types._, feature.uc, uc._, uc.field._, uc.step._, uc.text._, FreeTextTerms._, util._
 import org.joda.time.DateTime
 import org.scalatest.{Matchers, FunSpec}
 import net.liftweb.common.Logger

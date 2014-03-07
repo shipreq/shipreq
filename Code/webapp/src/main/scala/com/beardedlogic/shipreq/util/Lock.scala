@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.util
+package shipreq.webapp.util
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import java.util.concurrent.locks.{Lock => JLock, ReentrantReadWriteLock}

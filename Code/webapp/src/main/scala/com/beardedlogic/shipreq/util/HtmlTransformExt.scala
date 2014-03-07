@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.util
+package shipreq.webapp.util
 
 import net.liftweb.http.{SHtml, S}
 import net.liftweb.http.js.{JE, JsCmd}

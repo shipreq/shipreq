@@ -1,14 +1,14 @@
-package com.beardedlogic.shipreq.feature.publish
+package shipreq.webapp.feature.publish
 
 import scala.xml.{NodeSeq, Text}
-import com.beardedlogic.shipreq.feature.uc.UseCase
-import com.beardedlogic.shipreq.feature.uc.UseCaseFns.{fullName, reqId}
-import com.beardedlogic.shipreq.feature.uc.step.StepTreeZipper
-import com.beardedlogic.shipreq.feature.uc.text.FreeTextTerms._
-import com.beardedlogic.shipreq.feature.uc.text.{StepText, FreeText, ParsingConfig}
-import com.beardedlogic.shipreq.lib.Misc.DateTimeExt
-import com.beardedlogic.shipreq.lib.ScalazSubset._
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.feature.uc.UseCase
+import shipreq.webapp.feature.uc.UseCaseFns.{fullName, reqId}
+import shipreq.webapp.feature.uc.step.StepTreeZipper
+import shipreq.webapp.feature.uc.text.FreeTextTerms._
+import shipreq.webapp.feature.uc.text.{StepText, FreeText, ParsingConfig}
+import shipreq.webapp.lib.Misc.DateTimeExt
+import shipreq.webapp.lib.ScalazSubset._
+import shipreq.webapp.lib.Types._
 import ParsingConfig._
 import MarkupTokens._
 

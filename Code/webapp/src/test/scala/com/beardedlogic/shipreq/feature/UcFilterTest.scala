@@ -1,7 +1,7 @@
-package com.beardedlogic.shipreq.feature
+package shipreq.webapp.feature
 
 import org.scalatest.{Matchers, FunSpec}
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.lib.Types._
 import UcFilter._
 import UcFilters._
 

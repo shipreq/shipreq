@@ -1,9 +1,9 @@
-package com.beardedlogic.shipreq.feature.uc.text
+package shipreq.webapp.feature.uc.text
 
 import java.util.regex.Pattern
 import scala.annotation.tailrec
 import scala.util.parsing.combinator.RegexParsers
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.lib.Types._
 import ParsingConfig._
 
 /**

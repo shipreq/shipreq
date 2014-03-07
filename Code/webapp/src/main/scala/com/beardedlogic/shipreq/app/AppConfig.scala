@@ -1,10 +1,10 @@
-package com.beardedlogic.shipreq.app
+package shipreq.webapp.app
 
 import net.liftweb.util.Helpers._
 import org.joda.time.Period
-import com.beardedlogic.shipreq.util.ExternalValueReader._
-import com.beardedlogic.shipreq.util.RuntimePropReaders._
-import com.beardedlogic.shipreq.util.ExpireAfter
+import shipreq.webapp.util.ExternalValueReader._
+import shipreq.webapp.util.RuntimePropReaders._
+import shipreq.webapp.util.ExpireAfter
 
 final object AppConfig {
   implicit def PropScope = GlobalScope

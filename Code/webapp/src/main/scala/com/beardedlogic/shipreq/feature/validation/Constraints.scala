@@ -1,7 +1,7 @@
-package com.beardedlogic.shipreq.feature.validation
+package shipreq.webapp.feature.validation
 
 import java.util.regex.Pattern
-import com.beardedlogic.shipreq.app.AppConfig._
+import shipreq.webapp.app.AppConfig._
 
 trait Constraint[T <: AnyRef] extends (T => Option[String]) {
   def isValid(t: T): Boolean

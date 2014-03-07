@@ -1,18 +1,18 @@
-package com.beardedlogic.shipreq.feature.publish
+package shipreq.webapp.feature.publish
 
 import net.liftweb.util.TimeHelpers.logTime
 import scalaz.{Need, Traverse, Monoid}
 
-import com.beardedlogic.shipreq.feature.uc.UseCase
-import com.beardedlogic.shipreq.feature.uc.field._
-import com.beardedlogic.shipreq.feature.uc.step.{StepNode, StepTreeZipper}
-import com.beardedlogic.shipreq.feature.uc.text.FreeTextTerms._
-import com.beardedlogic.shipreq.feature.uc.text.{FreeTextTerm, StepText, FreeText}
-import com.beardedlogic.shipreq.lib.ScalazSubset._
-import com.beardedlogic.shipreq.lib.Misc.DateTimeExt
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.feature.FlowGraph
-import com.beardedlogic.shipreq.db.UseCaseRev
+import shipreq.webapp.feature.uc.UseCase
+import shipreq.webapp.feature.uc.field._
+import shipreq.webapp.feature.uc.step.{StepNode, StepTreeZipper}
+import shipreq.webapp.feature.uc.text.FreeTextTerms._
+import shipreq.webapp.feature.uc.text.{FreeTextTerm, StepText, FreeText}
+import shipreq.webapp.lib.ScalazSubset._
+import shipreq.webapp.lib.Misc.DateTimeExt
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.feature.FlowGraph
+import shipreq.webapp.db.UseCaseRev
 
 abstract class GenericPublisher(input: Input) {
 

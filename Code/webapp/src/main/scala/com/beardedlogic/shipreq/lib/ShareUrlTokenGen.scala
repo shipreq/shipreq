@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.lib
+package shipreq.webapp.lib
 
 import net.liftweb.common.Logger
 import scala.util.Random

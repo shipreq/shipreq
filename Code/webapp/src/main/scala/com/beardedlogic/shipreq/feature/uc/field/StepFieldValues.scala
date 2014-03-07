@@ -1,11 +1,11 @@
-package com.beardedlogic.shipreq.feature.uc.field
+package shipreq.webapp.feature.uc.field
 
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.feature.uc.{UcParsingCtx, Lenses}
-import com.beardedlogic.shipreq.feature.uc.change._
-import com.beardedlogic.shipreq.feature.uc.step.StepTree
-import com.beardedlogic.shipreq.feature.uc.step.TreeOps._
-import com.beardedlogic.shipreq.feature.uc.text.{StepTextUpdater, StepText}
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.feature.uc.{UcParsingCtx, Lenses}
+import shipreq.webapp.feature.uc.change._
+import shipreq.webapp.feature.uc.step.StepTree
+import shipreq.webapp.feature.uc.step.TreeOps._
+import shipreq.webapp.feature.uc.text.{StepTextUpdater, StepText}
 import Changes._
 
 object StepFieldValue {

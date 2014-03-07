@@ -1,9 +1,9 @@
-package com.beardedlogic.shipreq.stress
+package shipreq.webapp.stress
 
 import java.util.concurrent.atomic.AtomicLong
 import scala.slick.jdbc.StaticQuery
 import scala.slick.session.Session
-import com.beardedlogic.shipreq.test.TestDB
+import shipreq.webapp.test.TestDB
 
 object StressTestHelpers {
 

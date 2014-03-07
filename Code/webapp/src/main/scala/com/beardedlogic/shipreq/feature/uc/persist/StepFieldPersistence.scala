@@ -1,10 +1,10 @@
-package com.beardedlogic.shipreq.feature.uc
+package shipreq.webapp.feature.uc
 package persist
 
 import scala.annotation.tailrec
-import com.beardedlogic.shipreq.db._
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.feature.ExternalId
+import shipreq.webapp.db._
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.feature.ExternalId
 import field._
 import step.{StepNode, StepTree}
 import text.StepText

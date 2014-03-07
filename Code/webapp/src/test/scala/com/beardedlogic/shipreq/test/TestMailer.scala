@@ -1,9 +1,9 @@
-package com.beardedlogic.shipreq.test
+package shipreq.webapp.test
 
 import javax.mail.internet.MimeMessage
 import net.liftweb.util.Mailer
 import org.scalatest.Matchers
-import com.beardedlogic.shipreq.app.DI
+import shipreq.webapp.app.DI
 
 object TestMailer {
   def install[R](f: => R): MailTestResult[R] = {

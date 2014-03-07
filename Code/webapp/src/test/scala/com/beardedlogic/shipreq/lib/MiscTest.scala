@@ -1,11 +1,11 @@
-package com.beardedlogic.shipreq.lib
+package shipreq.webapp.lib
 
 import org.scalatest.FunSpec
 import org.scalatest.Matchers
 import net.liftweb.util.Helpers._
 import scalaz.Cord
-import com.beardedlogic.shipreq.feature.uc.field.{StepField, TextField}
-import com.beardedlogic.shipreq.test.TestData
+import shipreq.webapp.feature.uc.field.{StepField, TextField}
+import shipreq.webapp.test.TestData
 
 class MiscTest extends FunSpec with Matchers with Misc with TestData {
 

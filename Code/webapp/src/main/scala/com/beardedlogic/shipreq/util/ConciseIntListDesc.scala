@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.util
+package shipreq.webapp.util
 
 import scalaz.NonEmptyList
 

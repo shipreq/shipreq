@@ -1,13 +1,13 @@
-package com.beardedlogic.shipreq.snippet.project
+package shipreq.webapp.snippet.project
 
 import org.mockito.Mockito.when
 import org.scalatest.FunSuite
 import scalaz.Value
-import com.beardedlogic.shipreq.app.RequestVars
-import com.beardedlogic.shipreq.db.{Project, UserDescriptor, UpdateProjectResult}
-import com.beardedlogic.shipreq.test.{MockDaoProvider, TestHelpers}
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.util.NonEmptyTemplate
+import shipreq.webapp.app.RequestVars
+import shipreq.webapp.db.{Project, UserDescriptor, UpdateProjectResult}
+import shipreq.webapp.test.{MockDaoProvider, TestHelpers}
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.util.NonEmptyTemplate
 import UpdateProjectResult._
 import ProjectHeaderConsts._
 

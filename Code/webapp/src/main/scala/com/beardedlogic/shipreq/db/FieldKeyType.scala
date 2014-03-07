@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq
+package shipreq.webapp
 package db
 
 import scala.slick.jdbc.{StaticQuery => Q}

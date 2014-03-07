@@ -1,8 +1,8 @@
-package com.beardedlogic.shipreq.snippet.sir
+package shipreq.webapp.snippet.sir
 
-import com.beardedlogic.shipreq.feature.SessionStats
-import com.beardedlogic.shipreq.lib.{Misc, SnippetHelpers}
-import com.beardedlogic.shipreq.util.{ExpireAfter, CacheFn}
+import shipreq.webapp.feature.SessionStats
+import shipreq.webapp.lib.{Misc, SnippetHelpers}
+import shipreq.webapp.util.{ExpireAfter, CacheFn}
 import java.util.ResourceBundle
 import net.liftweb.http.LiftRules
 import net.liftweb.util.Helpers._

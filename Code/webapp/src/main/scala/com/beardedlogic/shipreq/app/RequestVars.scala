@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq
+package shipreq.webapp
 package app
 
 import scalaz.{Name, Need}

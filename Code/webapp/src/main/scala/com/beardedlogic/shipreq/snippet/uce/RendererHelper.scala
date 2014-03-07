@@ -1,7 +1,7 @@
-package com.beardedlogic.shipreq.snippet.uce
+package shipreq.webapp.snippet.uce
 
 import net.liftweb.http.js.JsCmd
-import com.beardedlogic.shipreq.lib.SnippetHelpers
+import shipreq.webapp.lib.SnippetHelpers
 import UseCaseEditor._
 
 private [uce] trait RendererHelper {

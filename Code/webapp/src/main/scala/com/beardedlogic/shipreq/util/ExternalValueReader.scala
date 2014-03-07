@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.util
+package shipreq.webapp.util
 
 import net.liftweb.util.Props
 import net.liftweb.common.{Empty, Box, Full, Failure}

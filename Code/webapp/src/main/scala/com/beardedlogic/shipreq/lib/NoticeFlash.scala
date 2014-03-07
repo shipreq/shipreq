@@ -1,8 +1,8 @@
-package com.beardedlogic.shipreq.lib
+package shipreq.webapp.lib
 
 import scala.xml.{Text, NodeSeq}
 import scalaz.NonEmptyList
-import com.beardedlogic.shipreq.util.ListFlashVar
+import shipreq.webapp.util.ListFlashVar
 
 object NoticeFlash {
 

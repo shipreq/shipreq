@@ -1,8 +1,8 @@
-package com.beardedlogic.shipreq.db
+package shipreq.webapp.db
 
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import org.scalatest.Matchers
-import com.beardedlogic.shipreq.test.TestDB
+import shipreq.webapp.test.TestDB
 
 class DaoProviderTest extends FunSuite with Matchers with BeforeAndAfterAll {
 

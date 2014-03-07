@@ -1,8 +1,8 @@
-package com.beardedlogic.shipreq.snippet
+package shipreq.webapp.snippet
 
 import scala.xml._
-import com.beardedlogic.shipreq.app.RequestVars
-import com.beardedlogic.shipreq.feature.NavbarElem
+import shipreq.webapp.app.RequestVars
+import shipreq.webapp.feature.NavbarElem
 
 /**
  * Renders a Navbar according to the contents of `RequestVars.Navbar`.

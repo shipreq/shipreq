@@ -1,9 +1,9 @@
-package com.beardedlogic.shipreq.snippet
+package shipreq.webapp.snippet
 
 import xml.{Unparsed, NodeSeq, Text}
 import net.liftweb.util.Helpers._
 import net.liftweb.util.CssSel
-import com.beardedlogic.shipreq.lib.ScalazSubset._
+import shipreq.webapp.lib.ScalazSubset._
 
 class About {
 

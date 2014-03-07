@@ -1,8 +1,8 @@
-package com.beardedlogic.shipreq.feature.uc.step
+package shipreq.webapp.feature.uc.step
 
 import scalaz.Zipper
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.feature.uc.text.StepText
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.feature.uc.text.StepText
 
 /**
  * Provides zippers for viewing and maneuvering around a tree of steps.

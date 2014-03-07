@@ -1,7 +1,7 @@
-package com.beardedlogic.shipreq.app
+package shipreq.webapp.app
 
 import org.scalatest.FunSuite
-import com.beardedlogic.shipreq.test.TestHelpers
+import shipreq.webapp.test.TestHelpers
 import AppSiteMap._
 import Implicits._
 

@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.util
+package shipreq.webapp.util
 
 trait ResourceLeaseFunctor[Resource] {
   protected def exec[T](f: Resource => T): T

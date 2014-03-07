@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.snippet
+package shipreq.webapp.snippet
 
 import net.liftweb.http.js.{JsCmds, JsCmd}
 import net.liftweb.http.{SessionVar, SHtml}
@@ -7,18 +7,18 @@ import org.joda.time.DateTime
 import scala.xml.{Text, NodeSeq}
 import scalaz.Need
 
-import com.beardedlogic.shipreq.app.AppSiteMap.mkTitle
-import com.beardedlogic.shipreq.app.AppConfig
-import com.beardedlogic.shipreq.db.{DaoS, Share}
-import com.beardedlogic.shipreq.feature.UcFilter
-import com.beardedlogic.shipreq.feature.publish.{DocHeader, HtmlPublisher, Input}
-import com.beardedlogic.shipreq.feature.uc.persist.{UseCaseSaveCheckpoint, UseCasePersistence}
-import com.beardedlogic.shipreq.lib.ScalazSubset._
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.lib.{LogShareView, Locks, SingleOpStatefulSnippet}
-import com.beardedlogic.shipreq.security.Permissions
-import com.beardedlogic.shipreq.util.HtmlTransformExt.ajaxSubmitOnClick
-import com.beardedlogic.shipreq.util.JsExt
+import shipreq.webapp.app.AppSiteMap.mkTitle
+import shipreq.webapp.app.AppConfig
+import shipreq.webapp.db.{DaoS, Share}
+import shipreq.webapp.feature.UcFilter
+import shipreq.webapp.feature.publish.{DocHeader, HtmlPublisher, Input}
+import shipreq.webapp.feature.uc.persist.{UseCaseSaveCheckpoint, UseCasePersistence}
+import shipreq.webapp.lib.ScalazSubset._
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.lib.{LogShareView, Locks, SingleOpStatefulSnippet}
+import shipreq.webapp.security.Permissions
+import shipreq.webapp.util.HtmlTransformExt.ajaxSubmitOnClick
+import shipreq.webapp.util.JsExt
 import ShareView._
 
 object ShareView {

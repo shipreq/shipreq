@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq
+package shipreq.webapp
 package feature
 
 import org.apache.commons.lang3.StringEscapeUtils.escapeJava

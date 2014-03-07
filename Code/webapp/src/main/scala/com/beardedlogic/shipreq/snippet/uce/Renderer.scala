@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq
+package shipreq.webapp
 package snippet.uce
 
 import scala.xml.{Text, NodeSeq}

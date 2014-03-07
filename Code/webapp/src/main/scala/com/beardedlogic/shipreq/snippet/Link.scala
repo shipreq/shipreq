@@ -1,9 +1,9 @@
-package com.beardedlogic.shipreq.snippet
+package shipreq.webapp.snippet
 
-import com.beardedlogic.shipreq.app.AppConfig
-import com.beardedlogic.shipreq.app.AppSiteMap
-import com.beardedlogic.shipreq.app.AppSiteMap.Implicits._
-import com.beardedlogic.shipreq.lib.{Misc, SnippetHelpers}
+import shipreq.webapp.app.AppConfig
+import shipreq.webapp.app.AppSiteMap
+import shipreq.webapp.app.AppSiteMap.Implicits._
+import shipreq.webapp.lib.{Misc, SnippetHelpers}
 import net.liftweb.http.DispatchSnippet
 import net.liftweb.sitemap.{Loc, SiteMap}
 import net.liftweb.util.Props

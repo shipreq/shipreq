@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq
+package shipreq.webapp
 package feature.validation
 
 import org.scalatest.FunSuite

@@ -1,12 +1,12 @@
-package com.beardedlogic.shipreq.util
+package shipreq.webapp.util
 
 import java.util.concurrent.atomic.AtomicInteger
 import net.liftweb.http.{TransientRequestVar, SessionVar}
 import org.joda.time.{Period, DateTime}
 import scalaz.syntax.semigroup._
 import scalaz.{NonEmptyList, Semigroup}
-import com.beardedlogic.shipreq.app.AppConfig.FlashVarTTL
-import com.beardedlogic.shipreq.lib.Misc
+import shipreq.webapp.app.AppConfig.FlashVarTTL
+import shipreq.webapp.lib.Misc
 import FlashVar._
 
 object FlashVar {

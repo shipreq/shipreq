@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.integration
+package shipreq.webapp.integration
 
 import org.scalatest.FreeSpec
 import support.SeleniumTest

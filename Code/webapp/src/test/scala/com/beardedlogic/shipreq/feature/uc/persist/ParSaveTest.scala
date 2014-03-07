@@ -1,12 +1,12 @@
-package com.beardedlogic.shipreq.feature.uc.persist
+package shipreq.webapp.feature.uc.persist
 
 import org.scalatest.FunSuite
-import com.beardedlogic.shipreq.app.DI
-import com.beardedlogic.shipreq.feature.uc.UseCase
-import com.beardedlogic.shipreq.lib.Locks
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.stress.GenerateUCs
-import com.beardedlogic.shipreq.test.{TestHelpers, TestDB}
+import shipreq.webapp.app.DI
+import shipreq.webapp.feature.uc.UseCase
+import shipreq.webapp.lib.Locks
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.stress.GenerateUCs
+import shipreq.webapp.test.{TestHelpers, TestDB}
 import TestDB.withDbHelpers
 
 class ParSaveTest extends FunSuite with TestHelpers with DI {

@@ -1,11 +1,11 @@
-package com.beardedlogic.shipreq.db
+package shipreq.webapp.db
 
 import org.scalatest.FunSpec
 import scala.slick.jdbc.{StaticQuery => Q}
 import Q.interpolation
 import org.postgresql.util.PSQLException
-import com.beardedlogic.shipreq.db.SqlHelpers.SP_ShareId
-import com.beardedlogic.shipreq.test.TestDatabaseSupport
+import shipreq.webapp.db.SqlHelpers.SP_ShareId
+import shipreq.webapp.test.TestDatabaseSupport
 
 class DbTriggerTest extends FunSpec with TestDatabaseSupport {
 

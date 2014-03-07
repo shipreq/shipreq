@@ -23,7 +23,7 @@
     <logger name="org.apache.commons" level="WARN" />
 	<logger name="scala.slick.compiler" level="WARN" />
 	<logger name="scala.slick.session" level="DEBUG" />
-	<logger name="com.beardedlogic" level="DEBUG" />
+	<logger name="shipreq.webapp" level="DEBUG" />
 	<root level="DEBUG">
 		<appender-ref ref="STDOUT" />
 		<appender-ref ref="FILE.LOG" />

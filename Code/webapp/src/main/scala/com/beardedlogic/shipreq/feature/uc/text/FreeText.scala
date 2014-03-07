@@ -1,10 +1,10 @@
-package com.beardedlogic.shipreq.feature.uc.text
+package shipreq.webapp.feature.uc.text
 
-import com.beardedlogic.shipreq.lib.Misc.containsAlpha
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.feature.validation.Validator
-import com.beardedlogic.shipreq.feature.uc.UcParsingCtx
-import com.beardedlogic.shipreq.feature.uc.change._
+import shipreq.webapp.lib.Misc.containsAlpha
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.feature.validation.Validator
+import shipreq.webapp.feature.uc.UcParsingCtx
+import shipreq.webapp.feature.uc.change._
 import Changes._
 import ParsingConfig._
 import ParsingUtils._

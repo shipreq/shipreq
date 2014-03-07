@@ -1,8 +1,8 @@
-package com.beardedlogic.shipreq.feature.validation
+package shipreq.webapp.feature.validation
 
 import scala.xml.{Text, NodeSeq}
 import scalaz.{Cord, Monoid, NonEmptyList}
-import com.beardedlogic.shipreq.lib.ScalazSubset._
+import shipreq.webapp.lib.ScalazSubset._
 import VFailure.ErrorMsg
 
 trait GenericVFailureRenderer {

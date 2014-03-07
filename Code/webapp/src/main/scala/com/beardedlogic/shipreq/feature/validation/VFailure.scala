@@ -1,8 +1,8 @@
-package com.beardedlogic.shipreq.feature.validation
+package shipreq.webapp.feature.validation
 
 import scala.xml.NodeSeq
 import scalaz.{Monoid, Semigroup, NonEmptyList}
-import com.beardedlogic.shipreq.lib.ScalazSubset._
+import shipreq.webapp.lib.ScalazSubset._
 import VFailure._
 
 object VFailure {

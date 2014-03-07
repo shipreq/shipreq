@@ -1,10 +1,10 @@
-package com.beardedlogic.shipreq.feature.uc.step
+package shipreq.webapp.feature.uc.step
 
 import org.scalacheck.Arbitrary
 import org.scalatest.FunSpec
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
-import com.beardedlogic.shipreq.test.DataGenerators._
-import com.beardedlogic.shipreq.test.TestHelpers
+import shipreq.webapp.test.DataGenerators._
+import shipreq.webapp.test.TestHelpers
 
 class StepTreeZipperTest extends FunSpec with TestHelpers with GeneratorDrivenPropertyChecks {
 

@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.feature.uc.step
+package shipreq.webapp.feature.uc.step
 
 /**
  * Anything that has (recursive) child nodes can be considered tree-like.

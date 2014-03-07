@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.lib
+package shipreq.webapp.lib
 
 import org.scalatest.{Matchers, FunSuite}
 

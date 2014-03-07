@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq
+package shipreq.webapp
 package util
 
 import java.lang.{Long => JLong}

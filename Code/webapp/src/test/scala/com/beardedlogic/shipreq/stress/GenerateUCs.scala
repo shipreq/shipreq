@@ -1,12 +1,12 @@
-package com.beardedlogic.shipreq.stress
+package shipreq.webapp.stress
 
-import com.beardedlogic.shipreq.lib.ScalazSubset._
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.lib.ScalazSubset._
+import shipreq.webapp.lib.Types._
 import scala.annotation.tailrec
-import com.beardedlogic.shipreq.test.DataGenerators._
-import com.beardedlogic.shipreq.test.TestDB
-import com.beardedlogic.shipreq.app.Defaults
-import com.beardedlogic.shipreq.feature.uc.UseCase
+import shipreq.webapp.test.DataGenerators._
+import shipreq.webapp.test.TestDB
+import shipreq.webapp.app.Defaults
+import shipreq.webapp.feature.uc.UseCase
 import org.apache.commons.io.FileUtils
 import java.io.File
 import collection.parallel.immutable.ParSeq
@@ -50,7 +50,7 @@ object GenerateUCs /*extends App */{
   val ucn: UseCaseNumber = (1:Short).tag
   val outpath = "/tmp/Data.scala"
 
-  import com.beardedlogic.shipreq.feature.Inspection._
+  import shipreq.webapp.feature.Inspection._
 
   def inspect(vars: Map[String, String])(uc: UseCase): String = {
     var x = uc.shows
@@ -78,7 +78,7 @@ object GenerateUCs /*extends App */{
 
     s"""
       |object Data {
-      |  import scalaz.Name, com.beardedlogic.shipreq._, db._, lib.Types._, feature.uc, uc._, uc.field._, uc.step._, uc.text._, FreeTextTerms._, util._
+      |  import scalaz.Name, shipreq.webapp._, db._, lib.Types._, feature.uc, uc._, uc.field._, uc.step._, uc.text._, FreeTextTerms._, util._
       |  ${lines.reverse.mkString("\n").replace("\n", "\n  ")}
       |}
     """.stripMargin

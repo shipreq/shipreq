@@ -1,11 +1,11 @@
-package com.beardedlogic.shipreq.feature.uc
+package shipreq.webapp.feature.uc
 package change
 
 import scala.collection.mutable.ListBuffer
 import scalaz.NonEmptyList
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.feature.validation.Validator
-import com.beardedlogic.shipreq.util.AppliedLens
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.feature.validation.Validator
+import shipreq.webapp.util.AppliedLens
 import field._
 import text.ParsedTextUpdater
 import Changes._

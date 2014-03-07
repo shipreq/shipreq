@@ -1,8 +1,8 @@
-package com.beardedlogic.shipreq.security
+package shipreq.webapp.security
 
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.lib.Types._
 import org.scalatest.{Matchers, FunSpec}
-import com.beardedlogic.shipreq.db.UserDescriptor
+import shipreq.webapp.db.UserDescriptor
 
 class PermissionsTest extends FunSpec with Matchers {
 

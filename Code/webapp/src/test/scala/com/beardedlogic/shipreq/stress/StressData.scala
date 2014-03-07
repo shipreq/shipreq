@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq
+package shipreq.webapp
 package stress
 /*
 import org.scalacheck.Gen

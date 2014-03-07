@@ -1,15 +1,15 @@
-package com.beardedlogic.shipreq.feature.uc.text
+package shipreq.webapp.feature.uc.text
 
 import scala.collection.immutable.TreeSet
 import scalaz.{NonEmptyList, Cord}
-import com.beardedlogic.shipreq.db.{FieldKeyType, FieldKeyRec}
-import com.beardedlogic.shipreq.feature.validation.Validator
-import com.beardedlogic.shipreq.feature.uc.UcParsingCtx
-import com.beardedlogic.shipreq.feature.uc.change._
-import com.beardedlogic.shipreq.feature.uc.field.{NormalCourseField, StepField}
-import com.beardedlogic.shipreq.feature.uc.text.ParsingConfig.{FlowToStyle, FlowFromStyle, makeInvalidStepRef}
-import com.beardedlogic.shipreq.lib.Misc.SingleSpace
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.db.{FieldKeyType, FieldKeyRec}
+import shipreq.webapp.feature.validation.Validator
+import shipreq.webapp.feature.uc.UcParsingCtx
+import shipreq.webapp.feature.uc.change._
+import shipreq.webapp.feature.uc.field.{NormalCourseField, StepField}
+import shipreq.webapp.feature.uc.text.ParsingConfig.{FlowToStyle, FlowFromStyle, makeInvalidStepRef}
+import shipreq.webapp.lib.Misc.SingleSpace
+import shipreq.webapp.lib.Types._
 import Changes._
 import ParsingUtils._
 

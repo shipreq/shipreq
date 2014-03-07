@@ -1,11 +1,11 @@
-package com.beardedlogic.shipreq.feature
+package shipreq.webapp.feature
 
 import org.scalacheck.Prop._
 import org.scalatest.FunSuite
 import org.scalatest.prop.Checkers
 import org.scalatest.Matchers
 import ExternalId.UseCase._
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.lib.Types._
 
 class ExternalIdTest extends FunSuite with Checkers with Matchers {
 

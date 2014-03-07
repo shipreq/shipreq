@@ -1,12 +1,12 @@
-package com.beardedlogic.shipreq.lib
+package shipreq.webapp.lib
 
 import net.liftweb.actor.SpecializedLiftActor
 import net.liftweb.common.Box
 import net.liftweb.http.LiftSession
-import com.beardedlogic.shipreq.app.DI
-import com.beardedlogic.shipreq.db.{UserDescriptor, DaoS}
-import com.beardedlogic.shipreq.feature.SessionStats
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.app.DI
+import shipreq.webapp.db.{UserDescriptor, DaoS}
+import shipreq.webapp.feature.SessionStats
+import shipreq.webapp.lib.Types._
 
 sealed trait StatLoggerCmd
 case class LogShareView(id: ShareId, ip: Option[String] = Misc.clientIp) extends StatLoggerCmd

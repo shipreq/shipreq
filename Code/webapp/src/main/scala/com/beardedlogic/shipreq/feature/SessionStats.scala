@@ -1,10 +1,10 @@
-package com.beardedlogic.shipreq.feature
+package shipreq.webapp.feature
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import net.liftweb.common.{Logger, Full, Box}
 import net.liftweb.http.{Req, LiftSession}
-import com.beardedlogic.shipreq.db.UserDescriptor
+import shipreq.webapp.db.UserDescriptor
 
 /**
  * Collects stats about sessions and logins.

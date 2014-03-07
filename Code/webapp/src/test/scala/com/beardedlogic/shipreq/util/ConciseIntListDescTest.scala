@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.util
+package shipreq.webapp.util
 
 import org.scalatest.{Matchers, FunSuite}
 import scalaz.{NonEmptyList => NEL}

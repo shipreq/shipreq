@@ -1,7 +1,7 @@
-package com.beardedlogic.shipreq.feature.validation
+package shipreq.webapp.feature.validation
 
 import scalaz.{NonEmptyList, Success, Failure}
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.lib.Types._
 
 object ConstraintValidator {
   def apply[T <: AnyRef](fieldName: String, constraints: Constraint[T]*) =

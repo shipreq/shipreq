@@ -1,17 +1,17 @@
-package com.beardedlogic.shipreq.snippet
+package shipreq.webapp.snippet
 
 import org.joda.time.DateTime
 import org.mockito.Mockito.{when, verify}
 import org.scalatest.FunSpec
-import com.beardedlogic.shipreq.app.DI
-import com.beardedlogic.shipreq.db.{UserDescriptor, UseCaseIdent, UseCaseRev, Project, Share}
-import com.beardedlogic.shipreq.feature.uc.persist.UseCaseSaveCheckpoint
-import com.beardedlogic.shipreq.feature.{UcFilters, UcFilter}
-import com.beardedlogic.shipreq.lib.{LogShareView, StatLogger}
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.security.PasswordAndSalt
-import com.beardedlogic.shipreq.test.{TestData, TestHelpers, MockDaoProvider}
-import com.beardedlogic.shipreq.util.NonEmptyTemplate
+import shipreq.webapp.app.DI
+import shipreq.webapp.db.{UserDescriptor, UseCaseIdent, UseCaseRev, Project, Share}
+import shipreq.webapp.feature.uc.persist.UseCaseSaveCheckpoint
+import shipreq.webapp.feature.{UcFilters, UcFilter}
+import shipreq.webapp.lib.{LogShareView, StatLogger}
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.security.PasswordAndSalt
+import shipreq.webapp.test.{TestData, TestHelpers, MockDaoProvider}
+import shipreq.webapp.util.NonEmptyTemplate
 import ShareView._
 
 class ShareViewTest extends FunSpec with TestHelpers with TestData {

@@ -1,12 +1,12 @@
-package com.beardedlogic.shipreq.app
+package shipreq.webapp.app
 
 import AppSiteMap._
 import Implicits._
-import com.beardedlogic.shipreq.test.LiveTest
-import com.beardedlogic.shipreq.test.fixture.UserFixture
+import shipreq.webapp.test.LiveTest
+import shipreq.webapp.test.fixture.UserFixture
 import org.apache.commons.httpclient.{HttpMethodBase, HttpClient}
 import org.scalatest.FunSpec
-import com.beardedlogic.shipreq.db.UseCaseHeader
+import shipreq.webapp.db.UseCaseHeader
 
 class PermissionTest extends FunSpec with LiveTest with UserFixture {
 

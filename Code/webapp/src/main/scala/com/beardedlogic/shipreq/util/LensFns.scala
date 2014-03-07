@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.util
+package shipreq.webapp.util
 
 import scalaz.{LensFamily, Lens}
 import Lens.{lensg, lensFamilyg}

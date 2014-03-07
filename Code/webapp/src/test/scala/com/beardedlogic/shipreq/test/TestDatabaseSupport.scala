@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq
+package shipreq.webapp
 package test
 
 import com.googlecode.flyway.core.dbsupport.{SqlScript, DbSupportFactory}

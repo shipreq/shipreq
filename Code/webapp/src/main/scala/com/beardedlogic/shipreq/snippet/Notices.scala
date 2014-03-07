@@ -1,10 +1,10 @@
-package com.beardedlogic.shipreq.snippet
+package shipreq.webapp.snippet
 
 import net.liftweb.common.Box
 import net.liftweb.http.S
 import net.liftweb.util.Helpers._
 import scala.xml._
-import com.beardedlogic.shipreq.lib.NoticeFlash
+import shipreq.webapp.lib.NoticeFlash
 
 object AlertType {
   private[snippet] final val CommonClasses = "alert alert-dismissable"

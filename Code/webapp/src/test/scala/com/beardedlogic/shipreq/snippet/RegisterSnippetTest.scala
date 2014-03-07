@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq
+package shipreq.webapp
 package snippet
 
 import net.liftweb.http.{ResponseShortcutException, S}

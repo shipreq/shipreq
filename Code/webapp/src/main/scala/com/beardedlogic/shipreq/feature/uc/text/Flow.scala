@@ -1,9 +1,9 @@
-package com.beardedlogic.shipreq.feature.uc.text
+package shipreq.webapp.feature.uc.text
 
 import scala.collection.immutable.{SortedSet, TreeSet}
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.feature.uc.change.Change
-import com.beardedlogic.shipreq.feature.uc.change.Changes.{FlowToChange, FlowFromChange}
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.feature.uc.change.Change
+import shipreq.webapp.feature.uc.change.Changes.{FlowToChange, FlowFromChange}
 import ParsingConfig.{FlowToStyle, FlowFromStyle, FlowStyle}
 
 object Flow {

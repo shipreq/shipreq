@@ -1,11 +1,11 @@
-package com.beardedlogic.shipreq.feature.publish
+package shipreq.webapp.feature.publish
 
 import scala.annotation.tailrec
 import scala.util.matching.Regex
 import scalaz.{\/, -\/, \/-, NonEmptyList => NEL}
 import NEL.nel
-import com.beardedlogic.shipreq.feature.uc.text.FreeTextTerm
-import com.beardedlogic.shipreq.feature.uc.text.FreeTextTerms._
+import shipreq.webapp.feature.uc.text.FreeTextTerm
+import shipreq.webapp.feature.uc.text.FreeTextTerms._
 
 sealed trait MarkupToken
 object MarkupTokens {

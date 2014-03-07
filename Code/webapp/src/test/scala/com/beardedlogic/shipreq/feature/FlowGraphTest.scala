@@ -1,11 +1,11 @@
-package com.beardedlogic.shipreq.feature
+package shipreq.webapp.feature
 
 import org.scalatest.FunSpec
 import org.scalatest.prop.PropertyChecks
 import scalaz.{NonEmptyList => NEL}
-import com.beardedlogic.shipreq.test.{StepNodeWithText, TestData}
-import com.beardedlogic.shipreq.test.NodeUtils.parseStepTree
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.test.{StepNodeWithText, TestData}
+import shipreq.webapp.test.NodeUtils.parseStepTree
+import shipreq.webapp.lib.Types._
 import uc.step.StepTreeZipper._
 import uc.text.{FlowToClause, Flow, FlowFromClause, StepText}
 import uc.UseCaseFns.generateStepAndLabelMap
@@ -184,7 +184,7 @@ class FlowGraphTest extends FunSpec with TestData with PropertyChecks {
   }
 
   // it("Generates DOT for arbitrary UCs") {
-  // import com.beardedlogic.shipreq.test.DataGenerators.useCaseGen
+  // import shipreq.webapp.test.DataGenerators.useCaseGen
   // val x = useCaseGen(FieldListRec(FL.map(_.rec))).sample.get
   // println(render(model(x)))
 

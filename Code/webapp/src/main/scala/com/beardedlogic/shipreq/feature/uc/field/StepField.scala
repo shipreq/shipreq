@@ -1,10 +1,10 @@
-package com.beardedlogic.shipreq.feature.uc
+package shipreq.webapp.feature.uc
 package field
 
 import scala.annotation.tailrec
-import com.beardedlogic.shipreq.db._
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.feature.validation.{Validator, VFailure}
+import shipreq.webapp.db._
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.feature.validation.{Validator, VFailure}
 import change._
 import step.StepLabels.{MaxStepsPerLevel, MaxStepDepth}
 import step.{StepTree, StepNodeBuilder, StepNode}

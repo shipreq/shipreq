@@ -1,7 +1,7 @@
-package com.beardedlogic.shipreq.test
+package shipreq.webapp.test
 
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.feature.uc.step.StepLabels._
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.feature.uc.step.StepLabels._
 
 /**
  * Very old way of generating trees.

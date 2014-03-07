@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.feature
+package shipreq.webapp.feature
 
 import net.liftweb.common.Full
 import net.liftweb.http.S
@@ -6,10 +6,10 @@ import net.liftweb.json._
 import scala.xml.{Text, NodeSeq}
 import scalaz.{MonadPlus, NonEmptyList}
 
-import com.beardedlogic.shipreq.lib.ScalazSubset._
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.db.BasicUseCaseInfo
-import com.beardedlogic.shipreq.lib.SnippetHelpers.shouldNeverHappen_swallowInProd
+import shipreq.webapp.lib.ScalazSubset._
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.db.BasicUseCaseInfo
+import shipreq.webapp.lib.SnippetHelpers.shouldNeverHappen_swallowInProd
 
 /**
  * The filtering of a project's use cases.

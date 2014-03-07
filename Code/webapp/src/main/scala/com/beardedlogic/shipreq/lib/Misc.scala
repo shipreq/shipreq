@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.lib
+package shipreq.webapp.lib
 
 import net.liftweb.common.Logger
 import net.liftweb.http.S
@@ -11,8 +11,8 @@ import scala.util.hashing.Hashing
 import scala.util.Random
 import scalaz.{Memo, Cord}
 
-import com.beardedlogic.shipreq.app.AppConfig
-import com.beardedlogic.shipreq.feature.uc.field.{TextFieldDefinition, TextField, Field}
+import shipreq.webapp.app.AppConfig
+import shipreq.webapp.feature.uc.field.{TextFieldDefinition, TextField, Field}
 import Types._
 import AppConfig._
 

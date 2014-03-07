@@ -1,7 +1,7 @@
-package com.beardedlogic.shipreq.snippet.sir
+package shipreq.webapp.snippet.sir
 
-import com.beardedlogic.shipreq.test.TestDatabaseSupport
-import com.beardedlogic.shipreq.util.NonEmptyTemplate
+import shipreq.webapp.test.TestDatabaseSupport
+import shipreq.webapp.util.NonEmptyTemplate
 import org.scalatest.FunSuite
 
 class StatsTest extends FunSuite with TestDatabaseSupport {

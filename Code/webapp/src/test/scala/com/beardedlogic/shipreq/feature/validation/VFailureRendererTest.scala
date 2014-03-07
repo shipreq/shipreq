@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.feature.validation
+package shipreq.webapp.feature.validation
 
 import org.scalatest.{Matchers, FunSpec}
 import scala.xml.Text

@@ -1,8 +1,8 @@
-package com.beardedlogic.shipreq.feature.uc.change
+package shipreq.webapp.feature.uc.change
 
-import com.beardedlogic.shipreq.feature.uc.UseCase
-import com.beardedlogic.shipreq.feature.validation.VFailure
-import com.beardedlogic.shipreq.lib.Types.UcUpdateResult
+import shipreq.webapp.feature.uc.UseCase
+import shipreq.webapp.feature.validation.VFailure
+import shipreq.webapp.lib.Types.UcUpdateResult
 
 /**
  * A filter on use case changes just before they are applied.

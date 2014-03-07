@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.feature.uc.step
+package shipreq.webapp.feature.uc.step
 
 import org.scalatest.Matchers
 import org.scalatest.WordSpec

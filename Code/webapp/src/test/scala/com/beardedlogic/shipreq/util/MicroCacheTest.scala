@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.util
+package shipreq.webapp.util
 
 import org.joda.time.{DateTimeUtils, Period}
 import org.scalatest.{Matchers, FunSpec}

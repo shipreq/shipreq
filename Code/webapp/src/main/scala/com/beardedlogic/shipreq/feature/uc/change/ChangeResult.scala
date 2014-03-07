@@ -1,8 +1,8 @@
-package com.beardedlogic.shipreq.feature.uc.change
+package shipreq.webapp.feature.uc.change
 
 import scalaz.NonEmptyList
-import com.beardedlogic.shipreq.feature.validation.VFailure
-import com.beardedlogic.shipreq.lib.Types.ValidationResultU
+import shipreq.webapp.feature.validation.VFailure
+import shipreq.webapp.lib.Types.ValidationResultU
 
 object ChangeResult {
 

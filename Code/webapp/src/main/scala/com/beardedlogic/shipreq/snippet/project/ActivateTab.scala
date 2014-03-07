@@ -1,10 +1,10 @@
-package com.beardedlogic.shipreq.snippet.project
+package shipreq.webapp.snippet.project
 
 import net.liftweb.util.Helpers._
 import scalaz.Memo
 import scala.xml.NodeSeq
-import com.beardedlogic.shipreq.util.FlashVar
-import com.beardedlogic.shipreq.util.HtmlTransformExt.removeClasses
+import shipreq.webapp.util.FlashVar
+import shipreq.webapp.util.HtmlTransformExt.removeClasses
 
 object ActivateTab {
 

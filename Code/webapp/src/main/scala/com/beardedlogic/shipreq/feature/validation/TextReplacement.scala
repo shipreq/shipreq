@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.feature.validation
+package shipreq.webapp.feature.validation
 
 import java.util.regex.Pattern
 import scala.util.matching.Regex

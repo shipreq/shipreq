@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.security
+package shipreq.webapp.security
 
 sealed case class Role(name: String) {
   if (!Roles.RoleNamePattern.pattern.matcher(name).matches)

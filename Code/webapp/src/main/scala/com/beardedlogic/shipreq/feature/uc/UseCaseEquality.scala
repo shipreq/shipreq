@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq
+package shipreq.webapp
 package feature.uc
 
 import scalaz.{Order, Equal}

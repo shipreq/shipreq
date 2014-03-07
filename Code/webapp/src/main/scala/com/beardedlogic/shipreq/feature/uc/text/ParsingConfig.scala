@@ -1,9 +1,9 @@
-package com.beardedlogic.shipreq.feature.uc.text
+package shipreq.webapp.feature.uc.text
 
 import java.util.regex.Pattern
 import scala.collection.immutable.SortedSet
 import scala.util.matching.Regex
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.lib.Types._
 
 final object ParsingConfig {
 

@@ -1,8 +1,8 @@
-package com.beardedlogic.shipreq.db
+package shipreq.webapp.db
 
 import net.liftweb.actor.SpecializedLiftActor
-import com.beardedlogic.shipreq.app.DI
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.app.DI
+import shipreq.webapp.lib.Types._
 import slick.session.Session
 import AsyncDb._
 

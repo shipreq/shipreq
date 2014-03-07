@@ -1,8 +1,8 @@
-package com.beardedlogic.shipreq.feature.uc.change
+package shipreq.webapp.feature.uc.change
 
 import scalaz.NonEmptyList
-import com.beardedlogic.shipreq.feature.uc.UcParsingCtx
-import com.beardedlogic.shipreq.lib.ScalazSubset._
+import shipreq.webapp.feature.uc.UcParsingCtx
+import shipreq.webapp.lib.ScalazSubset._
 
 
 trait ChangeResponder[V] {

@@ -1,7 +1,7 @@
-package com.beardedlogic.shipreq.feature.uc
+package shipreq.webapp.feature.uc
 package step
 
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.lib.Types._
 
 /**
  * Builds on `TreeNodeLike` to add a node ID, and hierarchical position details.

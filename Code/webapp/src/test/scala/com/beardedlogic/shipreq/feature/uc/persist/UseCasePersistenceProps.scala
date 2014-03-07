@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq
+package shipreq.webapp
 package feature.uc
 package persist
 
@@ -15,7 +15,7 @@ import step._
 import test.TestDatabaseSupport
 import test.DataGenerators._
 import app.Defaults
-import com.beardedlogic.shipreq.lib.Locks
+import shipreq.webapp.lib.Locks
 
 class UseCasePersistenceProps extends FunSuite with TestDatabaseSupport with Checkers {
 

@@ -1,7 +1,7 @@
-package com.beardedlogic.shipreq.feature.validation
+package shipreq.webapp.feature.validation
 
 import org.scalatest.{Matchers, FunSuite}
-import com.beardedlogic.shipreq.app.AppConfig._
+import shipreq.webapp.app.AppConfig._
 import Constraints._
 
 class ConstraintTest extends FunSuite with Matchers {

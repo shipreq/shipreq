@@ -1,8 +1,8 @@
-package com.beardedlogic.shipreq.feature.uc
+package shipreq.webapp.feature.uc
 package step
 
 import scala.annotation.tailrec
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.lib.Types._
 
 /**
  * @since 2/05/2013

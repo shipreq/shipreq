@@ -1,8 +1,8 @@
-package com.beardedlogic.shipreq.feature
+package shipreq.webapp.feature
 
-import com.beardedlogic.shipreq.app.DI
-import com.beardedlogic.shipreq.lib.Misc.DateTimeExt
-import com.beardedlogic.shipreq.lib.{MailHelpers, SnippetHelpers}
+import shipreq.webapp.app.DI
+import shipreq.webapp.lib.Misc.DateTimeExt
+import shipreq.webapp.lib.{MailHelpers, SnippetHelpers}
 import net.liftweb.common._
 import net.liftweb.http.{S, BadResponse, JsonResponse, InMemoryResponse, MethodNotAllowedResponse}
 import net.liftweb.json.Extraction

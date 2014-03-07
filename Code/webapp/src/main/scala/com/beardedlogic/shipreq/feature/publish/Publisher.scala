@@ -1,9 +1,9 @@
-package com.beardedlogic.shipreq.feature.publish
+package shipreq.webapp.feature.publish
 
 import org.joda.time.DateTime
-import com.beardedlogic.shipreq.db.UseCaseRev
-import com.beardedlogic.shipreq.feature.uc.UseCase
-import com.beardedlogic.shipreq.util.DateTimeOrdering.instance
+import shipreq.webapp.db.UseCaseRev
+import shipreq.webapp.feature.uc.UseCase
+import shipreq.webapp.util.DateTimeOrdering.instance
 import UseCase.ordering
 
 case class DocHeader(

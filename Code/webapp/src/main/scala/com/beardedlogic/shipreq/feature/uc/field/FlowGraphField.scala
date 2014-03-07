@@ -1,9 +1,9 @@
-package com.beardedlogic.shipreq.feature.uc.field
+package shipreq.webapp.feature.uc.field
 
 import scalaz.NonEmptyList
-import com.beardedlogic.shipreq.db.{FieldKeyRec, FieldKeyType}
-import com.beardedlogic.shipreq.feature.uc.change._
-import com.beardedlogic.shipreq.feature.uc.UcParsingCtx
+import shipreq.webapp.db.{FieldKeyRec, FieldKeyType}
+import shipreq.webapp.feature.uc.change._
+import shipreq.webapp.feature.uc.UcParsingCtx
 import Changes._
 
 // =====================================================================================================================

@@ -1,8 +1,8 @@
-package com.beardedlogic.shipreq.feature.uc
+package shipreq.webapp.feature.uc
 package persist
 
-import com.beardedlogic.shipreq.db.{DaoT, TextRev}
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.db.{DaoT, TextRev}
+import shipreq.webapp.lib.Types._
 import field.TextField
 import text.FreeText
 

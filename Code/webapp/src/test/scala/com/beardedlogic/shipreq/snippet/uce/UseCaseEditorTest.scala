@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq
+package shipreq.webapp
 package snippet.uce
 
 import java.util.regex.Pattern
@@ -20,7 +20,7 @@ import Renderer.TitleId
 import test.{CssTestHelpers, TestData, TestHelpers}
 import UseCaseEditor._
 import UseCaseEditorFns._
-import com.beardedlogic.shipreq.lib.Misc
+import shipreq.webapp.lib.Misc
 import app.AppConfig
 
 class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssTestHelpers {

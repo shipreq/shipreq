@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.lib
+package shipreq.webapp.lib
 
 import net.liftweb.common.{ParamFailure, Failure => FailBox, Full, Box, Logger, Empty}
 import net.liftweb.http.js.{JsCmd, JsExp}
@@ -9,13 +9,13 @@ import net.liftweb.sitemap.Menu
 import net.liftweb.util.Props
 import scala.xml.{Elem, Text, NodeSeq, UnprefixedAttribute}
 
-import com.beardedlogic.shipreq.app.{DI, AppSiteMap}
-import com.beardedlogic.shipreq.db.UserDescriptor
-import com.beardedlogic.shipreq.feature.validation.VFailure
-import com.beardedlogic.shipreq.snippet.{AlertTypeSuccess, AlertTypeError, Notices}
-import com.beardedlogic.shipreq.util.HttpResponses.ShouldNeverHappenResponse
-import com.beardedlogic.shipreq.util.JsExt._
-import com.beardedlogic.shipreq.util.ErrorMessages
+import shipreq.webapp.app.{DI, AppSiteMap}
+import shipreq.webapp.db.UserDescriptor
+import shipreq.webapp.feature.validation.VFailure
+import shipreq.webapp.snippet.{AlertTypeSuccess, AlertTypeError, Notices}
+import shipreq.webapp.util.HttpResponses.ShouldNeverHappenResponse
+import shipreq.webapp.util.JsExt._
+import shipreq.webapp.util.ErrorMessages
 import AppSiteMap.Implicits._
 import ScalazSubset._
 import Types._

@@ -1,10 +1,10 @@
-package com.beardedlogic.shipreq.feature.uc
+package shipreq.webapp.feature.uc
 
 import org.scalatest.FunSpec
-import com.beardedlogic.shipreq.db.UseCaseHeader
-import com.beardedlogic.shipreq.test.NodeUtils._
-import com.beardedlogic.shipreq.test.{TestData, TestHelpers}
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.db.UseCaseHeader
+import shipreq.webapp.test.NodeUtils._
+import shipreq.webapp.test.{TestData, TestHelpers}
+import shipreq.webapp.lib.Types._
 import Lenses._
 import field.Field
 import text.FreeText

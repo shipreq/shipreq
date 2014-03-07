@@ -1,6 +1,6 @@
-package com.beardedlogic.shipreq.snippet
+package shipreq.webapp.snippet
 
-import com.beardedlogic.shipreq.test.TestHelpers
+import shipreq.webapp.test.TestHelpers
 import org.scalatest.FunSuite
 
 class QuotesTest extends FunSuite with TestHelpers {

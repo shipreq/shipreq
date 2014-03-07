@@ -1,12 +1,12 @@
-package com.beardedlogic.shipreq.snippet
+package shipreq.webapp.snippet
 
 import net.liftweb.util.Helpers._
 import net.liftweb.util.CssSel
-import com.beardedlogic.shipreq.app.{AppSiteMap, RequestVars, DI}
-import com.beardedlogic.shipreq.feature.uc.persist.UseCasePersistence
-import com.beardedlogic.shipreq.lib.Locks
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.feature.publish.{Input, HtmlPublisher}
+import shipreq.webapp.app.{AppSiteMap, RequestVars, DI}
+import shipreq.webapp.feature.uc.persist.UseCasePersistence
+import shipreq.webapp.lib.Locks
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.feature.publish.{Input, HtmlPublisher}
 import AppSiteMap.Implicits._
 
 object ReadOwnUcs extends DI {

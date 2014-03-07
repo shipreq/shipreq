@@ -1,8 +1,8 @@
-package com.beardedlogic.shipreq.feature.uc
+package shipreq.webapp.feature.uc
 package change
 
 import scalaz.NonEmptyList
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.lib.Types._
 import field.{StepField, TextField}
 import step.{StepTree, StepNode}
 

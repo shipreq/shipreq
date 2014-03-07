@@ -1,11 +1,11 @@
-package com.beardedlogic.shipreq.snippet
+package shipreq.webapp.snippet
 
 import net.liftweb.http.js.JsCmd
 import net.liftweb.util.Helpers._
-import com.beardedlogic.shipreq.app.AppSiteMap
-import com.beardedlogic.shipreq.lib.SnippetHelpers
-import com.beardedlogic.shipreq.lib.Types.UserId
-import com.beardedlogic.shipreq.security.PasswordAndSalt
+import shipreq.webapp.app.AppSiteMap
+import shipreq.webapp.lib.SnippetHelpers
+import shipreq.webapp.lib.Types.UserId
+import shipreq.webapp.security.PasswordAndSalt
 
 /**
  * Allows user to view and modify their account details.

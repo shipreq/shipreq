@@ -6,7 +6,7 @@ import net.liftweb.http._
 import net.liftweb.util.{Props, Mailer}
 import provider.HTTPParam
 
-import com.beardedlogic.shipreq._
+import shipreq.webapp._
 import app.{Defaults, AppSiteMap}
 import db.DB
 import feature.SessionStats
@@ -20,7 +20,7 @@ class Boot {
 
   LiftRules.configureLogging()
 
-  val packageRoot = "com.beardedlogic.shipreq"
+  val packageRoot = "shipreq.webapp"
   lazy val logger = Logger(s"$packageRoot.Boot")
 
   def boot(): Unit = {
@@ -82,7 +82,7 @@ class Boot {
   }
 
   def logImportantSettings(): Unit = {
-    import com.beardedlogic.shipreq.app.AppConfig._
+    import shipreq.webapp.app.AppConfig._
     logger.info(s"Signup allowed: ${AllowRegister()}")
   }
 }

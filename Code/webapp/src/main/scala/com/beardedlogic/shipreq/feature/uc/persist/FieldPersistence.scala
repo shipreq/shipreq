@@ -1,10 +1,10 @@
-package com.beardedlogic.shipreq.feature.uc.persist
+package shipreq.webapp.feature.uc.persist
 
-import com.beardedlogic.shipreq.db.{UcFieldTextWithFK, UseCaseHeader, DaoT}
-import com.beardedlogic.shipreq.feature.uc.UcParsingCtx
-import com.beardedlogic.shipreq.feature.uc.field.Field
-import com.beardedlogic.shipreq.feature.uc.step.StepTree
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.db.{UcFieldTextWithFK, UseCaseHeader, DaoT}
+import shipreq.webapp.feature.uc.UcParsingCtx
+import shipreq.webapp.feature.uc.field.Field
+import shipreq.webapp.feature.uc.step.StepTree
+import shipreq.webapp.lib.Types._
 
 trait FieldPersistence[F <: Field] {
   type Value = F#Value

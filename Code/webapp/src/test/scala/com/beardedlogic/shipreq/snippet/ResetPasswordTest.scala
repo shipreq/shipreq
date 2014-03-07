@@ -1,15 +1,15 @@
-package com.beardedlogic.shipreq.snippet
+package shipreq.webapp.snippet
 
 import net.liftweb.util.Helpers._
 import org.joda.time.DateTime
 import org.mockito.Mockito.{when, verify}
 import org.scalatest.FunSpec
 
-import com.beardedlogic.shipreq.db.{ResetPasswordInfo, UserRegistrationInfo, DaoT}
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.test.T2._
-import com.beardedlogic.shipreq.test.{MockDaoProvider, TestHelpers}
-import com.beardedlogic.shipreq.util.NonEmptyTemplate
+import shipreq.webapp.db.{ResetPasswordInfo, UserRegistrationInfo, DaoT}
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.test.T2._
+import shipreq.webapp.test.{MockDaoProvider, TestHelpers}
+import shipreq.webapp.util.NonEmptyTemplate
 
 class ResetPasswordTest extends FunSpec with TestHelpers {
 

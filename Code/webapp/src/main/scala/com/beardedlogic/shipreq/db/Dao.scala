@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq
+package shipreq.webapp
 package db
 
 import net.liftweb.util.Helpers.nextFuncName

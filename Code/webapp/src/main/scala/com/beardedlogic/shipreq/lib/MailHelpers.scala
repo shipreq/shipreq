@@ -1,8 +1,8 @@
-package com.beardedlogic.shipreq.lib
+package shipreq.webapp.lib
 
 import net.liftweb.util.Mailer.{PlainMailBodyType, From, MailTypes, Subject, To}
 import scalaz.NonEmptyList
-import com.beardedlogic.shipreq.app.{DI, AppConfig}
+import shipreq.webapp.app.{DI, AppConfig}
 import MailHelpers.{MailContent, AddressedMail}
 
 object MailHelpers extends MailHelpers with MailCompositionHelpers with DI {

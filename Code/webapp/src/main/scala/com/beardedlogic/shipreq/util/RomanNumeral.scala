@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.util
+package shipreq.webapp.util
 
 /**
  * Taken from https://gist.github.com/AndyBowes/3048075

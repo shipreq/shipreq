@@ -1,9 +1,9 @@
-package com.beardedlogic.shipreq.feature.uc
+package shipreq.webapp.feature.uc
 
 import org.scalatest.FunSuite
 import scalaz.syntax.equal._
-import com.beardedlogic.shipreq.lib.Types.{@@, Validated, StepAndLabelBiMap}
-import com.beardedlogic.shipreq.test.TestData
+import shipreq.webapp.lib.Types.{@@, Validated, StepAndLabelBiMap}
+import shipreq.webapp.test.TestData
 import change.UseCaseUpdater
 import change.Changes.StepAdded
 import Lenses._

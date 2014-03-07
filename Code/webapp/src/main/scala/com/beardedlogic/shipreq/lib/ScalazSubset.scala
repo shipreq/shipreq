@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.lib
+package shipreq.webapp.lib
 
 import scalaz.{NonEmptyListFunctions, IdInstances}
 import scalaz.std.{StringInstances, OptionInstances, TupleInstances, NodeSeqInstances, MapInstances, ListInstances, FunctionInstances}

@@ -1,7 +1,7 @@
-package com.beardedlogic.shipreq.feature.uc.text
+package shipreq.webapp.feature.uc.text
 
 import net.liftweb.common.Logger
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.lib.Types._
 import ParsingConfig._
 
 object ParsingUtils extends Logger {

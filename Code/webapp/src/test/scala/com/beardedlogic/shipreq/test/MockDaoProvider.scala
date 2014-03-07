@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq
+package shipreq.webapp
 package test
 
 import org.mockito.Mockito.when
@@ -10,7 +10,7 @@ import java.sql.Connection
 import scalaz.Need
 
 /**
- * [[com.beardedlogic.shipreq.db.DaoProvider]] that creates and uses a mock DAO.
+ * [[shipreq.webapp.db.DaoProvider]] that creates and uses a mock DAO.
  *
  * Usage:
  *

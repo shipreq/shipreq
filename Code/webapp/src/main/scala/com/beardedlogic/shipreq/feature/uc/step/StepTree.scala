@@ -1,7 +1,7 @@
-package com.beardedlogic.shipreq.feature.uc.step
+package shipreq.webapp.feature.uc.step
 
 import net.liftweb.util.Helpers.nextFuncName
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.lib.Types._
 import StepLabels.LabelMakers
 
 /**

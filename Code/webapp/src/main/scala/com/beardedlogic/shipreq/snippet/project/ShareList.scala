@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq
+package shipreq.webapp
 package snippet.project
 
 import net.liftweb.http.js._

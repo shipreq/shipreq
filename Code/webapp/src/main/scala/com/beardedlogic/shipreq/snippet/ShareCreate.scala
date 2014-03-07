@@ -1,15 +1,15 @@
-package com.beardedlogic.shipreq.snippet
+package shipreq.webapp.snippet
 
 import net.liftweb.http.SHtml
 import net.liftweb.http.js.JsCmd
 import net.liftweb.util.Helpers._
-import com.beardedlogic.shipreq.app.AppSiteMap
-import com.beardedlogic.shipreq.feature.{UcFilters, UcFilter}
-import com.beardedlogic.shipreq.feature.validation.Validator
-import com.beardedlogic.shipreq.lib.{NoticeFlash, SingleOpStatefulSnippet}
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.security.PasswordAndSalt
-import com.beardedlogic.shipreq.util.HtmlTransformExt.ajaxSubmitOnClick
+import shipreq.webapp.app.AppSiteMap
+import shipreq.webapp.feature.{UcFilters, UcFilter}
+import shipreq.webapp.feature.validation.Validator
+import shipreq.webapp.lib.{NoticeFlash, SingleOpStatefulSnippet}
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.security.PasswordAndSalt
+import shipreq.webapp.util.HtmlTransformExt.ajaxSubmitOnClick
 import project.ActivateTab
 
 /**

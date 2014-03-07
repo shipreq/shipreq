@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.test
+package shipreq.webapp.test
 
 import net.liftweb.common.Logger
 

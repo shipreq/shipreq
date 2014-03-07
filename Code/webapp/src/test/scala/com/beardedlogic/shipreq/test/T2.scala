@@ -1,7 +1,7 @@
-package com.beardedlogic.shipreq.test
+package shipreq.webapp.test
 
-import com.beardedlogic.shipreq.app.DI
-import com.beardedlogic.shipreq.db.DaoT
+import shipreq.webapp.app.DI
+import shipreq.webapp.db.DaoT
 import net.liftweb.http.js.JsCmd
 import org.mockito.Mockito.{verify, times, never, verifyNoMoreInteractions}
 import org.scalatest.Matchers

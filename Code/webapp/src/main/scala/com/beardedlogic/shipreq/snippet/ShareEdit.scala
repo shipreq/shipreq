@@ -1,15 +1,15 @@
-package com.beardedlogic.shipreq.snippet
+package shipreq.webapp.snippet
 
 import net.liftweb.http.js.JsCmd
 import net.liftweb.util.Helpers._
 import scala.xml.NodeSeq
-import com.beardedlogic.shipreq.app.RequestVars
-import com.beardedlogic.shipreq.feature.UcFilter
-import com.beardedlogic.shipreq.feature.validation.Validator
-import com.beardedlogic.shipreq.lib.NoticeFlash
-import com.beardedlogic.shipreq.lib.Types.Json
-import com.beardedlogic.shipreq.util.HtmlTransformExt.IfCssSel
-import com.beardedlogic.shipreq.util.NonEmptyTemplate
+import shipreq.webapp.app.RequestVars
+import shipreq.webapp.feature.UcFilter
+import shipreq.webapp.feature.validation.Validator
+import shipreq.webapp.lib.NoticeFlash
+import shipreq.webapp.lib.Types.Json
+import shipreq.webapp.util.HtmlTransformExt.IfCssSel
+import shipreq.webapp.util.NonEmptyTemplate
 
 object ShareEditConsts {
 

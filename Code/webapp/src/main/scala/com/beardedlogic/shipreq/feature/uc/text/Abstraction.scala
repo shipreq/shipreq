@@ -1,8 +1,8 @@
-package com.beardedlogic.shipreq.feature.uc.text
+package shipreq.webapp.feature.uc.text
 
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.feature.uc.change._
-import com.beardedlogic.shipreq.feature.uc.UcParsingCtx
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.feature.uc.change._
+import shipreq.webapp.feature.uc.UcParsingCtx
 
 trait ParsedText {
   val text: String

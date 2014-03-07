@@ -1,8 +1,8 @@
-package com.beardedlogic.shipreq.feature
+package shipreq.webapp.feature
 
 import net.liftweb.common.{Full, Empty, Box}
-import com.beardedlogic.shipreq.util.BaseX
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.util.BaseX
+import shipreq.webapp.lib.Types._
 
 object ExternalId {
   // util.Random.shuffle(x.toList).mkString

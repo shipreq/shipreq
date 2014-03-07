@@ -1,11 +1,11 @@
-package com.beardedlogic.shipreq.snippet
+package shipreq.webapp.snippet
 
 import org.scalatest.FunSuite
-import com.beardedlogic.shipreq.test.TestHelpers
-import com.beardedlogic.shipreq.db.ProjectSummary
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.util.NonEmptyTemplate
-import com.beardedlogic.shipreq.lib.Misc
+import shipreq.webapp.test.TestHelpers
+import shipreq.webapp.db.ProjectSummary
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.util.NonEmptyTemplate
+import shipreq.webapp.lib.Misc
 
 class ProjectListTest extends FunSuite with TestHelpers {
   lazy val html = NonEmptyTemplate.load("loggedin/index").extract("#project-list").get

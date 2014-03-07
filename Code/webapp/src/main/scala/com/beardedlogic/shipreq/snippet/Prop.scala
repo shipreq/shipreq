@@ -1,10 +1,10 @@
-package com.beardedlogic.shipreq.snippet
+package shipreq.webapp.snippet
 
 import net.liftweb.http.DispatchSnippet
 import net.liftweb.util.Helpers._
 import scala.xml.NodeSeq
-import com.beardedlogic.shipreq.app.AppConfig
-import com.beardedlogic.shipreq.lib.Misc
+import shipreq.webapp.app.AppConfig
+import shipreq.webapp.lib.Misc
 
 object Prop extends DispatchSnippet {
   override def dispatch = { case s => renderMemo(s) }

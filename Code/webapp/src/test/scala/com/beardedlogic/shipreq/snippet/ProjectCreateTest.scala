@@ -1,9 +1,9 @@
-package com.beardedlogic.shipreq.snippet
+package shipreq.webapp.snippet
 
 import org.scalatest.{BeforeAndAfterEach, FunSuite}
 import net.liftweb.http.js.JsCmd
-import com.beardedlogic.shipreq.test.TestDatabaseSupport
-import com.beardedlogic.shipreq.test.fixture.UserFixture
+import shipreq.webapp.test.TestDatabaseSupport
+import shipreq.webapp.test.fixture.UserFixture
 
 class ProjectCreateTest extends FunSuite with TestDatabaseSupport with UserFixture with BeforeAndAfterEach {
 

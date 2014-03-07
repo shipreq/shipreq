@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq
+package shipreq.webapp
 package lib
 
 import util.{DefaultLockProvider, LockToken, LockProvider}

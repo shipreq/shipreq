@@ -1,7 +1,7 @@
-package com.beardedlogic.shipreq.feature.uc
+package shipreq.webapp.feature.uc
 
-import com.beardedlogic.shipreq.db.UseCaseSummary
-import com.beardedlogic.shipreq.lib.Types._
+import shipreq.webapp.db.UseCaseSummary
+import shipreq.webapp.lib.Types._
 
 trait UseCaseRelations {
   def findUcTitle(num: UseCaseNumber): Option[String]

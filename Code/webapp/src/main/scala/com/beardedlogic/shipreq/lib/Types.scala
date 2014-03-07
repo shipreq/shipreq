@@ -1,13 +1,13 @@
-package com.beardedlogic.shipreq.lib
+package shipreq.webapp.lib
 
-import com.beardedlogic.shipreq.db._
-import com.beardedlogic.shipreq.feature.uc.change.{Change, ChangeResultF}
-import com.beardedlogic.shipreq.feature.uc.field.Field
-import com.beardedlogic.shipreq.feature.uc.UseCase
-import com.beardedlogic.shipreq.feature.uc.persist.UseCaseSaveCheckpoint
-import com.beardedlogic.shipreq.feature.validation.VFailure
-import com.beardedlogic.shipreq.feature.{ExternalId, Inspection}
-import com.beardedlogic.shipreq.util.{AppliedLens, BiMap}
+import shipreq.webapp.db._
+import shipreq.webapp.feature.uc.change.{Change, ChangeResultF}
+import shipreq.webapp.feature.uc.field.Field
+import shipreq.webapp.feature.uc.UseCase
+import shipreq.webapp.feature.uc.persist.UseCaseSaveCheckpoint
+import shipreq.webapp.feature.validation.VFailure
+import shipreq.webapp.feature.{ExternalId, Inspection}
+import shipreq.webapp.util.{AppliedLens, BiMap}
 import java.lang.{Long => JJLong, Short => JJShort}
 import net.liftweb.common.Box
 import net.liftweb.http.js.{JsCmd, JsCmds}

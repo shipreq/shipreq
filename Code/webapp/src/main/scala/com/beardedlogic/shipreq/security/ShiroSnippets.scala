@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq
+package shipreq.webapp
 package security
 
 import net.liftweb.http.{LiftRules, DispatchSnippet}

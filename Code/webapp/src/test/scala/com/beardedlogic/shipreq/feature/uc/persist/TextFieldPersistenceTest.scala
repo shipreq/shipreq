@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq
+package shipreq.webapp
 package feature.uc.persist
 
 import org.scalatest.FunSpec

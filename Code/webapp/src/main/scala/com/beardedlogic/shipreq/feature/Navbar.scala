@@ -1,12 +1,12 @@
-package com.beardedlogic.shipreq.feature
+package shipreq.webapp.feature
 
 import scalaz.NonEmptyList
 import scala.xml.{Attribute, Elem, NodeSeq, Null, Text}
 
-import com.beardedlogic.shipreq.app.{AppSiteMap, RequestVars}
-import com.beardedlogic.shipreq.db.UseCaseSummary
-import com.beardedlogic.shipreq.lib.SnippetHelpers.shouldNeverHappen_!
-import com.beardedlogic.shipreq.lib.ScalazSubset._
+import shipreq.webapp.app.{AppSiteMap, RequestVars}
+import shipreq.webapp.db.UseCaseSummary
+import shipreq.webapp.lib.SnippetHelpers.shouldNeverHappen_!
+import shipreq.webapp.lib.ScalazSubset._
 import AppSiteMap.Implicits._
 
 /**

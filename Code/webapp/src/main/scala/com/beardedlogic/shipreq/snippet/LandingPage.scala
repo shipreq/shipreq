@@ -1,14 +1,14 @@
-package com.beardedlogic.shipreq.snippet
+package shipreq.webapp.snippet
 
 import scalaz.{Failure, Success}
 import net.liftweb.http.SHtml
 import net.liftweb.http.js.{JsCmds, JsCmd}
 import net.liftweb.util.CssSel
 import net.liftweb.util.Helpers._
-import com.beardedlogic.shipreq.app.AppConfig
-import com.beardedlogic.shipreq.util.HtmlTransformExt.ajaxSubmitOnClick
-import com.beardedlogic.shipreq.feature.validation.Validator
-import com.beardedlogic.shipreq.lib.MailHelpers
+import shipreq.webapp.app.AppConfig
+import shipreq.webapp.util.HtmlTransformExt.ajaxSubmitOnClick
+import shipreq.webapp.feature.validation.Validator
+import shipreq.webapp.lib.MailHelpers
 
 object LandingPage {
 

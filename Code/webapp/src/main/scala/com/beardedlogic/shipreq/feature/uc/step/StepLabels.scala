@@ -1,8 +1,8 @@
-package com.beardedlogic.shipreq.feature.uc.step
+package shipreq.webapp.feature.uc.step
 
 import scala.collection.mutable.{ Map => MutableMap }
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.util.RomanNumeral
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.util.RomanNumeral
 
 /**
  * @since 2/05/2013

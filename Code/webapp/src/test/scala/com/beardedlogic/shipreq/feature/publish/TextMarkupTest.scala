@@ -1,11 +1,11 @@
-package com.beardedlogic.shipreq.feature.publish
+package shipreq.webapp.feature.publish
 
 import scalaz._, Scalaz._
 import org.scalatest.{Matchers, FunSpec}
 import org.scalatest.prop.PropertyChecks
-import com.beardedlogic.shipreq.feature.Inspection.{listShow => _, _}
-import com.beardedlogic.shipreq.feature.uc.text.FreeTextTerm
-import com.beardedlogic.shipreq.feature.uc.text.FreeTextTerms._
+import shipreq.webapp.feature.Inspection.{listShow => _, _}
+import shipreq.webapp.feature.uc.text.FreeTextTerm
+import shipreq.webapp.feature.uc.text.FreeTextTerms._
 import MarkupTokens._
 
 class TextMarkupTest extends FunSpec with Matchers with PropertyChecks {

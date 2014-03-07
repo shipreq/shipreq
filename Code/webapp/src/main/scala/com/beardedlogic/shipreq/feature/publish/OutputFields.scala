@@ -1,9 +1,9 @@
-package com.beardedlogic.shipreq.feature.publish
+package shipreq.webapp.feature.publish
 
 import org.joda.time.DateTime
 import scalaz.Name
-import com.beardedlogic.shipreq.feature.uc.step.StepTreeZipper
-import com.beardedlogic.shipreq.feature.uc.text.FreeText
+import shipreq.webapp.feature.uc.step.StepTreeZipper
+import shipreq.webapp.feature.uc.text.FreeText
 
 sealed trait OutputField
 

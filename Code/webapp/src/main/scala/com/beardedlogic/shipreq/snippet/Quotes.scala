@@ -1,7 +1,7 @@
-package com.beardedlogic.shipreq.snippet
+package shipreq.webapp.snippet
 
-import com.beardedlogic.shipreq.app.AppConfig
-import com.beardedlogic.shipreq.util.{CacheFn, NonEmptyTemplate}
+import shipreq.webapp.app.AppConfig
+import shipreq.webapp.util.{CacheFn, NonEmptyTemplate}
 import net.liftweb.common.Logger
 import net.liftweb.util.Helpers._
 import scala.util.Random

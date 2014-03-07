@@ -1,13 +1,13 @@
-package com.beardedlogic.shipreq.feature.validation
+package shipreq.webapp.feature.validation
 
 import java.lang.{Boolean => JBool}
 import scalaz.{Validation, Success, Failure}
-import com.beardedlogic.shipreq.app.AppConfig._
-import com.beardedlogic.shipreq.lib.ScalazSubset._
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.lib.Misc._
-import com.beardedlogic.shipreq.feature.uc.text.ParsingConfig.AnyValidArrowRegexStr
-import com.beardedlogic.shipreq.security.PasswordAndSalt
+import shipreq.webapp.app.AppConfig._
+import shipreq.webapp.lib.ScalazSubset._
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.lib.Misc._
+import shipreq.webapp.feature.uc.text.ParsingConfig.AnyValidArrowRegexStr
+import shipreq.webapp.security.PasswordAndSalt
 import Constraints._
 
 sealed trait Validator[I <: AnyRef, C <: AnyRef, V <: AnyRef] {

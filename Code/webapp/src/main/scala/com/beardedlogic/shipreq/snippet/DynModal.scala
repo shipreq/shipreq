@@ -1,16 +1,16 @@
-package com.beardedlogic.shipreq.snippet
+package shipreq.webapp.snippet
 
 import net.liftweb.http.SHtml
 import net.liftweb.http.js.JsCmd
 import net.liftweb.util.Helpers._
 import scala.xml.NodeSeq
-import com.beardedlogic.shipreq.feature.validation.Validator
-import com.beardedlogic.shipreq.lib.StaticSnippetHelpers
-import com.beardedlogic.shipreq.lib.Types._
-import com.beardedlogic.shipreq.security.PasswordAndSalt
-import com.beardedlogic.shipreq.util.HtmlTransformExt._
-import com.beardedlogic.shipreq.util.JsExt._
-import com.beardedlogic.shipreq.util.NonEmptyTemplate
+import shipreq.webapp.feature.validation.Validator
+import shipreq.webapp.lib.StaticSnippetHelpers
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.security.PasswordAndSalt
+import shipreq.webapp.util.HtmlTransformExt._
+import shipreq.webapp.util.JsExt._
+import shipreq.webapp.util.NonEmptyTemplate
 
 /**
  * Generate dynamic modal dialogs.

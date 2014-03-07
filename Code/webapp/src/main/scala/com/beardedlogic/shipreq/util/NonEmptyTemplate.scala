@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq.util
+package shipreq.webapp.util
 
 import net.liftweb.http.Templates
 import net.liftweb.util.{ClearClearable, CssSel}

@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq
+package shipreq.webapp
 package feature.uc.field
 
 import org.scalatest.FunSpec

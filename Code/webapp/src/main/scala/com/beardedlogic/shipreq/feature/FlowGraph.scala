@@ -1,4 +1,4 @@
-package com.beardedlogic.shipreq
+package shipreq.webapp
 package feature
 
 import scalaz.{Cord, Monoid, Foldable, Functor, NonEmptyList}
