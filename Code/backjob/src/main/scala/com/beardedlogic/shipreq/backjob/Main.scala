@@ -1,29 +1,33 @@
 package sample.hello
 
 import akka.actor.Actor
+import akka.actor.Props
+import akka.event.Logging
+import akka.actor.ActorLogging
 
 object Greeter {
   case object Greet
   case object Done
 }
 
-class Greeter extends Actor {
+class Greeter extends Actor with ActorLogging {
+//  val log = Logging(context.system, this)
+
+  override def preStart() = {
+    log.debug("preStart !!")
+  }
+
   def receive = {
     case Greeter.Greet =>
       println("Hello World!")
+log.warning("sending back!!")
       sender() ! Greeter.Done
   }
 }
 
-import akka.actor.Actor
-import akka.actor.Props
-
 class HelloWorld extends Actor {
-
   override def preStart(): Unit = {
-    // create the greeter actor
     val greeter = context.actorOf(Props[Greeter], "greeter")
-    // tell it to perform the greeting
     greeter ! Greeter.Greet
   }
 
@@ -34,13 +38,12 @@ class HelloWorld extends Actor {
 }
 
 object Main {
-
   def main(args: Array[String]): Unit = {
     akka.Main.main(Array(classOf[HelloWorld].getName))
   }
-
 }
 
+/*
 import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.actor.ActorRef
@@ -66,7 +69,6 @@ object Main2 {
   }
 }
 
-/*
 package sample.kernel.hello
 
 import akka.actor.{ Actor, ActorSystem, Props }
