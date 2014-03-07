@@ -1,4 +1,4 @@
-package sample.hello
+/*package sample.hello
 
 import akka.actor.Actor
 import akka.actor.Props
@@ -37,11 +37,108 @@ class HelloWorld extends Actor {
   }
 }
 
-object Main {
-  def main(args: Array[String]): Unit = {
-    akka.Main.main(Array(classOf[HelloWorld].getName))
+// ---------------------------------------------------------------------------------------------------------------------
+
+class WorkProducer extends Actor with ActorLogging {
+
+  import context.dispatcher
+  import scala.concurrent.duration._
+
+  case object Tick
+  val ticker = context.system.scheduler.schedule(500 millis, 500 millis, self, Tick)
+
+//  val worker = context.actorOf(Props[Worker])
+  val manager = context.actorOf(Props[Workers].withDispatcher("dispatcher-X"), "manager")
+  var count = 0
+
+  override def postStop() = ticker.cancel()
+
+  override def preStart() = {
+  }
+
+  override def receive = {
+    case Tick =>
+      count += 1
+      log.info("Creating work: {}", count)
+//      worker ! count
+      manager ! count
   }
 }
+
+class Workers extends Actor with ActorLogging {
+  import akka.actor.Terminated
+  import akka.routing.ActorRefRoutee
+  import akka.routing.Router
+  import akka.routing._
+
+  private def newWorker = {
+    val r = context.actorOf(Props[Worker])
+    context watch r
+    r
+  }
+
+  var router = {
+    val routees = Vector.fill(10)(ActorRefRoutee(newWorker))
+    Router(SmallestMailboxRoutingLogic(), routees)
+  }
+
+  def receive = {
+    case w: Int =>
+      log.info("Routing work: {}", w)
+      router.route(w, sender())
+    case Terminated(a) =>
+      router = router.removeRoutee(a).addRoutee(newWorker)
+  }
+}
+
+class Worker extends Actor with ActorLogging {
+  override def receive = {
+    case x =>
+      log.info("Starting work: {}", x)
+      Thread.sleep(5000)
+      log.info("Finished work: {}", x)
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+object Main {
+  import akka.actor.ActorSystem
+  import akka.actor.ExtendedActorSystem
+  import akka.actor.Actor
+  import akka.actor.Terminated
+  import akka.actor.ActorLogging
+  import akka.actor.Props
+  import akka.actor.ActorRef
+  import scala.util.control.NonFatal
+
+  def main(args: Array[String]): Unit = {
+    //akka.Main.main(Array(classOf[WorkProducer].getName))
+
+    val system = ActorSystem("Main")
+
+    val producer = system.actorOf(Props[WorkProducer], "producer")
+    system.actorOf(Props(classOf[Terminator], producer), "terminator")
+
+//    try {
+//      val appClass = system.asInstanceOf[ExtendedActorSystem].dynamicAccess.getClassFor[Actor](args(0)).get
+//      val app = system.actorOf(Props(appClass), "app")
+//      val terminator = system.actorOf(Props(classOf[Terminator], app), "app-terminator")
+//    } catch {
+//      case NonFatal(e) ⇒ system.shutdown(); throw e
+//    }
+  }
+
+  class Terminator(app: ActorRef) extends Actor with ActorLogging {
+    context watch app
+    def receive = {
+      case Terminated(_) ⇒
+        log.info("application supervisor has terminated, shutting down")
+        context.system.shutdown()
+    }
+  }
+}
+*/
 
 /*
 import akka.actor.ActorSystem

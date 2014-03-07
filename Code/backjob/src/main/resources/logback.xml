@@ -2,7 +2,7 @@
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-			<pattern>%15X{akkaTimestamp} %-5level [%-32X{akkaSource}|%-32logger{32}] %msg%n</pattern>
+			<pattern>%15X{akkaTimestamp} %-5level [%-32logger{32}] {%-34X{akkaSource}} %msg%n</pattern>
 		</encoder>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>INFO</level>
@@ -16,7 +16,7 @@
             <maxHistory>60</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>%15X{akkaTimestamp} %-5level [%-32X{akkaSource}|%-32logger{32}] {%thread} %msg%n</pattern>
+            <pattern>%15X{akkaTimestamp} %-5level [%-40logger{40}] {%-34X{akkaSource} @ %-37X{sourceThread}} %msg%n</pattern>
         </encoder>
     </appender>
 
