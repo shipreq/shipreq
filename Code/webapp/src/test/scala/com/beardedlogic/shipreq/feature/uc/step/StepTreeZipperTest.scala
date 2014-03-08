@@ -5,6 +5,7 @@ import org.scalatest.FunSpec
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import com.beardedlogic.shipreq.test.DataGenerators._
 import com.beardedlogic.shipreq.test.TestHelpers
+import com.beardedlogic.shipreq.util.TypeTags._
 
 class StepTreeZipperTest extends FunSpec with TestHelpers with GeneratorDrivenPropertyChecks {
 
