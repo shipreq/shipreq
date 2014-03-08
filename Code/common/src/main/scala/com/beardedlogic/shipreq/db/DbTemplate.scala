@@ -1,7 +1,35 @@
 package com.beardedlogic.shipreq.db
 
-import scala.slick.session.Session
+import com.googlecode.flyway.core.Flyway
+import com.jolbox.bonecp.{ConnectionHandle, BoneCPDataSource}
+import com.jolbox.bonecp.hooks.{AbstractConnectionHook, ConnectionHook}
 import org.slf4j.LoggerFactory
+import scala.slick.session.Session
+
+object DbTemplate {
+  type C = BoneCPDataSource => BoneCPDataSource
+
+  def setSearchPath(path: String): C =
+    runOnConnectionAcquire(s"SET search_path TO $path")
+
+  def runOnConnectionAcquire(sql: String): C =
+    ds => {
+      val hook: ConnectionHook = new AbstractConnectionHook {
+        override def onAcquire(conn: ConnectionHandle): Unit = {
+          val s = conn.createStatement()
+          try s.execute(sql)
+          finally s.close()
+        }
+      }
+      ds.setConnectionHook(hook)
+      ds
+    }
+
+  type F = Flyway => Flyway
+
+  def setSchema(schema: String): F =
+    f => {f.setSchemas(schema); f}
+}
 
 /**
  * Template/mixin for database singletons.
@@ -23,7 +51,8 @@ trait DbTemplate {
   // ===================================================================================================================
   // Initialisation
 
-  private[this] val migrator = new DbMigrator(DataSource)
+  protected def flywayCfg: Flyway => Flyway = identity
+  private[this] val migrator = new DbMigrator(DataSource, flywayCfg)
   private[this] def initLock: AnyRef = migrator
 
   @volatile private[this] var initPending = true
@@ -37,7 +66,7 @@ trait DbTemplate {
     }
   }
 
-  protected def onInit(implicit s: Session): Unit
+  protected def onInit(implicit s: Session): Unit = ()
 
   /**
    * Drops all objects (tables, views, procedures, triggers, ...) in the configured schemas.

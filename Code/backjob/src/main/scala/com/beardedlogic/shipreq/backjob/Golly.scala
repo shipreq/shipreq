@@ -2,6 +2,13 @@ package com.beardedlogic.shipreq.backjob
 
 import akka.actor.{ActorRef, Actor, Props, ActorLogging}
 import com.beardedlogic.shipreq.backjob.CrossActorMessages.{HaveSomeWork, GimmeWork}
+import com.beardedlogic.shipreq.db.DbTemplate
+import com.googlecode.flyway.core.Flyway
+import java.util.Properties
+import com.beardedlogic.shipreq.util.{JPropertiesValueReader, ExternalValueReader}
+import java.util.regex.Pattern
+import com.jolbox.bonecp.hooks.{AbstractConnectionHook, ConnectionHook}
+import com.jolbox.bonecp.ConnectionHandle
 
 object CrossActorMessages {
 
@@ -62,6 +69,43 @@ class Worker extends Actor with ActorLogging {
   override def receive = {case x => log.info("----> {}", x); Thread.sleep(2000); log.info("<----")}
 }
 
+// =======================================================================================================================
+
+object MyDb extends DbTemplate {
+  import com.beardedlogic.shipreq.db._
+
+  lazy val schema = "awesome"
+
+  override protected def establishConnection() = {
+    val p = new Properties
+    p.load(getClass.getResourceAsStream("/dev.props"))
+    val r = JPropertiesValueReader(p)
+    import r._
+    new BaseDbConnection(DbTemplate setSearchPath schema)
+  }
+
+  override protected def flywayCfg = DbTemplate setSchema schema
+
+//  @inline def DataSource = baseConn.DataSource
+  import baseConn.Slick
+
+//  object DaoProvider extends DaoProvider {
+//    override def withRawSession[T](f: Session => T): T = Slick.withSession(f)
+//    override protected def rawSession(): Session       = Slick.createSession()
+//  }
+
+  def blah() {
+    import scala.slick.session.Session
+    import scala.slick.jdbc.{StaticQuery => Q}
+    import Q.interpolation
+
+    Slick.withSession { implicit s: Session =>
+      val count= sql"SELECT count(1) FROM yay".as[Int].first
+      println(s"-------- COUNT = $count")
+    }
+  }
+
+}
 
 
 object Main {
@@ -73,6 +117,11 @@ object Main {
 //  val WorkDispatcher = "work-dispatcher"
 
   def main(args: Array[String]): Unit = {
+    MyDb.init()
+    MyDb.blah()
+  }
+
+  def main2(args: Array[String]): Unit = {
     val system = ActorSystem("Main")
     val workerProps = Props[Worker] //.withDispatcher(WorkDispatcher)
     val source = system.actorOf(Props[Source].withDispatcher(DedicatedDispatcher), "source")
