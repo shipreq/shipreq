@@ -1,7 +1,7 @@
-package com.beardedlogic.shipreq.backjob
+package com.beardedlogic.shipreq.taskman
 
 import akka.actor.{ActorRef, Actor, Props, ActorLogging}
-import com.beardedlogic.shipreq.backjob.CrossActorMessages.{HaveSomeWork, GimmeWork}
+import com.beardedlogic.shipreq.taskman.CrossActorMessages.{HaveSomeWork, GimmeWork}
 
 object CrossActorMessages {
 

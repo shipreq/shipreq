@@ -8,7 +8,7 @@ object ShipReq extends Build {
   lazy val root = Root.project
   lazy val common = CommonModule.project
   lazy val webapp = Webapp.project
-  lazy val backendJobs = BackendJobs.project
+  lazy val taskman = Taskman.project
 
   sealed trait Module {
     def ideSettings = IdeSettings(this)
@@ -19,7 +19,7 @@ object ShipReq extends Build {
 
     def project = Project("root", file("."))
       .configure(Common.settings, ideSettings)
-      .aggregate(common, webapp, backendJobs)
+      .aggregate(common, webapp, taskman)
   }
 
   // ===================================================================================================================
@@ -77,9 +77,9 @@ object ShipReq extends Build {
     }
 
   // ===================================================================================================================
-  object BackendJobs extends Module {
+  object Taskman extends Module {
 
-    val dir = "backjob"
+    val dir = "taskman"
 
     def project = Project(dir, file(dir))
       .configure(Common.settings, ideSettings)

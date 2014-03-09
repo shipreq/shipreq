@@ -1,4 +1,4 @@
-name := "backend_jobs"
+name := "taskman"
 
 libraryDependencies ++= {
   val akkaVersion = "2.3.0"
