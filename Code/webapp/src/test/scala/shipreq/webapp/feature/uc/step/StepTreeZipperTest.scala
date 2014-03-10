@@ -3,6 +3,7 @@ package shipreq.webapp.feature.uc.step
 import org.scalacheck.Arbitrary
 import org.scalatest.FunSpec
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import shipreq.base.util.TypeTags._
 import shipreq.webapp.test.DataGenerators._
 import shipreq.webapp.test.TestHelpers
 

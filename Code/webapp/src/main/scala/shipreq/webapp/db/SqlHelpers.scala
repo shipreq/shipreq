@@ -4,7 +4,7 @@ package db
 import java.sql.Timestamp
 import org.joda.time.DateTime
 import scala.slick.jdbc.{SetParameter, GetResult}
-import scala.slick.session.{PositionedParameters, PositionedResult}
+import scala.slick.session.PositionedParameters
 import lib.Types._
 import feature.UcFilter
 import shipreq.base.db.SqlHelpers._
@@ -16,58 +16,6 @@ object SqlHelpers {
   implicit def TimestampToDateTime(t: Timestamp): DateTime = new DateTime(t)
   implicit val GR_DateTime = GetResult(r => TimestampToDateTime(r.nextTimestamp))
   implicit val GR_DateTimeOption = GetResult(r => r.nextTimestampOption.map(TimestampToDateTime))
-
-  implicit class PositionedResultExt(val r: PositionedResult) extends AnyVal {
-    def nextId[T <: JLong @@ TypeTag[JLong]](): T = r.nextObject.asInstanceOf[T]
-    def nextId_?[T <: JLong @@ TypeTag[JLong]](): Option[T] = r.nextObjectOption.asInstanceOf[Option[T]]
-    def nextTShort[Tag <: TypeTag[JShort]](): JShort @@ Tag = r.nextShort.tag[Tag]
-    def nextTShort_?[Tag <: TypeTag[JShort]](): Option[JShort @@ Tag] = r.nextShortOption.map(_.tag[Tag])
-  }
-
-  private def GR_TaggedString[T <: TypeTag[String]]: GetResult[String @@ T] = GetResult(_.nextString.tag[T])
-  private def GR_TaggedStringOpt[T <: TypeTag[String]]: GetResult[Option[String @@ T]] = GetResult(_.nextStringOption.tagInner[T])
-  private def SP_TaggedString[Tag <: TypeTag[String]]: SetParameter[String @@ Tag] = new SetParameter[String @@ Tag] {
-    def apply(v: String @@ Tag, pp: PositionedParameters): Unit = pp.setString(v)
-  }
-
-  private def GR_TaggedLong[T <: JLong @@ TypeTag[JLong]]: GetResult[T] = GetResult(_.nextId[T])
-  private def SP_TaggedLong[T <: JLong @@ TypeTag[JLong]]: SetParameter[T] = new SetParameter[T] {
-    def apply(v: T, pp: PositionedParameters): Unit = pp.setLong(v)
-  }
-  private def GR_TaggedLongOpt[T <: JLong @@ TypeTag[JLong]]: GetResult[Option[T]] = GetResult(_.nextId_?[T])
-  private def SP_TaggedLongOpt[T <: JLong @@ TypeTag[JLong]] = new SetParameter[Option[T]] {
-    def apply(v: Option[T], pp: PositionedParameters): Unit = pp.setObjectOption(v, java.sql.Types.BIGINT)
-  }
-  private def SP_TaggedLongArray[T <: JLong @@ TypeTag[JLong]]: SetParameter[List[T]] = new SetParameter[List[T]] {
-    def apply(v: List[T], pp: PositionedParameters): Unit = {
-      val sb = new StringBuilder
-      sb append '{'
-      if (v.nonEmpty) {
-        sb append v.head.longValue
-        v.tail.foreach(t => {
-          sb append ','
-          sb append t.longValue
-        })
-      }
-      sb append '}'
-
-      val o = pgObject("_int8", sb.toString)
-      pp.setObject(o, java.sql.Types.OTHER)
-    }
-  }
-
-  private def GR_TaggedShort[Tag <: TypeTag[JShort]]: GetResult[JShort @@ Tag] = GetResult(_.nextTShort[Tag])
-  private def SP_TaggedShort[Tag <: TypeTag[JShort]]: SetParameter[JShort @@ Tag] = new SetParameter[JShort @@ Tag] {
-    def apply(v: JShort @@ Tag, pp: PositionedParameters): Unit = pp.setShort(v)
-  }
-
-  private def GR_Json[T]: GetResult[Json[T]] = GetResult(_.nextString.tag[IsJsonFor[T]])
-  private def SP_Json[T]: SetParameter[Json[T]] = new SetParameter[Json[T]] {
-    def apply(v: Json[T], pp: PositionedParameters): Unit = {
-      val jo = pgObject("json", v)
-      pp.setObject(jo, java.sql.Types.OTHER)
-    }
-  }
 
   implicit val GR_UseCaseNumber = GR_TaggedShort[UseCaseNumber]
   implicit val SP_UseCaseNumber = SP_TaggedShort[UseCaseNumber]

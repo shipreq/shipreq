@@ -13,7 +13,6 @@ libraryDependencies ++= {
     // [main]
     "net.liftweb"              %% "lift-webkit"            % liftVersion,
     "org.scalaz"               %% "scalaz-core"            % "7.1.0-M5",
-    "com.googlecode.flyway"     % "flyway-core"            % "2.2.1",
     "org.apache.shiro"          % "shiro-core"             % shiroVersion,
     "org.apache.shiro"          % "shiro-web"              % shiroVersion,
     "org.slf4j"                 % "jcl-over-slf4j"         % "1.7.5", // required by Shiro (in place of commons-logging)

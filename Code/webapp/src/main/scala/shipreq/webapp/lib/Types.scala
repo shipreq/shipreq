@@ -1,6 +1,6 @@
 package shipreq.webapp.lib
 
-import shipreq.base.util.BiMap
+import shipreq.base.util.{BiMap, TypeTags}
 import shipreq.webapp.db._
 import shipreq.webapp.feature.uc.change.{Change, ChangeResultF}
 import shipreq.webapp.feature.uc.field.Field
@@ -17,7 +17,7 @@ import scalaz.{Validation, LensFamily, Monoid, Name, Value}
 /**
  * @since 30/05/2013
  */
-object Types {
+object Types extends TypeTags {
 
   // ===================================================================================================================
   // Handy Conversions
@@ -28,28 +28,8 @@ object Types {
   @inline final implicit def cp2ucr(u: UseCaseSaveCheckpoint): UseCaseRev = u.rec
   @inline final implicit def cp2uci(u: UseCaseSaveCheckpoint): UseCaseIdent = u.rec
 
-  // ===================================================================================================================
-  // Type tags
-
-  type JLong = JJLong
-  type JShort = JJShort
-  trait TypeTag[-O <: AnyRef]
-  type @@[+O <: AnyRef, T <: TypeTag[O]] = O with T
-
-  // Taggable version of Unit
-  sealed trait Unit2 extends AnyRef
-  final object Unit2 extends Unit2 {
-    override def toString = "()"
-  }
-
   // -------------------------------------------------------------------------------------------------------------------
   // Implicits
-
-  implicit def taggedStringOrdering[T <: TypeTag[String]] = implicitly[Ordering[String]].asInstanceOf[Ordering[String @@ T]]
-
-  implicit class AnyRefTypeTagExt[A <: AnyRef](val a: A) extends AnyVal {
-    def tag[T <: TypeTag[A]] = a.asInstanceOf[A @@ T]
-  }
 
   implicit class StringGeneralExt(val s: String) extends AnyVal {
     def asLocalStepId = s.asInstanceOf[LocalStepId]
@@ -58,35 +38,17 @@ object Types {
   }
 
   implicit class StringTypeTagExt2[F[_]](val s: F[String]) extends AnyVal {
-    def tagInner[T <: TypeTag[String]] = s.asInstanceOf[F[String @@ T]]
     def asLocalStepIdC = s.asInstanceOf[F[LocalStepId]]
     def asLabelC = s.asInstanceOf[F[StepLabel]]
   }
 
   implicit class StringTypeTagExt3[G[_], F[G]](val s: F[G[String]]) extends AnyVal {
-    def tagInner[T <: TypeTag[String]] = s.asInstanceOf[F[G[String @@ T]]]
     def asLocalStepIdC = s.asInstanceOf[F[G[LocalStepId]]]
     def asLabelC = s.asInstanceOf[F[G[StepLabel]]]
   }
 
-  implicit class SLongTypeTagExt(val x: scala.Long) extends AnyVal {
-    def tag[T <: TypeTag[JLong]] = JJLong.valueOf(x).tag[T]
-  }
-
-  implicit class SLongOptionTypeTagExt(val x: Option[scala.Long]) extends AnyVal {
-    def tag[T <: TypeTag[JLong]] = x.map(_.tag[T])
-  }
-
   implicit class SLongBoxTypeTagExt(val x: Box[scala.Long]) extends AnyVal {
     def tag[T <: TypeTag[JLong]] = x.map(_.tag[T])
-  }
-
-  implicit class SShortTypeTagExt(val x: scala.Short) extends AnyVal {
-    def tag[T <: TypeTag[JShort]] = JJShort.valueOf(x).tag[T]
-  }
-
-  implicit class SShortOptionTypeTagExt(val x: Option[scala.Short]) extends AnyVal {
-    def tag[T <: TypeTag[JShort]] = x.map(_.tag[T])
   }
 
   implicit class ShortBoxTypeTagExt(val x: Box[scala.Short]) extends AnyVal {
@@ -102,9 +64,6 @@ object Types {
 
   // -------------------------------------------------------------------------------------------------------------------
   // String tags
-
-  sealed trait IsJsonFor[T] extends TypeTag[String]
-  type Json[T] = String @@ IsJsonFor[T]
 
   sealed trait IsNormalised extends TypeTag[String]
   type NormalisedText = String @@ IsNormalised

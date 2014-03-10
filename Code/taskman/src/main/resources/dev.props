@@ -1,6 +1,5 @@
-server.url = http://localhost:8080
-
-db.appname  = WEBAPP
+db.appname  = BACKEND_JOBS
+db.schema   = backjobs
 db.database = usecase_dev
 db.username = usecase_dev
 db.password = uced
@@ -13,12 +12,3 @@ db.pool.logStatementsEnabled       = true
 db.pool.disableJMX                 = false
 db.pool.statisticsEnabled          = true
 db.pool.statementsCacheSize        = 64
-
-mail.from=default@props.com
-mail.smtp.host=smtp.gmail.com
-mail.smtp.socketFactory.port=465
-mail.smtp.socketFactory.class=javax.net.ssl.SSLSocketFactory
-mail.smtp.auth=true
-mail.smtp.port=465
-mail.user=yoar.mum@gmail.com
-mail.password=6vJDhVXYm8G95uXj3gPq

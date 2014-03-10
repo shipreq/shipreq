@@ -12,14 +12,16 @@ import Constraints._
 
 sealed trait Validator[I <: AnyRef, C <: AnyRef, V <: AnyRef] {
 
-  def correct(input: I): C @@ InputCorrected
+  type CI = C @@ InputCorrected
 
-  def validate(input: C @@ InputCorrected): ValidationResult[V]
+  def correct(input: I): CI
+
+  def validate(input: CI): ValidationResult[V]
 
   final def correctAndValidate(input: I): ValidationResult[V] =
     validate(correct(input))
 
-  final def isValid(input: C @@ InputCorrected): Boolean =
+  final def isValid(input: CI): Boolean =
     validate(input).isSuccess
 }
 
@@ -27,15 +29,15 @@ final object Validator {
 
   sealed trait InputValidatorV[T <: AnyRef] extends Validator[T, T, T] {
     protected def validator: ConstraintValidator[T]
-    final override def validate(input: T @@ InputCorrected) = validator.validate(input)
+    final override def validate(input: CI) = validator.validate(input)
   }
 
   sealed trait InputCorrectionOnly[I <: AnyRef, O <: AnyRef] extends Validator[I, O, O] {
-    final override def validate(input: O @@ InputCorrected) = Success(input.tag)
+    final override def validate(input: CI) = Success(input.tag)
   }
 
   sealed trait ValidationOnly[T <: AnyRef] extends Validator[T, T, T] {
-    final override def correct(input: T): T @@ InputCorrected = input.tag
+    final override def correct(input: T): CI = input.tag
   }
 
   val Ap = Validation.ValidationApplicative[VFailure](VFailure.semigroup)
@@ -44,7 +46,7 @@ final object Validator {
 
   /** Empty string not allowed. Carriage returns removed. */
   sealed abstract class MandatoryShortText(name: String) extends InputValidatorV[String] {
-    override def correct(input: String) = normaliseWhitespaceInSingleLineString(input).tag
+    override def correct(input: String): CI = normaliseWhitespaceInSingleLineString(input).tag
     override protected val validator = ConstraintValidator[String](name, NonEmpty, HasShortTextLimit)
   }
 
@@ -56,15 +58,15 @@ final object Validator {
 
   /** Empty string is represented as `""`. */
   sealed abstract class LargeText(name: String) extends InputValidatorV[String] {
-    override def correct(input: String) = correctLargeText(input).tag
+    override def correct(input: String): CI = correctLargeText(input).tag
     override val validator = largeTextValidator(name)
   }
 
   /** Empty string is represented as `None`. */
   sealed abstract class LargeTextO(name: String) extends Validator[String, Option[String], Option[String]] {
-    override def correct(input: String) = nonEmptyString(correctLargeText(input)).tag
+    override def correct(input: String): CI = nonEmptyString(correctLargeText(input)).tag
     val validator = largeTextValidator(name)
-    override def validate(input: Option[String] @@ InputCorrected) = (input: Option[String]) match {
+    override def validate(input: CI) = (input: Option[String]) match {
       case None    => Success(input.tag)
       case Some(i) => validator.validate(i.tag).map(s => Some(s).tag)
     }
@@ -74,7 +76,7 @@ final object Validator {
 
   object username
     extends InputValidatorV[String] {
-    override def correct(input: String) = removeAllWhitespace(input).toLowerCase.tag
+    override def correct(input: String): CI = removeAllWhitespace(input).toLowerCase.tag
     override protected val validator = ConstraintValidator[String]("Username",
       HasLengthInRange(UsernameLength),
       Whitelist.charRegex("a-z0-9_", "can only contain letters, numbers and underscores."),
@@ -85,7 +87,7 @@ final object Validator {
 
   object email
     extends InputValidatorV[String] {
-    override def correct(input: String) = removeAllWhitespace(input).tag
+    override def correct(input: String): CI = removeAllWhitespace(input).tag
     override protected val validator = ConstraintValidator[String]("Email address",
       HasMaximumLength(EmailMaxLength),
       MatchesRegex("^_+@_+?\\._+$".replace("_", "[^&<>]").r, "is invalid.") // loose validation
@@ -95,13 +97,13 @@ final object Validator {
   object usernameOrEmail
     extends Validator[String, String, String] {
     @inline private def underlying(input: String) = if (input.indexOf('@') == -1) username else email
-    override def correct(input: String) = underlying(input).correct(input)
-    override def validate(input: String @@ InputCorrected) = underlying(input).validate(input)
+    override def correct(input: String): CI = underlying(input).correct(input)
+    override def validate(input: CI) = underlying(input).validate(input)
   }
 
   object password
     extends InputValidatorV[String] {
-    override def correct(input: String) = input.tag
+    override def correct(input: String): CI = input.tag
     override protected val validator = ConstraintValidator[String]("Password",
       HasLengthInRange(PasswordLength),
       ContainsAlphaAndNumber
@@ -110,8 +112,8 @@ final object Validator {
 
   object passwords
     extends Validator[(String, String), (String, String), String] {
-    override def correct(input: (String, String)) = input.umap(password.correct).tag
-    override def validate(input: (String, String) @@ InputCorrected) = {
+    override def correct(input: (String, String)): CI = input.umap(password.correct).tag
+    override def validate(input: CI) = {
       password.validate(input._1.tag) match {
         case f@ Failure(_) => f
         case s@ Success(_) =>
@@ -124,8 +126,8 @@ final object Validator {
   }
 
   def currentPassword(ps: PasswordAndSalt): Validator[String, String, Unit2] = new Validator[String, String, Unit2] {
-    override def correct(input: String) = password.correct(input)
-    override def validate(input: String @@ InputCorrected) =
+    override def correct(input: String): CI = password.correct(input)
+    override def validate(input: CI) =
       if (ps.matches(input))
         Success(Unit2.tag)
       else
@@ -133,7 +135,7 @@ final object Validator {
   }
 
   object tosAgreement extends ValidationOnly[JBool] {
-    override def validate(b: JBool @@ InputCorrected) =
+    override def validate(b: CI) =
       if (b.booleanValue)
         Success(b.tag)
       else
@@ -144,7 +146,7 @@ final object Validator {
 
   object useCaseTitle
     extends InputValidatorV[String] {
-    override def correct(input: String) =
+    override def correct(input: String): CI =
       TextReplacements.perform(TextReplacements.General)(normaliseWhitespaceInSingleLineString(input)).tag
     override protected val validator = ConstraintValidator[String]("Use case title",
       NonEmpty,
@@ -163,7 +165,7 @@ final object Validator {
   object stepFieldText extends LargeText("Text")
 
   object landingPageName extends InputValidatorV[String] {
-    override def correct(input: String) = normaliseWhitespaceInSingleLineString(input).tag
+    override def correct(input: String): CI = normaliseWhitespaceInSingleLineString(input).tag
     override protected val validator = ConstraintValidator[String]("Your name",
       NonEmpty,
       IsNotAFirstNameOnly,
