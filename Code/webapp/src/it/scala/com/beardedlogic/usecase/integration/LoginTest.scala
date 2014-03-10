@@ -1,9 +1,9 @@
-package com.beardedlogic.shipreq.integration
+package shipreq.webapp.integration
 
 import org.scalatest.FunSuite
 import scala.slick.jdbc.StaticQuery
-import com.beardedlogic.shipreq.test.TestDB
-import com.beardedlogic.shipreq.test.fixture.UserFixture
+import shipreq.webapp.test.TestDB
+import shipreq.webapp.test.fixture.UserFixture
 import support.SeleniumTest
 
 class LoginTest extends FunSuite with SeleniumTest with UserFixture {

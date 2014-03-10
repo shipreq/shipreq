@@ -177,7 +177,7 @@ module.exports = function(grunt) {
     // *****************************************************************************************************************
     replace: {
       jquery: {
-        src:  'src/main/scala/com/beardedlogic/shipreq/app/AppConfig.scala',
+        src:  'src/main/scala/shipreq/webapp/app/AppConfig.scala',
         overwrite: true,
         replacements: [{
           from: /(jQueryVersion *= *")[^"]+/i,
