@@ -23,6 +23,7 @@ subgraph cluster_real {
   _mc [label="MailChimp\nAPI"]
   _crm [label="Insightly\nAPI"]
   akka
+  http [label="HTTP/WS/REST\nclient"]
 }
 
 subgraph cluster_public {
@@ -41,6 +42,7 @@ subgraph cluster_public {
     label="Real implementations for API" style=filled fillcolor="#eeeeee" fontcolor=red node[fillcolor="#ffbbbb"]
     _workq [label="Work Queue\nDB objects"]
     json4s
+    postgres [label="Slick\nBoneCP\nPostgreSQL"]
   }
 }
 
@@ -63,5 +65,8 @@ tla,bla -> bl
 tla -> tsl
 tsl -> ser,workq [dir=back]
 // tsl -> tl [dir=back] // weird bug, draws twice if not backwards
+
+_mc,_crm -> http
+_workq,_dbv -> postgres
 
 }
