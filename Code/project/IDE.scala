@@ -7,8 +7,8 @@ object IdeSettings {
 
   object excludes {
     def common = List("project/target")
-    def root   = List(".idea", ".idea_modules", ".settings") ++ common
-    def webapp = List("vendor", "node_modules", ".bower") ++ common
+    def root   = common ++ List(".idea", ".idea_modules", ".settings")
+    def webapp = common ++ List("vendor", "node_modules", ".bower", "src/it/scala", "src/main/webapp/assets/vendor/mathjax")
   }
 
   def prefix(p: String)(ss: List[String]): List[String] = ss.map(p + _)
