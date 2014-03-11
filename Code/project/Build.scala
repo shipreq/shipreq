@@ -5,31 +5,44 @@ import Common.Functions._
 object ShipReq extends Build {
 
   // Declare modules
-  lazy val root = Root.project
-  lazy val base = Base.project
-  lazy val webapp = Webapp.project
-  lazy val taskman = Taskman.project
+  lazy val root            = Root.project
+  lazy val base            = Base.project
+  lazy val baseDb          = Base.Db.project
+  lazy val webapp          = Webapp.project
+  lazy val taskmanApiLogic = TaskmanApi.Logic.project
+  lazy val taskmanApi      = TaskmanApi.project
+  lazy val taskmanLogic    = Taskman.Logic.project
+  lazy val taskman         = Taskman.project
 
   sealed trait Module {
+    def project: Project
+    def dir: String
+
     def ideSettings = IdeSettings(this)
+    def commonSettings: Project => Project = _.configure(Common.settings, ideSettings)
+    protected def typicalProject: Project =
+      Project(dir, file(dir)).configure(commonSettings).settings(name := dir)
   }
 
   // ===================================================================================================================
   object Root extends Module {
-
-    def project = Project("root", file("."))
-      .configure(Common.settings, ideSettings)
+    def dir = "."
+    override def project = Project("root", file(dir))
+      .configure(commonSettings)
       .settings(target <<= baseDirectory(_ / ".target"))
-      .aggregate(base, webapp, taskman)
+      .aggregate(base, baseDb, webapp, taskman)
   }
 
   // ===================================================================================================================
   object Base extends Module {
-
     val dir = "base"
+    override def project = typicalProject
 
-    def project = Project(dir, file(dir))
-      .configure(Common.settings, ideSettings)
+    object Db extends Module {
+      val dir = "base-db"
+      override def project = typicalProject
+        .dependsOn(base)
+    }
   }
 
   // ===================================================================================================================
@@ -60,10 +73,8 @@ object ShipReq extends Build {
         parallelExecution in IntegrationTest := false
       )
 
-    def project = Project("webapp", file(dir))
+    override def project = typicalProject
       .configure(
-        Common.settings,
-        ideSettings,
         Common.generateBuildPropFile(),
         warSettings,
         testSettings,
@@ -74,19 +85,37 @@ object ShipReq extends Build {
         // Ensure templates can be loaded from the console
         fullClasspath in console in Compile += file("src/main/webapp")
       )
-      .dependsOn(base)
+      .dependsOn(baseDb, taskmanApi)
     }
 
   // ===================================================================================================================
+  object TaskmanApi extends Module {
+    val dir = "taskman-api"
+    override def project = typicalProject
+      .aggregate(taskmanApiLogic)
+      .dependsOn(taskmanApiLogic)
+
+    object Logic extends Module {
+      val dir = "taskman-api-logic"
+      override def project = typicalProject
+        .dependsOn(base)
+    }
+  }
+
+  // ===================================================================================================================
   object Taskman extends Module {
-
     val dir = "taskman"
-
-    def project = Project(dir, file(dir))
-      .configure(Common.settings, ideSettings)
-      .dependsOn(base)
+    override def project = typicalProject
+      .aggregate(taskmanLogic, taskmanApi)
+      .dependsOn(taskmanLogic, taskmanApi, baseDb)
       .settings(
         scalacOptions in Compile ~= removeValues("-optimise") // see Akka docs
       )
+
+    object Logic extends Module {
+      val dir = "taskman-logic"
+      override def project = typicalProject
+        .dependsOn(taskmanApiLogic)
+    }
   }
 }

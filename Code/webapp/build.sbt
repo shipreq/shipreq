@@ -1,5 +1,3 @@
-name := "webapp"
-
 libraryDependencies ++= {
   val liftVersion = "2.6-M2-golly-1"
   val shiroVersion = "1.2.2"

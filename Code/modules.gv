@@ -1,0 +1,26 @@
+digraph G {
+rankdir=BT edge[dir=back] node[style=filled]
+
+{node[fillcolor="#bbffbb"]
+  base
+  baseDb [label="base-db"]
+}
+{node[fillcolor="#aaaaff"]
+  taskman
+  taskmanLogic [label="taskman-logic"]
+}
+{node[fillcolor="#ddf8ff"]
+  taskmanApi [label="taskman-api"]
+  taskmanApiLogic [label="taskman-api-logic"]
+}
+  webapp [fillcolor="#ffbbbb"]
+
+base
+baseDb -> base
+webapp -> baseDb,taskmanApi
+taskmanApi -> taskmanApiLogic
+taskmanApiLogic -> base
+taskman -> taskmanLogic,taskmanApi,baseDb
+taskmanLogic -> taskmanApiLogic
+
+}
