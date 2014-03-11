@@ -40,6 +40,7 @@ object Common {
       clearScreenTask := { println("\033[2J\033[;H") },
       version := s"${fmtTimeNow("yyyyMMdd")}-${gitRevisionShort}${snapshotSuffix}",
       isSnapshot := snapshotSuffix.nonEmpty,
+      scalaVersion := Common.Deps.ScalaVersion,
       scalacOptions ++= compilerFlags,
       scalacOptions in Test ++= testCompilerFlags,
       // Prevent src/main/java appearing in .classpath
@@ -48,6 +49,17 @@ object Common {
       unmanagedSourceDirectories in Test <<= (scalaSource in Test)(Seq(_))
     )
     .configure(debugAndReleaseCompilerFlags)
+
+  def useHiddenTargetDir: Project => Project =
+    _.settings(target <<= baseDirectory(_ / ".target"))
+
+  // ===================================================================================================================
+  object Deps {
+    val ScalaVersion = "2.10.3"
+    val Scalaz = "org.scalaz" %% "scalaz-core" % "7.1.0-M5"
+    val ScalaTest = "org.scalatest" %% "scalatest" % "2.1.0"
+    val ScalaCheck = "org.scalacheck" %% "scalacheck" % "1.11.3"
+  }
 
   // ===================================================================================================================
   object Values {
