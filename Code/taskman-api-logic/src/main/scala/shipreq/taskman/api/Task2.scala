@@ -1,41 +1,26 @@
 package shipreq.taskman.api
 
 import scalaz.{Coyoneda, Free, ~>}
+import scalaz.Scalaz.Id
 import scalaz.effect.IO
 import scalaz.Free.FreeC
 
 object Task2 {
+
   trait TaskDef
+  sealed trait Task[A]
+  case class Create(t: Seq[TaskDef]) extends Task[Unit]
 
-  sealed trait Task[A] {
-    def toIO: IO[A]
+  implicit object TaskImpl extends (Task ~> Id) {
+    override def apply[A](ta: Task[A]): Id[A] = ta match {
+      case Create(t) => { println(s"I got: $t !") }
+    }
   }
-
-  case class Create(t: Seq[TaskDef]) extends Task[Unit] {
-    def toIO = IO {println(s"I got: $t !")}
-  }
-
-//  implicit object TaskImpl extends (Task ~> Id) {
-//    override def apply[A](ta: Task[A]): Id[A] = ta match {
-//      case Create(t) => {
-//        println(s"I got: $t !")
-//        ()
-//      }
-//    }
-//  }
-
-//  implicit def TaskFunctor[T]: Functor[({type L[x] = Task[T]})#L] = new Functor[({type L[x] = Task[T]})#L] {
-//    override def map[A, B](ta: Task[T])(f: A => B): Task[B] = ta match {
-//      case x: Create[A] => Create[B](x.t, f(x.next))
-//    }
-//  }
 
   implicit object TaskToIO extends (Task ~> IO) {
-    override def apply[A](ta: Task[A]): IO[A] = ta.toIO
-//    override def apply[A](ta: Task[A]): IO[A] = ta match {
-//      case Create(t) =>
-//        IO {println(s"I got: $t !")}
-//    }
+    override def apply[A](ta: Task[A]): IO[A] = ta match {
+      case Create(n) => IO{ println(s"hello $n") }
+    }
   }
 
   type FreeTask[A] = Free.FreeC[Task, A]
@@ -89,6 +74,4 @@ object Task2 {
     val main: IO[Unit] = freeio.runM(identity)
     main.unsafePerformIO()
   }
-
-
 }
