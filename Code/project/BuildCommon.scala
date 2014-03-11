@@ -56,7 +56,7 @@ object Common {
   // ===================================================================================================================
   object Deps {
     val ScalaVersion = "2.10.3"
-    val Scalaz = "org.scalaz" %% "scalaz-core" % "7.1.0-M5"
+    val Scalaz = "org.scalaz" %% "scalaz-core" % "7.1.0-M6"
     val ScalaTest = "org.scalatest" %% "scalatest" % "2.1.0"
     val ScalaCheck = "org.scalacheck" %% "scalacheck" % "1.11.3"
   }
