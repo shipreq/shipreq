@@ -26,6 +26,13 @@ object IdeSettings {
       EclipseKeys.executionEnvironment := Some(EclipseExecutionEnvironment.JavaSE17),
       EclipseKeys.withSource := true,
       EclipseKeys.createSrc := EclipseCreateSrc.Default + EclipseCreateSrc.Resource
+      // Prevent src/main/java appearing in .classpath
+      unmanagedSourceDirectories in Compile <<= (scalaSource in Compile)(Seq(_)),
+      // Prevent src/test/java appearing in .classpath
+      unmanagedSourceDirectories in Test <<= (scalaSource in Test)(Seq(_))
+      // This is a better way of doing it:
+      unmanagedSourceDirectories in Compile ~= { _.filter(_.exists) }
+      unmanagedSourceDirectories in Test ~= { _.filter(_.exists) }
     )
   }
   */

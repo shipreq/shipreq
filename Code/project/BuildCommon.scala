@@ -42,11 +42,7 @@ object Common {
       isSnapshot := snapshotSuffix.nonEmpty,
       scalaVersion := Common.Deps.ScalaVersion,
       scalacOptions ++= compilerFlags,
-      scalacOptions in Test ++= testCompilerFlags,
-      // Prevent src/main/java appearing in .classpath
-      unmanagedSourceDirectories in Compile <<= (scalaSource in Compile)(Seq(_)),
-      // Prevent src/test/java appearing in .classpath
-      unmanagedSourceDirectories in Test <<= (scalaSource in Test)(Seq(_))
+      scalacOptions in Test ++= testCompilerFlags
     )
     .configure(debugAndReleaseCompilerFlags)
 
