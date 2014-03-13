@@ -58,6 +58,8 @@ object Common {
     val ScalazEffect = "org.scalaz" %% "scalaz-effect" % ScalazVersion
     val ScalaTest = "org.scalatest" %% "scalatest" % "2.1.0"
     val ScalaCheck = "org.scalacheck" %% "scalacheck" % "1.11.3"
+    val Mockito = "org.mockito" % "mockito-core" % "1.9.5"
+    val Specs2 = "org.specs2" % "specs2_2.10" % "2.3.10-scalaz-7.1.0-M6"
   }
 
   // ===================================================================================================================

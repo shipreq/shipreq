@@ -116,7 +116,7 @@ object ShipReq extends Build {
         // [test]
         Common.Deps.ScalaTest                                                 % "test",
         Common.Deps.ScalaCheck                                                % "test",
-        "org.mockito"                 % "mockito-core"          % "1.9.5"     % "test",
+        Common.Deps.Mockito                                                   % "test",
         "net.liftweb"                %% "lift-testkit"          % liftVersion % "test",
         "org.apache.directory.studio" % "org.apache.commons.io" % "2.4"       % "test",
         "com.twitter"                %% "util-eval"             % "6.5.0"     % "test",
@@ -159,13 +159,19 @@ object ShipReq extends Build {
       .aggregate(taskmanApiLogic)
       .dependsOn(taskmanApiLogic)
 
+//    override def deps = Seq(
+//      Common.Deps.Specs2 % "test"
+//    )
+
     // ----------------------------------------------------
     object Logic extends Module {
       val dir = "taskman-api-logic"
 
       override def deps = Seq(
         Common.Deps.ScalazCore,
-        Common.Deps.ScalazEffect
+        Common.Deps.ScalazEffect,
+        Common.Deps.Specs2 % "test",
+        Common.Deps.ScalaCheck % "test"
       )
 
       override def project = typicalProject

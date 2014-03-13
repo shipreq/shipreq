@@ -15,8 +15,8 @@ object TypeTags extends TypeTagsObjectMixin {
   implicit def taggedStringOrdering[T <: TypeTag[String]] =
     implicitly[Ordering[String]].asInstanceOf[Ordering[String @@ T]]
 
-  implicit class TTAnyRefTypeTagExt[A <: AnyRef](val a: A) extends AnyVal {
-    def tag[T <: TypeTag[A]] = a.asInstanceOf[A @@ T]
+  implicit class TTAnyRefTypeTagExt[A <: AnyRef](val __a: A) extends AnyVal {
+    def tag[T <: TypeTag[A]] = __a.asInstanceOf[A @@ T]
   }
 
 //  implicit class TTTaggedTypeExt[A <: AnyRef, T <: TypeTag[_]](val x: A @@ T) extends AnyVal {
