@@ -21,6 +21,7 @@ object ShipReq extends Build {
 
     def deps: MS = MS.empty
     protected def depScope(s: String)(ms: MS): MS = ms % s
+    protected def depScope(c: Configuration)(ms: MS): MS = depScope(c.name)(ms)
     protected def testScope = depScope("test") _
 
     def ideSettings = IdeSettings(this)
@@ -38,7 +39,7 @@ object ShipReq extends Build {
     def dir = "."
     override def project = Project("root", file(dir))
       .configure(commonSettings, Common.useHiddenTargetDir)
-      .aggregate(base, baseDb, webapp, taskman)
+      .aggregate(base, baseDb, webapp, taskman, taskmanLogic, taskmanApi, taskmanApiLogic)
   }
 
   // ===================================================================================================================
@@ -121,21 +122,33 @@ object ShipReq extends Build {
   object TaskmanApi extends Module {
     val dir = "taskman-api"
     override def project = typicalProject
-      .aggregate(taskmanApiLogic)
-      .dependsOn(taskmanApiLogic)
+      .dependsOn(taskmanApiLogic % "compile->compile;test->test-lib")
 
-//    override def deps =
-//      Json4s.jackson ++ testScope(specs2)
+    override def deps =
+      Json4s.jackson ++ testScope(specs2)
 
     // ----------------------------------------------------
     object Logic extends Module {
       val dir = "taskman-api-logic"
 
+      lazy val TestLib = config("test-lib") extend Compile describedAs "Reusable test helpers"
+
       override def deps =
-        Scalaz.core ++ Scalaz.effect ++ testScope(specs2 ++ scalaCheck)
+        Scalaz.core ++ Scalaz.effect ++
+        depScope(TestLib)(scalaCheck ++ Scala.reflect) ++ testScope(specs2)
+
+      def useTestLib = (p: Project) =>
+        p.configs(TestLib)
+        .settings(inConfig(TestLib)(Defaults.configSettings): _*)
+        .settings(
+          classpathConfiguration in Test := Test extend TestLib,
+          scalacOptions in TestLib <<= scalacOptions in Test,
+          javacOptions in TestLib <<= javacOptions in Test
+        )
 
       override def project = typicalProject
         .dependsOn(base)
+        .configure(useTestLib)
     }
   }
 
@@ -147,7 +160,6 @@ object ShipReq extends Build {
       Akka.actor ++ testScope(Akka.testkit)
 
     override def project = typicalProject
-      .aggregate(taskmanLogic, taskmanApi)
       .dependsOn(taskmanLogic, taskmanApi, baseDb)
       .settings(
         scalacOptions in Compile ~= removeValues("-optimise") // see Akka docs
