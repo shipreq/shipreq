@@ -22,17 +22,21 @@ object Common {
     p.settings(resourceGenerators in Compile <+= (resourceManaged in Compile, version) map createBuildProps)
   }
 
-  def compilerFlags = Seq(
+  def scalacFlags = Seq(
     "-unchecked",
     "-deprecation",
     "-Yno-generic-signatures",
     "-feature", "-language:postfixOps", "-language:implicitConversions", "-language:higherKinds", "-language:existentials")
 
-  def testCompilerFlags = Seq("-language:reflectiveCalls")
+  def scalacTestFlags = Seq("-language:reflectiveCalls")
 
   def debugAndReleaseCompilerFlags = debugOrRelease(
     _.settings(scalacOptions ++= Seq("-Xcheckinit")),
     nonTestCompilerFlags("-optimise", /*"-Yinline-warnings",*/ "-Xelide-below", "OFF"))
+
+  def targetJdk = "1.7"
+
+  def javacFlags = Seq("-target", targetJdk, "-source", targetJdk)
 
   lazy val settings = (p: Project) => p
     .settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*) // Dependency graph
@@ -40,27 +44,15 @@ object Common {
       clearScreenTask := { println("\033[2J\033[;H") },
       version := s"${fmtTimeNow("yyyyMMdd")}-${gitRevisionShort}${snapshotSuffix}",
       isSnapshot := snapshotSuffix.nonEmpty,
-      scalaVersion := Common.Deps.ScalaVersion,
-      scalacOptions ++= compilerFlags,
-      scalacOptions in Test ++= testCompilerFlags
+      javacOptions ++= javacFlags,
+      scalaVersion := Deps.Scala.version,
+      scalacOptions ++= scalacFlags,
+      scalacOptions in Test ++= scalacTestFlags
     )
     .configure(debugAndReleaseCompilerFlags)
 
   def useHiddenTargetDir: Project => Project =
     _.settings(target <<= baseDirectory(_ / ".target"))
-
-  // ===================================================================================================================
-  object Deps {
-    val ScalaVersion = "2.10.3"
-    val ScalazVersion = "7.1.0-M6"
-    val ScalazCore = "org.scalaz" %% "scalaz-core" % ScalazVersion
-    val ScalazConcurrent = "org.scalaz" %% "scalaz-concurrent" % ScalazVersion
-    val ScalazEffect = "org.scalaz" %% "scalaz-effect" % ScalazVersion
-    val ScalaTest = "org.scalatest" %% "scalatest" % "2.1.0"
-    val ScalaCheck = "org.scalacheck" %% "scalacheck" % "1.11.3"
-    val Mockito = "org.mockito" % "mockito-core" % "1.9.5"
-    val Specs2 = "org.specs2" % "specs2_2.10" % "2.3.10-scalaz-7.1.0-M6"
-  }
 
   // ===================================================================================================================
   object Values {
