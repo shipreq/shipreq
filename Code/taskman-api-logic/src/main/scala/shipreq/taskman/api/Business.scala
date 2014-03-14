@@ -44,6 +44,11 @@ object TaskTypes {
 
 sealed trait TaskDef
 object TaskDef {
+
+  // *******************************************************************************************************************
+  // * NOTE: Fields names here need to match the JSON FieldSerializers.
+  // *******************************************************************************************************************
+
   case class RegistrationRequested(email: EmailAddr, url: Option[String]) extends TaskDef
   case class RegistrationCompleted(userId: UserId) extends TaskDef
   case class PasswordResetRequested(email: EmailAddr, url: String) extends TaskDef

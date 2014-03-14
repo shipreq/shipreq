@@ -1,20 +1,50 @@
 package shipreq.taskman.api
 
+import shipreq.base.util.BiMap
 import shipreq.taskman.api.Types._
-import scalaz.{~>, \/, -\/}
+import scalaz.{~>, \/-, \/, -\/}
+import shipreq.taskman.api.{TaskType => T}
+import shipreq.taskman.api.{TaskDef => D}
+
 
 
 object Serialisation {
-  type Ser = Json[_]
+  type Ser = Json[TaskDef]
   type Deser = String \/ TaskDef
 
-  def ser(t: TaskDef): Ser = ??? // json4s blah blah
+  import org.json4s._
+  import org.json4s.jackson.Serialization
+  import org.json4s.jackson.Serialization.{read, write}
+
+  def fieldRenamer[A: Manifest](m: BiMap[String, String]): FieldSerializer[A] = FieldSerializer({
+    case p@(name, x) =>
+      Some(m.ab.get(name).map(newName => (newName, x)).getOrElse(p))
+  },{
+    case f@JField(name, x) =>
+      m.ba.get(name).map(newName => JField(newName, x)).getOrElse(f)
+  })
+
+  implicit val formats: Formats = (
+    Serialization.formats(NoTypeHints)
+      + fieldRenamer[D.RegistrationRequested](BiMap("email" -> "e", "url" -> "u"))
+      + fieldRenamer[D.RegistrationCompleted](BiMap("userId" -> "u"))
+      + fieldRenamer[D.PasswordResetRequested](BiMap("email" -> "e", "url" -> "u"))
+      + fieldRenamer[D.LandingPageHit](BiMap("email" -> "e", "name" -> "n", "msg" -> "m", "newsletter" -> "w"))
+  )
+
+  def ser(t: TaskDef): Ser = write(t).tag
 
   def deser(taskTypeId: Int, s: Ser): Deser = {
     TaskTypes.lookupType(taskTypeId) match {
       case Some(tt) =>
         val defClass = TaskTypes.lookupTaskDef(tt)
-        ???  // json4s blah blah
+        try {
+          val t: TaskDef = read(s)(implicitly[Formats], Manifest.classType(defClass))
+          \/-(t)
+        } catch {
+          case e: Throwable =>
+            -\/(s"Failed to parse JSON.\nError:\n  ${e.getClass.getCanonicalName}: ${e.getMessage.replaceAll("\n", "\n  ")}\nJSON Value:\n  $s")
+        }
       case None =>
         -\/(s"Unknown task type: $taskTypeId")
     }

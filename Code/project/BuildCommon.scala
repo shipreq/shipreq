@@ -25,7 +25,7 @@ object Common {
   def scalacFlags = Seq(
     "-unchecked",
     "-deprecation",
-    "-Yno-generic-signatures",
+    // "-Yno-generic-signatures", // Stuffs up json4s
     "-feature", "-language:postfixOps", "-language:implicitConversions", "-language:higherKinds", "-language:existentials")
 
   def scalacTestFlags = Seq("-language:reflectiveCalls")
