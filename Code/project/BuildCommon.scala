@@ -54,6 +54,19 @@ object Common {
   def useHiddenTargetDir: Project => Project =
     _.settings(target <<= baseDirectory(_ / ".target"))
 
+  trait ExportsTestLib {
+    lazy val TestLib = config("test-lib") extend Compile describedAs "Reusable test helpers"
+
+    def testLibSettings = (p: Project) =>
+      p.configs(TestLib)
+      .settings(inConfig(TestLib)(Defaults.configSettings): _*)
+      .settings(
+        classpathConfiguration in Test := Test extend TestLib,
+        scalacOptions in TestLib <<= scalacOptions in Test,
+        javacOptions in TestLib <<= javacOptions in Test
+      )
+  }
+
   // ===================================================================================================================
   object Values {
 

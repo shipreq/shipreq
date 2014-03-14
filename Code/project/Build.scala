@@ -1,5 +1,6 @@
 import sbt._
 import Keys._
+import Common.ExportsTestLib
 import Common.Functions._
 import Deps._
 
@@ -128,27 +129,16 @@ object ShipReq extends Build {
       Json4s.jackson ++ testScope(specs2)
 
     // ----------------------------------------------------
-    object Logic extends Module {
+    object Logic extends Module with ExportsTestLib {
       val dir = "taskman-api-logic"
-
-      lazy val TestLib = config("test-lib") extend Compile describedAs "Reusable test helpers"
 
       override def deps =
         Scalaz.core ++ Scalaz.effect ++
         depScope(TestLib)(scalaCheck ++ Scala.reflect) ++ testScope(specs2)
 
-      def useTestLib = (p: Project) =>
-        p.configs(TestLib)
-        .settings(inConfig(TestLib)(Defaults.configSettings): _*)
-        .settings(
-          classpathConfiguration in Test := Test extend TestLib,
-          scalacOptions in TestLib <<= scalacOptions in Test,
-          javacOptions in TestLib <<= javacOptions in Test
-        )
-
       override def project = typicalProject
         .dependsOn(base)
-        .configure(useTestLib)
+        .configure(testLibSettings)
     }
   }
 
