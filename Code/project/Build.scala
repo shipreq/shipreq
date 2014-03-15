@@ -7,10 +7,13 @@ import Deps._
 object ShipReq extends Build {
 
   // Declare modules
-  lazy val root            = Root.project
-  lazy val base            = Base.project
-  lazy val baseDb          = Base.Db.project
-  lazy val webapp          = Webapp.project
+  lazy val root = Root.project
+
+  lazy val base     = Base.project
+  lazy val baseDb   = Base.Db.project
+  lazy val baseUtil = Base.Util.project
+
+  lazy val webapp = Webapp.project
 
   lazy val taskman             = Taskman.project
   lazy val taskmanApi          = Taskman.Api.project
@@ -48,17 +51,24 @@ object ShipReq extends Build {
     def dir = "."
     override def project = Project("root", file(dir))
       .configure(commonSettings, Common.useHiddenTargetDir)
-      .aggregate(base, baseDb, webapp, taskman)
+      .aggregate(base, webapp, taskman)
   }
 
   // ===================================================================================================================
   object Base extends Module {
     val dir = "base"
-
-    override def deps =
-      Scalaz.core ++ scalaTest % "test"
-
     override def project = typicalProject
+      .aggregate(baseUtil, baseDb) // not umbrella cos it shouldn't dependOn
+
+    // ----------------------------------------------------
+    object Util extends Module {
+      val dir = "base-util"
+
+      override def deps =
+        Scalaz.core ++ scalaTest % "test"
+
+      override def project = typicalProject
+    }
 
     // ----------------------------------------------------
     object Db extends Module {
@@ -68,7 +78,7 @@ object ShipReq extends Build {
         postgresql ++ slick ++ bonecp ++ flyway ++ logback ++ testScope(scalaTest)
 
       override def project = typicalProject
-        .dependsOn(base)
+        .dependsOn(baseUtil)
     }
   }
 
@@ -146,7 +156,7 @@ object ShipReq extends Build {
           depScope(TestLib)(scalaCheck ++ Scala.reflect) ++ testScope(specs2)
 
         override def project = typicalProject
-          .dependsOn(base)
+          .dependsOn(baseUtil)
           .configure(testLibSettings)
       }
 

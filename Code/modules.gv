@@ -1,33 +1,43 @@
 digraph G {
+compound=true
 rankdir=BT edge[dir=back] node[style=filled]
 
-{node[fillcolor="#bbffbb"]
-  base
+subgraph cluster_base {
+  style=filled fillcolor="#f4fff4" node[fillcolor="#bbffbb"]
+  base [label="[aggregate]\nbase" fillcolor="#cccccc"]
+  baseUtil [label="base-util"]
   baseDb [label="base-db"]
 }
-{node[fillcolor="#aaaaff"]
-  taskmanDb [label="taskman-server-schema"]
-  taskmanServerImpl [label="taskman-server-impl"]
-  taskmanServerLogic [label="taskman-server-logic"]
-}
-{node[fillcolor="#cceeff"]
-  taskmanApiImpl [label="taskman-api-impl"]
-  taskmanApiLogic [label="taskman-api-logic"]
-}
-{node[fillcolor="#dddddd"]
-  taskman [label="[aggregate]\ntaskman"]
-  taskmanApi [label="[aggregate]\ntaskman-api"]
-  taskmanServer [label="[aggregate]\ntaskman-server"]
-}
-{node[fillcolor="#ffff80"]
-  webapp
+
+subgraph cluster_t {
+  fillcolor="#eeeeff" style=filled
+
+  subgraph cluster_ts {
+    fillcolor=white node[fillcolor="#aaaaff"]
+    taskmanDb [label="taskman-server-schema"]
+    taskmanServerImpl [label="taskman-server-impl"]
+    taskmanServerLogic [label="taskman-server-logic"]
+    taskmanServer [label="[aggregate]\ntaskman-server" fillcolor="#cccccc"]
+  }
+
+  subgraph cluster_ta {
+    fillcolor=white node[fillcolor="#cceeff"]
+    taskmanApi [label="[aggregate]\ntaskman-api" fillcolor="#cccccc"]
+    taskmanApiImpl [label="taskman-api-impl"]
+    taskmanApiLogic [label="taskman-api-logic"]
+  }
+
+  taskman [label="[aggregate]\ntaskman" fillcolor="#cccccc"]
 }
 
+root [label="[aggregate]\nroot" fillcolor="#cccccc"]
+webapp [fillcolor="#ffff80"]
+
 // Deps
-base
-baseDb -> base
+baseUtil
+baseDb -> baseUtil
 taskmanDb -> baseDb
-taskmanApiLogic -> base
+taskmanApiLogic -> baseUtil
 taskmanApiImpl -> taskmanApiLogic,baseDb
 taskmanApiImpl -> taskmanApiLogic [label="test-lib" style=dashed]
 taskmanApiImpl -> taskmanDb [label="test" style=dashed]
@@ -42,4 +52,6 @@ edge[dir=forward style=dashed arrowhead=vee color="#aaaaaa"]
 taskmanApi -> taskmanApiLogic,taskmanApiImpl
 taskmanServer -> taskmanServerLogic,taskmanServerImpl,taskmanDb
 taskman -> taskmanApi,taskmanServer
+base -> baseUtil,baseDb
+root -> base,webapp,taskman
 }
