@@ -6,32 +6,40 @@ rankdir=BT edge[dir=back] node[style=filled]
   baseDb [label="base-db"]
 }
 {node[fillcolor="#aaaaff"]
+  taskmanDb [label="taskman-server-schema"]
   taskmanServerImpl [label="taskman-server-impl"]
   taskmanServerLogic [label="taskman-server-logic"]
-  taskmanServer [label="taskman-server"]
 }
-{node[fillcolor="#ddf8ff"]
+{node[fillcolor="#cceeff"]
   taskmanApiImpl [label="taskman-api-impl"]
   taskmanApiLogic [label="taskman-api-logic"]
-  taskmanApi [label="taskman-api"]
 }
-  taskman [fillcolor="#ffbbbb"]
-  webapp [fillcolor="#ffbbbb"]
+{node[fillcolor="#dddddd"]
+  taskman [label="[aggregate]\ntaskman"]
+  taskmanApi [label="[aggregate]\ntaskman-api"]
+  taskmanServer [label="[aggregate]\ntaskman-server"]
+}
+{node[fillcolor="#ffff80"]
+  webapp
+}
 
 // Deps
 base
 baseDb -> base
+taskmanDb -> baseDb
 taskmanApiLogic -> base
 taskmanApiImpl -> taskmanApiLogic,baseDb
+taskmanApiImpl -> taskmanApiLogic [label="test-lib" style=dashed]
+taskmanApiImpl -> taskmanDb [label="test" style=dashed]
 taskmanApi -> taskmanApiImpl
 taskmanServerLogic -> taskmanApiLogic
-taskmanServerImpl -> taskmanServerLogic,taskmanApi,baseDb
+taskmanServerImpl -> taskmanServerLogic,taskmanApi,taskmanDb
 taskmanServer -> taskmanServerImpl
 webapp -> baseDb,taskmanApi
 
 // Aggregation
-edge[dir=forward style=dashed arrowhead=vee color="#999999"]
+edge[dir=forward style=dashed arrowhead=vee color="#aaaaaa"]
 taskmanApi -> taskmanApiLogic,taskmanApiImpl
-taskmanServer -> taskmanServerLogic,taskmanServerImpl
+taskmanServer -> taskmanServerLogic,taskmanServerImpl,taskmanDb
 taskman -> taskmanApi,taskmanServer
 }

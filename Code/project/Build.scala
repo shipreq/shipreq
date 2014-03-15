@@ -12,13 +12,14 @@ object ShipReq extends Build {
   lazy val baseDb          = Base.Db.project
   lazy val webapp          = Webapp.project
 
-  lazy val taskmanApiLogic    = Taskman.Api.Logic.project
-  lazy val taskmanApiImpl     = Taskman.Api.Impl.project
-  lazy val taskmanServerLogic = Taskman.Server.Logic.project
-  lazy val taskmanServerImpl  = Taskman.Server.Impl.project
-  lazy val taskmanApi         = Taskman.Api.project
-  lazy val taskmanServer      = Taskman.Server.project
-  lazy val taskman            = Taskman.project
+  lazy val taskman             = Taskman.project
+  lazy val taskmanApi          = Taskman.Api.project
+  lazy val taskmanApiLogic     = Taskman.Api.Logic.project
+  lazy val taskmanApiImpl      = Taskman.Api.Impl.project
+  lazy val taskmanServer       = Taskman.Server.project
+  lazy val taskmanServerLogic  = Taskman.Server.Logic.project
+  lazy val taskmanServerImpl   = Taskman.Server.Impl.project
+  lazy val taskmanServerSchema = Taskman.Server.Schema.project
 
   sealed trait Module {
     def project: Project
@@ -154,6 +155,7 @@ object ShipReq extends Build {
         val dir = "taskman-api-impl"
         override def project = typicalProject
           .dependsOn(taskmanApiLogic % "compile->compile;test->test-lib")
+          .dependsOn(taskmanServerSchema % "test")
 
         override def deps =
           Json4s.jackson ++ testScope(specs2)
@@ -163,12 +165,18 @@ object ShipReq extends Build {
     // Server -----------------------------------------------
     object Server extends Module {
       val dir = "taskman-server"
-      override def project = umbrellaOf(taskmanServerLogic, taskmanServerImpl)
+      override def project = umbrellaOf(taskmanServerLogic, taskmanServerImpl, taskmanServerSchema)
 
       // Server: Logic --------------------------------------
       object Logic extends Module {
         val dir = "taskman-server-logic"
         override def project = typicalProject.dependsOn(taskmanApiLogic)
+      }
+
+      // Server: Schema -------------------------------------
+      object Schema extends Module {
+        val dir = "taskman-server-schema"
+        override def project = typicalProject.dependsOn(baseDb)
       }
 
       // Server: Impl ---------------------------------------
@@ -179,9 +187,9 @@ object ShipReq extends Build {
           Akka.actor ++ testScope(Akka.testkit)
 
         override def project = typicalProject
-          .dependsOn(taskmanServerLogic, taskmanApi, baseDb)
+          .dependsOn(taskmanServerLogic, taskmanServerSchema, taskmanApi)
           .settings(
-            scalacOptions in Compile ~= removeValues("-optimise") // see Akka docs
+            scalacOptions in Compile ~= removeValues("-optimise") // because Akka docs
           )
       }
 
