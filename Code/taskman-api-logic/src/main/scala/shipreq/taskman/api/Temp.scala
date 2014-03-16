@@ -3,10 +3,10 @@ package shipreq.taskman.api
 import scalaz.{Coyoneda, Free, ~>, Functor, \/, -\/}
 import scalaz.Scalaz.Id
 import scalaz.effect.IO
-import scalaz.Free.FreeC
+import scalaz.Free.{liftFC, FreeC}
+import scalaz.Coyoneda.liftTF
 import scalaz.std.function.function0Instance
 
-import ScalazExt._
 import shipreq.base.util.TypeTags
 //  import scalaz._, Scalaz._
 //  import scalaz.syntax.functor._
@@ -52,7 +52,7 @@ object Effect {
   def iom[A](a: => A): IOM[A] = () => a
 
   def compile[C[_], A](f: FreeC[C, A], t: C ~> IOM): IO[A] = {
-    val g = f.mapSuspension(FG_to_CFG(t))
+    val g = f.mapSuspension(liftTF(t))
     IO{ g.run }
   }
 }
