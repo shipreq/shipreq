@@ -7,7 +7,7 @@ object IdeSettings {
 
   object excludes {
     def common = List("project/target")
-    def root   = common ++ List(".idea", ".idea_modules", ".settings")
+    def root   = common ++ List(".idea", ".idea_modules", ".settings", ".target", "log")
     def webapp = common ++ List("vendor", "node_modules", ".bower", "src/it/scala", "src/main/webapp/assets/vendor/mathjax")
   }
 

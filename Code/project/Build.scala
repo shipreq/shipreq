@@ -148,6 +148,7 @@ object ShipReq extends Build {
         fullClasspath in console in Compile += file("src/main/webapp")
       )
       .dependsOn(baseDb, taskmanApi)
+      .dependsOn(baseUtil, taskmanApiLogic, taskmanApiImpl) // Stupid IDEA auto-import needs this
     }
 
   // ===================================================================================================================
@@ -180,6 +181,7 @@ object ShipReq extends Build {
           .dependsOn(taskmanApiLogic % "compile->compile;test->test-lib")
           .dependsOn(taskmanServerSchema % "test")
           .dependsOn(baseTest % "test")
+          .dependsOn(baseUtil, baseDb) // Stupid IDEA auto-import needs this
 
         override def deps =
           Json4s.jackson ++ testScope(specs2)
