@@ -13,7 +13,7 @@ class TaskSubmissionTest extends Specification with DatabaseTest {
   "Submits task" in {
     val cmd = SubmitMsg(Msg.RegistrationRequested("a@b.com".tag, "http://x"))
     compile(cmd, reify(new GlobalContext(None), session)).unsafePerformIO()
-    sql"select count(1) from task".as[Int].first ==== 1
+    sql"select count(1) from msgq".as[Int].first ==== 1
   }
 
 }

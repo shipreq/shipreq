@@ -12,7 +12,7 @@ private[api] class ApiSql(prefix: String) {
   implicit val SP_JsonMsg = SP_Json[Msg]
 
   val CreateMsg = update[(Short, Option[Ser], Short)](
-    s"select ${prefix}create_task_v01(?::int2, ?::json, ?::int2)")
+    s"select ${prefix}create_msg_v01(?::int2, ?::json, ?::int2)")
 }
 
 private[api] class ApiDao(ctx: TaskmanApiImpl.GlobalContext, session: Session) {
