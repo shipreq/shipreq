@@ -41,8 +41,8 @@ object TaskmanApi {
   type CmdF[A] = FreeC[Cmd, A]
   implicit def cmdLiftF[A](c: Cmd[A]): CmdF[A] = liftFC(c)
 
-  case class SubmitTask(t: Msg) extends Cmd[Unit]
-  case class SubmitTasks(ts: Seq[Msg]) extends Cmd[Unit]
+  case class SubmitMsg(m: Msg) extends Cmd[Unit]
+  case class SubmitMsgs(ms: Seq[Msg]) extends Cmd[Unit]
 }
 
 object Effect {

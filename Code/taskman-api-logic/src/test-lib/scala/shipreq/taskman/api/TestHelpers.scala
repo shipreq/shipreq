@@ -55,7 +55,7 @@ object TestHelpers {
 
   def genMsg(c: Class[_ <: Msg]): Gen[Msg] = genMsg(MsgType.lookup(c))
 
-  def genMsg(t: MsgType): Gen[Msg] = t match {
+  def genMsg(m: MsgType): Gen[Msg] = m match {
 
     case T.RegistrationRequested =>
       for(email <- genEmail; url <- arbitrary[String])

@@ -3,7 +3,6 @@ package shipreq.webapp.test
 import shipreq.webapp.lib.{TaskmanImpl, TaskmanInterface}
 import scala.slick.session.Session
 import shipreq.taskman.api._
-import shipreq.taskman.api.impl._
 import TaskmanApi._
 import shipreq.webapp.app.DI
 
@@ -23,13 +22,13 @@ class TestTaskman extends TaskmanInterface {
     synchronized {
       ran ::= cmd
       cmd match {
-        case SubmitTask(t) => tasksSubmitted ::= t
-        case SubmitTasks(ts) => tasksSubmitted :::= ts.toList
+        case SubmitMsg(t) => tasksSubmitted ::= t
+        case SubmitMsgs(ts) => tasksSubmitted :::= ts.toList
       }
     }
 
-  override def submitTask(msg: Msg, s: Session) = run(SubmitTask(msg))
-  override def submitTasks(msgs: Seq[Msg], s: Session) = run(SubmitTasks(msgs))
+  override def submitMsg(m: Msg, s: Session) = run(SubmitMsg(m))
+  override def submitMsgs(ms: Seq[Msg], s: Session) = run(SubmitMsgs(ms))
 
   @volatile var ran: List[Cmd[_]] = List.empty
   @volatile var tasksSubmitted: List[Msg] = List.empty

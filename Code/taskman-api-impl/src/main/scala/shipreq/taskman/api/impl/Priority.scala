@@ -12,7 +12,7 @@ private[api] object Priority {
   val Low    = Priority(20)
   @inline def UserWaiting = High
 
-  def of(t: Msg): Priority = t match {
+  def of(m: Msg): Priority = m match {
     case _: RegistrationRequested
        | _: ReRegistrationAttempted
        | _: PasswordResetRequested

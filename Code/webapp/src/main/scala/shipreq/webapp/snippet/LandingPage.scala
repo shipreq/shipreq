@@ -44,7 +44,7 @@ object LandingPage extends SnippetHelpers {
   }
 
   def processInterest(i: Interest): Unit = {
-    val task = LandingPageHit(i.email.tag, i.name, i.msg, false) // TODO newsletter hardcoded
-    daoProvider.withSession(dao => submitTask(task, dao))
+    val msg = LandingPageHit(i.email.tag, i.name, i.msg, false) // TODO newsletter hardcoded
+    daoProvider.withSession(dao => submitMsg(msg, dao))
   }
 }

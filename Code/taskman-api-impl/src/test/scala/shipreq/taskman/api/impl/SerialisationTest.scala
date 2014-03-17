@@ -11,8 +11,8 @@ import Serialisation._
 class SerialisationTest extends Specification with ScalaCheck {
 
   "Serialisation" should {
-    "serialise and deserialise back" ! prop{ (t: Msg) =>
-      deserialise(MsgType.lookup(t).id, serialise(t)) ==== \/-(t)
+    "serialise and deserialise back" ! prop{ (m: Msg) =>
+      deserialise(MsgType.lookup(m).id, serialise(m)) ==== \/-(m)
     }
 
     "return an error for unknown task types" in {

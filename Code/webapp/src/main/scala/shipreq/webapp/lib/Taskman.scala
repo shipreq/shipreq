@@ -15,11 +15,11 @@ object TaskmanImpl extends TaskmanInterface {
   @inline private def run[A](msg: Cmd[A], s: Session): A =
     compile(msg, reify(ctx, s)).unsafePerformIO()
 
-  override def submitTask(msg: Msg, s: Session) = run(SubmitTask(msg), s)
-  override def submitTasks(msgs: Seq[Msg], s: Session) = run(SubmitTasks(msgs), s)
+  override def submitMsg(m: Msg, s: Session) = run(SubmitMsg(m), s)
+  override def submitMsgs(ms: Seq[Msg], s: Session) = run(SubmitMsgs(ms), s)
 }
 
 trait TaskmanInterface {
-  def submitTask(msg: Msg, s: Session): Unit
-  def submitTasks(msgs: Seq[Msg], s: Session): Unit
+  def submitMsg(m: Msg, s: Session): Unit
+  def submitMsgs(ms: Seq[Msg], s: Session): Unit
 }

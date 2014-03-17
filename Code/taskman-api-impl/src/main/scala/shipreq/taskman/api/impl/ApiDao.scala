@@ -11,7 +11,7 @@ private[api] class ApiSql(prefix: String) {
   implicit val GR_JsonMsg = GR_Json[Msg]
   implicit val SP_JsonMsg = SP_Json[Msg]
 
-  val CreateTask = update[(Short, Option[Ser], Short)](
+  val CreateMsg = update[(Short, Option[Ser], Short)](
     s"select ${prefix}create_task_v01(?::int2, ?::json, ?::int2)")
 }
 
@@ -20,9 +20,9 @@ private[api] class ApiDao(ctx: TaskmanApiImpl.GlobalContext, session: Session) {
 
   implicit def _session = session
 
-  def createTask(t: Msg): Unit =
-    createTask(MsgType lookup t, Serialisation serialise t, Priority of t)
+  def createMsg(m: Msg): Unit =
+    createMsg(MsgType lookup m, Serialisation serialise m, Priority of m)
 
-  def createTask(t: MsgType, taskData: Ser, p: Priority): Unit =
-    CreateTask.execute(t.id.toShort, Some(taskData), p.value)
+  def createMsg(m: MsgType, taskData: Ser, p: Priority): Unit =
+    CreateMsg.execute(m.id.toShort, Some(taskData), p.value)
 }

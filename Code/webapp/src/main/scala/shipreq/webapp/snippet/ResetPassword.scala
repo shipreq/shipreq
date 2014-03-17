@@ -51,17 +51,17 @@ object ResetPassword1 extends SnippetHelpers {
 
           // Account not activated yet
           case Some((u@UserRegistrationInfo(_, _, _, None), _)) =>
-            submitTask(Register1.preRegistrationMsg(email.tag, u, dao), dao)
+            submitMsg(Register1.preRegistrationMsg(email.tag, u, dao), dao)
 
           // Valid token available
           case Some((UserRegistrationInfo(id, _, _, Some(_)), ResetPasswordInfo(Some(token), Some(issued)))) if !isTokenExpired(issued) =>
             reuseToken(id, token, dao)
-            submitTask(passwordResetMsg(email, token), dao)
+            submitMsg(passwordResetMsg(email, token), dao)
 
           // No token or token expired
           case Some((UserRegistrationInfo(id, _, _, Some(_)), _)) =>
             val token = issueNewToken(id, dao)
-            submitTask(passwordResetMsg(email, token), dao)
+            submitMsg(passwordResetMsg(email, token), dao)
         }
 
       // Respond the same in all cases (for security purposes)

@@ -50,11 +50,11 @@ object Register1 extends SnippetHelpers {
   def perform(emailInput: String): JsCmd =
     ifValid(Validator.email.correctAndValidate(emailInput))(emailAddr => {
       daoProvider.withTransaction(dao => {
-        val task = dao.findUserRegistrationInfo(emailAddr) match {
+        val msg = dao.findUserRegistrationInfo(emailAddr) match {
           case None    => onNewUser(emailAddr, dao)
           case Some(u) => preRegistrationMsg(emailAddr, u, dao)
         }
-        submitTask(task, dao)
+        submitMsg(msg, dao)
       })
       jsClearError & JqExpr("#emailSent,#register1Form") ~> JqToggle
     })

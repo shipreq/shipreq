@@ -16,13 +16,13 @@ object TaskmanApiImpl {
       private[this] def newDao = new ApiDao(ctx, s)
       def apply[A](c: Cmd[A]): IOM[A] = c match {
 
-        case SubmitTask(t) => iom {
-          newDao.createTask(t)
+        case SubmitMsg(t) => iom {
+          newDao.createMsg(t)
         }
 
-        case SubmitTasks(ts) => iom {
+        case SubmitMsgs(ts) => iom {
           val dao = newDao
-          ts.foreach(t => dao.createTask(t))
+          ts.foreach(t => dao.createMsg(t))
         }
 
       }
