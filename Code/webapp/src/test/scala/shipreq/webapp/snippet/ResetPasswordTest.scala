@@ -10,6 +10,7 @@ import shipreq.webapp.lib.Types._
 import shipreq.webapp.test.T2._
 import shipreq.webapp.test.{MockDaoProvider, TestHelpers}
 import shipreq.webapp.util.NonEmptyTemplate
+import shipreq.taskman.api.TaskDef.PasswordResetRequested
 
 class ResetPasswordTest extends FunSpec with TestHelpers {
 
@@ -36,8 +37,8 @@ class ResetPasswordTest extends FunSpec with TestHelpers {
     val JsEmailSent     = NoErrorNotice & JsContains("resetpwTokenSent")
     val JsEmailRejected = HasErrorNotice("mail address") & JsDoesntContain("resetpwTokenSent")
 
-    val ChangeReqEmailSent            = EmailSentContaining("new password here:", "http", "/resetpw/")
-    val ConfirmRegistrationEmailSent  = EmailSentContaining("To continue your registration", "http")
+    val PasswordResetTaskSubmitted   = SubmittedOneTask(PasswordResetRequestedT)
+    val ConfirmRegistrationEmailSent = SubmittedOneTask(RegistrationRequestedT("http"))
 
     def NoDbChange     = new DbCheck(false, false)
     def IssuesNewToken = new DbCheck(true, false)
@@ -49,9 +50,9 @@ class ResetPasswordTest extends FunSpec with TestHelpers {
       }
     }
 
-    def test(emailInput: String, dbSetup: DbSetup)(dbExp: DbExp, emailExp: EmailExp, jsExp: JsExp): Unit =
+    def test(emailInput: String, dbSetup: DbSetup)(dbExp: DbExp, taskExp: TestTaskmanExp, jsExp: JsExp): Unit =
       inMockSession {
-        val r = withTestMailer {
+        val (r, tt) = withTestTaskman {
           MockDaoProvider(dao => {
             when(dao.performInstallNewResetPasswordToken(any, any)) thenReturn "TOKEN"
             dbSetup setup dao
@@ -61,18 +62,18 @@ class ResetPasswordTest extends FunSpec with TestHelpers {
             r
           }
         }
-        jsExp test r.result
-        emailExp test r
+        jsExp test r
+        taskExp test tt
       }
 
     // matches user: N, valid email: Y - pretend sent
     it("should do nothing and pretend email sent when no user found and email is valid") {
-      test(validEmail, UserNotFound)(NoDbChange, NoEmailSent, JsEmailSent)
+      test(validEmail, UserNotFound)(NoDbChange, NoTasksSubmitted, JsEmailSent)
     }
 
     // matches user: N, valid email: N - error
     it("should reject email address when no user found and email is invalid") {
-      test("invalidEmail", UserNotFound)(NoDbChange, NoEmailSent, JsEmailRejected)
+      test("invalidEmail", UserNotFound)(NoDbChange, NoTasksSubmitted, JsEmailRejected)
     }
 
     // matches user: Y, registered: N - send reg token
@@ -82,17 +83,17 @@ class ResetPasswordTest extends FunSpec with TestHelpers {
 
     // matches user: Y, registered: Y, has recent reset pw token: Y - reuse token, send email, inc req count
     it("should send email with current token when user found and valid reset-pw token exists") {
-      test(validEmail, UserWithValidToken)(ReusesToken, ChangeReqEmailSent, JsEmailSent)
+      test(validEmail, UserWithValidToken)(ReusesToken, PasswordResetTaskSubmitted, JsEmailSent)
     }
 
     // matches user: Y, registered: Y, has recent reset pw token: N - new token, send email, inc req count
     it("should send email with new token when user found and reset-pw token has expired") {
-      test(validEmail, UserWithExpiredToken)(IssuesNewToken, ChangeReqEmailSent, JsEmailSent)
+      test(validEmail, UserWithExpiredToken)(IssuesNewToken, PasswordResetTaskSubmitted, JsEmailSent)
     }
 
     // matches user: Y, registered: Y, has recent reset pw token: N - new token, send email, inc req count
     it("should send email with new token when user found and doesnt have a reset-pw token yet") {
-      test(validEmail, UserWithoutExistingToken)(IssuesNewToken, ChangeReqEmailSent, JsEmailSent)
+      test(validEmail, UserWithoutExistingToken)(IssuesNewToken, PasswordResetTaskSubmitted, JsEmailSent)
     }
   }
 

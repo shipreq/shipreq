@@ -5,12 +5,13 @@ import net.liftweb.http.SHtml
 import net.liftweb.http.js.{JsCmds, JsCmd}
 import net.liftweb.util.CssSel
 import net.liftweb.util.Helpers._
-import shipreq.webapp.app.AppConfig
 import shipreq.webapp.util.HtmlTransformExt.ajaxSubmitOnClick
 import shipreq.webapp.feature.validation.Validator
-import shipreq.webapp.lib.MailHelpers
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.lib.SnippetHelpers
+import shipreq.taskman.api.TaskDef.LandingPageHit
 
-object LandingPage {
+object LandingPage extends SnippetHelpers {
 
   case class Interest(name: String, email: String, msg: Option[String])
 
@@ -43,11 +44,7 @@ object LandingPage {
   }
 
   def processInterest(i: Interest): Unit = {
-    import AppConfig.LandingPage._
-    import MailHelpers._
-    val from = s"${i.name} <${i.email}>"
-    val body = s"$from\n\n${i.msg getOrElse ""}"
-    val mail = plainTextMail(subject, body) addressedTo sendTo
-    sendMail(mail)
+    val task = LandingPageHit(i.email.tag, i.name, i.msg, false) // TODO newsletter hardcoded
+    daoProvider.withSession(dao => submitTask(task, dao))
   }
 }

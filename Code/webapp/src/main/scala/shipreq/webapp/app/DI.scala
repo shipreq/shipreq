@@ -1,11 +1,10 @@
 package shipreq.webapp
 package app
 
-import db.{AsyncDbImpl, AsyncDb, DB, DaoProvider}
-import lib.{StatLoggerImpl, StatLogger}
 import net.liftweb.util.SimpleInjector
-import net.liftweb.util.{Mailer => LiftMailer}
 import security.{SecurityProvider, Oshiro}
+import db.{AsyncDbImpl, AsyncDb, DB, DaoProvider}
+import lib.{TaskmanImpl, TaskmanInterface, StatLoggerImpl, StatLogger}
 
 /**
  * Houses and provides access to global resources. Not exactly "dependency injection" but serves a similar enough
@@ -21,7 +20,7 @@ object DI extends SimpleInjector {
 
   final val StatLogger = new Inject[StatLogger](StatLoggerImpl) {}
 
-  final val Mailer = new Inject[LiftMailer](LiftMailer) {}
+  final val Taskman = new Inject[TaskmanInterface](TaskmanImpl) {}
 
   final val AsyncDb = new Inject[AsyncDb](AsyncDbImpl) {}
 }
@@ -33,6 +32,6 @@ trait DI {
   def daoProvider = DI.DaoProvider.vend
   def securityProvider = DI.SecurityProvider.vend
   def statLogger = DI.StatLogger.vend
-  def mailer = DI.Mailer.vend
+  def taskman = DI.Taskman.vend
   def asyncDb = DI.AsyncDb.vend
 }

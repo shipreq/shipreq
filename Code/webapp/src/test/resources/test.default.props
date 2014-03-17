@@ -14,4 +14,4 @@ db.pool.disableJMX                 = true
 db.pool.statisticsEnabled          = false
 db.pool.statementsCacheSize        = 64
 
-mail.from=test@props.com
+taskman.schema = taskman_test

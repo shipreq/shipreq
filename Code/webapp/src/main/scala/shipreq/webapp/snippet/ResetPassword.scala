@@ -1,5 +1,4 @@
-package shipreq.webapp
-package snippet
+package shipreq.webapp.snippet
 
 import java.sql.Connection
 import net.liftweb.http.{S, SHtml}
@@ -7,18 +6,18 @@ import net.liftweb.http.js.JsCmd
 import net.liftweb.util.Helpers._
 import org.joda.time.DateTime
 
-import app.AppConfig.PasswordResetTokenLifespan
-import db.{DaoT, UserRegistrationInfo, ResetPasswordInfo}
-import feature.validation.Validator
-import lib.MailHelpers.MailContent
-import lib.{SingleOpStatefulSnippet, SnippetHelpers}
-import lib.Types._
-import mail.PasswordResetEmails
-import util.HtmlTransformExt.ajaxSubmitOnClick
-import util.JsExt._
+import shipreq.taskman.api.TaskDef
+import shipreq.webapp.app.AppConfig.PasswordResetTokenLifespan
+import shipreq.webapp.db.{DaoT, UserRegistrationInfo, ResetPasswordInfo}
+import shipreq.webapp.feature.validation.Validator
+import shipreq.webapp.lib.{SingleOpStatefulSnippet, SnippetHelpers}
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.util.HtmlTransformExt.ajaxSubmitOnClick
+import shipreq.webapp.util.JsExt._
+import shipreq.webapp.app.AppSiteMap
+import shipreq.webapp.security.PasswordAndSalt
+import AppSiteMap.Implicits._
 import ResetPassword._
-import app.AppSiteMap
-import security.PasswordAndSalt
 
 object ResetPassword {
   def isTokenExpired(dateIssued: DateTime): Boolean = PasswordResetTokenLifespan.ago.isAfter(dateIssued)
@@ -42,41 +41,45 @@ object ResetPassword1 extends SnippetHelpers {
     )
   }
 
-  def perform(emailInput: String): JsCmd = {
-    val email = Validator.email.correct(emailInput)
-    daoProvider.withTransactionLevel(Connection.TRANSACTION_SERIALIZABLE)(dao =>
-      dao.findUserRegAndResetPwInfo(email) match {
+  def perform(emailInput: String): JsCmd =
+    ifValid(Validator.email.correctAndValidate(emailInput))(email =>
+      daoProvider.withTransactionLevel(Connection.TRANSACTION_SERIALIZABLE)(dao => {
+        dao.findUserRegAndResetPwInfo(email) match {
 
-        case None =>
-          ifValid(Validator.email.validate(email))(_ => jsEmailSent)
+          // No associated account
+          case None =>
 
-        case Some((u@UserRegistrationInfo(_, _, _, None), _)) =>
-          send(email, Register1.performPreRegistation(u, dao))
+          // Account not activated yet
+          case Some((u@UserRegistrationInfo(_, _, _, None), _)) =>
+            submitTask(Register1.preRegistrationTask(email.tag, u, dao), dao)
 
-        case Some((UserRegistrationInfo(id, _, _, Some(_)), ResetPasswordInfo(Some(token), Some(issued)))) if !isTokenExpired(issued) =>
-          send(email, reuseToken(id, token, dao))
+          // Valid token available
+          case Some((UserRegistrationInfo(id, _, _, Some(_)), ResetPasswordInfo(Some(token), Some(issued)))) if !isTokenExpired(issued) =>
+            reuseToken(id, token, dao)
+            submitTask(passwordResetTask(email, token), dao)
 
-        case Some((UserRegistrationInfo(id, _, _, Some(_)), _)) =>
-          send(email, issueNewToken(id, dao))
-  })}
+          // No token or token expired
+          case Some((UserRegistrationInfo(id, _, _, Some(_)), _)) =>
+            val token = issueNewToken(id, dao)
+            submitTask(passwordResetTask(email, token), dao)
+        }
 
-  def send(emailAddr: String, mail: MailContent): JsCmd = {
-    sendMail(mail addressedTo emailAddr)
-    jsEmailSent
-  }
+      // Respond the same in all cases (for security purposes)
+      jsEmailSent
+    })
+  )
+
+  def passwordResetTask(email: String @@ InputCorrected, token: String): TaskDef =
+    TaskDef.PasswordResetRequested(email.tag, AppSiteMap.ResetPassword2.absoluteUrl(token))
 
   val jsEmailSent: JsCmd =
     jsClearError & JqExpr("#resetpw1Form,#resetpwTokenSent") ~> JqToggle
 
-  private def issueNewToken(id: UserId, dao: DaoT): MailContent = {
-    val token = dao.performInstallNewResetPasswordToken(id, () => randomConfirmationToken)
-    PasswordResetEmails.PasswordChangeRequest(token)
-  }
+  private def issueNewToken(id: UserId, dao: DaoT): String =
+    dao.performInstallNewResetPasswordToken(id, () => randomConfirmationToken)
 
-  private def reuseToken(id: UserId, token: String, dao: DaoT): MailContent = {
+  private def reuseToken(id: UserId, token: String, dao: DaoT): Unit =
     dao.performReuseResetPasswordToken(id)
-    PasswordResetEmails.PasswordChangeRequest(token)
-  }
 }
 
 // =====================================================================================================================

@@ -9,11 +9,13 @@ import org.postgresql.util.PSQLException
 import org.scalatest.FunSpec
 
 import security.Oshiro
-import test.{TestMailer, TestDatabaseSupport}
+import test.TestDatabaseSupport
 import test.fixture.UserFixture
 import util.NonEmptyTemplate
 import app.AppConfig
 import Register._
+import shipreq.webapp.test.T2.{NoTasksSubmitted, SubmittedOneTask}
+import shipreq.taskman.api.TaskDef.{ReRegistrationAttempted, RegistrationRequested}
 
 class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixture {
 
@@ -70,28 +72,28 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
   describe("Register1.onSubmit") {
 
     def test(email: String, usrTableDiff: Int) =
-      withTestMailer {
+      withTestTaskman {
         assertTableDiffs(Tables.Usr -> usrTableDiff) {
           Register1.perform(email)
     }}
 
     def testSuccess(email: String, usrTableDiff: Int, tokenChange: Boolean) {
       val tokenBefore = lookupConfirmationToken(email)
-      val r = test(email, usrTableDiff)
-      r.result.assertJsAlert(None)
+      val (r, tt) = test(email, usrTableDiff)
+      r.assertJsAlert(None)
       val token = lookupConfirmationToken(email)
       token should not be ('empty)
       if (tokenChange)
         token should not be (tokenBefore)
       else
         token should be(tokenBefore)
-      r.assertEmail(Some(List(token.get)))
+      SubmittedOneTask{ case RegistrationRequested(_,url) => () => url should include(token.get) } test tt
     }
 
     it("when email is invalid -- should reject request") {
-      val r = test("not_an_email", 0)
-      r.result.assertJsAlert(Some("Email"))
-      r.assertEmail(None)
+      val (r, tt) = test("not_an_email", 0)
+      r.assertJsAlert(Some("Email"))
+      NoTasksSubmitted.test(tt)
     }
 
     it("when a pending, valid token exists -- should resend email") {
@@ -107,9 +109,9 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
     }
 
     it("when a email belongs to registered account -- should email with link to reset password") {
-      val r = test(user1.email, 0)
-      r.result.assertJsAlert(None)
-      r.assertEmail(Some(List("/login")))
+      val (r, tt) = test(user1.email, 0)
+      r.assertJsAlert(None)
+      SubmittedOneTask{ case ReRegistrationAttempted(_,url) => () => url should include("login") } test tt
     }
   }
 
@@ -117,7 +119,7 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
 
   class Reg2Tester(token: String) {
     val snippet = new Register2(token)
-    def onSubmit_() = TestMailer.install(snippet.onSubmit()).result
+    def onSubmit_() = withTestTaskman(snippet.onSubmit())._1
   }
 
   describe("Register2.validateToken") {

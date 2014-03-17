@@ -1,16 +1,15 @@
 package shipreq.webapp.feature
 
-import shipreq.webapp.app.DI
-import shipreq.webapp.lib.Misc.DateTimeExt
-import shipreq.webapp.lib.{MailHelpers, SnippetHelpers}
 import net.liftweb.common._
 import net.liftweb.http.{S, BadResponse, JsonResponse, InMemoryResponse, MethodNotAllowedResponse}
 import net.liftweb.json.Extraction
 import net.liftweb.sitemap.Loc._
 import net.liftweb.sitemap._
-import net.liftweb.util.Helpers.nextFuncName
 import net.liftweb.util.Props
 import net.liftweb.util.TimeHelpers.calcTime
+import shipreq.webapp.app.DI
+import shipreq.webapp.lib.Misc.DateTimeExt
+import shipreq.webapp.lib.SnippetHelpers
 
 /**
  * Expose URLs for diagnostic functions and purposes.
@@ -79,11 +78,12 @@ object DiagnosticEndpoints extends DI {
   val Email = endpoint("mail") >> denyNonHttps >> EarlyResponse(() =>
     S.param("to") match {
       case Full(emailAddress) => {
-        import MailHelpers._
-        val token = nextFuncName
-        val mail = plainTextMail(s"TEST: $token", "")
-        val time = calcTime(sendMailSync(mail addressedTo emailAddress))._1
-        Full(jsonResponse(EmailSendResult(time, token)))
+        ??? // TODO submit job, poll status until processed
+        // import MailHelpers._
+        // val token = nextFuncName
+        // val mail = plainTextMail(s"TEST: $token", "")
+        // val time = calcTime(sendMailSync(mail addressedTo emailAddress))._1
+        // Full(jsonResponse(EmailSendResult(time, token)))
       }
       case _ => Full(BadResponse())
     })

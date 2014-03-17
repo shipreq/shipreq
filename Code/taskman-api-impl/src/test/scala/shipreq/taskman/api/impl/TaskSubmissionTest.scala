@@ -11,7 +11,7 @@ import TaskmanApiImpl._
 class TaskSubmissionTest extends Specification with DatabaseTest {
 
   "Submits task" in {
-    val cmd = SubmitTask1(TaskDef.RegistrationRequested("a@b.com".tag, None))
+    val cmd = SubmitTask(TaskDef.RegistrationRequested("a@b.com".tag, "http://x"))
     compile(cmd, reify(new GlobalContext(None), session)).unsafePerformIO()
     sql"select count(1) from task".as[Int].first ==== 1
   }

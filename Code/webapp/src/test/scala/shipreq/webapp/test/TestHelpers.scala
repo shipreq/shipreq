@@ -334,8 +334,8 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
     err
   }
 
-  def withTestMailer[R](f: => R): MailTestResult[R] =
-    TestMailer.install(f)
+  def withTestTaskman[R](f: => R): (R, TestTaskman) =
+    TestTaskman.install(f)
 
   class Timer {
     val start = System.currentTimeMillis

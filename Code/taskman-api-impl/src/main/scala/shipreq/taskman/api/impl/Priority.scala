@@ -14,9 +14,12 @@ private[api] object Priority {
 
   def forTask(t: TaskDef): Priority = t match {
     case _: RegistrationRequested
-       | _: PasswordResetRequested => UserWaiting
+       | _: ReRegistrationAttempted
+       | _: PasswordResetRequested
+              => UserWaiting
     case _: RegistrationCompleted
-       | _: LandingPageHit         => Low
+       | _: LandingPageHit
+              => Low
   }
 
 }

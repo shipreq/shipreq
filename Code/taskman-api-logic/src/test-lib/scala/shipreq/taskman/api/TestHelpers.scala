@@ -43,22 +43,20 @@ object TestHelpers {
   def genTaskDef(t: TaskType): Gen[TaskDef] = t match {
 
     case T.RegistrationRequested =>
-      for {
-        email <- genEmail
-        url <- arbitrary[Option[String]]
-      } yield
-        D.RegistrationRequested(email, url)
+      for(email <- genEmail; url <- arbitrary[String])
+      yield D.RegistrationRequested(email, url)
+
+    case T.ReRegistrationAttempted =>
+      for(email <- genEmail; url <- arbitrary[String])
+      yield D.ReRegistrationAttempted(email, url)
 
     case T.RegistrationCompleted =>
       for (userId <- genUserId) yield
         D.RegistrationCompleted(userId)
 
     case T.PasswordResetRequested =>
-      for {
-        email <- genEmail
-        url <- arbitrary[String]
-      } yield
-        D.PasswordResetRequested(email, url)
+      for(email <- genEmail; url <- arbitrary[String])
+      yield D.PasswordResetRequested(email, url)
 
     case T.LandingPageHit =>
       for {

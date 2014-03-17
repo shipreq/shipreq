@@ -1,9 +1,7 @@
 package bootstrap.liftweb
 
-import javax.mail.{Authenticator, PasswordAuthentication}
 import net.liftweb.common.Logger
 import net.liftweb.http._
-import net.liftweb.util.{Props, Mailer}
 import provider.HTTPParam
 
 import shipreq.webapp._
@@ -34,8 +32,6 @@ class Boot {
 
     Oshiro.init()
 
-    initMailer()
-
     // Collect session stats
     LiftSession.afterSessionCreate ::= SessionStats.onSessionCreation _
     LiftSession.onShutdownSession ::= SessionStats.onSessionExpiration _
@@ -60,15 +56,6 @@ class Boot {
   def initDatabase(): Unit = {
     DB.init()
     Defaults.init()
-  }
-
-  def initMailer(): Unit = {
-    Mailer.authenticator = for {
-      user <- Props.get("mail.user")
-      pass <- Props.get("mail.password")
-    } yield new Authenticator {
-        override def getPasswordAuthentication = new PasswordAuthentication(user, pass)
-      }
   }
 
   def preloadTemplates(): Unit = {

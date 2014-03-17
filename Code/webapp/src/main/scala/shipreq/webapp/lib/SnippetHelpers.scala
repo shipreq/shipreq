@@ -9,8 +9,9 @@ import net.liftweb.sitemap.Menu
 import net.liftweb.util.Props
 import scala.xml.{Elem, Text, NodeSeq, UnprefixedAttribute}
 
+import shipreq.taskman.api.TaskDef
 import shipreq.webapp.app.{DI, AppSiteMap}
-import shipreq.webapp.db.UserDescriptor
+import shipreq.webapp.db.{DaoS, UserDescriptor}
 import shipreq.webapp.feature.validation.VFailure
 import shipreq.webapp.snippet.{AlertTypeSuccess, AlertTypeError, Notices}
 import shipreq.webapp.util.HttpResponses.ShouldNeverHappenResponse
@@ -155,7 +156,7 @@ trait StaticSnippetHelpers extends Logger {
  *
  * @since 11/06/2013
  */
-trait SnippetHelpers extends StaticSnippetHelpers with Misc with MailHelpers with DI with Logger {
+trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with Logger {
   import SnippetHelpers.{DefaultNoticesContainerExp, DefaultAjaxErrorId, DefaultJsonFormat}
 
   protected implicit def noticesContainerExp = DefaultNoticesContainerExp
@@ -170,6 +171,9 @@ trait SnippetHelpers extends StaticSnippetHelpers with Misc with MailHelpers wit
     case Some(user) => user
     case None => respondImmediately(RedirectResponse(AppSiteMap.Login.relativeUrl))
   }
+
+  def submitTask(task: TaskDef, dao: DaoS): Unit =
+    taskman.submitTask(task, dao.session)
 }
 
 /**

@@ -8,6 +8,8 @@ import org.scalatest.Matchers
 import xml.NodeSeq
 import scalaz.{\/-, -\/, \/}
 import net.liftweb.http.{S, RedirectResponse, ResponseShortcutException}
+import shipreq.taskman.api.TaskDef
+import shipreq.taskman.api.TaskDef.{RegistrationRequested, PasswordResetRequested, ReRegistrationAttempted}
 
 /**
  * Can't think of what else to call this. It's like Testing 2.0.
@@ -57,19 +59,36 @@ object T2 {
   }
 
   // ===================================================================================================================
-  // Expectations: Email
+  // Expectations: Taskman
 
-  trait EmailExp {
-    def test(m: MailTestResult[_]): Unit
+  trait TestTaskmanExp {
+    def test: TestTaskman => Unit
   }
 
-  object NoEmailSent extends EmailExp {
-    override def test(m: MailTestResult[_]) = m.assertNothingSent()
+  object NoTasksSubmitted extends TestTaskmanExp with Matchers {
+    override def test = _.tasksSubmitted shouldBe empty
   }
 
-  case class EmailSentContaining(frag: String, frags: String*) extends EmailExp {
-    override def test(m: MailTestResult[_]) = m.assertSent((frag +: frags): _*)
+  type TaskTestPF = PartialFunction[TaskDef, Function0[Unit]]
+
+  case class SubmittedOneTask(m: TaskTestPF) extends TestTaskmanExp with Matchers {
+    override def test = tt => tt.tasksSubmitted match {
+      case t :: Nil => if (m isDefinedAt t) m(t)() else fail(s"Task didn't meet criteria: $t")
+      case other    => other should have size(1)
+    }
   }
+
+  private def absUrl(frag: String): String => Function0[Unit] =
+    url => new Function0[Unit] with Matchers {def apply = url should (startWith("http") and include(frag))}
+
+  def RegistrationRequestedT(token: String): TaskTestPF =
+    { case RegistrationRequested(_, url) => absUrl(token)(url) }
+
+  val ReRegistrationAttemptedT: TaskTestPF =
+    { case ReRegistrationAttempted(_, url) => absUrl("login")(url) }
+
+  val PasswordResetRequestedT: TaskTestPF =
+    { case PasswordResetRequested(_, url) => absUrl("/resetpw/")(url) }
 
   // ===================================================================================================================
   // Expectations: DB

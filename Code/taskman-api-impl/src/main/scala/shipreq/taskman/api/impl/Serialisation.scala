@@ -25,10 +25,11 @@ private[api] object Serialisation {
 
   implicit val formats: Formats = (
     Serialization.formats(NoTypeHints)
-      + fieldRenamer[RegistrationRequested] (BiMap("email"->"e", "url"->"u"))
-      + fieldRenamer[RegistrationCompleted] (BiMap("userId"->"u"))
-      + fieldRenamer[PasswordResetRequested](BiMap("email"->"e", "url"->"u"))
-      + fieldRenamer[LandingPageHit]        (BiMap("email"->"e", "name"->"n", "msg"->"m", "newsletter"->"w"))
+      + fieldRenamer[RegistrationRequested]  (BiMap("email"->"e", "verifyEmailUrl"->"u"))
+      + fieldRenamer[RegistrationCompleted]  (BiMap("userId"->"u"))
+      + fieldRenamer[ReRegistrationAttempted](BiMap("email"->"e", "loginUrl"->"l"))
+      + fieldRenamer[PasswordResetRequested] (BiMap("email"->"e", "resetPasswordUrl"->"u"))
+      + fieldRenamer[LandingPageHit]         (BiMap("email"->"e", "name"->"n", "msg"->"m", "newsletter"->"w"))
     )
 
   def serialise(t: TaskDef): Ser = write(t).tag

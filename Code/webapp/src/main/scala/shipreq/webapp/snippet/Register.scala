@@ -1,5 +1,4 @@
-package shipreq.webapp
-package snippet
+package shipreq.webapp.snippet
 
 import net.liftweb.http.js.JsCmd
 import net.liftweb.http.{S, SHtml}
@@ -8,16 +7,17 @@ import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc.UsernamePasswordToken
 import org.joda.time.DateTime
 
-import app.{AppConfig, AppSiteMap}
-import lib.MailHelpers.MailContent
-import lib.{SnippetHelpers, SingleOpStatefulSnippet}
-import lib.Types._
-import mail.RegistrationEmails
-import db.{DaoT, UserRegistrationInfo, UserRegistrationResult}
-import feature.validation.Validator
-import security.{Permissions, PasswordAndSalt}
-import util.JsExt._
-import util.HtmlTransformExt.ajaxSubmitOnClick
+import shipreq.taskman.api.TaskDef
+import shipreq.webapp.app.{AppConfig, AppSiteMap}
+import shipreq.webapp.lib.{SnippetHelpers, SingleOpStatefulSnippet}
+import shipreq.webapp.lib.Types._
+import shipreq.webapp.db.{DaoT, UserRegistrationInfo, UserRegistrationResult}
+import shipreq.webapp.feature.validation.Validator
+import shipreq.webapp.security.{Permissions, PasswordAndSalt}
+import shipreq.webapp.util.JsExt._
+import shipreq.webapp.util.HtmlTransformExt.ajaxSubmitOnClick
+import AppSiteMap.Implicits._
+import TaskDef.{ReRegistrationAttempted, RegistrationRequested}
 import Register._
 
 object Register {
@@ -49,41 +49,44 @@ object Register1 extends SnippetHelpers {
 
   def perform(emailInput: String): JsCmd =
     ifValid(Validator.email.correctAndValidate(emailInput))(emailAddr => {
-      val mail: MailContent = daoProvider.withTransaction(dao =>
-        dao.findUserRegistrationInfo(emailAddr) match {
+      daoProvider.withTransaction(dao => {
+        val task = dao.findUserRegistrationInfo(emailAddr) match {
           case None    => onNewUser(emailAddr, dao)
-          case Some(u) => performPreRegistation(u, dao)
+          case Some(u) => preRegistrationTask(emailAddr, u, dao)
         }
-      )
-      sendMail(mail addressedTo emailAddr)
+        submitTask(task, dao)
+      })
       jsClearError & JqExpr("#emailSent,#register1Form") ~> JqToggle
     })
 
-  def performPreRegistation(u: UserRegistrationInfo, dao: DaoT): MailContent =
+  def preRegistrationTask(email: String @@ Validated, u: UserRegistrationInfo, dao: DaoT): TaskDef =
     u match {
       case UserRegistrationInfo(_, _, _, Some(_)) =>
-        onAlreadyRegistered()
+        onAlreadyRegistered(email)
       case UserRegistrationInfo(_, Some(token), Some(issued), None) if !isTokenExpired(issued) =>
-        onTokenReusable(token)
+        onTokenReusable(email, token)
       case UserRegistrationInfo(id, _, _, None) =>
-        onTokenExpired(id, dao)
+        onTokenExpired(email, id, dao)
     }
 
-  private def onNewUser(email: String @@ Validated, dao: DaoT): MailContent = {
+  private def onNewUser(email: String @@ Validated, dao: DaoT): TaskDef = {
     val token = dao.createUserPlaceholder(email, () => randomConfirmationToken)
-    RegistrationEmails.LinkToCompleteRegistration(token)
+    registrationRequestedTask(email, token)
   }
 
-  private def onTokenReusable(token: String): MailContent = {
-    RegistrationEmails.LinkToCompleteRegistration(token)
-  }
+  private def onTokenReusable(email: String @@ Validated, token: String): TaskDef =
+    registrationRequestedTask(email, token)
 
-  private def onTokenExpired(id: UserId, dao: DaoT): MailContent = {
+  private def onTokenExpired(email: String @@ Validated, id: UserId, dao: DaoT): TaskDef = {
     val token = dao.updateUserConfirmationToken(id, () => randomConfirmationToken)
-    RegistrationEmails.LinkToCompleteRegistration(token)
+    registrationRequestedTask(email, token)
   }
 
-  private def onAlreadyRegistered() = RegistrationEmails.AlreadyRegistered
+  private def onAlreadyRegistered(email: String @@ Validated): TaskDef =
+    ReRegistrationAttempted(email.tag, AppSiteMap.Login.absoluteUrl)
+
+  private def registrationRequestedTask(email: String @@ Validated, token: String): TaskDef =
+    RegistrationRequested(email.tag, AppSiteMap.Register2.absoluteUrl(token))
 }
 
 /**
