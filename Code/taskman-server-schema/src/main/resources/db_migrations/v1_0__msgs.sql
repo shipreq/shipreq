@@ -24,9 +24,8 @@ CREATE TABLE msgq (
 );
 
 
-CREATE SEQUENCE msg_history_seq START WITH 1;
 CREATE TABLE msg_history (
-  id               BIGINT       PRIMARY KEY DEFAULT NEXTVAL('msg_history_seq')
+  id               BIGINT       PRIMARY KEY
   ,type            INT2         NOT NULL
   ,data            JSON         NULL
   ,result          "char"       NOT NULL CHECK(result='s' OR result='f') -- Success/Failure

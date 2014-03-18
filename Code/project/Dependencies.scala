@@ -62,6 +62,8 @@ object Deps {
     val testkit = dd("akka-testkit")
   }
 
+  val jodaTime    :MS = "joda-time"                   % "joda-time"             % "2.3" ++
+                        "org.joda"                    % "joda-convert"          % "1.2"
   val postgresql  :MS = "org.postgresql"              % "postgresql"            % "9.3-1101-jdbc41"
   val slick       :MS = "com.typesafe.slick"         %% "slick"                 % "1.0.1"
   val bonecp      :MS = "com.jolbox"                  % "bonecp"                % "0.8.0.RELEASE" ++

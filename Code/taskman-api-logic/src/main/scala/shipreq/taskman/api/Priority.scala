@@ -2,7 +2,9 @@ package shipreq.taskman.api
 
 import Msg._
 
-case class Priority(val value: Short) extends AnyVal
+case class Priority(value: Short) extends AnyVal {
+  def inc = Priority((value.toInt + 1).toShort)
+}
 
 object Priority {
 
@@ -22,5 +24,4 @@ object Priority {
        | _: LandingPageHit
               => Low
   }
-
 }
