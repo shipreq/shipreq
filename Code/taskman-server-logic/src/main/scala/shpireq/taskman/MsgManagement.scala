@@ -2,9 +2,15 @@ package shpireq.taskman
 
 import org.joda.time.Period
 import scala.collection.immutable.TreeSet
-import scalaz.{StateT, Order, State}
+import shipreq.base.util.{ErrorOr, Error}
 import shipreq.taskman.api.{Msg, Priority}
-import scalaz.effect.{MonadIO, LiftIO, IO}
+
+import scalaz.{-\/, \/-, ~>, NonEmptyList, State, StateT}
+import scalaz.effect.{MonadIO, IO}
+import scalaz.syntax.bind._
+import scalaz.syntax.foldable._
+import scalaz.std.list.listInstance
+import scalaz.std.option.optionInstance
 
 object MsgManagement {
 
@@ -19,11 +25,18 @@ object MsgManagement {
    * @param minPriority All msgs will be at least this priority or higher.
    * @param assignmentTrustPeriod Period of time for which another node's assignment is respected.
    */
-  case class GetMsgs(n: NodeId, limit: Int, minPriority: Option[Priority], assignmentTrustPeriod: Period)
+  case class GetMsgsAssignNode(n: NodeId, limit: Int, minPriority: Option[Priority], assignmentTrustPeriod: Period)
     extends Op[Seq[MsgHeader]]
 
-  case class GetMsg(n: NodeId, w: WorkerId, m: MsgHeader)
+  case class GetMsgAssignWorker(n: NodeId, w: WorkerId, m: MsgHeader)
     extends Op[Option[MsgDetail]]
+  
+  case class MarkMsgComplete(m: MsgDetail) extends Op[Unit]
+  case class MsgFailedAbort(m: MsgDetail) extends Op[Unit]
+  case class MsgFailedRetry(m: MsgDetail, p: Period) extends Op[Unit]
+
+  case class NotifySupportWorkerFailed(m: MsgDetail, e: Error) extends Op[Unit]
+  case class NotifySupportTaskmanError(e: Error, m: Option[MsgDetail]) extends Op[Unit]
 
   // -------------------------------------------------------------------------------------------------------------------
 
@@ -57,29 +70,39 @@ object MsgManagement {
         (q, None)
       else
         (q.tail, q.headOption)
-  )
+    )
 
-  // -------------------------------------------------------------------------------------------------------------------
-
-  import scalaz._, Scalaz._
-
-  // All defs below could be vals, just avoiding ??? instantiation
-
-  def OpToIo: Op ~> IO = ???
   implicit class OpExt[A](val op: Op[A]) extends AnyVal {
-    def toIo: IO[A] = OpToIo(op)
-    def toMIo[M[_]](implicit m: MonadIO[M]): M[A] = toIo.liftIO[M]
+    def toIo(implicit opToIo: Op ~> IO): IO[A] = opToIo(op)
+    def toMIo[M[_]](implicit opToIo: Op ~> IO, m: MonadIO[M]): M[A] = toIo.liftIO[M]
   }
 
-  def n: NodeId = ???
-  def limit: Int = 10
-  def assignmentTrustPeriod: Period = ???
+  sealed trait JobFailureReaction
+  case class Retry(p: Period) extends JobFailureReaction
+  case object Abort extends JobFailureReaction
+  type FailurePolicy = MsgDetail => Error => (JobFailureReaction, List[Op[Unit]])
 
-  def pollTask: JobQueueSIO[Int] =
+  sealed trait WorkResult {
+    val io = IO(this)
+  }
+  case object CouldntAssign extends WorkResult
+  case object Completed extends WorkResult
+  case object WorkerFailed extends WorkResult
+  case object TaskmanFailed extends WorkResult
+}
+
+// ------------------------------------------------------------------------------------------------
+import MsgManagement._
+
+case class Blah(n: NodeId,
+                limit: Int,
+                assignmentTrustPeriod: Period)(implicit opToIo: Op ~> IO) {
+
+  val pollTask: JobQueueSIO[Int] =
     for {
       curHighPri <- getHighestPriority.lift[IO]
       minPri     =  curHighPri.map(_.inc)
-      jobs       <- GetMsgs(n, limit, minPri, assignmentTrustPeriod).toMIo[JobQueueSIO]
+      jobs       <- GetMsgsAssignNode(n, limit, minPri, assignmentTrustPeriod).toMIo[JobQueueSIO]
       _          <- addToQueue(jobs).lift[IO]
     } yield jobs.length
 
@@ -87,4 +110,43 @@ object MsgManagement {
     var queue: JobQueue = empty
     queue = pollTask.run(queue).unsafePerformIO()._1
   }
+}
+
+case class Blah2(n: NodeId, w: WorkerId, mh: MsgHeader)(implicit opToIo: Op ~> IO) {
+
+  def EXAMPLE_USAGE_worker(): Unit = {
+
+    val failurePolicy: FailurePolicy = ???
+    val jfToIo: JobFailureReaction => IO[Unit] = ???
+    val doWork: MsgDetail => ErrorOr[Unit] = ???
+
+
+    // what about error handling for GetMsgAssignWorker?
+    // what about error handling for the post-task actions?
+
+    def processWork(m: MsgDetail): IO[WorkResult] =
+      ErrorOr.catchException(doWork(m)) match {
+        case \/-(_) =>
+          MarkMsgComplete(m).toIo >> Completed.io
+        case -\/(err) =>
+          val (jf, extra) = failurePolicy(m)(err)
+          jfToIo(jf) >> extra.traverse_(opToIo) >> WorkerFailed.io
+      }
+
+    def catchTaskmanErrors(m: => Option[MsgDetail]): IO[WorkResult] => IO[WorkResult] =
+      _.except(t =>
+        opToIo(NotifySupportTaskmanError(Error.error(t), m)) >> WorkerFailed.io
+      )
+
+    val task: IO[WorkResult] =
+      GetMsgAssignWorker(n, w, mh).toIo.flatMap(_ match {
+        case Some(m) => catchTaskmanErrors(Some(m))(processWork(m))
+        case None    => CouldntAssign.io
+      })
+
+    val task2 = catchTaskmanErrors(None)(task)
+    
+    task2.unsafePerformIO()
+  }
+
 }

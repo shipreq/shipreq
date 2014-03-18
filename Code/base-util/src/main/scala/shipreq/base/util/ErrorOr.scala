@@ -30,6 +30,10 @@ object Error {
   def apply[A](e: Throwable)           : ErrorOr[A] = -\/(That(e))
   def apply[A](m: String, e: Throwable): ErrorOr[A] = -\/(Both(m, e))
 
+  def error[A](m: String)              : Error = This(m)
+  def error[A](e: Throwable)           : Error = That(e)
+  def error[A](m: String, e: Throwable): Error = Both(m, e)
+
   @inline private[this] def merge(a: String, b: String): String =
     s"$a -- $b"
 
