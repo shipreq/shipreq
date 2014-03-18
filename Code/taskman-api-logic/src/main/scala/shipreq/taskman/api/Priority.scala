@@ -1,22 +1,23 @@
-package shipreq.taskman.api.impl
+package shipreq.taskman.api
 
-import shipreq.taskman.api.Msg
 import Msg._
 
-private[api] case class Priority(value: Short)
+case class Priority(val value: Short) extends AnyVal
 
-private[api] object Priority {
+object Priority {
 
-  val High   = Priority(100)
-  val Medium = Priority(50)
-  val Low    = Priority(20)
+  @inline def High        = Priority(100)
+  @inline def Medium      = Priority(50)
+  @inline def Low         = Priority(20)
   @inline def UserWaiting = High
 
   def of(m: Msg): Priority = m match {
+
     case _: RegistrationRequested
        | _: ReRegistrationAttempted
        | _: PasswordResetRequested
               => UserWaiting
+
     case _: RegistrationCompleted
        | _: LandingPageHit
               => Low
