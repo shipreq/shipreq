@@ -2,11 +2,14 @@ package shpireq.taskman.server
 
 import org.specs2.mutable._
 import org.specs2.ScalaCheck
-import org.joda.time.DateTime
+import org.joda.time.{Period, DateTime}
 import org.scalacheck.Arbitrary
 import shipreq.taskman.api.Priority
 import Arbitrary._
 import Manager._
+import scalaz.effect.IO
+import shipreq.base.test.MockOpTransformer1
+import Sop._
 
 class ManagerTest extends Specification with ScalaCheck {
 
@@ -57,6 +60,36 @@ class ManagerTest extends Specification with ScalaCheck {
         case (r, (None, None))       => r == q && q.isEmpty
         case (r, (Some(j), None))    => r == q - j
         case (r, (Some(j), Some(k))) => r == q - j - k && j.p.value >= k.p.value
+      }
+    }
+  }
+
+  "Manager.Reified" >> {
+    implicit val node = NodeId(8)
+
+    "pollTask with empty queue" >> {
+      implicit val mockSop = MockOpTransformer1[Sop, IO, GetMsgsAssignNode, Seq[MsgHeader]](Seq(d))
+      val (q, r) = Reified(20, Period days 3).pollTask(emptyQueue).unsafePerformIO()
+
+      "Queue should have new msgs" in {
+        q ==== emptyQueue + d
+      }
+
+      "Min priority be unspecified" in {
+        mockSop.soleOp.minPriority ==== None
+      }
+    }
+
+    "pollTask with populated queue" >> {
+      implicit val mockSop = MockOpTransformer1[Sop, IO, GetMsgsAssignNode, Seq[MsgHeader]](Seq(c, d))
+      val (q, r) = Reified(20, Period days 3).pollTask(emptyQueue + a).unsafePerformIO()
+
+      "Queue should have new msgs" in {
+        q ==== emptyQueue + a + c + d
+      }
+
+      "Min priority in query should be 7" in {
+        mockSop.soleOp.minPriority ==== Some(Priority(7))
       }
     }
   }

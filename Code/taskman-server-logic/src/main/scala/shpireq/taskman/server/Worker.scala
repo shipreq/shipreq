@@ -10,7 +10,7 @@ import shipreq.base.util.{ErrorOr, Error}
 import shipreq.taskman.api.Msg
 import Sop._
 
-class Worker {
+object Worker {
 
   /** Represents how to handle a failed job. */
   sealed trait FailedJobReaction
@@ -28,17 +28,22 @@ class Worker {
     val io = IO(this)
   }
 
-  /** Unable to assign the worker to the job. Someone else must've taken it. */
-  case object CouldntAssign extends WorkResult
+  object WorkResult {
 
-  /** Work completed successfully. */
-  case object Completed extends WorkResult
+    /** Unable to assign the worker to the job. Someone else must've taken it. */
+    case object CouldntAssign extends WorkResult
 
-  /** The worker business logic failed. */
-  case object WorkerFailed extends WorkResult
+    /** Work completed successfully. */
+    case object Completed extends WorkResult
 
-  /** An error occurred in Taskman's generic work management. */
-  case object TaskmanFailed extends WorkResult
+    /** The worker business logic failed. */
+    case object WorkerFailed extends WorkResult
+
+    /** An error occurred in Taskman's generic work management. */
+    case object TaskmanFailed extends WorkResult
+  }
+
+  import WorkResult._
 
   // -------------------------------------------------------------------------------------------------------------------
 
