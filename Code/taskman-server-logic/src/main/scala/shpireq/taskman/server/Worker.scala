@@ -1,6 +1,5 @@
 package shpireq.taskman.server
 
-import org.joda.time.Period
 import scalaz.{-\/, \/-, ~>}
 import scalaz.effect.IO
 import scalaz.syntax.bind._
@@ -12,14 +11,17 @@ import Sop._
 
 object Worker {
 
-  /** Represents how to handle a failed job. */
-  sealed trait FailedJobReaction
+  /**
+   * What to do when a job fails.
+   *
+   * @param reaction What to do with the job itself.
+   * @param additionalOps Optional additional operations to perform (esp. notifying support).
+   */
+  case class FailurePolicyR(reaction: FailedJobReaction, additionalOps: List[Sop[Unit]])
 
-  case class Retry(delay: Period) extends FailedJobReaction
+  type FailurePolicy = MsgDetail => Error => FailurePolicyR
 
-  case object Abort extends FailedJobReaction
-
-  type FailurePolicy = MsgDetail => Error => (FailedJobReaction, List[Sop[Unit]])
+  type MsgProcessor = Msg => IO[ErrorOr[Unit]]
 
   // -------------------------------------------------------------------------------------------------------------------
 
@@ -50,9 +52,8 @@ object Worker {
   case class Reified(worker: WorkerId)(
     implicit node: NodeId,
              opToIo: Sop ~> IO,
-             jfToIo: FailedJobReaction => IO[Unit],
              failurePolicy: FailurePolicy,
-             msgProcessor: Msg => IO[ErrorOr[Unit]]) {
+             msgProcessor: MsgProcessor) {
 
     private[this] def catchTaskmanErrors(m: => Option[MsgDetail]): IO[WorkResult] => IO[WorkResult] =
       _.except(t =>
@@ -65,8 +66,8 @@ object Worker {
         case \/-(_) =>
           MarkMsgComplete(m).toIO >> Completed.io
         case -\/(err) =>
-          val (jf, extra) = failurePolicy(m)(err)
-          jfToIo(jf) >> extra.traverse_(opToIo) >> WorkerFailed.io
+          val FailurePolicyR(f, extra) = failurePolicy(m)(err)
+          f.toIO >> extra.traverse_(opToIo) >> WorkerFailed.io
       }
 
     private[this] val processAssignment: Option[MsgDetail] => IO[WorkResult] = {

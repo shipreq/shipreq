@@ -10,6 +10,9 @@ import shipreq.taskman.api.Priority
  */
 sealed trait Sop[A]
 
+/** Represents an operation to handle a failed job. */
+sealed trait FailedJobReaction extends Sop[Unit]
+
 object Sop {
 
   /**
@@ -25,8 +28,8 @@ object Sop {
   case class GetMsgAssignWorker(n: NodeId, w: WorkerId, m: MsgHeader) extends Sop[Option[MsgDetail]]
 
   case class MarkMsgComplete(m: MsgDetail) extends Sop[Unit]
-  case class MsgFailedAbort(m: MsgDetail) extends Sop[Unit]
-  case class MsgFailedRetry(m: MsgDetail, p: Period) extends Sop[Unit]
+  case class MsgFailedAbort(m: MsgDetail) extends FailedJobReaction
+  case class MsgFailedRetry(m: MsgDetail, p: Period) extends FailedJobReaction
 
   case class NotifySupportWorkerFailed(m: MsgDetail, e: Error) extends Sop[Unit]
   case class NotifySupportTaskmanError(e: Error, m: Option[MsgDetail]) extends Sop[Unit]

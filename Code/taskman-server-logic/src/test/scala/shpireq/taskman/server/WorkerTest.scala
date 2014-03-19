@@ -2,76 +2,125 @@ package shpireq.taskman.server
 
 import org.specs2.mutable._
 import org.joda.time.{Period, DateTime}
-import org.scalacheck.Arbitrary
-import shipreq.taskman.api.{Msg, Priority}
-import Worker._
+import scalaz.{Endo, ~>, \/-}
 import scalaz.effect.IO
-import shipreq.base.test.{MockOpTransformer, MockOpTransformer1}
-import Sop._
-import shipreq.base.util.ErrorOr
-import scalaz.\/-
+import shipreq.base.test.MockOpTransformer
 import shipreq.taskman.api.Msg.ReRegistrationAttempted
 import shipreq.taskman.api.Types._
+import shipreq.taskman.api.Priority
+import Sop._
+import Worker._
 
 class WorkerTest extends Specification {
 
-
   class MockSops extends MockOpTransformer[Sop, IO] {
-    val assignNodeResponses = MockResponse(Seq.empty[MsgHeader])
-    val assignWorkerResponses = MockResponse(Option[MsgDetail](null))
+    val assignNodeR = MockResponse(Seq.empty[MsgHeader])
+    val assignWorkerR = MockResponse(Option[MsgDetail](null))
+    val msgCompleteR = MockResponse(())
+    val msgFailedRetryR = MockResponse(())
 
     override def call[A] = {
-      case _: GetMsgsAssignNode => assignNodeResponses.pop()
-      case _: GetMsgAssignWorker => assignWorkerResponses.pop()
-      case _: MarkMsgComplete =>
+      case _: GetMsgsAssignNode => assignNodeR.pop()
+      case _: GetMsgAssignWorker => assignWorkerR.pop()
+      case _: MarkMsgComplete => msgCompleteR.pop()
       case _: MsgFailedAbort =>
-      case _: MsgFailedRetry =>
+      case _: MsgFailedRetry => msgFailedRetryR.pop()
       case _: NotifySupportWorkerFailed =>
       case _: NotifySupportTaskmanError =>
     }
   }
 
-
-  /*
-  case class Reified(worker: WorkerId)(
-    implicit node: NodeId,
-             opToIo: Sop ~> IO,
-             jfToIo: FailedJobReaction => IO[Unit],
-             failurePolicy: FailurePolicy,
-             msgProcessor: Msg => IO[ErrorOr[Unit]]) {
-
-   */
+  final def endoMod[A](f: A => Unit) = Endo[A](a => {f(a); a})
 
   val tn = DateTime.now()
   val mh = MsgHeader(MsgId(1), Priority(6), tn)
+  val md = MsgDetail(mh, ReRegistrationAttempted("@".tag), 1)
 
+  val crashAssignWorker = endoMod[MockSops](_.assignWorkerR << ???)
+  val allowAssignWorker = endoMod[MockSops](_.assignWorkerR << Some(md))
+  val msgCompleteCrash = endoMod[MockSops](_.msgCompleteR << ???)
+
+  val fpAbort: FailurePolicy =
+    msg => err => FailurePolicyR(MsgFailedAbort(msg), Nil)
+
+  val fpAbortSupport: FailurePolicy =
+    msg => err => FailurePolicyR(MsgFailedAbort(msg), NotifySupportWorkerFailed(msg, err) :: Nil)
+
+  val fpRetry: FailurePolicy =
+    msg => err => FailurePolicyR(MsgFailedRetry(msg, Period days 1), Nil)
+
+  val mpNop: MsgProcessor = msg => IO(\/-(()))
+  val mpCrash: MsgProcessor = msg => ???
+
+  def test(opToIo: Sop ~> IO, fp: FailurePolicy, mp: MsgProcessor): WorkResult =
+    Worker.Reified(WorkerId(7))(NodeId(4), opToIo, fp, mp).process(mh).unsafePerformIO()
 
   "Worker.Reified" >> {
-    implicit val node = NodeId(4)
-
-    implicit val jfToIo: FailedJobReaction => IO[Unit] = jf => ???
-    implicit val failurePolicy: FailurePolicy = msg => err => ???
-    implicit val msgProcessor: Msg => IO[ErrorOr[Unit]] = msg => IO(\/-(()))
-
-    // couldn't acquire
-
-    // pass
-
-    // worker throws
-
-    // assign Throws
-
-    val md = MsgDetail(mh, ReRegistrationAttempted("@".tag), 1)
-
-    // mark complete throws
 
     "Work completes" >> {
-      implicit val mockSop = new MockSops
-      mockSop.assignWorkerResponses << Some(md)
-      val r = Worker.Reified(WorkerId(1)).process(mh).unsafePerformIO()
+      val mockSop = allowAssignWorker(new MockSops)
+      val r = test(mockSop, fpRetry, mpNop)
+      "Result" in {
+        r ==== WorkResult.Completed
+      }
+      "Marks msg as complete" in {
+        mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[MarkMsgComplete])
+      }
+    }
 
-      "Result" in { r ==== WorkResult.Completed }
-      "Sops" in { mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[MarkMsgComplete]) }
+    "Worker crashes (retry)" >> {
+      val mockSop = allowAssignWorker(new MockSops)
+      val r = test(mockSop, fpRetry, mpCrash)
+      "Result" in {
+        r ==== WorkResult.WorkerFailed
+      }
+      "Schedules retry & notifies support" in {
+        mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[MsgFailedRetry])
+      }
+    }
+
+    "Worker crashes (abort)" >> {
+      val mockSop = allowAssignWorker(new MockSops)
+      val r = test(mockSop, fpAbort, mpCrash)
+      "Result" in {
+        r ==== WorkResult.WorkerFailed
+      }
+      "Aborts job" in {
+        mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[MsgFailedAbort])
+      }
+    }
+
+    "Worker crashes (abort and notify support)" >> {
+      val mockSop = allowAssignWorker(new MockSops)
+      val r = test(mockSop, fpAbortSupport, mpCrash)
+      "Result" in {
+        r ==== WorkResult.WorkerFailed
+      }
+      "Aborts job & notifies support" in {
+        mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[MsgFailedAbort], classOf[NotifySupportWorkerFailed])
+      }
+    }
+
+    "Taskman crashes pre-work" >> {
+      val mockSop = crashAssignWorker(new MockSops)
+      val r = test(mockSop, fpRetry, mpCrash)
+      "Result" in {
+        r ==== WorkResult.TaskmanFailed
+      }
+      "Notifies support" in {
+        mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[NotifySupportTaskmanError])
+      }
+    }
+
+    "Taskman crashes marking job complete" >> {
+      val mockSop = (msgCompleteCrash compose allowAssignWorker)(new MockSops)
+      val r = test(mockSop, fpRetry, mpNop)
+      "Result" in {
+        r ==== WorkResult.TaskmanFailed
+      }
+      "Notifies support" in {
+        mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[MarkMsgComplete], classOf[NotifySupportTaskmanError])
+      }
     }
 
   }
