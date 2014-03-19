@@ -5,7 +5,7 @@ import scala.collection.immutable.TreeSet
 import scalaz.{~>, State, StateT}
 import scalaz.effect.IO
 import shipreq.taskman.api.Priority
-import Op._
+import Sop._
 
 object Manager {
 
@@ -40,7 +40,7 @@ object Manager {
         (q.tail, q.headOption)
     )
 
-  case class Reified(limit: Int, assignmentTrustPeriod: Period)(implicit node: NodeId, opToIo: Op ~> IO) {
+  case class Reified(limit: Int, assignmentTrustPeriod: Period)(implicit node: NodeId, opToIo: Sop ~> IO) {
 
     val pollTask: JobQueueSIO[Int] =
       for {

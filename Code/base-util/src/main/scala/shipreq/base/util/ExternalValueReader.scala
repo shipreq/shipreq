@@ -1,6 +1,7 @@
 package shipreq.base.util
 
 import scalaz.{\/-, -\/}
+import scalaz.std.option.optionInstance
 
 /**
  * Reads values from some kind of external source.
@@ -88,7 +89,7 @@ class StringBasedValueReader(_retrieverS: Retriever[String]) {
   protected def tryParseOE[T](f: String => Option[ErrorOr[T]]): Retriever[T] =
     Retriever(k =>
         ErrorOr.annotateO(s"Error parsing $k")(
-          ErrorOr.catchExceptionO(
+          ErrorOr.catchExceptionM(
             retrieverS.run(k) match {
               case Some(\/-(s)) => f(s)
               case Some(-\/(e)) => Some(-\/(e))

@@ -1,14 +1,14 @@
 package shpireq.taskman.server
 
 import org.joda.time.Period
-import shipreq.base.util.{ErrorOr, Error}
-
 import scalaz.{-\/, \/-, ~>}
 import scalaz.effect.IO
 import scalaz.syntax.bind._
 import scalaz.syntax.foldable._
 import scalaz.std.list.listInstance
-import Op._
+import shipreq.base.util.{ErrorOr, Error}
+import shipreq.taskman.api.Msg
+import Sop._
 
 class Worker {
 
@@ -19,7 +19,7 @@ class Worker {
 
   case object Abort extends FailedJobReaction
 
-  type FailurePolicy = MsgDetail => Error => (FailedJobReaction, List[Op[Unit]])
+  type FailurePolicy = MsgDetail => Error => (FailedJobReaction, List[Sop[Unit]])
 
   // -------------------------------------------------------------------------------------------------------------------
 
@@ -44,10 +44,10 @@ class Worker {
 
   case class Reified(worker: WorkerId)(
     implicit node: NodeId,
-             opToIo: Op ~> IO,
+             opToIo: Sop ~> IO,
              jfToIo: FailedJobReaction => IO[Unit],
              failurePolicy: FailurePolicy,
-             msgProcessor: MsgDetail => ErrorOr[Unit]) {
+             msgProcessor: Msg => IO[ErrorOr[Unit]]) {
 
     private[this] def catchTaskmanErrors(m: => Option[MsgDetail]): IO[WorkResult] => IO[WorkResult] =
       _.except(t =>
@@ -56,7 +56,7 @@ class Worker {
     private[this] val catchTaskmanErrorsN = catchTaskmanErrors(None)
 
     private[this] def performWork(m: MsgDetail): IO[WorkResult] =
-      ErrorOr.catchException(msgProcessor(m)) match {
+      ErrorOr.catchExceptionM(msgProcessor(m.m)) >>= {
         case \/-(_) =>
           MarkMsgComplete(m).toIO >> Completed.io
         case -\/(err) =>
@@ -64,7 +64,7 @@ class Worker {
           jfToIo(jf) >> extra.traverse_(opToIo) >> WorkerFailed.io
       }
 
-    private[this] val processAssignment: Option[MsgDetail] => IO[WorkResult] = _ match {
+    private[this] val processAssignment: Option[MsgDetail] => IO[WorkResult] = {
       case Some(m) => catchTaskmanErrors(Some(m))(performWork(m))
       case None    => CouldntAssign.io
     }

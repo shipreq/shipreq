@@ -1,6 +1,6 @@
 package shipreq.base.util
 
-import scalaz.{-\/, \/-}
+import scalaz.{Applicative, -\/, \/-}
 import scalaz.\&/.{Both, That, This}
 
 object ErrorOr {
@@ -9,8 +9,8 @@ object ErrorOr {
   def catchException[A](a: => ErrorOr[A]): ErrorOr[A] =
     try a catch { case e: Throwable => Error(e) }
 
-  def catchExceptionO[A](a: => Option[ErrorOr[A]]): Option[ErrorOr[A]] =
-    try a catch { case e: Throwable => Some(Error(e)) }
+  def catchExceptionM[M[_], A](a: => M[ErrorOr[A]])(implicit M: Applicative[M]): M[ErrorOr[A]] =
+    try a catch { case e: Throwable => M.point(Error(e)) }
 
   def annotate[A](ann: => String)(eoa: ErrorOr[A]): ErrorOr[A] =
     eoa.leftMap(Error.annotate(ann, _))

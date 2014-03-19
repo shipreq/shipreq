@@ -1,8 +1,10 @@
 package shpireq.taskman
 
-import shipreq.taskman.api.{Msg, Priority}
 import org.joda.time.DateTime
-
+import scalaz.{\/-, ~>}
+import scalaz.effect.{MonadIO, IO}
+import shipreq.base.util.ErrorOr
+import shipreq.taskman.api.{Msg, Priority}
 
 package object server {
 
@@ -23,6 +25,12 @@ package object server {
 
   case class MsgDetail(h: MsgHeader, m: Msg, failureCount: Short) {
     assert(failureCount >= 0, s"Failure count = $failureCount")
+  }
+
+  implicit class OpExt[F[_], A](val op: F[A]) extends AnyVal {
+    def toIO(implicit opToIo: F ~> IO): IO[A] = opToIo(op)
+    def toIOM[M[_]](implicit opToIo: F ~> IO, m: MonadIO[M]): M[A] = toIO.liftIO[M]
+    def toIOE(implicit opToIo: F ~> IO): IO[ErrorOr[A]] = toIO.map(\/-(_))
   }
 
 }
