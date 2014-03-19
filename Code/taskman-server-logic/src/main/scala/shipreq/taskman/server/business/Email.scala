@@ -23,6 +23,11 @@ class Emails(ctx: Email.Ctx) {
   import Email.Content
   import ctx._
 
+  def sendToUser(addr: EmailAddr, c: Content): Bop[Unit] = {
+    val e = Email.Envelope(ctx.defaultFromAddress, NonEmptyList(addr))
+    Bop.SendEmail(e, c)
+  }
+
   // ===================================================================================================================
 
   private val passwordChangeRequestS = s"$shipreq Password Change Request"

@@ -74,7 +74,7 @@ class WorkerTest extends Specification {
       "Result" in {
         r ==== WorkResult.WorkerFailed
       }
-      "Schedules retry & notifies support" in {
+      "Schedules retry" in {
         mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[MsgFailedRetry])
       }
     }
@@ -112,7 +112,7 @@ class WorkerTest extends Specification {
       }
     }
 
-    "Taskman crashes marking job complete" >> {
+    "Taskman crashes post-work" >> {
       val mockSop = (msgCompleteCrash compose allowAssignWorker)(new MockSops)
       val r = test(mockSop, fpRetry, mpNop)
       "Result" in {
