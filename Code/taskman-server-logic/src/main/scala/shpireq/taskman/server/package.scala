@@ -1,25 +1,10 @@
-package shpireq
+package shpireq.taskman
 
 import shipreq.taskman.api.{Msg, Priority}
 import org.joda.time.DateTime
 
-/*
- Steps
-  =====
 
-  Manager:
-    Get jobs.
-    Prioritise jobs.
-    Assign highest-priority to worker.
-
-  Worker:
-    Allocate self to job.
-    Perform job.
-    Mark as success.
-    Mark as failure & retry/give-up.
- */
-
-package object taskman {
+package object server {
 
   case class NodeId(value: Int) extends AnyVal
 

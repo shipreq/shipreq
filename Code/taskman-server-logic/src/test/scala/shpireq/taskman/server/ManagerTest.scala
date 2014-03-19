@@ -1,16 +1,14 @@
-package shpireq.taskman
+package shpireq.taskman.server
 
 import org.specs2.mutable._
 import org.specs2.ScalaCheck
 import org.joda.time.DateTime
-import org.scalacheck.{Gen, Arbitrary}
+import org.scalacheck.Arbitrary
 import shipreq.taskman.api.Priority
 import Arbitrary._
-import MsgManagement._
-import org.specs2.main.{Diffs, SmartDiffs}
+import Manager._
 
-class MsgManagementTest extends Specification with ScalaCheck {
-  val M = MsgManagement
+class ManagerTest extends Specification with ScalaCheck {
 
   val tn = DateTime.now()
   val to = tn minusMinutes 10
@@ -20,7 +18,7 @@ class MsgManagementTest extends Specification with ScalaCheck {
   val c = MsgHeader(MsgId(3), Priority(5), to)
   val d = MsgHeader(MsgId(4), Priority(5), tn)
 
-  val eg4 = M.empty + c + a + d + b
+  val eg4 = emptyQueue + c + a + d + b
 
   def arbMap[B, A](f: A => B)(implicit a: Arbitrary[A]): Arbitrary[B] =
     Arbitrary { a.arbitrary.map(f) }
@@ -37,7 +35,7 @@ class MsgManagementTest extends Specification with ScalaCheck {
     } yield
       MsgHeader(i,p,c))
 
-  implicit def arbitraryJobQueue = arbMap[JobQueue, List[MsgHeader]](ms => M.empty ++ ms)
+  implicit def arbitraryJobQueue = arbMap[JobQueue, List[MsgHeader]](emptyQueue ++ _)
 
   // -------------------------------------------------------------------------------------------------------------------
 
@@ -61,6 +59,5 @@ class MsgManagementTest extends Specification with ScalaCheck {
         case (r, (Some(j), Some(k))) => r == q - j - k && j.p.value >= k.p.value
       }
     }
-
   }
 }
