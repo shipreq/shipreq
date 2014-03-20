@@ -197,6 +197,7 @@ object ShipReq extends Build {
       object Logic extends Module {
         val dir = "taskman-server-logic"
         override def project = typicalProject.dependsOn(taskmanApiLogic)
+          .dependsOn(baseTest % "test")
           .dependsOn(baseUtil) // Stupid IDEA auto-import needs this
 
         override def deps =
