@@ -2,45 +2,22 @@ package shipreq.taskman.server
 
 import org.specs2.mutable._
 import org.specs2.ScalaCheck
-import org.joda.time.{Period, DateTime}
-import org.scalacheck.Arbitrary
-import shipreq.taskman.api.Priority
-import Arbitrary._
-import Manager._
+import org.joda.time.Period
 import scalaz.effect.IO
+import shipreq.taskman.api.Priority
 import shipreq.base.test.MockOpTransformer1
+import Manager._
 import Sop._
+import TestHelpers._
 
 class ManagerTest extends Specification with ScalaCheck {
 
-  val tn = DateTime.now()
-  val to = tn minusMinutes 10
-
-  val a = MsgHeader(MsgId(1), Priority(6), to)
-  val b = MsgHeader(MsgId(2), Priority(6), tn)
-  val c = MsgHeader(MsgId(3), Priority(5), to)
-  val d = MsgHeader(MsgId(4), Priority(5), tn)
+  val a = MsgHeader(MsgId(1), Priority(6), timePast)
+  val b = MsgHeader(MsgId(2), Priority(6), timeNow)
+  val c = MsgHeader(MsgId(3), Priority(5), timePast)
+  val d = MsgHeader(MsgId(4), Priority(5), timeNow)
 
   val eg4 = emptyQueue + c + a + d + b
-
-  def arbMap[B, A](f: A => B)(implicit a: Arbitrary[A]): Arbitrary[B] =
-    Arbitrary { a.arbitrary.map(f) }
-
-  implicit def arbitraryMsgId = arbMap[MsgId, Long](new MsgId(_))
-  implicit def arbitraryPriority = arbMap[Priority, Short](new Priority(_))
-  implicit def arbitraryDateTime = arbMap[DateTime, Long](new DateTime(_))
-
-  implicit def arbitraryMsgHeader: Arbitrary[MsgHeader] =
-    Arbitrary(for {
-      i <- arbitrary[MsgId]
-      p <- arbitrary[Priority]
-      c <- arbitrary[DateTime]
-    } yield
-      MsgHeader(i,p,c))
-
-  implicit def arbitraryJobQueue = arbMap[JobQueue, List[MsgHeader]](emptyQueue ++ _)
-
-  // -------------------------------------------------------------------------------------------------------------------
 
   "JoeQueue" should {
     "prefer highest priority, then oldest" in {
