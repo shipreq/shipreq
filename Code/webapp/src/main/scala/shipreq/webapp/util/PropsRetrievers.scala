@@ -2,13 +2,12 @@ package shipreq.webapp.util
 
 import net.liftweb.util.Props
 import net.liftweb.common.{Empty, Box, Failure, Full}
-import scalaz.\/-
 import shipreq.base.util.{Error, ErrorOr}
 import shipreq.base.util.ExternalValueReader.Retriever
 
 object PropsRetrievers {
   private implicit def unbox[T](b: Box[T]): Option[ErrorOr[T]] = b match {
-    case Full(v)          => Some(\/-(v))
+    case Full(v)          => Some(ErrorOr(v))
     case Empty            => None
     case Failure(e, _, _) => Some(Error(e))
   }

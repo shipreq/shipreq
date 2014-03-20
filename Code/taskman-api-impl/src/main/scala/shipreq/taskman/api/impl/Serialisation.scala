@@ -3,7 +3,6 @@ package shipreq.taskman.api.impl
 import org.json4s._
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{read, write}
-import scalaz.{\/-, \/, -\/}
 import shipreq.base.util.{BiMap, Error, ErrorOr}
 import shipreq.taskman.api.Types._
 import shipreq.taskman.api.{Msg, MsgType}
@@ -40,7 +39,7 @@ private[api] object Serialisation {
         ErrorOr.annotate(s"Failed to parse JSON: $s") {
           ErrorOr.catchException {
             val m: Msg = read(s)(implicitly[Formats], Manifest.classType(t.msgClass))
-            \/-(m)
+            ErrorOr(m)
           }
         }
       case None =>

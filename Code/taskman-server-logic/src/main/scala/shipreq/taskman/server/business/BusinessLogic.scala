@@ -1,6 +1,6 @@
 package shipreq.taskman.server.business
 
-import scalaz.{~>, \/-}
+import scalaz.{~>}
 import scalaz.effect.IO
 import scalaz.syntax.bind._
 import shipreq.base.util.ErrorOr
@@ -11,10 +11,10 @@ import BusinessLogic._
 object BusinessLogic {
   type Task[A] = IO[ErrorOr[A]]
 
-  private[this] val nop: Task[Unit] = IO(\/-(()))
+  private[this] val nop: Task[Unit] = IO(ErrorOr(()))
 
   implicit class BopExt[A](val op: Bop[A]) extends AnyVal {
-    def toTask(implicit opToIo: Bop ~> IO): Task[A] = op.toIO.map(\/-(_))
+    def toTask(implicit opToIo: Bop ~> IO): Task[A] = op.toIO.map(ErrorOr(_))
     def toTaskU(implicit opToIo: Bop ~> IO, ev: A =:= Unit): Task[Unit] = op.toIO >> nop
   }
 

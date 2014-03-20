@@ -2,8 +2,9 @@ package shipreq.taskman.server
 
 import org.specs2.mutable._
 import org.joda.time.{Period, DateTime}
-import scalaz.{Endo, ~>, \/-}
+import scalaz.{Endo, ~>}
 import scalaz.effect.IO
+import shipreq.base.util.ErrorOr
 import shipreq.base.test.MockOpTransformer
 import shipreq.taskman.api.Msg.ReRegistrationAttempted
 import shipreq.taskman.api.Types._
@@ -49,7 +50,7 @@ class WorkerTest extends Specification {
   val fpRetry: FailurePolicy =
     msg => err => FailurePolicyR(MsgFailedRetry(msg, Period days 1), Nil)
 
-  val mpNop: MsgProcessor = msg => IO(\/-(()))
+  val mpNop: MsgProcessor = msg => IO(ErrorOr(()))
   val mpCrash: MsgProcessor = msg => ???
 
   def test(opToIo: Sop ~> IO, fp: FailurePolicy, mp: MsgProcessor): WorkResult =

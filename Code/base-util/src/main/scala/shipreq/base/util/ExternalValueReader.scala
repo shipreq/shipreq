@@ -85,7 +85,7 @@ class StringBasedValueReader(_retrieverS: Retriever[String]) {
   implicit final def retrieverS = _retrieverS
 
   def tryParse[T](f: String => T): Retriever[T] =
-    tryParseE(s => \/-(f(s)))
+    tryParseE(s => ErrorOr(f(s)))
 
   def tryParseE[T](f: String => ErrorOr[T]): Retriever[T] =
     tryParseOE(s => Some(f(s)))
@@ -108,9 +108,9 @@ class StringBasedValueReader(_retrieverS: Retriever[String]) {
 
   implicit val retrieverB: Retriever[Boolean] = tryParseE(s =>
     if (RegexT.matcher(s).matches)
-      \/-(true)
+      ErrorOr(true)
     else if (RegexF.matcher(s).matches)
-      \/-(false)
+      ErrorOr(false)
     else
       Error(s"Unable to parse '$s'")
   )
@@ -131,6 +131,6 @@ object JPropertiesValueReader {
         case None     => None
         case Some(vv) =>
           val v = removeComment(vv).trim
-          if (v.isEmpty) None else Some(\/-(v))
+          if (v.isEmpty) None else Some(ErrorOr(v))
       }))
 }
