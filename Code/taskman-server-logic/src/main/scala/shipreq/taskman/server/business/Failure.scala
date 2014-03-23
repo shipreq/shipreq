@@ -114,9 +114,9 @@ object Failure {
       r(ctx)
     }
 
-  val retryAccordingToPriority: Rule =
+  val retryAndNotify: Rule =
     priorityBasedRetryRule =<< retryResponse =<< addOpF(notifySupport)
 
   val failurePolicy: FailurePolicy =
-    abortDeterministicErrors ?>>? retryAccordingToPriority ?>> abortAndNotify
+    abortDeterministicErrors ?>>? retryAndNotify ?>> abortAndNotify
 }

@@ -3,6 +3,7 @@ package shipreq.taskman.server
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary._
 import org.joda.time.{Period, DateTime}
+import scalaz.Lens.lensg
 import scalaz.Endo
 import scalaz.effect.IO
 import shipreq.base.test.MockOpTransformer
@@ -20,8 +21,28 @@ object TestHelpers {
   val timeNow = DateTime.now()
   val timePast = timeNow minusMinutes 10
 
+  val msg_rereg = ReRegistrationAttempted("@".tag)
   val mh_1 = MsgHeader(MsgId(1), Priority(6), timeNow)
-  val md_1 = MsgDetail(mh_1, ReRegistrationAttempted("@".tag), 1)
+  val md_1 = MsgDetail(mh_1, msg_rereg, 0)
+
+  object lenses {
+    object msgDetail {
+      val failureCountL = lensg[MsgDetail, Int](m => f => m.copy(failureCount = f.toShort), _.failureCount)
+      val headerL = lensg[MsgDetail, MsgHeader](m => h => m.copy(hdr = h), _.hdr)
+      val priorityL = headerL >=> msgHeader.priorityL
+      val createdL = headerL >=> msgHeader.createdL
+    }
+    object msgHeader {
+      val priorityL = lensg[MsgHeader, Priority](m => p => m.copy(priority = p), _.priority)
+      val createdL = lensg[MsgHeader, DateTime](m => c => m.copy(created = c), _.created)
+    }
+    object failureCtx {
+      val msgL = lensg[FailureCtx, MsgDetail](c => md => c.copy(m = md), _.m)
+      val failureCountL = msgL >=> msgDetail.failureCountL
+      val priorityL = msgL >=> msgDetail.priorityL
+      val createdL = msgL >=> msgDetail.createdL
+    }
+  }
 
   def assignWorkerTo(md: MsgDetail) = endoMod[MockSops](_.assignWorkerR << Some(md))
   val assignWorkerAllow = assignWorkerTo(md_1)
