@@ -1,11 +1,10 @@
 package shipreq.taskman.server.business
 
 import org.joda.time.Period
-import scalaz.Scalaz.none
 import shipreq.taskman.api.Priority
-import shipreq.taskman.server.Deterministic
-import shipreq.taskman.server.Worker.{FailurePolicy, FailureResponse, FailureCtx}
+import shipreq.taskman.server.{Sop, Deterministic}
 import shipreq.taskman.server.Sop._
+import shipreq.taskman.server.Worker.{FailurePolicy, FailureResponse, FailureCtx}
 
 object Failure {
   implicit class TimeHelpers(val n: Int) extends AnyVal {
@@ -19,26 +18,42 @@ object Failure {
     def days    = Period days n
   }
 
-  type Rule = FailureCtx => Option[FailureResponse]
+  def composeF[R,A,B,C](h: B => A => C, g: R => B): R => A => C =
+    r => h(g(r))
 
-  type RetryRule = FailureCtx => Option[Period]
+  def mapO[A,B,C](g: A => B => C)(f: A => Option[B]): A => Option[C] =
+    c => f(c).map(a => g(c)(a))
 
-  private[this] def ifO[A](p: Boolean)(r: => A): Option[A] =
-    if (p) Some(r) else None
+  def ifO[A, B](p: A => Boolean, f: A => B): A => Option[B] =
+    a => if (p(a)) Some(f(a)) else None
 
-  private[this] def chooseFirst[A, B](fs: (A => Option[B])*): A => Option[B] = a =>
-    (none[B] /: fs)((pref,f) => pref orElse f(a))
-
-  private[this] def chooseFirstOr[A, B](fs: (A => Option[B])*)(fallback: A => B): A => B = a =>
-    chooseFirst(fs: _*)(a) getOrElse fallback(a)
-
-  def retryTable(x: IndexedSeq[Period]): RetryRule = {
-    val v = x.map(Some(_)).toVector
-    ctx => {
-      val i: Int = ctx.m.failureCount
-      if (i >= v.length) None else v(i)
+  def chooseByIndex[A, B](f: A => Int, values: IndexedSeq[B]): A => Option[B] = {
+    val vs = values.map(Some(_)).toVector
+    a => {
+      val i = f(a)
+      if (i >= vs.length) None else vs(i)
     }
   }
+
+  implicit class PriMExt[A, B](val f: A => Option[B]) extends AnyVal {
+    def ?>>?(g: A => Option[B]): A => Option[B] =
+      a => f(a) orElse g(a)
+
+    def ?>>(g: A => B): A => B =
+      a => f(a) getOrElse g(a)
+
+    def =<<[C](g: A => B => C): A => Option[C] =
+      mapO(g)(f)
+  }
+
+  // ===================================================================================================================
+
+  type Attempt[A] = FailureCtx => Option[A]
+  type Rule = Attempt[FailureResponse]
+  type RetryRule = Attempt[Period]
+
+  def chooseByFailureCount[A](values: A*): Attempt[A] =
+    chooseByIndex(_.m.failureCount, values.toIndexedSeq)
 
   def retryEveryUntil(every: Period, cutoff: Period): RetryRule = {
     val everyS = Some(every)
@@ -48,24 +63,26 @@ object Failure {
     }
   }
 
-  def runRetry(retry: RetryRule): Rule = ctx =>
-    retry(ctx).map(delay => FailureResponse(MsgFailedRetry(ctx.m, delay), Nil))
+  def addOp(op: Sop[Unit])(r: FailureResponse): FailureResponse =
+    r.copy(additionalOps = op :: r.additionalOps)
 
-  def notifyOfFailure(ctx: FailureCtx) = NotifySupportWorkerFailed(ctx.m, ctx.err)
+  def addOpF(op: FailureCtx => Sop[Unit]) =
+    composeF(addOp, op)
 
-  val abortAndNotify: FailurePolicy = ctx =>
-    FailureResponse(MsgFailedAbort(ctx.m), notifyOfFailure(ctx) :: Nil)
+  def retryResponse(ctx: FailureCtx)(delay: Period): FailureResponse =
+    FailureResponse(MsgFailedRetry(ctx.m, delay), Nil)
 
-  def notifyOnFailure(f: Rule): Rule = ctx =>
-    f(ctx).map(r => r.copy(additionalOps = notifyOfFailure(ctx) :: r.additionalOps))
+  def notifySupport(ctx: FailureCtx): Sop[Unit] =
+    NotifySupportWorkerFailed(ctx.m, ctx.err)
 
-  // ===================================================================================================================
+  val abortAndNotify: FailurePolicy =
+    ctx => FailureResponse(MsgFailedAbort(ctx.m), notifySupport(ctx) :: Nil)
 
-  def abortDeterministicErrors: Rule = ctx =>
-    ifO(ctx.err is Deterministic)(abortAndNotify(ctx))
+  def abortDeterministicErrors: Rule =
+    ifO(_.err is Deterministic, abortAndNotify)
 
-  val impatientRetries = chooseFirst(
-    retryTable(Vector(
+  val impatientRetries: RetryRule =
+    chooseByFailureCount(
       10 seconds    // Failure #1,  next attempt @ 10 sec
       , 15 seconds  // Failure #2,  next attempt @ 25 sec
       , 20 seconds  // Failure #3,  next attempt @ 45 sec
@@ -80,12 +97,11 @@ object Failure {
       , 20 minutes  // Failure #12, next attempt @ 50 min
       , 30 minutes  // Failure #13, next attempt @ 80 min
       , 40 minutes  // Failure #14, next attempt @ 2 hr
-    )),
-    retryEveryUntil(1 hour, 24 hours)
-  )
+    ) ?>>?
+      retryEveryUntil(1 hour, 24 hours)
 
-  val patientRetries = chooseFirst(
-    retryTable(Vector(
+  val patientRetries: RetryRule =
+    chooseByFailureCount(
       30 seconds   // Failure #1, next attempt @ 30 sec
       , 90 seconds // Failure #2, next attempt @  2 min
       , 3 minutes  // Failure #3, next attempt @  5 min
@@ -95,22 +111,21 @@ object Failure {
       , 25 minutes // Failure #7, next attempt @  1 hr
       , 1 hour     // Failure #8, next attempt @  2 hr
       , 2 hours    // Failure #9, next attempt @  4 hr
-    )),
-    retryEveryUntil(4 hours, 24 hours)
-  )
+    ) ?>>?
+      retryEveryUntil(4 hours, 24 hours)
 
-  val retryAccordingToPriority: Rule = ctx => {
-    val retryPolicy: RetryRule =
-      if (ctx.m.hdr.priority.value >= Priority.High.value)
-        impatientRetries
-      else
-        patientRetries
-    notifyOnFailure(runRetry(retryPolicy))(ctx)
-  }
+  val priorityBasedRetryRule: RetryRule =
+    ctx => {
+      val p = ctx.m.hdr.priority.value
+      val r: RetryRule =
+        if (p >= Priority.High.value) impatientRetries
+        else patientRetries
+      r(ctx)
+    }
+
+  val retryAccordingToPriority: Rule =
+    priorityBasedRetryRule =<< retryResponse =<< addOpF(notifySupport)
 
   val failurePolicy: FailurePolicy =
-    chooseFirstOr(
-      abortDeterministicErrors,
-      retryAccordingToPriority
-    )(abortAndNotify)
+    abortDeterministicErrors ?>>? retryAccordingToPriority ?>> abortAndNotify
 }
