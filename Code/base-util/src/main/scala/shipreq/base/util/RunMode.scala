@@ -4,47 +4,44 @@ import java.util.{Properties, Locale}
 import scalaz.\/-
 import shipreq.base.util.ExternalValueReader.Retriever
 
-object RunMode extends Enumeration {
+sealed abstract class RunMode(val id: Int, val name: String, _altNames: String*) {
+  override def toString = name
+  val names: List[String] = (name :: _altNames.toList).distinct
+}
 
-  val Development = Value(1, "Development")
-  val Test        = Value(2, "Test")
-  val Staging     = Value(3, "Staging")
-  val Production  = Value(4, "Production")
-  val Pilot       = Value(5, "Pilot")
-  val Profile     = Value(6, "Profile")
+object RunMode {
+  case object Development extends RunMode(1, "Development", "dev")
+  case object Test        extends RunMode(2, "Test")
+  case object Staging     extends RunMode(3, "Staging")
+  case object Production  extends RunMode(4, "Production", "prod")
+  case object Pilot       extends RunMode(5, "Pilot")
+  case object Profile     extends RunMode(6, "Profile")
 
-  def namesFor(m: Value): List[String] = m match {
-    case Development => List("dev", "development")
-    case Test        => List("test")
-    case Staging     => List("staging")
-    case Production  => List("prod", "production")
-    case Pilot       => List("pilot")
-    case Profile     => List("profile")
-  }
+  val values = List(Development, Test, Staging, Production, Pilot, Profile)
 
-  private[this] val normaliseName: String => String = _ toLowerCase Locale.ENGLISH
+  private[this] val normaliseName: String => String =
+    _ toLowerCase Locale.ENGLISH
 
-  private[this] val nameToMode: Map[String, Value] =
-      values.toList.flatMap(m =>
-        (m.toString :: namesFor(m))
-          .map(n => (normaliseName(n) -> m))
-      ).toMap
+  private[this] val nameToMode: Map[String, RunMode] =
+      values.toList
+        .flatMap(m => m.names.map(n => (normaliseName(n) -> m)))
+        .toMap
 
-  def forName(n: String): Option[Value] =
+  def forName(n: String): Option[RunMode] =
     nameToMode.get(normaliseName(n))
 
-  def retriever(implicit r: Retriever[String]): Retriever[Value] =
-    new StringBasedValueReader(r).tryParseE[Value](s =>
+  def retriever(implicit r: Retriever[String]): Retriever[RunMode] =
+    new StringBasedValueReader(r).tryParseE[RunMode](s =>
       forName(s) match {
         case Some(m) => \/-(m)
         case None    => Error(s"Unable to parse run mode: $s")
       }
     )
 
-  val retrieverFromSysProps: Retriever[Value] =
+  val retrieverFromSysProps: Retriever[RunMode] =
     retriever(JPropertiesValueReader(Props.systemProps(new Properties)).retrieverS)
 
-  def detectFromStackTrace(st: Array[StackTraceElement] = Thread.currentThread.getStackTrace): Value =
+  def detectFromStackTrace(st: Array[StackTraceElement] = Thread.currentThread.getStackTrace): RunMode =
     if (doesStackTraceContainKnownTestRunner(st))
       Test
     else

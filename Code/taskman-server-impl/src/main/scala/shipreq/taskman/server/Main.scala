@@ -32,7 +32,7 @@ object Main {
 
     // Determine run mode
     implicit val _rm = RunMode.retrieverFromSysProps
-    val runMode: RunMode.Value = tryNeed("run.mode", RunMode.detectFromStackTrace())
+    val runMode: RunMode = tryNeed("run.mode", RunMode.detectFromStackTrace())
     log.info("Run mode: {}", runMode)
 
     // Config
