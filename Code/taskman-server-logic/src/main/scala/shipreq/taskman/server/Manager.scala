@@ -46,7 +46,7 @@ object Manager {
       for {
         curHighPri <- getHighestPriority.lift[IO]
         minPri     =  curHighPri.map(_.inc)
-        jobs       <- GetMsgsAssignNode(node, limit, minPri, assignmentTrustPeriod).toIOM[JobQueueSIO]
+        jobs       <- GetMsgsAssignNode(node, limit, minPri, assignmentTrustPeriod).liftIOM[JobQueueSIO]
         _          <- addToQueue(jobs).lift[IO]
       } yield jobs.length
   }

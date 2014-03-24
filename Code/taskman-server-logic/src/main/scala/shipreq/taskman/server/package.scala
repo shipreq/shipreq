@@ -34,9 +34,12 @@ package object server {
    */
   case object Deterministic extends ErrorTag
 
+  type IOE[A] = IO[ErrorOr[A]]
+
   implicit class OpExt[F[_], A](val op: F[A]) extends AnyVal {
     def toIO(implicit opToIo: F ~> IO): IO[A] = opToIo(op)
-    def toIOM[M[_]](implicit opToIo: F ~> IO, m: MonadIO[M]): M[A] = toIO.liftIO[M]
-    def toIOE(implicit opToIo: F ~> IO): IO[ErrorOr[A]] = toIO.map(\/-(_))
+    def toIOE(implicit opToIo: F ~> IOE): IOE[A] = opToIo(op)
+    def liftIOM[M[_]](implicit opToIo: F ~> IO, m: MonadIO[M]): M[A] = toIO.liftIO[M]
+    def liftIOE(implicit opToIo: F ~> IO): IOE[A] = toIO.map(\/-(_))
   }
 }

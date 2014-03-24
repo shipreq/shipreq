@@ -1,25 +1,17 @@
 package shipreq.taskman.server.business
 
 import scalaz.~>
-import scalaz.effect.IO
-import scalaz.syntax.bind._
-import shipreq.base.util.ErrorOr
 import shipreq.taskman.api.Msg
 import shipreq.taskman.server._
-import shipreq.taskman.server.Worker.{MsgProcessor, Task, nopTask}
+import shipreq.taskman.server.Worker.MsgProcessor
 import BusinessLogic._
 
 object BusinessLogic {
 
-  implicit class BopExt[A](val op: Bop[A]) extends AnyVal {
-    def toTask(implicit opToIo: Bop ~> IO): Task[A] = op.toIO.map(ErrorOr(_))
-    def toTaskU(implicit opToIo: Bop ~> IO, ev: A =:= Unit): Task[Unit] = op.toIO >> nopTask
-  }
-
-  implicit def autoBopToTaskU(b: Bop[Unit])(implicit bopToIo: Bop ~> IO): Task[Unit] = b.toTaskU
+  implicit def autoReifyBop(bop: Bop[Unit])(implicit reifier: Bop ~> IOE): IOE[Unit] = reifier(bop)
 }
 
-class BusinessLogic(implicit ctx: Email.Ctx, bopToIo: Bop ~> IO) {
+class BusinessLogic(implicit ctx: Email.Ctx, reifier: Bop ~> IOE) {
 
   val email = new Emails(ctx)
 

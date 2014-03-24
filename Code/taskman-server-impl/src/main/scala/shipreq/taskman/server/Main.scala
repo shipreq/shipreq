@@ -111,13 +111,13 @@ object Main {
 
   BusinessLogic
     Email.Ctx
-    Bop ~> IO
+    Bop ~> IOE
 
    */
 
   import Bop._
 
-  class BopImpl(ctx: BopImplCtx) extends (Bop ~> IO) {
+  class BopImpl(ctx: BopImplCtx) extends (Bop ~> IOE) {
     import ctx._
 
     val charset = "UTF-8"
@@ -154,7 +154,7 @@ object Main {
       r.join
     }
 
-    override def apply[A](op: Bop[A]): IO[A] = op match {
+    override def apply[A](op: Bop[A]): IOE[A] = op match {
 
       case SendEmail(env, content) => IO {
 

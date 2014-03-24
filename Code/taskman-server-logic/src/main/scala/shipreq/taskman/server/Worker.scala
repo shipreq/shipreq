@@ -24,11 +24,9 @@ object Worker {
    */
   case class FailureResponse(reaction: FailedJobReaction, additionalOps: List[Sop[Unit]])
 
-  type MsgProcessor = Msg => Task[Unit]
+  type MsgProcessor = Msg => IOE[Unit]
 
-  type Task[A] = IO[ErrorOr[A]]
-
-  val nopTask: Task[Unit] = IO(ErrorOr(()))
+  val nopTask: IOE[Unit] = IO(ErrorOr(()))
 
   // -------------------------------------------------------------------------------------------------------------------
 
