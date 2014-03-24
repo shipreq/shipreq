@@ -21,6 +21,21 @@ object ErrorOr {
   def tag[A](t: => ErrorTag)(eoa: ErrorOr[A]): ErrorOr[A] =
     eoa.leftMap(_ tag t)
 
+  def tagM[M[_], A](t: => ErrorTag)(m: M[ErrorOr[A]])(implicit M: Applicative[M]): M[ErrorOr[A]] =
+    M.map(m)(_.leftMap(_ tag t))
+
+  def catchAndTag[A](t: => ErrorTag)(a: => ErrorOr[A]): ErrorOr[A] =
+    tag(t)(catchException(a))
+
+  def catchAndTagM[M[_], A](t: => ErrorTag)(a: => M[ErrorOr[A]])(implicit M: Applicative[M]): M[ErrorOr[A]] =
+    tagM(t)(catchExceptionM(a))
+
+  def safe[A](a: => A): ErrorOr[A] =
+    catchException(ErrorOr(a))
+
+  def safeT[A](t: => ErrorTag)(a: => A): ErrorOr[A] =
+    catchAndTag(t)(ErrorOr(a))
+
   def require_![A](eoa: ErrorOr[A]): A =
     eoa match {
       case \/-(v) => v
