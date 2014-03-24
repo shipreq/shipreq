@@ -13,3 +13,9 @@ object Logger {
       c.toString.replaceFirst("^Class ", "")
 
 }
+
+trait Logger {
+
+  final val log = Logger.forClass(getClass)
+
+}

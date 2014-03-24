@@ -7,7 +7,7 @@ object Email {
 
   trait Ctx {
     val shipreq: String
-    val loginUrl: String // TODO get from webapp via config table in DB
+    val loginUrl: String
     val defaultFromAddress: EmailAddr
   }
 
