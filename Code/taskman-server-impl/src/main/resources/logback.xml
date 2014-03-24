@@ -5,7 +5,7 @@
 			<pattern>%15X{akkaTimestamp} %-5level [%-32logger{32}] {%-34X{akkaSource}} %msg%n</pattern>
 		</encoder>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
+            <level>DEBUG</level>
         </filter>
 	</appender>
 
