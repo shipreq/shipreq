@@ -23,7 +23,7 @@ object Deps {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  object Scala extends Group("2.10.3", "org.scala-lang") {
+  object Scala extends Group("2.10.4", "org.scala-lang") {
     val compiler = d("scala-compiler")
     val library  = d("scala-library")
     val reflect  = d("scala-reflect")
