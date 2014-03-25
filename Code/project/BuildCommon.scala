@@ -39,7 +39,15 @@ object Common {
   def javacFlags = Seq("-target", targetJdk, "-source", targetJdk)
 
   lazy val settings = (p: Project) => p
-    .settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*) // Dependency graph
+    .settings((
+        net.virtualvoid.sbt.graph.Plugin.graphSettings ++ // Dependency graph
+        addCommandAlias("cc",   ";clear;compile") ++
+        addCommandAlias("ctc",  ";clear;test:compile") ++
+        addCommandAlias("ct",   ";clear;test") ++
+        addCommandAlias("ccc",  ";clear;clean;compile") ++
+        addCommandAlias("cctc", ";clear;clean;test:compile") ++
+        addCommandAlias("cct",  ";clear;clean;test")
+      ): _*)
     .settings(
       clearScreenTask := { println("\033[2J\033[;H") },
       version := s"${fmtTimeNow("yyyyMMdd")}-${gitRevisionShort}${snapshotSuffix}",
