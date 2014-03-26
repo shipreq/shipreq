@@ -45,7 +45,7 @@ object Manager {
         (q.tail, q.headOption)
     )
 
-  case class Reified(limit: Int, assignmentTrustPeriod: Period)(implicit node: NodeId, opToIo: Sop ~> IO) {
+  case class Reified(limit: Int, assignmentTrustPeriod: Period)(implicit node: NodeId, opToIo: SopReifier) {
 
     val pollTask: JobQueueSIO[Int] =
       for {

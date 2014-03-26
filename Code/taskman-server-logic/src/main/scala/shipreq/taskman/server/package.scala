@@ -36,6 +36,8 @@ package object server {
 
   type IOE[A] = IO[ErrorOr[A]]
 
+  type SopReifier = Sop ~> IO
+
   implicit class OpExt[F[_], A](val op: F[A]) extends AnyVal {
     def toIO(implicit opToIo: F ~> IO): IO[A] = opToIo(op)
     def toIOE(implicit opToIo: F ~> IOE): IOE[A] = opToIo(op)

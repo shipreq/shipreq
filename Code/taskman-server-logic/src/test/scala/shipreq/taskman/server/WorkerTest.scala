@@ -9,7 +9,7 @@ import TestHelpers._
 
 class WorkerTest extends Specification {
 
-  def test(opToIo: Sop ~> IO, fp: FailurePolicy, mp: MsgProcessor): WorkResult =
+  def test(opToIo: SopReifier, fp: FailurePolicy, mp: MsgProcessor): WorkResult =
     Worker.Reified(WorkerId(7))(NodeId(4), opToIo, clockReal, fp, mp).process(mh_1).unsafePerformIO()
 
   "Worker.Reified" >> {

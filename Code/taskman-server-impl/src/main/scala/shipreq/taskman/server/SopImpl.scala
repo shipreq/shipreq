@@ -3,7 +3,6 @@ package shipreq.taskman.server
 import org.joda.time.Period
 import scala.slick.session.{Database, Session}
 import scalaz.effect.IO
-import scalaz.~>
 import shipreq.base.util.ErrorOr
 import shipreq.taskman.api.Priority
 import shipreq.taskman.api.impl.Serialisation
@@ -49,7 +48,7 @@ object SopImpl {
 
 // =====================================================================================================================
 
-class SopImpl(db: Database) extends (Sop ~> IO) {
+class SopImpl(db: Database) extends SopReifier {
   import Sop._
   import SopImpl._
 

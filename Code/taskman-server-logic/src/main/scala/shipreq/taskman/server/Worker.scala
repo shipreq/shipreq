@@ -56,7 +56,7 @@ object Worker {
 
   case class Reified(worker: WorkerId)(
     implicit node: NodeId,
-             sopToIo: Sop ~> IO,
+             sopToIo: SopReifier,
              clock: IO[DateTime],
              failurePolicy: FailurePolicy,
              msgProcessor: MsgProcessor) {
