@@ -91,13 +91,8 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
       }
 
       "limit results to top n highest priority" in {
-        val p3 = insert(pri = Priority(3))
-        val p8 = insert(pri = Priority(8))
-        val p9 = insert(pri = Priority(9))
-        val p4 = insert(pri = Priority(4))
-        val p2 = insert(pri = Priority(2))
-        val p6 = insert(pri = Priority(6))
-        dao.getMsgsAssignNode(n, 3, 8 hours, queue) must ifAllowedReturnOnly(p9, p8, p6)
+        val ids = insertP(0, 1, 2, 3, 4, 5, 6)
+        dao.getMsgsAssignNode(n, 3, 8 hours, queue) must ifAllowedReturnOnly(ids takeRight 3: _*)
       }
 
       "filter by effective_from" in {
