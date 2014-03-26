@@ -3,7 +3,7 @@ package shipreq.taskman.server
 import java.sql.Timestamp
 import org.joda.time.{Period, DateTime}
 import org.postgresql.util.PGInterval
-import scala.slick.jdbc.StaticQuery.{query, update}
+import scala.slick.jdbc.StaticQuery.{query, queryNA, update}
 import scala.slick.jdbc.{GetResult, SetParameter}
 import scala.slick.session.PositionedParameters
 import shipreq.base.db.SqlHelpers._
@@ -50,6 +50,7 @@ object Sql {
     def apply(v: MsgId, pp: PositionedParameters): Unit = pp setLong v.value
   }
 
+  implicit val GR_NodeId = GetResult(r => NodeId(r.<<))
   implicit object SP_NodeId extends SetParameter[NodeId] {
     def apply(v: NodeId, pp: PositionedParameters): Unit = pp setInt v.value
   }
@@ -82,6 +83,10 @@ object Sql {
   implicit val GR_MsgHeader = GetResult(r => MsgHeader(r.<<, r.<<, r.<<))
 
   // ===================================================================================================================
+
+  val getNextNodeIdQ = queryNA[NodeId]("select NEXTVAL('node_seq')")
+
+  val cfgGetQ = query[String, String]("select v from cfg where k=?")
 
   private[this] def getMsgsAssignNode_q(extraSel: Option[String], extraCond: Option[String]) = s"""
          select ctid ${extraSel.map(s => s",$s") getOrElse ""}

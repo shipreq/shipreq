@@ -16,6 +16,13 @@ sealed trait FailedJobReaction extends Sop[Unit]
 object Sop {
 
   /**
+   * Loads a configuration value.
+   *
+   * @param k The config key.
+   */
+  case class CfgGet(k: String) extends Sop[Option[String]]
+
+  /**
    * Assigns msgs to the given node id, and retrieves them.
    *
    * @param limit The maximum number of msgs to assign and return.

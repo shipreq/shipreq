@@ -7,7 +7,7 @@ import scalaz.effect.IO
 import scalaz.std.list._
 import scalaz.syntax.bind._
 import scalaz.syntax.traverse._
-import shipreq.base.util.{Error, ErrorOr, Logger}
+import shipreq.base.util.{JPropertiesValueReader, Error, ErrorOr, Logger}
 import shipreq.base.util.ExternalValueReader._
 import shipreq.taskman.api.Types._
 import shipreq.taskman.server.business.Email
@@ -20,12 +20,10 @@ object EmailImpl extends Logger {
     val mailCharset = "UTF-8"
   }
 
-  def ctx(implicit props: Properties, _s: Retriever[String]): Ctx =
-    new Ctx {
-      override val mailSession = loadSession
-    }
+  def loadSession(props: Properties): Session = {
+    val pr = JPropertiesValueReader(props)
+    import pr._
 
-  def loadSession(implicit props: Properties, _s: Retriever[String]): Session = {
     val mailAuth: Option[Authenticator] = {
       implicit def scope = scopeByNS("mail")
       getO[String]("user").map(user => {

@@ -43,6 +43,11 @@ object SopImpl {
     def archiveMsg(msg: MsgId, status: ArchiveIntent): Unit =
       archiveMsgQ.execute(msg, status)
 
+    def getNextNodeId: NodeId =
+      getNextNodeIdQ.first()
+
+    def cfgGet(k: String): Option[String] =
+      cfgGetQ.firstOption(k)
   }
 }
 
@@ -54,6 +59,8 @@ class SopImpl(db: Database) extends SopReifier {
 
   private[this] def io[A](f: Dao => A): IO[A] =
     IO(db.withSession(implicit s => f(new Dao())))
+
+  def getNextNodeId = io(_.getNextNodeId)
 
   override def apply[A](op: Sop[A]): IO[A] = op match {
 
@@ -71,6 +78,9 @@ class SopImpl(db: Database) extends SopReifier {
 
     case MsgFailedAbort(m) =>
       io(_.archiveMsg(m, FailAndAbort))
+
+    case CfgGet(k) =>
+      io(_ cfgGet k)
 
     /*
     case class NotifySupportWorkerFailed(m: MsgDetail, e: Error) extends Sop[Unit]

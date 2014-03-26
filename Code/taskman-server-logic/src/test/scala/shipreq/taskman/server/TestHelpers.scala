@@ -83,17 +83,19 @@ object TestHelpers {
 }
 
 class MockSops extends MockOpTransformer[Sop, IO] {
+  val cfgGetR = MockResponse(Option[String](null))
   val assignNodeR = MockResponse(Seq.empty[MsgHeader])
   val assignWorkerR = MockResponse(Option[MsgDetail](null))
   val msgCompleteR = MockResponse(())
   val msgFailedRetryR = MockResponse(())
 
   override def call[A] = {
-    case _: GetMsgsAssignNode => assignNodeR.pop()
-    case _: GetMsgAssignWorker => assignWorkerR.pop()
-    case _: MarkMsgComplete => msgCompleteR.pop()
-    case _: MsgFailedAbort =>
-    case _: MsgFailedRetry => msgFailedRetryR.pop()
+    case _: CfgGet                    => cfgGetR.pop()
+    case _: GetMsgsAssignNode         => assignNodeR.pop()
+    case _: GetMsgAssignWorker        => assignWorkerR.pop()
+    case _: MarkMsgComplete           => msgCompleteR.pop()
+    case _: MsgFailedAbort            =>
+    case _: MsgFailedRetry            => msgFailedRetryR.pop()
     case _: NotifySupportWorkerFailed =>
     case _: NotifySupportTaskmanError =>
   }

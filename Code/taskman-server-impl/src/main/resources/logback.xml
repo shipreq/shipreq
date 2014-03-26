@@ -5,7 +5,7 @@
 			<pattern>%15X{akkaTimestamp} %-5level [%-32logger{32}] {%-34X{akkaSource}} %msg%n</pattern>
 		</encoder>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>DEBUG</level>
+            <level>INFO</level>
         </filter>
 	</appender>
 
@@ -20,9 +20,11 @@
         </encoder>
     </appender>
 
-    <!--<logger name="org.apache.commons" level="WARN" />-->
-    <!--<logger name="scala.slick.compiler" level="WARN" />-->
-    <!--<logger name="akka" level="INFO" />-->
+    <logger name="com.googlecode.flyway" level="INFO" />
+    <logger name="scala.slick.compiler" level="WARN" />
+    <logger name="scala.slick.session" level="INFO" />
+    <logger name="com.jolbox.bonecp" level="INFO" />
+    <logger name="shipreq" level="DEBUG" />
 
     <root>
         <appender-ref ref="STDOUT" />

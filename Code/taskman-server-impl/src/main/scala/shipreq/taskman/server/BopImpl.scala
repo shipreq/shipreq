@@ -5,8 +5,16 @@ import scalaz.effect.IO
 import shipreq.base.util.{ErrorOr, Logger}
 import shipreq.taskman.server.business.{BopReifier, Bop}
 import Bop._
+import BopImpl._
 
-final class BopImpl(emailer: EmailImpl) extends BopReifier with Logger {
+object BopImpl {
+  trait Ctx {
+    def emailer: EmailImpl
+  }
+}
+
+final class BopImpl(ctx: Ctx) extends BopReifier with Logger {
+  import ctx._
 
   override def apply[A](op: Bop[A]): IOE[A] =
     IoUtils.timeU(
