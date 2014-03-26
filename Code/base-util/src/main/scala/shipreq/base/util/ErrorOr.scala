@@ -19,8 +19,14 @@ object ErrorOr {
   def annotate[A](ann: => String)(eoa: ErrorOr[A]): ErrorOr[A] =
     eoa.leftMap(_ annotate ann)
 
-  def annotateO[A](ann: => String)(o: Option[ErrorOr[A]]): Option[ErrorOr[A]] =
-    o.map(annotate(ann))
+  def annotateM[M[_], A](ann: => String)(a: M[ErrorOr[A]])(implicit M: Applicative[M]): M[ErrorOr[A]] =
+    M.map(a)(annotate(ann))
+
+  def catchAndAnnotate[A](ann: => String)(a: => ErrorOr[A]): ErrorOr[A] =
+    annotate(ann)(catchException(a))
+
+  def catchAndAnnotateM[M[_], A](ann: => String)(a: => M[ErrorOr[A]])(implicit M: Applicative[M]): M[ErrorOr[A]] =
+    annotateM(ann)(catchExceptionM(a))
 
   def tag[A](t: => ErrorTag)(eoa: ErrorOr[A]): ErrorOr[A] =
     eoa.leftMap(_ tag t)
@@ -36,6 +42,9 @@ object ErrorOr {
 
   def safe[A](a: => A): ErrorOr[A] =
     catchException(ErrorOr(a))
+
+  def safeA[A](ann: => String)(a: => A): ErrorOr[A] =
+    catchAndAnnotate(ann)(ErrorOr(a))
 
   def safeT[A](t: => ErrorTag)(a: => A): ErrorOr[A] =
     catchAndTag(t)(ErrorOr(a))

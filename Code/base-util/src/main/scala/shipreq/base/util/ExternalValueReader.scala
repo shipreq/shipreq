@@ -28,13 +28,14 @@ object ExternalValueReader {
     scopeByPrefix((ns1 +: ns).map(_.replaceFirst("\\.+$", "")).filter(_.nonEmpty).mkString("", ".", "."))
 
   def getOE[T](name: String)(implicit s: PropScope, r: Retriever[T]): Option[ErrorOr[T]] =
-    r.run(s.run(name))
-
-  def get[T](name: String)(implicit s: PropScope, r: Retriever[T]): ErrorOr[T] =
-    getOE(name) getOrElse defaultError(name)
+    ErrorOr.catchAndAnnotateM(errorMsgWhenThrows(name))(
+      r.run(s.run(name)))
 
   def getO[T](name: String)(implicit s: PropScope, r: Retriever[T]): Option[T] =
     getOE(name) map ErrorOr.require_!
+
+  def get[T](name: String)(implicit s: PropScope, r: Retriever[T]): ErrorOr[T] =
+    getOE(name) getOrElse errorWhenMissing(name)
 
   def tryGet[T](name: String, moreNames: String*)(implicit s: PropScope, r: Retriever[T]): ErrorOr[T] = {
     val es = (name #:: moreNames.toStream).map(get(_))
@@ -50,11 +51,14 @@ object ExternalValueReader {
   def tryUse[T](name: String)(f: T => Unit)(implicit s: PropScope, r: Retriever[T]): Unit =
     get(name) foreach f
 
-  def defaultErrorMsg(name: String)(implicit s: PropScope): String =
-    s"Unable to retrieve external value: ${s.run(name)}"
+  def errorMsgWhenThrows(name: String)(implicit s: PropScope): String =
+    s"Error retrieving value: ${s.run(name)}"
 
-  def defaultError(name: String)(implicit s: PropScope): ErrorOr[Nothing] =
-    Error(defaultErrorMsg(name))
+  def errorMsgWhenMissing(name: String)(implicit s: PropScope): String =
+    s"Value not specified: ${s.run(name)}"
+
+  def errorWhenMissing(name: String)(implicit s: PropScope): ErrorOr[Nothing] =
+    Error(errorMsgWhenMissing(name))
 }
 
 // =====================================================================================================================
@@ -88,13 +92,11 @@ class StringBasedValueReader(_retrieverS: Retriever[String]) {
 
   def tryParseOE[T](f: String => Option[ErrorOr[T]]): Retriever[T] =
     Retriever(k =>
-        ErrorOr.annotateO(s"Error parsing $k")(
-          ErrorOr.catchExceptionM(
-            retrieverS.run(k) match {
-              case Some(\/-(s)) => f(s)
-              case Some(-\/(e)) => Some(-\/(e))
-              case None         => None
-            })))
+      retrieverS.run(k) match {
+        case Some(\/-(s)) => f(s)
+        case Some(-\/(e)) => Some(-\/(e))
+        case None         => None
+      })
 
   implicit val retrieverI: Retriever[Int] =
     tryParse(Integer.parseInt)
