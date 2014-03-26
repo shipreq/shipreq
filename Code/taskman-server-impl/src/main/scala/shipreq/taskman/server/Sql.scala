@@ -87,10 +87,10 @@ object Sql {
          select ctid ${extraSel.map(s => s",$s") getOrElse ""}
          from msgq
          where
-           effective_from <= now()
+           effective_from <= clock_timestamp()
            and (
-             node is null               -- Unassigned
-             or updated_at <= now()-?   -- Assignment lapsed
+             node is null                           -- Unassigned
+             or updated_at <= clock_timestamp()-?   -- Assignment lapsed
            )
            ${extraCond.map(s => s"and($s)") getOrElse ""}
          order by priority desc
@@ -99,7 +99,7 @@ object Sql {
 
   private[this] def getMsgsAssignNode_upd(ctids: String) = s"""
        update msgq
-       set node = ?, worker = NULL, updated_at = now()
+       set node = ?, worker = NULL, updated_at = clock_timestamp()
        where ctid in ($ctids)
        returning id, priority, created_at
     """.sql
@@ -122,7 +122,7 @@ object Sql {
 
   val getMsgAssignWorkerQ = query[(WorkerId, MsgId, NodeId), (Short, Json[Msg], Short)]("""
       update msgq
-      set worker = ?, updated_at = now()
+      set worker = ?, updated_at = clock_timestamp()
       where id = ? and node = ? and worker is null
       returning type, data, failure_count
     """.sql)
@@ -134,8 +134,8 @@ object Sql {
         node = null,
         worker = null,
         failure_count = failure_count + 1,
-        updated_at = now(),
-        effective_from = now() + ?
+        updated_at = clock_timestamp(),
+        effective_from = clock_timestamp() + ?
       where id = ?
     """.sql)
 
@@ -143,7 +143,7 @@ object Sql {
   val archiveMsgQ = update[(MsgId, ArchiveIntent)]("""
       with tmp as (
         delete from msgq where id=?
-        returning id, type, data, ?, failure_count+?, created_at, now()
+        returning id, type, data, ?, failure_count+?, created_at, clock_timestamp()
       )
       insert into msg_history select * from tmp
     """.sql)
