@@ -12,7 +12,10 @@ import scalaz.std.option.optionInstance
  */
 object ExternalValueReader {
 
-  case class Retriever[T](run: String => Option[ErrorOr[T]])
+  case class Retriever[T](run: String => Option[ErrorOr[T]]) {
+    def ?>>?(that: Retriever[T]): Retriever[T] =
+      Retriever(s => this.run(s) orElse that.run(s))
+  }
 
   case class PropScope(run: String => String)
 
