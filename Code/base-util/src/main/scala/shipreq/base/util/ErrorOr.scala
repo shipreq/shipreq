@@ -83,8 +83,11 @@ final case class Error(reason: String \&/ Throwable, tags: Set[ErrorTag] = Set.e
     case Both(_, e) => Some(e)
   }
 
-  def throwable: Throwable =
-    ErrorAsThrowable(this)
+  def throwable: Throwable = reason match {
+    case This(_)    => ErrorAsThrowable(this)
+    case That(e)    => e
+    case Both(_, e) => ErrorAsThrowable(this)
+  }
 }
 
 object Error {
