@@ -1,16 +1,16 @@
 package shipreq.base.util
 
-import org.scalatest.FunSuite
-import org.scalatest.Matchers
+import org.specs2.mutable.Specification
+import org.specs2.matcher.ThrownExpectations
 
-class BiMapTest extends FunSuite with Matchers {
+class BiMapTest extends Specification with ThrownExpectations {
 
-  test("Adding & retrieving") {
+  "Adding & retrieving" in {
     val b = new BiMapBuilder[String,Int]
     b += ("Three" -> 3)
     b("Two") = 2
     val m = b.result
-    m.ba(3) shouldBe "Three"
-    m.ab("Two") shouldBe 2
+    m.ba(3) ==== "Three"
+    m.ab("Two") ==== 2
   }
 }

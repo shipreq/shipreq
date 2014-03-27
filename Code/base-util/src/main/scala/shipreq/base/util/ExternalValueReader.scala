@@ -14,7 +14,16 @@ object ExternalValueReader {
 
   case class Retriever[T](run: String => Option[ErrorOr[T]]) {
     def ?>>?(that: Retriever[T]): Retriever[T] =
-      Retriever(s => this.run(s) orElse that.run(s))
+      Retriever(k => this.run(k) orElse that.run(k))
+
+    def map[B](f: T => B): Retriever[B] =
+      Retriever(k => this.run(k).map(_ map f))
+
+    def fmap[B](f: T => Option[ErrorOr[B]]): Retriever[B] =
+      Retriever(k => this.run(k).flatMap {
+        case -\/(e) => Some(-\/(e))
+        case \/-(t) => f(t)
+      })
   }
 
   case class PropScope(run: String => String)
@@ -40,8 +49,8 @@ object ExternalValueReader {
     getOE(name) getOrElse Error(errorMsgWhenMissing(name))
 
   def tryGet[T](name: String, moreNames: String*)(implicit s: PropScope, r: Retriever[T]): ErrorOr[T] = {
-    val es = (name #:: moreNames.toStream).map(get(_))
-    es.filter(_.isRight).headOption.getOrElse(es.head)
+    val es = (name #:: moreNames.toStream).map(getOE(_))
+    es.filter(_.isDefined).headOption.map(_.get) getOrElse get(name)
   }
 
   def need[T](name: String)(implicit s: PropScope, r: Retriever[T]): T =
@@ -99,9 +108,27 @@ object ExternalValueReader {
 }
 
 // =====================================================================================================================
+
+object StringParsingBase {
+  import java.util.regex.Pattern
+
+  val RegexT = Pattern.compile("^(?:t(?:rue)?|y(?:es)?|1|on|enabled?)$", Pattern.CASE_INSENSITIVE)
+  val RegexF = Pattern.compile("^(?:f(?:alse)?|n(?:o)?|0|off|disabled?)$", Pattern.CASE_INSENSITIVE)
+  val RemoveComments = Pattern.compile("\\s*#.*$")
+
+  def removeComment(s: String): String =
+    RemoveComments.matcher(s).replaceFirst("")
+}
+
 import ExternalValueReader.Retriever
+import StringParsingBase._
 
 abstract class StringParsingBase(_retrieverS: Retriever[String]) {
+
+  protected val normalisedRS = _retrieverS.fmap(s => {
+    val v = removeComment(s).trim
+    if (v.isEmpty) None else Some(ErrorOr(v))
+  })
 
   final def tryParse[T](f: String => T): Retriever[T] =
     tryParseE(k => ErrorOr(f(k)))
@@ -111,31 +138,20 @@ abstract class StringParsingBase(_retrieverS: Retriever[String]) {
 
   final def tryParseOE[T](f: String => Option[ErrorOr[T]]): Retriever[T] =
     Retriever(k =>
-      _retrieverS.run(k) match {
-        case Some(\/-(s)) => f(s)
-        case Some(-\/(e)) => Some(-\/(e))
-        case None         => None
-      })
-}
-
-object StringBasedValueReader {
-  import java.util.regex.Pattern
-
-  val RegexT = Pattern.compile("^(?:t(?:rue)|y(?:es)|1|on|enabled?)$", Pattern.CASE_INSENSITIVE)
-  val RegexF = Pattern.compile("^(?:f(?:alse)|n(?:o)|0|off|disabled?)$", Pattern.CASE_INSENSITIVE)
-  val RemoveComments = Pattern.compile("\\s*#.*$")
-
-  def removeComment(s: String): String =
-    RemoveComments.matcher(s).replaceFirst("")
+      ErrorOr.catchExceptionM(
+        normalisedRS.run(k) match {
+          case Some(\/-(s)) => f(s)
+          case Some(-\/(e)) => Some(-\/(e))
+          case None         => None
+        }))
 }
 
 /**
  * Reads a bunch of differently-typed values by parsing strings.
  */
 class StringBasedValueReader(_retrieverS: Retriever[String]) extends StringParsingBase(_retrieverS) {
-  import StringBasedValueReader._
 
-  implicit final def retrieverS = _retrieverS
+  implicit final def retrieverS = normalisedRS
 
   implicit val retrieverI: Retriever[Int] =
     tryParse(Integer.parseInt)
@@ -160,14 +176,8 @@ class StringBasedValueReader(_retrieverS: Retriever[String]) extends StringParsi
  */
 object JPropertiesValueReader {
   import java.util.Properties
-  import StringBasedValueReader._
 
   def apply(p: Properties) = new StringBasedValueReader(
-    Retriever[String](k =>
-      Option(p.getProperty(k)) match {
-        case None     => None
-        case Some(vv) =>
-          val v = removeComment(vv).trim
-          if (v.isEmpty) None else Some(ErrorOr(v))
-      }))
+    Retriever[String](k => Option(p.getProperty(k)).map(ErrorOr(_)))
+  )
 }
