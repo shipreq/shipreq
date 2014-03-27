@@ -8,6 +8,7 @@ import shipreq.base.db.{DatabaseConnection, DbTemplate}
 import shipreq.taskman.api.Types._
 import shipreq.taskman.api.CfgKeys
 import shipreq.taskman.server.business.{BusinessLogic, Failure, Email}
+import scala.slick.session.Database
 
 //==========================================================================================
 
@@ -21,25 +22,41 @@ class Db(props: StringBasedValueReader) extends DbTemplate {
 
 //==========================================================================================
 
-trait TaskmanCtx extends Email.Ctx with EmailImpl.Ctx with BopImpl.Ctx {
-  protected def mailProps: Properties
-  protected def fromDb: StringBasedValueReader
-  protected implicit def scope: PropScope
-  protected implicit def retrieverS: Retriever[String]
+class TaskmanCtx(db: Database, mailProps: Properties, evr: StringBasedValueReader)
+  extends Email.Ctx with EmailImpl.Ctx with BopImpl.Ctx with Logger {
+
+  val sopReifier = new SopImpl(db)
+
+  protected def fromDb = CfgValueReader(sopReifier)
+  protected implicit def scope: PropScope = scopeByNS("taskman")
+  protected implicit def _retrieverS = evr.retrieverS
+  import evr.retrieverI
 
   override def mailSession = EmailImpl.loadSession(mailProps)
   override val defaultFromAddress = need[String]("mail.from").tag
+  override val shipreq  = need(CfgKeys.Webapp.appName )(GlobalScope, fromDb.retrieverS)
+  override val loginUrl = need(CfgKeys.Webapp.loginUrl)(GlobalScope, fromDb.retrieverS)
+  override val emailer  = new EmailImpl(this)
 
-  override val shipreq  = need[String](CfgKeys.Webapp.appName )(GlobalScope, fromDb.retrieverS)
-  override val loginUrl = need[String](CfgKeys.Webapp.loginUrl)(GlobalScope, fromDb.retrieverS)
-
-  override val emailer = new EmailImpl(this)
+  object manager {
+    implicit def scope: PropScope = scopeByNS("taskman.manager")
+    val queueSize = validate("queueSize", need[Int])(valTest(_ >= 1, "Must be at least 1."))
+    val assignmentTrustPeriod = 5 minutes
+  }
 
   def loggable = Map[String, Any](
     "defaultFromAddress" -> defaultFromAddress
     , "shipreq" -> shipreq
     , "loginUrl" -> loginUrl
+    , "manager.queueSize" -> manager.queueSize
   )
+  log.info("Config: {}", loggable.toList.map{case (k,v) => s"$k=$v"}.sorted.mkString(", "))
+
+  val bopReifier = new BopImpl(this)
+  val failurePolicy = Failure.failurePolicy
+  val msgProcessor = BusinessLogic(this, bopReifier)
+  val nodeId = sopReifier.getNextNodeId.unsafePerformIO()
+  log.debug("Node ID is {}.", nodeId.value)
 }
 
 //==========================================================================================
@@ -63,30 +80,18 @@ object Main extends Logger {
     val db = new Db(propsR)
     db.init()
 
-    val sopImpl = new SopImpl(db.slick)
+    try {
 
-    // Config 2
-    val ctx: TaskmanCtx = new TaskmanCtx {
-      override protected def mailProps = props
-      override protected def fromDb = CfgValueReader(sopImpl)
-      override protected implicit def scope = GlobalScope //scopeByNS("taskman")
-      override protected implicit def retrieverS = propsR.retrieverS
-    }
-    log.debug("Config: {}", ctx.loggable)
+      // Config 2
+      val ctx = new TaskmanCtx(db.slick, props, propsR)
+      //    log.debug("Config: {}", ctx.loggable)
 
-    // Taskman
-    // TODO worker/manager ctx
-    val limit = 10
-    val assignmentTrustPeriod = 5 minutes
-    val bopImpl = new BopImpl(ctx)
-    val failurePolicy = Failure.failurePolicy
-    val msgProcessor = BusinessLogic(ctx, bopImpl)
-    val nodeId = sopImpl.getNextNodeId.unsafePerformIO()
+      // Taskman
+      // TODO worker/manager ctx
+      //    log.info("Node ID is {}.", ctx.nodeId.value)
 
-    log.info("Node ID is {}.", nodeId.value)
-
-    // Send an email
-    /*
+      // Send an email
+      /*
     val from: EmailAddr = "whatever@gmail.com".tag
     val to: EmailAddr = "japgolly+test@gmail.com".tag
     val io = bopImpl(SendEmail(
@@ -97,6 +102,8 @@ object Main extends Logger {
     log.info("DONE: {}", r)
     */
 
-    db.shutdown()
+    } finally {
+      ErrorOr.safe(db.shutdown()).leftMap(e => log.error("Error closing database connections.", e.throwable))
+    }
   }
 }

@@ -4,7 +4,6 @@ db.database = usecase_dev
 db.username = usecase_dev
 db.password = uced
 
-mail.from                     = default@props.com
 mail.smtp.host                = smtp.gmail.com
 mail.smtp.socketFactory.port  = 465
 mail.smtp.socketFactory.class = javax.net.ssl.SSLSocketFactory
