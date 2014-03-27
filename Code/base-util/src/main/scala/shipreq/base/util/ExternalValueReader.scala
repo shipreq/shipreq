@@ -21,6 +21,8 @@ object ExternalValueReader {
 
   val GlobalScope = PropScope(identity)
 
+  type ValTest[T] = T => Option[Error]
+
   def scopeByPrefix(prefix: String) =
     PropScope(prefix + _)
 
@@ -35,7 +37,7 @@ object ExternalValueReader {
     getOE(name) map ErrorOr.require_!
 
   def get[T](name: String)(implicit s: PropScope, r: Retriever[T]): ErrorOr[T] =
-    getOE(name) getOrElse errorWhenMissing(name)
+    getOE(name) getOrElse Error(errorMsgWhenMissing(name))
 
   def tryGet[T](name: String, moreNames: String*)(implicit s: PropScope, r: Retriever[T]): ErrorOr[T] = {
     val es = (name #:: moreNames.toStream).map(get(_))
@@ -51,14 +53,49 @@ object ExternalValueReader {
   def tryUse[T](name: String)(f: T => Unit)(implicit s: PropScope, r: Retriever[T]): Unit =
     get(name) foreach f
 
-  def errorMsgWhenThrows(name: String)(implicit s: PropScope): String =
-    s"Error retrieving value: ${s.run(name)}"
+  def valTest[T](f: T => Boolean, errMsg: String): ValTest[T] =
+    t => if (f(t)) None else Some(Error error errMsg)
 
-  def errorMsgWhenMissing(name: String)(implicit s: PropScope): String =
-    s"Value not specified: ${s.run(name)}"
+  def validate[T](name: String, f: String => T)(test: ValTest[T])(implicit s: PropScope): T =
+    _test[T, T](name, f, test)(Some(_), _.throw_!())
 
-  def errorWhenMissing(name: String)(implicit s: PropScope): ErrorOr[Nothing] =
-    Error(errorMsgWhenMissing(name))
+  def validateO[T](name: String, f: String => Option[T])(test: ValTest[T])(implicit s: PropScope): Option[T] =
+    _test[T, Option[T]](name, f, test)(identity, _.throw_!())
+
+  def test[T](name: String, f: String => ErrorOr[T])(test: ValTest[T])(implicit s: PropScope): ErrorOr[T] =
+    _test[T, ErrorOr[T]](name, f, test)(_.toOption, _.toErrorOr)
+
+  def testO[T](name: String, f: String => Option[ErrorOr[T]])(test: ValTest[T])(implicit s: PropScope): Option[ErrorOr[T]] =
+    _test[T, Option[ErrorOr[T]]](name, f, test)(_.flatMap(_.toOption), e => Some(e.toErrorOr))
+
+  private def _test[T, R](name: String, f: String => R, test: ValTest[T])
+                         (getTestable: R => Option[T], onTestFail: Error => R)
+                         (implicit s: PropScope): R = {
+    val r = f(name)
+    getTestable(r) match {
+      case None => r
+      case Some(t) =>
+        testVal(name, test)(s)(t) match {
+          case -\/(err) => onTestFail(err)
+          case \/-(_) => r
+        }
+    }
+  }
+
+  private def testVal[T](name: String, test: ValTest[T])(implicit s: PropScope): T => ErrorOr[T] =
+    v => test(v) match {
+      case Some(err) => err.annotate(errorMsgValueTestFails(name, v)).toErrorOr
+      case None      => ErrorOr(v)
+    }
+
+  private def errorMsgValueTestFails(name: String, v: Any)(implicit s: PropScope): String =
+    s"[${s run name}] Illegal value of '$v'."
+
+  private def errorMsgWhenThrows(name: String)(implicit s: PropScope): String =
+    s"[${s run name}] Error occurred retrieving value."
+
+  private def errorMsgWhenMissing(name: String)(implicit s: PropScope): String =
+    s"[${s run name}] Value not specified."
 }
 
 // =====================================================================================================================
