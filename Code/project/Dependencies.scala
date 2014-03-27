@@ -57,6 +57,11 @@ object Deps {
     val all  = core ++ web
   }
 
+  object Akka extends Group("2.3.0", "com.typesafe.akka") {
+    val actor   = dd("akka-actor") ++ dd("akka-slf4j")
+    val testkit = dd("akka-testkit")
+  }
+
   val javaMail    :MS = "com.sun.mail"                % "javax.mail"           % "1.5.1"
   val jodaTime    :MS = "joda-time"                   % "joda-time"             % "2.3" ++
                         "org.joda"                    % "joda-convert"          % "1.2"
