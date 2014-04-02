@@ -1,21 +1,12 @@
 package com.beardedlogic.shipreq.taskman
-//
+
 //import akka.actor.{ActorRef, Actor, Props, ActorLogging}
-//import com.beardedlogic.shipreq.taskman.CrossActorMessages.{HaveSomeWork, GimmeWork}
-//import shipreq.base.db.DbTemplate
-//import com.googlecode.flyway.core.Flyway
-//import java.util.Properties
-//import shipreq.base.util.{JPropertiesValueReader, ExternalValueReader}
-//import java.util.regex.Pattern
-//import com.jolbox.bonecp.hooks.{AbstractConnectionHook, ConnectionHook}
-//import com.jolbox.bonecp.ConnectionHandle
 //
 //object CrossActorMessages {
-//
 //  case object GimmeWork
 //  case object HaveSomeWork
-//
 //}
+//import CrossActorMessages._
 //
 //class Source extends Actor with ActorLogging {
 //  override def preStart() = {    log.info("STARTED!")  }
@@ -26,10 +17,9 @@ package com.beardedlogic.shipreq.taskman
 //    case GimmeWork =>
 //      log.info("Checking for work...")
 ////      if (rnd.nextBoolean())
-//      (1 to 10).foreach(_ =>
+//      (1 to 100).foreach(_ =>
 //        sender() ! HaveSomeWork
 //      )
-//
 //  }
 //}
 //
@@ -55,7 +45,7 @@ package com.beardedlogic.shipreq.taskman
 //
 //  override def receive = {
 //    case PollForWork =>
-//      log.info("")
+//      log.info("Polling.......")
 //      source ! GimmeWork
 //    case HaveSomeWork =>
 //      log.info("Got some work!!")
@@ -65,47 +55,16 @@ package com.beardedlogic.shipreq.taskman
 //}
 //
 //class Worker extends Actor with ActorLogging {
+//  val rnd = new scala.util.Random
 //  override def preStart() = {    log.info("STARTED!")  }
-//  override def receive = {case x => log.info("----> {}", x); Thread.sleep(2000); log.info("<----")}
+//  override def receive = {case x =>
+//    log.info("GOT WORK ----> {}", x)
+//    Thread.sleep(1000 + (rnd.nextLong() % 5000))
+//    log.info("<----")
+//  }
 //}
 //
 //// =======================================================================================================================
-//
-//object MyDb extends DbTemplate {
-//  import shipreq.base.db._
-//
-//  lazy val schema = "awesome"
-//
-//  override protected def establishConnection() = {
-//    val p = new Properties
-//    p.load(getClass.getResourceAsStream("/dev.props"))
-//    val r = JPropertiesValueReader(p)
-//    import r._
-//    new BaseDbConnection(DbTemplate setSearchPath schema)
-//  }
-//
-//  override protected def flywayCfg = DbTemplate setSchema schema
-//
-////  @inline def DataSource = baseConn.DataSource
-//  import baseConn.Slick
-//
-////  object DaoProvider extends DaoProvider {
-////    override def withRawSession[T](f: Session => T): T = Slick.withSession(f)
-////    override protected def rawSession(): Session       = Slick.createSession()
-////  }
-//
-//  def blah() {
-//    import scala.slick.session.Session
-//    import scala.slick.jdbc.{StaticQuery => Q}
-//    import Q.interpolation
-//
-//    Slick.withSession { implicit s: Session =>
-//      val count= sql"SELECT count(1) FROM yay".as[Int].first
-//      println(s"-------- COUNT = $count")
-//    }
-//  }
-//
-//}
 //
 //
 //object Main {
@@ -117,11 +76,6 @@ package com.beardedlogic.shipreq.taskman
 ////  val WorkDispatcher = "work-dispatcher"
 //
 //  def main(args: Array[String]): Unit = {
-//    MyDb.init()
-//    MyDb.blah()
-//  }
-//
-//  def main2(args: Array[String]): Unit = {
 //    val system = ActorSystem("Main")
 //    val workerProps = Props[Worker] //.withDispatcher(WorkDispatcher)
 //    val source = system.actorOf(Props[Source].withDispatcher(DedicatedDispatcher), "source")
@@ -138,3 +92,49 @@ package com.beardedlogic.shipreq.taskman
 //    }
 //  }
 //}
+
+
+
+// || M --[Q.pop]--> W ||
+//  class Manager1 extends Actor with ActorLogging {
+//
+//    // TODO Instead of   || M --[Q.pop]--> W ||
+//    // TODO it should be || M --[avail]--> W, W --[gimme]--> M, M --[Q.pop]--> W ||
+//
+//    implicit def priOrder = shipreq.taskman.server.Manager.PrioritisationOrder
+//
+//    var freeWorkers: Set[ActorRef] = Set.empty
+//    var workQueue: Heap[MsgHeader] = Heap.Empty[MsgHeader]
+//
+//    override def receive = {
+//
+//      case RegisterWorker =>
+//      case WorkerIsFree =>
+//        workQueue.uncons match {
+//          case Some((w,q)) =>
+//            sender() ! w
+//            workQueue = q
+//          case None =>
+//            freeWorkers += sender()
+//        }
+//
+//      case IncomingWorkBatch(inc) =>
+//        workQueue = (workQueue /: inc)((q,w) => q insert w)
+//        freeWorkers.foreach(_ ! WorkersNeeded)
+//        dist()
+//    }
+//
+//    @annotation.tailrec
+//    private def dist(): Unit = {
+//      if (freeWorkers.nonEmpty)
+//        workQueue.uncons match {
+//          case Some((w,q)) =>
+//            freeWorkers.head ! w
+//            workQueue = q
+//            freeWorkers = freeWorkers.tail
+//            dist()
+//          case None =>
+//        }
+//    }
+//  }
+// || M --[avail]--> W, W --[gimme]--> M, M --[Q.pop]--> W ||

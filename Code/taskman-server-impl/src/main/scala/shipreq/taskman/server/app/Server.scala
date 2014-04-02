@@ -1,5 +1,8 @@
 package shipreq.taskman.server.app
 
+import akka.actor.ActorSystem
+import akka.routing.FromConfig
+
 /**
  * Taskman, the Server.
  * Hard-working and magnanimous.
@@ -21,7 +24,22 @@ object Server extends MainTemplate {
   log.info("DONE: {}", r)
   */
 
-      println(ctx)
+      import shipreq.taskman.server.akka._
 
-  }
+      val system = ActorSystem("Taskman")
+      val source = system.actorOf(SourceActor.props, "source")
+      val manager = system.actorOf(ManagerActor.props(source), "manager")
+      val workers = system.actorOf(FromConfig.props(WorkerActor.props(manager)).withDispatcher("work"), "workers")
+      manager.tell(ManagerActor.RegisterWorker, workers)
+      system.awaitTermination()
+    }
+
+//  class Terminator(app: ActorRef) extends Actor with ActorLogging {
+//    context watch app
+//    override def receive = {
+//      case Terminated(_) =>
+//        log.info("Application supervisor has terminated, shutting down...")
+//        context.system.shutdown()
+//    }
+//  }
 }

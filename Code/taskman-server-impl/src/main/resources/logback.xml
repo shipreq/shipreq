@@ -2,10 +2,10 @@
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-			<pattern>%15X{akkaTimestamp} %-5level [%-32logger{32}] {%-34X{akkaSource}} %msg%n</pattern>
+			<pattern>%-5level [%-32logger{32}] {%-30X{akkaSource} @ %-15X{sourceThread}} %msg%n</pattern>
 		</encoder>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
+            <level>DEBUG</level>
         </filter>
 	</appender>
 
@@ -16,7 +16,7 @@
             <maxHistory>60</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>%15X{akkaTimestamp} %-5level [%-40logger{40}] {%-34X{akkaSource} @ %-37X{sourceThread}} %msg%n</pattern>
+            <pattern>%15X{akkaTimestamp} %-5level [%-40logger{40}] {%-30X{akkaSource} @ %-15X{sourceThread}} %msg%n</pattern>
         </encoder>
     </appender>
 
@@ -25,6 +25,7 @@
     <logger name="scala.slick.session" level="INFO" />
     <logger name="com.jolbox.bonecp" level="INFO" />
     <logger name="shipreq" level="DEBUG" />
+    <logger name="akka" level="DEBUG" />
 
     <root>
         <appender-ref ref="STDOUT" />
