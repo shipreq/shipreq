@@ -4,15 +4,13 @@ import org.joda.time.DateTime
 import scalaz.{\/-, ~>}
 import scalaz.effect.{MonadIO, IO}
 import shipreq.base.util.{ErrorTag, ErrorOr}
-import shipreq.taskman.api.{Msg, Priority}
+import shipreq.taskman.api.{MsgId, Msg, Priority}
 
 package object server {
 
   case class NodeId(value: Int) extends AnyVal
 
   case class WorkerId(value: Short) extends AnyVal
-
-  case class MsgId(value: Long) extends AnyVal
 
   case class MsgHeader(id: MsgId, priority: Priority, created: DateTime) {
     // override def toString = s"MsgHeader($id,$p,new DateTime(${created.getMillis}))\n"

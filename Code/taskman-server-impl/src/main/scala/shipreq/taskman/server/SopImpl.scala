@@ -4,7 +4,7 @@ import org.joda.time.Period
 import scala.slick.session.{Database, Session}
 import scalaz.effect.IO
 import shipreq.base.util.ErrorOr
-import shipreq.taskman.api.Priority
+import shipreq.taskman.api.{MsgId, Priority}
 import shipreq.taskman.api.impl.Serialisation
 import Sql.{FailAndAbort, Succeeded}
 

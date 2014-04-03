@@ -63,6 +63,7 @@ object Common {
       clearScreenTask := { println("\033[2J\033[;H") },
       version := s"${fmtTimeNow("yyyyMMdd")}-${gitRevisionShort}${snapshotSuffix}",
       isSnapshot := snapshotSuffix.nonEmpty,
+      shellPrompt in ThisBuild := { (s: State) => Project.extract(s).currentRef.project + "> " },
       javacOptions ++= javacFlags,
       scalaVersion := Deps.Scala.version,
       scalacOptions ++= scalacFlags,

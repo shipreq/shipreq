@@ -10,7 +10,6 @@ import shipreq.webapp.lib.Types._
 import shipreq.webapp.test.T2._
 import shipreq.webapp.test.{MockDaoProvider, TestHelpers}
 import shipreq.webapp.util.NonEmptyTemplate
-import shipreq.taskman.api.Msg.PasswordResetRequested
 
 class ResetPasswordTest extends FunSpec with TestHelpers {
 

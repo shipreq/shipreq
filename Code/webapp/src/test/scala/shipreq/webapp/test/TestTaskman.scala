@@ -6,8 +6,7 @@ import scalaz.Free.FreeC
 import shipreq.webapp.app.DI
 import shipreq.webapp.lib.{TaskmanImpl, TaskmanInterface}
 import shipreq.taskman.FreeEffect._
-import shipreq.taskman.api.Msg
-import shipreq.taskman.api.ApiOp
+import shipreq.taskman.api.{MsgId, Msg, ApiOp}
 import ApiOp._
 
 object TestTaskman {
@@ -24,7 +23,7 @@ class TestTaskman extends TaskmanInterface {
 
   val trans: (ApiOp ~> IOM) = new (ApiOp ~> IOM) {
     def apply[A](c: ApiOp[A]): IOM[A] = c match {
-      case SubmitMsg(t)   => iom{ tasksSubmitted ::= t }
+      case SubmitMsg(t)   => iom{ tasksSubmitted ::= t; null.asInstanceOf[MsgId] }
       case SubmitMsgs(ts) => iom{ tasksSubmitted :::= ts.toList }
       case CfgPut(k, v)   => iom{}
     }

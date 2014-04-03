@@ -8,7 +8,7 @@ import scala.slick.jdbc.{GetResult, SetParameter}
 import scala.slick.session.PositionedParameters
 import shipreq.base.db.SqlHelpers._
 import shipreq.taskman.api.Types._
-import shipreq.taskman.api.{Priority, Msg}
+import shipreq.taskman.api.{MsgId, Msg, Priority}
 
 object Sql {
 

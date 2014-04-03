@@ -12,7 +12,7 @@ object ApiOp {
   /**
    * Submits a Msg to the Taskman server for processing.
    */
-  case class SubmitMsg(m: Msg) extends ApiOp[Unit]
+  case class SubmitMsg(m: Msg) extends ApiOp[MsgId]
 
   /**
    * Submits 0-n Msgs to the Taskman server for processing.
