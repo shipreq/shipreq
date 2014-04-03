@@ -28,7 +28,7 @@ class SingleConnDatabase(s: Session) extends Database {
 trait DatabaseTest extends AroundExample {
   this: Specification =>
 
-  private val dbLog = Logger.forClass(getClass)
+  private lazy val dbLog = Logger.forClass(getClass)
 
   isolated
 
