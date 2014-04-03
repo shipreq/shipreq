@@ -96,11 +96,11 @@ object Worker extends Logger {
       r match {
         case CouldntAssign =>
         case Completed(m) =>
-          log.info("Work completed: {}", m)
+          log.info("Successfully completed: {}", m)
         case WorkerFailed(_, e, f) =>
           // f contains m so no need to print separately
           if (e is Deliberate)
-            log.debug("Worker deliberately failed: {} // {}", e.msg, f, null)
+            log.info("Worker deliberately failed: {} // {}", e.msg, f, null)
           else
             log.warn(s"Worker failed: $f", e.throwable)
         case TaskmanFailed(e, Some(m)) =>

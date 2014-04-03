@@ -25,6 +25,7 @@ object Msg {
   case class DummyMsg(desc: String,
                       processingTimeMs: Long = 0,
                       retryCount: Short = 0,
+                      retryDelaySec: Int = 0,
                       failureMsg: Option[String] = None) extends Msg
 
   // UserChangedPrefs

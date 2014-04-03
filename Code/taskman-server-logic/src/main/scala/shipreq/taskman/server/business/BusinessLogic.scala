@@ -3,7 +3,7 @@ package shipreq.taskman.server.business
 import scalaz.effect.IO
 import shipreq.base.util.{ErrorOr, Error}
 import shipreq.taskman.api.Msg
-import shipreq.taskman.server.{Deliberate, Worker}
+import shipreq.taskman.server.{Deliberate, Deterministic, Worker}
 import shipreq.taskman.server.Worker.MsgProcessor
 
 object BusinessLogic {
@@ -26,14 +26,15 @@ object BusinessLogic {
         case Msg.PasswordResetRequested(addr, url) =>
           email.sendToUser(addr, email.passwordChangeRequest(url))
 
-        case Msg.DummyMsg(desc, processingTimeMs, retryCount, failureMsg) => IO {
+        case Msg.DummyMsg(desc, processingTimeMs, retryCount, _, failureMsg) => IO {
           if (processingTimeMs > 0)
             Thread sleep processingTimeMs
           ErrorOr.tag[Unit](Deliberate)(
-            (md.failureCount < retryCount, failureMsg) match {
-              case (true, _)        => Error(s"Retrying: Failure count (${md.failureCount}) < desired ($retryCount).")
-              case (false, Some(e)) => Error(e)
-              case (false, None)    => Worker.nopResult
+            if (md.failureCount < retryCount)
+              Error(s"Failure count (${md.failureCount}) < desired ($retryCount).")
+            else failureMsg match {
+              case Some(e) => ErrorOr.tag(Deterministic)(Error(e))
+              case None    => Worker.nopResult
             }
           )
         }

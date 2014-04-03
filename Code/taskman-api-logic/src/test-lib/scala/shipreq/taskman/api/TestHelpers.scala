@@ -87,9 +87,10 @@ object TestHelpers {
         desc             <- arbitrary[String]
         processingTimeMs <- arbitrary[Long]
         retryCount       <- arbitrary[Short]
+        retryDelaySec    <- arbitrary[Int]
         failureMsg       <- arbitrary[Option[String]]
       } yield
-        M.DummyMsg(desc, processingTimeMs, retryCount, failureMsg)
+        M.DummyMsg(desc, processingTimeMs, retryCount, retryDelaySec, failureMsg)
   }
 
 //  def genMsgOfEachType: Gen[List[Msg]] =

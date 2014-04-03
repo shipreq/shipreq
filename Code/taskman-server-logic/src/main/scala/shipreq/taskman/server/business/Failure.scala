@@ -1,11 +1,12 @@
 package shipreq.taskman.server.business
 
 import org.joda.time.Period
+import shipreq.base.util.jodatime.JodaTimeHelpers._
+import shipreq.taskman.api.Msg.DummyMsg
 import shipreq.taskman.api.Priority
 import shipreq.taskman.server.{Deliberate, Deterministic, Sop}
 import shipreq.taskman.server.Sop._
 import shipreq.taskman.server.Worker.{FailurePolicy, FailureResponse, FailureCtx}
-import shipreq.base.util.jodatime.JodaTimeHelpers._
 
 object Failure {
 
@@ -69,11 +70,24 @@ object Failure {
     else
       NotifySupportWorkerFailed(ctx.m, ctx.err)
 
+  val abortAndDontNotify: FailurePolicy =
+    ctx => FailureResponse(MsgFailedAbort(ctx.m), Nil)
+
   val abortAndNotify: FailurePolicy =
     ctx => FailureResponse(MsgFailedAbort(ctx.m), notifySupport(ctx) :: Nil)
 
   def abortDeterministicErrors: Rule =
     ifO(_.err is Deterministic, abortAndNotify)
+
+  def dummyMsgRules: Rule =
+    ctx => ctx.m.msg match {
+      case m: DummyMsg =>
+        if (ctx.err is Deterministic)
+          Some(abortAndDontNotify(ctx))
+        else
+          Some(retryResponse(ctx)(m.retryDelaySec sec))
+      case _ => None
+    }
 
   val impatientRetries: RetryRule =
     chooseByFailureCount(
@@ -121,5 +135,5 @@ object Failure {
     priorityBasedRetryRule =<< retryResponse =<< addOpF(notifySupport)
 
   val failurePolicy: FailurePolicy =
-    abortDeterministicErrors ?>>? retryAndNotify ?>> abortAndNotify
+    dummyMsgRules ?>>? abortDeterministicErrors ?>>? retryAndNotify ?>> abortAndNotify
 }
