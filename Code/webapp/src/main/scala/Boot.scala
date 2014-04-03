@@ -62,8 +62,7 @@ class Boot {
 
   def initTaskman(): Unit =
     DI.DaoProvider.vend.withSession(s =>
-      DI.Taskman.vend.run(
-        Taskman.updateCfg, s.session))
+      DI.Taskman.vend.runAll(s.session, Taskman.updateCfg: _*))
 
   def preloadTemplates(): Unit = {
     snippet.DynModal

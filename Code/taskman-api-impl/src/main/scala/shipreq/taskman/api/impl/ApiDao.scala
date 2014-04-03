@@ -7,7 +7,7 @@ import Serialisation.Ser
 private[api] class ApiSql(prefix: String) {
   import shipreq.base.db.SqlHelpers._
   import scala.slick.jdbc.GetResult
-  import scala.slick.jdbc.StaticQuery.{query, queryNA, update, updateNA}
+  import scala.slick.jdbc.StaticQuery.{query, update}
 
   implicit val GR_JsonMsg = GR_Json[Msg]
   implicit val SP_JsonMsg = SP_Json[Msg]
@@ -20,7 +20,9 @@ private[api] class ApiSql(prefix: String) {
     s"select ${prefix}cfg_update(?::VARCHAR, ?::TEXT)")
 }
 
-private[api] class ApiDao(ctx: TaskmanApiImpl.GlobalContext, session: Session) {
+// =====================================================================================================================
+
+private[api] class ApiDao(ctx: TaskmanApi.Context, session: Session) {
   import ctx.sql._
 
   implicit def _session = session

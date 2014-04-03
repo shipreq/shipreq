@@ -7,7 +7,7 @@ import java.util.Properties
 import scala.slick.session.{Database, Session}
 import scala.slick.jdbc.SQLInterpolation
 import shipreq.base.util._
-import shipreq.base.db.{DatabaseConnection, DbTemplate}
+import shipreq.base.db.{SingleConnDatabase, DatabaseConnection, DbTemplate}
 
 object TestDb extends DbTemplate {
   val runMode = RunMode.Test
@@ -18,11 +18,6 @@ object TestDb extends DbTemplate {
   def slick = _slick
 
   override protected def preInit() = wipe_!()
-}
-
-class SingleConnDatabase(s: Session) extends Database {
-  override def createConnection() = s.conn
-  override def withSession[T](f: Session => T): T = f(s)
 }
 
 trait DatabaseTest extends AroundExample {

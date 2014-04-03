@@ -3,32 +3,20 @@ package shipreq.taskman.server
 import org.specs2.matcher.ThrownExpectations
 import org.specs2.mutable.Specification
 import org.specs2.time.NoTimeConversions
-import scalaz.effect.IO
 import shipreq.base.test.db.specs2.DatabaseTest
 import shipreq.base.util.jodatime.JodaTimeHelpers._
 import shipreq.taskman.api.Types._
-import shipreq.taskman.api.impl.TaskmanApiImpl
 import shipreq.taskman.api.Msg.ReRegistrationAttempted
 import shipreq.taskman.api.ApiOp.SubmitMsg
-import shipreq.taskman.api.ApiOp
 import shipreq.taskman.server.Sop._
-import shipreq.taskman.FreeEffect
 import Sql._
 
-class WorkflowTest extends Specification with DatabaseTest with NoTimeConversions with ThrownExpectations {
+class WorkflowTest extends Specification with DatabaseTest with NoTimeConversions with ThrownExpectations
+    with ServerImplTestHelpers {
 
   val n = NodeId(123)
   val w = WorkerId(666)
   val defaultMsg = ReRegistrationAttempted("haha cool".tag)
-
-  def apiOpReifier = TaskmanApiImpl.reify(new TaskmanApiImpl.GlobalContext(None), session)
-  def sopReifier = new SopImpl(db)
-
-  def reify[A](op: ApiOp[A]): IO[A] = FreeEffect.compile(FreeEffect.opLiftFC(op), apiOpReifier)
-  def reify[A](op: Sop[A]): IO[A] = sopReifier(op)
-
-  def run[A](op: ApiOp[A]): A = reify(op).unsafePerformIO()
-  def run[A](op: Sop[A]): A = reify(op).unsafePerformIO()
 
   val find = GetMsgsAssignNode(n, 10, 1 minutes, None)
 

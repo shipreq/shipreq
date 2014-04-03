@@ -1,11 +1,10 @@
 package shipreq.webapp.lib
 
 import scala.slick.session.Session
-import scalaz.Free.FreeC
-import shipreq.webapp.app.AppConfig
-import shipreq.taskman.FreeEffect._
-import shipreq.taskman.api.impl.TaskmanApiImpl._
+import shipreq.base.db.SingleConnDatabase
+import shipreq.taskman.api.impl.TaskmanApi
 import shipreq.taskman.api.{MsgId, Msg, ApiOp}
+import shipreq.webapp.app.AppConfig
 import ApiOp._
 
 object Taskman {
@@ -13,25 +12,30 @@ object Taskman {
   import shipreq.webapp.app.{AppSiteMap => SM}
   import SM.Implicits._
 
-  def updateCfg: FreeC[ApiOp, Unit] = (
-    CfgPut(K.appName,  AppConfig.AppName) >>
-    CfgPut(K.homeUrl,  SM.Home.absoluteUrl) >>
+  def updateCfg: List[ApiOp[Unit]] = List(
+    CfgPut(K.appName,  AppConfig.AppName),
+    CfgPut(K.homeUrl,  SM.Home.absoluteUrl),
     CfgPut(K.loginUrl, SM.Login.absoluteUrl)
   )
 }
 
 object TaskmanImpl extends TaskmanInterface {
+  val ctx = TaskmanApi.Context(Some(AppConfig.TaskmanSchema))
 
-  val ctx = new GlobalContext(Some(AppConfig.TaskmanSchema))
+  override def run[A](s: Session, op: ApiOp[A]): A =
+    new TaskmanApi(ctx, SingleConnDatabase(s)).apply(op).unsafePerformIO()
 
-  override def run[A](ops: FreeC[ApiOp, A], s: Session): A =
-    compile(ops, reify(ctx, s)).unsafePerformIO()
+  override def runAll(s: Session, ops: ApiOp[_]*): Unit = {
+    val reify = new TaskmanApi(ctx, SingleConnDatabase(s))
+    for (op <- ops)
+      reify(op).unsafePerformIO()
+  }
 }
 
 trait TaskmanInterface {
+  def run[A](s: Session, op: ApiOp[A]): A
+  def runAll(s: Session, ops: ApiOp[_]*): Unit = ops.foreach(op => run(s, op))
 
-  def run[A](ops: FreeC[ApiOp, A], s: Session): A
-
-  def submitMsg(m: Msg, s: Session): MsgId = run(SubmitMsg(m), s)
-  def submitMsgs(ms: Seq[Msg], s: Session): Unit = run(SubmitMsgs(ms), s)
+  def submitMsg(m: Msg, s: Session): MsgId       = run(s, SubmitMsg(m))
+  def submitMsgs(ms: Seq[Msg], s: Session): Unit = run(s, SubmitMsgs(ms))
 }

@@ -1,9 +1,0 @@
-#!/bin/bash
-cd "$(dirname "$0")"
-
-tmp=/tmp/$(date +%Y%m%d-%H%M%S)-$$
-[ -e src/main/scala/scalaz ] && zip -9rm $tmp src/main/scala/scalaz
-
-s=/home/golly/projects/my_forks/scalaz
-mkdir -p src/main/scala/scalaz
-ln -s $s/core/src/main/scala/scalaz/{Coyoneda,Free}.scala src/main/scala/scalaz/.
