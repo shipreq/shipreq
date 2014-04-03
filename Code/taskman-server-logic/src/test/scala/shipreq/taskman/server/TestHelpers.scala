@@ -7,7 +7,7 @@ import scalaz.Lens.lensg
 import scalaz.Endo
 import scalaz.effect.IO
 import shipreq.base.test.MockOpTransformer
-import shipreq.taskman.api.Priority
+import shipreq.taskman.api.{MsgId, Priority}
 import shipreq.taskman.api.Types._
 import shipreq.taskman.api.Msg.ReRegistrationAttempted
 import Sop._

@@ -5,7 +5,7 @@ import scalaz.Free.FreeC
 import shipreq.webapp.app.AppConfig
 import shipreq.taskman.FreeEffect._
 import shipreq.taskman.api.impl.TaskmanApiImpl._
-import shipreq.taskman.api.{Msg, ApiOp}
+import shipreq.taskman.api.{MsgId, Msg, ApiOp}
 import ApiOp._
 
 object Taskman {
@@ -32,6 +32,6 @@ trait TaskmanInterface {
 
   def run[A](ops: FreeC[ApiOp, A], s: Session): A
 
-  def submitMsg(m: Msg, s: Session) = run(SubmitMsg(m), s)
-  def submitMsgs(ms: Seq[Msg], s: Session) = run(SubmitMsgs(ms), s)
+  def submitMsg(m: Msg, s: Session): MsgId = run(SubmitMsg(m), s)
+  def submitMsgs(ms: Seq[Msg], s: Session): Unit = run(SubmitMsgs(ms), s)
 }

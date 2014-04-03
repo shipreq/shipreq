@@ -4,7 +4,7 @@ import org.specs2.mutable._
 import org.specs2.ScalaCheck
 import org.joda.time.Period
 import scalaz.effect.IO
-import shipreq.taskman.api.Priority
+import shipreq.taskman.api.{MsgId, Priority}
 import shipreq.base.test.MockOpTransformer1
 import Manager._
 import Sop._

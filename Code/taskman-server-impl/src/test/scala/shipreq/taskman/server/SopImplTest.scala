@@ -11,7 +11,7 @@ import shipreq.base.util.jodatime.JodaTimeHelpers._
 import shipreq.base.util.ScalaExt._
 import shipreq.taskman.api.impl.Serialisation
 import shipreq.taskman.api.Types._
-import shipreq.taskman.api.{MsgType, Msg, Priority}
+import shipreq.taskman.api.{MsgId, MsgType, Msg, Priority}
 import Msg.ReRegistrationAttempted
 import Sql._
 

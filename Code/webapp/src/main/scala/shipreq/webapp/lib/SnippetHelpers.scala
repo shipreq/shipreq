@@ -172,7 +172,7 @@ trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with Logger 
     case None => respondImmediately(RedirectResponse(AppSiteMap.Login.relativeUrl))
   }
 
-  def submitMsg(m: Msg, dao: DaoS): Unit =
+  def submitMsg(m: Msg, dao: DaoS) =
     taskman.submitMsg(m, dao.session)
 }
 
