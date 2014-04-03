@@ -1,19 +1,18 @@
 package shipreq.taskman.server
 
 import org.joda.time.Period
-import scala.collection.immutable.TreeSet
-import scalaz.{~>, State, StateT}
+import scalaz.{Heap, State, StateT}
 import scalaz.effect.IO
 import shipreq.taskman.api.Priority
 import Sop._
 
 object Manager {
 
-  type JobQueue       = TreeSet[MsgHeader]
+  type JobQueue       = Heap[MsgHeader]
   type JobQueueS[A]   = State[JobQueue, A]
   type JobQueueSIO[A] = StateT[IO, JobQueue, A]
 
-  object PrioritisationOrder extends Ordering[MsgHeader] {
+  implicit object PrioritisationOrder extends Ordering[MsgHeader] {
     override def compare(x: MsgHeader, y: MsgHeader): Int = {
       val a = y.priority.value - x.priority.value
       if (a != 0) a else {
@@ -24,17 +23,20 @@ object Manager {
     }
   }
 
-  def emptyQueue = TreeSet.empty[MsgHeader](PrioritisationOrder)
+  implicit val PrioritisationOrderZ = scalaz.Order.fromScalaOrdering[MsgHeader]
+
+  def emptyQueue = Heap.Empty[MsgHeader]
 
   def addToQueue(ms: Seq[MsgHeader]): JobQueueS[Unit] =
-    State.modify(_ ++ ms)
+    State.modify(s =>
+      (s /: ms)((q, m) => q insert m))
 
   val getQueueStatus: JobQueueS[Option[(Priority, Int)]] = // TODO cache?
     State.gets(q =>
       if (q.isEmpty)
         None
       else
-        Some((q.head.priority, q.size))
+        Some((q.minimum.priority, q.size))
     )
 
   val popJob: JobQueueS[Option[MsgHeader]] =
@@ -42,7 +44,7 @@ object Manager {
       if (q.isEmpty)
         (q, None)
       else
-        (q.tail, q.headOption)
+        (q.deleteMin, Some(q.minimum))
     )
 
   case class Reified(limit: Int, assignmentTrustPeriod: Period)(implicit node: NodeId, opToIo: SopReifier) {

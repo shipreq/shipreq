@@ -4,7 +4,7 @@ import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary._
 import org.joda.time.{Period, DateTime}
 import scalaz.Lens.lensg
-import scalaz.Endo
+import scalaz.{Heap, Order, Endo}
 import scalaz.effect.IO
 import shipreq.base.test.MockOpTransformer
 import shipreq.taskman.api.{MsgId, Priority}
@@ -15,6 +15,12 @@ import Manager._
 import Worker._
 
 object TestHelpers {
+
+  implicit class HeapExt[A: Order](val value: Heap[A]) {
+    def -(a: A) = value.filter(_ != a)
+    def +(a: A) = value insert a
+    def ++(as: Seq[A]) = (value /: as)((q,a) => q + a)
+  }
 
   final def endoMod[A](f: A => Unit) = Endo[A](a => {f(a); a})
 
@@ -98,5 +104,6 @@ class MockSops extends MockOpTransformer[Sop, IO] {
     case _: MsgFailedRetry            => msgFailedRetryR.pop()
     case _: NotifySupportWorkerFailed =>
     case _: NotifySupportTaskmanError =>
+    case    Nop                       =>
   }
 }

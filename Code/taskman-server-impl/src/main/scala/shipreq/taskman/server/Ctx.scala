@@ -1,7 +1,7 @@
 package shipreq.taskman.server
 
 import java.util.Properties
-import org.joda.time.Period
+import org.joda.time.{DateTime, Period}
 import scala.slick.session.Database
 import shipreq.base.db.{DatabaseConnection, DbTemplate}
 import shipreq.base.util.ExternalValueReader._
@@ -10,6 +10,7 @@ import shipreq.base.util.jodatime.JodaTimeValueRetrievers
 import shipreq.taskman.api.CfgKeys
 import shipreq.taskman.api.Types._
 import shipreq.taskman.server.business.{BusinessLogic, Failure, Email}
+import scalaz.effect.IO
 
 //==========================================================================================
 
@@ -26,7 +27,7 @@ class Db(props: StringBasedValueReader) extends DbTemplate {
 class TaskmanCtx(db: Database, mailProps: Properties, evr: StringBasedValueReader)
   extends Email.Ctx with EmailImpl.Ctx with BopImpl.Ctx with Logger {
 
-  val sopReifier = new SopImpl(db)
+  implicit val sopReifier = new SopImpl(db)
 
   protected def fromDb = CfgValueReader(sopReifier)
   protected implicit def scope: PropScope = scopeByNS("taskman")
@@ -67,9 +68,11 @@ class TaskmanCtx(db: Database, mailProps: Properties, evr: StringBasedValueReade
     .mkString
   )
 
-  val bopReifier = new BopImpl(this)
-  val failurePolicy = Failure.failurePolicy
-  val msgProcessor = BusinessLogic(this, bopReifier)
-  val nodeId = sopReifier.getNextNodeId.unsafePerformIO()
+  implicit val bopReifier = new BopImpl(this)
+  implicit val failurePolicy = Failure.failurePolicy
+  implicit val msgProcessor = BusinessLogic(this, bopReifier)
+  implicit val clock = IO(new DateTime)
+
+  implicit val nodeId = sopReifier.getNextNodeId.unsafePerformIO()
   log.info("Node ID is {}.", nodeId.value)
 }

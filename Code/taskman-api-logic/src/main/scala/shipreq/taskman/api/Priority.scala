@@ -20,6 +20,8 @@ object Priority {
        | _: PasswordResetRequested
               => UserWaiting
 
+    case _: DummyMsg => Medium
+
     case _: RegistrationCompleted
        | _: LandingPageHit
               => Low

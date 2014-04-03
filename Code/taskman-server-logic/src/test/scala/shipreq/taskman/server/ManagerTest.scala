@@ -19,24 +19,31 @@ class ManagerTest extends Specification with ScalaCheck {
 
   val eg4 = emptyQueue + c + a + d + b
 
+  def haveItems(ms: MsgHeader*) = be_==(ms.toList) ^^ { (q: JobQueue) => q.toList }
+
   "JoeQueue" should {
     "prefer highest priority, then oldest" in {
-      eg4.toList ==== List(a,b,c,d)
+      eg4 must haveItems(a,b,c,d)
     }
 
     "addToQueue" ! prop { (q: JobQueue, ms: List[MsgHeader]) =>
-      addToQueue(ms).run(q)._1 must containAllOf(q.toSeq) and containAllOf(ms.distinct)
+      addToQueue(ms).run(q)._1.toList must containAllOf(q.toList) and containAllOf(ms.distinct)
     }
 
     "getQueueStatus" in {
       getQueueStatus.run(eg4) ==== (eg4, Some((Priority(6), 4)))
     }
 
-    "popJob" ! prop { (q: JobQueue) =>
-      (for (a <- popJob; b <- popJob) yield (a,b)).run(q) match {
-        case (r, (None, None))       => r == q && q.isEmpty
-        case (r, (Some(j), None))    => r == q - j
-        case (r, (Some(j), Some(k))) => r == q - j - k && j.priority.value >= k.priority.value
+    "popJob" ! prop {
+      (q: JobQueue) => {
+        val (r,(a,b)) = (for (x <- popJob; y <- popJob) yield (x,y)).run(q)
+        (r.size == (q.size - 2).max(0)) :| "Size" &&
+        ((a.toList ++ b.toList ++ r.toList) == q.toList) :| "Reconstruction" && (
+        (a,b) match {
+          case (Some(j), Some(k)) => (j.priority.value >= k.priority.value) :| "Wrong order"
+          case (None, Some(_))    => false :| "No-pop followed by pop??"
+          case _                  => true
+        })
       }
     }
   }
@@ -49,7 +56,7 @@ class ManagerTest extends Specification with ScalaCheck {
       val (q, r) = Reified(20, Period days 3).pollTask(emptyQueue).unsafePerformIO()
 
       "Queue should have new msgs" in {
-        q ==== emptyQueue + d
+        q must haveItems(d)
       }
 
       "Queue status be unspecified" in {
@@ -62,7 +69,7 @@ class ManagerTest extends Specification with ScalaCheck {
       val (q, r) = Reified(20, Period days 3).pollTask(emptyQueue + a).unsafePerformIO()
 
       "Queue should have new msgs" in {
-        q ==== emptyQueue + a + c + d
+        q must haveItems(a, c, d)
       }
 
       "Queue status should be provided" in {

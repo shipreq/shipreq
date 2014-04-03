@@ -1,8 +1,6 @@
 package shipreq.taskman.server
 
 import org.specs2.mutable._
-import scalaz.~>
-import scalaz.effect.IO
 import Sop._
 import Worker._
 import TestHelpers._
@@ -10,7 +8,7 @@ import TestHelpers._
 class WorkerTest extends Specification {
 
   def test(opToIo: SopReifier, fp: FailurePolicy, mp: MsgProcessor): WorkResult =
-    Worker.Reified(WorkerId(7))(NodeId(4), opToIo, clockReal, fp, mp).process(mh_1).unsafePerformIO()
+    Worker.Reified()(NodeId(4), WorkerId(7), opToIo, clockReal, fp, mp).process(mh_1).unsafePerformIO()
 
   "Worker.Reified" >> {
 
@@ -18,7 +16,7 @@ class WorkerTest extends Specification {
       val mockSop = assignWorkerAllow(new MockSops)
       val r = test(mockSop, fpRetry, mpNop)
       "Result" in {
-        r ==== WorkResult.Completed
+        r must beLike{ case _: WorkResult.Completed => ok }
       }
       "Marks msg as complete" in {
         mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[MarkMsgComplete])
@@ -29,7 +27,7 @@ class WorkerTest extends Specification {
       val mockSop = assignWorkerAllow(new MockSops)
       val r = test(mockSop, fpRetry, mpCrash)
       "Result" in {
-        r ==== WorkResult.WorkerFailed
+        r must beLike{ case _: WorkResult.WorkerFailed => ok }
       }
       "Schedules retry" in {
         mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[MsgFailedRetry])
@@ -40,7 +38,7 @@ class WorkerTest extends Specification {
       val mockSop = assignWorkerAllow(new MockSops)
       val r = test(mockSop, fpAbort, mpCrash)
       "Result" in {
-        r ==== WorkResult.WorkerFailed
+        r must beLike{ case _: WorkResult.WorkerFailed => ok }
       }
       "Aborts job" in {
         mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[MsgFailedAbort])
@@ -51,7 +49,7 @@ class WorkerTest extends Specification {
       val mockSop = assignWorkerAllow(new MockSops)
       val r = test(mockSop, fpAbortSupport, mpCrash)
       "Result" in {
-        r ==== WorkResult.WorkerFailed
+        r must beLike{ case _: WorkResult.WorkerFailed => ok }
       }
       "Aborts job & notifies support" in {
         mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[MsgFailedAbort], classOf[NotifySupportWorkerFailed])
@@ -62,7 +60,7 @@ class WorkerTest extends Specification {
       val mockSop = assignWorkerCrash(new MockSops)
       val r = test(mockSop, fpRetry, mpCrash)
       "Result" in {
-        r ==== WorkResult.TaskmanFailed
+        r must beLike{ case _: WorkResult.TaskmanFailed => ok }
       }
       "Notifies support" in {
         mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[NotifySupportTaskmanError])
@@ -73,7 +71,7 @@ class WorkerTest extends Specification {
       val mockSop = (msgCompleteCrash compose assignWorkerAllow)(new MockSops)
       val r = test(mockSop, fpRetry, mpNop)
       "Result" in {
-        r ==== WorkResult.TaskmanFailed
+        r must beLike{ case _: WorkResult.TaskmanFailed => ok }
       }
       "Notifies support" in {
         mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[MarkMsgComplete], classOf[NotifySupportTaskmanError])

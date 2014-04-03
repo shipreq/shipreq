@@ -57,30 +57,35 @@ class SopImpl(db: Database) extends SopReifier {
   import Sop._
   import SopImpl._
 
-  private[this] def io[A](f: Dao => A): IO[A] =
+  val nop = IO(())
+
+  private[this] def ioD[A](f: Dao => A): IO[A] =
     IO(db.withSession(implicit s => f(new Dao())))
 
-  def getNextNodeId = io(_.getNextNodeId)
+  def getNextNodeId = ioD(_.getNextNodeId)
 
   override def apply[A](op: Sop[A]): IO[A] = op match {
 
     case GetMsgsAssignNode(node, limit, trustPeriod, queued) =>
-      io(_.getMsgsAssignNode(node, limit, trustPeriod, queued))
+      ioD(_.getMsgsAssignNode(node, limit, trustPeriod, queued))
 
     case GetMsgAssignWorker(node, worker, hdr) =>
-      io(_.getMsgAssignWorker(node, worker, hdr))
+      ioD(_.getMsgAssignWorker(node, worker, hdr))
 
     case MsgFailedRetry(m, delay) =>
-      io(_.failAndRetry(m, delay))
+      ioD(_.failAndRetry(m, delay))
 
     case MarkMsgComplete(m) =>
-      io(_.archiveMsg(m, Succeeded))
+      ioD(_.archiveMsg(m, Succeeded))
 
     case MsgFailedAbort(m) =>
-      io(_.archiveMsg(m, FailAndAbort))
+      ioD(_.archiveMsg(m, FailAndAbort))
 
     case CfgGet(k) =>
-      io(_ cfgGet k)
+      ioD(_ cfgGet k)
+
+    case Nop =>
+      nop
 
     /*
     case class NotifySupportWorkerFailed(m: MsgDetail, e: Error) extends Sop[Unit]

@@ -32,6 +32,13 @@ package object server {
    */
   case object Deterministic extends ErrorTag
 
+  /**
+   * Indication that an error is deliberate.
+   * Deliberate errors will likely only occur during testing and diagnosis.
+   * Support will not be notified when deliberate errors occur.
+   */
+  case object Deliberate extends ErrorTag
+
   type IOE[A] = IO[ErrorOr[A]]
 
   type SopReifier = Sop ~> IO

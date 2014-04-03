@@ -40,4 +40,6 @@ object Sop {
 
   case class NotifySupportWorkerFailed(m: MsgDetail, e: Error) extends Sop[Unit]
   case class NotifySupportTaskmanError(e: Error, m: Option[MsgDetail]) extends Sop[Unit]
+
+  case object Nop extends Sop[Unit]
 }

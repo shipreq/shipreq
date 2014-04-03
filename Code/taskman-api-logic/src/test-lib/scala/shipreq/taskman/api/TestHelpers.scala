@@ -81,6 +81,15 @@ object TestHelpers {
         newsletter <- arbitrary[Boolean]
       } yield
         M.LandingPageHit(email, name, msg, newsletter)
+
+    case T.DummyMsg =>
+      for {
+        desc             <- arbitrary[String]
+        processingTimeMs <- arbitrary[Long]
+        retryCount       <- arbitrary[Short]
+        failureMsg       <- arbitrary[Option[String]]
+      } yield
+        M.DummyMsg(desc, processingTimeMs, retryCount, failureMsg)
   }
 
 //  def genMsgOfEachType: Gen[List[Msg]] =

@@ -32,16 +32,26 @@ trait DatabaseTest extends AroundExample {
 
   def db: Database = new SingleConnDatabase(session)
 
+  def wrapTestsInTransaction = true
+
   override def around[T: AsResult](t: => T): Result = {
-    TestDb.init()
-    TestDb.slick.withTransaction(s => {
+    def go(s: Session)(rollback: => Unit): Result = {
       _session = Some(s)
       try AsResult(t)
       finally {
-        try s.rollback() catch {case e: Throwable => dbLog.warn("Rollback failed.", e)}
+        rollback
         _session = None
       }
-    })
+    }
+    TestDb.init()
+    wrapTestsInTransaction match {
+      case true =>
+        TestDb.slick.withTransaction(s =>
+          go(s)(try s.rollback() catch { case e: Throwable => dbLog.warn("Rollback failed.", e) })
+        )
+      case false =>
+        TestDb.slick.withSession(s => go(s)())
+    }
   }
 
   implicit def sqlInterpolation(s: StringContext) = new SQLInterpolation(s)

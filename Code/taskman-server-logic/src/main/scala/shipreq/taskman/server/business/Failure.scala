@@ -2,7 +2,7 @@ package shipreq.taskman.server.business
 
 import org.joda.time.Period
 import shipreq.taskman.api.Priority
-import shipreq.taskman.server.{Sop, Deterministic}
+import shipreq.taskman.server.{Deliberate, Deterministic, Sop}
 import shipreq.taskman.server.Sop._
 import shipreq.taskman.server.Worker.{FailurePolicy, FailureResponse, FailureCtx}
 import shipreq.base.util.jodatime.JodaTimeHelpers._
@@ -64,7 +64,10 @@ object Failure {
     FailureResponse(MsgFailedRetry(ctx.m, delay), Nil)
 
   def notifySupport(ctx: FailureCtx): Sop[Unit] =
-    NotifySupportWorkerFailed(ctx.m, ctx.err)
+    if (ctx.err is Deliberate)
+      Nop
+    else
+      NotifySupportWorkerFailed(ctx.m, ctx.err)
 
   val abortAndNotify: FailurePolicy =
     ctx => FailureResponse(MsgFailedAbort(ctx.m), notifySupport(ctx) :: Nil)

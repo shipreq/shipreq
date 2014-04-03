@@ -145,7 +145,7 @@ object ShipReq extends Build {
           .dependsOn(baseUtil) // Stupid IDEA auto-import needs this
 
         override def deps =
-          jodaTime ++ testScope(specs2)
+          jodaTime ++ logback ++ testScope(specs2)
       }
 
       // Server: Schema -------------------------------------
