@@ -18,6 +18,7 @@ import shipreq.taskman.server.{ServerImplTestHelpers, TaskmanCtx}
 
 class AkkaTest extends Specification with DatabaseTest with NoTimeConversions with Logger with ServerImplTestHelpers {
 
+  override def mutex = dbMutexW
   override def wrapTestsInTransaction = false
 
   implicit val GR_ArchiveIntent: GetResult[ArchiveIntent] =
