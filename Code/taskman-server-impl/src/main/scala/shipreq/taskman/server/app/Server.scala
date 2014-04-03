@@ -2,7 +2,9 @@ package shipreq.taskman.server.app
 
 import akka.actor.ActorSystem
 import akka.routing.FromConfig
-
+import shipreq.base.util.Logger
+import shipreq.taskman.server.akka._
+import shipreq.taskman.server.TaskmanCtx
 /**
  * Taskman, the Server.
  * Hard-working and magnanimous.
@@ -10,29 +12,28 @@ import akka.routing.FromConfig
 object Server extends MainTemplate {
 
   def main(args: Array[String]): Unit =
-    withTaskmanCtx { ctx =>
+    withTaskmanCtx(ctx =>
+      run(ctx)(_.system.awaitTermination()))
 
-    // Send an email
-    /*
-  val from: EmailAddr = "whatever@gmail.com".tag
-  val to: EmailAddr = "japgolly+test@gmail.com".tag
-  val io = bopImpl(SendEmail(
-    Email.Envelope(from, NonEmptyList(to)),
-    Email.Content("TEST from taskman", s"Hello at ${new DateTime}.")
-  ))
-  val r = io.unsafePerformIO()
-  log.info("DONE: {}", r)
-  */
+  def run(ctx: TaskmanCtx)(f: System => Unit): Unit = {
+    val s = new System(ctx)
+    import s._
+    manager.tell(ManagerActor.RegisterWorker, workers)
+    f(s)
+  }
 
-      import shipreq.taskman.server.akka._
+  class System(ctx: TaskmanCtx) extends Logger {
+    val system = ActorSystem("Taskman")
+    val source = system.actorOf(SourceActor.props(ctx), "source")
+    val manager = system.actorOf(ManagerActor.props(ctx, source), "manager")
+    val workers = system.actorOf(FromConfig.props(WorkerActor.props(ctx, manager)).withDispatcher("work"), "workers")
 
-      val system = ActorSystem("Taskman")
-      val source = system.actorOf(SourceActor.props, "source")
-      val manager = system.actorOf(ManagerActor.props(source), "manager")
-      val workers = system.actorOf(FromConfig.props(WorkerActor.props(manager)).withDispatcher("work"), "workers")
-      manager.tell(ManagerActor.RegisterWorker, workers)
-      system.awaitTermination()
+    def shutdown(): Unit = {
+      log.info("Shutting down...")
+      system.shutdown()
     }
+  }
+}
 
 //  class Terminator(app: ActorRef) extends Actor with ActorLogging {
 //    context watch app
@@ -42,4 +43,15 @@ object Server extends MainTemplate {
 //        context.system.shutdown()
 //    }
 //  }
-}
+
+  // Send an email
+  /*
+val from: EmailAddr = "whatever@gmail.com".tag
+val to: EmailAddr = "japgolly+test@gmail.com".tag
+val io = bopImpl(SendEmail(
+  Email.Envelope(from, NonEmptyList(to)),
+  Email.Content("TEST from taskman", s"Hello at ${new DateTime}.")
+))
+val r = io.unsafePerformIO()
+log.info("DONE: {}", r)
+*/

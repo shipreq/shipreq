@@ -6,21 +6,37 @@ import org.joda.time.DateTime
 import scala.concurrent.duration._
 import scalaz.Heap
 import shipreq.taskman.api.{MsgId, Priority}
-import shipreq.taskman.server.{WorkerId, MsgHeader}
+import shipreq.taskman.server.{Worker, TaskmanCtx, WorkerId, MsgHeader}
+import shipreq.taskman.server.Sop._
 
 object SourceActor {
-  def props = Props[SourceActor]
+  def props(ctx: TaskmanCtx) = Props(classOf[SourceActor], ctx)
 
   case class RequestForWork(queueStatus: Option[(Priority, Int)])
   case class IncomingWork(work: Seq[MsgHeader])
 }
 
-class SourceActor extends Actor with ActorLogging {
+class SourceActor(ctx: TaskmanCtx) extends Actor with ActorLogging {
   import SourceActor._
+  import ctx._
+
+  // TODO this logic should be in server-logic
+
+  val minPollGapMs = 1000
+  var lastPolled: DateTime = DateTime.now()
+
+  def poll(queued: Option[(Priority, Int)]): Seq[MsgHeader] = {
+    if (DateTime.now().isAfter(lastPolled plusMillis minPollGapMs)) {
+      val r = sopReifier(GetMsgsAssignNode(nodeId, manager.queueSize, manager.trustPeriod, queued)).unsafePerformIO()
+      lastPolled = DateTime.now()
+      r
+    } else
+      Seq.empty
+  }
 
   override def receive = {
-    case RequestForWork(queueStatus) =>
-      val work: Seq[MsgHeader] = List(MsgHeader(MsgId(3), Priority.High, new DateTime))
+    case RequestForWork(queued) =>
+      val work = poll(queued)
       if (work.nonEmpty)
         sender() ! IncomingWork(work)
   }
@@ -28,8 +44,9 @@ class SourceActor extends Actor with ActorLogging {
 
 // =====================================================================================================================
 
+// TODO TaskmanCtx unneeded
 object ManagerActor {
-  def props(source: ActorRef) = Props(classOf[ManagerActor], source)
+  def props(ctx: TaskmanCtx, source: ActorRef) = Props(classOf[ManagerActor], ctx, source)
 
   case object PollSource extends Serializable
   case object RegisterWorker
@@ -37,10 +54,14 @@ object ManagerActor {
   case object RequestForWork
 }
 
-class ManagerActor(source: ActorRef) extends Actor with ActorLogging {
-
+class ManagerActor(ctx: TaskmanCtx, source: ActorRef) extends Actor with ActorLogging {
   import ManagerActor._
   import context.dispatcher
+
+  // TODO Manager logic doesn't make things better here. Recreate it in reverse.
+  //import shipreq.taskman.server.{Manager => M}
+  //  val manager = M.Reified(ctx.manager.queueSize, ctx.manager.trustPeriod)
+  //  var jobQueue: M.JobQueue = M.emptyQueue
 
   implicit def priOrder = scalaz.Order.fromScalaOrdering(shipreq.taskman.server.Manager.PrioritisationOrder)
 
@@ -48,6 +69,7 @@ class ManagerActor(source: ActorRef) extends Actor with ActorLogging {
   var workQueue: Heap[MsgHeader] = Heap.Empty[MsgHeader]
 
   val poller = context.system.scheduler.schedule(500 millis, 2000 millis, self, PollSource)
+
   override def postStop() = poller.cancel()
 
   override def receive = {
@@ -84,19 +106,18 @@ class ManagerActor(source: ActorRef) extends Actor with ActorLogging {
 // =====================================================================================================================
 
 object WorkerActor {
-  def props(manager: ActorRef) = Props(classOf[WorkerActor], manager)
+  def props(ctx: TaskmanCtx, manager: ActorRef) = Props(classOf[WorkerActor], ctx, manager)
 
   private[this] val idCounter = new AtomicInteger
   def nextId(): WorkerId = WorkerId(idCounter.incrementAndGet().toShort)
 }
 
-class WorkerActor(manager: ActorRef) extends Actor with ActorLogging {
-
+class WorkerActor(ctx: TaskmanCtx, manager: ActorRef) extends Actor with ActorLogging {
+  import ctx._
   import ManagerActor.{RequestForWork, WorkAvailable}
 
-  val id: WorkerId = WorkerActor.nextId
-
-  // override def preStart() = manager ! RegisterWorker
+  implicit val id: WorkerId = WorkerActor.nextId
+  val worker = Worker.Reified()
 
   private def requestWork(): Unit =
     manager ! RequestForWork
@@ -104,13 +125,10 @@ class WorkerActor(manager: ActorRef) extends Actor with ActorLogging {
   override def receive = {
 
     case WorkAvailable =>
-      //log.debug("There's work???")
       requestWork()
 
-    case mh: MsgHeader =>
-      log.debug("Received work {}", mh)
-      //??? // Do work
-      // and then
+    case m: MsgHeader =>
+      worker.processL(m).unsafePerformIO()
       requestWork()
   }
 }
