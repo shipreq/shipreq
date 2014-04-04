@@ -72,7 +72,7 @@ object Worker extends Logger {
 
     private[this] def performWork(m: MsgDetail): IO[WorkResult] =
       ErrorOr.catchExceptionM(msgProcessor(m)) >>= {
-        case \/-(_) => MarkMsgComplete(m).toIO >> Completed(m).toIO
+        case \/-(_) => UpdateMsgSuccess(m).toIO >> Completed(m).toIO
         case -\/(e) => clock >>= handleTaskFailure(m, e)
       }
 

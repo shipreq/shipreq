@@ -19,7 +19,7 @@ class WorkerTest extends Specification {
         r must beLike{ case _: WorkResult.Completed => ok }
       }
       "Marks msg as complete" in {
-        mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[MarkMsgComplete])
+        mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[UpdateMsgSuccess])
       }
     }
 
@@ -30,7 +30,7 @@ class WorkerTest extends Specification {
         r must beLike{ case _: WorkResult.WorkerFailed => ok }
       }
       "Schedules retry" in {
-        mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[MsgFailedRetry])
+        mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[UpdateMsgAbort])
       }
     }
 
@@ -41,7 +41,7 @@ class WorkerTest extends Specification {
         r must beLike{ case _: WorkResult.WorkerFailed => ok }
       }
       "Aborts job" in {
-        mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[MsgFailedAbort])
+        mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[UpdateMsgRetry])
       }
     }
 
@@ -52,7 +52,7 @@ class WorkerTest extends Specification {
         r must beLike{ case _: WorkResult.WorkerFailed => ok }
       }
       "Aborts job & notifies support" in {
-        mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[MsgFailedAbort], classOf[NotifySupportWorkerFailed])
+        mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[UpdateMsgRetry], classOf[NotifySupportWorkerFailed])
       }
     }
 
@@ -74,7 +74,7 @@ class WorkerTest extends Specification {
         r must beLike{ case _: WorkResult.TaskmanFailed => ok }
       }
       "Notifies support" in {
-        mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[MarkMsgComplete], classOf[NotifySupportTaskmanError])
+        mockSop.allOpClasses ==== List(classOf[GetMsgAssignWorker], classOf[UpdateMsgSuccess], classOf[NotifySupportTaskmanError])
       }
     }
 
