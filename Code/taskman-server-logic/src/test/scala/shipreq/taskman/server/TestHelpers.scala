@@ -30,6 +30,7 @@ object TestHelpers {
   val msg_rereg = ReRegistrationAttempted("@".tag)
   val mh_1 = MsgHeader(MsgId(1), Priority(6), timeNow)
   val md_1 = MsgDetail(mh_1, msg_rereg, 0)
+  val mh_2 = MsgHeader(MsgId(2), Priority(5), timePast)
 
   object lenses {
     object msgDetail {
@@ -58,13 +59,13 @@ object TestHelpers {
   val clockReal = IO(DateTime.now)
 
   val fpAbort: FailurePolicy =
-    f => FailureResponse(MsgFailedAbort(f.m), Nil)
+    f => FailureResponse(UpdateMsgRetry(f.m), Nil)
 
   val fpAbortSupport: FailurePolicy =
-    f => FailureResponse(MsgFailedAbort(f.m), NotifySupportWorkerFailed(f.m, f.err) :: Nil)
+    f => FailureResponse(UpdateMsgRetry(f.m), NotifySupportWorkerFailed(f.m, f.err) :: Nil)
 
   val fpRetry: FailurePolicy =
-    f => FailureResponse(MsgFailedRetry(f.m, Period days 1), Nil)
+    f => FailureResponse(UpdateMsgAbort(f.m, Period days 1), Nil)
 
   val mpNop: MsgProcessor = msg => nopTask
   val mpCrash: MsgProcessor = msg => ???
@@ -99,9 +100,9 @@ class MockSops extends MockOpTransformer[Sop, IO] {
     case _: CfgGet                    => cfgGetR.pop()
     case _: GetMsgsAssignNode         => assignNodeR.pop()
     case _: GetMsgAssignWorker        => assignWorkerR.pop()
-    case _: MarkMsgComplete           => msgCompleteR.pop()
-    case _: MsgFailedAbort            =>
-    case _: MsgFailedRetry            => msgFailedRetryR.pop()
+    case _: UpdateMsgSuccess           => msgCompleteR.pop()
+    case _: UpdateMsgRetry            =>
+    case _: UpdateMsgAbort            => msgFailedRetryR.pop()
     case _: NotifySupportWorkerFailed =>
     case _: NotifySupportTaskmanError =>
     case    Nop                       =>

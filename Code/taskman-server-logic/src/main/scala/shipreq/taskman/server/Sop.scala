@@ -25,18 +25,18 @@ object Sop {
   /**
    * Assigns msgs to the given node id, and retrieves them.
    *
-   * @param limit The maximum number of msgs to assign and return.
+   * @param batchSize The maximum number of msgs to assign and return.
    * @param assignmentTrustPeriod Period of time for which another node's assignment is respected.
-   * @param queued The highest priority msg in, and size of the in-memory queue.
+   * @param qs Queue status: The highest priority msg in, and size of the in-memory queue.
    */
-  case class GetMsgsAssignNode(n: NodeId, limit: Int, assignmentTrustPeriod: Period, queued: Option[(Priority, Int)])
+  case class GetMsgsAssignNode(n: NodeId, batchSize: Int, assignmentTrustPeriod: Period, qs: Option[(Priority, Int)])
     extends Sop[Seq[MsgHeader]]
 
   case class GetMsgAssignWorker(n: NodeId, w: WorkerId, m: MsgHeader) extends Sop[Option[MsgDetail]]
 
-  case class MarkMsgComplete(m: MsgDetail) extends Sop[Unit]
-  case class MsgFailedAbort(m: MsgDetail) extends FailedJobReaction
-  case class MsgFailedRetry(m: MsgDetail, delay: Period) extends FailedJobReaction
+  case class UpdateMsgSuccess(m: MsgDetail) extends Sop[Unit]
+  case class UpdateMsgRetry(m: MsgDetail) extends FailedJobReaction
+  case class UpdateMsgAbort(m: MsgDetail, delay: Period) extends FailedJobReaction
 
   case class NotifySupportWorkerFailed(m: MsgDetail, e: Error) extends Sop[Unit]
   case class NotifySupportTaskmanError(e: Error, m: Option[MsgDetail]) extends Sop[Unit]

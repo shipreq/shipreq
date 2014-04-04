@@ -72,13 +72,13 @@ class SopImpl(db: Database) extends SopReifier {
     case GetMsgAssignWorker(node, worker, hdr) =>
       ioD(_.getMsgAssignWorker(node, worker, hdr))
 
-    case MsgFailedRetry(m, delay) =>
+    case UpdateMsgAbort(m, delay) =>
       ioD(_.failAndRetry(m, delay))
 
-    case MarkMsgComplete(m) =>
+    case UpdateMsgSuccess(m) =>
       ioD(_.archiveMsg(m, Succeeded))
 
-    case MsgFailedAbort(m) =>
+    case UpdateMsgRetry(m) =>
       ioD(_.archiveMsg(m, FailAndAbort))
 
     case CfgGet(k) =>

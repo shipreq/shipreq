@@ -2,12 +2,8 @@ package shipreq.taskman.server
 
 import org.specs2.mutable._
 import org.specs2.ScalaCheck
-import org.joda.time.Period
-import scalaz.effect.IO
 import shipreq.taskman.api.{MsgId, Priority}
-import shipreq.base.test.MockOpTransformer1
 import Manager._
-import Sop._
 import TestHelpers._
 
 class ManagerTest extends Specification with ScalaCheck {
@@ -44,36 +40,6 @@ class ManagerTest extends Specification with ScalaCheck {
           case (None, Some(_))    => false :| "No-pop followed by pop??"
           case _                  => true
         })
-      }
-    }
-  }
-
-  "Manager.Reified" >> {
-    implicit val node = NodeId(8)
-
-    "pollTask with empty queue" >> {
-      implicit val mockSop = MockOpTransformer1[Sop, IO, GetMsgsAssignNode, Seq[MsgHeader]](Seq(d))
-      val (q, r) = Reified(20, Period days 3).pollTask(emptyQueue).unsafePerformIO()
-
-      "Queue should have new msgs" in {
-        q must haveItems(d)
-      }
-
-      "Queue status be unspecified" in {
-        mockSop.soleOp.queued ==== None
-      }
-    }
-
-    "pollTask with populated queue" >> {
-      implicit val mockSop = MockOpTransformer1[Sop, IO, GetMsgsAssignNode, Seq[MsgHeader]](Seq(c, d))
-      val (q, r) = Reified(20, Period days 3).pollTask(emptyQueue + a).unsafePerformIO()
-
-      "Queue should have new msgs" in {
-        q must haveItems(a, c, d)
-      }
-
-      "Queue status should be provided" in {
-        mockSop.soleOp.queued ==== Some((Priority(6), 1))
       }
     }
   }

@@ -62,7 +62,7 @@ object Failure {
     composeF(addOp, op)
 
   def retryResponse(ctx: FailureCtx)(delay: Period): FailureResponse =
-    FailureResponse(MsgFailedRetry(ctx.m, delay), Nil)
+    FailureResponse(UpdateMsgAbort(ctx.m, delay), Nil)
 
   def notifySupport(ctx: FailureCtx): Sop[Unit] =
     if (ctx.err is Deliberate)
@@ -71,10 +71,10 @@ object Failure {
       NotifySupportWorkerFailed(ctx.m, ctx.err)
 
   val abortAndDontNotify: FailurePolicy =
-    ctx => FailureResponse(MsgFailedAbort(ctx.m), Nil)
+    ctx => FailureResponse(UpdateMsgRetry(ctx.m), Nil)
 
   val abortAndNotify: FailurePolicy =
-    ctx => FailureResponse(MsgFailedAbort(ctx.m), notifySupport(ctx) :: Nil)
+    ctx => FailureResponse(UpdateMsgRetry(ctx.m), notifySupport(ctx) :: Nil)
 
   def abortDeterministicErrors: Rule =
     ifO(_.err is Deterministic, abortAndNotify)

@@ -52,7 +52,7 @@ class WorkflowTest extends Specification with DatabaseTest with NoTimeConversion
     m1.failureCount must_== 0
 
     // fail:retry -> cant(assign worker)
-    run(MsgFailedRetry(m1, 0 sec))
+    run(UpdateMsgAbort(m1, 0 sec))
     run(assignWorker1) must beNone
 
     // assign node -> assign worker
@@ -60,7 +60,7 @@ class WorkflowTest extends Specification with DatabaseTest with NoTimeConversion
     m2.failureCount must_== 1
 
     // pass -> cant(assign node, assign worker)
-    run(MarkMsgComplete(m2))
+    run(UpdateMsgSuccess(m2))
     run(find) must beEmpty
     run(assignWorker2) must beNone
 
@@ -76,7 +76,7 @@ class WorkflowTest extends Specification with DatabaseTest with NoTimeConversion
     m1.failureCount must_== 0
 
     // fail:retry -> cant(assign worker) while delay
-    run(MsgFailedRetry(m1, 1 sec))
+    run(UpdateMsgAbort(m1, 1 sec))
     run(assignWorker1) must beNone
     run(find) must beEmpty
     Thread.sleep(1050)
@@ -86,7 +86,7 @@ class WorkflowTest extends Specification with DatabaseTest with NoTimeConversion
     m2.failureCount must_== 1
 
     // pass -> cant(assign node, assign worker)
-    run(MsgFailedAbort(m2))
+    run(UpdateMsgRetry(m2))
     run(find) must beEmpty
     run(assignWorker2) must beNone
 
