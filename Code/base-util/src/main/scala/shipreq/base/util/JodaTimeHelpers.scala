@@ -1,11 +1,17 @@
 package shipreq.base.util.jodatime
 
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.regex.Pattern
 import org.joda.time.Period
+import scala.concurrent.duration.FiniteDuration
 import shipreq.base.util.ExternalValueReader.Retriever
 import shipreq.base.util.{ErrorOr, Error, StringParsingBase}
 
 object JodaTimeHelpers {
+
+  implicit class PeriodConv(val p: Period) extends AnyVal {
+    def toScala: FiniteDuration = FiniteDuration(p.toStandardDuration.getMillis, MILLISECONDS)
+  }
 
   implicit class Units(val n: Int) extends AnyVal {
 

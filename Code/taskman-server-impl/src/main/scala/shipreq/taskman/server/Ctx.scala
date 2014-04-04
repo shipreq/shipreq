@@ -6,6 +6,7 @@ import scala.slick.session.Database
 import shipreq.base.db.{DatabaseConnection, DbTemplate}
 import shipreq.base.util.ExternalValueReader._
 import shipreq.base.util._
+import shipreq.base.util.jodatime.JodaTimeHelpers._
 import shipreq.base.util.jodatime.JodaTimeValueRetrievers
 import shipreq.taskman.api.CfgKeys
 import shipreq.taskman.api.Types._
@@ -43,30 +44,34 @@ class TaskmanCtx(db: Database, mailProps: Properties, evr: StringBasedValueReade
   override val loginUrl = need(CfgKeys.Webapp.loginUrl)(GlobalScope, fromDb.retrieverS)
   override val emailer  = new EmailImpl(this)
 
-  object manager {
-    private implicit def scope: PropScope = scopeByNS("taskman.manager")
-    private def minimumTrustPeriodSec = 10
-    private def minimumTrustPeriod = Period.seconds(minimumTrustPeriodSec).toStandardDuration
+  object server {
+    private implicit def scope: PropScope = scopeByNS("taskman.server")
+    def atLeast(min: Period) =
+      valTest[Period](_.toStandardDuration isLongerThan min.toStandardDuration, s"Must be at least $min.")
+    def atLeast(min: Int) =
+      valTest[Int](_ >= min, s"Must be at least $min.")
 
-    val queueSize = validate("queueSize", need[Int])(valTest(_ >= 1, "Must be at least 1."))
-
-    val trustPeriod = validate("trustPeriod", need[Period])(valTest(
-      _.toStandardDuration isLongerThan minimumTrustPeriod,
-      s"Must be at least $minimumTrustPeriodSec seconds."))
+    val queueSize = validate("queueSize", need[Int])(atLeast(1))
+    val trustPeriod = validate("trustPeriod", need[Period])(atLeast(10 seconds))
+    val pollEvery = validate("poll.every", need[Period])(atLeast(50 ms))
+    val pollGap = validate("poll.min", n => getO[Period](n) getOrElse pollEvery)(atLeast(50 ms))
+    if (pollGap.toStandardDuration isLongerThan pollEvery.toStandardDuration)
+      log.warn(s"The minimum poll gap ($pollGap) is larger than the poll time ($pollEvery). Wasteful.")
   }
 
   def loggable = Map[String, Any](
     "defaultFromAddress" -> defaultFromAddress
     , "shipreq" -> shipreq
     , "loginUrl" -> loginUrl
-    , "manager.queueSize" -> manager.queueSize
-    , "manager.trustPeriod" -> manager.trustPeriod
+    , "server.queueSize" -> server.queueSize
+    , "server.trustPeriod" -> server.trustPeriod
+    , "server.poll.every" -> server.pollEvery
+    , "server.poll.gap" -> server.pollGap
   )
-  log.info("Config: {}", loggable.toList
+  loggable.toList
     .sortBy(kv => (kv._1.count(_ == '.'), kv._1))
-    .map{case (k,v) => "\n  %-20s = %s".format(k,v) }
-    .mkString
-  )
+    .map{case (k,v) => "Config: %-20s = %s".format(k,v) }
+    .foreach(log.info)
 
   implicit val bopReifier = new BopImpl(this)
   implicit val failurePolicy = Failure.failurePolicy

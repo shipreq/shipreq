@@ -4,5 +4,7 @@ db.database = usecase_test
 db.username = usecase_test
 db.password = ucet
 
-shipreq.webapp.appName   = TestShipReq
-shipreq.webapp.url.login = http://test.shipreq.com/login
+shipreq.webapp.appName    = TestShipReq
+shipreq.webapp.url.login  = http://test.shipreq.com/login
+taskman.server.poll.every = 200 ms
+taskman.server.poll.min   = #

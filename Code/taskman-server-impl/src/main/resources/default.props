@@ -7,6 +7,8 @@ db.pool.disableJMX                 = false
 db.pool.statisticsEnabled          = true
 db.pool.statementsCacheSize        = 64
 
-taskman.mail.from           = default@props.com
-taskman.manager.queueSize   = 10
-taskman.manager.trustPeriod = 3 min
+taskman.mail.from          = default@props.com
+taskman.server.queueSize   = 10
+taskman.server.trustPeriod = 3 min
+taskman.server.poll.every  = 5 sec
+taskman.server.poll.min    = 1 sec
