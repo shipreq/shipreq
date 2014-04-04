@@ -39,6 +39,7 @@ class AkkaTest extends Specification with DatabaseTest with NoTimeConversions wi
     val ctx: TaskmanCtx = new TaskmanCtx(TestDb.slick, props, propsR) {
       override def fromDb = propsR
     }
+    val startTime = System.currentTimeMillis()
 
     try {
       // start akka
@@ -62,6 +63,7 @@ class AkkaTest extends Specification with DatabaseTest with NoTimeConversions wi
       List(dummy1, dummy2).map(lookupHistory) must be_==(expect).eventually(20, 1.second)
 
     } finally {
+      log.info("Finished in %.3fs".format((System.currentTimeMillis() - startTime) / 1000.0))
       shutdownLatch.countDown()
       es.shutdown()
       es.awaitTermination(10, TimeUnit.SECONDS)

@@ -17,8 +17,8 @@ object Server extends MainTemplate {
 
   def run(ctx: TaskmanCtx)(f: System => Unit): Unit = {
     val s = new System(ctx)
-    import s._
-    manager.tell(ManagerActor.RegisterWorker, workers)
+    s.manager.tell(ManagerActor.RegisterWorker, s.workers)
+    log.info("Taskman started.")
     f(s)
   }
 
