@@ -30,6 +30,7 @@ object TestHelpers {
   val msg_rereg = ReRegistrationAttempted("@".tag)
   val mh_1 = MsgHeader(MsgId(1), Priority(6), timeNow)
   val md_1 = MsgDetail(mh_1, msg_rereg, 0)
+  val mh_2 = MsgHeader(MsgId(2), Priority(5), timePast)
 
   object lenses {
     object msgDetail {

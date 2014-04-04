@@ -1,10 +1,7 @@
 package shipreq.taskman.server
 
-import org.joda.time.Period
 import scalaz.{Heap, State, StateT}
 import scalaz.effect.IO
-import shipreq.taskman.api.Priority
-import Sop._
 
 object Manager {
 
@@ -25,13 +22,13 @@ object Manager {
 
   implicit val PrioritisationOrderZ = scalaz.Order.fromScalaOrdering[MsgHeader]
 
-  def emptyQueue = Heap.Empty[MsgHeader]
+  def emptyQueue: JobQueue = Heap.Empty[MsgHeader]
 
   def addToQueue(ms: Seq[MsgHeader]): JobQueueS[Unit] =
     State.modify(s =>
       (s /: ms)((q, m) => q insert m))
 
-  val getQueueStatus: JobQueueS[Option[(Priority, Int)]] = // TODO cache?
+  val getQueueStatus: JobQueueS[Source.QueueStatus] = // TODO cache?
     State.gets(q =>
       if (q.isEmpty)
         None
@@ -46,14 +43,4 @@ object Manager {
       else
         (q.deleteMin, Some(q.minimum))
     )
-
-  case class Reified(limit: Int, assignmentTrustPeriod: Period)(implicit node: NodeId, opToIo: SopReifier) {
-
-    val pollTask: JobQueueSIO[Int] =
-      for {
-        queueStatus <- getQueueStatus.lift[IO]
-        jobs        <- GetMsgsAssignNode(node, limit, assignmentTrustPeriod, queueStatus).liftIOM[JobQueueSIO]
-        _           <- addToQueue(jobs).lift[IO]
-      } yield jobs.length
-  }
 }
