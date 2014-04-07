@@ -38,7 +38,7 @@ class TaskmanCtx(db: Database, mailProps: Properties, evr: StringBasedValueReade
   import evr.retrieverI
   import jtr.retrieverPeriod
 
-  override def mailSession = EmailImpl.loadSession(mailProps)
+  override val mailSession = EmailImpl.loadSession(mailProps)
   override val defaultFromAddress = need[String]("mail.from").tag
   override val shipreq  = need(CfgKeys.Webapp.appName )(GlobalScope, fromDb.retrieverS)
   override val loginUrl = need(CfgKeys.Webapp.loginUrl)(GlobalScope, fromDb.retrieverS)

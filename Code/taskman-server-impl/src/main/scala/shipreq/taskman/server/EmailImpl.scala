@@ -1,7 +1,7 @@
 package shipreq.taskman.server
 
 import java.util.Properties
-import javax.mail.{Message, Address, Session, PasswordAuthentication, Authenticator}
+import javax.mail._
 import javax.mail.internet.{MimeMessage, InternetAddress}
 import scalaz.effect.IO
 import scalaz.std.list._
@@ -75,7 +75,7 @@ final class EmailImpl(ctx: EmailImpl.Ctx) extends Logger {
 
   def send(op: SendEmail): IOE[Unit] = IO(
     buildEmail(op.e, op.c).map(m => {
-      // Transport.send(m)
+      Transport.send(m)
       log.info("Email sent: {} [{}]", op.e.to.head, op.c.subject, null)
     })
   )
