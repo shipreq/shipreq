@@ -1,0 +1,2 @@
+#!/bin/bash
+cd $(dirname "$0")/../.. && sbt taskman-server-impl/runMain\ shipreq.taskman.server.app.Server

@@ -41,9 +41,12 @@ First, be in webapp/
     script/db/create test
 
 * Initialise
-  [TODO](improve this)
   1. Setup the taskman schema.
-  2. Start the webapp. (Will store cfg values required by taskman.)
+     Required so that webapp can startup and issue `CfgPut`s.
+     `script/taskman/migrate_db`
+  2. Start the webapp.
+     Issues `CfgPuts` required by Taskman on startup.
+     `script/webapp/run`
 
 
 Updating Dependencies
@@ -77,10 +80,10 @@ Development
 ### Running
 
 Taskman:
-    script/taskman-run
+    script/taskman/run
 
 Webapp:
-    script/webapp-run
+    script/webapp/run
 
 ### Continuous Building
 
@@ -93,7 +96,7 @@ Webapp front-end:
     grunt watch
 
 Webapp back-end:
-    script/webapp-run
+    script/webapp/run
 
 ### Testing
 
