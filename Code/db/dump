@@ -1,20 +1,14 @@
 #!/bin/bash
 
-dbdir="$(dirname "$0")"
-
-case "$1" in
-  dev)  db=shipreq_dev ;;
-  test) db=shipreq_test ;;
-  prod) db=shipreq_prod ;;
-  *) echo -e "Unknown db: '$1'.\nExpected [dev|test|prod]." >&2; exit 1
-esac
+source $(dirname "$0")/lib.sh
+lookup1 "$@"
 
 fix_fks=$("$dbdir"/fix-fk_ids_in_dump "$1")
 [ ! -x "$fix_fks" ] && echo "Failed: fix-fk_ids_in_dump" && exit 1
 
 f1="$dbdir"/dump-$1.sql
 f2="$dbdir"/dump-$1-d.sql
-dump="sudo -u postgres pg_dump --encoding=UTF-8 --blobs"
+dump="$sudo_pg_dump --blobs"
 
 echo "Dump #1..." \
   && $dump --clean --create $db > "$f1" \

@@ -1,11 +1,7 @@
 #!/bin/bash
 
-case "$1" in
-  dev)  db=shipreq_dev ;;
-  test) db=shipreq_test ;;
-  prod) db=shipreq_prod ;;
-  *) echo -e "Unknown db: '$1'.\nExpected [dev|test|prod]." >&2; exit 1
-esac
+source $(dirname "$0")/lib.sh
+lookup1 "$@"
 
 q1="'"
 q2='"'
@@ -14,7 +10,7 @@ tmp=/tmp/fix-fk_ids_in_$1.sh
 echo "#!/bin/bash" > $tmp
 echo "perl -pe '" >> $tmp
 
-sudo -u postgres psql "$db" -c 'select fk_id, "desc" from v_field_key;' -t \
+$sudo_psql "$db" -c 'select fk_id, "desc" from v_field_key;' -t \
   | sed '/^$/d' \
   | while read line; do
 

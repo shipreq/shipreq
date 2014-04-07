@@ -1,18 +1,15 @@
 #!/bin/bash
 
-dbdir="$(dirname "$0")"
+source $(dirname "$0")/lib.sh
 backup="$dbdir"/backup-prod.sql
 
 [ ! -r "$backup" ] && echo "File not found or readable: $backup" && exit 1
 
-case "$1" in
-  dev)  db=shipreq_dev ;;
-  test) db=shipreq_test ;;
-  prod) db=shipreq_prod ; echo "WARNING: About to wipe PROD" ;;
-  *) echo -e "Unknown db: '$1'.\nExpected [dev|test|prod]." >&2; exit 1
-esac
+lookup1 "$@"
+echo "About to wipe $db"
 
-cat "$backup" | "$dbdir"/sql-trns-dbname "$1" | sudo -u postgres -k psql
+sudo -k
+cat "$backup" | "$dbdir"/sql-trns-dbname "$1" | $sudo_psql
 #cat "$dbdir"/backup-prod.sql | "$dbdir"/sql-trns-dbname "$1" | sudo -u postgres -k pg_restore -d $db --clean --create
 #cat <&0
 
