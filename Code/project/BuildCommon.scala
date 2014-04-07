@@ -61,6 +61,8 @@ object Common {
       ): _*)
     .settings(
       clearScreenTask := { println("\033[2J\033[;H") },
+      organization := "com.beardedlogic.shipreq",
+      organizationName := "Bearded Logic",
       version := s"${fmtTimeNow("yyyyMMdd")}-${gitRevisionShort}${snapshotSuffix}",
       isSnapshot := snapshotSuffix.nonEmpty,
       shellPrompt in ThisBuild := { (s: State) => Project.extract(s).currentRef.project + "> " },

@@ -10,3 +10,6 @@ addSbtPlugin("com.github.mpeltonen" % "sbt-idea" % "1.6.0")
 // Dependency graph
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.7.4")
 
+// Builds Taskman dist
+addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "0.7.0-RC2")
+
