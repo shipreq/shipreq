@@ -77,29 +77,23 @@ Development
 ### Running
 
 Taskman:
-    sbt
-    taskman-server-impl/runMain shipreq.taskman.server.app.Server
+    script/taskman-run
 
 Webapp:
-    sbt
-    webapp/container:start
-
+    script/webapp-run
 
 ### Continuous Building
 
 Scala:
     sbt
     project taskman # Example
-    ~ct
+    ~ct             # ct is an alias meaning "Clean Test"
 
 Webapp front-end:
     grunt watch
 
 Webapp back-end:
-    sbt
-    project webapp
-    ~; container:stop; container:start
-
+    script/webapp-run
 
 ### Testing
 
