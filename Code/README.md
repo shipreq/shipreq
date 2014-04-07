@@ -79,11 +79,9 @@ Development
 
 ### Running
 
-Taskman:
-    script/taskman/run
-
-Webapp:
-    script/webapp/run
+Everything: `script/run`
+Taskman:    `script/taskman/run`
+Webapp:     `script/webapp/run`
 
 ### Continuous Building
 
