@@ -15,12 +15,13 @@ private[api] class ApiSql(prefix: String) {
   implicit val SP_MsgId: SetParameter[MsgId] = ISP[Long] contramap (_.value)
 
   // Matches on db enum: msg_status_v01
-  implicit val GR_MsgStatus: GetResult[MsgStatus] = implicitly[GetResult[String]] andThen {
-    case "unassigned"    => MsgStatus.Unassigned
-    case "node_assigned" => MsgStatus.NodeAssigned
-    case "working"       => MsgStatus.Working
-    case "complete"      => MsgStatus.Complete
-    case "aborted"       => MsgStatus.Aborted
+  implicit val GR_MsgStatus: GetResult[Option[MsgStatus]] = implicitly[GetResult[String]] andThen {
+    case "unassigned"    => Some(MsgStatus.Unassigned)
+    case "node_assigned" => Some(MsgStatus.NodeAssigned)
+    case "working"       => Some(MsgStatus.Working)
+    case "complete"      => Some(MsgStatus.Complete)
+    case "aborted"       => Some(MsgStatus.Aborted)
+    case s if null eq s  => None
   }
 
   val CreateMsg = query[(Short, Option[Ser], Short), MsgId](
@@ -29,7 +30,7 @@ private[api] class ApiSql(prefix: String) {
   val CfgPut = update[(String, String)](
     s"select ${prefix}cfg_update(?::VARCHAR, ?::TEXT)")
 
-  val QueryMsgStatus = query[MsgId, MsgStatus](
+  val QueryMsgStatus = query[MsgId, Option[MsgStatus]](
     s"select ${prefix}query_msg_status_v01(?)")
 }
 
@@ -50,5 +51,5 @@ private[api] class ApiDao(ctx: TaskmanApi.Context, session: Session) {
     CfgPut.execute(k, v)
 
   def queryMsgStatus(id: MsgId): Option[MsgStatus] =
-    QueryMsgStatus.firstOption(id)
+    QueryMsgStatus.first(id)
 }
