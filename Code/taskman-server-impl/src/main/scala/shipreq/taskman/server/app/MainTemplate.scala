@@ -17,7 +17,6 @@ private[app] trait MainTemplate extends Logger {
   }
 
   lazy val props = Props.loadUsingStandardStrategy(runMode)(new Properties)
-
   lazy val propsR = JPropertiesValueReader(props)
 
   def withDatabase[A](f: Db => A): A = {
