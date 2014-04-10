@@ -42,15 +42,16 @@ Upgrade Procedure
     git commit as directed
 
 2. Customisation
-
     ./jetty-post_install
     git add -A .
-    git commit -m 'Jetty post-install'
 
 3. Test Locally
+    webapp/start
+    ../../../QA/smoke_test-frontend local-https
 
-4. Deploy
+4. Commit
 
+5. Deploy
     ./deploy-jetty $ip
     ./deploy-webapp $ip   # If needed
     ssh $(<deployment-user)@$ip webapp/restart
@@ -92,9 +93,17 @@ Keystore & SSL
     ./jetty-password_hash PASS2
 
 * Give Jetty the passwords.
-    KeyStorePassword   - Keystore password.
-    TrustStorePassword - Keystore password.
-    KeyManagerPassword - PKCS12 password.
+
+  Jetty needs:
+      KeyStorePassword   - Keystore password.
+      TrustStorePassword - Keystore password.
+      KeyManagerPassword - PKCS12 password.
+
+  These are already configured to be provided via properties.
+  The properties are in `start.d/ssl-passwords.ini` and look like this:
+      jetty.keystore.password=OBF:blah1
+      jetty.truststore.password=OBF:blah1
+      jetty.keymanager.password=OBF:blah2
 
 
 Running, Usage, etc.
