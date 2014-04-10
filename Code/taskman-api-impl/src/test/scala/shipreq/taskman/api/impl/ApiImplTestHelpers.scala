@@ -1,6 +1,6 @@
 package shipreq.taskman.api.impl
 
-import shipreq.base.test.db.specs2.DatabaseTest
+import shipreq.base.test.specs2.db.DatabaseTest
 import shipreq.taskman.api.ApiOp
 
 trait ApiImplTestHelpers {

@@ -6,7 +6,7 @@ import org.specs2.mutable.Specification
 import org.specs2.time.NoTimeConversions
 import scala.slick.jdbc.StaticQuery.query
 import scala.util.Random
-import shipreq.base.test.db.specs2.DatabaseTest
+import shipreq.base.test.specs2.db.DatabaseTest
 import shipreq.base.util.jodatime.JodaTimeHelpers._
 import shipreq.base.util.ScalaExt._
 import shipreq.taskman.api.impl.Serialisation

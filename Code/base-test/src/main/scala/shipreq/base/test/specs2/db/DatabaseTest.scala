@@ -1,4 +1,4 @@
-package shipreq.base.test.db.specs2
+package shipreq.base.test.specs2.db
 
 import java.util.concurrent.locks.Lock
 import java.util.Properties

@@ -3,7 +3,7 @@ package shipreq.taskman.server
 import org.specs2.matcher.ThrownExpectations
 import org.specs2.mutable.Specification
 import org.specs2.time.NoTimeConversions
-import shipreq.base.test.db.specs2.DatabaseTest
+import shipreq.base.test.specs2.db.DatabaseTest
 import shipreq.base.util.jodatime.JodaTimeHelpers._
 import shipreq.taskman.api.{MsgStatus, MsgId}
 import shipreq.taskman.api.Types._

@@ -6,7 +6,7 @@ import org.specs2.time.NoTimeConversions
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.slick.jdbc.GetResult
-import shipreq.base.test.db.specs2.DatabaseTest
+import shipreq.base.test.specs2.db.DatabaseTest
 import shipreq.base.util.Logger
 import shipreq.taskman.api.ApiOp.SubmitMsg
 import shipreq.taskman.api.Msg.DummyMsg
