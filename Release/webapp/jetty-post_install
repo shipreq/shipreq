@@ -1,0 +1,11 @@
+#!/bin/bash
+cd $(dirname "$0") || exit 1
+
+cd jetty \
+  && echo "Removing crap..." \
+  && git rm -r */*{jaas,jsp}[.-]* lib/jsp etc/keystore \
+  && echo "Applying patches..." \
+  && ../jetty-patch-no_logs_dir \
+  && ../jetty-patch-start_patience \
+  && echo "Done." \
+  && echo && git st

@@ -38,23 +38,14 @@ Upgrade Procedure
 ### Upgrading Jetty
 
 1. Install
+    ./install-jetty <jetty.tar.gz>
+    git commit as directed
 
-    o=9.1.0
-    n=9.1.1
-    tar xvzf ~/Downloads/jetty-distribution-$n.v????????.tar.gz
-    mv jetty-distribution-$n.v???????? jetty-$n
-    git add jetty-$n
-    git rm -r jetty-$o
-    rm -f jetty; ln -s jetty-$n jetty && git add jetty
-    git commit -m "Deps: Jetty $o => $n [1/2]"
+2. Customisation
 
-2. Sanitise and Prune
-
-    cd jetty-$n
-    rm -r */*{jaas,jsp}[.-]* lib/jsp etc/keystore
-    perl -pi -e 's!^(?=logs/$)!#!' modules/{logging,requestlog}.mod
-    ./jetty-patch-start_patience
+    ./jetty-post_install
     git add -A .
+    git commit -m 'Jetty post-install'
 
 3. Test Locally
 
