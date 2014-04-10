@@ -1,46 +1,68 @@
-Getting Started
-===============
+First-Time Procedure
+====================
 
-* Decrypt passwords and sensitive settings.
-    ./secrets-decrypt
-
-* Install webapps/shipreq.war
-    ../install-latest_war
+###  Local setup
 
 * Install required packages:
-    sudo pacman -Syu parallel pigz
+    sudo pacman -Syu --needed parallel pigz authbind
+
+* Decrypt passwords and sensitive settings.
+    webapp/secrets-decrypt
+
+* Install ShipReq WAR.
+    Build locally first.
+    ./install-war
+
+* Determine IP for commands below
+    export ip=$(../util/ip-shipreq)
+
+### Deployment
+
+    ./deploy-jetty $ip
+    ./deploy-webapp $ip
+    ./deploy-war $ip
+    ssh $(<deployment-user)@$ip webapp/restart
 
 
-Usage
-=====
+Upgrade Procedure
+=================
 
-* Run
-    ./jetty
+### Upgrading ShipReq
 
-* Start daemon
-    ./jettyd start
-
-* Stop daemon
-    ./jettyd stop
+    ./install-war
+    ./deploy-webapp $ip   # If needed
+    ./deploy-war $ip
+    ssh $(<deployment-user)@$ip webapp/restart
 
 
-Config
-======
+### Upgrading Jetty
 
-* Inspection
-    ./jetty --list-config
-    ./jetty --list-modules
-    ./jettyd check
+1. Install
 
-* Jetty config:
-    * start.ini
-    * start.d/*.ini
-    * etc/jetty.conf [daemon-mode only]
-    * XMLs displayed in `./jetty --list-config`
+    o=9.1.0
+    n=9.1.1
+    tar xvzf ~/Downloads/jetty-distribution-$n.v????????.tar.gz
+    mv jetty-distribution-$n.v???????? jetty-$n
+    git add jetty-$n
+    git rm -r jetty-$o
+    rm -f jetty; ln -s jetty-$n jetty && git add jetty
+    git commit -m "Deps: Jetty $o => $n [1/2]"
 
-* App config:
-    * resources/*
-    * start.d/shipreq.ini
+2. Sanitise and Prune
+
+    cd jetty-$n
+    rm -r */*{jaas,jsp}[.-]* lib/jsp etc/keystore
+    perl -pi -e 's!^(?=logs/$)!#!' modules/{logging,requestlog}.mod
+    ./jetty-patch-start_patience
+    git add -A .
+
+3. Test Locally
+
+4. Deploy
+
+    ./deploy-jetty $ip
+    ./deploy-webapp $ip   # If needed
+    ssh $(<deployment-user)@$ip webapp/restart
 
 
 Keystore & SSL
@@ -75,11 +97,17 @@ Keystore & SSL
 ### Jetty Integration
 
 * Obfuscate passwords.
-    java -cp jetty-inst/lib/jetty-util-9.1.0.v20131115.jar org.eclipse.jetty.util.security.Password PASS1
-    java -cp jetty-inst/lib/jetty-util-9.1.0.v20131115.jar org.eclipse.jetty.util.security.Password PASS2
+    ./jetty-password_hash PASS1
+    ./jetty-password_hash PASS2
 
 * Give Jetty the passwords.
     KeyStorePassword   - Keystore password.
     TrustStorePassword - Keystore password.
     KeyManagerPassword - PKCS12 password.
+
+
+Running, Usage, etc.
+====================
+
+See [webapp/README.md](webapp/README.md) for instructions.
 

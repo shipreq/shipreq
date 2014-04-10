@@ -1,6 +1,6 @@
 #!/bin/bash
 
-f="$(dirname "$0")/webapps/shipreq.war"
+f="$(dirname "$0")/webapp/webapps/shipreq.war"
 #echo "WAR: $f"
 [ ! -e "$f" ] && echo "File not found: $f" && exit 1
 
@@ -13,6 +13,6 @@ echo "Compression:"
 gzout=$(unzip -l "$f" '*.gz')
 gztail=$(echo "$gzout" | tail -1)
 uncomp=$(echo "$gzout" | fgrep .gz | perl -pe 's/(\s+\S+){3}\s+//; s/\.gz$//' | xargs unzip -l "$f" | tail -1)
-echo "$uncomp" | awk '{print "  Before: " $2 " files @ " $1 " bytes." }'
-echo "$gztail" | awk '{print "  After : " $2 " files @ " $1 " bytes." }'
-echo "$gztail $uncomp" | awk '{print "  Delta : " ($1/$4*100) "%"}'
+echo "$uncomp" | awk '{print "  Before    : " $2 " files @ " $1 " bytes." }'
+echo "$gztail" | awk '{print "  After     : " $2 " files @ " $1 " bytes." }'
+echo "$gztail $uncomp" | awk '{print "  Reduction : " (($4-$1)/$4*100) "%"}'

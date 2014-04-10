@@ -1,0 +1,3 @@
+#!/bin/bash
+cd $(dirname "$0") || exit 1
+exec $(./authbind) java -jar ../jetty/start.jar "$@"

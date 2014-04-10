@@ -2,15 +2,15 @@
 
 cd "$(dirname "$0")"
 
-d=../Code/webapp/target/scala-2.10/
+d=../../Code/webapp/target/scala-2.10/
 s="$(ls -1rt $d | fgrep .war | tail -1)"
 [ -z "$s" ] && echo "No WARs found in $d" && exit 1
 echo "Found: $s"
 
 echo "Installing..."
 cp -p $d/$s webapp/webapps/shipreq.war \
-  && echo && webapp/war-compress_static_resources \
-  && echo && webapp/war-enable_gzip \
-  && echo && webapp/war-force_https \
+  && echo && ./war-compress_static_resources \
+  && echo && ./war-enable_gzip \
+  && echo && ./war-force_https \
   && echo && echo "--------------------------------------------------------------------------------" \
-  && webapp/war-inspect
+  && ./war-inspect

@@ -2,4 +2,5 @@
 cd "$(dirname "$0")"
 
 ./group-devaccess-revoke webapp
+echo
 ./group-devaccess-allow webapp myip

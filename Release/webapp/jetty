@@ -1,4 +1,1 @@
-#!/bin/bash
-
-cd "$(dirname "$0")"
-$(./authbind) java -jar jetty-inst/start.jar "$@"
+jetty-9.1.1

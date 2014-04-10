@@ -1,7 +1,9 @@
 #!/bin/bash
 
-basedir="$(cd "$(dirname "$0")" && pwd)"
-wardir="$basedir/webapps"
+cd $(dirname "$0") || exit 1
+
+basedir=$(pwd)
+wardir="$basedir/webapp/webapps"
 war="$wardir/shipreq.war"
 patch="$basedir/gzip.patch"
 webxml=WEB-INF/web.xml

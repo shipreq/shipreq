@@ -1,6 +1,6 @@
 #!/bin/bash
 
-basedir="$(cd "$(dirname "$0")" && pwd)"
+basedir="$(cd "$(dirname "$0")"/webapp && pwd)"
 wardir="$basedir/webapps"
 war="$wardir/shipreq.war"
 patch="$basedir/gzip.patch"

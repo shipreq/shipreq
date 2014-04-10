@@ -1,0 +1,14 @@
+#!/bin/bash
+
+[ -z "$1" ] && echo "Usage: $0 <public DNS>" && exit 1
+
+cd $(dirname "$0") || exit 1
+
+war=webapp/webapps/shipreq.war
+[ ! -e "$war" ] && echo "WAR not found: $war" && exit 2
+
+rsync -vcRptih $war $(<deployment-user)@"$1":
+
+echo
+sha1sum $war | sed 's/$/ (local)/'
+ssh $(<deployment-user)@"$1" "sha1sum $war" | sed 's/$/ (remote)/'

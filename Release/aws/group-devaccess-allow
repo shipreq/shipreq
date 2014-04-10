@@ -1,5 +1,8 @@
 #!/bin/bash
 
+myip="$(dirname "$0")/../util/ip-mine"
+[ ! -e "$myip" ] && echo "File not found: $myip" && exit 1
+
 if [ $# -ne 2 ]; then
   echo "Usage: $0 <group name> (<ip> | myip)"
   exit 1
@@ -7,9 +10,9 @@ fi
 
 name="$1"
 ip="$2"
-[ "$ip" == myip ] && ip="$(curl -s http://ifconfig.me)"
+[ "$ip" == myip ] && ip=$($myip)
 
-echo "=== Adding"
+echo "=== Adding ($ip)"
 for port in 22 5432; do
   ec2-authorize "$name" -P tcp -p $port --cidr "$ip"/32
 done

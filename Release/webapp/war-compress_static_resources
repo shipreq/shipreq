@@ -3,7 +3,7 @@
 #compress="gzip -9"
 compress="pigz -11 -b 96"
 
-wardir="$(cd "$(dirname "$0")/webapps" && pwd)"
+wardir="$(cd "$(dirname "$0")/webapp/webapps" && pwd)"
 war="$wardir/shipreq.war"
 echo "Compressing static resources in:"
 echo "  $war"

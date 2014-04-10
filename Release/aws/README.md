@@ -14,8 +14,8 @@ Local Machine Setup
     export EC2_URL=https://<service_endpoint>
 
 
-Create a New Instance
-=====================
+Create a New EC2 Instance
+=========================
 
 * AWS console. https://console.aws.amazon.com/ec2/v2/home
 * EC2
@@ -30,18 +30,3 @@ Create a New Instance
 
 * AWS console > Instances > Public DNS
 
-
-Instance Setup
-==============
-
-* export ec=<public ip>
-* root/deploy $ec
-* ssh root@$ec
-  ./init-packages
-  ./fix-yaourt-micro     # Only if running a micro instance
-  ./init-packages2
-  ./init-instance_store  # Unless running a micro instance
-  reboot
-* ./deploy-jetty $ec
-* ./deploy-war $ec
-* ssh $(<username)@$ec
