@@ -31,8 +31,12 @@ object Common {
   def scalacTestFlags = Seq("-language:reflectiveCalls")
 
   def debugAndReleaseCompilerFlags = debugOrRelease(
-    _.settings(scalacOptions ++= Seq("-Xcheckinit")),
-    nonTestCompilerFlags("-optimise", /*"-Yinline-warnings",*/ "-Xelide-below", "OFF"))
+    _.settings(
+      scalacOptions ++= Seq("-Xcheckinit"),
+      cleanKeepFiles ++= Seq("resolution-cache", "streams").map(target.value / _) // stop those constant dep updates
+    ),
+    nonTestCompilerFlags("-optimise", /*"-Yinline-warnings",*/ "-Xelide-below", "OFF")
+  )
 
   def targetJdk = "1.7"
 
@@ -70,8 +74,7 @@ object Common {
       scalaVersion := Deps.Scala.version,
       scalacOptions ++= scalacFlags,
       scalacOptions in Test ++= scalacTestFlags,
-      testOptions in Test += Tests.Cleanup(shutdownTestDb(_)),
-      cleanKeepFiles ++= Seq("resolution-cache", "streams").map(target.value / _) // stop those constant dep updates
+      testOptions in Test += Tests.Cleanup(shutdownTestDb(_))
     )
     .configure(debugAndReleaseCompilerFlags)
 

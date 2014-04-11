@@ -1,0 +1,15 @@
+#!/bin/bash
+
+cd $(dirname $(readlink -e "$0"))/.. || exit 1
+
+[ $# -ne 1 ] && echo "Usage: $0 <main-class>" && exit 1
+
+main="$1"; shift
+conf=conf
+uber=lib/taskman.jar
+[ ! -e "$uber" ] && echo "Taskman JAR not found: $(pwd)/$uber" && exit 1
+cp="$conf/.:$uber"
+
+java_opt=(-server -cp "$cp" -Xss2m -Xmx512m)
+
+exec java $JAVA_OPTS "${java_opt[@]}" $main "$@"

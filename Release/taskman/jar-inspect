@@ -1,0 +1,17 @@
+#!/bin/bash
+
+f=$(dirname $(readlink -e "$0"))/package/lib/taskman.jar
+[ ! -e "$f" ] && echo "File not found: $f" && exit 1
+
+stat -L -c 'Size: %s bytes.' "$f"
+
+c=$(unzip -l "$f" | fgrep .class)
+
+echo "Manifest:"
+unzip -p "$f" META-INF/MANIFEST.MF | egrep 'Implementation-(Title|Version):' | sed 's/^/  /'
+
+echo "Classes:"
+echo "$c" | fgrep    shipreq | wc -l | awk '{print "  ShipReq: " $1 }'
+echo "$c" | fgrep -v shipreq | wc -l | awk '{print "  Other: " $1 }'
+
+unzip -tq "$f"

@@ -162,14 +162,15 @@ object ShipReq extends Build {
           Akka.actor ++ javaMail ++
           testScope(Akka.testkit ++ specs2)
 
-        import com.typesafe.sbt.{SbtNativePackager => N}
-        //import N.NativePackagerKeys._
+        import sbtassembly.Plugin._
+        import AssemblyKeys._
 
         override def project = typicalProject
           .dependsOn(taskmanServerLogic, taskmanServerSchema, taskmanApi)
           .dependsOn(baseTest % "test")
-          .settings(N.packageArchetype.java_application: _*)
+          .settings(assemblySettings: _*)
           .settings(
+            test in assembly := {}, // Disable tests during assembly
             scalacOptions in Compile ~= removeValues("-optimise") // because Akka docs
           )
       }
