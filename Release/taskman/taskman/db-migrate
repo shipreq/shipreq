@@ -1,0 +1,2 @@
+#!/bin/bash
+$(dirname $(readlink -e "$0"))/bin/run shipreq.taskman.server.app.DatabaseMigration "$@"
