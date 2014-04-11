@@ -1,0 +1,64 @@
+#!/bin/bash
+cd $(dirname $(readlink -e "$0")) || exit 1
+#tmp=/tmp/$(date +%Y%m%d-%H%M%S)-$$
+
+usage="Usage: $0 [start|status|stop|restart]"
+[ $# -ne 1 ] && echo "$usage" && exit 1
+
+pidF=taskman.pid
+
+function is_alive {
+  [ -e $pidF ] && kill -0 $(<$pidF) 2>/dev/null
+}
+
+case "$1" in
+
+  status)
+    if is_alive; then
+      echo "Running on: $(<$pidF)"
+    else
+      echo "Not running."
+    fi
+    ;;
+
+  start)
+    if is_alive; then
+      echo "Already running on: $(<$pidF)"
+    else
+      echo "Starting..."
+      exec ./start >/dev/null &
+      p=$!
+      sleep 2
+      disown $p \
+        && kill -0 $p \
+        && echo $p > $pidF \
+        && echo "Running on: $p"
+    fi
+    ;;
+
+  stop)
+    if is_alive; then
+      kill $(<$pidF)
+      [ $? -ne 0 ] && echo "Kill failed" && exit 2
+      for T in $(seq 1 120); do is_alive && sleep 1; done
+      is_alive && echo "Taskman didn't stop. PID = $(<$pidF)" && exit 2
+      echo "Stopped successfully."
+      rm $pidF
+    else
+      echo "Not running."
+      [ -e $pidF ] && rm $pidF
+    fi
+    ;;
+
+  restart)
+    is_alive && echo "Stopping..." && "$0" stop >/dev/null
+    is_alive && echo "Failed to stop." && exit 3
+    exec "$0" start
+    ;;
+
+  *)
+    echo "Unsupported command: $1"
+    echo "$usage"
+    exit 1
+esac
+
