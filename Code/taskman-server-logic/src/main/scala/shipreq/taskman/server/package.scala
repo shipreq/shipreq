@@ -23,6 +23,9 @@ package object server {
 
   case class MsgDetail(hdr: MsgHeader, msg: Msg, failureCount: Short) {
     assert(failureCount >= 0, s"Failure count = $failureCount")
+
+    override lazy val toString =
+      s"MsgDetail($hdr, ${msg.toString.replace("\n", "\\n")}, $failureCount)"
   }
 
   /**

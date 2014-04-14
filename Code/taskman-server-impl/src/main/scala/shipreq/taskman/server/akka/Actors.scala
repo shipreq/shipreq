@@ -111,8 +111,7 @@ class WorkerActor(ctx: TaskmanCtx, manager: ActorRef) extends Actor with HasLogg
       requestWork()
 
     case m: MsgHeader =>
-      log.debug.z(s"Starting work: $m")
-      worker.processL(m).unsafePerformIO()
+      worker.process(m).unsafePerformIO()
       requestWork()
   }
 }

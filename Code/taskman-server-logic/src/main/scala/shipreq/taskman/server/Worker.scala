@@ -39,7 +39,7 @@ object Worker extends HasLogger {
   object WorkResult {
 
     /** Unable to assign the worker to the job. Someone else must've taken it. */
-    case object CouldntAssign extends WorkResult
+    case class CouldntAssign(m: MsgHeader) extends WorkResult
 
     /** Work completed successfully. */
     case class Completed(m: MsgDetail) extends WorkResult
@@ -55,13 +55,16 @@ object Worker extends HasLogger {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  case class Reified(
+  final case class Reified(
     implicit node: NodeId,
              worker: WorkerId,
              sopToIo: SopReifier,
              clock: IO[DateTime],
              failurePolicy: FailurePolicy,
              msgProcessor: MsgProcessor) {
+
+    def process(m: MsgHeader): IO[WorkResult] =
+      catchTaskmanErrorsN(assign(m)) >>= logWorkResult
 
     private[this] def catchTaskmanErrors(m: => Option[MsgDetail]): IO[WorkResult] => IO[WorkResult] =
       _.except(t => {
@@ -71,6 +74,15 @@ object Worker extends HasLogger {
       })
 
     private[this] val catchTaskmanErrorsN = catchTaskmanErrors(None)
+
+    private[this] def assign(mh: MsgHeader): IO[WorkResult] =
+      GetMsgAssignWorker(node, worker, mh).toIO >>= {
+        case Some(m) => catchTaskmanErrors(Some(m))(logWorkStart(m) >> performWork(m))
+        case None    => CouldntAssign(mh).toIO
+      }
+
+    private[this] def logWorkStart(md: MsgDetail): IO[Unit] =
+      IO(log.debug.z(s"Starting work: $md"))
 
     private[this] def performWork(m: MsgDetail): IO[WorkResult] =
       ErrorOr.catchExceptionM(msgProcessor(m)) >>= {
@@ -84,18 +96,10 @@ object Worker extends HasLogger {
       f.reaction.toIO >> addOps >> WorkerFailed(m, err, f.reaction).toIO
     }
 
-    private[this] val processAssignment: Option[MsgDetail] => IO[WorkResult] = {
-      case Some(m) => catchTaskmanErrors(Some(m))(performWork(m))
-      case None    => CouldntAssign.toIO
-    }
-
-    def process(m: MsgHeader): IO[WorkResult] =
-      catchTaskmanErrorsN(
-        GetMsgAssignWorker(node, worker, m).toIO >>= processAssignment)
-
-    def logWorkResult(r: WorkResult): IO[WorkResult] = IO{
+    private[this] def logWorkResult(r: WorkResult): IO[WorkResult] = IO{
       r match {
-        case CouldntAssign =>
+        case CouldntAssign(m) =>
+          log.debug.z(s"Couldn't assign: $m")
         case Completed(m) =>
           log.info.z(s"Successfully completed: $m")
         case WorkerFailed(_, e, f) =>
@@ -103,16 +107,13 @@ object Worker extends HasLogger {
           if (e is Deliberate)
             log.info.z(s"Worker deliberately failed: ${e.msg} // $f")
           else
-            log.warn(e, s"Worker failed: $f")
+            log.error(e, s"Worker failed: $f")
         case TaskmanFailed(e, Some(m)) =>
           log.error(e, s"Taskman error occurred processing $m")
         case TaskmanFailed(e, None) =>
-          log.error(e, s"Taskman error occurred! (no msg)")
+          log.error(e, "Taskman error occurred! (no msg)")
       }
       r
     }
-
-    def processL(m: MsgHeader): IO[WorkResult] =
-      process(m) >>= logWorkResult
   }
 }
