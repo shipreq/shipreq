@@ -22,7 +22,7 @@
 	<logger name="scala.slick.session" level="DEBUG" />
 	<logger name="shipreq" level="DEBUG" />
 	<root level="DEBUG">
-		<appender-ref ref="STDOUT" />
+		<!--<appender-ref ref="STDOUT" />-->
 		<appender-ref ref="FILE.LOG" />
 	</root>
 </configuration>

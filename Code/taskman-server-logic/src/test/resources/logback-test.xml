@@ -14,7 +14,7 @@
 	<appender name="FILE.LOG" class="ch.qos.logback.core.FileAppender">
 		<file>log/taskman-server-logic-test-${bySecond}.log</file>
 		<encoder>
-			<pattern>%d{HH:mm:ss.SSS} %-5level [%-50logger{50}] {%thread} %msg%n</pattern>
+			<pattern>%d{HH:mm:ss.SSS} %-5level [%-50logger{50}] %msg%n</pattern>
 		</encoder>
 	</appender>
 
@@ -25,7 +25,7 @@
     <logger name="shipreq" level="DEBUG" />
 
 	<root level="DEBUG">
-		<appender-ref ref="STDOUT" />
+		<!--<appender-ref ref="STDOUT" />-->
 		<appender-ref ref="FILE.LOG" />
 	</root>
 </configuration>
