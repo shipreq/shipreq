@@ -9,14 +9,14 @@ object ErrorOr {
 
   val unit = apply(())
 
-  @inline final def error[A](m: String)              : ErrorOr[A] = -\/(Error error m)
-  @inline final def error[A](e: Throwable)           : ErrorOr[A] = -\/(Error error e)
-  @inline final def error[A](m: String, e: Throwable): ErrorOr[A] = -\/(Error.error(m,e))
+  @inline final def error[A](m: String)              : ErrorOr[A] = -\/(Error(m))
+  @inline final def error[A](e: Throwable)           : ErrorOr[A] = -\/(Error(e))
+  @inline final def error[A](m: String, e: Throwable): ErrorOr[A] = -\/(Error(m,e))
 
   def fromOption[A](o: Option[A], errMsg: => String): ErrorOr[A] =
     o match {
       case Some(a) => apply(a)
-      case None => Error(errMsg)
+      case None    => error(errMsg)
     }
 
   def catchException[A](a: => ErrorOr[A]): ErrorOr[A] =
@@ -25,7 +25,7 @@ object ErrorOr {
   def catchExceptionM[M[_], A](a: => M[ErrorOr[A]])(implicit M: Applicative[M]): M[ErrorOr[A]] =
     try a catch {
       case ErrorAsThrowable(e) => M.point(e.toErrorOr)
-      case e: Throwable        => M.point(Error(e))
+      case e: Throwable        => M.point(error(e))
     }
 
   def annotate[A](ann: => String)(eoa: ErrorOr[A]): ErrorOr[A] =
@@ -117,13 +117,9 @@ object Error {
   val reasonLens = Lens.lensg[Error, String \&/ Throwable](e => r => Error(r, e.tags)  , _.reason)
   val tagsLens   = Lens.lensg[Error, Set[ErrorTag]       ](e => t => Error(e.reason, t), _.tags)
 
-  @inline final def apply[A](m: String)              : ErrorOr[A] = -\/(error(m))
-  @inline final def apply[A](e: Throwable)           : ErrorOr[A] = -\/(error(e))
-  @inline final def apply[A](m: String, e: Throwable): ErrorOr[A] = -\/(error(m, e))
-
-  @inline final def error[A](m: String)              : Error = Error(This(m))
-  @inline final def error[A](e: Throwable)           : Error = Error(That(e))
-  @inline final def error[A](m: String, e: Throwable): Error = Error(Both(m, e))
+  @inline final def apply[A](m: String)              : Error = Error(This(m))
+  @inline final def apply[A](e: Throwable)           : Error = Error(That(e))
+  @inline final def apply[A](m: String, e: Throwable): Error = Error(Both(m, e))
 
   private def merge(a: String, b: String): String =
     if (a.isEmpty) b

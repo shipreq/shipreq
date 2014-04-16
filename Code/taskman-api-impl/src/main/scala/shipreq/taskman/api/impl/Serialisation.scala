@@ -3,7 +3,7 @@ package shipreq.taskman.api.impl
 import org.json4s._
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{read, write}
-import shipreq.base.util.{BiMap, Error, ErrorOr}
+import shipreq.base.util.{BiMap, ErrorOr}
 import shipreq.taskman.api.Types._
 import shipreq.taskman.api.{Msg, MsgType}
 import Msg._
@@ -36,7 +36,7 @@ private[taskman] object Serialisation {
   def deserialise(msgTypeId: Short, s: Ser): DeSer =
     MsgType.lookup(msgTypeId) match {
       case Some(t) => deserialise(t, s)
-      case None    => Error(s"Unknown message type: $msgTypeId")
+      case None    => ErrorOr.error(s"Unknown message type: $msgTypeId")
     }
 
   def deserialise(t: MsgType, s: Ser): DeSer =

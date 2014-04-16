@@ -58,7 +58,7 @@ object EmailImpl extends HasLogger {
         if (as.size == 1)
           ErrorOr(as.head)
         else
-          Error(s"Email address '$ea' is expected to parse into a single address, but parsed into ${as.toList}")
+          ErrorOr error s"Email address '$ea' is expected to parse into a single address, but parsed into ${as.toList}"
       }
   }
 }

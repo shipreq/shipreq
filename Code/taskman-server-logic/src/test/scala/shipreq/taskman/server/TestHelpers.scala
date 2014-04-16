@@ -37,8 +37,8 @@ object TestHelpers {
   val md_1 = MsgDetail(mh_1, msg_rereg, 0)
   val mh_2 = MsgHeader(MsgId(2), Priority(5), timePast)
 
-  val sampleNotifySupportWorkerFailed = NotifySupportWorkerFailed(timeNow, md_1, Error error "WORKED FAILED")
-  val sampleNotifySupportTaskmanError = NotifySupportTaskmanError(timeNow, Error error "WORKED FAILED", Some(md_1))
+  val sampleNotifySupportWorkerFailed = NotifySupportWorkerFailed(timeNow, md_1, Error("WORKED FAILED"))
+  val sampleNotifySupportTaskmanError = NotifySupportTaskmanError(timeNow, Error("WORKED FAILED"), Some(md_1))
 
   object lenses {
     object msgDetail {
@@ -68,7 +68,7 @@ object TestHelpers {
   val reassignWorkerDeny               = endoMod[MockSops](_.reassignWorkerR << false)
   val reassignWorkerCrash              = endoMod[MockSops](_.reassignWorkerR << ???)
 
-  val crashOnSendEmail = endoMod[MockBops](_.sendEmailR << Error("CRASH!"))
+  val crashOnSendEmail = endoMod[MockBops](_.sendEmailR << ErrorOr.error("CRASH!"))
 
   val clockReal = IO(DateTime.now)
 

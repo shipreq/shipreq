@@ -98,7 +98,7 @@ final class Worker[F[_]](msgProcessor: MsgProcessor[F])(
 
   private[this] def catchTaskmanErrors[T](m: => Option[MsgDetail], ef: TaskmanFailed => IO[T]): IO[T] => IO[T] =
     _.except(t => {
-      val e = Error.error(t)
+      val e = Error(t)
       val notifySupport = clock >>= (t => sopToIo(NotifySupportTaskmanError(t, e, m)))
       notifySupport >> ef(TaskmanFailed(e, m))
     })

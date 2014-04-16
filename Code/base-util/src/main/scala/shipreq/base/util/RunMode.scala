@@ -34,7 +34,7 @@ object RunMode {
     new StringBasedValueReader(r).tryParseE[RunMode](s =>
       forName(s) match {
         case Some(m) => \/-(m)
-        case None    => Error(s"Unable to parse run mode: $s")
+        case None    => ErrorOr.error(s"Unable to parse run mode: $s")
       }
     )
 

@@ -46,7 +46,7 @@ object ExternalValueReader {
     getOE(name) map ErrorOr.require_!
 
   def get[T](name: String)(implicit s: PropScope, r: Retriever[T]): ErrorOr[T] =
-    getOE(name) getOrElse Error(errorMsgWhenMissing(name))
+    getOE(name) getOrElse ErrorOr.error(errorMsgWhenMissing(name))
 
   def tryGet[T](name: String, moreNames: String*)(implicit s: PropScope, r: Retriever[T]): ErrorOr[T] = {
     val es = (name #:: moreNames.toStream).map(getOE(_))
@@ -63,7 +63,7 @@ object ExternalValueReader {
     get(name) foreach f
 
   def valTest[T](f: T => Boolean, errMsg: String): ValTest[T] =
-    t => if (f(t)) None else Some(Error error errMsg)
+    t => if (f(t)) None else Some(Error(errMsg))
 
   def valTestNotError[T]: ValTest[ErrorOr[T]] =
     _.swap.toOption
@@ -168,7 +168,7 @@ class StringBasedValueReader(_retrieverS: Retriever[String]) extends StringParsi
     else if (RegexF.matcher(s).matches)
       ErrorOr(false)
     else
-      Error(s"Unable to parse '$s'")
+      ErrorOr error s"Unable to parse '$s'"
   )
 }
 

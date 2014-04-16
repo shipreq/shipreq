@@ -5,7 +5,7 @@ import java.util.regex.Pattern
 import org.joda.time.Period
 import scala.concurrent.duration.FiniteDuration
 import shipreq.base.util.ExternalValueReader.Retriever
-import shipreq.base.util.{ErrorOr, Error, StringParsingBase}
+import shipreq.base.util.{ErrorOr, StringParsingBase}
 
 object JodaTimeHelpers {
 
@@ -102,7 +102,7 @@ case class JodaTimeValueRetrievers(rs: Retriever[String]) extends StringParsingB
       else {
         val m = periodRegex.matcher(s)
         if (!m.matches)
-          Error(s"Unable to parse into quantity and unit: '$s'")
+          ErrorOr.error(s"Unable to parse into quantity and unit: '$s'")
         else
           for {
             n <- ErrorOr.safe(java.lang.Integer.parseInt(m group 1))

@@ -15,8 +15,8 @@ import Worker._
 
 class FailureTest extends Specification with NoTimeConversions {
 
-  val genericError = Error.error("NO!")
-  val deterministicError = Error.error("ALWAYS NO!").tag(Deterministic)
+  val genericError = Error("NO!")
+  val deterministicError = Error("ALWAYS NO!").tag(Deterministic)
   val ctx_det = FailureCtx(md_1, deterministicError, timeNow)
   val ctx_nd = FailureCtx(md_1, genericError, timeNow)
 

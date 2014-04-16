@@ -95,7 +95,7 @@ class ExternalValueReaderTest extends Specification with DataTables with NoTimeC
     implicit def scope = GlobalScope
 
     def pass[T](t: T): Option[ErrorOr[T]] = Some(ErrorOr(t))
-    def fail[T]: Option[ErrorOr[T]] = Some(-\/(Error error "any error"))
+    def fail[T]: Option[ErrorOr[T]] = Some(ErrorOr error "any error")
 
     def test[T](r: StringBasedValueReader => Retriever[T])(s: String, exp: Option[ErrorOr[T]]) = {
       val a = new StringBasedValueReader(fromMap("X" -> (() => s)))

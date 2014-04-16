@@ -55,9 +55,9 @@ final class BusinessLogic[EA, F[_]](
         Thread.sleep(processingTimeMs)
       ErrorOr.tag[Unit](Deliberate)(
         if (md.failureCount < retryCount)
-          Error(s"Failure count (${md.failureCount}) < desired ($retryCount).")
+          ErrorOr.error(s"Failure count (${md.failureCount}) < desired ($retryCount).")
         else failureMsg match {
-          case Some(e) => ErrorOr.tag(Deterministic)(Error(e))
+          case Some(e) => Error(e).tag(Deterministic).toErrorOr
           case None    => ErrorOr.unit
         }
       )
