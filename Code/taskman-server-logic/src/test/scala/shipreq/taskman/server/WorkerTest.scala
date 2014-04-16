@@ -61,7 +61,7 @@ class WorkerTest extends Specification {
 
     def test(sopEndo: Endo[MockSops], fp: FailurePolicy, mp: MsgProcessor[Need]) = {
       val mockSop = sopEndo(new MockSops)
-      val w = new Worker()(nid, wid, mockSop, tp, clockReal, fp, mp)
+      val w = new Worker(mp)(nid, wid, mockSop, tp, clockReal, fp)
       val r: R = w.process(mh_1).unsafePerformIO()
       (r, mockSop)
     }
@@ -115,7 +115,7 @@ class WorkerTest extends Specification {
         val need = new (IO ~> Need) { def apply[A](io: IO[A]) = Need(io.unsafePerformIO()) }
         val mp: MsgProcessor[Need] = i => i.asyncT(need)(io)
         val mockSop = sopEndo(new MockSops)
-        val w = new Worker()(nid, wid, mockSop, tp, clock, fpRetry, mp)
+        val w = new Worker(mp)(nid, wid, mockSop, tp, clock, fpRetry)
         val r: R = w.process(mh_1).unsafePerformIO()
         (r, mockSop)
       }

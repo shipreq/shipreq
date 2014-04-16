@@ -42,6 +42,9 @@ object SopImpl {
               MsgDetail(hdr, msg, failureCount)))
       }
 
+    def reassignWorker(n: NodeId, w: WorkerId, m: MsgId): Boolean =
+      reassignWorkerQ.firstOption(n, w, m) getOrElse false
+
     def failAndRetry(msg: MsgId, delay: Period): Unit =
       failAndRetryQ.execute(delay, msg)
     
@@ -82,6 +85,9 @@ class SopImpl[EA](db: Database, emailCtx: Email.Ctx[EA], bopReifier: BopReifier)
 
     case GetMsgAssignWorker(node, worker, hdr) =>
       ioD(_.getMsgAssignWorker(node, worker, hdr))
+
+    case ReAssignWorker(n, w, m) =>
+      ioD(_.reassignWorker(n, w, m))
 
     case UpdateMsgAbort(m, delay) =>
       ioD(_.failAndRetry(m, delay))

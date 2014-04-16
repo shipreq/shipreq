@@ -85,12 +85,13 @@ object TestHelpers {
     case T.DummyMsg =>
       for {
         desc             <- arbitrary[String]
+        async            <- arbitrary[Boolean]
         processingTimeMs <- arbitrary[Long]
         retryCount       <- arbitrary[Short]
         retryDelaySec    <- arbitrary[Int]
         failureMsg       <- arbitrary[Option[String]]
       } yield
-        M.DummyMsg(desc, processingTimeMs, retryCount, retryDelaySec, failureMsg)
+        M.DummyMsg(desc, async, processingTimeMs, retryCount, retryDelaySec, failureMsg)
 
     case T.SendDiagEmail =>
       for {

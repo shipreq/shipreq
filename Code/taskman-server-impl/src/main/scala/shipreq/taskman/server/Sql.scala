@@ -132,6 +132,13 @@ object Sql {
       returning type, data, failure_count
     """.sql)
 
+  val reassignWorkerQ = query[(NodeId, WorkerId, MsgId), Boolean]("""
+      update msgq
+      set updated_at = clock_timestamp()
+      where node = ? and worker = ? and id = ?
+      returning true
+    """.sql)
+
   // TODO Doesn't confirm worker. and node = ? and worker = ?  , NodeId, WorkerId
   val failAndRetryQ = update[(Period, MsgId)]("""
       update msgq

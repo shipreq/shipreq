@@ -5,19 +5,17 @@ import scalaz.effect.IO
 import shipreq.base.util.{ErrorOr, Error}
 import shipreq.taskman.api.Msg._
 import shipreq.taskman.api.Types.EmailAddr
-import shipreq.taskman.server.{Deliberate, Deterministic}
+import shipreq.taskman.server.{IOE, Deliberate, Deterministic}
 import shipreq.taskman.server.Worker.{MsgProcessor, MsgProcessorIn, MsgProcessorOut}
 
-object BusinessLogic {
-  type NoAsync[A] = Nothing
-}
-import BusinessLogic._
+final class BusinessLogic[EA, F[_]](
+      ctx: Email.Ctx[EA],
+      bopReifier: BopReifier,
+      emailScheduler: IO ~> F
+    ) extends MsgProcessor[F] {
 
-final class BusinessLogic[EA](ctx: Email.Ctx[EA], bopReifier: BopReifier) extends MsgProcessor[NoAsync] {
-  type F[A] = NoAsync[A]
   type MI = MsgProcessorIn[F]
   type MO = MsgProcessorOut[F]
-  def emailScheduler: IO ~> F = ??? // TODO
 
   private[this] val emails = new Emails[EA](ctx)
   private[this] implicit def autoParseEa(ea: EmailAddr): EA = ctx.addrParser(ea)
@@ -42,8 +40,10 @@ final class BusinessLogic[EA](ctx: Email.Ctx[EA], bopReifier: BopReifier) extend
       case SendDiagEmail(addr, subject, body) =>
         emailUser(addr, emails.diagnosticEmail(subject, body, md))
 
-      case DummyMsg(desc, processingTimeMs, retryCount, _, failureMsg) =>
-        i.sync {
+      case DummyMsg(desc, async, processingTimeMs, retryCount, _, failureMsg) => {
+        val io: IOE[Unit] = IO {
+          if (processingTimeMs > 0)
+            Thread.sleep(processingTimeMs)
           if (processingTimeMs > 0)
             Thread.sleep(processingTimeMs)
           ErrorOr.tag[Unit](Deliberate)(
@@ -54,6 +54,11 @@ final class BusinessLogic[EA](ctx: Email.Ctx[EA], bopReifier: BopReifier) extend
               case None    => ErrorOr.unit
             }
           )
+        }
+        async match {
+          case true  => i.asyncT(emailScheduler)(io)
+          case false => i.sync(io)
+        }
       }
 
     }

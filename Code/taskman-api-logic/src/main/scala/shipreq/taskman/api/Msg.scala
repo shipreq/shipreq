@@ -25,6 +25,7 @@ object Msg {
   case class LandingPageHit(email: EmailAddr, name: String, msg: Option[String], newsletter: Boolean) extends Msg
 
   case class DummyMsg(desc: String,
+                      async: Boolean = false,
                       processingTimeMs: Long = 0,
                       retryCount: Short = 0,
                       retryDelaySec: Int = 0,

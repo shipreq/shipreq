@@ -50,11 +50,12 @@ class AkkaTest extends Specification with DatabaseTest with NoTimeConversions wi
       // submit jobs
       val dummy1 = run(SubmitMsg(DummyMsg("#1: Pass immediately")))
       val dummy2 = run(SubmitMsg(DummyMsg("#2: Fail immediately", retryCount = 1, failureMsg = Some("Deliberate fail."))))
-      log.debug.z(s"Dummy job ids: ${dummy1.value}, ${dummy2.value}")
+      val dummy3 = run(SubmitMsg(DummyMsg("#3: Async pass", async = true)))
+      log.debug.z(s"Dummy job ids: ${dummy1.value}, ${dummy2.value}, ${dummy3.value}")
 
       // wait for results
-      val expect = List(Succeeded, FailAndAbort).map(Some(_))
-      List(dummy1, dummy2).map(lookupHistory) must be_==(expect).eventually(20, 1.second)
+      val expect = List(Succeeded, FailAndAbort, Succeeded).map(Some(_))
+      List(dummy1, dummy2, dummy3).map(lookupHistory) must be_==(expect).eventually(20, 1.second)
 
     } finally {
       log.info.fmt("Finished in %.3fs", (System.currentTimeMillis() - startTime) / 1000.0)

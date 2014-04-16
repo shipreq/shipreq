@@ -23,15 +23,18 @@ private[app] trait MainTemplate extends HasLogger {
   def withDatabase[A](f: Db => A): A = {
     val db = new Db(propsR)
     db.init()
-    try {
+    try
       f(db)
-    } finally {
+    finally
       ErrorOr.safe(db.shutdown()).leftMap(e => log.error(e, "Error closing database connections."))
-    }
   }
 
   def withTaskmanCtx[A](f: TaskmanCtx => A): A =
-    withDatabase(db =>
-      f(new TaskmanCtx(db.slick, props, propsR))
-    )
+    withDatabase { db =>
+      val ctx = new TaskmanCtx(db.slick, props, propsR)
+      try
+        f(ctx)
+      finally
+        ErrorOr.safe(ctx.shutdown()).leftMap(e => log.error(e, "Error shutting down ctx."))
+    }
 }

@@ -6,5 +6,5 @@ db.password = sqt
 
 shipreq.webapp.appName    = TestShipReq
 shipreq.webapp.url.login  = http://test.shipreq.com/login
-taskman.server.poll.every = 200 ms
-taskman.server.poll.min   = #
+taskman.work.poll.every   = 200 ms
+taskman.work.poll.min     = #

@@ -23,6 +23,46 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
   val rng = new Random()
   val defaultMsg = ReRegistrationAttempted("haha cool".tag)
 
+  "reassignWorker" should {
+
+    val insertQ = query[(Option[NodeId], Option[WorkerId], Period, Period, Period), MsgId](
+      "INSERT INTO msgq(type, data, node, worker, updated_at, created_at, effective_from, priority, priority_base)" +
+        s"VALUES(0, NULL, ?, ?, now()-?, now()-?, now()-?, 5,5) RETURNING id")
+
+    val getUpdatedAt = query[MsgId, DateTime]("select updated_at from msgq where id=?")
+
+    def timestampBeforeAfter(id: MsgId) = {
+      val b = getUpdatedAt.first(id)
+      dao.reassignWorker(n ,w, id)
+      val a = getUpdatedAt.first(id)
+      (a, b)
+    }
+
+    "when still assigned to self" in {
+      def insert = insertQ.first(Some(n), Some(w), 10.minutes, 3.days, 3.days)
+
+      "return true" in {
+        dao.reassignWorker(n ,w, insert) must beTrue
+      }
+      "update timestamp" in {
+        val (a, b) = timestampBeforeAfter(insert)
+        a must_!= b
+      }
+    }
+
+    "when still assigned to self" >> {
+      def insert = insertQ.first(Some(n), None, 10.minutes, 3.days, 3.days)
+
+      "return false" in {
+        dao.reassignWorker(n, w, insert) must beFalse
+      }
+      "not update timestamp" in {
+        val (a, b) = timestampBeforeAfter(insert)
+        a must_== b
+      }
+    }
+  }
+
   "getMsgsAssignNode" should {
 
     val insertQ = query[(Short, Priority, Priority, Option[Int], Option[Short], Period, Period, Period), MsgId](

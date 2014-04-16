@@ -74,14 +74,13 @@ object Worker {
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-final class Worker[F[_]](
+final class Worker[F[_]](msgProcessor: MsgProcessor[F])(
     implicit node: NodeId,
              worker: WorkerId,
              sopToIo: SopReifier,
              trustPeriod: AssignmentTrustPeriod,
              clock: IO[DateTime],
-             failurePolicy: FailurePolicy,
-             msgProcessor: MsgProcessor[F]
+             failurePolicy: FailurePolicy
     ) extends HasLogger {
 
   // Output type of process()
