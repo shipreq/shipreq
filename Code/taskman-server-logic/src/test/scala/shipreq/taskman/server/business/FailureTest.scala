@@ -73,14 +73,14 @@ class FailureTest extends Specification with NoTimeConversions {
       val bop = new MockBops
       val sop = new MockSops
       handleFailedWorker(MockEmails, bop, sop)(sampleNotifySupportWorkerFailed).unsafePerformIO()
-      (sop, bop) must haveRunOps()(classOf[SendEmail[_]])
+      (sop, bop) must haveRunOps()(classOf[SendEmail])
     }
 
     "raise a taskman error if fails to notify support" in {
       val bop = crashOnSendEmail(new MockBops)
       val sop = new MockSops
       handleFailedWorker(MockEmails, bop, sop)(sampleNotifySupportWorkerFailed).unsafePerformIO()
-      (sop, bop) must haveRunOps(classOf[NotifySupportTaskmanError])(classOf[SendEmail[_]])
+      (sop, bop) must haveRunOps(classOf[NotifySupportTaskmanError])(classOf[SendEmail])
     }
   }
 
@@ -88,13 +88,13 @@ class FailureTest extends Specification with NoTimeConversions {
     "notify support" in {
       val bop = new MockBops
       handleFailedTaskman(MockEmails, bop)(sampleNotifySupportTaskmanError).unsafePerformIO()
-      bop must haveRunBops(classOf[SendEmail[_]])
+      bop must haveRunBops(classOf[SendEmail])
     }
 
     "recover if unable to notify support" in {
       val bop = crashOnSendEmail(new MockBops)
       handleFailedTaskman(MockEmails, bop)(sampleNotifySupportTaskmanError).unsafePerformIO()
-      bop must haveRunBops(classOf[SendEmail[_]])
+      bop must haveRunBops(classOf[SendEmail])
     }
   }
 }

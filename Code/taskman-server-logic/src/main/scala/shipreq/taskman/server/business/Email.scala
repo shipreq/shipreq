@@ -3,16 +3,28 @@ package shipreq.taskman.server.business
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import scalaz.NonEmptyList
-import shipreq.taskman.api.Types
+import shipreq.taskman.api.Types.EmailAddr
 import shipreq.taskman.server.MsgDetail
-import shipreq.base.util.Error
+import shipreq.base.util.{ErrorOr, Error}
 import Email._
 
 object Email {
 
-  trait EnvelopeProps[EA] {
-    val publicFrom: EA
-    val supportEnv: Envelope[EA]
+  final case class Addr(addr: EmailAddr, preParsed: Option[AnyRef] = None) {
+
+    override def toString =
+      if (preParsed.isDefined) preParsed.toString else addr
+
+    def tryParse[P](reuse: PartialFunction[AnyRef, P], parse: EmailAddr => ErrorOr[P]): ErrorOr[P] =
+      preParsed match {
+        case Some(p) if reuse.isDefinedAt(p) => ErrorOr(reuse(p))
+        case _ => parse(addr)
+      }
+  }
+
+  trait EnvelopeProps {
+    val publicFrom: Addr
+    val supportEnv: Envelope
   }
 
   trait TokenValues {
@@ -20,9 +32,7 @@ object Email {
     val loginUrl: String
   }
 
-  type AddrParser[EA] = Types.EmailAddr => EA
-
-  final case class Envelope[EA](from: EA, to: NonEmptyList[EA], cc: List[EA] = Nil, bcc: List[EA] = Nil) {
+  final case class Envelope(from: Addr, to: NonEmptyList[Addr], cc: List[Addr] = Nil, bcc: List[Addr] = Nil) {
     override def toString = {
       val sb = new StringBuilder(getClass.getSimpleName)
       def kv(k: String, v: Any, p: String = ", "): Unit = {
@@ -31,7 +41,7 @@ object Email {
         sb append " = "
         sb append v
       }
-      def kvo(k: String, v: List[EA]): Unit = if (v.nonEmpty) kv(k, v)
+      def kvo(k: String, v: List[Addr]): Unit = if (v.nonEmpty) kv(k, v)
       kv("from", from, "(")
       kv("to", to)
       kvo("cc", cc)
@@ -46,13 +56,13 @@ object Email {
   val timeFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
 }
 
-final class Emails[EA](val addrParser: AddrParser[EA], ep: EnvelopeProps[EA], tv: TokenValues) {
+final class Emails(ep: EnvelopeProps, tv: TokenValues) {
   import ep._
   import tv._
 
-  type SendOp = Bop.SendEmail[EA]
+  type SendOp = Bop.SendEmail
 
-  def sendToUser(addr: EA, c: Content): SendOp = {
+  def sendToUser(addr: Addr, c: Content): SendOp = {
     val e = Envelope(publicFrom, NonEmptyList(addr))
     Bop.SendEmail(e, c)
   }

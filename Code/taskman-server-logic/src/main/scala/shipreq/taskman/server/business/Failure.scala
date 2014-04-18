@@ -16,7 +16,7 @@ object Failure extends HasLogger {
 
   // TODO This should be elsewhere and/or this class needs renaming
 
-  def handleFailedWorker(emails: Emails[_], bopReifier: BopReifier, sopReifier: SopReifier): NotifySupportWorkerFailed => IO[Unit] =
+  def handleFailedWorker(emails: Emails, bopReifier: BopReifier, sopReifier: SopReifier): NotifySupportWorkerFailed => IO[Unit] =
     op =>
       bopReifier(emails.notifySupportOfWorkerFailure(op.t, op.m, op.e))
         .execE(e2 => IO(
@@ -27,7 +27,7 @@ object Failure extends HasLogger {
           ) >> sopReifier(NotifySupportTaskmanError(op.t, e2, Some(op.m)))
         )
 
-  def handleFailedTaskman(emails: Emails[_], bopReifier: BopReifier): NotifySupportTaskmanError => IO[Unit] =
+  def handleFailedTaskman(emails: Emails, bopReifier: BopReifier): NotifySupportTaskmanError => IO[Unit] =
     op =>
       bopReifier(emails.notifySupportOfTaskmanError(op.t, op.e, op.m))
         .execE(e2 => IO(

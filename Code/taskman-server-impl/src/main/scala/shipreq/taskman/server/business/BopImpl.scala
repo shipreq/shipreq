@@ -27,7 +27,7 @@ final class BopImpl(emailer: EmailImpl, mailchimp: MailChimpImpl) extends BopRei
 
   def applyOnly[A]: Bop[A] => IOE[A] = {
 
-    case s: SendEmail[EmailImpl.EA] =>
+    case s: SendEmail =>
       emailer send s
 
     case MailChimpOp(op) =>

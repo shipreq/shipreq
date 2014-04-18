@@ -14,7 +14,6 @@ import shipreq.base.util.jodatime.JodaTimeHelpers._
 import shipreq.base.util.jodatime.JodaTimeValueRetrievers
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.CfgKeys
-import shipreq.taskman.api.Types._
 import shipreq.taskman.api.impl.TaskmanApi
 import shipreq.taskman.server.business._
 
@@ -29,9 +28,6 @@ class Db(props: StringBasedValueReader) extends DbTemplate {
 //==========================================================================================
 
 final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
-  private type EA = EmailImpl.EA
-  private def addrParser  = EmailImpl.AddressParser
-
   import evr._
   private val jtr = JodaTimeValueRetrievers(retrieverS)
   import jtr.retrieverPeriod
@@ -56,13 +52,14 @@ final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
   def propmap = mail.propmap ++ mailchimp.propmap ++ taskman.propmap
 
   // --------------------------------------------------------------------------
-  object mail extends Email.EnvelopeProps[EA] {
+  object mail extends Email.EnvelopeProps {
+    import Email._
     private implicit def scope: PropScope = scopeByNS("mail")
-    private[this] implicit def rEA = retrieverS.map(s => addrParser(s.tag[IsEmailAddr]))
-    private[this] implicit def rEE = EmailImpl.envelopeLoader(rEA)
+    private[this] implicit def rEA = EmailImpl.addressLoader
+    private[this] implicit def rEE = EmailImpl.envelopeLoader
 
-    val publicFrom     = validate("public.from", need[EA])(valTestNotError)
-    val supportEnv     = need[Email.Envelope[EA]]("support")
+    val publicFrom     = need[Addr]("public.from")
+    val supportEnv     = need[Envelope]("support")
     val concurrencyMax = validate("concurrency.max", need[Int])(atLeast(1))
 
     private[TaskmanProps] def propmap = mkPropMap(
@@ -72,8 +69,6 @@ final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
   // --------------------------------------------------------------------------
   object mailchimp extends MailChimpImpl.Props {
     private implicit def scope: PropScope = scopeByNS("mailchimp")
-    private[this] implicit def rEA = retrieverS.map(s => addrParser(s.tag[IsEmailAddr]))
-    private[this] implicit def rEE = EmailImpl.envelopeLoader(rEA)
 
     val dc         = need[String]("dc")
     val key        = need[String]("key")
@@ -122,7 +117,7 @@ class TaskmanCtx(val db: Database, mailProps: Properties, evr: StringBasedValueR
   }
 
   val email     = new EmailImpl(EmailImpl.loadSession(mailProps))
-  val emails    = new Emails(EmailImpl.AddressParser, props.mail, new EmailTokenValues(cfgFromApiReader))
+  val emails    = new Emails(props.mail, new EmailTokenValues(cfgFromApiReader))
   val http      = new OkHttpClient()
   val mailchimp = new MailChimpImpl(http, props.mailchimp)
 

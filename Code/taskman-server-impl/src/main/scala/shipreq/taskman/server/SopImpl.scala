@@ -67,7 +67,7 @@ object SopImpl {
 
 // =====================================================================================================================
 
-class SopImpl[EA](db: Database, emails: Emails[EA], bopReifier: BopReifier) extends SopReifier {
+class SopImpl[EA](db: Database, emails: Emails, bopReifier: BopReifier) extends SopReifier {
   import Sop._
   import SopImpl._
 

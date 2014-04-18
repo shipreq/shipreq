@@ -8,21 +8,21 @@ import shipreq.taskman.api.Types.EmailAddr
 import shipreq.taskman.server.{MsgDetail, Deliberate, Deterministic}
 import shipreq.taskman.server.Worker.{AsyncScheduler, MsgProcessor, MsgProcessorIn, MsgProcessorOut}
 
-final class BusinessLogic[EA, F[_]](
+final class BusinessLogic[F[_]](
       bopReifier: BopReifier,
-      emails: Emails[EA],
+      emails: Emails,
       emailScheduler: AsyncScheduler[F]
     ) extends MsgProcessor[F] {
 
   type MI = MsgProcessorIn[F]
   type MO = MsgProcessorOut[F]
 
-  private[this] implicit def autoParseEa(ea: EmailAddr): EA = emails.addrParser(ea)
+  private[this] implicit def autoParseEa(ea: EmailAddr): Email.Addr = Email.Addr(ea)
 
-  @inline private[this] def emailUser(to: EA, c: Email.Content)(implicit i: MI): MO =
+  @inline private[this] def emailUser(to: Email.Addr, c: Email.Content)(implicit i: MI): MO =
     send(emails.sendToUser(to, c))
 
-  @inline private[this] def send(e: Bop.SendEmail[EA])(implicit i: MI): MO =
+  @inline private[this] def send(e: Bop.SendEmail)(implicit i: MI): MO =
     i.async(emailScheduler)(bopReifier(e))
 
   override def apply(i: MI): MO = {

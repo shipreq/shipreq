@@ -3,7 +3,7 @@ package shipreq.taskman.server.business
 import java.util.Properties
 import javax.mail._
 import javax.mail.internet.{MimeMessage, InternetAddress}
-import scalaz.NonEmptyList
+import scalaz.{Traverse, NonEmptyList}
 import scalaz.effect.IO
 import scalaz.std.list._
 import scalaz.syntax.bind._
@@ -12,14 +12,12 @@ import shipreq.base.util.{JPropertiesValueReader, ErrorOr}
 import shipreq.base.util.effect.IOE
 import shipreq.base.util.log.HasLogger
 import shipreq.base.util.ExternalValueReader._
-import shipreq.taskman.api.Types
+import shipreq.taskman.api.Types._
 import shipreq.taskman.server.Deterministic
 import Bop.SendEmail
 import Email._
 
 object EmailImpl extends HasLogger {
-
-  type EA = ErrorOr[Address]
 
   def loadSession(props: Properties): Session = {
     val pr = JPropertiesValueReader(props)
@@ -38,39 +36,54 @@ object EmailImpl extends HasLogger {
     Session.getInstance(props, mailAuth getOrElse null)
   }
 
-  def envelopeLoader(implicit rea: Retriever[EA]): Retriever[Envelope[EA]] =
-    Retriever[Envelope[EA]](k => {
+  val getParsed: PartialFunction[AnyRef, Address] = {
+    case a: Address => a
+  }
+
+  val parser: EmailAddr => ErrorOr[Address] = // TODO memoise?
+    ea => ErrorOr.catchAndTag(Deterministic) {
+      val as = InternetAddress.parse(ea)
+      if (as.size == 1)
+        ErrorOr(as.head)
+      else
+        ErrorOr error s"Email address '$ea' is expected to parse into a single address, but parsed into ${as.toList}"
+    }
+
+  def addressLoader(implicit rs: Retriever[String]): Retriever[Addr] =
+    rs.emap(s => {
+      val ea = s.tag[IsEmailAddr]
+      parser(ea).map(p => Addr(ea, Some(p)))
+    })
+
+  def envelopeLoader(implicit rea: Retriever[Addr]): Retriever[Envelope] =
+    Retriever[Envelope](k => {
       implicit val s = PropScope(n => s"$k.$n")
-      def get(n: String) = validate(n, need[EA])(valTestNotError)
+      def get(n: String) = need[Addr](n)
       val from = get("from")
       val to   = get("to")
       Some(ErrorOr(Envelope(from, NonEmptyList(to))))
     })
 
-  // TODO memo with LRU cache ?
-  case object AddressParser extends AddrParser[EA] {
-    override def apply(ea: Types.EmailAddr): EA =
-      ErrorOr.catchAndTag(Deterministic) {
-        val as = InternetAddress.parse(ea)
-        if (as.size == 1)
-          ErrorOr(as.head)
-        else
-          ErrorOr error s"Email address '$ea' is expected to parse into a single address, but parsed into ${as.toList}"
-      }
+  implicit class EAExt(val ea: Addr) extends AnyVal {
+    def parsed = ea.tryParse(getParsed, parser)
+  }
+
+  implicit class EAExtF[F[_]](val f: F[Addr]) extends AnyVal {
+    def parsed(implicit F: Traverse[F]): ErrorOr[F[Address]] = F.traverse[ErrorOr, Addr, Address](f)(_.parsed)
   }
 }
 
 final class EmailImpl(mailSession: Session) extends HasLogger {
-  import EmailImpl.EA
+  import EmailImpl._
 
   val charset = "UTF-8"
 
-  def buildEmail(e: Envelope[EA], c: Content): ErrorOr[MimeMessage] = {
+  def buildEmail(e: Envelope, c: Content): ErrorOr[MimeMessage] = {
     val r = for {
-      from <- e.from
-      to   <- e.to.sequence[ErrorOr, Address]
-      cc   <- e.cc.sequence[ErrorOr, Address]
-      bcc  <- e.bcc.sequence[ErrorOr, Address]
+      from <- e.from.parsed
+      to   <- e.to.parsed
+      cc   <- e.cc.parsed
+      bcc  <- e.bcc.parsed
     } yield {
       val m = new MimeMessage(mailSession)
       m.setSentDate(new java.util.Date)
@@ -87,7 +100,7 @@ final class EmailImpl(mailSession: Session) extends HasLogger {
     r.join
   }
 
-  def send(op: SendEmail[EA]): IOE[Unit] = IO(
+  def send(op: SendEmail): IOE[Unit] = IO(
     buildEmail(op.e, op.c).map(m => {
       Transport.send(m)
       log.info.z(s"Email sent: ${op.e.to.head} [${op.c.subject}]")

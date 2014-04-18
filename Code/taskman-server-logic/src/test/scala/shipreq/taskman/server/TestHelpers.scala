@@ -15,6 +15,7 @@ import shipreq.taskman.api.{MsgId, Priority}
 import shipreq.taskman.api.Types._
 import shipreq.taskman.api.Msg.ReRegistrationAttempted
 import shipreq.taskman.server.business.{Emails, Bop, Email}
+import shipreq.taskman.server.business.Email.Addr
 import Bop._
 import Sop._
 import Manager._
@@ -102,8 +103,9 @@ object TestHelpers {
 
   implicit def arbitraryJobQueue = arbMap[JobQueue, List[MsgHeader]](emptyQueue ++ _)
 
-  object MockEmailEnvelopeProps extends Email.EnvelopeProps[String] {
-    override val publicFrom = "publicFrom"
+  object MockEmailEnvelopeProps extends Email.EnvelopeProps {
+    private[this] implicit def autoParseEa(ea: String): Addr = Addr(ea.tag)
+    override val publicFrom: Addr = "publicFrom"
     override val supportEnv = Email.Envelope("Support.From", NonEmptyList("Support.To"))
   }
 
@@ -112,7 +114,7 @@ object TestHelpers {
     override val loginUrl = "loginUrl"
   }
 
-  val MockEmails = new Emails(identity, MockEmailEnvelopeProps, MockEmailTokenValues)
+  val MockEmails = new Emails(MockEmailEnvelopeProps, MockEmailTokenValues)
 
   def haveRunBops(expBops: Class[_ <: Bop[_]]*): Matcher[MockBops] =
     beEqualTo(expBops.toList) ^^ {(b: MockBops) => b.allOpClasses}
@@ -150,6 +152,6 @@ class MockBops extends MockOpTransformer[Bop, IOE] {
   val sendEmailR = MockResponse(ErrorOr.unit)
 
   override def trans[A] = {
-    case _: SendEmail[_] => IO(sendEmailR.pop())
+    case _: SendEmail => IO(sendEmailR.pop())
   }
 }

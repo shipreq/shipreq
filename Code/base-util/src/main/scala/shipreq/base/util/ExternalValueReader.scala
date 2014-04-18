@@ -20,6 +20,9 @@ object ExternalValueReader {
     def map[B](f: T => B): Retriever[B] =
       Retriever(k => this.run(k).map(_ map f))
 
+    def emap[B](f: T => ErrorOr[B]): Retriever[B] =
+      fmap(t => Some(f(t)))
+
     def fmap[B](f: T => Option[ErrorOr[B]]): Retriever[B] =
       Retriever(k => this.run(k).flatMap {
         case -\/(e) => Some(-\/(e))
