@@ -162,7 +162,7 @@ object ShipReq extends Build {
         val dir = "taskman-server-impl"
 
         override def deps =
-          Akka.actor ++ javaMail ++
+          Akka.actor ++ javaMail ++ okHttp ++ httpCore ++
           testScope(Akka.testkit ++ specs2)
 
         import sbtassembly.Plugin._

@@ -37,7 +37,7 @@ object Deps {
     val effect     = dd("scalaz-effect")
   }
 
-  object Json4s extends Group("3.2.7", "org.json4s") {
+  object Json4s extends Group("3.2.8", "org.json4s") {
     val jackson = dd("json4s-jackson") ++ Scala.all
   }
 
@@ -62,7 +62,9 @@ object Deps {
     val testkit = dd("akka-testkit")
   }
 
-  val javaMail    :MS = "com.sun.mail"                % "javax.mail"           % "1.5.1"
+  val okHttp      :MS = "com.squareup.okhttp"         % "okhttp"                % "1.5.4"
+  val httpCore    :MS = "org.apache.httpcomponents"   % "httpcore"              % "4.3.2"
+  val javaMail    :MS = "com.sun.mail"                % "javax.mail"            % "1.5.1"
   val jodaTime    :MS = "joda-time"                   % "joda-time"             % "2.3" ++
                         "org.joda"                    % "joda-convert"          % "1.2"
   val postgresql  :MS = "org.postgresql"              % "postgresql"            % "9.3-1101-jdbc41"

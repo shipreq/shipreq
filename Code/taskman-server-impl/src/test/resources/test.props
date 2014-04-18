@@ -9,3 +9,7 @@ shipreq.webapp.url.login     = http://test.shipreq.com/login
 taskman.mail.concurrency.max = 1
 taskman.work.poll.every      = 200 ms
 taskman.work.poll.min        = #
+
+mailchimp.dc         = us8
+mailchimp.key        = d96852e88497f5dd2d19da53fc565236-us8
+mailchimp.masterList = Master

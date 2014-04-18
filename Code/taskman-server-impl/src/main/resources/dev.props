@@ -11,3 +11,7 @@ mail.smtp.auth                = true
 mail.smtp.port                = 465
 mail.user                     = yoar.mum@gmail.com
 mail.password                 = 6vJDhVXYm8G95uXj3gPq
+
+mailchimp.dc         = us8
+mailchimp.key        = d96852e88497f5dd2d19da53fc565236-us8
+mailchimp.masterList = Master

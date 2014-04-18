@@ -1,0 +1,23 @@
+#!/bin/bash
+#cd "$(dirname "$0")"
+#[ -z "$1" ] && echo "Usage: $0 <xxx>" && exit 1
+#tmp=/tmp/$(date +%Y%m%d-%H%M%S)-$$
+#xxx="$(cd "$(dirname "$0")/xxx" && pwd)"
+
+url=https://us8.api.mailchimp.com/2.0
+key=d96852e88497f5dd2d19da53fc565236-us8
+
+# Get campaigns
+#req='{"apikey":"'$key'"}'
+#curl -X POST -H "Content-Type: application/json" -d "$req" $url/campaigns/list.json
+
+req='{"apikey":"'$key'","filters":{"list_name":"Master","exact":true}}'
+echo "$url/lists/list.json"
+curl -X POST -H "Content-Type: application/json" -d "$req" $url/lists/list.json | json_reformat
+
+# Get email addresses
+#cid=5901d4387f
+#req='{"apikey":"'$key'","cid":"'$cid'","opts":{"start":0,"limit":100}}'
+#echo "$req"
+#curl -X POST -H "Content-Type: application/json" -d "$req" $url/reports/sent-to.json | json_reformat
+

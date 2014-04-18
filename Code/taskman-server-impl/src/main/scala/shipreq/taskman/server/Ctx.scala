@@ -1,5 +1,6 @@
 package shipreq.taskman.server
 
+import com.squareup.okhttp.OkHttpClient
 import java.util.concurrent.{Callable, Executors, ExecutorService, ThreadFactory, TimeUnit}
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.Properties
@@ -17,7 +18,7 @@ import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.CfgKeys
 import shipreq.taskman.api.Types._
 import shipreq.taskman.api.impl.TaskmanApi
-import shipreq.taskman.server.business.{BopImpl, EmailImpl, BusinessLogic, Failure, Email}
+import shipreq.taskman.server.business._
 
 //==========================================================================================
 
@@ -76,6 +77,19 @@ final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
       "public.from" -> publicFrom, "support" -> supportEnv, "concurrency.max" -> concurrencyMax)
   }
 
+  object mailchimp {
+    private implicit def scope: PropScope = scopeByNS("mailchimp")
+    private[this] implicit def rEA = retrieverS.map(s => addrParser(s.tag[IsEmailAddr]))
+    private[this] implicit def rEE = EmailImpl.envelopeLoader(rEA)
+
+    val dc         = need[String]("dc") // data center
+    val key        = need[String]("key")
+    val masterList = need[String]("masterList")
+
+    private[TaskmanProps] def propmap = mkPropMap(
+      "dc" -> dc, "key" -> key, "masterList" -> masterList)
+  }
+
   object work {
     private implicit def scope: PropScope = scopeByNS("taskman.work")
 
@@ -91,7 +105,7 @@ final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
       "queueSize" -> queueSize, "trustPeriod" -> trustPeriod, "poll.every" -> pollEvery, "poll.min" -> pollGap)
   }
 
-  def propmap = mail.propmap ++ work.propmap
+  def propmap = mail.propmap ++ mailchimp.propmap ++ work.propmap
 }
 
 //==========================================================================================
@@ -134,13 +148,13 @@ object TaskmanAsync {
 //==========================================================================================
 
 class TaskmanCtx(val db: Database, mailProps: Properties, evr: StringBasedValueReader)
-  extends Email.Ctx[EmailImpl.EA] with EmailImpl.Ctx with BopImpl.Ctx with HasLogger {
+  extends Email.Ctx[EmailImpl.EA] with EmailImpl.Ctx with MailChimpImpl.Ctx
+     with HasLogger {
 
   protected def fromDb = SopImpl.cfgValueReader(db)
 
   override val mailSession = EmailImpl.loadSession(mailProps)
   override val addrParser  = EmailImpl.AddressParser
-  override val emailer     = new EmailImpl(this)
 
   val props = new TaskmanProps(evr)
 
@@ -149,6 +163,11 @@ class TaskmanCtx(val db: Database, mailProps: Properties, evr: StringBasedValueR
 
   override val publicFrom = props.mail.publicFrom
   override val supportEnv = props.mail.supportEnv
+
+  override val httpClient              = new OkHttpClient()
+  override val mailChimpDC             = props.mailchimp.dc
+  override val mailChimpKey            = props.mailchimp.key
+  override val mailChimpMasterListName = props.mailchimp.masterList
 
   private[TaskmanCtx] object async {
     import TaskmanAsync._
@@ -170,8 +189,10 @@ class TaskmanCtx(val db: Database, mailProps: Properties, evr: StringBasedValueR
   }
 
   implicit def trustPeriod   = props.work.trustPeriod
+  implicit val email         = new EmailImpl(this)
+  implicit val mailchimp     = new MailChimpImpl(this)
   implicit val aopReifier    = new TaskmanApi(TaskmanApi.Context(None), db)
-  implicit val bopReifier    = new BopImpl(this)
+  implicit val bopReifier    = new BopImpl(email, mailchimp)
   implicit val sopReifier    = new SopImpl(db, this, bopReifier)
   implicit val msgProcessor  = new BusinessLogic(this, bopReifier, async.email)
   implicit val failurePolicy = Failure.failurePolicy

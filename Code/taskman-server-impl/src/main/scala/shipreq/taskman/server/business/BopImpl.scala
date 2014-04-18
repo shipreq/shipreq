@@ -7,17 +7,8 @@ import shipreq.base.util.effect.IOE
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.server.IoUtils
 import Bop._
-import BopImpl._
 
-object BopImpl {
-  trait Ctx {
-    def emailer: EmailImpl
-  }
-}
-
-final class BopImpl(ctx: Ctx) extends BopReifier with HasLogger {
-
-  import ctx._
+final class BopImpl(emailer: EmailImpl, mailchimp: MailChimpImpl) extends BopReifier with HasLogger {
 
   override def apply[A](op: Bop[A]): IOE[A] =
     IoUtils.timeU(
@@ -34,9 +25,13 @@ final class BopImpl(ctx: Ctx) extends BopReifier with HasLogger {
       }
     )
 
-  def applyOnly[A](op: Bop[A]): IOE[A] =
-    op match {
-      case s: SendEmail[EmailImpl.EA] => emailer send s
-    }
+  def applyOnly[A]: Bop[A] => IOE[A] = {
+
+    case s: SendEmail[EmailImpl.EA] =>
+      emailer send s
+
+    case MailChimpOp(op) =>
+      mailchimp run op
+  }
 }
 

@@ -20,7 +20,7 @@ trait ServerImplTestHelpers {
     override def fromDb = propsR
   }
   lazy val apiOpReifier = new TaskmanApi(TaskmanApi.Context(None), db)
-  lazy val bopReifier = new BopImpl(ctx)
+  lazy val bopReifier = new BopImpl(ctx.email, ctx.mailchimp)
   lazy val sopReifier = new SopImpl(db, ctx, bopReifier)
 
   def reify[A](op: ApiOp[A]): IO[A] = apiOpReifier(op)
