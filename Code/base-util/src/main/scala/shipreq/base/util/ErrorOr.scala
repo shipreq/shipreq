@@ -67,7 +67,36 @@ object ErrorOr {
       case -\/(e) => e.throw_!()
     }
 
+  def withResource[R, O](r: => R)(close: R => Unit)(f: R => O): ErrorOr[O] =
+    withResourceE(r)(close)(apply[O]_  compose f)
+
+  def withResourceE[R, O](r: => R)(close: R => Unit)(f: R => ErrorOr[O]): ErrorOr[O] =
+    catchException {
+      val rr = r
+      execFinally(catchException(f(rr)), close(rr))
+    }
+
+  /**
+   * Runs a effect and if it throws an exception then it is returned gracefully.
+   * If the `tried` result is already an error, then the error from the finally-effect is ignored.
+   *
+   * Avoiding wrapping `finallyFn` in `safe` for a small performance gain.
+   *
+   * @param tried The default response (strict).
+   * @param finallyFn The effect function.
+   */
+  def execFinally[A](tried: ErrorOr[A], finallyFn: => Unit): ErrorOr[A] =
+    try {
+      finallyFn
+      tried
+    } catch {
+      case t: Throwable => Error.choose(tried, Error(t))
+    }
+
   object Implicits {
+
+    implicit def ErrorOrAsIdMonad[A](ea: ErrorOr[A]) = new MonadExt[Id, A](ea)
+
     implicit class MonadExt[M[_], A](val mea: M[ErrorOr[A]]) extends AnyVal {
 
       @inline def mapE[B](f: => A => B)(implicit M: Monad[M]): M[ErrorOr[B]] =
@@ -85,6 +114,23 @@ object ErrorOr {
       @inline def >-> [B](f: => A => B)            (implicit M: Monad[M]): M[ErrorOr[B]] = mapE(f)
       @inline def >=> [B](f: => A => ErrorOr[B])   (implicit M: Monad[M]): M[ErrorOr[B]] = emapE(f)
       @inline def >==>[B](f: => A => M[ErrorOr[B]])(implicit M: Monad[M]): M[ErrorOr[B]] = fmapE(f)
+
+      @inline def >->! (f: => A => Nothing)            (implicit M: Monad[M]): M[ErrorOr[Nothing]] = mapE[Nothing](f)
+      @inline def >=>! (f: => A => ErrorOr[Nothing])   (implicit M: Monad[M]): M[ErrorOr[Nothing]] = emapE[Nothing](f)
+      @inline def >==>!(f: => A => M[ErrorOr[Nothing]])(implicit M: Monad[M]): M[ErrorOr[Nothing]] = fmapE[Nothing](f)
+
+      @inline def _mapE [B](b: => B            )(implicit M: Monad[M]): M[ErrorOr[B]] = mapE(_ => b)
+      @inline def _emapE[B](b: => ErrorOr[B]   )(implicit M: Monad[M]): M[ErrorOr[B]] = emapE(_ => b)
+      @inline def _fmapE[B](b: => M[ErrorOr[B]])(implicit M: Monad[M]): M[ErrorOr[B]] = fmapE(_ => b)
+      @inline def |>->  [B](b: => B            )(implicit M: Monad[M]): M[ErrorOr[B]] = _mapE(b)
+      @inline def |>=>  [B](b: => ErrorOr[B]   )(implicit M: Monad[M]): M[ErrorOr[B]] = _emapE(b)
+      @inline def |>==> [B](b: => M[ErrorOr[B]])(implicit M: Monad[M]): M[ErrorOr[B]] = _fmapE(b)
+
+      @inline def ftapE(f: A => M[ErrorOr[Unit]])(implicit M: Monad[M]): M[ErrorOr[A]] = fmapE(a => f(a) |>-> a)
+      @inline def >==>^(f: A => M[ErrorOr[Unit]])(implicit M: Monad[M]): M[ErrorOr[A]] = ftapE(f)
+
+      @inline def tapE(f: A => M[Unit])(implicit M: Monad[M]): M[ErrorOr[A]] = fmapE(a => M.map(f(a))(_ => ErrorOr(a)))
+      @inline def <<| (f: A => M[Unit])(implicit M: Monad[M]): M[ErrorOr[A]] = tapE(f)
 
       @inline def execE(f: Error => M[Unit])(implicit M: Monad[M]): M[Unit] =
         M.bind(mea){
@@ -165,6 +211,12 @@ object Error {
     t.printStackTrace(pw)
     sw.toString
   }
+
+  def choose[N](a: ErrorOr[_], b: => Error): ErrorOr[N] =
+    a match {
+      case e@ -\/(_) => e
+      case \/-(_)    => b.toErrorOr
+    }
 }
 
 final case class ErrorAsThrowable(e: Error) extends RuntimeException(e.msg, e.cause getOrElse null)
