@@ -53,11 +53,11 @@ final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
       log.info.fmt(s"    %-${maxKeyLen}s = %s", k, v)
   }
 
-  def propmap = mail.propmap ++ mailchimp.propmap ++ work.propmap
+  def propmap = mail.propmap ++ mailchimp.propmap ++ taskman.propmap
 
   // --------------------------------------------------------------------------
   object mail extends Email.EnvelopeProps[EA] {
-    private implicit def scope: PropScope = scopeByNS("taskman.mail")
+    private implicit def scope: PropScope = scopeByNS("mail")
     private[this] implicit def rEA = retrieverS.map(s => addrParser(s.tag[IsEmailAddr]))
     private[this] implicit def rEE = EmailImpl.envelopeLoader(rEA)
 
@@ -83,8 +83,8 @@ final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
   }
 
   // --------------------------------------------------------------------------
-  object work {
-    private implicit def scope: PropScope = scopeByNS("taskman.work")
+  object taskman {
+    private implicit def scope: PropScope = scopeByNS("taskman")
 
     val queueSize   = validate("queueSize", need[Int])(atLeast(1))
     val trustPeriod = AssignmentTrustPeriod(validate("trustPeriod", need[Period])(atLeast(10 seconds)))
@@ -126,7 +126,7 @@ class TaskmanCtx(val db: Database, mailProps: Properties, evr: StringBasedValueR
   val http      = new OkHttpClient()
   val mailchimp = new MailChimpImpl(http, props.mailchimp)
 
-  implicit def trustPeriod   = props.work.trustPeriod
+  implicit def trustPeriod   = props.taskman.trustPeriod
   implicit val aopReifier    = new TaskmanApi(TaskmanApi.Context(None), db)
   implicit val bopReifier    = new BopImpl(email, mailchimp)
   implicit val sopReifier    = new SopImpl(db, emails, bopReifier)

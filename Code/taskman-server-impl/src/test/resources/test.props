@@ -4,12 +4,14 @@ db.database = shipreq_test
 db.username = shipreq_test
 db.password = sqt
 
-shipreq.webapp.appName       = TestShipReq
-shipreq.webapp.url.login     = http://test.shipreq.com/login
-taskman.mail.concurrency.max = 1
-taskman.work.poll.every      = 200 ms
-taskman.work.poll.min        = #
+shipreq.webapp.appName   = TestShipReq
+shipreq.webapp.url.login = http://test.shipreq.com/login
+
+mail.concurrency.max = 1
 
 mailchimp.dc         = us8
 mailchimp.key        = d96852e88497f5dd2d19da53fc565236-us8
 mailchimp.masterList = Master
+
+taskman.poll.every   = 200 ms
+taskman.poll.min     = #

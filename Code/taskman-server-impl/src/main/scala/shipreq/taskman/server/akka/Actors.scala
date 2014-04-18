@@ -21,7 +21,7 @@ class SourceActor(ctx: TaskmanCtx) extends Actor with HasLogger {
   import SourceActor._
   import shipreq.taskman.server.Source
   import ctx._
-  import ctx.props.work.{trustPeriod => _, _}
+  import ctx.props.taskman.{trustPeriod => _, _}
 
   val mdc = TaskmanLogging.mdc("source")
   val source = new Source(pollGap, queueSize)
@@ -53,7 +53,7 @@ class ManagerActor(ctx: TaskmanCtx, source: ActorRef) extends Actor with HasLogg
   import context.dispatcher
 
   val mdc = TaskmanLogging.mdc("manager")
-  val poller = context.system.scheduler.schedule(0 millis, ctx.props.work.pollEvery.toScala, self, PollSource)
+  val poller = context.system.scheduler.schedule(0 millis, ctx.props.taskman.pollEvery.toScala, self, PollSource)
 
   var workers: Set[ActorRef] = Set.empty
   var queue = M.emptyQueue

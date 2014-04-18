@@ -7,12 +7,12 @@ db.pool.disableJMX                 = false
 db.pool.statisticsEnabled          = true
 db.pool.statementsCacheSize        = 64
 
-taskman.mail.public.from     = default@props.com
-taskman.mail.support.from    = japgolly+support_from@gmail.com
-taskman.mail.support.to      = japgolly+support_to@gmail.com
-taskman.mail.concurrency.max = 4
+mail.public.from     = default@props.com
+mail.support.from    = japgolly+support_from@gmail.com
+mail.support.to      = japgolly+support_to@gmail.com
+mail.concurrency.max = 4
 
-taskman.work.queueSize      = 10
-taskman.work.trustPeriod    = 3 min
-taskman.work.poll.every     = 5 sec
-taskman.work.poll.min       = 1 sec
+taskman.queueSize      = 10
+taskman.trustPeriod    = 3 min
+taskman.poll.every     = 5 sec
+taskman.poll.min       = 1 sec
