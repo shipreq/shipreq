@@ -21,11 +21,6 @@ object EmailImpl extends HasLogger {
 
   type EA = ErrorOr[Address]
 
-  trait Ctx {
-    def mailSession: Session
-    val mailCharset = "UTF-8"
-  }
-
   def loadSession(props: Properties): Session = {
     val pr = JPropertiesValueReader(props)
     import pr._
@@ -65,9 +60,10 @@ object EmailImpl extends HasLogger {
   }
 }
 
-final class EmailImpl(ctx: EmailImpl.Ctx) extends HasLogger {
+final class EmailImpl(mailSession: Session) extends HasLogger {
   import EmailImpl.EA
-  import ctx._
+
+  val charset = "UTF-8"
 
   def buildEmail(e: Envelope[EA], c: Content): ErrorOr[MimeMessage] = {
     val r = for {
@@ -83,8 +79,8 @@ final class EmailImpl(ctx: EmailImpl.Ctx) extends HasLogger {
         m.setRecipients(Message.RecipientType.TO, Array(to.toList: _*))
         m.setRecipients(Message.RecipientType.CC, Array(cc.toList: _*))
         m.setRecipients(Message.RecipientType.BCC, Array(bcc.toList: _*))
-        m.setSubject(c.subject, mailCharset)
-        m.setText(c.body, mailCharset)
+        m.setSubject(c.subject, charset)
+        m.setText(c.body, charset)
         m
       }
     }

@@ -5,9 +5,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import scalaz.effect.IO
 import scala.slick.session.Database
 import shipreq.base.util.{JPropertiesValueReader, RunMode, Props}
-import shipreq.taskman.api.impl.TaskmanApi
 import shipreq.taskman.api.ApiOp
-import shipreq.taskman.server.business.BopImpl
 import ServerImplTestHelpers._
 
 trait ServerImplTestHelpers {
@@ -17,13 +15,11 @@ trait ServerImplTestHelpers {
   final def dbMutexW = ServerImplTestHelpers.dbMutexW
 
   lazy val ctx: TaskmanCtx = new TaskmanCtx(db, props, propsR) {
-    override def fromDb = propsR
+    override def cfgFromApiReader = propsR
   }
-  lazy val apiOpReifier = new TaskmanApi(TaskmanApi.Context(None), db)
-  lazy val bopReifier = new BopImpl(ctx.email, ctx.mailchimp)
-  lazy val sopReifier = new SopImpl(db, ctx, bopReifier)
+  import ctx._
 
-  def reify[A](op: ApiOp[A]): IO[A] = apiOpReifier(op)
+  def reify[A](op: ApiOp[A]): IO[A] = aopReifier(op)
   def reify[A](op: Sop[A]): IO[A] = sopReifier(op)
 
   def run[A](op: ApiOp[A]): A = reify(op).unsafePerformIO()

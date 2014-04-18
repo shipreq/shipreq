@@ -9,7 +9,7 @@ import shipreq.base.util.{ErrorOr, StringBasedValueReader}
 import shipreq.base.util.ExternalValueReader.Retriever
 import shipreq.taskman.api.{MsgId, Priority}
 import shipreq.taskman.api.impl.Serialisation
-import shipreq.taskman.server.business.{Failure, BopReifier, Emails, Email}
+import shipreq.taskman.server.business.{Failure, BopReifier, Emails}
 import Sql.{FailAndAbort, Succeeded}
 
 object SopImpl {
@@ -67,11 +67,10 @@ object SopImpl {
 
 // =====================================================================================================================
 
-class SopImpl[EA](db: Database, emailCtx: Email.Ctx[EA], bopReifier: BopReifier) extends SopReifier {
+class SopImpl[EA](db: Database, emails: Emails[EA], bopReifier: BopReifier) extends SopReifier {
   import Sop._
   import SopImpl._
 
-  private[this] val emails = new Emails(emailCtx)
   private[this] val failedWorkerHandler = Failure.handleFailedWorker(emails, bopReifier, this)
   private[this] val failedTaskmanHandler = Failure.handleFailedTaskman(emails, bopReifier)
   private[this] def ioD[A](f: Dao => A): IO[A] = IO(db.withSession(s => f(new Dao(s))))

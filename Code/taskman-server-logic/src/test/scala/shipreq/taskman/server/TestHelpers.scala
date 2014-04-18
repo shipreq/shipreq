@@ -102,14 +102,17 @@ object TestHelpers {
 
   implicit def arbitraryJobQueue = arbMap[JobQueue, List[MsgHeader]](emptyQueue ++ _)
 
-  object MockEmailCtx extends Email.Ctx[String] {
-    override def addrParser = identity
+  object MockEmailEnvelopeProps extends Email.EnvelopeProps[String] {
     override val publicFrom = "publicFrom"
     override val supportEnv = Email.Envelope("Support.From", NonEmptyList("Support.To"))
-    override val shipreq = "shipreq"
+  }
+
+  object MockEmailTokenValues extends Email.TokenValues {
+    override val shipreqName = "shipreq"
     override val loginUrl = "loginUrl"
   }
-  val MockEmails = new Emails(MockEmailCtx)
+
+  val MockEmails = new Emails(identity, MockEmailEnvelopeProps, MockEmailTokenValues)
 
   def haveRunBops(expBops: Class[_ <: Bop[_]]*): Matcher[MockBops] =
     beEqualTo(expBops.toList) ^^ {(b: MockBops) => b.allOpClasses}

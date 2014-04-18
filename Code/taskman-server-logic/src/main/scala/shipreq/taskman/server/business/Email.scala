@@ -6,18 +6,17 @@ import scalaz.NonEmptyList
 import shipreq.taskman.api.Types
 import shipreq.taskman.server.MsgDetail
 import shipreq.base.util.Error
+import Email._
 
 object Email {
 
-  trait Ctx[EA] {
-    def addrParser: AddrParser[EA]
-
-    // Email addresses
+  trait EnvelopeProps[EA] {
     val publicFrom: EA
     val supportEnv: Envelope[EA]
+  }
 
-    // Email content tokens
-    val shipreq: String
+  trait TokenValues {
+    val shipreqName: String
     val loginUrl: String
   }
 
@@ -47,14 +46,14 @@ object Email {
   val timeFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
 }
 
-final class Emails[EA](ctx: Email.Ctx[EA]) {
-  import Email._
-  import ctx._
+final class Emails[EA](val addrParser: AddrParser[EA], ep: EnvelopeProps[EA], tv: TokenValues) {
+  import ep._
+  import tv._
 
   type SendOp = Bop.SendEmail[EA]
 
   def sendToUser(addr: EA, c: Content): SendOp = {
-    val e = Email.Envelope(ctx.publicFrom, NonEmptyList(addr))
+    val e = Envelope(publicFrom, NonEmptyList(addr))
     Bop.SendEmail(e, c)
   }
 
@@ -75,13 +74,13 @@ final class Emails[EA](ctx: Email.Ctx[EA]) {
 
   // ===================================================================================================================
 
-  private val passwordChangeRequestS = s"$shipreq Password Change Request"
+  private val passwordChangeRequestS = s"$shipreqName Password Change Request"
 
   def passwordChangeRequest(url: String) =
     Content(passwordChangeRequestS, s"""
 Hi,
 
-Someone recently requested a password change to your $shipreq account.
+Someone recently requested a password change to your $shipreqName account.
 
 If this was you, you can set a new password here:
 $url
@@ -92,12 +91,12 @@ If you didn't request this, please ignore this email - your password will not be
 
   // ===================================================================================================================
 
-  private val registrationS = s"Registration at $shipreq"
+  private val registrationS = s"Registration at $shipreqName"
 
   def linkToCompleteRegistration(url: String) =
     Content(registrationS, s"""
 
-Your email address has been used to register a $shipreq account.
+Your email address has been used to register a $shipreqName account.
 
 To continue your registration, simply click on the following link:
 $url

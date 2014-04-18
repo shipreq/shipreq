@@ -23,12 +23,10 @@ import MailChimpImpl._
 
 object MailChimpImpl {
 
-  // TODO I think all these Ctxs as traits is a failed experiment. Separate classes would be better & clearer.
-  trait Ctx {
-    val httpClient: OkHttpClient
-    val mailChimpDC: String
-    val mailChimpKey: String
-    val mailChimpMasterListName: String
+  trait Props {
+    val dc: String
+    val key: String
+    val masterList: String
   }
 
   class Req(val url: URL, val body: JValue)
@@ -38,11 +36,10 @@ object MailChimpImpl {
 
 // =====================================================================================================================
 
-final class MailChimpImpl(ctx: Ctx) extends HasLogger {
-  import ctx._
+final class MailChimpImpl(httpClient: OkHttpClient, props: Props) extends HasLogger {
 
-  private val urlPrefix = s"https://$mailChimpDC.api.mailchimp.com/2.0"
-  private val apikeyJson = render("apikey" -> mailChimpKey)
+  private val urlPrefix = s"https://${props.dc}.api.mailchimp.com/2.0"
+  private val apikeyJson = render("apikey" -> props.key)
   private val defaultCharset = Charset.forName("UTF-8")
   private val contentTypeJson = s"application/json;charset=${defaultCharset.name}"
 

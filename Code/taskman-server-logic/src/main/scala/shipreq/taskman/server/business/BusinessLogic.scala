@@ -9,16 +9,15 @@ import shipreq.taskman.server.{MsgDetail, Deliberate, Deterministic}
 import shipreq.taskman.server.Worker.{AsyncScheduler, MsgProcessor, MsgProcessorIn, MsgProcessorOut}
 
 final class BusinessLogic[EA, F[_]](
-      ctx: Email.Ctx[EA],
       bopReifier: BopReifier,
+      emails: Emails[EA],
       emailScheduler: AsyncScheduler[F]
     ) extends MsgProcessor[F] {
 
   type MI = MsgProcessorIn[F]
   type MO = MsgProcessorOut[F]
 
-  private[this] val emails = new Emails[EA](ctx)
-  private[this] implicit def autoParseEa(ea: EmailAddr): EA = ctx.addrParser(ea)
+  private[this] implicit def autoParseEa(ea: EmailAddr): EA = emails.addrParser(ea)
 
   @inline private[this] def emailUser(to: EA, c: Email.Content)(implicit i: MI): MO =
     send(emails.sendToUser(to, c))

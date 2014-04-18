@@ -95,7 +95,7 @@ object WorkerActor {
 class WorkerActor(ctx: TaskmanCtx, manager: ActorRef) extends Actor with HasLogger {
   import shipreq.taskman.server.Worker
   import ManagerActor.{RequestForWork, WorkAvailable}
-  import ctx.{shipreq => _, _} // TODO rename ctx.shipreq
+  import ctx._
 
   implicit val id = WorkerActor.nextId
   val mdc = TaskmanLogging.mdc(s"worker-${id.value}")
