@@ -5,10 +5,6 @@ Development Environment Setup
 
 * Install SBT.
 
-* Building local fork of Lift.
-    Check out git@github.com:japgolly/framework.git or git://github.com/japgolly/framework.git somewhere.
-    ./golly
-
 ### Web Front-End
 
 First, be in webapp/

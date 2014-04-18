@@ -46,7 +46,7 @@ object Deps {
     val jcl = d("jcl-over-slf4j")
   }
 
-  object Lift extends Group("2.6-M2-golly-1", "net.liftweb") {
+  object Lift extends Group("2.6-M3", "net.liftweb") {
     val webkit  = dd("lift-webkit") ++ Scala.all // because it contains lift-json
     val testkit = dd("lift-testkit")
   }
@@ -57,7 +57,7 @@ object Deps {
     val all  = core ++ web
   }
 
-  object Akka extends Group("2.3.1", "com.typesafe.akka") {
+  object Akka extends Group("2.3.2", "com.typesafe.akka") {
     val actor   = dd("akka-actor") ++ dd("akka-slf4j")
     val testkit = dd("akka-testkit")
   }
@@ -72,16 +72,16 @@ object Deps {
   val bonecp      :MS = "com.jolbox"                  % "bonecp"                % "0.8.0.RELEASE" ++
                         "com.google.code.findbugs"    % "jsr305"                % "2.0.2" // required by Guava (which is required by BoneCP)
   val flyway      :MS = "com.googlecode.flyway"       % "flyway-core"           % "2.3.1"
-  val logback     :MS = "ch.qos.logback"              % "logback-classic"       % "1.1.1"
+  val logback     :MS = "ch.qos.logback"              % "logback-classic"       % "1.1.2"
   val scalate     :MS = "org.fusesource.scalate"     %% "scalate-core"          % "1.6.1" ++
                         "org.fusesource.scalamd"     %% "scalamd"               % "1.6" // why again?
-  val commonsLang :MS = "org.apache.commons"          % "commons-lang3"         % "3.1"
+  val commonsLang :MS = "org.apache.commons"          % "commons-lang3"         % "3.3.2"
   val commonsIo   :MS = "org.apache.directory.studio" % "org.apache.commons.io" % "2.4"
-  val twitterEval :MS = "com.twitter"                %% "util-eval"             % "6.5.0"
-  val jetty       :MS = "org.eclipse.jetty"           % "jetty-webapp"          % "9.1.1.v20140108"
+  val twitterEval :MS = "com.twitter"                %% "util-eval"             % "6.14.0"
+  val jetty       :MS = "org.eclipse.jetty"           % "jetty-webapp"          % "9.1.4.v20140401"
   val servlet     :MS = "org.eclipse.jetty.orbit"     % "javax.servlet"         % "3.0.0.v201112011016" artifacts Artifact("javax.servlet", "jar", "jar")
   val mockito     :MS = "org.mockito"                 % "mockito-core"          % "1.9.5"
-  val scalaTest   :MS = "org.scalatest"              %% "scalatest"             % "2.1.0"
+  val scalaTest   :MS = "org.scalatest"              %% "scalatest"             % "2.1.3"
   val scalaCheck  :MS = "org.scalacheck"             %% "scalacheck"            % "1.11.3"
   val specs2      :MS = "org.specs2"                 %% "specs2"                % "2.3.10-scalaz-7.1.0-M6"
   val selenium    :MS = "org.seleniumhq.selenium"     % "selenium-java"         % "2.35.0" excludeAll(

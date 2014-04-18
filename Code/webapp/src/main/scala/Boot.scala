@@ -43,6 +43,9 @@ class Boot extends DI {
     // App package path
     LiftRules.addToPackages(packageRoot)
 
+    // Prevent "stable" func names in test, and speed up generation routine
+    LiftRules.funcNameGenerator = S.generateFuncName _
+
     // Register route whitelist
     LiftRules.setSiteMap(AppSiteMap.sitemap)
 

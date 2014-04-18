@@ -90,7 +90,7 @@ object AppSiteMap {
     >> PermissionRequired(Permissions.editShare.using(project = RequestVars.Project.some, share = RequestVars.Share.some))
     >> UseTemplate("loggedin/share-edit")
     >> SetNavbarAndPerformEffects(Navbar.Home, Navbar.CurrentProject, Navbar.StaticText("Edit Share")) {
-        val token = Need(ShareEdit.currentValue.get)
+        val token = Need(ShareEdit.currentValue.openOrThrowException("C'est impossible!"))
         RequestVars.deriveShareAndProjectFromShareUrlToken(token)
       }
   )
