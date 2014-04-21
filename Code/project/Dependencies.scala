@@ -84,7 +84,7 @@ object Deps {
   val mockito     :MS = "org.mockito"                 % "mockito-core"          % "1.9.5"
   val scalaTest   :MS = "org.scalatest"              %% "scalatest"             % "2.1.3"
   val scalaCheck  :MS = "org.scalacheck"             %% "scalacheck"            % "1.11.3"
-  val specs2      :MS = "org.specs2"                 %% "specs2"                % "2.3.10-scalaz-7.1.0-M6"
+  val specs2      :MS = "org.specs2"                 %% "specs2"                % "2.3.11-scalaz-7.1.0-M6"
   val selenium    :MS = "org.seleniumhq.selenium"     % "selenium-java"         % "2.35.0" excludeAll(
     ExclusionRule(name = "selenium-android-driver"),
     ExclusionRule(name = "selenium-htmlunit-driver"),
