@@ -66,7 +66,7 @@ final class MailChimpImpl(httpClient: OkHttpClient, props: Props) extends HasLog
     conn => IO(ErrorOr.withResource(conn.getOutputStream)(_.close)(
       _ write body))
 
-  private def recvResponse(conn: HttpURLConnection): IO[ErrorOr[String]] =
+  private def recvResponse(conn: HttpURLConnection): IOE[String] =
     getResponseCode(conn) >==> (code =>
       if (code == HttpURLConnection.HTTP_OK)
         recvResponseInput(conn)
