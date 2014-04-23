@@ -313,7 +313,7 @@ object DataGenerators extends Logger {
                      .map(usecasetitleRemoval.replaceAllIn(_, ""))
                      .map(AnyValidArrowRegex.replaceAllIn(_, ""))
                      .map(s => if (s.isEmpty) "X" else s)
-                     .map(Validator.useCaseTitle.correctAndValidate(_).toOption)
+                     .map(Validator.usecase.title.correctAndValidate(_).toOption)
                      .suchThat(_.isDefined)
                      .map(_.get)
 

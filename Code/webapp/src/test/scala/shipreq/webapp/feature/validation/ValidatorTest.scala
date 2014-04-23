@@ -81,13 +81,13 @@ class ValidatorTest extends FunSuite with Matchers with PropertyChecks {
   }
 
   test("Username correction") {
-    V.username.correct("HEHE") shouldBe "hehe"
-    V.username.correct("  ahah  ") shouldBe "ahah"
-    V.username.correct("  Heh  ") shouldBe "heh"
+    V.user.username.correct("HEHE") shouldBe "hehe"
+    V.user.username.correct("  ahah  ") shouldBe "ahah"
+    V.user.username.correct("  Heh  ") shouldBe "heh"
   }
 
   test("Username validation") {
-    testV(V.username, Table(("Failure Frag", "Input")
+    testV(V.user.username, Table(("Failure Frag", "Input")
       , (None, "abc")
       , (None, "a" * 32)
       , (Some("can only contain"), "@#$%::P1_")
@@ -98,7 +98,7 @@ class ValidatorTest extends FunSuite with Matchers with PropertyChecks {
   }
 
   test("UseCaseTitle validation") {
-    testV(V.useCaseTitle, Table(("Failure Frag", "Input")
+    testV(V.usecase.title, Table(("Failure Frag", "Input")
       , (None, "hello")
       , (None, "hello >")
       , (None, "hello -")
@@ -114,7 +114,7 @@ class ValidatorTest extends FunSuite with Matchers with PropertyChecks {
   }
 
   test("MandatoryShortText") {
-    testCV(V.projectName, Table(("IN", "CORRECTED", "FAILURE")
+    testCV(V.project.name, Table(("IN", "CORRECTED", "FAILURE")
       , ("", None, Some("blank"))
       , ("  ", Some(""), Some("blank"))
       , ("hello", None, None)
@@ -128,7 +128,7 @@ class ValidatorTest extends FunSuite with Matchers with PropertyChecks {
   }
 
   test("LargeText") {
-    testCV(V.textFieldText, Table(("IN", "CORRECTED", "FAILURE")
+    testCV(V.usecase.textFieldText, Table(("IN", "CORRECTED", "FAILURE")
       , ("", None, None)
       , ("  ", Some(""), None)
       , ("hello", None, None)
@@ -141,11 +141,11 @@ class ValidatorTest extends FunSuite with Matchers with PropertyChecks {
   }
 
   test("LargeTextO") {
-    V.sharePreface.correct("\n\n  ") shouldBe None
-    V.sharePreface.correctAndValidate("") shouldBe Success(None)
-    V.sharePreface.correctAndValidate("\n\nyo\n\nhehe\n\n") shouldBe Success(Some("yo\n\nhehe".tag))
-    V.sharePreface.correctAndValidate("x" * LargeTextMaxLength).isSuccess shouldBe true
-    V.sharePreface.correctAndValidate("x" * (LargeTextMaxLength + 1)).isSuccess shouldBe false
+    V.share.preface.correct("\n\n  ") shouldBe None
+    V.share.preface.correctAndValidate("") shouldBe Success(None)
+    V.share.preface.correctAndValidate("\n\nyo\n\nhehe\n\n") shouldBe Success(Some("yo\n\nhehe".tag))
+    V.share.preface.correctAndValidate("x" * LargeTextMaxLength).isSuccess shouldBe true
+    V.share.preface.correctAndValidate("x" * (LargeTextMaxLength + 1)).isSuccess shouldBe false
   }
 
   test("Landing page name") {

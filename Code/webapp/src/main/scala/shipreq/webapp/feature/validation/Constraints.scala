@@ -106,6 +106,6 @@ final object Constraints {
   object IsNotAFirstNameOnly extends ConstraintWithStaticFailureResult[String] {
     private val regex = "^\\s*\\S+\\s*$".r.pattern
     override def isValid(input: String) = !regex.matcher(input).matches
-    override val failureResult = Some("should include a surname.")
+    override val failureResult = Some("should include a surname, please.")
   }
 }

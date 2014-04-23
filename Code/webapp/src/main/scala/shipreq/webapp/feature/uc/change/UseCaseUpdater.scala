@@ -61,7 +61,7 @@ case class UseCaseUpdater(uc: UseCase, rels: UseCaseRelations) {
 
   def updateTitle(input: String): UcUpdateResult = {
     implicit val lens = AppliedLens(Lenses.ucTitleL, uc)
-    def validator = Validator.useCaseTitle
+    def validator = Validator.usecase.title
     val c = validator.correct(input)
 
     if (c.isEmpty)

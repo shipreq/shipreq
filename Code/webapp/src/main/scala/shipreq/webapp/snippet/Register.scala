@@ -129,7 +129,7 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
 
   // TODO onUsernameChange(): This should be pure JS
   def onUsernameChange(input: String): JsCmd = {
-    usernameInput = Validator.username.correct(input)
+    usernameInput = Validator.user.username.correct(input)
     JqId("username") ~> JqSetValue(usernameInput)
   }
 
@@ -137,7 +137,7 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
     import UserRegistrationResult._
 
     val v = Validator.Ap.apply3(
-      Validator.username.correctAndValidate(usernameInput),
+      Validator.user.username.correctAndValidate(usernameInput),
       Validator.passwords.correctAndValidate(password1Input, password2Input),
       Validator.tosAgreement.correctAndValidate(tos)
     )(Tuple3.apply)

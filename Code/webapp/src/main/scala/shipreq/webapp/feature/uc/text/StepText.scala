@@ -15,7 +15,7 @@ import ParsingUtils._
 
 object StepText {
   def correctInput(input: String): String @@ InputCorrected =
-    Validator.stepFieldText.correct(input)
+    Validator.usecase.stepFieldText.correct(input)
 
   val empty = StepText(FreeText.empty, None, None)
 

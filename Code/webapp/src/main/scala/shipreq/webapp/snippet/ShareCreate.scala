@@ -37,8 +37,8 @@ private[snippet] abstract class ShareCreateBase extends SingleOpStatefulSnippet 
 
   def onSubmit(ucFilterJson: () => Json[UcFilter]): JsCmd
 
-  def nameV = Validator.shareName.correctAndValidate(nameInput)
-  def prefaceV = Validator.sharePreface.correctAndValidate(prefaceInput)
+  def nameV = Validator.share.name.correctAndValidate(nameInput)
+  def prefaceV = Validator.share.preface.correctAndValidate(prefaceInput)
 
   def goBackToShareList(): Nothing = {
     ActivateTab.SharesTab.setInFlash()

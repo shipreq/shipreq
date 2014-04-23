@@ -72,18 +72,7 @@ final object Validator {
     }
   }
 
-  // -------------------------------------------------------------------------------------------------------------------
-
-  object username
-    extends InputValidatorV[String] {
-    override def correct(input: String): CI = removeAllWhitespace(input).toLowerCase.tag
-    override protected val validator = ConstraintValidator[String]("Username",
-      HasLengthInRange(UsernameLength),
-      Whitelist.charRegex("a-z0-9_", "can only contain letters, numbers and underscores."),
-      StartsWith.regex("[a-z]",      "must start with a letter."),
-      EndsWith.regex("[a-z0-9]",     "must end with a letter or a number.")
-    )
-  }
+  // ===================================================================================================================
 
   object email
     extends InputValidatorV[String] {
@@ -92,16 +81,8 @@ final object Validator {
       HasMaximumLength(EmailMaxLength),
       MatchesRegex("^_+@_+?\\._+$".replace("_", "[^&<>]").r, "is invalid.") // loose validation
     )
-
     def correctAndValidateEA(i: String): ValidationResultU[EmailAddr] =
       correctAndValidate(i).map((s: String) => s.tag)
-  }
-
-  object usernameOrEmail
-    extends Validator[String, String, String] {
-    @inline private def underlying(input: String) = if (input.indexOf('@') == -1) username else email
-    override def correct(input: String): CI = underlying(input).correct(input)
-    override def validate(input: CI) = underlying(input).validate(input)
   }
 
   object password
@@ -145,27 +126,64 @@ final object Validator {
         Failure(VFailure.looseMsg("You must agree to the terms of service."))
   }
 
-  object projectName extends MandatoryShortText("Project name")
+  // -------------------------------------------------------------------------------------------------------------------
 
-  object useCaseTitle
-    extends InputValidatorV[String] {
-    override def correct(input: String): CI =
-      TextReplacements.perform(TextReplacements.General)(normaliseWhitespaceInSingleLineString(input)).tag
-    override protected val validator = ConstraintValidator[String]("Use case title",
-      NonEmpty,
-      HasShortTextLimit,
-      Blacklist.chars("[]⦋⦌［］", "cannot include square brackets."),
-      Not(Contain.regex(AnyValidArrowRegexStr, ""), "cannot include arrows.")
-    )
+  object user {
+
+    object username
+      extends InputValidatorV[String] {
+      override def correct(input: String): CI = removeAllWhitespace(input).toLowerCase.tag
+      override protected val validator = ConstraintValidator[String]("Username",
+        HasLengthInRange(UsernameLength),
+        Whitelist.charRegex("a-z0-9_", "can only contain letters, numbers and underscores."),
+        StartsWith.regex("[a-z]",      "must start with a letter."),
+        EndsWith.regex("[a-z0-9]",     "must end with a letter or a number.")
+      )
+    }
+
+    object usernameOrEmail
+      extends Validator[String, String, String] {
+      @inline private def underlying(input: String) = if (input.indexOf('@') == -1) username else email
+      override def correct(input: String): CI = underlying(input).correct(input)
+      override def validate(input: CI) = underlying(input).validate(input)
+    }
+
   }
 
-  object shareName extends MandatoryShortText("Share name")
+  // -------------------------------------------------------------------------------------------------------------------
 
-  object sharePreface extends LargeTextO("Preface")
+  object project {
+    object name extends MandatoryShortText("Project name")
+  }
 
-  object textFieldText extends LargeText("Text")
+  // -------------------------------------------------------------------------------------------------------------------
 
-  object stepFieldText extends LargeText("Text")
+  object usecase {
+
+    object title
+      extends InputValidatorV[String] {
+      override def correct(input: String): CI =
+        TextReplacements.perform(TextReplacements.General)(normaliseWhitespaceInSingleLineString(input)).tag
+      override protected val validator = ConstraintValidator[String]("Use case title",
+        NonEmpty,
+        HasShortTextLimit,
+        Blacklist.chars("[]⦋⦌［］", "cannot include square brackets."),
+        Not(Contain.regex(AnyValidArrowRegexStr, ""), "cannot include arrows.")
+      )
+    }
+
+    object textFieldText extends LargeText("Text")
+    object stepFieldText extends LargeText("Text")
+  }
+
+  // -------------------------------------------------------------------------------------------------------------------
+
+  object share {
+    object name extends MandatoryShortText("Share name")
+    object preface extends LargeTextO("Preface")
+  }
+
+  // -------------------------------------------------------------------------------------------------------------------
 
   object landingPage {
 
@@ -175,13 +193,13 @@ final object Validator {
         NonEmpty,
         IsNotAFirstNameOnly,
         HasShortTextLimit,
-        Not(Contain.regex("[0-9]", ""), "has numbers in it? I don't believe you.")
+        Not(Contain.regex("[0-9]", ""), "shouldn't contain numbers.")
       )
     }
 
     def email = Validator.email
 
     object msg extends LargeTextO("Your message")
-
   }
+
 }

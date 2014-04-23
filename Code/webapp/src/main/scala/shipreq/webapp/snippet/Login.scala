@@ -33,7 +33,7 @@ class Login extends SingleOpStatefulSnippet {
     securityProvider.enforceHumanSpeed()
 
     val v = Validator.Ap.apply2(
-      Validator.usernameOrEmail.correctAndValidate(usernameOrEmailInput),
+      Validator.user.usernameOrEmail.correctAndValidate(usernameOrEmailInput),
       Validator.password.correctAndValidate(passwordInput)
     )(new UsernamePasswordToken(_, _))
 

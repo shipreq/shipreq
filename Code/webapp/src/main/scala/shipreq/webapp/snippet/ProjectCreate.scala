@@ -28,7 +28,7 @@ class ProjectCreate extends SingleOpStatefulSnippet {
 
   def onSubmit(): JsCmd = {
     import CreateProjectResult._
-    Validator.projectName.correctAndValidate(projectNameInput) match {
+    Validator.project.name.correctAndValidate(projectNameInput) match {
       case Failure(f)    => jsShowFailure(f)
       case Success(name) =>
         daoProvider.withSession(_.createProject(currentUserId_!, name)) match {
