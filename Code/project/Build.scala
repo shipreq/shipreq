@@ -227,8 +227,7 @@ object ShipReq extends Build {
         integrationTestSettings
       )
       .settings(webSettings: _*)
-      .settings(addCommandAlias("restart", ";container:stop ;container:start"): _*)
-      .settings(addCommandAlias("up", "~;clear;restart"): _*)
+      .settings(addCommandAlias("up", ";container:stop ;clear ;container:start"): _*)
       .settings(
         initialCommands += consoleCmds,
         // Ensure templates can be loaded from the console

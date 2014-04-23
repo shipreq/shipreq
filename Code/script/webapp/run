@@ -1,2 +1,2 @@
 #!/bin/bash
-cd $(dirname "$0")/../.. && sbt 'project webapp' up
+cd $(dirname "$0")/../.. && sbt 'project webapp' up shell
