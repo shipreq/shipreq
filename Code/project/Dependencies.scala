@@ -38,7 +38,7 @@ object Deps {
     val scalacheck = dd("scalaz-scalacheck-binding")
   }
 
-  object Json4s extends Group("3.2.8", "org.json4s") {
+  object Json4s extends Group("3.2.9", "org.json4s") {
     val jackson = dd("json4s-jackson") ++ Scala.all
   }
 
