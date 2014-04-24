@@ -10,6 +10,7 @@ import shipreq.webapp.lib.Types._
 import shipreq.webapp.test.T2._
 import shipreq.webapp.test.{MockDaoProvider, TestHelpers}
 import shipreq.webapp.util.NonEmptyTemplate
+import shipreq.webapp.feature.validation.Validators
 
 class ResetPasswordTest extends FunSpec with TestHelpers {
 
@@ -56,7 +57,7 @@ class ResetPasswordTest extends FunSpec with TestHelpers {
             when(dao.performInstallNewResetPasswordToken(any, any)) thenReturn "TOKEN"
             dbSetup setup dao
           }).install {
-            val r = ResetPassword1.perform(emailInput)
+            val r = ResetPassword1.perform(Validators.email.correctAndValidate(emailInput))
             dbExp.test()
             r
           }
@@ -135,8 +136,7 @@ class ResetPasswordTest extends FunSpec with TestHelpers {
       inMockSession {
         MockDaoProvider().install {
           val s = new ResetPassword2("ah")
-          s.password1Input = p
-          s.password2Input = p
+          s.passwordV.fv set2 p
           val js = s.onSubmit()
           dbExp.test()
           jsExp test js

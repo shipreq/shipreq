@@ -18,11 +18,21 @@ trait Validator[-I, C <: AnyRef, +V] extends CorrectionPart[I, C] with Validatio
 
   final def isValid(input: CI): Boolean =
     validate(input).isSuccess
+
+  def map[V2](f: V => V2): Validator[I, C, V2] =
+    new Validator.Mapped(this, f)
 }
 
 object Validator {
 
   val Ap = Validation.ValidationApplicative[VFailure](VFailure.semigroup)
+
+  class Mapped[I, C <: AnyRef, V, V2](base: Validator[I, C, V], f: V => V2) extends Validator[I, C, V2] {
+    override def correct(i: I): CI = base.correct(i)
+    override def validate(c: C @@ InputCorrected): ValidationResult[V2] = base.validate(c).map(f)
+    override def map[V3](g: V2 => V3): Validator[I, C, V3] =
+      new Validator.Mapped(base, g compose f)
+  }
 
   abstract class UseConstraintValidator[T <: AnyRef](validator: ConstraintValidator[T])
     extends Validator[T, T, T @@ Validated] {

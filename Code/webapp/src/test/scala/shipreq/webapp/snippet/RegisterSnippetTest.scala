@@ -16,6 +16,7 @@ import app.AppConfig
 import Register._
 import shipreq.webapp.test.T2.{NoTasksSubmitted, SubmittedOneTask, ReRegistrationAttemptedT}
 import shipreq.taskman.api.Msg.RegistrationRequested
+import shipreq.webapp.feature.validation.Validators
 
 class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixture {
 
@@ -74,7 +75,7 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
     def test(email: String, usrTableDiff: Int) =
       withTestTaskman {
         assertTableDiffs(Tables.Usr -> usrTableDiff) {
-          Register1.perform(email)
+          Register1.perform(Validators.emailEA.correctAndValidate(email))
     }}
 
     def testSuccess(email: String, usrTableDiff: Int, tokenChange: Boolean) {
@@ -148,10 +149,9 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
   describe("Register2 POST") {
     def tester = {
       val t = new Reg2Tester(userWithCurrentToken.token)
-      t.snippet.usernameInput = "crazy50"
-      t.snippet.password1Input = "abcd5678"
-      t.snippet.password2Input = t.snippet.password1Input
-      t.snippet.tos = true
+      t.snippet.usernameV    set  "crazy50"
+      t.snippet.passwordV.fv set2 "abcd5678"
+      t.snippet.tosV         set  true
       t
     }
 
@@ -171,27 +171,27 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
     }
 
     it("should reject an invalid username") {
-      testFailure(_.usernameInput = "9000")
+      testFailure(_.usernameV set "9000")
     }
 
     it("should reject an invalid password") {
-      testFailure(s => {s.password1Input = "abcd"; s.password2Input = "abcd"})
+      testFailure(_.passwordV.fv set2 "abcd")
     }
 
     it("should reject when passwords dont match") {
-      testFailure(_.password1Input = "987654321zcbsdfg")
+      testFailure(_.passwordV.fv.a set "987654321zcbsdfg")
     }
 
     it("should reject a taken username") {
       val t = tester
-      t.snippet.usernameInput = user2.username
+      t.snippet.usernameV set user2.username
       t.onSubmit_
       try {assertUnconfirmed()}
       catch {case e: PSQLException if e.getMessage.contains("transaction is aborted") =>}
     }
 
     it("should reject without ToS agreement") {
-      testFailure(_.tos = false)
+      testFailure(_.tosV set false)
     }
 
     describe("when form details valid") {

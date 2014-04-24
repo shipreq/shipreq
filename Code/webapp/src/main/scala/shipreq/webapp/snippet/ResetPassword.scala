@@ -1,7 +1,7 @@
 package shipreq.webapp.snippet
 
 import java.sql.Connection
-import net.liftweb.http.{S, SHtml}
+import net.liftweb.http.S
 import net.liftweb.http.js.JsCmd
 import net.liftweb.util.Helpers._
 import org.joda.time.DateTime
@@ -9,8 +9,8 @@ import org.joda.time.DateTime
 import shipreq.taskman.api.Msg
 import shipreq.webapp.app.AppConfig.PasswordResetTokenLifespan
 import shipreq.webapp.db.{DaoT, UserRegistrationInfo, ResetPasswordInfo}
-import shipreq.webapp.feature.validation.Validators
-import shipreq.webapp.lib.{SingleOpStatefulSnippet, SnippetHelpers}
+import shipreq.webapp.feature.validation.{ValidationResultT, Validators}
+import shipreq.webapp.lib.{FormVar, SingleOpStatefulSnippet, SnippetHelpers}
 import shipreq.webapp.lib.Types._
 import shipreq.webapp.util.HtmlTransformExt.ajaxSubmitOnClick
 import shipreq.webapp.util.JsExt._
@@ -28,21 +28,18 @@ object ResetPassword {
 object ResetPassword1 extends SnippetHelpers {
 
   def render = {
-    var emailInput = ""
+    val emailV = FormVar.strOnSubmit(Validators.email, "#email")("")
 
     def onSubmit(): JsCmd = {
       securityProvider.enforceHumanSpeed()
-      perform(emailInput)
+      perform(emailV.validate)
     }
 
-    (
-      "#email" #> SHtml.onSubmit(emailInput = _) &
-      ":submit" #> ajaxSubmitOnClick(onSubmit)
-    )
+    emailV.csssel & ":submit" #> ajaxSubmitOnClick(onSubmit)
   }
 
-  def perform(emailInput: String): JsCmd =
-    ifValid(Validators.email.correctAndValidate(emailInput))(email =>
+  def perform(v: ValidationResultT[String]): JsCmd =
+    ifValid(v)(email =>
       daoProvider.withTransactionLevel(Connection.TRANSACTION_SERIALIZABLE)(dao => {
         dao.findUserRegAndResetPwInfo(email) match {
 
@@ -86,9 +83,7 @@ object ResetPassword1 extends SnippetHelpers {
 
 class ResetPassword2(token: String) extends SingleOpStatefulSnippet {
 
-  var usernameInput = ""
-  var password1Input = ""
-  var password2Input = ""
+  val passwordV = FormVar.passwordPair("#password1", "#password2")
 
   def validateToken_!(): Unit =
     daoProvider.withSession(_ findResetPasswordTokenIssuedDate token) match {
@@ -105,20 +100,14 @@ class ResetPassword2(token: String) extends SingleOpStatefulSnippet {
 
   def render = {
     validateToken_!()
-    (
-      "#password1" #> SHtml.onSubmit(password1Input = _) &
-      "#password2" #> SHtml.onSubmit(password2Input = _) &
-      ":submit" #> ajaxSubmitOnClick(onSubmit)
-    )
+    passwordV.csssel & ":submit" #> ajaxSubmitOnClick(onSubmit)
   }
 
   def onSubmit(): JsCmd =
-    try {
-      ifValid(Validators.passwords.correctAndValidate(password1Input, password2Input))(resetPassword)
-    } finally {
-      password1Input = "" // Let's not keep the plaintext passwords around
-      password2Input = ""
-    }
+    try
+      ifValid(passwordV.validate)(resetPassword)
+    finally
+      passwordV.fv.set2("") // Let's not keep the plaintext passwords around
 
   def resetPassword(password: String): JsCmd = {
     val ps = PasswordAndSalt.createWithRandomSalt(password)

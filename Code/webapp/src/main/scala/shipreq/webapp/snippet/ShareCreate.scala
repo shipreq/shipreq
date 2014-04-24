@@ -1,12 +1,11 @@
 package shipreq.webapp.snippet
 
-import net.liftweb.http.SHtml
 import net.liftweb.http.js.JsCmd
 import net.liftweb.util.Helpers._
 import shipreq.webapp.app.AppSiteMap
 import shipreq.webapp.feature.{UcFilters, UcFilter}
 import shipreq.webapp.feature.validation.Validators
-import shipreq.webapp.lib.{NoticeFlash, SingleOpStatefulSnippet}
+import shipreq.webapp.lib.{FormVar, NoticeFlash, SingleOpStatefulSnippet}
 import shipreq.webapp.lib.Types._
 import shipreq.webapp.security.PasswordAndSalt
 import shipreq.webapp.util.HtmlTransformExt.ajaxSubmitOnClick
@@ -20,25 +19,22 @@ private[snippet] abstract class ShareCreateBase extends SingleOpStatefulSnippet 
 
   def projectId: ProjectId
 
-  var nameInput = ""
-  var prefaceInput = ""
+  val nameV    = FormVar.strOnSubmit(Validators.share.name, "#shareName")("")
+  val prefaceV = FormVar.strOnSubmit(Validators.share.preface, "#preface")("")
 
   protected def render2(f: UcFilter) = {
     val ucs = daoProvider.withSession(_ findAllLatestUseCaseRevsByProject projectId)
     val (ucFilterXml, ucFilterFn) = UcFilter.render(f, ucs)
     def readHttpParamsAndBuildUcFilterJson(): Json[UcFilter] = UcFilter.toJson(ucFilterFn())
     (
-      "#shareName" #> SHtml.onSubmit(nameInput = _)
-      & "#preface" #> SHtml.onSubmit(prefaceInput = _)
+      nameV.csssel
+      & prefaceV.csssel
       & "#uc-filters" #> ucFilterXml
       & ":submit" #> ajaxSubmitOnClick(() => onSubmit(readHttpParamsAndBuildUcFilterJson))
     )
   }
 
   def onSubmit(ucFilterJson: () => Json[UcFilter]): JsCmd
-
-  def nameV = Validators.share.name.correctAndValidate(nameInput)
-  def prefaceV = Validators.share.preface.correctAndValidate(prefaceInput)
 
   def goBackToShareList(): Nothing = {
     ActivateTab.SharesTab.setInFlash()
@@ -53,22 +49,16 @@ private[snippet] abstract class ShareCreateBase extends SingleOpStatefulSnippet 
  */
 class ShareCreate(val projectId: ProjectId) extends ShareCreateBase {
 
-  var password1Input = ""
-  var password2Input = ""
+  val passwordV = FormVar.passwordPair("#password1", "#password2")
 
-  def render = (
-    render2(UcFilters.All)
-      & "#password1" #> SHtml.onSubmit(password1Input = _)
-      & "#password2" #> SHtml.onSubmit(password2Input = _)
-    )
+  def render =
+    render2(UcFilters.All) & passwordV.csssel
 
   def onSubmit(ucFilterJson: () => Json[UcFilter]): JsCmd = {
     val v = try
-      Validators.Ap.apply3(nameV, Validators.passwords.correctAndValidate(password1Input, password2Input), prefaceV)(Tuple3.apply)
-    finally {
-      password1Input = "" // Let's not keep the plaintext passwords around
-      password2Input = ""
-    }
+      FormVar.AP3(nameV, passwordV, prefaceV).validate(Tuple3.apply)
+    finally
+      passwordV.fv set2 "" // Let's not keep the plaintext passwords around
 
     ifValid(v)(r => {
       val (name, password, preface) = r

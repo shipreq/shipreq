@@ -1,11 +1,10 @@
 package shipreq.webapp.snippet
 
-import net.liftweb.http.SHtml
 import net.liftweb.http.js.JsCmd
 import net.liftweb.util.Helpers._
 import scala.xml.NodeSeq
 import shipreq.webapp.feature.validation.{ValidationResultT, Validators}
-import shipreq.webapp.lib.StaticSnippetHelpers
+import shipreq.webapp.lib.{FormVar, StaticSnippetHelpers}
 import shipreq.webapp.lib.Types._
 import shipreq.webapp.security.PasswordAndSalt
 import shipreq.webapp.util.HtmlTransformExt._
@@ -42,29 +41,26 @@ object DynModal extends StaticSnippetHelpers {
    * @param successFn Callback that reacts to a successful password submission.
    */
   def passwordChanger(title: String, current: Option[PasswordAndSalt])(successFn: String @@ Validated => JsCmd): JsCmd = {
-    var passwordCInput = ""
-    var password1Input = ""
-    var password2Input = ""
+
+    val curPasswordV = current.map(ps => FormVar.strOnSubmit(Validators.currentPassword(ps), "#dynmodal-passwordC")(""))
+    val passwordV = FormVar.passwordPair("#dynmodal-password1", "#dynmodal-password2")
 
     def onSubmit(): JsCmd = {
-      val vn = Validators.passwords.correctAndValidate(password1Input, password2Input)
-      val v: ValidationResultT[String] = current match {
+      val vn = passwordV.validate
+      val v: ValidationResultT[String] = curPasswordV match {
         case None     => vn
-        case Some(ps) => Validators.Ap.apply2(Validators.currentPassword(ps).correctAndValidate(passwordCInput), vn)((_,n) => n)
+        case Some(fv) => Validators.Ap.apply2(fv.validate, vn)((_,n) => n)
       }
       ifValid(v)(newPassword =>
         JsModalHide & successFn(newPassword))
     }
 
-    val currentPasswordTransform = current match {
-      case None    => ".curpw" #> ""
-      case Some(_) => "#dynmodal-passwordC" #> SHtml.onSubmit(passwordCInput = _)
-    }
+    val currentPasswordTransform = curPasswordV.map(_.csssel).getOrElse(".curpw" #> "")
+
     run(ChangePasswordTemplate)(
       ".modal-title *" #> title
       & currentPasswordTransform
-      & "#dynmodal-password1" #> SHtml.onSubmit(password1Input = _)
-      & "#dynmodal-password2" #> SHtml.onSubmit(password2Input = _)
+      & passwordV.csssel
       & ":submit" #> ajaxSubmitOnClick(onSubmit)
     )
   }

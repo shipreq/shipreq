@@ -57,10 +57,9 @@ final object Validators {
         HasMaximumLength(EmailMaxLength),
         MatchesRegex("^_+@_+?\\._+$".replace("_", "[^&<>]").r, "is invalid.") // loose validation
       )
-    ) {
-    def correctAndValidateEA(i: String): ValidationResult[EmailAddr] =
-      correctAndValidate(i).map((s: String) => s.tag)
-  }
+    )
+
+  val emailEA = email.map[EmailAddr]((s: String) => s.tag)
 
   object password
     extends UseConstraintValidator[String](
@@ -96,7 +95,8 @@ final object Validators {
           Failure(VFailure.looseMsg("Current password is incorrect."))
     }
 
-  object tosAgreement extends ValidatorT3[JBool] with NoInputCorrection[JBool] {
+  object tosAgreement extends ValidatorT[Boolean, JBool, JBool] {
+    override def correct(i: Boolean): CI = JBool.valueOf(i).tag
     override def validate(b: CI) =
       if (b.booleanValue)
         Success(b.tag)
@@ -172,7 +172,7 @@ final object Validators {
       )
     )
 
-    def email = Validators.email
+    def email = Validators.emailEA
 
     object msg extends LargeTextO("Your message")
   }

@@ -5,10 +5,8 @@ import net.liftweb.util.Helpers._
 import scala.xml.NodeSeq
 import shipreq.webapp.app.RequestVars
 import shipreq.webapp.feature.UcFilter
-import shipreq.webapp.feature.validation.Validators
-import shipreq.webapp.lib.NoticeFlash
+import shipreq.webapp.lib.{FormVar, NoticeFlash}
 import shipreq.webapp.lib.Types.Json
-import shipreq.webapp.util.HtmlTransformExt.IfCssSel
 import shipreq.webapp.util.NonEmptyTemplate
 
 object ShareEditConsts {
@@ -34,20 +32,17 @@ class ShareEdit extends ShareCreateBase {
   val share = RequestVars.Share.value
   def projectId = share.projectId
 
-  def render =
-    "#edit-form" #> ShareEditConsts.EditForm andThen (
-      render2(share.ucFilter)
-        & "#shareName [value]" #> share.name
-        & IfCssSel(share.preface.isDefined)("#preface *" #> share.preface.get)
-      )
+  def render = {
+    nameV set share.name
+    prefaceV set share.preface.getOrElse("")
+    "#edit-form" #> ShareEditConsts.EditForm andThen render2(share.ucFilter)
+  }
 
-  def onSubmit(ucFilterJson: () => Json[UcFilter]): JsCmd = {
-    val v = Validators.Ap.apply2(nameV, prefaceV)(Tuple2.apply)
-    ifValid(v)(r => {
+  def onSubmit(ucFilterJson: () => Json[UcFilter]): JsCmd =
+    ifValid(FormVar.AP2(nameV, prefaceV).validate(Tuple2.apply))(r => {
       val (name, preface) = r
       daoProvider.withSession(_.updateShare(share, name, preface, ucFilterJson()))
       NoticeFlash.notices.addS("Share updated successfully.")
       goBackToShareList()
     })
-  }
 }

@@ -1,16 +1,12 @@
-package shipreq.webapp
-package snippet
+package shipreq.webapp.snippet
 
 import net.liftweb.http.js.JsCmd
-import net.liftweb.http.SHtml
 import net.liftweb.util.Helpers._
-import scalaz.{Failure, Success}
-
-import app.AppSiteMap
-import db.CreateProjectResult
-import lib.SingleOpStatefulSnippet
-import feature.validation.Validators
-import util.HtmlTransformExt.ajaxSubmitOnClick
+import shipreq.webapp.app.AppSiteMap
+import shipreq.webapp.db.CreateProjectResult._
+import shipreq.webapp.feature.validation.Validators
+import shipreq.webapp.lib.{FormVar, SingleOpStatefulSnippet}
+import shipreq.webapp.util.HtmlTransformExt.ajaxSubmitOnClick
 
 /**
  * Form to create a new project.
@@ -19,22 +15,16 @@ import util.HtmlTransformExt.ajaxSubmitOnClick
  */
 class ProjectCreate extends SingleOpStatefulSnippet {
 
-  private[snippet] var projectNameInput = ""
+  private[snippet] val nameV = FormVar.strOnSubmit(Validators.project.name, ":text")("")
 
-  def render = (
-    ":text" #> SHtml.onSubmit(projectNameInput = _) &
-    ":submit" #> ajaxSubmitOnClick(onSubmit)
-  )
+  def render =
+    nameV.csssel & ":submit" #> ajaxSubmitOnClick(onSubmit)
 
-  def onSubmit(): JsCmd = {
-    import CreateProjectResult._
-    Validators.project.name.correctAndValidate(projectNameInput) match {
-      case Failure(f)    => jsShowFailure(f)
-      case Success(name) =>
-        daoProvider.withSession(_.createProject(currentUserId_!, name)) match {
-          case DbSuccess(id)    => redirectTo(AppSiteMap.Project)(id)
-          case NameAlreadyInUse => jsShowError("You already have a project with that name.")
-        }
-    }
-  }
+  def onSubmit(): JsCmd =
+    ifValid(nameV.validate)(name =>
+      daoProvider.withSession(_.createProject(currentUserId_!, name)) match {
+        case DbSuccess(id)    => redirectTo(AppSiteMap.Project)(id)
+        case NameAlreadyInUse => jsShowError("You already have a project with that name.")
+      }
+    )
 }

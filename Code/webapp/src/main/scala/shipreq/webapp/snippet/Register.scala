@@ -1,7 +1,7 @@
 package shipreq.webapp.snippet
 
 import net.liftweb.http.js.JsCmd
-import net.liftweb.http.{S, SHtml}
+import net.liftweb.http.S
 import net.liftweb.util.Helpers._
 import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc.UsernamePasswordToken
@@ -9,10 +9,10 @@ import org.joda.time.DateTime
 
 import shipreq.taskman.api.Msg
 import shipreq.webapp.app.{AppConfig, AppSiteMap}
-import shipreq.webapp.lib.{SnippetHelpers, SingleOpStatefulSnippet}
+import shipreq.webapp.lib.{FormVar, SnippetHelpers, SingleOpStatefulSnippet}
 import shipreq.webapp.lib.Types._
 import shipreq.webapp.db.{DaoT, UserRegistrationInfo, UserRegistrationResult}
-import shipreq.webapp.feature.validation.Validators
+import shipreq.webapp.feature.validation.{ValidationResult, Validators}
 import shipreq.webapp.security.{Permissions, PasswordAndSalt}
 import shipreq.webapp.util.JsExt._
 import shipreq.webapp.util.HtmlTransformExt.ajaxSubmitOnClick
@@ -32,23 +32,23 @@ object Register {
 object Register1 extends SnippetHelpers {
 
   def render = {
-    var emailInput = ""
+    val emailV = FormVar.strOnSubmit(Validators.emailEA, "#email")("")
 
     def onSubmit(): JsCmd = {
       securityProvider.enforceHumanSpeed()
-      perform(emailInput)
+      perform(emailV.validate)
     }
 
     if (Permissions.userRegistration.using().isPass)
-      ("#registrationDisabled" #> "" &
-        "#email" #> SHtml.onSubmit(emailInput = _) &
-        ":submit" #> ajaxSubmitOnClick(onSubmit))
+      ( "#registrationDisabled" #> ""
+      & emailV.csssel
+      & ":submit" #> ajaxSubmitOnClick(onSubmit))
     else
       "#register1Form" #> ""
   }
 
-  def perform(emailInput: String): JsCmd =
-    ifValid(Validators.email.correctAndValidateEA(emailInput))(emailAddr => {
+  def perform(v: ValidationResult[EmailAddr]): JsCmd =
+    ifValid(v)(emailAddr => {
       daoProvider.withTransaction(dao => {
         val msg = dao.findUserRegistrationInfo(emailAddr) match {
           case None    => onNewUser(emailAddr, dao)
@@ -97,10 +97,16 @@ object Register1 extends SnippetHelpers {
  */
 class Register2(token: String) extends SingleOpStatefulSnippet {
 
-  var usernameInput = ""
-  var password1Input = ""
-  var password2Input = ""
-  var tos = false
+  val usernameV = FormVar.ajaxStr(Validators.user.username, JqId("username"))("")
+  val passwordV = FormVar.passwordPair("#password1", "#password2")
+  val tosV      = FormVar.boolOnSubmit(Validators.tosAgreement, "#tos")(false)
+  val vars = FormVar.AP3(usernameV, passwordV, tosV)
+
+  def render = {
+    securityProvider.enforceHumanSpeed()
+    validateToken_!()
+    vars.csssel & ":submit" #> ajaxSubmitOnClick(onSubmit)
+  }
 
   def validateToken_!(): Unit =
     daoProvider.withSession(_.findUserConfirmationTokenIssuedDate(token)) match {
@@ -115,34 +121,10 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
       case _ => // valid
     }
 
-  def render = {
-    securityProvider.enforceHumanSpeed()
-    validateToken_!()
-    (
-      "#username" #> SHtml.ajaxText(usernameInput, onUsernameChange)
-        & "#password1" #> SHtml.onSubmit(password1Input = _)
-        & "#password2" #> SHtml.onSubmit(password2Input = _)
-        & "#tos" #> SHtml.onSubmitBoolean(tos = _)
-        & ":submit" #> ajaxSubmitOnClick(onSubmit)
-      )
-  }
-
-  // TODO onUsernameChange(): This should be pure JS
-  def onUsernameChange(input: String): JsCmd = {
-    usernameInput = Validators.user.username.correct(input)
-    JqId("username") ~> JqSetValue(usernameInput)
-  }
-
   def onSubmit(): JsCmd = try {
     import UserRegistrationResult._
 
-    val v = Validators.Ap.apply3(
-      Validators.user.username.correctAndValidate(usernameInput),
-      Validators.passwords.correctAndValidate(password1Input, password2Input),
-      Validators.tosAgreement.correctAndValidate(tos)
-    )(Tuple3.apply)
-
-    ifValid(v)(r => {
+    ifValid(vars.validate(Tuple3.apply))(r => {
       val (username, password, _) = r
       val ps = PasswordAndSalt.createWithRandomSalt(password)
       daoProvider.withSession(_.performUserRegistration(token)(username, ps, clientIp.getOrElse("?"))) match {
@@ -160,8 +142,6 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
           jsClearError & JqExpr("#regComplete,#register2") ~> JqToggle
       }
     })
-  } finally {
-    password1Input = "" // Let's not keep the plaintext passwords around
-    password2Input = ""
-  }
+  } finally
+    passwordV.fv.set2("") // Let's not keep the plaintext passwords around
 }

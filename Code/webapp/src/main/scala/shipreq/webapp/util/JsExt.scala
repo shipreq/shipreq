@@ -54,6 +54,7 @@ object JsExt {
 
   /** A JQuery query for an element based on the id of the element. ie. `$('#id')`*/
   case class JqId(id: String) extends JsExp {
+    assert(!id.startsWith("#"))
     override def toJsCmd = s"$$('#${id}')"
   }
 

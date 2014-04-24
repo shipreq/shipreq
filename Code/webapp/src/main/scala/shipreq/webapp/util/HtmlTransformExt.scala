@@ -1,9 +1,9 @@
 package shipreq.webapp.util
 
-import net.liftweb.http.{SHtml, S}
-import net.liftweb.http.js.{JE, JsCmd}
-import net.liftweb.util.{Helpers, CssSel}
+import net.liftweb.http.S
+import net.liftweb.http.js.JsCmd
 import net.liftweb.util.Helpers.strToCssBindPromoter
+import net.liftweb.util.{Helpers, CssSel}
 import scala.xml.NodeSeq
 import JsExt._
 
@@ -20,6 +20,12 @@ object HtmlTransformExt {
     val fst: NodeSeq => NodeSeq = f(x)
     (fst /: xs.map(f))((a,b) => a andThen b)
   }
+
+  def renderOpString(sel: String, value: String): CssSel =
+    if (value.isEmpty)
+      sel #> (None: Option[NodeSeq])
+    else
+      sel #> value
 
   def IfCssSel(cond: => Boolean)(expr: => CssSel): CssSel = if (cond) expr else PassThru
 
