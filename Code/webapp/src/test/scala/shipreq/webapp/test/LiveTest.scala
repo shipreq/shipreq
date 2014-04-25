@@ -12,7 +12,9 @@ import net.liftweb.json._
 trait LiveTest extends TestHelpers with TestKit with LiveTestHelpers with BeforeAndAfterAll with TestDatabaseSupport {
   self: Suite =>
 
-  override def baseUrl = Jetty.Default.url
+  private def jetty = TestJetty
+
+  override def baseUrl = jetty.url
 
   override val wrapTestsInTransaction = false
 
@@ -20,13 +22,12 @@ trait LiveTest extends TestHelpers with TestKit with LiveTestHelpers with Before
     def fail(msg: String): Nothing = self.fail(s"Error: '$msg'")
   }
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     TestDB.init()
-    Jetty.Default.acquire
+    jetty.start()
   }
 
-  override def afterAll() {
-    Jetty.Default.release
+  override def afterAll(): Unit = {
     TestDB.reinitOnNextUse()
   }
 }

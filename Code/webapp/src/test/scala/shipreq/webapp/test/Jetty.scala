@@ -7,9 +7,7 @@ import org.eclipse.jetty.webapp.WebAppContext
 import java.io.File
 import org.apache.commons.io.FileUtils
 
-object Jetty {
-  val Default = new Jetty(8090)
-}
+object TestJetty extends Jetty(8090)
 
 /**
  * Starts up an instance of Jetty than runs the webapp.
@@ -18,12 +16,19 @@ object Jetty {
  */
 class Jetty(val port: Int) extends Logger {
 
-  private val instance = SharedGlobal(Some(15000L), newServer _)(stopServer(_))
   val maxIdle = 10 seconds
   val url = "http://localhost:" + port
 
-  def acquire() = instance.acquire()
-  def release() = instance.release()
+  private var server: Option[Server] = None
+
+  def start(): Unit = synchronized {
+    if (server.isEmpty) server = Some(newServer)
+  }
+
+  def shutdown(): Unit = synchronized {
+    server foreach stopServer
+    server = None
+  }
 
   private def newServer: Server = {
     info("Starting Jetty")
@@ -53,12 +58,13 @@ class Jetty(val port: Int) extends Logger {
     svr.setHandler(context)
 
     context.setServer(svr)
-    svr.start
+    svr.start()
     svr
   }
 
   private def stopServer(s: Server) {
     info("Stopping Jetty")
-    s.stop; s.join
+    s.stop()
+    s.join()
   }
 }

@@ -51,6 +51,7 @@ object Common {
 
   def shutdownTestDb(loader: ClassLoader): Unit = {
     getMethod(loader, "shipreq.base.test.specs2.db.TestDb", "shutdown").foreach(_ invoke null)
+    getMethod(loader, "shipreq.webapp.test.TestJetty", "shutdown").foreach(_ invoke null)
     getMethod(loader, "shipreq.webapp.db.DB", "shutdown").foreach(_ invoke null)
   }
 
