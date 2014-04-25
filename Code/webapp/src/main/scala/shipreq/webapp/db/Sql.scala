@@ -61,8 +61,10 @@ private[db] final object Sql {
   @Insert val InsertUsrd = update[(UserId, String, Boolean)](
     "INSERT INTO usrd VALUES(?,?,?)")
 
-  val GetUserSupplementalInfo = query[UserId, UserSupplementalInfo](
-    "SELECT password, password_salt, confirmed_at FROM usr WHERE id=?")
+  private val usrSuppColumns = "password, password_salt, confirmed_at"
+  private val usrdColumns = "name, newsletter"
+  val GetUserSuppAndDetail = query[UserId, (UserSupplementalInfo, UserDetail)](
+    s"SELECT $usrSuppColumns, $usrdColumns FROM usr, usrd WHERE id=? and id=usr_id")
 
   @Update val UpdateUserPassword = update[(PasswordAndSalt, UserId)](
     "UPDATE usr SET password = ?, password_salt = ?, password_changed_at = NOW() WHERE id=?")

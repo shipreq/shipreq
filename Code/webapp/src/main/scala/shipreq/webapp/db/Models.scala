@@ -24,6 +24,8 @@ object UserDescriptor {
       Some(roles.mkString(","))
 }
 
+case class UserDetail(name: String, newsletter: Boolean)
+
 case class UserSupplementalInfo(ps: PasswordAndSalt, registeredAt: String @@ ISO8601)
 
 case class UserRegistrationInfo(

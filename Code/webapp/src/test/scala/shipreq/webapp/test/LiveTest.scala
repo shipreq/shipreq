@@ -42,7 +42,7 @@ trait LiveTestHelpers {
 
     /** Checks the result code of a HTTP request. */
     def !(code: Int)(implicit errorFunc: ReportFailure) =
-      r.!(code, s"Expected $code. Got ${asHttpResponse.code}")
+      r.!(code, s"Expected $code. Got ${asHttpResponse.code}. Response headers: ${asHttpResponse.headers}")
 
     def shouldRedirect(implicit errorFunc: ReportFailure) =
       r.!(302, s"Expected redirect (302). Got ${asHttpResponse.code}")

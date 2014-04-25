@@ -85,6 +85,14 @@ object SqlHelpers {
     }
   }
 
+  implicit val GR_UserDetail = GetResult(r => UserDetail(r.<<, r.<<))
+  implicit object SP_UserDetail extends SetParameter[UserDetail] {
+    def apply(d: UserDetail, pp: PositionedParameters) {
+      pp setString d.name
+      pp setBoolean d.newsletter
+    }
+  }
+
   def userRoles(r: PositionedResult): Set[String] =
     r.nextStringOption match {
       case None        => Set.empty

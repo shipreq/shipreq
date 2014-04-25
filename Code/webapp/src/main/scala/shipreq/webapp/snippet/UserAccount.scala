@@ -13,13 +13,15 @@ import shipreq.webapp.security.PasswordAndSalt
 object UserAccount extends SnippetHelpers {
 
   def render = {
-    val u = currentUser_!
-    val uu = daoProvider.withSession(_ findUserSupplementalInfo u) getOrElse redirectTo(AppSiteMap.Logout)
+    val usr = currentUser_!
+    val (supp, usrd) = daoProvider.withSession(_ findUserSuppAndDetail usr) getOrElse redirectTo(AppSiteMap.Logout)
     (
-      ".username .form-control-static *" #> u.username
-      & ".email .form-control-static *" #> u.email
-      & ".registeredAt time [datetime]" #> uu.registeredAt
-      & ".password .edit" #> DynModal.passwordChangerT("Account Password", Some(uu.ps))(onPasswordChange(u))
+      ".username .form-control-static *" #> usr.username
+      & ".email .form-control-static *" #> usr.email
+      & ".registeredAt time [datetime]" #> supp.registeredAt
+      & ".password .edit" #> DynModal.passwordChangerT("Account Password", Some(supp.ps))(onPasswordChange(usr))
+      & ".name .form-control-static *" #> usrd.name
+      & ".newsletter .form-control-static *" #> (if (usrd.newsletter) "Subscribed" else "Not subscribed")
     )
   }
 
