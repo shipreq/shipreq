@@ -13,7 +13,7 @@ import shipreq.base.util._
 import shipreq.base.util.ScalaExt.Tuple2Ext
 import shipreq.base.util.jodatime.JodaTimeHelpers._
 import shipreq.base.util.jodatime.JodaTimeValueRetrievers
-import shipreq.base.util.log.HasLogger
+import shipreq.base.util.log.{LogLevel, HasLogger}
 import shipreq.taskman.api.CfgKeys
 import shipreq.taskman.api.Types._
 import shipreq.taskman.api.impl.TaskmanApi
@@ -35,6 +35,7 @@ final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
   import evr._
   private val jtr = JodaTimeValueRetrievers(retrieverS)
   import jtr.retrieverPeriod
+  private implicit def llr = LogLevel.evr
 
   private def atLeast(min: Period) =
     valTest[Period](_.toStandardDuration isLongerThan min.toStandardDuration, s"Must be at least $min.")
@@ -75,11 +76,13 @@ final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
 
   object mailchimp extends MailChimp.Props {
     private implicit def scope: PropScope = scopeByNS("mailchimp")
-    private[TaskmanProps] def propmap = mkPropMap("dc" -> dc, "key" -> key, "masterList" -> masterList)
+    private[TaskmanProps] def propmap = mkPropMap(
+      "dc" -> dc, "key" -> key, "masterList" -> masterList, "logLevel" -> logLevel)
 
     val dc         = need[String]("dc")
     val key        = need[String]("key")
     val masterList = need[String]("masterList")
+    val logLevel   = need[LogLevel]("logLevel")
   }
 
   object shipreq {

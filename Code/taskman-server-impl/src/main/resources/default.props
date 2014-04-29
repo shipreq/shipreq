@@ -13,6 +13,8 @@ mail.support.from    = japgolly+support_from@gmail.com
 mail.support.to      = japgolly+support_to@gmail.com
 mail.concurrency.max = 4
 
+mailchimp.logLevel   = debug
+
 shipreq.schema = public
 
 taskman.queueSize      = 10

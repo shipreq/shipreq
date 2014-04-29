@@ -1,7 +1,9 @@
 package shipreq.base.util.log
 
 import org.slf4j.{LoggerFactory, Logger => slf4jLogger}
-import shipreq.base.util.Error
+import shipreq.base.util.{ErrorOr, Error}
+import shipreq.base.util.ExternalValueReader.Retriever
+import java.util.Locale
 
 object Logger {
   def forClass(c: Class[_]): Logger =
@@ -26,6 +28,19 @@ object LogLevel {
   case object Warn  extends LogLevel
   case object Error extends LogLevel
   val values = List(Trace, Debug, Info, Warn, Error)
+
+  def read(s: String): Option[LogLevel] =
+    s.trim.toLowerCase(Locale.ENGLISH) match {
+      case "trace" => Some(Trace)
+      case "debug" => Some(Debug)
+      case "info"  => Some(Info)
+      case "warn"  => Some(Warn)
+      case "error" => Some(Error)
+      case _       => None
+    }
+
+  def evr(implicit rs: Retriever[String]): Retriever[LogLevel] =
+    rs.emap(s => ErrorOr.fromOption(LogLevel.read(s), s"Invalid log level: $s"))
 }
 
 final class Logger(log: slf4jLogger) {

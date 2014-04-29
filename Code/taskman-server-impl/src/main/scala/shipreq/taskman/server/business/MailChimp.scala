@@ -12,22 +12,24 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
 import scalaz.{NonEmptyList, -\/, \/-}
 import scalaz.effect.IO
-import shipreq.base.util.effect.IOE
+import scalaz.syntax.bind._
+import shipreq.base.util.effect.{IoUtils, IOE}
 import shipreq.base.util.effect.IoUtils.IoExt
 import shipreq.base.util.{Error, ErrorOr}
 import shipreq.base.util.ScalaExt.AnyExt
-import shipreq.base.util.log.HasLogger
+import shipreq.base.util.log.{LogLevel, HasLogger}
 import shipreq.taskman.api.Types._
 import ErrorOr.Implicits._
 import MailingList._
 import MailingList.API._
 
-object MailChimp extends HasLogger {
+object MailChimp {
 
   trait Props {
     val dc: String
     val key: String
     val masterList: String
+    val logLevel: LogLevel
   }
 
   final case class Req(url: URL, bodyJ: JValue) {
@@ -72,9 +74,6 @@ object MailChimp extends HasLogger {
   // ---------------------------------------------------------------------------
   // Request
 
-  def logRequest(req: Req): IO[Unit] =
-    IO(log.debug z s"HTTP request: ${req.url} << ${req.bodyS}")
-
   def openConn(httpClient: OkHttpClient, url: URL): IOE[HttpURLConnection] = IOE {
     val conn = httpClient.open(url)
     conn.setRequestProperty("Content-Type", contentTypeJson)
@@ -82,9 +81,9 @@ object MailChimp extends HasLogger {
     conn
   }
 
-  def sendRequest(httpClient: OkHttpClient)(req: Req): IOE[HttpURLConnection] = {
+  def sendRequest(httpClient: OkHttpClient, logReq: Req => IO[Unit])(req: Req): IOE[HttpURLConnection] = {
     val body = req.bodyS.getBytes(defaultCharset)
-    openConn(httpClient, req.url) >==>^ writeRequestBody(body) |<<| logRequest(req)
+    openConn(httpClient, req.url) >==>^ writeRequestBody(body) |<<| logReq(req)
   }
 
   def writeRequestBody(body: Array[Byte])(conn: HttpURLConnection): IOE[Unit] =
@@ -92,9 +91,6 @@ object MailChimp extends HasLogger {
 
   // ---------------------------------------------------------------------------
   // Response
-
-  def logResponse(resp: String): IO[Unit] =
-    IO(log.debug z s"HTTP response: $resp")
 
   def recv(f: HttpURLConnection => InputStream): HttpURLConnection => IOE[String] = conn =>
     IO(ErrorOr.withResource(f(conn))(_.close){ in =>
@@ -111,12 +107,12 @@ object MailChimp extends HasLogger {
   def getResponseCode(conn: HttpURLConnection): IOE[Int] =
     IOE(conn.getResponseCode)
 
-  def recvResponse[R](ok: IOE[String] => IOE[R], ko: TotalApiFailure => Option[R])(conn: HttpURLConnection): IOE[R] =
+  def recvResponse[R](logResp: String => IO[Unit], ok: IOE[String] => IOE[R], ko: TotalApiFailure => Option[R])(conn: HttpURLConnection): IOE[R] =
     getResponseCode(conn) >==> (code =>
       if (code == HttpURLConnection.HTTP_OK)
-        recvResponseInput(conn) <<| logResponse |> ok
+        recvResponseInput(conn) <<| logResp |> ok
       else
-        handleErrorResponse(conn, ko)
+        handleErrorResponse(conn, logResp, ko)
       )
 
   def processResponse[R](api: API[R]): String => ErrorOr[R] =
@@ -125,7 +121,7 @@ object MailChimp extends HasLogger {
   // ---------------------------------------------------------------------------
   // Error handling
 
-  def handleErrorResponse[R](conn: HttpURLConnection, h: TotalApiFailure => Option[R]): IOE[R] = {
+  def handleErrorResponse[R](conn: HttpURLConnection, logResp: String => IO[Unit], h: TotalApiFailure => Option[R]): IOE[R] = {
     val parseApiFailureOrGeneric: String => IOE[R] = resp =>
       parseErrorResponse(resp) match {
         case \/-(f) =>
@@ -136,7 +132,7 @@ object MailChimp extends HasLogger {
         case -\/(_) =>
           genericHttpError(conn, resp).map(_.toErrorOr)
       }
-    recvResponseError(conn) <<| logResponse >==> parseApiFailureOrGeneric
+    recvResponseError(conn) <<| logResp >==> parseApiFailureOrGeneric
   }
 
   def genericHttpError(c: HttpURLConnection, errResp: String): IO[Error] =
@@ -182,9 +178,6 @@ object MailChimp extends HasLogger {
   // ---------------------------------------------------------------------------
   // API
 
-  def logResult(r: Any): IO[Unit] =
-    IO(log.debug z s"MailChimp result: $r")
-
   val i0 = JInt(0)
   val i1 = JInt(1)
   @inline def boolAsInt(b: Boolean) = if (b) i1 else i0
@@ -229,6 +222,15 @@ final class MailChimp(httpClient: OkHttpClient, props: Props) extends HasLogger 
   private val urlPrefix = s"https://${props.dc}.api.mailchimp.com/2.0"
   private val apikeyJson = render("apikey" -> props.key)
 
+  private val logDebug: (=> String) => IO[Unit] = {
+    val logger = log.atLevel(props.logLevel)
+    if (logger.?) msg => IO(logger z msg) else _ => IoUtils.nop
+  }
+
+  def logRequest(r: Req)     = logDebug(s"HTTP request: ${r.url} << ${r.bodyS}")
+  def logResponse(r: String) = logDebug(s"HTTP response: $r")
+  def logResult(r: Any)      = logDebug(s"MailChimp result: $r")
+
   private object urls {
     private[urls] def url(path: String) = new URL(s"$urlPrefix/$path.json")
     object lists {
@@ -243,8 +245,8 @@ final class MailChimp(httpClient: OkHttpClient, props: Props) extends HasLogger 
     new Req(url, apikeyJson merge reqJson)
 
   def run[A](api: API[A]): IOE[A] =
-    (buildRequest(api) |> sendRequest(httpClient)) >==>
-      recvResponse(_ >=> processResponse(api), extractResultFromError(api)) <| logResult
+    (buildRequest(api) |> sendRequest(httpClient, logRequest)) >==>
+      recvResponse(logResponse, _ >=> processResponse(api), extractResultFromError(api)) <| logResult
 
   val buildRequest: API[_] => Req = {
 
