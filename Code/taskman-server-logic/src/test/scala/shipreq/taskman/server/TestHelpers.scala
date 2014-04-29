@@ -3,23 +3,23 @@ package shipreq.taskman.server
 import org.joda.time.{Period, DateTime}
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary._
-import org.specs2.matcher.Matcher
-import org.specs2.matcher.AnyMatchers._
 import scalaz.Lens.lensg
 import scalaz.{NonEmptyList, Heap, Order, Endo}
 import scalaz.effect.IO
 import shipreq.base.util.{ErrorOr, Error}
 import shipreq.base.util.effect.IOE
-import shipreq.base.test.{MockOpTransformerA, MockOpTransformer}
+import shipreq.base.test.{OpTypeProvider, MockOpTransformerA, MockOpTransformer}
 import shipreq.taskman.api.{MsgId, Priority}
 import shipreq.taskman.api.Types._
-import shipreq.taskman.api.Msg.ReRegistrationAttempted
-import shipreq.taskman.server.business.{Emails, Bop, Email}
+import shipreq.taskman.api.Msg.{LandingPageHit, ReRegistrationAttempted}
+import shipreq.taskman.server.business.{MailingList, ShipReqUser, Emails, Bop, Email}
 import shipreq.taskman.server.business.Email.Addr
 import Bop._
 import Sop._
 import Manager._
 import Worker._
+import MailingList._
+import MailingList.API._
 
 object TestHelpers {
 
@@ -34,7 +34,8 @@ object TestHelpers {
   val timeNow = DateTime.now()
   val timePast = timeNow minusMinutes 10
 
-  val msg_rereg = ReRegistrationAttempted("@".tag)
+  val sampleEmailAddr = "test@hehe.com".tag[IsEmailAddr]
+  val msg_rereg = ReRegistrationAttempted(sampleEmailAddr)
   val node1 = NodeId(1)
   val worker2 = WorkerId(2)
   val mh_1 = MsgHeader(MsgId(1), Priority(6), timeNow)
@@ -43,6 +44,8 @@ object TestHelpers {
 
   val sampleNotifySupportWorkerFailed = NotifySupportWorkerFailed(timeNow, md_1, Error("WORKED FAILED"))
   val sampleNotifySupportTaskmanError = NotifySupportTaskmanError(timeNow, Error("WORKED FAILED"), Some(md_1))
+
+  val sampleLP = LandingPageHit(sampleEmailAddr, "Bob", None, true)
 
   object lenses {
     object msgDetail {
@@ -108,6 +111,7 @@ object TestHelpers {
   object MockEmailEnvelopeProps extends Email.EnvelopeProps {
     private[this] implicit def autoParseEa(ea: String): Addr = Addr(ea.tag)
     override val publicFrom: Addr = "publicFrom"
+    override val landingPageEnv = Email.EnvelopeFront(NonEmptyList("LP.To"))
     override val supportEnv = Email.Envelope("Support.From", NonEmptyList("Support.To"))
   }
 
@@ -118,23 +122,40 @@ object TestHelpers {
 
   val MockEmails = new Emails(MockEmailEnvelopeProps, MockEmailTokenValues)
 
-  def haveRunBops(expBops: Class[_ <: Bop[_]]*): Matcher[MockBops] =
-    beEqualTo(expBops.toList) ^^ {(b: MockBops) => b.allOpClasses}
+  def manifest[T](implicit m: Manifest[T]) = m
+}
 
-  def haveRunOps(expSops: Class[_ <: Sop[_]]*)(expBops: Class[_ <: Bop[_]]*): Matcher[(MockSops, MockBops)] =
-    beEqualTo((expSops.toList, expBops.toList)) ^^ {(t: (MockSops, MockBops)) => (t._1.allOpClasses, t._2.allOpClasses)}
+import TestHelpers.manifest
+
+// =====================================================================================================================
+
+object SopTypeTags extends OpTypeProvider[Sop] {
+  override def apply[A] = {
+    case _: CfgGet                    => manifest[CfgGet]
+    case _: GetMsgsAssignNode         => manifest[GetMsgsAssignNode]
+    case _: GetMsgAssignWorker        => manifest[GetMsgAssignWorker]
+    case _: UpdateMsgSuccess          => manifest[UpdateMsgSuccess]
+    case _: UpdateMsgRetry            => manifest[UpdateMsgRetry]
+    case _: UpdateMsgAbort            => manifest[UpdateMsgAbort]
+    case _: NotifySupportWorkerFailed => manifest[NotifySupportWorkerFailed]
+    case _: NotifySupportTaskmanError => manifest[NotifySupportTaskmanError]
+    case _: ReAssignWorker            => manifest[ReAssignWorker]
+    case    Nop                       => manifest[Nop.type]
+  }
 }
 
 class MockSops extends MockOpTransformerA[Sop, IO] {
-  val cfgGetR = MockResponse(Option[String](null))
-  val assignNodeR = MockResponse(Seq.empty[MsgHeader])
-  val assignWorkerR = MockResponse(Option[MsgDetail](null))
-  val updateMsgSuccessR = MockResponse(())
-  val updateMsgRetryR = MockResponse(())
-  val updateMsgAbortR = MockResponse(())
+  override def opTypeProvider = SopTypeTags
+
+  val cfgGetR                    = MockResponse(Option[String](null))
+  val assignNodeR                = MockResponse(Seq.empty[MsgHeader])
+  val assignWorkerR              = MockResponse(Option[MsgDetail](null))
+  val updateMsgSuccessR          = MockResponse(())
+  val updateMsgRetryR            = MockResponse(())
+  val updateMsgAbortR            = MockResponse(())
   val notifySupportWorkerFailedR = MockResponse(())
   val notifySupportTaskmanErrorR = MockResponse(())
-  val reassignWorkerR = MockResponse(true)
+  val reassignWorkerR            = MockResponse(true)
 
   override def cotrans[A] = {
     case _: CfgGet                    => cfgGetR.pop()
@@ -150,10 +171,35 @@ class MockSops extends MockOpTransformerA[Sop, IO] {
   }
 }
 
+// =====================================================================================================================
+
+object BopTypeTags extends OpTypeProvider[Bop] {
+  override def apply[A] = {
+    case _: SendEmail                     => manifest[SendEmail]
+    case _: LookupShipReqUser             => manifest[LookupShipReqUser]
+    case MailingListOp(_: GetListId)      => manifest[MailingListOp[GetListId]]
+    case MailingListOp(_: Subscribe)      => manifest[MailingListOp[Subscribe]]
+    case MailingListOp(_: UpdateMember)   => manifest[MailingListOp[UpdateMember]]
+    case MailingListOp(_: BatchSubscribe) => manifest[MailingListOp[BatchSubscribe]]
+  }
+}
+
 class MockBops extends MockOpTransformer[Bop, IOE] {
-  val sendEmailR = MockResponse(ErrorOr.unit)
+  override def opTypeProvider = BopTypeTags
+
+  val sendEmailR         = MockResponse(ErrorOr.unit)
+  val lookupShipReqUserR = MockResponse[Option[ShipReqUser]](None)
+  val mlGetListId        = MockResponse[Option[ListId]](None)
+  val mlSubscribe        = MockResponse[Option[SubscribeFail]](None)
+  val mlUpdateMember     = MockResponse[Option[UpdateMemberFail]](None)
+  val mlBatchSubscribe   = MockResponse(ErrorOr.unit)
 
   override def trans[A] = {
-    case _: SendEmail => IO(sendEmailR.pop())
+    case _: SendEmail                     => IO(sendEmailR.pop())
+    case _: LookupShipReqUser             => IOE(lookupShipReqUserR.pop())
+    case MailingListOp(_: GetListId)      => IOE(mlGetListId.pop())
+    case MailingListOp(_: Subscribe)      => IOE(mlSubscribe.pop())
+    case MailingListOp(_: UpdateMember)   => IOE(mlUpdateMember.pop())
+    case MailingListOp(_: BatchSubscribe) => IO(mlBatchSubscribe.pop())
   }
 }

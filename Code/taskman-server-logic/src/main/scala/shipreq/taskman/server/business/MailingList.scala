@@ -21,7 +21,13 @@ object MailingList {
   }
 
   case class Subscription(addr: EmailAddr, name: String, newsletter: Boolean, status: AccountStatus)
-  
+
+  // Failures
+  sealed trait SubscribeFail
+  sealed trait UpdateMemberFail
+  case object AlreadySubscribed extends SubscribeFail
+  case object NotSubscribed extends UpdateMemberFail
+
   // ===================================================================================================================
   // API
 
@@ -31,6 +37,10 @@ object MailingList {
     /** Looks up the ID of a mailing list by name. */
     case class GetListId(name: String) extends API[Option[ListId]]
 
-    case class BatchSubscribe(list: ListId, data: NonEmptyList[Subscription]) extends API[Unit]
+    case class Subscribe(l: ListId, s: Subscription, sendConfEmail: Boolean) extends API[Option[SubscribeFail]]
+
+    case class UpdateMember(l: ListId, s: Subscription) extends API[Option[UpdateMemberFail]]
+
+    case class BatchSubscribe(l: ListId, ss: NonEmptyList[Subscription]) extends API[Unit]
   }
 }

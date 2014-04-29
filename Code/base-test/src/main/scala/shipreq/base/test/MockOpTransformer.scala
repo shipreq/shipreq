@@ -2,23 +2,44 @@ package shipreq.base.test
 
 import scalaz.{Applicative, ~>, Name}
 
-abstract class MockOpTransformer[Op[_], I[_]] extends (Op ~> I) {
+trait OpTypeProvider[Op[_]] {
+  def apply[A]: Op[A] => Manifest[_]
+}
 
-  var allOps = List.empty[Op[_]]
+object MockOpTransformerResults {
+  def isSubtype(opType: Manifest[_], superType: Manifest[_]): Boolean = opType <:< superType
+}
 
-  def allOpClasses = allOps.map(_.getClass)
+import MockOpTransformerResults.isSubtype
 
-  def ops[T <: Op[_]](implicit m: Manifest[T]): List[T] =
-    allOps.filter(s => s.getClass.isAssignableFrom(m.runtimeClass)).map(_.asInstanceOf[T])
+trait MockOpTransformerResults[Op[_]] {
+  def allOps: Vector[Op[_]]
 
-  def sole[T <: Op[_]](implicit m: Manifest[T]): T = {
+  def allOpTypes = allOps.map(o => opManifest(o))
+
+  def ops[T <: Op[_]](implicit T: Manifest[T]): List[T] =
+    allOps.filter(o => isSubtype(opManifest(o), T)).toList.map(_.asInstanceOf[T])
+
+  def sole[T <: Op[_]](implicit T: Manifest[T]): T = {
     val o = ops[T]
     if (o.size != 1) throw new AssertionError(s"Expected a single op, got: $o")
     o.head
   }
 
+  def opTypeProvider: OpTypeProvider[Op]
+  def opManifest[A](o: Op[A]) = opTypeProvider.apply(o).asInstanceOf[Manifest[Op[A]]]
+}
+
+abstract class MockOpTransformer[Op[_], I[_]] extends (Op ~> I) with MockOpTransformerResults[Op] {
+
+  val x = Manifest
+
+  private var allOps_ = Vector.empty[Op[_]]
+
+  override def allOps = allOps_
+
   final override def apply[A](o: Op[A]): I[A] = {
-    allOps = allOps :+ o
+    allOps_ :+= o
     trans(o)
   }
 
@@ -48,13 +69,17 @@ abstract class MockOpTransformerA[Op[_], I[_]: Applicative] extends MockOpTransf
   def cotrans[A]: Op[A] => A
 }
 
-case class MockOpTransformer1[Op[_], I[_]: Applicative, S <: Op[A]: Manifest, A](default: A) extends MockOpTransformerA[Op, I] {
-  final def SM = implicitly[Manifest[S]]
+case class MockOpTransformer1[Op[_], I[_]: Applicative, S <: Op[A]: Manifest, A](ttp: OpTypeProvider[Op], default: A)
+    extends MockOpTransformerA[Op, I] {
+
+  final def S = implicitly[Manifest[S]]
+
+  override def opTypeProvider: OpTypeProvider[Op] = ttp
 
   val responses = MockResponse[A](default)
 
   override def cotrans[X] = op =>
-    if (op.getClass.isAssignableFrom(SM.runtimeClass))
+    if (isSubtype(opManifest(op), S))
       responses.pop().asInstanceOf[X]
     else
       throw new AssertionError(s"Unexpected operation: $op")

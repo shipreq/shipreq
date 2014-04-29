@@ -3,9 +3,10 @@ package shipreq.taskman.server.business
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import scalaz.NonEmptyList
+import shipreq.base.util.{Util, ErrorOr, Error}
+import shipreq.base.util.ScalaExt.StringBuilderExt
 import shipreq.taskman.api.Types.EmailAddr
 import shipreq.taskman.server.MsgDetail
-import shipreq.base.util.{ErrorOr, Error}
 import Email._
 
 object Email {
@@ -24,6 +25,7 @@ object Email {
 
   trait EnvelopeProps {
     val publicFrom: Addr
+    val landingPageEnv: EnvelopeFront
     val supportEnv: Envelope
   }
 
@@ -32,23 +34,25 @@ object Email {
     val loginUrl: String
   }
 
+  case class EnvelopeFront(to: NonEmptyList[Addr], cc: List[Addr] = Nil, bcc: List[Addr] = Nil) {
+    override def toString =
+      Util.quickToString(getClass)(
+        _.kv("to", to),
+        _.kv("cc", cc, cc.nonEmpty),
+        _.kv("bcc", bcc, bcc.nonEmpty)
+      )
+
+    def from(from: Addr) = Envelope(from, to, cc, bcc)
+  }
+
   final case class Envelope(from: Addr, to: NonEmptyList[Addr], cc: List[Addr] = Nil, bcc: List[Addr] = Nil) {
-    override def toString = {
-      val sb = new StringBuilder(getClass.getSimpleName)
-      def kv(k: String, v: Any, p: String = ", "): Unit = {
-        sb append p
-        sb append k
-        sb append " = "
-        sb append v
-      }
-      def kvo(k: String, v: List[Addr]): Unit = if (v.nonEmpty) kv(k, v)
-      kv("from", from, "(")
-      kv("to", to)
-      kvo("cc", cc)
-      kvo("bcc", bcc)
-      sb append ')'
-      sb.toString
-    }
+    override def toString =
+      Util.quickToString(getClass)(
+        _.kv("from", from),
+        _.kv("to", to),
+        _.kv("cc", cc, cc.nonEmpty),
+        _.kv("bcc", bcc, bcc.nonEmpty)
+      )
   }
 
   final case class Content(subject: String, body: String)
@@ -62,13 +66,21 @@ final class Emails(ep: EnvelopeProps, tv: TokenValues) {
 
   type SendOp = Bop.SendEmail
 
-  def sendToUser(addr: Addr, c: Content): SendOp = {
-    val e = Envelope(publicFrom, NonEmptyList(addr))
+  def sendToUser(a: Addr, c: Content): SendOp = {
+    val e = Envelope(publicFrom, NonEmptyList(a))
     Bop.SendEmail(e, c)
   }
 
   def diagnosticEmail(subject: String, body: String, msg: MsgDetail) =
     Content(s"[DIAG] $subject", s"$body\n\n${"=" * 40}\nMsg header: ${msg.hdr}\nFailure count: ${msg.failureCount}")
+
+  def propagateLandingPageMsg(a: Addr, name: String, msg: Option[String], newsletter: Boolean): SendOp = {
+    val e = landingPageEnv.from(a)
+    var b = s"Name: $name\nEmail: ${a.addr}\nNewsletter: $newsletter"
+    for (m <- msg) b += s"\n\n$m"
+    val c = Content(s"Landing Page: ${a.addr}", b)
+    Bop.SendEmail(e, c)
+  }
 
   // ===================================================================================================================
 

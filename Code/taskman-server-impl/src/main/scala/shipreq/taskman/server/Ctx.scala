@@ -16,6 +16,8 @@ import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.CfgKeys
 import shipreq.taskman.api.impl.TaskmanApi
 import shipreq.taskman.server.business._
+import shipreq.taskman.server.business.MailingList.API.GetListId
+import ErrorOr.Implicits._
 
 //==========================================================================================
 
@@ -57,8 +59,10 @@ final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
     private implicit def scope: PropScope = scopeByNS("mail")
     private[this] implicit def rEA = EmailImpl.addressLoader
     private[this] implicit def rEE = EmailImpl.envelopeLoader
+    private[this] implicit def rEF = EmailImpl.envelopeFrontLoader
 
     val publicFrom     = need[Addr]("public.from")
+    val landingPageEnv = need[EnvelopeFront]("landingPage")
     val supportEnv     = need[Envelope]("support")
     val concurrencyMax = validate("concurrency.max", need[Int])(atLeast(1))
 
@@ -116,23 +120,36 @@ class TaskmanCtx(val db: Database, mailProps: Properties, evr: StringBasedValueR
     val (emailS, email) = Async.newPool("email", props.mail.concurrencyMax)
   }
 
+  private def getMailChimpListId_!(name: String): MailingList.ListId =
+    ErrorOr.require_!(
+      mailchimp.run(GetListId(name)).emapE {
+        case None     => ErrorOr.error(s"Mailing list not found: $name")
+        case Some(id) => ErrorOr(id)
+      }.unsafePerformIO()
+    )
+
   val email     = new EmailImpl(EmailImpl.loadSession(mailProps))
   val emails    = new Emails(props.mail, new EmailTokenValues(cfgFromApiReader))
   val http      = new OkHttpClient()
   val mailchimp = new MailChimp(http, props.mailchimp)
 
+  val mailingListId = getMailChimpListId_!(props.mailchimp.masterList)
+
   implicit def trustPeriod   = props.taskman.trustPeriod
   implicit val aopReifier    = new TaskmanApi(TaskmanApi.Context(None), db)
   implicit val bopReifier    = new BopImpl(email, mailchimp)
   implicit val sopReifier    = new SopImpl(db, emails, bopReifier)
-  implicit val msgProcessor  = new BusinessLogic(bopReifier, emails, async.email)
+  implicit val msgProcessor  = new BusinessLogic(bopReifier, emails, async.email, mailingListId)
   implicit val failurePolicy = Failure.failurePolicy
   implicit val clock         = IO(new DateTime)
   implicit val nodeId        = sopReifier.getNextNodeId.unsafePerformIO()
 
   def logContent(): Unit = {
     props.logContent()
-    log.info z s"Node ID is ${nodeId.value}."
+    val p = "    "
+    log info "Settings"
+    log.info z s"${p}Mailing list ID = ${mailingListId.value}"
+    log.info z s"${p}Node ID         = ${nodeId.value}"
   }
 
   def shutdown(asyncWait: Option[Period] = Some(Period seconds 20)): Unit = {

@@ -7,6 +7,7 @@ import scalaz.{\/-, \/, -\/, Need, Endo}
 import scalaz.effect.IO
 import shipreq.base.util.effect.IOE
 import shipreq.base.util.ScalaExt.Tuple2Ext
+import shipreq.base.test.specs2.BaseMatchers._
 import TestHelpers._
 import Sop._
 import Worker._
@@ -39,23 +40,6 @@ class WorkerTest extends Specification {
 
   def haveResultA = beAnInstanceOf[-\/[AsyncResult[Need]]]
 
-  def allMockSopClasses = (_: MockSops).allOpClasses
-
-  def haveRun1[A <: Sop[_] : ClassTag] =
-    allMockSopClasses ^^ be_==(List(
-      implicitly[ClassTag[A]].runtimeClass))
-
-  def haveRun2[A <: Sop[_] : ClassTag, B <: Sop[_] : ClassTag] =
-    allMockSopClasses ^^ be_==(List(
-      implicitly[ClassTag[A]].runtimeClass
-      , implicitly[ClassTag[B]].runtimeClass))
-
-  def haveRun3[A <: Sop[_] : ClassTag, B <: Sop[_] : ClassTag, C <: Sop[_] : ClassTag] =
-    allMockSopClasses ^^ be_==(List(
-      implicitly[ClassTag[A]].runtimeClass
-      , implicitly[ClassTag[B]].runtimeClass
-      , implicitly[ClassTag[C]].runtimeClass))
-
   // -------------------------------------------------------------------------------------------------------------------
 
   "Worker processing msgs synchronously" >> {
@@ -70,37 +54,37 @@ class WorkerTest extends Specification {
     "Work completes" >> {
       val (r,s) = test(assignWorkerAllow, fpRetry, mpNop)
       "Result"                in (r must haveResultS[Completed])
-      "Marks msg as complete" in (s must haveRun2[GetMsgAssignWorker, UpdateMsgSuccess])
+      "Marks msg as complete" in (s must haveRun[Sop].ops2[GetMsgAssignWorker, UpdateMsgSuccess])
     }
 
     "Worker crashes (retry)" >> {
       val (r, s) = test(assignWorkerAllow, fpRetry, mpCrash)
       "Result"          in (r must haveResultS[WorkerFailed])
-      "Schedules retry" in (s must haveRun2[GetMsgAssignWorker, UpdateMsgRetry])
+      "Schedules retry" in (s must haveRun[Sop].ops2[GetMsgAssignWorker, UpdateMsgRetry])
     }
 
     "Worker crashes (abort)" >> {
       val (r, s) = test(assignWorkerAllow, fpAbort, mpCrash)
       "Result"     in (r must haveResultS[WorkerFailed])
-      "Aborts job" in (s must haveRun2[GetMsgAssignWorker, UpdateMsgAbort])
+      "Aborts job" in (s must haveRun[Sop].ops2[GetMsgAssignWorker, UpdateMsgAbort])
     }
 
     "Worker crashes (retry and notify support)" >> {
       val (r, s) = test(assignWorkerAllow, fpRetrySupport, mpCrash)
       "Result"                       in (r must haveResultS[WorkerFailed])
-      "Fails job & notifies support" in (s must haveRun3[GetMsgAssignWorker, UpdateMsgRetry, NotifySupportWorkerFailed])
+      "Fails job & notifies support" in (s must haveRun[Sop].ops3[GetMsgAssignWorker, UpdateMsgRetry, NotifySupportWorkerFailed])
     }
 
     "Taskman crashes pre-work" >> {
       val (r, s) = test(assignWorkerCrash, fpRetry, mpCrash)
       "Result"           in (r must haveResultS[TaskmanFailed])
-      "Notifies support" in (s must haveRun2[GetMsgAssignWorker, NotifySupportTaskmanError])
+      "Notifies support" in (s must haveRun[Sop].ops2[GetMsgAssignWorker, NotifySupportTaskmanError])
     }
 
     "Taskman crashes post-work" >> {
       val (r, s) = test(crashOnUpdateMsgSuccess compose assignWorkerAllow, fpRetry, mpNop)
       "Result"           in (r must haveResultS[TaskmanFailed])
-      "Notifies support" in (s must haveRun3[GetMsgAssignWorker, UpdateMsgSuccess, NotifySupportTaskmanError])
+      "Notifies support" in (s must haveRun[Sop].ops3[GetMsgAssignWorker, UpdateMsgSuccess, NotifySupportTaskmanError])
     }
   }
 
@@ -129,41 +113,41 @@ class WorkerTest extends Specification {
     "Work completes" >> {
       val ((r1, s1), (r2, s2)) = blah(IOE.nop)
       "Immediate result"             in (r1 must haveResultA)
-      "Assigns msg before future"    in (s1 must haveRun1[GetMsgAssignWorker])
+      "Assigns msg before future"    in (s1 must haveRun[Sop].op[GetMsgAssignWorker])
       "Future result"                in (r2 must haveResultS[Completed])
-      "Future marks msg as complete" in (s2 must haveRun2[GetMsgAssignWorker, UpdateMsgSuccess])
+      "Future marks msg as complete" in (s2 must haveRun[Sop].ops2[GetMsgAssignWorker, UpdateMsgSuccess])
     }
 
     "Future crashes" >> {
       val ((r1, s1), (r2, s2)) = blah(IOE(???))
       "Immediate result"           in (r1 must haveResultA)
-      "Assigns msg before future"  in (s1 must haveRun1[GetMsgAssignWorker])
+      "Assigns msg before future"  in (s1 must haveRun[Sop].op[GetMsgAssignWorker])
       "Future result"              in (r2 must haveResultS[WorkerFailed])
-      "Future marks msg as failed" in (s2 must haveRun2[GetMsgAssignWorker, UpdateMsgRetry])
+      "Future marks msg as failed" in (s2 must haveRun[Sop].ops2[GetMsgAssignWorker, UpdateMsgRetry])
     }
 
     "Reassigns and completes" >> {
       val ((r1, s1), (r2, s2)) = blah(IOE.nop, clock = longClock)
       "Immediate result"             in (r1 must haveResultA)
-      "Assigns msg before future"    in (s1 must haveRun1[GetMsgAssignWorker])
+      "Assigns msg before future"    in (s1 must haveRun[Sop].op[GetMsgAssignWorker])
       "Future result"                in (r2 must haveResultS[Completed])
-      "Future marks msg as complete" in (s2 must haveRun3[GetMsgAssignWorker, ReAssignWorker, UpdateMsgSuccess])
+      "Future marks msg as complete" in (s2 must haveRun[Sop].ops3[GetMsgAssignWorker, ReAssignWorker, UpdateMsgSuccess])
     }
 
     "Future fails to reassign worker" >> {
       val ((r1, s1), (r2, s2)) = blah(IOE.nop, clock = longClock, sopEndo = assignWorkerAllow compose reassignWorkerDeny)
       "Immediate result"                             in (r1 must haveResultA)
-      "Assigns msg before future"                    in (s1 must haveRun1[GetMsgAssignWorker])
+      "Assigns msg before future"                    in (s1 must haveRun[Sop].op[GetMsgAssignWorker])
       "Future result"                                in (r2 must haveResultS[CouldntReAssign])
-      "Future does nothing after reassignment fails" in (s2 must haveRun2[GetMsgAssignWorker, ReAssignWorker])
+      "Future does nothing after reassignment fails" in (s2 must haveRun[Sop].ops2[GetMsgAssignWorker, ReAssignWorker])
     }
 
     "Future encounters taskman error" >> {
       val ((r1, s1), (r2, s2)) = blah(IOE.nop, clock = longClock, sopEndo = assignWorkerAllow compose reassignWorkerCrash)
       "Immediate result"          in (r1 must haveResultA)
-      "Assigns msg before future" in (s1 must haveRun1[GetMsgAssignWorker])
+      "Assigns msg before future" in (s1 must haveRun[Sop].op[GetMsgAssignWorker])
       "Future result"             in (r2 must haveResultS[TaskmanFailed])
-      "Future notifies support"   in (s2 must haveRun3[GetMsgAssignWorker, ReAssignWorker, NotifySupportTaskmanError])
+    "Future notifies support"   in (s2 must haveRun[Sop].ops3[GetMsgAssignWorker, ReAssignWorker, NotifySupportTaskmanError])
     }
 
   }

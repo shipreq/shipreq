@@ -56,12 +56,21 @@ object EmailImpl extends HasLogger {
     })
 
   def envelopeLoader(implicit rea: Retriever[Addr]): Retriever[Envelope] =
-    Retriever[Envelope](k => {
+    envelopeLoaderG[Envelope](get => envelopeFrontLoaderF(get).from(get("from")))
+
+  def envelopeFrontLoader(implicit rea: Retriever[Addr]): Retriever[EnvelopeFront] =
+    envelopeLoaderG[EnvelopeFront](envelopeFrontLoaderF)
+
+  private[this] def envelopeFrontLoaderF(get: (String => Addr)) : EnvelopeFront = {
+    val to = get("to")
+    EnvelopeFront(NonEmptyList(to))
+  }
+
+  private[this] def envelopeLoaderG[E](f: (String => Addr) => E)(implicit rea: Retriever[Addr]): Retriever[E] =
+    Retriever[E](k => {
       implicit val s = PropScope(n => s"$k.$n")
       def get(n: String) = need[Addr](n)
-      val from = get("from")
-      val to   = get("to")
-      Some(ErrorOr(Envelope(from, NonEmptyList(to))))
+      Some(ErrorOr(f(get)))
     })
 
   implicit class EAExt(val ea: Addr) extends AnyVal {

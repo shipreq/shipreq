@@ -1,5 +1,6 @@
 package shipreq.taskman.server.business
 
+import scalaz.\/-
 import scalaz.effect.IO
 import shipreq.base.util.{ErrorOr, Error}
 import shipreq.base.util.effect.IOE
@@ -7,11 +8,14 @@ import shipreq.taskman.api.Msg._
 import shipreq.taskman.api.Types.EmailAddr
 import shipreq.taskman.server.{MsgDetail, Deliberate, Deterministic}
 import shipreq.taskman.server.Worker.{AsyncScheduler, MsgProcessor, MsgProcessorIn, MsgProcessorOut}
+import Bop._
+import ErrorOr.Implicits._
 
 final class BusinessLogic[F[_]](
       bopReifier: BopReifier,
       emails: Emails,
-      emailScheduler: AsyncScheduler[F]
+      emailScheduler: AsyncScheduler[F],
+      mailingListId: MailingList.ListId
     ) extends MsgProcessor[F] {
 
   type MI = MsgProcessorIn[F]
@@ -24,6 +28,12 @@ final class BusinessLogic[F[_]](
 
   @inline private[this] def send(e: Bop.SendEmail)(implicit i: MI): MO =
     i.async(emailScheduler)(bopReifier(e))
+
+  @inline private[this] def run[A](a: MailingList.API[A]): IOE[A] =
+    bopReifier(MailingListOp(a))
+
+  @inline private[this] def run[A](a: Bop[A]): IOE[A] =
+    bopReifier(a)
 
   override def apply(i: MI): MO = {
     @inline def md = i.m
@@ -42,8 +52,40 @@ final class BusinessLogic[F[_]](
       case SendDiagEmail(addr, subject, body) =>
         emailUser(addr, emails.diagnosticEmail(subject, body, md))
 
+      case l: LandingPageHit =>
+        i sync LandingPage(l)
+
       case d: DummyMsg =>
         dummy(md, d)
+    }
+  }
+
+  object LandingPage {
+
+    def apply(l: LandingPageHit): IOE[Unit] = {
+      import l._
+      updateMailingListIfNeeded(email, name, newsletter) |>==>
+        run(emails.propagateLandingPageMsg(email, name, msg, newsletter))
+    }
+
+    def updateMailingListIfNeeded(addr: EmailAddr, name: String, newsletter: Boolean): IOE[Unit] =
+      unlessShipReqUser(addr)(updateMailingList(addr, name, newsletter))
+
+    def unlessShipReqUser(addr: EmailAddr)(action: => IOE[Unit]): IOE[Unit] =
+      run(LookupShipReqUser(\/-(addr))) >==> {
+        case None    => action
+        case Some(_) => IOE.nop
+      }
+
+    def updateMailingList(addr: EmailAddr, name: String, newsletter: Boolean): IOE[Unit] = {
+      import MailingList._
+      val s = Subscription(addr, name, newsletter, AccountStatus.Never)
+      run(API.Subscribe(mailingListId, s, newsletter)) >==> {
+        case None =>
+          IOE.nop
+        case Some(AlreadySubscribed) =>
+          run(API.UpdateMember(mailingListId, s)).maybeFail(_.map(f => Error(s"Failed to update mailing list: $f")))
+      }
     }
   }
 
