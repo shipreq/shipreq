@@ -149,6 +149,7 @@ object ShipReq extends Build {
         override def project = typicalProject.dependsOn(taskmanApiLogic)
           .dependsOn(baseTest % "test")
           .dependsOn(baseUtil) // Stupid IDEA auto-import needs this
+          .settings(scalacOptions in Compile ~= removeValues("-optimise")) // try again with 2.11
 
         override def deps =
           jodaTime ++ logback ++ testScope(specs2)

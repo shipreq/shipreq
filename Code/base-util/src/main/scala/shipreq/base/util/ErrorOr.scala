@@ -4,14 +4,15 @@ import scalaz.Scalaz.Id
 import scalaz.{-\/, \/, \/-, \&/, Applicative, Catchable, Monad, Lens}
 import scalaz.\&/.{Both, That, This}
 
-object ErrorOr {
+final object ErrorOr {
   def apply[A](a: A): ErrorOr[A] = \/-(a)
 
   val unit = apply(())
 
-  @inline final def error[A](m: String)              : ErrorOr[A] = -\/(Error(m))
-  @inline final def error[A](e: Throwable)           : ErrorOr[A] = -\/(Error(e))
-  @inline final def error[A](m: String, e: Throwable): ErrorOr[A] = -\/(Error(m,e))
+  // @inline here breaks the optimiser with Scala 2.10
+  def error[A](m: String)              : ErrorOr[A] = -\/(Error(m))
+  def error[A](e: Throwable)           : ErrorOr[A] = -\/(Error(e))
+  def error[A](m: String, e: Throwable): ErrorOr[A] = -\/(Error(m,e))
 
   def fromOption[A](o: Option[A], errMsg: => String): ErrorOr[A] =
     o match {
@@ -103,9 +104,9 @@ object ErrorOr {
 
   object Implicits {
 
-    implicit def ErrorOrAsIdMonad[A](ea: Id[ErrorOr[A]]) = new MonadExt[Id, A](ea)
+    implicit final def ErrorOrAsIdMonad[A](ea: Id[ErrorOr[A]]) = new MonadExt[Id, A](ea)
 
-    implicit class MonadExt[M[_], A](val mea: M[ErrorOr[A]]) extends AnyVal {
+    implicit final class MonadExt[M[_], A](val mea: M[ErrorOr[A]]) extends AnyVal {
 
       @inline def mapE[B](f: => A => B)(implicit M: Monad[M]): M[ErrorOr[B]] =
         // fmapE(a => M point ErrorOr(f(a)))
@@ -183,7 +184,7 @@ object ErrorOr {
     }
   }
 
-  object Scalaz {
+  final object Scalaz {
     import Implicits._
 
     def monadInstance[M[_]](implicit M: Monad[M]): Monad[({type λ[α] = M[ErrorOr[α]]})#λ] = {
@@ -263,14 +264,14 @@ final case class Error(reason: String \&/ Throwable, tags: Set[ErrorTag] = Set.e
   def stackTraceStr: String = Error stackTraceStr throwable
 }
 
-object Error {
+final object Error {
   val reasonLens = Lens.lensg[Error, String \&/ Throwable](e => r => e.copy(reason = r), _.reason)
   val tagsLens   = Lens.lensg[Error, Set[ErrorTag]       ](e => t => e.copy(tags = t)  , _.tags)
   val suppLens   = Lens.lensg[Error, Option[Any]         ](e => s => e.copy(supp = s)  , _.supp)
 
-  @inline final def apply[A](m: String)              : Error = Error(This(m))
-  @inline final def apply[A](e: Throwable)           : Error = Error(That(e))
-  @inline final def apply[A](m: String, e: Throwable): Error = Error(Both(m, e))
+  @inline def apply[A](m: String)              : Error = Error(This(m))
+  @inline def apply[A](e: Throwable)           : Error = Error(That(e))
+  @inline def apply[A](m: String, e: Throwable): Error = Error(Both(m, e))
 
   private def merge(a: String, b: String): String =
     if (a.isEmpty) b
