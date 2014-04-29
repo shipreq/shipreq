@@ -14,16 +14,16 @@ object TmpMailchimp extends MainTemplate {
     withTaskmanCtx { ctx =>
       ctx.logContent()
       val mi = ctx.mailchimp
+      val id = ctx.mailingListId
       log info "Ready...."
 
-      val io1 = mi.run(GetListId(ctx.props.mailchimp.masterList))
-      val io2 = (o: Option[ListId]) => IOE(o.get)
-      val io3 = (id: ListId) => IO(log info s"ID: $id")
-      val io4 = (id: ListId) => {
-          val s = Subscription("tmp-mailchimp-app@shipreq.com".tag, "Tmp MailChimp App", true, AccountStatus.Never)
-          mi.run(BatchSubscribe(id, NonEmptyList(s)))
-        }
-      val io = io1 >==> io2 <<| io3 >==> io4
+      val s = Subscription("tmp-mailchimp-app@shipreq.com".tag, "Tmp MailChimp App", true, AccountStatus.Never)
+
+      val batch = mi.run(BatchSubscribe(id, NonEmptyList(s)))
+      val sub   = mi.run(Subscribe(id, s, false))
+      val upd   = mi.run(UpdateMember(id, s))
+
+      val io = batch |>==> sub |>==> upd
       io.unsafePerformIO()
     }
 }

@@ -84,4 +84,11 @@ class MailChimpTest extends Specification {
       ) must beAnError
     }
   }
+
+  "lists/subscribe" >> {
+    "error parsing" in {
+      val f = ErrorOr require_! parseErrorResponse("""{"status":"error","code":214,"name":"List_AlreadySubscribed","error":"tmp-mailchimp-app@shipreq.com is already subscribed to list Master. Click here to update your profile."}""")
+      extractResultFromError(Subscribe(null, null, true))(f) must beSome(AlreadySubscribed)
+    }
+  }
 }

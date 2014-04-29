@@ -12,7 +12,7 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
 import scalaz.{NonEmptyList, -\/, \/-}
 import scalaz.effect.IO
-import shipreq.base.util.effect.IOE
+import shipreq.base.util.effect.{IOE, IOExt}
 import shipreq.base.util.{Error, ErrorOr}
 import shipreq.base.util.ScalaExt.AnyExt
 import shipreq.base.util.log.HasLogger
@@ -110,12 +110,12 @@ object MailChimp extends HasLogger {
   def getResponseCode(conn: HttpURLConnection): IOE[Int] =
     IOE(conn.getResponseCode)
 
-  def recvResponse(conn: HttpURLConnection): IOE[String] =
+  def recvResponse[R](ok: IOE[String] => IOE[R], ko: TotalApiFailure => Option[R])(conn: HttpURLConnection): IOE[R] =
     getResponseCode(conn) >==> (code =>
       if (code == HttpURLConnection.HTTP_OK)
-        recvResponseInput(conn) <<| logResponse
+        recvResponseInput(conn) <<| logResponse |> ok
       else
-        handleErrorResponse(conn).map(_.toErrorOr)
+        handleErrorResponse(conn, ko)
       )
 
   def processResponse[R](api: API[R]): String => ErrorOr[R] =
@@ -124,13 +124,18 @@ object MailChimp extends HasLogger {
   // ---------------------------------------------------------------------------
   // Error handling
 
-  def handleErrorResponse(conn: HttpURLConnection): IO[Error] = {
-    val parseApiFailureOrGeneric: String => IO[Error] = resp =>
+  def handleErrorResponse[R](conn: HttpURLConnection, h: TotalApiFailure => Option[R]): IOE[R] = {
+    val parseApiFailureOrGeneric: String => IOE[R] = resp =>
       parseErrorResponse(resp) match {
-        case \/-(f) => IO(ApiFailure.Total(f))
-        case -\/(_) => genericHttpError(conn, resp)
+        case \/-(f) =>
+          h(f) match {
+            case None    => IO(ApiFailure.Total(f).toErrorOr)
+            case Some(r) => IOE(r)
+          }
+        case -\/(_) =>
+          genericHttpError(conn, resp).map(_.toErrorOr)
       }
-    recvResponseError(conn) <<| logResponse ftoErrorM parseApiFailureOrGeneric
+    recvResponseError(conn) <<| logResponse >==> parseApiFailureOrGeneric
   }
 
   def genericHttpError(c: HttpURLConnection, errResp: String): IO[Error] =
@@ -176,16 +181,26 @@ object MailChimp extends HasLogger {
   // ---------------------------------------------------------------------------
   // API
 
+  def logResult(r: Any): IO[Unit] =
+    IO(log.debug z s"MailChimp result: $r")
+
   val i0 = JInt(0)
   val i1 = JInt(1)
   @inline def boolAsInt(b: Boolean) = if (b) i1 else i0
 
-  val subscribeStaticOptions = ("double_optin" -> false) ~ ("update_existing" -> true) ~ ("send_welcome" -> false)
+  def subscribeOptions(sendConfEmail: Boolean, updExisting: Boolean) =
+    ("double_optin" -> sendConfEmail) ~ ("update_existing" -> updExisting) ~ ("send_welcome" -> false)
+
+  val batchSubscribeStatic = subscribeOptions(false, true)
+
+  def buildReqSubscription(s: Subscription) =
+    ("email" -> ("email" -> s.addr)) ~ ("merge_vars" ->
+      ("NAME" -> s.name) ~ ("NEWSLETTER" -> boolAsInt(s.newsletter)) ~ ("ACCT" -> s.status.remoteValue))
 
   def extractResult[R](a: API[R]): JValue => ErrorOr[R] =
     j => ErrorOr.safe(a match {
 
-      case GetListId(_) =>
+      case _: GetListId =>
         val JInt(total) = j \ "total"
         total.toInt match {
           case 0 => None
@@ -195,8 +210,15 @@ object MailChimp extends HasLogger {
         }
 
       case _: BatchSubscribe => ()
-
+      case _: Subscribe      => Ok
+      case _: UpdateMember   => Ok
     })
+
+  def extractResultFromError[R](a: API[R])(f: TotalApiFailure): Option[R] = a match {
+    case _: Subscribe    if f.name == "List_AlreadySubscribed" => Some(AlreadySubscribed)
+    case _: UpdateMember if f.name == "List_NotSubscribed"     => Some(NotSubscribed)
+    case _ => None
+  }
 }
 
 import MailChimp._
@@ -207,10 +229,12 @@ final class MailChimp(httpClient: OkHttpClient, props: Props) extends HasLogger 
   private val apikeyJson = render("apikey" -> props.key)
 
   private object urls {
-    private[urls] def url(path: String) = new URL(s"$urlPrefix/$path")
+    private[urls] def url(path: String) = new URL(s"$urlPrefix/$path.json")
     object lists {
-      val list = url("lists/list.json")
-      val batchSubscribe = url("lists/batch-subscribe.json")
+      val list           = url("lists/list")
+      val batchSubscribe = url("lists/batch-subscribe")
+      val subscribe      = url("lists/subscribe")
+      val updateMember   = url("lists/update-member")
     }
   }
 
@@ -218,19 +242,25 @@ final class MailChimp(httpClient: OkHttpClient, props: Props) extends HasLogger 
     new Req(url, apikeyJson merge reqJson)
 
   def run[A](api: API[A]): IOE[A] =
-    (buildRequest(api) |> sendRequest(httpClient)) >==> recvResponse >=> processResponse(api)
+    (buildRequest(api) |> sendRequest(httpClient)) >==>
+      recvResponse(_ >=> processResponse(api), extractResultFromError(api)) <| logResult
 
   val buildRequest: API[_] => Req = {
+
     case GetListId(name) =>
-      req(urls.lists.list, "filters" -> ("list_name" -> name) ~ ("exact" -> true))
+      req(urls.lists.list,
+        "filters" -> ("list_name" -> name) ~ ("exact" -> true))
 
-    case BatchSubscribe(ListId(listId), ss) => {
-      def x(s: Subscription) =
-        ("email" -> ("email" -> s.addr)) ~ ("merge_vars" ->
-          ("NAME" -> s.name) ~ ("NEWSLETTER" -> boolAsInt(s.newsletter)) ~ ("ACCT" -> s.status.remoteValue))
-      val j = ("id" -> listId) ~ ("batch" -> ss.list.map(x)) ~ subscribeStaticOptions
-      req(urls.lists.batchSubscribe, j)
-    }
+    case BatchSubscribe(ListId(listId), ss) =>
+      req(urls.lists.batchSubscribe,
+        ("id" -> listId) ~ ("batch" -> ss.list.map(buildReqSubscription)) ~ batchSubscribeStatic)
 
+    case Subscribe(ListId(listId), s, sendConfEmail) =>
+      req(urls.lists.subscribe,
+        ("id" -> listId) ~ buildReqSubscription(s) ~ subscribeOptions(sendConfEmail, false))
+
+    case UpdateMember(ListId(listId), s) =>
+      req(urls.lists.updateMember,
+        ("id" -> listId) ~ buildReqSubscription(s))
   }
 }
