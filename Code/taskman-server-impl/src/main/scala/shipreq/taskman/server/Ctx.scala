@@ -56,46 +56,43 @@ final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
   def propmap = mail.propmap ++ mailchimp.propmap ++ shipreq.propmap ++ taskman.propmap
 
   // --------------------------------------------------------------------------
+
   object mail extends Email.EnvelopeProps {
     import Email._
     private implicit def scope: PropScope = scopeByNS("mail")
     private[this] implicit def rEA = EmailImpl.addressLoader
     private[this] implicit def rEE = EmailImpl.envelopeLoader
     private[this] implicit def rEF = EmailImpl.envelopeFrontLoader
+    private[TaskmanProps] def propmap = mkPropMap(
+      "public.from" -> publicFrom, "landingPage" -> landingPageEnv, "support" -> supportEnv,
+      "concurrency.max" -> concurrencyMax)
 
     val publicFrom     = need[Addr]("public.from")
     val landingPageEnv = need[EnvelopeFront]("landingPage")
     val supportEnv     = need[Envelope]("support")
     val concurrencyMax = validate("concurrency.max", need[Int])(atLeast(1))
-
-    private[TaskmanProps] def propmap = mkPropMap(
-      "public.from" -> publicFrom, "landingPage" -> landingPageEnv, "support" -> supportEnv,
-      "concurrency.max" -> concurrencyMax)
   }
 
-  // --------------------------------------------------------------------------
   object mailchimp extends MailChimp.Props {
     private implicit def scope: PropScope = scopeByNS("mailchimp")
+    private[TaskmanProps] def propmap = mkPropMap("dc" -> dc, "key" -> key, "masterList" -> masterList)
 
     val dc         = need[String]("dc")
     val key        = need[String]("key")
     val masterList = need[String]("masterList")
-
-    private[TaskmanProps] def propmap = mkPropMap("dc" -> dc, "key" -> key, "masterList" -> masterList)
   }
 
-  // --------------------------------------------------------------------------
   object shipreq {
     private implicit def scope: PropScope = scopeByNS("shipreq")
+    private[TaskmanProps] def propmap = mkPropMap("schema" -> schema)
 
     val schema = getO[String]("schema")
-
-    private[TaskmanProps] def propmap = mkPropMap("schema" -> schema)
   }
 
-  // --------------------------------------------------------------------------
   object taskman {
     private implicit def scope: PropScope = scopeByNS("taskman")
+    private[TaskmanProps] def propmap = mkPropMap(
+      "queueSize" -> queueSize, "trustPeriod" -> trustPeriod, "poll.every" -> pollEvery, "poll.min" -> pollGap)
 
     val queueSize   = validate("queueSize", need[Int])(atLeast(1))
     val trustPeriod = AssignmentTrustPeriod(validate("trustPeriod", need[Period])(atLeast(10 seconds)))
@@ -104,9 +101,6 @@ final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
 
     if (pollGap.toStandardDuration isLongerThan pollEvery.toStandardDuration)
       log.warn.z(s"The minimum poll gap ($pollGap) is larger than the poll time ($pollEvery). Wasteful.")
-
-    private[TaskmanProps] def propmap = mkPropMap(
-      "queueSize" -> queueSize, "trustPeriod" -> trustPeriod, "poll.every" -> pollEvery, "poll.min" -> pollGap)
   }
 }
 
