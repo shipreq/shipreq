@@ -14,7 +14,7 @@ import test.fixture.UserFixture
 import util.NonEmptyTemplate
 import app.AppConfig
 import Register._
-import shipreq.webapp.test.T2.{NoTasksSubmitted, SubmittedOneTask, ReRegistrationAttemptedT}
+import shipreq.webapp.test.T2._
 import shipreq.taskman.api.Msg.RegistrationRequested
 import shipreq.webapp.feature.validation.Validators
 
@@ -120,7 +120,14 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
 
   class Reg2Tester(token: String) {
     val snippet = new Register2(token)
-    def onSubmit_() = withTestTaskman(snippet.onSubmit())._1
+
+    def onSubmit() = withTestTaskman(snippet.onSubmit())
+
+    def onSubmitF() = {
+      val (js, tt) = onSubmit()
+      NoTasksSubmitted test tt
+      js
+    }
   }
 
   describe("Register2.validateToken") {
@@ -166,7 +173,7 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
     def testFailure(mutate: Register2 => Any) {
       val t = tester
       mutate(t.snippet)
-      val js = t.onSubmit_
+      val js = t.onSubmitF
       assertUnconfirmed()
       js.assertJsAlert(Some(""))
     }
@@ -190,7 +197,7 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
     it("should reject a taken username") {
       val t = tester
       t.snippet.usernameV set user2.username
-      t.onSubmit_
+      t.onSubmitF
       try {assertUnconfirmed()}
       catch {case e: PSQLException if e.getMessage.contains("transaction is aborted") =>}
     }
@@ -201,7 +208,7 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
 
     describe("when form details valid") {
       it("should create user") {
-        tester.onSubmit_
+        tester.onSubmit()
         val reg = dao.findUserRegistrationInfo(userWithCurrentToken.email).get
         reg.confirmationSentAt should be(Some(userWithCurrentToken.tokenCreatedAt))
         reg.confirmedAt should not be (None)
@@ -215,7 +222,7 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
 
       it("should login") {
         Oshiro.loggedInUser should be(None)
-        tester.onSubmit_
+        tester.onSubmit()
         Oshiro.loggedInUser should not be (None)
         val user = Oshiro.loggedInUser.get
         user.username should be("crazy50")
@@ -224,16 +231,20 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
 
       it("should hash password so that login auth works with same plaintext password") {
         val subj = SecurityUtils.getSubject
-        tester.onSubmit_
+        tester.onSubmit()
         subj.logout()
         subj.login(new UsernamePasswordToken("crazy50", "abcd5678"))
       }
 
       it("should hide the form and show the success") {
-        val t = tester
-        val js = t.onSubmit_
+        val (js, _) = tester.onSubmit()
         js.assertJsAlert(None)
         js.toJsCmd should include("toggle")
+      }
+
+      it("should submit a msg to taskman") {
+        val (_, tt) = tester.onSubmit()
+        SubmittedOneTask(RegistrationCompletedT) test tt
       }
     }
   }

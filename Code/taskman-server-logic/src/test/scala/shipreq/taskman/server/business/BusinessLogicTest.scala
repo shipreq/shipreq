@@ -4,19 +4,23 @@ import org.specs2.mutable.Specification
 import shipreq.base.test.specs2.BaseMatchers._
 import shipreq.taskman.server.TestHelpers._
 import shipreq.taskman.api.Msg
-import shipreq.taskman.server.MockBops
+import shipreq.taskman.server.{MsgDetail, MockBops}
 import Bop._
 import MailingList.API._
+import shipreq.taskman.server.Worker.MsgProcessorIn
 
 class BusinessLogicTest extends Specification {
 
+  def testM(bop: MockBops, msg: Msg) = {
+    val bl = new BusinessLogic(bop, MockEmails, null, null)
+    val mo = bl(new MsgProcessorIn[Nothing](MsgDetail(mh_1, msg, 0), null))
+    val io = mo getOrElse sys.error("Async not supported")
+    (bop, io.unsafePerformIO())
+  }
+
   s"${Msg.LandingPageHit} handler" should {
 
-    def test(bop: MockBops) = {
-      val bl = new BusinessLogic(bop, MockEmails, null, null)
-      val r = bl.LandingPage(sampleLP).unsafePerformIO()
-      (bop, r)
-    }
+    def test(bop: MockBops) = testM(bop, sampleLP)
 
     "Add to ML & email support" in {
       val bop = new MockBops
@@ -39,6 +43,17 @@ class BusinessLogicTest extends Specification {
       val bop = new MockBops
       bop.mlSubscribe << ???
       test(bop) must match2(haveRun[Bop].anyBut1[SendEmail], beAnError)
+    }
+  }
+
+  s"${Msg.RegistrationCompleted} handler" should {
+
+    def test(bop: MockBops) = testM(bop, Msg.RegistrationCompleted(sampleUserId))
+
+    "update ML" in {
+      val bop = new MockBops
+      bop.lookupShipReqUserR << Some(sampleShipReqUser)
+      test(bop) must match2(haveRun[Bop].ops2[LookupShipReqUser, MailingListOp[BatchSubscribe]], notBeAnError)
     }
   }
 }

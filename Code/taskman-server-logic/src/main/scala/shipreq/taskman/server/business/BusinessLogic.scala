@@ -1,11 +1,11 @@
 package shipreq.taskman.server.business
 
-import scalaz.\/-
+import scalaz.{NonEmptyList, -\/, \/-}
 import scalaz.effect.IO
 import shipreq.base.util.{ErrorOr, Error}
 import shipreq.base.util.effect.IOE
 import shipreq.taskman.api.Msg._
-import shipreq.taskman.api.Types.EmailAddr
+import shipreq.taskman.api.Types._
 import shipreq.taskman.server.{MsgDetail, Deliberate, Deterministic}
 import shipreq.taskman.server.Worker.{AsyncScheduler, MsgProcessor, MsgProcessorIn, MsgProcessorOut}
 import Bop._
@@ -55,9 +55,25 @@ final class BusinessLogic[F[_]](
       case l: LandingPageHit =>
         i sync LandingPage(l)
 
+      case RegistrationCompleted(id) =>
+        i.sync(ActiveUser.get(id) >==> ActiveUser.updateML)
+
       case d: DummyMsg =>
         dummy(md, d)
     }
+  }
+
+  object ActiveUser {
+    import MailingList._
+
+    def get(id: UserId): IOE[ShipReqUser] =
+      run(LookupShipReqUser(-\/(id))) >=> (ErrorOr.fromOption(_, s"User not found: $id"))
+
+    def subscription(u: ShipReqUser) =
+      Subscription(u.email, u.name, u.newsletter, AccountStatus.Active)
+
+    def updateML(u: ShipReqUser): IOE[Unit] =
+      run(API.BatchSubscribe(mailingListId, NonEmptyList(subscription(u))))
   }
 
   object LandingPage {

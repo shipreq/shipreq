@@ -38,9 +38,12 @@ object TestHelpers {
   val msg_rereg = ReRegistrationAttempted(sampleEmailAddr)
   val node1 = NodeId(1)
   val worker2 = WorkerId(2)
+  val sampleUserId = 30.tag[IsUserId]
   val mh_1 = MsgHeader(MsgId(1), Priority(6), timeNow)
   val md_1 = MsgDetail(mh_1, msg_rereg, 0)
   val mh_2 = MsgHeader(MsgId(2), Priority(5), timePast)
+
+  val sampleShipReqUser = ShipReqUser(sampleUserId, "usrnm", sampleEmailAddr, "Bob Bobb", true)
 
   val sampleNotifySupportWorkerFailed = NotifySupportWorkerFailed(timeNow, md_1, Error("WORKED FAILED"))
   val sampleNotifySupportTaskmanError = NotifySupportTaskmanError(timeNow, Error("WORKED FAILED"), Some(md_1))

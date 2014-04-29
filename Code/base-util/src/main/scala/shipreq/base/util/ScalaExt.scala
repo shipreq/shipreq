@@ -4,6 +4,7 @@ object ScalaExt {
 
   implicit class AnyExt[A](val a: A) extends AnyVal {
     @inline def |>[B](f: A => B): B = f(a)
+    @inline def |&>[B](f: A => B): (A, B) = (a, f(a))
   }
 
   implicit class StringBuilderExt(val sb: StringBuilder) extends AnyVal {

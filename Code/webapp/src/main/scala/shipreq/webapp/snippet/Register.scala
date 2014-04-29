@@ -141,8 +141,9 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
           redirectTo(AppSiteMap.Login)
 
         // Registration complete
-        case DbSuccess(_) =>
+        case DbSuccess(id) =>
           info(s"Registered new user: $username")
+          taskman1(_ submitMsg Msg.RegistrationCompleted(id))
           SecurityUtils.getSubject.login(new UsernamePasswordToken(username, password))
           jsClearError & JqExpr("#regComplete,#register2") ~> JqToggle
       }

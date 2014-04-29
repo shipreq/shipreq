@@ -9,7 +9,7 @@ import scalaz.{\/-, -\/, \/}
 import shipreq.webapp.app.DI
 import shipreq.webapp.db.DaoT
 import shipreq.taskman.api.Msg
-import Msg.{RegistrationRequested, PasswordResetRequested, ReRegistrationAttempted}
+import Msg._
 
 /**
  * Can't think of what else to call this. It's like Testing 2.0.
@@ -86,6 +86,9 @@ object T2 {
 
   val ReRegistrationAttemptedT: TaskTestPF =
     { case ReRegistrationAttempted(_) => () => () }
+
+  val RegistrationCompletedT: TaskTestPF =
+    { case RegistrationCompleted(_) => () => () }
 
   val PasswordResetRequestedT: TaskTestPF =
     { case PasswordResetRequested(_, url) => absUrl("/resetpw/")(url) }
