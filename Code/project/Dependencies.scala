@@ -42,7 +42,7 @@ object Deps {
     val jackson = dd("json4s-jackson") ++ Scala.all
   }
 
-  object SLF4J extends Group("1.7.6", "org.slf4j") {
+  object SLF4J extends Group("1.7.7", "org.slf4j") {
     val api = d("slf4j-api")
     val jcl = d("jcl-over-slf4j")
   }
@@ -52,7 +52,7 @@ object Deps {
     val testkit = dd("lift-testkit")
   }
 
-  object Shiro extends Group("1.2.2", "org.apache.shiro") {
+  object Shiro extends Group("1.2.3", "org.apache.shiro") {
     val core = d("shiro-core") ++ SLF4J.jcl // slf4j required in place of commons-logging
     val web  = d("shiro-web")
     val all  = core ++ web
