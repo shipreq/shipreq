@@ -10,7 +10,7 @@ import shipreq.taskman.api.Types._
 import shipreq.taskman.api.Msg.ReRegistrationAttempted
 import shipreq.taskman.api.ApiOp.{QueryMsgStatus, SubmitMsg}
 import shipreq.taskman.server.Sop._
-import Sql._
+import SopImpl.Sql._
 
 class WorkflowTest extends Specification with DatabaseTest with NoTimeConversions with ThrownExpectations
     with ServerImplTestHelpers {

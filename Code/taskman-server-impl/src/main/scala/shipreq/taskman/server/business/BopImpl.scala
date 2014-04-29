@@ -2,13 +2,19 @@ package shipreq.taskman.server.business
 
 import scalaz.effect.IO
 import scalaz.{-\/, \/-}
+import scala.slick.session.Database
 import shipreq.base.util.ErrorOr
 import shipreq.base.util.effect.IOE
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.server.IoUtils
 import Bop._
 
-final class BopImpl(emailer: EmailImpl, mailchimp: MailChimp) extends BopReifier with HasLogger {
+final class BopImpl(db: Database, emailer: EmailImpl, mailchimp: MailChimp, shipreqSchema: Option[String]) extends BopReifier with HasLogger {
+
+  private[this] val shipreqSql = new ShipReqInterface.Sql(shipreqSchema)
+
+  private[this] def shipreqDao[A](f: ShipReqInterface.Dao => A): IOE[A] =
+    IOE(db.withSession(s => f(new ShipReqInterface.Dao(shipreqSql)(s))))
 
   override def apply[A](op: Bop[A]): IOE[A] =
     IoUtils.timeU(
@@ -26,12 +32,10 @@ final class BopImpl(emailer: EmailImpl, mailchimp: MailChimp) extends BopReifier
     )
 
   def applyOnly[A]: Bop[A] => IOE[A] = {
-
-    case s: SendEmail =>
-      emailer send s
-
-    case MailingListOp(op) =>
-      mailchimp run op
+    case s: SendEmail               => emailer send s
+    case MailingListOp(op)          => mailchimp run op
+    case LookupShipReqUser(-\/(id)) => shipreqDao(_ userQueryById id)
+    case LookupShipReqUser(\/-(ea)) => shipreqDao(_ userQueryByEmail ea)
   }
 }
 

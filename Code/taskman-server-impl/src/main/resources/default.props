@@ -13,6 +13,8 @@ mail.support.from    = japgolly+support_from@gmail.com
 mail.support.to      = japgolly+support_to@gmail.com
 mail.concurrency.max = 4
 
+shipreq.schema = public
+
 taskman.queueSize      = 10
 taskman.trustPeriod    = 3 min
 taskman.poll.every     = 5 sec

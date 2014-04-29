@@ -12,7 +12,7 @@ import shipreq.taskman.api.ApiOp.SubmitMsg
 import shipreq.taskman.api.Msg.DummyMsg
 import shipreq.taskman.api.MsgId
 import shipreq.taskman.server.ServerImplTestHelpers
-import shipreq.taskman.server.Sql.{Succeeded, FailAndAbort, ArchiveIntent}
+import shipreq.taskman.server.SopImpl.{Succeeded, FailAndAbort, ArchiveIntent}
 import shipreq.taskman.server.app.Server
 
 class AkkaTest extends Specification with DatabaseTest with NoTimeConversions with HasLogger with ServerImplTestHelpers {
@@ -38,7 +38,7 @@ class AkkaTest extends Specification with DatabaseTest with NoTimeConversions wi
     try {
       // start akka
       Future(try
-        Server.run(ctx)(s => {
+        Server.run(ctx, false)(s => {
           shutdownLatch.await(10, TimeUnit.SECONDS)
           s.shutdown()
           s.system.awaitTermination(10.seconds)

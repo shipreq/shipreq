@@ -5,6 +5,7 @@ import java.util.concurrent.{ExecutorService, TimeUnit}
 import java.util.Properties
 import org.joda.time.{DateTime, Period}
 import scala.slick.session.Database
+import scalaz.-\/
 import scalaz.effect.IO
 import shipreq.base.db.{DatabaseConnection, DbTemplate}
 import shipreq.base.util.ExternalValueReader._
@@ -14,6 +15,7 @@ import shipreq.base.util.jodatime.JodaTimeHelpers._
 import shipreq.base.util.jodatime.JodaTimeValueRetrievers
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.CfgKeys
+import shipreq.taskman.api.Types._
 import shipreq.taskman.api.impl.TaskmanApi
 import shipreq.taskman.server.business._
 import shipreq.taskman.server.business.MailingList.API.GetListId
@@ -51,7 +53,7 @@ final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
       log.info.fmt(s"    %-${maxKeyLen}s = %s", k, v)
   }
 
-  def propmap = mail.propmap ++ mailchimp.propmap ++ taskman.propmap
+  def propmap = mail.propmap ++ mailchimp.propmap ++ shipreq.propmap ++ taskman.propmap
 
   // --------------------------------------------------------------------------
   object mail extends Email.EnvelopeProps {
@@ -67,7 +69,8 @@ final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
     val concurrencyMax = validate("concurrency.max", need[Int])(atLeast(1))
 
     private[TaskmanProps] def propmap = mkPropMap(
-      "public.from" -> publicFrom, "support" -> supportEnv, "concurrency.max" -> concurrencyMax)
+      "public.from" -> publicFrom, "landingPage" -> landingPageEnv, "support" -> supportEnv,
+      "concurrency.max" -> concurrencyMax)
   }
 
   // --------------------------------------------------------------------------
@@ -79,6 +82,15 @@ final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
     val masterList = need[String]("masterList")
 
     private[TaskmanProps] def propmap = mkPropMap("dc" -> dc, "key" -> key, "masterList" -> masterList)
+  }
+
+  // --------------------------------------------------------------------------
+  object shipreq {
+    private implicit def scope: PropScope = scopeByNS("shipreq")
+
+    val schema = getO[String]("schema")
+
+    private[TaskmanProps] def propmap = mkPropMap("schema" -> schema)
   }
 
   // --------------------------------------------------------------------------
@@ -137,7 +149,7 @@ class TaskmanCtx(val db: Database, mailProps: Properties, evr: StringBasedValueR
 
   implicit def trustPeriod   = props.taskman.trustPeriod
   implicit val aopReifier    = new TaskmanApi(TaskmanApi.Context(None), db)
-  implicit val bopReifier    = new BopImpl(email, mailchimp)
+  implicit val bopReifier    = new BopImpl(db, email, mailchimp, props.shipreq.schema)
   implicit val sopReifier    = new SopImpl(db, emails, bopReifier)
   implicit val msgProcessor  = new BusinessLogic(bopReifier, emails, async.email, mailingListId)
   implicit val failurePolicy = Failure.failurePolicy
@@ -150,6 +162,12 @@ class TaskmanCtx(val db: Database, mailProps: Properties, evr: StringBasedValueR
     log info "Settings"
     log.info z s"${p}Mailing list ID = ${mailingListId.value}"
     log.info z s"${p}Node ID         = ${nodeId.value}"
+  }
+
+  def testConnections(): Unit = {
+    log debug "Testing connections..."
+    val io = bopReifier.applyOnly(Bop.LookupShipReqUser(-\/(1.tag)))
+    ErrorOr require_! io.unsafePerformIO()
   }
 
   def shutdown(asyncWait: Option[Period] = Some(Period seconds 20)): Unit = {

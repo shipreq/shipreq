@@ -13,7 +13,8 @@ import shipreq.taskman.api.impl.Serialisation
 import shipreq.taskman.api.Types._
 import shipreq.taskman.api.{MsgId, MsgType, Msg, Priority}
 import Msg.ReRegistrationAttempted
-import Sql._
+import SopImpl._
+import SopImpl.Sql._
 
 class SopImplTest extends Specification with DatabaseTest with NoTimeConversions {
 

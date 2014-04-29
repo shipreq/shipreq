@@ -5,6 +5,7 @@ import akka.routing.FromConfig
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.server.akka._
 import shipreq.taskman.server.TaskmanCtx
+
 /**
  * Taskman, the Server.
  * Hard-working and magnanimous.
@@ -15,8 +16,9 @@ object Server extends MainTemplate {
     withTaskmanCtx(ctx =>
       run(ctx)(_.system.awaitTermination()))
 
-  def run(ctx: TaskmanCtx)(f: System => Unit): Unit = {
+  def run(ctx: TaskmanCtx, testConnections: Boolean = true)(f: System => Unit): Unit = {
     ctx.logContent()
+    if (testConnections) ctx.testConnections()
     val s = new System(ctx)
     s.manager.tell(ManagerActor.RegisterWorker, s.workers)
     log.info("Taskman started.")
