@@ -20,7 +20,7 @@
 
 	<logger name="com.googlecode.flyway" level="INFO" />
 	<logger name="scala.slick.compiler" level="WARN" />
-    <logger name="scala.slick.session" level="INFO" />
+    <logger name="scala.slick.jdbc" level="INFO" />
     <logger name="com.jolbox.bonecp" level="INFO" />
 
     <logger name="akka" level="DEBUG" />

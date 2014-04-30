@@ -22,7 +22,7 @@
     <logger name="org.fusesource.scalate" level="INFO" />
     <logger name="org.apache.commons" level="WARN" />
 	<logger name="scala.slick.compiler" level="WARN" />
-	<logger name="scala.slick.session" level="DEBUG" />
+	<logger name="scala.slick.jdbc" level="DEBUG" />
 	<logger name="shipreq.webapp" level="DEBUG" />
 	<root level="DEBUG">
 		<appender-ref ref="STDOUT" />
