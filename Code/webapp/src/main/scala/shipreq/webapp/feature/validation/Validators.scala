@@ -110,6 +110,7 @@ final object Validators {
       NonEmpty,
       IsNotAFirstNameOnly,
       HasShortTextLimit,
+      Blacklist.chars("<>\"[]{}%$@!;:|?*+_", "shouldn't contain symbols."),
       Not(Contain.regex("[0-9]", ""), "shouldn't contain numbers.")
     )
   )
