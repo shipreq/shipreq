@@ -4,6 +4,11 @@ db.database = shipreq_dev
 db.username = shipreq_dev
 db.password = sqd
 
+freshdesk.domain                 = yoarmum
+freshdesk.key                    = 6nOvQN6fH4XKlVCbXHD9
+freshdesk.landingPage.group      = Sales
+freshdesk.landingPage.ticketType = Lead
+
 mail.smtp.host                = smtp.gmail.com
 mail.smtp.socketFactory.port  = 465
 mail.smtp.socketFactory.class = javax.net.ssl.SSLSocketFactory

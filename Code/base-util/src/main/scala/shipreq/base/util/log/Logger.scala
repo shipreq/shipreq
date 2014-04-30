@@ -1,6 +1,7 @@
 package shipreq.base.util.log
 
 import org.slf4j.{LoggerFactory, Logger => slf4jLogger}
+import scalaz.Applicative
 import shipreq.base.util.{ErrorOr, Error}
 import shipreq.base.util.ExternalValueReader.Retriever
 import java.util.Locale
@@ -72,6 +73,14 @@ final class Logger(log: slf4jLogger) {
     @inline final def fmt (e: Error, f: String, arg : Any           ): Unit = fmt(e.throwable, f, arg)
     @inline final def fmt (e: Error, f: String, arg1: Any, arg2: Any): Unit = fmt(e.throwable, f, arg1, arg2)
     @inline final def fmtN(e: Error, f: String, args: Any*          ): Unit = fmtN(e.throwable, f, args: _*)
+
+    final def printer[M[_]](implicit M: Applicative[M]): (=> String) => M[Unit] =
+      if (?)
+        msg => M.point(z(msg))
+      else {
+        val u = M.point(())
+        _ => u
+      }
   }
 
   object trace extends AtLevel {

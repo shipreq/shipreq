@@ -30,6 +30,7 @@ object Tmp extends MainTemplate {
       Transport.send(msg)
       */
 
+      /*
       val mi = ctx.mailchimp
       val id = ctx.mailingListId
       log info "Ready...."
@@ -42,5 +43,6 @@ object Tmp extends MainTemplate {
 
       val io = batch |>==> sub |>==> upd
       io.unsafePerformIO()
+      */
     }
 }

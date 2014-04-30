@@ -6,9 +6,8 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
 import scalaz.NonEmptyList
-import scalaz.effect.IO
 import scalaz.syntax.bind._
-import shipreq.base.util.effect.{IoUtils, IOE}
+import shipreq.base.util.effect.IOE
 import shipreq.base.util.effect.IoUtils.IoExt
 import shipreq.base.util.{Error, ErrorOr}
 import shipreq.base.util.ScalaExt.AnyExt
@@ -45,7 +44,7 @@ object MailChimp {
       ("NAME" -> s.name) ~ ("NEWSLETTER" -> boolAsInt(s.newsletter)) ~ ("ACCT" -> s.status.remoteValue))
 
   class Endpoints(urlPrefix: String) {
-    private[this] def url(path: String) = Endpoint(new URL(s"$urlPrefix/$path.json"), Post)
+    private[this] def url(path: String) = Endpoint(new URL(s"$urlPrefix/$path.json"), Post, None)
     object lists {
       val list           = url("lists/list")
       val batchSubscribe = url("lists/batch-subscribe")
@@ -172,17 +171,10 @@ object MailChimp {
 import MailChimp._
 
 final class MailChimp(httpClient: OkHttpClient, props: Props) extends HasLogger {
+  private val (logRequest, logResponse, logResult) = httpLoggers(log.atLevel(props.logLevel))
 
-  private val endpoints = new Endpoints(s"https://${props.dc}.api.mailchimp.com/2.0")
+  private val endpoints  = new Endpoints(s"https://${props.dc}.api.mailchimp.com/2.0")
   private val apikeyJson = render("apikey" -> props.key)
-
-  private val logDebug: (=> String) => IO[Unit] = {
-    val logger = log.atLevel(props.logLevel)
-    if (logger.?) msg => IO(logger z msg) else _ => IoUtils.nop
-  }
-  def logRequest(r: Req)     = logDebug(s"HTTP request: ${r.e.url} << ${r.bodyS}")
-  def logResponse(r: String) = logDebug(s"HTTP response: $r")
-  def logResult(r: Any)      = logDebug(s"MailChimp result: $r")
 
   private val requestBuilder =
     buildRequest(e => j => new Req(e(endpoints), apikeyJson merge j))
@@ -194,6 +186,6 @@ final class MailChimp(httpClient: OkHttpClient, props: Props) extends HasLogger 
     requestBuilder(api) |> sendRequestL(httpClient, logRequest)
 
   @inline private def recv[A](api: API[A]) =
-    recvResponse(totalErrParser, logResponse)(
-      catchPartialFailures(_) >=> parseResponse(api), parseResponseE(api)) _
+    recvResponseE[A, TotalApiFailure](totalErrParser, parseResponseE(api))(logResponse,
+      catchPartialFailures(_) >=> parseResponse(api))
 }

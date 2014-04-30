@@ -169,6 +169,12 @@ object ShipReq extends Build {
           Akka.actor ++ javaMail ++ okHttp ++ httpCore ++
           testScope(Akka.testkit ++ specs2)
 
+        def consoleCmds = """
+          import org.json4s._
+          import org.json4s.jackson.JsonMethods._
+          import org.json4s.JsonDSL._
+        """
+
         import sbtassembly.Plugin._
         import AssemblyKeys._
 
@@ -177,9 +183,10 @@ object ShipReq extends Build {
           .dependsOn(baseTest % "test")
           .settings(assemblySettings: _*)
           .settings(
+            initialCommands += consoleCmds,
             test in assembly := {}, // Disable tests during assembly
             scalacOptions in Compile ~= removeValues("-optimise") // because Akka docs
-          )
+        )
       }
     }
   }

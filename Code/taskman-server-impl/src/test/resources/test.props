@@ -7,6 +7,11 @@ db.password = sqt
 shipreq.webapp.appName   = TestShipReq
 shipreq.webapp.url.login = http://test.shipreq.com/login
 
+freshdesk.domain                 = yoarmum
+freshdesk.key                    = 6nOvQN6fH4XKlVCbXHD9
+freshdesk.landingPage.group      = Sales
+freshdesk.landingPage.ticketType = Lead
+
 mail.concurrency.max = 1
 
 mailchimp.dc         = us8

@@ -8,7 +8,11 @@ import shipreq.base.util.effect.{IoUtils, IOE}
 import shipreq.base.util.log.HasLogger
 import Bop._
 
-final class BopImpl(db: Database, emailer: EmailImpl, mailchimp: MailChimp, shipreqSchema: Option[String]) extends BopReifier with HasLogger {
+final class BopImpl(db: Database,
+                    emailer: EmailImpl,
+                    mailchimp: MailChimp,
+                    freshDesk: FreshDesk,
+                    shipreqSchema: Option[String]) extends BopReifier with HasLogger {
 
   private[this] val shipreqSql = new ShipReqInterface.Sql(shipreqSchema)
 
@@ -34,6 +38,7 @@ final class BopImpl(db: Database, emailer: EmailImpl, mailchimp: MailChimp, ship
     ErrorOr.catchExceptionM(op match {
       case s: SendEmail               => emailer send s
       case MailingListOp(op)          => mailchimp run op
+      case SupportOp(op)              => freshDesk run op
       case LookupShipReqUser(-\/(id)) => shipreqDao(_ userQueryById id)
       case LookupShipReqUser(\/-(ea)) => shipreqDao(_ userQueryByEmail ea)
     })

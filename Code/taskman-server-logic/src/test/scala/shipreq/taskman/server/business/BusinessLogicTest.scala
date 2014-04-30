@@ -2,12 +2,12 @@ package shipreq.taskman.server.business
 
 import org.specs2.mutable.Specification
 import shipreq.base.test.specs2.BaseMatchers._
-import shipreq.taskman.server.TestHelpers._
 import shipreq.taskman.api.Msg
+import shipreq.taskman.server.TestHelpers._
 import shipreq.taskman.server.{MsgDetail, MockBops}
+import shipreq.taskman.server.Worker.MsgProcessorIn
 import Bop._
 import MailingList.API._
-import shipreq.taskman.server.Worker.MsgProcessorIn
 
 class BusinessLogicTest extends Specification {
 
@@ -18,31 +18,33 @@ class BusinessLogicTest extends Specification {
     (bop, io.unsafePerformIO())
   }
 
+  type raiseTicket = SupportOp[Support.API.NotifyLandingPage]
+
   s"${Msg.LandingPageHit} handler" should {
 
     def test(bop: MockBops) = testM(bop, sampleLP)
 
-    "Add to ML & email support" in {
+    "Add to ML & raise support ticket" in {
       val bop = new MockBops
-      test(bop)._1 must haveRun[Bop].ops3[LookupShipReqUser, MailingListOp[Subscribe], SendEmail]
+      test(bop)._1 must haveRun[Bop].ops3[LookupShipReqUser, MailingListOp[Subscribe], raiseTicket]
     }
 
-    "Update ML & email support" in {
+    "Update ML & raise support ticket" in {
       val bop = new MockBops
       bop.mlSubscribe << MailingList.AlreadySubscribed
-      test(bop)._1 must haveRun[Bop].ops4[LookupShipReqUser, MailingListOp[Subscribe], MailingListOp[UpdateMember], SendEmail]
+      test(bop)._1 must haveRun[Bop].ops4[LookupShipReqUser, MailingListOp[Subscribe], MailingListOp[UpdateMember], raiseTicket]
     }
 
     "Skip the ML update when user already has account" in {
       val bop = new MockBops
       bop.lookupShipReqUserR << Some(null)
-      test(bop)._1 must haveRun[Bop].ops2[LookupShipReqUser, SendEmail]
+      test(bop)._1 must haveRun[Bop].ops2[LookupShipReqUser, raiseTicket]
     }
 
     "Fail on ML error" in {
       val bop = new MockBops
       bop.mlSubscribe << ???
-      test(bop) must match2(haveRun[Bop].anyBut1[SendEmail], beAnError)
+      test(bop) must match2(haveRun[Bop].anyBut1[raiseTicket], beAnError)
     }
   }
 

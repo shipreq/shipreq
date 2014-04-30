@@ -1,6 +1,7 @@
 package shipreq.taskman.server.business
 
 import com.squareup.okhttp.OkHttpClient
+import com.squareup.okhttp.OkAuthenticator.Credential
 import java.io.InputStream
 import java.net.{HttpURLConnection, URL}
 import java.nio.charset.Charset
@@ -11,8 +12,9 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import scalaz.{\/, -\/, \/-}
 import scalaz.effect.IO
-import shipreq.base.util.effect.IOE
 import shipreq.base.util.{Error, ErrorOr}
+import shipreq.base.util.effect.IOE
+import shipreq.base.util.log.Logger
 import shipreq.base.util.ScalaExt.AnyExt
 import ErrorOr.Implicits._
 
@@ -24,11 +26,20 @@ object Http {
   case object Post extends Method("POST")
   case object Delete extends Method("DELETE")
 
-  final case class Endpoint(url: URL, method: Method)
+  final case class Endpoint(url: URL, method: Method, credential: Option[Credential])
 
   final case class Req(e: Endpoint, bodyJ: JValue) {
     val bodyS = compact(bodyJ)
     def bodyB = bodyS.getBytes(defaultCharset)
+  }
+
+  def httpLoggers(log: Logger#AtLevel) = {
+    val p = log.printer[IO]
+    def s(prefix: String, str: String) = if (str.isEmpty) "" else prefix + str
+    val logRequest  = (r: Req)    => p(s"HTTP request: ${r.e.method} ${r.e.url}${s(" ~ ", r.bodyS)}")
+    val logResponse = (r: String) => p(s"HTTP response: $r")
+    val logResult   = (r: Any)    => p(s"Op result: $r")
+    (logRequest, logResponse, logResult)
   }
 
   val defaultCharset = Charset.forName("UTF-8")
@@ -56,6 +67,7 @@ object Http {
     val conn = httpClient.open(e.url)
     conn.setRequestProperty("Content-Type", contentTypeJson)
     conn.setRequestMethod(e.method.value)
+    for (c <- e.credential) conn.addRequestProperty("Authorization", c.getHeaderValue)
     conn
   }
 
@@ -80,14 +92,20 @@ object Http {
   def getResponseCode(conn: HttpURLConnection): IOE[Int] =
     IOE(conn.getResponseCode)
 
-  def recvResponse[R, E](ep: ErrParser[E], log: String => IO[Unit])(ok: JValue => ErrorOr[R], er: E => Option[R])
-                        (conn: HttpURLConnection): IOE[R] =
+  def recvResponseG[R](ko: HttpURLConnection => String => IOE[R])
+                      (log: String => IO[Unit], ok: JValue => ErrorOr[R])
+                      (conn: HttpURLConnection): IOE[R] =
     getResponseCode(conn) >==> (code =>
       if (code == HttpURLConnection.HTTP_OK)
         recvResponseInput(conn) <-<^ log >=> (parseIntoJson(_) >=> ok)
       else
-        recvResponseError(conn) <-<^ log >==> handleErrorResponse(ep, er, genericHttpError(conn))
+        recvResponseError(conn) <-<^ log >==> ko(conn)
       )
+
+  def recvResponse[R] = recvResponseG[R](genericHttpErrorN) _
+
+  def recvResponseE[R, E](ep: ErrParser[E], er: E => Option[R]) =
+    recvResponseG[R](conn => handleErrorResponse(ep, er, genericHttpError(conn))) _
 
   // ---------------------------------------------------------------------------
   // Error handling
@@ -112,4 +130,7 @@ object Http {
 
   def genericHttpError(c: HttpURLConnection)(resp: String): IO[Error] =
     IO(Error(s"Unexpected HTTP response: ${c.getResponseCode} ${c.getResponseMessage}. Response: $resp"))
+
+  def genericHttpErrorN[N](c: HttpURLConnection)(resp: String): IOE[N] =
+    genericHttpError(c)(resp).map(_.toErrorOr)
 }

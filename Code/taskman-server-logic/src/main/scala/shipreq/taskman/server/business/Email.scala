@@ -25,7 +25,6 @@ object Email {
 
   trait EnvelopeProps {
     val publicFrom: Addr
-    val landingPageEnv: EnvelopeFront
     val supportEnv: Envelope
   }
 
@@ -73,14 +72,6 @@ final class Emails(ep: EnvelopeProps, tv: TokenValues) {
 
   def diagnosticEmail(subject: String, body: String, msg: MsgDetail) =
     Content(s"[DIAG] $subject", s"$body\n\n${"=" * 40}\nMsg header: ${msg.hdr}\nFailure count: ${msg.failureCount}")
-
-  def propagateLandingPageMsg(a: Addr, name: String, msg: Option[String], newsletter: Boolean): SendOp = {
-    val e = landingPageEnv.from(a)
-    var b = s"Name: $name\nEmail: ${a.addr}\nNewsletter: $newsletter"
-    for (m <- msg) b += s"\n\n$m"
-    val c = Content(s"Landing Page: ${a.addr}", b)
-    Bop.SendEmail(e, c)
-  }
 
   // ===================================================================================================================
 

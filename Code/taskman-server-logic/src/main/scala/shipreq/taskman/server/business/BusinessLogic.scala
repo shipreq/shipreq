@@ -2,11 +2,12 @@ package shipreq.taskman.server.business
 
 import scalaz.{NonEmptyList, -\/, \/-}
 import scalaz.effect.IO
-import shipreq.base.util.{ErrorOr, Error}
+import shipreq.base.util.{Util, ErrorOr, Error}
+import shipreq.base.util.ScalaExt.StringBuilderExt
 import shipreq.base.util.effect.IOE
 import shipreq.taskman.api.Msg._
 import shipreq.taskman.api.Types._
-import shipreq.taskman.server.{MsgDetail, Deliberate, Deterministic}
+import shipreq.taskman.server.{MsgHeader, MsgDetail, Deliberate, Deterministic}
 import shipreq.taskman.server.Worker.{AsyncScheduler, MsgProcessor, MsgProcessorIn, MsgProcessorOut}
 import Bop._
 import ErrorOr.Implicits._
@@ -29,11 +30,9 @@ final class BusinessLogic[F[_]](
   @inline private[this] def send(e: Bop.SendEmail)(implicit i: MI): MO =
     i.async(emailScheduler)(bopReifier(e))
 
-  @inline private[this] def run[A](a: MailingList.API[A]): IOE[A] =
-    bopReifier(MailingListOp(a))
-
-  @inline private[this] def run[A](a: Bop[A]): IOE[A] =
-    bopReifier(a)
+  @inline private[this] def run[A](a: MailingList.API[A]): IOE[A] = bopReifier(MailingListOp(a))
+  @inline private[this] def run[A](a: Support.API[A])    : IOE[A] = bopReifier(SupportOp(a))
+  @inline private[this] def run[A](a: Bop[A])            : IOE[A] = bopReifier(a)
 
   override def apply(i: MI): MO = {
     @inline def md = i.m
@@ -53,7 +52,7 @@ final class BusinessLogic[F[_]](
         emailUser(addr, emails.diagnosticEmail(subject, body, md))
 
       case l: LandingPageHit =>
-        i sync LandingPage(l)
+        i sync LandingPage(md, l)
 
       case RegistrationCompleted(id) =>
         i.sync(ActiveUser.get(id) >==> ActiveUser.updateML)
@@ -78,11 +77,8 @@ final class BusinessLogic[F[_]](
 
   object LandingPage {
 
-    def apply(l: LandingPageHit): IOE[Unit] = {
-      import l._
-      updateMailingListIfNeeded(email, name, newsletter) |>==>
-        run(emails.propagateLandingPageMsg(email, name, msg, newsletter))
-    }
+    def apply(m: MsgHeader, l: LandingPageHit): IOE[Unit] =
+      updateMailingListIfNeeded(l.email, l.name, l.newsletter) |>==> createSupportTicket(m, l) |>==> IOE.nop
 
     def updateMailingListIfNeeded(addr: EmailAddr, name: String, newsletter: Boolean): IOE[Unit] =
       unlessShipReqUser(addr)(updateMailingList(addr, name, newsletter))
@@ -105,6 +101,19 @@ final class BusinessLogic[F[_]](
             case f  => ErrorOr error s"Failed to update mailing list: $f"
           }
       }
+    }
+
+    def createSupportTicket(m: MsgHeader, l: LandingPageHit): IOE[Support.TicketId] = {
+      import Support._
+      val from = s"${l.name} <${l.email}>"
+      val desc = Util.quickSB(_.mkStringF("","\n","")(
+        _.kv("MsgId", m.id.value)
+        ,_.kv("Contact time", m.created)
+        ,_.kv("Newsletter", l.newsletter)
+        ,_.kv("Message", l.msg.map("\n\n" + _) getOrElse "<no msg>")
+      ))
+      val p = if (l.msg.isDefined) Priority.Medium else Priority.Low
+      run(API.NotifyLandingPage(from, "Landing Page", desc, p))
     }
   }
 

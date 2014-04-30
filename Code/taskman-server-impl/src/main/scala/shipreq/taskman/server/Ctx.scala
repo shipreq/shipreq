@@ -11,6 +11,7 @@ import shipreq.base.db.{DatabaseConnection, DbTemplate}
 import shipreq.base.util.ExternalValueReader._
 import shipreq.base.util._
 import shipreq.base.util.ScalaExt.Tuple2Ext
+import shipreq.base.util.effect.IOE
 import shipreq.base.util.jodatime.JodaTimeHelpers._
 import shipreq.base.util.jodatime.JodaTimeValueRetrievers
 import shipreq.base.util.log.{LogLevel, HasLogger}
@@ -54,7 +55,7 @@ final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
       log.info.fmt(s"    %-${maxKeyLen}s = %s", k, v)
   }
 
-  def propmap = mail.propmap ++ mailchimp.propmap ++ shipreq.propmap ++ taskman.propmap
+  def propmap = mail.propmap ++ mailchimp.propmap ++ freshdesk.propmap ++ shipreq.propmap ++ taskman.propmap
 
   // --------------------------------------------------------------------------
 
@@ -65,12 +66,10 @@ final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
     private[this] implicit def rEE = EmailImpl.envelopeLoader
     private[this] implicit def rEF = EmailImpl.envelopeFrontLoader
     private[TaskmanProps] def propmap = mkPropMap(
-      "public.from" -> publicFrom, "landingPage" -> landingPageEnv, "support" -> supportEnv,
-      "concurrency.max" -> concurrencyMax)
+      "public.from" -> publicFrom, "support" -> supportEnv, "concurrency.max" -> concurrencyMax)
 
-    val publicFrom     = need[Addr]("public.from")
-    val landingPageEnv = need[EnvelopeFront]("landingPage")
-    val supportEnv     = need[Envelope]("support")
+    override val publicFrom = need[Addr]("public.from")
+    override val supportEnv = need[Envelope]("support")
     val concurrencyMax = validate("concurrency.max", need[Int])(atLeast(1))
   }
 
@@ -79,10 +78,23 @@ final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
     private[TaskmanProps] def propmap = mkPropMap(
       "dc" -> dc, "key" -> key, "masterList" -> masterList, "logLevel" -> logLevel)
 
-    val dc         = need[String]("dc")
-    val key        = need[String]("key")
-    val masterList = need[String]("masterList")
-    val logLevel   = need[LogLevel]("logLevel")
+    override val dc         = need[String]("dc")
+    override val key        = need[String]("key")
+    override val masterList = need[String]("masterList")
+    override val logLevel   = tryNeed[LogLevel]("logLevel", LogLevel.Debug)
+  }
+
+  object freshdesk extends FreshDesk.Props {
+    private implicit def scope: PropScope = scopeByNS("freshdesk")
+    private[TaskmanProps] def propmap = mkPropMap(
+      "domain" -> domain, "key" -> key, "landingPage.group" -> landingPageGroup,
+      "landingPage.ticketType" -> landingPageTicketType, "logLevel" -> logLevel)
+
+    override val domain                = need[String]("domain")
+    override val key                   = need[String]("key")
+    override val landingPageGroup      = need[String]("landingPage.group")
+    override val landingPageTicketType = need[String]("landingPage.ticketType")
+    override val logLevel              = tryNeed[LogLevel]("logLevel", LogLevel.Debug)
   }
 
   object shipreq {
@@ -129,24 +141,24 @@ class TaskmanCtx(val db: Database, mailProps: Properties, evr: StringBasedValueR
     val (emailS, email) = Async.newPool("email", props.mail.concurrencyMax)
   }
 
-  private def getMailChimpListId_!(name: String): MailingList.ListId =
-    ErrorOr.require_!(
-      mailchimp.run(GetListId(name)).emapE {
-        case None     => ErrorOr.error(s"Mailing list not found: $name")
-        case Some(id) => ErrorOr(id)
-      }.unsafePerformIO()
-    )
+  private def runPrerequisite_![A](io: IOE[A]): A =
+    ErrorOr.require_!(io.unsafePerformIO())
 
-  val email     = new EmailImpl(EmailImpl.loadSession(mailProps))
-  val emails    = new Emails(props.mail, new EmailTokenValues(cfgFromApiReader))
-  val http      = new OkHttpClient()
-  val mailchimp = new MailChimp(http, props.mailchimp)
+  private def getMailChimpListId(name: String): IOE[MailingList.ListId] =
+    mailchimp.run(GetListId(name)) >=> (ErrorOr.fromOptionS(_, s"Mailing list not found: $name"))
 
-  val mailingListId = getMailChimpListId_!(props.mailchimp.masterList)
+  val email      = new EmailImpl(EmailImpl.loadSession(mailProps))
+  val emails     = new Emails(props.mail, new EmailTokenValues(cfgFromApiReader))
+  val http       = new OkHttpClient()
+  val mailchimp  = new MailChimp(http, props.mailchimp)
+  val freshdesk0 = new FreshDesk0(http, props.freshdesk)
+
+  val freshdesk     = runPrerequisite_!(freshdesk0.upgrade)
+  val mailingListId = runPrerequisite_!(getMailChimpListId(props.mailchimp.masterList))
 
   implicit def trustPeriod   = props.taskman.trustPeriod
   implicit val aopReifier    = new TaskmanApi(TaskmanApi.Context(None), db)
-  implicit val bopReifier    = new BopImpl(db, email, mailchimp, props.shipreq.schema)
+  implicit val bopReifier    = new BopImpl(db, email, mailchimp, freshdesk, props.shipreq.schema)
   implicit val sopReifier    = new SopImpl(db, emails, bopReifier)
   implicit val msgProcessor  = new BusinessLogic(bopReifier, emails, async.email, mailingListId)
   implicit val failurePolicy = Failure.failurePolicy
@@ -157,8 +169,9 @@ class TaskmanCtx(val db: Database, mailProps: Properties, evr: StringBasedValueR
     props.logContent()
     val p = "    "
     log info "Settings"
-    log.info z s"${p}Mailing list ID = ${mailingListId.value}"
-    log.info z s"${p}Node ID         = ${nodeId.value}"
+    log.info z s"${p}FreshDesk LP group ID = ${freshdesk.landingPageGroupId.value}"
+    log.info z s"${p}Mailing list ID       = ${mailingListId.value}"
+    log.info z s"${p}Node ID               = ${nodeId.value}"
   }
 
   def testConnections(): Unit = {

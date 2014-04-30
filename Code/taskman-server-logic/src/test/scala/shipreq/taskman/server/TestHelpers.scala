@@ -12,7 +12,7 @@ import shipreq.base.test.{OpTypeProvider, MockOpTransformerA, MockOpTransformer}
 import shipreq.taskman.api.{MsgId, Priority}
 import shipreq.taskman.api.Types._
 import shipreq.taskman.api.Msg.{LandingPageHit, ReRegistrationAttempted}
-import shipreq.taskman.server.business.{MailingList, ShipReqUser, Emails, Bop, Email}
+import shipreq.taskman.server.business.{MailingList, ShipReqUser, Emails, Bop, Email, Support}
 import shipreq.taskman.server.business.Email.Addr
 import Bop._
 import Sop._
@@ -20,6 +20,8 @@ import Manager._
 import Worker._
 import MailingList._
 import MailingList.API._
+import Support._
+import Support.API._
 
 object TestHelpers {
 
@@ -114,7 +116,6 @@ object TestHelpers {
   object MockEmailEnvelopeProps extends Email.EnvelopeProps {
     private[this] implicit def autoParseEa(ea: String): Addr = Addr(ea.tag)
     override val publicFrom: Addr = "publicFrom"
-    override val landingPageEnv = Email.EnvelopeFront(NonEmptyList("LP.To"))
     override val supportEnv = Email.Envelope("Support.From", NonEmptyList("Support.To"))
   }
 
@@ -184,18 +185,20 @@ object BopTypeTags extends OpTypeProvider[Bop] {
     case MailingListOp(_: Subscribe)      => manifest[MailingListOp[Subscribe]]
     case MailingListOp(_: UpdateMember)   => manifest[MailingListOp[UpdateMember]]
     case MailingListOp(_: BatchSubscribe) => manifest[MailingListOp[BatchSubscribe]]
+    case SupportOp(_: NotifyLandingPage)  => manifest[SupportOp[NotifyLandingPage]]
   }
 }
 
 class MockBops extends MockOpTransformer[Bop, IOE] {
   override def opTypeProvider = BopTypeTags
 
-  val sendEmailR         = MockResponse(ErrorOr.unit)
-  val lookupShipReqUserR = MockResponse[Option[ShipReqUser]](None)
-  val mlGetListId        = MockResponse[Option[ListId]](None)
-  val mlSubscribe        = MockResponse[SubscribeResult](Ok)
-  val mlUpdateMember     = MockResponse[UpdateMemberResult](Ok)
-  val mlBatchSubscribe   = MockResponse(ErrorOr.unit)
+  val sendEmailR           = MockResponse(ErrorOr.unit)
+  val lookupShipReqUserR   = MockResponse[Option[ShipReqUser]](None)
+  val mlGetListId          = MockResponse[Option[ListId]](None)
+  val mlSubscribe          = MockResponse[SubscribeResult](Ok)
+  val mlUpdateMember       = MockResponse[UpdateMemberResult](Ok)
+  val mlBatchSubscribe     = MockResponse(ErrorOr.unit)
+  val supNotifyLandingPage = MockResponse[TicketId](TicketId(666))
 
   override def trans[A] = {
     case _: SendEmail                     => IO(sendEmailR.pop())
@@ -204,5 +207,6 @@ class MockBops extends MockOpTransformer[Bop, IOE] {
     case MailingListOp(_: Subscribe)      => IOE(mlSubscribe.pop())
     case MailingListOp(_: UpdateMember)   => IOE(mlUpdateMember.pop())
     case MailingListOp(_: BatchSubscribe) => IO(mlBatchSubscribe.pop())
+    case SupportOp(_: NotifyLandingPage)  => IOE(supNotifyLandingPage.pop())
   }
 }
