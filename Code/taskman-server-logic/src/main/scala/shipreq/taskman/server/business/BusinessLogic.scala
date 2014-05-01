@@ -2,9 +2,11 @@ package shipreq.taskman.server.business
 
 import scalaz.{NonEmptyList, -\/, \/-}
 import scalaz.effect.IO
+import scalaz.syntax.bind._
 import shipreq.base.util.{Util, ErrorOr, Error}
 import shipreq.base.util.ScalaExt.StringBuilderExt
 import shipreq.base.util.effect.IOE
+import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.Msg._
 import shipreq.taskman.api.Types._
 import shipreq.taskman.server.{MsgHeader, MsgDetail, Deliberate, Deterministic}
@@ -17,7 +19,7 @@ final class BusinessLogic[F[_]](
       emails: Emails,
       emailScheduler: AsyncScheduler[F],
       mailingListId: MailingList.ListId
-    ) extends MsgProcessor[F] {
+    ) extends MsgProcessor[F] with HasLogger {
 
   type MI = MsgProcessorIn[F]
   type MO = MsgProcessorOut[F]
@@ -57,6 +59,9 @@ final class BusinessLogic[F[_]](
       case RegistrationCompleted(id) =>
         i.sync(ActiveUser.get(id) >==> ActiveUser.updateML)
 
+      case SyncToMailingList(cond) =>
+        i sync ActiveUser.syncToML(cond)
+
       case d: DummyMsg =>
         dummy(md, d)
     }
@@ -73,6 +78,16 @@ final class BusinessLogic[F[_]](
 
     def updateML(u: ShipReqUser): IOE[Unit] =
       run(API.BatchSubscribe(mailingListId, NonEmptyList(subscription(u))))
+
+    def syncToML(sqlCond: Option[String]): IOE[Unit] =
+      run(LookupShipReqUsers(sqlCond)) >-> (_ map subscription) >==> {
+        case Nil =>
+          IOE(log info "No users to sync to mailing list.")
+        case h :: t =>
+          val ss = NonEmptyList.nel(h, t)
+          IO(log.info z s"Syncing ${ss.size} users to mailing list...") >>
+            run(API.BatchSubscribe(mailingListId, ss))
+      }
   }
 
   object LandingPage {

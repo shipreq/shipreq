@@ -100,6 +100,11 @@ object TestHelpers {
         body    <- arbitrary[String]
       } yield
         M.SendDiagEmail(email, subject, body)
+
+    case T.SyncToMailingList =>
+      for (sql <- arbitrary[Option[String]]) yield
+        M.SyncToMailingList(sql)
+
   }
 
 //  def genMsgOfEachType: Gen[List[Msg]] =

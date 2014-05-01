@@ -35,6 +35,8 @@ object Msg {
 
   case class SendDiagEmail(email: EmailAddr, subject: String, body: String) extends Msg
 
+  case class SyncToMailingList(sqlCond: Option[String]) extends Msg
+
   // UserChangedPrefs
   // MailChimpBroadcast
 }
@@ -52,6 +54,7 @@ object MsgType {
   case object ReRegistrationAttempted extends MsgType(102, classOf[Msg.ReRegistrationAttempted])
   case object PasswordResetRequested  extends MsgType(103, classOf[Msg.PasswordResetRequested])
   case object LandingPageHit          extends MsgType(200, classOf[Msg.LandingPageHit])
+  case object SyncToMailingList       extends MsgType(300, classOf[Msg.SyncToMailingList])
 
   val values = List[MsgType](
     RegistrationRequested
@@ -61,6 +64,7 @@ object MsgType {
     , LandingPageHit
     , DummyMsg
     , SendDiagEmail
+    , SyncToMailingList
   )
 
   private[this] val byId: Map[Short, MsgType] = {

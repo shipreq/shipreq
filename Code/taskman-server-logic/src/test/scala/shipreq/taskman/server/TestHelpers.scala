@@ -181,6 +181,7 @@ object BopTypeTags extends OpTypeProvider[Bop] {
   override def apply[A] = {
     case _: SendEmail                     => manifest[SendEmail]
     case _: LookupShipReqUser             => manifest[LookupShipReqUser]
+    case _: LookupShipReqUsers            => manifest[LookupShipReqUsers]
     case MailingListOp(_: GetListId)      => manifest[MailingListOp[GetListId]]
     case MailingListOp(_: Subscribe)      => manifest[MailingListOp[Subscribe]]
     case MailingListOp(_: UpdateMember)   => manifest[MailingListOp[UpdateMember]]
@@ -195,6 +196,7 @@ class MockBops extends MockOpTransformer[Bop, IOE] {
 
   val sendEmailR           = MockResponse(ErrorOr.unit)
   val lookupShipReqUserR   = MockResponse[Option[ShipReqUser]](None)
+  val lookupShipReqUsers   = MockResponse[List[ShipReqUser]](Nil)
   val mlGetListId          = MockResponse[Option[ListId]](None)
   val mlSubscribe          = MockResponse[SubscribeResult](Ok)
   val mlUpdateMember       = MockResponse[UpdateMemberResult](Ok)
@@ -205,6 +207,7 @@ class MockBops extends MockOpTransformer[Bop, IOE] {
   override def trans[A] = {
     case _: SendEmail                     => IO(sendEmailR.pop())
     case _: LookupShipReqUser             => IOE(lookupShipReqUserR.pop())
+    case _: LookupShipReqUsers            => IOE(lookupShipReqUsers.pop())
     case MailingListOp(_: GetListId)      => IOE(mlGetListId.pop())
     case MailingListOp(_: Subscribe)      => IOE(mlSubscribe.pop())
     case MailingListOp(_: UpdateMember)   => IOE(mlUpdateMember.pop())

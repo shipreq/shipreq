@@ -28,7 +28,7 @@ object SubmitMsg extends MainTemplate {
   case class Ok(msgs: List[Msg]) extends ParseResult
   case object Help extends ParseResult
 
-  private val typeAndDataRegex = """^\s*(\S+?)\s*(\{.+\})\s*$""".r.pattern
+  private val typeAndDataRegex = """^\s*(\S+?)\s*(\{.*\})\s*$""".r.pattern
 
   def parseA(args: Array[String]): ParseResult =
     ((Ok(Nil): ParseResult) /: args.toList)(parse)
@@ -89,6 +89,7 @@ object SubmitMsg extends MainTemplate {
       case T.PasswordResetRequested  => PasswordResetRequested(ea, url)
       case T.SendDiagEmail           => SendDiagEmail(ea, "test", "hello")
       case T.LandingPageHit          => LandingPageHit(ea, "Iskaral Pust", Some("No mule can match wits with me."), false)
+      case T.SyncToMailingList       => SyncToMailingList(Some("id < 100"))
     }
   }
 

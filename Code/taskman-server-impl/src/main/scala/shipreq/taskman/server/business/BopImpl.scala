@@ -36,11 +36,13 @@ final class BopImpl(db: Database,
 
   def applyUntimed[A](op: Bop[A]): IOE[A] =
     ErrorOr.catchExceptionM(op match {
-      case s: SendEmail               => emailer send s
-      case MailingListOp(op)          => mailchimp run op
-      case SupportOp(op)              => freshDesk run op
-      case LookupShipReqUser(-\/(id)) => shipreqDao(_ userQueryById id)
-      case LookupShipReqUser(\/-(ea)) => shipreqDao(_ userQueryByEmail ea)
+      case s: SendEmail                => emailer send s
+      case MailingListOp(op)           => mailchimp run op
+      case SupportOp(op)               => freshDesk run op
+      case LookupShipReqUser(-\/(id))  => shipreqDao(_ userQueryById id)
+      case LookupShipReqUser(\/-(ea))  => shipreqDao(_ userQueryByEmail ea)
+      case LookupShipReqUsers(None)    => shipreqDao(_.getAllUsers())
+      case LookupShipReqUsers(Some(c)) => shipreqDao(_ getAllUsers c)
     })
 }
 

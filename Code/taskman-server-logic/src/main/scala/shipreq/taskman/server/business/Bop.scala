@@ -22,6 +22,8 @@ object Bop {
 
   /** Lookup someone's ShipReq user record. */
   case class LookupShipReqUser(q: UserId \/ EmailAddr) extends Bop[Option[ShipReqUser]]
+
+  case class LookupShipReqUsers(sqlCond: Option[String]) extends Bop[List[ShipReqUser]]
 }
 
 case class ShipReqUser(id: UserId, username: String, email: EmailAddr, name: String, newsletter: Boolean)
