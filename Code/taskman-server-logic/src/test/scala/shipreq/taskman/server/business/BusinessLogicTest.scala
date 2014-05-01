@@ -26,19 +26,19 @@ class BusinessLogicTest extends Specification {
 
     "Add to ML & raise support ticket" in {
       val bop = new MockBops
-      test(bop)._1 must haveRun[Bop].ops3[LookupShipReqUser, MailingListOp[Subscribe], raiseTicket]
+      test(bop)._1 must haveRun[Bop].ops3[FindShipReqUser, MailingListOp[Subscribe], raiseTicket]
     }
 
     "Update ML & raise support ticket" in {
       val bop = new MockBops
       bop.mlSubscribe << MailingList.AlreadySubscribed
-      test(bop)._1 must haveRun[Bop].ops4[LookupShipReqUser, MailingListOp[Subscribe], MailingListOp[UpdateMember], raiseTicket]
+      test(bop)._1 must haveRun[Bop].ops4[FindShipReqUser, MailingListOp[Subscribe], MailingListOp[UpdateMember], raiseTicket]
     }
 
     "Skip the ML update when user already has account" in {
       val bop = new MockBops
-      bop.lookupShipReqUserR << Some(null)
-      test(bop)._1 must haveRun[Bop].ops2[LookupShipReqUser, raiseTicket]
+      bop.findShipReqUser << Some(null)
+      test(bop)._1 must haveRun[Bop].ops2[FindShipReqUser, raiseTicket]
     }
 
     "Fail on ML error" in {
@@ -54,8 +54,8 @@ class BusinessLogicTest extends Specification {
 
     "update ML" in {
       val bop = new MockBops
-      bop.lookupShipReqUserR << Some(sampleShipReqUser)
-      test(bop) must match2(haveRun[Bop].ops2[LookupShipReqUser, MailingListOp[BatchSubscribe]], notBeAnError)
+      bop.findShipReqUser << Some(sampleShipReqUser)
+      test(bop) must match2(haveRun[Bop].ops2[FindShipReqUser, MailingListOp[BatchSubscribe]], notBeAnError)
     }
   }
 }

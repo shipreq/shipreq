@@ -20,10 +20,11 @@ object Bop {
   /** Interact with the Support desk. */
   case class SupportOp[A](op: Support.API[A]) extends Bop[A]
 
-  /** Lookup someone's ShipReq user record. */
-  case class LookupShipReqUser(q: UserId \/ EmailAddr) extends Bop[Option[ShipReqUser]]
+  /** Lookup a user's details in the ShipReq DB. */
+  case class FindShipReqUser(q: UserId \/ EmailAddr) extends Bop[Option[ShipReqUser]]
 
-  case class LookupShipReqUsers(sqlCond: Option[String]) extends Bop[List[ShipReqUser]]
+  /** Lookup users' details in the ShipReq DB. */
+  case class FindShipReqUsers(sqlCond: Option[String]) extends Bop[List[ShipReqUser]]
 }
 
 case class ShipReqUser(id: UserId, username: String, email: EmailAddr, name: String, newsletter: Boolean)

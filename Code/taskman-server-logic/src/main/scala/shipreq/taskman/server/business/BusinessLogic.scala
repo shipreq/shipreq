@@ -71,7 +71,7 @@ final class BusinessLogic[F[_]](
     import MailingList._
 
     def get(id: UserId): IOE[ShipReqUser] =
-      run(LookupShipReqUser(-\/(id))) >=> (ErrorOr.fromOptionS(_, s"User not found: $id"))
+      run(FindShipReqUser(-\/(id))) >=> (ErrorOr.fromOptionS(_, s"User not found: $id"))
 
     def subscription(u: ShipReqUser) =
       Subscription(u.email, u.name, u.newsletter, AccountStatus.Active)
@@ -80,7 +80,7 @@ final class BusinessLogic[F[_]](
       run(API.BatchSubscribe(mailingListId, NonEmptyList(subscription(u))))
 
     def syncToML(sqlCond: Option[String]): IOE[Unit] =
-      run(LookupShipReqUsers(sqlCond)) >-> (_ map subscription) >==> {
+      run(FindShipReqUsers(sqlCond)) >-> (_ map subscription) >==> {
         case Nil =>
           IOE(log info "No users to sync to mailing list.")
         case h :: t =>
@@ -99,7 +99,7 @@ final class BusinessLogic[F[_]](
       unlessShipReqUser(addr)(updateMailingList(addr, name, newsletter))
 
     def unlessShipReqUser(addr: EmailAddr)(action: => IOE[Unit]): IOE[Unit] =
-      run(LookupShipReqUser(\/-(addr))) >==> {
+      run(FindShipReqUser(\/-(addr))) >==> {
         case None    => action
         case Some(_) => IOE.nop
       }

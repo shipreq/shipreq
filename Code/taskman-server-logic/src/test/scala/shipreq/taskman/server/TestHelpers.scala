@@ -80,7 +80,7 @@ object TestHelpers {
   val reassignWorkerDeny               = endoMod[MockSops](_.reassignWorkerR << false)
   val reassignWorkerCrash              = endoMod[MockSops](_.reassignWorkerR << ???)
 
-  val crashOnSendEmail     = endoMod[MockBops](_.sendEmailR << ErrorOr.error("CRASH!"))
+  val crashOnSendEmail     = endoMod[MockBops](_.sendEmail << ErrorOr.error("CRASH!"))
   val crashOnReportFailure = endoMod[MockBops](_.supReportFailure << ErrorOr.error("CRASH!"))
 
   val clockReal = IO(DateTime.now)
@@ -180,8 +180,8 @@ class MockSops extends MockOpTransformerA[Sop, IO] {
 object BopTypeTags extends OpTypeProvider[Bop] {
   override def apply[A] = {
     case _: SendEmail                     => manifest[SendEmail]
-    case _: LookupShipReqUser             => manifest[LookupShipReqUser]
-    case _: LookupShipReqUsers            => manifest[LookupShipReqUsers]
+    case _: FindShipReqUser               => manifest[FindShipReqUser]
+    case _: FindShipReqUsers              => manifest[FindShipReqUsers]
     case MailingListOp(_: GetListId)      => manifest[MailingListOp[GetListId]]
     case MailingListOp(_: Subscribe)      => manifest[MailingListOp[Subscribe]]
     case MailingListOp(_: UpdateMember)   => manifest[MailingListOp[UpdateMember]]
@@ -194,9 +194,9 @@ object BopTypeTags extends OpTypeProvider[Bop] {
 class MockBops extends MockOpTransformer[Bop, IOE] {
   override def opTypeProvider = BopTypeTags
 
-  val sendEmailR           = MockResponse(ErrorOr.unit)
-  val lookupShipReqUserR   = MockResponse[Option[ShipReqUser]](None)
-  val lookupShipReqUsers   = MockResponse[List[ShipReqUser]](Nil)
+  val sendEmail            = MockResponse(ErrorOr.unit)
+  val findShipReqUser      = MockResponse[Option[ShipReqUser]](None)
+  val findShipReqUsers     = MockResponse[List[ShipReqUser]](Nil)
   val mlGetListId          = MockResponse[Option[ListId]](None)
   val mlSubscribe          = MockResponse[SubscribeResult](Ok)
   val mlUpdateMember       = MockResponse[UpdateMemberResult](Ok)
@@ -205,9 +205,9 @@ class MockBops extends MockOpTransformer[Bop, IOE] {
   val supReportFailure     = MockResponse(ErrorOr(TicketId(200)))
 
   override def trans[A] = {
-    case _: SendEmail                     => IO(sendEmailR.pop())
-    case _: LookupShipReqUser             => IOE(lookupShipReqUserR.pop())
-    case _: LookupShipReqUsers            => IOE(lookupShipReqUsers.pop())
+    case _: SendEmail                     => IO(sendEmail.pop())
+    case _: FindShipReqUser               => IOE(findShipReqUser.pop())
+    case _: FindShipReqUsers              => IOE(findShipReqUsers.pop())
     case MailingListOp(_: GetListId)      => IOE(mlGetListId.pop())
     case MailingListOp(_: Subscribe)      => IOE(mlSubscribe.pop())
     case MailingListOp(_: UpdateMember)   => IOE(mlUpdateMember.pop())

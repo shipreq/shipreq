@@ -179,7 +179,7 @@ class TaskmanCtx(val db: Database, mailProps: Properties, evr: StringBasedValueR
 
   def testConnections(): Unit = {
     log debug "Testing connections..."
-    val io = bopReifier.applyUntimed(Bop.LookupShipReqUser(-\/(1.tag)))
+    val io = bopReifier.applyUntimed(Bop.FindShipReqUser(-\/(1.tag)))
     ErrorOr require_! io.unsafePerformIO()
   }
 

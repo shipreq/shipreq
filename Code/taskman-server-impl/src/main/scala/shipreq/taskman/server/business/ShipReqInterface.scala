@@ -23,27 +23,27 @@ object ShipReqInterface {
 
     val prefix = schema.map(_ + ".") getOrElse ""
 
-    val userQuery = s"select id, username, email, name, newsletter from ${prefix}taskman_users_v01"
+    val findUsersSql = s"select id, username, email, name, newsletter from ${prefix}taskman_users_v01"
 
-    val userQueryById = query[UserId, ShipReqUser](userQuery + " where id=?")
+    val findUserById = query[UserId, ShipReqUser](findUsersSql + " where id=?")
 
-    val userQueryByEmail = query[EmailAddr, ShipReqUser](userQuery + " where email=?")
+    val findUserByEmail = query[EmailAddr, ShipReqUser](findUsersSql + " where email=?")
 
-    val findAllUsers = queryNA[ShipReqUser](userQuery)
+    val findAllUsers = queryNA[ShipReqUser](findUsersSql)
 
-    def findAllUsersW(whereClause: String) = queryNA[ShipReqUser](s"$userQuery where ($whereClause)")
+    def findAllUsersW(whereClause: String) = queryNA[ShipReqUser](s"$findUsersSql where ($whereClause)")
   }
 
   // ===================================================================================================================
 
   class Dao(sql: Sql)(implicit session: Session) {
 
-    def userQueryById(id: UserId): Option[ShipReqUser] = sql.userQueryById.firstOption(id)
+    def findUser(id: UserId): Option[ShipReqUser] = sql.findUserById.firstOption(id)
 
-    def userQueryByEmail(e: EmailAddr): Option[ShipReqUser] = sql.userQueryByEmail.firstOption(e)
+    def findUser(e: EmailAddr): Option[ShipReqUser] = sql.findUserByEmail.firstOption(e)
 
-    def getAllUsers(): List[ShipReqUser] = sql.findAllUsers.list()
+    def findAllUsers(): List[ShipReqUser] = sql.findAllUsers.list()
 
-    def getAllUsers(cond: String): List[ShipReqUser] = sql.findAllUsersW(cond).list()
+    def findAllUsers(cond: String): List[ShipReqUser] = sql.findAllUsersW(cond).list()
   }
 }
