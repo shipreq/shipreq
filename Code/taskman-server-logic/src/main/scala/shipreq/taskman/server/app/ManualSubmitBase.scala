@@ -1,23 +1,26 @@
 package shipreq.taskman.server.app
 
 import scalaz.{-\/, \/-}
+import shipreq.base.util.ErrorOr
 import shipreq.base.util.ScalaExt.Tuple2Ext
+import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.Types._
-import shipreq.taskman.api.impl.Serialisation
-import shipreq.taskman.api.{MsgType => T, ApiOp, Msg}
+import shipreq.taskman.api.{MsgType => T, _}
 
 /**
  * Submits message(s) specified on the command line.
  */
-object SubmitMsg extends MainTemplate {
+abstract class ManualSubmitBase extends HasLogger {
 
-  // TODO Should this not be in server-logic?
+  def serialise  : Msg => Json[Msg]
+  def deserialise: (T, Json[Msg]) => ErrorOr[Msg]
+  def runner     : (ApiOpReifier => Unit) => Unit
 
   def main(args: Array[String]): Unit =
     parseA(args) match {
       case Ok(Nil) | Help => println(helpText)
       case ParseError(e)  => println(s"ERROR: $e"); System exit 1
-      case Ok(msgs)       => submitAll(msgs)
+      case Ok(msgs)       => runner(submitAll(msgs))
     }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -49,7 +52,7 @@ object SubmitMsg extends MainTemplate {
             ParseError(s"Unable to parse msg type: $msgTypeName")
           case Some(msgType) =>
             val msgData = m.group(2).tag[IsJsonFor[Msg]]
-            Serialisation.deserialise(msgType, msgData) match {
+            deserialise(msgType, msgData) match {
               case -\/(e) => ParseError(e.msg)
               case \/-(m) => Ok(m :: msgs)
             }
@@ -72,7 +75,7 @@ object SubmitMsg extends MainTemplate {
     T.values.map(t => {
       val m = exampleFor(t)
       val name = m.getClass.getSimpleName
-      val json = Serialisation.serialise(m).replace("\n", "").replace(",", ", ")
+      val json = serialise(m).replace("\n", "").replace(",", ", ")
       s"  '$name$json'"
     }).sorted.mkString("\n")
 
@@ -96,18 +99,18 @@ object SubmitMsg extends MainTemplate {
   // -------------------------------------------------------------------------------------------------------------------
   // Submission
 
-  def submitAll(msgs: List[Msg]): Unit =
-    withTaskmanCtx(ctx => {
+  def submitAll(msgs: List[Msg]): ApiOpReifier => Unit =
+    aopReifier => {
       val msgCount = msgs.size
       log info ""
 
       log info "Submitting..."
-      val results = ctx.aopReifier(ApiOp.SubmitMsgs(msgs)).unsafePerformIO()
+      val results = aopReifier(ApiOp.SubmitMsgs(msgs)).unsafePerformIO()
       for (((m,id),i) <- results.zipWithIndex.map(_.map2(_+1))) {
         log info s"[$i/$msgCount] $id <= $m"
       }
       log info "Success."
 
       log info ""
-    })
+    }
 }
