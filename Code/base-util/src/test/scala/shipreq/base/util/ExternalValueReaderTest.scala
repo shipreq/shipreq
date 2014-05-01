@@ -116,7 +116,7 @@ class ExternalValueReaderTest extends Specification with DataTables with NoTimeC
       "\t   "              !! None        |
       "\t\t300 # You know" !! pass("300") |
       " 300#"              !! pass("300") |
-      "# TODO"             !! None        |> test(_.retrieverS)
+      "# Comment"          !! None        |> test(_.retrieverS)
     }
 
     "Int parsing" ^ {
