@@ -69,6 +69,7 @@ object Common {
         addCommandAlias("cc",   ";clear;compile") ++
         addCommandAlias("ctc",  ";clear;test:compile") ++
         addCommandAlias("ct",   ";clear;test") ++
+        addCommandAlias("cq",   ";clear;testQuick") ++
         addCommandAlias("ccc",  ";clear;clean;compile") ++
         addCommandAlias("cctc", ";clear;clean;test:compile") ++
         addCommandAlias("cct",  ";clear;clean;test")
