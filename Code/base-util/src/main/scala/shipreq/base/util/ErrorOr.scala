@@ -276,7 +276,9 @@ final object Error {
   @inline def apply[A](e: Throwable)           : Error = Error(That(e))
   @inline def apply[A](m: String, e: Throwable): Error = Error(Both(m, e))
 
-  private def merge(a: String, b: String): String =
+  private def merge(aa: String, bb: String): String = {
+    val a = if (aa eq null) "" else aa
+    val b = if (bb eq null) "" else bb
     if (a.isEmpty) b
     else if (b.isEmpty) a
     else {
@@ -286,6 +288,7 @@ final object Error {
          else " "
       a + p + b
     }
+  }
 
   def stackTraceStr(t: Throwable): String = {
     val sw = new java.io.StringWriter
