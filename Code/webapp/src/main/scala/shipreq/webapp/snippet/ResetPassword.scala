@@ -70,7 +70,7 @@ object ResetPassword1 extends SnippetHelpers {
     Msg.PasswordResetRequested(email.tag, AppSiteMap.ResetPassword2.absoluteUrl(token))
 
   val jsEmailSent: JsCmd =
-    jsClearError & JqExpr("#resetpw1Form,#resetpwTokenSent") ~> JqToggle
+    JqExpr("#resetpw1Form,#resetpwTokenSent") ~> JqToggle
 
   private def issueNewToken(id: UserId, dao: DaoT): String =
     dao.performInstallNewResetPasswordToken(id, () => randomConfirmationToken)

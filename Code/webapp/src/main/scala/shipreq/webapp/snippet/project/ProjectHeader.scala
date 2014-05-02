@@ -62,8 +62,7 @@ class ProjectHeader extends SingleOpStatefulSnippet {
     )
 
   def jsRenamed(newName: String): JsCmd = (
-    jsClearError
-    & jsShowNotice("Project renamed successfully.")
+    jsShowNotice("Project renamed successfully.", "p-ren")
     & TriggerProjectUpdated.trigger(newName)
   )
 

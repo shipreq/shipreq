@@ -70,7 +70,7 @@ class UseCaseCrudl(projectId: ProjectId) extends SingleOpStatefulSnippet {
 
   def onCreate(): JsCmd =
     ifValid(create(createTitle))(ucs =>
-      jsClearError & TriggerCreated.trigger(renderListItem(ucs)(ListItemTemplate)))
+      TriggerCreated.trigger(renderListItem(ucs)(ListItemTemplate)))
 
   def create(titleInput: String): ValidationResult[UseCaseSummary] =
     Validators.usecase.title.correctAndValidate(titleInput).map(newTitle => {
@@ -96,12 +96,12 @@ class UseCaseCrudl(projectId: ProjectId) extends SingleOpStatefulSnippet {
   def onUpdate(uc: UseCaseSummary, newTitle: String): JsCmd =
     ifValid(update(uc.id, newTitle)){
       case None =>
-        jsClearError & TriggerUpdateNop.trigger(uc.eid)
+        TriggerUpdateNop.trigger(uc.eid)
       case Some(ucRev) =>
         val ucs = new UseCaseSummary(ucRev, Misc.currentTimeAsIso8601Str)
         val li = renderListItem(ucs)(ListItemTemplate)
         val dto = UpdateDTO(uc.eid, JqExpr(li))
-        jsClearError & TriggerUpdated.trigger(dto)
+        TriggerUpdated.trigger(dto)
     }
 
   def update(id: UseCaseIdentId, titleInput: String): ValidationResult[Option[UseCaseRev]] = {

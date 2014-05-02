@@ -56,7 +56,7 @@ object Register1 extends SnippetHelpers {
         }
         taskmanD(dao, _ submitMsg msg)
       })
-      jsClearError & JqExpr("#emailSent,#register1Form") ~> JqToggle
+      JqExpr("#emailSent,#register1Form") ~> JqToggle
     })
 
   def preRegistrationMsg(email: EmailAddr, u: UserRegistrationInfo, dao: DaoT): Msg =
@@ -145,7 +145,7 @@ class Register2(token: String) extends SingleOpStatefulSnippet {
           info(s"Registered new user: $username")
           taskman1(_ submitMsg Msg.RegistrationCompleted(id))
           SecurityUtils.getSubject.login(new UsernamePasswordToken(username, password))
-          jsClearError & JqExpr("#regComplete,#register2") ~> JqToggle
+          JqExpr("#regComplete,#register2") ~> JqToggle
       }
     })
   } finally
