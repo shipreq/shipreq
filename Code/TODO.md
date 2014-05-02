@@ -50,6 +50,8 @@ Comms System
 * [S.?.?=?] [   ] Update comms system & system arch doco.
 
 * [C.?.?=?] [T  ] Taskman msg aging.
+* [C.?.?=?] [T  ] Taskman msg consolidation to avoid redundant work. Eg n instances of SyncToMailingList(None).
+* [C.?.?=?] [T  ] Taskman msg batching. Eg every hour process all the UserUpdated(n) msgs in bulk.
 
 ### Insightly
 * [?.?.?=?] [T  ] Should contact syncs to ML also happen to Insightly?
