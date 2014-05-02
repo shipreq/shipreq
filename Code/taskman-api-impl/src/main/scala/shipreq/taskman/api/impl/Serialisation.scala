@@ -26,6 +26,7 @@ private[taskman] object Serialisation {
     Serialization.formats(NoTypeHints)
       + fieldRenamer[RegistrationRequested]  (BiMap("email"->"e", "verifyEmailUrl"->"u"))
       + fieldRenamer[RegistrationCompleted]  (BiMap("userId"->"u"))
+      + fieldRenamer[UserUpdated]            (BiMap("userId"->"u"))
       + fieldRenamer[ReRegistrationAttempted](BiMap("email"->"e", "loginUrl"->"l"))
       + fieldRenamer[PasswordResetRequested] (BiMap("email"->"e", "resetPasswordUrl"->"u"))
       + fieldRenamer[LandingPageHit]         (BiMap("email"->"e", "name"->"n", "msg"->"m", "newsletter"->"w"))

@@ -90,6 +90,7 @@ abstract class ManualSubmitBase extends HasLogger {
       case T.RegistrationRequested   => RegistrationRequested(ea, url)
       case T.RegistrationCompleted   => RegistrationCompleted(uid)
       case T.PasswordResetRequested  => PasswordResetRequested(ea, url)
+      case T.UserUpdated             => UserUpdated(uid)
       case T.SendDiagEmail           => SendDiagEmail(ea, "test", "hello")
       case T.LandingPageHit          => LandingPageHit(ea, "Iskaral Pust", Some("No mule can match wits with me."), false)
       case T.SyncToMailingList       => SyncToMailingList(Some("id < 100"))

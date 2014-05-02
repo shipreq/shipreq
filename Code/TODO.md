@@ -38,7 +38,6 @@ Comms System
 
 * [M.?.?=?] [   ] @shipreq email should be routed to FreshDesk.
 * [M.?.?=?] [ W+] Allow user to change prefs.
-* [M.?.?=?] [TW ] Update ML after user pref change.
 * [M.?.?=?] [TW ] Change all bearded.logic@gmail.com links to contact@shipreq.com.
 * [M.?.?=?] [T  ] Setup MailChimp prod & doc process.
 * [M.?.?=?] [T  ] Setup FreshDesk prod & doc process.

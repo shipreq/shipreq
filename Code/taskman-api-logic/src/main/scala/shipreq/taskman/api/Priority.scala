@@ -27,6 +27,7 @@ object Priority {
     case _: RegistrationCompleted
        | _: LandingPageHit
        | _: SyncToMailingList
+       | _: UserUpdated
               => Low
   }
 }

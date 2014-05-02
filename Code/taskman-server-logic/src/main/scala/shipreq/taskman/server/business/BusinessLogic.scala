@@ -57,7 +57,10 @@ final class BusinessLogic[F[_]](
         i sync LandingPage(md, l)
 
       case RegistrationCompleted(id) =>
-        i.sync(ActiveUser.get(id) >==> ActiveUser.updateML)
+        i sync ActiveUser.updateML(id)
+
+      case UserUpdated(id) =>
+        i sync ActiveUser.updateML(id)
 
       case SyncToMailingList(cond) =>
         i sync ActiveUser.syncToML(cond)
@@ -75,6 +78,9 @@ final class BusinessLogic[F[_]](
 
     def subscription(u: ShipReqUser) =
       Subscription(u.email, u.name, u.newsletter, AccountStatus.Active)
+
+    def updateML(id: UserId): IOE[Unit] =
+      get(id) >==> updateML
 
     def updateML(u: ShipReqUser): IOE[Unit] =
       run(API.BatchSubscribe(mailingListId, NonEmptyList(subscription(u))))

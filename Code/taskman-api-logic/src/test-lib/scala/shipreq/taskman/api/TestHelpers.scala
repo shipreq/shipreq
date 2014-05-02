@@ -69,6 +69,10 @@ object TestHelpers {
       for (userId <- genUserId) yield
         M.RegistrationCompleted(userId)
 
+    case T.UserUpdated =>
+      for (userId <- genUserId) yield
+        M.UserUpdated(userId)
+
     case T.PasswordResetRequested =>
       for(email <- genEmail; url <- arbitrary[String])
       yield M.PasswordResetRequested(email, url)
