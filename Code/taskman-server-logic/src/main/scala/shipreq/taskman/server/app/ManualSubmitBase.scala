@@ -76,7 +76,7 @@ abstract class ManualSubmitBase extends HasLogger {
       val m = exampleFor(t)
       val name = m.getClass.getSimpleName
       val json = serialise(m).replace("\n", "").replace(",", ", ")
-      s"  '$name$json'"
+      s"  $name$json"
     }).sorted.mkString("\n")
 
   def exampleFor(t: T): Msg = {
