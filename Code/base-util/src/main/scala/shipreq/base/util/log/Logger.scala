@@ -28,10 +28,12 @@ object LogLevel {
   case object Info  extends LogLevel
   case object Warn  extends LogLevel
   case object Error extends LogLevel
-  val values = List(Trace, Debug, Info, Warn, Error)
+  case object Off   extends LogLevel
+  val values = List(Off, Trace, Debug, Info, Warn, Error)
 
   def read(s: String): Option[LogLevel] =
     s.trim.toLowerCase(Locale.ENGLISH) match {
+      case "off"   => Some(Off)
       case "trace" => Some(Trace)
       case "debug" => Some(Debug)
       case "info"  => Some(Info)
@@ -83,6 +85,15 @@ final class Logger(log: slf4jLogger) {
       }
   }
 
+  object off extends AtLevel {
+    @inline override def ?                                             : Boolean = false
+    @inline override def apply(msg: String)                            : Unit    = ()
+    @inline override def apply(t: Throwable, msg: String)              : Unit    = ()
+    @inline override def apply(fmt: String, arg: AnyRef)               : Unit    = ()
+    @inline override def apply(fmt: String, arg1: AnyRef, arg2: AnyRef): Unit    = ()
+    @inline override def applyN(fmt: String, args: AnyRef*)            : Unit    = ()
+  }
+
   object trace extends AtLevel {
     @inline override def ?                                             : Boolean = log.isTraceEnabled
     @inline override def apply(msg: String)                            : Unit    = log.trace(msg)
@@ -132,8 +143,9 @@ final class Logger(log: slf4jLogger) {
     case LogLevel.Debug => debug
     case LogLevel.Info  => info
     case LogLevel.Warn  => warn
-    case LogLevel.Trace => trace
     case LogLevel.Error => error
+    case LogLevel.Trace => trace
+    case LogLevel.Off   => off
   }
 
   @inline def mdc = MDC
