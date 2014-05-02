@@ -1,5 +1,3 @@
-server.url = http://localhost:8090
-
 db.appname  = TESTS
 db.database = shipreq_test
 db.username = shipreq_test
@@ -14,4 +12,11 @@ db.pool.disableJMX                 = true
 db.pool.statisticsEnabled          = false
 db.pool.statementsCacheSize        = 64
 
-taskman.schema = taskman_test
+shipreq.url                       = http://localhost:8090
+shipreq.support.email             = contact@shipreq.com
+shipreq.attack_frustration_delay  = 120 ms
+shipreq.token.length              = 49
+shipreq.token.lifespan.email_conf = 3 days
+shipreq.token.lifespan.resetpw    = 24 hours
+shipreq.share.auth_period         = 30 min
+shipreq.taskman.schema            = taskman_test

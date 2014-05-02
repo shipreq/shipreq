@@ -1,5 +1,3 @@
-server.url = http://localhost:8080
-
 db.appname  = WEBAPP
 db.database = shipreq_dev
 db.username = shipreq_dev
@@ -14,4 +12,11 @@ db.pool.disableJMX                 = false
 db.pool.statisticsEnabled          = true
 db.pool.statementsCacheSize        = 64
 
-taskman.schema = taskman
+shipreq.url                       = http://localhost:8080
+shipreq.support.email             = contact@shipreq.com
+shipreq.attack_frustration_delay  = 120 ms
+shipreq.token.length              = 49
+shipreq.token.lifespan.email_conf = 3 days
+shipreq.token.lifespan.resetpw    = 24 hours
+shipreq.share.auth_period         = 30 min
+shipreq.taskman.schema            = taskman

@@ -3,24 +3,28 @@ package shipreq.webapp.app
 import net.liftweb.util.Helpers._
 import org.joda.time.Period
 import shipreq.base.util.ExternalValueReader._
+import shipreq.base.util.jodatime.JodaTimeValueRetrievers
 import shipreq.webapp.util.PropsRetrievers._
 import shipreq.webapp.util.ExpireAfter
 
 final object AppConfig {
-  implicit def PropScope = GlobalScope
+  implicit def PropScope = scopeByNS("shipreq")
+  private val jtr = JodaTimeValueRetrievers(retrieverS)
+  import jtr.retrieverPeriod
+  private implicit def rts: Retriever[TimeSpan] = jtr.retrieverPeriod.map(p => p)
 
   // Make sure this is in sync with application.js
   val AppName = "ShipReq"
 
-  val SupportEmailAddress = "bearded.logic@gmail.com"
+  val SupportEmailAddress = need[String]("support.email")
 
-  val BaseUrl = need[String]("server.url")
+  val BaseUrl = need[String]("url")
 
   /** A short amount of time, unnoticeable to humans, to sleep in order to frustrate automated security attacks. */
-  val AttackFrustrationDelayMs: Long = 120
+  val AttackFrustrationDelayMs = need[Period]("attack_frustration_delay").toStandardDuration.getMillis
 
   /** Number of characters in tokens used for email & reset-password verification. */
-  val ConfirmationTokenLength = 49
+  val ConfirmationTokenLength = need[Int]("token.length")
 
   /** The DB schema in which the Taskman interfaces reside. */
   val TaskmanSchema = need[String]("taskman.schema")
@@ -29,10 +33,10 @@ final object AppConfig {
   val PasswordLength = 8 to 128
 
   /** How long confirmation tokens are valid for after issuing. */
-  val TokenLifespan = 3 days
+  val TokenLifespan = need[TimeSpan]("token.lifespan.email_conf")
 
   /** How long password-reset tokens are valid for after issuing. */
-  val PasswordResetTokenLifespan = 24 hours
+  val PasswordResetTokenLifespan = need[TimeSpan]("token.lifespan.resetpw")
 
   /** Usernames' min & max lengths. */
   val UsernameLength = 3 to 32
@@ -47,7 +51,7 @@ final object AppConfig {
   val LargeTextMaxLength = 20000
 
   /** The amount of time that a user is allowed to view a share after authenticating, without re-authenticating. */
-  val ShareViewAuthPeriod = Period minutes 30
+  val ShareViewAuthPeriod = need[Period]("share.auth_period")
 
   /** Maximum time a flash variable will be retained. (default) */
   val FlashVarTTL = Period seconds 12
@@ -61,7 +65,7 @@ final object AppConfig {
    * (Registration tokens already issued will still be accepted.)
    */
   var AllowRegister: () => Boolean = { // non-volatile var allowed because modification will only occur in test-mode.
-    val v = tryNeed("app.allow.register", true)
+    val v = tryNeed("allow.register", true)
     () => v
   }
 

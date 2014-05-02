@@ -36,7 +36,6 @@ Use Case Editor & Reader
 Comms System
 ============
 
-* [M.?.?=?] [TW ] Change all bearded.logic@gmail.com links to contact@shipreq.com.
 * [M.?.?=?] [T  ] Setup MailChimp prod & doc process.
 
 * [S.2.2=4] [T  ] Certain emails sent from Taskman should BCC Gmail for redundancy.
