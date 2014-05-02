@@ -39,15 +39,15 @@ Comms System
 * [M.?.?=?] [TW ] Change all bearded.logic@gmail.com links to contact@shipreq.com.
 * [M.?.?=?] [T  ] Setup MailChimp prod & doc process.
 
-* [S.?.?=?] [   ] Add users' details to FreskDesk contacts.
-* [S.?.?=?] [T  ] Certain emails sent from Taskman should BCC Gmail for redundancy.
-* [S.?.?=?] [T P] Add indexes to Taskman tables.
-* [S.?.?=?] [T !] Async workers should reassign themselves if time remaining under threshold.
-* [S.?.?=?] [   ] Update comms system & system arch doco.
+* [S.2.2=4] [T  ] Certain emails sent from Taskman should BCC Gmail for redundancy.
+* [S.1.2=3] [   ] Update comms system & system arch doco.
+* [S.0.3=3] [T P] Add indexes to Taskman tables.
+* [S.0.3=3] [T !] Async workers should reassign themselves if time remaining under threshold.
 
-* [C.?.?=?] [T  ] Taskman msg aging.
-* [C.?.?=?] [T  ] Taskman msg consolidation to avoid redundant work. Eg n instances of SyncToMailingList(None).
-* [C.?.?=?] [T  ] Taskman msg batching. Eg every hour process all the UserUpdated(n) msgs in bulk.
+* [C.2.1=3] [T  ] Add users' details to FreskDesk contacts.
+* [C.0.2=2] [T  ] Taskman msg consolidation to avoid redundant work. Eg n instances of SyncToMailingList(None).
+* [C.0.2=2] [T  ] Taskman msg batching. Eg every hour process all the UserUpdated(n) msgs in bulk.
+* [C.1.0=1] [T  ] Taskman msg aging.
 
 ### Insightly
 * [?.?.?=?] [T  ] Should contact syncs to ML also happen to Insightly?
