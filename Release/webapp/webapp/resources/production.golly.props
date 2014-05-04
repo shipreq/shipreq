@@ -1,5 +1,3 @@
-server.url = https://localhost:443
-
 db.appname  = WEBAPP_PILOT
 db.database = usecase_dev
 db.username = usecase_dev
@@ -14,11 +12,12 @@ db.pool.disableJMX                 = true
 db.pool.statisticsEnabled          = false
 db.pool.statementsCacheSize        = 128
 
-mail.from=default@props.com
-mail.smtp.host=smtp.gmail.com
-mail.smtp.socketFactory.port=465
-mail.smtp.socketFactory.class=javax.net.ssl.SSLSocketFactory
-mail.smtp.auth=true
-mail.smtp.port=465
-mail.user=yoar.mum@gmail.com
-mail.password=6vJDhVXYm8G95uXj3gPq
+shipreq.url                       = https://localhost:443
+shipreq.support.email             = contact@shipreq.com
+shipreq.attack_frustration_delay  = 120 ms
+shipreq.token.length              = 49
+shipreq.token.lifespan.email_conf = 3 days
+shipreq.token.lifespan.resetpw    = 24 hours
+shipreq.share.auth_period         = 30 min
+shipreq.taskman.schema            = taskman
+
