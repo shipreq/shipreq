@@ -39,7 +39,7 @@ final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
   private implicit def llr = LogLevel.evr
 
   private def atLeast(min: Period) =
-    valTest[Period](_.toStandardDuration isLongerThan min.toStandardDuration, s"Must be at least $min.")
+    valTest[Period](p => !p.toStandardDuration.isShorterThan(min.toStandardDuration), s"Must be at least $min.")
 
   private def atLeast(min: Int) =
     valTest[Int](_ >= min, s"Must be at least $min.")
@@ -110,12 +110,12 @@ final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
   object taskman {
     private implicit def scope: PropScope = scopeByNS("taskman")
     private[TaskmanProps] def propmap = mkPropMap(
-      "queueSize" -> queueSize, "trustPeriod" -> trustPeriod, "poll.every" -> pollEvery, "poll.min" -> pollGap)
+      "queueSize" -> queueSize, "trustPeriod" -> trustPeriod.value, "poll.every" -> pollEvery, "poll.gap" -> pollGap)
 
     val queueSize   = validate("queueSize", need[Int])(atLeast(1))
     val trustPeriod = AssignmentTrustPeriod(validate("trustPeriod", need[Period])(atLeast(10 seconds)))
     val pollEvery   = validate("poll.every", need[Period])(atLeast(50 ms))
-    val pollGap     = validate("poll.min", n => getO[Period](n) getOrElse pollEvery)(atLeast(50 ms))
+    val pollGap     = validate("poll.gap", n => getO[Period](n) getOrElse pollEvery)(atLeast(50 ms))
 
     if (pollGap.toStandardDuration isLongerThan pollEvery.toStandardDuration)
       log.warn.z(s"The minimum poll gap ($pollGap) is larger than the poll time ($pollEvery). Wasteful.")

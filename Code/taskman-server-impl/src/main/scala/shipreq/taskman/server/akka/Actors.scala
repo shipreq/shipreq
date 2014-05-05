@@ -41,7 +41,7 @@ class SourceActor(ctx: TaskmanCtx) extends Actor with HasLogger {
 object ManagerActor {
   def props(ctx: TaskmanCtx, source: ActorRef) = Props(classOf[ManagerActor], ctx, source)
 
-  case object PollSource extends Serializable
+  case object PollSource
   case object RegisterWorker
   case object WorkAvailable
   case object RequestForWork
