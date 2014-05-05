@@ -232,6 +232,9 @@ final case class Error(reason: String \&/ Throwable, tags: Set[ErrorTag] = Set.e
   def is(t: ErrorTag): Boolean =
     tags contains t
 
+  def isNot(t: ErrorTag): Boolean =
+    !is(t)
+
   def withSupp(s: Any): Error =
     copy(supp = Some(s))
 
