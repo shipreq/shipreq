@@ -10,9 +10,10 @@ import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.Msg._
 import shipreq.taskman.api.Types._
 import shipreq.taskman.server.{MsgHeader, MsgDetail, Deliberate, Deterministic}
-import shipreq.taskman.server.Worker.{AsyncScheduler, MsgProcessor, MsgProcessorIn, MsgProcessorOut}
+import shipreq.taskman.server.Worker.{AsyncScheduler, MsgProcessor, MsgProcessorOut, ProcessorResult}
 import Bop._
 import ErrorOr.Implicits._
+import ProcessorResult._
 
 final class BusinessLogic[F[_]](
       bopReifier: BopReifier,
@@ -21,53 +22,50 @@ final class BusinessLogic[F[_]](
       mailingListId: MailingList.ListId
     ) extends MsgProcessor[F] with HasLogger {
 
-  type MI = MsgProcessorIn[F]
   type MO = MsgProcessorOut[F]
+
+  @inline private[this] def complete(io: IOE[_]): MO = io |>-> Complete
 
   private[this] implicit def autoParseEa(ea: EmailAddr): Email.Addr = Email.Addr(ea)
 
-  @inline private[this] def emailUser(to: Email.Addr, c: Email.Content)(implicit i: MI): MO =
-    send(emails.sendToUser(to, c))
+  @inline private[this] def emailUser(to: Email.Addr, c: Email.Content): MO =
+    sendEmailAsync(emails.sendToUser(to, c))
 
-  @inline private[this] def send(e: Bop.SendEmail)(implicit i: MI): MO =
-    i.async(emailScheduler)(bopReifier(e))
+  @inline private[this] def sendEmailAsync(e: Bop.SendEmail): MO =
+    IOE pure Schedule(emailScheduler, complete(bopReifier(e)))
 
   @inline private[this] def run[A](a: MailingList.API[A]): IOE[A] = bopReifier(MailingListOp(a))
   @inline private[this] def run[A](a: Support.API[A])    : IOE[A] = bopReifier(SupportOp(a))
   @inline private[this] def run[A](a: Bop[A])            : IOE[A] = bopReifier(a)
 
-  override def apply(i: MI): MO = {
-    @inline def md = i.m
-    @inline implicit def _i = i
-    md.msg match {
+  override def apply(md: MsgDetail): MO = md.msg match {
 
-      case RegistrationRequested(addr, url) =>
-        emailUser(addr, emails.linkToCompleteRegistration(url))
+    case RegistrationRequested(addr, url) =>
+      emailUser(addr, emails.linkToCompleteRegistration(url))
 
-      case ReRegistrationAttempted(addr) =>
-        emailUser(addr, emails.reRegistrationAttempted)
+    case ReRegistrationAttempted(addr) =>
+      emailUser(addr, emails.reRegistrationAttempted)
 
-      case PasswordResetRequested(addr, url) =>
-        emailUser(addr, emails.passwordChangeRequest(url))
+    case PasswordResetRequested(addr, url) =>
+      emailUser(addr, emails.passwordChangeRequest(url))
 
-      case SendDiagEmail(addr, subject, body) =>
-        emailUser(addr, emails.diagnosticEmail(subject, body, md))
+    case SendDiagEmail(addr, subject, body) =>
+      emailUser(addr, emails.diagnosticEmail(subject, body, md))
 
-      case l: LandingPageHit =>
-        i sync LandingPage(md, l)
+    case l: LandingPageHit =>
+      complete(LandingPage(md, l))
 
-      case RegistrationCompleted(id) =>
-        i sync ActiveUser.updateML(id)
+    case RegistrationCompleted(id) =>
+      complete(ActiveUser updateML id)
 
-      case UserUpdated(id) =>
-        i sync ActiveUser.updateML(id)
+    case UserUpdated(id) =>
+      complete(ActiveUser updateML id)
 
-      case SyncToMailingList(cond) =>
-        i sync ActiveUser.syncToML(cond)
+    case SyncToMailingList(cond) =>
+      complete(ActiveUser syncToML cond)
 
-      case d: DummyMsg =>
-        dummy(md, d)
-    }
+    case d: DummyMsg =>
+      dummy(md, d)
   }
 
   object ActiveUser {
@@ -98,8 +96,8 @@ final class BusinessLogic[F[_]](
 
   object LandingPage {
 
-    def apply(m: MsgHeader, l: LandingPageHit): IOE[Unit] =
-      updateMailingListIfNeeded(l.email, l.name, l.newsletter) |>==> createSupportTicket(m, l) |>==> IOE.nop
+    def apply(m: MsgHeader, l: LandingPageHit) =
+      updateMailingListIfNeeded(l.email, l.name, l.newsletter) |>==> createSupportTicket(m, l)
 
     def updateMailingListIfNeeded(addr: EmailAddr, name: String, newsletter: Boolean): IOE[Unit] =
       unlessShipReqUser(addr)(updateMailingList(addr, name, newsletter))
@@ -138,7 +136,7 @@ final class BusinessLogic[F[_]](
     }
   }
 
-  private[this] def dummy(md: MsgDetail, msg: DummyMsg)(implicit i: MI): MO = {
+  private[this] def dummy(md: MsgDetail, msg: DummyMsg): MO = {
     import msg._
 
     val io: IOE[Unit] = IO {
@@ -155,8 +153,8 @@ final class BusinessLogic[F[_]](
     }
 
     async match {
-      case true  => i.async(emailScheduler)(io)
-      case false => i.sync(io)
+      case true  => IOE pure Schedule(emailScheduler, complete(io))
+      case false => complete(io)
     }
   }
 }

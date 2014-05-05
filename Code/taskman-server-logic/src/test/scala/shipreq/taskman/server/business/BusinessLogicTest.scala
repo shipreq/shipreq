@@ -5,7 +5,6 @@ import shipreq.base.test.specs2.BaseMatchers._
 import shipreq.taskman.api.Msg
 import shipreq.taskman.server.TestHelpers._
 import shipreq.taskman.server.{MsgDetail, MockBops}
-import shipreq.taskman.server.Worker.MsgProcessorIn
 import Bop._
 import MailingList.API._
 
@@ -13,8 +12,7 @@ class BusinessLogicTest extends Specification {
 
   def testM(bop: MockBops, msg: Msg) = {
     val bl = new BusinessLogic(bop, MockEmails, null, null)
-    val mo = bl(new MsgProcessorIn[Nothing](MsgDetail(mh_1, msg, 0), null))
-    val io = mo getOrElse sys.error("Async not supported")
+    val io = bl(MsgDetail(mh_1, msg, 0))
     (bop, io.unsafePerformIO())
   }
 

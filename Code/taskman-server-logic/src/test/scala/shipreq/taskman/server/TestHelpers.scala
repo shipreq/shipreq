@@ -94,7 +94,7 @@ object TestHelpers {
   val fpAbort: FailurePolicy =
     f => FailureResponse(UpdateMsgAbort(f.n, f.w, f.m, Period days 1), Nil)
 
-  def mpNop[F[_]]: MsgProcessor[F] = _ sync IOE.nop
+  def mpNop[F[_]]: MsgProcessor[F] = _ => IOE(ProcessorResult.Complete)
   def mpCrash[F[_]]: MsgProcessor[F] = _ => ???
 
   def arbMap[B, A](f: A => B)(implicit a: Arbitrary[A]): Arbitrary[B] =

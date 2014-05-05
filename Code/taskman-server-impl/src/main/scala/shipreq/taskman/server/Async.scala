@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import org.slf4j.{MDC => SMDC}
 import scalaz.effect.IO
 import scalaz.syntax.bind._
+import shipreq.base.util.effect.IOE
 
 object Async {
 
@@ -35,7 +36,7 @@ object Async {
       def apply[A](io: IO[A]) =
         TaskmanLogging.readMdc >>= { who =>
           val fio = TaskmanLogging.writeMdc(s"$who*") >> io
-          IO(es submit CallableIO(fio))
+          IOE(es submit CallableIO(fio))
         }
     }
 

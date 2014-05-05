@@ -11,6 +11,7 @@ import shipreq.base.test.specs2.BaseMatchers._
 import shipreq.taskman.server.business.Bop
 import shipreq.taskman.server.business.Bop.SupportOp
 import shipreq.taskman.server.business.Support.API.ReportFailure
+import shipreq.base.util.ErrorOr.Implicits.MonadExt
 import TestHelpers._
 import Sop._
 import Worker._
@@ -18,7 +19,7 @@ import WorkResult._
 
 class WorkerTest extends Specification {
 
-  type R = AsyncResult[Need] \/ WorkResult
+  type R = WorkResult[Need]
 
   val nid = NodeId(4.toShort)
   val wid = WorkerId(7)
@@ -33,15 +34,15 @@ class WorkerTest extends Specification {
     }
   }
 
-  def haveResultS[W <: WorkResult : ClassTag] =
+  def haveResultS[W <: WorkResult[Need] : ClassTag] =
     beAnInstanceOf[W] ^^ {(_:AnyRef) match {
-      case r: WorkResult => r
-      case \/-(r: WorkResult) => r
-      case Some(r: WorkResult) => r
+      case r: WorkResult[_] => r
+      case \/-(r: WorkResult[_]) => r
+      case Some(r: WorkResult[_]) => r
       // case _ => ko("doesn't contain work result")
     }}
 
-  def haveResultA = beAnInstanceOf[-\/[AsyncResult[Need]]]
+  def haveResultA = haveResultS[Scheduled[Need]]
 
   // -------------------------------------------------------------------------------------------------------------------
 
@@ -99,15 +100,17 @@ class WorkerTest extends Specification {
              , clock: IO[DateTime] = clockReal
              , sopEndo: Endo[MockSops] = assignWorkerAllow
               ) = {
+      val need = new AsyncScheduler[Need] { def apply[A](io: IO[A]) = IOE(Need(io.unsafePerformIO())) }
+      val P: ProcessorResult[Need] = ProcessorResult.Complete
+      val S = ProcessorResult.Schedule(need, io |>-> P)
+      val mp: MsgProcessor[Need] = _ => IOE(S)
       def run = {
-        val need = new AsyncScheduler[Need] { def apply[A](io: IO[A]) = IO(Need(io.unsafePerformIO())) }
-        val mp: MsgProcessor[Need] = _.async(need)(io)
         val mockSop = sopEndo(new MockSops)
         val w = new Worker(mp)(nid, wid, mockSop, tp, clock, fpRetry)
         val r: R = w.process(mh_1).unsafePerformIO()
         (r, mockSop)
       }
-      def runFuture(r1: R) = r1.swap.toOption.map(_.f).get.value
+      def runFuture(r1: R) = r1.asInstanceOf[Scheduled[Need]].f.value
       (run, run map1 runFuture)
     }
 
