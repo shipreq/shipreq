@@ -27,7 +27,7 @@ final object Util {
 
   // https://issues.scala-lang.org/browse/SI-2034
   def simpleName(c: Class[_]): String =
-    simpleClassNameRegex.replaceFirstIn(c.getTypeName, "")
+    simpleClassNameRegex.replaceFirstIn(c.getName, "")
 
   val simpleNameMemo =
     Memo.immutableHashMapMemo[Class[_], String](simpleName _)
