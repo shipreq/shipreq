@@ -1,0 +1,13 @@
+#!/bin/bash
+cd $(dirname "$0") || exit 1
+
+[ -z "$1" ] && echo "Usage: $0 <public DNS>" && exit 1
+
+jar=taskman/lib/taskman.jar
+[ ! -e "$jar" ] && echo "JAR not found: $jar" && exit 2
+
+rsync -vcRptih $jar $(<deployment-user)@"$1":
+
+echo
+sha1sum $jar | sed 's/$/ (local)/'
+ssh $(<deployment-user)@"$1" "sha1sum $jar" | sed 's/$/ (remote)/'

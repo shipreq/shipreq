@@ -1,0 +1,12 @@
+#!/bin/bash
+
+cd $(dirname $(readlink -e "$0"))/.. || exit 1
+
+bin/jetty stop
+
+[ -n "$(jps -l | fgrep jetty)" ] && echo "Jetty still running." && exit 1
+
+time bin/jetty start
+echo
+echo
+exec tail -50f log/webapp.log

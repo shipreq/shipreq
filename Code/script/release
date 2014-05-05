@@ -1,0 +1,69 @@
+#!/bin/bash
+cd $(dirname $(readlink -e "$0"))/.. || exit 1
+
+avail_mods="taskman webapp"
+[ $# -eq 0 ] && defargs="$avail_mods"
+
+sbt=(sbt -DMODE=release)
+taskman=0
+webapp=0
+pre_release=()
+sbt_test=()
+sbt_pkg=()
+
+for m in $defargs "$@"; do
+  case "$m" in
+    taskman)
+      taskman=1
+      sbt_test+=(taskman/test)
+      sbt_pkg+=(taskman-server-impl/assembly)
+      ;;
+    webapp)
+      webapp=1
+      pre_release+=( "cd webapp && grunt" )
+      sbt_test+=(webapp/test)
+      sbt_pkg+=(webapp/package)
+      ;;
+    notest) notest=1 ;;
+    noclean) noclean=1 ;;
+    *)
+      echo "Unknown module: $m"
+      exit 1
+  esac
+done
+
+case "$((taskman + webapp))" in
+  0) exec script/"$0" $avail_mods "$@" ;;
+  2) sbt_test=(test) ;;
+  *) sbt_test=(base/test ${sbt_test[@]}) ;;
+esac
+[ -n "$notest" ] && sbt_test=()
+[ -z "$noclean" ] && sbt+=(clean)
+
+function sep() { echo -e '____________________________________________________________________________________________________\n'; }
+
+# ======================================================================================================================
+# Perform release
+
+clear
+
+for cmd in "${pre_release[@]}"; do
+  # Brackets run in subshell so pwd is preserved
+  (eval "$cmd") || exit 1
+  sep
+done
+
+git st .
+sep
+
+[ -e /opt/java7 ] && {
+  JAVA_HOME=/opt/java7
+  PATH="$JAVA_HOME/bin:$PATH"
+}
+java -version
+echo
+
+echo "> ${sbt[@]} ${sbt_test[@]} ${sbt_pkg[@]}"
+echo
+time ${sbt[@]} ${sbt_test[@]} ${sbt_pkg[@]}
+

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+source $(dirname "$0")/lib.sh
+lookup dev
+
+$sudo_pg_dump --blobs --clean --create "$db" \
+  | "$dbdir"/sql-trns-dbname test \
+  | $sudo_psql

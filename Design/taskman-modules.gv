@@ -1,0 +1,69 @@
+digraph G {
+compound=true
+labelloc=t
+node[style=filled]
+edge[color="#222222"]
+label="Taskman dist gets everything visible.\n(A→B means B knows about A)"
+
+subgraph cluster_abs {
+  label="Abstraction & logic. 100% pure FP." style=filled fillcolor="#eeeeee" fontcolor="#007000" node[fillcolor="#bbffbb"]
+  dbv [label="ShipReq\ndata interface"]
+  smtp [label="SMTP\ninterface"]
+  mc [label="MailChimp\ninterface"]
+  crm [label="Insightly\ninterface"]
+  actors
+  bl [label="Business logic"]
+  tl [label="Taskman\nprocessing logic"]
+}
+
+subgraph cluster_real {
+  label="Real implementations. Wiring." style=filled fillcolor="#eeeeee" fontcolor=red node[fillcolor="#ffbbbb"]
+  _dbv [label="ShipReq\nViews"]
+  _smtp [label="SMTP"]
+  _mc [label="MailChimp\nAPI"]
+  _crm [label="Insightly\nAPI"]
+  akka
+  http [label="HTTP/WS/REST\nclient"]
+}
+
+subgraph cluster_public {
+  label="Webapp gets this." style=filled fillcolor="#cccccc"
+
+  subgraph cluster_api {
+    label="API" style=filled fillcolor="#eeeeee" fontcolor="#000080" node[fillcolor="#bbbbff"]
+    bla [label="Business logic API\n(event/job defns)"]
+    tla [label="Taskman\nsubmission API"]
+    tsl [label="Taskman\nsubmission logic" fillcolor="#bbffbb"]
+  }
+
+  subgraph cluster_realp {
+    label="Real implementations for API" style=filled fillcolor="#eeeeee" fontcolor=red node[fillcolor="#ffbbbb"]
+    _tsl [label="Taskman\nsubmission impl"]
+    json4s
+    postgres [label="Slick\nBoneCP\nPostgreSQL"]
+  }
+}
+
+
+dbv -> _dbv
+smtp -> _smtp
+mc -> _mc
+crm -> _crm
+actors -> akka
+
+tl -> actors [dir=back]
+bl -> dbv,smtp,mc,crm,actors [dir=back]
+tl -> bl [minlen=2 constraint=false]
+
+tsl -> _tsl
+// bla -> _tsl
+tla -> bla [minlen=2 constraint=false]
+tla,bla -> bl
+tla -> tsl
+tsl -> tl
+
+_mc,_crm -> http
+_tsl,_dbv -> postgres [dir=back]
+_tsl -> json4s [dir=back]
+
+}

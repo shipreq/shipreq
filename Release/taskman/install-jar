@@ -1,0 +1,15 @@
+#!/bin/bash
+
+cd $(dirname $(readlink -e "$0")) || exit 1
+
+d=../../Code/taskman-server-impl/target/scala-2.10/
+s=$(ls -1rt $d | grep 'assembly.*\.jar' | tail -1)
+[ -z "$s" ] && echo "No assembly jars found in $d" && exit 1
+echo "Found: $s"
+
+echo "Installing..."
+lib=taskman/lib
+[ ! -e $lib ] && mkdir $lib
+cp -p $d/$s $lib/taskman.jar \
+  && echo && echo "--------------------------------------------------------------------------------" \
+  && ./jar-inspect

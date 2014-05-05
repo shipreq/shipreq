@@ -1,0 +1,62 @@
+digraph G {
+rankdir=BT edge[dir=back] node[style=filled]
+
+edge[color="#cc0000"]
+
+subgraph cluster_base {
+  style=filled fillcolor="#f4fff4" node[fillcolor="#bbffbb"]
+  base [label="[aggregate]\nbase" fillcolor="#cccccc"]
+  baseUtil [label="base-util"]
+  baseDb [label="base-db"]
+  baseTest [label="base-test"]
+}
+
+subgraph cluster_t {
+  fillcolor="#eeeeff" style=filled
+
+  subgraph cluster_ts {
+    fillcolor=white node[fillcolor="#aaaaff"]
+    taskmanDb [label="taskman-server-schema"]
+    taskmanServerImpl [label="taskman-server-impl"]
+    taskmanServerLogic [label="taskman-server-logic"]
+    taskmanServer [label="[aggregate]\ntaskman-server" fillcolor="#cccccc"]
+  }
+
+  subgraph cluster_ta {
+    fillcolor=white node[fillcolor="#cceeff"]
+    taskmanApi [label="[aggregate]\ntaskman-api" fillcolor="#cccccc"]
+    taskmanApiImpl [label="taskman-api-impl"]
+    taskmanApiLogic [label="taskman-api-logic"]
+  }
+
+  taskman [label="[aggregate]\ntaskman" fillcolor="#ffff80"]
+}
+
+root [label="[aggregate]\nroot" fillcolor="#cccccc"]
+webapp [fillcolor="#ffff80"]
+
+// Deps
+baseUtil
+baseDb -> baseUtil
+baseTest -> baseUtil
+baseTest -> baseDb [style=dashed label="provided"]
+taskmanDb -> baseDb
+taskmanApiLogic -> baseUtil
+taskmanApiImpl -> taskmanApiLogic,baseDb [minlen=2]
+taskmanApiImpl -> taskmanApiLogic [color="#111111" style=dashed label="test-lib"]
+taskmanApiImpl -> taskmanDb       [color="#111111" style=dashed label="test"]
+taskmanApiImpl -> baseTest        [color="#111111" style=dashed label="test"]
+taskmanApi -> taskmanApiImpl
+taskmanServerLogic -> taskmanApiLogic
+taskmanServerImpl -> taskmanServerLogic,taskmanApi,taskmanDb
+taskmanServer -> taskmanServerImpl
+webapp -> baseDb,taskmanApi
+
+// Aggregation
+edge[dir=forward style=dashed arrowhead=vee color="#aaaaaa"]
+taskmanApi -> taskmanApiLogic,taskmanApiImpl
+taskmanServer -> taskmanServerLogic,taskmanServerImpl,taskmanDb
+taskman -> taskmanApi,taskmanServer
+base -> baseUtil,baseDb,baseTest
+root -> base,webapp,taskman
+}

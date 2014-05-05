@@ -1,0 +1,1 @@
+insert into usrd select id, 'NameUnknown', false from usr;

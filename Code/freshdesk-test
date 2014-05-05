@@ -1,0 +1,34 @@
+#!/bin/bash
+#cd $(dirname $(readlink -e "$0")) || exit 1
+#[ $# -ne 1 ] && echo "Usage: $0 <xxx>" && exit 1
+#tmp=/tmp/$(date +%Y%m%d-%H%M%S)-$$
+
+auth=6nOvQN6fH4XKlVCbXHD9:X
+domain=yoarmum
+
+run=4
+
+# Create new ticket
+[ $run -eq 1 ] && curl -u "$auth" \
+  -H "Content-Type: application/json" \
+  -d '{"helpdesk_ticket": {"description": "Details about the issue...", "subject": "Test from CURL", "email": "The Hulk <hulk1@outerspace.com>",
+"custom_field":{"stacktrace_117090":"GREAT!"},
+       "source": 2, "priority": 1, "status": 2, "group_id": 1000123403, "ticket_type": "Lead"}}' \
+  -X POST https://$domain.freshdesk.com/helpdesk/tickets.json #| json_reformat
+
+# Bad post data
+[ $run -eq 2 ] && curl -u "$auth" \
+  -H "Content-Type: application/json" \
+  -d '{"helpdesk_ticket": {"description": "Details about the issue...", "subject": "Test from CURL", "email": "The Hulk <hulk1@outerspace.com>",
+       "source": 2, "priority": 1, "status": 20, "group_id": 6666, "ticket_type": "WHOA NOOOO"}}' \
+  -X POST https://$domain.freshdesk.com/helpdesk/tickets.json
+
+[ $run -eq 3 ] && curl -u "$auth" \
+  -H "Content-Type: application/json" \
+  -X GET https://$domain.freshdesk.com/groups.json | json_reformat
+#  -X GET https://$domain.freshdesk.com/helpdesk/tickets/50.json | json_reformat
+
+[ $run -eq 4 ] && curl -u "$auth" \
+  -H "Content-Type: application/json" \
+  -X GET https://$domain.freshdesk.com/contacts.json?state=all'&query=email%20is%20japgolly%2Btest1%40gmail.com' \
+  | json_reformat

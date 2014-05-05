@@ -1,0 +1,19 @@
+@startuml
+
+[*] --> Incomplete
+Done :
+GiveUp :
+state Incomplete {
+	[*] --> Scheduled
+	Scheduled --> Queued : assign node
+	Queued --> Working : assign worker
+	Working --> Done : complete
+	Working --> GiveUp : fails
+	Working --> Scheduled : fails
+	Working --> Scheduled : worker timeout
+	Queued --> Scheduled : node timeout
+}
+GiveUp --> [*]
+Done --> [*]
+
+@enduml

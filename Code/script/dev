@@ -1,0 +1,27 @@
+#!/bin/bash
+cd $(dirname "$0")/..
+
+S=shipreq-dev
+
+tmux -2 new-session -d -s $S \
+  && tmux rename-window ctl \
+  && tmux split-window -h \
+  && tmux select-pane -t 0 \
+  && tmux split-window -v \
+  && tmux select-pane -t 2 \
+  && tmux split-window -v \
+  && tmux select-pane -t 0 \
+  && tmux send-keys "clear; script/webapp/run" C-m \
+  && tmux select-pane -t 1 \
+  && tmux resize-pane -D 999 && tmux resize-pane -U 20 \
+  && tmux send-keys "clear; script/taskman/run" C-m \
+  && tmux select-pane -t 2 \
+  && tmux resize-pane -R 999 && tmux resize-pane -L 45 \
+  && tmux send-keys "clear; cd webapp && grunt watch" C-m \
+  && tmux select-pane -t 3 \
+  && tmux send-keys "cd ../QA && clear && find -executable -type f | sort | fgrep -v /gatling/" C-m \
+  && tmux select-pane -t 0
+
+tmux -2 attach-session -t $S
+
+#tmux new-window -t $S:0 -n 'Logs'

@@ -1,0 +1,54 @@
+#useracct-hub.tab-pane.fade(data-lift="UserAccount")
+  .panel.panel-default
+    .panel-heading
+      %h3.panel-title Account Details
+    .panel-body
+      %form.form-horizontal
+
+        .form-group.username
+          %label.col-xs-4.control-label Username
+          .col-xs-7
+            %p.form-control-static xxx
+
+        .form-group.email
+          %label.col-xs-4.control-label Email
+          .col-xs-7
+            %p.form-control-static xxx
+          .col-xs-1.rctl
+            /%button.btn.btn-default Edit
+
+        .form-group.password
+          %label.col-xs-4.control-label Password
+          .col-xs-5
+            %p.form-control-static ************
+          .col-xs-3.rctl
+            %button.btn.btn-default.edit Change Password
+
+        .form-group.registeredAt
+          %label.col-xs-4.control-label Account Created
+          .col-xs-8
+            %p.form-control-static
+              %time.showdate
+
+  .panel.panel-default#useracct-prefs
+    .panel-heading
+      %h3.panel-title User Details and Preferences
+    .panel-body
+      %form(data-lift="form.ajax?class=form-horizontal")
+
+        .form-group.name
+          %label.control-label.col-md-4(for="name") Full Name:
+          .col-md-5
+            %input.form-control#usrname(type="text" required)
+
+        .form-group.newsletter
+          .col-md-4
+          %label.col-md-5
+            %input#newsletter(type="checkbox" checked)
+            Subscribe to newsletter.
+          .col-xs-3.rctl
+            %button.btn.btn-default.edit#usrd-submit Update
+
+  %section#useracct-ctls
+    .btn-group
+      %button.btn.btn-danger.delete.unimplemented Delete Account

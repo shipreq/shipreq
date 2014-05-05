@@ -1,0 +1,26 @@
+#!/bin/bash
+
+source $(dirname "$0")/lib.sh
+lookup1 "$@"
+
+q1="'"
+q2='"'
+
+tmp=/tmp/fix-fk_ids_in_$1.sh
+echo "#!/bin/bash" > $tmp
+echo "perl -pe '" >> $tmp
+
+$sudo_psql "$db" -c 'select fk_id, "desc" from v_field_key;' -t \
+  | sed '/^$/d' \
+  | while read line; do
+
+  eval "$(echo "$line" | perl -pe 's!\s*(\d+)\s*\|\s*(\S.*?)\s*$!n=\1;t='"'"'\2'"'"'!' )"
+  r='s/(INSERT .+fk_id\).+, )'$n'(\).+)/\1(select fk_id from v_field_key where "desc"='"'$t'"')\2/'
+  r=$(echo "$r" | perl -pe s/$q1/$q1$q2$q1$q2$q1/g )
+  echo "$r;" >> $tmp
+
+done
+
+echo "'" >> $tmp
+chmod 755 $tmp
+echo $tmp

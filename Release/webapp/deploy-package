@@ -1,0 +1,9 @@
+#!/bin/bash
+cd $(dirname "$0") || exit 1
+
+[ -z "$1" ] && echo "Usage: $0 <public DNS>" && exit 1
+
+rsync -vzrRlptSihOJ --skip-compress=jar \
+  --exclude={jetty.pid,jetty.state,demo-base,log,work,'*.war','.*.sw?',production.golly.props,'*localhost*',secrets-{en,de}crypt,'*.gpg'} \
+  webapp $(<deployment-user)@"$1":
+

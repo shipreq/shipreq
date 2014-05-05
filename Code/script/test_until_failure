@@ -1,0 +1,24 @@
+#!/bin/bash
+
+cd $(dirname "$0")/..
+
+[ $# -gt 1 ] && echo "Usage: $0 [<project>]" && exit 1
+
+test=test
+[ -n "$1" ] && test="$1/$test"
+
+tmp=/tmp/shpireq-test-$(date +%Y%m%d-%H%M%S)-$$.log
+echo "Log: $tmp"
+i=0
+e=0
+while( [ $e == 0 ] ) do
+  i=$((i+1))
+  echo "$(date) - Attempt #$i"
+  sbt "$test" >$tmp 2>&1
+  e=$?
+done
+
+echo
+echo "Failed after $i attempt(s)."
+echo "Log: $tmp"
+

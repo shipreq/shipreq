@@ -6,3 +6,4 @@ target
 *.out
 *.err
 .cache
+.target

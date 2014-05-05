@@ -1,8 +1,8 @@
 server.url = http://localhost:9000
 
 db.appname  = WEBAPP
-db.database = usecase_prod
-db.username = usecase_prod
+db.database = shipreq_prod
+db.username = shipreq_prod
 db.password = ucelocal
 
 db.pool.partitionCount             = 1
@@ -13,12 +13,3 @@ db.pool.logStatementsEnabled       = true
 db.pool.disableJMX                 = true
 db.pool.statisticsEnabled          = false
 db.pool.statementsCacheSize        = 16
-
-mail.from=default@props.com
-mail.smtp.host=smtp.gmail.com
-mail.smtp.socketFactory.port=465
-mail.smtp.socketFactory.class=javax.net.ssl.SSLSocketFactory
-mail.smtp.auth=true
-mail.smtp.port=465
-mail.user=yoar.mum@gmail.com
-mail.password=6vJDhVXYm8G95uXj3gPq

@@ -7,8 +7,8 @@ object IdeSettings {
 
   object excludes {
     def common = List("project/target")
-    def root   = List(".idea", ".idea_modules", ".settings") ++ common
-    def webapp = List("vendor", "node_modules", ".bower") ++ common
+    def root   = common ++ List(".idea", ".idea_modules", ".settings", ".target", "log")
+    def webapp = common ++ List("vendor", "node_modules", ".bower", "src/it/scala", "src/main/webapp/assets/vendor/mathjax")
   }
 
   def prefix(p: String)(ss: List[String]): List[String] = ss.map(p + _)
@@ -26,17 +26,19 @@ object IdeSettings {
       EclipseKeys.executionEnvironment := Some(EclipseExecutionEnvironment.JavaSE17),
       EclipseKeys.withSource := true,
       EclipseKeys.createSrc := EclipseCreateSrc.Default + EclipseCreateSrc.Resource
+      // Prevent src/main/java appearing in .classpath
+      unmanagedSourceDirectories in Compile <<= (scalaSource in Compile)(Seq(_)),
+      // Prevent src/test/java appearing in .classpath
+      unmanagedSourceDirectories in Test <<= (scalaSource in Test)(Seq(_))
+      // This is a better way of doing it:
+      unmanagedSourceDirectories in Compile ~= { _.filter(_.exists) }
+      unmanagedSourceDirectories in Test ~= { _.filter(_.exists) }
     )
   }
   */
 
   def apply(module: Module): Project => Project = module match {
-    case Root =>
-      _.configure(intellijSettings)
-    case Webapp =>
-      // _.settings(ideaExcludeFolders := excludes.webapp)
-      identity
+    case Root => _.configure(intellijSettings)
+    case _    => identity
   }
-
-  // def apply(module: Module): Project => Project = identity
 }

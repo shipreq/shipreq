@@ -1,0 +1,6 @@
+db.appname  = TASKMAN_TEST
+db.schema   = taskman_api_impl
+db.database = shipreq_test
+db.username = shipreq_test
+db.password = sqt
+

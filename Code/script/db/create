@@ -1,0 +1,10 @@
+#!/bin/bash
+
+source $(dirname "$0")/lib.sh
+lookup1 "$@"
+
+s="$sqldir/create-$1.sql"
+[ ! -e "$s" ] && die "File not found: $s"
+
+echo "Creating database $db..."
+$sudo_psql < "$s"

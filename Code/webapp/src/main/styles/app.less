@@ -135,9 +135,12 @@ html, body { height: 100% } // Cannot have any padding or margin here
 .loginInfo { text-align: center }
 
 #register2 {
-  width: 560px;
+  width: 590px;
   margin: 1cm auto 1cm auto;
-  h1 {margin-bottom:1em}
+  h1 {
+    margin-bottom: 1em;
+    text-align: center;
+  }
   .alert {
     h3 {margin-top: 0.3em}
     a {text-decoration: underline}
@@ -188,6 +191,7 @@ html, body { height: 100% } // Cannot have any padding or margin here
 
 #useracct-hub {
   .rctl { text-align: right; }
+  .newsletter label { font-weight:normal; }
   #useracct-ctls { text-align: right; }
 }
 
@@ -507,6 +511,12 @@ blockquote.rndquote {
       margin-bottom: 0;
       button {
         font-weight: bold;
+      }
+    }
+    .newsletter {
+      text-align: center;
+      label {
+        font-weight: normal;
       }
     }
   }

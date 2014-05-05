@@ -18,11 +18,21 @@ u="$url/diag/mail"
 
 echo "URL: $u"
 curl -kD $tmp2 "$u" --data-urlencode "to=$addr" >$tmp1 2>/dev/null
+sed -i -e '$s/$/\n/' $tmp1
 
 if [ -n "$(fgrep '200 OK' $tmp2)" ]; then
-  echo "SUCCESS"
-  cat $tmp1
-  r=0
+  id=$(fgrep '"id"' $tmp1 | perl -pe 's/^.*:\s*(\d+).*$/\1/')
+  if [[ "$id" =~ ^[0-9]+$ ]]; then
+    date '+Start: %H:%M:%S'
+    cat $tmp1
+    "$(dirname "$0")/inspect-msg" "$1" $id
+    date '+End: %H:%M:%S'
+    r=0
+  else
+    cat $tmp1
+    echo "Unable to parse ID."
+    r=1
+  fi
 else
   echo
   echo "FAILURE"

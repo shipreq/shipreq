@@ -1,0 +1,11 @@
+#!/bin/bash
+cd $(dirname "$0") || exit 1
+
+[ -z "$1" ] && echo "Usage: $0 <public DNS>" && exit 1
+
+src=taskman
+
+rsync -vzrRlptSihOJ --no-implied-dirs --skip-compress=jar \
+  --exclude={log,taskman.{jar,pid},'.*.sw?','*golly*','*localhost*',secrets-{en,de}crypt,'*.gpg'} \
+  "$src" $(<deployment-user)@"$1":
+
