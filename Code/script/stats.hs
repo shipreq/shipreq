@@ -2,7 +2,6 @@
 
 import Control.Applicative
 import Control.Monad
-import Data.Graph.Inductive.Query.Monad (mapFst)
 import Data.List
 import Data.Maybe
 import Data.Monoid
@@ -10,6 +9,9 @@ import System.Directory
 import System.Posix.Files
 import System.Process
 import Text.Printf
+
+mapFst :: (a -> b) -> (a, c) -> (b, c)
+mapFst f (a,c) = (f a, c)
 
 ------------------------------------------------------------------------------------------------------------------------
 -- Dirs & cloc
