@@ -52,6 +52,9 @@ object ExternalValueReader {
   def get[T](name: String)(implicit s: PropScope, r: Retriever[T]): ErrorOr[T] =
     getOE(name) getOrElse ErrorOr.error(errorMsgWhenMissing(name))
 
+  def get[T](name: String, default: => T)(implicit s: PropScope, r: Retriever[T]): ErrorOr[T] =
+    getOE(name) getOrElse ErrorOr(default)
+
   def tryGet[T](name: String, moreNames: String*)(implicit s: PropScope, r: Retriever[T]): ErrorOr[T] = {
     val es = (name #:: moreNames.toStream).map(getOE(_))
     es.filter(_.isDefined).headOption.map(_.get) getOrElse get(name)

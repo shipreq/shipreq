@@ -9,7 +9,7 @@ import shipreq.base.util.effect.IOE
 import shipreq.base.util.ScalaExt.Tuple2Ext
 import shipreq.base.test.specs2.BaseMatchers._
 import shipreq.taskman.server.business.Bop
-import shipreq.taskman.server.business.Bop.SupportOp
+import shipreq.taskman.server.business.Bop.{SendEmail, SupportOp}
 import shipreq.taskman.server.business.Support.API.ReportFailure
 import shipreq.base.util.ErrorOr.Implicits.MonadExt
 import TestHelpers._
@@ -162,36 +162,46 @@ class WorkerTest extends Specification {
 
   "Worker.FailureHandler" >> {
     "handleFailedWorker" should {
-      def test(bop: MockBops) = {
-        new FailureHandler(MockEmails, bop).handleFailedWorker(sampleNotifySupportWorkerFailed).unsafePerformIO()
+      def test(bop: MockBops, archive: Boolean) = {
+        new FailureHandler(MockEmails(archive), bop).handleFailedWorker(sampleNotifySupportWorkerFailed).unsafePerformIO()
         bop
       }
 
       "notify support" in {
         val bop = new MockBops
-        test(bop) must haveRun[Bop].op[SupportOp[ReportFailure]]
+        test(bop, false) must haveRun[Bop].op[SupportOp[ReportFailure]]
+      }
+
+      "send archive email" in {
+        val bop = new MockBops
+        test(bop, true) must haveRun[Bop].ops2[SupportOp[ReportFailure], SendEmail]
       }
 
       "raise a taskman error if fails to notify support" in {
         val bop = crashOnReportFailure(new MockBops)
-        test(bop) must haveRun[Bop].ops2[SupportOp[ReportFailure], SupportOp[ReportFailure]]
+        test(bop, true) must haveRun[Bop].ops4[SupportOp[ReportFailure], SendEmail, SupportOp[ReportFailure], SendEmail]
       }
     }
 
     "handleFailedTaskman" should {
-      def test(bop: MockBops) = {
-        new FailureHandler(MockEmails, bop).handleFailedTaskman(sampleNotifySupportTaskmanError).unsafePerformIO()
+      def test(bop: MockBops, archive: Boolean) = {
+        new FailureHandler(MockEmails(archive), bop).handleFailedTaskman(sampleNotifySupportTaskmanError).unsafePerformIO()
         bop
       }
 
       "notify support" in {
         val bop = new MockBops
-        test(bop) must haveRun[Bop].op[SupportOp[ReportFailure]]
+        test(bop, false) must haveRun[Bop].op[SupportOp[ReportFailure]]
+      }
+
+      "send archive email" in {
+        val bop = new MockBops
+        test(bop, true) must haveRun[Bop].ops2[SupportOp[ReportFailure], SendEmail]
       }
 
       "recover if unable to notify support" in {
         val bop = crashOnReportFailure(new MockBops)
-        test(bop) must haveRun[Bop].op[SupportOp[ReportFailure]]
+        test(bop, true) must haveRun[Bop].ops2[SupportOp[ReportFailure], SendEmail]
       }
     }
   }

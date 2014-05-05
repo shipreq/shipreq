@@ -10,7 +10,7 @@ import shipreq.base.util.{ErrorOr, Error}
 import shipreq.base.util.effect.{IoUtils, IOE}
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.{Priority => MsgPriority}
-import shipreq.taskman.server.business.{Support, BopReifier, Emails}
+import shipreq.taskman.server.business.{Email, Support, BopReifier, Emails}
 import shipreq.taskman.server.business.Bop.SupportOp
 import ErrorOr.Implicits.MonadExt
 import Sop._
@@ -58,10 +58,15 @@ object Worker extends HasLogger {
 
   final class FailureHandler(emails: Emails, bopReifier: BopReifier) {
 
+    def raise(c: Email.Content, p: Support.Priority): IOE[Unit] = {
+      val io1 = bopReifier(SupportOp(Support.API.ReportFailure(c.subject, c.body, p)))
+      val io2 = emails archive c map (bopReifier(_)) getOrElse IOE.nop
+      io1 execMap io2
+    }
+
     def handleFailedWorker(f: NotifySupportWorkerFailed): IO[Unit] = {
       val c = emails.workerFailureEmail(f.t, f.m, f.e)
-      val a = Support.API.ReportFailure(c.subject, c.body, priorityForWorkerFailure(f.m.priority))
-      val io = bopReifier(SupportOp(a))
+      val io = raise(c, priorityForWorkerFailure(f.m.priority))
       val catchIo: Error => IO[Unit] =
         e2 => IO(
           log.error(s"""FAILED TO NOTIFY SUPPORT OF FAILED WORKER.
@@ -74,8 +79,7 @@ object Worker extends HasLogger {
 
     def handleFailedTaskman(f: NotifySupportTaskmanError): IO[Unit] = {
       val c = emails.taskmanErrorEmail(f.t, f.e, f.m)
-      val a = Support.API.ReportFailure(c.subject, c.body, Support.Priority.Urgent)
-      val io = bopReifier(SupportOp(a))
+      val io = raise(c, Support.Priority.Urgent)
       val catchIo: Error => IO[Unit] =
         e2 => IO(
           log.error(s"""FAILED TO NOTIFY SUPPORT OF TASKMAN FAILURE. FUCK.

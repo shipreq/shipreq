@@ -36,9 +36,9 @@ Use Case Editor & Reader
 Comms System
 ============
 
+* [M.?.?=?] [T  ] Handle actor failures. A crash in BopImpl.apply fucks everything up.
 * [M.?.?=?] [T  ] Setup MailChimp prod & doc process.
 
-* [S.2.2=4] [T  ] Certain emails sent from Taskman should BCC Gmail for redundancy.
 * [S.1.2=3] [   ] Update comms system & system arch doco.
 * [S.0.3=3] [T P] Add indexes to Taskman tables.
 * [S.0.3=3] [T !] Async workers should reassign themselves if time remaining under threshold.

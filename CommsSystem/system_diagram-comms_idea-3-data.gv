@@ -88,6 +88,7 @@ digraph G {
     fd_mail -> fd_web
     fd_web -> fd_staff
     taskman -> fd_api
+    taskman -> gmail
     usr_mail -> ea_contact
     usr_mail -> usr_web [dir=back]
     usr_web -> usr [dir=back]
@@ -104,6 +105,7 @@ digraph G {
     mc_web -> usr_mail
     taskman -> mc_api -> mc_web [dir=back]
     taskman -> usr_mail
+    taskman -> gmail
     usr_mail -> usr_web
     usr_web -> usr
     wb -> aws_rds -> taskman

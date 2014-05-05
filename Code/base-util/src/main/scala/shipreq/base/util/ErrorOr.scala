@@ -176,6 +176,12 @@ final object ErrorOr {
           case -\/(e) => f(e)
         }
 
+      @inline def execMap[B](f: M[ErrorOr[B]])(implicit M: Monad[M]): M[ErrorOr[B]] =
+        M.bind(mea){
+          case    \/-(_) => f
+          case e@ -\/(_) => M.map(f)(_ => e)
+        }
+
       @inline def joinE[B](implicit M: Monad[M], ev: A =:= ErrorOr[B]): M[ErrorOr[B]] =
         mea emapE ev
 

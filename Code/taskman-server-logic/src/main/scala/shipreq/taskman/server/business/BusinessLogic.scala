@@ -3,8 +3,7 @@ package shipreq.taskman.server.business
 import scalaz.{NonEmptyList, -\/, \/-}
 import scalaz.effect.IO
 import scalaz.syntax.bind._
-import shipreq.base.util.{Util, ErrorOr, Error}
-import shipreq.base.util.ScalaExt.StringBuilderExt
+import shipreq.base.util.{ErrorOr, Error}
 import shipreq.base.util.effect.IOE
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.Msg._
@@ -53,7 +52,7 @@ final class BusinessLogic[F[_]](
       emailUser(addr, emails.diagnosticEmail(subject, body, md))
 
     case l: LandingPageHit =>
-      complete(LandingPage(md, l))
+      LandingPage(md, l)
 
     case RegistrationCompleted(id) =>
       complete(ActiveUser updateML id)
@@ -96,8 +95,14 @@ final class BusinessLogic[F[_]](
 
   object LandingPage {
 
-    def apply(m: MsgHeader, l: LandingPageHit) =
-      updateMailingListIfNeeded(l.email, l.name, l.newsletter) |>==> createSupportTicket(m, l)
+    def apply(m: MsgHeader, l: LandingPageHit) = {
+      val c = emails.landingPageEmail(m, l)
+      val io = updateMailingListIfNeeded(l.email, l.name, l.newsletter) |>==> createSupportTicket(m, l, c)
+      emails.archive(c) match {
+        case None     => complete(io)
+        case Some(op) => io |>==> sendEmailAsync(op)
+      }
+    }
 
     def updateMailingListIfNeeded(addr: EmailAddr, name: String, newsletter: Boolean): IOE[Unit] =
       unlessShipReqUser(addr)(updateMailingList(addr, name, newsletter))
@@ -122,17 +127,11 @@ final class BusinessLogic[F[_]](
       }
     }
 
-    def createSupportTicket(m: MsgHeader, l: LandingPageHit): IOE[Support.TicketId] = {
+    def createSupportTicket(m: MsgHeader, l: LandingPageHit, c: Email.Content): IOE[Support.TicketId] = {
       import Support._
       val from = s"${l.name} <${l.email}>"
-      val desc = Util.quickSB(_.mkStringF("","\n","")(
-        _.kv("MsgId", m.id.value)
-        ,_.kv("Contact time", m.created)
-        ,_.kv("Newsletter", l.newsletter)
-        ,_.kv("Message", l.msg.map("\n\n" + _) getOrElse "<no msg>")
-      ))
       val p = if (l.msg.isDefined) Priority.Medium else Priority.Low
-      run(API.NotifyLandingPage(from, "Landing Page", desc, p))
+      run(API.NotifyLandingPage(from, c.subject, c.body, p))
     }
   }
 

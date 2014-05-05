@@ -62,14 +62,15 @@ final class TaskmanProps(evr: StringBasedValueReader) extends HasLogger {
   object mail extends Email.EnvelopeProps {
     import Email._
     private implicit def scope: PropScope = scopeByNS("mail")
-    private[this] implicit def rEA = EmailImpl.addressLoader
-    private[this] implicit def rEE = EmailImpl.envelopeLoader
-    private[this] implicit def rEF = EmailImpl.envelopeFrontLoader
-    private[TaskmanProps] def propmap = mkPropMap(
-      "public.from" -> publicFrom, "concurrency.max" -> concurrencyMax)
+    private val rEA = new EmailImpl.Retrievers()
+    import rEA._
 
-    override val publicFrom = need[Addr]("public.from")
-    val concurrencyMax = validate("concurrency.max", need[Int])(atLeast(1))
+    private[TaskmanProps] def propmap = mkPropMap(
+      "public.from" -> publicFrom, "archive.to" -> archiveAddrs, "concurrency.max" -> concurrencyMax)
+
+    override val publicFrom   = need[Addr]("public.from")
+    override val archiveAddrs = tryNeed[List[Addr]]("archive.to", Nil)
+    val concurrencyMax        = validate("concurrency.max", need[Int])(atLeast(1))
   }
 
   object mailchimp extends MailChimp.Props {

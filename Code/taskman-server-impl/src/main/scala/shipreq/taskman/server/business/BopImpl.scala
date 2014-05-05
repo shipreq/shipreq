@@ -1,7 +1,8 @@
 package shipreq.taskman.server.business
 
-import scalaz.effect.IO
 import scalaz.{-\/, \/-}
+import scalaz.effect.IO
+import scalaz.syntax.bind._
 import scala.slick.jdbc.JdbcBackend.Database
 import shipreq.base.util.ErrorOr
 import shipreq.base.util.effect.{IoUtils, IOE}
@@ -19,26 +20,36 @@ final class BopImpl(db: Database,
   private[this] def shipreqDao[A](f: ShipReqInterface.Dao => A): IOE[A] =
     IOE(db.withSession(s => f(new ShipReqInterface.Dao(shipreqSql)(s))))
 
-  override def apply[A](op: Bop[A]): IOE[A] = applyUntimed(op)
+  override def apply[A](op: Bop[A]): IOE[A] = applyTimed(op)
 
   def applyTimed[A](op: Bop[A]): IOE[A] =
     IoUtils.time_(applyUntimed(op))(logCompletion(op))
 
+  val className = scalaz.Memo.immutableHashMapMemo[Class[_], String] {
+    val regex = "^.+[\\.\\$]".r
+    c => regex.replaceFirstIn(c.getTypeName, "")
+  }
+
   def logCompletion[A](op: Bop[A]): ErrorOr[A] => Long => IO[Unit] =
-    res => time => IO(
-      res match {
-        case \/-(_) =>
-          log.info.z(s"${op.getClass.getSimpleName} completed in ${time}ms.")
-        case -\/(e) =>
-          log.error.z(s"${op.getClass.getSimpleName} failed after ${time}ms with [${e.msg}]. Op: $op")
+    res => time => {
+      val opName = op match {
+        case MailingListOp(i) => s"MailingListOp(${className(i.getClass)})"
+        case SupportOp(i)     => s"SupportOp(${className(i.getClass)})"
+        case _                => className(op.getClass)
       }
-    )
+      IO(res match {
+          case \/-(_) =>
+            log.info.z(s"$opName completed in ${time}ms.")
+          case -\/(e) =>
+            log.error.z(s"$opName failed after ${time}ms with [${e.msg}]. Op: $op")
+        })
+    }
 
   def applyUntimed[A](op: Bop[A]): IOE[A] =
     ErrorOr.catchExceptionM(op match {
-      case s: SendEmail              => emailer send s
-      case MailingListOp(op)         => mailchimp run op
-      case SupportOp(op)             => freshDesk run op
+      case s: SendEmail              => emailer.send(s)
+      case MailingListOp(op)         => mailchimp.run(op)
+      case SupportOp(op)             => freshDesk.run(op)
       case FindShipReqUser(-\/(id))  => shipreqDao(_ findUser id)
       case FindShipReqUser(\/-(ea))  => shipreqDao(_ findUser ea)
       case FindShipReqUsers(None)    => shipreqDao(_.findAllUsers())

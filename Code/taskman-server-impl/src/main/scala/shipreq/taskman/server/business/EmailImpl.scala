@@ -40,8 +40,8 @@ object EmailImpl extends HasLogger {
     case a: Address => a
   }
 
-  val parser: EmailAddr => ErrorOr[Address] = // TODO memoise?
-    ea => ErrorOr.catchAndTag(Deterministic) {
+  def parse1(ea: EmailAddr): ErrorOr[Address] =
+    ErrorOr.catchAndTag(Deterministic) {
       val as = InternetAddress.parse(ea)
       if (as.size == 1)
         ErrorOr(as.head)
@@ -49,32 +49,54 @@ object EmailImpl extends HasLogger {
         ErrorOr error s"Email address '$ea' is expected to parse into a single address, but parsed into ${as.toList}"
     }
 
-  def addressLoader(implicit rs: Retriever[String]): Retriever[Addr] =
-    rs.emap(s => {
-      val ea = s.tag[IsEmailAddr]
-      parser(ea).map(p => Addr(ea, Some(p)))
-    })
+  def parseN(s: String): ErrorOr[List[Address]] =
+    ErrorOr.safeT(Deterministic)(InternetAddress.parse(s).toList)
 
-  def envelopeLoader(implicit rea: Retriever[Addr]): Retriever[Envelope] =
-    envelopeLoaderG[Envelope](get => envelopeFrontLoaderF(get).from(get("from")))
+  final class Retrievers(implicit rs: Retriever[String]) {
 
-  def envelopeFrontLoader(implicit rea: Retriever[Addr]): Retriever[EnvelopeFront] =
-    envelopeLoaderG[EnvelopeFront](envelopeFrontLoaderF)
+    implicit val addr1: Retriever[Addr] =
+      rs.emap(s => {
+        val ea = s.tag[IsEmailAddr]
+        parse1(ea).map(p => Addr(ea, Some(p)))
+      })
 
-  private[this] def envelopeFrontLoaderF(get: (String => Addr)) : EnvelopeFront = {
-    val to = get("to")
-    EnvelopeFront(NonEmptyList(to))
+    implicit val addrN: Retriever[List[Addr]] =
+      rs.emap(parseN).map(as =>
+          as.map(a => Addr(a.toString.tag, Some(a))))
+
+    implicit val addrNEL: Retriever[NonEmptyList[Addr]] =
+      addrN.emap {
+        case Nil    => ErrorOr error "At least one address required."
+        case h :: t => ErrorOr(NonEmptyList.nel(h, t))
+      }
+
+    implicit val envelopeFront: Retriever[EnvelopeFront] =
+      Retriever[EnvelopeFront](k => {
+        implicit val s = PropScope(n => s"$k.$n")
+        for (
+          toE <- getOE[NonEmptyList[Addr]]("to")
+        ) yield for {
+            to  <- toE
+            cc  <- get[List[Addr]]("cc", Nil)
+            bcc <- get[List[Addr]]("bcc", Nil)
+          } yield
+            EnvelopeFront(to, cc, bcc)
+      })
+
+    implicit val envelope: Retriever[Envelope] =
+      Retriever[Envelope](k => {
+        implicit val s = PropScope(n => s"$k.$n")
+        (getOE[Addr]("from"), envelopeFront.run(k)) match {
+          case (None, None)       => None
+          case (Some(_), None)    => Some(ErrorOr error "'from' specified without 'to'.")
+          case (None, Some(_))    => Some(ErrorOr error "'to' specified without 'from'.")
+          case (Some(a), Some(b)) => Some(for {f <- a; env <- b} yield env.from(f))
+        }
+      })
   }
 
-  private[this] def envelopeLoaderG[E](f: (String => Addr) => E)(implicit rea: Retriever[Addr]): Retriever[E] =
-    Retriever[E](k => {
-      implicit val s = PropScope(n => s"$k.$n")
-      def get(n: String) = need[Addr](n)
-      Some(ErrorOr(f(get)))
-    })
-
   implicit class EAExt(val ea: Addr) extends AnyVal {
-    def parsed = ea.tryParse(getParsed, parser)
+    def parsed = ea.tryParse(getParsed, parse1)
   }
 
   implicit class EAExtF[F[_]](val f: F[Addr]) extends AnyVal {

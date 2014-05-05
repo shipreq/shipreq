@@ -114,9 +114,10 @@ object TestHelpers {
 
   implicit def arbitraryJobQueue = arbMap[JobQueue, List[MsgHeader]](emptyQueue ++ _)
 
-  object MockEmailEnvelopeProps extends Email.EnvelopeProps {
+  class MockEmailEnvelopeProps(archive: Boolean) extends Email.EnvelopeProps {
     private[this] implicit def autoParseEa(ea: String): Addr = Addr(ea.tag)
     override val publicFrom: Addr = "publicFrom"
+    override val archiveAddrs = if (archive) List[Addr]("archiveAddr") else Nil
   }
 
   object MockEmailTokenValues extends Email.TokenValues {
@@ -124,7 +125,7 @@ object TestHelpers {
     override val loginUrl = "loginUrl"
   }
 
-  val MockEmails = new Emails(MockEmailEnvelopeProps, MockEmailTokenValues)
+  def MockEmails(archive: Boolean) = new Emails(new MockEmailEnvelopeProps(archive), MockEmailTokenValues)
 
   def manifest[T](implicit m: Manifest[T]) = m
 }
