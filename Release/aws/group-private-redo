@@ -1,7 +1,0 @@
-#!/bin/bash
-cd "$(dirname "$0")"
-
-[ $# -ne 1 ] && echo "Usage: $0 <ip>" && exit 1
-./group-private-revoke
-echo
-./group-private-allow "$@"

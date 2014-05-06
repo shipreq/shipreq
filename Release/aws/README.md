@@ -23,7 +23,6 @@ Remote Service Setup
 
 2. Security groups
   * ./group-webapp-create
-  * ./group-private-create
   * ./group-devaccess-redo
 
 3. Create EC2 instance
@@ -58,7 +57,8 @@ Remote Service Setup
     * Backup Window: 18:00-18:30 (UTC)
     * Maintenance Window: Sat 19:00-19:30 (UTC)
   * RDS > Security Groups
+    The following steps will allow access from EC2 instances in the webapp security group.
     * Default
     * Connection type: EC2
-    * EC2 Security Name: private
+    * EC2 Security Name: webapp
     * Authorize
