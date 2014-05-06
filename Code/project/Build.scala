@@ -79,7 +79,8 @@ object ShipReq extends Build {
       val dir = "base-db"
 
       override def deps =
-        postgresql ++ slick ++ bonecp ++ flyway ++ logback ++ testScope(scalaTest)
+        postgresql ++ slick ++ bonecp ++ flyway ++ logback ++
+        providedScope(jodaTime)
 
       override def project = typicalProject
         .dependsOn(baseUtil)

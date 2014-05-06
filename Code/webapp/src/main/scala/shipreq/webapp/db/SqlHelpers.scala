@@ -1,12 +1,9 @@
 package shipreq.webapp
 package db
 
-import java.sql.Timestamp
-import org.joda.time.DateTime
 import scala.slick.jdbc.{GetResult, SetParameter, PositionedResult, PositionedParameters}
-import scalaz.NonEmptyList
 import shipreq.base.db.SqlHelpers._
-import lib.ScalazSubset._
+import shipreq.base.db.JodaTimeSqlHelpers._
 import lib.Types._
 import feature.UcFilter
 import security.PasswordAndSalt
@@ -16,10 +13,6 @@ object SqlHelpers {
   implicit def autotag[T <: AnyRef](t: T): T @@ Validated = t.tag[Validated]
 
   @inline implicit def shortToFieldKeyType(ordinal: Short): FieldKeyType = FieldKeyType(ordinal)
-
-  implicit def TimestampToDateTime(t: Timestamp): DateTime = new DateTime(t)
-  implicit val GR_DateTime = GetResult(r => TimestampToDateTime(r.nextTimestamp))
-  implicit val GR_DateTimeOption = GetResult(r => r.nextTimestampOption.map(TimestampToDateTime))
 
   implicit val GR_UseCaseNumber = GR_TaggedShort[UseCaseNumber]
   implicit val SP_UseCaseNumber = SP_TaggedShort[UseCaseNumber]
@@ -59,14 +52,14 @@ object SqlHelpers {
     def apply(v: FieldKeyType, pp: PositionedParameters): Unit = pp.setShort(v.id)
   }
 
-  implicit val GR_FieldKey = GetResult {r => FieldKeyRec(r.<<, r.<<, r.<<)}
+  implicit val GR_FieldKey = GetResult(r => FieldKeyRec(r.<<, r.<<, r.<<))
   implicit val GR_PasswordAndSalt = GetResult(r => PasswordAndSalt.restore(r.nextString.tag, r.<<))
   implicit val GR_Project = GetResult(r => Project(r.<<, r.<<, r.<<))
   implicit val GR_ProjectSummary = GetResult(r => ProjectSummary(r.nextId[ProjectId], r.<<, r.<<, r.<<, r.<<, r.<<, r.<<))
   implicit val GR_TextRev = GetResult(r => TextRev(r.<<, r.<<, r.<<, r.<<))
   implicit val GR_UcFieldText= GetResult(r => UcFieldText(r.nextStringOption.asLabelC, r.<<, r.<<, r.<<))
   implicit val GR_UcFieldTextWithFK = GetResult(r => UcFieldTextWithFK(r.<<, r.<<))
-  implicit val GR_UseCaseIdent = GetResult {r => UseCaseIdent(r.<<, r.<<, r.<<)}
+  implicit val GR_UseCaseIdent = GetResult(r => UseCaseIdent(r.<<, r.<<, r.<<))
   implicit val GR_UseCaseRev = GetResult(r => UseCaseRev(r.<<, r.<<, r.<<, UseCaseHeader(r.nextString), r.<<))
   implicit val GR_UseCaseSummary = GetResult(r => UseCaseSummary(r.nextId[UseCaseIdentId], r.<<, r.<<, r.<<))
   implicit val GR_UserDescriptor = GetResult(r => UserDescriptor(r.<<, r.<<, r.<<, userRoles(r)))
@@ -97,7 +90,4 @@ object SqlHelpers {
       case None        => Set.empty
       case Some(roles) => roles.split(',').toSet
     }
-
-  private def idsToSql(ids: NonEmptyList[JLong]): String = ids.map(_.toString).intercalate(",")
-
 }

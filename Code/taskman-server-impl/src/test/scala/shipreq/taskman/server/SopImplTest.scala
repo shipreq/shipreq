@@ -6,6 +6,7 @@ import org.specs2.mutable.Specification
 import org.specs2.time.NoTimeConversions
 import scala.slick.jdbc.StaticQuery.query
 import scala.util.Random
+import shipreq.base.db.JodaTimeSqlHelpers._
 import shipreq.base.test.specs2.db.DatabaseTest
 import shipreq.base.util.jodatime.JodaTimeHelpers._
 import shipreq.base.util.ScalaExt._
@@ -13,7 +14,6 @@ import shipreq.taskman.api.impl.Serialisation
 import shipreq.taskman.api.Types._
 import shipreq.taskman.api.{MsgId, MsgType, Msg, Priority}
 import Msg.ReRegistrationAttempted
-import SopImpl._
 import SopImpl.Sql._
 
 class SopImplTest extends Specification with DatabaseTest with NoTimeConversions {

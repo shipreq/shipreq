@@ -1,6 +1,6 @@
 package shipreq.taskman.server
 
-import org.joda.time.{Period, DateTime}
+import org.joda.time.Period
 import scala.slick.jdbc.JdbcBackend.{Database, Session}
 import scalaz.effect.IO
 import scalaz.std.option.optionInstance
@@ -34,18 +34,13 @@ object SopImpl {
   // -------------------------------------------------------------------------------------------------------------------
 
   object Sql {
-    import java.sql.Timestamp
-    import org.postgresql.util.PGInterval
     import scala.slick.jdbc.{GetResult, SetParameter, PositionedParameters}
     import scala.slick.jdbc.StaticQuery.{query, queryNA}
     import shipreq.base.db.SqlHelpers._
+    import shipreq.base.db.JodaTimeSqlHelpers._
 
     implicit val GR_JsonMsg = GR_Json[Msg]
     implicit val SP_JsonMsg = SP_Json[Msg]
-
-    // TODO joda time + slick should be shared in base-db
-    implicit def TimestampToDateTime(t: Timestamp): DateTime = new DateTime(t)
-    implicit val GR_DateTime = GetResult(r => TimestampToDateTime(r.nextTimestamp))
 
     implicit object SP_ArchiveIntent extends SetParameter[ArchiveIntent] {
       def apply(v: ArchiveIntent, pp: PositionedParameters): Unit = {
@@ -77,16 +72,6 @@ object SopImpl {
     implicit val GR_Priority = GetResult(r => Priority(r.<<))
     implicit object SP_Priority extends SetParameter[Priority] {
       def apply(v: Priority, pp: PositionedParameters): Unit = pp setShort v.value
-    }
-
-    implicit object SP_Period extends SetParameter[Period] {
-      def apply(v: Period, pp: PositionedParameters): Unit = {
-        val i = new PGInterval(
-          v.getYears, v.getMonths, v.getDays, v.getHours, v.getMinutes,
-          v.getSeconds.toDouble + v.getMillis/1000.0
-        )
-        pp.setObject(i, java.sql.Types.OTHER)
-      }
     }
 
     implicit val GR_MsgHeader = GetResult(r => MsgHeader(r.<<, r.<<, r.<<))

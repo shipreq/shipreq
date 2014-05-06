@@ -4,6 +4,7 @@ package db
 import org.joda.time.DateTime
 import scala.slick.jdbc.StaticQuery
 import shipreq.base.db.SqlHelpers._
+import shipreq.base.db.JodaTimeSqlHelpers._
 import shipreq.webapp.db.SqlHelpers._
 import lib.Types._
 import feature.UcFilter
