@@ -1,8 +1,0 @@
-#!/bin/bash
-
-mkdir -p /is \
-  && mkfs.ext4 -O ^has_journal,dir_index,sparse_super,uninit_bg /dev/xvdb \
-  && echo "/dev/xvdb  /is  ext4  rw,noatime  0 0" >> /etc/fstab \
-  && mount /is \
-  && df -h
-

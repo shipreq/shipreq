@@ -1,0 +1,10 @@
+#!/bin/bash
+cd $(dirname "$0") || exit 1
+
+[ -z "$1" ] && echo "Usage: $0 <public DNS>" && exit 1
+
+webapp/deploy-jetty $ip
+webapp/deploy-package  $ip
+webapp/deploy-war $ip
+taskman/deploy-package  $ip
+taskman/deploy-jar $ip

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+cd ~
+d=instance_store-device
+s=instance_store-swapsize
+
+if [ ! -e $d ]; then
+  echo "Device file not found: $d"
+else
+  ./instance_store-init
+  if [ ! -e $s ]; then
+    echo "Swap-size file not found: $s"
+  else
+    ./instance_store-swap
+  fi
+fi

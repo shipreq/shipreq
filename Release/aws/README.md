@@ -40,7 +40,8 @@ Remote Service Setup
     * AWS console > Instances
     * ec2-get-console-output `instance_id`
     * Click instance and copy `Public DNS`
-    * ssh root@<public dns>
+    * export ip=<public dns>
+    * ssh root@$ip
 
 4. Create database
   * AWS console > RDS
@@ -62,3 +63,23 @@ Remote Service Setup
     * Connection type: EC2
     * EC2 Security Name: webapp
     * Authorize
+
+Notes
+=====
+
+### Storage
+
+* Instance = local, transient.
+* EBS = network, persistent, fast, snapshotable, bootable, seperate charges.
+* S3  = network, persistent, slow.
+
+
+### Virtualisation
+
+* PV (Paravirtual)
+  * Fast
+  * Linux-only
+
+* HVM (Hardware-assisted Virtual Machine)
+  * Slow
+  * Better hardware isolation

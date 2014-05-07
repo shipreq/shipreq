@@ -1,0 +1,25 @@
+#!/bin/bash
+
+f=~/instance_store-swapsize
+
+if [ -e $f -a $# -eq 0 ]; then
+  size=$(< $f)
+elif [ $# -eq 1 ]; then
+  size="$1"
+  echo "$1" > $f
+else
+  echo "Usage: $0 <size>"
+  echo
+  df -h
+  exit 1
+fi
+
+swp=/is/swap
+
+fallocate -l "$size" $swp \
+  && chmod 600 $swp \
+  && mkswap $swp \
+  && swapon $swp \
+  && echo && df -h /is \
+  && echo && free -h
+

@@ -31,15 +31,42 @@ alias la='ls -la'
 alias ll='ls -l'
 alias lsa='ls -a'
 alias view='vim -R'
+alias diffu='colordiff -u'
 
 alias p='pacman -S --needed'
 alias syu='pacman -Syu'
-alias ql='pacman -Ql'
-
 alias syua='yaourt -Syua'
 alias y='yaourt -S --needed'
 alias yy='yaourt -S --needed --noconfirm'
+alias ql='pacman -Ql'
+alias ssc=systemctl
 
-export JAVA_HOME=/opt/java7
-export PATH="$JAVA_HOME/bin:$PATH"
+if [ -e /opt/java7 ]; then
+  export JAVA_HOME=/opt/java7
+  export PATH="$JAVA_HOME/bin:$PATH"
+fi
 
+function vime {
+  f="$1"
+  if [ -z "$f" ]; then
+    echo "USAGE: vime <filename> [<script args>]"
+  elif [ ! -x "$f" ]; then
+    echo "Not executable: $f"
+  else
+    shift
+    ff="$(dirname "$f")/$(basename "$f")"
+    vim "$f" && clear && echo "> $ff $*" && "$ff" "$@"
+  fi
+}
+
+function mc {
+  if [ -z "$1" ]; then
+    echo "Directory name required."
+  elif [ -e "$1" ]; then
+    echo "Dir exists, skipping creation."
+    cd "$1"
+  else
+    mkdir -p "$1" && echo "Dir created."
+    cd "$1"
+  fi
+}

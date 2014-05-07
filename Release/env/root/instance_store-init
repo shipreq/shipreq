@@ -1,0 +1,13 @@
+#!/bin/bash
+
+dev=$(<instance_store-device)
+[ ! -e $dev ] && echo "Device doesn't exist: $dev" && exit 1
+mnt=/is
+
+mkdir -p $mnt \
+  && mkfs.ext4 -O ^has_journal,dir_index,sparse_super,uninit_bg $dev \
+  && mount -t ext4 -o rw,noatime $dev $mnt \
+  && df -h $mnt
+
+# Storage is wiped on reboot. It won't be able to automount.
+#  && echo "$dev  $mnt  ext4  rw,noatime  0 0" >> /etc/fstab \

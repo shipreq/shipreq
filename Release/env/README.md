@@ -10,6 +10,13 @@ OS & Environment Setup
     ./init-packages
     ./fix-yaourt-micro     # Only if running a micro instance
     ./init-packages2
-    ./init-instance_store  # Unless running a micro instance
+
+    # Unless running a micro instance
+    lsblk
+    echo /dev/xvda2 > instance_store-device
+    ./instance_store-init
+    ./instance_store-swap <size>
+
     reboot
+    ./instance_store-reinit
 
