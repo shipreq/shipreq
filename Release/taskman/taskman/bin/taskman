@@ -1,9 +1,11 @@
 #!/bin/bash
-cd $(dirname $(readlink -e "$0"))/.. || exit 1
-#tmp=/tmp/$(date +%Y%m%d-%H%M%S)-$$
 
 usage="Usage: $0 [start|status|stop|restart]"
 [ $# -ne 1 ] && echo "$usage" && exit 1
+
+self=bin/taskman
+cd $(dirname $(readlink -e "$0"))/.. || exit 1
+[ ! -x "$self" ] && echo "Failed to determine self: $self" && exit 2
 
 bin=bin
 pidF=taskman.pid
@@ -52,9 +54,9 @@ case "$1" in
     ;;
 
   restart)
-    is_alive && echo "Stopping..." && "$0" stop >/dev/null
+    is_alive && echo "Stopping..." && "$self" stop >/dev/null
     is_alive && echo "Failed to stop." && exit 3
-    exec "$0" start
+    exec "$self" start
     ;;
 
   *)
