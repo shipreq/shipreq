@@ -35,4 +35,9 @@ final object Util {
   def existentLocalResources(paths: List[String]): Stream[URL] =
     paths.toStream.map(f => Try(getClass.getResource(f)).getOrElse(null)).filter(_ ne null)
 
+  def cutoffStr(s: String, cutoff: Int): String =
+    if (s.length <= cutoff)
+      s
+    else
+      s.substring(0, cutoff - 1) + "\u2026"
 }

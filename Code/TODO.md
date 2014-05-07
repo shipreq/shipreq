@@ -66,7 +66,6 @@ Functional
 * [S.0.3=3] [TW+] Allow change email.
 * [S.0.2=2] [TW+] Allow delete account.
 * [S.0.2=2] [ WX] Page for 404 errors.
-* [S.0.2=2] [ WX] Page for 5xx errors.
 
 * [C.3.4=7] [ WX] Add JS validation to register2 (ie. account creation).
 * [C.3.3=6] [ W+] Reorder UCs. Might be superceded by better UC org func such as grouping.
@@ -80,7 +79,6 @@ Functional
 Technical
 =========
 
-* [S.4.5=9] [TW!] Errors in webapp should be sent to support.
 * [S.3.5=8] [ WP] Add proper webapp DB indexes.
 * [S.0.5=5] [TW ] Monitoring. (nagios, riemann.io)
 * [S.0.5=5] [ W!] When fields are loaded but no FV exists, fields should be cleared. (Will affect in-place loading.)

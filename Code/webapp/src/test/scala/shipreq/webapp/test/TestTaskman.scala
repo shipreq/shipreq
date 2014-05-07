@@ -37,4 +37,6 @@ class TestTaskman extends TaskmanInterface {
 
   @volatile var ran: List[ApiOp[_]] = List.empty
   @volatile var msgsSubmitted: List[Msg] = List.empty
+
+  override def !(m: Msg): Unit = ()
 }

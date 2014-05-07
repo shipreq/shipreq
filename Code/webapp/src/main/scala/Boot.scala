@@ -1,17 +1,15 @@
 package bootstrap.liftweb
 
 import net.liftweb.common.Logger
-import net.liftweb.http._
+import net.liftweb.http.{LiftRules, LiftSession, S}
+import net.liftweb.http.provider.HTTPParam
 import net.liftweb.util.Props
-import net.liftweb.util.Props.RunModes._
-import provider.HTTPParam
-
-import shipreq.webapp._
-import shipreq.webapp.app.{DI, Defaults, AppSiteMap}
-import db.DB
-import feature.SessionStats
-import lib.Taskman
-import security.Oshiro
+import net.liftweb.util.Props.RunModes.Test
+import shipreq.webapp.app.{ExceptionHandler, DI, Defaults, AppSiteMap}
+import shipreq.webapp.db.DB
+import shipreq.webapp.feature.SessionStats
+import shipreq.webapp.lib.Taskman
+import shipreq.webapp.security.Oshiro
 
 /**
  * A class that's instantiated early and run.  It allows the application
@@ -56,6 +54,11 @@ class Boot extends DI {
     val suppHeaderList: List[HTTPParam] = List(HTTPParam("X-Frame-Options", "DENY"))
     LiftRules.supplimentalHeaders = _ addHeaders suppHeaderList
 
+    // Custom error handling
+    LiftRules.exceptionHandler.prepend {
+      case (_, r, e) => ExceptionHandler.handleServerError(r, e)
+    }
+
     // Add support for HAML/Jade template (must be after other LiftRules)
     ScamlJade.init(List("scaml", "html"))
   }
@@ -72,13 +75,14 @@ class Boot extends DI {
     }
 
   def preloadTemplates(): Unit = {
-    snippet.DynModal
-    snippet.Quotes
-    snippet.ShareEditConsts
-    snippet.project.ProjectHeaderConsts
-    snippet.project.ShareListConsts
-    snippet.project.UseCaseCrudlConsts
-    snippet.uce.Renderer.Templates
+    import shipreq.webapp.snippet._
+    DynModal
+    Quotes
+    ShareEditConsts
+    project.ProjectHeaderConsts
+    project.ShareListConsts
+    project.UseCaseCrudlConsts
+    uce.Renderer.Templates
   }
 
   def logImportantSettings(): Unit = {

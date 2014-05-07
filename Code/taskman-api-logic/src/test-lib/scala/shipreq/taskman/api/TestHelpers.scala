@@ -49,6 +49,7 @@ object TestHelpers {
 
   def genEmail: Gen[EmailAddr] = arbitrary[String].map(_.tag)
   def genUserId: Gen[UserId] = arbitrary[Long].map(_.tag)
+  def genUserIdO: Gen[Option[UserId]] = Gen.option(genUserId)
 
   implicit def arbMsg: Arbitrary[Msg] =
     Arbitrary { Gen.oneOf(allMsgs.classes.toSeq) flatMap genMsg }
@@ -85,6 +86,14 @@ object TestHelpers {
         newsletter <- arbitrary[Boolean]
       } yield
         M.LandingPageHit(email, name, msg, newsletter)
+
+    case T.WebappErrorOccurred =>
+      for {
+        usr <- genUserIdO
+        url <- arbitrary[Option[String]]
+        msg <- arbitrary[String]
+      } yield
+        M.WebappErrorOccurred(usr, url, msg)
 
     case T.DummyMsg =>
       for {

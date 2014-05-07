@@ -1,6 +1,7 @@
 package shipreq.taskman.api
 
 import shipreq.base.util.ScalaExt.Tuple2Ext
+import shipreq.base.util.Util
 
 /**
  * A datum that can be sent to the Taskman server and meaningfully processed.
@@ -38,6 +39,10 @@ object Msg {
   case class SendDiagEmail(email: EmailAddr, subject: String, body: String) extends Msg
 
   case class SyncToMailingList(sqlCond: Option[String]) extends Msg
+
+  case class WebappErrorOccurred(usr: Option[UserId], url: Option[String], report: String) extends Msg {
+    override def toString = s"WebappErrorOccurred($usr, $url, ${Util.cutoffStr(report, 80)})"
+  }
 }
 
 // =====================================================================================================================
@@ -54,6 +59,7 @@ object MsgType {
   case object UserUpdated             extends MsgType(104, classOf[Msg.UserUpdated])
   case object LandingPageHit          extends MsgType(200, classOf[Msg.LandingPageHit])
   case object SyncToMailingList       extends MsgType(300, classOf[Msg.SyncToMailingList])
+  case object WebappErrorOccurred     extends MsgType(500, classOf[Msg.WebappErrorOccurred])
 
   val values = List[MsgType](
     RegistrationRequested
@@ -65,6 +71,7 @@ object MsgType {
     , DummyMsg
     , SendDiagEmail
     , SyncToMailingList
+    , WebappErrorOccurred
   )
 
   private[this] val byId: Map[Short, MsgType] = {

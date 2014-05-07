@@ -1,10 +1,15 @@
 package shipreq.webapp.lib
 
+import net.liftweb.actor.SpecializedLiftActor
 import scala.slick.jdbc.JdbcBackend.Session
 import shipreq.base.db.SingleConnDatabase
+import shipreq.base.util.Error
+import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.impl.TaskmanApi
 import shipreq.taskman.api.{MsgId, Msg, ApiOp}
-import shipreq.webapp.app.AppConfig
+import shipreq.taskman.api.Msg.WebappErrorOccurred
+import shipreq.webapp.app.{DI, AppConfig}
+import shipreq.webapp.security.Oshiro
 import ApiOp._
 
 object Taskman {
@@ -17,9 +22,12 @@ object Taskman {
     CfgPut(K.homeUrl,  SM.Home.absoluteUrl),
     CfgPut(K.loginUrl, SM.Login.absoluteUrl)
   )
+
+  def errorMsg(e: Throwable, url: Option[String], suppInfo: String) =
+    WebappErrorOccurred(Oshiro.loggedInUser.map(_.id), url, s"${Error stackTraceStr e}\n\nSUPP: $suppInfo")
 }
 
-object TaskmanImpl extends TaskmanInterface {
+object TaskmanImpl extends TaskmanInterface with HasLogger {
   val ctx = TaskmanApi.Context(Some(AppConfig.TaskmanSchema))
 
   override def run[A](op: ApiOp[A])(s: Session): A =
@@ -30,6 +38,24 @@ object TaskmanImpl extends TaskmanInterface {
     for (op <- ops)
       reify(op).unsafePerformIO()
   }
+
+  override def !(m: Msg): Unit = AsyncActor ! m
+
+  private object AsyncActor extends SpecializedLiftActor[Msg] {
+    override protected def messageHandler = {
+      case m: Msg =>
+        try
+          DI.DaoProvider.vend.withRawSession(submitMsg(m))
+        catch {
+          case e: Throwable if m.isInstanceOf[WebappErrorOccurred] =>
+            log.error(e, s"Error occurred trying to send $m. FUCK.")
+          case e: Throwable =>
+            log.error(e, s"Error occurred send $m.")
+            this ! Taskman.errorMsg(e, None, s"Was trying to send: $m")
+        }
+    }
+  }
+
 }
 
 trait TaskmanInterface {
@@ -39,4 +65,7 @@ trait TaskmanInterface {
 
   def submitMsg(m: Msg)(s: Session): MsgId       = run(SubmitMsg(m))(s)
   def submitMsgs(ms: Seq[Msg])(s: Session): Unit = run(SubmitMsgs(ms))(s)
+
+  /** Submit msg asynchronously. */
+  def !(m: Msg): Unit
 }

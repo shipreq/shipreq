@@ -63,6 +63,15 @@ final class BusinessLogic[F[_]](
     case SyncToMailingList(cond) =>
       complete(ActiveUser syncToML cond)
 
+    case WebappErrorOccurred(usr, url, report) =>
+      val usrDescIo = usr.map(ActiveUser.tryDesc) getOrElse IO("None")
+      usrDescIo.flatMap { usrd =>
+        val subj = s"Webapp failure${url.map(" on: " + _) getOrElse ""}"
+        val desc = s"User: $usrd\n\nURL: $url\n\n$report"
+        val op = Support.API.ReportFailure(subj, desc, Support.Priority.High)
+        complete(run(op))
+      }
+
     case d: DummyMsg =>
       dummy(md, d)
   }
@@ -72,6 +81,12 @@ final class BusinessLogic[F[_]](
 
     def get(id: UserId): IOE[ShipReqUser] =
       run(FindShipReqUser(-\/(id))) >=> (ErrorOr.fromOptionS(_, s"User not found: $id"))
+
+    def tryDesc(id: UserId): IO[String] =
+      get(id).map {
+        case \/-(u) => u.toString
+        case -\/(e) => s"Error occurred looking up user #$id: ${e.msg}"
+      }
 
     def subscription(u: ShipReqUser) =
       Subscription(u.email, u.name, u.newsletter, AccountStatus.Active)

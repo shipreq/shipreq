@@ -81,7 +81,7 @@ abstract class ManualSubmitBase extends HasLogger {
 
   def exampleFor(t: T): Msg = {
     import Msg._
-    val ea = "you@gmail.com".tag[IsEmailAddr]
+    val ea = "yoar.mum@gmail.com".tag[IsEmailAddr]
     val url = "http://hello"
     val uid = 8000.tag[IsUserId]
     t match {
@@ -94,6 +94,7 @@ abstract class ManualSubmitBase extends HasLogger {
       case T.SendDiagEmail           => SendDiagEmail(ea, "test", "hello")
       case T.LandingPageHit          => LandingPageHit(ea, "Iskaral Pust", Some("No mule can match wits with me."), false)
       case T.SyncToMailingList       => SyncToMailingList(Some("id < 100"))
+      case T.WebappErrorOccurred     => WebappErrorOccurred(Some(uid), Some("/login"), "blah")
     }
   }
 

@@ -8,10 +8,10 @@ case class Priority(value: Short) extends AnyVal {
 
 object Priority {
 
-  @inline def High        = Priority(100)
-  @inline def Medium      = Priority(50)
   @inline def Low         = Priority(20)
-  @inline def UserWaiting = High
+  @inline def Medium      = Priority(50)
+  @inline def High        = Priority(80)
+  @inline def UserWaiting = Priority(100)
 
   def of(m: Msg): Priority = m match {
 
@@ -19,6 +19,9 @@ object Priority {
        | _: ReRegistrationAttempted
        | _: PasswordResetRequested
               => UserWaiting
+
+    case _: WebappErrorOccurred
+              => High
 
     case _: DummyMsg
        | _: SendDiagEmail
