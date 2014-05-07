@@ -37,7 +37,10 @@ Third-Party Setup
     * Global Support Emails --> ShipReq <contact@shipreq.com>
     * BCC --> shipreq@gmail.com
 2. Email Notifications
-    * Agent Notifications --> [x] New Ticket Created
+    * Agent Notifications > New Ticket Created > Edit
+      * Notification: On
+      * Subject: [ShipReq Support] New ticket: (#{{ticket.id}}) {{ticket.subject}}
+      * Notify Agents > Add
     * Requestor Notifications --> All off
 3. Ticket Fields
     * Type --> [x] Required when closing, RFI|RFC|Incident|Problem|Lead|Other
