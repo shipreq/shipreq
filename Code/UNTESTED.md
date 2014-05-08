@@ -17,4 +17,6 @@ UNTESTED
 * [ WU] DiagnosticEndpoints
 * [ WU] AdminSnippet
 * [ WU] LandingPage
+* [ WU] User pref updates
+* [T U] Business logic: WebappErrorOccurred
 
