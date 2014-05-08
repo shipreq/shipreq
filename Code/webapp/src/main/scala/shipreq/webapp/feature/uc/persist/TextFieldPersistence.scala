@@ -16,7 +16,7 @@ case class TextFieldPersistence(f: TextField) extends FieldPersistence[TextField
 
   override def load(loadCtx: FieldLoadCtx) = {
     val sd = loadCtx.fieldData.find(_.fkId == rec.id).map(_.textRev)
-    val text = sd.map(_.text).getOrElse("".tag[IsNormalised])
+    val text = sd.fold("".tag[IsNormalised])(_.text)
     FieldLoadResult.noSteps[Value, SavedData]((savedSteps, stepsAndLabels) => {
       val fv = FreeText.load(text)(savedSteps, stepsAndLabels)
       (fv,sd)

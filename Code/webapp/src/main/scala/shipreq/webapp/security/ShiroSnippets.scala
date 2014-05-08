@@ -48,7 +48,7 @@ object ShiroSnippets {
       case "email" => userAttribute(_.email)
     }
     def userAttribute(fn: UserDescriptor => String) =
-      (_: NodeSeq) => Text(loggedInUser.map(fn) getOrElse "?")
+      (_: NodeSeq) => Text(loggedInUser.fold("?")(fn))
     // "* *" #> Text(loggedInUser.map(fn) getOrElse "?")
   }
 

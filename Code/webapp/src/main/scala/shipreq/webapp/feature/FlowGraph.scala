@@ -142,7 +142,7 @@ object FlowGraph {
     def explicitFlows(implicit tops: List[FlatZipper]): List[ExplicitFlow] = tops map explicitFlow flatten
     def explicitFlow(z: FlatZipper): List[ExplicitFlow] = z.toList map explicitFlow flatten
     def explicitFlow(y: AnyFocus): List[ExplicitFlow] =
-      y.flowToClause map (_.refs.values.toList strengthL focus2node(y)) getOrElse List.empty
+      y.flowToClause.fold(List.empty[ExplicitFlow])(_.refs.values.toList strengthL focus2node(y))
 
     def startNodes(implicit c: Category, dzL: List[DeepFocus]): List[Node] = c match {
       case NC => List(dzL.head.label)

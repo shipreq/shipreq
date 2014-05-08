@@ -22,7 +22,7 @@ import util.JsExt.JqFocus
 object UseCaseEditor {
 
   case class State(uc: UseCase, prevSave: Option[UseCaseSaveCheckpoint], saveEnabled: Boolean) {
-    def currentRevision: Short = prevSave.map(_.rec.rev).getOrElse(0: Short)
+    def currentRevision: Short = prevSave.fold(0: Short)(_.rec.rev)
   }
   object State {
     def apply(cp: UseCaseSaveCheckpoint): State = State(cp.uc, Some(cp), false)
@@ -140,7 +140,7 @@ class UseCaseEditor(initialState: UseCaseEditor.State, val rels: UseCaseRelation
 
   def update(m: UcModifier): JsCmd = {
     val r1 = m.updateFn(ucUpdater)
-    val r2 = changeConstraint.map(_ apply r1) getOrElse r1
+    val r2 = changeConstraint.fold(r1)(_ apply r1)
     r2 match {
 
       case a@Changed(newUc, changes) =>
@@ -148,11 +148,11 @@ class UseCaseEditor(initialState: UseCaseEditor.State, val rels: UseCaseRelation
         renderer.jsRespondToChanges(changes)
 
       case NoChange =>
-        m.nopFn.map(_(renderer)) getOrElse Noop
+        m.nopFn.fold(Noop)(_(renderer))
 
       case ChangeFailure(vf) =>
-        val a = m.errFn.map(_(vf)) getOrElse renderer.jsRespondChangeFailure(vf)
-        val b = m.focusOnErr.map[JsCmd](_ ~> JqFocus) getOrElse Noop
+        val a = m.errFn.fold(renderer.jsRespondChangeFailure(vf))(_(vf))
+        val b = m.focusOnErr.fold(Noop)(_ ~> JqFocus)
         a |+| b
     }
   }

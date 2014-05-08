@@ -332,11 +332,9 @@ sealed trait DaoT extends DaoS {
     }
   }
 
-  def findOrCreateFieldKey(fkType: FieldKeyType, data: FieldKeyRecData): FieldKeyRec = {
+  def findOrCreateFieldKey(fkType: FieldKeyType, data: FieldKeyRecData): FieldKeyRec =
     SelectReusableFieldKeyId.firstOption(fkType, data)
-    .map(FieldKeyRec(_, fkType, data))
-    .getOrElse(createFieldKey(fkType, data))
-  }
+      .fold(createFieldKey(fkType, data))(FieldKeyRec(_, fkType, data))
 
   def syncFieldList(fields: List[FieldDefinition]): FieldListRec = {
     val fkRecs = fields.map(f => findOrCreateFieldKey(f.fieldKeyType, f.fieldKeyData))

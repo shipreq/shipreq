@@ -83,7 +83,7 @@ object SopImpl {
     val cfgGetQ = query[String, String]("select v from cfg where k=?")
 
     private[this] def getMsgsAssignNode_q(extraSel: Option[String], extraCond: Option[String]) = s"""
-         select ctid ${extraSel.map(s => s",$s") getOrElse ""}
+         select ctid ${extraSel.fold("")(s => s",$s")}
          from msgq
          where
            effective_from <= clock_timestamp()
@@ -91,7 +91,7 @@ object SopImpl {
              node is null                           -- Unassigned
              or updated_at <= clock_timestamp()-?   -- Assignment lapsed
            )
-           ${extraCond.map(s => s"and($s)") getOrElse ""}
+           ${extraCond.fold("")(s => s"and($s)")}
          order by priority desc
          limit ? -- for update
     """.sql

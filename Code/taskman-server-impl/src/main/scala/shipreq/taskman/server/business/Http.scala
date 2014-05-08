@@ -80,7 +80,7 @@ object Http {
   def recv(f: HttpURLConnection => InputStream): HttpURLConnection => IOE[String] = conn =>
     IO(ErrorOr.withResource(f(conn))(_.close){ in =>
       val entity: HttpEntity = new InputStreamEntity(in)
-      val charset = Option(ContentType get entity).map(_.getCharset) getOrElse defaultCharset
+      val charset = Option(ContentType get entity).fold(defaultCharset)(_.getCharset)
       val bytes = EntityUtils.toByteArray(entity)
       new String(bytes, charset)
     })

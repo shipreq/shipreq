@@ -16,10 +16,10 @@ private[taskman] object Serialisation {
   private def fieldRenamer[A: Manifest](m: BiMap[String, String]): FieldSerializer[A] =
     FieldSerializer({
       case p@(name, x) =>
-        Some(m.ab.get(name).map(newName => (newName, x)).getOrElse(p))
+        Some(m.ab.get(name).fold(p)(newName => (newName, x)))
     },{
       case f@JField(name, x) =>
-        m.ba.get(name).map(newName => JField(newName, x)).getOrElse(f)
+        m.ba.get(name).fold(f)(newName => JField(newName, x))
     })
 
   implicit val formats: Formats = (

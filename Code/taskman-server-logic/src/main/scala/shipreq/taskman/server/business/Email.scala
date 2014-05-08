@@ -110,7 +110,7 @@ final class Emails(ep: EnvelopeProps, tv: TokenValues) {
         ,_.kv("Name", l.name)
         ,_.kv("Email", l.email)
         ,_.kv("Newsletter", l.newsletter)
-        ,_.kv("Message", l.msg.map("\n\n" + _) getOrElse "<no msg>")
+        ,_.kv("Message", l.msg.fold("<no msg>")("\n\n" + _))
       ))
     Email.Content("Landing Page Contact", body)
   }

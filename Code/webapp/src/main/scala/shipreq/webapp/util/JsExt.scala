@@ -19,8 +19,8 @@ object JsExt {
   trait JqDurationExpr {
     def toJsArg: Option[String]
     @inline final def asOnlyArg = toJsArg getOrElse ""
-    @inline final def asOptionalLastArg = toJsArg map ("," + _) getOrElse ""
-    @inline final def asOptionalNonLastArg = toJsArg map (_ + ",") getOrElse ""
+    @inline final def asOptionalLastArg = toJsArg.fold("")("," + _)
+    @inline final def asOptionalNonLastArg = toJsArg.fold("")(_ + ",")
   }
   object DefaultDuration extends JqDurationExpr { override def toJsArg = None }
   object Fast extends JqDurationExpr { override def toJsArg = Some("'fast'") }

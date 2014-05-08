@@ -15,7 +15,7 @@ object ParsingUtils extends Logger {
     }
   }
 
-  @inline def flowHasRefs_?(c: Option[FlowClause]) = c.map(_.refs.nonEmpty).getOrElse(false)
+  @inline def flowHasRefs_?(c: Option[FlowClause]) = c.exists(_.refs.nonEmpty)
 
   def invalidateFlowArrows(text: String): String = {
     var t = text
@@ -64,10 +64,10 @@ object ParsingUtils extends Logger {
     NormalisedRefRegex.replaceAllIn(text, m => {
       val idText = m.group(1)
       val textIdentId = idText.toLong.tag[IsTextIdentId]
-      dbIdsToLocalIds.get(textIdentId).flatMap(nodeId => localIdsToLabels.get(nodeId)).map(makeStepRef).getOrElse {
+      dbIdsToLocalIds.get(textIdentId).flatMap(nodeId => localIdsToLabels.get(nodeId)).fold {
         warn(s"Unable to realise normalised step reference. ❚ Text: $text ❚ TextIdentId: $textIdentId ❚ DbIdsToLocalIds: $dbIdsToLocalIds ❚ LocalIdsToLabels: $localIdsToLabels")
         makeInvalidStepRef(idText)
-      }
+      }(makeStepRef)
     }).tag[InputCorrected]
   }
 }

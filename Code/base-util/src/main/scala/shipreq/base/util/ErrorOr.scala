@@ -168,7 +168,7 @@ final object ErrorOr {
         M.map(mea.ftoErrorM(f))(_.toErrorOr[Nothing])
 
       @inline def maybeFail(f: => A => Option[Error])(implicit M: Monad[M]): M[ErrorOr[Unit]] =
-        mea >=> f.andThen(_ map (_.toErrorOr) getOrElse ErrorOr.unit)
+        mea >=> f.andThen(_.fold(ErrorOr.unit)(_.toErrorOr))
 
       @inline def execE(f: Error => M[Unit])(implicit M: Monad[M]): M[Unit] =
         M.bind(mea){

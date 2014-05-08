@@ -55,7 +55,7 @@ object DynModal extends StaticSnippetHelpers {
         JsModalHide & successFn(newPassword))
     }
 
-    val currentPasswordTransform = curPasswordV.map(_.csssel).getOrElse(".curpw" #> "")
+    val currentPasswordTransform = curPasswordV.fold(".curpw" #> "")(_.csssel)
 
     run(ChangePasswordTemplate)(
       ".modal-title *" #> title

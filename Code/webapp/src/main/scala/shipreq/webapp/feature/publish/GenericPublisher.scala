@@ -45,9 +45,9 @@ abstract class GenericPublisher(input: Input) {
   def doc(header: X, lastUpdated: X, toc: X, articles: X): X =
           header |+| lastUpdated |+| toc |+| articles
 
-  def optionalDocHeader: X = input.header map docHeader getOrElse docHeaderSubst
+  def optionalDocHeader: X = input.header.fold(docHeaderSubst)(docHeader)
   def docHeaderSubst: X = zero
-  def docHeader(h: DocHeader): X = docHeader(docHeaderTitle(h.title), h.preface.map(docHeaderPreface).getOrElse(zero))
+  def docHeader(h: DocHeader): X = docHeader(docHeaderTitle(h.title), h.preface.fold(zero)(docHeaderPreface))
   def docHeader(title: X, preface: X): X
   def docHeaderTitle(t: String): X
   final def docHeaderPreface(p: String) = markedUpText(p)

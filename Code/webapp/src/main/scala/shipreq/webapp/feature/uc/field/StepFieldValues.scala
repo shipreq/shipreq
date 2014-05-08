@@ -28,7 +28,7 @@ case class StepFieldValue(field: StepField, tree: StepTree, textmap: Map[LocalSt
   assume(textmap.keySet == tree.mapRecursive(_.id).toSet, "There must be a StepText for all steps.")
 
   def getNormalisedText(id: LocalStepId)(implicit savedSteps: SavedSteps): NormalisedText =
-    textmap.get(id).map(_.normalisedText).getOrElse("".tag[IsNormalised])
+    textmap.get(id).fold("".tag[IsNormalised])(_.normalisedText)
 
   def withNewStep(newTree: StepTree, stepId: LocalStepId) =
     copy(tree = newTree, textmap = textmap + (stepId -> StepText.empty))

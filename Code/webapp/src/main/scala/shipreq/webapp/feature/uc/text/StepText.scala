@@ -197,7 +197,7 @@ class StepTextUpdater(field: StepField, stepId: LocalStepId) extends ParsedTextU
   : ChangeResult[Option[C], Change] = co match {
     case Some(c) =>
       val localIdsToLabels = ctx.getIdsToLabels
-      val changeFound = c.refs.exists {case (localId, label) => localIdsToLabels.get(localId).map(_ != label).getOrElse(true)}
+      val changeFound = c.refs.exists {case (localId, label) => localIdsToLabels.get(localId).fold(true)(_ != label)}
       if (!changeFound) NoChange
       else {
         var newLabels = TreeSet.empty[StepLabel]
@@ -218,7 +218,7 @@ class StepTextUpdater(field: StepField, stepId: LocalStepId) extends ParsedTextU
 
     if (oneId == stepId) NoChange
     else {
-      val clauseRefs = co.map(_.refs).getOrElse(Map.empty)
+      val clauseRefs = co.fold[Flow.Refs](Map.empty)(_.refs)
       val a = manyIds.contains(stepId)
       val b = clauseRefs.contains(oneId)
       if (a == b) NoChange

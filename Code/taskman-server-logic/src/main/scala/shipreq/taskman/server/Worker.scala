@@ -60,7 +60,7 @@ object Worker extends HasLogger {
 
     def raise(c: Email.Content, p: Support.Priority): IOE[Unit] = {
       val io1 = bopReifier(SupportOp(Support.API.ReportFailure(c.subject, c.body, p)))
-      val io2 = emails archive c map (bopReifier(_)) getOrElse IOE.nop
+      val io2 = emails.archive(c).fold(IOE.nop)(bopReifier.apply)
       io1 execMap io2
     }
 

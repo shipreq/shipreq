@@ -102,13 +102,12 @@ class StepFieldSaver(
     def anyNewOrModified = v.tree.iteratorRecursive.exists(n =>
       savedSteps.ba.get(n.id)
         .flatMap(txtIdentId => prev.get(txtIdentId))
-        .map(prev => different_?(n, prev))
-        .getOrElse(true)
+        .fold(true)(prev => different_?(n, prev))
     )
 
     def anyRemoved = prev.exists(_._2.label match {
       case None      => false
-      case Some(lbl) => labelsToLocalId.get(lbl).map(!v.textmap.contains(_)).getOrElse(true)
+      case Some(lbl) => labelsToLocalId.get(lbl).fold(true)(!v.textmap.contains(_))
     })
 
     anyNewOrModified || anyRemoved

@@ -64,9 +64,9 @@ final class BusinessLogic[F[_]](
       complete(ActiveUser syncToML cond)
 
     case WebappErrorOccurred(usr, url, report) =>
-      val usrDescIo = usr.map(ActiveUser.tryDesc) getOrElse IO("None")
+      val usrDescIo = usr.fold(IO("None"))(ActiveUser.tryDesc)
       usrDescIo.flatMap { usrd =>
-        val subj = s"Webapp failure${url.map(" on: " + _) getOrElse ""}"
+        val subj = s"Webapp failure${url.fold("")(" on: " + _)}"
         val desc = s"User: $usrd\n\nURL: $url\n\n$report"
         val op = Support.API.ReportFailure(subj, desc, Support.Priority.High)
         complete(run(op))

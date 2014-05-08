@@ -124,7 +124,7 @@ object MailChimp {
 
   final case class PartialApiFailure(code: Int, msg: String, email: Option[EmailAddr]) {
     def fullMsg = {
-      val emailPrefix = email.map(e => s"$e: ").getOrElse("")
+      val emailPrefix = email.fold("")(e => s"$e: ")
       s"$emailPrefix[$code] $msg"
     }
   }
