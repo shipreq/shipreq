@@ -33,16 +33,16 @@ First, be in webapp/
     sudo systemctl restart postgresql
 
 * Create local DBs
-    script/db/create dev
-    script/db/create test
+    bin/db/create dev
+    bin/db/create test
 
 * Initialise
   1. Setup the taskman schema.
      Required so that webapp can startup and issue `CfgPut`s.
-     `script/taskman/migrate_db`
+     `bin/taskman/migrate_db`
   2. Start the webapp.
      Issues `CfgPuts` required by Taskman on startup.
-     `script/webapp/run`
+     `bin/webapp/run`
 
 
 Updating Dependencies
@@ -75,22 +75,13 @@ Development
 
 ### Running
 
-Everything: `script/run`
-Taskman:    `script/taskman/run`
-Webapp:     `script/webapp/run`
+Everything: `bin/run`
+Taskman:    `bin/taskman/run`
+Webapp:     `bin/webapp/run`
 
 ### Continuous Building
 
-Scala:
-    sbt
-    project taskman # Example
-    ~ct             # ct is an alias meaning "Clean Test"
-
-Webapp front-end:
-    grunt watch
-
-Webapp back-end:
-    script/webapp/run
+`run/dev`
 
 ### Testing
 
