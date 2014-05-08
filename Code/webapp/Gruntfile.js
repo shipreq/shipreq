@@ -91,7 +91,7 @@ module.exports = function(grunt) {
       // Copies required 3rd-party files
       vendor: {
         files: [
-          {src:'.bower/jquery/jquery.min.js',            dest:'<%= cfg.vendor.out %>/jquery.js',         nonull:true},
+          {src:'.bower/jquery/dist/jquery.min.js',       dest:'<%= cfg.vendor.out %>/jquery.js',         nonull:true},
           {src:'.bower/zeroclipboard/ZeroClipboard.swf', dest:'<%= cfg.vendor.out %>/ZeroClipboard.swf', nonull:true},
           {src:'<%= cfg.vendor.cust %>/viz.js',          dest:'<%= cfg.vendor.out %>/viz.js',            nonull:true},
         ]

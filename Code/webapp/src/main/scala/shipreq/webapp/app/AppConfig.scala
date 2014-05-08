@@ -69,5 +69,5 @@ final object AppConfig {
     () => v
   }
 
-  val jQueryVersion = "2.1.0"
+  val jQueryVersion = "2.1.1"
 }
