@@ -21,7 +21,7 @@ curl -kD $tmp2 "$u" --data-urlencode "to=$addr" >$tmp1 2>/dev/null
 sed -i -e '$s/$/\n/' $tmp1
 
 if [ -n "$(fgrep '200 OK' $tmp2)" ]; then
-  id=$(fgrep '"id"' $tmp1 | perl -pe 's/^.*:\s*(\d+).*$/\1/')
+  id=$(fgrep '"id"' $tmp1 | perl -pe 's/^.*"id"\s*:\s*(\d+).*$/\1/')
   if [[ "$id" =~ ^[0-9]+$ ]]; then
     date '+Start: %H:%M:%S'
     cat $tmp1
