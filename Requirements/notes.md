@@ -1,3 +1,12 @@
+2014-05-09
+==========
+
+* Excellent requirement statements:
+    Complete, correct, feasible, necessary, prioritized, unambiguous, and verifiable.
+
+* Excellent requirements specifications:
+    Complete, consistent, modifiable, and traceable.
+
 2014-05-08
 ==========
 
