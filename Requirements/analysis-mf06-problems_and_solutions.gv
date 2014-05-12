@@ -11,18 +11,16 @@ node [fontcolor="#880000"]
 // ManualCheckTedious [label="Tedious to manually\ncheck each req\nfor incompletions"]
 MandatoryFields [label="Some req fields\nare mandatory"]
 TODOs [label="Tags such as\nTODO, TBD\noften used"]
-VaryingImportance [label="Incompletions have\ndifferent amounts\nof importance"]
+TypeIndicatesDependency [label="Incompletion types\nrepresent real-life\ndependencies"]
 NeedCtx [label="Hard to\nunderstand incompletion\nwithout ctx"]
 TagNotEnough [label="A TODO/TBD tag\nis often not enough"]
 ReasonIncompete [label="Incompletions\nhave reasons"]
-Dunno [label="Unclear how\nto resolve\nsomething"]
-IntDep [label="Waiting on\nauthor (time,\nattention, analysis)"]
+IntDep [label="Waiting\non author\n(time, attention,\nthought, analysis)"]
 ExtDep [label="Waiting on\nan external\ndependency,\nevent, info"]
 Effect [label="Incompletion\ncaused by\nchange to\nrelated data\n(eg. del UC)"]
 KnowWhy [label="Need to know\nwhy something\nis incomplete"]
 RemindMyself [label="Want to remind myself\nto do something"]
 ShareDeps [label="Communicate\ndependencies\nwith team"]
-TasksReqless [label="Some tasks won't\nhave a specific req\nassociated when recording"]
 AssessSocial [label="Assess whether complete\nenough to socialise"]
 AssessRemainingWork [label="Assess\nremaining work"]
 CanResolveOne [label="Realise can resolve\nan incompletion"]
@@ -30,21 +28,24 @@ WantToResolveNext [label="Want to\nkeep resolving"]
 FinishedResolving [label="Finished resolving"]
 WhileWriting [label="Discover a\ndependency whilst\nwriting a req"]
 ArbTypes [label="Incompletion types\nare arbitrary"]
-MngTypes [label="Manage Types"]
-TypeC [label="Create Type"]
-TypeR [label="Read Type"]
-TypeU [label="Modify Type"]
-TypeD [label="Delete Type"]
-TypeL [label="List Types"]
+MngTypes [label="Manage\nTypes"]
+TypeC [label="Create\nType"]
+TypeR [label="Read\nType"]
+TypeU [label="Modify\nType"]
+TypeD [label="Delete\nType"]
+TypeL [label="List\nTypes"]
+Explict [label="Make\nremaining tasks and\ndependencies explict"]
+Span0 [label="Tasks\ncan exist for\nreqs that don't\nexist yet"]
+SpanN [label="Tasks\ncan span multiple\nexisting reqs"]
 
 { // FUNCTIONALITY [R]
 node [style=filled,fillcolor="#99ee99"]
-  // CountInUC [label="Want to know\nhow many incompletions\nin a single UC"] // looking at UCs, quickly see how complete each is?
-  Count [label="Want to know\nhow many incompletions\nin given scope"]
+  CountAll [label="Want to know\nhow many incompletions\nin given scope"]
+  CountEach [label="List reqs\nand incompletions\nin each"]
   Summary [label="View list of all\nincompletions"]
   FilterScope [label="Apply/remove\nfilter(s) to scope"]
   SeeCtx [label="See context"]
-  SepByType [label="Seperate results\nby type"]
+  SepByType [label="Apply/remove\nfilter(s) on\nincompletion type"]
 }
 
 { // FUNCTIONALITY [W]
@@ -53,6 +54,7 @@ node [style=filled,fillcolor="#bbbbff"]
   TagInFields [label="Store an incompletion\ntag in a req field"]
   FreeNotes [label="Store free-text incompletions\nwithout associating\nwith a req"]
   ResolveOne  [label="Edit field\nwith incompletion\nand resolve"]
+  ToggleMandatory [label="Specify\nmandatory-ness\nof fields"]
 }
 
 { // QUESTIONABLE
@@ -61,25 +63,25 @@ node [style=filled,fillcolor="#ee9999"]
 
 // -----------------------------------------------------------------------------
 
-// {WantToResolve; GaugeState} -> ManualCheckTedious -> {Count; Summary}
+// {WantToResolve; GaugeState} -> ManualCheckTedious -> {CountAll; Summary}
 WantToResolve -> Summary
-GaugeState -> Count
+GaugeState -> CountAll,CountEach
 WantToResolve -> GaugeState
 // KnowWhy -> NeedCtx [constraint=false]
 
 TODOs -> TagInFields -> TagNotEnough
-{Effect; Dunno; IntDep; ExtDep} -> ReasonIncompete -> TagNotEnough -> SuppText
+Effect,IntDep,ExtDep -> ReasonIncompete -> TagNotEnough -> SuppText
 WantToResolve -> KnowWhy -> TagNotEnough
+MandatoryFields -> ReasonIncompete,ToggleMandatory
 
-{Summary; Count} -> FilterScope [dir=back,arrowtail=dot]
+{Summary; CountAll} -> FilterScope [dir=back,arrowtail=dot]
 
 {AssessSocial; AssessRemainingWork} -> GaugeState
 
 Summary -> NeedCtx -> SeeCtx
-{ShareDeps; TasksReqless; RemindMyself} -> FreeNotes
+WantToResolve,ShareDeps,RemindMyself -> Explict -> Span0,SpanN -> FreeNotes
 
 WantToResolve -> {RemindMyself; ShareDeps}
-GaugeState -> TasksReqless
 
 // Resolving process
 {Summary; SeeCtx} -> CanResolveOne -> ResolveOne -> WantToResolveNext -> Summary
@@ -87,11 +89,11 @@ ResolveOne -> FinishedResolving -> GaugeState
 WhileWriting -> TagInFields
 
 ArbTypes -> SepByType
-VaryingImportance -> SepByType
-{Summary; Count} -> SepByType [dir=back,arrowtail=dot]
+TypeIndicatesDependency -> SepByType
+Summary,CountAll,CountEach -> SepByType [dir=back,arrowtail=dot]
+CountAll -> CountEach
 
 ArbTypes -> MngTypes -> { TypeL; TypeC; TypeU; TypeD; TypeR }
-
 
 // summary -> Directly edit the TODOs supp info -> summary
 
