@@ -62,7 +62,7 @@
 <polygon fill="black" stroke="black" points="1241.75,-634.374 1247.93,-625.77 1237.73,-628.641 1241.75,-634.374"/>
 </g>
 <!-- Explict -->
-<g id="node28" class="node"><title>Explict</title>
+<g id="node23" class="node"><title>Explict</title>
 <ellipse fill="none" stroke="black" cx="1089" cy="-484" rx="91.3863" ry="37.4533"/>
 <text text-anchor="middle" x="1089" y="-495.3" font-family="Times,serif" font-size="14.00">Make</text>
 <text text-anchor="middle" x="1089" y="-480.3" font-family="Times,serif" font-size="14.00">remaining tasks and</text>
@@ -74,7 +74,7 @@
 <polygon fill="black" stroke="black" points="1026.1,-522.154 1032.16,-513.458 1022,-516.482 1026.1,-522.154"/>
 </g>
 <!-- Summary -->
-<g id="node33" class="node"><title>Summary</title>
+<g id="node28" class="node"><title>Summary</title>
 <ellipse fill="#99ee99" stroke="black" cx="1455" cy="-596" rx="68.9457" ry="26.7407"/>
 <text text-anchor="middle" x="1455" y="-599.8" font-family="Times,serif" font-size="14.00">View list of all</text>
 <text text-anchor="middle" x="1455" y="-584.8" font-family="Times,serif" font-size="14.00">incompletions</text>
@@ -85,19 +85,19 @@
 <polygon fill="black" stroke="black" points="1400.9,-623.202 1408.85,-616.198 1398.27,-616.716 1400.9,-623.202"/>
 </g>
 <!-- CountAll -->
-<g id="node31" class="node"><title>CountAll</title>
-<ellipse fill="#99ee99" stroke="black" cx="1805" cy="-596" rx="109.402" ry="37.4533"/>
-<text text-anchor="middle" x="1805" y="-607.3" font-family="Times,serif" font-size="14.00">Want to know</text>
-<text text-anchor="middle" x="1805" y="-592.3" font-family="Times,serif" font-size="14.00">how many incompletions</text>
-<text text-anchor="middle" x="1805" y="-577.3" font-family="Times,serif" font-size="14.00">in given scope</text>
+<g id="node26" class="node"><title>CountAll</title>
+<ellipse fill="#99ee99" stroke="black" cx="1804" cy="-596" rx="109.402" ry="37.4533"/>
+<text text-anchor="middle" x="1804" y="-607.3" font-family="Times,serif" font-size="14.00">Want to know</text>
+<text text-anchor="middle" x="1804" y="-592.3" font-family="Times,serif" font-size="14.00">how many incompletions</text>
+<text text-anchor="middle" x="1804" y="-577.3" font-family="Times,serif" font-size="14.00">in given scope</text>
 </g>
 <!-- GaugeState&#45;&gt;CountAll -->
 <g id="edge2" class="edge"><title>GaugeState&#45;&gt;CountAll</title>
-<path fill="none" stroke="black" d="M1984.59,-704.429C1951.99,-684.924 1905.08,-656.863 1867.38,-634.311"/>
-<polygon fill="black" stroke="black" points="1868.88,-631.131 1858.5,-629.001 1865.28,-637.138 1868.88,-631.131"/>
+<path fill="none" stroke="black" d="M1984.67,-704.58C1951.83,-685.026 1904.42,-656.795 1866.4,-634.159"/>
+<polygon fill="black" stroke="black" points="1867.84,-630.939 1857.46,-628.83 1864.26,-636.954 1867.84,-630.939"/>
 </g>
 <!-- CountEach -->
-<g id="node32" class="node"><title>CountEach</title>
+<g id="node27" class="node"><title>CountEach</title>
 <ellipse fill="#99ee99" stroke="black" cx="2024" cy="-484" rx="82.5969" ry="37.4533"/>
 <text text-anchor="middle" x="2024" y="-495.3" font-family="Times,serif" font-size="14.00">List reqs</text>
 <text text-anchor="middle" x="2024" y="-480.3" font-family="Times,serif" font-size="14.00">and incompletions</text>
@@ -126,7 +126,7 @@
 <polygon fill="black" stroke="black" points="332.883,-614.366 341.854,-608.729 331.326,-607.542 332.883,-614.366"/>
 </g>
 <!-- ToggleMandatory -->
-<g id="node41" class="node"><title>ToggleMandatory</title>
+<g id="node38" class="node"><title>ToggleMandatory</title>
 <ellipse fill="#bbbbff" stroke="black" cx="72" cy="-596" rx="72.2493" ry="37.4533"/>
 <text text-anchor="middle" x="72" y="-607.3" font-family="Times,serif" font-size="14.00">Specify</text>
 <text text-anchor="middle" x="72" y="-592.3" font-family="Times,serif" font-size="14.00">mandatory&#45;ness</text>
@@ -145,7 +145,7 @@
 <text text-anchor="middle" x="686" y="-710.3" font-family="Times,serif" font-size="14.00">often used</text>
 </g>
 <!-- TagInFields -->
-<g id="node38" class="node"><title>TagInFields</title>
+<g id="node35" class="node"><title>TagInFields</title>
 <ellipse fill="#bbbbff" stroke="black" cx="686" cy="-596" rx="96.3112" ry="26.7407"/>
 <text text-anchor="middle" x="686" y="-599.8" font-family="Times,serif" font-size="14.00">Store an incompletion</text>
 <text text-anchor="middle" x="686" y="-584.8" font-family="Times,serif" font-size="14.00">tag in a req field</text>
@@ -163,7 +163,7 @@
 <text text-anchor="middle" x="1837" y="-465.3" font-family="Times,serif" font-size="14.00">dependencies</text>
 </g>
 <!-- SepByType -->
-<g id="node36" class="node"><title>SepByType</title>
+<g id="node31" class="node"><title>SepByType</title>
 <ellipse fill="#99ee99" stroke="black" cx="1837" cy="-362" rx="82.0366" ry="37.4533"/>
 <text text-anchor="middle" x="1837" y="-373.3" font-family="Times,serif" font-size="14.00">Apply/remove</text>
 <text text-anchor="middle" x="1837" y="-358.3" font-family="Times,serif" font-size="14.00">filter(s) on</text>
@@ -182,14 +182,14 @@
 <text text-anchor="middle" x="1344" y="-465.3" font-family="Times,serif" font-size="14.00">without ctx</text>
 </g>
 <!-- SeeCtx -->
-<g id="node35" class="node"><title>SeeCtx</title>
-<ellipse fill="#99ee99" stroke="black" cx="1366" cy="-362" rx="51.4931" ry="18"/>
-<text text-anchor="middle" x="1366" y="-358.3" font-family="Times,serif" font-size="14.00">See context</text>
+<g id="node30" class="node"><title>SeeCtx</title>
+<ellipse fill="#99ee99" stroke="black" cx="1372" cy="-362" rx="51.4931" ry="18"/>
+<text text-anchor="middle" x="1372" y="-358.3" font-family="Times,serif" font-size="14.00">See context</text>
 </g>
 <!-- NeedCtx&#45;&gt;SeeCtx -->
 <g id="edge21" class="edge"><title>NeedCtx&#45;&gt;SeeCtx</title>
-<path fill="none" stroke="black" d="M1350.72,-446.344C1354.04,-428.251 1357.97,-406.803 1361.01,-390.196"/>
-<polygon fill="black" stroke="black" points="1364.51,-390.533 1362.87,-380.066 1357.63,-389.271 1364.51,-390.533"/>
+<path fill="none" stroke="black" d="M1352.55,-446.344C1356.77,-428.251 1361.78,-406.803 1365.65,-390.196"/>
+<polygon fill="black" stroke="black" points="1369.15,-390.599 1368.02,-380.066 1362.34,-389.009 1369.15,-390.599"/>
 </g>
 <!-- TagNotEnough -->
 <g id="node7" class="node"><title>TagNotEnough</title>
@@ -198,7 +198,7 @@
 <text text-anchor="middle" x="686" y="-472.8" font-family="Times,serif" font-size="14.00">is often not enough</text>
 </g>
 <!-- SuppText -->
-<g id="node37" class="node"><title>SuppText</title>
+<g id="node34" class="node"><title>SuppText</title>
 <ellipse fill="#bbbbff" stroke="black" cx="686" cy="-362" rx="92.4462" ry="26.7407"/>
 <text text-anchor="middle" x="686" y="-365.8" font-family="Times,serif" font-size="14.00">Store supplimentary</text>
 <text text-anchor="middle" x="686" y="-350.8" font-family="Times,serif" font-size="14.00">text with TODO tags</text>
@@ -292,41 +292,41 @@
 </g>
 <!-- CanResolveOne -->
 <g id="node17" class="node"><title>CanResolveOne</title>
-<ellipse fill="none" stroke="black" cx="1388" cy="-240" rx="85.9015" ry="26.7407"/>
-<text text-anchor="middle" x="1388" y="-243.8" font-family="Times,serif" font-size="14.00">Realise can resolve</text>
-<text text-anchor="middle" x="1388" y="-228.8" font-family="Times,serif" font-size="14.00">an incompletion</text>
+<ellipse fill="none" stroke="black" cx="1432" cy="-240" rx="85.9015" ry="26.7407"/>
+<text text-anchor="middle" x="1432" y="-243.8" font-family="Times,serif" font-size="14.00">Realise can resolve</text>
+<text text-anchor="middle" x="1432" y="-228.8" font-family="Times,serif" font-size="14.00">an incompletion</text>
 </g>
 <!-- ResolveOne -->
-<g id="node40" class="node"><title>ResolveOne</title>
-<ellipse fill="#bbbbff" stroke="black" cx="1388" cy="-128" rx="82.0366" ry="37.4533"/>
-<text text-anchor="middle" x="1388" y="-139.3" font-family="Times,serif" font-size="14.00">Edit field</text>
-<text text-anchor="middle" x="1388" y="-124.3" font-family="Times,serif" font-size="14.00">with incompletion</text>
-<text text-anchor="middle" x="1388" y="-109.3" font-family="Times,serif" font-size="14.00">and resolve</text>
+<g id="node37" class="node"><title>ResolveOne</title>
+<ellipse fill="#bbbbff" stroke="black" cx="1432" cy="-128" rx="82.0366" ry="37.4533"/>
+<text text-anchor="middle" x="1432" y="-139.3" font-family="Times,serif" font-size="14.00">Edit field</text>
+<text text-anchor="middle" x="1432" y="-124.3" font-family="Times,serif" font-size="14.00">with incompletion</text>
+<text text-anchor="middle" x="1432" y="-109.3" font-family="Times,serif" font-size="14.00">and resolve</text>
 </g>
 <!-- CanResolveOne&#45;&gt;ResolveOne -->
 <g id="edge33" class="edge"><title>CanResolveOne&#45;&gt;ResolveOne</title>
-<path fill="none" stroke="black" d="M1388,-212.932C1388,-201.802 1388,-188.464 1388,-175.731"/>
-<polygon fill="black" stroke="black" points="1391.5,-175.702 1388,-165.702 1384.5,-175.703 1391.5,-175.702"/>
+<path fill="none" stroke="black" d="M1432,-212.932C1432,-201.802 1432,-188.464 1432,-175.731"/>
+<polygon fill="black" stroke="black" points="1435.5,-175.702 1432,-165.702 1428.5,-175.703 1435.5,-175.702"/>
 </g>
 <!-- WantToResolveNext -->
 <g id="node18" class="node"><title>WantToResolveNext</title>
-<ellipse fill="none" stroke="black" cx="1229" cy="-27" rx="67.3243" ry="26.7407"/>
-<text text-anchor="middle" x="1229" y="-30.8" font-family="Times,serif" font-size="14.00">Want to</text>
-<text text-anchor="middle" x="1229" y="-15.8" font-family="Times,serif" font-size="14.00">keep resolving</text>
+<ellipse fill="none" stroke="black" cx="1257" cy="-27" rx="67.3243" ry="26.7407"/>
+<text text-anchor="middle" x="1257" y="-30.8" font-family="Times,serif" font-size="14.00">Want to</text>
+<text text-anchor="middle" x="1257" y="-15.8" font-family="Times,serif" font-size="14.00">keep resolving</text>
 </g>
 <!-- WantToResolveNext&#45;&gt;Summary -->
 <g id="edge35" class="edge"><title>WantToResolveNext&#45;&gt;Summary</title>
-<path fill="none" stroke="black" d="M1224.95,-53.9118C1219.11,-93.6374 1209,-172.031 1209,-239 1209,-363 1209,-363 1209,-363 1209,-434.169 1181.31,-468.283 1228,-522 1269.02,-569.193 1304.7,-538.185 1364,-558 1376,-562.009 1388.68,-566.801 1400.65,-571.585"/>
+<path fill="none" stroke="black" d="M1247.17,-53.8842C1233.13,-93.2528 1209,-170.814 1209,-239 1209,-363 1209,-363 1209,-363 1209,-434.169 1181.31,-468.283 1228,-522 1269.02,-569.193 1304.7,-538.185 1364,-558 1376,-562.009 1388.68,-566.801 1400.65,-571.585"/>
 <polygon fill="black" stroke="black" points="1399.48,-574.889 1410.06,-575.406 1402.11,-568.403 1399.48,-574.889"/>
 </g>
 <!-- FinishedResolving -->
 <g id="node19" class="node"><title>FinishedResolving</title>
-<ellipse fill="none" stroke="black" cx="1401" cy="-27" rx="76.0649" ry="18"/>
-<text text-anchor="middle" x="1401" y="-23.3" font-family="Times,serif" font-size="14.00">Finished resolving</text>
+<ellipse fill="none" stroke="black" cx="1513" cy="-27" rx="76.0649" ry="18"/>
+<text text-anchor="middle" x="1513" y="-23.3" font-family="Times,serif" font-size="14.00">Finished resolving</text>
 </g>
 <!-- FinishedResolving&#45;&gt;GaugeState -->
 <g id="edge37" class="edge"><title>FinishedResolving&#45;&gt;GaugeState</title>
-<path fill="none" stroke="black" d="M1472.38,-33.2324C1656.83,-48.7023 2135,-102.017 2135,-239 2135,-485 2135,-485 2135,-485 2135,-565.827 2083.56,-649.217 2050.72,-694.225"/>
+<path fill="none" stroke="black" d="M1578.68,-36.0653C1738.57,-57.5231 2135,-122.475 2135,-239 2135,-485 2135,-485 2135,-485 2135,-565.827 2083.56,-649.217 2050.72,-694.225"/>
 <polygon fill="black" stroke="black" points="2047.77,-692.323 2044.62,-702.438 2053.39,-696.497 2047.77,-692.323"/>
 </g>
 <!-- WhileWriting -->
@@ -349,77 +349,77 @@
 </g>
 <!-- MngTypes -->
 <g id="node22" class="node"><title>MngTypes</title>
-<ellipse fill="none" stroke="black" cx="2355" cy="-362" rx="43.2005" ry="26.7407"/>
-<text text-anchor="middle" x="2355" y="-365.8" font-family="Times,serif" font-size="14.00">Manage</text>
-<text text-anchor="middle" x="2355" y="-350.8" font-family="Times,serif" font-size="14.00">Types</text>
+<ellipse fill="none" stroke="black" cx="2356" cy="-362" rx="43.2005" ry="26.7407"/>
+<text text-anchor="middle" x="2356" y="-365.8" font-family="Times,serif" font-size="14.00">Manage</text>
+<text text-anchor="middle" x="2356" y="-350.8" font-family="Times,serif" font-size="14.00">Types</text>
 </g>
 <!-- ArbTypes&#45;&gt;MngTypes -->
 <g id="edge45" class="edge"><title>ArbTypes&#45;&gt;MngTypes</title>
-<path fill="none" stroke="black" d="M2300.02,-457.257C2310.42,-439.421 2324.37,-415.513 2335.61,-396.238"/>
-<polygon fill="black" stroke="black" points="2338.71,-397.873 2340.73,-387.471 2332.66,-394.346 2338.71,-397.873"/>
+<path fill="none" stroke="black" d="M2300.23,-457.257C2310.78,-439.421 2324.93,-415.513 2336.33,-396.238"/>
+<polygon fill="black" stroke="black" points="2339.44,-397.86 2341.52,-387.471 2333.42,-394.296 2339.44,-397.86"/>
 </g>
 <!-- ArbTypes&#45;&gt;SepByType -->
 <g id="edge39" class="edge"><title>ArbTypes&#45;&gt;SepByType</title>
 <path fill="none" stroke="black" d="M2220.81,-465.807C2140.67,-444.341 2003.59,-407.621 1916.78,-384.369"/>
 <polygon fill="black" stroke="black" points="1917.53,-380.948 1906.97,-381.742 1915.72,-387.71 1917.53,-380.948"/>
 </g>
-<!-- TypeC -->
-<g id="node23" class="node"><title>TypeC</title>
-<ellipse fill="none" stroke="black" cx="2480" cy="-240" rx="36.1582" ry="26.7407"/>
-<text text-anchor="middle" x="2480" y="-243.8" font-family="Times,serif" font-size="14.00">Create</text>
-<text text-anchor="middle" x="2480" y="-228.8" font-family="Times,serif" font-size="14.00">Type</text>
-</g>
-<!-- MngTypes&#45;&gt;TypeC -->
-<g id="edge46" class="edge"><title>MngTypes&#45;&gt;TypeC</title>
-<path fill="none" stroke="black" d="M2377.93,-338.99C2398.48,-319.259 2428.73,-290.216 2450.97,-268.869"/>
-<polygon fill="black" stroke="black" points="2453.68,-271.117 2458.47,-261.667 2448.83,-266.068 2453.68,-271.117"/>
-</g>
 <!-- TypeR -->
-<g id="node24" class="node"><title>TypeR</title>
-<ellipse fill="none" stroke="black" cx="2566" cy="-240" rx="31.1693" ry="26.7407"/>
-<text text-anchor="middle" x="2566" y="-243.8" font-family="Times,serif" font-size="14.00">Read</text>
-<text text-anchor="middle" x="2566" y="-228.8" font-family="Times,serif" font-size="14.00">Type</text>
+<g id="node32" class="node"><title>TypeR</title>
+<ellipse fill="#99ee99" stroke="black" cx="2478" cy="-240" rx="31.1693" ry="26.7407"/>
+<text text-anchor="middle" x="2478" y="-243.8" font-family="Times,serif" font-size="14.00">Read</text>
+<text text-anchor="middle" x="2478" y="-228.8" font-family="Times,serif" font-size="14.00">Type</text>
 </g>
 <!-- MngTypes&#45;&gt;TypeR -->
-<g id="edge47" class="edge"><title>MngTypes&#45;&gt;TypeR</title>
-<path fill="none" stroke="black" d="M2390.75,-347.012C2426.28,-332.329 2481.59,-307.327 2525,-278 2529.57,-274.914 2534.15,-271.347 2538.52,-267.672"/>
-<polygon fill="black" stroke="black" points="2540.88,-270.252 2546.08,-261.019 2536.26,-264.996 2540.88,-270.252"/>
-</g>
-<!-- TypeU -->
-<g id="node25" class="node"><title>TypeU</title>
-<ellipse fill="none" stroke="black" cx="2204" cy="-240" rx="41.0183" ry="26.7407"/>
-<text text-anchor="middle" x="2204" y="-243.8" font-family="Times,serif" font-size="14.00">Modify</text>
-<text text-anchor="middle" x="2204" y="-228.8" font-family="Times,serif" font-size="14.00">Type</text>
-</g>
-<!-- MngTypes&#45;&gt;TypeU -->
-<g id="edge48" class="edge"><title>MngTypes&#45;&gt;TypeU</title>
-<path fill="none" stroke="black" d="M2329.04,-340.371C2303.64,-320.183 2264.84,-289.349 2237.2,-267.386"/>
-<polygon fill="black" stroke="black" points="2239.37,-264.641 2229.37,-261.16 2235.02,-270.122 2239.37,-264.641"/>
-</g>
-<!-- TypeD -->
-<g id="node26" class="node"><title>TypeD</title>
-<ellipse fill="none" stroke="black" cx="2300" cy="-240" rx="36.1582" ry="26.7407"/>
-<text text-anchor="middle" x="2300" y="-243.8" font-family="Times,serif" font-size="14.00">Delete</text>
-<text text-anchor="middle" x="2300" y="-228.8" font-family="Times,serif" font-size="14.00">Type</text>
-</g>
-<!-- MngTypes&#45;&gt;TypeD -->
-<g id="edge49" class="edge"><title>MngTypes&#45;&gt;TypeD</title>
-<path fill="none" stroke="black" d="M2343.47,-335.844C2335.35,-318.126 2324.38,-294.203 2315.5,-274.817"/>
-<polygon fill="black" stroke="black" points="2318.67,-273.344 2311.33,-265.712 2312.31,-276.261 2318.67,-273.344"/>
+<g id="edge46" class="edge"><title>MngTypes&#45;&gt;TypeR</title>
+<path fill="none" stroke="black" d="M2378.38,-338.99C2398.68,-319.017 2428.69,-289.501 2450.46,-268.087"/>
+<polygon fill="black" stroke="black" points="2453.12,-270.386 2457.79,-260.879 2448.21,-265.396 2453.12,-270.386"/>
 </g>
 <!-- TypeL -->
-<g id="node27" class="node"><title>TypeL</title>
-<ellipse fill="none" stroke="black" cx="2390" cy="-240" rx="35.0343" ry="26.7407"/>
-<text text-anchor="middle" x="2390" y="-243.8" font-family="Times,serif" font-size="14.00">List</text>
-<text text-anchor="middle" x="2390" y="-228.8" font-family="Times,serif" font-size="14.00">Types</text>
+<g id="node33" class="node"><title>TypeL</title>
+<ellipse fill="#99ee99" stroke="black" cx="2562" cy="-240" rx="35.0343" ry="26.7407"/>
+<text text-anchor="middle" x="2562" y="-243.8" font-family="Times,serif" font-size="14.00">List</text>
+<text text-anchor="middle" x="2562" y="-228.8" font-family="Times,serif" font-size="14.00">Types</text>
 </g>
 <!-- MngTypes&#45;&gt;TypeL -->
-<g id="edge50" class="edge"><title>MngTypes&#45;&gt;TypeL</title>
-<path fill="none" stroke="black" d="M2362.51,-335.257C2367.55,-317.978 2374.25,-294.998 2379.78,-276.055"/>
-<polygon fill="black" stroke="black" points="2383.18,-276.869 2382.62,-266.289 2376.46,-274.909 2383.18,-276.869"/>
+<g id="edge47" class="edge"><title>MngTypes&#45;&gt;TypeL</title>
+<path fill="none" stroke="black" d="M2390.76,-345.969C2424.45,-330.768 2476.41,-305.627 2518,-278 2522.68,-274.894 2527.42,-271.366 2531.98,-267.752"/>
+<polygon fill="black" stroke="black" points="2534.42,-270.277 2539.93,-261.227 2529.98,-264.867 2534.42,-270.277"/>
+</g>
+<!-- TypeC -->
+<g id="node39" class="node"><title>TypeC</title>
+<ellipse fill="#bbbbff" stroke="black" cx="2200" cy="-240" rx="36.1582" ry="26.7407"/>
+<text text-anchor="middle" x="2200" y="-243.8" font-family="Times,serif" font-size="14.00">Create</text>
+<text text-anchor="middle" x="2200" y="-228.8" font-family="Times,serif" font-size="14.00">Type</text>
+</g>
+<!-- MngTypes&#45;&gt;TypeC -->
+<g id="edge48" class="edge"><title>MngTypes&#45;&gt;TypeC</title>
+<path fill="none" stroke="black" d="M2328.7,-340.767C2306.33,-324.102 2273.93,-299.762 2246,-278 2241.55,-274.535 2236.89,-270.852 2232.32,-267.203"/>
+<polygon fill="black" stroke="black" points="2234.23,-264.25 2224.24,-260.728 2229.85,-269.712 2234.23,-264.25"/>
+</g>
+<!-- TypeU -->
+<g id="node40" class="node"><title>TypeU</title>
+<ellipse fill="#bbbbff" stroke="black" cx="2296" cy="-240" rx="41.0183" ry="26.7407"/>
+<text text-anchor="middle" x="2296" y="-243.8" font-family="Times,serif" font-size="14.00">Modify</text>
+<text text-anchor="middle" x="2296" y="-228.8" font-family="Times,serif" font-size="14.00">Type</text>
+</g>
+<!-- MngTypes&#45;&gt;TypeU -->
+<g id="edge49" class="edge"><title>MngTypes&#45;&gt;TypeU</title>
+<path fill="none" stroke="black" d="M2343.57,-336.136C2334.72,-318.437 2322.72,-294.44 2312.99,-274.976"/>
+<polygon fill="black" stroke="black" points="2316.02,-273.211 2308.42,-265.832 2309.76,-276.342 2316.02,-273.211"/>
+</g>
+<!-- TypeD -->
+<g id="node41" class="node"><title>TypeD</title>
+<ellipse fill="#bbbbff" stroke="black" cx="2392" cy="-240" rx="36.1582" ry="26.7407"/>
+<text text-anchor="middle" x="2392" y="-243.8" font-family="Times,serif" font-size="14.00">Delete</text>
+<text text-anchor="middle" x="2392" y="-228.8" font-family="Times,serif" font-size="14.00">Type</text>
+</g>
+<!-- MngTypes&#45;&gt;TypeD -->
+<g id="edge50" class="edge"><title>MngTypes&#45;&gt;TypeD</title>
+<path fill="none" stroke="black" d="M2363.63,-335.551C2368.81,-318.289 2375.73,-295.239 2381.43,-276.22"/>
+<polygon fill="black" stroke="black" points="2384.86,-276.996 2384.38,-266.412 2378.15,-274.985 2384.86,-276.996"/>
 </g>
 <!-- Span0 -->
-<g id="node29" class="node"><title>Span0</title>
+<g id="node24" class="node"><title>Span0</title>
 <ellipse fill="none" stroke="black" cx="931" cy="-362" rx="65.1436" ry="48.1667"/>
 <text text-anchor="middle" x="931" y="-380.8" font-family="Times,serif" font-size="14.00">Tasks</text>
 <text text-anchor="middle" x="931" y="-365.8" font-family="Times,serif" font-size="14.00">can exist for</text>
@@ -432,7 +432,7 @@
 <polygon fill="black" stroke="black" points="986.081,-400.439 976.001,-397.178 981.847,-406.013 986.081,-400.439"/>
 </g>
 <!-- SpanN -->
-<g id="node30" class="node"><title>SpanN</title>
+<g id="node25" class="node"><title>SpanN</title>
 <ellipse fill="none" stroke="black" cx="1095" cy="-362" rx="79.3553" ry="37.4533"/>
 <text text-anchor="middle" x="1095" y="-373.3" font-family="Times,serif" font-size="14.00">Tasks</text>
 <text text-anchor="middle" x="1095" y="-358.3" font-family="Times,serif" font-size="14.00">can span multiple</text>
@@ -444,7 +444,7 @@
 <polygon fill="black" stroke="black" points="1096.15,-410.007 1093.16,-399.845 1089.16,-409.658 1096.15,-410.007"/>
 </g>
 <!-- FreeNotes -->
-<g id="node39" class="node"><title>FreeNotes</title>
+<g id="node36" class="node"><title>FreeNotes</title>
 <ellipse fill="#bbbbff" stroke="black" cx="994" cy="-240" rx="124.176" ry="37.4533"/>
 <text text-anchor="middle" x="994" y="-251.3" font-family="Times,serif" font-size="14.00">Store free&#45;text incompletions</text>
 <text text-anchor="middle" x="994" y="-236.3" font-family="Times,serif" font-size="14.00">without associating</text>
@@ -462,24 +462,24 @@
 </g>
 <!-- CountAll&#45;&gt;CountEach -->
 <g id="edge44" class="edge"><title>CountAll&#45;&gt;CountEach</title>
-<path fill="none" stroke="black" d="M1865.42,-564.651C1895.02,-549.782 1930.66,-531.883 1960.65,-516.822"/>
-<polygon fill="black" stroke="black" points="1962.39,-519.861 1969.76,-512.245 1959.25,-513.606 1962.39,-519.861"/>
+<path fill="none" stroke="black" d="M1864.7,-564.651C1894.44,-549.782 1930.23,-531.883 1960.36,-516.822"/>
+<polygon fill="black" stroke="black" points="1962.13,-519.848 1969.51,-512.245 1959,-513.587 1962.13,-519.848"/>
 </g>
 <!-- FilterScope -->
-<g id="node34" class="node"><title>FilterScope</title>
+<g id="node29" class="node"><title>FilterScope</title>
 <ellipse fill="#99ee99" stroke="black" cx="1620" cy="-484" rx="74.4303" ry="26.7407"/>
 <text text-anchor="middle" x="1620" y="-487.8" font-family="Times,serif" font-size="14.00">Apply/remove</text>
 <text text-anchor="middle" x="1620" y="-472.8" font-family="Times,serif" font-size="14.00">filter(s) to scope</text>
 </g>
 <!-- CountAll&#45;&gt;FilterScope -->
 <g id="edge16" class="edge"><title>CountAll&#45;&gt;FilterScope</title>
-<path fill="none" stroke="black" d="M1744.32,-558.921C1715.7,-541.904 1682.45,-522.135 1657.55,-507.324"/>
-<ellipse fill="black" stroke="black" cx="1748.05" cy="-561.139" rx="4.00002" ry="4.00002"/>
+<path fill="none" stroke="black" d="M1743.65,-558.921C1715.18,-541.904 1682.12,-522.135 1657.34,-507.324"/>
+<ellipse fill="black" stroke="black" cx="1747.35" cy="-561.131" rx="4.00002" ry="4.00002"/>
 </g>
 <!-- CountAll&#45;&gt;SepByType -->
 <g id="edge42" class="edge"><title>CountAll&#45;&gt;SepByType</title>
-<path fill="none" stroke="black" d="M1761.24,-554.311C1753.37,-544.558 1746.31,-533.584 1742,-522 1730.23,-490.34 1728.03,-476.754 1742,-446 1751.83,-424.365 1770.39,-406.159 1788.52,-392.363"/>
-<ellipse fill="black" stroke="black" cx="1763.92" cy="-557.483" rx="4.00002" ry="4.00002"/>
+<path fill="none" stroke="black" d="M1760.93,-554.218C1753.18,-544.471 1746.23,-533.523 1742,-522 1730.35,-490.294 1728.03,-476.754 1742,-446 1751.83,-424.365 1770.39,-406.159 1788.52,-392.363"/>
+<ellipse fill="black" stroke="black" cx="1763.55" cy="-557.369" rx="4.00002" ry="4.00002"/>
 </g>
 <!-- CountEach&#45;&gt;SepByType -->
 <g id="edge43" class="edge"><title>CountEach&#45;&gt;SepByType</title>
@@ -493,8 +493,8 @@
 </g>
 <!-- Summary&#45;&gt;CanResolveOne -->
 <g id="edge31" class="edge"><title>Summary&#45;&gt;CanResolveOne</title>
-<path fill="none" stroke="black" d="M1457.21,-569.007C1458.29,-555.078 1459.47,-537.616 1460,-522 1463.2,-428.383 1459.53,-401.466 1426,-314 1421.08,-301.157 1414.48,-287.65 1408.17,-275.795"/>
-<polygon fill="black" stroke="black" points="1411.07,-273.792 1403.21,-266.686 1404.92,-277.141 1411.07,-273.792"/>
+<path fill="none" stroke="black" d="M1457.21,-569.007C1458.29,-555.078 1459.47,-537.616 1460,-522 1461.15,-488.242 1462.29,-479.7 1460,-446 1455.95,-386.492 1445.38,-317.936 1438.44,-277.104"/>
+<polygon fill="black" stroke="black" points="1441.87,-276.357 1436.72,-267.095 1434.97,-277.544 1441.87,-276.357"/>
 </g>
 <!-- Summary&#45;&gt;FilterScope -->
 <g id="edge17" class="edge"><title>Summary&#45;&gt;FilterScope</title>
@@ -508,8 +508,8 @@
 </g>
 <!-- SeeCtx&#45;&gt;CanResolveOne -->
 <g id="edge32" class="edge"><title>SeeCtx&#45;&gt;CanResolveOne</title>
-<path fill="none" stroke="black" d="M1369.15,-343.807C1372.33,-326.464 1377.34,-299.163 1381.39,-277.053"/>
-<polygon fill="black" stroke="black" points="1384.87,-277.466 1383.23,-266.999 1377.99,-276.204 1384.87,-277.466"/>
+<path fill="none" stroke="black" d="M1380.47,-344.061C1389.29,-326.424 1403.35,-298.294 1414.56,-275.876"/>
+<polygon fill="black" stroke="black" points="1417.83,-277.174 1419.17,-266.665 1411.56,-274.044 1417.83,-277.174"/>
 </g>
 <!-- TagInFields&#45;&gt;TagNotEnough -->
 <g id="edge6" class="edge"><title>TagInFields&#45;&gt;TagNotEnough</title>
@@ -518,13 +518,13 @@
 </g>
 <!-- ResolveOne&#45;&gt;WantToResolveNext -->
 <g id="edge34" class="edge"><title>ResolveOne&#45;&gt;WantToResolveNext</title>
-<path fill="none" stroke="black" d="M1340.29,-97.2967C1318.92,-83.9906 1293.88,-68.3994 1272.97,-55.379"/>
-<polygon fill="black" stroke="black" points="1274.62,-52.2848 1264.29,-49.9703 1270.92,-58.2271 1274.62,-52.2848"/>
+<path fill="none" stroke="black" d="M1381.38,-98.3651C1356.86,-84.4905 1327.6,-67.9389 1303.62,-54.3752"/>
+<polygon fill="black" stroke="black" points="1305.14,-51.2125 1294.71,-49.3349 1301.69,-57.3051 1305.14,-51.2125"/>
 </g>
 <!-- ResolveOne&#45;&gt;FinishedResolving -->
 <g id="edge36" class="edge"><title>ResolveOne&#45;&gt;FinishedResolving</title>
-<path fill="none" stroke="black" d="M1392.8,-90.4173C1394.33,-78.7677 1396,-66.0918 1397.42,-55.2254"/>
-<polygon fill="black" stroke="black" points="1400.93,-55.4377 1398.76,-45.0671 1393.99,-54.5263 1400.93,-55.4377"/>
+<path fill="none" stroke="black" d="M1460.1,-92.6524C1470.87,-79.4935 1482.93,-64.7536 1492.81,-52.6747"/>
+<polygon fill="black" stroke="black" points="1495.64,-54.7456 1499.26,-44.7896 1490.22,-50.3129 1495.64,-54.7456"/>
 </g>
 </g>
 </svg>
