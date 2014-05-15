@@ -33,7 +33,9 @@ Smaller features should be in `Code/webapp/TODO.md`.
 
 * Link change requests to affected requirements.
 
-Generic TODOs: Plain text. (like notes, attached to a project, not a req)
+* Different representations/views for different audiences.
+  (View using field-set A for devs, field-set B for testers, etc.)
+
 
 TODOs due to MF intersection problems.
 where/how to store intersection problems?

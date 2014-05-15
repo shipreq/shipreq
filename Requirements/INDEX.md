@@ -45,6 +45,9 @@ Phase #2: Post UCE 1.0
 `interview-nnn.odt`
   * Requirements gathering interviews. (prelim & elicitation)
 
+`intersection.ods`
+  * List of all problems and requirements that exist in the intersection of 2 or more Major Features.
+
 `project-attributes.ods`
   * Top 5 project attributes.
   * Definition and analysis of each attribute.

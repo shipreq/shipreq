@@ -3,8 +3,6 @@
      * MF-12: Low-level Requirements (CO, FR, BR, etc.)
      * MF-22: High-level Requirements (MF, BO, SC, etc.)
 
-Created deferred.ods and start copying deferred concerns from analysis docs.
-
 2. Consider custom fields for MF-[12]2. Would support agile bullshit of [as a] [i want to] [so that]
      * MF-05: Field Customisation
 
