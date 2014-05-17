@@ -1,0 +1,50 @@
+\documentclass[11pt]{article} % This is a comment!!
+\usepackage{fontspec}
+\setmainfont[Ligatures=TeX]{Linux Libertine O}
+
+%\usepackage[pdftitle={Grüße},pdfauthor={Me}]{hyperref}
+\usepackage[xetex]{hyperref}
+\hypersetup {
+    pdfauthor={John Hancock},
+    pdfsubject={Some subject},
+    pdftitle={Sample document},
+    pdfkeywords={LaTeX, PDF, hyperlinks}
+}
+
+\begin{document}
+
+Here's a link to \href{http://twitter.com/home}{Twitter}.
+
+\section{Unicode support}
+
+\subsection{English}
+All human beings are born free and equal in dignity and rights.
+
+\subsection{Íslenska}
+Hver maður er borinn frjáls og jafn öðrum að virðingu og réttindum.
+
+\subsection{Русский}
+Все люди рождаются свободными и равными в своем достоинстве и
+правах.
+
+\subsection{Tiếng Việt}
+Tất cả mọi người sinh ra đều được tự do và bình đẳng về nhân phẩm và
+quyền lợi.
+
+\subsection{Ελληνικά}
+Ὅλοι οἱ ἄνθρωποι γεννιοῦνται ἐλεύθεροι καὶ ἴσοι στὴν ἀξιοπρέπεια
+καὶ τὰ δικαιώματα.
+
+\section{Legacy syntax}
+When he goes---``Hello World!''\\
+She replies—“Hello dear!”
+
+\section{Ligatures}
+\fontspec[Ligatures={Common, Historical}]{Linux Libertine O Italic}
+Questo è strano assai!
+
+\section{Numerals}
+\fontspec[Numbers={OldStyle}]{Linux Libertine O}Old style: 1234567\\
+\fontspec[Numbers={Lining}]{Linux Libertine O}Lining: 1234567
+
+\end{document}
