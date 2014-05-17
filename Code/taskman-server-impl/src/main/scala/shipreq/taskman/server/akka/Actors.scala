@@ -56,26 +56,25 @@ class ManagerActor(ctx: TaskmanCtx, source: ActorRef) extends Actor with HasLogg
   val poller = context.system.scheduler.schedule(0 millis, ctx.props.taskman.pollEvery.toScala, self, PollSource)
 
   var workers: Set[ActorRef] = Set.empty
-  var queue = M.emptyQueue
+  var queue = M.empty
 
   override def postStop() = poller.cancel()
 
   override def receive = mdc.pf {
 
     case PollSource =>
-      val qs = M.getQueueStatus.eval(queue)
-      source ! SourceActor.RequestForWork(qs)
+      source ! SourceActor.RequestForWork(queue.status)
 
     case RegisterWorker =>
       workers += sender()
 
     case SourceActor.IncomingWork(work) =>
       log.debug z s"Received ${work.size} new msg(s)"
-      queue = M.addToQueue(work).exec(queue)
+      queue = M.add(work).exec(queue)
       workers foreach (_ ! WorkAvailable)
 
     case RequestForWork =>
-      val (q2, wo) = M.popJob.run(queue)
+      val (q2, wo) = M.pop.run(queue)
       wo foreach (sender() ! _)
       queue = q2
   }

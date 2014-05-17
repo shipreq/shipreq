@@ -13,28 +13,28 @@ class ManagerTest extends Specification with ScalaCheck {
   val c = MsgHeader(MsgId(3), Priority(5), timePast)
   val d = MsgHeader(MsgId(4), Priority(5), timeNow)
 
-  val eg4 = emptyQueue + c + a + d + b
+  val eg4 = Manager.empty + c + a + d + b
 
-  def haveItems(ms: MsgHeader*) = be_==(ms.toList) ^^ { (q: JobQueue) => q.toList }
+  def haveItems(ms: MsgHeader*) = be_==(ms.toList) ^^ { (q: JobQueue) => q.q.toList }
 
   "JoeQueue" should {
     "prefer highest priority, then oldest" in {
       eg4 must haveItems(a,b,c,d)
     }
 
-    "addToQueue" ! prop { (q: JobQueue, ms: List[MsgHeader]) =>
-      addToQueue(ms).run(q)._1.toList must containAllOf(q.toList) and containAllOf(ms.distinct)
+    "add" ! prop { (q: JobQueue, ms: List[MsgHeader]) =>
+      add(ms).run(q)._1.q.toList must containAllOf(q.q.toList) and containAllOf(ms.distinct)
     }
 
-    "getQueueStatus" in {
-      getQueueStatus.run(eg4) ==== (eg4, Some((Priority(6), 4)))
+    "queue status" in {
+      eg4.status ==== Some((Priority(6), 4))
     }
 
-    "popJob" ! prop {
+    "pop" ! prop {
       (q: JobQueue) => {
-        val (r,(a,b)) = (for (x <- popJob; y <- popJob) yield (x,y)).run(q)
-        (r.size == (q.size - 2).max(0)) :| "Size" &&
-        ((a.toList ++ b.toList ++ r.toList) == q.toList) :| "Reconstruction" && (
+        val (r,(a,b)) = (for (x <- pop; y <- pop) yield (x,y)).run(q)
+        (r.q.size == (q.q.size - 2).max(0)) :| "Size" &&
+        ((a.toList ++ b.toList ++ r.q.toList) == q.q.toList) :| "Reconstruction" && (
         (a,b) match {
           case (Some(j), Some(k)) => (j.priority.value >= k.priority.value) :| "Wrong order"
           case (None, Some(_))    => false :| "No-pop followed by pop??"

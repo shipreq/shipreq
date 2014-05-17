@@ -16,7 +16,7 @@ import shipreq.taskman.server.business.{MailingList, ShipReqUser, Emails, Bop, E
 import shipreq.taskman.server.business.Email.Addr
 import Bop._
 import Sop._
-import Manager._
+import Manager.{JobQueue, PrioritisationOrderZ}
 import Worker._
 import MailingList._
 import MailingList.API._
@@ -25,10 +25,11 @@ import Support.API._
 
 object TestHelpers {
 
-  implicit class HeapExt[A: Order](val value: Heap[A]) {
-    def -(a: A) = value.filter(_ != a)
-    def +(a: A) = value insert a
-    def ++(as: Seq[A]) = (value /: as)((q,a) => q + a)
+  implicit class JobQueueExt(val j: JobQueue) {
+    def mod(f: Heap[MsgHeader] => Heap[MsgHeader]) = JobQueue(f(j.q))
+    def -(a: MsgHeader) = j.mod(_.filter(_ != a))
+    def +(a: MsgHeader) = j.mod(_ insert a)
+    def ++(as: Seq[MsgHeader]) = j.mod(i => (i /: as)((q,a) => q + a))
   }
 
   final def endoMod[A](f: A => Unit) = Endo[A](a => {f(a); a})
@@ -112,7 +113,7 @@ object TestHelpers {
     } yield
       MsgHeader(i,p,c))
 
-  implicit def arbitraryJobQueue = arbMap[JobQueue, List[MsgHeader]](emptyQueue ++ _)
+  implicit def arbitraryJobQueue = arbMap[JobQueue, List[MsgHeader]](Manager.empty ++ _)
 
   class MockEmailEnvelopeProps(archive: Boolean) extends Email.EnvelopeProps {
     private[this] implicit def autoParseEa(ea: String): Addr = Addr(ea.tag)
