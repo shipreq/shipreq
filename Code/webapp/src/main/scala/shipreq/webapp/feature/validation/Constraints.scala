@@ -17,10 +17,6 @@ object Constraints {
 
   def endsWithR(regex: String) = matchesR(s".*(?:$regex)$$".r)
 
-  def startsWithS(prefix: String) = predicate[String](_ startsWith prefix)(s"must start with '$prefix'.")
-
-  def endsWithS(suffix: String) = predicate[String](_ endsWith suffix)(s"must end with '$suffix'.")
-
   def whitelistCharsR(charRegex: String) = matchesR(s"^[$charRegex]*$$".r)
 
   def whitelistCharsS(charList: String) = whitelistCharsR(quote(charList))

@@ -48,9 +48,7 @@ object Constraint {
   def predicate[A](validityTest: A => Boolean): PendingErrMsg[A] =
     new PendingErrMsg(errMsg => {
       val err = errMsg :: Nil
-      new Constraint[A] {
-        override def invalidate(a: A) = if (validityTest(a)) Nil else err
-      }
+      Constraint[A](a => if (validityTest(a)) Nil else err)
     })
 
   def not[A](p: PendingErrMsg[A])(errMsg: String): Constraint[A] = p("").not(errMsg)
