@@ -55,5 +55,5 @@ object Constraints {
 
   val largeTextLimit = maximumLength(LargeTextMaxLength)
 
-  val containsSurname = nonEmpty --> matchesR("""^\s*?\S+?\s+?\S.*""".r)("should include a surname, please.")
+  val containsSurname = nonEmpty && matchesR("""^\s*?\S+?\s+?\S.*""".r)("should include a surname, please.")
 }

@@ -18,7 +18,7 @@ object Validators {
 
   /** Empty string not allowed. Carriage returns removed. */
   abstract class MandatoryShortText(name: String)
-    extends UseConstraintValidator(ConstraintValidator[String](name, nonEmpty & shortTextLimit)) {
+    extends UseConstraintValidator(ConstraintValidator[String](name, nonEmpty + shortTextLimit)) {
     override def correct(input: String): CI = normaliseWhitespaceInSingleLineString(input).tag
   }
 
@@ -56,7 +56,7 @@ object Validators {
       removeAllWhitespace(_).tag,
       ConstraintValidator("Email address",
         maximumLength(EmailMaxLength)
-          & matchesR("^_+@_+?\\._+$".replace("_", "[^&<>]").r)("is invalid.") // loose validation
+          + matchesR("^_+@_+?\\._+$".replace("_", "[^&<>]").r)("is invalid.") // loose validation
       )
     )
 
@@ -66,7 +66,7 @@ object Validators {
     extends UseConstraintValidator[String](
       ConstraintValidator("Password",
         lengthInRange(PasswordLength)
-          & containsAlphaAndNumber)
+          + containsAlphaAndNumber)
     ) with NoInputCorrection[String]
 
   object passwords
@@ -126,9 +126,9 @@ object Validators {
     normaliseWhitespaceInSingleLineString(_).tag,
     ConstraintValidator("Your name",
       containsSurname
-        & shortTextLimit
-        & blacklistCharsS("<>\"[]{}%$@!;:|?*+_")("mustn't contain symbols.")
-        & blacklistCharsR("0-9")("mustn't contain numbers.")
+        + shortTextLimit
+        + blacklistCharsS("<>\"[]{}%$@!;:|?*+_")("mustn't contain symbols.")
+        + blacklistCharsR("0-9")("mustn't contain numbers.")
     )
   )
 
@@ -140,9 +140,9 @@ object Validators {
       removeAllWhitespace(_).toLowerCase.tag,
       ConstraintValidator("Username",
         lengthInRange(UsernameLength)
-          & whitelistCharsR("a-z0-9_")("can only contain letters, numbers and underscores.")
-          & startsWithR("[a-z]")("must start with a letter.")
-          & endsWithR("[a-z0-9]")("must end with a letter or a number.")
+          + whitelistCharsR("a-z0-9_")("can only contain letters, numbers and underscores.")
+          + startsWithR("[a-z]")("must start with a letter.")
+          + endsWithR("[a-z0-9]")("must end with a letter or a number.")
       )
     )
 
@@ -170,9 +170,9 @@ object Validators {
       i => TextReplacements.perform(TextReplacements.General)(normaliseWhitespaceInSingleLineString(i)).tag,
       ConstraintValidator("Use case title",
         nonEmpty
-          & shortTextLimit
-          & blacklistCharsS("[]⦋⦌［］")("cannot include square brackets.")
-          & not(containsR(AnyValidArrowRegexStr))("cannot include arrows.")
+          + shortTextLimit
+          + blacklistCharsS("[]⦋⦌［］")("cannot include square brackets.")
+          + not(containsR(AnyValidArrowRegexStr))("cannot include arrows.")
       )
     )
 

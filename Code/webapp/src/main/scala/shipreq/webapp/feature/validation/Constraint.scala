@@ -10,15 +10,11 @@ trait Constraint[-A] {
   def isValid(a: A): Boolean =
     invalidate(a).isEmpty
 
-  final def &[B <: A](b: Constraint[B]) =
-    Constraint[B](i => invalidate(i) ::: b.invalidate(i), s"($js && ${b.js})")
+  final def +[B <: A](b: Constraint[B]) = Constraint[B](
+    i => invalidate(i) ::: b.invalidate(i), s"($js && ${b.js})")
 
-  final def |[B <: A](b: Constraint[B]) =
-    Constraint[B](i => if (isValid(i)) Nil else b.invalidate(i), s"($js || ${b.js})")
-
-  /** A implies B. If A is true, check B. If A is false, don't bother with B. */
-  final def -->[B <: A](b: Constraint[B]) =
-    Constraint[B](i => invalidate(i) match {
+  final def &&[B <: A](b: Constraint[B]) = Constraint[B](
+    i => invalidate(i) match {
       case Nil => b.invalidate(i)
       case aes => aes
     }, s"($js && ${b.js})")
