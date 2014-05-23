@@ -46,9 +46,9 @@ object FormVar {
     val booleanOnSubmit: CssSelF[Boolean] = (get, set) =>
       "*" #> SHtml.onSubmitBoolean(set) & "* [checked]" #> checkedO(get)
 
-    def ajaxStr(v: CorrectionPart[String, String], jsId: JsExp): CssSelF[String] = {
+    def ajaxStr(cp: CorrectionPart[String, String], jsId: JsExp): CssSelF[String] = {
       def callback(set: String @@ InputCorrected => Unit): String => JsCmd = i => {
-        val c = v.correct(i)
+        val c = cp.correct(i)
         set(c)
         updateJs(c)
       }
@@ -71,7 +71,7 @@ object FormVar {
     ajaxStr(v, "#" + id.id, id)
 
   def ajaxStr[O](v: Validator[String, String, O], sel: String, jsId: JsExp): FormVar[String, O] =
-    validated(v)(CS.ajaxStr(v, jsId) scopeBy sel)
+    validated(v)(CS.ajaxStr(v.cp, jsId) scopeBy sel)
 
   def strOnSubmit[O](v: Validator[String, _, O], sel: String): FormVar[String, O] =
     validated(v)(CS.strOnSubmit scopeBy sel)
@@ -91,13 +91,13 @@ object FormVar {
   val emptyPasswordPair = ("", "")
   val emptyPasswordChange = ("", emptyPasswordPair)
 
-  def passwordChange(ps: PasswordAndSalt, selCur: String, pp: PasswordPair): FormVar[Validators.PasswordChangeIn, String @@ Validated] =
+  def passwordChange(ps: PasswordAndSalt, selCur: String, pp: PasswordPair): FormVar[Validators.PasswordChange, String @@ Validated] =
     validated(Validators.passwordChange(ps))((get, set) =>
       CS.strOnSubmit.scopeBy(selCur)(get._1, x => set(get put1 x)) &
       pp.csssel                     (get._2, x => set(get put2 x))
     )
 
-  def passwordChange(cur: Option[PasswordAndSalt], selCur: String, removeCurFieldCsssel: CssSel, pp: PasswordPair): FormVar[Validators.PasswordChangeIn, String @@ Validated] =
+  def passwordChange(cur: Option[PasswordAndSalt], selCur: String, removeCurFieldCsssel: CssSel, pp: PasswordPair): FormVar[Validators.PasswordChange, String @@ Validated] =
     cur match {
       case Some(ps) => passwordChange(ps, selCur, pp)
       case None =>

@@ -3,75 +3,83 @@ package shipreq.webapp.feature.validation
 import scalaz.{NonEmptyList, Failure, Validation, Success}
 import shipreq.webapp.lib.Types._
 
-trait CorrectionPart[-I, +C <: AnyRef] {
-  final type CI = C @@ InputCorrected
-  def correct(input: I): CI
+final case class CorrectionPart[-I, +C <: AnyRef](correct: I => C @@ InputCorrected) {
+  def contramap[I2](f: I2 => I) = CorrectionPart[I2, C](correct compose f)
 }
 
-trait ValidationPart[-C <: AnyRef, +V] {
-  def validate(input: C @@ InputCorrected): ValidationResult[V]
+object CorrectionPart {
+  def lift[A <: AnyRef](f: A => A) = CorrectionPart[A, A](f(_).tag[InputCorrected])
+  def nop[A <: AnyRef] = lift[A](identity)
 }
 
-trait Validator[-I, C <: AnyRef, +V] extends CorrectionPart[I, C] with ValidationPart[C, V] {
-  final def correctAndValidate(input: I): ValidationResult[V] =
+// =====================================================================================================================
+
+final class ValidationPart[-C <: AnyRef, +V](val validate: C @@ InputCorrected => ValidationResult[V]) {
+  def map[V2](f: V => V2) = ValidationPart.untyped[C, V2](validate(_) map f)
+}
+
+object ValidationPart {
+
+  def apply[C <: AnyRef, V <: AnyRef](f: C @@ InputCorrected => ValidationResult[V @@ Validated]) =
+    new ValidationPart(f)
+
+  def untyped[C <: AnyRef, V](f: C @@ InputCorrected => ValidationResult[V]) =
+    new ValidationPart(f)
+
+  def liftO[C <: AnyRef, V](f: C @@ InputCorrected => ValidationResult[V]) =
+    new ValidationPart[Option[C], Option[V] @@ Validated]((_: Option[C]) match {
+      case None    => Success((None: Option[V]).tag)
+      case Some(c) => f(c.tag).map(s => Some(s).tag)
+    })
+
+  def test[A <: AnyRef](test: A @@ InputCorrected => Boolean, fail: VFailure) = {
+    val failure = Failure(fail)
+    apply[A, A](a => if (test(a)) Success(a.tag) else failure)
+  }
+
+  /**
+   * @param fieldName The field name. Prepend to validation failure messages.
+   */
+  def forConstraint[A <: AnyRef](fieldName: String, c: Constraint[A]) = ValidationPart[A, A](input => {
+    val a: A = input
+    c.invalidate(a) match {
+      case Nil    => Success(a.tag)
+      case h :: t => Failure(VFailure.forField(fieldName, NonEmptyList.nel(h, t)))
+    }
+  })
+}
+
+// =====================================================================================================================
+
+case class Validator[-I, C <: AnyRef, +V](cp: CorrectionPart[I, C], vp: ValidationPart[C, V]) {
+  @inline final def correct = cp.correct
+  @inline final def validate = vp.validate
+
+  def correctAndValidate(input: I): ValidationResult[V] =
     validate(correct(input))
 
-  final def isValid(input: CI): Boolean =
+  def isValid(input: C @@ InputCorrected): Boolean =
     validate(input).isSuccess
 
   def map[V2](f: V => V2): Validator[I, C, V2] =
-    new Validator.Mapped(this, f)
-}
+    Validator(cp, vp map f)
 
-/**
- * Collection of constraints that apply to a subject.
- *
- * @param fieldName The field name. Prepend to validation failure messages.
- */
-final case class ConstraintValidator[I <: AnyRef](fieldName: String, c: Constraint[I]) {
-  def validate(input: I @@ InputCorrected): ValidationResultT[I] = {
-    val i: I = input
-    c.invalidate(i) match {
-      case Nil    => Success(i.tag)
-      case h :: t => Failure(VFailure.forField(fieldName, NonEmptyList.nel(h, t)))
-    }
-  }
+  def &&&[I2, C2 <: AnyRef, V2](b: Validator[I2, C2, V2]): Validator[(I, I2), (C, C2), (V, V2) @@ Validated] =
+    Validator(
+      CorrectionPart[(I, I2), (C, C2)](i => (this correct i._1, b correct i._2).tag),
+      ValidationPart[(C, C2), (V, V2)](i =>
+        Validator.Ap.apply2(this validate i._1.tag, b validate i._2.tag)((x, y) => (x, y).tag))
+    )
 }
-
 
 object Validator {
 
-  // TODO clean up this WTF business
-
   val Ap = Validation.ValidationApplicative[VFailure](VFailure.semigroup)
 
-  class Mapped[I, C <: AnyRef, V, V2](base: Validator[I, C, V], f: V => V2) extends Validator[I, C, V2] {
-    override def correct(i: I): CI = base.correct(i)
-    override def validate(c: C @@ InputCorrected): ValidationResult[V2] = base.validate(c).map(f)
-    override def map[V3](g: V2 => V3): Validator[I, C, V3] =
-      new Validator.Mapped(base, g compose f)
-  }
-
-  abstract class UseConstraintValidator[T <: AnyRef](validator: ConstraintValidator[T])
-    extends Validator[T, T, T @@ Validated] {
-    final override def validate(input: T @@ InputCorrected) = validator.validate(input)
-  }
-
-  abstract class Typical[T <: AnyRef](c: T => T @@ InputCorrected, validator: ConstraintValidator[T])
-    extends UseConstraintValidator(validator) {
-    final override def correct(input: T) = c(input)
-  }
-
-  trait NoInputCorrection[I <: AnyRef] extends CorrectionPart[I, I] {
-    final override def correct(input: I) = input.tag[InputCorrected]
-  }
-
-  trait NoValidation[I <: AnyRef, O <: AnyRef] extends ValidationPart[I, O @@ Validated] {
-    final override def validate(input: I @@ InputCorrected) = Success(input.tag)
-  }
-
-  trait ValidatorT[I, C <: AnyRef, V <: AnyRef] extends Validator[I, C, V @@ Validated]
-
-  trait ValidatorT3[T <: AnyRef] extends ValidatorT[T, T, T]
+  def choose[I <: C, C <: AnyRef, V](f: C => Validator[I, C, V]): Validator[I, C, V] =
+    new Validator[I, C, V](
+      CorrectionPart[I, C](i => f(i).correct(i)),
+      ValidationPart.untyped[C, V](c => f(c).validate(c))) {
+      override def correctAndValidate(i: I): ValidationResult[V] = f(i).correctAndValidate(i)
+    }
 }
-
