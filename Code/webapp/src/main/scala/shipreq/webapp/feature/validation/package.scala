@@ -5,15 +5,14 @@ import shipreq.webapp.lib.Types._
 
 /*
  * CorrectionPart[-I, +C]
- *   CI                : C @@ InputCorrected
- *   correct           : I  => CI
+ *   correct           : I  => C @@ InputCorrected
  *
  * ValidationPart[-C, +V]
- *   validate          : CI => ValidationResult[V]
+ *   validate          : C @@ InputCorrected => ValidationResult[V]
  *
  * Validator[-I, C, +V]
  *   correctAndValidate: I  => ValidationResult[V]
- *   isValid           : CI => Boolean
+ *   isValid           : C @@ InputCorrected => Boolean
  *
  * ValidationResult[+A]            = Validation[VFailure, A]
  * ValidationResultT[+A <: AnyRef] = ValidationResult[A @@ Validated]
@@ -24,14 +23,9 @@ import shipreq.webapp.lib.Types._
  *   toText       : String
  *   toHtml       : NodeSeq
  *
- * ConstraintValidator[T]
- *   fieldName  : String
- *   constraints: List[Constraint[T]]
- *   validate   : T @@ InputCorrected => ValidationResultT[T]
- *
- * Constraint[-T]
- *   apply  : T => Option[String]
- *   isValid: T => Boolean
+ * Constraint[-A]
+ *   invalidate: A => List[String]
+ *   isValid   : A => Boolean
  */
 package object validation {
 
