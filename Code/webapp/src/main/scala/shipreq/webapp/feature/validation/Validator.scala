@@ -69,7 +69,7 @@ case class Validator[-I, C <: AnyRef, +V](cp: CorrectionPart[I, C], vp: Validati
   def map[V2](f: V => V2): Validator[I, C, V2] =
     Validator(cp, vp map f)
 
-  def &&&[I2, C2 <: AnyRef, V2](b: Validator[I2, C2, V2]): Validator[(I, I2), (C, C2), (V, V2) @@ Validated] =
+  def ***[I2, C2 <: AnyRef, V2](b: Validator[I2, C2, V2]): Validator[(I, I2), (C, C2), (V, V2) @@ Validated] =
     Validator(
       CorrectionPart[(I, I2), (C, C2)](i => (this correct i._1, b correct i._2).tag),
       ValidationPart[(C, C2), (V, V2)](i =>

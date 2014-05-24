@@ -70,7 +70,7 @@ object Validators {
   /** (currentPassword, (newPassword, confirmNewPassword)) */
   type PasswordChange = (String, (String, String))
 
-  def passwordChange(ps: PasswordAndSalt) = (currentPassword(ps) &&& passwords).map(_._2)
+  def passwordChange(ps: PasswordAndSalt) = (currentPassword(ps) *** passwords).map(_._2)
 
   /** `passwords` in the shape of `passwordChange`. i.e. change password without checking current. */
   val passwordSet = Validator(
