@@ -36,6 +36,7 @@ Smaller features should be in `Code/webapp/TODO.md`.
 * Different representations/views for different audiences.
   (View using field-set A for devs, field-set B for testers, etc.)
 
+* Talk to moronic Agilists. Find out what they need, determine feasability & what's missing.
 
 TODOs due to MF intersection problems.
 where/how to store intersection problems?
