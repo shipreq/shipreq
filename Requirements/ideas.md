@@ -20,17 +20,6 @@ Smaller features should be in `Code/webapp/TODO.md`.
   * Customise: hide fields.
   * Download xls.
 
-* Statuses per MF.
-
-* Matrixes (req x custom title *-- (2..n) status)
-  Example: For each requirement I might want the following axes:
-    * Analysis: Past-Change - (checkbox)
-    * Analysis: Modafiability - (checkbox)
-    * Analysis: Exceptions - (checkbox)
-    * Analysis: Boolean logic - (checkbox)
-    * Implemented
-    * Unit/Integration Tested
-
 * Allow stakeholders to vote to determine req/feature priority.
 
 * Link change requests to affected requirements.
