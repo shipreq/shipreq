@@ -1,11 +1,7 @@
-1. Get to 'review' status:
-     * MF-13: Requirement Extraction (eg. UC → FR, etc)
-     * MF-22: High-level Requirements (MF, BO, SC, etc.)
+1. Tokens SS doesn't include presentation markup (lists, blank lines, symbol textmod n shit).
 
 2. Work out intersections between MFs below & future MFs.
    Determine if any other MFs should be analysed immediately.
-
-tokens SS doesn't include presentation markup (lists, blank lines, symbol textmod n shit).
 
 3. Create a deferred.{ods,md} or a Deferred tab in reqs.ods.
    Scour analysis docs, req.ods, etc. to collect them all.
