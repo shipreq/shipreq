@@ -7,7 +7,7 @@ import shipreq.base.util.{ErrorOr, Error}
 import shipreq.base.util.effect.IOE
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.Msg._
-import shipreq.taskman.api.Types._
+import shipreq.taskman.api.{EmailAddr, UserId}
 import shipreq.taskman.server.{MsgHeader, MsgDetail, Deliberate, Deterministic}
 import shipreq.taskman.server.Worker.{AsyncScheduler, MsgProcessor, MsgProcessorOut, ProcessorResult}
 import Bop._

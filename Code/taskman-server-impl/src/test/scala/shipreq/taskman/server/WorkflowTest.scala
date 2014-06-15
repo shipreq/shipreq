@@ -5,12 +5,10 @@ import org.specs2.mutable.Specification
 import org.specs2.time.NoTimeConversions
 import shipreq.base.test.specs2.db.DatabaseTest
 import shipreq.base.util.jodatime.JodaTimeHelpers._
-import shipreq.taskman.api.{MsgStatus, MsgId}
-import shipreq.taskman.api.Types._
+import shipreq.taskman.api.{EmailAddr, MsgStatus, MsgId}
 import shipreq.taskman.api.Msg.ReRegistrationAttempted
 import shipreq.taskman.api.ApiOp.{QueryMsgStatus, SubmitMsg}
 import shipreq.taskman.server.Sop._
-import SopImpl.Sql._
 
 class WorkflowTest extends Specification with DatabaseTest with NoTimeConversions with ThrownExpectations
     with ServerImplTestHelpers {
@@ -19,7 +17,7 @@ class WorkflowTest extends Specification with DatabaseTest with NoTimeConversion
 
   val n = NodeId(123)
   val w = WorkerId(666)
-  val defaultMsg = ReRegistrationAttempted("haha cool".tag)
+  val defaultMsg = ReRegistrationAttempted(EmailAddr("haha cool"))
 
   val assignNode = GetMsgsAssignNode(n, 10, 1 minutes, None)
 

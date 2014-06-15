@@ -12,7 +12,8 @@ import shipreq.base.util.{JPropertiesValueReader, ErrorOr}
 import shipreq.base.util.effect.IOE
 import shipreq.base.util.log.HasLogger
 import shipreq.base.util.ExternalValueReader._
-import shipreq.taskman.api.Types._
+import shipreq.base.util.TaggedTypes._
+import shipreq.taskman.api.EmailAddr
 import shipreq.taskman.server.Deterministic
 import Bop.SendEmail
 import Email._
@@ -56,13 +57,13 @@ object EmailImpl extends HasLogger {
 
     implicit val addr1: Retriever[Addr] =
       rs.emap(s => {
-        val ea = s.tag[IsEmailAddr]
+        val ea = EmailAddr(s)
         parse1(ea).map(p => Addr(ea, Some(p)))
       })
 
     implicit val addrN: Retriever[List[Addr]] =
       rs.emap(parseN).map(as =>
-          as.map(a => Addr(a.toString.tag, Some(a))))
+          as.map(a => Addr(EmailAddr(a.toString), Some(a))))
 
     implicit val addrNEL: Retriever[NonEmptyList[Addr]] =
       addrN.emap {

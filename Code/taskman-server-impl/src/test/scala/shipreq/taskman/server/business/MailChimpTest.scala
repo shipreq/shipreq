@@ -6,7 +6,7 @@ import scalaz.NonEmptyList
 import shipreq.base.util.ErrorOr
 import shipreq.base.util.ErrorOr.Implicits._
 import shipreq.base.test.specs2.BaseMatchers._
-import shipreq.taskman.api.Types._
+import shipreq.taskman.api.EmailAddr
 import MailingList._
 import MailingList.API._
 import MailChimp._
@@ -44,7 +44,7 @@ class MailChimpTest extends Specification {
     "Single with email" in {
       p(parsePartialFailures,
         """{"add_count":0,"adds":[],"update_count":0,"updates":[],"error_count":1,"errors":[{"code":250,"error":"ACCT must be provided - Value must be one of: Never, Active (not Activ)","email":{"email":"great@yay.com"}}]}"""
-      ) ==== List(PartialApiFailure(250, "ACCT must be provided - Value must be one of: Never, Active (not Activ)", Some("great@yay.com".tag)))
+      ) ==== List(PartialApiFailure(250, "ACCT must be provided - Value must be one of: Never, Active (not Activ)", Some(EmailAddr("great@yay.com"))))
     }
 
     "Single without email" in {

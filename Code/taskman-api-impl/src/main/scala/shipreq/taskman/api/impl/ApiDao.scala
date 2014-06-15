@@ -8,11 +8,9 @@ private[api] class ApiSql(prefix: String) {
   import shipreq.base.db.SqlHelpers._
   import scala.slick.jdbc.{GetResult, SetParameter}
   import scala.slick.jdbc.StaticQuery.{query, update}
-  
-  implicit val GR_JsonMsg = GR_Json[Msg]
-  implicit val SP_JsonMsg = SP_Json[Msg]
-  implicit val GR_MsgId: GetResult[MsgId] = IGR[Long] andThen MsgId
-  implicit val SP_MsgId: SetParameter[MsgId] = ISP[Long] contramap (_.value)
+
+  implicit val (jm1, jm2, jm3, jm4) = sqlAccessorsJson[Msg]
+  implicit val (mi1, mi2, mi3, mi4) = sqlAccessors[MsgId]
 
   // Matches on db enum: msg_status_v01
   implicit val GR_MsgStatus: GetResult[Option[MsgStatus]] = implicitly[GetResult[String]] andThen {

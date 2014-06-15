@@ -12,7 +12,7 @@ import shipreq.base.util.effect.IoUtils.IoExt
 import shipreq.base.util.{Error, ErrorOr}
 import shipreq.base.util.ScalaExt.AnyExt
 import shipreq.base.util.log.{LogLevel, HasLogger}
-import shipreq.taskman.api.Types._
+import shipreq.taskman.api.EmailAddr
 import ErrorOr.Implicits._
 import Http._
 import MailingList._
@@ -40,7 +40,7 @@ object MailChimp {
   val batchSubscribeStatic = subscribeOptions(false, true)
 
   def buildReqSubscription(s: Subscription) =
-    ("email" -> ("email" -> s.addr)) ~ ("merge_vars" ->
+    ("email" -> ("email" -> s.addr.value)) ~ ("merge_vars" ->
       ("NAME" -> s.name) ~ ("NEWSLETTER" -> boolAsInt(s.newsletter)) ~ ("ACCT" -> s.status.remoteValue))
 
   class Endpoints(urlPrefix: String) {
@@ -159,7 +159,7 @@ object MailChimp {
         val JString(msg) = e \ "error"
         val opEmail = (e \ "email").toOption.map { i =>
           val JString(email) = i \ "email"
-          email.tag[IsEmailAddr]
+          EmailAddr(email)
         }
         PartialApiFailure(code.toInt, msg, opEmail)
       }

@@ -3,8 +3,8 @@ package shipreq.taskman.server.app
 import scalaz.{-\/, \/-}
 import shipreq.base.util.ErrorOr
 import shipreq.base.util.ScalaExt.Tuple2Ext
+import shipreq.base.util.TaggedTypes.JsonStr
 import shipreq.base.util.log.HasLogger
-import shipreq.taskman.api.Types._
 import shipreq.taskman.api.{MsgType => T, _}
 
 /**
@@ -12,8 +12,8 @@ import shipreq.taskman.api.{MsgType => T, _}
  */
 abstract class ManualSubmitBase extends HasLogger {
 
-  def serialise  : Msg => Json[Msg]
-  def deserialise: (T, Json[Msg]) => ErrorOr[Msg]
+  def serialise  : Msg => JsonStr[Msg]
+  def deserialise: (T, JsonStr[Msg]) => ErrorOr[Msg]
   def runner     : (ApiOpReifier => Unit) => Unit
 
   def main(args: Array[String]): Unit =
@@ -51,7 +51,7 @@ abstract class ManualSubmitBase extends HasLogger {
           case None =>
             ParseError(s"Unable to parse msg type: $msgTypeName")
           case Some(msgType) =>
-            val msgData = m.group(2).tag[IsJsonFor[Msg]]
+            val msgData = JsonStr[Msg](m group 2)
             deserialise(msgType, msgData) match {
               case -\/(e) => ParseError(e.msg)
               case \/-(m) => Ok(m :: msgs)
@@ -75,15 +75,15 @@ abstract class ManualSubmitBase extends HasLogger {
     T.values.map(t => {
       val m = exampleFor(t)
       val name = m.getClass.getSimpleName
-      val json = serialise(m).replace("\n", "").replace(",", ", ")
+      val json = serialise(m).value.replace("\n", "").replace(",", ", ")
       s"  $name$json"
     }).sorted.mkString("\n")
 
   def exampleFor(t: T): Msg = {
     import Msg._
-    val ea = "yoar.mum@gmail.com".tag[IsEmailAddr]
+    val ea = EmailAddr("yoar.mum@gmail.com")
     val url = "http://hello"
-    val uid = 8000.tag[IsUserId]
+    val uid = UserId(8000)
     t match {
       case T.DummyMsg                => DummyMsg("hello", failureMsg = Some("nope"))
       case T.ReRegistrationAttempted => ReRegistrationAttempted(ea)

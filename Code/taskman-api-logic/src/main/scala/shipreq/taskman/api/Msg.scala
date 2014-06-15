@@ -11,7 +11,6 @@ sealed trait Msg {
 }
 
 object Msg {
-  import Types._
 
   // ********************************************************************
   // * NOTE: Fields names here need to match the JSON FieldSerializers. *

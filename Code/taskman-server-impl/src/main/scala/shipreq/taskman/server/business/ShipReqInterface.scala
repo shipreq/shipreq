@@ -1,22 +1,17 @@
 package shipreq.taskman.server.business
 
 import scala.slick.jdbc.JdbcBackend.Session
-import shipreq.taskman.api.Types._
+import shipreq.taskman.api.{EmailAddr, UserId}
 
 object ShipReqInterface {
 
   class Sql(schema: Option[String]) {
-
     import scala.slick.jdbc.GetResult
     import scala.slick.jdbc.StaticQuery.{query, queryNA}
     import shipreq.base.db.SqlHelpers._
 
-    implicit val GR_UserId = GR_TaggedLong[UserId]
-    implicit val SP_UserId = SP_TaggedLong[UserId]
-
-    implicit val GR_EmailAddr = GR_TaggedString[EmailAddr]
-    implicit val SP_EmailAddr = SP_TaggedString[EmailAddr]
-
+    implicit val (ui1, ui2, ui3, ui4) = sqlAccessors[UserId]
+    implicit val (ea1, ea2, ea3, ea4) = sqlAccessors[EmailAddr]
     implicit val GR_ShipReqUser = GetResult(r => ShipReqUser(r.<<, r.<<, r.<<, r.<<, r.<<))
 
     // ---------------------------------------------------------------------------------------------

@@ -10,9 +10,9 @@ import shipreq.base.db.JodaTimeSqlHelpers._
 import shipreq.base.test.specs2.db.DatabaseTest
 import shipreq.base.util.jodatime.JodaTimeHelpers._
 import shipreq.base.util.ScalaExt._
+import shipreq.base.util.TaggedTypes.JsonStr
 import shipreq.taskman.api.impl.Serialisation
-import shipreq.taskman.api.Types._
-import shipreq.taskman.api.{MsgId, MsgType, Msg, Priority}
+import shipreq.taskman.api._
 import Msg.ReRegistrationAttempted
 import SopImpl.Sql._
 
@@ -22,7 +22,7 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
   val n = NodeId(123)
   val w = WorkerId(666)
   val rng = new Random()
-  val defaultMsg = ReRegistrationAttempted("haha cool".tag)
+  val defaultMsg = ReRegistrationAttempted(EmailAddr("haha cool"))
 
   "reassignWorker" should {
 
@@ -188,7 +188,7 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
 
   "getMsgAssignWorker" should {
 
-    val insertQ = query[(Short, Json[Msg], Option[NodeId], Option[WorkerId], Period, Period, Period), MsgId](
+    val insertQ = query[(Short, JsonStr[Msg], Option[NodeId], Option[WorkerId], Period, Period, Period), MsgId](
       "INSERT INTO msgq(type, data, node, worker, created_at, updated_at, effective_from, priority, priority_base)" +
         "VALUES(?, ?, ?, ?, now()-?, now()-?, now()-?, 5,5) RETURNING id")
 

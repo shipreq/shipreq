@@ -10,7 +10,7 @@ import shipreq.base.util.ExternalValueReader.Retriever
 import shipreq.base.util.effect.IoUtils
 import shipreq.taskman.api.{MsgId, Msg, Priority}
 import shipreq.taskman.api.impl.Serialisation
-import shipreq.taskman.api.Types._
+import shipreq.base.util.TaggedTypes.JsonStr
 
 object SopImpl {
 
@@ -121,7 +121,7 @@ object SopImpl {
       ${getMsgsAssignNode_upd("select ctid from b")}
     """.sql)
 
-    val getMsgAssignWorkerQ = query[(WorkerId, MsgId, NodeId), (Short, Json[Msg], Short)]("""
+    val getMsgAssignWorkerQ = query[(WorkerId, MsgId, NodeId), (Short, JsonStr[Msg], Short)]("""
       update msgq
       set worker = ?, updated_at = clock_timestamp()
       where id = ? and node = ? and worker is null
