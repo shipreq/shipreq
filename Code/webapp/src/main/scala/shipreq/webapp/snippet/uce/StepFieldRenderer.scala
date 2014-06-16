@@ -79,7 +79,7 @@ object NormalCourseFieldConfig extends StepFieldRenderConfig {
     newTree.nodes match {
       // Move steps from NC to AC
       case nc :: ac1 :: acN if ac1.id == node.id =>
-        JsCmds.Run(s"nc_to_ac('#uce','${node.id}',${JE.AnonFunc(updateJs).toJsCmd},${JE.AnonFunc(focusJs).toJsCmd})")
+        JsCmds.Run(s"nc_to_ac('#uce','${node.id.value}',${JE.AnonFunc(updateJs).toJsCmd},${JE.AnonFunc(focusJs).toJsCmd})")
 
       // Apply indent decrease normally
       case _ => updateJs & focusJs
