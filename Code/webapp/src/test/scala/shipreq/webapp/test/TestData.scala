@@ -21,7 +21,7 @@ trait TestData extends TestHelpers2 {
 
   lazy val FL: List[Field] = List(TF1, TF2, NCF, ECF, TF3, FGF)
   lazy val EmptyFieldValues: FieldValues = FL.map(f => (f ~> f.empty)).toMap
-  lazy val UCN = (7:Short).tag[IsUseCaseNumber]
+  lazy val UCN = UseCaseNumber(7)
   lazy val UCH = UseCaseHeader("YES!".validated)
   lazy val EmptyLoadCtx = FieldLoadCtx(UCH, List.empty)
   lazy val EmptyUC = UseCase(UCN, UCH, FL, EmptyFieldValues, StepAndLabelBiMap.empty)
@@ -66,7 +66,7 @@ trait TestData extends TestHelpers2 {
       X4 -> StepText(freeText("deeper"), None, None) // 7.0.1.a
     )
     lazy val NcSfv = StepFieldValue(NCF, NcStepTree, NcStepText)
-    lazy val TFV1 = FreeText(PlainText("Linking to ") :: StepRef(X2, "7.0.1".asLabel) :: Nil)
+    lazy val TFV1 = FreeText(PlainText("Linking to ") :: StepRef(X2, StepLabel("7.0.1")) :: Nil)
     lazy val UC = ucWithValues(TF1 -> TFV1, NCF -> NcSfv)
   }
 
@@ -80,7 +80,7 @@ trait TestData extends TestHelpers2 {
       X4 -> StepText(freeText("deeper"), None, None) // 7.0.2.a
     )
     lazy val NcSfv = StepFieldValue(NCF, NcStepTree, NcStepText)
-    lazy val TFV1 = FreeText(PlainText("Linking to ") :: StepRef(X2, "7.0.2".asLabel) :: Nil)
+    lazy val TFV1 = FreeText(PlainText("Linking to ") :: StepRef(X2, StepLabel("7.0.2")) :: Nil)
     lazy val UC = ucWithValues(TF1 -> TFV1, NCF -> NcSfv)
   }
 
@@ -91,19 +91,19 @@ trait TestData extends TestHelpers2 {
         StepNode(X5, 1, 3, Nil) :: Nil
     lazy val NcStepTree = StepTree(StepNode(X1, 0, 0, X1sChildren) :: Nil)
     lazy val NcStepText = Map(
-      X1 -> StepText(FreeText(PlainText("I'm the root ") :: StepRef(X5, "7.0.3".asLabel) :: Nil), None, None), // 7.0
+      X1 -> StepText(FreeText(PlainText("I'm the root ") :: StepRef(X5, StepLabel("7.0.3")) :: Nil), None, None), // 7.0
       X3 -> StepText(freeText("I was inserted"), None, None), // 7.0.1
       X2 -> StepText(freeText("blar"), None, None), // 7.0.2
       X4 -> StepText(freeText("deeper"), None, None), // 7.0.2.a
       X5 -> StepText(freeText("last"), None, None) // 7.0.3
     )
     lazy val NcSfv = StepFieldValue(NCF, NcStepTree, NcStepText)
-    lazy val TFV1 = FreeText(PlainText("Linking to ") :: StepRef(X2, "7.0.2".asLabel) :: Nil)
+    lazy val TFV1 = FreeText(PlainText("Linking to ") :: StepRef(X2, StepLabel("7.0.2")) :: Nil)
     lazy val UC = ucWithValues(TF1 -> TFV1, NCF -> NcSfv)
   }
 
   object MockUc4 {
-    implicit def autoLabel(x: String): StepLabel = x.asLabel
+    implicit def autoLabel(x: String) = StepLabel(x)
 
     lazy val X1sChildren =
       StepNode(X3, 1, 1, Nil) ::

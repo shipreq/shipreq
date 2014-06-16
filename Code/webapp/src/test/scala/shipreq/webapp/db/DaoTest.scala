@@ -1,10 +1,10 @@
 package shipreq.webapp.db
 
 import org.scalatest.FunSpec
+import shipreq.taskman.api.UserId
 import slick.jdbc.{StaticQuery => Q}
 import Q.interpolation
 
-import shipreq.taskman.api.Types.IsUserId
 import shipreq.webapp.feature.UcFilters
 import shipreq.webapp.feature.uc.field.{TextFieldDefinition, NormalCourseFieldDefinition, ExceptionCourseFieldDefinition}
 import shipreq.webapp.lib.Types._
@@ -13,7 +13,7 @@ import shipreq.webapp.snippet.ResetPassword
 import shipreq.webapp.test.TestDatabaseSupport
 
 class DaoTest extends FunSpec with TestDatabaseSupport {
-  implicit def str2uch(title: String @@ Validated): UseCaseHeader = UseCaseHeader(title)
+  implicit def str2uch(title: String) = UseCaseHeader(title)
 
   describe("FieldList") {
     lazy val fl1 =
@@ -89,7 +89,7 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
 
     describe("findUseCase") {
       it("should load when found") {
-        val saved = createUseCaseIdentAndRev1(newProjectId(), "ah".validated)
+        val saved = createUseCaseIdentAndRev1(newProjectId(), "ah")
         dao.findUseCaseRev(saved).get ==== saved
       }
     }
@@ -123,7 +123,7 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
       }
 
       def createTwoRevs(implicit projectId: ProjectId) = {
-        val rev1 = createUseCaseIdentAndRev1(projectId, "Haha".validated)
+        val rev1 = createUseCaseIdentAndRev1(projectId, "Haha")
         val rev2s = updateUseCaseHeader(rev1, _.copy(title = "wow".validated)) match {
           case DbSuccess(x) => x
           case _ => fail("Expected Success.")
@@ -134,7 +134,7 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
 
       it("should do an audited update when rev #1 and non-default title changes") {
         implicit val pid = newProjectId()
-        assertAuditedUpdate(createUseCaseIdentAndRev1(pid, "Haha".validated))
+        assertAuditedUpdate(createUseCaseIdentAndRev1(pid, "Haha"))
       }
 
       it("should do an audited update when rev #2+") {
@@ -146,9 +146,9 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
       it("should copy relationships when performing an audited update") {
         val fk1 = dao.createFieldKey(FieldKeyType.Text, Some("THE OCEAN"))
         val fk2 = dao.createFieldKey(FieldKeyType.Text, Some("PELAGIAL"))
-        val uc1 = createUseCaseIdentAndRev1(newProjectId(), "Haha".validated)
-        val txt1 = dao.createTextRev(dao.createTextIdent(uc1, fk1), 1, "mesopelagic".tag[IsNormalised])
-        val txt2 = dao.createTextRev(dao.createTextIdent(uc1, fk2), 1, "bathyalpelagic".tag[IsNormalised])
+        val uc1 = createUseCaseIdentAndRev1(newProjectId(), "Haha")
+        val txt1 = dao.createTextRev(dao.createTextIdent(uc1, fk1), 1, NormalisedText("mesopelagic"))
+        val txt2 = dao.createTextRev(dao.createTextIdent(uc1, fk2), 1, NormalisedText("bathyalpelagic"))
         dao.linkUcToText(uc1, txt1)
         dao.linkUcToText(uc1, txt2)
 
@@ -159,7 +159,7 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
 
       it("should do nothing when rev #1 and no change") {
         implicit val pid = newProjectId()
-        val rev1 = createUseCaseIdentAndRev1(pid, "YAY".validated)
+        val rev1 = createUseCaseIdentAndRev1(pid, "YAY")
         assertNOP(rev1, rev1)
       }
 
@@ -176,15 +176,15 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
   describe("Project") {
     import Tables.{Project => TProject}
 
-    def newUserAndProject(projectName: String @@ Validated) = {
+    def newUserAndProject(projectName: Validated[String]) = {
       val u = newUserId
       val p = dao.createProject(u, projectName).gimme
       (u, p)
     }
 
-    def newUserProjectAndUseCase(projectName: String @@ Validated, ucName: String @@ Validated) = {
+    def newUserProjectAndUseCase(projectName: Validated[String], ucName: Validated[String]) = {
       val (u, p) = newUserAndProject(projectName)
-      val uc = createUseCaseIdentAndRev1(p, ucName)
+      val uc = createUseCaseIdentAndRev1(p, ucName.value)
       (u, p, uc)
     }
 
@@ -220,7 +220,7 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
       }
 
       it("should fail when project not found") {
-        dao.updateProject(0.tag[IsProjectId], 0.tag[IsUserId], "A".validated) ==== ProjectNotFound
+        dao.updateProject(ProjectId(0), UserId(0), "A".validated) ==== ProjectNotFound
       }
 
       it("should fail when project doesnt belong to user") {
@@ -249,7 +249,7 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
         dao.summariseProjects(u) ==== List(ProjectSummary(p2, "Apple", 0, None, 0, 0, None), s1)
 
         // + use case
-        createUseCaseIdentAndRev1(p2, "yo".validated)
+        createUseCaseIdentAndRev1(p2, "yo")
         val r = dao.summariseProjects(u)
         r.map(_.copy(ucUpdatedAt = None)) ==== List(ProjectSummary(p2, "Apple", 1, None, 0, 0, None), s1)
         r(0).ucUpdatedAt shouldBe defined
@@ -262,16 +262,16 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
       newUserProjectAndUseCase("IGNORED".validated, "IGNORED".validated)
       val (_,p,_) = newUserProjectAndUseCase("P1".validated, "YAY".validated)
       dao.findAllLatestUseCaseRevsByProject(p).map(_.title) shouldBe List("YAY")
-      createUseCaseIdentAndRev1(p, "yo".validated)
+      createUseCaseIdentAndRev1(p, "yo")
       dao.findAllLatestUseCaseRevsByProject(p).map(_.title) shouldBe List("YAY", "yo")
     }
 
     it("findAllLatestUseCaseRevs(pid,ids)") {
       newUserProjectAndUseCase("IGNORED".validated, "IGNORED".validated)
       val (_,p,u1) = newUserProjectAndUseCase("P1".validated, "U1".validated)
-      val u2 = createUseCaseIdentAndRev1(p, "U2".validated)
-      val u3 = createUseCaseIdentAndRev1(p, "U3".validated)
-      val u4 = createUseCaseIdentAndRev1(p, "U4".validated)
+      val u2 = createUseCaseIdentAndRev1(p, "U2")
+      val u3 = createUseCaseIdentAndRev1(p, "U3")
+      val u4 = createUseCaseIdentAndRev1(p, "U4")
 
       dao.findAllLatestUseCaseRevs(p, Nil) shouldBe Nil
       dao.findAllLatestUseCaseRevs(p, List(u2)) shouldBe List(u2)
@@ -279,9 +279,9 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
     }
 
     def afterDeletion: (UserId, ProjectId, ProjectId) = {
-      val (uid, p1) = newUserAndProject("wow".tag)
+      val (uid, p1) = newUserAndProject("wow".validated)
       assertTableDiffs()(dao deleteProjectSoft p1)
-      val p2 = dao.createProject(uid, "wow".tag).gimme
+      val p2 = dao.createProject(uid, "wow".validated).gimme
       assertTableDiffs()(dao deleteProjectSoft p2)
       (uid, p1, p2)
     }
@@ -346,13 +346,13 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
     }
 
     it("create should retry when token taken") {
-      val firstToken: ShareUrlToken = "abcdefgh".tag
+      val firstToken = ShareUrlToken("abcdefgh")
       val pid = newProjectId()
       val a = dao.createShare(pid, PasswordAndSalt.createWithRandomSalt("v"), "n", None, FilterAllJson, () => firstToken)
       a.urlToken shouldBe firstToken
 
       var nextToken = firstToken
-      val secondToken: ShareUrlToken = "987654321".tag
+      val secondToken = ShareUrlToken("987654321")
       val fn = () => {
         val use = nextToken
         nextToken = secondToken

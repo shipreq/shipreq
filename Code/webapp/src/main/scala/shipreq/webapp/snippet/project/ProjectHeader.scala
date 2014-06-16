@@ -10,6 +10,7 @@ import db.UpdateProjectResult._
 import feature.validation.Validators
 import lib.{NoticeFlash, SingleOpStatefulSnippet}
 import lib.Types._
+import lib.SnippetHelpers.ErrorAlertId
 import snippet.DynModal
 import util.HtmlTransformExt.ajaxSubmitOnClick
 import util.JsExt.JsTextTrigger
@@ -34,7 +35,7 @@ object ProjectHeaderConsts {
  */
 class ProjectHeader extends SingleOpStatefulSnippet {
   import ProjectHeaderConsts._
-  override implicit def errorAlertId = "phdra".tag
+  override implicit def errorAlertId = ErrorAlertId("phdra")
 
   val project = RequestVars.Project.get.value
   @inline final def pid = project.id

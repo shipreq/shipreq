@@ -8,7 +8,7 @@ import shipreq.webapp.feature.uc.step.StepLabels._
  */
 object TreeDSL {
 
-  case class NC(val node: String, val children: List[NC])
+  case class NC(node: String, children: List[NC])
   def $(nodes: NC*) = nodes.toList
   implicit def nodeWithoutChildren(n: String) = NC(n, Nil)
   implicit class StringAsNode(val s: String) { def ~>(children: List[NC]) = NC(s, children) }
@@ -27,13 +27,13 @@ object TreeDSL {
       val labelSplit(lblPrefix, lblSuffix) = lbl
       val lblIndex = LabelMakers(lvl)(lblSuffix)
       val id2 = if (genIds) id else null
-      StepNodeWithText(id2.asLocalStepId, lvl, lblIndex, txt, ch)
+      StepNodeWithText(LocalStepId(id2), lvl, lblIndex, txt, ch)
     }
   }
 
-  type NodeChange = Tuple2[String, List[NC]]
+  type NodeChange = (String, List[NC])
   def changeChildren(nodes: List[StepNodeWithText], changes: NodeChange*): List[StepNodeWithText] = nodes.map { n =>
-    val matches = for ((id, c) <- changes if id == n.id) yield c
+    val matches = for ((id, c) <- changes if id == n.id.value) yield c
     val ch = if (matches.isEmpty) n.children else matches(0).toStepNodes
     n.copy(children = changeChildren(ch, changes: _*))
   }

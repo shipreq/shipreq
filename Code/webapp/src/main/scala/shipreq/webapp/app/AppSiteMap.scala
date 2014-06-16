@@ -84,7 +84,7 @@ object AppSiteMap {
   )
 
   val ShareEdit: PM[ShareUrlToken] = (
-    Menu.param[ShareUrlToken]("share-edit", "_", i => Full(i.tag), o => o) / "share" / * / "edit"
+    Menu.param[ShareUrlToken]("share-edit", "_", i => Full(ShareUrlToken(i)), _.value) / "share" / * / "edit"
     >> TitleFromShareName
     >> AuthenticationRequired
     >> PermissionRequired(Permissions.editShare.using(project = RequestVars.Project.some, share = RequestVars.Share.some))
@@ -96,7 +96,7 @@ object AppSiteMap {
   )
 
   val ShareView: PM[ShareUrlToken] = (
-    Menu.param[ShareUrlToken]("share-view", "_", i => Full(i.tag), o => o) / "share" / *
+    Menu.param[ShareUrlToken]("share-view", "_", i => Full(ShareUrlToken(i)), _.value) / "share" / *
     >> UseTemplate("share-view")
   )
 
@@ -250,8 +250,8 @@ object AppSiteMap {
   private def TitleFromProjectName[T] = DynamicTitle[T](mkTitle(projectName))
   private def TitleFromShareName[T] = DynamicTitle[T](mkTitle(shareName))
 
-  private def MenuWithIdParam[Tag <: IsExteralisableId](eidGen: ExternalIdConverter[Tag])(name: String) =
-    Menu.param[JLong @@ Tag](name, "", eidGen.parseB(_), eidGen.toExternal(_))
+  private def MenuWithIdParam[T <: ExteralisableId](eidGen: ExternalIdConverter[T])(name: String) =
+    Menu.param[T](name, "", eidGen.parseB, eidGen.toExternal)
 
   private def splitPath(path: String): List[String] =
     path.split("/").toList

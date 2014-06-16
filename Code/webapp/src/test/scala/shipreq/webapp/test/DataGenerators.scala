@@ -158,7 +158,7 @@ object DataGenerators extends Logger {
     suffix <- randomStepLabelWithoutPrefix
   } yield prefix + suffix
 
-  def randomStepLabel = Gen.chooseNum(1,100).flatMap(n => randomStepLabelForUc(n.toShort.tag[IsUseCaseNumber]))
+  def randomStepLabel = Gen.chooseNum(1,100).flatMap(n => randomStepLabelForUc(UseCaseNumber(n.toShort)))
 
   // -------------------------------------------------------------------------------------------------------------------
   // Step tree
@@ -172,7 +172,7 @@ object DataGenerators extends Logger {
 
     lazy val stepTree = StepTree(
       convertNodeTree[StepPlaceholderNode, StepNode](nodes
-      , {case (node, level, index, children) => StepNode(node.label.replace('.', '_').asLocalStepId, level, index, children)}
+      , {case (node, level, index, children) => StepNode(LocalStepId(node.label.replace('.', '_')), level, index, children)}
       , sli.startingLabelIndex _
       )
     )
@@ -195,8 +195,8 @@ object DataGenerators extends Logger {
           numberOfSteps(minSteps, sli.startingLabelIndex(level)).flatMap(size => {
             val listOfGens = (0 to (size - 1)).toList.map(i => {
               val ind = i + sli.startingLabelIndex(level)
-              val lbl = (prefix + labelMaker(ind)).asLabel
-              go(lbl + ".", level + 1, nextLabels, 0).map(StepPlaceholderNode(lbl, _))
+              val lbl = StepLabel(prefix + labelMaker(ind).value)
+              go(lbl.value + ".", level + 1, nextLabels, 0).map(StepPlaceholderNode(lbl, _))
             })
             Gen.sequence[List, StepPlaceholderNode](listOfGens)
           })
@@ -224,7 +224,7 @@ object DataGenerators extends Logger {
 
     val validStep = Gen.oneOf(validSteps)
     val invalidStep = randomStepLabel suchThat (x => !validSteps.contains(TextMod.noWhitespace(x)))
-    val validStepRef = withBraces(validStep)
+    val validStepRef = withBraces(validStep.map(_.value))
 
     val possibleUcRefTitleSuffix = Gen.oneOf(nothing, useCaseTitle.map(":" + _))
     val validUcRefInner = for {
@@ -243,7 +243,7 @@ object DataGenerators extends Logger {
 
     val textToken = Gen.oneOf(
       mathTex
-        , withBraces(validStep)
+        , withBraces(validStep.map(_.value))
         , withBraces(invalidStep)
         , withBraces(validUcRefInner)
         , withBraces(invalidUcRefInner)
@@ -252,7 +252,7 @@ object DataGenerators extends Logger {
 
     val textFieldText = Gen.listOf(Gen.oneOf(nothing, plainText, textToken)).map(_.mkString)
 
-    val validFlowRef = Gen.oneOf(validStep, validStepRef)
+    val validFlowRef = Gen.oneOf(validStep.map(_.value), validStepRef)
     val validFlowRefs = mkStringWithWhitespace(Gen.listOf(validFlowRef))
     val flowToRefClause = flowAndRefs(flowToArrow, validFlowRefs)
     val flowFromRefClause = flowAndRefs(flowFromArrow, validFlowRefs)
@@ -318,7 +318,7 @@ object DataGenerators extends Logger {
                      .suchThat(_.isDefined)
                      .map(_.get)
 
-  val useCaseNumber = Gen.posNum[Short].map(_.tag[IsUseCaseNumber])
+  val useCaseNumber = Gen.posNum[Short].map(UseCaseNumber)
 
   val useCaseHeader = for {
     title <- useCaseTitle

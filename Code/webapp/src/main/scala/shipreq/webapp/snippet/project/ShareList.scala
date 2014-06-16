@@ -67,14 +67,14 @@ class ShareList(projectId: ProjectId) extends SingleOpStatefulSnippet {
     )
   }
 
-  def shareLiId(s: ShareSummary): String = "s-" + s.urlToken
+  def shareLiId(s: ShareSummary): String = "s-" + s.urlToken.value
 
   def descMatchingUcs(f: UcFilter): String = {
     val m = UcFilter.apply(f)(ucs)
     val msize = m.size
     msize match {
       case 0 => "0 use cases."
-      case 1 => s"1 use case: ${m.head.number}."
+      case 1 => s"1 use case: UC-${m.head.number.value}."
       case _ =>
         val mnel = nel(m.head, m.tail)
         val idDesc = ConciseIntListDesc.compute(mnel)(_.number.toInt)
@@ -88,10 +88,8 @@ class ShareList(projectId: ProjectId) extends SingleOpStatefulSnippet {
     else
       s"$viewCount views."
 
-  def renderViewRecency(lastViewedAt: Option[String @@ ISO8601]): CssSel = lastViewedAt match {
-    case None => "*" #> ""
-    case Some(at) => "abbr [title]" #> at
-  }
+  def renderViewRecency(lastViewedAt: Option[ISO8601]): CssSel =
+    lastViewedAt.fold("*" #> "")("abbr [title]" #> _.value)
 
   def onPasswordChange(s: ShareSummary)(newPassword: PasswordAndSalt): JsCmd = {
     daoProvider.withSession(_.updateSharePassword(s, newPassword))

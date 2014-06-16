@@ -17,15 +17,15 @@ import ShareView._
 class ShareViewTest extends FunSpec with TestHelpers with TestData {
   lazy val template = NonEmptyTemplate.load("share-view").get
 
-  val URL = "12345678".tag[IsShareUrlToken]
+  val URL = ShareUrlToken("12345678")
   val userId = UD1.id
-  val projectId = 123.tag[IsProjectId]
-  val share = Share(1.tag, projectId, URL, "z", None, UcFilter.toJson(UcFilters.All))
+  val projectId = ProjectId(123)
+  val share = Share(ShareId(1), projectId, URL, "z", None, UcFilter.toJsonStr(UcFilters.All))
   val project = Project(projectId, "z", userId)
   val PS = PasswordAndSalt.createWithRandomSalt("correct")
   val cp = {
     val uc = MockUc4.UC
-    val ucr = UseCaseRev(UseCaseIdent(8.tag, (2: Short).tag, projectId), 3, 9.tag, uc.header, DateTime.now)
+    val ucr = UseCaseRev(UseCaseIdent(UseCaseIdentId(8), UseCaseNumber(2), projectId), 3, UseCaseRevId(9), uc.header, DateTime.now)
     UseCaseSaveCheckpoint(uc, ucr, null, null)
   }
 
@@ -66,7 +66,7 @@ class ShareViewTest extends FunSpec with TestHelpers with TestData {
 
   def authGuest(token: ShareUrlToken = URL
     , when: DateTime = DateTime.now.minusSeconds(30)
-    , password: String @@ Hashed = PS.hashedPassword): Unit =
+    , password: HashedStr = PS.hashedPassword): Unit =
     AuthMapVar.atomicUpdate(_ + (token -> (when, password)))
 
   describe("Rendering") {
@@ -121,14 +121,14 @@ class ShareViewTest extends FunSpec with TestHelpers with TestData {
 
       it("should deny access when already authorised but password has changed") {
         setupValidShare {
-          authGuest(password = "changed".tag)
+          authGuest(password = HashedStr("changed"))
           subject.initialPage shouldBe PasswordRequired
         }
       }
 
       it("should deny access when other page is authorised") {
         setupValidShare {
-          authGuest(token = "different".tag)
+          authGuest(token = ShareUrlToken("different"))
           subject.initialPage shouldBe PasswordRequired
         }
       }
@@ -195,7 +195,7 @@ class ShareViewTest extends FunSpec with TestHelpers with TestData {
       }
 
       it("should update the authmap") {
-        val oldAuthMap: AuthMap = Map("qwe".tag -> (DateTime.now minusHours 4, "roar".tag))
+        val oldAuthMap: AuthMap = Map(ShareUrlToken("qwe") -> (DateTime.now minusHours 4, HashedStr("roar")))
         val o = oldAuthMap.head
         setupValidShare {
           AuthMapVar.set(oldAuthMap)

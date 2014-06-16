@@ -21,10 +21,10 @@ object TreeOps {
    */
   def mapIdsToFullLabels[T <: TreeNode[T]](nodes: List[T], prefix: String = ""): Map[LocalStepId, StepLabel] = nodes match {
     case h :: t =>
-      val lbl = prefix + h.label
+      val lbl = prefix + h.label.value
       mapIdsToFullLabels(t, prefix) ++
         mapIdsToFullLabels(h.children, lbl + ".") +
-        (h.id -> lbl.asLabel)
+        (h.id -> StepLabel(lbl))
 
     case Nil => Map.empty
   }

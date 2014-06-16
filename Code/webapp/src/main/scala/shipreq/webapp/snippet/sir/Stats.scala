@@ -56,7 +56,7 @@ object Stats extends SnippetHelpers {
 
   def renderFn = {
     val stats = allStats
-    val evalTime = Misc.currentTimeAsIso8601Str
+    val evalTime = Misc.currentTimeAsIso8601Str.value
     (
       "time [datetime]" #> evalTime andThen
       "section" #> stats.map{ case (section,subStats) =>

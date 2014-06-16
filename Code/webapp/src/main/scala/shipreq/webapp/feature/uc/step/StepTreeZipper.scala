@@ -29,7 +29,7 @@ object StepTreeZipper {
       def text: String = value.text
       def flowFromClause = value.flowFromClause
       def flowToClause = value.flowToClause
-      override def toString = s"$label. '$text'"
+      override def toString = s"${label.value}. '$text'"
     }
   }
 

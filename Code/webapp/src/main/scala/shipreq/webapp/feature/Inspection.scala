@@ -7,6 +7,7 @@ import scala.reflect.runtime.universe.{TypeTag => ReflectTypeTag}
 import scalaz.{Cord, Show, Name, Need, Value}
 import scalaz.syntax.show._
 
+import shipreq.base.util.TaggedTypes.TaggedType
 import db.{UseCaseRev, UseCaseIdent, UseCaseHeader, FieldKeyType, FieldKeyRec}
 import lib.Types._
 import uc.UseCase
@@ -15,7 +16,7 @@ import uc.step._
 import uc.text._
 import FreeTextTerms._
 import shipreq.base.util.BiMap
-import shipreq.taskman.api.Types.IsUserId
+import shipreq.taskman.api.UserId
 
 /**
  * Typeclasses of `scalaz.Show` that returns code that can be pasted back into Scala.
@@ -36,7 +37,6 @@ object Inspection {
   private val `)`: Cord = ")"
   private val nil: Cord = "Nil"
   private val eol: Cord = "\n"
-  private val `:Short)`: Cord = ":Short)"
   private val `()`: Cord = "()"
 
   private implicit class StringExt(val s: String) extends AnyVal {
@@ -65,8 +65,6 @@ object Inspection {
   implicit val unit: Show[Unit] = Show.show(_ => `()`)
   implicit val str: Show[String] = Show.show(`"` ++ escapeJava(_) ++ `"`)
   implicit val long: Show[Long] = Show.show(_.toString + "L")
-  implicit val jlong: Show[JLong] = Show.show(_.toString + "L")
-  implicit val jshort: Show[JShort] = Show.show(`(` ++ _.toString ++ `:Short)`)
 
   implicit def listShow[A: Show]: Show[List[A]] =
     Show.show(l =>
@@ -95,38 +93,21 @@ object Inspection {
   // ===================================================================================================================
   // Type tags
 
-  private def getTagName(tag: ReflectTypeTag[_]): String = tag.tpe.toString.replaceFirst("^.+\\.","")
+  private def taggedType[T <: TaggedType](implicit baseShow: Show[T#U]): Show[T] =
+    Show.show(t => t.getClass.getSimpleName <> baseShow.show(t.value))
 
-  private def taggedType[Base <: AnyRef, Tag <: TypeTag[Base]](implicit tt: ReflectTypeTag[Tag], baseShow: Show[Base]): Show[Base @@ Tag] = {
-    val tagClass = getTagName(tt)
-    val tagSuffix: Cord = s".tag[$tagClass]"
-    Show.show(s => {
-      val b: Base = s
-      baseShow.show(b) ++ tagSuffix
-    })
-  }
-
-  private def taggedAnyRef[T <: AnyRef, Tag <: TypeTag[AnyRef]](implicit t: Show[T], tt: ReflectTypeTag[Tag]): Show[T @@ Tag] = taggedType[T, Tag]
-  private def taggedStr[Tag <: TypeTag[String]](implicit tt: ReflectTypeTag[Tag]): Show[String @@ Tag] = taggedType[String, Tag]
-  private def taggedShort[Tag <: TypeTag[JShort]](implicit tt: ReflectTypeTag[Tag]): Show[JShort @@ Tag] = taggedType[JShort, Tag]
-  private def taggedLong[Tag <: TypeTag[JLong]](implicit tt: ReflectTypeTag[Tag]): Show[JLong @@ Tag] = taggedType[JLong, Tag]
-
-  implicit def validatedType[T <: AnyRef](implicit t: Show[T]): Show[T @@ Validated] = taggedAnyRef[T, Validated]
-
-  implicit val textWithNRefs   : Show[NormalisedText]   = taggedStr[IsNormalised]
-  implicit val localTextFieldId: Show[LocalTextFieldId] = taggedStr[IsLocalTextFieldId]
-  implicit val localStepId     : Show[LocalStepId]      = taggedStr[IsLocalStepId]
-  implicit val labelStr        : Show[StepLabel]        = taggedStr[IsStepLabel]
-
-  implicit val useCaseNumber: Show[UseCaseNumber] = taggedShort[IsUseCaseNumber]
-
-  implicit val fieldKeyId : Show[FieldKeyId]     = taggedLong[IsFieldKeyId]
-  implicit val ucIdentId  : Show[UseCaseIdentId] = taggedLong[IsUseCaseIdentId]
-  implicit val ucRevId    : Show[UseCaseRevId]   = taggedLong[IsUseCaseRevId]
-  implicit val textIdentId: Show[TextIdentId]    = taggedLong[IsTextIdentId]
-  implicit val textRevId  : Show[TextRevId]      = taggedLong[IsTextRevId]
-  implicit val userId     : Show[UserId]         = taggedLong[IsUserId]
-  implicit val projectId  : Show[ProjectId]      = taggedLong[IsProjectId]
+  implicit val fieldKeyId      : Show[FieldKeyId]       = taggedType[FieldKeyId]
+  implicit val localTextFieldId: Show[LocalTextFieldId] = taggedType[LocalTextFieldId]
+  implicit val localStepId     : Show[LocalStepId]      = taggedType[LocalStepId]
+  implicit val textWithNRefs   : Show[NormalisedText]   = taggedType[NormalisedText]
+  implicit val projectId       : Show[ProjectId]        = taggedType[ProjectId]
+  implicit val labelStr        : Show[StepLabel]        = taggedType[StepLabel]
+  implicit val textIdentId     : Show[TextIdentId]      = taggedType[TextIdentId]
+  implicit val textRevId       : Show[TextRevId]        = taggedType[TextRevId]
+  implicit val ucIdentId       : Show[UseCaseIdentId]   = taggedType[UseCaseIdentId]
+  implicit val useCaseNumber   : Show[UseCaseNumber]    = taggedType[UseCaseNumber]
+  implicit val ucRevId         : Show[UseCaseRevId]     = taggedType[UseCaseRevId]
+  implicit val userId          : Show[UserId]           = taggedType[UserId]
 
   // ===================================================================================================================
   // Fields and values
@@ -140,7 +121,7 @@ object Inspection {
 
   implicit val textFieldDefn: Show[TextFieldDefinition] = "TextFieldDefinition" <*> (_.title.show)
 
-  private val fieldM: Field => Cord = _ match {
+  private val fieldM: Field => Cord = {
     case f: TextField            => "TextField" <> f.defn.show ++> f.rec.show
     case f: NormalCourseField    => "NormalCourseField" <> f.rec.show
     case f: ExceptionCourseField => "ExceptionCourseField" <> f.rec.show
@@ -157,7 +138,7 @@ object Inspection {
   implicit val fttUseCaseSelfRef   : Show[UseCaseSelfRef]    = "UseCaseSelfRef" <*> (x => x.num.show ++> x.title.show)
   implicit val fttInvalidUseCaseRef: Show[InvalidUseCaseRef] = "InvalidUseCaseRef" <*> (x => x.num.show ++> x.title.show)
   implicit val fttMathTexTerm      : Show[MathTexTerm]       = "MathTexTerm" <*> (_.tex.show)
-  implicit val freeTextTerm: Show[FreeTextTerm] = Show.show(_ match {
+  implicit val freeTextTerm: Show[FreeTextTerm] = Show.show({
     case t: PlainText         => t.show
     case t: StepRef           => t.show
     case t: InvalidStepRef    => t.show

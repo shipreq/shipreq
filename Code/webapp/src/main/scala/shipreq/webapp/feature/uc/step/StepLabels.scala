@@ -27,7 +27,7 @@ object StepLabels {
    * Bidirectional map of labels ("ii","vii","c") to their indices (which are usually one-based).
    */
   final class LabelMaker private (val min: Int, val label: Map[Int, String], val index: Map[String, Int]) {
-    def apply(i: Int) = label(i).asLabel
+    def apply(i: Int) = StepLabel(label(i))
     def apply(l: String) = index(l)
   }
 
@@ -44,10 +44,10 @@ object StepLabels {
     }
   }
 
-  final val NUMERIC_0 = LabelMaker(0, toNumeric _)
-  final val NUMERIC = LabelMaker(1, toNumeric _)
-  final val ALPHA = LabelMaker(1, toAlpha _)
-  final val ROMAN = LabelMaker(1, toRoman _)
+  final val NUMERIC_0 = LabelMaker(0, toNumeric)
+  final val NUMERIC = LabelMaker(1, toNumeric)
+  final val ALPHA = LabelMaker(1, toAlpha)
+  final val ROMAN = LabelMaker(1, toRoman)
 
   // (1.)0.1.a.i.4
   final val LabelMakers = Vector(NUMERIC_0, NUMERIC, ALPHA, ROMAN, NUMERIC)

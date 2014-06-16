@@ -3,10 +3,10 @@ package shipreq.webapp.snippet
 import net.liftweb.http.js.JsCmd
 import net.liftweb.util.Helpers._
 import scala.xml.NodeSeq
+import shipreq.base.util.TaggedTypes.JsonStr
 import shipreq.webapp.app.RequestVars
 import shipreq.webapp.feature.UcFilter
 import shipreq.webapp.lib.{FormVar, NoticeFlash}
-import shipreq.webapp.lib.Types.Json
 import shipreq.webapp.util.NonEmptyTemplate
 import ShareCreateBase._
 import ShareEditConsts._
@@ -40,7 +40,7 @@ class ShareEdit extends ShareCreateBase {
   def render =
     "#edit-form" #> editFormXml andThen (editForm.csssel(vars, vars = _) & render2(share.ucFilter))
 
-  def onSubmit(ucFilterJson: () => Json[UcFilter]): JsCmd =
+  def onSubmit(ucFilterJson: () => JsonStr[UcFilter]): JsCmd =
     ifValid(editForm validate vars)(t => {
       val (name, preface) = t
       daoProvider.withSession(_.updateShare(share, name, preface, ucFilterJson()))

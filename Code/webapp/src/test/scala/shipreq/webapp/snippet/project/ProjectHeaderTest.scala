@@ -3,7 +3,7 @@ package shipreq.webapp.snippet.project
 import org.mockito.Mockito.when
 import org.scalatest.FunSuite
 import scalaz.Value
-import shipreq.taskman.api.Types.IsUserId
+import shipreq.taskman.api.UserId
 import shipreq.webapp.app.RequestVars
 import shipreq.webapp.db.{Project, UserDescriptor, UpdateProjectResult}
 import shipreq.webapp.test.{MockDaoProvider, TestHelpers}
@@ -18,11 +18,11 @@ class ProjectHeaderTest extends FunSuite with TestHelpers {
 
   def run[R](
     loggedInUser: Option[UserDescriptor] = Some(UD1),
-    project: Project = Project(123456.tag[IsProjectId], "Grrr", UD1.id),
+    project: Project = Project(ProjectId(123456), "Grrr", UD1.id),
     updateResult: UpdateProjectResult = DbSuccess
     )(fn: ProjectHeader => R = identity[ProjectHeader] _): R = {
 
-    val uid: UserId = loggedInUser.map(_.id).getOrElse((-1).tag[IsUserId])
+    val uid: UserId = loggedInUser.map(_.id).getOrElse(UserId(-1))
     MockDaoProvider(dao => {
       when(dao.updateProject(meq(project.id), meq(uid), any)).thenReturn(updateResult)
     }).install {

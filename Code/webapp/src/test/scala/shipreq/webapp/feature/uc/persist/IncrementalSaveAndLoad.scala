@@ -43,7 +43,7 @@ object IncrementalSaveAndLoad extends Commands {
         val pid = db.newProjectId()
         SystemInvariants(pid, db)
       }
-      val rev1 = db.createUseCaseIdentAndRev1(pid, UseCaseHeader("IncrementalSaveAndLoad rev 1".tag[Validated]))
+      val rev1 = db.createUseCaseIdentAndRev1(pid, UseCaseHeader("IncrementalSaveAndLoad rev 1"))
       cp = db.loadUseCase(rev1, pid)
       history = (cp.uc, "Starting point.") :: Nil
     }

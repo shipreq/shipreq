@@ -18,7 +18,7 @@ class ValidatorTest extends FunSuite with Matchers with PropertyChecks {
     forAll(examples) ((expectedFailure, input) => testV(v, input, expectedFailure))
 
   def testV(v: VT3, input: String, expectedFailure: Option[String]): Unit =
-    v.validate(input.tag) match {
+    v.validate(InputCorrected(input)) match {
       case Failure(f) => f.toText should include(expectedFailure.getOrElse("Validation failed but was expected to pass."))
       case Success(_) => expectedFailure shouldBe None
     }
@@ -26,13 +26,13 @@ class ValidatorTest extends FunSuite with Matchers with PropertyChecks {
   def testCV(v: VT3, examples: TableFor3[String, Option[String], Option[String]]): Unit =
     forAll(examples)((i, cc, expectedFailure) => {
       val c = cc.getOrElse(i)
-      v.correct(i) shouldBe c
+      v.correct(i).value shouldBe c
       testV(v, c, expectedFailure)
     })
 
   test("Email correction") {
-    V.email.correct("hehe") shouldBe "hehe"
-    V.email.correct(" he  he ") shouldBe "hehe" // removes ALL whitespace
+    V.email.correct("hehe").value shouldBe "hehe"
+    V.email.correct(" he  he ").value shouldBe "hehe" // removes ALL whitespace
   }
 
   test("Email validation") {
@@ -100,9 +100,9 @@ class ValidatorTest extends FunSuite with Matchers with PropertyChecks {
   }
 
   test("Username correction") {
-    V.user.username.correct("HEHE") shouldBe "hehe"
-    V.user.username.correct("  ahah  ") shouldBe "ahah"
-    V.user.username.correct("  Heh  ") shouldBe "heh"
+    V.user.username.correct("HEHE").value shouldBe "hehe"
+    V.user.username.correct("  ahah  ").value shouldBe "ahah"
+    V.user.username.correct("  Heh  ").value shouldBe "heh"
   }
 
   test("Username validation") {
@@ -160,9 +160,9 @@ class ValidatorTest extends FunSuite with Matchers with PropertyChecks {
   }
 
   test("LargeTextO") {
-    V.share.preface.correct("\n\n  ") shouldBe None
+    V.share.preface.correct("\n\n  ").value shouldBe None
     V.share.preface.correctAndValidate("") shouldBe Success(None)
-    V.share.preface.correctAndValidate("\n\nyo\n\nhehe\n\n") shouldBe Success(Some("yo\n\nhehe".tag))
+    V.share.preface.correctAndValidate("\n\nyo\n\nhehe\n\n") shouldBe Success(Some("yo\n\nhehe"))
     V.share.preface.correctAndValidate("x" * LargeTextMaxLength).isSuccess shouldBe true
     V.share.preface.correctAndValidate("x" * (LargeTextMaxLength + 1)).isSuccess shouldBe false
   }

@@ -8,7 +8,7 @@ import app.DI
 import db.{Share, UserDescriptor, Project}
 import Permission._
 
-final object Permission {
+object Permission {
 
   val SomeTrue = Some(true)
   val SomeFalse = Some(false)

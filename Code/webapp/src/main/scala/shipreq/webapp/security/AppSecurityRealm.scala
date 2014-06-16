@@ -23,7 +23,7 @@ class AppSecurityRealm extends AuthenticatingRealm with DI {
     val (user, cred) = result.get
 
     // Result
-    val info = new SimpleAuthenticationInfo(Some(user), cred.hashedPassword, getName)
+    val info = new SimpleAuthenticationInfo(Some(user), cred.hashedPassword.value, getName)
     info.setCredentialsSalt(cred.saltBytes)
     info
   }

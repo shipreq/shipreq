@@ -19,10 +19,10 @@ import FreeTextTerms._
 
 object FreeAndStepTextTests extends TestHelpers2 {
 
-  val UCN = (3:Short).tag[IsUseCaseNumber]
+  val UCN = UseCaseNumber(3)
   implicit def autoCtx(sl: StepAndLabelBiMap) = UcParsingCtx(UCN, "New Third", sl, Rels)
-  implicit def autoNum(i: Int) = i.toShort.tag[IsUseCaseNumber]
-  implicit def autoUCId(i: Int) = i.toLong.tag[IsUseCaseIdentId]
+  implicit def autoNum(i: Int) = UseCaseNumber(i.toShort)
+  implicit def autoUCId(i: Int) = UseCaseIdentId(i)
   implicit def exTerms(t: FreeText) = t.terms
 
   val UCS = List(
@@ -211,11 +211,11 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
 
         it("should add ? to invalid step refs") {
           testBoth("[1.0.9] doesn't exist.", "[1.0.9?] doesn't exist."
-            , InvalidStepRef("1.0.9".asLabel), PlainText(" doesn't exist."))
+            , InvalidStepRef(StepLabel("1.0.9")), PlainText(" doesn't exist."))
         }
 
         it("should parse invalid step refs as is") {
-          testBoth("[1.0.9?] doesn't exist.", None, InvalidStepRef("1.0.9".asLabel), PlainText(" doesn't exist."))
+          testBoth("[1.0.9?] doesn't exist.", None, InvalidStepRef(StepLabel("1.0.9")), PlainText(" doesn't exist."))
         }
 
         it("should ignore invalid refs without dots") {
@@ -273,22 +273,22 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
 
     describe("Loading text") {
       it("should load simple text") {
-        val x = T.load("Hehe".tag[IsNormalised])(BiMap.empty, StepState1)
+        val x = T.load(NormalisedText("Hehe"))(BiMap.empty, StepState1)
         T.oldAssert(x, "Hehe", Map.empty, false)
       }
 
       it("should denormalise step refs") {
-        val x = T.load("Hehe [D.100]".tag[IsNormalised])(savedSteps(100 -> X2), StepState1)
+        val x = T.load(NormalisedText("Hehe [D.100]"))(savedSteps(100 -> X2), StepState1)
         T.oldAssert(x, "Hehe [S.2]", Map(X2 -> S2), false)
       }
 
       it("should denormalise UC refs") {
-        val x = T.load("Hehe [UC-2] and [UC-1]!".tag[IsNormalised])(BiMap.empty, StepState1)
+        val x = T.load(NormalisedText("Hehe [UC-2] and [UC-1]!"))(BiMap.empty, StepState1)
         T.oldAssert(x, "Hehe [UC-2: Second] and [UC-1: First]!", Map.empty, false)
       }
 
       it("should denormalise UC self-refs") {
-        val x = T.load("Hehe [UC-3]!".tag[IsNormalised])(BiMap.empty, UcParsingCtx(UCN, "Old Third", StepState1, Rels))
+        val x = T.load(NormalisedText("Hehe [UC-3]!"))(BiMap.empty, UcParsingCtx(UCN, "Old Third", StepState1, Rels))
         T.oldAssert(x, "Hehe [UC-3: Old Third]!", Map.empty, true)
       }
     }
@@ -297,7 +297,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
       it("should normalise UC refs to [UC-n]") {
         val txt = "Hehe [UC-2: Second] and [UC-1: First]!"
         val nt = T.parse(txt).normalisedText(BiMap.empty)
-        nt shouldBe "Hehe [UC-2] and [UC-1]!"
+        nt.value shouldBe "Hehe [UC-2] and [UC-1]!"
       }
     }
 
@@ -444,7 +444,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
 
       it("should sort refs with parents preceding children") {
         val orderedLabels = List("1.0", "1.0.1", "1.0.1.a", "1.0.1.a.2", "1.0.1.c", "1.0.2", "1.1", "1.E.1")
-        val refs: Refs = orderedLabels.map(x => (s"id/$x".asLocalStepId, x.asLabel)).toMap
+        val refs: Refs = orderedLabels.map(x => (LocalStepId(s"id/$x"), StepLabel(x))).toMap
         val flow = F.obj.create(refs).get
         F.obj.toText(flow).replaceAll("[^0-9a-zE\\. ]", "").trim should be(orderedLabels.mkString(" "))
       }
@@ -533,7 +533,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
         def makeExample(a: List[Ref], b: List[Ref]): Example = {
           def genInp(l: List[Ref], f: Ref => String) = l match {
             case Nil => ""
-            case _ => "⬅" + l.map(r => makeStepRef(f(r).tag[IsStepLabel])).mkString("")
+            case _ => "⬅" + l.map(r => makeStepRef(StepLabel(f(r)))).mkString("")
           }
           val input = genInp(a, _.t1) + genInp(b, _.t2)
 
@@ -541,7 +541,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
             case Nil => None
             case ll => Some("<- " + ll.map(r => makeInvalidStepRef(f(r))).mkString(" "))
           }
-          def expGood1(l: List[Ref], f: Ref => String) = l.filter(_.good).map(r => makeStepRef(f(r).tag[IsStepLabel]))
+          def expGood1(l: List[Ref], f: Ref => String) = l.filter(_.good).map(r => makeStepRef(StepLabel(f(r))))
           def expGood: Option[String] = (expGood1(a, _.t1) ::: expGood1(b, _.t2)) match {
             case Nil => None
             case l => Some("⬅ " + l.mkString(" "))
@@ -650,7 +650,7 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
       it("should parse both flows") {
         val x = StepText.parse("He [S.3] he ⬅ [S.2] ➡ [S.1]")(StepState1)
         x.text should be("He [S.3] he ⬅ [S.2] ➡ [S.1]")
-        oldStyleRefs(x.mainClause) shouldBe Map("X3" -> "S.3")
+        oldStyleRefs(x.mainClause) shouldBe Map(X3 -> S3)
         assertFlowClause(x.flowFromClause, Map(X2 -> S2))
         assertFlowClause(x.flowToClause, Map(X1 -> S1))
       }
@@ -659,8 +659,8 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
         forAll(TextWithFlowExamples)((input, expText, expRefsFrom, expRefsTo) => {
           val x = StepText.parse(input)(StepStateB)
           x.mainClause.text should be(expText.replaceAll("-->", FlowToStyle.arrowBadReplacement))
-          assertFlowClause(x.flowFromClause, mapFromIds(expRefsFrom.asLabelC, StepStateB))
-          assertFlowClause(x.flowToClause, mapFromIds(expRefsTo.asLabelC, StepStateB))
+          assertFlowClause(x.flowFromClause, mapFromIds(expRefsFrom.map(StepLabel), StepStateB))
+          assertFlowClause(x.flowToClause, mapFromIds(expRefsTo.map(StepLabel), StepStateB))
         })
       }
 
@@ -701,9 +701,9 @@ class FreeAndStepTextTests extends FunSpec with TestHelpers with PropertyChecks 
     describe("Loading text with flow") {
       it("should normalise refs in all clauses") {
         val save = savedSteps(100 -> X2, 104 -> X1, 108 -> X3)
-        val x = StepText.load("He [D.108] he ⬅ [D.100] ➡ [D.104]".tag[IsNormalised])(save, StepState1)
+        val x = StepText.load(NormalisedText("He [D.108] he ⬅ [D.100] ➡ [D.104]"))(save, StepState1)
         x.text should be("He [S.3] he ⬅ [S.2] ➡ [S.1]")
-        oldStyleRefs(x.mainClause) shouldBe Map("X3" -> "S.3")
+        oldStyleRefs(x.mainClause) shouldBe Map(X3 -> S3)
         x.flowFromClause should be(Some(FlowFromClause(Map(X2 -> S2))))
         x.flowToClause should be(Some(FlowToClause(Map(X1 -> S1))))
       }

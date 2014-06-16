@@ -3,6 +3,7 @@ package shipreq.webapp.snippet
 import net.liftweb.http.js.JsCmd
 import net.liftweb.util.Helpers._
 import shipreq.base.util.ScalaExt._
+import shipreq.base.util.TaggedTypes.JsonStr
 import shipreq.webapp.app.AppSiteMap
 import shipreq.webapp.feature.{UcFilters, UcFilter}
 import shipreq.webapp.feature.validation.Validators
@@ -29,14 +30,14 @@ private[snippet] abstract class ShareCreateBase extends SingleOpStatefulSnippet 
   protected def render2(f: UcFilter) = {
     val ucs = daoProvider.withSession(_ findAllLatestUseCaseRevsByProject projectId)
     val (ucFilterXml, ucFilterFn) = UcFilter.render(f, ucs)
-    def readHttpParamsAndBuildUcFilterJson(): Json[UcFilter] = UcFilter.toJson(ucFilterFn())
+    def readHttpParamsAndBuildUcFilterJson(): JsonStr[UcFilter] = UcFilter.toJsonStr(ucFilterFn())
 
     ( "#uc-filters" #> ucFilterXml
     & ":submit" #> ajaxSubmitOnClick(() => onSubmit(readHttpParamsAndBuildUcFilterJson))
     )
   }
 
-  def onSubmit(ucFilterJson: () => Json[UcFilter]): JsCmd
+  def onSubmit(ucFilterJson: () => JsonStr[UcFilter]): JsCmd
 
   def goBackToShareList(): Nothing = {
     ActivateTab.SharesTab.setInFlash()
@@ -61,7 +62,7 @@ class ShareCreate(val projectId: ProjectId) extends ShareCreateBase {
   def render =
     render2(UcFilters.All) & createForm.csssel(vars, vars = _)
 
-  def onSubmit(ucFilterJson: () => Json[UcFilter]): JsCmd = {
+  def onSubmit(ucFilterJson: () => JsonStr[UcFilter]): JsCmd = {
     val v = try
       createForm validate vars
     finally

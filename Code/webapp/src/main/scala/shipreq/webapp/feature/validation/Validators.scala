@@ -1,8 +1,8 @@
 package shipreq.webapp.feature.validation
 
-import java.lang.{Boolean => JBool}
 import scalaz.{Success, Failure}
 import shipreq.base.util.ScalaExt._
+import shipreq.taskman.api.EmailAddr
 import shipreq.webapp.app.AppConfig._
 import shipreq.webapp.lib.ScalazSubset._
 import shipreq.webapp.lib.TextMod._
@@ -28,7 +28,7 @@ object Validators {
 
   /** Empty string is represented as `None`. */
   private def optionalLargeText(name: String) = Validator(
-    largeTextCP.map[Option[String]](nonBlank(_).tag),
+    largeTextCP.mapQ[Option[String]](nonBlank),
     ValidationPart.liftO[String, String](largeTextValidator(name).validate))
 
   // ===================================================================================================================
@@ -40,19 +40,19 @@ object Validators {
         + matchesR("^_+@_+?\\._+$".replace("_", "[^&<>]").r)("is invalid.") // loose validation
     ))
 
-  val emailEA = email.map[EmailAddr]((s: String) => s.tag)
+  val emailEA = email.map(EmailAddr)
 
   val password = Validator(
     CorrectionPart.nop[String],
     ValidationPart.forConstraint("Password", lengthInRange(PasswordLength) + containsAlphaAndNumber))
 
   val passwords = Validator(
-    CorrectionPart.lift[(String, String)](_ umap password.correct),
+    CorrectionPart.liftE[(String, String)](_ umap password.correctU),
     ValidationPart[(String, String), String](input =>
-      password.validate(input._1.tag) match {
+      password.validate(input.value._1) match {
         case f@ Failure(_) => f
         case s@ Success(_) =>
-          if (input._1 != input._2)
+          if (input.value._1 != input.value._2)
             Failure(VFailure.looseMsg("Passwords don't match."))
           else
             s
@@ -60,8 +60,8 @@ object Validators {
 
   def currentPassword(ps: PasswordAndSalt) = Validator(
     password.cp,
-    ValidationPart.untyped[String, Unit](input =>
-      if (ps matches input)
+    ValidationPart[String, Unit](input =>
+      if (ps matches input.value)
         Success(())
       else
         Failure(VFailure.looseMsg("Current password is incorrect."))
@@ -74,12 +74,12 @@ object Validators {
 
   /** `passwords` in the shape of `passwordChange`. i.e. change password without checking current. */
   val passwordSet = Validator(
-    CorrectionPart[PasswordChange, PasswordChange](_.map2(passwords.correct).tag),
-    ValidationPart[PasswordChange, String](passwords validate _._2.tag))
+    CorrectionPart.liftE[PasswordChange](_.map2(passwords.correctU)),
+    ValidationPart[PasswordChange, String](passwords validate _.value._2))
 
   val tosAgreement = Validator(
-    CorrectionPart[Boolean, JBool](JBool.valueOf(_).tag),
-    ValidationPart.test[JBool](_.booleanValue, VFailure.looseMsg("You must agree to the terms of service.")))
+    CorrectionPart.nop[Boolean],
+    ValidationPart.test[Boolean](_.value, VFailure.looseMsg("You must agree to the terms of service.")))
 
   val humanFullName = Validator(
     CorrectionPart.endo(singleLineWhitespace),

@@ -11,7 +11,7 @@ import text.FreeText
 
 class FieldLensesTest extends FunSpec with TestHelpers with TestData {
   import MockUc1._
-  implicit def autotagV[T <: AnyRef](t: T): T @@ Validated = t.tag[Validated]
+  implicit def autotagV[T](t: T) = Validated(t)
 
   def testFieldValueSet[F <: Field {type Value = V}, V](before: UseCase)(field: F, newValue: V)(after: UseCase) {
     field(after.fieldValues) ==== newValue

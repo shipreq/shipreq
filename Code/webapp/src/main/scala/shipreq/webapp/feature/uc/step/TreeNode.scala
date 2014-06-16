@@ -30,7 +30,7 @@ trait TreeNode[T <: TreeNode[T]] extends TreeNodeLike[T] {
    * 1.0.1      --> 1.0.2
    * 1.3.a.iii  --> 1.3.a.iv
    */
-  @inline final def incrementPosition() = copy(labelIndex = this.labelIndex + 1)
+  @inline final def incrementPosition = copy(labelIndex = this.labelIndex + 1)
 
   /**
    * Decrements the position of this node.
@@ -39,7 +39,7 @@ trait TreeNode[T <: TreeNode[T]] extends TreeNodeLike[T] {
    * 1.0.2      --> 1.0.1
    * 1.3.a.iv   --> 1.3.a.iii
    */
-  @inline final def decrementPosition() = copy(labelIndex = this.labelIndex - 1)
+  @inline final def decrementPosition = copy(labelIndex = this.labelIndex - 1)
 }
 
 /**

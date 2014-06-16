@@ -23,12 +23,12 @@ class TextFieldPersistenceTest extends FunSpec with TestHelpers {
 
   val UCH = UseCaseHeader("AH".validated)
   val EmptyLoadCtx = FieldLoadCtx(UCH, List.empty)
-  val TI1 = 201L.tag[IsTextIdentId]
-  val TR1 = 301L.tag[IsTextRevId]
-  val TR2 = 302L.tag[IsTextRevId]
+  val TI1 = TextIdentId(201)
+  val TR1 = TextRevId(301)
+  val TR2 = TextRevId(302)
 
   def ucFieldText(fkId: FieldKeyId, id: TextRevId, text: String) =
-    UcFieldTextWithFK(fkId, UcFieldText(None, None, -1, TextRev((id * 10000).tag[IsTextIdentId], 1, id, text.tag[IsNormalised])))
+    UcFieldTextWithFK(fkId, UcFieldText(None, None, -1, TextRev(TextIdentId(id.value * 10000), 1, id, NormalisedText(text))))
 
   implicit def f2fp(f: TextField) = new TextFieldPersistence(f)
 
@@ -67,7 +67,7 @@ class TextFieldPersistenceTest extends FunSpec with TestHelpers {
 
   describe("Saving") {
     implicit def ss = StepState1
-    val ucId = 123L.tag[IsUseCaseIdentId]
+    val ucId = UseCaseIdentId(123)
 
     def saver(v: V) = TF1.saver(v, StepAndLabelBiMap.empty)
 
@@ -86,19 +86,19 @@ class TextFieldPersistenceTest extends FunSpec with TestHelpers {
       implicit val ctx = UcParsingCtx.Empty.copy(stepsAndLabels = sl)
 
       it("should compare simple text") {
-        saver(parseExact("ah")).differsFromPrevSave_?(TextRev(TI1, 1, TR1, "ah".tag[IsNormalised])) ==== false
-        saver(parseExact("ah")).differsFromPrevSave_?(TextRev(TI1, 1, TR1, "30".tag[IsNormalised])) ==== true
+        saver(parseExact(NormalisedText("ah"))).differsFromPrevSave_?(TextRev(TI1, 1, TR1, "ah")) ==== false
+        saver(parseExact(NormalisedText("ah"))).differsFromPrevSave_?(TextRev(TI1, 1, TR1, "30")) ==== true
       }
 
       it("should normalise refs before comparison") {
-        val tr = TextRev(TI1, 1, TR1, "look at [D.141]".tag[IsNormalised])
+        val tr = TextRev(TI1, 1, TR1, NormalisedText("look at [D.141]"))
         saver(FreeText.parse("look at [S.1]")).differsFromPrevSave_?(tr) ==== false
         saver(FreeText.parse("look at [S.2]")).differsFromPrevSave_?(tr) ==== true
       }
     }
 
     describe("save") {
-      val ucRevId = 321L.tag[IsUseCaseRevId]
+      val ucRevId = UseCaseRevId(321)
 
       def mockDao = {
         val dao = mock[DaoT]
@@ -113,8 +113,8 @@ class TextFieldPersistenceTest extends FunSpec with TestHelpers {
         val dao = mockDao
         val tr = saver(parseExact("hello")).save(dao, ucId, ucRevId, None)
         tr.rev ==== 1
-        tr.identId.toLong ==== 657
-        tr.text.toString ==== "hello"
+        tr.identId.value ==== 657
+        tr.text.value ==== "hello"
         verify(dao, times(1)).createTextIdent(any, any)
         verify(dao, times(1)).createTextRev(any, any, any)
         verify(dao, times(1)).linkUcToText(any, any)
@@ -123,11 +123,11 @@ class TextFieldPersistenceTest extends FunSpec with TestHelpers {
 
       it("should update changed text") {
         val dao = mockDao
-        val prev = TextRev(TI1, 2, TR1, "OLD".tag[IsNormalised])
+        val prev = TextRev(TI1, 2, TR1, NormalisedText("OLD"))
         val tr = saver(parseExact("hello")).save(dao, ucId, ucRevId, Some(prev))
         tr.rev ==== 3
         tr.identId ==== TI1
-        tr.text.toString ==== "hello"
+        tr.text.value ==== "hello"
         verify(dao, times(1)).createTextRev(any, any, any)
         verify(dao, times(1)).linkUcToText(any, any)
         verifyNoMoreInteractions(dao)
@@ -135,7 +135,7 @@ class TextFieldPersistenceTest extends FunSpec with TestHelpers {
 
       it("should reuse unchanged text") {
         val dao = mockDao
-        val prev = TextRev(TI1, 2, TR1, "hello".tag[IsNormalised])
+        val prev = TextRev(TI1, 2, TR1, NormalisedText("hello"))
         val tr = saver(parseExact("hello")).save(dao, ucId, ucRevId, Some(prev))
         tr ==== prev
         verify(dao, times(1)).linkUcToText(any, any)

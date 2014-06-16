@@ -6,6 +6,7 @@ import app.AppSiteMap
 import db.ProjectSummary
 import lib.SnippetHelpers
 import AppSiteMap.Implicits._
+import shipreq.webapp.lib.Types.ISO8601
 
 /**
  * Displays a list of a user's projects.
@@ -49,8 +50,8 @@ object ProjectList extends SnippetHelpers {
 
   val shareViews = pluralise("view.", "views.") _
 
-  def detailTimeSpan(whenO: Option[String]) = whenO match {
+  def detailTimeSpan(whenO: Option[ISO8601]) = whenO match {
     case None       => ".t" #> ""
-    case Some(when) => ".t abbr [title]" #> when
+    case Some(when) => ".t abbr [title]" #> when.value
   }
 }

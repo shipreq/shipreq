@@ -1,11 +1,10 @@
 package shipreq.webapp.feature.uc.text
 
-import java.util.regex.Pattern
 import scala.collection.immutable.SortedSet
 import scala.util.matching.Regex
 import shipreq.webapp.lib.Types._
 
-final object ParsingConfig {
+object ParsingConfig {
 
   val RefBraceL = '['
   val RefBraceR = ']'
@@ -20,9 +19,9 @@ final object ParsingConfig {
   val NormalisationPrefix = "D."
   val NormalisedRefRegex = "\\[D\\.(-?\\d+?)\\]".r
 
-  @inline def makeStepRef(label: StepLabel) = RefBraceL + label + RefBraceR
+  @inline def makeStepRef(label: StepLabel) = RefBraceL + label.value + RefBraceR
   @inline def makeInvalidStepRef(label: String) = RefBraceL + label + InvalidRefSuffix + RefBraceR
-  @inline def makeNormalisedStepRef(textIdentId: TextIdentId) = RefBraceL + NormalisationPrefix + textIdentId + RefBraceR
+  @inline def makeNormalisedStepRef(textIdentId: TextIdentId) = RefBraceL + NormalisationPrefix + textIdentId.value + RefBraceR
 
   @inline def makeUseCaseRef(num: UseCaseNumber, title: String): String =
     new StringBuilder(title.length + 10).appendUseCaseRef(num, title).toString
@@ -37,7 +36,7 @@ final object ParsingConfig {
     def braced(fn: => Unit): StringBuilder = {sb += RefBraceL; fn; sb += RefBraceR; sb}
 
     def appendStepRef(valid: Boolean, label: StepLabel) = braced {
-      sb.append(label)
+      sb.append(label.value)
       if (!valid) sb.append(InvalidRefSuffix)
     }
 

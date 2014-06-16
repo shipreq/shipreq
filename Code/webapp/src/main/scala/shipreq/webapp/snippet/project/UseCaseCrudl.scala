@@ -21,7 +21,7 @@ object UseCaseCrudlConsts {
   final val TriggerCreated = JsHtmlTrigger("usecase-created")
 
   final val TriggerUpdated = JsJsonTrigger[UpdateDTO]("usecase-updated")
-  case class UpdateDTO(eid: UseCaseIdentEI, li: JqExpr)
+  case class UpdateDTO(eid: String, li: JqExpr) // TODO change back to UseCaseIdentIdE after agronaut
 
   final val TriggerUpdateNop = JsTextTrigger("usecase-update-nop")
 }
@@ -49,12 +49,12 @@ class UseCaseCrudl(projectId: ProjectId) extends SingleOpStatefulSnippet {
   def renderList(ucs: List[UseCaseSummary]) = "li" #> ucs.map(renderListItem)
 
   def renderListItem(uc: UseCaseSummary) = (
-    "li [class+]" #> uc.eid &
+    "li [class+]" #> uc.eid.value &
     "a .title" #> (
       "* *" #> uc.fullName &
       "* [href]" #> AppSiteMap.UseCaseEditor.relativeUrl(uc.id)
     ) &
-    ".detail abbr [title]" #> uc.updatedAt &
+    ".detail abbr [title]" #> uc.updatedAt.value &
     renderEditItem(uc)
   )
 

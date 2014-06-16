@@ -6,7 +6,7 @@ class ShareUrlTokenGenTest extends FunSuite with Matchers {
   def next = ShareUrlTokenGen.fn()
 
   test("Size") {
-    next.size shouldBe ShareUrlTokenGen.len
+    next.value.size shouldBe ShareUrlTokenGen.len
   }
   test("Random") {
     val ts = (1 to 100).toList.map(_ => next).distinct

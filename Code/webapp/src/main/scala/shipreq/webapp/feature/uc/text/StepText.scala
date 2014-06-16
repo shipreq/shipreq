@@ -14,7 +14,7 @@ import Changes._
 import ParsingUtils._
 
 object StepText {
-  def correctInput(input: String): String @@ InputCorrected =
+  def correctInput(input: String): InputCorrected[String] =
     Validators.usecase.stepFieldText.correct(input)
 
   val empty = StepText(FreeText.empty, None, None)
@@ -27,11 +27,11 @@ object StepText {
   def parse(text: String)(implicit ctx: UcParsingCtx): StepText =
     parseCorrected(correctInput(text))
 
-  def parseCorrected(text: String @@ InputCorrected)(implicit ctx: UcParsingCtx): StepText =
+  def parseCorrected(text: InputCorrected[String])(implicit ctx: UcParsingCtx): StepText =
     fakeUpdater.updateCorrectedAndGet(empty, text)
 
-  private val fakeStepField: StepField = NormalCourseField(FieldKeyRec(0.tag[IsFieldKeyId], FieldKeyType.NormalAndAlternateCourses, None))
-  private val fakeStepId: LocalStepId = "".asLocalStepId
+  private val fakeStepField: StepField = NormalCourseField(FieldKeyRec(FieldKeyId(0), FieldKeyType.NormalAndAlternateCourses, None))
+  private val fakeStepId = LocalStepId("")
   private val fakeUpdater = new StepTextUpdater(fakeStepField, fakeStepId)
 }
 
@@ -74,7 +74,7 @@ class StepTextUpdater(field: StepField, stepId: LocalStepId) extends ParsedTextU
   def updateMainClause(t: StepText, newMainClauseText: String)(implicit ctx: UcParsingCtx): ChangeResult[StepText, Change] =
     convert(t, mainClauseUpdater.update(_, newMainClauseText))
 
-  override protected def updateCorrected2(t: StepText, newText: String @@ InputCorrected)(implicit ctx: UcParsingCtx) = {
+  override protected def updateCorrected2(t: StepText, newText: InputCorrected[String])(implicit ctx: UcParsingCtx) = {
     val p          = parseTextForFlow(newText)
     val (from, c1) = updateFlowClause(FlowFrom, t.flowFromClause, p.from)
     val (to, c2)   = updateFlowClause(FlowTo, t.flowToClause, p.to)

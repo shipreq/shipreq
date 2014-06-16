@@ -44,7 +44,7 @@ object ParsingUtils extends Logger {
     @inline def normaliseUcRefs(text: String) =
       ValidUseCaseRefRegex.replaceAllIn(text, makeNormalisedUseCaseRef _)
 
-    normaliseStepRefs(normaliseUcRefs(text)).tag[IsNormalised]
+    NormalisedText(normaliseStepRefs(normaliseUcRefs(text)))
   }
 
   /**
@@ -56,18 +56,18 @@ object ParsingUtils extends Logger {
    * @return Text with all step references
    */
   def realiseNormalisedStepRefs(text: NormalisedText)(implicit savedSteps: SavedSteps,
-    stepsAndLabels: StepAndLabelBiMap): String @@ InputCorrected = {
+    stepsAndLabels: StepAndLabelBiMap): InputCorrected[String] = {
 
     val dbIdsToLocalIds = savedSteps.ab
     lazy val localIdsToLabels = stepsAndLabels.value.ab
 
-    NormalisedRefRegex.replaceAllIn(text, m => {
+    InputCorrected(NormalisedRefRegex.replaceAllIn(text, m => {
       val idText = m.group(1)
-      val textIdentId = idText.toLong.tag[IsTextIdentId]
+      val textIdentId = TextIdentId(idText.toLong)
       dbIdsToLocalIds.get(textIdentId).flatMap(nodeId => localIdsToLabels.get(nodeId)).fold {
         warn(s"Unable to realise normalised step reference. ❚ Text: $text ❚ TextIdentId: $textIdentId ❚ DbIdsToLocalIds: $dbIdsToLocalIds ❚ LocalIdsToLabels: $localIdsToLabels")
         makeInvalidStepRef(idText)
       }(makeStepRef)
-    }).tag[InputCorrected]
+    }))
   }
 }

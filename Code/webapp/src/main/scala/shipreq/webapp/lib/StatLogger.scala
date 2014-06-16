@@ -3,10 +3,11 @@ package shipreq.webapp.lib
 import net.liftweb.actor.SpecializedLiftActor
 import net.liftweb.common.Box
 import net.liftweb.http.LiftSession
+import shipreq.taskman.api.UserId
 import shipreq.webapp.app.DI
 import shipreq.webapp.db.{UserDescriptor, DaoS}
 import shipreq.webapp.feature.SessionStats
-import shipreq.webapp.lib.Types._
+import shipreq.webapp.lib.Types.ShareId
 
 sealed trait StatLoggerCmd
 case class LogShareView(id: ShareId, ip: Option[String] = Misc.clientIp) extends StatLoggerCmd

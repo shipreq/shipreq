@@ -49,7 +49,7 @@ class GrammarTest extends FunSpec with TestHelpers with PropertyChecks {
       , ("X1", false)
       , ("", false)
     )
-    test(G.FreeTextParsers.StepLabel, examples)(_.replaceAll("\\s+", ""))
+    test(G.FreeTextParsers.stepLabel, examples)(_.replaceAll("\\s+", ""))
   }
 
   it("should parse math") {
@@ -64,7 +64,7 @@ class GrammarTest extends FunSpec with TestHelpers with PropertyChecks {
       , ("{|math: 1+1 }", None)
       , ("{|math:    |}", None)
     )
-    test2(G.FreeTextParsers.MathTex, examples)
+    test2(G.FreeTextParsers.mathTex, examples)
   }
 
   describe("FlowParsers") {
@@ -77,7 +77,7 @@ class GrammarTest extends FunSpec with TestHelpers with PropertyChecks {
       case _ => fail("Expected result: " + x)
     }
 
-    def validRef(x: String) = PotentiallyValidRef(x.asLabel)
+    def validRef(x: String) = PotentiallyValidRef(StepLabel(x))
 
     it("should parse ValidRef") {
       val examples = Table(("EXAMPLE", "PASS")

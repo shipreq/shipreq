@@ -204,7 +204,7 @@ object FlowGraph {
 
     def anonGroup(cust: => Cord)(inner: Cord): Cord = group(GrpStart ++ cust)(inner)
 
-    def nodeDotId(n: Node): Cord = '"' -: Cord(n) :- '"'
+    def nodeDotId(n: Node): Cord = '"' -: Cord(n.value) :- '"'
 
     def mkStmts[M[_] : Functor : Foldable, A](ma: M[A])(f: A => Cord): Cord = ma map f intercalate SepSymbol
 

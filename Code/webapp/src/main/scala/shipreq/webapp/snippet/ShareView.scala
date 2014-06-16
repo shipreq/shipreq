@@ -22,7 +22,7 @@ import shipreq.webapp.util.JsExt
 import ShareView._
 
 object ShareView {
-  type AuthMap = Map[ShareUrlToken, (DateTime, String @@ Hashed)]
+  type AuthMap = Map[ShareUrlToken, (DateTime, HashedStr)]
   object AuthMapVar extends SessionVar[AuthMap](Map.empty)
 
   sealed trait Page {
@@ -115,7 +115,7 @@ class ShareView(token: ShareUrlToken) extends SingleOpStatefulSnippet {
     possibleJs getOrElse jsShowError(Text("Access denied. Please verify the URL and password."))
   }
 
-  def onAuthOk(s: Share, hashedPassword: String @@ Hashed): Unit = {
+  def onAuthOk(s: Share, hashedPassword: HashedStr): Unit = {
     val newAuthEntry = (token, (DateTime.now, hashedPassword))
     AuthMapVar.atomicUpdate(_ + newAuthEntry)
     statLogger ! LogShareView(s)

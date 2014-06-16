@@ -2,7 +2,9 @@ package shipreq.webapp
 package db
 
 import org.joda.time.DateTime
+import shipreq.base.util.TaggedTypes.JsonStr
 import scala.reflect.ClassTag
+import shipreq.taskman.api.UserId
 import lib.Types._
 import feature.{UcFilter, ExternalId}
 import feature.uc.field._
@@ -26,7 +28,7 @@ object UserDescriptor {
 
 case class UserDetail(name: String, newsletter: Boolean)
 
-case class UserSupplementalInfo(ps: PasswordAndSalt, registeredAt: String @@ ISO8601)
+case class UserSupplementalInfo(ps: PasswordAndSalt, registeredAt: ISO8601)
 
 case class UserRegistrationInfo(
   id: UserId,
@@ -77,9 +79,9 @@ case class UseCaseSummary(
   id: UseCaseIdentId,
   number: UseCaseNumber,
   title: String,
-  updatedAt: String @@ ISO8601) extends BasicUseCaseInfo {
+  updatedAt: ISO8601) extends BasicUseCaseInfo {
   @inline final def identId = id
-  def this(ucr: UseCaseRev, updatedAt: String @@ ISO8601) = this(ucr.identId, ucr.ident.number, ucr.title, updatedAt)
+  def this(ucr: UseCaseRev, updatedAt: ISO8601) = this(ucr.identId, ucr.ident.number, ucr.title, updatedAt)
 }
 
 case class UseCaseIdent(identId: UseCaseIdentId, number: UseCaseNumber, projectId: ProjectId)
@@ -92,7 +94,7 @@ case class UseCaseRev(ident: UseCaseIdent, rev: Short, id: UseCaseRevId, header:
   @inline final def title = header.title
 }
 
-case class UseCaseHeader(title: String @@ Validated)
+case class UseCaseHeader(title: String)
 
 case class TextRev(identId: TextIdentId, rev: Short, id: TextRevId, text: NormalisedText)
 
@@ -119,10 +121,10 @@ case class ProjectSummary(
   id: ProjectId,
   name: String,
   ucCount: Long,
-  ucUpdatedAt: Option[String @@ ISO8601],
+  ucUpdatedAt: Option[ISO8601],
   shareCount: Long,
   shareViews: Long,
-  shareLastViewedAt: Option[String @@ ISO8601])
+  shareLastViewedAt: Option[ISO8601])
 
 // ===================================================================================================================
 // Shares
@@ -133,7 +135,7 @@ case class Share(
   urlToken: ShareUrlToken,
   name: String,
   preface: Option[String],
-  ucFilterJson: Json[UcFilter]) {
+  ucFilterJson: JsonStr[UcFilter]) {
   def ucFilter = UcFilter.fromJson(ucFilterJson)
 }
 
@@ -141,8 +143,8 @@ case class ShareSummary(
   id: ShareId,
   urlToken: ShareUrlToken,
   name: String,
-  ucFilterJson: Json[UcFilter],
+  ucFilterJson: JsonStr[UcFilter],
   viewCount: Long,
-  lastViewedAt: Option[String @@ ISO8601]) {
+  lastViewedAt: Option[ISO8601]) {
   def ucFilter = UcFilter.fromJson(ucFilterJson)
 }

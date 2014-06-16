@@ -6,7 +6,7 @@ import net.liftweb.util.CssSel
 import net.liftweb.util.Helpers._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.feature.validation.{Validators, ValidationResult, Validator, CorrectionPart}
-import shipreq.webapp.lib.Types.{Validated, InputCorrected, @@}
+import shipreq.webapp.lib.Types.{Validated, InputCorrected}
 import shipreq.webapp.security.PasswordAndSalt
 import shipreq.webapp.util.JsExt.{JqSetValue, JqId}
 import shipreq.webapp.util.HtmlTransformExt
@@ -47,12 +47,12 @@ object FormVar {
       "*" #> SHtml.onSubmitBoolean(set) & "* [checked]" #> checkedO(get)
 
     def ajaxStr(cp: CorrectionPart[String, String], jsId: JsExp): CssSelF[String] = {
-      def callback(set: String @@ InputCorrected => Unit): String => JsCmd = i => {
+      def callback(set: String => Unit): String => JsCmd = i => {
         val c = cp.correct(i)
-        set(c)
+        set(c.value)
         updateJs(c)
       }
-      def updateJs(v: String @@ InputCorrected): JsCmd = jsId ~> JqSetValue(v)
+      def updateJs(v: InputCorrected[String]): JsCmd = jsId ~> JqSetValue(v.value)
       (get, set) => "*" #> SHtml.ajaxText(get, callback(set))
     }
   }
@@ -82,7 +82,7 @@ object FormVar {
   def boolOnSubmit(sel: String): FormVar[Boolean, Boolean] =
     unvalidated(CS.booleanOnSubmit scopeBy sel)
 
-  type PasswordPair = FormVar[(String, String), String @@ Validated]
+  type PasswordPair = FormVar[(String, String), String]
   def passwordPair(selPw1: String, selPw2: String): PasswordPair =
     validated(Validators.passwords)((get, set) =>
       CS.strOnSubmit.scopeBy(selPw1)(get._1, x => set(get put1 x)) &
@@ -91,13 +91,13 @@ object FormVar {
   val emptyPasswordPair = ("", "")
   val emptyPasswordChange = ("", emptyPasswordPair)
 
-  def passwordChange(ps: PasswordAndSalt, selCur: String, pp: PasswordPair): FormVar[Validators.PasswordChange, String @@ Validated] =
+  def passwordChange(ps: PasswordAndSalt, selCur: String, pp: PasswordPair): FormVar[Validators.PasswordChange, String] =
     validated(Validators.passwordChange(ps))((get, set) =>
       CS.strOnSubmit.scopeBy(selCur)(get._1, x => set(get put1 x)) &
       pp.csssel                     (get._2, x => set(get put2 x))
     )
 
-  def passwordChange(cur: Option[PasswordAndSalt], selCur: String, removeCurFieldCsssel: CssSel, pp: PasswordPair): FormVar[Validators.PasswordChange, String @@ Validated] =
+  def passwordChange(cur: Option[PasswordAndSalt], selCur: String, removeCurFieldCsssel: CssSel, pp: PasswordPair): FormVar[Validators.PasswordChange, String] =
     cur match {
       case Some(ps) => passwordChange(ps, selCur, pp)
       case None =>

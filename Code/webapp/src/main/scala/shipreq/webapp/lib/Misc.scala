@@ -38,7 +38,7 @@ object Misc extends Misc with Logger {
   implicit class DateTimeExt(val t: DateTime) extends AnyVal {
     def >(timeToLive: Period) = isExpired_?(t, timeToLive)
     def <=(timeToLive: Period) = ! >(timeToLive)
-    def toIso8601Str: String @@ ISO8601 = Misc.toIso8601Str(t)
+    def toIso8601: ISO8601 = Misc.toIso8601Str(t)
   }
 }
 
@@ -57,11 +57,11 @@ trait Misc {
     // println("X-Forwarded-For: " + req.header("X-Forwarded-For"))
     )
 
-  final def currentTimeAsIso8601Str: String @@ ISO8601 =
-    Iso8601Format.print(DateTimeUtils.currentTimeMillis).tag
+  final def currentTimeAsIso8601Str: ISO8601 =
+    ISO8601(Iso8601Format.print(DateTimeUtils.currentTimeMillis))
 
-  final def toIso8601Str(d: DateTime): String @@ ISO8601 =
-    Iso8601Format.print(d).tag
+  final def toIso8601Str(d: DateTime): ISO8601 =
+    ISO8601(Iso8601Format.print(d))
 
   def isExpired_?(startTime: DateTime, timeToLive: Period, now: Long = DateTimeUtils.currentTimeMillis): Boolean =
     startTime plus timeToLive isBefore now

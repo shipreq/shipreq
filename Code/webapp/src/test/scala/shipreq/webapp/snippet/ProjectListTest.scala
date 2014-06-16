@@ -13,16 +13,16 @@ class ProjectListTest extends FunSuite with TestHelpers {
   import ProjectList.renderProjectList
 
   def includeNone = include("none")
-  def includeProjects = include regex ("<ol[ >]")
+  def includeProjects = include regex "<ol[ >]"
 
   test("No projects") {
     renderProjectList(Nil)(html).toString should (includeNone and (not(includeProjects)))
   }
 
   test("Projects") {
-    val p1 = ProjectSummary(1.tag[IsProjectId], "Empty", 0, None, 0, 0, None)
-    val p2 = ProjectSummary(2.tag[IsProjectId], "Hello", 2, Some(Misc.currentTimeAsIso8601Str), 0, 0, None)
-    val p3 = ProjectSummary(2.tag[IsProjectId], "Wait!", 1, Some(Misc.currentTimeAsIso8601Str), 1, 20, Some(Misc.currentTimeAsIso8601Str))
+    val p1 = ProjectSummary(ProjectId(1), "Empty", 0, None, 0, 0, None)
+    val p2 = ProjectSummary(ProjectId(2), "Hello", 2, Some(Misc.currentTimeAsIso8601Str), 0, 0, None)
+    val p3 = ProjectSummary(ProjectId(2), "Wait!", 1, Some(Misc.currentTimeAsIso8601Str), 1, 20, Some(Misc.currentTimeAsIso8601Str))
     val r = renderProjectList(p1 :: p2 :: p3 :: Nil)(html).toString
     r should (includeProjects and (not(includeNone))
       and include("Empty") and include("0 use cases")

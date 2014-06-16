@@ -74,23 +74,22 @@ object SqlHelpers {
   def sqlAccessors[T <: TaggedType](implicit S: SqlForType[T#U], TC: TaggedTypeCtor[T]) =
     (GR_Tagged[T], GR_TaggedO[T], SP_Tagged[T], SP_TaggedO[T])
 
-//  def SP_TaggedLongL[T <: TaggedType]: SetParameter[List[T]] = new SetParameter[List[T]] {
-//    def apply(v: List[T], pp: PositionedParameters): Unit = {
-//      val sb = new StringBuilder
-//      sb append '{'
-//      if (v.nonEmpty) {
-//        sb append v.head.longValue
-//        v.tail.foreach(t => {
-//          sb append ','
-//          sb append t.longValue
-//        })
-//      }
-//      sb append '}'
-//
-//      val o = pgObject("_int8", sb.toString)
-//      pp.setObject(o, java.sql.Types.OTHER)
-//    }
-//  }
+  def SP_TaggedLongL[T <: TaggedType](implicit ev: T#U =:= Long): SetParameter[List[T]] = new SetParameter[List[T]] {
+    def apply(v: List[T], pp: PositionedParameters): Unit = {
+      val sb = new StringBuilder
+      sb append '{'
+      if (v.nonEmpty) {
+        sb append ev(v.head.value)
+        v.tail.foreach(t => {
+          sb append ','
+          sb append ev(t.value)
+        })
+      }
+      sb append '}'
+      val o = pgObject("_int8", sb.toString)
+      pp.setObject(o, java.sql.Types.OTHER)
+    }
+  }
 
   // JsonStr is a special case because it is generic
   def GR_Json[T]: GetResult[JsonStr[T]] = implicitly[GetResult[String]].andThen(JsonStr[T])

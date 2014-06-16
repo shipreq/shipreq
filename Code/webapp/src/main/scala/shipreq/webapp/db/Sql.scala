@@ -3,8 +3,10 @@ package db
 
 import org.joda.time.DateTime
 import scala.slick.jdbc.StaticQuery
+import shipreq.base.util.TaggedTypes.JsonStr
 import shipreq.base.db.SqlHelpers._
 import shipreq.base.db.JodaTimeSqlHelpers._
+import shipreq.taskman.api.UserId
 import shipreq.webapp.db.SqlHelpers._
 import lib.Types._
 import feature.UcFilter
@@ -14,7 +16,7 @@ import StaticQuery.{query, queryNA, update, updateNA}
 /**
  * SQL for all functions exposed in the DAO.
  */
-private[db] final object Sql {
+private[db] object Sql {
 
   private[this] case class Insert() extends scala.annotation.StaticAnnotation
   private[this] case class Update() extends scala.annotation.StaticAnnotation
@@ -238,11 +240,11 @@ private[db] final object Sql {
   // ###################################################################################################################
   // Shares
 
-  @Insert val InsertShare = query[(ProjectId, ShareUrlToken, PasswordAndSalt, String, Option[String], Json[UcFilter]), ShareId](
+  @Insert val InsertShare = query[(ProjectId, ShareUrlToken, PasswordAndSalt, String, Option[String], JsonStr[UcFilter]), ShareId](
     "INSERT INTO share(project_id, url_token, password, password_salt, name, preface, uc_filter)"
       + " VALUES(?,?,?,?,?,?,?) RETURNING id")
 
-  @Update val UpdateShare = update[(String, Option[String], Json[UcFilter], ShareId)](
+  @Update val UpdateShare = update[(String, Option[String], JsonStr[UcFilter], ShareId)](
     "UPDATE share SET name=?, preface=?, uc_filter=? WHERE id=?")
 
   @Update val UpdateSharePassword = update[(PasswordAndSalt, ShareId)](
@@ -274,7 +276,7 @@ private[db] final object Sql {
 
 // #####################################################################################################################
 // Diagnostics & Stats
-private[db] final object AdminSql {
+private[db] object AdminSql {
 
   val DiagSelectNow = queryNA[DateTime]("select now()")
 

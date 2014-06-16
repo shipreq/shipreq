@@ -33,7 +33,7 @@ class UseCasePersistenceTest extends FunSpec with TestDatabaseSupport with TestH
   def reload(cp: UseCaseSaveCheckpoint, projectId: ProjectId) = loadRev(cp.rec, projectId)
 
   def createInitialTextRev(ucIdentId: UseCaseIdentId, fkId: FieldKeyId, text: String) =
-    dao.createTextRev(dao.createTextIdent(ucIdentId, fkId), 1, text.tag[IsNormalised])
+    dao.createTextRev(dao.createTextIdent(ucIdentId, fkId), 1, NormalisedText(text))
 
   describe("Loading") {
     it("should set NC.0 to the title for new UCs") {
@@ -47,7 +47,7 @@ class UseCasePersistenceTest extends FunSpec with TestDatabaseSupport with TestH
     it("should load a simple, manually-saved UC") {
       // Create UC
       val pid = newProjectId()
-      val ucIdent = dao.createUseCaseIdentWithForcedNumber(pid, (3:Short).tag[IsUseCaseNumber])
+      val ucIdent = dao.createUseCaseIdentWithForcedNumber(pid, UseCaseNumber(3))
       val ucRev = dao.createUseCaseRev(ucIdent, 1, UseCaseHeader("ahh".validated))
 
       // Create Text FV
@@ -57,8 +57,8 @@ class UseCasePersistenceTest extends FunSpec with TestDatabaseSupport with TestH
       // Create course FV
       val s1 = createInitialTextRev(ucIdent, NCF, "Root")
       val s2 = createInitialTextRev(ucIdent, NCF, "Child")
-      dao.linkUcToStep(ucRev, "3.0".asLabel, 0, None, s1)
-      dao.linkUcToStep(ucRev, "3.0.1".asLabel, 0, Some(s1.id), s2)
+      dao.linkUcToStep(ucRev, StepLabel("3.0"), 0, None, s1)
+      dao.linkUcToStep(ucRev, StepLabel("3.0.1"), 0, Some(s1.id), s2)
 
       // Load
       val loaded = loadRev(ucRev, pid).uc
@@ -72,19 +72,19 @@ class UseCasePersistenceTest extends FunSpec with TestDatabaseSupport with TestH
     it("should load a manually-saved UC with refs") {
       // Create UC
       val pid = newProjectId()
-      val ucIdent = dao.createUseCaseIdentWithForcedNumber(pid, (3:Short).tag[IsUseCaseNumber])
+      val ucIdent = dao.createUseCaseIdentWithForcedNumber(pid, UseCaseNumber(3))
       val ucRev = dao.createUseCaseRev(ucIdent, 1, UseCaseHeader("ahh".validated))
 
       // Create course FV
       val s1 = createInitialTextRev(ucIdent, NCF, "Root")
-      val s2 = createInitialTextRev(ucIdent, NCF, s"Child [D.${s1.identId}]")
-      val s3 = createInitialTextRev(ucIdent, NCF, s"Other [D.${s2.identId}]")
-      dao.linkUcToStep(ucRev, "3.0".asLabel, 0, None, s1)
-      dao.linkUcToStep(ucRev, "3.0.1".asLabel, 0, Some(s1.id), s2)
-      dao.linkUcToStep(ucRev, "3.1".asLabel, 1, None, s3)
+      val s2 = createInitialTextRev(ucIdent, NCF, s"Child [D.${s1.identId.value}]")
+      val s3 = createInitialTextRev(ucIdent, NCF, s"Other [D.${s2.identId.value}]")
+      dao.linkUcToStep(ucRev, StepLabel("3.0"), 0, None, s1)
+      dao.linkUcToStep(ucRev, StepLabel("3.0.1"), 0, Some(s1.id), s2)
+      dao.linkUcToStep(ucRev, StepLabel("3.1"), 1, None, s3)
 
       // Create Text FV
-      val txtRev = createInitialTextRev(ucIdent, TF3, s"look at [D.${s2.identId}] and [D.${s3.identId}]!")
+      val txtRev = createInitialTextRev(ucIdent, TF3, s"look at [D.${s2.identId.value}] and [D.${s3.identId.value}]!")
       dao.linkUcToText(ucRev, txtRev)
 
       // Load

@@ -6,14 +6,14 @@ import org.apache.commons.io.IOUtils
 import org.postgresql.util.PSQLException
 import org.scalatest.{Exceptional, Outcome, Suite}
 import scala.slick.jdbc.{StaticQuery => Q}
-import scalaz.Need
 import scala.slick.jdbc.JdbcBackend.{Database, Session}
+import scalaz.Need
 import Q.interpolation
 
-import shipreq.taskman.api.Types.IsUserId
+import shipreq.taskman.api.UserId
 import app.{Defaults, DI}
 import db.{AdminDao, UseCaseHeader, DaoS, DaoT, DaoProvider, DB, UseCaseRev}
-import db.SqlHelpers.SP_ProjectId
+import db.SqlHelpers._
 import lib.Types._
 import lib.Locks
 import feature.UcFilters
@@ -228,25 +228,25 @@ trait TestDatabaseHelpers extends TestHelpers2 {
    * @param n The new UC number.
    */
   def forceUcNumber(cp: UseCaseSaveCheckpoint, n: Int): UseCaseSaveCheckpoint = {
-    val ucn = n.toShort.tag[IsUseCaseNumber]
+    val ucn = UseCaseNumber(n.toShort)
     val uc_ = cp.uc.copy(number = ucn)
     val rec_ = cp.rec.copy(ident = cp.rec.ident.copy(number = ucn))
-    sqlu"UPDATE usecase set number=${ucn.toShort} where id = ${rec_.ident.identId.toLong}".execute
+    sqlu"UPDATE usecase set number=${ucn.value} where id = ${rec_.ident.identId.value}".execute
     cp.copy(uc = uc_, rec = rec_)
   }
 
-  def randomUCTitle: String @@ Validated =
+  def randomUCTitle: String =
     findSuitable(Validators.usecase.title.correctAndValidate(randomStr))(_.isSuccess).getOrElse(???)
 
   def newProjectId(userId: UserId = getOrCreateUserId): ProjectId =
     dao.createProject(userId, randomUCTitle).gimme
 
   def getOrCreateUserId(): UserId =
-    sql"select id from usr where username is not null".as[Long].firstOption.map(_.tag[IsUserId]).getOrElse(newUserId)
+    sql"select id from usr where username is not null".as[UserId].firstOption.getOrElse(newUserId)
 
   def newUserId(): UserId =
     sql"INSERT INTO usr(username, email, password, password_salt, password_changed_at, confirmation_sent_at, confirmed_at) VALUES($randomStr,$randomStr,0,0,NOW(),NOW(),NOW()) RETURNING id".
-    as[Long].first.tag[IsUserId]
+    as[UserId].first
 
   def deleteUser(u: UserId): Unit =
     Q.update[Long]("DELETE FROM usr WHERE id=?").execute(u)

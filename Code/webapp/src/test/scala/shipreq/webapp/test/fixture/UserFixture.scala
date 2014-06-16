@@ -6,12 +6,10 @@ import net.liftweb.util.Helpers._
 import org.joda.time.DateTime
 import scala.slick.jdbc.{StaticQuery => Q}
 import scala.slick.jdbc.JdbcBackend.Session
-
-import shipreq.taskman.api.Types.IsUserId
+import shipreq.taskman.api.UserId
 import shipreq.webapp.db.{Shim, UserDescriptor}
 import security.{Roles, PasswordAndSalt}
 import test.{TestDB, TestHelpers}
-import lib.Types._
 
 trait UserFixture {
   this: TestHelpers =>
@@ -45,7 +43,7 @@ trait UserFixture {
     // Insert mock users (registered)
     val i1 = Q.query[(String, String, String, String, Option[String]), Long]("INSERT INTO usr(username, email, password, password_salt, password_changed_at, confirmation_sent_at, confirmed_at, roles) VALUES(?,?,?,?,NOW(),NOW(),NOW(),?) RETURNING id")
     for (u <- users) {
-      val id = i1.first(u.username, u.email, u.hashedPassword, u.salt, UserDescriptor.roleStr(u.roles))(db).tag[IsUserId]
+      val id = UserId(i1.first(u.username, u.email, u.hashedPassword, u.salt, UserDescriptor.roleStr(u.roles))(db))
       u._id = Some(id)
       Shim.InsertUsrd.execute(id, u.name, u.newsletter)
     }

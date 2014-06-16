@@ -111,8 +111,8 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
         }
 
         it("should preserve the NC root text flow when changing") {
-          val f = Some(FlowFromClause(Map(X2 -> "X2".asLabel)))
-          val t = Some(FlowToClause(Map(X3 -> "X333".asLabel)))
+          val f = Some(FlowFromClause(Map(X2 -> StepLabel("X2"))))
+          val t = Some(FlowToClause(Map(X3 -> StepLabel("X333"))))
           testChanges(NCF, StepText(freeText(UCH.title), f, t))
         }
 
@@ -133,26 +133,26 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
         }
 
         it("should update self-refs in NC steps") {
-          val NCF = NormalCourseField(FieldKeyRec(14.tag[IsFieldKeyId],FieldKeyType.NormalAndAlternateCourses,None))
-          val uc1 = UseCase.as((1:Short).tag[IsUseCaseNumber],UseCaseHeader("Hehe".tag[Validated])
-            ,List(TextField(TextFieldDefinition("Description"),FieldKeyRec(10.tag[IsFieldKeyId],FieldKeyType.Text,Some("Description")))~>FreeText.empty
-            ,TextField(TextFieldDefinition("Actors"),FieldKeyRec(11.tag[IsFieldKeyId],FieldKeyType.Text,Some("Actors")))~>FreeText.empty
-            ,TextField(TextFieldDefinition("Pre-Conditions"),FieldKeyRec(12.tag[IsFieldKeyId],FieldKeyType.Text,Some("Pre-Conditions")))~>FreeText.empty
-            ,TextField(TextFieldDefinition("Post-Conditions"),FieldKeyRec(13.tag[IsFieldKeyId],FieldKeyType.Text,Some("Post-Conditions")))~>FreeText.empty
-            ,NCF~>StepFieldValue(NormalCourseField(FieldKeyRec(14.tag[IsFieldKeyId],FieldKeyType.NormalAndAlternateCourses,None)),StepTree(List(StepNode("wVaEE".tag[IsLocalStepId],0,0,List(StepNode("wEGJZ".tag[IsLocalStepId],1,1,Nil))))),Map(
-                "wEGJZ".tag[IsLocalStepId]->StepText(FreeText(List(PlainText("Link to "),UseCaseSelfRef((1:Short).tag[IsUseCaseNumber],"Hehe"))),None,None),
-                "wVaEE".tag[IsLocalStepId]->StepText(FreeText(List(PlainText("Hehe"))),None,None)
+          val NCF = NormalCourseField(FieldKeyRec(FieldKeyId(14),FieldKeyType.NormalAndAlternateCourses,None))
+          val uc1 = UseCase.as(UseCaseNumber(1),UseCaseHeader("Hehe")
+            ,List(TextField(TextFieldDefinition("Description"),FieldKeyRec(FieldKeyId(10),FieldKeyType.Text,Some("Description")))~>FreeText.empty
+            ,TextField(TextFieldDefinition("Actors"),FieldKeyRec(FieldKeyId(11),FieldKeyType.Text,Some("Actors")))~>FreeText.empty
+            ,TextField(TextFieldDefinition("Pre-Conditions"),FieldKeyRec(FieldKeyId(12),FieldKeyType.Text,Some("Pre-Conditions")))~>FreeText.empty
+            ,TextField(TextFieldDefinition("Post-Conditions"),FieldKeyRec(FieldKeyId(13),FieldKeyType.Text,Some("Post-Conditions")))~>FreeText.empty
+            ,NCF~>StepFieldValue(NormalCourseField(FieldKeyRec(FieldKeyId(14),FieldKeyType.NormalAndAlternateCourses,None)),StepTree(List(StepNode(LocalStepId("wVaEE"),0,0,List(StepNode(LocalStepId("wEGJZ"),1,1,Nil))))),Map(
+                LocalStepId("wEGJZ")->StepText(FreeText(List(PlainText("Link to "),UseCaseSelfRef(UseCaseNumber(1),"Hehe"))),None,None),
+                LocalStepId("wVaEE")->StepText(FreeText(List(PlainText("Hehe"))),None,None)
               ))
-            ,ExceptionCourseField(FieldKeyRec(15.tag[IsFieldKeyId],FieldKeyType.ExceptionCourses,None))~>StepFieldValue(ExceptionCourseField(FieldKeyRec(15.tag[IsFieldKeyId],FieldKeyType.ExceptionCourses,None)),StepTree(Nil),Map())
-            ,TextField(TextFieldDefinition("Use Case Relationships"),FieldKeyRec(16.tag[IsFieldKeyId],FieldKeyType.Text,Some("Use Case Relationships")))~>FreeText.empty
-            ,TextField(TextFieldDefinition("Constraints and Business Rules"),FieldKeyRec(17.tag[IsFieldKeyId],FieldKeyType.Text,Some("Constraints and Business Rules")))~>FreeText.empty
-            ,TextField(TextFieldDefinition("Frequency of Use"),FieldKeyRec(18.tag[IsFieldKeyId],FieldKeyType.Text,Some("Frequency of Use")))~>FreeText.empty
-            ,TextField(TextFieldDefinition("Special Requirements"),FieldKeyRec(19.tag[IsFieldKeyId],FieldKeyType.Text,Some("Special Requirements")))~>FreeText.empty
-            ,TextField(TextFieldDefinition("Assumptions"),FieldKeyRec(20.tag[IsFieldKeyId],FieldKeyType.Text,Some("Assumptions")))~>FreeText.empty
-            ,TextField(TextFieldDefinition("Notes and Issues"),FieldKeyRec(21.tag[IsFieldKeyId],FieldKeyType.Text,Some("Notes and Issues")))~>FreeText.empty
-            ),Name(BiMap("wEGJZ".tag[IsLocalStepId]->"1.0.1".tag[IsStepLabel],"wVaEE".tag[IsLocalStepId]->"1.0".tag[IsStepLabel])))
+            ,ExceptionCourseField(FieldKeyRec(FieldKeyId(15),FieldKeyType.ExceptionCourses,None))~>StepFieldValue(ExceptionCourseField(FieldKeyRec(FieldKeyId(15),FieldKeyType.ExceptionCourses,None)),StepTree(Nil),Map())
+            ,TextField(TextFieldDefinition("Use Case Relationships"),FieldKeyRec(FieldKeyId(16),FieldKeyType.Text,Some("Use Case Relationships")))~>FreeText.empty
+            ,TextField(TextFieldDefinition("Constraints and Business Rules"),FieldKeyRec(FieldKeyId(17),FieldKeyType.Text,Some("Constraints and Business Rules")))~>FreeText.empty
+            ,TextField(TextFieldDefinition("Frequency of Use"),FieldKeyRec(FieldKeyId(18),FieldKeyType.Text,Some("Frequency of Use")))~>FreeText.empty
+            ,TextField(TextFieldDefinition("Special Requirements"),FieldKeyRec(FieldKeyId(19),FieldKeyType.Text,Some("Special Requirements")))~>FreeText.empty
+            ,TextField(TextFieldDefinition("Assumptions"),FieldKeyRec(FieldKeyId(20),FieldKeyType.Text,Some("Assumptions")))~>FreeText.empty
+            ,TextField(TextFieldDefinition("Notes and Issues"),FieldKeyRec(FieldKeyId(21),FieldKeyType.Text,Some("Notes and Issues")))~>FreeText.empty
+            ),Name(BiMap(LocalStepId("wEGJZ")->StepLabel("1.0.1"),LocalStepId("wVaEE")->StepLabel("1.0"))))
 
-          val stepId = "wEGJZ".tag[IsLocalStepId]
+          val stepId = LocalStepId("wEGJZ")
           val cr = UseCaseUpdater(uc1, ctx.rels).updateTitle("GREAT")
           val uc2 = cr.gimme
           NCF(uc2.fieldValues).textmap(stepId).text ==== "Link to [UC-1: GREAT]"
@@ -171,15 +171,15 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
     it("should cause other steps to mirror flows") {
       val uc = NCF.updateText(X2, " greater --> [ 7.0] ")(MockUc2b.UC).gimme
       val textmap = NCF.lens.get(uc).textmap
-      textmap(X2) ==== StepText(freeText("greater"), None, flowToClause(X1 -> "7.0".asLabel))
-      textmap(X1) ==== StepText(freeText("I'm the root"), flowFromClause(X2 -> "7.0.2".asLabel), None)
+      textmap(X2) ==== StepText(freeText("greater"), None, flowToClause(X1 -> StepLabel("7.0")))
+      textmap(X1) ==== StepText(freeText("I'm the root"), flowFromClause(X2 -> StepLabel("7.0.2")), None)
     }
   }
 
   describe("updateTextFieldText()") {
     def test(f: TextField) {
       val uc = f.updateText("The Refusal, Karnivool [7.0]")(MockUc2b.UC).gimme
-      f.lens.get(uc) ==== FreeText(PlainText("The Refusal, Karnivool ") :: StepRef(X1, "7.0".asLabel) :: Nil)
+      f.lens.get(uc) ==== FreeText(PlainText("The Refusal, Karnivool ") :: StepRef(X1, StepLabel("7.0")) :: Nil)
     }
     it("should update existing text") {
       test(TF1)
@@ -196,7 +196,7 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
       tree.nodes.size ==== expecetedTopLevel
       val newNode = tree.nodes.last
       newNode.copy(id = null) ==== StepNode(null, 0, expectedLabelIndex, Nil)
-      uc2.stepsAndLabels.value.ab(newNode.id) ==== expectedLabel.asLabel
+      uc2.stepsAndLabels.value.ab(newNode.id).value ==== expectedLabel
       assertStepsAndLabelsRegen(uc2)
     }
 
@@ -228,7 +228,7 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
       assertStepsAndLabelsRegen(uc)
     }
     it("should update refs in text") {
-      TF1.lens.get(uc) ==== FreeText(PlainText("Linking to ") :: StepRef(X2, "7.0.3".asLabel) :: Nil)
+      TF1.lens.get(uc) ==== FreeText(PlainText("Linking to ") :: StepRef(X2, StepLabel("7.0.3")) :: Nil)
     }
   }
 
@@ -242,7 +242,7 @@ class UseCaseTest extends FunSpec with TestHelpers with TestData {
       v.textmap.keySet ==== Set(X1, X3)
     }
     it("should update the step label map") {
-      uc.stepsAndLabels.value.ab ==== Map(X1 -> "7.0".asLabel, X3 -> "7.0.1".asLabel)
+      uc.stepsAndLabels.value.ab ==== Map(X1 -> StepLabel("7.0"), X3 -> StepLabel("7.0.1"))
     }
     it("should update refs to the step") {
       TF1.lens.get(uc) ==== FreeText(PlainText("Linking to ") :: DeletedRef :: Nil)

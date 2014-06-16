@@ -23,7 +23,7 @@ trait TextFieldLike { this: Field with TextField =>
 
   override def empty = FreeText.empty
 
-  override def toString = s"${getClass.getSimpleName}[#${rec.id}:${defn.title}]"
+  override def toString = s"${getClass.getSimpleName}[#${rec.id.value}:${defn.title}]"
 
   override val changeResponder = new FreeTextUpdater(TextChanged(this))
 

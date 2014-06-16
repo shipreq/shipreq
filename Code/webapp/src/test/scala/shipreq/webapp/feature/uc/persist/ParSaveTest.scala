@@ -1,6 +1,7 @@
 package shipreq.webapp.feature.uc.persist
 
 import org.scalatest.FunSuite
+import shipreq.taskman.api.UserId
 import shipreq.webapp.app.DI
 import shipreq.webapp.feature.uc.UseCase
 import shipreq.webapp.lib.Locks
@@ -49,9 +50,9 @@ class ParSaveTest extends FunSuite with TestHelpers with DI {
   }
 
   test("Concurrent saving and loading") {
-    val ucs1 = GenerateUCs.generate(count, (1: Short).tag).toList
-    val ucs2 = GenerateUCs.generate(count, (2: Short).tag).toList
-    val ucs3 = GenerateUCs.generate(count, (3: Short).tag).toList
+    val ucs1 = GenerateUCs.generate(count, UseCaseNumber(1)).toList
+    val ucs2 = GenerateUCs.generate(count, UseCaseNumber(2)).toList
+    val ucs3 = GenerateUCs.generate(count, UseCaseNumber(3)).toList
 
     val t1 = TestThread("[1]", setupData.u, setupData.p, ucs1)
     val t2 = TestThread("[2]", setupData.u, setupData.p, ucs2)

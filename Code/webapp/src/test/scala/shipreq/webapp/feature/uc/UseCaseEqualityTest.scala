@@ -2,7 +2,6 @@ package shipreq.webapp.feature.uc
 
 import org.scalatest.FunSuite
 import scalaz.syntax.equal._
-import shipreq.webapp.lib.Types.{@@, Validated}
 import shipreq.webapp.test.TestData
 import change.UseCaseUpdater
 import change.Changes.StepAdded
@@ -36,7 +35,7 @@ class UseCaseEqualityTest extends FunSuite with TestData {
   }
 
   test("Changes in header") {
-    testStringChange(uc => f => ucTitleL.mod(f.asInstanceOf[String @@ Validated => String @@ Validated], uc))
+    testStringChange(uc => f => ucTitleL.mod(f, uc))
   }
 
   test("Changes in text field text") {

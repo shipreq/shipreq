@@ -38,9 +38,9 @@ import FreeTextTerms._
 
 object FreeText {
 
-  val empty: FreeText = parseCorrected("".tag[InputCorrected])(UcParsingCtx.Empty)
+  val empty: FreeText = parseCorrected(InputCorrected(""))(UcParsingCtx.Empty)
 
-  def correctInput(input: String): String @@ InputCorrected =
+  def correctInput(input: String): InputCorrected[String] =
     Validators.usecase.textFieldText.correct(input)
 
   def load(text: NormalisedText)(implicit savedSteps: SavedSteps, ctx: UcParsingCtx): FreeText = {
@@ -51,7 +51,7 @@ object FreeText {
   def parse(text: String)(implicit ctx: UcParsingCtx): FreeText =
     parseCorrected(correctInput(text))
 
-  def parseCorrected(text: String @@ InputCorrected)(implicit ctx: UcParsingCtx): FreeText = {
+  def parseCorrected(text: InputCorrected[String])(implicit ctx: UcParsingCtx): FreeText = {
     import Grammar.{parse => parseG, _}
     import FreeTextToken._
 
@@ -88,10 +88,10 @@ object FreeText {
           case None    => InvalidUseCaseRef(num, ot)
         }
 
-    parseG(FreeTextParsers.TextAndTokens, text) match {
+    parseG(FreeTextParsers.textAndTokens, text) match {
       case Success(tokens, _) => FreeText(parseTokens(tokens))
       case Failure(_, _)      => FreeText(Nil)
-      case e@Error(_, _)      => throw new RuntimeException(s"FreeText parsing error occurred: $e. Text: ${text.inspect}")
+      case e@Error(_, _)      => throw new RuntimeException(s"FreeText parsing error occurred: $e. Text: ${text.value.inspect}")
     }
   }
 
@@ -114,7 +114,7 @@ case class FreeText(terms: List[FreeTextTerm]) extends ParsedText {
     var stepRefMap = Map.empty[LocalStepId, StepLabel]
     var hasUcSelfRef = false
     val sb = new StringBuilder
-    terms.foreach(_ match {
+    terms.foreach({
       case PlainText(text)            => sb.append(text)
       case StepRef(id, label)         => sb.appendStepRef(true, label); stepRefMap += (id -> label)
       case InvalidStepRef(label)      => sb.appendStepRef(false, label)
@@ -138,7 +138,7 @@ class FreeTextUpdater(textChanged: Change) extends ParsedTextUpdater[FreeText] w
 
   override def correctInput(input: String) = FreeText.correctInput(input)
 
-  override protected def updateCorrected2(t: FreeText, newText: String @@ InputCorrected)(implicit ctx: UcParsingCtx) =
+  override protected def updateCorrected2(t: FreeText, newText: InputCorrected[String])(implicit ctx: UcParsingCtx) =
     FreeText.parseCorrected(newText) @: textChanged
 
   override def respondToChange(t: FreeText, c: Change)(implicit  ctx: UcParsingCtx) =
@@ -184,7 +184,7 @@ class FreeTextUpdater(textChanged: Change) extends ParsedTextUpdater[FreeText] w
     }
 
   def updateUcSelfRefs(t: FreeText, newTitle: String): ChangeResult[FreeText, Change] = {
-    val newTerms = t.terms.map(_ match {
+    val newTerms = t.terms.map({
       case UseCaseSelfRef(num, _) => UseCaseSelfRef(num, newTitle)
       case term                   => term
     })
