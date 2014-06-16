@@ -4,14 +4,12 @@ import org.scalatest.FunSpec
 import shipreq.webapp.db.UseCaseHeader
 import shipreq.webapp.test.NodeUtils._
 import shipreq.webapp.test.{TestData, TestHelpers}
-import shipreq.webapp.lib.Types._
 import Lenses._
 import field.Field
 import text.FreeText
 
 class FieldLensesTest extends FunSpec with TestHelpers with TestData {
   import MockUc1._
-  implicit def autotagV[T <: AnyRef](t: T): T @@ Validated = t.tag[Validated]
 
   def testFieldValueSet[F <: Field {type Value = V}, V](before: UseCase)(field: F, newValue: V)(after: UseCase) {
     field(after.fieldValues) ==== newValue

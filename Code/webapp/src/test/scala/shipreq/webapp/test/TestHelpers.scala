@@ -20,6 +20,7 @@ import net.liftweb.mocks.MockHttpServletRequest
 import net.liftweb.mockweb.MockWeb
 import net.liftweb.util.StringHelpers
 import net.liftweb.util.Helpers.stringToSuper
+import shipreq.taskman.api.{EmailAddr, UserId}
 import scalaz.{Lens, NonEmptyList, Value}
 import scala.annotation.tailrec
 import scala.util.Random
@@ -67,7 +68,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
   type Refs = Map[LocalStepId, StepLabel]
 
   def savedSteps(tuples: (Int, LocalStepId)*): BiMap[TextIdentId, LocalStepId] =
-    BiMap.apply(tuples.map(t => (t._1.toLong.tag[IsTextIdentId], t._2)): _*)
+    BiMap.apply(tuples.map(t => (TextIdentId(t._1.toLong), t._2)): _*)
 
   def mapToLabels(i: Traversable[LocalStepId], stepState: StepAndLabelBiMap = StepState1) = i.map(id => (id, stepState.value.ab(id))).toMap
   def mapFromLabels(i: Traversable[LocalStepId], stepState: StepAndLabelBiMap = StepState1) = i.map(id => (stepState.value.ab(id), id)).toMap
@@ -84,31 +85,31 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
     m
   }
 
-  val UD1 = UserDescriptor(5001.tag[UserId], "U1", "U1@TEST", Set.empty)
-  val UD2 = UserDescriptor(5002.tag[UserId], "U2", "U2@TEST", Set.empty)
+  val UD1 = UserDescriptor(UserId(5001), Username("U1"), EmailAddr("U1@TEST"), Set.empty)
+  val UD2 = UserDescriptor(UserId(5002), Username("U2"), EmailAddr("U2@TEST"), Set.empty)
 
-  val X0 = "X0".asLocalStepId
-  val X1 = "X1".asLocalStepId
-  val X2 = "X2".asLocalStepId
-  val X3 = "X3".asLocalStepId
-  val X4 = "X4".asLocalStepId
-  val X5 = "X5".asLocalStepId
-  val X6 = "X6".asLocalStepId
-  val X7 = "X7".asLocalStepId
-  val X8 = "X8".asLocalStepId
-  val X9 = "X9".asLocalStepId
-  val X3E1 = "X3E1".asLocalStepId
-  val X3E2 = "X3E2".asLocalStepId
+  val X0 = LocalStepId("X0")
+  val X1 = LocalStepId("X1")
+  val X2 = LocalStepId("X2")
+  val X3 = LocalStepId("X3")
+  val X4 = LocalStepId("X4")
+  val X5 = LocalStepId("X5")
+  val X6 = LocalStepId("X6")
+  val X7 = LocalStepId("X7")
+  val X8 = LocalStepId("X8")
+  val X9 = LocalStepId("X9")
+  val X3E1 = LocalStepId("X3E1")
+  val X3E2 = LocalStepId("X3E2")
 
-  val S0 = "S.0".asLabel
-  val S1 = "S.1".asLabel
-  val S2 = "S.2".asLabel
-  val S3 = "S.3".asLabel
-  val S4 = "S.4".asLabel
-  val S5 = "S.5".asLabel
-  val S6 = "S.6".asLabel
-  val SA = "S.A".asLabel
-  val SF = "S.F".asLabel
+  val S0 = StepLabel("S.0")
+  val S1 = StepLabel("S.1")
+  val S2 = StepLabel("S.2")
+  val S3 = StepLabel("S.3")
+  val S4 = StepLabel("S.4")
+  val S5 = StepLabel("S.5")
+  val S6 = StepLabel("S.6")
+  val SA = StepLabel("S.A")
+  val SF = StepLabel("S.F")
 
   val SavedSteps1: SavedSteps = savedSteps(
     140 -> X0,
@@ -135,11 +136,11 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
   )
 
   val StepStateB: StepAndLabelBiMap = Value(BiMap(
-    X1 -> "1.0".asLabel,
-    X2 -> "1.2".asLabel,
-    X3 -> "1.3".asLabel,
-    X3E1 -> "3.E.1".asLabel,
-    X3E2 -> "3.E.2".asLabel))
+    X1 -> StepLabel("1.0"),
+    X2 -> StepLabel("1.2"),
+    X3 -> StepLabel("1.3"),
+    X3E1 -> StepLabel("3.E.1"),
+    X3E2 -> StepLabel("3.E.2")))
 
   implicit def FieldToFKRec(f: Field): FieldKeyRec = f.rec
   implicit def FieldToFkId(f: Field): FieldKeyId = f.rec.id
@@ -150,10 +151,10 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
   lazy val TF3 = mockTextField("Stuff #3", 333)
   lazy val TF4 = mockTextField("Stuff #4", 444)
 
-  lazy val NCF = NormalCourseField(FieldKeyRec(55.tag[IsFieldKeyId], NormalCourseFieldDefinition.fieldKeyType, NormalCourseFieldDefinition.fieldKeyData))
-  lazy val ECF = ExceptionCourseField(FieldKeyRec(66.tag[IsFieldKeyId], ExceptionCourseFieldDefinition.fieldKeyType, ExceptionCourseFieldDefinition.fieldKeyData))
+  lazy val NCF = NormalCourseField(FieldKeyRec(FieldKeyId(55), NormalCourseFieldDefinition.fieldKeyType, NormalCourseFieldDefinition.fieldKeyData))
+  lazy val ECF = ExceptionCourseField(FieldKeyRec(FieldKeyId(66), ExceptionCourseFieldDefinition.fieldKeyType, ExceptionCourseFieldDefinition.fieldKeyData))
 
-  lazy val FGF = FlowGraphField(FieldKeyRec(707.tag[IsFieldKeyId], FlowGraphFieldDefinition.fieldKeyType, FlowGraphFieldDefinition.fieldKeyData))
+  lazy val FGF = FlowGraphField(FieldKeyRec(FieldKeyId(707), FlowGraphFieldDefinition.fieldKeyType, FlowGraphFieldDefinition.fieldKeyData))
 
   def rnd = TestHelperConsts.Random
 
@@ -167,7 +168,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
     var i = 0
     tree.foreachRecursive(s => {
       i += 1
-      val textIdentId = (i * 1000).tag[IsTextIdentId]
+      val textIdentId = TextIdentId(i * 1000)
       savedSteps += (textIdentId -> s.id)
     })
     savedSteps.result
@@ -177,7 +178,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
     var id = startingId - 1
     override def answer(invocation: InvocationOnMock) = {
       id += 1
-      id.tag[IsTextIdentId]
+      TextIdentId(id)
     }
   }
 
@@ -186,7 +187,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
       val identId = i.getArguments()(0).asInstanceOf[TextIdentId]
       val rev = i.getArguments()(1).asInstanceOf[Short]
       val text = i.getArguments()(2).asInstanceOf[NormalisedText]
-      val id = (identId*10).tag[IsTextRevId]
+      val id = TextRevId(identId.value * 10)
       TextRev(identId, rev, id, text)
     }
   }
@@ -211,7 +212,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
 
   def mockTextField(title: String, id: Long) = {
     val defn = TextFieldDefinition(title)
-    TextField(defn, FieldKeyRec(id.tag[IsFieldKeyId], FieldKeyType.Text, defn.fieldKeyData))
+    TextField(defn, FieldKeyRec(FieldKeyId(id), FieldKeyType.Text, defn.fieldKeyData))
   }
 
 //  def mockFieldList(defs: List[FieldDefinition]): FieldListRec = {
@@ -391,12 +392,12 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
 
   def normaliseFreeTextTerms(ts: List[FreeTextTerm]): List[FreeTextTerm] = ts map normaliseFreeTextTerm
   def normaliseFreeTextTerm(t: FreeTextTerm): FreeTextTerm = t match {
-    case StepRef(_, lbl) => StepRef(lbl.asLocalStepId, lbl)
+    case StepRef(_, lbl) => StepRef(LocalStepId(lbl), lbl)
     case _ => t
   }
 
   def normaliseRefs(r: Refs): Refs = r.map {
-    case (id, lbl) => (lbl.asLocalStepId -> lbl)
+    case (id, lbl) => LocalStepId(lbl) -> lbl
   }
 
   def normaliseStepFieldValue(s: StepFieldValue): StepFieldValue = {
@@ -404,7 +405,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
     // Add treeroot map
     val newNodes = s.tree.nodes.map(n => n.deepCopy[StepNode] {
       (stepNode, children) =>
-        val newId = s"id/${stepNode.level}.${stepNode.labelIndex}".asLocalStepId
+        val newId = LocalStepId(s"id/${stepNode.level}.${stepNode.labelIndex}")
         s.textmap.get(stepNode.id).map(
           txt => newTextmap += (newId -> txt.norm)
         )
@@ -448,13 +449,6 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
   }
 
   /**
-   * Extensions for: AnyRef
-   */
-  implicit class AnyRefExt2[T <: AnyRef](val v: T) {
-    def validated = v.tag[Validated]
-  }
-
-  /**
    * Extensions for: Int
    */
   implicit class MyRichInt(val i: Int) {
@@ -473,7 +467,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
    */
   implicit class LocalStepIdExt(val id: LocalStepId) {
     def withLabel(uc: UseCase): String =
-      uc.stepsAndLabels.value.ab.get(id).map(l => s"{$id:$l}").getOrElse(s"{$id:LABEL NOT FOUND}")
+      uc.stepsAndLabels.value.ab.get(id).map(l => s"{${id.value}:${l.value}").getOrElse(s"{$id:LABEL NOT FOUND}")
   }
 
   /**
@@ -504,7 +498,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
     def toTextTree(field: StepField, savedSteps: SavedSteps = SavedSteps.empty): List[StepNodeWithText] =
       convertNodeTree[StepNode, StepNodeWithText](v.tree, {
         case (n, lvl, lbl, children) =>
-          val txt = v.textmap.get(n.id).map(_.normalisedText(savedSteps)).getOrElse("".tag[IsNormalised])
+          val txt = v.textmap.get(n.id).fold(NormalisedText(""))(_.normalisedText(savedSteps))
           StepNodeWithText(n.id, lvl, lbl, txt, children)
       }, field.sli.startingLabelIndex _)
   }
@@ -517,7 +511,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
 
     def toTextmap(savedSteps: SavedSteps = SavedSteps.empty, sl: StepAndLabelBiMap = StepAndLabelBiMap.empty) =
       TreeLike(x).mapRecursive[(LocalStepId, StepText)](n => {
-        val t = StepText.load(n.text.tag[IsNormalised])(savedSteps, UcParsingCtx.Empty.copy(stepsAndLabels = sl))
+        val t = StepText.load(NormalisedText(n.text))(savedSteps, UcParsingCtx.Empty.copy(stepsAndLabels = sl))
         (n.id, t)
       }).toMap
 
@@ -576,7 +570,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
    * Extensions for: UseCaseRev
    */
   implicit class UseCaseRevExt(val v: UseCaseRev) {
-    def withTitle(t: String @@ Validated) = v.copy(header = v.header.copy(title = t))
+    def withTitle(t: String) = v.copy(header = v.header.copy(title = t))
   }
 
   /**

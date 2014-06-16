@@ -73,7 +73,7 @@ case class Renderer(
   saveUC: Option[() => JsCmd]
   ) extends RendererHelper with Logger {
 
-  @inline final def textFieldPubId(f: TextField) = textFieldIds(f) + "-p"
+  @inline final def textFieldPubId(f: TextField) = textFieldIds(f).value + "-p"
   @inline final def renderTextFieldPub(f: TextField) = HtmlFieldValuePublishers.textField(f.value)
 
   // *************************************
@@ -82,7 +82,7 @@ case class Renderer(
 
   def render = {
     ".fieldFrame *" #> renderFields andThen (
-      ".title .ucid *" #> ucNumber.toString &
+      ".title .ucid *" #> ucNumber.value.toString &
       ".title @title" #> SHtml.ajaxTextarea(uch.title, modTitle(_), "id" -> TitleId, "rows" -> "1", "class" -> "form-control input-lg") &
       renderSaveCont
     )
@@ -106,7 +106,7 @@ case class Renderer(
     "th *" #> f.defn.title &
     ".fvpub [id]" #> textFieldPubId(f) &
     ".fvpub *" #> renderTextFieldPub(f) &
-    "textarea" #> SHtml.ajaxTextarea(f.value.text, modTextField(f)(_), "id" -> textFieldIds(f))
+    "textarea" #> SHtml.ajaxTextarea(f.value.text, modTextField(f)(_), "id" -> textFieldIds(f).value)
   )
 
   val stepRenderers = Memo.immutableListMapMemo[StepField, StepFieldRenderer] {

@@ -3,7 +3,6 @@ package shipreq.webapp.feature.uc.step
 import org.scalacheck.Arbitrary
 import org.scalatest.FunSpec
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
-import shipreq.base.util.TypeTags._
 import shipreq.webapp.test.DataGenerators._
 import shipreq.webapp.test.TestHelpers
 
@@ -31,7 +30,7 @@ class StepTreeZipperTest extends FunSpec with TestHelpers with GeneratorDrivenPr
             case None =>
               z.focus.node.children.size ==== 0
             case Some(z2) =>
-              z2.focus.label should startWith(z.focus.label + ".")
+              z2.focus.label.value should startWith(z.focus.label.value + ".")
               z2.focus.flat.focus.label ==== z2.focus.label
               z2.focus.flat.length ==== TreeLike(z2.focus.node.children).sizeRecursive + 1
               test(z2)

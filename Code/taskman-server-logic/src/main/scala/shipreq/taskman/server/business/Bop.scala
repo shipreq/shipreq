@@ -2,7 +2,7 @@ package shipreq.taskman.server.business
 
 import scalaz.\/
 import shipreq.base.util.Util.simpleNameMemo
-import shipreq.taskman.api.Types._
+import shipreq.taskman.api.{EmailAddr, UserId}
 
 /**
  * Business Operation.

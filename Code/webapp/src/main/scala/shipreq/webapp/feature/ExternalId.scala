@@ -1,52 +1,51 @@
 package shipreq.webapp.feature
 
 import net.liftweb.common.{Full, Empty, Box}
+import shipreq.base.util.TaggedTypes.TaggedTypeCtor
 import shipreq.webapp.util.BaseX
 import shipreq.webapp.lib.Types._
 
 object ExternalId {
   // util.Random.shuffle(x.toList).mkString
-  final val Project = new ExternalIdConverter[IsProjectId]("F4XBvt0i2cnHQ6dIaAomLjPE3MOrsbxReq1W9pgZyzNY7SkGf5UlwJCTKuVD8h")
-  final val UseCase = new ExternalIdConverter[IsUseCaseIdentId]("0atxlQwnj7y3zFZNVBqJ42AcriYEeMu8SdU91HgfTsb6GhmWkX5KopCIRLvOPD")
-  final val TextRev = new ExternalIdConverter[IsTextRevId]("eBM0xKQuO2Zy43AnWGPmkbXN9HprwV7ItSi1CdETv6D5UYRscjJzhFgoLflqa8")
+  final val Project = new ExternalIdConverter[ProjectId]("F4XBvt0i2cnHQ6dIaAomLjPE3MOrsbxReq1W9pgZyzNY7SkGf5UlwJCTKuVD8h")
+  final val UseCase = new ExternalIdConverter[UseCaseIdentId]("0atxlQwnj7y3zFZNVBqJ42AcriYEeMu8SdU91HgfTsb6GhmWkX5KopCIRLvOPD")
+  final val TextRev = new ExternalIdConverter[TextRevId]("eBM0xKQuO2Zy43AnWGPmkbXN9HprwV7ItSi1CdETv6D5UYRscjJzhFgoLflqa8")
 }
 
-final class ExternalIdConverter[Tag <: IsExteralisableId](val dictionaryStr: String) {
-  type Id = JLong @@ Tag
-  type EI = Tag#EI
+final class ExternalIdConverter[I <: ExteralisableId](val dictionaryStr: String)(implicit I: TaggedTypeCtor[I],  E: TaggedTypeCtor[I#E]) {
+  type E = I#E
 
   import ExternalIdFns._
 
   private[this] val base62 = new BaseX(dictionaryStr, 4)
   require(base62.base.longValue == 62)
 
-  @inline final def apply(internal: Id): EI = toExternal(internal)
+  @inline def apply(internal: I): E = toExternal(internal)
 
-  def toExternal(internal: Id): EI = {
-    var (a, b) = splitLong(internal.longValue)
+  def toExternal(internal: I): E = {
+    var (a, b) = splitLong(internal.value)
     b = xorness(b)
     b = shuffleBitsObfuscate(b)
     val x = joinInts(a, b)
-    base62.encode(x).tag[Tag#EITag]
+    E(base62 encode x)
   }
 
-  private def parse(external: String): Id = {
+  private def parse(external: String): I = {
     val y = base62.decode(external)
     var (a, b) = splitLong(y)
     b = shuffleBitsRestore(b)
     b = xorness(b)
-    joinInts(a, b).tag[Tag]
+    I(joinInts(a, b))
   }
 
   def isValidExternalId(str: String): Boolean = ExternalIdRegex.matcher(str).matches
 
-  def parseO(external: String): Option[Id] = if (isValidExternalId(external)) Some(parse(external)) else None
-
-  def parseB(external: String): Box[Id] = if (isValidExternalId(external)) Full(parse(external)) else Empty
-  def parseB(str: Box[String]): Box[Id] = str.flatMap(parseB)
+  def parseO(external: String): Option[I] = if (isValidExternalId(external)) Some(parse(external)) else None
+  def parseB(external: String): Box[I] = if (isValidExternalId(external)) Full(parse(external)) else Empty
+  def parseB(str: Box[String]): Box[I] = str.flatMap(parseB)
 }
 
-private[feature] final object ExternalIdFns {
+private[feature] object ExternalIdFns {
   val ExternalIdRegex = "^[a-zA-Z0-9]{4,11}$".r.pattern
 
   @inline def splitLong(x: Long): (Int, Int) = ((x >>> 32).toInt, (x.toInt & 0xffffffff))

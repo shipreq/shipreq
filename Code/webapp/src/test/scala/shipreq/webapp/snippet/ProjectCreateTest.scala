@@ -29,12 +29,12 @@ class ProjectCreateTest extends FunSuite with TestDatabaseSupport with UserFixtu
   }
 
   test("Creation fails when project exists") {
-    dao.createProject(user1.id, "hehe".validated)
+    dao.createProject(user1.id, "hehe")
     assertJsErrorNotice(create("hehe"), Some("already"))
   }
 
   test("Allows same project name between different users") {
-    dao.createProject(user2.id, "hehe".validated)
+    dao.createProject(user2.id, "hehe")
     testSuccess
   }
 }

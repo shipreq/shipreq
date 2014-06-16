@@ -7,7 +7,7 @@ import Types._
 /**
  * Generates a random string to be used as a ShareUrlToken.
  */
-final object ShareUrlTokenGen extends Logger {
+object ShareUrlTokenGen extends Logger {
 
   val len = 8
 
@@ -30,7 +30,7 @@ final object ShareUrlTokenGen extends Logger {
       sb append chars(rnd.nextInt(charSpace))
       i -= 1
     }
-    sb.toString.tag
+    ShareUrlToken(sb.toString)
   }
 
   val fn: () => ShareUrlToken = nextToken _

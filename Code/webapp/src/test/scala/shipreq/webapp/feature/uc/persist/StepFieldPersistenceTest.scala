@@ -18,11 +18,11 @@ import step.{StepNode, StepTree}
 class StepFieldPersistenceTest extends FunSpec with TestHelpers with TestData {
   type V = StepFieldValue
 
-  implicit def autoTagLocalStepIds(s: String) = s.asLocalStepId
-  implicit def autoTagNormalisedRefs(s: String) = s.tag[IsNormalised]
+  implicit def autoTagLocalStepIds(s: String) = LocalStepId(s)
+  implicit def autoTagNormalisedRefs(s: String) = NormalisedText(s)
   implicit def f2fp(f: StepField) = new StepFieldPersistence(f)
 
-  val ucId = 123L.tag[IsUseCaseIdentId]
+  val ucId = UseCaseIdentId(123)
 
   def saver(f: StepField, sfv: StepFieldValue) = {
     val stepsAndLabels: StepAndLabelBiMap = Need(BiMap(UseCaseFns.generateStepAndLabelMap(UCN, f, sfv.tree)))
@@ -30,11 +30,11 @@ class StepFieldPersistenceTest extends FunSpec with TestHelpers with TestData {
   }
 
   import MockUc3._
-  val T1 = 401L.tag[IsTextIdentId]
-  val T2 = 402L.tag[IsTextIdentId]
-  val T3 = 403L.tag[IsTextIdentId]
-  val T4 = 404L.tag[IsTextIdentId]
-  val T5 = 405L.tag[IsTextIdentId]
+  val T1 = TextIdentId(401)
+  val T2 = TextIdentId(402)
+  val T3 = TextIdentId(403)
+  val T4 = TextIdentId(404)
+  val T5 = TextIdentId(405)
   val MockSavedSteps: SavedSteps = {
     val b = new BiMapBuilder[TextIdentId, LocalStepId]
     b += (T1 -> X1)
@@ -48,10 +48,10 @@ class StepFieldPersistenceTest extends FunSpec with TestHelpers with TestData {
   // -------------------------------------------------------------------------------------------------------------------
 
   describe("Loading") {
-    implicit def int_to_textrevid(id: Int): TextRevId = id.toLong.tag[IsTextRevId]
-    implicit def int_to_textident(id: Int): TextIdentId = id.toLong.tag[IsTextIdentId]
-    implicit def autoLabel(x: String): StepLabel = x.asLabel
-    implicit def autoLabelO(x: Option[String]): Option[StepLabel] = x.asLabelC
+    implicit def int_to_textrevid(id: Int): TextRevId = TextRevId(id)
+    implicit def int_to_textident(id: Int): TextIdentId = TextIdentId(id)
+    implicit def autoLabel(x: String) = StepLabel(x)
+    implicit def autoLabelO(x: Option[String]): Option[StepLabel] = x map StepLabel.apply
     implicit def parent(rel: UcFieldTextWithFK): Option[TextRevId] = Some(rel.id)
     val N70 = UcFieldTextWithFK(NCF, UcFieldText(Some("x.0"), None, 0, TextRev(10, 1, 100, "I'm the root [D.703]")))
     val N701 = UcFieldTextWithFK(NCF, UcFieldText(Some("x.0.1"), N70, 0, TextRev(11, 1, 101, "I was inserted")))
@@ -153,7 +153,7 @@ class StepFieldPersistenceTest extends FunSpec with TestHelpers with TestData {
     }
 
     describe("save()") {
-      val ucRevId = 123L.tag[IsUseCaseRevId]
+      val ucRevId = UseCaseRevId(123)
 
       def mockDao = {
         val dao = mock[DaoT]
@@ -180,7 +180,7 @@ class StepFieldPersistenceTest extends FunSpec with TestHelpers with TestData {
           tree = StepTree(NcSfv.tree.nodes :+ StepNode(X8, 0, 1, Nil)),
           textmap = NcSfv.textmap + (X8 -> StepText(freeText("AHHH"), None, None))
         )
-        val T8 = 408L.tag[IsTextIdentId]
+        val T8 = TextIdentId(408)
         val mockSavedSteps2: SavedSteps = BiMap(MockSavedSteps.ab + (T8 -> X8))
 
         val dao = mockDao

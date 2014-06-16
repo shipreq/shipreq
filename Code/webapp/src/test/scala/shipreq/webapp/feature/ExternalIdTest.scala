@@ -11,7 +11,7 @@ class ExternalIdTest extends FunSuite with Checkers with Matchers {
 
   implicit override val generatorDrivenConfig = PropertyCheckConfig(minSuccessful = 10000)
 
-  implicit def autoTagLongs(x: Long) = x.tag[IsUseCaseIdentId]
+  implicit def autoTagLongs(x: Long) = UseCaseIdentId(x)
 
   // println((100 to 150).map(toExternal(_)).mkString("\n"))
   // println(toExternal(Long.MaxValue))
@@ -23,14 +23,14 @@ class ExternalIdTest extends FunSuite with Checkers with Matchers {
       id: Long =>
         val ext = toExternal(id)
         val i2 = parseO(ext).get
-        (i2 == id) :| s"$id --> $ext --> $i2"
+        (i2.value == id) :| s"$id --> $ext --> $i2"
     }
   }
 
   test("External string format") {
     check {
       id: Long =>
-        toExternal(id) should fullyMatch regex "^[a-zA-Z0-9]{4,12}$"
+        toExternal(id).value should fullyMatch regex "^[a-zA-Z0-9]{4,12}$"
         true
     }
   }
@@ -42,7 +42,7 @@ class ExternalIdTest extends FunSuite with Checkers with Matchers {
         val a = toExternal(id)
         val b = toExternal(id + 1)
         val a2 = lastCh.replaceSomeIn(a, m => Some((m.group(1)(0) + 1).toChar.toString))
-        (a2 != b) :| s"$a + 1 matches $b"
+        (a2 != b.value) :| s"$a + 1 matches $b"
     }
   }
 }

@@ -7,11 +7,11 @@ import UcFilters._
 
 class UcFilterTest extends FunSpec with Matchers {
 
-  implicit def autoId(i: Long): UseCaseIdentId = i.toLong.tag[IsUseCaseIdentId]
+  implicit def autoId(i: Long) = UseCaseIdentId(i)
 
   def aLawfulFilter(f: UcFilter) {
     it("fromJson . toJson = id") {
-      val j = toJson(f)
+      val j = toJsonStr(f)
       val f2 = fromJson(j)
       f2 shouldBe f
     }

@@ -1,6 +1,6 @@
 package shipreq.taskman.server.business
 
-import shipreq.taskman.api.Types._
+import shipreq.taskman.api.EmailAddr
 import scalaz.NonEmptyList
 
 object MailingList {

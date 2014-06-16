@@ -21,7 +21,7 @@ trait FlowGraphFieldLike {
   override type Value = Unit
   override def defn = FlowGraphFieldDefinition
   override def empty = ()
-  override def toString = s"${getClass.getSimpleName}[#${rec.id}]"
+  override def toString = s"${getClass.getSimpleName}[#${rec.id.value}]"
   override def changeResponder = FlowGraphChangeResponder
 }
 

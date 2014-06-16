@@ -6,12 +6,11 @@ import net.liftweb.http.js.JsCmd
 import net.liftweb.util.Helpers._
 import org.joda.time.DateTime
 
-import shipreq.taskman.api.Msg
+import shipreq.taskman.api.{UserId, EmailAddr, Msg}
 import shipreq.webapp.app.AppConfig.PasswordResetTokenLifespan
 import shipreq.webapp.db.{DaoT, UserRegistrationInfo, ResetPasswordInfo}
-import shipreq.webapp.feature.validation.{ValidationResultT, Validators}
+import shipreq.webapp.feature.validation.{ValidationResult, Validators}
 import shipreq.webapp.lib.{FormVar, SingleOpStatefulSnippet, SnippetHelpers}
-import shipreq.webapp.lib.Types._
 import shipreq.webapp.util.HtmlTransformExt.ajaxSubmitOnClick
 import shipreq.webapp.util.JsExt._
 import shipreq.webapp.app.AppSiteMap
@@ -40,7 +39,7 @@ object ResetPassword1 extends SnippetHelpers {
     form.csssel(vars, vars = _) & ":submit" #> ajaxSubmitOnClick(onSubmit)
   }
 
-  def perform(v: ValidationResultT[String]): JsCmd =
+  def perform(v: ValidationResult[EmailAddr]): JsCmd =
     ifValid(v)(email =>
       daoProvider.withTransactionLevel(Connection.TRANSACTION_SERIALIZABLE)(dao => {
         dao.findUserRegAndResetPwInfo(email) match {
@@ -50,7 +49,7 @@ object ResetPassword1 extends SnippetHelpers {
 
           // Account not activated yet
           case Some((u@UserRegistrationInfo(_, _, _, None), _)) =>
-            taskmanD(dao, _ submitMsg Register1.preRegistrationMsg(email.tag, u, dao))
+            taskmanD(dao, _ submitMsg Register1.preRegistrationMsg(email, u, dao))
 
           // Valid token available
           case Some((UserRegistrationInfo(id, _, _, Some(_)), ResetPasswordInfo(Some(token), Some(issued)))) if !isTokenExpired(issued) =>
@@ -68,8 +67,8 @@ object ResetPassword1 extends SnippetHelpers {
     })
   )
 
-  def passwordResetMsg(email: String @@ InputCorrected, token: String): Msg =
-    Msg.PasswordResetRequested(email.tag, AppSiteMap.ResetPassword2.absoluteUrl(token))
+  def passwordResetMsg(email: EmailAddr, token: String): Msg =
+    Msg.PasswordResetRequested(email, AppSiteMap.ResetPassword2.absoluteUrl(token))
 
   val jsEmailSent: JsCmd =
     JqExpr("#resetpw1Form,#resetpwTokenSent") ~> JqToggle

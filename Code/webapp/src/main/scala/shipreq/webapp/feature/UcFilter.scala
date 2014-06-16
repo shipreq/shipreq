@@ -5,10 +5,10 @@ import net.liftweb.http.S
 import net.liftweb.json._
 import scala.xml.{Text, NodeSeq}
 import scalaz.{MonadPlus, NonEmptyList}
-
+import shipreq.base.util.TaggedTypes.JsonStr
+import shipreq.webapp.db.BasicUseCaseInfo
 import shipreq.webapp.lib.ScalazSubset._
 import shipreq.webapp.lib.Types._
-import shipreq.webapp.db.BasicUseCaseInfo
 import shipreq.webapp.lib.SnippetHelpers.shouldNeverHappen_swallowInProd
 
 /**
@@ -22,7 +22,7 @@ object UcFilters {
    * No filter. All use cases remain in scope.
    */
   case object All extends UcFilter {
-    val json: Json[UcFilter] = UcFilter.toJson(this)
+    val json: JsonStr[UcFilter] = UcFilter.toJsonStr(this)
   }
 
   /**
@@ -72,9 +72,9 @@ object UcFilter {
     }
 
     object UseCaseIdentIdSerialiser extends CustomSerializer[UseCaseIdentId](format => ( {
-      case JInt(l) => l.longValue.tag[UseCaseIdentId]
+      case JInt(l) => UseCaseIdentId(l.toLong)
     }, {
-      case l: UseCaseIdentId => JInt(l.longValue)
+      case l: UseCaseIdentId => JInt(l.value)
     }))
 
     object Serialiser extends CustomSerializer[UcFilter](format => ( {
@@ -88,10 +88,10 @@ object UcFilter {
 
   implicit def jsonFormats = FilterJson.jsonFormats
 
-  def toJson[F <: UcFilter](f: F): Json[F] =
-    Serialization.write(f).tag[IsJsonFor[F]]
+  def toJsonStr[F <: UcFilter](f: F): JsonStr[F] =
+    JsonStr[F](Serialization.write(f))
 
-  def fromJson(json: Json[UcFilter]): UcFilter =
+  def fromJson(json: JsonStr[UcFilter]): UcFilter =
     Serialization.read[UcFilter](json)
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -168,7 +168,7 @@ object UcFilter {
       <li class="checkbox"><label><input type="checkbox" name={name} value="1" checked={checkedAttr(selected)}/> {uc.fullName}</label></li>
     }
 
-    def ucParamName(prefix: String, id: UseCaseIdentId) = s"$prefix-$id"
+    def ucParamName(prefix: String, id: UseCaseIdentId) = s"$prefix-${id.value}"
 
     def parseRequest(ucs: UseCases): UcFilter = {
       S.param(optionParamName) match {

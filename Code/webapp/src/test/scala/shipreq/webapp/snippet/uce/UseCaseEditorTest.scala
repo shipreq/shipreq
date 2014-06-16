@@ -112,10 +112,10 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
     assertIdAndActionR(resp, id, Pattern.quote(actionStr).r)
 
   def assertIdAndActionR(resp: String, id: AnyLocalId, actionRegex: Regex): Unit =
-    resp should include regex(s"""$id[^;\n]+?$actionRegex""")
+    resp should include regex s"""${id.value}[^;\n]+?$actionRegex"""
 
   def assertIdRelabeled(resp: String, id: AnyLocalId, newLabel: String) {
-    assertIdAndActionR(resp, s"$id-l".tag[IsLocalId], s"""['"]$newLabel['"]""".r)
+    assertIdAndActionR(resp, LocalStepId(s"${id.value}-l"), s"""['"]$newLabel['"]""".r)
   }
 
   def assertNewStepFound(resp: String) {
@@ -184,7 +184,7 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
         uce.uc.title should be("bananas")
       }
       it("should set the title via ajax") {
-        assertIdAndActionR(resp, TitleId.tag[IsLocalId], """['"]bananas['"]""".r)
+        assertIdAndActionR(resp, LocalStepId(TitleId), """['"]bananas['"]""".r)
       }
 
       it("should restore the original value after receiving an inconsequential change") {
@@ -260,7 +260,7 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
 
     def itRespectsMaxStepsPossible(name: String, uceFn: => () => UseCaseEditor2, addFn: => UseCaseUpdater => UcUpdateResult, labelAtMax: String) = {
       it(s"should not exceed the max-steps limit ($name)") {
-        testMaxSteps(uceFn(), addFn, _.stepsAndLabels.value.ba.contains(labelAtMax.asLabel))
+        testMaxSteps(uceFn(), addFn, _.stepsAndLabels.value.ba.contains(StepLabel(labelAtMax)))
       }
     }
 
@@ -297,10 +297,10 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
         stepTreeLens.get(uce.uc, ECF).nodes.size should be(3)
         assertTailStepAdded(resp, "7.E.3", ".courses-e")
       }
-      it should behave like(itRespectsMaxStepsPossible("NC", UCE1 _, NCF.addTailStep, "7.99"))
-      it should behave like(itRespectsMaxStepsPossible("EC", UCE1 _, ECF.addTailStep, "7.E.99"))
-      it should behave like(itRespectsMaxStepConstraint("NC", true, f => f.addTailStep))
-      it should behave like(itRespectsMaxStepConstraint("EC", false, f => f.addTailStep))
+      it should behave like itRespectsMaxStepsPossible("NC", UCE1 _, NCF.addTailStep, "7.99")
+      it should behave like itRespectsMaxStepsPossible("EC", UCE1 _, ECF.addTailStep, "7.E.99")
+      it should behave like itRespectsMaxStepConstraint("NC", true, f => f.addTailStep)
+      it should behave like itRespectsMaxStepConstraint("EC", false, f => f.addTailStep)
     }
 
     describe("adding a step") {
@@ -324,10 +324,10 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
       it("should update referencing step field text") {
         assertIdAndAction(resp, X1, "root [7.0.4]")
       }
-      it should behave like(itRespectsMaxStepsPossible("NC", UCE2b _, NCF.addStep(X3), "7.0.99"))
-      it should behave like(itRespectsMaxStepsPossible("EC", UCE1 _, ECF.addStep(MockUc1.EcSfv.tree(1).id), "7.E.2.99"))
-      it should behave like(itRespectsMaxStepConstraint("NC", true, f => f.addStep("F898146860208051SD4".tag)))
-      it should behave like(itRespectsMaxStepConstraint("EC", false, f => f.addStep("F898146860506XT0ZUD".tag)))
+      it should behave like itRespectsMaxStepsPossible("NC", UCE2b _, NCF.addStep(X3), "7.0.99")
+      it should behave like itRespectsMaxStepsPossible("EC", UCE1 _, ECF.addStep(MockUc1.EcSfv.tree(1).id), "7.E.2.99")
+      it should behave like itRespectsMaxStepConstraint("NC", true, f => f.addStep(LocalStepId("F898146860208051SD4")))
+      it should behave like itRespectsMaxStepConstraint("EC", false, f => f.addStep(LocalStepId("F898146860506XT0ZUD")))
     }
 
     describe("remove a step") {
@@ -353,14 +353,14 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
     describe("indenting a step") {
       lazy val (uce,resp) = UCE3.update2(NCF.increaseIndent(X5))
       it("should update the state"){
-        uce.uc.stepsAndLabels.value.ab(X5) should be("7.0.2.b")
+        uce.uc.stepsAndLabels.value.ab(X5).value should be("7.0.2.b")
       }
       it("should update the client"){
         assertIdAndAction(resp, X5, "attr")
         assertIdRelabeled(resp, X5, "b")
       }
       it("should not transition from AC to NC when node is 7.0.3") {
-        resp should not include("ac_to_nc")
+        resp should not include "ac_to_nc"
       }
       it("should transition from AC to NC when node is 7.1") {
         val (_,resp) = UCE1.update2(NCF.increaseIndent(MockUc1.NcSfv.tree(1).id))
@@ -392,7 +392,7 @@ class UseCaseEditorTest extends FunSpec with TestHelpers with TestData with CssT
     describe("decreasing a step indent") {
       lazy val (uce,resp) = UCE3.update2(NCF.decreaseIndent(X5))
       it("should update the state"){
-        uce.uc.stepsAndLabels.value.ab(X5) should be("7.1")
+        uce.uc.stepsAndLabels.value.ab(X5).value should be("7.1")
       }
       it("should update the client"){
         assertIdAndAction(resp, X5, "attr")

@@ -54,13 +54,13 @@ object NodeUtils {
         if (indent == 0) {
           val topLevelLabel(labelPrefix, labelSuffix) = label
           val labelIndex = LabelMakers(0)(labelSuffix)
-          val n = StepNodeWithText(idOverride.getOrElse(label).asLocalStepId, 0, labelIndex, stepText)
+          val n = StepNodeWithText(LocalStepId(idOverride.getOrElse(label)), 0, labelIndex, stepText)
           nodes += n
           n
         } else {
           val p = parents(indent - 1)
           val labelIndex = LabelMakers(indent)(label)
-          val n = StepNodeWithText(idOverride.getOrElse(s"${p.id}.${label}").asLocalStepId, indent, labelIndex, stepText)
+          val n = StepNodeWithText(LocalStepId(idOverride.getOrElse(s"${p.id.value}.${label}")), indent, labelIndex, stepText)
           children(p) += n
           n
         }
@@ -71,10 +71,10 @@ object NodeUtils {
     // Convert to immutable tree
     def addChildren(n: StepNodeWithText): StepNodeWithText = {
       val nKey = n.copy(children = Nil)
-      val ch = children(nKey).map { addChildren(_) }.toList
+      val ch = children(nKey).map(addChildren).toList
       n.copy(children = ch)
     }
-    nodes.map { addChildren(_) }.toList
+    nodes.map(addChildren).toList
   }
 
   /**
@@ -89,7 +89,7 @@ object NodeUtils {
   def inspectTree(tree: List[StepNodeWithText], indent: String = "", res: List[String] = Nil): List[String] = tree match {
     case Nil => res
     case h :: t =>
-      val s = s"${indent}${h.label}. ${h.text.replace("\n","\\n")}"
+      val s = s"${indent}${h.label.value}. ${h.text.replace("\n","\\n")}"
       val ch = inspectTree(h.children, indent + "  ")
       inspectTree(t, indent, res ::: s :: ch)
   }

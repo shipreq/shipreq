@@ -1,8 +1,8 @@
 package shipreq.taskman.api
 
-import scala.reflect.runtime.{universe => ru}
 import org.scalacheck.{Gen, Arbitrary}
-import shipreq.taskman.api.Types._
+import scala.reflect.runtime.{universe => ru}
+import shipreq.base.util.TaggedTypes.{TaggedTypeCtor, TaggedType}
 import shipreq.taskman.api.{MsgType => T}
 import shipreq.taskman.api.{Msg => M}
 
@@ -43,12 +43,20 @@ object TestHelpers {
 
   import Arbitrary._
 
-//  def arbTaggedString[T <: TypeTag[String]]: Arbitrary[String @@ T] =
+//  def arbTaggedString[T <: TaggedType[String]]: Arbitrary[T] =
 //    Arbitrary {      arbitrary[String].map(_.tag[T])    }
   //  implicit def arbEmail: Arbitrary[EmailAddr] = arbTaggedString
 
-  def genEmail: Gen[EmailAddr] = arbitrary[String].map(_.tag)
-  def genUserId: Gen[UserId] = arbitrary[Long].map(_.tag)
+//  implicit def arbTagged[U, T <: TaggedType[U]](implicit U: Arbitrary[U], T: TaggedTypeCtor[U, T]): Arbitrary[T] =
+//    Arbitrary { U.arbitrary.map(T.apply)}
+//  implicit def arbTagged[U, T](implicit U: Arbitrary[U], T: TaggedTypeCtor[U, T]): Arbitrary[T] =
+//    Arbitrary { U.arbitrary.map(T.apply)}
+
+//  implicit def arbEmail: Arbitrary[EmailAddr] = arbTagged[String, EmailAddr]
+//  def genEmail: Gen[EmailAddr] = arbEmail.arbitrary
+
+  def genEmail: Gen[EmailAddr] = arbitrary[String].map(EmailAddr.apply)
+  def genUserId: Gen[UserId] = arbitrary[Long].map(UserId.apply)
   def genUserIdO: Gen[Option[UserId]] = Gen.option(genUserId)
 
   implicit def arbMsg: Arbitrary[Msg] =

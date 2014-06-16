@@ -29,9 +29,9 @@ class UserAccount extends SnippetHelpers {
   var vars: form.Var = (usrd.name, usrd.newsletter)
 
   def render = (
-    ".username .form-control-static *" #> usr.username
-    & ".email .form-control-static *" #> usr.email
-    & ".registeredAt time [datetime]" #> supp.registeredAt
+    ".username .form-control-static *" #> usr.username.value
+    & ".email .form-control-static *" #> usr.email.value
+    & ".registeredAt time [datetime]" #> supp.registeredAt.value
     & ".password .edit" #> DynModal.passwordChangerT("Account Password", Some(supp.ps))(onPasswordChange)
     & form.csssel(vars, vars = _)
     & "#usrd-submit" #> ajaxSubmitOnClick(onUserPrefUpdate)

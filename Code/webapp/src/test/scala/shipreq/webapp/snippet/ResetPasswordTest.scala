@@ -4,9 +4,8 @@ import net.liftweb.util.Helpers._
 import org.joda.time.DateTime
 import org.mockito.Mockito.{when, verify}
 import org.scalatest.FunSpec
-import shipreq.base.util.ScalaExt._
+import shipreq.taskman.api.UserId
 import shipreq.webapp.db.{ResetPasswordInfo, UserRegistrationInfo, DaoT}
-import shipreq.webapp.lib.Types._
 import shipreq.webapp.test.T2._
 import shipreq.webapp.test.{MockDaoProvider, TestHelpers}
 import shipreq.webapp.util.NonEmptyTemplate
@@ -24,12 +23,12 @@ class ResetPasswordTest extends FunSpec with TestHelpers {
     def findUserReturns(r: Option[(UserRegistrationInfo, ResetPasswordInfo)]): DbSetup = new DbSetup {
       override def setup(d: DaoT) = when(d.findUserRegAndResetPwInfo(any)) thenReturn r
     }
-    def registeredUser = UserRegistrationInfo(5.tag, None, None, Some(DateTime.now))
+    def registeredUser = UserRegistrationInfo(UserId(5), None, None, Some(DateTime.now))
     def existingToken(token: String, age: TimeSpan) = ResetPasswordInfo(Some(token), Some(age.ago))
     def noResetPwToken = ResetPasswordInfo(None, None)
 
     val UserNotFound             = findUserReturns(None)
-    val UnactivatedUser          = findUserReturns(Some(UserRegistrationInfo(5.tag, Some("X"), Some((1 minute).ago), None), noResetPwToken))
+    val UnactivatedUser          = findUserReturns(Some(UserRegistrationInfo(UserId(5), Some("X"), Some((1 minute).ago), None), noResetPwToken))
     val UserWithoutExistingToken = findUserReturns(Some(registeredUser, noResetPwToken))
     val UserWithExpiredToken     = findUserReturns(Some(registeredUser, existingToken("EXPIRED", expiredTime)))
     val UserWithValidToken       = findUserReturns(Some(registeredUser, existingToken("VALID", nonExpiredTime)))

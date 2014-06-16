@@ -1,12 +1,12 @@
 package shipreq.webapp.app
 
-import AppSiteMap._
-import Implicits._
-import shipreq.webapp.test.LiveTest
-import shipreq.webapp.test.fixture.UserFixture
 import org.apache.commons.httpclient.{HttpMethodBase, HttpClient}
 import org.scalatest.FunSpec
 import shipreq.webapp.db.UseCaseHeader
+import shipreq.webapp.test.LiveTest
+import shipreq.webapp.test.fixture.UserFixture
+import AppSiteMap._
+import Implicits._
 
 class PermissionTest extends FunSpec with LiveTest with UserFixture {
 
@@ -21,7 +21,7 @@ class PermissionTest extends FunSpec with LiveTest with UserFixture {
   }
 
   def doLogin(user: TestUser) =
-    post("/login.api", "user" -> user.username, "pass" -> user.password) !@ "Failed to log in"
+    post("/login.api", "user" -> user.username.value, "pass" -> user.password) !@ "Failed to log in"
 
   def loginShouldBeRequiredFor(url: String) =
     get(url) shouldRedirectTo(Login.relativeUrl)
@@ -29,7 +29,7 @@ class PermissionTest extends FunSpec with LiveTest with UserFixture {
   // -------------------------------------------------------------------------------------------------------------------
 
   lazy val pid = newProjectId(user1.id)
-  lazy val ucId = withNewTransaction(createUseCaseIdentAndRev1(pid, UseCaseHeader("Hello".validated)))
+  lazy val ucId = withNewTransaction(createUseCaseIdentAndRev1(pid, UseCaseHeader("Hello")))
 
   describe("/") {
     it("anon") {

@@ -3,8 +3,9 @@ package shipreq.webapp.snippet
 import net.liftweb.http.js.JsCmd
 import net.liftweb.util.Helpers._
 import scala.xml.NodeSeq
-import shipreq.webapp.feature.validation.{ValidationResultT, Validators}
+import shipreq.webapp.feature.validation.{ValidationResult, Validators}
 import shipreq.webapp.lib.{FormVar, StaticSnippetHelpers}
+import shipreq.webapp.lib.SnippetHelpers.{ErrorAlertId, NoticeContainerExp}
 import shipreq.webapp.lib.Types._
 import shipreq.webapp.security.PasswordAndSalt
 import shipreq.webapp.util.HtmlTransformExt._
@@ -16,8 +17,8 @@ import shipreq.webapp.util.NonEmptyTemplate
  */
 object DynModal extends StaticSnippetHelpers {
 
-  implicit val innerNoticesCont: NoticeContainerExp = "#dynmodal-notices".tag
-  implicit val innerErrorAlertId: ErrorAlertId = "d--e".tag
+  implicit val innerNoticesCont = NoticeContainerExp("#dynmodal-notices")
+  implicit val innerErrorAlertId = ErrorAlertId("d--e")
 
   object JqModalHide extends JsMethod {def toJsCmd: String = "modal('hide')"}
   val JqModal = JqId("dynmodal")
@@ -42,7 +43,7 @@ object DynModal extends StaticSnippetHelpers {
    *                a password change to be permitted.
    * @param successFn Callback that reacts to a successful password submission.
    */
-  def passwordChanger(title: String, current: Option[PasswordAndSalt])(successFn: String @@ Validated => JsCmd): JsCmd = {
+  def passwordChanger(title: String, current: Option[PasswordAndSalt])(successFn: String => JsCmd): JsCmd = {
 
     val form = FormVar.passwordChange(current, "#dynmodal-passwordC", ".curpw" #> "", ChangePasswordPairFV)
 

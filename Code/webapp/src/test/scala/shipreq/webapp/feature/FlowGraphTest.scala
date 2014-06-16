@@ -13,11 +13,11 @@ import FlowGraph._
 
 class FlowGraphTest extends FunSpec with TestData with PropertyChecks {
 
-  implicit def s2n(x: String): Node = x.asLabel
-  implicit def autoLabelT(t: (String, String)): ExplicitFlow = (t._1.asLabel, t._2.asLabel)
+  implicit def s2n(x: String): Node = StepLabel(x)
+  implicit def autoLabelT(t: (String, String)): ExplicitFlow = (t._1, t._2)
   implicit def autoLabelL(l: List[String]): List[Node] = l map s2n
   implicit def dz2L(z: DeepZipper): List[DeepFocus] = z.toStream.toList
-  def nl(prefix: String, range: Range): List[Node] = range map (i => s"$prefix.$i".asLabel) toList
+  def nl(prefix: String, range: Range): List[Node] = range map (i => s"$prefix.$i") toList
   //def nnel(prefix: String, range: Range): NEL[Node] = nl(prefix, range) match {case h::t => NEL(h,t:_*)}
   def hnNel(prefix: String, range: Range): NEL[Node] = NEL(prefix, nl(prefix, range): _*)
 
@@ -36,7 +36,7 @@ class FlowGraphTest extends FunSpec with TestData with PropertyChecks {
 
   def mod(z: DeepZipper, stepId: String)(f: StepText => StepText): DeepZipper = {
     val b = z.focus.builder
-    val id = stepId.asLocalStepId
+    val id = LocalStepId(stepId)
     val oldValue = b.textmap(id)
     val newValue = f(oldValue)
     val b2 = b.copy(textmap = b.textmap + (id -> newValue))
@@ -61,7 +61,7 @@ class FlowGraphTest extends FunSpec with TestData with PropertyChecks {
       m.socialData.endNodes.sorted ==== List("7.0.3", "7.1")
     }
     it("explicitFlows") {
-      m.socialData.explicitFlows.sorted ==== List(("7.0.2.a" -> "7.0.1"), ("7.0.2.a" -> "7.1"), ("7.2.1" -> "7.0.3"))
+      m.socialData.explicitFlows.sorted ==== List("7.0.2.a" -> "7.0.1", "7.0.2.a" -> "7.1", "7.2.1" -> "7.0.3")
     }
     it("NC.headNodes") {
       m.intraCatData(NC).headNodes ==== List("7.0")
@@ -145,13 +145,13 @@ class FlowGraphTest extends FunSpec with TestData with PropertyChecks {
     val ac = IntraCatData(List("1.1"), List(hnNel("1.1", 1 to 5)))
     val ec = IntraCatData(List("1.E.1"), List(hnNel("1.E.1", 1 to 3)))
     val ef: List[ExplicitFlow] = List(
-      ("1.0.4" -> "1.0.7")
-      , ("1.0.6" -> "1.0.1")
-      , ("1.0.1" -> "1.1")
-      , ("1.0.4" -> "1.1")
-      , ("1.1.5" -> "1.0.1")
-      , ("1.0.9" -> "1.E.1")
-      , ("1.E.1.3" -> "1.0.1")
+      "1.0.4" -> "1.0.7"
+      , "1.0.6" -> "1.0.1"
+      , "1.0.1" -> "1.1"
+      , "1.0.4" -> "1.1"
+      , "1.1.5" -> "1.0.1"
+      , "1.0.9" -> "1.E.1"
+      , "1.E.1.3" -> "1.0.1"
     )
     val sd = SocialData(ef, List("1.0","1.99"), List("1.0.9","99.99"))
     val m = FlowGraphModel(Map(NC -> nc, AC -> ac, EC -> ec), sd)

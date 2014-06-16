@@ -12,7 +12,7 @@ import StepLabels.LabelMakers
 class StepTreeTest extends WordSpec with TestHelpers {
 
   case class StepTreeWithText(override val nodes: List[StepNodeWithText]) extends TreeRoot[StepNodeWithText]
-  implicit def autoTagLocalStepIds(s: String) = s.asLocalStepId
+  implicit def autoTagLocalStepIds(s: String) = LocalStepId(s)
   implicit def ListToStepTree(l: List[StepNode]) = StepTree(l)
   implicit def ListToStepTreeWithText(l: List[StepNodeWithText]) = StepTreeWithText(l)
 
@@ -65,8 +65,8 @@ class StepTreeTest extends WordSpec with TestHelpers {
 
     "map ids to labels" in {
       val map = mapIdsToFullLabels(oneLevel, "1.")
-      map("X1") should be("1.0")
-      map("X2") should be("1.1")
+      map("X1").value shouldEqual "1.0"
+      map("X2").value shouldEqual "1.1"
     }
 
     "map children and generate full labels" in {
@@ -80,11 +80,11 @@ class StepTreeTest extends WordSpec with TestHelpers {
         ) ::
         StepNode("X1", 0, 2, Nil) :: // 1.E.2
         Nil, "1.E.")
-      map("X5") should be("1.E.1")
-      map("X3") should be("1.E.1.1")
-      map("X4") should be("1.E.1.1.a")
-      map("X2") should be("1.E.1.2")
-      map("X1") should be("1.E.2")
+      map("X5").value shouldEqual "1.E.1"
+      map("X3").value shouldEqual "1.E.1.1"
+      map("X4").value shouldEqual "1.E.1.1.a"
+      map("X2").value shouldEqual "1.E.1.2"
+      map("X1").value shouldEqual "1.E.2"
     }
   }
 
@@ -123,19 +123,19 @@ class StepTreeTest extends WordSpec with TestHelpers {
 
     "TreeLike.foreachRecursive" in {
       var list = List.empty[String]
-      top.foreachRecursive(list :+= _.id)
+      top.foreachRecursive(list :+= _.id.value)
       list.sorted should be(ids)
     }
     "TreeLike.mapRecursive" in {
-      top.mapRecursive(_.id.asInstanceOf[String]).sorted should be(ids)
+      top.mapRecursive(_.id.value).sorted should be(ids)
     }
     "TreeNodeLike.foreachRecursive" in {
       var list = List.empty[String]
-      node10.foreachRecursive(list :+= _.id)
+      node10.foreachRecursive(list :+= _.id.value)
       list.sorted should be(idsFor10)
     }
     "TreeNodeLike.mapRecursive" in {
-      node10.mapRecursive(_.id.asInstanceOf[String]).sorted should be(idsFor10)
+      node10.mapRecursive(_.id.value).sorted should be(idsFor10)
     }
   }
 
@@ -145,7 +145,7 @@ class StepTreeTest extends WordSpec with TestHelpers {
       val afterIndex = LabelMakers(lvl)(after)
       val B = new StepNodeWithText("blah", lvl, beforeIndex, null)
       val A = new StepNodeWithText("blah", lvl, afterIndex, null)
-      B.incrementPosition() should be(A)
+      B.incrementPosition should be(A)
     }
     "increase numeric positions" in {
       test(1, "1", "2")
@@ -165,8 +165,8 @@ class StepTreeTest extends WordSpec with TestHelpers {
     "increase top-level positions" in {
       val before = new StepNodeWithText("blah", 0, 1, null)
       val after = new StepNodeWithText("blah", 0, 2, null)
-      after.label should be("2")
-      before.incrementPosition() should be(after)
+      after.label.value shouldEqual "2"
+      before.incrementPosition should be(after)
     }
   }
 
@@ -429,7 +429,7 @@ class StepTreeTest extends WordSpec with TestHelpers {
     def test(id: String, expectedTreeTxt: String) {
       val expected = parseStepTree(expectedTreeTxt)
       val actual = stepRemove(id, Steps.BigTree)
-      actual._2.get.id should be(id)
+      actual._2.get.id.value should be(id)
       actual._1 should matchTree(expected)
     }
 
@@ -734,7 +734,7 @@ class StepTreeTest extends WordSpec with TestHelpers {
       val expected = parseStepTree(expectedTreeTxt)
       val actual = indentDecrease(id, Steps.BigTree)
       actual._2.isDefined should be(true)
-      actual._2.get.id should be(id)
+      actual._2.get.id.value should be(id)
       actual._1 should matchTree(expected)
     }
 
@@ -1026,7 +1026,7 @@ class StepTreeTest extends WordSpec with TestHelpers {
       val expected = parseStepTree(expectedTreeTxt)
       val actual = indentIncrease(id, Steps.BigTree)
       actual._2.isDefined should be(true)
-      actual._2.get.id should be(id)
+      actual._2.get.id.value should be(id)
       actual._1 should matchTree(expected)
     }
 

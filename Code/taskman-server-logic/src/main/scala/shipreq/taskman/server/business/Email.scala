@@ -5,7 +5,7 @@ import org.joda.time.format.DateTimeFormat
 import scalaz.NonEmptyList
 import shipreq.base.util.{Util, ErrorOr, Error}
 import shipreq.base.util.ScalaExt.StringBuilderExt
-import shipreq.taskman.api.Types.EmailAddr
+import shipreq.taskman.api.EmailAddr
 import shipreq.taskman.api.Msg.LandingPageHit
 import shipreq.taskman.server.{MsgHeader, MsgDetail}
 import Email._

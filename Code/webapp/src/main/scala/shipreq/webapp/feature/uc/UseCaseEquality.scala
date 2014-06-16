@@ -5,6 +5,7 @@ import scalaz.{Order, Equal}
 import scalaz.std.map.mapEqual
 import scalaz.std.string.stringInstance
 import scalaz.syntax.equal._
+import shipreq.base.util.TaggedTypes.TaggedString
 import field._
 import text._
 import lib.Types._
@@ -34,7 +35,7 @@ object UseCaseEquality {
     case f: FlowGraphField => true
   }
 
-  def stringTagOrder[S <: String @@ TypeTag[String]]: Order[S] = stringInstance.asInstanceOf[Order[S]]
+  def stringTagOrder[T <: TaggedString](implicit O: Order[String]): Order[T] = O.contramap[T](_.value)
   implicit def localStepIdOrder: Order[LocalStepId] = stringTagOrder
   implicit def stepLabelOrder: Order[StepLabel] = stringTagOrder
 

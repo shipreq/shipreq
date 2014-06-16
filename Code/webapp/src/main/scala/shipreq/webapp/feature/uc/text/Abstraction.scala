@@ -12,21 +12,21 @@ trait ParsedText {
 }
 
 trait ParsedTextUpdater[T <: ParsedText] {
-  def correctInput(input: String): String @@ InputCorrected
+  def correctInput(input: String): InputCorrected[String]
 
   final def update(t: T, input: String)(implicit ctx: UcParsingCtx): ChangeResult[T, Change] =
     updateCorrected(t, correctInput(input))
 
-  final def updateCorrected(t: T, newText: String @@ InputCorrected)(implicit ctx: UcParsingCtx): ChangeResult[T, Change] = {
-    if (t.text == newText)
+  final def updateCorrected(t: T, newText: InputCorrected[String])(implicit ctx: UcParsingCtx): ChangeResult[T, Change] = {
+    if (t.text == newText.value)
       NoChange
     else
       updateCorrected2(t, newText)
   }
 
-  protected def updateCorrected2(t: T, newText: String @@ InputCorrected)(implicit ctx: UcParsingCtx): ChangeResult[T, Change]
+  protected def updateCorrected2(t: T, newText: InputCorrected[String])(implicit ctx: UcParsingCtx): ChangeResult[T, Change]
 
   final def updateAndGet(t: T, input: String)(implicit ctx: UcParsingCtx): T = update(t, input).getValueOrElse(t)
-  final def updateCorrectedAndGet(t: T, input: String @@ InputCorrected)(implicit ctx: UcParsingCtx): T = updateCorrected(t, input).getValueOrElse(t)
+  final def updateCorrectedAndGet(t: T, input: InputCorrected[String])(implicit ctx: UcParsingCtx): T = updateCorrected(t, input).getValueOrElse(t)
 
 }

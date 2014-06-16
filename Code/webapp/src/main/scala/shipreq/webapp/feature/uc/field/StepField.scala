@@ -74,12 +74,12 @@ trait StepFieldLike { this: Field with StepField =>
   /** If this is true, then title changes will be propagated to the root course text when safe. */
   def preferTitleInRoot_?() = false
 
-  override def toString = s"${getClass.getSimpleName}[#${rec.id}]"
+  override def toString = s"${getClass.getSimpleName}[#${rec.id.value}]"
 
   override val changeResponder = new StepFieldValueChangeResponder(this)
 
   def updateText(id: LocalStepId, newText: String)(u: UseCaseUpdater): UcUpdateResult =
-    ChangeResult.fromValidation(Validators.usecase.stepFieldText.correctAndValidate(newText))(t => {
+    ChangeResult.fromValidationIC(Validators.usecase.stepFieldText correctAndValidate newText)(t => {
       implicit val lens = AppliedLens(ucStepTextInstL, (u.uc, (this, id)))
       val updater = new StepTextUpdater(this, id)
       val cr = updater.updateCorrected(lens.get, t)(u.ctx)
@@ -181,7 +181,7 @@ trait NormalCourseFieldLike extends StepFieldLike { this: Field with StepField =
   import NormalCourseFieldConsts._
   override def defn = NormalCourseFieldDefinition
   override val empty = StepFieldValue.forTree(this, EmptyTree)
-  override def rootLabelPrefix(ucn: UseCaseNumber) = s"${ucn}."
+  override def rootLabelPrefix(ucn: UseCaseNumber) = s"${ucn.value}."
   override val sli = StartingRootLabelIndexAt0
   override def prohibitRemoval_?(v: Value, id: LocalStepId) = v.tree(0).id == id
   override def preferTitleInRoot_?() = true
@@ -205,7 +205,7 @@ case object ExceptionCourseFieldDefinition extends FieldDefinition {
 trait ExceptionCourseFieldLike extends StepFieldLike { this: Field with StepField =>
   override def defn = ExceptionCourseFieldDefinition
   override val empty = StepFieldValue.empty(this)
-  override def rootLabelPrefix(ucn: UseCaseNumber) = s"${ucn}.E."
+  override def rootLabelPrefix(ucn: UseCaseNumber) = s"${ucn.value}.E."
   override val sli = StartingLabelIndicesAt1
   override def prohibitRemoval_?(v: Value, id: LocalStepId) = false
   override def defaultLoadValue(h: UseCaseHeader) = defaultLoadValue_

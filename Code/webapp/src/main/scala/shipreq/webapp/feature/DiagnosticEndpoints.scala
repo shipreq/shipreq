@@ -2,22 +2,21 @@ package shipreq.webapp.feature
 
 import java.lang.{Long => JLong}
 import net.liftweb.common._
-import net.liftweb.http.{S, BadResponse, JsonResponse, InMemoryResponse, MethodNotAllowedResponse, NotFoundResponse}
+import net.liftweb.http.{BadResponse, InMemoryResponse, JsonResponse, MethodNotAllowedResponse, NotFoundResponse, S}
 import net.liftweb.json.Extraction
 import net.liftweb.sitemap.Loc._
 import net.liftweb.sitemap._
 import net.liftweb.util.Helpers.nextFuncName
 import net.liftweb.util.Props
 import net.liftweb.util.TimeHelpers.calcTime
-import scalaz.{\/-, -\/}
+import scalaz.{-\/, \/-}
 import shipreq.base.util.ErrorOr
+import shipreq.taskman.api.ApiOp.QueryMsgStatus
+import shipreq.taskman.api.Msg.SendDiagEmail
+import shipreq.taskman.api.{EmailAddr, MsgId}
 import shipreq.webapp.app.DI
 import shipreq.webapp.lib.Misc.DateTimeExt
 import shipreq.webapp.lib.{Misc, SnippetHelpers}
-import shipreq.taskman.api.ApiOp.{QueryMsgStatus, SubmitMsg}
-import shipreq.taskman.api.Msg.SendDiagEmail
-import shipreq.taskman.api.Types._
-import shipreq.taskman.api.{Msg, ApiOp, MsgId}
 
 /**
  * Expose URLs for diagnostic functions and purposes.
@@ -85,7 +84,7 @@ object DiagnosticEndpoints extends DI {
           }
         )
       }
-    DbTestResult(ab, ab - b, b, dbClock.toIso8601Str)
+    DbTestResult(ab, ab - b, b, dbClock.toIso8601)
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -97,7 +96,7 @@ object DiagnosticEndpoints extends DI {
     S.param("to") match {
       case Full(emailAddress) => {
         val token = nextFuncName
-        val msg = SendDiagEmail(emailAddress.tag, token, s"Token: $token\nIssued: ${Misc.currentTimeAsIso8601Str}")
+        val msg = SendDiagEmail(EmailAddr(emailAddress), token, s"Token: $token\nIssued: ${Misc.currentTimeAsIso8601Str.value}")
         val (time, msgId) = calcTime(taskman1(_ submitMsg msg))
         Full(jsonResponse(EmailSendResult(msgId, time, token)))
       }

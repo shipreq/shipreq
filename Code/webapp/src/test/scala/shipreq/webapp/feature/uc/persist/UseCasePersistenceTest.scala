@@ -33,12 +33,12 @@ class UseCasePersistenceTest extends FunSpec with TestDatabaseSupport with TestH
   def reload(cp: UseCaseSaveCheckpoint, projectId: ProjectId) = loadRev(cp.rec, projectId)
 
   def createInitialTextRev(ucIdentId: UseCaseIdentId, fkId: FieldKeyId, text: String) =
-    dao.createTextRev(dao.createTextIdent(ucIdentId, fkId), 1, text.tag[IsNormalised])
+    dao.createTextRev(dao.createTextIdent(ucIdentId, fkId), 1, NormalisedText(text))
 
   describe("Loading") {
     it("should set NC.0 to the title for new UCs") {
       val pid = newProjectId()
-      val x = createUseCaseIdentAndRev1(pid, UseCaseHeader("Hello".validated))
+      val x = createUseCaseIdentAndRev1(pid, UseCaseHeader("Hello"))
       val y = loadRev(x, pid)
       val sfv = NCF.lens.get(y.uc)
       sfv.textmap(sfv.tree.head.id).text ==== "Hello."
@@ -47,8 +47,8 @@ class UseCasePersistenceTest extends FunSpec with TestDatabaseSupport with TestH
     it("should load a simple, manually-saved UC") {
       // Create UC
       val pid = newProjectId()
-      val ucIdent = dao.createUseCaseIdentWithForcedNumber(pid, (3:Short).tag[IsUseCaseNumber])
-      val ucRev = dao.createUseCaseRev(ucIdent, 1, UseCaseHeader("ahh".validated))
+      val ucIdent = dao.createUseCaseIdentWithForcedNumber(pid, UseCaseNumber(3))
+      val ucRev = dao.createUseCaseRev(ucIdent, 1, UseCaseHeader("ahh"))
 
       // Create Text FV
       val txtRev = createInitialTextRev(ucIdent, TF1, "Hehe")
@@ -57,14 +57,14 @@ class UseCasePersistenceTest extends FunSpec with TestDatabaseSupport with TestH
       // Create course FV
       val s1 = createInitialTextRev(ucIdent, NCF, "Root")
       val s2 = createInitialTextRev(ucIdent, NCF, "Child")
-      dao.linkUcToStep(ucRev, "3.0".asLabel, 0, None, s1)
-      dao.linkUcToStep(ucRev, "3.0.1".asLabel, 0, Some(s1.id), s2)
+      dao.linkUcToStep(ucRev, StepLabel("3.0"), 0, None, s1)
+      dao.linkUcToStep(ucRev, StepLabel("3.0.1"), 0, Some(s1.id), s2)
 
       // Load
       val loaded = loadRev(ucRev, pid).uc
 
       // Verify
-      loaded.header ==== UseCaseHeader("ahh".validated)
+      loaded.header ==== UseCaseHeader("ahh")
       TF1(loaded.fieldValues).text ==== "Hehe"
       assertStepTree(loaded, NCF, "3.0. Root\n  1. Child")
     }
@@ -72,26 +72,26 @@ class UseCasePersistenceTest extends FunSpec with TestDatabaseSupport with TestH
     it("should load a manually-saved UC with refs") {
       // Create UC
       val pid = newProjectId()
-      val ucIdent = dao.createUseCaseIdentWithForcedNumber(pid, (3:Short).tag[IsUseCaseNumber])
-      val ucRev = dao.createUseCaseRev(ucIdent, 1, UseCaseHeader("ahh".validated))
+      val ucIdent = dao.createUseCaseIdentWithForcedNumber(pid, UseCaseNumber(3))
+      val ucRev = dao.createUseCaseRev(ucIdent, 1, UseCaseHeader("ahh"))
 
       // Create course FV
       val s1 = createInitialTextRev(ucIdent, NCF, "Root")
-      val s2 = createInitialTextRev(ucIdent, NCF, s"Child [D.${s1.identId}]")
-      val s3 = createInitialTextRev(ucIdent, NCF, s"Other [D.${s2.identId}]")
-      dao.linkUcToStep(ucRev, "3.0".asLabel, 0, None, s1)
-      dao.linkUcToStep(ucRev, "3.0.1".asLabel, 0, Some(s1.id), s2)
-      dao.linkUcToStep(ucRev, "3.1".asLabel, 1, None, s3)
+      val s2 = createInitialTextRev(ucIdent, NCF, s"Child [D.${s1.identId.value}]")
+      val s3 = createInitialTextRev(ucIdent, NCF, s"Other [D.${s2.identId.value}]")
+      dao.linkUcToStep(ucRev, StepLabel("3.0"), 0, None, s1)
+      dao.linkUcToStep(ucRev, StepLabel("3.0.1"), 0, Some(s1.id), s2)
+      dao.linkUcToStep(ucRev, StepLabel("3.1"), 1, None, s3)
 
       // Create Text FV
-      val txtRev = createInitialTextRev(ucIdent, TF3, s"look at [D.${s2.identId}] and [D.${s3.identId}]!")
+      val txtRev = createInitialTextRev(ucIdent, TF3, s"look at [D.${s2.identId.value}] and [D.${s3.identId.value}]!")
       dao.linkUcToText(ucRev, txtRev)
 
       // Load
       val loaded = loadRev(ucRev, pid).uc
 
       // Verify
-      loaded.header ==== UseCaseHeader("ahh".validated)
+      loaded.header ==== UseCaseHeader("ahh")
       TF3(loaded.fieldValues).text ==== "look at [3.0.1] and [3.1]!"
       assertStepTree(loaded, NCF, "3.0. Root\n  1. Child [3.0]\n3.1. Other [3.0.1]")
     }
@@ -99,8 +99,8 @@ class UseCasePersistenceTest extends FunSpec with TestDatabaseSupport with TestH
     it("should realise UC refs") {
       // Create UCs
       val pid = newProjectId()
-      createUseCaseIdentAndRev1(pid, UseCaseHeader("First!".validated))
-      val r = createUseCaseIdentAndRev1(pid, UseCaseHeader("SECOND".validated))
+      createUseCaseIdentAndRev1(pid, UseCaseHeader("First!"))
+      val r = createUseCaseIdentAndRev1(pid, UseCaseHeader("SECOND"))
       dao.linkUcToText(r, createInitialTextRev(r, TF1, "I LIKE [UC-1] AND [UC-2]"))
 
       // Load and verify
@@ -155,7 +155,7 @@ class UseCasePersistenceTest extends FunSpec with TestDatabaseSupport with TestH
       }
 
       it("should save a title change") {
-        testUpdateSucceeds(ucTitleL.set(_, "zz".validated), UsecaseRev -> 1, UcField -> rels)
+        testUpdateSucceeds(ucTitleL.set(_, "zz"), UsecaseRev -> 1, UcField -> rels)
       }
 
       it("should save a text update") {
@@ -217,7 +217,7 @@ class UseCasePersistenceTest extends FunSpec with TestDatabaseSupport with TestH
       }
 
       // Change title
-      testUpdate(ucTitleL.set(_, "zzzzzzzzz".validated), UsecaseRev -> 1, UcField -> rels)
+      testUpdate(ucTitleL.set(_, "zzzzzzzzz"), UsecaseRev -> 1, UcField -> rels)
 
       // Change text field
       testUpdate(uc => TF1.lens.set(uc, freeText("jjj")), UsecaseRev -> 1, TextRev -> 1, UcField -> rels)

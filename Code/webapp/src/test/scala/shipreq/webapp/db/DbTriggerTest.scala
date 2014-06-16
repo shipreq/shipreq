@@ -4,7 +4,7 @@ import org.scalatest.FunSpec
 import scala.slick.jdbc.{StaticQuery => Q}
 import Q.interpolation
 import org.postgresql.util.PSQLException
-import shipreq.webapp.db.SqlHelpers.SP_ShareId
+import shipreq.webapp.db.SqlHelpers._
 import shipreq.webapp.test.TestDatabaseSupport
 
 class DbTriggerTest extends FunSpec with TestDatabaseSupport {
@@ -20,7 +20,7 @@ class DbTriggerTest extends FunSpec with TestDatabaseSupport {
 
   case class SampleUC(ucn: Short, fks: SampleFKs) {
     import fks._
-    val projectId = newProjectId().longValue
+    val projectId = newProjectId()
     val ucId: Long = sql"INSERT INTO usecase(project_id,number) VALUES($projectId,$ucn) RETURNING id".as[Long].first
     def insertText(fkId: Long) = SampleText(this, fkId)
     val txt1 = insertText(txtField1)

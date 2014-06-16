@@ -29,7 +29,7 @@ case class StepNode(id: LocalStepId, level: Int, labelIndex: Int, children: List
   override final def label = labelMaker(labelIndex)
 
   // Manually specify else it will recurse forever because this is Traversable
-  override def toString = s"StepNode($id, $level.$labelIndex, $children)"
+  override def toString = s"StepNode(${id.value}, $level.$labelIndex, $children)"
 
   override def copy(id: LocalStepId = this.id,
     level: Int = this.level,
@@ -40,5 +40,5 @@ case class StepNode(id: LocalStepId, level: Int, labelIndex: Int, children: List
 
 object StepNodeBuilder extends TreeNodeBuilder[StepNode] {
   def apply(level: Int, labelIndex: Int, children: List[StepNode] = Nil) =
-    StepNode(nextFuncName.asLocalStepId, level, labelIndex, children)
+    StepNode(LocalStepId(nextFuncName), level, labelIndex, children)
 }

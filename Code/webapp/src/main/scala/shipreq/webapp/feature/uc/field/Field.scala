@@ -3,7 +3,6 @@ package feature.uc
 package field
 
 import db.FieldKeyRec
-import lib.Types._
 import change.ChangeResponder
 
 /**
@@ -21,7 +20,7 @@ sealed trait Field {
   /** The DB record used to reference this field. */
   val rec: FieldKeyRec
 
-  final override def hashCode = rec.id.toInt
+  final override def hashCode = rec.id.value.toInt
   final override def equals(o: Any) = o match {
     case f: Field => rec.id == f.rec.id
     case _        => false

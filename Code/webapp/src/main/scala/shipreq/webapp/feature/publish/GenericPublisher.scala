@@ -53,8 +53,8 @@ abstract class GenericPublisher(input: Input) {
   final def docHeaderPreface(p: String) = markedUpText(p)
   def docHeaderPreface(p: X): X
 
-  def optionalDocLastUpdated: X = input.lastUpdated.map(t => docLastUpdated(t.toIso8601Str)) getOrElse zero
-  def docLastUpdated(t: String @@ ISO8601): X
+  def optionalDocLastUpdated: X = input.lastUpdated.map(t => docLastUpdated(t.toIso8601)) getOrElse zero
+  def docLastUpdated(t: ISO8601): X
 
   def toc: X = tocSurround(useCases foldMap tocEntry)
   def tocSurround(entries: X): X
@@ -162,7 +162,7 @@ abstract class GenericPublisher(input: Input) {
   def stepTreeGenSurround(level: Int, gen: X): X
 
   final def stepLeader(step: StepTreeZipper.AnyFocus): String =
-    (if (step.level == 0) step.label else step.node.label) + "."
+    (if (step.level == 0) step.label else step.node.label).value + "."
 
   final def stepTreeNoChildren(step: StepTreeZipper.AnyFocus): X =
     stepTreeNoChildren(step, stepLeader(step), stepText(step.value))

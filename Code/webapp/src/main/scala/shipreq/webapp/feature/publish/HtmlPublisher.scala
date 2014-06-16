@@ -59,7 +59,7 @@ import HtmlPublishingBase._
 object HtmlFieldValuePublishers {
 
   object lr extends LinkRenderer[NodeSeq] {
-    override def stepRef(l: StepLabel)                       = <span class="wouldbelink step">[{l}]</span>
+    override def stepRef(l: StepLabel)                       = <span class="wouldbelink step">[{l.value}]</span>
     override def usecaseRef(n: UseCaseNumber, title: String) = <span class="wouldbelink uc">[{fullName(n, title)}]</span>
   }
 
@@ -82,12 +82,12 @@ object HtmlPublisher extends Publisher[NodeSeq] {
 
   @inline def ucId(n: UseCaseNumber) = reqId(n)
   @inline def ucHref(n: UseCaseNumber) = "#" + ucId(n)
-  @inline def stepId(lbl: StepLabel) = "step-" + lbl.replace('.','_')
+  @inline def stepId(lbl: StepLabel) = "step-" + lbl.value.replace('.','_')
   @inline def stepHref(lbl: StepLabel) = "#" + stepId(lbl)
 
   object HtmlLinkRenderer extends LinkRenderer[NodeSeq] {
     override def stepRef(l: StepLabel) =
-      <a class="step" href={stepHref(l)}>{l}</a>
+      <a class="step" href={stepHref(l)}>{l.value}</a>
 
     override def usecaseRef(num: UseCaseNumber, title: String) =
       <a class="uc" title={fullName(num, title)} href={ucHref(num)}>{reqId(num)}</a>
@@ -121,8 +121,8 @@ class HtmlPublisher(input: Input) extends GenericPublisher(input) {
   override def docHeaderTitle(t: String) = <h1>{t}</h1>
   override def docHeaderPreface(p: X) = <p>{p}</p>
 
-  override def docLastUpdated(t: String @@ ISO8601) =
-    <p class="last-updated">Last updated: <time class="showdatetime" datetime={t}></time></p>
+  override def docLastUpdated(t: ISO8601) =
+    <p class="last-updated">Last updated: <time class="showdatetime" datetime={t.value}></time></p>
 
   override def tocSurround(entries: X) =
     <nav>
@@ -186,7 +186,7 @@ class HtmlPublisher(input: Input) extends GenericPublisher(input) {
     <tr class="rev"><th>Revision</th><td>{f.rev}</td></tr>
 
   override def lastUpdatedField(f: OF_LastUpdated) =
-    <tr class="lastupdated"><th>Last Updated</th><td><time class="showdate" datetime={f.when.toIso8601Str}></time></td></tr>
+    <tr class="lastupdated"><th>Last Updated</th><td><time class="showdate" datetime={f.when.toIso8601.value}></time></td></tr>
 
   override def flowGraphField(f: OF_FlowGraph) =
     <tr class="flowgraph"><th>Flow Graph</th><td data-dot={f.dot.value}></td></tr>

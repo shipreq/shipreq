@@ -10,6 +10,8 @@ import net.liftweb.util.Props
 import scala.slick.jdbc.JdbcBackend.Session
 import scala.xml.{Elem, Text, NodeSeq, UnprefixedAttribute}
 import scalaz.Monoid
+import shipreq.base.util.TaggedTypes.{JsonStr, TaggedString}
+import shipreq.taskman.api.UserId
 import shipreq.webapp.app.{DI, AppSiteMap}
 import shipreq.webapp.db.{DaoS, UserDescriptor}
 import shipreq.webapp.feature.validation.{ValidationResult, VFailure}
@@ -22,13 +24,14 @@ import ScalazSubset._
 import Types._
 
 object SnippetHelpers extends StaticSnippetHelpers {
-  sealed trait NoticeContainerExpTag extends TypeTag[String]
-  sealed trait ErrorAlertIdTag extends TypeTag[String]
+  final case class NoticeContainerExp(value: String) extends TaggedString
+  final case class ErrorAlertId(value: String) extends TaggedString
 
-  final val DefaultNoticesContainerExp = "#notices".tag[NoticeContainerExpTag]
-  final val DefaultAjaxErrorId = "x--e".tag[ErrorAlertIdTag]
+  final val DefaultNoticesContainerExp = NoticeContainerExp("#notices")
+  final val DefaultAjaxErrorId = ErrorAlertId("x--e")
 
   final val JqExprJsonSerializer: Serializer[JqExpr] = new Serializer[JqExpr] {
+    // TODO Change over to Argonaut. Actually acks [Jj]son
     import net.liftweb.json._
     def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, JValue), JqExpr] = ???
     def serialize(implicit format: Formats): PartialFunction[Any, JValue] = {
@@ -47,7 +50,7 @@ object SnippetHelpers extends StaticSnippetHelpers {
   final val DefaultJsonFormat = Serialization.formats(NoTypeHints) + JqExprJsonSerializer + NodeSeqJsonSerializer
 }
 
-import SnippetHelpers.{ErrorAlertIdTag, NoticeContainerExpTag}
+import SnippetHelpers.{ErrorAlertId, NoticeContainerExp}
 
 // =====================================================================================================================
 
@@ -55,8 +58,6 @@ import SnippetHelpers.{ErrorAlertIdTag, NoticeContainerExpTag}
  * Snippet helpers without Misc, DI and implicit vals/defs.
  */
 trait StaticSnippetHelpers extends Logger {
-  final type NoticeContainerExp = String @@ NoticeContainerExpTag
-  final type ErrorAlertId = String @@ ErrorAlertIdTag
 
   @inline implicit final def jsExpToJsCmd(in: JsExp): JsCmd = in.cmd
   @inline implicit final def str2txt(s: String): NodeSeq = Text(s)
@@ -168,10 +169,10 @@ trait SnippetHelpers extends StaticSnippetHelpers with Misc with DI with Logger 
   protected implicit def errorAlertId = DefaultAjaxErrorId
   protected implicit lazy val jsonFormats = DefaultJsonFormat
 
-  def toJson[T <: AnyRef](data: T): Json[T] = Serialization.write(data).tag[IsJsonFor[T]]
+  def toJson[T <: AnyRef](data: T): JsonStr[T] = JsonStr[T](Serialization write data)
 
   @inline final def currentUser: Option[UserDescriptor] = securityProvider.loggedInUser
-  @inline final def currentUserId_!() : UserId = currentUser_!.id
+  @inline final def currentUserId_!() : UserId = currentUser_!().id
   final def currentUser_!(): UserDescriptor = currentUser match {
     case Some(user) => user
     case None => respondImmediately(RedirectResponse(AppSiteMap.Login.relativeUrl))

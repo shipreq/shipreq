@@ -3,8 +3,10 @@ package db
 
 import org.joda.time.DateTime
 import scala.slick.jdbc.StaticQuery
+import shipreq.base.util.TaggedTypes.JsonStr
 import shipreq.base.db.SqlHelpers._
 import shipreq.base.db.JodaTimeSqlHelpers._
+import shipreq.taskman.api.{EmailAddr, UserId}
 import shipreq.webapp.db.SqlHelpers._
 import lib.Types._
 import feature.UcFilter
@@ -14,7 +16,7 @@ import StaticQuery.{query, queryNA, update, updateNA}
 /**
  * SQL for all functions exposed in the DAO.
  */
-private[db] final object Sql {
+private[db] object Sql {
 
   private[this] case class Insert() extends scala.annotation.StaticAnnotation
   private[this] case class Update() extends scala.annotation.StaticAnnotation
@@ -27,16 +29,16 @@ private[db] final object Sql {
   private val PwdAndSaltCols = "password,password_salt"
   private val UserRegistrationInfoCols = "id,confirmation_token,confirmation_sent_at,confirmed_at"
 
-  val GetUserDescCredByUsername = query[String, (UserDescriptor, PasswordAndSalt)](
+  val GetUserDescCredByUsername = query[Username, (UserDescriptor, PasswordAndSalt)](
     s"SELECT $UserDescCols,$PwdAndSaltCols FROM usr WHERE username=?")
 
-  val GetUserDescCredByEmail = query[String, (UserDescriptor, PasswordAndSalt)](
+  val GetUserDescCredByEmail = query[EmailAddr, (UserDescriptor, PasswordAndSalt)](
     s"SELECT $UserDescCols,$PwdAndSaltCols FROM usr WHERE email=? AND password IS NOT NULL")
 
-  val GetUserRegInfo = query[String, UserRegistrationInfo](
+  val GetUserRegInfo = query[EmailAddr, UserRegistrationInfo](
     s"SELECT $UserRegistrationInfoCols FROM usr WHERE email=?")
 
-  val GetUserRegAndResetPwInfo = query[String, (UserRegistrationInfo, ResetPasswordInfo)](
+  val GetUserRegAndResetPwInfo = query[EmailAddr, (UserRegistrationInfo, ResetPasswordInfo)](
     s"SELECT $UserRegistrationInfoCols, reset_password_token, reset_password_sent_at FROM usr WHERE email=?")
 
   val GetConfirmationTokenIssuedDate = query[String, DateTime](
@@ -48,10 +50,10 @@ private[db] final object Sql {
   @Insert val LogUserLogin = update[(UserId, Option[String])](
     "INSERT INTO usr_login_log(usr_id,ip) VALUES(?,?)")
 
-  @Insert val InsertUserPlaceholder = update[(String, String)](
+  @Insert val InsertUserPlaceholder = update[(EmailAddr, String)](
     "INSERT INTO usr(email, confirmation_token, confirmation_sent_at) VALUES(?,?,NOW())")
 
-  @Update val RegisterUser = query[(String, PasswordAndSalt, String, String), UserId]( """
+  @Update val RegisterUser = query[(Username, PasswordAndSalt, String, String), UserId]( """
     UPDATE usr SET username = ?
       ,password = ?, password_salt = ?, password_changed_at = NOW()
       ,confirmation_token = NULL, confirmed_at = NOW()
@@ -238,11 +240,11 @@ private[db] final object Sql {
   // ###################################################################################################################
   // Shares
 
-  @Insert val InsertShare = query[(ProjectId, ShareUrlToken, PasswordAndSalt, String, Option[String], Json[UcFilter]), ShareId](
+  @Insert val InsertShare = query[(ProjectId, ShareUrlToken, PasswordAndSalt, String, Option[String], JsonStr[UcFilter]), ShareId](
     "INSERT INTO share(project_id, url_token, password, password_salt, name, preface, uc_filter)"
       + " VALUES(?,?,?,?,?,?,?) RETURNING id")
 
-  @Update val UpdateShare = update[(String, Option[String], Json[UcFilter], ShareId)](
+  @Update val UpdateShare = update[(String, Option[String], JsonStr[UcFilter], ShareId)](
     "UPDATE share SET name=?, preface=?, uc_filter=? WHERE id=?")
 
   @Update val UpdateSharePassword = update[(PasswordAndSalt, ShareId)](
@@ -274,7 +276,7 @@ private[db] final object Sql {
 
 // #####################################################################################################################
 // Diagnostics & Stats
-private[db] final object AdminSql {
+private[db] object AdminSql {
 
   val DiagSelectNow = queryNA[DateTime]("select now()")
 

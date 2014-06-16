@@ -64,7 +64,7 @@ object Navbar {
 
     def renderCurrent(uc: UseCaseSummary): NodeSeq=
       <a href="#" data-toggle="dropdown" class="active-uc.dropdown-toggle">
-        UC-<span class="num">{uc.number.toString}</span>: <span class="cur-uc-title">{uc.title}</span>
+        UC-<span class="num">{uc.number.value.toString}</span>: <span class="cur-uc-title">{uc.title}</span>
         <b class="caret"/>
       </a>
 

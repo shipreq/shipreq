@@ -76,7 +76,7 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
     def test(email: String, usrTableDiff: Int) =
       withTestTaskman {
         assertTableDiffs(Tables.Usr -> usrTableDiff) {
-          Register1.perform(Validators.emailEA.correctAndValidate(email))
+          Register1.perform(Validators.email.correctAndValidate(email))
     }}
 
     def testSuccess(email: String, usrTableDiff: Int, tokenChange: Boolean) {
@@ -224,8 +224,8 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
         reg.confirmationToken should be(None)
 
         val (user, pwd) = dao.findUserDescAndCredentials(userWithCurrentToken.email).get
-        user.username should be("crazy50")
-        pwd.hashedPassword should not be ("abcd5678")
+        user.username.value shouldEqual "crazy50"
+        pwd.hashedPassword.value should not be("abcd5678")
       }
 
       it("should login") {
@@ -233,7 +233,7 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
         tester.onSubmit()
         Oshiro.loggedInUser should not be (None)
         val user = Oshiro.loggedInUser.get
-        user.username should be("crazy50")
+        user.username.value shouldEqual "crazy50"
         user.email should be(userWithCurrentToken.email)
       }
 

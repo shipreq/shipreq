@@ -15,8 +15,7 @@ import shipreq.base.util.effect.IOE
 import shipreq.base.util.jodatime.JodaTimeHelpers._
 import shipreq.base.util.jodatime.JodaTimeValueRetrievers
 import shipreq.base.util.log.{LogLevel, HasLogger}
-import shipreq.taskman.api.CfgKeys
-import shipreq.taskman.api.Types._
+import shipreq.taskman.api.{UserId, CfgKeys}
 import shipreq.taskman.api.impl.TaskmanApi
 import shipreq.taskman.server.business._
 import shipreq.taskman.server.business.MailingList.API.GetListId
@@ -180,7 +179,7 @@ class TaskmanCtx(val db: Database, mailProps: Properties, evr: StringBasedValueR
 
   def testConnections(): Unit = {
     log debug "Testing connections..."
-    val io = bopReifier.applyUntimed(Bop.FindShipReqUser(-\/(1.tag)))
+    val io = bopReifier.applyUntimed(Bop.FindShipReqUser(-\/(UserId(1))))
     ErrorOr require_! io.unsafePerformIO()
   }
 

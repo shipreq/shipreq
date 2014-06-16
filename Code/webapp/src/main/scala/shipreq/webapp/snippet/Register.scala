@@ -7,10 +7,9 @@ import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc.UsernamePasswordToken
 import org.joda.time.DateTime
 import shipreq.base.util.ScalaExt._
-import shipreq.taskman.api.Msg
+import shipreq.taskman.api.{UserId, EmailAddr, Msg}
 import shipreq.webapp.app.{AppConfig, AppSiteMap}
 import shipreq.webapp.lib.{FormVar, SnippetHelpers, SingleOpStatefulSnippet}
-import shipreq.webapp.lib.Types._
 import shipreq.webapp.db.{DaoT, UserRegistrationInfo, UserRegistrationResult}
 import shipreq.webapp.feature.validation.{ValidationResult, Validators}
 import shipreq.webapp.security.{Permissions, PasswordAndSalt}
@@ -33,7 +32,7 @@ object Register {
  */
 object Register1 extends SnippetHelpers {
 
-  val form = FormVar.strOnSubmit(Validators.emailEA, "#email")
+  val form = FormVar.strOnSubmit(Validators.email, "#email")
 
   def render = {
     var vars: form.Var = ""

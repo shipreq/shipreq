@@ -3,6 +3,8 @@ package shipreq.webapp.db
 import net.liftweb.util.Helpers.nextFuncName
 import org.postgresql.util.PSQLException
 import scala.slick.jdbc.JdbcBackend.Session
+import shipreq.base.util.TaggedTypes.JsonStr
+import shipreq.taskman.api.{UserId, EmailAddr}
 import shipreq.webapp.feature.uc.field.FieldDefinition
 import shipreq.webapp.feature.UcFilter
 import shipreq.webapp.lib.Locks.{UseCaseNumbers, SingleUseCase}
@@ -90,17 +92,17 @@ sealed trait DaoS {
 
   def findUserDescAndCredentials(usernameOrEmail: String): Option[(UserDescriptor, PasswordAndSalt)] =
     if (usernameOrEmail.indexOf('@') == -1)
-      findUserDescAndCredentialsByUsername(usernameOrEmail)
+      findUserDescAndCredentials(Username(usernameOrEmail))
     else
-      findUserDescAndCredentialsByEmail(usernameOrEmail)
+      findUserDescAndCredentials(EmailAddr(usernameOrEmail))
 
-  def findUserDescAndCredentialsByUsername(username: String) = GetUserDescCredByUsername.firstOption(username)
+  def findUserDescAndCredentials(username: Username) = GetUserDescCredByUsername.firstOption(username)
 
-  def findUserDescAndCredentialsByEmail(email: String) = GetUserDescCredByEmail.firstOption(email)
+  def findUserDescAndCredentials(email: EmailAddr) = GetUserDescCredByEmail.firstOption(email)
 
-  def findUserRegistrationInfo(email: String) = GetUserRegInfo.firstOption(email)
+  def findUserRegistrationInfo(email: EmailAddr) = GetUserRegInfo.firstOption(email)
 
-  def findUserRegAndResetPwInfo(email: String) = GetUserRegAndResetPwInfo.firstOption(email)
+  def findUserRegAndResetPwInfo(email: EmailAddr) = GetUserRegAndResetPwInfo.firstOption(email)
 
   def findUserConfirmationTokenIssuedDate(token: String) = GetConfirmationTokenIssuedDate.firstOption(token)
 
@@ -125,13 +127,13 @@ sealed trait DaoS {
   // ===================================================================================================================
   // Project
 
-  private[this] def saveProject[R](name: String @@ Validated, saveFn: String => R)(nameAlreadyInUse: R): R =
+  private[this] def saveProject[R](name: String, saveFn: String => R)(nameAlreadyInUse: R): R =
     try saveFn(name)
     catch {
       case e: PSQLException if e.getMessage.contains("_usr_id_name_") => nameAlreadyInUse
     }
 
-  def createProject(usrId: UserId, name: String @@ Validated): CreateProjectResult = {
+  def createProject(usrId: UserId, name: String): CreateProjectResult = {
     import CreateProjectResult._
     saveProject[CreateProjectResult](name, name => {
       val id = CreateProject.first(usrId, name)
@@ -139,7 +141,7 @@ sealed trait DaoS {
     })(NameAlreadyInUse)
   }
 
-  def updateProject(id: ProjectId, usrId: UserId, name: String @@ Validated): UpdateProjectResult = {
+  def updateProject(id: ProjectId, usrId: UserId, name: String): UpdateProjectResult = {
     import UpdateProjectResult._
     saveProject[UpdateProjectResult](name, name => {
       if (RenameProject.first(name, id, usrId) == 0) ProjectNotFound
@@ -225,7 +227,7 @@ sealed trait DaoS {
 
   def createShare(
     projectId: ProjectId, ps: PasswordAndSalt,
-    name: String, preface: Option[String], ucFilterJson: Json[UcFilter],
+    name: String, preface: Option[String], ucFilterJson: JsonStr[UcFilter],
     urlTokenFn: () => ShareUrlToken = ShareUrlTokenGen.fn)
   : Share =
     retry(12) { // Chance of error when 200,000 tokens in use = 0.0000002% ^ 12 (6E-105%)
@@ -236,7 +238,7 @@ sealed trait DaoS {
       }
     }
 
-  def updateShare(id: ShareId, name: String, preface: Option[String], ucFilterJson: Json[UcFilter]): Unit =
+  def updateShare(id: ShareId, name: String, preface: Option[String], ucFilterJson: JsonStr[UcFilter]): Unit =
     UpdateShare.execute(name, preface, ucFilterJson, id)
 
   def updateSharePassword(id: ShareId, ps: PasswordAndSalt): Unit =
@@ -271,8 +273,8 @@ sealed trait DaoT extends DaoS {
   import Sql._
 
   def performUserRegistration(token: String)(
-    username: String @@ Validated, ps: PasswordAndSalt, ipAddr: String)(
-    name: String @@ Validated, newsletter: Boolean): UserRegistrationResult = {
+    username: Username, ps: PasswordAndSalt, ipAddr: String)(
+    name: String, newsletter: Boolean): UserRegistrationResult = {
 
     import UserRegistrationResult._
     try {

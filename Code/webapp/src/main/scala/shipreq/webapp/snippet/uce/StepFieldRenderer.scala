@@ -26,16 +26,16 @@ import feature.publish.HtmlFieldValuePublishers
 import feature.uc.text.StepText
 
 object StepFieldRenderer {
-  @inline final def ExprForNodeAndChildren(n: StepNode) = n.mapRecursive("#" + _.id).mkString(",")
+  @inline final def ExprForNodeAndChildren(n: StepNode) = n.mapRecursive("#" + _.id.value).mkString(",")
   @inline final def JqExprForNodeAndChildren(n: StepNode) = JqExpr(ExprForNodeAndChildren(n))
 
   /** ID of the HTML attribute that contains a step's label (eg. "1.0.4.b") */
-  @inline final def labelId(id: LocalStepId): String = (id: String) + "-l"
+  @inline final def labelId(id: LocalStepId): String = id.value + "-l"
 
   /** ID of the textarea that contains a step's text. */
-  @inline final def textareaId(id: LocalStepId): String = (id: String) + "-t"
+  @inline final def textareaId(id: LocalStepId): String = id.value + "-t"
 
-  @inline final def stepPubId(id: LocalStepId): String = (id: String) + "-p"
+  @inline final def stepPubId(id: LocalStepId): String = id.value + "-p"
 
   @inline final def renderStepPub(value: StepText) = HtmlFieldValuePublishers.stepField(value)
 
@@ -79,7 +79,7 @@ object NormalCourseFieldConfig extends StepFieldRenderConfig {
     newTree.nodes match {
       // Move steps from NC to AC
       case nc :: ac1 :: acN if ac1.id == node.id =>
-        JsCmds.Run(s"nc_to_ac('#uce','${node.id}',${JE.AnonFunc(updateJs).toJsCmd},${JE.AnonFunc(focusJs).toJsCmd})")
+        JsCmds.Run(s"nc_to_ac('#uce','${node.id.value}',${JE.AnonFunc(updateJs).toJsCmd},${JE.AnonFunc(focusJs).toJsCmd})")
 
       // Apply indent decrease normally
       case _ => updateJs & focusJs
@@ -124,9 +124,9 @@ case class StepFieldRenderer(
   val tree = f.value.tree
 
   @inline final def labelPrefixForLevel(level: Int) = if (level == 0) rootLabelPrefix else ""
-  @inline final def labelFor(node: StepNode) = labelPrefixForLevel(node.level) + node.label
+  @inline final def labelFor(node: StepNode) = labelPrefixForLevel(node.level) + node.label.value
 
-  @inline final def step(id: LocalStepId): StepText = f.value.textmap.get(id).getOrElse(StepText.empty)
+  @inline final def step(id: LocalStepId): StepText = f.value.textmap.getOrElse(id, StepText.empty)
 
   /** The text value of a step. */
   @inline final def text(id: LocalStepId): String = step(id).text
@@ -158,7 +158,7 @@ case class StepFieldRenderer(
     val id = n.id
     @inline def %%(fn: LocalStepId => UseCaseUpdater => UcUpdateResult) = UcModifier(fn(id), None, None)
     (
-      ".step [id]" #> id
+      ".step [id]" #> id.value
         & StepLevelAttributeCss #> n.level
         & IfCssSel(cfg.prohibitRemoval_?(id, tree)) {".step [class+]" #> "noDel"}
         & ".lbl span *" #> labelFor(n)

@@ -2,7 +2,7 @@ package shipreq.taskman.server.app
 
 import org.joda.time.DateTime
 import shipreq.taskman.api._
-import shipreq.taskman.api.Types._
+import shipreq.base.util.TaggedTypes._
 import shipreq.taskman.server._
 import shipreq.taskman.server.business._
 import shipreq.base.util.Error
@@ -52,7 +52,7 @@ object Tmp extends MainTemplate {
       // val e = Sop.NotifySupportTaskmanError(DateTime.now, Error("Test from Tmp", new RuntimeException), None)
       // ctx.sopReifier(e).unsafePerformIO()
 
-      val m = MsgDetail(MsgHeader(MsgId(0), Priority.Medium, DateTime.now), Msg.RegistrationCompleted(0.tag), 0)
+      val m = MsgDetail(MsgHeader(MsgId(0), Priority.Medium, DateTime.now), Msg.RegistrationCompleted(UserId(0)), 0)
       val f = Sop.NotifySupportWorkerFailed(DateTime.now, m ,Error("Test from Tmp", new RuntimeException))
       ctx.sopReifier(f).unsafePerformIO()
     }

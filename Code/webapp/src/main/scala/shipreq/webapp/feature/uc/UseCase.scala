@@ -21,7 +21,7 @@ case class UcParsingCtx(ucn: UseCaseNumber, title: String, stepsAndLabels: StepA
   def update(uc: UseCase): UcParsingCtx = UcParsingCtx(uc, rels)
 }
 object UcParsingCtx {
-  val Empty: UcParsingCtx = new UcParsingCtx((0:Short).tag[IsUseCaseNumber], "", StepAndLabelBiMap.empty, UseCaseRelations.Empty) {
+  val Empty: UcParsingCtx = new UcParsingCtx(UseCaseNumber(0), "", StepAndLabelBiMap.empty, UseCaseRelations.Empty) {
     override def toString = "UcParsingCtx.Empty"
   }
 
@@ -33,8 +33,8 @@ object UcParsingCtx {
 
 object UseCaseFns {
 
-  def reqId(n: UseCaseNumber) = s"UC-$n"
-  def fullName(n: UseCaseNumber, title: String) = s"UC-$n: $title"
+  def reqId(n: UseCaseNumber) = s"UC-${n.value}"
+  def fullName(n: UseCaseNumber, title: String) = s"UC-${n.value}: $title"
 
   def filterKeys[F <: Field](fieldValues: FieldValues)(implicit m: ClassTag[F]): Map[F, F#Value] =
     fieldValues.filterKeys(isCovar[F]).asInstanceOf[Map[F, F#Value]]
@@ -105,7 +105,7 @@ object UseCase {
     UseCase(number, header, fieldValues.map(_._1).toList, fieldValues.toMap, stepsAndLabels)
 
   implicit object ordering extends Ordering[UseCase] {
-    def compare(x: UseCase, y: UseCase): Int = x.number compareTo y.number
+    def compare(x: UseCase, y: UseCase): Int = x.number.value compareTo y.number.value
   }
 }
 
@@ -138,12 +138,12 @@ case class UseCase(
     def ppSfv(sfv: StepFieldValue): String = {
       import sfv._
       val lines = s"StepFieldValue: $field, ${textmap.size} steps." +:
-        textmap.map {case (id, t) => "    %-16s = %s".format(id, t.text)}.toList.sorted
+        textmap.map {case (id, t) => "    %-16s = %s".format(id.value, t.text)}.toList.sorted
       lines.mkString("\n")
     }
     val line = "-" * 98
     val fieldsPP = fields.map(f => s"  F: $f\n  V: ${ppFV(fieldValues(f))}\n").mkString("\n")
-    val snl = stepsAndLabels.value.ab.map {case (id, lbl) => "  %-16s <-- %s".format(lbl, id)}.toList.sorted.mkString("\n")
+    val snl = stepsAndLabels.value.ab.map {case (id, lbl) => "  %-16s <-- %s".format(lbl.value, id.value)}.toList.sorted.mkString("\n")
     (s">$line>\n"
       + s"Header: $header\n"
       + s"Fields:\n$fieldsPP\n"
@@ -161,7 +161,7 @@ case class UseCase(
       case fg: FlowGraphField => "<FlowGraph>"
     }
     def printSFV(sfv: StepFieldValue): String =
-        sfv.textByLabels.map{case (l,t) => "  %-18s: %s".format(l, text(t))}.toList.sorted.mkString("\n")
+        sfv.textByLabels.map{case (l,t) => "  %-18s: %s".format(l.value, text(t))}.toList.sorted.mkString("\n")
     val line = "-" * 98
     val lineS = s">$line>"
     val lineE = s"<$line<"

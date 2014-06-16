@@ -2,6 +2,7 @@ package shipreq.webapp.feature.uc.change
 
 import scalaz.NonEmptyList
 import shipreq.webapp.feature.validation.{ValidationResult, VFailure}
+import shipreq.webapp.lib.Types.InputCorrected
 
 object ChangeResult {
 
@@ -45,6 +46,9 @@ object ChangeResult {
       case scalaz.Failure(f) => ChangeFailure(f)
       case scalaz.Success(v) => onSuccess(v)
     }
+
+  def fromValidationIC[VV, V, C](r: ValidationResult[VV])(onSuccess: InputCorrected[VV] => ChangeResultF[V, C]): ChangeResultF[V, C] =
+    fromValidation(r)(onSuccess compose InputCorrected.apply)
 }
 
 /**

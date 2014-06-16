@@ -9,8 +9,7 @@ import scalaz.effect.IO
 import shipreq.base.util.{ErrorOr, Error}
 import shipreq.base.util.effect.IOE
 import shipreq.base.test.{OpTypeProvider, MockOpTransformerA, MockOpTransformer}
-import shipreq.taskman.api.{MsgId, Priority}
-import shipreq.taskman.api.Types._
+import shipreq.taskman.api.{EmailAddr, UserId, MsgId, Priority}
 import shipreq.taskman.api.Msg.{LandingPageHit, ReRegistrationAttempted}
 import shipreq.taskman.server.business.{MailingList, ShipReqUser, Emails, Bop, Email, Support}
 import shipreq.taskman.server.business.Email.Addr
@@ -37,11 +36,11 @@ object TestHelpers {
   val timeNow = DateTime.now()
   val timePast = timeNow minusMinutes 10
 
-  val sampleEmailAddr = "test@hehe.com".tag[IsEmailAddr]
+  val sampleEmailAddr = EmailAddr("test@hehe.com")
   val msg_rereg = ReRegistrationAttempted(sampleEmailAddr)
   val node1 = NodeId(1)
   val worker2 = WorkerId(2)
-  val sampleUserId = 30.tag[IsUserId]
+  val sampleUserId = UserId(30)
   val mh_1 = MsgHeader(MsgId(1), Priority(6), timeNow)
   val md_1 = MsgDetail(mh_1, msg_rereg, 0)
   val mh_2 = MsgHeader(MsgId(2), Priority(5), timePast)
@@ -116,7 +115,7 @@ object TestHelpers {
   implicit def arbitraryJobQueue = arbMap[JobQueue, List[MsgHeader]](Manager.empty ++ _)
 
   class MockEmailEnvelopeProps(archive: Boolean) extends Email.EnvelopeProps {
-    private[this] implicit def autoParseEa(ea: String): Addr = Addr(ea.tag)
+    private[this] implicit def autoParseEa(ea: String): Addr = Addr(EmailAddr(ea))
     override val publicFrom: Addr = "publicFrom"
     override val archiveAddrs = if (archive) List[Addr]("archiveAddr") else Nil
   }

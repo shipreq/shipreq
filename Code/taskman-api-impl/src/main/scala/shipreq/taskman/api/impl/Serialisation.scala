@@ -4,13 +4,13 @@ import org.json4s._
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{read, write}
 import shipreq.base.util.{BiMap, ErrorOr}
-import shipreq.taskman.api.Types._
-import shipreq.taskman.api.{Msg, MsgType}
+import shipreq.base.util.TaggedTypes._
+import shipreq.taskman.api._
 import Msg._
 
 private[taskman] object Serialisation {
 
-  type Ser = Json[Msg]
+  type Ser = JsonStr[Msg]
   type DeSer = ErrorOr[Msg]
 
   private def fieldRenamer[A: Manifest](m: BiMap[String, String]): FieldSerializer[A] =
@@ -32,7 +32,7 @@ private[taskman] object Serialisation {
       + fieldRenamer[LandingPageHit]         (BiMap("email"->"e", "name"->"n", "msg"->"m", "newsletter"->"w"))
     )
 
-  def serialise(m: Msg): Ser = write(m).tag
+  def serialise(m: Msg): Ser = JsonStr(write(m))
 
   def deserialise(msgTypeId: Short, s: Ser): DeSer =
     MsgType.lookup(msgTypeId) match {
@@ -43,7 +43,7 @@ private[taskman] object Serialisation {
   def deserialise(t: MsgType, s: Ser): DeSer =
     ErrorOr.annotate(s"Failed to parse JSON: $s") {
       ErrorOr.catchException {
-        val m: Msg = read(s)(implicitly[Formats], Manifest.classType(t.msgClass))
+        val m: Msg = read(s.value)(implicitly[Formats], Manifest.classType(t.msgClass))
         ErrorOr(m)
       }
     }
