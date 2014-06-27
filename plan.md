@@ -32,16 +32,12 @@
 
 ================================================================================
 
-* MF-5: I will usually be interested in fields for a single req type.
-  Have a view.
-
-* Typing groupings whilst editing. System behaviour changes when typed into
-  built-in field vs custom field.
+* Typing groupings whilst editing ← not analysed properly.
+  System behaviour changes when typed into built-in field vs custom field.
   In one case it applies to the entire req; in the other, the field contents.
 
-Ideas from reading Software Requirements 3rd Ed
-* Investigate groupings representing workflows.
-  e.g. rules about transitions like in automata.
-* Graph grouping applications over time.
-* There isn't a way to assign an incmp to a user.
+* From ideas.md:
+    TODOs due to MF intersection problems.
+    where/how to store intersection problems?
 
+* Work out issues with subreqs.

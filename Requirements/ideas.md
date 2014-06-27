@@ -4,7 +4,7 @@ Ideas
 This is where loose ideas live temporarily until they become concrete enough for a proper home.
 
 Major features should be in `major_features.ods`.
-Smaller features should be in `Code/webapp/TODO.md`.
+Smaller features should be in `Code/TODO.md`.
 
 
 * Link (UC-to-UC)
@@ -29,10 +29,16 @@ Smaller features should be in `Code/webapp/TODO.md`.
 
 * Talk to moronic Agilists. Find out what they need, determine feasability & what's missing.
 
-TODOs due to MF intersection problems.
-where/how to store intersection problems?
-
 user stories, how to cater for them? Will likely share most of UC functionality.
+
+Ideas from reading Software Requirements 3rd Ed
+===============================================
+
+* Investigate groupings representing workflows.
+    e.g. rules about transitions like in automata.
+
+* Graph grouping applications over time.  e.g. last week 50 pending, today 3 pending.
+
 
 
 Shanelle's Feedback
