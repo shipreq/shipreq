@@ -1,15 +1,17 @@
-1. Need to work out saving strategy immediately.
-   Related:
+1. Decide saving strategy, considering:
     * MF-08: History/Audit
     * MF-09: Collaboration: authoring
     * MF-10: Collaboration: stakeholders
+    * MF-11: Collaboration: change mgnt & approval
     * MF-17: Undo & Auto-save
 
-1. Analyse due to phase-2 DB risk:
-    * MF-11: Collaboration: change mgnt & approval
-    * MF-08: History/Audit
-    * MF-17: Undo & Auto-save
+1. Determine risk to phase-2 DB from:
     * MF-04: Templates
+    * MF-08: History/Audit
+    * MF-09: Collaboration: authoring
+    * MF-10: Collaboration: stakeholders
+    * MF-11: Collaboration: change mgnt & approval
+    * MF-17: Undo & Auto-save
 
 2. Plan UI for:
      * MF-01: Use Case Editor
@@ -22,11 +24,9 @@
 
 3. Mock up UI.
 
-4. Analyse due to phase-2 req intersection risk:
-    * MF-09: Collaboration: authoring
-    * MF-10: Collaboration: stakeholders
-    * MF-20: Generic artifact storage (DOC, PDF, PNG, XLS)
+4. Do prelim analysis and pull out probable changes to phase-2:
     * MF-14: Text-generated Diagrams
+    * MF-20: Generic artifact storage (DOC, PDF, PNG, XLS)
 
 4. ¿Split subsequent requirements with coding?
 
