@@ -1,2 +1,8 @@
 <!DOCTYPE html>
-<html><head><title>SHIPREQ PHASE-2 PROTOTYPE</title></head><body><h1>SHIPREQ PHASE-2 PROTOTYPE</h1></body></html>
+<html><head><title>SHIPREQ PHASE-2 PROTOTYPE</title><style type="text/css">
+table {border-collapse: collapse}
+th,td {border: solid 1px #000; padding: 1px 4px}
+.notes {color:#338; margin: 2em; font-style:italic}
+.notes ol, .notes ul {margin-top:0.2em}
+
+</style></head><body><h1>SHIPREQ PHASE-2 PROTOTYPE</h1><section><a id="fields"><h1>Fields</h1></a><h4>Active Fields</h4><button>Create</button><table><tr><th>Name</th><th>RefKey</th><th>Field Type</th><th>Mandatory</th><th>Req Types</th><th>Usage</th><th>Ctrls</th></tr><tr><td>Description</td><td>.desc</td><td>Text</td><td>☐</td><td>Only: MF, UC.</td><td>27</td><td><button>Edit</button><button>Delete</button>[Drag]</td></tr><tr><td>Priority</td><td>.pri</td><td>Grouping</td><td>☑</td><td>All.</td><td>432</td><td><button>Edit</button><button>Delete</button>[Drag]</td></tr></table><h4>Deleted Fields</h4><table><tr><th>Name</th><th>RefKey</th><th>Field Type</th><th>Mandatory</th><th>Req Types</th><th>Usage</th><th>Ctrls</th></tr><tr><td>Description</td><td>.desc</td><td>Text</td><td>☐</td><td>Only: MF, UC.</td><td>27</td><td><button>Restore</button>[Drag]</td></tr></table><div class="notes">Notes.<ol><li>Items can be dragged to reorder, or dragged from/to bin.</li><li>Some fields will not be editable or deletable.</li><li>Usage numbers should be links to references. That would make delete button simple.</li><li>Create → Choose req type → Enter common attr {mand, req types} and special attr {grouping, name, ...}</li><li>Edit is same form as above.</li></ol></div></section></body></html>
