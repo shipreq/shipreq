@@ -2,6 +2,7 @@ Done: 5,6,7,12,13
 
 # Fields
   * List
+    * Name, type, mandatory, req types, Σ usage
   * Reorder
   * Create
     * Type: text, grouping, courses, flow graph (not editable later)
@@ -22,10 +23,12 @@ Done: 5,6,7,12,13
   * ∀incmp. req id, name, field name, incmp supp info, incmp context
 
 # Add loose incompletion
+  * Specify: type & text.
 
 # Incompletion types & config
   * Create
   * ∀incmp type.
+    * Show: name, Σ usage
     * Edit
     * Delete
       * Usage summary (number(s) or table)
@@ -35,6 +38,8 @@ Done: 5,6,7,12,13
 # Grouping types
   * List as tree
   * Edit
+    * Name
+    * RefKey
     * Children are mutually-exclusive
     * Parents
     * Children
