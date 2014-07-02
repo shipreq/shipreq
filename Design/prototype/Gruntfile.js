@@ -9,7 +9,7 @@ module.exports = function(grunt) {
 
     haml: {
       all: {
-        files: [{expand: true, cwd: '', src: ['*.haml'], dest: '', ext: '.html', flatten: false }],
+        files: [{expand: true, cwd: '', src: ['*.haml'], dest: '', ext: '.haml.html', flatten: false }],
       },
     },
 
@@ -20,6 +20,15 @@ module.exports = function(grunt) {
       haml: { files: ['*.haml'], tasks: ['haml'] },
     },
 
+  });
+
+  // Prevent stale reads
+  grunt.event.on('watch', function(action, filepath, target) {
+    var t = filepath + ".html";
+    if (grunt.file.exists(t)) {
+      grunt.file.delete(t);
+      grunt.log.ok("Deleted: "+t);
+    }
   });
 
   // ===========================================================================

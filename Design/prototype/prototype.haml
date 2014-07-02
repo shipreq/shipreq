@@ -5,16 +5,20 @@
     :css
       table {border-collapse: collapse}
       th,td {border: solid 1px #000; padding: 1px 4px}
-      .notes {color:#338; margin: 2em; font-style:italic}
+      .notes {color:#338; margin-top: 2em; margin-left: -3em; font-style:italic}
       .notes ol, .notes ul {margin-top:0.2em}
+      section.screen {border-top: solid 1px black; margin-top: 3em; padding-top: 0.7em; padding-left: 4em}
+      section.screen > a h1 {margin-top: 0; margin-left: -2.6em}
+      span.incmp {color:#c00}
+      span.incmp-dull {color:#777}
 
   %body
     %h1 SHIPREQ PHASE-2 PROTOTYPE
 
-    %section
+    -#==============================================================================================
+    %section.screen
       %a#fields
         %h1 Fields
-
 
       %h4 Active Fields
       %button Create
@@ -71,11 +75,76 @@
             %button Restore
             [Drag]
 
-
       .notes Notes.
         %ol
           %li Items can be dragged to reorder, or dragged from/to bin.
+          %li If items can be dragged in/out of bin, is there any reason keeping the delete/restore buttons?
           %li Some fields will not be editable or deletable.
-          %li Usage numbers should be links to references. That would make delete button simple.
+          %li Usage numbers should be links which lead to references. That would make delete button simple.
           %li Create → Choose req type → Enter common attr {mand, req types} and special attr {grouping, name, ...}
-          %li Edit is same form as above.
+          %li Edit brings up the last part of the form above.
+          %li If we're going use auto-save strategy,
+            %ul
+              %li we need an undo button, and maybe visible attr should be directly editable.
+              %li maybe visible attr should be directly editable.
+
+
+    -#==============================================================================================
+    %section.screen
+      %a#incmp
+        %h1 Incompletions
+
+      %div [Filters here]
+      %h3 Σ 29
+
+      %h4 Req View
+      %table
+        %tr
+          %th Σ
+          %th ID
+          %th ReqText
+        %tr
+          %td 2
+          %td FR-49
+          %td BA shall be able to see a list of UCs and the number of incompletions <span class="incmp">#TBD</span> in each <span class="incmp">#TODO{confirm}</span>.
+        %tr
+          %td 3
+          %td FR-311
+          %td
+        %tr
+          %td 8
+          %td UC-3
+          %td Eat Food.
+
+      %h4 Incmp View
+      %table
+        %tr
+          %th ID
+          %th Location
+          %th Type
+          %th Supp Info
+          %th Context
+        %tr
+          %td FR-49
+          %td Body
+          %td TBD
+          %td
+          %td …the number of UCs and the number of incompletions <span class="incmp">#TBD</span> in each <span class="incmp-dull">#TODO</span>.
+        %tr
+          %td FR-49
+          %td Body
+          %td TODO
+          %td confirm
+          %td …of UCs and the number of incompletions <span class="incmp-dull">#TBD</span> in each <span class="incmp">#TODO</span>.
+        %tr
+          %td UC-3
+          %td 3.0.4.a
+          %td
+          %td
+          %td
+
+      .notes Notes.
+        %ol
+          %li Probably no need for req + incmp views to be visible simultaneously.  Maybe show one and allow to flip between both. Would save cog + DB load.
+          %li Are requirements missing? From here we'd want to view (sub)req for more info and/or edit to resolve.
+          %li Fark, how the hell is delayed-async-auto-save going to work if we can edit fields directly here? Similarly, undo.
