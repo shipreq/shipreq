@@ -148,3 +148,65 @@
           %li Probably no need for req + incmp views to be visible simultaneously.  Maybe show one and allow to flip between both. Would save cog + DB load.
           %li Are requirements missing? From here we'd want to view (sub)req for more info and/or edit to resolve.
           %li Fark, how the hell is delayed-async-auto-save going to work if we can edit fields directly here? Similarly, undo.
+
+
+    -#==============================================================================================
+    %section.screen
+      %a#grouping-cfg
+        %h1 Groupings (Cfg)
+
+      %table
+        %tr
+          %td
+            %pre
+              Priority
+               ├── High Priority
+               ├── Medium Priority
+               └── Low Priority
+              Blah
+              └── fay
+                  ├── evnznhce
+                  ├── webhket
+                  │   ├── daf7_arser
+                  │   ├── hyi_paser
+                  │   │   ├── jnshkn
+                  │   │   └── strm_reader
+                  │   └── hbi_parser
+                  └── ebsokt
+            %h3 Deleted Groupings / Bin
+            TODO
+          %td
+            %button Create
+            %div(style="margin-top:1em")
+              %h3 Editor
+              %table
+                %tr
+                  %th Name
+                  %td
+                    %input(value="High Priority")
+                  %th RefKey
+                  %td
+                    %input(value="pri=high")
+                  %th Type
+                  %td Applicable
+                  %th Enum
+                  %td
+                    %input(type="checkbox")
+              %h3 Parents
+                %div
+                  %input
+                  %button Add
+                %ol
+                  %li
+                    Priority
+                    %button Remove
+              %h3 Children
+              %h3 Usage
+              %div Σ applications
+              %div View applications button or something
+              %button Delete
+
+      .notes Notes.
+        %ol
+          %li Items can be dragged to reorder, or dragged from/to bin.
+          %li If items can be dragged in/out of bin, is there any reason keeping the delete/restore buttons?

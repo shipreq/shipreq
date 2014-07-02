@@ -39,5 +39,24 @@
 * From ideas.md:
     TODOs due to MF intersection problems.
     where/how to store intersection problems?
+    Neither loose nor in-req incmps seem to be enough for intersection probs.
 
 * Work out issues with subreqs.
+
+* Reqs around min/max time auto-save bounds. Not too quick, don't wait too long.
+
+* Reqs for undo. Undo(undo)? Have to pull MF-17 into phase 2 scope...
+  - Connection problems.
+  - Validation problems. (Eg. cyclic structs, etc.)
+    Delayed saving probably fine but validation is better asap.
+  - Knockon effects such as add/del/reind step handled how?
+    Am I conflating saving + history concerns with multi-user anti-conflict
+    concerns? Seems like it.
+  - Actually MF-17 shouldn't be a problem until there are multiple users (in a
+    single-user ctx it only affects multiple tabs). Maybe simplest would be best
+    until phase 3? Consider history reqs for data structures but whack save
+    buttons on things and/or auto-save (LL-reqs) where appropriate for now.
+    UX inconsistency but maybe ok short-term, changability cost shouldn't be high.
+
+* Maybe its time to revisit the UX book(s).
+
