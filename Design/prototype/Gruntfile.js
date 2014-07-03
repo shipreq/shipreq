@@ -23,13 +23,13 @@ module.exports = function(grunt) {
   });
 
   // Prevent stale reads
-  grunt.event.on('watch', function(action, filepath, target) {
-    var t = filepath + ".html";
-    if (grunt.file.exists(t)) {
-      grunt.file.delete(t);
-      grunt.log.ok("Deleted: "+t);
-    }
-  });
+  // grunt.event.on('watch', function(action, filepath, target) {
+    // var t = filepath + ".html";
+    // if (grunt.file.exists(t)) {
+      // grunt.file.delete(t);
+      // grunt.log.ok("Deleted: "+t);
+    // }
+  // });
 
   // ===========================================================================
   grunt.registerTask('default', ['haml']);

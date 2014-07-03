@@ -1,6 +1,7 @@
 !!! 5
 %html
   %head
+    %meta(http-equiv="refresh" content="1")
     %title SHIPREQ PHASE-2 PROTOTYPE
     :css
       table {border-collapse: collapse}
@@ -25,6 +26,10 @@
         %a(href="#incmp-cfg") Incompletions (cfg)
       %li
         %a(href="#grouping-cfg") Groupings (cfg)
+      %li
+        %a(href="#grouping-browse") Grouping Browser
+      %li
+        %a(href="#grouping-browse2") Grouping Browser (lvl 2+)
 
     -#==============================================================================================
     %section.screen
@@ -48,7 +53,8 @@
           %td Text
           %td ☐
           %td Only: MF, UC.
-          %td 27
+          %td
+            %a(href="#") 27
           %td
             %button Edit
             %button Delete
@@ -59,7 +65,8 @@
           %td Grouping
           %td ☑
           %td All.
-          %td 432
+          %td
+            %a(href="#") 432
           %td
             %button Edit
             %button Delete
@@ -81,7 +88,8 @@
           %td Text
           %td ☐
           %td Only: MF, UC.
-          %td 27
+          %td
+            %a(href="#") 27
           %td
             %button Restore
             [Drag]
@@ -320,3 +328,99 @@
           %li If items can be dragged in/out of bin, is there any reason keeping the delete/restore buttons?
           %li Drag left-side tree to reorder.
           %li Drag from left-side into editor's parent/child sections.
+          %li Reorder children via right-side children view.
+
+
+    -#==============================================================================================
+    %section.screen
+      %a#grouping-browse
+        %h1 Grouping Browser
+
+      %div [Filter here]
+
+      %h3 Groupings
+      %p
+        %a(href="#") Priority
+        \ [ALLOCATION GRAPH]
+        %br
+        3 sub-groupings. 320 direct applications.
+      %p
+        %a(href="#") Component
+        \ [ALLOCATION GRAPH]
+        %br
+        4 sub-groupings. 320 direct applications.
+      %p
+        %a(href="#") Version
+        \ [ALLOCATION GRAPH]
+        %br
+        6 sub-groupings. 320 direct applications.
+
+      %h3 Req types that don't require implication
+      %p
+        %a(href="#") MF: Major Features
+        \ [ALLOCATION GRAPH]
+        %br
+        6 sub-groupings. 320 direct applications.
+
+      .notes Notes.
+        %table
+          %tr
+            %th Attr
+            %th Groupings
+            %th Implications
+          %tr
+            %th Graph segments
+            %td grouping children
+            %td active requirements of req type
+          %tr
+            %th Graph hover
+            %td name, application count, %
+            %td id, name, implication count, %
+          %tr
+            %th Graph click
+            %td re-scope to subject child
+            %td nothing
+        %ol
+          %li xxx
+
+
+
+    -#==============================================================================================
+    %section.screen
+      %a#grouping-browse2
+        %h1 Grouping Browser (lvl 2+)
+
+      %button Back to Top-Level
+      %button Back to Parent grouping (when lvl is 3+)
+
+      %div [Filter here]
+
+      %h2 Priority
+      %div [Σ ALLOCATION GRAPH]
+
+      %p
+        %div Unapplied
+      %p
+        %a(href="#") Low Priority
+
+      %h3 Cfg
+
+      .notes Notes.
+        %table
+          %tr
+            %th Attr
+            %th Groupings
+            %th Implications
+          %tr
+            %th Graph segments
+            %td children of subject grouping
+            %td reqs of subject req type
+          %tr
+            %th Graph detail
+            %td name, application count, %
+            %td id, name, implication count, %
+        %ol
+          %li xxx
+
+    -#==============================================================================================
+    %section.screen
