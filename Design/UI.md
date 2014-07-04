@@ -20,27 +20,16 @@
     * Restore
 
 # Req List
-  * Toggle visibility of deleted reqs
-  * Create: any req type, SHR
-  * Specify implying req(s) for new req creations
-  * ∀reqs. selected, ID, semIDs, desc/name, anything else in sort criteria
-    * Maybe: revision & last-updated time & user, implication src/tgt
   * Selected reqs
     * Create child
     * Restore deleted
       * List of implied reqs to also restore.
-    * Create copy
-    * Change req-type
-    * Change common sem-ID prefix
   * Edit
     * View/Edit text tokens
-    * Implications.
-    * Groupings.
   * Delete
     * Usage summary (number(s) or table) of incoming references
     * Usage detail: Show each incoming references
     * List of implied reqs to also delete.
-  * Filter.
   * Sort criteria: view, edit, reset
 
 # Text Tokens

@@ -20,3 +20,6 @@
 
 * Maybe its time to revisit the UX book(s).
 
+* Field based on implication just like they have with groupings. Except it
+  should be read-only and show resolve transitively to a given req-type.
+  So I can create a field showing the driving MF for everything.

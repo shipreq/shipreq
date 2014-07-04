@@ -4,6 +4,7 @@
     %meta(http-equiv="refresh" content="1")
     %title SHIPREQ PHASE-2 PROTOTYPE
     :css
+      body {padding-bottom:12em}
       table {border-collapse: collapse}
       th,td {border: solid 1px #000; padding: 1px 4px}
       .notes {color:#338; margin-top: 2em; margin-left: -3em; font-style:italic}
@@ -12,8 +13,20 @@
       section.screen > a h1 {margin-top: 0; margin-left: -2.6em}
       span.incmp {color:#c00}
       span.incmp-dull {color:#777}
+      .empty {background:#c66}
       .fixpre pre {margin-top:0; margin-bottom:0}
       .na, .na * {color:#777 !important; text-decoration:line-through !important}
+      .subscreen {padding-top:1.6em}
+      th.l {text-align:left}
+      .shrna {text-align:center; color:#888}
+      .focuscell {border: solid 2px #008}
+      .left-th th {text-align:left}
+
+      .req-detail .x {border:none; vertical-align:top}
+      .req-detail .tt {background:#ddd; text-align:center}
+      .causality td {border:none; vertical-align:middle}
+      .causality td.a {text-align:right}
+      .causality td.b {font-weight:bold}
 
   %body
     %h1 SHIPREQ PHASE-2 PROTOTYPE
@@ -30,7 +43,7 @@
       %li
         %a(href="#grouping-browse") Grouping Browser
       %li
-        %a(href="#grouping-browse2") Grouping Browser (lvl 2+)
+        %a(href="#llreqs") Common Req View &amp; Editor
 
     -#==============================================================================================
     %section.screen
@@ -363,31 +376,8 @@
         %br
         6 sub-groupings. 320 direct applications.
 
-      .notes Notes.
-        %table
-          %tr
-            %th
-            %th Groupings
-            %th Implications
-          %tr
-            %th Graph segments
-            %td grouping children
-            %td active requirements of req type
-          %tr
-            %th Graph hover
-            %td name, application count, %
-            %td id, name, implication count, %
-          %tr
-            %th Graph click
-            %td re-scope to subject child
-            %td nothing
-        %ol
-          %li xxx
-
-
-
-    -#==============================================================================================
-    %section.screen
+      -#--------------------------------------------------------------------------------------------
+      .subscreen
       %a#grouping-browse2
         %h1 Grouping Browser (lvl 2+)
 
@@ -477,8 +467,7 @@
             %td Low Priority
 
       -#--------------------------------------------------------------------------------------------
-
-      %div(style="padding-top:1.6em")
+      .subscreen
       %a#impl-browse2
         %h1 Implication Browser (lvl 2 only)
 
@@ -573,11 +562,23 @@
             %th Groupings
             %th Implications
           %tr
-            %th Graph segments
+            %th.l Top-Level: Graph segments
+            %td grouping children
+            %td active requirements of req type
+          %tr
+            %th.l Top-Level: Graph hover
+            %td name, application count, %
+            %td id, name, implication count, %
+          %tr
+            %th.l Top-Level: Graph click
+            %td re-scope to subject child
+            %td nothing
+          %tr
+            %th.l L2+: Graph segments
             %td children of subject grouping
             %td reqs of subject req type
           %tr
-            %th Graph detail
+            %th.l L2+: Graph detail
             %td name, application count, %
             %td id, name, implication count, %
         %ol
@@ -593,3 +594,147 @@
 
     -#==============================================================================================
     %section.screen
+      %a#llreqs
+        %h1 Common Req View &amp; Editor
+
+      %div [Filter here]
+
+      %div [Sort &amp; column critera]
+        %button Reset
+
+      %div
+        %button Create header row
+      %br
+      %div
+        New Requirement template:
+        %div Req-Type: 
+          %select
+            %option CO
+            %option(selected="selected") FR
+            %option MF
+        %div Implied by: ? ⇒
+          %input(value="MF-12, MF-18")
+        %div Text
+          %input(value="When doing blah,")
+        %div Priority
+          %input(value="Medium Priority")
+        %button Create
+      %br
+
+      %div
+        %input(type="checkbox")
+        Show deleted reqs
+
+      %table(style="margin-top:1em")
+        %tr
+          %th
+            %input(type="checkbox")
+          %th Type
+          %th ID
+          %th Sem-ID
+          %th ? ⇒
+          %th Desc
+          %th ⇒ ?
+          %th Priority
+        %tr
+          %td
+            %input(type="checkbox")
+          %td SHR
+          %td.shrna –
+          %td incmp.tag
+          %td.shrna –
+          %td BA shall be able to specify incompletion tags in reqs.
+          %td.shrna –
+          %td.shrna –
+        %tr
+          %td
+            %input(type="checkbox")
+          %td FR
+          %td FR-48
+          %td(style="padding-left:2.3ex") ap
+          %td UC-4
+          %td.focuscell BA shall be able to specify incompletion tags in reqs.
+          %td FR-264
+          %td.empty
+
+      %div
+        3 reqs selected.
+        %button Copy
+        %button Change Req-Type
+        %button Change common sem-ID prefix
+        %button Restore (deleted)
+
+      %div(style="margin:1em 0")
+        %div %strong Req view (integrate with focussed req &amp; editing somehow)
+        %table.req-detail
+          %tr
+            %td.x
+              %table.left-th
+                %tr
+                  %th.tt(colspan=2) Editable
+                %tr
+                  %th Req-Type
+                  %td FR
+                %tr
+                  %th Sem-IDs
+                  %td incmp.tag.ap<br>stuff.track.ap
+                %tr
+                  %th ?⇒
+                  %td UC-4
+                %tr
+                  %th Groupings
+                  %td Phase2
+                %tr
+                  %th Desc
+                  %td BA shall be able to specify incompletion tags in reqs.
+                %tr
+                  %th Notes
+                  %td We should probably do all of the stuff with the things <span class="incmp">#TODO{confirm}</span>.
+                %tr
+                  %th Priority
+                  %td.empty
+                %tr
+                  %th ⇒?
+                  %td FR-264
+            %td.x
+              %table.left-th
+                %tr
+                  %th.tt(colspan=2) Read-only
+                %tr
+                  %th ID
+                  %td FR-48
+                    %span(style="color:#888; text-decoration:line-through; font-style:italic; margin-left:1.3ex") (BR-7)
+                %tr
+                  %th Revision
+                  %td 34.2
+                %tr
+                  %th Last Updated
+                  %td 37 min ago.
+                %tr
+                  %th Referenced By
+                  %td FR-10, FR-189, QR-7.
+                /%tr
+                  %th Causality
+                  %td.fixpre
+                    %pre MF-12 →       <strong>FR-48</strong> → FR-264
+                    %pre MF-4  → UC-4 ↗
+                %tr
+                  %th Causality
+                  %td
+                    %table.causality
+                      %tr
+                        %td.a MF-12 →<br>MF-4 → UC-4 →
+                        %td.b MF-48
+                        %td.c → FR-264
+                    %em (A graphviz SVG would be better actually.)
+
+
+      .notes Notes.
+        %ol
+          %li Create buttons needs next action.
+          %li Hover over MF-12 etc (like in template.?⇒) should display the req text. Click should change focus or maybe even bring up modal?
+          %li I'm not convinced that columns based on sort is a good idea. Will have to create a number of sort+column scenarios and test bouncing around between them.
+          %li Needs undo/redo
+          %li Maybe move the focus around the expanded/detailed view as well?
+          %li UC &amp; SHR are special cases. Determine their req views too.
+
