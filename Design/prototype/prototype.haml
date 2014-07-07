@@ -21,6 +21,9 @@
       .shrna {text-align:center; color:#888}
       .focuscell {border: solid 2px #008}
       .left-th th {text-align:left}
+      .l1 {padding-left:4ex}
+      .l2 {padding-left:8ex}
+      .del, .del * {opacity:0.5; _color:#666 !important; text-decoration:line-through !important}
 
       .req-detail .x {border:none; vertical-align:top}
       .req-detail .tt {background:#ddd; text-align:center}
@@ -46,6 +49,8 @@
         %a(href="#llreqs") Common Req View &amp; Editor
       %li
         %a(href="#filters") Filters
+      %li
+        %a(href="#delete") Deleting Reqs
       %li
         %a(href="#restore") Restoring Reqs
 
@@ -813,62 +818,61 @@
 
     -#==============================================================================================
     %section.screen
-      %a#restore
-        %h1 Restoring Reqs
+      %a#delete
+        %h1 Deleting/Restoring Reqs
 
-      %h3 Restoring UC-4: Do stuff.
+      %h3 Approach #1
+      %div
+        %input(type="checkbox")
+        \ All
+      %div
+        %input(type="checkbox" checked="checked" disabled="disabled")
+        \ UC-4: Do The Stuff To The Things
+      %div.l1
+        %input(type="checkbox")
+        \ FR-22: BA shall be able to drink the wake on peace in seven.
+        %span(style="color:#922")\ Also implied by MF-6, <span class="del">UC-9</span>.
+      %div.l1
+        %input(type="checkbox" checked="checked")
+        \ FR-48: BA shall be able to specify incompletion tags in reqs.
+      %div.l2
+        %input(type="checkbox" checked="checked")
+        \ FR-241: BA shall be able to read the stuff on the box.
 
-      %h4 Directly Implied
-      %table
-        %tr
-          %th
-            %input(type="checkbox" checked="checked")
-          %th Type
-          %th ID
-          %th Sem-ID
-          %th ? ⇒
-          %th Desc
-          %th ⇒ ?
-          %th Priority
-        %tr
-          %td
-            %input(type="checkbox" checked="checked")
-          %td FR
-          %td FR-48
-          %td incmp.tag.ap
-          %td UC-4
-          %td BA shall be able to specify incompletion tags in reqs.
-          %td FR-264
-          %td
-
-      %h4 Transitively Implied
-      %table
-        %tr
-          %th
-            %input(type="checkbox" checked="checked")
-          %th Type
-          %th ID
-          %th Sem-ID
-          %th ? ⇒
-          %th Desc
-          %th ⇒ ?
-          %th Priority
+      %h3 Approach #2
+      %table(style="margin-top:1em")
         %tr
           %td
+            %input(type="checkbox" checked="checked" disabled="disabled")
             %input(type="checkbox" checked="checked")
-          %td FR
-          %td FR-281
-          %td incmp.tag.join
-          %td FR-48
-          %td BA shall be able to do the stuff to the things.
+          %td UC-4: Do The Stuff To The Things
+          %td ⇐ MF-4
+        %tr
           %td
-          %td Low Priority
+            %input(type="checkbox" checked="checked" disabled="disabled" style="visibility:hidden")
+            %input(type="checkbox" checked="checked")
+          %td.l1 FR-22: BA shall be able to drink the wake on peace in seven.
+          %td ⇐ <span class="del">UC-4</span>
+        %tr
+          %td
+            %input(type="checkbox" checked="checked" disabled="disabled" style="visibility:hidden")
+            %input(type="checkbox" checked="checked")
+            %input(type="checkbox")
+          %td.l1 FR-48: BA shall be able to specify incompletion tags in reqs.
+          %td ⇐ MF-6, <span class="del">UC-4</span>
+        %tr
+          %td
+            %input(type="checkbox" checked="checked" disabled="disabled" style="visibility:hidden")
+            %input(type="checkbox" checked="checked" disabled="disabled" style="visibility:hidden")
+            %input(type="checkbox")
+          %td.l2 FR-241: BA shall be able to read the stuff on the box.
+          %td ⇐ <span class="del">FR-48</span>
 
-      %button(style="margin-top:2em") Restore 3 Reqs
+      %button(style="margin-top:2em") Delete 3 Reqs
       %button Cancel
 
       .notes Notes.
         %ol
-          %li As reqs are (de)selected, their direct &amp; transitively implied reqs (dis)appear from the transitive view.
-          %li Rather than two hardcoded sections, nesting or something would probably be clearer.
-              The req(s) originally asked to delete would be the root(s), each level of transitivity becomes a level of nesting.
+          %li As reqs are (de)selected, the reqs that they imply (dis)appear.
+          %li In approach #2, in the right-most column refs selected for deletion get strike-through too.
+          %li For restoration instead of deletion, the ⇐ column simply becomes ⇒.

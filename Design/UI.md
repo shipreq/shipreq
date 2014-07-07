@@ -24,10 +24,6 @@
     * Create child
   * Edit
     * View/Edit text tokens
-  * Delete
-    * Usage summary (number(s) or table) of incoming references
-    * Usage detail: Show each incoming references
-    * List of implied reqs to also delete.
   * Sort criteria: view, edit, reset
 
 # Text Tokens
