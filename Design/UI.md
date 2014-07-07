@@ -6,9 +6,6 @@
     * Applicable req-types: all | whitelist | blacklist
     * Type-specific attributes
 
-# Add loose incompletion
-  * Specify: type & text.
-
 # Requirement Types
   * Create
 

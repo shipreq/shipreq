@@ -1,7 +1,7 @@
 !!! 5
 %html
   %head
-    %meta(http-equiv="refresh" content="1")
+    -# %meta(http-equiv="refresh" content="1")
     %title SHIPREQ PHASE-2 PROTOTYPE
     :css
       body {padding-bottom:12em}
@@ -42,6 +42,8 @@
         %a(href="#reqtypes") Requirement Types
       %li
         %a(href="#incmp") Incompletions
+      %li
+        %a(href="#incmp-loose") Loose Incompletion
       %li
         %a(href="#incmp-cfg") Incompletions (cfg)
       %li
@@ -283,6 +285,28 @@
           %li Are requirements missing? From here we'd want to view (sub)req for more info and/or edit to resolve.
           %li Fark, how the hell is delayed-async-auto-save going to work if we can edit fields directly here? Similarly, undo.
           %li Incmp view should probably be in collapsable sections.
+
+
+    -#==============================================================================================
+    %section.screen
+      %a#incmp-loose
+        %h1 Loose Incompletion
+
+      %table.no-border
+        %tr
+          %td
+            %select
+              %option TODO
+              %option TBD
+          %td
+            %textarea
+          %td
+            %button Done
+            %button Cancel
+
+      .notes Notes.
+        %ol
+          %li Make this a modal dialog.
 
 
     -#==============================================================================================
