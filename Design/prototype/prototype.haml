@@ -9,7 +9,7 @@
       th,td {border: solid 1px #000; padding: 1px 4px}
       .notes {color:#338; margin-top: 2em; margin-left: -3em; font-style:italic}
       .notes ol, .notes ul {margin-top:0.2em}
-      section.screen {border-top: solid 1px black; margin-top: 12em; padding-top: 0.7em; padding-left: 4em}
+      section.screen {border-top: solid 1px black; margin-top: 8em; padding-top: 0.7em; padding-left: 4em}
       section.screen > a h1 {margin-top: 0; margin-left: -2.6em}
       span.incmp {color:#c00}
       span.incmp-dull {color:#777}
@@ -52,30 +52,17 @@
     %h3 Low Frequency
     %ol
       %li
-        %a(href="#fields") Fields
+        %a(href="#fields") Cfg: Fields
       %li
-        %a(href="#reqtypes") Requirement Types
+        %a(href="#reqtypes") Cfg: Requirement Types
+      %li
+        %a(href="#incmp-cfg") Cfg: Incompletions
+      %li
+        %a(href="#grouping-cfg") Cfg: Groupings
       %li
         %a(href="#incmp-loose") Loose Incompletion
       %li
-        %a(href="#incmp-cfg") Incompletions (cfg)
-      %li
-        %a(href="#grouping-cfg") Groupings (cfg)
-      %li
         %a(href="#delete") Deleting Reqs
-
-    %h3 TODO
-    %ul
-      %li Extract TODOs from notes.
-      %li Work out undo (window top-right undo/redo, lock/unlock, partial undo? (ie. simply undo strategy that can fail on conflict)). First, catalog all change types.
-      %li Confirm SHRs &amp; UCs.
-      %li MF column. When sorted should show dups for each MF, just like how sem IDs work.
-      %li Subreqs &amp; implication + groupings still need work.
-      %li Prototype nice auto-complete, inserting a req ref by text would be awesome.
-      %li Prototype feasability of sending entire project's reqs to client. (local storage caching, payload size, mem size)
-      %li Split remaining TODOs into req|prototype/UI|impl
-      %li Idea: a project-wide long representing revision would be AWESOME. Eg. client's cache is at 15348, DB is at 16001, send changes.
-          Could also use associativity and commutativity of (+) to compartmentalise and use revs for each data component (eg. grouping cfg rev, reqs rev) as long as all revs are monotonic.
 
     -#==============================================================================================
     %section.screen
@@ -153,16 +140,9 @@
 
       .notes Notes.
         %ol
-          %li Items can be dragged to reorder, or dragged from/to bin.
-          %li If items can be dragged in/out of bin, is there any reason keeping the delete/restore buttons?
           %li Some fields will not be editable or deletable.
-          %li Usage numbers should be links which lead to references. That would make delete button simple.
           %li Create → Choose req type → Enter common attr {mand, req types} and special attr {grouping, name, ...}
           %li Edit brings up the last part of the form above.
-          %li If we're going use auto-save strategy,
-            %ul
-              %li we need an undo button, and maybe visible attr should be directly editable.
-              %li maybe visible attr should be directly editable.
 
 
     -#==============================================================================================
@@ -221,9 +201,9 @@
         %h1 Incompletions
 
       %div [Filters here]
-      %h3 Σ 29
+      %div Σ 29
 
-      %h4 Req View
+      %h3 Req View
       %table
         %tr
           %th Σ
@@ -242,34 +222,7 @@
           %td UC-3
           %td Eat Food.
 
-      %h4 Incmp View (#1: the everything view)
-      %table
-        %tr
-          %th ID
-          %th Location
-          %th Type
-          %th Supp Info
-          %th Context
-        %tr
-          %td FR-49
-          %td Body
-          %td TBD
-          %td
-          %td …the number of UCs and the number of incompletions <span class="incmp">#TBD</span> in each <span class="incmp-dull">#TODO</span>.
-        %tr
-          %td FR-49
-          %td Body
-          %td TODO
-          %td confirm
-          %td …of UCs and the number of incompletions <span class="incmp-dull">#TBD</span> in each <span class="incmp">#TODO</span>.
-        %tr
-          %td UC-3
-          %td 3.0.4.a
-          %td
-          %td
-          %td
-
-      %h4 Incmp View (#2: collapsable)
+      %h3 Incmp View
       %h5 &gt; Blank Fields (1)
       %table
         %tr
@@ -298,10 +251,8 @@
 
       .notes Notes.
         %ol
-          %li Probably no need for req + incmp views to be visible simultaneously.  Maybe show one and allow to flip between both. Would save cog + DB load.
-          %li Are requirements missing? From here we'd want to view (sub)req for more info and/or edit to resolve.
-          %li Fark, how the hell is delayed-async-auto-save going to work if we can edit fields directly here? Similarly, undo.
-          %li Incmp view should probably be in collapsable sections.
+          %li Don't show req &amp; incmp views simultaneously. Show one and allow flip between both.
+          %li Incmp view sections will be collapsable.
 
 
     -#==============================================================================================
@@ -346,7 +297,7 @@
             %a(href="#") 26
           %td
             %button Edit
-            %button Delete
+            %button Delete Forever
         %tr
           %td
             %input(value="TBD")
@@ -356,7 +307,7 @@
           %td
             %a(href="#") 4
           %td
-            %button Delete
+            %button Delete Forever
 
       %h3 Req-Types requiring implication
       %div
@@ -372,10 +323,8 @@
         %input(type="checkbox" checked="checked")
         QR: Quality Requirements
 
-      .notes Notes.
+      /.notes Notes.
         %ol
-          %li Maybe a good strategy on config pages would be having an edit button which then turns
-              static text into editable fields (which are autosaved).
 
 
     -#==============================================================================================
@@ -453,8 +402,6 @@
 
       .notes Notes.
         %ol
-          %li Items can be dragged to reorder, or dragged from/to bin.
-          %li If items can be dragged in/out of bin, is there any reason keeping the delete/restore buttons?
           %li Drag left-side tree to reorder.
           %li Drag from left-side into editor's parent/child sections.
           %li Reorder children via right-side children view.
@@ -702,9 +649,6 @@
           %li Cannot reorder or restore groupings. Instead provide link ↔ proper cfg?
           %li Maybe the [Apply ?⁺] buttons can always be enabled and if you click without a ?⁺ specified, it just focusses the ?⁺ input.
               Actually, in that case, the button labels should change as the ?⁺ input changes, so [Apply Low Priority] buttons.
-          %li Maybe a button to toggle read/edit mode. If browsing, all of those buttons are unnecessary clutter.
-          %li Needs undo/redo.
-          %li Implication transitivity becomes a problem. When browsing, I want to see. What happens when a user tries to remove/replace an implication and reqs are still transitively implied and remain the segment. Is that good (correct) or confusing? Should there just be a button to hide transitively implied reqs?
 
 
     -#==============================================================================================
@@ -856,9 +800,6 @@
           %li Press ? on a focussed cell explains any abbreviated content. (Eg. MF-4 = Blahdy Blah)
         %ol
           %li Hover over MF-12 etc (like in template.?⇒) should display the req text. Click should change focus or maybe even bring up modal?
-          %li Needs undo/redo
-          %li UC &amp; SHR are special cases. Determine their req views too.
-          %li Custom fields have their own groupings &amp; implications. How to handle that?
           %li In the dlg, UI should be the same? Move around with KB, etc. (?)
 
 
@@ -867,6 +808,7 @@
       %a#filters
         %h1 Filters
 
+      %h3 UI #1: Simple filter
       %table.left-th
         %tr
           %th Req-Type
@@ -875,17 +817,15 @@
             <input type="checkbox"/> CO
             <input type="checkbox"/> MF
             <input type="checkbox"/> FR
-          %td BR,CO, etc. Would require not overlap between req-type mnemonic and mini-lang.
         %tr
           %th Groupings
           %td
             %input(style="width:50ex" value="#v1.0 and not(#pri=med or #pri=low)")
-          %td As is.
         %tr
           %th Implied By
           %td
-            %input(style="width:50ex" value="MF-4 and not(MF-7 or MF-12) and MF-{7,9,120-140}")
-          %td As is.
+            %input(style="width:50ex" value="MF-4 MF-12")
+            AND or OR?
         %tr
           %th Incompletion Type
           %td
@@ -896,21 +836,13 @@
             %div \<input type="checkbox"/> TBD
             %div \<input type="checkbox"/> Blank field
             %div \<input type="checkbox"/> Project config issue
-          %td The user-defined ones are easy. The others are hard...
         %tr
           %th Text
           %td
             %input(style="width:50ex" value="req-type")
             %div \<input type="checkbox"/> Case-Sensitive
-            %div Search Type:
-              %div(style="padding-left:2ex")
-                %div \<input type="radio" value="txtsearch" checked="checked"/> Simple
-                %div \<input type="radio" value="txtsearch"/> Advanced
-                  %em \ (requires search terms be quoted; understands AND,OR,NOT,parens)
-                %div \<input type="radio" value="txtsearch"/> Regex
-          %td how to represent the options?
 
-      %h3 Idea #2: Single text field
+      %h3 UI #2: Advanced filter
       %div
         %textarea(rows=3 cols=100)
           {BR,CO} and #pri=high and implied by MF-{7,12} and #TODO and contains "req-type"
@@ -919,14 +851,11 @@
 
       .notes Notes.
         %ol
-          %li Problem: filter needs MF-4 but I can't remember which MF "Auto-save" is. I'd want something like a little modal dlg or auto-complete thing to popup so I can select the right MF.
-          %li Grouping filter also needs help.
-          %li How to combine filter criteria? AND everything? Loss of flexibility.
-          %li Maybe the single textarea can be an advanced option. Seeing as its advanced just make fns for everything. eg. CONTAINS("req-type",false), /qwe/i
+          %li Two components with different goals.
+            %ol
+              %li A language to represent *any* criteria imaginable. Goal: expressivity.
+              %li A simple UI for 80% of users to easily &amp; quickly accomplish 80%+ of typical filters. Goal: simplicity.
           %li When not editing the filter, it should take up as little space as possible. Therefore a single text representation + an edit button would probably be best.
-          %li Goal: have a lang which can represent *any* criteria imaginable, have a simple frontend.
-              The lang doesn't have to be simple cos it would be interal-only and/or advanced-users-only.
-          %li This will also search as the Search infrastructure, not just filters.
 
 
     -#==============================================================================================
@@ -934,7 +863,6 @@
       %a#delete
         %h1 Deleting/Restoring Reqs
 
-      %h3 Approach #1
       %div
         %input(type="checkbox")
         \ All
@@ -987,7 +915,7 @@
       .notes Notes.
         %ol
           %li As reqs are (de)selected, the reqs that they imply (dis)appear.
-          %li In approach #2, in the right-most column refs selected for deletion get strike-through too.
+          %li In the right-most column refs selected for deletion get strike-through too.
           %li For restoration instead of deletion, the ⇐ column simply becomes ⇒.
 
 
