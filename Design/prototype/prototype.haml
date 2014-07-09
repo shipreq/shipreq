@@ -35,13 +35,26 @@
   %body
     %h1 SHIPREQ PHASE-2 PROTOTYPE
 
+    %h3 High Frequency
+    %ol
+      %li
+        %a(href="#llreqs") Common Req View &amp; Editor
+      %li
+        %a(href="#filters") Filters
+      %li
+        %a(href="#sort") Sort &amp; Columns
+    %h3 Medium Frequency
+    %ol
+      %li
+        %a(href="#incmp") Incompletions
+      %li
+        %a(href="#grouping-browse") Grouping Browser
+    %h3 Low Frequency
     %ol
       %li
         %a(href="#fields") Fields
       %li
         %a(href="#reqtypes") Requirement Types
-      %li
-        %a(href="#incmp") Incompletions
       %li
         %a(href="#incmp-loose") Loose Incompletion
       %li
@@ -49,16 +62,20 @@
       %li
         %a(href="#grouping-cfg") Groupings (cfg)
       %li
-        %a(href="#grouping-browse") Grouping Browser
-      %li
-        %a(href="#llreqs") Common Req View &amp; Editor
-      %li
-        %a(href="#filters") Filters
-      %li
         %a(href="#delete") Deleting Reqs
-      %li
-        %a(href="#sort") Sort &amp; Columns
 
+    %h3 TODO
+    %ul
+      %li Extract TODOs from notes.
+      %li Work out undo (window top-right undo/redo, lock/unlock, partial undo? (ie. simply undo strategy that can fail on conflict)). First, catalog all change types.
+      %li Confirm SHRs &amp; UCs.
+      %li MF column. When sorted should show dups for each MF, just like how sem IDs work.
+      %li Subreqs &amp; implication + groupings still need work.
+      %li Prototype nice auto-complete, inserting a req ref by text would be awesome.
+      %li Prototype feasability of sending entire project's reqs to client. (local storage caching, payload size, mem size)
+      %li Split remaining TODOs into req|prototype/UI|impl
+      %li Idea: a project-wide long representing revision would be AWESOME. Eg. client's cache is at 15348, DB is at 16001, send changes.
+          Could also use associativity and commutativity of (+) to compartmentalise and use revs for each data component (eg. grouping cfg rev, reqs rev) as long as all revs are monotonic.
 
     -#==============================================================================================
     %section.screen
@@ -735,6 +752,7 @@
           %th Desc
           %th ⇒ ?
           %th Priority
+          %th
         %tr
           %td
             %input(type="checkbox")
@@ -745,6 +763,7 @@
           %td BA shall be able to specify incompletion tags in reqs.
           %td.shrna –
           %td.shrna –
+          %td %button Detail (?)
         %tr
           %td
             %input(type="checkbox")
@@ -755,6 +774,7 @@
           %td.focuscell BA shall be able to specify incompletion tags in reqs.
           %td FR-264
           %td.empty
+          %td %button Detail
 
       %div
         3 reqs selected.
@@ -765,77 +785,81 @@
 
       %div(style="margin:1em 0")
         %div %strong Req view (integrate with focussed req &amp; editing somehow)
-        %table.req-detail
+        %table.left-th.req-detail
           %tr
-            %td.x
-              %table.left-th
+            %th.tt(colspan=2) Read-only
+          %tr
+            %th ID
+            %td FR-48
+              %span(style="color:#888; text-decoration:line-through; font-style:italic; margin-left:1.3ex") (BR-7)
+          %tr
+            %th Revision
+            %td 34.2
+          %tr
+            %th Last Updated
+            %td 37 min ago.
+          %tr
+            %th Referenced By
+            %td FR-10, FR-189, QR-7.
+          /%tr
+            %th Causality
+            %td.fixpre
+              %pre MF-12 →       <strong>FR-48</strong> → FR-264
+              %pre MF-4  → UC-4 ↗
+          %tr
+            %th Causality
+            %td
+              %table.causality
                 %tr
-                  %th.tt(colspan=2) Editable
-                %tr
-                  %th Req-Type
-                  %td FR
-                %tr
-                  %th Sem-IDs
-                  %td incmp.tag.ap<br>stuff.track.ap
-                %tr
-                  %th ?⇒
-                  %td UC-4
-                %tr
-                  %th Groupings
-                  %td Phase2
-                %tr
-                  %th Desc
-                  %td BA shall be able to specify incompletion tags in reqs.
-                %tr
-                  %th Notes
-                  %td We should probably do all of the stuff with the things <span class="incmp">#TODO{confirm}</span>.
-                %tr
-                  %th Priority
-                  %td.empty
-                %tr
-                  %th ⇒?
-                  %td FR-264
-            %td.x
-              %table.left-th
-                %tr
-                  %th.tt(colspan=2) Read-only
-                %tr
-                  %th ID
-                  %td FR-48
-                    %span(style="color:#888; text-decoration:line-through; font-style:italic; margin-left:1.3ex") (BR-7)
-                %tr
-                  %th Revision
-                  %td 34.2
-                %tr
-                  %th Last Updated
-                  %td 37 min ago.
-                %tr
-                  %th Referenced By
-                  %td FR-10, FR-189, QR-7.
-                /%tr
-                  %th Causality
-                  %td.fixpre
-                    %pre MF-12 →       <strong>FR-48</strong> → FR-264
-                    %pre MF-4  → UC-4 ↗
-                %tr
-                  %th Causality
-                  %td
-                    %table.causality
-                      %tr
-                        %td.a MF-12 →<br>MF-4 → UC-4 →
-                        %td.b MF-48
-                        %td.c → FR-264
-                    %em (A graphviz SVG would be better actually.)
+                  %td.a MF-12 →<br>MF-4 → UC-4 →
+                  %td.b MF-48
+                  %td.c → FR-264
+              %em (A graphviz SVG would be better actually.)
+          %tr
+            %th.tt(colspan=2) Editable
+          %tr
+            %th Req-Type
+            %td FR
+          %tr
+            %th Sem-IDs
+            %td incmp.tag.ap<br>stuff.track.ap
+          %tr
+            %th ?⇒
+            %td UC-4
+          %tr
+            %th Groupings
+            %td Phase2
+          %tr
+            %th Desc
+            %td.focuscell BA shall be able to specify incompletion tags in reqs.
+          %tr
+            %th Notes
+            %td We should probably do all of the stuff with the things <span class="incmp">#TODO{confirm}</span>.
+          %tr
+            %th Priority
+            %td.empty
+          %tr
+            %th ⇒?
+            %td FR-264
+          %tr
+            %th
+              %td
+                %button Close Detail
+                %button Delete
 
 
       .notes Notes.
         %ol
-          %li Create buttons needs next action.
+          %li Grid will be like Excel: click to focus, move around with kb, double-click or f2 to edit (inline editor).
+          %li In the inline editor: esc cancels, return saves, ctrl-return or shift-return insert a CR into text.
+          %li There will also be a key and/or button to bring up the full req editor where all fields are editable.
+          %li Press ? on a focussed cell explains any abbreviated content. (Eg. MF-4 = Blahdy Blah)
+        %ol
           %li Hover over MF-12 etc (like in template.?⇒) should display the req text. Click should change focus or maybe even bring up modal?
           %li Needs undo/redo
-          %li Maybe move the focus around the expanded/detailed view as well?
           %li UC &amp; SHR are special cases. Determine their req views too.
           %li Custom fields have their own groupings &amp; implications. How to handle that?
+          %li In the dlg, UI should be the same? Move around with KB, etc. (?)
 
 
     -#==============================================================================================

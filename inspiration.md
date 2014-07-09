@@ -1,0 +1,12 @@
+I want this product to
+======================
+
+* be awesome.
+* be the Github of requirements.
+* be easy to use, at least as easy at excel.
+* make people happy when they use it.
+* be super powerful & flexible.
+* provide info more useful that what one would normally provide (without significant effort).
+* facilitate better software and make both dev teams & clients happier.
+* be passionately embraced by people who believe in the value of requirements.
+* be something I can use to write better software myself.
