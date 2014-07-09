@@ -47,5 +47,5 @@ Tech Prototype
   * Implications (by id or text)
   * Groupings
 * Prototype feasability of sending entire project's reqs to client.
-  (local storage caching, payload size, mem size)
+  Payload size is good (120kb gz per 1000 reqs)
 
