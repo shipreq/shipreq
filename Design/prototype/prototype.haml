@@ -24,6 +24,7 @@
       .l1 {padding-left:4ex}
       .l2 {padding-left:8ex}
       .del, .del * {opacity:0.5; _color:#666 !important; text-decoration:line-through !important}
+      .off, .off *:not(select) {color:#5a5a5a}
 
       .no-border td, .no-border th {border:none}
       .req-detail .x {border:none; vertical-align:top}
@@ -924,63 +925,68 @@
       %a#sort
         %h1 Sort &amp; Columns
 
-      %h3 Sorting
-      %table.no-border
+      %table
+        %tr
+          %th Columns
+          %th Sorting
         %tr
           %td
-            %select(size=8)
-              %option Req-Type
-              %option Groupings
-              %option ? ⇒
-              %option Desc
-              %option ⇒ ?
-              %option Custom Field α (exclude UC-only fields)
-              %option Revision
-              %option Referenced By
+            %ol
+              %li \<input type="checkbox" checked/> Column E [drag]
+              %li \<input type="checkbox" checked/> Column F [drag]
+              %li \<input type="checkbox" checked/> Column A [drag]
+              %li \<input type="checkbox" checked/> Column B [drag]
+              %li \<input type="checkbox" checked/> Column G [drag]
+              %li.off \<input type="checkbox"/> Column C [drag]
+              %li.off \<input type="checkbox"/> Column D [drag]
           %td
-            %div %button ⇒
-            %div %button ⇐
-          %td
-            %select(size=8)
-              %option Δ ID
-              %option Δ Sem-ID
-              %option ∇ Last Updated
-          %td
-            %div %button ⇑
-            %div %button ↑
-            %div %button Δ∇
-            %div %button ↓
-            %div %button ⇓
-
-      %h3 Columns
-      %table.no-border
-        %tr
-          %td
-            %select(size=8)
-              %option Req-Type
-              %option Groupings
-              %option Custom Field α (exclude UC-only fields)
-              %option Last Updated
-              %option Revision
-              %option Referenced By
-          %td
-            %div %button ⇒
-            %div %button ⇐
-          %td
-            %select(size=8)
-              %option ID
-              %option Sem-ID
-              %option ? ⇒
-              %option Desc
-              %option ⇒ ?
-          %td
-            %div %button ⇑
-            %div %button ↑
-            %div %button ↓
-            %div %button ⇓
+            %ol
+              %li
+                %select
+                  %option Not used
+                  %option(selected="selected") Δ Ascending
+                  %option ∇ Descending
+                \ Column A [drag]
+              %li
+                %select
+                  %option Not used
+                  %option(selected="selected") Δ Ascending
+                  %option ∇ Descending
+                \ Column C [drag]
+              %li
+                %select
+                  %option Not used
+                  %option Δ Ascending
+                  %option(selected="selected") ∇ Descending
+                \ Column E [drag]
+              %li
+                %select
+                  %option Not used
+                  %option(selected="selected") Δ Ascending
+                  %option ∇ Descending
+                \ Column G [drag]
+              %li.off
+                %select
+                  %option Not used
+                  %option Δ Ascending
+                  %option ∇ Descending
+                \ Column B [drag]
+              %li.off
+                %select
+                  %option Not used
+                  %option Δ Ascending
+                  %option ∇ Descending
+                \ Column D [drag]
+              %li.off
+                %select
+                  %option Not used
+                  %option Δ Ascending
+                  %option ∇ Descending
+                \ Column F [drag]
 
       .notes Notes.
         %ol
+          %li Columns not being used are sorted alphabetically.
+          %li Dragging something off, up into where things are on, also turns it on.
+          %li Dragging something on, down into where things are off, turns it off.
           %li Custom fields have their own groupings &amp; implications. How to handle that?
-          %li This works but makes for annoying UX.
-          %li Would columns based on sort be a good idea? Will have to create a number of common sort+column scenarios and test bouncing around between them.
