@@ -3,13 +3,12 @@ Prototype / UI
 
 ## High Freq UIs
 
-* Finish filter prototype.
 * Mistake/accident prevention/recovery strategy.
   * Affects: Cfg.Fields, Cfg.ReqTypes, Incmp, Cfg.Incmp, GBrowser, LLReqs.
   * window top-right undo/redo, lock/unlock, partial undo? (ie. simply undo strategy that can fail on conflict)
   * First, catalog all change types.
 * Fucking subreqs, work out implications.
-* Prototype UC, SHR, subreqs on Incmp, GBrowser.
+* Prototype {UC, SHR, subreqs} on {Incmp, GroupingBrowser}.
 
 ## Med Freq UIs
 

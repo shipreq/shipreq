@@ -840,30 +840,22 @@
             <input type="checkbox"/> CO
             <input type="checkbox"/> MF
             <input type="checkbox"/> FR
+            <input type="checkbox" checked/> All
         %tr
           %th Groupings
           %td
-            %input(style="width:50ex" value="#v1.0 and not(#pri=med or #pri=low)")
+            %input(style="width:50ex" value="#v1.0 #pri=med")
+            <input type="radio" checked/> Match any | <input type="radio"/> Match all
         %tr
           %th Implied By
           %td
             %input(style="width:50ex" value="MF-4 MF-12")
-            AND or OR?
-        %tr
-          %th Incompletion Type
-          %td
-            %div \<input type="checkbox"/> Is incomplete
-            %div \<input type="checkbox"/> Is not incomplete
-            %hr
-            %div \<input type="checkbox"/> TODO
-            %div \<input type="checkbox"/> TBD
-            %div \<input type="checkbox"/> Blank field
-            %div \<input type="checkbox"/> Project config issue
+            <input type="radio"/> Match any | <input type="radio" checked/> Match all
         %tr
           %th Text
           %td
             %input(style="width:50ex" value="req-type")
-            %div \<input type="checkbox"/> Case-Sensitive
+            \ <input type="checkbox"/> Case-Sensitive
 
       %h3 UI #2: Advanced filter
       %div
@@ -879,6 +871,7 @@
               %li A language to represent *any* criteria imaginable. Goal: expressivity.
               %li A simple UI for 80% of users to easily &amp; quickly accomplish 80%+ of typical filters. Goal: simplicity.
           %li When not editing the filter, it should take up as little space as possible. Therefore a single text representation + an edit button would probably be best.
+          %li Incompletion filtering would be nice in the underlying expression syntax. Should not be part of the simple UI; there is a whole incompletions UI for that.
 
 
     -#==============================================================================================
