@@ -11,7 +11,7 @@
       .notes ol, .notes ul {margin-top:0.2em}
       section.screen {border-top: solid 1px black; margin-top: 8em; padding-top: 0.7em; padding-left: 4em}
       section.screen > a h1 {margin-top: 0; margin-left: -2.6em}
-      span.incmp {color:#c00}
+      textarea.incmp, span.incmp {color:#c00}
       span.incmp-dull {color:#777}
       .empty {background:#c66}
       .fixpre pre {margin-top:0; margin-bottom:0}
@@ -204,12 +204,16 @@
       %div [Filters here]
       %div Σ 29
 
-      %h3 Req View
+      %h3 Distribution View
       %table
         %tr
           %th Σ
           %th ID
           %th ReqText
+        %tr
+          %td 1
+          %td Project Config
+          %td
         %tr
           %td 2
           %td FR-49
@@ -222,6 +226,10 @@
           %td 8
           %td UC-3
           %td Eat Food.
+        %tr
+          %td 2
+          %td Loose
+          %td
 
       %h3 Incmp View
       %h5 &gt; Blank Fields (1)
@@ -229,9 +237,11 @@
         %tr
           %th ID
           %th Location
+          %th Content
         %tr
           %td UC-3
           %td 3.0.4.a
+          %td %textarea
       %h5 &gt; TODO (2)
       %table
         %tr
@@ -249,11 +259,17 @@
           %td Body
           %td confirm
           %td …of UCs and the number of incompletions <span class="incmp-dull">#TBD</span> in each <span class="incmp">#TODO</span>.
+      %h5 &gt; Loose (1)
+      %table
+        %tr
+          %td %textarea.incmp(rows=3 cols=80) Still need to analyse all the things with the stuff and write down the words.
+          %td %button Resolve
 
       .notes Notes.
         %ol
-          %li Don't show req &amp; incmp views simultaneously. Show one and allow flip between both.
+          %li Distribution &amp; incmp views not simultaneously. Have a button or tab to flip between both.
           %li Incmp view sections will be collapsable.
+          %li Details about what to show for each incompletion type in <code>system-wide.ods:Incompletions</code>.
 
 
     -#==============================================================================================

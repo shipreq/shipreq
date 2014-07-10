@@ -13,10 +13,6 @@ Prototype / UI
 
 ## Med Freq UIs
 
-* Catalogue incompletion types and prototype each.
-  Think about how to quickly resolve from Incompletions page.
-* Does incompletion view really have enough info/functionality?
-  Confirm goals of page and re-read the reqs, maybe analysis doc too.
 * Mock up allocation graphs.
 * Grouping browser: revise reqs and analysis docs. Ensure it is sufficient for goals.
 * Create a doc with UIs and goals, ensure they stay true to their purpose.
