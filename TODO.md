@@ -1,8 +1,3 @@
-Requirements
-============
-
-* MF column. When sorted should show dups for each MF, just like how sem IDs work.
-
 Prototype / UI
 ==============
 
