@@ -15,8 +15,6 @@ Prototype / UI
 
 * Mock up allocation graphs.
 * Grouping browser: revise reqs and analysis docs. Ensure it is sufficient for goals.
-* Create a doc with UIs and goals, ensure they stay true to their purpose.
-  Also clarify what they are *not* to prevent bloat and cross-UI duplication.
 * The implication browser differs from the grouping one in that it considers
   implication transitivity in its content, but not its editing.
   i.e. remove all from MF-1 implied can still leave some transitively implied reqs remaining.
