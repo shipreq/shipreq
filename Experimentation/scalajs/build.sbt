@@ -10,10 +10,8 @@ scalaVersion := "2.11.1"
 
 scalacOptions ++= Seq( "-deprecation", "-unchecked", "-language:_" )
 
-resolvers += bintray.Opts.resolver.repo("japgolly", "scala")
-
 libraryDependencies ++= Seq(
-  "japgolly.scalajs.react" %%% "scalajs-react" % "0.1.0"
+  "com.github.japgolly.scalajs-react" %%% "scalajs-react" % "0.2.0"
   ,"com.github.japgolly.fork.scalaz" %%% "scalaz-core" % "7.1.0-RC1"
 )
 

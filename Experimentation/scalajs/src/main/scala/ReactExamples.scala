@@ -28,7 +28,7 @@ object ReactExamples {
     case class State(people: SortedSet[String], text: String, focusPerson: Option[String])
     val stateTextL = Lens.lensg[State, String](a => b => a.copy(text = b, focusPerson = None), _.text)
 
-    class PeopleListBackend(t: ComponentScopeB[Unit, State]) {
+    class PeopleListBackend(t: BackendScope[Unit, State]) {
       def delete(name: String): Unit = {
         val p = t.state.people
         if (p.contains(name))
@@ -105,8 +105,8 @@ object ReactExamples {
 
     case class State(focus: Option[Int], cells: Vector[String])
 
-    // TODO ComponentScopeB rename or typealias to BackendScope
-    class Backend(T: ComponentScopeB[Unit, State]) {
+    // TODO BackendScope rename or typealias to BackendScope
+    class Backend(T: BackendScope[Unit, State]) {
 
       val UP = 38
       val DOWN = 40
