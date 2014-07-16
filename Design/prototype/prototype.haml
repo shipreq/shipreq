@@ -13,6 +13,7 @@
       section.screen > a h1 {margin-top: 0; margin-left: -2.6em}
       textarea.incmp, span.incmp {color:#c00}
       span.incmp-dull {color:#777}
+      section.group {border:dashed 1px #777; padding:1ex; margin: 1.3em 0}
       .empty {background:#c66}
       .fixpre pre {margin-top:0; margin-bottom:0}
       .na, .na * {color:#777 !important; text-decoration:line-through !important}
@@ -205,77 +206,83 @@
       %div Σ 29
 
       %div
+        %button Create Loose Incompletion
         %button Field Cfg
         %button Grouping Cfg
         %button Req-Type Cfg
-        %em \ ← secondary goal
+        %em \ ← secondary goals
 
-      %h3 Distribution View
-      %table
-        %tr
-          %th Σ
-          %th ID
-          %th ReqText
-        %tr
-          %td 1
-          %td Project Config
-          %td
-        %tr
-          %td 2
-          %td FR-49
-          %td BA shall be able to see a list of UCs and the number of incompletions <span class="incmp">#TBD</span> in each <span class="incmp">#TODO{confirm}</span>.
-        %tr
-          %td 3
-          %td FR-311
-          %td
-        %tr
-          %td 8
-          %td UC-3
-          %td Eat Food.
-        %tr
-          %td 2
-          %td Loose
-          %td
+      %section.group
+        %h3 Distribution View
+        %table
+          %tr
+            %th Σ
+            %th ID
+            %th ReqText
+          %tr
+            %td 1
+            %td Project Config
+            %td
+          %tr
+            %td 2
+            %td FR-49
+            %td BA shall be able to see a list of UCs and the number of incompletions <span class="incmp">#TBD</span> in each <span class="incmp">#TODO{confirm}</span>.
+          %tr
+            %td 3
+            %td FR-311
+            %td
+          %tr
+            %td 8
+            %td UC-3
+            %td Eat Food.
+          %tr
+            %td 2
+            %td Loose
+            %td
 
-      %h3 Incmp View
-      %h5 &gt; Blank Fields (1)
-      %table
-        %tr
-          %th ID
-          %th Location
-          %th Content
-        %tr
-          %td UC-3
-          %td 3.0.4.a
-          %td %textarea
-      %h5 &gt; TODO (2)
-      %table
-        %tr
-          %th ID
-          %th Location
-          %th Supp Info
-          %th Context
-        %tr
-          %td FR-49
-          %td Body
-          %td
-          %td …the number of UCs and the number of incompletions <span class="incmp">#TBD</span> in each <span class="incmp-dull">#TODO</span>.
-        %tr
-          %td FR-49
-          %td Body
-          %td confirm
-          %td …of UCs and the number of incompletions <span class="incmp-dull">#TBD</span> in each <span class="incmp">#TODO</span>.
-      %h5 &gt; Loose (1)
-      %table
-        %tr
-          %td %textarea.incmp(rows=3 cols=80) Still need to analyse all the things with the stuff and write down the words.
-          %td %button Resolve
+      %section.group
+        %h3 Incmp View
+        %h5 &gt; Blank Fields (1)
+        %table
+          %tr
+            %th ID
+            %th Location
+            %th Content
+            %th In Context
+          %tr
+            %td UC-3
+            %td 3.0.4.a
+            %td %textarea
+            %td %button Edit UC-3
+        %h5 &gt; TODO (2)
+        %table
+          %tr
+            %th ID
+            %th Location
+            %th Supp Info
+            %th Context
+          %tr
+            %td FR-49
+            %td Body
+            %td
+            %td …the number of UCs and the number of incompletions <span class="incmp">#TBD</span> in each <span class="incmp-dull">#TODO</span>.
+          %tr
+            %td FR-49
+            %td Body
+            %td confirm
+            %td …of UCs and the number of incompletions <span class="incmp-dull">#TBD</span> in each <span class="incmp">#TODO</span>.
+        %h5 &gt; Loose (1)
+        %table
+          %tr
+            %td %textarea.incmp(rows=3 cols=80) Still need to analyse all the things with the stuff and write down the words.
+            %td %button Resolve
 
       .notes Notes.
         %ol
           %li Distribution &amp; incmp views not simultaneously. Have a button or tab to flip between both.
           %li Incmp view sections will be collapsable.
-          %li Details about what to show for each incompletion type in <code>system-wide.ods:Incompletions</code>.
+          %li Details about what to show for each incompletion type in <code>system-wide.ods:Issues</code>.
+          %li Might be an idea to have a "Resolved today" section, else resolve reqs disappear without a trace. One may not have meant to hit enter and undo would remove all changes, user just wants to find and add another word or something.
 
 
     -#==============================================================================================
