@@ -58,9 +58,9 @@
       %li
         %a(href="#reqtypes") Cfg: Requirement Types
       %li
-        %a(href="#incmp-cfg") Cfg: Incompletions
-      %li
         %a(href="#grouping-cfg") Cfg: Groupings
+      %li
+        %a(href="#incmp-cfg") Cfg: Incompletions
       %li
         %a(href="#incmp-loose") Loose Incompletion
       %li
@@ -68,133 +68,274 @@
 
     -#==============================================================================================
     %section.screen
-      %a#fields
-        %h1 Fields
+      %a#llreqs
+        %h1 Common Req View &amp; Editor
 
-      %h4 Active Fields
-      %button Create
-      %table
-        %tr
-          %th Name
-          %th RefKey
-          %th Field Type
-          %th Mandatory
-          %th Req Types
-          %th Usage
-          %th Ctrls
-        %tr
-          %td Description
-          %td \.desc
-          %td Text
-          %td ☐
-          %td Only: MF, UC.
-          %td
-            %a(href="#") 27
-          %td
-            %button Edit
-            %button Delete
-            [Drag]
-        %tr
-          %td Priority
-          %td \.pri
-          %td Grouping
-          %td ☑
-          %td All.
-          %td
-            %a(href="#") 432
-          %td
-            %button Edit
-            %button Delete
-            [Drag]
-        %tr
-          %td TEST
-          %td \.test
-          %td Text
-          %td ☑
-          %td All.
-          %td 0
-          %td
-            %button Edit
-            %button Delete Forever
-            [Drag]
+      %div [Filter here]
 
-      %h4 Deleted Fields
-      %table
+      %div [Sort &amp; column critera]
+        %button Reset
+
+      %div
+        %button Create header row
+      %br
+      %div
+        New Requirement template:
+        %div Req-Type: 
+          %select
+            %option CO
+            %option(selected="selected") FR
+            %option MF
+        %div Implied by: ? ⇒
+          %input(value="MF-12, MF-18")
+        %div Text
+          %input(value="When doing blah,")
+        %div Priority
+          %input(value="Medium Priority")
+        %button Create
+        %button Create under [incmp.tag.ap]
+      %br
+
+      %div
+        %input(type="checkbox")
+        Show deleted reqs
+
+      %table(style="margin-top:1em")
         %tr
-          %th Name
-          %th RefKey
-          %th Field Type
-          %th Mandatory
-          %th Req Types
-          %th Usage
-          %th Ctrls
+          %th
+            %input(type="checkbox")
+          %th Type
+          %th ID
+          %th Sem-ID
+          %th ? ⇒
+          %th Desc
+          %th ⇒ ?
+          %th Priority
+          %th
         %tr
-          %td Description
-          %td \.desc
-          %td Text
-          %td ☐
-          %td Only: MF, UC.
           %td
-            %a(href="#") 27
+            %input(type="checkbox")
+          %td SHR
+          %td.shrna –
+          %td incmp.tag
+          %td.shrna –
+          %td BA shall be able to specify incompletion tags in reqs.
+          %td.shrna –
+          %td.shrna –
+          %td %button Detail (?)
+        %tr
           %td
-            %button Restore
-            [Drag]
+            %input(type="checkbox")
+          %td FR
+          %td FR-48
+          %td(style="padding-left:2.3ex") ap
+          %td UC-4
+          %td.focuscell BA shall be able to specify incompletion tags in reqs.
+          %td FR-264
+          %td.empty
+          %td %button Detail
+
+      %div
+        3 reqs selected.
+        %button Copy
+        %button Change Req-Type
+        %button Change common sem-ID prefix
+        %button Restore (deleted)
+
+      %div(style="margin:1em 0")
+        %div %strong Req view (integrate with focussed req &amp; editing somehow)
+        %table.left-th.req-detail
+          %tr
+            %th.tt(colspan=2) Read-only
+          %tr
+            %th ID
+            %td FR-48
+              %span(style="color:#888; text-decoration:line-through; font-style:italic; margin-left:1.3ex") (BR-7)
+          %tr
+            %th Revision
+            %td 34.2
+          %tr
+            %th Last Updated
+            %td 37 min ago.
+          %tr
+            %th Referenced By
+            %td FR-10, FR-189, QR-7.
+          /%tr
+            %th Causality
+            %td.fixpre
+              %pre MF-12 →       <strong>FR-48</strong> → FR-264
+              %pre MF-4  → UC-4 ↗
+          %tr
+            %th Causality
+            %td
+              %table.causality
+                %tr
+                  %td.a MF-12 →<br>MF-4 → UC-4 →
+                  %td.b MF-48
+                  %td.c → FR-264
+              %em (A graphviz SVG would be better actually.)
+          %tr
+            %th.tt(colspan=2) Editable
+          %tr
+            %th Req-Type
+            %td FR
+          %tr
+            %th Sem-IDs
+            %td incmp.tag.ap<br>stuff.track.ap
+          %tr
+            %th ?⇒
+            %td UC-4
+          %tr
+            %th Groupings
+            %td Phase2
+          %tr
+            %th Desc
+            %td.focuscell BA shall be able to specify incompletion tags in reqs.
+          %tr
+            %th Notes
+            %td We should probably do all of the stuff with the things <span class="incmp">#TODO{confirm}</span>.
+          %tr
+            %th Priority
+            %td.empty
+          %tr
+            %th ⇒?
+            %td FR-264
+          %tr
+            %th
+              %td
+                %button Close Detail
+                %button Delete
+
 
       .notes Notes.
         %ol
-          %li Some fields will not be editable or deletable.
-          %li Create → Choose req type → Enter common attr {mand, req types} and special attr {grouping, name, ...}
-          %li Edit brings up the last part of the form above.
+          %li Grid will be like Excel: click to focus, move around with kb, double-click or f2 to edit (inline editor).
+          %li In the inline editor: esc cancels, return saves, ctrl-return or shift-return insert a CR into text.
+          %li There will also be a key and/or button to bring up the full req editor where all fields are editable.
+          %li Press ? on a focussed cell explains any abbreviated content. (Eg. MF-4 = Blahdy Blah)
+        %ol
+          %li Hover over MF-12 etc (like in template.?⇒) should display the req text. Click should change focus or maybe even bring up modal?
+          %li In the dlg, UI should be the same? Move around with KB, etc. (?)
 
 
     -#==============================================================================================
     %section.screen
-      %a#reqtypes
-        %h1 Requirement Types
+      %a#filters
+        %h1 Filters
 
-      %h4 Active Fields
-      %button Create
-      %table
+      %h3 UI #1: Simple filter
+      %table.left-th
         %tr
-          %th Mnemonic
-          %th Name
-          %th Implication Required
-          %th Requirements
-          %th Ctrls
+          %th Req-Type
+          %td
+            <input type="checkbox"/> BR
+            <input type="checkbox"/> CO
+            <input type="checkbox"/> MF
+            <input type="checkbox"/> FR
+            <input type="checkbox" checked/> All
         %tr
-          %td BR
-          %td Business Requirement
-          %td ☐
-          %td 0
+          %th Groupings
           %td
-            %button Edit
-            %button Delete Forever
+            %input(style="width:50ex" value="#v1.0 #pri=med")
+            <input type="radio" checked/> Match any | <input type="radio"/> Match all
         %tr
-          %td MF 
-            .del F
-          %td Major Feature
-          %td ☐
+          %th Implied By
           %td
-            %a(href="#") 27
-          %td
-            %button Edit
-            %button Delete
+            %input(style="width:50ex" value="MF-4 MF-12")
+            <input type="radio"/> Match any | <input type="radio" checked/> Match all
         %tr
-          %td FR
-          %td Functional Requirement
-          %td ☑
+          %th Text
           %td
-            %a(href="#") 348
-          %td
-            %button Edit
-            %button Delete
+            %input(style="width:50ex" value="req-type")
+            \ <input type="checkbox"/> Case-Sensitive
 
-      %h4 Deleted Fields
-      [Blah blah blah]
+      %h3 UI #2: Advanced filter
+      %div
+        %textarea(rows=3 cols=100)
+          {BR,CO} and #pri=high and implied by MF-{7,12} and #TODO and contains "req-type"
+        %textarea(rows=3 cols=100)
+          {BR,CO} #pri=high (implied by MF-7) (#TODO or (contains "req-type"))
 
       .notes Notes.
         %ol
-          %li This should work the same way the <a href="#fields">Fields</a> screen works.
+          %li Two components with different goals.
+            %ol
+              %li A language to represent *any* criteria imaginable. Goal: expressivity.
+              %li A simple UI for 80% of users to easily &amp; quickly accomplish 80%+ of typical filters. Goal: simplicity.
+          %li When not editing the filter, it should take up as little space as possible. Therefore a single text representation + an edit button would probably be best.
+          %li Incompletion filtering would be nice in the underlying expression syntax. Should not be part of the simple UI; there is a whole incompletions UI for that.
+
+
+    -#==============================================================================================
+    %section.screen
+      %a#sort
+        %h1 Sort &amp; Columns
+
+      %table
+        %tr
+          %th Columns
+          %th Sorting
+        %tr
+          %td
+            %ol
+              %li \<input type="checkbox" checked/> Column E [drag]
+              %li \<input type="checkbox" checked/> Column F [drag]
+              %li \<input type="checkbox" checked/> Column A [drag]
+              %li \<input type="checkbox" checked/> Column B [drag]
+              %li \<input type="checkbox" checked/> Column G [drag]
+              %li.off \<input type="checkbox"/> Column C [drag]
+              %li.off \<input type="checkbox"/> Column D [drag]
+          %td
+            %ol
+              %li
+                %select
+                  %option Not used
+                  %option(selected="selected") Δ Ascending
+                  %option ∇ Descending
+                \ Column A [drag]
+              %li
+                %select
+                  %option Not used
+                  %option(selected="selected") Δ Ascending
+                  %option ∇ Descending
+                \ Column C [drag]
+              %li
+                %select
+                  %option Not used
+                  %option Δ Ascending
+                  %option(selected="selected") ∇ Descending
+                \ Column E [drag]
+              %li
+                %select
+                  %option Not used
+                  %option(selected="selected") Δ Ascending
+                  %option ∇ Descending
+                \ Column G [drag]
+              %li.off
+                %select
+                  %option Not used
+                  %option Δ Ascending
+                  %option ∇ Descending
+                \ Column B [drag]
+              %li.off
+                %select
+                  %option Not used
+                  %option Δ Ascending
+                  %option ∇ Descending
+                \ Column D [drag]
+              %li.off
+                %select
+                  %option Not used
+                  %option Δ Ascending
+                  %option ∇ Descending
+                \ Column F [drag]
+
+      .notes Notes.
+        %ol
+          %li Columns not being used are sorted alphabetically.
+          %li Dragging something off, up into where things are on, also turns it on.
+          %li Dragging something on, down into where things are off, turns it off.
+          %li Custom fields have their own groupings &amp; implications. How to handle that?
 
 
     -#==============================================================================================
@@ -283,158 +424,6 @@
           %li Incmp view sections will be collapsable.
           %li Details about what to show for each incompletion type in <code>system-wide.ods:Issues</code>.
           %li Might be an idea to have a "Resolved today" section, else resolve reqs disappear without a trace. One may not have meant to hit enter and undo would remove all changes, user just wants to find and add another word or something.
-
-
-    -#==============================================================================================
-    %section.screen
-      %a#incmp-loose
-        %h1 Loose Incompletion
-
-      %table.no-border
-        %tr
-          %td
-            %select
-              %option TODO
-              %option TBD
-          %td
-            %textarea
-          %td
-            %button Done
-            %button Cancel
-
-      .notes Notes.
-        %ol
-          %li Make this a modal dialog.
-
-
-    -#==============================================================================================
-    %section.screen
-      %a#incmp-cfg
-        %h1 Incompletions (cfg)
-
-      %h3 User-Defined Incompletion Types
-      %button Create
-      %table
-        %tr
-          %th Name &amp; RefKey
-          %th Desc
-          %th Σ
-          %th Ctrls
-        %tr
-          %td TODO
-          %td Something that needs to be done.
-          %td
-            %a(href="#") 26
-          %td
-            %button Edit
-            %button Delete Forever
-        %tr
-          %td
-            %input(value="TBD")
-          %td
-            %textarea
-              Pending discussion with a client.
-          %td
-            %a(href="#") 4
-          %td
-            %button Delete Forever
-
-      %h3 Req-Types requiring implication
-      %div
-        %input(type="checkbox")
-        CO: Constraints
-      %div
-        %input(type="checkbox" checked="checked")
-        FR: Functional Requirements
-      %div
-        %input(type="checkbox")
-        MF: Major Features
-      %div
-        %input(type="checkbox" checked="checked")
-        QR: Quality Requirements
-
-      /.notes Notes.
-        %ol
-
-
-    -#==============================================================================================
-    %section.screen
-      %a#grouping-cfg
-        %h1 Groupings (Cfg)
-
-      %table
-        %tr
-          %td.fixpre
-            %button Create
-            %pre Priority
-            %pre  ├── High Priority
-            %pre  ├── Medium Priority
-            %pre  └── Low Priority
-            %pre Blah
-            %pre └── fay
-            %pre     ├── evnznhce
-            %pre     ├── webhket
-            %pre     │   ├── daf7_arser
-            %pre     │   ├── hyi_paser
-            %pre     │   │   ├── jnshkn
-            %pre     │   │   └── strm_reader
-            %pre     │   └── hbi_parser
-            %pre     └── ebsokt
-            %h3 Deleted Groupings / Bin
-            TODO
-          %td
-            %h3 Editor
-            %table
-              %tr
-                %th Name
-                %td
-                  %input(value="High Priority")
-              %tr
-                %th Description
-                %td
-                  %textarea
-              %tr
-                %th RefKey
-                %td
-                  %input(value="pri=high")
-              %tr
-                %th Type
-                %td Applicable
-              %tr
-                %th Enum
-                %td
-                  %input(type="checkbox")
-            %div
-              %h3 Parents
-              %ol
-                %li
-                  Priority
-                  %button Remove
-              %div
-                %input
-                %button Add Parent
-            %div
-              %h3 Children
-              %ol
-                %li
-                  Priority
-                  %button Remove
-              %div
-                %input
-                %button Add Child
-            %h3 Usage
-            %div Σ applications
-            %div View applications button or something
-            %button Delete
-            %br
-            %br
-            %button Create Child
-
-      .notes Notes.
-        %ol
-          %li Drag left-side tree to reorder.
-          %li Drag from left-side into editor's parent/child sections.
-          %li Reorder children via right-side children view.
 
 
     -#==============================================================================================
@@ -683,202 +672,285 @@
 
     -#==============================================================================================
     %section.screen
-      %a#llreqs
-        %h1 Common Req View &amp; Editor
+      %a#fields
+        %h1 Cfg: Fields
 
-      %div [Filter here]
-
-      %div [Sort &amp; column critera]
-        %button Reset
-
-      %div
-        %button Create header row
-      %br
-      %div
-        New Requirement template:
-        %div Req-Type: 
-          %select
-            %option CO
-            %option(selected="selected") FR
-            %option MF
-        %div Implied by: ? ⇒
-          %input(value="MF-12, MF-18")
-        %div Text
-          %input(value="When doing blah,")
-        %div Priority
-          %input(value="Medium Priority")
-        %button Create
-        %button Create under [incmp.tag.ap]
-      %br
-
-      %div
-        %input(type="checkbox")
-        Show deleted reqs
-
-      %table(style="margin-top:1em")
+      %h4 Active Fields
+      %button Create
+      %table
         %tr
-          %th
-            %input(type="checkbox")
-          %th Type
-          %th ID
-          %th Sem-ID
-          %th ? ⇒
-          %th Desc
-          %th ⇒ ?
-          %th Priority
-          %th
+          %th Name
+          %th RefKey
+          %th Field Type
+          %th Mandatory
+          %th Req Types
+          %th Usage
+          %th Ctrls
         %tr
+          %td Description
+          %td \.desc
+          %td Text
+          %td ☐
+          %td Only: MF, UC.
           %td
-            %input(type="checkbox")
-          %td SHR
-          %td.shrna –
-          %td incmp.tag
-          %td.shrna –
-          %td BA shall be able to specify incompletion tags in reqs.
-          %td.shrna –
-          %td.shrna –
-          %td %button Detail (?)
-        %tr
+            %a(href="#") 27
           %td
-            %input(type="checkbox")
-          %td FR
-          %td FR-48
-          %td(style="padding-left:2.3ex") ap
-          %td UC-4
-          %td.focuscell BA shall be able to specify incompletion tags in reqs.
-          %td FR-264
-          %td.empty
-          %td %button Detail
+            %button Edit
+            %button Delete
+            [Drag]
+        %tr
+          %td Priority
+          %td \.pri
+          %td Grouping
+          %td ☑
+          %td All.
+          %td
+            %a(href="#") 432
+          %td
+            %button Edit
+            %button Delete
+            [Drag]
+        %tr
+          %td TEST
+          %td \.test
+          %td Text
+          %td ☑
+          %td All.
+          %td 0
+          %td
+            %button Edit
+            %button Delete Forever
+            [Drag]
 
-      %div
-        3 reqs selected.
-        %button Copy
-        %button Change Req-Type
-        %button Change common sem-ID prefix
-        %button Restore (deleted)
-
-      %div(style="margin:1em 0")
-        %div %strong Req view (integrate with focussed req &amp; editing somehow)
-        %table.left-th.req-detail
-          %tr
-            %th.tt(colspan=2) Read-only
-          %tr
-            %th ID
-            %td FR-48
-              %span(style="color:#888; text-decoration:line-through; font-style:italic; margin-left:1.3ex") (BR-7)
-          %tr
-            %th Revision
-            %td 34.2
-          %tr
-            %th Last Updated
-            %td 37 min ago.
-          %tr
-            %th Referenced By
-            %td FR-10, FR-189, QR-7.
-          /%tr
-            %th Causality
-            %td.fixpre
-              %pre MF-12 →       <strong>FR-48</strong> → FR-264
-              %pre MF-4  → UC-4 ↗
-          %tr
-            %th Causality
-            %td
-              %table.causality
-                %tr
-                  %td.a MF-12 →<br>MF-4 → UC-4 →
-                  %td.b MF-48
-                  %td.c → FR-264
-              %em (A graphviz SVG would be better actually.)
-          %tr
-            %th.tt(colspan=2) Editable
-          %tr
-            %th Req-Type
-            %td FR
-          %tr
-            %th Sem-IDs
-            %td incmp.tag.ap<br>stuff.track.ap
-          %tr
-            %th ?⇒
-            %td UC-4
-          %tr
-            %th Groupings
-            %td Phase2
-          %tr
-            %th Desc
-            %td.focuscell BA shall be able to specify incompletion tags in reqs.
-          %tr
-            %th Notes
-            %td We should probably do all of the stuff with the things <span class="incmp">#TODO{confirm}</span>.
-          %tr
-            %th Priority
-            %td.empty
-          %tr
-            %th ⇒?
-            %td FR-264
-          %tr
-            %th
-              %td
-                %button Close Detail
-                %button Delete
-
+      %h4 Deleted Fields
+      %table
+        %tr
+          %th Name
+          %th RefKey
+          %th Field Type
+          %th Mandatory
+          %th Req Types
+          %th Usage
+          %th Ctrls
+        %tr
+          %td Description
+          %td \.desc
+          %td Text
+          %td ☐
+          %td Only: MF, UC.
+          %td
+            %a(href="#") 27
+          %td
+            %button Restore
+            [Drag]
 
       .notes Notes.
         %ol
-          %li Grid will be like Excel: click to focus, move around with kb, double-click or f2 to edit (inline editor).
-          %li In the inline editor: esc cancels, return saves, ctrl-return or shift-return insert a CR into text.
-          %li There will also be a key and/or button to bring up the full req editor where all fields are editable.
-          %li Press ? on a focussed cell explains any abbreviated content. (Eg. MF-4 = Blahdy Blah)
-        %ol
-          %li Hover over MF-12 etc (like in template.?⇒) should display the req text. Click should change focus or maybe even bring up modal?
-          %li In the dlg, UI should be the same? Move around with KB, etc. (?)
+          %li Some fields will not be editable or deletable.
+          %li Create → Choose req type → Enter common attr {mand, req types} and special attr {grouping, name, ...}
+          %li Edit brings up the last part of the form above.
 
 
     -#==============================================================================================
     %section.screen
-      %a#filters
-        %h1 Filters
+      %a#reqtypes
+        %h1 Cfg: Requirement Types
 
-      %h3 UI #1: Simple filter
-      %table.left-th
+      %h4 Active Fields
+      %button Create
+      %table
         %tr
-          %th Req-Type
-          %td
-            <input type="checkbox"/> BR
-            <input type="checkbox"/> CO
-            <input type="checkbox"/> MF
-            <input type="checkbox"/> FR
-            <input type="checkbox" checked/> All
+          %th Mnemonic
+          %th Name
+          %th Implication Required
+          %th Requirements
+          %th Ctrls
         %tr
-          %th Groupings
+          %td BR
+          %td Business Requirement
+          %td ☐
+          %td 0
           %td
-            %input(style="width:50ex" value="#v1.0 #pri=med")
-            <input type="radio" checked/> Match any | <input type="radio"/> Match all
+            %button Edit
+            %button Delete Forever
         %tr
-          %th Implied By
+          %td MF 
+            .del F
+          %td Major Feature
+          %td ☐
           %td
-            %input(style="width:50ex" value="MF-4 MF-12")
-            <input type="radio"/> Match any | <input type="radio" checked/> Match all
+            %a(href="#") 27
+          %td
+            %button Edit
+            %button Delete
         %tr
-          %th Text
+          %td FR
+          %td Functional Requirement
+          %td ☑
           %td
-            %input(style="width:50ex" value="req-type")
-            \ <input type="checkbox"/> Case-Sensitive
+            %a(href="#") 348
+          %td
+            %button Edit
+            %button Delete
 
-      %h3 UI #2: Advanced filter
-      %div
-        %textarea(rows=3 cols=100)
-          {BR,CO} and #pri=high and implied by MF-{7,12} and #TODO and contains "req-type"
-        %textarea(rows=3 cols=100)
-          {BR,CO} #pri=high (implied by MF-7) (#TODO or (contains "req-type"))
+      %h4 Deleted Fields
+      [Blah blah blah]
 
       .notes Notes.
         %ol
-          %li Two components with different goals.
-            %ol
-              %li A language to represent *any* criteria imaginable. Goal: expressivity.
-              %li A simple UI for 80% of users to easily &amp; quickly accomplish 80%+ of typical filters. Goal: simplicity.
-          %li When not editing the filter, it should take up as little space as possible. Therefore a single text representation + an edit button would probably be best.
-          %li Incompletion filtering would be nice in the underlying expression syntax. Should not be part of the simple UI; there is a whole incompletions UI for that.
+          %li This should work the same way the <a href="#fields">Fields</a> screen works.
+
+
+    -#==============================================================================================
+    %section.screen
+      %a#grouping-cfg
+        %h1 Cfg: Groupings
+
+      %table
+        %tr
+          %td.fixpre
+            %button Create
+            %pre Priority
+            %pre  ├── High Priority
+            %pre  ├── Medium Priority
+            %pre  └── Low Priority
+            %pre Blah
+            %pre └── fay
+            %pre     ├── evnznhce
+            %pre     ├── webhket
+            %pre     │   ├── daf7_arser
+            %pre     │   ├── hyi_paser
+            %pre     │   │   ├── jnshkn
+            %pre     │   │   └── strm_reader
+            %pre     │   └── hbi_parser
+            %pre     └── ebsokt
+            %h3 Deleted Groupings / Bin
+            TODO
+          %td
+            %h3 Editor
+            %table
+              %tr
+                %th Name
+                %td
+                  %input(value="High Priority")
+              %tr
+                %th Description
+                %td
+                  %textarea
+              %tr
+                %th RefKey
+                %td
+                  %input(value="pri=high")
+              %tr
+                %th Type
+                %td Applicable
+              %tr
+                %th Enum
+                %td
+                  %input(type="checkbox")
+            %div
+              %h3 Parents
+              %ol
+                %li
+                  Priority
+                  %button Remove
+              %div
+                %input
+                %button Add Parent
+            %div
+              %h3 Children
+              %ol
+                %li
+                  Priority
+                  %button Remove
+              %div
+                %input
+                %button Add Child
+            %h3 Usage
+            %div Σ applications
+            %div View applications button or something
+            %button Delete
+            %br
+            %br
+            %button Create Child
+
+      .notes Notes.
+        %ol
+          %li Drag left-side tree to reorder.
+          %li Drag from left-side into editor's parent/child sections.
+          %li Reorder children via right-side children view.
+
+
+    -#==============================================================================================
+    %section.screen
+      %a#incmp-cfg
+        %h1 Cfg: Incompletions
+
+      %h3 User-Defined Incompletion Types
+      %button Create
+      %table
+        %tr
+          %th Name &amp; RefKey
+          %th Desc
+          %th Σ
+          %th Ctrls
+        %tr
+          %td TODO
+          %td Something that needs to be done.
+          %td
+            %a(href="#") 26
+          %td
+            %button Edit
+            %button Delete Forever
+        %tr
+          %td
+            %input(value="TBD")
+          %td
+            %textarea
+              Pending discussion with a client.
+          %td
+            %a(href="#") 4
+          %td
+            %button Delete Forever
+
+      %h3 Req-Types requiring implication
+      %div
+        %input(type="checkbox")
+        CO: Constraints
+      %div
+        %input(type="checkbox" checked="checked")
+        FR: Functional Requirements
+      %div
+        %input(type="checkbox")
+        MF: Major Features
+      %div
+        %input(type="checkbox" checked="checked")
+        QR: Quality Requirements
+
+      /.notes Notes.
+        %ol
+
+
+    -#==============================================================================================
+    %section.screen
+      %a#incmp-loose
+        %h1 Loose Incompletion
+
+      %table.no-border
+        %tr
+          %td
+            %select
+              %option TODO
+              %option TBD
+          %td
+            %textarea
+          %td
+            %button Done
+            %button Cancel
+
+      .notes Notes.
+        %ol
+          %li Make this a modal dialog.
 
 
     -#==============================================================================================
@@ -940,75 +1012,3 @@
           %li As reqs are (de)selected, the reqs that they imply (dis)appear.
           %li In the right-most column refs selected for deletion get strike-through too.
           %li For restoration instead of deletion, the ⇐ column simply becomes ⇒.
-
-
-    -#==============================================================================================
-    %section.screen
-      %a#sort
-        %h1 Sort &amp; Columns
-
-      %table
-        %tr
-          %th Columns
-          %th Sorting
-        %tr
-          %td
-            %ol
-              %li \<input type="checkbox" checked/> Column E [drag]
-              %li \<input type="checkbox" checked/> Column F [drag]
-              %li \<input type="checkbox" checked/> Column A [drag]
-              %li \<input type="checkbox" checked/> Column B [drag]
-              %li \<input type="checkbox" checked/> Column G [drag]
-              %li.off \<input type="checkbox"/> Column C [drag]
-              %li.off \<input type="checkbox"/> Column D [drag]
-          %td
-            %ol
-              %li
-                %select
-                  %option Not used
-                  %option(selected="selected") Δ Ascending
-                  %option ∇ Descending
-                \ Column A [drag]
-              %li
-                %select
-                  %option Not used
-                  %option(selected="selected") Δ Ascending
-                  %option ∇ Descending
-                \ Column C [drag]
-              %li
-                %select
-                  %option Not used
-                  %option Δ Ascending
-                  %option(selected="selected") ∇ Descending
-                \ Column E [drag]
-              %li
-                %select
-                  %option Not used
-                  %option(selected="selected") Δ Ascending
-                  %option ∇ Descending
-                \ Column G [drag]
-              %li.off
-                %select
-                  %option Not used
-                  %option Δ Ascending
-                  %option ∇ Descending
-                \ Column B [drag]
-              %li.off
-                %select
-                  %option Not used
-                  %option Δ Ascending
-                  %option ∇ Descending
-                \ Column D [drag]
-              %li.off
-                %select
-                  %option Not used
-                  %option Δ Ascending
-                  %option ∇ Descending
-                \ Column F [drag]
-
-      .notes Notes.
-        %ol
-          %li Columns not being used are sorted alphabetically.
-          %li Dragging something off, up into where things are on, also turns it on.
-          %li Dragging something on, down into where things are off, turns it off.
-          %li Custom fields have their own groupings &amp; implications. How to handle that?
