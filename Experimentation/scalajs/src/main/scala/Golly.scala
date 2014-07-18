@@ -1,6 +1,6 @@
 package golly
 
-import golly.ReactExamples.ExcelLike
+//import golly.ReactExamples.ExcelLike
 
 import scala.scalajs.js.JSApp
 import org.scalajs.dom.{document, console}
@@ -10,7 +10,7 @@ object Golly extends JSApp {
 //    console log "Starting..."
 
 //    ReactExamples.Sample4()
-    ExcelLike.apply()
+//    ExcelLike.apply()
 
 //    console log "Done!"
   }

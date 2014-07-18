@@ -1,5 +1,5 @@
 package golly
-
+/*
 import scala.scalajs.js
 import org.scalajs.dom
 import org.scalajs.dom.{document, console, window}
@@ -8,18 +8,12 @@ import japgolly.scalajs.react._
 import vdom.ReactVDom._
 import all._
 
+import ScalazReact._
+
 import scala.collection.immutable.SortedSet
-import scalaz.{LensFamily, Lens}
+import scalaz.Lens
 
 object ReactExamples {
-
-  implicit final class ComponentScope_SS_Ext2[State](val u: ComponentScope_SS[State]) extends AnyVal {
-    @inline def setStateL[V](l: LensFamily[State, State, _, V])(v: V) = u.modState(l.set(_, v))
-    @inline def modState2(f: State => State, callback: => Unit) = u.setState(f(u.state), callback)
-  }
-
-  def textChangeRecv(f: String => Unit): SyntheticEvent[dom.HTMLInputElement] => Unit = e => f(e.target.value)
-  def textChangeRecvL[State](t: ComponentScope_SS[State], l: Lens[State, String]) = textChangeRecv(t setStateL l)
 
   // ===================================================================================================================
 
@@ -169,3 +163,4 @@ object ReactExamples {
     }
   }
 }
+*/
