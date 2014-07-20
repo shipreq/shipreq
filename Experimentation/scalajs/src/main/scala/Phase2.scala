@@ -8,6 +8,7 @@ import japgolly.scalajs.react._
 import vdom.ReactVDom._
 import all._
 
+import scalaz.effect.IO
 import scalaz.{-\/, \/-, \/, State, StateT, Scalaz}
 import Scalaz.Id
 import scalaz.syntax.bind._
@@ -34,6 +35,8 @@ object Xxx {
     @inline def runStateC(m: StateT[Id, S, _])(callback: () => Unit) = runState(m, callback())
     @inline def runStateF[V](f: V => StateT[Id, S, _])                    = (v: V) => u.runState(f(v))
     @inline def runStateF[V](f: V => StateT[Id, S, _], callback: => Unit) = (v: V) => u.runState(f(v), callback)
+
+    @inline def runStateIO(m: StateT[IO, S, _]) = u.modState(s => m.run(s).unsafePerformIO()._1)
   }
 
   def textChangeRecv(f: String => Unit): SyntheticEvent[dom.HTMLInputElement] => Unit = e => f(e.target.value)
@@ -116,7 +119,7 @@ object Phase2 extends js.JSApp {
                                   v: Validator[I, C, O]
                                   , pL: S => C
                                   , eL: SimpleLens[S, I]
-                                  , trySave: S => S
+                                  , trySave: S => IO[S]
                                   ) {
 
     private val SM = new StateHelper[S]
@@ -128,11 +131,11 @@ object Phase2 extends js.JSApp {
     def cancelChange = getSaved >>= change
 
     def editEnd =
-      SM.modify(s => {
+      StateT[IO, S, Unit](s => {
         val c = v.correct(eL.get(s))
         val mod1 = eL.setF(v.c2i(c))
 
-        trySave(mod1(s))
+        trySave(mod1(s)).map((_,()))
 //        val mod2 = v.validate(c) match {
 //          case -\/(_) => identity[S]_
 //          case \/-(o) => pL.setF(o)
@@ -143,7 +146,7 @@ object Phase2 extends js.JSApp {
     def render[V](editor: Editor[I, V], T: ComponentScope_SS[S]): V = {
       val i = eL get T.state
       val e = v.correctAndValidate(i).swap.toOption
-      editor(i, e, T runStateF change, T runStateC cancelChange, T runState editEnd)
+      editor(i, e, T runStateF change, T runStateC cancelChange, T runStateIO editEnd)
     }
   }
 
@@ -154,7 +157,7 @@ object Phase2 extends js.JSApp {
 
   case class Spec2[G, P, V, I1, C1, O1, I2, C2, O2](s1: SpecSplice[P,V,I1,C1,O1], s2: SpecSplice[P,V,I2,C2,O2]
                                                     , o2g: (O1, O2) => G
-                                                    , g2p: (Option[P], G) => P
+                                                    , g2p: (Option[P], G) => IO[P]
                                                      ) {
     type E = (I1,I2)
     type OO = (O1, O2)
@@ -167,29 +170,37 @@ object Phase2 extends js.JSApp {
       o2 <- s2.savable(e._2)
     } yield (o1,o2)
 
-    def trySave[S, T](sp: Lens[S, S, P, OO], se: SimpleLens[S, E])(S: S): Option[S] =
-      savable(se get S).map(oo => sp.set(S, oo))
+//    def trySave[S](sp: S => IO[SSetter[S, OO], se: SimpleLens[S, E])(S: S): Option[S] =
+//      savable(se get S).map(oo => sp.set(S, oo))
 
-    def shit[S](sp: Lens[S, S, P, OO], se: SimpleLens[S, E]) = {
-      val sf: S => S = s => trySave(sp, se)(s).getOrElse(s)
-      val spg: S => P = sp.get _
+    def shit[S](sp: S => P, spp: (S, OO) => IO[S], se: SimpleLens[S, E]) = {
+      val sf: S => IO[S] = s =>
+        savable(se get s).fold(IO(s))(oo => spp(s, oo))
+
       (
-        new FormAttrShit[S, I1, C1, O1](s1.v, s1.pL compose spg, se |-> _1[E, I1], sf),
-        new FormAttrShit[S, I2, C2, O2](s2.v, s2.pL compose spg, se |-> _2[E, I2], sf)
+        new FormAttrShit[S, I1, C1, O1](s1.v, s1.pL compose sp, se |-> _1[E, I1], sf),
+        new FormAttrShit[S, I2, C2, O2](s2.v, s2.pL compose sp, se |-> _2[E, I2], sf)
         )
     }
 
     val oo2g: OO => G = o => o2g(o._1, o._2)
 
     def render[S](x: SimpleLens[S, (P, E)])(T: ComponentScope_SS[S]): VV = {
-      val x2 = Lens[P, P, P, OO](p => p, (p,o) => g2p(Some(p), oo2g(o)))
+//      val x2 = Lens[P, P, P, OO](p => p, (p,o) => g2p(Some(p), oo2g(o)))
 //      render(x composeLens _1 composeLens x2, x |-> _2)(T)
 //    }
-      val sp = x composeLens _1 composeLens x2
+      val sp = x composeLens _1
       val se = x |-> _2
 
+      def spp(s: S, oo: OO): IO[S] = {
+        val g = oo2g(oo)
+        val op = sp.getOption(s)
+        val iop = g2p(op, g)
+        iop.map(p => sp.set(s, p))
+      }
+
 //    def render[S](sp: Lens[S, S, P, OO], se: SimpleLens[S, E])(T: ComponentScope_SS[S]): VV = {
-      val s = shit(sp, se)
+      val s = shit(sp.get _, spp , se)
       (
         s._1.render(s1.editor, T)
         ,s._2.render(s2.editor, T)
@@ -273,7 +284,7 @@ object Phase2 extends js.JSApp {
       , UserDefIssueType.apply, fakeSave
     )
 
-    def fakeSave(p: Option[UserDefIssueType], g: UserDefIssueType) = {
+    def fakeSave(p: Option[UserDefIssueType], g: UserDefIssueType) = IO {
       console.log(s"SAVING $p ⇒ $g")
       g
     }

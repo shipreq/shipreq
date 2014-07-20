@@ -14,9 +14,10 @@ libraryDependencies ++= Seq(
   "com.github.japgolly.scalajs-react" %%% "scalajs-react" % "0.2.0"
   ,"com.github.japgolly.fork.monocle" %%% "monocle-core" % "0.4.0"
   //,"com.github.japgolly.fork.scalaz" %%% "scalaz-core" % "7.1.0-RC1"
+  ,"com.github.japgolly.fork.scalaz" %%% "scalaz-effect" % "7.0.6"
 )
 
-jsDependencies += "org.webjars" % "react" % "0.10.0" / "react-with-addons.js"
+jsDependencies += "org.webjars" % "react" % "0.11.0" / "react-with-addons.js"
 
 skip in packageJSDependencies := false
 
