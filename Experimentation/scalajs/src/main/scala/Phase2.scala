@@ -1,6 +1,7 @@
 
 import japgolly.scalajs.react.vdom.{ReactOutput, ReactVDom, VDomBuilder, ReactFragT}
 import org.scalajs.dom
+import org.scalajs.dom.extensions.KeyCode
 import scala.scalajs.js
 
 import japgolly.scalajs.react._
@@ -72,8 +73,8 @@ object Phase2 extends js.JSApp {
   override def main(): Unit = {
     import IssueConfig._
     IssueTypeTable(List(
-      UserDefIssueType(1, "TODO", None)
-      ,UserDefIssueType(2, "TBD", Some("To Be Decided."))
+      1L -> UserDefIssueType("TODO", None)
+      ,2L -> UserDefIssueType("TBD", Some("To Be Decided."))
     )) render dom.document.getElementById("target")
   }
 
@@ -113,13 +114,14 @@ object Phase2 extends js.JSApp {
   // TODO This should validate the entire row and correct its input. (optionally)
   class FormAttrShit[S, I, C, O](
                                   v: Validator[I, C, O]
-                                  , pL: Lens[S, S, C, O]
+                                  , pL: S => C
                                   , eL: SimpleLens[S, I]
+                                  , trySave: S => S
                                   ) {
 
     private val SM = new StateHelper[S]
 
-    def getSaved = SM.gets(v.c2i compose pL.get)
+    def getSaved = SM.gets(v.c2i compose pL)
 
     def change(i: I) = SM.modify(eL.setF(i))
 
@@ -129,41 +131,64 @@ object Phase2 extends js.JSApp {
       SM.modify(s => {
         val c = v.correct(eL.get(s))
         val mod1 = eL.setF(v.c2i(c))
-        val mod2 = v.validate(c) match {
-          case -\/(_) => identity[S]_
-          case \/-(o) => pL.setF(o)
-        }
-        (mod1 compose mod2)(s)
+
+        trySave(mod1(s))
+//        val mod2 = v.validate(c) match {
+//          case -\/(_) => identity[S]_
+//          case \/-(o) => pL.setF(o)
+//        }
+//        (mod1 compose mod2)(s)
       })
 
     def render[V](editor: Editor[I, V], T: ComponentScope_SS[S]): V = {
-      val S = T.state
-      val i = eL.get(S)
+      val i = eL get T.state
       val e = v.correctAndValidate(i).swap.toOption
       editor(i, e, T runStateF change, T runStateC cancelChange, T runState editEnd)
     }
   }
 
-  case class SpecSplice[P, V, I, C, O](pL: Lens[P, P, C, O], v: Validator[I, C, O], editor: Editor[I, V]) {
-    def initial: P => I = v.c2i compose pL.get
+  case class SpecSplice[P, V, I, C, O](pL: P => C, v: Validator[I, C, O], editor: Editor[I, V]) {
+    def initial: P => I = v.c2i compose pL
+    def savable(i: I) = v.correctAndValidate(i).toOption
   }
 
-  case class Spec2[P, V, I1, C1, O1, P2, I2, C2, O2](s1: SpecSplice[P,V,I1,C1,O1], s2: SpecSplice[P,V,I2,C2,O2]) {
+  case class Spec2[G, P, V, I1, C1, O1, I2, C2, O2](s1: SpecSplice[P,V,I1,C1,O1], s2: SpecSplice[P,V,I2,C2,O2]
+                                                    , o2g: (O1, O2) => G
+                                                    , g2p: (Option[P], G) => P
+                                                     ) {
     type E = (I1,I2)
-    def initial(p: P): E = (s1 initial p, s2 initial p)
-
-    def shit[S](sp: SimpleLens[S, P], se: SimpleLens[S, E]) =
-      (
-        new FormAttrShit[S, I1, C1, O1](s1.v, sp |-> s1.pL, se |-> _1[E, I1]),
-        new FormAttrShit[S, I2, C2, O2](s2.v, sp |-> s2.pL, se |-> _2[E, I2])
-        )
-
+    type OO = (O1, O2)
     type VV = (V, V)
+    
+    def initial(p: P): E = (s1 initial p, s2 initial p)
+    
+    def savable(e: E): Option[OO] = for {
+      o1 <- s1.savable(e._1)
+      o2 <- s2.savable(e._2)
+    } yield (o1,o2)
 
-    def render[S](x: SimpleLens[S, (P, E)])(T: ComponentScope_SS[S]): VV =
-      render(x |-> _1, x |-> _2)(T)
+    def trySave[S, T](sp: Lens[S, S, P, OO], se: SimpleLens[S, E])(S: S): Option[S] =
+      savable(se get S).map(oo => sp.set(S, oo))
 
-    def render[S](sp: SimpleLens[S, P], se: SimpleLens[S, E])(T: ComponentScope_SS[S]): VV = {
+    def shit[S](sp: Lens[S, S, P, OO], se: SimpleLens[S, E]) = {
+      val sf: S => S = s => trySave(sp, se)(s).getOrElse(s)
+      val spg: S => P = sp.get _
+      (
+        new FormAttrShit[S, I1, C1, O1](s1.v, s1.pL compose spg, se |-> _1[E, I1], sf),
+        new FormAttrShit[S, I2, C2, O2](s2.v, s2.pL compose spg, se |-> _2[E, I2], sf)
+        )
+    }
+
+    val oo2g: OO => G = o => o2g(o._1, o._2)
+
+    def render[S](x: SimpleLens[S, (P, E)])(T: ComponentScope_SS[S]): VV = {
+      val x2 = Lens[P, P, P, OO](p => p, (p,o) => g2p(Some(p), oo2g(o)))
+//      render(x composeLens _1 composeLens x2, x |-> _2)(T)
+//    }
+      val sp = x composeLens _1 composeLens x2
+      val se = x |-> _2
+
+//    def render[S](sp: Lens[S, S, P, OO], se: SimpleLens[S, E])(T: ComponentScope_SS[S]): VV = {
       val s = shit(sp, se)
       (
         s._1.render(s1.editor, T)
@@ -171,6 +196,11 @@ object Phase2 extends js.JSApp {
         )
     }
   }
+
+  // saves only when entire row is valid
+  // escape to cancel change
+  // validation as you type
+  // correction
 
   // ===================================================================================================================
 
@@ -202,7 +232,7 @@ object Phase2 extends js.JSApp {
                         ) = {
 
       val cancelOnEscape: SyntheticEvent[dom.HTMLInputElement] => Unit =
-        e => if (e.keyboardEvent.keyCode == 27) {
+        e => if (e.keyboardEvent.keyCode == KeyCode.escape) {
           e.preventDefault()
           e.stopPropagation()
           val t = e.target
@@ -232,33 +262,40 @@ object Phase2 extends js.JSApp {
 
     type UserDefIssueTypeId = Long
 
-    case class UserDefIssueType(id: UserDefIssueTypeId, key: String, desc: Option[String])
+    case class UserDefIssueType(key: String, desc: Option[String])
+    //type UserDefIssueTypeWithId = (UserDefIssueTypeId, UserDefIssueType)
     val keyL = SimpleLens2[UserDefIssueType](_.key)((a, b) => a.copy(key = b))
     val descL = SimpleLens2[UserDefIssueType](_.desc)((a, b) => a.copy(desc = b))
 
     val SPEC = Spec2(
-      SpecSplice(keyL, KeyValidator, TextInputEditor)
-      , SpecSplice(descL, DescValidator, TextareaEditor)
+      SpecSplice(keyL.get _, KeyValidator, TextInputEditor)
+      , SpecSplice(descL.get _, DescValidator, TextareaEditor)
+      , UserDefIssueType.apply, fakeSave
     )
+
+    def fakeSave(p: Option[UserDefIssueType], g: UserDefIssueType) = {
+      console.log(s"SAVING $p ⇒ $g")
+      g
+    }
 
     type IssueTypeTableS = Map[UserDefIssueTypeId, (UserDefIssueType, SPEC.E)]
     def rowL(id: UserDefIssueTypeId) = SimpleLens2[IssueTypeTableS](_(id))((a,b) => a + (id -> b))
 
-    val IssueTypeTable = ReactComponentB[List[UserDefIssueType]]("IssueTypeTable")
-      .getInitialState[IssueTypeTableS](_.map(x => x.id -> (x, SPEC.initial(x))).toMap)
+    val IssueTypeTable = ReactComponentB[List[(UserDefIssueTypeId, UserDefIssueType)]]("IssueTypeTable")
+      .getInitialState[IssueTypeTableS](_.map(x => x._1 -> (x._2, SPEC.initial(x._2))).toMap)
       .render(T => {
         val S = T.state
         console.log(s"State = $S")
 
-        def row(s: UserDefIssueType) = {
-          val (key, desc) = SPEC.render(rowL(s.id))(T)
+        def row(id: UserDefIssueTypeId, s: UserDefIssueType) = {
+          val (key, desc) = SPEC.render(rowL(id))(T)
           val ctrls = raw(s"${s.key} | ${s.desc}")
-          tr(keyAttr := s.id)(td(key), td(desc), td(ctrls))
+          tr(keyAttr := id)(td(key), td(desc), td(ctrls))
         }
 
         table(tbody(
           tr(th("Name"), th("Description"), th("Ctrls"))
-          , S.values.toList.map(_._1).sortBy(_.key).map(row).toJsArray
+          , S.toList.sortBy(_._2._1.key).map(x => row(x._1, x._2._1)).toJsArray
         ))
       }).create
     }
