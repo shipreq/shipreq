@@ -7,6 +7,7 @@ import scala.scalajs.js
 import japgolly.scalajs.react._
 import vdom.ReactVDom._
 import all._
+import ScalazReact._
 
 import scalaz.effect.IO
 import scalaz.{-\/, \/-, \/, State, StateT, Scalaz}
@@ -24,15 +25,6 @@ object Xxx {
 
   implicit def autoLiftStateIntoIO[S, A](s: StateT[Id, S, A]): StateT[IO, S, A] = s.lift[IO]
 
-  implicit final class ReactAttrExt22(val a: Attr) extends AnyVal {
-    @inline def ~~>(thunk: IO[Unit]) =
-      a --> thunk.unsafePerformIO()
-
-    @inline def ~~>[E <: dom.Node](eventHandler: SyntheticEvent[E] => IO[Unit]) =
-      a.==>[E, Unit](eventHandler(_).unsafePerformIO())
-  }
-
-
   implicit final class ComponentScope_SS_Ext3[S](val u: ComponentScope_SS[S]) extends AnyVal {
 
 //    @inline def setStateL [V](l: Setter[S, S, _, V])(v: V)                    = u.modState((s: S) => l.set(s, v))
@@ -44,19 +36,12 @@ object Xxx {
     @inline def runState(m: StateT[Id, S, _])                    = u.modState(m(_)._1)
     @inline def runState(m: StateT[Id, S, _], callback: => Unit) = u.modState(m(_)._1, callback)
     @inline def runStateC(m: StateT[Id, S, _])(callback: () => Unit) = runState(m, callback())
-
-    @inline def runStateIO(m: StateT[IO, S, Unit]): IO[Unit] =
-      IO(u.modState(s => m.run(s).unsafePerformIO()._1))
-    @inline def runStateIO(m: StateT[IO, S, Unit], callback: IO[Unit]): IO[Unit] =
-      IO(u.modState(s => m.run(s).unsafePerformIO()._1, callback.unsafePerformIO()))
-    @inline def runStateIOC(m: StateT[IO, S, Unit]): IO[Unit] => IO[Unit] =
-      c => runStateIO(m, c)
   }
 
-  def textChangeRecv(f: String => Unit): SyntheticEvent[dom.HTMLInputElement] => Unit = e => f(e.target.value)
+  def textChangeRecv(f: String => Unit): InputEvent => Unit = e => f(e.target.value)
   def textChangeRecvL[State](t: ComponentScope_SS[State], l: Setter[State, State, _, String]) =
     textChangeRecv(t setStateL l)
-  def textChangeRecvIO(f: String => IO[Unit]): SyntheticEvent[dom.HTMLInputElement] => IO[Unit] =
+  def textChangeRecvIO(f: String => IO[Unit]): InputEvent => IO[Unit] =
     e => f(e.target.value)
 
   def SimpleLens2[T] = new {
@@ -257,13 +242,13 @@ object Phase2 extends js.JSApp {
                        , onEditEnd: IO[Unit]
                         ) = {
 
-      val cancelOnEscape: SyntheticEvent[dom.HTMLInputElement] => IO[Unit] =
-        e => if (e.keyboardEvent.keyCode == KeyCode.escape) {
-          e.preventDefault()
-          e.stopPropagation()
-          val t = e.target
-          onCancel(IO(t.blur()))
-        } else IO(())
+      val cancelOnEscape: InputEvent => IO[Unit] =
+        e => e.keyboardEvent
+          .filter(_.keyCode == KeyCode.escape)
+          .fold(IO(()))(_ => {
+            val t = e.target
+            e.preventDefaultIO >> e.stopPropagationIO >> onCancel(IO(t.blur()))
+          })
 
       div(
         node(
