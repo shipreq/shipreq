@@ -28,9 +28,10 @@ object Phase2 extends js.JSApp {
     val descL = SimpleLens2[UserDefIssueType](_.desc)((a, b) => a.copy(desc = b))
 
     val SPEC = Spec2(
-      SpecSplice(keyL.get _, KeyValidator, TextInputEditor)
-      , SpecSplice(descL.get _, DescValidator, TextareaEditor)
-        ,(UserDefIssueType.apply _).tupled, fakeSave
+      SpecSplice(keyL.get _, KeyValidator).edit(TextInputEditor),
+      SpecSplice(descL.get _, DescValidator).edit(TextareaEditor),
+      (UserDefIssueType.apply _).tupled,
+      fakeSave
     )
 
     def fakeSave(p: Option[UserDefIssueType], g: UserDefIssueType) = IO {
