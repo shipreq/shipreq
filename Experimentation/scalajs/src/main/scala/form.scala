@@ -26,16 +26,16 @@ import Lib._
 /**
  * Done
  * ~~~~
- * escape to cancel change
- * validation as you type
- * input correction (valid or not)
- * saves only when entire row is valid
+ * [2] escape to cancel change
+ * [4] validation as you type
+ * [4] input correction (valid or not)
+ * [5] saves only when entire row is valid
+ * [5] create new
  *
  * TODO
  * ~~~~
  * [ priority . effort ]
  * [5.5] drag to reorder
- * [5.5] create new
  * [5.3] delete
  * [5.2] show/hide deleted
  * [3.5] different view when field not in edit (sometimes the edit view is too noisy)
@@ -133,21 +133,6 @@ object FormStuff {
 
   case class SpecSpliceE[P, V, I, C, O](s: SpecSplice[P, I, C, O], editor: Editor[I, V])
 
-  case class SavingThingy[S, G, L, L2, Px](getLast: S => L,
-                                           needSave: (L, G) => Option[L2],
-                                           saveIO: (L2, G) => IO[Px],
-                                           storeSaved: Px => S => S) {
-    def save(s: S, g: G): IO[S] = {
-      val last = getLast(s)
-      needSave(last, g) match {
-        case Some(l2) =>
-          saveIO(l2, g).map(storeSaved(_)(s))
-        case None =>
-          IO(s)
-      }
-    }
-  }
-
   /**
    * @tparam G "Good", meaning entire row has passed validation, row ready to be saved.
    * @tparam P "Persisted", the last saved copy of the row.
@@ -195,6 +180,21 @@ object FormStuff {
         v1 <- s._1.render(s1.editor, T)
         v2 <- s._2.render(s2.editor, T)
       } yield (v1,v2)
+    }
+  }
+
+  // ===================================================================================================================
+
+  case class SavingThingy[S, G, L, L2, Px](getLast: S => L,
+                                           needSave: (L, G) => Option[L2],
+                                           saveIO: (L2, G) => IO[Px],
+                                           storeSaved: Px => S => S) {
+    def save(s: S, g: G): IO[S] = {
+      val last = getLast(s)
+      needSave(last, g) match {
+        case Some(l2) => saveIO(l2, g).map(storeSaved(_)(s))
+        case None     => IO(s)
+      }
     }
   }
 
