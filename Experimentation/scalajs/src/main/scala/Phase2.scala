@@ -5,7 +5,8 @@ import monocle.function.Field2._
 import org.scalajs.dom
 import org.scalajs.dom.console
 import scala.scalajs.js
-import scalaz.{State, StateT, Scalaz}
+import scalaz.{State, StateT, Scalaz, Bind}
+import scalaz.syntax.bind._
 import scalaz.std.option.optionInstance
 import Scalaz.Id
 import scalaz.effect.IO
@@ -63,34 +64,39 @@ object Phase2 extends js.JSApp {
 
     // ===============================================================================================
     object NewRow {
-      def empty: SPEC.E = ("","")
+      private def empty: SPEC.E = ("","")
 
       def createS = State.modify[FormState](unsavedL.modifyF(_ orElse Some(empty)))
 
-      def storeInsert(px: Px): S => S =
+      private def storeInsert(px: Px): S => S =
         storeUpdate(px) compose unsavedL.setF(None)
 
-      val newRowRenderer = {
+      private val renderAttr = {
         val s2op: S => Option[P] = _ => None
         def setE(s: S, e: E): Option[S] = unsavedL.get(s).map(_ => unsavedL.set(s, Some(e)))
         val se = WierdLens[Option, S, S, E](unsavedL.get, setE)
-//        val saverr = SavingThingy[S, G, Unit, Unit, Px](
-//          _ => (),
-//          (_, g) => Some(()),
-//          (_, g) => fakeSave(None, g),
-//          storeInsert)
         val saveIO: (S, G) => IO[S] = (s,g) => fakeSave(None, g).map(storeInsert(_)(s))
         SPEC.renderM(se, saveIO, s2op) _
       }
 
-      val delS = State.modify[S](_.copy(unsaved = None))
+      private val delS = State.modify[S](_.copy(unsaved = None))
+
+      private def renderRow(T: ComponentScope_SS[S], vv: SPEC.VV) = {
+        val (key, desc) = vv
+        //val ctrls = raw(S.unsaved.toString)
+        val delButton = button(onclick ~~> T.runStateIO(NewRow.delS))("Cancel")
+        tr(keyAttr := "new")(td(key), td(desc), td(delButton))
+      }
+
+      val row = new FullRow[Option, S, SPEC.VV, Tag, Unit](
+          _ => renderAttr, (T,_,vv) => renderRow(T, vv))
     }
 
     // ===============================================================================================
     object SavedRow {
-      def rowL(id: UserDefIssueTypeId) = savedL composeLens SimpleLens2[SaveMap](_(id))((a,b) => a + (id -> b))
+      private def rowL(id: UserDefIssueTypeId) = savedL composeLens SimpleLens2[SaveMap](_(id))((a,b) => a + (id -> b))
 
-      def renderer(id: UserDefIssueTypeId, s: UserDefIssueType) = {
+      private def renderAttr(id: UserDefIssueTypeId) = {
         val l: SimpleLens[S, (P, E)] = rowL(id)
         val sp: SimpleLens[S, P] = l |-> _1
         val se: SimpleLens[S, E] = l |-> _2
@@ -102,12 +108,22 @@ object Phase2 extends js.JSApp {
         SPEC.render(se, saverr.save, sp.get) _
       }
 
-      def fakeDelete(id: UserDefIssueTypeId) = IO {
+      private def fakeDelete(id: UserDefIssueTypeId) = IO {
         console.log(s"DELETING $id")
       }
 
-      def delS(id: UserDefIssueTypeId) =
+      private def delS(id: UserDefIssueTypeId) =
         runStoreU(fakeDelete(id), (s:S) => s.copy(saved = s.saved - id))
+
+      private def renderRow(T: ComponentScope_SS[S], id: UserDefIssueTypeId, vv: SPEC.VV) = {
+        val (key, desc) = vv
+        val delButton = button(onclick ~~> T.runStateIO(SavedRow delS id))("Delete")
+        //val ctrls = raw(s"${s.key} | ${s.desc}")
+        tr(keyAttr := id)(td(key), td(desc), td(delButton))
+      }
+
+      val row = new FullRow[Id, S, SPEC.VV, Tag, UserDefIssueTypeId](
+        renderAttr, renderRow)
     }
 
     // ===============================================================================================
@@ -117,31 +133,18 @@ object Phase2 extends js.JSApp {
         val S = T.state
         console.log(s"State = $S")
 
-        def newRow = NewRow.newRowRenderer(T).map {
-          case (key, desc) =>
-            val ctrls = raw(S.unsaved.toString)
-            val delButton = button(onclick ~~> T.runStateIO(NewRow.delS))("Cancel")
-            tr(keyAttr := "new")(td(key), td(desc), td(delButton))
-        }
-
-        def row(id: UserDefIssueTypeId, s: UserDefIssueType) = {
-          val (key, desc) = SavedRow.renderer(id, s)(T)
-
-          val delButton = button(onclick ~~> T.runStateIO(SavedRow delS id))("Delete")
-
-          val ctrls = raw(s"${s.key} | ${s.desc}")
-          tr(keyAttr := id)(td(key), td(desc), td(delButton))
-        }
+        def newRow = NewRow.row.render(T)(())
+        def row = SavedRow.row.render(T)
 
         val rows = S.saved.toList.sortBy(_._2._1.key)
 
-      // TODO handle empty table
+        // TODO handle empty table
         div(
           button(onclick ~~> T.runStateIO(NewRow.createS))("Create"),
           table(tbody(
             tr(th("Name"), th("Description"), th("Ctrls"))
             , newRow
-            , rows.map(x => row(x._1, x._2._1)).toJsArray
+            , rows.map(x => row(x._1)).toJsArray
           ))
         )
       }).create

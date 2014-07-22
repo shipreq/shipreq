@@ -195,6 +195,19 @@ object FormStuff {
   }
 
   // ===================================================================================================================
+  // rows
+
+  class FullRow[M[_] : Bind, S, VV, V, I](renderAttr: I => ComponentScope_SS[S] => M[VV],
+                                          renderRow: (ComponentScope_SS[S], I, VV) => V
+                                           ) {
+
+    def render(T: ComponentScope_SS[S]): I => M[V] =
+      i => renderAttr(i)(T).map(vv => renderRow(T, i, vv))
+  }
+
+
+  // ===================================================================================================================
+  // util
 
   case class SavingThingy[S, G, L, L2, Px](getLast: S => L,
                                            needSave: (L, G) => Option[L2],
