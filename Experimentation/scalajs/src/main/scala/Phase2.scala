@@ -46,8 +46,6 @@ object Phase2 extends js.JSApp {
       SpecSplice(descL.get _, DescValidator).edit(TextareaEditor),
       (UserDefIssueType.apply _).tupled)
 
-    def needSave(px: Px, g: UserDefIssueType) = px._2 != g
-
     def fakeSave(p: Option[Px], g: UserDefIssueType) = IO[Px] {
       console.log(s"SAVING $p ⇒ $g")
       val newId = p.fold[UserDefIssueTypeId](666L)(_._1)
@@ -76,11 +74,10 @@ object Phase2 extends js.JSApp {
 
     val newRowRenderer = {
       val s2op: S => Option[P] = _ => None
-      val getPx: S => Option[Px] = _ => None
       def setE(s:S, e:E): Option[S] = unsavedL.get(s).map(_ => unsavedL.set(s, Some(e)))
       //            unsavedL.get(s).map(_ => unsavedL.modify(s, _.map(_ => e)))
       val se = WierdLens[Option, S, S, E](unsavedL.get, setE)
-      val saverr = SavingThingy[S, G, Px](needSave, fakeSave, getPx, storePx)
+      val saverr = SavingThingy[S, G, Option[Px], Px]((a,b) => true, fakeSave, _=>None, storePx)
       SPEC.renderM(se, saverr.save, s2op) _
     }
 
@@ -95,7 +92,7 @@ object Phase2 extends js.JSApp {
           val sp: SimpleLens[S, P] = l |-> _1
           val se: SimpleLens[S, E] = l |-> _2
           val getPx: S => Option[Px] = s => Some(id, sp get s)
-          val saverr = SavingThingy[S, G, Px](needSave, fakeSave, getPx, storePx)
+          val saverr = SavingThingy[S, G, Option[Px], Px]((a,b) => a.fold(true)(_._2 != b), fakeSave, getPx, storePx)
 
           val (key, desc) = SPEC.render(se, saverr.save, sp.getOption)(T)
           val ctrls = raw(s"${s.key} | ${s.desc}")
