@@ -33,6 +33,7 @@ object Phase2 extends js.JSApp {
     type S = FormState
     type E = SPEC.E
     type P = UserDefIssueType
+    type G = UserDefIssueType
     type Px = (UserDefIssueTypeId, P)
 
     case class UserDefIssueType(key: String, desc: Option[String])
@@ -43,10 +44,7 @@ object Phase2 extends js.JSApp {
     val SPEC = Spec2(
       SpecSplice(keyL.get _, KeyValidator).edit(TextInputEditor),
       SpecSplice(descL.get _, DescValidator).edit(TextareaEditor),
-      (UserDefIssueType.apply _).tupled,
-      fakeSave,
-      needSave
-    )
+      (UserDefIssueType.apply _).tupled)
 
     def needSave(px: Px, g: UserDefIssueType) = px._2 != g
 
@@ -76,6 +74,16 @@ object Phase2 extends js.JSApp {
 
     def rowL(id: UserDefIssueTypeId) = savedL composeLens SimpleLens2[SaveMap](_(id))((a,b) => a + (id -> b))
 
+    val newRowRenderer = {
+      val s2op: S => Option[P] = _ => None
+      val getPx: S => Option[Px] = _ => None
+      def setE(s:S, e:E): Option[S] = unsavedL.get(s).map(_ => unsavedL.set(s, Some(e)))
+      //            unsavedL.get(s).map(_ => unsavedL.modify(s, _.map(_ => e)))
+      val se = WierdLens[Option, S, S, E](unsavedL.get, setE)
+      val saverr = SavingThingy[S, G, Px](needSave, fakeSave, getPx, storePx)
+      SPEC.renderM(se, saverr.save, s2op) _
+    }
+
     val IssueTypeTable = ReactComponentB[List[(UserDefIssueTypeId, UserDefIssueType)]]("IssueTypeTable")
       .getInitialState(p => FormState(p.map(x => x._1 -> mkPE(x._2)).toMap, None))
       .render(T => {
@@ -87,23 +95,19 @@ object Phase2 extends js.JSApp {
           val sp: SimpleLens[S, P] = l |-> _1
           val se: SimpleLens[S, E] = l |-> _2
           val getPx: S => Option[Px] = s => Some(id, sp get s)
-          val (key, desc) = SPEC.render(se.get, se.set, getPx, storePx, sp.getOption)(T)
+          val saverr = SavingThingy[S, G, Px](needSave, fakeSave, getPx, storePx)
+
+          val (key, desc) = SPEC.render(se, saverr.save, sp.getOption)(T)
           val ctrls = raw(s"${s.key} | ${s.desc}")
           tr(keyAttr := id)(td(key), td(desc), td(ctrls))
         }
 
-        def newRow(s: SPEC.E) = {
-          val s2op: S => Option[P] = _ => None
-          val getPx: S => Option[Px] = _ => None
-          def setE(s:S, e:E): Option[S] =
-            unsavedL.get(s).map(_ => unsavedL.set(s, Some(e)))
-//            unsavedL.get(s).map(_ => unsavedL.modify(s, _.map(_ => e)))
-          SPEC.renderM(unsavedL.get, setE, getPx, storePx, s2op)(T).map {
+        def newRow =
+          newRowRenderer(T).map {
             case (key, desc) =>
-              val ctrls = raw(s.toString)
+              val ctrls = raw(S.unsaved.toString)
               tr(keyAttr := "new")(td(key), td(desc), td(ctrls))
           }
-        }
 
         val rows = S.saved.toList.sortBy(_._2._1.key)
 
@@ -111,7 +115,7 @@ object Phase2 extends js.JSApp {
           button(onclick ~~> T.runStateIO(createS))("Create"),
           table(tbody(
             tr(th("Name"), th("Description"), th("Ctrls"))
-            , S.unsaved.map(newRow)
+            , newRow
             , rows.map(x => row(x._1, x._2._1)).toJsArray
           ))
         )
