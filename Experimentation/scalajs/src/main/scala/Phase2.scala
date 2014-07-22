@@ -82,6 +82,8 @@ object Phase2 extends js.JSApp {
         val saveIO: (S, G) => IO[S] = (s,g) => fakeSave(None, g).map(storeInsert(_)(s))
         SPEC.renderM(se, saveIO, s2op) _
       }
+
+      val delS = State.modify[S](_.copy(unsaved = None))
     }
 
     // ===============================================================================================
@@ -99,6 +101,13 @@ object Phase2 extends js.JSApp {
           storeUpdate)
         SPEC.render(se, saverr.save, sp.get) _
       }
+
+      def fakeDelete(id: UserDefIssueTypeId) = IO {
+        console.log(s"DELETING $id")
+      }
+
+      def delS(id: UserDefIssueTypeId) =
+        runStoreU(fakeDelete(id), (s:S) => s.copy(saved = s.saved - id))
     }
 
     // ===============================================================================================
@@ -111,17 +120,22 @@ object Phase2 extends js.JSApp {
         def newRow = NewRow.newRowRenderer(T).map {
           case (key, desc) =>
             val ctrls = raw(S.unsaved.toString)
-            tr(keyAttr := "new")(td(key), td(desc), td(ctrls))
+            val delButton = button(onclick ~~> T.runStateIO(NewRow.delS))("Cancel")
+            tr(keyAttr := "new")(td(key), td(desc), td(delButton))
         }
 
         def row(id: UserDefIssueTypeId, s: UserDefIssueType) = {
           val (key, desc) = SavedRow.renderer(id, s)(T)
+
+          val delButton = button(onclick ~~> T.runStateIO(SavedRow delS id))("Delete")
+
           val ctrls = raw(s"${s.key} | ${s.desc}")
-          tr(keyAttr := id)(td(key), td(desc), td(ctrls))
+          tr(keyAttr := id)(td(key), td(desc), td(delButton))
         }
 
         val rows = S.saved.toList.sortBy(_._2._1.key)
 
+      // TODO handle empty table
         div(
           button(onclick ~~> T.runStateIO(NewRow.createS))("Create"),
           table(tbody(

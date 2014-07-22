@@ -11,7 +11,7 @@ import ScalazReact._
 
 import scalaz.effect.IO
 import scalaz.Scalaz.Id
-import scalaz.{Foldable, Bind, \/, \/-, -\/}
+import scalaz.{Foldable, Bind, \/, \/-, -\/, StateT}
 import scalaz.syntax.bind._
 import scalaz.syntax.foldable._
 
@@ -22,6 +22,12 @@ import monocle.function.Field1._
 import monocle.function.Field2._
 
 import Lib._
+
+// TODO compose a row (Spec2) with ctrls (deletion)
+// TODO compose homogeneous rows (Spec2's) to create a table
+// TODO compose hetrogeneous (unsaved + saved) rows (Spec2's) to create a table
+// TODO add drag/drop ordering to table
+// TODO state date structure help
 
 /**
  * Done
@@ -121,15 +127,24 @@ object FormStuff {
   // ===================================================================================================================
   // Spec
 
+  /**
+   * Single field attribute: types & validation logic.
+   */
   case class SpecSplice[P, I, C, O](p2c: P => C, v: Validator[I, C, O]) {
     def initial: P => I = v.c2i compose p2c
     def savable(i: I) = v.correctAndValidate(i).toOption
     def edit[V](e: Editor[I, V]) = SpecSpliceE(this, e)
   }
 
+  /**
+   * Single field attribute: +renderToView.
+   */
   case class SpecSpliceE[P, V, I, C, O](s: SpecSplice[P, I, C, O], editor: Editor[I, V])
 
   /**
+   * This is actually just field attribute composition.
+   * Single row/record.
+   *
    * @tparam G "Good", meaning entire row has passed validation, row ready to be saved.
    * @tparam P "Persisted", the last saved copy of the row.
    * @tparam V "View", the type of the DOM representation.
@@ -193,6 +208,18 @@ object FormStuff {
       }
     }
   }
+
+  def deleteS[S, P, R](getP: S => P, save: P => IO[R], store: (S, P, R) => S) =
+    StateT[IO, S, Unit](s => {
+      val p = getP(s)
+      save(p).map(r => (store(s, p, r), ()))
+    })
+
+  def runStore[S, R](io: IO[R], store: (S, R) => S) =
+    StateT[IO, S, Unit](s => io.map(r => (store(s, r), ())))
+
+  def runStoreU[S](io: IO[Unit], store: S => S) =
+    runStore[S, Unit](io, (s, _) => store(s))
 
   // ===================================================================================================================
   // Impl
