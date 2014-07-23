@@ -20,10 +20,19 @@ import Lib._
 object Phase2 extends js.JSApp {
   override def main(): Unit = {
     import Phase2.IssueConfig._
+
     IssueTypeTable(List(
       1L -> UserDefIssueType("TODO", None)
       ,2L -> UserDefIssueType("TBD", Some("To Be Decided."))
     )) render dom.document.getElementById("target")
+
+    DragAndDrop.Component(List(
+      DragAndDrop.Item(10, "Ten")
+      ,DragAndDrop.Item(20, "Two Zero")
+      ,DragAndDrop.Item(30, "Firty")
+      ,DragAndDrop.Item(40, "Thorty")
+      ,DragAndDrop.Item(50, "Fipty")
+    )) render dom.document.getElementById("target2")
   }
 
 
@@ -142,7 +151,7 @@ object Phase2 extends js.JSApp {
       .getInitialState(p => FormState(p.map(x => x._1 -> mkPE(x._2)).toMap, None))
       .render(T => {
         val S = T.state
-        console.log(s"State = $S")
+        //console.log(s"State = $S")
 
         def newRow = NewRow.row.render(T)(())
         def row = SavedRow.row.render(T)
@@ -160,4 +169,121 @@ object Phase2 extends js.JSApp {
         )
       }).create
     }
+
+  // ===============================================================================================
+  // ===============================================================================================
+  // ===============================================================================================
+
+//  trait SyntheticMouseEvent[N <: dom.Node] extends dom.MouseEvent with SyntheticEvent[N]
+//  trait SyntheticDragEvent[N <: dom.Node] extends dom.DragEvent with SyntheticEvent[N]
+
+
+  object DragAndDrop {
+
+    case class Item(id: Int, name: String)
+
+    val placeholder = dom.document.createElement("li")
+    placeholder.className = "placeholder"
+
+    class DNDB(T: BackendScope[_, List[Item]]) {
+      type E = dom.HTMLElement
+      type SE = SyntheticEvent[E] with dom.DragEvent
+
+      def eh(f: SE => Unit) = (e: SE) => IO(f(e))
+
+      var dragged: E = null
+      var draggedStyle: String = null
+      var over: E = null
+      var nodeAfter: Boolean = _
+
+      def dragStart: SyntheticEvent[E] => IO[Unit] = e => IO{
+        val ee = e.dragEvent.get
+        val t = e.currentTarget
+        console.log("START: ", t, t.asInstanceOf[js.Dynamic].dataset.id)
+        this.dragged = t
+        this.draggedStyle = t.style.display
+        e.asInstanceOf[js.Dynamic].dataTransfer.effectAllowed = "move"
+
+        // Firefox requires calling dataTransfer.setData
+        // for the drag to properly work
+        //ee.dataTransfer.setData("text/html", t.toString)
+      }
+
+      def getDataId(e: E) =
+        e.asInstanceOf[js.Dynamic].dataset.id.asInstanceOf[String].toInt
+
+      def dragEnd: SyntheticEvent[E] => IO[Unit] = e => IO {
+        //        console.log("END: ", dragged, over)
+        if (this.dragged != null) {
+          this.dragged.style.display = this.draggedStyle
+          this.dragged.parentNode.removeChild(placeholder)
+
+          // Update state
+          val from = getDataId(dragged)
+          val to = getDataId(over)
+          console.log("END: ", from, to)
+          T.modState(s => {
+            val f = s.find(_.id == from).get
+            s.flatMap(i => {
+              var x = if (i.id == from) Nil else (i :: Nil)
+              if (to == i.id) x = if (this.nodeAfter) x :+ f else f :: x
+              x
+            })
+          })
+
+          this.dragged = null
+          this.over = null
+        }
+      }
+
+      def dragOver: SyntheticEvent[E] => IO[Unit] = e => IO {
+        if (this.dragged != null) {
+          val ee = e.dragEvent.get
+          e.preventDefault()
+          this.dragged.style.display = "none"
+          if (e.target.className != "placeholder") {
+            this.over = e.target
+
+            // Inside the dragOver method
+            val relY = ee.clientY - this.over.offsetTop
+            val height = this.over.offsetHeight / 2
+            val parent = e.target.parentNode
+
+            if (relY > height) {
+              this.nodeAfter = true
+              parent.insertBefore(placeholder, e.target.asInstanceOf[js.Dynamic].nextElementSibling.asInstanceOf[dom.Node])
+            } else if (relY < height) {
+              this.nodeAfter = false
+              parent.insertBefore(placeholder, e.target)
+            }
+          }
+        }
+      }
+    }
+
+    val Component = ReactComponentB[List[Item]]("DragAndDrop")
+      .getInitialState(p => p)
+      .backend(new DNDB(_))
+      .render(T => {
+        console.log(s"State = ${T.state}")
+
+        def renderItem(i: Item) =
+          li(
+            key := i.id
+            , "data-id".attr := i.id
+            ,"draggable".attr := "true"
+            ,"onDragStart".attr ~~> T.backend.dragStart
+            ,"onDragEnd".attr ~~> T.backend.dragEnd
+          )(s"${i.name} / ${i.id}")
+
+      div(
+          h1("Drag and Drop"),
+          ol(
+            "onDragOver".attr ~~> T.backend.dragOver
+          )(T.state map renderItem)
+        )
+
+      }).create
+
+  }
 }

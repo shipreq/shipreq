@@ -12,11 +12,20 @@
           td, th {border: solid 1px #333}
           .error {border-color: red}
           .errorMsg {color: red}
+
+li.placeholder {background: rgb(255,240,120);}
+li.placeholder:before {
+  content: "Drop here";
+  color: rgb(225,210,90);
+}
+
       </style>
   </head>
   <body>
 
     <div id="target">target</div>
+    <hr>
+    <div id="target2">target2</div>
 
     <script type="text/javascript">
       Phase2().main()

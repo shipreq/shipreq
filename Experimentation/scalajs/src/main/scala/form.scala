@@ -292,6 +292,14 @@ object FormStuff {
 //  case class TableSpec2[G, P, V, I1, C1, O1, I2, C2, O2](
 //    spec: Spec2[G, P, V, I1, C1, O1, I2, C2, O2],
 
+  /*
+    Full table:
+    S - full state
+    W - row id
+    find rows matching criteria, return W
+    use W to modify and save rows
+   */
+
   /**
    * Field attributes + TABLE STATE + TABLE ROW-ID
    */
