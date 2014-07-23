@@ -62,6 +62,17 @@ object Phase2 extends js.JSApp {
       (newId, g)
     }
 
+    type RowId = Option[UserDefIssueTypeId]
+    val SPECX = Spec2X(SPEC, Some(keyUniqueness), None)
+    //def keyUniqueness = uniquenessRefl[S, String](_.saved.toStream.map(_._2._1.key))
+//    def keyUniqueness = uniquenessRefl[Stream[UserDefIssueType], String](_.map(_.key))
+//    def S2X(s: S): X = (s, )
+    def keyUniqueness = uniqueness[S, RowId, (UserDefIssueTypeId, (P, E)), String](
+      _.saved.toStream,
+      (a,w) => w.fold(false)(_ == a._1),
+      (a,i) => i == a._2._1.key
+    )
+
     // ===============================================================================================
     object NewRow {
       private def empty: SPEC.E = ("","")
@@ -76,7 +87,7 @@ object Phase2 extends js.JSApp {
         def setE(s: S, e: E): Option[S] = unsavedL.get(s).map(_ => unsavedL.set(s, Some(e)))
         val se = WierdLens[Option, S, S, E](unsavedL.get, setE)
         val saveIO: (S, G) => IO[S] = (s,g) => fakeSave(None, g).map(storeInsert(_)(s))
-        SPEC.renderM(se, saveIO, s2op) _
+        SPECX.renderM(se, saveIO, s2op, None) _
       }
 
       private val delS = State.modify[S](_.copy(unsaved = None))
@@ -105,7 +116,7 @@ object Phase2 extends js.JSApp {
           (px,g) => if (px._2 == g) None else Some(px),
           (px,g) => fakeSave(Some(px), g),
           storeUpdate)
-        SPEC.render(se, saverr.save, sp.get) _
+        SPECX.render(se, saverr.save, sp.get, Some(id)) _
       }
 
       private def fakeDelete(id: UserDefIssueTypeId) = IO {
