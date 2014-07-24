@@ -35,6 +35,7 @@ object Phase2 extends js.JSApp {
     )) render dom.document.getElementById("target2")
   }
 
+  // ===================================================================================================================
 
   object IssueConfig {
 
@@ -73,16 +74,12 @@ object Phase2 extends js.JSApp {
 
     type RowId = Option[UserDefIssueTypeId]
     val SPECX = Spec2X(SPEC, Some(keyUniqueness), None)
-    //def keyUniqueness = uniquenessRefl[S, String](_.saved.toStream.map(_._2._1.key))
-//    def keyUniqueness = uniquenessRefl[Stream[UserDefIssueType], String](_.map(_.key))
-//    def S2X(s: S): X = (s, )
     def keyUniqueness = uniqueness[S, RowId, (UserDefIssueTypeId, (P, E)), String](
-      _.saved.toStream,
-      (a,w) => w.fold(false)(_ == a._1),
+      (s,w) => s.saved.toStream.filterNot(a => w.fold(false)(_ == a._1)),
       (a,i) => i == a._2._1.key
     )
 
-    // ===============================================================================================
+    // ...............................................................................................................
     object NewRow {
       private def empty: SPEC.E = ("","")
 
@@ -103,7 +100,6 @@ object Phase2 extends js.JSApp {
 
       private def renderRow(T: ComponentScope_SS[S], vv: SPEC.VV) = {
         val (key, desc) = vv
-        //val ctrls = raw(S.unsaved.toString)
         val delButton = button(onclick ~~> T.runStateIO(NewRow.delS))("Cancel")
         tr(keyAttr := "new")(td(key), td(desc), td(delButton))
       }
@@ -112,7 +108,7 @@ object Phase2 extends js.JSApp {
           _ => renderAttr, (T,_,vv) => renderRow(T, vv))
     }
 
-    // ===============================================================================================
+    // ...............................................................................................................
     object SavedRow {
       private def rowL(id: UserDefIssueTypeId) = savedL composeLens SimpleLens2[SaveMap](_(id))((a,b) => a + (id -> b))
 
@@ -146,7 +142,7 @@ object Phase2 extends js.JSApp {
         renderAttr, renderRow)
     }
 
-    // ===============================================================================================
+    // ...............................................................................................................
     val IssueTypeTable = ReactComponentB[List[(UserDefIssueTypeId, UserDefIssueType)]]("IssueTypeTable")
       .getInitialState(p => FormState(p.map(x => x._1 -> mkPE(x._2)).toMap, None))
       .render(T => {
@@ -170,9 +166,7 @@ object Phase2 extends js.JSApp {
       }).create
     }
 
-  // ===============================================================================================
-  // ===============================================================================================
-  // ===============================================================================================
+  // ===================================================================================================================
 
   object DragAndDrop {
 

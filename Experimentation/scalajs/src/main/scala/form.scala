@@ -57,8 +57,6 @@ import Lib._
  */
 object FormStuff {
 
-  // get: S => M[A], set: (S, A) => M[T], mod: (S, A => A) => M[T] = derived
-
   case class WierdLens[M[_]: Bind, S, T, A](get: S => M[A], set: (S, A) => M[T]) {
     def mod(s: S, f: A => A): M[T] = get(s).flatMap(a => set(s, f(a)))
     def map[B](l: SimpleLens[A, B]) = WierdLens[M, S, T, B](
@@ -69,7 +67,6 @@ object FormStuff {
   object WierdLens {
     def from[S, A](l: SimpleLens[S, A]) = WierdLens[Id, S, S, A](l.get, l.set)
   }
-//  type WierdLens[M[_]: Bind, S, A] = Lens[S, M[S], M[A], A]
 
   private def getOrElseAP[M[_]: Foldable, A](m: M[A], a: => A): A =
     m.foldr(a)(aa => _ => aa)
@@ -90,53 +87,15 @@ object FormStuff {
     final def correctAndValidate = validate compose correct
   }
 
-  // Option #1
-//  trait ValidatorX1[I, S, C, O] {
-//    def correct: I => C
-//    def validate: (C, S) => ErrorMsg \/ O
-//    def c2i: C => I
-//    def correctAndValidate(i: I, s: S) = validate(correct(i), s)
-//  }
-
-  // Option #2
   type ValidatorX2[S, W, I, C, O] = (S, W) => Validator[I, C, O]
-
-//  class ValidatorS[S, I, C, O](v: Validator[I, C, O], f: (S, C) => Option[ErrorMsg]) extends Validator[I, C, O] {
-//    def correct = v.correct
-//    def c2i = v.c2i
-//    def validate = c => f(s, c).fold(v validate c)(-\/.apply)
-//  }
 
   class CtxValidation[S, W, A](val f: (S, W, A) => Option[ErrorMsg]) extends AbstractFunction3[S, W, A, Option[ErrorMsg]] {
     override def apply(s: S, w: W, a: A) = f(s, w, a)
-
-//    def &(g: CtxValidation[S, A]): CtxValidation[S, A] =
-//      &(g.f)
-//
-//    def &(g: (S, A) => Option[ErrorMsg]): CtxValidation[S, A] =
-//      new CtxValidation[S, A]((s, a) => f(s, a).orElse(g(s, a)))
 
     def contramap[T](g: T => S) =
       new CtxValidation[T, W, A]((t, w, a) => f(g(t), w, a))
   }
 
-//  class ValidatorS[S, I, C, O](v: Validator[I, C, O], f: (S, C) => Option[ErrorMsg]) {
-//    def apply(s: S): Validator[I, C, O] =
-//  }
-
-  // def ValidatorX2_lift[S, I, C, O](norm: Validator[I, C, O]): ValidatorX2[S, I, C, O] = s => norm
-//  def ValidatorX2[S, I, C, O](norm: Validator[I, C, O], f: S => C => Option[ErrorMsg]): ValidatorX2[S, I, C, O] =
-//    s => new Validator[I, C, O] {
-//      def correct = norm.correct
-//      def validate = c => f(s)(c).flatMap(norm.validate)
-//      def c2i = norm.c2i
-//    }
-//def ValidatorX2[S, I, C, O](norm: Validator[I, C, O], f: (S, C) => Option[ErrorMsg]): ValidatorX2[S, I, C, O] =
-//  s => new Validator[I, C, O] {
-//    def correct = norm.correct
-//    def validate = c => f(s, c).fold(norm validate c)(-\/.apply)
-//    def c2i = norm.c2i
-//  }
   def ValidatorX2[S, W, I, C, O](norm: Validator[I, C, O], f: CtxValidation[S, W, O], w: W): S => Validator[I, C, O] =
     s => new Validator[I, C, O] {
       def correct = norm.correct
@@ -146,16 +105,6 @@ object FormStuff {
       }
       def c2i = norm.c2i
     }
-//  def ValidatorX2_b[S, I, C, O](x2: ValidatorX2[S, I, C, O], f: CtxValidation[S, O]): ValidatorX2[S, I, C, O] =
-//    s => new Validator[I, C, O] {
-//      private[this] val norm = x2(s)
-//      def correct = norm.correct
-//      def validate = c => {
-//        val orig = norm.validate(c)
-//        orig.flatMap(o => f(s, o).fold(orig)(-\/.apply))
-//      }
-//      def c2i = norm.c2i
-//    }
 
   trait Editor[D, V] {
     def apply(data: D
@@ -165,8 +114,6 @@ object FormStuff {
               , onEditEnd: IO[Unit]
                ): V
   }
-
-  // TODO create event handling monad?
 
   // ===================================================================================================================
   // Field attrs
@@ -214,23 +161,7 @@ object FormStuff {
   /**
    * Single field attribute: +renderToView.
    */
-  case class SpecSpliceE[P, V, I, C, O](s: SpecSplice[P, I, C, O], editor: Editor[I, V]) {
-//    def x[X](x: CtxValidation[X, O]) = SpecSpliceEX(s, editor, Some(x))
-//    def noX[X] = SpecSpliceEX[P, V, I, C, O, X](s, editor, None)
-  }
-
-  trait SpecLike[G, P, V] {
-    type E
-    //type OO
-    type VV
-
-//
-//    def renderM[S, M[_] : Bind : Foldable](eL: WierdLens[M, S, S, E],
-//                                           saveG: (S, G) => IO[S],
-//                                           s2mp: S => M[P]
-//                                            )(T: ComponentScope_SS[S]): M[VV]
-
-    }
+  case class SpecSpliceE[P, V, I, C, O](s: SpecSplice[P, I, C, O], editor: Editor[I, V])
 
   /**
    * This is actually just field attribute composition.
@@ -242,7 +173,7 @@ object FormStuff {
    */
   case class Spec2[G, P, V, I1, C1, O1, I2, C2, O2](s1: SpecSpliceE[P,V,I1,C1,O1], s2: SpecSpliceE[P,V,I2,C2,O2]
                                                     , oo2g: ((O1, O2)) => G
-                                                     ) extends SpecLike[G,P,V] {
+                                                     ) {
     type E = (I1,I2)
     type OO = (O1, O2)
     type VV = (V, V)
@@ -286,11 +217,6 @@ object FormStuff {
   }
 
   /* **************** */ /* **************** */ /* **************** */
-  /* **************** */ /* **************** */ /* **************** */
-  /* **************** */ /* **************** */ /* **************** */
-
-//  case class TableSpec2[G, P, V, I1, C1, O1, I2, C2, O2](
-//    spec: Spec2[G, P, V, I1, C1, O1, I2, C2, O2],
 
   /*
     Full table:
@@ -301,13 +227,13 @@ object FormStuff {
    */
 
   /**
-   * Field attributes + TABLE STATE + TABLE ROW-ID
+   * Field attributes + TABLE ROW-ID + [ROW-ID & STATE AWARE VALIDATORS]
    */
   case class Spec2X[S, W, G, P, V, I1, C1, O1, I2, C2, O2](
       spec: Spec2[G, P, V, I1, C1, O1, I2, C2, O2],
       ctxV1: Option[CtxValidation[S, W, O1]],
       ctxV2: Option[CtxValidation[S, W, O2]]
-  ) extends SpecLike[G,P,V] {
+  ) {
 
     type E = spec.E
     type VV = spec.VV
@@ -317,8 +243,8 @@ object FormStuff {
     private def fieldRenderers[M[_] : Bind : Foldable](s2mp: S => M[P],
                                                           w: W,
                                                           saveG: (S, G) => IO[S],
-
                                                           eL: WierdLens[M, S, S, E]) = {
+
       val v1 = ctxV1.fold[S => Validator[I1,C1,O1]]( _ => s1.s.v )( c=> ValidatorX2(s1.s.v, c, w) )
       val v2 = ctxV2.fold[S => Validator[I2,C2,O2]]( _ => s2.s.v )( c=> ValidatorX2(s2.s.v, c, w) )
 
@@ -359,66 +285,7 @@ object FormStuff {
         v2 <- s._2.render(s2.editor, T)
       } yield (v1,v2)
     }
-
-
   }
-
-//  case class TableSpec[M[_] : Bind, S, VV, V, RowId](
-//    row: FullRow[M, S, VV, V, RowId],
-//    ctxV: Option[CtxValidation[S, O1]]
-//                                                      )
-
-//  case class SpecSpliceEX[P, V, I, C, O, X](s: SpecSplice[P, I, C, O], editor: Editor[I, V], ctxV: Option[CtxValidation[X, O]])
-//  case class Spec2X[G, P, V, I1, C1, O1, I2, C2, O2, S1, S2, X](
-//       s1: SpecSpliceEX[P,V,I1,C1,O1,X], s2: SpecSpliceEX[P,V,I2,C2,O2,X]
-//      , oo2g: ((O1, O2)) => G) {
-//    type E = (I1, I2)
-//    type OO = (O1, O2)
-//    type VV = (V, V)
-//
-//    def initial(p: P): E = (s1.s initial p, s2.s initial p)
-//
-//    def savable(e: E): Option[OO] = for {
-//      o1 <- s1.s.savable(e._1)
-//      o2 <- s2.s.savable(e._2)
-//    } yield (o1,o2)
-//
-//    def fieldRenderers[S, M[_] : Bind : Foldable](s2mp: S => M[P],
-//                                                  s2x: S => X,
-//                                                  spp: (S, OO) => IO[S],
-//                                                  eL: WierdLens[M, S, S, E]) = {
-//      val sf: S => IO[S] = s =>
-//        foldableToOption(eL.get(s)).flatMap(savable).fold(IO(s))(oo => spp(s, oo))
-//
-//      val v1 = s1.ctxV.fold[ValidatorX2[S,I1,C1,O1]]( _ => s1.s.v )( c=> ValidatorX2(s1.s.v, c contramap s2x) )
-//      val v2 = s2.ctxV.fold[ValidatorX2[S,I2,C2,O2]]( _ => s2.s.v )( c=> ValidatorX2(s2.s.v, c contramap s2x) )
-//      (
-//        new FormAttrShit[S, I1, C1, O1, M](v1, s2mp.andThen(_ map s1.s.p2c), eL map _1[E, I1], sf),
-//        new FormAttrShit[S, I2, C2, O2, M](v2, s2mp.andThen(_ map s2.s.p2c), eL map _2[E, I2], sf)
-//        )
-//    }
-//
-//    def render[S](eL: SimpleLens[S, E],
-//                  saveG: (S, G) => IO[S],
-//                  s2mp: S => P,
-//                  s2x: S => X
-//                   )(T: ComponentScope_SS[S]): VV = renderM[S, Id](WierdLens from eL, saveG, s2mp, s2x)(T)
-//
-//    def renderM[S, M[_] : Bind : Foldable](eL: WierdLens[M, S, S, E],
-//                                           saveG: (S, G) => IO[S],
-//                                           s2mp: S => M[P],
-//                                           s2x: S => X
-//                                            )(T: ComponentScope_SS[S]): M[VV] = {
-//
-//      def spp(s: S, oo: OO): IO[S] = saveG(s, oo2g(oo))
-//
-//      val s = fieldRenderers(s2mp, s2x, spp, eL)
-//      for {
-//        v1 <- s._1.render(s1.editor, T)
-//        v2 <- s._2.render(s2.editor, T)
-//      } yield (v1,v2)
-//    }
-//  }
 
   // ===================================================================================================================
   // rows
@@ -426,7 +293,6 @@ object FormStuff {
   class FullRow[M[_] : Bind, S, VV, V, RowId](renderAttr: RowId => ComponentScope_SS[S] => M[VV],
                                           renderRow: (ComponentScope_SS[S], RowId, VV) => V
                                            ) {
-
     def render(T: ComponentScope_SS[S]): RowId => M[V] =
       id => renderAttr(id)(T).map(vv => renderRow(T, id, vv))
   }
@@ -473,17 +339,12 @@ object FormStuff {
     override def c2i = identity
   }
 
-  def uniqueness[S, W, A, I](extract: S => Stream[A], cur: (A, W) => Boolean, cmp: (A, I) => Boolean, errorMsg: ErrorMsg = "Already in use. Duplicate.") =
+  def uniqueness[S, W, A, I](extract: (S,W) => Stream[A], cmp: (A, I) => Boolean, errorMsg: ErrorMsg = "Already in use. Duplicate.") =
     new CtxValidation[S, W, I]((s, w, i) => {
-      val dupFound = extract(s)
-        .filterNot(cur(_, w))
-        .exists(cmp(_,i))
+      val dupFound = extract(s, w).exists(cmp(_,i))
         //.foldLeft(0)((j, a) => if (j <= 1 && cmp(a,i)) j + 1 else j) // TODO effeciency, too eager
       if (dupFound) Some(errorMsg) else None
     })
-
-//  def uniquenessRefl[S, A](extract: S => Stream[A]) =
-//    uniqueness[S, A, A](extract, (a,b) => a == b)
 
   object DescValidator extends Validator[String, Option[String], Option[String]] {
     override def c2i = _ getOrElse ""
