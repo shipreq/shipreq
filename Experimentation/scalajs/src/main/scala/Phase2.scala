@@ -174,164 +174,35 @@ object Phase2 extends js.JSApp {
   // ===============================================================================================
   // ===============================================================================================
 
-//  trait SyntheticMouseEvent[N <: dom.Node] extends dom.MouseEvent with SyntheticEvent[N]
-//  trait SyntheticDragEvent[N <: dom.Node] extends dom.DragEvent with SyntheticEvent[N]
-
   object DragAndDrop {
-
-    // Child
 
     case class Item(id: Int, name: String)
 
-    case class ItemCP(item: Item, props: DND.Child.CProps[Item])
+    val RowComp = DND.Child.dndItemComponent[Item](
+      (i, hnd) => hnd :: raw(s"${i.id} | ${i.name}") :: Nil)
 
-    val ItemC = ReactComponentB[ItemCP]("DndItem")
-      .initialState(DND.Child.initialState)
-      .render(T => {
-        val i = T.props.item
-        DND.Child.renderRow(T.props.props, i, T)(
-          DND.Child.renderDragHandle(T.props.props, i, T),
-          raw(s"${i.id} | ${i.name}")
-        )
-      }).create
+    case class ParentState(items: List[Item], dnd: DND.Parent.PState[Item])
 
-    // Parent
-
-    case class ParentState(items: List[Item], num: Int, dnd: DND.Parent.PState[Item])
-
-    def inc(s: ComponentStateFocus[Int]) = s.modStateIO(_ + 1)
+    def itemCmp(a: Item, b: Item) = a.id==b.id
 
     val Component = ReactComponentB[List[Item]]("DragAndDrop")
-      .getInitialState(p => ParentState(p, 0, DND.Parent.initialState))
-      //.backend(T => new DNDB(T.focusState(_.items)((a, b) => a.copy(items = b))))
+      .getInitialState(p => ParentState(p, DND.Parent.initialState))
       .render(T => {
-//console.log(s"State = ${T.state}")
+console.log(s"State = ${T.state}")
         val itemsState = T.focusState(_.items)((a, b) => a.copy(items = b))
         val dndState = T.focusState(_.dnd)((a, b) => a.copy(dnd = b))
-        val numState = T.focusState(_.num)((a, b) => a.copy(num = b))
 
-        def move(from: Item, to: Item) = {
-          itemsState.modStateIO(s => {
-  console.log(s"Parent.move: $from ⇒ $to")
-            val f = s.find(_.id == from.id).get
-            s.flatMap(i => {
-              var x = if (i.id == from.id) Nil else (i :: Nil)
-              if (to.id == i.id) x = x :+ f //if (this.nodeAfter) x :+ f else f :: x
-              x
-            })
-          })
-        }
+        def move(from: Item, to: Item) =
+          itemsState.modStateIO(DND.move(from, to, itemCmp))
 
         def renderItem(i: Item) =
-          li(key := i.id)(ItemC(ItemCP(i, DND.Parent.cProps(dndState, i, (a,b)=>a==b, move ))))
+          li(key := i.id)(RowComp((i, DND.Parent.cProps(dndState, i, itemCmp, move ))))
 
         div(
-          h1("ComponentStateFocus"),
-          div(s"Num = ${numState.state}"), button(onclick ~~> inc(numState))("Inc Counter"),
           h1("Drag and Drop"),
           ol(T.state.items.map(renderItem).toJsArray)
 
         )
       }).create
-  }
-
-}
-
-object ScalatagsExtra {
-  val draggable   = "draggable".attr
-  val onDragStart = "onDragStart".attr
-  val onDragEnd   = "onDragEnd".attr
-  val onDragEnter = "onDragEnter".attr
-  val onDragOver  = "onDragOver".attr
-  val onDragLeave = "onDragLeave".attr
-  val onDrop      = "onDrop".attr
-}
-import ScalatagsExtra._
-
-object DND {
-  object Parent {
-    type PState[A] = Option[(A, Option[A])] // src & target
-
-    def initialState[A]: PState[A] = None
-
-    // optimise (many needless state changes)
-    private def setStateDrop[A](s: Option[A]): State[PState[A], Unit] = State.modify(_.map(x => (x._1, s)))
-
-    def dragEnd[A] = State.put[PState[A]](None)
-    def dragStart[A](a: A) = State.put[PState[A]](Some(a, None))
-
-    def dragOver[A](a: A) = setStateDrop(Some(a))
-    def dragLeave[A] = setStateDrop[A](None)
-
-    def cProps[A](T: ComponentStateFocus[PState[A]], a: A, aEq: (A,A) => Boolean, move: (A,A) => IO[Unit]) = Child.CProps[A](
-      T.state match {
-        case Some((_, Some(d))) => aEq(a,d)
-        case _ => false
-      },
-      T _runStateIO dragStart,
-      T _runStateIO dragOver,
-      T runStateIO dragLeave,
-      T runStateIO dragEnd,
-      T.state match {
-        case Some((from, Some(to))) => move(from, to)
-        case _ => IO(())
-      }
-    )
-  }
-
-  object Child {
-    case class CProps[A](dragover: Boolean,
-                         onDragStart: A => IO[Unit],
-                         onDragOver: A => IO[Unit],
-                         onDragLeave: IO[Unit],
-                         onDragEnd: IO[Unit],
-                         onMove: IO[Unit])
-    type CState = Boolean
-
-    type StateIO[A] = StateT[IO, CState, A]
-
-    def initialState: CState = false
-
-    def dragStart[A](a: A, p: CProps[A]): SyntheticEvent[dom.Node] => StateIO[Unit] =
-      e => StateT(_ => p.onDragStart(a) >> IO {
-//console.log(s"dragStart: $p")
-        e.dragEvent.get.dataTransfer.setData("text", "managed")
-        (true, ())
-      })
-
-    def dragEnd[A](p: CProps[A]): StateIO[Unit] =
-      StateT(_ => p.onDragEnd >> IO(false, ()))
-
-    def dragOver[A](a: A, p: CProps[A], s: => CState): SyntheticEvent[dom.Node] => IO[Unit] =
-      e => IO {
-//console.log(s"dragOver: dragging = $s / dragover = ${p.dragover}")
-        if (!s) {
-          e.preventDefault()
-          e.dragEvent.get.dataTransfer.asInstanceOf[js.Dynamic].updateDynamic("dropEffect")("move")
-          p.onDragOver(a).unsafePerformIO()
-        }
-      }
-
-    def drop[A](p: CProps[A]): SyntheticEvent[dom.Node] => IO[Unit] =
-      _.preventDefaultIO >> p.onMove
-
-    def renderDragHandle[S, A](p: CProps[A], a: A, T: ComponentStateFocus[CState]) =
-      span(
-        className     := "draghandle"
-        ,draggable    := "true"
-        ,onDragStart ~~> T._runStateIO(dragStart(a, p))
-        ,onDragEnd   ~~> T.runStateIO(dragEnd(p))
-        // onMouseDown={typeof window.isIE9 != 'undefined' && this.handleIE9DragHack}
-      )("\u2630")
-
-    def renderRow[A](p: CProps[A], a: A, T: ComponentStateFocus[CState]) =
-      div(
-        classSet("dragging" -> T.state, "dragover" -> p.dragover)
-        ,onDragEnter ~~> preventDefaultIO
-        ,onDragOver  ~~> dragOver(a, p, T.state)
-        ,onDragLeave ~~> p.onDragLeave
-        ,onDrop      ~~> drop(p)
-      )
-
   }
 }
