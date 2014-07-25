@@ -16,9 +16,10 @@ object DND {
     l.find(cmp(from, _)) match {
       case None => l
       case Some(f) =>
+        var removedYet = false
         l.flatMap(i => {
-          var x = if (cmp(from, i)) Nil else i :: Nil
-          if (cmp(to, i)) x = x :+ f
+          var x = if (cmp(from, i)) {removedYet=true; Nil} else i :: Nil
+          if (cmp(to, i)) x = if (removedYet) x :+ f else f :: x
           x
         })
     }
