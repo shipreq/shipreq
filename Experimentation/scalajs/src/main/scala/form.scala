@@ -116,7 +116,7 @@ object FormStuff {
   }
 
   // ===================================================================================================================
-  // Field attrs
+  // Field attr editor
 
   class FormAttrShit[S, I, C, O, M[_] : Bind : Foldable](
                                   vs: S => Validator[I, C, O] // Conflation. S not required for i↔c
@@ -149,6 +149,9 @@ object FormStuff {
     }
   }
 
+  // ===================================================================================================================
+  // Field rules and composition
+
   /**
    * Single field attribute: types & validation logic.
    */
@@ -180,43 +183,9 @@ object FormStuff {
 
     def initial(p: P): E = (s1.s initial p, s2.s initial p)
 
-//    private def savable(e: E): Option[OO] = for {
-//      o1 <- s1.s.savable(e._1)
-//      o2 <- s2.s.savable(e._2)
-//    } yield (o1,o2)
-//
-//    private def fieldRenderers[S, M[_] : Bind : Foldable](s2mp: S => M[P],
-//                                                  spp: (S, OO) => IO[S],
-//                                                  eL: WierdLens[M, S, S, E]) = {
-//      val sf: S => IO[S] = s =>
-//        foldableToOption(eL.get(s)).flatMap(savable).fold(IO(s))(oo => spp(s, oo))
-//      (
-//        new FormAttrShit[S, I1, C1, O1, M](_=> s1.s.v, s2mp.andThen(_ map s1.s.p2c), eL map _1[E, I1], sf),
-//        new FormAttrShit[S, I2, C2, O2, M](_=> s2.s.v, s2mp.andThen(_ map s2.s.p2c), eL map _2[E, I2], sf)
-//        )
-//    }
-//
-//    final def render[S](eL: SimpleLens[S, E],
-//                        saveG: (S, G) => IO[S],
-//                        s2mp: S => P
-//                         )(T: ComponentScope_SS[S]): VV = renderM[S, Id](WierdLens from eL, saveG, s2mp)(T)
-//
-//    def renderM[S, M[_] : Bind : Foldable](eL: WierdLens[M, S, S, E],
-//                                           saveG: (S, G) => IO[S],
-//                                           s2mp: S => M[P]
-//                                            )(T: ComponentScope_SS[S]): M[VV] = {
-//
-//      def spp(s: S, oo: OO): IO[S] = saveG(s, oo2g(oo))
-//
-//      val s = fieldRenderers(s2mp, spp, eL)
-//      for {
-//        v1 <- s._1.render(s1.editor, T)
-//        v2 <- s._2.render(s2.editor, T)
-//      } yield (v1,v2)
-//    }
+    def forState[S] =
+      Spec2X[S, Unit, G, P, V, I1, C1, O1, I2, C2, O2](this, None, None).forRow(())
   }
-
-  /* **************** */ /* **************** */ /* **************** */
 
   /*
     Full table:
@@ -254,37 +223,36 @@ object FormStuff {
         o2 <- v2(s).correctAndValidate(e._2).toOption
       } yield (o1,o2)
 
-//      def saveOO(s: S, oo: OO): IO[S] = saveG(s, oo2g(oo))
-
       // TODO This isn't able to traverse other rows, or access them by W
       // Cannot save rows that were invalid due to this one, that have just become valid.
-
       val sf: S => IO[S] = s =>
         foldableToOption(eL.get(s)).flatMap(savable(s,_)).fold(IO(s))(oo => saveG(s, oo2g(oo)))
+
       (
         new FormAttrShit[S, I1, C1, O1, M](v1, s2mp.andThen(_ map s1.s.p2c), eL map _1[E, I1], sf),
         new FormAttrShit[S, I2, C2, O2, M](v2, s2mp.andThen(_ map s2.s.p2c), eL map _2[E, I2], sf)
-        )
+      )
     }
 
-    final def render(eL: SimpleLens[S, E],
-                        saveG: (S, G) => IO[S],
-                        s2mp: S => P,
-                          w: W
-                         )(T: ComponentScope_SS[S]): VV = renderM[Id](WierdLens from eL, saveG, s2mp, w)(T)
-
-    def renderM[M[_] : Bind : Foldable](eL: WierdLens[M, S, S, E],
-                                           saveG: (S, G) => IO[S],
-                                           s2mp: S => M[P],
-                                           w: W
-                                            )(T: ComponentScope_SS[S]): M[VV] = {
-
-      val s = fieldRenderers(s2mp, w, saveG, eL)
-      for {
-        v1 <- s._1.render(s1.editor, T)
-        v2 <- s._2.render(s2.editor, T)
-      } yield (v1,v2)
+    def forRow(w: W): Renderable[S, G, P, E, V, VV] = new Renderable[S, G, P, E, V, VV] {
+      override def renderM[M[_] : Bind : Foldable]
+        (eL: WierdLens[M, S, S, E], s2mp: S => M[P])
+        (saveG: (S, G) => IO[S]): ComponentScope_SS[S] => M[VV] = T => {
+          val s = fieldRenderers(s2mp, w, saveG, eL)
+          for {
+            v1 <- s._1.render(s1.editor, T)
+            v2 <- s._2.render(s2.editor, T)
+          } yield (v1,v2)
+        }
     }
+  }
+
+  trait Renderable[S, G, P, E, V, VV] {
+    final def render(eL: SimpleLens[S, E], s2mp: S => P) = renderM[Id](WierdLens from eL, s2mp) _
+
+    def renderM[M[_] : Bind : Foldable]
+      (eL: WierdLens[M, S, S, E], s2mp: S => M[P])
+      (saveG: (S, G) => IO[S]): ComponentScope_SS[S] => M[VV]
   }
 
   // ===================================================================================================================

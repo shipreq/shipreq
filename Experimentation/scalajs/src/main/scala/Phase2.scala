@@ -93,7 +93,7 @@ object Phase2 extends js.JSApp {
         def setE(s: S, e: E): Option[S] = unsavedL.get(s).map(_ => unsavedL.set(s, Some(e)))
         val se = WierdLens[Option, S, S, E](unsavedL.get, setE)
         val saveIO: (S, G) => IO[S] = (s,g) => fakeSave(None, g).map(storeInsert(_)(s))
-        SPECX.renderM(se, saveIO, s2op, None) _
+        SPECX.forRow(None).renderM(se, s2op)(saveIO)
       }
 
       private val delS = State.modify[S](_.copy(unsaved = None))
@@ -121,7 +121,7 @@ object Phase2 extends js.JSApp {
           (px,g) => if (px._2 == g) None else Some(px),
           (px,g) => fakeSave(Some(px), g),
           storeUpdate)
-        SPECX.render(se, saverr.save, sp.get, Some(id)) _
+        SPECX.forRow(Some(id)).render(se, sp.get)(saverr.save)
       }
 
       private def fakeDelete(id: CustomIssueTypeId) = IO {
@@ -203,6 +203,9 @@ console.log(s"State = ${T.state}")
   // ===================================================================================================================
 
   object ReqTypes {
-    
+
+    type CustomReqTypeId = Int
+    case class CustomReqType(mnemonic: String, name: String, oldMnemonics: Set[String], implicationReq: Boolean)
+
   }
 }
