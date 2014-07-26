@@ -165,8 +165,6 @@ console.log(s"DND.State = ${T.state}")
 
     // TODO T.state is consistent, doesn't show next iteration's state
     // TODO prevent old mnemonic reuse
-    // TODO blacklist certain chars (ie. deny I change)
-    // TODO transform certain chars (ie. preprocess I)
     // TODO Add an uneditable UC type in there
 
     type P = CustomReqType

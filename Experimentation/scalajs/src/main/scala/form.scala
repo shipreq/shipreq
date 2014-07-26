@@ -82,6 +82,7 @@ object FormStuff {
   type ErrorMsg = String
 
   trait Validator[I, C, O] {
+    def liveCorrect: I => I
     def correct: I => C
     def validate: C => ErrorMsg \/ O
     def c2i: C => I
@@ -99,6 +100,7 @@ object FormStuff {
 
   def ValidatorX2[S, W, I, C, O](norm: Validator[I, C, O], f: CtxValidation[S, W, O], w: W): S => Validator[I, C, O] =
     s => new Validator[I, C, O] {
+      def liveCorrect = norm.liveCorrect
       def correct = norm.correct
       def validate = c => {
         val orig = norm.validate(c)
@@ -126,7 +128,7 @@ object FormStuff {
                                   , trySave: S => IO[S]
                                   ) {
 
-    private def change(i: I) = (s: S) => getOrElseAP(iL.set(s,i), s)
+    private def change(i: I) = (s: S) => getOrElseAP(iL.set(s, vs(s).liveCorrect(i) ), s)
 
     private def cancelChange(T: ComponentScope_SS[S])(callback: IO[Unit]): IO[Unit] =
       T.stateIO.flatMap(s =>
@@ -427,6 +429,7 @@ object FormStuff {
   // Impl
 
   object KeyValidator extends Validator[String, String, String] {
+    override def liveCorrect = _.toUpperCase()
     override def correct = _.trim.toUpperCase()
     override def validate = {
       case "" => -\/("It's blank!")
@@ -437,6 +440,7 @@ object FormStuff {
   }
 
   object MnemonicValidator extends Validator[String, String, String] {
+    override def liveCorrect = _.toUpperCase().replaceAll("[^A-Z]+","").replaceAll("^(.{6}).+","$1")
     override def correct = _.trim.toUpperCase()
     override def validate = {
       case "" => -\/("It's blank!")
@@ -447,6 +451,7 @@ object FormStuff {
   }
 
   def NopValidator[I] : Validator[I,I,I] = new Validator[I,I,I] {
+    override def liveCorrect = identity
     override def correct = identity
     override def validate = \/-.apply
     override def c2i = identity
@@ -460,6 +465,7 @@ object FormStuff {
     })
 
   object DescValidator extends Validator[String, Option[String], Option[String]] {
+    override def liveCorrect = identity
     override def c2i = _ getOrElse ""
     override def correct = s => {
       val j = s.trim
