@@ -79,16 +79,16 @@ object Phase2 extends js.JSApp {
       val create = Spec.createUnsaved(("",""))
       val row = Spec.unsavedRow((T, vv) => {
         val (key, desc) = vv
-        val delButton = button(onclick ~~> T.modStateIO(Spec.removeUnsaved))("Cancel")
+        val delButton = button(onclick ~~> T.runState(Spec.removeUnsavedS))("Cancel")
         tr(keyAttr := "new")(td(key), td(desc), td(delButton))
       })
     }
 
     object SavedRow {
-      private val delete = Spec.deleteSavedFn(fakeDelete)
+      private val delete = Spec.deleteSavedS(fakeDelete)
       val row = Spec.savedRow((T, id, vv) => {
         val (key, desc) = vv
-        val delButton = button(onclick ~~> T.runStateIO(delete(id)))("Delete")
+        val delButton = button(onclick ~~> T.runState(delete(id)))("Delete")
         tr(keyAttr := id)(td(key), td(desc), td(delButton))
       })
     }
@@ -104,7 +104,7 @@ object Phase2 extends js.JSApp {
 
         // TODO handle empty table
         div(
-          button(onclick ~~> T.runStateIO(NewRow.create))("Create"),
+          button(onclick ~~> T.runState(NewRow.create))("Create"),
           table(
             thead(tr(th("Name"), th("Description"), th("Ctrls"))),
             tbody(newRow, savedRows)
@@ -135,7 +135,7 @@ console.log(s"DND.State = ${T.state}")
 
         def move(from: Item, to: Item) =
           IO{ console.log(s"...Before = ${T.state}") } >>
-          itemsState.modStateIO(DND.move(from, to, itemCmp)) >>
+          IO{ itemsState.modState(DND.move(from, to, itemCmp)) } >>
           IO{ console.log(s"....After = ${T.state}") }
 
         def renderItem(i: Item) =
@@ -194,16 +194,16 @@ console.log(s"DND.State = ${T.state}")
     private val NewRow = {
       Spec.unsavedRow((T, vv) => {
         val (mnemonic, impReq) = vv
-        val delButton = button(onclick ~~> T.modStateIO(Spec.removeUnsaved))("Cancel")
+        val delButton = button(onclick ~~> T.runState(Spec.removeUnsavedS))("Cancel")
         tr(keyAttr := "new")(td(mnemonic), td(impReq), td(delButton))
       })
     }
 
     private val SavedRow = {
-      val delete = Spec.deleteSavedFn(fakeDelete)
+      val delete = Spec.deleteSavedS(fakeDelete)
       Spec.savedRow((T, id, p, vv) => {
         val (mnemonic, impReq) = vv
-        val delButton = button(onclick ~~> T.runStateIO(delete(id)))("Delete")
+        val delButton = button(onclick ~~> T.runState(delete(id)))("Delete")
         tr(keyAttr := id)(td(mnemonic), td(p.name), td(impReq), td(delButton))
       })
     }
@@ -216,7 +216,7 @@ console.log(s"DND.State = ${T.state}")
         val savedRows = Spec.renderSaved(T, SavedRow)(_.sortBy(_._2._1.mnemonic))
 
         div(
-          button(onclick ~~> T.runStateIO(Create))("Create"),
+          button(onclick ~~> T.runState(Create))("Create"),
           table(
             thead(tr(th("Mnemonic"), th("Name"), th("Implication Required"), th("Ctrls"))),
             tbody(

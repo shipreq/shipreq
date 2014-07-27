@@ -110,11 +110,12 @@ object FormStuff {
     }
 
   trait Editor[D, V] {
-    def apply(data: D
+    def apply[S](data: D
               , error: Option[ErrorMsg]
-              , onChange: D => IO[Unit]
-              , onCancel: IO[Unit] => IO[Unit]
-              , onEditEnd: IO[Unit]
+              , onChange: D => ReactST[IO, S, Unit]
+              , onCancel: IO[Unit] => ReactST[IO, S, Unit]
+              , onEditEnd: ReactST[IO, S, Unit]
+              , T: ComponentScope_SS[S]
                ): V
   }
 
@@ -128,26 +129,33 @@ object FormStuff {
                                   , trySave: S => IO[S]
                                   ) {
 
-    private def change(i: I) = (s: S) => getOrElseAP(iL.set(s, vs(s).liveCorrect(i) ), s)
+    def resolvem[A](m: M[A])(f: A => ReactS[S, Unit]): ReactS[S, Unit] =
+      foldMapAP(m, ReactS.ret[S, Unit](()))(f)
 
-    private def cancelChange(T: ComponentScope_SS[S])(callback: IO[Unit]): IO[Unit] =
-      T.stateIO.flatMap(s =>
-        foldMapAP(s2mc(s), IO(()))(c => T.modStateIO(change(vs(s) c2i c), callback)))
+    def resolvemio[A](m: M[A])(f: A => ReactST[IO, S, Unit]): ReactST[IO, S, Unit] =
+      foldMapAP(m, ReactS.retT[IO, S, Unit](()))(f)
 
-    private def editEnd(T: ComponentScope_SS[S]): IO[Unit] =
-      T.stateIO.flatMap(s => {
+    private def change(i: I) = ReactS.mod((s:S) => getOrElseAP(iL.set(s, vs(s).liveCorrect(i)), s))
+
+    private def cancelChange(callback: IO[Unit]) =
+      ReactS.get[S].flatMap(s =>
+        resolvem(s2mc(s))(c => change(vs(s) c2i c) addCallback callback)
+      )
+
+    private def editEnd =
+      ReactS.getT[IO, S].flatMap(s => {
         val v = vs(s)
         // optimisation: compare I & I here, don't try to save if equal
         // correctness, don't try to save if invalid
-        val m = iL.mod(s, v.c2i compose v.correct).map(trySave(_) >>= T.setStateIO)
-        getOrElseAP(m, IO(()))
+        val ms = iL.mod(s, v.c2i compose v.correct)
+        resolvemio(ms)(s => ReactS.modT(trySave))
       })
 
     def render[V](editor: Editor[I, V], T: ComponentScope_SS[S]): M[V] = {
       val s = T.state
       iL.get(s).map(i => {
         val e = vs(s).correctAndValidate(i).swap.toOption
-        editor(i, e, i => T modStateIO change(i), cancelChange(T), editEnd(T))
+        editor(i, e, change, cancelChange, editEnd, T)
       })
     }
   }
@@ -327,9 +335,10 @@ object FormStuff {
           spec.forRow(None).renderM(se, s2op)(saveIO)
         }
 
-        def createUnsaved(empty: I) = scalaz.State.modify[S](unsavedL.modifyF(_ orElse Some(empty)))
+        def createUnsaved(empty: I) = ReactS.mod(unsavedL.modifyF(_ orElse Some(empty)))
 
         val removeUnsaved = unsavedL setF None
+        val removeUnsavedS = ReactS.mod(removeUnsaved)
 //        val cancelUnsaved = scalaz.State.modify[S](unsavedL setF None)
 
         def insertUnsaved(px: Px)          : S => S = insertUnsaved(px._1, px._2)
@@ -359,10 +368,10 @@ object FormStuff {
         }
 
         def removeSaved(id: DataId) = savedL.modifyF(m => m - id)
+        def removeSavedS(id: DataId) = ReactS.mod(removeSaved(id))
 
-        def deleteSavedFn(f: DataId => IO[Unit]) = (id: DataId) =>
-          runStoreU(f(id), removeSaved(id))
-
+        def deleteSavedS(f: DataId => IO[Unit]): DataId => ReactST[IO, S, Unit] =
+          id => ReactS.retM(f(id)) >> removeSavedS(id)
 
         def updateSaved(px: Px)          : S => S = updateSaved(px._1, px._2)
         def updateSaved(id: DataId, p: P): S => S = savedL.modifyF(_ + (id -> mkPI(p)))
@@ -384,8 +393,6 @@ object FormStuff {
       }
     }
   }
-  
-
 
   // ===================================================================================================================
   // rows
@@ -396,7 +403,6 @@ object FormStuff {
     def render(T: ComponentScope_SS[S]): RowId => M[V] =
       id => renderAttr(id)(T).map(vv => renderRow(T, id, vv))
   }
-
 
   // ===================================================================================================================
   // util
@@ -418,12 +424,6 @@ object FormStuff {
       val p = getP(s)
       save(p).map(r => (store(s, p, r), ()))
     })
-
-  def runStore[S, R](io: IO[R], store: (S, R) => S) =
-    StateT[IO, S, Unit](s => io.map(r => (store(s, r), ())))
-
-  def runStoreU[S](io: IO[Unit], store: S => S) =
-    runStore[S, Unit](io, (s, _) => store(s))
 
   // ===================================================================================================================
   // Impl
@@ -475,28 +475,29 @@ object FormStuff {
   }
 
   class TextEditor(node: ReactVDom.Tag) extends Editor[String, ReactVDom.Modifier] {
-    override def apply(data: String
-                       , error: Option[ErrorMsg]
-                       , onChange: String => IO[Unit]
-                       , onCancel: IO[Unit] => IO[Unit]
-                       , onEditEnd: IO[Unit]
-                        ) = {
+    override def apply[S](data: String
+                          , error: Option[ErrorMsg]
+                          , onChange: String => ReactST[IO, S, Unit]
+                          , onCancel: IO[Unit] => ReactST[IO, S, Unit]
+                          , onEditEnd: ReactST[IO, S, Unit]
+                          , T: ComponentScope_SS[S]
+                           ) = {
 
-      val cancelOnEscape: InputEvent => IO[Unit] =
+      val cancelOnEscape: InputEvent => ReactST[IO, S, Unit] =
         e => e.keyboardEvent
           .filter(_.keyCode == KeyCode.escape)
-          .fold(IO(()))(_ => {
-          val t = e.target
-          e.preventDefaultIO >> e.stopPropagationIO >> onCancel(IO(t.blur()))
-        })
+          .fold(ReactS.retT[IO,S,Unit](()))(_ => {
+            val t = e.target
+            ReactS.retM[IO, S, Unit](e.preventDefaultIO >> e.stopPropagationIO) >> onCancel(IO(t.blur()))
+          })
 
       div(
         node(
           value := data
           , error.isDefined && (cls := "error")
-          , onchange  ~~> textChangeRecvIO(onChange)
-          , onblur    ~~> onEditEnd
-          , onkeydown ~~> cancelOnEscape
+          , onchange  ~~> T._runState(textChangeRecvX(onChange))
+          , onkeydown ~~> T._runState(cancelOnEscape)
+          , onblur    ~~> T.runState(onEditEnd)
         )
         , error.fold(Nop)(e => div(cls := "errorMsg")(e))
       )
@@ -504,13 +505,14 @@ object FormStuff {
   }
 
   object CheckboxEditor extends Editor[Boolean, ReactVDom.Modifier] {
-    override def apply(data: Boolean
+    override def apply[S](data: Boolean
                        , error: Option[ErrorMsg]
-                       , onChange: Boolean => IO[Unit]
-                       , onCancel: IO[Unit] => IO[Unit]
-                       , onEditEnd: IO[Unit]
+                       , onChange: Boolean => ReactST[IO, S, Unit]
+                       , onCancel: IO[Unit] => ReactST[IO, S, Unit]
+                       , onEditEnd: ReactST[IO, S, Unit]
+                       , T: ComponentScope_SS[S]
                         ) = {
-      val ch: InputEvent => IO[Unit] = e => {
+      def ch(e: InputEvent) = {
         val v = e.target.checked
         onChange(v) >> onEditEnd
       }
@@ -519,7 +521,7 @@ object FormStuff {
         input(
           `type` := "checkbox"
           //, value := 1
-          , onchange ~~> ch
+          , onchange ~~> T._runState(ch)
           , data && (checked := "checked")
           , error.isDefined && (cls := "error")
         )

@@ -45,10 +45,10 @@ object DND {
           case Some((_, Some(d))) => cmp(a, d)
           case _ => false
         },
-        T _runStateIO dragStart,
-        T _runStateIO dragOver,
-        T runStateIO dragLeave,
-        T runStateIO dragEnd,
+        T _runStateS dragStart,
+        T _runStateS dragOver,
+        T runStateS dragLeave,
+        T runStateS dragEnd,
         T.state match {
           case Some((from, Some(to))) => move(from, to)
           case _ => IO(())
@@ -96,8 +96,8 @@ object DND {
       span(
         className     := "draghandle"
         ,draggable    := "true"
-        ,onDragStart ~~> T._runStateIO(dragStart(a, p))
-        ,onDragEnd   ~~> T.runStateIO(dragEnd(p))
+        ,onDragStart ~~> T._runStateS(dragStart(a, p))
+        ,onDragEnd   ~~> T.runStateS(dragEnd(p))
         // onMouseDown={typeof window.isIE9 != 'undefined' && this.handleIE9DragHack}
       )("\u2630")
 

@@ -8,6 +8,9 @@ object Lib {
   type SSetter[S, A] = Setter[S, S, _, A]
 
   implicit def autoLiftStateIntoIO[S, A](s: StateT[Id, S, A]): StateT[IO, S, A] = s.lift[IO]
+//  implicit class StateExt[S, A](val u: StateT[Id, S, A]) extends AnyVal {
+//    def liftIO = autoLiftStateIntoIO(u)
+//  }
 
   implicit final class ComponentScope_SS_Ext3[S](val u: ComponentScope_SS[S]) extends AnyVal {
 
@@ -25,8 +28,11 @@ object Lib {
   def textChangeRecv(f: String => Unit): InputEvent => Unit = e => f(e.target.value)
 //  def textChangeRecvL[State](t: ComponentScope_SS[State], l: Setter[State, State, _, String]) =
 //    textChangeRecv(t setStateL l)
+
   def textChangeRecvIO(f: String => IO[Unit]): InputEvent => IO[Unit] =
     e => f(e.target.value)
+
+  def textChangeRecvX[R](f: String => R): InputEvent => R = e => f(e.target.value)
 
   def SimpleLens2[T] = new {
     def apply[A](f: T => A) = new {
