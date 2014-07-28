@@ -29,7 +29,8 @@ object Phase2 extends js.JSApp {
         CustomReqType(CustomReqTypeId(2), "MF", Set.empty, "Major Feature", false, true),
         CustomReqType(CustomReqTypeId(3), "FR", Set.empty, "Functional Requirement", false, true),
         CustomReqType(CustomReqTypeId(4), "BR", Set.empty, "Business Rule", false, true),
-        CustomReqType(CustomReqTypeId(5), "DD", Set("DA","DDF"), "Data Definition", false, true)
+        CustomReqType(CustomReqTypeId(5), "DD", Set("DA","DDF"), "Data Definition", false, false),
+        CustomReqType(CustomReqTypeId(6), "DD", Set.empty, "Solution Idea", true, false)
       )) render dom.document.getElementById("target2")
     }
   }
@@ -109,7 +110,19 @@ object Phase2 extends js.JSApp {
         SpecAttr[P](_.implicationRequired)(NopValidator)(CheckboxEditor)
       ).mapO(CustomReqTypeNV.fromTuple)
       .rowId[CustomReqTypeId]
-    val Spec = PreSpec.ctxAwareValidators(Some(PreSpec.uniquenessCheck(_.mnemonic)), None)
+
+    //def uniqueness[S, W, A, I](extract: (S,W) => Stream[A], cmp: (A, I) => Boolean, errorMsg: ErrorMsg = "Already in use. Duplicate.") =
+    // TODO UC hardcoding here
+    val mnemonicUniqueness = uniqueness[PreSpec.S, PreSpec.RowId, ReqTypeMnemonic, String](
+      (s,ow) => UC #:: s._1.toStream.filterNot(x => ow.fold(false)(_ == x._1)).flatMap{x=>
+        val p = x._2._1
+        p.mnemonic #:: p.oldMnemonics.toStream
+      },
+      (a,i) => a==i,
+      "Mnemonic has already been used."
+    )
+
+    val Spec = PreSpec.ctxAwareValidators(Some(mnemonicUniqueness), None)
       .saveFn(fakeSave)
     type Px = PreSpec.Px
 
@@ -130,7 +143,7 @@ object Phase2 extends js.JSApp {
     private def row(mnemonic: Modifier, name: Modifier, impReq: Modifier, delButton: Modifier) =
       Seq(td(mnemonic), td(name), td(impReq), td(delButton))
 
-    private val UC: ReqTypeMnemonic = "UC"
+    private def UC: ReqTypeMnemonic = "UC"
     private val ucRow =
       tr(key := UC, row(raw(UC), raw("Use Case"), input(`type`:="checkbox", checked := "checked", disabled := "disabled"), Nop))
 
@@ -156,11 +169,13 @@ object Phase2 extends js.JSApp {
       .render(T => {
 
         val newRow = NewRow.render(T)(())
-        val savedRows = { //Spec.renderSaved(T, SavedRow)(_.sortBy(_._2._1.mnemonic))
+        val savedRows = {
           val rr = SavedRow.render(T)
-          val rows = (UC -> ucRow) #:: Spec.getSaved(T).map(x => (x._2.mnemonic, rr(x._1)))
+          // TODO UC hardcoding here
+          val rows = (UC -> ucRow) #:: Spec.getSaved(T).filter(_._2.alive).map(x => (x._2.mnemonic, rr(x._1)))
           rows.sortBy(_._1).map(_._2).toJsArray
         }
+        //val deletedRows = ???
 
         div(
           button(onclick ~~> T.runState(Create))("Create"),

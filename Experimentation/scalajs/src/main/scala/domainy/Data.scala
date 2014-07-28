@@ -52,4 +52,10 @@ object Data {
   // TODO something like this? Let's wait until it's needed
 //  sealed trait ReqType
 //  object UseCaseReqType extends ReqType
+//  final case class CustomReqType2(id: CustomReqTypeId,
+//                                 mnemonic: ReqTypeMnemonic,
+//                                 oldMnemonics: Set[ReqTypeMnemonic],
+//                                 name: String,
+//                                 alive: Boolean)
+//  case class ReqTypesRequiringImplicitation(t: Set[ReqType])
 }

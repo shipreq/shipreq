@@ -64,6 +64,9 @@ object FormStuff {
     def map[B](l: SimpleLens[A, B]) = WierdLens[M, S, T, B](
       s => get(s).map(l.get),
       (s,b) => get(s).flatMap(a => set(s, l.set(a, b))))
+
+    def dimap[F, G](f: F => S, g: T=> G) =
+      WierdLens[M, F, G, A](get compose f, (b, a) => implicitly[Bind[M]].map(set(f(b), a))(g))
   }
 
   object WierdLens {
@@ -116,7 +119,7 @@ object FormStuff {
               , onChange: D => ReactST[IO, S, Unit]
               , onCancel: IO[Unit] => ReactST[IO, S, Unit]
               , onEditEnd: ReactST[IO, S, Unit]
-              , T: ComponentScope_SS[S]
+              , T: ComponentStateFocus[S]
                ): V
   }
 
@@ -152,7 +155,7 @@ object FormStuff {
         resolvemio(ms)(s => ReactS.modT(trySave))
       })
 
-    def render[V](editor: Editor[I, V], T: ComponentScope_SS[S]): M[V] = {
+    def render[V](editor: Editor[I, V], T: ComponentStateFocus[S]): M[V] = {
       val s = T.state
       iL.get(s).map(i => {
         val e = vs(s).correctAndValidate(i).swap.toOption
@@ -249,7 +252,7 @@ object FormStuff {
     def forRow(w: W): Renderable[S, G, P, E, V, VV] = new Renderable[S, G, P, E, V, VV] {
       override def renderM[M[_] : Bind : Foldable]
         (eL: WierdLens[M, S, S, E], s2mp: S => M[P])
-        (saveG: (S, G) => IO[S]): ComponentScope_SS[S] => M[VV] = T => {
+        (saveG: (S, G) => IO[S]): ComponentStateFocus[S] => M[VV] = T => {
           val s = fieldRenderers(s2mp, w, saveG, eL)
           for {
             v1 <- s._1.render(s1.editor, T)
@@ -264,8 +267,54 @@ object FormStuff {
 
     def renderM[M[_] : Bind : Foldable]
       (eL: WierdLens[M, S, S, E], s2mp: S => M[P])
-      (saveG: (S, G) => IO[S]): ComponentScope_SS[S] => M[VV]
+      (saveG: (S, G) => IO[S]): ComponentStateFocus[S] => M[VV]
+
+//    def contra[T](l: SimpleLens[T, S]) = new ContraRenderable[T, S, G, P, E, V, VV](this, l)
   }
+
+  /*
+  class ContraRenderable[T, S, G, P, E, V, VV](
+      to: Renderable[S, G, P, E, V, VV]
+  , l: SimpleLens[T, S]
+      ) extends Renderable[T, G, P, E, V, VV] {
+
+    override def renderM[M[_] : Bind : Foldable]
+      (eL: WierdLens[M, T, T, E], s2mp: T => M[P])
+      (saveG: (T, G) => IO[T]): ComponentStateFocus[T] => M[VV] =
+      T => {
+        //def dimap[F, G](f: F => S, g: T => G) =
+
+
+        use T.state everywhere will wipe out any changes to T not in S
+
+        val S: ComponentStateFocus[S] = T.focusState[S](l.get _)(l.set _)
+
+        val t_me = eL.get
+        val t_e_mt = eL.set
+        val t_s = l.get _
+        val t_s_t = l.set _
+
+        // get
+        val s_me: S => M[E] = s => {
+          val t: T = t_s_t(T.state, s)
+          t_me(t)
+        }
+
+        // set
+        val s_e_ms: (S,E) => M[S] = (s,e) => {
+          val t: T = t_s_t(T.state, s)
+          val mt = t_e_mt(t, e)
+          implicitly[Bind[M]].map(mt)(t_s)
+        }
+
+        val XeL: WierdLens[M, S, S, E] = WierdLens[M, S, S, E](s_me, s_e_ms)
+        val Xs2mp: S => M[P] = s => s2mp(t_s_t(T.state, s))
+        val XsaveG: (S, G) => IO[S] = (s,g) => saveG(t_s_t(T.state, s), g).map(t_s)
+        val x = to.renderM[M](XeL, Xs2mp)(XsaveG)
+        x(S)
+      }
+  }
+*/
 
   // ===================================================================================================================
   // easier spec building
@@ -286,6 +335,7 @@ object FormStuff {
       s1: SpecSpliceE[P,V,I1,C1,O1], s2: SpecSpliceE[P,V,I2,C2,O2], buildO: ((O1,O2)) => O) {
 
     type I = (I1,I2)
+    type VV = (V,V)
 
     def mapO[OO](f: O => OO) = new SpecBuilder2(s1,s2, f compose buildO)
     def buildO[OO](f: (O1,O2) => OO) = new SpecBuilder2(s1,s2, f.tupled)
@@ -299,7 +349,6 @@ object FormStuff {
       type S = (Saved, Unsaved)
       private val savedL = _1[S, Saved]
       private val unsavedL = _2[S, Unsaved]
-      private def savedIL(id: DataId) = savedL composeLens SimpleLens2[Saved](_(id))((a,b) => a + (id -> b))
       type Px = (DataId, P)
       type OO = O
 
@@ -309,102 +358,114 @@ object FormStuff {
       )
 
       def ctxAwareValidators(cv1: Option[CtxValidation[S, RowId, O1]], cv2: Option[CtxValidation[S, RowId, O2]]) = new {
-        def saveFn(f: (Option[Px], O) => IO[Px]) =
-          new B3(Spec2X(Spec2(s1, s2, buildO), cv1, cv2), f)
-      }
-
-
-      class B3(val spec: Spec2X[S, RowId, O, P, V, I1, C1, O1, I2, C2, O2]
-                  ,saveIO: (Option[Px], O) => IO[Px]
-                  ) {
-        type I = SpecBuilder2.this.I
-        type S = B2.this.S
-        type VV = spec.VV
-
-        private def mkPI(p: P) = (p, spec.spec initial p)
-
-        def initialState(xs: Seq[(DataId, P)]): S =
-          (xs.map(x => x._1 -> mkPI(x._2)).toMap, None)
-
-        def initialState(xs: Seq[P], id: P => DataId): S =
-          initialState(xs.map(x => id(x) -> x))
-
-        private def renderAttrForUnsaved(saveIO: (S, O) => IO[S]) = {
-          val s2op: S => Option[P] = _ => None
-          def setI(s: S, i: I): Option[S] = unsavedL.get(s).map(_ => unsavedL.set(s, Some(i)))
-          val se = WierdLens[Option, S, S, I](unsavedL.get, setI)
-          spec.forRow(None).renderM(se, s2op)(saveIO)
+        def saveFn(saveIO: (Option[Px], O) => IO[Px]) = {
+          val spec = Spec2X(Spec2(s1, s2, buildO), cv1, cv2)
+          val renderable: Option[DataId] => Renderable[S,O,P,I,V,VV] = d => spec.forRow(d)
+          val PtoI: P => I = spec.spec.initial
+          def mkPI(p: P): (P,I) = (p, PtoI(p))
+          val initialState: Seq[(DataId, P)] => S = xs => (xs.map(x => x._1 -> mkPI(x._2)).toMap, None)
+          new TableSpec(renderable, savedL, unsavedL, PtoI, initialState, saveIO)
         }
-
-        def createUnsaved(empty: I) = ReactS.mod(unsavedL.modifyF(_ orElse Some(empty)))
-
-        val removeUnsaved = unsavedL setF None
-        val removeUnsavedS = ReactS.mod(removeUnsaved)
-//        val cancelUnsaved = scalaz.State.modify[S](unsavedL setF None)
-
-        def insertUnsaved(px: Px)          : S => S = insertUnsaved(px._1, px._2)
-        def insertUnsaved(id: DataId, p: P): S => S = updateSaved(id, p) compose removeUnsaved
-
-        private val _renderAttrUnsaved =
-          renderAttrForUnsaved((s,g) => saveIO(None, g).map(insertUnsaved(_)(s)))
-
-        def unsavedRow[V2](renderRow: (ComponentScope_SS[S], VV) => V2) =
-          _unsavedRow(_renderAttrUnsaved, renderRow)
-
-        private def _unsavedRow[V2](renderAttr: ComponentScope_SS[S] => Option[VV], renderRow: (ComponentScope_SS[S], VV) => V2) =
-          new FullRow[Option, S, VV, V2, Unit](_ => renderAttr(_), (T,_,vv) => renderRow(T, vv))
-
-        private def renderAttrForSaved(id: DataId, saveIO: (Option[Px], O) => IO[Px]) = {
-          val l: SimpleLens[S, (P, I)] = savedIL(id)
-          val sp: SimpleLens[S, P] = l |-> _1
-          val si: SimpleLens[S, I] = l |-> _2
-
-          val save = saveHelper[S, O, Px, Px, Px](
-            s => (id, sp get s),
-            (px,g) => if (px._2 == g) None else Some(px),
-            (px,g) => saveIO(Some(px), g),
-            (s,px) => updateSaved(px)(s))
-
-          spec.forRow(Some(id)).render(si, sp.get)(save)
-        }
-
-        def removeSaved(id: DataId) = savedL.modifyF(m => m - id)
-        def removeSavedS(id: DataId) = ReactS.mod(removeSaved(id))
-
-        def deleteSavedS(f: DataId => IO[Unit]): DataId => ReactST[IO, S, Unit] =
-          id => ReactS.retM(f(id)) >> removeSavedS(id)
-
-        def updateSaved(px: Px)          : S => S = updateSaved(px._1, px._2)
-        def updateSaved(id: DataId, p: P): S => S = savedL.modifyF(_ + (id -> mkPI(p)))
-
-        def savedRow[V2](renderRow: (ComponentScope_SS[S], DataId, P, VV) => V2) =
-          _savedRow(renderAttrForSaved(_, saveIO), (t,i,v) => renderRow(t,i,savedIL(i).get(t.state)._1,v))
-
-        def savedRow[V2](renderRow: (ComponentScope_SS[S], DataId, VV) => V2) =
-          _savedRow(renderAttrForSaved(_, saveIO), renderRow)
-
-        private def _savedRow[V2](renderAttr: DataId => ComponentScope_SS[S] => VV, renderRow: (ComponentScope_SS[S], DataId, VV) => V2) =
-            new FullRow[Id, S, VV, V2, DataId](renderAttr, renderRow)
-
-        type SavedPs = Stream[(DataId, P)]
-        def renderSaved(T: ComponentScope_SS[S], r: FullRow[Id, S, VV, Tag, DataId])(f: SavedPs => SavedPs) = {
-          val rr = r.render(T)
-          f(getSaved(T)).map(x => rr(x._1)).toJsArray
-        }
-
-        def getSaved(T: ComponentScope_SS[S]): SavedPs =
-          savedL.get(T.state).toStream.map(x => x._1 -> x._2._1)
       }
     }
+  }
+
+  class TableSpec[S, DataId, O, P, V, I, VV](
+                                       renderable: Option[DataId] => Renderable[S,O,P,I,V,VV],
+                                       savedL: SimpleLens[S, Map[DataId, (P, I)]],
+                                       unsavedL: SimpleLens[S, Option[I]],
+                                       PtoI: P => I,
+                                       initialState: Seq[(DataId, P)] => S,
+                                       saveIO: (Option[(DataId, P)], O) => IO[(DataId, P)]
+                                       ) {
+
+//    def contramap[T](l: SimpleLens[T, S], i: S => T) = new TableSpec[T, DataId, O, P, V, I, VV](
+//      d => renderable(d).contra(l), l |-> savedL, l |-> unsavedL, PtoI, i compose initialState, saveIO)
+
+    private type Unsaved = Option[I]
+    private type Saved = Map[DataId, (P, I)]
+    private def savedIL(id: DataId) = savedL composeLens SimpleLens2[Saved](_(id))((a,b) => a + (id -> b))
+    type Px = (DataId, P)
+
+    def mkPI(p: P): (P,I) = (p, PtoI(p))
+
+    def initialState(xs: Seq[P], id: P => DataId): S =
+      initialState(xs.map(x => id(x) -> x))
+
+    private def renderAttrForUnsaved(saveIO: (S, O) => IO[S]) = {
+      val s2op: S => Option[P] = _ => None
+      def setI(s: S, i: I): Option[S] = unsavedL.get(s).map(_ => unsavedL.set(s, Some(i)))
+      val se = WierdLens[Option, S, S, I](unsavedL.get, setI)
+      renderable(None).renderM(se, s2op)(saveIO)
+    }
+
+    def createUnsaved(empty: I) = ReactS.mod(unsavedL.modifyF(_ orElse Some(empty)))
+
+    val removeUnsaved = unsavedL setF None
+    val removeUnsavedS = ReactS.mod(removeUnsaved)
+    //        val cancelUnsaved = scalaz.State.modify[S](unsavedL setF None)
+
+    def insertUnsaved(px: Px)          : S => S = insertUnsaved(px._1, px._2)
+    def insertUnsaved(id: DataId, p: P): S => S = updateSaved(id, p) compose removeUnsaved
+
+    private val _renderAttrUnsaved =
+      renderAttrForUnsaved((s,g) => saveIO(None, g).map(insertUnsaved(_)(s)))
+
+    def unsavedRow[V2](renderRow: (ComponentStateFocus[S], VV) => V2) =
+      _unsavedRow(_renderAttrUnsaved, renderRow)
+
+    private def _unsavedRow[V2](renderAttr: ComponentStateFocus[S] => Option[VV], renderRow: (ComponentStateFocus[S], VV) => V2) =
+      new FullRow[Option, S, VV, V2, Unit](_ => renderAttr(_), (T,_,vv) => renderRow(T, vv))
+
+    private def renderAttrForSaved(id: DataId, saveIO: (Option[Px], O) => IO[Px]) = {
+      val l: SimpleLens[S, (P, I)] = savedIL(id)
+      val sp: SimpleLens[S, P] = l |-> _1
+      val si: SimpleLens[S, I] = l |-> _2
+
+      val save = saveHelper[S, O, Px, Px, Px](
+        s => (id, sp get s),
+        (px,g) => if (px._2 == g) None else Some(px),
+        (px,g) => saveIO(Some(px), g),
+        (s,px) => updateSaved(px)(s))
+
+      renderable(Some(id)).render(si, sp.get)(save)
+    }
+
+    def removeSaved(id: DataId) = savedL.modifyF(m => m - id)
+    def removeSavedS(id: DataId) = ReactS.mod(removeSaved(id))
+
+    def deleteSavedS(f: DataId => IO[Unit]): DataId => ReactST[IO, S, Unit] =
+      id => ReactS.retM(f(id)) >> removeSavedS(id)
+
+    def updateSaved(px: Px)          : S => S = updateSaved(px._1, px._2)
+    def updateSaved(id: DataId, p: P): S => S = savedL.modifyF(_ + (id -> mkPI(p)))
+
+    def savedRow[V2](renderRow: (ComponentStateFocus[S], DataId, P, VV) => V2) =
+      _savedRow(renderAttrForSaved(_, saveIO), (t,i,v) => renderRow(t,i,savedIL(i).get(t.state)._1,v))
+
+    def savedRow[V2](renderRow: (ComponentStateFocus[S], DataId, VV) => V2) =
+      _savedRow(renderAttrForSaved(_, saveIO), renderRow)
+
+    private def _savedRow[V2](renderAttr: DataId => ComponentStateFocus[S] => VV, renderRow: (ComponentStateFocus[S], DataId, VV) => V2) =
+      new FullRow[Id, S, VV, V2, DataId](renderAttr, renderRow)
+
+    type SavedPs = Stream[(DataId, P)]
+    def renderSaved(T: ComponentStateFocus[S], r: FullRow[Id, S, VV, Tag, DataId])(f: SavedPs => SavedPs) = {
+      val rr = r.render(T)
+      f(getSaved(T)).map(x => rr(x._1)).toJsArray
+    }
+
+    def getSaved(T: ComponentStateFocus[S]): SavedPs =
+      savedL.get(T.state).toStream.map(x => x._1 -> x._2._1)
   }
 
   // ===================================================================================================================
   // rows
 
-  class FullRow[M[_] : Bind, S, VV, V, RowId](renderAttr: RowId => ComponentScope_SS[S] => M[VV],
-                                          renderRow: (ComponentScope_SS[S], RowId, VV) => V
+  class FullRow[M[_] : Bind, S, VV, V, RowId](renderAttr: RowId => ComponentStateFocus[S] => M[VV],
+                                          renderRow: (ComponentStateFocus[S], RowId, VV) => V
                                            ) {
-    def render(T: ComponentScope_SS[S]): RowId => M[V] =
+    def render(T: ComponentStateFocus[S]): RowId => M[V] =
       id => renderAttr(id)(T).map(vv => renderRow(T, id, vv))
   }
 
@@ -484,7 +545,7 @@ object FormStuff {
                           , onChange: String => ReactST[IO, S, Unit]
                           , onCancel: IO[Unit] => ReactST[IO, S, Unit]
                           , onEditEnd: ReactST[IO, S, Unit]
-                          , T: ComponentScope_SS[S]
+                          , T: ComponentStateFocus[S]
                            ) = {
 
       val cancelOnEscape: InputEvent => ReactST[IO, S, Unit] =
@@ -514,7 +575,7 @@ object FormStuff {
                        , onChange: Boolean => ReactST[IO, S, Unit]
                        , onCancel: IO[Unit] => ReactST[IO, S, Unit]
                        , onEditEnd: ReactST[IO, S, Unit]
-                       , T: ComponentScope_SS[S]
+                       , T: ComponentStateFocus[S]
                         ) = {
       def ch(e: InputEvent) = {
         val v = e.target.checked
