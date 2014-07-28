@@ -8,9 +8,11 @@ object FakeDao {
 
   private implicit class OEXT[A](val a: A) extends AnyVal {
     def log(s: String) = { console.log(s"$s $a"); a}
-    def fakeCreate: A    = log("FAKE CREATE:")
-    def fakeUpdate: A    = log("FAKE UPDATE:")
-    def fakeDelete: Unit = log("FAKE DELETE:")
+    def fakeCreate    : A    = log("FAKE CREATE:")
+    def fakeUpdate    : A    = log("FAKE UPDATE:")
+    def fakeDeleteHard: Unit = log("FAKE HARD-DELETE :")
+    def fakeDeleteSoft: Unit = log("FAKE SOFT-DELETE:")
+    def fakeRestore   : Unit = log("FAKE RESTORE:")
   }
   private var _fakeId = 999L // JS is single-threaded
   private def fakeId = { _fakeId = _fakeId + 1; _fakeId }
@@ -21,7 +23,7 @@ object FakeDao {
 
     def update(a: CustomIssueType) = a.fakeUpdate
 
-    def deleteHard(id: CustomIssueTypeId) = id.fakeDelete
+    def deleteHard(id: CustomIssueTypeId) = id.fakeDeleteHard
   }
 
   object customReqType {
@@ -34,7 +36,9 @@ object FakeDao {
     def update(id: CustomReqTypeId, v: CustomReqTypeNV) =
       CustomReqType(id, v.mnemonic, Set.empty, "NAME TODO", v.implicationRequired, true).fakeUpdate
 
-    def deleteHard(id: CustomReqTypeId) = id.fakeDelete
+    def deleteHard(id: CustomReqTypeId) = id.fakeDeleteHard
+    def deleteSoft(id: CustomReqTypeId) = id.fakeDeleteSoft
+    def restore(id: CustomReqTypeId) = id.fakeRestore
   }
 
 }

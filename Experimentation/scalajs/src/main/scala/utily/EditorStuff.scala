@@ -213,14 +213,11 @@ object EditorStuff {
       }
 
       div(
-        input(
-          `type` := "checkbox"
-          //, value := 1
-          , onchange ~~> T._runState(ch)
-          , data && (checked := "checked")
-          , error.isDefined && (cls := "error")
-        )
-        , error.fold(Nop)(e => div(cls := "errorMsg")(e))
+        checkbox(data)(
+          onchange ~~> T._runState(ch),
+          error.isDefined && (cls := "error")
+        ),
+        error.fold(Nop)(e => div(cls := "errorMsg")(e))
       )
     }
   }

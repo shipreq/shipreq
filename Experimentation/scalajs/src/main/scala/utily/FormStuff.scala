@@ -138,9 +138,10 @@ object FormStuff {
 //    def contramap[T](l: SimpleLens[T, S], i: S => T) = new TableSpec[T, DataId, O, P, V, I, VV](
 //      d => renderable(d).contra(l), l |-> savedL, l |-> unsavedL, PtoI, i compose initialState, saveIO)
 
+    @inline final private def ST = ReactS.Fix[S]
+
     private type Unsaved = Option[I]
     private type Saved = Map[DataId, (P, I)]
-    private def savedIL(id: DataId) = savedL composeLens SimpleLens2[Saved](_(id))((a,b) => a + (id -> b))
     type Px = (DataId, P)
 
     def mkPI(p: P): (P,I) = (p, PtoI(p))
@@ -179,19 +180,20 @@ object FormStuff {
     // ----------------------------------------------------------------------
     // Saved
 
-    private def renderAttrForSaved(id: DataId, saveIO: (Option[Px], O) => IO[Px]) = {
-      val l: SimpleLens[S, (P, I)] = savedIL(id)
-      val sp: SimpleLens[S, P] = l |-> _1
-      val si: SimpleLens[S, I] = l |-> _2
+    private def rowL(id: DataId) = savedL composeLens SimpleLens2[Saved](_(id))((a,b) => a + (id -> b))
+    private def rowIL(id: DataId) = rowL(id) |-> _2
+    private def rowP(id: DataId): S => P = savedL.get(_)(id)._1
+    private def rowPx(id: DataId): S => Px = s => (id, rowP(id)(s))
 
-      val save = saveHelper[S, O, Px, Px, Px](
-        s => (id, sp get s),
+    private def saveRowFn(id: DataId) =
+      saveHelper[S, O, Px, Px, Px](
+        s => (id, rowP(id)(s)),
         (px,g) => if (px._2 == g) None else Some(px),
         (px,g) => saveIO(Some(px), g),
         (s,px) => updateSaved(px)(s))
 
-      renderable(Some(id)).render(si, sp.get)(save)
-    }
+    private def renderAttrForSaved(id: DataId) =
+      renderable(Some(id)).render(rowIL(id), rowP(id))(saveRowFn(id))
 
     def removeSaved(id: DataId) = savedL.modifyF(m => m - id)
     def removeSavedS(id: DataId) = ReactS.mod(removeSaved(id))
@@ -199,14 +201,31 @@ object FormStuff {
     def deleteSavedS(f: DataId => IO[Unit]): DataId => ReactST[IO, S, Unit] =
       id => ReactS.retM(f(id)) >> removeSavedS(id)
 
+    def cancelChangesS(id: DataId) = ST.mod(s => rowIL(id).set(s, PtoI(rowP(id)(s))))
+
+    def modAndSaveS(modAndSaveIO: Px => IO[Px]): DataId => ReactST[IO, S, Unit] = id => {
+      val modsaveS: ReactST[IO, S, Px] = ST.gets(rowPx(id)).lift[IO].flatMap(px1 => ST.retM(modAndSaveIO(px1)))
+      //        .map(px2 => updateSaved(px2)(s1))
+//      ST.gets(rowPx(id)).flatMap()
+
+//      ReactS.modT[IO, S](s1 => {
+//        val px: Px = rowPx(id)(s1)
+//        modAndSaveIO(px).map(updateSaved(_)(s1))
+//      })
+      //cancelChangesS(id)
+      modsaveS flatMap updateSavedS
+    }
+
     def updateSaved(px: Px)          : S => S = updateSaved(px._1, px._2)
     def updateSaved(id: DataId, p: P): S => S = savedL.modifyF(_ + (id -> mkPI(p)))
 
+    def updateSavedS(px: Px) = ST.mod(updateSaved(px))
+
     def savedRow[V2](renderRow: (ComponentStateFocus[S], DataId, P, VV) => V2) =
-      _savedRow(renderAttrForSaved(_, saveIO), (t,i,v) => renderRow(t,i,savedIL(i).get(t.state)._1,v))
+      _savedRow(renderAttrForSaved, (t,i,v) => renderRow(t,i,rowL(i).get(t.state)._1,v))
 
     def savedRow[V2](renderRow: (ComponentStateFocus[S], DataId, VV) => V2) =
-      _savedRow(renderAttrForSaved(_, saveIO), renderRow)
+      _savedRow(renderAttrForSaved, renderRow)
 
     private def _savedRow[V2](renderAttr: DataId => ComponentStateFocus[S] => VV, renderRow: (ComponentStateFocus[S], DataId, VV) => V2) =
       new FullRow[Id, S, VV, V2, DataId](renderAttr, renderRow)

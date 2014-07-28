@@ -3,6 +3,7 @@ import org.scalajs.dom.console
 import scala.scalajs.js
 import scalaz.syntax.bind._
 import scalaz.effect.IO
+import monocle.function.Field2._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.ReactVDom._
 import japgolly.scalajs.react.vdom.ReactVDom.all._
@@ -10,6 +11,7 @@ import japgolly.scalajs.react.ScalazReact._
 import utily.EditorStuff._
 import utily.FormStuff._
 import utily.SpecN._
+import utily.Lib._
 import domainy.Data._
 import domainy.FakeDao
 
@@ -26,14 +28,14 @@ object Phase2 extends js.JSApp {
 
     {
       import Phase2.ReqTypes._
-      ReqTypeTableComp(List(
+      ReqTypeTableCompOuter(ReqTypeTableProps(List(
         CustomReqType(CustomReqTypeId(1), "CO", Set.empty, "Constraint", false, true),
         CustomReqType(CustomReqTypeId(2), "MF", Set.empty, "Major Feature", false, true),
         CustomReqType(CustomReqTypeId(3), "FR", Set.empty, "Functional Requirement", false, true),
         CustomReqType(CustomReqTypeId(4), "BR", Set.empty, "Business Rule", false, true),
         CustomReqType(CustomReqTypeId(5), "DD", Set("DA","DDF"), "Data Definition", false, false),
-        CustomReqType(CustomReqTypeId(6), "DD", Set.empty, "Solution Idea", true, false)
-      )) render dom.document.getElementById("target2")
+        CustomReqType(CustomReqTypeId(6), "SI", Set.empty, "Solution Idea", true, false)
+      ), false)) render dom.document.getElementById("target2")
     }
   }
 
@@ -136,10 +138,6 @@ object Phase2 extends js.JSApp {
       (r.id, r)
     }
 
-    def fakeDelete(id: CustomReqTypeId) = IO {
-      console.log(s"DELETING $id")
-    }
-
     private val Create = Spec.createUnsaved(("",false))
 
     private def row(mnemonic: Modifier, name: Modifier, impReq: Modifier, delButton: Modifier) =
@@ -147,7 +145,7 @@ object Phase2 extends js.JSApp {
 
     private def UC: ReqTypeMnemonic = "UC"
     private val ucRow =
-      tr(key := UC, row(raw(UC), raw("Use Case"), input(`type`:="checkbox", checked := "checked", disabled := "disabled"), Nop))
+      tr(key := UC, row(raw(UC), raw("Use Case"), checkbox(true)(disabled := "disabled"), Nop))
 
     private val NewRow = {
       Spec.unsavedRow((T, vv) => {
@@ -157,17 +155,26 @@ object Phase2 extends js.JSApp {
       })
     }
 
+    private val softDeleteL = _2[Px, P] composeLens SimpleLens2[P](_.alive)((a,b) => a.copy(alive = b))
     private val SavedRow = {
-      val delete = Spec.deleteSavedS(fakeDelete)
+      val hardDelS = Spec.deleteSavedS(id => IO(FakeDao.customReqType.deleteHard(id)))
+      val softDelS = Spec.modAndSaveS(px => IO {
+        FakeDao.customReqType.deleteSoft(px._1)
+        softDeleteL.set(px, false)
+      })
+
       Spec.savedRow((T, id, p, vv) => {
         val (mnemonic, impReq) = vv
-        val delButton = button(onclick ~~> T.runState(delete(id)))("Delete")
-        tr(keyAttr := id.value)(row(mnemonic, p.name, impReq, delButton))
+        val hardDel = button(onclick ~~> T.runState(hardDelS(id)))("Delete Forever")
+        val softDel = button(onclick ~~> T.runState(softDelS(id)))("Delete")
+        tr(keyAttr := id.value)(row(mnemonic, p.name, impReq, Seq(hardDel,softDel)))
       })
     }
 
-    val ReqTypeTableComp = ReactComponentB[List[CustomReqType]]("ReqTypeTable")
-      .getInitialState(p => Spec.initialState(p, _.id))
+    case class ReqTypeTableProps(items: List[CustomReqType], showDeleted: Boolean)
+
+    val ReqTypeTableComp = ReactComponentB[ReqTypeTableProps]("ReqTypeTable")
+      .getInitialState(p => Spec.initialState(p.items, _.id))
       .render(T => {
 
         val newRow = NewRow.render(T)(())
@@ -177,16 +184,42 @@ object Phase2 extends js.JSApp {
           val rows = (UC -> ucRow) #:: Spec.getSaved(T).filter(_._2.alive).map(x => (x._2.mnemonic, rr(x._1)))
           rows.sortBy(_._1).map(_._2).toJsArray
         }
-        //val deletedRows = ???
+        def deletedRows: Modifier = {
+          val restoreS = Spec.modAndSaveS(px => IO {
+            FakeDao.customReqType.restore(px._1)
+            softDeleteL.set(px, true)
+          })
+          def r(p: P) =
+            tr(cls := "del", key := p.id.value, row(
+              raw(p.mnemonic),
+              raw(p.name),
+              checkbox(p.implicationRequired)(disabled := "disabled"),
+              button(onclick ~~> T.runState(restoreS(p.id)))("Restore")))
+          Spec.getSaved(T).map(_._2).filterNot(_.alive).sortBy(_.mnemonic).map(r).toJsArray
+        }
 
         div(
           button(onclick ~~> T.runState(Create))("Create"),
           table(
             thead(tr(th("Mnemonic"), th("Name"), th("Implication Required"), th("Ctrls"))),
             tbody(
-              newRow, savedRows
+              newRow, savedRows, T.props.showDeleted && deletedRows
             )
           )
+        )
+
+      }).create
+
+    val ReqTypeTableCompOuter = ReactComponentB[ReqTypeTableProps]("ReqTypeTableOuter")
+      .getInitialState(p => p.showDeleted)
+      .renderS((t,p,s) => {
+
+        div(
+          label(
+            checkbox(s)(onchange --> t.modState(b => !b)),
+            raw(if (s) "Showing deleted" else "Not showing deleted")
+          ),
+          ReqTypeTableComp(p.copy(showDeleted = s))
         )
 
       }).create

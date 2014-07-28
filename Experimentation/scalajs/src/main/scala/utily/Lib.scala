@@ -5,6 +5,8 @@ import scalaz.Scalaz.Id
 import scalaz.effect.IO
 import monocle._
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.ReactVDom._
+import japgolly.scalajs.react.vdom.ReactVDom.all._
 
 object Lib {
 //  type SSetter[S, A] = Setter[S, S, _, A]
@@ -50,4 +52,7 @@ object Lib {
     final def setF(newValue: B) = (from: S) => o.set(from, newValue)
     final def modifyF(f: A => B) = (from: S) => o.modify(from, f)
   }
+
+  def checkbox(checked: Boolean) =
+    input(`type` := "checkbox", checked && (all.checked := "checked"))
 }
