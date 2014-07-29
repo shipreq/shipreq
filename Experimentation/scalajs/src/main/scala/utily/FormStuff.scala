@@ -264,9 +264,44 @@ object FormStuff {
       }
     }
 
-  def deleteS[S, P, R](getP: S => P, save: P => IO[R], store: (S, P, R) => S) =
-    StateT[IO, S, Unit](s => {
-      val p = getP(s)
-      save(p).map(r => (store(s, p, r), ()))
-    })
+//  def deleteS[S, P, R](getP: S => P, save: P => IO[R], store: (S, P, R) => S) =
+//    StateT[IO, S, Unit](s => {
+//      val p = getP(s)
+//      save(p).map(r => (store(s, p, r), ()))
+//    })
+
+  sealed trait DeletionAction
+  case object HardDelete extends DeletionAction
+  case object SoftDelete extends DeletionAction
+  case object Restore extends DeletionAction
+
+  class DeletionThingy[S, P, DataId](
+                                      spec: TableSpec[S, DataId, _, P, _, _, _])(
+                                      l: SimpleLens[P, Boolean],
+                                      saveIO: DataId => DeletionAction => IO[Unit]
+                               ) {
+    private type Px = (DataId, P)
+    private val hardDelS = spec.deleteSavedS(id => saveIO(id)(HardDelete))
+    private val softDeleteL = _2[Px, P] composeLens l
+    private def aliveS(ls: DeletionAction, alive: Boolean) =
+      spec.modAndSaveS(px => saveIO(px._1)(ls).map(_ => softDeleteL.set(px, alive)))
+    private val softDelS = aliveS(SoftDelete, false)
+    private val restoreS = aliveS(Restore, true)
+
+    def button(T: ComponentStateFocus[S], id: DataId, a: DeletionAction) =
+      a match {
+        case HardDelete => all.button(onclick ~~> T.runState(hardDelS(id)))("Delete Forever")
+        case SoftDelete => all.button(onclick ~~> T.runState(softDelS(id)))("Delete")
+        case Restore    => all.button(onclick ~~> T.runState(restoreS(id)))("Restore")
+      }
+
+    def buttons(T: ComponentStateFocus[S], id: DataId, as: DeletionAction*) =
+      as.map(button(T, id, _))
+
+    def getSaved(T: ComponentStateFocus[S], alive: Boolean): Stream[(DataId, P)] =
+      spec.getSaved(T).filter(px => l.get(px._2) == alive)
+
+    def getSavedP(T: ComponentStateFocus[S], alive: Boolean): Stream[P] =
+      getSaved(T, alive).map(_._2)
+  }
 }

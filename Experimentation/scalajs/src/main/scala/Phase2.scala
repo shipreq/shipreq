@@ -128,6 +128,14 @@ object Phase2 extends js.JSApp {
       .saveFn(fakeSave)
     type Px = PreSpec.Px
 
+    val Deletion = new DeletionThingy(Spec)(
+      SimpleLens2[P](_.alive)((a,b) => a.copy(alive = b)),
+      id => a => IO(a match {
+        case HardDelete => FakeDao.customReqType.deleteHard(id)
+        case SoftDelete => FakeDao.customReqType.deleteSoft(id)
+        case Restore    => FakeDao.customReqType.restore(id)
+      }))
+
     def fakeSave(op: Option[Px], g: CustomReqTypeNV) = IO[Px] {
       val r = op match {
         case None          => FakeDao.customReqType.create(g)
@@ -143,43 +151,27 @@ object Phase2 extends js.JSApp {
 
     private def UC: ReqTypeMnemonic = "UC"
     private val ucRow =
-      tr(key := UC, row(raw(UC), raw("Use Case"), checkbox(true)(disabled := "disabled"), Nop))
+      tr(key := UC, row(raw(UC), raw("Use Case"), checkbox(true)(disabled := true), Nop))
 
-    private val NewRow = {
+    private val NewRow =
       Spec.unsavedRow((T, vv) => {
         val (mnemonic, impReq) = vv
         val delButton = button(onclick ~~> T.runState(Spec.removeUnsavedS))("Cancel")
         tr(keyAttr := "new")(row(mnemonic, "NO NAME!", impReq, delButton))
       })
-    }
 
-    private val softDeleteL = _2[Px, P] composeLens SimpleLens2[P](_.alive)((a,b) => a.copy(alive = b))
-    private val SavedRow = {
-      val hardDelS = Spec.deleteSavedS(id => IO(FakeDao.customReqType.deleteHard(id)))
-      val softDelS = Spec.modAndSaveS(px => IO {
-        FakeDao.customReqType.deleteSoft(px._1)
-        softDeleteL.set(px, false)
-      })
-
+    private val SavedRow =
       Spec.savedRow((T, id, p, vv) => {
         val (mnemonic, impReq) = vv
-        val hardDel = button(onclick ~~> T.runState(hardDelS(id)))("Delete Forever")
-        val softDel = button(onclick ~~> T.runState(softDelS(id)))("Delete")
-        tr(keyAttr := id.value)(row(mnemonic, p.name, impReq, Seq(hardDel,softDel)))
+        tr(keyAttr := id.value)(row(mnemonic, p.name, impReq, Deletion.buttons(T, id, HardDelete, SoftDelete)))
       })
-    }
 
     def deletedRow(T: ComponentStateFocus[PreSpec.S], p: P) =
       tr(cls := "del", key := p.id.value, row(
         raw(p.mnemonic),
         raw(p.name),
-        checkbox(p.implicationRequired)(disabled := "disabled"),
-        button(onclick ~~> T.runState(restoreS(p.id)))("Restore")))
-
-    val restoreS = Spec.modAndSaveS(px => IO {
-      FakeDao.customReqType.restore(px._1)
-      softDeleteL.set(px, true)
-    })
+        checkbox(p.implicationRequired)(disabled := true),
+        Deletion.button(T, p.id, Restore)))
 
     case class ReqTypeTableProps(items: List[CustomReqType], showDeleted: Boolean)
 
@@ -193,11 +185,11 @@ object Phase2 extends js.JSApp {
         def savedRows: RS = {
           val rr = SavedRow.render(T)
           // TODO UC hardcoding here
-          (UC -> ucRow) #:: Spec.getSaved(T).filter(_._2.alive).map(x => (x._2.mnemonic, rr(x._1)))
+          (UC -> ucRow) #:: Deletion.getSavedP(T, true).map(p => (p.mnemonic, rr(p.id)))
         }
         def deletedRows: RS =
           if (T.props.showDeleted)
-            Spec.getSaved(T).map(_._2).filterNot(_.alive).map(p => (p.mnemonic, deletedRow(T, p)))
+            Deletion.getSavedP(T, false).map(p => (p.mnemonic, deletedRow(T, p)))
           else Stream.empty
 
         val savedAndDeleted = (savedRows #::: deletedRows).sortBy(_._1).map(_._2).toJsArray
