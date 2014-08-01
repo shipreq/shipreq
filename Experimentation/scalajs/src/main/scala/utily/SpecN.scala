@@ -1,6 +1,7 @@
 package utily
 
 import japgolly.scalajs.react._
+import org.scalajs.dom
 import scalaz.effect.IO
 import scalaz.{Foldable, Bind, Equal}
 import scalaz.syntax.bind._
@@ -23,11 +24,11 @@ object SpecN {
   case class Spec2[G, P, V, I1:Equal, C1, O1, I2:Equal, C2, O2](s1: SpecSpliceE[P,V,I1,C1,O1], s2: SpecSpliceE[P,V,I2,C2,O2]
                                                     , oo2g: ((O1, O2)) => G
                                                      ) {
-    type E = (I1,I2)
+    type II = (I1,I2)
     type OO = (O1, O2)
     type VV = (V, V)
 
-    def initial(p: P): E = (s1.s initial p, s2.s initial p)
+    def initial(p: P): II = (s1.s initial p, s2.s initial p)
 
     def forState[S] =
       Spec2X[S, Unit, G, P, V, I1, C1, O1, I2, C2, O2](this, None, None).forRow(())
@@ -41,7 +42,7 @@ object SpecN {
       ctxV1: Option[CtxValidation[S, W, O1]],
       ctxV2: Option[CtxValidation[S, W, O2]]
       ) {
-    type E = spec.E
+    type II = spec.II
     type VV = spec.VV
 
     import spec.{OO, s1, s2, oo2g}
@@ -49,13 +50,13 @@ object SpecN {
     private def fieldRenderers[M[_] : Bind : Foldable](s2mp: S => M[P],
                                                        w: W,
                                                        saveG: (S, G) => IO[S],
-                                                       eL: WierdLens[M, S, S, E]) = {
+                                                       eL: WierdLens[M, S, S, II]) = {
 
       val v1 = ctxV1.fold[S => Validator[I1,C1,O1]]( _ => s1.s.v )( c=> ValidatorX2(s1.s.v, c, w) )
       val v2 = ctxV2.fold[S => Validator[I2,C2,O2]]( _ => s2.s.v )( c=> ValidatorX2(s2.s.v, c, w) )
 
       //def savable1(i: I) = v.correctAndValidate(i).toOption
-      def savable(s: S, e: E): Option[OO] = for {
+      def savable(s: S, e: II): Option[OO] = for {
         o1 <- v1(s).correctAndValidate(e._1).toOption
         o2 <- v2(s).correctAndValidate(e._2).toOption
       } yield (o1,o2)
@@ -66,14 +67,14 @@ object SpecN {
         foldableToOption(eL.get(s)).flatMap(savable(s,_)).fold(IO(s))(oo => saveG(s, oo2g(oo)))
 
       (
-        new FormAttrShit[S, I1, C1, O1, M](v1, s2mp.andThen(_ map s1.s.p2c), eL map _1[E, I1], sf),
-        new FormAttrShit[S, I2, C2, O2, M](v2, s2mp.andThen(_ map s2.s.p2c), eL map _2[E, I2], sf)
+        new FormAttrShit[S, I1, C1, O1, M](v1, s2mp.andThen(_ map s1.s.p2c), eL map _1[II, I1], sf),
+        new FormAttrShit[S, I2, C2, O2, M](v2, s2mp.andThen(_ map s2.s.p2c), eL map _2[II, I2], sf)
         )
     }
 
-    def forRow(w: W): Renderable[S, G, P, E, V, VV] = new Renderable[S, G, P, E, V, VV] {
+    def forRow(w: W): Renderable[S, G, P, II, V, VV] = new Renderable[S, G, P, II, V, VV] {
       override def renderM[M[_] : Bind : Foldable]
-      (eL: WierdLens[M, S, S, E], s2mp: S => M[P])
+      (eL: WierdLens[M, S, S, II], s2mp: S => M[P])
       (saveG: (S, G) => IO[S]): ComponentStateFocus[S] => M[VV] = T => {
         val s = fieldRenderers(s2mp, w, saveG, eL)
         for {
@@ -138,11 +139,11 @@ object SpecN {
   (s1: SpecSpliceE[P,V,I1,C1,O1], s2: SpecSpliceE[P,V,I2,C2,O2], s3: SpecSpliceE[P,V,I3,C3,O3]
                                                     , oo2g: ((O1, O2, O3)) => G
                                                      ) {
-    type E = (I1,I2, I3)
+    type II = (I1,I2, I3)
     type OO = (O1, O2, O3)
     type VV = (V, V, V)
 
-    def initial(p: P): E = (s1.s initial p, s2.s initial p, s3.s initial p)
+    def initial(p: P): II = (s1.s initial p, s2.s initial p, s3.s initial p)
 
     def forState[S] =
       Spec3X[S, Unit, G, P, V, I1, C1, O1, I2, C2, O2, I3, C3, O3](this, None, None, None).forRow(())
@@ -157,7 +158,7 @@ object SpecN {
                                                             ctxV2: Option[CtxValidation[S, W, O2]],
                                                             ctxV3: Option[CtxValidation[S, W, O3]]
                                                             ) {
-    type E = spec.E
+    type II = spec.II
     type VV = spec.VV
 
     import spec.{OO, s1, s2, s3, oo2g}
@@ -165,14 +166,14 @@ object SpecN {
     private def fieldRenderers[M[_] : Bind : Foldable](s2mp: S => M[P],
                                                        w: W,
                                                        saveG: (S, G) => IO[S],
-                                                       eL: WierdLens[M, S, S, E]) = {
+                                                       eL: WierdLens[M, S, S, II]) = {
 
       val v1 = ctxV1.fold[S => Validator[I1,C1,O1]]( _ => s1.s.v )( c=> ValidatorX2(s1.s.v, c, w) )
       val v2 = ctxV2.fold[S => Validator[I2,C2,O2]]( _ => s2.s.v )( c=> ValidatorX2(s2.s.v, c, w) )
       val v3 = ctxV3.fold[S => Validator[I3,C3,O3]]( _ => s3.s.v )( c=> ValidatorX2(s3.s.v, c, w) )
 
       //def savable1(i: I) = v.correctAndValidate(i).toOption
-      def savable(s: S, e: E): Option[OO] = for {
+      def savable(s: S, e: II): Option[OO] = for {
         o1 <- v1(s).correctAndValidate(e._1).toOption
         o2 <- v2(s).correctAndValidate(e._2).toOption
         o3 <- v3(s).correctAndValidate(e._3).toOption
@@ -184,15 +185,15 @@ object SpecN {
         foldableToOption(eL.get(s)).flatMap(savable(s,_)).fold(IO(s))(oo => saveG(s, oo2g(oo)))
 
       (
-        new FormAttrShit[S, I1, C1, O1, M](v1, s2mp.andThen(_ map s1.s.p2c), eL map _1[E, I1], sf),
-        new FormAttrShit[S, I2, C2, O2, M](v2, s2mp.andThen(_ map s2.s.p2c), eL map _2[E, I2], sf),
-        new FormAttrShit[S, I3, C3, O3, M](v3, s2mp.andThen(_ map s3.s.p2c), eL map _3[E, I3], sf)
+        new FormAttrShit[S, I1, C1, O1, M](v1, s2mp.andThen(_ map s1.s.p2c), eL map _1[II, I1], sf),
+        new FormAttrShit[S, I2, C2, O2, M](v2, s2mp.andThen(_ map s2.s.p2c), eL map _2[II, I2], sf),
+        new FormAttrShit[S, I3, C3, O3, M](v3, s2mp.andThen(_ map s3.s.p2c), eL map _3[II, I3], sf)
         )
     }
 
-    def forRow(w: W): Renderable[S, G, P, E, V, VV] = new Renderable[S, G, P, E, V, VV] {
+    def forRow(w: W): Renderable[S, G, P, II, V, VV] = new Renderable[S, G, P, II, V, VV] {
       override def renderM[M[_] : Bind : Foldable]
-      (eL: WierdLens[M, S, S, E], s2mp: S => M[P])
+      (eL: WierdLens[M, S, S, II], s2mp: S => M[P])
       (saveG: (S, G) => IO[S]): ComponentStateFocus[S] => M[VV] = T => {
         val s = fieldRenderers(s2mp, w, saveG, eL)
         for {

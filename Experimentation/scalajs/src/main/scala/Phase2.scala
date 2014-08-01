@@ -58,8 +58,12 @@ object Phase2 extends js.JSApp {
 
     def fakeSave(prev: Option[Px], newValues: CustomIssueTypeV) = IO[Px] {
       val n = prev match {
-        case None         => FakeDao.customIssueType.create(newValues)
-        case Some((id,_)) => FakeDao.customIssueType.update(newValues withId id)
+        case None =>
+          FakeDao.customIssueType.create(newValues)
+        case Some((_,old)) if old.value == newValues =>
+          old
+        case Some((id,_)) =>
+          FakeDao.customIssueType.update(newValues withId id)
       }
       (n.id, n)
     }
@@ -140,10 +144,14 @@ object Phase2 extends js.JSApp {
         case Restore    => FakeDao.customReqType.restore(id)
       }))
 
-    def fakeSave(op: Option[Px], g: CustomReqTypeNV) = IO[Px] {
+    def fakeSave(op: Option[Px], newValues: CustomReqTypeNV) = IO[Px] {
       val r = op match {
-        case None          => FakeDao.customReqType.create(g)
-        case Some((id, p)) => FakeDao.customReqType.update(id, g)
+        case None =>
+          FakeDao.customReqType.create(newValues)
+        case Some((_,old)) if old.value == newValues =>
+          old
+        case Some((id, _)) =>
+          FakeDao.customReqType.update(id, newValues)
       }
       (r.id, r)
     }

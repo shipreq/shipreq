@@ -40,22 +40,19 @@ object EditorStuff {
       )
 
     private def correctInput =
-      ReactS[S, Option[C]](s1 => {
+      ReactS.mod[S](s1 => {
         val v = vs(s1)
         val r = for {
           i1 <- iL.getO(s1)
           c = v.correct(i1)
           i2 = v.c2i(c)
           s2 <- iL.setO(s1, i2) if !implicitly[Equal[I]].equal(i1, i2)
-        } yield (s2, Some(c))
-        r.getOrElse((s1, None))
+        } yield s2
+        r getOrElse s1
       })
 
     val editEnd =
-      correctInput.liftIO.flatMap {
-        case Some(_) => ReactS.modT(trySave)
-        case None    => ReactS.retT[IO, S, Unit](())
-      }
+      correctInput.liftIO >> ReactS.modT(trySave)
 
     def render[V](editor: Editor[I, V], T: ComponentStateFocus[S]): M[V] = {
       val s = T.state

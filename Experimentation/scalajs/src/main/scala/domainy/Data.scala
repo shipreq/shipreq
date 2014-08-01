@@ -12,8 +12,9 @@ object Data {
     def withId(id: CustomIssueTypeId) = CustomIssueType(id, key, desc)
   }
   object CustomIssueTypeV { val fromTuple = (apply _).tupled}
-  final case class CustomIssueType(id: CustomIssueTypeId, key: String, desc: Option[String])
-//    def value = CustomIssueTypeV(key, desc)
+  final case class CustomIssueType(id: CustomIssueTypeId, key: String, desc: Option[String]) {
+    def value = CustomIssueTypeV(key, desc)
+  }
 
   // ---------------------------------------------------------------------------
 
@@ -47,7 +48,9 @@ object Data {
                                  oldMnemonics: Set[ReqTypeMnemonic],
                                  name: String,
                                  implicationRequired: Boolean,
-                                 alive: Boolean)
+                                 alive: Boolean) {
+    def value = CustomReqTypeNV(mnemonic, name, implicationRequired)
+  }
 
   // TODO something like this? Let's wait until it's needed
 //  sealed trait ReqType
