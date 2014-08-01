@@ -40,6 +40,8 @@ object Phase2 extends js.JSApp {
         CustomReqType(CustomReqTypeId(6), "SI", Set.empty, "Solution Idea", true, false)
       ), false)) render dom.document.getElementById("target2")
     }
+
+    ReactExamples.DragAndDrop.demo  render dom.document.getElementById("target3")
   }
 
   // ===================================================================================================================

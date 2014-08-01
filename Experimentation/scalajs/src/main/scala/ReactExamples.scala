@@ -1,5 +1,3 @@
-package golly
-
 import org.scalajs.dom.console
 import scalaz.syntax.bind._
 import scalaz.effect.IO
@@ -14,13 +12,12 @@ object ReactExamples {
   object DragAndDrop {
 
     case class Item(id: Int, name: String)
+    implicit val itemEq = scalaz.Equal.equalRef[Item]
 
     val RowComp = DND.Child.dndItemComponent[Item](
       (i, hnd) => hnd :: raw(s"${i.id} | ${i.name}") :: Nil)
 
     case class ParentState(items: List[Item], dnd: DND.Parent.PState[Item], i: Int)
-
-    def itemCmp(a: Item, b: Item) = a.id==b.id
 
     val Component = ReactComponentB[List[Item]]("DragAndDrop")
       .getInitialState(p => ParentState(p, DND.Parent.initialState, 0))
@@ -31,11 +28,11 @@ object ReactExamples {
 
       def move(from: Item, to: Item) =
         IO{ console.log(s"...Before = ${T.state}") } >>
-          IO{ itemsState.modState(DND.move(from, to, itemCmp)) } >>
+          IO{ itemsState.modState(DND.move(from, to)) } >>
           IO{ console.log(s"....After = ${T.state}") }
 
       def renderItem(i: Item) =
-        li(key := i.id)(RowComp((i, DND.Parent.cProps(dndState, i, itemCmp, move ))))
+        li(key := i.id)(RowComp((i, DND.Parent.cProps(dndState, i, move ))))
 
       div(
         h1("Drag and Drop"),

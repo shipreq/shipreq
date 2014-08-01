@@ -3,7 +3,9 @@ package utily
 import org.scalajs.dom
 import org.scalajs.dom.console
 import scala.scalajs.js
-import scalaz.{State, StateT, Scalaz, Bind}
+import scalaz.{Equal, State, StateT}
+import scalaz.std.option.optionEqual
+import scalaz.std.tuple.tuple2Equal
 import scalaz.syntax.bind._
 import scalaz.effect.IO
 import japgolly.scalajs.react._
@@ -13,15 +15,15 @@ import japgolly.scalajs.react.ScalazReact._
 
 object DND {
 
-  def move[A](from: A, to: A, cmp: (A, A) => Boolean)(l: List[A]): List[A] = {
+  def move[A](from: A, to: A)(l: List[A])(implicit E: Equal[A]): List[A] = {
     console.log(s"DND Move: $from ⇒ $to") // TODO del
-    l.find(cmp(from, _)) match {
+    l.find(E.equal(from, _)) match {
       case None => l
       case Some(f) =>
         var removedYet = false
         l.flatMap(i => {
-          var x = if (cmp(from, i)) {removedYet=true; Nil} else i :: Nil
-          if (cmp(to, i)) x = if (removedYet) x :+ f else f :: x
+          var x = if (E.equal(from, i)) {removedYet=true; Nil} else i :: Nil
+          if (E.equal(to, i)) x = if (removedYet) x :+ f else f :: x
           x
         })
     }
@@ -32,7 +34,8 @@ object DND {
 
     def initialState[A]: PState[A] = None
 
-    // optimise (many needless state changes)
+    implicit def changeFilter[A: Equal] = ChangeFilter.equal[PState[A]]
+
     private def setStateDrop[A](s: Option[A]): State[PState[A], Unit] = State.modify(_.map(x => (x._1, s)))
 
     def dragEnd[A] = State.put[PState[A]](None)
@@ -41,16 +44,16 @@ object DND {
     def dragOver[A](a: A) = setStateDrop(Some(a))
     def dragLeave[A] = setStateDrop[A](None)
 
-    def cProps[A](T: ComponentStateFocus[PState[A]], a: A, cmp: (A, A) => Boolean, move: (A,A) => IO[Unit]) =
+    def cProps[A: Equal](T: ComponentStateFocus[PState[A]], a: A, move: (A,A) => IO[Unit]) =
       Child.CProps[A](
         T.state match {
-          case Some((_, Some(d))) => cmp(a, d)
+          case Some((_, Some(d))) => implicitly[Equal[A]].equal(a, d)
           case _ => false
         },
-        T _runStateS dragStart,
-        T _runStateS dragOver,
-        T runStateS dragLeave,
-        T runStateS dragEnd,
+        T _runStateFS dragStart,
+        T _runStateFS dragOver,
+        T runStateFS dragLeave,
+        T runStateFS dragEnd,
         T.state match {
           case Some((from, Some(to))) => move(from, to)
           case _ => IO(())
