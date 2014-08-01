@@ -142,7 +142,7 @@ object FormStuff {
                                        savedL: SimpleLens[S, Map[DataId, (P, I)]],
                                        unsavedL: SimpleLens[S, Option[I]],
                                        PtoI: P => I,
-                                       initialState: Seq[(DataId, P)] => S,
+                                       _initialState: Seq[(DataId, P)] => S,
                                        saveIO: (Option[(DataId, P)], O) => IO[(DataId, P)]
                                        ) {
 
@@ -157,8 +157,9 @@ object FormStuff {
 
     def mkPI(p: P): (P,I) = (p, PtoI(p))
 
-    def initialState(xs: Seq[P], id: P => DataId): S =
-      initialState(xs.map(x => id(x) -> x))
+    def initialState(xs: Seq[P], id: P => DataId): S = _initialState(xs.map(x => id(x) -> x))
+    def initialState(d: Map[DataId, P]): S = _initialState(d.toSeq)
+    def initialState(d: Seq[(DataId, P)]): S = _initialState(d)
 
     // ----------------------------------------------------------------------
     // Unsaved

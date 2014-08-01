@@ -51,7 +51,7 @@ object EditorStuff {
         r.getOrElse((s1, None))
       })
 
-    private def editEnd =
+    val editEnd =
       correctInput.liftIO.flatMap {
         case Some(_) => ReactS.modT(trySave)
         case None    => ReactS.retT[IO, S, Unit](())
