@@ -35,6 +35,8 @@
       .causality td.a {text-align:right}
       .causality td.b {font-weight:bold}
 
+      .field-reqtypes label {margin-right: 1.2ex}
+
   %body
     %h1 SHIPREQ PHASE-2 PROTOTYPE
 
@@ -55,7 +57,7 @@
     %h3 Low Frequency
     %ol
       %li
-        %a.todo(href="#fields") Cfg: Fields
+        %a(href="#fields") Cfg: Fields
       %li
         %a(href="#reqtypes") Cfg: Requirement Types
       %li
@@ -674,8 +676,13 @@
     -#==============================================================================================
     %section.screen
       %a#fields
-        %h1.todo Cfg: Fields
+        %h1 Cfg: Fields
 
+      %select
+        %option Text Field
+        %option Grouping Field
+        %option Implication Field
+        %option Step Graph
       %button Create
       %div
         %input(type="checkbox")
@@ -683,58 +690,114 @@
       %table
         %tr
           %th Name
+          %th Type
           %th RefKey
-          %th Field Type
           %th Mandatory
           %th Req Types
           %th Usage
           %th Ctrls
         %tr
-          %td Description
-          %td \.desc
+          %td %input(type="text" value="Description")
           %td Text
-          %td ☐
+          %td %input(type="text" value="desc")
+          %td %input(type="checkbox")
           %td Only: MF, UC.
+          %td %a(href="#") 27
           %td
-            %a(href="#") 27
-          %td
-            %button Delete
             [Drag]
+            %button Delete
         %tr
-          %td Priority
-          %td \.pri
+          %td %select %option Priority&nbsp;&nbsp;
           %td Grouping
-          %td ☑
+          %td \-
+          %td %input(type="checkbox" checked=1)
           %td All.
+          %td %a(href="#") 432
           %td
-            %a(href="#") 432
-          %td
+            [Drag]
             %button Delete
-            [Drag]
         %tr
-          %td TEST
-          %td \.test
-          %td Text
-          %td ☑
-          %td All.
-          %td 0
+          %td %select %option Major Feature&nbsp;&nbsp;
+          %td Implication
+          %td \-
+          %td %input(type="checkbox" checked=1)
+          %td Only: FR, UC.
+          %td %a(href="#") 50
           %td
-            %button Delete Forever
             [Drag]
+            %button Delete
+        %tr
+          %td Normal and Alternative Courses
+          %td Step Tree
+          %td \-
+          %td \-
+          %td Only: UC.
+          %td %a(href="#") 132
+          %td [Drag]
+        %tr
+          %td Exception Courses
+          %td Step Tree
+          %td \-
+          %td \-
+          %td Only: UC.
+          %td %a(href="#") 34
+          %td [Drag]
+        %tr
+          %td %input(type="text" value="Step Graph")
+          %td Step Graph
+          %td \-
+          %td \-
+          %td Only: UC.
+          %td \-
+          %td
+            [Drag]
+            %button Delete
+        %tr
+          %td %input(type="text" value="Notes and Issues")
+          %td Text
+          %td %input(type="text" value="notes")
+          %td %input(type="checkbox")
+          %td Not: BR.
+          %td %a(href="#") 65
+          %td
+            [Drag]
+            %button Delete
 
-      %h3 Fields types todo
-        %ul
-          %li Text
-          %li Grouping
-          %li Implication
-          %li UC: Courses
-          %li UC: Flowgraph
+      %h4 Req Types form
+      %div.field-reqtypes
+        %div
+          %label
+            %input(type="radio")
+            All.
+          %label
+            %input(type="radio" checked=1)
+            Only…
+          %label
+            %input(type="radio")
+            Not…
+        %div
+          %label
+            %input(type="checkbox")
+            %span(title="Business Requirement") BR
+          %label
+            %input(type="checkbox" checked=1)
+            %span(title="Constraint") CO
+          %label
+            %input(type="checkbox" checked=1)
+            %span(title="Functional Requirement") FR
+          %label
+            %input(type="checkbox")
+            %span(title="Major Feature") MF
+          %label
+            %input(type="checkbox")
+            %span(title="Solution Idea") SI
+          %label
+            %input(type="checkbox" checked=1)
+            %span(title="Quality Requirement") QR
 
       .notes Notes.
         %ol
-          %li Some fields will not be editable or deletable.
-          %li Create → Choose req type → Enter common attr {mand, req types} and special attr {grouping, name, ...}
-          %li Edit brings up the last part of the form above.
+          %li The table has an <code>Option[Row]</code> which has focus, for which the Req Types field is expanded into a form.
 
 
     -#==============================================================================================
