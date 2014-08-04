@@ -15,7 +15,9 @@ object ShipReq extends Build {
   lazy val baseUtil    = Base.Util.project
   lazy val baseUtilSjs = Base.UtilSjs.project
 
-  lazy val webapp = Webapp.project
+  lazy val webapp       = Webapp.project
+  lazy val webappShared = Webapp.Shared.project
+  lazy val webappServer = Webapp.Server.project
 
   lazy val taskman             = Taskman.project
   lazy val taskmanApi          = Taskman.Api.project
@@ -61,7 +63,7 @@ object ShipReq extends Build {
   object Base extends Module {
     val dir = "base"
     override def project = typicalProject
-      .aggregate(baseUtil, baseDb, baseTest) // not umbrella cos it shouldn't dependOn
+      .aggregate(baseUtilSjs, baseUtil, baseDb, baseTest) // not umbrella cos it shouldn't dependOn
 
     // ----------------------------------------------------
     object UtilSjs extends Module {
@@ -71,7 +73,7 @@ object ShipReq extends Build {
         providedScope(SJS.scalazEffect)
 
       override def project = typicalProject
-        .configure(Common.jsSettings)
+        .configure(Common.scalaAndScalaJS)
     }
 
     // ----------------------------------------------------
@@ -207,58 +209,77 @@ object ShipReq extends Build {
 
   // ===================================================================================================================
   object Webapp extends Module {
-    import com.earldouglas.xsbtwebplugin.PluginKeys.packageWar
-    import com.earldouglas.xsbtwebplugin.WebPlugin.webSettings
-
     val dir = "webapp"
-
-    def warSettings = (p: Project) => p.settings(
-      // Don't allow WEB-INF/_scalate into the WAR
-      excludeFilter in packageWar ~= { _ ||
-        new FileFilter { def accept(f: File) = f.getPath.containsSlice("/_scalate/") }
-      }
-    )
-
-    def testSettings = (p: Project) => p.settings(
-      // Put webapp on test classpath so templates load
-      unmanagedResourceDirectories in Test <+= baseDirectory { _ / "src/main/webapp" },
-      parallelExecution in Test := false
-    )
-
-    lazy val IntegrationTest = config("it") extend Test
-    def integrationTestSettings = (p: Project) =>
-      p.configs(IntegrationTest)
-        .settings(inConfig(IntegrationTest)(Defaults.testSettings): _*)
-        .settings(
-        parallelExecution in IntegrationTest := false
-      )
-
-    override def deps =
-      Scalaz.core ++ Lift.webkit ++ Shiro.all ++ scalate ++ commonsLang ++
-      testScope(scalaTest ++ scalaCheck ++ mockito ++ Lift.testkit ++ commonsIo ++ twitterEval) ++
-      depScope("it")(selenium) ++
-      (jetty % "container,test") ++ (servlet % "container,test,provided")
-
-    def consoleCmds = """
-      import scalaz._, shipreq.base.util._, shipreq.webapp._, db._, lib.Types._, feature.uc, uc._, uc.field._, uc.step._, uc.text._, FreeTextTerms._, util._
-      def initlift() = {val b = new bootstrap.liftweb.Boot; b.configureLift; b}
-    """
-
     override def project = typicalProject
-      .configure(
-        Common.generateBuildPropFile(),
-        warSettings,
-        testSettings,
-        integrationTestSettings
-      )
-      .settings(webSettings: _*)
-      .settings(addCommandAlias("up", ";container:stop ;clear ;container:start"): _*)
-      .settings(
-        initialCommands += consoleCmds,
-        // Ensure templates can be loaded from the console
-        fullClasspath in console in Compile += file("src/main/webapp")
-      )
-      .dependsOn(baseDb, taskmanApi)
-      .dependsOn(baseUtil, taskmanApiLogic, taskmanApiImpl) // Stupid IDEA auto-import needs this
+      .aggregate(webappShared, webappServer) // not umbrella cos it shouldn't dependOn
+
+    // ----------------------------------------------------
+    object Shared extends Module {
+      val dir = "webapp-shared"
+
+//      override def deps =
+//        providedScope(SJS.scalazEffect)
+
+      override def project = typicalProject
+        .configure(Common.scalaAndScalaJS)
+        .dependsOn(baseUtilSjs)
     }
+
+    // ----------------------------------------------------
+    object Server extends Module {
+      import com.earldouglas.xsbtwebplugin.PluginKeys.packageWar
+      import com.earldouglas.xsbtwebplugin.WebPlugin.webSettings
+
+      val dir = "webapp-server"
+
+      def warSettings = (p: Project) => p.settings(
+        // Don't allow WEB-INF/_scalate into the WAR
+        excludeFilter in packageWar ~= { _ ||
+          new FileFilter { def accept(f: File) = f.getPath.containsSlice("/_scalate/") }
+        }
+      )
+
+      def testSettings = (p: Project) => p.settings(
+        // Put webapp on test classpath so templates load
+        unmanagedResourceDirectories in Test <+= baseDirectory { _ / "src/main/webapp" },
+        parallelExecution in Test := false
+      )
+
+      lazy val IntegrationTest = config("it") extend Test
+      def integrationTestSettings = (p: Project) =>
+        p.configs(IntegrationTest)
+          .settings(inConfig(IntegrationTest)(Defaults.testSettings): _*)
+          .settings(
+          parallelExecution in IntegrationTest := false
+        )
+
+      override def deps =
+        Scalaz.core ++ Lift.webkit ++ Shiro.all ++ scalate ++ commonsLang ++
+        testScope(scalaTest ++ scalaCheck ++ mockito ++ Lift.testkit ++ commonsIo ++ twitterEval) ++
+        depScope("it")(selenium) ++
+        (jetty % "container,test") ++ (servlet % "container,test,provided")
+
+      def consoleCmds = """
+        import scalaz._, shipreq.base.util._, shipreq.webapp._, db._, lib.Types._, feature.uc, uc._, uc.field._, uc.step._, uc.text._, FreeTextTerms._, util._
+        def initlift() = {val b = new bootstrap.liftweb.Boot; b.configureLift; b}
+      """
+
+      override def project = typicalProject
+        .configure(
+          Common.generateBuildPropFile(),
+          warSettings,
+          testSettings,
+          integrationTestSettings
+        )
+        .settings(webSettings: _*)
+        .settings(addCommandAlias("up", ";container:stop ;clear ;container:start"): _*)
+        .settings(
+          initialCommands += consoleCmds,
+          // Ensure templates can be loaded from the console
+          fullClasspath in console in Compile += file("src/main/webapp")
+        )
+        .dependsOn(baseDb, taskmanApi, webappShared)
+        .dependsOn(baseUtil, taskmanApiLogic, taskmanApiImpl) // Stupid IDEA auto-import needs this
+      }
+  }
 }

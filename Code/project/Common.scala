@@ -95,7 +95,7 @@ object Common {
   def useHiddenTargetDir: Project => Project =
     _.settings(target <<= baseDirectory(_ / ".target"))
 
-  def jsSettings: Project => Project =
+  def scalaAndScalaJS: Project => Project =
     _.settings(scalaJSSettings: _*)
 
   trait ExportsTestLib {
