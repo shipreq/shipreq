@@ -20,9 +20,13 @@ import scalaz.syntax.foldable._
 
 //import golly.ScalazReact._
 import monocle._
+//import Monocle._
 import monocle.syntax._
-import monocle.function.Field1._
-import monocle.function.Field2._
+import monocle.function.Field1.first
+import monocle.function.Field2.second
+import monocle.function.Field3.third
+import monocle.std.tuple2._
+import monocle.std.tuple3._
 
 import Lib._
 import EditorStuff._
@@ -131,8 +135,8 @@ object FormStuff {
     private type Unsaved = Option[I]
     private type Saved = Map[DataId, (P, I)]
     private type S = (Saved, Unsaved)
-    private def savedL = _1[S, Saved]
-    private def unsavedL = _2[S, Unsaved]
+    private def savedL = first[S, Saved]
+    private def unsavedL = second[S, Unsaved]
 
     def renderFn(renderable: Option[DataId] => Renderable[S, O, P, I, V, VV]) = new {
 
@@ -211,8 +215,8 @@ object FormStuff {
     // ----------------------------------------------------------------------
     // Saved
 
-    private def rowL(id: DataId) = savedL composeLens SimpleLens2[Saved](_(id))((a,b) => a + (id -> b))
-    private def rowIL(id: DataId) = rowL(id) |-> _2
+    private def rowL(id: DataId) = savedL composeLens SimpleLens[Saved](_(id))((a,b) => a + (id -> b))
+    private def rowIL(id: DataId) = rowL(id) |-> second
     private def rowP(id: DataId): S => P = savedL.get(_)(id)._1
     private def rowPx(id: DataId): S => Px = s => (id, rowP(id)(s))
 
@@ -314,7 +318,7 @@ object FormStuff {
                                ) {
     private type Px = (DataId, P)
     private val hardDelS = spec.deleteSavedS(id => saveIO(id)(HardDelete))
-    private val softDeleteL = _2[Px, P] composeLens l
+    private val softDeleteL = second[Px, P] composeLens l
     private def aliveS(ls: DeletionAction, alive: Boolean) =
       spec.modAndSaveS(px => saveIO(px._1)(ls).map(_ => softDeleteL.set(px, alive)))
     private val softDelS = aliveS(SoftDelete, false)

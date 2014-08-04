@@ -15,10 +15,11 @@ scalaVersion := "2.11.2"
 scalacOptions ++= Seq( "-deprecation", "-unchecked", "-language:_" )
 
 libraryDependencies ++= Seq(
-  "com.github.japgolly.scalajs-react" %%% "scalajs-react" % "0.2.0"
-  ,"com.github.japgolly.fork.monocle" %%% "monocle-core" % "0.4.0-2"
-  //,"com.github.japgolly.fork.scalaz" %%% "scalaz-core" % "7.1.0-RC1"
-  ,"com.github.japgolly.fork.scalaz" %%% "scalaz-effect" % "7.0.6-2"
+   "com.github.japgolly.scalajs-react" %%% "core"          % "0.4.0"
+  ,"com.github.japgolly.scalajs-react" %%% "test"          % "0.4.0" % "test"
+  ,"com.github.japgolly.scalajs-react" %%% "ext-scalaz71"  % "0.4.0"
+  ,"com.github.japgolly.fork.scalaz"   %%% "scalaz-effect" % "7.1.0"
+  ,"com.github.japgolly.fork.monocle"  %%% "monocle-core"  % "0.5.0"
   ,"com.lihaoyi" %%% "utest" % "0.1.8" % "test"
 )
 

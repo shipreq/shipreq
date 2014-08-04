@@ -42,21 +42,6 @@ object Lib {
 
   def textChangeRecvX[R](f: String => R): InputEvent => R = e => f(e.target.value)
 
-  def SimpleLens2[T] = new {
-    def apply[A](f: T => A) = new {
-      def apply(g: (T, A) => T) = SimpleLens[T, A](f, g)
-    }
-  }
-
-  //  implicit class MonOptionalExt[S, T, A, B](val o: Optional[S, T, A, B]) extends AnyVal {
-  //    def modifyOptionF(f: A => B)(from: S) = o.modifyOption(from, f)
-  //    def setOptionF(newValue: B)(from: S) = o.setOption(from, newValue)
-  //  }
-  implicit class MonSetterExt[S, T, A, B](val o: Setter[S, T, A, B]) extends AnyVal {
-    final def setF(newValue: B) = (from: S) => o.set(from, newValue)
-    final def modifyF(f: A => B) = (from: S) => o.modify(from, f)
-  }
-
   def checkbox(checked: Boolean) =
     input(`type` := "checkbox", checked && (all.checked := "checked"))
 }

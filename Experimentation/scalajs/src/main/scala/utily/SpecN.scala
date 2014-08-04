@@ -5,9 +5,11 @@ import org.scalajs.dom
 import scalaz.effect.IO
 import scalaz.{Foldable, Bind, Equal}
 import scalaz.syntax.bind._
-import monocle.function.Field1._
-import monocle.function.Field2._
-import monocle.function.Field3._
+import monocle.function.Field1.first
+import monocle.function.Field2.second
+import monocle.function.Field3.third
+import monocle.std.tuple2._
+import monocle.std.tuple3._
 import FormStuff._
 import EditorStuff._
 
@@ -67,8 +69,8 @@ object SpecN {
         foldableToOption(eL.get(s)).flatMap(savable(s,_)).fold(IO(s))(oo => saveG(s, oo2g(oo)))
 
       (
-        new FormAttrShit[S, I1, C1, O1, M](v1, s2mp.andThen(_ map s1.s.p2c), eL map _1[II, I1], sf),
-        new FormAttrShit[S, I2, C2, O2, M](v2, s2mp.andThen(_ map s2.s.p2c), eL map _2[II, I2], sf)
+        new FormAttrShit[S, I1, C1, O1, M](v1, s2mp.andThen(_ map s1.s.p2c), eL map first[II, I1], sf),
+        new FormAttrShit[S, I2, C2, O2, M](v2, s2mp.andThen(_ map s2.s.p2c), eL map second[II, I2], sf)
         )
     }
 
@@ -102,7 +104,7 @@ object SpecN {
       private type Unsaved = Option[I]
       private type Saved = Map[DataId, (P, I)]
       type S = (Saved, Unsaved)
-      private def savedL = _1[S, Saved]
+      private def savedL = first[S, Saved]
 
       def uniquenessCheck[A](f: P => A) = uniqueness[S, RowId, (DataId, (P, I)), A](
         (s,ow) => savedL.get(s).toStream.filterNot(wpi => ow.fold(false)(_ == wpi._1)),
@@ -176,9 +178,9 @@ object SpecN {
         foldableToOption(eL.get(s)).flatMap(savable(s,_)).fold(IO(s))(oo => saveG(s, oo2g(oo)))
 
       (
-        new FormAttrShit[S, I1, C1, O1, M](v1, s2mp.andThen(_ map s1.s.p2c), eL map _1[II, I1], sf),
-        new FormAttrShit[S, I2, C2, O2, M](v2, s2mp.andThen(_ map s2.s.p2c), eL map _2[II, I2], sf),
-        new FormAttrShit[S, I3, C3, O3, M](v3, s2mp.andThen(_ map s3.s.p2c), eL map _3[II, I3], sf)
+        new FormAttrShit[S, I1, C1, O1, M](v1, s2mp.andThen(_ map s1.s.p2c), eL map first[II, I1], sf),
+        new FormAttrShit[S, I2, C2, O2, M](v2, s2mp.andThen(_ map s2.s.p2c), eL map second[II, I2], sf),
+        new FormAttrShit[S, I3, C3, O3, M](v3, s2mp.andThen(_ map s3.s.p2c), eL map third[II, I3], sf)
         )
     }
 
@@ -213,7 +215,7 @@ object SpecN {
       private type Unsaved = Option[I]
       private type Saved = Map[DataId, (P, I)]
       type S = (Saved, Unsaved)
-      private def savedL = _1[S, Saved]
+      private def savedL = first[S, Saved]
 
       def uniquenessCheck[A](f: P => A) = uniqueness[S, RowId, (DataId, (P, I)), A](
         (s,ow) => savedL.get(s).toStream.filterNot(wpi => ow.fold(false)(_ == wpi._1)),

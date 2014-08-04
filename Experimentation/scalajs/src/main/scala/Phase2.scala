@@ -6,7 +6,7 @@ import scalaz.Equal
 import scalaz.effect.IO
 import scalaz.std.string.stringInstance
 import scalaz.std.anyVal.booleanInstance
-import monocle.function.Field2._
+import monocle.SimpleLens
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.ReactVDom._
 import japgolly.scalajs.react.vdom.ReactVDom.all._
@@ -136,7 +136,7 @@ object Phase2 extends js.JSApp {
       .saveFn2(fakeSave, _.id)
 
     val Deletion = new DeletionThingy(Spec)(
-      SimpleLens2[P](_.alive)((a,b) => a.copy(alive = b)),
+      SimpleLens[P](_.alive)((a,b) => a.copy(alive = b)),
       id => a => IO(a match {
         case HardDelete => FakeDao.customReqType.deleteHard(id)
         case SoftDelete => FakeDao.customReqType.deleteSoft(id)
