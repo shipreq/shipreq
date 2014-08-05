@@ -95,8 +95,8 @@ object ShipReq {
       .check(
         regex("""lift_page = "([A-Za-z0-9]+)"""").saveAs("login_post_url") //
         , regex("""hidden" name="([A-Za-z0-9]+)"""").saveAs("login_post_hidden") //
-        , regex("""who"[^>]+?name="([A-Za-z0-9]+)"""").saveAs("login_post_username") //
-        , regex("""password"[^>]+?name="([A-Za-z0-9]+)"""").saveAs("login_post_password") //
+        , regex("""name="([A-Za-z0-9]+)"[^>]+?who""").saveAs("login_post_username") //
+        , regex("""name="([A-Za-z0-9]+)"[^>]+?password""").saveAs("login_post_password") //
         , regex("""liftAjax.lift_uriSuffix='([A-Za-z0-9]+?)=_';return true""").saveAs("login_post_submit") //
         ))
       .exec(getCommonDeps)
