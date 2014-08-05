@@ -1,7 +1,6 @@
 package domainy
 
 import org.scalajs.dom.console
-import copied.TaggedTypes._
 import Data._
 
 object FakeDao {

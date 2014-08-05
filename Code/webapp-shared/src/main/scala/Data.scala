@@ -2,7 +2,7 @@ package domainy
 
 import shipreq.base.util.TaggedTypes._
 
-object Da {
+object Data {
 
   // Fuck this. Use a code generator
   

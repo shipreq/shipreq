@@ -16,6 +16,7 @@ object ShipReq extends Build {
   lazy val baseUtilSjs = Base.UtilSjs.project
 
   lazy val webapp       = Webapp.project
+  lazy val webappClient = Webapp.Client.project
   lazy val webappShared = Webapp.Shared.project
   lazy val webappServer = Webapp.Server.project
 
@@ -211,7 +212,7 @@ object ShipReq extends Build {
   object Webapp extends Module {
     val dir = "webapp"
     override def project = typicalProject
-      .aggregate(webappShared, webappServer) // not umbrella cos it shouldn't dependOn
+      .aggregate(webappClient, webappShared, webappServer) // not umbrella cos it shouldn't dependOn
 
     // ----------------------------------------------------
     object Shared extends Module {
@@ -223,6 +224,21 @@ object ShipReq extends Build {
       override def project = typicalProject
         .configure(Common.scalaAndScalaJS)
         .dependsOn(baseUtilSjs)
+    }
+
+    // ----------------------------------------------------
+    object Client extends Module {
+      import scala.scalajs.sbtplugin.ScalaJSPlugin._
+
+      val dir = "webapp-client"
+
+      override def deps =
+        SJS.scalazEffect ++ SJS.React.core ++ SJS.monocle ++
+        testScope(SJS.React.test)
+
+      override def project = typicalProject
+        .settings(scalaJSSettings: _*)
+        .dependsOn(webappShared)
     }
 
     // ----------------------------------------------------
