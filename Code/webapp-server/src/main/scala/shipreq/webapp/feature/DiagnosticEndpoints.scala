@@ -90,7 +90,7 @@ object DiagnosticEndpoints extends DI {
   // -------------------------------------------------------------------------------------------------------------------
   // Email
 
-  case class EmailSendResult(id: MsgId, time: Long, token: String)
+  case class EmailSendResult(id: Long, time: Long, token: String)
 
   val Email = endpoint("mail") >> denyNonHttps >> EarlyResponse(() =>
     S.param("to") match {
@@ -106,7 +106,7 @@ object DiagnosticEndpoints extends DI {
   // -------------------------------------------------------------------------------------------------------------------
   // Taskman & msgs
 
-  case class MsgStatusResult(id: MsgId, status: String, archived: Boolean)
+  case class MsgStatusResult(id: Long, status: String, archived: Boolean)
 
   val MsgStatus: PM[JLong] =
     Menu.param[JLong]("diag.msg.status", "", parseJLong, _.toString) / "diag" / "msg" / * >>
