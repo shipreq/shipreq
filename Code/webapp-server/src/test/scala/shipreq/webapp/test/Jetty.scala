@@ -37,7 +37,7 @@ class Jetty(val port: Int) extends Logger {
     def tryPrefix(prefix: String): Option[String] =
       if (new File(prefix + "src/main/webapp").exists) Some(prefix) else None
     val webappProjectRoot: String =
-      tryPrefix("") orElse tryPrefix("webapp/") get
+      tryPrefix("") orElse tryPrefix("webapp-server/") get
     def file(relPath: String) = new File(webappProjectRoot + relPath)
 
     // Manually create an exploded WAR
