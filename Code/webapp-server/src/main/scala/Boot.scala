@@ -51,8 +51,8 @@ class Boot extends DI {
     LiftRules.early.append(_ setCharacterEncoding "UTF-8")
 
     // Common headers: Remove X-Lift-Version, add X-Frame-Options
-    val suppHeaderList: List[HTTPParam] = List(HTTPParam("X-Frame-Options", "DENY"))
-    LiftRules.supplimentalHeaders = _ addHeaders suppHeaderList
+    val suppHeaderList: List[(String, String)] = List("X-Frame-Options" -> "DENY")
+    LiftRules.supplementalHeaders.default.set(() => suppHeaderList)
 
     // Custom error handling
     LiftRules.exceptionHandler.prepend {
