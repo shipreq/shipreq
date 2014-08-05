@@ -17,7 +17,7 @@ tmux -2 new-session -d -s $S \
   && tmux send-keys "clear; bin/taskman/run" C-m \
   && tmux select-pane -t 2 \
   && tmux resize-pane -R 999 && tmux resize-pane -L 45 \
-  && tmux send-keys "clear; cd webapp && grunt watch" C-m \
+  && tmux send-keys "clear; cd webapp-server && grunt watch" C-m \
   && tmux select-pane -t 3 \
   && tmux send-keys "cd ../QA && clear && find -executable -type f | sort | fgrep -v /gatling/" C-m \
   && tmux select-pane -t 0

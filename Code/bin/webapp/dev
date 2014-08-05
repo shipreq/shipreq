@@ -10,7 +10,7 @@ tmux -2 new-session -d -s $S \
   && tmux send-keys "clear; bin/webapp/run" C-m \
   && tmux select-pane -t 1 \
   && tmux resize-pane -D 16 \
-  && tmux send-keys "clear; cd webapp && grunt watch" C-m \
+  && tmux send-keys "clear; cd webapp-server && grunt watch" C-m \
   && tmux select-pane -t 0
 
 tmux -2 attach-session -t $S

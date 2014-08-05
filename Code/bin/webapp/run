@@ -1,2 +1,2 @@
 #!/bin/bash
-cd "$(dirname "$0")"/../.. && sbt 'project webapp' up shell
+cd "$(dirname "$0")"/../.. && sbt 'project webapp-server' up shell

@@ -56,7 +56,7 @@ The version of SBT itself is configured in `project/build.properties`.
 
 ### Web Front-End
 
-First, be in webapp/
+First, be in webapp-server/
 
 * Updating
   1. bower list

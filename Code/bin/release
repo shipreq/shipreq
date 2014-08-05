@@ -20,9 +20,9 @@ for m in $defargs "$@"; do
       ;;
     webapp)
       webapp=1
-      pre_release+=( "cd webapp && grunt" )
+      pre_release+=( "cd webapp-server && grunt" )
       sbt_test+=(webapp/test)
-      sbt_pkg+=(webapp/package)
+      sbt_pkg+=(webapp-server/package)
       ;;
     notest) notest=1 ;;
     noclean) noclean=1 ;;
