@@ -74,7 +74,7 @@ object FieldKeyType {
     val u = Q.update[(String, Short)](s"UPDATE field_key_type SET name=? WHERE id=?")
     val i = Q.update[(Short, String, Option[Short])](s"INSERT INTO field_key_type VALUES(?,?,?)")
     for (v <- Values)
-      if (u.first((v.name, v.id)) == 0)
-        i.execute(v.id, v.name, v.maxTextPerUc)
+      if (u(v.name, v.id).first == 0)
+        i(v.id, v.name, v.maxTextPerUc).execute
   }
 }

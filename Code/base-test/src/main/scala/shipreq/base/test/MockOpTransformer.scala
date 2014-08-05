@@ -69,10 +69,20 @@ abstract class MockOpTransformerA[Op[_], I[_]: Applicative] extends MockOpTransf
   def cotrans[A]: Op[A] => A
 }
 
+// https://issues.scala-lang.org/browse/SI-8602
+/*
 case class MockOpTransformer1[Op[_], I[_]: Applicative, S <: Op[A]: Manifest, A](ttp: OpTypeProvider[Op], default: A)
     extends MockOpTransformerA[Op, I] {
 
   final def S = implicitly[Manifest[S]]
+
+  def soleOp = sole[S]
+ */
+// WORKAROUND START
+case class MockOpTransformer1[Op[_], I[_], S, A](ttp: OpTypeProvider[Op], default: A)(implicit I: Applicative[I], S: Manifest[S], ev: S <:< Op[A])
+  extends MockOpTransformerA[Op, I] {
+  def soleOp = sole[Op[A]](S.asInstanceOf[Manifest[Op[A]]]).asInstanceOf[S]
+// WORKAROUND END
 
   override def opTypeProvider: OpTypeProvider[Op] = ttp
 
@@ -83,6 +93,4 @@ case class MockOpTransformer1[Op[_], I[_]: Applicative, S <: Op[A]: Manifest, A]
       responses.pop().asInstanceOf[X]
     else
       throw new AssertionError(s"Unexpected operation: $op")
-
-  def soleOp: S = sole[S]
 }

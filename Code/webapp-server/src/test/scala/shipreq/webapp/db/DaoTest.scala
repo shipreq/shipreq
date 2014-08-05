@@ -2,8 +2,7 @@ package shipreq.webapp.db
 
 import org.scalatest.FunSpec
 import shipreq.taskman.api.UserId
-import slick.jdbc.{StaticQuery => Q}
-import Q.interpolation
+import slick.jdbc.StaticQuery.{queryNA, updateNA}
 
 import shipreq.webapp.feature.UcFilters
 import shipreq.webapp.feature.uc.field.{TextFieldDefinition, NormalCourseFieldDefinition, ExceptionCourseFieldDefinition}
@@ -34,7 +33,7 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
 
     describe("syncFieldList") {
       it("should save when never saved before") {
-        sqlu" UPDATE field_key SET data='hehe' WHERE data IS NULL ".execute
+        updateNA(" UPDATE field_key SET data='hehe' WHERE data IS NULL").execute
         val fl = assertTableDiffs(Tables.FieldKey -> fl1.size) {dao.syncFieldList(fl1)}
         fl.fieldDefns ==== fl1
       }
@@ -60,7 +59,7 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
   describe("to_iso8601_str") {
 
     def test(in: String, out: String): Unit = {
-      val q = Q.queryNA[String](s"select to_iso8601_str(timestamptz '$in')")
+      val q = queryNA[String](s"select to_iso8601_str(timestamptz '$in')")
       val r: String = q.first
       r shouldBe out
     }
@@ -78,7 +77,7 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
     }
 
     it("should work with NULLs") {
-      val q = Q.queryNA[String](s"select to_iso8601_str(NULL)")
+      val q = queryNA[String](s"select to_iso8601_str(NULL)")
       q.first shouldBe null
     }
   }
@@ -306,7 +305,7 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
 
     it("reset password fns") {
       val u = newUserId
-      val username = sql"select username from usr where id=${u: Long}".as[String].first()
+      val username = queryNA[String](s"select username from usr where id=${u: Long}").first
       val token = dao.performInstallNewResetPasswordToken(u, () => s"token.$u")
 
       val date = dao.findResetPasswordTokenIssuedDate(token).get

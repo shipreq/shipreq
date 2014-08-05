@@ -187,8 +187,12 @@ object BopTypeTags extends OpTypeProvider[Bop] {
     case MailingListOp(_: Subscribe)      => manifest[MailingListOp[Subscribe]]
     case MailingListOp(_: UpdateMember)   => manifest[MailingListOp[UpdateMember]]
     case MailingListOp(_: BatchSubscribe) => manifest[MailingListOp[BatchSubscribe]]
-    case SupportOp(_: NotifyLandingPage)  => manifest[SupportOp[NotifyLandingPage]]
-    case SupportOp(_: ReportFailure)      => manifest[SupportOp[ReportFailure]]
+    case SupportOp(o) => o match {
+      case _: NotifyLandingPage           => manifest[SupportOp[NotifyLandingPage]]
+      case _: ReportFailure               => manifest[SupportOp[ReportFailure]]
+    }
+//    case SupportOp(_: NotifyLandingPage)  => manifest[SupportOp[NotifyLandingPage]]
+//    case SupportOp(_: ReportFailure)      => manifest[SupportOp[ReportFailure]]
   }
 }
 
@@ -213,7 +217,11 @@ class MockBops extends MockOpTransformer[Bop, IOE] {
     case MailingListOp(_: Subscribe)      => IOE(mlSubscribe.pop())
     case MailingListOp(_: UpdateMember)   => IOE(mlUpdateMember.pop())
     case MailingListOp(_: BatchSubscribe) => IO(mlBatchSubscribe.pop())
-    case SupportOp(_: NotifyLandingPage)  => IOE(supNotifyLandingPage.pop())
-    case SupportOp(_: ReportFailure)      => IO(supReportFailure.pop())
+    case SupportOp(o) => o match {
+      case _: NotifyLandingPage           => IOE(supNotifyLandingPage.pop())
+      case _: ReportFailure               => IO(supReportFailure.pop())
+    }
+//    case SupportOp(_: NotifyLandingPage)  => IOE(supNotifyLandingPage.pop())
+//    case SupportOp(_: ReportFailure)      => IO(supReportFailure.pop())
   }
 }

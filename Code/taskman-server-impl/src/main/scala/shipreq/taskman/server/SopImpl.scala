@@ -167,20 +167,20 @@ object SopImpl {
       queued match {
         case None =>
           // Empty mem-queue
-          getMsgsAssignNodeZ.list(node, assignmentTrustPeriod, limit)
+          getMsgsAssignNodeZ(node, assignmentTrustPeriod, limit).list
 
         case Some((memPri, memSize)) =>
           val freeSlots = limit - memSize
           if (freeSlots > 0)
             // Partial mem-queue
-            getMsgsAssignNodeP.list(assignmentTrustPeriod, limit, freeSlots, memPri, node)
+            getMsgsAssignNodeP(assignmentTrustPeriod, limit, freeSlots, memPri, node).list
           else
             // Full mem-queue
-            getMsgsAssignNodeF.list(node, assignmentTrustPeriod, memPri, limit)
+            getMsgsAssignNodeF(node, assignmentTrustPeriod, memPri, limit).list
       }
 
     def getMsgAssignWorker(node: NodeId, worker: WorkerId, hdr: MsgHeader): Option[MsgDetail] =
-      getMsgAssignWorkerQ.firstOption(worker, hdr.id, node) map {
+      getMsgAssignWorkerQ(worker, hdr.id, node).firstOption map {
         case (msgType, msgData, failureCount) =>
           ErrorOr.require_!(
             Serialisation.deserialise(msgType, msgData).map(msg =>
@@ -188,19 +188,19 @@ object SopImpl {
       }
 
     def reassignWorker(n: NodeId, w: WorkerId, m: MsgId): Boolean =
-      reassignWorkerQ.firstOption(n, w, m) getOrElse false
+      reassignWorkerQ(n, w, m).firstOption getOrElse false
 
     def failAndRetry(n: NodeId, w: WorkerId, m: MsgId, delay: Period): Unit =
-      failAndRetryQ.first(delay, n, w, m)
+      failAndRetryQ(delay, n, w, m).first
     
     def archiveMsg(n: NodeId, w: WorkerId, m: MsgId, status: ArchiveIntent): Unit =
-      archiveMsgQ.first(n, w, m, status)
+      archiveMsgQ(n, w, m, status).first
 
     def getNextNodeId: NodeId =
-      getNextNodeIdQ.first()
+      getNextNodeIdQ.first
 
     def cfgGet(k: String): Option[String] =
-      cfgGetQ.firstOption(k)
+      cfgGetQ(k).firstOption
   }
 
   def cfgValueReader(db: Database) =

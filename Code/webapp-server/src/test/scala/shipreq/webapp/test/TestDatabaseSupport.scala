@@ -5,10 +5,9 @@ import com.googlecode.flyway.core.dbsupport.{SqlScript, DbSupportFactory}
 import org.apache.commons.io.IOUtils
 import org.postgresql.util.PSQLException
 import org.scalatest.{Exceptional, Outcome, Suite}
-import scala.slick.jdbc.{StaticQuery => Q}
+import scala.slick.jdbc.StaticQuery.{queryNA, query, updateNA, update}
 import scala.slick.jdbc.JdbcBackend.{Database, Session}
 import scalaz.Need
-import Q.interpolation
 
 import shipreq.taskman.api.UserId
 import app.{Defaults, DI}
@@ -129,7 +128,7 @@ trait TestDatabaseHelpers extends TestHelpers2 {
 
   def randomStr: String = rnd.nextString(32)
 
-  def countRowsIn(table: Table) = Q.queryNA[Int](s"select count(*) from ${table.name}").first
+  def countRowsIn(table: Table) = queryNA[Int](s"select count(*) from ${table.name}").first
 
   sealed trait Table {def name: String; override def toString = name}
   object Tables {
@@ -193,7 +192,7 @@ trait TestDatabaseHelpers extends TestHelpers2 {
         case FieldKeyType => truncate(FieldKey)
         case FieldKey     => truncate(Text)
         case Usecase      => truncate(UsecaseRev)
-        case UsecaseRev   => Q.updateNA(s"update usecase set latest_rev_id = NULL").execute; truncate(UcField)
+        case UsecaseRev   => updateNA("update usecase set latest_rev_id = NULL").execute; truncate(UcField)
         case Text         => truncate(TextRev)
         case TextRev      => truncate(UcField)
         case Project      => truncate(Share, Usecase)
@@ -205,11 +204,11 @@ trait TestDatabaseHelpers extends TestHelpers2 {
           | ShareViewLog  => // No one keys to these tables
       }
       val tableName = table.name
-      Q.updateNA(s"delete from $tableName").execute
+      updateNA(s"delete from $tableName").execute
     }
   }
 
-  def lookupConfirmationToken(email: String) = sql"select confirmation_token from usr where email = $email".as[String].firstOption
+  def lookupConfirmationToken(email: String) = query[String,String]("select confirmation_token from usr where email=?").apply(email).firstOption
 
   /**
    * Loads an SQL script on the classpath, and runs it.
@@ -231,7 +230,7 @@ trait TestDatabaseHelpers extends TestHelpers2 {
     val ucn = UseCaseNumber(n.toShort)
     val uc_ = cp.uc.copy(number = ucn)
     val rec_ = cp.rec.copy(ident = cp.rec.ident.copy(number = ucn))
-    sqlu"UPDATE usecase set number=${ucn.value} where id = ${rec_.ident.identId.value}".execute
+    updateNA(s"UPDATE usecase set number=${ucn.value} where id = ${rec_.ident.identId.value}").execute
     cp.copy(uc = uc_, rec = rec_)
   }
 
@@ -242,14 +241,14 @@ trait TestDatabaseHelpers extends TestHelpers2 {
     dao.createProject(userId, randomUCTitle).gimme
 
   def getOrCreateUserId(): UserId =
-    sql"select id from usr where username is not null".as[UserId].firstOption.getOrElse(newUserId)
+    queryNA[UserId]("select id from usr where username is not null").firstOption.getOrElse(newUserId)
 
   def newUserId(): UserId =
-    sql"INSERT INTO usr(username, email, password, password_salt, password_changed_at, confirmation_sent_at, confirmed_at) VALUES($randomStr,$randomStr,0,0,NOW(),NOW(),NOW()) RETURNING id".
-    as[UserId].first
+    query[(String,String),UserId]("INSERT INTO usr(username, email, password, password_salt, password_changed_at, confirmation_sent_at, confirmed_at) VALUES(?,?,0,0,NOW(),NOW(),NOW()) RETURNING id")
+    .apply(randomStr,randomStr).first
 
   def deleteUser(u: UserId): Unit =
-    Q.update[Long]("DELETE FROM usr WHERE id=?").execute(u)
+    update[Long]("DELETE FROM usr WHERE id=?").apply(u).execute
 
   def newShare(projectId: ProjectId = newProjectId()): ShareId =
     dao.createShare(projectId, PasswordAndSalt.createWithRandomSalt(randomStr), randomStr, None, UcFilters.All.json).id

@@ -69,6 +69,8 @@ sealed trait DaoS {
     }
   }
 
+  // TODO: Use EmailAddr instead of String
+
   // ===================================================================================================================
   // User
 
@@ -83,10 +85,10 @@ sealed trait DaoS {
 
   /** Creates an unconfirmed user account. No username, no password until email confirmed. */
   def createUserPlaceholder(email: EmailAddr, tokenFn: () => String): String =
-    tokenAttempt(tokenFn)(token => InsertUserPlaceholder.execute(email, token))
+    tokenAttempt(tokenFn)(token => InsertUserPlaceholder(email, token).execute)
 
   def updateUserConfirmationToken(id: UserId, tokenFn: () => String): String =
-    tokenAttempt(tokenFn)(token => UpdateConfirmationToken.execute(token, id))
+    tokenAttempt(tokenFn)(token => UpdateConfirmationToken(token, id).execute)
 
   def findUserDescAndCredentials(usernameOrEmail: String): Option[(UserDescriptor, PasswordAndSalt)] =
     if (usernameOrEmail.indexOf('@') == -1)
@@ -94,33 +96,33 @@ sealed trait DaoS {
     else
       findUserDescAndCredentials(EmailAddr(usernameOrEmail))
 
-  def findUserDescAndCredentials(username: Username) = GetUserDescCredByUsername.firstOption(username)
+  def findUserDescAndCredentials(username: Username) = GetUserDescCredByUsername(username).firstOption
 
-  def findUserDescAndCredentials(email: EmailAddr) = GetUserDescCredByEmail.firstOption(email)
+  def findUserDescAndCredentials(email: EmailAddr) = GetUserDescCredByEmail(email).firstOption
 
-  def findUserRegistrationInfo(email: EmailAddr) = GetUserRegInfo.firstOption(email)
+  def findUserRegistrationInfo(email: EmailAddr) = GetUserRegInfo(email).firstOption
 
-  def findUserRegAndResetPwInfo(email: EmailAddr) = GetUserRegAndResetPwInfo.firstOption(email)
+  def findUserRegAndResetPwInfo(email: EmailAddr) = GetUserRegAndResetPwInfo(email).firstOption
 
-  def findUserConfirmationTokenIssuedDate(token: String) = GetConfirmationTokenIssuedDate.firstOption(token)
+  def findUserConfirmationTokenIssuedDate(token: String) = GetConfirmationTokenIssuedDate(token).firstOption
 
-  def findUserSuppAndDetail(id: UserId) = GetUserSuppAndDetail.firstOption(id)
+  def findUserSuppAndDetail(id: UserId) = GetUserSuppAndDetail(id).firstOption
 
-  def logUserLogin(id: UserId, ip: Option[String]): Unit = LogUserLogin.execute(id, ip)
+  def logUserLogin(id: UserId, ip: Option[String]): Unit = LogUserLogin(id, ip).execute
 
   def updateUserDetails(id: UserId, d: UserDetail): Unit =
-    UpdateUserDetails.execute(d.name, d.newsletter, id)
+    UpdateUserDetails(d.name, d.newsletter, id).execute
 
-  def updateUserPassword(id: UserId, ps: PasswordAndSalt): Unit = UpdateUserPassword.execute(ps, id)
+  def updateUserPassword(id: UserId, ps: PasswordAndSalt): Unit = UpdateUserPassword(ps, id).execute
 
   def performInstallNewResetPasswordToken(u: UserId, tokenFn: () => String): String =
-    tokenAttempt(tokenFn)(token => InstallNewResetPasswordToken.execute(token, u))
+    tokenAttempt(tokenFn)(token => InstallNewResetPasswordToken(token, u).execute)
 
-  def performReuseResetPasswordToken(u: UserId): Unit = ReuseResetPasswordToken.execute(u)
+  def performReuseResetPasswordToken(u: UserId): Unit = ReuseResetPasswordToken(u).execute
 
-  def findResetPasswordTokenIssuedDate(token: String) = GetResetPasswordTokenIssuedDate.firstOption(token)
+  def findResetPasswordTokenIssuedDate(token: String) = GetResetPasswordTokenIssuedDate(token).firstOption
 
-  def performPasswordReset(ps: PasswordAndSalt, token: String) = ResetPassword.execute(ps, token)
+  def performPasswordReset(ps: PasswordAndSalt, token: String) = ResetPassword(ps, token).execute
 
   // ===================================================================================================================
   // Project
@@ -134,7 +136,7 @@ sealed trait DaoS {
   def createProject(usrId: UserId, name: String): CreateProjectResult = {
     import CreateProjectResult._
     saveProject[CreateProjectResult](name, name => {
-      val id = CreateProject.first(usrId, name)
+      val id = CreateProject(usrId, name).first
       DbSuccess(id)
     })(NameAlreadyInUse)
   }
@@ -142,73 +144,73 @@ sealed trait DaoS {
   def updateProject(id: ProjectId, usrId: UserId, name: String): UpdateProjectResult = {
     import UpdateProjectResult._
     saveProject[UpdateProjectResult](name, name => {
-      if (RenameProject.first(name, id, usrId) == 0) ProjectNotFound
+      if (RenameProject(name, id, usrId).first == 0) ProjectNotFound
       else DbSuccess
     })(NameAlreadyInUse)
   }
 
-  def findProject(id: ProjectId): Option[Project] = FindProject.firstOption(id)
+  def findProject(id: ProjectId): Option[Project] = FindProject(id).firstOption
 
-  def findProjectByUc(ucId: UseCaseIdentId): Option[Project] = FindProjectByUc.firstOption(ucId)
+  def findProjectByUc(ucId: UseCaseIdentId): Option[Project] = FindProjectByUc(ucId).firstOption
 
-  def summariseProjects(userId: UserId): List[ProjectSummary] = SummariseProjects.list(userId)
+  def summariseProjects(userId: UserId): List[ProjectSummary] = SummariseProjects(userId).list
 
-  def deleteProjectSoft(id: ProjectId): Unit = DeleteProjectSoft.execute(nextFuncName, id)
+  def deleteProjectSoft(id: ProjectId): Unit = DeleteProjectSoft(nextFuncName, id).execute
 
   // ===================================================================================================================
   // Use Case
 
   def createUseCaseRev(ucIdent: UseCaseIdent, rev: Short, header: UseCaseHeader): UseCaseRev = {
-    val (id, createdAt) = InsertUseCaseRev.first(ucIdent, rev, header.title)
+    val (id, createdAt) = InsertUseCaseRev(ucIdent, rev, header.title).first
     UseCaseRev(ucIdent, rev, id, header, createdAt)
   }
 
-  def findUseCaseRev(revId: UseCaseRevId): Option[UseCaseRev] = SelectUseCaseRev.firstOption(revId)
+  def findUseCaseRev(revId: UseCaseRevId): Option[UseCaseRev] = SelectUseCaseRev(revId).firstOption
 
-  def findUseCaseLatestRevId(ucId: UseCaseIdentId): Option[UseCaseRevId] = SelectLatestUseCaseRevId.firstOption(ucId)
+  def findUseCaseLatestRevId(ucId: UseCaseIdentId): Option[UseCaseRevId] = SelectLatestUseCaseRevId(ucId).firstOption
 
-  def findUseCaseLatestRev(ucId: UseCaseIdentId): Option[UseCaseRev] = SelectLatestUseCaseRev.firstOption(ucId)
+  def findUseCaseLatestRev(ucId: UseCaseIdentId): Option[UseCaseRev] = SelectLatestUseCaseRev(ucId).firstOption
 
-  def findAllLatestUseCaseRevsByProject(pid: ProjectId): List[UseCaseRev] = SelectLatestUseCaseRevsByProject.list(pid)
+  def findAllLatestUseCaseRevsByProject(pid: ProjectId): List[UseCaseRev] = SelectLatestUseCaseRevsByProject(pid).list
 
   def findAllLatestUseCaseRevs(pid: ProjectId, ids: List[UseCaseIdentId]): List[UseCaseRev] =
     if (ids.isEmpty)
       List.empty
     else
-      SelectLatestUseCaseRevsByIds.list(pid, ids)
+      SelectLatestUseCaseRevsByIds(pid, ids).list
 
-  def summariseUseCases(projectId: ProjectId): List[UseCaseSummary] = SummariseUseCases.list(projectId)
+  def summariseUseCases(projectId: ProjectId): List[UseCaseSummary] = SummariseUseCases(projectId).list
 
   // ===================================================================================================================
   // uc_field
 
   def findAllUcFieldData(ucRevId: UseCaseRevId): List[UcFieldTextWithFK] =
-    SelectUcFields.list(ucRevId)
+    SelectUcFields(ucRevId).list
 
   def findAllUcFieldData(ids: List[UseCaseRevId]): List[(UseCaseRevId, UcFieldTextWithFK)] =
     if (ids.isEmpty)
       List.empty
     else
-      SelectUcFieldsInBulk.list(ids)
+      SelectUcFieldsInBulk(ids).list
 
   def linkUcToText(uc: UseCaseRevId, txt: TextRevId): Unit =
-    LinkUcToText.execute(uc, txt)
+    LinkUcToText(uc, txt).execute
 
   def linkUcToStep(uc: UseCaseRevId, label: StepLabel, index: Short, parentId: Option[TextRevId], text: TextRev): UcFieldText = {
-    LinkUcToStep.execute(uc, label, parentId, index, text.id)
+    LinkUcToStep(uc, label, parentId, index, text.id).execute
     UcFieldText(Some(label), parentId, index, text)
   }
 
-  def linkUcToSameFieldsAsOtherUc(from: UseCaseRevId, to: UseCaseRevId): Unit = CopyUcFieldsBetweenRevs.execute(to, from)
+  def linkUcToSameFieldsAsOtherUc(from: UseCaseRevId, to: UseCaseRevId): Unit = CopyUcFieldsBetweenRevs(to, from).execute
 
   // ===================================================================================================================
   // Text
 
   def createTextIdent(ucId: UseCaseIdentId, fkId: FieldKeyId): TextIdentId =
-    InsertTextIdent.first(ucId, fkId)
+    InsertTextIdent(ucId, fkId).first
 
   def createTextRev(identId: TextIdentId, rev: Short, text: NormalisedText): TextRev = {
-    val id = InsertTextRev.first(identId, rev, text)
+    val id = InsertTextRev(identId, rev, text).first
     TextRev(identId, rev, id, text)
   }
 
@@ -216,7 +218,7 @@ sealed trait DaoS {
   // Fields
 
   def createFieldKey(fkType: FieldKeyType, data: FieldKeyRecData): FieldKeyRec = {
-    val id = InsertFieldKey.first(fkType, data)
+    val id = InsertFieldKey(fkType, data).first
     FieldKeyRec(id, fkType, data)
   }
 
@@ -231,34 +233,34 @@ sealed trait DaoS {
     retry(12) { // Chance of error when 200,000 tokens in use = 0.0000002% ^ 12 (6E-105%)
       inSafeTransaction {
         val urlToken = urlTokenFn()
-        val id = InsertShare.first(projectId, urlToken, ps, name, preface, ucFilterJson)
+        val id = InsertShare(projectId, urlToken, ps, name, preface, ucFilterJson).first
         Share(id, projectId, urlToken, name, preface, ucFilterJson)
       }
     }
 
   def updateShare(id: ShareId, name: String, preface: Option[String], ucFilterJson: JsonStr[UcFilter]): Unit =
-    UpdateShare.execute(name, preface, ucFilterJson, id)
+    UpdateShare(name, preface, ucFilterJson, id).execute
 
   def updateSharePassword(id: ShareId, ps: PasswordAndSalt): Unit =
-    UpdateSharePassword.execute(ps, id)
+    UpdateSharePassword(ps, id).execute
 
   def deleteShare(id: ShareId): Unit =
-    DeleteShare.execute(id)
+    DeleteShare(id).execute
 
   def findShare(id: ShareId): Option[Share] =
-    SelectShare.firstOption(id)
+    SelectShare(id).firstOption
 
   def findShareAndPassword(url: ShareUrlToken): Option[(Share, PasswordAndSalt)] =
-    SelectShareAndPasswordByUrl.firstOption(url)
+    SelectShareAndPasswordByUrl(url).firstOption
 
   def findShareAndProject(url: ShareUrlToken): Option[(Share, Project)] =
-    SelectShareAndProjectByUrl.firstOption(url)
+    SelectShareAndProjectByUrl(url).firstOption
 
   def summariseShares(projectId: ProjectId): List[ShareSummary] =
-    SummariseShares.list(projectId)
+    SummariseShares(projectId).list
 
   def logShareView(shareId: ShareId, ip: Option[String]): Unit =
-    LogShareView.execute(shareId, ip)
+    LogShareView(shareId, ip).execute
 }
 
 // #####################################################################################################################
@@ -276,9 +278,9 @@ sealed trait DaoT extends DaoS {
 
     import UserRegistrationResult._
     try {
-      RegisterUser.firstOption(username, ps, ipAddr, token) match {
+      RegisterUser(username, ps, ipAddr, token).firstOption match {
         case Some(id) =>
-          InsertUsrd.execute(id, name, newsletter)
+          InsertUsrd(id, name, newsletter).execute
           DbSuccess(id)
         case None =>
           NoMatchingConfToken
@@ -292,14 +294,14 @@ sealed trait DaoT extends DaoS {
    * Creates a new `usecase` row. If a `usecase_rev` row is not inserted before the end of the transaction, then the
    * transaction will fail because `usecase.latest_rev_id` will be `NULL`.
    */
-  def createUseCaseIdent(projectId: ProjectId): UseCaseIdent = InsertUseCaseIdent.first(projectId, projectId)
+  def createUseCaseIdent(projectId: ProjectId): UseCaseIdent = InsertUseCaseIdent(projectId, projectId).first
 
   /**
    * Same as `#createUseCaseIdent` except uses a manually-provided UC number.
    * This should only be used in tests.
    */
   def createUseCaseIdentWithForcedNumber(projectId: ProjectId, ucn: UseCaseNumber): UseCaseIdent = {
-    val id = InsertUseCaseIdentForceNum.first(projectId, ucn)
+    val id = InsertUseCaseIdentForceNum(projectId, ucn).first
     UseCaseIdent(id, ucn, projectId)
   }
 
@@ -333,7 +335,7 @@ sealed trait DaoT extends DaoS {
   }
 
   def findOrCreateFieldKey(fkType: FieldKeyType, data: FieldKeyRecData): FieldKeyRec =
-    SelectReusableFieldKeyId.firstOption(fkType, data)
+    SelectReusableFieldKeyId(fkType, data).firstOption
       .fold(createFieldKey(fkType, data))(FieldKeyRec(_, fkType, data))
 
   def syncFieldList(fields: List[FieldDefinition]): FieldListRec = {
@@ -355,13 +357,13 @@ sealed class AdminDao(_session: Session) extends DaoS {
   def diagSelectNow() = DiagSelectNow.first
 
   def statsCountUsers: UsrCount = {
-    val (a, b) = StatsCountUsers.first()
+    val (a, b) = StatsCountUsers.first
     UsrCount(a, b)
   }
 
-  def statsTableSizes: List[(String, Long)] = StatsSizesByTypes.list("r")
-  def statsIndexSizes: List[(String, Long)] = StatsSizesByTypes.list("i")
-  def statsDatabaseSize: Long = StatsDatabaseSize.first(DB.DatabaseName.replaceFirst("^.*/", ""))
+  def statsTableSizes: List[(String, Long)] = StatsSizesByTypes("r").list
+  def statsIndexSizes: List[(String, Long)] = StatsSizesByTypes("i").list
+  def statsDatabaseSize: Long = StatsDatabaseSize(DB.DatabaseName.replaceFirst("^.*/", "")).first
 }
 
 // #####################################################################################################################

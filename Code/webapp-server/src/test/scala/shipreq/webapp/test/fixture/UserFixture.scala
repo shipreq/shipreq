@@ -47,9 +47,9 @@ trait UserFixture {
     // Insert mock users (registered)
     val i1 = Q.query[(String, String, String, String, Option[String]), Long]("INSERT INTO usr(username, email, password, password_salt, password_changed_at, confirmation_sent_at, confirmed_at, roles) VALUES(?,?,?,?,NOW(),NOW(),NOW(),?) RETURNING id")
     for (u <- users) {
-      val id = UserId(i1.first(u.username, u.email, u.hashedPassword, u.salt, UserDescriptor.roleStr(u.roles))(db))
+      val id = UserId(i1(u.username, u.email, u.hashedPassword, u.salt, UserDescriptor.roleStr(u.roles)).first)
       u._id = Some(id)
-      Shim.InsertUsrd.execute(id, u.name, u.newsletter)
+      Shim.InsertUsrd(id, u.name, u.newsletter).execute
     }
 
     // Insert mock users (pending confirmation)
@@ -65,18 +65,18 @@ trait UserFixture {
 
   def insert(user: PendingTestUser)(implicit db: Session): Unit =
     Q.update[(String, String, Timestamp)]("INSERT INTO usr(email, confirmation_token, confirmation_sent_at) VALUES(?,?,?)").
-    execute(user.email, user.token, user.tokenCreatedAt)
+      apply(user.email, user.token, user.tokenCreatedAt).execute
 
   def deleteUser(u: TestUser)(implicit db: Session): Unit = { deleteUser(u.id); u._id = None }
   def deleteUser(u: PendingTestUser)(implicit db: Session): Unit = deleteUserByEmail(u.email)
 
   def deleteUser(id: Long)(implicit db: Session): Unit = {
-    Q.update[Long]("DELETE FROM usrh_name WHERE usr_id = ?").execute(id)
-    Q.update[Long]("DELETE FROM usrd WHERE usr_id = ?").execute(id)
-    Q.update[Long]("DELETE FROM usr WHERE id = ?").execute(id)
+    Q.update[Long]("DELETE FROM usrh_name WHERE usr_id = ?").apply(id).execute
+    Q.update[Long]("DELETE FROM usrd WHERE usr_id = ?").apply(id).execute
+    Q.update[Long]("DELETE FROM usr WHERE id = ?").apply(id).execute
   }
   def deleteUserByEmail(email: String)(implicit db: Session): Unit = {
-    val id = Q.query[String, Long]("SELECT id FROM usr WHERE email = ?").firstOption(email)
+    val id = Q.query[String, Long]("SELECT id FROM usr WHERE email = ?").apply(email).firstOption
     id foreach deleteUser
   }
 

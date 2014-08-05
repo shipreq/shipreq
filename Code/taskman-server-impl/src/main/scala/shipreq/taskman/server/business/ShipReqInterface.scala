@@ -16,7 +16,7 @@ object ShipReqInterface {
 
     // ---------------------------------------------------------------------------------------------
 
-    val prefix = schema.map(_ + ".") getOrElse ""
+    val prefix = schema.fold("")(_ + ".")
 
     val findUsersSql = s"select id, username, email, name, newsletter from ${prefix}taskman_users_v01"
 
@@ -33,12 +33,12 @@ object ShipReqInterface {
 
   class Dao(sql: Sql)(implicit session: Session) {
 
-    def findUser(id: UserId): Option[ShipReqUser] = sql.findUserById.firstOption(id)
+    def findUser(id: UserId): Option[ShipReqUser] = sql.findUserById(id).firstOption
 
-    def findUser(e: EmailAddr): Option[ShipReqUser] = sql.findUserByEmail.firstOption(e)
+    def findUser(e: EmailAddr): Option[ShipReqUser] = sql.findUserByEmail(e).firstOption
 
-    def findAllUsers(): List[ShipReqUser] = sql.findAllUsers.list()
+    def findAllUsers(): List[ShipReqUser] = sql.findAllUsers.list
 
-    def findAllUsers(cond: String): List[ShipReqUser] = sql.findAllUsersW(cond).list()
+    def findAllUsers(cond: String): List[ShipReqUser] = sql.findAllUsersW(cond).list
   }
 }

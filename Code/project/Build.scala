@@ -271,7 +271,7 @@ object ShipReq extends Build {
 
       override def deps =
         Scalaz.core ++ Lift.webkit ++ Shiro.all ++ scalate ++ commonsLang ++
-        testScope(scalaTest ++ scalaCheck ++ mockito ++ Lift.testkit ++ commonsIo ++ twitterEval) ++
+        testScope(scalaTest ++ scalaCheck ++ mockito ++ Lift.testkit ++ commonsIo /*++ twitterEval*/) ++
         depScope("it")(selenium) ++
         (jetty % "container,test") ++ (servlet % "container,test,provided")
 

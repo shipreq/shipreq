@@ -70,13 +70,13 @@ class MailChimpTest extends Specification {
     "new user" in {
       p(parseResponse(BatchSubscribe(null, null)),
         """{"add_count":1,"adds":[{"email":"great@yay.com","euid":"1fbc6c212e","leid":"147450781"}],"update_count":0,"updates":[],"error_count":0,"errors":[]}"""
-      ) ==== ()
+      ) ==== (())
     }
 
     "update user" in {
       p(parseResponse(BatchSubscribe(null, null)),
         """{"add_count":0,"adds":[],"update_count":1,"updates":[{"email":"great@yay.com","euid":"1fbc6c212e","leid":"147450781"}],"error_count":0,"errors":[]}"""
-      ) ==== ()
+      ) ==== (())
     }
 
     "error" in {

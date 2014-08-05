@@ -1,3 +1,4 @@
+
 package shipreq.taskman.server
 
 import org.joda.time.{DateTime, Period}
@@ -33,14 +34,14 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
     val getUpdatedAt = query[MsgId, DateTime]("select updated_at from msgq where id=?")
 
     def timestampBeforeAfter(id: MsgId) = {
-      val b = getUpdatedAt.first(id)
+      val b = getUpdatedAt(id).first
       dao.reassignWorker(n ,w, id)
-      val a = getUpdatedAt.first(id)
+      val a = getUpdatedAt(id).first
       (a, b)
     }
 
     "when still assigned to self" in {
-      def insert = insertQ.first(Some(n), Some(w), 10.minutes, 3.days, 3.days)
+      def insert = insertQ(Some(n), Some(w), 10.minutes, 3.days, 3.days).first
 
       "return true" in {
         dao.reassignWorker(n ,w, insert) must beTrue
@@ -52,7 +53,7 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
     }
 
     "when still assigned to self" >> {
-      def insert = insertQ.first(Some(n), None, 10.minutes, 3.days, 3.days)
+      def insert = insertQ(Some(n), None, 10.minutes, 3.days, 3.days).first
 
       "return false" in {
         dao.reassignWorker(n, w, insert) must beFalse
@@ -77,7 +78,7 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
                updated: Period = null,
                effective: Period = null
                 ): MsgId =
-      insertQ.first(
+      insertQ(
         rng.nextInt().toShort,
         pri,
         Priority(rng.nextInt().toShort),
@@ -86,7 +87,7 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
         created,
         Option(updated) getOrElse created,
         Option(effective) getOrElse created
-      )
+      ).first
 
     def insertP(pris: Int*): Vector[MsgId] =
       rng.shuffle(
@@ -194,7 +195,7 @@ class SopImplTest extends Specification with DatabaseTest with NoTimeConversions
 
     def insert(node: Option[NodeId] = None, worker: Option[WorkerId] = None, msg: Msg = defaultMsg): MsgId = {
       val p: Period = 2.days
-      insertQ.first(MsgType.lookup(msg).id, Serialisation.serialise(msg), node, worker, p, p, p)
+      insertQ(MsgType.lookup(msg).id, Serialisation.serialise(msg), node, worker, p, p, p).first
     }
 
     def insertAssignedToOwnNode() = insert(node = Some(n))

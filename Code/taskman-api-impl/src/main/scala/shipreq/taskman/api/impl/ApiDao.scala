@@ -43,11 +43,11 @@ private[api] class ApiDao(ctx: TaskmanApi.Context, session: Session) {
     createMsg(MsgType lookup m, Serialisation serialise m, Priority of m)
 
   def createMsg(m: MsgType, taskData: Ser, p: Priority): MsgId =
-    CreateMsg.first(m.id.toShort, Some(taskData), p.value)
+    CreateMsg(m.id.toShort, Some(taskData), p.value).first
 
   def cfgPut(k: String, v: String): Unit =
-    CfgPut.execute(k, v)
+    CfgPut(k, v).execute
 
   def queryMsgStatus(id: MsgId): Option[MsgStatus] =
-    QueryMsgStatus.first(id)
+    QueryMsgStatus(id).first
 }

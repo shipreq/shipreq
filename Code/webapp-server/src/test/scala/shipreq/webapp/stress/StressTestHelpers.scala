@@ -44,6 +44,6 @@ object StressTestHelpers {
       implicit val s = db.get()
       queryFn
     }
-    def execute(param: P) = get.execute(param)(db.get)
+    def execute(param: P) = get.apply(param).execute(db.get)
   }
 }

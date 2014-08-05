@@ -26,7 +26,7 @@ class TestTaskman extends TaskmanInterface {
       c match {
         case SubmitMsg(m)       => IO{ msgsSubmitted ::= m; null.asInstanceOf[MsgId] }
         case SubmitMsgs(ms)     => IO{ msgsSubmitted :::= ms.toList; null.asInstanceOf[List[(Msg, MsgId)]] }
-        case CfgPut(k, v)       => IO()
+        case CfgPut(k, v)       => IO(())
         case QueryMsgStatus(id) => IO(None)
       }
     }

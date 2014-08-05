@@ -18,6 +18,8 @@ class Jetty(val port: Int) extends Logger {
 
   val maxIdle = 10 seconds
   val url = "http://localhost:" + port
+  val scalaVersionR = """^(\d\.\d+)\..+""".r
+  val scalaVersionR(scalaVersion) = scala.util.Properties.versionNumberString
 
   private var server: Option[Server] = None
 
@@ -44,7 +46,7 @@ class Jetty(val port: Int) extends Logger {
     // Could use sbt or a real WAR but then we can't easily/quickly run single tests from IDE
     val tmpWarDir = TestHelpers.createTempDir("usecase-test-war")
     FileUtils.copyDirectory(file("src/main/webapp"), tmpWarDir)
-    FileUtils.copyDirectory(file("target/scala-2.10/resource_managed/main"), tmpWarDir)
+    FileUtils.copyDirectory(file(s"target/scala-$scalaVersion/resource_managed/main"), tmpWarDir)
 
     val svr = new Server
     val http = new ServerConnector(svr, new HttpConnectionFactory(new HttpConfiguration))

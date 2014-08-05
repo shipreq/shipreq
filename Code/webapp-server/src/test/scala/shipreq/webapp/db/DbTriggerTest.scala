@@ -1,8 +1,8 @@
 package shipreq.webapp.db
 
 import org.scalatest.FunSpec
-import scala.slick.jdbc.{StaticQuery => Q}
-import Q.interpolation
+import shipreq.webapp.lib.Types.ProjectId
+import scala.slick.jdbc.StaticQuery.{queryNA, updateNA, update => updateQ, query => queryQ}
 import org.postgresql.util.PSQLException
 import shipreq.webapp.db.SqlHelpers._
 import shipreq.webapp.test.TestDatabaseSupport
@@ -10,33 +10,33 @@ import shipreq.webapp.test.TestDatabaseSupport
 class DbTriggerTest extends FunSpec with TestDatabaseSupport {
 
   class SampleFKs {
-    val txtFieldTypeId = sql"INSERT INTO field_key_type VALUES(3250,'txt',1) RETURNING id".as[Short].first
-    val stepFieldTypeId = sql"INSERT INTO field_key_type VALUES(3251,'stp',NULL) RETURNING id".as[Short].first
-    val txtField1 = sql"INSERT INTO field_key(type_id,data) VALUES($txtFieldTypeId,'TF1') RETURNING id".as[Long].first
-    val txtField2 = sql"INSERT INTO field_key(type_id,data) VALUES($txtFieldTypeId,'TF1') RETURNING id".as[Long].first
-    val ncId = sql"INSERT INTO field_key(type_id,data) VALUES($stepFieldTypeId,'NC') RETURNING id".as[Long].first
-    val ecId = sql"INSERT INTO field_key(type_id,data) VALUES($stepFieldTypeId,'EC') RETURNING id".as[Long].first
+    val txtFieldTypeId = queryNA[Short]("INSERT INTO field_key_type VALUES(3250,'txt',1) RETURNING id").first
+    val stepFieldTypeId = queryNA[Short]("INSERT INTO field_key_type VALUES(3251,'stp',NULL) RETURNING id").first
+    val txtField1 = queryNA[Long](s"INSERT INTO field_key(type_id,data) VALUES($txtFieldTypeId,'TF1') RETURNING id").first
+    val txtField2 = queryNA[Long](s"INSERT INTO field_key(type_id,data) VALUES($txtFieldTypeId,'TF1') RETURNING id").first
+    val ncId = queryNA[Long](s"INSERT INTO field_key(type_id,data) VALUES($stepFieldTypeId,'NC') RETURNING id").first
+    val ecId = queryNA[Long](s"INSERT INTO field_key(type_id,data) VALUES($stepFieldTypeId,'EC') RETURNING id").first
   }
 
   case class SampleUC(ucn: Short, fks: SampleFKs) {
     import fks._
     val projectId = newProjectId()
-    val ucId: Long = sql"INSERT INTO usecase(project_id,number) VALUES($projectId,$ucn) RETURNING id".as[Long].first
+    val ucId: Long = queryQ[(ProjectId,Short),Long]("INSERT INTO usecase(project_id,number) VALUES(?,?) RETURNING id").apply(projectId,ucn).first
     def insertText(fkId: Long) = SampleText(this, fkId)
     val txt1 = insertText(txtField1)
     val txt2 = insertText(txtField2)
     val ncStep1, ncStep2, ncStep3, ncStep4 = insertText(ncId)
     val ecStep1 = insertText(ecId)
-    def latestRevId = sql"SELECT latest_rev_id FROM usecase WHERE id = $ucId".as[Long].first
+    def latestRevId = queryNA[Long](s"SELECT latest_rev_id FROM usecase WHERE id = $ucId").first
     def insertRev(rev: Int, title: String): Long =
-      sql"INSERT INTO usecase_rev(ident_id,rev,title) VALUES($ucId,$rev,$title) RETURNING id".as[Long].first
+      queryQ[(Long,Int,String), Long]("INSERT INTO usecase_rev(ident_id,rev,title) VALUES(?,?,?) RETURNING id").apply(ucId,rev,title).first
   }
 
   case class SampleText(uc: SampleUC, fkId: Long) {
     def ucId = uc.ucId
-    val id = sql"INSERT INTO text(uc_id,fk_id) VALUES($ucId,$fkId) RETURNING id".as[Long].first
+    val id = queryNA[Long](s"INSERT INTO text(uc_id,fk_id) VALUES($ucId,$fkId) RETURNING id").first
     def insertRev(rev: Int, text: String): Long =
-      sql"INSERT INTO text_rev(ident_id,rev,text) VALUES($id,$rev,$text) RETURNING id".as[Long].first
+      queryQ[(Long,Int,String), Long]("INSERT INTO text_rev(ident_id,rev,text) VALUES(?,?,?) RETURNING id").apply(id,rev,text).first
   }
 
   it("Only 1 value per-UC per-text-field allowed") {
@@ -70,37 +70,37 @@ class DbTriggerTest extends FunSpec with TestDatabaseSupport {
     smp2.latestRevId should be(revB1)
 
     // UPDATE rev
-    sqlu"UPDATE usecase_rev set rev=rev+5000 WHERE ident_id = ${smp.ucId} AND id = $rev2".execute
+    updateNA(s"UPDATE usecase_rev set rev=rev+5000 WHERE ident_id = ${smp.ucId} AND id = $rev2").execute
     smp.latestRevId should be(rev2)
-    sqlu"UPDATE usecase_rev set rev=rev-5000 WHERE ident_id = ${smp.ucId} AND id = $rev2".execute
+    updateNA(s"UPDATE usecase_rev set rev=rev-5000 WHERE ident_id = ${smp.ucId} AND id = $rev2").execute
     smp.latestRevId should be(rev3)
 
     // UPDATE ident_id
-    sqlu"UPDATE usecase_rev set ident_id = ${smp2.ucId} WHERE ident_id = ${smp.ucId} AND id = $rev3".execute
+    updateNA(s"UPDATE usecase_rev set ident_id = ${smp2.ucId} WHERE ident_id = ${smp.ucId} AND id = $rev3").execute
     smp.latestRevId should be(rev2)
     smp2.latestRevId should be(rev3)
 
     // DELETE
-    sqlu"DELETE FROM usecase_rev where id = $rev3".execute
+    updateNA(s"DELETE FROM usecase_rev where id = $rev3").execute
     smp2.latestRevId should be(revB1)
-    sqlu"DELETE FROM usecase_rev where id = $revB1".execute
+    updateNA(s"DELETE FROM usecase_rev where id = $revB1").execute
     smp2.latestRevId should be(TMP)
 
     // UPDATE ident_id of latest rev
     val revB2 = smp2.insertRev(8, "qwe")
     smp2.latestRevId should be(revB2)
-    sqlu"UPDATE usecase_rev set ident_id = ${smp.ucId} WHERE ident_id = ${smp2.ucId} AND id = $revB2".execute
+    updateNA(s"UPDATE usecase_rev set ident_id = ${smp.ucId} WHERE ident_id = ${smp2.ucId} AND id = $revB2").execute
     smp2.latestRevId should be(TMP)
   }
 
   def linkText(ucRevId: Long, txtRevId: Long) =
-    sqlu"INSERT INTO uc_field(uc_rev_id,text_rev_id) VALUES($ucRevId, $txtRevId)".execute
+    updateNA(s"INSERT INTO uc_field(uc_rev_id,text_rev_id) VALUES($ucRevId, $txtRevId)").execute
 
   def linkStep(ucRevId: Long, index: Int, txtRevId: Long) =
-    sqlu"INSERT INTO uc_field VALUES($ucRevId, ${s"R.$index.$txtRevId"}, NULL, $index, $txtRevId)".execute
+    updateNA(s"""INSERT INTO uc_field VALUES($ucRevId, 'R.$index.$txtRevId', NULL, $index, $txtRevId)""").execute
 
   def linkStep(ucRevId: Long, index: Int, txtRevId: Long, parent: Long) =
-    sqlu"INSERT INTO uc_field VALUES($ucRevId, ${s"$parent.$index.$txtRevId"}, $parent, $index, $txtRevId)".execute
+    updateNA(s"""INSERT INTO uc_field VALUES($ucRevId, '$parent.$index.$txtRevId', $parent, $index, $txtRevId)""").execute
 
   describe(Tables.UcField.name) {
     class Data(fk: SampleFKs) {
@@ -150,7 +150,7 @@ class DbTriggerTest extends FunSpec with TestDatabaseSupport {
   }
 
   describe(Tables.ShareViewLog.name) {
-    def shareViewCount(shareId: Long): Long = sql"SELECT view_count FROM share WHERE id = $shareId".as[Long].first
+    def shareViewCount(shareId: Long): Long = queryNA[Long](s"SELECT view_count FROM share WHERE id = $shareId").first
 
     it("should update agg view stats by trigger") {
       val a, b = newShare()
@@ -163,7 +163,7 @@ class DbTriggerTest extends FunSpec with TestDatabaseSupport {
   }
 
   describe(Tables.UsrLoginLog.name) {
-    def loginCount(userId: Long): Long = sql"SELECT login_count FROM usr WHERE id = $userId".as[Long].first
+    def loginCount(userId: Long): Long = queryNA[Long](s"SELECT login_count FROM usr WHERE id = $userId").first
 
     it("should update agg view stats by trigger") {
       val a, b = newUserId()
@@ -177,13 +177,18 @@ class DbTriggerTest extends FunSpec with TestDatabaseSupport {
 
   describe(Tables.Usrd.name) {
     def nameHistory(userId: Long) =
-      sql"select name from usrh_name where usr_id=$userId order by updated_at".as[String].list()
+      queryNA[String](s"select name from usrh_name where usr_id=$userId order by updated_at").list
+
     def insert(userId: Long, name: String, newsletter: Boolean) =
-      sqlu"insert into usrd values($userId,$name,$newsletter)".execute()
+      updateQ[(Long, String, Boolean)]("insert into usrd values(?,?,?)")
+        .apply(userId, name, newsletter).execute
+
     def update(userId: Long, name: String, newsletter: Boolean) =
-      sqlu"update usrd set name=$name, newsletter=$newsletter where usr_id=$userId".execute()
+      updateQ[(String, Boolean, Long)]("update usrd set name=?, newsletter=? where usr_id=?")
+        .apply(name, newsletter, userId).execute
+
     def read(userId: Long) =
-      sql"select name, newsletter from usrd where usr_id=$userId".as[(String,Boolean)].first()
+      queryNA[(String,Boolean)](s"select name, newsletter from usrd where usr_id=$userId").first
 
     it("should record name changes") {
       val u = newUserId()

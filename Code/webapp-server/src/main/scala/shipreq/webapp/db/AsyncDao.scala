@@ -30,5 +30,5 @@ private[db] class AsyncDao(implicit val session: Session) {
 
   // Deletion automatically cascades to shares and use cases. See FKs in child tables.
   def deleteProject(id: ProjectId): Unit =
-    DeleteProjectHard.execute(id)
+    DeleteProjectHard(id).execute
 }
