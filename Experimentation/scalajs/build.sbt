@@ -18,9 +18,9 @@ libraryDependencies ++= Seq(
    "com.github.japgolly.scalajs-react" %%% "core"          % "0.4.0"
   ,"com.github.japgolly.scalajs-react" %%% "test"          % "0.4.0" % "test"
   ,"com.github.japgolly.scalajs-react" %%% "ext-scalaz71"  % "0.4.0"
-  ,"com.github.japgolly.fork.scalaz"   %%% "scalaz-effect" % "7.1.0"
-  ,"com.github.japgolly.fork.monocle"  %%% "monocle-core"  % "0.5.0"
-  ,"com.lihaoyi" %%% "utest" % "0.1.8" % "test"
+  ,"com.github.japgolly.fork.scalaz"   %%% "scalaz-effect" % "7.1.0-2"
+  ,"com.github.japgolly.fork.monocle"  %%% "monocle-core"  % "0.5.1"
+  ,"com.lihaoyi" %%% "utest" % "0.2.3" % "test"
 )
 
 jsDependencies += "org.webjars" % "react" % "0.11.1" / "react-with-addons.js" commonJSName "React"
