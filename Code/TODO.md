@@ -75,6 +75,7 @@ Technical
 * [S.0.5=5] [ W!] When fields are loaded but no FV exists, fields should be cleared. (Will affect in-place loading.)
 * [S.1.3=4] [ WP] Textareas' blur shouldn't send a request when input doesn't change.
 * [S.3.1=4] [ WP] Change text parsing engine: parboiled2 or gll-combinators.
+* [S.2.1=3] [ WP] Replace Mathjax with KaTeX.
 * [S.0.3=3] [ W$] Secure /diag endpoints.
 * [S.2.0=2] [ W ] Webapp should use rolling appender log like Taskman
 * [S.0.2=2] [ W ] Serve robots.txt via HTTP.
