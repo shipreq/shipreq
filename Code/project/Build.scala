@@ -255,7 +255,7 @@ object ShipReq extends Build {
       class ClientJsLinks(sRoot: File, tRoot: File) {
         private val s = sRoot / "scala-2.11"
         private val t = tRoot / "src/main/webapp/assets"
-        private def sPrefix = "webapp-client-"
+        private def sPrefix = Webapp.Client.dir + "-"
         private def tName = "blah.js"
         private val devMap = Map(
           s / s"${sPrefix}fastopt.js"     -> t / tName,
@@ -277,26 +277,22 @@ object ShipReq extends Build {
             ln(s, t, log)
         })
 
-      def warSettings = (p: Project) => p.settings(
+      def warSettings = (_: Project).settings(
         // Don't allow WEB-INF/_scalate into the WAR
         excludeFilter in packageWar ~= { _ ||
           new FileFilter { def accept(f: File) = f.getPath.containsSlice("/_scalate/") }
-        }
-      )
+        })
 
-      def testSettings = (p: Project) => p.settings(
+      def testSettings = (_: Project).settings(
         // Put webapp on test classpath so templates load
-        unmanagedResourceDirectories in Test <+= baseDirectory { _ / "src/main/webapp" },
-        parallelExecution in Test := false
-      )
+        unmanagedResourceDirectories in Test += baseDirectory.value / "src/main/webapp",
+        parallelExecution in Test := false)
 
       lazy val IntegrationTest = config("it") extend Test
-      def integrationTestSettings = (p: Project) =>
-        p.configs(IntegrationTest)
-          .settings(inConfig(IntegrationTest)(Defaults.testSettings): _*)
-          .settings(
-          parallelExecution in IntegrationTest := false
-        )
+      def integrationTestSettings = (_: Project)
+        .configs(IntegrationTest)
+        .settings(inConfig(IntegrationTest)(Defaults.testSettings): _*)
+        .settings(parallelExecution in IntegrationTest := false)
 
       override def deps =
         Scalaz.core ++ Lift.webkit ++ Shiro.all ++ scalate ++ commonsLang ++
@@ -315,16 +311,15 @@ object ShipReq extends Build {
           clientJsSettings,
           warSettings,
           testSettings,
-          integrationTestSettings
-        )
+          integrationTestSettings,
+          addCommandAliases(
+            "up" -> ";container:stop ;clear ;container:start",
+            "d" -> "container:stop"))
         .settings(webSettings: _*)
-        .settings(addCommandAlias("up", ";container:stop ;clear ;container:start"): _*)
-        .settings(addCommandAlias("d", "container:stop"): _*)
         .settings(
           initialCommands += consoleCmds,
           // Ensure templates can be loaded from the console
-          fullClasspath in console in Compile += file("src/main/webapp")
-        )
+          fullClasspath in console in Compile += file("src/main/webapp"))
         .dependsOn(baseDb, taskmanApi, webappShared)
         .dependsOn(baseUtil, taskmanApiLogic, taskmanApiImpl) // Stupid IDEA auto-import needs this
       }

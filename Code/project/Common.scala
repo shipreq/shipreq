@@ -68,27 +68,7 @@ object Common {
   }
 
   lazy val settings = (p: Project) => p
-    .settings((
-        net.virtualvoid.sbt.graph.Plugin.graphSettings ++ // Dependency graph
-        addCommandAlias("/",   "project root") ++
-        addCommandAlias("B",   "project base") ++
-        addCommandAlias("T",   "project taskman") ++
-        addCommandAlias("W",   "project webapp") ++
-        addCommandAlias("TAI", "project taskman-api-impl") ++
-        addCommandAlias("TAL", "project taskman-api-logic") ++
-        addCommandAlias("TSI", "project taskman-server-impl") ++
-        addCommandAlias("TSL", "project taskman-server-logic") ++
-        addCommandAlias("WW",  "project webapp-shared") ++
-        addCommandAlias("WC",  "project webapp-client") ++
-        addCommandAlias("WS",  "project webapp-server") ++
-        addCommandAlias("cc",   ";clear;compile") ++
-        addCommandAlias("ctc",  ";clear;test:compile") ++
-        addCommandAlias("ct",   ";clear;test") ++
-        addCommandAlias("cq",   ";clear;testQuick") ++
-        addCommandAlias("ccc",  ";clear;clean;compile") ++
-        addCommandAlias("cctc", ";clear;clean;test:compile") ++
-        addCommandAlias("cct",  ";clear;clean;test")
-      ): _*)
+    .settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*) // Dependency graph
     .settings(
       clearScreenTask := { println("\033[2J\033[;H") },
       organization := "com.beardedlogic.shipreq",
@@ -103,7 +83,28 @@ object Common {
       scalacOptions in Test ++= scalacTestFlags,
       testOptions in Test += Tests.Cleanup(shutdownTestDb(_))
     )
-    .configure(debugAndReleaseCompilerFlags)
+    .configure(
+      debugAndReleaseCompilerFlags,
+      addCommandAliases(
+        "/"    -> "project root",
+        "B"    -> "project base",
+        "T"    -> "project taskman",
+        "W"    -> "project webapp",
+        "TAI"  -> "project taskman-api-impl",
+        "TAL"  -> "project taskman-api-logic",
+        "TSI"  -> "project taskman-server-impl",
+        "TSL"  -> "project taskman-server-logic",
+        "WW"   -> "project webapp-shared",
+        "WC"   -> "project webapp-client",
+        "WS"   -> "project webapp-server",
+        "cc"   -> ";clear;compile",
+        "ctc"  -> ";clear;test:compile",
+        "ct"   -> ";clear;test",
+        "cq"   -> ";clear;testQuick",
+        "ccc"  -> ";clear;clean;compile",
+        "cctc" -> ";clear;clean;test:compile",
+        "cct"  -> ";clear;clean;test")
+    )
 
   def useHiddenTargetDir: Project => Project =
     _.settings(target <<= baseDirectory(_ / ".target"))
@@ -178,6 +179,11 @@ object Common {
       log.info(s"Creating hard link $tgt -> $src")
       Files.deleteIfExists(tgt)
       Files.createLink(tgt, src)
+    }
+
+    def addCommandAliases(m: (String, String)*) = {
+      val s = m.map(p => addCommandAlias(p._1, p._2)).reduce(_ ++ _)
+      (_: Project).settings(s: _*)
     }
   }
 }
