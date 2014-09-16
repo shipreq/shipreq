@@ -107,8 +107,8 @@ object Common {
   def useHiddenTargetDir: Project => Project =
     _.settings(target <<= baseDirectory(_ / ".target"))
 
-  def scalaAndScalaJS: Project => Project =
-    _.settings(scalaJSSettings: _*)
+  def scalaAndScalaJsShared: Project => Project =
+    identity
 
   trait ExportsTestLib {
     lazy val TestLib = config("test-lib") extend Compile describedAs "Reusable test helpers"

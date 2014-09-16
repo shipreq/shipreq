@@ -74,7 +74,7 @@ object ShipReq extends Build {
         providedScope(ScalaJS.Scalaz.effect)
 
       override def project = typicalProject
-        .configure(Common.scalaAndScalaJS)
+        .configure(Common.scalaAndScalaJsShared)
     }
 
     // ----------------------------------------------------
@@ -222,7 +222,7 @@ object ShipReq extends Build {
 //        providedScope(ScalaJS.Scalaz.effect)
 
       override def project = typicalProject
-        .configure(Common.scalaAndScalaJS)
+        .configure(Common.scalaAndScalaJsShared)
         .dependsOn(baseUtilSjs)
     }
 
