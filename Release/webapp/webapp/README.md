@@ -2,28 +2,28 @@ Usage
 =====
 
 * Run in foreground
-    ./start
+    bin/start
 
 * Start daemon
-    ./jetty start
+    bin/jetty start
 
 * Stop daemon
-    ./jetty stop
+    bin/jetty stop
 
 
 Config
 ======
 
 * Inspection
-    ./start --list-config
-    ./start --list-modules
-    ./jetty check
+    bin/start --list-config
+    bin/start --list-modules
+    bin/jetty check
 
 * Jetty config:
     * start.ini
     * start.d/*.ini
     * etc/jetty.conf [daemon-mode only]
-    * XMLs displayed in `./jetty --list-config`
+    * XMLs displayed in `bin/jetty --list-config`
 
 * App config:
     * resources/*
