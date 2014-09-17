@@ -37,6 +37,8 @@ object AppSiteMap {
     >> UseEitherTemplate(Oshiro.isAuthenticated, "loggedin/index")(landingPageTemplate)
   )
 
+  val WIP = pageWithStaticUrl("wip", "WIP")(_ / "wip") // TODO Remove
+
   val Land_BusinessCard = pageWithStaticUrl("land-bc", "")(_ / "bc" >> UseTemplate(landingPageTemplate))
 
   val About = pageWithStaticUrl("about", "About")(_ / "about")
@@ -132,6 +134,7 @@ object AppSiteMap {
   // -------------------------------------------------------------------------------------------------------------------
 
   val AllProdPages: List[ConvertableToMenu] = List(
+WIP,
     Home, About, TermsOfService, PrivacyPolicy, Land_BusinessCard
     , Login, Logout, Register1, Register2, ResetPassword1, ResetPassword2
     , Project, UseCaseEditor, ReadOwnUcs, ShareCreate, ShareEdit, ShareView

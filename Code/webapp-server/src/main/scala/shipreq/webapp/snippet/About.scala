@@ -44,6 +44,26 @@ class About {
     val MIT = Licence("MIT Licence", "http://opensource.org/licenses/MIT")
 
     val alist = List(
+      Attribution("Scala.js",
+        "http://www.scala-js.org/",
+        Some(<xml:group>Copyright (c) 2013-2014 EPFL</xml:group>),
+        Set(BSD_3))
+      ,
+      Attribution("React",
+        "http://facebook.github.io/react/",
+        Some(Text("Copyright 2013-2014 Facebook, Inc.")),
+        Set(Apache2))
+      ,
+      Attribution("scalajs-react",
+        "https://github.com/japgolly/scalajs-react",
+        Some(Text("Copyright © 2014 David Barri")),
+        Set(Apache2))
+      ,
+      Attribution("Scalatags",
+        "https://github.com/lihaoyi/scalatags",
+        Some(Text("Copyright (c) 2013, Li Haoyi")),
+        Set(MIT))
+      ,
       Attribution("jQuery",
         "http://jquery.com/",
         Some(Text("Copyright 2013 jQuery Foundation and other contributors.")),
@@ -68,96 +88,96 @@ class About {
         "http://zeroclipboard.org/",
         Some(Text("Copyright (c) 2013 Jon Rohan, James M. Greene.")),
         Set(MIT))
-    ,
-    Attribution("Mousetrap",
-      "http://craig.is/killing/mice",
-      None,
-      Set.empty)
-    ,
-    Attribution("GraphViz",
-      "http://www.graphviz.org/",
-      None,
-      Set(EPLv1))
-    ,
-    Attribution("Viz.js",
-      "https://github.com/mdaines/viz.js/",
-      Some(Text("Copyright (c) 2012 Michael Daines.")),
-      Set(MIT))
-    ,
-    Attribution("Twitter Bootstrap",
-      "http://getbootstrap.com/",
-      Some(Text("Copyright 2013 Twitter, Inc.")),
-      Set(Apache2))
-    ,
-    Attribution("Scala",
-      "http://www.scala-lang.org/",
-      Some(<xml:group>Copyright (c) 2002-2013 EPFL, Copyright (c) 2011-2013 Typesafe, Inc.</xml:group>),
-      Set(BSD_3))
-    ,
-    Attribution("Lift",
-      "http://liftweb.net/",
-      Some(Text("Copyright © 2010-2013 WorldWide Conferencing, LLC.")),
-      Set(Apache2))
-    ,
-    Attribution("Scalaz",
-      "https://github.com/scalaz/scalaz",
-      None,
-      Set.empty)
-    ,
-    Attribution("Logback",
-      "http://logback.qos.ch/",
-      Some(Text("Copyright (C) 1999-2012, QOS.ch.All rights reserved.")),
-      Set(EPLv1, LGPLv21))
-    ,
-    Attribution("Slick",
-      "http://slick.typesafe.com/",
-      Some(<xml:group>Copyright © 2011-2012 <a href="http://typesafe.com">Typesafe, Inc.</a></xml:group>),
-      Set(BSD_2))
-    ,
-    Attribution("FlyWay",
-      "http://flywaydb.org/",
-      Some(<xml:group>© 2010-2013 <a href="http://axelfontaine.com">Axel Fontaine</a> and the <a href="http://flywaydb.org/contribute/hallOfFame.html">many contributors</a>.</xml:group>),
-      Set(Apache2))
-    ,
-    Attribution("Shiro",
-      "http://shiro.apache.org/",
-      Some(Text("Copyright © 2008-2013 The Apache Software Foundation.")),
-      Set(Apache2))
-    ,
-    Attribution("SLF4J",
-      "http://www.slf4j.org/",
-      Some(Text("Copyright (c) 2004-2013 QOS.ch.")),
-      Set(MIT))
-    ,
-    Attribution("BoneCP",
-      "http://jolbox.com/",
-      Some(Text("Copyright 2010 Wallace Wadge.")),
-      Set(Apache2))
-    ,
-    Attribution("Guava",
-      "https://code.google.com/p/guava-libraries/",
-      None,
-      Set(Apache2))
-    ,
-    Attribution("Scalate",
-      "http://scalate.fusesource.org/",
-      None,
-      Set(Apache2))
-    ,
-    Attribution("Apache Commons",
-      "http://commons.apache.org/proper/commons-lang/",
-      Some(Text("Copyright 2001-2013 The Apache Software Foundation.")),
-      Set(Apache2))
-    ,
-    Attribution("PostgreSQL JDBC driver",
-      "http://jdbc.postgresql.org/",
-      Some(Text("Copyright (c) 1997-2011, PostgreSQL Global Development Group.")),
-      Set(BSD_3))
-    ,
-    Attribution("DejaVu fonts",
-      "http://dejavu-fonts.org/",
-      Some(<xml:group>Copyright © 2003 by Bitstream, Inc. All Rights Reserved. Bitstream Vera is a trademark of Bitstream, Inc. Glyphs imported from <a href="http://dejavu-fonts.org/wiki/Bitstream_Vera_derivatives#Arev_Fonts">Arev fonts</a> are copyright © 2006 by Tavmjong Bah. All Rights Reserved.</xml:group>),
-      Set.empty)
+      ,
+      Attribution("Mousetrap",
+        "http://craig.is/killing/mice",
+        None,
+        Set.empty)
+      ,
+      Attribution("GraphViz",
+        "http://www.graphviz.org/",
+        None,
+        Set(EPLv1))
+      ,
+      Attribution("Viz.js",
+        "https://github.com/mdaines/viz.js/",
+        Some(Text("Copyright (c) 2012 Michael Daines.")),
+        Set(MIT))
+      ,
+      Attribution("Twitter Bootstrap",
+        "http://getbootstrap.com/",
+        Some(Text("Copyright 2013 Twitter, Inc.")),
+        Set(Apache2))
+      ,
+      Attribution("Scala",
+        "http://www.scala-lang.org/",
+        Some(<xml:group>Copyright (c) 2002-2014 EPFL, Copyright (c) 2011-2014 Typesafe, Inc.</xml:group>),
+        Set(BSD_3))
+      ,
+      Attribution("Lift",
+        "http://liftweb.net/",
+        Some(Text("Copyright © 2010-2014 WorldWide Conferencing, LLC.")),
+        Set(Apache2))
+      ,
+      Attribution("Scalaz",
+        "https://github.com/scalaz/scalaz",
+        None,
+        Set.empty)
+      ,
+      Attribution("Logback",
+        "http://logback.qos.ch/",
+        Some(Text("Copyright (C) 1999-2012, QOS.ch. All rights reserved.")),
+        Set(EPLv1, LGPLv21))
+      ,
+      Attribution("Slick",
+        "http://slick.typesafe.com/",
+        Some(<xml:group>Copyright © 2011-2012 <a href="http://typesafe.com">Typesafe, Inc.</a></xml:group>),
+        Set(BSD_2))
+      ,
+      Attribution("FlyWay",
+        "http://flywaydb.org/",
+        Some(<xml:group>© 2010-2014 <a href="http://axelfontaine.com">Axel Fontaine</a> and the <a href="http://flywaydb.org/contribute/hallOfFame.html">many contributors</a>.</xml:group>),
+        Set(Apache2))
+      ,
+      Attribution("Shiro",
+        "http://shiro.apache.org/",
+        Some(Text("Copyright © 2008-2013 The Apache Software Foundation.")),
+        Set(Apache2))
+      ,
+      Attribution("SLF4J",
+        "http://www.slf4j.org/",
+        Some(Text("Copyright (c) 2004-2013 QOS.ch.")),
+        Set(MIT))
+      ,
+      Attribution("BoneCP",
+        "http://jolbox.com/",
+        Some(Text("Copyright 2010 Wallace Wadge.")),
+        Set(Apache2))
+      ,
+      Attribution("Guava",
+        "https://code.google.com/p/guava-libraries/",
+        None,
+        Set(Apache2))
+      ,
+      Attribution("Scalate",
+        "http://scalate.fusesource.org/",
+        None,
+        Set(Apache2))
+      ,
+      Attribution("Apache Commons",
+        "http://commons.apache.org/proper/commons-lang/",
+        Some(Text("Copyright 2001-2013 The Apache Software Foundation.")),
+        Set(Apache2))
+      ,
+      Attribution("PostgreSQL JDBC driver",
+        "http://jdbc.postgresql.org/",
+        Some(Text("Copyright (c) 1997-2011, PostgreSQL Global Development Group.")),
+        Set(BSD_3))
+      ,
+      Attribution("DejaVu fonts",
+        "http://dejavu-fonts.org/",
+        Some(<xml:group>Copyright © 2003 by Bitstream, Inc. All Rights Reserved. Bitstream Vera is a trademark of Bitstream, Inc. Glyphs imported from <a href="http://dejavu-fonts.org/wiki/Bitstream_Vera_derivatives#Arev_Fonts">Arev fonts</a> are copyright © 2006 by Tavmjong Bah. All Rights Reserved.</xml:group>),
+        Set.empty)
     )
 
     val renderedRows = alist.sortBy(_.name.toLowerCase).map(_.render)

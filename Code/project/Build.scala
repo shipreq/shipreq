@@ -257,11 +257,13 @@ object ShipReq extends Build {
         private val t = tRoot / "src/main/webapp/assets"
         private def sPrefix = Webapp.Client.dir + "-"
         private def tName = "blah.js"
-        private val devMap = Map(
-          s / s"${sPrefix}fastopt.js"     -> t / tName,
-          s / s"${sPrefix}fastopt.js.map" -> t / s"$tName.map")
+        private val devMap = {
+          val j = s"${sPrefix}fastopt.js"
+          val m = j + ".map"
+          Map(s/j -> t/tName, s/m -> t/m)
+        }
         private val releaseMap =
-          Map(s / s"${sPrefix}opt.js" -> t / tName)
+          Map(s/s"${sPrefix}opt.js" -> t/tName)
         def links =
           if (releaseMode) releaseMap else devMap
         def cleanable =

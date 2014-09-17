@@ -12,6 +12,7 @@
     "jquery.livequery": "*",
     "mousetrap": "*",
     "jquery.ui": "~1.10",
+    "react": "~0.11",
     "qunit": "*",
     "syn": "*",
     "MathJax": "*"
