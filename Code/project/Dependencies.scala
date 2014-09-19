@@ -39,6 +39,7 @@ object Deps {
     }
     val monocle :MS = jsGA("com.github.japgolly.fork.monocle", "monocle-core") % "0.5.1"
     val upickle :MS = jsGA("com.lihaoyi", "upickle") % upickleVersion
+    val utest   :MS = jsGA("com.lihaoyi", "utest") % "0.2.3"
   }
 
   object Scala extends Group("2.11.2", "org.scala-lang") {

@@ -234,10 +234,11 @@ object ShipReq extends Build {
 
       override def deps =
         ScalaJS.Scalaz.effect ++ ScalaJS.React.core ++ ScalaJS.monocle ++ ScalaJS.upickle ++
-        testScope(ScalaJS.React.test)
+        testScope(ScalaJS.React.test ++ ScalaJS.utest)
 
       override def project = typicalProject
         .settings(scalaJSSettings: _*)
+        .settings(utest.jsrunner.Plugin.utestJsSettings: _*)
         .settings(
           // Recompile shared source rather than depending directly
           // https://github.com/scala-js/scala-js/issues/1067

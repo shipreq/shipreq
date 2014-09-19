@@ -77,6 +77,7 @@ object Common {
       isSnapshot := snapshotSuffix.nonEmpty,
       shellPrompt in ThisBuild := { (s: State) => Project.extract(s).currentRef.project + "> " },
       incOptions := incOptions.value.withNameHashing(true),
+      updateOptions := updateOptions.value.withConsolidatedResolution(true),
       javacOptions ++= javacFlags,
       scalaVersion := Deps.Scala.version,
       scalacOptions ++= scalacFlags,
