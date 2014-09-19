@@ -14,7 +14,11 @@ import japgolly.scalajs.react.ScalazReact._
 import utily.EditorStuff._
 import utily.FormStuff._
 import utily.SpecN._
-import utily.Lib._
+import shipreq.webapp.client.ui.Implicits._
+import shipreq.webapp.client.ui.Util._
+import shipreq.webapp.client.ui.{ErrorMsg, InputEvent, Editor}
+import shipreq.webapp.client.ui.Editors._
+
 import domainy.Data._
 import domainy.FakeDao
 

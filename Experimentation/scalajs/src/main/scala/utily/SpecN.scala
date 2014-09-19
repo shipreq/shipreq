@@ -1,7 +1,6 @@
 package utily
 
 import japgolly.scalajs.react._
-import org.scalajs.dom
 import scalaz.effect.IO
 import scalaz.{Foldable, Bind, Equal}
 import scalaz.syntax.bind._
@@ -12,7 +11,11 @@ import monocle.std.tuple2._
 import monocle.std.tuple3._
 import FormStuff._
 import EditorStuff._
+import shipreq.webapp.client.ui.Implicits._
+import shipreq.webapp.client.ui.Util._
+import shipreq.webapp.client.ui.{ErrorMsg, InputEvent, Editor}
 
+// TODO use TupleExt.mapn
 object SpecN {
 
   /**

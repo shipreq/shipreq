@@ -28,7 +28,9 @@ import monocle.function.Field3.third
 import monocle.std.tuple2._
 import monocle.std.tuple3._
 
-import Lib._
+import shipreq.webapp.client.ui.Implicits._
+import shipreq.webapp.client.ui.Util._
+import shipreq.webapp.client.ui.{ErrorMsg, InputEvent, Editor}
 import EditorStuff._
 
 // TODO add drag/drop ordering to table

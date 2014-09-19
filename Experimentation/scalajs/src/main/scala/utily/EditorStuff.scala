@@ -11,11 +11,14 @@ import scalaz.syntax.bind._
 import scalaz.syntax.foldable._
 import monocle._
 
-import Lib._
+import shipreq.webapp.client.ui.Implicits._
+import shipreq.webapp.client.ui.Util._
+import shipreq.webapp.client.ui.{ErrorMsg, InputEvent, Editor}
 import japgolly.scalajs.react._
 import vdom.ReactVDom._
 import all._
 import ScalazReact._
+
 
 /**
  * S = State. Where the subject data lives.
@@ -62,7 +65,7 @@ object EditorStuff {
       val s = T.state
       iL.get(s).map(i => {
         val e = vs(s).correctAndValidate(i).swap.toOption
-        editor(i, e, change, cancelChange, editEnd, T)
+        editor.render(i, e, change, cancelChange, editEnd, T)
       })
     }
   }
@@ -95,8 +98,6 @@ object EditorStuff {
 
   // ===================================================================================================================
   // Validation
-
-  type ErrorMsg = String
 
   // TODO not really a validator, data input/recv pipeline/receiver/valve/protocol/rules/gateway/enforcer
   trait Validator[I, C, O] {
@@ -180,75 +181,4 @@ object EditorStuff {
     override def validate = \/-(_)
   }
 
-  // ===================================================================================================================
-  // Editors
-
-  trait Editor[D, V] {
-    def apply[S](data: D
-                 , error: Option[ErrorMsg]
-                 , onChange: D => ReactST[IO, S, Unit]
-                 , onCancel: IO[Unit] => ReactST[IO, S, Unit]
-                 , onEditEnd: ReactST[IO, S, Unit]
-                 , T: ComponentStateFocus[S]
-                  ): V
-  }
-
-
-  class TextEditor(node: Tag) extends Editor[String, Modifier] {
-    override def apply[S](data: String
-                          , error: Option[ErrorMsg]
-                          , onChange: String => ReactST[IO, S, Unit]
-                          , onCancel: IO[Unit] => ReactST[IO, S, Unit]
-                          , onEditEnd: ReactST[IO, S, Unit]
-                          , T: ComponentStateFocus[S]
-                           ) = {
-
-      val cancelOnEscape: ReactKeyboardEventH => ReactST[IO, S, Unit] =
-        e => e.key match {
-          case "Escape" => // TODO use KeyValue
-            val t = e.target
-            ReactS.retM[IO, S, Unit](e.preventDefaultIO >> e.stopPropagationIO) >> onCancel(IO(t.blur()))
-          case _ =>
-            ReactS.retT[IO,S,Unit](())
-        }
-
-      div(
-        node(
-          value := data
-          , error.isDefined && (cls := "error")
-          , onchange  ~~> T._runState(textChangeRecvX(onChange))
-          , onkeydown ~~> T._runState(cancelOnEscape)
-          , onblur    ~~> T.runState(onEditEnd)
-        )
-        , error.fold(Nop)(e => div(cls := "errorMsg")(e))
-      )
-    }
-  }
-
-  object CheckboxEditor extends Editor[Boolean, Modifier] {
-    override def apply[S](data: Boolean
-                          , error: Option[ErrorMsg]
-                          , onChange: Boolean => ReactST[IO, S, Unit]
-                          , onCancel: IO[Unit] => ReactST[IO, S, Unit]
-                          , onEditEnd: ReactST[IO, S, Unit]
-                          , T: ComponentStateFocus[S]
-                           ) = {
-      def ch(e: InputEvent) = {
-        val v = e.target.checked
-        onChange(v) >> onEditEnd
-      }
-
-      div(
-        checkbox(data)(
-          onchange ~~> T._runState(ch),
-          error.isDefined && (cls := "error")
-        ),
-        error.fold(Nop)(e => div(cls := "errorMsg")(e))
-      )
-    }
-  }
-
-
-  val TextInputEditor = new TextEditor(input)
-  val TextareaEditor = new TextEditor(textarea)
 }
