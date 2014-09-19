@@ -116,9 +116,9 @@ object Phase2 extends js.JSApp {
 
     type P = CustomReqType
     val PreSpec = SpecBuilder[P](
-        SpecAttr[P](_.mnemonic)(MnemonicValidator)(TextInputEditor),
-        SpecAttr[P](_.name)(ReqNameValidator)(TextInputEditor),
-        SpecAttr[P](_.implicationRequired)(NopValidator)(CheckboxEditor)
+        SpecAttr[P](_.mnemonic           )(MnemonicValidator)(TextInputEditor),
+        SpecAttr[P](_.name               )(ReqNameValidator )(TextInputEditor),
+        SpecAttr[P](_.implicationRequired)(NopValidator     )(CheckboxEditor)
       ).mapO(CustomReqTypeNV.fromTuple)
       .rowId[CustomReqTypeId]
 

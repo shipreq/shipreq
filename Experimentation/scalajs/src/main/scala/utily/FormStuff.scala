@@ -119,17 +119,16 @@ object FormStuff {
 */
   /**
    * Single field attribute: types & validation logic.
-   */
-  case class SpecSplice[P, I, C, O](p2c: P => C, v: Validator[I, C, O]) {
-    def initial: P => I = v.c2i compose p2c
-    //    def savable(i: I) = v.correctAndValidate(i).toOption
-    def edit[V](e: Editor[I, V]) = SpecSpliceE(this, e)
-  }
-
-  /**
    * Single field attribute: +renderToView.
    */
-  case class SpecSpliceE[P, V, I, C, O](s: SpecSplice[P, I, C, O], editor: Editor[I, V])
+  class AttrSpec[P, V, I, C, O](val p2c: P => C, val v: Validator[I, C, O], val editor: Editor[I, V]) {
+    def initial: P => I = v.c2i compose p2c
+    //    def savable(i: I) = v.correctAndValidate(i).toOption
+    @inline final def toW[S,W](vw: Option[ValidateFnW[S, W, O]]) = new AttrSpecW(this, vw)
+  }
+
+  class AttrSpecW[S, W, P, V, I, C, O](s: AttrSpec[P, V, I, C, O], val vw: Option[ValidateFnW[S, W, O]])
+      extends AttrSpec(s.p2c, s.v, s.editor)
 
   class TableSpecB[DataId, O, P, I, V, VV](PtoI: P => I) {
     private type Unsaved = Option[I]
@@ -152,11 +151,9 @@ object FormStuff {
   }
 
   def SpecAttr[P] = new {
-    import SpecN._
-
     def apply[C](p2c: P => C) = new {
       def apply[I, O](v: Validator[I, C, O])(e: Editor[I, ReactVDom.Modifier]) =
-        SpecSplice(p2c, v).edit(e)
+        new AttrSpec(p2c, v, e)
     }
   }
 

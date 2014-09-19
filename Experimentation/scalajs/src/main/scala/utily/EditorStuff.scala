@@ -17,9 +17,13 @@ import vdom.ReactVDom._
 import all._
 import ScalazReact._
 
+/**
+ * S = State. Where the subject data lives.
+ * W = Row ID.
+ */
 object EditorStuff {
 
-  class FormAttrShit[S, I : Equal, C, O, M[_] : Bind : Foldable](
+  class WiredEditor[S, I : Equal, C, O, M[_] : Bind : Foldable](
       vs: S => Validator[I, C, O] // Conflation. S not required for i↔c
       , s2mc: S => M[C]
       , iL: WierdLens[M, S, S, I]
@@ -94,6 +98,7 @@ object EditorStuff {
 
   type ErrorMsg = String
 
+  // TODO not really a validator, data input/recv pipeline/receiver/valve/protocol/rules/gateway/enforcer
   trait Validator[I, C, O] {
     def liveCorrect: I => I
     def correct: I => C
@@ -102,24 +107,19 @@ object EditorStuff {
     final def correctAndValidate = validate compose correct
   }
 
-  type ValidatorX2[S, W, I, C, O] = (S, W) => Validator[I, C, O]
+  type ValidatorW[S, W, I, C, O] = (S, W) => Validator[I, C, O]
 
-  class CtxValidation[S, W, A](val f: (S, W, A) => Option[ErrorMsg]) extends AbstractFunction3[S, W, A, Option[ErrorMsg]] {
-    override def apply(s: S, w: W, a: A) = f(s, w, a)
+  type ValidateFnW[S, W, O] = (S, W, O) => Option[ErrorMsg]
 
-    def contramap[T](g: T => S) =
-      new CtxValidation[T, W, A]((t, w, a) => f(g(t), w, a))
-  }
-
-  def ValidatorX2[S, W, I, C, O](norm: Validator[I, C, O], f: CtxValidation[S, W, O], w: W): S => Validator[I, C, O] =
+  def rowValidator[S, W, I, C, O](norm: Validator[I, C, O], f: ValidateFnW[S, W, O], w: W): S => Validator[I, C, O] =
     s => new Validator[I, C, O] {
       def liveCorrect = norm.liveCorrect
       def correct = norm.correct
+      def c2i = norm.c2i
       def validate = c => {
         val orig = norm.validate(c)
         orig.flatMap(o => f(s, w, o).fold(orig)(-\/.apply))
       }
-      def c2i = norm.c2i
     }
 
   object KeyValidator extends Validator[String, String, String] {
@@ -154,19 +154,21 @@ object EditorStuff {
     override def c2i = identity
   }
 
-  def NopValidator[I] : Validator[I,I,I] = new Validator[I,I,I] {
+  class NopValidator[I] extends Validator[I,I,I] {
     override def liveCorrect = identity
     override def correct = identity
     override def validate = \/-.apply
     override def c2i = identity
   }
+  def NopValidator[I] = new NopValidator[I]
 
-  def uniqueness[S, W, A, I](extract: (S,W) => Stream[A], cmp: (A, I) => Boolean, errorMsg: ErrorMsg = "Already in use. Duplicate.") =
-    new CtxValidation[S, W, I]((s, w, i) => {
-      val dupFound = extract(s, w).exists(cmp(_,i))
+  // TODO Delete this? If keeping add a version where A=B and Equal is used
+  def uniqueness[S, W, A, B](extract: (S,W) => Stream[A], cmp: (A, B) => Boolean, errorMsg: ErrorMsg = "Already in use. Duplicate."): ValidateFnW[S,W,B] =
+    (s, w, b) => {
+      val dupFound = extract(s, w).exists(cmp(_,b))
       //.foldLeft(0)((j, a) => if (j <= 1 && cmp(a,i)) j + 1 else j) // TODO effeciency, too eager
       if (dupFound) Some(errorMsg) else None
-    })
+    }
 
   object DescValidator extends Validator[String, Option[String], Option[String]] {
     override def liveCorrect = identity
