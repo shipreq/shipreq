@@ -27,7 +27,7 @@ object Test extends TestSuite {
 
 //    case class Person(key: String, desc: Option[String], age: Int)
 //    'a {
-//      val nameL = WierdLens[Id, Person, Person, String](_.name, (a,b) => a.copy(name = b))
+//      val nameL = WeirdLens[Id, Person, Person, String](_.name, (a,b) => a.copy(name = b))
 //      def saveIO(p: Person) = IO{println("CALLED!"); p.copy(age = 100)}
 //
 //      val f = new FormAttrShit[Person, String, String, String, Id](_ => KeyValidator, _.name, nameL, saveIO)

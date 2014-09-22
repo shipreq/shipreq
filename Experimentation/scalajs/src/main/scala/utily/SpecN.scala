@@ -12,8 +12,8 @@ import monocle.std.tuple3._
 import FormStuff._
 import EditorStuff._
 import shipreq.webapp.client.ui.Implicits._
+import shipreq.webapp.client.ui._
 import shipreq.webapp.client.ui.Util._
-import shipreq.webapp.client.ui.{ErrorMsg, InputEvent, Editor}
 
 // TODO use TupleExt.mapn
 object SpecN {
@@ -38,13 +38,13 @@ object SpecN {
 
     def initial(p: P): II = (s1 initial p, s2 initial p)
 
-    private def fieldRenderers[M[_] : Bind : Foldable](s2mp: S => M[P],
+    private def fieldRenderers[M[_] : Bind : Optional2](s2mp: S => M[P],
                                                        w: W,
                                                        saveG: (S, G) => IO[S],
-                                                       eL: WierdLens[M, S, S, II]) = {
+                                                       eL: WeirdLens[M, S, S, II]) = {
 
-      val v1 = s1.vw.fold[S => Validator[I1,C1,O1]]( _ => s1.v )( c=> rowValidator(s1.v, c, w) )
-      val v2 = s2.vw.fold[S => Validator[I2,C2,O2]]( _ => s2.v )( c=> rowValidator(s2.v, c, w) )
+      val v1 = s1.vw.fold[S => Validator[I1,C1,O1]]( _ => s1.v )( c=> Validator.forRow(s1.v, c, w) )
+      val v2 = s2.vw.fold[S => Validator[I2,C2,O2]]( _ => s2.v )( c=> Validator.forRow(s2.v, c, w) )
 
       //def savable1(i: I) = v.correctAndValidate(i).toOption
       def savable(s: S, e: II): Option[OO] = for {
@@ -55,17 +55,17 @@ object SpecN {
       // TODO This isn't able to traverse other rows, or access them by W
       // Cannot save rows that were invalid due to this one, that have just become valid.
       val sf: S => IO[S] = s =>
-        foldableToOption(eL.get(s)).flatMap(savable(s,_)).fold(IO(s))(oo => saveG(s, oo2g(oo)))
+        eL.get(s).toOption.flatMap(savable(s,_)).fold(IO(s))(oo => saveG(s, oo2g(oo)))
 
       (
-        new WiredEditor[S, I1, C1, O1, M](v1, s2mp.andThen(_ map s1.p2c), eL map first[II, I1], sf),
-        new WiredEditor[S, I2, C2, O2, M](v2, s2mp.andThen(_ map s2.p2c), eL map second[II, I2], sf)
+        new SmartEditor[S, I1, C1, O1, M](v1, s2mp.andThen(_ map s1.p2c), eL map first[II, I1], sf),
+        new SmartEditor[S, I2, C2, O2, M](v2, s2mp.andThen(_ map s2.p2c), eL map second[II, I2], sf)
       )
     }
 
     def forRow(w: W): Renderable[S, G, P, II, V, VV] = new Renderable[S, G, P, II, V, VV] {
-      override def renderM[M[_] : Bind : Foldable]
-      (eL: WierdLens[M, S, S, II], s2mp: S => M[P])
+      override def renderM[M[_] : Bind : Optional2]
+      (eL: WeirdLens[M, S, S, II], s2mp: S => M[P])
       (saveG: (S, G) => IO[S]): ComponentStateFocus[S] => M[VV] = T => {
         val s = fieldRenderers(s2mp, w, saveG, eL)
         for {
@@ -95,7 +95,7 @@ object SpecN {
       type S = (Saved, Unsaved)
       private def savedL = first[S, Saved]
 
-      def uniquenessCheck[A](f: P => A) = uniqueness[S, RowId, (DataId, (P, I)), A](
+      def uniquenessCheck[A](f: P => A) = Validator.uniqueness[S, RowId, (DataId, (P, I)), A](
         (s,ow) => savedL.get(s).toStream.filterNot(wpi => ow.fold(false)(_ == wpi._1)),
         (wpi,a) => a == f(wpi._2._1)
       )
@@ -129,14 +129,14 @@ object SpecN {
 
     def initial(p: P): II = (s1 initial p, s2 initial p, s3 initial p)
 
-    private def fieldRenderers[M[_] : Bind : Foldable](s2mp: S => M[P],
+    private def fieldRenderers[M[_] : Bind : Optional2](s2mp: S => M[P],
                                                        w: W,
                                                        saveG: (S, G) => IO[S],
-                                                       eL: WierdLens[M, S, S, II]) = {
+                                                       eL: WeirdLens[M, S, S, II]) = {
 
-      val v1 = s1.vw.fold[S => Validator[I1,C1,O1]]( _ => s1.v )( c=> rowValidator(s1.v, c, w) )
-      val v2 = s2.vw.fold[S => Validator[I2,C2,O2]]( _ => s2.v )( c=> rowValidator(s2.v, c, w) )
-      val v3 = s3.vw.fold[S => Validator[I3,C3,O3]]( _ => s3.v )( c=> rowValidator(s3.v, c, w) )
+      val v1 = s1.vw.fold[S => Validator[I1,C1,O1]]( _ => s1.v )( c=> Validator.forRow(s1.v, c, w) )
+      val v2 = s2.vw.fold[S => Validator[I2,C2,O2]]( _ => s2.v )( c=> Validator.forRow(s2.v, c, w) )
+      val v3 = s3.vw.fold[S => Validator[I3,C3,O3]]( _ => s3.v )( c=> Validator.forRow(s3.v, c, w) )
 
       //def savable1(i: I) = v.correctAndValidate(i).toOption
       def savable(s: S, e: II): Option[OO] = for {
@@ -148,18 +148,18 @@ object SpecN {
       // TODO This isn't able to traverse other rows, or access them by W
       // Cannot save rows that were invalid due to this one, that have just become valid.
       val sf: S => IO[S] = s =>
-        foldableToOption(eL.get(s)).flatMap(savable(s,_)).fold(IO(s))(oo => saveG(s, oo2g(oo)))
+        eL.get(s).toOption.flatMap(savable(s,_)).fold(IO(s))(oo => saveG(s, oo2g(oo)))
 
       (
-        new WiredEditor[S, I1, C1, O1, M](v1, s2mp.andThen(_ map s1.p2c), eL map first[II, I1], sf),
-        new WiredEditor[S, I2, C2, O2, M](v2, s2mp.andThen(_ map s2.p2c), eL map second[II, I2], sf),
-        new WiredEditor[S, I3, C3, O3, M](v3, s2mp.andThen(_ map s3.p2c), eL map third[II, I3], sf)
+        new SmartEditor[S, I1, C1, O1, M](v1, s2mp.andThen(_ map s1.p2c), eL map first[II, I1], sf),
+        new SmartEditor[S, I2, C2, O2, M](v2, s2mp.andThen(_ map s2.p2c), eL map second[II, I2], sf),
+        new SmartEditor[S, I3, C3, O3, M](v3, s2mp.andThen(_ map s3.p2c), eL map third[II, I3], sf)
         )
     }
 
     def forRow(w: W): Renderable[S, G, P, II, V, VV] = new Renderable[S, G, P, II, V, VV] {
-      override def renderM[M[_] : Bind : Foldable]
-      (eL: WierdLens[M, S, S, II], s2mp: S => M[P])
+      override def renderM[M[_] : Bind : Optional2]
+      (eL: WeirdLens[M, S, S, II], s2mp: S => M[P])
       (saveG: (S, G) => IO[S]): ComponentStateFocus[S] => M[VV] = T => {
         val s = fieldRenderers(s2mp, w, saveG, eL)
         for {
@@ -190,7 +190,7 @@ object SpecN {
       type S = (Saved, Unsaved)
       private def savedL = first[S, Saved]
 
-      def uniquenessCheck[A](f: P => A) = uniqueness[S, RowId, (DataId, (P, I)), A](
+      def uniquenessCheck[A](f: P => A) = Validator.uniqueness[S, RowId, (DataId, (P, I)), A](
         (s,ow) => savedL.get(s).toStream.filterNot(wpi => ow.fold(false)(_ == wpi._1)),
         (wpi,a) => a == f(wpi._2._1)
       )

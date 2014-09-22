@@ -16,7 +16,7 @@ import utily.FormStuff._
 import utily.SpecN._
 import shipreq.webapp.client.ui.Implicits._
 import shipreq.webapp.client.ui.Util._
-import shipreq.webapp.client.ui.{ErrorMsg, InputEvent, Editor}
+import shipreq.webapp.client.ui._
 import shipreq.webapp.client.ui.Editors._
 
 import domainy.Data._
@@ -122,12 +122,12 @@ object Phase2 extends js.JSApp {
     val PreSpec = SpecBuilder[P](
         SpecAttr[P](_.mnemonic           )(MnemonicValidator)(TextInputEditor),
         SpecAttr[P](_.name               )(ReqNameValidator )(TextInputEditor),
-        SpecAttr[P](_.implicationRequired)(NopValidator     )(CheckboxEditor)
+        SpecAttr[P](_.implicationRequired)(Validator.nop    )(CheckboxEditor)
       ).mapO(CustomReqTypeNV.fromTuple)
       .rowId[CustomReqTypeId]
 
     // TODO UC hardcoding here
-    val mnemonicUniqueness = uniqueness[PreSpec.S, PreSpec.RowId, ReqTypeMnemonic, String](
+    val mnemonicUniqueness = Validator.uniqueness[PreSpec.S, PreSpec.RowId, ReqTypeMnemonic, String](
       (s,ow) => UC #:: s._1.toStream.filterNot(x => ow.fold(false)(_ == x._1)).flatMap{x=>
         val p = x._2._1
         p.mnemonic #:: p.oldMnemonics.toStream

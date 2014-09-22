@@ -28,6 +28,7 @@ import monocle.function.Field3.third
 import monocle.std.tuple2._
 import monocle.std.tuple3._
 
+import shipreq.webapp.client.ui._
 import shipreq.webapp.client.ui.Implicits._
 import shipreq.webapp.client.ui.Util._
 import shipreq.webapp.client.ui.{ErrorMsg, InputEvent, Editor}
@@ -67,10 +68,10 @@ import EditorStuff._
 object FormStuff {
 
   trait Renderable[S, G, P, E, V, VV] {
-    final def render(eL: SimpleLens[S, E], s2mp: S => P) = renderM[Id](WierdLens from eL, s2mp) _
+    final def render(eL: SimpleLens[S, E], s2mp: S => P) = renderM[Id](WeirdLens from eL, s2mp) _
 
-    def renderM[M[_] : Bind : Foldable]
-    (eL: WierdLens[M, S, S, E], s2mp: S => M[P])
+    def renderM[M[_] : Bind : Optional2]
+    (eL: WeirdLens[M, S, S, E], s2mp: S => M[P])
     (saveG: (S, G) => IO[S]): ComponentStateFocus[S] => M[VV]
 
     //    def contra[T](l: SimpleLens[T, S]) = new ContraRenderable[T, S, G, P, E, V, VV](this, l)
@@ -83,7 +84,7 @@ object FormStuff {
       ) extends Renderable[T, G, P, E, V, VV] {
 
     override def renderM[M[_] : Bind : Foldable]
-      (eL: WierdLens[M, T, T, E], s2mp: T => M[P])
+      (eL: WeirdLens[M, T, T, E], s2mp: T => M[P])
       (saveG: (T, G) => IO[T]): ComponentStateFocus[T] => M[VV] =
       T => {
         //def dimap[F, G](f: F => S, g: T => G) =
@@ -111,7 +112,7 @@ object FormStuff {
           implicitly[Bind[M]].map(mt)(t_s)
         }
 
-        val XeL: WierdLens[M, S, S, E] = WierdLens[M, S, S, E](s_me, s_e_ms)
+        val XeL: WeirdLens[M, S, S, E] = WeirdLens[M, S, S, E](s_me, s_e_ms)
         val Xs2mp: S => M[P] = s => s2mp(t_s_t(T.state, s))
         val XsaveG: (S, G) => IO[S] = (s,g) => saveG(t_s_t(T.state, s), g).map(t_s)
         val x = to.renderM[M](XeL, Xs2mp)(XsaveG)
@@ -189,7 +190,7 @@ object FormStuff {
     private def renderAttrForUnsaved(saveIO: (S, O) => IO[S]) = {
       val s2op: S => Option[P] = _ => None
       def setI(s: S, i: I): Option[S] = unsavedL.get(s).map(_ => unsavedL.set(s, Some(i)))
-      val se = WierdLens[Option, S, S, I](unsavedL.get, setI)
+      val se = WeirdLens[Option, S, S, I](unsavedL.get, setI)
       renderable(None).renderM(se, s2op)(saveIO)
     }
 

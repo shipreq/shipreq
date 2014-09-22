@@ -2,8 +2,6 @@ package shipreq.webapp.client
 
 import org.scalajs.dom.HTMLInputElement
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.ReactVDom._
-import japgolly.scalajs.react.vdom.ReactVDom.all._
 
 package object ui {
 
@@ -11,12 +9,8 @@ package object ui {
 
   type InputEvent = SyntheticEvent[HTMLInputElement]
 
-  object Util {
+  type ValidatorW[S, W, I, C, O] = (S, W) => Validator[I, C, O]
 
-    def textChangeRecv[R](f: String => R): InputEvent => R =
-      e => f(e.target.value)
+  type ValidateFnW[S, W, O] = (S, W, O) => Option[ErrorMsg]
 
-    def checkbox(checked: Boolean) =
-      input(`type` := "checkbox", checked && (all.checked := "checked"))
-  }
 }
