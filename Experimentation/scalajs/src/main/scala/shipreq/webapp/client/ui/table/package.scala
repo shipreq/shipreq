@@ -40,6 +40,8 @@ package object table {
   type Unsaved[I] = Option[I]
   type SavedAndUnsaved[DataId, P, I] = (Saved[DataId, P, I], Unsaved[I])
 
+  def getSaved[DataId, P, I]: SavedAndUnsaved[DataId, P, I] => Saved[DataId, P, I] = _._1
+
   case class SavedUnsavedL[S, DataId, P, I](savedL: SimpleLens[S, Saved[DataId, P, I]],
                                             unsavedL: SimpleLens[S, Unsaved[I]])
 

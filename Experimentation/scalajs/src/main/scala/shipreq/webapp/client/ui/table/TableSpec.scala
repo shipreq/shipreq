@@ -9,7 +9,6 @@ import monocle.std.tuple2._
 import monocle.syntax._
 import shipreq.webapp.client.ui.Implicits._
 import shipreq.webapp.client.ui._
-import utily.FormStuff.SpecN
 
 import scalaz.Bind
 import scalaz.Scalaz.Id
@@ -39,7 +38,7 @@ class TableSpecB[S, DataId, O, P, I, V](val PtoI: P => I,
 
 object TableSpecB {
 
-  def default[DataId, G, P, I, V](spec: SpecN[SavedAndUnsaved[DataId, P, I], Option[DataId], G, P, I, V]) = {
+  def default[DataId, G, P, I, V](spec: RowSpec[SavedAndUnsaved[DataId, P, I], Option[DataId], G, P, I, V]) = {
     val init = spec.initial _
     val initialState: Seq[(DataId, P)] => spec.SS =
       xs => (xs.map(x => x._1 ->(x._2, init(x._2))).toMap, None)

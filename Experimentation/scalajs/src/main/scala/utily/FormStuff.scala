@@ -19,14 +19,6 @@ import shipreq.webapp.client.ui.table._
 
 object FormStuff {
 
-  trait SpecN[S, W, G, P, I, V] {
-    final type SS = S
-    final type II = I
-    final type VV = V
-    def initial(p: P): I
-    def forRow(w: W): RowRenderer[S, G, P, I, V]
-  }
-
 //  def deleteS[S, P, R](getP: S => P, save: P => IO[R], store: (S, P, R) => S) =
 //    StateT[IO, S, Unit](s => {
 //      val p = getP(s)

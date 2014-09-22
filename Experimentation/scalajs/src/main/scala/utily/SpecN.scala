@@ -1,22 +1,15 @@
 package utily
 
+import shipreq.base.util.ScalaExt._
 import japgolly.scalajs.react._
 import scalaz.effect.IO
-import scalaz.{Foldable, Bind, Equal}
+import scalaz.{Bind, Equal}
 import scalaz.syntax.bind._
-import monocle.function.Field1.first
-import monocle.function.Field2.second
-import monocle.function.Field3.third
-import monocle.std.tuple2._
-import monocle.std.tuple3._
-import FormStuff._
-import EditorStuff._
 import shipreq.webapp.client.ui.Implicits._
 import shipreq.webapp.client.ui._
 import shipreq.webapp.client.ui.Util._
 import shipreq.webapp.client.ui.table._
 
-// TODO use TupleExt.mapn
 object SpecN {
 
   /**
@@ -32,7 +25,7 @@ object SpecN {
   case class Spec2[S, W, G, P, V, I1:Equal, C1, O1, I2:Equal, C2, O2](
         s1: FieldSpecW[S,W,P,V,I1,C1,O1], s2: FieldSpecW[S,W,P,V,I2,C2,O2],
         oo2g: ((O1, O2)) => G)
-    extends SpecN[S, W, G, P, (I1, I2), (V, V)] {
+    extends RowSpec[S, W, G, P, (I1, I2), (V, V)] {
 
     type OO = (O1, O2)
 
@@ -58,8 +51,8 @@ object SpecN {
         eL.get(s).toOption.flatMap(savable(s,_)).fold(IO(s))(oo => saveG(s, oo2g(oo)))
 
       (
-        new SmartEditor[S, I1, C1, O1, M](v1, s2mp.andThen(_ map s1.p2c), eL map first[II, I1], sf),
-        new SmartEditor[S, I2, C2, O2, M](v2, s2mp.andThen(_ map s2.p2c), eL map second[II, I2], sf)
+        new SmartEditor[S, I1, C1, O1, M](v1, s2mp.andThen(_ map s1.p2c), eL.mapF(_._1)((a,b) => a put1 b), sf),
+        new SmartEditor[S, I2, C2, O2, M](v2, s2mp.andThen(_ map s2.p2c), eL.mapF(_._2)((a,b) => a put2 b), sf)
       )
     }
 
@@ -81,7 +74,6 @@ object SpecN {
       buildO: ((O1,O2)) => O) {
 
     type I = (I1,I2)
-    type VV = (V,V)
 
     def mapO[OO](f: O => OO) = new SpecBuilder2(s1,s2, f compose buildO)
     def buildO[OO](f: (O1,O2) => OO) = new SpecBuilder2(s1,s2, f.tupled)
@@ -90,13 +82,10 @@ object SpecN {
 
     class B2[DataId] {
       type RowId = Option[DataId]
-      private type Unsaved = Option[I]
-      private type Saved = Map[DataId, (P, I)]
-      type S = (Saved, Unsaved)
-      private def savedL = first[S, Saved]
+      type S = SavedAndUnsaved[DataId, P, I]
 
       def uniquenessCheck[A](f: P => A) = Validator.uniqueness[S, RowId, (DataId, (P, I)), A](
-        (s,ow) => savedL.get(s).toStream.filterNot(wpi => ow.fold(false)(_ == wpi._1)),
+        (s,ow) => getSaved(s).toStream.filterNot(wpi => ow.fold(false)(_ == wpi._1)),
         (wpi,a) => a == f(wpi._2._1)
       )
 
@@ -120,7 +109,7 @@ object SpecN {
   case class Spec3[S, W, G, P, V, I1:Equal, C1, O1, I2:Equal, C2, O2, I3:Equal, C3, O3](
       s1: FieldSpecW[S,W,P,V,I1,C1,O1], s2: FieldSpecW[S,W,P,V,I2,C2,O2], s3: FieldSpecW[S,W,P,V,I3,C3,O3],
       oo2g: ((O1, O2, O3)) => G)
-    extends SpecN[S, W, G, P, (I1, I2, I3), (V, V, V)] {
+    extends RowSpec[S, W, G, P, (I1, I2, I3), (V, V, V)] {
 
     type OO = (O1, O2, O3)
 
@@ -148,10 +137,10 @@ object SpecN {
         eL.get(s).toOption.flatMap(savable(s,_)).fold(IO(s))(oo => saveG(s, oo2g(oo)))
 
       (
-        new SmartEditor[S, I1, C1, O1, M](v1, s2mp.andThen(_ map s1.p2c), eL map first[II, I1], sf),
-        new SmartEditor[S, I2, C2, O2, M](v2, s2mp.andThen(_ map s2.p2c), eL map second[II, I2], sf),
-        new SmartEditor[S, I3, C3, O3, M](v3, s2mp.andThen(_ map s3.p2c), eL map third[II, I3], sf)
-        )
+        new SmartEditor[S, I1, C1, O1, M](v1, s2mp.andThen(_ map s1.p2c), eL.mapF(_._1)((a,b) => a put1 b), sf),
+        new SmartEditor[S, I2, C2, O2, M](v2, s2mp.andThen(_ map s2.p2c), eL.mapF(_._2)((a,b) => a put2 b), sf),
+        new SmartEditor[S, I3, C3, O3, M](v3, s2mp.andThen(_ map s3.p2c), eL.mapF(_._3)((a,b) => a put3 b), sf)
+      )
     }
 
     def forRow(w: W): RowRenderer[S, G, P, II, VV] = new RowRenderer[S, G, P, II, VV] {
@@ -173,7 +162,6 @@ object SpecN {
                                                        buildO: ((O1,O2,O3)) => O) {
 
     type I = (I1,I2,I3)
-    type VV = (V,V,V)
 
     def mapO[OO](f: O => OO) = new SpecBuilder3(s1,s2,s3, f compose buildO)
     def buildO[OO](f: (O1,O2,O3) => OO) = new SpecBuilder3(s1,s2,s3, f.tupled)
@@ -182,13 +170,10 @@ object SpecN {
 
     class B2[DataId] {
       type RowId = Option[DataId]
-      private type Unsaved = Option[I]
-      private type Saved = Map[DataId, (P, I)]
-      type S = (Saved, Unsaved)
-      private def savedL = first[S, Saved]
+      type S = SavedAndUnsaved[DataId, P, I]
 
       def uniquenessCheck[A](f: P => A) = Validator.uniqueness[S, RowId, (DataId, (P, I)), A](
-        (s,ow) => savedL.get(s).toStream.filterNot(wpi => ow.fold(false)(_ == wpi._1)),
+        (s,ow) => getSaved(s).toStream.filterNot(wpi => ow.fold(false)(_ == wpi._1)),
         (wpi,a) => a == f(wpi._2._1)
       )
 

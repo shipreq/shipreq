@@ -14,6 +14,10 @@ case class WeirdLens[M[_] : Bind : Optional2, S, T, A](get: S => M[A], set: (S, 
     s => get(s).map(l.get),
     (s,b) => get(s).flatMap(a => set(s, l.set(a, b))))
 
+  def mapF[B](f: A => B)(g: (A, B) => A) = WeirdLens[M, S, T, B](
+    s => get(s).map(f),
+    (s,b) => get(s).flatMap(a => set(s, g(a, b))))
+
   def dimap[F, G](f: F => S, g: T=> G) =
     WeirdLens[M, F, G, A](get compose f, (b, a) => set(f(b), a) map g)
 
