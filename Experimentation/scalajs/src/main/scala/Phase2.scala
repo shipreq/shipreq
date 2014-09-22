@@ -16,8 +16,9 @@ import utily.FormStuff._
 import utily.SpecN._
 import shipreq.webapp.client.ui.Implicits._
 import shipreq.webapp.client.ui.Util._
-import shipreq.webapp.client.ui._
+import shipreq.webapp.client.ui.{table => _, _}
 import shipreq.webapp.client.ui.Editors._
+import shipreq.webapp.client.ui.table._
 
 import domainy.Data._
 import domainy.FakeDao
@@ -54,8 +55,8 @@ object Phase2 extends js.JSApp {
 
     type P = CustomIssueType
     val PreSpec = SpecBuilder[P](
-                    SpecAttr[P](_.key)(KeyValidator)(TextInputEditor),
-                    SpecAttr[P](_.desc)(DescValidator)(TextareaEditor)
+                    FieldSpec[P](_.key)(KeyValidator)(TextInputEditor),
+                    FieldSpec[P](_.desc)(DescValidator)(TextareaEditor)
                   ).mapO(CustomIssueTypeV.fromTuple)
                   .rowId[CustomIssueTypeId]
     val Spec = PreSpec.ctxAwareValidators(Some(PreSpec.uniquenessCheck(_.key)), None)
@@ -120,9 +121,9 @@ object Phase2 extends js.JSApp {
 
     type P = CustomReqType
     val PreSpec = SpecBuilder[P](
-        SpecAttr[P](_.mnemonic           )(MnemonicValidator)(TextInputEditor),
-        SpecAttr[P](_.name               )(ReqNameValidator )(TextInputEditor),
-        SpecAttr[P](_.implicationRequired)(Validator.nop    )(CheckboxEditor)
+        FieldSpec[P](_.mnemonic           )(MnemonicValidator)(TextInputEditor),
+        FieldSpec[P](_.name               )(ReqNameValidator )(TextInputEditor),
+        FieldSpec[P](_.implicationRequired)(Validator.nop    )(CheckboxEditor)
       ).mapO(CustomReqTypeNV.fromTuple)
       .rowId[CustomReqTypeId]
 

@@ -14,6 +14,7 @@ import EditorStuff._
 import shipreq.webapp.client.ui.Implicits._
 import shipreq.webapp.client.ui._
 import shipreq.webapp.client.ui.Util._
+import shipreq.webapp.client.ui.table._
 
 // TODO use TupleExt.mapn
 object SpecN {
@@ -29,7 +30,7 @@ object SpecN {
    * Field attributes + TABLE ROW-ID + [ROW-ID & STATE AWARE VALIDATORS]
    */
   case class Spec2[S, W, G, P, V, I1:Equal, C1, O1, I2:Equal, C2, O2](
-        s1: AttrSpecW[S,W,P,V,I1,C1,O1], s2: AttrSpecW[S,W,P,V,I2,C2,O2],
+        s1: FieldSpecW[S,W,P,V,I1,C1,O1], s2: FieldSpecW[S,W,P,V,I2,C2,O2],
         oo2g: ((O1, O2)) => G)
     extends SpecN[S, W, G, P, (I1, I2), (V, V)] {
 
@@ -62,7 +63,7 @@ object SpecN {
       )
     }
 
-    override def forRow(w: W): Renderable[S, G, P, II, VV] = new Renderable[S, G, P, II, VV] {
+    override def forRow(w: W): RowRenderer[S, G, P, II, VV] = new RowRenderer[S, G, P, II, VV] {
       override def renderM[M[_] : Bind : Optional2]
       (eL: WeirdLens[M, S, S, II], s2mp: S => M[P])
       (saveG: (S, G) => IO[S]): ComponentStateFocus[S] => M[VV] = T => {
@@ -76,7 +77,7 @@ object SpecN {
   }
 
   class SpecBuilder2[P, O, V, I1:Equal, C1, O1, I2:Equal, C2, O2](
-      s1: AttrSpec[P,V,I1,C1,O1], s2: AttrSpec[P,V,I2,C2,O2],
+      s1: FieldSpec[P,V,I1,C1,O1], s2: FieldSpec[P,V,I2,C2,O2],
       buildO: ((O1,O2)) => O) {
 
     type I = (I1,I2)
@@ -100,7 +101,7 @@ object SpecN {
       )
 
       def ctxAwareValidators(cv1: Option[ValidateFnW[S, RowId, O1]], cv2: Option[ValidateFnW[S, RowId, O2]]) =
-        newTableSpecB(Spec2(s1.toW(cv1), s2.toW(cv2), buildO))
+        TableSpecB.default(Spec2(s1.toW(cv1), s2.toW(cv2), buildO))
     }
   }
 
@@ -117,7 +118,7 @@ object SpecN {
    * Field attributes + TABLE ROW-ID + [ROW-ID & STATE AWARE VALIDATORS]
    */
   case class Spec3[S, W, G, P, V, I1:Equal, C1, O1, I2:Equal, C2, O2, I3:Equal, C3, O3](
-      s1: AttrSpecW[S,W,P,V,I1,C1,O1], s2: AttrSpecW[S,W,P,V,I2,C2,O2], s3: AttrSpecW[S,W,P,V,I3,C3,O3],
+      s1: FieldSpecW[S,W,P,V,I1,C1,O1], s2: FieldSpecW[S,W,P,V,I2,C2,O2], s3: FieldSpecW[S,W,P,V,I3,C3,O3],
       oo2g: ((O1, O2, O3)) => G)
     extends SpecN[S, W, G, P, (I1, I2, I3), (V, V, V)] {
 
@@ -153,7 +154,7 @@ object SpecN {
         )
     }
 
-    def forRow(w: W): Renderable[S, G, P, II, VV] = new Renderable[S, G, P, II, VV] {
+    def forRow(w: W): RowRenderer[S, G, P, II, VV] = new RowRenderer[S, G, P, II, VV] {
       override def renderM[M[_] : Bind : Optional2]
       (eL: WeirdLens[M, S, S, II], s2mp: S => M[P])
       (saveG: (S, G) => IO[S]): ComponentStateFocus[S] => M[VV] = T => {
@@ -168,7 +169,7 @@ object SpecN {
   }
 
   class SpecBuilder3[P, O, V, I1:Equal, C1, O1, I2:Equal, C2, O2, I3:Equal, C3, O3](
-                                                       s1: AttrSpec[P,V,I1,C1,O1], s2: AttrSpec[P,V,I2,C2,O2],s3: AttrSpec[P,V,I3,C3,O3],
+                                                       s1: FieldSpec[P,V,I1,C1,O1], s2: FieldSpec[P,V,I2,C2,O2],s3: FieldSpec[P,V,I3,C3,O3],
                                                        buildO: ((O1,O2,O3)) => O) {
 
     type I = (I1,I2,I3)
@@ -192,16 +193,16 @@ object SpecN {
       )
 
       def ctxAwareValidators(cv1: Option[ValidateFnW[S, RowId, O1]], cv2: Option[ValidateFnW[S, RowId, O2]], cv3: Option[ValidateFnW[S, RowId, O3]]) =
-        newTableSpecB(Spec3(s1.toW(cv1), s2.toW(cv2), s3.toW(cv3), buildO))
+        TableSpecB.default(Spec3(s1.toW(cv1), s2.toW(cv2), s3.toW(cv3), buildO))
     }
   }
 
   // ===================================================================================================================
 
   def SpecBuilder[P] = new {
-    def apply[V, I1:Equal, C1, O1, I2:Equal, C2, O2](s1: AttrSpec[P,V,I1,C1,O1], s2: AttrSpec[P,V,I2,C2,O2]) =
+    def apply[V, I1:Equal, C1, O1, I2:Equal, C2, O2](s1: FieldSpec[P,V,I1,C1,O1], s2: FieldSpec[P,V,I2,C2,O2]) =
       new SpecBuilder2[P, (O1,O2), V, I1, C1, O1, I2, C2, O2](s1, s2, oo=>oo)
-    def apply[V, I1:Equal, C1, O1, I2:Equal, C2, O2, I3:Equal, C3, O3](s1: AttrSpec[P,V,I1,C1,O1], s2: AttrSpec[P,V,I2,C2,O2], s3: AttrSpec[P,V,I3,C3,O3]) =
+    def apply[V, I1:Equal, C1, O1, I2:Equal, C2, O2, I3:Equal, C3, O3](s1: FieldSpec[P,V,I1,C1,O1], s2: FieldSpec[P,V,I2,C2,O2], s3: FieldSpec[P,V,I3,C3,O3]) =
       new SpecBuilder3[P, (O1,O2,O3), V, I1, C1, O1, I2, C2, O2, I3, C3, O3](s1, s2, s3, oo=>oo)
   }
 
