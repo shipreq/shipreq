@@ -14,7 +14,7 @@ trait Validator[I, C, O] {
 
 object Validator {
 
-  def forRow[S, W, I, C, O](norm: Validator[I, C, O], f: ValidateFnW[S, W, O], w: W): S => Validator[I, C, O] =
+  def forRow[S, W, I, C, O](norm: Validator[I, C, O], f: ValidateFnR[S, W, O], w: W): S => Validator[I, C, O] =
     s => new Validator[I, C, O] {
       def liveCorrect = norm.liveCorrect
       def correct     = norm.correct
@@ -34,7 +34,7 @@ object Validator {
 
   // TODO Delete this? If keeping add a version where A=B and Equal is used
   // TODO Delete/change this default error msg
-  def uniqueness[S, W, A, B](extract: (S,W) => Stream[A], cmp: (A, B) => Boolean, errorMsg: ErrorMsg = "Already in use. Duplicate."): ValidateFnW[S,W,B] =
+  def uniqueness[S, W, A, B](extract: (S,W) => Stream[A], cmp: (A, B) => Boolean, errorMsg: ErrorMsg = "Already in use. Duplicate."): ValidateFnR[S,W,B] =
     (s, w, b) => {
       val dupFound = extract(s, w).exists(cmp(_,b))
       //.foldLeft(0)((j, a) => if (j <= 1 && cmp(a,i)) j + 1 else j) // TODO effeciency, too eager

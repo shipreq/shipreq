@@ -38,23 +38,23 @@ for (a <- (1 to 9)) {
   def IeCO  = mc(IeCOn)
   def ICO   = mc(ICOn)
   def spec  = mc(i ⇒ s"s$i: FieldSpec[P,V,I$i,C$i,O$i]")
-  def specW = mc(i ⇒ s"s$i: FieldSpecW[S,W,P,V,I$i,C$i,O$i]")
+  def specR = mc(i ⇒ s"s$i: FieldSpecR[S,R,P,V,I$i,C$i,O$i]")
   def II    = mt(i ⇒ s"I$i")
   def OO    = mt(i ⇒ s"O$i")
   def os    = mt(i ⇒ s"o$i")
   def VV    = mt(_ ⇒ "V")
   def vs    = mt(i ⇒ s"v$i")
   def ss    = mc(i ⇒ s"s$i")
-  def cvs   = mc(i ⇒ s"cv$i: Option[ValidateFnW[S,RowId,O$i]]")
+  def cvs   = mc(i ⇒ s"cv$i: Option[ValidateFnR[S,R,O$i]]")
 
   def ta(i: Int) = if (a==1) "" else s"._$i" //tuple access
-  def eLmap(i: Int) = if (a==1) "" else s".mapF(_${ta(i)})((a,b) ⇒ a put$i b)"
+  def iLmap(i: Int) = if (a==1) "" else s".mapF(_${ta(i)})((a,b) ⇒ a put$i b)"
   def tupled = if (a==1) "" else ".tupled"
 
   def in = mt(i ⇒ s"s$i initial p")
   def vn = mn(i ⇒ s"      val v$i = s$i.vw.fold[S ⇒ Validator[${ICOn(i)}]](_⇒ s$i.v)(c ⇒ Validator.forRow(s$i.v,c,w))")
   def sn = mn(i ⇒ s"        o$i ← v$i(s).correctAndValidate(e${ta(i)}).toOption")
-  def en = mb(i ⇒ s"        new SmartEditor[S,${ICOn(i)},M](v$i, s2mp.andThen(_ map s$i.p2c), eL${eLmap(i)}, sf)").replaceFirst("^ +","")
+  def en = mb(i ⇒ s"        new SmartEditor[S,${ICOn(i)},M](v$i, s2mp.andThen(_ map s$i.p2c), iL${iLmap(i)}, sf)").replaceFirst("^ +","")
   def rn = mn(i ⇒ s"            v$i ← s${ta(i)}.render(s$i.editor, T)")
 
   def RS = s"RowSpec$a"
@@ -64,22 +64,22 @@ for (a <- (1 to 9)) {
 
   print(s"""
 
-  final case class $RS[S, W, G, P, V, $IeCO]($specW, oo2g: ($OO) ⇒ G) extends RowSpec[S, W, G, P, $II, $VV] {
+  final case class $RS[S, R, U, P, V, $IeCO]($specR, buildU: ($OO) ⇒ U) extends RowSpec[S, R, U, P, $II, $VV] {
     override def initial(p: P): $II = $in
-    private def fieldRenderers[M[_] : Bind : Optional2](s2mp: S ⇒ M[P], w: W, saveG: (S, G) ⇒ IO[S], eL: WeirdLens[M,S,S,$II]) = {
+    private def fieldRenderers[M[_] : Bind : Optional2](s2mp: S ⇒ M[P], w: R, save: (S, U) ⇒ IO[S], iL: WeirdLens[M,S,S,$II]) = {
 $vn
       def savable(s: S, e: $II): Option[$OO] = for {
 $sn
       } yield $os
-      // TODO This isn't able to traverse other rows, or access them by W
+      // TODO This isn't able to traverse other rows, or access them by R
       // Cannot save rows that were invalid due to this one, that have just become valid.
-      val sf: S ⇒ IO[S] = s ⇒ eL.get(s).toOption.flatMap(savable(s, _)).fold(IO(s))(oo ⇒ saveG(s, oo2g(oo)))
+      val sf: S ⇒ IO[S] = s ⇒ iL.get(s).toOption.flatMap(savable(s, _)).fold(IO(s))(oo ⇒ save(s, buildU(oo)))
       ( $en)
     }
-    override def forRow(w: W): RowRenderer[S, G, P, $II, $VV] =
-      new RowRenderer[S, G, P, $II, $VV] {
-        override def renderM[M[_] : Bind : Optional2](eL: WeirdLens[M,S,S,$II], s2mp: S ⇒ M[P])(saveG: (S,G) ⇒ IO[S]): ComponentStateFocus[S] ⇒ M[$VV] = T ⇒ {
-          val s = fieldRenderers(s2mp, w, saveG, eL)
+    override def forRow(w: R): RowRenderer[S, U, P, $II, $VV] =
+      new RowRenderer[S, U, P, $II, $VV] {
+        override def renderM[M[_] : Bind : Optional2](iL: WeirdLens[M,S,S,$II], s2mp: S ⇒ M[P])(save: (S,U) ⇒ IO[S]): ComponentStateFocus[S] ⇒ M[$VV] = T ⇒ {
+          val s = fieldRenderers(s2mp, w, save, iL)
           for {
 $rn
           } yield $vs
@@ -87,18 +87,18 @@ $rn
       }
   }
 
-  final class $SB[P, G, V, $IeCO]($spec, buildG: ($OO) ⇒ G) {
-    def mapG[GG](f: G ⇒ GG) = new $SB($ss, f compose buildG)
-    def buildG[GG](f: $OO ⇒ GG) = new $SB($ss, f$tupled)
-    def rowId[W] = new B2[W]
-    final class B2[DataId] {
-      type RowId = Option[DataId]
-      type S = SavedAndUnsaved[DataId, P, $II]
-      def uniquenessCheck[A](f: P ⇒ A) = Validator.uniqueness[S, RowId, (DataId, (P, $II)), A](
+  final class $SB[P, U, V, $IeCO]($spec, buildU: ($OO) ⇒ U) {
+    def mapU[UU](f: U ⇒ UU) = new $SB($ss, f compose buildU)
+    def buildU[UU](f: $OO ⇒ UU) = new $SB($ss, f$tupled)
+    def dataId[D] = new B2[D]
+    final class B2[D] {
+      type R = Option[D]
+      type S = SavedAndUnsaved[D, P, $II]
+      def uniquenessCheck[A](f: P ⇒ A) = Validator.uniqueness[S, R, (D, (P, $II)), A](
         (s, ow) ⇒ getSaved(s).toStream.filterNot(wpi ⇒ ow.fold(false)(_ == wpi._1)),
         (wpi, a) ⇒ a == f(wpi._2._1))
       def ctxAwareValidators($cvs) =
-        TableSpecB default $RS(${mc(i => s"s$i toW cv$i")},buildG)
+        TableSpecB default $RS(${mc(i => s"s$i toR cv$i")},buildU)
     }
   }""")
 }

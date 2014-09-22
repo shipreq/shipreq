@@ -1,30 +1,30 @@
 digraph D {
 
-FieldSpec -> TableSpecBuilder [label="G⁺ = ΣOₙ⁻" taillabel="n" headlabel="1       "]
+FieldSpec -> TableSpecBuilder [label="U⁺ = ΣOₙ⁻" taillabel="n" headlabel="1       "]
 TableSpecBuilder -> TableSpecBuilder_B2
-TableSpecBuilder_B2 -> FieldSpecW [label="W⁺ = Option[DataId⁻]" taillabel="1  " headlabel="n  "]
+TableSpecBuilder_B2 -> FieldSpecR [label="R⁺ = Option[D⁻]" taillabel="1  " headlabel="n  "]
 TableSpecBuilder_B2 -> RowSpec
-TableSpecBuilder_B2 -> TableSpecB [label="I⁺ = (Iⁿ)⁻\nV⁺ = (Vⁿ)⁻"]
-FieldSpecW -> RowSpec [constraint=false taillabel="n" headlabel="1"]
+TableSpecBuilder_B2 -> TableSpecB [label="I⁺ = ΣIₙ⁻\nV⁺ = (V⁻)ⁿ"]
+FieldSpecR -> RowSpec [constraint=false taillabel="n" headlabel="1"]
 TableSpecB -> TableSpec
-RowSpec -> RowRenderer [label="I⁺ = (Iⁿ)⁻\nV⁺ = (Vⁿ)⁻"]
+RowSpec -> RowRenderer [label="I⁺ = ΣIₙ⁻\nV⁺ = (V⁻)ⁿ"]
 RowRenderer -> TableSpecB
 
-RowSpec [label="RowSpecⁿ\n[S,W,G,P,V,Iₙ,Cₙ,Oₙ]"]
-FieldSpec [label="FieldSpec\n[P,V,I,C,O]"]
-FieldSpecW [label="FieldSpecW\n[S,W,P,V,I,C,O]"]
-TableSpecBuilder [label="TableSpecBuilderⁿ\n[P,G,V,Iₙ,Cₙ,Oₙ]\nIⁿ = ΣIₙ"]
-TableSpecBuilder_B2 [label="TableSpecBuilderⁿ.B2\n[P,G,V,Iₙ,Cₙ,Oₙ]\nIⁿ = ΣIₙ\n[DataId]\nS = SavedAndUnsaved[DataId,P,Iⁿ]"]
-TableSpecB [label="TableSpecB\n[S,DataId,G,P,I,V]"]
-TableSpec [label="TableSpec\n[S,DataId,G,P,I,V]"]
-RowRenderer [label="RowRenderer\n[S,G,P,I,V]\n\nrenderM: WeirdLens[M,S,S,I]\n⇒ (S ⇒ M[P])\n⇒ ((S,G) ⇒ IO[S])\n⇒ ComponentStateFocus[S] ⇒ M[V]\n\n"]
+RowSpec             [label="RowSpecⁿ\n[S,R,U,P,V,Iₙ,Cₙ,Oₙ]"]
+FieldSpec           [label="FieldSpec\n[P,V,I,C,O]"]
+FieldSpecR          [label="FieldSpecR\n[S,R,P,V,I,C,O]"]
+TableSpecBuilder    [label="TableSpecBuilderⁿ\n[P,U,V,Iₙ,Cₙ,Oₙ]"]
+TableSpecBuilder_B2 [label="TableSpecBuilderⁿ.B2\n[P,U,V,Iₙ,Cₙ,Oₙ]\n[D]\nS = SavedAndUnsaved[D,P,ΣIₙ]"]
+TableSpecB          [label="TableSpecB\n[S,D,U,P,I,V]"]
+TableSpec           [label="TableSpec\n[S,D,U,P,I,V]"]
+RowRenderer         [label="RowRenderer\n[S,U,P,I,V]\n\nrenderM: WeirdLens[M,S,S,I]\n⇒ (S ⇒ M[P])\n⇒ ((S,U) ⇒ IO[S])\n⇒ ComponentStateFocus[S] ⇒ M[V]\n\n"]
 
 edge [color=red fontcolor="#550000"]
 Client [fontcolor=red]
 Client -> FieldSpec [label="1. Create"]
-Client -> TableSpecBuilder [label="2. Create\n3. RowSpecify DataId type"]
-Client -> TableSpecBuilder_B2 [label="4. ctxAwareValidators"]
+Client -> TableSpecBuilder [label="2. Create\n3. dataId"]
+Client -> TableSpecBuilder_B2 [label="4. validators"]
 Client -> TableSpecB [label="5. saveFn"]
-TableSpecBuilder -> TableSpecBuilder [label=" G⁺ = arb"]
+TableSpecBuilder -> TableSpecBuilder [label=" U⁺ = arb"]
 
 }

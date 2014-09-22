@@ -14,12 +14,12 @@ case object HardDelete extends DeletionAction
 case object SoftDelete extends DeletionAction
 case object Restore extends DeletionAction
 
-class DeletionManager[S, P, DataId](spec: TableSpec[S, DataId, _, P, _, _])(
+class DeletionManager[S, P, D](spec: TableSpec[S, D, _, P, _, _])(
   aliveL: SimpleLens[P, Boolean],
-  saveIO: DataId => DeletionAction => IO[Unit]) {
+  saveIO: D => DeletionAction => IO[Unit]) {
 
-  private type Px = (DataId, P)
-  private val aliveL2 = second[Px, P] composeLens aliveL
+  private type DP = (D, P)
+  private val aliveL2 = second[DP, P] composeLens aliveL
 
   private def modAliveS(ls: DeletionAction, alive: Boolean) =
     spec.modAndSaveS(px => saveIO(px._1)(ls).map(_ => aliveL2.set(px, alive)))
@@ -27,17 +27,17 @@ class DeletionManager[S, P, DataId](spec: TableSpec[S, DataId, _, P, _, _])(
   private val softDeleteS = modAliveS(SoftDelete, false)
   private val hardDeleteS = spec.deleteSavedS(id => saveIO(id)(HardDelete))
 
-  def button(T: ComponentStateFocus[S], id: DataId, a: DeletionAction) =
+  def button(T: ComponentStateFocus[S], id: D, a: DeletionAction) =
     a match {
       case HardDelete => all.button(onclick ~~> T.runState(hardDeleteS(id)), "Delete Forever")
       case SoftDelete => all.button(onclick ~~> T.runState(softDeleteS(id)), "Delete")
       case Restore    => all.button(onclick ~~> T.runState(restoreS(id)), "Restore")
     }
 
-  def buttons(T: ComponentStateFocus[S], id: DataId, as: DeletionAction*) =
+  def buttons(T: ComponentStateFocus[S], id: D, as: DeletionAction*) =
     as.map(button(T, id, _))
 
-  def getSaved(T: ComponentStateFocus[S], alive: Boolean): Stream[(DataId, P)] =
+  def getSaved(T: ComponentStateFocus[S], alive: Boolean): Stream[(D, P)] =
     spec.getSaved(T).filter(px => aliveL.get(px._2) == alive)
 
   def getSavedP(T: ComponentStateFocus[S], alive: Boolean): Stream[P] =

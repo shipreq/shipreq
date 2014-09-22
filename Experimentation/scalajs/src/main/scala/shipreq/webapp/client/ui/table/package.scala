@@ -6,6 +6,18 @@ import monocle.function.Field2.second
 import monocle.std.tuple2._
 
 /**
+ * Types
+ * ~~~~~
+ * S  = State. Type containing all table data.
+ * V  = View. Type of the DOM representation.
+ * Iₙ = Input #n. Type of fieldₙ's data as it comes in from the UI.
+ * Cₙ = Corrected input #n. Type of fieldₙ's data after being corrected (pre-processed).
+ * Oₙ = Output #n. Type of fieldₙ's data after being successfully validated.
+ * U  = Updated. Type of data once all of its fields have passed validation but before it's been saved.
+ * P  = Persisted. The last saved copy of the row.
+ * D  = Data ID. Type used to identity persisted data.
+ * R  = Row ID. Type used to identity rows in the table (where not all rows are persisted).
+ *
  * Done
  * ~~~~
  * [5] create new
@@ -36,18 +48,17 @@ import monocle.std.tuple2._
  */
 package object table {
 
-  type Saved[DataId, P, I] = Map[DataId, (P, I)]
+  type Saved[D, P, I] = Map[D, (P, I)]
   type Unsaved[I] = Option[I]
-  type SavedAndUnsaved[DataId, P, I] = (Saved[DataId, P, I], Unsaved[I])
+  type SavedAndUnsaved[D, P, I] = (Saved[D, P, I], Unsaved[I])
 
-  def getSaved[DataId, P, I]: SavedAndUnsaved[DataId, P, I] => Saved[DataId, P, I] = _._1
+  def getSaved[D, P, I]: SavedAndUnsaved[D, P, I] => Saved[D, P, I] = _._1
 
-  case class SavedUnsavedL[S, DataId, P, I](savedL: SimpleLens[S, Saved[DataId, P, I]],
-                                            unsavedL: SimpleLens[S, Unsaved[I]])
+  case class SavedUnsavedL[S, D, P, I](savedL: SimpleLens[S, Saved[D, P, I]],
+                                       unsavedL: SimpleLens[S, Unsaved[I]])
 
   object SavedUnsavedL {
-    def default[DataId, P, I] =
-      SavedUnsavedL[SavedAndUnsaved[DataId, P, I], DataId, P, I](first, second)
+    def default[D, P, I] =
+      SavedUnsavedL[SavedAndUnsaved[D, P, I], D, P, I](first, second)
   }
-
 }

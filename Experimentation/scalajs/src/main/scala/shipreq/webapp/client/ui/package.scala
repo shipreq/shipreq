@@ -9,8 +9,8 @@ package object ui {
 
   type InputEvent = SyntheticEvent[HTMLInputElement]
 
-  type ValidatorW[S, W, I, C, O] = (S, W) => Validator[I, C, O]
+  type ValidatorR[S, R, I, C, O] = (S, R) => Validator[I, C, O]
 
-  type ValidateFnW[S, W, O] = (S, W, O) => Option[ErrorMsg]
+  type ValidateFnR[S, R, O] = (S, R, O) => Option[ErrorMsg]
 
 }

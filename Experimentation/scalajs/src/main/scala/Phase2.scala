@@ -55,8 +55,8 @@ object Phase2 extends js.JSApp {
     val PreSpec = TableSpecBuilder[P](
                     FieldSpec[P](_.key)(KeyValidator)(TextInputEditor),
                     FieldSpec[P](_.desc)(DescValidator)(TextareaEditor)
-                  ).mapG(CustomIssueTypeV.fromTuple)
-                  .rowId[CustomIssueTypeId]
+                  ).mapU(CustomIssueTypeV.fromTuple)
+                  .dataId[CustomIssueTypeId]
     val Spec = PreSpec.ctxAwareValidators(Some(PreSpec.uniquenessCheck(_.key)), None)
                  .saveFn2(fakeSave, _.id)
 
@@ -122,11 +122,11 @@ object Phase2 extends js.JSApp {
         FieldSpec[P](_.mnemonic           )(MnemonicValidator)(TextInputEditor),
         FieldSpec[P](_.name               )(ReqNameValidator )(TextInputEditor),
         FieldSpec[P](_.implicationRequired)(Validator.nop    )(CheckboxEditor)
-      ).mapG(CustomReqTypeNV.fromTuple)
-      .rowId[CustomReqTypeId]
+      ).mapU(CustomReqTypeNV.fromTuple)
+      .dataId[CustomReqTypeId]
 
     // TODO UC hardcoding here
-    val mnemonicUniqueness = Validator.uniqueness[PreSpec.S, PreSpec.RowId, ReqTypeMnemonic, String](
+    val mnemonicUniqueness = Validator.uniqueness[PreSpec.S, PreSpec.R, ReqTypeMnemonic, String](
       (s,ow) => UC #:: s._1.toStream.filterNot(x => ow.fold(false)(_ == x._1)).flatMap{x=>
         val p = x._2._1
         p.mnemonic #:: p.oldMnemonics.toStream
