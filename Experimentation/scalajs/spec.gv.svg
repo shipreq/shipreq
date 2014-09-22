@@ -9,65 +9,65 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 1032.57)">
 <title>D</title>
 <polygon fill="white" stroke="none" points="-4,4 -4,-1032.57 570.782,-1032.57 570.782,4 -4,4"/>
-<!-- SpecAttr -->
-<g id="node1" class="node"><title>SpecAttr</title>
-<ellipse fill="none" stroke="black" cx="104.782" cy="-914.698" rx="82.0488" ry="26.7407"/>
-<text text-anchor="middle" x="104.782" y="-918.498" font-family="Times,serif" font-size="14.00">SpecAttr/AttrSpec</text>
+<!-- FieldSpec -->
+<g id="node1" class="node"><title>FieldSpec</title>
+<ellipse fill="none" stroke="black" cx="104.782" cy="-914.698" rx="57.0522" ry="26.7407"/>
+<text text-anchor="middle" x="104.782" y="-918.498" font-family="Times,serif" font-size="14.00">FieldSpec</text>
 <text text-anchor="middle" x="104.782" y="-903.498" font-family="Times,serif" font-size="14.00">[P,V,I,C,O]</text>
 </g>
-<!-- SpecBuilder -->
-<g id="node2" class="node"><title>SpecBuilder</title>
-<ellipse fill="none" stroke="black" cx="222.782" cy="-788.744" rx="79.8062" ry="48.1667"/>
-<text text-anchor="middle" x="222.782" y="-807.544" font-family="Times,serif" font-size="14.00">SpecBuilderⁿ</text>
-<text text-anchor="middle" x="222.782" y="-792.544" font-family="Times,serif" font-size="14.00">[P,O,V,Iₙ,Cₙ,Oₙ]</text>
-<text text-anchor="middle" x="222.782" y="-777.544" font-family="Times,serif" font-size="14.00">Iⁿ = ΣIₙ</text>
-<text text-anchor="middle" x="222.782" y="-762.544" font-family="Times,serif" font-size="14.00">Vⁿ = ΣVₙ</text>
+<!-- TableSpecBuilder -->
+<g id="node2" class="node"><title>TableSpecBuilder</title>
+<ellipse fill="none" stroke="black" cx="197.782" cy="-788.744" rx="84.2917" ry="48.1667"/>
+<text text-anchor="middle" x="197.782" y="-807.544" font-family="Times,serif" font-size="14.00">TableSpecBuilderⁿ</text>
+<text text-anchor="middle" x="197.782" y="-792.544" font-family="Times,serif" font-size="14.00">[P,O,V,Iₙ,Cₙ,Oₙ]</text>
+<text text-anchor="middle" x="197.782" y="-777.544" font-family="Times,serif" font-size="14.00">Iⁿ = ΣIₙ</text>
+<text text-anchor="middle" x="197.782" y="-762.544" font-family="Times,serif" font-size="14.00">Vⁿ = ΣVₙ</text>
 </g>
-<!-- SpecAttr&#45;&gt;SpecBuilder -->
-<g id="edge1" class="edge"><title>SpecAttr&#45;&gt;SpecBuilder</title>
-<path fill="none" stroke="black" d="M119.376,-888.163C126.13,-877.348 134.672,-864.937 143.782,-854.828 150.384,-847.501 157.836,-840.292 165.46,-833.494"/>
-<polygon fill="black" stroke="black" points="167.861,-836.044 173.116,-826.844 163.271,-830.759 167.861,-836.044"/>
-<text text-anchor="middle" x="176.282" y="-858.628" font-family="Times,serif" font-size="14.00">O⁺ = (Oⁿ)⁻</text>
-<text text-anchor="middle" x="156.116" y="-830.644" font-family="Times,serif" font-size="14.00">1 &#160;&#160;&#160;&#160;&#160;&#160;</text>
-<text text-anchor="middle" x="115.876" y="-876.963" font-family="Times,serif" font-size="14.00">n</text>
+<!-- FieldSpec&#45;&gt;TableSpecBuilder -->
+<g id="edge1" class="edge"><title>FieldSpec&#45;&gt;TableSpecBuilder</title>
+<path fill="none" stroke="black" d="M107.282,-887.663C109.222,-876.882 112.667,-864.633 118.782,-854.828 123.684,-846.965 129.867,-839.606 136.605,-832.871"/>
+<polygon fill="black" stroke="black" points="139.219,-835.217 144.1,-825.813 134.421,-830.12 139.219,-835.217"/>
+<text text-anchor="middle" x="151.282" y="-858.628" font-family="Times,serif" font-size="14.00">O⁺ = (Oⁿ)⁻</text>
+<text text-anchor="middle" x="127.1" y="-829.613" font-family="Times,serif" font-size="14.00">1 &#160;&#160;&#160;&#160;&#160;&#160;</text>
+<text text-anchor="middle" x="103.782" y="-876.463" font-family="Times,serif" font-size="14.00">n</text>
 </g>
-<!-- SpecBuilder_B2 -->
-<g id="node3" class="node"><title>SpecBuilder_B2</title>
+<!-- TableSpecBuilder_B2 -->
+<g id="node3" class="node"><title>TableSpecBuilder_B2</title>
 <ellipse fill="none" stroke="black" cx="290.782" cy="-634.365" rx="150.728" ry="69.0935"/>
-<text text-anchor="middle" x="290.782" y="-668.165" font-family="Times,serif" font-size="14.00">SpecBuilderⁿ.B2</text>
+<text text-anchor="middle" x="290.782" y="-668.165" font-family="Times,serif" font-size="14.00">TableSpecBuilderⁿ.B2</text>
 <text text-anchor="middle" x="290.782" y="-653.165" font-family="Times,serif" font-size="14.00">[P,O,V,Iₙ,Cₙ,Oₙ]</text>
 <text text-anchor="middle" x="290.782" y="-638.165" font-family="Times,serif" font-size="14.00">Iⁿ = ΣIₙ</text>
 <text text-anchor="middle" x="290.782" y="-623.165" font-family="Times,serif" font-size="14.00">Vⁿ = ΣVₙ</text>
 <text text-anchor="middle" x="290.782" y="-608.165" font-family="Times,serif" font-size="14.00">[DataId]</text>
 <text text-anchor="middle" x="290.782" y="-593.165" font-family="Times,serif" font-size="14.00">S = SavedAndUnsaved[DataId,P,Iⁿ]</text>
 </g>
-<!-- SpecBuilder&#45;&gt;SpecBuilder_B2 -->
-<g id="edge2" class="edge"><title>SpecBuilder&#45;&gt;SpecBuilder_B2</title>
-<path fill="none" stroke="black" d="M243.184,-742.025C247.437,-732.495 252.03,-722.202 256.627,-711.901"/>
-<polygon fill="black" stroke="black" points="259.961,-713.019 260.84,-702.46 253.569,-710.166 259.961,-713.019"/>
+<!-- TableSpecBuilder&#45;&gt;TableSpecBuilder_B2 -->
+<g id="edge2" class="edge"><title>TableSpecBuilder&#45;&gt;TableSpecBuilder_B2</title>
+<path fill="none" stroke="black" d="M225.182,-742.85C231.501,-732.496 238.389,-721.209 245.25,-709.968"/>
+<polygon fill="black" stroke="black" points="248.259,-711.757 250.481,-701.397 242.284,-708.11 248.259,-711.757"/>
 </g>
-<!-- AttrSpecW -->
-<g id="node4" class="node"><title>AttrSpecW</title>
+<!-- FieldSpecW -->
+<g id="node4" class="node"><title>FieldSpecW</title>
 <ellipse fill="none" stroke="black" cx="77.7817" cy="-487.198" rx="77.5641" ry="26.7407"/>
-<text text-anchor="middle" x="77.7817" y="-490.998" font-family="Times,serif" font-size="14.00">AttrSpecW</text>
+<text text-anchor="middle" x="77.7817" y="-490.998" font-family="Times,serif" font-size="14.00">FieldSpecW</text>
 <text text-anchor="middle" x="77.7817" y="-475.998" font-family="Times,serif" font-size="14.00">[S,W,P,V,I,C,O]</text>
 </g>
-<!-- SpecBuilder_B2&#45;&gt;AttrSpecW -->
-<g id="edge3" class="edge"><title>SpecBuilder_B2&#45;&gt;AttrSpecW</title>
+<!-- TableSpecBuilder_B2&#45;&gt;FieldSpecW -->
+<g id="edge3" class="edge"><title>TableSpecBuilder_B2&#45;&gt;FieldSpecW</title>
 <path fill="none" stroke="black" d="M203.37,-577.693C188.071,-567.653 172.384,-557.165 157.782,-547.068 144.402,-537.816 130.019,-527.389 117.19,-517.909"/>
 <polygon fill="black" stroke="black" points="119.126,-514.987 109.01,-511.837 114.954,-520.608 119.126,-514.987"/>
 <text text-anchor="middle" x="222.282" y="-535.868" font-family="Times,serif" font-size="14.00">W⁺ = Option[DataId⁻]</text>
 <text text-anchor="middle" x="101.51" y="-515.637" font-family="Times,serif" font-size="14.00">n &#160;</text>
 <text text-anchor="middle" x="195.87" y="-566.493" font-family="Times,serif" font-size="14.00">1 &#160;</text>
 </g>
-<!-- Spec -->
-<g id="node5" class="node"><title>Spec</title>
+<!-- RowSpec -->
+<g id="node5" class="node"><title>RowSpec</title>
 <ellipse fill="none" stroke="black" cx="290.782" cy="-487.198" rx="99.9045" ry="26.7407"/>
-<text text-anchor="middle" x="290.782" y="-490.998" font-family="Times,serif" font-size="14.00">Specⁿ</text>
+<text text-anchor="middle" x="290.782" y="-490.998" font-family="Times,serif" font-size="14.00">RowSpecⁿ</text>
 <text text-anchor="middle" x="290.782" y="-475.998" font-family="Times,serif" font-size="14.00">[S,W,G,P,V,Iₙ,Cₙ,Oₙ]</text>
 </g>
-<!-- SpecBuilder_B2&#45;&gt;Spec -->
-<g id="edge4" class="edge"><title>SpecBuilder_B2&#45;&gt;Spec</title>
+<!-- TableSpecBuilder_B2&#45;&gt;RowSpec -->
+<g id="edge4" class="edge"><title>TableSpecBuilder_B2&#45;&gt;RowSpec</title>
 <path fill="none" stroke="black" d="M290.782,-565.032C290.782,-551.04 290.782,-536.837 290.782,-524.512"/>
 <polygon fill="black" stroke="black" points="294.282,-524.216 290.782,-514.216 287.282,-524.216 294.282,-524.216"/>
 <text text-anchor="middle" x="320.282" y="-535.868" font-family="Times,serif" font-size="14.00"> &#160;G⁺ = O⁻</text>
@@ -78,32 +78,32 @@
 <text text-anchor="middle" x="433.782" y="-121.41" font-family="Times,serif" font-size="14.00">TableSpecB</text>
 <text text-anchor="middle" x="433.782" y="-106.41" font-family="Times,serif" font-size="14.00">[S,DataId,O,P,I,V]</text>
 </g>
-<!-- SpecBuilder_B2&#45;&gt;TableSpecB -->
-<g id="edge5" class="edge"><title>SpecBuilder_B2&#45;&gt;TableSpecB</title>
+<!-- TableSpecBuilder_B2&#45;&gt;TableSpecB -->
+<g id="edge5" class="edge"><title>TableSpecBuilder_B2&#45;&gt;TableSpecB</title>
 <path fill="none" stroke="black" d="M359.467,-572.522C375.134,-555.182 390.022,-535.21 399.782,-514.068 455.96,-392.37 446.396,-227.3 438.562,-155.028"/>
 <polygon fill="black" stroke="black" points="441.989,-154.189 437.378,-144.65 435.034,-154.982 441.989,-154.189"/>
 <text text-anchor="middle" x="464.282" y="-431.128" font-family="Times,serif" font-size="14.00">I⁺ = (Iⁿ)⁻</text>
 <text text-anchor="middle" x="464.282" y="-416.128" font-family="Times,serif" font-size="14.00">V⁺ = (Vⁿ)⁻</text>
 </g>
-<!-- AttrSpecW&#45;&gt;Spec -->
-<g id="edge6" class="edge"><title>AttrSpecW&#45;&gt;Spec</title>
+<!-- FieldSpecW&#45;&gt;RowSpec -->
+<g id="edge6" class="edge"><title>FieldSpecW&#45;&gt;RowSpec</title>
 <path fill="none" stroke="black" d="M155.577,-487.198C163.962,-487.198 172.348,-487.198 180.734,-487.198"/>
 <polygon fill="black" stroke="black" points="180.962,-490.698 190.962,-487.198 180.962,-483.698 180.962,-490.698"/>
 <text text-anchor="middle" x="187.462" y="-490.998" font-family="Times,serif" font-size="14.00">1</text>
 <text text-anchor="middle" x="159.077" y="-490.998" font-family="Times,serif" font-size="14.00">n</text>
 </g>
-<!-- Renderable -->
-<g id="node8" class="node"><title>Renderable</title>
+<!-- RowRenderer -->
+<g id="node8" class="node"><title>RowRenderer</title>
 <ellipse fill="none" stroke="black" cx="247.782" cy="-302.404" rx="158.284" ry="91.8478"/>
-<text text-anchor="middle" x="247.782" y="-352.204" font-family="Times,serif" font-size="14.00">Renderable</text>
+<text text-anchor="middle" x="247.782" y="-352.204" font-family="Times,serif" font-size="14.00">RowRenderer</text>
 <text text-anchor="middle" x="247.782" y="-337.204" font-family="Times,serif" font-size="14.00">[S,G,P,E,V]</text>
 <text text-anchor="middle" x="247.782" y="-306.204" font-family="Times,serif" font-size="14.00">renderM: WeirdLens[M,S,S,E]</text>
 <text text-anchor="middle" x="247.782" y="-291.204" font-family="Times,serif" font-size="14.00">⇒ (S ⇒ M[P])</text>
 <text text-anchor="middle" x="247.782" y="-276.204" font-family="Times,serif" font-size="14.00">⇒ ((S,G) ⇒ IO[S])</text>
 <text text-anchor="middle" x="247.782" y="-261.204" font-family="Times,serif" font-size="14.00">⇒ ComponentStateFocus[S] ⇒ M[V]</text>
 </g>
-<!-- Spec&#45;&gt;Renderable -->
-<g id="edge8" class="edge"><title>Spec&#45;&gt;Renderable</title>
+<!-- RowSpec&#45;&gt;RowRenderer -->
+<g id="edge8" class="edge"><title>RowSpec&#45;&gt;RowRenderer</title>
 <path fill="none" stroke="black" d="M284.621,-460.008C281.032,-444.753 276.254,-424.442 271.332,-403.515"/>
 <polygon fill="black" stroke="black" points="274.683,-402.477 268.986,-393.544 267.869,-404.08 274.683,-402.477"/>
 <text text-anchor="middle" x="313.282" y="-431.128" font-family="Times,serif" font-size="14.00">E⁺ = (Iⁿ)⁻</text>
@@ -120,40 +120,40 @@
 <path fill="none" stroke="black" d="M433.782,-90.4652C433.782,-82.1605 433.782,-72.8249 433.782,-63.9483"/>
 <polygon fill="black" stroke="black" points="437.282,-63.8282 433.782,-53.8282 430.282,-63.8282 437.282,-63.8282"/>
 </g>
-<!-- Renderable&#45;&gt;TableSpecB -->
-<g id="edge9" class="edge"><title>Renderable&#45;&gt;TableSpecB</title>
+<!-- RowRenderer&#45;&gt;TableSpecB -->
+<g id="edge9" class="edge"><title>RowRenderer&#45;&gt;TableSpecB</title>
 <path fill="none" stroke="black" d="M313.147,-218.245C330,-198.981 348.775,-179.235 367.782,-162.48 373.66,-157.299 380.189,-152.251 386.789,-147.535"/>
 <polygon fill="black" stroke="black" points="388.913,-150.322 395.143,-141.752 384.929,-144.566 388.913,-150.322"/>
 <text text-anchor="middle" x="393.782" y="-181.28" font-family="Times,serif" font-size="14.00">O⁺ = G⁻</text>
 <text text-anchor="middle" x="393.782" y="-166.28" font-family="Times,serif" font-size="14.00">I⁺ = E⁻</text>
 </g>
-<!-- User -->
-<g id="node9" class="node"><title>User</title>
-<ellipse fill="none" stroke="black" cx="298.782" cy="-1010.57" rx="27.0966" ry="18"/>
-<text text-anchor="middle" x="298.782" y="-1006.87" font-family="Times,serif" font-size="14.00" fill="red">User</text>
+<!-- Client -->
+<g id="node9" class="node"><title>Client</title>
+<ellipse fill="none" stroke="black" cx="285.782" cy="-1010.57" rx="32.4942" ry="18"/>
+<text text-anchor="middle" x="285.782" y="-1006.87" font-family="Times,serif" font-size="14.00" fill="red">Client</text>
 </g>
-<!-- User&#45;&gt;SpecAttr -->
-<g id="edge10" class="edge"><title>User&#45;&gt;SpecAttr</title>
-<path fill="none" stroke="red" d="M271.755,-1007.46C242.197,-1004.14 194.307,-995.706 158.782,-974.568 147.701,-967.974 137.547,-958.406 129.107,-948.893"/>
-<polygon fill="red" stroke="red" points="131.56,-946.372 122.439,-940.981 126.207,-950.883 131.56,-946.372"/>
-<text text-anchor="middle" x="183.782" y="-963.368" font-family="Times,serif" font-size="14.00" fill="#550000">1. Create</text>
+<!-- Client&#45;&gt;FieldSpec -->
+<g id="edge10" class="edge"><title>Client&#45;&gt;FieldSpec</title>
+<path fill="none" stroke="red" d="M253.262,-1009.89C219.908,-1008.58 168.175,-1001.8 133.782,-974.568 126.025,-968.426 120.194,-959.678 115.875,-950.797"/>
+<polygon fill="red" stroke="red" points="119.08,-949.393 111.903,-941.599 112.654,-952.167 119.08,-949.393"/>
+<text text-anchor="middle" x="158.782" y="-963.368" font-family="Times,serif" font-size="14.00" fill="#550000">1. Create</text>
 </g>
-<!-- User&#45;&gt;SpecBuilder -->
-<g id="edge11" class="edge"><title>User&#45;&gt;SpecBuilder</title>
-<path fill="none" stroke="red" d="M281.541,-996.262C266.869,-983.852 246.651,-963.93 236.782,-941.568 223.78,-912.107 219.974,-876.36 219.56,-846.955"/>
-<polygon fill="red" stroke="red" points="223.06,-846.834 219.545,-836.839 216.06,-846.844 223.06,-846.834"/>
-<text text-anchor="middle" x="298.782" y="-918.498" font-family="Times,serif" font-size="14.00" fill="#550000">2. Create</text>
-<text text-anchor="middle" x="298.782" y="-903.498" font-family="Times,serif" font-size="14.00" fill="#550000">3. Specify DataId type</text>
+<!-- Client&#45;&gt;TableSpecBuilder -->
+<g id="edge11" class="edge"><title>Client&#45;&gt;TableSpecBuilder</title>
+<path fill="none" stroke="red" d="M264.547,-996.549C247.118,-984.593 223.473,-965.178 211.782,-941.568 197.439,-912.603 193.593,-876.73 193.494,-847.127"/>
+<polygon fill="red" stroke="red" points="196.996,-846.977 193.604,-836.939 189.996,-846.901 196.996,-846.977"/>
+<text text-anchor="middle" x="286.282" y="-918.498" font-family="Times,serif" font-size="14.00" fill="#550000">2. Create</text>
+<text text-anchor="middle" x="286.282" y="-903.498" font-family="Times,serif" font-size="14.00" fill="#550000">3. RowSpecify DataId type</text>
 </g>
-<!-- User&#45;&gt;SpecBuilder_B2 -->
-<g id="edge12" class="edge"><title>User&#45;&gt;SpecBuilder_B2</title>
-<path fill="none" stroke="red" d="M316.233,-996.711C331.262,-984.457 351.893,-964.509 360.782,-941.568 390.216,-865.599 361.453,-774.011 332.396,-710.909"/>
-<polygon fill="red" stroke="red" points="335.539,-709.368 328.113,-701.811 329.205,-712.349 335.539,-709.368"/>
-<text text-anchor="middle" x="435.782" y="-858.628" font-family="Times,serif" font-size="14.00" fill="#550000">4. ctxAwareValidators</text>
+<!-- Client&#45;&gt;TableSpecBuilder_B2 -->
+<g id="edge12" class="edge"><title>Client&#45;&gt;TableSpecBuilder_B2</title>
+<path fill="none" stroke="red" d="M307.499,-997.111C325.547,-985.385 349.958,-965.992 360.782,-941.568 393.949,-866.726 364.148,-774.367 333.822,-710.77"/>
+<polygon fill="red" stroke="red" points="336.88,-709.056 329.351,-701.601 330.588,-712.124 336.88,-709.056"/>
+<text text-anchor="middle" x="437.782" y="-858.628" font-family="Times,serif" font-size="14.00" fill="#550000">4. ctxAwareValidators</text>
 </g>
-<!-- User&#45;&gt;TableSpecB -->
-<g id="edge13" class="edge"><title>User&#45;&gt;TableSpecB</title>
-<path fill="none" stroke="red" d="M326.449,-1009.72C384.517,-1008.45 513.782,-996.545 513.782,-915.698 513.782,-915.698 513.782,-915.698 513.782,-301.404 513.782,-245.678 482.192,-187.807 458.714,-152.491"/>
+<!-- Client&#45;&gt;TableSpecB -->
+<g id="edge13" class="edge"><title>Client&#45;&gt;TableSpecB</title>
+<path fill="none" stroke="red" d="M318.449,-1010.34C381.493,-1009.94 513.782,-999.171 513.782,-915.698 513.782,-915.698 513.782,-915.698 513.782,-301.404 513.782,-245.678 482.192,-187.807 458.714,-152.491"/>
 <polygon fill="red" stroke="red" points="461.464,-150.311 452.944,-144.014 455.677,-154.25 461.464,-150.311"/>
 <text text-anchor="middle" x="540.282" y="-630.665" font-family="Times,serif" font-size="14.00" fill="#550000">5. saveFn</text>
 </g>

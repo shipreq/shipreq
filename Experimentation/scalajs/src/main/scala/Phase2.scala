@@ -14,6 +14,7 @@ import japgolly.scalajs.react.ScalazReact._
 import utily.EditorStuff._
 import utily.FormStuff._
 import utily.SpecN._
+import utily.TableSpecBuilder
 import shipreq.webapp.client.ui.Implicits._
 import shipreq.webapp.client.ui.Util._
 import shipreq.webapp.client.ui.{table => _, _}
@@ -54,7 +55,7 @@ object Phase2 extends js.JSApp {
   object IssueConfig {
 
     type P = CustomIssueType
-    val PreSpec = SpecBuilder[P](
+    val PreSpec = TableSpecBuilder[P](
                     FieldSpec[P](_.key)(KeyValidator)(TextInputEditor),
                     FieldSpec[P](_.desc)(DescValidator)(TextareaEditor)
                   ).mapO(CustomIssueTypeV.fromTuple)
@@ -120,7 +121,7 @@ object Phase2 extends js.JSApp {
     // TODO render old mnemonics
 
     type P = CustomReqType
-    val PreSpec = SpecBuilder[P](
+    val PreSpec = TableSpecBuilder[P](
         FieldSpec[P](_.mnemonic           )(MnemonicValidator)(TextInputEditor),
         FieldSpec[P](_.name               )(ReqNameValidator )(TextInputEditor),
         FieldSpec[P](_.implicationRequired)(Validator.nop    )(CheckboxEditor)

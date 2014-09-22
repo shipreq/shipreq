@@ -1,0 +1,118 @@
+#!/bin/env scala
+
+// vim: set ft=scala :
+
+val comma = ", "
+val Comma = ","
+def T(i: Int) = (64+i).toChar.toString
+
+var B = List.empty[String]
+
+for (a <- (1 to 9)) {
+// println(s"// Arity: $a")
+
+  def m (f: Int ⇒ String): List[String] = (1 to a).toList.map(f)
+  def mc(f: Int ⇒ String): String = m(f).mkString(comma)
+  def mt(f: Int ⇒ String): String = if (a==1) f(1) else m(f).mkString("(",Comma,")")
+  def mn(f: Int ⇒ String): String = m(f).mkString("\n")
+  def mb(f: Int ⇒ String): String = m(f).mkString(",\n")
+  // def TO(i: Int)  = T(i) + "O"
+  // def TTO(i: Int) = T(i) + "," + TO(i)
+  // def VD(i: Int)  = s"FormVar[${TTO(i)}]"
+  // def v(i: Int)   = T(i).toLowerCase
+  // def vVD(i: Int) = s"${v(i)}: ${VD(i)}"
+  def IeCOn(i: Int) = s"I$i: Equal,C$i,O$i"
+  def ICOn(i: Int) = s"I$i,C$i,O$i"
+
+  def IeCO  = mc(IeCOn)
+  def ICO   = mc(ICOn)
+  def spec  = mc(i ⇒ s"s$i: FieldSpec[P,V,I$i,C$i,O$i]")
+  def specW = mc(i ⇒ s"s$i: FieldSpecW[S,W,P,V,I$i,C$i,O$i]")
+  def II    = mt(i ⇒ s"I$i")
+  def OO    = mt(i ⇒ s"O$i")
+  def os    = mt(i ⇒ s"o$i")
+  def VV    = mt(_ ⇒ "V")
+  def vs    = mt(i ⇒ s"v$i")
+  def ss    = mc(i ⇒ s"s$i")
+  def cvs   = mc(i ⇒ s"cv$i: Option[ValidateFnW[S,RowId,O$i]]")
+
+  def ta(i: Int) = if (a==1) "" else s"._$i" //tuple access
+  def eLmap(i: Int) = if (a==1) "" else s".mapF(_${ta(i)})((a, b) ⇒ a put$i b)"
+  def tupled = if (a==1) "" else ".tupled"
+
+  def in = mt(i ⇒ s"s$i initial p")
+  def vn = mn(i ⇒ s"      val v$i = s$i.vw.fold[S ⇒ Validator[${ICOn(i)}]](_ ⇒ s$i.v)(c ⇒ Validator.forRow(s$i.v, c, w))")
+  def sn = mn(i ⇒ s"        o$i <- v$i(s).correctAndValidate(e${ta(i)}).toOption")
+  def en = mb(i ⇒ s"        new SmartEditor[S,${ICOn(i)},M](v$i, s2mp.andThen(_ map s$i.p2c), eL${eLmap(i)}, sf)")
+  def rn = mn(i ⇒ s"            v$i <- s${ta(i)}.render(s$i.editor, T)")
+
+  def RS = s"RowSpec$a"
+  def SB = s"TableSpecBuider$a"
+
+  B = s"  def apply[V, $IeCO]($spec) = new $SB[P,$OO,V,$ICO]($ss,x⇒x)" :: B
+
+  print(s"""
+  final case class $RS[S, W, G, P, V, $IeCO]($specW, oo2g: ($OO) ⇒ G)
+      extends RowSpec[S, W, G, P, $II, $VV] {
+
+    override def initial(p: P): $II = $in
+
+    private def fieldRenderers[M[_] : Bind : Optional2](
+        s2mp: S ⇒ M[P], w: W, saveG: (S, G) ⇒ IO[S], eL: WeirdLens[M,S,S,$II]) = {
+
+$vn
+
+      //def savable1(i: I) = v.correctAndValidate(i).toOption
+      def savable(s: S, e: $II): Option[$OO] = for {
+$sn
+      } yield $os
+
+      // TODO This isn't able to traverse other rows, or access them by W
+      // Cannot save rows that were invalid due to this one, that have just become valid.
+      val sf: S ⇒ IO[S] = s ⇒
+        eL.get(s).toOption.flatMap(savable(s, _)).fold(IO(s))(oo ⇒ saveG(s, oo2g(oo)))
+
+      (
+$en)
+    }
+
+    override def forRow(w: W): RowRenderer[S, G, P, $II, $VV] =
+      new RowRenderer[S, G, P, $II, $VV] {
+        override def renderM[M[_] : Bind : Optional2](eL: WeirdLens[M,S,S,$II], s2mp: S ⇒ M[P])(saveG: (S,G) ⇒ IO[S]): ComponentStateFocus[S] ⇒ M[$VV] = T ⇒ {
+          val s = fieldRenderers(s2mp, w, saveG, eL)
+          for {
+$rn
+          } yield $vs
+        }
+      }
+  }
+
+  final class $SB[P, O, V, $IeCO]($spec, buildO: ($OO) ⇒ O) {
+    def mapO[OO](f: O ⇒ OO) = new $SB($ss, f compose buildO)
+    def buildO[OO](f: $OO ⇒ OO) = new $SB($ss, f$tupled)
+    def rowId[W] = new B2[W]
+
+    final class B2[DataId] {
+      type RowId = Option[DataId]
+      type S = SavedAndUnsaved[DataId, P, $II]
+
+      def uniquenessCheck[A](f: P ⇒ A) = Validator.uniqueness[S, RowId, (DataId, (P, $II)), A](
+        (s, ow) ⇒ getSaved(s).toStream.filterNot(wpi ⇒ ow.fold(false)(_ == wpi._1)),
+        (wpi, a) ⇒ a == f(wpi._2._1)
+      )
+
+      def ctxAwareValidators($cvs) =
+        TableSpecB.default($RS(${mc(i => s"s$i.toW(cv$i)")}, buildO))
+    }
+  }
+    """)
+}
+print(s"""
+}
+
+import SpecN._
+final class TableSpecBuilder[P] {
+${B.reverse.mkString("\n")}
+}
+object TableSpecBuilder { def apply[P] = new TableSpecBuilder[P] }
+""")

@@ -1,29 +1,29 @@
 digraph D {
 
-SpecAttr -> SpecBuilder [label="O⁺ = (Oⁿ)⁻" taillabel="n" headlabel="1       "]
-SpecBuilder -> SpecBuilder_B2
-SpecBuilder_B2 -> AttrSpecW [label="W⁺ = Option[DataId⁻]" taillabel="1  " headlabel="n  "]
-SpecBuilder_B2 -> Spec [label="  G⁺ = O⁻"]
-SpecBuilder_B2 -> TableSpecB [label="I⁺ = (Iⁿ)⁻\nV⁺ = (Vⁿ)⁻"]
-AttrSpecW -> Spec [constraint=false taillabel="n" headlabel="1"]
+FieldSpec -> TableSpecBuilder [label="O⁺ = (Oⁿ)⁻" taillabel="n" headlabel="1       "]
+TableSpecBuilder -> TableSpecBuilder_B2
+TableSpecBuilder_B2 -> FieldSpecW [label="W⁺ = Option[DataId⁻]" taillabel="1  " headlabel="n  "]
+TableSpecBuilder_B2 -> RowSpec [label="  G⁺ = O⁻"]
+TableSpecBuilder_B2 -> TableSpecB [label="I⁺ = (Iⁿ)⁻\nV⁺ = (Vⁿ)⁻"]
+FieldSpecW -> RowSpec [constraint=false taillabel="n" headlabel="1"]
 TableSpecB -> TableSpec
-Spec -> Renderable [label="E⁺ = (Iⁿ)⁻\nV⁺ = (Vⁿ)⁻"]
-Renderable -> TableSpecB [label="O⁺ = G⁻\nI⁺ = E⁻"]
+RowSpec -> RowRenderer [label="E⁺ = (Iⁿ)⁻\nV⁺ = (Vⁿ)⁻"]
+RowRenderer -> TableSpecB [label="O⁺ = G⁻\nI⁺ = E⁻"]
 
-Spec [label="Specⁿ\n[S,W,G,P,V,Iₙ,Cₙ,Oₙ]"]
-SpecAttr [label="SpecAttr/AttrSpec\n[P,V,I,C,O]"]
-AttrSpecW [label="AttrSpecW\n[S,W,P,V,I,C,O]"]
-SpecBuilder [label="SpecBuilderⁿ\n[P,O,V,Iₙ,Cₙ,Oₙ]\nIⁿ = ΣIₙ\nVⁿ = ΣVₙ"]
-SpecBuilder_B2 [label="SpecBuilderⁿ.B2\n[P,O,V,Iₙ,Cₙ,Oₙ]\nIⁿ = ΣIₙ\nVⁿ = ΣVₙ\n[DataId]\nS = SavedAndUnsaved[DataId,P,Iⁿ]"]
+RowSpec [label="RowSpecⁿ\n[S,W,G,P,V,Iₙ,Cₙ,Oₙ]"]
+FieldSpec [label="FieldSpec\n[P,V,I,C,O]"]
+FieldSpecW [label="FieldSpecW\n[S,W,P,V,I,C,O]"]
+TableSpecBuilder [label="TableSpecBuilderⁿ\n[P,O,V,Iₙ,Cₙ,Oₙ]\nIⁿ = ΣIₙ\nVⁿ = ΣVₙ"]
+TableSpecBuilder_B2 [label="TableSpecBuilderⁿ.B2\n[P,O,V,Iₙ,Cₙ,Oₙ]\nIⁿ = ΣIₙ\nVⁿ = ΣVₙ\n[DataId]\nS = SavedAndUnsaved[DataId,P,Iⁿ]"]
 TableSpecB [label="TableSpecB\n[S,DataId,O,P,I,V]"]
 TableSpec [label="TableSpec\n[S,DataId,O,P,I,V]"]
-Renderable [label="Renderable\n[S,G,P,E,V]\n\nrenderM: WeirdLens[M,S,S,E]\n⇒ (S ⇒ M[P])\n⇒ ((S,G) ⇒ IO[S])\n⇒ ComponentStateFocus[S] ⇒ M[V]\n\n"]
+RowRenderer [label="RowRenderer\n[S,G,P,E,V]\n\nrenderM: WeirdLens[M,S,S,E]\n⇒ (S ⇒ M[P])\n⇒ ((S,G) ⇒ IO[S])\n⇒ ComponentStateFocus[S] ⇒ M[V]\n\n"]
 
 edge [color=red fontcolor="#550000"]
-User [fontcolor=red]
-User -> SpecAttr [label="1. Create"]
-User -> SpecBuilder [label="2. Create\n3. Specify DataId type"]
-User -> SpecBuilder_B2 [label="4. ctxAwareValidators"]
-User -> TableSpecB [label="5. saveFn"]
+Client [fontcolor=red]
+Client -> FieldSpec [label="1. Create"]
+Client -> TableSpecBuilder [label="2. Create\n3. RowSpecify DataId type"]
+Client -> TableSpecBuilder_B2 [label="4. ctxAwareValidators"]
+Client -> TableSpecB [label="5. saveFn"]
 
 }
