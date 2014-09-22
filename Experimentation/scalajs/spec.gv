@@ -4,10 +4,10 @@ FieldSpec -> TableSpecBuilder [label="U⁺ = ΣOₙ⁻" taillabel="n" headlabel=
 TableSpecBuilder -> TableSpecBuilder_B2
 TableSpecBuilder_B2 -> FieldSpecR [label="R⁺ = Option[D⁻]" taillabel="1  " headlabel="n  "]
 TableSpecBuilder_B2 -> RowSpec
-TableSpecBuilder_B2 -> TableSpecB [label="I⁺ = ΣIₙ⁻\nV⁺ = (V⁻)ⁿ"]
+TableSpecBuilder_B2 -> TableSpecB [label="II⁺ = ΣIₙ⁻\nVV⁺ = (V⁻)ⁿ"]
 FieldSpecR -> RowSpec [constraint=false taillabel="n" headlabel="1"]
 TableSpecB -> TableSpec
-RowSpec -> RowRenderer [label="I⁺ = ΣIₙ⁻\nV⁺ = (V⁻)ⁿ"]
+RowSpec -> RowRenderer [label="II⁺ = ΣIₙ⁻\nVV⁺ = (V⁻)ⁿ"]
 RowRenderer -> TableSpecB
 
 RowSpec             [label="RowSpecⁿ\n[S,R,U,P,V,Iₙ,Cₙ,Oₙ]"]
@@ -15,9 +15,9 @@ FieldSpec           [label="FieldSpec\n[P,V,I,C,O]"]
 FieldSpecR          [label="FieldSpecR\n[S,R,P,V,I,C,O]"]
 TableSpecBuilder    [label="TableSpecBuilderⁿ\n[P,U,V,Iₙ,Cₙ,Oₙ]"]
 TableSpecBuilder_B2 [label="TableSpecBuilderⁿ.B2\n[P,U,V,Iₙ,Cₙ,Oₙ]\n[D]\nS = SavedAndUnsaved[D,P,ΣIₙ]"]
-TableSpecB          [label="TableSpecB\n[S,D,U,P,I,V]"]
-TableSpec           [label="TableSpec\n[S,D,U,P,I,V]"]
-RowRenderer         [label="RowRenderer\n[S,U,P,I,V]\n\nrenderM: WeirdLens[M,S,S,I]\n⇒ (S ⇒ M[P])\n⇒ ((S,U) ⇒ IO[S])\n⇒ ComponentStateFocus[S] ⇒ M[V]\n\n"]
+TableSpecB          [label="TableSpecB\n[S,D,U,P,II,VV]"]
+TableSpec           [label="TableSpec\n[S,D,U,P,II,VV]"]
+RowRenderer         [label="RowRenderer\n[S,U,P,II,VV]\n\nrenderM: WeirdLens[M,S,S,II]\n⇒ (S ⇒ M[P])\n⇒ ((S,U) ⇒ IO[S])\n⇒ ComponentStateFocus[S] ⇒ M[VV]\n\n"]
 
 edge [color=red fontcolor="#550000"]
 Client [fontcolor=red]

@@ -17,6 +17,8 @@ import monocle.std.tuple2._
  * P  = Persisted. The last saved copy of the row.
  * D  = Data ID. Type used to identity persisted data.
  * R  = Row ID. Type used to identity rows in the table (where not all rows are persisted).
+ * II = Inputs. Tuple of (I₁,I₂,…,Iₙ).
+ * VV = Views. Tuple of (V,V,V,…).
  *
  * Done
  * ~~~~
@@ -48,17 +50,17 @@ import monocle.std.tuple2._
  */
 package object table {
 
-  type Saved[D, P, I] = Map[D, (P, I)]
-  type Unsaved[I] = Option[I]
-  type SavedAndUnsaved[D, P, I] = (Saved[D, P, I], Unsaved[I])
+  type Saved[D, P, II] = Map[D, (P, II)]
+  type Unsaved[II] = Option[II]
+  type SavedAndUnsaved[D, P, II] = (Saved[D, P, II], Unsaved[II])
 
-  def getSaved[D, P, I]: SavedAndUnsaved[D, P, I] => Saved[D, P, I] = _._1
+  def getSaved[D, P, II]: SavedAndUnsaved[D, P, II] => Saved[D, P, II] = _._1
 
-  case class SavedUnsavedL[S, D, P, I](savedL: SimpleLens[S, Saved[D, P, I]],
-                                       unsavedL: SimpleLens[S, Unsaved[I]])
+  case class SavedUnsavedL[S, D, P, II](savedL: SimpleLens[S, Saved[D, P, II]],
+                                        unsavedL: SimpleLens[S, Unsaved[II]])
 
   object SavedUnsavedL {
-    def default[D, P, I] =
-      SavedUnsavedL[SavedAndUnsaved[D, P, I], D, P, I](first, second)
+    def default[D, P, II] =
+      SavedUnsavedL[SavedAndUnsaved[D, P, II], D, P, II](first, second)
   }
 }
