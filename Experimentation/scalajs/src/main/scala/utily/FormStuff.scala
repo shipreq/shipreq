@@ -4,7 +4,6 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.ReactVDom._
 import japgolly.scalajs.react.vdom.ReactVDom.all._
 import ScalazReact._
-import utily.SpecN.SpecGeneric
 
 import scalaz.effect.IO
 import scalaz.Scalaz.Id
@@ -72,40 +71,36 @@ object FormStuff {
   class AttrSpecW[S, W, P, V, I, C, O](s: AttrSpec[P, V, I, C, O], val vw: Option[ValidateFnW[S, W, O]])
       extends AttrSpec(s.p2c, s.v, s.editor)
 
+  trait SpecN[S, W, G, P, I, V] {
+    final type II = I
+    final type VV = V
+    def initial(p: P): I
+    def forRow(w: W): Renderable[S, G, P, I, V]
+  }
 
-
-  class TableSpecB[DataId, O, P, I, V](PtoI: P => I, renderable: Option[DataId] => Renderable[SavedAndUnsaved[DataId, P, I], O, P, I, V]) {
+  class TableSpecB[S, DataId, O, P, I, V](PtoI: P => I,
+                                          renderable: Option[DataId] => Renderable[S, O, P, I, V],
+                                          savedUnsaved: SavedUnsavedL[S, DataId, P, I],
+                                          initialState: Seq[(DataId, P)] => S) {
 
     def saveFn2(saveIO: (Option[P], O) => IO[P], id: P => DataId) =
       saveFn((opx, o) => saveIO(opx.map(_._2), o).map(p => (id(p), p)))
 
-    def saveFn(saveIO: (Option[(DataId, P)], O) => IO[(DataId, P)]) = {
-      def mkPI(p: P): (P, I) = (p, PtoI(p))
-      val initialState: Seq[(DataId, P)] => SavedAndUnsaved[DataId, P, I] =
-        xs => (xs.map(x => x._1 -> mkPI(x._2)).toMap, None)
-      new TableSpec[SavedAndUnsaved[DataId, P, I], DataId, O, P, I, V](PtoI, renderable, simpleSavedUnsavedL[DataId, P, I], initialState, saveIO)
-    }
+    def saveFn(saveIO: (Option[(DataId, P)], O) => IO[(DataId, P)]) =
+      new TableSpec[S, DataId, O, P, I, V](PtoI, renderable, savedUnsaved, initialState, saveIO)
   }
 
+  def newTableSpecB[DataId, G, P, I, V](spec: SpecN[SavedAndUnsaved[DataId, P, I], Option[DataId], G, P, I, V]) = {
+    val init = spec.initial _
+    val initialState: Seq[(DataId, P)] => SavedAndUnsaved[DataId, P, I] =
+      xs => (xs.map(x => x._1 -> (x._2, init(x._2))).toMap, None)
+
+    new TableSpecB[SavedAndUnsaved[DataId, P, I], DataId, G, P, I, V](init, spec.forRow, simpleSavedUnsavedL, initialState)
+  }
 
   type Saved[DataId, P, I] = Map[DataId, (P, I)]
   type Unsaved[I] = Option[I]
   type SavedAndUnsaved[DataId, P, I] = (Saved[DataId, P, I], Unsaved[I])
-
-//  type SavedAndUnsavedStor[DataId, P, I] =
-//    final type Saved = Map[DataId, (P, I)]
-//    final type Unsaved = Option[I]
-//    def savedL: SimpleLens[S, Saved]
-//    def unsavedL: SimpleLens[S, Unsaved]
-//  }
-
-//  trait SomeTypes[DataId, P, I] {
-//    final type Saved = Map[DataId, (P, I)]
-//    final type Unsaved = Option[I]
-//    final type S = (Saved, Unsaved)
-//    protected final def savedL = first[S, Saved]
-//    protected final def unsavedL = second[S, Unsaved]
-//  }
 
   def simpleSavedUnsavedL[DataId, P, I] =
     SavedUnsavedL[SavedAndUnsaved[DataId, P, I], DataId, P, I](first, second)
@@ -113,21 +108,6 @@ object FormStuff {
   case class SavedUnsavedL[S, DataId, P, I](
     savedL: SimpleLens[S, Saved[DataId, P, I]],
     unsavedL: SimpleLens[S, Unsaved[I]])
-
-//  trait SavedAndUnsavedStore[S, DataId, P, I] {
-//    final type Saved = Map[DataId, (P, I)]
-//    final type Unsaved = Option[I]
-//    def savedL: SimpleLens[S, Saved]
-//    def unsavedL: SimpleLens[S, Unsaved]
-//  }
-
-//  def xxxSomeTypes[DataId, P, I]
-//  trait SavedAndUnsavedStoreTuple2[DataId, P, I] extends SavedAndUnsavedStore2[S, DataId, P, I]{
-//    final type Saved = Map[DataId, (P, I)]
-//    final type Unsaved = Option[I]
-//    def savedL: SimpleLens[S, Saved]
-//    def unsavedL: SimpleLens[S, Unsaved]
-//  }
 
   def SpecAttr[P] = new {
     def apply[C](p2c: P => C) = new {

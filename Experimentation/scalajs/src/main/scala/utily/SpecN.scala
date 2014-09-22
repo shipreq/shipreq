@@ -18,13 +18,6 @@ import shipreq.webapp.client.ui.Util._
 // TODO use TupleExt.mapn
 object SpecN {
 
-  trait SpecGeneric[S, W, G, P, I, V] {
-    final type II = I
-    final type VV = V
-    def initial(p: P): II
-    def forRow(w: W): Renderable[S, G, P, II, VV]
-  }
-
   /**
    * This is actually just field attribute composition.
    * Single row/record.
@@ -37,7 +30,8 @@ object SpecN {
    */
   case class Spec2[S, W, G, P, V, I1:Equal, C1, O1, I2:Equal, C2, O2](
         s1: AttrSpecW[S,W,P,V,I1,C1,O1], s2: AttrSpecW[S,W,P,V,I2,C2,O2],
-        oo2g: ((O1, O2)) => G) extends SpecGeneric[S, W, G, P, (I1, I2), (V, V)] {
+        oo2g: ((O1, O2)) => G)
+    extends SpecN[S, W, G, P, (I1, I2), (V, V)] {
 
     type OO = (O1, O2)
 
@@ -105,10 +99,8 @@ object SpecN {
         (wpi,a) => a == f(wpi._2._1)
       )
 
-      def ctxAwareValidators(cv1: Option[ValidateFnW[S, RowId, O1]], cv2: Option[ValidateFnW[S, RowId, O2]]) = {
-        val spec = Spec2(s1.toW(cv1), s2.toW(cv2), buildO)
-        new TableSpecB[DataId, O, P, I, VV](spec.initial, spec.forRow)
-      }
+      def ctxAwareValidators(cv1: Option[ValidateFnW[S, RowId, O1]], cv2: Option[ValidateFnW[S, RowId, O2]]) =
+        newTableSpecB(Spec2(s1.toW(cv1), s2.toW(cv2), buildO))
     }
   }
 
@@ -126,11 +118,10 @@ object SpecN {
    */
   case class Spec3[S, W, G, P, V, I1:Equal, C1, O1, I2:Equal, C2, O2, I3:Equal, C3, O3](
       s1: AttrSpecW[S,W,P,V,I1,C1,O1], s2: AttrSpecW[S,W,P,V,I2,C2,O2], s3: AttrSpecW[S,W,P,V,I3,C3,O3],
-      oo2g: ((O1, O2, O3)) => G) {
+      oo2g: ((O1, O2, O3)) => G)
+    extends SpecN[S, W, G, P, (I1, I2, I3), (V, V, V)] {
 
-    type II = (I1, I2, I3)
     type OO = (O1, O2, O3)
-    type VV = (V, V, V)
 
     def initial(p: P): II = (s1 initial p, s2 initial p, s3 initial p)
 
@@ -200,10 +191,8 @@ object SpecN {
         (wpi,a) => a == f(wpi._2._1)
       )
 
-      def ctxAwareValidators(cv1: Option[ValidateFnW[S, RowId, O1]], cv2: Option[ValidateFnW[S, RowId, O2]], cv3: Option[ValidateFnW[S, RowId, O3]]) = {
-        val spec = Spec3(s1.toW(cv1), s2.toW(cv2), s3.toW(cv3), buildO)
-        new TableSpecB[DataId, O, P, I, VV](spec.initial, spec.forRow)
-      }
+      def ctxAwareValidators(cv1: Option[ValidateFnW[S, RowId, O1]], cv2: Option[ValidateFnW[S, RowId, O2]], cv3: Option[ValidateFnW[S, RowId, O3]]) =
+        newTableSpecB(Spec3(s1.toW(cv1), s2.toW(cv2), s3.toW(cv3), buildO))
     }
   }
 

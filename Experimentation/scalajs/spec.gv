@@ -2,20 +2,20 @@ digraph D {
 
 SpecAttr -> SpecBuilder [label="O⁺ = (Oⁿ)⁻" taillabel="n" headlabel="1       "]
 SpecBuilder -> SpecBuilder_B2
-SpecBuilder_B2 -> AttrSpecW [label="S⁺ = SavedAndUnsaved[DataId⁻, P⁻, Iₙ⁻]\nW⁺ = Option[DataId⁻]" taillabel="1  " headlabel="n  "]
-AttrSpecW -> Spec [constraint=false taillabel="n" headlabel="1"]
-SpecBuilder_B2 -> Spec [label="G⁺ = O⁻"]
+SpecBuilder_B2 -> AttrSpecW [label="W⁺ = Option[DataId⁻]" taillabel="1  " headlabel="n  "]
+SpecBuilder_B2 -> Spec [label="  G⁺ = O⁻"]
 SpecBuilder_B2 -> TableSpecB [label="I⁺ = (Iⁿ)⁻\nV⁺ = (Vⁿ)⁻"]
-TableSpecB -> TableSpec [label="   S⁺ = SavedAndUnsaved[DataId⁻, P⁻, I⁻]"]
+AttrSpecW -> Spec [constraint=false taillabel="n" headlabel="1"]
+TableSpecB -> TableSpec
 Spec -> Renderable [label="E⁺ = (Iⁿ)⁻\nV⁺ = (Vⁿ)⁻"]
-Renderable -> TableSpecB [label="S⁻ = SavedAndUnsaved[DataId⁺, P⁺, I⁺]\nO⁺ = G⁻\nI⁺ = E⁻"]
+Renderable -> TableSpecB [label="O⁺ = G⁻\nI⁺ = E⁻"]
 
 Spec [label="Specⁿ\n[S,W,G,P,V,Iₙ,Cₙ,Oₙ]"]
 SpecAttr [label="SpecAttr/AttrSpec\n[P,V,I,C,O]"]
 AttrSpecW [label="AttrSpecW\n[S,W,P,V,I,C,O]"]
-SpecBuilder [label="SpecBuilderⁿ\n[P,O,V,Iₙ,Cₙ,Oₙ]"]
-SpecBuilder_B2 [label="SpecBuilderⁿ.B2\n[P,O,V,Iₙ,Cₙ,Oₙ]\n[DataId]"]
-TableSpecB [label="TableSpecB\n[DataId,O,P,I,V]"]
+SpecBuilder [label="SpecBuilderⁿ\n[P,O,V,Iₙ,Cₙ,Oₙ]\nIⁿ = ΣIₙ\nVⁿ = ΣVₙ"]
+SpecBuilder_B2 [label="SpecBuilderⁿ.B2\n[P,O,V,Iₙ,Cₙ,Oₙ]\nIⁿ = ΣIₙ\nVⁿ = ΣVₙ\n[DataId]\nS = SavedAndUnsaved[DataId,P,Iⁿ]"]
+TableSpecB [label="TableSpecB\n[S,DataId,O,P,I,V]"]
 TableSpec [label="TableSpec\n[S,DataId,O,P,I,V]"]
 Renderable [label="Renderable\n[S,G,P,E,V]\n\nrenderM: WeirdLens[M,S,S,E]\n⇒ (S ⇒ M[P])\n⇒ ((S,G) ⇒ IO[S])\n⇒ ComponentStateFocus[S] ⇒ M[V]\n\n"]
 
