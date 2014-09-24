@@ -2,6 +2,7 @@ package domainy
 
 import shipreq.base.util.TaggedTypes._
 
+/*
 object Data {
 
   // Fuck this. Use a code generator
@@ -22,24 +23,23 @@ object Data {
 
   final case class CustomReqTypeId(value: Long) extends TaggedLong
   implicit object CustomReqTypeId extends TaggedTypeCtor[CustomReqTypeId]
-  /*
-  final case class CustomReqTypeV(mnemonic: ReqTypeMnemonic,
-                                  oldMnemonics: Set[ReqTypeMnemonic],
-                                  name: String,
-                                  implicationRequired: Boolean,
-                                  alive: Boolean) {
-    def withId(id: CustomReqTypeId) = CustomReqType(id, mnemonic, oldMnemonics, name, implicationRequired, alive)
-  }
-  object CustomReqTypeV { val fromTuple = (apply _).tupled}
-  final case class CustomReqType(id: CustomReqTypeId,
-                                 mnemonic: ReqTypeMnemonic,
-                                 oldMnemonics: Set[ReqTypeMnemonic],
-                                 name: String,
-                                 implicationRequired: Boolean,
-                                 alive: Boolean) {
-    def value = CustomReqTypeV(mnemonic, oldMnemonics, name, implicationRequired, alive)
-  }
-  */
+
+//  final case class CustomReqTypeV(mnemonic: ReqTypeMnemonic,
+//                                  oldMnemonics: Set[ReqTypeMnemonic],
+//                                  name: String,
+//                                  implicationRequired: Boolean,
+//                                  alive: Boolean) {
+//    def withId(id: CustomReqTypeId) = CustomReqType(id, mnemonic, oldMnemonics, name, implicationRequired, alive)
+//  }
+//  object CustomReqTypeV { val fromTuple = (apply _).tupled}
+//  final case class CustomReqType(id: CustomReqTypeId,
+//                                 mnemonic: ReqTypeMnemonic,
+//                                 oldMnemonics: Set[ReqTypeMnemonic],
+//                                 name: String,
+//                                 implicationRequired: Boolean,
+//                                 alive: Boolean) {
+//    def value = CustomReqTypeV(mnemonic, oldMnemonics, name, implicationRequired, alive)
+//  }
 
   final case class CustomReqTypeNV(mnemonic: ReqTypeMnemonic, name: String, implicationRequired: Boolean)
   object CustomReqTypeNV { val fromTuple = (apply _).tupled}
@@ -62,3 +62,27 @@ object Data {
 //                                 alive: Boolean)
 //  case class ReqTypesRequiringImplicitation(t: Set[ReqType])
 }
+
+object Data2 {
+
+  object CustomIssueType {
+
+    final case class Id(value: Long) extends TaggedLong
+
+    implicit object Id extends TaggedTypeCtor[Id]
+
+    final case class V(key: String, desc: Option[String]) {
+      def withId(id: Id) = (id, key, desc)
+    }
+
+    object V {
+      val fromTuple = (apply _).tupled
+    }
+
+    final case class P(id: Id, key: String, desc: Option[String]) {
+      def value = V(key, desc)
+    }
+  }
+
+}
+*/
