@@ -10,6 +10,9 @@ object AppConsts {
   /** Usernames' min & max lengths. */
   def usernameLength = 3 to 32
 
+  /** Requirement types' min & max lengths. */
+  def reqTypeMnemonicLength = 1 to 6
+
   /** Email address max length. */
   def emailMaxLength = 120
 

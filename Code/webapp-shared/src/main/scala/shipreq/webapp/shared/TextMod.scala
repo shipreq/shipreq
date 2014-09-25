@@ -23,6 +23,8 @@ object TextMod {
 
   val lowerCase = Endo[String](_.toLowerCase)
 
+  val upperCase = Endo[String](_.toUpperCase)
+
   val niceSymbols =
     symbol("<=", "≤") compose
     symbol(">=", "≥")
@@ -39,6 +41,12 @@ object TextMod {
 
   val noWhitespace =
     regex(whitespaceRegex, "")
+
+  def truncateToLength(range: Range.Inclusive): Endo[String] =
+    truncateToLength(range.end)
+
+  def truncateToLength(maxLen: Int): Endo[String] =
+    Endo(s => if (s.length <= maxLen) s else s.substring(0, maxLen))
 
   object nonBlank extends (String <=> Option[String]) {
     override def to = s => if (s.isEmpty) None else Some(s)
