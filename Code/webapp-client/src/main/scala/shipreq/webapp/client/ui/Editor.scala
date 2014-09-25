@@ -2,26 +2,48 @@ package shipreq.webapp.client.ui
 
 import scalaz.effect.IO
 import scalaz.syntax.bind._
+import scalaz.Isomorphism.<=>
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.ReactVDom._
 import japgolly.scalajs.react.vdom.ReactVDom.all._
 import japgolly.scalajs.react.ScalazReact._
 import Util._
+import Editor.Error
 
 trait Editor[D, V] {
   def render[S](data: D,
-                error: Option[ErrorMsg],
+                error: Error,
                 onChange: D => ReactST[IO, S, Unit],
                 onCancel: IO[Unit] => ReactST[IO, S, Unit],
                 onEditEnd: ReactST[IO, S, Unit],
                 T: ComponentStateFocus[S]): V
+
+  final def map[E](iso: D <=> E): Editor[E, V] =
+    new Editor.Mapped(iso, this)
+}
+
+object Editor {
+  type Error = Option[String]
+
+  class Mapped[A, B, V](iso: A <=> B, underlying: Editor[A, V]) extends Editor[B, V] {
+    override def render[S](data: B,
+                           error: Error,
+                           onChange: B => ReactST[IO, S, Unit],
+                           onCancel: IO[Unit] => ReactST[IO, S, Unit],
+                           onEditEnd: ReactST[IO, S, Unit],
+                           T: ComponentStateFocus[S]) = {
+      val data2 = iso from data
+      val onChange2 = (a: A) => onChange(iso to a)
+      underlying.render(data2, error, onChange2, onCancel, onEditEnd, T)
+    }
+  }
 }
 
 object Editors {
 
   class TextEditor(node: Tag) extends Editor[String, Modifier] {
     override def render[S](data: String,
-                           error: Option[ErrorMsg],
+                           error: Error,
                            onChange: String => ReactST[IO, S, Unit],
                            onCancel: IO[Unit] => ReactST[IO, S, Unit],
                            onEditEnd: ReactST[IO, S, Unit],
@@ -49,7 +71,7 @@ object Editors {
 
   object CheckboxEditor extends Editor[Boolean, Modifier] {
     override def render[S](data: Boolean,
-                           error: Option[ErrorMsg],
+                           error: Error,
                            onChange: Boolean => ReactST[IO, S, Unit],
                            onCancel: IO[Unit] => ReactST[IO, S, Unit],
                            onEditEnd: ReactST[IO, S, Unit],

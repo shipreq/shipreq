@@ -5,6 +5,9 @@ import scalaz.{Failure, Success, Endo}
 class ValidatorPlus[I, C, V](val liveCorrect: I => I, cp: CorrectionPart[I, C], vp: ValidationPart[C, V])
   extends Validator[I, C, V](cp, vp) {
 
+  override def map[V2](f: V => V2): ValidatorPlus[I, C, V2] =
+    new ValidatorPlus(liveCorrect, cp, vp map f)
+
   def stateful[S](t: ValidatePlusS[S, V]): S => ValidatorPlus[I, C, V] =
     s => {
       val vp2 = ValidationPart[C, V](c =>
@@ -27,8 +30,11 @@ object ValidatorPlus {
   def apply[I, C, V](cp: CorrectionPart[I, C], vp: ValidationPart[C, V]): ValidatorPlus[I, C, V] =
     new ValidatorPlus(identity[I], cp, vp)
 
-  def nop[A] =
+  def nop[A]: ValidatorPlus[A, A, A] =
     apply(CorrectionPart.nop[A], ValidationPart.nop[A], Endo.idEndo[A])
+
+  def nop[I, V](f: I => V): ValidatorPlus[I, I, V] =
+    apply(CorrectionPart.nop[I], ValidationPart.nop(f), Endo.idEndo[I])
 
   object Implicits {
     implicit class ValidatorExt[I, C, V](val v: Validator[I, C, V]) extends AnyVal {

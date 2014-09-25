@@ -70,8 +70,11 @@ object ValidationPart {
     }
   })
 
-  def nop[A] =
-    ValidationPart[A, A](c => Success(c.value))
+  def nop[A]: ValidationPart[A, A] =
+    ValidationPart(c => Success(c.value))
+
+  def nop[C, V](f: C => V): ValidationPart[C, V] =
+    ValidationPart(c => Success(f(c.value)))
 }
 
 // =====================================================================================================================

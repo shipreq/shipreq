@@ -60,6 +60,7 @@ for (a <- (1 to 9)) {
 
   def RS = s"RowSpec$a"
   def SB = s"TableSpecBuider$a"
+  def PS = s"TablePreSpec$a"
 
   B = s"  def apply[V, $IeCO]($spec) = new $SB[P,$OO,V,$ICO]($ss,x⇒x)" :: B
 
@@ -88,18 +89,20 @@ $rn
       }
   }
 
-  final class $SB[P, U, V, $IeCO]($spec, buildU: ($OO) ⇒ U) {
-    def mapU[UU](f: U ⇒ UU) = new $SB($ss, f compose buildU)
-    def buildU[UU](f: $OO ⇒ UU) = new $SB($ss, f$tupled)
-    def dataId[D] = new B2[D]
-    final class B2[D] {
-      type R = Option[D]
-      type S = SavedAndUnsaved[D, P, $II]
-      def uniquenessCheck[A: Equal](f: P ⇒ A) =
-        TableConstraint.uniquenessT[D,P,$II,A](f)
-      def tableConstraints($cvs) =
-        TableSpecB default $RS(${mc(i => s"s$i toR cv$i")},buildU)
-    }
+  final class $SB[P, U1, V, $IeCO]($spec, buildU: ($OO) ⇒ U1) {
+    def mapU[U2](f: U1 ⇒ U2) = new $SB($ss, f compose buildU)
+    def buildU[U2](f: $OO ⇒ U2) = new $SB($ss, f$tupled)
+    def dataId[D] = new $PS[P,D,U1,V,$ICO]($ss, buildU)
+  }
+
+  final class $PS[P, D, U1, V, $IeCO]($spec, buildU: ($OO) ⇒ U1) {
+    type U = U1
+    type R = Option[D]
+    type S = SavedAndUnsaved[D, P, $II]
+    def uniquenessCheck[A: Equal](f: P ⇒ A) =
+      TableConstraint.uniquenessT[D,P,$II,A](f)
+    def tableConstraints($cvs) =
+      TableSpecB default $RS(${mc(i => s"s$i toR cv$i")},buildU)
   }""")
 }
 print(s"""

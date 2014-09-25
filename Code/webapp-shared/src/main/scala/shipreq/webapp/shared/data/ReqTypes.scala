@@ -1,9 +1,13 @@
 package shipreq.webapp.shared.data
 
+import scalaz.Isomorphism.<=>
 import shipreq.base.util.TaggedTypes._
 
 sealed trait ImplicationRequired
-case object ImplicationRequired extends ImplicationRequired
+case object ImplicationRequired extends ImplicationRequired with (Boolean <=> ImplicationRequired) {
+  override def from = _ == ImplicationRequired
+  override def to = b => if (b) ImplicationRequired else ImplicationNotRequired
+}
 case object ImplicationNotRequired extends ImplicationRequired
 
 sealed trait ReqType {
