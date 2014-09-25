@@ -6,6 +6,7 @@ import scalaz.effect.IO
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.ScalazReact._
 import shipreq.webapp.client.ui.Implicits._
+import shipreq.webapp.shared.validation.ValidatorPlus
 
 class SmartEditor[S, I: Equal, C, O, M[_] : Bind : Optional2](
     vs: S => ValidatorPlus[I, C, O],

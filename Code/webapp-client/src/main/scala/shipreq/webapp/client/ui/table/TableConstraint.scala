@@ -1,8 +1,7 @@
 package shipreq.webapp.client.ui.table
 
 import scalaz.{NonEmptyList, Equal}
-import shipreq.webapp.client.ui._
-import shipreq.webapp.shared.validation.VFailure
+import shipreq.webapp.shared.validation.{ValidatePlusR, VFailure}
 import scalaz.syntax.equal._
 
 object TableConstraint {
@@ -10,9 +9,10 @@ object TableConstraint {
   def uniquenessFailure(fieldName: String) =
     VFailure.forField(fieldName, NonEmptyList("must be unique."))
 
-  final class UniquenessB[S, R, A](b: (=> VFailure) => ValidateR[S, R, A]) {
-    def apply(fail: => VFailure) = b(fail)
-    def failField(fieldName: String) = apply(uniquenessFailure(fieldName))
+  final class UniquenessB[S, R, A](b: VFailure => ValidatePlusR[S, R, A]) {
+    def apply(fail: VFailure) = b(fail)
+    def fieldName(fieldName: String) = apply(uniquenessFailure(fieldName))
+    def failureMsg(msg: String) = apply(VFailure looseMsg msg)
   }
 
   def uniqueness[S, R, A, B](extract: (S, R) => Stream[A], cmp: (A, B) => Boolean) =

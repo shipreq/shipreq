@@ -7,6 +7,7 @@ import scalaz.syntax.bind._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.client.ui.Implicits._
 import shipreq.webapp.client.ui._
+import shipreq.webapp.shared.validation.{ValidatePlusR, ValidatorPlus}
 
 object SpecN {
 
@@ -42,7 +43,7 @@ object SpecN {
       type S = SavedAndUnsaved[D, P, I1]
       def uniquenessCheck[A: Equal](f: P ⇒ A) =
         TableConstraint.uniquenessT[D,P,I1,A](f)
-      def tableConstraints(cv1: Option[ValidateR[S,R,O1]]) =
+      def tableConstraints(cv1: Option[ValidatePlusR[S,R,O1]]) =
         TableSpecB default RowSpec1(s1 toR cv1,buildU)
     }
   }
@@ -83,7 +84,7 @@ object SpecN {
       type S = SavedAndUnsaved[D, P, (I1,I2)]
       def uniquenessCheck[A: Equal](f: P ⇒ A) =
         TableConstraint.uniquenessT[D,P,(I1,I2),A](f)
-      def tableConstraints(cv1: Option[ValidateR[S,R,O1]],cv2: Option[ValidateR[S,R,O2]]) =
+      def tableConstraints(cv1: Option[ValidatePlusR[S,R,O1]],cv2: Option[ValidatePlusR[S,R,O2]]) =
         TableSpecB default RowSpec2(s1 toR cv1,s2 toR cv2,buildU)
     }
   }
@@ -128,7 +129,7 @@ object SpecN {
       type S = SavedAndUnsaved[D, P, (I1,I2,I3)]
       def uniquenessCheck[A: Equal](f: P ⇒ A) =
         TableConstraint.uniquenessT[D,P,(I1,I2,I3),A](f)
-      def tableConstraints(cv1: Option[ValidateR[S,R,O1]],cv2: Option[ValidateR[S,R,O2]],cv3: Option[ValidateR[S,R,O3]]) =
+      def tableConstraints(cv1: Option[ValidatePlusR[S,R,O1]],cv2: Option[ValidatePlusR[S,R,O2]],cv3: Option[ValidatePlusR[S,R,O3]]) =
         TableSpecB default RowSpec3(s1 toR cv1,s2 toR cv2,s3 toR cv3,buildU)
     }
   }
@@ -177,7 +178,7 @@ object SpecN {
       type S = SavedAndUnsaved[D, P, (I1,I2,I3,I4)]
       def uniquenessCheck[A: Equal](f: P ⇒ A) =
         TableConstraint.uniquenessT[D,P,(I1,I2,I3,I4),A](f)
-      def tableConstraints(cv1: Option[ValidateR[S,R,O1]],cv2: Option[ValidateR[S,R,O2]],cv3: Option[ValidateR[S,R,O3]],cv4: Option[ValidateR[S,R,O4]]) =
+      def tableConstraints(cv1: Option[ValidatePlusR[S,R,O1]],cv2: Option[ValidatePlusR[S,R,O2]],cv3: Option[ValidatePlusR[S,R,O3]],cv4: Option[ValidatePlusR[S,R,O4]]) =
         TableSpecB default RowSpec4(s1 toR cv1,s2 toR cv2,s3 toR cv3,s4 toR cv4,buildU)
     }
   }
@@ -230,7 +231,7 @@ object SpecN {
       type S = SavedAndUnsaved[D, P, (I1,I2,I3,I4,I5)]
       def uniquenessCheck[A: Equal](f: P ⇒ A) =
         TableConstraint.uniquenessT[D,P,(I1,I2,I3,I4,I5),A](f)
-      def tableConstraints(cv1: Option[ValidateR[S,R,O1]],cv2: Option[ValidateR[S,R,O2]],cv3: Option[ValidateR[S,R,O3]],cv4: Option[ValidateR[S,R,O4]],cv5: Option[ValidateR[S,R,O5]]) =
+      def tableConstraints(cv1: Option[ValidatePlusR[S,R,O1]],cv2: Option[ValidatePlusR[S,R,O2]],cv3: Option[ValidatePlusR[S,R,O3]],cv4: Option[ValidatePlusR[S,R,O4]],cv5: Option[ValidatePlusR[S,R,O5]]) =
         TableSpecB default RowSpec5(s1 toR cv1,s2 toR cv2,s3 toR cv3,s4 toR cv4,s5 toR cv5,buildU)
     }
   }
@@ -287,7 +288,7 @@ object SpecN {
       type S = SavedAndUnsaved[D, P, (I1,I2,I3,I4,I5,I6)]
       def uniquenessCheck[A: Equal](f: P ⇒ A) =
         TableConstraint.uniquenessT[D,P,(I1,I2,I3,I4,I5,I6),A](f)
-      def tableConstraints(cv1: Option[ValidateR[S,R,O1]],cv2: Option[ValidateR[S,R,O2]],cv3: Option[ValidateR[S,R,O3]],cv4: Option[ValidateR[S,R,O4]],cv5: Option[ValidateR[S,R,O5]],cv6: Option[ValidateR[S,R,O6]]) =
+      def tableConstraints(cv1: Option[ValidatePlusR[S,R,O1]],cv2: Option[ValidatePlusR[S,R,O2]],cv3: Option[ValidatePlusR[S,R,O3]],cv4: Option[ValidatePlusR[S,R,O4]],cv5: Option[ValidatePlusR[S,R,O5]],cv6: Option[ValidatePlusR[S,R,O6]]) =
         TableSpecB default RowSpec6(s1 toR cv1,s2 toR cv2,s3 toR cv3,s4 toR cv4,s5 toR cv5,s6 toR cv6,buildU)
     }
   }
@@ -348,7 +349,7 @@ object SpecN {
       type S = SavedAndUnsaved[D, P, (I1,I2,I3,I4,I5,I6,I7)]
       def uniquenessCheck[A: Equal](f: P ⇒ A) =
         TableConstraint.uniquenessT[D,P,(I1,I2,I3,I4,I5,I6,I7),A](f)
-      def tableConstraints(cv1: Option[ValidateR[S,R,O1]],cv2: Option[ValidateR[S,R,O2]],cv3: Option[ValidateR[S,R,O3]],cv4: Option[ValidateR[S,R,O4]],cv5: Option[ValidateR[S,R,O5]],cv6: Option[ValidateR[S,R,O6]],cv7: Option[ValidateR[S,R,O7]]) =
+      def tableConstraints(cv1: Option[ValidatePlusR[S,R,O1]],cv2: Option[ValidatePlusR[S,R,O2]],cv3: Option[ValidatePlusR[S,R,O3]],cv4: Option[ValidatePlusR[S,R,O4]],cv5: Option[ValidatePlusR[S,R,O5]],cv6: Option[ValidatePlusR[S,R,O6]],cv7: Option[ValidatePlusR[S,R,O7]]) =
         TableSpecB default RowSpec7(s1 toR cv1,s2 toR cv2,s3 toR cv3,s4 toR cv4,s5 toR cv5,s6 toR cv6,s7 toR cv7,buildU)
     }
   }
@@ -413,7 +414,7 @@ object SpecN {
       type S = SavedAndUnsaved[D, P, (I1,I2,I3,I4,I5,I6,I7,I8)]
       def uniquenessCheck[A: Equal](f: P ⇒ A) =
         TableConstraint.uniquenessT[D,P,(I1,I2,I3,I4,I5,I6,I7,I8),A](f)
-      def tableConstraints(cv1: Option[ValidateR[S,R,O1]],cv2: Option[ValidateR[S,R,O2]],cv3: Option[ValidateR[S,R,O3]],cv4: Option[ValidateR[S,R,O4]],cv5: Option[ValidateR[S,R,O5]],cv6: Option[ValidateR[S,R,O6]],cv7: Option[ValidateR[S,R,O7]],cv8: Option[ValidateR[S,R,O8]]) =
+      def tableConstraints(cv1: Option[ValidatePlusR[S,R,O1]],cv2: Option[ValidatePlusR[S,R,O2]],cv3: Option[ValidatePlusR[S,R,O3]],cv4: Option[ValidatePlusR[S,R,O4]],cv5: Option[ValidatePlusR[S,R,O5]],cv6: Option[ValidatePlusR[S,R,O6]],cv7: Option[ValidatePlusR[S,R,O7]],cv8: Option[ValidatePlusR[S,R,O8]]) =
         TableSpecB default RowSpec8(s1 toR cv1,s2 toR cv2,s3 toR cv3,s4 toR cv4,s5 toR cv5,s6 toR cv6,s7 toR cv7,s8 toR cv8,buildU)
     }
   }
@@ -482,7 +483,7 @@ object SpecN {
       type S = SavedAndUnsaved[D, P, (I1,I2,I3,I4,I5,I6,I7,I8,I9)]
       def uniquenessCheck[A: Equal](f: P ⇒ A) =
         TableConstraint.uniquenessT[D,P,(I1,I2,I3,I4,I5,I6,I7,I8,I9),A](f)
-      def tableConstraints(cv1: Option[ValidateR[S,R,O1]],cv2: Option[ValidateR[S,R,O2]],cv3: Option[ValidateR[S,R,O3]],cv4: Option[ValidateR[S,R,O4]],cv5: Option[ValidateR[S,R,O5]],cv6: Option[ValidateR[S,R,O6]],cv7: Option[ValidateR[S,R,O7]],cv8: Option[ValidateR[S,R,O8]],cv9: Option[ValidateR[S,R,O9]]) =
+      def tableConstraints(cv1: Option[ValidatePlusR[S,R,O1]],cv2: Option[ValidatePlusR[S,R,O2]],cv3: Option[ValidatePlusR[S,R,O3]],cv4: Option[ValidatePlusR[S,R,O4]],cv5: Option[ValidatePlusR[S,R,O5]],cv6: Option[ValidatePlusR[S,R,O6]],cv7: Option[ValidatePlusR[S,R,O7]],cv8: Option[ValidatePlusR[S,R,O8]],cv9: Option[ValidatePlusR[S,R,O9]]) =
         TableSpecB default RowSpec9(s1 toR cv1,s2 toR cv2,s3 toR cv3,s4 toR cv4,s5 toR cv5,s6 toR cv6,s7 toR cv7,s8 toR cv8,s9 toR cv9,buildU)
     }
   }

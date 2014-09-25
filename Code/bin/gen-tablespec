@@ -16,6 +16,7 @@ import scalaz.syntax.bind._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.client.ui.Implicits._
 import shipreq.webapp.client.ui._
+import shipreq.webapp.shared.validation.{ValidatePlusR, ValidatorPlus}
 
 object SpecN {""")
 
@@ -45,7 +46,7 @@ for (a <- (1 to 9)) {
   def VV    = mt(_ ⇒ "V")
   def vs    = mt(i ⇒ s"v$i")
   def ss    = mc(i ⇒ s"s$i")
-  def cvs   = mc(i ⇒ s"cv$i: Option[ValidateR[S,R,O$i]]")
+  def cvs   = mc(i ⇒ s"cv$i: Option[ValidatePlusR[S,R,O$i]]")
 
   def ta(i: Int) = if (a==1) "" else s"._$i" //tuple access
   def iLmap(i: Int) = if (a==1) "" else s".mapF(_${ta(i)})((a,b) ⇒ a put$i b)"

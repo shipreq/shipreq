@@ -1,12 +1,11 @@
-package shipreq.webapp.client.ui
+package shipreq.webapp.shared.validation
 
 import scalaz.{Failure, Success, Endo}
-import shipreq.webapp.shared.validation._
 
 class ValidatorPlus[I, C, V](val liveCorrect: I => I, cp: CorrectionPart[I, C], vp: ValidationPart[C, V])
   extends Validator[I, C, V](cp, vp) {
 
-  def stateful[S](t: ValidateS[S, V]): S => ValidatorPlus[I, C, V] =
+  def stateful[S](t: ValidatePlusS[S, V]): S => ValidatorPlus[I, C, V] =
     s => {
       val vp2 = ValidationPart[C, V](c =>
         validate(c) match {
@@ -24,6 +23,9 @@ object ValidatorPlus {
 
   def apply[I, C, V](cp: CorrectionPart[I, C], vp: ValidationPart[C, V], liveCorrect: I => I): ValidatorPlus[I, C, V] =
     new ValidatorPlus(liveCorrect, cp, vp)
+
+  def apply[I, C, V](cp: CorrectionPart[I, C], vp: ValidationPart[C, V]): ValidatorPlus[I, C, V] =
+    new ValidatorPlus(identity[I], cp, vp)
 
   def nop[A] =
     apply(CorrectionPart.nop[A], ValidationPart.nop[A], Endo.idEndo[A])

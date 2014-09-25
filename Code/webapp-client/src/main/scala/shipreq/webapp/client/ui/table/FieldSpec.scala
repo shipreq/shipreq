@@ -2,10 +2,11 @@ package shipreq.webapp.client.ui.table
 
 import japgolly.scalajs.react.vdom.ReactVDom.Modifier
 import shipreq.webapp.client.ui._
+import shipreq.webapp.shared.validation.{ValidatePlusR, ValidatorPlus}
 
 class FieldSpec[P, V, I, C, O](val p2c: P => C, val v: ValidatorPlus[I, C, O], val e: Editor[I, V]) {
   def initial: P => I = v.cp.ci compose p2c
-  @inline final def toR[S,R](vw: Option[ValidateR[S, R, O]]) = new FieldSpecR(this, vw)
+  @inline final def toR[S,R](vw: Option[ValidatePlusR[S, R, O]]) = new FieldSpecR(this, vw)
 }
 
 object FieldSpec {
@@ -17,5 +18,5 @@ object FieldSpec {
   }
 }
 
-class FieldSpecR[S, R, P, V, I, C, O](s: FieldSpec[P, V, I, C, O], val vr: Option[ValidateR[S, R, O]])
+class FieldSpecR[S, R, P, V, I, C, O](s: FieldSpec[P, V, I, C, O], val vr: Option[ValidatePlusR[S, R, O]])
   extends FieldSpec(s.p2c, s.v, s.e)
