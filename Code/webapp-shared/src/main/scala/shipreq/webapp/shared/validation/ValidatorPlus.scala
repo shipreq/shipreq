@@ -29,4 +29,18 @@ object ValidatorPlus {
 
   def nop[A] =
     apply(CorrectionPart.nop[A], ValidationPart.nop[A], Endo.idEndo[A])
+
+  object Implicits {
+    implicit class ValidatorExt[I, C, V](val v: Validator[I, C, V]) extends AnyVal {
+
+      def toPlus: ValidatorPlus[I, C, V] =
+        ValidatorPlus[I, C, V](v.cp, v.vp)
+
+      def toPlus(liveCorrect: I => I): ValidatorPlus[I, C, V] =
+        ValidatorPlus[I, C, V](v.cp, v.vp, liveCorrect)
+
+      def toPlus(liveCorrect: Endo[I]): ValidatorPlus[I, C, V] =
+        ValidatorPlus[I, C, V](v.cp, v.vp, liveCorrect)
+    }
+  }
 }

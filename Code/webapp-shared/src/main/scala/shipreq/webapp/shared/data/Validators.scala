@@ -4,6 +4,8 @@ import shipreq.webapp.shared.AppConsts._
 import shipreq.webapp.shared.TextMod._
 import shipreq.webapp.shared.validation._
 import Constraints._
+import GenericValidators._
+import ValidatorPlus.Implicits._
 
 object Validators {
 
@@ -18,5 +20,6 @@ object Validators {
       ).map(ReqType.Mnemonic),
       upperCase andThen regex("[^A-Z]".r, "") andThen truncateToLength(reqTypeMnemonicLength))
 
+    val name = mandatoryShortText("Name").toPlus
   }
 }
