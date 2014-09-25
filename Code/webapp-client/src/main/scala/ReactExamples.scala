@@ -12,7 +12,8 @@ object ReactExamples extends js.JSApp {
 
   override def main(): Unit = {
     example1(document getElementById "eg1")
-    example2(document getElementById "eg2")
+//    example2(document getElementById "eg2")
+    cfgReqTypesTest(document getElementById "eg2")
   }
 
   @JSExport
@@ -59,6 +60,21 @@ object ReactExamples extends js.JSApp {
   }
 
   // ===================================================================================================================
+
+  def cfgReqTypesTest(mountNode: Node) = {
+    import shipreq.webapp.shared.data._
+    import shipreq.webapp.client.CfgReqType._
+    import CustReqType.Id
+    implicit def autoMnemonic(s: String) = ReqType.Mnemonic(s)
+    ReqTypeTableCompOuter(ReqTypeTableProps(List(
+      CustReqType(Id(1), "CO", Set.empty, "Constraint", ImplicationNotRequired, Alive),
+      CustReqType(Id(2), "MF", Set.empty, "Major Feature", ImplicationNotRequired, Alive),
+      CustReqType(Id(3), "FR", Set.empty, "Functional Requirement", ImplicationNotRequired, Alive),
+      CustReqType(Id(4), "BR", Set.empty, "Business Rule", ImplicationNotRequired, Alive),
+      CustReqType(Id(5), "DD", Set("DA", "DDF"), "Data Definition", ImplicationNotRequired, Dead),
+      CustReqType(Id(6), "SI", Set.empty, "Solution Idea", ImplicationRequired, Dead)
+    ), false)) render mountNode
+  }
 
   def example2(mountNode: Node) = {
 
