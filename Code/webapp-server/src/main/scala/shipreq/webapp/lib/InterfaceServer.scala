@@ -2,7 +2,8 @@ package shipreq.webapp.lib
 
 import net.liftweb.http.S
 import upickle._
-import shipreq.webapp.shared.rpc.Interface
+import shipreq.base.util.Util.quickSB
+import shipreq.webapp.shared.rpc.{ClientAccess, Interface}
 
 /**
  * Server-side RPC support.
@@ -21,4 +22,23 @@ object InterfaceServer {
     Interface.Remote[D](fnName, d)
   }
 
+  def invokeClientJs[I: Writer, O](f: ClientAccess.Fn[I, O])(i: I): String = {
+    def runOnWindowLoad(f: StringBuilder => Unit): StringBuilder => Unit = sb => {
+      sb append "window.onload = function(){"
+      f(sb)
+      sb append "};"
+    }
+    def callClient[I: Writer](n: String, i: I): StringBuilder => Unit = sb => {
+      sb append ClientAccess.client
+      sb append "()."
+      sb append n
+      sb append '('
+      sb append write(i)
+      sb append ')'
+    }
+    quickSB(runOnWindowLoad(callClient(f.name, i)))
+  }
+
+  def invokeClientHtml[I: Writer, O](f: ClientAccess.Fn[I, O])(i: I) =
+    <script type="text/javascript">{invokeClientJs(f)(i)}</script>
 }

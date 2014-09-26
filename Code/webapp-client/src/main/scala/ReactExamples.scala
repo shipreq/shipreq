@@ -8,26 +8,16 @@ import scala.scalajs.js
 import org.scalajs.dom.{document, window, Node, console, alert}
 import scala.scalajs.js.annotation.{JSExport, JSName}
 
-object ReactExamples extends js.JSApp {
+object ReactExamples {
 
-  override def main(): Unit = {
+  def main(r: Interfaces.WIP): Unit = {
     example1(document getElementById "eg1")
-//    example2(document getElementById "eg2")
+    //    example2(document getElementById "eg2")
     cfgReqTypesTest(document getElementById "eg2")
+
+    invokeCallback(r.square)(123, s => alert(s"RESPONSE: [$s]"))
+    invokeCallback(r.grrr)(ExampleData(666), s => alert(s.yar))
   }
-
-  @JSExport
-  def wired(a: js.Any) = readCluster[Interfaces.WIP](a)
-
-  @JSExport
-  def invokeSquare(p: Interfaces.WIP, n: js.Number): Unit =
-    invokeCallback(p.square)(n.toInt, s => alert(s"RESPONSE: [$s]"))
-
-  @JSExport
-  def invokeGrrr(p: Interfaces.WIP, n: js.Number): Unit =
-    invokeCallback(p.grrr)(ExampleData(n.toInt), s => alert(s.yar))
-
-
 
   // ===================================================================================================================
 
