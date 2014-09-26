@@ -14,12 +14,12 @@ object Validators {
     val mnemonic = ValidatorPlus(
       CorrectionPart.endo(noWhitespace andThen upperCase),
       ValidationPart.forConstraint("Mnemonic",
-        nonEmpty
-          + lengthInRange(reqTypeMnemonicLength)
-          + whitelistCharsR("A-Z")("may only consist of letters.")
+        nonEmpty >> (
+          lengthInRange(reqTypeMnemonicLength) + whitelistCharsR("A-Z")("may only consist of letters."))
       ).map(ReqType.Mnemonic),
       upperCase andThen regex("[^A-Z]".r, "") andThen truncateToLength(reqTypeMnemonicLength))
 
     val name = mandatoryShortText("Name").toPlus
   }
+
 }

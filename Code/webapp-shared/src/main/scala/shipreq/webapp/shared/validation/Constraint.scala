@@ -10,7 +10,8 @@ trait Constraint[-A] {
   final def +[B <: A](b: Constraint[B]) = Constraint[B](
     i => invalidate(i) ::: b.invalidate(i))
 
-  final def &&[B <: A](b: Constraint[B]) = Constraint[B](
+  /** Runs b only if this passes */
+  final def >>[B <: A](b: Constraint[B]) = Constraint[B](
     i => invalidate(i) match {
       case Nil => b.invalidate(i)
       case aes => aes
