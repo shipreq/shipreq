@@ -1,8 +1,7 @@
 package hahaa
 
-import shipreq.webapp.client.lib.{InterfaceClient, LiftAjax}
-import shipreq.webapp.shared.rpc._
-import InterfaceClient._
+import shipreq.webapp.shared.protocol.{ExampleData, Routines}
+import shipreq.webapp.client.protocol.ClientProtocol
 
 import scala.scalajs.js
 import org.scalajs.dom.{document, window, Node, console, alert}
@@ -10,13 +9,13 @@ import scala.scalajs.js.annotation.{JSExport, JSName}
 
 object ReactExamples {
 
-  def main(r: Interfaces.WIP): Unit = {
+  def main(r: Routines.WIP): Unit = {
     example1(document getElementById "eg1")
     //    example2(document getElementById "eg2")
     cfgReqTypesTest(document getElementById "eg2")
 
-    invokeCallback(r.square)(123, s => alert(s"RESPONSE: [$s]"))
-    invokeCallback(r.grrr)(ExampleData(666), s => alert(s.yar))
+    ClientProtocol.call(r.square)(123, s => alert(s"RESPONSE: [$s]"))
+    ClientProtocol.call(r.grrr)(ExampleData(666), s => alert(s.yar))
   }
 
   // ===================================================================================================================
