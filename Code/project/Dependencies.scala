@@ -82,7 +82,7 @@ object Deps {
     val testkit = dd("akka-testkit")
   }
 
-  def upickleVersion = "0.2.4"
+  def upickleVersion = "0.2.5"
 
   val upickle     :MS = "com.lihaoyi"                %% "upickle"               % upickleVersion
   val okHttp      :MS = "com.squareup.okhttp"         % "okhttp"                % "1.5.4"

@@ -13,7 +13,7 @@ object InterfaceClient {
   // TODO test all failure scenarios imaginable
 
   def readCluster[C <: Interface.Cluster : Reader](a: js.Any) =
-    readJs[C](Patches readJs a)
+    readJs[C](json.readJs(a)) // TODO unsafe readJs
 
   def invokeCallback[D <: Interface.Def](r: Interface.Remote[D])
                                         (input: r.d.I, callback: r.d.O => Unit)
@@ -22,7 +22,7 @@ object InterfaceClient {
     val i = js.encodeURIComponent(write(input))
     val s: js.Any => Unit = o => {
       console.log("invokeCallback result", o)
-      val oo = readJs[r.d.O](Patches readJs o)
+      val oo = readJs[r.d.O](json.readJs(o)) // TODO unsafe readJs
       callback(oo)
     }
     // needs failure

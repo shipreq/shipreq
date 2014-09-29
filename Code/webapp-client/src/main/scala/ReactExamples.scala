@@ -1,6 +1,6 @@
 package hahaa
 
-import shipreq.webapp.client.lib.{InterfaceClient, Patches, LiftAjax}
+import shipreq.webapp.client.lib.{InterfaceClient, LiftAjax}
 import shipreq.webapp.shared.rpc._
 import InterfaceClient._
 
