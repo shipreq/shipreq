@@ -1,26 +1,37 @@
 package shipreq.webapp.shared.protocol
 
-import upickle.key
 import shipreq.webapp.shared.data._
-import Codecs._
+import Codec._
+import DataCodecs._
 import Routine._
+import upickle.{Reader, Writer}
+
+sealed abstract class GenericCrud[T: Reader : Writer, I: Reader : Writer, V: Reader : Writer] {
+  final type R = Option[T]
+  final type Id = I
+  final type Values = V
+
+  case object Create extends DescT[V, R]
+  case object Update extends DescT[(I, V), R]
+  case object SoftDelete extends DescT[I, R]
+  case object HardDelete extends DescT[I, R]
+  case object Restore extends DescT[I, R]
+
+  implicit def rr1 = remoteRoutine(Create)
+  implicit def rr2 = remoteRoutine(Update)
+  implicit def rr3 = remoteRoutine(SoftDelete)
+  implicit def rr4 = remoteRoutine(HardDelete)
+  implicit def rr5 = remoteRoutine(Restore)
+}
 
 object Routines {
 
-  object Square extends DescT[Int, String]
-  object Half extends DescT[Int, String]
-  object Grrr extends DescT[ExampleData, ExampleData]
+  object CustReqTypeOps extends GenericCrud[CustReqType, CustReqType.Id, (ReqType.Mnemonic, String, ImplicationRequired)]
 
-  object CustReqTypeUpdate extends DescT[
-    (CustReqType.Id, ReqType.Mnemonic, String, ImplicationRequired),
-    Option[CustReqType]]
-
-  case class WIP(@key("a") square: Square.Remote,
-                 @key("b") half: Half.Remote,
-                 @key("c") grrr: Grrr.Remote) extends Group
-
-}
-
-case class ExampleData(i: Int) {
-  def yar = s"yar → $i"
+  case class ForCfgReqType(create: CustReqTypeOps.Create.Remote,
+                           update: CustReqTypeOps.Update.Remote,
+                           softDelete: CustReqTypeOps.SoftDelete.Remote,
+                           hardDelete: CustReqTypeOps.HardDelete.Remote,
+                           restore: CustReqTypeOps.Restore.Remote)
+    extends Group
 }

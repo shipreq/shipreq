@@ -26,16 +26,26 @@ private[protocol] object Codec {
     })
   }
 
+  def caseclass5[A: Reader : Writer, B: Reader : Writer, C: Reader : Writer, D: Reader : Writer, E: Reader : Writer, Z]
+  (y: (A, B, C, D, E) => Z, u: Z => Option[(A, B, C, D, E)]): ReadWriter[Z] = {
+    val r = Tuple5R[A, B, C, D, E].read
+    val w = Tuple5W[A, B, C, D, E].write
+    ReadWriter[Z](z => w(u(z).get), r andThen y.tupled)
+  }
+
   def caseclass6[A: Reader : Writer, B: Reader : Writer, C: Reader : Writer, D: Reader : Writer, E: Reader : Writer, F: Reader : Writer, Z]
   (y: (A, B, C, D, E, F) => Z, u: Z => Option[(A, B, C, D, E, F)]): ReadWriter[Z] = {
     val r = Tuple6R[A, B, C, D, E, F].read
     val w = Tuple6W[A, B, C, D, E, F].write
     ReadWriter[Z](z => w(u(z).get), r andThen y.tupled)
   }
+
+  def remoteRoutine[R <: Routine.Desc](d: R) = ReadWriter[d.Remote](r => Js.Str(r.n), {case Js.Str(n) => Routine.Remote(n, d) })
 }
 
-object Codecs {
-  import Codec._
+import Codec._
+
+object DataCodecs {
 
   implicit def alive = boolCase(Alive)
 
@@ -46,4 +56,11 @@ object Codecs {
   implicit def custReqTypeId = tagL(CustReqType.Id.apply)
 
   implicit def custReqType = caseclass6(CustReqType.apply, CustReqType.unapply)
+
+}
+
+object RoutineGroupCodecs {
+
+  implicit def routinesForCfgReqType = caseclass5(Routines.ForCfgReqType.apply, Routines.ForCfgReqType.unapply)
+
 }

@@ -1,6 +1,6 @@
 package hahaa
 
-import shipreq.webapp.shared.protocol.{ExampleData, Routines}
+import shipreq.webapp.shared.protocol.Routines
 import shipreq.webapp.client.protocol.ClientProtocol
 
 import scala.scalajs.js
@@ -9,13 +9,10 @@ import scala.scalajs.js.annotation.{JSExport, JSName}
 
 object ReactExamples {
 
-  def main(r: Routines.WIP): Unit = {
+  def main(routines: Routines.ForCfgReqType): Unit = {
     example1(document getElementById "eg1")
     //    example2(document getElementById "eg2")
-    cfgReqTypesTest(document getElementById "eg2")
-
-    ClientProtocol.call(r.square)(123, s => alert(s"RESPONSE: [$s]"))
-    ClientProtocol.call(r.grrr)(ExampleData(666), s => alert(s.yar))
+    cfgReqTypesTest(routines, document getElementById "eg2")
   }
 
   // ===================================================================================================================
@@ -35,7 +32,7 @@ object ReactExamples {
 
   // ===================================================================================================================
 
-  def cfgReqTypesTest(mountNode: Node) = {
+  def cfgReqTypesTest(routines: Routines.ForCfgReqType, mountNode: Node) = {
     import shipreq.webapp.shared.data._
     import shipreq.webapp.client.CfgReqType._
     import CustReqType.Id
@@ -52,7 +49,7 @@ object ReactExamples {
 
     val map = list.map(i => i.id -> i).toMap
 
-    Component(Props(map, false)) render mountNode
+    Component(Props(routines, map, false)) render mountNode
   }
 
   def example2(mountNode: Node) = {

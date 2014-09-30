@@ -6,8 +6,11 @@ import scalaz.effect.IO
 import scalaz.std.anyVal.booleanInstance
 import scalaz.std.string.stringInstance
 import japgolly.scalajs.react.ReactComponentB
+
 import shipreq.base.util.TaggedTypes.taggedStringInstance
 import shipreq.webapp.shared.data._
+import shipreq.webapp.shared.protocol.Routines
+import shipreq.webapp.client.protocol.ClientProtocol
 import shipreq.webapp.client.ui.table._
 import shipreq.webapp.client.ui.{Editors => E, Util}
 import Validators.{reqType => V}
@@ -42,7 +45,9 @@ object CfgReqType {
         (static #::: custom).flatMap(p => p.mnemonic #:: p.oldMnemonics.toStream)
       }).fieldName("Mnemonic")
 
-  case class Props(customReqTypes: Map[CustReqType.Id, CustReqType], showDeleted: Boolean)
+  case class Props(routines: Routines.ForCfgReqType,
+                   startingPoint: Map[CustReqType.Id, CustReqType],
+                   showDeleted: Boolean)
 
   val Component = ReactComponentB[Props]("CfgReqTypes")
     .getInitialState(p => p.showDeleted)
@@ -50,7 +55,7 @@ object CfgReqType {
     .create
 
   private val InnerComponent = ReactComponentB[Props]("CfgReqTypesⁱ")
-    .getInitialState(p => spec.initialState(p.customReqTypes))
+    .getInitialState(p => spec.initialState(p.startingPoint))
     .render(Render.renderInner _)
     .create
 

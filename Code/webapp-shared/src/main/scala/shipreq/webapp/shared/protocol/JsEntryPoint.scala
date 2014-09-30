@@ -1,6 +1,7 @@
 package shipreq.webapp.shared.protocol
 
 import upickle.{Reader, Writer}
+import RoutineGroupCodecs._
 
 /**
  * Describes a function exposed in client JS, that the server can invoke.
@@ -20,6 +21,6 @@ object JsEntryPoint {
   final val client = "Bnzklx"
 
   final val reactExamplesN = "x8927nh"
-  final val reactExamples = new JsEntryPoint[Routines.WIP, Unit](reactExamplesN)
+  final val reactExamples = new JsEntryPoint[Routines.ForCfgReqType, Unit](reactExamplesN)
 
 }
