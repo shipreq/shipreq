@@ -1,6 +1,6 @@
 package shipreq.webapp.shared.protocol
 
-import upickle._
+import upickle.{Reader, Writer}
 
 object Routine {
 
