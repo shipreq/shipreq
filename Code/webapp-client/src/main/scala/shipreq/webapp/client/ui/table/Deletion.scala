@@ -5,6 +5,7 @@ import japgolly.scalajs.react.vdom.ReactVDom._
 import japgolly.scalajs.react.vdom.ReactVDom.all._
 import ScalazReact._
 import scalaz.effect.IO
+import scalaz.syntax.equal._
 import monocle._
 import monocle.function.Field2.second
 import monocle.std.tuple2._
@@ -41,7 +42,7 @@ class DeletionManager[S, P, D](spec: TableSpec[S, D, _, P, _, _])(
   // TODO rename getSaved, here & in spec
   // TODO provide separate filter
   def getSaved(T: ComponentStateFocus[S], alive: Alive): Stream[(D, P)] =
-    spec.getSaved(T).filter(px => aliveL.get(px._2) == alive)
+    spec.getSaved(T).filter(px => aliveL.get(px._2) ≟ alive)
 
   def getSavedP(T: ComponentStateFocus[S], alive: Alive): Stream[P] =
     getSaved(T, alive).map(_._2)

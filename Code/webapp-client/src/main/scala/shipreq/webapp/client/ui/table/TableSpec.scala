@@ -6,7 +6,7 @@ import japgolly.scalajs.react.vdom.ReactVDom._
 import monocle._
 import shipreq.webapp.client.ui.Implicits._
 import shipreq.webapp.client.ui._
-import scalaz.Bind
+import scalaz.{Equal, Bind}
 import scalaz.Scalaz.Id
 import scalaz.effect.IO
 import scalaz.std.option._
@@ -20,16 +20,27 @@ trait RowRenderer[S, U, P, II, VV] {
 
 // =====================================================================================================================
 
-final class TableSpecB[S, D, G, P, II, VV](val p2ii: P => II,
-                                           val rowRenderer: Option[D] => RowRenderer[S, G, P, II, VV],
+final class TableSpecB[S, D, U, P, II, VV](val p2ii: P => II,
+                                           val rowRenderer: Option[D] => RowRenderer[S, U, P, II, VV],
                                            val savedUnsaved: SavedUnsavedL[S, D, P, II],
                                            val initialState: Seq[(D, P)] => S) {
 
-  def saveFn2(saveIO: (Option[P], G) => IO[P], id: P => D) =
-    saveFn((opx, o) => saveIO(opx.map(_._2), o).map(p => (id(p), p)))
+  def saveNotNeededWhen(f: (U, P) => Boolean) =
+    new B2(f)
 
-  def saveFn(saveIO: (Option[(D, P)], G) => IO[(D, P)]) =
-    new TableSpec[S, D, G, P, II, VV](this, saveIO)
+  def saveNotNeededWhenE(f: P => U)(implicit U: Equal[U]) =
+    saveNotNeededWhen((u,p) => U.equal(u, f(p)))
+
+  def saveNotNeededWhenI(implicit ev: II =:= U, U: Equal[U]) =
+    saveNotNeededWhenE(ev compose p2ii)
+
+  class B2(saveNotNeeded: (U, P) => Boolean) {
+    def saveFn2(saveIO: (Option[P], U) => IO[P], id: P => D) =
+      saveFn((opx, o) => saveIO(opx.map(_._2), o).map(p => (id(p), p)))
+
+    def saveFn(saveIO: (Option[(D, P)], U) => IO[(D, P)]) =
+      new TableSpec[S, D, U, P, II, VV](TableSpecB.this, saveIO, saveNotNeeded)
+  }
 }
 
 object TableSpecB {
@@ -47,7 +58,8 @@ object TableSpecB {
 import TableSpec._
 
 final class TableSpec[S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, VV],
-                                          saveIO: (Option[(D, P)], U) => IO[(D, P)]) {
+                                          saveIO: (Option[(D, P)], U) => IO[(D, P)],
+                                          saveNotNeeded: (U, P) => Boolean) {
 
   import tsb.{p2ii, rowRenderer}
   import tsb.savedUnsaved._
@@ -96,9 +108,9 @@ final class TableSpec[S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, VV],
   private def saveRowFn(id: D) =
     saveHelper[S, U, DP, DP, DP](
       s => (id, rowP(id)(s)),
-      (px,g) => if (px._2 == g) None else Some(px),
-      (px,g) => saveIO(Some(px), g),
-      (s,px) => updateSaved(px)(s))
+      (dp,u) => if (saveNotNeeded(u, dp._2)) None else Some(dp),
+      (dp,u) => saveIO(Some(dp), u),
+      (s,dp) => updateSaved(dp)(s))
 
   private def renderAttrForSaved(id: D) =
     rowRenderer(Some(id)).render(rowIL(id), rowP(id))(saveRowFn(id))

@@ -5,6 +5,7 @@ import org.scalajs.dom.console
 import scalaz.effect.IO
 import scalaz.std.anyVal.booleanInstance
 import scalaz.std.string.stringInstance
+import scalaz.std.tuple._
 import japgolly.scalajs.react.ReactComponentB
 
 import shipreq.base.util.TaggedTypes.taggedStringInstance
@@ -32,6 +33,7 @@ object CfgReqType {
       Some(mnemonicUniqueness),
       Some(prespec.uniquenessCheck(_.name).fieldName("Name")),
       None)
+    .saveNotNeededWhenE(p => (p.mnemonic, p.name, p.imp))
     .saveFn2(fakeSave, _.id)
 
   private def mnemonicUniqueness =

@@ -1,10 +1,12 @@
 package shipreq.webapp.shared.data
 
+import scalaz.Equal
 import scalaz.Isomorphism.<=>
 import shipreq.base.util.TaggedTypes._
 
 sealed trait ImplicationRequired
 case object ImplicationRequired extends ImplicationRequired with (Boolean <=> ImplicationRequired) {
+  implicit val equal = Equal.equalA[ImplicationRequired]
   override def from = _ == ImplicationRequired
   override def to = b => if (b) ImplicationRequired else ImplicationNotRequired
 }
