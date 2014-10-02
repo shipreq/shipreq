@@ -20,7 +20,7 @@ object ReactExamples {
     case class ParentState(items: List[Item], dnd: DND.Parent.PState[Item], i: Int)
 
     val Component = ReactComponentB[List[Item]]("DragAndDrop")
-      .getInitialState(p => ParentState(p, DND.Parent.initialState, 0))
+      .initialStateP(p => ParentState(p, DND.Parent.initialState, 0))
       .render(T => {
       console.log(s"DND.State = ${T.state}")
       val itemsState = T.focusState(_.items)((a, b) => a.copy(items = b))

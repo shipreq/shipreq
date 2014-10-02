@@ -92,7 +92,7 @@ object Phase2 extends js.JSApp {
     }
 
     val IssueTypeTable = ReactComponentB[List[CustomIssueType]]("IssueTypeTable")
-      .getInitialState(p => Spec.initialState(p, _.id))
+      .initialStateP(p => Spec.initialState(p, _.id))
       .render(T => {
         val S = T.state
         //console.log(s"State = $S")
@@ -164,7 +164,7 @@ object Phase2 extends js.JSApp {
 
     private def UC: ReqTypeMnemonic = "UC"
     private val ucRow =
-      tr(key := UC, row(raw(UC), raw("Use Case"), checkbox(true)(disabled := true), Nop))
+      tr(key := UC, row(raw(UC), raw("Use Case"), checkbox(true)(disabled := true), EmptyTag))
 
     private val NewRow =
       Spec.unsavedRow((T, vv) => {
@@ -189,7 +189,7 @@ object Phase2 extends js.JSApp {
     case class ReqTypeTableProps(items: List[CustomReqType], showDeleted: Boolean)
 
     val ReqTypeTableComp = ReactComponentB[ReqTypeTableProps]("ReqTypeTable")
-      .getInitialState(p => Spec.initialState(p.items, _.id))
+      .initialStateP(p => Spec.initialState(p.items, _.id))
       .render(T => {
 
         val newRow = NewRow.render(T)(())
@@ -218,7 +218,7 @@ object Phase2 extends js.JSApp {
       }).create
 
     val ReqTypeTableCompOuter = ReactComponentB[ReqTypeTableProps]("ReqTypeTableOuter")
-      .getInitialState(p => p.showDeleted)
+      .initialStateP(p => p.showDeleted)
       .renderS((t,p,s) => {
 
         div(
