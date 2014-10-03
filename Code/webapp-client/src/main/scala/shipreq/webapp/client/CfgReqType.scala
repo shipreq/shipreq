@@ -21,7 +21,7 @@ object CfgReqType {
 
   type P = CustReqType
   type D = CustReqType.Id
-  type X = Int
+  type X = Routines.ForCfgReqType
 
   private val prespec = TableSpecBuilder[P](
     FieldSpec[P](_.mnemonic.value)(V.mnemonic)(E.TextInputEditor),
@@ -35,8 +35,7 @@ object CfgReqType {
       Some(prespec.uniquenessCheck(_.name).fieldName("Name")),
       None)
     .saveNotNeededWhenE(p => (p.mnemonic, p.name, p.imp))
-    .asyncSaveP(_.id, fakeSave2)
-  //.syncSaveP(_.id, fakeSave)
+    .asyncSaveP(_.id, saveIO)
 
   private def mnemonicUniqueness =
     TableConstraint.uniquenessE[prespec.S, prespec.R, Mnemonic](
@@ -63,22 +62,13 @@ object CfgReqType {
     .render(Render.renderInner _)
     .create
 
-  private def fakeSave(op: Option[P], newValues: prespec.U) = IO[P] {
-    val (a,b,c) = newValues
+  private def saveIO(x: X, op: Option[P], u: prespec.U): IO[Unit] =
     op match {
       case None =>
-        console.log(s"FAKE-SAVE: New row $newValues")
-        CustReqType(CustReqType.Id(666L), a, Set.empty, b, c, Alive)
-      //        case Some(old) if old.value == newValues =>
-      //          old
+        ClientProtocol.call(x.create)(u, o => console.log(s"Ajax Result = $o"))
       case Some(p) =>
-        console.log(s"FAKE-SAVE: Update [$p] → $newValues")
-        p
+        ClientProtocol.call(x.update)((p.id, u), o => console.log(s"Ajax Result = $o"))
     }
-  }
-
-  private def fakeSave2(x: X, op: Option[P], newValues: prespec.U) =
-    IO(println(s"x = $x"))
 
   private val deletion = new DeletionManager(spec)(
     SimpleLens[P](_.alive)((a,b) => a.copy(alive = b)),
@@ -109,7 +99,7 @@ object CfgReqType {
     type RowStream = Stream[(Mnemonic, Tag)]
 
     def renderInner(S: ScopeI): VDom = {
-      implicit val x: X = 666
+      implicit val x: X = S.props.routines
       val newRow = Render.newRow.render(S)(())
       val nonNewRows = (staticRows #::: savedRows(S) #::: deletedRows(S)).sortBy(_._1.value).map(_._2).toJsArray
       div(
