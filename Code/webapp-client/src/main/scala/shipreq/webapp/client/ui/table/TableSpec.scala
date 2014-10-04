@@ -35,6 +35,9 @@ final class TableSpecB[S, D, U, P, II, VV](val p2ii: P => II,
   def saveNotNeededWhenI(implicit ev: II =:= U, U: Equal[U]) =
     saveNotNeededWhenE(ev compose p2ii)
 
+  def saveNotNeededWhenP(implicit ev: P =:= U, U: Equal[U]) =
+    saveNotNeededWhenE(ev)
+
   class B2(saveNotNeeded: (U, P) => Boolean) {
 
     def syncSave(saveIO: (Option[(D, P)], U) => IO[(D, P)]) =
@@ -153,7 +156,7 @@ abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, 
 
   def updateSavedS(px: DP) = ST.mod(updateSaved(px))
 
-  def savedRow[V2](renderRow: (ComponentStateFocus[S], D, P, VV) => V2)(implicit x: X) =
+  def savedRowP[V2](renderRow: (ComponentStateFocus[S], D, P, VV) => V2)(implicit x: X) =
     _savedRow(renderAttrForSaved(x), (t,i,v) => renderRow(t,i,rowL(i).get(t.state)._1,v))
 
   def savedRow[V2](renderRow: (ComponentStateFocus[S], D, VV) => V2)(implicit x: X) =

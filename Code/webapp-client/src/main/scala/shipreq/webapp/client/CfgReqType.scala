@@ -86,7 +86,7 @@ object CfgReqType {
   private val newRowS = spec.createUnsaved(("","",false))
 
   private object Render {
-    import japgolly.scalajs.react._, vdom.ReactVDom._, all._, ScalazReact._
+    import japgolly.scalajs.react._, vdom.ReactVDom.{Tag => _, _}, all._, ScalazReact._
     import Util.checkbox
 
     def renderOuter(S: ComponentScopeU[Props, Boolean, Unit]): VDom = {
@@ -129,7 +129,7 @@ object CfgReqType {
     }
 
     def savedRow(implicit x: X) =
-      spec.savedRow((F, id, p, vv) => {
+      spec.savedRowP((F, id, p, vv) => {
         val (mnemonic, name, impReq) = vv
         tr(keyAttr := id.value, row(mnemonic, name, impReq, deletion.buttons(F, id, HardDelete, SoftDelete)))
       })
