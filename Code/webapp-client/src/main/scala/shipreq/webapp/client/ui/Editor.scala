@@ -65,7 +65,7 @@ object Editors {
           onchange ~~> T._runState(textChangeRecv(onChange)),
           onkeydown ~~> T._runState(cancelOnEscape),
           onblur ~~> T.runState(onEditEnd)),
-        error.fold(Nop)(e => div(cls := "errorMsg")(e)))
+        error.fold(EmptyTag)(e => div(cls := "errorMsg", e)))
     }
   }
 
@@ -84,7 +84,7 @@ object Editors {
         checkbox(data)(
           onchange ~~> T._runState(ch),
           error.isDefined && (cls := "error")),
-        error.fold(Nop)(e => div(cls := "errorMsg")(e)))
+        error.fold(EmptyTag)(e => div(cls := "errorMsg", e)))
     }
   }
 

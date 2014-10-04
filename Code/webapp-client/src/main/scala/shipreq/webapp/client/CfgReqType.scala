@@ -151,7 +151,7 @@ object CfgReqType {
 
     def staticRow(r: ReqType.Static) = {
       val imp = checkbox(ImplicationRequired from r.imp)(disabled := true)
-      tr(key := r.mnemonic.value, row(raw(r.mnemonic), raw(r.name), imp, Nop))
+      tr(key := r.mnemonic.value, row(raw(r.mnemonic), raw(r.name), imp, EmptyTag))
     }
   }
 }
