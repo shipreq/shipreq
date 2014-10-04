@@ -43,7 +43,7 @@ object CfgReqType {
         val custom: Stream[ReqType] =
           s._1.toStream
             .filterNot(dpi => r.fold(false)(_ == dpi._1)) // exclude own row
-            .map(_._2._1)
+            .map(_._2.p)
         val static: Stream[ReqType] = ReqType.static.toStream
         (static #::: custom).flatMap(p => p.mnemonic #:: p.oldMnemonics.toStream)
       }).fieldName("Mnemonic")

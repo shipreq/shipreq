@@ -20,11 +20,11 @@ abstract class Deletion[S, P, D](spec: TableSpec[_, S, D, _, P, _, _], aliveL: S
 
   // TODO rename getSaved, here & in spec
   // TODO provide separate filter
-  def getSaved(T: ComponentStateFocus[S], alive: Alive): Stream[(D, P)] =
-    spec.getSaved(T).filter(dp => aliveL.get(dp._2) ≟ alive)
+  def getSaved(T: ComponentStateFocus[S], alive: Alive): Stream[(RowStatus, D, P)] =
+    spec.getSaved(T).filter(r => aliveL.get(r._3) ≟ alive)
 
   def getSavedP(T: ComponentStateFocus[S], alive: Alive): Stream[P] =
-    getSaved(T, alive).map(_._2)
+    getSaved(T, alive).map(_._3)
 }
 
 // =====================================================================================================================
@@ -65,7 +65,7 @@ final class AsyncDeletion[X, S, P, D](spec: TableSpec.AsyncSave[X, S, D, _, P, _
     val r = Some(id)
     val f = spec.failureIO(T, r)
     val j = delIO(x, id, a, f)
-    ReactS.modT[IO, S](s => j.map(_ => spec.setStatusToEffectInProgress(r)(s)))
+    ReactS.modT[IO, S](s => j.map(_ => spec.lockRow(r)(s)))
   }
 
   def button(T: ComponentStateFocus[S], id: D, a: DeletionAction)(implicit x: X) =

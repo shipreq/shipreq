@@ -25,8 +25,8 @@ object TableConstraint {
     uniqueness[S, R, A, A](extract, implicitly[Equal[A]].equal)
 
   def uniquenessT[D, P, II, A: Equal](pa: P => A) =
-    uniqueness[SavedAndUnsaved[D, P, II], Option[D], (D, (P, II)), A](
+    uniqueness[SavedAndUnsaved[D, P, II], Option[D], (D, SavedRow[P, II]), A](
       // D is used to key maps so Scala equality must hold, no need for Equal[D]
-      (s, od)  => getSaved(s).toStream.filterNot(dpi => od.fold(false)(_ == dpi._1)),
-      (dpi, a) => a ≟ pa(dpi._2._1))
+      (s, od) => getSaved(s).toStream.filter(r => od.forall(_ != r._1)),
+      (r, a)  => a ≟ pa(r._2.p))
 }

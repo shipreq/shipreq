@@ -4,6 +4,7 @@ import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.ReactVDom._
 import monocle._
+import shipreq.base.util.ScalaExt._
 import shipreq.webapp.client.protocol.FailureIO
 import shipreq.webapp.client.ui.Implicits._
 import shipreq.webapp.client.ui._
@@ -13,11 +14,28 @@ import scalaz.effect.IO
 import scalaz.std.option._
 import scalaz.syntax.bind._
 
+// TODO clean this shit file up, esp renaming stuff
+
 trait RowRenderer[S, U, P, II, VV] {
   final def render(iL: SimpleLens[S, II], s2p: S => P) = renderM[Id](WeirdLens from iL, s2p) _
 
+  // TODO save here should include ComponentStateFocus[S]. Save those λs in renderAttrForUnsaved etc
   def renderM[M[_] : Bind : Optional2](iL: WeirdLens[M, S, S, II], s2mp: S => M[P])(save: (S, U) => IO[S]): ComponentStateFocus[S] => M[VV]
 }
+
+sealed trait RowStatus
+object RowStatus {
+
+  /** Row is in sync with the known (local) world. An edit may or may not be in progress. */
+  case object Sync extends RowStatus
+
+  /** Row is locked pending an external response to change. (Ajax in progress) */
+  case object Locked extends RowStatus
+
+  /** Failed to coordination Local change with external agent. (Ajax failure) */
+  case object Failed extends RowStatus
+}
+import RowStatus.Sync
 
 // =====================================================================================================================
 
@@ -59,7 +77,7 @@ object TableSpecB {
   def default[D, G, P, II, VV](spec: RowSpec[SavedAndUnsaved[D, P, II], Option[D], G, P, II, VV]) = {
     val init = spec.initial _
     val initialState: Seq[(D, P)] => spec.S =
-      xs => (xs.map(x => x._1 ->(x._2, init(x._2))).toMap, None)
+      xs => (xs.map{ case (d,p) => d -> SavedRow(Sync, p, init(p)) }.toMap, None)
     new TableSpecB[spec.S, D, G, P, II, VV](init, spec.forRow, SavedUnsavedL.default, initialState)
   }
 }
@@ -76,7 +94,7 @@ abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, 
 
   final type DP = (D, P)
 
-  def mkPI(p: P): (P,II) = (p, p2ii(p))
+  def mkPI(p: P): SavedRow[P,II] = SavedRow(Sync, p, p2ii(p))
 
   def initialState(d: Seq[P], id: P => D): S = tsb.initialState(d.map(x => id(x) -> x))
   def initialState(d: Map[D, P])         : S = tsb.initialState(d.toSeq)
@@ -87,15 +105,17 @@ abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, 
 
   private def renderAttrForUnsaved(saveIO: ComponentStateFocus[S] => (S, U) => IO[S]) = {
     val s2op: S => Option[P] = _ => None
-    def setI(s: S, i: II): Option[S] = unsavedL.get(s).map(_ => unsavedL.set(s, Some(i)))
-    val se = WeirdLens[Option, S, S, II](unsavedL.get, setI)
+    val getI: S => Option[II] = unsavedL.get(_).map(_._2)
+    // TODO if I=I will that clear the RowStatus?
+    val setI: (S, II) => Option[S] = (s,i) => unsavedL.get(s).map(_ => unsavedL.set(s, Some((Sync, i))))
+    val se = WeirdLens[Option, S, S, II](getI, setI)
     (T: ComponentStateFocus[S]) => {
       val r = rowRenderer(None).renderM(se, s2op)(saveIO(T))
       r(T)
     }
   }
 
-  def createUnsaved(empty: II) = ReactS.mod(unsavedL.modifyF(_ orElse Some(empty)))
+  def createUnsaved(empty: II) = ReactS.mod(unsavedL.modifyF(_ orElse Some((Sync, empty))))
 
   val removeUnsaved = unsavedL setF None
   val removeUnsavedS = ReactS.mod(removeUnsaved)
@@ -157,7 +177,7 @@ abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, 
   def updateSavedS(px: DP) = ST.mod(updateSaved(px))
 
   def savedRowP[V2](renderRow: (ComponentStateFocus[S], D, P, VV) => V2)(implicit x: X) =
-    _savedRow(renderAttrForSaved(x), (t,i,v) => renderRow(t,i,rowL(i).get(t.state)._1,v))
+    _savedRow(renderAttrForSaved(x), (t,d,v) => renderRow(t,d,rowP(d)(t.state),v))
 
   def savedRow[V2](renderRow: (ComponentStateFocus[S], D, VV) => V2)(implicit x: X) =
     _savedRow(renderAttrForSaved(x), renderRow)
@@ -165,14 +185,14 @@ abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, 
   private def _savedRow[V2](renderAttr: D => ComponentStateFocus[S] => VV, renderRow: (ComponentStateFocus[S], D, VV) => V2) =
     new FullRow[Id, S, VV, V2, D](renderAttr, renderRow)
 
-  type SavedPs = Stream[(D, P)]
+  final type SavedPs = Stream[(RowStatus, D, P)]
   def renderSaved(T: ComponentStateFocus[S], r: FullRow[Id, S, VV, Tag, D])(f: SavedPs => SavedPs) = {
     val rr = r.render(T)
-    f(getSaved(T)).map(x => rr(x._1)).toJsArray
+    f(getSaved(T)).map(x => rr(x._2)).toJsArray
   }
 
   def getSaved(T: ComponentStateFocus[S]): SavedPs =
-    savedL.get(T.state).toStream.map(x => x._1 -> x._2._1)
+    savedL.get(T.state).toStream.map{ case (d,SavedRow(r,p,_)) => (r,d,p) }
 }
 
 // =====================================================================================================================
@@ -205,21 +225,27 @@ object TableSpec {
       saveIO:        (X, Option[(D, P)], U, FailureIO) => IO[Unit])
       extends TableSpec[X, S, D, U, P, II, VV](tsb, saveNotNeeded) {
 
+    import tsb.savedUnsaved._
+
     override protected def createIO = x => T => (s, u) =>
       saveIO(x, None, u, failureIO(T, None))
-        .map(_ => setStatusToEffectInProgress(None)(s))
+        .map(_ => lockRow(None)(s))
 
     override protected def updateIO2 = (T, x) => (s, dp, u) => {
       val row = Some(dp._1)
       saveIO(x, Some(dp), u, failureIO(T, row))
-        .map(_ => setStatusToEffectInProgress(row)(s))
+        .map(_ => lockRow(row)(s))
     }
 
-    def setStatusToEffectInProgress(row: Option[D]): S => S = s => {println(s"$row → in-progress");s} // TODO
-    def setStatusToRetry(row: Option[D]): S => S = s => {println(s"$row → retry");s}// TODO
+    private def setStatus(status: RowStatus): Option[D] => S => S = {
+      case None => unsavedL.modifyF(_.map(_.put1(status)))
+      case Some(d) => rowStatus(d).setF(status)
+    }
+
+    val lockRow = setStatus(RowStatus.Locked)
 
     def failureS(row: Option[D]) =
-      ReactS.mod(setStatusToRetry(row))
+      ReactS.mod(setStatus(RowStatus.Failed)(row))
 
     def failureIO(T: ComponentStateFocus[S], row: Option[D]) =
       FailureIO(T.runState(failureS(row)))
