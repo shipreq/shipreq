@@ -1,10 +1,19 @@
-package shipreq.webapp.shared.data.delta
+package shipreq.webapp.client.delta
 
 import scala.annotation.tailrec
+import shipreq.webapp.shared.data.delta.Partition
 
-case class LocalDeltaP[P <: Partition](
-  del: List[P#Id],
-  upd: List[P#Instance])
+case class LocalDeltaP[P <: Partition](del: List[P#Id],
+                                       upd: List[P#Instance]) {
+
+  def deltaG(p: P): LocalDeltaG = new LocalDeltaR(p, this)
+}
+
+private[delta] class LocalDeltaR[_P <: Partition](_p: _P, d: LocalDeltaP[_P]) extends LocalDeltaG {
+  override type P = _P
+  override def p = _p
+  override def deltaP = d
+}
 
 trait LocalDeltaG {
   type P <: Partition

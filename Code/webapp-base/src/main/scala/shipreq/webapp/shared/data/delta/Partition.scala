@@ -44,25 +44,5 @@ case object Partition {
   // ------------------------------------------------------------------------------------------------------------------
 
   case object CustReqType extends Aux[D.CustReqType, D.CustReqType.Id]
-
-  object CustReqTypeFns extends Fns[CustReqType.type] {
-
-    override def rev(p: Project) =
-      p.customReqTypes.rev
-
-    override def update(p: Project, rev: Rev, ds: RemoteDeltaP[CustReqType.type]) = {
-      var vs = p.customReqTypes.data.toStream
-
-      val dels = ds.del.toSet
-      if (dels.nonEmpty)
-        vs = vs.filterNot(p => dels contains p.id)
-
-      val upds = ds.upd.map(p => p.id -> p).toMap
-      if (upds.nonEmpty)
-        vs = vs.map(p => upds.getOrElse(p.id, p))
-
-      p.copy(customReqTypes = CustomReqTypes(rev, vs.toSeq))
-    }
-  }
 }
 

@@ -4,6 +4,4 @@ package object delta {
 
   type RemoteDeltas = List[RemoteDeltaG]
 
-  type LocalDeltas = List[LocalDeltaG]
-
 }
