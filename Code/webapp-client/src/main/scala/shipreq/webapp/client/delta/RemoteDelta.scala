@@ -1,7 +1,7 @@
 package shipreq.webapp.client.delta
 
-import shipreq.webapp.shared.data.{CustomReqTypes, Project}
 import shipreq.webapp.shared.data.delta._
+import shipreq.webapp.shared.{data => D}, D.Project
 import Partition._
 
 sealed trait ApplicationResult
@@ -29,7 +29,7 @@ object RemoteDelta {
           }
 
         d.p match {
-          case t@ CustReqType => x(t, CustReqTypeFns)
+          case t@ CustomReqTypes => x(t, CustomReqTypeFns)
         }
       }
       
@@ -40,12 +40,12 @@ object RemoteDelta {
     })
 }
 
-object CustReqTypeFns extends Fns[CustReqType.type] {
+object CustomReqTypeFns extends Fns[CustomReqTypes.type] {
 
   override def rev(p: Project) =
     p.customReqTypes.rev
 
-  override def update(p: Project, rev: Rev, ds: RemoteDeltaP[CustReqType.type]) = {
+  override def update(p: Project, rev: Rev, ds: RemoteDeltaP[CustomReqTypes.type]) = {
     var vs = p.customReqTypes.data.toStream
 
     val dels = ds.del.toSet
@@ -56,6 +56,6 @@ object CustReqTypeFns extends Fns[CustReqType.type] {
     if (upds.nonEmpty)
       vs = vs.map(p => upds.getOrElse(p.id, p))
 
-    p.copy(customReqTypes = CustomReqTypes(rev, vs.toSeq))
+    p.copy(customReqTypes = D.CustomReqTypes(rev, vs.toSeq))
   }
 }

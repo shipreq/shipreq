@@ -87,9 +87,9 @@ object DataCodecs {
 
   implicit def reqTypeMnemonic = tagS(ReqType.Mnemonic.apply)
 
-  implicit def custReqTypeId = tagL(CustReqType.Id.apply)
+  implicit def customReqTypeId = tagL(CustomReqType.Id.apply)
 
-  implicit def custReqType = caseclass6(CustReqType.apply, CustReqType.unapply)
+  implicit def customReqType = caseclass6(CustomReqType.apply, CustomReqType.unapply)
 
 }
 
@@ -106,7 +106,7 @@ object DeltaCodecs {
 
   implicit def rev = tagL(Rev.apply)
 
-  implicit def partitions = enum[Partition](Partition.CustReqType)
+  implicit def partitions = enum[Partition](Partition.CustomReqTypes)
 
   implicit def remoteDeltaGW = Writer[RemoteDeltaG](r => {
     import r.p.{wd, wp}

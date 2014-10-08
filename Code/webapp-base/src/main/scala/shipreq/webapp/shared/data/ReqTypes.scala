@@ -36,13 +36,13 @@ object ReqType {
 
 // constraints:
 // - oldMnemonics doesn't include mnemonic
-final case class CustReqType(id: CustReqType.Id,
-                             mnemonic: ReqType.Mnemonic,
-                             oldMnemonics: Set[ReqType.Mnemonic],
-                             name: String,
-                             imp: ImplicationRequired,
-                             alive: Alive) extends ReqType
+final case class CustomReqType(id: CustomReqType.Id,
+                               mnemonic: ReqType.Mnemonic,
+                               oldMnemonics: Set[ReqType.Mnemonic],
+                               name: String,
+                               imp: ImplicationRequired,
+                               alive: Alive) extends ReqType
 
-object CustReqType {
+object CustomReqType {
   final case class Id(value: Long) extends TaggedLong
 }

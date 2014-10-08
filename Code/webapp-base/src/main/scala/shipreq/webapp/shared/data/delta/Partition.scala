@@ -3,7 +3,6 @@ package shipreq.webapp.shared.data.delta
 import upickle.{Reader, Writer}
 import shipreq.base.util.TaggedTypes.TaggedLong
 import shipreq.webapp.shared.data._
-import shipreq.webapp.shared.{data => D}
 import shipreq.webapp.shared.protocol.DataCodecs._
 
 final case class Rev(value: Long) extends TaggedLong
@@ -54,6 +53,6 @@ case object Partition {
 
   // ------------------------------------------------------------------------------------------------------------------
 
-  case object CustReqType extends Aux[D.CustReqType, D.CustReqType.Id]
+  case object CustomReqTypes extends Aux[CustomReqType, CustomReqType.Id]
 }
 

@@ -26,12 +26,12 @@ sealed abstract class GenericCrud[T: Reader : Writer, I: Reader : Writer, V: Rea
 
 object Routines {
 
-  object CustReqTypeOps extends GenericCrud[CustReqType, CustReqType.Id, (ReqType.Mnemonic, String, ImplicationRequired)]
+  object CustomReqTypeOps extends GenericCrud[CustomReqType, CustomReqType.Id, (ReqType.Mnemonic, String, ImplicationRequired)]
 
-  case class ForCfgReqType(create: CustReqTypeOps.Create.Remote,
-                           update: CustReqTypeOps.Update.Remote,
-                           softDelete: CustReqTypeOps.SoftDelete.Remote,
-                           hardDelete: CustReqTypeOps.HardDelete.Remote,
-                           restore: CustReqTypeOps.Restore.Remote)
+  case class ForCfgReqType(create: CustomReqTypeOps.Create.Remote,
+                           update: CustomReqTypeOps.Update.Remote,
+                           softDelete: CustomReqTypeOps.SoftDelete.Remote,
+                           hardDelete: CustomReqTypeOps.HardDelete.Remote,
+                           restore: CustomReqTypeOps.Restore.Remote)
     extends Group
 }

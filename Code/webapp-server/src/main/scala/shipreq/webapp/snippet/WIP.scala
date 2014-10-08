@@ -11,33 +11,33 @@ class WIP {
 
   var rev = 99
 
-  val create = ServerProtocol.routine(Routines.CustReqTypeOps.Create)(vs => {
+  val create = ServerProtocol.routine(Routines.CustomReqTypeOps.Create)(vs => {
     val (mnemonic, name, impReq) = vs
     println(s"TODO: create $vs")
     None
   })
 
-  val update = ServerProtocol.routine(Routines.CustReqTypeOps.Update)(vs => {
+  val update = ServerProtocol.routine(Routines.CustomReqTypeOps.Update)(vs => {
     val (id, (mnemonic, name, impReq)) = vs
     println(s"TODO: update $vs")
     None
   })
 
-  val softDelete = ServerProtocol.routine(Routines.CustReqTypeOps.SoftDelete)(id => {
+  val softDelete = ServerProtocol.routine(Routines.CustomReqTypeOps.SoftDelete)(id => {
     println(s"TODO: softDelete $id")
     rev += 1
     Thread.sleep(1500)
-    val dg = RemoteDeltaG(Partition.CustReqType, Rev(0), Rev(rev))(id :: Nil, Nil)
+    val dg = RemoteDeltaG(Partition.CustomReqTypes, Rev(0), Rev(rev))(id :: Nil, Nil)
     val d: RemoteDelta = dg :: Nil
     d
   })
 
-  val hardDelete = ServerProtocol.routine(Routines.CustReqTypeOps.HardDelete)(id => {
+  val hardDelete = ServerProtocol.routine(Routines.CustomReqTypeOps.HardDelete)(id => {
     println(s"TODO: hardDelete $id")
     None
   })
 
-  val restore = ServerProtocol.routine(Routines.CustReqTypeOps.Restore)(id => {
+  val restore = ServerProtocol.routine(Routines.CustomReqTypeOps.Restore)(id => {
     println(s"TODO: restore $id")
     None
   })

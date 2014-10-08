@@ -23,8 +23,8 @@ import ReqType.Mnemonic
 
 object CfgReqType {
 
-  type P = CustReqType
-  type D = CustReqType.Id
+  type P = CustomReqType
+  type D = CustomReqType.Id
   type X = (Routines.ForCfgReqType, ClientData)
 
   private val prespec = TableSpecBuilder[P](
@@ -57,7 +57,7 @@ object CfgReqType {
   final class MyBack extends OnUnmount
 
   private def recvExtUpdate(d: LocalDelta) = ReactS.mod[prespec.S](s1 => {
-    val ds = LocalDelta.filter(Partition.CustReqType, d)
+    val ds = LocalDelta.filter(Partition.CustomReqTypes, d)
     val s2 = (s1 /: ds.del)((t,id) => spec.savedRemoveF(id)(t))
     val s3 = (s2 /: ds.upd)((t,p) => spec.savedSetF(p.id, p)(t))
     s3

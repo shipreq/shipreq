@@ -42,13 +42,13 @@ object ProtocolTest extends TestSuite {
 
   object TestData {
     // TODO this is bullshit, need properties :(
-    object custReqType {
-      def id = CustReqType.Id(5)
+    object customReqType {
+      def id = CustomReqType.Id(5)
       def mn = ReqType.Mnemonic("BR")
       def mn2 = ReqType.Mnemonic("X")
       def mn3 = ReqType.Mnemonic("Y")
       val s = "hehe"
-      def c1 = CustReqType(id, mn, Set(mn2, mn3), s, ImplicationRequired, Dead)
+      def c1 = CustomReqType(id, mn, Set(mn2, mn3), s, ImplicationRequired, Dead)
     }
   }
 
@@ -56,15 +56,15 @@ object ProtocolTest extends TestSuite {
 
     'Routines {
 
-      'CustReqTypeOps {
-        import TestData.custReqType._
+      'CustomReqTypeOps {
+        import TestData.customReqType._
         'Create {
-          val kit = kitR(Routines.CustReqTypeOps.Create)
+          val kit = kitR(Routines.CustomReqTypeOps.Create)
           'i - kit.testI( (mn,s,ImplicationRequired) )
           'o - kit.testO(None, Some(c1))
         }
         'Update {
-          val kit = kitR(Routines.CustReqTypeOps.Update)
+          val kit = kitR(Routines.CustomReqTypeOps.Update)
           'i - kit.testI( (id,(mn,s,ImplicationRequired)) )
           'o - kit.testO(None, Some(c1))
         }
@@ -75,7 +75,7 @@ object ProtocolTest extends TestSuite {
       import JsEntryPoint._
 
       'reactExamples {
-        import CustReqTypeOps._
+        import CustomReqTypeOps._
         kitEP(reactExamples).testI(ForCfgReqType(
           Remote("x", Create),
           Remote("e", Update),
@@ -91,18 +91,18 @@ object ProtocolTest extends TestSuite {
       val r1 = Rev(3)
       val r2 = Rev(4)
       def test1[P <: Partition]: P => RemoteDeltaG = {
-        case p@ Partition.CustReqType =>
-          import TestData.custReqType._
+        case p@ Partition.CustomReqTypes =>
+          import TestData.customReqType._
           RemoteDeltaG(p, r1, r2)(List(id), List(c1))
       }
 
       def test2(dg: RemoteDeltaG) = {
         val d = List(dg)
-        kitR(Routines.CustReqTypeOps.SoftDelete).testO(d)
+        kitR(Routines.CustomReqTypeOps.SoftDelete).testO(d)
       }
       def test[P <: Partition](p: P) = test2(test1(p))
 
-      'CustReqType - test(Partition.CustReqType)
+      'CustomReqTypes - test(Partition.CustomReqTypes)
     }
   }
 }
