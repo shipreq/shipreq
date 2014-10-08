@@ -117,13 +117,12 @@ object CfgReqType {
 
     def renderInner(S: ScopeI): VDom = {
       implicit val x: X = S.props.x
-      val newRow = Render.newRow.render(S)(())
       val nonNewRows = (staticRows #::: savedRows(S) #::: deletedRows(S)).sortBy(_._1.value).map(_._2).toJsArray
       div(
         button(onclick ~~> S.runState(newRowS), "New"),
         table(
           thead(tr(th("Mnemonic"), th("Name"), th("Implication Required"), th("Ctrls"))),
-          tbody(newRow, nonNewRows)))
+          tbody(newRow(S), nonNewRows)))
     }
 
     private def row(classArg: String, mnemonic: Modifier, name: Modifier, impReq: Modifier, rs: RowStatus, ctrls: => Modifier): Tag = {
@@ -135,43 +134,41 @@ object CfgReqType {
       tr(cls := s"$classArg $cls2", td(mnemonic), td(name), td(impReq), td(c))
     }
 
-    def newRow(implicit x: X) =
+    def newRow(S: ScopeI)(implicit x: X) =
       spec.unsavedRow((F, rs, vv) => {
         val (mnemonic, name, impReq) = vv
         def c = button(onclick ~~> F.runState(spec.unsavedRemoveS), "Cancel")
         row("new", mnemonic, name, impReq, rs, c)(keyAttr := "new")
-      })
+      })(x)(S)
 
     def savedRows(S: ScopeI)(implicit x: X): RowStream = {
-      val rr = savedRow.render(S)
-      deletion.getSavedP(S, Alive).map(p => p.mnemonic -> rr(p.id))
-    }
-
-    def savedRow(implicit x: X) =
-      spec.savedRowP((F, id, rs, p, vv) => {
+      val rr = spec.savedRowP((F, id, rs, p, vv) => {
         val (mnemonic, name, impReq) = vv
         def c = deletion.buttons(F, id, HardDelete, SoftDelete)
         row("live", mnemonic, name, impReq, rs, c)(keyAttr := id.value)
-      })
+      })(x)(S)
+      deletion.getSavedP(S, Alive).map(p => p.mnemonic -> rr(p.id))
+    }
 
-    def deletedRows(S: ScopeI)(implicit x: X): RowStream =
+    def deletedRows(S: ScopeI)(implicit x: X): RowStream = {
+      def rr(rs: RowStatus, p: P) = {
+        val impReq = checkbox(ImplicationRequired from p.imp)(disabled := true)
+        def c = deletion.button(S, p.id, Restore)
+        row("dead", raw(p.mnemonic), raw(p.name), impReq, rs, c)(keyAttr := p.id.value)
+      }
       if (S.props.showDeleted)
-        deletion.getSaved(S, Dead).map(a => a._3.mnemonic -> deletedRow(S, a._1, a._3))
+        deletion.getSaved(S, Dead).map(a => a._3.mnemonic -> rr(a._1, a._3))
       else
         Stream.empty
-
-    def deletedRow(F: FocusI, rs: RowStatus, p: P)(implicit x: X) = {
-      val impReq = checkbox(ImplicationRequired from p.imp)(disabled := true)
-      def c = deletion.button(F, p.id, Restore)
-      row("dead", raw(p.mnemonic), raw(p.name), impReq, rs, c)(keyAttr := p.id.value)
     }
 
-    val staticRows: RowStream =
-      ReqType.static.map(r => r.mnemonic -> staticRow(r)).toStream
-
-    def staticRow(r: ReqType.Static) = {
-      val imp = checkbox(ImplicationRequired from r.imp)(disabled := true)
-      row("static", raw(r.mnemonic), raw(r.name), imp, RowStatus.Sync, EmptyTag)(keyAttr := r.mnemonic.value)
+    val staticRows: RowStream = {
+      def rr(r: ReqType.Static) = {
+        val imp = checkbox(ImplicationRequired from r.imp)(disabled := true)
+        row("static", raw(r.mnemonic), raw(r.name), imp, RowStatus.Sync, EmptyTag)(keyAttr := r.mnemonic.value)
+      }
+      ReqType.static.map(r => r.mnemonic -> rr(r)).toStream
     }
+
   }
 }
