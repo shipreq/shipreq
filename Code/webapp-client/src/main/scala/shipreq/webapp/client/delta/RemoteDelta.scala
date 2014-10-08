@@ -8,8 +8,8 @@ sealed trait ApplicationResult
 case class Applied(p: Project, d: LocalDeltas) extends ApplicationResult
 case object CouldntApply extends ApplicationResult
 
-final class RemoteDelta(deltas: RemoteDeltas) {
-  
+object RemoteDelta {
+
   def apply(p: Project, deltas: RemoteDeltas): ApplicationResult =
     apply2(Applied(p, Nil), deltas)
 
@@ -17,18 +17,18 @@ final class RemoteDelta(deltas: RemoteDeltas) {
     deltas.foldLeft(z)((acc, d) => {
 
       def y(a: Applied): ApplicationResult = {
-        def x[P <: Partition](q: P, b: Fns[P]): ApplicationResult =
-          d.applicableToRev(b.rev(a.p)) match {
+        def x[P <: Partition](part: P, fns: Fns[P]): ApplicationResult =
+          d.applicableToRev(fns.rev(a.p)) match {
             case Applies =>
-              val ds = forceEqProof[Partition, P].subst(d.updateSet)
-              val p = b.update(a.p, d.toRev, ds)
-              val u = LocalDeltaP(ds.del, ds.upd).deltaG(q) :: a.d
+              val ds = d.forceDeltaP(part)
+              val p = fns.update(a.p, d.to, ds)
+              val u = LocalDeltaP(ds.del, ds.upd).deltaG(part) :: a.d
               Applied(p, u)
             case NoNeed => a
             case Unapplicable => CouldntApply
           }
 
-        d.meta match {
+        d.p match {
           case t@ CustReqType => x(t, CustReqTypeFns)
         }
       }

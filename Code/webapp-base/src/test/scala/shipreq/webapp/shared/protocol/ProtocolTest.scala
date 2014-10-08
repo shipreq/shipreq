@@ -22,10 +22,10 @@ object ProtocolTest extends TestSuite {
     private def c(code: String, m: Any) = s"\033[${code}m$m\033[0m"
 
     def testI(is: I*): Unit =
-      is.foreach(testA(_, (a, j) => s"  C ⇒ ${c("36", a)} ⇒ ${c("34;1", j)} ⇒ S"))
+      is.foreach(testA(_, (a, j) => s"  C ⇒ ${c("36", a)}\n    ⇒ ${c("34;1", j)} ⇒ S"))
 
     def testO(os: O*): Unit =
-      os.foreach(testA(_, (a, j) => s"  S ⇒ ${c("36", a)} ⇒ ${c("34;1", j)} ⇒ C"))
+      os.foreach(testA(_, (a, j) => s"  S ⇒ ${c("36", a)}\n    ⇒ ${c("34;1", j)} ⇒ C"))
 
     def testIO(is: I*)(implicit ev: I === O): Unit = {
       testI(is: _*)
@@ -40,19 +40,24 @@ object ProtocolTest extends TestSuite {
     }
   }
 
+  object TestData {
+    // TODO this is bullshit, need properties :(
+    object custReqType {
+      def id = CustReqType.Id(5)
+      def mn = ReqType.Mnemonic("BR")
+      def mn2 = ReqType.Mnemonic("X")
+      def mn3 = ReqType.Mnemonic("Y")
+      val s = "hehe"
+      def c1 = CustReqType(id, mn, Set(mn2, mn3), s, ImplicationRequired, Dead)
+    }
+  }
+
   override def tests = TestSuite {
 
     'Routines {
 
       'CustReqTypeOps {
-        // TODO this is bullshit, need properties :(
-        def id = CustReqType.Id(5)
-        def mn = ReqType.Mnemonic("BR")
-        def mn2 = ReqType.Mnemonic("X")
-        def mn3 = ReqType.Mnemonic("Y")
-        val s = "hehe"
-        def c1 = CustReqType(id, mn, Set(mn2, mn3), s, ImplicationRequired, Dead)
-
+        import TestData.custReqType._
         'Create {
           val kit = kitR(Routines.CustReqTypeOps.Create)
           'i - kit.testI( (mn,s,ImplicationRequired) )
@@ -79,6 +84,25 @@ object ProtocolTest extends TestSuite {
           Remote("o", Restore)
         ))
       }
+    }
+
+    'Δ {
+      import delta._
+      val r1 = Rev(3)
+      val r2 = Rev(4)
+      def test1[P <: Partition]: P => RemoteDeltaG = {
+        case p@ Partition.CustReqType =>
+          import TestData.custReqType._
+          RemoteDeltaG(p, r1, r2)(List(id), List(c1))
+      }
+
+      def test2(dg: RemoteDeltaG) = {
+        val d = List(dg)
+        kitR(Routines.CustReqTypeOps.SoftDelete).testO(d)
+      }
+      def test[P <: Partition](p: P) = test2(test1(p))
+
+      'CustReqType - test(Partition.CustReqType)
     }
   }
 }

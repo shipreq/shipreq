@@ -1,10 +1,10 @@
 package shipreq.webapp.shared.protocol
 
-import shipreq.webapp.shared.data._
-import Codec._
-import DataCodecs._
-import Routine._
 import upickle.{Reader, Writer}
+import shipreq.webapp.shared.data._
+import shipreq.webapp.shared.data.delta.RemoteDeltas
+import Codec._, DataCodecs._, DeltaCodecs._
+import Routine._
 
 sealed abstract class GenericCrud[T: Reader : Writer, I: Reader : Writer, V: Reader : Writer] {
   final type R = Option[T]
@@ -13,7 +13,7 @@ sealed abstract class GenericCrud[T: Reader : Writer, I: Reader : Writer, V: Rea
 
   case object Create extends DescT[V, R]
   case object Update extends DescT[(I, V), R]
-  case object SoftDelete extends DescT[I, R]
+  case object SoftDelete extends DescT[I, RemoteDeltas]
   case object HardDelete extends DescT[I, R]
   case object Restore extends DescT[I, R]
 

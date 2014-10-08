@@ -7,10 +7,14 @@ import scalaz.std.anyVal.booleanInstance
 import scalaz.std.string.stringInstance
 import scalaz.std.tuple._
 import japgolly.scalajs.react.ReactComponentB
+import japgolly.scalajs.react.experiment.{Listenable, OnUnmount}
+import japgolly.scalajs.react.ScalazReact._
 
 import shipreq.base.util.TaggedTypes.taggedStringInstance
 import shipreq.webapp.shared.data._
+import shipreq.webapp.shared.data.delta.Partition
 import shipreq.webapp.shared.protocol.Routines
+import shipreq.webapp.client.delta.LocalDeltas
 import shipreq.webapp.client.protocol.{FailureIO, ClientProtocol}
 import shipreq.webapp.client.ui.table._
 import shipreq.webapp.client.ui.{Editors => E, Util}
@@ -21,7 +25,7 @@ object CfgReqType {
 
   type P = CustReqType
   type D = CustReqType.Id
-  type X = Routines.ForCfgReqType
+  type X = (Routines.ForCfgReqType, ClientData)
 
   private val prespec = TableSpecBuilder[P](
     FieldSpec[P](_.mnemonic.value)(V.mnemonic)(E.TextInputEditor),
@@ -48,9 +52,16 @@ object CfgReqType {
         (static #::: custom).flatMap(p => p.mnemonic #:: p.oldMnemonics.toStream)
       }).fieldName("Mnemonic")
 
-  case class Props(routines: Routines.ForCfgReqType,
-                   startingPoint: Map[CustReqType.Id, CustReqType],
-                   showDeleted: Boolean)
+  case class Props(x: X, showDeleted: Boolean)
+
+  final class MyBack extends OnUnmount
+
+  private def recvExtUpdate(d: LocalDeltas) = ReactS.mod[prespec.S](s1 => {
+    val ds = LocalDeltas.filter(Partition.CustReqType, d)
+    val s2 = (s1 /: ds.del)((t,id) => spec.savedRemoveF(id)(t))
+    val s3 = (s2 /: ds.upd)((t,p) => spec.savedSetF(p.id, p)(t))
+    s3
+  })
 
   val Component = ReactComponentB[Props]("CfgReqTypes")
     .getInitialState(p => p.showDeleted)
@@ -58,16 +69,18 @@ object CfgReqType {
     .build
 
   private val InnerComponent = ReactComponentB[Props]("CfgReqTypesⁱ")
-    .getInitialState(p => spec.initialState(p.startingPoint))
+    .getInitialState(p => spec.initialState(p.x._2.project.customReqTypes.data, _.id))
+    .backend(_ => new MyBack)
     .render(Render.renderInner _)
+    .configure(Listenable.installS(_.x._2, recvExtUpdate))
     .build
 
   private def saveIO(x: X, op: Option[P], u: prespec.U, f: FailureIO): IO[Unit] =
     op match {
       case None =>
-        ClientProtocol.call(x.create)(u, o => IO(console.log(s"Ajax Result = $o")), f)
+        ClientProtocol.call(x._1.create)(u, o => IO(console.log(s"Ajax Result = $o")), f)
       case Some(p) =>
-        ClientProtocol.call(x.update)((p.id, u), o => IO(console.log(s"Ajax Result = $o")), f)
+        ClientProtocol.call(x._1.update)((p.id, u), o => IO(console.log(s"Ajax Result = $o")), f)
     }
 
   private val deletion =
@@ -78,9 +91,9 @@ object CfgReqType {
   private def deleteIO(x: X, id: D, a: DeletionAction, f: FailureIO): IO[Unit] =
     // TODO Merge these callbacks
     a match {
-      case HardDelete => ClientProtocol.call(x.hardDelete)(id, o => IO(console.log(s"Ajax Result = $o")), f)
-      case SoftDelete => ClientProtocol.call(x.softDelete)(id, o => IO(console.log(s"Ajax Result = $o")), f)
-      case Restore    => ClientProtocol.call(x.restore   )(id, o => IO(console.log(s"Ajax Result = $o")), f)
+      case HardDelete => ClientProtocol.call(x._1.hardDelete)(id, o => IO(console.log(s"Ajax Result = $o")), f)
+      case SoftDelete => ClientProtocol.call(x._1.softDelete)(id, o => IO{console.log(s"Ajax Result = $o"); x._2.update(o) }, f)
+      case Restore    => ClientProtocol.call(x._1.restore   )(id, o => IO(console.log(s"Ajax Result = $o")), f)
     }
 
   private val newRowS = spec.unsavedInitS(("","",false))
@@ -98,12 +111,12 @@ object CfgReqType {
         InnerComponent(S.props.copy(showDeleted = s)))
     }
 
-    type ScopeI = ComponentScopeU[Props, prespec.S, Unit]
+    type ScopeI = ComponentScopeU[Props, prespec.S, MyBack]
     type FocusI = ComponentStateFocus[prespec.S]
     type RowStream = Stream[(Mnemonic, Tag)]
 
     def renderInner(S: ScopeI): VDom = {
-      implicit val x: X = S.props.routines
+      implicit val x: X = S.props.x
       val newRow = Render.newRow.render(S)(())
       val nonNewRows = (staticRows #::: savedRows(S) #::: deletedRows(S)).sortBy(_._1.value).map(_._2).toJsArray
       div(

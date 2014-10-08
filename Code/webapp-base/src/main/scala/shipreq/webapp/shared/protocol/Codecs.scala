@@ -1,5 +1,7 @@
 package shipreq.webapp.shared.protocol
 
+import shipreq.base.util.BiMap
+
 import scalaz.Isomorphism.<=>
 import upickle._
 import shipreq.base.util.TaggedTypes._
@@ -26,6 +28,35 @@ private[protocol] object Codec {
     })
   }
 
+  // UNSAFE. Make sure tests using exhaustive pattern matching to cover this hierarchy
+  def enum[T](ts: T*) = {
+    val table = BiMap(ts.zipWithIndex.map(p => p._1 -> ('0' + p._2).toChar.toString).toMap)
+    ReadWriter[T](t => Js.Str(table.ab(t)), {
+      case Js.Str(k) if table.ba.contains(k) => table.ba(k)
+    })
+  }
+
+  def caseclass2[A: Reader : Writer, B: Reader : Writer, Z]
+  (y: (A, B) => Z, u: Z => Option[(A, B)]): ReadWriter[Z] = {
+    val r = Tuple2R[A, B].read
+    val w = Tuple2W[A, B].write
+    ReadWriter[Z](z => w(u(z).get), r andThen y.tupled)
+  }
+
+  def caseclass3[A: Reader : Writer, B: Reader : Writer, C: Reader : Writer, Z]
+  (y: (A, B, C) => Z, u: Z => Option[(A, B, C)]): ReadWriter[Z] = {
+    val r = Tuple3R[A, B, C].read
+    val w = Tuple3W[A, B, C].write
+    ReadWriter[Z](z => w(u(z).get), r andThen y.tupled)
+  }
+
+  def caseclass4[A: Reader : Writer, B: Reader : Writer, C: Reader : Writer, D: Reader : Writer, Z]
+  (y: (A, B, C, D) => Z, u: Z => Option[(A, B, C, D)]): ReadWriter[Z] = {
+    val r = Tuple4R[A, B, C, D].read
+    val w = Tuple4W[A, B, C, D].write
+    ReadWriter[Z](z => w(u(z).get), r andThen y.tupled)
+  }
+  
   def caseclass5[A: Reader : Writer, B: Reader : Writer, C: Reader : Writer, D: Reader : Writer, E: Reader : Writer, Z]
   (y: (A, B, C, D, E) => Z, u: Z => Option[(A, B, C, D, E)]): ReadWriter[Z] = {
     val r = Tuple5R[A, B, C, D, E].read
@@ -40,11 +71,14 @@ private[protocol] object Codec {
     ReadWriter[Z](z => w(u(z).get), r andThen y.tupled)
   }
 
-  def remoteRoutine[R <: Routine.Desc](d: R) = ReadWriter[d.Remote](r => Js.Str(r.n), {case Js.Str(n) => Routine.Remote(n, d) })
+  def remoteRoutine[R <: Routine.Desc](d: R) = ReadWriter[d.Remote](
+    r => Js.Str(r.n),
+    {case Js.Str(n) => Routine.Remote(n, d) })
 }
 
 import Codec._
 
+// =====================================================================================================================
 object DataCodecs {
 
   implicit def alive = boolCase(Alive)
@@ -59,8 +93,40 @@ object DataCodecs {
 
 }
 
+// =====================================================================================================================
 object RoutineGroupCodecs {
 
   implicit def routinesForCfgReqType = caseclass5(Routines.ForCfgReqType.apply, Routines.ForCfgReqType.unapply)
+
+}
+
+// =====================================================================================================================
+object DeltaCodecs {
+  import shipreq.webapp.shared.data.delta._
+
+  implicit def rev = tagL(Rev.apply)
+
+  implicit def partitions = enum[Partition](Partition.CustReqType)
+
+  implicit def remoteDeltaGW = Writer[RemoteDeltaG](r => {
+    import r.p.{wd, wp}
+    val dp = r.forceDeltaP[r.p.type](r.p)
+    val a = partitions write r.p
+    val b = rev write r.from
+    val c = rev write r.to
+    val d = Js.Arr(dp.del.map(wd.write): _*)
+    val e = Js.Arr(dp.upd.map(wp.write): _*)
+    Js.Arr(a, b, c, d, e)
+  })
+
+  implicit def remoteDeltaGR = Reader[RemoteDeltaG]({
+    case Js.Arr(a, b, c, Js.Arr(d@_*), Js.Arr(e@_*)) =>
+      val p = partitions read a
+      val f = rev read b
+      val t = rev read c
+      val x = d.map(p.rd.read).toList
+      val y = e.map(p.rp.read).toList
+      RemoteDeltaG(p, f, t)(x, y)
+  })
 
 }

@@ -1,7 +1,7 @@
 package hahaa
 
+import shipreq.webapp.client.ClientData
 import shipreq.webapp.shared.protocol.Routines
-import shipreq.webapp.client.protocol.ClientProtocol
 
 import scala.scalajs.js
 import org.scalajs.dom.{document, window, Node, console, alert}
@@ -34,23 +34,8 @@ object ReactExamples {
   // ===================================================================================================================
 
   def cfgReqTypesTest(routines: Routines.ForCfgReqType, mountNode: Node) = {
-    import shipreq.webapp.shared.data._
     import shipreq.webapp.client.CfgReqType._
-    import CustReqType.Id
-    implicit def autoMnemonic(s: String) = ReqType.Mnemonic(s)
-
-    val list = List(
-      CustReqType(Id(1), "CO", Set.empty, "Constraint", ImplicationNotRequired, Alive),
-      CustReqType(Id(2), "MF", Set.empty, "Major Feature", ImplicationNotRequired, Alive),
-      CustReqType(Id(3), "FR", Set.empty, "Functional Requirement", ImplicationNotRequired, Alive),
-      CustReqType(Id(4), "BR", Set.empty, "Business Rule", ImplicationNotRequired, Alive),
-      CustReqType(Id(5), "DD", Set("DA", "DDF"), "Data Definition", ImplicationNotRequired, Dead),
-      CustReqType(Id(6), "SI", Set.empty, "Solution Idea", ImplicationRequired, Dead)
-    )
-
-    val map = list.map(i => i.id -> i).toMap
-
-    Component(Props(routines, map, false)) render mountNode
+    Component(Props((routines, ClientData.GLOBAL), false)) render mountNode
   }
 
   def example2(mountNode: Node) = {

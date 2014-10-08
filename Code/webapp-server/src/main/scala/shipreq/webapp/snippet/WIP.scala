@@ -4,7 +4,12 @@ import net.liftweb.util.Helpers._
 import shipreq.webapp.shared.protocol._
 import shipreq.webapp.lib.ServerProtocol
 
+import shipreq.webapp.shared.data._
+import shipreq.webapp.shared.data.delta._
+
 class WIP {
+
+  var rev = 99
 
   val create = ServerProtocol.routine(Routines.CustReqTypeOps.Create)(vs => {
     val (mnemonic, name, impReq) = vs
@@ -20,7 +25,11 @@ class WIP {
 
   val softDelete = ServerProtocol.routine(Routines.CustReqTypeOps.SoftDelete)(id => {
     println(s"TODO: softDelete $id")
-    None
+    rev += 1
+    Thread.sleep(1500)
+    val dg = RemoteDeltaG(Partition.CustReqType, Rev(0), Rev(rev))(id :: Nil, Nil)
+    val d: RemoteDeltas = dg :: Nil
+    d
   })
 
   val hardDelete = ServerProtocol.routine(Routines.CustReqTypeOps.HardDelete)(id => {
