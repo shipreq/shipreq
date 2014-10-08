@@ -224,7 +224,9 @@ object ShipReq extends Build {
         μPickle.jvm ++ testScope(μTest.jvm)
 
       override def project = typicalProject
-        .configure(Common.scalaAndScalaJsShared)
+        .configure(
+          Common.scalaAndScalaJsShared,
+          addCommandAliases("wd" -> ";up; ~fastOptJS"))
         .dependsOn(baseUtilSjs)
     }
 
