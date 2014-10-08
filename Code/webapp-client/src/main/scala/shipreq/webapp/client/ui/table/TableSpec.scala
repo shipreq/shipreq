@@ -87,10 +87,13 @@ abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, 
     val setI: (S, II) => Option[S] =
       (s,i) => unsavedL.get(s).map(_ => unsavedL.set(s, Some(UnsavedRow(Sync, i))))
     val se = WeirdLens[Option, S, S, II](getI, setI)
-    (T: CSF) => {
-      val r = rowRenderer(None).renderM(se, s2op)(saveIO(T))
-      r(T)
-    }
+    (T: CSF) =>
+      // TODO this is terrible
+      for {
+        rs <- unsavedStatusL.getOption(T.state)
+        r = rowRenderer(None).renderM(se, s2op)(saveIO(T))
+        v <- r(T)
+      } yield (rs, v)
   }
 
   def unsavedInitS(empty: II) =
@@ -108,11 +111,11 @@ abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, 
   def unsavedToSavedF(id: D, p: P): S => S =
     savedSetF(id, p) compose unsavedRemoveF
 
-  def unsavedRow[V2](renderRow: (CSF, VV) => V2)(implicit x: X) =
-    unsavedRowI(unsavedRenderAttr(createIO(x)), renderRow)
+  def unsavedRow[V2](renderRow: (CSF, RowStatus, VV) => V2)(implicit x: X) =
+    unsavedRowI(unsavedRenderAttr(createIO(x)),renderRow)
 
-  private def unsavedRowI[V2](renderAttr: CSF => Option[VV], renderRow: (CSF, VV) => V2) =
-    new FullRow[Option, S, VV, V2, Unit](_ => renderAttr(_), (T,_,vv) => renderRow(T, vv))
+  private def unsavedRowI[V2](renderAttr: CSF => Option[(RowStatus,VV)], renderRow: (CSF, RowStatus, VV) => V2) =
+    new FullRow[Option, S, VV, V2, Unit](_ => renderAttr(_), (T,_,r,v) => renderRow(T,r,v))
 
   protected def updateIO: (CSF, X) => (S, DP, U) => IO[S]
 
@@ -122,8 +125,9 @@ abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, 
         s => (id, rowP(id)(s)),
         (dp, u) => if (saveNotNeeded(u, dp._2)) None else Some(dp)
       )(updateIO(T, x))
+      val rs = rowStatus(id).get(T.state)
       val r = rowRenderer(Some(id)).render(rowIL(id), rowP(id))(saveIO)
-      r(T)
+      (rs, r(T))
     }
 
   def savedRemoveF(id: D) =
@@ -152,13 +156,13 @@ abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, 
   def savedSetS(dp: DP) =
     ST.mod(savedSetF(dp))
 
-  def savedRowP[V2](renderRow: (CSF, D, P, VV) => V2)(implicit x: X) =
-    savedRow((t,d,v) => renderRow(t,d,rowP(d)(t.state),v))
+  def savedRowP[V2](renderRow: (CSF, D, RowStatus, P, VV) => V2)(implicit x: X) =
+    savedRow((t, d, r, v) => renderRow(t, d, r, rowP(d)(t.state), v))
 
-  def savedRow[V2](renderRow: (CSF, D, VV) => V2)(implicit x: X) =
+  def savedRow[V2](renderRow: (CSF, D, RowStatus, VV) => V2)(implicit x: X) =
     savedRowI(savedRenderAttr(x), renderRow)
 
-  private def savedRowI[V2](renderAttr: D => CSF => VV, renderRow: (CSF, D, VV) => V2) =
+  private def savedRowI[V2](renderAttr: D => CSF => (RowStatus, VV), renderRow: (CSF, D, RowStatus, VV) => V2) =
     new FullRow[Id, S, VV, V2, D](renderAttr, renderRow)
 
   final type SavedPs = Stream[(RowStatus, D, P)]
@@ -236,10 +240,12 @@ object TableSpec {
     def renderM[M[_] : Bind : Optional2](iL: WeirdLens[M, S, S, II], s2mp: S => M[P])(save: (S, U) => IO[S]): ComponentStateFocus[S] => M[VV]
   }
 
-  final private[table] class FullRow[M[_] : Bind, S, V1, V2, R](renderAttr: R => ComponentStateFocus[S] => M[V1],
-                                                                renderRow: (ComponentStateFocus[S], R, V1) => V2) {
+  final private[table] class FullRow[M[_] : Bind, S, V1, V2, R](
+        renderAttr: R => ComponentStateFocus[S] => M[(RowStatus, V1)],
+        renderRow: (ComponentStateFocus[S], R, RowStatus, V1) => V2) {
+
     def render(T: ComponentStateFocus[S]): R => M[V2] =
-      id => renderAttr(id)(T).map(v1 => renderRow(T, id, v1))
+      id => renderAttr(id)(T).map(rv => renderRow(T, id, rv._1, rv._2))
   }
 
   @inline final private[table] def updateIfNeeded[S, U, L, L2](getLast: S => L,

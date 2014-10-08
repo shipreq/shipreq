@@ -126,14 +126,20 @@ object CfgReqType {
           tbody(newRow, nonNewRows)))
     }
 
-    private def row(mnemonic: Modifier, name: Modifier, impReq: Modifier, delButton: Modifier) =
-      Seq(td(mnemonic), td(name), td(impReq), td(delButton))
+    private def row(classArg: String, mnemonic: Modifier, name: Modifier, impReq: Modifier, rs: RowStatus, ctrls: => Modifier): Tag = {
+      val (cls2, c: Modifier) = rs match {
+        case RowStatus.Sync   => ("sync", ctrls)
+        case RowStatus.Locked => ("locked", img(cls := "spinner", src := "/assets/loading-spin.svg"))
+        case RowStatus.Failed => ??? // TODO need that callback
+      }
+      tr(cls := s"$classArg $cls2", td(mnemonic), td(name), td(impReq), td(c))
+    }
 
     def newRow(implicit x: X) =
-      spec.unsavedRow((F, vv) => {
+      spec.unsavedRow((F, rs, vv) => {
         val (mnemonic, name, impReq) = vv
-        val delButton = button(onclick ~~> F.runState(spec.unsavedRemoveS))("Cancel")
-        tr(keyAttr := "new", row(mnemonic, name, impReq, delButton))
+        def c = button(onclick ~~> F.runState(spec.unsavedRemoveS), "Cancel")
+        row("new", mnemonic, name, impReq, rs, c)(keyAttr := "new")
       })
 
     def savedRows(S: ScopeI)(implicit x: X): RowStream = {
@@ -142,21 +148,22 @@ object CfgReqType {
     }
 
     def savedRow(implicit x: X) =
-      spec.savedRowP((F, id, p, vv) => {
+      spec.savedRowP((F, id, rs, p, vv) => {
         val (mnemonic, name, impReq) = vv
-        tr(keyAttr := id.value, row(mnemonic, name, impReq, deletion.buttons(F, id, HardDelete, SoftDelete)))
+        def c = deletion.buttons(F, id, HardDelete, SoftDelete)
+        row("live", mnemonic, name, impReq, rs, c)(keyAttr := id.value)
       })
 
     def deletedRows(S: ScopeI)(implicit x: X): RowStream =
       if (S.props.showDeleted)
-        deletion.getSavedP(S, Dead).map(p => p.mnemonic -> deletedRow(S, p))
+        deletion.getSaved(S, Dead).map(a => a._3.mnemonic -> deletedRow(S, a._1, a._3))
       else
         Stream.empty
 
-    def deletedRow(F: FocusI, p: P)(implicit x: X) = {
-      val imp = checkbox(ImplicationRequired from p.imp)(disabled := true)
-      val del = deletion.button(F, p.id, Restore)
-      tr(cls := "del", key := p.id.value, row(raw(p.mnemonic), raw(p.name), imp, del))
+    def deletedRow(F: FocusI, rs: RowStatus, p: P)(implicit x: X) = {
+      val impReq = checkbox(ImplicationRequired from p.imp)(disabled := true)
+      def c = deletion.button(F, p.id, Restore)
+      row("dead", raw(p.mnemonic), raw(p.name), impReq, rs, c)(keyAttr := p.id.value)
     }
 
     val staticRows: RowStream =
@@ -164,7 +171,7 @@ object CfgReqType {
 
     def staticRow(r: ReqType.Static) = {
       val imp = checkbox(ImplicationRequired from r.imp)(disabled := true)
-      tr(key := r.mnemonic.value, row(raw(r.mnemonic), raw(r.name), imp, EmptyTag))
+      row("static", raw(r.mnemonic), raw(r.name), imp, RowStatus.Sync, EmptyTag)(keyAttr := r.mnemonic.value)
     }
   }
 }
