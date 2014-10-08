@@ -5,15 +5,15 @@ import shipreq.webapp.shared.data.delta._
 import Partition._
 
 sealed trait ApplicationResult
-case class Applied(p: Project, d: LocalDeltas) extends ApplicationResult
+case class Applied(p: Project, d: LocalDelta) extends ApplicationResult
 case object CouldntApply extends ApplicationResult
 
 object RemoteDelta {
 
-  def apply(p: Project, deltas: RemoteDeltas): ApplicationResult =
+  def apply(p: Project, deltas: RemoteDelta): ApplicationResult =
     apply2(Applied(p, Nil), deltas)
 
-  private def apply2(z: ApplicationResult, deltas: RemoteDeltas): ApplicationResult =
+  private def apply2(z: ApplicationResult, deltas: RemoteDelta): ApplicationResult =
     deltas.foldLeft(z)((acc, d) => {
 
       def y(a: Applied): ApplicationResult = {

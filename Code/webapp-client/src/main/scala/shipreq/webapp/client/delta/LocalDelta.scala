@@ -25,10 +25,10 @@ trait LocalDeltaG {
 //   UpdateSet  ∈ O(n)
 //   UpdateSetG ∈ O(1)
 //   UpdateSets ∈ O(2m + n)
-object LocalDeltas {
+object LocalDelta {
 
   @tailrec
-  def filter[P <: Partition](p: P, s: LocalDeltas): LocalDeltaP[P] = s match {
+  def filter[P <: Partition](p: P, s: LocalDelta): LocalDeltaP[P] = s match {
     case h :: t =>
       Partition.testEq(h.p, p) match {
         case Some(ev) => ev.subst(h.deltaP)

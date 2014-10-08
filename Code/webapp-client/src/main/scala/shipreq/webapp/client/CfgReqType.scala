@@ -14,7 +14,7 @@ import shipreq.base.util.TaggedTypes.taggedStringInstance
 import shipreq.webapp.shared.data._
 import shipreq.webapp.shared.data.delta.Partition
 import shipreq.webapp.shared.protocol.Routines
-import shipreq.webapp.client.delta.LocalDeltas
+import shipreq.webapp.client.delta.LocalDelta
 import shipreq.webapp.client.protocol.{FailureIO, ClientProtocol}
 import shipreq.webapp.client.ui.table._
 import shipreq.webapp.client.ui.{Editors => E, Util}
@@ -56,8 +56,8 @@ object CfgReqType {
 
   final class MyBack extends OnUnmount
 
-  private def recvExtUpdate(d: LocalDeltas) = ReactS.mod[prespec.S](s1 => {
-    val ds = LocalDeltas.filter(Partition.CustReqType, d)
+  private def recvExtUpdate(d: LocalDelta) = ReactS.mod[prespec.S](s1 => {
+    val ds = LocalDelta.filter(Partition.CustReqType, d)
     val s2 = (s1 /: ds.del)((t,id) => spec.savedRemoveF(id)(t))
     val s3 = (s2 /: ds.upd)((t,p) => spec.savedSetF(p.id, p)(t))
     s3

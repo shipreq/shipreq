@@ -3,16 +3,16 @@ package shipreq.webapp.client
 import org.scalajs.dom
 import shipreq.webapp.client.delta._
 import shipreq.webapp.shared.data.Project
-import shipreq.webapp.shared.data.delta.{Rev, RemoteDeltas}
+import shipreq.webapp.shared.data.delta.{Rev, RemoteDelta}
 import japgolly.scalajs.react.experiment.Broadcaster
 
-final class ClientData(initial: Project) extends Broadcaster[LocalDeltas] {
+final class ClientData(initial: Project) extends Broadcaster[LocalDelta] {
 
   private var p = initial
 
   @inline def project = p
 
-  def update(d: RemoteDeltas): Unit = {
+  def update(d: RemoteDelta): Unit = {
     RemoteDelta(p, d) match {
       case Applied(p2, d2) =>
         p = p2

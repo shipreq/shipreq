@@ -28,7 +28,7 @@ class WIP {
     rev += 1
     Thread.sleep(1500)
     val dg = RemoteDeltaG(Partition.CustReqType, Rev(0), Rev(rev))(id :: Nil, Nil)
-    val d: RemoteDeltas = dg :: Nil
+    val d: RemoteDelta = dg :: Nil
     d
   })
 

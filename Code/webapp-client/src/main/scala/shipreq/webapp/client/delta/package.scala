@@ -2,6 +2,6 @@ package shipreq.webapp.client
 
 package object delta {
 
-  type LocalDeltas = List[LocalDeltaG]
+  type LocalDelta = List[LocalDeltaG]
 
 }
