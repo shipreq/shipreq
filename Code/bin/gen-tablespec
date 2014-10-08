@@ -17,11 +17,12 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.client.ui.Implicits._
 import shipreq.webapp.client.ui._
 import shipreq.webapp.shared.validation.{ValidatePlusR, ValidatorPlus}
-import TableSpec.RowRenderer
+import TableSpec.MultiFieldRenderer
 
 object SpecN {""")
 
-for (a <- (1 to 9)) {
+// for (a <- (1 to 9)) {
+for (a <- List(1,2,3)) {
 // println(s"// Arity: $a")
 
   def m (f: Int ⇒ String): List[String] = (1 to a).toList.map(f)
@@ -40,7 +41,7 @@ for (a <- (1 to 9)) {
   def IeCO  = mc(IeCOn)
   def ICO   = mc(ICOn)
   def spec  = mc(i ⇒ s"s$i: FieldSpec[P,V,I$i,C$i,O$i]")
-  def specR = mc(i ⇒ s"s$i: FieldSpecR[S,R,P,V,I$i,C$i,O$i]")
+  def specR = mc(i ⇒ s"s$i: FieldSpecR[_S,R,P,V,I$i,C$i,O$i]")
   def II    = mt(i ⇒ s"I$i")
   def OO    = mt(i ⇒ s"O$i")
   def os    = mt(i ⇒ s"o$i")
@@ -50,13 +51,13 @@ for (a <- (1 to 9)) {
   def cvs   = mc(i ⇒ s"cv$i: Option[ValidatePlusR[S,R,O$i]]")
 
   def ta(i: Int) = if (a==1) "" else s"._$i" //tuple access
-  def iLmap(i: Int) = if (a==1) "" else s".mapF(_${ta(i)})((a,b) ⇒ a put$i b)"
+  def iLmap(i: Int) = if (a==1) "" else s".map(_${ta(i)})((a,b) ⇒ a put$i b)"
   def tupled = if (a==1) "" else ".tupled"
 
   def in = mt(i ⇒ s"s$i initial p")
-  def vn = mn(i ⇒ s"      val v$i = s$i.vr.fold[S ⇒ ValidatorPlus[${ICOn(i)}]](_⇒ s$i.v)(s$i.v stateful _(w))")
+  def vn = mn(i ⇒ s"      val v$i = s$i.vr.fold[S ⇒ ValidatorPlus[${ICOn(i)}]](_⇒ s$i.v)(s$i.v stateful _(r))")
   def sn = mn(i ⇒ s"        o$i ← v$i(s).correctAndValidate(e${ta(i)}).toOption")
-  def en = mb(i ⇒ s"        new SmartEditor[S,${ICOn(i)},M](v$i, s2mp.andThen(_ map s$i.p2c), iL${iLmap(i)}, sf)").replaceFirst("^ +","")
+  def en = mb(i ⇒ s"        new SmartEditor[S,${ICOn(i)},M](v$i, s2mp.andThen(_ map s$i.p2c), ig${iLmap(i)}, sf)").replaceFirst("^ +","")
   def rn = mn(i ⇒ s"            v$i ← s${ta(i)}.render(s$i.e, T)")
 
   def RS = s"RowSpec$a"
@@ -67,22 +68,22 @@ for (a <- (1 to 9)) {
 
   print(s"""
 
-  final case class $RS[S, R, U, P, V, $IeCO]($specR, buildU: ($OO) ⇒ U) extends RowSpec[S, R, U, P, $II, $VV] {
+  final case class $RS[_S, R, U, P, V, $IeCO]($specR, buildU: ($OO) ⇒ U) extends RowSpec[_S, R, U, P, $II, $VV] {
     override def initial(p: P): $II = $in
-    private def fieldRenderers[M[_] : Bind : Optional2](s2mp: S ⇒ M[P], w: R, save: (S, U) ⇒ IO[S], iL: WeirdLens[M,S,S,$II]) = {
+    private def fieldRenderers[M[_] : Bind : Optional2](ig: InputGatewayS[M,S,$II], s2mp: S ⇒ M[P], save: (S, U) ⇒ IO[S], r: R) = {
 $vn
       def savable(s: S, e: $II): Option[$OO] = for {
 $sn
       } yield $os
       // TODO This isn't able to traverse other rows, or access them by R
       // Cannot save rows that were invalid due to this one, that have just become valid.
-      val sf: S ⇒ IO[S] = s ⇒ iL.get(s).toOption.flatMap(savable(s, _)).fold(IO(s))(oo ⇒ save(s, buildU(oo)))
+      val sf: S ⇒ IO[S] = s ⇒ ig(s).toOption.flatMap(x => savable(s, x.i)).fold(IO(s))(oo ⇒ save(s, buildU(oo)))
       ( $en)
     }
-    override def forRow(w: R): RowRenderer[S, U, P, $II, $VV] =
-      new RowRenderer[S, U, P, $II, $VV] {
-        override def renderM[M[_] : Bind : Optional2](iL: WeirdLens[M,S,S,$II], s2mp: S ⇒ M[P])(save: (S,U) ⇒ IO[S]): ComponentStateFocus[S] ⇒ M[$VV] = T ⇒ {
-          val s = fieldRenderers(s2mp, w, save, iL)
+    override def forRow(r: R): MultiFieldRenderer[S, U, P, $II, $VV] =
+      new MultiFieldRenderer[S, U, P, $II, $VV] {
+        override def render[M[_] : Bind : Optional2](ig: InputGatewayS[M,S,$II], s2mp: S ⇒ M[P], save: (S, U) ⇒ IO[S]): ComponentStateFocus[S] ⇒ M[$VV] = T ⇒ {
+          val s = fieldRenderers(ig, s2mp, save, r)
           for {
 $rn
           } yield $vs

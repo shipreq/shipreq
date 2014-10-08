@@ -33,7 +33,7 @@ object ClientData {
     val list = List(
       CustomReqType(Id(1), "CO", Set.empty, "Constraint", ImplicationNotRequired, Alive),
       CustomReqType(Id(2), "MF", Set.empty, "Major Feature", ImplicationNotRequired, Alive),
-      CustomReqType(Id(3), "FR", Set.empty, "Functional Requirement", ImplicationNotRequired, Alive),
+      CustomReqType(Id(3), "FR", Set.empty, "Functional Requirement", ImplicationRequired, Alive),
       CustomReqType(Id(4), "BR", Set.empty, "Business Rule", ImplicationNotRequired, Alive),
       CustomReqType(Id(5), "DD", Set("DA", "DDF"), "Data Definition", ImplicationNotRequired, Dead),
       CustomReqType(Id(6), "SI", Set.empty, "Solution Idea", ImplicationRequired, Dead)

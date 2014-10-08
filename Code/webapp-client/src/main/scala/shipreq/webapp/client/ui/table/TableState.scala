@@ -27,6 +27,8 @@ final case class SavedRow[P, II](status: RowStatus, p: P, ii: II)
 final class SavedUnsavedL[S, D, P, II](val savedL: SimpleLens[S, Saved[D, P, II]],
                                        val unsavedL: SimpleLens[S, Unsaved[II]]) {
 
+  // TODO rename ↓
+
   def unsavedLO =
     unsavedL composeOptional some
 
@@ -39,8 +41,11 @@ final class SavedUnsavedL[S, D, P, II](val savedL: SimpleLens[S, Saved[D, P, II]
   def rowStatus(id: D): SimpleLens[S, RowStatus] =
     rowL(id) |-> SimpleLens[SavedRow[P, II]](_.status)((a, b) => a.copy(status = b))
 
+  def savedIL =
+    SimpleLens[SavedRow[P, II]](_.ii)((a, b) => a.copy(ii = b))
+
   def rowIL(id: D): SimpleLens[S, II] =
-    rowL(id) |-> SimpleLens[SavedRow[P, II]](_.ii)((a, b) => a.copy(ii = b))
+    rowL(id) |-> savedIL
 
   def rowP(id: D): S => P =
     savedL.get(_)(id).p

@@ -58,7 +58,7 @@ object TableTest extends TestSuite {
         .getInitialState(p => spec.initialState(p._2))
         .render(T => {
           implicit def x = T.props._1
-          val savedRow = spec.savedRow((_, d, vv) => {
+          val savedRow = spec.savedRow((_, d, _, vv) => {
             val (name, desc) = vv
             div(keyAttr := d, ref := refs(d), name, desc)
           })

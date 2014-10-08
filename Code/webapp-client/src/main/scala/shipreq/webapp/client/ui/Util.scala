@@ -1,14 +1,12 @@
 package shipreq.webapp.client.ui
 
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.ReactVDom._
-import japgolly.scalajs.react.vdom.ReactVDom.all._
+import japgolly.scalajs.react._, vdom.ReactVDom.{Tag => _, _}, all._, ScalazReact._
 
 object Util {
 
   def textChangeRecv[R](f: String => R): InputEvent => R =
     e => f(e.target.value)
 
-  def checkbox(checked: Boolean) =
-    input(`type` := "checkbox", checked && (all.checked := "checked"))
+  def checkbox(check: Boolean) =
+    input(`type` := "checkbox", check && (checked := true))
 }
