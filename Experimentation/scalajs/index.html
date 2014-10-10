@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <title>TEST</title>
       <script type="text/javascript" src="target/scala-2.11/scala-js-experiment-jsdeps.js"></script>
-      <script type="text/javascript" src="target/scala-2.11/scala-js-experiment-fastopt.js"></script>
-      <script type="text/javascript" src="/workbench.js"></script>
       <style>
           table {border-collapse:collapse}
           .excellike td, .excellike th {border: solid 1px #333}
@@ -19,7 +17,44 @@
     <div id="target2">target2</div>
 
     <script type="text/javascript">
-      golly.Golly().main()
+
+/** @jsx React.DOM */
+var TodoList = React.createClass({displayName: 'TodoList',
+  render: function() {
+    var createItem = function(itemText) {
+      return React.DOM.li(null, itemText);
+    };
+    return React.DOM.ul(null, this.props.items.map(createItem));
+  }
+});
+var TodoApp = React.createClass({displayName: 'TodoApp',
+  getInitialState: function() {
+    return {items: [], xxx: false};
+  },
+  onChange: function(e) {
+    //this.setState({xxx: e.target.value});
+    console.log("onChange", e.target)
+  },
+  handleSubmit: function(e) {
+    e.preventDefault();
+    var nextItems = this.state.items.concat([this.state.xxx]);
+    this.setState({items: nextItems, xxx: false});
+  },
+  render: function() {
+    return (
+      React.DOM.div(null,
+        React.DOM.h3(null, "TODO"),
+        TodoList({items: this.state.items}),
+        React.DOM.form({onSubmit: this.handleSubmit},
+          React.DOM.input({onChange: this.onChange, checked: this.state.xxx, type: "checkbox"}),
+          React.DOM.button(null, 'Add #' + (this.state.items.length + 1))
+        )
+      )
+    );
+  }
+});
+React.renderComponent(TodoApp(null), document.getElementById('target1'));
+
     </script>
   </body>
 </html>
