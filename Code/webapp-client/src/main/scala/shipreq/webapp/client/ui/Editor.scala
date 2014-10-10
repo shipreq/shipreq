@@ -21,6 +21,7 @@ trait Editor[D, V] {
     new Editor.Mapped(iso, this)
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
 object Editor {
   type Error = Option[String]
 
@@ -42,6 +43,7 @@ object Editor {
   }
 }
 
+// =====================================================================================================================
 object Editors {
 
   class TextEditor(node: Tag) extends Editor[String, Modifier] {
@@ -75,6 +77,10 @@ object Editors {
       div(node(value := data, readonly := true))
   }
 
+  val TextInputEditor = new TextEditor(input)
+  val TextareaEditor = new TextEditor(textarea)
+
+  // -------------------------------------------------------------------------------------------------------------------
   object CheckboxEditor extends Editor[Boolean, Modifier] {
     override def renderRW[S](data     : Boolean,
                              error    : Error,
@@ -96,7 +102,4 @@ object Editors {
     override def renderRO[S](data: Boolean, T: ComponentStateFocus[S]) =
       div(checkbox(data)(readonly := true))
   }
-
-  val TextInputEditor = new TextEditor(input)
-  val TextareaEditor = new TextEditor(textarea)
 }

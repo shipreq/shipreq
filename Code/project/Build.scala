@@ -227,7 +227,7 @@ object ShipReq extends Build {
         .configure(
           Common.scalaAndScalaJsShared,
           addCommandAliases(
-            "js" -> s";clear;${if (releaseMode) "fullOptJS" else "fastOptJS"}",
+            "js" -> (if (releaseMode) "fullOptJS" else "fastOptJS"),
             "wd" -> ";up;~js"))
         .dependsOn(baseUtilSjs)
     }
