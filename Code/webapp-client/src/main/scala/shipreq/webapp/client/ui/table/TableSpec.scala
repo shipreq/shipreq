@@ -78,23 +78,27 @@ abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, 
   def initialState(d: Map[D, P])         : S = tsb.initialState(d.toSeq)
   def initialState(d: Seq[(D, P)])       : S = tsb.initialState(d)
 
-  private def inputGateway[M[_]](rs: RowStatus, i: II, iL: WeirdLens[M, S, S, II]): InputGateway[M, S, II] = rs match {
-    case RowStatus.Sync | RowStatus.Failed =>
-      EditAllowed(i, iL)
-    case RowStatus.Locked =>
-      ReadOnly(i)
+  private def inputGateway[M[_]: Bind : Optional2, T](getT: S => M[T], trs: T => RowStatus, ti: T => II,
+                                                      setI: (S, II) => M[S]): InputGatewayE[M, S, II] = {
+    val te = trs andThen editMode
+    val setA2 = (s: S, i: II) =>
+      getT(s).toOption.flatMap(t => te(t) match {
+        case EditMode.ReadWrite => setI(s, i).toOption
+        case EditMode.ReadOnly  => None
+      })
+    new InputGateway(getT, te, ti, setA2)
+  }
+
+  private val editMode: RowStatus => EditMode = {
+    case RowStatus.Sync | RowStatus.Failed => EditMode.ReadWrite
+    case RowStatus.Locked                  => EditMode.ReadOnly
   }
 
   protected def createIO: X => CSF => (S, U) => IO[S]
 
-  private val unsavedIG: InputGatewayS[Option, S, II] = {
-    val getI: S => Option[II] =
-      unsavedL.get(_).map(_.ii)
-    val setI: (S, II) => Option[S] =
-      (s,i) => unsavedL.get(s).map(_ => unsavedL.set(s, Some(UnsavedRow(Sync, i))))
-    val iL = WeirdLens[Option, S, S, II](getI, setI)
-    unsavedL.get(_).map(u => inputGateway(u.status, u.ii, iL))
-  }
+  private val unsavedIG = inputGateway[Option, UnsavedRow[II]](
+    unsavedLO.getOption, _.status, _.ii,
+    (s, i) => unsavedL.get(s).map(_ => unsavedL.set(s, Some(UnsavedRow(Sync, i)))))
 
   private val unsavedS2OP: S => Option[P] = _ => None
 
@@ -130,13 +134,10 @@ abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, 
 
   protected def updateIO: (CSF, X) => (S, DP, U) => IO[S]
 
-  private def savedIG(id: D): InputGatewayS[Id, S, II] = {
+  private def savedIG(id: D): InputGatewayE[Id, S, II] = {
     val rL = rowL(id)
-    val iL = WeirdLens from (rL composeLens savedIL)
-    s => {
-      val v = rL.get(s)
-      inputGateway(v.status, v.ii, iL)
-    }
+    val iL = rL composeLens savedIL
+    inputGateway[Id, SavedRow[P, II]](rL.get, _.status, _.ii, iL.set)
   }
 
   private def savedRenderAttr(x: X)(id: D) = {
@@ -258,7 +259,7 @@ object TableSpec {
   private[table] trait MultiFieldRenderer[S, U, P, II, VV] {
     // TODO save here should include ComponentStateFocus[S]. Save those λs in renderAttrForUnsaved etc
     def render[M[_] : Bind : Optional2](
-      ig: InputGatewayS[M, S, II], s2mp: S => M[P], save: (S, U) => IO[S]): ComponentStateFocus[S] => M[VV]
+      ig: InputGatewayE[M, S, II], s2mp: S => M[P], save: (S, U) => IO[S]): ComponentStateFocus[S] => M[VV]
   }
 
   @inline private[TableSpec] final def rowRenderer[M[_] : Bind, S, V1, V2, SubId](

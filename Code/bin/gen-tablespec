@@ -70,19 +70,19 @@ for (a <- List(1,2,3)) {
 
   final case class $RS[_S, R, U, P, V, $IeCO]($specR, buildU: ($OO) ⇒ U) extends RowSpec[_S, R, U, P, $II, $VV] {
     override def initial(p: P): $II = $in
-    private def fieldRenderers[M[_] : Bind : Optional2](ig: InputGatewayS[M,S,$II], s2mp: S ⇒ M[P], save: (S, U) ⇒ IO[S], r: R) = {
+    private def fieldRenderers[M[_] : Bind : Optional2](ig: InputGatewayE[M,S,$II], s2mp: S ⇒ M[P], save: (S, U) ⇒ IO[S], r: R) = {
 $vn
       def savable(s: S, e: $II): Option[$OO] = for {
 $sn
       } yield $os
       // TODO This isn't able to traverse other rows, or access them by R
       // Cannot save rows that were invalid due to this one, that have just become valid.
-      val sf: S ⇒ IO[S] = s ⇒ ig(s).toOption.flatMap(x => savable(s, x.i)).fold(IO(s))(oo ⇒ save(s, buildU(oo)))
+      val sf: S ⇒ IO[S] = s ⇒ ig.getA(s).toOption.flatMap(i ⇒ savable(s,i)).fold(IO(s))(oo ⇒ save(s, buildU(oo)))
       ( $en)
     }
     override def forRow(r: R): MultiFieldRenderer[S, U, P, $II, $VV] =
       new MultiFieldRenderer[S, U, P, $II, $VV] {
-        override def render[M[_] : Bind : Optional2](ig: InputGatewayS[M,S,$II], s2mp: S ⇒ M[P], save: (S, U) ⇒ IO[S]): ComponentStateFocus[S] ⇒ M[$VV] = T ⇒ {
+        override def render[M[_] : Bind : Optional2](ig: InputGatewayE[M,S,$II], s2mp: S ⇒ M[P], save: (S, U) ⇒ IO[S]): ComponentStateFocus[S] ⇒ M[$VV] = T ⇒ {
           val s = fieldRenderers(ig, s2mp, save, r)
           for {
 $rn

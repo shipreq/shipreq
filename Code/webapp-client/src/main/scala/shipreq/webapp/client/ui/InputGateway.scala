@@ -1,20 +1,19 @@
 package shipreq.webapp.client.ui
 
 import scalaz.Bind
+import scalaz.syntax.bind._
+import shipreq.webapp.client.ui.Implicits.Optional2
+import Implicits._
 
-sealed trait InputGateway[M[_], S, I] {
-  def i: I
-}
+final class InputGateway[M[_] : Bind : Optional2, S, R, A, T](
+    getT: S => M[T], tr: T => R, ta: T => A, val setA: (S, A) => Option[S]) {
 
-final case class EditAllowed[M[_], S, I](i: I, iL: WeirdLens[M, S, S, I]) extends InputGateway[M, S, I]
+  val getRA: S => M[(R, A)] =
+    getT(_).map(t => tr(t) -> ta(t))
 
-final case class ReadOnly[M[_], S, I](i: I) extends InputGateway[M, S, I]
+  val getA: S => M[A] =
+    getT(_) map ta
 
-object InputGatewayS {
-
-  def map[M[_] : Bind, S, A, B](ig: InputGatewayS[M, S, A], f: A => B, g: (A, B) => A): InputGatewayS[M, S, B] =
-    s => implicitly[Bind[M]].map(ig(s)) {
-      case EditAllowed(i, il) => EditAllowed(f(i), il.mapF(f)(g))
-      case ReadOnly(i)        => ReadOnly(f(i))
-    }
+  def map[B](f: A => B)(g: (A, B) => A) = new InputGateway[M, S, R, B, T](
+    getT, tr, f compose ta, (s, b) => getA(s).toOption.flatMap(a => setA(s, g(a, b))))
 }
