@@ -64,7 +64,7 @@ for (a <- List(1,2,3)) {
   def rn = mn(i ⇒ s"                v$i ← se$i.render(s$i.e, T)")
 
   def RS = s"RowSpec$a"
-  def SB = s"TableSpecBuider$a"
+  def SB = s"TableSpecBuilder$a"
   def PS = s"TablePreSpec$a"
 
   B = s"  def apply[V, $IeCO]($spec) = new $SB[P,$OO,V,$ICO]($ss,($os2)⇒($os2))" :: B

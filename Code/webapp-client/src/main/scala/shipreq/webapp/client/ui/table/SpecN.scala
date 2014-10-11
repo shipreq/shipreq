@@ -35,9 +35,9 @@ object SpecN {
       }
   }
 
-  final class TableSpecBuider1[P, U1, V, I1: Equal,C1,O1](s1: FieldSpec[P,V,I1,C1,O1], buildU: O1 ⇒ U1) {
-    def mapU[U2](f: U1 ⇒ U2) = new TableSpecBuider1(s1, (o1:O1) ⇒ f(buildU(o1)))
-    def buildU[U2](f: O1 ⇒ U2) = new TableSpecBuider1(s1, f)
+  final class TableSpecBuilder1[P, U1, V, I1: Equal,C1,O1](s1: FieldSpec[P,V,I1,C1,O1], buildU: O1 ⇒ U1) {
+    def mapU[U2](f: U1 ⇒ U2) = new TableSpecBuilder1(s1, (o1:O1) ⇒ f(buildU(o1)))
+    def buildU[U2](f: O1 ⇒ U2) = new TableSpecBuilder1(s1, f)
     def dataId[D] = new TablePreSpec1[P,D,U1,V,I1,C1,O1](s1, buildU)
   }
 
@@ -77,9 +77,9 @@ object SpecN {
       }
   }
 
-  final class TableSpecBuider2[P, U1, V, I1: Equal,C1,O1,I2: Equal,C2,O2](s1: FieldSpec[P,V,I1,C1,O1],s2: FieldSpec[P,V,I2,C2,O2], buildU: (O1,O2) ⇒ U1) {
-    def mapU[U2](f: U1 ⇒ U2) = new TableSpecBuider2(s1,s2, (o1:O1,o2:O2) ⇒ f(buildU(o1,o2)))
-    def buildU[U2](f: (O1,O2) ⇒ U2) = new TableSpecBuider2(s1,s2, f)
+  final class TableSpecBuilder2[P, U1, V, I1: Equal,C1,O1,I2: Equal,C2,O2](s1: FieldSpec[P,V,I1,C1,O1],s2: FieldSpec[P,V,I2,C2,O2], buildU: (O1,O2) ⇒ U1) {
+    def mapU[U2](f: U1 ⇒ U2) = new TableSpecBuilder2(s1,s2, (o1:O1,o2:O2) ⇒ f(buildU(o1,o2)))
+    def buildU[U2](f: (O1,O2) ⇒ U2) = new TableSpecBuilder2(s1,s2, f)
     def dataId[D] = new TablePreSpec2[P,D,U1,V,I1,C1,O1,I2,C2,O2](s1,s2, buildU)
   }
 
@@ -123,9 +123,9 @@ object SpecN {
       }
   }
 
-  final class TableSpecBuider3[P, U1, V, I1: Equal,C1,O1,I2: Equal,C2,O2,I3: Equal,C3,O3](s1: FieldSpec[P,V,I1,C1,O1],s2: FieldSpec[P,V,I2,C2,O2],s3: FieldSpec[P,V,I3,C3,O3], buildU: (O1,O2,O3) ⇒ U1) {
-    def mapU[U2](f: U1 ⇒ U2) = new TableSpecBuider3(s1,s2,s3, (o1:O1,o2:O2,o3:O3) ⇒ f(buildU(o1,o2,o3)))
-    def buildU[U2](f: (O1,O2,O3) ⇒ U2) = new TableSpecBuider3(s1,s2,s3, f)
+  final class TableSpecBuilder3[P, U1, V, I1: Equal,C1,O1,I2: Equal,C2,O2,I3: Equal,C3,O3](s1: FieldSpec[P,V,I1,C1,O1],s2: FieldSpec[P,V,I2,C2,O2],s3: FieldSpec[P,V,I3,C3,O3], buildU: (O1,O2,O3) ⇒ U1) {
+    def mapU[U2](f: U1 ⇒ U2) = new TableSpecBuilder3(s1,s2,s3, (o1:O1,o2:O2,o3:O3) ⇒ f(buildU(o1,o2,o3)))
+    def buildU[U2](f: (O1,O2,O3) ⇒ U2) = new TableSpecBuilder3(s1,s2,s3, f)
     def dataId[D] = new TablePreSpec3[P,D,U1,V,I1,C1,O1,I2,C2,O2,I3,C3,O3](s1,s2,s3, buildU)
   }
 
@@ -142,8 +142,8 @@ object SpecN {
 
 import SpecN._
 final class TableSpecBuilder[P] {
-  def apply[V, I1: Equal,C1,O1](s1: FieldSpec[P,V,I1,C1,O1]) = new TableSpecBuider1[P,O1,V,I1,C1,O1](s1,(o1)⇒(o1))
-  def apply[V, I1: Equal,C1,O1,I2: Equal,C2,O2](s1: FieldSpec[P,V,I1,C1,O1],s2: FieldSpec[P,V,I2,C2,O2]) = new TableSpecBuider2[P,(O1,O2),V,I1,C1,O1,I2,C2,O2](s1,s2,(o1,o2)⇒(o1,o2))
-  def apply[V, I1: Equal,C1,O1,I2: Equal,C2,O2,I3: Equal,C3,O3](s1: FieldSpec[P,V,I1,C1,O1],s2: FieldSpec[P,V,I2,C2,O2],s3: FieldSpec[P,V,I3,C3,O3]) = new TableSpecBuider3[P,(O1,O2,O3),V,I1,C1,O1,I2,C2,O2,I3,C3,O3](s1,s2,s3,(o1,o2,o3)⇒(o1,o2,o3))
+  def apply[V, I1: Equal,C1,O1](s1: FieldSpec[P,V,I1,C1,O1]) = new TableSpecBuilder1[P,O1,V,I1,C1,O1](s1,(o1)⇒(o1))
+  def apply[V, I1: Equal,C1,O1,I2: Equal,C2,O2](s1: FieldSpec[P,V,I1,C1,O1],s2: FieldSpec[P,V,I2,C2,O2]) = new TableSpecBuilder2[P,(O1,O2),V,I1,C1,O1,I2,C2,O2](s1,s2,(o1,o2)⇒(o1,o2))
+  def apply[V, I1: Equal,C1,O1,I2: Equal,C2,O2,I3: Equal,C3,O3](s1: FieldSpec[P,V,I1,C1,O1],s2: FieldSpec[P,V,I2,C2,O2],s3: FieldSpec[P,V,I3,C3,O3]) = new TableSpecBuilder3[P,(O1,O2,O3),V,I1,C1,O1,I2,C2,O2,I3,C3,O3](s1,s2,s3,(o1,o2,o3)⇒(o1,o2,o3))
 }
 object TableSpecBuilder { def apply[P] = new TableSpecBuilder[P] }
