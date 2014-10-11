@@ -46,6 +46,8 @@ for (a <- List(1,2,3)) {
   def II    = mt(i ⇒ s"I$i")
   def OO    = mt(i ⇒ s"O$i")
   def os    = mt(i ⇒ s"o$i")
+  def os2   = m(i ⇒ s"o$i").mkString(comma)
+  def os3   = m(i ⇒ s"o$i:O$i").mkString(comma)
   def VV    = mt(_ ⇒ "V")
   def vs    = mt(i ⇒ s"v$i")
   def ss    = mc(i ⇒ s"s$i")
@@ -65,18 +67,18 @@ for (a <- List(1,2,3)) {
   def SB = s"TableSpecBuider$a"
   def PS = s"TablePreSpec$a"
 
-  B = s"  def apply[V, $IeCO]($spec) = new $SB[P,$OO,V,$ICO]($ss,x⇒x)" :: B
+  B = s"  def apply[V, $IeCO]($spec) = new $SB[P,$OO,V,$ICO]($ss,($os2)⇒($os2))" :: B
 
   print(s"""
 
-  final case class $RS[_S, R, U, P, V, $IeCO]($specR, buildU: ($OO) ⇒ U) extends RowSpec[_S, R, U, P, $II, $VV] {
+  final case class $RS[_S, R, U, P, V, $IeCO]($specR, buildU: $OO ⇒ U) extends RowSpec[_S, R, U, P, $II, $VV] {
     override def initial(p: P): $II = $in
     override def forRow(r: R): MultiFieldRenderer[S, U, P, $II, $VV] =
       new MultiFieldRenderer[S, U, P, $II, $VV] {
 $vn
         private def savableI(s: S, e: $II): Option[U] = for {
 $sn
-        } yield buildU($os)
+        } yield buildU($os2)
         override def prepare[M[_] : Bind : Optional2](ig: InputGatewayE[M, S, $II]): MultiFieldRenderer2[M, S, U, P, $VV] =
           new MultiFieldRenderer2[M, S, U, P, $VV] {
             override def savableU: S ⇒ Option[U] =
@@ -91,13 +93,13 @@ $rn
       }
   }
 
-  final class $SB[P, U1, V, $IeCO]($spec, buildU: ($OO) ⇒ U1) {
-    def mapU[U2](f: U1 ⇒ U2) = new $SB($ss, f compose buildU)
-    def buildU[U2](f: $OO ⇒ U2) = new $SB($ss, f$tupled)
+  final class $SB[P, U1, V, $IeCO]($spec, buildU: $OO ⇒ U1) {
+    def mapU[U2](f: U1 ⇒ U2) = new $SB($ss, ($os3) ⇒ f(buildU($os2)))
+    def buildU[U2](f: $OO ⇒ U2) = new $SB($ss, f)
     def dataId[D] = new $PS[P,D,U1,V,$ICO]($ss, buildU)
   }
 
-  final class $PS[P, D, U1, V, $IeCO]($spec, buildU: ($OO) ⇒ U1) {
+  final class $PS[P, D, U1, V, $IeCO]($spec, buildU: $OO ⇒ U1) {
     type U = U1
     type R = Option[D]
     type S = SavedUnsaved[D, P, $II]

@@ -13,7 +13,7 @@ import TableSpec.{MultiFieldRenderer, MultiFieldRenderer2}
 
 object SpecN {
 
-  final case class RowSpec1[_S, R, U, P, V, I1: Equal,C1,O1](s1: FieldSpecR[_S,R,P,V,I1,C1,O1], buildU: (O1) ⇒ U) extends RowSpec[_S, R, U, P, I1, V] {
+  final case class RowSpec1[_S, R, U, P, V, I1: Equal,C1,O1](s1: FieldSpecR[_S,R,P,V,I1,C1,O1], buildU: O1 ⇒ U) extends RowSpec[_S, R, U, P, I1, V] {
     override def initial(p: P): I1 = s1 initial p
     override def forRow(r: R): MultiFieldRenderer[S, U, P, I1, V] =
       new MultiFieldRenderer[S, U, P, I1, V] {
@@ -35,13 +35,13 @@ object SpecN {
       }
   }
 
-  final class TableSpecBuider1[P, U1, V, I1: Equal,C1,O1](s1: FieldSpec[P,V,I1,C1,O1], buildU: (O1) ⇒ U1) {
-    def mapU[U2](f: U1 ⇒ U2) = new TableSpecBuider1(s1, f compose buildU)
+  final class TableSpecBuider1[P, U1, V, I1: Equal,C1,O1](s1: FieldSpec[P,V,I1,C1,O1], buildU: O1 ⇒ U1) {
+    def mapU[U2](f: U1 ⇒ U2) = new TableSpecBuider1(s1, (o1:O1) ⇒ f(buildU(o1)))
     def buildU[U2](f: O1 ⇒ U2) = new TableSpecBuider1(s1, f)
     def dataId[D] = new TablePreSpec1[P,D,U1,V,I1,C1,O1](s1, buildU)
   }
 
-  final class TablePreSpec1[P, D, U1, V, I1: Equal,C1,O1](s1: FieldSpec[P,V,I1,C1,O1], buildU: (O1) ⇒ U1) {
+  final class TablePreSpec1[P, D, U1, V, I1: Equal,C1,O1](s1: FieldSpec[P,V,I1,C1,O1], buildU: O1 ⇒ U1) {
     type U = U1
     type R = Option[D]
     type S = SavedUnsaved[D, P, I1]
@@ -51,7 +51,7 @@ object SpecN {
       TableSpecB default RowSpec1(s1 toR cv1,buildU)
   }
 
-  final case class RowSpec2[_S, R, U, P, V, I1: Equal,C1,O1,I2: Equal,C2,O2](s1: FieldSpecR[_S,R,P,V,I1,C1,O1],s2: FieldSpecR[_S,R,P,V,I2,C2,O2], buildU: ((O1,O2)) ⇒ U) extends RowSpec[_S, R, U, P, (I1,I2), (V,V)] {
+  final case class RowSpec2[_S, R, U, P, V, I1: Equal,C1,O1,I2: Equal,C2,O2](s1: FieldSpecR[_S,R,P,V,I1,C1,O1],s2: FieldSpecR[_S,R,P,V,I2,C2,O2], buildU: (O1,O2) ⇒ U) extends RowSpec[_S, R, U, P, (I1,I2), (V,V)] {
     override def initial(p: P): (I1,I2) = (s1 initial p,s2 initial p)
     override def forRow(r: R): MultiFieldRenderer[S, U, P, (I1,I2), (V,V)] =
       new MultiFieldRenderer[S, U, P, (I1,I2), (V,V)] {
@@ -60,7 +60,7 @@ object SpecN {
         private def savableI(s: S, e: (I1,I2)): Option[U] = for {
           o1 ← v1(s).correctAndValidate(e._1).toOption
           o2 ← v2(s).correctAndValidate(e._2).toOption
-        } yield buildU((o1,o2))
+        } yield buildU(o1,o2)
         override def prepare[M[_] : Bind : Optional2](ig: InputGatewayE[M, S, (I1,I2)]): MultiFieldRenderer2[M, S, U, P, (V,V)] =
           new MultiFieldRenderer2[M, S, U, P, (V,V)] {
             override def savableU: S ⇒ Option[U] =
@@ -77,13 +77,13 @@ object SpecN {
       }
   }
 
-  final class TableSpecBuider2[P, U1, V, I1: Equal,C1,O1,I2: Equal,C2,O2](s1: FieldSpec[P,V,I1,C1,O1],s2: FieldSpec[P,V,I2,C2,O2], buildU: ((O1,O2)) ⇒ U1) {
-    def mapU[U2](f: U1 ⇒ U2) = new TableSpecBuider2(s1,s2, f compose buildU)
-    def buildU[U2](f: (O1,O2) ⇒ U2) = new TableSpecBuider2(s1,s2, f.tupled)
+  final class TableSpecBuider2[P, U1, V, I1: Equal,C1,O1,I2: Equal,C2,O2](s1: FieldSpec[P,V,I1,C1,O1],s2: FieldSpec[P,V,I2,C2,O2], buildU: (O1,O2) ⇒ U1) {
+    def mapU[U2](f: U1 ⇒ U2) = new TableSpecBuider2(s1,s2, (o1:O1,o2:O2) ⇒ f(buildU(o1,o2)))
+    def buildU[U2](f: (O1,O2) ⇒ U2) = new TableSpecBuider2(s1,s2, f)
     def dataId[D] = new TablePreSpec2[P,D,U1,V,I1,C1,O1,I2,C2,O2](s1,s2, buildU)
   }
 
-  final class TablePreSpec2[P, D, U1, V, I1: Equal,C1,O1,I2: Equal,C2,O2](s1: FieldSpec[P,V,I1,C1,O1],s2: FieldSpec[P,V,I2,C2,O2], buildU: ((O1,O2)) ⇒ U1) {
+  final class TablePreSpec2[P, D, U1, V, I1: Equal,C1,O1,I2: Equal,C2,O2](s1: FieldSpec[P,V,I1,C1,O1],s2: FieldSpec[P,V,I2,C2,O2], buildU: (O1,O2) ⇒ U1) {
     type U = U1
     type R = Option[D]
     type S = SavedUnsaved[D, P, (I1,I2)]
@@ -93,7 +93,7 @@ object SpecN {
       TableSpecB default RowSpec2(s1 toR cv1,s2 toR cv2,buildU)
   }
 
-  final case class RowSpec3[_S, R, U, P, V, I1: Equal,C1,O1,I2: Equal,C2,O2,I3: Equal,C3,O3](s1: FieldSpecR[_S,R,P,V,I1,C1,O1],s2: FieldSpecR[_S,R,P,V,I2,C2,O2],s3: FieldSpecR[_S,R,P,V,I3,C3,O3], buildU: ((O1,O2,O3)) ⇒ U) extends RowSpec[_S, R, U, P, (I1,I2,I3), (V,V,V)] {
+  final case class RowSpec3[_S, R, U, P, V, I1: Equal,C1,O1,I2: Equal,C2,O2,I3: Equal,C3,O3](s1: FieldSpecR[_S,R,P,V,I1,C1,O1],s2: FieldSpecR[_S,R,P,V,I2,C2,O2],s3: FieldSpecR[_S,R,P,V,I3,C3,O3], buildU: (O1,O2,O3) ⇒ U) extends RowSpec[_S, R, U, P, (I1,I2,I3), (V,V,V)] {
     override def initial(p: P): (I1,I2,I3) = (s1 initial p,s2 initial p,s3 initial p)
     override def forRow(r: R): MultiFieldRenderer[S, U, P, (I1,I2,I3), (V,V,V)] =
       new MultiFieldRenderer[S, U, P, (I1,I2,I3), (V,V,V)] {
@@ -104,7 +104,7 @@ object SpecN {
           o1 ← v1(s).correctAndValidate(e._1).toOption
           o2 ← v2(s).correctAndValidate(e._2).toOption
           o3 ← v3(s).correctAndValidate(e._3).toOption
-        } yield buildU((o1,o2,o3))
+        } yield buildU(o1,o2,o3)
         override def prepare[M[_] : Bind : Optional2](ig: InputGatewayE[M, S, (I1,I2,I3)]): MultiFieldRenderer2[M, S, U, P, (V,V,V)] =
           new MultiFieldRenderer2[M, S, U, P, (V,V,V)] {
             override def savableU: S ⇒ Option[U] =
@@ -123,13 +123,13 @@ object SpecN {
       }
   }
 
-  final class TableSpecBuider3[P, U1, V, I1: Equal,C1,O1,I2: Equal,C2,O2,I3: Equal,C3,O3](s1: FieldSpec[P,V,I1,C1,O1],s2: FieldSpec[P,V,I2,C2,O2],s3: FieldSpec[P,V,I3,C3,O3], buildU: ((O1,O2,O3)) ⇒ U1) {
-    def mapU[U2](f: U1 ⇒ U2) = new TableSpecBuider3(s1,s2,s3, f compose buildU)
-    def buildU[U2](f: (O1,O2,O3) ⇒ U2) = new TableSpecBuider3(s1,s2,s3, f.tupled)
+  final class TableSpecBuider3[P, U1, V, I1: Equal,C1,O1,I2: Equal,C2,O2,I3: Equal,C3,O3](s1: FieldSpec[P,V,I1,C1,O1],s2: FieldSpec[P,V,I2,C2,O2],s3: FieldSpec[P,V,I3,C3,O3], buildU: (O1,O2,O3) ⇒ U1) {
+    def mapU[U2](f: U1 ⇒ U2) = new TableSpecBuider3(s1,s2,s3, (o1:O1,o2:O2,o3:O3) ⇒ f(buildU(o1,o2,o3)))
+    def buildU[U2](f: (O1,O2,O3) ⇒ U2) = new TableSpecBuider3(s1,s2,s3, f)
     def dataId[D] = new TablePreSpec3[P,D,U1,V,I1,C1,O1,I2,C2,O2,I3,C3,O3](s1,s2,s3, buildU)
   }
 
-  final class TablePreSpec3[P, D, U1, V, I1: Equal,C1,O1,I2: Equal,C2,O2,I3: Equal,C3,O3](s1: FieldSpec[P,V,I1,C1,O1],s2: FieldSpec[P,V,I2,C2,O2],s3: FieldSpec[P,V,I3,C3,O3], buildU: ((O1,O2,O3)) ⇒ U1) {
+  final class TablePreSpec3[P, D, U1, V, I1: Equal,C1,O1,I2: Equal,C2,O2,I3: Equal,C3,O3](s1: FieldSpec[P,V,I1,C1,O1],s2: FieldSpec[P,V,I2,C2,O2],s3: FieldSpec[P,V,I3,C3,O3], buildU: (O1,O2,O3) ⇒ U1) {
     type U = U1
     type R = Option[D]
     type S = SavedUnsaved[D, P, (I1,I2,I3)]
@@ -142,8 +142,8 @@ object SpecN {
 
 import SpecN._
 final class TableSpecBuilder[P] {
-  def apply[V, I1: Equal,C1,O1](s1: FieldSpec[P,V,I1,C1,O1]) = new TableSpecBuider1[P,O1,V,I1,C1,O1](s1,x⇒x)
-  def apply[V, I1: Equal,C1,O1,I2: Equal,C2,O2](s1: FieldSpec[P,V,I1,C1,O1],s2: FieldSpec[P,V,I2,C2,O2]) = new TableSpecBuider2[P,(O1,O2),V,I1,C1,O1,I2,C2,O2](s1,s2,x⇒x)
-  def apply[V, I1: Equal,C1,O1,I2: Equal,C2,O2,I3: Equal,C3,O3](s1: FieldSpec[P,V,I1,C1,O1],s2: FieldSpec[P,V,I2,C2,O2],s3: FieldSpec[P,V,I3,C3,O3]) = new TableSpecBuider3[P,(O1,O2,O3),V,I1,C1,O1,I2,C2,O2,I3,C3,O3](s1,s2,s3,x⇒x)
+  def apply[V, I1: Equal,C1,O1](s1: FieldSpec[P,V,I1,C1,O1]) = new TableSpecBuider1[P,O1,V,I1,C1,O1](s1,(o1)⇒(o1))
+  def apply[V, I1: Equal,C1,O1,I2: Equal,C2,O2](s1: FieldSpec[P,V,I1,C1,O1],s2: FieldSpec[P,V,I2,C2,O2]) = new TableSpecBuider2[P,(O1,O2),V,I1,C1,O1,I2,C2,O2](s1,s2,(o1,o2)⇒(o1,o2))
+  def apply[V, I1: Equal,C1,O1,I2: Equal,C2,O2,I3: Equal,C3,O3](s1: FieldSpec[P,V,I1,C1,O1],s2: FieldSpec[P,V,I2,C2,O2],s3: FieldSpec[P,V,I3,C3,O3]) = new TableSpecBuider3[P,(O1,O2,O3),V,I1,C1,O1,I2,C2,O2,I3,C3,O3](s1,s2,s3,(o1,o2,o3)⇒(o1,o2,o3))
 }
 object TableSpecBuilder { def apply[P] = new TableSpecBuilder[P] }
