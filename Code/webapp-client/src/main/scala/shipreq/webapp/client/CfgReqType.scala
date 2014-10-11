@@ -124,9 +124,9 @@ object CfgReqType {
 
     private def row(classArg: String, mnemonic: Modifier, name: Modifier, impReq: Modifier, rs: RowStatus, ctrls: => Modifier): Tag = {
       val (cls2, c: Modifier) = rs match {
-        case RowStatus.Sync   => ("sync", ctrls)
-        case RowStatus.Locked => ("locked", img(cls := "spinner", src := "/assets/loading-spin.svg"))
-        case RowStatus.Failed => ??? // TODO need that callback
+        case RowStatus.Sync          => ("sync", ctrls)
+        case RowStatus.Locked        => ("locked", img(cls := "spinner", src := "/assets/loading-spin.svg"))
+        case RowStatus.Failed(retry) => ("failed", button("Retry", onclick ~~> retry))
       }
       tr(cls := s"$classArg $cls2", td(mnemonic), td(name), td(impReq), td(c))
     }

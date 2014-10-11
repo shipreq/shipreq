@@ -10,6 +10,7 @@ var B = List.empty[String]
 print("""package shipreq.webapp.client.ui.table
 
 import japgolly.scalajs.react.ComponentStateFocus
+import japgolly.scalajs.react.ScalazReact.ReactST
 import scalaz.effect.IO
 import scalaz.{Bind, Equal}
 import scalaz.syntax.bind._
@@ -17,7 +18,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.client.ui.Implicits._
 import shipreq.webapp.client.ui._
 import shipreq.webapp.shared.validation.{ValidatePlusR, ValidatorPlus}
-import TableSpec.MultiFieldRenderer
+import TableSpec.{MultiFieldRenderer, MultiFieldRenderer2}
 
 object SpecN {""")
 
@@ -55,10 +56,10 @@ for (a <- List(1,2,3)) {
   def tupled = if (a==1) "" else ".tupled"
 
   def in = mt(i ⇒ s"s$i initial p")
-  def vn = mn(i ⇒ s"      val v$i = s$i.vr.fold[S ⇒ ValidatorPlus[${ICOn(i)}]](_⇒ s$i.v)(s$i.v stateful _(r))")
-  def sn = mn(i ⇒ s"        o$i ← v$i(s).correctAndValidate(e${ta(i)}).toOption")
-  def en = mb(i ⇒ s"        new SmartEditor[S,${ICOn(i)},M](v$i, s2mp.andThen(_ map s$i.p2c), ig${iLmap(i)}, sf)").replaceFirst("^ +","")
-  def rn = mn(i ⇒ s"            v$i ← s${ta(i)}.render(s$i.e, T)")
+  def vn = mn(i ⇒ s"        private final val v$i = s$i.vr.fold[S ⇒ ValidatorPlus[${ICOn(i)}]](_⇒ s$i.v)(s$i.v stateful _(r))")
+  def sn = mn(i ⇒ s"          o$i ← v$i(s).correctAndValidate(e${ta(i)}).toOption")
+  def en = mn(i ⇒ s"              val se$i = new SmartEditor[S,${ICOn(i)},M](v$i, s2mp.andThen(_ map s$i.p2c), ig${iLmap(i)}, save)")
+  def rn = mn(i ⇒ s"                v$i ← se$i.render(s$i.e, T)")
 
   def RS = s"RowSpec$a"
   def SB = s"TableSpecBuider$a"
@@ -70,24 +71,23 @@ for (a <- List(1,2,3)) {
 
   final case class $RS[_S, R, U, P, V, $IeCO]($specR, buildU: ($OO) ⇒ U) extends RowSpec[_S, R, U, P, $II, $VV] {
     override def initial(p: P): $II = $in
-    private def fieldRenderers[M[_] : Bind : Optional2](ig: InputGatewayE[M,S,$II], s2mp: S ⇒ M[P], save: (S, U) ⇒ IO[S], r: R) = {
-$vn
-      def savable(s: S, e: $II): Option[$OO] = for {
-$sn
-      } yield $os
-      // TODO This isn't able to traverse other rows, or access them by R
-      // Cannot save rows that were invalid due to this one, that have just become valid.
-      val sf: S ⇒ IO[S] = s ⇒ ig.getA(s).toOption.flatMap(i ⇒ savable(s,i)).fold(IO(s))(oo ⇒ save(s, buildU(oo)))
-      ( $en)
-    }
     override def forRow(r: R): MultiFieldRenderer[S, U, P, $II, $VV] =
       new MultiFieldRenderer[S, U, P, $II, $VV] {
-        override def render[M[_] : Bind : Optional2](ig: InputGatewayE[M,S,$II], s2mp: S ⇒ M[P], save: (S, U) ⇒ IO[S]): ComponentStateFocus[S] ⇒ M[$VV] = T ⇒ {
-          val s = fieldRenderers(ig, s2mp, save, r)
-          for {
+$vn
+        private def savableI(s: S, e: $II): Option[U] = for {
+$sn
+        } yield buildU($os)
+        override def prepare[M[_] : Bind : Optional2](ig: InputGatewayE[M, S, $II]): MultiFieldRenderer2[M, S, U, P, $VV] =
+          new MultiFieldRenderer2[M, S, U, P, $VV] {
+            override def savableU: S ⇒ Option[U] =
+              s ⇒ ig.getA(s).toOption.flatMap(savableI(s, _))
+            override def render(s2mp: S ⇒ M[P], save: ReactST[IO, S, Unit]): ComponentStateFocus[S] ⇒ M[$VV] = {
+$en
+              T ⇒ for {
 $rn
-          } yield $vs
-        }
+              } yield $vs
+            }
+          }
       }
   }
 
@@ -104,7 +104,7 @@ $rn
     def uniquenessCheck[A: Equal](f: P ⇒ A) =
       TableConstraint.uniquenessT[D,P,$II,A](f)
     def tableConstraints($cvs) =
-      TableSpecB default $RS(${mc(i => s"s$i toR cv$i")},buildU)
+      TableSpecB default $RS(${mc(i ⇒ s"s$i toR cv$i")},buildU)
   }""")
 }
 print(s"""

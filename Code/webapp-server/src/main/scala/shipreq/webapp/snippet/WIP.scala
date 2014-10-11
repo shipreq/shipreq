@@ -6,6 +6,7 @@ import shipreq.webapp.lib.ServerProtocol
 import shipreq.webapp.shared.data._
 import shipreq.webapp.shared.data.delta._
 import DeletionAction._
+import shipreq.webapp.util.QuietException
 
 class WIP {
 
@@ -16,7 +17,8 @@ class WIP {
       println(s"TODO: create $v"); Nil
 
     case CrudAction.Update(id, v) =>
-      println(s"TODO: update $id $v"); Nil
+      println(s"\nTODO: update $id $v\n")
+      throw QuietException
 
     case CrudAction.Delete(id, HardDel) =>
       println(s"TODO: Hard delete $id"); Nil
@@ -27,7 +29,8 @@ class WIP {
       d
 
     case CrudAction.Delete(id, SoftDel) =>
-      println(s"TODO: Soft delete $id"); Nil
+      println(s"\nTODO: Soft delete $id\n")
+      throw QuietException
 
     case CrudAction.Delete(id, Restore) =>
       println(s"TODO: Restore $id"); Nil

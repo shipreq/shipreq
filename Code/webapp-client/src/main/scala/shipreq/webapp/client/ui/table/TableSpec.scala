@@ -3,8 +3,7 @@ package shipreq.webapp.client.ui.table
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.ReactVDom._
-import monocle._
-import scalaz.{Equal, Bind}
+import scalaz.{Equal, Bind, Name, Need, Value}
 import scalaz.Scalaz.Id
 import scalaz.effect.IO
 import scalaz.std.option._
@@ -22,11 +21,11 @@ final class TableSpecB[S, D, U, P, II, VV](val p2ii: P => II,
                                            val savedUnsaved: SavedUnsavedL[S, D, P, II],
                                            val initialState: Seq[(D, P)] => S) {
 
-  def saveNotNeededWhen(f: (U, P) => Boolean) =
+  def saveNotNeededWhen(f: (U, P) => SaveNeed) =
     new B2(f)
 
   def saveNotNeededWhenE(f: P => U)(implicit U: Equal[U]) =
-    saveNotNeededWhen((u,p) => U.equal(u, f(p)))
+    saveNotNeededWhen((u,p) => if (U.equal(u, f(p))) SaveNotNeeded else SaveNeeded)
 
   def saveNotNeededWhenI(implicit ev: II =:= U, U: Equal[U]) =
     saveNotNeededWhenE(ev compose p2ii)
@@ -34,7 +33,7 @@ final class TableSpecB[S, D, U, P, II, VV](val p2ii: P => II,
   def saveNotNeededWhenP(implicit ev: P =:= U, U: Equal[U]) =
     saveNotNeededWhenE(ev)
 
-  class B2(saveNotNeeded: (U, P) => Boolean) {
+  class B2(saveNotNeeded: (U, P) => SaveNeed) {
 
     def syncSave(saveIO: (Option[(D, P)], U) => IO[(D, P)]) =
       new TableSpec.SyncSave(TableSpecB.this, saveNotNeeded, saveIO)
@@ -62,11 +61,12 @@ object TableSpecB {
 
 // =====================================================================================================================
 
-abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, VV], saveNotNeeded: (U, P) => Boolean) {
+sealed abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, VV], needSave: (U, P) => SaveNeed) {
   import tsb.{p2ii, multiFieldRenderer}
   import tsb.savedUnsaved._
 
-  @inline final private def ST = ReactS.Fix[S]
+  @inline final protected val ST = ReactS.Fix[S]
+  @inline final protected val nopIOS = ST.retM(IO(()))
 
   final type DP = (D, P)
   final type CSF = ComponentStateFocus[S]
@@ -90,11 +90,11 @@ abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, 
   }
 
   private val editMode: RowStatus => EditMode = {
-    case RowStatus.Sync | RowStatus.Failed => EditMode.ReadWrite
-    case RowStatus.Locked                  => EditMode.ReadOnly
+    case RowStatus.Sync | RowStatus.Failed(_) => EditMode.ReadWrite
+    case RowStatus.Locked                     => EditMode.ReadOnly
   }
 
-  protected def createIO: X => CSF => (S, U) => IO[S]
+  protected def createIO: (X, CSF, Retry[S], U) => ReactST[IO, S, Unit]
 
   private val unsavedIG = inputGateway[Option, UnsavedRow[II]](
     unsavedLO.getOption, _.status, _.ii,
@@ -102,13 +102,18 @@ abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, 
 
   private val unsavedS2OP: S => Option[P] = _ => None
 
-  private def unsavedRenderAttr(saveIO: CSF => (S, U) => IO[S]) =
-    (T: CSF) =>
+  private def unsavedRenderAttr(x: X) = {
+    val mr2 = multiFieldRenderer(None).prepare(unsavedIG)
+    (T: CSF) => {
+      lazy val save: ReactST[IO, S, Unit] = ST.liftR(s =>
+        mr2.savableU(s).fold(nopIOS)(u => createIO(x, T, Value(save), u)))
       for {
         rs <- unsavedStatusL.getOption(T.state)
-        r = multiFieldRenderer(None).render(unsavedIG, unsavedS2OP, saveIO(T))
+        r = mr2.render(unsavedS2OP, save)
         v <- r(T)
       } yield (rs, v)
+    }
+  }
 
   def unsavedInitS(empty: II) =
     ReactS.mod(unsavedL.modifyF(_ orElse Some(UnsavedRow(Sync, empty))))
@@ -127,12 +132,12 @@ abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, 
 
   def unsavedRow[V2](renderRow: (CSF, RowStatus, VV) => V2)(implicit x: X) = {
     val rr = rowRenderer[Option, S, VV, V2, Unit](
-      _ => unsavedRenderAttr(createIO(x))(_),
+      _ => unsavedRenderAttr(x)(_),
       (T, _, r, v) => renderRow(T, r, v))
     (T: CSF) => rr(T)(())
   }
 
-  protected def updateIO: (CSF, X) => (S, DP, U) => IO[S]
+  protected def updateIO: (X, CSF, Retry[S], DP, U) => ReactST[IO, S, Unit]
 
   private def savedIG(id: D): InputGatewayE[Id, S, II] = {
     val rL = rowL(id)
@@ -141,14 +146,20 @@ abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, 
   }
 
   private def savedRenderAttr(x: X)(id: D) = {
-    val ig = savedIG(id)
+    val mr2 = multiFieldRenderer(Some(id)).prepare[Id](savedIG(id))
+    val save1: S => Option[U] = mr2.savableU
+    val save2: (S, U) => Option[(DP, U)] = (s, u) => {
+      val dp = rowDP(id)(s)
+      needSave(u, dp._2).asOption((dp, u))
+    }
+    val s2p = rowP(id)
     (T: CSF) => {
-      val saveIO = updateIfNeeded[S, U, DP, DP](
-        s => (id, rowP(id)(s)),
-        (dp, u) => if (saveNotNeeded(u, dp._2)) None else Some(dp)
-      )(updateIO(T, x))
+      lazy val save: ReactST[IO, S, Unit] = ST.liftR(s =>
+        save1(s)
+          .flatMap(save2(s, _))
+          .fold(nopIOS)(dpu => updateIO(x, T, Value(save), dpu._1, dpu._2)))
+      val r = mr2.render(s2p, save)
       val rs = rowStatus(id).get(T.state)
-      val r = multiFieldRenderer(Some(id)).render[Id](ig, rowP(id), saveIO)
       (rs, r(T))
     }
   }
@@ -204,62 +215,77 @@ object TableSpec {
 
   final class SyncSave[S, D, U, P, II, VV](
       tsb:           TableSpecB[S, D, U, P, II, VV],
-      saveNotNeeded: (U, P) => Boolean,
+      saveNotNeeded: (U, P) => SaveNeed,
       saveIO:        (Option[(D, P)], U) => IO[(D, P)])
       extends TableSpec[NoX.type, S, D, U, P, II, VV](tsb, saveNotNeeded) {
 
-    override protected def createIO = _ => _ => (s, u) =>
-      saveIO(None, u)
-        .map(unsavedToSavedF(_)(s))
+    override protected def createIO = (_, _, _, u) =>
+      ST.modT(s => saveIO(None, u).map(unsavedToSavedF(_)(s)))
 
-    override protected def updateIO = (_, _) => (s, dp, u) =>
-      saveIO(Some(dp), u)
-        .map(savedSetF(_)(s))
+    override protected def updateIO = (_, _, _, dp, u) =>
+      ST.modT(s => saveIO(Some(dp), u).map(savedSetF(_)(s)))
   }
 
   // ===================================================================================================================
 
   final class AsyncSave[X, S, D, U, P, II, VV](
       tsb:           TableSpecB[S, D, U, P, II, VV],
-      saveNotNeeded: (U, P) => Boolean,
+      saveNotNeeded: (U, P) => SaveNeed,
       saveIO:        (X, Option[(D, P)], U, FailureIO) => IO[Unit])
       extends TableSpec[X, S, D, U, P, II, VV](tsb, saveNotNeeded) {
 
     import tsb.savedUnsaved._
 
-    override protected def createIO = x => T => (s, u) =>
-      saveIO(x, None, u, failureIO(T, None))
-        .map(_ => lockRow(None)(s))
+    override protected def createIO = (x, T, retry, u) =>
+      saveS(x, T, retry, None, u)
 
-    override protected def updateIO = (T, x) => (s, dp, u) => {
-      val row = Some(dp._1)
-      saveIO(x, Some(dp), u, failureIO(T, row))
-        .map(_ => lockRow(row)(s))
+    override protected def updateIO = (x, T, retry, dp, u) =>
+      saveS(x, T, retry, Some(dp), u)
+
+    private def saveS(x: X, T: CSF, retry: Retry[S], o: Option[(D, P)], u: U) = {
+      val row = o.map(_._1)
+      val f = failureIO(T, row, retry)
+      val io = saveIO(x, o, u, f)
+      ST.retM(io) >> lockRowS(row).liftIO
     }
 
-    private def setStatus(status: RowStatus): Option[D] => S => S = {
-      case None    => unsavedStatusL.setF(status)
-      case Some(d) => rowStatus(d).setF(status)
+    private def setStatusS(status: RowStatus): Option[D] => ReactS[S, Unit] = {
+      case None    => ReactS.mod(unsavedStatusL setF status)
+      case Some(d) => ReactS.mod(rowStatus(d) setF status)
     }
 
-    val lockRow = setStatus(RowStatus.Locked)
+    val lockRowS = setStatusS(RowStatus.Locked)
 
-    def failureS(row: Option[D]) =
-      ReactS.mod(setStatus(RowStatus.Failed)(row))
+    def failureS(row: Option[D], retry: IO[Unit]) =
+      setStatusS(RowStatus.Failed(retry))(row)
 
-    def failureIO(T: CSF, row: Option[D]) =
-      FailureIO(T.runState(failureS(row)))
+    def failureIO(T: CSF, row: Option[D], retry: Retry[S]) =
+      FailureIO(T runState failureS(row, T runState retry.value))
   }
 
   // ===================================================================================================================
+
+  sealed trait SaveNeed {
+    def asOption[A](a: A): Option[A]
+  }
+  case object SaveNeeded extends SaveNeed {
+    override def asOption[A](a: A) = Some(a)
+  }
+  case object SaveNotNeeded extends SaveNeed {
+    override def asOption[A](a: A) = None
+  }
+
+  type Retry[S] = Name[ReactST[IO, S, Unit]]
 
   /**
    * Renders all n fields in a row of an n-field table (See SpecN for impls).
    */
   private[table] trait MultiFieldRenderer[S, U, P, II, VV] {
-    // TODO save here should include ComponentStateFocus[S]. Save those λs in renderAttrForUnsaved etc
-    def render[M[_] : Bind : Optional2](
-      ig: InputGatewayE[M, S, II], s2mp: S => M[P], save: (S, U) => IO[S]): ComponentStateFocus[S] => M[VV]
+    def prepare[M[_] : Bind : Optional2](ig: InputGatewayE[M,S,II]): MultiFieldRenderer2[M, S, U, P, VV]
+  }
+  private[table] trait MultiFieldRenderer2[M[_], S, U, P, VV] {
+    def savableU: S => Option[U]
+    def render(s2mp: S => M[P], save: ReactST[IO, S, Unit]): ComponentStateFocus[S] => M[VV]
   }
 
   @inline private[TableSpec] final def rowRenderer[M[_] : Bind, S, V1, V2, SubId](
@@ -267,13 +293,4 @@ object TableSpec {
       renderRow: (ComponentStateFocus[S], SubId, RowStatus, V1) => V2
       ): ComponentStateFocus[S] => SubId => M[V2] =
     T => id => renderFields(id)(T).map(rv => renderRow(T, id, rv._1, rv._2))
-
-  @inline private[TableSpec] final def updateIfNeeded[S, U, L, L2](
-      getLast: S => L, needSave: (L, U) => Option[L2])(f: (S, L2, U) => IO[S]): (S, U) => IO[S] =
-    (s, u) => {
-      needSave(getLast(s), u) match {
-        case Some(l2) => f(s, l2, u)
-        case None     => IO(s)
-      }
-    }
 }

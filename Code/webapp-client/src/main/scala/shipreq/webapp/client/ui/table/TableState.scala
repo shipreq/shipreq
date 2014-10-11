@@ -6,6 +6,7 @@ import monocle.function.Field1.first
 import monocle.function.Field2.second
 import monocle.std.tuple2._
 import monocle.syntax._
+import scalaz.effect.IO
 
 sealed trait RowStatus
 object RowStatus {
@@ -17,7 +18,7 @@ object RowStatus {
   case object Locked extends RowStatus
 
   /** Failed to coordination Local change with external agent. (Ajax failure) */
-  case object Failed extends RowStatus
+  case class Failed(retry: IO[Unit]) extends RowStatus
 }
 
 final case class UnsavedRow[II](status: RowStatus, ii: II)

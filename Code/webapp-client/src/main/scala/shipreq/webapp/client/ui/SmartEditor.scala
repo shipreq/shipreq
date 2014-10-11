@@ -18,7 +18,7 @@ class SmartEditor[S, I, C, O, M[_]](
     vs     : S => ValidatorPlus[I, C, O],
     s2mc   : S => M[C],
     ig     : InputGatewayE[M, S, I],
-    trySave: S => IO[S])(
+    trySave: ReactST[IO, S, Unit])(
     implicit E: Equal[I], B: Bind[M], M: Optional2[M]){
 
   private def change(setI: (S, I) => Option[S])(i: I) =
@@ -43,7 +43,7 @@ class SmartEditor[S, I, C, O, M[_]](
     })
 
   private def editEnd(getI: S => M[I], setI: (S, I) => Option[S]) =
-    correctInput(getI, setI).liftIO >> ReactS.modT(trySave)
+    correctInput(getI, setI).liftIO >> trySave
 
   def render[V](editor: Editor[I, V], T: ComponentStateFocus[S]): M[V] = {
     import ig.{setA => setI, getA => getI}
