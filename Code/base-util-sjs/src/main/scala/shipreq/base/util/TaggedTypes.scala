@@ -2,7 +2,7 @@ package shipreq.base.util
 
 import scalaz.Equal
 import scalaz.std.string.stringInstance
-import scalaz.std.anyVal.{shortInstance, longInstance}
+import scalaz.std.anyVal.{shortInstance, longInstance, intInstance}
 
 object TaggedTypes {
 
@@ -35,6 +35,7 @@ object TaggedTypes {
   }
 
   trait TaggedLong extends TaggedType { final type U = Long }
+  trait TaggedInt extends TaggedType { final type U = Int }
   trait TaggedString extends TaggedType { final type U = String }
   trait TaggedShort extends TaggedType {
     final type U = Short
@@ -48,10 +49,12 @@ object TaggedTypes {
   }
   private val _taggedStringInstance = new TaggedTypeScalaz[TaggedString, String]
   private val _taggedLongInstance   = new TaggedTypeScalaz[TaggedLong, Long]
+  private val _taggedIntInstance    = new TaggedTypeScalaz[TaggedInt, Int]
   private val _taggedShortInstance  = new TaggedTypeScalaz[TaggedShort, Short]
 
   implicit def taggedStringInstance[T <: TaggedType {type U = String}] = _taggedStringInstance.subst[T]
   implicit def taggedLongInstance  [T <: TaggedType {type U = Long}]   = _taggedLongInstance.subst[T]
+  implicit def taggedIntInstance  [T <: TaggedType {type U = Int}]     = _taggedIntInstance.subst[T]
   implicit def taggedShortInstance [T <: TaggedType {type U = Short}]  = _taggedShortInstance.subst[T]
 
 //  implicit def autoUnboxTaggedTypes[T <: TaggedType](t: T): T#U = t.value
@@ -60,6 +63,7 @@ object TaggedTypes {
 //  implicit def autoUnboxTaggedString[T <: TaggedType](t: T)(implicit ev: T#U =:= String): String = ev(t.value)
 //  implicit def autoUnboxTaggedTypes[UU, T <: TaggedType {type U = UU}](t: T): UU = t.value
   implicit def autoUnboxTaggedLong[T <: TaggedType {type U = Long}](t: T): Long = t.value
+  implicit def autoUnboxTaggedInt[T <: TaggedType {type U = Int}](t: T): Int = t.value
   implicit def autoUnboxTaggedShort[T <: TaggedType {type U = Short}](t: T): Short = t.value
   implicit def autoUnboxTaggedString[T <: TaggedType {type U = String}](t: T): String = t.value
 

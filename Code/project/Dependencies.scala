@@ -25,9 +25,12 @@ object Deps {
     protected implicit def js(a: String) = dd(jsA(a))
   }
 
-  case class JvmAndJs(groupId: String, name: String, version: String) {
-    final val jvm: MS = (groupId: GroupID) %% name % version
-    final val js: MS = jsGA(groupId, name) % version
+  def JvmAndJs(groupId: String, name: String, version: String) =
+    JvmAndJsFork(groupId, groupId, name, version)
+
+  case class JvmAndJsFork(jvmGroupId: String, jsGroupId: String, name: String, version: String) {
+    final val jvm: MS = (jvmGroupId: GroupID) %% name % version
+    final val js: MS = jsGA(jsGroupId, name) % version
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -87,6 +90,8 @@ object Deps {
 
   val μPickle = JvmAndJs("com.lihaoyi", "upickle", "0.2.5")
   val μTest   = JvmAndJs("com.lihaoyi", "utest",   "0.2.3")
+
+  val RNG = JvmAndJsFork("com.nicta", "com.github.japgolly.fork.nicta", "rng", "1.3.0")
 
   val okHttp      :MS = "com.squareup.okhttp"         % "okhttp"                % "1.5.4"
   val httpCore    :MS = "org.apache.httpcomponents"   % "httpcore"              % "4.3.2"

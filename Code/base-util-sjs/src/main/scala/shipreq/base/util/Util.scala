@@ -40,4 +40,19 @@ final object Util {
       s
     else
       s.substring(0, cutoff - 1) + "\u2026"
+
+  def quoteString(s: String): String =
+    "\"" + escapeString(s) + "\""
+
+  def escapeString(s: String): String =
+    s.toCharArray.map {
+      case '\n' => "\\n"
+      case '\r' => "\\r"
+      case '\t' => "\\t"
+      case '\\' => "\\"
+      case '"' => "\\\""
+      case n if n >= 32 && n <= 127 => n.toString
+      //case n if n < 256 => "\\x%02x" format n.toInt
+      case n => "\\u%04x" format n.toLong
+    }.mkString
 }
