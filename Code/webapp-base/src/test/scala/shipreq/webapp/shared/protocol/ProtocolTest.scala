@@ -4,6 +4,10 @@ import scalaz.Leibniz.===
 import utest._
 import upickle._
 import shipreq.webapp.shared.data._
+import shipreq.webapp.shared.data.delta._
+import shipreq.webapp.shared.RandomData
+import shipreq.webapp.shared.prop._
+import shipreq.webapp.shared.TestUtil._
 import Routine.Remote, Routines._
 import DeletionAction._
 
@@ -39,61 +43,45 @@ object ProtocolTest extends TestSuite {
       val b = read[A](j)
       assert(b == a)
     }
-  }
 
-  object TestData {
-    // TODO this is bullshit, need properties :(
-    // TODO or at least use applicative and give each field multiple values
-    object customReqType {
-      def id = CustomReqType.Id(123654)
-      def mn = ReqType.Mnemonic("BR")
-      def mn2 = ReqType.Mnemonic("X")
-      def mn3 = ReqType.Mnemonic("Y")
-      val s = "hehe"
-      def c1 = CustomReqType(id, mn, Set(mn2, mn3), s, ImplicationRequired, Dead)
-      def nv = (mn, s, ImplicationRequired)
+    def testAQ[A: Reader : Writer](a: A) = {
+      val j = write(a)
+      val b = read[A](j)
+      b == a
     }
+
+    def propI = Prop[I](testAQ)
+    def propO = Prop[O](testAQ)
   }
 
   override def tests = TestSuite {
 
     'Routines {
       'CustomReqTypeOps {
-        import TestData.customReqType._
-        val C = Routines.CustomReqTypeCrud
-        val kit = kitR(C)
-        'create  - kit.testI( C.create(nv) )
-        'update  - kit.testI( C.update(id, nv) )
-        'softDel - kit.testI( C.delete(id, SoftDel) )
-        'hardDel - kit.testI( C.delete(id, HardDel) )
-        'restore - kit.testI( C.delete(id, Restore) )
+        val prop = kitR(Routines.CustomReqTypeCrud).propI
+        import RandomData.routines.customReqTypeCrud._
+        'create { create _mustSatisfy prop }
+        'update { update _mustSatisfy prop }
+        'delete { delete _mustSatisfy prop }
+//        'manual - {
+//          import CustomReqType.Id, ReqType.Mnemonic
+//          import Routines._
+//          val d = CustomReqTypeCrud.create((Mnemonic("KQMBFJ"),
+//            "\u001e\u587f\u1611\u523f\u9d9f\uf969\u73a1\uadd6\u3eae\u5f22\u9d6f\u3abf\u0c0d\uef1d\u1628\ud968\u93a0\ud8a3\uef1d\u1628\ud968\u93a0\ud8a3"
+//            ,ImplicationRequired))
+//          kitR(Routines.CustomReqTypeCrud).testI(d)
+//        }
       }
     }
 
     'JsEntryPoints {
-      import JsEntryPoint._
-
-      'reactExamples {
-        kitEP(reactExamples).testI(ForCfgReqType(Remote("x", Routines.CustomReqTypeCrud)))
-      }
+      import JsEntryPoint._, RandomData.routines._
+      'reactExamples { kitEP(reactExamples).propI mustBeSatisfiedBy forCfgReqType }
     }
 
     'Δ {
-      import delta._
-      val r1 = Rev(3)
-      val r2 = Rev(4)
-      def test1[P <: Partition]: P => RemoteDeltaG = {
-        case p@ Partition.CustomReqTypes =>
-          import TestData.customReqType._
-          RemoteDeltaG(p, r1, r2)(List(id), List(c1))
-      }
-
-      def test2(dg: RemoteDeltaG) = {
-        val d = List(dg)
-        kitR(Routines.CustomReqTypeCrud).testO(d)
-      }
-      def test[P <: Partition](p: P) = test2(test1(p))
-
+      val prop = kitR(Routines.CustomReqTypeCrud).propO
+      def test(p: Partition) = RandomData.remoteDelta forPart p mustSatisfy prop
       'CustomReqTypes - test(Partition.CustomReqTypes)
     }
   }

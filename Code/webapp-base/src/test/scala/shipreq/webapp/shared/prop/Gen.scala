@@ -9,6 +9,8 @@ final case class SampleSize(value: Int) extends TaggedInt
 
 trait Gen[A] {
   def gen2(gs: GenSize): Gen2[A]
+  def map[B](g: A => B): Gen[B]
+  def subst[AA >: A]: Gen[AA] = map(a => a: AA)
 }
 
 case class Gen2[A](f: SampleSize => EphemeralStream[A]) {
@@ -16,21 +18,27 @@ case class Gen2[A](f: SampleSize => EphemeralStream[A]) {
 }
 
 class RngGen[A](val f: GenSize => Rng[A]) extends Gen[A] {
-  
+
   override def gen2(gs: GenSize): Gen2[A] =
     Gen2[A](ss => f(gs).fill(ss.value).map(EphemeralStream(_: _*)).run.unsafePerformIO())
 
-  def mapr[B](g: Rng[A] => Rng[B])  = new RngGen[B](g compose f)
-  def map[B](g: A => B)             = new RngGen[B](s => f(s) map g)
-  def flatMap[B](g: A => RngGen[B]) = new RngGen[B](s => f(s).flatMap(a => g(a).f(s)))
+  override def map[B](g: A => B): RngGen[B] = new RngGen[B](s => f(s) map g)
+  override def subst[B >: A]    : RngGen[B] = map(a => a: B)
 
-  private def sizeOp[B](g: Rng[A] => Size => Rng[B]) =
-    new RngGenS[B](s => g(f(s))(s.value))
+  def mapr[B](g: Rng[A] => Rng[B])    = new RngGen[B](g compose f)
+  def flatMap[B](g: A => RngGen[B])   = new RngGen[B](s => f(s).flatMap(a => g(a).f(s)))
+  def flatMapS[B](g: A => RngGenS[B]) = new RngGenS[B](s => f(s).flatMap(a => g(a).f(s)))
+
+  private def sizeOp[B](g: Rng[A] => Size => Rng[B]): RngGenS[B] =
+    new RngGenS(s => g(f(s))(s.value))
+
+  private def sizeOp[B, C](g: Rng[A] => Size => Rng[B], h: B => C): RngGenS[C] =
+    new RngGenS(s => g(f(s))(s.value) map h)
 
   def fill(n: Int)   : RngGen[List[A]]              = mapr(_ fill n)
   def list           : RngGenS[List[A]]             = sizeOp(_.list)
   def list1          : RngGenS[NonEmptyList[A]]     = sizeOp(_.list1)
-  def set            : RngGenS[Set[A]]              = sizeOp(_.list).map(_.toSet)
+  def set            : RngGenS[Set[A]]              = sizeOp(_.list, (_: List[A]).toSet)
   def vector         : RngGenS[Vector[A]]           = sizeOp(_.vector)
   def stream[AA >: A]: RngGenS[EphemeralStream[AA]] = sizeOp(_.stream)
   def option         : RngGen[Option[A]]            = mapr(_.option)
@@ -46,9 +54,9 @@ class RngGen[A](val f: GenSize => Rng[A]) extends Gen[A] {
 
 class RngGenS[A](f: GenSize => Rng[A]) extends RngGen(f) {
 
-  override def mapr[B](g: Rng[A] => Rng[B])  = new RngGenS[B](g compose f)
-  override def map[B](g: A => B)             = new RngGenS[B](s => f(s) map g)
-  override def flatMap[B](g: A => RngGen[B]) = new RngGenS[B](s => f(s).flatMap(a => g(a).f(s)))
+//  override def mapr[B](g: Rng[A] => Rng[B])  = new RngGenS[B](g compose f)
+//  override def map[B](g: A => B)             = new RngGenS[B](s => f(s) map g)
+//  override def flatMap[B](g: A => RngGen[B]) = new RngGenS[B](s => f(s).flatMap(a => g(a).f(s)))
 
   def lim(size: Int) = {
     val t = GenSize(size)
@@ -57,7 +65,11 @@ class RngGenS[A](f: GenSize => Rng[A]) extends RngGen(f) {
 }
 
 object Gen {
-  
+
+  object Covariance {
+    implicit def rnggenCovariance[A, B >: A](r: RngGen[A]) = r.subst[B]
+  }
+
   def unsized[A](rng: Rng[A]) =
     new RngGen[A](_ => rng)
 
@@ -139,4 +151,10 @@ object Gen {
 //  def frequencyL         [A](x: NonEmptyList[(Int, Gen[A])]): Gen[A] = Rng.frequencyL.gen
 //  def pick               (n: Int, l: NonEmptyList[(Int, Gen[A])]): Gen[A] = Rng.pick.gen
 //  def frequency          [A](x: (Int, Gen[A]), xs: (Int, Gen[A])*): Gen[A] = Rng.frequency.gen
+
+  def oneofG[A](a: RngGen[A], as: RngGen[A]*): RngGen[A] =
+    Rng.oneof(a, as: _*).gen.flatMap(r => r)
+
+  def oneofGC[A, B >: A](a: RngGen[A], as: RngGen[A]*): RngGen[B] =
+    oneofG(a.subst[B], as.map(_.subst[B]): _*)
 }
