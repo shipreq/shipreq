@@ -14,7 +14,7 @@ object GenericValidators {
     ValidationPart.forConstraint(name, largeTextLimit)
 
   private def largeTextCP =
-    CorrectionPart.endo(multiLineWhitespace) // TODO niceSymbols doesn't work in JS
+    CorrectionPart.endo(multiLineWhitespace andThen niceSymbols)
 
   /** Empty string is represented as `""`. */
   def largeText(name: String) =

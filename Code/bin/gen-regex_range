@@ -1,0 +1,51 @@
+#!/bin/env scala
+// vim: set ft=scala :
+
+import language._
+import scala.annotation.tailrec
+
+//////////////////////////////////////////////////////////////////
+val pat = """[\p{S}\p{P}]""".r.pattern
+//////////////////////////////////////////////////////////////////
+
+val naughty = """-[]\""".toCharArray.map(_.toInt).toSet
+
+case class Rec(a: Int, b: Int, matched: Boolean) {
+  def frag =
+    if      (a == b)     p(a)
+    else if (a == b - 1) p(a)+p(b)
+    else                 s"${p(a)}-${p(b)}"
+    def p: Int => String = {
+      case i if naughty contains i => "\\\\" + i.toChar.toString
+      case i => "\\u%04x".format(i)
+    }
+
+}
+
+@tailrec
+def go(c: Int, max: Int, log: List[Rec]): List[Rec] =
+  if (c > max)
+    log
+  else {
+    val next = c+1
+    (pat matcher c.toChar.toString matches, log) match {
+      case (m, Rec(a,_,n) :: t) if m==n => go(next, max, Rec(a,c,m) :: t)
+      case (m, l)                       => go(next, max, Rec(c,c,m) :: l)
+    }
+  }
+
+val r = go(0,65535,Nil).reverse
+val rcount = r.length
+
+def show(title: String, recs: List[Rec]): Unit = {
+  println(s"$title: ${recs.length}/$rcount")
+  // recs foreach println
+  val x = "[" + recs.foldLeft("")((a,b) => a + b.frag) + "]"
+  println(s"Len: ${x.length}")
+  println(x)
+  println()
+}
+
+println()
+show("Matching", r.filter(_.matched))
+show("Non-matching", r.filterNot(_.matched))
