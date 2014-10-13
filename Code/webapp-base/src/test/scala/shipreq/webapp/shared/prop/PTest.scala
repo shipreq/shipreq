@@ -45,6 +45,7 @@ object RunState {
 object PTest {
 
   def apply[A](p: Prop[A], gen: Gen[A])(implicit S: Settings): RunState[A] = {
+    if (S.debug) println(s"\n${p.name}")
     val data =
       EphemeralStream((if (S.sizeDist.isEmpty) Seq((1D, 1D)) else S.sizeDist): _*)
       .flatMap { case (sr, gr) =>
@@ -64,7 +65,6 @@ object PTest {
 //    }
 
   private def testN[A](p: Prop[A], data: EphemeralStream[A])(implicit S: Settings): RunState[A] = {
-    if (S.debug) println()
     data.foldLeft(RunState[A](0, Satisfied))(rs => a => {
       rs.result match {
         case Satisfied =>
@@ -89,7 +89,7 @@ object PTest {
       aa = s"%s … %.0f%%".format(aa, maxLen.toDouble / al * 100.0)
     val pc = if (r.success) "32;1" else "31;1"
     println(s"${c(pc, S.sampleProgressFmt.format(r.runs))}$aa")
-    if (al > 120) println()
+    if (al > 200) println()
   }
 
   private def test1[A](p: Prop[A], x: Ctx[A]): Result[A] =

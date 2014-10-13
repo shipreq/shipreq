@@ -14,15 +14,15 @@ object ProtocolTest extends TestSuite {
 
   def kitR[R <: Routine.Desc](r: R) = {
     import r.{ri, wi, ro, wo}
-    new KitIO[r.I, r.O]
+    new KitIO[r.I, r.O]("Routines." + r.getClass.getSimpleName.replace("$",""))
   }
 
-  def kitEP[I](ep: JsEntryPoint[I, _]) = {
+  def kitEP[I](ep: JsEntryPoint[I, _], name: String) = {
     import ep.{ri, wi}
-    new KitIO[I, Unit]
+    new KitIO[I, Unit]("JsEntryPoint." + name)
   }
 
-  class KitIO[I: Reader : Writer, O: Reader : Writer] {
+  class KitIO[I: Reader : Writer, O: Reader : Writer](subject: String) {
     private def c(code: String, m: Any) = s"\033[${code}m$m\033[0m"
 
     private type LogFmt = (String, String) => String
@@ -44,17 +44,17 @@ object ProtocolTest extends TestSuite {
       assert(b == a)
     }
 
-    def propA[A: Reader : Writer](lf: LogFmt) = Prop.withCtx[A]{ x =>
+    def propA[A: Reader : Writer](lf: LogFmt, name: String) = Prop.withCtx[A](name, x => {
       import x.a
       val j = write(a)
       val b = read[A](j)
       if (!x.settings.debug && x.run == 0)
         println(lf(a.toString, j))
       b == a
-    }
+    })
 
-    def propI = propA[I](logFmtI)
-    def propO = propA[O](logFmtO)
+    def propI = propA[I](logFmtI, s"$subject⁻: read(write(a)) = a")
+    def propO = propA[O](logFmtO, s"$subject⁺: read(write(a)) = a")
   }
 
   override def tests = TestSuite {
@@ -79,7 +79,7 @@ object ProtocolTest extends TestSuite {
 
     'JsEntryPoints {
       import JsEntryPoint._, RandomData.routines._
-      'reactExamples { kitEP(reactExamples).propI mustBeSatisfiedBy forCfgReqType }
+      'reactExamples { kitEP(reactExamples, "reactExamples").propI mustBeSatisfiedBy forCfgReqType }
     }
 
     'Δ {

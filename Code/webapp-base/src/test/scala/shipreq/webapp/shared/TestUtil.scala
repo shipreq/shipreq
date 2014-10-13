@@ -3,6 +3,7 @@ package shipreq.webapp.shared
 import shipreq.base.util.Util
 import shipreq.webapp.shared.prop._
 import utest._
+import Console.{RED, BOLD, WHITE_B, RESET}
 
 object TestUtil {
 
@@ -21,7 +22,7 @@ object TestUtil {
         if (!S.debug) {
           val v = a.toString
           val w = Util.escapeString(v)
-          println(s"\nFalsified after $runs runs with:\n$v\n")
+          println(s"\n${RED}Falsified $WHITE_B[${p.name}]$RESET$RED after $runs runs with:$RESET\n$v\n")
           if (w != v) println(s"$w\n")
         }
         assert(false)
