@@ -27,7 +27,7 @@ object RandomData {
       id <- customReqTypeId
       n  <- customReqTypeName
       mn <- reqTypeMnemonic
-      om <- reqTypeMnemonic.set
+      om <- reqTypeMnemonic.set.lim(16)
       ir <- implicationRequired
       a  <- alive
     } yield CustomReqType(id, mn, om - mn, n, ir, a)

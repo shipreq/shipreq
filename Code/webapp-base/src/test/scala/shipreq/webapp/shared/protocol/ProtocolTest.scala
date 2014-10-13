@@ -9,7 +9,6 @@ import shipreq.webapp.shared.RandomData
 import shipreq.webapp.shared.prop._
 import shipreq.webapp.shared.TestUtil._
 import Routine.Remote, Routines._
-import DeletionAction._
 
 object ProtocolTest extends TestSuite {
 
@@ -26,32 +25,36 @@ object ProtocolTest extends TestSuite {
   class KitIO[I: Reader : Writer, O: Reader : Writer] {
     private def c(code: String, m: Any) = s"\033[${code}m$m\033[0m"
 
-    def testI(is: I*): Unit =
-      is.foreach(testA(_, (a, j) => s"  C ⇒ ${c("36", a)}\n    ⇒ ${c("34;1", j)} ⇒ S"))
+    private type LogFmt = (String, String) => String
+    private val logFmtI: LogFmt = (a, j) => s"  C ⇒ ${c("36", a)}\n    ⇒ ${c("34;1", j)} ⇒ S"
+    private val logFmtO: LogFmt = (a, j) => s"  S ⇒ ${c("36", a)}\n    ⇒ ${c("34;1", j)} ⇒ C"
 
-    def testO(os: O*): Unit =
-      os.foreach(testA(_, (a, j) => s"  S ⇒ ${c("36", a)}\n    ⇒ ${c("34;1", j)} ⇒ C"))
+    def testI(is: I*): Unit = is.foreach(testA(_, logFmtI))
+    def testO(os: O*): Unit = os.foreach(testA(_, logFmtO))
 
     def testIO(is: I*)(implicit ev: I === O): Unit = {
       testI(is: _*)
       testO(ev.subst(is): _*)
     }
 
-    def testA[A: Reader : Writer](a: A, f: (String, String) => String) = {
+    def testA[A: Reader : Writer](a: A, lf: LogFmt) = {
       val j = write(a)
-      println(f(a.toString, j))
+      println(lf(a.toString, j))
       val b = read[A](j)
       assert(b == a)
     }
 
-    def testAQ[A: Reader : Writer](a: A) = {
+    def propA[A: Reader : Writer](lf: LogFmt) = Prop.withCtx[A]{ x =>
+      import x.a
       val j = write(a)
       val b = read[A](j)
+      if (!x.settings.debug && x.run == 0)
+        println(lf(a.toString, j))
       b == a
     }
 
-    def propI = Prop[I](testAQ)
-    def propO = Prop[O](testAQ)
+    def propI = propA[I](logFmtI)
+    def propO = propA[O](logFmtO)
   }
 
   override def tests = TestSuite {

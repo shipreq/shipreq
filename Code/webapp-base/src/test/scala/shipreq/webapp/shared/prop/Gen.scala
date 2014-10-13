@@ -4,8 +4,12 @@ import com.nicta.rng.{Rng, Size}
 import scalaz._
 import shipreq.base.util.TaggedTypes.TaggedInt
 
-final case class GenSize(value: Int) extends TaggedInt
-final case class SampleSize(value: Int) extends TaggedInt
+final case class GenSize(value: Int) extends TaggedInt {
+  def map(f: Int => Int) = GenSize(f(value))
+}
+final case class SampleSize(value: Int) extends TaggedInt  {
+  def map(f: Int => Int) = SampleSize(f(value))
+}
 
 trait Gen[A] {
   def gen2(gs: GenSize): Gen2[A]

@@ -11,7 +11,7 @@ object TestUtil {
   implicit val propSettings = (
     if (js) Settings(sampleSize = SampleSize(4))
     else    Settings(sampleSize = SampleSize(100))
-    ).copy(debug = false)
+    ).copy(debug = false, sizeDist = Seq(0.2 -> 0.2, 0.8 -> 0.8))
 
   def assertProp[A](p: Prop[A], g: Gen[A])(implicit S: Settings): Unit = {
     val r = PTest(p, g)(S)
