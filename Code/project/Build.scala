@@ -221,7 +221,7 @@ object ShipReq extends Build {
       val dir = "webapp-base"
 
       override def deps =
-        μPickle.jvm ++ testScope(μTest.jvm)
+        μPickle.jvm ++ testScope(μTest.jvm ++ RNG.jvm)
 
       override def project = typicalProject
         .configure(
@@ -244,7 +244,7 @@ object ShipReq extends Build {
 
       override def deps =
         ScalaJS.Scalaz.effect ++ ScalaJS.React.scalaz ++ ScalaJS.monocle ++ μPickle.js ++
-        testScope(ScalaJS.React.test ++ μTest.js)
+        testScope(ScalaJS.React.test ++ μTest.js ++ RNG.js)
 
       def testSettings = (_: Project)
         .settings(utestJsSettings: _*)
