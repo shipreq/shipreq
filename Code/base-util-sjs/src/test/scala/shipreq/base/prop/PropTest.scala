@@ -1,4 +1,4 @@
-package shipreq.webapp.shared.prop
+package shipreq.base.prop
 
 import utest._
 

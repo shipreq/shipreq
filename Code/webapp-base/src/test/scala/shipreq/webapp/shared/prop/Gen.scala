@@ -2,14 +2,7 @@ package shipreq.webapp.shared.prop
 
 import com.nicta.rng.{Rng, Size}
 import scalaz._
-import shipreq.base.util.TaggedTypes.TaggedInt
-
-final case class GenSize(value: Int) extends TaggedInt {
-  def map(f: Int => Int) = GenSize(f(value))
-}
-final case class SampleSize(value: Int) extends TaggedInt  {
-  def map(f: Int => Int) = SampleSize(f(value))
-}
+import shipreq.base.prop._
 
 trait Gen[A] {
   def gen2(gs: GenSize): Gen2[A]

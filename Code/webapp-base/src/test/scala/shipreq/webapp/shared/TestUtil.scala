@@ -1,6 +1,7 @@
 package shipreq.webapp.shared
 
 import shipreq.base.util.Util
+import shipreq.base.prop._
 import shipreq.webapp.shared.prop._
 import utest._
 import Console.{RED, BOLD, WHITE_B, RESET}

@@ -1,6 +1,7 @@
 package shipreq.webapp.shared.prop
 
 import scalaz.EphemeralStream
+import shipreq.base.prop._
 
 sealed trait Result[+A] {
   def success: Boolean = this match {
@@ -13,39 +14,10 @@ case object Proved                extends Result[Nothing]
 case class  Falsified[+A](a: A)   extends Result[A]
 //case class  Error(reason: String) extends Result[Nothing]
 
-
-case class Settings(
-  sizeDist: Seq[(Double, Double)] = Seq.empty,
-  sampleSize: SampleSize          = SampleSize(100),
-  genSize: GenSize                = GenSize(40),
-  debug: Boolean                  = false,
-  debugMaxLen: Int                = 960) {
-
-  private[prop] lazy val sampleSizeLen = sampleSize.value.toString.length
-  private[prop] lazy val sampleProgressFmt = s"[%${sampleSizeLen}d/${sampleSize.value}] "
-}
-
-object Settings {
-  val default = Settings()
-  object Default {
-    implicit def defaultSettings = Settings.default
-  }
-}
-
-
-case class Ctx[A](a: A, run: Int, settings: Settings) {
-  def map[B](f: A => B) = Ctx[B](f(a), run, settings)
-}
-object Ctx {
-  def single[A](a: A)(implicit S: Settings = Settings.default) = Ctx(a, 0, S)
-}
-
-
 case class RunState[+A](runs: Int, result: Result[A])
 object RunState {
   implicit def RunStateToResult[A](r: RunState[A]): Result[A] = r.result
 }
-
 
 object PTest {
 

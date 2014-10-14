@@ -6,9 +6,8 @@ import upickle._
 import shipreq.webapp.shared.data._
 import shipreq.webapp.shared.data.delta._
 import shipreq.webapp.shared.RandomData
-import shipreq.webapp.shared.prop._
+import shipreq.base.prop._
 import shipreq.webapp.shared.TestUtil._
-import Routine.Remote, Routines._
 
 object ProtocolTest extends TestSuite {
 

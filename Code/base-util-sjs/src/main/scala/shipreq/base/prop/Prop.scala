@@ -1,9 +1,8 @@
-package shipreq.webapp.shared.prop
-
-import shipreq.base.util.Util
+package shipreq.base.prop
 
 import scala.annotation.tailrec
 import scalaz.NonEmptyList
+import shipreq.base.util.Util
 
 sealed abstract class Prop[A] {
   def unary_~                 : Prop[A] = Negation(this)
