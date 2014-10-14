@@ -45,7 +45,7 @@ object PTest {
     data.foldLeft(RunState[A](0, Satisfied))(rs => a => {
       rs.result match {
         case Satisfied =>
-          val r = RunState(rs.runs + 1, test1(p, Ctx(a, rs.runs, S)))
+          val r = RunState(rs.runs + 1, test1(p, a, Ctx(rs.runs, S)))
           if (S.debug) debug1(a, r)
           r
         case Proved | Falsified(_) =>
@@ -69,10 +69,10 @@ object PTest {
     if (al > 200) println()
   }
 
-  private def test1[A](p: Prop[A], x: Ctx[A]): Result[A] =
+  private def test1[A](p: Prop[A], a: A, x: Ctx): Result[A] =
     try {
-      if (p test x) Satisfied else Falsified(x.a)
+      if (p.test(a, x)) Satisfied else Falsified(a)
     } catch {
-      case _: Throwable => Falsified(x.a)
+      case _: Throwable => Falsified(a)
     }
 }

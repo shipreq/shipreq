@@ -27,10 +27,8 @@ object Settings {
   }
 }
 
-case class Ctx[A](a: A, run: Int, settings: Settings) {
-  def map[B](f: A => B) = Ctx[B](f(a), run, settings)
-}
+case class Ctx(run: Int, settings: Settings)
 
 object Ctx {
-  def single[A](a: A)(implicit S: Settings = Settings.default) = Ctx(a, 0, S)
+  def single(implicit S: Settings = Settings.default) = Ctx(0, S)
 }

@@ -56,6 +56,6 @@ object CustomReqTypeFns extends Fns[CustomReqTypes.type] {
     if (upds.nonEmpty)
       vs = vs.map(p => upds.getOrElse(p.id, p))
 
-    p.copy(customReqTypes = D.CustomReqTypes(rev, vs.toSeq))
+    p.copy(customReqTypes = D.CustomReqTypes(rev, vs.toList))
   }
 }

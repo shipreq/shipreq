@@ -1,5 +1,6 @@
 package shipreq.base.prop
 
+import scalaz.std.list._
 import utest._
 
 object PropTest extends TestSuite {
@@ -97,6 +98,12 @@ object PropTest extends TestSuite {
         testRootCauses(p, Yay("Bad", 30), List(upper))
         testRootCauses(p, Yay("GOOD", 15), List(even))
         testRootCauses(p, Yay("both", 4), List(mod3, mod5, upper))
+      }
+      'forall {
+        val allEven = even.forallF[List]
+        testRootCauses(allEven, List(4,6), Nil)
+        testRootCauses(allEven, Nil, Nil)
+        testRootCauses(allEven, List(4,5,6,7), List(even))
       }
     }
   }

@@ -43,8 +43,7 @@ object ProtocolTest extends TestSuite {
       assert(b == a)
     }
 
-    def propA[A: Reader : Writer](lf: LogFmt, name: String) = Prop.withCtx[A](name, x => {
-      import x.a
+    def propA[A: Reader : Writer](lf: LogFmt, name: String) = Prop.withCtx[A](name, (a,x) => {
       val j = write(a)
       val b = read[A](j)
       if (!x.settings.debug && x.run == 0)

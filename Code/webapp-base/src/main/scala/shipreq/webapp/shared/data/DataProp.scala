@@ -29,7 +29,7 @@ object DataProp {
       Prop[CustomReqTypes]("each CustomReqType name is unique", _.data.map(_.name).isUnique)
 
     lazy val all =
-      uniqueMnemonics ∧ uniqueId ∧ uniqueNames ∧ rev.contramap(_.rev) ∧ reqType.contramapF[CustomReqTypes, List](_.data)
+      uniqueMnemonics ∧ uniqueId ∧ uniqueNames ∧ rev.contramap(_.rev) ∧ reqType.forall[CustomReqTypes, List](_.data)
   }
 
   lazy val project =
