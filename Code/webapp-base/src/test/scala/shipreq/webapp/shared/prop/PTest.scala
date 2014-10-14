@@ -34,6 +34,9 @@ object Settings {
 
 
 case class Ctx[A](a: A, run: Int, settings: Settings)
+object Ctx {
+  def single[A](a: A)(implicit S: Settings = Settings.default) = Ctx(a, 0, S)
+}
 
 
 case class RunState[+A](runs: Int, result: Result[A])
@@ -45,7 +48,7 @@ object RunState {
 object PTest {
 
   def apply[A](p: Prop[A], gen: Gen[A])(implicit S: Settings): RunState[A] = {
-    if (S.debug) println(s"\n${p.name}")
+    if (S.debug) println(s"\n$p")
     val data =
       EphemeralStream((if (S.sizeDist.isEmpty) Seq((1D, 1D)) else S.sizeDist): _*)
       .flatMap { case (sr, gr) =>

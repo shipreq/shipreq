@@ -22,7 +22,7 @@ object TestUtil {
         if (!S.debug) {
           val v = a.toString
           val w = Util.escapeString(v)
-          println(s"\n${RED}Falsified $WHITE_B[${p.name}]$RESET$RED after $runs runs with:$RESET\n$v\n")
+          println(s"\n${RED}Falsified $WHITE_B[$p]$RESET$RED after $runs runs with:$RESET\n$v\n")
           if (w != v) println(s"$w\n")
         }
         assert(false)
