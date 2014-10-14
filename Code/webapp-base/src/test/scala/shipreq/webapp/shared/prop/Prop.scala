@@ -136,6 +136,22 @@ final case class Falsification[A](p: Prop[A], cause: List[Falsification[A]]) {
 
   def tree: String = Util.quickSB(treeSB)
   def treeSB(sb: StringBuilder): Unit = {
-    // TODO
+    val pm = "│  "
+    val pl = "   "
+    val cm = "├─ "
+    val cl = "└─ "
+    def loop(parentLvlLast: Vector[Boolean], fs: List[Falsification[A]], root: Boolean): Unit = fs match {
+      case Nil =>
+      case h :: t =>
+        sb append '\n'
+        for (b <- parentLvlLast) sb.append(if (b) pl else pm)
+        val last = t.isEmpty
+        if (!root) sb.append(if (last) cl else cm)
+        sb append h.p.toString
+        val nextLvl = if (root) Vector.empty[Boolean] else parentLvlLast :+ last
+        loop(nextLvl, h.cause, false)
+        loop(parentLvlLast, t, root)
+    }
+    loop(Vector.empty, List(this), true)
   }
 }
