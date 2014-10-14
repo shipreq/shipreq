@@ -14,12 +14,25 @@ object DataProp {
     Prop[Rev]("rev ≥ 0", _.value >= 0)
 
   lazy val reqType =
-    Prop[ReqType]("oldMnemonics doesn't contain mnemonic", a => !a.oldMnemonics.contains(a.mnemonic))
+    Prop[ReqType]("oldMnemonics doesn't contain current mnemonic", a => !a.oldMnemonics.contains(a.mnemonic))
+
+  object customReqType {
+
+    private def mnemonicBlacklist  =
+      ReqType.static.map(_.mnemonic).toSet
+
+    // starting to overlap with validation....
+    lazy val mnemonicStatic =
+      Prop[CustomReqType]("mnemonic doesn't overlap with static",
+        a => mnemonicBlacklist.intersect(a.oldMnemonics + a.mnemonic).isEmpty)
+
+    lazy val all = mnemonicStatic ∧ reqType.subst
+  }
 
   object customReqTypes {
 
     lazy val uniqueMnemonics =
-      Prop[CustomReqTypes]("each mnemonics is unique",
+      Prop[CustomReqTypes]("each mnemonic is unique",
         _.data.toList.flatMap(b => b.mnemonic :: b.oldMnemonics.toList).isUnique)
 
     lazy val uniqueId =
@@ -28,8 +41,11 @@ object DataProp {
     lazy val uniqueNames =
       Prop[CustomReqTypes]("each CustomReqType name is unique", _.data.map(_.name).isUnique)
 
+    lazy val each =
+      customReqType.all.forall[CustomReqTypes, List](_.data)
+
     lazy val all =
-      uniqueMnemonics ∧ uniqueId ∧ uniqueNames ∧ rev.contramap(_.rev) ∧ reqType.forall[CustomReqTypes, List](_.data)
+      uniqueMnemonics ∧ uniqueId ∧ uniqueNames ∧ rev.contramap(_.rev) ∧ each
   }
 
   lazy val project =
