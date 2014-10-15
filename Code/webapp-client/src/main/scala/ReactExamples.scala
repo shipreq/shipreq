@@ -1,6 +1,7 @@
 package hahaa
 
 import shipreq.webapp.client.ClientData
+import shipreq.webapp.client.protocol.{FailureIO, ClientProtocol}
 import shipreq.webapp.shared.protocol.Routines
 
 import scala.scalajs.js
@@ -35,7 +36,10 @@ object ReactExamples {
 
   def cfgReqTypesTest(routines: Routines.ForCfgReqType, mountNode: Node) = {
     import shipreq.webapp.client.CfgReqType._
-    Component(Props((routines, ClientData.GLOBAL), false)) render mountNode
+
+    ClientData.init(routines.projectInit, clientData => IO {
+      Component(Props((routines, clientData), false)) render mountNode
+    }).unsafePerformIO()
   }
 
   def example2(mountNode: Node) = {

@@ -5,7 +5,9 @@ import shipreq.base.util.TaggedTypes.TaggedLong
 import shipreq.webapp.shared.data._
 import shipreq.webapp.shared.protocol.DataCodecs._
 
-final case class Rev(value: Long) extends TaggedLong
+final case class Rev(value: Long) extends TaggedLong {
+  @inline def succ = Rev(value + 1L)
+}
 
 sealed trait Partition {
   type Instance
