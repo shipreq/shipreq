@@ -121,7 +121,7 @@ object RoutineGroupCodecs {
 //  implicit def customReqTypeCrud = crudable[CustomReqTypeCrud]
 
 //  val x = implicitly[Reader[CustomReqTypeCrud.Desc.Remote]]
-  implicit def routinesForCfgReqType = caseclass1(ForCfgReqType.apply, ForCfgReqType.unapply)
+  implicit def routinesForCfgReqType = caseclass2(ForCfgReqType.apply, ForCfgReqType.unapply)
 //  implicit def routinesForCfgReqTypeR: Reader[ForCfgReqType.type] = implicitly
 //  implicit def routinesForCfgReqTypeW: Writer[ForCfgReqType.type] = implicitly
 }

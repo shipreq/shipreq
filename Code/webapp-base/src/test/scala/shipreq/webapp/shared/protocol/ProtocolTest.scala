@@ -58,6 +58,11 @@ object ProtocolTest extends TestSuite {
   override def tests = TestSuite {
 
     'Routines {
+      'ProjectInit {
+        val prop = kitR(Routines.ProjectInit).propO
+        RandomData.project mustSatisfy prop
+      }
+
       'CustomReqTypeOps {
         val prop = kitR(Routines.CustomReqTypeCrud).propI
         import RandomData.routines.customReqTypeCrud._

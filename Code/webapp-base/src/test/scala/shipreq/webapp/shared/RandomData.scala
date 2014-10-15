@@ -1,11 +1,21 @@
 package shipreq.webapp.shared
 
-import shipreq.webapp.shared.prop.{RngGen, Gen}
+import shipreq.webapp.shared.prop.{Distinct, RngGen, Gen}
 import shipreq.webapp.shared.data._
 import shipreq.webapp.shared.data.delta._
 import shipreq.webapp.shared.protocol._
+import shipreq.base.util.Debug._
 
 object RandomData {
+
+  lazy val rev =
+    Gen.positivelong.map(delta.Rev)
+
+  lazy val revPair =
+    for {
+      r1 <- rev
+      r2 <- rev
+    } yield if (r1.value <= r2.value) (r1, r2) else (r2, r1)
 
   lazy val alive =
     Gen.oneof[Alive](Alive, Dead)
@@ -32,9 +42,29 @@ object RandomData {
       a  <- alive
     } yield CustomReqType(id, mn, om - mn, n, ir, a)
 
-  lazy val rev =
-    Gen.positivelong.map(delta.Rev)
+  lazy val customReqTypes = {
+    def distinctId = Distinct.on[CustomReqType](_.id.value).long((a, b) => a.copy(id = CustomReqType.Id(b)))
+    def distinctName = Distinct.on[CustomReqType](_.name).str((a, b) => a.copy(name = b))
+    def distinctMnemonics = Distinct.on[CustomReqType]
+      .n(c => c.oldMnemonics + c.mnemonic)(
+        (a, bs) => {
+          var c = a
+          c = a.copy(oldMnemonics = c.oldMnemonics -- bs)
+          if (c.oldMnemonics.contains(c.mnemonic) || bs.contains(c.mnemonic))
+            c = c.copy(mnemonic = ReqType.Mnemonic("\uffff" + bs.max.value))
+          c
+        })
+      .blacklist(ReqType.static.map(_.mnemonic).toSet)
+    for {
+      r  <- rev
+      cs <- customReqType.list.distinct(distinctId + distinctName + distinctMnemonics)
+    } yield CustomReqTypes(r, cs)
+  }
 
+  lazy val project =
+    customReqTypes.map(Project)
+
+  // -------------------------------------------------------------------------------------------------------------------
   object remoteDeltaG {
     def forPart: Partition => RngGen[RemoteDeltaG] = {
       case p@ Partition.CustomReqTypes => customReqTypes
@@ -42,14 +72,10 @@ object RandomData {
 
     lazy val customReqTypes =
       for {
-        r1  <- rev
-        r2  <- rev
-        ids <- customReqTypeId.list
-        cs  <- customReqType.list
-      } yield if (r1.value <= r2.value)
-        RemoteDeltaG(Partition.CustomReqTypes, r1, r2)(ids, cs)
-      else
-        RemoteDeltaG(Partition.CustomReqTypes, r2, r1)(ids, cs)
+        (r1, r2) <- revPair
+        ids      <- customReqTypeId.list
+        cs       <- customReqType.list
+      } yield RemoteDeltaG(Partition.CustomReqTypes, r1, r2)(ids, cs)
   }
 
   object remoteDelta {
@@ -57,13 +83,14 @@ object RandomData {
       remoteDeltaG.forPart(_).map(List(_))
   }
 
-  lazy val deletionAction = {
-    import DeletionAction._
-    Gen.oneof[DeletionAction](HardDel, SoftDel, Restore)
-  }
-
+  // -------------------------------------------------------------------------------------------------------------------
   object routines {
     import Routine._, Routines._
+
+    lazy val deletionAction = {
+      import DeletionAction._
+      Gen.oneof[DeletionAction](HardDel, SoftDel, Restore)
+    }
 
     lazy val remoteName =
       Gen.alphanumericstring1
@@ -72,7 +99,10 @@ object RandomData {
       remoteName.map(Remote(_, d))
 
     lazy val forCfgReqType =
-      remote(CustomReqTypeCrud).map(ForCfgReqType)
+      for {
+        pi   <- remote(ProjectInit)
+        crud <- remote(CustomReqTypeCrud)
+      } yield ForCfgReqType(pi, crud)
 
     class CrudActionGens[C <: Crudable] (idG: RngGen[C#Id], vG: RngGen[C#V]) {
       import Gen.Covariance._

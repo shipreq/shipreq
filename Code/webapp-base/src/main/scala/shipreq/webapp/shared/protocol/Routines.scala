@@ -46,9 +46,12 @@ object DeletionAction {
 
 object Routines {
 
+  object ProjectInit extends DescT[Unit, Project]
+
   sealed trait CustomReqTypeCrud extends CrudableAux[CustomReqType.Id, (ReqType.Mnemonic, String, ImplicationRequired)]
   object CustomReqTypeCrud extends CrudableCompanion[CustomReqTypeCrud]
 
-  case class ForCfgReqType(crud: CustomReqTypeCrud.Remote)
+  case class ForCfgReqType(projectInit: ProjectInit.Remote,
+                           crud: CustomReqTypeCrud.Remote)
     extends Group
 }
