@@ -227,7 +227,7 @@ object ShipReq extends Build {
         .configure(
           Common.scalaAndScalaJsShared,
           addCommandAliases(
-            "js" -> (if (releaseMode) "fullOptJS" else "fastOptJS"),
+            "js" -> Client.jsCmd,
             "wd" -> ";up;~js"))
         .dependsOn(baseUtilSjs)
     }
@@ -240,6 +240,10 @@ object ShipReq extends Build {
       import utest.jsrunner.Plugin.utestJsSettings
       import ScalaJSKeys._
 
+      def stage  = if (releaseMode) fullOptStage else fastOptStage
+      def jsTask = if (releaseMode) fullOptJS    else fastOptJS
+      def jsCmd  = if (releaseMode) "fullOptJS"  else "fastOptJS"
+
       val dir = "webapp-client"
 
       override def deps =
@@ -249,6 +253,7 @@ object ShipReq extends Build {
       def testSettings = (_: Project)
         .settings(utestJsSettings: _*)
         .settings(
+          test in Test := (test in(Test, stage)).value,
           jsDependencies += "org.webjars" % "react" % "0.11.1" % "test" / "react-with-addons.js" commonJSName "React",
           requiresDOM := true,
           jsEnv in Test := new PhantomJSEnv)
@@ -305,8 +310,7 @@ object ShipReq extends Build {
 
       lazy val jsBuildTask = {
         import scala.scalajs.sbtplugin.ScalaJSPlugin.ScalaJSKeys._
-        val task = if (releaseMode) fullOptJS else fastOptJS
-        task in Compile in webappClient
+        Client.jsTask in Compile in webappClient
       }
 
       def clientJsSettings = (_: Project).settings(
