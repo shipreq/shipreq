@@ -7,7 +7,7 @@ import utest._
 object GenTest extends TestSuite {
 
   val prop = Prop[List[Int]]("distinct ints", is => is.distinct == is)
-  val intGen = Gen.chooseint(0,5).list.lim(10).distinct(Distinctness.int)
+  val intGen = Gen.chooseint(0,5).list.lim(10).distinct(Distinct.int)
 
   override def tests = TestSuite {
 

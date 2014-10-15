@@ -44,10 +44,7 @@ object PTest {
     val it = EphemeralStream.toIterable(data).iterator
     var rs = RunState[A](0, Satisfied)
     while (rs.success && it.hasNext) {
-//      println(">>>>>>>>>>>>>>>>>>>>>")
       val a = it.next()
-//      println("<<<<<<<<<<<<<<<<<<<<< "+a)
-//      println()
       rs = RunState(rs.runs + 1, test1(p, a, Ctx(rs.runs, S)))
       if (S.debug) debug1(a, rs)
     }
