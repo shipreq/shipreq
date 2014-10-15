@@ -34,11 +34,24 @@ object Distinct {
 
   final class B2[A, B](f: A => TraversableOnce[B]) {
     def apply(g: (A, Set[B]) => A) = Distinct1(f, g, Set.empty)
-    def str (g: (A, String) => A)(implicit ev: B === String) = apply((a, bs) => g(a, "\uffff" + (ev subst bs).max))
+    def str (g: (A, String) => A)(implicit ev: B === String) = apply((a, bs) => g(a, distinctStr(ev subst bs)))
     def int (g: (A, Int)    => A)(implicit ev: B === Int)    = apply((a, bs) => g(a, (ev subst bs).max + 1))
     def long(g: (A, Long)   => A)(implicit ev: B === Long)   = apply((a, bs) => g(a, (ev subst bs).max + 1L))
   }
 
+  def distinctStr(bs: Set[String]): String = {
+    val x = bs.max
+    if (x.nonEmpty) {
+      val c = x.head
+      if (c < 0xffff) return (c + 1).toChar.toString
+    }
+    val y = bs.min
+    if (y.nonEmpty) {
+      val c = y.head
+      if (c > 32) return (c - 1).toChar.toString
+    }
+    "\uffff" + x
+  }
 
   def applyF[A, B](r: RngGen[List[A]], f: A => TraversableOnce[B], g: (A, Set[B]) => A, ib: TraversableOnce[B]): RngGen[List[A]] =
     r.flatMap(apply(_, f, g, ib))
