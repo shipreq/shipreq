@@ -114,7 +114,7 @@ object CfgReqType {
       implicit val x: X = S.props.x
       val nonNewRows = (staticRows #::: savedRows(S) #::: deletedRows(S)).sortBy(_._1.value).map(_._2).toJsArray
       div(
-        button(onclick ~~> S.runState(newRowS), "New"),
+        button(onclick ~~> S.runState(newRowS), disabled := spec.unsavedRowExists(S), "New"),
         table(
           thead(tr(th("Mnemonic"), th("Name"), th("Implication Required"), th("Ctrls"))),
           tbody(newRow(S), nonNewRows)))

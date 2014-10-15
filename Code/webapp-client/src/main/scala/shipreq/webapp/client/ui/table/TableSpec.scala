@@ -205,6 +205,9 @@ sealed abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, 
 
   def getSaved(T: CSF): SavedPs =
     savedL.get(T.state).toStream.map{ case (d,SavedRow(r,p,_)) => (r,d,p) }
+
+  def unsavedRowExists(T: CSF): Boolean =
+    unsavedL.get(T.state).isDefined
 }
 
 // =====================================================================================================================
