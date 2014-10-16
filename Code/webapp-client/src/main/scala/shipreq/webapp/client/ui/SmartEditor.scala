@@ -25,9 +25,8 @@ class SmartEditor[S, I, C, O, M[_]](
     ReactS.mod((s: S) =>
       setI(s, vs(s).liveCorrect(i)) getOrElse s)
 
-  // TODO does flatMap lose previous callbacks? And should it?
   private def cancelChange(setI: (S, I) => Option[S])(callback: IO[Unit]) =
-    ReactS.get[S].flatMap(s => // TODO get.flatMap seems needlessly inefficient
+    ReactS.liftR((s: S) =>
       s2mc(s).mapReactS(c => change(setI)(vs(s) ci c) addCallback callback))
 
   private def correctInput(getI: S => M[I], setI: (S, I) => Option[S]) =
@@ -35,8 +34,7 @@ class SmartEditor[S, I, C, O, M[_]](
       val v = vs(s1)
       val r = for {
         i1 <- M.toOption(getI(s1))
-        c = v.correct(i1)
-        i2 = v.ci(c)
+        i2  = v.ci(v.correct(i1))
         s2 <- setI(s1, i2) if !E.equal(i1, i2)
       } yield s2
       r getOrElse s1

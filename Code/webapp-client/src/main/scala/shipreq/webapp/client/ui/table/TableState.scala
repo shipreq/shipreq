@@ -28,31 +28,32 @@ final case class SavedRow[P, II](status: RowStatus, p: P, ii: II)
 final class SavedUnsavedL[S, D, P, II](val savedL: SimpleLens[S, Saved[D, P, II]],
                                        val unsavedL: SimpleLens[S, Unsaved[II]]) {
 
-  // TODO rename ↓
-
-  def unsavedLO =
+  def unsavedRowL =
     unsavedL composeOptional some
 
   def unsavedStatusL: SimpleOptional[S, RowStatus] =
-    unsavedLO composeOptional SimpleLens[UnsavedRow[II]](_.status)((a, b) => a.copy(status = b))
+    unsavedRowL composeOptional SimpleLens[UnsavedRow[II]](_.status)((a, b) => a.copy(status = b))
 
-  def rowL(id: D) =
-    savedL composeLens SimpleLens[Saved[D, P, II]](_(id))((a, b) => a + (id -> b))
-
-  def rowStatus(id: D): SimpleLens[S, RowStatus] =
-    rowL(id) |-> SimpleLens[SavedRow[P, II]](_.status)((a, b) => a.copy(status = b))
-
-  def savedIL =
+  def savedRowIL =
     SimpleLens[SavedRow[P, II]](_.ii)((a, b) => a.copy(ii = b))
 
-  def rowIL(id: D): SimpleLens[S, II] =
-    rowL(id) |-> savedIL
+  def savedRowStatusL =
+    SimpleLens[SavedRow[P, II]](_.status)((a, b) => a.copy(status = b))
 
-  def rowP(id: D): S => P =
+  def srowL(id: D) =
+    savedL |-> SimpleLens[Saved[D, P, II]](_(id))((a, b) => a + (id -> b))
+
+  def srowStatusL(id: D): SimpleLens[S, RowStatus] =
+    srowL(id) |-> savedRowStatusL
+
+  def srowIL(id: D): SimpleLens[S, II] =
+    srowL(id) |-> savedRowIL
+
+  def srowP(id: D): S => P =
     savedL.get(_)(id).p
 
-  def rowDP(id: D): S => (D, P) =
-    s => (id, rowP(id)(s))
+  def srowDP(id: D): S => (D, P) =
+    s => (id, srowP(id)(s))
 }
 
 object SavedUnsavedL {

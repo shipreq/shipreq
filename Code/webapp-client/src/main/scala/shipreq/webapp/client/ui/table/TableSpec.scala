@@ -102,12 +102,12 @@ sealed abstract class TableSpec[Arb, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U
   private val unsavedS2OP: S => Option[P] = _ => None
 
   private val unsavedIG = inputGateway[Option, UnsavedRow[II]](
-    unsavedLO.getOption, _.status, _.ii,
+    unsavedRowL.getOption, _.status, _.ii,
     (s, i) => unsavedL.get(s).map(_ => unsavedL.set(s, Some(UnsavedRow(Sync, i)))))
 
   private def savedIG(id: D): InputGatewayE[Id, S, II] = {
-    val rL = rowL(id)
-    val iL = rL composeLens savedIL
+    val rL = srowL(id)
+    val iL = rL composeLens savedRowIL
     inputGateway[Id, SavedRow[P, II]](rL.get, _.status, _.ii, iL.set)
   }
 
@@ -128,17 +128,17 @@ sealed abstract class TableSpec[Arb, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U
     val mr2 = multiFieldRenderer(Some(id)).prepare[Id](savedIG(id))
     val save1: S => Option[U] = mr2.savableU
     val save2: (S, U) => Option[(DP, U)] = (s, u) => {
-      val dp = rowDP(id)(s)
+      val dp = srowDP(id)(s)
       needSave(u, dp._2).asOption((dp, u))
     }
-    val s2p = rowP(id)
+    val s2p = srowP(id)
     (T: CSF) => {
       lazy val save: ReactST[IO, S, Unit] = ST.liftR(s =>
         save1(s)
           .flatMap(save2(s, _))
           .fold(nopIOS)(dpu => updateIO(x, T, Value(save), dpu._1, dpu._2)))
       val r = mr2.render(s2p, save)
-      val rs = rowStatus(id).get(T.state)
+      val rs = srowStatusL(id).get(T.state)
       (rs, r(T))
     }
   }
@@ -151,7 +151,7 @@ sealed abstract class TableSpec[Arb, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U
   }
 
   def savedRowP[V2](renderRow: (CSF, D, RowStatus, P, VV) => V2)(implicit x: Arb) =
-    savedRow((t, d, r, v) => renderRow(t, d, r, rowP(d)(t.state), v))
+    savedRow((t, d, r, v) => renderRow(t, d, r, srowP(d)(t.state), v))
 
   def savedRow[V2](renderRow: (CSF, D, RowStatus, VV) => V2)(implicit x: Arb) =
     rowRenderer[Id, S, VV, V2, D](savedRenderAttr(x), renderRow)
@@ -184,13 +184,13 @@ sealed abstract class TableSpec[Arb, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U
     ST.mod(savedSetF(dp))
 
   def savedRevertS(id: D) =
-    ST.mod(s => rowIL(id).set(s, p2ii(rowP(id)(s))))
+    ST.mod(s => srowIL(id).set(s, p2ii(srowP(id)(s))))
 
   def savedDeleteIO_(f: D => IO[Unit]): D => ReactST[IO, S, Unit] =
     id => ReactS.retM(f(id)) >> savedRemoveS(id)
 
   def updateSavedIO_(saveIO: DP => IO[DP]): D => ReactST[IO, S, Unit] = id =>
-    ST.gets(rowDP(id)).liftIO
+    ST.gets(srowDP(id)).liftIO
       .flatMap(px1 => ST.retM(saveIO(px1)))
       .flatMap(savedSetS)
 
@@ -257,7 +257,7 @@ object TableSpec {
 
     private def setStatusS(status: RowStatus): Option[D] => ReactS[S, Unit] = {
       case None    => ReactS.mod(unsavedStatusL setF status)
-      case Some(d) => ReactS.mod(rowStatus(d) setF status)
+      case Some(d) => ReactS.mod(srowStatusL(d) setF status)
     }
 
     val lockRowS = setStatusS(RowStatus.Locked)
