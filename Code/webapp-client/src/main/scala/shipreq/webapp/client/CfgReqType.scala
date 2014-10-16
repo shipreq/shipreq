@@ -158,7 +158,7 @@ object CfgReqType {
         row("dead", raw(p.mnemonic), p.oldMnemonics, raw(p.name), impReq, rs, c)(keyAttr := p.id.value)
       }
       if (S.props.showDeleted)
-        deletion.savedGet(S, Dead).map(a => a._3.mnemonic -> rr(a._1, a._3))
+        deletion.savedGet(S, Dead).map(r => r.p.mnemonic -> rr(r.status, r.p))
       else
         Stream.empty
     }

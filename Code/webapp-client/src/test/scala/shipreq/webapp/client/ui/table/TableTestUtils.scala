@@ -30,7 +30,7 @@ object TableTestUtils {
 
     def assertRowValues[A](f: (RowStatus, P) => A) = new {
       def apply(m: (D, A)*): Unit = {
-        val actual = spec.savedGet(c).map { case (r, d, p) => d -> f(r, p)}.toMap
+        val actual = spec.savedGet(c).map(r => r.d -> f(r.status, r.p)).toMap
         val expect = m.toMap
         assert(actual == expect)
       }

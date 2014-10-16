@@ -194,15 +194,15 @@ sealed abstract class TableSpec[Arb, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U
       .flatMap(px1 => ST.retM(saveIO(px1)))
       .flatMap(savedSetS)
 
-  final type SavedPs = Stream[(RowStatus, D, P)]
+  final type SavedPs = Stream[SavedRowDP[D, P]]
 
   def savedRows(T: CSF, r: ComponentStateFocus[S] => D => Tag)(f: SavedPs => SavedPs) = {
     val rr = r(T)
-    f(savedGet(T)).map(x => rr(x._2)).toJsArray
+    f(savedGet(T)).map(x => rr(x.d)).toJsArray
   }
 
   def savedGet(T: CSF): SavedPs =
-    savedL.get(T.state).toStream.map{ case (d,SavedRow(r,p,_)) => (r,d,p) }
+    savedL.get(T.state).toStream.map{ case (d,SavedRow(r,p,_)) => SavedRowDP(r,d,p) }
 
   def unsavedGet(T: CSF): Option[UnsavedRow[II]] =
     unsavedL.get(T.state)
@@ -210,6 +210,8 @@ sealed abstract class TableSpec[Arb, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U
   def unsavedRowExists(T: CSF): Boolean =
     unsavedGet(T).isDefined
 }
+
+final case class SavedRowDP[D, P](status: RowStatus, d: D, p: P)
 
 // =====================================================================================================================
 
