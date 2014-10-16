@@ -148,7 +148,7 @@ object CfgReqType {
         def c = deletion.buttons(F, id, HardDel, SoftDel)
         row("live", mnemonic, p.oldMnemonics, name, impReq, rs, c)(keyAttr := id.value)
       })(x)(S)
-      deletion.getSavedP(S, Alive).map(p => p.mnemonic -> rr(p.id))
+      deletion.savedGetP(S, Alive).map(p => p.mnemonic -> rr(p.id))
     }
 
     def deletedRows(S: ScopeI)(implicit x: Arb): RowStream = {
@@ -158,7 +158,7 @@ object CfgReqType {
         row("dead", raw(p.mnemonic), p.oldMnemonics, raw(p.name), impReq, rs, c)(keyAttr := p.id.value)
       }
       if (S.props.showDeleted)
-        deletion.getSaved(S, Dead).map(a => a._3.mnemonic -> rr(a._1, a._3))
+        deletion.savedGet(S, Dead).map(a => a._3.mnemonic -> rr(a._1, a._3))
       else
         Stream.empty
     }

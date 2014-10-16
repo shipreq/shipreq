@@ -23,13 +23,11 @@ abstract class Deletion[S, P, D](spec: TableSpec[_, S, D, _, P, _, _], aliveG: P
     case HardDel => "Delete Forever"
   }
 
-  // TODO rename getSaved, here & in spec
-  // TODO provide separate filter
-  def getSaved(T: CSF, alive: Alive): Stream[(RowStatus, D, P)] =
+  def savedGet(T: CSF, alive: Alive): Stream[(RowStatus, D, P)] =
     spec.savedGet(T).filter(r => aliveG(r._3) ≟ alive)
 
-  def getSavedP(T: CSF, alive: Alive): Stream[P] =
-    getSaved(T, alive).map(_._3)
+  def savedGetP(T: CSF, alive: Alive): Stream[P] =
+    savedGet(T, alive).map(_._3)
 }
 
 // =====================================================================================================================

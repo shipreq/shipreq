@@ -299,7 +299,7 @@ object TableSpec {
     T => id => renderFields(id)(T).map(rv => renderRow(T, id, rv._1, rv._2))
 }
 
-final case class SuccessIO(io: IO[Unit])
+final case class SuccessIO(io: IO[Unit]) // TODO Either move and use in ClientProtocol too, or rename
 object SuccessIO {
   def nop = SuccessIO(IO(()))
 }
