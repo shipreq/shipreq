@@ -97,9 +97,9 @@ gatherAllStats = do dirs <- dirsIn "."
 -- Top-level module stats
 
 deps = M.fromList [
-         ("webapp-server",         ["webapp-shared", "base-db", "taskman-api"]) ,
-         ("webapp-client",         ["webapp-shared", "base-util-sjs"]) ,
-         ("webapp-shared",         ["base-util-sjs"]) ,
+         ("webapp-server",         ["webapp-base", "base-db", "taskman-api"]) ,
+         ("webapp-client",         ["webapp-base", "base-util-sjs"]) ,
+         ("webapp-base",           ["base-util-sjs"]) ,
          ("taskman",               ["taskman-api", "taskman-server"]) ,
          ("taskman-api",           ["taskman-api-impl", "taskman-api-logic"]) ,
          ("taskman-api-impl",      ["taskman-api-logic"]) ,
@@ -204,7 +204,7 @@ topLevelModuleStatReport gs =
 
 ------------------------------------------------------------------------------------------------------------------------
 
-sampleData = [GroupD {gname = "base", modstats = [("base-db",(Stat {files = 6, loc = 330},Stat {files = 0, loc = 0})),("base-test",(Stat {files = 0, loc = 0},Stat {files = 3, loc = 167})),("base-util",(Stat {files = 9, loc = 529},Stat {files = 3, loc = 244})),("base-util-sjs",(Stat {files = 6, loc = 470},Stat {files = 0, loc = 0}))]},GroupD {gname = "taskman", modstats = [("taskman-api-impl",(Stat {files = 3, loc = 102},Stat {files = 4, loc = 75})),("taskman-api-logic",(Stat {files = 6, loc = 148},Stat {files = 2, loc = 109})),("taskman-server-impl",(Stat {files = 16, loc = 1144},Stat {files = 6, loc = 443})),("taskman-server-logic",(Stat {files = 13, loc = 816},Stat {files = 6, loc = 517}))]},GroupD {gname = "webapp", modstats = [("webapp-client",(Stat {files = 18, loc = 1059},Stat {files = 1, loc = 10})),("webapp-server",(Stat {files = 130, loc = 8252},Stat {files = 70, loc = 8267})),("webapp-shared",(Stat {files = 16, loc = 439},Stat {files = 0, loc = 0}))]}]
+sampleData = [GroupD {gname = "base", modstats = [("base-db",(Stat {files = 6, loc = 330},Stat {files = 0, loc = 0})),("base-test",(Stat {files = 0, loc = 0},Stat {files = 3, loc = 167})),("base-util",(Stat {files = 9, loc = 529},Stat {files = 3, loc = 244})),("base-util-sjs",(Stat {files = 6, loc = 470},Stat {files = 0, loc = 0}))]},GroupD {gname = "taskman", modstats = [("taskman-api-impl",(Stat {files = 3, loc = 102},Stat {files = 4, loc = 75})),("taskman-api-logic",(Stat {files = 6, loc = 148},Stat {files = 2, loc = 109})),("taskman-server-impl",(Stat {files = 16, loc = 1144},Stat {files = 6, loc = 443})),("taskman-server-logic",(Stat {files = 13, loc = 816},Stat {files = 6, loc = 517}))]},GroupD {gname = "webapp", modstats = [("webapp-client",(Stat {files = 18, loc = 1059},Stat {files = 1, loc = 10})),("webapp-server",(Stat {files = 130, loc = 8252},Stat {files = 70, loc = 8267})),("webapp-base",(Stat {files = 16, loc = 439},Stat {files = 0, loc = 0}))]}]
 
 main :: IO ()
 main = do putStrLn "Analysing..."
