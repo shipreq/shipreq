@@ -26,7 +26,7 @@ abstract class Deletion[S, P, D](spec: TableSpec[_, S, D, _, P, _, _], aliveG: P
   // TODO rename getSaved, here & in spec
   // TODO provide separate filter
   def getSaved(T: CSF, alive: Alive): Stream[(RowStatus, D, P)] =
-    spec.getSaved(T).filter(r => aliveG(r._3) ≟ alive)
+    spec.savedGet(T).filter(r => aliveG(r._3) ≟ alive)
 
   def getSavedP(T: CSF, alive: Alive): Stream[P] =
     getSaved(T, alive).map(_._3)

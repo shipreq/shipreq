@@ -5,6 +5,7 @@ import scalaz.effect.IO
 import scalaz.std.anyVal.booleanInstance
 import scalaz.std.string.stringInstance
 import scalaz.std.tuple._
+import scalaz.syntax.bind._
 import japgolly.scalajs.react.ReactComponentB
 import japgolly.scalajs.react.experiment.{Listenable, OnUnmount}
 import japgolly.scalajs.react.ScalazReact._
@@ -76,11 +77,11 @@ object CfgReqType {
     .configure(Listenable.installS(_.x._2, recvExtUpdate))
     .build
 
-  private def crudIO(x: X, f: FailureIO, a: CustomReqTypeCrud.Action): IO[Unit] =
-    ClientProtocol.call(x._1.crud)(a, x._2.update, f)
+  private def crudIO(x: X, s: SuccessIO, f: FailureIO, a: CustomReqTypeCrud.Action): IO[Unit] =
+    ClientProtocol.call(x._1.crud)(a, x._2.update(_) >> s.io, f)
 
-  private def saveIO(x: X, op: Option[P], u: prespec.U, f: FailureIO): IO[Unit] =
-    crudIO(x, f, op match {
+  private def saveIO(x: X, op: Option[P], u: prespec.U, s: SuccessIO, f: FailureIO): IO[Unit] =
+    crudIO(x, s, f, op match {
       case None    => CustomReqTypeCrud.create(u)
       case Some(p) => CustomReqTypeCrud.update(p.id, u)
     })
@@ -89,7 +90,7 @@ object CfgReqType {
     new AsyncDeletion(spec)(_.alive, deleteIO)
 
   private def deleteIO(x: X, id: D, a: DeletionAction, f: FailureIO): IO[Unit] =
-    crudIO(x, f, CustomReqTypeCrud.delete(id, a))
+    crudIO(x, SuccessIO.nop, f, CustomReqTypeCrud.delete(id, a))
 
   private val newRowS = spec.unsavedInitS(("","",false))
 

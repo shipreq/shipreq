@@ -41,11 +41,11 @@ final class TableSpecB[S, D, U, P, II, VV](val p2ii: P => II,
     def syncSaveP(id: P => D, saveIO: (Option[P], U) => IO[P]) =
       syncSave((odp, o) => saveIO(odp.map(_._2), o).map(p => (id(p), p)))
 
-    def asyncSave[X](saveIO: (X, Option[(D, P)], U, FailureIO) => IO[Unit]) =
+    def asyncSave[X](saveIO: (X, Option[(D, P)], U, SuccessIO, FailureIO) => IO[Unit]) =
       new TableSpec.AsyncSave(TableSpecB.this, saveNotNeeded, saveIO)
 
-    def asyncSaveP[X](id: P => D, saveIO: (X, Option[P], U, FailureIO) => IO[Unit]) =
-      asyncSave[X]((x, odp, o, f) => saveIO(x, odp.map(_._2), o, f))
+    def asyncSaveP[X](id: P => D, saveIO: (X, Option[P], U, SuccessIO, FailureIO) => IO[Unit]) =
+      asyncSave[X]((x, odp, o, s, f) => saveIO(x, odp.map(_._2), o, s, f))
   }
 }
 
@@ -200,14 +200,17 @@ sealed abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, 
 
   def savedRows(T: CSF, r: ComponentStateFocus[S] => D => Tag)(f: SavedPs => SavedPs) = {
     val rr = r(T)
-    f(getSaved(T)).map(x => rr(x._2)).toJsArray
+    f(savedGet(T)).map(x => rr(x._2)).toJsArray
   }
 
-  def getSaved(T: CSF): SavedPs =
+  def savedGet(T: CSF): SavedPs =
     savedL.get(T.state).toStream.map{ case (d,SavedRow(r,p,_)) => (r,d,p) }
 
+  def unsavedGet(T: CSF): Option[UnsavedRow[II]] =
+    unsavedL.get(T.state)
+
   def unsavedRowExists(T: CSF): Boolean =
-    unsavedL.get(T.state).isDefined
+    unsavedGet(T).isDefined
 }
 
 // =====================================================================================================================
@@ -234,21 +237,21 @@ object TableSpec {
   final class AsyncSave[X, S, D, U, P, II, VV](
       tsb:           TableSpecB[S, D, U, P, II, VV],
       saveNotNeeded: (U, P) => SaveNeed,
-      saveIO:        (X, Option[(D, P)], U, FailureIO) => IO[Unit])
+      saveIO:        (X, Option[(D, P)], U, SuccessIO, FailureIO) => IO[Unit])
       extends TableSpec[X, S, D, U, P, II, VV](tsb, saveNotNeeded) {
 
     import tsb.savedUnsaved._
 
     override protected def createIO = (x, T, retry, u) =>
-      saveS(x, T, retry, None, u)
+      saveS(x, T, retry, None, u, SuccessIO(T runState unsavedRemoveS))
 
     override protected def updateIO = (x, T, retry, dp, u) =>
-      saveS(x, T, retry, Some(dp), u)
+      saveS(x, T, retry, Some(dp), u, SuccessIO.nop)
 
-    private def saveS(x: X, T: CSF, retry: Retry[S], o: Option[(D, P)], u: U) = {
+    private def saveS(x: X, T: CSF, retry: Retry[S], o: Option[(D, P)], u: U, s: SuccessIO) = {
       val row = o.map(_._1)
       val f = failureIO(T, row, retry)
-      val io = saveIO(x, o, u, f)
+      val io = saveIO(x, o, u, s, f)
       ST.retM(io) >> lockRowS(row).liftIO
     }
 
@@ -296,4 +299,9 @@ object TableSpec {
       renderRow: (ComponentStateFocus[S], SubId, RowStatus, V1) => V2
       ): ComponentStateFocus[S] => SubId => M[V2] =
     T => id => renderFields(id)(T).map(rv => renderRow(T, id, rv._1, rv._2))
+}
+
+final case class SuccessIO(io: IO[Unit])
+object SuccessIO {
+  def nop = SuccessIO(IO(()))
 }
