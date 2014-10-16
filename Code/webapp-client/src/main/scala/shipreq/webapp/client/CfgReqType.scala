@@ -27,7 +27,7 @@ object CfgReqType {
 
   type P = CustomReqType
   type D = CustomReqType.Id
-  type X = (Routines.ForCfgReqType, ClientData)
+  type Arb = (Routines.ForCfgReqType, ClientData)
 
   private val prespec = TableSpecBuilder[P](
     FieldSpec[P](_.mnemonic.value)(V.mnemonic)(E.TextInputEditor),
@@ -54,7 +54,7 @@ object CfgReqType {
         (static #::: custom).flatMap(p => p.mnemonic #:: p.oldMnemonics.toStream)
       }).fieldName("Mnemonic")
 
-  case class Props(x: X, showDeleted: Boolean)
+  case class Props(x: Arb, showDeleted: Boolean)
 
   final class MyBack extends OnUnmount
 
@@ -77,10 +77,10 @@ object CfgReqType {
     .configure(Listenable.installS(_.x._2, recvExtUpdate))
     .build
 
-  private def crudIO(x: X, s: SuccessIO, f: FailureIO, a: CustomReqTypeCrud.Action): IO[Unit] =
+  private def crudIO(x: Arb, s: SuccessIO, f: FailureIO, a: CustomReqTypeCrud.Action): IO[Unit] =
     ClientProtocol.call(x._1.crud)(a, x._2.update(_) >> s.io, f)
 
-  private def saveIO(x: X, op: Option[P], u: prespec.U, s: SuccessIO, f: FailureIO): IO[Unit] =
+  private def saveIO(x: Arb, op: Option[P], u: prespec.U, s: SuccessIO, f: FailureIO): IO[Unit] =
     crudIO(x, s, f, op match {
       case None    => CustomReqTypeCrud.create(u)
       case Some(p) => CustomReqTypeCrud.update(p.id, u)
@@ -89,7 +89,7 @@ object CfgReqType {
   private val deletion =
     new AsyncDeletion(spec)(_.alive, deleteIO)
 
-  private def deleteIO(x: X, id: D, a: DeletionAction, f: FailureIO): IO[Unit] =
+  private def deleteIO(x: Arb, id: D, a: DeletionAction, f: FailureIO): IO[Unit] =
     crudIO(x, SuccessIO.nop, f, CustomReqTypeCrud.delete(id, a))
 
   private val newRowS = spec.unsavedInitS(("","",false))
@@ -112,7 +112,7 @@ object CfgReqType {
     type RowStream = Stream[(Mnemonic, Tag)]
 
     def renderInner(S: ScopeI): VDom = {
-      implicit val x: X = S.props.x
+      implicit val x: Arb = S.props.x
       val nonNewRows = (staticRows #::: savedRows(S) #::: deletedRows(S)).sortBy(_._1.value).map(_._2).toJsArray
       div(
         button(onclick ~~> S.runState(newRowS), disabled := spec.unsavedRowExists(S), "New"),
@@ -135,14 +135,14 @@ object CfgReqType {
       tr(cls := s"$classArg $cls2", td(mn), td(name), td(impReq), td(c))
     }
 
-    def newRow(S: ScopeI)(implicit x: X) =
+    def newRow(S: ScopeI)(implicit x: Arb) =
       spec.unsavedRow((F, rs, vv) => {
         val (mnemonic, name, impReq) = vv
         def c = button(onclick ~~> F.runState(spec.unsavedRemoveS), "Cancel")
         row("new", mnemonic, Set.empty, name, impReq, rs, c)(keyAttr := "new")
       })(x)(S)
 
-    def savedRows(S: ScopeI)(implicit x: X): RowStream = {
+    def savedRows(S: ScopeI)(implicit x: Arb): RowStream = {
       val rr = spec.savedRowP((F, id, rs, p, vv) => {
         val (mnemonic, name, impReq) = vv
         def c = deletion.buttons(F, id, HardDel, SoftDel)
@@ -151,7 +151,7 @@ object CfgReqType {
       deletion.getSavedP(S, Alive).map(p => p.mnemonic -> rr(p.id))
     }
 
-    def deletedRows(S: ScopeI)(implicit x: X): RowStream = {
+    def deletedRows(S: ScopeI)(implicit x: Arb): RowStream = {
       def rr(rs: RowStatus, p: P) = {
         val impReq = checkbox(ImplicationRequired from p.imp)(disabled := true)
         def c = deletion.button(S, p.id, Restore)

@@ -14,8 +14,6 @@ import shipreq.webapp.client.ui._
 import RowStatus.Sync
 import TableSpec._
 
-// TODO rename X
-
 final class TableSpecB[S, D, U, P, II, VV](val p2ii: P => II,
                                            val multiFieldRenderer: Option[D] => MultiFieldRenderer[S, U, P, II, VV],
                                            val savedUnsaved: SavedUnsavedL[S, D, P, II],
@@ -61,7 +59,7 @@ object TableSpecB {
 
 // =====================================================================================================================
 
-sealed abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, VV], needSave: (U, P) => SaveNeed) {
+sealed abstract class TableSpec[Arb, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, VV], needSave: (U, P) => SaveNeed) {
   import tsb.{p2ii, multiFieldRenderer}
   import tsb.savedUnsaved._
 
@@ -71,9 +69,9 @@ sealed abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, 
   final type DP = (D, P)
   final type CSF = ComponentStateFocus[S]
 
-  protected def createIO: (X, CSF, Retry[S], U) => ReactST[IO, S, Unit]
+  protected def createIO: (Arb, CSF, Retry[S], U) => ReactST[IO, S, Unit]
 
-  protected def updateIO: (X, CSF, Retry[S], DP, U) => ReactST[IO, S, Unit]
+  protected def updateIO: (Arb, CSF, Retry[S], DP, U) => ReactST[IO, S, Unit]
 
   @inline private final def initSavedRow(p: P): SavedRow[P, II] =
     SavedRow(Sync, p, p2ii(p))
@@ -113,7 +111,7 @@ sealed abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, 
     inputGateway[Id, SavedRow[P, II]](rL.get, _.status, _.ii, iL.set)
   }
 
-  private def unsavedRenderAttr(x: X) = {
+  private def unsavedRenderAttr(x: Arb) = {
     val mr2 = multiFieldRenderer(None).prepare(unsavedIG)
     (T: CSF) => {
       lazy val save: ReactST[IO, S, Unit] = ST.liftR(s =>
@@ -126,7 +124,7 @@ sealed abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, 
     }
   }
 
-  private def savedRenderAttr(x: X)(id: D) = {
+  private def savedRenderAttr(x: Arb)(id: D) = {
     val mr2 = multiFieldRenderer(Some(id)).prepare[Id](savedIG(id))
     val save1: S => Option[U] = mr2.savableU
     val save2: (S, U) => Option[(DP, U)] = (s, u) => {
@@ -145,17 +143,17 @@ sealed abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, 
     }
   }
 
-  def unsavedRow[V2](renderRow: (CSF, RowStatus, VV) => V2)(implicit x: X) = {
+  def unsavedRow[V2](renderRow: (CSF, RowStatus, VV) => V2)(implicit x: Arb) = {
     val rr = rowRenderer[Option, S, VV, V2, Unit](
       _ => unsavedRenderAttr(x)(_),
       (T, _, r, v) => renderRow(T, r, v))
     (T: CSF) => rr(T)(())
   }
 
-  def savedRowP[V2](renderRow: (CSF, D, RowStatus, P, VV) => V2)(implicit x: X) =
+  def savedRowP[V2](renderRow: (CSF, D, RowStatus, P, VV) => V2)(implicit x: Arb) =
     savedRow((t, d, r, v) => renderRow(t, d, r, rowP(d)(t.state), v))
 
-  def savedRow[V2](renderRow: (CSF, D, RowStatus, VV) => V2)(implicit x: X) =
+  def savedRow[V2](renderRow: (CSF, D, RowStatus, VV) => V2)(implicit x: Arb) =
     rowRenderer[Id, S, VV, V2, D](savedRenderAttr(x), renderRow)
 
   val unsavedRemoveF =
@@ -217,13 +215,13 @@ sealed abstract class TableSpec[X, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, 
 
 object TableSpec {
 
-  implicit object NoX
+  implicit object NoArb
 
   final class SyncSave[S, D, U, P, II, VV](
       tsb:           TableSpecB[S, D, U, P, II, VV],
       saveNotNeeded: (U, P) => SaveNeed,
       saveIO:        (Option[(D, P)], U) => IO[(D, P)])
-      extends TableSpec[NoX.type, S, D, U, P, II, VV](tsb, saveNotNeeded) {
+      extends TableSpec[NoArb.type, S, D, U, P, II, VV](tsb, saveNotNeeded) {
 
     override protected def createIO = (_, _, _, u) =>
       ST.modT(s => saveIO(None, u).map(unsavedToSavedF(_)(s)))
@@ -234,11 +232,11 @@ object TableSpec {
 
   // ===================================================================================================================
 
-  final class AsyncSave[X, S, D, U, P, II, VV](
+  final class AsyncSave[Arb, S, D, U, P, II, VV](
       tsb:           TableSpecB[S, D, U, P, II, VV],
       saveNotNeeded: (U, P) => SaveNeed,
-      saveIO:        (X, Option[(D, P)], U, SuccessIO, FailureIO) => IO[Unit])
-      extends TableSpec[X, S, D, U, P, II, VV](tsb, saveNotNeeded) {
+      saveIO:        (Arb, Option[(D, P)], U, SuccessIO, FailureIO) => IO[Unit])
+      extends TableSpec[Arb, S, D, U, P, II, VV](tsb, saveNotNeeded) {
 
     import tsb.savedUnsaved._
 
@@ -248,7 +246,7 @@ object TableSpec {
     override protected def updateIO = (x, T, retry, dp, u) =>
       saveS(x, T, retry, Some(dp), u, SuccessIO.nop)
 
-    private def saveS(x: X, T: CSF, retry: Retry[S], o: Option[(D, P)], u: U, s: SuccessIO) = {
+    private def saveS(x: Arb, T: CSF, retry: Retry[S], o: Option[(D, P)], u: U, s: SuccessIO) = {
       val row = o.map(_._1)
       val f = failureIO(T, row, retry)
       val io = saveIO(x, o, u, s, f)

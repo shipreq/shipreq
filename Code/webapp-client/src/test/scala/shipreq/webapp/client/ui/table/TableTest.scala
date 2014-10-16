@@ -38,8 +38,8 @@ object TableTest extends TestSuite {
     var upds = List.empty[(Option[(Int, Data)], Data)]
   }
 
-  type X = AsyncTester
-  def save(x: X, o: Option[(Int, Data)], u: Data, s: SuccessIO, f: FailureIO) = IO[Unit] {
+  type Arb = AsyncTester
+  def save(x: Arb, o: Option[(Int, Data)], u: Data, s: SuccessIO, f: FailureIO) = IO[Unit] {
     x.ss ::= s
     x.fs ::= f
     x.upds ::= (o,u)
@@ -50,7 +50,7 @@ object TableTest extends TestSuite {
 
   val newRowS = spec.unsavedInitS(("nem","desk"))
 
-  val C = ReactComponentB[(X, Map[Int, Data])]("C")
+  val C = ReactComponentB[(Arb, Map[Int, Data])]("C")
     .getInitialState(p => spec.initialState(p._2))
     .render(T => {
       implicit def x = T.props._1
