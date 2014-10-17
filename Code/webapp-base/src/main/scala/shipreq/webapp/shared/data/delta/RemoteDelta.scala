@@ -9,7 +9,7 @@ final case class RemoteDeltaP[P <: Partition] private[delta](
 
   override def toString = s"Δᵖ($del, $upd)"
 
-  def isEmpty = del.isEmpty || upd.isEmpty
+  def isEmpty = del.isEmpty && upd.isEmpty
   def nonEmpty = !isEmpty
 }
 
