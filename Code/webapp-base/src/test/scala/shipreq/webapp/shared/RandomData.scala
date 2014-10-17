@@ -38,21 +38,14 @@ object RandomData {
 
   lazy val customIncmpTypeId =
     id map CustomIncmpType.Id
-  
+
   lazy val customIncmpType =
-    for {
-      i <- customIncmpTypeId
-      k <- refKey
-      d <- optionalLargeText
-      a <- alive
-    } yield CustomIncmpType(i, k, d, a)
-  
+    Gen.apply4(CustomIncmpType.apply)(customIncmpTypeId, refKey, optionalLargeText, alive)
+
   lazy val customIncmpTypes = {
+    // TODO copied customIncmpTypes.distinctId copy of customReqTypes'
     def distinctId = Distinct.on[CustomIncmpType](_.id.value).long((a, b) => a.copy(id = CustomIncmpType.Id(b)))
-    for {
-      r  <- rev
-      cs <- customIncmpType.list.distinct(distinctId)
-    } yield CustomIncmpTypes(r, cs)
+    Gen.apply2(CustomIncmpTypes)(rev, customIncmpType.list.distinct(distinctId))
   }
 
   lazy val reqTypeMnemonic =
@@ -87,17 +80,12 @@ object RandomData {
           c
         })
       .blacklist(ReqType.static.map(_.mnemonic).toSet)
-    for {
-      r  <- rev
-      cs <- customReqType.list.distinct(distinctId + distinctName + distinctMnemonics)
-    } yield CustomReqTypes(r, cs)
+    def distinctRules = distinctId + distinctName + distinctMnemonics
+    Gen.apply2(CustomReqTypes)(rev, customReqType.list.distinct(distinctRules))
   }
 
   lazy val project =
-    for {
-      i <- customIncmpTypes
-      r <- customReqTypes
-    } yield Project(i, r)
+    Gen.apply2(Project)(customIncmpTypes, customReqTypes)
 
   // -------------------------------------------------------------------------------------------------------------------
   object remoteDeltaG {
@@ -142,32 +130,14 @@ object RandomData {
       remoteName.map(Remote(_, d))
 
     lazy val forCfgReqType =
-      for {
-        a <- remote(ProjectInit)
-        b <- remote(CustomIncmpTypeCrud)
-        c <- remote(CustomReqTypeCrud)
-      } yield ForCfgReqType(a, b, c)
+      Gen.apply3(ForCfgReqType)(remote(ProjectInit), remote(CustomIncmpTypeCrud), remote(CustomReqTypeCrud))
 
     class CrudActionGens[C <: Crudable] (idG: RngGen[C#Id], vG: RngGen[C#V]) {
       import Gen.Covariance._
-
-      lazy val create =
-        vG.map(CrudAction.Create[C])
-
-      lazy val update =
-        for {
-          id <- idG
-          vs <- vG
-        } yield CrudAction.Update[C](id, vs)
-
-      lazy val delete =
-        for {
-          id <- idG
-          da <- deletionAction
-        } yield CrudAction.Delete[C](id, da)
-
-      lazy val any =
-        Gen.oneofG[CrudAction[C]](create, update, delete)
+      lazy val create = vG.map(CrudAction.Create[C])
+      lazy val update = Gen.apply2(CrudAction.Update[C])(idG, vG)
+      lazy val delete = Gen.apply2(CrudAction.Delete[C])(idG, deletionAction)
+      lazy val any    = Gen.oneofG[CrudAction[C]](create, update, delete)
     }
 
     lazy val customIncmpTypeCrud = new CrudActionGens[CustomIncmpTypeCrud](
