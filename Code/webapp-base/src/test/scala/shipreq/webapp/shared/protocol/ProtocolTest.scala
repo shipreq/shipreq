@@ -63,20 +63,21 @@ object ProtocolTest extends TestSuite {
         RandomData.project mustSatisfy prop
       }
 
+      // TODO copy/paste/search/replace again
+      'CustomIncmpTypeOps {
+        val prop = kitR(Routines.CustomIncmpTypeCrud).propI
+        import RandomData.routines.customIncmpTypeCrud._
+        'create { create _mustSatisfy prop }
+        'update { update _mustSatisfy prop }
+        'delete { delete _mustSatisfy prop }
+      }
+
       'CustomReqTypeOps {
         val prop = kitR(Routines.CustomReqTypeCrud).propI
         import RandomData.routines.customReqTypeCrud._
         'create { create _mustSatisfy prop }
         'update { update _mustSatisfy prop }
         'delete { delete _mustSatisfy prop }
-//        'manual - {
-//          import CustomReqType.Id, ReqType.Mnemonic
-//          import Routines._
-//          val d = CustomReqTypeCrud.create((Mnemonic("KQMBFJ"),
-//            "\u001e\u587f\u1611\u523f\u9d9f\uf969\u73a1\uadd6\u3eae\u5f22\u9d6f\u3abf\u0c0d\uef1d\u1628\ud968\u93a0\ud8a3\uef1d\u1628\ud968\u93a0\ud8a3"
-//            ,ImplicationRequired))
-//          kitR(Routines.CustomReqTypeCrud).testI(d)
-//        }
       }
     }
 

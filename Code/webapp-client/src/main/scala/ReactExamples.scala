@@ -38,7 +38,7 @@ object ReactExamples {
     import shipreq.webapp.client.CfgReqType._
 
     ClientData.init(routines.projectInit, clientData => IO {
-      Component(Props((routines, clientData), false)) render mountNode
+      Component(Props((routines.reqCrud, clientData), false)) render mountNode
     }).unsafePerformIO()
   }
 

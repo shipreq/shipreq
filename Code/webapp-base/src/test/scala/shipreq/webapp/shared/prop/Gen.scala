@@ -169,4 +169,13 @@ object Gen {
 
   def charof(s: String, rs: scala.collection.immutable.NumericRange.Inclusive[Char]*) =
     oneofUnsafe(rs.flatMap(_.toSeq) ++ s.toCharArray)
+
+  def tuple2[A,B](A:RngGen[A], B:RngGen[B]): RngGen[(A,B)] = for {a←A;b←B} yield (a,b)
+  def tuple3[A,B,C](A:RngGen[A], B:RngGen[B], C:RngGen[C]): RngGen[(A,B,C)] = for {a←A;b←B;c←C} yield (a,b,c)
+  def tuple4[A,B,C,D](A:RngGen[A], B:RngGen[B], C:RngGen[C], D:RngGen[D]): RngGen[(A,B,C,D)] = for {a←A;b←B;c←C;d←D} yield (a,b,c,d)
+  def tuple5[A,B,C,D,E](A:RngGen[A], B:RngGen[B], C:RngGen[C], D:RngGen[D], E:RngGen[E]): RngGen[(A,B,C,D,E)] = for {a←A;b←B;c←C;d←D;e←E} yield (a,b,c,d,e)
+  def tuple6[A,B,C,D,E,F](A:RngGen[A], B:RngGen[B], C:RngGen[C], D:RngGen[D], E:RngGen[E], F:RngGen[F]): RngGen[(A,B,C,D,E,F)] = for {a←A;b←B;c←C;d←D;e←E;f←F} yield (a,b,c,d,e,f)
+  def tuple7[A,B,C,D,E,F,G](A:RngGen[A], B:RngGen[B], C:RngGen[C], D:RngGen[D], E:RngGen[E], F:RngGen[F], G:RngGen[G]): RngGen[(A,B,C,D,E,F,G)] = for {a←A;b←B;c←C;d←D;e←E;f←F;g←G} yield (a,b,c,d,e,f,g)
+  def tuple8[A,B,C,D,E,F,G,H](A:RngGen[A], B:RngGen[B], C:RngGen[C], D:RngGen[D], E:RngGen[E], F:RngGen[F], G:RngGen[G], H:RngGen[H]): RngGen[(A,B,C,D,E,F,G,H)] = for {a←A;b←B;c←C;d←D;e←E;f←F;g←G;h←H} yield (a,b,c,d,e,f,g,h)
+  def tuple9[A,B,C,D,E,F,G,H,I](A:RngGen[A], B:RngGen[B], C:RngGen[C], D:RngGen[D], E:RngGen[E], F:RngGen[F], G:RngGen[G], H:RngGen[H], I:RngGen[I]): RngGen[(A,B,C,D,E,F,G,H,I)] = for {a←A;b←B;c←C;d←D;e←E;f←F;g←G;h←H;i←I} yield (a,b,c,d,e,f,g,h,i)
 }

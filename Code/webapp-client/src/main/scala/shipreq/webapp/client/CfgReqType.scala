@@ -27,7 +27,7 @@ object CfgReqType {
 
   type P = CustomReqType
   type D = CustomReqType.Id
-  type Arb = (Routines.ForCfgReqType, ClientData)
+  type Arb = (CustomReqTypeCrud.Remote, ClientData)
 
   private val prespec = TableSpecBuilder[P](
     FieldSpec[P](_.mnemonic.value)(V.mnemonic)(E.TextInputEditor),
@@ -78,7 +78,7 @@ object CfgReqType {
     .build
 
   private def crudIO(x: Arb, s: SuccessIO, f: FailureIO, a: CustomReqTypeCrud.Action): IO[Unit] =
-    ClientProtocol.call(x._1.crud)(a, x._2.update(_) >> s.io, f)
+    ClientProtocol.call(x._1)(a, x._2.update(_) >> s.io, f)
 
   private def saveIO(x: Arb, op: Option[P], u: prespec.U, s: SuccessIO, f: FailureIO): IO[Unit] =
     crudIO(x, s, f, op match {

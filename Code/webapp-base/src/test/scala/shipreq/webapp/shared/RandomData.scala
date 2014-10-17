@@ -21,7 +21,8 @@ object RandomData {
     } yield if (r1.value <= r2.value) (r1, r2) else (r2, r1)
 
   lazy val optionalLargeText =
-    Gen.string1.lim(AppConsts.largeTextMaxLength).option
+    Gen.alphanumericstring1 // TODO reenable after Jawn bugfix: Gen.string1
+      .lim(AppConsts.largeTextMaxLength).option
 
   lazy val alive =
     Gen.oneof[Alive](Alive, Dead)
@@ -61,7 +62,7 @@ object RandomData {
     id map CustomReqType.Id
 
   lazy val customReqTypeName =
-    Gen.alphanumericstring1 // TODO reenable after Jawn bugfix Gen.string1
+    Gen.alphanumericstring1 // TODO reenable after Jawn bugfix: Gen.string1
 
   lazy val customReqType =
     for {
@@ -142,9 +143,10 @@ object RandomData {
 
     lazy val forCfgReqType =
       for {
-        pi   <- remote(ProjectInit)
-        crud <- remote(CustomReqTypeCrud)
-      } yield ForCfgReqType(pi, crud)
+        a <- remote(ProjectInit)
+        b <- remote(CustomIncmpTypeCrud)
+        c <- remote(CustomReqTypeCrud)
+      } yield ForCfgReqType(a, b, c)
 
     class CrudActionGens[C <: Crudable] (idG: RngGen[C#Id], vG: RngGen[C#V]) {
       import Gen.Covariance._
@@ -168,12 +170,12 @@ object RandomData {
         Gen.oneofG[CrudAction[C]](create, update, delete)
     }
 
+    lazy val customIncmpTypeCrud = new CrudActionGens[CustomIncmpTypeCrud](
+      RandomData.customIncmpTypeId,
+      Gen.tuple2(refKey, optionalLargeText))
+
     lazy val customReqTypeCrud = new CrudActionGens[CustomReqTypeCrud](
       RandomData.customReqTypeId,
-      for {
-        m <- reqTypeMnemonic
-        n <- customReqTypeName
-        i <- implicationRequired
-      } yield (m, n, i))
+      Gen.tuple3(reqTypeMnemonic, customReqTypeName, implicationRequired))
   }
 }
