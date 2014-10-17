@@ -1,5 +1,6 @@
 package shipreq.webapp.shared.data
 
+import scalaz.Equal
 import shipreq.base.util.TaggedTypes._
 
 final case class CustomIncmpType(id: CustomIncmpType.Id,
@@ -19,3 +20,6 @@ object CustomIncmpType {
  * #pri=high refers to a grouping.
  */
 final case class RefKey(value: String) extends TaggedString
+object RefKey {
+  implicit val equal = Equal.equalA[RefKey]
+}

@@ -28,7 +28,7 @@ object Validators {
 
   object customIncmpType {
     def key = refKey
-    def desc = optionalLargeText(FieldNames.desc)
+    def desc = optionalLargeText(FieldNames.desc).toPlus
   }
 
   val refKey = {
