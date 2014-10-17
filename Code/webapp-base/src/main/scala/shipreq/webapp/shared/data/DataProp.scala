@@ -2,6 +2,7 @@ package shipreq.webapp.shared.data
 
 import scalaz.std.list._
 import shipreq.base.prop._
+import DataImplicits._
 
 object DataProp {
 
@@ -12,15 +13,14 @@ object DataProp {
   lazy val rev =
     Prop[Rev]("rev ≥ 0", _.value >= 0)
 
+  private def dataSet[T <: DataAndId : IdAccessor] =
+    Prop[DataSet[T]]("each ID is unique", _.data.map(_.id).isUnique)
+
   // -------------------------------------------------------------------------------------------------------------------
   // Incompletions
 
   object customIncmpTypes {
-
-    lazy val uniqueId =
-      Prop[CustomIncmpTypes]("each CustomIncmpType is unique", _.data.map(_.id).isUnique)
-
-    def all = uniqueId
+    def all = dataSet[CustomIncmpTypeAndId]
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -43,22 +43,20 @@ object DataProp {
   }
 
   object customReqTypes {
-
-    lazy val uniqueId =
-      Prop[CustomReqTypes]("each CustomReqTypeId is unique", _.data.map(_.id).isUnique)
+    type DS = DataSet[CustomReqTypeAndId]
 
     lazy val uniqueMnemonics =
-      Prop[CustomReqTypes]("each mnemonic is unique",
+      Prop[DS]("each mnemonic is unique",
         _.data.toList.flatMap(b => b.mnemonic :: b.oldMnemonics.toList).isUnique)
 
     lazy val uniqueNames =
-      Prop[CustomReqTypes]("each CustomReqType name is unique", _.data.map(_.name).isUnique)
+      Prop[DS]("each CustomReqType name is unique", _.data.map(_.name).isUnique)
 
     lazy val each =
-      customReqType.all.forall[CustomReqTypes, List](_.data)
+      customReqType.all.forall[DS, List](_.data)
 
     lazy val all =
-      uniqueMnemonics ∧ uniqueId ∧ uniqueNames ∧ rev.contramap(_.rev) ∧ each
+      dataSet[CustomReqTypeAndId] ∧ uniqueMnemonics ∧ uniqueNames ∧ rev.contramap(_.rev) ∧ each
   }
 
   // -------------------------------------------------------------------------------------------------------------------

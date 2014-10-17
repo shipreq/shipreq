@@ -5,6 +5,7 @@ import shipreq.webapp.shared.data._
 import shipreq.webapp.shared.data.delta._
 import shipreq.webapp.shared.protocol._
 import shipreq.base.util.Debug._
+import DataImplicits._
 
 object RandomData {
 
@@ -42,11 +43,8 @@ object RandomData {
   lazy val customIncmpType =
     Gen.apply4(CustomIncmpType.apply)(customIncmpTypeId, refKey, optionalLargeText, alive)
 
-  lazy val customIncmpTypes = {
-    // TODO copied customIncmpTypes.distinctId copy of customReqTypes'
-    def distinctId = Distinct.on[CustomIncmpType](_.id.value).long((a, b) => a.copy(id = CustomIncmpType.Id(b)))
-    Gen.apply2(CustomIncmpTypes)(rev, customIncmpType.list.distinct(distinctId))
-  }
+  lazy val customIncmpTypes =
+    dataSet[CustomIncmpTypeAndId](customIncmpType)
 
   lazy val reqTypeMnemonic =
     Gen.uppers1.lim(6).map(cs => ReqType.Mnemonic(cs.list.mkString))
@@ -68,7 +66,6 @@ object RandomData {
     } yield CustomReqType(id, mn, om - mn, n, ir, a)
 
   lazy val customReqTypes = {
-    def distinctId = Distinct.on[CustomReqType](_.id.value).long((a, b) => a.copy(id = CustomReqType.Id(b)))
     def distinctName = Distinct.on[CustomReqType](_.name).str((a, b) => a.copy(name = b))
     def distinctMnemonics = Distinct.on[CustomReqType]
       .n(c => c.oldMnemonics + c.mnemonic)(
@@ -80,12 +77,17 @@ object RandomData {
           c
         })
       .blacklist(ReqType.static.map(_.mnemonic).toSet)
-    def distinctRules = distinctId + distinctName + distinctMnemonics
-    Gen.apply2(CustomReqTypes)(rev, customReqType.list.distinct(distinctRules))
+    dataSet[CustomReqTypeAndId](customReqType, Some(distinctName + distinctMnemonics))
+  }
+
+  def dataSet[T <: DataAndId](r: RngGen[T#Data], dist: Option[Distinct[T#Data]] = None)(implicit i: IdAccessor[T]): RngGen[DataSet[T]] = {
+    def distId = Distinct.on[T#Data](_.id.value).long((a,b) => i.setId(a, i mkId b))
+    val dist2 = dist.fold(distId: Distinct[T#Data])(distId + _)
+    Gen.apply2(DataSet[T])(rev, r.list.distinct(dist2))
   }
 
   lazy val project =
-    Gen.apply2(Project)(customIncmpTypes, customReqTypes)
+    Gen.apply2(Project.apply)(customIncmpTypes, customReqTypes)
 
   // -------------------------------------------------------------------------------------------------------------------
   object remoteDeltaG {
@@ -94,21 +96,19 @@ object RandomData {
       case Partition.CustomReqTypes   => customReqTypesDG
     }
 
-    // TODO another copy/paste/search/replace
-    lazy val customIncmpTypesDG =
+    def generic[T <: Partition](p: T)(ir: RngGen[T#Id], dr: RngGen[T#Data]): RngGen[RemoteDeltaG] =
       for {
         (r1, r2) <- revPair
-        ids      <- customIncmpTypeId.list
-        cs       <- customIncmpType.list
-      } yield RemoteDeltaG(Partition.CustomIncmpTypes, r1, r2)(ids, cs)
+        i        <- ir.list
+        d        <- dr.list
+      } yield RemoteDeltaG(p, r1, r2)(i, d)
+    //} yield RemoteDeltaG(Partition.CustomReqTypes, r1, r2)(ids -- cs.map(_.id), cs) // TODO make set
+
+    lazy val customIncmpTypesDG =
+      generic(Partition.CustomIncmpTypes)(customIncmpTypeId, customIncmpType)
 
     lazy val customReqTypesDG =
-      for {
-        (r1, r2) <- revPair
-        ids      <- customReqTypeId.list
-        cs       <- customReqType.list
-      //} yield RemoteDeltaG(Partition.CustomReqTypes, r1, r2)(ids -- cs.map(_.id), cs) // TODO make set
-      } yield RemoteDeltaG(Partition.CustomReqTypes, r1, r2)(ids, cs)
+      generic(Partition.CustomReqTypes)(customReqTypeId, customReqType)
   }
 
   object remoteDelta {

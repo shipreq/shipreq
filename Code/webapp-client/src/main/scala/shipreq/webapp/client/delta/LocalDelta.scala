@@ -4,7 +4,7 @@ import scala.annotation.tailrec
 import shipreq.webapp.shared.data.delta.Partition
 
 case class LocalDeltaP[P <: Partition](del: List[P#Id],
-                                       upd: List[P#Instance]) {
+                                       upd: List[P#Data]) {
 
   def deltaG(p: P): LocalDeltaG = new LocalDeltaR(p, this)
 }

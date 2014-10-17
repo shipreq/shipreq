@@ -5,7 +5,7 @@ import shipreq.webapp.shared.data.Rev
 
 final case class RemoteDeltaP[P <: Partition] private[delta](
     del: List[P#Id],
-    upd: List[P#Instance]) {
+    upd: List[P#Data]) {
 
   override def toString = s"Δᵖ($del, $upd)"
 
@@ -16,7 +16,7 @@ final case class RemoteDeltaP[P <: Partition] private[delta](
 // =====================================================================================================================
 
 object RemoteDeltaG {
-  def apply[P <: Partition](p: P, from: Rev, to: Rev)(del: List[P#Id], upd: List[P#Instance]) =
+  def apply[P <: Partition](p: P, from: Rev, to: Rev)(del: List[P#Id], upd: List[P#Data]) =
     new RemoteDeltaG(p, from, to, RemoteDeltaP(del, upd))
 
   lazy val prop =

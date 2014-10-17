@@ -6,13 +6,14 @@ import shipreq.webapp.shared.data._
 import shipreq.webapp.shared.protocol.DataCodecs._
 
 sealed trait Partition {
-  type Instance
-  type Id
+  type DI <: DataAndId
+  final type Data = DI#Data
+  final type Id = DI#Id
 
-  implicit val rd: Reader[Id]
-  implicit val wd: Writer[Id]
-  implicit val rp: Reader[Instance]
-  implicit val wp: Writer[Instance]
+  implicit val ri: Reader[Id]
+  implicit val wi: Writer[Id]
+  implicit val rd: Reader[Data]
+  implicit val wd: Writer[Data]
 
   final def unapply[B <: Partition](b: B): Option[Partition.EqProof[B, this.type]] =
     Partition.testEq[B, this.type](b, this)
@@ -35,13 +36,12 @@ case object Partition {
 
   // ------------------------------------------------------------------------------------------------------------------
 
-  sealed abstract class Aux[P, D](implicit RD: Reader[D], WD: Writer[D], RP: Reader[P], WP: Writer[P]) extends Partition {
-    override type Instance = P
-    override type Id = D
+  sealed abstract class Aux[T <: DataAndId](implicit RI: Reader[T#Id], WI: Writer[T#Id], RD: Reader[T#Data], WD: Writer[T#Data]) extends Partition {
+    override type DI = T
+    override implicit val ri = RI
+    override implicit val wi = WI
     override implicit val rd = RD
     override implicit val wd = WD
-    override implicit val rp = RP
-    override implicit val wp = WP
   }
 
   abstract class Fns[P <: Partition] {
@@ -54,7 +54,7 @@ case object Partition {
 
   val values = NonEmptyList[Partition](CustomIncmpTypes, CustomReqTypes)
 
-  case object CustomIncmpTypes extends Aux[CustomIncmpType, CustomIncmpType.Id]
-  case object CustomReqTypes   extends Aux[CustomReqType,   CustomReqType.Id]
+  case object CustomIncmpTypes extends Aux[CustomIncmpTypeAndId]
+  case object CustomReqTypes   extends Aux[CustomReqTypeAndId]
 }
 

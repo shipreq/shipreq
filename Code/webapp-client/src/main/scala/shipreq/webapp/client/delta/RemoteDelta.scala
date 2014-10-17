@@ -1,8 +1,8 @@
 package shipreq.webapp.client.delta
 
+import shipreq.webapp.shared.data._
 import shipreq.webapp.shared.data.delta._
-import shipreq.webapp.shared.{data => D}
-import D.{Project, Rev}
+import shipreq.webapp.shared.data.DataImplicits._
 import Partition._
 
 sealed trait ApplicationResult
@@ -30,8 +30,8 @@ object RemoteDelta {
           }
 
         d.p match {
-          case t@ CustomIncmpTypes => x(t, CustomIncmpTypeFns)
-          case t@ CustomReqTypes   => x(t, CustomReqTypeFns)
+          case t@ CustomIncmpTypes => x(t, new GenericPartitionFns(t))
+          case t@ CustomReqTypes   => x(t, new GenericPartitionFns(t))
         }
       }
       
@@ -42,43 +42,22 @@ object RemoteDelta {
     })
 }
 
-// TODO CustomIncmpTypeFns is just a search/replace different from CustomReqTypeFns
-object CustomIncmpTypeFns extends Fns[CustomIncmpTypes.type] {
+class GenericPartitionFns[T <: Partition](tt: T)(implicit ia: IdAccessor[T#DI], da: DataSetAccessor[T#DI]) extends Fns[T] {
 
-  override def rev(p: Project) =
-    p.customIncmpTypes.rev
+  def rev(p: Project): Rev = da.getRev(p)
 
-  override def update(p: Project, rev: Rev, ds: RemoteDeltaP[CustomIncmpTypes.type]) = {
-    var vs = p.customIncmpTypes.data.toStream
+  def update(p: Project, rev: Rev, ds: RemoteDeltaP[T]): Project = {
+
+    var vs = da.getData(p)
 
     val dels = ds.del.toSet
     if (dels.nonEmpty)
-      vs = vs.filterNot(p => dels contains p.id)
+      vs = vs.filterNot(data => dels contains data.id)
 
     val upds = ds.upd.map(p => p.id -> p).toMap
     if (upds.nonEmpty)
       vs = vs.map(p => upds.getOrElse(p.id, p))
 
-    p.copy(customIncmpTypes = D.CustomIncmpTypes(rev, vs.toList))
-  }
-}
-
-object CustomReqTypeFns extends Fns[CustomReqTypes.type] {
-
-  override def rev(p: Project) =
-    p.customReqTypes.rev
-
-  override def update(p: Project, rev: Rev, ds: RemoteDeltaP[CustomReqTypes.type]) = {
-    var vs = p.customReqTypes.data.toStream
-
-    val dels = ds.del.toSet
-    if (dels.nonEmpty)
-      vs = vs.filterNot(p => dels contains p.id)
-
-    val upds = ds.upd.map(p => p.id -> p).toMap
-    if (upds.nonEmpty)
-      vs = vs.map(p => upds.getOrElse(p.id, p))
-
-    p.copy(customReqTypes = D.CustomReqTypes(rev, vs.toList))
+    da.set(p, rev, vs)
   }
 }

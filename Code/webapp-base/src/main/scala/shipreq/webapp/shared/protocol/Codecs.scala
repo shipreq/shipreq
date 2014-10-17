@@ -77,6 +77,7 @@ private[protocol] object Codec {
     ReadWriter[Z](z => w(u(z).get), r andThen y.tupled)
   }
 
+  // TODO Move remoteRoutine, deletionAction, crudable out of Codecs
   def remoteRoutine[R <: Routine.Desc](d: R) = ReadWriter[d.Remote](
     r => Js.Str(r.n),
     {case Js.Str(n) => Routine.Remote(n, d) })
@@ -93,7 +94,6 @@ private[protocol] object Codec {
       case Js.Arr(i, v)    => CrudAction.Update(RI read i, RV read v)
       case Js.Arr(i, a, _) => CrudAction.Delete(RI read i, deletionAction read a)
     })
-
 }
 import Codec._
 
@@ -107,12 +107,13 @@ object DataCodecs {
   implicit def refkey = tagS(RefKey.apply)
   implicit def customIncmpTypeId = tagL(CustomIncmpType.Id.apply)
   implicit def customIncmpType = caseclass4(CustomIncmpType.apply, CustomIncmpType.unapply)
-  implicit def customIncmpTypes = caseclass2(CustomIncmpTypes.apply, CustomIncmpTypes.unapply)
 
   implicit def reqTypeMnemonic = tagS(ReqType.Mnemonic.apply)
   implicit def customReqTypeId = tagL(CustomReqType.Id.apply)
   implicit def customReqType = caseclass6(CustomReqType.apply, CustomReqType.unapply)
-  implicit def customReqTypes = caseclass2(CustomReqTypes.apply, CustomReqTypes.unapply)
+
+  implicit def dataset[T <: DataAndId](implicit WI: Writer[T#Id], RI: Reader[T#Id], WV: Writer[T#Data], RV: Reader[T#Data]) =
+    caseclass2(DataSet.apply[T], DataSet.unapply[T])
 
   implicit def project = caseclass2(Project.apply, Project.unapply)
 }
@@ -137,13 +138,13 @@ object DeltaCodecs {
   implicit def partitions = enum(Partition.values)
 
   implicit def remoteDeltaGW = Writer[RemoteDeltaG](r => {
-    import r.p.{wd, wp}
+    import r.p.{wi, wd}
     val dp = r.forceDeltaP[r.p.type](r.p)
     val a = partitions write r.p
     val b = rev write r.from
     val c = rev write r.to
-    val d = Js.Arr(dp.del.map(wd.write): _*)
-    val e = Js.Arr(dp.upd.map(wp.write): _*)
+    val d = Js.Arr(dp.del.map(wi.write): _*)
+    val e = Js.Arr(dp.upd.map(wd.write): _*)
     Js.Arr(a, b, c, d, e)
   })
 
@@ -152,8 +153,8 @@ object DeltaCodecs {
       val p = partitions read a
       val f = rev read b
       val t = rev read c
-      val x = d.map(p.rd.read).toList
-      val y = e.map(p.rp.read).toList
+      val x = d.map(p.ri.read).toList
+      val y = e.map(p.rd.read).toList
       RemoteDeltaG(p, f, t)(x, y)
   })
 
