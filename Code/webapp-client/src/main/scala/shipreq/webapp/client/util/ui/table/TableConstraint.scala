@@ -1,4 +1,4 @@
-package shipreq.webapp.client.ui.table
+package shipreq.webapp.client.util.ui.table
 
 import scalaz.{NonEmptyList, Equal}
 import shipreq.webapp.base.validation.{ValidatePlusR, VFailure}

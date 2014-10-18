@@ -1,4 +1,4 @@
-package shipreq.webapp.client.ui
+package shipreq.webapp.client.util.ui
 
 /**
  * Types

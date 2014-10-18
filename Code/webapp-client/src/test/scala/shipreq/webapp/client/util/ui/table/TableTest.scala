@@ -1,4 +1,4 @@
-package shipreq.webapp.client.ui
+package shipreq.webapp.client.util.ui
 package table
 
 import japgolly.scalajs.react._, vdom.ReactVDom._, all._, ScalazReact._

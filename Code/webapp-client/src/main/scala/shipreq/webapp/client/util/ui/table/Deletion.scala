@@ -1,4 +1,4 @@
-package shipreq.webapp.client.ui.table
+package shipreq.webapp.client.util.ui.table
 
 import monocle._
 import monocle.function.Field2.second
@@ -10,7 +10,7 @@ import japgolly.scalajs.react._, vdom.ReactVDom._, all._, ScalazReact._
 import shipreq.webapp.base.data.{Dead, Alive}
 import shipreq.webapp.base.protocol.DeletionAction, DeletionAction._
 import shipreq.webapp.client.protocol.FailureIO
-import shipreq.webapp.client.ui.Implicits._
+import shipreq.webapp.client.util.ui.Implicits._
 
 abstract class Deletion[S, P, D](spec: TableSpec[_, S, D, _, P, _, _], aliveG: P => Alive) {
 

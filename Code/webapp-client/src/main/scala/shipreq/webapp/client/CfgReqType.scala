@@ -15,8 +15,8 @@ import shipreq.webapp.base.data.delta.Partition
 import shipreq.webapp.base.protocol.{DeletionAction, Routines}
 import shipreq.webapp.client.delta.LocalDelta
 import shipreq.webapp.client.protocol.{FailureIO, ClientProtocol}
-import shipreq.webapp.client.ui.table._
-import shipreq.webapp.client.ui.{Editors => E, Util}
+import shipreq.webapp.client.util.ui.table._
+import shipreq.webapp.client.util.ui.{Editors => E, Util}
 import Validators.{reqType => V}
 import ReqType.Mnemonic
 import DeletionAction._

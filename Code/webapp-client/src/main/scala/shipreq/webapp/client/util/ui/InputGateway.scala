@@ -1,8 +1,8 @@
-package shipreq.webapp.client.ui
+package shipreq.webapp.client.util.ui
 
 import scalaz.Bind
 import scalaz.syntax.bind._
-import shipreq.webapp.client.ui.Implicits.Optional2
+import shipreq.webapp.client.util.ui.Implicits.Optional2
 import Implicits._
 
 final class InputGateway[M[_] : Bind : Optional2, S, R, A, T](

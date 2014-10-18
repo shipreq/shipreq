@@ -1,4 +1,4 @@
-package shipreq.webapp.client.ui
+package shipreq.webapp.client.util.ui
 
 import scalaz.{Applicative, Bind, StateT}
 import scalaz.Scalaz.Id

@@ -1,4 +1,4 @@
-package shipreq.webapp.client.ui
+package shipreq.webapp.client.util.ui
 
 import japgolly.scalajs.react._, vdom.ReactVDom.{Tag => _, _}, all._, ScalazReact._
 

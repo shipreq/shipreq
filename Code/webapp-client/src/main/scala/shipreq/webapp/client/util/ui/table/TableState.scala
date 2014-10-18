@@ -1,4 +1,4 @@
-package shipreq.webapp.client.ui.table
+package shipreq.webapp.client.util.ui.table
 
 import monocle._
 import monocle.std.option.some

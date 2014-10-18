@@ -1,4 +1,4 @@
-package shipreq.webapp.client.ui.table
+package shipreq.webapp.client.util.ui.table
 
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react._
@@ -9,8 +9,8 @@ import scalaz.effect.IO
 import scalaz.std.option._
 import scalaz.syntax.bind._
 import shipreq.webapp.client.protocol.FailureIO
-import shipreq.webapp.client.ui.Implicits._
-import shipreq.webapp.client.ui._
+import shipreq.webapp.client.util.ui.Implicits._
+import shipreq.webapp.client.util.ui._
 import RowStatus.Sync
 import TableSpec._
 

@@ -1,11 +1,11 @@
-package shipreq.webapp.client.ui
+package shipreq.webapp.client.util.ui
 
 import scalaz.{Bind, Equal}
 import scalaz.syntax.bind._
 import scalaz.effect.IO
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.ScalazReact._
-import shipreq.webapp.client.ui.Implicits._
+import shipreq.webapp.client.util.ui.Implicits._
 import shipreq.webapp.base.validation.ValidatorPlus
 
 sealed trait EditMode

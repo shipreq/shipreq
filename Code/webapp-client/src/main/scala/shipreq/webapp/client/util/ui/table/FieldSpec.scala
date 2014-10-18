@@ -1,6 +1,6 @@
-package shipreq.webapp.client.ui.table
+package shipreq.webapp.client.util.ui.table
 
-import shipreq.webapp.client.ui._
+import shipreq.webapp.client.util.ui._
 import shipreq.webapp.base.validation.{ValidatePlusR, ValidatorPlus}
 import scalaz.Isomorphism.<=>
 

@@ -1,4 +1,4 @@
-package shipreq.webapp.client.ui.table
+package shipreq.webapp.client.util.ui.table
 
 trait RowSpec[S_, R, U, P, I, V] {
   final type S = S_

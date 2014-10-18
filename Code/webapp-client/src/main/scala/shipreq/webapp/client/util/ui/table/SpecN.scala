@@ -1,4 +1,4 @@
-package shipreq.webapp.client.ui.table
+package shipreq.webapp.client.util.ui.table
 
 import japgolly.scalajs.react.ComponentStateFocus
 import japgolly.scalajs.react.ScalazReact.ReactST
@@ -6,9 +6,9 @@ import scalaz.effect.IO
 import scalaz.{Bind, Equal}
 import scalaz.syntax.bind._
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.client.ui.Implicits._
-import shipreq.webapp.client.ui._
 import shipreq.webapp.base.validation.{ValidatePlusR, ValidatorPlus}
+import shipreq.webapp.client.util.ui._
+import shipreq.webapp.client.util.ui.Implicits._
 import TableSpec.{MultiFieldRenderer, MultiFieldRenderer2}
 
 object SpecN {

@@ -1,4 +1,4 @@
-package shipreq.webapp.client
+package shipreq.webapp.client.util
 
 import japgolly.scalajs.react._
 import org.scalajs.dom.HTMLInputElement
