@@ -55,9 +55,13 @@ object Routines {
   sealed trait CustomReqTypeCrud extends CrudableAux[CustomReqType.Id, (ReqType.Mnemonic, String, ImplicationRequired)]
   object CustomReqTypeCrud extends CrudableCompanion[CustomReqTypeCrud]
 
+  object CustomReqTypeImpUpd extends DescT[(CustomReqType.Id, ImplicationRequired), RemoteDelta]
+
   // TODO rename ForCfgReqType
   case class ForCfgReqType(projectInit: ProjectInit.Remote,
                            incmpCrud: CustomIncmpTypeCrud.Remote,
-                           reqCrud: CustomReqTypeCrud.Remote)
+                           reqCrud: CustomReqTypeCrud.Remote
+                            )
+//  , reqImpReq: CustomReqTypeImpUpd.Remote)
     extends Group
 }

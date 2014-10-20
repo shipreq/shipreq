@@ -36,7 +36,9 @@ final case class CustomReqType(id: CustomReqType.Id,
                                oldMnemonics: Set[ReqType.Mnemonic],
                                name: String,
                                imp: ImplicationRequired,
-                               alive: Alive) extends ReqType
+                               alive: Alive) extends ReqType {
+  def fullName = s"${mnemonic.value}: $name"
+}
 
 object CustomReqType extends IdAccessor[CustomReqTypeAndId] {
   final case class Id(value: Long) extends TaggedLong
