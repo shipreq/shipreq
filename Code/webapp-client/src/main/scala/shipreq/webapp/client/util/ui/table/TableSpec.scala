@@ -59,7 +59,7 @@ object TableSpecB {
 
 // =====================================================================================================================
 
-sealed abstract class TableSpec[Arb, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U, P, II, VV], needSave: (U, P) => SaveNeed) {
+sealed abstract class TableSpec[Arb, S, D, U, P, II, _VV](tsb: TableSpecB[S, D, U, P, II, _VV], needSave: (U, P) => SaveNeed) {
   import tsb.{p2ii, multiFieldRenderer}
   import tsb.savedUnsaved._
 
@@ -68,6 +68,7 @@ sealed abstract class TableSpec[Arb, S, D, U, P, II, VV](tsb: TableSpecB[S, D, U
 
   final type DP = (D, P)
   final type CSF = ComponentStateFocus[S]
+  final type VV = _VV
 
   protected def createIO: (Arb, CSF, Retry[S], U) => ReactST[IO, S, Unit]
 
