@@ -10,8 +10,7 @@ import shipreq.base.util.TaggedTypes.taggedStringInstance
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.delta.Partition
 import shipreq.webapp.base.protocol.Routines
-import shipreq.webapp.client.lib.{CfgTableCells, CfgTable, TableIO}
-import shipreq.webapp.client.util.OnUnmountBackend
+import shipreq.webapp.client.lib._
 import shipreq.webapp.client.util.ui.table._
 import shipreq.webapp.client.util.ui.{Editors => E, Util}
 import Validators.{customIncmpType => V}
@@ -47,12 +46,7 @@ object CfgIncmpType {
     .render(Render.renderOuter _)
     .build
 
-  private val InnerComponent = ReactComponentB[Props]("CfgIncmpTypesⁱ")
-    .getInitialState(p => spec.initialState(p.x._2.project.customIncmpTypes.data, _.id))
-    .backend(_ => new OnUnmountBackend)
-    .render(Render.renderInner _)
-    .configure(tableIO.recvExtUpdates(spec, Partition.CustomIncmpTypes, _.x))
-    .build
+  private val innerComponent = tableIO.innerComponent(spec, Partition.CustomIncmpTypes, Render.renderInner)
 
   // ===================================================================================================================
   private object Render {
@@ -74,10 +68,10 @@ object CfgIncmpType {
         label(
           checkbox(s)(onchange --> S.modState(b => !b)),
           raw(if (s) "Showing deleted" else "Not showing deleted")),
-        InnerComponent(S.props.copy(showDeleted = s)))
+        innerComponent(TableIoProps(S.props.x, s)))
     }
 
-    def renderInner(S: ComponentScopeU[Props, prespec.S, _]): VDom =
+    def renderInner(S: ComponentScopeU[tableIO.Props, prespec.S, _]): VDom =
       tbl(S.props.showDeleted, S)(S.props.x)
         .tableness(List(FieldNames.refKey, FieldNames.desc), identity)
   }

@@ -1,16 +1,14 @@
 package shipreq.webapp.client
 
+import japgolly.scalajs.react.ReactComponentB
 import scalaz.std.anyVal.booleanInstance
 import scalaz.std.string.stringInstance
 import scalaz.std.tuple._
-import japgolly.scalajs.react.ReactComponentB
-
 import shipreq.base.util.TaggedTypes.taggedStringInstance
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.delta.Partition
 import shipreq.webapp.base.protocol.Routines
-import shipreq.webapp.client.lib.{CfgTableCells, CfgTable, TableIO}
-import shipreq.webapp.client.util.OnUnmountBackend
+import shipreq.webapp.client.lib._
 import shipreq.webapp.client.util.ui.table._
 import shipreq.webapp.client.util.ui.{Editors => E, Util}
 import Validators.{reqType => V}
@@ -60,12 +58,7 @@ object CfgReqType {
     .render(Render.renderOuter _)
     .build
 
-  private val InnerComponent = ReactComponentB[Props]("CfgReqTypesⁱ")
-    .getInitialState(p => spec.initialState(p.x._2.project.customReqTypes.data, _.id))
-    .backend(_ => new OnUnmountBackend)
-    .render(Render.renderInner _)
-    .configure(tableIO.recvExtUpdates(spec, Partition.CustomReqTypes, _.x))
-    .build
+  private val innerComponent = tableIO.innerComponent(spec, Partition.CustomReqTypes, Render.renderInner)
 
   // ===================================================================================================================
   private object Render {
@@ -101,10 +94,10 @@ object CfgReqType {
         label(
           checkbox(s)(onchange --> S.modState(b => !b)),
           raw(if (s) "Showing deleted" else "Not showing deleted")),
-        InnerComponent(S.props.copy(showDeleted = s)))
+        innerComponent(TableIoProps(S.props.x, s)))
     }
 
-    def renderInner(S: ComponentScopeU[Props, prespec.S, _]): VDom =
+    def renderInner(S: ComponentScopeU[tableIO.Props, prespec.S, _]): VDom =
       tbl(S.props.showDeleted, S)(S.props.x)
         .tableness(List("Mnemonic", "Name", "Implication Required"), staticRows #::: _)
 
