@@ -1,7 +1,7 @@
 package hahaa
 
 import shipreq.webapp.client.ClientData
-import shipreq.webapp.client.lib.TableIoArb
+import shipreq.webapp.client.lib.{TableIoProps, TableIoArb}
 import shipreq.webapp.client.protocol.{FailureIO, ClientProtocol}
 import shipreq.webapp.base.protocol.Routines
 
@@ -17,8 +17,8 @@ object ReactExamples {
 
     import shipreq.webapp.client._
     ClientData.init(routines.projectInit, clientData => IO {
-      CfgReqType.Component(CfgReqType.Props(TableIoArb(routines.reqCrud, clientData), false)) render document.getElementById("eg2")
-      CfgIncmpType.Component(CfgIncmpType.Props(TableIoArb(routines.incmpCrud, clientData), false)) render document.getElementById("eg3")
+      CfgReqType.Component(TableIoProps(TableIoArb(routines.reqCrud, clientData), false)) render document.getElementById("eg2")
+      CfgIncmpType.Component(TableIoProps(TableIoArb(routines.incmpCrud, clientData), false)) render document.getElementById("eg3")
     }).unsafePerformIO()
   }
 

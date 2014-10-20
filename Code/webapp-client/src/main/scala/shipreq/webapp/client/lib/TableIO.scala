@@ -1,8 +1,8 @@
 package shipreq.webapp.client.lib
 
-import japgolly.scalajs.react.{ReactComponentB, VDom, ComponentScopeU}
+import japgolly.scalajs.react._, vdom.ReactVDom._, all._, ScalazReact._
 import japgolly.scalajs.react.experiment.{Listenable, OnUnmount}
-import japgolly.scalajs.react.ScalazReact._
+import shipreq.webapp.client.util.ui.Util.checkbox
 import scalaz.effect.IO
 import scalaz.syntax.bind._
 import shipreq.webapp.base.data._
@@ -36,8 +36,6 @@ class RemoteDeltaListener[T <: DataAndId, RD <: DescT[_, RemoteDelta]](implicit 
   def recvExtUpdates[CP, CB <: OnUnmount, S, Q <: Partition](spec: TableSpec[_, S, D, _, P, _, _], partition: Q, f: CP => Arb)
                                                             (implicit ei: Q#Id =:= T#Id, ed: Q#Data =:= T#Data) =
     Listenable.installS[CP, S, CB, LocalDelta](f(_).clientData, recvExtUpdate(spec, partition))
-
-
 }
 
 class TableIO[T <: DataAndId, C <: Crudable, RD <: CrudableCompanion[C]](implicit t_c_id: T#Id =:= C#Id, I: IdAccessor[T])
@@ -68,4 +66,22 @@ class TableIO[T <: DataAndId, C <: Crudable, RD <: CrudableCompanion[C]](implici
     .render(render)
     .configure(recvExtUpdates(spec, partition, _.x))
     .build
+
+
+  def renderOuter[P0, S0](S: ComponentStateFocus[Boolean],
+                          arb: Arb,
+                          innerComponent: ReactComponentC.ReqProps[Props, _, _, _]): VDom = {
+    val s = S.state
+    div(
+      label(
+        checkbox(s)(onchange --> S.modState(b => !b)),
+        raw(if (s) "Showing deleted" else "Not showing deleted")),
+      innerComponent(TableIoProps(arb, s)))
+  }
+
+  def outerComponent(name: String, innerComponent: ReactComponentC.ReqProps[Props, _, _, _]) =
+    ReactComponentB[Props](name)
+      .getInitialState(p => p.showDeleted)
+      .render(S => renderOuter(S, S.props.x, innerComponent))
+      .build
 }

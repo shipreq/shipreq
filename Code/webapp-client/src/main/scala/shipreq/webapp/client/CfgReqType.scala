@@ -1,6 +1,5 @@
 package shipreq.webapp.client
 
-import japgolly.scalajs.react.ReactComponentB
 import scalaz.std.anyVal.booleanInstance
 import scalaz.std.string.stringInstance
 import scalaz.std.tuple._
@@ -19,24 +18,13 @@ import DataImplicits._
 object CfgReqType {
 
   val tableIO = new TableIO[CustomReqTypeAndId, CustomReqTypeCrud, CustomReqTypeCrud.type]
-  import tableIO.{P, D, Arb}
+  import tableIO.{P, D}
 
   private val prespec = TableSpecBuilder[P](
     FieldSpec[P](_.mnemonic.value)(V.mnemonic)(E.TextInputEditor),
     FieldSpec[P](_.name)(V.name)(E.TextInputEditor),
     FieldSpec[P].noValidation(_.imp, ImplicationRequired)(E.CheckboxEditor))
     .dataId[D]
-
-  private def mnemonicUniqueness =
-    TableConstraint.uniquenessE[prespec.S, prespec.R, Mnemonic](
-      (s, r) => {
-        val custom: Stream[ReqType] =
-          s._1.toStream
-            .filterNot(dpi => r.fold(false)(_ == dpi._1)) // exclude own row
-            .map(_._2.p)
-        val static: Stream[ReqType] = ReqType.static.toStream
-        (static #::: custom).flatMap(p => p.mnemonic #:: p.oldMnemonics.toStream)
-      }).fieldName("Mnemonic")
 
   private val spec = prespec
     .tableConstraints(
@@ -48,17 +36,20 @@ object CfgReqType {
 
   private val deletion = new AsyncDeletion(spec)(_.alive, tableIO.deleteIO)
 
-  // ===================================================================================================================
-  // Component
-
-  case class Props(x: Arb, showDeleted: Boolean)
-
-  val Component = ReactComponentB[Props]("CfgReqTypes")
-    .getInitialState(p => p.showDeleted)
-    .render(Render.renderOuter _)
-    .build
-
   private val innerComponent = tableIO.innerComponent(spec, Partition.CustomReqTypes, Render.renderInner)
+
+  val Component = tableIO.outerComponent("CfgReqTypes", innerComponent)
+
+  private def mnemonicUniqueness =
+    TableConstraint.uniquenessE[prespec.S, prespec.R, Mnemonic](
+      (s, r) => {
+        val custom: Stream[ReqType] =
+          s._1.toStream
+            .filterNot(dpi => r.fold(false)(_ == dpi._1)) // exclude own row
+            .map(_._2.p)
+        val static: Stream[ReqType] = ReqType.static.toStream
+        (static #::: custom).flatMap(p => p.mnemonic #:: p.oldMnemonics.toStream)
+      }).fieldName("Mnemonic")
 
   // ===================================================================================================================
   private object Render {
@@ -87,15 +78,6 @@ object CfgReqType {
     }
 
     val tbl = CfgTable[CustomReqTypeAndId].b1(spec)(deletion, ("", "", false), _.mnemonic).b2(cells)
-
-    def renderOuter(S: ComponentScopeU[Props, Boolean, Unit]): VDom = {
-      val s = S.state
-      div(
-        label(
-          checkbox(s)(onchange --> S.modState(b => !b)),
-          raw(if (s) "Showing deleted" else "Not showing deleted")),
-        innerComponent(TableIoProps(S.props.x, s)))
-    }
 
     def renderInner(S: ComponentScopeU[tableIO.Props, prespec.S, _]): VDom =
       tbl(S.props.showDeleted, S)(S.props.x)
