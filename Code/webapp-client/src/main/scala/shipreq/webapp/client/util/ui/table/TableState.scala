@@ -25,14 +25,8 @@ final case class UnsavedRow[II](status: RowStatus, ii: II)
 
 final case class SavedRow[P, II](status: RowStatus, p: P, ii: II)
 
-final class SavedUnsavedL[S, D, P, II](val savedL: SimpleLens[S, Saved[D, P, II]],
-                                       val unsavedL: SimpleLens[S, Unsaved[II]]) {
-
-  def unsavedRowL =
-    unsavedL composeOptional some
-
-  def unsavedStatusL: SimpleOptional[S, RowStatus] =
-    unsavedRowL composeOptional SimpleLens[UnsavedRow[II]](_.status)((a, b) => a.copy(status = b))
+trait SavedL[S, D, P, II] {
+  val savedL: SimpleLens[S, Saved[D, P, II]]
 
   def savedRowIL =
     SimpleLens[SavedRow[P, II]](_.ii)((a, b) => a.copy(ii = b))
@@ -55,6 +49,20 @@ final class SavedUnsavedL[S, D, P, II](val savedL: SimpleLens[S, Saved[D, P, II]
   def srowDP(id: D): S => (D, P) =
     s => (id, srowP(id)(s))
 }
+
+trait UnsavedL[S, II] {
+  val unsavedL: SimpleLens[S, Unsaved[II]]
+
+  def unsavedRowL =
+    unsavedL composeOptional some
+
+  def unsavedStatusL: SimpleOptional[S, RowStatus] =
+    unsavedRowL composeOptional SimpleLens[UnsavedRow[II]](_.status)((a, b) => a.copy(status = b))
+}
+
+final class SavedUnsavedL[S, D, P, II](val savedL: SimpleLens[S, Saved[D, P, II]],
+                                       val unsavedL: SimpleLens[S, Unsaved[II]])
+  extends SavedL[S, D, P, II] with UnsavedL[S, II]
 
 object SavedUnsavedL {
   def default[D, P, II] =

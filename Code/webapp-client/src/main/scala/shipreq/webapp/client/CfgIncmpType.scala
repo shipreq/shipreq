@@ -31,9 +31,11 @@ object CfgIncmpType {
       Some(prespec.uniquenessCheck(_.key).fieldName(FieldNames.refKey)),
       None)
     .saveNotNeededWhenE(p => (p.key, p.desc))
-    .asyncSaveP(_.id, tableIO.saveIO)
+    .asyncSaveP(tableIO.updateIO)
 
-  private val deletion = new AsyncDeletion(spec)(_.alive, tableIO.deleteIO)
+  private val specC = TableSpecC(spec)(tableIO.createIO)
+
+  private val specD = TableSpecD(spec)(_.alive, tableIO.deleteIO)
 
   private val innerComponent = tableIO.innerComponent(spec, Partition.CustomIncmpTypes, Render.renderInner)
 
@@ -50,7 +52,7 @@ object CfgIncmpType {
       override def deletedRow = p => (raw(p.key.value), raw(TextMod.nonBlank from p.desc))
     }
 
-    val tbl = CfgTable[CustomIncmpTypeAndId].b1(spec)(deletion, ("", ""), _.key).b2(cells)
+    val tbl = CfgTable[CustomIncmpTypeAndId].b1(spec)(specC, specD, ("", ""), _.key).b2(cells)
 
     def renderInner(S: ComponentScopeU[tableIO.Props, prespec.S, _]): VDom =
       tbl(S.props.showDeleted, S)(S.props.x)

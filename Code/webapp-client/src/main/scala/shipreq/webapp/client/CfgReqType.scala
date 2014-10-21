@@ -32,9 +32,11 @@ object CfgReqType {
       Some(prespec.uniquenessCheck(_.name).fieldName("Name")),
       None)
     .saveNotNeededWhenE(p => (p.mnemonic, p.name, p.imp))
-    .asyncSaveP(_.id, tableIO.saveIO)
+    .asyncSaveP(tableIO.updateIO)
 
-  private val deletion = new AsyncDeletion(spec)(_.alive, tableIO.deleteIO)
+  private val specC = TableSpecC(spec)(tableIO.createIO)
+
+  private val specD = TableSpecD(spec)(_.alive, tableIO.deleteIO)
 
   private val innerComponent = tableIO.innerComponent(spec, Partition.CustomReqTypes, Render.renderInner)
 
@@ -77,7 +79,7 @@ object CfgReqType {
       }
     }
 
-    val tbl = CfgTable[CustomReqTypeAndId].b1(spec)(deletion, ("", "", false), _.mnemonic).b2(cells)
+    val tbl = CfgTable[CustomReqTypeAndId].b1(spec)(specC, specD, ("", "", false), _.mnemonic).b2(cells)
 
     def renderInner(S: ComponentScopeU[tableIO.Props, prespec.S, _]): VDom =
       tbl(S.props.showDeleted, S)(S.props.x)

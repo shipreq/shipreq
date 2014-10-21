@@ -24,7 +24,7 @@ class RemoteDeltaListener[T <: DataAndId, RD <: DescT[_, RemoteDelta]](implicit 
   final type D = T#Id
   final type Arb = TableIoArb[RD]
 
-  private def recvExtUpdate[S, Q <: Partition](spec: TableSpec[_, S, D, _, P, _, _], partition: Q)
+  private def recvExtUpdate[S, Q <: Partition](spec: TableSpecU[_, S, D, _, P, _, _], partition: Q)
                                               (implicit ei: Q#Id =:= T#Id, ed: Q#Data =:= T#Data) =
     (d: LocalDelta) => ReactS.mod[S](s1 => {
       val ds = LocalDelta.filter(partition, d)
@@ -33,7 +33,7 @@ class RemoteDeltaListener[T <: DataAndId, RD <: DescT[_, RemoteDelta]](implicit 
       s3
     })
 
-  def recvExtUpdates[CP, CB <: OnUnmount, S, Q <: Partition](spec: TableSpec[_, S, D, _, P, _, _], partition: Q, f: CP => Arb)
+  def recvExtUpdates[CP, CB <: OnUnmount, S, Q <: Partition](spec: TableSpecU[_, S, D, _, P, _, _], partition: Q, f: CP => Arb)
                                                             (implicit ei: Q#Id =:= T#Id, ed: Q#Data =:= T#Data) =
     Listenable.installS[CP, S, CB, LocalDelta](f(_).clientData, recvExtUpdate(spec, partition))
 }
@@ -46,17 +46,17 @@ class TableIO[T <: DataAndId, C <: Crudable, RD <: CrudableCompanion[C]](implici
   private def crudIO(arb: Arb, s: SuccessIO, f: FailureIO, a: CrudAction[C]): IO[Unit] =
     ClientProtocol.call(arb.remote)(a, arb.clientData.update(_) >> s.io, f)
 
-  def saveIO(arb: Arb, op: Option[P], u: U, s: SuccessIO, f: FailureIO): IO[Unit] =
-    crudIO(arb, s, f, op match {
-      case None    => CrudAction.Create[C](u)
-      case Some(p) => CrudAction.Update[C](p.id, u)
-    })
+  def createIO(arb: Arb, u: U, s: SuccessIO, f: FailureIO): IO[Unit] =
+    crudIO(arb, s, f, CrudAction.Create[C](u))
+
+  def updateIO(arb: Arb, p: P, u: U, s: SuccessIO, f: FailureIO): IO[Unit] =
+    crudIO(arb, s, f, CrudAction.Update[C](p.id, u))
 
   def deleteIO(arb: Arb, id: D, a: DeletionAction, f: FailureIO): IO[Unit] =
     crudIO(arb, SuccessIO.nop, f, CrudAction.Delete[C](id, a))
 
   final type Props = TableIoProps[RD]
-  def innerComponent[S, Q <: Partition](spec: TableSpec[Arb, S, T#Id, C#V, T#Data, _, _],
+  def innerComponent[S, Q <: Partition](spec: TableSpecU[Arb, S, T#Id, C#V, T#Data, _, _],
                                         partition: Q,
                                         render: ComponentScopeU[Props, S, _] => VDom)
                                        (implicit DSA: DataSetAccessor[T], ei: Q#Id =:= T#Id, ed: Q#Data =:= T#Data)

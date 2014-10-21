@@ -17,7 +17,7 @@ object TableTestUtils {
     }
   }
 
-  case class TableAssertions[S, D, P](spec: TableSpec[_, S, D, _, P, _, _], c: ComponentStateFocus[S]) {
+  case class TableAssertions[S, D, P](specU: TableSpecU[_, S, D, _, P, _, _], specC: TableSpecC[_, S, D, _, P, _, _], c: ComponentStateFocus[S]) {
 
     val initialState = c.state
 
@@ -30,7 +30,7 @@ object TableTestUtils {
 
     def assertRowValues[A](f: (RowStatus, P) => A) = new {
       def apply(m: (D, A)*): Unit = {
-        val actual = spec.savedGet(c).map(r => r.d -> f(r.status, r.p)).toMap
+        val actual = specU.savedGet(c).map(r => r.d -> f(r.status, r.p)).toMap
         val expect = m.toMap
         assert(actual == expect)
       }
@@ -40,7 +40,7 @@ object TableTestUtils {
       assertRowValues((r, p) => RowStatusT(r))
 
     def assertUnsavedRowStatus(expect: Option[RowStatusT]) = {
-      val actual = spec.unsavedGet(c).map(u => RowStatusT(u.status))
+      val actual = specC.unsavedGet(c).map(u => RowStatusT(u.status))
       assert(actual == expect)
     }
   }

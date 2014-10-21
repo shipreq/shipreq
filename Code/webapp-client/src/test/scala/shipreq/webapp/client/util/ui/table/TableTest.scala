@@ -39,32 +39,36 @@ object TableTest extends TestSuite {
   }
 
   type Arb = AsyncTester
-  def save(x: Arb, o: Option[(Int, Data)], u: Data, s: SuccessIO, f: FailureIO) = IO[Unit] {
+  def saveIO(x: Arb, o: Option[(Int, Data)], u: Data, s: SuccessIO, f: FailureIO) = IO[Unit] {
     x.ss ::= s
     x.fs ::= f
     x.upds ::= (o,u)
   }
-  val spec = prespec2.asyncSave(save)
+  def updateIO(x: Arb, d: Int, p: Data, u: Data, s: SuccessIO, f: FailureIO) = saveIO(x, Some((d,p)), u, s, f)
+  def createIO(x: Arb, u: Data, s: SuccessIO, f: FailureIO) = saveIO(x, None, u, s, f)
+
+  val specU = prespec2.asyncSave(updateIO)
+  val specC = TableSpecC(specU)(createIO)
 
   val refs = Ref.param[Int, TopNode](_.toString)
 
-  val newRowS = spec.unsavedInitS(("nem","desk"))
+  val newRowS = specC.unsavedInitS(("nem","desk"))
 
   val C = ReactComponentB[(Arb, Map[Int, Data])]("C")
-    .getInitialState(p => spec.initialState(p._2))
+    .getInitialState(p => specU.initialState(p._2))
     .render(T => {
       implicit def x = T.props._1
-      val newRow = spec.unsavedRow((F, rs, vv) => {
+      val newRow = specC.unsavedRow((F, rs, vv) => {
         val (name, desc) = vv
         div(ref := refs(-1), name, desc)
       })
-      val savedRow = spec.savedRow((_, d, _, vv) => {
+      val savedRow = specU.savedRow((_, d, _, vv) => {
           val (name, desc) = vv
           div(keyAttr := d, ref := refs(d), name, desc)
         })
-      val savedRows = spec.savedRows(T, savedRow)(_.sortBy(_.p.name))
+      val savedRows = specU.savedRows(T, savedRow)(_.sortBy(_.p.name))
       div(
-        button(cls := "new", onclick ~~> T.runState(newRowS), disabled := spec.unsavedRowExists(T), "New"),
+        button(cls := "new", onclick ~~> T.runState(newRowS), disabled := specC.unsavedRowExists(T), "New"),
         newRow(T),
         savedRows)
     }).build
@@ -72,7 +76,7 @@ object TableTest extends TestSuite {
   val data = Map(2 -> Data("ABC", None), 3 -> Data("DEF", Some("YAG")))
   val t = new AsyncTester
   val c = ReactTestUtils renderIntoDocument C((t, data))
-  val ta = TableAssertions(spec, c)
+  val ta = TableAssertions(specU, specC, c)
   import ta._
 
   def nameRef(i: Int) = Sel("input").findIn(refs(i)(c)).domType[dom.HTMLInputElement]
