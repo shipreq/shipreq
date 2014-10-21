@@ -105,6 +105,10 @@ object PropTest extends TestSuite {
         testRootCauses(allEven, Nil, Nil)
         testRootCauses(allEven, List(4,5,6,7), List(even))
       }
+      'renamed {
+        val t = mod235c.rename("whateverness").falsify1(6).get.tree
+        assert(t == "whateverness\n└─ mod5")
+      }
     }
   }
 }

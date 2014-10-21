@@ -13,6 +13,8 @@ sealed abstract class Prop[A] {
   def <==                      (a: Prop[A])  : Prop[A] = Reduction(this, a)
   def <==>                     (q: Prop[A])  : Prop[A] = Biconditional(this, q)
 
+  def rename(n: String): Prop[A] = Rename(n, this)
+
   def contramap[Z](f: Z => A): Prop[Z] = Contramap(this, f)
 
   def forall[Z, F[_] : Foldable](f: Z => F[A]): Prop[Z] = Forall(this, f, true)
@@ -42,7 +44,7 @@ sealed abstract class Prop[A] {
     falsify1(a).foreach(f => {
       val err = s"Property [$toString] failed\nwith [$a]" +
         s"\n\nRoot cause(s): ${f.rootCauses.list.mkString(", ")}" +
-        s"\nFailure tree:\n${f.tree("  ")}"
+        s"\nFailure tree:\n${f.treeI("  ")}"
       val sep = "=" * 120
       System.err.println(sep)
       System.err.println(err)
@@ -89,6 +91,14 @@ final case class Forall[F[_]: Foldable, A, B](p: Prop[B], f: A => F[B], updName:
       case fs@(_ :: _) => Some(Falsification(this, fs.distinct.map(_.map[A](Forall(_, f, false)))))
     }
   override def toString = if (updName) s"∀{$p}" else p.toString
+}
+
+
+final case class Rename[A](name: String, p: Prop[A]) extends Prop[A] {
+  override def rename(n: String): Prop[A] = Rename(n, p)
+  override def test(a: A, x: Ctx) = p.test(a, x)
+  override def falsifyE = (a,b,c) => p.falsifyE(a,b,c).map(_.copy(this))
+  override def toString = name
 }
 
 
@@ -166,7 +176,8 @@ final case class Falsification[A](p: Prop[A], cause: List[Falsification[A]]) {
     loop(this, Nil)
   }
 
-  def tree(indent: String = ""): String = Util.quickSB(treeSB(_, indent))
+  def tree = treeI("")
+  def treeI(indent: String): String = Util.quickSB(treeSB(_, indent))
   def treeSB(sb: StringBuilder, indent: String = ""): Unit = {
     val pm = "│  "
     val pl = "   "

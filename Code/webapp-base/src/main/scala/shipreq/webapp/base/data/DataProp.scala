@@ -55,12 +55,14 @@ object DataProp {
     lazy val each =
       customReqType.all.forall[DS, List](_.data)
 
-    lazy val all =
-      dataSet[CustomReqTypeAndId] ∧ uniqueMnemonics ∧ uniqueNames ∧ rev.contramap(_.rev) ∧ each
+    lazy val all = (
+        dataSet[CustomReqTypeAndId] ∧ uniqueMnemonics ∧ uniqueNames ∧ rev.contramap(_.rev) ∧ each
+      ) rename "customReqTypes"
   }
 
   // -------------------------------------------------------------------------------------------------------------------
-  lazy val project =
-    customIncmpTypes.all.contramap[Project](_.customIncmpTypes) ∧
-    customReqTypes.all.contramap[Project](_.customReqTypes)
+  lazy val project = (
+      customIncmpTypes.all.contramap[Project](_.customIncmpTypes) ∧
+      customReqTypes.all.contramap[Project](_.customReqTypes)
+    ) rename "Project"
 }
