@@ -1,24 +1,23 @@
-package shipreq.webapp.client
+package shipreq.webapp.client.ui
 
 import scalaz.std.anyVal.booleanInstance
 import scalaz.std.string.stringInstance
 import scalaz.std.tuple._
 import shipreq.base.util.TaggedTypes.taggedStringInstance
+import shipreq.webapp.base.data.DataImplicits._
+import shipreq.webapp.base.data.ReqType.Mnemonic
+import shipreq.webapp.base.data.Validators.{reqType => V}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.delta.Partition
-import shipreq.webapp.base.protocol.Routines
+import shipreq.webapp.base.protocol.Routines.CustomReqTypeCrud
 import shipreq.webapp.client.lib._
 import shipreq.webapp.client.util.ui.table._
-import shipreq.webapp.client.util.ui.{Editors => E, Util}
-import Validators.{reqType => V}
-import ReqType.Mnemonic
-import Routines.CustomReqTypeCrud
-import DataImplicits._
+import shipreq.webapp.client.util.ui.{Editors => E}
 
 object CfgReqType {
 
   val tableIO = new TableIO[CustomReqTypeAndId, CustomReqTypeCrud, CustomReqTypeCrud.type]
-  import tableIO.{P, D}
+  import tableIO.{D, P}
 
   private val prespec = TableSpecBuilder[P](
     FieldSpec[P](_.mnemonic.value)(V.mnemonic)(E.TextInputEditor),
@@ -55,8 +54,8 @@ object CfgReqType {
 
   // ===================================================================================================================
   private object Render {
-    import japgolly.scalajs.react._, vdom.ReactVDom.{Tag => _, _}, all._, ScalazReact._
-    import Util.checkbox
+    import japgolly.scalajs.react._, vdom.ReactVDom.{Tag => _, _}, all._
+    import shipreq.webapp.client.util.ui.Util.checkbox
 
     val cells = new CfgTableCells[P, spec.VV, (Modifier, Set[ReqType.Mnemonic], Modifier, Modifier)] {
       override def mklist = {

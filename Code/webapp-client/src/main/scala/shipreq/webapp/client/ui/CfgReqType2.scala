@@ -1,24 +1,23 @@
-package shipreq.webapp.client
+package shipreq.webapp.client.ui
 
 import japgolly.scalajs.react.ReactComponentB
 import scalaz.effect.IO
 import scalaz.std.anyVal.booleanInstance
 import scalaz.syntax.bind._
+import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.delta.Partition
-import shipreq.webapp.base.protocol.Routines
+import shipreq.webapp.base.protocol.Routines.CustomReqTypeImpUpd
 import shipreq.webapp.client.lib._
 import shipreq.webapp.client.protocol.{ClientProtocol, FailureIO}
 import shipreq.webapp.client.util.OnUnmountBackend
 import shipreq.webapp.client.util.ui.table._
 import shipreq.webapp.client.util.ui.{Editors => E}
-import Routines.CustomReqTypeImpUpd
-import DataImplicits._
 
 object CfgReqType2 {
 
   val tableIO = new RemoteDeltaListener[CustomReqTypeAndId, CustomReqTypeImpUpd.type]
-  import tableIO.{P, D, Arb}
+  import tableIO.{Arb, D, P}
 
   private val prespec = TableSpecBuilder[P](
     FieldSpec[P].noValidation(_.imp, ImplicationRequired)(E.CheckboxEditor))
@@ -41,6 +40,7 @@ object CfgReqType2 {
 
   // TODO doesn't handle static reqs
 
+  // ===================================================================================================================
   private object Render {
     import japgolly.scalajs.react._, vdom.ReactVDom.{Tag => _, _}, all._
 

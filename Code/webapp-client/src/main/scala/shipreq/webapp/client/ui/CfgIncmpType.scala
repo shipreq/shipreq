@@ -1,25 +1,24 @@
-package shipreq.webapp.client
+package shipreq.webapp.client.ui
 
-import shipreq.webapp.base.TextMod
-import shipreq.webapp.base.UiText.FieldNames
 import scalaz.std.option._
 import scalaz.std.string.stringInstance
 import scalaz.std.tuple._
 import shipreq.base.util.TaggedTypes.taggedStringInstance
+import shipreq.webapp.base.TextMod
+import shipreq.webapp.base.UiText.FieldNames
+import shipreq.webapp.base.data.DataImplicits._
+import shipreq.webapp.base.data.Validators.{customIncmpType => V}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.delta.Partition
-import shipreq.webapp.base.protocol.Routines
+import shipreq.webapp.base.protocol.Routines.CustomIncmpTypeCrud
 import shipreq.webapp.client.lib._
 import shipreq.webapp.client.util.ui.table._
 import shipreq.webapp.client.util.ui.{Editors => E}
-import Validators.{customIncmpType => V}
-import Routines.CustomIncmpTypeCrud
-import DataImplicits._
 
 object CfgIncmpType {
 
   val tableIO = new TableIO[CustomIncmpTypeAndId, CustomIncmpTypeCrud, CustomIncmpTypeCrud.type]
-  import tableIO.{P, D}
+  import tableIO.{D, P}
 
   private val prespec = TableSpecBuilder[P](
     FieldSpec[P](_.key.value)(V.key)(E.TextInputEditor),

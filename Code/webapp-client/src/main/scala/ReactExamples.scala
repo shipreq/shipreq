@@ -1,14 +1,10 @@
 package hahaa
 
-import shipreq.webapp.client.ClientData
-import shipreq.webapp.client.lib.{TableIoProps, TableIoArb}
-import shipreq.webapp.client.protocol.{FailureIO, ClientProtocol}
-import shipreq.webapp.base.protocol.Routines
-
-import scala.scalajs.js
-import org.scalajs.dom.{document, window, Node, console, alert}
-import scala.scalajs.js.annotation.{JSExport, JSName}
+import org.scalajs.dom._
 import scalaz.effect.IO
+import shipreq.webapp.base.protocol.Routines
+import shipreq.webapp.client.lib.{TableIoProps, TableIoArb}
+import shipreq.webapp.client.ui._
 
 object ReactExamples {
 
@@ -25,9 +21,7 @@ object ReactExamples {
 
   // ===================================================================================================================
 
-  import japgolly.scalajs.react._
-  import vdom.ReactVDom._
-  import all._
+  import japgolly.scalajs.react._, vdom.ReactVDom._, all._
 
   def example1(mountNode: Node) = {
 
