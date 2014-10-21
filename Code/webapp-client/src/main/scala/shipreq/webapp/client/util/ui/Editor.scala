@@ -93,9 +93,8 @@ object Editors {
         onChange(e.target.checked) >> onEditEnd
 
       div(
-        checkbox(data)(
-          onchange ~~> T._runState(ch),
-          error.isDefined && (cls := "error")),
+        checkbox(data)(onchange ~~> T._runState(ch)),
+        error.isDefined && (cls := "error"),
         error.fold(EmptyTag)(e => div(cls := "errorMsg", e)))
     }
 

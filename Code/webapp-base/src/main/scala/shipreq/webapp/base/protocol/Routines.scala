@@ -61,7 +61,6 @@ object Routines {
   case class ForCfgReqType(projectInit: ProjectInit.Remote,
                            incmpCrud: CustomIncmpTypeCrud.Remote,
                            reqCrud: CustomReqTypeCrud.Remote
-                            )
-//  , reqImpReq: CustomReqTypeImpUpd.Remote)
+                  , reqImpReq: CustomReqTypeImpUpd.Remote)
     extends Group
 }

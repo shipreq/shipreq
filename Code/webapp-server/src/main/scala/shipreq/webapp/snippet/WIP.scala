@@ -34,7 +34,7 @@ class WIP {
   val projectInit = ServerProtocol.routine(Routines.ProjectInit)(_ => p)
 
   // -------------------------------------------------------------------------------------------------------------------
-  val reqCrud = {
+  object reqqq {
 
     def upd(id: CustomReqType.Id, f: CustomReqType => CustomReqType) =
       mod(_.map(c => if (c.id == id) f(c) else c))
@@ -64,21 +64,27 @@ class WIP {
       }).toList
     }
 
-    ServerProtocol.routine(Routines.CustomReqTypeCrud)({
-      case CrudAction.Create(v)    =>
-        val (mnemonic, name, imp) = v
-        val id = CustomReqType.Id(p.customReqTypes.data.map(_.id.value).max + 1)
-        val n = CustomReqType(id, mnemonic, Set.empty, name, imp, Alive)
-        mod(n :: _)
+    val crud =
+      ServerProtocol.routine(Routines.CustomReqTypeCrud)({
+        case CrudAction.Create(v)    =>
+          val (mnemonic, name, imp) = v
+          val id = CustomReqType.Id(p.customReqTypes.data.map(_.id.value).max + 1)
+          val n = CustomReqType(id, mnemonic, Set.empty, name, imp, Alive)
+          mod(n :: _)
 
-      case CrudAction.Update(id, v) =>
-        val (mnemonic, name, imp) = v
-        upd(id, o => CustomReqType(id, mnemonic, (o.oldMnemonics + o.mnemonic) - mnemonic, name, imp, Alive))
+        case CrudAction.Update(id, v) =>
+          val (mnemonic, name, imp) = v
+          upd(id, o => CustomReqType(id, mnemonic, (o.oldMnemonics + o.mnemonic) - mnemonic, name, imp, Alive))
 
-      case CrudAction.Delete(id, HardDel) => mod(_.filterNot(_.id == id))
-      case CrudAction.Delete(id, SoftDel) => upd(id, _.copy(alive = Dead))
-      case CrudAction.Delete(id, Restore) => upd(id, _.copy(alive = Alive))
-    })
+        case CrudAction.Delete(id, HardDel) => mod(_.filterNot(_.id == id))
+        case CrudAction.Delete(id, SoftDel) => upd(id, _.copy(alive = Dead))
+        case CrudAction.Delete(id, Restore) => upd(id, _.copy(alive = Alive))
+      })
+
+    val imptoggle =
+      ServerProtocol.routine(Routines.CustomReqTypeImpUpd){
+        case (id, imp2) => upd(id, _.copy(imp = imp2))
+      }
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -132,7 +138,7 @@ class WIP {
 
   // -------------------------------------------------------------------------------------------------------------------
   def render = {
-    val pg = Routines.ForCfgReqType(projectInit, incmpCrud, reqCrud)
+    val pg = Routines.ForCfgReqType(projectInit, incmpCrud, reqqq.crud, reqqq.imptoggle)
     val js = ServerProtocol.invokeClientHtml(JsEntryPoint.reactExamples)(pg)
     "*" #> js
   }

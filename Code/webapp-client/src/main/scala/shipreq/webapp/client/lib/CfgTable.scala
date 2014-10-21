@@ -3,6 +3,7 @@ package shipreq.webapp.client.lib
 import japgolly.scalajs.react._, vdom.ReactVDom.{Tag => _, _}, all._, ScalazReact._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.DeletionAction._
+import shipreq.webapp.client.util.ui.Util
 import shipreq.webapp.client.util.ui.table._
 import DataImplicits._
 
@@ -41,11 +42,8 @@ final class CfgTable[DI <: DataAndId : IdAccessor] {
       type RowStream = Stream[(RowKey, Tag)]
 
       def row(classArg: String, rs: RowStatus, vv: Cells, ctrls: => Modifier): Tag = {
-        val (cls2, c: Modifier) = rs match {
-          case RowStatus.Sync          => ("sync", ctrls)
-          case RowStatus.Locked        => ("locked", img(cls := "spinner", src := "/assets/loading-spin.svg"))
-          case RowStatus.Failed(retry) => ("failed", button("Retry", onclick ~~> retry))
-        }
+        val cls2 = UiLib.rowStatusRowClass(rs)
+        val c = UiLib.rowStatusCtrls(rs, ctrls)
         tr(cls := s"$classArg $cls2", cells.mklist(vv).map(td(_)), td(c))
       }
 

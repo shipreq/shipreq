@@ -19,6 +19,7 @@ object ReactExamples {
     ClientData.init(routines.projectInit, clientData => IO {
       CfgReqType.Component(TableIoProps(TableIoArb(routines.reqCrud, clientData), false)) render document.getElementById("eg2")
       CfgIncmpType.Component(TableIoProps(TableIoArb(routines.incmpCrud, clientData), false)) render document.getElementById("eg3")
+      CfgReqType2.Component(TableIoArb(routines.reqImpReq, clientData)) render document.getElementById("eg4")
     }).unsafePerformIO()
   }
 

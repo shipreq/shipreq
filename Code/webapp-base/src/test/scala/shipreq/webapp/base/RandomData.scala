@@ -130,7 +130,11 @@ object RandomData {
       remoteName.map(Remote(_, d))
 
     lazy val forCfgReqType =
-      Gen.apply3(ForCfgReqType)(remote(ProjectInit), remote(CustomIncmpTypeCrud), remote(CustomReqTypeCrud))
+      Gen.apply4(ForCfgReqType)(
+        remote(ProjectInit),
+        remote(CustomIncmpTypeCrud),
+        remote(CustomReqTypeCrud),
+        remote(CustomReqTypeImpUpd))
 
     class CrudActionGens[C <: Crudable] (idG: RngGen[C#Id], vG: RngGen[C#V]) {
       import Gen.Covariance._
