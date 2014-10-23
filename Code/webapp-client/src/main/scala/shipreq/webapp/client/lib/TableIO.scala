@@ -3,6 +3,7 @@ package shipreq.webapp.client.lib
 import japgolly.scalajs.react._, vdom.ReactVDom._, all._, ScalazReact._
 import japgolly.scalajs.react.experiment.{Listenable, OnUnmount}
 import shipreq.webapp.client.util.ui.Util.checkbox
+import scalaz.Scalaz.Id
 import scalaz.effect.IO
 import scalaz.syntax.bind._
 import shipreq.webapp.base.data._
@@ -42,7 +43,7 @@ class RemoteDeltaListener[T <: DataAndId, RD <: DescT[_, RemoteDelta]](implicit 
 
   def recvExtUpdates[CP, CB <: OnUnmount, S, Q <: Partition](spec: TableSpecU[_, S, D, _, P, _, _], partition: Q, f: CP => Arb)
                                                             (implicit ei: Q#Id =:= T#Id, ed: Q#Data =:= T#Data) =
-    Listenable.installS[CP, S, CB, LocalDelta](f(_).clientData, recvExtUpdate(spec, partition))
+    Listenable.installS[CP, S, CB, Id, LocalDelta](f(_).clientData, recvExtUpdate(spec, partition))
 }
 
 class TableIO[T <: DataAndId, C <: Crudable, RD <: CrudableCompanion[C]](implicit t_c_id: T#Id =:= C#Id, I: IdAccessor[T])

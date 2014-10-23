@@ -36,7 +36,7 @@ object Deps {
   // -------------------------------------------------------------------------------------------------------------------
 
   object ScalaJS {
-    object React extends Group("0.5.0", "com.github.japgolly.scalajs-react") {
+    object React extends Group("0.5.1-SNAPSHOT", "com.github.japgolly.scalajs-react") {
       val core   = js("core")
       val test   = js("test")
       val scalaz = js("ext-scalaz71")

@@ -38,39 +38,42 @@ object ReactExamples {
     sealed trait MyPage
     object MyPage extends Page[MyPage] {
       val root = Root(RootC)
-      val f2 = path("#f2", Route2C)
-      val f3 = path("#f3", Route3C)
+      val f2 = path("#f2", addBack(Route2C))
+      val f3 = path("#f3", addBack(Route3C))
     }
 
+    def addBack(inner: Renderer[MyPage]): Renderer[MyPage] = router => {
+      val c = ReactComponentB[Unit]("Outer")
+        .render(_ =>
+        div(
+          div(backgroundColor := "#ddd", router.link(MyPage.root)("Back")),
+          inner(router))
+      ).buildU
+      c()
+    }
 
-    def RootC(router: Router[MyPage]): VDom = {
+    def RootC: Renderer[MyPage] = router => {
       val c = ReactComponentB[Unit]("RootC")
-        .render(_ => {
+        .render(_ =>
         div(
           h2("Top Level. Top Secret."),
-          div(a(href := "#f2", "F222222222222222222222222", onclick ~~> router.setIO(MyPage.f2))),
-          div(a(href := "#f3", "F333333333333333333333333")))
-        }).buildU
+          div(router.link(MyPage.f2)("F222222222222222222222222")),
+          div(router.link(MyPage.f3)("F333333333333333333333333")))
+        ).buildU
       c()
     }
 
-    def Route2C(router: Router[MyPage]): VDom = {
+    def Route2C: Renderer[MyPage] = router => {
       val c = ReactComponentB[Unit]("F2")
-        .render(_ => {
-        div(
-          h3("Cool."),
-          div(a("Back", onclick ~~> router.setIO(MyPage.root))))
-      }).buildU
+        .render(_ => div(h3("Cool.")))
+        .buildU
       c()
     }
 
-    def Route3C(router: Router[MyPage]): VDom = {
+    def Route3C: Renderer[MyPage] = router => {
       val c = ReactComponentB[String]("F3")
-        .render(p => {
-        div(
-          h3("Hello ", p),
-          div(a("Go back", onclick ~~> router.setIO(MyPage.root))))
-      }).build
+        .render(p => div(h3("Hello ", p)))
+        .build
       c("hehe cool")
     }
 

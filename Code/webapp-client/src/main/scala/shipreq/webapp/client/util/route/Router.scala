@@ -7,6 +7,7 @@ import org.scalajs.dom._
 import scala.scalajs.js
 import scalaz.{\/, ~>, Free}
 import scalaz.effect.IO
+import scalaz.syntax.bind._
 import scalaz.syntax.std.option._
 import shipreq.webapp.client.util.OnUnmountBackend
 
@@ -14,21 +15,13 @@ final case class BaseUrl(value: String)
 
 object Router {
 
-  // TODO Listenable.installF monkey patch
-  implicit class ListenableObjExt(val a: Listenable.type) extends AnyVal {
-    def installF[P, S, B <: OnUnmount, M[_], A](f: P => Listenable[A], g: A => ReactST[M, S, Unit])(implicit M: M ~> IO, F: ChangeFilter[S]) =
-      Listenable.install[P, S, B, A](f, t => a => t.runStateF(g(a)).unsafePerformIO())
-  }
-
   @inline def component[P](base: BaseUrl, p: Page[P]) =
-    component2(base, p.root, p.paths)
+    componentR(new Router(base, p.root, p.paths))
 
-  def component2[P](base: BaseUrl, root: Root[P], paths: List[Path[P]]) = {
-    val router  = new Router[P](base, root, paths)
-    val rootDom = root renderer router
-    val doms    = paths.map(p => (p: Route[P], p renderer router)).toMap + (root -> rootDom)
-
-    ReactComponentB[Unit](base.value)
+  def componentR[P](router: Router[P]) = {
+    val rootDom = router.root renderer router
+    val doms    = router.paths.map(p => (p: Route[P], p renderer router)).toMap + (router.root -> rootDom)
+    ReactComponentB[Unit]("Router")
       .initialState(router.readIO.unsafePerformIO())
       .backend(_ => new OnUnmountBackend)
       .render((_, route, _) => doms.getOrElse(route, rootDom))
@@ -38,7 +31,7 @@ object Router {
   }
 }
 
-class Router[P](base: BaseUrl, root: Root[P], paths: Seq[Path[P]]) extends Broadcaster[Unit] {
+class Router[P](val base: BaseUrl, val root: Root[P], val paths: Seq[Path[P]]) extends Broadcaster[Unit] {
 
   final type RouteCmdP[A] = RouteCmd[P, A]
   final type RouteProgP[A] = RouteProg[P, A]
@@ -66,25 +59,28 @@ class Router[P](base: BaseUrl, root: Root[P], paths: Seq[Path[P]]) extends Broad
       .flatMap(url => read(url).fold(interpret(_), IO(_)))
 
   def readS =
-    ReactS.modT[IO, Route[P]](_ => readIO) // TODO use setM later
+    ReactS.setM(readIO)
 
   def set(r: Route[P]): RouteProgP[Unit] =
-    PushState(base, r) >> Notify
+    PushState(base, r) >> BroadcastRouteChange
 
   def setIO(r: Route[P]): IO[Unit] =
     interpret(set(r))
 
-  @inline final private def eo = js.Dynamic.literal()
+  def setEH(r: Route[P]): ReactEvent => IO[Unit] =
+    e => preventDefaultIO(e) >> stopPropagationIO(e) >> setIO(r)
+
+  @inline private def eo = js.Dynamic.literal()
+
+  @inline private def mkurl(r: Route[P]) = base.value + r.path
 
   private[this] val cmdinterp: RouteCmdP ~> IO = new (RouteCmdP ~> IO) {
     @inline private def hs = js.Dynamic.literal()
     @inline private def ht = ""
-    @inline private def mkurl(r: Route[P]) = base.value + r.path
-
     override def apply[A](m: RouteCmdP[A]): IO[A] = m match {
-      case PushState(b, r)    => IO{ window.history.pushState   (hs, ht, mkurl(r)); r }
-      case ReplaceState(b, r) => IO{ window.history.replaceState(hs, ht, mkurl(r)); r }
-      case Notify             => IO{ broadcast(()) }
+      case PushState(b, r)      => IO{ window.history.pushState   (hs, ht, mkurl(r)); r }
+      case ReplaceState(b, r)   => IO{ window.history.replaceState(hs, ht, mkurl(r)); r }
+      case BroadcastRouteChange => IO{ broadcast(()) }
     }
   }
 
@@ -100,9 +96,13 @@ class Router[P](base: BaseUrl, root: Root[P], paths: Seq[Path[P]]) extends Broad
       }
     )
   }
+
+  import vdom.ReactVDom._, all._
+  def setonclick(r: Route[P]) = onclick ~~> setEH(r)
+  def link(r: Route[P]) = a(href := mkurl(r), setonclick(r))
 }
 
 sealed trait RouteCmd[+P, A]
 case class PushState[P](b: BaseUrl, r: Route[P]) extends RouteCmd[P, Route[P]]
 case class ReplaceState[P](b: BaseUrl, r: Route[P]) extends RouteCmd[P, Route[P]]
-case object Notify extends RouteCmd[Nothing, Unit]
+case object BroadcastRouteChange extends RouteCmd[Nothing, Unit]
