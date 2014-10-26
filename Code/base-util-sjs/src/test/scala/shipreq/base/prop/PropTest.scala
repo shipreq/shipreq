@@ -11,6 +11,7 @@ object PropTest extends TestSuite {
       case _ => false
     }
     override def hashCode = p.hashCode
+    override def toString = s"Falsy($p, $cause)"
   }
   object Falsy {
     def apply[A](p: Prop[A], cause: List[Falsy[A]]): Falsy[A] =
@@ -61,7 +62,8 @@ object PropTest extends TestSuite {
       'disjunction {
         test(mod235d, 30, None)
         test(mod235d,  4, None)
-        test(mod235d, 31, Some(Falsy(mod235d, List(evenF, mod3F, mod5F))))
+        // test(mod235d, 31, Some(Falsy(mod235d, List(evenF, mod3F, mod5F))))
+        test(mod235d, 31, Some(Falsy(mod235d, Nil)))
       }
       'conjunction {
         test(mod235c, 30, None)
@@ -133,6 +135,7 @@ object PropTest extends TestSuite {
         val c = Falsification(q, List(d, e), Set(1,2,3,4,5,6,7,8,9))
         val f = Falsification[List[Int]](p, List(c.map(x => Forall(x, p.f, false))), Set(List(1,2,3,4,5,6,7,8,9,10)))
         val List(r2,f2) = List(r,f) map norm
+        assert(r2 == f2)
       }
     }
   }

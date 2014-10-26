@@ -1,11 +1,12 @@
 package shipreq.base.util
 
 import java.net.URL
+import scala.annotation.tailrec
 import scala.util.Try
 import scalaz.Memo
 import ScalaExt.StringBuilderExt
 
-final object Util {
+object Util {
 
   @inline def quickSB(f: StringBuilder => Unit): String = {
     val sb = new StringBuilder
@@ -55,4 +56,34 @@ final object Util {
       //case n if n < 256 => "\\x%02x" format n.toInt
       case n => "\\u%04x" format n.toLong
     }.mkString
+
+  def asciiTree[N](root: List[N], show: N => String, leaves: N => List[N], indent: String): String =
+    quickSB(asciiTreeSB(_, root, show, leaves, indent))
+
+  def asciiTreeSB[N](sb: StringBuilder, root: List[N], show: N => String, leaves: N => List[N], indent: String): Unit = {
+    val pm = "│  "
+    val pl = "   "
+    val cm = "├─ "
+    val cl = "└─ "
+    var first = true
+    val im = Memo.mutableHashMapMemo[Int, String](i => "\n" + (" " * i))
+    @inline def loop2 = loop(_, _, _)
+    @tailrec
+    def loop(parentLvlLast: Vector[Boolean], fs: List[N], root: Boolean): Unit = fs match {
+      case Nil =>
+      case h :: t =>
+        if (first) first = false else sb append '\n'
+        var indentlen = sb.length
+        sb append indent
+        for (b <- parentLvlLast) sb.append(if (b) pl else pm)
+        val last = t.isEmpty
+        if (!root) sb.append(if (last) cl else cm)
+        indentlen = sb.length - indentlen
+        sb append show(h).replaceAll("\n(?=[^\n])", im(indentlen))
+        val nextLvl = if (root) Vector.empty[Boolean] else parentLvlLast :+ last
+        loop2(nextLvl, leaves(h), false)
+        loop(parentLvlLast, t, root)
+    }
+    loop(Vector.empty, root, true)
+  }
 }

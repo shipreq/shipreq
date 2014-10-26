@@ -3,7 +3,41 @@ package shipreq.base.prop
 import scala.annotation.{elidable, tailrec}
 import scalaz.{Foldable, NonEmptyList}
 import scalaz.syntax.foldable._
-import shipreq.base.util.Util
+
+object Prop {
+
+  @inline final def apply[A](name: String, t: A => Boolean): Prop[A] =
+    atom2(name, t, identity)
+
+  @inline final def atom2[A](name: String, t: A => Boolean, fmta: A => Any): Prop[A] =
+    atom(name, (a,_) => t(a), fmta)
+
+  @inline final def atom[A](name: String, t: (A, Ctx) => Boolean, fmta: A => Any): Prop[A] =
+    new Atom[A](name, t, fmta)
+
+  def distinct[A, B](name: String, f: A => Stream[B]) =
+    distinct[B](name).contramap(f)
+
+  def distinct[A](name: String) =
+    atom2[Stream[A]](s"each $name is unique", as => {
+      var s = Set.empty[A]
+      !as.exists(a =>
+        s.contains(a) match {
+          case true  => true
+          case false => s += a; false
+        })
+    }, as => {
+      val dups =
+        (Map.empty[A, Int] /: as)((q, a) => q + (a -> (q.getOrElse(a, 0) + 1)))
+          .filter(_._2 > 1)
+          .toStream
+          .sortBy(_._1.toString)
+          .map { case (a, i) => s"$a -> $i"}
+          .mkString("Dups(", ", ", ")")
+      s"$as\n$dups"
+    })
+}
+
 
 sealed abstract class Prop[A] {
   def unary_~                                : Prop[A] = Negation(this)
@@ -75,51 +109,6 @@ final case class Atom[A](name: String, t: (A, Ctx) => Boolean, fmta: A => Any) e
 }
 
 
-final case class Contramap[A, B](p: Prop[B], f: A => B) extends Prop[A] {
-  override def contramap[Z](g: Z => A): Prop[Z] = Contramap(p, f compose g)
-  override def test(a: A, x: Ctx) = p.test(f(a), x)
-  override def falsifyE = (a,x,e) => p.falsifyE(f(a), x, e).map(_.map(_ contramap f))
-  override def toString = p.toString
-  override protected[prop] def fmta = p.fmta compose f
-}
-
-
-final case class Forall[F[_]: Foldable, A, B](p: Prop[B], f: A => F[B], updName: Boolean) extends Prop[A] {
-  override def test(a: A, x: Ctx) = f(a).∀(b => p.test(b, x))
-  override def falsifyE = (a, x, e) =>
-    f(a).foldl(List.empty[Falsification[B]])(q => b => p.falsifyE(b, x, e).toList ::: q) match {
-      case Nil => None
-      case fs@(_ :: _) =>
-        val causes = fs
-          .foldLeft(Map.empty[Prop[B], (List[Falsification[B]], Set[Any])])((q, i) => {
-            val (cs, is) = q.getOrElse(i.p, (List.empty[Falsification[B]], Set.empty[Any]))
-            q + (i.p ->(cs ++ i.cause, is ++ i.inputs))
-          })
-          .toList
-          .map { case (p, (cs, is)) =>
-            val causes2 = cs
-              .foldLeft(Map.empty[Prop[B], Set[Any]])((q, c) =>
-                q + (c.p -> (q.getOrElse(c.p, Set.empty[Any]) ++ c.inputs)))
-              .toList.map { case (p2, is2) => Falsification(p2, Nil, is2) }
-            val inputs2 = causes2.foldLeft(Set.empty[Any])(_ ++ _.inputs)
-            Falsification(p, causes2, inputs2).map[A](Forall(_, f, false))
-          }
-        Some(Falsification(this, causes, Set(a)))
-    }
-  override def toString = if (updName) s"∀{$p}" else p.toString
-  override protected[prop] def fmta = identity
-}
-
-
-final case class Rename[A](name: String, p: Prop[A]) extends Prop[A] {
-  override def rename(n: String): Prop[A] = Rename(n, p)
-  override def test(a: A, x: Ctx) = p.test(a, x)
-  override def falsifyE = (a,b,c) => p.falsifyE(a,b,c).map(_.copy(this))
-  override def toString = name
-  override protected[prop] def fmta = p.fmta
-}
-
-
 final case class Negation[A](p: Prop[A]) extends Prop[A] {
   override def unary_~ = p
   override def test(a: A, x: Ctx) = !p.test(a, x)
@@ -132,7 +121,7 @@ final case class Negation[A](p: Prop[A]) extends Prop[A] {
 final case class Disjunction[A](ps: NonEmptyList[Prop[A]]) extends Prop[A] {
   override def |(q: Prop[A]) = Disjunction(q <:: ps)
   override def test(a: A, x: Ctx) = ps.stream.exists(_.test(a, x))
-  override def falsifyE = falsifyB(ps)
+  override def falsifyE = falsifyN //falsifyB(ps)
   override def toString = ps.stream.map(_.toString).mkString(" ∨ ")
   override protected[prop] def fmta = identity
 }
@@ -164,142 +153,52 @@ final case class Reduction[A](c: Prop[A], a: Prop[A]) extends Prop[A]  {
 
 final case class Biconditional[A](p: Prop[A], q: Prop[A]) extends Prop[A]  {
   override def test(a: A, x: Ctx) = p.test(a, x) == q.test(a, x)
-  override def falsifyE = falsifyN // TODO different than disjunction, breakdown or not?
+  override def falsifyE = falsifyN
   override def toString = s"$p ⇔ $q"
   override protected[prop] def fmta = identity
 }
 
 
-object Prop {
+final case class Rename[A](name: String, p: Prop[A]) extends Prop[A] {
+  override def rename(n: String): Prop[A] = Rename(n, p)
+  override def test(a: A, x: Ctx) = p.test(a, x)
+  override def falsifyE = (a,b,c) => p.falsifyE(a,b,c).map(_.copy(this))
+  override def toString = name
+  override protected[prop] def fmta = p.fmta
+}
 
-  @inline final def apply[A](name: String, t: A => Boolean): Prop[A] =
-    atom2(name, t, identity)
 
-  @inline final def atom2[A](name: String, t: A => Boolean, fmta: A => Any): Prop[A] =
-    atom(name, (a,_) => t(a), fmta)
+final case class Contramap[A, B](p: Prop[B], f: A => B) extends Prop[A] {
+  override def contramap[Z](g: Z => A): Prop[Z] = Contramap(p, f compose g)
+  override def test(a: A, x: Ctx) = p.test(f(a), x)
+  override def falsifyE = (a,x,e) => p.falsifyE(f(a), x, e).map(_.map(_ contramap f))
+  override def toString = p.toString
+  override protected[prop] def fmta = p.fmta compose f
+}
 
-  @inline final def atom[A](name: String, t: (A, Ctx) => Boolean, fmta: A => Any): Prop[A] =
-    new Atom[A](name, t, fmta)
 
-  def distinct[A, B](name: String, f: A => Stream[B]) =
-    distinct[B](name).contramap(f)
-
-  def distinct[A](name: String) =
-    atom2[Stream[A]](s"each $name is unique", as => {
-      var s = Set.empty[A]
-      !as.exists(a =>
-        s.contains(a) match {
-          case true  => true
-          case false => s += a; false
+final case class Forall[F[_]: Foldable, A, B](p: Prop[B], f: A => F[B], updName: Boolean) extends Prop[A] {
+  override def test(a: A, x: Ctx) = f(a).∀(b => p.test(b, x))
+  override def falsifyE = (a, x, e) =>
+    f(a).foldl(List.empty[Falsification[B]])(q => b => p.falsifyE(b, x, e).toList ::: q) match {
+      case Nil => None
+      case fs@(_ :: _) =>
+        val causes = fs
+          .foldLeft(Map.empty[Prop[B], (List[Falsification[B]], Set[Any])])((q, i) => {
+          val (cs, is) = q.getOrElse(i.p, (List.empty[Falsification[B]], Set.empty[Any]))
+          q + (i.p ->(cs ++ i.cause, is ++ i.inputs))
         })
-    }, as => {
-      val dups =
-        (Map.empty[A, Int] /: as)((q, a) => q + (a -> (q.getOrElse(a, 0) + 1)))
-          .filter(_._2 > 1)
-          .toStream
-          .sortBy(_._1.toString)
-          .map { case (a, i) => s"$a -> $i"}
-          .mkString("Dups(", ", ", ")")
-      s"$as\n$dups"
-    })
-}
-
-
-final case class Falsification[A](p: Prop[A], cause: List[Falsification[A]], inputs: Set[Any]) {
-
-  def map[B](f: Prop[A] => Prop[B]): Falsification[B] =
-    Falsification(f(p), cause map (_ map f), inputs)
-
-  // TODO rootCauses is redundant now or what?
-  def rootCauses: NonEmptyList[Prop[A]] = {
-    @tailrec
-    def loop2(fs: List[Falsification[A]], cs: List[Prop[A]]): List[Prop[A]] =
-      fs match {
-        case Nil => cs
-        case h :: t => loop2(t, loop(h, cs).list)
-      }
-    @tailrec
-    def loop(f: Falsification[A], cs: List[Prop[A]]): NonEmptyList[Prop[A]] =
-      f match {
-        case Falsification(p, Nil, _)    => NonEmptyList.nel(p, cs.filterNot(_ == p))
-        case Falsification(_, h :: t, _) => loop(h, loop2(t, cs))
-      }
-    loop(this, Nil)
-  }
-
-  def rootCausesAndInputs: Map[Prop[A], Set[Any]] = {
-    type R = Map[Prop[A], Set[Any]]
-    @inline def addR(r: R, p: Prop[A], i: Set[Any]): R =
-      r + (p -> (r.getOrElse(p, Set.empty[Any]) ++ i))
-    def loop(f: Falsification[A], r: R): R =
-      f match {
-        case Falsification(p, Nil, i)        => addR(r, p, i)
-        case Falsification(_, c@(_ :: _), _) => c.foldLeft(r)((q,c) => loop(c, q))
-      }
-    loop(this, Map.empty)
-  }
-
-  def failureTree = failureTreeI("")
-  def failureTreeI(indent: String): String = Util.quickSB(failureTreeSB(_, indent))
-  def failureTreeSB(sb: StringBuilder, indent: String = ""): Unit =
-    AsciiTree[Falsification[A]](sb, List(this), _.p.toString, _.cause, indent)
-
-  def rootCauseTree = rootCauseTreeI("")
-  def rootCauseTreeI(indent: String): String = Util.quickSB(rootCauseTreeSB(_, indent))
-  def rootCauseTreeSB(sb: StringBuilder, indent: String = ""): Unit = {
-    val m = rootCausesAndInputs
-    trait X
-    case class K(k: Prop[A]) extends X {
-      override val toString = k.toString
+          .toList
+          .map { case (p, (cs, is)) =>
+          val causes2 = cs
+            .foldLeft(Map.empty[Prop[B], Set[Any]])((q, c) =>
+            q + (c.p -> (q.getOrElse(c.p, Set.empty[Any]) ++ c.inputs)))
+            .toList.map { case (p2, is2) => Falsification(p2, Nil, is2) }
+          val inputs2 = causes2.foldLeft(Set.empty[Any])(_ ++ _.inputs)
+          Falsification(p, causes2, inputs2).map[A](Forall(_, f, false))
+        }
+        Some(Falsification(this, causes, Set(a)))
     }
-    case class I(i: Any) extends X {
-      override val toString = i.toString
-    }
-    case object T extends X {
-      override def toString = s"${m.size} props, ${m.values.foldLeft(Set.empty[Any])(_ ++ _).size} inputs."
-    }
-    val keys = m.keys.toList.map(K).sortBy(_.toString)
-    AsciiTree[X](sb, List(T), _.toString, {
-      case T    => keys
-      case K(k) => m(k).map(I).toList.sortBy(_.toString)
-      case I(_) => Nil
-    }, indent)
-  }
-
-  def report = {
-    def is = inputs.toList.sortBy(_.toString) match {
-      case Nil        => "."
-      case h :: Nil   => s" on\ninput: $h"
-      case l@(_ :: _) => s" on\ninputs: ${l.mkString("\n        ")}"
-    }
-    s"Property [$p] failed$is" +
-      s"\n\nRoot causes:\n${rootCauseTreeI("  ")}" +
-      s"\n\nFailure tree:\n${failureTreeI("  ")}"
-  }
-}
-
-object AsciiTree {
-  def apply[N](sb: StringBuilder, root: List[N], show: N => String, leaves: N => List[N], indent: String = ""): Unit = {
-    val pm = "│  "
-    val pl = "   "
-    val cm = "├─ "
-    val cl = "└─ "
-    var first = true
-    def loop(parentLvlLast: Vector[Boolean], fs: List[N], root: Boolean): Unit = fs match {
-      case Nil =>
-      case h :: t =>
-        if (first) first = false else sb append '\n'
-        var indentlen = sb.length
-        sb append indent
-        for (b <- parentLvlLast) sb.append(if (b) pl else pm)
-        val last = t.isEmpty
-        if (!root) sb.append(if (last) cl else cm)
-        indentlen = sb.length - indentlen
-        sb append show(h).replaceAll("\n(?=[^\n])", "\n" + (" " * indentlen))
-        val nextLvl = if (root) Vector.empty[Boolean] else parentLvlLast :+ last
-        loop(nextLvl, leaves(h), false)
-        loop(parentLvlLast, t, root)
-    }
-    loop(Vector.empty, root, true)
-  }
+  override def toString = if (updName) s"∀{$p}" else p.toString
+  override protected[prop] def fmta = identity
 }
