@@ -1,12 +1,17 @@
 package shipreq.webapp.base.prop
 
-import scalaz.{Foldable, State}
+import scalaz.{NonEmptyList, Foldable, State}
+import scalaz.Leibniz.===
 import scalaz.syntax.foldable._
 import shipreq.base.util.Baggy, Baggy._
 import Distinct.Fixer
 
-case class Distinct[A, X, H[_] : Baggy, Y, Z, B](fixer: Fixer[X, H, Y, Z],
-                                                 t: A => (X => State[H[Y], Z]) => State[H[Y], B]) {
+sealed trait DistinctFn[A, B] {
+  def run: A => B
+}
+
+case class Distinct[A, X, H[_] : Baggy, Y, Z, B](
+    fixer: Fixer[X, H, Y, Z], t: A => (X => State[H[Y], Z]) => State[H[Y], B]) extends DistinctFn[A, B]{
 
   final type S[λ] = State[H[Y], λ]
 
@@ -42,7 +47,31 @@ case class Distinct[A, X, H[_] : Baggy, Y, Z, B](fixer: Fixer[X, H, Y, Z],
   def +[C](f: Distinct[B, X, H, Y, Z, C]) =
     Distinct[A, X, H, Y, Z, C](fixer + f.fixer, a => _ => runs(a) flatMap f.runs)
 
-  // TODO doesn't allow (name + id).list[List]
+  def *(f: DistinctFn[A, A])(implicit ev: B === A): DistinctEndo[A] =
+    DistinctEndo(NonEmptyList(ev.subst[({type λ[α] = Distinct[A, X, H, Y, Z, α]})#λ](this), f))
+
+  // def ***[C, D](f: Distinct1[C, D]): Distinct1[(A, C), (B, D)] =
+}
+
+case class DistinctEndo[A](ds: NonEmptyList[DistinctFn[A, A]]) extends DistinctFn[A, A] {
+  def run: A => A =
+    ds.tail.foldLeft(ds.head.run)(_ compose _.run)
+
+  def *(d: DistinctFn[A, A]): DistinctEndo[A] =
+    DistinctEndo(d <:: ds)
+
+  def map[B](f: DistinctFn[A, A] => DistinctFn[B, B]): DistinctEndo[B] =
+    DistinctEndo(ds map f)
+
+  def contramap[B](f: B => A, g: (B, A) => B): DistinctEndo[B] = map {
+    case d@DistinctEndo(_) => d.contramap(f, g)
+    case d@Distinct(_, _)  => d.contramap(f, g)
+  }
+
+  def lift[F[_] : Foldable : Baggy]: DistinctEndo[F[A]] = map {
+    case d@DistinctEndo(_) => d.lift[F]
+    case d@Distinct(_, _)  => d.lift[F]
+  }
 }
 
 // =====================================================================================================================

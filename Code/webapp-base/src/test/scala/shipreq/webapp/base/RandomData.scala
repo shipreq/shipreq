@@ -69,7 +69,7 @@ object RandomData {
 
   lazy val customReqTypes = {
     // TODO ffs just use lenses
-    def dname = Distinct.str.contramap[CustomReqType](_.name, (a, b) => a.copy(name = b)).lift[List]
+    def dname = Distinct.str.contramap[CustomReqType](_.name, (a, b) => a.copy(name = b))
     def dmnemonic = {
       val distm = Distinct.fstr
         .xmap(Mnemonic.apply)(_.value)
@@ -78,10 +78,10 @@ object RandomData {
         .distinct
       val cur = distm.contramap[CustomReqType](_.mnemonic, (a, b) => a.copy(mnemonic = b))
       val old = distm.lift[Set].contramap[CustomReqType](_.oldMnemonics, (a, b) => a.copy(oldMnemonics = b))
-      (cur + old).lift[List]
+      cur + old
     }
-    val d = dname.run compose dmnemonic.run
-    dataSet[CustomReqTypeAndId](customReqType, d)
+    val d = (dname * dmnemonic).lift[List]
+    dataSet[CustomReqTypeAndId](customReqType, d.run)
   }
 
   def dataSet[T <: DataAndId](r: RngGen[T#Data], mod: List[T#Data] => List[T#Data])(implicit i: IdAccessor[T]): RngGen[DataSet[T]] = {
