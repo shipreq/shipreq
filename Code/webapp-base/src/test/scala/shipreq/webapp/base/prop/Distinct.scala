@@ -3,6 +3,7 @@ package shipreq.webapp.base.prop
 import monocle.Lens
 import scalaz.{NonEmptyList, Foldable, State}
 import scalaz.Leibniz.===
+import scalaz.std.stream._
 import scalaz.syntax.foldable._
 import shipreq.base.util.Baggy, Baggy._
 import Distinct.Fixer
@@ -45,6 +46,15 @@ case class Distinct[A, X, H[_] : Baggy, Y, Z, B](
         (h2, fb + b)
       })
     ))
+
+  def liftL[R]: Distinct[(A, R), X, H, Y, Z, (B, R)] =
+    dimap[(A, R), (B, R)](_._1, (a, b) => (b, a._2))
+
+  def liftR[L]: Distinct[(L, A), X, H, Y, Z, (L, B)] =
+    dimap[(L, A), (L, B)](_._2, (a, b) => (a._1, b))
+
+  def liftMapValues[K]: Distinct[Map[K, A], X, H, Y, Z, Map[K, B]] =
+    liftR[K].lift[Stream].dimap[Map[K, A], Map[K, B]](_.toStream, (_, l) => l.toMap)
 
   def compose[C](f: Distinct[C, X, H, Y, Z, A]) = f + this
 
