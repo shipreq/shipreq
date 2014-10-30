@@ -110,7 +110,6 @@ object ShipReq extends Build {
 
       override def project = typicalProject
         .configure(Common.scalaAndScalaJsShared)
-        .dependsOn(propCore, propTest % "test")
     }
 
     // ----------------------------------------------------
