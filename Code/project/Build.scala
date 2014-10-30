@@ -10,11 +10,12 @@ object ShipReq extends Build {
   // Declare modules
   lazy val root = Root.project
 
-  lazy val base        = Base.project
-  lazy val baseDb      = Base.Db.project
-  lazy val baseTest    = Base.Test.project
-  lazy val baseUtil    = Base.Util.project
-  lazy val baseUtilSjs = Base.UtilSjs.project
+  lazy val base         = Base.project
+  lazy val baseDb       = Base.Db.project
+  lazy val baseTest     = Base.Test.project
+  lazy val basePropTest = Base.PropTest.project
+  lazy val baseUtil     = Base.Util.project
+  lazy val baseUtilSjs  = Base.UtilSjs.project
 
   lazy val webapp       = Webapp.project
   lazy val webappBase   = Webapp.Base.project
@@ -65,7 +66,19 @@ object ShipReq extends Build {
   object Base extends Module {
     val dir = "base"
     override def project = typicalProject
-      .aggregate(baseUtilSjs, baseUtil, baseDb, baseTest) // not umbrella cos it shouldn't dependOn
+      .aggregate(baseUtilSjs, baseUtil, baseDb, baseTest, basePropTest) // not umbrella cos it shouldn't dependOn
+
+    // ----------------------------------------------------
+    object PropTest extends Module {
+      val dir = "base-prop-test"
+
+      override def deps =
+        Scalaz.core ++ Monocle.macros ++ RNG.jvm ++ μTest.jvm
+
+      override def project = typicalProject
+        .configure(Common.scalaAndScalaJsShared)
+        .dependsOn(baseUtilSjs)
+    }
 
     // ----------------------------------------------------
     object UtilSjs extends Module {
@@ -222,7 +235,7 @@ object ShipReq extends Build {
 
       override def deps =
         μPickle.jvm ++ Monocle.macros ++
-        testScope(μTest.jvm ++ RNG.jvm)
+        testScope(μTest.jvm)
 
       override def project = typicalProject
         .configure(
@@ -230,7 +243,7 @@ object ShipReq extends Build {
           addCommandAliases(
             "js" -> Client.jsCmd,
             "wd" -> ";up;~js"))
-        .dependsOn(baseUtilSjs)
+        .dependsOn(baseUtilSjs, basePropTest % "test")
     }
 
     // ----------------------------------------------------
@@ -268,16 +281,19 @@ object ShipReq extends Build {
 
       // Recompile shared source rather than depending directly
       // https://github.com/scala-js/scala-js/issues/1067
-      def jsStyleDependsOn(ps: Project*) = (_: Project)
-        .settings(ps.flatMap(p => Seq(
-          unmanagedSourceDirectories in Compile += (scalaSource in Compile in p).value,
-          unmanagedSourceDirectories in Test    += (scalaSource in Test    in p).value
-        )): _*)
+      def jsStyleDependsOn(deps: Project*) =
+        deps.foldLeft(identity[Project]_)(_ compose jsStyleDependsOn1(_, Compile -> Compile, Test -> Test))
+
+      def jsStyleDependsOn1(dep: Project, scopes: (Configuration, Configuration)*) = (_: Project)
+        .settings(scopes.map{ case (a, b) =>
+          unmanagedSourceDirectories in b += (scalaSource in a in dep).value
+        }: _*)
 
       override def project = typicalProject
         .settings(scalaJSSettings: _*)
         .configure(
           jsStyleDependsOn(baseUtilSjs, webappBase),
+          jsStyleDependsOn1(basePropTest, Compile -> Test, Test -> Test),
           testSettings,
           dontInline, // crashes scalac 2.11.2
           prodJsSettings)
