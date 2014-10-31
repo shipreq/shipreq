@@ -9,10 +9,21 @@ import shipreq.webapp.base.protocol._
 import shipreq.base.util.Debug._
 import DataImplicits._
 
+// TODO RandomData is inaccurate in that CorrectionParts aren't applied.
+
 object RandomData {
 
   lazy val id =
     Gen.positivelong
+
+  def shortText1 =
+    Gen.alphanumericstring1.lim(AppConsts.shortTextMaxLength) // TODO reenable after Jawn bugfix: Gen.string1
+
+  def shortText =
+    Gen.alphanumericstring.lim(AppConsts.shortTextMaxLength) // TODO reenable after Jawn bugfix: Gen.string
+
+  lazy val optionalLargeText =
+    shortText1.lim(AppConsts.largeTextMaxLength).option
 
   lazy val rev =
     Gen.positivelong.map(Rev)
@@ -22,10 +33,6 @@ object RandomData {
       r1 <- rev
       r2 <- rev
     } yield if (r1.value <= r2.value) (r1, r2) else (r2, r1)
-
-  lazy val optionalLargeText =
-    Gen.alphanumericstring1 // TODO reenable after Jawn bugfix: Gen.string1
-      .lim(AppConsts.largeTextMaxLength).option
 
   lazy val alive =
     Gen.oneof[Alive](Alive, Dead)
@@ -45,6 +52,7 @@ object RandomData {
   lazy val customIncmpType =
     Gen.apply4(CustomIncmpType.apply)(customIncmpTypeId, refKey, optionalLargeText, alive)
 
+  /** RefKey uniqueness enforced in Project, not here */
   lazy val customIncmpTypes =
     dataSet[CustomIncmpTypeAndId](customIncmpType, identity)
 
@@ -54,8 +62,8 @@ object RandomData {
   lazy val customReqTypeId =
     id map CustomReqType.Id
 
-  lazy val customReqTypeName =
-    Gen.alphanumericstring1 // TODO reenable after Jawn bugfix: Gen.string1
+  def customReqTypeName =
+    shortText1
 
   lazy val customReqType =
     for {
@@ -79,9 +87,12 @@ object RandomData {
     dataSet[CustomReqTypeAndId](customReqType, d.run)
   }
 
+  def distinctId[T <: DataAndId](implicit i: IdAccessor[T]) =
+    Distinct.flong.xmap(i.mkId)(_.value).distinct.contramap[T#Data](i.id, i.setId)
+
   def dataSet[T <: DataAndId](r: RngGen[T#Data], mod: List[T#Data] => List[T#Data])(implicit i: IdAccessor[T]): RngGen[DataSet[T]] = {
-    def distId = Distinct.flong.xmap(i.mkId)(_.value).distinct.contramap[T#Data](i.id, i.setId).lift[List].run
-    val f = mod compose distId
+    val d = distinctId[T].lift[List]
+    val f = mod compose d.run
     Gen.apply2(DataSet[T])(rev, r.list.map(f))
   }
 
