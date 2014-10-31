@@ -10,14 +10,14 @@ trait Gen[A] {
   def subst[AA >: A]: Gen[AA] = map(a => a: AA)
 }
 
-case class Gen2[A](f: SampleSize => EphemeralStream[A]) {
-  def map[B](g: A => B) = Gen2[B](s => f(s) map g)
+case class Gen2[A](f: SampleSize => Rng[EphemeralStream[A]]) {
+  def map[B](g: A => B) = Gen2[B](s => f(s) map (_ map g))
 }
 
 class RngGen[A](val f: GenSize => Rng[A]) extends Gen[A] {
 
   override def gen2(gs: GenSize): Gen2[A] =
-    Gen2[A](ss => f(gs).fill(ss.value).map(EphemeralStream(_: _*)).run.unsafePerformIO())
+    Gen2[A](ss => f(gs).fill(ss.value).map(EphemeralStream(_: _*)))
 
   override def map[B](g: A => B): RngGen[B] = new RngGen[B](s => f(s) map g)
   override def subst[B >: A]    : RngGen[B] = map(a => a: B)

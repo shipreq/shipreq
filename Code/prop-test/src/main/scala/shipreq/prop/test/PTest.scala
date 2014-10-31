@@ -1,6 +1,7 @@
 package shipreq.prop.test
 
-import scalaz.EphemeralStream
+import com.nicta.rng.Rng
+import scalaz.EphemeralStream, EphemeralStream._
 import shipreq.prop._
 
 sealed trait Result[+A] {
@@ -118,14 +119,15 @@ object PTest {
 
   def apply[A](p: Prop[A], gen: Gen[A], S: Settings): RunState[A] = {
     if (S.debug) println(s"\n$p")
-    val data =
-      EphemeralStream((if (S.sizeDist.isEmpty) Seq((1D, 1D)) else S.sizeDist): _*)
-      .flatMap { case (sr, gr) =>
+    val sizedist = if (S.sizeDist.isEmpty) Seq((1D, 1D)) else S.sizeDist
+    val data = sizedist.foldLeft(Rng.insert(EphemeralStream[A])){ case (q, (sr, gr)) =>
         val s = S.sampleSize.map(v => (v * sr + 0.5).toInt max 1)
         val g = S.genSize.map(v => (v * gr + 0.5).toInt max 0)
         if (S.debug) println(s"Generating ${s.value} samples @ sz ${g.value}...")
-        gen.gen2(g).f(s).take(s.value)
+        val x = gen.gen2(g).f(s).map(_ take s.value)
+        x.flatMap(y => q.map(_ ++ y))
       }
+      .run.unsafePerformIO()
     S.executor.run(p, data, S)
   }
 
