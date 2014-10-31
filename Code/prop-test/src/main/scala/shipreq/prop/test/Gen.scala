@@ -1,8 +1,7 @@
 package shipreq.prop.test
 
 import com.nicta.rng.{Rng, Size}
-import scalaz._, Leibniz.===
-import shipreq.prop._
+import scalaz._, Scalaz._, Validation._
 
 trait Gen[A] {
   def gen2(gs: GenSize): Gen2[A]
@@ -27,7 +26,6 @@ class RngGen[A](val f: GenSize => Rng[A]) extends Gen[A] {
       // This seems crazy to be but it's how scala.Future does it
       throw new NoSuchElementException("RngGen.withFilter predicate is not satisfied"))
 
-
   def mapr[B](g: Rng[A] => Rng[B])    = new RngGen[B](g compose f)
   def flatMap[B](g: A => RngGen[B])   = new RngGen[B](s => f(s).flatMap(a => g(a).f(s)))
   def flatMapS[B](g: A => RngGenS[B]) = new RngGenS[B](s => f(s).flatMap(a => g(a).f(s)))
@@ -38,6 +36,9 @@ class RngGen[A](val f: GenSize => Rng[A]) extends Gen[A] {
   private def sizeOp[B, C](g: Rng[A] => Size => Rng[B], h: B => C): RngGenS[C] =
     new RngGenS(s => g(f(s))(s.value) map h)
 
+  private def combrng[B, C](b: RngGen[B], c: (Rng[A], Rng[B]) => Rng[C]): RngGen[C] =
+    new RngGen(s => c(f(s), b.f(s)))
+
   def fill(n: Int)   : RngGen[List[A]]              = mapr(_ fill n)
   def list           : RngGenS[List[A]]             = sizeOp(_.list)
   def list1          : RngGenS[NonEmptyList[A]]     = sizeOp(_.list1)
@@ -46,13 +47,13 @@ class RngGen[A](val f: GenSize => Rng[A]) extends Gen[A] {
   def stream[AA >: A]: RngGenS[EphemeralStream[AA]] = sizeOp(_.stream)
   def option         : RngGen[Option[A]]            = mapr(_.option)
 
-  //  def ***[X](x: Rng[X]): Rng[(A, X)] =
-  //  def either[X](x: Rng[X]): Rng[A \/ X] =
-  //  def \/[X](x: Rng[X]): Rng[A \/ X] =
-  //  def validation[X](x: Rng[X]): Rng[A \?/ X] =
-  //  def \?/[X](x: Rng[X]): Rng[A \?/ X] =
-  //  def +++[X](x: Rng[X]): Rng[A \/ X] =
-  //  def eitherS[X](x: Rng[X]): Rng[Either[A, X]] =
+  def ***       [X](x: RngGen[X]): RngGen[(A, X)]       = combrng[X, (A, X)](x, _ *** _)
+  def either    [X](x: RngGen[X]): RngGen[A \/ X]       = combrng[X, A \/ X](x, _ either _)
+  def \/        [X](x: RngGen[X]): RngGen[A \/ X]       = combrng[X, A \/ X](x, _ \/ _)
+  def +++       [X](x: RngGen[X]): RngGen[A \/ X]       = combrng[X, A \/ X](x, _ +++ _)
+  def validation[X](x: RngGen[X]): RngGen[A \?/ X]      = combrng[X, A \?/ X](x, _ validation _)
+  def \?/       [X](x: RngGen[X]): RngGen[A \?/ X]      = combrng[X, A \?/ X](x, _ \?/ _)
+  def eitherS   [X](x: RngGen[X]): RngGen[Either[A, X]] = combrng[X, Either[A, X]](x, _ eitherS _)
 }
 
 class RngGenS[A](f: GenSize => Rng[A]) extends RngGen(f) {
@@ -143,19 +144,31 @@ object Gen {
   def oneof[A]     (a: A, as: A*)          : RngGen[A]      = Rng.oneof(a, as: _*).gen
   def oneofV[A]    (x: OneAnd[Vector, A])  : RngGen[A]      = Rng.oneofV(x).gen
 
-  def sequence           [T[_], A](x: T[RngGen[A]])(implicit T: Traverse[T]): RngGen[T[A]] = T.sequence(x)
+  def pair[A, B](A: RngGen[A], B: RngGen[B]): RngGen[(A, B)] = tuple2(A, B)
+  def triple[A, B, C](A: RngGen[A], B: RngGen[B], C: RngGen[C]): RngGen[(A, B, C)] = tuple3(A, B, C)
 
-//  def pair               [A, B](a: Gen[A], b: Gen[B]): Gen[(A, B)] = Rng.pair.gen
-//  def triple             [A, B, C](a: Gen[A], b: Gen[B], c: Gen[C]): Gen[(A, B, C)] = Rng.triple.gen
-//  def sequence           [T[_], A](x: T[Gen[A]])(implicit T: Traverse[T]): Gen[T[A]] = Rng.sequence.gen
-//  def sequencePair       [X, A](x: X, r: Gen[A]): Gen[(X, A)] = Rng.sequencePair.gen
-//  def distribute         [F[_], B](a: Gen[F[B]])(implicit D: Distributive[F]): F[Gen[B]] = Rng.distribute.gen
-//  def distributeR        [A, B](a: Gen[A => B]): A => Gen[B] = Rng.distributeR.gen
-//  def distributeRK       [A, B](a: Gen[A => B]): Kleisli[Gen, A, B] = Rng.distributeRK.gen
-//  def distributeK        [F[_]: Distributive, A, B](a: Gen[Kleisli[F, A, B]]): Kleisli[F, A, Gen[B]] = Rng.distributeK.gen
-//  def frequencyL         [A](x: NonEmptyList[(Int, Gen[A])]): Gen[A] = Rng.frequencyL.gen
-//  def pick               (n: Int, l: NonEmptyList[(Int, Gen[A])]): Gen[A] = Rng.pick.gen
-//  def frequency          [A](x: (Int, Gen[A]), xs: (Int, Gen[A])*): Gen[A] = Rng.frequency.gen
+  def sequence[T[_], A](x: T[RngGen[A]])(implicit T: Traverse[T]): RngGen[T[A]] = T.sequence(x)
+
+  def sequencePair[X, A](x: X, r: RngGen[A]): RngGen[(X, A)] = sequence[({type f[x] = (X, x)})#f, A]((x, r))
+
+  def distribute  [F[_], B]   (a: RngGen[F[B]])(implicit D: Distributive[F])            : F[RngGen[B]]             = D.cosequence(a)
+  def distributeR [A, B]      (a: RngGen[A => B])                                       : A => RngGen[B]           = distribute[({type f[x] = A => x})#f, B](a)
+  def distributeRK[A, B]      (a: RngGen[A => B])                                       : Kleisli[RngGen, A, B]    = Kleisli(distributeR(a))
+  def distributeK [F[_], A, B](a: RngGen[Kleisli[F, A, B]])(implicit D: Distributive[F]): Kleisli[F, A, RngGen[B]] = distribute[({type f[x] = Kleisli[F, A, x]})#f, B](a)
+
+  private def freqRng[A](s: GenSize): ((Int, RngGen[A])) => (Int, Rng[A]) =
+    x => (x._1, x._2.f(s))
+
+  def frequency[A](x: (Int, RngGen[A]), xs: (Int, RngGen[A])*): RngGen[A] =
+    new RngGen[A](s => {
+      val f = freqRng[A](s)
+      Rng.frequency(f(x), xs.map(f): _*)
+    })
+
+  def frequencyL[A](l: NonEmptyList[(Int, RngGen[A])]): RngGen[A] =
+    new RngGen[A](s => Rng.frequencyL(l map freqRng[A](s)))
+
+  // -------------------------------------------------------------------------------------------------------------------
 
   def oneofG[A](a: RngGen[A], as: RngGen[A]*): RngGen[A] =
     Rng.oneof(a, as: _*).gen.flatMap(r => r)
