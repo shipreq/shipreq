@@ -1,26 +1,24 @@
 package shipreq.prop.test
 
-import com.nicta.rng.Rng
-import scalaz.effect.IO
-import scalaz.EphemeralStream, EphemeralStream._
+import scalaz.EphemeralStream
 import shipreq.prop._
 
-sealed trait Result[+A] {
+sealed trait Result[A] {
   def success: Boolean = this match {
-    case Satisfied | Proved => true
-    case Falsified(_)       => false
+    case Satisfied() | Proved()        => true
+    case Falsified(_, _) | Error(_, _) => false
   }
 }
-case object Satisfied             extends Result[Nothing]
-case object Proved                extends Result[Nothing]
-case class  Falsified[+A](a: A)   extends Result[A]
-//case class  Error(reason: String) extends Result[Nothing]
+final case class Satisfied[A]()                          extends Result[A]
+final case class Proved   [A]()                          extends Result[A]
+final case class Falsified[A](a: A, f: Falsification[A]) extends Result[A]
+final case class Error    [A](a: A, e: Throwable)        extends Result[A]
 
-case class RunState[+A](runs: Int, result: Result[A])
+case class RunState[A](runs: Int, result: Result[A])
 object RunState {
   implicit def RunStateToResult[A](r: RunState[A]): Result[A] = r.result
 
-  def empty[A] = RunState[A](0, Satisfied)
+  def empty[A] = RunState[A](0, Satisfied())
 }
 
 object PTest {
@@ -50,7 +48,7 @@ object PTest {
 
   def testN[A](p: Prop[A], data: EphemeralStream[A], runInc: () => Int, S: Settings): RunState[A] = {
     val it = EphemeralStream.toIterable(data).iterator
-    var rs = RunState[A](0, Satisfied)
+    var rs = RunState.empty[A]
     while (rs.success && it.hasNext) {
       val a = it.next()
       rs = RunState(runInc(), test1(p, a))
@@ -76,8 +74,8 @@ object PTest {
 
   def test1[A](p: Prop[A], a: A): Result[A] =
     try {
-      if (p.test(a)) Satisfied else Falsified(a)
+      p.falsify(a).fold(Satisfied(): Result[A])(Falsified(a, _))
     } catch {
-      case _: Throwable => Falsified(a)
+      case e: Throwable => Error(a, e)
     }
 }
