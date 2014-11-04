@@ -1,11 +1,12 @@
 package shipreq.prop.test
 
 import java.util.concurrent._, atomic.AtomicInteger
-import scalaz.EphemeralStream
-import scalaz.effect.IO
 import shipreq.prop.Prop
 import ParallelExecutor._
 import PTest._
+import Executor.Data
+
+// TODO data SampleSize = TotalSamples(n) | Fn(qty|%, gensize|%) | PerWorker(sampleSize)
 
 object ParallelExecutor {
   def defaultThreadCount = 1.max(Runtime.getRuntime.availableProcessors - 1)
@@ -13,7 +14,7 @@ object ParallelExecutor {
 
 case class ParallelExecutor(workers: Int = defaultThreadCount) extends Executor {
 
-  override def run[A](p: Prop[A], g: SampleSize => IO[EphemeralStream[A]], S: Settings): RunState[A] = {
+  override def run[A](p: Prop[A], g: Data[A], S: Settings): RunState[A] = {
 
     val sss = {
       var rem = S.sampleSize.value

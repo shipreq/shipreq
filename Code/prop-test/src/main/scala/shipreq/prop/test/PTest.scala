@@ -1,7 +1,9 @@
 package shipreq.prop.test
 
-import scalaz.EphemeralStream
+import com.nicta.rng.Rng
+import scalaz.{-\/, \/-, EphemeralStream}
 import shipreq.prop._
+import Executor.Data
 
 sealed trait Result[A] {
   def success: Boolean = this match {
@@ -25,18 +27,33 @@ object PTest {
 
   def apply[A](p: Prop[A], gen: Gen[A], S: Settings): RunState[A] = {
     if (S.debug) println(s"\n$p")
-    /*
-    val sizedist = if (S.sizeDist.isEmpty) Seq((1D, 1D)) else S.sizeDist
-    val data = sizedist.foldLeft(Rng.insert(EphemeralStream[A])){ case (q, (sr, gr)) =>
-        val s = S.sampleSize.map(v => (v * sr + 0.5).toInt max 1)
-        val g = S.genSize.map(v => (v * gr + 0.5).toInt max 0)
-        if (S.debug) println(s"Generating ${s.value} samples @ sz ${g.value}...")
-        val x = gen.gen2(g).f(s).map(_ take s.value)
-        x.flatMap(y => q.map(_ ++ y))
+
+    def samples(s: SampleSize, g: GenSize): Rng[EphemeralStream[A]] = {
+      if (S.debug) println(s"Generating ${s.value} samples @ sz ${g.value}...")
+      gen.gen2(g).f(s).map(_ take s.value)
+    }
+
+    def sampleSizePerc(s: SampleSize, p: Double): SampleSize =
+      s.map(v => (v * p + 0.5).toInt max 1)
+
+    def genSizePerc(s: GenSize, p: Double): GenSize =
+      s.map(v => (v * p + 0.5).toInt max 0)
+
+    val data: Data[A] = s =>
+      if (S.sizeDist.isEmpty)
+        samples(s, S.genSize).run
+      else {
+        val total = S.sizeDist.foldLeft(0)(_ + _._1).toDouble
+        def ssPerc(i: Int) = i.toDouble / total
+        S.sizeDist.toStream.map {
+          case (si, -\/(gp)) => samples(sampleSizePerc(s, ssPerc(si)), genSizePerc(S.genSize, gp))
+          case (si, \/-(gs)) => samples(sampleSizePerc(s, ssPerc(si)), gs)
+        }
+        .foldLeft(Rng insert EphemeralStream[A])((a, b) => b.flatMap(c => a.map(_ ++ c)))
+        .run
       }
-      .run.unsafePerformIO()
-      */
-    S.executor.run(p, s => gen.gen2(S.genSize).f(s).map(_ take s.value).run, S)
+
+    S.executor.run(p, data, S)
   }
 
   // exhaustive
