@@ -106,13 +106,13 @@ object RandomData {
       case Partition.CustomReqTypes   => customReqTypesDG
     }
 
-    def generic[T <: Partition](p: T)(ir: RngGen[T#Id], dr: RngGen[T#Data]): RngGen[RemoteDeltaG] =
+    def generic[T <: Partition](p: T)(ir: RngGen[T#Id], dr: RngGen[T#Data])(implicit I: IdAccessor[T#DI]): RngGen[RemoteDeltaG] =
       for {
-        (r1, r2) <- revPair
-        i        <- ir.list
-        d        <- dr.list
+        d        ← dr.list
+        i0       ← ir.set
+        i        = d.foldLeft(i0)(_ - _.id)
+        (r1, r2) ← revPair
       } yield RemoteDeltaG(p, r1, r2)(i, d)
-    //} yield RemoteDeltaG(Partition.CustomReqTypes, r1, r2)(ids -- cs.map(_.id), cs) // TODO make set
 
     lazy val customIncmpTypesDG =
       generic(Partition.CustomIncmpTypes)(customIncmpTypeId, customIncmpType)

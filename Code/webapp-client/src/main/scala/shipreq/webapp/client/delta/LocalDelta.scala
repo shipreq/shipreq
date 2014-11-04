@@ -3,7 +3,7 @@ package shipreq.webapp.client.delta
 import scala.annotation.tailrec
 import shipreq.webapp.base.data.delta.Partition
 
-case class LocalDeltaP[P <: Partition](del: List[P#Id],
+case class LocalDeltaP[P <: Partition](del: Set[P#Id],
                                        upd: List[P#Data]) {
 
   def deltaG(p: P): LocalDeltaG = new LocalDeltaR(p, this)
@@ -34,6 +34,6 @@ object LocalDelta {
         case Some(ev) => ev.subst(h.deltaP)
         case None     => filter(p, t)
       }
-    case Nil => LocalDeltaP(Nil, Nil)
+    case Nil => LocalDeltaP[P](Set.empty, Nil)
   }
 }

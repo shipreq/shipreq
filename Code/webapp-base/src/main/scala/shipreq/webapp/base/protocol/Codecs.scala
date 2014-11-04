@@ -39,6 +39,24 @@ private[protocol] object Codec {
     })
   }
 
+  implicit class ReaderExt[T](val r: Reader[T]) extends AnyVal {
+    @inline def readSet[TT >: T](s: Seq[Js.Value]): Set[TT] =
+      foldlSeq[Set[TT]](s, Set.empty)(_ + _)
+
+    @inline def readList(s: Seq[Js.Value]): List[T] =
+      foldlSeq[List[T]](s, Nil)((a, b) => b :: a)
+      // foldrSeq[List[T]](s, Nil)(_ :: _)
+
+    @inline def foldlSeq[B](s: Seq[Js.Value], z: B)(f: (B, T) => B): B =
+      s.foldLeft(z)((b, j) => f(b, r read0 j))
+
+    @inline def foldrSeq[B](s: Seq[Js.Value], z: B)(f: (T, B) => B): B =
+      s.foldRight(z)((j, b) => f(r read0 j, b))
+  }
+
+  def writeIterable[T](ts: Iterable[T])(implicit W: Writer[T]) =
+    Js.Arr(ts.foldLeft(List.empty[Js.Value])((q,i) => W.write0(i) :: q): _*)
+
   def caseclass1[A, Z](y: A => Z, u: Z => Option[A])(implicit RA: Reader[A], WA: Writer[A]) =
     ReadWriter[Z](z => WA write u(z).get, RA.read andThen y)
 
@@ -140,22 +158,22 @@ object DeltaCodecs {
   implicit def remoteDeltaGW = Writer[RemoteDeltaG](r => {
     import r.p.{wi, wd}
     val dp = r.forceDeltaP[r.p.type](r.p)
-    val a = partitions write r.p
-    val b = rev write r.from
-    val c = rev write r.to
-    val d = Js.Arr(dp.del.map(wi.write): _*)
-    val e = Js.Arr(dp.upd.map(wd.write): _*)
+    val a = partitions write0 r.p
+    val b = rev write0 r.from
+    val c = rev write0 r.to
+    val d = writeIterable(dp.del)(wi)
+    val e = writeIterable(dp.upd)(wd)
     Js.Arr(a, b, c, d, e)
   })
 
   implicit def remoteDeltaGR = Reader[RemoteDeltaG]({
     case Js.Arr(a, b, c, Js.Arr(d@_*), Js.Arr(e@_*)) =>
-      val p = partitions read a
-      val f = rev read b
-      val t = rev read c
-      val x = d.map(p.ri.read).toList
-      val y = e.map(p.rd.read).toList
-      RemoteDeltaG(p, f, t)(x, y)
+      val p = partitions read0 a
+      val f = rev read0 b
+      val t = rev read0 c
+      val x = p.ri.readSet(d)
+      val y = p.rd.readList(e)
+      RemoteDeltaG[p.type](p, f, t)(x, y)
   })
 
 }

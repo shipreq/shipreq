@@ -58,7 +58,7 @@ class WIP {
       mod1(f).map(rev => {
         val m1 = p1.customReqTypes.data.map(c => c.id -> c).toMap
         val m2 = p.customReqTypes.data.map(c => c.id -> c).toMap
-        val delIds = (m1.keySet -- m2.keySet).toList
+        val delIds = m1.keySet -- m2.keySet
         val updates = m2.toStream.filter{ case (k,v) => !m1.contains(k) || m1(k) != v }.map(_._2).toList
         RemoteDeltaG(Partition.CustomReqTypes, rev, rev)(delIds, updates)
       }).toList
@@ -113,7 +113,7 @@ class WIP {
       mod1(f).map(rev => {
         val m1 = p1.customIncmpTypes.data.map(c => c.id -> c).toMap
         val m2 = p.customIncmpTypes.data.map(c => c.id -> c).toMap
-        val delIds = (m1.keySet -- m2.keySet).toList
+        val delIds = m1.keySet -- m2.keySet
         val updates = m2.toStream.filter{ case (k,v) => !m1.contains(k) || m1(k) != v }.map(_._2).toList
         RemoteDeltaG(Partition.CustomIncmpTypes, rev, rev)(delIds, updates)
       }).toList
