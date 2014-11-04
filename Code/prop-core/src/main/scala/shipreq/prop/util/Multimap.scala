@@ -34,16 +34,22 @@ final class Multimap[K, L[_], V](val m: Map[K, L[V]])(implicit L: MultiValues[L]
   def addPair (kv: (K, V))            = copy(m add kv)
   def addPairs(kvs: (K, V)*)          = copy(kvs.foldLeft(m)(_ add _))
   def addvs   (k: K, vs: L[V])        = mod(k, _ addn vs)
-  def addks   (ks: L[K], v: V)        = copy(ks.foldl(m)(_.add(_, v)))
+  def addks   (ks: L[K], v: V)        = copy(m.addks(ks, v))
   def del     (k: K, v: V)            = mod(k, _ del1 v)
   def delk    (k: K)                  = copy(m - k)
-  def delv    (v: V)                  = copy(m.mapValues(_ del1 v))
+  def delv    (v: V)                  = copy(m delv v)
   def delks   (ks: L[K])              = copy(ks.foldl(m)(_ - _))
   def delvs   (vs: L[V])              = copy(m.mapValues(_ deln vs))
-  def set     (k: K, vs: L[V])        = mod(k, _ => vs)
+  def setks   (ks: L[K], v: V)        = copy(m.delv(v).addks(ks, v))
+  def setvs   (k: K, vs: L[V])        = mod(k, _ => vs)
   def reverse                         = Multimap.reverse(m)
 
-  @inline def delbi(a: K, b: V)(implicit e: K =:= V, f: V =:= K) =
+  /** Removes x entirely. Same as delk(x).delv(x) */
+  def delkv(x: K)(implicit ev: K =:= V) =
+    copy((m - x) delv x)
+
+  /** Removes a↔b and b↔a. */
+  def unlink(a: K, b: V)(implicit e: K =:= V, f: V =:= K) =
     copy(m.mod(a, _ del1 b).mod(b, _ del1 a))
 
   def streamKV: Stream[(K, V)] =
@@ -59,9 +65,11 @@ object Multimap {
 
   private[util] object Internal {
     implicit final class MultiMapExt[K, L[_], V](val m: Map[K, L[V]]) extends AnyVal {
+      @inline def delv(v: V)                (implicit L: MultiValues[L]): Map[K, L[V]] = m.mapValues(_ del1 v)
       @inline def getOrEmpty(k: K)          (implicit L: MultiValues[L]): L[V]         = m.getOrElse(k, L.empty)
       @inline def add(kv: (K, V))           (implicit L: MultiValues[L]): Map[K, L[V]] = mod(kv._1, _ add1 kv._2)
       @inline def add(k: K, v: V)           (implicit L: MultiValues[L]): Map[K, L[V]] = mod(k, _ add1 v)
+      @inline def addks(ks: L[K], v: V)     (implicit L: MultiValues[L]): Map[K, L[V]] = ks.foldl(m)(_.add(_, v))
       @inline def mod(k: K, f: L[V] => L[V])(implicit L: MultiValues[L]): Map[K, L[V]] = put(k, f(getOrEmpty(k)))
       @inline def put(k: K, v: L[V])        (implicit L: MultiValues[L]): Map[K, L[V]] =
         if (v.isEmpty) m - k else m + (k -> v)
