@@ -4,7 +4,7 @@ import scalaz.NonEmptyList
 import upickle.{Reader, Writer}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.delta.RemoteDelta
-import Codec._, DataCodecs._, DeltaCodecs._
+import Codec._, DataCodecs._, DeltaCodecs._, RoutineCodecs._
 import Routine._
 
 trait Crudable {

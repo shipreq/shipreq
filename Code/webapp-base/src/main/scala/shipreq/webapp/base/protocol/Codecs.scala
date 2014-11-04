@@ -94,24 +94,6 @@ private[protocol] object Codec {
     val w = Tuple6W[A, B, C, D, E, F].write0
     ReadWriter[Z](z => w(u(z).get), r andThen y.tupled)
   }
-
-  // TODO Move remoteRoutine, deletionAction, crudable out of Codecs
-  def remoteRoutine[R <: Routine.Desc](d: R) = ReadWriter[d.Remote](
-    r => Js.Str(r.n),
-    {case Js.Str(n) => Routine.Remote(n, d) })
-
-  implicit def deletionAction = enum(DeletionAction.values)
-
-  implicit def crudable[C <: Crudable](implicit WI: Writer[C#Id], RI: Reader[C#Id], WV: Writer[C#V], RV: Reader[C#V]): ReadWriter[CrudAction[C]] =
-    ReadWriter[CrudAction[C]]({
-      case CrudAction.Create(v)    => Js.Arr(WV write0 v)
-      case CrudAction.Update(i, v) => Js.Arr(WI write0 i, WV write0 v)
-      case CrudAction.Delete(i, a) => Js.Arr(WI write0 i, deletionAction write0 a, Js.Arr())
-    }, {
-      case Js.Arr(v)       => CrudAction.Create(RV read0 v)
-      case Js.Arr(i, v)    => CrudAction.Update(RI read0 i, RV read0 v)
-      case Js.Arr(i, a, _) => CrudAction.Delete(RI read0 i, deletionAction read0 a)
-    })
 }
 import Codec._
 
@@ -137,15 +119,33 @@ object DataCodecs {
 }
 
 // =====================================================================================================================
+object RoutineCodecs {
+
+  def remoteRoutine[R <: Routine.Desc](d: R) = ReadWriter[d.Remote](
+    r => Js.Str(r.n),
+    {case Js.Str(n) => Routine.Remote(n, d) })
+
+  implicit def deletionAction = enum(DeletionAction.values)
+
+  implicit def crudable[C <: Crudable](implicit WI: Writer[C#Id], RI: Reader[C#Id], WV: Writer[C#V], RV: Reader[C#V]): ReadWriter[CrudAction[C]] =
+    ReadWriter[CrudAction[C]]({
+      case CrudAction.Create(v)    => Js.Arr(WV write0 v)
+      case CrudAction.Update(i, v) => Js.Arr(WI write0 i, WV write0 v)
+      case CrudAction.Delete(i, a) => Js.Arr(WI write0 i, deletionAction write0 a, Js.Arr())
+    }, {
+      case Js.Arr(v)       => CrudAction.Create(RV read0 v)
+      case Js.Arr(i, v)    => CrudAction.Update(RI read0 i, RV read0 v)
+      case Js.Arr(i, a, _) => CrudAction.Delete(RI read0 i, deletionAction read0 a)
+    })
+}
+
+// =====================================================================================================================
 object RoutineGroupCodecs {
   import Routines._
 
 //  implicit def customReqTypeCrud = crudable[CustomReqTypeCrud]
 
-//  val x = implicitly[Reader[CustomReqTypeCrud.Desc.Remote]]
   implicit def routinesForCfgReqType = caseclass4(ForCfgReqType.apply, ForCfgReqType.unapply)
-//  implicit def routinesForCfgReqTypeR: Reader[ForCfgReqType.type] = implicitly
-//  implicit def routinesForCfgReqTypeW: Writer[ForCfgReqType.type] = implicitly
 }
 
 // =====================================================================================================================
@@ -175,5 +175,4 @@ object DeltaCodecs {
       val y = p.rd.readList(e)
       RemoteDeltaG[p.type](p, f, t)(x, y)
   })
-
 }
