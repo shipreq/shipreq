@@ -1,30 +1,38 @@
 digraph D {
 
 FieldSpec -> TableSpecBuilder [label="U⁺ = ΣOₙ⁻" taillabel="n" headlabel="1       "]
-TableSpecBuilder -> TableSpecBuilder_B2
-TableSpecBuilder_B2 -> FieldSpecR [label="R⁺ = Option[D⁻]" taillabel="1  " headlabel="n  "]
-TableSpecBuilder_B2 -> RowSpec
-TableSpecBuilder_B2 -> TableSpecB [label="II⁺ = ΣIₙ⁻\nVV⁺ = (V⁻)ⁿ"]
+TableSpecBuilder -> TablePreSpec
+TablePreSpec -> FieldSpecR [label="R⁺ = Option[D⁻]" taillabel="1  " headlabel="n  "]
+TablePreSpec -> RowSpec
+TablePreSpec -> TableSpecB [label="II⁺ = ΣIₙ⁻\nVV⁺ = (V⁻)ⁿ"]
 FieldSpecR -> RowSpec [constraint=false taillabel="n" headlabel="1"]
-TableSpecB -> TableSpec
-RowSpec -> RowRenderer [label="II⁺ = ΣIₙ⁻\nVV⁺ = (V⁻)ⁿ"]
-RowRenderer -> TableSpecB
+RowSpec -> MultiFieldRenderer [label="II⁺ = ΣIₙ⁻\nVV⁺ = (V⁻)ⁿ"]
+MultiFieldRenderer -> TableSpecB
+MultiFieldRenderer -> MultiFieldRenderer2 [label=".prepare"]
+
+edge [style=dashed]
+TableSpecB -> TableSpecU [label="(U,P) ⇒ SaveNeed\nUpdateIO[α,S,D,U,P]"]
+TableSpecU -> TableSpecC [label="CreateIO[α,S,U]"]
+TableSpecU -> TableSpecD [label="P ⇒ Alive\nDelIO[α,D]"]
 
 RowSpec             [label="RowSpecⁿ\n[S,R,U,P,V,Iₙ,Cₙ,Oₙ]"]
 FieldSpec           [label="FieldSpec\n[P,V,I,C,O]"]
 FieldSpecR          [label="FieldSpecR\n[S,R,P,V,I,C,O]"]
 TableSpecBuilder    [label="TableSpecBuilderⁿ\n[P,U,V,Iₙ,Cₙ,Oₙ]"]
-TableSpecBuilder_B2 [label="TableSpecBuilderⁿ.B2\n[P,U,V,Iₙ,Cₙ,Oₙ]\n[D]\nS = SavedAndUnsaved[D,P,ΣIₙ]"]
+TablePreSpec        [label="TablePreSpecⁿ\n[P,U,V,Iₙ,Cₙ,Oₙ]\n[D]\nS = SavedAndUnsaved[D,P,ΣIₙ]"]
+MultiFieldRenderer  [label="MultiFieldRenderer\n[S,U,P,II,VV]"]
+MultiFieldRenderer2 [label="MultiFieldRenderer2\n[M[_],S,U,P,VV]\n\nrender:\n(S ⇒ M[P], ReactST[IO,S,Unit]) ⇒\nComponentStateFocus[S] ⇒ M[VV]\n\nsavableU:\nS ⇒ Option[U]"]
 TableSpecB          [label="TableSpecB\n[S,D,U,P,II,VV]"]
-TableSpec           [label="TableSpec\n[S,D,U,P,II,VV]"]
-RowRenderer         [label="RowRenderer\n[S,U,P,II,VV]\n\nrenderM: WeirdLens[M,S,S,II]\n⇒ (S ⇒ M[P])\n⇒ ((S,U) ⇒ IO[S])\n⇒ ComponentStateFocus[S] ⇒ M[VV]\n\n"]
+TableSpecC          [label="TableSpecC\n[α,S,D,U,P,II,VV]"]
+TableSpecU          [label="TableSpecU\n[α,S,D,U,P,II,VV]"]
+TableSpecD          [label="TableSpecD\n[α,S,P,D]"]
 
-edge [color=red fontcolor="#550000"]
+edge [style=filled color=red fontcolor="#550000"]
 Client [fontcolor=red]
 Client -> FieldSpec [label="1. Create"]
 Client -> TableSpecBuilder [label="2. Create\n3. dataId"]
-Client -> TableSpecBuilder_B2 [label="4. tableConstraints"]
-Client -> TableSpecB [label="5. saveFn"]
+Client -> TablePreSpec [label="4. tableConstraints"]
+Client -> TableSpecB [label="5. saveNotNeededWhen\n6. asyncSave"]
 TableSpecBuilder -> TableSpecBuilder [label=" U⁺ = arb"]
 
 }

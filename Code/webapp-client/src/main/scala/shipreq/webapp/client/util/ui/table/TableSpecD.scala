@@ -8,15 +8,19 @@ import shipreq.webapp.base.data.Alive
 import shipreq.webapp.base.protocol.DeletionAction, DeletionAction._
 import shipreq.webapp.client.protocol.FailureIO
 import shipreq.webapp.client.util.ui.Implicits._
+import TableSpecD.DelIO
 
 object TableSpecD {
+
+  type DelIO[Arb, D] = (Arb, D, DeletionAction, FailureIO) => IO[Unit]
+
   def apply[Arb, S, P, D](spec: TableSpecU[Arb, S, D, _, P, _, _])
                          (aliveG: P => Alive,
                           delIO: (Arb, D, DeletionAction, FailureIO) => IO[Unit]) =
     new TableSpecD(spec, aliveG, delIO)
 }
 
-class TableSpecD[Arb, S, P, D](spec: TableSpecU[Arb, S, D, _, P, _, _], aliveG: P => Alive, delIO: (Arb, D, DeletionAction, FailureIO) => IO[Unit]) {
+class TableSpecD[Arb, S, P, D](spec: TableSpecU[Arb, S, D, _, P, _, _], aliveG: P => Alive, delIO: DelIO[Arb, D]) {
 
   final protected type DP = (D, P)
   final type CSF = ComponentStateFocus[S]
