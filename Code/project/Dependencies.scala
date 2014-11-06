@@ -49,6 +49,7 @@ object Deps {
       val core   = js("monocle-core")
       val macros = js("monocle-macro") ++ core
     }
+    val shapeless: MS = jsGA("com.github.japgolly.fork.shapeless", "shapeless") % "2.1.0-test1"
   }
 
   object Scala extends Group("2.11.4", "org.scala-lang") {
