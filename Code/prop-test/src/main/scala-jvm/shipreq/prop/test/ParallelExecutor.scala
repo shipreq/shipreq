@@ -10,12 +10,19 @@ import Executor.Data
 
 object ParallelExecutor {
   def defaultThreadCount = 1.max(Runtime.getRuntime.availableProcessors - 1)
+
+  def merge[A](a: RunState[A], b: RunState[A]): RunState[A] = {
+    val runs = a.runs max b.runs
+    (a.success, b.success) match {
+      case (false, true) => RunState(runs, a.result)
+      case _             => RunState(runs, b.result)
+    }
+  }
 }
 
 case class ParallelExecutor(workers: Int = defaultThreadCount) extends Executor {
 
   override def run[A](p: Prop[A], g: Data[A], S: Settings): RunState[A] = {
-
     val sss = {
       var rem = S.sampleSize.value
       var i = workers
@@ -30,29 +37,36 @@ case class ParallelExecutor(workers: Int = defaultThreadCount) extends Executor 
     }
 
     val ai = new AtomicInteger(0)
-
-    def task(worker: Int) = new Callable[RunState[A]] {
-      override def call(): RunState[A] = {
-        val data = g(sss(worker - 1)).unsafePerformIO()
-        testN(p, data, ai.incrementAndGet, S)
-      }
+    def task(worker: Int) = mkTask {
+      val data = g(sss(worker)).unsafePerformIO()
+      testN(p, data, ai.incrementAndGet, S)
     }
+    runAsync2(workers, task)
+  }
 
+  override def prove[A](p: Prop[A], d: Domain[A], S: Settings): RunState[A] = {
+    val threads = workers min d.size
+
+    val ai = new AtomicInteger(0)
+    def task(worker: Int) = mkTask {
+      proveN(p, d, worker, threads, _ => ai.incrementAndGet, S)
+    }
+    runAsync2(threads, task)
+  }
+
+  private[this] def mkTask[A](f: => RunState[A]) = new Callable[RunState[A]] {
+    override def call(): RunState[A] = f
+  }
+
+  private[this] def runAsync2[A](threads: Int, f: Int => Callable[RunState[A]]): RunState[A] =
+    runAsync(es => (0 until threads).toList.map(es submit f(_)))
+
+  private[this] def runAsync[A](start: ExecutorService => List[Future[RunState[A]]]): RunState[A] = {
     val es: ExecutorService = Executors.newFixedThreadPool(workers)
-    val fs = (1 to workers).toList.map(es submit task(_))
+    val fs = start(es)
     es.shutdown()
     val rss = fs.map(_.get())
     es.awaitTermination(1, TimeUnit.MINUTES)
-
-    def merge(a: RunState[A], b: RunState[A]): RunState[A] = {
-      val runs = a.runs max b.runs
-      (a.success, b.success) match {
-        case (false, true) => RunState(runs, a.result)
-        case _             => RunState(runs, b.result)
-      }
-    }
-
-    val rs = rss.foldLeft(RunState.empty[A])(merge)
-    rs
+    rss.foldLeft(RunState.empty[A])(merge)
   }
 }

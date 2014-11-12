@@ -27,18 +27,14 @@ object PTest {
 
   def apply[A](p: Prop[A], gen: Gen[A], S: Settings): RunState[A] = {
     if (S.debug) println(s"\n$p")
-
     def samples(s: SampleSize, g: GenSize): Rng[EphemeralStream[A]] = {
       if (S.debug) println(s"Generating ${s.value} samples @ sz ${g.value}...")
       gen.gen2(g).f(s).map(_ take s.value)
     }
-
     def sampleSizePerc(s: SampleSize, p: Double): SampleSize =
       s.map(v => (v * p + 0.5).toInt max 1)
-
     def genSizePerc(s: GenSize, p: Double): GenSize =
       s.map(v => (v * p + 0.5).toInt max 0)
-
     val data: Data[A] = s =>
       if (S.sizeDist.isEmpty)
         samples(s, S.genSize).run
@@ -52,16 +48,8 @@ object PTest {
         .foldLeft(Rng insert EphemeralStream[A])((a, b) => b.flatMap(c => a.map(_ ++ c)))
         .run
       }
-
     S.executor.run(p, data, S)
   }
-
-  // exhaustive
-//  def prove[A](settings: Settings, p: Prop[A], data: EphemeralStream[A]): RunState[A] =
-//    testN(p, data) match {
-//      case RunState(r, Satisfied) => RunState(r, Proved)
-//      case r => r
-//    }
 
   def testN[A](p: Prop[A], data: EphemeralStream[A], runInc: () => Int, S: Settings): RunState[A] = {
     val it = EphemeralStream.toIterable(data).iterator
@@ -95,4 +83,29 @@ object PTest {
     } catch {
       case e: Throwable => Error(a, e)
     }
+
+
+  def prove[A](p: Prop[A], d: Domain[A], S1: Settings): RunState[A] = {
+    val S = S1.copy(sampleSize = SampleSize(d.size))
+    if (S.debug) println(s"\n$p\nAttempting to prove with ${d.size} values...")
+    S.executor.prove(p, d, S) match {
+      case RunState(n, Satisfied()) if n == d.size =>
+        RunState(n, Proved())
+      case r =>
+        if (S.debug && r.success) println(s"Test was successful but didn't prove proposition: $r")
+        r
+    }
+  }
+
+  def proveN[A](p: Prop[A], d: Domain[A], start: Int, step: Int, runInc: Int => Int, S: Settings): RunState[A] = {
+    var rs = RunState.empty[A]
+    var i = start
+    while (rs.success && i < d.size) {
+      val a = d(i)
+      rs = RunState(runInc(i), test1(p, a))
+      if (S.debug) debug1(a, rs, S)
+      i += step
+    }
+    rs
+  }
 }
