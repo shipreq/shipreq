@@ -25,7 +25,7 @@ object RunState {
 
 object PTest {
 
-  def apply[A](p: Prop[A], gen: Gen[A], S: Settings): RunState[A] = {
+  def test[A](p: Prop[A], gen: Gen[A], S: Settings): RunState[A] = {
     if (S.debug) println(s"\n$p")
     def samples(s: SampleSize, g: GenSize): Rng[EphemeralStream[A]] = {
       if (S.debug) println(s"Generating ${s.value} samples @ sz ${g.value}...")
@@ -51,7 +51,7 @@ object PTest {
     S.executor.run(p, data, S)
   }
 
-  def testN[A](p: Prop[A], data: EphemeralStream[A], runInc: () => Int, S: Settings): RunState[A] = {
+  private[test] def testN[A](p: Prop[A], data: EphemeralStream[A], runInc: () => Int, S: Settings): RunState[A] = {
     val it = EphemeralStream.toIterable(data).iterator
     var rs = RunState.empty[A]
     while (rs.success && it.hasNext) {
@@ -62,7 +62,7 @@ object PTest {
     rs
   }
 
-  def debug1[A](a: A, r: RunState[A], S: Settings): Unit = {
+  private[test] def debug1[A](a: A, r: RunState[A], S: Settings): Unit = {
     def c(code: String, m: Any) = s"\033[${code}m$m\033[0m"
     var aa = a.toString
     val maxLen = if (r.success) S.debugMaxLen else aa.length
@@ -77,7 +77,7 @@ object PTest {
     //if (al > 200) println()
   }
 
-  def test1[A](p: Prop[A], a: A): Result[A] =
+  private[test] def test1[A](p: Prop[A], a: A): Result[A] =
     try {
       p.falsify(a).fold(Satisfied(): Result[A])(Falsified(a, _))
     } catch {
@@ -97,7 +97,7 @@ object PTest {
     }
   }
 
-  def proveN[A](p: Prop[A], d: Domain[A], start: Int, step: Int, runInc: Int => Int, S: Settings): RunState[A] = {
+  private[test] def proveN[A](p: Prop[A], d: Domain[A], start: Int, step: Int, runInc: Int => Int, S: Settings): RunState[A] = {
     var rs = RunState.empty[A]
     var i = start
     while (rs.success && i < d.size) {

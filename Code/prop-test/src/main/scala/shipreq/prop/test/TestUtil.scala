@@ -10,7 +10,7 @@ object TestUtil {
   val jvm = try { "!" matches """\p{P}""" } catch { case _: Throwable => false }
 
   def testProp[A](p: Prop[A], g: Gen[A])(implicit S: Settings): Unit =
-    assertSuccessful(p, PTest(p, g, S))
+    assertSuccessful(p, PTest.test(p, g, S))
 
   def proveProp[A](p: Prop[A], d: Domain[A])(implicit S: Settings): Unit = {
     val rs = PTest.prove(p, d, S)
