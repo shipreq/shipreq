@@ -45,6 +45,24 @@ object Prop {
         })
     })
 
+  /** Ensures that A's Cs form a subset of A's Bs. */
+  def subset[A](name: String) = new SubsetB[A](name)
+  final class SubsetB[A](val name: String) extends AnyVal {
+    def apply[B, C](superset: A => Set[B], sub: A => Traversable[C])(implicit ev: C <:< B) =
+      atom[A](name, a => {
+        val valid = superset(a)
+        val found = sub(a)
+        val bad = (Set.empty[C] /: found)((q, c) => if (valid contains c) q else q + c)
+        if (bad.isEmpty)
+          None
+        else
+          Some(Need {
+            val b = bad.toStream.map(_.toString).sorted.distinct.mkString("{", ", ", "}")
+            s"$a\nLegal: (${valid.size}) $valid\nFound: (${found.size}) $found\nIllegal: $b"
+          })
+      })
+  }
+
   def test(b: Boolean, e: => String): Option[FailureInfo] =
     if (b) None else Some(Need(e))
 
