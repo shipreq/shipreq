@@ -42,6 +42,8 @@ class Gen[A](val f: GenSize => Rng[A]) {
   def stream      : GenS[Stream[A]]          = estream.map(_.toStream)
   def stream1     : GenS[Stream[A]]          = stream.flatMap(s => this.map(_ #:: s))
   def option      : Gen[Option[A]]           = mapr(_.option)
+  def pair        : Gen[(A, A)]              = mapr(r => Rng.pair(r, r))
+  def triple      : Gen[(A, A, A)]           = mapr(r => Rng.triple(r, r, r))
 
   def ***       [X](x: Gen[X]): Gen[(A, X)]       = combrng[X, (A, X)](x, _ *** _)
   def \/        [X](x: Gen[X]): Gen[A \/ X]       = combrng[X, A \/ X](x, _ \/ _)
