@@ -2,7 +2,7 @@ package shipreq.webapp.base
 
 import scalaz.std.list._
 import scalaz.std.set._
-import shipreq.prop.test.{Distinct, RngGen, Gen}
+import shipreq.prop.test.{Distinct, Gen}
 import shipreq.webapp.base.data._, ReqType.Mnemonic
 import shipreq.webapp.base.data.delta._
 import shipreq.webapp.base.protocol._
@@ -43,7 +43,7 @@ object RandomData {
   lazy val refKey =
     for {
       h <- Gen.alphanumeric
-      t <- Gen.charof("._=-", 'a' to 'z', 'A' to 'Z', '0' to '9').list.lim(AppConsts.refKeyLength.end)
+      t <- Gen.charof('.', "_=-", 'a' to 'z', 'A' to 'Z', '0' to '9').list.lim(AppConsts.refKeyLength.end)
     } yield RefKey((h :: t).mkString)
 
   lazy val customIncmpTypeId =
@@ -90,7 +90,7 @@ object RandomData {
   def distinctId[T <: DataAndId](implicit i: IdAccessor[T]) =
     Distinct.flong.xmap(i.mkId)(_.value).distinct.contramap[T#Data](i.id, i.setId)
 
-  def dataSet[T <: DataAndId](r: RngGen[T#Data], mod: List[T#Data] => List[T#Data])(implicit i: IdAccessor[T]): RngGen[DataSet[T]] = {
+  def dataSet[T <: DataAndId](r: Gen[T#Data], mod: List[T#Data] => List[T#Data])(implicit i: IdAccessor[T]): Gen[DataSet[T]] = {
     val d = distinctId[T].lift[List]
     val f = mod compose d.run
     Gen.apply2(DataSet[T])(rev, r.list.map(f))
@@ -101,12 +101,12 @@ object RandomData {
 
   // -------------------------------------------------------------------------------------------------------------------
   object remoteDeltaG {
-    def forPart: Partition => RngGen[RemoteDeltaG] = {
+    def forPart: Partition => Gen[RemoteDeltaG] = {
       case Partition.CustomIncmpTypes => customIncmpTypesDG
       case Partition.CustomReqTypes   => customReqTypesDG
     }
 
-    def generic[T <: Partition](p: T)(ir: RngGen[T#Id], dr: RngGen[T#Data])(implicit I: IdAccessor[T#DI]): RngGen[RemoteDeltaG] =
+    def generic[T <: Partition](p: T)(ir: Gen[T#Id], dr: Gen[T#Data])(implicit I: IdAccessor[T#DI]): Gen[RemoteDeltaG] =
       for {
         d        ← dr.list
         i0       ← ir.set
@@ -122,7 +122,7 @@ object RandomData {
   }
 
   object remoteDelta {
-    def forPart: Partition => RngGen[RemoteDelta] =
+    def forPart: Partition => Gen[RemoteDelta] =
       remoteDeltaG.forPart(_).map(List(_))
   }
 
@@ -146,7 +146,7 @@ object RandomData {
         remote(CustomReqTypeCrud),
         remote(CustomReqTypeImplicationMod))
 
-    class CrudActionGens[C <: Crudable] (idG: RngGen[C#Id], vG: RngGen[C#V]) {
+    class CrudActionGens[C <: Crudable] (idG: Gen[C#Id], vG: Gen[C#V]) {
       import Gen.Covariance._
       lazy val create = vG.map(CrudAction.Create[C])
       lazy val update = Gen.apply2(CrudAction.Update[C])(idG, vG)

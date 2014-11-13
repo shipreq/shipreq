@@ -1,210 +1,203 @@
 package shipreq.prop.test
 
+import scala.collection.immutable.NumericRange
 import com.nicta.rng.{Rng, Size}
 import scalaz._, Scalaz._, Validation._
 
-trait Gen[A] {
-  def gen2(gs: GenSize): Gen2[A]
-  def map[B](g: A => B): Gen[B]
-  def subst[AA >: A]: Gen[AA] = map(a => a: AA)
-}
+class Gen[A](val f: GenSize => Rng[A]) {
 
-case class Gen2[A](f: SampleSize => Rng[EphemeralStream[A]]) {
-  def map[B](g: A => B) = Gen2[B](s => f(s) map (_ map g))
-}
+  def data(gs: GenSize, ss: SampleSize): Rng[EphemeralStream[A]] =
+    f(gs).fill(ss.value).map(EphemeralStream(_: _*))
 
-class RngGen[A](val f: GenSize => Rng[A]) extends Gen[A] {
+  def map     [B](g: A => B)           = new Gen[B](s => f(s) map g)
+  def mapr    [B](g: Rng[A] => Rng[B]) = new Gen[B](g compose f)
+  def flatMap [B](g: A => Gen[B])      = new Gen[B](s => f(s).flatMap(a => g(a).f(s)))
+  def flatMapS[B](g: A => GenS[B])     = new GenS[B](s => f(s).flatMap(a => g(a).f(s)))
 
-  override def gen2(gs: GenSize): Gen2[A] =
-    Gen2[A](ss => f(gs).fill(ss.value).map(EphemeralStream(_: _*)))
+  def subst[B >: A]    : Gen[B] = map[B](a => a)
 
-  override def map[B](g: A => B): RngGen[B] = new RngGen[B](s => f(s) map g)
-  override def subst[B >: A]    : RngGen[B] = map(a => a: B)
-
-  def withFilter(p: A => Boolean): RngGen[A] =
+  def withFilter(p: A => Boolean): Gen[A] =
     map(a => if (p(a)) a else
-      // This seems crazy to be but it's how scala.Future does it
-      throw new NoSuchElementException("RngGen.withFilter predicate is not satisfied"))
+    // This seems crazy to be but it's how scala.Future does it
+      throw new NoSuchElementException("Gen.withFilter predicate is not satisfied"))
 
-  def mapr[B](g: Rng[A] => Rng[B])    = new RngGen[B](g compose f)
-  def flatMap[B](g: A => RngGen[B])   = new RngGen[B](s => f(s).flatMap(a => g(a).f(s)))
-  def flatMapS[B](g: A => RngGenS[B]) = new RngGenS[B](s => f(s).flatMap(a => g(a).f(s)))
+  private def sizeOp[B](g: Rng[A] => Size => Rng[B]): GenS[B] =
+    new GenS(s => g(f(s))(s.value))
 
-  private def sizeOp[B](g: Rng[A] => Size => Rng[B]): RngGenS[B] =
-    new RngGenS(s => g(f(s))(s.value))
+  private def sizeOp[B, C](g: Rng[A] => Size => Rng[B], h: B => C): GenS[C] =
+    new GenS(s => g(f(s))(s.value) map h)
 
-  private def sizeOp[B, C](g: Rng[A] => Size => Rng[B], h: B => C): RngGenS[C] =
-    new RngGenS(s => g(f(s))(s.value) map h)
+  private def combrng[B, C](b: Gen[B], c: (Rng[A], Rng[B]) => Rng[C]): Gen[C] =
+    new Gen(s => c(f(s), b.f(s)))
 
-  private def combrng[B, C](b: RngGen[B], c: (Rng[A], Rng[B]) => Rng[C]): RngGen[C] =
-    new RngGen(s => c(f(s), b.f(s)))
+  def fill(n: Int): Gen[List[A]]             = mapr(_ fill n)
+  def list        : GenS[List[A]]            = sizeOp(_.list)
+  def list1       : GenS[NonEmptyList[A]]    = sizeOp(_.list1)
+  def set         : GenS[Set[A]]             = sizeOp(_.list, (_: List[A]).toSet)
+  def set1        : GenS[Set[A]]             = sizeOp(_.list1, (_: NonEmptyList[A]).list.toSet)
+  def vector      : GenS[Vector[A]]          = sizeOp(_.vector)
+  def vector1     : GenS[Vector[A]]          = sizeOp(_.vector).flatMap(s => map(s :+ _))
+  def stream      : GenS[EphemeralStream[A]] = sizeOp(_.stream)
+  def stream1     : GenS[EphemeralStream[A]] = sizeOp(_.stream).flatMap(s => map(_ ##:: s))
+  def option      : Gen[Option[A]]           = mapr(_.option)
 
-  def fill(n: Int)   : RngGen[List[A]]             = mapr(_ fill n)
-  def list           : RngGenS[List[A]]            = sizeOp(_.list)
-  def list1          : RngGenS[NonEmptyList[A]]    = sizeOp(_.list1)
-  def set            : RngGenS[Set[A]]             = sizeOp(_.list, (_: List[A]).toSet)
-  def set1           : RngGenS[Set[A]]             = sizeOp(_.list1, (_: NonEmptyList[A]).list.toSet)
-  def vector         : RngGenS[Vector[A]]          = sizeOp(_.vector)
-  def vector1        : RngGenS[Vector[A]]          = sizeOp(_.vector).flatMap(s => map(s :+ _))
-  def stream         : RngGenS[EphemeralStream[A]] = sizeOp(_.stream)
-  def stream1        : RngGenS[EphemeralStream[A]] = sizeOp(_.stream).flatMap(s => map(_ ##:: s))
-  def option         : RngGen[Option[A]]           = mapr(_.option)
-
-  def ***       [X](x: RngGen[X]): RngGen[(A, X)]       = combrng[X, (A, X)](x, _ *** _)
-  def either    [X](x: RngGen[X]): RngGen[A \/ X]       = combrng[X, A \/ X](x, _ either _)
-  def \/        [X](x: RngGen[X]): RngGen[A \/ X]       = combrng[X, A \/ X](x, _ \/ _)
-  def +++       [X](x: RngGen[X]): RngGen[A \/ X]       = combrng[X, A \/ X](x, _ +++ _)
-  def validation[X](x: RngGen[X]): RngGen[A \?/ X]      = combrng[X, A \?/ X](x, _ validation _)
-  def \?/       [X](x: RngGen[X]): RngGen[A \?/ X]      = combrng[X, A \?/ X](x, _ \?/ _)
-  def eitherS   [X](x: RngGen[X]): RngGen[Either[A, X]] = combrng[X, Either[A, X]](x, _ eitherS _)
+  def ***       [X](x: Gen[X]): Gen[(A, X)]       = combrng[X, (A, X)](x, _ *** _)
+  def either    [X](x: Gen[X]): Gen[A \/ X]       = combrng[X, A \/ X](x, _ either _)
+  def \/        [X](x: Gen[X]): Gen[A \/ X]       = combrng[X, A \/ X](x, _ \/ _)
+  def +++       [X](x: Gen[X]): Gen[A \/ X]       = combrng[X, A \/ X](x, _ +++ _)
+  def validation[X](x: Gen[X]): Gen[A \?/ X]      = combrng[X, A \?/ X](x, _ validation _)
+  def \?/       [X](x: Gen[X]): Gen[A \?/ X]      = combrng[X, A \?/ X](x, _ \?/ _)
+  def eitherS   [X](x: Gen[X]): Gen[Either[A, X]] = combrng[X, Either[A, X]](x, _ eitherS _)
 }
 
-class RngGenS[A](f: GenSize => Rng[A]) extends RngGen(f) {
+class GenS[A](f: GenSize => Rng[A]) extends Gen(f) {
+  /** Apply an upper bound to the GenSize. */
   def lim(size: Int) = {
     val t = GenSize(size)
-    new RngGenS[A](s => f(if (s.value > size) t else s))
+    new GenS[A](s => f(if (s.value > size) t else s))
   }
 
-  override def map[B](g: A => B)            : RngGenS[B] = new RngGenS(s => f(s) map g)
-  override def mapr[B](g: Rng[A] => Rng[B]) : RngGenS[B] = new RngGenS(g compose f)
-  override def flatMap[B](g: A => RngGen[B]): RngGenS[B] = new RngGenS(s => f(s).flatMap(a => g(a).f(s)))
+  override def map    [B](g: A => B)           = new GenS[B](s => f(s) map g)
+  override def mapr   [B](g: Rng[A] => Rng[B]) = new GenS[B](g compose f)
+  override def flatMap[B](g: A => Gen[B])      = new GenS[B](s => f(s).flatMap(a => g(a).f(s)))
 
-  def sup: RngGen[A] = this
+  def sup: Gen[A] = this
 }
 
 object Gen {
 
-  implicit object RngGenScalaz extends Monad[RngGen] {
-    def bind[A, B](a: RngGen[A])(f: A => RngGen[B]) = a flatMap f
+  implicit object GenScalaz extends Monad[Gen] {
+    def bind[A, B](a: Gen[A])(f: A => Gen[B]) = a flatMap f
     def point[A](a: => A) = insert(a)
   }
   
   object Covariance {
-    implicit def rnggenCovariance[A, B >: A](r: RngGen[A]) = r.subst[B]
+    implicit def genCovariance[A, B >: A](r: Gen[A]) = r.subst[B]
   }
 
   def unsized[A](rng: Rng[A]) =
-    new RngGen[A](_ => rng)
+    new Gen[A](_ => rng)
 
   def lift[A](f: Size => Rng[A]) =
-    new RngGenS[A](s => f(Size(s.value)))
+    new GenS[A](s => f(Size(s.value)))
 
-  def double         : RngGen[Double]  = Rng.double.gen
-  def float          : RngGen[Float]   = Rng.float.gen
-  def long           : RngGen[Long]    = Rng.long.gen
-  def int            : RngGen[Int]     = Rng.int.gen
-  def byte           : RngGen[Byte]    = Rng.byte.gen
-  def short          : RngGen[Short]   = Rng.short.gen
-  def unit           : RngGen[Unit]    = Rng.unit.gen
-  def boolean        : RngGen[Boolean] = Rng.boolean.gen
-  def positivedouble : RngGen[Double]  = Rng.positivedouble.gen
-  def negativedouble : RngGen[Double]  = Rng.negativedouble.gen
-  def positivefloat  : RngGen[Float]   = Rng.positivefloat.gen
-  def negativefloat  : RngGen[Float]   = Rng.negativefloat.gen
-  def positivelong   : RngGen[Long]    = Rng.positivelong.gen
-  def negativelong   : RngGen[Long]    = Rng.negativelong.gen
-  def positiveint    : RngGen[Int]     = Rng.positiveint.gen
-  def negativeint    : RngGen[Int]     = Rng.negativeint.gen
-  def digit          : RngGen[Digit]   = Rng.digit.gen
-  def numeric        : RngGen[Char]    = Rng.numeric.gen
-  def char           : RngGen[Char]    = Rng.char.gen
-  def upper          : RngGen[Char]    = Rng.upper.gen
-  def lower          : RngGen[Char]    = Rng.lower.gen
-  def alpha          : RngGen[Char]    = Rng.alpha.gen
-  def alphanumeric   : RngGen[Char]    = Rng.alphanumeric.gen
+  def double         : Gen[Double]  = Rng.double.gen
+  def float          : Gen[Float]   = Rng.float.gen
+  def long           : Gen[Long]    = Rng.long.gen
+  def int            : Gen[Int]     = Rng.int.gen
+  def byte           : Gen[Byte]    = Rng.byte.gen
+  def short          : Gen[Short]   = Rng.short.gen
+  def unit           : Gen[Unit]    = Rng.unit.gen
+  def boolean        : Gen[Boolean] = Rng.boolean.gen
+  def positivedouble : Gen[Double]  = Rng.positivedouble.gen
+  def negativedouble : Gen[Double]  = Rng.negativedouble.gen
+  def positivefloat  : Gen[Float]   = Rng.positivefloat.gen
+  def negativefloat  : Gen[Float]   = Rng.negativefloat.gen
+  def positivelong   : Gen[Long]    = Rng.positivelong.gen
+  def negativelong   : Gen[Long]    = Rng.negativelong.gen
+  def positiveint    : Gen[Int]     = Rng.positiveint.gen
+  def negativeint    : Gen[Int]     = Rng.negativeint.gen
+  def digit          : Gen[Digit]   = Rng.digit.gen
+  def numeric        : Gen[Char]    = Rng.numeric.gen
+  def char           : Gen[Char]    = Rng.char.gen
+  def upper          : Gen[Char]    = Rng.upper.gen
+  def lower          : Gen[Char]    = Rng.lower.gen
+  def alpha          : Gen[Char]    = Rng.alpha.gen
+  def alphanumeric   : Gen[Char]    = Rng.alphanumeric.gen
 
-  def digits              : RngGenS[List[Digit]]         = lift(Rng.digits)
-  def digits1             : RngGenS[NonEmptyList[Digit]] = lift(Rng.digits1)
-  def numerics            : RngGenS[List[Char]]          = lift(Rng.numerics)
-  def numerics1           : RngGenS[NonEmptyList[Char]]  = lift(Rng.numerics1)
-  def chars               : RngGenS[List[Char]]          = lift(Rng.chars)
-  def chars1              : RngGenS[NonEmptyList[Char]]  = lift(Rng.chars1)
-  def uppers              : RngGenS[List[Char]]          = lift(Rng.uppers)
-  def uppers1             : RngGenS[NonEmptyList[Char]]  = lift(Rng.uppers1)
-  def lowers              : RngGenS[List[Char]]          = lift(Rng.lowers)
-  def lowers1             : RngGenS[NonEmptyList[Char]]  = lift(Rng.lowers1)
-  def alphas              : RngGenS[List[Char]]          = lift(Rng.alphas)
-  def alphas1             : RngGenS[NonEmptyList[Char]]  = lift(Rng.alphas1)
-  def alphanumerics       : RngGenS[List[Char]]          = lift(Rng.alphanumerics)
-  def alphanumerics1      : RngGenS[NonEmptyList[Char]]  = lift(Rng.alphanumerics1)
-  def string              : RngGenS[String]              = lift(Rng.string)
-  def string1             : RngGenS[String]              = lift(Rng.string1)
-  def upperstring         : RngGenS[String]              = lift(Rng.upperstring)
-  def upperstring1        : RngGenS[String]              = lift(Rng.upperstring1)
-  def lowerstring         : RngGenS[String]              = lift(Rng.lowerstring)
-  def lowerstring1        : RngGenS[String]              = lift(Rng.lowerstring1)
-  def alphastring         : RngGenS[String]              = lift(Rng.alphastring)
-  def alphastring1        : RngGenS[String]              = lift(Rng.alphastring1)
-  def numericstring       : RngGenS[String]              = lift(Rng.numericstring)
-  def numericstring1      : RngGenS[String]              = lift(Rng.numericstring1)
-  def alphanumericstring  : RngGenS[String]              = lift(Rng.alphanumericstring)
-  def alphanumericstring1 : RngGenS[String]              = lift(Rng.alphanumericstring1)
-  def identifier          : RngGenS[NonEmptyList[Char]]  = lift(Rng.identifier)
-  def identifierstring    : RngGenS[String]              = lift(Rng.identifierstring)
-  def propernoun          : RngGenS[NonEmptyList[Char]]  = lift(Rng.propernoun)
-  def propernounstring    : RngGenS[String]              = lift(Rng.propernounstring)
+  def digits              : GenS[List[Digit]]         = lift(Rng.digits)
+  def digits1             : GenS[NonEmptyList[Digit]] = lift(Rng.digits1)
+  def numerics            : GenS[List[Char]]          = lift(Rng.numerics)
+  def numerics1           : GenS[NonEmptyList[Char]]  = lift(Rng.numerics1)
+  def chars               : GenS[List[Char]]          = lift(Rng.chars)
+  def chars1              : GenS[NonEmptyList[Char]]  = lift(Rng.chars1)
+  def uppers              : GenS[List[Char]]          = lift(Rng.uppers)
+  def uppers1             : GenS[NonEmptyList[Char]]  = lift(Rng.uppers1)
+  def lowers              : GenS[List[Char]]          = lift(Rng.lowers)
+  def lowers1             : GenS[NonEmptyList[Char]]  = lift(Rng.lowers1)
+  def alphas              : GenS[List[Char]]          = lift(Rng.alphas)
+  def alphas1             : GenS[NonEmptyList[Char]]  = lift(Rng.alphas1)
+  def alphanumerics       : GenS[List[Char]]          = lift(Rng.alphanumerics)
+  def alphanumerics1      : GenS[NonEmptyList[Char]]  = lift(Rng.alphanumerics1)
+  def string              : GenS[String]              = lift(Rng.string)
+  def string1             : GenS[String]              = lift(Rng.string1)
+  def upperstring         : GenS[String]              = lift(Rng.upperstring)
+  def upperstring1        : GenS[String]              = lift(Rng.upperstring1)
+  def lowerstring         : GenS[String]              = lift(Rng.lowerstring)
+  def lowerstring1        : GenS[String]              = lift(Rng.lowerstring1)
+  def alphastring         : GenS[String]              = lift(Rng.alphastring)
+  def alphastring1        : GenS[String]              = lift(Rng.alphastring1)
+  def numericstring       : GenS[String]              = lift(Rng.numericstring)
+  def numericstring1      : GenS[String]              = lift(Rng.numericstring1)
+  def alphanumericstring  : GenS[String]              = lift(Rng.alphanumericstring)
+  def alphanumericstring1 : GenS[String]              = lift(Rng.alphanumericstring1)
+  def identifier          : GenS[NonEmptyList[Char]]  = lift(Rng.identifier)
+  def identifierstring    : GenS[String]              = lift(Rng.identifierstring)
+  def propernoun          : GenS[NonEmptyList[Char]]  = lift(Rng.propernoun)
+  def propernounstring    : GenS[String]              = lift(Rng.propernounstring)
 
-  def insert[A]    (a: A)                  : RngGen[A]      = Rng.insert(a).gen
-  def chooselong   (l: Long, h: Long)      : RngGen[Long]   = Rng.chooselong(l,h).gen
-  def choosedouble (l: Double, h: Double)  : RngGen[Double] = Rng.choosedouble(l,h).gen
-  def choosefloat  (l: Float, h: Float)    : RngGen[Float]  = Rng.choosefloat(l,h).gen
-  def chooseint    (l: Int, h: Int)        : RngGen[Int]    = Rng.chooseint(l,h).gen
-  def oneofL[A]    (x: NonEmptyList[A])    : RngGen[A]      = Rng.oneofL(x).gen
-  def oneof[A]     (a: A, as: A*)          : RngGen[A]      = Rng.oneof(a, as: _*).gen
-  def oneofV[A]    (x: OneAnd[Vector, A])  : RngGen[A]      = Rng.oneofV(x).gen
+  def insert[A]    (a: A)                  : Gen[A]      = Rng.insert(a).gen
+  def chooselong   (l: Long, h: Long)      : Gen[Long]   = Rng.chooselong(l,h).gen
+  def choosedouble (l: Double, h: Double)  : Gen[Double] = Rng.choosedouble(l,h).gen
+  def choosefloat  (l: Float, h: Float)    : Gen[Float]  = Rng.choosefloat(l,h).gen
+  def chooseint    (l: Int, h: Int)        : Gen[Int]    = Rng.chooseint(l,h).gen
+  def oneofL[A]    (x: NonEmptyList[A])    : Gen[A]      = Rng.oneofL(x).gen
+  def oneof[A]     (a: A, as: A*)          : Gen[A]      = Rng.oneof(a, as: _*).gen
+  def oneofV[A]    (x: OneAnd[Vector, A])  : Gen[A]      = Rng.oneofV(x).gen
 
-  def pair[A, B](A: RngGen[A], B: RngGen[B]): RngGen[(A, B)] = tuple2(A, B)
-  def triple[A, B, C](A: RngGen[A], B: RngGen[B], C: RngGen[C]): RngGen[(A, B, C)] = tuple3(A, B, C)
+  def pair[A, B](A: Gen[A], B: Gen[B]): Gen[(A, B)] = tuple2(A, B)
+  def triple[A, B, C](A: Gen[A], B: Gen[B], C: Gen[C]): Gen[(A, B, C)] = tuple3(A, B, C)
 
-  def sequence[T[_], A](x: T[RngGen[A]])(implicit T: Traverse[T]): RngGen[T[A]] = T.sequence(x)
+  def sequence[T[_], A](x: T[Gen[A]])(implicit T: Traverse[T]): Gen[T[A]] = T.sequence(x)
 
-  def sequencePair[X, A](x: X, r: RngGen[A]): RngGen[(X, A)] = sequence[({type f[x] = (X, x)})#f, A]((x, r))
+  def sequencePair[X, A](x: X, r: Gen[A]): Gen[(X, A)] = sequence[({type f[x] = (X, x)})#f, A]((x, r))
 
-  def distribute  [F[_], B]   (a: RngGen[F[B]])(implicit D: Distributive[F])            : F[RngGen[B]]             = D.cosequence(a)
-  def distributeR [A, B]      (a: RngGen[A => B])                                       : A => RngGen[B]           = distribute[({type f[x] = A => x})#f, B](a)
-  def distributeRK[A, B]      (a: RngGen[A => B])                                       : Kleisli[RngGen, A, B]    = Kleisli(distributeR(a))
-  def distributeK [F[_], A, B](a: RngGen[Kleisli[F, A, B]])(implicit D: Distributive[F]): Kleisli[F, A, RngGen[B]] = distribute[({type f[x] = Kleisli[F, A, x]})#f, B](a)
+  def distribute  [F[_], B]   (a: Gen[F[B]])(implicit D: Distributive[F])            : F[Gen[B]]             = D.cosequence(a)
+  def distributeR [A, B]      (a: Gen[A => B])                                       : A => Gen[B]           = distribute[({type f[x] = A => x})#f, B](a)
+  def distributeRK[A, B]      (a: Gen[A => B])                                       : Kleisli[Gen, A, B]    = Kleisli(distributeR(a))
+  def distributeK [F[_], A, B](a: Gen[Kleisli[F, A, B]])(implicit D: Distributive[F]): Kleisli[F, A, Gen[B]] = distribute[({type f[x] = Kleisli[F, A, x]})#f, B](a)
 
-  private def freqRng[A](s: GenSize): ((Int, RngGen[A])) => (Int, Rng[A]) =
+  private def freqRng[A](s: GenSize): ((Int, Gen[A])) => (Int, Rng[A]) =
     x => (x._1, x._2.f(s))
 
-  def frequency[A](x: (Int, RngGen[A]), xs: (Int, RngGen[A])*): RngGen[A] =
-    new RngGen[A](s => {
+  def frequency[A](x: (Int, Gen[A]), xs: (Int, Gen[A])*): Gen[A] =
+    new Gen[A](s => {
       val f = freqRng[A](s)
       Rng.frequency(f(x), xs.map(f): _*)
     })
 
-  def frequencyL[A](l: NonEmptyList[(Int, RngGen[A])]): RngGen[A] =
-    new RngGen[A](s => Rng.frequencyL(l map freqRng[A](s)))
+  def frequencyL[A](l: NonEmptyList[(Int, Gen[A])]): Gen[A] =
+    new Gen[A](s => Rng.frequencyL(l map freqRng[A](s)))
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  def oneofG[A](a: RngGen[A], as: RngGen[A]*): RngGen[A] =
+  def oneofG[A](a: Gen[A], as: Gen[A]*): Gen[A] =
     Rng.oneof(a, as: _*).gen.flatMap(r => r)
 
-  def oneofGC[A, B >: A](a: RngGen[A], as: RngGen[A]*): RngGen[B] =
+  def oneofGC[A, B >: A](a: Gen[A], as: Gen[A]*): Gen[B] =
     oneofG(a.subst[B], as.map(_.subst[B]): _*)
 
-  def oneofUnsafe[A](s: Seq[A]) = oneof(s.head, s.tail: _*)
+  def charof(ev: Char, s: String, rs: NumericRange[Char]*): Gen[Char] =
+    oneof(ev, rs.foldLeft(s.to[Seq])(_ ++ _.toSeq): _*)
 
-  def charof(s: String, rs: scala.collection.immutable.NumericRange.Inclusive[Char]*) =
-    oneofUnsafe(rs.flatMap(_.toSeq) ++ s.toCharArray)
+//  def oneofUnsafe[A](s: Seq[A]): Gen[A] =
+//    oneof(s.head, s.tail: _*)
 
   // Generated by bin/gen-tuple_rnggen
-  def tuple2[A,B](A:RngGen[A], B:RngGen[B]): RngGen[(A,B)] = for {a←A;b←B} yield (a,b)
-  def tuple3[A,B,C](A:RngGen[A], B:RngGen[B], C:RngGen[C]): RngGen[(A,B,C)] = for {a←A;b←B;c←C} yield (a,b,c)
-  def tuple4[A,B,C,D](A:RngGen[A], B:RngGen[B], C:RngGen[C], D:RngGen[D]): RngGen[(A,B,C,D)] = for {a←A;b←B;c←C;d←D} yield (a,b,c,d)
-  def tuple5[A,B,C,D,E](A:RngGen[A], B:RngGen[B], C:RngGen[C], D:RngGen[D], E:RngGen[E]): RngGen[(A,B,C,D,E)] = for {a←A;b←B;c←C;d←D;e←E} yield (a,b,c,d,e)
-  def tuple6[A,B,C,D,E,F](A:RngGen[A], B:RngGen[B], C:RngGen[C], D:RngGen[D], E:RngGen[E], F:RngGen[F]): RngGen[(A,B,C,D,E,F)] = for {a←A;b←B;c←C;d←D;e←E;f←F} yield (a,b,c,d,e,f)
-  def tuple7[A,B,C,D,E,F,G](A:RngGen[A], B:RngGen[B], C:RngGen[C], D:RngGen[D], E:RngGen[E], F:RngGen[F], G:RngGen[G]): RngGen[(A,B,C,D,E,F,G)] = for {a←A;b←B;c←C;d←D;e←E;f←F;g←G} yield (a,b,c,d,e,f,g)
-  def tuple8[A,B,C,D,E,F,G,H](A:RngGen[A], B:RngGen[B], C:RngGen[C], D:RngGen[D], E:RngGen[E], F:RngGen[F], G:RngGen[G], H:RngGen[H]): RngGen[(A,B,C,D,E,F,G,H)] = for {a←A;b←B;c←C;d←D;e←E;f←F;g←G;h←H} yield (a,b,c,d,e,f,g,h)
-  def tuple9[A,B,C,D,E,F,G,H,I](A:RngGen[A], B:RngGen[B], C:RngGen[C], D:RngGen[D], E:RngGen[E], F:RngGen[F], G:RngGen[G], H:RngGen[H], I:RngGen[I]): RngGen[(A,B,C,D,E,F,G,H,I)] = for {a←A;b←B;c←C;d←D;e←E;f←F;g←G;h←H;i←I} yield (a,b,c,d,e,f,g,h,i)
-  def apply2[A,B,Z](z: (A,B)⇒Z)(A:RngGen[A], B:RngGen[B]): RngGen[Z] = for {a←A;b←B} yield z(a,b)
-  def apply3[A,B,C,Z](z: (A,B,C)⇒Z)(A:RngGen[A], B:RngGen[B], C:RngGen[C]): RngGen[Z] = for {a←A;b←B;c←C} yield z(a,b,c)
-  def apply4[A,B,C,D,Z](z: (A,B,C,D)⇒Z)(A:RngGen[A], B:RngGen[B], C:RngGen[C], D:RngGen[D]): RngGen[Z] = for {a←A;b←B;c←C;d←D} yield z(a,b,c,d)
-  def apply5[A,B,C,D,E,Z](z: (A,B,C,D,E)⇒Z)(A:RngGen[A], B:RngGen[B], C:RngGen[C], D:RngGen[D], E:RngGen[E]): RngGen[Z] = for {a←A;b←B;c←C;d←D;e←E} yield z(a,b,c,d,e)
-  def apply6[A,B,C,D,E,F,Z](z: (A,B,C,D,E,F)⇒Z)(A:RngGen[A], B:RngGen[B], C:RngGen[C], D:RngGen[D], E:RngGen[E], F:RngGen[F]): RngGen[Z] = for {a←A;b←B;c←C;d←D;e←E;f←F} yield z(a,b,c,d,e,f)
-  def apply7[A,B,C,D,E,F,G,Z](z: (A,B,C,D,E,F,G)⇒Z)(A:RngGen[A], B:RngGen[B], C:RngGen[C], D:RngGen[D], E:RngGen[E], F:RngGen[F], G:RngGen[G]): RngGen[Z] = for {a←A;b←B;c←C;d←D;e←E;f←F;g←G} yield z(a,b,c,d,e,f,g)
-  def apply8[A,B,C,D,E,F,G,H,Z](z: (A,B,C,D,E,F,G,H)⇒Z)(A:RngGen[A], B:RngGen[B], C:RngGen[C], D:RngGen[D], E:RngGen[E], F:RngGen[F], G:RngGen[G], H:RngGen[H]): RngGen[Z] = for {a←A;b←B;c←C;d←D;e←E;f←F;g←G;h←H} yield z(a,b,c,d,e,f,g,h)
-  def apply9[A,B,C,D,E,F,G,H,I,Z](z: (A,B,C,D,E,F,G,H,I)⇒Z)(A:RngGen[A], B:RngGen[B], C:RngGen[C], D:RngGen[D], E:RngGen[E], F:RngGen[F], G:RngGen[G], H:RngGen[H], I:RngGen[I]): RngGen[Z] = for {a←A;b←B;c←C;d←D;e←E;f←F;g←G;h←H;i←I} yield z(a,b,c,d,e,f,g,h,i)
+  def tuple2[A,B](A:Gen[A], B:Gen[B]): Gen[(A,B)] = for {a←A;b←B} yield (a,b)
+  def tuple3[A,B,C](A:Gen[A], B:Gen[B], C:Gen[C]): Gen[(A,B,C)] = for {a←A;b←B;c←C} yield (a,b,c)
+  def tuple4[A,B,C,D](A:Gen[A], B:Gen[B], C:Gen[C], D:Gen[D]): Gen[(A,B,C,D)] = for {a←A;b←B;c←C;d←D} yield (a,b,c,d)
+  def tuple5[A,B,C,D,E](A:Gen[A], B:Gen[B], C:Gen[C], D:Gen[D], E:Gen[E]): Gen[(A,B,C,D,E)] = for {a←A;b←B;c←C;d←D;e←E} yield (a,b,c,d,e)
+  def tuple6[A,B,C,D,E,F](A:Gen[A], B:Gen[B], C:Gen[C], D:Gen[D], E:Gen[E], F:Gen[F]): Gen[(A,B,C,D,E,F)] = for {a←A;b←B;c←C;d←D;e←E;f←F} yield (a,b,c,d,e,f)
+  def tuple7[A,B,C,D,E,F,G](A:Gen[A], B:Gen[B], C:Gen[C], D:Gen[D], E:Gen[E], F:Gen[F], G:Gen[G]): Gen[(A,B,C,D,E,F,G)] = for {a←A;b←B;c←C;d←D;e←E;f←F;g←G} yield (a,b,c,d,e,f,g)
+  def tuple8[A,B,C,D,E,F,G,H](A:Gen[A], B:Gen[B], C:Gen[C], D:Gen[D], E:Gen[E], F:Gen[F], G:Gen[G], H:Gen[H]): Gen[(A,B,C,D,E,F,G,H)] = for {a←A;b←B;c←C;d←D;e←E;f←F;g←G;h←H} yield (a,b,c,d,e,f,g,h)
+  def tuple9[A,B,C,D,E,F,G,H,I](A:Gen[A], B:Gen[B], C:Gen[C], D:Gen[D], E:Gen[E], F:Gen[F], G:Gen[G], H:Gen[H], I:Gen[I]): Gen[(A,B,C,D,E,F,G,H,I)] = for {a←A;b←B;c←C;d←D;e←E;f←F;g←G;h←H;i←I} yield (a,b,c,d,e,f,g,h,i)
+  def apply2[A,B,Z](z: (A,B)⇒Z)(A:Gen[A], B:Gen[B]): Gen[Z] = for {a←A;b←B} yield z(a,b)
+  def apply3[A,B,C,Z](z: (A,B,C)⇒Z)(A:Gen[A], B:Gen[B], C:Gen[C]): Gen[Z] = for {a←A;b←B;c←C} yield z(a,b,c)
+  def apply4[A,B,C,D,Z](z: (A,B,C,D)⇒Z)(A:Gen[A], B:Gen[B], C:Gen[C], D:Gen[D]): Gen[Z] = for {a←A;b←B;c←C;d←D} yield z(a,b,c,d)
+  def apply5[A,B,C,D,E,Z](z: (A,B,C,D,E)⇒Z)(A:Gen[A], B:Gen[B], C:Gen[C], D:Gen[D], E:Gen[E]): Gen[Z] = for {a←A;b←B;c←C;d←D;e←E} yield z(a,b,c,d,e)
+  def apply6[A,B,C,D,E,F,Z](z: (A,B,C,D,E,F)⇒Z)(A:Gen[A], B:Gen[B], C:Gen[C], D:Gen[D], E:Gen[E], F:Gen[F]): Gen[Z] = for {a←A;b←B;c←C;d←D;e←E;f←F} yield z(a,b,c,d,e,f)
+  def apply7[A,B,C,D,E,F,G,Z](z: (A,B,C,D,E,F,G)⇒Z)(A:Gen[A], B:Gen[B], C:Gen[C], D:Gen[D], E:Gen[E], F:Gen[F], G:Gen[G]): Gen[Z] = for {a←A;b←B;c←C;d←D;e←E;f←F;g←G} yield z(a,b,c,d,e,f,g)
+  def apply8[A,B,C,D,E,F,G,H,Z](z: (A,B,C,D,E,F,G,H)⇒Z)(A:Gen[A], B:Gen[B], C:Gen[C], D:Gen[D], E:Gen[E], F:Gen[F], G:Gen[G], H:Gen[H]): Gen[Z] = for {a←A;b←B;c←C;d←D;e←E;f←F;g←G;h←H} yield z(a,b,c,d,e,f,g,h)
+  def apply9[A,B,C,D,E,F,G,H,I,Z](z: (A,B,C,D,E,F,G,H,I)⇒Z)(A:Gen[A], B:Gen[B], C:Gen[C], D:Gen[D], E:Gen[E], F:Gen[F], G:Gen[G], H:Gen[H], I:Gen[I]): Gen[Z] = for {a←A;b←B;c←C;d←D;e←E;f←F;g←G;h←H;i←I} yield z(a,b,c,d,e,f,g,h,i)
 }

@@ -29,7 +29,7 @@ object PTest {
     if (S.debug) println(s"\n$p")
     def samples(s: SampleSize, g: GenSize): Rng[EphemeralStream[A]] = {
       if (S.debug) println(s"Generating ${s.value} samples @ sz ${g.value}...")
-      gen.gen2(g).f(s).map(_ take s.value)
+      gen.data(g, s).map(_ take s.value)
     }
     def sampleSizePerc(s: SampleSize, p: Double): SampleSize =
       s.map(v => (v * p + 0.5).toInt max 1)
