@@ -7,7 +7,7 @@ import PTest._
 
 object Executor {
   type DebugPrefix = String
-  type Data[A] = (SampleSize, DebugPrefix) => IO[EphemeralStream[A]]
+  type Data[A] = (SampleSize, Option[Long], DebugPrefix) => IO[EphemeralStream[A]]
 }
 
 import Executor.Data
@@ -19,7 +19,7 @@ trait Executor {
 
 object SingleThreadedExecutor extends Executor {
   override def run[A](p: Prop[A], g: Data[A], S: Settings): RunState[A] = {
-    val data = g(S.sampleSize, "").unsafePerformIO()
+    val data = g(S.sampleSize, S.seed, "").unsafePerformIO()
     var i = 0
     testN(p, data, () => {i+=1; i}, S)
   }

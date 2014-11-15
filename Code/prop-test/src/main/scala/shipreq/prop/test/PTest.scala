@@ -26,28 +26,31 @@ object RunState {
 object PTest {
 
   private[this] def prepareData[A](gen: Gen[A], sizeDist: Settings.SizeDist, genSize: GenSize, debug: Boolean): Data[A] =
-    (sampleSize, debugPrefix) => {
+    (sampleSize, seedo, debugPrefix) => {
       val samples: (SampleSize, GenSize) => Rng[EphemeralStream[A]] = (s, g) => {
         if (debug) println(s"${debugPrefix}Generating ${s.value} samples @ sz ${g.value}...")
         gen.data(g, s).map(_ take s.value)
       }
-      if (sizeDist.isEmpty)
-        samples(sampleSize, genSize).run
-      else {
-        var total = sizeDist.foldLeft(0)(_ + _._1)
-        var rem = sampleSize.value
-        val plan = sizeDist.map { case (si, gg) =>
-          val gs = gg.fold[GenSize](p => genSize.map(v => (v * p + 0.5).toInt max 0), identity)
-          val ss = SampleSize((si.toDouble / total * rem + 0.5).toInt)
-          total -= si
-          rem -= ss.value
-          (ss, gs)
+      val rng =
+        if (sizeDist.isEmpty)
+          samples(sampleSize, genSize)
+        else {
+          var total = sizeDist.foldLeft(0)(_ + _._1)
+          var rem = sampleSize.value
+          val plan = sizeDist.map { case (si, gg) =>
+            val gs = gg.fold[GenSize](p => genSize.map(v => (v * p + 0.5).toInt max 0), identity)
+            val ss = SampleSize((si.toDouble / total * rem + 0.5).toInt)
+            total -= si
+            rem -= ss.value
+            (ss, gs)
+          }
+          plan.toStream
+            .map(samples.tupled)
+            .foldLeft(Rng insert EphemeralStream[A])((a, b) => b.flatMap(c => a.map(_ ++ c)))
         }
-        plan.toStream
-          .map(samples.tupled)
-          .foldLeft(Rng insert EphemeralStream[A])((a, b) => b.flatMap(c => a.map(_ ++ c)))
-          .run
-      }
+
+      seedo.fold(rng)(seed => Rng.setseed(seed).flatMap(_ => rng))
+        .run
     }
 
   def test[A](p: Prop[A], gen: Gen[A], S: Settings): RunState[A] = {
