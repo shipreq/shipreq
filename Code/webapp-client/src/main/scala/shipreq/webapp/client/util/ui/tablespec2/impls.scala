@@ -7,9 +7,8 @@ import shipreq.webapp.base.validation._
 import shipreq.webapp.client.util.ui.Util.textChangeRecv
 import scalajs.js.UndefOr
 import scala.util.Try
-import scalaz.Bind
+import scalaz._, Scalaz._
 import scalaz.effect.IO
-import scalaz.syntax.bind._
 
 object impls {
 
@@ -43,9 +42,17 @@ object impls {
   abstract class ECB2[A] {
     type S
     def f: ComponentStateFocus[S]
-    def cb: ReactST[IO, S, Unit]
+    def cb: ReactST[IO, S, A]
 
     final def run = f.runState(cb)
+  }
+  object ECB2 {
+    def apply[_S, A](_f: => ComponentStateFocus[_S], _cb: => ReactST[IO, _S, A]): ECB2[A] =
+      new ECB2[A] {
+        override type S = _S
+        override def f = _f
+        override def cb = _cb
+      }
   }
 
   def textEditor2(node: Tag): Editor[String, String, ECB2, Modifier] =
@@ -152,5 +159,45 @@ object impls {
 
     Row = lens + validator =
     */
+
+  trait Row {
+    type Ctx
+    type S // State|Store
+    final type C[A] = ReactST[IO, S, A]
+    type Clean
+    type Dirty
+    type Validated
+
+    def clean: Ctx => Clean
+    def dirty: C[Dirty] // Read all stores in row, to build X
+
+    def validate: (Ctx, Dirty) => Option[Validated] // Verify X
+
+    def saveRequired: (Clean, Validated) => Boolean // check store for last clean and abort if NOP
+
+    def save: Validated => C[Unit]
+    def lock: C[Unit]
+
+    def onChange(ctx: Ctx): C[Unit] =
+      // TODO doesn't update dirty
+      dirty.flatMap(d =>
+        validate(ctx, d) match {
+          case Some(v) if saveRequired(clean(ctx), v) =>
+            save(v) flatMap (_ => lock)
+          case _ =>
+            nopCB[S]
+        }
+      )
+
+    def getCSF: Ctx => ComponentStateFocus[S]
+
+    def render[A,B,V](ctx: Ctx, e: Editor[A,B,ECB2,V]): V = {
+      val cbs = EditorCallbacks[B, ECB2](
+        b => ECB2(getCSF(ctx), onChange(ctx)),
+        ???,
+        ???)
+      ???
+    }
+  }
 
 }

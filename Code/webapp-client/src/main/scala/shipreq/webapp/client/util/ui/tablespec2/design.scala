@@ -160,41 +160,39 @@ object design {
   // external data (dirty and clean)
   // wire up editors - composition for EditorInput ?
   // correct, validate, save on edit finish
-/*
   def nopCB[S] = ReactS.retT[IO, S, Unit](())
 
   trait Row {
+    type Ctx
     type S // State|Store
     type C[A] = ReactST[IO, S, A]
     type Clean
     type Dirty
     type Validated
 
-    def clean: Clean
+    def clean: Ctx => Clean
     def dirty: C[Dirty] // Read all stores in row, to build X
 
-    def validate: Dirty => Option[Validated] // Verify X
+    def validate: (Ctx, Dirty) => Option[Validated] // Verify X
 
     def saveRequired: (Clean, Validated) => Boolean // check store for last clean and abort if NOP
 
     def save: Validated => C[Unit]
     def lock: C[Unit]
 
-    def onChange: C =
+    def onChange(ctx: Ctx): C[Unit] =
       dirty.flatMap(d =>
-        validate(d) match {
-          case Some(v) if saveRequired(clean, v) =>
+        validate(ctx, d) match {
+          case Some(v) if saveRequired(clean(ctx), v) =>
             save(v) >> lock
           case _ =>
             nopCB[S]
         }
       )
   }
-*/
 
   // turn multiple editors into row
   // row has differnt callbacks
-
 
 
 }
