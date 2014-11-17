@@ -2,9 +2,10 @@ package shipreq.webapp.client.util.ui.tablespec2
 
 import design._
 import japgolly.scalajs.react._, vdom.ReactVDom.{Tag => _, _}, all._, ScalazReact._
-import monocle.Lenser
+import monocle.{SimpleOptional, SimplePrism, SimpleLens, Lenser}
 import shipreq.webapp.base.validation._
 import shipreq.webapp.client.util.ui.Util.textChangeRecv
+import scalajs.js.UndefOr
 import scala.util.Try
 import scalaz.Bind
 import scalaz.effect.IO
@@ -41,10 +42,10 @@ object impls {
 
   abstract class ECB2[A] {
     type S
-    type ST = ReactST[IO, S, Unit]
-    val f: ComponentStateFocus[S]
-    val cb: ST
-    def run = f.runState(cb)
+    def f: ComponentStateFocus[S]
+    def cb: ReactST[IO, S, Unit]
+
+    final def run = f.runState(cb)
   }
 
   def textEditor2(node: Tag): Editor[String, String, ECB2, Modifier] =
@@ -88,7 +89,7 @@ object impls {
   // example
 
   case class Age(value: Int)
-  case class Person(name: String, age: Age)
+  case class Person(id: Long, name: String, age: Age)
 
   val nameV: ValidatorPlus[String, String, String] = ???
 
@@ -101,8 +102,38 @@ object impls {
   val nameE = textInputEditor
   val ageE = textInputEditor
 
-//  val nameEE = composeEditorValidator(nameV, nameE)
-//  val ageEE = composeEditorValidator(ageV, ageE)
+  val nameE2 = composeEditorValidator(nameV, nameE)
+  val ageE2 = composeEditorValidator(ageV, ageE)
+
+  /*
+  Storage.
+  Different kinds. for each T: {saved, unsaved} ?
+  Composable.
+
+  just lenses.
+
+  trait SavedStorage[S, Id, Data] {
+    def idl(id: Id): SimpleLens[S, UndefOr[Data]]
+
+    def contramap[X](f: SimpleLens[X, S]): SavedStorage[X, Id, Data] = {
+      val x: SimpleLens[X, UndefOr[Data]] = f composeLens idl(???)
+      ???
+    }
+  }
+
+  trait SavedStorageChoose[S, Id, Data] {
+  }
+  */
+
+
+  /*
+
+  These are the editors for each field.
+  These are the validators for each field.
+  These fields make a row.
+
+  Row type depends on underlying data type.
+
 
   case class RowState(n: String, a: String)
   private[this] def l = Lenser[RowState]
@@ -118,4 +149,8 @@ object impls {
 
   val rowE: Editor[RowState, RowState, ECB2, (Modifier, Modifier)] =
     editors2i(nameE, ageE, rowState_n, rowState_a, dirty)
+
+    Row = lens + validator =
+    */
+
 }
