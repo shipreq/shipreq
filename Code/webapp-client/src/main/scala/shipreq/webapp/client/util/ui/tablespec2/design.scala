@@ -1,5 +1,7 @@
 package shipreq.webapp.client.util.ui.tablespec2
 
+import shipreq.webapp.base.validation.ValidatorPlus
+
 import scalaz.effect.IO
 
 object design {
@@ -54,8 +56,13 @@ object design {
   TableConstraint
 
   ---------------------------------------------------------------
+  Solution Ideas
 
-  Separate class or fn for each piece of behaviour
+  - Have a separate class or fn for each piece of behaviour.
+  - Where ∀-types are concerned, rather than polluting the entire type hierarchy consider using abstract type members.
+  - Types can be data representation like ADT, maybe impl should be considered separately.
+  - Consider possible shape changes of each type.
+  - Consider composability of each type.
 
 */
 
@@ -65,11 +72,14 @@ object design {
 
   case class EditorInput[D, Callback](data: D,
                                       cssClass: String,
-                                      editing: Option[EditorCallbacks[D, Callback]])
+                                      editable: Option[EditorCallbacks[D, Callback]])
 
   type Editor[D, Callback, V] = EditorInput[D, Callback] => V
 
-  // errors + editor
-  //type WithError[E, V] = EditorInput[D, Callback] => V
+  type EditorE[PossibleError, D, Callback, V] = PossibleError => Editor[D, Callback, V]
 
+//  case class EditorV[I, C, O, Callback, V](v: ValidatorPlus[I, C, O], e: Editor[I, Callback, V])
+  // ValidatorPlus[I, C, O]
+
+//  type EditorLC[D, Callback, V] = (D => D) => Editor[D, Callback, V] => Editor[D, Callback, V]
 }
