@@ -66,20 +66,30 @@ object design {
 
 */
 
-  case class EditorCallbacks[D, Callback](onChange: D => Callback,
-                                          onCancel: Callback,
-                                          onEditFinished: Callback)
+  case class EditorCallbacks[A, C](onChange: A => C,
+                                    onCancel: C,
+                                    onEditFinished: C) {
+    def contramap[X](f: X => A): EditorCallbacks[X, C] =
+      copy[X, C](onChange = onChange compose f)
+  }
 
-  case class EditorInput[D, Callback](data: D,
-                                      cssClass: String,
-                                      editable: Option[EditorCallbacks[D, Callback]])
+  case class EditorInput[A, B, C](data: A,
+                                    cssClass: String,
+                                    editable: Option[EditorCallbacks[B, C]]) {
+    def map[X](f: A => X): EditorInput[X, B, C] =
+      copy(f(data))
 
-  type Editor[D, Callback, V] = EditorInput[D, Callback] => V
+    def contramapOutput[X](f: X => B): EditorInput[A, X, C] =
+      copy(editable = editable.map(_ contramap f))
+  }
 
-  type EditorE[PossibleError, D, Callback, V] = PossibleError => Editor[D, Callback, V]
+  case class Editor[A, B, C, V](render: EditorInput[A, B, C] => V) {
+    def contramap[X](f: X => A): Editor[X, B, C, V] =
+      Editor(i => render(i map f))
 
-//  case class EditorV[I, C, O, Callback, V](v: ValidatorPlus[I, C, O], e: Editor[I, Callback, V])
-  // ValidatorPlus[I, C, O]
+    def mapOutput[X](f: B => X): Editor[A, X, C, V] =
+      Editor(i => render(i contramapOutput f))
+  }
 
-//  type EditorLC[D, Callback, V] = (D => D) => Editor[D, Callback, V] => Editor[D, Callback, V]
+  type EditorE[E, A, B, C, V] = E => Editor[A, B, C, V]
 }

@@ -2,7 +2,9 @@ package shipreq.webapp.client.util.ui.tablespec2
 
 import design._
 import japgolly.scalajs.react._, vdom.ReactVDom.{Tag => _, _}, all._, ScalazReact._
+import shipreq.webapp.base.validation.ValidatorPlus
 import shipreq.webapp.client.util.ui.Util.textChangeRecv
+import scalaz._
 import scalaz.effect.IO
 import scalaz.syntax.bind._
 
@@ -21,19 +23,19 @@ object impls {
         nopCB
     }
 
-  def textEditor[S](node: Tag, T: ComponentStateFocus[S]): Editor[String, ECB[S], Modifier] =
-    ei => {
-      val base = node(cls := ei.cssClass, value := ei.data)
-      ei.editable match {
-        case None =>
-          base(readonly := true)
-        case Some(cb) =>
-          base(
-            onchange  ~~> T._runState(textChangeRecv(cb.onChange)),
-            onkeydown ~~> T._runState(cancelOnEscape(cb.onCancel)),
-            onblur    ~~> T.runState(cb.onEditFinished))
-      }
-    }
+//  def textEditor[S](node: Tag, T: ComponentStateFocus[S]): Editor[String, ECB[S], Modifier] =
+//    ei => {
+//      val base = node(cls := ei.cssClass, value := ei.data)
+//      ei.editable match {
+//        case None =>
+//          base(readonly := true)
+//        case Some(cb) =>
+//          base(
+//            onchange  ~~> T._runState(textChangeRecv(cb.onChange)),
+//            onkeydown ~~> T._runState(cancelOnEscape(cb.onCancel)),
+//            onblur    ~~> T.runState(cb.onEditFinished))
+//      }
+//    }
 
   abstract class ECB2 {
     type S
@@ -43,8 +45,8 @@ object impls {
     def run = f.runState(cb)
   }
 
-  def textEditor2(node: Tag): Editor[String, ECB2, Modifier] =
-    ei => {
+  def textEditor2(node: Tag): Editor[String, String, ECB2, Modifier] =
+    Editor(ei => {
       val base = node(cls := ei.cssClass, value := ei.data)
       ei.editable match {
         case None =>
@@ -55,13 +57,25 @@ object impls {
             onkeydown ~~> cb.onCancel.f._runState(cancelOnEscape(cb.onCancel.cb)),
             onblur    ~~> cb.onEditFinished.run)
       }
-    }
+    })
 
-  def renderWithError[D, CB](editor: Editor[D, CB, Modifier])(err: String): Editor[D, CB, Modifier] =
-    ei => div(editor(ei), div(cls := "errorMsg", err))
+  def renderWithError[A, B, C](editor: Editor[A, B, C, Modifier])(err: String): Editor[A, B, C, Modifier] =
+    Editor(ei => div(editor render ei, div(cls := "errorMsg", err)))
 
-  def editorWithError[D, CB](editor: Editor[D, CB, Modifier]): EditorE[Option[String], D, CB, Modifier] =
+  def editorWithError[A, B, C](editor: Editor[A, B, C, Modifier]): EditorE[Option[String], A, B, C, Modifier] =
     _.fold(editor)(renderWithError(editor))
 
-//  def editorLiveCorrect[D, Callback, V](lc: D => D, e: Editor[D, Callback, V]): Editor[D, Callback, V]
+  def editorV[E, A, B, C, V](f: A => E, e: EditorE[E, A, B, C, V]): Editor[A, B, C, V] =
+    Editor(i => e(f(i.data)) render i)
+
+  def validateAndDisplayError[A, B, C](f: A => Option[String], e: Editor[A, B, C, Modifier]): Editor[A, B, C, Modifier] =
+    Editor(i => editorV(f, editorWithError(e)) render i)
+
+  @deprecated("Need external validation (S⇒VP)", "")
+  def composeEditorValidator[I, C](v: ValidatorPlus[I, _, _], e: Editor[I, I, C, Modifier]): Editor[I, I, C, Modifier] = {
+    type E = Editor[I, I, C, Modifier]
+    val e1: E = e.mapOutput(v.liveCorrect)
+    val e2: E = validateAndDisplayError(i => v.correctAndValidate(i).swap.toOption.map(_.toText), e1)
+    e2
+  }
 }
