@@ -277,7 +277,10 @@ object tryagain {
 
     def mapInput[X](f: A => X)       : EditorInput[X, B, C] = copy(data = f(data))
     def contramapOutput[X](f: X => B): EditorInput[A, X, C] = copy(editable = editable.map(_ contramap f))
-    def mapC[X](f: C => X)        : EditorInput[A, B, X] = copy(editable = editable.map(_ mapC f))
+    def mapC[X](f: C => X)           : EditorInput[A, B, X] = copy(editable = editable.map(_ mapC f))
+
+    def dimap[X, Y](f: A => X, g: Y => B): EditorInput[X, Y, C] =
+      copy(data = f(data), editable = editable.map(_ contramap g))
   }
 
   case class Editor[A, B, C, V](render: EditorInput[A, B, C] => V) {

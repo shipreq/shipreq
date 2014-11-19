@@ -115,7 +115,17 @@ object impls2 {
   val nameE2 = composeEditorValidator(nameV, nameE)
   val ageE2 = composeEditorValidator(ageV, ageE)
 
-  val e2 = nameE2 compose ageE2
+  val e2: Editor[(String, String), String \/ String, (ECB2, ECB2), (Modifier, Modifier)] =
+    nameE2 compose ageE2
+
+  type EditorState = (String, String)
+  val ideal_e: (() => EditorState) => Editor[EditorState, EditorState, ECB2, (Modifier, Modifier)] =
+    getes => Editor(i => {
+      val es = getes()
+      val i1 = i.dimap[String, String](_._1, j => es put1 j)
+      val i2 = i.dimap[String, String](_._2, j => es put2 j)
+      (nameE2 render i1, ageE2 render i2)
+    })
 
   object ManualExample1_split_editors {
     object RowStatus
@@ -225,7 +235,6 @@ object impls2 {
             },
             (revert1(id), revert2(id)),
             ???))))
-
     }
 
     val outmost = ReactComponentB[Props]("Outmost")
@@ -253,6 +262,63 @@ object impls2 {
         val (n, a) = e2.render(p.ei)
         tr(key := p.key, n, a)
       })
+      .build
+  }
+
+  // ******************************************************************
+  object ManualExample3_ideally_consolidated_editor {
+    object RowStatus
+    case class Props(ppl: Map[Long, Person])
+    case class RowState(i: EditorState, rowStatus: RowStatus.type)
+    type SavedState = Map[Long, RowState]
+    case class ZeState(saved: SavedState)
+
+    class TopBackend(c: BackendScope[Props, ZeState]) {
+
+      val nopEcb = ECB2.nop(c)
+
+      def tableProps = TableProps(rowpropsa(c.state.saved))
+
+      def getes(id: Long): EditorState =
+        c.state.saved(id).i
+
+      def rowpropsa(saved: SavedState): Vector[SavedRowProps] =
+        saved.foldLeft(Vector.empty[SavedRowProps])((q,a) => q :+ rowprops1(a._1, a._2))
+
+      def rowprops1(id: Long, s: RowState): SavedRowProps =
+        SavedRowProps(id, () => getes(id), EditorInput(
+          s.i, "",
+          Some(EditorCallbacks[EditorState, ECB2](
+            ???,
+            ???, // TODO woah, don't want to revert all fields in bulk
+            ???))))
+    }
+
+    val outmost = ReactComponentB[Props]("Outmost")
+      .getInitialState(p => ZeState(p.ppl.mapValues(v => RowState((v.name, v.age.toString), RowStatus))))
+      .backend(new TopBackend(_))
+      .render((p, s, b) =>
+      div(h1("Hi!"), tablec(b.tableProps))
+      )
+      .build
+
+    case class TableProps(saved: Vector[SavedRowProps])
+    val tablec = ReactComponentB[TableProps]("table")
+      .stateless
+      .render((p,_) =>
+      table(
+        thead("Name", "Age"),
+        tbody(p.saved.map(savedrow(_)).asJsArray))
+      )
+      .build
+
+    case class SavedRowProps(key: Long, getes: () => EditorState, ei: EditorInput[EditorState, EditorState, ECB2])
+    val savedrow = ReactComponentB[SavedRowProps]("savedrow")
+      .stateless
+      .render((p, _) => {
+      val (n, a) = ideal_e(p.getes).render(p.ei)
+      tr(key := p.key, n, a)
+    })
       .build
   }
 }
