@@ -27,11 +27,17 @@ object Neo {
 
   case class EditorCallbacks[-B, -C, +D](onChange: (B, C) => D,
                                      onCancel: C => D,
-                                     onEditFinished: C => D) {
+                                     onEditFinished: (B, C) => D) {
 
-    def mapB[X](f: X => B): EditorCallbacks[X, C, D] = copy[X, C, D](onChange = (a,c) => onChange(f(a), c))
-    def mapC[X](f: X => C): EditorCallbacks[B, X, D] = EditorCallbacks[B, X, D]((a,x) => onChange(a,f(x)), onCancel compose f, onEditFinished compose f)
-    def mapD[X](f: D => X): EditorCallbacks[B, C, X] = EditorCallbacks[B, C, X]((a,c) => f(onChange(a,c)), f compose onCancel, f compose onEditFinished)
+    @inline private def mp[X,Y,Z](f: ((B, C) => D) => ((X, Y) => Z), g: (C => D) => (Y => Z)) =
+      EditorCallbacks[X, Y, Z](f(onChange), g(onCancel), f(onEditFinished))
+
+    def mapB[X](f: X => B): EditorCallbacks[X, C, D] = mp(h => (b,c) => h(f(b), c), identity)
+    def mapC[X](f: X => C): EditorCallbacks[B, X, D] = mp(h => (b,c) => h(b, f(c)), f.andThen)
+    def mapD[X](f: D => X): EditorCallbacks[B, C, X] = mp(h => (b,c) => f(h(b, c)), f.compose)
+
+    def modB_onChange      [X <: B](f: X => X): EditorCallbacks[X, C, D] = copy(onChange       = (b,c) => onChange      (f(b), c))
+    def modB_onEditFinished[X <: B](f: X => X): EditorCallbacks[X, C, D] = copy(onEditFinished = (b,c) => onEditFinished(f(b), c))
   }
 
   case class EditorInput[+A, -B, -C, +D](data: A,
@@ -39,11 +45,17 @@ object Neo {
                                      editable: Option[EditorCallbacks[B, C, D]]) {
 
     def mapA[X](f: A => X): EditorInput[X, B, C, D] = copy(data = f(data))
-    def mapB[X](f: X => B): EditorInput[A, X, C, D] = copy(editable = editable.map(_ mapB f))
-    def mapC[X](f: X => C): EditorInput[A, B, X, D] = copy(editable = editable.map(_ mapC f))
-    def mapD[X](f: D => X): EditorInput[A, B, C, X] = copy(editable = editable.map(_ mapD f))
+    def mapB[X](f: X => B): EditorInput[A, X, C, D] = mapCB(_ mapB f)
+    def mapC[X](f: X => C): EditorInput[A, B, X, D] = mapCB(_ mapC f)
+    def mapD[X](f: D => X): EditorInput[A, B, C, X] = mapCB(_ mapD f)
 //    def dimap[X, Y](f: A => X, g: Y => B): EditorInput[X, Y, C] =
 //      copy(data = f(data), editable = editable.map(_ contramap g))
+
+    @inline final def mapCB[X,Y,Z](f: EditorCallbacks[B,C,D] => EditorCallbacks[X,Y,Z]): EditorInput[A,X,Y,Z] =
+      copy(editable = editable map f)
+
+    def modB_onChange      [X <: B](f: X => X): EditorInput[A, X, C, D] = mapCB(_ modB_onChange f)
+    def modB_onEditFinished[X <: B](f: X => X): EditorInput[A, X, C, D] = mapCB(_ modB_onEditFinished f)
   }
 
   case class Editor[-A, +B, +C, -D, +V](render: EditorInput[A, B, C, D] => V) {
@@ -51,6 +63,10 @@ object Neo {
     def mapB[X](f: B => X): Editor[A, X, C, D, V] = Editor(i => render(i mapB f))
     def mapC[X](f: C => X): Editor[A, B, X, D, V] = Editor(i => render(i mapC f))
     def mapD[X](f: X => D): Editor[A, B, C, X, V] = Editor(i => render(i mapD f))
+
+//    def mapCB[X,Y,Z](f: EditorCallbacks[X,Y,Z] => EditorCallbacks[B,C,D]): Editor[A,X,Y,Z,V] = Editor(i => render(i mapCB f))
+    def modB_onChange      [X >: B](f: X => X): Editor[A, X, C, D, V] = Editor(i => render(i modB_onChange f))
+    def modB_onEditFinished[X >: B](f: X => X): Editor[A, X, C, D, V] = Editor(i => render(i modB_onEditFinished f))
   }
 
   type RU = ReactST[IO, Unit, Unit]
@@ -66,8 +82,8 @@ object Neo {
         case Some(cb) =>
           base(
             onchange  ~~> textChangeRecv(cb.onChange(_, nopRU)),
-            onkeydown ~~> cb.onCancel.compose(cancelOnEscape),
-            onblur    ~~> cb.onEditFinished(nopRU))
+            onblur    ~~> textChangeRecv(cb.onEditFinished(_, nopRU)),
+            onkeydown ~~> cb.onCancel.compose(cancelOnEscape))
       }
     })
 
@@ -97,16 +113,68 @@ object Neo {
   def validateAndDisplayError[A, B, C, D](f: A => Option[String], e: Editor[A, B, C, D, Modifier]): Editor[A, B, C, D, Modifier] =
     Editor(i => editorV(f, editorWithError(e)) render i)
 
+  /*
+  def validateAndDisplayError[A, B, C, D](f: A => Option[String]): Endo[Editor[A, B, C, D, Modifier]] =
+    Endo(e => Editor(i => editorV(f, editorWithError(e)) render i))
+
+  def applyLiveCorrection[A, B, C, D, V](v: ValidatorPlus[B, _, _]): Endo[Editor[A, B, C, D, V]] =
+    Endo(_ modB_onChange v.liveCorrect)
+
+  def applyPostCorrection[A, B, C, D, V, T](v: CorrectionPart[B, T]): Endo[Editor[A, B, C, D, V]] =
+    Endo(_.modB_onEditFinished(b => v.ci(v.correct(b).value)))
+
+  def applyInputValidation[A, B, C, D](v: Validator[A, _, _]): Endo[Editor[A, B, C, D, Modifier]] =
+    validateAndDisplayError(i => v.correctAndValidate(i).swap.toOption.map(_.toText))
+
+  def composeEditorValidator[I, C, D](v: ValidatorPlus[I, _, _]): Endo[Editor[I, I, C, D, Modifier]] =
+    applyInputValidation[I, I, C, D](v) compose
+      applyPostCorrection(v.cp) compose
+        applyLiveCorrection(v)
+
+  val nameE2 = composeEditorValidator(nameV).run(nameE)
+  val ageE2 = composeEditorValidator(ageV).run(ageE)
+  */
+
+  /*
+  def applyLiveCorrection[A, B, C, D, V](v: ValidatorPlus[B, _, _], e: Editor[A, B, C, D, V]): Editor[A, B, C, D, V] =
+    e.modB_onChange(v.liveCorrect)
+
+  def applyPostCorrection[A, B, C, D, V, T](v: CorrectionPart[B, T], e: Editor[A, B, C, D, V]): Editor[A, B, C, D, V] =
+    e.modB_onEditFinished(b => v.ci(v.correct(b).value))
+
+  def applyInputValidation[A, B, C, D](v: Validator[A, _, _], e: Editor[A, B, C, D, Modifier]): Editor[A, B, C, D, Modifier] =
+    validateAndDisplayError(i => v.correctAndValidate(i).swap.toOption.map(_.toText), e)
+
+  //  def uniqueness[S, A, B, C, D](f: (S,A), e: Editor[A, B, C, D, Modifier]): Editor[(S,A), B, C, D, Modifier] =
+  //    validateAndDisplayError(i => v.correctAndValidate(i).swap.toOption.map(_.toText), e)
+
   def composeEditorValidator[I, C, D](v: ValidatorPlus[I, _, _], e: Editor[I, I, C, D, Modifier]): Editor[I, I, C, D, Modifier] =
     applyInputValidation(v,
-      applyLiveCorrection(v,
-        e))
+      applyPostCorrection(v.cp,
+        applyLiveCorrection(v,
+          e)))
+  */
 
-  def applyLiveCorrection[A, B, C, D, V](v: ValidatorPlus[B, _, _], e: Editor[A, B, C, D, V]): Editor[A, B, C, D, V] =
-    e.mapB(v.liveCorrect)
+  implicit final class EditorExt[A,B,C,D,V](val e: Editor[A,B,C,D,V]) extends AnyVal {
+    type Self = Editor[A, B, C, D, V]
+    def applyLiveCorrection(v: ValidatorPlus[B, _, _]): Self =
+      e.modB_onChange(v.liveCorrect)
 
-  def applyInputValidation[A, B, C, D](v: ValidatorPlus[A, _, _], e: Editor[A, B, C, D, Modifier]): Editor[A, B, C, D, Modifier] =
-    validateAndDisplayError(i => v.correctAndValidate(i).swap.toOption.map(_.toText), e)
+    def applyPostCorrection[T](v: CorrectionPart[B, T]): Self =
+      e.modB_onEditFinished(b => v.ci(v.correct(b).value))
+  }
+
+  implicit final class EditorExtV[A,B,C,D](val e: Editor[A,B,C,D,Modifier]) extends AnyVal {
+    type Self = Editor[A, B, C, D, Modifier]
+
+    def applyInputValidation(v: Validator[A, _, _]): Self =
+      validateAndDisplayError(i => v.correctAndValidate(i).swap.toOption.map(_.toText), e)
+  }
+
+  def composeEditorValidator[I, C, D](v: ValidatorPlus[I, _, _], e: Editor[I, I, C, D, Modifier]): Editor[I, I, C, D, Modifier] =
+    e.applyInputValidation(v)
+      .applyLiveCorrection(v)
+      .applyPostCorrection(v.cp)
 
   // ===================================================================================================================
 
@@ -126,13 +194,28 @@ object Neo {
         ValidationPart[Option[Int], Age](???),
         _.replaceAll("\\D", ""))
 
-    val bothV = nameV *** ageV
+//    val bothV = nameV *** ageV
+
+
+    // TODO correction on onEditFinished. callback is (C→D) only, not (B→C→D).
+    // How to get B? I want to apply a (B→B) basically.((B→B),C)→D
+    // B/I₁ → C → I₂ → ReactS[S, Unit]
+    // I → ReactS[S, Unit] = woah!
+
+
+    // ValidationPlus isn't helpful. LiveCorrect used in isolation from Validator
+    val ageV_1: Validator[String, Option[Int], Age] = ageV
+//    val ageV_2 = ageV_1.contraxmap()
 
     val nameE = textInputEditor
     val ageE = textInputEditor
 
     val nameE2 = composeEditorValidator(nameV, nameE)
     val ageE2 = composeEditorValidator(ageV, ageE)
+
+    // This is what uniqueness validation of name would probably look like ↙
+    type NameSWI = (Map[Long, String], Long, String)
+    val nameE3 = nameE2.mapA[NameSWI](_._3)
 
     object ManualExample1_split_editors {
       object RowStatus
@@ -168,13 +251,17 @@ object Neo {
               }
             )
 
-        def rowpropsa(saved: SavedState): Vector[SavedRowProps] =
-          saved.foldLeft(Vector.empty[SavedRowProps])((q,a) => q :+ rowprops1(a._1, a._2))
+        def rowpropsa(saved: SavedState): Vector[SavedRowProps] = {
+          val names = saved.mapValues(_.i._1)
+          saved.foldLeft(Vector.empty[SavedRowProps])((q, a) => q :+ rowprops1(names, a._1, a._2))
+        }
 
-        def rowprops1(id: Long, s: RowState): SavedRowProps =
+        def rowprops1(names: Map[Long, String], id: Long, s: RowState): SavedRowProps = {
+          val nameswi: NameSWI = (names, id, s.i._1)
           SavedRowProps(id,
-            EditorInput(s.i._1, "", Some(EditorCallbacks[String, RU, IO[Unit]](update1(id), revert1(id), ???))),
+            EditorInput(nameswi, "", Some(EditorCallbacks[String, RU, IO[Unit]](update1(id), revert1(id), ???))),
             EditorInput(s.i._2, "", Some(EditorCallbacks[String, RU, IO[Unit]](update2(id), revert2(id), ???))))
+        }
       }
 
       val outmost = ReactComponentB[Props]("Outmost")
@@ -195,12 +282,12 @@ object Neo {
         )
         .build
 
-      case class SavedRowProps(key: Long, nameEI: EditorInput[String, String, RU, IO[Unit]], ageEI: EditorInput[String, String, RU, IO[Unit]])
+      case class SavedRowProps(key: Long, nameEI: EditorInput[NameSWI, String, RU, IO[Unit]], ageEI: EditorInput[String, String, RU, IO[Unit]])
       val savedrow = ReactComponentB[SavedRowProps]("savedrow")
         .stateless
         .render((p, _) => {
         //val (n, a) = e2.render(???)
-        val n = nameE2 render p.nameEI
+        val n = nameE3 render p.nameEI
         val a = ageE2 render p.ageEI
         tr(key := p.key, n, a)
       })

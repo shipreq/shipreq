@@ -4,7 +4,7 @@ import japgolly.scalajs.react._, vdom.ReactVDom.{Tag => _, _}, all._, ScalazReac
 
 object Util {
 
-  def textChangeRecv[R](f: String => R): InputEvent => R =
+  def textChangeRecv[R](f: String => R): ReactEventI => R =
     e => f(e.target.value)
 
   def checkbox(check: Boolean) =
