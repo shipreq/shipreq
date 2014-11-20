@@ -194,18 +194,10 @@ object Neo {
         ValidationPart[Option[Int], Age](???),
         _.replaceAll("\\D", ""))
 
-//    val bothV = nameV *** ageV
-
-
-    // TODO correction on onEditFinished. callback is (C→D) only, not (B→C→D).
-    // How to get B? I want to apply a (B→B) basically.((B→B),C)→D
-    // B/I₁ → C → I₂ → ReactS[S, Unit]
-    // I → ReactS[S, Unit] = woah!
-
 
     // ValidationPlus isn't helpful. LiveCorrect used in isolation from Validator
-    val ageV_1: Validator[String, Option[Int], Age] = ageV
-//    val ageV_2 = ageV_1.contraxmap()
+    val nameV_1: Validator[String, String, String] = nameV
+    // TODO can't contramap Validator because I in invariant & needs xmap.
 
     val nameE = textInputEditor
     val ageE = textInputEditor
