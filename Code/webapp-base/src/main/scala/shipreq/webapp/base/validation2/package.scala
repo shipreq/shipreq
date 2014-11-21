@@ -15,7 +15,4 @@ package object validation2 {
     def map[B](f: A => B) = InputCorrected[B](f(value))
   }
   implicit def InputCorrectedCtor[R] = TaggedTypeCtor[InputCorrected[R]](InputCorrected[R])
-
-  type ValidatePlusR[S, R, O] = R => ValidatePlusS[S, O]
-  type ValidatePlusS[S, O] = (S, O) => Option[VFailure]
 }
