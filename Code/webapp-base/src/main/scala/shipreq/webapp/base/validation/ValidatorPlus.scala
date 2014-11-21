@@ -16,7 +16,7 @@ class ValidatorPlus[I, C, V](val liveCorrect: I => I, cp: CorrectionPart[I, C], 
   override def map[W](f: V => W): ValidatorPlus[I, C, W] =
     new ValidatorPlus(liveCorrect, cp, vp map f)
 
-  override def lift[M[_]](implicit M: Functor[M], T: Traverse[M]): ValidatorPlus[M[I], M[C], M[V]] =
+  override def lift[M[_]](implicit M: Traverse[M]): ValidatorPlus[M[I], M[C], M[V]] =
     super.lift[M].toPlus(M.map(_)(liveCorrect))
 
   def stateful[S](t: ValidatePlusS[S, V]): S => ValidatorPlus[I, C, V] =
