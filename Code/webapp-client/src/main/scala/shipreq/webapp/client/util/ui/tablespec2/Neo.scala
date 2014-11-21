@@ -3,12 +3,14 @@ package shipreq.webapp.client.util.ui.tablespec2
 import japgolly.scalajs.react._, vdom.ReactVDom.{Tag => _, _}, all._, ScalazReact._
 import monocle._
 import shipreq.webapp.base.validation._
+import shipreq.webapp.base.validation2._
 import shipreq.webapp.client.util.ui.Util._
 import scala.util.Try
 import scalaz.effect.IO
 import scalajs.js.undefined
 import scalaz._, Scalaz._
 import shipreq.base.util.ScalaExt._
+import ValiS._
 
 object Neo {
 
@@ -176,6 +178,37 @@ object Neo {
       .applyLiveCorrection(v)
       .applyPostCorrection(v.cp)
 
+  // -------------------------------------------------------------
+//  object SValiExt {
+
+    implicit final class EditorExt2[A,B,C,D,V](val e: Editor[A,B,C,D,V]) extends AnyVal {
+      type Self = Editor[A, B, C, D, V]
+//      def applyLiveCorrection(v: ValidatorPlus[B, _, _]): Self =
+//        e.modB_onChange(v.liveCorrect)
+
+//      def applyPostCorrection[T](v: CorrectionPart[B, T]): Self =
+//        e.modB_onEditFinished(b => v.ci(v.correct(b).value))
+    }
+
+    implicit final class EditorExtV2[A,B,C,D](val e: Editor[A,B,C,D,Modifier]) extends AnyVal {
+      type Self = Editor[A, B, C, D, Modifier]
+
+      def applyInputValidation2[S](v: ValiS[S, A, _, _]): Editor[(S, A), B, C, D, Modifier] =
+        validateAndDisplayError(sa => v.correctAndValidate(sa._1, sa._2).swap.toOption.map(_.toText),
+          e.mapA[(S, A)](_._2))
+    }
+
+//    def composeEditorValidator[I, C, D](v: ValidatorPlus[I, _, _], e: Editor[I, I, C, D, Modifier]): Editor[I, I, C, D, Modifier] =
+//      e.applyInputValidation(v)
+//        .applyLiveCorrection(v)
+//        .applyPostCorrection(v.cp)
+//  }
+
+//  def composeEditorValiS[S, I, C, D](v: ValiS[S, I, _, _], e: Editor[I, I, C, D, Modifier]): Editor[I, I, C, D, Modifier] =
+//    e.applyInputValidation(v)
+//      .applyLiveCorrection(v)
+//      .applyPostCorrection(v.cp)
+
   // ===================================================================================================================
 
   object Example {
@@ -206,8 +239,23 @@ object Neo {
     val ageE2 = composeEditorValidator(ageV, ageE)
 
     // This is what uniqueness validation of name would probably look like ↙
-    type NameSWI = (Map[Long, String], Long, String)
-    val nameE3 = nameE2.mapA[NameSWI](_._3)
+    type NameSW = (Map[Long, String], Long)
+    type NameSWI = (NameSW, String)
+    def nameUniqueness(names: Map[Long, String], id: Long, name: String): Option[VFailure] =
+      (names - id).forall(_._2 != name) match {
+        case true  => None
+        case false => Some(uniquenessFailure("Name"))
+      }
+    def uniquenessFailure(fieldName: String): VFailure =
+      VFailure.forField(fieldName, NonEmptyList("must be unique."))
+    def tovps[S,A](f: (S,InputCorrected[A]) => Option[VFailure]): VPS[S, A, A] =
+      new VPS((s,a) => f(s,a) match {
+        case None    => Success(a.value)
+        case Some(r) => Failure(r)
+      })
+    val nameUniqueVPS = tovps[NameSW, String]((a,b) => nameUniqueness(a._1, a._2, b))
+    val nameV2 = nameV.toValiS[NameSW].addValidation(nameUniqueVPS)
+    val nameE3 = nameE2.applyInputValidation2(nameV2)
 
     object ManualExample1_split_editors {
       object RowStatus
@@ -249,7 +297,7 @@ object Neo {
         }
 
         def rowprops1(names: Map[Long, String], id: Long, s: RowState): SavedRowProps = {
-          val nameswi: NameSWI = (names, id, s.i._1)
+          val nameswi: NameSWI = ((names, id), s.i._1)
           SavedRowProps(id,
             EditorInput(nameswi, "", Some(EditorCallbacks[String, RU, IO[Unit]](update1(id), revert1(id), ???))),
             EditorInput(s.i._2, "", Some(EditorCallbacks[String, RU, IO[Unit]](update2(id), revert2(id), ???))))
