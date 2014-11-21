@@ -13,6 +13,8 @@ import shipreq.base.util.ScalaExt._
 import ValiS._
 
 object Neo {
+  @deprecated("????", "")
+  def ???? = scala.Predef.???
 
   // Args
   // - for each arg, measure variance of each type
@@ -69,6 +71,63 @@ object Neo {
 //    def mapCB[X,Y,Z](f: EditorCallbacks[X,Y,Z] => EditorCallbacks[B,C,D]): Editor[A,X,Y,Z,V] = Editor(i => render(i mapCB f))
     def modB_onChange      [X >: B](f: X => X): Editor[A, X, C, D, V] = Editor(i => render(i modB_onChange f))
     def modB_onEditFinished[X >: B](f: X => X): Editor[A, X, C, D, V] = Editor(i => render(i modB_onEditFinished f))
+
+    def compose_1[M,N,O,P,Q](t: Editor[M,N,O,P,Q]): Editor[(A,M),(B,N),(C,O),(D,P),(V,Q)] =
+      Editor[(A,M),(B,N),(C,O),(D,P),(V,Q)](i => {
+        val i1: EditorInput[A, B, C, D] = ???
+        val i2: EditorInput[M, N, O, P] = i
+          .mapA(_._2)
+          .mapB[N](/* N→(B,N) */ ???)
+          .mapC[O](/* O→(C,O) */ ???)
+          .mapD(_._2)
+        (this render i1, t render i2)
+      })
+
+    type NoB = Unit
+    def compose_2[M,N,O >: C, P,Q](t: Editor[M,N,O,P,Q]): Editor[(A,M),NoB,O,(D,P),(V,Q)] =
+      Editor[(A,M),NoB,O,(D,P),(V,Q)](i => {
+        val i1: EditorInput[A, B, C, D] = i
+          .mapA(_._1)
+          .mapB[B](_ => ())
+          .mapC[C](o => o)
+          .mapD(_._1)
+        val i2: EditorInput[M, N, O, P] = i
+          .mapA(_._2)
+          .mapB[N](_ => ())
+          //.mapC[O](o => o)
+          .mapD(_._2)
+        (this render i1, t render i2)
+      })
+
+    def compose_3[M,N,O >: C, P <: D,Q](t: Editor[M,N,O,P,Q]): Editor[(A,M),NoB,O,P,(V,Q)] =
+      Editor[(A,M),NoB,O,P,(V,Q)](i => {
+        val i1: EditorInput[A, B, C, D] = i
+          .mapA(_._1)
+          .mapB[B](_ => ())
+          .mapC[C](o => o)
+          .mapD[P](d => d)
+        val i2: EditorInput[M, N, O, P] = i
+          .mapA(_._2)
+          .mapB[N](_ => ())
+          //.mapC[O](o => o)
+          //.mapD[P](d => d)
+        (this render i1, t render i2)
+      })
+
+    def compose_4[M,N,O >: C, P <: D,Q](t: Editor[M,N,O,P,Q]): Editor[(A,M),B \/ N,O,P,(V,Q)] =
+      Editor[(A,M),B \/ N,O,P,(V,Q)](i => {
+        val i1: EditorInput[A, B, C, D] = i
+          .mapA(_._1)
+          .mapB[B](-\/.apply)
+          .mapC[C](o => o)
+          .mapD[P](d => d)
+        val i2: EditorInput[M, N, O, P] = i
+          .mapA(_._2)
+          .mapB[N](\/-.apply)
+        //.mapC[O](o => o)
+        //.mapD[P](d => d)
+        (this render i1, t render i2)
+      })
   }
 
   type RU = ReactST[IO, Unit, Unit]
@@ -213,9 +272,6 @@ object Neo {
 
   object Example {
 
-    @deprecated("????", "")
-    def ???? = scala.Predef.???
-
     case class Age(value: Int)
     case class Person(id: Long, name: String, age: Age)
 
@@ -257,6 +313,12 @@ object Neo {
     val nameV2 = nameV.toValiS[NameSW].addValidation(nameUniqueVPS)
     val nameE3 = nameE2.applyInputValidation2(nameV2)
 
+    // 1: NameSWI, String, RU, IO[Unit], Modifier
+    // 2: String,  String, RU, IO[Unit], Modifier
+//    val mergedE: Editor[(NameSWI, String), Nothing, RU, IO[Unit], (Modifier, Modifier)] = ???
+    val mergedE: Editor[(NameSWI, String), String \/ String, RU, IO[Unit], (Modifier, Modifier)] =
+      nameE3 compose_4 ageE2
+
     object ManualExample1_split_editors {
       object RowStatus
       case class Props(ppl: Map[Long, Person])
@@ -269,15 +331,27 @@ object Neo {
 
         def tableProps = TableProps(rowpropsa(c.state.saved))
 
-        def update1(id: Long): (String, RU) => IO[Unit] = ????
-        def update2(id: Long): (String, RU) => IO[Unit] =
+        def updaten(id: Long): (String \/ String, RU) => IO[Unit] =
           (i, ru) => c.runState(
             ru.zoomU[ZeState] >>
               ZS.modS{ s =>
-                val nv = s.saved(id).i put2 i
+                val ov = s.saved(id).i
+                val nv = i match {
+                  case -\/(n) => ov put1 n
+                  case \/-(a) => ov put2 a
+                }
                 s.copy(saved = s.saved + (id -> RowState(nv, RowStatus)))
               }
           )
+
+        // Editor composition ends up merging the onCancel response.
+        // 1 - Make it send a type through to disambiguate (like \/ in updaten).
+        //     A better coproduct would be desirable.
+        //     Maybe tuple of (Lens' s t, t).
+        // 2 - Maybe Editor isn't the right type for row-level consolidation.
+
+        // HAD A THOUGHT! Instead of 3 callback fields we should have (CallbackType, B, C) => D
+        // or (CallbackType[B], C) => D
 
         def revert1(id: Long): RU => IO[Unit] = ????
         def revert2(id: Long): RU => IO[Unit] =
@@ -299,8 +373,12 @@ object Neo {
         def rowprops1(names: Map[Long, String], id: Long, s: RowState): SavedRowProps = {
           val nameswi: NameSWI = ((names, id), s.i._1)
           SavedRowProps(id,
-            EditorInput(nameswi, "", Some(EditorCallbacks[String, RU, IO[Unit]](update1(id), revert1(id), ???))),
-            EditorInput(s.i._2, "", Some(EditorCallbacks[String, RU, IO[Unit]](update2(id), revert2(id), ???))))
+            EditorInput(
+              (nameswi, s.i._2),
+              "",
+              Some(EditorCallbacks[String \/ String, RU, IO[Unit]](
+                updaten(id), revertn(id), ???))))
+                //update1(id), revert1(id), ???))))
         }
       }
 
@@ -322,13 +400,13 @@ object Neo {
         )
         .build
 
-      case class SavedRowProps(key: Long, nameEI: EditorInput[NameSWI, String, RU, IO[Unit]], ageEI: EditorInput[String, String, RU, IO[Unit]])
+      case class SavedRowProps(key: Long, ei: EditorInput[(NameSWI, String), String \/ String, RU, IO[Unit]])
       val savedrow = ReactComponentB[SavedRowProps]("savedrow")
         .stateless
         .render((p, _) => {
-        //val (n, a) = e2.render(???)
-        val n = nameE3 render p.nameEI
-        val a = ageE2 render p.ageEI
+        val (n, a) = mergedE.render(p.ei)
+//        val n = nameE3 render p.nameEI
+//        val a = ageE2 render p.ageEI
         tr(key := p.key, n, a)
       })
         .build
