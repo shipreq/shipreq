@@ -116,7 +116,7 @@ class Validator[I, C, V](val cp: CorrectionPart[I, C], val vp: ValidationPart[C,
   def map[W](f: V => W): Validator[I, C, W] =
     Validator(cp, vp map f)
 
-  def lift[M[_]](implicit M: Functor[M], T: Traverse[M]): Validator[M[I], M[C], M[V]] =
+  def lift[M[_]](implicit M: Traverse[M]): Validator[M[I], M[C], M[V]] =
     Validator(cp.lift[M], vp.lift[M])
 
   def ***[I2, C2, V2](b: Validator[I2, C2, V2]): Validator[(I, I2), (C, C2), (V, V2)] =
