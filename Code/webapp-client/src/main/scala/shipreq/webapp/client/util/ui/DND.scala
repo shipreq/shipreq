@@ -39,9 +39,9 @@ object DND {
     private def setStateDrop[A](s: Option[A]): State[PState[A], Unit] = State.modify(_.map(x => (x._1, s)))
 
     def dragEnd[A] = State.put[PState[A]](None)
-    def dragStart[A](a: A) = State.put[PState[A]](Some(a, None))
+    def dragStart[A] = (a: A) => State.put[PState[A]](Some(a, None))
 
-    def dragOver[A](a: A) = setStateDrop(Some(a))
+    def dragOver[A] = (a: A) => setStateDrop(Some(a))
     def dragLeave[A] = setStateDrop[A](None)
 
     def cProps[A: Equal](T: ComponentStateFocus[PState[A]], a: A, move: (A,A) => IO[Unit]) =
@@ -50,10 +50,10 @@ object DND {
           case Some((_, Some(d))) => implicitly[Equal[A]].equal(a, d)
           case _ => false
         },
-        T _runStateFS dragStart,
-        T _runStateFS dragOver,
-        T runStateFS dragLeave,
-        T runStateFS dragEnd,
+        T _runStateF dragStart.liftR,
+        T _runStateF dragOver.liftR,
+        T runStateF dragLeave.liftR,
+        T runStateF dragEnd.liftR,
         T.state match {
           case Some((from, Some(to))) => move(from, to)
           case _ => IO(())
@@ -74,7 +74,7 @@ object DND {
 
     def initialState: CState = false
 
-    def dragStart[A](a: A, p: CProps[A]): SyntheticDragEvent[dom.Node] => StateIO[Unit] =
+    def dragStart[A](a: A, p: CProps[A]): ReactDragEvent => StateIO[Unit] =
       e => StateT(_ => p.onDragStart(a) >> IO {
         //console.log(s"dragStart: $p")
         e.dataTransfer.setData("text", "managed")
@@ -84,7 +84,7 @@ object DND {
     def dragEnd[A](p: CProps[A]): StateIO[Unit] =
       StateT(_ => p.onDragEnd >> IO(false, ()))
 
-    def dragOver[A](a: A, p: CProps[A], s: => CState): SyntheticDragEvent[dom.Node] => IO[Unit] =
+    def dragOver[A](a: A, p: CProps[A], s: => CState): ReactDragEvent => IO[Unit] =
       e => IO {
         //console.log(s"dragOver: dragging = $s / dragover = ${p.dragover}")
         if (!s) {
@@ -94,34 +94,32 @@ object DND {
         }
       }
 
-    def drop[A](p: CProps[A]): SyntheticDragEvent[dom.Node] => IO[Unit] =
+    def drop[A](p: CProps[A]): ReactDragEvent => IO[Unit] =
       _.preventDefaultIO >> p.onMove
 
     def renderDragHandle[S, A](p: CProps[A], a: A, T: ComponentStateFocus[CState]) =
       span(
-        className     := "draghandle"
-        ,draggable    := "true"
-        ,onDragStart ~~> T._runStateS(dragStart(a, p))
-        ,onDragEnd   ~~> T.runStateS(dragEnd(p))
+        className    := "draghandle",
+        draggable    := "true",
+        onDragStart ~~> T._runState(dragStart(a, p).liftR),
+        onDragEnd   ~~> T.runState(dragEnd(p).liftR),
         // onMouseDown={typeof window.isIE9 != 'undefined' && this.handleIE9DragHack}
-      )("\u2630")
+        "\u2630")
 
     def renderRow[A](p: CProps[A], a: A, T: ComponentStateFocus[CState]) =
       div(
-        classSet("dragging" -> T.state, "dragover" -> p.dragover)
-        ,onDragEnter ~~> preventDefaultIO
-        ,onDragOver  ~~> dragOver(a, p, T.state)
-        ,onDragLeave ~~> p.onDragLeave
-        ,onDrop      ~~> drop(p)
-      )
+        classSet("dragging" -> T.state, "dragover" -> p.dragover),
+        onDragEnter ~~> preventDefaultIO,
+        onDragOver  ~~> dragOver(a, p, T.state),
+        onDragLeave ~~> p.onDragLeave,
+        onDrop      ~~> drop(p))
 
-    def dndItemComponent[A](r: (A, Tag) => Modifier ) = ReactComponentB[(A, DND.Child.CProps[A])]("DndItem")
+    def dndItemComponent[A](r: (A, Tag) => ReactElement) = ReactComponentB[(A, DND.Child.CProps[A])]("DndItem")
       .initialState(DND.Child.initialState)
       .render(T => {
-      val (i,p) = T.props
-      DND.Child.renderRow(p, i, T)(
-        r(i, DND.Child.renderDragHandle(p, i, T))
-      )
-    }).build
+        val (i,p) = T.props
+        DND.Child.renderRow(p, i, T)(
+          r(i, DND.Child.renderDragHandle(p, i, T)))
+      }).build
   }
 }
