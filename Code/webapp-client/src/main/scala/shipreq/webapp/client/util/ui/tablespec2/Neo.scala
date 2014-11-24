@@ -11,6 +11,7 @@ import scalajs.js.undefined
 import scalaz._, Scalaz._
 import shipreq.base.util.ScalaExt._
 import ValiS._
+import scala.language.reflectiveCalls
 
 object Neo {
   @deprecated("????", "")
@@ -148,10 +149,10 @@ object Neo {
     val v: f.V
   }
   object GenFieldValue {
-    def apply[F <: GenField[_]](_f: F)(_v: _f.V): GenFieldValue[F] =
+    def apply[F <: GenField[_]](a: F)(b: a.V): GenFieldValue[F] =
       new GenFieldValue[F] {
-        override final val f: _f.type = _f
-        override final val v = _v
+        override final val f: a.type = a
+        override final val v = b
       }
   }
 
@@ -167,7 +168,7 @@ object Neo {
         (e1 render i1, e2 render i2)
       })
 
-  def compose_b[C,D, A1,B1,V1, A2,B2,V2 ](e1: Editor[A1, B1, C, D, V1], e2: Editor[A2, B2, C, D, V2]) = new {
+  def compose_5b[C,D, A1,B1,V1, A2,B2,V2 ](e1: Editor[A1, B1, C, D, V1], e2: Editor[A2, B2, C, D, V2]) = new {
     def pairI[F <: GenField[_]](f1: F, f2: F)(implicit w1: B1 =:= f1.V, w2: B2 =:= f2.V) =
       apply[(A1, A2), F](_._1, _._2, f1, f2)
     def apply[I, F <: GenField[_]](a1: I => A1, a2: I => A2, f1: F, f2: F)(implicit w1: B1 =:= f1.V, w2: B2 =:= f2.V)
@@ -364,7 +365,7 @@ object Neo {
     val nameE3 = nameE2.applyInputValidation2(nameV2)
 
     sealed trait PersonField extends GenField[(String, String)] {
-      final def *(_v: V): GenFieldValue[PersonField] = GenFieldValue(this)(_v)
+//      final def *(_v: V): GenFieldValue[PersonField] = GenFieldValue(this)(_v)
     }
     case object PersonFieldName extends PersonField {
       override type V = String
@@ -381,8 +382,7 @@ object Neo {
     // 2: String,  String, RU, IO[Unit], Modifier
     type SWII = (NameSWI, String)
     val mergedE: Editor[SWII, PersonFieldAndInput, CompositeC, IO[Unit], (Modifier, Modifier)] =
-      compose_5[SWII, PersonField, RU ,IO[Unit], NameSWI,String,Modifier, String,String,Modifier](
-        nameE3, ageE2, _._1, _._2, PersonFieldName, PersonFieldAge)
+      compose_5b(nameE3, ageE2).pairI[PersonField](PersonFieldName, PersonFieldAge)
 
     object ManualExample1_split_editors {
       object RowStatus
