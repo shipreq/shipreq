@@ -36,6 +36,9 @@ object Neo {
     @inline private def mp[X,Y,Z](f: ((B, C) => D) => ((X, Y) => Z), g: (C => D) => (Y => Z)) =
       EditorCallbacks[X, Y, Z](f(onChange), g(onCancel), f(onEditFinished))
 
+    def mapBC[X,Y](f: X => B, g: Y => C): EditorCallbacks[X, Y, D] =
+      mp(h => (b,c) => h(f(b), g(c)), g.andThen)
+
     def mapB[X](f: X => B): EditorCallbacks[X, C, D] = mp(h => (b,c) => h(f(b), c), identity)
     def mapC[X](f: X => C): EditorCallbacks[B, X, D] = mp(h => (b,c) => h(b, f(c)), f.andThen)
     def mapD[X](f: D => X): EditorCallbacks[B, C, X] = mp(h => (b,c) => f(h(b, c)), f.compose)
@@ -47,6 +50,9 @@ object Neo {
   case class EditorInput[+A, -B, -C, +D](data: A,
                                      cssClass: String,
                                      editable: Option[EditorCallbacks[B, C, D]]) {
+
+    def mapABC[X,Y,Z](f: A => X, g: Y => B, h: Z => C): EditorInput[X, Y, Z, D] =
+      copy(data = f(data), editable = editable map (_.mapBC(g, h)))
 
     def mapA[X](f: A => X): EditorInput[X, B, C, D] = copy(data = f(data))
     def mapB[X](f: X => B): EditorInput[A, X, C, D] = mapCB(_ mapB f)
@@ -129,6 +135,50 @@ object Neo {
         (this render i1, t render i2)
       })
   }
+
+
+
+  trait GenField[_R] {
+    final type R = _R
+    type V
+    def lens: SimpleLens[R, V]
+  }
+  trait GenFieldValue[F <: GenField[_]] {
+    val f: F
+    val v: f.V
+  }
+  object GenFieldValue {
+    def apply[F <: GenField[_]](_f: F)(_v: _f.V): GenFieldValue[F] =
+      new GenFieldValue[F] {
+        override final val f: _f.type = _f
+        override final val v = _v
+      }
+  }
+
+  def compose_5[I, F <: GenField[_], C,D, A1,B1,V1, A2,B2,V2 ](e1: Editor[A1, B1, C, D, V1], e2: Editor[A2, B2, C, D, V2],
+                                                               a1: I => A1, a2: I => A2,
+                                                                f1: F, f2: F)
+                                                              (implicit w1: B1 =:= f1.V, w2: B2 =:= f2.V):
+  Editor[I, GenFieldValue[F], (F,C), D, (V1,V2)] =
+    Editor[I, GenFieldValue[F], (F,C), D, (V1,V2)](
+      ei => {
+        val i1 = ei.mapABC[A1, B1, C](a1, GenFieldValue(f1)(_), (f1, _))
+        val i2 = ei.mapABC[A2, B2, C](a2, GenFieldValue(f2)(_), (f2, _))
+        (e1 render i1, e2 render i2)
+      })
+
+  def compose_b[C,D, A1,B1,V1, A2,B2,V2 ](e1: Editor[A1, B1, C, D, V1], e2: Editor[A2, B2, C, D, V2]) = new {
+    def pairI[F <: GenField[_]](f1: F, f2: F)(implicit w1: B1 =:= f1.V, w2: B2 =:= f2.V) =
+      apply[(A1, A2), F](_._1, _._2, f1, f2)
+    def apply[I, F <: GenField[_]](a1: I => A1, a2: I => A2, f1: F, f2: F)(implicit w1: B1 =:= f1.V, w2: B2 =:= f2.V)
+    : Editor[I, GenFieldValue[F], (F,C), D, (V1,V2)] =
+      Editor(ei => {
+        val i1 = ei.mapABC[A1, B1, C](a1, GenFieldValue(f1)(_), (f1, _))
+        val i2 = ei.mapABC[A2, B2, C](a2, GenFieldValue(f2)(_), (f2, _))
+        (e1 render i1, e2 render i2)
+      })
+  }
+
 
   type RU = ReactST[IO, Unit, Unit]
   val RU = ReactS.FixT[IO, Unit]
@@ -313,11 +363,26 @@ object Neo {
     val nameV2 = nameV.toValiS[NameSW].addValidation(nameUniqueVPS)
     val nameE3 = nameE2.applyInputValidation2(nameV2)
 
+    sealed trait PersonField extends GenField[(String, String)] {
+      final def *(_v: V): GenFieldValue[PersonField] = GenFieldValue(this)(_v)
+    }
+    case object PersonFieldName extends PersonField {
+      override type V = String
+      override def lens: SimpleLens[R, V] = SimpleLens[R](_._1)(_ put1 _)
+    }
+    case object PersonFieldAge extends PersonField {
+      override type V = String
+      override def lens: SimpleLens[R, V] = SimpleLens[R](_._2)(_ put2 _)
+    }
+    type PersonFieldAndInput = GenFieldValue[PersonField]
+    type CompositeC = (PersonField, RU)
+
     // 1: NameSWI, String, RU, IO[Unit], Modifier
     // 2: String,  String, RU, IO[Unit], Modifier
-//    val mergedE: Editor[(NameSWI, String), Nothing, RU, IO[Unit], (Modifier, Modifier)] = ???
-    val mergedE: Editor[(NameSWI, String), String \/ String, RU, IO[Unit], (Modifier, Modifier)] =
-      nameE3 compose_4 ageE2
+    type SWII = (NameSWI, String)
+    val mergedE: Editor[SWII, PersonFieldAndInput, CompositeC, IO[Unit], (Modifier, Modifier)] =
+      compose_5[SWII, PersonField, RU ,IO[Unit], NameSWI,String,Modifier, String,String,Modifier](
+        nameE3, ageE2, _._1, _._2, PersonFieldName, PersonFieldAge)
 
     object ManualExample1_split_editors {
       object RowStatus
@@ -331,39 +396,39 @@ object Neo {
 
         def tableProps = TableProps(rowpropsa(c.state.saved))
 
-        def updaten(id: Long): (String \/ String, RU) => IO[Unit] =
-          (i, ru) => c.runState(
-            ru.zoomU[ZeState] >>
-              ZS.modS{ s =>
-                val ov = s.saved(id).i
-                val nv = i match {
-                  case -\/(n) => ov put1 n
-                  case \/-(a) => ov put2 a
+        def updaten(id: Long): (PersonFieldAndInput, CompositeC) => IO[Unit] =
+          (b, cc) => {
+            val (_,ru) = cc
+            c.runState(
+              ru.zoomU[ZeState] >>
+                ZS.modS{ s =>
+                  val i1 = s.saved(id).i
+                  val i2 = b.f.lens.set(i1, b.v)
+                  s.copy(saved = s.saved + (id -> RowState(i2, RowStatus)))
                 }
-                s.copy(saved = s.saved + (id -> RowState(nv, RowStatus)))
-              }
-          )
+            )
+          }
 
-        // Editor composition ends up merging the onCancel response.
-        // 1 - Make it send a type through to disambiguate (like \/ in updaten).
-        //     A better coproduct would be desirable.
-        //     Maybe tuple of (Lens' s t, t).
-        // 2 - Maybe Editor isn't the right type for row-level consolidation.
-
-        // HAD A THOUGHT! Instead of 3 callback fields we should have (CallbackType, B, C) => D
+        // TODO HAD A THOUGHT! Instead of 3 callback fields we should have (CallbackType, B, C) => D
         // or (CallbackType[B], C) => D
 
-        def revert1(id: Long): RU => IO[Unit] = ????
-        def revert2(id: Long): RU => IO[Unit] =
-          ru => c.runState(
-            ru.zoomU[ZeState] >>
-              ZS.modS{ s =>
-                // save as update except for this line here ↙
-                val i = c.props.ppl(id).age.toString
-                val nv = s.saved(id).i put2 i
-                s.copy(saved = s.saved + (id -> RowState(nv, RowStatus)))
-              }
+        // 90% the same as update
+        def revertn(id: Long): CompositeC => IO[Unit] =
+          cc => {
+            val (fc,ru) = cc
+            c.runState(
+              ru.zoomU[ZeState] >>
+                ZS.modS{ s =>
+                  val p = c.props.ppl(id)
+                  val i1 = s.saved(id).i
+                  val i2 = fc match {
+                    case PersonFieldName => i1 put1 p.name
+                    case PersonFieldAge  => i1 put2 p.age.toString
+                  }
+                  s.copy(saved = s.saved + (id -> RowState(i2, RowStatus)))
+                }
             )
+          }
 
         def rowpropsa(saved: SavedState): Vector[SavedRowProps] = {
           val names = saved.mapValues(_.i._1)
@@ -376,8 +441,8 @@ object Neo {
             EditorInput(
               (nameswi, s.i._2),
               "",
-              Some(EditorCallbacks[String \/ String, RU, IO[Unit]](
-                updaten(id), ????, ???))))
+              Some(EditorCallbacks[PersonFieldAndInput, CompositeC, IO[Unit]](
+                updaten(id), revertn(id), ???))))
                 //update1(id), revert1(id), ???))))
         }
       }
@@ -400,7 +465,7 @@ object Neo {
         )
         .build
 
-      case class SavedRowProps(key: Long, ei: EditorInput[(NameSWI, String), String \/ String, RU, IO[Unit]])
+      case class SavedRowProps(key: Long, ei: EditorInput[(NameSWI, String), PersonFieldAndInput, CompositeC, IO[Unit]])
       val savedrow = ReactComponentB[SavedRowProps]("savedrow")
         .stateless
         .render((p, _) => {
