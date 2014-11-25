@@ -1,0 +1,29 @@
+#!/bin/env scala
+// vim: set ft=scala :
+
+val comma = ", "
+def T(i: Int) = (64+i).toChar.toString
+
+var com = Seq.empty[String]
+
+for (i <- (2 to 9)) {
+  // def m (f: Int => String): List[String] = (1 to a).toList.map(f)
+  // def mc(f: Int => String): String = m(f).mkString(comma)
+  // def mt(f: Int => String): String = m(f).mkString("(",comma,")")
+
+  def A(j: Int) = ('A'+j).toChar.toString
+  val As = (0 until i) map A
+  val Ac = As mkString ","
+  val ac = Ac.toLowerCase
+
+  com :+= s"  def composeA[$Ac](y: ($Ac)⇒X): ($Ac)⇒Y = y andThenA x"
+
+  println(s"implicit class Function${i}Ext[$Ac,R](val x: ($Ac) ⇒ R) extends AnyVal {")
+  println(s"  def andThenA[Z](y: R⇒Z): ($Ac)⇒Z = ($ac)⇒y(x($ac))")
+  println("}")
+}
+// println((rt++ra) mkString "\n")
+println(s"implicit class Function1Ext[X,Y](val x: X ⇒ Y) extends AnyVal {")
+println(com mkString "\n")
+println("}")
+println()
