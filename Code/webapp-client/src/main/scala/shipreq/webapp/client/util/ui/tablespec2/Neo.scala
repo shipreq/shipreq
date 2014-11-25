@@ -30,78 +30,90 @@ object Neo {
 
   // ===================================================================================================================
 
-  case class EditorCallbacks[-B, -C, +D](onChange: (B, C) => D,
-                                     onCancel: C => D,
-                                     onEditFinished: (B, C) => D) {
+  sealed abstract class EditorCallback[+I] {
+    final def map[X](f: I => X): EditorCallback[X] = this match {
+      case OnChange(i)       => OnChange(f(i))
+      case OnEditFinished(i) => OnEditFinished(f(i))
+      case OnCancel          => OnCancel
+    }
+  }
+  final case class OnChange      [I](input: I) extends EditorCallback[I]
+  final case class OnEditFinished[I](input: I) extends EditorCallback[I]
+  case object      OnCancel                    extends EditorCallback[Nothing]
 
-    @inline private def mp[X,Y,Z](f: ((B, C) => D) => ((X, Y) => Z), g: (C => D) => (Y => Z)) =
-      EditorCallbacks[X, Y, Z](f(onChange), g(onCancel), f(onEditFinished))
+  case class EditorCallbacks[I, C, D](t: (EditorCallback[I], C) => D) {
+    def cmap [X,Y]  (f: X => I, g: Y => C)            = EditorCallbacks[X, Y, D]((x,c) => t(x map f, g(c)))
+    def cmapC[X]    (f: X => C)                       = EditorCallbacks[I, X, D]((x,c) => t(x, f(c)))
+    def map  [X]    (f: D => X)                       = EditorCallbacks[I, C, X](t andThenA f)
+    def dimap[X,Y,Z](f: X => I, g: Y => C, h: D => Z) = EditorCallbacks[X, Y, Z]((x,c) => h(t(x map f, g(c))))
 
-    def mapBC[X,Y](f: X => B, g: Y => C): EditorCallbacks[X, Y, D] =
-      mp(h => (b,c) => h(f(b), g(c)), g.andThen)
+    def pmodI(f: PartialFunction[EditorCallback[I], I]): EditorCallbacks[I, C, D] =
+      EditorCallbacks((i,c) => {
+        val j = f.andThen(i2 => i map (_ => i2)).applyOrElse(i, identity[EditorCallback[I]])
+        t(j, c)
+      })
 
-    def mapB[X](f: X => B): EditorCallbacks[X, C, D] = mp(h => (b,c) => h(f(b), c), identity)
-    def mapC[X](f: X => C): EditorCallbacks[B, X, D] = mp(h => (b,c) => h(b, f(c)), f.andThen)
-    def mapD[X](f: D => X): EditorCallbacks[B, C, X] = mp(h => (b,c) => f(h(b, c)), f.compose)
-
-    def modB_onChange      [X <: B](f: X => X): EditorCallbacks[X, C, D] = copy(onChange       = (b,c) => onChange      (f(b), c))
-    def modB_onEditFinished[X <: B](f: X => X): EditorCallbacks[X, C, D] = copy(onEditFinished = (b,c) => onEditFinished(f(b), c))
+    def pmodC(f: C => PartialFunction[EditorCallback[I], C]): EditorCallbacks[I, C, D] =
+      EditorCallbacks((i,c) => {
+        val c2 = f(c).applyOrElse(i, (_: Any) => c)
+        t(i, c2)
+      })
   }
 
-  case class EditorInput[+A, -B, -C, +D](data: A,
-                                     cssClass: String,
+  case class EditorInput[A, B, C, D](data: A, cssClass: String,
                                      editable: Option[EditorCallbacks[B, C, D]]) {
 
-    def mapABC[X,Y,Z](f: A => X, g: Y => B, h: Z => C): EditorInput[X, Y, Z, D] =
-      copy(data = f(data), editable = editable map (_.mapBC(g, h)))
+    def mapABC[X,Y,Z](f: A => X, g: Y => B, h: Z => C): EditorInput[X,Y,Z,D] =
+      copy(data = f(data), editable = editable map (_.cmap(g, h)))
 
-    def mapA[X](f: A => X): EditorInput[X, B, C, D] = copy(data = f(data))
-    def mapB[X](f: X => B): EditorInput[A, X, C, D] = mapCB(_ mapB f)
-    def mapC[X](f: X => C): EditorInput[A, B, X, D] = mapCB(_ mapC f)
-    def mapD[X](f: D => X): EditorInput[A, B, C, X] = mapCB(_ mapD f)
-//    def dimap[X, Y](f: A => X, g: Y => B): EditorInput[X, Y, C] =
-//      copy(data = f(data), editable = editable.map(_ contramap g))
+    def mapA [X](f: A => X): EditorInput[X, B, C, D] = copy(data = f(data))
+    def cmapB[X](f: X => B): EditorInput[A, X, C, D] = mapCallbacks(_.cmap(f, identity))
+    def cmapC[X](f: X => C): EditorInput[A, B, X, D] = mapCallbacks(_ cmapC f)
+    def mapD [X](f: D => X): EditorInput[A, B, C, X] = mapCallbacks(_ map f)
 
-    @inline final def mapCB[X,Y,Z](f: EditorCallbacks[B,C,D] => EditorCallbacks[X,Y,Z]): EditorInput[A,X,Y,Z] =
+    def mapCallbacks[X,Y,Z](f: EditorCallbacks[B,C,D] => EditorCallbacks[X,Y,Z]): EditorInput[A,X,Y,Z] =
       copy(editable = editable map f)
-
-    def modB_onChange      [X <: B](f: X => X): EditorInput[A, X, C, D] = mapCB(_ modB_onChange f)
-    def modB_onEditFinished[X <: B](f: X => X): EditorInput[A, X, C, D] = mapCB(_ modB_onEditFinished f)
   }
 
-  case class Editor[-A, +B, +C, -D, +V](render: EditorInput[A, B, C, D] => V) {
-    // TODO need strength A
-    def mapA[X](f: X => A): Editor[X, B, C, D, V] = Editor(i => render(i mapA f))
-    def mapB[X](f: B => X): Editor[A, X, C, D, V] = Editor(i => render(i mapB f))
-    def mapC[X](f: C => X): Editor[A, B, X, D, V] = Editor(i => render(i mapC f))
-    def mapD[X](f: X => D): Editor[A, B, C, X, V] = Editor(i => render(i mapD f))
+  case class Editor[A, B, C, D, V](render: EditorInput[A, B, C, D] => V) {
+    def strengthL[X]           : Editor[(X,A), B, C, D, V] = cmapA(_._2)
+    def strengthR[X]           : Editor[(A,X), B, C, D, V] = cmapA(_._1)
+    def cmapA    [X](f: X => A): Editor[X,     B, C, D, V] = Editor(i => render(i mapA f))
+    def mapB     [X](f: B => X): Editor[A,     X, C, D, V] = Editor(i => render(i cmapB f))
+    def mapC     [X](f: C => X): Editor[A,     B, X, D, V] = Editor(i => render(i cmapC f))
+    def cmapD    [X](f: X => D): Editor[A,     B, C, X, V] = Editor(i => render(i mapD f))
 
-    def mapCB[X,Y,Z](f: EditorCallbacks[X,Y,Z] => EditorCallbacks[B,C,D]): Editor[A,X,Y,Z,V] = Editor(i => render(i mapCB f))
-    //def modCB[BB >: B, CC >: C, DD <: D](f: EditorCallbacks[BB,CC,DD] => EditorCallbacks[BB,CC,DD]): Editor[A,BB,CC,DD,V] = Editor(i => render(i mapCB f))
-    def modB_onChange      [X >: B](f: X => X): Editor[A, X, C, D, V] = Editor(i => render(i modB_onChange f))
-    def modB_onEditFinished[X >: B](f: X => X): Editor[A, X, C, D, V] = Editor(i => render(i modB_onEditFinished f))
+    def pmodB(f: PartialFunction[EditorCallback[B], B])     : Editor[A, B, C, D, V] = cmapCallbacks[B,C,D](_ pmodI f)
+    def pmodC(f: C => PartialFunction[EditorCallback[B], C]): Editor[A, B, C, D, V] = cmapCallbacks[B,C,D](_ pmodC f)
 
-    def compose_4[M,N,O >: C, P <: D,Q](t: Editor[M,N,O,P,Q]): Editor[(A,M),B \/ N,O,P,(V,Q)] =
-      Editor[(A,M),B \/ N,O,P,(V,Q)](i => {
-        val i1: EditorInput[A, B, C, D] = i
-          .mapA(_._1)
-          .mapB[B](-\/.apply)
-          .mapC[C](o => o)
-          .mapD[P](d => d)
-        val i2: EditorInput[M, N, O, P] = i
-          .mapA(_._2)
-          .mapB[N](\/-.apply)
-        //.mapC[O](o => o)
-        //.mapD[P](d => d)
+    def cmapCallbacksA[X,Y,Z](f: A => EditorCallbacks[X,Y,Z] => EditorCallbacks[B,C,D]): Editor[A,X,Y,Z,V] = Editor(i => render(i.mapCallbacks(f(i.data))))
+    def cmapCallbacks [X,Y,Z](f: EditorCallbacks[X,Y,Z]      => EditorCallbacks[B,C,D]): Editor[A,X,Y,Z,V] = Editor(i => render(i mapCallbacks f))
+
+    @inline def modCallbacksA(f: A => EditorCallbacks[B, C, D] => EditorCallbacks[B, C, D]): Editor[A, B, C, D, V] = cmapCallbacksA(f)
+
+    def compose[M, N, O>:C, P<:D, Q](t: Editor[M,N,O,P,Q]): Editor[(A,M), B\/N, O, P, (V,Q)] =
+      Editor[(A,M), B\/N, O, P, (V,Q)](i => {
+        val i1 = i.copy[A,B,C,D](data = i.data._1, editable = i.editable.map(_.dimap[B,C,D](-\/.apply, c⇒c, d⇒d)))
+        val i2 = i.copy[M,N,O,P](data = i.data._2, editable = i.editable.map(_.dimap[N,O,P](\/-.apply, o⇒o, p⇒p)))
         (this render i1, t render i2)
       })
   }
 
-  def modcallbacks[A,B,C,D,V,X,Y](e: Editor[A,B,C,D,V])(f: (A, EditorCallbacks[B,C,D]) => EditorCallbacks[B,C,D]): Editor[A,B,C,D,V] =
-    Editor(i => e.render(i.mapCB(f(i.data, _))))
+  object Editor {
+    def merge2[C, D, A1, B1, V1, A2, B2, V2](e1: Editor[A1, B1, C, D, V1], e2: Editor[A2, B2, C, D, V2]) = new {
+      def pairI[F <: GenField[_]](f1: F, f2: F)(implicit w1: B1 =:= f1.V, w2: B2 =:= f2.V) =
+        apply[(A1, A2), F](_._1, _._2, f1, f2)
+      def apply[I, F <: GenField[_]](a1: I => A1, a2: I => A2, f1: F, f2: F)
+                                    (implicit w1: B1 =:= f1.V, w2: B2 =:= f2.V): Editor[I, GenFieldValue[F], (F, C), D, (V1, V2)] =
+        Editor(ei => {
+          val i1 = ei.mapABC[A1, B1, C](a1, GenFieldValue(f1)(_), (f1, _))
+          val i2 = ei.mapABC[A2, B2, C](a2, GenFieldValue(f2)(_), (f2, _))
+          (e1 render i1, e2 render i2)
+        })
+    }
+  }
 
-
-  trait GenField[_R] {
+  trait GenField[_R] { // TODO don't think this needs to be exposed like this
     final type R = _R
     type V
     def lens: SimpleLens[R, V]
@@ -118,30 +130,9 @@ object Neo {
       }
   }
 
-  def compose_5[I, F <: GenField[_], C,D, A1,B1,V1, A2,B2,V2 ](e1: Editor[A1, B1, C, D, V1], e2: Editor[A2, B2, C, D, V2],
-                                                               a1: I => A1, a2: I => A2,
-                                                                f1: F, f2: F)
-                                                              (implicit w1: B1 =:= f1.V, w2: B2 =:= f2.V):
-  Editor[I, GenFieldValue[F], (F,C), D, (V1,V2)] =
-    Editor[I, GenFieldValue[F], (F,C), D, (V1,V2)](
-      ei => {
-        val i1 = ei.mapABC[A1, B1, C](a1, GenFieldValue(f1)(_), (f1, _))
-        val i2 = ei.mapABC[A2, B2, C](a2, GenFieldValue(f2)(_), (f2, _))
-        (e1 render i1, e2 render i2)
-      })
-
-  def compose_5b[C,D, A1,B1,V1, A2,B2,V2 ](e1: Editor[A1, B1, C, D, V1], e2: Editor[A2, B2, C, D, V2]) = new {
-    def pairI[F <: GenField[_]](f1: F, f2: F)(implicit w1: B1 =:= f1.V, w2: B2 =:= f2.V) =
-      apply[(A1, A2), F](_._1, _._2, f1, f2)
-    def apply[I, F <: GenField[_]](a1: I => A1, a2: I => A2, f1: F, f2: F)(implicit w1: B1 =:= f1.V, w2: B2 =:= f2.V)
-    : Editor[I, GenFieldValue[F], (F,C), D, (V1,V2)] =
-      Editor(ei => {
-        val i1 = ei.mapABC[A1, B1, C](a1, GenFieldValue(f1)(_), (f1, _))
-        val i2 = ei.mapABC[A2, B2, C](a2, GenFieldValue(f2)(_), (f2, _))
-        (e1 render i1, e2 render i2)
-      })
-  }
-
+  // ↑ Abstract ↑
+  // ===================================================================================================================
+  // ↓ Library ↓
 
   type RU = ReactST[IO, Unit, Unit]
   val RU = ReactS.FixT[IO, Unit]
@@ -155,20 +146,20 @@ object Neo {
           base(readonly := true)
         case Some(cb) =>
           base(
-            onchange  ~~> textChangeRecv(cb.onChange(_, nopRU)),
-            onblur    ~~> textChangeRecv(cb.onEditFinished(_, nopRU)),
-            onkeydown ~~> cb.onCancel.compose(cancelOnEscape))
+            onchange  ~~> textChangeRecv(t => cb.t(OnChange(t), nopRU)),
+            onblur    ~~> textChangeRecv(t => cb.t(OnEditFinished(t), nopRU)),
+            onkeydown ~~> cancelOnEscape(cb.t(OnCancel, _)))
       }
     })
 
-  def cancelOnEscape: ReactKeyboardEventH => RU =
-    e => e.key match {
+  def cancelOnEscape[X](f: RU => X): ReactKeyboardEventH => X =
+    e => f(e.key match {
       case "Escape" => // TODO use KeyValue
         val t = e.target
         RU.callback[Unit](e.preventDefaultIO >> e.stopPropagationIO)(IO(t.blur()))
       case _ =>
         nopRU
-    }
+    })
 
   val textInputEditor = textEditor(input)
   val textareaEditor  = textEditor(textarea)
@@ -189,11 +180,12 @@ object Neo {
 
   implicit final class EditorExt[A,B,C,D,V](val e: Editor[A,B,C,D,V]) extends AnyVal {
     type Self = Editor[A, B, C, D, V]
+
     def applyLiveCorrection(v: ValidatorPlus[B, _, _]): Self =
-      e.modB_onChange(v.liveCorrect)
+      e.pmodB { case OnChange(b) => v.liveCorrect(b) }
 
     def applyPostCorrection[T](v: CorrectionPart[B, T]): Self =
-      e.modB_onEditFinished(b => v.ci(v.correct(b).value))
+      e.pmodB { case OnEditFinished(b) => v.ci(v.correct(b).value) }
   }
 
   implicit final class EditorExtV[A,B,C,D](val e: Editor[A,B,C,D,Modifier]) extends AnyVal {
@@ -208,38 +200,16 @@ object Neo {
       .applyLiveCorrection(v)
       .applyPostCorrection(v.cp)
 
-  // -------------------------------------------------------------
-//  object SValiExt {
+  implicit final class EditorExtV2[A,B,C,D](val e: Editor[A,B,C,D,Modifier]) extends AnyVal {
+    type Self = Editor[A, B, C, D, Modifier]
 
-    implicit final class EditorExt2[A,B,C,D,V](val e: Editor[A,B,C,D,V]) extends AnyVal {
-      type Self = Editor[A, B, C, D, V]
-//      def applyLiveCorrection(v: ValidatorPlus[B, _, _]): Self =
-//        e.modB_onChange(v.liveCorrect)
+    def applyInputValidation2[S](v: ValiS[S, A, _, _]): Editor[(S, A), B, C, D, Modifier] =
+      validateAndDisplayError(sa => v.correctAndValidate(sa._1, sa._2).swap.toOption.map(_.toText), e.strengthL[S])
+  }
 
-//      def applyPostCorrection[T](v: CorrectionPart[B, T]): Self =
-//        e.modB_onEditFinished(b => v.ci(v.correct(b).value))
-    }
-
-    implicit final class EditorExtV2[A,B,C,D](val e: Editor[A,B,C,D,Modifier]) extends AnyVal {
-      type Self = Editor[A, B, C, D, Modifier]
-
-      def applyInputValidation2[S](v: ValiS[S, A, _, _]): Editor[(S, A), B, C, D, Modifier] =
-        validateAndDisplayError(sa => v.correctAndValidate(sa._1, sa._2).swap.toOption.map(_.toText),
-          e.mapA[(S, A)](_._2))
-    }
-
-//    def composeEditorValidator[I, C, D](v: ValidatorPlus[I, _, _], e: Editor[I, I, C, D, Modifier]): Editor[I, I, C, D, Modifier] =
-//      e.applyInputValidation(v)
-//        .applyLiveCorrection(v)
-//        .applyPostCorrection(v.cp)
-//  }
-
-//  def composeEditorValiS[S, I, C, D](v: ValiS[S, I, _, _], e: Editor[I, I, C, D, Modifier]): Editor[I, I, C, D, Modifier] =
-//    e.applyInputValidation(v)
-//      .applyLiveCorrection(v)
-//      .applyPostCorrection(v.cp)
-
+  // ↑ Library ↑
   // ===================================================================================================================
+  // ↓ Application ↓
 
   object Example {
 
@@ -257,7 +227,7 @@ object Neo {
 
     // ValidationPlus isn't helpful. LiveCorrect used in isolation from Validator
     val nameV_1: Validator[String, String, String] = nameV
-    // TODO can't contramap Validator because I in invariant & needs xmap.
+    // TODO can't cmap Validator because I in invariant & needs xmap.
 
     val nameE = textInputEditor
     val ageE = textInputEditor
@@ -302,7 +272,7 @@ object Neo {
     // 2: String,  String, RU, IO[Unit], Modifier
     type SWII = (NameSWI, String)
     val mergedE: Editor[SWII, PersonFieldAndInput, CompositeC, IO[Unit], (Modifier, Modifier)] =
-      compose_5b(nameE3, ageE2).pairI[PersonField](PersonFieldName, PersonFieldAge)
+      Editor.merge2(nameE3, ageE2).pairI[PersonField](PersonFieldName, PersonFieldAge)
 
     object ManualExample1_split_editors {
       object RowStatus
@@ -345,54 +315,40 @@ object Neo {
           s.copy(saved = s.saved + (id -> row2))
         }
       type CompositeC2 = (PersonField, ReactST[IO, ZeState, Unit])
-      val mergedE2a = mergedE
+      val mergedE2 = mergedE
+        .strengthR[Long]
         .mapC(_ map2 (_.zoomU[ZeState]))
-        .mapA[(SWII, Long)](_._1)
-      val mergedE2 = modcallbacks(mergedE2a)((a, x) =>
-        x.copy(
-          onChange = (b, cc) => x.onChange(b, cc map2 (c => c >> updatex(a._2, b))),
-          onCancel = cc => x.onCancel(cc map2 (c => c >> revertx(a._2, cc._1)))
-        ))
-
+        .modCallbacksA(a => _.pmodC(c => {
+          case OnChange(b) => c map2 (_ >> updatex(a._2, b))
+          case OnCancel    => c map2 (_ >> revertx(a._2, c._1))
+        }))
 
       val ageV2 = ageV.toValiS[NameSW]
-      //val personVF = (si: SWII) => Validator.Ap.apply2(nameV2 correctAndValidate si._1, ageV correctAndValidate si._2)((n,a))
       val personV = nameV2 merge2 ageV2
       def personVF(s: NameSW, i: (String,String)) = personV.correctAndValidate(s, i)
-      val mergedE3 = modcallbacks(mergedE2)((a, x) => {
+      val mergedE3 = mergedE2.modCallbacksA(a => {
         val (((namesw, i1), i2), id) = a
-        x.copy(
-          onEditFinished = (b, cc) => x.onEditFinished(b, cc map2 (c =>
-            c >> validaterow(namesw, id, v => lockrow(id), _ => ZS.ret(()))
-          ))
-        )})
-
+        _.pmodC(c => {
+          case OnEditFinished(b) => c map2 (_ >> validaterow(namesw, id, v => lockrow(id), _ => ZS.ret(())))
+        })
+      })
 
       class TopBackend(c: BackendScope[Props, ZeState]) {
 
         def tableProps = TableProps(rowpropsa(c.state.saved))
-
-        // TODO HAD A THOUGHT! Instead of 3 callback fields we should have (CallbackType, B, C) => D
-        // or (CallbackType[B], C) => D
 
         def rowpropsa(saved: SavedState): Vector[SavedRowProps] = {
           val names = saved.mapValues(_.i._1)
           saved.foldLeft(Vector.empty[SavedRowProps])((q, a) => q :+ rowprops1(names, a._1, a._2))
         }
 
+        val cbRealise: (Any,CompositeC2) => IO[Unit] = (_,x) => c.runState(x._2)
+        val editable = Some(EditorCallbacks[PersonFieldAndInput, CompositeC2, IO[Unit]](cbRealise))
+
         def rowprops1(names: Map[Long, String], id: Long, s: RowState): SavedRowProps = {
           val nameswi: NameSWI = ((names, id), s.i._1)
           val swii: SWII = (nameswi, s.i._2)
-
-          val cbRealise: CompositeC2 => IO[Unit] = x => c.runState(x._2)
-          val cbRealise2: (Any,CompositeC2) => IO[Unit] = (_,x) => c.runState(x._2)
-
-          SavedRowProps(id,
-            EditorInput(
-              (swii, id),
-              "",
-              Some(EditorCallbacks[PersonFieldAndInput, CompositeC2, IO[Unit]](
-                cbRealise2, cbRealise, cbRealise2))))
+          SavedRowProps(id, EditorInput((swii, id), "", editable))
         }
       }
 
@@ -419,8 +375,6 @@ object Neo {
         .stateless
         .render((p, _) => {
         val (n, a) = mergedE2.render(p.ei)
-//        val n = nameE3 render p.nameEI
-//        val a = ageE2 render p.ageEI
         tr(key := p.key, n, a)
       })
       .build
