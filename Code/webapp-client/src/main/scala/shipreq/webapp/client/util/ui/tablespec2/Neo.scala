@@ -281,11 +281,7 @@ object Neo {
     case class Age(value: Int)
     case class Person(id: Long, name: String, age: Age)
 
-    // TODO later reduce this to a val, who needs named field access?
-    object PeronFields extends FieldSet2[Person, String, String](_.name, _.age.toString) {
-      @inline def name = f1
-      @inline def age = f2
-    }
+    val personFields = FieldSet2[Person](_.name, _.age.toString)
 
     val nameV: Validator[String, String, String] = ???
 
@@ -326,13 +322,13 @@ object Neo {
     val nameV2 = nameV.liftS[NameSW].addValidation(nameUniqueVPS)
     val nameE3 = nameE2.applyInputValidation2(nameV2)
 
-    type CompositeC = (PeronFields.Field, RU)
+    type CompositeC = (personFields.Field, RU)
 
     // 1: NameSWI, String, RU, IO[Unit], Modifier
     // 2: String,  String, RU, IO[Unit], Modifier
     type SWII = (NameSWI, String)
-    val mergedE: Editor[SWII, PeronFields.FieldValue, CompositeC, IO[Unit], (Modifier, Modifier)] =
-      Editor.merge2(PeronFields, nameE3, ageE2).pairI
+    val mergedE: Editor[SWII, personFields.FieldValue, CompositeC, IO[Unit], (Modifier, Modifier)] =
+      Editor.merge2(personFields, nameE3, ageE2).pairI
 
     object ManualExample1_split_editors {
 
@@ -343,10 +339,10 @@ object Neo {
       val savedStoreZ = savedStore.contramap(SimpleLens[ZeState](_.saved)((a,b) =>  a.copy(saved = b)))
       val ZS = ReactS.FixT[IO, ZeState]
 
-      def updatex(id: Long, b: PeronFields.FieldValue) =
+      def updatex(id: Long, b: personFields.FieldValue) =
         ZS.modS(savedStoreZ.setField(id, b))
 
-      def revertx(id: Long, f: PeronFields.Field) =
+      def revertx(id: Long, f: personFields.Field) =
         ZS.modS(savedStoreZ.revertField(id, f))
 
       def validaterow(ss: NameSW, id: Long, ok: ((String, Age)) => ReactST[IO, ZeState, Unit], ko: VFailure => ReactST[IO, ZeState, Unit]) =
@@ -361,7 +357,7 @@ object Neo {
       def lockrow(id: Long) =
         ZS.modS(savedStoreZ.setStatus(id, RowStatus.Locked))
 
-      type CompositeC2 = (PeronFields.Field, ReactST[IO, ZeState, Unit])
+      type CompositeC2 = (personFields.Field, ReactST[IO, ZeState, Unit])
       val mergedE2 = mergedE
         .strengthR[Long]
         .mapC(_ map2 (_.zoomU[ZeState]))
@@ -383,7 +379,7 @@ object Neo {
       class TopBackend(c: BackendScope[Props, ZeState]) {
 
         val cbRealise: (Any,CompositeC2) => IO[Unit] = (_,x) => c.runState(x._2)
-        val editable = Some(EditorCallbacks[PeronFields.FieldValue, CompositeC2, IO[Unit]](cbRealise))
+        val editable = Some(EditorCallbacks[personFields.FieldValue, CompositeC2, IO[Unit]](cbRealise))
 
         def tableProps = TableProps(rowpropsa(c.state.saved))
 
@@ -417,7 +413,7 @@ object Neo {
         )
         .build
 
-      case class SavedRowProps(key: Long, ei: EditorInput[(SWII, Long), PeronFields.FieldValue, CompositeC2, IO[Unit]])
+      case class SavedRowProps(key: Long, ei: EditorInput[(SWII, Long), personFields.FieldValue, CompositeC2, IO[Unit]])
       val savedrow = ReactComponentB[SavedRowProps]("savedrow")
         .stateless
         .render((p, _) => {

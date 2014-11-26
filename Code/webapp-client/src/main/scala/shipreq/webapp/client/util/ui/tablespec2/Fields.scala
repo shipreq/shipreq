@@ -36,9 +36,14 @@ trait FieldSet[_P, _I] {
     }
 }
 
-abstract class FieldSet2[Q, A, B](g1: Q=>A, g2: Q=>B) extends FieldSet[Q, (A,B)] {
+class FieldSet2[Q, A, B](g1: Q=>A, g2: Q=>B) extends FieldSet[Q, (A,B)] {
   final val f1 = field[A](g1, SimpleLens(_._1, _ put1 _))
   final val f2 = field[B](g2, SimpleLens(_._2, _ put2 _))
   override final val fields   = Vector(f1, f2)
   override final def pi(p: P) = (f1 pv p, f2 pv p)
+}
+object FieldSet2 {
+  def apply[Q] = new {
+    @inline def apply[A, B](g1: Q=>A, g2: Q=>B): FieldSet2[Q, A, B] = new FieldSet2(g1, g2)
+  }
 }
