@@ -57,20 +57,10 @@ object Neo {
     val personFields = FieldSet2[Person](_.name, _.age.toString)
 
     val nameV: Validator[String, String, String] = ???
+    val ageV: Validator[String, Option[Int], Age] = ???
 
-    val ageV =
-      Validator(
-        CorrectionPart.apply3[String, Option[Int]](
-          _.replaceAll("\\D", ""),
-          s => Try(Option(s.toInt)).getOrElse(None),
-          _.fold("")(_.toString)),
-        ValidationPart[Option[Int], Age](???))
-
-    val nameE = textInputEditor
-    val ageE = textInputEditor
-
-    val nameE2 = composeEditorValidator(nameV, nameE)
-    val ageE2 = composeEditorValidator(ageV, ageE)
+    val nameE2 = composeEditorValidator(nameV, textInputEditor)
+    val ageE2 = composeEditorValidator(ageV, textInputEditor)
 
     // This is what uniqueness validation of name would probably look like ↙
     type NameSW = (Map[Long, String], Long)
@@ -93,11 +83,8 @@ object Neo {
 
     type CompositeC = (personFields.Field, RU)
 
-    // 1: NameSWI, String, RU, IO[Unit], Modifier
-    // 2: String,  String, RU, IO[Unit], Modifier
     type SWII = (NameSWI, String)
-    val mergedE: Editor[SWII, personFields.FieldValue, CompositeC, IO[Unit], (Modifier, Modifier)] =
-      Editor.merge2(personFields, nameE3, ageE2).pairI
+    val mergedE = Editor.merge2(personFields, nameE3, ageE2).pairI
 
     object ManualExample1_split_editors {
 
@@ -108,23 +95,18 @@ object Neo {
       val savedStoreZ = savedStore.contramap(SimpleLens[ZeState](_.saved)((a,b) =>  a.copy(saved = b)))
       val ZS = ReactS.FixT[IO, ZeState]
 
-      def updatex(id: Long, b: personFields.FieldValue) =
-        ZS.modS(savedStoreZ.setField(id, b))
-
-      def revertx(id: Long, f: personFields.Field) =
-        ZS.modS(savedStoreZ.revertField(id, f))
+      def updatex(id: Long, b: personFields.FieldValue) = ZS.modS(savedStoreZ.setField(id, b))
+      def revertx(id: Long, f: personFields.Field)      = ZS.modS(savedStoreZ.revertField(id, f))
+      def lockrow(id: Long)                             = ZS.modS(savedStoreZ.setStatus(id, RowStatus.Locked))
 
       def validaterow(ss: NameSW, id: Long, ok: ((String, Age)) => ReactST[IO, ZeState, Unit], ko: VFailure => ReactST[IO, ZeState, Unit]) =
         ZS.liftR{ s =>
           val i = s.saved(id).i
-          personVF(ss, i) match {
+          personV.correctAndValidate(ss, i) match {
             case scalaz.Success(v) => ok(v)
             case scalaz.Failure(f) => ko(f)
           }
         }
-
-      def lockrow(id: Long) =
-        ZS.modS(savedStoreZ.setStatus(id, RowStatus.Locked))
 
       type CompositeC2 = (personFields.Field, ReactST[IO, ZeState, Unit])
       val mergedE2 = mergedE
@@ -135,11 +117,9 @@ object Neo {
           case OnCancel    => c map2 (_ >> revertx(a._2, c._1))
         }))
 
-      val ageV2 = ageV.liftS[NameSW]
-      val personV = nameV2 *** ageV2
-      def personVF(s: NameSW, i: (String,String)) = personV.correctAndValidate(s, i)
+      val personV = nameV2 *** ageV.liftS[NameSW]
       val mergedE3 = mergedE2.modCallbacksA(a => {
-        val (((namesw, i1), i2), id) = a
+        val (((namesw, _), _), id) = a
         _.pmodC(c => {
           case OnEditFinished(b) => c map2 (_ >> validaterow(namesw, id, v => lockrow(id), _ => ZS.ret(())))
         })
