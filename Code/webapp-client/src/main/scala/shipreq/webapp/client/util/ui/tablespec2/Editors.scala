@@ -66,13 +66,13 @@ object Editors {
   implicit final class EditorExt[A,B,C,D,V](val e: Editor[A,B,C,D,V]) extends AnyVal {
     type Self = Editor[A,B,C,D,V]
 
-    def applyLiveCorrection(v: ValidatorS[_, B, _, _]): Self =
+    def applyLiveCorrection(v: Validator[_, B, _, _]): Self =
       e.pmodB { case OnChange(b) => v.liveCorrect(b) }
 
-    def applyPostCorrection[U](v: CorrectionPart[B, U]): Self =
+    def applyPostCorrection[U](v: CorrectionPartU[B, U]): Self =
       e.pmodB { case OnEditFinished(b) => v.ci(v.correct_(b).value) }
 
-    def applyPostCorrectionS[S, U](v: CorrectionPartS[S, B, U])(f: A => S): Self =
+    def applyPostCorrectionS[S, U](v: CorrectionPart[S, B, U])(f: A => S): Self =
       e.pmodBx(a => _ => { case OnEditFinished(b) => v.ci(v.correct(f(a), b).value) })
   }
 
@@ -85,13 +85,13 @@ object Editors {
     def renderOptionalError(f: A => Option[String]): Self =
       Editor(i => resolveEditorWithError(f, fromOptionalError) render i)
 
-    def applyInputValidation(v: Validator[A, _, _]): Self =
+    def applyInputValidation(v: ValidatorU[A, _, _]): Self =
       renderOptionalError(i => v.correctAndValidate_(i).swap.toOption.map(_.toText))
 
-    def applyInputValidationS[S, I](v: ValidatorS[S, I, _, _])(s: A => S, i: A => I): Self =
+    def applyInputValidationS[S, I](v: Validator[S, I, _, _])(s: A => S, i: A => I): Self =
       renderOptionalError(a => v.correctAndValidate(s(a), i(a)).swap.toOption.map(_.toText))
 
-    def applyInputValidationSL[S, I](v: ValidatorS[S, A, _, _]) =
+    def applyInputValidationSL[S, I](v: Validator[S, A, _, _]) =
       e.strengthL[S].applyInputValidationS(v)(_._1, _._2)
   }
 

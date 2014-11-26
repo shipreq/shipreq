@@ -16,11 +16,7 @@ package object validation2 {
   }
   implicit def InputCorrectedCtor[R] = TaggedTypeCtor[InputCorrected[R]](InputCorrected[R])
 
-  // TODO these should have U's, defaults should be with S
-  type CorrectionPart[I, C] = CorrectionPartS[Unit, I, C]
-  type ValidationPart[C, V] = ValidationPartS[Unit, C, V]
-  type Validator[I, C, V]   = ValidatorS[Unit, I, C, V]
-
-  type ValidatePlusR[S, R, O] = R => ValidatePlusS[S, O]
-  type ValidatePlusS[S, O] = (S, O) => Option[VFailure]
+  type CorrectionPartU[I, C] = CorrectionPart[Unit, I, C]
+  type ValidationPartU[C, V] = ValidationPart[Unit, C, V]
+  type ValidatorU[I, C, V]   = Validator[Unit, I, C, V]
 }

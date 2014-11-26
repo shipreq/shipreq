@@ -34,13 +34,13 @@ object Neo {
   // ↓ Library ↓
 
   @deprecated("no","")
-  def composeEditorValidator[I, C, D](v: Validator[I, _, _], e: Editor[I, I, C, D, Modifier]): Editor[I, I, C, D, Modifier] =
+  def composeEditorValidatorU[I, C, D](v: ValidatorU[I, _, _], e: Editor[I, I, C, D, Modifier]): Editor[I, I, C, D, Modifier] =
     e.applyInputValidation(v)
       .applyLiveCorrection(v)
       .applyPostCorrection(v.cp)
 
   @deprecated("no","")
-  def composeEditorValidatorS[S, I, C, D](v: ValidatorS[S, I, _, _], e: Editor[I, I, C, D, Modifier]): Editor[(S, I), I, C, D, Modifier] =
+  def composeEditorValidator[S, I, C, D](v: Validator[S, I, _, _], e: Editor[I, I, C, D, Modifier]): Editor[(S, I), I, C, D, Modifier] =
     e.applyInputValidationSL(v)
       .applyLiveCorrection(v)
       .applyPostCorrectionS(v.cp)(_._1)
@@ -56,8 +56,8 @@ object Neo {
 
     val personFields = FieldSet2[Person](_.name, _.age.toString)
 
-    val nameV: Validator[String, String, String] = ???
-    val ageV: Validator[String, Option[Int], Age] = ???
+    val nameV: ValidatorU[String, String, String] = ???
+    val ageV: ValidatorU[String, Option[Int], Age] = ???
 
     // This is what uniqueness validation of name would probably look like ↙
     type NameSW = (Map[Long, String], Long)
@@ -69,17 +69,17 @@ object Neo {
       }
     def uniquenessFailure(fieldName: String): VFailure =
       VFailure.forField(fieldName, NonEmptyList("must be unique."))
-    def tovps[S,A](f: (S,InputCorrected[A]) => Option[VFailure]): ValidationPartS[S, A, A] =
-      new ValidationPartS((s,a) => f(s,a) match {
+    def tovps[S,A](f: (S,InputCorrected[A]) => Option[VFailure]): ValidationPart[S, A, A] =
+      new ValidationPart((s,a) => f(s,a) match {
         case None    => Success(a.value)
         case Some(r) => Failure(r)
       })
     val nameUniqueVPS = tovps[NameSW, String]((a,b) => nameUniqueness(a._1, a._2, b))
     val nameV2 = nameV.liftS[NameSW].addValidation(nameUniqueVPS)
     //val nameE3 = nameE2.applyInputValidationSL(nameV2)
-    val nameE3 = composeEditorValidatorS(nameV2, textInputEditor)
+    val nameE3 = composeEditorValidator(nameV2, textInputEditor)
 
-    val ageE2 = composeEditorValidator(ageV, textInputEditor)
+    val ageE2 = composeEditorValidatorU(ageV, textInputEditor)
 
     val mergedE = Editor.merge2(personFields, nameE3, ageE2).pairI
 
