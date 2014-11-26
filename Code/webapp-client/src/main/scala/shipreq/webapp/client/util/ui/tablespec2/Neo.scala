@@ -239,6 +239,7 @@ object Neo {
     private def _row   (k: K): SimpleLens[S, Row]       = _s |-> __row(k)
     private def _status(k: K): SimpleLens[S, RowStatus] = _row(k) |-> _savedRow.status
     private def _i     (k: K): SimpleLens[S, I]         = _row(k) |-> _savedRow.i
+    private def _p     (k: K): SimpleLens[S, P]         = _row(k) |-> _savedRow.p
 
     def initStateM(s: Map[K, P])         : SS = s mapValues initRow
     def initStateS(s: Seq[P], pk: P => K): SS = initStateM(s.foldLeft(Map.empty[K, P])((m, p) => m + p.mapStrengthL(pk)))
@@ -254,6 +255,9 @@ object Neo {
 
     def setField[X](k: K, fv: FieldSet[X, I]#FieldValue): S => S =
       (_i(k) |-> fv.f.ilens).setF(fv.v)
+
+    def revertField(k: K, f: FieldSet[P, I]#Field): S => S =
+      s => setField(k, f * f.pv(_p(k) get s))(s)
 
 //    private[this] implicit def autoLiftEndo(f: S => S): ReactS[S, Unit] = ReactS mod f
 //    def savedRemoveR(k: K): ReactS[S, Unit] = savedRemoveF(k)
@@ -343,13 +347,8 @@ object Neo {
         ZS.modS(savedStoreZ.setField(id, b))
 
       def revertx(id: Long, f: PeronFields.Field) =
-        ZS.modS{ s =>
-          val row = s.saved(id)
-          val p = row.p
-          val i1 = row.i
-          val i2 = f.ilens.set(i1, f.pv(p))
-          s.copy(saved = s.saved + (id -> row.copy(i = i2)))
-        }
+        ZS.modS(savedStoreZ.revertField(id, f))
+
       def validaterow(ss: NameSW, id: Long, ok: ((String, Age)) => ReactST[IO, ZeState, Unit], ko: VFailure => ReactST[IO, ZeState, Unit]) =
         ZS.liftR{ s =>
           val i = s.saved(id).i
