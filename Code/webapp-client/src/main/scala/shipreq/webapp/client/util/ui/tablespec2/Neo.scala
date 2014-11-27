@@ -43,6 +43,11 @@ object Neo {
       .applyLiveCorrection(v)
       .applyPostCorrectionS(v.cp)(_._1)
 
+  def validateS[S, I, O](v: Validator[S, I, _, O]): I => ReactS[S, ValidationResult[O]] =
+    i => ReactS.gets(s => v.correctAndValidate(s, i))
+
+
+
   // ↑ Library ↑
   // ===================================================================================================================
   // ↓ Application ↓
@@ -58,7 +63,7 @@ object Neo {
     val ageV: ValidatorU[String, Option[Int], Age] = ???
 
     val nameUnique = Uniqueness.entity[Person](_.id, _.name).fieldName("Name")
-    type NameSW = nameUnique.S
+    type NameSW = nameUnique._S
     type NameSWI = (NameSW, String)
     val nameV2 = nameV.liftS[NameSW].addValidation(nameUnique)
     val nameE = composeEditorValidator(nameV2, textInputEditor)
@@ -68,32 +73,48 @@ object Neo {
     case class Props(ppl: Map[Long, Person])
 
     val savedStore = SavedRowStore.of(personFields).keyedBy[Long]
+    type Realiser = ReactST[IO, ZeState, Unit] => IO[Unit]
     case class ZeState(saved: savedStore.State)
     val savedStoreZ = savedStore.contramap(SimpleLens[ZeState](_.saved)((a,b) =>  a.copy(saved = b)))
     val ZS = ReactS.FixT[IO, ZeState]
+    val nop = ZS.ret(()) // TODO add nop and & _nop to React
+    val _nop = (_: Any) => nop
+
+    def nameSW(s: ZeState): NameSW = ????
 
     type SWII = (NameSWI, String)
     val personV = nameV2 *** ageV.liftS[NameSW]
-    def validaterow(ss: NameSW, id: Long, ok: ((String, Age)) => ReactST[IO, ZeState, Unit], ko: VFailure => ReactST[IO, ZeState, Unit]) =
-      ZS.liftR{ s =>
-        val i = s.saved(id).i
-        personV.correctAndValidate(ss, i) match {
-          case scalaz.Success(v) => ok(v)
-          case scalaz.Failure(f) => ko(f)
-        }
-      }
+
+    def validateAndSave(id: Long, realise: ReactST[IO, ZeState, Unit] => IO[Unit]) = {
+      import NeoSaves._
+      type S = ZeState
+      type I = personV._I
+      type U = personV._V
+      type P = Person
+      validateAndSaveAsync[S, personV._S, P, U, I](
+        personV, //      validator: Validator[S, I, _, U],
+        nameSW, //      st: S => T,
+        savedStoreZ.getI(id), //      si: S => I,
+        savedStoreZ.getP(id), //      sp: S => P,
+        ???, //      needSave: (U, P) => SaveNeed,
+        ???, //      asyncSaveIO: (P, U, Any, Any) => IO[Unit],
+        realise, //      realise: ReactST[IO, S, Unit] => IO[Unit],
+        savedStoreZ.setStatusS(id) //      setStatus: SetRowStatus[S]
+      )
+    }
 
     val personE = Editor.merge2(personFields, nameE, ageE).pairI
-      .strengthR[Long]
+      .cmapA[(SWII, Long, Realiser)](_._1)
       .mapC(_ map2 (_.zoomU[ZeState]))
       .modCallbacksA(a => {
-        val (((namesw, _), _), id) = a
+        val (_, id, realiser) = a
         _.pmodC(c => {
-          case OnChange(b) => c map2 (_ >> updatex(a._2, b))
-          case OnCancel    => c map2 (_ >> revertx(a._2, c._1))
-          case OnEditFinished(b) => c map2 (_ >> validaterow(namesw, id, v => lockrow(id), _ => ZS.ret(())))
+          case OnChange(b)       => c map2 (_ >> updatex(id, b))
+          case OnCancel          => c map2 (_ >> revertx(id, c._1))
+          case OnEditFinished(_) => c map2 (_ >> validateAndSave(id, realiser))
         })
       })
+
     type CompositeC = (personFields.Field, ReactST[IO, ZeState, Unit])
 
     def updatex(id: Long, b: personFields.FieldValue) = ZS.modS(savedStoreZ.setField(id, b))
@@ -101,6 +122,8 @@ object Neo {
     def lockrow(id: Long)                             = ZS.modS(savedStoreZ.setStatus(id, RowStatus.Locked))
 
     class TopBackend(c: BackendScope[Props, ZeState]) {
+
+      val realiser: Realiser = c.runState(_)
 
       val editable = {
         val cbRealise: (Any,CompositeC) => IO[Unit] = (_,x) => c.runState(x._2)
@@ -117,7 +140,7 @@ object Neo {
       def rowprops1(ppl: Stream[Person], id: Long, s: savedStore.Row): SavedRowProps = {
         val nameswi: NameSWI = ((ppl, id), s.i._1)
         val swii: SWII = (nameswi, s.i._2)
-        SavedRowProps(id, EditorInput((swii, id), "", editable))
+        SavedRowProps(id, EditorInput((swii, id, realiser), "", editable))
       }
     }
 
@@ -139,7 +162,7 @@ object Neo {
       )
       .build
 
-    case class SavedRowProps(key: Long, ei: EditorInput[(SWII, Long), personFields.FieldValue, CompositeC, IO[Unit]])
+    case class SavedRowProps(key: Long, ei: EditorInput[(SWII, Long, Realiser), personFields.FieldValue, CompositeC, IO[Unit]])
     val savedrow = ReactComponentB[SavedRowProps]("savedrow")
       .stateless
       .render((p, _) => {

@@ -7,7 +7,12 @@ import scalaz.syntax.traverse._
 import scalaz.Validation.FlatMap._
 import shipreq.base.util.ScalaExt._
 
-final class CorrectionPart[S, I, C](val liveCorrect: I => I, val fullCorrect: (S, I) => InputCorrected[C], val ci: C => I) {
+final class CorrectionPart[S, I, C](val liveCorrect: I => I,
+                                    val fullCorrect: (S, I) => InputCorrected[C],
+                                    val ci         : C => I) {
+  type _S = S
+  type _I = I
+  type _C = C
 
   def addLiveCorrect(f: I => I): CorrectionPart[S, I, C] =
     new CorrectionPart(f compose liveCorrect, fullCorrect, ci)
@@ -58,8 +63,10 @@ object CorrectionPart {
 
 // =====================================================================================================================
 
-final class ValidationPart[_S, C, V](val validate: (_S, InputCorrected[C]) => ValidationResult[V]) {
-  type S = _S
+final class ValidationPart[S, C, V](val validate: (S, InputCorrected[C]) => ValidationResult[V]) {
+  type _S = S
+  type _C = C
+  type _V = V
 
   @inline def validate_(c: InputCorrected[C])(implicit ev: Unit =:= S) = validate((), c)
 
@@ -135,6 +142,12 @@ object ValidationPart {
 // TODO Determine Validator properties/laws
 
 class Validator[S, I, C, V](val cp: CorrectionPart[S, I, C], val vp: ValidationPart[S, C, V]) {
+  final type _S = S
+  final type _I = I
+  final type _C = C
+  final type _V = V
+  final type VR = ValidationResult[V]
+
   @inline final def liveCorrect       (i: I)                      : I                   = cp.liveCorrect(i)
   @inline final def ci                (c: C)                      : I                   = cp.ci(c)
   @inline final def correct           (s: S, i: I)                : InputCorrected[C]   = cp.correct(s, i)
