@@ -43,11 +43,6 @@ object Neo {
       .applyLiveCorrection(v)
       .applyPostCorrectionS(v.cp)(_._1)
 
-  def validateS[S, I, O](v: Validator[S, I, _, O]): I => ReactS[S, ValidationResult[O]] =
-    i => ReactS.gets(s => v.correctAndValidate(s, i))
-
-
-
   // ↑ Library ↑
   // ===================================================================================================================
   // ↓ Application ↓
@@ -85,6 +80,23 @@ object Neo {
     type SWII = (NameSWI, String)
     val personV = nameV2 *** ageV.liftS[NameSW]
 
+    val personE = Editor.merge2(personFields, nameE, ageE).pairI
+      .cmapA[(SWII, Long, Realiser)](_._1)
+      .mapC(_ map2 (_.zoomU[ZeState]))
+      .modCallbacksA(a => {
+        val (_, id, realiser) = a
+        _.pmodC(c => {
+          case OnChange(b)       => c map2 (_ >> updateField(id, b))
+          case OnCancel          => c map2 (_ >> revertField(id, c._1))
+          case OnEditFinished(_) => c map2 (_ >> validateAndSave(id, realiser))
+        })
+      })
+
+    type CompositeC = (personFields.Field, ReactST[IO, ZeState, Unit])
+
+    def updateField(id: Long, b: personFields.FieldValue) = ZS.modS(savedStoreZ.setField(id, b))
+    def revertField(id: Long, f: personFields.Field)      = ZS.modS(savedStoreZ.revertField(id, f))
+
     def validateAndSave(id: Long, realise: ReactST[IO, ZeState, Unit] => IO[Unit]) = {
       import NeoSaves._
       type S = ZeState
@@ -103,23 +115,6 @@ object Neo {
       )
     }
 
-    val personE = Editor.merge2(personFields, nameE, ageE).pairI
-      .cmapA[(SWII, Long, Realiser)](_._1)
-      .mapC(_ map2 (_.zoomU[ZeState]))
-      .modCallbacksA(a => {
-        val (_, id, realiser) = a
-        _.pmodC(c => {
-          case OnChange(b)       => c map2 (_ >> updatex(id, b))
-          case OnCancel          => c map2 (_ >> revertx(id, c._1))
-          case OnEditFinished(_) => c map2 (_ >> validateAndSave(id, realiser))
-        })
-      })
-
-    type CompositeC = (personFields.Field, ReactST[IO, ZeState, Unit])
-
-    def updatex(id: Long, b: personFields.FieldValue) = ZS.modS(savedStoreZ.setField(id, b))
-    def revertx(id: Long, f: personFields.Field)      = ZS.modS(savedStoreZ.revertField(id, f))
-    def lockrow(id: Long)                             = ZS.modS(savedStoreZ.setStatus(id, RowStatus.Locked))
 
     class TopBackend(c: BackendScope[Props, ZeState]) {
 
