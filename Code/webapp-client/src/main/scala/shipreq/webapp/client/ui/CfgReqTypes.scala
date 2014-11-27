@@ -54,6 +54,17 @@ object CfgReqTypes {
         (static #::: custom).flatMap(p => p.mnemonic #:: p.oldMnemonics.toStream)
       }).fieldName("Mnemonic")
 
+  object TESTTTTT { // TODO temporary
+    import shipreq.webapp.base.validation2._
+    import shipreq.base.util.ScalaExt._
+    def mnemonics: ReqType => Set[Mnemonic] = r => r.oldMnemonics + r.mnemonic
+    val static: Set[Mnemonic] = ReqType.static.map(mnemonics).reduce(_ ++ _)
+    val staticK = (none[CustomReqType.Id],  static)
+    Uniqueness.againstSetByKeyO[(prespec.S, prespec.R), CustomReqType.Id, Mnemonic](
+      sr => sr._2,
+      sr => staticK #:: sr._1._1.toStream.map(_._2.p.tmap2(_.id.some, mnemonics)))
+  }
+
   private def cells = new CfgTableCells[P, spec.VV, (Modifier, Set[ReqType.Mnemonic], Modifier, Modifier)] {
     override def mklist = {
       case (mnemonic, oldMnemonics, name, impReq) =>

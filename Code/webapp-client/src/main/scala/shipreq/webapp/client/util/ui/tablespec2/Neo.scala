@@ -59,10 +59,10 @@ object Neo {
     val nameV: ValidatorU[String, String, String] = ???
     val ageV: ValidatorU[String, Option[Int], Age] = ???
 
-    val nameUnique = Uniqueness.over[Person](_.id, _.name).forField("Name")
+    val nameUnique = Uniqueness.entity[Person](_.id, _.name).fieldName("Name")
     type NameSW = nameUnique.S
     type NameSWI = (NameSW, String)
-    val nameV2 = nameV.liftS[NameSW].addValidation(nameUnique.vp)
+    val nameV2 = nameV.liftS[NameSW].addValidation(nameUnique)
     val nameE3 = composeEditorValidator(nameV2, textInputEditor)
 
     val ageE2 = composeEditorValidatorU(ageV, textInputEditor)

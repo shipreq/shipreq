@@ -58,7 +58,9 @@ object CorrectionPart {
 
 // =====================================================================================================================
 
-final class ValidationPart[S, C, V](val validate: (S, InputCorrected[C]) => ValidationResult[V]) {
+final class ValidationPart[_S, C, V](val validate: (_S, InputCorrected[C]) => ValidationResult[V]) {
+  type S = _S
+
   @inline def validate_(c: InputCorrected[C])(implicit ev: Unit =:= S) = validate((), c)
 
   @inline def liftS[X](implicit ev: Unit =:= S): ValidationPart[X, C, V] =

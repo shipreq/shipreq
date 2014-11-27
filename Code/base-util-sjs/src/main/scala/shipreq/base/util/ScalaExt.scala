@@ -2,11 +2,14 @@ package shipreq.base.util
 
 object ScalaExt {
 
+  @inline final def none[A]: Option[A] = None
+
   implicit class BaseUtilExtAny[A](val a: A) extends AnyVal {
     @inline def |>[B](f: A => B): B = f(a)
     @inline def mapStrengthL[B](f: A => B): (B, A) = (f(a), a)
     @inline def mapStrengthR[B](f: A => B): (A, B) = (a, f(a))
     @inline def tmap2[B, C](b: A => B, c: A => C): (B, C) = (b(a), c(a))
+    @inline def some: Option[A] = Some(a)
   }
 
   implicit class StringBuilderExt(val sb: StringBuilder) extends AnyVal {
