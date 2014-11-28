@@ -8,11 +8,7 @@ import japgolly.scalajs.react.ScalazReact._
 
 object Implicits {
 
-  implicit class StateExt[S, A](val u: StateT[Id, S, A]) extends AnyVal {
-    def liftIO: StateT[IO, S, A] = u.lift[IO]
-  }
-
-  implicit def autoLiftStateIntoIO[S, A](s: StateT[Id, S, A]) = s.liftIO
+  implicit def autoLiftStateIntoIO[S, A](s: ReactS[S, A]) = s.liftIO
 
   // Use Scalaz's Optional after upgrading to 7.2
   trait Optional2[M[_]] {

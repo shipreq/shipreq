@@ -1,7 +1,7 @@
 package shipreq.webapp.client.util
 
 import japgolly.scalajs.react.ScalazReact.ChangeFilter
-import japgolly.scalajs.react.VDom
+import japgolly.scalajs.react.ReactElement
 import scalaz.Free
 
 package object route {
@@ -9,7 +9,7 @@ package object route {
   @inline implicit def routeChangeFilter[P] =
     ChangeFilter.refl[Route[P]]
 
-  type Renderer[P] = Router[P] => VDom
+  type Renderer[P] = Router[P] => ReactElement
 
   type RouteProg[P, A] = Free.FreeC[({type λ[α] = RouteCmd[P, α]})#λ, A]
 

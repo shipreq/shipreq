@@ -87,7 +87,7 @@ object CfgReqTypes {
 
   private val tbl = CfgTable[CustomReqTypeAndId].b1(spec)(specC, specD, ("", "", false), _.mnemonic).b2(cells)
 
-  private def renderInner(S: ComponentScopeU[tableIO.Props, prespec.S, _]): VDom =
+  private def renderInner(S: ComponentScopeU[tableIO.Props, prespec.S, _]): ReactElement =
     tbl(S.props.showDeleted, S)(S.props.x)
       .tableness(List("Mnemonic", "Name", "Implication Required"), staticRows #::: _)
 

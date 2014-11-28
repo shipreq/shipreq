@@ -66,7 +66,7 @@ class TableIO[T <: DataAndId, C <: Crudable, RD <: CrudableCompanion[C]](implici
   final type Props = TableIoProps[RD]
   def innerComponent[S, Q <: Partition](spec: TableSpecU[Arb, S, T#Id, C#V, T#Data, _, _],
                                         partition: Q,
-                                        render: ComponentScopeU[Props, S, _] => VDom)
+                                        render: ComponentScopeU[Props, S, _] => ReactElement)
                                        (implicit DSA: DataSetAccessor[T], ei: Q#Id =:= T#Id, ed: Q#Data =:= T#Data)
   = ReactComponentB[Props]("TableIO")
     .getInitialState(p => spec.initialState(DSA.getData(p.x.clientData.project), _.id))
@@ -78,7 +78,7 @@ class TableIO[T <: DataAndId, C <: Crudable, RD <: CrudableCompanion[C]](implici
 
   def renderOuter[P0, S0](S: ComponentStateFocus[Boolean],
                           arb: Arb,
-                          innerComponent: ReactComponentC.ReqProps[Props, _, _, _]): VDom = {
+                          innerComponent: ReactComponentC.ReqProps[Props, _, _, _<:TopNode]): ReactElement = {
     val s = S.state
     div(
       label(
@@ -87,7 +87,7 @@ class TableIO[T <: DataAndId, C <: Crudable, RD <: CrudableCompanion[C]](implici
       innerComponent(TableIoProps(arb, s)))
   }
 
-  def outerComponent(name: String, innerComponent: ReactComponentC.ReqProps[Props, _, _, _]) =
+  def outerComponent(name: String, innerComponent: ReactComponentC.ReqProps[Props, _, _, _<:TopNode]) =
     ReactComponentB[Props](name)
       .getInitialState(p => p.showDeleted)
       .render(S => renderOuter(S, S.props.x, innerComponent))

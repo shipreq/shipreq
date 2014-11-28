@@ -71,7 +71,7 @@ object ReactExamples {
     val HelloMessage = ReactComponentB[String]("HelloMessage")
       .render(name => div("Hello ", name))
       .build
-    React.renderComponent(HelloMessage("John"), mountNode)
+    React.render(HelloMessage("John"), mountNode)
   }
 
   def manual() = {
@@ -114,7 +114,7 @@ object ReactExamples {
     }
 
     val c = Router.component(BaseUrl("/wip"), MyPage)
-    React.renderComponent(c(), tgt)
+    React.render(c(), tgt)
   }
 
 }

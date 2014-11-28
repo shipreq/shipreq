@@ -72,7 +72,7 @@ object CfgIncompletions {
 
     private val tbl = CfgTable[CustomIncmpTypeAndId].b1(spec)(specC, specD, ("", ""), _.key).b2(cells)
 
-    private def renderInner(S: ComponentScopeU[tableIO.Props, prespec.S, _]): VDom =
+    private def renderInner(S: ComponentScopeU[tableIO.Props, prespec.S, _]): ReactElement =
       tbl(S.props.showDeleted, S)(S.props.x)
         .tableness(List(FieldNames.refKey, FieldNames.desc), identity)
   }
@@ -112,7 +112,7 @@ object CfgIncompletions {
         tr(cls := c, key := id.value, td(label(vv, p.fullName), ctrls))
       })
 
-    private def render(T: ComponentScopeU[Arb, prespec.S, _]): VDom = {
+    private def render(T: ComponentScopeU[Arb, prespec.S, _]): ReactElement = {
       implicit def x = T.props
       val rows = spec.savedRows(T, savedRow)(_.filter(_.p.alive == Alive).sortBy(_.p.mnemonic))
       table(
