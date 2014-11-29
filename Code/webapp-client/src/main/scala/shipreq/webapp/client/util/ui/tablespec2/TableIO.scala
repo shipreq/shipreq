@@ -17,21 +17,21 @@ import shipreq.webapp.client.util.OnUnmountBackend
 //import shipreq.webapp.client.util.ui.table._
 import DataImplicits._
 
-final case class TableIoArb[RD <: Desc](remote: Remote[RD], clientData: ClientData)
+final case class DataIO[RD <: Desc](remote: Remote[RD], clientData: ClientData)
 
-final class TableIoProps[RD <: Desc](val arb: TableIoArb[RD], val showDeleted: Boolean)
+final class TableIoProps[RD <: Desc](val arb: DataIO[RD], val showDeleted: Boolean)
 object TableIoProps {
-  @inline def apply[RD <: Desc](arb: TableIoArb[RD], showDeleted: Boolean) =
+  @inline def apply[RD <: Desc](arb: DataIO[RD], showDeleted: Boolean) =
     new TableIoProps(arb, showDeleted)
 
   @inline def apply[RD <: Desc](remote: Remote[RD], clientData: ClientData, showDeleted: Boolean) =
-    new TableIoProps(TableIoArb(remote, clientData), showDeleted)
+    new TableIoProps(DataIO(remote, clientData), showDeleted)
 }
 
 class RemoteDeltaListener[T <: DataAndId, RD <: DescT[_, RemoteDelta]](implicit I: IdAccessor[T]) {
   final type P = T#Data
   final type D = T#Id
-  final type Arb = TableIoArb[RD]
+  final type Arb = DataIO[RD]
   final type Store[S] = SavedRowStore[S, D, P, _]
 
   private def recvExtUpdate[S, Q <: Partition](store: Store[S], partition: Q)
@@ -95,4 +95,40 @@ class TableIO[T <: DataAndId, C <: Crudable, RD <: CrudableCompanion[C]](implici
 //      .getInitialState(p => p.showDeleted)
 //      .render(S => renderOuter(S, S.props.x, innerComponent))
 //      .build
+}
+
+class RemoteDeltaListener2[T <: DataAndId, RD <: DescT[_, RemoteDelta]](implicit I: IdAccessor[T]) {
+  final type Store[S] = SavedRowStore[S, T#Id, T#Data, _]
+
+  private def recvExtUpdate[S, Q <: Partition](store: Store[S], partition: Q)
+                                              (implicit ei: Q#Id =:= T#Id, ed: Q#Data =:= T#Data) =
+    (d: LocalDelta) => ReactS.mod[S](s1 => {
+      val ds = LocalDelta.filter(partition, d)
+      val s2 = (s1 /: ds.del)((s, id)   => store.remove(id)(s))
+      val s3 = (s2 /: ds.upd)((s, data) => store.set(I id data, data)(s))
+      s3
+    })
+
+  def recvExtUpdates[CP, CB <: OnUnmount, S, Q <: Partition](store: Store[S], partition: Q, f: CP => ClientData)
+                                                            (implicit ei: Q#Id =:= T#Id, ed: Q#Data =:= T#Data) =
+    Listenable.installS[CP, S, CB, Id, LocalDelta](f, recvExtUpdate(store, partition))
+}
+
+class TableIO2[T <: DataAndId, C <: Crudable, RD <: CrudableCompanion[C]]
+  (remote: Remote[RD], clientData: ClientData)
+  (implicit t_c_id: T#Id =:= C#Id, I: IdAccessor[T]) {
+
+  final type U = C#V
+
+  private def crudIO(s: SuccessIO, f: FailureIO, a: CrudAction[C]): IO[Unit] =
+    ClientProtocol.call(remote)(a, clientData.update(_) >> s.io, f)
+
+  def createIO(u: U, s: SuccessIO, f: FailureIO): IO[Unit] =
+    crudIO(s, f, CrudAction.Create[C](u))
+
+  def updateIO(p: T#Data, u: U, s: SuccessIO, f: FailureIO): IO[Unit] =
+    crudIO(s, f, CrudAction.Update[C](p.id, u))
+
+  def deleteIO(id: T#Id, a: DeletionAction, s: SuccessIO, f: FailureIO): IO[Unit] =
+    crudIO(s, f, CrudAction.Delete[C](id, a))
 }

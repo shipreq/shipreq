@@ -1,14 +1,16 @@
 package shipreq.webapp.client.util.ui.tablespec2
 
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.ReactVDom.{Tag => _, _}
-import japgolly.scalajs.react.ScalazReact._
+import japgolly.scalajs.react._, vdom.ReactVDom.implicits._, prefix_<*._, ScalazReact._
+import japgolly.scalajs.react.experiment.{Listenable, OnUnmount}
 
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.taggedStringInstance
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data.ReqType.Mnemonic
+import shipreq.webapp.base.protocol.Routine.Remote
+import shipreq.webapp.client.ClientData
+import shipreq.webapp.client.util.ui.Util
 
 import scalaz.effect.IO
 
@@ -96,28 +98,70 @@ import monocle.syntax._
 
 object CfgReqTypes222 {
 
-  val tableIO = new TableIO[CustomReqTypeAndId, CustomReqTypeCrud, CustomReqTypeCrud.type]
-  import tableIO.{D, P}
+//  val tableIO = new TableIO[CustomReqTypeAndId, CustomReqTypeCrud, CustomReqTypeCrud.type]
+//  import tableIO.{D, P}
 
-  val fields = FieldSet3[P](_.mnemonic.value, _.name, _.imp)(("", "", ImplicationNotRequired))
+  val fields = FieldSet3[CustomReqType](_.mnemonic.value, _.name, _.imp)(("", "", ImplicationNotRequired))
 
-  val savedRowStore = SavedRowStore.of(fields).keyedBy[D]
+  val savedRowStore = SavedRowStore.of(fields).keyedBy[CustomReqType.Id]
   val newRowStore   = NewRowStore.of(fields)
-  case class State(savedRows: savedRowStore.State, newRow: newRowStore.State)
+  case class State(newRow: newRowStore.State, savedRows: savedRowStore.State, showDeleted: Boolean)
   object State {
     private[this] def l = Lenser[State]
-    val _savedRows = l(_.savedRows)
-    val _newRow    = l(_.newRow)
+    val _newRow      = l(_.newRow)
+    val _savedRows   = l(_.savedRows)
+    val _showDeleted = l(_.showDeleted)
   }
   type S = State
-  type RowId = Option[D]
   val ST = ReactS.FixT[IO, S]
+
+  val savedRowStoreS = savedRowStore.contramap(State._savedRows)
 
   val mnemonicE = Editors.textInputEditor.applyValidator(V.mnemonicS)
   val nameE     = Editors.textInputEditor.applyValidator(V.nameS)
   val impE      = Editors.checkboxEditor.imap(ImplicationRequired)
 
-//    .saveNotNeededWhenE(p => (p.mnemonic, p.name, p.imp))
+  case class Props(remote: CustomReqTypeCrud.Remote, clientData: ClientData, showDeleted: Boolean)
+
+  def initialState(p: Props): State =
+    State(
+      newRowStore.initState,
+      savedRowStore.initStateS(p.clientData.project.customReqTypes.data, _.id),
+      p.showDeleted)
+
+  class Backend(c: BackendScope[Props, State]) extends OnUnmount {
+
+    // TODO If XxxCrud knew about XxxAndId then we could save a lot of shit
+    val tableIO = new TableIO2[CustomReqTypeAndId, CustomReqTypeCrud, CustomReqTypeCrud.type](c.props.remote, c.props.clientData)
+
+    val toggleShowDeleted: IO[Unit] = {
+      val st = ST.modT(State._showDeleted.modifyF(v => !v))
+      c runState st
+    }
+
+    def render: ReactElement =
+      <.div(
+        renderShowDeleted(c.state.showDeleted, toggleShowDeleted),
+        ???)
+  }
+
+  val xxxx = new RemoteDeltaListener2[CustomReqTypeAndId, CustomReqTypeCrud.type]
+
+  def renderShowDeleted(show: Boolean, toggle: => IO[Unit]): ReactElement =
+      <.label(
+        Util.checkbox(show)(*.onchange ~~> toggle),
+        if (show) "Showing deleted" else "Not showing deleted")
+
+  val Top =
+    ReactComponentB[Props]("top")
+      .getInitialState(initialState)
+      .backend(new Backend(_))
+      .render(_.backend.render)
+      .configure(xxxx.recvExtUpdates(savedRowStoreS, Partition.CustomReqTypes, _.clientData))
+      .build
+
+
+  //    .saveNotNeededWhenE(p => (p.mnemonic, p.name, p.imp))
 //    .asyncSaveP(tableIO.updateIO)
 //
 //  private val specC = TableSpecC(spec)(tableIO.createIO)
