@@ -1,9 +1,11 @@
 package shipreq.webapp.client.util.ui.tablespec2
 
 import japgolly.scalajs.react._, vdom.ReactVDom.{Tag => _, _}, all._, ScalazReact._
-import shipreq.webapp.base.validation2._
+import scalaz.{Applicative, Bind}
 import scalaz.effect.IO
 import scalaz.syntax.bind._
+import shipreq.base.util.ScalaExt._
+import shipreq.webapp.base.validation2._
 import shipreq.webapp.client.util.ui.Util._
 
 object Editors {
@@ -108,4 +110,35 @@ object Editors {
         .applyLiveCorrection(v)
         .applyPostCorrection(v.cp)(_._1)
   }
+
+  implicit final class EditorExtIII[M[_], S,A,B,C1,D,V](val e: Editor[A,B,(C1,ReactST[M, S, Unit]),D,V]) extends AnyVal {
+    type Self = Editor[A, B, (C1,ReactST[M, S, Unit]), D, V]
+    def applyOnEditFinished[K](f: K => ReactST[M, S, Unit])(g: A => K)(implicit M: Bind[M]): Self =
+      e.modCallbacksA(a =>
+        _.pmodC(c => {
+          case OnEditFinished(_) => c map2 (_ >> f(g(a)))
+        })
+      )
+  }
+
+  def applyRowUpdateAndRevert[M[_] : Bind : Applicative, S, K, P, I, A, D, V, F, FV](
+      e         : Editor[A, FV, (F, ReactST[M, S, Unit]), D, V],
+      savedStore: SavedRowStore[S,K,P,I],
+      newStore  : NewRowStore[S,I])
+      (k        : A => Option[K])
+      (implicit wf: F <:< FieldSet[P, I]#Field, wv: FV <:< FieldSet[P, I]#FieldValue)
+      : Editor[A, FV, (F, ReactST[M, S, Unit]), D, V] =
+    e.modCallbacksA(a =>
+      k(a) match {
+        case None =>
+          _.pmodC(c => {
+            case OnChange(v) => c map2 (_ >> newStore.setFieldST(v))
+          })
+        case Some(id) =>
+          _.pmodC(c => {
+            case OnChange(v) => c map2 (_ >> savedStore.setFieldST(id, v))
+            case OnCancel    => c map2 (_ >> savedStore.revertFieldST(id, c._1))
+          })
+      })
+
 }

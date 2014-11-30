@@ -1,12 +1,14 @@
 package shipreq.webapp.client.util.ui.tablespec2
 
 import japgolly.scalajs.react.ScalazReact._
+import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.protocol.DeletionAction
 import shipreq.webapp.base.validation2._
 import shipreq.webapp.client.protocol.FailureIO
 import shipreq.webapp.client.util.ui.table.SuccessIO
-import scalaz.{Need, Name}
+import scalaz.{Equal, Need, Name}
 import scalaz.effect.IO
+import scalaz.syntax.equal._
 
 object NeoSaves {
 
@@ -23,6 +25,15 @@ object NeoSaves {
   case object SaveNotNeeded extends SaveNeed {
     override def asOption[A](a: A) = None
   }
+  object SaveNeed {
+    def cmpToExtract[A, B: Equal](f: A => B): (A,B) => SaveNeed = {
+      val c = cmp[B]
+      (a,b) => c(f(a), b)
+    }
+
+    def cmp[A: Equal]: (A,A) => SaveNeed =
+      (a,b) => if (a ≟ b) SaveNotNeeded else SaveNeeded
+  }
 
 
   def retryably[A](f: Name[A] => A): A = {
@@ -31,27 +42,26 @@ object NeoSaves {
   }
 
   def validateAndSaveAsync2[S, T, K, P, U, I](validator: Validator[T, I, _, U], store: SavedRowStore[S, K, P, I])(
-                                           st: S => T,
-                                           needSave: (U, P) => SaveNeed,
+                                           st: K => S => T,
+                                           needSave: (P, U) => SaveNeed,
                                            asyncSaveIO: (P, U, SuccessIO, FailureIO) => IO[Unit],
                                            realise: ReactST[IO, S, Unit] => IO[Unit])
   : K => ReactST[IO, S, Unit] =
     k => validateAndSaveAsync(
-      validator, st,
+      validator, st(k),
       store.getI(k),
       store.getP(k),
-      needSave, asyncSaveIO, realise,
-      rs => store.setStatusS(k, rs).liftIO
-    )
+      store.setStatusST[IO](k),
+      needSave, asyncSaveIO, realise)
 
   def validateAndSaveAsync[S, T, P, U, I](validator: Validator[T, I, _, U],
                                           st: S => T,
                                           si: S => I,
                                           sp: S => P,
-                                          needSave: (U, P) => SaveNeed,
+                                          setStatus: SetRowStatus[S],
+                                          needSave: (P, U) => SaveNeed,
                                           asyncSaveIO: (P, U, SuccessIO, FailureIO) => IO[Unit],
-                                          realise: ReactST[IO, S, Unit] => IO[Unit],
-                                          setStatus: SetRowStatus[S])
+                                          realise: ReactST[IO, S, Unit] => IO[Unit])
   : ReactST[IO, S, Unit] = {
     val Fix = ReactS.FixT[IO, S]
     type R = Fix.T[Unit]
@@ -59,7 +69,7 @@ object NeoSaves {
       def abortSave: R = setStatus(RowStatus.Sync)
       def valid(u: U): R = Fix.liftR { s =>
         val p = sp(s)
-        needSave(u, p) match {
+        needSave(p, u) match {
           case SaveNotNeeded => abortSave
           case SaveNeeded    => save(p, u) >> setStatus(RowStatus.Locked)
         }
@@ -75,13 +85,21 @@ object NeoSaves {
     })
   }
 
+  def validateAndCreateAsync2[S, T, U, I](validator: Validator[T, I, _, U], store: NewRowStore[S, I])(
+                                         st: S => T,
+                                         asyncCreate: (U, SuccessIO, FailureIO) => IO[Unit],
+                                         realise: ReactST[IO, S, Unit] => IO[Unit]) =
+    validateAndCreateAsync[S, T, U, I](
+      validator, st, store.getI, ReactS mod store.remove, store.setStatusST[IO], asyncCreate, realise)
+
+
   def validateAndCreateAsync[S, T, U, I](validator: Validator[T, I, _, U],
                                          st: S => T,
-                                         si: S => I,
+                                         si: S => Option[I],
                                          removeNew: ReactS[S, Unit],
+                                         setStatus: SetRowStatus[S],
                                          asyncCreate: (U, SuccessIO, FailureIO) => IO[Unit],
-                                         realise: ReactST[IO, S, Unit] => IO[Unit],
-                                         setStatus: SetRowStatus[S])
+                                         realise: ReactST[IO, S, Unit] => IO[Unit])
   : ReactST[IO, S, Unit] = {
     val Fix = ReactS.FixT[IO, S]
     type R = Fix.T[Unit]
@@ -96,8 +114,9 @@ object NeoSaves {
         Fix.ret(asyncCreate(u, s, f))
       }
       Fix.liftR(s =>
-        validator.correctAndValidate(st(s), si(s))
-          .fold(_ => abortSave, valid))
+        si(s).fold(Fix.nop)(i =>
+        validator.correctAndValidate(st(s), i)
+          .fold(_ => abortSave, valid)))
     })
   }
 
@@ -120,5 +139,19 @@ object NeoSaves {
                    setStatus: SetRowStatus[S]): FailureIO = {
     def failedStatus = RowStatus.Failed(realise(retry.value))
     FailureIO(realise(setStatus(failedStatus)))
+  }
+
+  def validateAndSaveBoth[S, T, K, P, U, I](v: Validator[T, I, _, U], savedStore: SavedRowStore[S, K, P, I])(
+    newStore: NewRowStore[S, I],
+    createT: S => T,
+    updateT: K => S => T,
+    needSave: (P, U) => SaveNeed,
+    asyncCreate: (U, SuccessIO, FailureIO) => IO[Unit],
+    asyncSaveIO: (P, U, SuccessIO, FailureIO) => IO[Unit],
+    realise: ReactST[IO, S, Unit] => IO[Unit]) : Option[K] => ReactST[IO, S, Unit] = {
+
+    val update = validateAndSaveAsync2(v, savedStore)(updateT, needSave, asyncSaveIO, realise)
+    val create = validateAndCreateAsync2(v, newStore)(createT, asyncCreate, realise)
+    _.fold(create)(update)
   }
 }

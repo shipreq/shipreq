@@ -74,6 +74,7 @@ case class Editor[A, B, C, D, V](render: EditorInput[A, B, C, D] => V) {
   def pmodCx(f: A ⇒ C ⇒ PartialFunction[EditorCallback[B], C]): Editor[A, B, C, D, V] = cmapCallbacksA[B,C,D](a ⇒ _ pmodC f(a))
   def pmodB (f:         PartialFunction[EditorCallback[B], B]): Editor[A, B, C, D, V] = cmapCallbacks[B,C,D](_ pmodI (_ => f))
   def pmodC (f:         PartialFunction[EditorCallback[B], C]): Editor[A, B, C, D, V] = cmapCallbacks[B,C,D](_ pmodC (_ => f))
+  // TODO pmodC ↑ looks like it discards old Cs instead of appending
 
   def cmapCallbacksA[X,Y,Z](f: A => EditorCallbacks[X,Y,Z] => EditorCallbacks[B,C,D]): Editor[A,X,Y,Z,V] = Editor(i => render(i.mapCallbacks(f(i.data))))
   def cmapCallbacks [X,Y,Z](f: EditorCallbacks[X,Y,Z]      => EditorCallbacks[B,C,D]): Editor[A,X,Y,Z,V] = Editor(i => render(i mapCallbacks f))

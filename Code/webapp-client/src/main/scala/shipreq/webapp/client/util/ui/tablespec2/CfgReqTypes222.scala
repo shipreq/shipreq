@@ -95,7 +95,7 @@ import __Validators.{reqType => V}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.validation2._
 import scala.language.reflectiveCalls
-import Editors.{EditorExtII, EditorExtV, EditorExt}
+import Editors.{EditorExtIII, EditorExtII, EditorExtV, EditorExt}
 import monocle._
 import monocle.syntax._
 
@@ -134,16 +134,32 @@ object CfgReqTypes222 {
     // TODO If XxxCrud knew about XxxAndId then we could save a lot of shit
     val tableIO = new TableIO2[CustomReqTypeAndId, CustomReqTypeCrud, CustomReqTypeCrud.type](c.props.remote, c.props.clientData)
 
+    def stateForValidator(k: Option[CustomReqType.Id]): S => V.S =
+      s => (savedRowStoreS.getAllP(s), k)
+
+    val needSave = NeoSaves.SaveNeed.cmpToExtract((p: CustomReqType) => (p.mnemonic, p.name, p.imp))
+
     val mnemonicE = Editors.textInputEditor.applyValidator(V.mnemonicS)
     val nameE     = Editors.textInputEditor.applyValidator(V.nameS)
     val impE      = Editors.checkboxEditor.imap(ImplicationRequired).strengthL[V.S]
 
-    val rowE      = Editor.merge3S(fields, mnemonicE, nameE, impE).tupleI(_.zoomU[S])
-    val savedRowE = savedRowStoreS.applyRowUpdateAndRevertO(rowE)(_._1._2)
-    val newRowE   = newRowStoreS.applyRowUpdate(rowE)
+    val rowE  = {
+      var e = Editor.merge3S(fields, mnemonicE, nameE, impE).tupleI(_.zoomU[S])
 
-//    NeoSaves.validateAndSaveAsync2()
-    // tableIO.updateIO(p,u,s,f)
+      e = Editors.applyRowUpdateAndRevert(e, savedRowStoreS, newRowStoreS)(_._1._2)
+
+      val savef = NeoSaves.validateAndSaveBoth(V.all, savedRowStoreS)(
+        newRowStoreS,
+        stateForValidator(None),
+        k => stateForValidator(Some(k)),
+        needSave,
+        tableIO.createIO,
+        tableIO.updateIO,
+        c runState _)
+      e = e.applyOnEditFinished(savef)(_._1._2)
+
+      e
+    }
 
     val toggleShowDeleted: IO[Unit] = {
       val st = ST.modT(State._showDeleted.modifyF(v => !v))

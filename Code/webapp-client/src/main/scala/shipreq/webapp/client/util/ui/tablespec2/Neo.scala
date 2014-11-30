@@ -98,11 +98,10 @@ object Neo {
         nameSW, //      st: S => T,
         savedStoreZ.getI(id), //      si: S => I,
         savedStoreZ.getP(id), //      sp: S => P,
+        savedStoreZ.setStatusST[IO](id), //      setStatus: SetRowStatus[S]
         ???, //      needSave: (U, P) => SaveNeed,
         ???, //      asyncSaveIO: (P, U, Any, Any) => IO[Unit],
-        realise, //      realise: ReactST[IO, S, Unit] => IO[Unit],
-        v => savedStoreZ.setStatusS(id, v).liftIO //      setStatus: SetRowStatus[S]
-      )
+        realise) //      realise: ReactST[IO, S, Unit] => IO[Unit],
     }
 
     type CompositeC = (personFields.Field, ReactST[IO, ZeState, Unit])
