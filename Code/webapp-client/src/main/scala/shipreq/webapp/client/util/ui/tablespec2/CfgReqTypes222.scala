@@ -13,6 +13,7 @@ import shipreq.webapp.client.ClientData
 import shipreq.webapp.client.util.ui.Util
 
 import scalaz.effect.IO
+import shipreq.base.util.GenTuple, GenTuple._
 
 //import shipreq.webapp.base.data.Validators.{reqType => V}
 import shipreq.webapp.base.data._
@@ -66,6 +67,8 @@ object __Validators {
       Uniqueness.entity[CustomReqType].applyO(_.id.some, _.name).fieldName("Name")
 
     val nameS = nameU.liftS[S].addValidation(nameUniqueness)
+
+    val all = mnemonicS ⊗ nameS ⊗ Validator.nop[ImplicationRequired].liftS[S]
   }
 
   object customIncmpType {
@@ -118,14 +121,6 @@ object CfgReqTypes222 {
   val savedRowStoreS = savedRowStore.contramap(State._savedRows)
   val newRowStoreS   = newRowStore  .contramap(State._newRow)
 
-  val mnemonicE = Editors.textInputEditor.applyValidator(V.mnemonicS)
-  val nameE     = Editors.textInputEditor.applyValidator(V.nameS)
-  val impE      = Editors.checkboxEditor.imap(ImplicationRequired).strengthL[V.S]
-
-  val rowE      = Editor.merge3S(fields, mnemonicE, nameE, impE).tupleI(_.zoomU[S])
-  val savedRowE = savedRowStoreS.applyRowUpdateAndRevertO(rowE)(_._1._2)
-  val newRowE   = newRowStoreS.applyRowUpdate(rowE)
-
   case class Props(remote: CustomReqTypeCrud.Remote, clientData: ClientData, showDeleted: Boolean)
 
   def initialState(p: Props): State =
@@ -138,6 +133,17 @@ object CfgReqTypes222 {
 
     // TODO If XxxCrud knew about XxxAndId then we could save a lot of shit
     val tableIO = new TableIO2[CustomReqTypeAndId, CustomReqTypeCrud, CustomReqTypeCrud.type](c.props.remote, c.props.clientData)
+
+    val mnemonicE = Editors.textInputEditor.applyValidator(V.mnemonicS)
+    val nameE     = Editors.textInputEditor.applyValidator(V.nameS)
+    val impE      = Editors.checkboxEditor.imap(ImplicationRequired).strengthL[V.S]
+
+    val rowE      = Editor.merge3S(fields, mnemonicE, nameE, impE).tupleI(_.zoomU[S])
+    val savedRowE = savedRowStoreS.applyRowUpdateAndRevertO(rowE)(_._1._2)
+    val newRowE   = newRowStoreS.applyRowUpdate(rowE)
+
+//    NeoSaves.validateAndSaveAsync2()
+    // tableIO.updateIO(p,u,s,f)
 
     val toggleShowDeleted: IO[Unit] = {
       val st = ST.modT(State._showDeleted.modifyF(v => !v))

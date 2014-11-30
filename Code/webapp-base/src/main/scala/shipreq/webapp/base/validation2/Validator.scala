@@ -6,6 +6,7 @@ import scalaz.syntax.functor._
 import scalaz.syntax.traverse._
 import scalaz.Validation.FlatMap._
 import shipreq.base.util.ScalaExt._
+import shipreq.base.util.GenTuple, GenTuple._
 
 final class CorrectionPart[S, I, C](val liveCorrect: I => I,
                                     val fullCorrect: (S, I) => InputCorrected[C],
@@ -41,11 +42,14 @@ final class CorrectionPart[S, I, C](val liveCorrect: I => I,
   def imapI[X](iso: X <=> I): CorrectionPart[S, X, C] = xmapI(iso.from)(iso.to)
   def imapC[X](iso: C <=> X): CorrectionPart[S, I, X] = xmapC(iso.to)(iso.from)
 
-  def ***[I2, C2](b: CorrectionPart[S, I2, C2]): CorrectionPart[S, (I,I2), (C,C2)] =
-      new CorrectionPart[S, (I,I2), (C,C2)](
-        i => (this liveCorrect i._1, b liveCorrect i._2),
-        (s,i) => InputCorrected(correct(s, i._1).value, b.correct(s, i._2).value),
-        c => (this ci c._1, b ci c._2))
+  @inline def ***[I2, C2](that: CorrectionPart[S, I2, C2]): CorrectionPart[S, (I,I2), (C,C2)] =
+    this ⊗ that
+
+  def ⊗[I2, C2, II, CC](b: CorrectionPart[S, I2, C2])(implicit I: GenTuple[I,I2,II], C: GenTuple[C,C2,CC]): CorrectionPart[S, II, CC] =
+    new CorrectionPart[S, II, CC](
+      ii => I.map(ii, liveCorrect, b.liveCorrect, I.append),
+      (s,ii) => InputCorrected(I.map(ii, correct(s, _).value, b.correct(s, _).value, C.append)),
+      cc => C.map(cc, ci, b.ci, I.append))
 }
 
 object CorrectionPart {
@@ -92,10 +96,16 @@ final class ValidationPart[S, C, V](val validate: (S, InputCorrected[C]) => Vali
   def compose[A](that: ValidationPart[S, A, C]): ValidationPart[S, A, V] =
     new ValidationPart((s,a) => that.validate(s, a).flatMap(c => this.validate(s, InputCorrected(c))))
 
-  def ***[C2, V2](that: ValidationPart[S, C2, V2]): ValidationPart[S, (C,C2), (V,V2)] =
-    new ValidationPart[S, (C,C2), (V,V2)]((s, i) => Validator.Ap.tuple2(
-      this.validate(s, i.map(_._1)),
-      that.validate(s, i.map(_._2))))
+  @inline def ***[C2, V2](that: ValidationPart[S, C2, V2]): ValidationPart[S, (C,C2), (V,V2)] =
+    this ⊗ that
+
+  def ⊗[C2, V2, CC, VV](that: ValidationPart[S, C2, V2])(implicit C: GenTuple[C,C2,CC], V: GenTuple[V,V2,VV]): ValidationPart[S, CC, VV] =
+    new ValidationPart[S, CC, VV]((s, cc) => {
+      val (c,c2) = C.init(cc.value)
+      val x = this.validate(s, InputCorrected(c))
+      val y = that.validate(s, InputCorrected(c2))
+      Validator.Ap.apply2(x, y)(V.append)
+    })
 
   def liftO: ValidationPart[S, Option[C], Option[V]] =
     new ValidationPart[S, Option[C], Option[V]]((s, ic) => ic.value match {
@@ -173,8 +183,14 @@ class Validator[S, I, C, V](val cp: CorrectionPart[S, I, C], val vp: ValidationP
   def addLiveCorrect      (f: I => I)                 : Validator[S, I, C, V]          = Validator(cp addLiveCorrect f, vp)
   def addValidation [X]   (f: ValidationPart[S, V, X]): Validator[S, I, C, X]          = Validator(cp, vp andThen f)
 
-  def ***[I2, C2, V2](b: Validator[S, I2, C2, V2]): Validator[S, (I,I2), (C,C2), (V,V2)] =
-    new Validator(cp *** b.cp, vp *** b.vp)
+  @inline def ***[I2, C2, V2](that: Validator[S, I2, C2, V2]): Validator[S, (I,I2), (C,C2), (V,V2)] =
+    this ⊗ that
+
+  def ⊗[I2, C2, V2, II, CC, VV](that: Validator[S, I2, C2, V2])(implicit I: GenTuple[I,I2,II], C: GenTuple[C,C2,CC], V: GenTuple[V,V2,VV]): Validator[S, II, CC, VV] =
+    new Validator(cp ⊗ that.cp, vp ⊗ that.vp)
+
+  def vi: ValidationPart[S, I, V] =
+    ValidationPart(correctAndValidate)
 }
 
 object Validator {
