@@ -132,7 +132,7 @@ object CfgReqTypes222 {
   class Backend(c: BackendScope[Props, State]) extends OnUnmount {
 
     // TODO If XxxCrud knew about XxxAndId then we could save a lot of shit
-    val tableIO = new TableIO2[CustomReqTypeAndId, CustomReqTypeCrud, CustomReqTypeCrud.type](c.props.remote, c.props.clientData)
+    val tableIO = new TableIO2[CustomReqType, CustomReqType.Id, CustomReqTypeCrud, CustomReqTypeCrud.type](c.props.remote, c.props.clientData)
 
     def stateForValidator(k: Option[CustomReqType.Id]): S => V.S =
       s => (savedRowStoreS.getAllP(s), k)
@@ -170,7 +170,7 @@ object CfgReqTypes222 {
         ???)
   }
 
-  val xxxx = new RemoteDeltaListener2[CustomReqTypeAndId, CustomReqTypeCrud.type]
+  val xxxx = new RemoteDeltaListener2[CustomReqType, CustomReqType.Id, CustomReqTypeCrud.type]
 
   def showDeletedElement(show: Boolean, toggle: => IO[Unit]): ReactElement =
       <.label(

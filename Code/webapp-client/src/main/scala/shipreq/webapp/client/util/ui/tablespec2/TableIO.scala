@@ -28,14 +28,13 @@ object TableIoProps {
     new TableIoProps(DataIO(remote, clientData), showDeleted)
 }
 
-class RemoteDeltaListener[T <: DataAndId, RD <: DescT[_, RemoteDelta]](implicit I: IdAccessor[T]) {
-  final type P = T#Data
-  final type D = T#Id
+class RemoteDeltaListener[_P, _D, RD <: DescT[_, RemoteDelta]](implicit I: DataIdAux[_P, _D]) {
+  final type P = _P
+  final type D = _D
   final type Arb = DataIO[RD]
   final type Store[S] = SavedRowStore[S, D, P, _]
 
-  private def recvExtUpdate[S, Q <: Partition](store: Store[S], partition: Q)
-                                              (implicit ei: Q#Id =:= T#Id, ed: Q#Data =:= T#Data) =
+  private def recvExtUpdate[S](store: Store[S], partition: Partition.Aux[P, D]) =
     (d: LocalDelta) => ReactS.mod[S](s1 => {
       val ds = LocalDelta.filter(partition, d)
       val s2 = (s1 /: ds.del)((s, id)   => store.remove(id)(s))
@@ -43,13 +42,13 @@ class RemoteDeltaListener[T <: DataAndId, RD <: DescT[_, RemoteDelta]](implicit 
       s3
     })
 
-  def recvExtUpdates[CP, CB <: OnUnmount, S, Q <: Partition](store: Store[S], partition: Q, f: CP => Arb)
-                                                            (implicit ei: Q#Id =:= T#Id, ed: Q#Data =:= T#Data) =
+  def recvExtUpdates[CP, CB <: OnUnmount, S](store: Store[S], partition: Partition.Aux[P, D], f: CP => Arb) =
     Listenable.installS[CP, S, CB, Id, LocalDelta](f(_).clientData, recvExtUpdate(store, partition))
 }
 
-class TableIO[T <: DataAndId, C <: Crudable, RD <: CrudableCompanion[C]](implicit t_c_id: T#Id =:= C#Id, I: IdAccessor[T])
-    extends RemoteDeltaListener[T, RD] {
+// TODO I want to specify TableIO in two arguments, not four type args.
+class TableIO[_P, _D, C <: Crudable {type Id = _D}, RD <: CrudableCompanion[C]](implicit I: DataIdAux[_P, _D])
+  extends RemoteDeltaListener[_P, _D, RD] {
 
   final type U = C#V
 
@@ -97,11 +96,10 @@ class TableIO[T <: DataAndId, C <: Crudable, RD <: CrudableCompanion[C]](implici
 //      .build
 }
 
-class RemoteDeltaListener2[T <: DataAndId, RD <: DescT[_, RemoteDelta]](implicit I: IdAccessor[T]) {
-  final type Store[S] = SavedRowStore[S, T#Id, T#Data, _]
+class RemoteDeltaListener2[D, I, RD <: DescT[_, RemoteDelta]](implicit I: DataIdAux[D, I]) {
+  final type Store[S] = SavedRowStore[S, I, D, _]
 
-  private def recvExtUpdate[S, Q <: Partition](store: Store[S], partition: Q)
-                                              (implicit ei: Q#Id =:= T#Id, ed: Q#Data =:= T#Data) =
+  private def recvExtUpdate[S](store: Store[S], partition: Partition.Aux[D, I]) =
     (d: LocalDelta) => ReactS.mod[S](s1 => {
       val ds = LocalDelta.filter(partition, d)
       val s2 = (s1 /: ds.del)((s, id)   => store.remove(id)(s))
@@ -109,14 +107,14 @@ class RemoteDeltaListener2[T <: DataAndId, RD <: DescT[_, RemoteDelta]](implicit
       s3
     })
 
-  def recvExtUpdates[CP, CB <: OnUnmount, S, Q <: Partition](store: Store[S], partition: Q, f: CP => ClientData)
-                                                            (implicit ei: Q#Id =:= T#Id, ed: Q#Data =:= T#Data) =
+  def recvExtUpdates[CP, CB <: OnUnmount, S](store: Store[S], partition: Partition.Aux[D, I], f: CP => ClientData) =
     Listenable.installS[CP, S, CB, Id, LocalDelta](f, recvExtUpdate(store, partition))
 }
 
-class TableIO2[T <: DataAndId, C <: Crudable, RD <: CrudableCompanion[C]]
+class TableIO2[D, I, C <: Crudable {type Id = I}, RD <: CrudableCompanion[C]]
   (remote: Remote[RD], clientData: ClientData)
-  (implicit t_c_id: T#Id =:= C#Id, I: IdAccessor[T]) {
+  (implicit I: DataIdAux[D, I])
+  extends RemoteDeltaListener2[D, I, RD] {
 
   final type U = C#V
 
@@ -126,9 +124,9 @@ class TableIO2[T <: DataAndId, C <: Crudable, RD <: CrudableCompanion[C]]
   def createIO(u: U, s: SuccessIO, f: FailureIO): IO[Unit] =
     crudIO(s, f, CrudAction.Create[C](u))
 
-  def updateIO(p: T#Data, u: U, s: SuccessIO, f: FailureIO): IO[Unit] =
+  def updateIO(p: D, u: U, s: SuccessIO, f: FailureIO): IO[Unit] =
     crudIO(s, f, CrudAction.Update[C](p.id, u))
 
-  def deleteIO(id: T#Id, a: DeletionAction, s: SuccessIO, f: FailureIO): IO[Unit] =
+  def deleteIO(id: I, a: DeletionAction, s: SuccessIO, f: FailureIO): IO[Unit] =
     crudIO(s, f, CrudAction.Delete[C](id, a))
 }

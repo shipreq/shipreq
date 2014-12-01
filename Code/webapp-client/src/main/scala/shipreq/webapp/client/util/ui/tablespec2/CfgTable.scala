@@ -1,6 +1,7 @@
 package shipreq.webapp.client.util.ui.tablespec2
 
 import japgolly.scalajs.react._, vdom.ReactVDom._, prefix_<*._, implicits.{Tag => _, _}, ScalazReact._
+import shipreq.base.util.TaggedTypes.TaggedLong
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.DeletionAction
 import shipreq.webapp.base.protocol.DeletionAction._
@@ -17,19 +18,16 @@ trait CfgTableCells[P, A, B] {
 }
 
 
-final class CfgTable[DI <: DataAndId, S, I, V, V2, A, B, C, RowKey](savedStore: SavedRowStore[S, DI#Id, DI#Data, I],
-                                                                    newStore: NewRowStore[S, I],
-                                                                    editor: Editor[A, B, IO, S, C, IO[Unit], V],
-                                                                    rowkey: DI#Data => RowKey,
-                                                                    cellfmt: CfgTableCells[DI#Data, V, V2],
-                                                                    editorA: Option[DI#Id] => A,
-                                                                    del: Deletion[DI#Data, DI#Id],
-                                                                    showDeleted: S => Boolean,
-                                                                    c: ComponentStateFocus[S])
-                                                                   (implicit I: IdAccessor[DI], O: Ordering[RowKey]) {
-
-  type P = DI#Data
-  type K = DI#Id
+final class CfgTable[S, K <: TaggedLong, P, I, V, V2, A, B, C, RowKey](savedStore: SavedRowStore[S, K, P, I],
+                                                                       newStore: NewRowStore[S, I],
+                                                                       editor: Editor[A, B, IO, S, C, IO[Unit], V],
+                                                                       rowkey: P => RowKey,
+                                                                       cellfmt: CfgTableCells[P, V, V2],
+                                                                       editorA: Option[K] => A,
+                                                                       del: Deletion[P, K],
+                                                                       showDeleted: S => Boolean,
+                                                                       c: ComponentStateFocus[S])
+                                                                      (implicit I: DataIdAux[P, K], O: Ordering[RowKey]) {
   type RowStream = Stream[(RowKey, ReactElement)]
 
   private[this] val ST = ReactS.FixT[IO, S]
