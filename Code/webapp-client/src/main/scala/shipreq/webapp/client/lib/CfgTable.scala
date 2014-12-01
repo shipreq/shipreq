@@ -1,6 +1,7 @@
 package shipreq.webapp.client.lib
 
 import japgolly.scalajs.react._, vdom.ReactVDom.{Tag => _, _}, all._, ScalazReact._
+import shipreq.base.util.TaggedTypes.TaggedLong
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.DeletionAction._
 import shipreq.webapp.client.util.ui.Util
@@ -15,12 +16,10 @@ trait CfgTableCells[P, VV, Cells] {
 }
 
 object CfgTable {
-  @inline final def apply[DI <: DataAndId : IdAccessor] = new CfgTable[DI]
+  @inline final def apply[O, D, I <: TaggedLong](o: O)(implicit O: ObjDataId[O, D, I]) = new CfgTable[D, I]
 }
 
-final class CfgTable[DI <: DataAndId : IdAccessor] {
-  type P = DI#Data
-  type D = DI#Id
+final class CfgTable[P, D <: TaggedLong](implicit I: DataIdAux[P, D]) {
 
   // -------------------------------------------------------------------------------------------------------------------
   @inline def b1[Arb, S, U, II, VV, RowKey: Ordering](specU: TableSpecU[Arb, S, D, U, P, II, VV])

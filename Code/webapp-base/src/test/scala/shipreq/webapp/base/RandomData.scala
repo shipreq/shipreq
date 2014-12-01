@@ -3,6 +3,7 @@ package shipreq.webapp.base
 import scalaz.std.list._
 import scalaz.std.set._
 import shipreq.prop.test.{Distinct, Gen}
+import shipreq.base.util.TaggedTypes.TaggedLong
 import shipreq.webapp.base.data._, ReqType.Mnemonic
 import shipreq.webapp.base.data.delta._
 import shipreq.webapp.base.protocol._
@@ -54,7 +55,7 @@ object RandomData {
 
   /** RefKey uniqueness enforced in Project, not here */
   lazy val customIncmpTypes =
-    dataSet[CustomIncmpTypeAndId](customIncmpType, identity)
+    dataSet[CustomIncmpType, CustomIncmpType.Id](customIncmpType, identity)
 
   lazy val reqTypeMnemonic =
     Gen.uppers1.lim(6).map(cs => Mnemonic(cs.list.mkString))
@@ -84,16 +85,17 @@ object RandomData {
       cur + old
     }
     val d = (dname * dmnemonic).lift[List]
-    dataSet[CustomReqTypeAndId](customReqType, d.run)
+    dataSet[CustomReqType, CustomReqType.Id](customReqType, d.run)
   }
 
-  def distinctId[T <: DataAndId](implicit i: IdAccessor[T]) =
-    Distinct.flong.xmap(i.mkId)(_.value).distinct.contramap[T#Data](i.id, i.setId)
+  def distinctId[D, I <: TaggedLong](implicit i: DataIdAux[D, I]) =
+    Distinct.flong.xmap(i.mkId)(_.value).distinct.contramap[D](i.id, i.setId)
 
-  def dataSet[T <: DataAndId](r: Gen[T#Data], mod: List[T#Data] => List[T#Data])(implicit i: IdAccessor[T]): Gen[DataSet[T]] = {
-    val d = distinctId[T].lift[List]
+  // TODO I don't wanna specify two types!!!!!!! whaaaaaa
+  def dataSet[D, I <: TaggedLong](r: Gen[D], mod: List[D] => List[D])(implicit i: DataIdAux[D, I]): Gen[DataSet[D]] = {
+    val d = distinctId[D, I].lift[List]
     val f = mod compose d.run
-    Gen.apply2(DataSet[T])(rev, r.list.map(f))
+    Gen.apply2(DataSet[D])(rev, r.list.map(f))
   }
 
   lazy val project =
@@ -106,13 +108,15 @@ object RandomData {
       case Partition.CustomReqTypes   => customReqTypesDG
     }
 
-    def generic[T <: Partition](p: T)(ir: Gen[T#Id], dr: Gen[T#Data])(implicit I: IdAccessor[T#DI]): Gen[RemoteDeltaG] =
+    def generic(p: Partition)(ir: Gen[p.Id], dr: Gen[p.Data]): Gen[RemoteDeltaG] = {
+      import p.di
       for {
         d        ← dr.list
         i0       ← ir.set
         i        = d.foldLeft(i0)(_ - _.id)
         (r1, r2) ← revPair
       } yield RemoteDeltaG(p, r1, r2)(i, d)
+    }
 
     lazy val customIncmpTypesDG =
       generic(Partition.CustomIncmpTypes)(customIncmpTypeId, customIncmpType)

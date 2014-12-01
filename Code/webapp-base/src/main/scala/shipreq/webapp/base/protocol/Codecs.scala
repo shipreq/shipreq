@@ -112,8 +112,8 @@ object DataCodecs {
   implicit def customReqTypeId = tagL(CustomReqType.Id.apply)
   implicit def customReqType = caseclass6(CustomReqType.apply, CustomReqType.unapply)
 
-  implicit def dataset[T <: DataAndId](implicit WI: Writer[T#Id], RI: Reader[T#Id], WV: Writer[T#Data], RV: Reader[T#Data]) =
-    caseclass2(DataSet.apply[T], DataSet.unapply[T])
+  implicit def dataset[D, I](implicit D: DataIdAux[D, I], WI: Writer[I], RI: Reader[I], WV: Writer[D], RV: Reader[D]) =
+    caseclass2(DataSet.apply[D], DataSet.unapply[D])
 
   implicit def project = caseclass2(Project.apply, Project.unapply)
 }
@@ -173,6 +173,6 @@ object DeltaCodecs {
       val t = rev read0 c
       val x = p.ri.readSet(d)
       val y = p.rd.readList(e)
-      RemoteDeltaG[p.type](p, f, t)(x, y)
+      RemoteDeltaG(p, f, t)(x, y)
   })
 }

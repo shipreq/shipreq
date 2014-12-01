@@ -16,7 +16,7 @@ final case class RemoteDeltaP[P <: Partition] private[delta](
 // =====================================================================================================================
 
 object RemoteDeltaG {
-  def apply[P <: Partition](p: P, from: Rev, to: Rev)(del: Set[P#Id], upd: List[P#Data]) =
+  def apply(p: Partition, from: Rev, to: Rev)(del: Set[p.Id], upd: List[p.Data]) =
     new RemoteDeltaG(p, from, to, RemoteDeltaP(del, upd))
 
   lazy val prop =

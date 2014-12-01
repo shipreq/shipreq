@@ -14,11 +14,11 @@ class WIP {
     import shipreq.webapp.base.data._
     import shipreq.webapp.base.UnsafeTypes._
 
-    val customImplTypes = DataSet[CustomIncmpTypeAndId](10, List(
+    val customImplTypes = DataSet[CustomIncmpType](10, List(
       CustomIncmpType(1, "TODO", "Something you need To Do.", Alive),
       CustomIncmpType(2, "TBD", "To Be Decided.", Alive)))
 
-    val customReqTypes = DataSet[CustomReqTypeAndId](20, List(
+    val customReqTypes = DataSet[CustomReqType](20, List(
         CustomReqType(1, "CO", Set.empty, "Constraint", ImplicationNotRequired, Alive),
         CustomReqType(2, "MF", Set.empty, "Major Feature", ImplicationNotRequired, Alive),
         CustomReqType(3, "FR", Set.empty, "Functional Requirement", ImplicationRequired, Alive),
@@ -47,7 +47,7 @@ class WIP {
         None
       else {
         val rev = c.rev.succ
-        p = p.copy(customReqTypes = DataSet[CustomReqTypeAndId](rev, b))
+        p = p.copy(customReqTypes = DataSet[CustomReqType](rev, b))
         Some(rev)
       }
     }
@@ -102,7 +102,7 @@ class WIP {
         None
       else {
         val rev = c.rev.succ
-        p = p.copy(customIncmpTypes = DataSet[CustomIncmpTypeAndId](rev, b))
+        p = p.copy(customIncmpTypes = DataSet[CustomIncmpType](rev, b))
         Some(rev)
       }
     }

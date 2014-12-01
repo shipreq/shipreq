@@ -2,14 +2,14 @@ package shipreq.webapp.base.data.delta
 
 import scalaz.NonEmptyList
 import upickle.{Reader, Writer}
-import shipreq.webapp.base.data._
+import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.protocol.DataCodecs._
 
 sealed trait Partition {
-  type DI <: DataAndId
-  final type Data = DI#Data
-  final type Id = DI#Id
+  type Data
+  type Id
 
+  implicit val di: DataIdAux[Data, Id]
   implicit val ri: Reader[Id]
   implicit val wi: Writer[Id]
   implicit val rd: Reader[Data]
@@ -36,8 +36,14 @@ case object Partition {
 
   // ------------------------------------------------------------------------------------------------------------------
 
-  sealed abstract class Aux[T <: DataAndId](implicit RI: Reader[T#Id], WI: Writer[T#Id], RD: Reader[T#Data], WD: Writer[T#Data]) extends Partition {
-    override type DI = T
+  type Aux[D, I] = Partition {type Data = D; type Id = I}
+
+  sealed abstract class CAux[T, D, I](t: T)(implicit I: ObjDataId[T, D, I],
+                                           RI: Reader[I], WI: Writer[I],
+                                           RD: Reader[D], WD: Writer[D]) extends Partition {
+    override type Data = D
+    override type Id = I
+    override implicit val di = I
     override implicit val ri = RI
     override implicit val wi = WI
     override implicit val rd = RD
@@ -54,7 +60,7 @@ case object Partition {
 
   val values = NonEmptyList[Partition](CustomIncmpTypes, CustomReqTypes)
 
-  case object CustomIncmpTypes extends Aux[CustomIncmpTypeAndId]
-  case object CustomReqTypes   extends Aux[CustomReqTypeAndId]
+  case object CustomIncmpTypes extends CAux(CustomIncmpType)
+  case object CustomReqTypes   extends CAux(CustomReqType)
 }
 
