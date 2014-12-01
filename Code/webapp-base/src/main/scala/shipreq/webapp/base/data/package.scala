@@ -1,30 +1,30 @@
 package shipreq.webapp.base
 
-import shipreq.base.util.TaggedTypes.TaggedLong
-
 package object data {
 
-  trait DataAndId {
-    type Data
-    type Id <: TaggedLong
+  trait DataId[D] {
+    type I
+    def id(d: D): I
+    def setId(d: D, id: I): D
+    def mkId(l: Long): I // For testing
   }
 
-  trait IdAccessor[T <: DataAndId] {
-    def id(d: T#Data): T#Id
-    def setId(d: T#Data, id: T#Id): T#Data
-    def mkId(l: Long): T#Id // For testing
+  type DataIdAux[D, Id] = DataId[D] {type I = Id}
+
+  trait ObjDataId[O, D, Id] extends DataId[D] {
+    override final type I = Id
   }
 
-  trait DataObjImplicits {
-    implicit def tcCustomIncmpType = CustomIncmpType
-    implicit def tcCustomReqType = CustomReqType
+  abstract class DataObjImplicits {
+    @inline implicit final def tcCustomIncmpType = CustomIncmpType.IdAccess
+    @inline implicit final def tcCustomReqType   = CustomReqType.IdAccess
   }
 
-  object DataImplicits extends Project.Implicits with DataObjImplicits {
+  object DataImplicits extends DataObjImplicits with Project.Implicits {
 
-    implicit class DataAndIdDataExt[Q <: DataAndId](val d: Q#Data) extends AnyVal {
-      def id(implicit i: IdAccessor[Q]): Q#Id = i.id(d)
+    implicit final class DataAnyExt[D](val d: D) extends AnyVal {
+      @inline def id[I](implicit i: DataIdAux[D, I]): I = i.id(d)
+      @inline def id_(implicit i: DataId[D]): i.I = i.id(d)
     }
   }
-
 }

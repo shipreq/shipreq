@@ -30,8 +30,8 @@ object RemoteDelta {
           }
 
         d.p match {
-          case t@ CustomIncmpTypes => x(t, new GenericPartitionFns(t))
-          case t@ CustomReqTypes   => x(t, new GenericPartitionFns(t))
+          case t@ CustomIncmpTypes => x(t, GenericPartitionFns(t))
+          case t@ CustomReqTypes   => x(t, GenericPartitionFns(t))
         }
       }
       
@@ -42,11 +42,17 @@ object RemoteDelta {
     })
 }
 
-class GenericPartitionFns[T <: Partition](tt: T)(implicit ia: IdAccessor[T#DI], da: DataSetAccessor[T#DI]) extends Fns[T] {
+object GenericPartitionFns {
+  def apply(q: Partition)(implicit da: DataSetAccessor[q.Data]) =
+    new GenericPartitionFns[q.type, q.Data](q)(da)
+}
+
+class GenericPartitionFns[P <: Partition {type Data = D}, D](q: P)(implicit da: DataSetAccessor[D]) extends Fns[P] {
+  import q.di
 
   def rev(p: Project): Rev = da.getRev(p)
 
-  def update(p: Project, rev: Rev, ds: RemoteDeltaP[T]): Project = {
+  def update(p: Project, rev: Rev, ds: RemoteDeltaP[P]): Project = {
 
     var vs = da.getData(p)
 
@@ -54,7 +60,7 @@ class GenericPartitionFns[T <: Partition](tt: T)(implicit ia: IdAccessor[T#DI], 
     if (dels.nonEmpty)
       vs = vs.filterNot(data => dels contains data.id)
 
-    val upds = ds.upd.map(p => p.id -> p).toMap
+    val upds = ds.upd.map(data => data.id -> data).toMap
     if (upds.nonEmpty)
       vs = vs.map(p => upds.getOrElse(p.id, p))
 

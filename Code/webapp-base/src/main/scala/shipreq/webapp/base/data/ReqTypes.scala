@@ -30,11 +30,6 @@ object ReqType {
 
 // =====================================================================================================================
 
-sealed trait CustomReqTypeAndId extends DataAndId {
-  override type Data = CustomReqType
-  override type Id = CustomReqType.Id
-}
-
 final case class CustomReqType(id: CustomReqType.Id,
                                mnemonic: ReqType.Mnemonic,
                                oldMnemonics: Set[ReqType.Mnemonic],
@@ -44,11 +39,14 @@ final case class CustomReqType(id: CustomReqType.Id,
   def fullName = s"${mnemonic.value}: $name"
 }
 
-object CustomReqType extends IdAccessor[CustomReqTypeAndId] {
+object CustomReqType {
   final case class Id(value: Long) extends TaggedLong
-  override def id(d: CustomReqType) = d.id
-  override def mkId(l: Long) = Id(l)
-  override def setId(a: CustomReqType, b: Id) = a.copy(id = b)
+
+  object IdAccess extends ObjDataId[CustomReqType.type, CustomReqType, Id] {
+    override def id(d: CustomReqType) = d.id
+    override def mkId(l: Long) = Id(l)
+    override def setId(a: CustomReqType, b: Id) = a.copy(id = b)
+  }
 }
 
 object CustomReqTypeL {

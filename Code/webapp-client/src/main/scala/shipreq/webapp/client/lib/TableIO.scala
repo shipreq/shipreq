@@ -27,13 +27,12 @@ object TableIoProps {
     new TableIoProps(TableIoArb(remote, clientData), showDeleted)
 }
 
-class RemoteDeltaListener[T <: DataAndId, RD <: DescT[_, RemoteDelta]](implicit I: IdAccessor[T]) {
-  final type P = T#Data
-  final type D = T#Id
+class RemoteDeltaListener[_P, _D, RD <: DescT[_, RemoteDelta]](implicit I: DataIdAux[_P, _D]) {
+  final type P = _P
+  final type D = _D
   final type Arb = TableIoArb[RD]
 
-  private def recvExtUpdate[S, Q <: Partition](spec: TableSpecU[_, S, D, _, P, _, _], partition: Q)
-                                              (implicit ei: Q#Id =:= T#Id, ed: Q#Data =:= T#Data) =
+  private def recvExtUpdate[S](spec: TableSpecU[_, S, D, _, P, _, _], partition: Partition.Aux[P, D]) =
     (d: LocalDelta) => ReactS.mod[S](s1 => {
       val ds = LocalDelta.filter(partition, d)
       val s2 = (s1 /: ds.del)((s, id)   => spec.savedRemoveF(id)(s))
@@ -41,13 +40,13 @@ class RemoteDeltaListener[T <: DataAndId, RD <: DescT[_, RemoteDelta]](implicit 
       s3
     })
 
-  def recvExtUpdates[CP, CB <: OnUnmount, S, Q <: Partition](spec: TableSpecU[_, S, D, _, P, _, _], partition: Q, f: CP => Arb)
-                                                            (implicit ei: Q#Id =:= T#Id, ed: Q#Data =:= T#Data) =
+  def recvExtUpdates[CP, CB <: OnUnmount, S](spec: TableSpecU[_, S, D, _, P, _, _], partition: Partition.Aux[P, D], f: CP => Arb) =
     Listenable.installS[CP, S, CB, Id, LocalDelta](f(_).clientData, recvExtUpdate(spec, partition))
 }
 
-class TableIO[T <: DataAndId, C <: Crudable, RD <: CrudableCompanion[C]](implicit t_c_id: T#Id =:= C#Id, I: IdAccessor[T])
-    extends RemoteDeltaListener[T, RD] {
+// TODO I want to specify TableIO in two arguments, not four type args.
+class TableIO[_P, _D, C <: Crudable {type Id = _D}, RD <: CrudableCompanion[C]](implicit I: DataIdAux[_P, _D])
+    extends RemoteDeltaListener[_P, _D, RD] {
 
   final type U = C#V
 
@@ -64,10 +63,10 @@ class TableIO[T <: DataAndId, C <: Crudable, RD <: CrudableCompanion[C]](implici
     crudIO(arb, SuccessIO.nop, f, CrudAction.Delete[C](id, a))
 
   final type Props = TableIoProps[RD]
-  def innerComponent[S, Q <: Partition](spec: TableSpecU[Arb, S, T#Id, C#V, T#Data, _, _],
-                                        partition: Q,
-                                        render: ComponentScopeU[Props, S, _] => ReactElement)
-                                       (implicit DSA: DataSetAccessor[T], ei: Q#Id =:= T#Id, ed: Q#Data =:= T#Data)
+  def innerComponent[S](spec: TableSpecU[Arb, S, D, C#V, P, _, _],
+                        partition: Partition.Aux[P, D],
+                        render: ComponentScopeU[Props, S, _] => ReactElement)
+                       (implicit DSA: DataSetAccessor[P])
   = ReactComponentB[Props]("TableIO")
     .getInitialState(p => spec.initialState(DSA.getData(p.x.clientData.project), _.id))
     .backend(_ => new OnUnmountBackend)

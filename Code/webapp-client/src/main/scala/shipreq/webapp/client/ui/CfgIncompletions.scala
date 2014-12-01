@@ -42,7 +42,7 @@ object CfgIncompletions {
 
   object UserDefIncompletions {
 
-    val tableIO = new TableIO[CustomIncmpTypeAndId, CustomIncmpTypeCrud, CustomIncmpTypeCrud.type]
+    val tableIO = new TableIO[CustomIncmpType, CustomIncmpType.Id, CustomIncmpTypeCrud, CustomIncmpTypeCrud.type]
     import tableIO.{D, P}
 
     private val prespec = TableSpecBuilder[P](
@@ -70,7 +70,7 @@ object CfgIncompletions {
       override def deletedRow = p => (raw(p.key.value), raw(TextMod.nonBlank from p.desc))
     }
 
-    private val tbl = CfgTable[CustomIncmpTypeAndId].b1(spec)(specC, specD, ("", ""), _.key).b2(cells)
+    private val tbl = CfgTable(CustomIncmpType).b1(spec)(specC, specD, ("", ""), _.key).b2(cells)
 
     private def renderInner(S: ComponentScopeU[tableIO.Props, prespec.S, _]): ReactElement =
       tbl(S.props.showDeleted, S)(S.props.x)
@@ -81,7 +81,7 @@ object CfgIncompletions {
 
   object OtherCauses {
 
-    val tableIO = new RemoteDeltaListener[CustomReqTypeAndId, CustomReqTypeImplicationMod.type]
+    val tableIO = new RemoteDeltaListener[CustomReqType, CustomReqType.Id, CustomReqTypeImplicationMod.type]
     import tableIO.{Arb, D, P}
 
     private val prespec = TableSpecBuilder[P](

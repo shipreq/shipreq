@@ -1,5 +1,6 @@
 package shipreq.webapp.base.data
 
+import shipreq.base.util.TaggedTypes.TaggedLong
 import scalaz.std.list._
 import shipreq.prop._
 import DataImplicits._
@@ -9,14 +10,14 @@ object DataProp {
   lazy val rev =
     Prop[Rev]("rev ≥ 0", _.value >= 0)
 
-  private def dataSet[T <: DataAndId : IdAccessor] =
-    Prop.distinct("ID", (_: DataSet[T]).data.toStream.map(_.id.value))
+  private def dataSet[O, D, I <: TaggedLong](o: O)(implicit O: ObjDataId[O, D, I]) =
+    Prop.distinct("ID", (_: DataSet[D]).data.toStream.map(_.id.value))
 
   // -------------------------------------------------------------------------------------------------------------------
   // Incompletions
 
   object customIncmpTypes {
-    def all = dataSet[CustomIncmpTypeAndId]
+    def all = dataSet(CustomIncmpType)
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -36,7 +37,7 @@ object DataProp {
   }
 
   object customReqTypes {
-    type DS = DataSet[CustomReqTypeAndId]
+    type DS = DataSet[CustomReqType]
 
     lazy val uniqueMnemonics =
       Prop.distinct("mnemonic", (_: DS).data.toStream.flatMap(b => b.mnemonic #:: b.oldMnemonics.toStream).map(_.value))
@@ -48,7 +49,7 @@ object DataProp {
       customReqType.all.forall[DS, List](_.data)
 
     lazy val all = (
-        dataSet[CustomReqTypeAndId] ∧ uniqueMnemonics ∧ uniqueNames ∧ rev.contramap(_.rev) ∧ each
+        dataSet(CustomReqType) ∧ uniqueMnemonics ∧ uniqueNames ∧ rev.contramap(_.rev) ∧ each
       ) rename "customReqTypes"
   }
 

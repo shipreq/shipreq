@@ -18,7 +18,7 @@ import shipreq.webapp.client.util.ui.Util.checkbox
 
 object CfgReqTypes {
 
-  val tableIO = new TableIO[CustomReqTypeAndId, CustomReqTypeCrud, CustomReqTypeCrud.type]
+  val tableIO = new TableIO[CustomReqType, CustomReqType.Id, CustomReqTypeCrud, CustomReqTypeCrud.type]
   import tableIO.{D, P}
 
   private val prespec = TableSpecBuilder[P](
@@ -74,7 +74,7 @@ object CfgReqTypes {
       (raw(p.mnemonic), p.oldMnemonics, raw(p.name), checkbox(ImplicationRequired from p.imp)(disabled := true))
   }
 
-  private val tbl = CfgTable[CustomReqTypeAndId].b1(spec)(specC, specD, ("", "", false), _.mnemonic).b2(cells)
+  private val tbl = CfgTable(CustomReqType).b1(spec)(specC, specD, ("", "", false), _.mnemonic).b2(cells)
 
   private def renderInner(S: ComponentScopeU[tableIO.Props, prespec.S, _]): ReactElement =
     tbl(S.props.showDeleted, S)(S.props.x)
