@@ -83,6 +83,11 @@ object Editors {
     def applyPostCorrection[T, U](v: CorrectionPart[T, B, U])(f: A => T): Self =
       e.modCallbacksA(a =>
         _.pmodB{ case OnEditFinished(b) => v.ci(v.correct(f(a), b).value) })
+
+    def applyOnEditFinishedK[K](f: K => ReactST[M, S, Unit])(g: A => K)(implicit M: Bind[M]): Self =
+      e.modCallbacksA(a => _.paddST {
+        case OnEditFinished(_) => f(g(a))
+      })
   }
 
   implicit final class EditorExtV[A,B,M[_],S,C,D](val e: Editor[A,B,M,S,C,D,Modifier]) extends AnyVal {
@@ -115,14 +120,6 @@ object Editors {
       e.applyInputValidationL(v)
         .applyLiveCorrection(v)
         .applyPostCorrection(v.cp)(_._1)
-  }
-
-  implicit final class EditorExtIII[A,B,M[_],S,C,D,V](val e: Editor[A,B,M,S,C,D,V]) extends AnyVal {
-    type Self = Editor[A,B,M,S,C,D,V]
-    def applyOnEditFinished[K](f: K => ReactST[M, S, Unit])(g: A => K)(implicit M: Bind[M]): Self =
-      e.modCallbacksA(a => _.paddST {
-        case OnEditFinished(_) => f(g(a))
-      })
   }
 
   def applyRowUpdateAndRevert[A, FV, M[_] : Bind : Applicative, S, F, D, V, K, P, I](

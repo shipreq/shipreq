@@ -95,7 +95,7 @@ import __Validators.{reqType => V}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.validation2._
 import scala.language.reflectiveCalls
-import Editors.{EditorExtIII, EditorExtII, EditorExtV, EditorExt}
+import Editors.{EditorExtII, EditorExtV, EditorExt}
 import monocle._
 import monocle.syntax._
 
@@ -156,9 +156,7 @@ object CfgReqTypes222 {
         tableIO.createIO,
         tableIO.updateIO,
         c runState _)
-      e = e.applyOnEditFinished(savef)(_._1._2)
-
-      e
+      e.applyOnEditFinishedK(savef)(_._1._2)
     }
 
     val toggleShowDeleted: IO[Unit] = {
