@@ -131,8 +131,7 @@ object CfgReqTypes222 {
 
   class Backend(c: BackendScope[Props, State]) extends OnUnmount {
 
-    // TODO If XxxCrud knew about XxxAndId then we could save a lot of shit
-    val tableIO = new TableIO2[CustomReqType, CustomReqType.Id, CustomReqTypeCrud, CustomReqTypeCrud.type](c.props.remote, c.props.clientData)
+    val tableIO = TableIO2(CustomReqType, CustomReqTypeCrud)(c.props.remote, c.props.clientData)
 
     def stateForValidator(k: Option[CustomReqType.Id]): S => V.S =
       s => (savedRowStoreS.getAllP(s), k)
