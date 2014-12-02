@@ -6,6 +6,7 @@ import upickle._
 import shipreq.base.util.BiMap
 import shipreq.base.util.TaggedTypes._
 import shipreq.webapp.base.data._
+import DataImplicits._
 
 private[protocol] object Codec {
   //  private def tagS[T <: TaggedString](implicit C: TaggedTypeCtor[T]) =
@@ -127,8 +128,8 @@ object RoutineCodecs {
 
   implicit def deletionAction = enum(DeletionAction.values)
 
-  implicit def crudable[C <: Crudable](implicit WI: Writer[C#Id], RI: Reader[C#Id], WV: Writer[C#V], RV: Reader[C#V]): ReadWriter[CrudAction[C]] =
-    ReadWriter[CrudAction[C]]({
+  def crudAction[I, V](implicit WI: Writer[I], RI: Reader[I], WV: Writer[V], RV: Reader[V]): ReadWriter[CrudAction[I, V]] =
+    ReadWriter[CrudAction[I, V]]({
       case CrudAction.Create(v)    => Js.Arr(WV write0 v)
       case CrudAction.Update(i, v) => Js.Arr(WI write0 i, WV write0 v)
       case CrudAction.Delete(i, a) => Js.Arr(WI write0 i, deletionAction write0 a, Js.Arr())
@@ -142,8 +143,6 @@ object RoutineCodecs {
 // =====================================================================================================================
 object RoutineGroupCodecs {
   import Routines._
-
-//  implicit def customReqTypeCrud = crudable[CustomReqTypeCrud]
 
   implicit def routinesForCfgReqType = caseclass4(ForCfgReqType.apply, ForCfgReqType.unapply)
 }

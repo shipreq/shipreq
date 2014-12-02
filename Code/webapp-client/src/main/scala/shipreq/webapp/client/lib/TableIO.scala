@@ -20,6 +20,7 @@ final case class TableIoArb[RD <: Desc](remote: Remote[RD], clientData: ClientDa
 
 final class TableIoProps[RD <: Desc](val x: TableIoArb[RD], val showDeleted: Boolean)
 object TableIoProps {
+
   @inline def apply[RD <: Desc](x: TableIoArb[RD], showDeleted: Boolean) =
     new TableIoProps(x, showDeleted)
 
@@ -27,7 +28,7 @@ object TableIoProps {
     new TableIoProps(TableIoArb(remote, clientData), showDeleted)
 }
 
-class RemoteDeltaListener[_P, _D, RD <: DescT[_, RemoteDelta]](implicit I: DataIdAux[_P, _D]) {
+class RemoteDeltaListener[_P, _D, RD <: Desc {type O = RemoteDelta}](implicit I: DataIdAux[_P, _D]) {
   final type P = _P
   final type D = _D
   final type Arb = TableIoArb[RD]
@@ -44,26 +45,30 @@ class RemoteDeltaListener[_P, _D, RD <: DescT[_, RemoteDelta]](implicit I: DataI
     Listenable.installS[CP, S, CB, Id, LocalDelta](f(_).clientData, recvExtUpdate(spec, partition))
 }
 
-// TODO I want to specify TableIO in two arguments, not four type args.
-class TableIO[_P, _D, C <: Crudable {type Id = _D}, RD <: CrudableCompanion[C]](implicit I: DataIdAux[_P, _D])
+object TableIO {
+  def apply[O, P, D, V](o: O, rd: Crudable.Aux[D, V])(implicit O: ObjDataId[O, P, D]) =
+    new TableIO[P, D, V, rd.type]
+}
+
+class TableIO[_P, _D, _V, RD <: Crudable.Aux[_D, _V]](implicit I: DataIdAux[_P, _D])
     extends RemoteDeltaListener[_P, _D, RD] {
 
-  final type U = C#V
+  final type U = _V
 
-  private def crudIO(arb: Arb, s: SuccessIO, f: FailureIO, a: CrudAction[C]): IO[Unit] =
+  private def crudIO(arb: Arb, s: SuccessIO, f: FailureIO, a: CrudAction[D, U]): IO[Unit] =
     ClientProtocol.call(arb.remote)(a, arb.clientData.update(_) >> s.io, f)
 
   def createIO(arb: Arb, u: U, s: SuccessIO, f: FailureIO): IO[Unit] =
-    crudIO(arb, s, f, CrudAction.Create[C](u))
+    crudIO(arb, s, f, CrudAction.Create(u))
 
   def updateIO(arb: Arb, p: P, u: U, s: SuccessIO, f: FailureIO): IO[Unit] =
-    crudIO(arb, s, f, CrudAction.Update[C](p.id, u))
+    crudIO(arb, s, f, CrudAction.Update(p.id, u))
 
   def deleteIO(arb: Arb, id: D, a: DeletionAction, f: FailureIO): IO[Unit] =
-    crudIO(arb, SuccessIO.nop, f, CrudAction.Delete[C](id, a))
+    crudIO(arb, SuccessIO.nop, f, CrudAction.Delete(id, a))
 
   final type Props = TableIoProps[RD]
-  def innerComponent[S](spec: TableSpecU[Arb, S, D, C#V, P, _, _],
+  def innerComponent[S](spec: TableSpecU[Arb, S, D, U, P, _, _],
                         partition: Partition.Aux[P, D],
                         render: ComponentScopeU[Props, S, _] => ReactElement)
                        (implicit DSA: DataSetAccessor[P])

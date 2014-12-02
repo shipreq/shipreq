@@ -150,19 +150,19 @@ object RandomData {
         remote(CustomReqTypeCrud),
         remote(CustomReqTypeImplicationMod))
 
-    class CrudActionGens[C <: Crudable] (idG: Gen[C#Id], vG: Gen[C#V]) {
+    class CrudActionGens[I, V](c: Crudable.Aux[I, V])(idG: Gen[I], vG: Gen[V]) {
       import Gen.Covariance._
-      lazy val create = vG.map(CrudAction.Create[C])
-      lazy val update = Gen.apply2(CrudAction.Update[C])(idG, vG)
-      lazy val delete = Gen.apply2(CrudAction.Delete[C])(idG, deletionAction)
-      lazy val any    = Gen.oneofG[CrudAction[C]](create, update, delete)
+      lazy val create = vG.map(CrudAction.Create[V])
+      lazy val update = Gen.apply2(CrudAction.Update[I, V])(idG, vG)
+      lazy val delete = Gen.apply2(CrudAction.Delete[I])(idG, deletionAction)
+      lazy val any    = Gen.oneofG[CrudAction[I, V]](create, update, delete)
     }
 
-    lazy val customIncmpTypeCrud = new CrudActionGens[CustomIncmpTypeCrud](
+    lazy val customIncmpTypeCrud = new CrudActionGens(CustomIncmpTypeCrud)(
       RandomData.customIncmpTypeId,
       Gen.tuple2(refKey, optionalLargeText))
 
-    lazy val customReqTypeCrud = new CrudActionGens[CustomReqTypeCrud](
+    lazy val customReqTypeCrud = new CrudActionGens(CustomReqTypeCrud)(
       RandomData.customReqTypeId,
       Gen.tuple3(reqTypeMnemonic, customReqTypeName, implicationRequired))
   }

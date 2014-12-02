@@ -7,33 +7,42 @@ import shipreq.webapp.base.data.delta.RemoteDelta
 import Codec._, DataCodecs._, DeltaCodecs._, RoutineCodecs._
 import Routine._
 
-trait Crudable {
+trait Crudable extends Desc {
   type Id
   type V
+  override final type I  = CrudAction[Id, V]
+  override final type O  = RemoteDelta
+
+  final type Action = CrudAction[Id, V]
+  @inline final def create(v: V)                      : Action = CrudAction.Create[V]    (v)
+  @inline final def update(id: Id, v: V)              : Action = CrudAction.Update[Id, V](id, v)
+  @inline final def delete(id: Id, a: DeletionAction) : Action = CrudAction.Delete[Id]   (id, a)
 }
 
-trait CrudableAux[_I, _V] extends Crudable {
-  override final type Id = _I
-  override final type V = _V
+object Crudable {
+  type Aux[_I, _V] = Crudable { type Id = _I; type V = _V }
+
+  class CAux[_Id, _V] private[protocol](implicit RI: Reader[_Id], WI: Writer[_Id], RV: Reader[_V], WV: Writer[_V]
+                                        , RO: Reader[RemoteDelta], WO: Writer[RemoteDelta]) extends Crudable {
+    override final type Id = _Id
+    override final type V  = _V
+
+    override implicit final def ri: Reader[I] = crudAction[_Id, _V]
+    override implicit final def wi: Writer[I] = crudAction[_Id, _V]
+    override implicit final def ro: Reader[O] = RO
+    override implicit final def wo: Writer[O] = WO
+
+    implicit def rwd = remoteRoutine(this)
+  }
 }
 
-abstract class CrudableCompanion[C <: Crudable](implicit RI: Reader[C#Id], WI: Writer[C#Id], RV: Reader[C#V], WV: Writer[C#V])
-    extends DescT[CrudAction[C], RemoteDelta] {
-
-  implicit def rwd = remoteRoutine(this)
-
-  final type Action = CrudAction[C]
-  @inline final def create(v: C#V)                      = CrudAction.Create[C](v)
-  @inline final def update(id: C#Id, v: C#V)            = CrudAction.Update[C](id, v)
-  @inline final def delete(id: C#Id, a: DeletionAction) = CrudAction.Delete[C](id, a)
-}
-
-sealed trait CrudAction[C <: Crudable]
+sealed trait CrudAction[+Id, +V]
 object CrudAction {
-  case class Create[C <: Crudable](newValues: C#V) extends CrudAction[C]
-  case class Update[C <: Crudable](id: C#Id, newValues: C#V) extends CrudAction[C]
-  case class Delete[C <: Crudable](id: C#Id, action: DeletionAction) extends CrudAction[C]
+  final case class Create[V]    (newValues: V)                   extends CrudAction[Nothing, V]
+  final case class Update[Id, V](id: Id, newValues: V)           extends CrudAction[Id     , V]
+  final case class Delete[Id]   (id: Id, action: DeletionAction) extends CrudAction[Id     , Nothing]
 }
+
 
 sealed abstract class DeletionAction
 object DeletionAction {
@@ -49,11 +58,8 @@ object Routines {
 
   object ProjectInit extends DescT[Unit, Project]
 
-  sealed trait CustomIncmpTypeCrud extends CrudableAux[CustomIncmpType.Id, (RefKey, Option[String])]
-  object CustomIncmpTypeCrud extends CrudableCompanion[CustomIncmpTypeCrud]
-
-  sealed trait CustomReqTypeCrud extends CrudableAux[CustomReqType.Id, (ReqType.Mnemonic, String, ImplicationRequired)]
-  object CustomReqTypeCrud extends CrudableCompanion[CustomReqTypeCrud]
+  object CustomIncmpTypeCrud extends Crudable.CAux[CustomIncmpType.Id, (RefKey, Option[String])]
+  object CustomReqTypeCrud   extends Crudable.CAux[CustomReqType.Id, (ReqType.Mnemonic, String, ImplicationRequired)]
 
   object CustomReqTypeImplicationMod extends DescT[(CustomReqType.Id, ImplicationRequired), RemoteDelta]
 

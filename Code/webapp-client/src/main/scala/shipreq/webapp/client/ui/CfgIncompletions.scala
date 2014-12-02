@@ -42,7 +42,7 @@ object CfgIncompletions {
 
   object UserDefIncompletions {
 
-    val tableIO = new TableIO[CustomIncmpType, CustomIncmpType.Id, CustomIncmpTypeCrud, CustomIncmpTypeCrud.type]
+    val tableIO = TableIO(CustomIncmpType, CustomIncmpTypeCrud)
     import tableIO.{D, P}
 
     private val prespec = TableSpecBuilder[P](
