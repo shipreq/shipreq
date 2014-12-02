@@ -18,7 +18,7 @@ import shipreq.webapp.client.util.ui.Util.checkbox
 
 object CfgReqTypes {
 
-  val tableIO = new TableIO[CustomReqType, CustomReqType.Id, CustomReqTypeCrud, CustomReqTypeCrud.type]
+  val tableIO = TableIO(CustomReqType, CustomReqTypeCrud)
   import tableIO.{D, P}
 
   private val prespec = TableSpecBuilder[P](
