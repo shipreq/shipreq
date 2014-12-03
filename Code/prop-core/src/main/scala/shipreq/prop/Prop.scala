@@ -27,6 +27,15 @@ object Prop {
       test(ba ≟ be, s"Actual: $ba\nExpect: $be")
     })
 
+  def equal[A](name: String) = new EqualB[A](name)
+  final class EqualB[A](name: String) {
+    def apply[B: Equal](t: A => B, e: A => B): Prop[A] =
+      equal(name, t, e)
+  }
+
+  def ifelse[A](test: Prop[A], ifPass: Prop[A], ifFail: Prop[A]): Prop[A] =
+    (test ==> ifPass) ∧ (~test ==> ifFail)
+
   def distinct[A, B](name: String, f: A => Stream[B]) =
     distinct[B](name).contramap(f)
 
