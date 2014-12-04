@@ -44,6 +44,9 @@ final class Multimap[K, L[_], V](val m: Map[K, L[V]])(implicit L: MultiValues[L]
   def setvs   (k: K, vs: L[V])        = mod(k, _ => vs)
   def reverse                         = Multimap.reverse(m)
 
+  def ++(n: Map[K, L[V]]) =
+    copy(n.foldLeft(m)((q, x) => q.addn(x._1, x._2)))
+
   /** Removes x entirely. Same as delk(x).delv(x) */
   def delkv(x: K)(implicit ev: K =:= V) =
     copy((m - x) delv x)
@@ -55,6 +58,8 @@ final class Multimap[K, L[_], V](val m: Map[K, L[V]])(implicit L: MultiValues[L]
   def streamKV: Stream[(K, V)] =
     m.toStream.flatMap(kv => kv._2.stream.map(v => (kv._1, v)))
 
+  def isEmpty    = m.isEmpty
+  def nonEmpty   = m.nonEmpty
   def keyCount   = m.size
   def valueCount = m.valuesIterator.foldLeft(0)(_ + _.count)
   def sizeSummary = SizeSummary(m.valuesIterator.foldLeft(Vector.empty[Int])(_ :+ _.count))
@@ -69,6 +74,7 @@ object Multimap {
       @inline def getOrEmpty(k: K)          (implicit L: MultiValues[L]): L[V]         = m.getOrElse(k, L.empty)
       @inline def add(kv: (K, V))           (implicit L: MultiValues[L]): Map[K, L[V]] = mod(kv._1, _ add1 kv._2)
       @inline def add(k: K, v: V)           (implicit L: MultiValues[L]): Map[K, L[V]] = mod(k, _ add1 v)
+      @inline def addn(k: K, vs: L[V])      (implicit L: MultiValues[L]): Map[K, L[V]] = mod(k, _ addn vs)
       @inline def addks(ks: L[K], v: V)     (implicit L: MultiValues[L]): Map[K, L[V]] = ks.foldl(m)(_.add(_, v))
       @inline def mod(k: K, f: L[V] => L[V])(implicit L: MultiValues[L]): Map[K, L[V]] = put(k, f(getOrEmpty(k)))
       @inline def put(k: K, v: L[V])        (implicit L: MultiValues[L]): Map[K, L[V]] =

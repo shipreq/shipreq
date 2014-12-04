@@ -19,7 +19,7 @@ trait PropTestOps {
     val rs = PTest.prove(p, d, S)
     assertSuccessful(p, rs)
     rs match {
-      case RunState(n, Satisfied()) =>
+      case RunState(n, Satisfied) =>
         println(s"${YELLOW}Proposition $RESET[$p]$YELLOW was satisfied but not proved after $RED$n runs$YELLOW of an expected ${d.size}.")
         fail(s"Proposition [$p] was satisfied but not proved after $n runs of an expected ${d.size}.")
       case _ => ()
@@ -28,7 +28,7 @@ trait PropTestOps {
 
   private[this] def assertSuccessful[A](p: Prop[A], rs: RunState[A])(implicit S: Settings): Unit =
     rs match {
-      case RunState(_, Satisfied()) | RunState(_, Proved()) => ()
+      case RunState(_, Satisfied) | RunState(_, Proved) => ()
 
       case RunState(runs, Falsified(a, f)) =>
         failinfo(a, v => s"\n${RED}Falsified $WHITE_B[$p]$RESET$RED after $runs runs with:$RESET\n$v\n",

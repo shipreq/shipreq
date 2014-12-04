@@ -1,144 +1,178 @@
 package shipreq.prop
 
-import scalaz.Value
 import scalaz.std.list._
 import utest._
 
 object PropTest extends TestSuite {
 
-  final class Falsy[A] private[Falsy] (val p: Prop[A], val cause: List[Falsy[A]]) {
-    override def equals(o: Any) = o match {
-      case that: Falsy[_] => p == that.p && cause == that.cause
-      case _ => false
-    }
-    override def hashCode = p.hashCode
-    override def toString = s"Falsy($p, $cause)"
+  case class Tst(run: Any => Eval => Unit) {
+    def >>(next: Tst): Tst =
+      Tst(a => e => {
+        run(a)(e)
+        next.run(a)(e)
+      })
+    def <<(prev: Tst) = prev >> this
   }
-  object Falsy {
-    def apply[A](p: Prop[A], cause: List[Falsy[A]]): Falsy[A] =
-      new Falsy(p, cause.sortBy(_.toString))
+
+  val sep = "="*120
+
+  val DEBUG                                        = Tst(_ => v => println(s"$sep\n${v.report}\n"))
+  val nop                                          = Tst(_ => _ => ())
+  val ok                                           = Tst(_ => v => assert(v.success))
+  val ko                                           = Tst(_ => v => assert(v.failure))
+  def name         (e: String)                     = Tst{_ => v => val a = v.name; assert(e == a)}
+  def nameOf       (p: Prop[Int])                  = name(p(0).name)
+  val inputA                                       = Tst{e => v => val a = v.input.a; assert(e == a)}
+  def causes       (f: Any => List[Eval] => Unit)  = Tst(i => v => f(i)(v.reasonsAndCauses.values.toList.flatten))
+  val rootCause                                    = causes(_ => c => assert(c == Nil))
+  def cause1       (f: Tst = nop)                  = causes{i => c => assert(c.size == 1); f.run(i)(c.head) }
+  def causeNames   (ee: String*)                   = causes{_ => c => val a = c.map(_.name).sorted; val e = ee.sorted; assert(a == e) }
+  def rootCauses   (f: Any => Set[String] => Unit) = Tst(i => v => f(i)(v.rootCauses))
+  def rootCausesN  (s: String*)                    = rootCauses{_ => v => val a = v.toList.sorted; val e = s.toList.sorted; assert(a == e) }
+  def rootCausesP  (p: Prop[Int]*)                 = rootCausesN(p.map(_(0).name): _*)
+  def failureTree  (f: String => Unit)             = Tst(i => v => f(v.failureTree))
+  def failureTreeIs(e: String)                     = failureTree(a => assert(a == e))
+  def report       (f: String => Unit)             = Tst(i => v => f(v.report))
+  def reportIs     (e: String)                     = report(a => assert(a == e))
+  def failSimple   (n: String)                     = ko >> name(n) >> inputA
+  def failRoot     (n: String)                     = failSimple(n) >> rootCause
+
+  val all = nop
+
+  def test[A](p: Prop[A], a: A, t: Tst): Unit = {
+    val result = p(a)
+    (t << all).run(a)(result)
   }
-  implicit def toFalsy[A](f: Falsification[A]): Falsy[A] = Falsy(f.p, f.cause map toFalsy)
 
-  implicit def toFInfo[A](a: A): FailureInfo = Value(a.toString)
+  def testRootCauses[A](p: Prop[A], a: A, e: String*): Unit = {
+    val r = p(a).rootCauses.toList
+    val actual = r.map(_.toString).sorted
+    val expect = e.map(_.toString).sorted
+    assert(actual == expect)
+  }
 
-  def norm[A](f: Falsification[A]): Falsification[A] =
-    Falsification(f.p, f.cause.sortBy(_.toString) map norm, f.finfo.map(v => Value(v.value)))
+  // ===================================================================================================================
 
-  val even = Prop[Int]("even", _ % 2 == 0)
-  val mod3 = Prop[Int]("mod3", _ % 3 == 0)
-  val mod5 = Prop[Int]("mod5", _ % 5 == 0)
+  val evenN = "even"
+  val oddN  = "¬even"
+  val mod3N = "mod3"
+  val mod5N = "mod5"
+  val upperN = "upper"
+
+  val even = Prop[Int](evenN, _ % 2 == 0)
+  val mod3 = Prop[Int](mod3N, _ % 3 == 0)
+  val mod5 = Prop[Int](mod5N, _ % 5 == 0)
   val odd = ~even
   val mod235d = even | mod3 | mod5
   val mod235c = even & mod3 & mod5
-  val evenF = Falsy(even, Nil)
-  val oddF  = Falsy(odd, Nil)
-  val mod3F = Falsy(mod3, Nil)
-  val mod5F = Falsy(mod5, Nil)
+  val upper = Prop[String](upperN, s => s == s.toUpperCase)
+
+  val evenF = failSimple(evenN) >> rootCause
+  val oddF  = failSimple(oddN) >> rootCause // >> cause1(evenF)
+  val mod3F = failSimple(mod3N) >> rootCause
+  val mod5F = failSimple(mod5N) >> rootCause
+  val disF  = failSimple("(even ∨ mod3 ∨ mod5)")
+  val conF  = failSimple("(even ∧ mod3 ∧ mod5)")
 
   override def tests = TestSuite {
-    'Falsy {
-      def test[A](p: Prop[A], a: A, expect: Option[Falsy[A]]): Unit = {
-        val actual = p falsify a map toFalsy
-        assert(actual == expect)
-      }
-      def testRootCauses[A](p: Prop[A], a: A, e: List[Prop[_]]): Unit = {
-        val r = p.falsify(a).toList.flatMap(_.rootCauses.list)
-        val actual = r.map(_.toString).sorted
-        val expect = e.map(_.toString).sorted
-        assert(actual == expect)
-      }
-      'atom {
-        test(even, 2, None)
-        test(even, 3, Some(evenF))
-      }
-      'negation {
-        test(odd, 3, None)
-        // test(odd, 2, Some(Falsy(odd, List(evenF))))
-        test(odd, 2, Some(oddF))
-      }
-      'doubleNegation {
-        val p  = ~(~even)
-        test(p, 2, None)
-        test(p, 3, Some(evenF))
-      }
-      'disjunction {
-        test(mod235d, 30, None)
-        test(mod235d,  4, None)
-        // test(mod235d, 31, Some(Falsy(mod235d, List(evenF, mod3F, mod5F))))
-        test(mod235d, 31, Some(Falsy(mod235d, Nil)))
-      }
-      'conjunction {
-        test(mod235c, 30, None)
-        test(mod235c, 31, Some(Falsy(mod235c, List(evenF, mod3F, mod5F))))
-        test(mod235c, 15, Some(Falsy(mod235c, List(evenF))))
-        test(mod235c,  4, Some(Falsy(mod235c, List(mod3F, mod5F))))
-      }
-      'implication {
-        val mod5impEven = mod5 ==> even
-        test(mod5impEven, 1, None)
-        test(mod5impEven, 10, None)
-        test(mod5impEven, 5, Some(Falsy(mod5impEven, List(evenF))))
-      }
-      'reduction {
-        val evenRedMod5 = even <== mod5
-        test(evenRedMod5,  1, None)
-        test(evenRedMod5, 10, None)
-        test(evenRedMod5,  5, Some(Falsy(evenRedMod5, List(evenF))))
-      }
-      'biconditional {
-        val evenIffMod5 = even <==> mod5
-        test(evenIffMod5, 10, None)
-        test(evenIffMod5,  5, Some(Falsy(evenIffMod5, Nil)))
-        test(evenIffMod5,  2, Some(Falsy(evenIffMod5, Nil)))
-      }
-      'nested {
-        val a = even ∧ odd
-        val b = even ==> a
-        val c = mod5 ∧ b
-        val p = mod5 ∧ c
-        test(p, 10, Some(Falsy(p, List(
-          Falsy(c, List(
-            Falsy(b, List(
-              Falsy(a, List(
-                Falsy(odd, List(
-                  ))))))))))))
-      }
-      'rootCause {
-        val p = mod5 ∧ (even ==> (even ∧ odd)) ∧ (mod3 ∧ ~even)
-        testRootCauses(p, 10, List(odd, mod3))
-        testRootCauses(mod235c, 10, List(mod3))
-      }
-      'contramap {
-        val upper = Prop[String]("upper", s => s == s.toUpperCase)
-        case class Yay(s: String, i: Int)
-        val p = mod235c.contramap[Yay](_.i) ∧ upper.contramap[Yay](_.s)
-        testRootCauses(p, Yay("GOOD", 30), Nil)
-        testRootCauses(p, Yay("Bad", 30), List(upper))
-        testRootCauses(p, Yay("GOOD", 15), List(even))
-        testRootCauses(p, Yay("both", 4), List(mod3, mod5, upper))
-      }
-      'forall {
+    'atom {
+      test(even, 2, ok)
+      test(even, 3, evenF)
+    }
+    'negation {
+      test(odd, 3, ok)
+      test(odd, 2, oddF)
+    }
+    'doubleNegation {
+      val p  = ~(~even)
+      test(p, 2, ok)
+      test(p, 3, evenF)
+    }
+    'disjunction {
+      test(mod235d, 30, ok)
+      test(mod235d,  4, ok)
+      test(mod235d, 31, disF >> causeNames(evenN, mod3N, mod5N))
+    }
+   'conjunction {
+     test(mod235c, 30, ok)
+     test(mod235c, 31, conF >> causeNames(evenN, mod3N, mod5N))
+     test(mod235c,  4, conF >> causeNames(mod3N, mod5N))
+     test(mod235c, 15, conF >> cause1(evenF))
+   }
+   'implication {
+     val mod5impEven = mod5 ==> even
+     test(mod5impEven, 1, ok)
+     test(mod5impEven, 10, ok)
+     test(mod5impEven, 5, failSimple(s"$mod5N ⇒ $evenN") >> cause1(evenF))
+   }
+   'reduction {
+     val evenRedMod5 = even <== mod5
+     test(evenRedMod5,  1, ok)
+     test(evenRedMod5, 10, ok)
+     test(evenRedMod5,  5, failSimple(s"$evenN ⇐ $mod5N") >> cause1(evenF))
+   }
+   'biconditional {
+     val evenIffMod5 = even <==> mod5
+     val f = failSimple(s"$evenN ⇔ $mod5N")
+     test(evenIffMod5, 10, ok)
+     test(evenIffMod5,  5, f >> cause1(evenF))
+     test(evenIffMod5,  2, f >> cause1(mod5F))
+   }
+   'nested {
+     val a = even ∧ odd
+     val b = even ==> a
+     val c = mod5 ∧ b
+     val p = mod5 ∧ c
+     test(p, 10, ko >> inputA >>
+       cause1(nameOf(c) >>
+         cause1(nameOf(b) >>
+           cause1(nameOf(a) >>
+             cause1(name(oddN) >>
+               rootCause)))))
+   }
+   'rootCause {
+     test(mod235c, 10, rootCausesN(mod3N))
+     val p = mod5 ∧ (even ==> (even ∧ odd)) ∧ (mod3 ∧ ~even)
+     test(p, 10, rootCausesN(oddN, mod3N))
+   }
+   'contramap {
+     case class Yay(s: String, i: Int)
+     val p = mod235c.contramap[Yay](_.i) ∧ upper.contramap[Yay](_.s)
+     test(p, Yay("GOOD", 30), rootCausesN() >> ok)
+     test(p, Yay("Bad", 30),  rootCausesN(upperN))
+     test(p, Yay("GOOD", 15), rootCausesN(evenN))
+     test(p, Yay("both", 4),  rootCausesN(mod3N, mod5N, upperN))
+   }
+    'renamed {
+      test(mod235c.rename("whateverness"), 6, failureTreeIs("whateverness\n└─ mod5"))
+    }
+    'forall {
+      * -{
         val allEven = even.forallF[List]
-        testRootCauses(allEven, List(4,6), Nil)
-        testRootCauses(allEven, Nil, Nil)
-        testRootCauses(allEven, List(4,5,6,7), List(even))
+        test(allEven, List(4,6), ok)
+        test(allEven, Nil, ok)
+        test(allEven, List(4,5,6,7), ko >> rootCausesN(evenN) >> failureTreeIs("∀{even}\n└─ even"))
       }
-      'renamed {
-        val t = mod235c.rename("whateverness").falsify(6).get.failureTree
-        assert(t == "whateverness\n└─ mod5")
-      }
-      'forall2 {
-        val t = Prop[Int]("true", _ => true)
-        val q = even ∧ mod5 ∧ t
-        val p = q.forallF[List].asInstanceOf[Forall[List, List[Int], Int]]
-        val r = p.falsify(List(1,2,3,4,5,6,7,8,9,10)).get
-        val d = Falsification(mod5, Nil, Set(1,2,3,4,6,7,8,9))
-        val e = Falsification(even, Nil, Set(1,3,5,7,9))
-        val c = Falsification(q, List(d, e), Set(1,2,3,4,5,6,7,8,9))
-        val f = Falsification[List[Int]](p, List(c.map(x => Forall(x, p.f, false))), Set(List(1,2,3,4,5,6,7,8,9,10)))
-        val List(r2,f2) = List(r,f) map norm
-        assert(r2 == f2)
+      * -{
+      val p = mod235c.forallF[List]
+      test(p, List(15, 30, 60, 25), ko >> inputA >> rootCausesN(evenN, mod3N) >> reportIs(
+        """
+          |Property [∀{(even ∧ mod3 ∧ mod5)}] failed on input [List(15, 30, 60, 25)].
+          |
+          |Root causes:
+          |  2 failed axioms, 2 causes of failure.
+          |  ├─ even
+          |  │  ├─ Invalid input [15]
+          |  │  └─ Invalid input [25]
+          |  └─ mod3
+          |     └─ Invalid input [25]
+          |
+          |Failure tree:
+          |  ∀{(even ∧ mod3 ∧ mod5)}
+          |  └─ (even ∧ mod3 ∧ mod5)
+          |     ├─ even
+          |     └─ mod3
+        """.stripMargin.trim))
       }
     }
   }
