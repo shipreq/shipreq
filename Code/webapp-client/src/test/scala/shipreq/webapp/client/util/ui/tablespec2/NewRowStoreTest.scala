@@ -45,7 +45,7 @@ object NewRowStoreTest extends TestSuite {
 
     def main =
       (Prop[I]("get <=> getI", i⇒{import i._; t.get(s).isEmpty == t.getI(s).isEmpty})
-      ∧ Prop.ifelse(isActive, active, empty)
+      ∧ isActive.ifelse(active, empty)
       ) rename "NewStore"
   }
 

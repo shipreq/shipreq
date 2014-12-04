@@ -19,12 +19,24 @@ object SavedRowStoreTest extends TestSuite {
 
   type SSS[K, A, B] = SS[K, AB[A,B], (A,B)]
 
-  case class TestInput[S, K, A, B](t: SavedRowStore[S, K, AB[A,B], (A,B)], s: S,
-                                      f: TestFields2[A, B], a: A, b: B, a2: A, b2: B,
-                                      k: K, k2: K, r1: RowStatus, r2: RowStatus) {
+  case class TestInput[S: Equal, K, A: Equal, B: Equal](t: SavedRowStore[S, K, AB[A, B], (A, B)], s: S,
+                                                        f: TestFields2[A, B], a: A, b: B, a2: A, b2: B,
+                                                        k: K, k2: K, r1: RowStatus, r2: RowStatus) {
+
     def setab (k: K): S => S = s => t.setField(k, f.f2 * b )(t.setField(k, f.f1 * a )(s))
     def setab2(k: K): S => S = s => t.setField(k, f.f2 * b2)(t.setField(k, f.f1 * a2)(s))
     def revertBoth(k: K): S => S = s => t.revertField(k, f.f1)(t.revertField(k, f.f2)(s))
+
+
+    def p1 = Eval.equal("set.remove = revert.sync", this,
+      t.set(k, t.getP(k)(s))(t.remove(k)(s)),
+      t.setStatus(k, Sync)(revertBoth(k)(s)))
+
+    def p2 = Eval.equal("get.set(v).set = v", this,
+      t.getI(k)(setab2(k)(setab(k)(s))),
+      (a2, b2))
+
+    def p = p1 ∧ p2
   }
 
   class StoreProps[S: Equal, K, A: Equal, B: Equal] {
@@ -32,7 +44,8 @@ object SavedRowStoreTest extends TestSuite {
 
     def testNop(name: String, f: I => S) = Prop.equal[I, S](name, f, _.s)
     def main =
-      ( Prop.equal[I]("set.remove = revert")(i⇒{import i._; t.set(k, t.getP(k)(s))(t.remove(k)(s))}, i⇒{import i._; t.setStatus(k, Sync)(revertBoth(k)(s))})
+      ( //Prop.equal[I]("set.remove = revert")(i⇒{import i._; t.set(k, t.getP(k)(s))(t.remove(k)(s))}, i⇒{import i._; t.setStatus(k, Sync)(revertBoth(k)(s))})
+        Prop.eval[I](_.p)
       ∧ Prop.equal[I]("get.set(v).set = v") (i⇒{import i._; t.getI(k)(setab2(k)(setab(k)(s)))}, _.tmap2(_.a2, _.b2))
       ∧ Prop.equal[I]("revertField 1")      (i⇒{import i._; t.getI(k)(t.revertField(k, f.f1)(setab(k)(s)))}, i⇒{import i._; (t.getP(k)(s).a, b)})
       ∧ Prop.equal[I]("revertField 2")      (i⇒{import i._; t.getI(k)(t.revertField(k, f.f2)(setab(k)(s)))}, i⇒{import i._; (a, t.getP(k)(s).b)})
