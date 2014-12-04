@@ -1,7 +1,7 @@
 package shipreq.prop
 
 import scala.annotation.elidable
-import scalaz.{Equal, Foldable, Contravariant}
+import scalaz.{Need, Equal, Foldable, Contravariant}
 import scalaz.syntax.equal._
 import scalaz.syntax.foldable._
 
@@ -16,10 +16,10 @@ object PropA {
 
 object Prop {
 
-  def apply[A](name: String, t: A => Boolean): Prop[A] =
+  def apply[A](name: => String, t: A => Boolean): Prop[A] =
     atom(name, a => if (t(a)) None else Some(s"Invalid input [$a]"))
 
-  def atom[A](name: String, t: A => FailureReasonO): Prop[A] =
+  def atom[A](name: => String, t: A => FailureReasonO): Prop[A] =
     eval(a => Eval.atom(name, a, t(a)))
 
   def eval[A](q: A => EvalL): Prop[A] =
@@ -28,13 +28,13 @@ object Prop {
   def run[A](l: Prop[A])(a: A): Eval =
     l.run(p => Eval.run(p.t(a)))
 
-  def equalSelf[A: Equal](name: String, f: A => A): Prop[A] =
+  def equalSelf[A: Equal](name: => String, f: A => A): Prop[A] =
     equal[A, A](name, f, identity)
 
-  def equal[A, B: Equal](name: String, t: A => B, e: A => B): Prop[A] =
+  def equal[A, B: Equal](name: => String, t: A => B, e: A => B): Prop[A] =
     atom[A](name, a => testEq(t(a), e(a)))
 
-  def equal[A](name: String) = new EqualB[A](name)
+  def equal[A](name: => String) = new EqualB[A](name)
   final class EqualB[A](val name: String) extends AnyVal {
     def apply[B: Equal](t: A => B, e: A => B): Prop[A] = equal(name, t, e)
   }
@@ -61,22 +61,23 @@ object Prop {
   def forall[A, F[_] : Foldable, B](f: A => F[B], lb: Prop[B]): Prop[A] =
     eval[A](a => {
       val es = f(a).foldLeft(List.empty[Eval])((q, b) => run(lb)(b) :: q)
-      val n  = es.headOption.fold("∅")(e => s"∀{${e.name}}")
+      val ho = es.headOption
+      val n  = Need(ho.fold("∅")(e => s"∀{${e.name.value}}"))
       val i  = Input(a)
       val r  = es.filter(_.failure) match {
                  case Nil =>
                    Eval.success(n, i)
                  case fs@(_ :: _) =>
-                   val causes = fs.foldLeft(Eval.root)((q, e) => q.add(e.name, List(e)))
+                   val causes = fs.foldLeft(Eval.root)((q, e) => q.add(e.name.value, List(e)))
                    Eval(n, i, causes)
                }
       r.liftL
     })
 
-  def distinct[A, B](name: String, f: A => Stream[B]): Prop[A] =
+  def distinct[A, B](name: => String, f: A => Stream[B]): Prop[A] =
     distinct[B](name).contramap(f)
 
-  def distinct[A](name: String): Prop[Stream[A]] =
+  def distinct[A](name: => String): Prop[Stream[A]] =
     atom[Stream[A]](s"each $name is unique", as => {
       val dups = (Map.empty[A, Int] /: as)((q, a) => q + (a -> (q.getOrElse(a, 0) + 1))).filter(_._2 > 1)
       if (dups.isEmpty)
@@ -108,5 +109,4 @@ object Prop {
           }
       })
   }
-
 }

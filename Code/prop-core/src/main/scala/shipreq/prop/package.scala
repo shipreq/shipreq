@@ -1,13 +1,15 @@
 package shipreq
 
 import scala.annotation.elidable
-import scalaz.Foldable
+import scalaz.{Need, Foldable}
 
 package object prop {
 
   case class Input(a: Any) {
     def show: String = a.toString
   }
+
+  type Name = Need[String]
 
   type FailureReason  = String
   type FailureReasonO = Option[FailureReason]

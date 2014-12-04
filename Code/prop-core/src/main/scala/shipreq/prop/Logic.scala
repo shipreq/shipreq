@@ -1,10 +1,10 @@
 package shipreq.prop
 
-import scalaz.{NonEmptyList, Contravariant}
+import scalaz.{Need, NonEmptyList, Contravariant}
 import scalaz.syntax.foldable1._
 
 final case class Atom         [P[_], A   ](f: P[A])                        extends Logic[P, A]
-final case class Named        [P[_], A   ](n: String, l: Logic[P, A])      extends Logic[P, A]
+final case class Named        [P[_], A   ](n: Name, l: Logic[P, A])        extends Logic[P, A]
 final case class Mapped       [P[_], A, B](m: A => B, l: Logic[P, B])      extends Logic[P, A]
 final case class Negation     [P[_], A   ](l: Logic[P, A])                 extends Logic[P, A]
 final case class Conjunction  [P[_], A   ](ls: NonEmptyList[Logic[P, A]])  extends Logic[P, A]
@@ -20,7 +20,7 @@ object Logic {
     val es  = ls.map(_ run x)
     val i   = es.head.input
     val ess = es.toStream
-    val n   = ess.reverse.map(_.name).mkString("(", op, ")") // TODO Use lazy names
+    val n   = Need(ess.reverse.map(_.name.value).mkString("(", op, ")"))
     val fs = t(ess)
     if (fs.isEmpty)
       Eval.success(n, i)
@@ -29,11 +29,11 @@ object Logic {
   }
 
   private[prop] def bibool[P[_], A](x: P[A] => Eval, lp: Logic[P, A], lq: Logic[P, A])
-                                    (name: (String, String) => String, t: (Boolean, Boolean) => Boolean, fr: FailureReason)
-                                    (implicit F: Contravariant[P]): Eval = {
+                                   (name: (String, String) => String, t: (Boolean, Boolean) => Boolean, fr: FailureReason)
+                                   (implicit F: Contravariant[P]): Eval = {
     val p = lp.run(x)
     val q = lq.run(x)
-    def n = name(p.name, q.name)
+    val n = Need(name(p.name.value, q.name.value))
     val i = {
       val a = p.input
       val b = q.input
@@ -115,8 +115,8 @@ sealed abstract class Logic[P[_], A] {
     //case Implication(a, c)           => a ∧ ~c
   }
 
-  final def rename(n: String): Logic[P, A] = this match {
-    case Named(_, l)         => Named(n, l)
+  final def rename(n: => String): Logic[P, A] = this match {
+    case Named(_, l)         => Named(Need(n), l)
     case Mapped(m, l)        => Mapped(m, l rename n)
     case Atom(_)
        | Negation(_)
@@ -124,7 +124,7 @@ sealed abstract class Logic[P[_], A] {
        | Disjunction(_)
        | Implication(_, _)
        | Reduction(_, _)
-       | Biconditional(_, _) => Named(n, this)
+       | Biconditional(_, _) => Named(Need(n), this)
   }
 
   final def run(x: P[A] => Eval)(implicit F: Contravariant[P]): Eval = this match {
@@ -137,7 +137,7 @@ sealed abstract class Logic[P[_], A] {
 
     case Negation(l) =>
       val e = l.run(x)
-      val n = "¬" + e.name
+      val n = Need("¬" + e.name.value)
       val f = if (e.failure) Eval.root
               else           Eval.root.add(s"Failure expected with input [${e.input.show}].", Nil)
       Eval(n, e.input, f)

@@ -1,6 +1,8 @@
 package shipreq.prop
 
-import scalaz.std.list._
+import scalaz.Equal
+import scalaz.std.AllInstances._
+import scalaz.syntax.equal._
 import utest._
 
 object PropTest extends TestSuite {
@@ -15,25 +17,32 @@ object PropTest extends TestSuite {
   }
 
   val sep = "="*120
+  def assertEq[A: Equal](a: A, e: A): Unit = {
+    val actual = a
+    val expect = e
+    assert(actual ≟ expect)
+  }
+
+  val anyEq = Equal.equalA[Any]
 
   val DEBUG                                        = Tst(_ => v => println(s"$sep\n${v.report}\n"))
   val nop                                          = Tst(_ => _ => ())
   val ok                                           = Tst(_ => v => assert(v.success))
   val ko                                           = Tst(_ => v => assert(v.failure))
-  def name         (e: String)                     = Tst{_ => v => val a = v.name; assert(e == a)}
-  def nameOf       (p: Prop[Int])                  = name(p(0).name)
-  val inputA                                       = Tst{e => v => val a = v.input.a; assert(e == a)}
+  def name         (e: String)                     = Tst(_ => v => assertEq(v.name.value, e))
+  def nameOf       (p: Prop[Int])                  = name(p(0).name.value)
+  val inputA                                       = Tst(e => v => assertEq(v.input.a, e)(anyEq))
   def causes       (f: Any => List[Eval] => Unit)  = Tst(i => v => f(i)(v.reasonsAndCauses.values.toList.flatten))
-  val rootCause                                    = causes(_ => c => assert(c == Nil))
+  val rootCause                                    = causes(_ => c => assert(c.isEmpty))
   def cause1       (f: Tst = nop)                  = causes{i => c => assert(c.size == 1); f.run(i)(c.head) }
-  def causeNames   (ee: String*)                   = causes{_ => c => val a = c.map(_.name).sorted; val e = ee.sorted; assert(a == e) }
-  def rootCauses   (f: Any => Set[String] => Unit) = Tst(i => v => f(i)(v.rootCauses))
-  def rootCausesN  (s: String*)                    = rootCauses{_ => v => val a = v.toList.sorted; val e = s.toList.sorted; assert(a == e) }
-  def rootCausesP  (p: Prop[Int]*)                 = rootCausesN(p.map(_(0).name): _*)
+  def causeNames   (e: String*)                    = causes(_ => c => assertEq(c.map(_.name.value).sorted, e.toList.sorted))
+  def rootCauses   (f: Any => Set[String] => Unit) = Tst(i => v => f(i)(v.rootCauses.map(_.value)))
+  def rootCausesN  (s: String*)                    = rootCauses(_ => v => assertEq(v.toList.sorted, s.toList.sorted))
+  def rootCausesP  (p: Prop[Int]*)                 = rootCausesN(p.map(_(0).name.value): _*)
   def failureTree  (f: String => Unit)             = Tst(i => v => f(v.failureTree))
-  def failureTreeIs(e: String)                     = failureTree(a => assert(a == e))
+  def failureTreeIs(e: String)                     = failureTree(a => assertEq(a, e))
   def report       (f: String => Unit)             = Tst(i => v => f(v.report))
-  def reportIs     (e: String)                     = report(a => assert(a == e))
+  def reportIs     (e: String)                     = report(a => assertEq(a, e))
   def failSimple   (n: String)                     = ko >> name(n) >> inputA
   def failRoot     (n: String)                     = failSimple(n) >> rootCause
 
