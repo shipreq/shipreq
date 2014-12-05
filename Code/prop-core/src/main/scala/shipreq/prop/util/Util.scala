@@ -29,10 +29,10 @@ object Util {
       case n => "\\u%04x" format n.toLong
     }.mkString
 
-  def asciiTree[N](root: List[N], show: N => String, leaves: N => List[N], indent: String): String =
-    quickSB(asciiTreeSB(_, root, show, leaves, indent))
+  def asciiTree[N](root: List[N], leaves: N => List[N], show: N => String, indent: String): String =
+    quickSB(asciiTreeSB(_, root, leaves, show, indent))
 
-  def asciiTreeSB[N](sb: StringBuilder, root: List[N], show: N => String, leaves: N => List[N], indent: String): Unit = {
+  def asciiTreeSB[N](sb: StringBuilder, root: List[N], leaves: N => List[N], show: N => String, indent: String): Unit = {
     val pm = "│  "
     val pl = "   "
     val cm = "├─ "
