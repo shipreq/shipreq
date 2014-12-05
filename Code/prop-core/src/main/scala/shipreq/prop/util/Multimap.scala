@@ -13,6 +13,9 @@ trait MultiValues[L[_]] {
   def stream[A](a: L[A]): Stream[A]
   def isEmpty[A](a: L[A]): Boolean
 }
+object MultiValues {
+  @inline def apply[L[_]](implicit F: MultiValues[L]): MultiValues[L] = F
+}
 
 final class Multimap[K, L[_], V](val m: Map[K, L[V]])(implicit L: MultiValues[L]) {
 

@@ -68,13 +68,13 @@ object PropTest extends TestSuite {
   val mod5N = "mod5"
   val upperN = "upper"
 
-  val even = Prop[Int](evenN, _ % 2 == 0)
-  val mod3 = Prop[Int](mod3N, _ % 3 == 0)
-  val mod5 = Prop[Int](mod5N, _ % 5 == 0)
+  val even = Prop.test[Int](evenN, _ % 2 == 0)
+  val mod3 = Prop.test[Int](mod3N, _ % 3 == 0)
+  val mod5 = Prop.test[Int](mod5N, _ % 5 == 0)
   val odd = ~even
   val mod235d = even | mod3 | mod5
   val mod235c = even & mod3 & mod5
-  val upper = Prop[String](upperN, s => s == s.toUpperCase)
+  val upper = Prop.test[String](upperN, s => s == s.toUpperCase)
 
   val evenF = failSimple(evenN) >> rootCause
   val oddF  = failSimple(oddN) >> rootCause // >> cause1(evenF)

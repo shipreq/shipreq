@@ -20,8 +20,8 @@ object RemoteDeltaG {
     new RemoteDeltaG(p, from, to, RemoteDeltaP(del, upd))
 
   lazy val prop =
-    Prop[RemoteDeltaG]("from ≥ 0", _.from.value >= 0) &
-    Prop[RemoteDeltaG]("from ≤ to", r => r.from.value <= r.to.value)
+    Prop.test[RemoteDeltaG]("from ≥ 0", _.from.value >= 0) ∧
+    Prop.test[RemoteDeltaG]("from ≤ to", r => r.from.value <= r.to.value)
 }
 
 final class RemoteDeltaG private(

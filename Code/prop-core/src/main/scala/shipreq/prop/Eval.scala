@@ -28,12 +28,15 @@ object Eval {
   def atom(name: => String, a: Any, failure: FailureReasonO): EvalL =
     Atom[Eval_, Nothing](Eval(Need(name), Input(a), failure.fold(root)(root.add(_, Nil))))
 
-  def equal[A: Equal](name: => String, a: Any, t: A, e: A): EvalL =
-    atom(name, a, Prop.testEq(t, e))
+  def test[A](name: => String, a: Any, t: Boolean): EvalL =
+    atom(name, a, Prop.reasonBool(t, a))
+
+  def equal[A: Equal](name: => String, a: Any, actual: A, expect: A): EvalL =
+    atom(name, a, Prop.reasonEq(actual, expect))
 
   def equal[A](name: => String, a: A) = new EqualB[A](name, a)
   final class EqualB[A](name: String, a: A)  {
-    def apply[B: Equal](t: A => B, e: A => B): EvalL = equal(name, a, t(a), e(a))
+    def apply[B: Equal](actual: A => B, expect: A => B): EvalL = equal(name, a, actual(a), expect(a))
   }
 }
 

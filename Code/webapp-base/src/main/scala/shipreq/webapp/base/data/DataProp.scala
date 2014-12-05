@@ -8,7 +8,7 @@ import DataImplicits._
 object DataProp {
 
   lazy val rev =
-    Prop[Rev]("rev ≥ 0", _.value >= 0)
+    Prop.test[Rev]("rev ≥ 0", _.value >= 0)
 
   private def dataSet[O, D, I <: TaggedLong](o: O)(implicit O: ObjDataId[O, D, I]) =
     Prop.distinct("ID", (_: DataSet[D]).data.toStream.map(_.id.value))
@@ -24,13 +24,13 @@ object DataProp {
   // Requirement Types
 
   lazy val reqType =
-    Prop[ReqType]("oldMnemonics doesn't contain current mnemonic", a => !a.oldMnemonics.contains(a.mnemonic))
+    Prop.test[ReqType]("oldMnemonics doesn't contain current mnemonic", a => !a.oldMnemonics.contains(a.mnemonic))
 
   object customReqType {
 
     // starting to overlap with validation....
     lazy val mnemonicStatic =
-      Prop[CustomReqType]("mnemonic doesn't overlap with static",
+      Prop.test[CustomReqType]("mnemonic doesn't overlap with static",
         a => ReqType.staticMnemonics.intersect(a.oldMnemonics + a.mnemonic).isEmpty)
 
     lazy val all = mnemonicStatic ∧ reqType.subst
