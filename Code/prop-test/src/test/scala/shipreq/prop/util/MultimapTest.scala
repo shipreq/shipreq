@@ -57,9 +57,7 @@ object MultimapTest extends TestSuite {
     ) rename "Multimap"
   }
 
-  val prop = Prop.eval[PropInputs[Set, Int]](_.eval)
-
   override def tests = TestSuite {
-    gen mustSatisfy prop
+    gen mustSatisfyE (_.eval)
   }
 }

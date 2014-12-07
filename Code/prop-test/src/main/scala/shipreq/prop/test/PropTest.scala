@@ -62,20 +62,22 @@ trait PropTestOps {
 
 import PropTestOps._
 
-class PropExt[A](val p: Prop[A]) extends AnyVal {
-  def mustBeSatisfiedBy         (g: Gen[A])(implicit S: Settings) = testProp(p, g)
-  def mustBeSatisfiedBy_[B <: A](g: Gen[B])(implicit S: Settings) = testProp(p, g.subst[A])
+class PropExt[A](val _p: Prop[A]) extends AnyVal {
+  def mustBeSatisfiedBy         (g: Gen[A])(implicit S: Settings) = testProp(_p, g)
+  def mustBeSatisfiedBy_[B <: A](g: Gen[B])(implicit S: Settings) = testProp(_p, g.subst[A])
 
-  def mustBeProvedBy         (d: Domain[A])(implicit S: Settings) = proveProp(p, d)
-  def mustBeProvedBy_[B <: A](d: Domain[B])(implicit S: Settings) = proveProp(p, d.subst[A])
+  def mustBeProvedBy         (d: Domain[A])(implicit S: Settings) = proveProp(_p, d)
+  def mustBeProvedBy_[B <: A](d: Domain[B])(implicit S: Settings) = proveProp(_p, d.subst[A])
 }
 
-class GenExt[A](val g: Gen[A]) extends AnyVal {
-  def mustSatisfy         (p: Prop[A])(implicit S: Settings) = testProp(p, g)
-  def _mustSatisfy[B >: A](p: Prop[B])(implicit S: Settings) = testProp(p, g.subst[B])
+class GenExt[A](val _g: Gen[A]) extends AnyVal {
+  def mustSatisfy         (p: Prop[A])   (implicit S: Settings) = testProp(p, _g)
+  def mustSatisfyE        (f: A => EvalL)(implicit S: Settings) = testProp(Prop eval f, _g)
+  def _mustSatisfy[B >: A](p: Prop[B])   (implicit S: Settings) = testProp(p, _g.subst[B])
 }
 
-class DomainExt[A](val d: Domain[A]) extends AnyVal {
-  def mustProve         (p: Prop[A])(implicit S: Settings) = proveProp(p, d)
-  def _mustProve[B >: A](p: Prop[B])(implicit S: Settings) = proveProp(p, d.subst[B])
+class DomainExt[A](val _d: Domain[A]) extends AnyVal {
+  def mustProve         (p: Prop[A])   (implicit S: Settings) = proveProp(p, _d)
+  def mustProveE        (f: A => EvalL)(implicit S: Settings) = proveProp(Prop eval f, _d)
+  def _mustProve[B >: A](p: Prop[B])   (implicit S: Settings) = proveProp(p, _d.subst[B])
 }
