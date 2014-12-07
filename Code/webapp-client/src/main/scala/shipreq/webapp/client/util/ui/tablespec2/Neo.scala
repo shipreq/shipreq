@@ -1,6 +1,6 @@
 package shipreq.webapp.client.util.ui.tablespec2
 
-import japgolly.scalajs.react._, vdom.ReactVDom.implicits._, prefix_<*._, ScalazReact._
+import japgolly.scalajs.react._, vdom.prefix_<*._, ScalazReact._
 import monocle._
 import monocle.syntax._
 import shipreq.webapp.base.validation2._

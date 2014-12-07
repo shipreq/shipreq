@@ -25,8 +25,8 @@ class Deletion[P, K](val alive: P => Alive, delIO: (K, DeletionAction) => IO[Uni
       case Dead  => false
     }
 
-  import japgolly.scalajs.react._, vdom.ReactVDom.implicits._, prefix_<*._, ScalazReact._
+  import japgolly.scalajs.react._, vdom.prefix_<*._, ScalazReact._
 
-  def button(k: K, a: DeletionAction) =
+  def button(k: K, a: DeletionAction): Tag =
     <.button(buttonLabel(a), *.onclick ~~> delIO(k, a))
 }

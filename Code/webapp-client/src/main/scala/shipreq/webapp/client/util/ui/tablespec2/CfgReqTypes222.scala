@@ -1,6 +1,6 @@
 package shipreq.webapp.client.util.ui.tablespec2
 
-import japgolly.scalajs.react._, vdom.ReactVDom._, prefix_<*._, implicits.{Tag => _, _}, ScalazReact._
+import japgolly.scalajs.react._, vdom.prefix_<*._, ScalazReact._
 import japgolly.scalajs.react.experiment.{Listenable, OnUnmount}
 
 import shipreq.base.util.ScalaExt._

@@ -1,6 +1,6 @@
 package shipreq.webapp.client.util.ui.tablespec2
 
-import japgolly.scalajs.react._, vdom.ReactVDom._, prefix_<*._, implicits.{Tag => _, _}, ScalazReact._
+import japgolly.scalajs.react._, vdom.prefix_<*._, ScalazReact._
 import shipreq.base.util.TaggedTypes.TaggedLong
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.DeletionAction
@@ -9,6 +9,7 @@ import shipreq.webapp.base.protocol.DeletionAction._
 //import shipreq.webapp.client.util.ui.Util
 import DataImplicits._
 import scalaz.effect.IO
+
 
 trait CfgTableCells[P, A, Norm] {
   def newRow    : A => Norm
