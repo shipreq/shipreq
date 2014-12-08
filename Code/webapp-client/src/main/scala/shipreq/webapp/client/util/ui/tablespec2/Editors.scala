@@ -7,6 +7,7 @@ import scalaz.syntax.bind._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.validation2._
 import shipreq.webapp.client.util.ui.Util._
+import shipreq.base.util.Debug._
 
 object Editors {
 
@@ -131,12 +132,14 @@ object Editors {
       k(a) match {
         case None =>
           _.paddST {
-            case OnChange(v) => newStore.setFieldST(v)
+            case OnChange(v)       => newStore.setFieldST(v)
+            case OnEditFinished(v) => newStore.setFieldST(v)
           }
         case Some(id) =>
           h => h.paddST {
-            case OnChange(v) => savedStore.setFieldST(id, v)
-            case OnCancel    => savedStore.revertFieldST(id, h.data)
+            case OnChange(v)       => savedStore.setFieldST(id, v)
+            case OnEditFinished(v) => savedStore.setFieldST(id, v)
+            case OnCancel          => savedStore.revertFieldST(id, h.data)
           }
       }
     )

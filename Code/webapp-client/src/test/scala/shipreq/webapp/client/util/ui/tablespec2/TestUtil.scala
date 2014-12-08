@@ -4,6 +4,7 @@ import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import monocle.Lenser
 import scalaz.Equal
 import scalaz.std.anyVal.longInstance
+import scalaz.syntax.equal._
 import scalaz.effect.IO
 import shipreq.prop.test.Gen
 import shipreq.base.util.ScalaExt._
@@ -15,6 +16,19 @@ import RowStatus._
 
 object TestUtil {
 
+  def assertEq[A: Equal](actual: A, expect: A): Unit =
+    assertEq(None, actual, expect)
+
+  def assertEq[A: Equal](name: String, actual: A, expect: A): Unit =
+    assertEq(name.some, actual, expect)
+
+  def assertEq[A: Equal](name: Option[String], actual: A, expect: A): Unit =
+    if (actual ≠ expect) {
+      name.foreach(n => println(s">>>>>>> $n"))
+      println(s"actual: [$actual]\nexpect: [$expect]")
+      assert(false)
+    }
+
   case class AB[A,B](a: A, b: B)
 
   def genAB[A, B](ga: Gen[A], gb: Gen[B]): Gen[AB[A,B]] =
@@ -24,6 +38,8 @@ object TestUtil {
 
   def fields2[A,B](empty: (A,B)): TestFields2[A, B] =
     FieldSet2[AB[A,B]](_.a, _.b)(empty)
+
+  implicit def eqCallbackEvent[B] = Equal.equalA[CallbackEvent[B]]
 
   implicit val eqRowStatus = Equal.equalA[RowStatus]
 
@@ -84,12 +100,22 @@ object TestUtil {
 
       val initialState = NewAndSavedRowState(newRowStore.initState, savedRowStore.initStateS(sampleData, _.id))
 
-      class Backend(c: BackendScope[Unit, NewAndSavedRowState]) {
-        val e1 = Editor.merge2(fields,
-          textInputEditor.addCssClass("username"),
-          textareaEditor.addCssClass("desc"))
-          .tupleI.strengthR[Option[Long]].zoomU[NewAndSavedRowState]
-        val e = applyRowUpdateAndRevert(e1, savedRowStoreS, newRowStoreS)(_._2)
+      case class Props(fieldValidation: Boolean, updateRevert: Boolean)
+
+      class Backend(c: BackendScope[Props, NewAndSavedRowState]) {
+        val e = {
+          var e1 = textInputEditor.addCssClass("username")
+          var e2 = textareaEditor.addCssClass("desc")
+          if (c.props.fieldValidation) {
+            e1 = e1.applyValidatorU(usernameVU)
+            e2 = e2.applyValidatorU(descVU)
+          }
+
+          var en = Editor.merge2(fields, e1, e2).tupleI.strengthR[Option[Long]].zoomU[NewAndSavedRowState]
+          if (c.props.updateRevert)
+            en = applyRowUpdateAndRevert(en, savedRowStoreS, newRowStoreS)(_._2)
+          en
+        }
 
         def renderRow(a: e.InputA) =
           e.render(EditorI(a, "", e.editable(c runState _.st)))
@@ -108,11 +134,11 @@ object TestUtil {
         }
       }
 
-      val Component = ReactComponentB[Unit]("NewAndSavedRowState")
+      val Component = ReactComponentB[Props]("NewAndSavedRowState")
         .initialState(NewAndSavedRowState.initialState)
         .backend(new Backend(_))
         .render(_.backend.render)
-        .buildU
+        .build
     }
   }
 }
