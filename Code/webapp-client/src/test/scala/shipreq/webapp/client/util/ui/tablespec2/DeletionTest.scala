@@ -1,24 +1,22 @@
 package shipreq.webapp.client.util.ui.tablespec2
 
 import japgolly.scalajs.react.ScalazReact._
+import scalaz.effect.IO
 import shipreq.webapp.client.util.{FailureIO, SuccessIO}
 import shipreq.base.util.ScalaExt._
 import TestUtil._
 import utest._
-import Persistence._
-
-import scalaz.effect.IO
 
 object DeletionTest extends TestSuite {
 
   case class MockState(status: RowStatus)
-  val setRowStatus: SetRowStatus[MockState] = r => ReactS.modT(_.copy(status = r))
+  val setRowStatus: Persistence.SetRowStatus[MockState] = r => ReactS.modT(_.copy(status = r))
 
   override def tests = TestSuite {
     var cb: Option[(SuccessIO, FailureIO)] = None
     var s = MockState(RowStatus.Sync)
     val r = (st: ReactST[IO, MockState, Unit]) => ReactS.unlift(st).exec(s).map { s2 => s = s2}
-    val d = deleteAsync[MockState]((s, f) => IO{cb = (s,f).some}, r, setRowStatus)
+    val d = Persistence.asyncDelete[MockState]((s, f) => IO{cb = (s,f).some}, r, setRowStatus)
     val dio = r(d)
 
     'uninvoked {

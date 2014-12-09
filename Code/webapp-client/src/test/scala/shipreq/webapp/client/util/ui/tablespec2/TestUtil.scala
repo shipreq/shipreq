@@ -99,7 +99,7 @@ object TestUtil {
     val savedRowStore = SavedRowStore.of(fields).keyedBy[Long]
     val newRowStore   = NewRowStore.of(fields)
 
-    val needSave = Persistence.SaveNeed.cmpToExtract((p: Person) => (p.username, p.desc))
+    val needSave = SaveNeed.cmpToExtract((p: Person) => (p.username, p.desc))
 
     val person7 = Person(7, Username("mike"), None)
     val person4 = Person(4, Username("bob"), Some("Hello"))
@@ -139,7 +139,7 @@ object TestUtil {
             en = applyRowUpdateAndRevert(en, savedRowStoreS, newRowStoreS)(_._2)
 
           c.props.saveIO.foreach(save => {
-            val f = Persistence.validateAndSaveBoth(personV, savedRowStoreS)(newRowStoreS,
+            val f = Persistence.asyncSaveS(personV, savedRowStoreS)(newRowStoreS,
               s => (savedRowStoreS.getAllP(s), None),
               k => s => (savedRowStoreS.getAllP(s), k.some),
               needSave,
