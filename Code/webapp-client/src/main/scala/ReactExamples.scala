@@ -60,7 +60,7 @@ object ReactExamples {
 
       def cfgReqTypesR: Renderer[ProjectPage] = _ =>
         //CfgReqTypes.comp(TableIoProps(r.reqTypeCrud, clientData, false))
-        CfgReqTypes222.Top(CfgReqTypes222.Props(r.reqTypeCrud, clientData, false))
+        CfgReqTypes222.Props(r.reqTypeCrud, clientData, false).component
 
       val c = Router.component(BaseUrl("/wip"), ProjectPage)
       c() render document.getElementById("eg2")

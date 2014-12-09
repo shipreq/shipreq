@@ -37,4 +37,7 @@ class TypicalStoresAndState[P, I, K](fields: FieldSet[P, I]) {
    */
   def validatorInput(k: Option[K]): S => (Stream[P], Option[K]) =
     s => (savedRowStoreS.getAllP(s), k)
+
+  def toggleShowDeleted =
+    ST.modT(State._showDeleted.modifyF(v => !v))
 }

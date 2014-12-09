@@ -94,6 +94,7 @@ import scala.language.reflectiveCalls
 import Editors.{EditorExtII, EditorExtV, EditorExt}
 import monocle._
 import monocle.syntax._
+import shipreq.webapp.client.util.ui.Util.checkbox
 
 
 object CfgReqTypes222 {
@@ -103,20 +104,31 @@ object CfgReqTypes222 {
   val storesAndState = TypicalStoresAndState(fields).keyedBy[CustomReqType.Id]
   import storesAndState._
 
-  case class Props(remote: CustomReqTypeCrud.Remote, clientData: ClientData, showDeleted: Boolean)
+  case class Props(remote: CustomReqTypeCrud.Remote, clientData: ClientData, showDeleted: Boolean) {
+    def component = Component(this)
+  }
 
-  def initialState(p: Props): State =
-    State(
-      newRowStore.initState,
+  val Component =
+    ReactComponentB[Props]("Cfg: Req Types")
+      .getInitialState(initialState)
+      .backend(new Backend(_))
+      .render(_.backend.render)
+      .configure(
+        RemoteDeltaListener(CustomReqType, CustomReqTypeCrud)
+          .recvExtUpdates(savedRowStoreS, Partition.CustomReqTypes, _.clientData))
+      .build
+
+  private def initialState(p: Props): S =
+    State(newRowStore.initState,
       savedRowStore.initStateS(p.clientData.project.customReqTypes.data, _.id),
       p.showDeleted)
 
-  val headerRow = CfgTable.header(List("Mnemonic", "Name", "Implication Required"))
-
   // ===================================================================================================================
-  class Backend(c: BackendScope[Props, State]) extends OnUnmount {
+  final class Backend(c: BackendScope[Props, S]) extends OnUnmount {
 
     val tableIO = TableIO(CustomReqType, CustomReqTypeCrud)(c.props.remote, c.props.clientData)
+
+    val deletion = NeoSaves.deleterAsync(savedRowStoreS)(_.alive, tableIO._deleteIO, c runState _)
 
     val rowE = {
       val mnemonicE = Editors.textInputEditor.applyValidator(V.mnemonicS)
@@ -132,78 +144,51 @@ object CfgReqTypes222 {
       e.applyOnEditFinishedK(savef)(_._1._2)
     }
 
-    val toggleShowDeleted: IO[Unit] = {
-      val st = ST.modT(State._showDeleted.modifyF(v => !v))
-      c runState st
-    }
+    val table = {
+      def rowRenderer =
+        new CfgTable.RowRenderer[CustomReqType, rowE.View, (Modifier, Set[ReqType.Mnemonic], Modifier, Modifier)] {
 
-    def rowA(k: Option[CustomReqType.Id], i: fields.I): rowE.InputA =
-      ((savedRowStoreS.getAllP(c.state), k), i)
+          override def newRow = {
+            case (mnemonic, name, impReq) => (mnemonic, Set.empty, name, impReq)
+          }
 
-    def newRowA(i: fields.I): rowE.InputA =
-      rowA(None, i)
+          override def savedRow = {
+            case ((mnemonic, name, impReq), p) => (mnemonic, p.oldMnemonics, name, impReq)
+          }
 
-    def savedRowA(id: CustomReqType.Id): rowE.InputA =
-      rowA(Some(id), savedRowStoreS.getI(id)(c.state))
+          override def deletedRow = p =>
+            (p.mnemonic.value, p.oldMnemonics, p.name, checkbox(ImplicationRequired from p.imp)(*.disabled := true))
 
-    import shipreq.webapp.client.util.ui.Util.checkbox
+          override def render = {
+            case (mnemonic, oldMnemonics, name, impReq) =>
+              val mn: Modifier =
+                if (oldMnemonics.isEmpty)
+                  mnemonic
+                else
+                  Seq(mnemonic, <.div(*.cls := "oldMnemonics", oldMnemonics.toStream.map(_.value).sorted.mkString(", ")))
+              Seq(mn, name, impReq)
+          }
+        }
 
-    private def cells = new CfgTableCells[CustomReqType, rowE.View, (Modifier, Set[ReqType.Mnemonic], Modifier, Modifier)] {
+      val t = CfgTable.typical(storesAndState)(rowE)(_.mnemonic, rowRenderer, deletion, c)
 
-      override def newRow = {
-        case (mnemonic, name, impReq) => (mnemonic, Set.empty, name, impReq)
+      val headerRow = CfgTable.header(List("Mnemonic", "Name", "Implication Required"))
+
+      val staticRows: t.RowStream = {
+        def rr(r: ReqType.Static): ReactElement = {
+          val imp = checkbox(ImplicationRequired from r.imp)(*.disabled := true)
+          val norm: t.RowContent = (r.mnemonic.value, r.oldMnemonics, r.name, imp)
+          t.row("static", RowStatus.Sync, norm, EmptyTag)(*.keyAttr := r.mnemonic.value)
+        }
+        ReqType.static.map(r => r.mnemonic -> rr(r)).toStream
       }
 
-      override def savedRow = {
-        case ((mnemonic, name, impReq), p) => (mnemonic, p.oldMnemonics, name, impReq)
-      }
-
-      override def deletedRow = p =>
-        (p.mnemonic.value, p.oldMnemonics, p.name, checkbox(ImplicationRequired from p.imp)(*.disabled := true))
-
-      override def render = {
-        case (mnemonic, oldMnemonics, name, impReq) =>
-          val mn: Modifier =
-            if (oldMnemonics.isEmpty)
-              mnemonic
-            else
-              Seq(mnemonic, <.div(*.cls := "oldMnemonics", oldMnemonics.toStream.map(_.value).sorted.mkString(", ")))
-          Seq(mn, name, impReq)
-      }
-    }
-
-    val del = NeoSaves.deleterAsync(savedRowStoreS)(_.alive, tableIO._deleteIO, c runState _)
-
-    val tbl = CfgTable(rowE, savedRowStoreS, newRowStoreS).build(_.mnemonic, cells, newRowA, savedRowA, del, _.showDeleted, c)
-
-    private val staticRows: tbl.RowStream = {
-      def rr(r: ReqType.Static): ReactElement = {
-        val imp = checkbox(ImplicationRequired from r.imp)(*.disabled := true)
-        val norm: tbl.Norm = (r.mnemonic.value, r.oldMnemonics, r.name, imp)
-        tbl.row("static", RowStatus.Sync, norm, EmptyTag)(*.keyAttr := r.mnemonic.value)
-      }
-      ReqType.static.map(r => r.mnemonic -> rr(r)).toStream
+      () => t.table(headerRow, staticRows)
     }
 
     def render: ReactElement =
       <.div(
-        showDeletedElement(c.state.showDeleted, toggleShowDeleted),
-        tbl.table(headerRow, staticRows))
+        ShowDeletedToggler(storesAndState)(c),
+        table())
   }
-  // ===================================================================================================================
-
-  def rdl = RemoteDeltaListener(CustomReqType, CustomReqTypeCrud)
-
-  def showDeletedElement(show: Boolean, toggle: => IO[Unit]): ReactElement =
-      <.label(
-        Util.checkbox(show)(*.onchange ~~> toggle),
-        if (show) "Show deleted items." else "Showing deleted items.")
-
-  val Top =
-    ReactComponentB[Props]("top")
-      .getInitialState(initialState)
-      .backend(new Backend(_))
-      .render(_.backend.render)
-      .configure(rdl.recvExtUpdates(savedRowStoreS, Partition.CustomReqTypes, _.clientData))
-      .build
 }
