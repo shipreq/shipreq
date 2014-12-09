@@ -21,8 +21,9 @@ trait CfgTableCells[P, A, Norm] {
 object CfgTable {
   def apply[S, K <: TaggedLong, P, I, A, B, C, V](editor: Editor[A, B, IO, S, C, IO[Unit], V],
                                                   savedStore: SavedRowStore[S, K, P, I],
-                                                  newStore: NewRowStore[S, I])(implicit I: DataIdAux[P, K]) = new {
-    def then[RowKey,N](rowkey: P => RowKey,
+                                                  newStore: NewRowStore[S, I])(implicit I: DataIdAux[P, K]) =
+    new {
+      @inline def build[RowKey,N](rowkey: P => RowKey,
                      cellfmt: CfgTableCells[P, V, N],
                      newRowA: I => A,
                      savedRowA: K => A,

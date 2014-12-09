@@ -130,6 +130,8 @@ final case class Editor[A, B, M[_], S, C, D, V](render: EditorI[A, B, M, S, C, D
 // =====================================================================================================================
 
 object Editor {
+  import scala.language.reflectiveCalls
+
   def merge2[M[_], S, D, A1, B1, V1, A2, B2, V2, FS <: FieldSet2[_, B1, B2]](fs: FS, e1: Editor[A1, B1, M, S, Unit, D, V1], e2: Editor[A2, B2, M, S, Unit, D, V2]) =
   new {
     def tupleI = apply[(A1, A2)](_._1, _._2)

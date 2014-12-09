@@ -195,7 +195,7 @@ object CfgReqTypes222 {
 
     val del = NeoSaves.deleterAsync(savedRowStoreS)(_.alive, tableIO._deleteIO, c runState _)
 
-    val tbl = CfgTable(rowE, savedRowStoreS, newRowStoreS).then(_.mnemonic, cells, newRowA, savedRowA, del, _.showDeleted, c)
+    val tbl = CfgTable(rowE, savedRowStoreS, newRowStoreS).build(_.mnemonic, cells, newRowA, savedRowA, del, _.showDeleted, c)
 
     private val staticRows: tbl.RowStream = {
       def rr(r: ReqType.Static): ReactElement = {
