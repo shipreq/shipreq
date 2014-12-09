@@ -220,7 +220,7 @@ object CfgReqTypes222 {
   def showDeletedElement(show: Boolean, toggle: => IO[Unit]): ReactElement =
       <.label(
         Util.checkbox(show)(*.onchange ~~> toggle),
-        if (show) "Deleted items visible." else "Deleted items hidden.")
+        if (show) "Show deleted items." else "Showing deleted items.")
 
   val Top =
     ReactComponentB[Props]("top")

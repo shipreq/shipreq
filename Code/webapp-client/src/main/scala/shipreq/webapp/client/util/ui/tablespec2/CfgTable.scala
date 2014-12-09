@@ -93,7 +93,7 @@ final class CfgTable[S, K <: TaggedLong, P, I, A, B, C, V, RowKey, N](editor: Ed
 
   def savedRows: RowStream = {
     var rs = savedStore.rowStream(c.state)
-    if (showDeleted(c.state))
+    if (!showDeleted(c.state))
       rs = rs.filter(r => del.filterAlive(r.p))
     rs.map(r => {
       val el = del.alive(r.p) match {
