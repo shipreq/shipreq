@@ -11,7 +11,7 @@ import scalaz.{Equal, Need, Name}
 import scalaz.effect.IO
 import scalaz.syntax.equal._
 
-object NeoSaves {
+object Persistence {
 
   type SetRowStatus[S] = RowStatus => ReactST[IO, S, Unit]
 
@@ -20,20 +20,23 @@ object NeoSaves {
   sealed trait SaveNeed {
     def asOption[A](a: A): Option[A]
   }
+
   case object SaveNeeded extends SaveNeed {
     override def asOption[A](a: A) = Some(a)
   }
+
   case object SaveNotNeeded extends SaveNeed {
     override def asOption[A](a: A) = None
   }
+
   object SaveNeed {
-    def cmpToExtract[A, B: Equal](f: A => B): (A,B) => SaveNeed = {
+    def cmpToExtract[A, B: Equal](f: A => B): (A, B) => SaveNeed = {
       val c = cmp[B]
-      (a,b) => c(f(a), b)
+      (a, b) => c(f(a), b)
     }
 
-    def cmp[A: Equal]: (A,A) => SaveNeed =
-      (a,b) => if (a ≟ b) SaveNotNeeded else SaveNeeded
+    def cmp[A: Equal]: (A, A) => SaveNeed =
+      (a, b) => if (a ≟ b) SaveNotNeeded else SaveNeeded
   }
 
 
@@ -43,10 +46,10 @@ object NeoSaves {
   }
 
   def validateAndSaveAsync2[S, T, K, P, U, I](validator: Validator[T, I, _, U], store: SavedRowStore[S, K, P, I])(
-                                           st: K => S => T,
-                                           needSave: (P, U) => SaveNeed,
-                                           asyncSaveIO: (P, U, SuccessIO, FailureIO) => IO[Unit],
-                                           realise: ReactST[IO, S, Unit] => IO[Unit])
+    st: K => S => T,
+    needSave: (P, U) => SaveNeed,
+    asyncSaveIO: (P, U, SuccessIO, FailureIO) => IO[Unit],
+    realise: ReactST[IO, S, Unit] => IO[Unit])
   : K => ReactST[IO, S, Unit] =
     k => validateAndSaveAsync(
       validator, st(k),
@@ -72,7 +75,7 @@ object NeoSaves {
         val p = sp(s)
         needSave(p, u) match {
           case SaveNotNeeded => abortSave
-          case SaveNeeded    => save(p, u) >> setStatus(RowStatus.Locked)
+          case SaveNeeded => save(p, u) >> setStatus(RowStatus.Locked)
         }
       }
       def save(p: P, u: U): R = {
@@ -87,9 +90,9 @@ object NeoSaves {
   }
 
   def validateAndCreateAsync2[S, T, U, I](validator: Validator[T, I, _, U], store: NewRowStore[S, I])(
-                                         st: S => T,
-                                         asyncCreate: (U, SuccessIO, FailureIO) => IO[Unit],
-                                         realise: ReactST[IO, S, Unit] => IO[Unit]) =
+    st: S => T,
+    asyncCreate: (U, SuccessIO, FailureIO) => IO[Unit],
+    realise: ReactST[IO, S, Unit] => IO[Unit]) =
     validateAndCreateAsync[S, T, U, I](
       validator, st, store.getI, ReactS mod store.remove, store.setStatusST[IO], asyncCreate, realise)
 
@@ -116,8 +119,8 @@ object NeoSaves {
       }
       Fix.liftR(s =>
         si(s).fold(Fix.nop)(i =>
-        validator.correctAndValidate(st(s), i)
-          .fold(_ => abortSave, valid)))
+          validator.correctAndValidate(st(s), i)
+            .fold(_ => abortSave, valid)))
     })
   }
 
@@ -157,20 +160,20 @@ object NeoSaves {
     needSave: (P, U) => SaveNeed,
     asyncCreate: (U, SuccessIO, FailureIO) => IO[Unit],
     asyncSaveIO: (P, U, SuccessIO, FailureIO) => IO[Unit],
-    realise: ReactST[IO, S, Unit] => IO[Unit]) : Option[K] => ReactST[IO, S, Unit] = {
+    realise: ReactST[IO, S, Unit] => IO[Unit]): Option[K] => ReactST[IO, S, Unit] = {
 
     val update = validateAndSaveAsync2(v, savedStore)(updateT, needSave, asyncSaveIO, realise)
     val create = validateAndCreateAsync2(v, newStore)(createT, asyncCreate, realise)
     _.fold(create)(update)
   }
 
-  def typicalValidateAndSave[K, P, U, I](v: Validator[(Stream[P], Option[K]), I, _, U], sas: TypicalStoresAndState[P,I,K])(
+  def typicalValidateAndSave[K, P, U, I](v: Validator[(Stream[P], Option[K]), I, _, U], sas: TypicalStoresAndState[P, I, K])(
     needSave: (P, U) => SaveNeed,
     tableIO: TableIO[P, _, U, _],
-    realise: sas.ST => IO[Unit]) : Option[K] => sas.ST =
+    realise: sas.ST => IO[Unit]): Option[K] => sas.ST =
     validateAndSaveBoth(
       v, sas.savedRowStoreS)(sas.newRowStoreS,
-      sas.validatorInput(None), k => sas.validatorInput(Some(k)), needSave,
-      tableIO.createIO, tableIO.updateIO, realise)
+        sas.validatorInput(None), k => sas.validatorInput(Some(k)), needSave,
+        tableIO.createIO, tableIO.updateIO, realise)
 
 }

@@ -6,7 +6,7 @@ import shipreq.webapp.client.util.ui.table.SuccessIO
 import shipreq.base.util.ScalaExt._
 import TestUtil._
 import utest._
-import NeoSaves._
+import Persistence._
 
 import scalaz.effect.IO
 

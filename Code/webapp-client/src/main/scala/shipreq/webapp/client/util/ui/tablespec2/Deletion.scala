@@ -1,10 +1,11 @@
 package shipreq.webapp.client.util.ui.tablespec2
 
+import japgolly.scalajs.react._, vdom.prefix_<*._, ScalazReact._
+import scalaz.effect.IO
 import shipreq.webapp.base.data.{Dead, Alive}
 import shipreq.webapp.base.protocol.DeletionAction
 import DeletionAction._
-
-import scalaz.effect.IO
+import Deletion._
 
 object Deletion {
 
@@ -15,8 +16,6 @@ object Deletion {
   }
 }
 
-import Deletion._
-
 class Deletion[P, K](val alive: P => Alive, delIO: (K, DeletionAction) => IO[Unit]) {
 
   val filterAlive: P => Boolean =
@@ -24,8 +23,6 @@ class Deletion[P, K](val alive: P => Alive, delIO: (K, DeletionAction) => IO[Uni
       case Alive => true
       case Dead  => false
     }
-
-  import japgolly.scalajs.react._, vdom.prefix_<*._, ScalazReact._
 
   def button(k: K, a: DeletionAction): Tag =
     <.button(buttonLabel(a), *.onclick ~~> delIO(k, a))

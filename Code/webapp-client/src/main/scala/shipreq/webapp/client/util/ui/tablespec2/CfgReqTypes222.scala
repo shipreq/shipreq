@@ -128,7 +128,7 @@ object CfgReqTypes222 {
 
     val tableIO = TableIO(CustomReqType, CustomReqTypeCrud)(c.props.remote, c.props.clientData)
 
-    val deletion = NeoSaves.deleterAsync(savedRowStoreS)(_.alive, tableIO._deleteIO, c runState _)
+    val deletion = Persistence.deleterAsync(savedRowStoreS)(_.alive, tableIO._deleteIO, c runState _)
 
     val rowE = {
       val mnemonicE = Editors.textInputEditor.applyValidator(V.mnemonicS)
@@ -139,8 +139,8 @@ object CfgReqTypes222 {
 
       e = Editors.applyRowUpdateAndRevert(e, savedRowStoreS, newRowStoreS)(_._1._2)
 
-      val needSave = NeoSaves.SaveNeed.cmpToExtract((p: CustomReqType) => (p.mnemonic, p.name, p.imp))
-      val savef = NeoSaves.typicalValidateAndSave(V.all, storesAndState)(needSave, tableIO, c runState _)
+      val needSave = Persistence.SaveNeed.cmpToExtract((p: CustomReqType) => (p.mnemonic, p.name, p.imp))
+      val savef = Persistence.typicalValidateAndSave(V.all, storesAndState)(needSave, tableIO, c runState _)
       e.applyOnEditFinishedK(savef)(_._1._2)
     }
 
