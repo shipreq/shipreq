@@ -59,6 +59,8 @@ final class SavedRowStore[S, K, P, I](_ss: SimpleLens[S, SavedRowStore.SS[K,P,I]
 
   def getP(k: K): S => P = _p(k).get
   def getI(k: K): S => I = _i(k).get
+  def get(k: K): S => Row = _row(k).get
+  def getStatus(k: K): S => RowStatus = _status(k).get
 
   def getAllP(s: S): Stream[P] =
     _ss.get(s).toStream.map(_._2.p)

@@ -2,8 +2,10 @@ package shipreq.webapp.client.util.ui.tablespec2
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import monocle.Lenser
+import shipreq.webapp.client.protocol.FailureIO
+import shipreq.webapp.client.util.ui.table.SuccessIO
 import scalaz.Equal
-import scalaz.std.anyVal.longInstance
+import scalaz.std.AllInstances._
 import scalaz.syntax.equal._
 import scalaz.effect.IO
 import shipreq.prop.test.Gen
@@ -13,6 +15,7 @@ import shipreq.webapp.base.validation2.Constraints._
 import shipreq.webapp.base.validation2._
 import Editors._
 import RowStatus._
+import shipreq.base.util.Debug._
 
 object TestUtil {
 
@@ -56,6 +59,9 @@ object TestUtil {
       implicit val equal = Equal.equalA[Username]
     }
     case class Person(id: Long, username: Username, desc: Option[String])
+    object Person {
+      implicit val equal = Equal.equalA[Person]
+    }
 
     type VS = (Stream[Person], Option[Long])
 
@@ -86,9 +92,12 @@ object TestUtil {
     val savedRowStore = SavedRowStore.of(fields).keyedBy[Long]
     val newRowStore   = NewRowStore.of(fields)
 
-    val sampleData = List(
-      Person(7, Username("mike"), None),
-      Person(4, Username("bob"), Some("Hello")))
+    val needSave = NeoSaves.SaveNeed.cmpToExtract((p: Person) => (p.username, p.desc))
+
+    val person7 = Person(7, Username("mike"), None)
+    val person4 = Person(4, Username("bob"), Some("Hello"))
+
+    val sampleData = List(person4, person7)
 
     case class NewAndSavedRowState(newRow: newRowStore.State, savedRows: savedRowStore.State)
     object NewAndSavedRowState {
@@ -100,7 +109,12 @@ object TestUtil {
 
       val initialState = NewAndSavedRowState(newRowStore.initState, savedRowStore.initStateS(sampleData, _.id))
 
-      case class Props(fieldValidation: Boolean, updateRevert: Boolean)
+      case class SaveI(p: Option[Person], u: (Username, Option[String]), s: SuccessIO, f: FailureIO)
+      type SaveIO = SaveI => IO[Unit]
+
+      case class Props(fieldValidation: Boolean, updateRevert: Boolean, saveIO: Option[SaveIO]) {
+        if (saveIO.isDefined && !updateRevert) sys.error("saveIO needs updateRevert")
+      }
 
       class Backend(c: BackendScope[Props, NewAndSavedRowState]) {
         val e = {
@@ -112,8 +126,21 @@ object TestUtil {
           }
 
           var en = Editor.merge2(fields, e1, e2).tupleI.strengthR[Option[Long]].zoomU[NewAndSavedRowState]
+
           if (c.props.updateRevert)
             en = applyRowUpdateAndRevert(en, savedRowStoreS, newRowStoreS)(_._2)
+
+          c.props.saveIO.foreach(save => {
+            val f = NeoSaves.validateAndSaveBoth(personV, savedRowStoreS)(newRowStoreS,
+              s => (savedRowStoreS.getAllP(s), None),
+              k => s => (savedRowStoreS.getAllP(s), k.some),
+              needSave,
+              (u, s, f) => save(SaveI(None, u, s, f)),
+              (p, u, s, f) => save(SaveI(p.some, u, s, f)),
+              c runState _
+            )
+            en = en.applyOnEditFinishedK(f)(_._2)
+          })
           en
         }
 
