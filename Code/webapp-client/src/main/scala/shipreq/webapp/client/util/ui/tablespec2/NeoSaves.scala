@@ -123,30 +123,30 @@ object NeoSaves {
 
   def deleterAsync[S, K, P](store: SavedRowStore[S, K, P, _])
                            (alive: P => Alive,
-                            asyncDelete: (K, DeletionAction, SuccessIO, FailureIO) => IO[Unit],
+                            asyncDelete: (K, DeletionAction) => (SuccessIO, FailureIO) => IO[Unit],
                             realise: ReactST[IO, S, Unit] => IO[Unit]) =
     new Deletion[P, K](alive, (id, a) =>
-      realise(deleteAsync(id, a, asyncDelete, realise, store.setStatusST[IO](id))))
+      realise(deleteAsync(asyncDelete(id, a), realise, store.setStatusST[IO](id))))
 
 
-  def deleteAsync[S, D](id: D, da: DeletionAction,
-                        asyncDelete: (D, DeletionAction, SuccessIO, FailureIO) => IO[Unit],
-                        realise: ReactST[IO, S, Unit] => IO[Unit],
-                        setStatus: SetRowStatus[S])
+  def deleteAsync[S](asyncDelete: (SuccessIO, FailureIO) => IO[Unit],
+                     realise: ReactST[IO, S, Unit] => IO[Unit],
+                     setStatus: SetRowStatus[S])
   : ReactST[IO, S, Unit] = {
     val Fix = ReactS.FixT[IO, S]
     type R = Fix.T[Unit]
     retryably[R](retry => {
       val s = SuccessIO.nop
       val f = failureIO(retry, realise, setStatus)
-      Fix.ret(asyncDelete(id, da, s, f)) >> setStatus(RowStatus.Locked)
+      Fix.ret(asyncDelete(s, f)) >> setStatus(RowStatus.Locked)
     })
   }
+
 
   def failureIO[S](retry: Retry[S],
                    realise: ReactST[IO, S, Unit] => IO[Unit],
                    setStatus: SetRowStatus[S]): FailureIO = {
-    def failedStatus = RowStatus.Failed(realise(retry.value))
+    def failedStatus = RowStatus.Failed.lazily(realise(retry.value))
     FailureIO(realise(setStatus(failedStatus)))
   }
 

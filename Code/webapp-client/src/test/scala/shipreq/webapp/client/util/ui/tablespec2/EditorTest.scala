@@ -249,10 +249,7 @@ object EditorTest extends TestSuite {
             Simulation.focusChangeBlur("blahblah") run tgt
             assertSave()
             saves(0).f.io.unsafePerformIO()
-            val retry = savedRowStoreS.getStatus(7)(c.state) match {
-              case RowStatus.Failed(r) => r
-              case f => sys.error(s"Expected a failed row. Got: $f")
-            }
+            val retry = assertRowStatusFailed(savedRowStoreS.getStatus(7)(c.state)).retry
             testRetry(retry)
           }
         }
@@ -296,10 +293,7 @@ object EditorTest extends TestSuite {
             Simulation.focusChangeBlur("blahblah") run tgt
             assertSave()
             saves(0).f.io.unsafePerformIO()
-            val retry = newRowStoreS.getStatus(c.state) match {
-              case Some(RowStatus.Failed(r)) => r
-              case f => sys.error(s"Expected a failed row. Got: $f")
-            }
+            val retry = assertRowStatusFailed(newRowStoreS.getStatus(c.state).get).retry
             testRetry(retry)
           }
         }

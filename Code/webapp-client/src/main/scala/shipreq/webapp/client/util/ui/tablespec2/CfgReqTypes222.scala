@@ -193,7 +193,7 @@ object CfgReqTypes222 {
       }
     }
 
-    val del = NeoSaves.deleterAsync(savedRowStoreS)(_.alive, tableIO.deleteIO, c runState _)
+    val del = NeoSaves.deleterAsync(savedRowStoreS)(_.alive, tableIO._deleteIO, c runState _)
 
     val tbl = CfgTable(rowE, savedRowStoreS, newRowStoreS).then(_.mnemonic, cells, newRowA, savedRowA, del, _.showDeleted, c)
 

@@ -54,4 +54,7 @@ class TableIO[D, I, _V, RD <: Crudable.Aux[I, _V]](remote: Remote[RD], clientDat
 
   def deleteIO(id: I, a: DeletionAction, s: SuccessIO, f: FailureIO): IO[Unit] =
     crudIO(s, f, CrudAction.Delete(id, a))
+
+  def _deleteIO: (I, DeletionAction) => (SuccessIO, FailureIO) => IO[Unit] =
+    (id, a) => (s, f) => deleteIO(id, a, s, f)
 }

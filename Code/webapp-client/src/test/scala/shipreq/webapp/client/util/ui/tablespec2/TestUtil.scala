@@ -34,6 +34,12 @@ object TestUtil {
       assert(false)
     }
 
+  def assertRowStatusFailed(r: RowStatus): RowStatus.Failed =
+    r match {
+      case f@ RowStatus.Failed(_) => f
+      case f => sys.error(s"Expected a failed row. Got: $f")
+    }
+
   case class AB[A,B](a: A, b: B)
 
   def genAB[A, B](ga: Gen[A], gb: Gen[B]): Gen[AB[A,B]] =

@@ -1,5 +1,6 @@
 package shipreq.webapp.client.util.ui.tablespec2
 
+import scalaz.Bind
 import scalaz.effect.IO
 
 sealed trait RowStatus
@@ -13,4 +14,7 @@ object RowStatus {
 
   /** Failed to coordination Local change with external agent. (Ajax failure) */
   case class Failed(retry: IO[Unit]) extends RowStatus
+  object Failed {
+    def lazily(f: => IO[Unit]): Failed = Failed(Bind[IO].join(IO(f)))
+  }
 }
