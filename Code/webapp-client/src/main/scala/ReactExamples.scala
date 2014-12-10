@@ -1,7 +1,7 @@
 package hahaa
 
 import org.scalajs.dom._
-import shipreq.webapp.client.util.ui.tablespec2.CfgReqTypes222
+import shipreq.webapp.client.app.ui.CfgReqTypes222
 import scala.scalajs.js
 //import scalaz._, Scalaz._
 import scalaz.\/

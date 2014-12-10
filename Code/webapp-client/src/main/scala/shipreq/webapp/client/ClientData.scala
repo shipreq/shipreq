@@ -7,7 +7,7 @@ import shipreq.webapp.client.protocol.ClientProtocol
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.data.delta.RemoteDelta
 import shipreq.webapp.base.protocol.Routines.ProjectInit
-import shipreq.webapp.client.util.{FailureIO, Console}
+import shipreq.webapp.client.lib.{FailureIO, Console}
 
 final class ClientData(init: Project) extends Broadcaster[LocalDelta] {
 
