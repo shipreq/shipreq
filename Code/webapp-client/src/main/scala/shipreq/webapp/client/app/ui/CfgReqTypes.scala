@@ -14,7 +14,7 @@ import shipreq.webapp.client.ClientData
 import shipreq.webapp.client.lib.CrudIO
 import shipreq.webapp.client.lib.ui._
 import Editors._ // TODO refactor Editors
-import Util.checkbox // TODO refactor UiLib/Util
+import UI.checkbox
 
 object CfgReqTypes {
 

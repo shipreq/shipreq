@@ -1,8 +1,16 @@
 package shipreq.webapp.client.lib.ui
 
-import japgolly.scalajs.react._, vdom.ReactVDom.{Tag => _, _}, all._, ScalazReact._
+import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 
-object UiLib {
+object UI {
+
+  def textChangeRecv[R](f: String => R): ReactEventI => R =
+    e => f(e.target.value)
+
+  def checkbox(check: Boolean) =
+    <.input(
+      ^.`type` := "checkbox",
+      ^.checked := check)
 
   def rowStatusRowClass(rs: RowStatus): String = rs match {
     case RowStatus.Sync      => "sync"
@@ -16,10 +24,12 @@ object UiLib {
   def rowStatusCtrlsFold(rs: RowStatus, sync: => Modifier, locked: Tag => Modifier, failed: Tag => Modifier): Modifier = rs match {
     case RowStatus.Sync      => sync
     case RowStatus.Locked    => locked(spinner)
-    case RowStatus.Failed(r) => failed(button("Retry", onclick ~~> r))
+    case RowStatus.Failed(r) => failed(<.button("Retry", ^.onclick ~~> r))
   }
 
   def spinner =
-    img(cls := "spinner", src := "/assets/loading-spin.svg")
+    <.img(
+      ^.cls := "spinner",
+      ^.src := "/assets/loading-spin.svg")
 
 }

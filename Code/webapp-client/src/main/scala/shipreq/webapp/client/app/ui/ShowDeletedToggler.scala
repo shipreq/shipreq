@@ -3,7 +3,7 @@ package shipreq.webapp.client.app.ui
 import japgolly.scalajs.react._, vdom.prefix_<*._, ScalazReact._
 import scalaz.effect.IO
 import shipreq.webapp.client.lib.ui.TypicalStoresAndState
-import shipreq.webapp.client.lib.ui.Util.checkbox
+import shipreq.webapp.client.lib.ui.UI.checkbox
 
 object ShowDeletedToggler {
 

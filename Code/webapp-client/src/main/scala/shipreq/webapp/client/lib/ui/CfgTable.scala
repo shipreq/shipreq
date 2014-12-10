@@ -1,11 +1,10 @@
 package shipreq.webapp.client.lib.ui
 
 import japgolly.scalajs.react._, vdom.prefix_<*._, ScalazReact._
-import shipreq.base.util.TaggedTypes.TaggedLong
-import shipreq.webapp.base.data._
-import shipreq.webapp.base.protocol.DeletionAction._
-import DataImplicits._
 import scalaz.effect.IO
+import shipreq.base.util.TaggedTypes.TaggedLong
+import shipreq.webapp.base.data._, DataImplicits._
+import shipreq.webapp.base.protocol.DeletionAction._
 
 object CfgTable {
   def apply[S, K <: TaggedLong, P, I, A, B, C, V](editor: Editor[A, B, IO, S, C, IO[Unit], V],
@@ -98,8 +97,8 @@ final class CfgTable[S, K <: TaggedLong, P, I, A, B, C, V, RowKey, R](editor: Ed
       "Cancel")
 
   def row(classArg: String, rs: RowStatus, content: RowContent, ctrls: => Modifier): Tag = {
-    val cls2 = UiLib.rowStatusRowClass(rs)
-    val c = UiLib.rowStatusCtrls(rs, ctrls)
+    val cls2 = UI.rowStatusRowClass(rs)
+    val c = UI.rowStatusCtrls(rs, ctrls)
     <.tr(
       *.cls := s"$classArg $cls2",
       rr.render(content).map(<.td(_)),
