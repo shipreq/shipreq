@@ -73,7 +73,7 @@ class UseCaseCrudl(projectId: ProjectId) extends SingleOpStatefulSnippet {
       TriggerCreated.trigger(renderListItem(ucs)(ListItemTemplate)))
 
   def create(titleInput: String): ValidationResult[UseCaseSummary] =
-    Validators.usecase.title.correctAndValidate(titleInput).map(newTitle => {
+    Validators.usecase.title.correctAndValidateU(titleInput).map(newTitle => {
       val h = UseCaseHeader(newTitle)
       val ucRev = Locks.UseCaseNumbers.write(projectId)(lock =>
         daoProvider.withTransaction(_.createUseCaseIdentAndRev1(projectId, h, lock)))
@@ -106,7 +106,7 @@ class UseCaseCrudl(projectId: ProjectId) extends SingleOpStatefulSnippet {
 
   def update(id: UseCaseIdentId, titleInput: String): ValidationResult[Option[UseCaseRev]] = {
     import UseCaseHeaderUpdateResult._
-    Validators.usecase.title.correctAndValidate(titleInput).map(newTitle =>
+    Validators.usecase.title.correctAndValidateU(titleInput).map(newTitle =>
       Locks.SingleUseCase.write(id, projectId)(lock =>
         daoProvider.withTransaction(_.updateUseCaseHeader(id, _.copy(title = newTitle), lock))
       ) match {

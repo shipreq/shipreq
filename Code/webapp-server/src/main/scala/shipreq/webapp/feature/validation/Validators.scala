@@ -17,8 +17,8 @@ import GenericValidators._
 object Validators {
 
   val email_ = Validator(
-    CorrectionPart.endo(noWhitespace),
-    ValidationPart.forConstraint("Email address",
+    CorrectionPartU.endo(noWhitespace),
+    ValidationPartU.forConstraint("Email address",
       maximumLength(AppConsts.emailMaxLength)
         + matchesR("^_+@_+?\\._+$".replace("_", "[^&<>]").r)("is invalid.") // loose validation
     ))
@@ -26,13 +26,13 @@ object Validators {
   val email = email_ map EmailAddr.apply
 
   val password = Validator(
-    CorrectionPart.nop[String],
-    ValidationPart.forConstraint("Password", lengthInRange(AppConsts.passwordLength) + containsAlphaAndNumber))
+    CorrectionPartU.nop[String],
+    ValidationPartU.forConstraint("Password", lengthInRange(AppConsts.passwordLength) + containsAlphaAndNumber))
 
   val passwords = Validator(
-    CorrectionPart.liftE[(String, String)](_ umap password.correctU),
-    ValidationPart[(String, String), String](input =>
-      password.validate(input.map(_._1)) match {
+    CorrectionPartU.liftE[(String, String)](_ umap password.correctU),
+    ValidationPartU[(String, String), String](input =>
+      password.validateU(input.map(_._1)) match {
         case f@ Failure(_) => f
         case s@ Success(_) =>
           if (input.value._1 != input.value._2)
@@ -43,7 +43,7 @@ object Validators {
 
   def currentPassword(ps: PasswordAndSalt) = Validator(
     password.cp,
-    ValidationPart[String, Unit](input =>
+    ValidationPartU[String, Unit](input =>
       if (ps matches input.value)
         Success(())
       else
@@ -57,16 +57,16 @@ object Validators {
 
   /** `passwords` in the shape of `passwordChange`. i.e. change password without checking current. */
   val passwordSet = Validator(
-    CorrectionPart.liftE[PasswordChange](_.map2(passwords.correctU)),
-    ValidationPart[PasswordChange, String](passwords validate _.map(_._2)))
+    CorrectionPartU.liftE[PasswordChange](_.map2(passwords.correctU)),
+    ValidationPartU[PasswordChange, String](passwords validateU _.map(_._2)))
 
   val tosAgreement = Validator(
-    CorrectionPart.nop[Boolean],
-    ValidationPart.test[Boolean](_.value, VFailure.looseMsg("You must agree to the terms of service.")))
+    CorrectionPartU.nop[Boolean],
+    ValidationPartU.test[Boolean](_.value, VFailure.looseMsg("You must agree to the terms of service.")))
 
   val humanFullName = Validator(
-    CorrectionPart.endo(singleLineWhitespace),
-    ValidationPart.forConstraint("Your name",
+    CorrectionPartU.endo(singleLineWhitespace),
+    ValidationPartU.forConstraint("Your name",
       containsSurname
         + shortTextLimit
         + blacklistCharsS("<>\"[]{}%$@!;:|?*+_")("mustn't contain symbols.")
@@ -78,8 +78,8 @@ object Validators {
   object user {
 
     val username_ = Validator(
-      CorrectionPart.endo(noWhitespace andThen lowerCase),
-      ValidationPart.forConstraint("Username",
+      CorrectionPartU.endo(noWhitespace andThen lowerCase),
+      ValidationPartU.forConstraint("Username",
         lengthInRange(AppConsts.usernameLength)
           + whitelistCharsR("a-z0-9_")("can only contain letters, numbers and underscores.")
           + startsWithR("[a-z]")("must start with a letter.")
@@ -104,8 +104,8 @@ object Validators {
   object usecase {
 
     val title = Validator(
-      CorrectionPart.endo(singleLineWhitespace andThen niceSymbols),
-      ValidationPart.forConstraint("Use case title",
+      CorrectionPartU.endo(singleLineWhitespace andThen niceSymbols),
+      ValidationPartU.forConstraint("Use case title",
         nonEmpty
           + shortTextLimit
           + blacklistCharsS("[]⦋⦌［］")("cannot include square brackets.")

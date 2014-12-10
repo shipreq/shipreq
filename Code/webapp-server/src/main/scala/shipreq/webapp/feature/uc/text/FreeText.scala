@@ -42,7 +42,7 @@ object FreeText {
   val empty: FreeText = parseCorrected(InputCorrected(""))(UcParsingCtx.Empty)
 
   def correctInput(input: String): InputCorrected[String] =
-    Validators.usecase.textFieldText.correct(input)
+    Validators.usecase.textFieldText.correctedU(input)
 
   def load(text: NormalisedText)(implicit savedSteps: SavedSteps, ctx: UcParsingCtx): FreeText = {
     implicit val stepsAndLabels = ctx.stepsAndLabels

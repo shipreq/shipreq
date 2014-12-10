@@ -54,7 +54,7 @@ class ProjectHeader extends SingleOpStatefulSnippet {
   )
 
   def onRename(): JsCmd =
-    ifValid(Validators.project.name.correctAndValidate(projectNameInput))(newName =>
+    ifValid(Validators.project.name.correctAndValidateU(projectNameInput))(newName =>
       daoProvider.withSession(_.updateProject(project.id, currentUserId_!, newName)) match {
         case DbSuccess        => jsRenamed(newName)
         case NameAlreadyInUse => jsShowError("You already have a project with that name.")
