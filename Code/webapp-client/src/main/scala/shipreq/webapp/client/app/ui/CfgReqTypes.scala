@@ -17,14 +17,13 @@ import UI.checkbox
 
 object CfgReqTypes {
 
-  val fields = FieldSet3[CustomReqType](_.mnemonic.value, _.name, _.imp)(("", "", ImplicationNotRequired))
-
-  val storesAndState = TypicalStoresAndState(fields).keyedBy[CustomReqType.Id]
-  import storesAndState._
-
   case class Props(remote: CustomReqTypeCrud.Remote, clientData: ClientData, showDeleted: Boolean) {
     def component = Component(this)
   }
+
+  val fields = FieldSet3[CustomReqType](_.mnemonic.value, _.name, _.imp)(("", "", ImplicationNotRequired))
+  val storesAndState = TypicalStoresAndState(fields).keyedBy[CustomReqType.Id]
+  import storesAndState._
 
   val Component =
     ReactComponentB[Props]("Cfg: Req Types")

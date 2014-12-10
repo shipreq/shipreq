@@ -36,7 +36,7 @@ object ReactExamples {
       sealed trait ProjectPage
       object ProjectPage extends Page[ProjectPage] {
         val root = Root(index)
-//        val cfgIncmp    = path("#cfg/incmp",    addBack(root, cfgIncmpR))
+        val cfgIncmp    = path("#cfg/incmp",    addBack(root, cfgIncmpR))
         val cfgReqTypes = path("#cfg/reqtypes", addBack(root, cfgReqTypesR))
       }
 
@@ -44,14 +44,14 @@ object ReactExamples {
         val c = ReactComponentB[Unit]("Index")
           .render(_ =>
           ul(
-//            li(router.link(ProjectPage.cfgIncmp)("Cfg: Incompletions")),
+            li(router.link(ProjectPage.cfgIncmp)("Cfg: Incompletions")),
             li(router.link(ProjectPage.cfgReqTypes)("Cfg: Requirement Types")))
           ).buildU
         c()
       }
 
-//      def cfgIncmpR: Renderer[ProjectPage] = _ =>
-//        CfgIncompletions.comp(CfgIncompletions.Props(r.incmpCrud, r.reqTypeImpMod, clientData, false))
+      def cfgIncmpR: Renderer[ProjectPage] = _ =>
+        CfgIncompletions.comp(CfgIncompletions.Props(r.incmpCrud, r.reqTypeImpMod, clientData, false))
 
       def cfgReqTypesR: Renderer[ProjectPage] = _ =>
         CfgReqTypes.Props(r.reqTypeCrud, clientData, false).component

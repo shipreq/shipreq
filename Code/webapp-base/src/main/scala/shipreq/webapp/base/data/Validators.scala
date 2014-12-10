@@ -12,7 +12,9 @@ import GenericValidators._
 
 object Validators {
 
+  // ===================================================================================================================
   object reqType {
+    type S = (Stream[CustomReqType], Option[CustomReqType.Id])
 
     val mnemonicU =
       Rules.whitelistCharsR("A-Z", "may only consist of letters.")
@@ -22,10 +24,6 @@ object Validators {
         .constraint(nonEmpty >> _)
         .forField("Mnemonic")
         .map(ReqType.Mnemonic)
-
-    val nameU = mandatoryShortText("Name")
-
-    type S = (Stream[CustomReqType], Option[CustomReqType.Id])
 
     private def mnemonicUniqueness = {
       val static = (none[CustomReqType.Id],  ReqType.staticMnemonics)
@@ -37,6 +35,8 @@ object Validators {
 
     val mnemonicS = mnemonicU.liftS[S].addValidation(mnemonicUniqueness)
 
+    def nameU = mandatoryShortText("Name")
+
     private def nameUniqueness =
       Uniqueness.entity[CustomReqType].applyO(_.id.some, _.name).fieldName("Name")
 
@@ -45,19 +45,36 @@ object Validators {
     val all = mnemonicS ⊗ nameS ⊗ ValidatorU.nop[ImplicationRequired].liftS[S]
   }
 
+  // ===================================================================================================================
   object customIncmpType {
-    def key = refKey
-    def desc = optionalLargeText(FieldNames.desc)
+    type S = (Stream[CustomIncmpType], Option[CustomIncmpType.Id])
+
+    def keyU = refKeyU
+
+    private def keyUniqueness =
+      Uniqueness.entity[CustomIncmpType].applyO(_.id.some, _.key).fieldName(FieldNames.refKey)
+
+    val keyS = keyU.liftS[S].addValidation(keyUniqueness)
+
+    def descU = optionalLargeText(FieldNames.desc)
+
+    def descS = descU.liftS[S]
+
+    val all = keyS ⊗ descS
   }
+
+  // ===================================================================================================================
 
   // DD-18: Hashtag-like refkeys (groupings, incmp) must match this format: /[A-Za-z0-9][A-Za-z0-9_-=.]*/
   // Must not contain: []{}<>
   // TODO should uniqueness and matching be case-insensitive?
-  val refKey =
+  val refKeyU =
     Rules.whitelistCharsR( """A-Za-z0-9\._=\-""", "may only consist of letters, numbers, and these symbols: . _ = -")
       .addRule(Rules.lengthInRange(refKeyLength))
       .correct(noWhitespace.compose)
       .constraint(c => nonEmpty >> (startsWithAlphaNumeric + c))
       .forField(FieldNames.refKey)
       .map(RefKey.apply)
+
+
 }

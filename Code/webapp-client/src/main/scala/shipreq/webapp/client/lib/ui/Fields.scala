@@ -1,6 +1,6 @@
 package shipreq.webapp.client.lib.ui
 
-import monocle.SimpleLens
+import monocle.{SimpleIso, SimpleLens}
 import shipreq.base.util.ScalaExt._
 
 trait FieldSet[_P, _I] {
@@ -35,6 +35,18 @@ trait FieldSet[_P, _I] {
       override final val f: a.type = a
       override final val v = b
     }
+}
+
+class FieldSet1[Q, A](g1: Q=>A, i: A) extends FieldSet[Q, A] {
+  final val f1 = field[A](g1, SimpleIso.dummy)
+  override final val emptyI   = i
+  override final val fields   = Vector(f1)
+  override final def pi(p: P) = (f1 pv p)
+}
+object FieldSet1 {
+  def apply[Q] = new {
+    @inline def apply[A](g1: Q=>A)(emptyI: A): FieldSet1[Q, A] = new FieldSet1(g1, emptyI)
+  }
 }
 
 class FieldSet2[Q, A, B](g1: Q=>A, g2: Q=>B, i: (A,B)) extends FieldSet[Q, (A,B)] {
