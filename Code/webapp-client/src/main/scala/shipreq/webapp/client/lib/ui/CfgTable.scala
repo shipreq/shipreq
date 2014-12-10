@@ -5,6 +5,7 @@ import scalaz.effect.IO
 import shipreq.base.util.TaggedTypes.TaggedLong
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.protocol.DeletionAction._
+import shipreq.webapp.client.app.ui.ShowDeletedToggler
 
 object CfgTable {
   def apply[S, K <: TaggedLong, P, I, A, B, C, V](editor: Editor[A, B, IO, S, C, IO[Unit], V],
@@ -41,6 +42,14 @@ object CfgTable {
 
   def header(headers: List[String]): ReactElement =
     <.thead(<.tr(headers.map(<.th(_)), <.th("Ctrls")))
+
+
+  def outer[P, I, K](sas: TypicalStoresAndState[P, I, K])
+                    (c: ComponentStateFocus[sas.S],
+                     inner: => ReactElement): ReactElement =
+    <.div(
+      ShowDeletedToggler(sas)(c),
+      inner)
 
   /**
    * @tparam P Persisted data. Data known to be saved.

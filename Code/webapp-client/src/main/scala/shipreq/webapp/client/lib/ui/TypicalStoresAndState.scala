@@ -5,13 +5,24 @@ import monocle.Lenser
 import scalaz.effect.IO
 
 object TypicalStoresAndState {
-  def apply[P, I](fields: FieldSet[P, I]) = new B(fields)
-  @inline final class B[P, I](fields: FieldSet[P, I]) {
-    @inline def keyedBy[K]: TypicalStoresAndState[P, I, K] = new TypicalStoresAndState(fields)
+  def apply[P, I](fields: FieldSet[P, I]) = new B[P, I, fields.type](fields)
+  @inline final class B[P, I, _FS <: FieldSet[P, I]](_fields: _FS) {
+    @inline def keyedBy[K]: TypicalStoresAndState[P, I, K] {type FS = _FS} =
+      new TypicalStoresAndState[P, I, K] {
+        override type FS = _FS
+        override val fields = _fields
+      }
   }
 }
 
-class TypicalStoresAndState[P, I, K](fields: FieldSet[P, I]) {
+/**
+ * @tparam P Persisted data. Data known to be saved.
+ * @tparam I Input. A subset of P's fields in a form that matches the editor state.
+ * @tparam K Key. Data ID.
+ */
+abstract class TypicalStoresAndState[P, I, K] {
+  type FS <: FieldSet[P, I]
+  val fields: FS
 
   val savedRowStore = SavedRowStore.of(fields).keyedBy[K]
   val newRowStore   = NewRowStore.of(fields)

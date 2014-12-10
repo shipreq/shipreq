@@ -53,30 +53,20 @@ object CfgIncompletions {
             .install(savedRowStoreS, Partition.CustomIncmpTypes, _.clientData))
         .build
 
-
-
     private def initialState(p: Props): S =
       State(newRowStore.initState,
         savedRowStore.initStateS(p.clientData.project.customIncmpTypes.data, _.id),
         p.showDeleted)
 
     final class Backend(c: BackendScope[Props, S]) extends OnUnmount {
-
       val crudIO = CrudIO(CustomIncmpType, CustomIncmpTypeCrud)(c.props.remote, c.props.clientData)
-
-      val deletion = Persistence.asyncDeletionS(savedRowStoreS)(_.alive, crudIO._deleteIO, c runState _)
+      val supp = TypicalSupp(storesAndState, crudIO)(c, _.alive)
 
       val rowE = {
         val keyE  = Editors.textInputEditor.applyValidator(V.keyS)
         val descE = Editors.textareaEditor.applyValidator(V.descS)
-
-        var e = Editor.merge2S(fields, keyE, descE).tupleI.zoomU[S]
-
-        e = e.applyRowUpdateAndRevert(savedRowStoreS, newRowStoreS)(_._1._2)
-
-        val needSave = SaveNeed.cmpToExtract((p: CustomIncmpType) => (p.key, p.desc))
-        val savef = Persistence.asyncSaveT(V.all, storesAndState)(needSave, crudIO, c runState _)
-        e.applyOnEditFinishedK(savef)(_._1._2)
+        val e = Editor.merge2S(fields, keyE, descE).tupleI.zoomU[S]
+        supp.addEditorFeatures(e)(V.all, _._1._2, p => (p.key, p.desc))
       }
 
       val table = {
@@ -87,15 +77,13 @@ object CfgIncompletions {
             override def deletedRow = p => (p.key.value, TextMod.nonBlank from p.desc)
             override def render     = { case (key, desc) => List(key, desc) }
           }
-        val t = CfgTable.typical(storesAndState)(rowE)(_.key, rowRenderer, deletion, c)
+        val t = CfgTable.typical(storesAndState)(rowE)(_.key, rowRenderer, supp.deletion, c)
         val headerRow = CfgTable.header(List(FieldNames.refKey, FieldNames.desc))
         () => t.table(headerRow, Stream.empty)
       }
 
       def render: ReactElement =
-        <.div(
-          ShowDeletedToggler(storesAndState)(c),
-          table())
+        CfgTable.outer(storesAndState)(c, table())
     }
   }
 

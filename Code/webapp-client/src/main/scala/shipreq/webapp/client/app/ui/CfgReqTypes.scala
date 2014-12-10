@@ -42,37 +42,26 @@ object CfgReqTypes {
 
   // ===================================================================================================================
   final class Backend(c: BackendScope[Props, S]) extends OnUnmount {
-
     val crudIO = CrudIO(CustomReqType, CustomReqTypeCrud)(c.props.remote, c.props.clientData)
-
-    val deletion = Persistence.asyncDeletionS(savedRowStoreS)(_.alive, crudIO._deleteIO, c runState _)
+    val supp = TypicalSupp(storesAndState, crudIO)(c, _.alive)
 
     val rowE = {
       val mnemonicE = Editors.textInputEditor.applyValidator(V.mnemonicS)
       val nameE     = Editors.textInputEditor.applyValidator(V.nameS)
       val impE      = Editors.checkboxEditor.imap(ImplicationRequired).strengthL[V.S]
-
-      var e = Editor.merge3S(fields, mnemonicE, nameE, impE).tupleI.zoomU[S]
-
-      e = e.applyRowUpdateAndRevert(savedRowStoreS, newRowStoreS)(_._1._2)
-
-      val needSave = SaveNeed.cmpToExtract((p: CustomReqType) => (p.mnemonic, p.name, p.imp))
-      val savef = Persistence.asyncSaveT(V.all, storesAndState)(needSave, crudIO, c runState _)
-      e.applyOnEditFinishedK(savef)(_._1._2)
+      val e = Editor.merge3S(fields, mnemonicE, nameE, impE).tupleI.zoomU[S]
+      supp.addEditorFeatures(e)(V.all, _._1._2, p => (p.mnemonic, p.name, p.imp))
     }
 
     val table = {
       def rowRenderer =
         new CfgTable.RowRenderer[CustomReqType, rowE.View, (Modifier, Set[ReqType.Mnemonic], Modifier, Modifier)] {
-
           override def newRow = {
             case (mnemonic, name, impReq) => (mnemonic, Set.empty, name, impReq)
           }
-
           override def savedRow = {
             case ((mnemonic, name, impReq), p) => (mnemonic, p.oldMnemonics, name, impReq)
           }
-
           override def deletedRow = p =>
             (p.mnemonic.value, p.oldMnemonics, p.name, checkbox(ImplicationRequired from p.imp)(*.disabled := true))
 
@@ -87,7 +76,7 @@ object CfgReqTypes {
           }
         }
 
-      val t = CfgTable.typical(storesAndState)(rowE)(_.mnemonic, rowRenderer, deletion, c)
+      val t = CfgTable.typical(storesAndState)(rowE)(_.mnemonic, rowRenderer, supp.deletion, c)
 
       val headerRow = CfgTable.header(List("Mnemonic", "Name", "Implication Required"))
 
@@ -104,8 +93,6 @@ object CfgReqTypes {
     }
 
     def render: ReactElement =
-      <.div(
-        ShowDeletedToggler(storesAndState)(c),
-        table())
+      CfgTable.outer(storesAndState)(c, table())
   }
 }
