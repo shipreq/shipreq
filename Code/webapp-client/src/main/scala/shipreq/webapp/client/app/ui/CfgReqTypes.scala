@@ -13,7 +13,6 @@ import shipreq.webapp.base.protocol.Routines.CustomReqTypeCrud
 import shipreq.webapp.client.ClientData
 import shipreq.webapp.client.lib.CrudIO
 import shipreq.webapp.client.lib.ui._
-import Editors._ // TODO refactor Editors
 import UI.checkbox
 
 object CfgReqTypes {
@@ -56,7 +55,7 @@ object CfgReqTypes {
 
       var e = Editor.merge3S(fields, mnemonicE, nameE, impE).tupleI.zoomU[S]
 
-      e = Editors.applyRowUpdateAndRevert(e, savedRowStoreS, newRowStoreS)(_._1._2)
+      e = e.applyRowUpdateAndRevert(savedRowStoreS, newRowStoreS)(_._1._2)
 
       val needSave = SaveNeed.cmpToExtract((p: CustomReqType) => (p.mnemonic, p.name, p.imp))
       val savef = Persistence.asyncSaveT(V.all, storesAndState)(needSave, crudIO, c runState _)

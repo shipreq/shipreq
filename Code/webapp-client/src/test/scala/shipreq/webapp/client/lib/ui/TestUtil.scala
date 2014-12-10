@@ -136,7 +136,7 @@ object TestUtil {
           var en = Editor.merge2(fields, e1, e2).tupleI.strengthR[Option[Long]].zoomU[NewAndSavedRowState]
 
           if (c.props.updateRevert)
-            en = applyRowUpdateAndRevert(en, savedRowStoreS, newRowStoreS)(_._2)
+            en = en.applyRowUpdateAndRevert(savedRowStoreS, newRowStoreS)(_._2)
 
           c.props.saveIO.foreach(save => {
             val f = Persistence.asyncSaveS(personV, savedRowStoreS)(newRowStoreS,
