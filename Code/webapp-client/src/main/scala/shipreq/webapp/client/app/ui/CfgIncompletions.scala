@@ -1,19 +1,22 @@
 package shipreq.webapp.client.app.ui
 
-import japgolly.scalajs.react._, vdom.prefix_<*._, ScalazReact._
+import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.experiment.OnUnmount
 import scala.language.reflectiveCalls
+import scalaz.effect.IO
 import scalaz.std.AllInstances._
 
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.data.delta.Partition
 import shipreq.webapp.base.data.Validators.{customIncmpType => V}
-import shipreq.webapp.base.protocol.Routines.{CustomIncmpTypeCrud, CustomReqTypeImplicationMod}
+import shipreq.webapp.base.protocol.Routines._
 import shipreq.webapp.base.TextMod
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.client.ClientData
 import shipreq.webapp.client.lib.CrudIO
 import shipreq.webapp.client.lib.ui._
+import shipreq.webapp.client.protocol.ClientProtocol
+import ReqType.Mnemonic
 
 object CfgIncompletions {
 
@@ -26,9 +29,9 @@ object CfgIncompletions {
     .render(p =>
       <.div(
         <.h4("User-Defined Incompletion Types"),
-        UserDefIncompletions.Props(p.a, p.c, p.showDeleted).component)
-        //h4("Other Causes of Incompletion"),
-        //OtherCauses.comp(TableIoArb(p.b, p.c)))
+        UserDefIncompletions.Props(p.a, p.c, p.showDeleted).component,
+        <.h4("Other Causes of Incompletion"),
+        OtherCauses.Props(p.b, p.c).component)
     ).build
 
   // ===================================================================================================================
@@ -91,48 +94,84 @@ object CfgIncompletions {
 
   object OtherCauses {
 
-    case class Props(remote: CustomIncmpTypeCrud.Remote, clientData: ClientData) {
-//      def component = Component(this)
+    case class Props(remote: CustomReqTypeImplicationMod.Remote, clientData: ClientData) {
+      def component = Component(this)
     }
 
-    //    val tableIO = new RemoteDeltaListener[CustomReqType, CustomReqType.Id, CustomReqTypeImplicationMod.type]
-//    import tableIO.{Arb, D, P}
-//
-//    private val prespec = TableSpecBuilder[P](
-//      FieldSpec[P].noValidation(_.imp, ImplicationRequired)(E.CheckboxEditor))
-//      .dataId[D]
-//
-//    private val spec = prespec
-//      .tableConstraints(None)
-//      .saveNotNeededWhenE(_.imp)
-//      .asyncSaveP(updateIO)
-//
-//    def updateIO(arb: Arb, p: P, u: prespec.U, s: SuccessIO, f: FailureIO): IO[Unit] =
-//      ClientProtocol.call(arb.remote)((p.id, u), arb.clientData.update(_) >> s.io, f)
-//
-//    val comp = ReactComponentB[Arb]("OtherCauses")
-//      .getInitialState(p => spec.initialState(p.clientData.project.customReqTypes.data, _.id))
-//      .backend(_ => new OnUnmountBackend)
-//      .render(render _)
-//      .configure(tableIO.recvExtUpdates(spec, Partition.CustomReqTypes, identity))
-//      .build
-//
-//    // TODO doesn't handle static reqs
-//
-//    private def savedRow(implicit x: Arb) = // TODO fuck this implicit shit off
-//      spec.savedRowP((F, id, rs, p, vv) => {
-//        val c = UiLib.rowStatusRowClass(rs)
-//        val ctrls = UiLib.rowStatusCtrls(rs, EmptyTag)
-//        tr(cls := c, key := id.value, td(label(vv, p.fullName), ctrls))
-//      })
-//
-//    private def render(T: ComponentScopeU[Arb, prespec.S, _]): ReactElement = {
-//      implicit def x = T.props
-//      val rows = spec.savedRows(T, savedRow)(_.filter(_.p.alive == Alive).sortBy(_.p.mnemonic))
-//      table(
-//        cls := "reqimp",
-//        thead(tr(th("ReqTypes requiring implication"))),
-//        tbody(rows))
-//    }
+    val savedRowStore = SavedRowStore.data[CustomReqType](_.imp)
+    import savedRowStore.{State => S}
+    val ST = ReactS.FixT[IO, S]
+    type ST = ST.T[Unit]
+
+    val Component = ReactComponentB[Props]("OtherCauses")
+      .getInitialState(initialState)
+      .backend(new Backend(_))
+      .render(_.backend.render)
+      .configure(
+        RemoteDeltaListener(CustomReqType, CustomReqTypeCrud)
+          .install(savedRowStore, Partition.CustomReqTypes, _.clientData))
+      .build
+
+    private def initialState(p: Props): S =
+      savedRowStore.initStateS(p.clientData.project.customReqTypes.data, _.id)
+
+    def label(r: ReqType): String = s"${r.mnemonic.value}: ${r.name}"
+
+    final class Backend(c: BackendScope[Props, S]) extends OnUnmount {
+
+      def save(p: Props, id: CustomReqType.Id): ST =
+        ReactS.liftR[IO, S, Unit](state => {
+          val setStatus = savedRowStore.setStatusST[IO](id)
+          val saveio = Persistence.retryably[ST](retry => {
+            val v = savedRowStore.getI(id)(state)
+            val f = Persistence.failureIO(retry)(c runState _, setStatus)
+            val io = ClientProtocol.call(p.remote)((id, v), p.clientData.update, f)
+            ST ret io
+          })
+          saveio >> setStatus(RowStatus.Locked)
+        })
+
+      val genEditor =
+        Editors.checkboxEditor.imap(ImplicationRequired)
+          .strengthR[ReqType].labelSuffix(a => label(a._2))
+
+      val editor =
+        genEditor.cmapA[(ImplicationRequired, CustomReqType)](a => a)
+          .zoomU[S].applyRowUpdate(savedRowStore)(_._2.id)
+          .paddSTA(a => { case OnEditFinished(_) => save(c.props, a._2.id) })
+
+      val editable = editor.editableByRowStatus(c)
+
+      def editorI(r: savedRowStore.Row): editor.Input =
+        EditorI((r.i, r.p), "", editable(r.status))
+
+      type Rows = Stream[(Mnemonic, ReactElement)]
+
+      def savedRows: Rows =
+        savedRowStore.getAll(c.state).filter(_.p.alive == Alive).map(r => {
+          val re: ReactElement =
+            <.tr(^.key := r.p.id.value,
+              <.td(
+                editor render editorI(r),
+                UI.rowStatusCtrls(r.status, EmptyTag)))
+          (r.p.mnemonic, re)
+        })
+
+      val staticRows: Rows =
+        ReqType.static.toStream.map(s => {
+          val re: ReactElement =
+            <.tr(^.key := s.mnemonic.value,
+              <.td(genEditor render EditorI((s.imp, s), "", None)))
+          (s.mnemonic, re)
+        })
+
+      def renderRows =
+        (staticRows #::: savedRows).sortBy(_._1).map(_._2).toReactNodeArray
+
+      def render: ReactElement =
+        <.table(
+          <.thead(<.tr(<.th("ReqTypes requiring implication"))),
+          <.tbody(renderRows))
+    }
   }
 }

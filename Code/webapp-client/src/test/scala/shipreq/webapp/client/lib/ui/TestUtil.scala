@@ -96,7 +96,7 @@ object TestUtil {
 
     val fields = FieldSet2[Person](_.username.value, _.desc getOrElse "")(("", "TODO"))
 
-    val savedRowStore = SavedRowStore.of(fields).keyedBy[Long]
+    val savedRowStore = SavedRowStore.fields(fields).keyedBy[Long]
     val newRowStore   = NewRowStore.of(fields)
 
     val needSave = SaveNeed.cmpToExtract((p: Person) => (p.username, p.desc))

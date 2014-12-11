@@ -1,7 +1,8 @@
 package shipreq.webapp.client.lib.ui
 
-import japgolly.scalajs.react._, vdom.ReactVDom.Tag, ScalazReact._
-import scalaz.{Applicative, Bind}
+import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import scalaz.{Applicative, Bind, ~>}
+import scalaz.effect.IO
 import shipreq.webapp.base.validation._
 
 abstract class EditorExt {
@@ -29,6 +30,15 @@ object EditorExt extends EditorExt {
         case OnEditFinished(_) => f(g(a))
       })
 
+    def applyRowUpdate[K, P](savedStore: SavedRowStore[S, K, P, B])
+                            (k: A => K)
+                            (implicit A: Applicative[M], B: Bind[M]): Editor[A, B, M, S, C, D, V] =
+      e.modCallbacksA(a =>
+        h => h.paddST {
+          case OnChange(v)       => savedStore.setIST(k(a), v)
+          case OnEditFinished(v) => savedStore.setIST(k(a), v)
+        })
+
     def applyRowUpdateAndRevert[K, P, I](savedStore: SavedRowStore[S, K, P, I], newStore: NewRowStore[S, I])
                                         (k: A => Option[K])
                                         (implicit A: Applicative[M], B: Bind[M],
@@ -49,12 +59,28 @@ object EditorExt extends EditorExt {
             }
         }
       )
+
+    def editableByRowStatus(c: ComponentStateFocus[S])
+                           (implicit ev: IO[Unit] =:= D, M: M ~> IO): RowStatus => Option[e.Editable] = {
+      val canedit = e.editable(c runState _.st)
+      rs => rs match {
+        case RowStatus.Sync | RowStatus.Failed(_) => canedit
+        case RowStatus.Locked                     => None
+      }
+    }
+
   }
 
   final class EditorExt_Tag[A,B,M[_],S,C,D](val e: Editor[A,B,M,S,C,D,Tag]) extends AnyVal {
 
     def renderOptionalError(f: A => Option[String]): Editor[A,B,M,S,C,D,Tag] =
       Editor(i => Editors.renderWithError(e, f(i.data)) render i)
+
+    def wrapInLabel(f: (A, Tag) => Modifier): Editor[A,B,M,S,C,D,Tag] =
+      Editor(i => <.label(f(i.data, e render i)))
+
+    def labelSuffix(f: A => Modifier): Editor[A,B,M,S,C,D,Tag] =
+      wrapInLabel((a, i) => Seq(i, f(a)))
 
     def applyInputValidationU(v: ValidatorU[A, _, _]): Editor[A,B,M,S,C,D,Tag] =
       renderOptionalError(i => v.correctAndValidateU(i).swap.toOption.map(_.toText))

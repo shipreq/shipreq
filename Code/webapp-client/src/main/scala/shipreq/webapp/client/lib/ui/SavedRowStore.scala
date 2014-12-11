@@ -5,6 +5,7 @@ import monocle._
 import monocle.syntax._
 import scalaz.Applicative
 import shipreq.base.util.ScalaExt._
+import shipreq.webapp.base.data.DataIdAux
 
 object SavedRowStore {
   final case class Row[P, I](status: RowStatus, p: P, i: I)
@@ -21,8 +22,13 @@ object SavedRowStore {
   def apply[K, P, I](pi: P => I): SavedRowStore[SS[K, P, I], K, P, I] =
     new SavedRowStore(SimpleIso.dummy, new RowL, pi)
 
-  def of[P, I](f: FieldSet[P, I]) = new B(f)
-  @inline final class B[P, I](f: FieldSet[P, I]) {
+  def data[P] = new BD[P]
+  @inline final class BD[P] {
+    @inline def apply[K, I](pi: P => I)(implicit D: DataIdAux[P, K]): SavedRowStore[SS[K, P, I], K, P, I] = SavedRowStore(pi)
+  }
+
+  def fields[P, I](f: FieldSet[P, I]) = new BF(f)
+  @inline final class BF[P, I](f: FieldSet[P, I]) {
     @inline def keyedBy[K]: SavedRowStore[SS[K, P, I], K, P, I] = SavedRowStore(f.pi)
   }
 }
@@ -67,7 +73,11 @@ final class SavedRowStore[S, K, P, I](_ss: SimpleLens[S, SavedRowStore.SS[K, P, 
   def remove   (k: K)              : S => S         = _ss.modifyF(_ - k)
   def set      (k: K, p: P)        : S => S         = _ss.modifyF(_ + (k -> initRow(p)))
   def setT     (kp: KP)            : S => S         = set(kp._1, kp._2)
+  def setI     (k: K, i: I)        : S => S         = _i(k).setF(i)
   def setStatus(k: K, r: RowStatus): S => S         = _status(k).setF(r)
+
+  def setIST[M[_] : Applicative](k: K, i: I): ReactST[M, S, Unit] =
+    ReactS modT setI(k, i)
 
   def setStatusST[M[_]: Applicative](k: K): RowStatus => ReactST[M, S, Unit] =
     rs => ReactS.modT(setStatus(k, rs))

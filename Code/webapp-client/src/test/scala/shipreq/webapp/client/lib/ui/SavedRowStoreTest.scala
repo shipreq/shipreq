@@ -58,7 +58,7 @@ object SavedRowStoreTest extends TestSuite {
       (r1,r2)    ← genRowStatus.pair
     } yield {
       val f = fields2((a0,b0))
-      val t = SavedRowStore.of(f).keyedBy[Long].contramap(l)
+      val t = SavedRowStore.fields(f).keyedBy[Long].contramap(l)
       TestInput(t, s, f, a1, b1, a2, b2, k1, k2, r1, r2)
     }
 

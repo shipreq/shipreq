@@ -52,7 +52,7 @@ object Editors {
       val base = checkbox(ei.data)(^.cls := ei.cssClass)
       ei.editable match {
         case None =>
-          base(^.readonly := true)
+          base(^.readonly := true, ^.disabled := true)
         case Some(cb) =>
           @inline def cbh(event: CallbackEvent[Boolean], st: ST = nopST) = cb(callbackH(event, st))
           def handleChange: ReactEventI => IO[Unit] = e => {
@@ -66,8 +66,7 @@ object Editors {
   // -------------------------------------------------------------------------------------------------------------------
 
   def renderWithError[A,B,M[_],S,C,D](editor: Editor[A,B,M,S,C,D,Tag], err: Option[String]): Editor[A,B,M,S,C,D,Tag] =
-    Editor(ei => <.div(
-      editor render ei,
+    Editor(i => <.div(
+      editor render i,
       err.map(e => <.div(^.cls := "errorMsg", e))))
-
 }

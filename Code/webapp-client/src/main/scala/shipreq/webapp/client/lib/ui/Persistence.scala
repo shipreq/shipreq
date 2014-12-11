@@ -20,7 +20,7 @@ object Persistence {
     a
   }
 
-  def failureIO[S](retry: Retry[S], realise: Realise[S], setStatus: SetRowStatus[S]): FailureIO = {
+  def failureIO[S](retry: Retry[S])(realise: Realise[S], setStatus: SetRowStatus[S]): FailureIO = {
     def failedStatus = RowStatus.Failed.lazily(realise(retry.value))
     FailureIO(realise(setStatus(failedStatus)))
   }
@@ -51,7 +51,7 @@ object Persistence {
       }
       def save(p: P, u: U): R = {
         val s: SuccessIO = SuccessIO.nop
-        val f = failureIO(retry, realise, setStatus)
+        val f = failureIO(retry)(realise, setStatus)
         Fix.ret(updateIO(p, u, s, f))
       }
       Fix.liftR(s =>
@@ -94,7 +94,7 @@ object Persistence {
       }
       def save(u: U): R = {
         val s = SuccessIO(realise(removeNew.liftIO))
-        val f = failureIO(retry, realise, setStatus)
+        val f = failureIO(retry)(realise, setStatus)
         Fix.ret(createIO(u, s, f))
       }
       Fix.liftR(s =>
@@ -155,7 +155,7 @@ object Persistence {
 
     retryably[R](retry => {
       val s = SuccessIO.nop
-      val f = failureIO(retry, realise, setStatus)
+      val f = failureIO(retry)(realise, setStatus)
       Fix.ret(deleteIO(s, f)) >> setStatus(RowStatus.Locked)
     })
   }

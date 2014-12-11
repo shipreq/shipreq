@@ -8,9 +8,8 @@ object TypicalStoresAndState {
   def apply[P, I](fields: FieldSet[P, I]) = new B[P, I, fields.type](fields)
   @inline final class B[P, I, _FS <: FieldSet[P, I]](_fields: _FS) {
     @inline def keyedBy[K]: TypicalStoresAndState[P, I, K] {type FS = _FS} =
-      new TypicalStoresAndState[P, I, K] {
+      new TypicalStoresAndState[P, I, K](_fields) {
         override type FS = _FS
-        override val fields = _fields
       }
   }
 }
@@ -20,11 +19,10 @@ object TypicalStoresAndState {
  * @tparam I Input. A subset of P's fields in a form that matches the editor state.
  * @tparam K Key. Data ID.
  */
-abstract class TypicalStoresAndState[P, I, K] {
+abstract class TypicalStoresAndState[P, I, K](fields: FieldSet[P, I]) {
   type FS <: FieldSet[P, I]
-  val fields: FS
 
-  val savedRowStore = SavedRowStore.of(fields).keyedBy[K]
+  val savedRowStore = SavedRowStore.fields(fields).keyedBy[K]
   val newRowStore   = NewRowStore.of(fields)
 
   case class State(newRow: newRowStore.State, savedRows: savedRowStore.State, showDeleted: Boolean)

@@ -83,13 +83,7 @@ final class CfgTable[S, K <: TaggedLong, P, I, A, B, C, V, RowKey, R](editor: Ed
   private[this] def run(s: ST.T[Unit]): IO[Unit] = c.runState(s)
   private[this] implicit def endofToReactST(f: S => S) = ST modT f
 
-  private[this] val editable: RowStatus => Option[editor.Editable] = {
-    val canedit = editor.editable(c runState _.st)
-    rs => rs match {
-      case RowStatus.Sync | RowStatus.Failed(_) => canedit
-      case RowStatus.Locked                     => None
-    }
-  }
+  private[this] val editable = editor.editableByRowStatus(c)
 
   private[this] def renderRow(a: A, rs: RowStatus): V =
     editor render EditorI(a, "", editable(rs))
