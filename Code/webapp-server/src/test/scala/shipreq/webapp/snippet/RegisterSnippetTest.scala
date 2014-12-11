@@ -76,7 +76,7 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
     def test(email: String, usrTableDiff: Int) =
       withTestTaskman {
         assertTableDiffs(Tables.Usr -> usrTableDiff) {
-          Register1.perform(Validators.email.correctAndValidate(email))
+          Register1.perform(Validators.email.correctAndValidateU(email))
     }}
 
     def testSuccess(email: String, usrTableDiff: Int, tokenChange: Boolean) {

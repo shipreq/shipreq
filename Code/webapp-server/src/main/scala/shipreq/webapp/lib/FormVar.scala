@@ -5,7 +5,7 @@ import net.liftweb.http.js.{JsExp, JsCmd, JsCmds}
 import net.liftweb.util.CssSel
 import net.liftweb.util.Helpers._
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.base.validation.{ValidationResult, Validator, CorrectionPart, InputCorrected}
+import shipreq.webapp.base.validation._
 import shipreq.webapp.feature.validation.Validators
 import shipreq.webapp.security.PasswordAndSalt
 import shipreq.webapp.util.JsExt.{JqSetValue, JqId}
@@ -46,9 +46,9 @@ object FormVar {
     val booleanOnSubmit: CssSelF[Boolean] = (get, set) =>
       "*" #> SHtml.onSubmitBoolean(set) & "* [checked]" #> checkedO(get)
 
-    def ajaxStr(cp: CorrectionPart[String, String], jsId: JsExp): CssSelF[String] = {
+    def ajaxStr(cp: CorrectionPartU[String, String], jsId: JsExp): CssSelF[String] = {
       def callback(set: String => Unit): String => JsCmd = i => {
-        val c = cp.correct(i)
+        val c = cp.correctU(i)
         set(c.value)
         updateJs(c)
       }
@@ -64,19 +64,19 @@ object FormVar {
   private def unvalidated[A](csssel: CssSelF[A]) =
     FormVar[A, A](csssel, ValidationResult(_))
 
-  private def validated[I, O](v: Validator[I, _, O])(csssel: CssSelF[I]) =
-    FormVar[I, O](csssel, v.correctAndValidate)
+  private def validated[I, O](v: ValidatorU[I, _, O])(csssel: CssSelF[I]) =
+    FormVar[I, O](csssel, v.correctAndValidateU)
 
-  def ajaxStr[O](v: Validator[String, String, O], id: JqId): FormVar[String, O] =
+  def ajaxStr[O](v: ValidatorU[String, String, O], id: JqId): FormVar[String, O] =
     ajaxStr(v, "#" + id.id, id)
 
-  def ajaxStr[O](v: Validator[String, String, O], sel: String, jsId: JsExp): FormVar[String, O] =
+  def ajaxStr[O](v: ValidatorU[String, String, O], sel: String, jsId: JsExp): FormVar[String, O] =
     validated(v)(CS.ajaxStr(v.cp, jsId) scopeBy sel)
 
-  def strOnSubmit[O](v: Validator[String, _, O], sel: String): FormVar[String, O] =
+  def strOnSubmit[O](v: ValidatorU[String, _, O], sel: String): FormVar[String, O] =
     validated(v)(CS.strOnSubmit scopeBy sel)
 
-  def boolOnSubmit[O](v: Validator[Boolean, _, O], sel: String): FormVar[Boolean, O] =
+  def boolOnSubmit[O](v: ValidatorU[Boolean, _, O], sel: String): FormVar[Boolean, O] =
     validated(v)(CS.booleanOnSubmit scopeBy sel)
 
   def boolOnSubmit(sel: String): FormVar[Boolean, Boolean] =

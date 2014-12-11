@@ -8,6 +8,8 @@ sealed trait ReqType {
   def oldMnemonics: Set[ReqType.Mnemonic]
   def name: String
   def imp: ImplicationRequired
+
+  final def allMnemonics: Set[ReqType.Mnemonic] = oldMnemonics + mnemonic
 }
 
 object ReqType {
@@ -25,7 +27,7 @@ object ReqType {
   val static: List[Static] = List(UseCase)
 
   lazy val staticMnemonics =
-    (Set.empty[Mnemonic] /: static)((q, r) => q ++ r.oldMnemonics + r.mnemonic)
+    (Set.empty[Mnemonic] /: static)(_ ++ _.allMnemonics)
 }
 
 // =====================================================================================================================

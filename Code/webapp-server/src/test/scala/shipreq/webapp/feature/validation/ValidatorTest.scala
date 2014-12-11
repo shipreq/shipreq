@@ -13,13 +13,13 @@ import shipreq.webapp.security.PasswordAndSalt
 class ValidatorTest extends FunSuite with Matchers with PropertyChecks {
   def V = Validators
 
-  type VT3 = Validator[String, String, String]
+  type VT3 = ValidatorU[String, String, String]
 
   def testV(v: VT3, examples: TableFor2[Option[String], String]): Unit =
     forAll(examples) ((expectedFailure, input) => testV(v, input, expectedFailure))
 
   def testV(v: VT3, input: String, expectedFailure: Option[String]): Unit =
-    v.validate(InputCorrected(input)) match {
+    v.validateU(InputCorrected(input)) match {
       case Failure(f) => f.toText should include(expectedFailure.getOrElse("Validation failed but was expected to pass."))
       case Success(_) => expectedFailure shouldBe None
     }
@@ -27,13 +27,13 @@ class ValidatorTest extends FunSuite with Matchers with PropertyChecks {
   def testCV(v: VT3, examples: TableFor3[String, Option[String], Option[String]]): Unit =
     forAll(examples)((i, cc, expectedFailure) => {
       val c = cc.getOrElse(i)
-      v.correct(i).value shouldBe c
+      v.correctU(i) shouldBe c
       testV(v, c, expectedFailure)
     })
 
   test("Email correction") {
-    V.email.correct("hehe").value shouldBe "hehe"
-    V.email.correct(" he  he ").value shouldBe "hehe" // removes ALL whitespace
+    V.email.correctU("hehe") shouldBe "hehe"
+    V.email.correctU(" he  he ") shouldBe "hehe" // removes ALL whitespace
   }
 
   test("Email validation") {
@@ -80,30 +80,30 @@ class ValidatorTest extends FunSuite with Matchers with PropertyChecks {
   }
 
   test("Password pair validation") {
-    Validators.passwords.correctAndValidate("qweqwe123", "qweqwe123h").isFailure shouldBe true
-    Validators.passwords.correctAndValidate("qweqwe123", "qweqwe123").isFailure shouldBe false
+    Validators.passwords.correctAndValidateU("qweqwe123", "qweqwe123h").isFailure shouldBe true
+    Validators.passwords.correctAndValidateU("qweqwe123", "qweqwe123").isFailure shouldBe false
   }
 
   test("Password change") {
     val ps = PasswordAndSalt.createWithRandomSalt("blahblah8")
     val v = Validators.passwordChange(ps)
-    v.correctAndValidate("blahblah", ("qweqwe123", "qweqwe123")).isFailure shouldBe true
-    v.correctAndValidate("blahblah8", ("qweqwe12", "qweqwe123")).isFailure shouldBe true
-    v.correctAndValidate("blahblah8", ("qweqwe123", "")).isFailure shouldBe true
-    v.correctAndValidate("blahblah8", ("qweqwe123", "qweqwe123")) shouldBe Success("qweqwe123")
+    v.correctAndValidateU("blahblah", ("qweqwe123", "qweqwe123")).isFailure shouldBe true
+    v.correctAndValidateU("blahblah8", ("qweqwe12", "qweqwe123")).isFailure shouldBe true
+    v.correctAndValidateU("blahblah8", ("qweqwe123", "")).isFailure shouldBe true
+    v.correctAndValidateU("blahblah8", ("qweqwe123", "qweqwe123")) shouldBe Success("qweqwe123")
   }
 
   test("Password set") {
     val v = Validators.passwordSet
-    v.correctAndValidate("", ("qweqwe12", "qweqwe123")).isFailure shouldBe true
-    v.correctAndValidate("", ("qweqwe123", "")).isFailure shouldBe true
-    v.correctAndValidate("", ("qweqwe123", "qweqwe123")) shouldBe Success("qweqwe123")
+    v.correctAndValidateU("", ("qweqwe12", "qweqwe123")).isFailure shouldBe true
+    v.correctAndValidateU("", ("qweqwe123", "")).isFailure shouldBe true
+    v.correctAndValidateU("", ("qweqwe123", "qweqwe123")) shouldBe Success("qweqwe123")
   }
 
   test("Username correction") {
-    V.user.username.correct("HEHE").value shouldBe "hehe"
-    V.user.username.correct("  ahah  ").value shouldBe "ahah"
-    V.user.username.correct("  Heh  ").value shouldBe "heh"
+    V.user.username.correctU("HEHE")     shouldBe "hehe"
+    V.user.username.correctU("  ahah  ") shouldBe "ahah"
+    V.user.username.correctU("  Heh  ")  shouldBe "heh"
   }
 
   test("Username validation") {
@@ -161,11 +161,11 @@ class ValidatorTest extends FunSuite with Matchers with PropertyChecks {
   }
 
   test("LargeTextO") {
-    V.share.preface.correct("\n\n  ").value shouldBe None
-    V.share.preface.correctAndValidate("") shouldBe Success(None)
-    V.share.preface.correctAndValidate("\n\nyo\n\nhehe\n\n") shouldBe Success(Some("yo\n\nhehe"))
-    V.share.preface.correctAndValidate("x" * largeTextMaxLength).isSuccess shouldBe true
-    V.share.preface.correctAndValidate("x" * (largeTextMaxLength + 1)).isSuccess shouldBe false
+    V.share.preface.correctU("\n\n  ") shouldBe None
+    V.share.preface.correctAndValidateU("") shouldBe Success(None)
+    V.share.preface.correctAndValidateU("\n\nyo\n\nhehe\n\n") shouldBe Success(Some("yo\n\nhehe"))
+    V.share.preface.correctAndValidateU("x" * largeTextMaxLength).isSuccess shouldBe true
+    V.share.preface.correctAndValidateU("x" * (largeTextMaxLength + 1)).isSuccess shouldBe false
   }
 
   test("Landing page name") {

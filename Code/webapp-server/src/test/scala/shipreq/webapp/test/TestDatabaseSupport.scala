@@ -235,7 +235,7 @@ trait TestDatabaseHelpers extends TestHelpers2 {
   }
 
   def randomUCTitle: String =
-    findSuitable(Validators.usecase.title.correctAndValidate(randomStr))(_.isSuccess).getOrElse(???)
+    findSuitable(Validators.usecase.title.correctAndValidateU(randomStr))(_.isSuccess).getOrElse(???)
 
   def newProjectId(userId: UserId = getOrCreateUserId): ProjectId =
     dao.createProject(userId, randomUCTitle).gimme

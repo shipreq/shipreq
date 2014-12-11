@@ -2,16 +2,12 @@ package hahaa
 
 import org.scalajs.dom._
 import scala.scalajs.js
-//import scalaz._, Scalaz._
-import scalaz.\/
 import scalaz.effect.IO
-import scalaz.std.option._
-import scalaz.syntax.std.option._
+import scalaz.std.AllInstances._
 import shipreq.webapp.base.protocol.Routines
-import shipreq.webapp.client.lib._
-import shipreq.webapp.client.ui._
 import shipreq.webapp.client.util.route._
 import japgolly.scalajs.react._, vdom.ReactVDom._, all._, ScalazReact._, experiment._
+import shipreq.webapp.client.app.ui._
 
 object ReactExamples {
 
@@ -58,7 +54,7 @@ object ReactExamples {
         CfgIncompletions.comp(CfgIncompletions.Props(r.incmpCrud, r.reqTypeImpMod, clientData, false))
 
       def cfgReqTypesR: Renderer[ProjectPage] = _ =>
-        CfgReqTypes.comp(TableIoProps(r.reqTypeCrud, clientData, false))
+        CfgReqTypes.Props(r.reqTypeCrud, clientData, false).component
 
       val c = Router.component(BaseUrl("/wip"), ProjectPage)
       c() render document.getElementById("eg2")
