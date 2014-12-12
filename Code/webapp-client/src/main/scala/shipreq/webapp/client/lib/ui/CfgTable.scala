@@ -3,7 +3,8 @@ package shipreq.webapp.client.lib.ui
 import japgolly.scalajs.react._, vdom.prefix_<*._, ScalazReact._
 import scalaz.effect.IO
 import shipreq.base.util.TaggedTypes.TaggedLong
-import shipreq.webapp.base.data._, DataImplicits._
+import shipreq.webapp.base.data.{Alive, Dead, DataIdAux}
+import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.protocol.DeletionAction._
 import shipreq.webapp.client.app.ui.ShowDeletedToggler
 
