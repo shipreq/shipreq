@@ -61,7 +61,7 @@ object CfgTable {
     def newRow    : I => R
     def savedRow  : (I, P) => R
     def deletedRow: P => R
-    def render    : R => Seq[Modifier]
+    def render    : R => Seq[TagMod]
   }
 }
 
@@ -100,7 +100,7 @@ final class CfgTable[S, K <: TaggedLong, P, I, A, B, C, V, RowKey, R](editor: Ed
       ^.onClick ~~> run(newStore.remove),
       "Cancel")
 
-  def row(classArg: String, rs: RowStatus, content: RowContent, ctrls: => Modifier): ReactTag = {
+  def row(classArg: String, rs: RowStatus, content: RowContent, ctrls: => TagMod): ReactTag = {
     val cls2 = UI.rowStatusRowClass(rs)
     val c = UI.rowStatusCtrls(rs, ctrls)
     <.tr(
@@ -115,7 +115,7 @@ final class CfgTable[S, K <: TaggedLong, P, I, A, B, C, V, RowKey, R](editor: Ed
       row("new", r.status, rr.newRow(v), newCancelButton)(^.key := "new")
     })
 
-  def newRow: Modifier =
+  def newRow: TagMod =
     newRowO.getOrElse(EmptyTag)
 
   def savedRows: RowStream = {

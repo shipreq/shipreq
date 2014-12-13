@@ -76,10 +76,10 @@ object EditorExt extends EditorExt {
     def renderOptionalError(f: A => Option[String]): Editor[A,B,M,S,C,D,ReactTag] =
       Editor(i => Editors.renderWithError(e, f(i.data)) render i)
 
-    def wrapInLabel(f: (A, ReactTag) => Modifier): Editor[A,B,M,S,C,D,ReactTag] =
+    def wrapInLabel(f: (A, ReactTag) => TagMod): Editor[A,B,M,S,C,D,ReactTag] =
       Editor(i => <.label(f(i.data, e render i)))
 
-    def labelSuffix(f: A => Modifier): Editor[A,B,M,S,C,D,ReactTag] =
+    def labelSuffix(f: A => TagMod): Editor[A,B,M,S,C,D,ReactTag] =
       wrapInLabel((a, i) => Seq(i, f(a)))
 
     def applyInputValidationU(v: ValidatorU[A, _, _]): Editor[A,B,M,S,C,D,ReactTag] =

@@ -74,7 +74,7 @@ object CfgIncompletions {
 
       val table = {
         def rowRenderer =
-          new CfgTable.RowRenderer[CustomIncmpType, rowE.View, (Modifier, Modifier)] {
+          new CfgTable.RowRenderer[CustomIncmpType, rowE.View, (TagMod, TagMod)] {
             override def newRow     = identity
             override def savedRow   = (v, p) => v
             override def deletedRow = p => (p.key.value, TextMod.nonBlank from p.desc)

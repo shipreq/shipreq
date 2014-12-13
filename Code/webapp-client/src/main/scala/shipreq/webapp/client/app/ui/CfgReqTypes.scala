@@ -55,7 +55,7 @@ object CfgReqTypes {
 
     val table = {
       def rowRenderer =
-        new CfgTable.RowRenderer[CustomReqType, rowE.View, (Modifier, Set[ReqType.Mnemonic], Modifier, Modifier)] {
+        new CfgTable.RowRenderer[CustomReqType, rowE.View, (TagMod, Set[ReqType.Mnemonic], TagMod, TagMod)] {
           override def newRow = {
             case (mnemonic, name, impReq) => (mnemonic, Set.empty, name, impReq)
           }
@@ -67,7 +67,7 @@ object CfgReqTypes {
 
           override def render = {
             case (mnemonic, oldMnemonics, name, impReq) =>
-              val mn: Modifier =
+              val mn: TagMod =
                 if (oldMnemonics.isEmpty)
                   mnemonic
                 else
