@@ -6,9 +6,11 @@ import scala.language.reflectiveCalls
 import scalaz.effect.IO
 import scalaz.std.AllInstances._
 
+import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.data.delta.Partition
 import shipreq.webapp.base.data.Validators.{customIncmpType => V}
+import shipreq.webapp.base.data.Validators.shared.RefKeyVS
 import shipreq.webapp.base.protocol.Routines._
 import shipreq.webapp.base.TextMod
 import shipreq.webapp.base.UiText.FieldNames
@@ -20,25 +22,26 @@ import ReqType.Mnemonic
 
 object CfgIncompletions {
 
-  case class Props(a: CustomIncmpTypeCrud.Remote,
+  case class Props(cp: ClientProtocol,
+                   a: CustomIncmpTypeCrud.Remote,
                    b: CustomReqTypeImplicationMod.Remote,
-                   c: ClientData,
+                   cd: ClientData,
                    showDeleted: Boolean)
 
   val comp = ReactComponentB[Props]("Cfg: Incompletions")
     .render(p =>
       <.div(
         <.h4("User-Defined Incompletion Types"),
-        UserDefIncompletions.Props(p.a, p.c, p.showDeleted).component,
+        UserDefIncompletions.Props(p.cp, p.a, p.cd, p.showDeleted).component,
         <.h4("Other Causes of Incompletion"),
-        OtherCauses.Props(p.b, p.c).component)
+        OtherCauses.Props(p.cp, p.b, p.cd).component)
     ).build
 
   // ===================================================================================================================
 
   object UserDefIncompletions {
 
-    case class Props(remote: CustomIncmpTypeCrud.Remote, clientData: ClientData, showDeleted: Boolean) {
+    case class Props(cp: ClientProtocol, remote: CustomIncmpTypeCrud.Remote, clientData: ClientData, showDeleted: Boolean) {
       def component = Component(this)
     }
 
@@ -61,15 +64,37 @@ object CfgIncompletions {
         savedRowStore.initStateS(p.clientData.project.customIncmpTypes.data, _.id),
         p.showDeleted)
 
+    def validatorState(k: Option[CustomIncmpType.Id], cd: ClientData): S => V.S =
+      s => {
+        val ts: RefKeyVS.Data[Tag.Id] = // TODO cacheable
+          (None, cd.project.tags.data.tags.values.toStream
+            .map(t => t.keyO.map(k => (t.id.some, k))).filter(_.isDefined).map(_.get))
+        val is: RefKeyVS.Data[CustomIncmpType.Id] =
+          (k, savedRowStoreS.getAllP(s).map(i => (i.id.some, i.key)))
+        RefKeyVS(ts, is)
+      }
+
     final class Backend(c: BackendScope[Props, S]) extends OnUnmount {
-      val crudIO = CrudIO(CustomIncmpType, CustomIncmpTypeCrud)(c.props.remote, c.props.clientData)
+      val crudIO = CrudIO(CustomIncmpType, CustomIncmpTypeCrud)(c.props.cp, c.props.remote, c.props.clientData)
       val supp = TypicalSupp(storesAndState, crudIO)(c, _.alive)
+
+      def valState(k: Option[CustomIncmpType.Id]) = validatorState(k, c.props.clientData)
 
       val rowE = {
         val keyE  = Editors.textInputEditor.applyValidator(V.keyS)
         val descE = Editors.textareaEditor.applyValidator(V.descS)
         val e = Editor.merge2S(fields, keyE, descE).tupleI.zoomU[S]
-        supp.addEditorFeatures(e)(V.all, _._1._2, p => (p.key, p.desc))
+
+        // TODO simplify
+        val saveFn = Persistence.asyncSaveS(V.all, savedRowStoreS)(
+          newRowStoreS,
+          valState(None),
+          k => valState(k.some),
+          supp.saveNeed(p => (p.key, p.desc)),
+          crudIO.createIO, crudIO.updateIO,
+          c runState _)
+
+        supp.addEditorFeatures2(e)(saveFn, _._1.incmpData._1)
       }
 
       val table = {
@@ -80,7 +105,11 @@ object CfgIncompletions {
             override def deletedRow = p => (p.key.value, TextMod.nonBlank from p.desc)
             override def render     = { case (key, desc) => List(key, desc) }
           }
-        val t = CfgTable.typical(storesAndState)(rowE)(_.key, rowRenderer, supp.deletion, c)
+        val t = CfgTable(rowE, savedRowStoreS, newRowStoreS).build(
+          _.key, rowRenderer,
+          i => (valState(None)(c.state), i),
+          k => (valState(k.some)(c.state), savedRowStoreS.getI(k)(c.state)),
+          supp.deletion,  _.showDeleted, c)
         val headerRow = CfgTable.header(List(FieldNames.refKey, FieldNames.desc))
         () => t.table(headerRow, Stream.empty)
       }
@@ -94,7 +123,7 @@ object CfgIncompletions {
 
   object OtherCauses {
 
-    case class Props(remote: CustomReqTypeImplicationMod.Remote, clientData: ClientData) {
+    case class Props(cp: ClientProtocol, remote: CustomReqTypeImplicationMod.Remote, clientData: ClientData) {
       def component = Component(this)
     }
 
@@ -125,7 +154,7 @@ object CfgIncompletions {
           val saveio = Persistence.retryably[ST](retry => {
             val v = savedRowStore.getI(id)(state)
             val f = Persistence.failureIO(retry)(c runState _, setStatus)
-            val io = ClientProtocol.call(p.remote)((id, v), p.clientData.update, f)
+            val io = c.props.cp.call(p.remote)((id, v), p.clientData.update, f)
             ST ret io
           })
           saveio >> setStatus(RowStatus.Locked)

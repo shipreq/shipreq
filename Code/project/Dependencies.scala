@@ -39,6 +39,8 @@ object Deps {
     // Update webapp-server/bower.json too.
     val reactJs = "org.webjars" % "react" % "0.12.1"
 
+    val sizzleJs = "org.webjars" % "sizzle" % "2.1.1"
+
     object React extends Group("0.6.1", "com.github.japgolly.scalajs-react") {
       val core   = js("core")
       val test   = js("test")

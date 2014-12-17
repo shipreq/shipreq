@@ -1,6 +1,8 @@
 package shipreq.webapp.base.data
 
+import scalaz.Equal
 import scalaz.std.string.stringInstance
+import scalaz.syntax.equal.ToEqualOps
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.AppConsts._
 import shipreq.webapp.base.TextMod._
@@ -16,16 +18,39 @@ object Validators {
 
   val genericDesc = optionalLargeText(FieldNames.desc)
 
-  // DD-18: Hashtag-like refkeys (groupings, incmp) must match this format: /[A-Za-z0-9][A-Za-z0-9_-=.]*/
-  // Must not contain: []{}<>
-  // TODO should refkey uniqueness and matching be case-insensitive? Probably.
-  val refKeyU =
-    Rules.whitelistCharsR( """A-Za-z0-9\._=\-""", "may only consist of letters, numbers, and these symbols: . _ = -")
-      .addRule(Rules.lengthInRange(refKeyLength))
-      .correct(noWhitespace.compose)
-      .constraint(c => nonEmpty >> (startsWithAlphaNumeric + c))
-      .forField(FieldNames.refKey)
-      .map(RefKey.apply)
+  // ===================================================================================================================
+  object shared {
+
+    // DD-18: Hashtag-like refkeys (groupings, incmp) must match this format: /[A-Za-z0-9][A-Za-z0-9_-=.]*/
+    // Must not contain: []{}<>
+    // TODO should refkey uniqueness and matching be case-insensitive? Probably.
+    val refKeyU =
+      Rules.whitelistCharsR( """A-Za-z0-9\._=\-""", "may only consist of letters, numbers, and these symbols: . _ = -")
+        .addRule(Rules.lengthInRange(refKeyLength))
+        .correct(noWhitespace.compose)
+        .constraint(c => nonEmpty >> (startsWithAlphaNumeric + c))
+        .forField(FieldNames.refKey)
+        .map(RefKey.apply)
+
+    object RefKeyVS {
+      type Data[Id] = (Option[Id], Stream[(Option[Id], RefKey)])
+    }
+
+    /** Validation state (external data) required to validate refkey uniqueness. */
+    case class RefKeyVS(tagData: RefKeyVS.Data[Tag.Id],
+                        incmpData: RefKeyVS.Data[CustomIncmpType.Id])
+
+    private def refKeyUniqueness: ValidationPart[RefKeyVS, RefKey, RefKey] = {
+      def vp[I: Equal](f: RefKeyVS => RefKeyVS.Data[I]) =
+        Uniqueness.main[RefKeyVS, (Option[I], RefKey), Option[I], RefKey, RefKey](
+          f(_)._1, f(_)._2, _._1, _._2, Uniqueness.ignoreO[I], _.≟).fieldName(FieldNames.refKey)
+      val v1 = vp(_.incmpData)
+      val v2 = vp(_.tagData)
+      v1 compose v2
+    }
+
+    val refKeyS = refKeyU.liftS[RefKeyVS].addValidation(refKeyUniqueness)
+  }
 
   // ===================================================================================================================
   object reqType {
@@ -61,17 +86,12 @@ object Validators {
 
   // ===================================================================================================================
   object customIncmpType {
-    type S = (Stream[CustomIncmpType], Option[CustomIncmpType.Id])
+    type S = shared.RefKeyVS
 
-    def keyU = refKeyU
-
-    private def keyUniqueness =
-      Uniqueness.entity[CustomIncmpType].applyO(_.id.some, _.key).fieldName(FieldNames.refKey)
-
-    val keyS = keyU.liftS[S].addValidation(keyUniqueness)
+    def keyU = shared.refKeyU
+    def keyS = shared.refKeyS
 
     def descU = genericDesc
-
     def descS = descU.liftS[S]
 
     val all = keyS ⊗ descS
@@ -79,10 +99,19 @@ object Validators {
 
   // ===================================================================================================================
   object tag {
+    type S = (Stream[Tag], Option[Tag.Id])
+
     def nameU = genericName
-    def keyU  = refKeyU
+
+    private def nameUniqueness =
+      Uniqueness.entity[Tag].applyO(_.id.some, _.name).fieldName("Name")
+
+    val nameS = nameU.liftS[S].addValidation(nameUniqueness)
+
+//    def keyU  = refKey
+
     def descU = genericDesc
-    // name - unique
+
     // refkey - unique
     // no cycles
   }

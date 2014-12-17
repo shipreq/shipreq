@@ -10,9 +10,9 @@ import DataImplicits._
 
 object CrudIO {
   def apply[O, D, I, U](o: O, rd: Crudable.Aux[I, U])
-                       (remote: rd.Remote, clientData: ClientData)
+                       (cp: ClientProtocol, remote: rd.Remote, clientData: ClientData)
                        (implicit O: ObjDataId[O, D, I]) =
-    new CrudIO[D, I, U, rd.type](remote, clientData)
+    new CrudIO[D, I, U, rd.type](cp, remote, clientData)
 }
 
 /**
@@ -20,11 +20,13 @@ object CrudIO {
  * @tparam I Data ID.
  * @tparam U Updated data values.
  */
-final class CrudIO[D, I, U, RD <: Crudable.Aux[I, U]](remote: Remote[RD], clientData: ClientData)
-                                                      (implicit I: DataIdAux[D, I]) {
+final class CrudIO[D, I, U, RD <: Crudable.Aux[I, U]](cp: ClientProtocol,
+                                                      remote: Remote[RD],
+                                                      clientData: ClientData)
+                                                     (implicit I: DataIdAux[D, I]) {
 
   private def crudIO(s: SuccessIO, f: FailureIO, a: CrudAction[I, U]): IO[Unit] =
-    ClientProtocol.call(remote)(a, clientData.update(_) >> s.io, f)
+    cp.call(remote)(a, clientData.update(_) >> s.io, f)
 
   def createIO(values: U, s: SuccessIO, f: FailureIO): IO[Unit] =
     crudIO(s, f, CrudAction.Create(values))

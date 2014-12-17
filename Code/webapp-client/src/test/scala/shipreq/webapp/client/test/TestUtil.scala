@@ -1,6 +1,10 @@
 package shipreq.webapp.client.test
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import shipreq.webapp.base.protocol.Routine
+import shipreq.webapp.client.lib.FailureIO
+import shipreq.webapp.client.protocol.ClientProtocol
+import scala.scalajs.js
 import scalaz.Equal
 import scalaz.std.AllInstances._
 import scalaz.syntax.equal._
@@ -34,6 +38,9 @@ object TestUtil {
       case f => sys.error(s"Expected a failed row. Got: $f")
     }
 
+  def fail(msg: String): Nothing =
+    throw new AssertionError(msg)
+
   case class AB[A,B](a: A, b: B)
 
   def genAB[A, B](ga: Gen[A], gb: Gen[B]): Gen[AB[A,B]] =
@@ -53,4 +60,11 @@ object TestUtil {
 
   def genRowStatus: Gen[RowStatus] =
     Gen.oneof(Sync, Locked, failedRowStatus)
+
+  def sole[A](a: js.Array[A]): A = {
+    assertEq(a.length, 1)
+    a.head
+  }
+
+  implicit def autodomnode(c: ComponentScope_M[TopNode]) = c.getDOMNode()
 }

@@ -7,6 +7,10 @@ import upickle._
 import shipreq.webapp.base.protocol.Routine
 import shipreq.webapp.client.lib.{FailureIO, Console}
 
+trait ClientProtocol {
+  def call[D <: Routine.Desc](r: Routine.Remote[D])(input: r.d.I, success: r.d.O => IO[Unit], f: FailureIO): IO[Unit]
+}
+
 object ClientProtocol {
 
   def parseJsObject[T: Reader](a: js.Any): Throwable \/ T =
@@ -28,15 +32,17 @@ object ClientProtocol {
   def readCluster[G <: Routine.Group : Reader](a: js.Any) = // TODO rename
     parseJsObject[G](a)
 
-  def call[D <: Routine.Desc](r: Routine.Remote[D])(input: r.d.I, success: r.d.O => IO[Unit], f: FailureIO): IO[Unit] = {
-    import r.d.{wi, ro}
-    val i = js.encodeURIComponent(write(input))
-    val q = s"${r.n}=$i"
-    val s = jsonEffect[r.d.O](success)
-    val ff = () => {
-      Console.error(s"AJAX failure on ${r.n} ⇐ $input")
-      f.io.unsafePerformIO()
+  object Lift extends ClientProtocol {
+    override def call[D <: Routine.Desc](r: Routine.Remote[D])(input: r.d.I, success: r.d.O => IO[Unit], f: FailureIO): IO[Unit] = {
+      import r.d.{wi, ro}
+      val i = js.encodeURIComponent(write(input))
+      val q = s"${r.n}=$i"
+      val s = jsonEffect[r.d.O](success)
+      val ff = () => {
+        Console.error(s"AJAX failure on ${r.n} ⇐ $input")
+        f.io.unsafePerformIO()
+      }
+      IO(LiftAjax.lift_ajaxHandler(q, s, ff, "json"))
     }
-    IO(LiftAjax.lift_ajaxHandler(q, s, ff, "json"))
   }
 }

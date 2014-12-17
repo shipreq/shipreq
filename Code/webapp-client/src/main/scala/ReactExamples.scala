@@ -1,6 +1,7 @@
 package hahaa
 
 import org.scalajs.dom._
+import shipreq.webapp.client.protocol.ClientProtocol
 import scala.scalajs.js
 import scalaz.effect.IO
 import scalaz.std.AllInstances._
@@ -31,7 +32,8 @@ object ReactExamples {
 
   def projectPage(r: Routines.ForCfgReqType): IO[Unit] = {
     import shipreq.webapp.client._
-    ClientData.init(r.projectInit, clientData => IO {
+    val cp = ClientProtocol.Lift
+    ClientData.init(cp, r.projectInit, clientData => IO {
 
       sealed trait ProjectPage
       object ProjectPage extends Page[ProjectPage] {
@@ -51,10 +53,10 @@ object ReactExamples {
       }
 
       def cfgIncmpR: Renderer[ProjectPage] = _ =>
-        CfgIncompletions.comp(CfgIncompletions.Props(r.incmpCrud, r.reqTypeImpMod, clientData, false))
+        CfgIncompletions.comp(CfgIncompletions.Props(cp, r.incmpCrud, r.reqTypeImpMod, clientData, false))
 
       def cfgReqTypesR: Renderer[ProjectPage] = _ =>
-        CfgReqTypes.Props(r.reqTypeCrud, clientData, false).component
+        CfgReqTypes.Props(cp, r.reqTypeCrud, clientData, false).component
 
       val c = Router.component(BaseUrl("/wip"), ProjectPage)
       c() render document.getElementById("eg2")

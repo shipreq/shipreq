@@ -36,6 +36,12 @@ trait TypicalSupp[P, I, K, U] {
     e.applyRowUpdateAndRevert(savedRowStoreS, newRowStoreS)(ak)
       .applyOnEditFinishedK(save)(ak)
   }
+
+  def addEditorFeatures2[A, V](e: Editor[A, FS#FieldValue, IO, S, FS#Field, IO[Unit], V])
+                              (saveFn: Option[K] => sas.ST,
+                               ak: A => Option[K]) =
+    e.applyRowUpdateAndRevert(savedRowStoreS, newRowStoreS)(ak)
+      .applyOnEditFinishedK(saveFn)(ak)
 }
 
 object TypicalSupp {

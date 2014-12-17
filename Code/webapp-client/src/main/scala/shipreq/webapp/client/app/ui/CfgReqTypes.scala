@@ -13,11 +13,12 @@ import shipreq.webapp.base.protocol.Routines.CustomReqTypeCrud
 import shipreq.webapp.client.ClientData
 import shipreq.webapp.client.lib.CrudIO
 import shipreq.webapp.client.lib.ui._
+import shipreq.webapp.client.protocol.ClientProtocol
 import UI.checkbox
 
 object CfgReqTypes {
 
-  case class Props(remote: CustomReqTypeCrud.Remote, clientData: ClientData, showDeleted: Boolean) {
+  case class Props(cp: ClientProtocol, remote: CustomReqTypeCrud.Remote, clientData: ClientData, showDeleted: Boolean) {
     def component = Component(this)
   }
 
@@ -42,7 +43,7 @@ object CfgReqTypes {
 
   // ===================================================================================================================
   final class Backend(c: BackendScope[Props, S]) extends OnUnmount {
-    val crudIO = CrudIO(CustomReqType, CustomReqTypeCrud)(c.props.remote, c.props.clientData)
+    val crudIO = CrudIO(CustomReqType, CustomReqTypeCrud)(c.props.cp, c.props.remote, c.props.clientData)
     val supp = TypicalSupp(storesAndState, crudIO)(c, _.alive)
 
     val rowE = {

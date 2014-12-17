@@ -20,7 +20,7 @@ object Uniqueness {
   }
 
   /** Some(k₁) = Some(k₂), otherwise false */
-  private def ignoreO[K: Equal]: Option[K] => Option[K] => Boolean =
+  def ignoreO[K: Equal]: Option[K] => Option[K] => Boolean =
     _.fold[Option[K] => Boolean](_ => false)(k => _.fold(false)(k ≟ _))
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -49,7 +49,7 @@ object Uniqueness {
   // -------------------------------------------------------------------------------------------------------------------
 
   def vfailure(fieldName: String): VFailure =
-    VFailure.forField(fieldName, NonEmptyList("must be unique."))
+    VFailure.forField(fieldName, NonEmptyList("must be unique.")) // or maybe "is already in use"?
 
   final class BF[S, V](f: VFailure => ValidationPart[S, V, V]) {
     def fieldName(fieldName: String) = f(vfailure(fieldName))

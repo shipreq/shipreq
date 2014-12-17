@@ -293,6 +293,7 @@ object ShipReq extends Build {
           testOnly  in Test := (testOnly  in(Test, stage)).evaluated,
           testQuick in Test := (testQuick in(Test, stage)).evaluated,
           jsDependencies += ScalaJS.reactJs % "test" / "react-with-addons.js" commonJSName "React",
+          jsDependencies += ScalaJS.sizzleJs % "test" / "sizzle.min.js" commonJSName "Sizzle",
           requiresDOM := true,
           postLinkJSEnv in Test := new PhantomJSEnv)
 
