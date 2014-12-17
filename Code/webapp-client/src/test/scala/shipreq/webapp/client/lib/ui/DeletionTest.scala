@@ -5,7 +5,7 @@ import scalaz.effect.IO
 import utest._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.client.lib.{FailureIO, SuccessIO}
-import TestUtil._
+import shipreq.webapp.client.test.TestUtil._
 
 object DeletionTest extends TestSuite {
 

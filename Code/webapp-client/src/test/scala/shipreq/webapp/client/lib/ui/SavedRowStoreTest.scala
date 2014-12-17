@@ -7,9 +7,9 @@ import utest._
 import shipreq.prop._
 import shipreq.prop.test._
 import shipreq.prop.test.PropTest._
+import shipreq.webapp.client.test.TestUtil._
 import RowStatus._
 import SavedRowStore.{Row, SS}
-import TestUtil._
 
 object SavedRowStoreTest extends TestSuite {
 

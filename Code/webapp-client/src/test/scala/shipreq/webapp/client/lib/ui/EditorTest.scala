@@ -10,7 +10,8 @@ import scalaz.Scalaz.Id
 import utest._
 import shipreq.base.util.ScalaExt._
 import Editors._
-import TestUtil._, SampleData_Person._
+import shipreq.webapp.client.test.TestUtil._
+import shipreq.webapp.client.test.SampleDataPerson._
 import NewAndSavedRowState._
 
 object EditorTest extends TestSuite {

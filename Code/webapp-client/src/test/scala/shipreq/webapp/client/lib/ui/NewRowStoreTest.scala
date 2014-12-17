@@ -8,9 +8,9 @@ import shipreq.prop._
 import shipreq.prop.test._
 import shipreq.prop.test.PropTest._
 import shipreq.base.util.ScalaExt._
+import shipreq.webapp.client.test.TestUtil._
 import RowStatus._
 import NewRowStore.{Row, SS}
-import TestUtil._
 
 object NewRowStoreTest extends TestSuite {
 
