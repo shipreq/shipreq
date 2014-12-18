@@ -76,21 +76,18 @@ object TagPartitionFns extends Fns[Tags.type] {
     p.tags.rev
 
   def update(p: Project, rev: Rev, ds: RemoteDeltaP[T]): Project = {
-    val t = p.tags.data
-    var tags = t.tags
-    var pc = t.structure.ab
+    var t = p.tags.data
 
-    for (id <- ds.del) {
-      tags -= id
-      pc = pc delkv id
-    }
+    // Delete tags
+    for (id <- ds.del)
+      t = t.mapUnderlying(_.mapValues(_ removeChild id) - id)
 
-    for (u <- ds.upd) {
-      val id = u.id
-      tags += id -> u.tag
-      pc = pc.setks(u.rels.parents, id).setvs(id, u.rels.children)
-    }
+    // Insert/update
+    // (Separate phases ∵ all ids must exist before updating structure)
+    t = t.addAll(ds.upd.map(u => TagInTree(u.tag, Vector.empty)): _*)
+    for (u <- ds.upd) t = u.rels(t, u.id)
 
-    p.copy(tags = RevAnd(rev, TagTree(tags, BiMultimap(pc))))
+    // Done
+    p.copy(tags = RevAnd(rev, t))
   }
 }

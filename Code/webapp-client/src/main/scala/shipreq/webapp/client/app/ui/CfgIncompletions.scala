@@ -67,7 +67,7 @@ object CfgIncompletions {
     def validatorState(k: Option[CustomIncmpType.Id], cd: ClientData): S => V.S =
       s => {
         val ts: RefKeyVS.Data[Tag.Id] = // TODO cacheable
-          (None, cd.project.tags.data.tags.values.toStream
+          (None, cd.project.tags.data.vstream(_.tag)
             .map(t => t.keyO.map(k => (t.id.some, k))).filter(_.isDefined).map(_.get))
         val is: RefKeyVS.Data[CustomIncmpType.Id] =
           (k, savedRowStoreS.getAllP(s).map(i => (i.id.some, i.key)))

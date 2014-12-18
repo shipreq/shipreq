@@ -3,6 +3,8 @@ package shipreq.webapp.client.app.ui
 import japgolly.scalajs.react._, vdom.prefix_<^.{Tag => ReactTag, Modifier => TagMod, _}, ScalazReact._
 import japgolly.scalajs.react.experiment.OnUnmount
 import monocle.Lenser
+import shipreq.base.util.IMap
+import shipreq.prop.util.Multimap
 import shipreq.webapp.base.data.Validators.shared.RefKeyVS
 import scala.language.reflectiveCalls
 import scalaz.effect.IO
@@ -41,7 +43,7 @@ object CfgTags {
   case class State(showDeleted: Boolean,
                    tg_state: tg_storesAndState.State,
                    at_state: at_storesAndState.State,
-                   tree: TagTree.Structure,
+                   tree: Multimap[Tag.Id, Vector, Tag.Id],
                    detailRow: Option[Tag.Id])
                   // DND state
   object State {
@@ -61,15 +63,15 @@ object CfgTags {
   private def initialState(p: Props): S = {
     val tgs = Seq.newBuilder[TagGroup]
     val ats = Seq.newBuilder[ApplicableTag]
-    val data = p.clientData.project.tags.data
-    data.tags.values.foreach {
+    val tagtree = p.clientData.project.tags.data
+    tagtree.vstream(_.tag).foreach {
       case t: TagGroup      => tgs += t
       case t: ApplicableTag => ats += t
     }
     State(p.showDeleted,
       tg_storesAndState.initState(_.initStateS(tgs.result(), _.id)),
       at_storesAndState.initState(_.initStateS(ats.result(), _.id)),
-      data.structure,
+      Multimap(tagtree.mapValues(_.children)),
       None)
   }
 
@@ -181,9 +183,8 @@ object CfgTags {
       }))
 
       val m = (tgs #::: ats).foldLeft(Map.empty[Tag.Id, F])(_ + _)
-      val parentToChild = s.tree.ab
-      val childToParent = s.tree.ba
 
+      val childToParent = s.tree.reverseM[Set]
       val topLvlIds = m.keySet -- childToParent.m.keySet
       val topLvl = tags.filter(topLvlIds contains _.id).sortBy(_.name)
 
@@ -191,7 +192,7 @@ object CfgTags {
         val h = m(id)(keyp, indent)
         val k2 = s"$keyp${id.value}."
         val i2: ReactTag => ReactTag = r => <.div(^.cls := "indent", indent(r))
-        val t = parentToChild(id).toStream.flatMap(j => go(j, k2, i2))
+        val t = s.tree(id).toStream.flatMap(j => go(j, k2, i2))
         h #:: t
       }
       topLvl.flatMap(t => go(t.id, "", identity)).toReactNodeArray

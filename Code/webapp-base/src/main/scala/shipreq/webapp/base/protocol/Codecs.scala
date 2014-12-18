@@ -105,6 +105,9 @@ private[protocol] object Codec {
 
   def readJ[T](v: Js.Value)(implicit T: Reader[T]) = T read0 v
 
+  def iMap[K: Reader : Writer, V: Reader : Writer](key: V => K): ReadWriter[IMap[K, V]] =
+    xmap((_: IMap[K, V]).underlyingMap)(m => IMap.empty(key).replaceUnderlying(m))
+
   /*
   Something like this for ADTs maybe?
   val vv = Vector[ReadWriter[_ <: Tag]](tagGroup, applicableTag)
@@ -167,13 +170,8 @@ object DataCodecs {
       case 1 => readJ[ApplicableTag](v)
     }
   })
-  implicit def tagTree = xmap(
-    (t: TagTree) => (t.tags.values.toList, t.structure.ab.m)) {
-    case (vs, ab) =>
-      val t = Tag.IdAccess.mapById(vs)
-      val s = BiMultimap(Multimap(ab))
-      TagTree(t, s)
-  }
+  implicit def tagInTree = caseclass2(TagInTree.apply, TagInTree.unapply)
+  implicit def tagTree = iMap[Tag.Id, TagInTree](_.tag.id)
   implicit def tagPovRelations = caseclass2(TagProtocol.PovRelations.apply, TagProtocol.PovRelations.unapply)
   implicit def tagPov = caseclass2(TagProtocol.PovTag.apply, TagProtocol.PovTag.unapply)
   implicit def tagGroupValues = caseclass3(TagProtocol.TagGroupValues.apply, TagProtocol.TagGroupValues.unapply)

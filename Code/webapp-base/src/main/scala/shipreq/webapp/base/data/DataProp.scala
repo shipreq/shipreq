@@ -1,7 +1,7 @@
 package shipreq.webapp.base.data
 
 import shipreq.base.util.TaggedTypes.TaggedLong
-import scalaz.std.list._
+import scalaz.std.AllInstances._
 import shipreq.prop._
 import DataImplicits._
 
@@ -50,22 +50,29 @@ object DataProp {
 
   // -------------------------------------------------------------------------------------------------------------------
   object tags {
+    type T = TagTree
+    import Tag.Id
 
-    lazy val uniqueIds =
-      Prop.distinct("id", (_: TagTree).tags.values.toStream.map(_.id))
+    def uniqueNames =
+      Prop.distinct("name", (_: T).vstream(_.tag.name))
 
-    lazy val uniqueNames =
-      Prop.distinct("name", (_: TagTree).tags.values.toStream.map(_.name))
+    def uniqueSiblings =
+      Prop.distinctC[Vector, Id]("siblings").forall((_: T).vstream(_.children))
 
-    lazy val structIds =
-      Prop.subset[TagTree]("ids refers to available tags")(_.tags.keySet,
-        t => t.parentToChild.keySet ++ t.childToParent.keySet)
+    def cycleDetector =
+      CycleDetector.Directed.multimap[Vector, Id, Long](_.value, Vector.empty)
 
-    lazy val tagTree =
-      uniqueIds ∧ uniqueNames ∧ structIds
+    def noCycles =
+      cycleDetector.noCycleProp("structure").contramap((_: T).mapValues(_.children))
+
+    def noDeadLinks =
+      Prop.subset[T]("ids refers to available tags")(_.keySet, _.vstreamf(_.children.toStream))
+
+    def tagTree =
+      uniqueNames ∧ uniqueSiblings ∧ noCycles ∧ noDeadLinks
 
     lazy val all =
-      (tagTree.contramap[RevAnd[TagTree]](_.data) ∧ rev.contramap(_.rev)) rename "Tags"
+      (tagTree.contramap[RevAnd[T]](_.data) ∧ rev.contramap(_.rev)) rename "Tags"
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -73,7 +80,7 @@ object DataProp {
   lazy val uniqueRefkeys =
     Prop.distinct[Project, RefKey]("refkey", p =>
       p.customIncmpTypes.data.toStream.map(_.key) #:::
-      p.tags.data.tags.values.toStream.flatMap(_.keyO.toStream))
+      p.tags.data.vstreamf(_.tag.keyO.toStream))
 
   lazy val project = (
     uniqueRefkeys

@@ -1,17 +1,19 @@
 package shipreq.webapp.base
 
+import monocle.SimpleLens
 import monocle.function.{first, second}
 import monocle.std.tuple2._
 import monocle.syntax.lens.toLensOps
-import shipreq.prop.CycleDetector
-import shipreq.prop.util.{BiMultimap, Multimap}
 import scala.annotation.tailrec
 import scalaz.std.list._
-import scalaz.std.option._
+import scalaz.std.option.{none => _, _}
 import scalaz.std.set._
 import scalaz.std.stream._
-import shipreq.prop.test.{Distinct, Gen}
+
+import shipreq.base.util.IMap
+import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedLong
+import shipreq.prop.test.{Distinct, Gen}
 import shipreq.webapp.base.data._, ReqType.Mnemonic
 import shipreq.webapp.base.data.delta._
 import shipreq.webapp.base.protocol._
@@ -132,30 +134,29 @@ object RandomData {
     tag.list map d.run
   }
 
-  type TagMM = Multimap[Tag.Id, Set, Tag.Id]
-  val tagCycleDetector = CycleDetector.Directed.setmultimap[Tag.Id, Long](_.value)
+  type TagTreeStructure = Map[Tag.Id, Vector[Tag.Id]]
 
   @tailrec
-  def preventCycles(m: TagMM, i: Int = 0): TagMM =
-    tagCycleDetector.findCycle(m.m) match {
+  def preventCycles(m: TagTreeStructure, i: Int = 0): TagTreeStructure =
+    DataProp.tags.cycleDetector.findCycle(m) match {
       case None     =>
         // println(s"No cycles after $i attemps @ size ${m.keyCount}→${m.valueCount}")
         m
       case Some((a, b)) =>
 //        println(s"Found cycle #$i [$a→$b] in ${m.m}")
 //        preventCycles(m.del(a, b).del(b, a), i + 1) // TODO better but slowwwwww
-        preventCycles(m.delk(b), i + 1)
+        preventCycles(m - b, i + 1)
     }
 
-  def tagTreeStructure(tags: Set[Tag.Id]): Gen[TagTree.Structure] =
+  def tagTreeStructure(tags: Set[Tag.Id]): Gen[TagTreeStructure] =
     if (tags.isEmpty)
-      Gen.insert(BiMultimap(Multimap.empty[Tag.Id, Set, Tag.Id]))
+      Gen.insert(Map.empty)
     else {
       val tagsSeq = tags.toSeq
       val idset = Gen.oneof(tagsSeq.head, tagsSeq.tail: _*).set
       idset.map(_.toStream)
-        .flatMap(ks => Gen sequence ks.map(k => idset.map(v => (k, v - k)).sup))
-        .map(s => BiMultimap(preventCycles(Multimap(s.toMap))))
+        .flatMap(ks => Gen sequence ks.map(k => idset.map(ids => (k, (ids - k).toVector)).sup))
+        .map(s => preventCycles(s.toMap))
     }
 
   lazy val tagTree: Gen[TagTree] =
@@ -163,7 +164,9 @@ object RandomData {
       l ← tags
       m = Tag.IdAccess.mapById(l)
       s ← tagTreeStructure(m.keySet)
-    } yield TagTree(m, s)
+    } yield
+      m.values.foldLeft(TagTree.empty)((q, t) =>
+        q.add(TagInTree(t, s.getOrElse(t.id, Vector.empty))))
 
   lazy val revAndTagTree: Gen[RevAnd[TagTree]] =
     Gen.apply2(RevAnd.apply[TagTree])(rev, tagTree)
@@ -172,6 +175,8 @@ object RandomData {
     case t: ApplicableTag => kk.fold(t)(k => t.copy(key = k))
     case t: TagGroup      => t
   }
+
+  def imapToMapLens[K, V] = SimpleLens[IMap[K, V]](_.underlyingMap)(_ replaceUnderlying _)
 
   def distinctRefkeys = {
     type A = DataSet[CustomIncmpType]
@@ -182,8 +187,9 @@ object RandomData {
       .at(CustomIncmpType._key).lift[List]
       .at(first[T, A] |-> DataSet._data[CustomIncmpType])
     val tags = refkey
-      .lift[Option].contramap[Tag](_.keyO, setTagKey).liftMapValues[Tag.Id]
-      .at(second[T, B] |-> RevAnd._data[TagTree] |-> TagTree._tags)
+      .lift[Option].contramap[Tag](_.keyO, setTagKey)
+      .at(TagInTree._tag).liftMapValues[Tag.Id]
+      .at(second[T, B] |-> RevAnd._data[TagTree] |-> imapToMapLens)
     incmp + tags
   }
 
@@ -224,7 +230,11 @@ object RandomData {
       for {
         t      ← tag
         (p, c) ← tagId.set.pair
-      } yield TagProtocol.PovTag(t, TagProtocol.PovRelations(p - t.id -- c, c - t.id -- p))
+      } yield {
+        val children = (c - t.id -- p).toVector
+        val parents  = (p - t.id -- c).toStream.map(_ -> none[Tag.Id]).toMap
+        TagProtocol.PovTag(t, TagProtocol.PovRelations(parents, children))
+      }
   }
 
   object remoteDelta {
@@ -269,15 +279,19 @@ object RandomData {
       RandomData.customReqTypeId,
       Gen.tuple3(reqTypeMnemonic, customReqTypeName, implicationRequired))
 
-    lazy val tagValues =
-      remoteDeltaG.povTag.map(t => (valuesFromTag(t.tag), t.rels))
-
-    def valuesFromTag: Tag => TagProtocol.Values = {
+    def tagProtocolValues: Tag => TagProtocol.Values = {
       case TagGroup(_, n, d, e, _)      => TagProtocol.TagGroupValues(n, d, e)
       case ApplicableTag(_, n, d, k, _) => TagProtocol.ApplicableTagValues(n, d, k)
     }
 
+    lazy val tagCrudInput =
+      remoteDeltaG.povTag.flatMap(t => {
+        val a = Gen insert tagProtocolValues(t.tag)
+        val b = Gen insert t.rels
+        a \&/ b
+      })
+
     lazy val tagCrud =
-      new CrudActionGens(TagCrud)(RandomData.tagId, tagValues)
+      new CrudActionGens(TagCrud)(RandomData.tagId, tagCrudInput)
   }
 }

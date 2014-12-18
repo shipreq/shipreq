@@ -1,6 +1,7 @@
 package shipreq.prop
 
 import scala.annotation.elidable
+import scala.collection.GenTraversable
 import scalaz.{Need, Equal, Foldable, Contravariant}
 import scalaz.syntax.equal._
 import scalaz.syntax.foldable._
@@ -70,6 +71,9 @@ object Prop {
                }
       r.liftL
     })
+
+  def distinctC[C[_], A](name: => String)(implicit ev: C[A] <:< GenTraversable[A]): Prop[C[A]] =
+    distinct(name, _.toStream)
 
   def distinct[A, B](name: => String, f: A => Stream[B]): Prop[A] =
     distinct[B](name).contramap(f)

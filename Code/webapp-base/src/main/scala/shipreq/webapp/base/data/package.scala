@@ -1,5 +1,7 @@
 package shipreq.webapp.base
 
+import shipreq.base.util.IMap
+
 package object data {
 
   trait DataId[D] {
@@ -32,4 +34,7 @@ package object data {
       @inline def id_(implicit i: DataId[D]): i.I = i.id(d)
     }
   }
+
+  type TagTree = IMap[Tag.Id, TagInTree]
+
 }

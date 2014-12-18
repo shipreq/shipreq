@@ -1,9 +1,10 @@
 package shipreq.prop
 
 import scala.annotation.tailrec
+import scala.collection.GenTraversable
 import scalaz.{\/-, -\/, \/}
 
-case class CycleDetector[-A, B](extract: A => Stream[B], check: (A, Stream[B]) => Option[(B, B)]) {
+case class CycleDetector[A, B](extract: A => Stream[B], check: (A, Stream[B]) => Option[(B, B)]) {
 
   @inline final def hasCycle(a: A): Boolean =
     findCycle(a).isDefined
@@ -16,6 +17,11 @@ case class CycleDetector[-A, B](extract: A => Stream[B], check: (A, Stream[B]) =
 
   def contramap[Z](f: Z => A) =
     new CycleDetector[Z, B](extract compose f, (z, b) => check(f(z), b))
+
+  def noCycleProp(name: => String): Prop[A] =
+    Prop.atom[A](name, findCycle(_).map{
+      case (b1,b2) => s"Cycle detected: [$b1] → [$b2]"
+    })
 }
 
 object CycleDetector {
@@ -68,7 +74,9 @@ object CycleDetector {
     def map[A, I](id: A => I) = CycleDetector[Map[A, A], A](
       _.keys.toStream, check(_.get(_).toStream, id))
 
-    def setmultimap[A, I](id: A => I) = CycleDetector[Map[A, Set[A]], A](
-      _.keys.toStream, check(_.getOrElse(_, Set.empty).toStream, id))
+    def multimap[V[_], A, I](id: A => I, empty: V[A])(implicit ev: V[A] <:< GenTraversable[A]) =
+      CycleDetector[Map[A, V[A]], A](
+        _.keys.toStream,
+        check(_.getOrElse(_, empty).toStream, id))
   }
 }

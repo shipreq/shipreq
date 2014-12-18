@@ -52,6 +52,14 @@ class Gen[A](val f: GenSize => Rng[A]) {
   def \?/       [X](x: Gen[X]): Gen[A \?/ X]      = combrng[X, A \?/ X](x, _ \?/ _)
   def either    [X](x: Gen[X]): Gen[Either[A, X]] = combrng[X, Either[A, X]](x, _ eitherS _)
 
+  def \&/[X](that: Gen[X]): Gen[A \&/ X] = {
+    import scalaz.\&/._
+    Gen.oneofG(
+      this.map(This.apply),
+      that.map(That.apply),
+      flatMap(a => that.map(b => Both(a, b))))
+  }
+
   def mapBy[K](k: Gen[K]): Gen[Map[K, A]] = Gen.pair(k, this).list.map(_.toMap)
   def mapTo[V](v: Gen[V]): Gen[Map[A, V]] = v mapBy this
 }
