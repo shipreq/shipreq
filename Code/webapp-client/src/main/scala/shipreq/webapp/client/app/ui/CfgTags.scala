@@ -158,77 +158,72 @@ object CfgTags {
     val headerRow =
       CfgTable.header(List(FieldNames.name, FieldNames.refKey, FieldNames.tagIsEnumLike))
 
-    private[this] val at_editable = at_editor.editableByRowStatus(c)
-    private[this] val tg_editable = tg_editor.editableByRowStatus(c)
+    type F = (String, ReactTag => ReactTag) => UndefOr[ReactElement]
+    @inline def F(f: F): F = f
 
-    def rows: TagMod = {
-      val s = c.state
-      val tags = getAllP(c.state)
+    val unusedField: ReactNode = "-"
 
-      def tg_ei(r: tg_storesAndStateS.s.Row): tg_editor.Input = {
+    abstract class TagSubtypeRenderer[T <: Tag, I, B, D, V](
+        final val editor: Editor[(V.S, I), B, IO, S, D, IO[Unit], V],
+        final val storesAndStateS: NewAndSavedStores[S, Tag.Id, T, I]) {
+      type TagT = T
+
+      val editable = editor.editableByRowStatus(c)
+
+      def ei(s: S, r: storesAndStateS.s.Row): editor.Input = {
         val a = (validatorState(r.p.id.some)(s), r.i)
-        EditorI(a, "", tg_editable(r.status))
+        EditorI(a, "", editable(r.status))
       }
 
-      def at_ei(r: at_storesAndStateS.s.Row): at_editor.Input = {
-        val a = (validatorState(r.p.id.some)(s), r.i)
-        EditorI(a, "", at_editable(r.status))
-      }
+      def renderAlive(s: S, indent: ReactTag => ReactTag, key: String)(r: storesAndStateS.s.Row): ReactElement
+      def renderDead (s: S, indent: ReactTag => ReactTag, key: String)(rs: RowStatus, t: TagT): ReactElement
 
-      type F = (String, ReactTag => ReactTag) => UndefOr[ReactElement]
-      @inline def F(f: F): F = f
-
-      val unusedField: ReactNode = "-"
-
-      def renderRow(rs: RowStatus, rowKey: String, name: ReactNode, refkey: ReactNode, enum: ReactNode): ReactElement =
-        <.tr(^.key := rowKey, ^.cls := UI.rowStatusRowClass(rs),
+      def rowTemplate(rs: RowStatus, key: String)(name: ReactNode, refkey: ReactNode, enum: ReactNode): ReactElement =
+        <.tr(^.key := key, ^.cls := UI.rowStatusRowClass(rs),
           <.td(name),
           <.td(refkey),
           <.td(enum),
           <.td(UI.rowStatusCtrls(rs, EmptyTag)))
 
-      def tg_renderRow(row: tg_storesAndStateS.s.Row): F = F { (keyp, indent) =>
+      def renderRow(s: S, row: storesAndStateS.s.Row): F = F { (keyp, indent) =>
         val tag = row.p
         def key = s"$keyp.${tag.id.value}"
         tag.alive match {
-          case Alive =>
-            val (n,e,_) = tg_editor render tg_ei(row)
-            renderRow(row.status, s"$keyp.${row.p.id.value}",
-              name   = indent(n),
-              refkey = unusedField,
-              enum   = e)
-          case Dead if s.showDeleted =>
-            renderRow(row.status, key, tag.name, unusedField, "TODO")
-          case Dead if !s.showDeleted =>
-            undefined
+          case Alive                  => renderAlive(s, indent, key)(row)
+          case Dead if s.showDeleted  => renderDead (s, indent, key)(row.status, tag)
+          case Dead if !s.showDeleted => undefined
         }
       }
 
-      def at_renderRow(row: at_storesAndStateS.s.Row): F = F { (keyp, indent) =>
-        val tag = row.p
-        def key = s"$keyp.${tag.id.value}"
-        tag.alive match {
-          case Alive =>
-            val (n, k, _) = at_editor render at_ei(row)
-            renderRow(row.status, key,
-              name   = indent(n),
-              refkey = k,
-              enum   = unusedField)
-          case Dead if s.showDeleted =>
-            renderRow(row.status, key, tag.name, tag.key.value, unusedField)
-          case Dead if !s.showDeleted =>
-            undefined
-        }
+      def all(s: S): Stream[(Tag.Id, F)] =
+        storesAndStateS.s.getAll(s).map(row => row.p.id -> renderRow(s, row))
+    }
+
+    val tg_renderer = new TagSubtypeRenderer(tg_editor, tg_storesAndStateS) {
+      override def renderAlive(s: S, indent: ReactTag => ReactTag, key: String)(row: storesAndStateS.s.Row): ReactElement = {
+        val (name, enum, _) = editor render ei(s, row)
+        rowTemplate(row.status, key)(indent(name), unusedField, enum)
       }
+      override def renderDead (s: S, indent: ReactTag => ReactTag, key: String)(rs: RowStatus, t: TagT): ReactElement =
+        rowTemplate(rs, key)(t.name, unusedField, "TODO")
+    }
 
-      val tgs = tg_storesAndStateS.s.getAll(s).map(row => row.p.id -> tg_renderRow(row))
-      val ats = at_storesAndStateS.s.getAll(s).map(row => row.p.id -> at_renderRow(row))
+    val at_renderer = new TagSubtypeRenderer(at_editor, at_storesAndStateS) {
+      override def renderAlive(s: S, indent: ReactTag => ReactTag, key: String)(row: storesAndStateS.s.Row): ReactElement = {
+        val (name, refkey, _) = editor render ei(s, row)
+        rowTemplate(row.status, key)(indent(name), refkey, unusedField)
+      }
+      override def renderDead (s: S, indent: ReactTag => ReactTag, key: String)(rs: RowStatus, t: TagT): ReactElement =
+        rowTemplate(rs, key)(t.name, t.key.value, unusedField)
+    }
 
-      val all = (tgs #::: ats).foldLeft(Map.empty[Tag.Id, F])(_ + _)
-
+    def rows: TagMod = {
+      val s             = c.state
+      val tags          = getAllP(c.state)
+      val all           = (tg_renderer.all(s) #::: at_renderer.all(s)).foldLeft(Map.empty[Tag.Id, F])(_ + _)
       val childToParent = s.tree.reverseM[Set]
-      val topLvlIds = all.keySet -- childToParent.m.keySet
-      val topLvl = tags.filter(topLvlIds contains _.id).sortBy(_.name)
+      val topLvlIds     = all.keySet -- childToParent.m.keySet
+      val topLvl        = tags.filter(topLvlIds contains _.id).sortBy(_.name)
 
       def go(id: Tag.Id, keyp: String, indent: ReactTag => ReactTag): Stream[ReactElement] = {
         val h = all(id)(keyp, indent)
