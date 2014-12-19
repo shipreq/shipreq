@@ -1,7 +1,8 @@
 package shipreq.webapp.client.lib.ui
 
-import monocle.{SimpleIso, SimpleLens}
+import monocle.{Iso, Lens}
 import shipreq.base.util.ScalaExt._
+import shipreq.webapp.base.WebappTmp
 
 trait FieldSet[_P, _I] {
 
@@ -10,11 +11,11 @@ trait FieldSet[_P, _I] {
 
   sealed abstract class Field {
     type V
-    def ilens: SimpleLens[I, V]
+    def ilens: Lens[I, V]
     def pv: P => V
     @inline final def *(v: V): FieldValue = fieldValue(this)(v)
   }
-  protected def field[_V](_pv: P => _V, _ilens: SimpleLens[I, _V]): Field {type V = _V} =
+  protected def field[_V](_pv: P => _V, _ilens: Lens[I, _V]): Field {type V = _V} =
     new Field {
       override type V    = _V
       override def ilens = _ilens
@@ -38,7 +39,7 @@ trait FieldSet[_P, _I] {
 }
 
 class FieldSet1[Q, A](g1: Q=>A, i: A) extends FieldSet[Q, A] {
-  final val f1 = field[A](g1, SimpleIso.dummy)
+  final val f1 = field[A](g1, WebappTmp.lensId)
   override final val emptyI   = i
   override final val fields   = Vector(f1)
   override final def pi(p: P) = (f1 pv p)
@@ -50,8 +51,9 @@ object FieldSet1 {
 }
 
 class FieldSet2[Q, A, B](g1: Q=>A, g2: Q=>B, i: (A,B)) extends FieldSet[Q, (A,B)] {
-  final val f1 = field[A](g1, SimpleLens(_._1, _ put1 _))
-  final val f2 = field[B](g2, SimpleLens(_._2, _ put2 _))
+  private type T = (A,B)
+  final val f1 = field[A](g1, Lens((_: T)._1)(v => _ put1 v))
+  final val f2 = field[B](g2, Lens((_: T)._2)(v => _ put2 v))
   override final val emptyI   = i
   override final val fields   = Vector(f1, f2)
   override final def pi(p: P) = (f1 pv p, f2 pv p)
@@ -63,9 +65,10 @@ object FieldSet2 {
 }
 
 class FieldSet3[Q, A, B, C](g1: Q=>A, g2: Q=>B, g3: Q=>C, i: (A,B,C)) extends FieldSet[Q, (A,B,C)] {
-  final val f1 = field[A](g1, SimpleLens(_._1, _ put1 _))
-  final val f2 = field[B](g2, SimpleLens(_._2, _ put2 _))
-  final val f3 = field[C](g3, SimpleLens(_._3, _ put3 _))
+  private type T = (A,B,C)
+  final val f1 = field[A](g1, Lens((_: T)._1)(v => _ put1 v))
+  final val f2 = field[B](g2, Lens((_: T)._2)(v => _ put2 v))
+  final val f3 = field[C](g3, Lens((_: T)._3)(v => _ put3 v))
   override final val emptyI   = i
   override final val fields   = Vector(f1, f2, f3)
   override final def pi(p: P) = (f1 pv p, f2 pv p, f3 pv p)

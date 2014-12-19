@@ -1,6 +1,6 @@
 package shipreq.webapp.base.data
 
-import monocle.Lenser
+import monocle.macros.Lenser
 import shipreq.base.util.TaggedTypes._
 
 sealed trait ReqType {

@@ -2,7 +2,8 @@ package shipreq.webapp.client.lib.ui
 
 import japgolly.scalajs.react.ScalazReact._
 import monocle._
-import monocle.syntax._
+import monocle.macros.Lenser
+import shipreq.webapp.base.WebappTmp
 import scalaz.Applicative
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data.DataIdAux
@@ -20,7 +21,7 @@ object SavedRowStore {
   type SS[K, P, I] = Map[K, Row[P, I]]
 
   def apply[K, P, I](pi: P => I): SavedRowStore[SS[K, P, I], K, P, I] =
-    new SavedRowStore(SimpleIso.dummy, new RowL, pi)
+    new SavedRowStore(WebappTmp.lensId, new RowL, pi)
 
   def data[P] = new BD[P]
   @inline final class BD[P] {
@@ -39,7 +40,7 @@ object SavedRowStore {
  * @tparam P Persisted data. Data known to be saved.
  * @tparam I Input. A subset of P's fields in a form that matches the editor state.
  */
-final class SavedRowStore[S, K, P, I](_ss: SimpleLens[S, SavedRowStore.SS[K, P, I]],
+final class SavedRowStore[S, K, P, I](_ss: Lens[S, SavedRowStore.SS[K, P, I]],
                                       rowL: SavedRowStore.RowL[P, I],
                                       pi: P => I) {
   type State = S
@@ -47,8 +48,8 @@ final class SavedRowStore[S, K, P, I](_ss: SimpleLens[S, SavedRowStore.SS[K, P, 
   type SS    = SavedRowStore.SS[K, P, I]
   type KP    = (K, P)
 
-  def contramap[T](f: SimpleLens[T, S]): SavedRowStore[T, K, P, I] =
-    new SavedRowStore(f |-> _ss, rowL, pi)
+  def contramap[T](f: Lens[T, S]): SavedRowStore[T, K, P, I] =
+    new SavedRowStore(f ^|-> _ss, rowL, pi)
 
   @inline private def initRow(p: P): Row =
     SavedRowStore.Row(RowStatus.Sync, p, pi(p))
@@ -57,11 +58,11 @@ final class SavedRowStore[S, K, P, I](_ss: SimpleLens[S, SavedRowStore.SS[K, P, 
   def initStateS(s: Seq[P], pk: P => K): SS = initStateM(s.foldLeft(Map.empty[K, P])(_ + _.mapStrengthL(pk)))
   def initStateT(s: Seq[KP])           : SS = initStateM(s.toMap)
 
-  private def __row  (k: K): SimpleLens[SS, Row]      = SimpleLens[SS](_ apply k)((m, p) => m + (k -> p))
-  private def _row   (k: K): SimpleLens[S, Row]       = _ss |-> __row(k)
-  private def _status(k: K): SimpleLens[S, RowStatus] = _row(k) |-> rowL.status
-  private def _i     (k: K): SimpleLens[S, I]         = _row(k) |-> rowL.i
-  private def _p     (k: K): SimpleLens[S, P]         = _row(k) |-> rowL.p
+  private def __row  (k: K): Lens[SS, Row]      = Lens((_: SS) apply k)(p => _ + (k -> p))
+  private def _row   (k: K): Lens[S, Row]       = _ss ^|-> __row(k)
+  private def _status(k: K): Lens[S, RowStatus] = _row(k) ^|-> rowL.status
+  private def _i     (k: K): Lens[S, I]         = _row(k) ^|-> rowL.i
+  private def _p     (k: K): Lens[S, P]         = _row(k) ^|-> rowL.p
 
 
   def getAll   (s: S)              : Stream[Row]    = _ss.get(s).values.toStream
@@ -70,11 +71,11 @@ final class SavedRowStore[S, K, P, I](_ss: SimpleLens[S, SavedRowStore.SS[K, P, 
   def getP     (k: K)              : S => P         = _p(k).get
   def getI     (k: K)              : S => I         = _i(k).get
   def getStatus(k: K)              : S => RowStatus = _status(k).get
-  def remove   (k: K)              : S => S         = _ss.modifyF(_ - k)
-  def set      (k: K, p: P)        : S => S         = _ss.modifyF(_ + (k -> initRow(p)))
+  def remove   (k: K)              : S => S         = _ss.modify(_ - k)
+  def set      (k: K, p: P)        : S => S         = _ss.modify(_ + (k -> initRow(p)))
   def setT     (kp: KP)            : S => S         = set(kp._1, kp._2)
-  def setI     (k: K, i: I)        : S => S         = _i(k).setF(i)
-  def setStatus(k: K, r: RowStatus): S => S         = _status(k).setF(r)
+  def setI     (k: K, i: I)        : S => S         = _i(k).set(i)
+  def setStatus(k: K, r: RowStatus): S => S         = _status(k).set(r)
 
   def setIST[M[_] : Applicative](k: K, i: I): ReactST[M, S, Unit] =
     ReactS modT setI(k, i)
@@ -83,7 +84,7 @@ final class SavedRowStore[S, K, P, I](_ss: SimpleLens[S, SavedRowStore.SS[K, P, 
     rs => ReactS.modT(setStatus(k, rs))
 
   def setField[X](k: K, fv: FieldSet[X, I]#FieldValue): S => S =
-    (_i(k) |-> fv.f.ilens).setF(fv.v)
+    (_i(k) ^|-> fv.f.ilens).set(fv.v)
 
   def setFieldST[M[_]: Applicative, X](k: K, fv: FieldSet[X, I]#FieldValue): ReactST[M, S, Unit] =
     ReactS modT setField(k, fv)

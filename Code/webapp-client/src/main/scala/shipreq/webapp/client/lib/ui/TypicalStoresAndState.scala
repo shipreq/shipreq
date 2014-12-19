@@ -1,7 +1,7 @@
 package shipreq.webapp.client.lib.ui
 
 import japgolly.scalajs.react.ScalazReact._
-import monocle.Lenser
+import monocle.macros.Lenser
 import scalaz.effect.IO
 
 object TypicalStoresAndState {
@@ -48,5 +48,5 @@ abstract class TypicalStoresAndState[P, I, K](fields: FieldSet[P, I]) {
     s => (savedRowStoreS.getAllP(s), k)
 
   def toggleShowDeleted =
-    ST.modT(State._showDeleted.modifyF(v => !v))
+    ST.modT(State._showDeleted.modify(v => !v))
 }

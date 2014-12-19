@@ -1,6 +1,7 @@
 package shipreq.webapp.base.data
 
-import monocle.{SimpleLens, Lenser}
+import monocle.Lens
+import monocle.macros.Lenser
 
 trait DataSetAccessor[D] {
   def getRev(p: Project): Rev
@@ -15,11 +16,11 @@ object Project {
   val _customIncmpTypes = l(_.customIncmpTypes)
   val _customReqTypes   = l(_.customReqTypes)
 
-  private def dsa[D](ds: SimpleLens[Project, DataSet[D]]): DataSetAccessor[D] =
+  private def dsa[D](ds: Lens[Project, DataSet[D]]): DataSetAccessor[D] =
     new DataSetAccessor[D] {
       override def getRev(p: Project)                    = ds.get(p).rev
       override def getData(p: Project)                   = ds.get(p).data.toStream
-      override def set(p: Project, r: Rev, d: Stream[D]) = ds.set(p, DataSet[D](r, d.toList))
+      override def set(p: Project, r: Rev, d: Stream[D]) = ds.set(DataSet[D](r, d.toList))(p)
     }
 
   trait Implicits {
