@@ -1,12 +1,12 @@
 package shipreq.webapp.client.test
 
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.UnsafeTypes._
 import shipreq.webapp.client.ClientData
 
 object SampleProject {
 
   val project = {
-    import shipreq.webapp.base.data._
-    import shipreq.webapp.base.UnsafeTypes._
 
     val customImplTypes = DataSet[CustomIncmpType](10, List(
       CustomIncmpType(1, "TODO", "Something you need To Do.", Alive),

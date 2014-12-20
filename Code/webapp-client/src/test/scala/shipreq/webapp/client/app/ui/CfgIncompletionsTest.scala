@@ -1,12 +1,10 @@
 package shipreq.webapp.client.app.ui
 
-import japgolly.scalajs.react.React
 import japgolly.scalajs.react.test._
 import scalaz.std.AllInstances._
 import utest._
 import shipreq.webapp.base.protocol.Routine
 import shipreq.webapp.base.protocol.Routines.CustomIncmpTypeCrud
-import shipreq.webapp.client.ClientData
 import shipreq.webapp.client.test._
 import TestUtil._
 

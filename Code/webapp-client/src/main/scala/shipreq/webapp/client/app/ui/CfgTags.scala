@@ -25,6 +25,7 @@ import shipreq.webapp.client.lib.CrudIO
 import shipreq.webapp.client.lib.ui._
 import shipreq.webapp.client.protocol.ClientProtocol
 import TagProtocol.PovTag
+import Tag.Id
 
 object CfgTags {
 
@@ -40,20 +41,23 @@ object CfgTags {
   val tg_fields = FieldSet3[TagGroup](_.name, _.enum, _.desc getOrElse "")(("", NotEnumLike, ""))
   val at_fields = FieldSet3[ApplicableTag](_.name, _.key.value, _.desc getOrElse "")(("", "", ""))
 
-  val tg_storesAndState = NewAndSavedStores.fields(tg_fields).keyedBy[Tag.Id]
-  val at_storesAndState = NewAndSavedStores.fields(at_fields).keyedBy[Tag.Id]
+  val tg_storesAndState = NewAndSavedStores.fields(tg_fields).keyedBy[Id]
+  val at_storesAndState = NewAndSavedStores.fields(at_fields).keyedBy[Id]
+
+  type TreeState = Multimap[Id, Vector, Id]
 
   case class State(showDeleted: Boolean,
                    tg_state: tg_storesAndState.State,
                    at_state: at_storesAndState.State,
-                   tree: Multimap[Tag.Id, Vector, Tag.Id],
-                   detailRow: Option[Tag.Id])
+                   tree: TreeState,
+                   detailRow: Option[Id])
                   // DND state
   object State {
     private[this] def l = Lenser[State]
     val _showDeleted = l(_.showDeleted)
     val _tg_state    = l(_.tg_state)
     val _at_state    = l(_.at_state)
+    val _tree        = l(_.tree)
     val _detailRow   = l(_.detailRow)
   }
 
@@ -78,18 +82,29 @@ object CfgTags {
       None)
   }
 
-  val tagStateFns = new RemoteDeltaListener.StateFns[S, Tag.Id, PovTag](
+  implicit object TreeStateMod extends TagProtocol.TreeMod[TreeState] {
+    override def modChildren(id: Id, f: Vector[Id] => Vector[Id]): TreeState => TreeState =
+      _.mod(id, f)
+
+    override def removeChild(parent: Id, child: Id): TreeState => TreeState =
+      _.del(parent, child)
+
+    override def keySet(t: TreeState): Set[Id] =
+      t.m.keySet
+  }
+
+  val tagStateFns = new RemoteDeltaListener.StateFns[S, Id, PovTag](
     (s, i) =>
-      tg_storesAndStateS.s.remove(i)(
-        at_storesAndStateS.s.remove(i)(
-          s)),
+      State._tree.modify(_.delkv(i))(
+        tg_storesAndStateS.s.remove(i)(
+          at_storesAndStateS.s.remove(i)(
+            s))),
     (s, i, d) => {
       val s2 = d.tag match {
         case t: TagGroup      => tg_storesAndStateS.s.set(i, t)(s)
         case t: ApplicableTag => at_storesAndStateS.s.set(i, t)(s)
       }
-      // TODO update tree
-      s2
+      State._tree.modify(d.rels.apply(_, i))(s2)
     })
 
   val Component =
@@ -105,18 +120,18 @@ object CfgTags {
     tg_storesAndStateS.s.getAllP(s).map(t => t: Tag) #:::
     at_storesAndStateS.s.getAllP(s).map(t => t: Tag))
 
-  val rowIdFromEditorInput: ((V.S, Any)) => Option[Tag.Id] = _._1._2.tagData._1
+  val rowIdFromEditorInput: ((V.S, Any)) => Option[Id] = _._1._2.tagData._1
 
   // ===================================================================================================================
   final class Backend(c: BackendScope[Props, S]) extends OnUnmount {
     val crudIO = CrudIO(Tag, TagCrud)(c.props.cp, c.props.remote, c.props.clientData)
 
-    def validatorState(k: Option[Tag.Id]): S => V.S =
+    def validatorState(k: Option[Id]): S => V.S =
       s => {
         val cd = c.props.clientData
         val tags = getAllP(s)
 
-        val ts: RefKeyVS.Data[Tag.Id] =
+        val ts: RefKeyVS.Data[Id] =
           (k, tags.map(t => t.keyO.map(k => (t.id.some, k))).filter(_.isDefined).map(_.get))
         val is: RefKeyVS.Data[CustomIncmpType.Id] = // TODO cacheable
           (None, cd.project.customIncmpTypes.data.toStream
@@ -133,7 +148,7 @@ object CfgTags {
 
     abstract class TagSubtypeRenderer[T <: Tag, I, B, D, V](
         final val editor: Editor[(V.S, I), B, IO, S, D, IO[Unit], V],
-        final val storesAndStateS: NewAndSavedStores[S, Tag.Id, T, I]) {
+        final val storesAndStateS: NewAndSavedStores[S, Id, T, I]) {
       type TagT = T
 
       val editable = editor.editableByRowStatus(c)
@@ -150,7 +165,7 @@ object CfgTags {
 
       def rowTemplate(rs: RowStatus, key: String)(name: ReactNode, refkey: ReactNode, enum: ReactNode): ReactElement =
         <.tr(^.key := key, ^.cls := UI.rowStatusRowClass(rs),
-          <.td(name),
+          <.td(^.cls := "name", name),
           <.td(refkey),
           <.td(enum),
           <.td(UI.rowStatusCtrls(rs, EmptyTag)))
@@ -165,19 +180,19 @@ object CfgTags {
         }
       }
 
-      def all(s: S): Stream[(Tag.Id, F)] =
+      def all(s: S): Stream[(Id, F)] =
         storesAndStateS.s.getAll(s).map(row => row.p.id -> renderRow(s, row))
     }
 
     def rows: TagMod = {
       val s             = c.state
       val tags          = getAllP(c.state)
-      val all           = (tg_renderer.all(s) #::: at_renderer.all(s)).foldLeft(Map.empty[Tag.Id, F])(_ + _)
+      val all           = (tg_renderer.all(s) #::: at_renderer.all(s)).foldLeft(Map.empty[Id, F])(_ + _)
       val childToParent = s.tree.reverseM[Set]
       val topLvlIds     = all.keySet -- childToParent.m.keySet
       val topLvl        = tags.filter(topLvlIds contains _.id).sortBy(_.name)
 
-      def go(id: Tag.Id, keyp: String, indent: ReactTag => ReactTag): Stream[ReactElement] = {
+      def go(id: Id, keyp: String, indent: ReactTag => ReactTag): Stream[ReactElement] = {
         val h = all(id)(keyp, indent)
         val k2 = s"$keyp${id.value}."
         val i2: ReactTag => ReactTag = r => <.div(^.cls := "indent", indent(r))

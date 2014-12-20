@@ -108,6 +108,23 @@ object TagInTree {
 
 object TagProtocol {
 
+  trait TreeMod[T] {
+    def modChildren(id: Id, f: Vector[Id] => Vector[Id]): T => T
+    def removeChild(parent: Id, child: Id): T => T
+    def keySet(t: T): Set[Id]
+  }
+
+  implicit object TagTreeMod extends TreeMod[TagTree] {
+    override def modChildren(id: Id, f: Vector[Id] => Vector[Id]): TagTree => TagTree =
+      _.mod(id, _ modChildren f)
+
+    override def removeChild(parent: Id, child: Id): TagTree => TagTree =
+      _.mod(parent, _ removeChild child)
+
+    override def keySet(t: TagTree): Set[Id] =
+      t.keySet
+  }
+
   /**
    * A tag's relations from its own point of view.
    *
@@ -118,25 +135,25 @@ object TagProtocol {
   final case class PovRelations(parents: Map[Id, Option[Id]], children: Vector[Id]) {
     // TODO ↑ this could use some props too
 
-    def apply(tt: TagTree, id: Id): TagTree = {
+    def apply[T](tt: T, id: Id)(implicit T: TreeMod[T]): T = {
       var t = tt
 
       // Add children
-      t = t.mod(id, _.modChildren(_ => children))
+      t = T.modChildren(id, _ => children)(t)
 
       // Add parents
       for ((parent, pos) <- parents)
-        t = t.mod(parent, _.modChildren(sibs =>
+        t = T.modChildren(parent, sibs =>
           pos match {
             case None    => if (sibs contains id) sibs else sibs :+ id
             case Some(b) => reposition(sibs, id, before = b)
           }
-        ))
+        )(t)
 
       // Remove old parents
-      val oldParents = tt.keySet - id -- parents.keySet
+      val oldParents = T.keySet(t) - id -- parents.keySet
       for (p <- oldParents)
-        t = t.mod(p, _.removeChild(id))
+        t = T.removeChild(p, id)(t)
 
       t
     }
