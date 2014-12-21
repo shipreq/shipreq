@@ -26,6 +26,7 @@ import NewAndSavedStores.SS
 case class NewAndSavedStores[S, K, P, I](n: NewRowStore[S, I],
                                          s: SavedRowStore[S, K, P, I]) {
 
+  type Input = I
   type State = S
 
   def contramap[T](f: Lens[T, S]): NewAndSavedStores[T, K, P, I] =
