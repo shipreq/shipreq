@@ -2,7 +2,6 @@ package shipreq.webapp.client.lib.ui
 
 import monocle.{Iso, Lens}
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.base.WebappTmp
 
 trait FieldSet[_P, _I] {
 
@@ -39,7 +38,7 @@ trait FieldSet[_P, _I] {
 }
 
 class FieldSet1[Q, A](g1: Q=>A, i: A) extends FieldSet[Q, A] {
-  final val f1 = field[A](g1, WebappTmp.lensId)
+  final val f1 = field[A](g1, Iso.id.asLens)
   override final val emptyI   = i
   override final val fields   = Vector(f1)
   override final def pi(p: P) = (f1 pv p)

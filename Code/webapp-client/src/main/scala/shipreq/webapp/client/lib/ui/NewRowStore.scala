@@ -5,7 +5,6 @@ import monocle._
 import monocle.macros.Lenser
 import monocle.std.option.some
 import scalaz.Applicative
-import shipreq.webapp.base.WebappTmp
 
 object NewRowStore {
   final case class Row[I](status: RowStatus, i: I)
@@ -19,7 +18,7 @@ object NewRowStore {
   type SS[I] = Option[Row[I]]
 
   def apply[I](emptyI: I): NewRowStore[SS[I], I] =
-    new NewRowStore(WebappTmp.lensId, new RowL, emptyI)
+    new NewRowStore(Iso.id.asLens, new RowL, emptyI)
 
   def of[I](f: FieldSet[_, I]): NewRowStore[SS[I], I] =
     NewRowStore(f.emptyI)

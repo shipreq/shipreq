@@ -4,5 +4,5 @@ import monocle._
 
 object WebappTmp {
 
-  @inline final def lensId[A]: Lens[A, A] = Iso.id[A].asLens
+//  @inline final def lensId[A]: Lens[A, A] = Iso.id[A].asLens
 }

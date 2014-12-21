@@ -3,7 +3,6 @@ package shipreq.webapp.client.lib.ui
 import japgolly.scalajs.react.ScalazReact._
 import monocle._
 import monocle.macros.Lenser
-import shipreq.webapp.base.WebappTmp
 import scalaz.Applicative
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data.DataIdAux
@@ -21,7 +20,7 @@ object SavedRowStore {
   type SS[K, P, I] = Map[K, Row[P, I]]
 
   def apply[K, P, I](pi: P => I): SavedRowStore[SS[K, P, I], K, P, I] =
-    new SavedRowStore(WebappTmp.lensId, new RowL, pi)
+    new SavedRowStore(Iso.id.asLens, new RowL, pi)
 
   def data[P] = new BD[P]
   @inline final class BD[P] {
