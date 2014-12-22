@@ -20,10 +20,11 @@ object ShipReq extends Build {
   lazy val baseUtil     = Base.Util.project
   lazy val baseUtilSjs  = Base.UtilSjs.project
 
-  lazy val webapp       = Webapp.project
-  lazy val webappBase   = Webapp.Base.project
-  lazy val webappClient = Webapp.Client.project
-  lazy val webappServer = Webapp.Server.project
+  lazy val webapp         = Webapp.project
+  lazy val webappBase     = Webapp.Base.project
+  lazy val webappBaseTest = Webapp.BaseTest.project
+  lazy val webappClient   = Webapp.Client.project
+  lazy val webappServer   = Webapp.Server.project
 
   lazy val taskman             = Taskman.project
   lazy val taskmanApi          = Taskman.Api.project
@@ -249,7 +250,7 @@ object ShipReq extends Build {
   object Webapp extends Module {
     val dir = "webapp"
     override def project = typicalProject
-      .aggregate(webappClient, webappBase, webappServer) // not umbrella cos it shouldn't dependOn
+      .aggregate(webappClient, webappBase, webappBaseTest, webappServer) // not umbrella cos it shouldn't dependOn
 
     // ----------------------------------------------------
     object Base extends Module {
@@ -265,7 +266,18 @@ object ShipReq extends Build {
           addCommandAliases(
             "js" -> Client.jsCmd,
             "wd" -> ";up;~js"))
-        .dependsOn(propCore, baseUtilSjs, propTest % "test")
+        .dependsOn(propCore, baseUtilSjs)
+    }
+
+    // ----------------------------------------------------
+    object BaseTest extends Module {
+      val dir = "webapp-base-test"
+
+      override def deps = μTest.jvm
+
+      override def project = typicalProject
+        .configure(Common.scalaAndScalaJsShared)
+        .dependsOn(webappBase, propTest % "test")
     }
 
     // ----------------------------------------------------
@@ -320,7 +332,7 @@ object ShipReq extends Build {
         .settings(scalaJSSettings: _*)
         .configure(
           jsStyleDependsOn(propCore, baseUtilSjs, webappBase),
-          jsStyleDependsOnS(propTest)(Compile -> Test, Test -> Test),
+          jsStyleDependsOnS(propTest, webappBaseTest)(Compile -> Test, Test -> Test),
           testSettings,
           dontInline, // crashes scalac 2.11.2
           prodJsSettings)
@@ -420,6 +432,7 @@ object ShipReq extends Build {
           // Ensure templates can be loaded from the console
           fullClasspath in console in Compile += file("src/main/webapp"))
         .dependsOn(baseDb, taskmanApi, webappBase)
+        .dependsOn(propTest % "test", webappBaseTest % "test")
         .dependsOn(baseUtil, taskmanApiLogic, taskmanApiImpl) // Stupid IDEA auto-import needs this
       }
   }

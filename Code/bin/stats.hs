@@ -97,8 +97,9 @@ gatherAllStats = do dirs <- dirsIn "."
 -- Top-level module stats
 
 deps = M.fromList [
-         ("webapp-server",         ["webapp-base", "base-db", "taskman-api"]) ,
-         ("webapp-client",         ["webapp-base", "base-util-sjs"]) ,
+         ("webapp-server",         ["webapp-base-test", "base-db", "taskman-api"]) ,
+         ("webapp-client",         ["webapp-base-test", "base-util-sjs"]) ,
+         ("webapp-base-test",      ["webapp-base"]) ,
          ("webapp-base",           ["base-util-sjs", "prop-core"]) ,
          ("taskman",               ["taskman-api", "taskman-server"]) ,
          ("taskman-api",           ["taskman-api-impl", "taskman-api-logic"]) ,

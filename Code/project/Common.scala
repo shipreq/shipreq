@@ -97,6 +97,7 @@ object Common {
         "TSI"  -> "project taskman-server-impl",
         "TSL"  -> "project taskman-server-logic",
         "WB"   -> "project webapp-base",
+        "WT"   -> "project webapp-base-test",
         "WC"   -> "project webapp-client",
         "WS"   -> "project webapp-server",
         "cc"   -> ";clear;compile",
