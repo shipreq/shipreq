@@ -432,7 +432,7 @@ object ShipReq extends Build {
           // Ensure templates can be loaded from the console
           fullClasspath in console in Compile += file("src/main/webapp"))
         .dependsOn(baseDb, taskmanApi, webappBase)
-        .dependsOn(propTest % "test", webappBaseTest % "test")
+        .dependsOn(propTest % "test") //, webappBaseTest % "test") μTest??
         .dependsOn(baseUtil, taskmanApiLogic, taskmanApiImpl) // Stupid IDEA auto-import needs this
       }
   }
