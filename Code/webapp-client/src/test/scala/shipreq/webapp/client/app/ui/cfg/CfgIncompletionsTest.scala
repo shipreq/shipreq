@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.ui
+package shipreq.webapp.client.app.ui.cfg
 
 import japgolly.scalajs.react.test._
 import scalaz.std.AllInstances._

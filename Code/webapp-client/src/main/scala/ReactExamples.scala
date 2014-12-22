@@ -55,10 +55,10 @@ object ReactExamples {
       }
 
       def cfgIncmpR: Renderer[ProjectPage] = _ =>
-        CfgIncompletions.comp(CfgIncompletions.Props(cp, r.incmpCrud, r.reqTypeImpMod, clientData, false))
+        cfg.CfgIncompletions.comp(cfg.CfgIncompletions.Props(cp, r.incmpCrud, r.reqTypeImpMod, clientData, false))
 
       def cfgReqTypesR: Renderer[ProjectPage] = _ =>
-        CfgReqTypes.Props(cp, r.reqTypeCrud, clientData, false).component
+        cfg.CfgReqTypes.Props(cp, r.reqTypeCrud, clientData, false).component
 
       def cfgTagsR: Renderer[ProjectPage] = _ =>
         cfg.tags.CfgTags.Props(cp, r.tagCrud, clientData, false).component

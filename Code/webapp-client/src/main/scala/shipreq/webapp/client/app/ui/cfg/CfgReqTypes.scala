@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.ui
+package shipreq.webapp.client.app.ui.cfg
 
 import japgolly.scalajs.react._, vdom.prefix_<*._, ScalazReact._
 import japgolly.scalajs.react.experiment.OnUnmount
