@@ -1,45 +1,24 @@
 package shipreq.webapp.client.test
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
-import shipreq.webapp.base.protocol.Routine
-import shipreq.webapp.client.lib.FailureIO
-import shipreq.webapp.client.protocol.ClientProtocol
 import scala.scalajs.js
 import scalaz.Equal
 import scalaz.std.AllInstances._
-import scalaz.syntax.equal._
 import scalaz.effect.IO
 import shipreq.prop.test.Gen
 import shipreq.base.util.Debug._
 import shipreq.base.util.ScalaExt._
+import shipreq.webapp.base.test.BaseTestUtil
 import shipreq.webapp.client.lib.ui._
 import RowStatus._
 
-object TestUtil {
-
-  def assertEq[A: Equal](actual: A, expect: A): Unit =
-    assertEq(None, actual, expect)
-
-  def assertEq[A: Equal](name: String, actual: A, expect: A): Unit =
-    assertEq(name.some, actual, expect)
-
-  def assertEq[A: Equal](name: Option[String], actual: A, expect: A): Unit =
-    if (actual ≠ expect) {
-      println()
-      name.foreach(n => println(s">>>>>>> $n"))
-      println(s"actual: [$actual]\nexpect: [$expect]")
-      println()
-      assert(false)
-    }
+object TestUtil extends BaseTestUtil {
 
   def assertRowStatusFailed(r: RowStatus): RowStatus.Failed =
     r match {
       case f@ RowStatus.Failed(_) => f
       case f => sys.error(s"Expected a failed row. Got: $f")
     }
-
-  def fail(msg: String): Nothing =
-    throw new AssertionError(msg)
 
   case class AB[A,B](a: A, b: B)
 

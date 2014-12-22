@@ -1,8 +1,7 @@
-package shipreq.webapp.client.test
+package shipreq.webapp.base.test
 
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.UnsafeTypes._
-import shipreq.webapp.client.ClientData
 
 object SampleProject {
 
@@ -39,7 +38,5 @@ object SampleProject {
 
     new Project(customImplTypes, customReqTypes, tags)
   }
-
-  def clientData = new ClientData(project)
 
 }

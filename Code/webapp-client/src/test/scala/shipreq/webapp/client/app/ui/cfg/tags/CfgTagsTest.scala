@@ -10,8 +10,10 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.UnsafeTypes._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.delta.{Partition, RemoteDeltaG}
+import shipreq.webapp.base.test.SampleProject
 import shipreq.webapp.base.protocol.Routine
 import shipreq.webapp.base.protocol.Routines.TagCrud
+import shipreq.webapp.client.ClientData
 import shipreq.webapp.client.test._
 import Tag.Id
 import TagProtocol._
@@ -32,7 +34,7 @@ object CfgTagsTest extends TestSuite {
 
   override def tests = TestSuite {
     val remote     = Routine.Remote("x", TagCrud)
-    val clientData = SampleProject.clientData
+    val clientData = new ClientData(SampleProject.project)
     val cp         = new TestClientProtocol
     val props      = new CfgTags.Props(cp, remote, clientData, false)
     val re         = MainTable.Component(props)

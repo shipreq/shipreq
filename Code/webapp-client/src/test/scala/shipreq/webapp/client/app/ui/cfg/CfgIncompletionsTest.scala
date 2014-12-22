@@ -5,6 +5,8 @@ import scalaz.std.AllInstances._
 import utest._
 import shipreq.webapp.base.protocol.Routine
 import shipreq.webapp.base.protocol.Routines.CustomIncmpTypeCrud
+import shipreq.webapp.base.test.SampleProject
+import shipreq.webapp.client.ClientData
 import shipreq.webapp.client.test._
 import TestUtil._
 
@@ -12,7 +14,7 @@ object CfgIncompletionsTest extends TestSuite {
 
   override def tests = TestSuite {
     val remote     = Routine.Remote("x", CustomIncmpTypeCrud)
-    val clientData = SampleProject.clientData
+    val clientData = new ClientData(SampleProject.project)
     val cp         = new TestClientProtocol
     val props      = new CfgIncompletions.UserDefIncompletions.Props(cp, remote, clientData, false)
     val re         = CfgIncompletions.UserDefIncompletions.Component(props)
