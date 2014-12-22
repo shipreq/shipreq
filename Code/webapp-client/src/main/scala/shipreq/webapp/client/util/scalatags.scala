@@ -17,7 +17,28 @@ abstract class XxxxPri0 {
 
 object XxxxConst {
   trait AllHtmlTags extends ReactVDom.Cap with ReactTags with ReactTags2
-  trait AllHtmlAttr extends ReactVDom.Cap with ReactVDom.Attrs with ReactVDom.ExtraAttrs with ReactVDom.Styles
+  trait AllHtmlAttr extends ReactVDom.Cap with ReactVDom.Attrs with ReactVDom.ExtraAttrs with ReactVDom.Styles {
+    import ReactVDom._
+    import ReactVDom.all._
+
+    final def compositeAttr[A](k: Attr, f: (A, List[A]) => A, e: => Modifier = EmptyTag) =
+      new CompositeAttr(k, f, e)
+
+    val classSwitch = compositeAttr[String](all.cls, (h,t) => (h::t) mkString " ")
+
+    @inline final def classSet(ps: (String, Boolean)*): Modifier =
+      classSwitch(ps.map(p => if (p._2) Some(p._1) else None): _*)(stringAttrX)
+
+    @inline final def classSet1(a: String, ps: (String, Boolean)*): Modifier =
+      classSet(((a, true) +: ps):_*)
+
+    @inline final def classSetM(ps: Map[String, Boolean]): Modifier =
+      classSet(ps.toSeq: _*)
+
+    @inline final def classSet1M(a: String, ps: Map[String, Boolean]): Modifier =
+      classSet1(a, ps.toSeq: _*)
+
+  }
   trait AllSvgTags extends ReactVDom.Cap with ReactSvgTags
   trait AllSvgAttr extends ReactVDom.Cap with ReactVDom.SvgAttrs
 

@@ -3,7 +3,7 @@ package shipreq.webapp.client.app.ui.cfg.tags
 import japgolly.scalajs.react._, vdom.prefix_<^.{Tag => ReactTag, Modifier => TagMod, _}, ScalazReact._
 import japgolly.scalajs.react.experiment.OnUnmount
 import monocle.macros.Lenser
-import shipreq.webapp.client.app.ui.ShowDeletedToggler
+import shipreq.webapp.client.app.ui.{RowDetailButton, ShowDeletedToggler}
 import scala.language.reflectiveCalls
 import scalajs.js.{undefined, UndefOr, UndefOrOps}
 import scalaz.effect.IO
@@ -56,7 +56,14 @@ private[tags] object MainTable {
                    at_state: at_storesAndState.State,
                    tree: TreeState,
                    newSel: Tag.Type,
-                   detailRow: Option[Id])
+                   detailRow: Option[Id]) {
+
+    val childToParent = tree.reverseM[Set]
+    val tagStream = getAllP
+
+    private def getAllP: Stream[Tag] =
+      eachTypesStores.foldLeft(Stream.empty[Tag])(_ #::: _.s.getAllP(this).map(t => t: Tag))
+  }
 
   object State {
     private[this] def l = Lenser[State]
@@ -130,9 +137,6 @@ private[tags] object MainTable {
         RemoteDeltaListener(PovTag, TagCrud).install(tagStateFns, Partition.Tags, _.clientData))
       .build
 
-  def getAllP(s: S): Stream[Tag] =
-    eachTypesStores.foldLeft(Stream.empty[Tag])(_ #::: _.s.getAllP(s).map(t => t: Tag))
-
   val rowIdFromEditorInput: ((V.S, Any)) => Option[Id] = _._1._2.tagData._1
 
   def newRowActive(s: State): Boolean =
@@ -148,15 +152,14 @@ private[tags] object MainTable {
     def validatorState(k: Option[Id]): S => V.S =
       s => {
         val cd = c.props.clientData
-        val tags = getAllP(s)
 
         val ts: RefKeyVS.Data[Id] =
-          (k, tags.map(t => t.keyO.map(k => (t.id.some, k))).filter(_.isDefined).map(_.get))
+          (k, s.tagStream.map(t => t.keyO.map(k => (t.id.some, k))).filter(_.isDefined).map(_.get))
         val is: RefKeyVS.Data[CustomIncmpType.Id] = // TODO cacheable
           (None, cd.project.customIncmpTypes.data.toStream
             .map(i => (i.id.some, i.key)))
 
-        (tags, RefKeyVS(ts, is))
+        (s.tagStream, RefKeyVS(ts, is))
       }
 
     def newTagControlProps =
@@ -175,6 +178,22 @@ private[tags] object MainTable {
       <.button(
         ^.onclick ~~> c.modStateIO(abortNew),
         "Cancel") // TODO sync all abort-new buttons
+
+    def detailPane: TagMod = {
+      val s = c.state
+      s.detailRow.fold(EmptyTag) { id =>
+        def rels(ids: Seq[Id]): DetailPane.Rels =
+          ids.map { id =>
+            val t = s.tagStream.find(_.id ≟ id).get // TODO yuk
+            DetailPane.Rel(id, t.name, IO(()))
+          }
+        val props = DetailPane.Props(
+          descEditor = <.div("TODO"),
+          children = rels(s.tree(id)),
+          parents = rels(s.childToParent(id).toSeq))
+        DetailPane.Component(props)
+      }
+    }
 
     type Indenter = ReactTag => ReactTag
     type F = (String, Indenter) => UndefOr[ReactElement]
@@ -206,15 +225,22 @@ private[tags] object MainTable {
 
       val unusedField: ReactNode = "-"
 
-      def rowTemplate(rs: RowStatus, key: String)(name: ReactNode, refkey: ReactNode, enum: ReactNode)(ctrls: => TagMod): ReactElement =
-        <.tr(^.key := key, ^.cls := UI.rowStatusRowClass(rs),
+      def rowTemplate(s: S, oid: UndefOr[Id], rs: RowStatus, key: String)(name: ReactNode, refkey: ReactNode, enum: ReactNode)(ctrls: => TagMod): ReactElement = {
+        val focus = oid.map(id =>
+          RowDetailButton.Props.forRow(id)(s.detailRow, w => c.modStateIO(State._detailRow set w)))
+        <.tr(
+          ^.key := key,
+          ^.classSet1(UI.rowStatusRowClass(rs), "focusrow" -> focus.exists(_.isActive)),
           <.td(^.cls := "name", name),
           <.td(refkey),
           <.td(enum),
-          <.td(UI.rowStatusCtrls(rs, ctrls)))
+          <.td(
+            focus.map(_.component),
+            UI.rowStatusCtrls(rs, ctrls)))
+      }
 
-      def newRowTemplate(rs: RowStatus)(name: ReactNode, refkey: ReactNode, enum: ReactNode): ReactElement =
-        rowTemplate(rs, "new")(name, refkey, enum)(abortNewButton)
+      def newRowTemplate(s: S, rs: RowStatus)(name: ReactNode, refkey: ReactNode, enum: ReactNode): ReactElement =
+        rowTemplate(s, undefined, rs, "new")(name, refkey, enum)(abortNewButton)
 
       def renderRow(s: S, row: stores.s.Row): F = F { (keyp, indent) =>
         val tag = row.p
@@ -235,12 +261,10 @@ private[tags] object MainTable {
     } // end TagSubtypeRenderer
 
     def rows: TagMod = {
-      val s             = c.state
-      val tags          = getAllP(c.state)
-      val all           = (tg_renderer.all(s) #::: at_renderer.all(s)).foldLeft(Map.empty[Id, F])(_ + _)
-      val childToParent = s.tree.reverseM[Set]
-      val topLvlIds     = all.keySet -- childToParent.m.keySet
-      val topLvl        = tags.filter(topLvlIds contains _.id).sortBy(_.name)
+      val s         = c.state
+      val all       = (tg_renderer.all(s) #::: at_renderer.all(s)).foldLeft(Map.empty[Id, F])(_ + _)
+      val topLvlIds = all.keySet -- s.childToParent.m.keySet
+      val topLvl    = s.tagStream.filter(topLvlIds contains _.id).sortBy(_.name)
 
       def go(id: Id, keyp: String, indent: Indenter): Stream[ReactElement] =
         all(id)(keyp, indent).fold(Stream.empty[ReactElement]) { h =>
@@ -266,7 +290,8 @@ private[tags] object MainTable {
         <.table(
           headerRow,
           <.tbody(rows)
-        ))
+        ),
+        detailPane)
 
     // -----------------------------------------------------------------------------------------------------------------
     // TagGroup
@@ -290,14 +315,15 @@ private[tags] object MainTable {
     val tg_renderer = new TagSubtypeRenderer(tg_editor, tg_storesAndStateS) {
       override def renderNew(s: S, row: stores.n.Row): ReactElement = {
         val (name, enum, _) = editor render ei(s, row)
-        newRowTemplate(row.status)(name, unusedField, enum)
+        newRowTemplate(s, row.status)(name, unusedField, enum)
       }
       override def renderAlive(s: S, indent: Indenter, key: String)(row: stores.s.Row): ReactElement = {
         val (name, enum, _) = editor render ei(s, row)
-        rowTemplate(row.status, key)(indent(name), unusedField, enum)(deletion.button(row.p.id, SoftDel))
+        val t = row.p
+        rowTemplate(s, t.id, row.status, key)(indent(name), unusedField, enum)(deletion.button(t.id, SoftDel))
       }
       override def renderDead (s: S, indent: Indenter, key: String)(rs: RowStatus, t: TagT): ReactElement =
-        rowTemplate(rs, key)(indent(<.span(t.name)), unusedField, "TODO")(deletion.button(t.id, Restore))
+        rowTemplate(s, t.id, rs, key)(indent(<.span(t.name)), unusedField, "TODO")(deletion.button(t.id, Restore))
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -322,14 +348,15 @@ private[tags] object MainTable {
     val at_renderer = new TagSubtypeRenderer(at_editor, at_storesAndStateS) {
       override def renderNew(s: S, row: stores.n.Row): ReactElement = {
         val (name, refkey, _) = editor render ei(s, row)
-        newRowTemplate(row.status)(name, refkey, unusedField)
+        newRowTemplate(s, row.status)(name, refkey, unusedField)
       }
       override def renderAlive(s: S, indent: Indenter, key: String)(row: stores.s.Row): ReactElement = {
         val (name, refkey, _) = editor render ei(s, row)
-        rowTemplate(row.status, key)(indent(name), refkey, unusedField)(deletion.button(row.p.id, SoftDel))
+        val t = row.p
+        rowTemplate(s, t.id, row.status, key)(indent(name), refkey, unusedField)(deletion.button(t.id, SoftDel))
       }
       override def renderDead (s: S, indent: Indenter, key: String)(rs: RowStatus, t: TagT): ReactElement =
-        rowTemplate(rs, key)(indent(<.span(t.name)), t.key.value, unusedField)(deletion.button(t.id, Restore))
+        rowTemplate(s, t.id, rs, key)(indent(<.span(t.name)), t.key.value, unusedField)(deletion.button(t.id, Restore))
     }
 
   } // end Backend

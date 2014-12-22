@@ -48,5 +48,7 @@ object WebappClientTmp {
 //        a.==>[N, E](eventHandler(_).unsafePerformIO())
     }
 
+    implicit def asdlkkjfjhaslkdjasdf[A <% Modifier](x: js.UndefOr[A]): Modifier =
+      x.map(v => v: Modifier).toOption
   }
 }
