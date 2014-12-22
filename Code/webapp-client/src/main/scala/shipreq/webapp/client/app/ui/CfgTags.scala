@@ -53,7 +53,7 @@ object CfgTags {
                    tg_state: tg_storesAndState.State,
                    at_state: at_storesAndState.State,
                    tree: TreeState,
-                   newSel: TagType,
+                   newSel: Tag.Type,
                    detailRow: Option[Id])
 
   object State {
@@ -70,26 +70,16 @@ object CfgTags {
   type ST = ReactST[IO, S, Unit]
   val ST = ReactS.FixT[IO, S]
 
-  sealed abstract class TagType(val key: String, val text: String) {
-    type P <: Tag
-    type I
-    val stores: NewAndSavedStores[S, Id, P, I]
-  }
+  val tg_storesAndStateS = tg_storesAndState.contramap(State._tg_state)
+  val at_storesAndStateS = at_storesAndState.contramap(State._at_state)
 
-  case object TagGroupType extends TagType("T", "Tag Group") {
-    override type P = TagGroup
-    override type I = tg_storesAndState.Input
-    override val stores = tg_storesAndState.contramap(State._tg_state)
-  }
+  def storesForType(t: Tag.Type): NewAndSavedStores[S, Id, _ <: Tag, _] =
+    t match {
+      case Tag.Type.Group      => tg_storesAndStateS
+      case Tag.Type.Applicable => at_storesAndStateS
+    }
 
-  case object ApplicableTagType extends TagType("A", "Tag") {
-    override type P = ApplicableTag
-    override type I = at_storesAndState.Input
-    override val stores = at_storesAndState.contramap(State._at_state)
-  }
-
-  val tagTypes  = List[TagType](TagGroupType, ApplicableTagType)
-  val tagTypesM = IMap.empty((_: TagType).key).addAll(tagTypes: _*)
+  val eachTypesStores = Tag.Type.values map storesForType
 
   private def initialState(p: Props): S = {
     val tgs = Seq.newBuilder[TagGroup]
@@ -103,7 +93,7 @@ object CfgTags {
       tg_storesAndState.initState(_.initStateS(tgs.result(), _.id)),
       at_storesAndState.initState(_.initStateS(ats.result(), _.id)),
       Multimap(tagtree.mapValues(_.children)),
-      ApplicableTagType,
+      Tag.Type.Applicable,
       None)
   }
 
@@ -120,11 +110,11 @@ object CfgTags {
 
   val tagStateFns = new RemoteDeltaListener.StateFns[S, Id, PovTag](
     (s, i) =>
-      tagTypes.foldLeft(State._tree.modify(_ delkv i))((f, t) => f compose t.stores.s.remove(i))(s),
+      eachTypesStores.foldLeft(State._tree.modify(_ delkv i))((f, s) => f compose s.s.remove(i))(s),
     (s, i, d) => {
       val s2 = d.tag match {
-        case t: TagGroup      => TagGroupType     .stores.s.set(i, t)(s)
-        case t: ApplicableTag => ApplicableTagType.stores.s.set(i, t)(s)
+        case t: TagGroup      => tg_storesAndStateS.s.set(i, t)(s)
+        case t: ApplicableTag => at_storesAndStateS.s.set(i, t)(s)
       }
       State._tree.modify(d.rels.apply(_, i))(s2)
     })
@@ -139,21 +129,21 @@ object CfgTags {
       .build
 
   def getAllP(s: S): Stream[Tag] =
-    tagTypes.foldLeft(Stream.empty[Tag])(_ #::: _.stores.s.getAllP(s).map(t => t: Tag))
+    eachTypesStores.foldLeft(Stream.empty[Tag])(_ #::: _.s.getAllP(s).map(t => t: Tag))
 
   val rowIdFromEditorInput: ((V.S, Any)) => Option[Id] = _._1._2.tagData._1
 
-  case class CreateControlProps(selected: TagType, onChange: TagType => IO[Unit], onCreate: Option[IO[Unit]])
+  case class CreateControlProps(selected: Tag.Type, onChange: Tag.Type => IO[Unit], onCreate: Option[IO[Unit]])
   val CreateControl = ReactComponentB[CreateControlProps]("CreateControl")
     .render(p => {
       def onchange: SyntheticEvent[HTMLSelectElement] => IO[Unit] =
-        e => tagTypesM.get(e.target.value).fold(IO(()))(p.onChange)
+        e => Tag.Type.byKey.get(e.target.value).fold(IO(()))(p.onChange)
       <.div(
         <.select(
           ^.value := p.selected.key,
           ^.onchange ~~> onchange,
           ^.disabled := p.onCreate.isEmpty,
-          tagTypes.map(t => <.option(^.value := t.key, t.text))),
+          Tag.Type.values.map(t => <.option(^.value := t.key, t.name))),
         <.button(
           ^.onclick ~~>? p.onCreate,
           ^.disabled := p.onCreate.isEmpty,
@@ -163,10 +153,10 @@ object CfgTags {
     .build
 
   def newRowActive(s: State): Boolean =
-    tagTypes.foldLeft(false)(_ || _.stores.n.editing(s))
+    eachTypesStores.foldLeft(false)(_ || _.n.editing(s))
 
   val abortNew: S => S =
-    tagTypes.map(_.stores.n.remove).reduce(_ compose _)
+    eachTypesStores.map(_.n.remove).reduce(_ compose _)
 
   // ===================================================================================================================
   final class Backend(c: BackendScope[Props, S]) extends OnUnmount {
@@ -193,7 +183,7 @@ object CfgTags {
         if (newRowActive(c.state)) None else Some(onCreate))
 
     def onCreate: IO[Unit] =
-      c.modStateIO(s => s.newSel.stores.n.enableEdit(s))
+      c.modStateIO(s => storesForType(s.newSel).n.enableEdit(s))
 
     val headerRow =
       CfgTable.header(List(FieldNames.name, FieldNames.refKey, FieldNames.tagIsEnumLike))
@@ -299,7 +289,7 @@ object CfgTags {
     // TagGroup
 
     val tg_editor = {
-      import TagGroupType.stores
+      @inline def stores = tg_storesAndStateS
       def crudValues(u: V.tagGroup._V): TagCrud.V = {
         val (name, enum, desc) = u
         \&/.This(TagProtocol.TagGroupValues(name, desc, enum))
@@ -314,7 +304,7 @@ object CfgTags {
         .applyOnEditFinishedK(saveFn)(rowIdFromEditorInput)
     }
 
-    val tg_renderer = new TagSubtypeRenderer(tg_editor, TagGroupType.stores) {
+    val tg_renderer = new TagSubtypeRenderer(tg_editor, tg_storesAndStateS) {
       override def renderNew(s: S, row: stores.n.Row): ReactElement = {
         val (name, enum, _) = editor render ei(s, row)
         newRowTemplate(row.status)(name, unusedField, enum)
@@ -331,7 +321,7 @@ object CfgTags {
     // ApplicableTag
 
     val at_editor = {
-      import ApplicableTagType.stores
+      @inline def stores = at_storesAndStateS
       def crudValues(u: V.applTag._V): TagCrud.V = {
         val (name, key, desc) = u
         \&/.This(TagProtocol.ApplicableTagValues(name, desc, key))
@@ -346,7 +336,7 @@ object CfgTags {
         .applyOnEditFinishedK(saveFn)(rowIdFromEditorInput)
     }
 
-    val at_renderer = new TagSubtypeRenderer(at_editor, ApplicableTagType.stores) {
+    val at_renderer = new TagSubtypeRenderer(at_editor, at_storesAndStateS) {
       override def renderNew(s: S, row: stores.n.Row): ReactElement = {
         val (name, refkey, _) = editor render ei(s, row)
         newRowTemplate(row.status)(name, refkey, unusedField)

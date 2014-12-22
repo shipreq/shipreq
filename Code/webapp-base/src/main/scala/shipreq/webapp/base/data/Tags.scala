@@ -9,7 +9,7 @@ import shipreq.base.util.IMap
 import shipreq.base.util.TaggedTypes.TaggedLong
 
 // =====================================================================================================================
-// A single tag. No relationships.
+// Tag meta
 
 object Tag {
   final case class Id(value: Long) extends TaggedLong
@@ -32,7 +32,18 @@ object Tag {
     case TagGroup(a, b, c, d, _)      => TagGroup(a, b, c, d, n)
     case ApplicableTag(a, b, c, d, _) => ApplicableTag(a, b, c, d, n)
   })
+
+  sealed abstract class Type(val key: String, val name: String) { type Data <: Tag}
+  object Type {
+    case object Group      extends Type("G", "Tag Group") { override type Data = TagGroup }
+    case object Applicable extends Type("A", "Tag")       { override type Data = ApplicableTag }
+    val values = List[Type](Group, Applicable)
+    val byKey  = IMap.empty((_: Type).key).addAll(values: _*)
+  }
 }
+
+// =====================================================================================================================
+// A single tag. No relationships.
 
 import Tag.Id
 import DataImplicits._
