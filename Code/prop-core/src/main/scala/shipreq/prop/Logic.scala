@@ -17,10 +17,11 @@ object Logic {
   private[prop] def evalChildren[P[_], A](x: P[A] => Eval, ls: NonEmptyList[Logic[P, A]])
                                           (op: String, fr: FailureReason, t: Stream[Eval] => List[Eval])
                                           (implicit F: Contravariant[P]): Eval = {
+    def wrap(s: String): String = if (s.indexOf(' ') >= 0) s"[$s]" else s
     val es  = ls.map(_ run x)
     val i   = es.head.input
     val ess = es.toStream
-    val n   = Need(ess.reverse.map(_.name.value).mkString("(", op, ")"))
+    val n   = Need(ess.reverse.map(x => wrap(x.name.value)).mkString("(", op, ")"))
     val fs = t(ess)
     if (fs.isEmpty)
       Eval.success(n, i)
