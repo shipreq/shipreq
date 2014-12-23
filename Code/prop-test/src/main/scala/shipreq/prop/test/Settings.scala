@@ -20,6 +20,10 @@ case class Settings(
 
   lazy val sampleSizeLen = sampleSize.value.toString.length
   lazy val sampleProgressFmt = s"[%${sampleSizeLen}d/${sampleSize.value}] "
+
+  // Convenience
+  def setSingleThreaded: Settings = copy(executor = SingleThreadedExecutor)
+  def setDebug         : Settings = copy(debug = true)
 }
 
 object Settings {
