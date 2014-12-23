@@ -1,6 +1,6 @@
 package shipreq.base.util
 
-import scalaz.Equal
+import scalaz.{Order, Equal}
 import scalaz.std.string.stringInstance
 import scalaz.std.anyVal.{shortInstance, longInstance, intInstance}
 
@@ -42,36 +42,46 @@ object TaggedTypes {
     final def toInt = value.toInt
   }
 
-  final class TaggedTypeScalaz[T <: TaggedType {type U = A}, A](implicit E: Equal[A], O: Ordering[A])
-      extends Equal[T] with Ordering[T] {
-    override def equal(a1: T, a2: T) = E.equal(a1.value, a2.value)
-    override def equalIsNatural = E.equalIsNatural
-    override def compare(x: T, y: T) = O.compare(x.value, y.value)
-    def subst[F <: TaggedType {type U = A}] = this.asInstanceOf[TaggedTypeScalaz[F, A]]
-  }
-  private val _taggedStringInstance = new TaggedTypeScalaz[TaggedString, String]
-  private val _taggedLongInstance   = new TaggedTypeScalaz[TaggedLong, Long]
-  private val _taggedIntInstance    = new TaggedTypeScalaz[TaggedInt, Int]
-  private val _taggedShortInstance  = new TaggedTypeScalaz[TaggedShort, Short]
+  final class TaggedTypeTypeclass[T <: TaggedType {type U = A}, A](implicit O: Order[A], SO: scala.Ordering[A]) {
+    def subst[F <: TaggedType {type U = A}] = this.asInstanceOf[TaggedTypeTypeclass[F, A]]
 
-  implicit def taggedStringInstance[T <: TaggedType {type U = String}] = _taggedStringInstance.subst[T]
-  implicit def taggedLongInstance  [T <: TaggedType {type U = Long}]   = _taggedLongInstance.subst[T]
-  implicit def taggedIntInstance  [T <: TaggedType {type U = Int}]     = _taggedIntInstance.subst[T]
-  implicit def taggedShortInstance [T <: TaggedType {type U = Short}]  = _taggedShortInstance.subst[T]
+    object ScalaTC extends scala.Ordering[T] {
+      override def compare(x: T, y: T) = SO.compare(x.value, y.value)
+    }
+    object ScalazTC extends Order[T] {
+      override def equal(a1: T, a2: T) = O.equal(a1.value, a2.value)
+      override def equalIsNatural      = O.equalIsNatural
+      override def order(x: T, y: T)   = O.order(x.value, y.value)
+    }
+  }
+
+  private[this] val taggedTC_string = new TaggedTypeTypeclass[TaggedString, String]
+  private[this] val taggedTC_long   = new TaggedTypeTypeclass[TaggedLong,   Long]
+  private[this] val taggedTC_int    = new TaggedTypeTypeclass[TaggedInt,    Int]
+  private[this] val taggedTC_short  = new TaggedTypeTypeclass[TaggedShort,  Short]
+
+  implicit def taggedScalaTC_string[T <: TaggedType {type U = String}] = taggedTC_string.subst[T].ScalaTC
+  implicit def taggedScalaTC_long  [T <: TaggedType {type U = Long  }] = taggedTC_long  .subst[T].ScalaTC
+  implicit def taggedScalaTC_int   [T <: TaggedType {type U = Int   }] = taggedTC_int   .subst[T].ScalaTC
+  implicit def taggedScalaTC_short [T <: TaggedType {type U = Short }] = taggedTC_short .subst[T].ScalaTC
+
+  implicit def taggedScalazTC_string[T <: TaggedType {type U = String}] = taggedTC_string.subst[T].ScalazTC
+  implicit def taggedScalazTC_long  [T <: TaggedType {type U = Long  }] = taggedTC_long  .subst[T].ScalazTC
+  implicit def taggedScalazTC_int   [T <: TaggedType {type U = Int   }] = taggedTC_int   .subst[T].ScalazTC
+  implicit def taggedScalazTC_short [T <: TaggedType {type U = Short }] = taggedTC_short .subst[T].ScalazTC
 
 //  implicit def autoUnboxTaggedTypes[T <: TaggedType](t: T): T#U = t.value
 //  implicit def autoUnboxTaggedLong[T <: TaggedType](t: T)(implicit ev: T#U =:= Long): Long = ev(t.value)
 //  implicit def autoUnboxTaggedShort[T <: TaggedType](t: T)(implicit ev: T#U =:= Short): Short = ev(t.value)
 //  implicit def autoUnboxTaggedString[T <: TaggedType](t: T)(implicit ev: T#U =:= String): String = ev(t.value)
 //  implicit def autoUnboxTaggedTypes[UU, T <: TaggedType {type U = UU}](t: T): UU = t.value
-  implicit def autoUnboxTaggedLong[T <: TaggedType {type U = Long}](t: T): Long = t.value
-  implicit def autoUnboxTaggedInt[T <: TaggedType {type U = Int}](t: T): Int = t.value
-  implicit def autoUnboxTaggedShort[T <: TaggedType {type U = Short}](t: T): Short = t.value
+  implicit def autoUnboxTaggedLong  [T <: TaggedType {type U = Long}]  (t: T): Long   = t.value
+  implicit def autoUnboxTaggedInt   [T <: TaggedType {type U = Int}]   (t: T): Int    = t.value
+  implicit def autoUnboxTaggedShort [T <: TaggedType {type U = Short}] (t: T): Short  = t.value
   implicit def autoUnboxTaggedString[T <: TaggedType {type U = String}](t: T): String = t.value
 
   // -------------------------------------------------------------------------------------------------------------------
 
   final case class JsonStr[R](value: String) extends TaggedString
   implicit def JsonStrCtor[R] = TaggedTypeCtor[JsonStr[R]](JsonStr[R])
-
 }
