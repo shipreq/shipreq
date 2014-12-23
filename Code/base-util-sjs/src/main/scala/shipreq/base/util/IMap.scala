@@ -1,11 +1,15 @@
 package shipreq.base.util
 
 import scala.annotation.elidable
-import scalaz.Foldable
+import scalaz.{Order, Equal, Foldable}
 import scalaz.std.iterable._
+import scalaz.std.map._
 import scalaz.syntax.foldable._
 
 object IMap {
+  implicit def equality[K: Order, V: Equal]: Equal[IMap[K, V]] =
+    Equal.equalBy(_.underlyingMap)
+
   def empty[K, V](k: V => K): IMap[K, V] = new IMap(k, Map.empty)
 }
 
