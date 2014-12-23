@@ -78,7 +78,7 @@ final case class Eval private[prop] (name: Name, input: Input, failures: Failure
   def failureTree = failureTreeI("")
   def failureTreeI(indent: String): String = Util.quickSB(failureTreeSB(_, indent))
   def failureTreeSB(sb: StringBuilder, indent: String): Unit =
-    Util.asciiTreeSB[Eval](sb, List(this),
+    Util.asciiTreeSB[Eval](List(this))(sb,
       _.reasonsAndCauses.values.flatMap(_.toList).toList.map(v => (v.name.value, v)).toMap.toList.sortBy(_._1).map(_._2),
       _.name.value, indent)
 
@@ -97,7 +97,7 @@ final case class Eval private[prop] (name: Name, input: Input, failures: Failure
       override def toString = s"${m.size} failed axioms, ${m.values.foldLeft(Set.empty[FailureReason])(_ ++ _).size} causes of failure."
     }
     val keys = m.keys.toList.map(K).sortBy(_.toString)
-    Util.asciiTreeSB[X](sb, List(T), {
+    Util.asciiTreeSB[X](List(T))(sb, {
         case T    => keys
         case K(k) => m(k).map(I).toList.sortBy(_.toString)
         case I(_) => Nil
