@@ -4,6 +4,7 @@ import japgolly.scalajs.react._, vdom.prefix_<^.{Tag => ReactTag, Modifier => Ta
 import japgolly.scalajs.react.experiment.OnUnmount
 import monocle.macros.Lenser
 import shipreq.webapp.client.app.ui.{RowDetailButton, ShowDeletedToggler}
+import shipreq.webapp.client.util.DND
 import scala.language.reflectiveCalls
 import scalajs.js.{undefined, UndefOr, UndefOrOps}
 import scalaz.effect.IO
@@ -364,7 +365,14 @@ private[tags] object MainTable {
     def removeParent(parent: Id): PovRelations => PovRelations =
       r => r.copy(parents = r.parents - parent)
 
-    def treeUpdate(s: S, updateIO: UpdateIO, subj: Tag, g: PovRelations => PovRelations): IO[Unit] =
+    def moveChild(from: Id, to: Id): PovRelations => PovRelations =
+      r => r.copy(children =
+        DND.move(from, to)(r.children.toList).toVector) // TODO performance: .toList.toVector
+
+    def moveChildIO(s: S, updateIO: UpdateIO, subj: Tag)(from: Id, to: Id): IO[Unit] =
+      treeUpdateIO(s, updateIO, subj, moveChild(from, to))
+
+    def treeUpdateIO(s: S, updateIO: UpdateIO, subj: Tag, g: PovRelations => PovRelations): IO[Unit] =
       IO {
         val r = PovRelations.derive(subj.id, s.tree.m)
         val u = \&/.That(g(r))
@@ -373,11 +381,12 @@ private[tags] object MainTable {
         //val lock = c modStateIO storesForType(t.tagType).s.setStatus(t.id, RowStatus.Locked)
       }.join
 
-    def rels(s: S, updateIO: UpdateIO, subj: Tag, ids: Seq[Id], removeFn: Id => PovRelations => PovRelations): DetailPane.Rels =
-      ids.map { id =>
-        val t = getTag(id)(s).get
-        DetailPane.Rel(id, t.name, treeUpdate(s, updateIO, subj, removeFn(id)))
-      }
+    def rels(s: S, updateIO: UpdateIO, subj: Tag, ids: Seq[Id], removeFn: Id => PovRelations => PovRelations): DetailPane.Rels = {
+      var rs = ids.map(getTag(_)(s).get)
+      if (!s.showDeleted)
+        rs = rs.filter(_.alive ≟ Alive)
+      rs.map(t => DetailPane.Rel(t.id, t.name, treeUpdateIO(s, updateIO, subj, removeFn(t.id))))
+    }
 
     def childrenRels(s: S, updateIO: UpdateIO, subj: Tag): DetailPane.Rels =
       rels(s, updateIO, subj, s.tree(subj.id), removeChild)
@@ -392,7 +401,8 @@ private[tags] object MainTable {
           val props = DetailPane.Props(
             <.div("TODO"),
             childrenRels(s, updateIO, subj),
-            parentRels(s, updateIO, subj))
+            parentRels(s, updateIO, subj),
+            moveChildIO(s, updateIO, subj))
           DetailPane.Component(props)
         case _ => EmptyTag
       }

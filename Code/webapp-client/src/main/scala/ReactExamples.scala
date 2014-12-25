@@ -153,7 +153,7 @@ object ReactExamples {
         }
 
         def renderItem(i: Item) =
-          li(key := i.id)(RowComp((i, DND.Parent.cProps(dndState, i, move ))))
+          li(key := i.id)(RowComp(DND.Parent.cProps2(dndState, i, move)))
 
         div(
           h1("Drag and Drop"),

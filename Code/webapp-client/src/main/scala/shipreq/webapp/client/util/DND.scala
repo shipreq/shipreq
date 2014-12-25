@@ -11,6 +11,15 @@ import japgolly.scalajs.react.vdom.ReactVDom.Tag
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.ScalazReact._
 
+/**
+ * Usage.
+ *
+ * 1. Include in parent component state: DND.Parent.PState[A]
+ * 2. Initialise parent component state using DND.Parent.initialState[A]
+ * 3. Create component for draggable children using DND.Child.dndItemComponent[A]
+ * 4. Prepare a DND success callback `move(from: A, to: A): IO[Unit]`
+ * 5. Render draggable children using DND.Parent.cProps2
+ */
 object DND {
 
   def move[A](from: A, to: A)(l: List[A])(implicit E: Equal[A]): List[A] = {
@@ -59,7 +68,7 @@ object DND {
 
     import PState._
 
-    def initialState: PState[Nothing] = PState.Inactive
+    def initialState[A]: PState[A] = PState.Inactive
 
     def setTarget[A](tgt: A): PState[A] => PState[A] = {
       case Started(s)     => Possible(s, tgt)
@@ -99,6 +108,10 @@ object DND {
           case _                => false
         },
         c _runStateF eventHandler(moveFn))
+
+    def cProps2[M[_], A](c: ComponentStateFocus[PState[A]], a: A, moveFn: (A, A) => M[Unit])
+                        (implicit A: Applicative[M], M: M ~> IO, E: Equal[A]): (A, Child.CProps[A]) =
+      (a, cProps(c, a, moveFn))
   }
 
   // ===================================================================================================================
@@ -156,10 +169,10 @@ object DND {
 
     def dndItemComponent[A](r: (A, Tag) => ReactElement) = ReactComponentB[(A, DND.Child.CProps[A])]("DndItem")
       .initialState(DND.Child.initialState)
-      .render(T => {
-        val (i,p) = T.props
-        DND.Child.renderRow(p, i, T)(
-          r(i, DND.Child.renderDragHandle(p, i, T)))
-      }).build
+      .render { c =>
+        val (a, cp) = c.props
+        DND.Child.renderRow(cp, a, c)(
+          r(a, DND.Child.renderDragHandle(cp, a, c)))
+      }.build
   }
 }
