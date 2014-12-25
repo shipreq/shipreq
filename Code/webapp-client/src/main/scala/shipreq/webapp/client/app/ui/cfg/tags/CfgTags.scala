@@ -356,6 +356,7 @@ private[tags] object MainTable {
   // ===================================================================================================================
   object DetailPaneFns {
     // TODO CfgTags' DetailPane doesn't lock rows or handle ajax failure
+    // TODO Don't allow detail pane for deleted rows
 
     type UpdateIO = (Tag, TagCrud.V, SuccessIO, FailureIO) => IO[Unit]
 
@@ -383,7 +384,7 @@ private[tags] object MainTable {
 
     def rels(s: S, updateIO: UpdateIO, subj: Tag, ids: Seq[Id], removeFn: Id => PovRelations => PovRelations): DetailPane.Rels = {
       var rs = ids.map(getTag(_)(s).get)
-      if (!s.showDeleted)
+      //if (!s.showDeleted)
         rs = rs.filter(_.alive ≟ Alive)
       rs.map(t => DetailPane.Rel(t.id, t.name, treeUpdateIO(s, updateIO, subj, removeFn(t.id))))
     }
@@ -399,6 +400,7 @@ private[tags] object MainTable {
         case Some(id) => //if getRowStatus(id)(s).contains(RowStatus.Sync) =>
           val subj = getTag(id)(s).get
           val props = DetailPane.Props(
+            subj.name,
             <.div("TODO"),
             childrenRels(s, updateIO, subj),
             parentRels(s, updateIO, subj),
