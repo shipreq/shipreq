@@ -4,6 +4,8 @@ import scala.annotation.tailrec
 import scala.collection.GenTraversable
 import scalaz.{\/-, -\/, \/}
 
+final case class CycleFree[A](value: A)
+
 case class CycleDetector[A, B](extract: A => Stream[B], check: (A, Stream[B]) => Option[(B, B)]) {
 
   @inline final def hasCycle(a: A): Boolean =
@@ -14,6 +16,9 @@ case class CycleDetector[A, B](extract: A => Stream[B], check: (A, Stream[B]) =>
 
   final def findCycle(a: A): Option[(B, B)] =
     check(a, extract(a))
+
+  def cycleFree(a: A): (B, B) \/ CycleFree[A] =
+    findCycle(a).fold[(B, B) \/ CycleFree[A]](\/-(CycleFree(a)))(-\/.apply)
 
   def contramap[Z](f: Z => A) =
     new CycleDetector[Z, B](extract compose f, (z, b) => check(f(z), b))

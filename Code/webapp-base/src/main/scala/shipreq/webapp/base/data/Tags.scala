@@ -2,10 +2,12 @@ package shipreq.webapp.base.data
 
 import monocle.Lens
 import monocle.macros.Lenser
-import scalaz.Equal
+import scala.collection.GenTraversable
+import scalaz.{\/, Equal}
 import scalaz.Isomorphism._
 import scalaz.std.vector._
 import scalaz.syntax.equal._
+import shipreq.prop.{CycleFree, CycleDetector}
 import shipreq.base.util.IMap
 import shipreq.base.util.TaggedTypes.TaggedLong
 
@@ -43,6 +45,17 @@ object Tag {
   }
 
   implicit val equality: Equal[Tag] = Equal.equalA[Tag] // TODO use macros
+
+  object CycleDetectors {
+    val multimap =
+      CycleDetector.Directed.multimap[Vector, Id, Long](_.value, Vector.empty)
+    // val tagTree = multimap.contramap((_: TagTree).mapValues(_.children))
+
+    val tagTree =
+      CycleDetector[TagTree, Id](
+        _.keys.toStream,
+        CycleDetector.Directed.check[TagTree, Id, Long](_.get(_).fold(Stream.empty[Id])(_.children.toStream), _.value))
+  }
 }
 
 // =====================================================================================================================
@@ -144,6 +157,7 @@ object TagProtocol {
     def modChildren(id: Id, f: Vector[Id] => Vector[Id]): T => T
     def removeChild(parent: Id, child: Id): T => T
     def keySet(t: T): Set[Id]
+    def cycleDetector: CycleDetector[T, Id]
   }
 
   implicit object TagTreeMod extends TreeMod[TagTree] {
@@ -155,6 +169,9 @@ object TagProtocol {
 
     override def keySet(t: TagTree): Set[Id] =
       t.keySet
+
+    override val cycleDetector =
+      Tag.CycleDetectors.tagTree
   }
 
   /**
@@ -167,29 +184,6 @@ object TagProtocol {
   final case class PovRelations(parents: Map[Id, Option[Id]], children: Vector[Id]) {
     // TODO ↑ this could use some props too
 
-    def apply[T](tt: T, id: Id)(implicit T: TreeMod[T]): T = {
-      var t = tt
-
-      // Add children
-      t = T.modChildren(id, _ => children)(t)
-
-      // Add parents
-      for ((parent, pos) <- parents)
-        t = T.modChildren(parent, sibs =>
-          pos match {
-            case None    => if (sibs contains id) sibs else sibs :+ id
-            case Some(b) => reposition(sibs, id, before = b)
-          }
-        )(t)
-
-      // Remove old parents
-      val oldParents = T.keySet(t) - id -- parents.keySet
-      for (p <- oldParents)
-        t = T.removeChild(p, id)(t)
-
-      t
-    }
-
     // For testing
     def allReferencedIds: Set[Id] =
       parents.keySet ++
@@ -199,6 +193,38 @@ object TagProtocol {
 
   object PovRelations {
     implicit val equality = Equal.equalA[PovRelations]
+
+    def safeApply1[T](rels: PovRelations, id: Id, tt: T)(implicit T: TreeMod[T]): (Id, Id) \/ CycleFree[T] =
+      T.cycleDetector cycleFree trustedApply1(rels, id, tt)
+
+    def safeApplyN[T](rels: GenTraversable[(Id, PovRelations)], tt: T)(implicit T: TreeMod[T]): (Id, Id) \/ CycleFree[T] =
+      T.cycleDetector cycleFree trustedApplyN(rels, tt)
+
+    def trustedApplyN[T](rels: GenTraversable[(Id, PovRelations)], tt: T)(implicit T: TreeMod[T]): T =
+      rels.foldLeft(tt) { case (t, (id, r)) => trustedApply1(r, id, t) }
+
+    def trustedApply1[T](rels: PovRelations, id: Id, tt: T)(implicit T: TreeMod[T]): T = {
+      var t = tt
+
+      // Add children
+      t = T.modChildren(id, _ => rels.children)(t)
+
+      // Add parents
+      for ((parent, pos) <- rels.parents)
+        t = T.modChildren(parent, sibs =>
+          pos match {
+            case None    => if (sibs contains id) sibs else sibs :+ id
+            case Some(b) => reposition(sibs, id, before = b)
+          }
+        )(t)
+
+      // Remove old parents
+      val oldParents = T.keySet(t) - id -- rels.parents.keySet
+      for (p <- oldParents)
+        t = T.removeChild(p, id)(t)
+
+      t
+    }
 
     def derive(id: Id, tree: Map[Id, Vector[Id]]): PovRelations = {
       val children = tree.getOrElse(id, Vector.empty)

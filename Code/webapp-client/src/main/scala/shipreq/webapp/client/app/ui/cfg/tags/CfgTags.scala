@@ -3,8 +3,6 @@ package shipreq.webapp.client.app.ui.cfg.tags
 import japgolly.scalajs.react._, vdom.prefix_<^.{Tag => ReactTag, Modifier => TagMod, _}, ScalazReact._
 import japgolly.scalajs.react.experiment.OnUnmount
 import monocle.macros.Lenser
-import shipreq.webapp.client.app.ui.{RowDetailButton, ShowDeletedToggler}
-import shipreq.webapp.client.util.DND
 import scala.language.reflectiveCalls
 import scalajs.js.{undefined, UndefOr, UndefOrOps}
 import scalaz.effect.IO
@@ -14,20 +12,23 @@ import scalaz.syntax.equal._
 import scalaz.syntax.bind.ToBindOps
 
 import shipreq.prop.util.Multimap
-import shipreq.webapp.base.data.Validators.shared.RefKeyVS
+import shipreq.prop.CycleDetector
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.data.delta.Partition
 import shipreq.webapp.base.data.Validators.{tag => V}
+import shipreq.webapp.base.data.Validators.shared.RefKeyVS
+import shipreq.webapp.base.protocol.DeletionAction._
 import shipreq.webapp.base.protocol.Routines.TagCrud
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.client.ClientData
+import shipreq.webapp.client.app.ui.{RowDetailButton, ShowDeletedToggler}
 import shipreq.webapp.client.lib.{FailureIO, SuccessIO, CrudIO}
 import shipreq.webapp.client.lib.ui._
 import shipreq.webapp.client.protocol.ClientProtocol
+import shipreq.webapp.client.util.DND
 import TagProtocol.{PovTag, PovRelations}
 import Tag.Id
-import shipreq.webapp.base.protocol.DeletionAction._
 import shipreq.webapp.client.WebappClientTmp.WCTmpImplicits._
 
 
@@ -117,6 +118,9 @@ private[tags] object MainTable {
 
     override def keySet(t: TreeState): Set[Id] =
       t.m.keySet
+
+    override val cycleDetector: CycleDetector[TreeState, Id] =
+      Tag.CycleDetectors.multimap.contramap[TreeState](_.m)
   }
 
   val tagStateFns = new RemoteDeltaListener.StateFns[S, Id, PovTag](
@@ -127,7 +131,7 @@ private[tags] object MainTable {
         case t: TagGroup      => tg_storesAndStateS.s.set(i, t)(s)
         case t: ApplicableTag => at_storesAndStateS.s.set(i, t)(s)
       }
-      State._tree.modify(d.rels.apply(_, i))(s2)
+      State._tree.modify(PovRelations.trustedApply1(d.rels, i, _))(s2)
     })
 
   val Component =

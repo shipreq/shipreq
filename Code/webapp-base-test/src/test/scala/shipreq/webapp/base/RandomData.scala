@@ -137,9 +137,9 @@ object RandomData {
 
   @tailrec
   def preventCycles(m: TagTreeStructure, i: Int = 0): TagTreeStructure =
-    DataProp.tags.cycleDetector.findCycle(m) match {
+    Tag.CycleDetectors.multimap.findCycle(m) match {
       case None     =>
-        // println(s"No cycles after $i attemps @ size ${m.keyCount}→${m.valueCount}")
+        // println(s"No cycles after $i attempts @ size ${m.keyCount}→${m.valueCount}")
         m
       case Some((a, b)) =>
 //        println(s"Found cycle #$i [$a→$b] in ${m.m}")

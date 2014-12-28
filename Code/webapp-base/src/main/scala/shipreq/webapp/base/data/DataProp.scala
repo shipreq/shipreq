@@ -59,11 +59,8 @@ object DataProp {
     def uniqueSiblings =
       Prop.distinctC[Vector, Id]("siblings").forall((_: T).vstream(_.children))
 
-    def cycleDetector =
-      CycleDetector.Directed.multimap[Vector, Id, Long](_.value, Vector.empty)
-
     def noCycles =
-      cycleDetector.noCycleProp("structure").contramap((_: T).mapValues(_.children))
+      Tag.CycleDetectors.tagTree.noCycleProp("structure")
 
     def noDeadLinks =
       Prop.subset[T]("ids refers to available tags")(_.keySet, _.vstreamf(_.children.toStream))

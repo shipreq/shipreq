@@ -19,11 +19,12 @@ object TagsTest extends TestSuite {
     val E = EvalOver(this)
     val tt = tt0.add(TagInTree(t, Vector.empty))
     val id = tt.keys.head
+    import PovRelations._
 
     def prop =
       DataProp.tags.tagTree(tt).liftL ==> (
-        E.equal("deriveRels(applyRels(r)) = r", PovRelations.derive(id, povRels(tt, id)) , povRels)
-      ∧ E.equal("applyRels(deriveRels(t) = t",  PovRelations.derive(id, tt).apply(tt, id), tt)
+        E.equal("deriveRels(applyRels(r)) = r", derive(id, trustedApply1(povRels, id, tt)), povRels)
+      ∧ E.equal("applyRels(deriveRels(t) = t",  trustedApply1(derive(id, tt), id, tt)     , tt)
       )
   }
 

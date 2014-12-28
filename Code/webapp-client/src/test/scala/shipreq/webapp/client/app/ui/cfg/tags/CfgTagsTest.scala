@@ -92,7 +92,7 @@ object CfgTagsTest extends TestSuite {
         assertEq(h._1, subj)
         val actualRels = h._2.onlyThat.get
         assertEq("RFC", actualRels, expectedRels)
-        val tt = actualRels(S.project.tags.data, h._1.id)
+        val tt = PovRelations.trustedApply1(actualRels, h._1.id, S.project.tags.data)
         assertEq("Final result", PovRelations.derive(subj.id, tt), expectedRels)
       }
 

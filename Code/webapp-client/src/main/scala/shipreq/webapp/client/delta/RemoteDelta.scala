@@ -1,6 +1,8 @@
 package shipreq.webapp.client.delta
 
-import shipreq.prop.util.BiMultimap
+import scalaz.{-\/, \/-}
+import shipreq.base.util.ScalaExt._
+import shipreq.webapp.base.data.TagProtocol.PovRelations
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.delta._
 import shipreq.webapp.base.data.DataImplicits._
@@ -85,7 +87,7 @@ object TagPartitionFns extends Fns[Tags.type] {
     // Insert/update
     // (Separate phases ∵ all ids must exist before updating structure)
     t = t.addAll(ds.upd.map(u => TagInTree(u.tag, Vector.empty)): _*)
-    for (u <- ds.upd) t = u.rels(t, u.id)
+    t = PovRelations.trustedApplyN(ds.upd.map(_.tmap2(_.id, _.rels)), t)
 
     // Done
     p.copy(tags = RevAnd(rev, t))

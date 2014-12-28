@@ -210,13 +210,15 @@ class WIP {
       case Both(a, b) => put2(i, a.some, b.some)
     }
 
+    // TODO Crud routines don't allow validation?? That's a massive oversight.
+
     def put2(i: Id, ov: Option[Values], or: Option[PovRelations]): RemoteDelta =
       mod(tt => {
         val res = ov.fold(tt) { v =>
           val newTag = build(i)(v)
           tt.modOrPut(i, _.copy(tag = newTag), TagInTree(newTag, Vector.empty))
         }
-        or.fold(res)(_(res, i))
+        or.fold(res)(PovRelations.trustedApply1(_, i, res)) // TODO Possible cycle error
       })
 
     def nextId = Id(p.tags.data.keySet.map(_.value).max + 1)
