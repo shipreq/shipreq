@@ -1,7 +1,7 @@
 package shipreq.webapp.client.lib.ui
 
 import japgolly.scalajs.react.ScalazReact._
-import japgolly.scalajs.react.extras.{Listenable, OnUnmount}
+import japgolly.scalajs.react.extra.{Listenable, OnUnmount}
 import scalaz.Scalaz.Id
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.delta._

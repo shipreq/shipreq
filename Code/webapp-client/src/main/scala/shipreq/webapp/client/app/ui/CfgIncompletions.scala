@@ -1,7 +1,7 @@
 package shipreq.webapp.client.app.ui
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
-import japgolly.scalajs.react.extras.OnUnmount
+import japgolly.scalajs.react.extra.OnUnmount
 import scala.language.reflectiveCalls
 import scalaz.effect.IO
 import scalaz.std.AllInstances._

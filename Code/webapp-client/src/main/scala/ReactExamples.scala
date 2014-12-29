@@ -6,8 +6,8 @@ import scalaz.effect.IO
 import scalaz.std.AllInstances._
 import shipreq.webapp.base.protocol.Routines
 import japgolly.scalajs.react._, vdom.all._, ScalazReact._
-import japgolly.scalajs.react.extras._
-import japgolly.scalajs.react.extras.router._
+import japgolly.scalajs.react.extra._
+import japgolly.scalajs.react.extra.router._
 import shipreq.webapp.client.app.ui._
 
 object ReactExamples {
@@ -18,46 +18,48 @@ object ReactExamples {
     projectPage(r).unsafePerformIO()
   }
 
-  def addBack[P](root: Root[P], inner: Renderer[P]): Renderer[P] = router => {
-    val c = ReactComponentB[Unit]("Outer")
-      .render(_ =>
-      div(
-        div(backgroundColor := "#ddd", router.link(root)("Back")),
-        inner(router))
-      ).buildU
-    c()
-  }
-
   // ===================================================================================================================
 
   def projectPage(r: Routines.ForCfgReqType): IO[Unit] = {
     import shipreq.webapp.client._
+    import shipreq.webapp.client.app.ui._
     ClientData.init(r.projectInit, clientData => IO {
 
-      sealed trait ProjectPage
-      object ProjectPage extends Page[ProjectPage] {
-        val root = Root(index)
-        val cfgIncmp    = path("#cfg/incmp",    addBack(root, cfgIncmpR))
-        val cfgReqTypes = path("#cfg/reqtypes", addBack(root, cfgReqTypesR))
+      object ProjectPage extends RoutingRules {
+        val root       : Loc = register(rootLocation(index))
+        val cfgIncmp   : Loc = register(location("#cfg/incmp",    cfgIncmpR))
+        val cfgReqTypes: Loc = register(location("#cfg/reqtypes", cfgReqTypesR))
+
+        private def index: Renderer = router => {
+          val c = ReactComponentB[Unit]("Index")
+            .render(_ =>
+              ul(
+                li(router.link(ProjectPage.cfgIncmp   )("Cfg: Incompletions")),
+                li(router.link(ProjectPage.cfgReqTypes)("Cfg: Requirement Types")))
+            ).buildU
+          c()
+        }
+
+        private def cfgIncmpR =
+          CfgIncompletions.comp(CfgIncompletions.Props(r.incmpCrud, r.reqTypeImpMod, clientData, false))
+
+        private def cfgReqTypesR =
+          CfgReqTypes.Props(r.reqTypeCrud, clientData, false).component
+
+        register(removeTrailingSlashes)
+
+        override protected val notFound = redirect(root, Redirect.Replace)
+
+        override protected def interceptRender(i: InterceptionR): ReactElement =
+          if (i.loc == root)
+            i.element
+          else
+            div(
+              div(backgroundColor := "#ddd", i.router.link(root)("Back", cls := "back")),
+              i.element)
       }
 
-      def index: Renderer[ProjectPage] = router => {
-        val c = ReactComponentB[Unit]("Index")
-          .render(_ =>
-          ul(
-            li(router.link(ProjectPage.cfgIncmp)("Cfg: Incompletions")),
-            li(router.link(ProjectPage.cfgReqTypes)("Cfg: Requirement Types")))
-          ).buildU
-        c()
-      }
-
-      def cfgIncmpR: Renderer[ProjectPage] = _ =>
-        CfgIncompletions.comp(CfgIncompletions.Props(r.incmpCrud, r.reqTypeImpMod, clientData, false))
-
-      def cfgReqTypesR: Renderer[ProjectPage] = _ =>
-        CfgReqTypes.Props(r.reqTypeCrud, clientData, false).component
-
-      val c = Router.component(BaseUrl("/wip"), ProjectPage)
+      val c = ProjectPage.router(BaseUrl.fromWindowOrigin / "wip", Router.consoleLogger)
       c() render document.getElementById("eg2")
     })
   }
@@ -70,48 +72,4 @@ object ReactExamples {
       .build
     React.render(HelloMessage("John"), mountNode)
   }
-
-  def manual() = {
-    val tgt = document.getElementById("eg2")
-
-    sealed trait MyPage
-    object MyPage extends Page[MyPage] {
-      val root = Root(RootC)
-      val f2 = path("#f2", addBack(root, Route2C))
-      val f3 = path("#f3", addBack(root, Route3C))
-    }
-
-    def RootC: Renderer[MyPage] = router => {
-      val c = ReactComponentB[Unit]("RootC")
-        .render(_ =>
-        div(
-          h2("Top Level. Top Secret."),
-          div(router.link(MyPage.f2)("F222222222222222222222222")),
-          div(router.link(MyPage.f3)("F333333333333333333333333")))
-        )
-        .configure(LogLifecycle.short)
-        .buildU
-      c()
-    }
-
-    def Route2C: Renderer[MyPage] = router => {
-      val c = ReactComponentB[Unit]("F2")
-        .render(_ => div(h3("Cool.")))
-        .configure(LogLifecycle.short)
-        .buildU
-      c()
-    }
-
-    def Route3C: Renderer[MyPage] = router => {
-      val c = ReactComponentB[String]("F3")
-        .render(p => div(h3("Hello ", p)))
-        .configure(LogLifecycle.short)
-        .build
-      c("hehe cool")
-    }
-
-    val c = Router.component(BaseUrl("/wip"), MyPage)
-    React.render(c(), tgt)
-  }
-
 }
