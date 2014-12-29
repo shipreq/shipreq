@@ -1,6 +1,6 @@
 package shipreq.prop.test
 
-import monocle.Lens
+import monocle.PLens
 import scalaz.{NonEmptyList, Foldable, State}
 import scalaz.Leibniz.===
 import scalaz.std.stream._
@@ -26,8 +26,8 @@ case class Distinct[A, X, H[_] : Baggy, Y, Z, B](
   def addh(xs: X*): Distinct[A, X, H, Y, Z, B] =
     copy(fixer = this.fixer.addh(xs: _*))
 
-  @inline final def at[M, N](l: Lens[M, N, A, B]): Distinct[M, X, H, Y, Z, N] =
-    dimap(l.get, l.set)
+  @inline final def at[M, N](l: PLens[M, N, A, B]): Distinct[M, X, H, Y, Z, N] =
+    dimap(l.get, (m, b) => l.set(b)(m))
 
   @inline final def contramap[C](f: C => A, g: (C, B) => C): Distinct[C, X, H, Y, Z, C] =
     dimap(f, g)

@@ -70,7 +70,7 @@ object Deps {
     val scalacheck = dd("scalaz-scalacheck-binding")
   }
 
-  object Monocle extends Group("0.5.1", "com.github.julien-truffaut") {
+  object Monocle extends Group("1.0.1", "com.github.julien-truffaut") {
     val core   = dd("monocle-core")
     val macros = dd("monocle-macro") ++ core
   }

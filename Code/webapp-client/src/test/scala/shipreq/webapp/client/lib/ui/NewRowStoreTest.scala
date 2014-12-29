@@ -1,6 +1,6 @@
 package shipreq.webapp.client.lib.ui
 
-import monocle.SimpleLens
+import monocle.Lens
 import scalaz.Equal
 import scalaz.std.AllInstances._
 import utest._
@@ -53,7 +53,7 @@ object NewRowStoreTest extends TestSuite {
 
   case class FakeS(i: Int, ss: SS[(Int, String)])
   implicit val eqFakeS = Equal.equalA[FakeS]
-  val l = SimpleLens[FakeS](_.ss)((a,b) => a.copy(ss = b))
+  val l = Lens((_: FakeS).ss)(b => _.copy(ss = b))
 
   def genA   = Gen.int
   def genB   = Gen.alphanumericstring1.lim(4)

@@ -1,6 +1,6 @@
 package shipreq.prop.test
 
-import monocle.Lenser
+import monocle.macros.Lenser
 import scalaz.std.list._
 import scalaz.std.set._
 import utest._
