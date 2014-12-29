@@ -39,11 +39,13 @@ object Deps {
     // Update webapp-server/bower.json too.
     val reactJs = "org.webjars" % "react" % "0.12.1"
 
-    object React extends Group("0.7.0-SNAPSHOT", "com.github.japgolly.scalajs-react") {
-      val core   = js("core")
-      val test   = js("test")
-      val scalaz = js("ext-scalaz71")
-      val extras = js("extras")
+    object React extends Group("0.7.0-fe70c0a", "com.github.japgolly.scalajs-react") {
+      val core    = js("core")
+      val test    = js("test")
+      val scalaz  = js("ext-scalaz71")
+      val monocle = js("ext-monocle")
+      val extra   = js("extra")
+      val most    = core ++ scalaz ++ monocle ++ extra
     }
     object Scalaz extends Group(Deps.Scalaz.version + "-4", "com.github.japgolly.fork.scalaz") {
       val core   = js("scalaz-core")
