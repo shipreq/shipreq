@@ -1,6 +1,6 @@
 package shipreq.webapp.client
 
-import japgolly.scalajs.react.experiment.Broadcaster
+import japgolly.scalajs.react.extra.Broadcaster
 import scalaz.effect.IO
 import shipreq.webapp.client.delta._
 import shipreq.webapp.client.protocol.ClientProtocol

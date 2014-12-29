@@ -6,10 +6,7 @@ import scala.scalajs.js
 import scalaz._
 import scalaz.syntax.bind.ToBindOps
 import scalaz.effect.IO
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.ReactVDom.Tag
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.ScalazReact._
+import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 
 /**
  * Usage.
@@ -167,7 +164,7 @@ object DND {
         ^.onDragLeave ~~> p.eventHandler(DragEvent.Leave),
         ^.onDrop      ~~> drop(p))
 
-    def dndItemComponent[A](r: (A, Tag) => ReactElement) = ReactComponentB[(A, DND.Child.CProps[A])]("DndItem")
+    def dndItemComponent[A](r: (A, ReactTag) => ReactElement) = ReactComponentB[(A, DND.Child.CProps[A])]("DndItem")
       .initialState(DND.Child.initialState)
       .render { c =>
         val (a, cp) = c.props

@@ -10,25 +10,25 @@ object Editors {
   type ST   = ST.T[Unit]
   val nopST = ST.nop
 
-  type SimpleEditor[I] = Editor[I, I, IO, Unit, Unit, IO[Unit], Tag]
+  type SimpleEditor[I] = Editor[I, I, IO, Unit, Unit, IO[Unit], ReactTag]
 
   @inline private def callbackH[I](event: CallbackEvent[I], st: ST = nopST): CallbackH[I, IO, Unit, Unit] =
     CallbackH(event, st, ())
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  def textEditor(node: Tag): SimpleEditor[String] =
+  def textEditor(node: ReactTag): SimpleEditor[String] =
     Editor(ei => {
       val base = node(^.cls := ei.cssClass, ^.value := ei.data)
       ei.editable match {
         case None =>
-          base(^.readonly := true)
+          base(^.readOnly := true)
         case Some(cb) =>
           @inline def cbh(event: CallbackEvent[String], st: ST = nopST) = cb(callbackH(event, st))
           base(
-            ^.onchange  ~~> textChangeRecv(i => cbh(OnChange(i))),
-            ^.onblur    ~~> textChangeRecv(i => cbh(OnEditFinished(i))),
-            ^.onkeydown ~~> cancelOnEscape(s => cbh(OnCancel, s))) // esc doesn't trigger onkeypress
+            ^.onChange  ~~> textChangeRecv(i => cbh(OnChange(i))),
+            ^.onBlur    ~~> textChangeRecv(i => cbh(OnEditFinished(i))),
+            ^.onKeyDown ~~> cancelOnEscape(s => cbh(OnCancel, s))) // esc doesn't trigger onKeyPress
       }
     })
 
@@ -52,20 +52,20 @@ object Editors {
       val base = checkbox(ei.data)(^.cls := ei.cssClass)
       ei.editable match {
         case None =>
-          base(^.readonly := true, ^.disabled := true)
+          base(^.readOnly := true, ^.disabled := true)
         case Some(cb) =>
           @inline def cbh(event: CallbackEvent[Boolean], st: ST = nopST) = cb(callbackH(event, st))
           def handleChange: ReactEventI => IO[Unit] = e => {
             val b = e.target.checked
             cbh(OnChange(b)) >> cbh(OnEditFinished(b))
           }
-          base(^.onchange ~~> handleChange)
+          base(^.onChange ~~> handleChange)
       }
     })
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  def renderWithError[A,B,M[_],S,C,D](editor: Editor[A,B,M,S,C,D,Tag], err: Option[String]): Editor[A,B,M,S,C,D,Tag] =
+  def renderWithError[A,B,M[_],S,C,D](editor: Editor[A,B,M,S,C,D,ReactTag], err: Option[String]): Editor[A,B,M,S,C,D,ReactTag] =
     Editor(i => <.div(
       editor render i,
       err.map(e => <.div(^.cls := "errorMsg", e))))

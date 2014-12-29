@@ -1,6 +1,6 @@
 package shipreq.webapp.client.lib.ui
 
-import japgolly.scalajs.react._, vdom.prefix_<*._, ScalazReact._
+import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import scalaz.effect.IO
 import shipreq.base.util.TaggedTypes.TaggedLong
 import shipreq.webapp.base.data.{Alive, Dead, DataIdAux}
@@ -61,7 +61,7 @@ object CfgTable {
     def newRow    : I => R
     def savedRow  : (I, P) => R
     def deletedRow: P => R
-    def render    : R => Seq[Modifier]
+    def render    : R => Seq[TagMod]
   }
 }
 
@@ -91,31 +91,31 @@ final class CfgTable[S, K <: TaggedLong, P, I, A, B, C, V, RowKey, R](editor: Ed
 
   def newButton: ReactElement =
     <.button(
-      *.onclick ~~> run(newStore.enableEdit),
-      *.disabled := newStore.editing(c.state),
+      ^.onClick ~~> run(newStore.enableEdit),
+      ^.disabled := newStore.editing(c.state),
       "New")
 
   def newCancelButton: ReactElement =
     <.button(
-      *.onclick ~~> run(newStore.remove),
+      ^.onClick ~~> run(newStore.remove),
       "Cancel")
 
-  def row(classArg: String, rs: RowStatus, content: RowContent, ctrls: => Modifier): Tag = {
+  def row(classArg: String, rs: RowStatus, content: RowContent, ctrls: => TagMod): ReactTag = {
     val cls2 = UI.rowStatusRowClass(rs)
     val c = UI.rowStatusCtrls(rs, ctrls)
     <.tr(
-      *.cls := s"$classArg $cls2",
+      ^.cls := s"$classArg $cls2",
       rr.render(content).map(<.td(_)),
       <.td(c))
   }
 
-  def newRowO: Option[Tag] =
+  def newRowO: Option[ReactTag] =
     newStore.get(c.state).map(r => {
       val v = renderRow(newRowA(r.i), r.status)
-      row("new", r.status, rr.newRow(v), newCancelButton)(*.keyAttr := "new")
+      row("new", r.status, rr.newRow(v), newCancelButton)(^.key := "new")
     })
 
-  def newRow: Modifier =
+  def newRow: TagMod =
     newRowO.getOrElse(EmptyTag)
 
   def savedRows: RowStream = {
@@ -135,12 +135,12 @@ final class CfgTable[S, K <: TaggedLong, P, I, A, B, C, V, RowKey, R](editor: Ed
     def del1 = deletion.button(p.id, HardDel)
     def del2 = deletion.button(p.id, SoftDel)
     val v = renderRow(savedRowA(p.id), rs)
-    row("live", rs, rr.savedRow(v, p), <.span(del1, del2))(*.keyAttr := p.id.value)
+    row("live", rs, rr.savedRow(v, p), <.span(del1, del2))(^.key := p.id.value)
   }
 
   private def savedDeadRow(rs: RowStatus, p: P): ReactElement = {
     def restore = deletion.button(p.id, Restore)
-    row("dead", rs, rr.deletedRow(p), restore)(*.keyAttr := p.id.value)
+    row("dead", rs, rr.deletedRow(p), restore)(^.key := p.id.value)
   }
 
   def allSortableRows(static: RowStream) =

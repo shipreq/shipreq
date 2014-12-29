@@ -69,7 +69,7 @@ object TableTest extends TestSuite {
         })
       val savedRows = specU.savedRows(T, savedRow)(_.sortBy(_.p.name))
       div(
-        button(cls := "new", onclick ~~> T.runState(newRowS), disabled := specC.unsavedRowExists(T), "New"),
+        button(cls := "new", onClick ~~> T.runState(newRowS), disabled := specC.unsavedRowExists(T), "New"),
         newRow(T),
         savedRows)
     }).build

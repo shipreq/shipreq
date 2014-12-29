@@ -1,7 +1,7 @@
 package shipreq.webapp.client.app.ui.cfg
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
-import japgolly.scalajs.react.experiment.OnUnmount
+import japgolly.scalajs.react.extra.OnUnmount
 import scala.language.reflectiveCalls
 import scalaz.effect.IO
 import scalaz.std.AllInstances._
@@ -99,7 +99,7 @@ object CfgIncompletions {
 
       val table = {
         def rowRenderer =
-          new CfgTable.RowRenderer[CustomIncmpType, rowE.View, (Modifier, Modifier)] {
+          new CfgTable.RowRenderer[CustomIncmpType, rowE.View, (TagMod, TagMod)] {
             override def newRow     = identity
             override def savedRow   = (v, p) => v
             override def deletedRow = p => (p.key.value, TextMod.nonBlank from p.desc)

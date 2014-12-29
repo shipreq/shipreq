@@ -1,6 +1,6 @@
 package shipreq.webapp.client.lib.ui
 
-import japgolly.scalajs.react._, vdom.prefix_<*._, ScalazReact._
+import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import scalaz.effect.IO
 import shipreq.webapp.base.data.{Dead, Alive}
 import shipreq.webapp.base.protocol.DeletionAction
@@ -24,6 +24,6 @@ class Deletion[P, K](val alive: P => Alive, delIO: (K, DeletionAction) => IO[Uni
       case Dead  => false
     }
 
-  def button(k: K, a: DeletionAction): Tag =
-    <.button(buttonLabel(a), *.onclick ~~> delIO(k, a))
+  def button(k: K, a: DeletionAction): ReactTag =
+    <.button(buttonLabel(a), ^.onClick ~~> delIO(k, a))
 }

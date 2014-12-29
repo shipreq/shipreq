@@ -18,13 +18,13 @@ object UI {
     case RowStatus.Failed(_) => "failed"
   }
 
-  def rowStatusCtrls(rs: RowStatus, syncCtrls: => Modifier): Modifier =
+  def rowStatusCtrls(rs: RowStatus, ctrls: => TagMod): TagMod =
     rowStatusCtrlsFold(rs, sync = syncCtrls, t => t, t => t)
 
-  def rowStatusCtrlsFold(rs: RowStatus, sync: => Modifier, locked: Tag => Modifier, failed: Tag => Modifier): Modifier = rs match {
+  def rowStatusCtrlsFold(rs: RowStatus, sync: => TagMod, locked: ReactTag => TagMod, failed: ReactTag => TagMod): TagMod = rs match {
     case RowStatus.Sync      => sync
     case RowStatus.Locked    => locked(spinner)
-    case RowStatus.Failed(r) => failed(<.button("Retry", ^.onclick ~~> r))
+    case RowStatus.Failed(r) => failed(<.button("Retry", ^.onClick ~~> r))
   }
 
   def spinner =
