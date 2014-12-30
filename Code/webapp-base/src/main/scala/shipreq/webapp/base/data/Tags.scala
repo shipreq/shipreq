@@ -123,7 +123,28 @@ object TagTree {
       "  ")
   }
 
-  final case class FlatRow(tag: Tag, depth: Int, parentPath: Vector[Id]) {
+  object FlatRow {
+    sealed trait Status
+    object Status {
+      case object Good              extends Status
+      case object Bad               extends Status
+      case object BadParentGoodKids extends Status
+      implicit val equality: Equal[Status] = Equal.equalA[Status]
+    }
+
+    sealed trait FilterPolicy
+    object FilterPolicy {
+      case object OmitNothing         extends FilterPolicy
+      case object OmitBadBranches     extends FilterPolicy
+      case object OmitAnythingWithBadParent extends FilterPolicy
+      implicit val equality: Equal[FilterPolicy] = Equal.equalA[FilterPolicy]
+    }
+
+    implicit val equality: Equal[FlatRow] = Equal.equalA[FlatRow] // TODO use shapeless
+  }
+  import FlatRow.{FilterPolicy, Status}
+
+  final case class FlatRow(tag: Tag, depth: Int, parentPath: Vector[Id], status: Status) {
     @inline final def id: Id = tag.id
 
     def key: String =
@@ -145,22 +166,48 @@ object TagTree {
     tt.keySet -- allChildren
   }
 
-  def flatten(tt: TagTree, filter: Tag => Boolean): Vector[FlatRow] =
-    flatRows(topLevelIds(tt), tt.get(_).get, filter)
+  def flatten(tt: TagTree) =
+    flatRows(topLevelIds(tt), tt.get(_).get) _
 
-  def flatRows(topLvlIds: Set[Id], lookup: Id => TagInTree, filter: Tag => Boolean): Vector[FlatRow] = {
+  def flatRows(topLvlIds: Set[Id], lookup: Id => TagInTree)
+              (filter: Tag => Boolean, policy: FilterPolicy): Vector[FlatRow] = {
+    import Status._
+    import FilterPolicy._
+
+    val omitAnythingWithBadParent = policy ≟ OmitAnythingWithBadParent
+    val omitNothing               = policy ≟ OmitNothing
+
     def go(r: Vector[FlatRow], t: TagInTree, depth: Int, parentPath: Vector[Id]): Vector[FlatRow] =
       if (filter(t.tag)) {
-        val newr = r :+ FlatRow(t.tag, depth, parentPath)
-        if (t.children.isEmpty)
-          newr
-        else {
+        var result = r :+ FlatRow(t.tag, depth, parentPath, Good)
+        // Append children directly
+        if (t.children.nonEmpty) {
           val nextDepth = depth + 1
           val nextPP = parentPath :+ t.id
-          t.children.foldLeft(newr)((q, id) => go(q, lookup(id), nextDepth, nextPP))
+          t.children.foreach(id => result = go(result, lookup(id), nextDepth, nextPP))
         }
-      } else
+        result
+      } else if (omitAnythingWithBadParent)
         r
+      else {
+        // Process children separately
+        var cs = Vector.empty[FlatRow]
+        if (t.children.nonEmpty) {
+          val nextDepth = depth + 1
+          val nextPP = parentPath :+ t.id
+          cs = t.children.foldLeft(cs)((q, id) => go(q, lookup(id), nextDepth, nextPP))
+        }
+        val goodKids = cs.exists(_.status == Good)
+
+        def result(s: Status) = (r :+ FlatRow(t.tag, depth, parentPath, s)) ++ cs
+        if (goodKids)
+          result(BadParentGoodKids)
+        else if (omitNothing)
+          result(Bad)
+        else
+          r
+      }
+
     val topLvl = topLvlIds.toStream.map(lookup).sortBy(_.tag.name)
     topLvl.foldLeft(Vector.empty[FlatRow])(go(_, _, 0, Vector.empty))
   }

@@ -18,7 +18,12 @@ trait BaseTestUtil {
     if (actual ≠ expect) {
       println()
       name.foreach(n => println(s">>>>>>> $n"))
-      println(s"actual: [$actual]\nexpect: [$expect]")
+      val as = actual.toString
+      val es = expect.toString
+      if ((as + es) contains "\n")
+        println(s"actual: ↙[\n$as]\nexpect: ↙[\n$es]")
+      else
+        println(s"actual: [$as]\nexpect: [$es]")
       println()
       assert(false)
     }
