@@ -96,17 +96,17 @@ object CfgTagsTest extends TestSuite {
         assertEq("Final result", PovRelations.derive(subj.id, tt), expectedRels)
       }
 
-      'parentRels {
+      'existingParentRels {
         val subj = S.tags.get(23).get.tag
-        val rels = D.parentRels(s, t.u, subj)
+        val rels = D.existingParentRels(s, t.u, subj)
         assertEq(rels.map(_.name).toList.sorted, List("Released", "v1.x"))
         // Remove parent 'Released' from 'v1.1'
         testUnlink(subj, rels, "Released")(PovRelations(Map(Id(21) -> Id(24)), Vector.empty))
       }
 
-      'childRels {
+      'existingChildRels {
         val subj = S.tags.get(27).get.tag
-        val rels = D.childrenRels(s, t.u, subj)
+        val rels = D.existingChildrenRels(s, t.u, subj)
         assertEq(rels.map(_.name).toList, List("v1.0", "v1.1"))
         // Remove child 'v1.0' from 'Released'
         testUnlink(subj, rels, "v1.0")(PovRelations(Map(Id(20) -> Id(21)), Vector(23)))

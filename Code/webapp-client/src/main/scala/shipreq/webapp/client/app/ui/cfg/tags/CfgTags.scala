@@ -3,19 +3,20 @@ package shipreq.webapp.client.app.ui.cfg.tags
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.extra.OnUnmount
 import monocle.macros.Lenser
-import shipreq.base.util.IMap
+import monocle.Optional
+import monocle.std.option.some
 import scala.annotation.tailrec
 import scala.language.reflectiveCalls
 import scalajs.js.{undefined, UndefOr, UndefOrOps, Array => JsArray}
 import scalajs.js.JSConverters._
 import scalaz.effect.IO
-import scalaz.{Memo, \&/}
+import scalaz.{Maybe, Memo, \&/}
 import scalaz.std.AllInstances._
 import scalaz.syntax.equal._
 import scalaz.syntax.bind.ToBindOps
 
-import shipreq.prop.util.Multimap
 import shipreq.prop.CycleDetector
+import shipreq.prop.util.Multimap
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.data.delta.Partition
@@ -32,6 +33,7 @@ import shipreq.webapp.client.protocol.ClientProtocol
 import shipreq.webapp.client.util.DND
 import TagProtocol.{PovTag, PovRelations}
 import Tag.Id
+import TagTree.FlatRow, FlatRow.FilterPolicy
 
 
 object CfgTags {
@@ -56,12 +58,21 @@ private[tags] object MainTable {
 
   type TreeState = Multimap[Id, Vector, Id]
 
+  case class DetailPaneState(id: Id, parentAddSel: Option[Id], childAddSel: Option[Id])
+
+  object DetailPaneState {
+    private[this] def l = Lenser[DetailPaneState]
+    val _id           = l(_.id)
+    val _parentAddSel = l(_.parentAddSel)
+    val _childAddSel  = l(_.childAddSel)
+  }
+
   case class State(showDeleted: Boolean,
                    tg_state: tg_storesAndState.State,
                    at_state: at_storesAndState.State,
                    tree: TreeState,
                    newSel: Tag.Type,
-                   detailRow: Option[Id]) {
+                   detailRow: Option[DetailPaneState]) {
 
     lazy val childToParent = tree.reverseM[Set]
 
@@ -74,8 +85,6 @@ private[tags] object MainTable {
     val tagFilter: Tag => Boolean =
       if (showDeleted) Function const true
       else _.alive ≟ Alive
-
-    lazy val flatTree = TagTree.flatten(tagTree, tagFilter)
   }
 
   object State {
@@ -86,6 +95,9 @@ private[tags] object MainTable {
     val _tree        = l(_.tree)
     val _newSel      = l(_.newSel)
     val _detailRow   = l(_.detailRow)
+
+    val _detailRowSelParent = _detailRow ^<-? some ^|-> DetailPaneState._parentAddSel
+    val _detailRowSelChild  = _detailRow ^<-? some ^|-> DetailPaneState._childAddSel
   }
 
   type S = State
@@ -112,11 +124,11 @@ private[tags] object MainTable {
       case t: ApplicableTag => ats += t
     }
     State(p.showDeleted,
-      tg_storesAndState.initState(_.initStateS(tgs.result(), _.id)),
-      at_storesAndState.initState(_.initStateS(ats.result(), _.id)),
-      Multimap(tagtree.mapValues(_.children)),
-      Tag.Type.Applicable,
-      None)
+      tg_state  = tg_storesAndState.initState(_.initStateS(tgs.result(), _.id)),
+      at_state  = at_storesAndState.initState(_.initStateS(ats.result(), _.id)),
+      tree      = Multimap(tagtree.mapValues(_.children)),
+      newSel    = Tag.Type.Applicable,
+      detailRow = None)
   }
 
   implicit object TreeStateMod extends TagProtocol.TreeMod[TreeState] {
@@ -201,6 +213,15 @@ private[tags] object MainTable {
         ^.onClick ~~> c.modStateIO(abortNew),
         "Cancel") // TODO sync all abort-new buttons
 
+    def setDetail(w: Option[Id]): S => S =
+      w match {
+        case None     => State._detailRow set None
+        case Some(id) => State._detailRow modify {
+          case Some(r) if r.id ≟ id => r.copy(id = id).some
+          case _                    => DetailPaneState(id, None, None).some
+        }
+      }
+
     type Indenter = ReactTag => ReactTag
     type F = (String, Indenter) => ReactElement
     @inline def F(f: F): F = f
@@ -233,7 +254,7 @@ private[tags] object MainTable {
 
       def rowTemplate(s: S, oid: UndefOr[Id], rs: RowStatus, key: String)(name: ReactNode, refkey: ReactNode, enum: ReactNode, desc: ReactNode)(ctrls: => TagMod): ReactElement = {
         val focus = oid.map(id =>
-          RowDetailButton.Props.forRow(id)(s.detailRow, w => c.modStateIO(State._detailRow set w)))
+          RowDetailButton.Props.forRow(id)(s.detailRow.map(_.id), w => c modStateIO setDetail(w)))
         <.tr(
           ^.key := key,
           ^.classSet1(UI.rowStatusRowClass(rs), "focusrow" -> focus.exists(_.isActive)),
@@ -279,6 +300,7 @@ private[tags] object MainTable {
     def rows: TagMod = {
       val s         = c.state
       val renderers = (tg_renderer.all(s) #::: at_renderer.all(s)).foldLeft(Map.empty[Id, F])(_ + _)
+      val flatTree  = TagTree.flatten(s.tagTree)(s.tagFilter, FilterPolicy.OmitAnythingWithBadParent)
       val results   = JsArray.apply[ReactNode]()
       @inline def append(r: ReactNode): Unit = results push r
 
@@ -287,7 +309,7 @@ private[tags] object MainTable {
       at_renderer.newRow(s) foreach append
 
       // Saved rows
-      s.flatTree.foreach(row =>
+      flatTree.foreach(row =>
         append(renderers(row.id)(row.key, indentation(row.depth))))
 
       results
@@ -301,7 +323,10 @@ private[tags] object MainTable {
           headerRow,
           <.tbody(rows)
         ),
-        DetailPaneFns.render(c.state, crudIO.updateIO))
+        DetailPaneFns.render(
+          c.state, crudIO.updateIO,
+          parentSel = id => c.modStateIO(State._detailRowSelParent set id),
+          childSel  = id => c.modStateIO(State._detailRowSelChild  set id)))
 
     // -----------------------------------------------------------------------------------------------------------------
     // TagGroup
@@ -375,14 +400,23 @@ private[tags] object MainTable {
   object DetailPaneFns {
     // TODO CfgTags' DetailPane doesn't lock rows or handle ajax failure
     // TODO Don't allow detail pane for deleted rows
+    
+    import DetailPane.{Rel, Rels, AddRel, AddRels, AddSelected}
 
     type UpdateIO = (Tag, TagCrud.V, SuccessIO, FailureIO) => IO[Unit]
+    type SelUpdate = Option[Id] => IO[Unit]
 
     def removeChild(child: Id): PovRelations => PovRelations =
       r => r.copy(children = r.children.filterNot(_ ≟ child))
 
     def removeParent(parent: Id): PovRelations => PovRelations =
       r => r.copy(parents = r.parents - parent)
+
+    def addChild(child: Id): PovRelations => PovRelations =
+      r => r.copy(children = r.children :+ child)
+
+    def addParent(parent: Id): PovRelations => PovRelations =
+      r => r.copy(parents = r.parents.updated(parent, None))
 
     def moveChild(from: Id, to: Id): PovRelations => PovRelations =
       r => r.copy(children =
@@ -400,30 +434,58 @@ private[tags] object MainTable {
         //val lock = c modStateIO storesForType(t.tagType).s.setStatus(t.id, RowStatus.Locked)
       }.join
 
-    def rels(s: S, updateIO: UpdateIO, subj: Tag, ids: Seq[Id], removeFn: Id => PovRelations => PovRelations): DetailPane.Rels = {
+    def existingRels(s: S, updateIO: UpdateIO, subj: Tag, ids: Seq[Id], removeFn: Id => PovRelations => PovRelations): Rels = {
       var rs = ids.map(getTag(_)(s).get)
       //if (!s.showDeleted)
         rs = rs.filter(_.alive ≟ Alive)
-      rs.map(t => DetailPane.Rel(t.id, t.name, treeUpdateIO(s, updateIO, subj, removeFn(t.id))))
+      rs.map(t => Rel(t.id, t.name, treeUpdateIO(s, updateIO, subj, removeFn(t.id))))
     }
 
-    def childrenRels(s: S, updateIO: UpdateIO, subj: Tag): DetailPane.Rels =
-      rels(s, updateIO, subj, s.tree(subj.id), removeChild)
+    def existingChildrenRels(s: S, updateIO: UpdateIO, subj: Tag): Rels =
+      existingRels(s, updateIO, subj, s.tree(subj.id), removeChild)
 
-    def parentRels(s: S, updateIO: UpdateIO, subj: Tag): DetailPane.Rels =
-      rels(s, updateIO, subj, s.childToParent(subj.id).toSeq, removeParent)
+    def existingParentRels(s: S, updateIO: UpdateIO, subj: Tag): Rels =
+      existingRels(s, updateIO, subj, s.childToParent(subj.id).toSeq, removeParent)
 
-    def render(s: S, updateIO: UpdateIO): TagMod =
+    def addRelFilter(s: S, subj: Tag, mod: Id => PovRelations => PovRelations,
+                     relAlreadyExists: (PovRelations, Id) => Boolean): Tag => Boolean =
+      t => (t.alive ≟ Alive) && {
+        val r = PovRelations.derive(subj.id, s.tree.m)
+        !relAlreadyExists(r, t.id) && {
+          val r2 = mod(t.id)(r)
+          val x = PovRelations.safeApply1(r2, subj.id, s.tagTree)
+          // if (x.isLeft) println(s"Preventing: $subj → $t")
+          x.isRight
+        }
+      }
+
+    def addRels(s: S, subj: Tag, updateIO: UpdateIO, sel: Option[Id], selUpdate: SelUpdate,
+                mod: Id => PovRelations => PovRelations, relAlreadyExists: (PovRelations, Id) => Boolean): AddRels = {
+      val filter = addRelFilter(s, subj, mod, relAlreadyExists)
+      val rels = TagTree.flatten(s.tagTree)(filter, FilterPolicy.OmitNothing)
+        .filter(_.tag.alive ≟ Alive)
+        .map(row => AddRel(row.tag.name, row.depth,
+            if (row.status ≟ FlatRow.Status.Good) row.id.some else None))
+      AddRels(rels, selUpdate,
+        sel.map(selId => AddSelected(selId, treeUpdateIO(s, updateIO, subj, mod(selId)))))
+    }
+
+    def render(s: S, updateIO: UpdateIO, parentSel: SelUpdate, childSel: SelUpdate): TagMod =
       s.detailRow match {
-        case Some(id) => //if getRowStatus(id)(s).contains(RowStatus.Sync) =>
-          val subj = getTag(id)(s).get
-          val props = DetailPane.Props(
-            subj.name,
-            childrenRels(s, updateIO, subj),
-            parentRels(s, updateIO, subj),
-            moveChildIO(s, updateIO, subj))
-          DetailPane.Component(props)
+        case Some(ds) => //if getRowStatus(id)(s).contains(RowStatus.Sync) =>
+          DetailPane.Component(props(s, ds, updateIO, parentSel, childSel))
         case _ => EmptyTag
       }
+
+    def props(s: S, ds: DetailPaneState, updateIO: UpdateIO, parentSel: SelUpdate, childSel: SelUpdate): DetailPane.Props = {
+      val subj = getTag(ds.id)(s).get
+      DetailPane.Props(
+        subjName    = subj.name,
+        parents     = existingParentRels(s, updateIO, subj),
+        children    = existingChildrenRels(s, updateIO, subj),
+        parentAdds  = addRels(s, subj, updateIO, ds.parentAddSel, parentSel, addParent, _.parents contains _),
+        childAdds   = addRels(s, subj, updateIO, ds.childAddSel, childSel, addChild, _.children contains _),
+        childMoveIO = moveChildIO(s, updateIO, subj))
+    }
   }
 }
