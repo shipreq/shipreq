@@ -23,7 +23,6 @@ object Validators {
 
     // DD-18: Hashtag-like refkeys (groupings, incmp) must match this format: /[A-Za-z0-9][A-Za-z0-9_-=.]*/
     // Must not contain: []{}<>
-    // TODO should refkey uniqueness and matching be case-insensitive? Probably.
     val refKeyU =
       Rules.whitelistCharsR( """A-Za-z0-9\._=\-""", "may only consist of letters, numbers, and these symbols: . _ = -")
         .addRule(Rules.lengthInRange(refKeyLength))
@@ -40,10 +39,16 @@ object Validators {
     case class RefKeyVS(tagData: RefKeyVS.Data[Tag.Id],
                         customIssueData: RefKeyVS.Data[CustomIssueType.Id])
 
+    // DD-19: Hashtag-like refkeys (groupings, incmp) must be unique.
+    //        e.g. can't have both a grouping and an incompletion with refkey #X.
+    // DD-21: Refkeys must be case-insensitive.
+    //        eg. #HELLO should match #Hello
     private def refKeyUniqueness: ValidationPart[RefKeyVS, RefKey, RefKey] = {
       def vp[I: Equal](f: RefKeyVS => RefKeyVS.Data[I]) =
         Uniqueness.main[RefKeyVS, (Option[I], RefKey), Option[I], RefKey, RefKey](
-          f(_)._1, f(_)._2, _._1, _._2, Uniqueness.ignoreO[I], _.≟).fieldName(FieldNames.refKey)
+          f(_)._1, f(_)._2, _._1, _._2, Uniqueness.ignoreO[I], a => a equalsIgnoreCase _.value
+        ).fieldName(FieldNames.refKey)
+
       val v1 = vp(_.customIssueData)
       val v2 = vp(_.tagData)
       v1 compose v2

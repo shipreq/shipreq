@@ -1,0 +1,51 @@
+package shipreq.webapp.base.data
+
+import scalaz.std.anyVal._
+import utest._
+import shipreq.webapp.base.UnsafeTypes._
+import shipreq.webapp.base.test.BaseTestUtil._
+
+object DataTest extends TestSuite {
+
+  import Validators.shared._
+
+  @inline def tr(a: Option[Tag.Id], b: RefKey) = (a,b)
+  @inline def ir(a: Option[CustomIssueType.Id], b: RefKey) = (a,b)
+
+  val tagData = Stream(tr(1, "abc"), tr(2, "def"))
+  val issueData = Stream(ir(1, "tbd"), ir(3, "todo"))
+
+  override def tests = TestSuite {
+    'validation {
+      'refkeyUniqueness {
+
+        def test(input: String, expectValid: Boolean, subjT: Option[Tag.Id] = None, subjI: Option[CustomIssueType.Id] = None): Unit = {
+          val vs = RefKeyVS((subjT, tagData), (subjI, issueData))
+          assertEq(s"[$input] | $subjT, $subjI", refKeyS.isValid(vs, input), expectValid)
+        }
+
+        'preventDups {
+          test("hehe", true)
+          test("abc", false)
+          test("todo", false)
+          test("   todo   ", false)
+        }
+
+        'subjCanChangeItself {
+          test("abc", true, subjT = 1)
+          test("abc", false, subjT = 2)
+          test("todo", true, subjI = 3)
+          test("todo", false, subjI = 1)
+        }
+
+        'caseInsensitive {
+          test("ABC", false)
+          test("ABCD", true)
+          test("ABC", true, subjT = 1)
+          test("ABC", false, subjT = 2)
+          test("ABC", false, subjT = 3)
+        }
+      }
+    }
+  }
+}
