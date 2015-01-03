@@ -1,6 +1,6 @@
 package shipreq.webapp.base.data
 
-import scalaz.Equal
+import scalaz.{OneAnd, Equal}
 import scalaz.Isomorphism.<=>
 import shipreq.base.util.TaggedTypes._
 
@@ -37,3 +37,23 @@ case object ImplicationRequired extends ImplicationRequired with (Boolean <=> Im
  * #pri=high refers to a grouping.
  */
 final case class RefKey(value: String) extends TaggedString
+
+
+/**
+ * An intensional subset over F[A].
+ */
+sealed abstract class ISubset[F[_], A] {
+//  final def filter: Option[A => Boolean] = {
+//    @inline def check(a: A, as: OneAnd[Set, A]) = a == as.head || as.tail.contains(a)
+//    this match {
+//      case Subset.All()    => None
+//      case Subset.Only(as) => Some(check(_, as))
+//      case Subset.Not(as)  => Some(!check(_, as))
+//    }
+//  }
+}
+object ISubset {
+  case class All [F[_], A]()                     extends ISubset[F, A]
+  case class Only[F[_], A](values: OneAnd[F, A]) extends ISubset[F, A]
+  case class Not [F[_], A](values: OneAnd[F, A]) extends ISubset[F, A]
+}

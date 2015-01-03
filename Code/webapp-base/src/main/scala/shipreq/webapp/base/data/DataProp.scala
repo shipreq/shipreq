@@ -1,6 +1,7 @@
 package shipreq.webapp.base.data
 
 import shipreq.base.util.TaggedTypes.TaggedLong
+import scalaz.syntax.equal._
 import scalaz.std.AllInstances._
 import shipreq.prop._
 import DataImplicits._
@@ -47,6 +48,29 @@ object DataProp {
 
     lazy val all =
       (revAnd[T] ∧ (uniqueMnemonics ∧ uniqueNames ∧ each).contramap[RevAnd[T]](_.data)) rename "CustomReqTypes"
+  }
+
+  // -------------------------------------------------------------------------------------------------------------------
+  object fieldSet {
+
+    def orderNoDups =
+      Prop.distinct("order", (_: FieldSet).order)
+
+    def orderCustomFieldsIso =
+      Prop.equal[FieldSet]("order.customFields = fieldSet.customFields")(
+        _.customFields.keySet,
+        _.order.foldLeft(Set.empty[CustomField.Id])((q, id) => id match {
+          case i: CustomField.Id => q + i
+          case _: Field.Static   => q
+        }))
+
+    def orderHasAllUndeletableStaticFields =
+      Prop.prohibitMissingElements[FieldSet]("order ⊇ undeletable static")(
+        _ => Field.static.filter(_.deletable ≟ Deletable.Not),
+        _.order.toSet)
+
+    lazy val all = "FieldSet" rename_: (
+      orderNoDups ∧ orderCustomFieldsIso ∧ orderHasAllUndeletableStaticFields)
   }
 
   // -------------------------------------------------------------------------------------------------------------------

@@ -75,8 +75,8 @@ object Prop {
   def distinctC[C[_], A](name: => String)(implicit ev: C[A] <:< GenTraversable[A]): Prop[C[A]] =
     distinct(name, _.toStream)
 
-  def distinct[A, B](name: => String, f: A => Stream[B]): Prop[A] =
-    distinct[B](name).contramap(f)
+  def distinct[A, B](name: => String, f: A => GenTraversable[B]): Prop[A] =
+    distinct[B](name).contramap(f(_).toStream)
 
   def distinct[A](name: => String): Prop[Stream[A]] =
     atom[Stream[A]](s"each $name is unique", as => {
@@ -93,21 +93,45 @@ object Prop {
         }
     })
 
-  /** Ensures that A's Cs form a subset of A's Bs. */
-  def subset[A](name: String) = new SubsetB[A](name)
+  /**
+   * Test that A's Cs form a subset of (A's) Bs.
+   * Detect illegal values.
+   */
+  @inline def subset                 [A](name: String) = new SubsetB[A](name)
+  @inline def prohibitIllegalElements[A](name: String) = new SubsetB[A](name)
   final class SubsetB[A](val name: String) extends AnyVal {
-    def apply[B, C](superset: A => Set[B], sub: A => Traversable[C])(implicit ev: C <:< B): Prop[A] =
+    def apply[B, C](legalSuperset: A => Set[B], testData: A => Traversable[C])(implicit ev: C <:< B): Prop[A] =
       atom[A](name, a => {
-        val valid = superset(a)
-        val found = sub(a)
-        val bad = (Set.empty[C] /: found)((q, c) => if (valid contains c) q else q + c)
-        if (bad.isEmpty)
-          None
-        else
-          Some{
-            val b = bad.toStream.map(_.toString).sorted.distinct.mkString("{", ", ", "}")
-            s"$a\nLegal: (${valid.size}) $valid\nFound: (${found.size}) $found\nIllegal: $b"
-          }
+        val legal = legalSuperset(a)
+        val found = testData(a)
+        val bad   = found.foldLeft(Set.empty[C])((q, c) => if (legal contains c) q else q + c)
+        setMembershipResult(a, "Legal", legal, found, "Illegal", bad)
       })
   }
+
+  /**
+   * Test that A's Cs form a superset of (A's) Bs.
+   * Detect missing values.
+   */
+  @inline def superset               [A](name: String) = new SupersetB[A](name)
+  @inline def prohibitMissingElements[A](name: String) = new SupersetB[A](name)
+  final class SupersetB[A](val name: String) extends AnyVal {
+    def apply[B, C](requiredSubset: A => Traversable[B], testData: A => Set[C])(implicit ev: B <:< C): Prop[A] =
+      atom[A](name, a => {
+        val required = requiredSubset(a)
+        val found    = testData(a)
+        val missing  = required.foldLeft(Set.empty[B])((q, b) => if (found contains b) q else q + b)
+        setMembershipResult(a, "Required", required, found, "Missing", missing)
+      })
+  }
+
+  private[this] def fmtSet(s: Set[_]): String =
+    s.toStream.map(_.toString).sorted.distinct.mkString("{", ", ", "}")
+
+  private[this] def setMembershipResult(input: Any, expectName: String, expect: Traversable[_], found: Traversable[_],
+                                        failureName: String, problems: Set[_]): FailureReasonO =
+    if (problems.isEmpty)
+      None
+    else
+      Some(s"$input\n$expectName: (${expect.size}) $expect\nFound: (${found.size}) $found\n$failureName: ${fmtSet(problems)}")
 }

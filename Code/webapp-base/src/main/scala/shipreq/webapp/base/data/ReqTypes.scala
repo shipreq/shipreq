@@ -15,7 +15,10 @@ sealed trait ReqType {
 object ReqType {
   final case class Mnemonic(value: String) extends TaggedString
 
-  sealed trait Static extends ReqType
+  // type Id = Static \/ CustomReqType.Id
+  sealed trait Id
+
+  sealed trait Static extends ReqType with Id
 
   case object UseCase extends Static {
     override def mnemonic     = Mnemonic("UC")
@@ -42,7 +45,7 @@ final case class CustomReqType(id: CustomReqType.Id,
 }
 
 object CustomReqType {
-  final case class Id(value: Long) extends TaggedLong
+  final case class Id(value: Long) extends TaggedLong with ReqType.Id
 
   object IdAccess extends ObjDataId[CustomReqType.type, CustomReqType, Id] {
     override def id(d: CustomReqType) = d.id
