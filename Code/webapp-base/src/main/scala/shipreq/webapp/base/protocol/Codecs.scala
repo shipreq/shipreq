@@ -223,7 +223,7 @@ object RoutineGroupCodecs {
 
 // =====================================================================================================================
 object DeltaCodecs {
-  import shipreq.webapp.base.data.delta._
+  import shipreq.webapp.base.delta._
   import DataCodecs.rev
 
   implicit def partitions = enum(Partition.values)

@@ -14,7 +14,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedLong
 import shipreq.prop.test.{Distinct, Gen}
 import shipreq.webapp.base.data._, ReqType.Mnemonic
-import shipreq.webapp.base.data.delta._
+import shipreq.webapp.base.delta._
 import shipreq.webapp.base.protocol._
 import shipreq.base.util.Debug._
 import DataImplicits._

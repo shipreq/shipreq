@@ -5,7 +5,7 @@ import scalaz.Leibniz.===
 import utest._
 import upickle._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.delta._
+import shipreq.webapp.base.delta._
 import shipreq.webapp.base.RandomData
 import shipreq.prop._
 import shipreq.prop.test.PropTest._

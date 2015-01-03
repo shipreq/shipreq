@@ -6,7 +6,7 @@ import shipreq.base.util.IMap
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data.TagProtocol.PovRelations
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.delta._
+import shipreq.webapp.base.delta._
 import shipreq.webapp.base.data.DataImplicits._
 import Partition._
 

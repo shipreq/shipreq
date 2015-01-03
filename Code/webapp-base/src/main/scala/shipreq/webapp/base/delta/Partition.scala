@@ -1,4 +1,4 @@
-package shipreq.webapp.base.data.delta
+package shipreq.webapp.base.delta
 
 import scalaz.NonEmptyList
 import upickle.{Reader, Writer}

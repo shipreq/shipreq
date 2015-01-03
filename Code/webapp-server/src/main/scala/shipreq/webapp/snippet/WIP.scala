@@ -8,7 +8,7 @@ import shipreq.prop.util._
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.lib.ServerProtocol
 import shipreq.webapp.base.data._, DataImplicits._
-import shipreq.webapp.base.data.delta._
+import shipreq.webapp.base.delta._
 import DeletionAction._
 import shipreq.webapp.util.QuietException
 

@@ -3,7 +3,7 @@ package shipreq.webapp.base.protocol
 import scalaz.{NonEmptyList, \&/}
 import upickle.{Reader, Writer}
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.delta.RemoteDelta
+import shipreq.webapp.base.delta.RemoteDelta
 import Codec._, DataCodecs._, DeltaCodecs._, RoutineCodecs._
 import Routine._
 

@@ -7,7 +7,7 @@ import scalaz.std.string.stringInstance
 import scalaz.std.tuple._
 
 import shipreq.webapp.base.data._, DataImplicits._
-import shipreq.webapp.base.data.delta.Partition
+import shipreq.webapp.base.delta.Partition
 import shipreq.webapp.base.data.Validators.{reqType => V}
 import shipreq.webapp.base.protocol.Routines.CustomReqTypeCrud
 import shipreq.webapp.client.ClientData

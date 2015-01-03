@@ -4,7 +4,7 @@ import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.{Listenable, OnUnmount}
 import scalaz.Scalaz.Id
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.delta._
+import shipreq.webapp.base.delta._
 import shipreq.webapp.base.protocol._, Routine._
 import shipreq.webapp.client.ClientData
 import shipreq.webapp.client.delta.LocalDelta

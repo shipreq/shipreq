@@ -19,7 +19,7 @@ import shipreq.prop.CycleDetector
 import shipreq.prop.util.Multimap
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._, DataImplicits._
-import shipreq.webapp.base.data.delta.Partition
+import shipreq.webapp.base.delta.Partition
 import shipreq.webapp.base.data.Validators.{tag => V}
 import shipreq.webapp.base.data.Validators.shared.RefKeyVS
 import shipreq.webapp.base.protocol.DeletionAction._

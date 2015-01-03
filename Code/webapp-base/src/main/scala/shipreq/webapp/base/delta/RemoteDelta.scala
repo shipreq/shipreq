@@ -1,4 +1,4 @@
-package shipreq.webapp.base.data.delta
+package shipreq.webapp.base.delta
 
 import shipreq.prop._
 import shipreq.webapp.base.data.Rev

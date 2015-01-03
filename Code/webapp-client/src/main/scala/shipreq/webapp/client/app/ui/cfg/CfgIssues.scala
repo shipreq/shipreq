@@ -8,7 +8,7 @@ import scalaz.std.AllInstances._
 
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._, DataImplicits._
-import shipreq.webapp.base.data.delta.Partition
+import shipreq.webapp.base.delta.Partition
 import shipreq.webapp.base.data.Validators.{customIssueType => V}
 import shipreq.webapp.base.data.Validators.shared.RefKeyVS
 import shipreq.webapp.base.protocol.Routines._
