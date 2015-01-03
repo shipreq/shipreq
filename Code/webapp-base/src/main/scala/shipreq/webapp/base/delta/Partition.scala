@@ -3,6 +3,7 @@ package shipreq.webapp.base.delta
 import scalaz.NonEmptyList
 import upickle.{Reader, Writer}
 import shipreq.webapp.base.data._, DataImplicits._
+import shipreq.webapp.base.protocol.TagProtocol
 import shipreq.webapp.base.protocol.DataCodecs._
 
 sealed trait Partition {

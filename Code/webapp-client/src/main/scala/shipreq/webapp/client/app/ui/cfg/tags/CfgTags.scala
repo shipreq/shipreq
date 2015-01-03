@@ -23,6 +23,7 @@ import shipreq.webapp.base.delta.Partition
 import shipreq.webapp.base.data.Validators.{tag => V}
 import shipreq.webapp.base.data.Validators.shared.RefKeyVS
 import shipreq.webapp.base.protocol.DeletionAction._
+import shipreq.webapp.base.protocol.TagProtocol
 import shipreq.webapp.base.protocol.Routines.TagCrud
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.client.ClientData
@@ -31,10 +32,9 @@ import shipreq.webapp.client.lib.{FailureIO, SuccessIO, CrudIO}
 import shipreq.webapp.client.lib.ui._
 import shipreq.webapp.client.protocol.ClientProtocol
 import shipreq.webapp.client.util.DND
-import TagProtocol.{PovTag, PovRelations}
 import Tag.Id
 import TagTree.FlatRow, FlatRow.FilterPolicy
-
+import TagProtocol.{PovTag, PovRelations}
 
 object CfgTags {
   case class Props(cp: ClientProtocol, remote: TagCrud.Remote, clientData: ClientData, showDeleted: Boolean) {

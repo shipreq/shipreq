@@ -1,0 +1,134 @@
+package shipreq.webapp.base.protocol
+
+import monocle.macros.Lenser
+import scala.collection.GenTraversable
+import scalaz.{\/, Equal}
+import scalaz.syntax.equal._
+import shipreq.prop.{CycleFree, CycleDetector}
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.DataImplicits._
+import Tag.Id
+
+object TagProtocol {
+
+  @inline implicit final def tcTagPov = PovTag.IdAccess
+
+  trait TreeMod[T] {
+    def modChildren(id: Id, f: Vector[Id] => Vector[Id]): T => T
+    def removeChild(parent: Id, child: Id): T => T
+    def keySet(t: T): Set[Id]
+    def cycleDetector: CycleDetector[T, Id]
+  }
+
+  implicit object TagTreeMod extends TreeMod[TagTree] {
+    override def modChildren(id: Id, f: Vector[Id] => Vector[Id]): TagTree => TagTree =
+      _.mod(id, _ modChildren f)
+
+    override def removeChild(parent: Id, child: Id): TagTree => TagTree =
+      _.mod(parent, _ removeChild child)
+
+    override def keySet(t: TagTree): Set[Id] =
+      t.keySet
+
+    override val cycleDetector =
+      Tag.CycleDetectors.tagTree
+  }
+
+  /**
+   * A tag's relations from its own point of view.
+   *
+   * @param parents Each key is a parent of the subject tag.
+   *                Each value is the sibling before which the subject tag should be inserted. (None ⇒ append.)
+   * @param children An ordered list of the subject tag's children.
+   */
+  final case class PovRelations(parents: Map[Id, Option[Id]], children: Vector[Id]) {
+
+    // For testing
+    def allReferencedIds: Set[Id] =
+      parents.keySet ++
+      parents.values.filter(_.isDefined).map(_.get).toSet ++
+      children.toSet
+  }
+
+  object PovRelations {
+    implicit val equality = Equal.equalA[PovRelations]
+
+    def safeApply1[T](rels: PovRelations, id: Id, tt: T)(implicit T: TreeMod[T]): (Id, Id) \/ CycleFree[T] =
+      T.cycleDetector cycleFree trustedApply1(rels, id, tt)
+
+    def safeApplyN[T](rels: GenTraversable[(Id, PovRelations)], tt: T)(implicit T: TreeMod[T]): (Id, Id) \/ CycleFree[T] =
+      T.cycleDetector cycleFree trustedApplyN(rels, tt)
+
+    def trustedApplyN[T](rels: GenTraversable[(Id, PovRelations)], tt: T)(implicit T: TreeMod[T]): T =
+      rels.foldLeft(tt) { case (t, (id, r)) => trustedApply1(r, id, t) }
+
+    def trustedApply1[T](rels: PovRelations, id: Id, tt: T)(implicit T: TreeMod[T]): T = {
+      var t = tt
+
+      // Add children
+      t = T.modChildren(id, _ => rels.children)(t)
+
+      // Add parents
+      for ((parent, pos) <- rels.parents)
+        t = T.modChildren(parent, sibs =>
+          pos match {
+            case None    => if (sibs contains id) sibs else sibs :+ id
+            case Some(b) => reposition(sibs, id, before = b)
+          }
+        )(t)
+
+      // Remove old parents
+      val oldParents = T.keySet(t) - id -- rels.parents.keySet
+      for (p <- oldParents)
+        t = T.removeChild(p, id)(t)
+
+      t
+    }
+
+    def derive(id: Id, tree: Map[Id, Vector[Id]]): PovRelations = {
+      val children = tree.getOrElse(id, Vector.empty)
+
+      val parents = tree
+        .filter(_._2 contains id)
+        .foldLeft(Map.empty[Tag.Id, Option[Tag.Id]]) { case (m, (parent, sibs)) =>
+          val i = sibs.indexOf(id)
+          val s: Option[Tag.Id] = if (i >= 0 && (i + 1) < sibs.length) Some(sibs(i + 1)) else None
+          m + (parent -> s)
+        }
+
+      PovRelations(parents, children)
+    }
+  }
+
+  private def reposition[A: Equal](v: Vector[A], ins: A, before: A): Vector[A] =
+    v.foldLeft(Vector.empty[A])((q, e) => {
+      val q2 = if (e ≟ before) q :+ ins else q
+      if (e ≟ ins) q2 else q2 :+ e
+    })
+
+  /** A tag and its world from its own point of view. */
+  final case class PovTag(tag: Tag, rels: PovRelations) {
+    @inline def id = tag.id
+  }
+
+  object PovTag {
+    private[this] def l = Lenser[PovTag]
+    val _tag = l(_.tag)
+
+    object IdAccess extends ObjDataId[PovTag.type, PovTag, Id] {
+      override def id(d: PovTag) = d.id
+      override def mkId(l: Long) = Id(l)
+      override def setId(t: PovTag, i: Id) = _tag.modify(Tag.IdAccess.setId(_, i))(t)
+    }
+  }
+
+  sealed trait Values
+
+  final case class TagGroupValues(name: String,
+                                  desc: Option[String],
+                                  mutexChildren: MutexChildren) extends Values
+
+  final case class ApplicableTagValues(name: String,
+                                       desc: Option[String],
+                                       key: RefKey) extends Values
+}

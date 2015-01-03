@@ -58,17 +58,17 @@ object Routines {
 
   object ProjectInit extends DescT[Unit, Project]
 
-  object CustomIssueTypeCrud extends Crudable.CAux[CustomIssueType.Id, (RefKey, Option[String])]
-  object CustomReqTypeCrud   extends Crudable.CAux[CustomReqType.Id,   (ReqType.Mnemonic, String, ImplicationRequired)]
+  object CustomIssueTypeCrud extends Crudable.CAux[CustomIssueType.Id, CustomIssueTypeProtocol.Values]
+  object CustomReqTypeCrud   extends Crudable.CAux[CustomReqType.Id,   CustomReqTypeProtocol.Values]
   object TagCrud             extends Crudable.CAux[Tag.Id,             TagProtocol.Values \&/ TagProtocol.PovRelations]
 
   object CustomReqTypeImplicationMod extends DescT[(CustomReqType.Id, ImplicationRequired), RemoteDelta]
 
   // TODO rename ForCfgReqType
-  case class ForCfgReqType(projectInit:   ProjectInit.Remote,
-                           issueTypeCrud: CustomIssueTypeCrud.Remote,
-                           reqTypeCrud:   CustomReqTypeCrud.Remote,
+  case class ForCfgReqType(projectInit:   ProjectInit                .Remote,
+                           issueTypeCrud: CustomIssueTypeCrud        .Remote,
+                           reqTypeCrud:   CustomReqTypeCrud          .Remote,
                            reqTypeImpMod: CustomReqTypeImplicationMod.Remote,
-                           tagCrud:       TagCrud.Remote)
+                           tagCrud:       TagCrud                    .Remote)
     extends Group
 }

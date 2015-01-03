@@ -25,7 +25,6 @@ package object data {
     @inline implicit final def tcCustomIssueType = CustomIssueType.IdAccess
     @inline implicit final def tcCustomReqType   = CustomReqType.IdAccess
     @inline implicit final def tcTag             = Tag.IdAccess
-    @inline implicit final def tcTagPov          = TagProtocol.PovTag.IdAccess
   }
 
   object DataImplicits extends DataObjImplicits {

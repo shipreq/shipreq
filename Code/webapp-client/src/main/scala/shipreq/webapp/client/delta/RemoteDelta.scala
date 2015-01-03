@@ -4,10 +4,9 @@ import monocle.Lens
 import scalaz.Leibniz.===
 import shipreq.base.util.IMap
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.base.data.TagProtocol.PovRelations
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.delta._
 import shipreq.webapp.base.data.DataImplicits._
+import shipreq.webapp.base.delta._
 import Partition._
 
 sealed trait ApplicationResult
@@ -70,12 +69,12 @@ object GenericPartitionFns {
 }
 
 object TagPartitionFns extends Fns[Tags.type] {
-  type T = Tags.type
+  import shipreq.webapp.base.protocol.TagProtocol._
 
   def rev(p: Project): Rev =
     p.tags.rev
 
-  def update(p: Project, rev: Rev, ds: RemoteDeltaP[T]): Project = {
+  def update(p: Project, rev: Rev, ds: RemoteDeltaP[Tags.type]): Project = {
     var t = p.tags.data
 
     // Delete tags

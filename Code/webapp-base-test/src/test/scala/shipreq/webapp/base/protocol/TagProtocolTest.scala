@@ -1,4 +1,4 @@
-package shipreq.webapp.base.data
+package shipreq.webapp.base.protocol
 
 import scalaz.std.vector._
 import scalaz.std.string._
@@ -10,6 +10,7 @@ import shipreq.prop.test.PropTest._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.UnsafeTypes._
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.{SampleProject => S}
 import shipreq.webapp.base.test.BaseTestUtil._
 import TagProtocol._
@@ -18,7 +19,7 @@ import TagTree.FlatRow
 import FlatRow._
 import FilterPolicy._
 
-object TagsTest extends TestSuite {
+object TagProtocolTest extends TestSuite {
 
   case class TagProps(tt0: TagTree, povRels: PovRelations, t: Tag) {
     val E = EvalOver(this)
