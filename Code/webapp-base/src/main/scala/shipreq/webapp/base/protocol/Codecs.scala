@@ -106,6 +106,9 @@ private[protocol] object Codec {
   def intkeyW2[A, B](k: Int, a: A, b: B)(implicit A: Writer[A], B: Writer[B]) =
     Js.Arr(Js.Num(k), A write0 a, B write0 b)
 
+  def intkeyW4[A, B, C, D](k: Int, a: A, b: B, c: C, d: D)(implicit A: Writer[A], B: Writer[B], C: Writer[C], D: Writer[D]) =
+    Js.Arr(Js.Num(k), A write0 a, B write0 b, C write0 c, D write0 d)
+
   def strkeyW[T](k: String, t: T)(implicit T: Writer[T]) =
     Js.Arr(Js.Str(k), T write0 t)
 
@@ -166,13 +169,14 @@ object DataCodecs {
   implicit def iMapAuto[K: Reader : Writer, V: Reader : Writer](implicit d: DataIdAux[V, K]): ReadWriter[IMap[K, V]] =
     iMap(d.id)
 
-  implicit def rev           = tagL(Rev.apply)
-  implicit def alive         = boolCase(Alive)
-  implicit def impReq        = boolCase(ImplicationRequired)
-  implicit def mutexChildren = boolCase(MutexChildren)
-  implicit def mandatory     = boolCase(Mandatory)
-  implicit def deletable     = boolCase(Deletable)
-  implicit def refkey        = tagS(RefKey.apply)
+  implicit def rev            = tagL(Rev.apply)
+  implicit def alive          = boolCase(Alive)
+  implicit def impReq         = boolCase(ImplicationRequired)
+  implicit def mutexChildren  = boolCase(MutexChildren)
+  implicit def mandatory      = boolCase(Mandatory)
+  implicit def deletable      = boolCase(Deletable)
+  implicit def refkey         = tagS(RefKey.apply)
+  implicit def deletionAction = enum(DeletionAction.values)
 
   implicit def customIssueTypeId = tagL(CustomIssueType.Id.apply)
   implicit def customIssueType   = caseclass4(CustomIssueType.apply, CustomIssueType.unapply)
@@ -216,6 +220,35 @@ object DataCodecs {
   }
   implicit def fieldSet        = caseclass2(FieldSet.apply, FieldSet.unapply)
 
+  implicit def fieldProtocolValues = {
+    import FieldProtocol._, Field.ApplicableReqTypes
+    ReadWriter[Values]({
+      case TextFieldValues(a, b, c, d) => intkeyW4(0, a, b, c, d)
+    }, {
+      case Js.Arr(Js.Num(n), a, b, c, d) => n.toInt match {
+        case 0 => TextFieldValues(readJ[String](a), readJ[RefKey](b), readJ[Mandatory](c), readJ[ApplicableReqTypes](d))
+      }
+    })
+  }
+  implicit def fieldProtocolCfgAction = {
+    import FieldProtocol._, CfgAction._
+    ReadWriter[CfgAction]({
+      case Create(a)          => intkeyW (0, a)
+      case UpdateValues(a, b) => intkeyW2(1, a, b)
+      case UpdateOrder(a, b)  => intkeyW2(2, a, b)
+      case Delete(a, b)       => intkeyW2(3, a, b)
+    }, {
+      case Js.Arr(Js.Num(n), a) => n.toInt match {
+        case 0 => Create(readJ[Values](a))
+      }
+      case Js.Arr(Js.Num(n), a, b) => n.toInt match {
+        case 1 => UpdateValues(readJ[CustomField.Id](a), readJ[Values        ](b))
+        case 2 => UpdateOrder (readJ[Field.Id      ](a), readJ[Position      ](b))
+        case 3 => Delete      (readJ[Field.Id      ](a), readJ[DeletionAction](b))
+      }
+    })
+  }
+
   implicit def tagId         = tagL(Tag.Id.apply)
   implicit def tagGroup      = caseclass5(TagGroup.apply, TagGroup.unapply)
   implicit def applicableTag = caseclass5(ApplicableTag.apply, ApplicableTag.unapply)
@@ -253,12 +286,11 @@ object DataCodecs {
 
 // =====================================================================================================================
 object RoutineCodecs {
+  import DataCodecs.deletionAction
 
   def remoteRoutine[R <: Routine.Desc](d: R) = ReadWriter[d.Remote](
     r => Js.Str(r.n),
     {case Js.Str(n) => Routine.Remote(n, d) })
-
-  implicit def deletionAction = enum(DeletionAction.values)
 
   def crudAction[I, V](implicit WI: Writer[I], RI: Reader[I], WV: Writer[V], RV: Reader[V]): ReadWriter[CrudAction[I, V]] =
     ReadWriter[CrudAction[I, V]]({

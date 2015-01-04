@@ -17,6 +17,8 @@ object Routines {
 
   object CustomReqTypeImplicationMod extends DescT[(CustomReqType.Id, ImplicationRequired), RemoteDelta]
 
+  object FieldCrud extends DescT[FieldProtocol.CfgAction, RemoteDelta]
+
   case class ProjectSPA(projectInit:   ProjectInit                .Remote,
                         issueTypeCrud: CustomIssueTypeCrud        .Remote,
                         reqTypeCrud:   CustomReqTypeCrud          .Remote,
