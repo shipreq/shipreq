@@ -4,9 +4,11 @@ import monocle.macros.Lenser
 import scala.collection.GenTraversable
 import scalaz.{\/, Equal}
 import shipreq.base.util.Util
+import shipreq.base.util.ScalaExt._
 import shipreq.prop.{CycleFree, CycleDetector}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.DataImplicits._
+import shipreq.webapp.base.delta.{Partition, RemoteDeltaP}
 import Tag.Id
 
 object TagProtocol {
@@ -119,4 +121,26 @@ object TagProtocol {
   final case class ApplicableTagValues(name: String,
                                        desc: Option[String],
                                        key: RefKey) extends Values
+
+  object PartitionFns extends Partition.Fns[Partition.Tags.type] {
+    def rev(p: Project): Rev =
+      p.tags.rev
+
+    def update(p: Project, rev: Rev, ds: RemoteDeltaP[Partition.Tags.type]): Project = {
+      var t = p.tags.data
+
+      // Delete tags
+      for (id <- ds.del)
+        t = t.mapUnderlying(_.mapValues(_ removeChild id) - id)
+
+      // Insert/update
+      // (Separate phases ∵ all ids must exist before updating structure)
+      t = t.addAll(ds.upd.map(u => TagInTree(u.tag, Vector.empty)): _*)
+      t = PovRelations.trustedApplyN(ds.upd.map(_.tmap2(_.id, _.rels)), t)
+
+      // Done
+      p.copy(tags = RevAnd(rev, t))
+    }
+  }
+
 }

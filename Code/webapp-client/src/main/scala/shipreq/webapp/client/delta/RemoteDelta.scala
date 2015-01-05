@@ -1,18 +1,15 @@
 package shipreq.webapp.client.delta
 
-import monocle.Lens
-import scalaz.{-\/, \/-}
-import scalaz.Leibniz.===
-import shipreq.base.util.{Util, IMap}
-import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.delta._
+import shipreq.webapp.base.protocol._
 import Partition._
+
 
 sealed trait ApplicationResult
 case class Applied(p: Project, d: LocalDelta) extends ApplicationResult
-case object CouldntApply extends ApplicationResult
+case object CouldntApply                      extends ApplicationResult
+
 
 object RemoteDelta {
 
@@ -35,10 +32,10 @@ object RemoteDelta {
           }
 
         d.p match {
-          case t@ CustomIssueTypes => x(t, GenericPartitionFns(t, Project._customIssueTypes))
-          case t@ CustomReqTypes   => x(t, GenericPartitionFns(t, Project._customReqTypes))
-          case t@ Fields           => x(t, FieldPartitionFns)
-          case t@ Tags             => x(t, TagPartitionFns)
+          case t@ CustomIssueTypes => x(t, CustomIssueTypeProtocol.partitionFns)
+          case t@ CustomReqTypes   => x(t, CustomReqTypeProtocol  .partitionFns)
+          case t@ Fields           => x(t, FieldProtocol          .PartitionFns)
+          case t@ Tags             => x(t, TagProtocol            .PartitionFns)
         }
       }
 
@@ -49,80 +46,3 @@ object RemoteDelta {
     })
 }
 
-object GenericPartitionFns {
-  def apply[Id, D](q: Partition, l: Lens[Project, RevAnd[IMap[Id, D]]])
-                  (implicit evD: q.Data === D, evI: q.Id === Id): Fns[q.type] =
-    new Fns[q.type] {
-
-      def rev(p: Project): Rev = l.get(p).rev
-
-      def update(p: Project, rev: Rev, ds: RemoteDeltaP[q.type]): Project = {
-        var m = l.get(p).data
-
-        // Deletions
-        m --= evI.subst(ds.del)
-
-        // Updates
-        m = m.addAll(evD.subst(ds.upd): _*)
-
-        l.set(RevAnd(rev, m))(p)
-      }
-    }
-}
-
-object FieldPartitionFns extends Fns[Fields.type] {
-  import shipreq.webapp.base.protocol.FieldProtocol._
-
-  def rev(p: Project): Rev =
-    p.fields.rev
-
-  def update(p: Project, rev: Rev, ds: RemoteDeltaP[Fields.type]): Project = {
-    var FieldSet(customFields, order) = p.fields.data
-
-    // Delete fields
-    for (fieldId <- ds.del)
-      fieldId match {
-        case i: CustomField.Id => customFields = customFields - i
-        case _: Field.Static   => ()
-      }
-    order = order.filterNot(ds.del.contains)
-
-    // Insert/update
-    def setOrder(id: Field.Id, pos: Position): Unit =
-      order = Util.reposition(order, id, pos)
-    for (delta <- ds.upd)
-      delta match {
-        case Delta(-\/(staticField), pos) =>
-          setOrder(staticField, pos)
-        case Delta(\/-(customField), pos) =>
-          customFields += customField
-          setOrder(customField.id, pos)
-      }
-
-    // Done
-    p.copy(fields = RevAnd(rev, FieldSet(customFields, order)))
-  }
-}
-
-object TagPartitionFns extends Fns[Tags.type] {
-  import shipreq.webapp.base.protocol.TagProtocol._
-
-  def rev(p: Project): Rev =
-    p.tags.rev
-
-  def update(p: Project, rev: Rev, ds: RemoteDeltaP[Tags.type]): Project = {
-    var t = p.tags.data
-
-    // Delete tags
-    for (id <- ds.del)
-      t = t.mapUnderlying(_.mapValues(_ removeChild id) - id)
-
-    // Insert/update
-    // (Separate phases ∵ all ids must exist before updating structure)
-    t = t.addAll(ds.upd.map(u => TagInTree(u.tag, Vector.empty)): _*)
-    t = PovRelations.trustedApplyN(ds.upd.map(_.tmap2(_.id, _.rels)), t)
-
-    // Done
-    p.copy(tags = RevAnd(rev, t))
-  }
-}
