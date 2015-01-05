@@ -264,8 +264,9 @@ object ShipReq extends Build {
         .configure(
           Common.scalaAndScalaJsShared,
           addCommandAliases(
-            "js" -> Client.jsCmd,
-            "wd" -> ";up;~js"))
+            "tbc" -> ";webapp-base-test/test; webapp-client/test",
+            "js"  -> Client.jsCmd,
+            "wd"  -> ";up;~js"))
         .dependsOn(propCore, baseUtilSjs)
     }
 

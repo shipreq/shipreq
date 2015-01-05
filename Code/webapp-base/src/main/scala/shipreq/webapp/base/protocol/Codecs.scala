@@ -179,34 +179,23 @@ object DataCodecs {
   implicit final val tagId         = tagL(Tag.Id.apply)
   implicit final val tagGroup      = caseclass5(TagGroup.apply, TagGroup.unapply)
   implicit final val applicableTag = caseclass5(ApplicableTag.apply, ApplicableTag.unapply)
-  implicit final val tag           = ReadWriter[Tag]({
-      case t: TagGroup      => intkeyW(0, t)
-      case t: ApplicableTag => intkeyW(1, t)
-    }, {
-      case Js.Arr(Js.Num(n), v) => n.toInt match {
-        case 0 => readJs[TagGroup](v)
-        case 1 => readJs[ApplicableTag](v)
-      }
-    })
-
-  implicit final val tagInTree           = caseclass2(TagInTree.apply, TagInTree.unapply)
-  implicit final val tagTree             = iMap[Tag.Id, TagInTree](_.tag.id)
-  implicit final val tagPovRelations     = caseclass2(TagProtocol.PovRelations.apply, TagProtocol.PovRelations.unapply)
-  implicit final val tagPov              = caseclass2(TagProtocol.PovTag.apply, TagProtocol.PovTag.unapply)
-  implicit final val tagGroupValues      = caseclass3(TagProtocol.TagGroupValues.apply, TagProtocol.TagGroupValues.unapply)
-  implicit final val applicableTagValues = caseclass3(TagProtocol.ApplicableTagValues.apply, TagProtocol.ApplicableTagValues.unapply)
-  implicit final val tagValues           = ReadWriter[TagProtocol.Values]({
-      case t: TagProtocol.TagGroupValues      => intkeyW(0, t)
-      case t: TagProtocol.ApplicableTagValues => intkeyW(1, t)
-    }, {
-      case Js.Arr(Js.Num(n), v) => n.toInt match {
-        case 0 => readJs[TagProtocol.TagGroupValues](v)
-        case 1 => readJs[TagProtocol.ApplicableTagValues](v)
-      }
-    })
+  implicit final val tag           = tagRW
+  implicit final val tagInTree     = caseclass2(TagInTree.apply, TagInTree.unapply)
+  implicit final val tagTree       = iMap[Tag.Id, TagInTree](_.tag.id)
+  private[this] def tagRW = ReadWriter[Tag]({
+    case t: TagGroup      => intkeyW(0, t)(tagGroup)
+    case t: ApplicableTag => intkeyW(1, t)(applicableTag)
+  }, {
+    case Js.Arr(Js.Num(n), v) => n.toInt match {
+      case 0 => readJs(v)(tagGroup)
+      case 1 => readJs(v)(applicableTag)
+    }
+  })
 
   implicit final val project = caseclass3(Project.apply, Project.unapply)
 }
+
+import DataCodecs._
 
 // =====================================================================================================================
 object RoutineDataCodecs {
@@ -223,6 +212,21 @@ object RoutineDataCodecs {
       case Js.Arr(i, v)    => CrudAction.Update(RI read i, RV read v)
       case Js.Arr(i, a, _) => CrudAction.Delete(RI read i, deletionAction read a)
     })
+
+  import shipreq.webapp.base.protocol.{TagProtocol => TP}
+  implicit final val tagPovRelations     = caseclass2(TP.PovRelations.apply,        TP.PovRelations.unapply)
+  implicit final val tagPov              = caseclass2(TP.PovTag.apply,              TP.PovTag.unapply)
+  implicit final val tagGroupValues      = caseclass3(TP.TagGroupValues.apply,      TP.TagGroupValues.unapply)
+  implicit final val applicableTagValues = caseclass3(TP.ApplicableTagValues.apply, TP.ApplicableTagValues.unapply)
+  implicit final val tagValues           = ReadWriter[TP.Values]({
+    case t: TP.TagGroupValues      => intkeyW(0, t)(tagGroupValues)
+    case t: TP.ApplicableTagValues => intkeyW(1, t)(applicableTagValues)
+  }, {
+    case Js.Arr(Js.Num(n), v) => n.toInt match {
+      case 0 => readJs(v)(tagGroupValues)
+      case 1 => readJs(v)(applicableTagValues)
+    }
+  })
 }
 
 // =====================================================================================================================
@@ -273,5 +277,4 @@ object DeltaCodecs {
   implicit final val remoteDelta = ReadWriter[RemoteDelta](
     SeqishW[RemoteDeltaG, List].write,
     SeqishR[RemoteDeltaG, List].read)
-
 }
