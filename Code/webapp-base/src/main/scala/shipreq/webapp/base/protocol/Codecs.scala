@@ -111,13 +111,13 @@ private[protocol] object CodecBase {
     Js.Arr(Js.Num(k), T write t)
 
   def intkeyW2[A, B](k: Int, a: A, b: B)(implicit A: Writer[A], B: Writer[B]) =
-    Js.Arr(Js.Num(k), A write0 a, B write0 b)
+    Js.Arr(Js.Num(k), A write a, B write b)
 
   def intkeyW4[A, B, C, D](k: Int, a: A, b: B, c: C, d: D)(implicit A: Writer[A], B: Writer[B], C: Writer[C], D: Writer[D]) =
-    Js.Arr(Js.Num(k), A write0 a, B write0 b, C write0 c, D write0 d)
+    Js.Arr(Js.Num(k), A write a, B write b, C write c, D write d)
 
   def strkeyW[T](k: String, t: T)(implicit T: Writer[T]) =
-    Js.Arr(Js.Str(k), T write0 t)
+    Js.Arr(Js.Str(k), T write t)
 
   def iMap[K: Reader : Writer, V: Reader : Writer](key: V => K): ReadWriter[IMap[K, V]] =
     xmap((_: IMap[K, V]).underlyingMap)(m => IMap.empty(key).replaceUnderlying(m))
@@ -130,7 +130,7 @@ private[protocol] object CodecBase {
     case t: ApplicableTag => vv(1)
   }
   implicit def tag2 = ReadWriter[Tag](
-  t => w(t).asInstanceOf[Writer[Tag]] write0 t, {
+  t => w(t).asInstanceOf[Writer[Tag]] write t, {
     case Js.Arr(Js.Num(n), v) => vv(n.toInt) read0 v
   })
   */
@@ -175,8 +175,8 @@ object DataCodecs {
     }, {
       case Js.Num(n) if n.toInt == 0 => All()
       case Js.Arr(Js.Num(n), a, as) => n.toInt match {
-        case 1 => Only(OneAnd(readJ[A](a), readJ[F[A]](as)))
-        case 2 => Not (OneAnd(readJ[A](a), readJ[F[A]](as)))
+        case 1 => Only(OneAnd(readJs[A](a), readJs[F[A]](as)))
+        case 2 => Not (OneAnd(readJs[A](a), readJs[F[A]](as)))
       }
     })
   }
@@ -187,19 +187,18 @@ object DataCodecs {
   @inline implicit def revAnd[T](implicit WT: Writer[T], RT: Reader[T]) =
     caseclass2(RevAnd.apply[T], RevAnd.unapply[T])(rev, rev, RT, WT)
 
-  implicit def mandatory      = boolCase(Mandatory)
-  implicit def deletable      = boolCase(Deletable)
-  implicit def deletionAction = enum(DeletionAction.values)
-
-  implicit final val rev           = tagL(Rev.apply)
-  implicit final val alive         = boolCase(Alive)
-  implicit final val impReq        = boolCase(ImplicationRequired)
-  implicit final val mutexChildren = boolCase(MutexChildren)
-  implicit final val refkey        = tagS(RefKey.apply)
+  implicit final val rev            = tagL(Rev.apply)
+  implicit final val alive          = boolCase(Alive)
+  implicit final val impReq         = boolCase(ImplicationRequired)
+  implicit final val mutexChildren  = boolCase(MutexChildren)
+  implicit final val mandatory      = boolCase(Mandatory)
+  implicit final val deletable      = boolCase(Deletable)
+  implicit final val refkey         = tagS(RefKey.apply)
+  implicit final val deletionAction = enum(DeletionAction.values)
 
   implicit final val customIssueTypeId = tagL(CustomIssueType.Id.apply)
   implicit final val customIssueType   = caseclass4(CustomIssueType.apply, CustomIssueType.unapply)
-  implicit def reqTypeId = {
+  implicit final val reqTypeId = {
     import ReqType._
     ReadWriter[ReqType.Id]({
       case i: CustomReqType.Id => Js.Str(i.value.toString)
@@ -210,16 +209,16 @@ object DataCodecs {
     })
   }
 
-  implicit def customFieldId   = tagL(CustomField.Id.apply)
-  implicit def customFieldText = caseclass6(CustomField.Text.apply, CustomField.Text.unapply)
-  implicit def customField     = ReadWriter[CustomField]({
+  implicit final val customFieldId   = tagL(CustomField.Id.apply)
+  implicit final val customFieldText = caseclass6(CustomField.Text.apply, CustomField.Text.unapply)
+  implicit final val customField     = ReadWriter[CustomField]({
       case f: CustomField.Text => strkeyW("t", f)
     }, {
       case Js.Arr(Js.Str(k), v) => k match {
-        case "t" => readJ[CustomField.Text](v)
+        case "t" => readJs[CustomField.Text](v)
       }
     })
-  implicit def fieldId = {
+  implicit final val fieldId = {
     import Field._
     ReadWriter[Field.Id]({
       case i: CustomField.Id => Js.Str(i.value.toString)
@@ -233,36 +232,7 @@ object DataCodecs {
       case Js.Str("g")          => StepGraph
     })
   }
-  implicit def fieldSet        = caseclass2(FieldSet.apply, FieldSet.unapply)
-
-  implicit def fieldProtocolValues = {
-    import FieldProtocol._, Field.ApplicableReqTypes
-    ReadWriter[Values]({
-      case TextFieldValues(a, b, c, d) => intkeyW4(0, a, b, c, d)
-    }, {
-      case Js.Arr(Js.Num(n), a, b, c, d) => n.toInt match {
-        case 0 => TextFieldValues(readJ[String](a), readJ[RefKey](b), readJ[Mandatory](c), readJ[ApplicableReqTypes](d))
-      }
-    })
-  }
-  implicit def fieldProtocolCfgAction = {
-    import FieldProtocol._, CfgAction._
-    ReadWriter[CfgAction]({
-      case Create(a)          => intkeyW (0, a)
-      case UpdateValues(a, b) => intkeyW2(1, a, b)
-      case UpdateOrder(a, b)  => intkeyW2(2, a, b)
-      case Delete(a, b)       => intkeyW2(3, a, b)
-    }, {
-      case Js.Arr(Js.Num(n), a) => n.toInt match {
-        case 0 => Create(readJ[Values](a))
-      }
-      case Js.Arr(Js.Num(n), a, b) => n.toInt match {
-        case 1 => UpdateValues(readJ[CustomField.Id](a), readJ[Values        ](b))
-        case 2 => UpdateOrder (readJ[Field.Id      ](a), readJ[Position      ](b))
-        case 3 => Delete      (readJ[Field.Id      ](a), readJ[DeletionAction](b))
-      }
-    })
-  }
+  implicit final val fieldSet        = caseclass2(FieldSet.apply, FieldSet.unapply)
 
   implicit final val reqTypeMnemonic = tagS(ReqType.Mnemonic.apply)
   implicit final val customReqTypeId = tagL(CustomReqType.Id.apply)
@@ -304,6 +274,35 @@ object ProtocolDataCodecs {
       case Js.Arr(i, v)    => CrudAction.Update(RI read i, RV read v)
       case Js.Arr(i, a, _) => CrudAction.Delete(RI read i, deletionAction read a)
     })
+
+  implicit final val fieldProtocolValues = {
+    import FieldProtocol._, Field.ApplicableReqTypes
+    ReadWriter[Values]({
+      case TextFieldValues(a, b, c, d) => intkeyW4(0, a, b, c, d)
+    }, {
+      case Js.Arr(Js.Num(n), a, b, c, d) => n.toInt match {
+        case 0 => TextFieldValues(readJs[String](a), readJs[RefKey](b), readJs[Mandatory](c), readJs[ApplicableReqTypes](d))
+      }
+    })
+  }
+  implicit final val fieldProtocolCfgAction = {
+    import FieldProtocol._, CfgAction._
+    ReadWriter[CfgAction]({
+      case Create(a)          => intkeyW (0, a)
+      case UpdateValues(a, b) => intkeyW2(1, a, b)
+      case UpdateOrder(a, b)  => intkeyW2(2, a, b)
+      case Delete(a, b)       => intkeyW2(3, a, b)
+    }, {
+      case Js.Arr(Js.Num(n), a) => n.toInt match {
+        case 0 => Create(readJs[Values](a))
+      }
+      case Js.Arr(Js.Num(n), a, b) => n.toInt match {
+        case 1 => UpdateValues(readJs[CustomField.Id](a), readJs[Values        ](b))
+        case 2 => UpdateOrder (readJs[Field.Id      ](a), readJs[Position      ](b))
+        case 3 => Delete      (readJs[Field.Id      ](a), readJs[DeletionAction](b))
+      }
+    })
+  }
 
   import shipreq.webapp.base.protocol.{TagProtocol => TP}
   implicit final val tagPovRelations     = caseclass2(TP.PovRelations.apply,        TP.PovRelations.unapply)
