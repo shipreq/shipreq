@@ -66,9 +66,9 @@ object Field {
                                override val reqTypes : Field.ApplicableReqTypes,
                                         val deletable: Deletable) extends Field with Id
 
-  case object NormalAltStepTree extends Static("Normal and Alternate Courses", FieldType.StepTree, useCaseOnly, Deletable.Not)
-  case object ExceptionStepTree extends Static("Exception Courses",            FieldType.StepTree, useCaseOnly, Deletable.Not)
-  case object StepGraph         extends Static("Step Graph",                   FieldType.StepTree, useCaseOnly, Deletable)
+  case object NormalAltStepTree extends Static("Normal and Alternate Courses", FieldType.StepTree,  useCaseOnly, Deletable.Not)
+  case object ExceptionStepTree extends Static("Exception Courses",            FieldType.StepTree,  useCaseOnly, Deletable.Not)
+  case object StepGraph         extends Static("Step Graph",                   FieldType.StepGraph, useCaseOnly, Deletable)
 
   // Not lazy causes crash in DataProp
   lazy val static: List[Static] =
