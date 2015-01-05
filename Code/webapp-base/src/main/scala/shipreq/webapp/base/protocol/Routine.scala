@@ -31,11 +31,5 @@ object Routine {
    * Descriptor of a remotely available routine.
    * @param n The server-side Lift function key.
    */
-  case class Remote[D <: Desc](n: String, d: D)
-
-  // TODO Customise serialisation for Remote
-  // {"square":{"n":"F751737835735KSD2LY","d":{}} should just be "F751737835735KSD2LY"
-
-  /** Denotes a set of routines. */
-  trait Group
+  final case class Remote[D <: Desc](n: String, d: D)
 }

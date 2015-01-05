@@ -4,6 +4,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import scalaz.Leibniz.===
 import utest._
 import upickle._
+import upickle.Fns._
+import upickle.BaseCodecs.UnitRW
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.delta._
 import shipreq.webapp.base.RandomData

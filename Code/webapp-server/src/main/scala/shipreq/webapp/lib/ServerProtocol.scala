@@ -3,6 +3,7 @@ package shipreq.webapp.lib
 import net.liftweb.http.{BadResponse, S}
 import scalaz.{-\/, \/-, \/}
 import upickle._
+import upickle.Fns._
 
 import shipreq.base.util.Util.quickSB
 import shipreq.webapp.base.protocol.{JsEntryPoint, Routine}

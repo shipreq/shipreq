@@ -3,7 +3,7 @@ package shipreq.webapp.base.protocol
 import scalaz.NonEmptyList
 import upickle.{Reader, Writer}
 import shipreq.webapp.base.delta.RemoteDelta
-import RoutineCodecs._
+import ProtocolDataCodecs._
 import Routine._
 
 trait Crudable extends Desc {
@@ -30,8 +30,6 @@ object Crudable {
     override implicit final def wi: Writer[I] = crudAction[_Id, _V]
     override implicit final def ro: Reader[O] = RO
     override implicit final def wo: Writer[O] = WO
-
-    implicit def rwd = remoteRoutine(this)
   }
 }
 

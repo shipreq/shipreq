@@ -4,6 +4,7 @@ import scala.scalajs.js
 import scalaz.effect.IO
 import scalaz.{-\/, \/-, \/}
 import upickle._
+import upickle.Fns._
 import shipreq.webapp.base.protocol.Routine
 import shipreq.webapp.client.lib.{FailureIO, Console}
 
@@ -28,9 +29,6 @@ object ClientProtocol {
 
   private def handleJsonParsingError(a: js.Any, e: Throwable): Unit =
     Console.error(s"Parsing failure: $e\nJS: ", a)
-
-  def readCluster[G <: Routine.Group : Reader](a: js.Any) = // TODO rename
-    parseJsObject[G](a)
 
   object Lift extends ClientProtocol {
     override def call[D <: Routine.Desc](r: Routine.Remote[D])(input: r.d.I, success: r.d.O => IO[Unit], f: FailureIO): IO[Unit] = {

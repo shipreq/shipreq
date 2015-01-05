@@ -1,7 +1,7 @@
 package shipreq.webapp.base.protocol
 
 import upickle.{Reader, Writer}
-import RoutineGroupCodecs._
+import ProtocolRemoteCodecs._
 
 /**
  * Describes a function exposed in client JS, that the server can invoke.
