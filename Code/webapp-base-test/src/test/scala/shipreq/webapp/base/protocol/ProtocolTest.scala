@@ -8,8 +8,9 @@ import upickle.Fns._
 import upickle.BaseCodecs.UnitRW
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.delta._
-import shipreq.webapp.base.RandomData
+import shipreq.webapp.base.{RandomData => $}
 import shipreq.prop._
+import shipreq.prop.test.Gen
 import shipreq.prop.test.PropTest._
 
 object ProtocolTest extends TestSuite {
@@ -21,7 +22,7 @@ object ProtocolTest extends TestSuite {
     new KitIO[r.I, r.O]("Routines." + r.getClass.getSimpleName.replace("$",""))
   }
 
-  def kitEP[I](ep: JsEntryPoint[I, _], name: String) = {
+  def kitEP[I](ep: JsEntryPoint[I, Unit], name: String) = {
     import ep.{ri, wi}
     new KitIO[I, Unit]("JsEntryPoint." + name)
   }
@@ -67,45 +68,25 @@ object ProtocolTest extends TestSuite {
   override def tests = TestSuite {
 
     'Routines {
-      'ProjectInit {
-        val prop = kitR(Routines.ProjectInit).propO
-        RandomData.project mustSatisfy prop
-      }
+      def testCrud(r: Routine.Desc {type O = RemoteDelta})(g: Gen[r.I]): Unit = kitR(r).propI mustBeSatisfiedBy g
+      def testUnitI(r: Routine.Desc {type I = Unit})(g: Gen[r.O]): Unit = kitR(r).propO mustBeSatisfiedBy g
 
-      // TODO copy/paste/search/replace again
-      'CustomIssueTypeCrud {
-        val prop = kitR(Routines.CustomIssueTypeCrud).propI
-        import RandomData.routines.customIssueTypeCrud._
-        'create { create _mustSatisfy prop }
-        'update { update _mustSatisfy prop }
-        'delete { delete _mustSatisfy prop }
-      }
-
-      'CustomReqTypeCrud {
-        val prop = kitR(Routines.CustomReqTypeCrud).propI
-        import RandomData.routines.customReqTypeCrud._
-        'create { create _mustSatisfy prop }
-        'update { update _mustSatisfy prop }
-        'delete { delete _mustSatisfy prop }
-      }
-
-      'TagCrud {
-        val prop = kitR(Routines.TagCrud).propI
-        import RandomData.routines.tagCrud._
-        'create { create _mustSatisfy prop }
-        'update { update _mustSatisfy prop }
-        'delete { delete _mustSatisfy prop }
-      }
+      'ProjectInit         - testUnitI(Routines.ProjectInit       )($.project)
+      'CustomIssueTypeCrud - testCrud(Routines.CustomIssueTypeCrud)($.routines.customIssueTypeCrud.any)
+      'CustomReqTypeCrud   - testCrud(Routines.CustomReqTypeCrud  )($.routines.customReqTypeCrud.any)
+      'TagCrud             - testCrud(Routines.TagCrud            )($.routines.tagCrud.any)
     }
 
     'JsEntryPoints {
-      import JsEntryPoint._, RandomData.routines._
-      'reactExamples { kitEP(reactExamples, "reactExamples").propI mustBeSatisfiedBy projectSPA }
+      import JsEntryPoint._
+      def test[I](ep: JsEntryPoint[I, Unit], name: String)(g: Gen[I]): Unit = kitEP(ep, name).propI mustBeSatisfiedBy g
+
+      'reactExamples - test(reactExamples, "reactExamples")($.routines.projectSPA)
     }
 
     'Δ {
       val prop = kitR(Routines.CustomReqTypeCrud).propO
-      def test(p: Partition) = RandomData.remoteDelta forPart confirmTest(p) mustSatisfy prop
+      def test(p: Partition) = $.remoteDelta forPart confirmTest(p) mustSatisfy prop
 
       // This just spits out a compiler warning to remind you to add a manual test here
       def confirmTest(p: Partition) = p match {
