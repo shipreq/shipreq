@@ -87,10 +87,8 @@ object TagProtocol {
 
       val parents = tree
         .filter(_._2 contains id)
-        .foldLeft(Map.empty[Tag.Id, Option[Tag.Id]]) { case (m, (parent, sibs)) =>
-          val i = sibs.indexOf(id)
-          val s: Option[Tag.Id] = if (i >= 0 && (i + 1) < sibs.length) Some(sibs(i + 1)) else None
-          m + (parent -> s)
+        .foldLeft(Map.empty[Tag.Id, Option[Tag.Id]]) {
+          case (m, (parent, sibs)) => m + (parent -> Util.position(sibs, id))
         }
 
       PovRelations(parents, children)

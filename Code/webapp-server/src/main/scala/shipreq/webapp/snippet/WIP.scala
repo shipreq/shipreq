@@ -1,8 +1,9 @@
 package shipreq.webapp.snippet
 
 import net.liftweb.util.Helpers._
-import scalaz.{Equal, \&/}, \&/._
+import scalaz.{Equal, \&/, -\/, \/-}, \&/._
 import scalaz.syntax.equal._
+import shipreq.base.util.Util
 import shipreq.base.util.ScalaExt._
 import shipreq.prop.util._
 import shipreq.webapp.base.protocol._
@@ -273,11 +274,85 @@ class WIP {
   }
 
   // -------------------------------------------------------------------------------------------------------------------
+  object fieldCrud {
+    import FieldProtocol._
+    import CfgAction._
+
+    def apply(deletions: Set[Field.Id], updates: List[Delta]): RemoteDelta = {
+      delay()
+      val rev = p.fields.rev.succ
+      val rdg = RemoteDeltaG(Partition.Fields, rev, rev)(deletions, updates)
+      val p2 = PartitionFns.update(p, rev, rdg.forceDeltaP(Partition.Fields))
+      if (p.fields.data ≟ p2.fields.data)
+        Nil
+      else {
+        p = p2
+        List(rdg)
+      }
+    }
+
+    def mod(f: FieldSet => List[Delta]): RemoteDelta =
+      apply(Set.empty, f(p.fields.data))
+
+    def mod(id: CustomField.Id)(f: CustomField => CustomField): RemoteDelta =
+      mod(fs => fs.customFields.get(id).fold(∅)(newField =>
+        List(Delta(\/-(f(newField)), Util.position(fs.order, id)))))
+
+    @inline def ∅ = List.empty[Delta]
+
+    def nextId(fs: FieldSet) = CustomField.Id(fs.customFields.keys.max.value + 1)
+
+    val cfgAction =
+      ServerProtocol.routine(Routines.FieldCrud){
+
+        case Create(TextFieldValues(n, k, m, r)) =>
+          mod { fs =>
+            val f = CustomField.Text(nextId(fs), n, k, m, r, Alive)
+            List(Delta(\/-(f), None))
+          }
+
+        case UpdateValues(id, v) =>
+          mod(id)(cf => (cf, v) match {
+            case (CustomField.Text(_, _, _, _, _, Alive), TextFieldValues(n, k, m, r)) => CustomField.Text(id, n, k, m, r, Alive)
+            case _ => cf
+          })
+
+        case UpdateOrder(f: Field.Static, p) =>
+          mod(fs => if (fs.order contains f) List(Delta(-\/(f), p)) else Nil)
+
+        case UpdateOrder(id: CustomField.Id, p) =>
+          mod(_.customFields.get(id).fold(∅)(f => List(Delta(\/-(f), p))))
+
+        case Delete(f: Field.Static, Restore) =>
+          mod(fs => if (fs.order contains f) Nil else List(Delta(-\/(f), None)))
+
+        case Delete(id: CustomField.Id, Restore) =>
+          mod(id){
+            case f: CustomField.Text => f.copy(alive = Alive)
+          }
+
+        case Delete(f: Field.Static, HardDel | SoftDel) =>
+          f.deletable match {
+            case Deletable     => apply(Set(f), Nil)
+            case Deletable.Not => Nil
+          }
+
+        case Delete(id: CustomField.Id, SoftDel) =>
+          mod(id){
+            case f: CustomField.Text => f.copy(alive = Dead)
+          }
+
+        case Delete(id: CustomField.Id, HardDel) =>
+          apply(Set(id), Nil)
+      }
+  }
+
+  // -------------------------------------------------------------------------------------------------------------------
 
   def delay(): Unit = () //Thread.sleep(new java.util.Random().nextInt(120)+100)
 
   def render = {
-    val pg = Routines.ProjectSPA(projectInit, issueTypeCrud, reqqq.crud, reqqq.imptoggle, tagCrud.fn)
+    val pg = Routines.ProjectSPA(projectInit, issueTypeCrud, reqqq.crud, reqqq.imptoggle, fieldCrud.cfgAction, tagCrud.fn)
     val js = ServerProtocol.invokeClientHtml(JsEntryPoint.reactExamples)(pg)
     "*" #> js
   }

@@ -2,6 +2,7 @@ package shipreq.webapp.base.data
 
 import scalaz.{OneAnd, Equal}
 import scalaz.Isomorphism.<=>
+import shapeless.contrib.scalaz.Instances._
 import shipreq.base.util.TaggedTypes._
 
 
@@ -53,7 +54,9 @@ sealed abstract class ISubset[F[_], A] {
 //  }
 }
 object ISubset {
-  case class All [F[_], A]()                     extends ISubset[F, A]
-  case class Only[F[_], A](values: OneAnd[F, A]) extends ISubset[F, A]
-  case class Not [F[_], A](values: OneAnd[F, A]) extends ISubset[F, A]
+  final case class All [F[_], A]()                     extends ISubset[F, A]
+  final case class Only[F[_], A](values: OneAnd[F, A]) extends ISubset[F, A]
+  final case class Not [F[_], A](values: OneAnd[F, A]) extends ISubset[F, A]
+
+  implicit def equality[F[_], A](implicit FA: Equal[F[A]],  A: Equal[A]) = deriveEqual[ISubset[F, A]]
 }

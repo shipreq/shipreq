@@ -2,10 +2,13 @@ package shipreq.webapp.base.data
 
 import monocle.Lens
 import monocle.macros.Lenser
-import shipreq.base.util.IMap
-
 import scalaz.{OneAnd, Equal}
 import scalaz.Isomorphism._
+import scalaz.std.AllInstances._
+import scalaz.syntax.equal._
+import shapeless.TypeClass.deriveConstructors
+import shapeless.contrib.scalaz.Instances._
+import shipreq.base.util.IMap
 import shipreq.base.util.TaggedTypes.TaggedLong
 
 // =====================================================================================================================
@@ -13,8 +16,8 @@ import shipreq.base.util.TaggedTypes.TaggedLong
 
 sealed trait FieldType
 object FieldType {
-  case object Text extends FieldType
-  case object StepTree extends FieldType
+  case object Text      extends FieldType
+  case object StepTree  extends FieldType
   case object StepGraph extends FieldType
 
   implicit val equality = Equal.equalA[FieldType]
@@ -59,7 +62,6 @@ object Field {
 
   // type Id = Static \/ CustomField.Id
   sealed trait Id
-  implicit val idEquality = Equal.equalA[Id]
 
   sealed abstract class Static(override val name     : String,
                                override val fieldType: FieldType,
@@ -73,6 +75,12 @@ object Field {
   // Not lazy causes crash in DataProp
   lazy val static: List[Static] =
     List(NormalAltStepTree, ExceptionStepTree, StepGraph)
+
+  // Not lazy causes crash in tests
+  implicit lazy val applicableReqTypesEquality: Equal[ApplicableReqTypes] = implicitly
+
+  implicit val staticEquality = Equal.equalA[Static]
+  implicit val idEquality     = Equal.equalA[Id]
 }
 
 import Field.ApplicableReqTypes
@@ -104,12 +112,14 @@ object CustomField {
                   mandatory: Mandatory,
                   reqTypes : ApplicableReqTypes,
                   alive    : Alive) extends CustomField(FieldType.Text)
-//  object Text {
-//    private[this] def l = Lenser[Text]
-//    val _id   = l(_.id)
-//    val _name = l(_.name)
-//    val _key  = l(_.key)
-//  }
+
+  implicit val textFieldEquality = deriveEqual[Text]
+
+  implicit object Equality extends Equal[CustomField] {
+    override def equal(a: CustomField, b: CustomField) = a match {
+      case x: Text => b match {case y: Text => x ≟ y; case _ => false}
+    }
+  }
 }
 
 // =====================================================================================================================
@@ -117,3 +127,7 @@ object CustomField {
 
 case class FieldSet(customFields: IMap[CustomField.Id, CustomField],
                     order       : Vector[Field.Id])
+
+object FieldSet {
+  implicit val equality = deriveEqual[FieldSet]
+}

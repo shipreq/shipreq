@@ -53,6 +53,15 @@ object Util {
       case None =>
         v.filterNot(_ ≟ subj) :+ subj
     }
+
+  /**
+   * Dual of `reposition()`.
+   * @return The element immediately following the given subject.
+   */
+  def position[A: Equal](v: Vector[A], subj: A): Option[A] = {
+    val i = v.indexWhere(subj ≟ _)
+    if (i >= 0 && (i + 1) < v.length) Some(v(i + 1)) else None
+  }
 }
 
 object ParseLong {
