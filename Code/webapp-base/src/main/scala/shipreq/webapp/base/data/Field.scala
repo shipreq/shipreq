@@ -1,8 +1,8 @@
 package shipreq.webapp.base.data
 
-import monocle.Lens
+import monocle._
 import monocle.macros.Lenser
-import scalaz.{OneAnd, Equal}
+import scalaz.{OneAnd, Equal, Maybe}
 import scalaz.Isomorphism._
 import scalaz.std.AllInstances._
 import scalaz.syntax.equal._
@@ -59,6 +59,7 @@ sealed trait Field {
   def name     : String
   def fieldType: FieldType
   def reqTypes : Field.ApplicableReqTypes
+  def keyO     : Option[FieldRefKey]
 }
 object Field {
   type ApplicableReqTypes = ISubset[Set, ReqType.Id]
@@ -71,11 +72,12 @@ object Field {
   sealed abstract class Static(override val name     : String,
                                override val fieldType: FieldType,
                                override val reqTypes : Field.ApplicableReqTypes,
+                               override val keyO     : Option[FieldRefKey],
                                         val deletable: Deletable) extends Field with Id
 
-  case object NormalAltStepTree extends Static("Normal and Alternate Courses", FieldType.StepTree,  useCaseOnly, Deletable.Not)
-  case object ExceptionStepTree extends Static("Exception Courses",            FieldType.StepTree,  useCaseOnly, Deletable.Not)
-  case object StepGraph         extends Static("Step Graph",                   FieldType.StepGraph, useCaseOnly, Deletable)
+  case object NormalAltStepTree extends Static("Normal and Alternate Courses", FieldType.StepTree,  useCaseOnly, None, Deletable.Not)
+  case object ExceptionStepTree extends Static("Exception Courses",            FieldType.StepTree,  useCaseOnly, None, Deletable.Not)
+  case object StepGraph         extends Static("Step Graph",                   FieldType.StepGraph, useCaseOnly, None, Deletable)
 
   // Not lazy causes crash in DataProp
   lazy val static: List[Static] =
@@ -107,18 +109,30 @@ object CustomField {
     }
   }
 
-  val _alive = Lens((_: CustomField).alive)(n => {
-    case t: Text => t.copy(alive = n)
-  })
-
   case class Text(id       : Id,
                   name     : String,
                   key      : FieldRefKey,
                   mandatory: Mandatory,
                   reqTypes : ApplicableReqTypes,
-                  alive    : Alive) extends CustomField(FieldType.Text)
+                  alive    : Alive) extends CustomField(FieldType.Text) {
+    override def keyO = Some(key)
+  }
 
-  implicit val textFieldEquality = deriveEqual[Text]
+  object Text {
+    implicit val equality = deriveEqual[Text]
+  }
+
+  val _name = Lens[CustomField, String](_.name)(n => {
+    case Text(a, _, b, c, d, e) => Text(a, n, b, c, d, e)
+  })
+
+  val _key = Optional[CustomField, FieldRefKey](f => Maybe.optionMaybeIso.to(f.keyO))(n => {
+    case Text(a, b, _, c, d, e) => Text(a, b, n, c, d, e)
+  })
+
+  val _alive = Lens[CustomField, Alive](_.alive)(n => {
+    case t: Text => t.copy(alive = n)
+  })
 
   implicit object Equality extends Equal[CustomField] {
     override def equal(a: CustomField, b: CustomField) = a match {
@@ -131,7 +145,14 @@ object CustomField {
 // Set
 
 case class FieldSet(customFields: IMap[CustomField.Id, CustomField],
-                    order       : Vector[Field.Id])
+                    order       : Vector[Field.Id]) {
+
+  def fields: Vector[Field] =
+    order.map {
+      case  f: Field.Static   => f
+      case id: CustomField.Id => customFields.get(id).get
+    }
+}
 
 object FieldSet {
   implicit val equality = deriveEqual[FieldSet]

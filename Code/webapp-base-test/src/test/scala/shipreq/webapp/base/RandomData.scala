@@ -218,9 +218,10 @@ object RandomData {
     Gen.oneofGC(customFieldText(art))
 
   def customFields(cf: Gen[CustomField]): Gen[IMap[CustomField.Id, CustomField]] = {
-    def id = distinctId(CustomField.IdAccess)
-    // TODO def dname = Distinct.str.at(CustomField.Text._name)
-    val dist = id.lift[Stream]
+    def id   = distinctId(CustomField.IdAccess)
+    def name = Distinct.str.at(CustomField._name)
+    def key  = Distinct.fstr.xmap(FieldRefKey.apply)(_.value).distinct.at(CustomField._key)
+    val dist = (id * name * key).lift[Stream]
     cf.stream.map(fs => emptyDataMap(CustomField) ++ dist.run(fs))
   }
 

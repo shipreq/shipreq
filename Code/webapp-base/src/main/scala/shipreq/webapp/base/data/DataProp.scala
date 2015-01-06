@@ -53,7 +53,11 @@ object DataProp {
   // -------------------------------------------------------------------------------------------------------------------
   object fields {
 
-    // TODO unique refkeys?
+    def uniqueNames =
+      Prop.distinct("name", (_: FieldSet).fields.map(_.name))
+
+    def uniqueKeys =
+      Prop.distinct("FieldRefKey", (_: FieldSet).fields.flatMap(_.keyO.toVector))
 
     def orderNoDups =
       Prop.distinct("order", (_: FieldSet).order)
@@ -72,6 +76,7 @@ object DataProp {
         _.order.toSet)
 
     def fieldSet = "FieldSet" rename_: (
+      uniqueNames ∧ uniqueKeys ∧
       orderNoDups ∧ orderCustomFieldsIso ∧ orderHasAllUndeletableStaticFields)
 
     lazy val all = (revAnd[FieldSet] ∧ fieldSet.contramap(_.data)) rename "Fields"
