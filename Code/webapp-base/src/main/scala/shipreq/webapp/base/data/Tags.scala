@@ -4,58 +4,12 @@ import monocle.Lens
 import monocle.macros.Lenser
 import scalaz.Equal
 import scalaz.Isomorphism._
-import scalaz.std.vector._
+import scalaz.std.AllInstances._
 import scalaz.syntax.equal._
+import shapeless.contrib.scalaz.Instances._
 import shipreq.prop.CycleDetector
 import shipreq.base.util.IMap
 import shipreq.base.util.TaggedTypes.TaggedLong
-
-// =====================================================================================================================
-// Tag meta
-
-sealed abstract class TagType(val key: String, val name: String) { type Data <: Tag }
-object TagType {
-  case object Group      extends TagType("G", "Tag Group") { override type Data = TagGroup }
-  case object Applicable extends TagType("A", "Tag")       { override type Data = ApplicableTag }
-  val values = List[TagType](Group, Applicable)
-  val byKey  = IMap.empty((_: TagType).key).addAll(values: _*)
-}
-
-object Tag {
-  final case class Id(value: Long) extends TaggedLong
-
-  object IdAccess extends ObjDataIdM[Tag.type, Tag, Id] {
-    override def id(d: Tag) = d.id
-    override def mkId(l: Long) = Id(l)
-    override def setId(t: Tag, i: Id) = t match {
-      case x: TagGroup      => x.copy(id = i)
-      case x: ApplicableTag => x.copy(id = i)
-    }
-  }
-
-  val _name = Lens((_: Tag).name)(n => {
-    case TagGroup(a, _, b, c, d)      => TagGroup(a, n, b, c, d)
-    case ApplicableTag(a, _, b, c, d) => ApplicableTag(a, n, b, c, d)
-  })
-
-  val _alive = Lens((_: Tag).alive)(n => {
-    case TagGroup(a, b, c, d, _)      => TagGroup(a, b, c, d, n)
-    case ApplicableTag(a, b, c, d, _) => ApplicableTag(a, b, c, d, n)
-  })
-
-  implicit val equality: Equal[Tag] = Equal.equalA[Tag] // TODO use macros
-
-  object CycleDetectors {
-    val multimap =
-      CycleDetector.Directed.multimap[Vector, Id, Long](_.value, Vector.empty)
-    // val tagTree = multimap.contramap((_: TagTree).mapValues(_.children))
-
-    val tagTree =
-      CycleDetector[TagTree, Id](
-        _.keys.toStream,
-        CycleDetector.Directed.check[TagTree, Id, Long](_.get(_).fold(Stream.empty[Id])(_.children.toStream), _.value))
-  }
-}
 
 // =====================================================================================================================
 // A single tag. No relationships.
@@ -107,6 +61,55 @@ case object MutexChildren extends MutexChildren with (Boolean <=> MutexChildren)
 }
 
 // =====================================================================================================================
+// Tag meta
+
+sealed abstract class TagType(val key: String, val name: String) { type Data <: Tag }
+object TagType {
+  case object Group      extends TagType("G", "Tag Group") { override type Data = TagGroup }
+  case object Applicable extends TagType("A", "Tag")       { override type Data = ApplicableTag }
+  val values = List[TagType](Group, Applicable)
+  val byKey  = IMap.empty((_: TagType).key).addAll(values: _*)
+}
+
+object Tag {
+  final case class Id(value: Long) extends TaggedLong
+
+  object IdAccess extends ObjDataIdM[Tag.type, Tag, Id] {
+    override def id(d: Tag) = d.id
+    override def mkId(l: Long) = Id(l)
+    override def setId(t: Tag, i: Id) = t match {
+      case x: TagGroup      => x.copy(id = i)
+      case x: ApplicableTag => x.copy(id = i)
+    }
+  }
+
+  // implicit val equalityTG = deriveEqual[TagGroup]
+  // implicit val equalityAT = deriveEqual[ApplicableTag]
+  implicit val equality   = deriveEqual[Tag]
+
+  val _name = Lens((_: Tag).name)(n => {
+    case TagGroup(a, _, b, c, d)      => TagGroup(a, n, b, c, d)
+    case ApplicableTag(a, _, b, c, d) => ApplicableTag(a, n, b, c, d)
+  })
+
+  val _alive = Lens((_: Tag).alive)(n => {
+    case TagGroup(a, b, c, d, _)      => TagGroup(a, b, c, d, n)
+    case ApplicableTag(a, b, c, d, _) => ApplicableTag(a, b, c, d, n)
+  })
+
+  object CycleDetectors {
+    val multimap =
+      CycleDetector.Directed.multimap[Vector, Id, Long](_.value, Vector.empty)
+    // val tagTree = multimap.contramap((_: TagTree).mapValues(_.children))
+
+    val tagTree =
+      CycleDetector[TagTree, Id](
+        _.keys.toStream,
+        CycleDetector.Directed.check[TagTree, Id, Long](_.get(_).fold(Stream.empty[Id])(_.children.toStream), _.value))
+  }
+}
+
+// =====================================================================================================================
 // Many tags
 
 object TagTree {
@@ -133,14 +136,15 @@ object TagTree {
 
     sealed trait FilterPolicy
     object FilterPolicy {
-      case object OmitNothing         extends FilterPolicy
-      case object OmitBadBranches     extends FilterPolicy
+      case object OmitNothing               extends FilterPolicy
+      case object OmitBadBranches           extends FilterPolicy
       case object OmitAnythingWithBadParent extends FilterPolicy
       implicit val equality: Equal[FilterPolicy] = Equal.equalA[FilterPolicy]
     }
 
-    implicit val equality: Equal[FlatRow] = Equal.equalA[FlatRow] // TODO use shapeless
+    implicit val equality = deriveEqual[FlatRow]
   }
+
   import FlatRow.{FilterPolicy, Status}
 
   final case class FlatRow(tag: Tag, depth: Int, parentPath: Vector[Id], status: Status) {
@@ -228,10 +232,7 @@ final case class TagInTree(tag: Tag, children: Vector[Id]) {
 }
 
 object TagInTree {
-  implicit object Equality extends Equal[TagInTree] {
-    override def equalIsNatural                    = Equal[Tag].equalIsNatural
-    override def equal(a: TagInTree, b: TagInTree) = a.tag ≟ b.tag && a.children ≟ b.children
-  }
+  implicit val equality = deriveEqual[TagInTree]
 
   private[this] def l = Lenser[TagInTree]
   val _tag      = l(_.tag)

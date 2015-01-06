@@ -257,7 +257,7 @@ object ShipReq extends Build {
       val dir = "webapp-base"
 
       override def deps =
-        μPickle.jvm ++ Monocle.macros ++
+        μPickle.jvm ++ Monocle.macros ++ shapeless.jvm
         testScope(μTest.jvm)
 
       override def project = typicalProject
@@ -296,7 +296,7 @@ object ShipReq extends Build {
       val dir = "webapp-client"
 
       override def deps =
-        ScalaJS.Scalaz.effect ++ ScalaJS.React.most ++ ScalaJS.Monocle.macros ++ μPickle.js ++
+        ScalaJS.Scalaz.effect ++ ScalaJS.React.most ++ ScalaJS.Monocle.macros ++ μPickle.js ++ shapeless.js ++
         testScope(ScalaJS.React.test ++ μTest.js ++ RNG.js)
 
       def testSettings = (_: Project)

@@ -108,8 +108,9 @@ object Deps {
     val combo = dd("specs2-core") ++ dd("specs2-scalacheck")
   }
 
-  val μPickle = JvmAndJs("com.github.japgolly.fork.upickle", "upickle", "custom-1")
-  val μTest   = JvmAndJs("com.lihaoyi", "utest",   "0.2.3")
+  val shapeless = JvmAndJs("com.github.japgolly.fork.shapeless", "shapeless", "2.0.0")
+  val μPickle   = JvmAndJs("com.github.japgolly.fork.upickle",   "upickle",   "custom-1")
+  val μTest     = JvmAndJs("com.lihaoyi",                        "utest",     "0.2.3")
 
   val RNG = JvmAndJsFork("com.nicta", "com.github.japgolly.fork.nicta", "rng", "1.3.0")
 
