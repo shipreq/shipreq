@@ -118,7 +118,7 @@ object TagProtocol {
 
   final case class ApplicableTagValues(name: String,
                                        desc: Option[String],
-                                       key: RefKey) extends Values
+                                       key: HashRefKey) extends Values
 
   object PartitionFns extends Partition.Fns[Partition.Tags.type] {
     def rev(p: Project): Rev =

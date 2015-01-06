@@ -23,38 +23,38 @@ object Validators {
 
     // DD-18: Hashtag-like refkeys (groupings, incmp) must match this format: /[A-Za-z0-9][A-Za-z0-9_-=.]*/
     // Must not contain: []{}<>
-    val refKeyU =
+    val hashRefKeyU =
       Rules.whitelistCharsR( """A-Za-z0-9\._=\-""", "may only consist of letters, numbers, and these symbols: . _ = -")
-        .addRule(Rules.lengthInRange(refKeyLength))
+        .addRule(Rules.lengthInRange(hashRefKeyLength))
         .correct(noWhitespace.compose)
         .constraint(c => nonEmpty >> (startsWithAlphaNumeric + c))
-        .forField(FieldNames.refKey)
-        .map(RefKey.apply)
+        .forField(FieldNames.hashRefKey)
+        .map(HashRefKey.apply)
 
-    object RefKeyVS {
-      type Data[Id] = (Option[Id], Stream[(Option[Id], RefKey)])
+    object HashRefKeyVS {
+      type Data[Id] = (Option[Id], Stream[(Option[Id], HashRefKey)])
     }
 
-    /** Validation state (external data) required to validate refkey uniqueness. */
-    case class RefKeyVS(tagData: RefKeyVS.Data[Tag.Id],
-                        customIssueData: RefKeyVS.Data[CustomIssueType.Id])
+    /** Validation state (external data) required to validate HashRefKey uniqueness. */
+    case class HashRefKeyVS(tagData        : HashRefKeyVS.Data[Tag.Id],
+                            customIssueData: HashRefKeyVS.Data[CustomIssueType.Id])
 
     // DD-19: Hashtag-like refkeys (groupings, incmp) must be unique.
     //        e.g. can't have both a grouping and an incompletion with refkey #X.
     // DD-21: Refkeys must be case-insensitive.
     //        eg. #HELLO should match #Hello
-    private def refKeyUniqueness: ValidationPart[RefKeyVS, RefKey, RefKey] = {
-      def vp[I: Equal](f: RefKeyVS => RefKeyVS.Data[I]) =
-        Uniqueness.main[RefKeyVS, (Option[I], RefKey), Option[I], RefKey, RefKey](
+    private def hashRefKeyUniqueness: ValidationPart[HashRefKeyVS, HashRefKey, HashRefKey] = {
+      def vp[I: Equal](f: HashRefKeyVS => HashRefKeyVS.Data[I]) =
+        Uniqueness.main[HashRefKeyVS, (Option[I], HashRefKey), Option[I], HashRefKey, HashRefKey](
           f(_)._1, f(_)._2, _._1, _._2, Uniqueness.ignoreO[I], a => a equalsIgnoreCase _.value
-        ).fieldName(FieldNames.refKey)
+        ).fieldName(FieldNames.hashRefKey)
 
       val v1 = vp(_.customIssueData)
       val v2 = vp(_.tagData)
       v1 compose v2
     }
 
-    val refKeyS = refKeyU.liftS[RefKeyVS].addValidation(refKeyUniqueness)
+    val hashRefKeyS = hashRefKeyU.liftS[HashRefKeyVS].addValidation(hashRefKeyUniqueness)
   }
 
   // ===================================================================================================================
@@ -91,10 +91,10 @@ object Validators {
 
   // ===================================================================================================================
   object customIssueType {
-    type S = shared.RefKeyVS
+    type S = shared.HashRefKeyVS
 
-    def keyU = shared.refKeyU
-    def keyS = shared.refKeyS
+    def keyU = shared.hashRefKeyU
+    def keyS = shared.hashRefKeyS
 
     def descU = genericDesc
     def descS = descU.liftS[S]
@@ -104,7 +104,7 @@ object Validators {
 
   // ===================================================================================================================
   object tag {
-    type S = (Stream[Tag], shared.RefKeyVS)
+    type S = (Stream[Tag], shared.HashRefKeyVS)
 
     def nameU = genericName
     val nameS = nameU.liftS[S].addValidation(nameUniqueness)
@@ -112,8 +112,8 @@ object Validators {
       Uniqueness.entity[Tag].applyO(_.id.some, _.name).fieldName(FieldNames.name)
         .contramapS[S](r => (r._1, r._2.tagData._1))
 
-    def keyU = shared.refKeyU
-    def keyS = shared.refKeyS.contramapS[S](_._2)
+    def keyU = shared.hashRefKeyU
+    def keyS = shared.hashRefKeyS.contramapS[S](_._2)
 
     def descU = genericDesc
     def descS = descU.liftS[S]

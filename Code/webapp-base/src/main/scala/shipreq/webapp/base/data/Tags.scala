@@ -22,7 +22,7 @@ sealed trait Tag {
   val name: String
   val desc: Option[String]
   val alive: Alive
-  def keyO: Option[RefKey]
+  def keyO: Option[HashRefKey]
   def tagType: TagType
 }
 
@@ -42,7 +42,7 @@ final case class TagGroup(id: Id,
 final case class ApplicableTag(id: Id,
                                name: String,
                                desc: Option[String],
-                               key: RefKey,
+                               key: HashRefKey,
                                alive: Alive) extends Tag {
   override def keyO = Some(key)
   override def tagType = TagType.Applicable

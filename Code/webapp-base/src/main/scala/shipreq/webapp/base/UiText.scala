@@ -3,7 +3,7 @@ package shipreq.webapp.base
 object UiText {
 
   object FieldNames {
-    def refKey             = "Key"
+    def hashRefKey         = "Key"
     def name               = "Name"
     def desc               = "Description"
     def mnemonic           = "Mnemonic"

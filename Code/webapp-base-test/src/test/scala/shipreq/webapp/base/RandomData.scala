@@ -57,19 +57,19 @@ object RandomData {
   lazy val mandatory =
     Gen.oneof[Mandatory](Mandatory, Mandatory.Not)
 
-  lazy val refKey =
+  lazy val hashRefKey =
     for {
       h <- Gen.alphanumeric
-      t <- Gen.charof('.', "_=-", 'a' to 'z', 'A' to 'Z', '0' to '9').list.lim(AppConsts.refKeyLength.end)
-    } yield RefKey((h :: t).mkString)
+      t <- Gen.charof('.', "_=-", 'a' to 'z', 'A' to 'Z', '0' to '9').list.lim(AppConsts.hashRefKeyLength.end)
+    } yield HashRefKey((h :: t).mkString)
 
   lazy val customIssueTypeId =
     id map CustomIssueType.Id
 
   lazy val customIssueType =
-    Gen.apply4(CustomIssueType.apply)(customIssueTypeId, refKey, optionalLargeText, alive)
+    Gen.apply4(CustomIssueType.apply)(customIssueTypeId, hashRefKey, optionalLargeText, alive)
 
-  /** RefKey uniqueness enforced in Project, not here */
+  /** HashRefKey uniqueness enforced in Project, not here */
   lazy val customIssueTypes =
     revAndIMap(customIssueType)(identity)
 
@@ -130,12 +130,12 @@ object RandomData {
     Gen.apply5(TagGroup.apply)(tagId, tagName, optionalLargeText, mutexChildren, alive)
 
   lazy val applicableTag =
-    Gen.apply5(ApplicableTag.apply)(tagId, tagName, optionalLargeText, refKey, alive)
+    Gen.apply5(ApplicableTag.apply)(tagId, tagName, optionalLargeText, hashRefKey, alive)
 
   lazy val tag =
     Gen.oneofG[Tag](tagGroup.subst, applicableTag.subst)
 
-  /** RefKey uniqueness enforced in Project, not here */
+  /** HashRefKey uniqueness enforced in Project, not here */
   lazy val tags: Gen[List[Tag]] = {
     val di = distinctId[Tag, Tag.Id]
     val dn = Distinct.str.at(Tag._name)
@@ -180,7 +180,7 @@ object RandomData {
   lazy val revAndTagTree: Gen[RevAnd[TagTree]] =
     Gen.apply2(RevAnd.apply[TagTree])(rev, tagTree)
 
-  def setTagKey(tt: Tag, kk: Option[RefKey]): Tag = tt match {
+  def setTagKey(tt: Tag, kk: Option[HashRefKey]): Tag = tt match {
     case t: ApplicableTag => kk.fold(t)(k => t.copy(key = k))
     case t: TagGroup      => t
   }
@@ -206,7 +206,7 @@ object RandomData {
     id map CustomField.Id
 
   def customFieldText(art: Gen[ApplicableReqTypes]): Gen[CustomField.Text] =
-    Gen.apply6(CustomField.Text.apply)(customFieldId, shortText1, refKey, mandatory, art, alive)
+    Gen.apply6(CustomField.Text.apply)(customFieldId, shortText1, hashRefKey, mandatory, art, alive)
 
   def customField(art: Gen[ApplicableReqTypes]): Gen[CustomField] =
     Gen.oneofGC(customFieldText(art))
@@ -229,15 +229,15 @@ object RandomData {
 
   def imapToMapLens[K, V] = Lens((_: IMap[K, V]).underlyingMap)(v => _ replaceUnderlying v)
 
-  def distinctRefkeys = {
+  def distinctHashRefKeys = {
     type A = RevAnd[CustomIssueTypeIMap]
     type B = RevAnd[TagTree]
     type T = (A, B)
-    val refkey = Distinct.fstr.xmap(RefKey.apply)(_.value).distinct
-    val issues = refkey
+    val keyDist = Distinct.fstr.xmap(HashRefKey.apply)(_.value).distinct
+    val issues = keyDist
       .at(CustomIssueType._key).liftMapValues[CustomIssueType.Id]
       .at(first[T, A] ^|-> RevAnd._data[CustomIssueTypeIMap] ^|-> imapToMapLens)
-    val tags = refkey
+    val tags = keyDist
       .lift[Option].contramap[Tag](_.keyO, setTagKey)
       .at(TagInTree._tag).liftMapValues[Tag.Id]
       .at(second[T, B] ^|-> RevAnd._data[TagTree] ^|-> imapToMapLens)
@@ -246,7 +246,7 @@ object RandomData {
 
   lazy val project =
     for {
-      (issues, tags) <- Gen.tuple2(customIssueTypes, revAndTagTree) map distinctRefkeys.run
+      (issues, tags) <- Gen.tuple2(customIssueTypes, revAndTagTree) map distinctHashRefKeys.run
       reqtypes       <- customReqTypes
       fields         <- revAnd(fieldSet(reqtypes.data.keySet))
     } yield Project(issues, reqtypes, fields, tags)
@@ -273,7 +273,7 @@ object RandomData {
       fieldId.option
 
     lazy val textFieldValues =
-      Gen.apply4(FP.TextFieldValues.apply)(shortText1, refKey, mandatory, applicableReqTypes)
+      Gen.apply4(FP.TextFieldValues.apply)(shortText1, hashRefKey, mandatory, applicableReqTypes)
 
     lazy val fieldValues: Gen[FP.Values] =
       Gen.oneofG(textFieldValues)
@@ -384,7 +384,7 @@ object RandomData {
 
     lazy val customIssueTypeCrud = new CrudActionGens(CustomIssueTypeCrud)(
       RandomData.customIssueTypeId,
-      Gen.tuple2(refKey, optionalLargeText))
+      Gen.tuple2(hashRefKey, optionalLargeText))
 
     lazy val customReqTypeCrud = new CrudActionGens(CustomReqTypeCrud)(
       RandomData.customReqTypeId,

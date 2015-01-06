@@ -21,7 +21,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.delta.Partition
 import shipreq.webapp.base.data.Validators.{tag => V}
-import shipreq.webapp.base.data.Validators.shared.RefKeyVS
+import shipreq.webapp.base.data.Validators.shared.HashRefKeyVS
 import shipreq.webapp.base.protocol.DeletionAction._
 import shipreq.webapp.base.protocol.TagProtocol
 import shipreq.webapp.base.protocol.Routines.TagCrud
@@ -187,13 +187,13 @@ private[tags] object MainTable {
       s => {
         val cd = c.props.clientData
 
-        val ts: RefKeyVS.Data[Id] =
+        val ts: HashRefKeyVS.Data[Id] =
           (k, s.tagStream.map(t => t.keyO.map(k => (t.id.some, k))).filter(_.isDefined).map(_.get))
-        val is: RefKeyVS.Data[CustomIssueType.Id] = // TODO cacheable
+        val is: HashRefKeyVS.Data[CustomIssueType.Id] = // TODO cacheable
           (None, cd.project.customIssueTypes.data.values.toStream
             .map(i => (i.id.some, i.key)))
 
-        (s.tagStream, RefKeyVS(ts, is))
+        (s.tagStream, HashRefKeyVS(ts, is))
       }
 
     def newTagControlProps =
@@ -206,7 +206,7 @@ private[tags] object MainTable {
       c.modStateIO(s => storesForType(s.newSel).n.enableEdit(s))
 
     val headerRow =
-      CfgTable.header(List(FieldNames.name, FieldNames.refKey, FieldNames.mutexChildren, FieldNames.desc))
+      CfgTable.header(List(FieldNames.name, FieldNames.hashRefKey, FieldNames.mutexChildren, FieldNames.desc))
 
     def abortNewButton =
       <.button(

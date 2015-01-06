@@ -4,7 +4,7 @@ import monocle.macros.Lenser
 import shipreq.base.util.TaggedTypes._
 
 final case class CustomIssueType(id: CustomIssueType.Id,
-                                 key: RefKey,
+                                 key: HashRefKey,
                                  desc: Option[String],
                                  alive: Alive)
 

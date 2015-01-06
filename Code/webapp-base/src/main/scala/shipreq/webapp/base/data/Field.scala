@@ -108,7 +108,7 @@ object CustomField {
 
   case class Text(id       : Id,
                   name     : String,
-                  key      : RefKey,
+                  key      : HashRefKey,
                   mandatory: Mandatory,
                   reqTypes : ApplicableReqTypes,
                   alive    : Alive) extends CustomField(FieldType.Text)

@@ -21,7 +21,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.delta.Partition
 //import shipreq.webapp.base.data.Validators.{tag => V}
-//import shipreq.webapp.base.data.Validators.shared.RefKeyVS
+//import shipreq.webapp.base.data.Validators.shared.HashRefKeyVS
 import shipreq.webapp.base.protocol.DeletionAction._
 import shipreq.webapp.base.protocol.FieldProtocol
 import shipreq.webapp.base.protocol.Routines.FieldCrud

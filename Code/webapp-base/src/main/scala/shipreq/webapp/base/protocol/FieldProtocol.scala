@@ -11,7 +11,7 @@ object FieldProtocol {
   sealed trait Values
 
   case class TextFieldValues(name     : String,
-                             key      : RefKey,
+                             key      : HashRefKey,
                              mandatory: Mandatory,
                              reqTypes : ApplicableReqTypes) extends Values
 

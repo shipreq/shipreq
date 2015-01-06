@@ -10,7 +10,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.delta.Partition
 import shipreq.webapp.base.data.Validators.{customIssueType => V}
-import shipreq.webapp.base.data.Validators.shared.RefKeyVS
+import shipreq.webapp.base.data.Validators.shared.HashRefKeyVS
 import shipreq.webapp.base.protocol.Routines._
 import shipreq.webapp.base.TextMod
 import shipreq.webapp.base.UiText.FieldNames
@@ -66,12 +66,12 @@ object CfgIssues {
 
     def validatorState(k: Option[CustomIssueType.Id], cd: ClientData): S => V.S =
       s => {
-        val ts: RefKeyVS.Data[Tag.Id] = // TODO cacheable
+        val ts: HashRefKeyVS.Data[Tag.Id] = // TODO cacheable
           (None, cd.project.tags.data.vstream(_.tag)
             .map(t => t.keyO.map(k => (t.id.some, k))).filter(_.isDefined).map(_.get))
-        val is: RefKeyVS.Data[CustomIssueType.Id] =
+        val is: HashRefKeyVS.Data[CustomIssueType.Id] =
           (k, savedRowStoreS.getAllP(s).map(i => (i.id.some, i.key)))
-        RefKeyVS(ts, is)
+        HashRefKeyVS(ts, is)
       }
 
     final class Backend(c: BackendScope[Props, S]) extends OnUnmount {
@@ -110,7 +110,7 @@ object CfgIssues {
           i => (valState(None)(c.state), i),
           k => (valState(k.some)(c.state), savedRowStoreS.getI(k)(c.state)),
           supp.deletion,  _.showDeleted, c)
-        val headerRow = CfgTable.header(List(FieldNames.refKey, FieldNames.desc))
+        val headerRow = CfgTable.header(List(FieldNames.hashRefKey, FieldNames.desc))
         () => t.table(headerRow, Stream.empty)
       }
 

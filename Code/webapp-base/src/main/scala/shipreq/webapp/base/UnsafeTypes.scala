@@ -16,7 +16,7 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
   import shipreq.webapp.base.delta._
 
   implicit def autoMnemonic(s: String) = ReqType.Mnemonic(s)
-  implicit def autoRefKey(s: String) = RefKey(s)
+  implicit def autoHashRefKey(s: String) = HashRefKey(s)
 
   implicit def autoCustomFieldId    (i: Int) = CustomField.Id(i)
   implicit def autoCustomIssueTypeId(i: Int) = CustomIssueType.Id(i)

@@ -103,13 +103,13 @@ object DataProp {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  lazy val uniqueRefkeys =
-    Prop.distinct[Project, RefKey]("refkey", p =>
+  lazy val uniqueHashRefKeys =
+    Prop.distinct[Project, HashRefKey]("HashRefKey", p =>
       p.customIssueTypes.data.values.toStream.map(_.key) #:::
       p.tags.data.vstreamf(_.tag.keyO.toStream))
 
   lazy val project = "Project" rename_: (
-    uniqueRefkeys
+    uniqueHashRefKeys
       ∧ customIssueTypes.all.contramap(_.customIssueTypes)
       ∧   customReqTypes.all.contramap(_.customReqTypes)
       ∧           fields.all.contramap(_.fields)

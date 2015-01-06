@@ -9,19 +9,19 @@ object DataTest extends TestSuite {
 
   import Validators.shared._
 
-  @inline def tr(a: Option[Tag.Id], b: RefKey) = (a,b)
-  @inline def ir(a: Option[CustomIssueType.Id], b: RefKey) = (a,b)
+  @inline def tr(a: Option[Tag.Id], b: HashRefKey) = (a,b)
+  @inline def ir(a: Option[CustomIssueType.Id], b: HashRefKey) = (a,b)
 
   val tagData = Stream(tr(1, "abc"), tr(2, "def"))
   val issueData = Stream(ir(1, "tbd"), ir(3, "todo"))
 
   override def tests = TestSuite {
     'validation {
-      'refkeyUniqueness {
+      'hashRefKeyUniqueness {
 
         def test(input: String, expectValid: Boolean, subjT: Option[Tag.Id] = None, subjI: Option[CustomIssueType.Id] = None): Unit = {
-          val vs = RefKeyVS((subjT, tagData), (subjI, issueData))
-          assertEq(s"[$input] | $subjT, $subjI", refKeyS.isValid(vs, input), expectValid)
+          val vs = HashRefKeyVS((subjT, tagData), (subjI, issueData))
+          assertEq(s"[$input] | $subjT, $subjI", hashRefKeyS.isValid(vs, input), expectValid)
         }
 
         'preventDups {

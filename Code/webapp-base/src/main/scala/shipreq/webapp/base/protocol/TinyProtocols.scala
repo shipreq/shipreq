@@ -4,7 +4,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.delta.{Partition, GenericPartitionFns}
 
 object CustomIssueTypeProtocol {
-  type Values = (RefKey, Option[String])
+  type Values = (HashRefKey, Option[String])
   val partitionFns = GenericPartitionFns(Partition.CustomIssueTypes, Project._customIssueTypes)
 }
 
