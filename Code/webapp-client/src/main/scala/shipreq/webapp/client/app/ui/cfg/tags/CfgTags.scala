@@ -273,6 +273,8 @@ private[tags] object MainTable {
     type F = (String, Indenter) => ReactElement
     @inline def F(f: F): F = f
 
+    val unusedField: ReactNode = "-"
+
     abstract class SubtypeRenderer[T <: Tag, I, B, D, V](
         final val editor: Editor[(V.S, I), B, IO, S, D, IO[Unit], V],
         final val stores: NewAndSavedStores[S, Id, T, I]) {
@@ -295,8 +297,6 @@ private[tags] object MainTable {
       def renderNew  (s: S, r: stores.n.Row): ReactElement
       def renderAlive(s: S, indent: Indenter, key: String)(r: stores.s.Row): ReactElement
       def renderDead (s: S, indent: Indenter, key: String)(rs: RowStatus, t: T): ReactElement
-
-      val unusedField: ReactNode = "-"
 
       def rowTemplate(s: S, oid: UndefOr[Id], rs: RowStatus, key: String)(name: ReactNode, refkey: ReactNode, mutexChildren: ReactNode, desc: ReactNode)(ctrls: => TagMod): ReactElement = {
         val focus = oid.map(id =>

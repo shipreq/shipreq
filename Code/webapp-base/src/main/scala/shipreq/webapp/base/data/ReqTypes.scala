@@ -14,15 +14,22 @@ sealed trait ReqType {
   def imp: ImplicationRequired
 
   final def allMnemonics: Set[ReqType.Mnemonic] = oldMnemonics + mnemonic
+
+  def fold[A](s: ReqType.Static => A, c: CustomReqType => A): A
 }
 
 object ReqType {
   final case class Mnemonic(value: String) extends TaggedString
 
   // type Id = Static \/ CustomReqType.Id
-  sealed trait Id
+  sealed trait Id {
+    def foldId[A](s: Static => A, c: CustomReqType.Id => A): A
+  }
 
-  sealed trait Static extends ReqType with Id
+  sealed trait Static extends ReqType with Id {
+    override final def fold  [A](s: Static => A, c: CustomReqType    => A): A = s(this)
+    override final def foldId[A](s: Static => A, c: CustomReqType.Id => A): A = s(this)
+  }
 
   case object UseCase extends Static {
     override def mnemonic     = Mnemonic("UC")
@@ -56,6 +63,9 @@ object ReqType {
 
   lazy val staticMnemonics =
     (Set.empty[Mnemonic] /: static)(_ ++ _.allMnemonics)
+
+  val filterAlive: ReqType => Boolean =
+    _.fold(_ => true, _.alive ≟ Alive)
 }
 
 // =====================================================================================================================
@@ -66,11 +76,16 @@ final case class CustomReqType(id: CustomReqType.Id,
                                name: String,
                                imp: ImplicationRequired,
                                alive: Alive) extends ReqType {
+
   def fullName = s"${mnemonic.value}: $name"
+
+  override def fold[A](s: ReqType.Static => A, c: CustomReqType => A): A = c(this)
 }
 
 object CustomReqType {
-  final case class Id(value: Long) extends TaggedLong with ReqType.Id
+  final case class Id(value: Long) extends TaggedLong with ReqType.Id {
+    override def foldId[A](s: ReqType.Static => A, c: Id => A): A = c(this)
+  }
 
   object IdAccess extends ObjDataIdM[CustomReqType.type, CustomReqType, Id] {
     override def id(d: CustomReqType) = d.id

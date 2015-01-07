@@ -35,4 +35,7 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
     Stream(customIssueTypes, customReqTypes, fields, tags)
       .map("\n    " + _.toString.replace(" -> ", " → "))
       .mkString("Project(", "", "\n)")
+
+  def reqType(i: ReqType.Id): Option[ReqType] =
+    i.foldId(Some(_), customReqTypes.data.get)
 }

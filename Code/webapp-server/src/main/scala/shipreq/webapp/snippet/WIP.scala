@@ -51,10 +51,11 @@ class WIP {
       TagInTree(ApplicableTag(4, "Low Priority", Some("Nice to have. Stuff that probably won't be implemented."), "pri=low", Alive), Vector())))
 
     val fields = RevAnd(40, FieldSet(emptyDataMap(CustomField).addAll(
-        CustomField.Text(1, "Description", "desc",  Mandatory,     onlyReqTypes(2, ReqType.UseCase), Alive),
-        CustomField.Text(2, "Notes",       "notes", Mandatory.Not, notReqTypes(4),                   Alive)
+        CustomField.Text(1, "Description", "desc",     Mandatory,     onlyReqTypes(2, ReqType.UseCase), Alive),
+        CustomField.Text(2, "Notes",       "notes",    Mandatory.Not, notReqTypes(4),                   Alive),
+        CustomField.Text(3, "Reporter",    "reporter", Mandatory,     onlyReqTypes(5, ReqType.UseCase), Dead)
       ), Vector(
-        1, StaticField.NormalAltStepTree, StaticField.ExceptionStepTree, StaticField.StepGraph, 2
+        1, 3, StaticField.NormalAltStepTree, StaticField.ExceptionStepTree, StaticField.StepGraph, 2
       )))
 
     new Project(customIssueTypes, customReqTypes, fields, tags)

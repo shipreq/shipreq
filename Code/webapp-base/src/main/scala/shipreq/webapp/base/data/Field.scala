@@ -77,17 +77,24 @@ sealed trait Field {
   def reqTypes : Field.ApplicableReqTypes
   def keyO     : Option[FieldRefKey]
   def mandatory: Mandatory
+
+  def fold[A](s: StaticField => A, c: CustomField => A): A
 }
 
 object Field {
   type ApplicableReqTypes = ISubset[Set, ReqType.Id]
 
   // type Id = Static \/ CustomField.Id
-  sealed trait Id
+  sealed trait Id {
+    def foldId[A](s: StaticField => A, c: CustomField.Id => A): A
+  }
 
-  implicit val applicableReqTypesEquality: Equal[ApplicableReqTypes] = implicitly
+  implicit lazy val applicableReqTypesEquality: Equal[ApplicableReqTypes] = implicitly
 
   implicit val idEquality = Equal.equalA[Id]
+
+  val filterAlive: Field => Boolean =
+    _.fold(_ => true, _.alive ≟ Alive)
 }
 
 import Field.ApplicableReqTypes
@@ -97,7 +104,11 @@ sealed abstract class StaticField(override val name     : String,
                                   override val reqTypes : Field.ApplicableReqTypes,
                                   override val mandatory: Mandatory,
                                            val deletable: Deletable,
-                                  override val keyO     : Option[FieldRefKey]) extends Field with Field.Id
+                                  override val keyO     : Option[FieldRefKey]) extends Field with Field.Id {
+
+  override final def fold  [A](s: StaticField => A, c: CustomField    => A): A = s(this)
+  override final def foldId[A](s: StaticField => A, c: CustomField.Id => A): A = s(this)
+}
 
 object StaticField {
   val useCaseOnly: ApplicableReqTypes = ISubset.Only(OneAnd(ReqType.UseCase, Set.empty))
@@ -130,10 +141,14 @@ object StaticField {
 sealed abstract class CustomField(override final val fieldType: CustomFieldType) extends Field {
   def id: CustomField.Id
   def alive: Alive
+
+  override final def fold[A](s: StaticField => A, c: CustomField => A): A = c(this)
 }
 
 object CustomField {
-  final case class Id(value: Long) extends TaggedLong with Field.Id
+  final case class Id(value: Long) extends TaggedLong with Field.Id {
+    def foldId[A](s: StaticField => A, c: CustomField.Id => A): A = c(this)
+  }
 
   object IdAccess extends ObjDataIdM[CustomField.type, CustomField, Id] {
     override def id(d: CustomField) = d.id

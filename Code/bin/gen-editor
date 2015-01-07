@@ -4,7 +4,7 @@
 val comma = ", "
 def T(i: Int) = (64+i).toChar.toString
 
-for (i <- (1 to 3)) {
+for (i <- (1 to 4)) {
   // def m (f: Int ⇒ String): List[String] = (1 to a).toList.map(f)
   // def mc(f: Int ⇒ String): String = m(f).mkString(comma)
   // def mt(f: Int ⇒ String): String = m(f).mkString("(",comma,")")

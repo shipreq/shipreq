@@ -189,4 +189,24 @@ object Editor {
       def apply[I](a1: I⇒A1, a2: I⇒A2, a3: I⇒A3): Editor[(T,I), fs.FieldValue, M, S, fs.Field, D, (V1,V2,V3)] =
         merge3(fs,e1,e2,e3).apply[(T,I)](_ map2 a1, _ map2 a2, _ map2 a3)
     }
+
+  def merge4[M[_], S, D, A1,B1,V1, A2,B2,V2, A3,B3,V3, A4,B4,V4, FS <: FieldSet4[_,B1,B2,B3,B4]](fs: FS, e1: Editor[A1,B1,M,S,Unit,D,V1], e2: Editor[A2,B2,M,S,Unit,D,V2], e3: Editor[A3,B3,M,S,Unit,D,V3], e4: Editor[A4,B4,M,S,Unit,D,V4]) =
+    new {
+    def tupleI = apply[(A1,A2,A3,A4)](_._1,_._2,_._3,_._4)
+    def apply[I](a1: I⇒A1, a2: I⇒A2, a3: I⇒A3, a4: I⇒A4): Editor[I, fs.FieldValue, M, S, fs.Field, D, (V1,V2,V3,V4)] =
+      Editor(ei ⇒ {
+        val i1 = ei.mapABC[A1,B1,Unit](a1, fs.f1 * _, _ ⇒ fs.f1)
+        val i2 = ei.mapABC[A2,B2,Unit](a2, fs.f2 * _, _ ⇒ fs.f2)
+        val i3 = ei.mapABC[A3,B3,Unit](a3, fs.f3 * _, _ ⇒ fs.f3)
+        val i4 = ei.mapABC[A4,B4,Unit](a4, fs.f4 * _, _ ⇒ fs.f4)
+        (e1 render i1, e2 render i2, e3 render i3, e4 render i4)
+      })
+  }
+
+  def merge4S[M[_], T, S, C, D, A1,B1,V1, A2,B2,V2, A3,B3,V3, A4,B4,V4, FS <: FieldSet4[_,B1,B2,B3,B4]](fs: FS, e1: Editor[(T,A1),B1,M,S,Unit,D,V1], e2: Editor[(T,A2),B2,M,S,Unit,D,V2], e3: Editor[(T,A3),B3,M,S,Unit,D,V3], e4: Editor[(T,A4),B4,M,S,Unit,D,V4]) =
+    new {
+      def tupleI = apply[(A1,A2,A3,A4)](_._1,_._2,_._3,_._4)
+      def apply[I](a1: I⇒A1, a2: I⇒A2, a3: I⇒A3, a4: I⇒A4): Editor[(T,I), fs.FieldValue, M, S, fs.Field, D, (V1,V2,V3,V4)] =
+        merge4(fs,e1,e2,e3,e4).apply[(T,I)](_ map2 a1, _ map2 a2, _ map2 a3, _ map2 a4)
+    }
 }

@@ -10,14 +10,12 @@ import scala.language.reflectiveCalls
 import scalajs.js.{undefined, UndefOr, UndefOrOps, Array => JsArray}
 import scalajs.js.JSConverters._
 import scalaz.effect.IO
-import scalaz.{Maybe, Memo, \&/, -\/, \/-}
+import scalaz.{OneAnd, Maybe, Memo, \&/, -\/, \/-}
 import scalaz.std.AllInstances._
 import scalaz.syntax.equal._
 import scalaz.syntax.bind.ToBindOps
 import scalaz.syntax.foldable1._
 
-import shipreq.prop.CycleDetector
-import shipreq.prop.util.Multimap
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.delta.Partition
@@ -28,10 +26,11 @@ import shipreq.webapp.base.protocol.Routines.FieldCrud
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.client.ClientData
 import shipreq.webapp.client.app.ui.{RowDetailButton, ShowDeletedToggler}
-import shipreq.webapp.client.lib.{FailureIO, SuccessIO, CrudIO}
+import shipreq.webapp.client.lib.{FailureIO, SuccessIO}
 import shipreq.webapp.client.lib.ui._
 import shipreq.webapp.client.protocol.ClientProtocol
 import shipreq.webapp.client.util.DND
+import Field.ApplicableReqTypes
 import FieldProtocol.Delta
 
 object CfgFields {
@@ -47,6 +46,7 @@ private[fields] object MainTable {
   val nameE      = Editors.textInputEditor.applyValidator(V.nameS)
   val refkeyE    = Editors.textInputEditor.applyValidator(V.keyS)
   val mandatoryE = Editors.checkboxEditor.imap(Mandatory).strengthL[V.S]
+  val reqtypesE  = Editors.constSimpleEditor[ApplicableReqTypes](<.span("TODO")).strengthL[V.S]
 
   val text_fields = FieldSet4[CustomField.Text](
     _.name, _.key.value, _.mandatory, _.reqTypes)(
@@ -55,7 +55,15 @@ private[fields] object MainTable {
   val text_stores = NewAndSavedStores.fields(text_fields).keyedBy[CustomField.Id]
 
   case class State(showDeleted: Boolean,
-                   text_state: text_stores.State)
+                   text_state: text_stores.State) {
+
+//    lazy val customFieldStream: Stream[CustomField] =
+//      customFieldStores.flatMap(_.s.getAllP(this).map(f => f: CustomField))
+
+    lazy val customFields =
+      customFieldStores.foldLeft(CustomField.IdAccess.emptyIMap)(_ ++ _.s.getAllP(this))
+  }
+
   object State {
     private[this] def l = Lenser[State]
     val _showDeleted = l(_.showDeleted)
@@ -108,6 +116,8 @@ private[fields] object MainTable {
     (customFieldStream, k)
   }
 
+  val rowIdFromEditorInput: ((V.S, Any)) => Option[CustomField.Id] = _._1._2
+
   // ===================================================================================================================
   final class Backend(c: BackendScope[Props, S]) extends OnUnmount {
 
@@ -132,28 +142,60 @@ private[fields] object MainTable {
     def renderFields: TagMod = {
       val order = c.props.clientData.project.fields.data.order
 
+      var content = order.toStream
+        .flatMap(_.foldId[Stream[Field]](s => Stream(s), c.state.customFields.get(_).toStream))
+
+      if (!c.state.showDeleted)
+        content = content.filter(Field.filterAlive)
+
+      content.toReactNodeArray(renderField)
+
       // TODO add to scalajs-react ?
-      val array = new JsArray[ReactNode]()
-      order.foreach(f => renderField(f).foreach(array push _))
-      array
+//      val array = new JsArray[ReactNode]()
+//      order.foreach(f => renderField(f).foreach(array push _))
+//      array
     }
 
-    def renderField(f: Field.Id): UndefOr[ReactTag] = f match {
-      case c: CustomField.Id => undefined // TODO customFieldStores.map(_.s.g)
-      case s: StaticField    => renderStaticField(s)
+    def renderField(gf: Field): ReactElement = gf match {
+      case f: CustomField.Text => text_renderer.render(c.state, f.id)
+      case s: StaticField      => renderStaticField(s)
     }
 
-    def renderStaticField(f: StaticField): ReactTag =
-      renderRow(
+//    def renderField(fid: Field.Id): UndefOr[ReactElement] = fid match {
+//      case id: CustomField.Id =>
+//        c.state.customFields.get(id).orUndefined.map {
+//          case f: CustomField.Text => text_renderer.render(c.state, f.id)
+//        }
+//      case s: StaticField    => renderStaticField(s)
+//    }
+
+    def renderStaticField(f: StaticField): ReactElement =
+      renderRow(RowStatus.Sync)(
         name      = f.name,
-        ftype     = f.fieldType.name,
+        ftype     = f.fieldType,
         refkey    = renderKeyO(f.keyO),
         mandatory = Editors.staticCheckbox(Mandatory from f.mandatory),
-        reqtypes  = "TODO"
+        reqtypes  = renderApReqTypes(f.reqTypes),
+        ctrls     = "TODO"
       )(^.key := f.name)
 
     def renderKeyO(k: Option[FieldRefKey]): TagMod =
       k.fold("-")(_.value)
+
+    def renderApReqTypes(a: ApplicableReqTypes): TagMod = {
+      def fmt(prefix: String, rs: OneAnd[Set, ReqType.Id]) =
+        (rs.head #:: rs.tail.toStream)
+          .flatMap(c.props.clientData.project.reqType(_).toStream)
+          //.filter(ReqType.filterAlive) // TODO should render with strike-through
+          .map(_.mnemonic.value)
+          .sorted
+          .mkString(prefix, ", ", ".")
+      a match {
+        case ISubset.Only(rs) => fmt("Only: ", rs)
+        case ISubset.Not(rs)  => fmt("Not: ", rs)
+        case ISubset.All()    => "All."
+      }
+    }
 
 //    def renderCustomField(f: CustomField): ReactTag =
 //      renderRow(
@@ -164,26 +206,30 @@ private[fields] object MainTable {
 //        reqtypes  = "TODO"
 //      )(^.key := f.id.value)
 
-    def renderRow(name: TagMod, ftype: TagMod, refkey: TagMod, mandatory: TagMod, reqtypes: TagMod): ReactTag =
+    def renderRow(rs: RowStatus)
+                 (name: TagMod, ftype: FieldType, refkey: TagMod, mandatory: TagMod, reqtypes: TagMod, ctrls: => TagMod): ReactTag =
       <.tr(
+        ^.cls := UI.rowStatusRowClass(rs),
         <.td(name),
-        <.td(ftype),
+        <.td(ftype.name),
         <.td(refkey),
         <.td(mandatory),
-        <.td(reqtypes))
+        <.td(reqtypes),
+        <.td(UI.rowStatusCtrls(rs, ctrls)))
 
     // -----------------------------------------------------------------------------------------------------------------
     // Subtype
 
-    /*
-    abstract class SubtypeRenderer[F <: Field, I, B, D, V](
+    val unusedField: ReactNode = "-"
+
+    abstract class SubtypeRenderer[T <: CustomField, I, B, D, V](
       final val editor: Editor[(V.S, I), B, IO, S, D, IO[Unit], V],
-      final val stores: NewAndSavedStores[S, Id, T, I]) {
+      final val stores: NewAndSavedStores[S, CustomField.Id, T, I]) {
 
       val editable = editor.editableByRowStatus(c)
 
-      val deletion =
-        Persistence.asyncDeletionS(stores.s)(_.alive, crudIO._deleteIO, c runState _)
+//      val deletion =
+//        Persistence.asyncDeletionS(stores.s)(_.alive, crudIO._deleteIO, c runState _)
 
       def ei(s: S, r: stores.s.Row): editor.Input = {
         val a = (validatorState(r.p.id.some)(s), r.i)
@@ -195,45 +241,92 @@ private[fields] object MainTable {
         EditorI(a, "", editable(r.status))
       }
 
-      def renderNew  (s: S, r: stores.n.Row): ReactElement
-      def renderAlive(s: S, indent: Indenter, key: String)(r: stores.s.Row): ReactElement
-      def renderDead (s: S, indent: Indenter, key: String)(rs: RowStatus, t: T): ReactElement
+//      def renderNew  (s: S, r: stores.n.Row): ReactElement
+      def renderAlive(s: S, r: stores.s.Row): ReactElement
+      def renderDead (s: S, rs: RowStatus, t: T): ReactElement
 
-      val unusedField: ReactNode = "-"
+//      def rowTemplate(s: S, oid: UndefOr[CustomField.Id], rs: RowStatus, key: String)
+//                     (name: ReactNode, refkey: ReactNode, mutexChildren: ReactNode, desc: ReactNode)
+//                     (ctrls: => TagMod): ReactElement = {
+//        val focus = oid.map(id =>
+//          RowDetailButton.Props.forRow(id)(s.detailRow.map(_.id), c _modStateIO setDetail))
+//        <.tr(
+//          ^.key := key,
+//          ^.classSet1(UI.rowStatusRowClass(rs), "focusrow" -> focus.exists(_.isActive)),
+//          <.td(^.cls := "name", name),
+//          <.td(refkey),
+//          <.td(mutexChildren),
+//          <.td(^.cls := "desc", desc),
+//          <.td(
+//            focus.map(_.component),
+//            UI.rowStatusCtrls(rs, ctrls)))
+//      }
 
-      def rowTemplate(s: S, oid: UndefOr[Id], rs: RowStatus, key: String)(name: ReactNode, refkey: ReactNode, mutexChildren: ReactNode, desc: ReactNode)(ctrls: => TagMod): ReactElement = {
-        val focus = oid.map(id =>
-          RowDetailButton.Props.forRow(id)(s.detailRow.map(_.id), c _modStateIO setDetail))
-        <.tr(
-          ^.key := key,
-          ^.classSet1(UI.rowStatusRowClass(rs), "focusrow" -> focus.exists(_.isActive)),
-          <.td(^.cls := "name", name),
-          <.td(refkey),
-          <.td(mutexChildren),
-          <.td(^.cls := "desc", desc),
-          <.td(
-            focus.map(_.component),
-            UI.rowStatusCtrls(rs, ctrls)))
-      }
+//      def newRowTemplate(s: S, rs: RowStatus)(name: ReactNode, refkey: ReactNode, mutexChildren: ReactNode, desc: ReactNode): ReactElement =
+//        rowTemplate(s, undefined, rs, "new")(name, refkey, mutexChildren, desc)(abortNewButton)
 
-      def newRowTemplate(s: S, rs: RowStatus)(name: ReactNode, refkey: ReactNode, mutexChildren: ReactNode, desc: ReactNode): ReactElement =
-        rowTemplate(s, undefined, rs, "new")(name, refkey, mutexChildren, desc)(abortNewButton)
-
-      def renderRow(s: S, row: stores.s.Row): F = F { (keyp, indent) =>
+      def render(s: S, id: CustomField.Id) = {
+        val row = stores.s.get(id)(s)
         val tag = row.p
-        def key = s"$keyp.${tag.id.value}"
         tag.alive match {
-          case Alive => renderAlive(s, indent, key)(row)
-          case Dead  => renderDead (s, indent, key)(row.status, tag)
+          case Alive => renderAlive(s, row)
+          case Dead  => renderDead (s, row.status, tag)
         }
       }
 
-      def all(s: S): Stream[(Id, F)] =
-        stores.s.getAll(s).map(row => row.p.id -> renderRow(s, row))
+//      def newRow(s: S): Option[ReactElement] =
+//        stores.n.get(s).map(renderNew(s, _))
+    } // SubtypeRenderer
 
-      def newRow(s: S): Option[ReactElement] =
-        stores.n.get(s).map(renderNew(s, _))
+    // -----------------------------------------------------------------------------------------------------------------
+    // TagGroup
+
+    val text_editor = {
+      @inline def stores = text_storesS
+//      def crudValues(u: V.tagGroup._V): TagCrud.V = {
+//        val (name, mutexChildren, desc) = u
+//        \&/.This(TagProtocol.TagGroupValues(name, desc, mutexChildren))
+//      }
+//      val saveFn = Persistence.asyncSave2(V.tagGroup, stores, crudIO.createIO)(crudIO.updateIO,
+//        validatorState,
+//        SaveNeed.cmpToExtract(t => (t.name, t.mutexChildren, t.desc)),
+//        crudValues,
+//        c runState _)
+      Editor.merge4S(text_fields, nameE, refkeyE, mandatoryE, reqtypesE).tupleI.zoomU[S]
+        .applyRowUpdateAndRevert(stores)(rowIdFromEditorInput)
+        //.applyOnEditFinishedK(???)(rowIdFromEditorInput)
     }
-    */
+
+    val text_renderer = new SubtypeRenderer(text_editor, text_storesS) {
+//      override def renderNew(s: S, row: stores.n.Row): ReactElement = {
+//        val (name, mutexChildren, desc) = editor render ei(s, row)
+//        newRowTemplate(s, row.status)(name, unusedField, mutexChildren, desc)
+//      }
+      override def renderAlive(s: S, row: stores.s.Row): ReactElement = {
+        val (name, refkey, mandatory, reqtypes) = editor render ei(s, row)
+        val f = row.p
+        renderRow(row.status)(
+          name      = name,
+          ftype     = f.fieldType,
+          refkey    = refkey,
+          mandatory = mandatory,
+          reqtypes  = reqtypes,
+          ctrls     = "TODO"
+        )(^.key := f.id.value)
+//        (deletion.button(t.id, SoftDel))
+      }
+
+      override def renderDead(s: S, rs: RowStatus, f: CustomField.Text): ReactElement =
+        renderRow(rs)(
+          name      = f.name,
+          ftype     = f.fieldType,
+          refkey    = f.key.value,
+          mandatory = Editors.staticCheckbox(Mandatory from f.mandatory),
+          reqtypes  = renderApReqTypes(f.reqTypes),
+          ctrls     = "TODO"
+        )(^.key := f.id.value)
+        // deletion.button(t.id, Restore)
+    }
+    
   }
 }

@@ -13,6 +13,9 @@ object Editors {
 
   type SimpleEditor[I] = Editor[I, I, IO, Unit, Unit, IO[Unit], ReactTag]
 
+  def constSimpleEditor[I](v: ReactTag): SimpleEditor[I] =
+    Editor(_ => v)
+
   @inline private def callbackH[I](event: CallbackEvent[I], st: ST = nopST): CallbackH[I, IO, Unit, Unit] =
     CallbackH(event, st, ())
 
