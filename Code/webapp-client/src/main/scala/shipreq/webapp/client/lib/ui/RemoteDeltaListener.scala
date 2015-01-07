@@ -5,14 +5,15 @@ import japgolly.scalajs.react.extra.{Listenable, OnUnmount}
 import scalaz.Scalaz.Id
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.delta._
-import shipreq.webapp.base.protocol._, Routine._
+import shipreq.webapp.base.protocol._
 import shipreq.webapp.client.ClientData
 import shipreq.webapp.client.delta.LocalDelta
 import RemoteDeltaListener.StateFns
 
 object RemoteDeltaListener {
-  def apply[O, D, I, V](o: O, rd: Crudable.Aux[I, V])(implicit O: ObjDataId[O, D, I]) =
-    new RemoteDeltaListener[D, I, rd.type]
+  def apply[O, D, I](o: O)(implicit O: ObjDataId[O, D, I]) = new RemoteDeltaListener[D, I]
+
+  def apply[D](d: DataId[D]) = new RemoteDeltaListener[D, d.I]()(d)
 
   class StateFns[S, I, D](val remove: (S, I) => S,
                           val put: (S, I, D) => S)
@@ -22,7 +23,7 @@ object RemoteDeltaListener {
  * @tparam D Data type.
  * @tparam I Data ID.
  */
-class RemoteDeltaListener[D, I, RD <: Desc {type O = RemoteDelta}](implicit I: DataIdAux[D, I]) {
+class RemoteDeltaListener[D, I](implicit I: DataIdAux[D, I]) {
 
   private def recvExtUpdate[S](stateFns: StateFns[S, I, D], partition: Partition.Aux[D, I]) =
     (d: LocalDelta) => ReactS.mod[S](s1 => {

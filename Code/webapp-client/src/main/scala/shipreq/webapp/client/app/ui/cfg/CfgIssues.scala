@@ -55,8 +55,7 @@ object CfgIssues {
         .backend(new Backend(_))
         .render(_.backend.render)
         .configure(
-          RemoteDeltaListener(CustomIssueType, CustomIssueTypeCrud)
-            .installS(savedRowStoreS, Partition.CustomIssueTypes, _.clientData))
+          RemoteDeltaListener(CustomIssueType).installS(savedRowStoreS, Partition.CustomIssueTypes, _.clientData))
         .build
 
     private def initialState(p: Props): S =
@@ -137,8 +136,7 @@ object CfgIssues {
       .backend(new Backend(_))
       .render(_.backend.render)
       .configure(
-        RemoteDeltaListener(CustomReqType, CustomReqTypeCrud)
-          .installS(savedRowStore, Partition.CustomReqTypes, _.clientData))
+        RemoteDeltaListener(CustomReqType).installS(savedRowStore, Partition.CustomReqTypes, _.clientData))
       .build
 
     private def initialState(p: Props): S =
