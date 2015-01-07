@@ -54,7 +54,7 @@ class WIP {
         CustomField.Text(1, "Description", "desc",  Mandatory,     onlyReqTypes(2, ReqType.UseCase), Alive),
         CustomField.Text(2, "Notes",       "notes", Mandatory.Not, notReqTypes(4),                   Alive)
       ), Vector(
-        1, Field.NormalAltStepTree, Field.ExceptionStepTree, Field.StepGraph, 2
+        1, StaticField.NormalAltStepTree, StaticField.ExceptionStepTree, StaticField.StepGraph, 2
       )))
 
     new Project(customIssueTypes, customReqTypes, fields, tags)
@@ -317,13 +317,13 @@ class WIP {
             case _ => cf
           })
 
-        case UpdateOrder(f: Field.Static, p) =>
+        case UpdateOrder(f: StaticField, p) =>
           mod(fs => if (fs.order contains f) List(Delta(-\/(f), p)) else Nil)
 
         case UpdateOrder(id: CustomField.Id, p) =>
           mod(_.customFields.get(id).fold(∅)(f => List(Delta(\/-(f), p))))
 
-        case Delete(f: Field.Static, Restore) =>
+        case Delete(f: StaticField, Restore) =>
           mod(fs => if (fs.order contains f) Nil else List(Delta(-\/(f), None)))
 
         case Delete(id: CustomField.Id, Restore) =>
@@ -331,7 +331,7 @@ class WIP {
             case f: CustomField.Text => f.copy(alive = Alive)
           }
 
-        case Delete(f: Field.Static, HardDel | SoftDel) =>
+        case Delete(f: StaticField, HardDel | SoftDel) =>
           f.deletable match {
             case Deletable     => apply(Set(f), Nil)
             case Deletable.Not => Nil

@@ -67,12 +67,12 @@ object DataProp {
         _.customFields.keySet,
         _.order.foldLeft(Set.empty[CustomField.Id])((q, id) => id match {
           case i: CustomField.Id => q + i
-          case _: Field.Static   => q
+          case _: StaticField    => q
         }))
 
     def orderHasAllUndeletableStaticFields =
       Prop.prohibitMissingElements[FieldSet]("order ⊇ undeletable static")(
-        _ => Field.static.filter(_.deletable ≟ Deletable.Not),
+        _ => StaticField.notDeletable,
         _.order.toSet)
 
     def fieldSet = "FieldSet" rename_: (

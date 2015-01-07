@@ -6,11 +6,11 @@ import shipreq.webapp.base.UnsafeTypes._
 
 object SampleProject {
 
-  val customIssueTypes = RevAnd(10, emptyDataMap(CustomIssueType).addAll(
+  lazy val customIssueTypes = RevAnd(10, emptyDataMap(CustomIssueType).addAll(
     CustomIssueType(1, "TO"+"DO", "Something you need To Do.", Alive),
     CustomIssueType(2, "TBD", "To Be Decided.", Alive)))
 
-  val customReqTypes = RevAnd(20, emptyDataMap(CustomReqType).addAll(
+  lazy val customReqTypes = RevAnd(20, emptyDataMap(CustomReqType).addAll(
     CustomReqType(1, "CO", Set.empty, "Constraint",             ImplicationRequired.Not, Alive),
     CustomReqType(2, "MF", Set.empty, "Major Feature",          ImplicationRequired.Not, Alive),
     CustomReqType(3, "FR", Set.empty, "Functional Requirement", ImplicationRequired,     Alive),
@@ -18,9 +18,9 @@ object SampleProject {
     CustomReqType(5, "DD", Set("DA", "DDF"), "Data Definition", ImplicationRequired.Not, Dead),
     CustomReqType(6, "SI", Set.empty, "Solution Idea",          ImplicationRequired,     Dead)))
 
-  val v10d = Some("Released: 17/14/1976\nFirst release.")
-  val v11d = Some("Released: 1/2/2001")
-  val tags = TagTree.empty.addAll(
+  lazy val v10d = Some("Released: 17/14/1976\nFirst release.")
+  lazy val v11d = Some("Released: 1/2/2001")
+  lazy val tags = TagTree.empty.addAll(
     TagInTree(TagGroup     (1, "Priority",        None, MutexChildren,     Alive), Vector(2,3,4)),
     TagInTree(ApplicableTag(2, "High Priority",   None, "pri=high",        Alive), Vector()),
     TagInTree(ApplicableTag(3, "Medium Priority", None, "pri=med",         Alive), Vector()),
@@ -38,20 +38,20 @@ object SampleProject {
     TagInTree(ApplicableTag(4, "Low Priority", Some("Nice to have. Stuff that probably won't be implemented."), "pri=low", Alive), Vector()))
 
 
-  val fields = RevAnd(40, FieldSet(emptyDataMap(CustomField).addAll(
+  lazy val fields = RevAnd(40, FieldSet(emptyDataMap(CustomField).addAll(
     CustomField.Text(1, "Description", "desc",  Mandatory,     onlyReqTypes(2, ReqType.UseCase), Alive),
     CustomField.Text(2, "Notes",       "notes", Mandatory.Not, notReqTypes(4),                   Alive)
   ), Vector(
-    1, Field.NormalAltStepTree, Field.ExceptionStepTree, Field.StepGraph, 2
+    1, StaticField.NormalAltStepTree, StaticField.ExceptionStepTree, StaticField.StepGraph, 2
   )))
 
-  val project = new Project(
+  lazy val project = new Project(
     customIssueTypes,
     customReqTypes,
     fields,
     RevAnd(30, tags))
 
-  val tagTree = project.tags.data.mapValues(_.children)
+  lazy val tagTree = project.tags.data.mapValues(_.children)
 
-  // val tagTreeB = BiMultimap(Multimap(tagTree.mapValues(_.toSet)))
+  // lazy val tagTreeB = BiMultimap(Multimap(tagTree.mapValues(_.toSet)))
 }

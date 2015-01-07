@@ -231,8 +231,8 @@ object DataCodecs {
       }
     })
   implicit final val staticField = {
-    import Field._
-    ReadWriter[Field.Static]({
+    import StaticField._
+    ReadWriter[StaticField]({
       case NormalAltStepTree => Js.Str("n")
       case ExceptionStepTree => Js.Str("e")
       case StepGraph         => Js.Str("g")
@@ -244,7 +244,7 @@ object DataCodecs {
   }
   implicit final val fieldId = ReadWriter[Field.Id]({
       case i: CustomField.Id => Js.Str(i.value.toString)
-      case s: Field.Static   => staticField.write(s)
+      case s: StaticField    => staticField.write(s)
     }, {
       case Js.Str(ParseLong(i)) => CustomField.Id(i)
       case s                    => staticField.read(s)

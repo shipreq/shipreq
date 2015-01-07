@@ -26,7 +26,7 @@ object FieldProtocol {
     final case class Delete      (id: Field.Id, action: DeletionAction)  extends CfgAction
   }
 
-  case class Delta(field: Field.Static \/ CustomField, pos: Position)
+  case class Delta(field: StaticField \/ CustomField, pos: Position)
 
   implicit object Delta extends DataId[Delta] {
     override type I = Field.Id
@@ -45,7 +45,7 @@ object FieldProtocol {
       for (fieldId <- ds.del)
         fieldId match {
           case i: CustomField.Id => customFields = customFields - i
-          case _: Field.Static   => ()
+          case _: StaticField    => ()
         }
       order = order.filterNot(ds.del.contains)
 

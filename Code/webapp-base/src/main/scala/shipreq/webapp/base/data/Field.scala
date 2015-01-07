@@ -2,7 +2,7 @@ package shipreq.webapp.base.data
 
 import monocle._
 import monocle.macros.Lenser
-import scalaz.{OneAnd, Equal, Maybe}
+import scalaz.{NonEmptyList, OneAnd, Equal, Maybe}
 import scalaz.Isomorphism._
 import scalaz.std.AllInstances._
 import scalaz.syntax.equal._
@@ -61,36 +61,43 @@ sealed trait Field {
   def reqTypes : Field.ApplicableReqTypes
   def keyO     : Option[FieldRefKey]
 }
+
 object Field {
   type ApplicableReqTypes = ISubset[Set, ReqType.Id]
-
-  val useCaseOnly: ApplicableReqTypes = ISubset.Only(OneAnd(ReqType.UseCase, Set.empty))
 
   // type Id = Static \/ CustomField.Id
   sealed trait Id
 
-  sealed abstract class Static(override val name     : String,
-                               override val fieldType: FieldType,
-                               override val reqTypes : Field.ApplicableReqTypes,
-                               override val keyO     : Option[FieldRefKey],
-                                        val deletable: Deletable) extends Field with Id
+  implicit val applicableReqTypesEquality: Equal[ApplicableReqTypes] = implicitly
 
-  case object NormalAltStepTree extends Static("Normal and Alternate Courses", FieldType.StepTree,  useCaseOnly, None, Deletable.Not)
-  case object ExceptionStepTree extends Static("Exception Courses",            FieldType.StepTree,  useCaseOnly, None, Deletable.Not)
-  case object StepGraph         extends Static("Step Graph",                   FieldType.StepGraph, useCaseOnly, None, Deletable)
-
-  // Not lazy causes crash in DataProp
-  lazy val static: List[Static] =
-    List(NormalAltStepTree, ExceptionStepTree, StepGraph)
-
-  // Not lazy causes crash in tests
-  implicit lazy val applicableReqTypesEquality: Equal[ApplicableReqTypes] = implicitly
-
-  implicit val staticEquality = Equal.equalA[Static]
-  implicit val idEquality     = Equal.equalA[Id]
+  implicit val idEquality = Equal.equalA[Id]
 }
 
 import Field.ApplicableReqTypes
+
+sealed abstract class StaticField(override val name     : String,
+                                  override val fieldType: FieldType,
+                                  override val reqTypes : Field.ApplicableReqTypes,
+                                  override val keyO     : Option[FieldRefKey],
+                                           val deletable: Deletable) extends Field with Field.Id
+
+object StaticField {
+  val useCaseOnly: ApplicableReqTypes = ISubset.Only(OneAnd(ReqType.UseCase, Set.empty))
+
+  case object NormalAltStepTree extends StaticField("Normal and Alternate Courses", FieldType.StepTree,  useCaseOnly, None, Deletable.Not)
+  case object ExceptionStepTree extends StaticField("Exception Courses",            FieldType.StepTree,  useCaseOnly, None, Deletable.Not)
+  case object StepGraph         extends StaticField("Step Graph",                   FieldType.StepGraph, useCaseOnly, None, Deletable)
+
+  // Non lazy causes utest to crash
+  lazy val values: NonEmptyList[StaticField] =
+    NonEmptyList(NormalAltStepTree, ExceptionStepTree, StepGraph)
+
+  // Non lazy causes utest to crash
+  lazy val (deletable, notDeletable) =
+    values.list.partition(_.deletable ≟ Deletable)
+
+  implicit val equality = Equal.equalA[StaticField]
+}
 
 /** Custom here just distinguishes user-defined fields from static fields. */
 sealed abstract class CustomField(override final val fieldType: FieldType) extends Field {
@@ -149,7 +156,7 @@ case class FieldSet(customFields: IMap[CustomField.Id, CustomField],
 
   def fields: Vector[Field] =
     order.map {
-      case  f: Field.Static   => f
+      case  f: StaticField    => f
       case id: CustomField.Id => customFields.get(id).get
     }
 }

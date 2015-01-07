@@ -185,8 +185,8 @@ object RandomData {
     case t: TagGroup      => t
   }
 
-  lazy val staticField: Gen[Field.Static] =
-    Gen.oneof(Field.static.head, Field.static.tail: _*)
+  lazy val staticField: Gen[StaticField] =
+    Gen.oneofL(StaticField.values)
 
   def isubset[F[_], A](ga: Gen[A], gf: Gen[F[A]]): Gen[ISubset[F, A]] = {
     def h(k: OneAnd[F, A] => ISubset[F, A]) = gf.flatMap(f => ga.map(a => k(OneAnd(a, f))))
@@ -228,9 +228,8 @@ object RandomData {
   def fieldSet(r: Set[CustomReqType.Id]): Gen[FieldSet] =
     for {
       cf           ← customFields(customField(applicableReqTypes(r)))
-      (del, undel) = Field.static.partition(_.deletable ≟ Deletable)
-      mandatoryIds = cf.keySet.map(f => f: Field.Id) ++ undel
-      optionalIds  ← Gen.oneof(del.head, del.tail: _*).set
+      mandatoryIds = cf.keySet.map(f => f: Field.Id) ++ StaticField.notDeletable
+      optionalIds  ← Gen.oneof(StaticField.deletable.head, StaticField.deletable.tail: _*).set
       order        ← Gen.shuffle((mandatoryIds ++ optionalIds).toVector)
     } yield FieldSet(cf, order)
 
