@@ -77,3 +77,19 @@ object FieldSet3 {
     @inline def apply[A, B, C](g1: Q=>A, g2: Q=>B, g3: Q=>C)(emptyI: (A,B,C)): FieldSet3[Q, A, B, C] = new FieldSet3(g1, g2, g3, emptyI)
   }
 }
+
+class FieldSet4[Q, A, B, C, D](g1: Q=>A, g2: Q=>B, g3: Q=>C, g4: Q=>D, i: (A,B,C,D)) extends FieldSet[Q, (A,B,C,D)] {
+  private type T = (A,B,C,D)
+  final val f1 = field[A](g1, Lens((_: T)._1)(v => _ put1 v))
+  final val f2 = field[B](g2, Lens((_: T)._2)(v => _ put2 v))
+  final val f3 = field[C](g3, Lens((_: T)._3)(v => _ put3 v))
+  final val f4 = field[D](g4, Lens((_: T)._4)(v => _ put4 v))
+  override final val emptyI   = i
+  override final val fields   = Vector(f1, f2, f3, f4)
+  override final def pi(p: P) = (f1 pv p, f2 pv p, f3 pv p, f4 pv p)
+}
+object FieldSet4 {
+  def apply[Q] = new {
+    @inline def apply[A, B, C, D](g1: Q=>A, g2: Q=>B, g3: Q=>C, g4: Q=>D)(emptyI: (A,B,C,D)): FieldSet4[Q, A, B, C, D] = new FieldSet4(g1, g2, g3, g4, emptyI)
+  }
+}

@@ -14,21 +14,37 @@ import shipreq.base.util.TaggedTypes.{TaggedString, TaggedLong}
 // =====================================================================================================================
 // Types
 
-sealed trait FieldType
+sealed abstract class FieldType(val name: String)
+sealed abstract class StaticFieldType(name: String) extends FieldType(name)
+sealed abstract class CustomFieldType(name: String) extends FieldType(name)
+
+object StaticFieldType {
+
+  case object StepTree  extends StaticFieldType("Step Tree")
+  case object StepGraph extends StaticFieldType("Step Graph")
+
+  val values = NonEmptyList[StaticFieldType](
+    StepTree,
+    StepGraph)
+
+  implicit val equality = Equal.equalA[StaticFieldType]
+}
+
+object CustomFieldType {
+
+  case object Text extends CustomFieldType("Text")
+
+  val values = NonEmptyList[CustomFieldType](
+    Text)
+
+  implicit val equality = Equal.equalA[CustomFieldType]
+}
+
 object FieldType {
-  case object Text      extends FieldType
-  case object StepTree  extends FieldType
-  case object StepGraph extends FieldType
+  val values: NonEmptyList[FieldType] =
+    StaticFieldType.values append CustomFieldType.values
 
   implicit val equality = Equal.equalA[FieldType]
-
-  val name: FieldType => String = {
-    case Text      => "Text"
-    case StepTree  => "Step Tree"
-    case StepGraph => "Step Graph"
-  }
-
-  // allowNew: FieldType => FieldSet => Boolean
 }
 
 // =====================================================================================================================
@@ -60,6 +76,7 @@ sealed trait Field {
   def fieldType: FieldType
   def reqTypes : Field.ApplicableReqTypes
   def keyO     : Option[FieldRefKey]
+  def mandatory: Mandatory
 }
 
 object Field {
@@ -76,31 +93,41 @@ object Field {
 import Field.ApplicableReqTypes
 
 sealed abstract class StaticField(override val name     : String,
-                                  override val fieldType: FieldType,
+                                  override val fieldType: StaticFieldType,
                                   override val reqTypes : Field.ApplicableReqTypes,
-                                  override val keyO     : Option[FieldRefKey],
-                                           val deletable: Deletable) extends Field with Field.Id
+                                  override val mandatory: Mandatory,
+                                           val deletable: Deletable,
+                                  override val keyO     : Option[FieldRefKey]) extends Field with Field.Id
 
 object StaticField {
   val useCaseOnly: ApplicableReqTypes = ISubset.Only(OneAnd(ReqType.UseCase, Set.empty))
 
-  case object NormalAltStepTree extends StaticField("Normal and Alternate Courses", FieldType.StepTree,  useCaseOnly, None, Deletable.Not)
-  case object ExceptionStepTree extends StaticField("Exception Courses",            FieldType.StepTree,  useCaseOnly, None, Deletable.Not)
-  case object StepGraph         extends StaticField("Step Graph",                   FieldType.StepGraph, useCaseOnly, None, Deletable)
+  @inline final private[this] def T = StaticFieldType
+
+  case object NormalAltStepTree extends StaticField(
+    "Normal and Alternate Courses", T.StepTree, useCaseOnly, Mandatory.Not, Deletable.Not, None)
+
+  case object ExceptionStepTree extends StaticField(
+    "Exception Courses", T.StepTree, useCaseOnly, Mandatory.Not, Deletable.Not, None)
+
+  case object StepGraph extends StaticField(
+    "Step Graph", T.StepGraph, useCaseOnly, Mandatory.Not, Deletable, None)
 
   // Non lazy causes utest to crash
   lazy val values: NonEmptyList[StaticField] =
     NonEmptyList(NormalAltStepTree, ExceptionStepTree, StepGraph)
 
-  // Non lazy causes utest to crash
   lazy val (deletable, notDeletable) =
     values.list.partition(_.deletable ≟ Deletable)
+
+  lazy val names: Set[String] =
+    values.list.map(_.name).toSet
 
   implicit val equality = Equal.equalA[StaticField]
 }
 
 /** Custom here just distinguishes user-defined fields from static fields. */
-sealed abstract class CustomField(override final val fieldType: FieldType) extends Field {
+sealed abstract class CustomField(override final val fieldType: CustomFieldType) extends Field {
   def id: CustomField.Id
   def alive: Alive
 }
@@ -121,7 +148,7 @@ object CustomField {
                   key      : FieldRefKey,
                   mandatory: Mandatory,
                   reqTypes : ApplicableReqTypes,
-                  alive    : Alive) extends CustomField(FieldType.Text) {
+                  alive    : Alive) extends CustomField(CustomFieldType.Text) {
     override def keyO = Some(key)
   }
 

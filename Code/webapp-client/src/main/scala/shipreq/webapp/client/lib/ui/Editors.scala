@@ -3,6 +3,7 @@ package shipreq.webapp.client.lib.ui
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import scalaz.effect.IO
 import scalaz.syntax.bind.ToBindOps
+import shipreq.base.util.ScalaExt._
 import UI._
 
 object Editors {
@@ -62,6 +63,12 @@ object Editors {
           base(^.onChange ~~> handleChange)
       }
     })
+
+  val List(staticCheckboxOn, staticCheckboxOff) = List(true, false).map(b =>
+    checkboxEditor render EditorI(b, "", None))
+
+  def staticCheckbox(checked: Boolean): ReactTag =
+    if (checked) staticCheckboxOn else staticCheckboxOff
 
   // -------------------------------------------------------------------------------------------------------------------
 

@@ -1,6 +1,6 @@
 package shipreq.webapp.base.data
 
-import scalaz.Equal
+import scalaz.{NonEmptyList, Equal}
 import scalaz.std.string.stringInstance
 import scalaz.syntax.equal.ToEqualOps
 import shipreq.base.util.ScalaExt._
@@ -100,6 +100,45 @@ object Validators {
     def descS = descU.liftS[S]
 
     val all = keyS ⊗ descS
+  }
+
+  // ===================================================================================================================
+  object field {
+    type S = (Stream[CustomField], Option[CustomField.Id])
+
+    // TODO BR-2: A field-set cannot contain more than 30 fields.
+
+    def nameU =
+      genericName.addValidation(nameStatic)
+
+    private def nameStatic =
+      ValidationPartU.test[String](n => !StaticField.names.contains(n),
+        VFailure.forField(FieldNames.name, NonEmptyList("can not be used for user-defined fields.")))
+
+    private def nameUniqueness =
+      Uniqueness.entity[CustomField].applyO(_.id.some, _.name).fieldName(FieldNames.name)
+
+    val nameS = nameU.liftS[S].addValidation(nameUniqueness)
+
+    // DD-20: Field refkeys must match this format: /[a-z][a-z0-9_]*/
+    // Must not contain: []{}<>.?"
+    val keyU =
+      Rules.whitelistCharsR("""a-z0-9_""", "may only consist of letters, numbers, and underscores.")
+        .addRule(Rules.lengthInRange(fieldRefKeyLength))
+        .correct(_ andThen noWhitespace andThen lowerCase)
+        .constraint(c => nonEmpty >> (startsWithAlpha + c))
+        .forField(FieldNames.fieldRefKey)
+        .map(FieldRefKey.apply)
+
+    private def keyUniqueness =
+      Uniqueness.entity[CustomField].applyOO(_.id.some, _.keyO).fieldName(FieldNames.fieldRefKey)
+
+    val keyS = keyU.liftS[S].addValidation(keyUniqueness)
+
+    val mandatoryS = ValidatorU.nop[Mandatory].liftS[S]
+    val reqTypesS  = ValidatorU.nop[Field.ApplicableReqTypes].liftS[S]
+
+    val text = nameS ⊗ keyS ⊗ mandatoryS ⊗ reqTypesS
   }
 
   // ===================================================================================================================

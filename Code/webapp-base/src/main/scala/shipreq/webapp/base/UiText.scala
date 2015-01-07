@@ -4,6 +4,7 @@ object UiText {
 
   object FieldNames {
     def hashRefKey         = "Key"
+    def fieldRefKey        = hashRefKey
     def name               = "Name"
     def desc               = "Description"
     def mnemonic           = "Mnemonic"
