@@ -39,9 +39,9 @@ object SampleProject {
 
 
   lazy val fields = RevAnd(40, FieldSet(emptyDataMap(CustomField).addAll(
-    CustomField.Text(1, "Description", "desc",     Mandatory,     onlyReqTypes(2, ReqType.UseCase), Alive),
-    CustomField.Text(2, "Notes",       "notes",    Mandatory.Not, notReqTypes(4),                   Alive),
-    CustomField.Text(3, "Reporter",    "reporter", Mandatory,     onlyReqTypes(5, ReqType.UseCase), Dead)
+    CustomField.Text(1, "Description", "desc",     Mandatory,     onlyReqTypes(2, StaticReqType.UseCase), Alive),
+    CustomField.Text(2, "Notes",       "notes",    Mandatory.Not, notReqTypes(4),                         Alive),
+    CustomField.Text(3, "Reporter",    "reporter", Mandatory,     onlyReqTypes(5, StaticReqType.UseCase), Dead)
   ), Vector(
     1, 3, StaticField.NormalAltStepTree, StaticField.ExceptionStepTree, StaticField.StepGraph, 2
   )))

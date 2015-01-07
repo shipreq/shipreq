@@ -71,7 +71,7 @@ object Validators {
         .map(ReqType.Mnemonic)
 
     private def mnemonicUniqueness = {
-      val static = (none[CustomReqType.Id],  ReqType.staticMnemonics)
+      val static = (none[CustomReqType.Id], StaticReqType.mnemonics)
       Uniqueness.againstSetByKeyO[S, CustomReqType.Id, Mnemonic](
         sr => sr._2,
         sr => static #:: sr._1.map(_.tmap2(_.id.some, _.allMnemonics))

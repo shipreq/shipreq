@@ -185,7 +185,7 @@ object CfgIssues {
         })
 
       val staticRows: Rows =
-        ReqType.static.toStream.map(s => {
+        StaticReqType.values.list.toStream.map(s => {
           val re: ReactElement =
             <.tr(^.key := s.mnemonic.value,
               <.td(genEditor render EditorI((s.imp, s), "", None)))

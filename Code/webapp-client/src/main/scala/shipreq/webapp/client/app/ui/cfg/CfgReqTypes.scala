@@ -81,12 +81,12 @@ object CfgReqTypes {
       val headerRow = CfgTable.header(List("Mnemonic", "Name", "Implication Required"))
 
       val staticRows: t.RowStream = {
-        def rr(r: ReqType.Static): ReactElement = {
+        def rr(r: StaticReqType): ReactElement = {
           val imp = checkbox(ImplicationRequired from r.imp)(^.disabled := true)
           val norm: t.RowContent = (r.mnemonic.value, r.oldMnemonics, r.name, imp)
           t.row("static", RowStatus.Sync, norm, EmptyTag)(^.key := r.mnemonic.value)
         }
-        ReqType.static.map(r => r.mnemonic -> rr(r)).toStream
+        StaticReqType.values.list.toStream.map(r => r.mnemonic -> rr(r))
       }
 
       () => t.table(headerRow, staticRows)

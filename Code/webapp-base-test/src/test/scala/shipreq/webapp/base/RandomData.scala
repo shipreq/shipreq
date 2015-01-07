@@ -79,8 +79,8 @@ object RandomData {
   lazy val customReqTypeId =
     id map CustomReqType.Id
 
-  lazy val staticReqType: Gen[ReqType.Static] =
-    Gen.oneof(ReqType.static.head, ReqType.static.tail: _*)
+  lazy val staticReqType: Gen[StaticReqType] =
+    Gen.oneofL(StaticReqType.values)
 
   def customReqTypeName =
     shortText1
@@ -98,7 +98,7 @@ object RandomData {
   lazy val customReqTypes = {
     def dname = Distinct.str.at(CustomReqType._name)
     def dmnemonic = {
-      val distm = Distinct.fstr.xmap(Mnemonic.apply)(_.value).addhs(ReqType.staticMnemonics).distinct
+      val distm = Distinct.fstr.xmap(Mnemonic.apply)(_.value).addhs(StaticReqType.mnemonics).distinct
       val cur = distm.at(CustomReqType._mnemonic)
       val old = distm.lift[Set].at(CustomReqType._oldMnemonics)
       cur + old
@@ -197,7 +197,7 @@ object RandomData {
   }
 
   def applicableReqTypes(r: Set[CustomReqType.Id]): Gen[ApplicableReqTypes] = {
-    val all = ReqType.static.foldLeft(r.map(a => a: ReqType.Id))(_ + _).toList
+    val all = StaticReqType.values.list.foldLeft(r.map(a => a: ReqType.Id))(_ + _).toList
     val a = Gen.oneof(all.head, all.tail: _*)
     isubset(a, a.set)
   }

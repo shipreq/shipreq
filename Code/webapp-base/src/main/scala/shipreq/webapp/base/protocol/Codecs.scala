@@ -211,7 +211,7 @@ object DataCodecs {
   implicit final val customIssueTypeId = tagL(CustomIssueType.Id.apply)
   implicit final val customIssueType   = caseclass4(CustomIssueType.apply, CustomIssueType.unapply)
   implicit final val reqTypeId = {
-    import ReqType._
+    import StaticReqType._
     ReadWriter[ReqType.Id]({
       case i: CustomReqType.Id => Js.Str(i.value.toString)
       case UseCase             => Js.Str("u")

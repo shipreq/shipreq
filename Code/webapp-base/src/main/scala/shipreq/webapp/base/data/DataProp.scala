@@ -29,7 +29,7 @@ object DataProp {
     // starting to overlap with validation....
     lazy val mnemonicStatic =
       Prop.test[CustomReqType]("mnemonic doesn't overlap with static",
-        a => ReqType.staticMnemonics.intersect(a.oldMnemonics + a.mnemonic).isEmpty)
+        a => (a.oldMnemonics + a.mnemonic).intersect(StaticReqType.mnemonics).isEmpty)
 
     lazy val all = mnemonicStatic ∧ reqType.subst
   }
