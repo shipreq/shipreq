@@ -3,7 +3,7 @@ package shipreq.webapp.client.lib.ui
 import japgolly.scalajs.react.ScalazReact._
 import scalaz.{Need, Name}
 import scalaz.effect.IO
-import shipreq.webapp.base.data.Alive
+import shipreq.webapp.base.data.{DataIdAux, Alive}
 import shipreq.webapp.base.protocol.DeletionAction
 import shipreq.webapp.base.validation._
 import shipreq.webapp.client.lib.{CrudIO, FailureIO, SuccessIO}
@@ -155,6 +155,21 @@ object Persistence {
     asyncSaveS(v, stores.s)(stores.n, t(None), k => t(Some(k)), needSave,
       (   u, s, f) => createIO(   u2(u), s, f),
       (p, u, s, f) => updateIO(p, u2(u), s, f),
+      realise)
+
+
+  def asyncSave3[S, T, K, P, U, U2, I](v: Validator[T, I, _, U],
+                                       stores: NewAndSavedStores[S, K, P, I],
+                                       createIO: U2 => (SuccessIO, FailureIO) => IO[Unit])
+                                      (updateIO: (K, U2) => (SuccessIO, FailureIO) => IO[Unit],
+                                       pk: P => K,
+                                       t: Option[K] => S => T,
+                                       needSave: (P, U) => SaveNeed,
+                                       u2: U => U2,
+                                       realise: Realise[S]): Option[K] => ST[S] =
+    asyncSaveS(v, stores.s)(stores.n, t(None), k => t(Some(k)), needSave,
+      (   u, s, f) => createIO(       u2(u))(s, f),
+      (p, u, s, f) => updateIO(pk(p), u2(u))(s, f),
       realise)
 
 

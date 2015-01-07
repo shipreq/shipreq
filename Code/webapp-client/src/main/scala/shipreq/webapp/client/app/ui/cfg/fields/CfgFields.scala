@@ -121,6 +121,26 @@ private[fields] object MainTable {
   // ===================================================================================================================
   final class Backend(c: BackendScope[Props, S]) extends OnUnmount {
 
+    val clientData = c.props.clientData
+
+    object protocol {
+      import FieldProtocol._, CfgAction._
+      val remote = c.props.remote
+      val cp     = c.props.cp
+
+      private def call(a: CfgAction): (SuccessIO, FailureIO) => IO[Unit] =
+        (s, f) => cp.call(remote)(a, clientData.update(_) >> s.io, f)
+
+      def createIO(v: FieldProtocol.Values) =
+        call(Create(v))
+
+      def updateValuesIO(i: CustomField.Id, v: FieldProtocol.Values) =
+        call(UpdateValues(i, v))
+
+//      val updateOrderIO: (Field.Id, Position, SuccessIO, FailureIO) => IO[Unit] =
+//        (i, p, s, f) => call(UpdateOrder(i, p), s, f)
+    }
+
     def validatorState(k: Option[CustomField.Id]): S => V.S =
       MainTable.validatorState(_, k)
 
@@ -140,7 +160,7 @@ private[fields] object MainTable {
         ))
 
     def renderFields: TagMod = {
-      val order = c.props.clientData.project.fields.data.order
+      val order = clientData.project.fields.data.order
 
       var content = order.toStream
         .flatMap(_.foldId[Stream[Field]](s => Stream(s), c.state.customFields.get(_).toStream))
@@ -185,7 +205,7 @@ private[fields] object MainTable {
     def renderApReqTypes(a: ApplicableReqTypes): TagMod = {
       def fmt(prefix: String, rs: OneAnd[Set, ReqType.Id]) =
         (rs.head #:: rs.tail.toStream)
-          .flatMap(c.props.clientData.project.reqType(_).toStream)
+          .flatMap(clientData.project.reqType(_).toStream)
           //.filter(ReqType.filterAlive) // TODO should render with strike-through
           .map(_.mnemonic.value)
           .sorted
@@ -279,22 +299,18 @@ private[fields] object MainTable {
     } // SubtypeRenderer
 
     // -----------------------------------------------------------------------------------------------------------------
-    // TagGroup
+    // Text field
 
     val text_editor = {
       @inline def stores = text_storesS
-//      def crudValues(u: V.tagGroup._V): TagCrud.V = {
-//        val (name, mutexChildren, desc) = u
-//        \&/.This(TagProtocol.TagGroupValues(name, desc, mutexChildren))
-//      }
-//      val saveFn = Persistence.asyncSave2(V.tagGroup, stores, crudIO.createIO)(crudIO.updateIO,
-//        validatorState,
-//        SaveNeed.cmpToExtract(t => (t.name, t.mutexChildren, t.desc)),
-//        crudValues,
-//        c runState _)
+      val saveFn = Persistence.asyncSave3(V.text, stores, protocol.createIO)(protocol.updateValuesIO, _.id,
+        validatorState,
+        SaveNeed.cmpToExtract(t => (t.name, t.key, t.mandatory, t.reqTypes)), // TODO should use values, safer actually
+        (FieldProtocol.TextFieldValues.apply _).tupled, // TODO the same thing in other places
+        c runState _)
       Editor.merge4S(text_fields, nameE, refkeyE, mandatoryE, reqtypesE).tupleI.zoomU[S]
         .applyRowUpdateAndRevert(stores)(rowIdFromEditorInput)
-        //.applyOnEditFinishedK(???)(rowIdFromEditorInput)
+        .applyOnEditFinishedK(saveFn)(rowIdFromEditorInput)
     }
 
     val text_renderer = new SubtypeRenderer(text_editor, text_storesS) {
@@ -327,6 +343,6 @@ private[fields] object MainTable {
         )(^.key := f.id.value)
         // deletion.button(t.id, Restore)
     }
-    
+
   }
 }
