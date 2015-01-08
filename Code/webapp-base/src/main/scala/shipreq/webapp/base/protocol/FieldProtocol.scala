@@ -1,6 +1,9 @@
 package shipreq.webapp.base.protocol
 
 import scalaz.{\/-, -\/, \/}
+import scalaz.std.AllInstances._
+import shapeless.TypeClass.deriveConstructors
+import shapeless.contrib.scalaz.Instances._
 import shipreq.base.util.Util
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.delta.{Partition, RemoteDeltaP}
@@ -14,6 +17,8 @@ object FieldProtocol {
                              key      : FieldRefKey,
                              mandatory: Mandatory,
                              reqTypes : ApplicableReqTypes) extends Values
+
+  implicit val textFieldValueEquality = deriveEqual[TextFieldValues]
 
   // The field immediately before which the subject field should be ordered. None means append.
   type Position = Option[Field.Id]

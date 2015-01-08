@@ -303,11 +303,11 @@ private[fields] object MainTable {
 
     val text_editor = {
       @inline def stores = text_storesS
-      val saveFn = Persistence.asyncSave3(V.text, stores, protocol.createIO)(protocol.updateValuesIO, _.id,
-        validatorState,
-        SaveNeed.cmpToExtract(t => (t.name, t.key, t.mandatory, t.reqTypes)), // TODO should use values, safer actually
-        (FieldProtocol.TextFieldValues.apply _).tupled, // TODO the same thing in other places
-        c runState _)
+      val toValues  = FieldProtocol.TextFieldValues.apply _
+      val toValuesT = toValues.tupled
+      val saveFn    = Persistence.asyncSaveNS2(V.text map toValuesT, stores, protocol.createIO)(protocol.updateValuesIO,
+        SaveNeed.cmpToExtract(t => toValues(t.name, t.key, t.mandatory, t.reqTypes)),
+        _.id, validatorState, c runState _)
       Editor.merge4S(text_fields, nameE, refkeyE, mandatoryE, reqtypesE).tupleI.zoomU[S]
         .applyRowUpdateAndRevert(stores)(rowIdFromEditorInput)
         .applyOnEditFinishedK(saveFn)(rowIdFromEditorInput)
