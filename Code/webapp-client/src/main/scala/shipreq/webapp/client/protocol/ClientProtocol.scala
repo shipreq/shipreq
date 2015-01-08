@@ -6,7 +6,7 @@ import scalaz.{-\/, \/-, \/}
 import upickle._
 import upickle.Fns._
 import shipreq.webapp.base.protocol.Routine
-import shipreq.webapp.client.lib.{FailureIO, Console}
+import shipreq.webapp.client.lib.{FailureIO, ConsoleIO}
 
 trait ClientProtocol {
   def call[D <: Routine.Desc](r: Routine.Remote[D])(input: r.d.I, success: r.d.O => IO[Unit], f: FailureIO): IO[Unit]
@@ -28,7 +28,7 @@ object ClientProtocol {
     }
 
   private def handleJsonParsingError(a: js.Any, e: Throwable): Unit =
-    Console.error(s"Parsing failure: $e\nJS: ", a)
+    ConsoleIO(_.error(s"Parsing failure: $e\nJS: ", a))
 
   object Lift extends ClientProtocol {
     override def call[D <: Routine.Desc](r: Routine.Remote[D])(input: r.d.I, success: r.d.O => IO[Unit], f: FailureIO): IO[Unit] = {
@@ -37,7 +37,7 @@ object ClientProtocol {
       val q = s"${r.n}=$i"
       val s = jsonEffect[r.d.O](success)
       val ff = () => {
-        Console.error(s"AJAX failure on ${r.n} ⇐ $input")
+        ConsoleIO(_ error s"AJAX failure on ${r.n} ⇐ $input")
         f.io.unsafePerformIO()
       }
       IO(LiftAjax.lift_ajaxHandler(q, s, ff, "json"))

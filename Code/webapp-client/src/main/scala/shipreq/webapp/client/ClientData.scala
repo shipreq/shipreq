@@ -7,7 +7,7 @@ import shipreq.webapp.client.protocol.ClientProtocol
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.delta.RemoteDelta
 import shipreq.webapp.base.protocol.Routines.ProjectInit
-import shipreq.webapp.client.lib.{FailureIO, Console}
+import shipreq.webapp.client.lib.{FailureIO, ConsoleIO}
 
 final class ClientData(init: Project) extends Broadcaster[LocalDelta] {
 
@@ -22,7 +22,7 @@ final class ClientData(init: Project) extends Broadcaster[LocalDelta] {
           broadcast(d2)
         }
         case CouldntApply =>
-          Console.errorIO(s"Update failed.\n\nΠ: $project\n\nΔ: $d")
+          ConsoleIO(_ error s"Update failed.\n\nΠ: $project\n\nΔ: $d")
       }
 }
 
