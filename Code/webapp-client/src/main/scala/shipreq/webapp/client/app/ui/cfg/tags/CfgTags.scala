@@ -337,15 +337,11 @@ private[tags] object MainTable {
 
     val tg_editor = {
       @inline def stores = tg_storesS
-      def crudValues(u: V.tagGroup._V): TagCrud.V = {
-        val (name, mutexChildren, desc) = u
-        \&/.This(TagProtocol.TagGroupValues(name, desc, mutexChildren))
-      }
-      val saveFn = Persistence.asyncSave2(V.tagGroup, stores, crudIO.createIO)(crudIO.updateIO,
-        validatorState,
-        SaveNeed.cmpToExtract(t => (t.name, t.mutexChildren, t.desc)),
-        crudValues,
-        c runState _)
+      val toValues  = TagProtocol.TagGroupValues.apply _
+      val toValuesT = (toValues andThenA \&/.This.apply).tupled
+      val saveFn    = Persistence.asyncSaveNS(V.tagGroup map toValuesT, stores, crudIO.createIO)(crudIO.updateIO,
+        (t,u) => SaveNeed.equal(u.onlyThis.get, toValues(t.name, t.mutexChildren, t.desc)),
+        validatorState, c runState _)
       Editor.merge3S(tg_fields, nameE, mutexChildrenE, descE).tupleI.zoomU[S]
         .applyRowUpdateAndRevert(stores)(rowIdFromEditorInput)
         .applyOnEditFinishedK(saveFn)(rowIdFromEditorInput)
@@ -370,15 +366,11 @@ private[tags] object MainTable {
 
     val at_editor = {
       @inline def stores = at_storesS
-      def crudValues(u: V.applTag._V): TagCrud.V = {
-        val (name, key, desc) = u
-        \&/.This(TagProtocol.ApplicableTagValues(name, desc, key))
-      }
-      val saveFn = Persistence.asyncSave2(V.applTag, stores, crudIO.createIO)(crudIO.updateIO,
-        validatorState,
-        SaveNeed.cmpToExtract(t => (t.name, t.key, t.desc)),
-        crudValues,
-        c runState _)
+      val toValues  = TagProtocol.ApplicableTagValues.apply _
+      val toValuesT = (toValues andThenA \&/.This.apply).tupled
+      val saveFn    = Persistence.asyncSaveNS(V.applTag map toValuesT, stores, crudIO.createIO)(crudIO.updateIO,
+        (t,u) => SaveNeed.equal(u.onlyThis.get, toValues(t.name, t.key, t.desc)),
+        validatorState, c runState _)
       Editor.merge3S(at_fields, nameE, keyE, descE).tupleI.zoomU[S]
         .applyRowUpdateAndRevert(stores)(rowIdFromEditorInput)
         .applyOnEditFinishedK(saveFn)(rowIdFromEditorInput)

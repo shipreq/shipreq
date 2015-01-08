@@ -144,18 +144,14 @@ object Persistence {
         crudIO.createIO, crudIO.updateIO, realise)
 
 
-  def asyncSave2[S, T, K, P, U, U2, I](v: Validator[T, I, _, U],
-                                       stores: NewAndSavedStores[S, K, P, I],
-                                       createIO: (U2, SuccessIO, FailureIO) => IO[Unit])
-                                      (updateIO: (P, U2, SuccessIO, FailureIO) => IO[Unit],
-                                       t: Option[K] => S => T,
-                                       needSave: (P, U) => SaveNeed,
-                                       u2: U => U2,
-                                       realise: Realise[S]): Option[K] => ST[S] =
-    asyncSaveS(v, stores.s)(stores.n, t(None), k => t(Some(k)), needSave,
-      (   u, s, f) => createIO(   u2(u), s, f),
-      (p, u, s, f) => updateIO(p, u2(u), s, f),
-      realise)
+  def asyncSaveNS[S, T, K, P, U, I](v: Validator[T, I, _, U],
+                                    stores: NewAndSavedStores[S, K, P, I],
+                                    createIO: (U, SuccessIO, FailureIO) => IO[Unit])
+                                   (updateIO: (P, U, SuccessIO, FailureIO) => IO[Unit],
+                                    needSave: (P, U) => SaveNeed,
+                                    t: Option[K] => S => T,
+                                    realise: Realise[S]): Option[K] => ST[S] =
+    asyncSaveS(v, stores.s)(stores.n, t(None), k => t(Some(k)), needSave, createIO, updateIO, realise)
 
 
   def asyncSave3[S, T, K, P, U, U2, I](v: Validator[T, I, _, U],

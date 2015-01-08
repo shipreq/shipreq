@@ -237,8 +237,8 @@ class WIP {
     def nextId = Id(p.tags.data.keySet.map(_.value).max + 1)
 
     def build(i: Id): Values => Tag = {
-      case TagGroupValues(n, d, e)      => TagGroup(i, n, d, e, Alive)
-      case ApplicableTagValues(n, d, k) => ApplicableTag(i, n, d, k, Alive)
+      case TagGroupValues(n, mc, d)     => TagGroup(i, n, d, mc, Alive)
+      case ApplicableTagValues(n, k, d) => ApplicableTag(i, n, d, k, Alive)
     }
 
     def setLife(t0: TagTree, id: Id, oa: Option[Alive]): TagTree =

@@ -3,6 +3,9 @@ package shipreq.webapp.base.protocol
 import monocle.macros.Lenser
 import scala.collection.GenTraversable
 import scalaz.{\/, Equal}
+import scalaz.std.AllInstances._
+import shapeless.TypeClass.deriveConstructors
+import shapeless.contrib.scalaz.Instances._
 import shipreq.base.util.Util
 import shipreq.base.util.ScalaExt._
 import shipreq.prop.{CycleFree, CycleDetector}
@@ -113,12 +116,15 @@ object TagProtocol {
   sealed trait Values
 
   final case class TagGroupValues(name: String,
-                                  desc: Option[String],
-                                  mutexChildren: MutexChildren) extends Values
+                                  mutexChildren: MutexChildren,
+                                  desc: Option[String]) extends Values
 
   final case class ApplicableTagValues(name: String,
-                                       desc: Option[String],
-                                       key: HashRefKey) extends Values
+                                       key: HashRefKey,
+                                       desc: Option[String]) extends Values
+
+  implicit val tagGroupValueEquality      = deriveEqual[TagGroupValues]
+  implicit val applicableTagValueEquality = deriveEqual[ApplicableTagValues]
 
   object PartitionFns extends Partition.Fns[Partition.Tags.type] {
     def rev(p: Project): Rev =

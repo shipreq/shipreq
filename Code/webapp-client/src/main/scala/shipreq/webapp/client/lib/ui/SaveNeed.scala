@@ -22,6 +22,9 @@ object SaveNeed {
     (a, b) => c(f(a), b)
   }
 
-  def cmp[A: Equal]: (A, A) => SaveNeed =
-    (a, b) => if (a ≟ b) SaveNotNeeded else SaveNeeded
+  def cmp[T: Equal]: (T, T) => SaveNeed =
+    equal(_, _)
+
+  def equal[T: Equal](a: T, b: T): SaveNeed =
+    if (a ≟ b) SaveNotNeeded else SaveNeeded
 }

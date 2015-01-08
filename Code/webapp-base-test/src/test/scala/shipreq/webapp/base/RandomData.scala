@@ -297,8 +297,8 @@ object RandomData {
     }
 
     def tagProtocolValues: Tag => TagProtocol.Values = {
-      case TagGroup(_, n, d, e, _)      => TagProtocol.TagGroupValues(n, d, e)
-      case ApplicableTag(_, n, d, k, _) => TagProtocol.ApplicableTagValues(n, d, k)
+      case TagGroup(_, n, d, mc, _)     => TagProtocol.TagGroupValues(n, mc, d)
+      case ApplicableTag(_, n, d, k, _) => TagProtocol.ApplicableTagValues(n, k, d)
     }
 
     lazy val tagCrudInput =
