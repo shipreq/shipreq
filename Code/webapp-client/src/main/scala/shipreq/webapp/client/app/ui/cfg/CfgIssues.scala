@@ -74,11 +74,11 @@ object CfgIssues {
         RefKeyVS(ts, is)
       }
 
-    final class Backend(c: BackendScope[Props, S]) extends OnUnmount {
-      val crudIO = CrudIO(CustomIssueType, CustomIssueTypeCrud)(c.props.cp, c.props.remote, c.props.clientData)
-      val supp = TypicalSupp(storesAndState, crudIO)(c, _.alive)
+    final class Backend($: BackendScope[Props, S]) extends OnUnmount {
+      val crudIO = CrudIO(CustomIssueType, CustomIssueTypeCrud)($.props.cp, $.props.remote, $.props.clientData)
+      val supp = TypicalSupp(storesAndState, crudIO)($, _.alive)
 
-      def valState(k: Option[CustomIssueType.Id]) = validatorState(k, c.props.clientData)
+      def valState(k: Option[CustomIssueType.Id]) = validatorState(k, $.props.clientData)
 
       val rowE = {
         val keyE  = Editors.textInputEditor.applyValidator(V.keyS)
@@ -92,7 +92,7 @@ object CfgIssues {
           k => valState(k.some),
           supp.saveNeed(p => (p.key, p.desc)),
           crudIO.createIO, crudIO.updateIO,
-          c runState _)
+          $ runState _)
 
         supp.addEditorFeatures2(e)(saveFn, _._1.customIssueData._1)
       }
@@ -107,15 +107,15 @@ object CfgIssues {
           }
         val t = CfgTable(rowE, savedRowStoreS, newRowStoreS).build(
           _.key, rowRenderer,
-          i => (valState(None)(c.state), i),
-          k => (valState(k.some)(c.state), savedRowStoreS.getI(k)(c.state)),
-          supp.deletion,  _.showDeleted, c)
+          i => (valState(None)($.state), i),
+          k => (valState(k.some)($.state), savedRowStoreS.getI(k)($.state)),
+          supp.deletion,  _.showDeleted, $)
         val headerRow = CfgTable.header(List(FieldNames.refKey, FieldNames.desc))
         () => t.table(headerRow, Stream.empty)
       }
 
       def render: ReactElement =
-        CfgTable.outer(storesAndState)(c, table())
+        CfgTable.outer(storesAndState)($, table())
     }
   }
 
@@ -146,15 +146,15 @@ object CfgIssues {
 
     def label(r: ReqType): String = s"${r.mnemonic.value}: ${r.name}"
 
-    final class Backend(c: BackendScope[Props, S]) extends OnUnmount {
+    final class Backend($: BackendScope[Props, S]) extends OnUnmount {
 
       def save(p: Props, id: CustomReqType.Id): ST =
         ReactS.liftR[IO, S, Unit](state => {
           val setStatus = savedRowStore.setStatusST[IO](id)
           val saveio = Persistence.retryably[ST](retry => {
             val v = savedRowStore.getI(id)(state)
-            val f = Persistence.failureIO(retry)(c runState _, setStatus)
-            val io = c.props.cp.call(p.remote)((id, v), p.clientData.update, f)
+            val f = Persistence.failureIO(retry)($ runState _, setStatus)
+            val io = $.props.cp.call(p.remote)((id, v), p.clientData.update, f)
             ST ret io
           })
           saveio >> setStatus(RowStatus.Locked)
@@ -167,9 +167,9 @@ object CfgIssues {
       val editor =
         genEditor.cmapA[(ImplicationRequired, CustomReqType)](a => a)
           .zoomU[S].applyRowUpdate(savedRowStore)(_._2.id)
-          .paddSTA(a => { case OnEditFinished(_) => save(c.props, a._2.id) })
+          .paddSTA(a => { case OnEditFinished(_) => save($.props, a._2.id) })
 
-      val editable = editor.editableByRowStatus(c)
+      val editable = editor.editableByRowStatus($)
 
       def editorI(r: savedRowStore.Row): editor.Input =
         EditorI((r.i, r.p), "", editable(r.status))
@@ -177,7 +177,7 @@ object CfgIssues {
       type Rows = Stream[(Mnemonic, ReactElement)]
 
       def savedRows: Rows =
-        savedRowStore.getAll(c.state).filter(_.p.alive == Alive).map(r => {
+        savedRowStore.getAll($.state).filter(_.p.alive == Alive).map(r => {
           val re: ReactElement =
             <.tr(^.key := r.p.id.value,
               <.td(

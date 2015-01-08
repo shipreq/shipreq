@@ -39,8 +39,8 @@ private[tags] object DetailPane {
         ^.onClick ~~> r.unlink,
         "Remove"))
 
-  class Backend(c: BackendScope[Props, State]) {
-    @inline def p = c.props
+  class Backend($: BackendScope[Props, State]) {
+    @inline def p = $.props
 
     def render: ReactElement =
       <.section(
@@ -61,7 +61,7 @@ private[tags] object DetailPane {
     def childrenPane: ReactElement =
       pane(
         existingRels(p.children, <.ol, "This has no children.",
-          r => DraggableRel(DND.Parent.cProps2(c, r, (from, to) => p.childMoveIO(from.id, to.id)))),
+          r => DraggableRel(DND.Parent.cProps2($, r, (from, to) => p.childMoveIO(from.id, to.id)))),
         addableRels(p.childAdds, "Add Child"))
 
     def pane(existing: ReactElement, addable: TagMod): ReactElement =

@@ -80,28 +80,28 @@ object SampleDataPerson {
       if (saveIO.isDefined && !updateRevert) sys.error("saveIO needs updateRevert")
     }
 
-    class Backend(c: BackendScope[Props, NewAndSavedRowState]) {
+    class Backend($: BackendScope[Props, NewAndSavedRowState]) {
       val e = {
         var e1 = textInputEditor.addCssClass("username")
         var e2 = textareaEditor.addCssClass("desc")
-        if (c.props.fieldValidation) {
+        if ($.props.fieldValidation) {
           e1 = e1.applyValidatorU(usernameVU)
           e2 = e2.applyValidatorU(descVU)
         }
 
         var en = Editor.merge2(fields, e1, e2).tupleI.strengthR[Option[Long]].zoomU[NewAndSavedRowState]
 
-        if (c.props.updateRevert)
+        if ($.props.updateRevert)
           en = en.applyRowUpdateAndRevert(savedRowStoreS, newRowStoreS)(_._2)
 
-        c.props.saveIO.foreach(save => {
+        $.props.saveIO.foreach(save => {
           val f = Persistence.asyncSaveS(personV, savedRowStoreS)(newRowStoreS,
             s => (savedRowStoreS.getAllP(s), None),
             k => s => (savedRowStoreS.getAllP(s), k.some),
             needSave,
             (u, s, f) => save(SaveI(None, u, s, f)),
             (p, u, s, f) => save(SaveI(p.some, u, s, f)),
-            c runState _
+            $ runState _
           )
           en = en.applyOnEditFinishedK(f)(_._2)
         })
@@ -109,14 +109,14 @@ object SampleDataPerson {
       }
 
       def renderRow(a: e.InputA) =
-        e.render(EditorI(a, "", e.editable(c runState _.st)))
+        e.render(EditorI(a, "", e.editable($ runState _.st)))
 
       def render: ReactElement = {
-        val newRow = newRowStoreS.getI(c.state).fold(EmptyTag)(i => {
+        val newRow = newRowStoreS.getI($.state).fold(EmptyTag)(i => {
           val v = renderRow((i, None))
           <.div(^.cls := "new", v._1, v._2)
         })
-        val saved = savedRowStoreS.getAll(c.state).map(row => {
+        val saved = savedRowStoreS.getAll($.state).map(row => {
           val id = row.p.id
           val v = renderRow((row.i, id.some))
           <.div(^.key := id, ^.cls := s"id-$id", v._1, v._2)

@@ -42,9 +42,9 @@ object CfgReqTypes {
       p.showDeleted)
 
   // ===================================================================================================================
-  final class Backend(c: BackendScope[Props, S]) extends OnUnmount {
-    val crudIO = CrudIO(CustomReqType, CustomReqTypeCrud)(c.props.cp, c.props.remote, c.props.clientData)
-    val supp = TypicalSupp(storesAndState, crudIO)(c, _.alive)
+  final class Backend($: BackendScope[Props, S]) extends OnUnmount {
+    val crudIO = CrudIO(CustomReqType, CustomReqTypeCrud)($.props.cp, $.props.remote, $.props.clientData)
+    val supp = TypicalSupp(storesAndState, crudIO)($, _.alive)
 
     val rowE = {
       val mnemonicE = Editors.textInputEditor.applyValidator(V.mnemonicS)
@@ -77,7 +77,7 @@ object CfgReqTypes {
           }
         }
 
-      val t = CfgTable.typical(storesAndState)(rowE)(_.mnemonic, rowRenderer, supp.deletion, c)
+      val t = CfgTable.typical(storesAndState)(rowE)(_.mnemonic, rowRenderer, supp.deletion, $)
 
       val headerRow = CfgTable.header(List("Mnemonic", "Name", "Implication Required"))
 
@@ -94,6 +94,6 @@ object CfgReqTypes {
     }
 
     def render: ReactElement =
-      CfgTable.outer(storesAndState)(c, table())
+      CfgTable.outer(storesAndState)($, table())
   }
 }
