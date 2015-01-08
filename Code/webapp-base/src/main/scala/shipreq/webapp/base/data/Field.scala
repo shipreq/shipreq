@@ -79,6 +79,9 @@ sealed trait Field {
   def mandatory: Mandatory
 
   def fold[A](s: StaticField => A, c: CustomField => A): A
+
+  final def fieldId: Field.Id =
+    fold(s => s, _.id)
 }
 
 object Field {

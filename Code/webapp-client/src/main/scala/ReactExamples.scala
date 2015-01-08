@@ -101,10 +101,10 @@ object ReactExamples {
       <.div(outerAttr,
         <.div(hnd, s"${i.id} | ${i.name}")))
 
-    case class ParentState(items: List[Item], dnd: DND.Parent.PState[Item], i: Int)
+    case class ParentState(items: List[Item], dnd: DND.Parent.PState[Item])
 
     val Component = ReactComponentB[List[Item]]("DragAndDrop")
-      .getInitialState(p => ParentState(p, DND.Parent.initialState, 0))
+      .getInitialState(p => ParentState(p, DND.Parent.initialState))
       .render(T => {
         // console.log(s"DND.State = ${T.state}")
         val itemsState = T.focusState(_.items)((a, b) => a.copy(items = b))
@@ -145,10 +145,10 @@ object ReactExamples {
         <.td(hnd),
         <.td(s"${i.id} | ${i.name}")))
 
-    case class ParentState(items: List[Item], dnd: DND.Parent.PState[Item], i: Int)
+    case class ParentState(items: List[Item], dnd: DND.Parent.PState[Item])
 
     val Component = ReactComponentB[List[Item]]("DragAndDrop")
-      .getInitialState(p => ParentState(p, DND.Parent.initialState, 0))
+      .getInitialState(p => ParentState(p, DND.Parent.initialState))
       .render(T => {
       // console.log(s"DND.State = ${T.state}")
       val itemsState = T.focusState(_.items)((a, b) => a.copy(items = b))
