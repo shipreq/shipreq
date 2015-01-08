@@ -144,6 +144,10 @@ private[fields] object MainTable {
         call(Delete(i, a))
     }
 
+    // TODO staticDeletion doesn't handle failure (or lock row)
+    val staticDeletion = new Deletion[StaticField, Field.Id](
+      _ => Alive, protocol.deleteIO(_, _)(SuccessIO.nop, FailureIO.nop))
+
     def validatorState(k: Option[CustomField.Id]): S => V.S =
       MainTable.validatorState(_, k)
 
@@ -199,7 +203,7 @@ private[fields] object MainTable {
         refkey    = renderKeyO(f.keyO),
         mandatory = Editors.staticCheckbox(Mandatory from f.mandatory),
         reqtypes  = renderApReqTypes(f.reqTypes),
-        ctrls     = "TODO"
+        ctrls     = (f.deletable ≟ Deletable) ?= staticDeletion.button(f, SoftDel)
       )(^.key := f.name)
 
     def renderKeyO(k: Option[FieldRefKey]): TagMod =
