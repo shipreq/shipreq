@@ -44,6 +44,8 @@ final case class CallbackH[B, M[_], S, C](event: CallbackEvent[B], st: ReactST[M
 final case class EditorI[A, B, M[_], S, C, D](data: A, cssClass: String,
                                               editable: Option[CallbackH[B, M, S, C] => D]) {
 
+  type CBH = CallbackH[B, M, S, C]
+
   def addCssClass(c: String): EditorI[A,B,M,S,C,D] =
     copy(cssClass = if (cssClass.isEmpty) c else s"$cssClass $c")
 
@@ -75,6 +77,15 @@ final case class EditorI[A, B, M[_], S, C, D](data: A, cssClass: String,
 
 // =====================================================================================================================
 
+/**
+ * @tparam A Input value to the editor
+ * @tparam B Output value from the editor
+ * @tparam M Callback state monad context.
+ * @tparam S Callback state monad state.
+ * @tparam C Supplementary info about the editor. Used to identity fields when editors are merged.
+ * @tparam D Callbacks in their final, computed state, ready to be used directly by the editor.
+ * @tparam V The final, rendered editor type.
+ */
 final case class Editor[A, B, M[_], S, C, D, V](render: EditorI[A, B, M, S, C, D] => V) {
   type Input     = EditorI[A, B, M, S, C, D]
   type InputA    = A
