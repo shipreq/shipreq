@@ -1,0 +1,175 @@
+package shipreq.webapp.client.app.ui
+
+import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import shipreq.webapp.client.lib.ClientUtil
+import scalaz.{Equal, OneAnd}
+import scalaz.effect.IO
+import scalaz.syntax.bind.ToBindOps
+import scalaz.syntax.equal._
+import shipreq.base.util.IMap
+import shipreq.base.util.ScalaExt._
+import shipreq.webapp.base.data.ISubset
+
+object ISubsetEditor {
+
+  def Component[A](staticProps: StaticProps[A]) =
+    ReactComponentB[Mode[A]]("ISubsetEditor")
+      .stateless
+      .backend(new Backend(_, staticProps))
+      .render(_.backend.render)
+      .build
+
+  // -------------------------------------------------------------------------------------------------------------------
+  sealed trait Mode[A]
+
+  case class ViewMode[A](value: ISubset[Set, A], startEdit: Option[IO[Unit]]) extends Mode[A]
+
+  case class EditMode[A](state: EditState[A],
+                         update: EditState[A] => IO[Unit],
+                         finishEdit: Option[ISubset[Set, A]] => IO[Unit]) extends Mode[A]
+
+  // -------------------------------------------------------------------------------------------------------------------
+  sealed abstract class Method(val code: String, val label: String)
+  object Method {
+    case object All  extends Method("a", "All")
+    case object Only extends Method("o", "Only…")
+    case object Not  extends Method("n", "Not…")
+
+    implicit val equality = Equal.equalA[Method]
+
+    val all   = List[Method](All, Only, Not)
+    val index = IMap.empty((_: Method).code) ++ all
+  }
+
+  // -------------------------------------------------------------------------------------------------------------------
+  case class EditState[A](method: Method, values: Set[A]) {
+    def foldv[B](z: => B, f: OneAnd[Set, A] => B): B =
+      if (values.isEmpty)
+        z
+      else
+        f(OneAnd(values.head, values.tail))
+
+    def result: Option[ISubset[Set, A]] = method match {
+      case Method.All  => Some(ISubset.All())
+      case Method.Only => foldv(None, vs => Some(ISubset.Only(vs)))
+      case Method.Not  => foldv(None, vs => Some(ISubset.Not (vs)))
+    }
+  }
+
+  object EditState {
+    def init[A](i: ISubset[Set, A], defaultValues: Set[A]): EditState[A] = i match {
+      case ISubset.All()    => EditState(Method.All,  defaultValues)
+      case ISubset.Only(vs) => EditState(Method.Only, vs.tail + vs.head)
+      case ISubset.Not(vs)  => EditState(Method.Not,  vs.tail + vs.head)
+    }
+  }
+
+  // -------------------------------------------------------------------------------------------------------------------
+  final case class StaticProps[A](preprocess : Stream[A] => Stream[A],
+                                  renderValue: A => ReactNode,
+                                  allValues  : TraversableOnce[A]) {
+    val allValueStatic =
+      preprocess(allValues.toStream).foldLeft(Vector.empty[ValueStatic[A]])((q, a) =>
+        q :+ ValueStatic(a,
+          <.span(renderValue(a)),
+          <.input(^.`type` := "checkbox")))
+  }
+
+  final case class ValueStatic[A](value: A, rendered: ReactTag, checkbox: ReactTag)
+
+  // -------------------------------------------------------------------------------------------------------------------
+  final class Backend[A]($: BackendScope[Mode[A], Unit], staticProps: StaticProps[A]) {
+    import staticProps._
+
+    val radioGroupName =
+      ClientUtil.uniqueStr.unsafePerformIO()
+
+    def render: ReactElement =
+      $.props match {
+        case m: ViewMode[A] => renderViewMode(m)
+        case m: EditMode[A] => renderEditMode(m)
+      }
+
+    def renderViewMode(m: ViewMode[A]): ReactElement = {
+      def selection(prefix: String, i: OneAnd[Set, A]): TagMod = {
+        val as = preprocess(i.head #:: i.tail.toStream)
+        val ns = as.map(renderValue)
+        val vs = ns.head #:: ns.tail.flatMap(v => Stream[ReactNode](", ", v))
+        (prefix + ": ") #:: vs #::: Stream[ReactNode](".")
+      }
+
+      val values: TagMod = m.value match {
+        case ISubset.All()    => "All."
+        case ISubset.Only(vs) => selection("Only", vs)
+        case ISubset.Not(vs)  => selection("Not", vs)
+      }
+
+      val editButton =
+        m.startEdit.map(io =>
+          <.button(^.onClick ~~> io, "Edit"))
+
+      val all = editButton.fold[TagMod](values)(btn => Seq(values, btn))
+      <.div(all)
+    }
+
+    val inputRadio =
+      <.input(^.`type` := "radio", ^.name := radioGroupName)
+
+    def renderEditMode(mode: EditMode[A]): ReactElement = {
+      import mode.state
+
+      val methodSelection =
+        Method.all.map { v =>
+          val selected = v ≟ state.method
+          <.label(
+            ^.classSet1("isubsetM", "checked" -> selected),
+            inputRadio(
+              ^.value     := v.code,
+              ^.checked   := selected,
+              ^.onChange ~~> mode.update(state.copy(method = v))),
+            <.span(v.label))
+        }
+
+      val allowValueSelection = state.method match {
+        case Method.All => false
+        case Method.Only
+           | Method.Not => true
+      }
+
+      def valueSelection: TagMod = {
+        def attr(a: A, selected: Boolean): TagMod = {
+          def change = IO {
+            val u = state.values.ifelse(selected, _ - a, _ + a)
+            val n = state.copy(values = u)
+            mode update n
+          }.join
+          (^.checked := selected) + (^.onChange ~~> change)
+        }
+
+        allValueStatic.map { p =>
+          val selected = state.values contains p.value
+          <.label(
+            ^.classSet1("isubsetV", "checked" -> selected),
+            p.checkbox(attr(p.value, selected)),
+            p.rendered)
+        }
+      }
+
+      val saveButton = {
+        val io = state.result.map(v => mode.finishEdit(Some(v)))
+        <.button("Save",
+          ^.onClick ~~>? io,
+          ^.disabled  := io.isEmpty)
+      }
+
+      val cancelButton =
+        <.button("Cancel",
+          ^.onClick ~~> mode.finishEdit(None))
+
+      <.div(
+        <.div(methodSelection),
+        allowValueSelection ?= <.div(valueSelection),
+        <.div(saveButton, cancelButton))
+    }
+  }
+}

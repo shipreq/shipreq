@@ -14,9 +14,13 @@ sealed trait ReqType {
   def name: String
   def imp: ImplicationRequired
 
-  final def allMnemonics: Set[Mnemonic] = oldMnemonics + mnemonic
-
   def fold[A](s: StaticReqType => A, c: CustomReqType => A): A
+
+  final def reqTypeId: ReqType.Id =
+    fold(s => s, _.id)
+
+  final def allMnemonics: Set[Mnemonic] =
+    oldMnemonics + mnemonic
 }
 
 object ReqType {

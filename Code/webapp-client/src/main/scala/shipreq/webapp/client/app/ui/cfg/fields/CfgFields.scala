@@ -3,16 +3,13 @@ package shipreq.webapp.client.app.ui.cfg.fields
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
 import japgolly.scalajs.react.extra.OnUnmount
 import monocle.macros.Lenser
-import monocle.Optional
-import monocle.std.option.some
 import scala.language.reflectiveCalls
-import scalajs.js.{undefined, UndefOr, UndefOrOps, Array => JsArray}
-import scalajs.js.JSConverters._
+import scalajs.js.{undefined, UndefOr, UndefOrOps, Array => JsArray, Any => JsAny}
 import scalaz.effect.IO
-import scalaz.{Equal, OneAnd, Maybe, -\/, \/-}
+import scalaz.{Equal, Maybe, -\/, \/-}
 import scalaz.std.AllInstances._
-import scalaz.syntax.equal._
 import scalaz.syntax.bind.ToBindOps
+import scalaz.syntax.equal._
 
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.Util
@@ -23,9 +20,9 @@ import shipreq.webapp.base.protocol.{DeletionAction, FieldProtocol}
 import shipreq.webapp.base.protocol.Routines.FieldCrud
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.client.ClientData
-import shipreq.webapp.client.app.ui.{RowDetailButton, ShowDeletedToggler}
+import shipreq.webapp.client.app.ui.ShowDeletedToggler
 import shipreq.webapp.client.lib.{FailureIO, SuccessIO}
-import shipreq.webapp.client.lib.ui._
+import shipreq.webapp.client.lib.ui.{FieldSet => _, _}
 import shipreq.webapp.client.protocol.ClientProtocol
 import shipreq.webapp.client.util.DND
 import Field.ApplicableReqTypes
@@ -42,20 +39,16 @@ import CfgFields.Props
 
 private[fields] object MainTable {
 
-  val nameE      = Editors.textInputEditor.applyValidator(V.nameS)
-  val refkeyE    = Editors.textInputEditor.applyValidator(V.keyS)
-  val mandatoryE = Editors.checkboxEditor.imap(Mandatory).strengthL[V.S]
-  val reqtypesE  = Editors.constSimpleEditor[ApplicableReqTypes](<.span("TODO")).strengthL[V.S]
-
   val text_fields = FieldSet4[CustomField.Text](
     _.name, _.key.value, _.mandatory, _.reqTypes)(
     ("", "", Mandatory.Not, ISubset.All()))
 
   val text_stores = NewAndSavedStores.fields(text_fields).keyedBy[CustomField.Id]
 
-  case class State(showDeleted: Boolean,
-                   text_state: text_stores.State,
-                   dnd: DND.Parent.PState[Field]) {
+  case class State(showDeleted    : Boolean,
+                   text_state     : text_stores.State,
+                   appReqTypeState: AppReqTypesEditor.S,
+                   dnd            : DND.Parent.PState[Field]) {
 
     lazy val customFields =
       customFieldStores.foldLeft(CustomField.IdAccess.emptyIMap)(_ ++ _.s.getAllP(this))
@@ -63,9 +56,13 @@ private[fields] object MainTable {
 
   object State {
     private[this] def l = Lenser[State]
-    val _showDeleted = l(_.showDeleted)
-    val _text_state  = l(_.text_state)
-    val _dnd         = l(_.dnd)
+    val _showDeleted      = l(_.showDeleted)
+    val _text_state       = l(_.text_state)
+    val _appReqTypeState  = l(_.appReqTypeState)
+    val _dnd              = l(_.dnd)
+
+    @inline final def _appReqTypeStateFor(k: Option[Field.Id]) =
+      _appReqTypeState ^|-> AppReqTypesEditor._stateFor(k)
   }
 
   type S  = State
@@ -83,24 +80,35 @@ private[fields] object MainTable {
 
   def initialState(p: Props): S = {
     val textFields = Seq.newBuilder[CustomField.Text]
-    p.clientData.project.fields.data.customFields.values.foreach {
+    val fs         = p.clientData.project.fields.data
+    fs.customFields.values.foreach {
       case f: CustomField.Text => textFields += f
     }
     State(p.showDeleted,
       text_state = text_stores.initState(_.initStateS(textFields.result(), _.id)),
+      AppReqTypesEditor initialState fs,
       DND.Parent.initialState)
   }
 
   val deltaFns =
     new RemoteDeltaListener.StateFns[S, Field.Id, Delta](
-      (s, i) => i match {
-        case _: StaticField => s
-        case j: CustomField.Id => customFieldStores.foldLeft(s)((t, f) => f.s.remove(j)(t))
+      (s, i) => {
+        val s2 = i match {
+          case _: StaticField => s
+          case j: CustomField.Id => customFieldStores.foldLeft(s)((t, f) => f.s.remove(j)(t))
+        }
+        clearAppReqTypesEditorState(i)(s2)
       },
-      (s, _, d) => d match {
-        case Delta(-\/(_: StaticField     ), _) => s
-        case Delta(\/-(f: CustomField.Text), _) => text_storesS.s.set(f.id, f)(s)
+      (s, i, d) => {
+        val s2 = d match {
+          case Delta(-\/(_: StaticField     ), _) => s
+          case Delta(\/-(f: CustomField.Text), _) => text_storesS.s.set(f.id, f)(s)
+        }
+        clearAppReqTypesEditorState(i)(s2)
       })
+
+  def clearAppReqTypesEditorState(id: Field.Id): S => S =
+    State._appReqTypeStateFor(Some(id)).set(Maybe.empty)
 
   val Component =
     ReactComponentB[Props]("Cfg: Fields")
@@ -123,6 +131,14 @@ private[fields] object MainTable {
     val clientData = $.props.clientData
 
     def fieldOrder = clientData.project.fields.data.order
+
+    // TODO AppReqTypesEditor needs to change when customReqTypes change
+    val appReqTypesEditor = new AppReqTypesEditor(clientData.project.customReqTypes.data.values)
+
+    val nameE      = Editors.textInputEditor.applyValidator(V.nameS)
+    val refkeyE    = Editors.textInputEditor.applyValidator(V.keyS)
+    val mandatoryE = Editors.checkboxEditor.imap(Mandatory).strengthL[V.S]
+    val reqtypesE  = appReqTypesEditor.editor($ focusStateL State._appReqTypeState).cmapA[(V.S, ApplicableReqTypes)](_.map1(_._2))
 
     object protocol {
       import FieldProtocol._, CfgAction._
@@ -189,7 +205,7 @@ private[fields] object MainTable {
 
     val renderField: Field => ReactElement = {
       implicit val fieldEquivalence = Equal.equalBy((_: Field).fieldId)
-      f => DraggableFieldRow(DND.Parent.cProps2(dndState, f, orderIO))
+      f => DraggableFieldRow.set(key = f.fold[JsAny](_.name, _.id.value))(DND.Parent.cProps2(dndState, f, orderIO))
     }
 
     val DraggableFieldRow = DND.Child.dndItemComponent[Field]((outerAttr, dragHandle, f) =>
@@ -207,27 +223,12 @@ private[fields] object MainTable {
         ftype      = f.fieldType,
         refkey     = renderKeyO(f.keyO),
         mandatory  = Editors.staticCheckbox(Mandatory from f.mandatory),
-        reqtypes   = renderApReqTypes(f.reqTypes),
+        reqtypes   = appReqTypesEditor.renderReadOnly(f.reqTypes),
         ctrls      = (f.deletable ≟ Deletable) ?= staticDeletion.button(f, SoftDel)
-      )(^.key := f.name)
+      )
 
     def renderKeyO(k: Option[FieldRefKey]): TagMod =
       k.fold("-")(_.value)
-
-    def renderApReqTypes(a: ApplicableReqTypes): TagMod = {
-      def fmt(prefix: String, rs: OneAnd[Set, ReqType.Id]) =
-        (rs.head #:: rs.tail.toStream)
-          .flatMap(clientData.project.reqType(_).toStream)
-          //.filter(ReqType.filterAlive) // TODO should render with strike-through
-          .map(_.mnemonic.value)
-          .sorted
-          .mkString(prefix, ", ", ".")
-      a match {
-        case ISubset.Only(rs) => fmt("Only: ", rs)
-        case ISubset.Not(rs)  => fmt("Not: ", rs)
-        case ISubset.All()    => "All."
-      }
-    }
 
     def renderRow(rs: RowStatus)(dragHandle: ReactTag, name: TagMod, ftype: FieldType, refkey: TagMod,
                                  mandatory: TagMod, reqtypes: TagMod, ctrls: => TagMod): ReactTag =
@@ -314,7 +315,7 @@ private[fields] object MainTable {
           mandatory  = mandatory,
           reqtypes   = reqtypes,
           ctrls      = deletion.button(f.id, SoftDel)
-        )(^.key := f.id.value)
+        )
       }
 
       override def renderDead(s: S, dragHandle: ReactTag, rs: RowStatus, f: CustomField.Text): ReactTag =
@@ -324,10 +325,9 @@ private[fields] object MainTable {
           ftype      = f.fieldType,
           refkey     = f.key.value,
           mandatory  = Editors.staticCheckbox(Mandatory from f.mandatory),
-          reqtypes   = renderApReqTypes(f.reqTypes),
+          reqtypes   = appReqTypesEditor.renderReadOnly(f.reqTypes),
           ctrls      = deletion.button(f.id, Restore)
-        )(^.key := f.id.value)
+        )
     }
-
   }
 }

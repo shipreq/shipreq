@@ -71,7 +71,7 @@ object CfgReqTypes {
                 if (oldMnemonics.isEmpty)
                   mnemonic
                 else
-                  Seq(mnemonic, <.div(^.cls := "oldMnemonics", oldMnemonics.toStream.map(_.value).sorted.mkString(", ")))
+                  Seq(mnemonic, <.div(CSS.deadInline, oldMnemonics.toStream.map(_.value).sorted.mkString(", ")))
               Seq(mn, name, impReq)
           }
         }

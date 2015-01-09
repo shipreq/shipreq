@@ -15,14 +15,12 @@
     tr.locked input, tr.locked textarea {background: #fafafa; color: #888}
     tr.locked .spinner {width:24px; height:24px}
 
-    .oldMnemonics {color:#aaa !important; text-decoration: line-through;}
-
     table.reqimp label {font-weight: normal}
     table.reqimp div {display:inline}
     table.reqimp input {margin-right: 1ex}
 
     label {font-weight: normal}
-    label > input[type=checkbox] {margin-right: 0.8ex}
+    label > input[type=checkbox] {margin-right: 0.8ex} /* affects .isubsetV */
 
     div.indent {padding-left:3ex}
 
@@ -43,6 +41,14 @@
 
     td.dndh {text-align: center; }
     td.dndh .draghandle { margin: 0 auto; }
+
+    .isubsetV {margin-left: 1.4ex}
+    .isubsetV > input {margin-right: 3px !important}
+    .isubsetM + .isubsetM {margin-left: 2.0ex}
+    .isubsetM > input {margin-right: 3px}
+    .isubsetM.checked > span, .isubsetV.checked > span {font-weight: bold; color: #060}
+
+    .deadInline {color:#aaa !important; text-decoration: line-through;}
 
   %h1 WIP: Testing page
 
