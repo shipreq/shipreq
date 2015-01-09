@@ -15,6 +15,16 @@ object BiMap {
   def flatten[T](pairs: Tuple2[T, T]*): Map[T, T] = Map((pairs ++ pairs.map(t => (t._2, t._1))): _*)
 
   def swapped[A, B](ba: Map[B, A]): BiMap[A, B] = BiMap(ba.map(e => e._2 -> e._1), ba)
+
+  def index[A](as: TraversableOnce[A]): BiMap[A, Int] = {
+    var i = 0
+    var m = Map.empty[A, Int]
+    as.foreach { a =>
+      m = m.updated(a, i)
+      i += 1
+    }
+    BiMap(m)
+  }
 }
 
 /**

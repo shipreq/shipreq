@@ -62,6 +62,19 @@ object Util {
     val i = v.indexWhere(subj ≟ _)
     if (i >= 0 && (i + 1) < v.length) Some(v(i + 1)) else None
   }
+
+  def foldAndIndex[A, B](as: TraversableOnce[A], z: B)(f: (B, Int, A) => B): (B, Map[Int, A]) = {
+    var i = 0
+    var m = Map.empty[Int, A]
+    var b = z
+    as.foreach { a =>
+      b = f(b, i, a)
+      m = m.updated(i, a)
+      i += 1
+    }
+    (b, m)
+  }
+
 }
 
 object ParseLong {
