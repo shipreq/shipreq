@@ -17,12 +17,12 @@ for (a <- (2 to 9)) {
     def lc(hit: String, miss: Int => String): String = l(hit,miss).mkString(comma)
     def lt(hit: String, miss: Int => String): String = l(hit,miss).mkString("(",comma,")")
 
-    o ::= s"def map$i[X](f: $c => X): (${lc("X",T)}) = ${lt(s"f(t._$i)", "t._"+_)}"
-    o ::= s"def put$i[X](x: X): (${lc("X",T)}) = ${lt("x", "t._"+_)}"
+    o ::= s"@inline def map$i[X](f: $c => X): (${lc("X",T)}) = ${lt(s"f(_t._$i)", "_t._"+_)}"
+    o ::= s"@inline def put$i[X](x: X): (${lc("X",T)}) = ${lt("x", "_t._"+_)}"
 
   }
 
-  println(s"implicit class Tuple${a}Ext[${mc(T)}](val t: ${mt(T)}) extends AnyVal {")
+  println(s"@inline final implicit class Tuple${a}Ext[${mc(T)}](val _t: ${mt(T)}) extends AnyVal {")
   println(o.sorted.map("  "+_) mkString "\n")
   println("}")
 }
