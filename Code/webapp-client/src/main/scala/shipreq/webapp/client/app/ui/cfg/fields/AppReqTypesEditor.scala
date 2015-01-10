@@ -18,7 +18,7 @@ import ISubsetEditor._
 private[fields] object AppReqTypesEditor {
   type A = ReqType.Id
   type M = Mode[A]
-  type K = Option[Field.Id]
+  type K = Field.Id
   type S = Map[K, EditState[A]]
 
   def initialState(fs: FieldSet): S = Map.empty
@@ -55,34 +55,38 @@ class AppReqTypesEditor(customReqTypes: TraversableOnce[CustomReqType]) {
 
   val component = ISubsetEditor.Component(static)
 
-  def editor($: ComponentStateFocus[S]): SimpleEditor2[(K, ApplicableReqTypes), ApplicableReqTypes] =
+  def editor($: ComponentStateFocus[S]): SimpleEditor2[(Option[K], ApplicableReqTypes), ApplicableReqTypes] =
     Editor(ei => {
       import SimpleEditor._
       val (id, value) = ei.data
-
-      @inline def * = _stateFor(id)
-
-      def setIO(s: EditState[A]): IO[Unit] =
-        $ modStateIO *.set(Maybe.Just(s))
 
       def cbh(cb: ei.CBH): IO[Unit] =
         ei.editable.fold(ConsoleIO(_ log s"Can't interpret ApplicableReqTypesEditor callback."))(_(cb))
 
       val mode: M =
-        $.state.get(id) match {
+        id match {
+          case Some(k) =>
+            @inline def * = _stateFor(k)
+            def setIO(s: EditState[A]): IO[Unit] = $ modStateIO *.set(Maybe.Just(s))
+
+            $.state.get(k) match {
+
+              case None =>
+                ViewMode(
+                  value     = value,
+                  startEdit = ei.editable.map(_ => setIO(EditState.init(value, Set.empty))))
+
+              case Some(es) =>
+                EditMode[A](
+                  state      = es,
+                  update     = setIO,
+                  finishEdit = _.fold[IO[Unit]](
+                                 $ modStateIO *.set(Maybe.empty))(
+                                 u => cbh(callbackH(OnChange(u))) >> cbh(callbackH(OnEditFinished(u)))))
+            }
 
           case None =>
-            ViewMode(
-              value     = value,
-              startEdit = ei.editable.map(_ => setIO(EditState.init(value, Set.empty))))
-
-          case Some(es) =>
-            EditMode[A](
-              state      = es,
-              update     = setIO,
-              finishEdit = _.fold[IO[Unit]](
-                             $ modStateIO *.set(Maybe.Empty()))(
-                             u => cbh(callbackH(OnChange(u))) >> cbh(callbackH(OnEditFinished(u)))))
+            ViewMode(value, None)
         }
 
       component(mode)

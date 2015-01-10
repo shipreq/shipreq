@@ -65,7 +65,7 @@ private[fields] object MainTable {
     val _appReqTypeStates = l(_.appReqTypeStates)
     val _dnd              = l(_.dnd)
 
-    @inline final def _appReqTypeState(k: Option[Field.Id]) =
+    @inline final def _appReqTypeState(k: Field.Id) =
       _appReqTypeStates ^|-> AppReqTypesEditor._stateFor(k)
   }
 
@@ -114,7 +114,7 @@ private[fields] object MainTable {
       })
 
   def clearAppReqTypesEditorState(id: Field.Id): S => S =
-    State._appReqTypeState(Some(id)).set(Maybe.empty)
+    State._appReqTypeState(id).set(Maybe.empty)
 
   val Component =
     ReactComponentB[Props]("Cfg: Fields")
