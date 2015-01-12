@@ -12,7 +12,6 @@ object SelectOne {
   case class Choice[A](value   : A,
                        label   : String,
                        disabled: Boolean) {
-
     def map[B](f: A => B): Choice[B] = copy(value = f(value))
   }
 

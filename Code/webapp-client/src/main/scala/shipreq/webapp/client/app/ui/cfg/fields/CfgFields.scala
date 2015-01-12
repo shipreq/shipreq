@@ -19,7 +19,7 @@ import shipreq.webapp.base.protocol.{DeletionAction, FieldProtocol}
 import shipreq.webapp.base.protocol.Routines.FieldCrud
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.client.ClientData
-import shipreq.webapp.client.app.ui.{SelectAction, ShowDeletedToggler}
+import shipreq.webapp.client.app.ui.{SelectAndInvoke, ShowDeletedToggler}
 import shipreq.webapp.client.lib.{ConsoleIO, FailureIO, SuccessIO}
 import shipreq.webapp.client.lib.ui.{FieldSet => _, _}
 import shipreq.webapp.client.protocol.ClientProtocol
@@ -186,7 +186,7 @@ private[fields] object MainTable {
     }
 
     object newFieldControl {
-      import SelectAction._
+      import SelectAndInvoke._
 
       def name: NewSelType => String =
         _.fold(_.name, _.name)
@@ -196,10 +196,10 @@ private[fields] object MainTable {
       def apply() = {
         val s = $.state
 
-        var actions = Vector.empty[Action[NewSelType]]
+        var actions = Vector.empty[Choice[NewSelType]]
 
         def addAction(value: NewSelType, invoke: IO[Unit]): Unit =
-          actions :+= Action(
+          actions :+= Choice(
             value  = value,
             select = Some($ modStateIO State._newFieldTypeSel.set(Some(value))),
             invoke = Some(invoke))
@@ -230,10 +230,10 @@ private[fields] object MainTable {
         def customInvoke(t: CustomFieldType): IO[Unit] =
           IO($ modStateIO storesForType(t).n.enableEdit).join
 
-        Component(SelectAction.Props(
-          disabled = customFieldStores.exists(_.n.editing(s)),
-          actions  = actions.sortBy(a => name(a.value)),
-          selected = s.newFieldTypeSel
+        Component(SelectAndInvoke.Props(
+          selected = s.newFieldTypeSel,
+          choices  = actions.sortBy(a => name(a.value)),
+          disabled = customFieldStores.exists(_.n.editing(s))
         ))
       }
 

@@ -8,7 +8,7 @@ import scalaz.effect.IO
 import scalaz.syntax.equal._
 import shipreq.base.util.Util
 
-object SelectAction {
+object SelectAndInvoke {
 
   def Component[A: Equal](staticProps: StaticProps[A]) =
     ReactComponentB[Props[A]]("SelectAction")
@@ -17,17 +17,17 @@ object SelectAction {
       .render(_.backend.render)
       .build
 
-  final case class StaticProps[A: Equal](invokeLabel: String, actionLabel: A => String) {
+  final case class StaticProps[A: Equal](invokeButtonLabel: String, optionLabel: A => String) {
     @inline def component = Component(this)
   }
 
-  final case class Props[A](disabled: Boolean,
-                            actions : Vector[Action[A]],
-                            selected: Option[A])
-
-  final case class Action[A](value : A,
+  final case class Choice[A](value : A,
                              select: Option[IO[Unit]],
                              invoke: Option[IO[Unit]])
+
+  final case class Props[A](selected: Option[A],
+                            choices : Seq[Choice[A]],
+                            disabled: Boolean)
 
   final class Backend[A: Equal]($: BackendScope[Props[A], Unit], staticProps: StaticProps[A]) {
     import staticProps._
@@ -36,11 +36,11 @@ object SelectAction {
     
     def render: ReactElement = {
       val (actionTags, actionIndex) =
-        Util.foldAndIndexS(p.actions, Vector.empty[ReactTag])((q, k, o) => q :+
+        Util.foldAndIndexS(p.choices, Vector.empty[ReactTag])((q, k, o) => q :+
           <.option(
             ^.value    := k,
             ^.disabled := o.select.isEmpty,
-            actionLabel(o.value)))
+            optionLabel(o.value)))
 
       def changeAction: SyntheticEvent[HTMLSelectElement] => Option[IO[Unit]] =
         e => actionIndex.get(e.target.value).flatMap(_.select)
@@ -62,7 +62,7 @@ object SelectAction {
         <.button(
           ^.disabled  := (p.disabled || invokeIO.isEmpty),
           ^.onClick ~~>? invokeIO,
-          invokeLabel)
+          invokeButtonLabel)
 
       <.div(dropdown, invokeButton)
     }
