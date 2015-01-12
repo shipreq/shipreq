@@ -6,6 +6,7 @@ import shapeless.TypeClass.deriveConstructors
 import shapeless.contrib.scalaz.Instances._
 import shipreq.base.util.Util
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.Tag.{Id => TagId}
 import shipreq.webapp.base.delta.{Partition, RemoteDeltaP}
 import Field.ApplicableReqTypes
 
@@ -18,7 +19,12 @@ object FieldProtocol {
                              mandatory: Mandatory,
                              reqTypes : ApplicableReqTypes) extends Values
 
+  case class TagFieldValues(tagId    : TagId,
+                            mandatory: Mandatory,
+                            reqTypes : ApplicableReqTypes) extends Values
+
   implicit val textFieldValueEquality = deriveEqual[TextFieldValues]
+  implicit val tagFieldValueEquality  = deriveEqual[TagFieldValues]
 
   // The field immediately before which the subject field should be ordered. None means append.
   type Position = Option[Field.Id]

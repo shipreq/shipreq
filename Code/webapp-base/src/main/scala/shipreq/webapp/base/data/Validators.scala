@@ -1,6 +1,7 @@
 package shipreq.webapp.base.data
 
 import scalaz.{NonEmptyList, Equal}
+import scalaz.std.option.optionEqual
 import scalaz.std.string.stringInstance
 import scalaz.syntax.equal.ToEqualOps
 import shipreq.base.util.ScalaExt._
@@ -138,7 +139,19 @@ object Validators {
     val mandatoryS = ValidatorU.nop[Mandatory].liftS[S]
     val reqTypesS  = ValidatorU.nop[Field.ApplicableReqTypes].liftS[S]
 
-    val text = nameS ⊗ keyS ⊗ mandatoryS ⊗ reqTypesS
+    val textField = nameS ⊗ keyS ⊗ mandatoryS ⊗ reqTypesS
+
+    private def tagIdUniqueness =
+      Uniqueness.entity[CustomField].applyOO(_.id.some, {
+        case  f: CustomField.Tag => f.tagId.some
+        case _                   => None
+      }).fieldName(tagIdField)
+
+    @inline private def tagIdField = "Tag"
+
+    val tagIdS = ValidationPartU.requireFromOption[Tag.Id](tagIdField).liftS[S].toValidator.addValidation(tagIdUniqueness)
+
+    val tagField = tagIdS ⊗ mandatoryS ⊗ reqTypesS
   }
 
   // ===================================================================================================================

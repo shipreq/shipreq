@@ -6,6 +6,7 @@ import scalaz.Equal
 import scalaz.Isomorphism._
 import scalaz.std.AllInstances._
 import scalaz.syntax.equal._
+import shapeless.TypeClass.deriveConstructors
 import shapeless.contrib.scalaz.Instances._
 import japgolly.nyaya.CycleDetector
 import shipreq.base.util.IMap
@@ -83,9 +84,20 @@ object Tag {
     }
   }
 
-  // implicit val equalityTG = deriveEqual[TagGroup]
-  // implicit val equalityAT = deriveEqual[ApplicableTag]
-  implicit val equality   = deriveEqual[Tag]
+  implicit val equalityTG = deriveEqual[TagGroup]
+  implicit val equalityAT = deriveEqual[ApplicableTag]
+
+  //implicit val equality   = deriveEqual[Tag]
+  implicit object Equality extends Equal[Tag] {
+    override val equalIsNatural =
+      Equal[ApplicableTag].equalIsNatural &&
+      Equal[TagGroup     ].equalIsNatural
+    override def equal(a: Tag, b: Tag): Boolean = a match {
+      case x: ApplicableTag  => b match {case y: ApplicableTag  => x ≟ y; case _ => false}
+      case x: TagGroup       => b match {case y: TagGroup       => x ≟ y; case _ => false}
+    }
+  }
+
 
   val _name = Lens((_: Tag).name)(n => {
     case TagGroup(a, _, b, c, d)      => TagGroup(a, n, b, c, d)
@@ -96,6 +108,9 @@ object Tag {
     case TagGroup(a, b, c, d, _)      => TagGroup(a, b, c, d, n)
     case ApplicableTag(a, b, c, d, _) => ApplicableTag(a, b, c, d, n)
   })
+
+  val filterAlive: Tag => Boolean =
+    _.alive ≟ Alive
 
   object CycleDetectors {
     val multimap =

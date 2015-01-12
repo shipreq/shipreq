@@ -9,7 +9,7 @@ import scalaz.std.list._
 import scalaz.std.option.{none => _, _}
 import scalaz.std.set._
 import scalaz.std.stream._
-import scalaz.syntax.equal._
+import scalaz.std.vector._
 
 import shipreq.base.util.IMap
 import shipreq.base.util.ScalaExt._
@@ -211,23 +211,58 @@ object RandomData {
       t <- Gen.charof('_', "", 'a' to 'z', '0' to '9').list.lim(AppConsts.fieldRefKeyLength.end - 1)
     } yield FieldRefKey((h :: t).mkString)
 
+  def customFieldType =
+    Gen.oneofL(CustomFieldType.values)
+
   def customFieldText(art: Gen[ApplicableReqTypes]): Gen[CustomField.Text] =
     Gen.apply6(CustomField.Text.apply)(customFieldId, shortText1, fieldRefKey, mandatory, art, alive)
 
-  def customField(art: Gen[ApplicableReqTypes]): Gen[CustomField] =
-    Gen.oneofGC(customFieldText(art))
+  def customFieldTag(tagId: Gen[Tag.Id], art: Gen[ApplicableReqTypes]): Gen[CustomField.Tag] =
+    Gen.apply5(CustomField.Tag.apply)(customFieldId, tagId, mandatory, art, alive)
 
-  def customFields(cf: Gen[CustomField]): Gen[IMap[CustomField.Id, CustomField]] = {
+  def customFieldTagSome(tagIds: Set[Tag.Id], art: Gen[ApplicableReqTypes]): Gen[Vector[CustomField.Tag]] =
+    subset(tagIds).flatMap(ids =>
+      Gen sequence ids.map(id =>
+        customFieldTag(Gen insert id, art)))
+
+  def customField(art: Gen[ApplicableReqTypes], tagFields: Boolean): Gen[CustomField] = {
+    import Gen.Covariance._
+    lazy val txt: Gen[CustomField] = customFieldText(art)
+    customFieldType.flatMap {
+      case CustomFieldType.Text => txt
+      case CustomFieldType.Tag  => if (tagFields) customFieldTag(tagId, art) else txt
+    }
+  }
+
+  def customFields(tagIds: Set[Tag.Id], art: Gen[ApplicableReqTypes]): Gen[IMap[CustomField.Id, CustomField]] = {
+    val cf = for {
+      f1 <- customField(art, false).stream
+      f2 <- customFieldTagSome(tagIds, art)
+    } yield f2.toStream #::: f1
     def id   = distinctId(CustomField.IdAccess)
     def name = Distinct.str.at(CustomField._independentName)
     def key  = Distinct.fstr.xmap(FieldRefKey.apply)(_.value).distinct.at(CustomField._key)
     val dist = (id * name * key).lift[Stream]
-    cf.stream.map(fs => emptyDataMap(CustomField) ++ dist.run(fs))
+    cf.map(fs => emptyDataMap(CustomField) ++ dist.run(fs))
   }
 
-  def fieldSet(r: Set[CustomReqType.Id]): Gen[FieldSet] =
+  // TODO Move to Nyaya: subset
+  def subset[A](g: TraversableOnce[A]): Gen[Vector[A]] =
+    Gen.sequence(
+      g.foldLeft(Vector.empty[Gen[(A, Boolean)]])((q, a) => q :+ Gen.boolean.map(b => (a,b)))
+    ).map(
+      _.foldLeft(Vector.empty[A]){ case (q, (a,b)) => if (b) q :+ a else q }
+    )
+
+  // TODO Move to Nyaya: oneofSafe
+  def oneofSafe[A](as: Seq[A]): Gen[Option[A]] =
+    as.headOption.fold[Gen[Option[A]]](
+      Gen insert None)(
+      Gen.oneof(_, as.tail: _*).option)
+
+  def fieldSet(tagIds: Set[Tag.Id], r: Set[CustomReqType.Id]): Gen[FieldSet] =
     for {
-      cf           ← customFields(customField(applicableReqTypes(r)))
+      cf           ← customFields(tagIds, applicableReqTypes(r))
       mandatoryIds = cf.keySet.map(f => f: Field.Id) ++ StaticField.notDeletable
       optionalIds  ← Gen.oneof(StaticField.deletable.head, StaticField.deletable.tail: _*).set
       order        ← Gen.shuffle((mandatoryIds ++ optionalIds).toVector)
@@ -254,7 +289,7 @@ object RandomData {
     for {
       (issues, tags) <- Gen.tuple2(customIssueTypes, revAndTagTree) map distinctHashRefKeys.run
       reqtypes       <- customReqTypes
-      fields         <- revAnd(fieldSet(reqtypes.data.keySet))
+      fields         <- revAnd(fieldSet(tags.data.keySet, reqtypes.data.keySet))
     } yield Project(issues, reqtypes, fields, tags)
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -285,7 +320,7 @@ object RandomData {
       Gen.oneofG(textFieldValues)
 
     lazy val fieldDelta: Gen[FP.Delta] =
-      Gen.apply2(FP.Delta.apply)(staticField \/ customField(applicableReqTypes), fieldPosition)
+      Gen.apply2(FP.Delta.apply)(staticField \/ customField(applicableReqTypes, true), fieldPosition)
 
     object fieldCfgAction {
       import FP.CfgAction, CfgAction._

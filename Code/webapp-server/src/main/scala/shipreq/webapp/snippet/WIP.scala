@@ -53,9 +53,11 @@ class WIP {
     val fields = RevAnd(40, FieldSet(emptyDataMap(CustomField).addAll(
         CustomField.Text(1, "Description", "desc",     Mandatory,     onlyReqTypes(2, 6, StaticReqType.UseCase), Alive),
         CustomField.Text(2, "Notes",       "notes",    Mandatory.Not, notReqTypes(4),                            Alive),
-        CustomField.Text(3, "Reporter",    "reporter", Mandatory,     onlyReqTypes(5, StaticReqType.UseCase),    Dead)
+        CustomField.Text(3, "Reporter",    "reporter", Mandatory,     onlyReqTypes(5, StaticReqType.UseCase),    Dead),
+        CustomField.Tag (4, 1,                         Mandatory,     ISubset.All(),                             Alive),
+        CustomField.Tag (5, 10,                        Mandatory.Not, ISubset.All(),                             Alive)
       ), Vector(
-        1, 3, StaticField.NormalAltStepTree, StaticField.ExceptionStepTree, StaticField.StepGraph, 2
+        1, 4, 5, 3, StaticField.NormalAltStepTree, StaticField.ExceptionStepTree, StaticField.StepGraph, 2
       )))
 
     new Project(customIssueTypes, customReqTypes, fields, tags)
@@ -312,9 +314,15 @@ class WIP {
             List(Delta(\/-(f), None))
           }
 
+        case Create(TagFieldValues(t, m, r)) =>
+          mod { fs =>
+            val f = CustomField.Tag(nextId(fs), t, m, r, Alive)
+            List(Delta(\/-(f), None))
+          }
         case UpdateValues(id, v) =>
           mod(id)(cf => (cf, v) match {
             case (CustomField.Text(_, _, _, _, _, Alive), TextFieldValues(n, k, m, r)) => CustomField.Text(id, n, k, m, r, Alive)
+            case (CustomField.Tag (_,    _, _, _, Alive), TagFieldValues (t,    m, r)) => CustomField.Tag (id, t,    m, r, Alive)
             case _ => cf
           })
 
@@ -328,9 +336,7 @@ class WIP {
           mod(fs => if (fs.order contains f) Nil else List(Delta(-\/(f), None)))
 
         case Delete(id: CustomField.Id, Restore) =>
-          mod(id){
-            case f: CustomField.Text => f.copy(alive = Alive)
-          }
+          mod(id)(CustomField._alive set Alive)
 
         case Delete(f: StaticField, HardDel | SoftDel) =>
           f.deletable match {
@@ -339,9 +345,7 @@ class WIP {
           }
 
         case Delete(id: CustomField.Id, SoftDel) =>
-          mod(id){
-            case f: CustomField.Text => f.copy(alive = Dead)
-          }
+          mod(id)(CustomField._alive set Dead)
 
         case Delete(id: CustomField.Id, HardDel) =>
           apply(Set(id), Nil)

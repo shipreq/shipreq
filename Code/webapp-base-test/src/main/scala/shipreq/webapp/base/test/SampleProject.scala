@@ -1,6 +1,5 @@
 package shipreq.webapp.base.test
 
-import japgolly.nyaya.util._
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.UnsafeTypes._
 
@@ -41,9 +40,11 @@ object SampleProject {
   lazy val fields = RevAnd(40, FieldSet(emptyDataMap(CustomField).addAll(
     CustomField.Text(1, "Description", "desc",     Mandatory,     onlyReqTypes(2, 6, StaticReqType.UseCase), Alive),
     CustomField.Text(2, "Notes",       "notes",    Mandatory.Not, notReqTypes(4),                            Alive),
-    CustomField.Text(3, "Reporter",    "reporter", Mandatory,     onlyReqTypes(5, StaticReqType.UseCase),    Dead)
+    CustomField.Text(3, "Reporter",    "reporter", Mandatory,     onlyReqTypes(5, StaticReqType.UseCase),    Dead),
+    CustomField.Tag (4, 1,                         Mandatory,     ISubset.All(),                             Alive),
+    CustomField.Tag (5, 10,                        Mandatory.Not, ISubset.All(),                             Alive)
   ), Vector(
-    1, 3, StaticField.NormalAltStepTree, StaticField.ExceptionStepTree, StaticField.StepGraph, 2
+    1, 4, 5, 3, StaticField.NormalAltStepTree, StaticField.ExceptionStepTree, StaticField.StepGraph, 2
   )))
 
   lazy val project = new Project(

@@ -65,6 +65,10 @@ object CorrectionPartU {
   def nop  [A]                 : CorrectionPartU[A, A] = liftE[A](identity)
 }
 
+object CorrectionPart {
+  def nop[S, A]: CorrectionPart[S, A, A] = CorrectionPartU.nop[A].liftS
+}
+
 // =====================================================================================================================
 
 final class ValidationPart[S, C, V](val validate: (S, InputCorrected[C]) => ValidationResult[V]) {
@@ -112,6 +116,9 @@ final class ValidationPart[S, C, V](val validate: (S, InputCorrected[C]) => Vali
       case None    => Success(None)
       case Some(c) => validate(s, InputCorrected(c)).map(s => Some(s))
     })
+
+  def toValidator: Validator[S, C, C, V] =
+    Validator[S, C, C, V](CorrectionPart.nop, this)
 }
 
 object ValidationPartU {
@@ -139,6 +146,12 @@ object ValidationPartU {
 
   def nop[A]              : ValidationPartU[A, A] = apply(c => Success(c.value))
   def nop[C, V](f: C => V): ValidationPartU[C, V] = apply(c => Success(f(c.value)))
+
+  def requireFromOption[A](fieldName: String, errmsg: String = "is required."): ValidationPartU[Option[A], A] =
+    apply[Option[A], A](_.value match {
+      case Some(a) => Success(a)
+      case None    => Failure(VFailure.forField1(fieldName, errmsg))
+    })
 }
 
 object ValidationPart {

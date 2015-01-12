@@ -83,3 +83,11 @@ Technical
 * [C.0.5=5] [TW ] Robustness: Handle DB going down.
 * [C.0.1=1] [ W$] Add a HSTS header (HTTP Strict Transport Security)
 * [C.0.1=1] [ WP] Shiro caching.
+
+
+Delete{, Forever}
+=================
+
+* Field → Tag.Id     : CustomField.Tag.tagId
+* Field → ReqType.Id : applicableReqTypes
+

@@ -10,6 +10,9 @@ object VFailure {
   def looseMsg(e: ErrorMsg) =
     new VFailure(List(e), Map.empty)
 
+  @inline final def forField1(fieldName: String, e: ErrorMsg) =
+    forField(fieldName, NonEmptyList(e))
+
   def forField(fieldName: String, es: NonEmptyList[ErrorMsg]) =
     new VFailure(List.empty, Map(fieldName -> es))
 

@@ -56,8 +56,7 @@ class AppReqTypesEditor(customReqTypes: TraversableOnce[CustomReqType]) {
   val component = ISubsetEditor.Component(static)
 
   def editor($: ComponentStateFocus[S]): SimpleEditor2[(Option[K], ApplicableReqTypes), ApplicableReqTypes] =
-    Editor(ei => {
-      import SimpleEditor._
+    Editor { ei =>
       val (id, value) = ei.data
 
       def cbh(cb: ei.CBH): IO[Unit] =
@@ -82,7 +81,7 @@ class AppReqTypesEditor(customReqTypes: TraversableOnce[CustomReqType]) {
                   update     = setIO,
                   finishEdit = _.fold[IO[Unit]](
                                  $ modStateIO *.set(Maybe.empty))(
-                                 u => cbh(callbackH(OnChange(u))) >> cbh(callbackH(OnEditFinished(u)))))
+                                 SimpleEditor.onChangeAndEditFinished(cbh)))
             }
 
           case None =>
@@ -90,7 +89,7 @@ class AppReqTypesEditor(customReqTypes: TraversableOnce[CustomReqType]) {
         }
 
       component(mode)
-    })
+    }
 
   def renderReadOnly(a: ApplicableReqTypes) =
     component(ViewMode(a, None))

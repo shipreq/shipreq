@@ -33,11 +33,11 @@ object StaticFieldType {
 object CustomFieldType {
 
   case object Text extends CustomFieldType("Text")
+  case object Tag  extends CustomFieldType("Tag")
 
   val values = NonEmptyList[CustomFieldType](
-    Text)
-
-  val valueStream = values.list.toStream
+    Text,
+    Tag)
 
   implicit val equality = Equal.equalA[CustomFieldType]
 }
@@ -103,9 +103,10 @@ object Field {
   val filterAlive: Field => Boolean =
     _.fold(_ => true, _.alive ≟ Alive)
 
-  def name: Field => String = {
+  def name(tags: TagTree): Field => String = {
     case f: StaticField      => f.name
     case f: CustomField.Text => f.name
+    case f: CustomField.Tag  => f.name(tags)
   }
 }
 
@@ -169,6 +170,7 @@ object CustomField {
     override def mkId(l: Long) = Id(l)
     override def setId(cf: CustomField, i: Id) = cf match {
       case f: Text => f.copy(id = i)
+      case f: Tag  => f.copy(id = i)
     }
   }
 
@@ -178,29 +180,50 @@ object CustomField {
                   mandatory: Mandatory,
                   reqTypes : ApplicableReqTypes,
                   alive    : Alive) extends CustomField(CustomFieldType.Text) {
-    override def keyO = Some(key)
     override def independentName = Some(name)
+    override def keyO = Some(key)
   }
 
   object Text {
     implicit val equality = deriveEqual[Text]
   }
 
+  import shipreq.webapp.base.data.Tag.{Id => TagId}
+  case class Tag(id       : Id,
+                 tagId    : TagId,
+                 mandatory: Mandatory,
+                 reqTypes : ApplicableReqTypes,
+                 alive    : Alive) extends CustomField(CustomFieldType.Tag) {
+    override def independentName = None
+    override def keyO = None
+
+    def name(tags: TagTree): String =
+      tags.get(tagId).fold("DELETED TAG")(_.tag.name)
+  }
+
+  object Tag {
+    implicit val equality = deriveEqual[Tag]
+  }
+
   val _independentName = Optional[CustomField, String](Maybe.optionMaybeIso to _.independentName)(n => {
     case Text(a, _, b, c, d, e) => Text(a, n, b, c, d, e)
+    case f: Tag                 => f
   })
 
   val _key = Optional[CustomField, FieldRefKey](Maybe.optionMaybeIso to _.keyO)(n => {
     case Text(a, b, _, c, d, e) => Text(a, b, n, c, d, e)
+    case f: Tag                 => f
   })
 
   val _alive = Lens[CustomField, Alive](_.alive)(n => {
-    case t: Text => t.copy(alive = n)
+    case f: Text => f.copy(alive = n)
+    case f: Tag  => f.copy(alive = n)
   })
 
   implicit object Equality extends Equal[CustomField] {
     override def equal(a: CustomField, b: CustomField) = a match {
       case x: Text => b match {case y: Text => x ≟ y; case _ => false}
+      case x: Tag  => b match {case y: Tag  => x ≟ y; case _ => false}
     }
   }
 }

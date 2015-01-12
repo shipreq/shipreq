@@ -113,6 +113,9 @@ private[protocol] object CodecBase {
   def intkeyW2[A, B](k: Int, a: A, b: B)(implicit A: Writer[A], B: Writer[B]) =
     Js.Arr(Js.Num(k), A write a, B write b)
 
+  def intkeyW3[A, B, C](k: Int, a: A, b: B, c: C)(implicit A: Writer[A], B: Writer[B], C: Writer[C]) =
+    Js.Arr(Js.Num(k), A write a, B write b, C write c)
+
   def intkeyW4[A, B, C, D](k: Int, a: A, b: B, c: C, d: D)(implicit A: Writer[A], B: Writer[B], C: Writer[C], D: Writer[D]) =
     Js.Arr(Js.Num(k), A write a, B write b, C write c, D write d)
 
@@ -221,36 +224,6 @@ object DataCodecs {
     })
   }
 
-  implicit final val customFieldId   = tagL(CustomField.Id.apply)
-  implicit final val customFieldText = caseclass6(CustomField.Text.apply, CustomField.Text.unapply)
-  implicit final val customField     = ReadWriter[CustomField]({
-      case f: CustomField.Text => strkeyW("t", f)
-    }, {
-      case Js.Arr(Js.Str(k), v) => k match {
-        case "t" => readJs[CustomField.Text](v)
-      }
-    })
-  implicit final val staticField = {
-    import StaticField._
-    ReadWriter[StaticField]({
-      case NormalAltStepTree => Js.Str("n")
-      case ExceptionStepTree => Js.Str("e")
-      case StepGraph         => Js.Str("g")
-    }, {
-      case Js.Str("n") => NormalAltStepTree
-      case Js.Str("e") => ExceptionStepTree
-      case Js.Str("g") => StepGraph
-    })
-  }
-  implicit final val fieldId = ReadWriter[Field.Id]({
-      case i: CustomField.Id => Js.Str(i.value.toString)
-      case s: StaticField    => staticField.write(s)
-    }, {
-      case Js.Str(ParseLong(i)) => CustomField.Id(i)
-      case s                    => staticField.read(s)
-    })
-  implicit final val fieldSet        = caseclass2(FieldSet.apply, FieldSet.unapply)
-
   implicit final val reqTypeMnemonic = tagS(ReqType.Mnemonic.apply)
   implicit final val customReqTypeId = tagL(CustomReqType.Id.apply)
   implicit final val customReqType   = caseclass6(CustomReqType.apply, CustomReqType.unapply)
@@ -270,6 +243,39 @@ object DataCodecs {
       case 1 => readJs(v)(applicableTag)
     }
   })
+
+  implicit final val customFieldId   = tagL(CustomField.Id.apply)
+  implicit final val customFieldText = caseclass6(CustomField.Text.apply, CustomField.Text.unapply)
+  implicit final val customFieldTag  = caseclass5(CustomField.Tag .apply, CustomField.Tag .unapply)
+  implicit final val customField     = ReadWriter[CustomField]({
+    case f: CustomField.Text => strkeyW("x", f)
+    case f: CustomField.Tag  => strkeyW("t", f)
+  }, {
+    case Js.Arr(Js.Str(k), v) => k match {
+      case "x" => readJs[CustomField.Text](v)
+      case "t" => readJs[CustomField.Tag ](v)
+    }
+  })
+  implicit final val staticField = {
+    import StaticField._
+    ReadWriter[StaticField]({
+      case NormalAltStepTree => Js.Str("n")
+      case ExceptionStepTree => Js.Str("e")
+      case StepGraph         => Js.Str("g")
+    }, {
+      case Js.Str("n") => NormalAltStepTree
+      case Js.Str("e") => ExceptionStepTree
+      case Js.Str("g") => StepGraph
+    })
+  }
+  implicit final val fieldId = ReadWriter[Field.Id]({
+    case i: CustomField.Id => Js.Str(i.value.toString)
+    case s: StaticField    => staticField.write(s)
+  }, {
+    case Js.Str(ParseLong(i)) => CustomField.Id(i)
+    case s                    => staticField.read(s)
+  })
+  implicit final val fieldSet        = caseclass2(FieldSet.apply, FieldSet.unapply)
 
   implicit final val project = caseclass4(Project.apply, Project.unapply)
 }
@@ -301,9 +307,13 @@ object ProtocolDataCodecs {
     import FP._, Field.ApplicableReqTypes
     ReadWriter[Values]({
       case TextFieldValues(a, b, c, d) => intkeyW4(0, a, b, c, d)
+      case TagFieldValues(a, b, c)     => intkeyW3(1, a, b, c)
     }, {
       case Js.Arr(Js.Num(n), a, b, c, d) => n.toInt match {
         case 0 => TextFieldValues(readJs[String](a), readJs[FieldRefKey](b), readJs[Mandatory](c), readJs[ApplicableReqTypes](d))
+      }
+      case Js.Arr(Js.Num(n), a, b, c) => n.toInt match {
+        case 1 => TagFieldValues(readJs[Tag.Id](a), readJs[Mandatory](b), readJs[ApplicableReqTypes](c))
       }
     })
   }
