@@ -7,7 +7,7 @@ import scalaz.Isomorphism._
 import scalaz.std.AllInstances._
 import scalaz.syntax.equal._
 import shapeless.contrib.scalaz.Instances._
-import shipreq.prop.CycleDetector
+import japgolly.nyaya.CycleDetector
 import shipreq.base.util.IMap
 import shipreq.base.util.TaggedTypes.TaggedLong
 
@@ -120,7 +120,7 @@ object TagTree {
     val rootIds = tt.values.foldLeft(tt.keySet)(_ -- _.children)
     val roots = rootIds.toStream.map(lookup).sortBy(_.tag.name)
     "TagTree\n" +
-    shipreq.prop.util.Util.asciiTree(roots)(_.children.map(lookup),
+    japgolly.nyaya.util.Util.asciiTree(roots)(_.children.map(lookup),
       t => s"${t.tag.name} (${t.id.value})${if (t.tag.alive ≟ Dead) " DEAD" else ""}",
       "  ")
   }

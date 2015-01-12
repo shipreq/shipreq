@@ -1,6 +1,6 @@
 package shipreq.webapp.base.test
 
-import shipreq.prop.util._
+import japgolly.nyaya.util._
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.UnsafeTypes._
 

@@ -4,9 +4,9 @@ import scalaz.std.vector._
 import scalaz.std.string._
 import scalaz.syntax.equal._
 import utest._
-import shipreq.prop._
-import shipreq.prop.test._
-import shipreq.prop.test.PropTest._
+import japgolly.nyaya._
+import japgolly.nyaya.test._
+import japgolly.nyaya.test.PropTest._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.UnsafeTypes._

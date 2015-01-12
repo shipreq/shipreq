@@ -79,6 +79,17 @@ object Deps {
     val macros = dd("monocle-macro") ++ core
   }
 
+  object Nyaya extends Group("0.5.0", "com.github.japgolly.nyaya") {
+    object jvm {
+      val core = dd("nyaya-core")
+      val test = dd("nyaya-test")
+    }
+    object js {
+      val core = js("nyaya-core")
+      val test = js("nyaya-test")
+    }
+  }
+
   object Json4s extends Group("3.2.10", "org.json4s") {
     val jackson = dd("json4s-jackson") ++ Scala.all
   }
@@ -111,8 +122,6 @@ object Deps {
   val shapeless = JvmAndJs("com.github.japgolly.fork.shapeless", "shapeless", "2.0.0")
   val μPickle   = JvmAndJs("com.github.japgolly.fork.upickle",   "upickle",   "custom-1")
   val μTest     = JvmAndJs("com.lihaoyi",                        "utest",     "0.2.3")
-
-  val RNG = JvmAndJsFork("com.nicta", "com.github.japgolly.fork.nicta", "rng", "1.3.0")
 
   // Was only needed trying to use Monocle's @Lenses. Monocle's Lenser works without this.
   // val macroParadise = compilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full)

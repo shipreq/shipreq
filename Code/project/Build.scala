@@ -10,10 +10,6 @@ object ShipReq extends Build {
   // Declare modules
   lazy val root = Root.project
 
-  lazy val prop     = Prop.project
-  lazy val propCore = Prop.PropCore.project
-  lazy val propTest = Prop.PropTest.project
-
   lazy val base         = Base.project
   lazy val baseDb       = Base.Db.project
   lazy val baseTest     = Base.Test.project
@@ -63,41 +59,10 @@ object ShipReq extends Build {
     def dir = "."
     override def project = Project("root", file(dir))
       .configure(commonSettings, Common.useHiddenTargetDir)
-      .aggregate(base, webapp, taskman, prop)
+      .aggregate(base, webapp, taskman)
   }
 
   // ===================================================================================================================
-  object Prop extends Module {
-    val dir = "prop"
-
-    override def project = typicalProject
-      .aggregate(propCore, propTest) // not umbrella cos it shouldn't dependOn
-
-    // ----------------------------------------------------
-    object PropCore extends Module {
-      val dir = "prop-core"
-
-      override def deps =
-        Scalaz.core ++ testScope(μTest.jvm)
-
-      override def project = typicalProject
-        .configure(Common.scalaAndScalaJsShared)
-    }
-
-    // ----------------------------------------------------
-    object PropTest extends Module {
-      val dir = "prop-test"
-
-      override def deps =
-        Scalaz.core ++ Monocle.macros ++ RNG.jvm ++ μTest.jvm
-
-      override def project = typicalProject
-        .configure(Common.scalaAndScalaJsShared)
-        .dependsOn(propCore)
-        .settings(unmanagedSourceDirectories in Compile += baseDirectory.value / "src/main/scala-jvm")
-    }
-  }
-    // ===================================================================================================================
   object Base extends Module {
     val dir = "base"
     override def project = typicalProject
@@ -257,7 +222,7 @@ object ShipReq extends Build {
       val dir = "webapp-base"
 
       override def deps =
-        μPickle.jvm ++ Monocle.macros ++ shapeless.jvm
+        μPickle.jvm ++ Monocle.macros ++ shapeless.jvm ++ Nyaya.jvm.core
         testScope(μTest.jvm)
 
       override def project = typicalProject
@@ -267,18 +232,19 @@ object ShipReq extends Build {
             "tbc" -> ";webapp-base-test/test; webapp-client/test",
             "js"  -> Client.jsCmd,
             "wd"  -> ";up;~js"))
-        .dependsOn(propCore, baseUtilSjs)
+        .dependsOn(baseUtilSjs)
     }
 
     // ----------------------------------------------------
     object BaseTest extends Module {
       val dir = "webapp-base-test"
 
-      override def deps = μTest.jvm
+      override def deps =
+        μTest.jvm ++ testScope(Nyaya.jvm.test)
 
       override def project = typicalProject
         .configure(Common.scalaAndScalaJsShared)
-        .dependsOn(webappBase, propTest % "test")
+        .dependsOn(webappBase)
     }
 
     // ----------------------------------------------------
@@ -296,8 +262,9 @@ object ShipReq extends Build {
       val dir = "webapp-client"
 
       override def deps =
-        ScalaJS.Scalaz.effect ++ ScalaJS.React.most ++ ScalaJS.Monocle.macros ++ μPickle.js ++ shapeless.js ++
-        testScope(ScalaJS.React.test ++ μTest.js ++ RNG.js)
+        ScalaJS.Scalaz.effect ++ ScalaJS.React.most ++ ScalaJS.Monocle.macros ++
+        μPickle.js ++ shapeless.js ++ Nyaya.js.core ++
+        testScope(ScalaJS.React.test ++ μTest.js ++ Nyaya.js.test)
 
       def testSettings = (_: Project)
         .settings(utestJsSettings: _*)
@@ -332,12 +299,11 @@ object ShipReq extends Build {
       override def project = typicalProject
         .settings(scalaJSSettings: _*)
         .configure(
-          jsStyleDependsOn(propCore, baseUtilSjs, webappBase),
-          jsStyleDependsOnS(propTest, webappBaseTest)(Compile -> Test, Test -> Test),
+          jsStyleDependsOn(baseUtilSjs, webappBase),
+          jsStyleDependsOnS(webappBaseTest)(Compile -> Test, Test -> Test),
           testSettings,
           dontInline, // crashes scalac 2.11.2
           prodJsSettings)
-        .settings(unmanagedSourceDirectories in Test += (baseDirectory in Compile in propTest).value / "src/main/scala-js")
     }
 
     // ----------------------------------------------------
@@ -433,7 +399,6 @@ object ShipReq extends Build {
           // Ensure templates can be loaded from the console
           fullClasspath in console in Compile += file("src/main/webapp"))
         .dependsOn(baseDb, taskmanApi, webappBase)
-        .dependsOn(propTest % "test") //, webappBaseTest % "test") μTest??
         .dependsOn(baseUtil, taskmanApiLogic, taskmanApiImpl) // Stupid IDEA auto-import needs this
       }
   }

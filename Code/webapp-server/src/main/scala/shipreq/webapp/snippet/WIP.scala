@@ -5,7 +5,7 @@ import scalaz.{Equal, \&/, -\/, \/-}, \&/._
 import scalaz.syntax.equal._
 import shipreq.base.util.Util
 import shipreq.base.util.ScalaExt._
-import shipreq.prop.util._
+import japgolly.nyaya.util._
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.lib.ServerProtocol
 import shipreq.webapp.base.data._, DataImplicits._

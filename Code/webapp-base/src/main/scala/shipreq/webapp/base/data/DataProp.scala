@@ -3,7 +3,7 @@ package shipreq.webapp.base.data
 import shipreq.base.util.Debug._
 import scalaz.syntax.equal._
 import scalaz.std.AllInstances._
-import shipreq.prop._
+import japgolly.nyaya._
 import DataImplicits._
 
 object DataProp {

@@ -1,6 +1,6 @@
 package shipreq.webapp.base.delta
 
-import shipreq.prop._
+import japgolly.nyaya._
 import shipreq.webapp.base.data.Rev
 
 final case class RemoteDeltaP[P <: Partition] private[delta](

@@ -4,9 +4,9 @@ import monocle.Lens
 import scalaz.Equal
 import scalaz.std.AllInstances._
 import utest._
-import shipreq.prop._
-import shipreq.prop.test._
-import shipreq.prop.test.PropTest._
+import japgolly.nyaya._
+import japgolly.nyaya.test._
+import japgolly.nyaya.test.PropTest._
 import shipreq.webapp.client.test.TestUtil._
 import RowStatus._
 import SavedRowStore.{Row, SS}

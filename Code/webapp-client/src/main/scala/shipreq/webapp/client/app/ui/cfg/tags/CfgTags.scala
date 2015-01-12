@@ -15,8 +15,8 @@ import scalaz.std.AllInstances._
 import scalaz.syntax.equal._
 import scalaz.syntax.bind.ToBindOps
 
-import shipreq.prop.CycleDetector
-import shipreq.prop.util.Multimap
+import japgolly.nyaya.CycleDetector
+import japgolly.nyaya.util.Multimap
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.delta.Partition

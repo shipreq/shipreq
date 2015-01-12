@@ -22,7 +22,7 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
                          fields:           RevAnd[FieldSet],
                          tags:             RevAnd[TagTree]) {
 
-  import shipreq.prop._
+  import japgolly.nyaya._
   this assertSatisfies DataProp.project
 
   def rev =

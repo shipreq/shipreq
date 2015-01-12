@@ -14,7 +14,7 @@ import scalaz.syntax.equal._
 import shipreq.base.util.IMap
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedLong
-import shipreq.prop.test.{Distinct, Gen}
+import japgolly.nyaya.test.{Distinct, Gen}
 import shipreq.webapp.base.data._, ReqType.Mnemonic, Field.ApplicableReqTypes
 import shipreq.webapp.base.delta._
 import shipreq.base.util.Debug._

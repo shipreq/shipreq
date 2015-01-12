@@ -9,9 +9,9 @@ import upickle.BaseCodecs.UnitRW
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.delta._
 import shipreq.webapp.base.{RandomData => $}
-import shipreq.prop._
-import shipreq.prop.test.Gen
-import shipreq.prop.test.PropTest._
+import japgolly.nyaya._
+import japgolly.nyaya.test.Gen
+import japgolly.nyaya.test.PropTest._
 
 object ProtocolTest extends TestSuite {
 

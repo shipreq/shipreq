@@ -88,7 +88,6 @@ object Common {
       debugAndReleaseCompilerFlags,
       addCommandAliases(
         "/"    -> "project root",
-        "P"    -> "project prop",
         "B"    -> "project base",
         "T"    -> "project taskman",
         "W"    -> "project webapp",

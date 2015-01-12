@@ -8,7 +8,7 @@ import shapeless.TypeClass.deriveConstructors
 import shapeless.contrib.scalaz.Instances._
 import shipreq.base.util.Util
 import shipreq.base.util.ScalaExt._
-import shipreq.prop.{CycleFree, CycleDetector}
+import japgolly.nyaya.{CycleFree, CycleDetector}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.delta.{Partition, RemoteDeltaP}

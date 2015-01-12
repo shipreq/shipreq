@@ -46,7 +46,7 @@ parseCloc a = parse $ listToMaybe $ filter (isPrefixOf "Scala") $ lines a
 ------------------------------------------------------------------------------------------------------------------------
 -- Stats gathering
 
-groups = ["prop", "base", "taskman", "webapp"]
+groups = ["base", "taskman", "webapp"]
 mainPaths = ["src/main/scala", "src/main/scala-jvm", "src/main/scala-js"]
 testPaths = ["src/test-lib/scala", "src/test/scala"]
 
@@ -100,7 +100,7 @@ deps = M.fromList [
          ("webapp-server",         ["webapp-base-test", "base-db", "taskman-api"]) ,
          ("webapp-client",         ["webapp-base-test", "base-util-sjs"]) ,
          ("webapp-base-test",      ["webapp-base"]) ,
-         ("webapp-base",           ["base-util-sjs", "prop-core"]) ,
+         ("webapp-base",           ["base-util-sjs"]) ,
          ("taskman",               ["taskman-api", "taskman-server"]) ,
          ("taskman-api",           ["taskman-api-impl", "taskman-api-logic"]) ,
          ("taskman-api-impl",      ["taskman-api-logic"]) ,

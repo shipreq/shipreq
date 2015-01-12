@@ -9,7 +9,7 @@ import upickle.TupleCodecs._
 import upickle.StdlibCodecs.{SeqishR, SeqishW}
 import upickle.StdlibCodecs.{MapR, MapW}
 
-import shipreq.prop.util._
+import japgolly.nyaya.util._
 import shipreq.base.util._
 import shipreq.base.util.TaggedTypes._
 import shipreq.webapp.base.data._

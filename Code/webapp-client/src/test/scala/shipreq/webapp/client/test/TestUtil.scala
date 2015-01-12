@@ -5,7 +5,7 @@ import scala.scalajs.js
 import scalaz.Equal
 import scalaz.std.AllInstances._
 import scalaz.effect.IO
-import shipreq.prop.test.Gen
+import japgolly.nyaya.test.Gen
 import shipreq.base.util.Debug._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.test.BaseTestUtil
