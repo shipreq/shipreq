@@ -2,13 +2,13 @@ package shipreq.webapp.client.app.ui.cfg.tags
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import org.scalajs.dom.HTMLSelectElement
-import shipreq.base.util.ParseLong
-import scalaz.{Equal, Memo}
+import scalaz.Equal
 import scalaz.effect.IO
-
+import shipreq.base.util.ParseLong
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.util.DND
 import Tag.Id
+import TagTree.FlatRow
 
 private[tags] object DetailPane {
 
@@ -16,7 +16,7 @@ private[tags] object DetailPane {
   implicit val relEquivalence = Equal.equalBy((_: Rel).id)
   type Rels = Seq[Rel]
 
-  case class AddRel(name: String, depth: Int, selectable: Option[Id])
+  case class AddRel(value: FlatRow, selectable: Option[Id])
   case class AddSelected(id: Id, onAdd: IO[Unit])
   case class AddRels(rels: Vector[AddRel], onSelect: Option[Id] => IO[Unit], selected: Option[AddSelected])
 
@@ -87,7 +87,7 @@ private[tags] object DetailPane {
             case Some(id) => <.option(^.value := id.value)
             case None     => <.option(^.disabled := true)
           }
-          base(s"${indentation(r.depth)}${r.name}")
+          base(r.value.indentedName)
         }
 
         val dropdown =
@@ -108,9 +108,6 @@ private[tags] object DetailPane {
         <.div(^.marginTop := 1.ex, dropdown, addButton)
       }
   }
-
-  private[this] val indentation =
-    Memo.immutableHashMapMemo[Int, String]("\u00A0\u00A0" * _)
 
   val Component = ReactComponentB[Props]("Cfg: Tag Detail")
     .initialState[State](DND.Parent.initialState)

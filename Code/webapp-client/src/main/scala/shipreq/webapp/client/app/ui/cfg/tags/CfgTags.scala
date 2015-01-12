@@ -462,7 +462,7 @@ private[tags] object MainTable {
       val filter = addRelFilter(s, subj, mod, relAlreadyExists)
       val rels = TagTree.flatten(s.tagTree)(filter, FilterPolicy.OmitNothing)
         .filter(_.tag.alive ≟ Alive)
-        .map(row => AddRel(row.tag.name, row.depth,
+        .map(row => AddRel(row,
             if (row.status ≟ FlatRow.Status.Good) row.id.some else None))
       AddRels(rels, selUpdate,
         sel.map(selId => AddSelected(selId, treeUpdateIO(s, updateIO, subj, mod(selId)))))

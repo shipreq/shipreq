@@ -11,7 +11,7 @@ private[fields] class TagSelector(tt: TagTree) {
 
   private[this] val options = {
     val flat = TagTree.flatten(tt)(Tag.filterAlive, FilterPolicy.OmitAnythingWithBadParent)
-    flat.map(f => Choice(f.id, f.tag.name, false))
+    flat.map(f => Choice(f.id, f.indentedName, false))
   }
 
   private[this] val optionsO =

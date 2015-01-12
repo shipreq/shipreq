@@ -2,7 +2,7 @@ package shipreq.webapp.base.data
 
 import monocle.Lens
 import monocle.macros.Lenser
-import scalaz.Equal
+import scalaz.{Memo, Equal}
 import scalaz.Isomorphism._
 import scalaz.std.AllInstances._
 import scalaz.syntax.equal._
@@ -177,7 +177,13 @@ object TagTree {
         sb append id.value
         sb.toString()
       }
+
+    def indentedName =
+      s"${indentation(depth)}${tag.name}"
   }
+
+  val indentation =
+    Memo.immutableHashMapMemo[Int, String]("\u00A0\u00A0" * _)
 
   def topLevelIds(tt: TagTree): Set[Id] = {
     val allChildren = tt.values.foldLeft(Set.empty[Id])((q, t) => t.children.foldLeft(q)(_ + _))
