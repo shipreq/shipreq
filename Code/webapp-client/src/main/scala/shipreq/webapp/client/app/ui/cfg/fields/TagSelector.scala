@@ -10,17 +10,26 @@ import TagTree.FlatRow.FilterPolicy
 private[fields] class TagSelector(tt: TagTree) {
 
   private[this] val options = {
-    val flat    = TagTree.flatten(tt)(Tag.filterAlive, FilterPolicy.OmitAnythingWithBadParent)
-    val choices = flat.map(f => Choice(f.id, f.tag.name, false))
-    SelectOne.optional(choices)
+    val flat = TagTree.flatten(tt)(Tag.filterAlive, FilterPolicy.OmitAnythingWithBadParent)
+    flat.map(f => Choice(f.id, f.tag.name, false))
   }
 
-  val component = SelectOne.component[Option[Tag.Id]]
+  private[this] val optionsO =
+    SelectOne.optional(options)
+
+  val component  = SelectOne.component[Tag.Id]
+  val componentO = SelectOne.component[Option[Tag.Id]]
 
   def editor: SimpleEditor[Option[Tag.Id]] =
     Editor { ei =>
       val selected = ei.data
       val onSelect = ei.editable map SimpleEditor.onChangeAndEditFinished
-      component(Props(selected, options, onSelect))
+
+      // Once a tag is selected, the blank option (None: Option[Tag.Id]) is removed
+
+      selected match {
+        case Some(s) => component (Props(s,    options,  onSelect.map(f => s => f(Some(s)))))
+        case None    => componentO(Props(None, optionsO, onSelect))
+      }
     }
 }
