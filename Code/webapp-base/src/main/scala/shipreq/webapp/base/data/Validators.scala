@@ -116,7 +116,7 @@ object Validators {
         VFailure.forField(FieldNames.name, NonEmptyList("can not be used for user-defined fields.")))
 
     private def nameUniqueness =
-      Uniqueness.entity[CustomField].applyO(_.id.some, _.name).fieldName(FieldNames.name)
+      Uniqueness.entity[CustomField].applyOO(_.id.some, _.independentName).fieldName(FieldNames.name)
 
     val nameS = nameU.liftS[S].addValidation(nameUniqueness)
 

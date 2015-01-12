@@ -219,7 +219,7 @@ object RandomData {
 
   def customFields(cf: Gen[CustomField]): Gen[IMap[CustomField.Id, CustomField]] = {
     def id   = distinctId(CustomField.IdAccess)
-    def name = Distinct.str.at(CustomField._name)
+    def name = Distinct.str.at(CustomField._independentName)
     def key  = Distinct.fstr.xmap(FieldRefKey.apply)(_.value).distinct.at(CustomField._key)
     val dist = (id * name * key).lift[Stream]
     cf.stream.map(fs => emptyDataMap(CustomField) ++ dist.run(fs))

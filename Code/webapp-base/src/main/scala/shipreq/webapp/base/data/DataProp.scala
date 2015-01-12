@@ -1,9 +1,9 @@
 package shipreq.webapp.base.data
 
-import shipreq.base.util.Debug._
+import japgolly.nyaya._
 import scalaz.syntax.equal._
 import scalaz.std.AllInstances._
-import japgolly.nyaya._
+import shipreq.base.util.Debug._
 import DataImplicits._
 
 object DataProp {
@@ -54,7 +54,7 @@ object DataProp {
   object fields {
 
     def uniqueNames =
-      Prop.distinct("name", (_: FieldSet).fields.map(_.name))
+      Prop.distinct("name", (_: FieldSet).fields.flatMap(_.independentName.toVector))
 
     def uniqueKeys =
       Prop.distinct("FieldRefKey", (_: FieldSet).fields.flatMap(_.keyO.toVector))

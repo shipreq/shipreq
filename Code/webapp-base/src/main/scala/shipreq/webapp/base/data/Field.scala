@@ -74,11 +74,13 @@ case object Deletable extends Deletable with (Boolean <=> Deletable) {
 }
 
 sealed trait Field {
-  def name     : String
   def fieldType: FieldType
   def reqTypes : Field.ApplicableReqTypes
   def keyO     : Option[FieldRefKey]
   def mandatory: Mandatory
+
+  /** Independent as opposed to the name being derived from some external state. */
+  def independentName: Option[String]
 
   def fold[A](s: StaticField => A, c: CustomField => A): A
 
@@ -100,16 +102,23 @@ object Field {
 
   val filterAlive: Field => Boolean =
     _.fold(_ => true, _.alive ≟ Alive)
+
+  def name: Field => String = {
+    case f: StaticField      => f.name
+    case f: CustomField.Text => f.name
+  }
 }
 
 import Field.ApplicableReqTypes
 
-sealed abstract class StaticField(override val name     : String,
+sealed abstract class StaticField(         val name     : String,
                                   override val fieldType: StaticFieldType,
                                   override val reqTypes : Field.ApplicableReqTypes,
                                   override val mandatory: Mandatory,
                                            val deletable: Deletable,
                                   override val keyO     : Option[FieldRefKey]) extends Field with Field.Id {
+
+  override final def independentName = Some(name)
 
   override final def fold  [A](s: StaticField => A, c: CustomField    => A): A = s(this)
   override final def foldId[A](s: StaticField => A, c: CustomField.Id => A): A = s(this)
@@ -170,17 +179,18 @@ object CustomField {
                   reqTypes : ApplicableReqTypes,
                   alive    : Alive) extends CustomField(CustomFieldType.Text) {
     override def keyO = Some(key)
+    override def independentName = Some(name)
   }
 
   object Text {
     implicit val equality = deriveEqual[Text]
   }
 
-  val _name = Lens[CustomField, String](_.name)(n => {
+  val _independentName = Optional[CustomField, String](Maybe.optionMaybeIso to _.independentName)(n => {
     case Text(a, _, b, c, d, e) => Text(a, n, b, c, d, e)
   })
 
-  val _key = Optional[CustomField, FieldRefKey](f => Maybe.optionMaybeIso.to(f.keyO))(n => {
+  val _key = Optional[CustomField, FieldRefKey](Maybe.optionMaybeIso to _.keyO)(n => {
     case Text(a, b, _, c, d, e) => Text(a, b, n, c, d, e)
   })
 
