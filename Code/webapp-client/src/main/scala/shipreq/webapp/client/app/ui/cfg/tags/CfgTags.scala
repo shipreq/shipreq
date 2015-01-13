@@ -146,15 +146,24 @@ private[tags] object MainTable {
   }
 
   val tagStateFns = new RemoteDeltaListener.StateFns[S, Id, PovTag](
-    (s, i) =>
-      eachTypesStores.foldLeft(State._tree.modify(_ delkv i))((f, s) => f compose s.s.remove(i))(s),
+    (s, i) => {
+      val f1 = State._tree.modify(_ delkv i)
+      val f2 = eachTypesStores.foldLeft(f1)(_ compose _.s.remove(i))
+      val f3 = f2 compose maybeCloseDetailPane(_.id ≟ i)
+      f3(s)
+    },
     (s, i, d) => {
-      val s2 = d.tag match {
-        case t: TagGroup      => tg_storesS.s.set(i, t)(s)
-        case t: ApplicableTag => at_storesS.s.set(i, t)(s)
+      val f1 = d.tag match {
+        case t: TagGroup      => tg_storesS.s.set(i, t)
+        case t: ApplicableTag => at_storesS.s.set(i, t)
       }
-      State._tree.modify(PovRelations.trustedApply1(d.rels, i, _))(s2)
+      val f2 = f1 compose State._tree.modify(PovRelations.trustedApply1(d.rels, i, _))
+      val f3 = f2 compose maybeCloseDetailPane(p => (d.tag.alive ≟ Dead) && (p.id ≟ d.tag.id))
+      f3(s)
     })
+
+  def maybeCloseDetailPane(closeCondition: DetailPaneState => Boolean): S => S =
+    s => if (State._detailRow.get(s) exists closeCondition) State._detailRow.set(None)(s) else s
 
   val Component =
     ReactComponentB[Props]("Cfg: Tags")
