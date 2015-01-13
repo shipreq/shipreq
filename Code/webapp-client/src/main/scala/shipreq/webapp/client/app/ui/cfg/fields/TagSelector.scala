@@ -17,8 +17,8 @@ private[fields] class TagSelector(tt: TagTree) {
   private[this] val optionsO =
     SelectOne.optional(options)
 
-  val component  = SelectOne.component[Tag.Id]
-  val componentO = SelectOne.component[Option[Tag.Id]]
+  val Component  = SelectOne.Component[Tag.Id]
+  val ComponentO = SelectOne.Component[Option[Tag.Id]]
 
   def editor: SimpleEditor[Option[Tag.Id]] =
     Editor { ei =>
@@ -28,8 +28,8 @@ private[fields] class TagSelector(tt: TagTree) {
       // Once a tag is selected, the blank option (None: Option[Tag.Id]) is removed
 
       selected match {
-        case Some(s) => component (Props(s,    options,  onSelect.map(f => s => f(Some(s)))))
-        case None    => componentO(Props(None, optionsO, onSelect))
+        case Some(s) => Component (Props(s,    options,  onSelect.map(f => s => f(Some(s)))))
+        case None    => ComponentO(Props(None, optionsO, onSelect))
       }
     }
 }

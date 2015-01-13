@@ -1,30 +1,22 @@
 package shipreq.webapp.client.app.ui.cfg.tags
 
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
-import org.scalajs.dom.HTMLSelectElement
 import scalaz.effect.IO
 import shipreq.webapp.base.data.TagType
+import shipreq.webapp.client.app.ui.{SelectAndInvoke, SelectOne}
+import SelectOne.Choice
 
-private[tags] object NewTagControl { // TODO Replace with SelectAction
+private[tags] object NewTagControl {
 
-  case class Props(selected: TagType, onChange: TagType => IO[Unit], onCreate: Option[IO[Unit]])
+  val choices = TagType.values.map(tt => Choice(tt, tt.name, false))
 
-  val Component = ReactComponentB[Props]("NewTagControl")
-    .render(p =>
-      <.div(
-        <.select(
-          ^.value := p.selected.key,
-          ^.onChange ~~> onchange(p.onChange),
-          ^.disabled := p.onCreate.isEmpty,
-          TagType.values.map(t => <.option(^.value := t.key, t.name))),
-        <.button(
-          ^.onClick ~~>? p.onCreate,
-          ^.disabled := p.onCreate.isEmpty,
-          "Create"
-      )))
-    .shouldComponentUpdate((c,p,_) => p != c.props)
-    .build
+  val Component = SelectAndInvoke.Component[TagType]("NewTag")
 
-  private def onchange(onChange: TagType => IO[Unit]): SyntheticEvent[HTMLSelectElement] => IO[Unit] =
-    e => TagType.byKey.get(e.target.value).fold(IO(()))(onChange)
+  def props(selected: TagType,
+            invoke  : Option[IO[Unit]],
+            select  : TagType => IO[Unit],
+            disabled: Boolean): SelectAndInvoke.Props[TagType] =
+
+    SelectAndInvoke.Props(
+      SelectOne.Props(selected, choices, Some(select)),
+      "Create", invoke, disabled) // TODO sync all new buttons
 }

@@ -64,12 +64,14 @@ case object MutexChildren extends MutexChildren with (Boolean <=> MutexChildren)
 // =====================================================================================================================
 // Tag meta
 
-sealed abstract class TagType(val key: String, val name: String) { type Data <: Tag }
+sealed abstract class TagType(val name: String) { type Data <: Tag }
 object TagType {
-  case object Group      extends TagType("G", "Tag Group") { override type Data = TagGroup }
-  case object Applicable extends TagType("A", "Tag")       { override type Data = ApplicableTag }
+  case object Group      extends TagType("Tag Group") { override type Data = TagGroup }
+  case object Applicable extends TagType("Tag")       { override type Data = ApplicableTag }
+
+  implicit val equality = Equal.equalA[TagType]
+
   val values = List[TagType](Group, Applicable)
-  val byKey  = IMap.empty((_: TagType).key).addAll(values: _*)
 }
 
 object Tag {

@@ -196,14 +196,14 @@ private[tags] object MainTable {
     def validatorState(k: Option[Id]): S => V.S =
       MainTable.validatorState(_, $.props.clientData, k)
 
-    def newTagControlProps =
-      NewTagControl.Props(
-        $.state.newSel,
-        $._setStateL(State._newSel),
-        if (newRowActive($.state)) None else Some(onCreate))
+    def newTagControlProps = NewTagControl.props(
+      $.state.newSel,
+      onNewInvoke,
+      $ _setStateL State._newSel,
+      newRowActive($.state))
 
-    def onCreate: IO[Unit] =
-      $.modStateIO(s => storesForType(s.newSel).n.enableEdit(s))
+    val onNewInvoke =
+      Some($.modStateIO(s => storesForType(s.newSel).n.enableEdit(s)))
 
     val headerRow = CfgTable.header(List(
       FieldNames.name,

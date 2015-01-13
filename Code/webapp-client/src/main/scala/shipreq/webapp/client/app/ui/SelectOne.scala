@@ -25,7 +25,7 @@ object SelectOne {
     choices.foldLeft(Vector(nop))(_ :+ _.map[Option[A]](Some.apply))
   }
 
-  def component[A: Equal] =
+  def Component[A: Equal] =
     ReactComponentB[Props[A]]("SelectOne")
       .render(render(_))
       .domType[HTMLSelectElement]

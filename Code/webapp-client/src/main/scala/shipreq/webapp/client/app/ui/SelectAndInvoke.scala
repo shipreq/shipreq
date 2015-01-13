@@ -1,6 +1,7 @@
 package shipreq.webapp.client.app.ui
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import org.scalajs.dom.HTMLDivElement
 import scalaz.Equal
 import scalaz.effect.IO
 
@@ -9,6 +10,7 @@ object SelectAndInvoke {
   def Component[A: Equal](name: String) =
     ReactComponentB[Props[A]](name)
       .render(render(_))
+      .domType[HTMLDivElement]
       .build
 
   final case class Props[A](selection  : SelectOne.Props[A],
