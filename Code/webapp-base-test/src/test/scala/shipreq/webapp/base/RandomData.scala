@@ -28,10 +28,10 @@ object RandomData {
     Gen.positivelong
 
   def shortText1 =
-    Gen.alphanumericstring1.lim(AppConsts.shortTextMaxLength) // TODO reenable after Jawn bugfix: Gen.string1
+    Gen.string1.lim(AppConsts.shortTextMaxLength)
 
   def shortText =
-    Gen.alphanumericstring.lim(AppConsts.shortTextMaxLength) // TODO reenable after Jawn bugfix: Gen.string
+    Gen.string.lim(AppConsts.shortTextMaxLength)
 
   lazy val optionalLargeText =
     shortText1.lim(AppConsts.largeTextMaxLength).option
