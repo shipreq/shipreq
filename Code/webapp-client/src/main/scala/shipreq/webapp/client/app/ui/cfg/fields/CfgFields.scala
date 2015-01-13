@@ -17,7 +17,7 @@ import shipreq.webapp.base.delta.Partition
 import shipreq.webapp.base.data.Validators.{field => V}
 import shipreq.webapp.base.protocol.{DeletionAction, FieldProtocol}
 import shipreq.webapp.base.protocol.Routines.FieldCrud
-import shipreq.webapp.base.UiText.FieldNames
+import shipreq.webapp.base.UiText, UiText.FieldNames
 import shipreq.webapp.client.ClientData
 import shipreq.webapp.client.app.ui.{SelectInvoke, SelectOne, ShowDeletedToggler}
 import shipreq.webapp.client.lib.{ConsoleIO, FailureIO, SuccessIO}
@@ -237,7 +237,7 @@ private[fields] object MainTable {
               choices.sortBy(_.label),
               Some($ _setStateL State._newFieldTypeSel)
             ),
-            onInvoke, "Create", // TODO sync all new buttons
+            onInvoke, UiText.Cfg.startNewButton,
             customFieldStores.exists(_.n.editing(s))))
       }
 
@@ -245,9 +245,7 @@ private[fields] object MainTable {
         customFieldStores.map(_.n.remove).reduce(_ compose _)
 
       val abortButton =
-        <.button(
-          ^.onClick ~~> $.modStateIO(abortNew),
-          "Cancel") // TODO sync all abort-new buttons
+        UI.abortNewButton($ modStateIO abortNew)
     }
 
     // TODO staticDeletion doesn't handle failure (or lock row)

@@ -14,4 +14,10 @@ object UiText {
     def applicableReqTypes  = "Req Types"
     def dndDragHandleHeader = ""
   }
+
+  object Cfg {
+    def startNewButton    = "Create"
+    def abortNewButton    = "Cancel"
+    def retryFailedButton = "Retry"
+  }
 }

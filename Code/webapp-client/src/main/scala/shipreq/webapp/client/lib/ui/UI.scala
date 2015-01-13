@@ -1,6 +1,8 @@
 package shipreq.webapp.client.lib.ui
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import shipreq.webapp.base.UiText
+import scalaz.effect.IO
 
 object UI {
 
@@ -24,12 +26,15 @@ object UI {
   def rowStatusCtrlsFold(rs: RowStatus, sync: => TagMod, locked: ReactTag => TagMod, failed: ReactTag => TagMod): TagMod = rs match {
     case RowStatus.Sync      => sync
     case RowStatus.Locked    => locked(spinner)
-    case RowStatus.Failed(r) => failed(<.button("Retry", ^.onClick ~~> r))
+    case RowStatus.Failed(r) => failed(<.button(^.onClick ~~> r, UiText.Cfg.retryFailedButton))
   }
 
-  def spinner =
+  val spinner =
     <.img(
       ^.cls := "spinner",
       ^.src := "/assets/loading-spin.svg")
+
+  def abortNewButton(cb: IO[Unit]): ReactTag =
+    <.button(^.onClick ~~> cb, UiText.Cfg.abortNewButton)
 
 }

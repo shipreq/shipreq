@@ -211,10 +211,8 @@ private[tags] object MainTable {
       FieldNames.mutexChildren,
       FieldNames.desc))
 
-    def abortNewButton =
-      <.button(
-        ^.onClick ~~> $.modStateIO(abortNew),
-        "Cancel") // TODO sync all abort-new buttons
+    val abortNewButton =
+      UI.abortNewButton($ modStateIO abortNew)
 
     def setDetail(w: Option[Id]): S => S =
       w match {

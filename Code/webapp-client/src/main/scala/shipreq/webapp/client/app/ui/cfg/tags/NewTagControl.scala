@@ -2,6 +2,7 @@ package shipreq.webapp.client.app.ui.cfg.tags
 
 import scalaz.effect.IO
 import shipreq.webapp.base.data.TagType
+import shipreq.webapp.base.UiText
 import shipreq.webapp.client.app.ui.{SelectInvoke, SelectOne}
 import SelectOne.Choice
 
@@ -18,5 +19,5 @@ private[tags] object NewTagControl {
 
     SelectInvoke.Props(
       SelectOne.Props(selected, choices, Some(select)),
-      invoke, "Create", disabled) // TODO sync all new buttons
+      invoke, UiText.Cfg.startNewButton, disabled)
 }
