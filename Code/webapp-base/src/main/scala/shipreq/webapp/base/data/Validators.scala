@@ -83,7 +83,7 @@ object Validators {
     def nameU = genericName
 
     private def nameUniqueness =
-      Uniqueness.entity[CustomReqType].applyO(_.id.some, _.name).fieldName(FieldNames.name)
+      Uniqueness.entity[CustomReqType].optk(_.id.some).v(_.name).fieldName(FieldNames.name)
 
     val nameS = nameU.liftS[S].addValidation(nameUniqueness)
 
@@ -117,7 +117,7 @@ object Validators {
         VFailure.forField(FieldNames.name, NonEmptyList("can not be used for user-defined fields.")))
 
     private def nameUniqueness =
-      Uniqueness.entity[CustomField].applyOO(_.id.some, _.independentName).fieldName(FieldNames.name)
+      Uniqueness.entity[CustomField].optk(_.id.some).optv(_.independentName).fieldName(FieldNames.name)
 
     val nameS = nameU.liftS[S].addValidation(nameUniqueness)
 
@@ -132,7 +132,7 @@ object Validators {
         .map(FieldRefKey.apply)
 
     private def keyUniqueness =
-      Uniqueness.entity[CustomField].applyOO(_.id.some, _.keyO).fieldName(FieldNames.fieldRefKey)
+      Uniqueness.entity[CustomField].optk(_.id.some).optv(_.keyO).fieldName(FieldNames.fieldRefKey)
 
     val keyS = keyU.liftS[S].addValidation(keyUniqueness)
 
@@ -142,10 +142,10 @@ object Validators {
     val textField = nameS ⊗ keyS ⊗ mandatoryS ⊗ reqTypesS
 
     private def tagIdUniqueness =
-      Uniqueness.entity[CustomField].applyOO(_.id.some, {
+      Uniqueness.entity[CustomField].optk(_.id.some).optv {
         case  f: CustomField.Tag => f.tagId.some
         case _                   => None
-      }).fieldName(tagIdField)
+      }.fieldName(tagIdField)
 
     @inline private def tagIdField = "Tag"
 
@@ -161,7 +161,7 @@ object Validators {
     def nameU = genericName
     val nameS = nameU.liftS[S].addValidation(nameUniqueness)
     private def nameUniqueness =
-      Uniqueness.entity[Tag].applyO(_.id.some, _.name).fieldName(FieldNames.name)
+      Uniqueness.entity[Tag].optk(_.id.some).v(_.name).fieldName(FieldNames.name)
         .contramapS[S](r => (r._1, r._2.tagData._1))
 
     def keyU = shared.hashRefKeyU

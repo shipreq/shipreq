@@ -36,19 +36,19 @@ object Uniqueness {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  def entity[E] = new BE[E]
+  @inline def entity[E] = new BE[E]
 
   final class BE[E] {
-    // TODO should do {k|k?} and {v|v?} separately instead of {kv}, {k?v}, {k?v?}
+    @inline def k   [K: Equal](ek: E => K)         = new BE2[E, K        ](ek, k => k ≟ _)
+    @inline def optk[K: Equal](ek: E => Option[K]) = new BE2[E, Option[K]](ek, ignoreO[K])
+  }
 
-    def apply[K: Equal, V: Equal](ek: E => K, ev: E => V): BF[(Stream[E], K), V] =
-      main[(Stream[E], K), E, K, E, V](_._2, _._1, ek, identity, k => k ≟ _, v => v ≟ ev(_))
+  final class BE2[E, K](ek: E => K, ignore: K => K => Boolean) {
+    @inline def v   [V: Equal](ev: E => V)         = member[V](v => v ≟ ev(_))
+    @inline def optv[V: Equal](ev: E => Option[V]) = member[V](v => ev(_).fold(false)(v ≟ _))
 
-    def applyO[K: Equal, V: Equal](ek: E => Option[K], ev: E => V): BF[(Stream[E], Option[K]), V] =
-      main[(Stream[E], Option[K]), E, Option[K], E, V](_._2, _._1, ek, identity, ignoreO[K], v => v ≟ ev(_))
-
-    def applyOO[K: Equal, V: Equal](ek: E => Option[K], ev: E => Option[V]): BF[(Stream[E], Option[K]), V] =
-      main[(Stream[E], Option[K]), E, Option[K], E, V](_._2, _._1, ek, identity, ignoreO[K], v => ev(_).fold(false)(v ≟ _))
+    @inline def member[V](m: V => E => Boolean): BF[(Stream[E], K), V] =
+      main[(Stream[E], K), E, K, E, V](_._2, _._1, ek, identity, ignore, m)
   }
 
   // -------------------------------------------------------------------------------------------------------------------

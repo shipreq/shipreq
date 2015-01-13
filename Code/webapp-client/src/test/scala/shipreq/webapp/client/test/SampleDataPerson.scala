@@ -41,7 +41,7 @@ object SampleDataPerson {
         + endsWithR("[a-z0-9]")("must end with a letter or a number.")
     )) map Username.apply
 
-  val uniqueUsername = Uniqueness.entity[Person].applyO(_.id.some, _.username).fieldName(usernameF)
+  val uniqueUsername = Uniqueness.entity[Person].optk(_.id.some).v(_.username).fieldName(usernameF)
 
   val usernameV = usernameVU.liftS[VS].addValidation(uniqueUsername)
 
