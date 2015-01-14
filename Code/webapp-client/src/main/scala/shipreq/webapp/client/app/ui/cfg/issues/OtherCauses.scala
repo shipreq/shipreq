@@ -14,7 +14,7 @@ import ReqType.Mnemonic
 
 private[issues] object OtherCauses {
 
-  case class Props(cp: ClientProtocol, remote: CustomReqTypeImplicationMod.Remote, clientData: ClientData) {
+  case class Props(cp: ClientProtocol, remote: ReqTypeImplicationMod.Remote, clientData: ClientData) {
     @inline def component = Component(this)
   }
 

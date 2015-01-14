@@ -411,7 +411,7 @@ object RandomData {
         remote(ProjectInit),
         remote(CustomIssueTypeCrud),
         remote(CustomReqTypeCrud),
-        remote(CustomReqTypeImplicationMod),
+        remote(ReqTypeImplicationMod),
         remote(FieldCrud),
         remote(TagCrud))
 

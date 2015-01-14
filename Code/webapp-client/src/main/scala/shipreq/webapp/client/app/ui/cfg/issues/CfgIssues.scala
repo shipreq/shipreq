@@ -10,7 +10,7 @@ object CfgIssues {
 
   case class Props(cp         : ClientProtocol,
                    a          : CustomIssueTypeCrud.Remote,
-                   b          : CustomReqTypeImplicationMod.Remote,
+                   b          : ReqTypeImplicationMod.Remote,
                    cd         : ClientData,
                    showDeleted: Boolean) {
     @inline def component = Component(this)
