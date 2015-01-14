@@ -19,8 +19,8 @@ private[issues] object ReqTypeImplication {
     @inline def component = Component(this)
   }
 
-  val savedRowStore = SavedRowStore.data[CustomReqType](_.imp)
-  import savedRowStore.{State => S}
+  val rowStore = SavedRowStore.data[CustomReqType](_.imp)
+  import rowStore.{State => S}
   val  ST = ReactS.FixT[IO, S]
   type ST = ST.T[Unit]
 
@@ -29,11 +29,11 @@ private[issues] object ReqTypeImplication {
     .backend(new Backend(_))
     .render(_.backend.render)
     .configure(
-      RemoteDeltaListener(CustomReqType).installS(savedRowStore, Partition.CustomReqTypes, _.clientData))
+      RemoteDeltaListener(CustomReqType).installS(rowStore, Partition.CustomReqTypes, _.clientData))
     .build
 
   private def initialState(p: Props): S =
-    savedRowStore.initStateIM(p.clientData.project.customReqTypes.data)
+    rowStore.initStateIM(p.clientData.project.customReqTypes.data)
 
   private def label(r: ReqType): String =
     s"${r.mnemonic.value}: ${r.name}"
@@ -42,9 +42,9 @@ private[issues] object ReqTypeImplication {
 
     def save(p: Props, id: CustomReqType.Id): ST =
       ReactS.liftR[IO, S, Unit](state => {
-        val setStatus = savedRowStore.setStatusST[IO](id)
+        val setStatus = rowStore.setStatusST[IO](id)
         val saveio = Persistence.retryably[ST](retry => {
-          val v = savedRowStore.getI(id)(state)
+          val v = rowStore.getI(id)(state)
           val f = Persistence.failureIO(retry)($ runState _, setStatus)
           val io = $.props.cp.call(p.remote)((id, v), p.clientData.update, f)
           ST ret io
@@ -58,18 +58,18 @@ private[issues] object ReqTypeImplication {
 
     val editor =
       genEditor.cmapA[(ImplicationRequired, CustomReqType)](a => a)
-        .zoomU[S].applyRowUpdate(savedRowStore)(_._2.id)
+        .zoomU[S].applyRowUpdate(rowStore)(_._2.id)
         .paddSTA(a => { case OnEditFinished(_) => save($.props, a._2.id) })
 
     val editable = editor.editableByRowStatus($)
 
-    def editorI(r: savedRowStore.Row): editor.Input =
+    def editorI(r: rowStore.Row): editor.Input =
       EditorI((r.i, r.p), "", editable(r.status))
 
     type Rows = Stream[(Mnemonic, ReactElement)]
 
-    def savedRows: Rows =
-      savedRowStore.getAll($.state).filter(_.p.alive ≟ Alive).map(r => {
+    def customRows: Rows =
+      rowStore.getAll($.state).filter(_.p.alive ≟ Alive).map(r => {
         val re: ReactElement =
           <.tr(^.key := r.p.id.value,
             <.td(
@@ -87,7 +87,7 @@ private[issues] object ReqTypeImplication {
       })
 
     def renderRows =
-      (staticRows #::: savedRows).sortBy(_._1).map(_._2).toReactNodeArray
+      (staticRows #::: customRows).sortBy(_._1).map(_._2).toReactNodeArray
 
     def render: ReactElement =
       <.table(
