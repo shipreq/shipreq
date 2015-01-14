@@ -4,6 +4,7 @@ import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.extra.OnUnmount
 import scala.language.reflectiveCalls
 import scalaz.effect.IO
+import scalaz.syntax.equal._
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.delta.Partition
 import shipreq.webapp.base.protocol.Routines._
@@ -68,7 +69,7 @@ private[issues] object OtherCauses {
     type Rows = Stream[(Mnemonic, ReactElement)]
 
     def savedRows: Rows =
-      savedRowStore.getAll($.state).filter(_.p.alive == Alive).map(r => {
+      savedRowStore.getAll($.state).filter(_.p.alive ≟ Alive).map(r => {
         val re: ReactElement =
           <.tr(^.key := r.p.id.value,
             <.td(
