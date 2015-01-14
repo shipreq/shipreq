@@ -29,6 +29,7 @@ object Common {
     "-deprecation",
     // "-Xstrict-inference", // Don't infer known-unsound types
     // "-Yno-generic-signatures", // Stuffs up json4s
+    "-YclasspathImpl:flat", // https://github.com/scala/scala/pull/4176
     "-feature", "-language:postfixOps", "-language:implicitConversions", "-language:higherKinds", "-language:existentials")
 
   def scalacTestFlags = Seq("-language:reflectiveCalls")
