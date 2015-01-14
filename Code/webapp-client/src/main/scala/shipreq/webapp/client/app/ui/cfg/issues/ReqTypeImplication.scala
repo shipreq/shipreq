@@ -13,7 +13,7 @@ import shipreq.webapp.client.lib.ui._
 import shipreq.webapp.client.protocol.ClientProtocol
 import ReqType.Mnemonic
 
-private[issues] object OtherCauses {
+private[issues] object ReqTypeImplication {
 
   case class Props(cp: ClientProtocol, remote: ReqTypeImplicationMod.Remote, clientData: ClientData) {
     @inline def component = Component(this)
@@ -24,7 +24,7 @@ private[issues] object OtherCauses {
   val  ST = ReactS.FixT[IO, S]
   type ST = ST.T[Unit]
 
-  val Component = ReactComponentB[Props]("OtherCauses")
+  val Component = ReactComponentB[Props]("ReqTypeImplication")
     .getInitialState(initialState)
     .backend(new Backend(_))
     .render(_.backend.render)
@@ -91,7 +91,7 @@ private[issues] object OtherCauses {
 
     def render: ReactElement =
       <.table(
-        <.thead(<.tr(<.th("ReqTypes requiring implication"))),
+        <.thead(<.tr(<.th("Req-Types Requiring Implication"))),
         <.tbody(renderRows))
   }
 }

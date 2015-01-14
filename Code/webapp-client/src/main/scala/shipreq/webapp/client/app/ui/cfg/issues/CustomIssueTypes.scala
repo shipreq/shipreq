@@ -17,7 +17,7 @@ import shipreq.webapp.client.lib.CrudIO
 import shipreq.webapp.client.lib.ui._
 import shipreq.webapp.client.protocol.ClientProtocol
 
-private[issues] object CustomIssueTypeEditor {
+private[issues] object CustomIssueTypes {
 
   case class Props(cp: ClientProtocol, remote: CustomIssueTypeCrud.Remote, clientData: ClientData, showDeleted: Boolean) {
     @inline def component = Component(this)

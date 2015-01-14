@@ -11,13 +11,13 @@ import utest._
 
 import scalaz.std.AllInstances._
 
-object CustomIssueTypeEditorTest extends TestSuite {
+object CustomIssueTypesTest extends TestSuite {
 
   override def tests = TestSuite {
     val remote     = Routine.Remote("x", CustomIssueTypeCrud)
     val clientData = new ClientData(SampleProject.project)
     val cp         = new TestClientProtocol
-    val props      = new CustomIssueTypeEditor.Props(cp, remote, clientData, false)
+    val props      = new CustomIssueTypes.Props(cp, remote, clientData, false)
     val re         = props.component
     val c          = ReactTestUtils.renderIntoDocument(re)
 

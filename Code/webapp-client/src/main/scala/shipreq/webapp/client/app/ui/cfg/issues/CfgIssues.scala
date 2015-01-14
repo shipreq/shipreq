@@ -21,8 +21,8 @@ object CfgIssues {
       .render(* =>
         <.section(
           <.h4("User-Defined Issue Types"),
-          CustomIssueTypeEditor.Props(*.cp, *.a, *.cd, *.showDeleted).component,
+          CustomIssueTypes.Props(*.cp, *.a, *.cd, *.showDeleted).component,
           <.h4("Other Causes of Issues"),
-          OtherCauses.Props(*.cp, *.b, *.cd).component))
+          ReqTypeImplication.Props(*.cp, *.b, *.cd).component))
       .build
 }
