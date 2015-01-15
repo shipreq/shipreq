@@ -2,13 +2,14 @@ package shipreq.webapp.base.data
 
 import monocle._
 import monocle.macros.Lenser
-import scalaz.{NonEmptyList, OneAnd, Equal, Maybe}
+import scalaz.{NonEmptyList, OneAnd, Equal}
+import scalaz.Maybe.optionMaybeIso
 import scalaz.Isomorphism._
 import scalaz.std.AllInstances._
 import scalaz.syntax.equal._
 import shapeless.TypeClass.deriveConstructors
 import shapeless.contrib.scalaz.Instances._
-import shipreq.base.util.{Refreshable, IMap}
+import shipreq.base.util.IMap
 import shipreq.base.util.TaggedTypes.{TaggedString, TaggedLong}
 
 // =====================================================================================================================
@@ -184,10 +185,6 @@ object CustomField {
     override def keyO = Some(key)
   }
 
-  object Text {
-    implicit val equality = deriveEqual[Text]
-  }
-
   import shipreq.webapp.base.data.Tag.{Id => TagId}
   case class Tag(id       : Id,
                  tagId    : TagId,
@@ -201,16 +198,15 @@ object CustomField {
       tags.get(tagId).fold("DELETED TAG")(_.tag.name)
   }
 
-  object Tag {
-    implicit val equality = deriveEqual[Tag]
-  }
+  implicit val equalityTag  = deriveEqual[Tag]
+  implicit val equalityText = deriveEqual[Text]
 
-  val _independentName = Optional[CustomField, String](Maybe.optionMaybeIso to _.independentName)(n => {
+  val _independentName = Optional[CustomField, String](optionMaybeIso to _.independentName)(n => {
     case Text(a, _, b, c, d, e) => Text(a, n, b, c, d, e)
     case f: Tag                 => f
   })
 
-  val _key = Optional[CustomField, FieldRefKey](Maybe.optionMaybeIso to _.keyO)(n => {
+  val _key = Optional[CustomField, FieldRefKey](optionMaybeIso to _.keyO)(n => {
     case Text(a, b, _, c, d, e) => Text(a, b, n, c, d, e)
     case f: Tag                 => f
   })
