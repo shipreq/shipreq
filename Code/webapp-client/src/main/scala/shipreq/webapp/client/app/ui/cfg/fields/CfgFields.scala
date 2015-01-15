@@ -12,7 +12,7 @@ import scalaz.syntax.equal._
 
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.Util
-import shipreq.webapp.base.data._, DataImplicits._
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.delta.Partition
 import shipreq.webapp.base.data.Validators.{field => V}
 import shipreq.webapp.base.protocol.{DeletionAction, FieldProtocol}
@@ -23,7 +23,7 @@ import shipreq.webapp.client.app.ui.{SelectInvoke, SelectOne, ShowDeletedToggler
 import shipreq.webapp.client.lib.{ConsoleIO, FailureIO, SuccessIO}
 import shipreq.webapp.client.lib.ui.{FieldSet => _, _}
 import shipreq.webapp.client.protocol.ClientProtocol
-import shipreq.webapp.client.util.DND
+import shipreq.webapp.client.util.{Refreshable, DND}
 import Field.ApplicableReqTypes
 import FieldProtocol.Delta
 import DeletionAction._
@@ -133,11 +133,16 @@ private[fields] object MainTable {
     ReactComponentB[Props]("Cfg: Fields")
       .getInitialState(initialState)
       .backend(new Backend(_))
-      .render(_.backend.render)
-      .configure(DeltaListener(_.clientData, fieldDeltaListener.handler(Partition.Fields)))
+      .render(_.backend.dyn.value.render)
+      .configure(
+        DeltaListener.apply  [Props, S, Backend](_.clientData, fieldDeltaListener.handler(Partition.Fields)) compose
+        DeltaListener.refresh[Props, S, Backend](_.clientData, _.backend.dyn.refresh(()))(
+          Partition.CustomReqTypes, // Refreshes AppReqTypesEditor
+          Partition.Tags          ) // Refreshes TagSelector
+      )
       .build
 
-  def validatorState(s: S, k: Option[CustomField.Id]): V.S = {
+  def validatorStateS(s: S, k: Option[CustomField.Id]): V.S = {
     val customFieldStream = customFieldStores.flatMap(_.s.getAllP(s))
     (customFieldStream, k)
   }
@@ -145,23 +150,13 @@ private[fields] object MainTable {
   val rowIdFromEditorInput: ((V.S, Any)) => Option[CustomField.Id] = _._1._2
 
   // ===================================================================================================================
-  final class Backend($: BackendScope[Props, S]) extends OnUnmount {
+  final class Backend(val $: BackendScope[Props, S]) extends OnUnmount {
 
-    val clientData = $.props.clientData
-
-    def fieldOrder = clientData.project.fields.data.order
-
-    // TODO AppReqTypesEditor needs to change when customReqTypes change
-    val appReqTypesEditor = new AppReqTypesEditor(clientData.project.customReqTypes.data.values)
-
-    // TODO TagSelector needs to change when tags change
-    val tagSelector = new TagSelector(clientData.project.tags.data)
+    lazy val dyn = Refreshable.thunk(new DynBackend(this, $.props.clientData.project)).asVar
 
     val nameE      = Editors.textInputEditor.applyValidator(V.nameS)
     val refkeyE    = Editors.textInputEditor.applyValidator(V.keyS)
     val mandatoryE = Editors.checkboxEditor.imap(Mandatory).strengthL[V.S]
-    val reqtypesE  = appReqTypesEditor.editor($ focusStateL State._appReqTypeStates).cmapA[(V.S, ApplicableReqTypes)](_.map1(_._2))
-    val tagSelE    = tagSelector.editor.applyValidator(V.tagIdS)
 
     object protocol {
       import FieldProtocol._, CfgAction._
@@ -169,7 +164,7 @@ private[fields] object MainTable {
       val cp     = $.props.cp
 
       private def call(a: CfgAction): (SuccessIO, FailureIO) => IO[Unit] =
-        (s, f) => cp.call(remote)(a, clientData.update(_) >> s.io, f)
+        (s, f) => cp.call(remote)(a, $.props.clientData.update(_) >> s.io, f)
 
       def createIO(v: FieldProtocol.Values) =
         call(Create(v))
@@ -183,6 +178,38 @@ private[fields] object MainTable {
       def deleteIO(i: Field.Id, a: DeletionAction) =
         call(Delete(i, a))
     }
+
+    // TODO staticDeletion doesn't handle failure (or lock row)
+    val staticDeletion = new Deletion[StaticField](
+      protocol.deleteIO(_, _)(SuccessIO.nop, FailureIO.nop))
+
+    def validatorState(k: Option[CustomField.Id]): S => V.S =
+      validatorStateS(_, k)
+
+    val dndState = $.focusStateL(State._dnd)
+
+    val headerRow = CfgTable.header(List(
+      FieldNames.dndDragHandleHeader,
+      FieldNames.name,
+      FieldNames.fieldType,
+      FieldNames.fieldRefKey,
+      FieldNames.mandatory,
+      FieldNames.applicableReqTypes))
+
+    def fieldOrder = $.props.clientData.project.fields.data.order
+  }
+
+  // ===================================================================================================================
+  // Certain vals here depend on parts of Project beyond .fields
+
+  final class DynBackend(backend: Backend, project: Project) {
+    import backend.{dyn => _, _}
+
+    val appReqTypesEditor = new AppReqTypesEditor(project.customReqTypes.data.values)
+    val tagSelector       = new TagSelector(project.tags.data)
+
+    val reqtypesE  = appReqTypesEditor.editor($ focusStateL State._appReqTypeStates).cmapA[(V.S, ApplicableReqTypes)](_.map1(_._2))
+    val tagSelE    = tagSelector.editor.applyValidator(V.tagIdS)
 
     object newFieldControl {
       import SelectOne.Choice
@@ -213,7 +240,7 @@ private[fields] object MainTable {
         val allowNewCustomFieldType: CustomFieldType => Boolean = {
           case CustomFieldType.Text => true
           case CustomFieldType.Tag  =>
-            clientData.project.tags.data.values.toStream
+            project.tags.data.values.toStream
               .filter(TagInTree.filterAlive)
               .exists(t => !s.tagFieldTags.contains(t.id))
         }
@@ -246,23 +273,6 @@ private[fields] object MainTable {
       val abortButton =
         UI.abortNewButton($ modStateIO abortNew)
     }
-
-    // TODO staticDeletion doesn't handle failure (or lock row)
-    val staticDeletion = new Deletion[StaticField](
-        protocol.deleteIO(_, _)(SuccessIO.nop, FailureIO.nop))
-
-    def validatorState(k: Option[CustomField.Id]): S => V.S =
-      MainTable.validatorState(_, k)
-
-    val dndState = $.focusStateL(State._dnd)
-
-    val headerRow = CfgTable.header(List(
-      FieldNames.dndDragHandleHeader,
-      FieldNames.name,
-      FieldNames.fieldType,
-      FieldNames.fieldRefKey,
-      FieldNames.mandatory,
-      FieldNames.applicableReqTypes))
 
     def render =
       <.div(
@@ -473,7 +483,7 @@ private[fields] object MainTable {
       override def renderDead(s: S, dragHandle: ReactTag, rs: RowStatus, f: CustomField.Tag): ReactTag =
         renderRow(rs)(
           dragHandle = dragHandle,
-          name       = f.name(clientData.project.tags.data),
+          name       = f.name(project.tags.data),
           refkey     = unusedField,
           mandatory  = Editors.staticCheckbox(Mandatory from f.mandatory),
           reqtypes   = appReqTypesEditor.renderReadOnly(f.reqTypes),
@@ -489,6 +499,5 @@ private[fields] object MainTable {
         case CustomFieldType.Tag  => tag_renderer
       }
     val customFieldRenderers = CustomFieldType.values.list map rendererForType toStream
-
   }
 }

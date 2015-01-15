@@ -1,8 +1,10 @@
 package shipreq.webapp.client.lib.ui
 
+import japgolly.scalajs.react.ComponentScopeM
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.{Listenable, OnUnmount}
 import scalaz.Scalaz.Id
+import scalaz.effect.IO
 import shipreq.webapp.base.delta._
 import shipreq.webapp.client.ClientData
 import shipreq.webapp.client.delta._
@@ -62,4 +64,13 @@ object DeltaListener {
       (s, i)    => store.remove(i)(s),
       (s, i, d) => store.set(i, d)(s))
 
+  def refresh[P, S, B <: OnUnmount](cd: P => ClientData, refreshIO: ComponentScopeM[P, S, B] => IO[Unit])(p1: Partition, pn: Partition*) = {
+    val ps = pn.toSet + p1
+    Listenable.installIO[P, S, B, LocalDelta](cd, ($, ds) =>
+      if (ds.exists(ps contains _.p))
+        refreshIO($)
+      else
+        IO(())
+    )
+  }
 }
