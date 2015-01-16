@@ -79,7 +79,7 @@ object Deps {
     val macros = dd("monocle-macro") ++ core
   }
 
-  object Nyaya extends Group("0.5.0", "com.github.japgolly.nyaya") {
+  object Nyaya extends Group("0.5.1", "com.github.japgolly.nyaya") {
     object jvm {
       val core = dd("nyaya-core")
       val test = dd("nyaya-test")

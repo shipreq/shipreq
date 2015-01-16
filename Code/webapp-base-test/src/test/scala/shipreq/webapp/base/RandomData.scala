@@ -224,7 +224,7 @@ object RandomData {
     Gen.apply5(CustomField.Tag.apply)(customFieldId, tagId, mandatory, art, alive)
 
   def customFieldTagSome(tagIds: Set[Tag.Id], art: Gen[ApplicableReqTypes]): Gen[Vector[CustomField.Tag]] =
-    subset(tagIds).flatMap(ids =>
+    Gen.subset(tagIds).flatMap(ids =>
       Gen sequence ids.map(id =>
         customFieldTag(Gen insert id, art)))
 
@@ -232,7 +232,7 @@ object RandomData {
     Gen.apply5(CustomField.Implication.apply)(customFieldId, reqTypeId, mandatory, art, alive)
 
   def customFieldImplicationSome(reqTypeIds: Set[ReqType.Id], art: Gen[ApplicableReqTypes]): Gen[Vector[CustomField.Implication]] =
-    subset(reqTypeIds).flatMap(ids =>
+    Gen.subset(reqTypeIds).flatMap(ids =>
       Gen sequence ids.map(id =>
         customFieldImplication(Gen insert id, art)))
 
@@ -260,20 +260,6 @@ object RandomData {
     val dist = (id * name * key).lift[Stream]
     cf.map(fs => emptyDataMap(CustomField) ++ dist.run(fs))
   }
-
-  // TODO Move to Nyaya: subset
-  def subset[A](g: TraversableOnce[A]): Gen[Vector[A]] =
-    Gen.sequence(
-      g.foldLeft(Vector.empty[Gen[(A, Boolean)]])((q, a) => q :+ Gen.boolean.map(b => (a,b)))
-    ).map(
-      _.foldLeft(Vector.empty[A]){ case (q, (a,b)) => if (b) q :+ a else q }
-    )
-
-  // TODO Move to Nyaya: oneofSafe
-  def oneofSafe[A](as: Seq[A]): Gen[Option[A]] =
-    as.headOption.fold[Gen[Option[A]]](
-      Gen insert None)(
-      Gen.oneof(_, as.tail: _*).option)
 
   def fieldSet(reqTypeIds: Set[ReqType.Id], tagIds: Set[Tag.Id], r: Set[CustomReqType.Id]): Gen[FieldSet] =
     for {
