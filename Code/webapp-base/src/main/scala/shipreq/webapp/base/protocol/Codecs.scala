@@ -9,7 +9,6 @@ import upickle.TupleCodecs._
 import upickle.StdlibCodecs.{SeqishR, SeqishW}
 import upickle.StdlibCodecs.{MapR, MapW}
 
-import japgolly.nyaya.util._
 import shipreq.base.util._
 import shipreq.base.util.TaggedTypes._
 import shipreq.webapp.base.data._
@@ -17,28 +16,16 @@ import DataImplicits._
 
 private[protocol] object CodecBase {
 
-  //  private def tagS[T <: TaggedString](implicit C: TaggedTypeCtor[T]) =
-  //    ReadWriter[T](i => Js.Str(i.value), { case Js.Str(i) => C(i)})
-  //  private def tagL[T <: TaggedLong](implicit C: TaggedTypeCtor[T]) =
-  //    ReadWriter[T](i => Js.Str(i.value.toString), { case Js.Str(i) => C(i.toLong)})
-
   def tagS[T <: TaggedString](C: String => T) =
     ReadWriter[T](i => Js.Str(i.value), { case Js.Str(i) => C(i)})
 
   def tagL[T <: TaggedLong](C: Long => T) =
-//    import java.lang.{Long => L}
-//    import java.lang.Character.{MAX_RADIX => R} // TODO patch scala.js
-//    ReadWriter[T](i => Js.Str(L.toString(i, R)), { case Js.Str(i) => C(L.parseLong(i, R)) })
     ReadWriter[T](i => Js.Str(i.value.toString), { case Js.Str(i) => C(i.toLong)})
 
-  def boolCase[T](iso: Boolean <=> T) = {
-    val T = "t"
-    val F = "f"
-    ReadWriter[T](t => if (iso from t) Js.Str(T) else Js.Str(F), {
-      case Js.Str(T) => iso to true
-      case Js.Str(F) => iso to false
+  def boolCase[T](iso: Boolean <=> T) =
+    ReadWriter[T](t => if (iso from t) Js.Num(1) else Js.Num(0), {
+      case Js.Num(n) => iso to (n.toInt != 0)
     })
-  }
 
   // UNSAFE. Make sure tests using exhaustive pattern matching to cover this hierarchy
   def enum[T](ts: NonEmptyList[T]) = {
