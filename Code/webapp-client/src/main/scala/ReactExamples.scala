@@ -101,9 +101,9 @@ object ReactExamples {
       <.div(outerAttr,
         <.div(hnd, s"${i.id} | ${i.name}")))
 
-    case class ParentState(items: List[Item], dnd: DND.Parent.PState[Item])
+    case class ParentState(items: Vector[Item], dnd: DND.Parent.PState[Item])
 
-    val Component = ReactComponentB[List[Item]]("DragAndDrop")
+    val Component = ReactComponentB[Vector[Item]]("DragAndDrop")
       .getInitialState(p => ParentState(p, DND.Parent.initialState))
       .render(T => {
         // console.log(s"DND.State = ${T.state}")
@@ -126,7 +126,7 @@ object ReactExamples {
       }).build
 
     def demo =
-      Component(List(
+      Component(Vector(
         Item(10, "Ten")
         ,Item(20, "Two Zero")
         ,Item(30, "Firty")
@@ -145,9 +145,9 @@ object ReactExamples {
         <.td(hnd),
         <.td(s"${i.id} | ${i.name}")))
 
-    case class ParentState(items: List[Item], dnd: DND.Parent.PState[Item])
+    case class ParentState(items: Vector[Item], dnd: DND.Parent.PState[Item])
 
-    val Component = ReactComponentB[List[Item]]("DragAndDrop")
+    val Component = ReactComponentB[Vector[Item]]("DragAndDrop")
       .getInitialState(p => ParentState(p, DND.Parent.initialState))
       .render(T => {
       // console.log(s"DND.State = ${T.state}")
@@ -172,7 +172,7 @@ object ReactExamples {
     }).build
 
     def demo =
-      Component(List(
+      Component(Vector(
         Item(10, "Ten")
         ,Item(20, "Two Zero")
         ,Item(30, "Firty")

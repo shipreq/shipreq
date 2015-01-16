@@ -424,8 +424,7 @@ private[tags] object MainTable {
       r => r.copy(parents = r.parents.updated(parent, None))
 
     def moveChild(from: Id, to: Id): PovRelations => PovRelations =
-      r => r.copy(children =
-        DND.move(from, to)(r.children.toList).toVector) // TODO performance: .toList.toVector
+      r => r.copy(children = DND.move(from, to)(r.children))
 
     def moveChildIO(s: S, updateIO: UpdateIO, subj: Tag)(from: Id, to: Id): IO[Unit] =
       treeUpdateIO(s, updateIO, subj, moveChild(from, to))

@@ -19,18 +19,20 @@ import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
  */
 object DND {
 
-  def move[A](from: A, to: A)(l: List[A])(implicit E: Equal[A]): List[A] = {
-    // console.log(s"DND Move: $from ⇒ $to") // TODO del
-    l.find(E.equal(from, _)) match {
-      case None => l
-      case Some(f) =>
-        var removedYet = false
-        l.flatMap(i => {
-          var x = if (E.equal(from, i)) {removedYet=true; Nil} else i :: Nil
-          if (E.equal(to, i)) x = if (removedYet) x :+ f else f :: x
-          x
-        })
+  def move[A](from: A, to: A)(as: Vector[A])(implicit E: Equal[A]): Vector[A] = {
+    var result = Vector.empty[A]
+    var finding = true
+    as.foreach { a =>
+      if (finding && E.equal(from, a))
+        finding = false
+      else {
+        val e = E.equal(to, a)
+        if (e && finding) result :+= from
+        result :+= a
+        if (e && !finding) result :+= from
+      }
     }
+    result
   }
 
   sealed trait DragEvent[+A]

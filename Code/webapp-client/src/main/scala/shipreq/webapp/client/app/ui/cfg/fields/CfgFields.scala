@@ -314,9 +314,8 @@ private[fields] object MainTable {
 
     // TODO orderIO doesn't handle failure (or lock row)
     def orderIO(from: Field, to: Field): IO[Unit] = {
-      // TODO performance: .toList.toVector -> position
       val id       = from.fieldId
-      val newOrder = DND.move(id, to.fieldId)(fieldOrder.toList).toVector
+      val newOrder = DND.move(id, to.fieldId)(fieldOrder)
       val pos      = Util.position(newOrder, id)
       protocol.updateOrderIO(id, pos)(SuccessIO.nop, FailureIO.nop)
     }
