@@ -50,7 +50,7 @@ object Deps {
       val extra   = js("extra")
       val most    = core ++ scalaz ++ monocle ++ extra
     }
-    object Scalaz extends Group(Deps.Scalaz.version + "-4", "com.github.japgolly.fork.scalaz") {
+    object Scalaz extends Group(Deps.Scalaz.version, "com.github.japgolly.fork.scalaz") {
       val core   = js("scalaz-core")
       val effect = js("scalaz-effect")
     }
@@ -68,11 +68,12 @@ object Deps {
     val all      = compiler ++ library ++ reflect ++ p
   }
 
-  object Scalaz extends Group("7.1.0", "org.scalaz") {
+  object Scalaz extends Group("7.1.1", "org.scalaz") {
     val core       = dd("scalaz-core")
-    val concurrent = dd("scalaz-concurrent")
-    val effect     = dd("scalaz-effect")
-    val scalacheck = dd("scalaz-scalacheck-binding")
+    val effect     = dd("scalaz-effect") ++ core
+    val concurrent = dd("scalaz-concurrent") ++ effect
+    val iteratee   = dd("scalaz-iteratee") ++ effect
+    val scalacheck = dd("scalaz-scalacheck-binding") ++ concurrent ++ iteratee
   }
 
   object Monocle extends Group("1.0.1", "com.github.julien-truffaut") {
@@ -82,11 +83,11 @@ object Deps {
 
   object Nyaya extends Group("0.5.3", "com.github.japgolly.nyaya") {
     object jvm {
-      val core = dd("nyaya-core")
+      val core = dd("nyaya-core") ++ Scalaz.core
       val test = dd("nyaya-test")
     }
     object js {
-      val core = js("nyaya-core")
+      val core = js("nyaya-core") ++ ScalaJS.Scalaz.core
       val test = js("nyaya-test")
     }
   }
