@@ -9,5 +9,5 @@ object LiftAjax extends js.Object {
   def lift_ajaxHandler(input: String,
                        success: js.Function1[js.Any, Unit] = null,
                        failure: js.Function0[Unit] = null,
-                       respType: String = null): Boolean = ???
+                       respType: String = null): Boolean = js.native
 }

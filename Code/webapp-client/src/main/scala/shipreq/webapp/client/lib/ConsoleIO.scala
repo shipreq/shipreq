@@ -4,6 +4,7 @@ import org.scalajs.dom.console
 import scala.annotation.elidable
 import scala.scalajs.js
 import scalaz.effect.IO
+import js.{UndefOr, undefined}
 
 trait ConsoleIO {
   def info      (msg: js.Any, extra: js.Any*)               : IO[Unit]
@@ -13,7 +14,7 @@ trait ConsoleIO {
   def assert    (test: Boolean, msg: String, extra: js.Any*): IO[Unit]
   def clear     ()                                          : IO[Unit]
   def dir       (value: js.Any, extra: js.Any*)             : IO[Unit]
-  def profile   (reportName: String = ???)                  : IO[Unit] // TODO Change ??? on Scala.js 0.6
+  def profile   (reportName: UndefOr[String] = undefined)   : IO[Unit]
   def profileEnd()                                          : IO[Unit]
 }
 
@@ -30,7 +31,7 @@ object ConsoleIO {
       override def assert    (test: Boolean, msg: String, extra: js.Any*) = IO[Unit](console.assert    (test, msg, extra: _*))
       override def clear     ()                                           = IO[Unit](console.clear     ())
       override def dir       (value: js.Any, extra: js.Any*)              = IO[Unit](console.dir       (value, extra: _*))
-      override def profile   (reportName: String = ???)                   = IO[Unit](console.profile   (reportName))
+      override def profile   (reportName: UndefOr[String] = undefined)    = IO[Unit](reportName.fold(console.profile())(console.profile))
       override def profileEnd()                                           = IO[Unit](console.profileEnd())
     }
   }

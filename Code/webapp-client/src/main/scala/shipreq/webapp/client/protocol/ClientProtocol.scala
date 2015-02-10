@@ -33,7 +33,7 @@ object ClientProtocol {
   object Lift extends ClientProtocol {
     override def call[D <: Routine.Desc](r: Routine.Remote[D])(input: r.d.I, success: r.d.O => IO[Unit], f: FailureIO): IO[Unit] = {
       import r.d.{wi, ro}
-      val i = js.encodeURIComponent(write(input))
+      val i = js.URIUtils.encodeURIComponent(write(input))
       val q = s"${r.n}=$i"
       val s = jsonEffect[r.d.O](success)
       val ff = () => {

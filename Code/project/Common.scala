@@ -1,7 +1,6 @@
 import sbt._
 import Keys._
 import java.nio.file.{Files, Path}
-import scala.scalajs.sbtplugin.ScalaJSPlugin._
 
 object Common {
   import Functions._
@@ -112,8 +111,12 @@ object Common {
   def useHiddenTargetDir: Project => Project =
     _.settings(target <<= baseDirectory(_ / ".target"))
 
-  def scalaAndScalaJsShared: Project => Project =
-    _.settings(testFrameworks += new TestFramework("utest.runner.JvmFramework"))
+  def utestOnJvm = utestSettings
+  def utestOnJs  = utestSettings
+
+  def utestSettings: Project => Project =
+    _.settings(
+      testFrameworks += new TestFramework("utest.runner.Framework"))
 
   trait ExportsTestLib {
     lazy val TestLib = config("test-lib") extend Compile describedAs "Reusable test helpers"

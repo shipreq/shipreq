@@ -23,8 +23,8 @@ object Sizzle extends js.Object {
    */
 
   def apply(selector: String,
-            context: DOM = ???,
-            results: js.Array[DOM] = ???): js.Array[DOM] = ???
+            context: DOM = js.native,
+            results: js.Array[DOM] = js.native): js.Array[DOM] = js.native
 
 
   /*
@@ -41,7 +41,7 @@ object Sizzle extends js.Object {
   selector: A css selector
    */
 
-  def matchesSelector(element: DOM, selector: String): js.Boolean = ???
+  def matchesSelector(element: DOM, selector: String): Boolean = js.native
 
   /*
   Sizzle.matches( String selector, Array<DOMElement> elements )
@@ -54,5 +54,5 @@ object Sizzle extends js.Object {
 
   elements: An array of DOMElements to filter against the specified selector.
    */
-  def matches(selector: String, elements: js.Array[DOM]): js.Array[DOM] = ???
+  def matches(selector: String, elements: js.Array[DOM]): js.Array[DOM] = js.native
 }

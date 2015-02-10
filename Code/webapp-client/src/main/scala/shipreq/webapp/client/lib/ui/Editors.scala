@@ -1,6 +1,7 @@
 package shipreq.webapp.client.lib.ui
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import org.scalajs.dom.extensions.KeyValue
 import scalaz.effect.IO
 import scalaz.syntax.bind.ToBindOps
 import UI._
@@ -25,7 +26,7 @@ object Editors {
 
   def cancelOnEscape(f: ST => IO[Unit]): ReactKeyboardEventH => IO[Unit] =
     e => e.key match {
-      case "Escape" => // TODO use KeyValue
+      case KeyValue.Escape =>
         val t = e.target
         val st = ST.callback(e.preventDefaultIO >> e.stopPropagationIO, IO(t.blur()))
         f(st)

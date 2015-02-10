@@ -1,7 +1,8 @@
 import sbt._
 import sbt.impl.GroupID
 import scala.languageFeature._
-import scala.scalajs.sbtplugin.ScalaJSPlugin._
+import org.scalajs.sbtplugin.ScalaJSPlugin
+import ScalaJSPlugin.autoImport._
 
 object Deps {
 
@@ -16,13 +17,12 @@ object Deps {
   private implicit def singleToMS(m: ModuleID) = MS(Seq(m))
   private implicit def seqToMS(ms: Seq[ModuleID]) = MS(ms)
 
-  private def jsA(a: String) = a + "_sjs0.5"
-  private def jsGA(g: String, a: String) = g %% jsA(a)
+  private def jsGA(g: String, a: String) = g %%%! a
 
   abstract class Group(final val version: String, final val groupId: String) {
-    protected implicit def d(a: String): MS = (groupId: GroupID) % a % version
+    protected implicit def d (a: String): MS = (groupId: GroupID) % a % version
     protected implicit def dd(a: String): MS = (groupId: GroupID) %% a % version
-    protected implicit def js(a: String) = dd(jsA(a))
+    protected implicit def js(a: String): MS = jsGA(groupId, a) % version
   }
 
   def JvmAndJs(groupId: String, name: String, version: String) =
@@ -31,6 +31,7 @@ object Deps {
   case class JvmAndJsFork(jvmGroupId: String, jsGroupId: String, name: String, version: String) {
     final val jvm: MS = (jvmGroupId: GroupID) %% name % version
     final val js: MS = jsGA(jsGroupId, name) % version
+    def apply(jvm: Boolean): MS = if (jvm) this.jvm else js
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -41,7 +42,7 @@ object Deps {
 
     val sizzleJs = "org.webjars" % "sizzle" % "2.1.1"
 
-    object React extends Group("0.7.1", "com.github.japgolly.scalajs-react") {
+    object React extends Group("0.7.2", "com.github.japgolly.scalajs-react") {
       val core    = js("core")
       val test    = js("test")
       val scalaz  = js("ext-scalaz71")
@@ -79,7 +80,7 @@ object Deps {
     val macros = dd("monocle-macro") ++ core
   }
 
-  object Nyaya extends Group("0.5.1", "com.github.japgolly.nyaya") {
+  object Nyaya extends Group("0.5.2", "com.github.japgolly.nyaya") {
     object jvm {
       val core = dd("nyaya-core")
       val test = dd("nyaya-test")
@@ -120,8 +121,8 @@ object Deps {
   }
 
   val shapeless = JvmAndJs("com.github.japgolly.fork.shapeless", "shapeless", "2.0.0")
-  val μPickle   = JvmAndJs("com.github.japgolly.fork.upickle",   "upickle",   "custom-1")
-  val μTest     = JvmAndJs("com.lihaoyi",                        "utest",     "0.2.3")
+  val μPickle   = JvmAndJs("com.github.japgolly.fork.upickle",   "upickle",   "custom-2")
+  val μTest     = JvmAndJs("com.lihaoyi",                        "utest",     "0.3.0")
 
   // Was only needed trying to use Monocle's @Lenses. Monocle's Lenser works without this.
   // val macroParadise = compilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full)

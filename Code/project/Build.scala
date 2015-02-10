@@ -4,6 +4,7 @@ import Common.ExportsTestLib
 import Common.Functions._
 import Common.Values.releaseMode
 import Deps._
+import org.scalajs.sbtplugin.ScalaJSPlugin
 
 object ShipReq extends Build {
 
@@ -76,7 +77,7 @@ object ShipReq extends Build {
         Scalaz.effect ++ testScope(μTest.jvm)
 
       override def project = typicalProject
-        .configure(Common.scalaAndScalaJsShared)
+        .configure(Common.utestOnJvm)
     }
 
     // ----------------------------------------------------
@@ -227,7 +228,8 @@ object ShipReq extends Build {
 
       override def project = typicalProject
         .configure(
-          Common.scalaAndScalaJsShared,
+          Common.utestOnJvm,
+          dontInline, // crashes scalac 2.11.5
           addCommandAliases(
             "tbc" -> ";webapp-base-test/test; webapp-client/test",
             "js"  -> Client.jsCmd,
@@ -243,19 +245,17 @@ object ShipReq extends Build {
         μTest.jvm ++ testScope(Nyaya.jvm.test)
 
       override def project = typicalProject
-        .configure(Common.scalaAndScalaJsShared)
+        .configure(Common.utestOnJvm)
         .dependsOn(webappBase)
     }
 
     // ----------------------------------------------------
     object Client extends Module {
-      import scala.scalajs.sbtplugin.ScalaJSPlugin._
-      import scala.scalajs.sbtplugin.InliningMode
-      import scala.scalajs.sbtplugin.env.phantomjs.PhantomJSEnv
-      import utest.jsrunner.Plugin.utestJsSettings
-      import ScalaJSKeys._
+      import ScalaJSPlugin._
+      import ScalaJSPlugin.autoImport._
+      import org.scalajs.core.tools.sem._
 
-      def stage  = if (releaseMode) fullOptStage else fastOptStage
+      def stage  = if (releaseMode) FullOptStage else FastOptStage
       def jsTask = if (releaseMode) fullOptJS    else fastOptJS
       def jsCmd  = if (releaseMode) "fullOptJS"  else "fastOptJS"
 
@@ -267,20 +267,25 @@ object ShipReq extends Build {
         testScope(ScalaJS.React.test ++ μTest.js ++ Nyaya.js.test)
 
       def testSettings = (_: Project)
-        .settings(utestJsSettings: _*)
+        .configure(Common.utestOnJs)
         .settings(
-          test      in Test := (test      in(Test, stage)).value,
-          testOnly  in Test := (testOnly  in(Test, stage)).evaluated,
-          testQuick in Test := (testQuick in(Test, stage)).evaluated,
+          scalaJSStage in Global := stage,
           jsDependencies += ScalaJS.reactJs % "test" / "react-with-addons.js" commonJSName "React",
           jsDependencies += ScalaJS.sizzleJs % "test" / "sizzle.min.js" commonJSName "Sizzle",
           requiresDOM := true,
-          postLinkJSEnv in Test := new PhantomJSEnv)
+          jsEnv in Test := PhantomJSEnv().value)
 
       def prodJsSettings = (_: Project).settings(
-        emitSourceMaps in fullOptJS := false,
-        // checkScalaJSIR in fullOptJS := true, https://github.com/lihaoyi/upickle/issues/27
-        inliningMode in fullOptJS := InliningMode.Batch)
+        emitSourceMaps := false,
+        scalaJSOptimizerOptions ~= (_
+          //.withPrettyPrintFullOptJS(true)
+          .withBatchMode(true)
+          .withCheckScalaJSIR(true)
+        ),
+        scalaJSSemantics ~= (_
+          .withRuntimeClassName(_ => "")
+          .withAsInstanceOfs(CheckedBehavior.Unchecked)
+        ))
 
       // Recompile shared source rather than depending directly
       // https://github.com/scala-js/scala-js/issues/1067
@@ -297,13 +302,13 @@ object ShipReq extends Build {
           ): _*)
 
       override def project = typicalProject
-        .settings(scalaJSSettings: _*)
+        .enablePlugins(ScalaJSPlugin)
         .configure(
           jsStyleDependsOn(baseUtilSjs, webappBase),
           jsStyleDependsOnS(webappBaseTest)(Compile -> Test, Test -> Test),
           testSettings,
-          dontInline, // crashes scalac 2.11.2
-          prodJsSettings)
+          dontInline, // ScalaJS inlines
+          debugOrRelease(identity, prodJsSettings))
     }
 
     // ----------------------------------------------------
@@ -334,10 +339,8 @@ object ShipReq extends Build {
           (devMap.values ++ releaseMap.values).map(_.asFile).toSet[File]
       }
 
-      lazy val jsBuildTask = {
-        import scala.scalajs.sbtplugin.ScalaJSPlugin.ScalaJSKeys._
+      lazy val jsBuildTask =
         Client.jsTask in Compile in webappClient
-      }
 
       def clientJsSettings = (_: Project).settings(
         clientJsLinks := new ClientJsLinks((target in webappClient).value, baseDirectory.value),
@@ -391,6 +394,7 @@ object ShipReq extends Build {
           warSettings,
           testSettings,
           integrationTestSettings,
+          dontInline, // crashes scalac 2.11.5
           addCommandAliases(
             "up" -> ";container:stop ;clear ;container:start",
             "d" -> "container:stop"))

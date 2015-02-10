@@ -141,7 +141,7 @@ object DND {
         //console.log(s"dragOver: dragging = $s / dragover = ${p.dragover}")
         if (!s) {
           e.preventDefault()
-          e.dataTransfer.asInstanceOf[js.Dynamic].updateDynamic("dropEffect")("move") // TODO not needed soon
+          e.dataTransfer.dropEffect = "move"
           p.eventHandler(DragEvent.Over(a)).unsafePerformIO()
         }
       }
