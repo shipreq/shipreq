@@ -101,7 +101,7 @@ object Deps {
     val jcl = d("jcl-over-slf4j")
   }
 
-  object Lift extends Group("2.6-RC1", "net.liftweb") {
+  object Lift extends Group("2.6", "net.liftweb") {
     val webkit  = dd("lift-webkit") ++ Scala.all // because it contains lift-json
     val testkit = dd("lift-testkit")
   }
