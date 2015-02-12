@@ -1,0 +1,38 @@
+digraph G {
+  vs1 [label="View settings #1\nsort & cols\n(data rep)"]
+  sortColsEd [label="Sort & cols editor"]
+  ro [label="RO Table"]
+  kb [label="KB focus & nav"]
+  txt [label="Rich text parser & data rep\n(incl. refs & markdown)"]
+  txtPoly [label="Rich text variants\ncertain features on/off"]
+  cellLock [label="Cell locking"]
+  rw [label="RW Table"]
+
+  // Later
+  node [style=filled,fillcolor="#dddddd"]
+  filter [label="Table Filter"]
+  impfields [label="Implication fields"]
+  cellLock -> {filter,impfields}
+
+  node [style=filled,fillcolor="#ddffdd"]
+  fieldCellRI    [label="Field cell renderer\ninterface"]
+  fieldCellRText [label="Field cell renderer\nText"]
+  fieldCellRTag  [label="Field cell renderer\nTag"]
+  fieldCellRI -> {fieldCellRTag,fieldCellRText}
+  fieldCellRI -> ro
+  txt -> fieldCellRText
+
+  node [style=filled,fillcolor="#ffdddd"]
+  fieldCellEI    [label="Field cell editor\ninterface"]
+  fieldCellEText [label="Field cell editor\nText"]
+  fieldCellETag  [label="Field cell editor\nTag"]
+  fieldCellEI -> {fieldCellETag,fieldCellEText}
+  fieldCellEI -> rw
+  txt -> fieldCellEText
+
+  node [style=filled,fillcolor="#000000"]
+  vs1 -> {sortColsEd,ro}
+  ro -> kb
+  txt -> txtPoly
+  ro -> rw -> cellLock
+}
