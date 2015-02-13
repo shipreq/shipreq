@@ -174,5 +174,12 @@ object DND {
           f(outerAttrs(p, a, c.state), renderDragHandle(p, a, c), a)
         }.build
 
+    def dndItemComponentB[A, B](f: (TagMod, ReactTag, A, B) => ReactElement) =
+      ReactComponentB[(A, DND.Child.CProps[A], B)]("DndItem")
+        .initialState(DND.Child.initialState)
+        .render { c =>
+          val (a, p, b) = c.props
+          f(outerAttrs(p, a, c.state), renderDragHandle(p, a, c), a, b)
+        }.build
   }
 }

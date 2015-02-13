@@ -30,6 +30,7 @@ object ReactExamples {
 
       object ProjectPage extends RoutingRules {
         val root       : Loc = register(rootLocation(index))
+        val tab        : Loc = register(location("#tab",          tabR))
         val cfgFields  : Loc = register(location("#cfg/fields",   cfgFieldsR))
         val cfgIssues  : Loc = register(location("#cfg/issues",   cfgIssuesR))
         val cfgReqTypes: Loc = register(location("#cfg/reqtypes", cfgReqTypesR))
@@ -40,6 +41,7 @@ object ReactExamples {
           val c = ReactComponentB[Unit]("Index")
             .render(_ =>
               <.ul(
+                <.li(router.link(ProjectPage.tab        )("Requirements Table")),
                 <.li(router.link(ProjectPage.cfgFields  )("Cfg: Fields")),
                 <.li(router.link(ProjectPage.cfgIssues  )("Cfg: Issues")),
                 <.li(router.link(ProjectPage.cfgReqTypes)("Cfg: Requirement Types")),
@@ -48,6 +50,9 @@ object ReactExamples {
             ).buildU
           c()
         }
+
+        private def tabR =
+          reqtable.ReqTable.WIP(clientData.project)
 
         private def cfgIssuesR =
           cfg.issues.CfgIssues.Props(cp, r.issueTypeCrud, r.reqTypeImpMod, r.fieldMandMod, clientData, false).component

@@ -106,11 +106,13 @@ object Field {
   val filterAlive: Field => Boolean =
     _.fold(_ => true, _.alive ≟ Alive)
 
-  def name(customReqTypes: CustomReqTypeIMap, tags: TagTree): Field => String = {
-    case f: StaticField             => f.name
-    case f: CustomField.Text        => f.name
-    case f: CustomField.Tag         => f.name(tags)
-    case f: CustomField.Implication => f.name(customReqTypes)
+  def name(customReqTypes: CustomReqTypeIMap, tags: TagTree) = {
+    val cn: CustomField => String = CustomField.name(customReqTypes, tags)
+    val fn: Field       => String = {
+      case f: StaticField => f.name
+      case f: CustomField => cn(f)
+    }
+    fn
   }
 
   def nameP(p: Project) = name(p.customReqTypes.data, p.tags.data)
@@ -242,6 +244,14 @@ object CustomField {
     case f: Tag         => f.copy(alive = n)
     case f: Implication => f.copy(alive = n)
   })
+
+  def name(customReqTypes: CustomReqTypeIMap, tags: TagTree): CustomField => String = {
+    case f: Text        => f.name
+    case f: Tag         => f.name(tags)
+    case f: Implication => f.name(customReqTypes)
+  }
+
+  def nameP(p: Project) = name(p.customReqTypes.data, p.tags.data)
 
   implicit val equalImplication = deriveEqual[Implication]
   implicit val equalTag         = deriveEqual[Tag]

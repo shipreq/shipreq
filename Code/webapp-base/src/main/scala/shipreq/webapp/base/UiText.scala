@@ -4,6 +4,13 @@ object UiText {
 
   def entityNameNotFound = "?"
 
+  object ColumnNames {
+    def reqType = "Type"
+    def pubId   = "ID"
+    def code    = "Code"
+    def desc    = "Desc"
+  }
+
   object FieldNames {
     def hashRefKey          = "Key"
     def fieldRefKey         = hashRefKey
