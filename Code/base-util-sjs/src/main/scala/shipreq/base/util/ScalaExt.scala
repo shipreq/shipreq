@@ -2,6 +2,8 @@ package shipreq.base.util
 
 object ScalaExt {
 
+  type EndoFn[A] = A => A
+
   @inline final def none[A]: Option[A] = None
 
   implicit class BaseUtilExtAny[A](val _a: A) extends AnyVal {

@@ -2,12 +2,12 @@ package shipreq.webapp.client.app.ui
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import org.scalajs.dom
-import shipreq.webapp.client.lib.ui.UI
-import shipreq.webapp.client.util.DND
 import scala.collection.GenTraversable
-import scala.collection.immutable.TreeMap
 import scalaz.Equal
 import scalaz.effect.IO
+import shipreq.base.util.Util
+import shipreq.webapp.client.lib.ui.UI
+import shipreq.webapp.client.util.DND
 
 /**
  * Something like this:
@@ -70,12 +70,7 @@ object OrderedSubsetEditor {
       val p = $.props
 
       val orderedInactiveValues =
-        p.all.foldLeft(TreeMap.empty[String, A])((q, a) =>
-          if (p.value.exists(E.equal(a, _)))
-            q
-          else
-            q.updated(p.label(a), a)
-        ).values
+        Util.filterOutAndSortByName(p.all)(a => p.value.exists(E.equal(a, _)), p.label)
 
       val li2 = li(p, orderedInactiveValues) _
 

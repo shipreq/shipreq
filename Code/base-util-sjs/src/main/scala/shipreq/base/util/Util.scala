@@ -1,6 +1,8 @@
 package shipreq.base.util
 
 import java.net.URL
+import scala.collection.GenTraversable
+import scala.collection.immutable.TreeMap
 import scala.util.Try
 import scalaz.{Equal, Memo}
 import scalaz.syntax.equal._
@@ -22,7 +24,6 @@ object Util {
 
   @inline def quickToString(clz: Class[_])(fs: (StringBuilder => Any)*): String =
     quickSB(clz.getSimpleName, _.mkStringF("(", ", ", ")")(fs: _*))
-
 
   private[this] val simpleClassNameRegex = "^.+[\\.\\$]".r
 
@@ -87,6 +88,17 @@ object Util {
 
   def indexS[A](as: TraversableOnce[A]): Map[String, A] =
     foldAndIndexS(as, ())((_, _, _) => ())._2
+
+  def filterAndSortByName[A](as: GenTraversable[A])(f: A => Boolean, name: A => String): Iterable[A] =
+    as.foldLeft(TreeMap.empty[String, A])((q, a) =>
+      if (f(a))
+        q.updated(name(a), a)
+      else
+        q
+    ).values
+
+  @inline final def filterOutAndSortByName[A](as: GenTraversable[A])(f: A => Boolean, name: A => String): Iterable[A] =
+    filterAndSortByName(as)(!f(_), name)
 }
 
 object ParseLong {

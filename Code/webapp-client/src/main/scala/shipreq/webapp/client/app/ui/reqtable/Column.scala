@@ -1,7 +1,9 @@
 package shipreq.webapp.client.app.ui.reqtable
 
 import scalaz.{Equal, NonEmptyList}
+import shipreq.base.util.IMap
 import shipreq.webapp.base.data
+import shipreq.webapp.base.UiText.ColumnNames
 
 sealed trait Column {
   protected def __sortConclusiveness: Nothing // Ensure sort-conclusiveness is specified for all columns
@@ -33,10 +35,26 @@ object Column {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  implicit val equality = Equal.equalA[Column]
+  implicit val equalityI: Equal[SortInconclusive] = Equal.equalA
+  implicit val equalityC: Equal[SortConclusive]   = Equal.equalA
+  implicit val equality : Equal[Column]           = Equal.equalA
 
   val mandatory: Column => Boolean = {
     case CustomField(_) => false
     case _: NonField    => true
+  }
+
+  case class NameResolver(customFields   : IMap[data.CustomField.Id, data.CustomField],
+                          customFieldName: data.CustomField => String) {
+
+    @inline def apply(column: Column) = fn(column)
+    
+    val fn: Column => String = {
+      case Column.CustomField(id) => customFields.get(id).map(customFieldName) getOrElse "?"
+      case Column.ReqType         => ColumnNames.reqType
+      case Column.PubId           => ColumnNames.pubId
+      case Column.Code            => ColumnNames.code
+      case Column.Desc            => ColumnNames.desc
+    }
   }
 }

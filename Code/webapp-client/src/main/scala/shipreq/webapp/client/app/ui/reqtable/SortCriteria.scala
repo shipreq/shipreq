@@ -1,13 +1,6 @@
 package shipreq.webapp.client.app.ui.reqtable
 
-/*
-sealed trait SortDir
-object SortDir {
-  case object Asc extends SortDir
-  case object Desc extends SortDir
-}
-case sensitivity?
-*/
+import scalaz.Equal
 
 sealed abstract class SortMethod(symbol: String, desc: String) {
   val optionLabel = symbol + " " + desc
@@ -33,8 +26,12 @@ object SortMethod {
   case object AscThenBlanks  extends ConsiderBlanks(ascSym   + blankSym, txt2(ascTxt,   blankTxt))
   case object DescThenBlanks extends ConsiderBlanks(descSym  + blankSym, txt2(descTxt,  blankTxt))
 
-  val ignoreBlanks   = Vector[IgnoreBlanks](Asc, Desc)
-  val considerBlanks = Vector[ConsiderBlanks](AscThenBlanks, DescThenBlanks, BlanksThenAsc, BlanksThenDesc)
+  implicit val equalityI: Equal[IgnoreBlanks] = Equal.equalA
+  implicit val equality : Equal[SortMethod]   = Equal.equalA
+
+  // TODO Lazy due to https://github.com/scala-js/scala-js/issues/1490
+  lazy val ignoreBlanks   = Vector[IgnoreBlanks](Asc, Desc)
+  lazy val considerBlanks = Vector[ConsiderBlanks](AscThenBlanks, BlanksThenAsc, BlanksThenDesc, DescThenBlanks)
 
   val valuesAllowed: Column.SortInconclusive => Vector[SortMethod] = {
     case Column.ReqType => ignoreBlanks
@@ -44,39 +41,10 @@ object SortMethod {
   }
 }
 
-/*
-case class SortCriterion[A](criterion: A, method: SortMethod)
-
-object SortCriteria {
-
-  /**
-   * Indicates that now further sorting would have an effect.
-   *
-   * Column value requirements:
-   * - values per requirement must be 1..n.
-   * - all values are unique.
-   * - blank values are impossible.
-   */
-  val columnConclusive: Column => Boolean = {
-    case Column.PubId => true
-    case Column.Code
-       | Column.Desc
-       | Column.ReqType
-       | Column.CustomField(_) => false
-  }
-
-  val default: SortCriteria[Column] =
-    Vector(
-      SortCriterion(Column.Code,  SortMethod.AscThenBlanks),
-      SortCriterion(Column.PubId, SortMethod.Asc))
-}
-
-*/
-
 sealed trait SortCriterion
 object SortCriterion {
-  case class Inconclusive(column: Column.SortInconclusive, method: SortMethod) extends SortCriterion
-  case class Conclusive(column: Column.SortConclusive, method: SortMethod with SortMethod.IgnoreBlanks) extends SortCriterion
+  case class Inconclusive(column: Column.SortInconclusive, method: SortMethod             ) extends SortCriterion
+  case class Conclusive  (column: Column.SortConclusive,   method: SortMethod.IgnoreBlanks) extends SortCriterion
 }
 
 case class SortCriteria(init: Vector[SortCriterion.Inconclusive], last: SortCriterion.Conclusive)
@@ -88,5 +56,4 @@ object SortCriteria {
       Vector(
         SortCriterion.Inconclusive(Column.Code,  SortMethod.AscThenBlanks)),
       SortCriterion.Conclusive    (Column.PubId, SortMethod.Asc))
-
 }
