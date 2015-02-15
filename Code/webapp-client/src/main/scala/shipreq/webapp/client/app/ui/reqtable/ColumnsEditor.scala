@@ -3,11 +3,11 @@ package shipreq.webapp.client.app.ui.reqtable
 import scalaz.effect.IO
 import shipreq.webapp.client.app.ui.OrderedSubsetEditor
 
-object ColumnEditor {
+object ColumnsEditor {
   val Component = OrderedSubsetEditor.Component[Column]
 }
 
-final class ColumnEditor(columnName: Column.NameResolver) {
+final class ColumnsEditor(columnName: Column.NameResolver) {
 
   val allColumns: Vector[Column] =
     columnName.customFields.keys.toVector.map(Column.CustomField) ++ Column.nonFieldValues.list
@@ -18,6 +18,6 @@ final class ColumnEditor(columnName: Column.NameResolver) {
                                               label     = columnName.fn,
                                               mandatory = Column.mandatory,
                                               change    = _change)
-    ColumnEditor.Component(p)
+    ColumnsEditor.Component(p)
   }
 }

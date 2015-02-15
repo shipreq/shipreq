@@ -26,7 +26,7 @@ object ReqTable {
     val S = $.focusStateL(State.sort)
     val n = Column.NameResolver($.props.fields.data.customFields, CustomField.nameP($.props))
 
-    val ed = new ColumnEditor(n)
+    val ed = new ColumnsEditor(n)
 
     def render =
       <.table(
