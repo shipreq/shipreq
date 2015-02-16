@@ -11,7 +11,7 @@ trait UnsafeTypesLowPriority {
 /**
  * THIS SHOULD ONLY BE USED FOR TESTING.
  */
-object UnsafeTypes extends UnsafeTypesLowPriority {
+object UnsafeTypes extends UnsafeTypesLowPriority { // TODO move into test
   import shipreq.webapp.base.data._
   import shipreq.webapp.base.delta._
 
@@ -24,7 +24,8 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
   implicit def autoCustomFieldTxtId (i: Int) = CustomField.Text.Id(i)
   implicit def autoCustomIssueTypeId(i: Int) = CustomIssueType.Id(i)
   implicit def autoCustomReqTypeId  (i: Int) = CustomReqType.Id(i)
-  implicit def autoTagId            (i: Int) = Tag.Id(i)
+  implicit def autoTagGroupId       (i: Int) = TagGroup.Id(i)
+  implicit def autoApplicableTagId  (i: Int) = ApplicableTag.Id(i)
   implicit def autoRev              (i: Int) = Rev(i)
 
   implicit def autoCustomFieldImpIdO (i: Int): Option[CustomField.Implication.Id] = Some(i)
@@ -32,7 +33,8 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
   implicit def autoCustomFieldTxtIdO (i: Int): Option[CustomField.Text.Id]        = Some(i)
   implicit def autoCustomIssueTypeIdO(i: Int): Option[CustomIssueType.Id]         = Some(i)
   implicit def autoCustomReqTypeIdO  (i: Int): Option[CustomReqType.Id]           = Some(i)
-  implicit def autoTagIdO            (i: Int): Option[Tag.Id]                     = Some(i)
+  implicit def autoTagGroupIdO       (i: Int): Option[TagGroup.Id]                = Some(i)
+  implicit def autoApplicableTagIdO  (i: Int): Option[ApplicableTag.Id]           = Some(i)
 
   implicit def tagTreeTree(t: TagTree) = t.mapValues(_.children)
 
@@ -40,4 +42,10 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
   def onlyReqTypes(a: ReqType.Id, as: ReqType.Id*): ApplicableReqTypes = ISubset.Only(reqTypesSet1(a, as: _*))
   def notReqTypes(a: ReqType.Id, as: ReqType.Id*): ApplicableReqTypes = ISubset.Not(reqTypesSet1(a, as: _*))
   val allReqTypes: ApplicableReqTypes = ISubset.All()
+
+  implicit class UnsafeIntExt(val a: Int) extends AnyVal {
+    def AT = ApplicableTag.Id(a)
+    def TG = TagGroup.Id(a)
+  }
+
 }

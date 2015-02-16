@@ -14,7 +14,6 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.{SampleProject => S}
 import shipreq.webapp.base.test.BaseTestUtil._
 import TagProtocol._
-import Tag.Id
 import TagTree.FlatRow
 import FlatRow._
 import FilterPolicy._
@@ -66,9 +65,9 @@ object TagProtocolTest extends TestSuite {
     }
 
   val sampleTagTree_f = {
-    def t(id: Id, name: String)(children: Id*) = TagInTree(
-      ApplicableTag(id, name, None, s"id=${id.value}", if (name contains "*") Dead else Alive),
-      children.toVector)
+    def t(id: Int, name: String)(children: Int*) = TagInTree(
+      ApplicableTag(id, name, None, s"id=$id", if (name contains "*") Dead else Alive),
+      children.toVector.map(ApplicableTag.Id(_)))
     TagTree.empty.addAll(
       t( 1, "A"  )(2, 15, 17),
       t( 2, "B*" )(3, 6, 9, 12),
@@ -96,24 +95,24 @@ object TagProtocolTest extends TestSuite {
     'PovRelations {
       'derive {
         // Multiple prepend parents, no children
-        "22" - assertEq(PovRelations.derive(22, S.tagTree), PovRelations(
-          parents = Map(Id(21) -> Id(23), Id(27) -> Id(23)),
+        "22" - assertEq(PovRelations.derive(22.AT, S.tagTree), PovRelations(
+          parents = Map(21.AT -> 23.AT, 27.TG -> 23.AT),
           children = Vector.empty))
 
         // Append parent, no children
-        "24" - assertEq(PovRelations.derive(24, S.tagTree), PovRelations(
-          parents = Map(Id(21) -> None),
+        "24" - assertEq(PovRelations.derive(24.AT, S.tagTree), PovRelations(
+          parents = Map(21.AT -> None),
           children = Vector.empty))
 
         // No parents, children
-        "10" - assertEq(PovRelations.derive(10, S.tagTree), PovRelations(
+        "10" - assertEq(PovRelations.derive(10.TG, S.tagTree), PovRelations(
           parents = Map.empty,
-          children = Vector(11, 12)))
+          children = Vector(11.AT, 12.AT)))
 
         // Parents and children
-        "27" - assertEq(PovRelations.derive(27, S.tagTree), PovRelations(
-          parents = Map(Id(20) -> Id(21)),
-          children = Vector(22, 23)))
+        "27" - assertEq(PovRelations.derive(27.TG, S.tagTree), PovRelations(
+          parents = Map(20.TG -> 21.AT),
+          children = Vector(22.AT, 23.AT)))
       }
     }
 

@@ -12,7 +12,7 @@ object DataTest extends TestSuite {
   @inline def tr(a: Option[Tag.Id], b: HashRefKey) = (a,b)
   @inline def ir(a: Option[CustomIssueType.Id], b: HashRefKey) = (a,b)
 
-  val tagData = Stream(tr(1, "abc"), tr(2, "def"))
+  val tagData = Stream(tr(1.AT, "abc"), tr(2.AT, "def"))
   val issueData = Stream(ir(1, "tbd"), ir(3, "todo"))
 
   override def tests = TestSuite {
@@ -32,8 +32,8 @@ object DataTest extends TestSuite {
         }
 
         'subjCanChangeItself {
-          test("abc", true, subjT = 1)
-          test("abc", false, subjT = 2)
+          test("abc", true, subjT = 1.AT)
+          test("abc", false, subjT = 2.AT)
           test("todo", true, subjI = 3)
           test("todo", false, subjI = 1)
         }
@@ -41,9 +41,9 @@ object DataTest extends TestSuite {
         'caseInsensitive {
           test("ABC", false)
           test("ABCD", true)
-          test("ABC", true, subjT = 1)
-          test("ABC", false, subjT = 2)
-          test("ABC", false, subjT = 3)
+          test("ABC", true, subjT = 1.AT)
+          test("ABC", false, subjT = 2.AT)
+          test("ABC", false, subjT = 3.AT)
         }
       }
     }

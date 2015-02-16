@@ -17,25 +17,25 @@ object SampleProject {
     CustomReqType(5, "DD", Set("DA", "DDF"), "Data Definition", ImplicationRequired.Not, Dead),
     CustomReqType(6, "SI", Set.empty, "Solution Idea",          ImplicationRequired,     Dead)))
 
+  lazy val tagsR = RevAnd(30, tags)
   lazy val v10d = Some("Released: 17/14/1976\nFirst release.")
   lazy val v11d = Some("Released: 1/2/2001")
   lazy val tags = TagTree.empty.addAll(
-    TagInTree(TagGroup     (1, "Priority",        None, MutexChildren,     Alive), Vector(2,3,4)),
+    TagInTree(TagGroup     (1, "Priority",        None, MutexChildren,     Alive), Vector(2.AT, 3.AT, 4.AT)),
     TagInTree(ApplicableTag(2, "High Priority",   None, "pri=high",        Alive), Vector()),
     TagInTree(ApplicableTag(3, "Medium Priority", None, "pri=med",         Alive), Vector()),
-    TagInTree(TagGroup     (10, "Status",         None, MutexChildren.Not, Alive), Vector(11,12)),
+    TagInTree(TagGroup     (10, "Status",         None, MutexChildren.Not, Alive), Vector(11.AT, 12.AT)),
     TagInTree(ApplicableTag(11, "WIP",            None, "wip",             Alive), Vector()),
     TagInTree(ApplicableTag(12, "Deferred",       None, "defer",           Alive), Vector()),
-    TagInTree(TagGroup     (20, "Version",        None, MutexChildren.Not, Alive), Vector(27,21,25,26)),
-    TagInTree(ApplicableTag(21, "v1.x",           None, "v1.x",            Alive), Vector(22,23,24)),
+    TagInTree(TagGroup     (20, "Version",        None, MutexChildren.Not, Alive), Vector(27.TG, 21.AT, 25.AT, 26.AT)),
+    TagInTree(ApplicableTag(21, "v1.x",           None, "v1.x",            Alive), Vector(22.AT, 23.AT, 24.AT)),
     TagInTree(ApplicableTag(22, "v1.0",           v10d, "v1.0",            Alive), Vector()),
     TagInTree(ApplicableTag(23, "v1.1",           v11d, "v1.1",            Alive), Vector()),
     TagInTree(ApplicableTag(24, "v1.2",           None, "v1.2",            Alive), Vector()),
     TagInTree(ApplicableTag(25, "v2.x",           None, "v2.x",            Alive), Vector()),
     TagInTree(ApplicableTag(26, "v3.x",           None, "v3.x",            Dead ), Vector()),
-    TagInTree(TagGroup     (27, "Released",       None, MutexChildren.Not, Alive), Vector(22,23)),
+    TagInTree(TagGroup     (27, "Released",       None, MutexChildren.Not, Alive), Vector(22.AT, 23.AT)),
     TagInTree(ApplicableTag(4, "Low Priority", Some("Nice to have. Stuff that probably won't be implemented."), "pri=low", Alive), Vector()))
-
 
   lazy val fields = {
     import CustomField._
@@ -43,8 +43,8 @@ object SampleProject {
       Text       (1, "Description", "desc",     Mandatory,     onlyReqTypes(2, 6, StaticReqType.UseCase), Alive),
       Text       (2, "Notes",       "notes",    Mandatory.Not, notReqTypes(4),                            Alive),
       Text       (3, "Reporter",    "reporter", Mandatory,     onlyReqTypes(5, StaticReqType.UseCase),    Dead),
-      Tag        (4, 1,                         Mandatory,     ISubset.All(),                             Alive),
-      Tag        (5, 10,                        Mandatory.Not, ISubset.All(),                             Alive),
+      Tag        (4, 1.TG,                      Mandatory,     ISubset.All(),                             Alive),
+      Tag        (5, 10.TG,                     Mandatory.Not, ISubset.All(),                             Alive),
       Implication(6, 2,                         Mandatory.Not, ISubset.All(),                             Alive)
     ), Vector(
       Text.Id(1), Implication.Id(6), Tag.Id(4), Text.Id(3),
@@ -53,11 +53,7 @@ object SampleProject {
     )))
   }
 
-  lazy val project = new Project(
-    customIssueTypes,
-    customReqTypes,
-    fields,
-    RevAnd(30, tags))
+  lazy val project = new Project(customIssueTypes, customReqTypes, fields, tagsR)
 
   lazy val tagTree = project.tags.data.mapValues(_.children)
 

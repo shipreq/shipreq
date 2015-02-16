@@ -125,7 +125,7 @@ object SCRATCH {
   // TODO ReqFieldData should be (Req)CustomFieldData
   object ReqFieldData {
     type Text         = Map[CustomField.Text.Id, Map[Req.Id, Unit]] // TODO Unit should be the rich text AST
-    type Tags         = Map[Req.Id, Set[Tag.Id]] // TODO Should be ApplicableTag.Id
+    type Tags         = Map[Req.Id, Set[ApplicableTag.Id]]
     type Implications = BiMap[Req.Id, Req.Id]
   }
 

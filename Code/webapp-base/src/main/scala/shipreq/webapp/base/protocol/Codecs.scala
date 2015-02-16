@@ -222,12 +222,23 @@ object DataCodecs {
   implicit final val customReqTypeId = tagL(CustomReqType.Id.apply)
   implicit final val customReqType   = caseclass6(CustomReqType.apply, CustomReqType.unapply)
 
-  implicit final val tagId         = tagL(Tag.Id.apply)
-  implicit final val tagGroup      = caseclass5(TagGroup.apply, TagGroup.unapply)
-  implicit final val applicableTag = caseclass5(ApplicableTag.apply, ApplicableTag.unapply)
-  implicit final val tag           = tagRW
-  implicit final val tagInTree     = caseclass2(TagInTree.apply, TagInTree.unapply)
-  implicit final val tagTree       = iMap[Tag.Id, TagInTree](_.tag.id)
+  implicit final val tagGroupId      = tagL(TagGroup.Id.apply)
+  implicit final val applicableTagId = tagL(ApplicableTag.Id.apply)
+  implicit final val tagId           = tagIdRW
+  implicit final val tagGroup        = caseclass5(TagGroup.apply, TagGroup.unapply)
+  implicit final val applicableTag   = caseclass5(ApplicableTag.apply, ApplicableTag.unapply)
+  implicit final val tag             = tagRW
+  implicit final val tagInTree       = caseclass2(TagInTree.apply, TagInTree.unapply)
+  implicit final val tagTree         = iMap[Tag.Id, TagInTree](_.tag.id)
+  private[this] def tagIdRW = ReadWriter[Tag.Id]({
+    case i: ApplicableTag.Id => intkeyW(0, i)(applicableTagId)
+    case i: TagGroup     .Id => intkeyW(1, i)(tagGroupId)
+  }, {
+    case Js.Arr(Js.Num(n), v) => n.toInt match {
+      case 0 => readJs(v)(applicableTagId)
+      case 1 => readJs(v)(tagGroupId)
+    }
+  })
   private[this] def tagRW = ReadWriter[Tag]({
     case t: TagGroup      => intkeyW(0, t)(tagGroup)
     case t: ApplicableTag => intkeyW(1, t)(applicableTag)

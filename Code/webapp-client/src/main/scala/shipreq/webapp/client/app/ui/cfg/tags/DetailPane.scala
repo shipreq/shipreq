@@ -1,12 +1,13 @@
 package shipreq.webapp.client.app.ui.cfg.tags
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
-import org.scalajs.dom.raw.HTMLSelectElement
 import scalaz.Equal
 import scalaz.effect.IO
-import shipreq.base.util.ParseLong
+import scalaz.std.option.optionEqual
 import shipreq.webapp.base.data._
+import shipreq.webapp.client.app.ui.SelectOne
 import shipreq.webapp.client.util.DND
+import SelectOne.Choice
 import Tag.Id
 import TagTree.FlatRow
 
@@ -40,7 +41,10 @@ private[tags] object DetailPane {
         ^.onClick ~~> r.unlink,
         "Remove"))
 
-  class Backend($: BackendScope[Props, State]) {
+  val relDropdownComponent = SelectOne.Component[Option[Id]]
+  val emptyRelChoice       = Choice[Option[Id]](None, "", disabled = false)
+
+  final class Backend($: BackendScope[Props, State]) {
     @inline def p = $.props
 
     def render: ReactElement =
@@ -79,23 +83,15 @@ private[tags] object DetailPane {
         EmptyTag
       else {
 
-        def dropdownChange: SyntheticEvent[HTMLSelectElement] => IO[Unit] =
-          e => ar.onSelect(ParseLong.unapply(e.target.value).map(Id.apply))
-
-        def option(r: AddRel) = {
-          val base = r.selectable match {
-            case Some(id) => <.option(^.value := id.value)
-            case None     => <.option(^.disabled := true)
+        val choices =
+          emptyRelChoice +:
+          ar.rels.map { r =>
+            val s = r.selectable
+            Choice[Option[Id]](s, r.value.indentedName, disabled = s.isEmpty)
           }
-          base(r.value.indentedName)
-        }
 
         val dropdown =
-          <.select(
-            ^.value := ar.selected.map(_.id.value.toString).getOrElse("∅"),
-            ^.onChange ~~> dropdownChange,
-            <.option(^.value := "∅"),
-            ar.rels.map(option))
+          relDropdownComponent(SelectOne.Props(ar.selected.map(_.id), choices, Some(ar.onSelect)))
 
         val addButton = {
           val b = <.button(^.marginLeft := 1.ex, buttonLabel)

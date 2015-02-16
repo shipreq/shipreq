@@ -120,8 +120,16 @@ object RandomData {
     revAnd(r.list map g)
   }
 
-  lazy val tagId =
-    id map Tag.Id
+  lazy val tagGroupId =
+    id map TagGroup.Id
+
+  lazy val applicableTagId =
+    id map ApplicableTag.Id
+
+  lazy val tagId: Gen[Tag.Id] = {
+    import Gen.Covariance._
+    Gen.oneofG(tagGroupId, applicableTagId)
+  }
 
   lazy val mutexChildren =
     Gen.oneof[MutexChildren](MutexChildren, MutexChildren.Not)
@@ -130,10 +138,10 @@ object RandomData {
     shortText1
 
   lazy val tagGroup =
-    Gen.apply5(TagGroup.apply)(tagId, tagName, optionalLargeText, mutexChildren, alive)
+    Gen.apply5(TagGroup.apply)(tagGroupId, tagName, optionalLargeText, mutexChildren, alive)
 
   lazy val applicableTag =
-    Gen.apply5(ApplicableTag.apply)(tagId, tagName, optionalLargeText, hashRefKey, alive)
+    Gen.apply5(ApplicableTag.apply)(applicableTagId, tagName, optionalLargeText, hashRefKey, alive)
 
   lazy val tag =
     Gen.oneofG[Tag](tagGroup.subst, applicableTag.subst)

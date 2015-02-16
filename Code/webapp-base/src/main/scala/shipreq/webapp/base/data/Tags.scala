@@ -31,19 +31,19 @@ sealed trait Tag {
  * FR-246: BA shall be able to specify that a grouping cannot be applied.
  *         e.g. “Priority” shouldn't be applicable but its children should.
  */
-final case class TagGroup(id: Id,
-                          name: String,
-                          desc: Option[String],
+final case class TagGroup(id           : TagGroup.Id,
+                          name         : String,
+                          desc         : Option[String],
                           mutexChildren: MutexChildren,
-                          alive: Alive) extends Tag {
+                          alive        : Alive) extends Tag {
   override def keyO = None
   override def tagType = TagType.Group
 }
 
-final case class ApplicableTag(id: Id,
-                               name: String,
-                               desc: Option[String],
-                               key: HashRefKey,
+final case class ApplicableTag(id   : ApplicableTag.Id,
+                               name : String,
+                               desc : Option[String],
+                               key  : HashRefKey,
                                alive: Alive) extends Tag {
   override def keyO = Some(key)
   override def tagType = TagType.Applicable
@@ -75,14 +75,14 @@ object TagType {
 }
 
 object Tag {
-  final case class Id(value: Long) extends TaggedLong
+  sealed trait Id extends TaggedLong
 
   object IdAccess extends ObjDataIdM[Tag.type, Tag, Id] {
     override def id(d: Tag) = d.id
-    override def mkId(l: Long) = Id(l)
-    override def setId(t: Tag, i: Id) = t match {
-      case x: TagGroup      => x.copy(id = i)
-      case x: ApplicableTag => x.copy(id = i)
+    override def mkId(l: Long) = ApplicableTag.Id(l) // This is declared as being for testing only
+    override def setId(t: Tag, i: Id) = t match { // TODO Ideally this should be hidden from non-test code
+      case x: TagGroup      => x.copy(id = TagGroup     .Id(i.value))
+      case x: ApplicableTag => x.copy(id = ApplicableTag.Id(i.value))
     }
   }
 
@@ -99,7 +99,6 @@ object Tag {
       case x: TagGroup       => b match {case y: TagGroup       => x ≟ y; case _ => false}
     }
   }
-
 
   val _name = Lens((_: Tag).name)(n => {
     case TagGroup(a, _, b, c, d)      => TagGroup(a, n, b, c, d)
@@ -124,6 +123,13 @@ object Tag {
         _.keys.toStream,
         CycleDetector.Directed.check[TagTree, Id, Long](_.get(_).fold(Stream.empty[Id])(_.children.toStream), _.value))
   }
+}
+
+object TagGroup {
+  final case class Id(value: Long) extends Tag.Id with TaggedLong
+}
+object ApplicableTag {
+  final case class Id(value: Long) extends Tag.Id with TaggedLong
 }
 
 // =====================================================================================================================

@@ -15,6 +15,7 @@ import shipreq.webapp.base.protocol.Routine
 import shipreq.webapp.base.protocol.Routines.TagCrud
 import shipreq.webapp.base.protocol.TagProtocol._
 import shipreq.webapp.base.test.{SampleProject => S}
+import shipreq.webapp.base.UnsafeTypes.UnsafeIntExt
 import shipreq.webapp.client.ClientData
 import shipreq.webapp.client.test._
 import Tag.Id
@@ -54,7 +55,7 @@ object CfgTagsTest extends TestSuite {
       val rev = clientData.project.tags.rev.succ
       val upd = PovTag(
         ApplicableTag(22, "Blah", None, "blah", Alive),
-        PovRelations(Map(Id(1) -> Id(3).some), Vector(10)))
+        PovRelations(Map(1.TG -> 3.AT.some), Vector(10.TG)))
       val d = RemoteDeltaG(Partition.Tags, rev, rev)(Set.empty, List(upd))
       clientData.update(List(d)).unsafePerformIO()
 
@@ -96,19 +97,19 @@ object CfgTagsTest extends TestSuite {
       }
 
       'existingParentRels {
-        val subj = S.tags.get(23).get.tag
+        val subj = S.tags.get(23.AT).get.tag
         val rels = D.existingParentRels(s, t.u, subj)
         assertEq(rels.map(_.name).toList.sorted, List("Released", "v1.x"))
         // Remove parent 'Released' from 'v1.1'
-        testUnlink(subj, rels, "Released")(PovRelations(Map(Id(21) -> Id(24)), Vector.empty))
+        testUnlink(subj, rels, "Released")(PovRelations(Map(21.AT -> 24.AT), Vector.empty))
       }
 
       'existingChildRels {
-        val subj = S.tags.get(27).get.tag
+        val subj = S.tags.get(27.TG).get.tag
         val rels = D.existingChildrenRels(s, t.u, subj)
         assertEq(rels.map(_.name).toList, List("v1.0", "v1.1"))
         // Remove child 'v1.0' from 'Released'
-        testUnlink(subj, rels, "v1.0")(PovRelations(Map(Id(20) -> Id(21)), Vector(23)))
+        testUnlink(subj, rels, "v1.0")(PovRelations(Map(20.TG -> 21.AT), Vector(23.AT)))
       }
     }
   }
