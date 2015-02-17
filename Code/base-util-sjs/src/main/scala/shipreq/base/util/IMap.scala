@@ -41,6 +41,8 @@ final class IMap[K, V] private (key: V => K, m: Map[K, V]) extends Subtractable[
 
   def get(k: K): Option[V] = m.get(k)
 
+  def apply(k: K): Must[V] = Must.fromOption(get(k), s"Value not found for $k . Keys = $keySet.")
+
   override def -(k: K) = setmap(m - k)
 
   // ------------------------------------------------

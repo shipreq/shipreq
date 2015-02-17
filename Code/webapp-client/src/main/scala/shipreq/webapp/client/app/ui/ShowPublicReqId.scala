@@ -21,12 +21,9 @@ object ShowPublicReqId {
     ReactComponentB[ShowPublicReqId]("ReqId")
       .stateless
       .render((p, _) =>
-        p.project.reqType(p.subject.reqTypeId).fold(
-          UI.`WHAT?!`()(s"Missing ReqType for ${p.subject}", p.project.customReqTypes)
-        )(reqtype =>
-          <.span(s"${reqtype.mnemonic.value}-${p.subject.pos}")
-        )
-      )
+        UI.must(p.project.reqType(p.subject.reqTypeId))(reqtype =>
+          <.span(
+            s"${reqtype.mnemonic.value}-${p.subject.pos}")))
       .build
   
 }

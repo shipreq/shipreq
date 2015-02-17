@@ -2,6 +2,7 @@ package shipreq.webapp.client.lib.ui
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import org.scalajs.dom
+import shipreq.base.util.Must
 import scalaz.effect.IO
 import shipreq.webapp.base.UiText
 
@@ -38,12 +39,10 @@ object UI {
   def abortNewButton(cb: IO[Unit]): ReactTag =
     <.button(^.onClick ~~> cb, UiText.Cfg.abortNewButton)
 
-  /**
-   * Something that should never happen, did. We could crash but it might be benign.
-   * We need to render something and we should send the error back home.
-   */
-  def `WHAT?!`(userMsg: String = "MISSING DATA")(debugMsg: String, params: Any*): ReactElement = {
-    dom.console.error(params.foldLeft(debugMsg)(_ + "\n" + _.toString))
-    <.span(^.color.red, userMsg)
+  def must[A](m: Must[A], userMsg: String = "ERR")(render: A => ReactElement): ReactElement = {
+    m.fold(e => {
+      dom.console.error(e) // side-effect!
+      <.span(^.cls := "mustfailed", ^.color.red, userMsg)
+    }, render)
   }
 }

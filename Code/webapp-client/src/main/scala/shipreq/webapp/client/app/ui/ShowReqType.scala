@@ -21,15 +21,10 @@ object ShowReqType {
     ReactComponentB[ShowReqType]("ReqType")
       .stateless
       .render((p, _) =>
-        // TODO dupl ↓↓
-        p.project.reqType(p.subject).fold(
-          UI.`WHAT?!`()(s"Missing ReqType for ${p.subject}", p.project.customReqTypes)
-        )(reqtype =>
+        UI.must(p.project.reqType(p.subject))(reqtype =>
           <.span(
             ^.title := reqtype.name,
-            s"${reqtype.mnemonic.value}")
-        )
-      )
+            s"${reqtype.mnemonic.value}")))
       .build
   
 }

@@ -185,7 +185,7 @@ object ColumnRenderer {
   class CFTag(project: Project, scope: Option[Tag.Id]) extends ColumnRenderer {
 
     def this(project: Project, fieldId: CustomField.Tag.Id) {
-      this(project, project.fields.data.customFields.get(fieldId).asInstanceOf[CustomField.Tag].tagId.some)
+      this(project, None) //project.fields.data.customFields.get(fieldId).asInstanceOf[CustomField.Tag].tagId.some)
       // TODO add getField[I,D](I): Err \/ D
     }
 

@@ -2,6 +2,7 @@ package shipreq.webapp.base.data
 
 import monocle.Lens
 import monocle.macros.Lenser
+import shipreq.base.util.Must
 
 case class RevAnd[D](rev: Rev, data: D)
 
@@ -36,8 +37,8 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
       .map("\n    " + _.toString.replace(" -> ", " → "))
       .mkString("Project(", "", "\n)")
 
-  def reqType(i: ReqType.Id): Option[ReqType] =
-    i.foldId(Some(_), customReqTypes.data.get)
+  def reqType(i: ReqType.Id): Must[ReqType] =
+    i.foldId[Must[ReqType]](s => s, customReqTypes.data.apply)
 
   lazy val reqTypes: Stream[ReqType] =
     (customReqTypes.data.values.toStream: Stream[ReqType]) #:::
