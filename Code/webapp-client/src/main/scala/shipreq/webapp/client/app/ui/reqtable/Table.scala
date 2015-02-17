@@ -22,8 +22,6 @@ object Table {
       .render(_.backend.render)
       .build
 
-  val noReqCodesToExpand: List[List[ReqCode]] = List(Nil)
-
   final class Backend($: BackendScope[Props, Unit]) {
     def render: ReactElement = {
       val p = $.props
@@ -33,28 +31,7 @@ object Table {
       val crs: Vector[ColumnRenderer] =
         p.viewSettings.columns.map(xxx)
 
-      val expandCodes = p.viewSettings.order.includesCode
-
-      // Collect rows
-      var rows: Vector[Row] =
-        p.project.reqs.values.foldLeft(Vector.empty[Row])((q, i) => i match {
-          case r: GenericReq =>
-
-          // Filter deleted
-
-          // Expansion
-          val expandedReqCodes: List[List[ReqCode]] = {
-            val codes = p.project.reqCodesPerTarget(r.id)
-            if (codes.isEmpty)
-              noReqCodesToExpand
-            else if (expandCodes)
-              codes.foldLeft[List[List[ReqCode]]](Nil)((q2, c) => (c :: Nil) :: q2)
-            else
-              List(codes.toList) // TODO sort
-          }
-
-          (q /: expandedReqCodes)((q2, codes) => q2 :+ GenericReqRow(r, Expansion(None, None, codes)))
-        })
+      val rows = Logic.gatherReqs(p.viewSettings, p.project)
 
       // Add SHRs
 
