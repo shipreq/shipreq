@@ -5,7 +5,7 @@ import japgolly.scalajs.react.extra.OnUnmount
 import monocle.macros.Lenser
 import scala.language.reflectiveCalls
 import scalaz.effect.IO
-import shipreq.base.util.Refreshable
+import shipreq.base.util.{Must, Refreshable}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.delta.Partition
@@ -23,7 +23,7 @@ private[issues] object MandatoryFields {
   val rowStore = SavedRowStore.data[CustomField](_.mandatory)
 
   case class State(rows   : rowStore.State,
-                   labelFn: Refreshable[Project, Field => String])
+                   labelFn: Refreshable[Project, Field => Must[String]])
 
   type S = State
   val  ST = ReactS.FixT[IO, S]
@@ -69,7 +69,7 @@ private[issues] object MandatoryFields {
 
     val genEditor =
       Editors.checkboxEditor.imap(Mandatory)
-        .strengthR[Field].labelSuffix(a => $.state.labelFn.value(a._2))
+        .strengthR[Field].labelSuffix(a => UI.mustA($.state.labelFn.value(a._2)))
 
     val editor =
       genEditor.cmapA[(Mandatory, CustomField)](a => a)

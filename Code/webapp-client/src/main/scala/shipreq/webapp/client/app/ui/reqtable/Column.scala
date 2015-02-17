@@ -1,8 +1,8 @@
 package shipreq.webapp.client.app.ui.reqtable
 
 import scalaz.{Equal, NonEmptyList}
-import shipreq.base.util.IMap
-import shipreq.webapp.base.data
+import shipreq.base.util.{Must, IMap}
+import shipreq.webapp.base.{UiText, data}
 import shipreq.webapp.base.UiText.ColumnNames
 
 sealed trait Column {
@@ -46,12 +46,12 @@ object Column {
   }
 
   case class NameResolver(customFields   : IMap[data.CustomField.Id, data.CustomField],
-                          customFieldName: data.CustomField => String) {
+                          customFieldName: data.CustomField => Must[String]) {
 
     @inline def apply(column: Column) = fn(column)
     
     val fn: Column => String = {
-      case Column.CustomField(id) => customFields.get(id).map(customFieldName) getOrElse "?"
+      case Column.CustomField(id) => UiText.mustA(customFields(id) flatMap customFieldName)
       case Column.ReqType         => ColumnNames.reqType
       case Column.PubId           => ColumnNames.pubId
       case Column.Code            => ColumnNames.code

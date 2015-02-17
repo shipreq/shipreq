@@ -9,7 +9,7 @@ import scalaz.std.AllInstances._
 import scalaz.syntax.equal._
 import shapeless.TypeClass.deriveConstructors
 import shapeless.contrib.scalaz.Instances._
-import shipreq.base.util.IMap
+import shipreq.base.util.{Must, IMap}
 import shipreq.base.util.TaggedTypes.{TaggedString, TaggedLong}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.delta.Partition
@@ -107,8 +107,8 @@ object Field {
     _.fold(_ => true, _.alive ≟ Alive)
 
   def name(customReqTypes: CustomReqTypeIMap, tags: TagTree) = {
-    val cn: CustomField => String = CustomField.name(customReqTypes, tags)
-    val fn: Field       => String = {
+    val cn: CustomField => Must[String] = CustomField.name(customReqTypes, tags)
+    val fn: Field       => Must[String] = {
       case f: StaticField => f.name
       case f: CustomField => cn(f)
     }
@@ -211,8 +211,8 @@ object CustomField {
     override def independentName = None
     override def keyO = None
 
-    def name(tags: TagTree): String =
-      tags.get(tagId).fold(UiText.entityNameNotFound)(_.tag.name)
+    def name(tags: TagTree): Must[String] =
+      tags(tagId).map(_.tag.name)
   }
   object Tag {
     final case class Id(value: Long) extends CustomField.Id
@@ -262,7 +262,7 @@ object CustomField {
     case f: Implication => f.copy(alive = n)
   })
 
-  def name(customReqTypes: CustomReqTypeIMap, tags: TagTree): CustomField => String = {
+  def name(customReqTypes: CustomReqTypeIMap, tags: TagTree): CustomField => Must[String] = {
     case f: Text        => f.name
     case f: Tag         => f.name(tags)
     case f: Implication => f.name(customReqTypes)

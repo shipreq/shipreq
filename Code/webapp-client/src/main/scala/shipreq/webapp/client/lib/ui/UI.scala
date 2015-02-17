@@ -2,8 +2,8 @@ package shipreq.webapp.client.lib.ui
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import org.scalajs.dom
-import shipreq.base.util.Must
 import scalaz.effect.IO
+import shipreq.base.util.Must
 import shipreq.webapp.base.UiText
 
 object UI {
@@ -39,10 +39,15 @@ object UI {
   def abortNewButton(cb: IO[Unit]): ReactTag =
     <.button(^.onClick ~~> cb, UiText.Cfg.abortNewButton)
 
-  def must[A](m: Must[A], userMsg: String = "ERR")(render: A => ReactElement): ReactElement = {
+  def must[A, N](m: Must[A], outputOnFailure: String = UiText.mustFailed)(render: A => N)(implicit x: ReactTag => N): N = {
     m.fold(e => {
       dom.console.error(e) // side-effect!
-      <.span(^.cls := "mustfailed", ^.color.red, userMsg)
+      <.span(^.cls := "mustfailed", ^.color.red, outputOnFailure)
     }, render)
   }
+
+  /** A is for auto! */
+  @inline def mustA[A, N](m: Must[A], outputOnFailure: String = UiText.mustFailed)(implicit x: ReactTag => N, y: A => N): N =
+    must(m, outputOnFailure)(y)
+
 }

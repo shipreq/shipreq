@@ -1,8 +1,19 @@
 package shipreq.webapp.base
 
+import shipreq.base.util.Must
+
 object UiText {
 
-  def entityNameNotFound = "?"
+  def mustFailed = "¿ERR"
+
+  def entityNameNotFound = "?" // TODO remove
+
+  def mustA(m: Must[String], outputOnFailure: String = mustFailed): String = {
+    m.fold(e => {
+      System.err.println(e) // side-effect!
+      outputOnFailure
+    }, identity)
+  }
 
   object ColumnNames {
     def reqType = "Type"
