@@ -1,7 +1,6 @@
 package shipreq.webapp.client.app.ui.reqtable
 
 import shipreq.webapp.base.data._
-import SCRATCH._
 
 /**
  * Requirements aren't always rendered in their entirety.

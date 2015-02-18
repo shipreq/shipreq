@@ -47,6 +47,7 @@ package object data {
     @inline implicit final def tcCustomIssueType    = CustomIssueType        .IdAccess
     @inline implicit final def tcCustomReqType      = CustomReqType          .IdAccess
     @inline implicit final def tcTag                = Tag                    .IdAccess
+    @inline implicit final def tcReq                = Req                    .IdAccess
   }
 
   object DataImplicits extends DataObjImplicits {
@@ -60,9 +61,9 @@ package object data {
   // ----------------------------------------------------------------------------------------------
   // Data types and functions
 
-  type TagTree             = IMap[Tag.Id, TagInTree]
   type CustomIssueTypeIMap = IMap[CustomIssueType.Id, CustomIssueType]
   type CustomReqTypeIMap   = IMap[CustomReqType.Id, CustomReqType]
+  type TagTree             = IMap[Tag.Id, TagInTree]
 
   @inline final def emptyDataMap[O, D, Id](o: O)(implicit O: ObjDataId[O, D, Id]): IMap[Id, D] =
     IMap.empty(O.id)

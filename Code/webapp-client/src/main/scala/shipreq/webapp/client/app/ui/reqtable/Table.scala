@@ -6,7 +6,6 @@ import shipreq.base.util.Must
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.app.ui.widget._
-import SCRATCH._
 import DataImplicits._
 
 object Table {

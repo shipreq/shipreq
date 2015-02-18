@@ -1,7 +1,6 @@
 package shipreq.webapp.client.app.ui.reqtable
 
 import shipreq.webapp.base.data._
-import SCRATCH._
 
 object Logic {
 
@@ -24,13 +23,13 @@ object Logic {
     val codeExpander = expandReqCodes(vs.order.includesCode)
 
     // Traverse reqs
-    p.reqs.vstreamf {
+    p.reqs.data.reqs.vstreamf {
       case r: GenericReq =>
 
         // Remove deleted
 
         // Expansion
-        val expandedReqCodes = codeExpander(p.reqCodesPerTarget(r.id))
+        val expandedReqCodes = codeExpander(p.reqCodes.data.byTarget(r.id))
 
         // Done
         expandedReqCodes.map(codes =>

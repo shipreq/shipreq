@@ -6,7 +6,6 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.client.lib.ui.UI
 
 // TODO PubidW inconsistent style
-import shipreq.webapp.base.data.SCRATCH._
 
 final case class PubidW(subject       : Pubid,
                 // TODO hoverForDetail: Boolean,

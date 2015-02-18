@@ -6,7 +6,6 @@ import shipreq.base.util.Must
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.app.ui.widget._
-import SCRATCH._
 import DataImplicits._
 
 
@@ -97,7 +96,7 @@ object ColumnRenderer {
   // ===================================================================================================================
   class CFText(project: Project, id: CustomField.Text.Id) extends ColumnRenderer {
 
-    val reqs = project.reqFieldData.text(id)
+    val reqs = project.reqFieldData.data.text(id)
 
     override def header: ReactElement =
       <.span("TODO") // Use Column.NameResolver
@@ -125,7 +124,7 @@ object ColumnRenderer {
 
     override val render: Row => ReactElement = {
       case GenericReqRow(req, _) =>
-        var reqtags = project.reqFieldData.tags(req.id)
+        var reqtags = project.reqFieldData.data.tags(req.id)
         tagWhitelist.foreach{w => reqtags = reqtags.filter(w.contains)}
         ???
       case ReqCodeGroupRow(_, _) => `N/A`

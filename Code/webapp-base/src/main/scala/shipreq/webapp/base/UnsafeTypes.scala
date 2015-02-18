@@ -18,7 +18,12 @@ object UnsafeTypes extends UnsafeTypesLowPriority { // TODO move into test
   implicit def autoMnemonic   (s: String) = ReqType.Mnemonic(s)
   implicit def autoHashRefKey (s: String) = HashRefKey(s)
   implicit def autoFieldRefKey(s: String) = FieldRefKey(s)
+  implicit def autoReqCodeNode(s: String) = ReqCode.Node(s)
 
+  implicit def autoReqCodeNodeId    (i: Int) = ReqCode.NodeId(i)
+  implicit def autoReqCodeGroupId   (i: Int) = ReqCodeGroup.Id(i)
+  implicit def autoReqTypePos       (i: Int) = ReqTypePos(i)
+  implicit def autoGenericReqId     (i: Int) = GenericReq.Id(i)
   implicit def autoCustomFieldImpId (i: Int) = CustomField.Implication.Id(i)
   implicit def autoCustomFieldTagId (i: Int) = CustomField.Tag.Id(i)
   implicit def autoCustomFieldTxtId (i: Int) = CustomField.Text.Id(i)
@@ -28,6 +33,10 @@ object UnsafeTypes extends UnsafeTypesLowPriority { // TODO move into test
   implicit def autoApplicableTagId  (i: Int) = ApplicableTag.Id(i)
   implicit def autoRev              (i: Int) = Rev(i)
 
+  implicit def autoReqCodeNodeIdO    (i: Int): Option[ReqCode.NodeId]             = Some(i)
+  implicit def autoReqCodeGroupIdO   (i: Int): Option[ReqCodeGroup.Id]            = Some(i)
+  implicit def autoReqTypePosO       (i: Int): Option[ReqTypePos]                 = Some(i)
+  implicit def autoGenericReqIdO     (i: Int): Option[GenericReq.Id]              = Some(i)
   implicit def autoCustomFieldImpIdO (i: Int): Option[CustomField.Implication.Id] = Some(i)
   implicit def autoCustomFieldTagIdO (i: Int): Option[CustomField.Tag.Id]         = Some(i)
   implicit def autoCustomFieldTxtIdO (i: Int): Option[CustomField.Text.Id]        = Some(i)
@@ -35,6 +44,7 @@ object UnsafeTypes extends UnsafeTypesLowPriority { // TODO move into test
   implicit def autoCustomReqTypeIdO  (i: Int): Option[CustomReqType.Id]           = Some(i)
   implicit def autoTagGroupIdO       (i: Int): Option[TagGroup.Id]                = Some(i)
   implicit def autoApplicableTagIdO  (i: Int): Option[ApplicableTag.Id]           = Some(i)
+
 
   implicit def tagTreeTree(t: TagTree) = t.mapValues(_.children)
 

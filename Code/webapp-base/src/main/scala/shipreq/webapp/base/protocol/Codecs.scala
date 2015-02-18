@@ -1,5 +1,6 @@
 package shipreq.webapp.base.protocol
 
+import japgolly.nyaya.util.{MultiValues, Multimap}
 import scalaz.{OneAnd, NonEmptyList, \&/, \/, -\/, \/-}
 import scalaz.Isomorphism.<=>
 
@@ -18,6 +19,9 @@ private[protocol] object CodecBase {
 
   def tagS[T <: TaggedString](C: String => T) =
     ReadWriter[T](i => Js.Str(i.value), { case Js.Str(i) => C(i)})
+
+  def tagI[T <: TaggedInt](C: Int => T) =
+    ReadWriter[T](i => Js.Str(i.value.toString), { case Js.Str(i) => C(i.toInt)})
 
   def tagL[T <: TaggedLong](C: Long => T) =
     ReadWriter[T](i => Js.Str(i.value.toString), { case Js.Str(i) => C(i.toLong)})
@@ -189,6 +193,16 @@ object DataCodecs {
     })
   }
 
+  implicit def bimap[K, V](implicit r: Reader[Map[K, V]], w: Writer[Map[K, V]]): ReadWriter[BiMap[K, V]] =
+    ReadWriter(
+      b => w write b.ab,
+      r.read.andThen(BiMap(_)))
+
+  implicit def multimap[K, L[_], V](implicit r: Reader[Map[K, L[V]]], w: Writer[Map[K, L[V]]], l: MultiValues[L]): ReadWriter[Multimap[K, L, V]] =
+    ReadWriter(
+      mm => w write mm.m,
+      r.read.andThen(Multimap(_))) // TODO Multimap reader could be optimised
+
   @inline implicit def iMapAuto[K: Reader : Writer, V: Reader : Writer](implicit d: DataIdAux[V, K]): ReadWriter[IMap[K, V]] =
     iMap(d.id)
 
@@ -207,6 +221,10 @@ object DataCodecs {
 
   implicit final val customIssueTypeId = tagL(CustomIssueType.Id.apply)
   implicit final val customIssueType   = caseclass4(CustomIssueType.apply, CustomIssueType.unapply)
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // ReqTypes
+
   implicit final val reqTypeId = {
     import StaticReqType._
     ReadWriter[ReqType.Id]({
@@ -222,6 +240,9 @@ object DataCodecs {
   implicit final val customReqTypeId = tagL(CustomReqType.Id.apply)
   implicit final val customReqType   = caseclass6(CustomReqType.apply, CustomReqType.unapply)
 
+  // -------------------------------------------------------------------------------------------------------------------
+  // Tags
+
   implicit final val tagGroupId      = tagL(TagGroup.Id.apply)
   implicit final val applicableTagId = tagL(ApplicableTag.Id.apply)
   implicit final val tagId           = tagIdRW
@@ -230,6 +251,7 @@ object DataCodecs {
   implicit final val tag             = tagRW
   implicit final val tagInTree       = caseclass2(TagInTree.apply, TagInTree.unapply)
   implicit final val tagTree         = iMap[Tag.Id, TagInTree](_.tag.id)
+
   private[this] def tagIdRW = ReadWriter[Tag.Id]({
     case i: ApplicableTag.Id => intkeyW(0, i)(applicableTagId)
     case i: TagGroup     .Id => intkeyW(1, i)(tagGroupId)
@@ -239,6 +261,7 @@ object DataCodecs {
       case 1 => readJs(v)(tagGroupId)
     }
   })
+
   private[this] def tagRW = ReadWriter[Tag]({
     case t: TagGroup      => intkeyW(0, t)(tagGroup)
     case t: ApplicableTag => intkeyW(1, t)(applicableTag)
@@ -248,6 +271,9 @@ object DataCodecs {
       case 1 => readJs(v)(applicableTag)
     }
   })
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Fields
 
   implicit final val customFieldImplId = tagL(CustomField.Implication.Id.apply)
   implicit final val customFieldTextId = tagL(CustomField.Text       .Id.apply)
@@ -263,6 +289,7 @@ object DataCodecs {
       case "i" => readJs[CustomField.Implication.Id](v)
     }
   })
+
   implicit final val customFieldImpl = caseclass5(CustomField.Implication.apply, CustomField.Implication.unapply)
   implicit final val customFieldText = caseclass6(CustomField.Text       .apply, CustomField.Text       .unapply)
   implicit final val customFieldTag  = caseclass5(CustomField.Tag        .apply, CustomField.Tag        .unapply)
@@ -277,6 +304,7 @@ object DataCodecs {
       case "i" => readJs[CustomField.Implication](v)
     }
   })
+
   implicit final val staticField = {
     import StaticField._
     ReadWriter[StaticField]({
@@ -289,6 +317,7 @@ object DataCodecs {
       case Js.Str("g") => StepGraph
     })
   }
+
   implicit final val fieldId = ReadWriter[Field.Id]({
     case i: CustomField.Id => writeJs(i)
     case i: StaticField    => writeJs(i)
@@ -296,9 +325,73 @@ object DataCodecs {
     // Shape determines type. Arr(Str(_), _) or Str(_)
     customFieldId.read orElse staticField.read
   )
+
   implicit final val fieldSet = caseclass2(FieldSet.apply, FieldSet.unapply)
 
-  implicit final val project = caseclass4(Project.apply, Project.unapply)
+  // -------------------------------------------------------------------------------------------------------------------
+  // Requirements
+
+  implicit final val reqTypePos    = tagI(ReqTypePos.apply)
+  implicit final val pubid         = caseclass2(Pubid.apply, Pubid.unapply)
+  implicit final val genericReqId  = tagL(GenericReq.Id.apply)
+  implicit final val genericReq    = caseclass4(GenericReq.apply, GenericReq.unapply)
+  implicit final val reqId         = _reqId
+  implicit final val req           = _req
+  implicit final val requirements  = caseclass2(Requirements.apply, Requirements.unapply)
+  implicit final val reqFieldData  = caseclass3(ReqFieldData.apply, ReqFieldData.unapply)
+
+  private def _req = ReadWriter[Req]({
+    case r: GenericReq => intkeyW(0, r)(genericReq)
+  }, {
+    case Js.Arr(Js.Num(n), v) => n.toInt match {
+      case 0 => readJs(v)(genericReq)
+    }
+  })
+
+  private def _reqId = ReadWriter[Req.Id]({
+    case i: GenericReq.Id => intkeyW(0, i)(genericReqId)
+  }, {
+    case Js.Arr(Js.Num(n), v) => n.toInt match {
+      case 0 => readJs(v)(genericReqId)
+    }
+  })
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Req Codes
+
+  implicit final val reqCodeGroupId  = tagL(ReqCodeGroup.Id.apply)
+  implicit final val reqCodeGroup    = caseclass2(ReqCodeGroup.apply, ReqCodeGroup.unapply)
+  implicit final val reqCodeNodeId   = tagL(ReqCode.NodeId.apply)
+  implicit final val reqCodeNode     = tagS(ReqCode.Node.apply)
+  implicit final val reqCodeTarget   = _reqCodeTarget
+  implicit final val reqCodeTrieNode = _reqCodeTrieNode
+  implicit final val reqCodeTrie     = _reqCodeTrie
+  implicit final val reqCodes        = caseclass2(ReqCodes.apply, ReqCodes.unapply)
+
+  private def _reqCodeTarget = ReadWriter[ReqCode.Target]({
+    case i: Req         .Id => intkeyW(0, i)(reqId)
+    case i: ReqCodeGroup.Id => intkeyW(1, i)(reqCodeGroupId)
+  }, {
+    case Js.Arr(Js.Num(n), v) => n.toInt match {
+      case 0 => readJs(v)(reqId)
+      case 1 => readJs(v)(reqCodeGroupId)
+    }
+  })
+
+  private lazy val _reqCodeTrieNode: ReadWriter[ReqCode.TrieNode] = {
+    import ReqCode._
+    val trieRW = _reqCodeTrie
+    caseclass2(TrieNode.apply, TrieNode.unapply)(implicitly, implicitly, trieRW, trieRW)
+  }
+  private lazy val _reqCodeTrie: ReadWriter[ReqCode.Trie] = {
+    import ReqCode._
+    lazy val w = MapW[NodeId, TrieNode](reqCodeNodeId, _reqCodeTrieNode)
+    lazy val r = MapR[NodeId, TrieNode](reqCodeNodeId, _reqCodeTrieNode)
+    ReadWriter[Trie](i => w write i, {case i => r read i})
+  }
+
+  // -------------------------------------------------------------------------------------------------------------------
+  implicit final val project = caseclass7(Project.apply, Project.unapply)
 }
 
 import DataCodecs._

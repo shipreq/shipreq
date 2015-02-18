@@ -4,7 +4,7 @@ import monocle.Lens
 import monocle.macros.Lenser
 import shipreq.base.util.Must
 
-case class RevAnd[D](rev: Rev, data: D)
+final case class RevAnd[D](rev: Rev, data: D)
 
 object RevAnd {
   def _data[D] = Lens((_: RevAnd[D]).data)(b => _.copy(data = b))
@@ -16,12 +16,18 @@ object Project {
   val _customReqTypes   = l(_.customReqTypes)
   val _fields           = l(_.fields)
   val _tags             = l(_.tags)
+  val _reqs             = l(_.reqs)
+  val _reqCodes         = l(_.reqCodes)
+  val _reqFieldData     = l(_.reqFieldData)
 }
 
 final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
-                         customReqTypes:   RevAnd[CustomReqTypeIMap],
-                         fields:           RevAnd[FieldSet],
-                         tags:             RevAnd[TagTree]) {
+                         customReqTypes  : RevAnd[CustomReqTypeIMap],
+                         fields          : RevAnd[FieldSet],
+                         tags            : RevAnd[TagTree],
+                         reqs            : RevAnd[Requirements],
+                         reqCodes        : RevAnd[ReqCodes],
+                         reqFieldData    : RevAnd[ReqFieldData]) {
 
   import japgolly.nyaya._
   this assertSatisfies DataProp.project
@@ -30,10 +36,13 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
     customIssueTypes.rev +
     customReqTypes  .rev +
     fields          .rev +
-    tags            .rev
+    tags            .rev +
+    reqs            .rev +
+    reqCodes        .rev +
+    reqFieldData    .rev
 
   override def toString =
-    Stream(customIssueTypes, customReqTypes, fields, tags)
+    Stream(customIssueTypes, customReqTypes, fields, tags, reqs, reqCodes, reqFieldData)
       .map("\n    " + _.toString.replace(" -> ", " → "))
       .mkString("Project(", "", "\n)")
 
@@ -41,28 +50,14 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
     fields.data.customFields(id).flatMap(f =>
       Must.fromOption(d.unapplyData(f), s"$id associated with wrong type: $f"))
 
-  def reqType(i: ReqType.Id): Must[ReqType] =
-    i.foldId[Must[ReqType]](s => s, customReqTypes.data.apply)
+  def req(id: Req.Id): Option[Req] =
+    reqs.data.reqs.get(id)
 
-  lazy val reqTypes: Stream[ReqType] =
-    (customReqTypes.data.values.toStream: Stream[ReqType]) #:::
-    (StaticReqType.valueStream          : Stream[ReqType])
-
-
-  // ------------------------------------------------------------------------------
-  import SCRATCH._ // TODO Hardcoded ↓
-  import shipreq.base.util.IMap
-
-  val pubidRegister: Pubid.Register    = ???
-  val reqs         : IMap[Req.Id, Req] = ???
-  val reqCodeNodes : ReqCode.Nodes     = ???
-  val reqCodeTrie  : ReqCode.Trie      = ???
-  val reqFieldData : ReqFieldData      = ???
-
-  lazy val reqCodesPerTarget = ReqCode.PerTarget(reqCodeTrie, reqCodeNodes)
+  def reqByPubid(id: Pubid): Option[Req] =
+    reqIdByPubid(id) flatMap req
 
   def reqIdByPubid(id: Pubid): Option[Req.Id] = {
-    val v = pubidRegister(id.reqTypeId)
+    val v = reqs.data.pubids(id.reqTypeId)
     val i = id.pos.value - 1
     try {
       Some(v(i))
@@ -71,10 +66,11 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
     }
   }
 
-  def reqByPubid(id: Pubid): Option[Req] =
-    reqIdByPubid(id) flatMap req
+  def reqType(i: ReqType.Id): Must[ReqType] =
+    i.foldId[Must[ReqType]](s => s, customReqTypes.data.apply)
 
-  def req(id: Req.Id): Option[Req] =
-    reqs.get(id)
+  lazy val reqTypes: Stream[ReqType] =
+    (customReqTypes.data.values.toStream: Stream[ReqType]) #:::
+      (StaticReqType.valueStream        : Stream[ReqType])
 
 }
