@@ -2,9 +2,9 @@ package shipreq.webapp.base.data
 
 import japgolly.nyaya.util.Multimap
 import monocle.macros.Lenser
-import shipreq.base.util.{IMap, BiMap}
+import shipreq.base.util.{Must, IMap, BiMap}
 import shipreq.base.util.TaggedTypes._
-import scalaz.{Memo, Equal, NonEmptyList}
+import scalaz.NonEmptyList
 
 // ===================================================================================================================
 // ReqCodes: A hierarchy of semantic IDs
@@ -16,7 +16,7 @@ import scalaz.{Memo, Equal, NonEmptyList}
  *
  * Each [[ReqCode]] only refers to a single target, but requirements can have 0..n [[ReqCode]]s.
  */
-final case class ReqCode(/*last: ReqCode.Node, secondLastToRoot: List[ReqCode.Node]*/) {
+final case class ReqCode(backwards: NonEmptyList[ReqCode.Node]) {
 //    def asc = (last :: secondLastToRoot).reverse
   def txt: String = ???
 }
@@ -70,24 +70,53 @@ object ReqCode {
    */
   sealed trait Target
 
-  final case class TrieNode(value: Option[Target], next: Trie)
+  final case class TrieNode(target: Option[Target], next: Trie)
 
-  // ReqCodes are unique and refer to 0..1 (ReqCodeGroup | Req)
   type Trie = Map[NodeId, TrieNode]
   object Trie {
     val empty: Trie = Map.empty
+
+    def fold[A](trie: Trie, z: => A)(f: (A, NonEmptyList[NodeId], Option[Target]) => A): A =
+      foldP[A, List[NodeId], NonEmptyList[NodeId]](trie, z, Nil, _.list)(
+        (p, i) => NonEmptyList.nel(i, p), f)
+
+    def foldP[A, P0, P1](trie: Trie, z: => A, pz: => P0, p0: P1 => P0)(p1: (P0, NodeId) => P1, f: (A, P1, Option[Target]) => A): A = {
+      def traverseT(q: A, path: P0, t: Trie): A =
+        t.foldLeft(q) {
+          case (q2, (id, node)) => traverseN(q2, p1(path, id), node)
+        }
+
+      @inline def traverseN(q: A, path: P1, node: TrieNode): A = {
+        val q2 = f(q, path, node.target)
+        traverseT(q2, p0(path), node.next)
+      }
+
+      traverseT(z, pz, trie)
+    }
   }
 
   type Nodes = Map[NodeId, Node]
 }
 
 final case class ReqCodes(trie: ReqCode.Trie, nodes: ReqCode.Nodes) {
-  import ReqCode.Target
+  import ReqCode.{NodeId, Node, Target, Trie}
 
-  private[this] lazy val mapByTarget: Map[Target, Set[ReqCode]] = ??? // TODO
+  private def foldN[A](z: => A)(f: (A, NonEmptyList[Node], Option[Target]) => A): Must[A] = {
+    val getNode: NodeId => Must[Node] = id => Must.fromOption(nodes get id, s"Node missing for $id\nNodes: $nodes")
+    Trie.foldP[Must[A], Must[List[Node]], Must[NonEmptyList[Node]]](trie, z, Nil, _.map(_.list))(
+        (mp, id)      => mp.flatMap(p => getNode(id).map(n => NonEmptyList.nel(n, p))),
+        (ma, mp, tgt) => ma.flatMap(a => mp.map(p => f(a, p, tgt))))
+  }
 
-  def byTarget(k: Target): Set[ReqCode] =
-    mapByTarget.getOrElse(k, Set.empty[ReqCode])
+  lazy val byTargetMap: Must[Multimap[Target, Set, ReqCode]] =
+    foldN[Multimap[Target, Set, ReqCode]](Multimap.empty)((q, path, tgt) =>
+      tgt.fold(q)(q.add(_, ReqCode(path))))
+
+  val byTarget: Target => Must[Set[ReqCode]] =
+    byTargetMap.fold(e => Function const Must.Failed(e), _.apply)
+
+  def nodeIdsInTrie: List[NodeId] =
+    Trie.foldP[List[NodeId], Unit, NodeId](trie, Nil, (), _ => ())((_,i) => i, (q, i, _) => i :: q)
 }
 
 
@@ -137,6 +166,7 @@ object Pubid {
 /** [[Req]] = [[GenericReq]] */
 sealed trait Req {
   val id: Req.Id
+  val pubId: Pubid
 }
 object Req {
 
@@ -175,4 +205,21 @@ case class ReqFieldData(text        : ReqFieldData.Text,
                         tags        : ReqFieldData.Tags,
                         implications: ReqFieldData.Implications)
 
-case class Requirements(reqs: IMap[Req.Id, Req], pubids: Pubid.Register)
+case class Requirements(reqs: IMap[Req.Id, Req], pubids: Pubid.Register) {
+
+  def req(id: Req.Id): Option[Req] =
+    reqs.get(id)
+
+  def reqByPubid(id: Pubid): Option[Req] =
+    reqIdByPubid(id) flatMap req
+
+  def reqIdByPubid(id: Pubid): Option[Req.Id] = {
+    val v = pubids(id.reqTypeId)
+    val i = id.pos.value - 1
+    try {
+      Some(v(i))
+    } catch {
+      case _: IndexOutOfBoundsException => None
+    }
+  }
+}

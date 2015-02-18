@@ -29,7 +29,10 @@ object Logic {
         // Remove deleted
 
         // Expansion
-        val expandedReqCodes = codeExpander(p.reqCodes.data.byTarget(r.id))
+        val expandedReqCodes: ExpandedCodes =
+          p.reqCodes.data.byTarget(r.id).fold(
+            e => Stream.empty, // TODO Report Must.Failed
+            codeExpander)
 
         // Done
         expandedReqCodes.map(codes =>

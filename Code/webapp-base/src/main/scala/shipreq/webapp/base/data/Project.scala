@@ -30,7 +30,7 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
                          reqFieldData    : RevAnd[ReqFieldData]) {
 
   import japgolly.nyaya._
-  this assertSatisfies DataProp.project
+  this assertSatisfies DataProp.project.all
 
   def rev =
     customIssueTypes.rev +
@@ -49,22 +49,6 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
   def customField[I <: CustomField.Id, D <: CustomField](id: I)(implicit d: DataIdAux[D, I]): Must[D] =
     fields.data.customFields(id).flatMap(f =>
       Must.fromOption(d.unapplyData(f), s"$id associated with wrong type: $f"))
-
-  def req(id: Req.Id): Option[Req] =
-    reqs.data.reqs.get(id)
-
-  def reqByPubid(id: Pubid): Option[Req] =
-    reqIdByPubid(id) flatMap req
-
-  def reqIdByPubid(id: Pubid): Option[Req.Id] = {
-    val v = reqs.data.pubids(id.reqTypeId)
-    val i = id.pos.value - 1
-    try {
-      Some(v(i))
-    } catch {
-      case _: IndexOutOfBoundsException => None
-    }
-  }
 
   def reqType(i: ReqType.Id): Must[ReqType] =
     i.foldId[Must[ReqType]](s => s, customReqTypes.data.apply)

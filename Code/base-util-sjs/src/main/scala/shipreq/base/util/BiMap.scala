@@ -2,9 +2,7 @@ package shipreq.base.util
 
 object BiMap {
 
-  private val empty_ = new BiMap(Map.empty[Any, Any], Map.empty[Any, Any]) {
-    override def toString = "BiMap.empty"
-  }
+  private val empty_ = BiMap(Map.empty[Any, Any], Map.empty[Any, Any])
 
   def empty[A, B] = empty_.asInstanceOf[BiMap[A, B]]
 
@@ -32,12 +30,13 @@ object BiMap {
  *
  * @since 31/05/2013
  */
-case class BiMap[A, B](final val ab: Map[A, B], final val ba: Map[B, A]) {
+final case class BiMap[A, B](ab: Map[A, B], ba: Map[B, A]) {
   def as = ab.keySet
   def bs = ba.keySet
   def size = ab.size
   assume(ab.size == ba.size, "A->B and B->A have differing sizes. There must be a non-unique element.")
   override def toString = s"BiMap($ab)"
+  def toSet(implicit ev: B =:= A): Set[A] = ba.keys.foldLeft(as)(_ + _)
 }
 
 /*{
