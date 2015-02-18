@@ -381,7 +381,16 @@ object DataCodecs {
   private lazy val _reqCodeTrieNode: ReadWriter[ReqCode.TrieNode] = {
     import ReqCode._
     val trieRW = _reqCodeTrie
-    caseclass2(TrieNode.apply, TrieNode.unapply)(implicitly, implicitly, trieRW, trieRW)
+    val branchRW = caseclass2(TrieBranch.apply, TrieBranch.unapply)(implicitly, implicitly, trieRW, trieRW)
+    ReadWriter[TrieNode]({
+      case i: TrieBranch => intkeyW(0, i)(branchRW)
+      case i: Target     => intkeyW(1, i)(reqCodeTarget)
+    }, {
+      case Js.Arr(Js.Num(n), v) => n.toInt match {
+        case 0 => readJs(v)(branchRW)
+        case 1 => readJs(v)(reqCodeTarget)
+      }
+    })
   }
   private lazy val _reqCodeTrie: ReadWriter[ReqCode.Trie] = {
     import ReqCode._

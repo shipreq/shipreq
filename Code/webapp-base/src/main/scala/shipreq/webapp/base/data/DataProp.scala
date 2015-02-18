@@ -170,6 +170,14 @@ object DataProp {
   // -------------------------------------------------------------------------------------------------------------------
   object reqCodes {
     type T = ReqCodes
+    import ReqCode._
+
+    def branchesMustBranch =
+      Prop.test[TrieBranch]("TrieBranch branches", _.next.nonEmpty)
+        .forall[T, List](t => Trie.simpleFold[List[TrieBranch]](t.trie, Nil)((q, n) => n match {
+          case b: TrieBranch => b :: q
+          case _: Target     => q
+        })) rename "All TrieBranches branch"
 
     def consistentNodeIdSet =
       Prop.equal[T]("nodes.keySet = nodeIdsInTrie")(_.nodeIdsInTrie.toSet, _.nodes.keySet)
@@ -178,7 +186,7 @@ object DataProp {
       Prop.distinct("No shared trie branches", (_: T).nodeIdsInTrie)
 
     lazy val all =
-      revAnd(consistentNodeIdSet ∧ noSharedTrieBranches) rename "ReqCodes"
+      revAnd(branchesMustBranch ∧ consistentNodeIdSet ∧ noSharedTrieBranches) rename "ReqCodes"
   }
 
   // -------------------------------------------------------------------------------------------------------------------

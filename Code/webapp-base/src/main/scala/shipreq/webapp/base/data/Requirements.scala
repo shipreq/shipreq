@@ -68,28 +68,42 @@ object ReqCode {
    *
    * [[Target]] = [[ReqCodeGroup.Id]] | [[Req.Id]]
    */
-  sealed trait Target
+  sealed trait Target extends TrieNode
 
-  final case class TrieNode(target: Option[Target], next: Trie)
+  /** [[TrieNode]] = [[TrieBranch]] | [[Target]] (terminal/leaf) */
+  sealed trait TrieNode
+  final case class TrieBranch(target: Option[Target], next: Trie) extends TrieNode
 
   type Trie = Map[NodeId, TrieNode]
   object Trie {
     val empty: Trie = Map.empty
 
-    def fold[A](trie: Trie, z: => A)(f: (A, NonEmptyList[NodeId], Option[Target]) => A): A =
+//    val target: TrieNode => Option[Target] = {
+//      case TrieBranch(t, _) => t
+//      case t: Target        => Some(t)
+//    }
+
+    def simpleFold[A](trie: Trie, z: A)(f: (A, TrieNode) => A): A =
+      trie.values.foldLeft(z)((q, n) => n match {
+        case TrieBranch(_, next) => simpleFold(next, f(q, n))(f)
+        case _: Target           => f(q, n)
+      })
+
+    def fold[A](trie: Trie, z: A)(f: (A, NonEmptyList[NodeId], Option[Target]) => A): A =
       foldP[A, List[NodeId], NonEmptyList[NodeId]](trie, z, Nil, _.list)(
         (p, i) => NonEmptyList.nel(i, p), f)
 
-    def foldP[A, P0, P1](trie: Trie, z: => A, pz: => P0, p0: P1 => P0)(p1: (P0, NodeId) => P1, f: (A, P1, Option[Target]) => A): A = {
+    def foldP[A, P0, P1](trie: Trie, z: A, pz: => P0, p0: P1 => P0)(p1: (P0, NodeId) => P1, f: (A, P1, Option[Target]) => A): A = {
       def traverseT(q: A, path: P0, t: Trie): A =
         t.foldLeft(q) {
           case (q2, (id, node)) => traverseN(q2, p1(path, id), node)
         }
 
-      @inline def traverseN(q: A, path: P1, node: TrieNode): A = {
-        val q2 = f(q, path, node.target)
-        traverseT(q2, p0(path), node.next)
-      }
+      @inline def traverseN(q: A, path: P1, node: TrieNode): A =
+        node match {
+          case TrieBranch(tgt, next) => traverseT(f(q, path, tgt), p0(path), next)
+          case tgt: Target           => f(q, path, Some(tgt))
+        }
 
       traverseT(z, pz, trie)
     }
@@ -101,7 +115,7 @@ object ReqCode {
 final case class ReqCodes(trie: ReqCode.Trie, nodes: ReqCode.Nodes) {
   import ReqCode.{NodeId, Node, Target, Trie}
 
-  private def foldN[A](z: => A)(f: (A, NonEmptyList[Node], Option[Target]) => A): Must[A] = {
+  private def foldN[A](z: A)(f: (A, NonEmptyList[Node], Option[Target]) => A): Must[A] = {
     val getNode: NodeId => Must[Node] = id => Must.fromOption(nodes get id, s"Node missing for $id\nNodes: $nodes")
     Trie.foldP[Must[A], Must[List[Node]], Must[NonEmptyList[Node]]](trie, z, Nil, _.map(_.list))(
         (mp, id)      => mp.flatMap(p => getNode(id).map(n => NonEmptyList.nel(n, p))),
