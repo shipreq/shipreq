@@ -7,6 +7,7 @@ import scalaz.{Equal, Order, NonEmptyList}
 import scalaz.std.stream.streamEqual
 import scalaz.std.tuple.tuple2Equal
 import scalaz.syntax.equal._
+import shapeless.contrib.scalaz.Instances._
 import shipreq.base.util.{BiMap, IMap}
 import shipreq.base.util.TaggedTypes._
 
@@ -208,6 +209,8 @@ final case class Pubid(reqTypeId: ReqType.Id, pos: ReqTypePos)
 
 object Pubid {
 
+  implicit val equality: Equal[Pubid] = deriveEqual
+
   /**
    * Once a (reqtype x position) is allocated, it is never removed.
    * Thus, the 0-based position in the vector corresponds with 1-based [[ReqTypePos]] values.
@@ -223,6 +226,16 @@ object Pubid {
       (register, Pubid(reqTypeId, ReqTypePos(i + 1)))
     else
       (register.add(reqTypeId, reqId), Pubid(reqTypeId, ReqTypePos(cur.size + 1)))
+  }
+
+  def lookup(register: Register, id: Pubid): Option[Req.Id] = {
+    val v = register(id.reqTypeId)
+    val i = id.pos.value - 1
+    try {
+      Some(v(i))
+    } catch {
+      case _: IndexOutOfBoundsException => None
+    }
   }
 }
 
@@ -281,13 +294,6 @@ case class Requirements(reqs: IMap[Req.Id, Req], pubids: Pubid.Register) {
   def reqByPubid(id: Pubid): Option[Req] =
     reqIdByPubid(id) flatMap req
 
-  def reqIdByPubid(id: Pubid): Option[Req.Id] = {
-    val v = pubids(id.reqTypeId)
-    val i = id.pos.value - 1
-    try {
-      Some(v(i))
-    } catch {
-      case _: IndexOutOfBoundsException => None
-    }
-  }
+  def reqIdByPubid(id: Pubid): Option[Req.Id] =
+    Pubid.lookup(pubids, id)
 }

@@ -322,12 +322,18 @@ object RandomData {
     Gen.oneofG(genericReqId)
   }
 
-  def pubid(reqTypeIds: NonEmptyList[ReqType.Id])(reqId: Req.Id): StateG[Pubid.Register, Pubid] =
+  def pubidS(reqTypeIds: NonEmptyList[ReqType.Id])(reqId: Req.Id): StateG[Pubid.Register, Pubid] =
     StateT(register =>
       Gen.oneofL(reqTypeIds).map(reqTypeId =>
         Pubid.alloc(reqId, reqTypeId, register)))
 
-  def genericReq(pubidS: Req.Id => StateG[Pubid.Register, Pubid]): StateG[Pubid.Register, GenericReq] =
+  def genericReqIdS(pubidS: Req.Id => StateG[Pubid.Register, Pubid]): StateG[Pubid.Register, Req.Id] =
+    for {
+      id <- genericReqId |> gliftS[Pubid.Register, GenericReq.Id]
+      _  <- pubidS(id)
+    } yield id
+
+  def genericReqS(pubidS: Req.Id => StateG[Pubid.Register, Pubid]): StateG[Pubid.Register, GenericReq] =
     for {
       id    <- genericReqId |> gliftS[Pubid.Register, GenericReq.Id]
       pubid <- pubidS(id)
@@ -335,19 +341,29 @@ object RandomData {
       live  <- alive
     } yield GenericReq(id, pubid, desc, live)
 
-  def requirements(reqTypeIds: NonEmptyList[ReqType.Id]): Gen[Requirements] = {
-    def init = StateT.stateT[Gen, Pubid.Register, IMap[Req.Id, Req]](Req.IdAccess.emptyIMap)
-    Gen.genSize.flatMap(sz => {
-      val prog =
-        Stream.fill(sz.value)(genericReq(pubid(reqTypeIds))).foldLeft(init)((sn, s1) =>
+  // TODO Add Nyaya: uptosize GenS(gsz => Gen.chooseint(0, 0.min(gsz.value - 1))
+  def pubidRegisterAnd[A, B](inita: A, genb: StateG[Pubid.Register, B])
+                            (f: (A, B) => A): GenS[(Pubid.Register, A)] = {
+    def init = StateT.stateT[Gen, Pubid.Register, A](inita)
+    GenS(gsz =>
+      Gen.chooseint(0, 0.max(gsz.value - 1)).flatMap { sz =>
+        val prog = Stream.fill(sz)(genb).foldLeft(init)((sn, ga) =>
           for {
-            m <- sn
-            r <- s1
-          } yield m + r
+            b <- sn
+            a <- ga
+          } yield f(b, a)
         )
-      prog(Pubid.emptyRegister).map{ case (p, m) => Requirements(m, p) }
-    })
+        prog(Pubid.emptyRegister)
+      }
+    )
   }
+
+  def pubidRegisterAndIds(reqTypeIds: NonEmptyList[ReqType.Id]): GenS[(Pubid.Register, Set[Req.Id])] =
+    pubidRegisterAnd(Set.empty[Req.Id], genericReqIdS(pubidS(reqTypeIds)))(_ + _)
+
+  def requirements(reqTypeIds: NonEmptyList[ReqType.Id]): GenS[Requirements] =
+    pubidRegisterAnd(Req.IdAccess.emptyIMap, genericReqS(pubidS(reqTypeIds)))(_ + _)
+      .map { case (pr, reqs) => Requirements(reqs, pr) }
 
   // -------------------------------------------------------------------------------------------------------------------
   // Req Data
@@ -441,7 +457,7 @@ object RandomData {
       reqTypeIdSet   = reqTypeIds.list.toSet
       fields         ← revAnd(fieldSet(reqTypeIdSet, tags.data.keySet, reqtypes.data.keySet))
       reqs           ← revAnd(requirements(reqTypeIds))
-      reqCodes       ← reqCodes(reqCodeTrie(reqs.data.reqs.keys).lim(7 `|SJS|` 3)) // TODO add SHRs
+      reqCodes       ← reqCodes(reqCodeTrie(reqs.data.reqs.keys).lim(22 `|SJS|` 8)) // TODO add SHRs
       atagIds        = tags.data.vstream(_.tag).filterT[ApplicableTag].map(_.id).toSet
       textColIds     = fields.data.customFields.values.filterT[CustomField.Text].map(_.id).toSet
       reqIds         = reqs.data.reqs.keySet
