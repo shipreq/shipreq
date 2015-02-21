@@ -7,6 +7,8 @@
 * Add to Codecs.
 * Add to DataProp.
 * Add to RandomData (id, data, project).
+* Add to Validators.
+* Add to SampleProject.
 
 * Add to Partition and Partition.values.
 * Add to RemoteDelta.
