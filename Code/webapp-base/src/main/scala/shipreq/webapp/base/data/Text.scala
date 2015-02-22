@@ -1,0 +1,114 @@
+package shipreq.webapp.base.data
+
+import scalaz.NonEmptyList
+
+object Text {
+
+  // ===================================================================================================================
+  // Generic
+
+  sealed trait Generic {
+    sealed trait Atom
+    final type Text = NonEmptyList[Atom]
+    final type OptionalText = List[Atom]
+  }
+
+  object Generic {
+
+    /** Literal text, like "hello there" */
+    sealed trait Literal extends Generic {
+      case class Literal(value: String) extends Atom
+    }
+
+    sealed trait NewLine extends Generic {
+      case class NewLine() extends Atom
+    }
+
+    sealed trait ListMarkup extends Generic {
+      final type ListItem = List[Atom]
+      case class UnorderedList(items: NonEmptyList[ListItem]) extends Atom
+    }
+
+    sealed trait PlainTextMarkup extends Generic {
+      /** Web address, like "https://www.google.com" */
+      case class WebAddress(value: String) extends Atom
+
+      /** Email address, like "bob@hotmail.com" */
+      case class EmailAddress(value: String) extends Atom
+
+      /** Math in TeX format, like "\frac{22}{7}-\pi" */
+      case class MathTeX(value: String) extends Atom
+    }
+
+    sealed trait SingleLineText extends Literal with PlainTextMarkup
+
+    sealed trait MultiLineText extends SingleLineText with NewLine with ListMarkup
+
+    /** Reference to a requirement, like "UC-4" */
+    sealed trait ReqRef extends Generic {
+      case class ReqRef(value: Req.Id) extends Atom
+    }
+
+    // ReqCodes need IDs?
+    // TODO ↓ FR-152 needs much thought!
+    //    case class ValidReqCode(tgt: ReqCode.Target, pref: ReqCode) extends Atom
+    //    with ReqTitle
+
+    // UC Step     - pending UC data types
+
+    /** An inline issue, like "#TBD" */
+    sealed trait Issue extends Generic {
+      case class Issue(typ: CustomIssueType.Id, desc: InlineIssueDesc.OptionalText) extends Atom
+    }
+
+    /** An inline tag, like "#pri=high" */
+    sealed trait TagRef extends Generic {
+      case class TagRef(value: Tag.Id) extends Atom
+    }
+  }
+
+  // ===================================================================================================================
+  // Specialised
+
+  import Generic._
+
+  sealed trait ReqTitle extends SingleLineText
+    with ReqRef
+    with Issue
+
+  object RecCodeGroupDesc extends ReqTitle
+
+  object GenericReqDesc extends ReqTitle
+
+  object InlineIssueDesc extends SingleLineText
+    with ReqRef
+
+  object CustomTextField extends MultiLineText
+    with ReqRef
+    with Issue
+    with TagRef
+
+
+
+
+  // ===================================================================================================================
+
+  /*
+  def _confirm_req: GenericReqDesc.Atom => Unit = {
+    case GenericReqDesc.Literal(_) => ()
+  }
+
+  def _confirm_txt: CustomTextField.Atom => Unit = {
+    case CustomTextField.Literal(_) => ()
+  }
+
+  def _confirm_iss: InlineIssueDesc.Atom => Unit = {
+    case InlineIssueDesc.Literal(_) => ()
+  }
+
+  def _confirm_any: Generic#Atom => Unit = {
+    case _: Literal#Literal => ()
+  }
+  */
+
+}
