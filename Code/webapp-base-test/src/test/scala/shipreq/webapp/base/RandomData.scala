@@ -341,21 +341,18 @@ object RandomData {
       live  <- alive
     } yield GenericReq(id, pubid, desc, live)
 
-  // TODO Add Nyaya: uptosize GenS(gsz => Gen.chooseint(0, 0.min(gsz.value - 1))
   def pubidRegisterAnd[A, B](inita: A, genb: StateG[Pubid.Register, B])
                             (f: (A, B) => A): GenS[(Pubid.Register, A)] = {
-    def init = StateT.stateT[Gen, Pubid.Register, A](inita)
-    GenS(gsz =>
-      Gen.chooseint(0, 0.max(gsz.value - 1)).flatMap { sz =>
-        val prog = Stream.fill(sz)(genb).foldLeft(init)((sn, ga) =>
-          for {
-            b <- sn
-            a <- ga
-          } yield f(b, a)
-        )
-        prog(Pubid.emptyRegister)
-      }
-    )
+    val init = StateT.stateT[Gen, Pubid.Register, A](inita)
+    GenS.choosesize flatMap { sz =>
+      val prog = Stream.fill(sz)(genb).foldLeft(init)((sn, ga) =>
+        for {
+          b <- sn
+          a <- ga
+        } yield f(b, a)
+      )
+      prog(Pubid.emptyRegister)
+    }
   }
 
   def pubidRegisterAndIds(reqTypeIds: NonEmptyList[ReqType.Id]): GenS[(Pubid.Register, Set[Req.Id])] =
@@ -457,7 +454,7 @@ object RandomData {
       reqTypeIdSet   = reqTypeIds.list.toSet
       fields         ← revAnd(fieldSet(reqTypeIdSet, tags.data.keySet, reqtypes.data.keySet))
       reqs           ← revAnd(requirements(reqTypeIds))
-      reqCodes       ← reqCodes(reqCodeTrie(reqs.data.reqs.keys).lim(22 `|SJS|` 8)) // TODO add SHRs
+      reqCodes       ← reqCodes(reqCodeTrie(reqs.data.reqs.keys).lim(22 `JVM|JS` 8)) // TODO add SHRs
       atagIds        = tags.data.vstream(_.tag).filterT[ApplicableTag].map(_.id).toSet
       textColIds     = fields.data.customFields.values.filterT[CustomField.Text].map(_.id).toSet
       reqIds         = reqs.data.reqs.keySet
