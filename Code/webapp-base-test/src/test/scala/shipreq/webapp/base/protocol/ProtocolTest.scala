@@ -6,12 +6,13 @@ import utest._
 import upickle._
 import upickle.Fns._
 import upickle.BaseCodecs.UnitRW
+import japgolly.nyaya._
+import japgolly.nyaya.test.{Gen, Settings}
+import japgolly.nyaya.test.PropTest._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.delta._
 import shipreq.webapp.base.{RandomData => $}
-import japgolly.nyaya._
-import japgolly.nyaya.test.Gen
-import japgolly.nyaya.test.PropTest._
+import $.TextGenExt
 
 object ProtocolTest extends TestSuite {
 
@@ -65,7 +66,22 @@ object ProtocolTest extends TestSuite {
     def propO = propA[O](logFmtO, s"$subject⁺: read(write(a)) = a")
   }
 
+
   override def tests = TestSuite {
+
+    'Codecs {
+      import DataCodecs.{unit => _, _}
+
+      def test[A: Reader : Writer](name: String, g: Gen[A]): Unit =
+        g.mustSatisfy((new KitIO[A, Unit](name)).propI) //(implicitly[Settings].setDebug.copy(debugMaxLen = 5000))
+
+      'Text {
+        'RecCodeGroupDesc - test("RecCodeGroupDesc", $.TextGen.recCodeGroupDescAtom($.reqId, $.customIssueTypeId         ).text)
+        'GenericReqDesc   - test("GenericReqDesc",   $.TextGen.genericReqDescAtom  ($.reqId, $.customIssueTypeId         ).text)
+        'InlineIssueDesc  - test("InlineIssueDesc",  $.TextGen.inlineIssueDescAtom ($.reqId                              ).text)
+        'CustomTextField  - test("CustomTextField",  $.TextGen.customTextFieldAtom ($.reqId, $.customIssueTypeId, $.tagId).text)
+      }
+    }
 
     'Routines {
       def testCrud(r: Routine.Desc {type O = RemoteDelta})(g: Gen[r.I]): Unit = kitR(r).propI mustBeSatisfiedBy g

@@ -9,8 +9,8 @@ object Text {
 
   sealed trait Generic {
     sealed trait Atom
-    final type Text = NonEmptyList[Atom]
     final type OptionalText = List[Atom]
+    final type NonEmptyText = NonEmptyList[Atom]
   }
 
   object Generic {
@@ -22,6 +22,7 @@ object Text {
 
     sealed trait NewLine extends Generic {
       case class NewLine() extends Atom
+      final val newLine = NewLine()
     }
 
     sealed trait ListMarkup extends Generic {
@@ -65,16 +66,17 @@ object Text {
     sealed trait TagRef extends Generic {
       case class TagRef(value: Tag.Id) extends Atom
     }
+
+    /** The main title/desc of a top-level requirement. */
+    sealed trait ReqTitle extends SingleLineText
+      with ReqRef
+      with Issue
   }
 
   // ===================================================================================================================
   // Specialised
 
   import Generic._
-
-  sealed trait ReqTitle extends SingleLineText
-    with ReqRef
-    with Issue
 
   object RecCodeGroupDesc extends ReqTitle
 

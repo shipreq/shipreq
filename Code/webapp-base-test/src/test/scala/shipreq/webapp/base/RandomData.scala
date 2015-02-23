@@ -9,7 +9,7 @@ import monocle.std.tuple2._
 import monocle.std.tuple3._
 import scala.annotation.tailrec
 import scala.collection.GenTraversable
-import scalaz.{NonEmptyList, OneAnd, StateT}
+import scalaz.{NonEmptyList, OneAnd, StateT, Name, Need}
 import scalaz.std.list._
 import scalaz.std.option.{none => _, _}
 import scalaz.std.set._
@@ -310,6 +310,120 @@ object RandomData {
       optionalIds  ← Gen.oneof(StaticField.deletable.head, StaticField.deletable.tail: _*).set
       order        ← Gen.shuffle((mandatoryIds ++ optionalIds).toVector)
     } yield FieldSet(cf, order)
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Text
+
+  object TextGen {
+    import Text._, Generic._
+    import Gen.Covariance._
+
+    private[this] def literal(implicit t: Literal): Gen[t.Literal] =
+      Gen.string1.map(t.Literal)
+
+    private[this] def newLine(implicit t: NewLine): Gen[t.NewLine] =
+      Gen.insert(t.newLine)
+
+    private[this] def listItem[T <: ListMarkup](g: Name[Gen[T#Atom]]): Gen[T#ListItem] =
+      Gen.insert(g).flatMap(_.value).list.lim(MaxTextAtoms)
+
+    private[this] def listItems[T <: ListMarkup](g: Name[Gen[T#Atom]]): Gen[NonEmptyList[T#ListItem]] =
+      listItem(g).list1.lim(20)
+
+    private[this] def unorderedList(t: ListMarkup)(g: Name[Gen[t.Atom]]): Gen[t.UnorderedList] =
+      listItems(g) map t.UnorderedList
+
+    private[this] def webAddress(implicit t: PlainTextMarkup): Gen[t.WebAddress] =
+      for {
+        a <- Gen.lowerstring1
+        b <- Gen.string1
+      } yield t.WebAddress(a + "://" + b)
+
+    private[this] def emailAddress(implicit t: PlainTextMarkup): Gen[t.EmailAddress] =
+      for {
+        (a, b) <- Gen.charof('.', "_+", 'a' to 'z', 'A' to 'Z', '0' to '9').list1.pair
+      } yield t.EmailAddress((a.list ::: '@' :: b.list).mkString)
+
+    private[this] def mathTex(implicit t: PlainTextMarkup): Gen[t.MathTeX] =
+      Gen.string1.map(t.MathTeX)
+
+    private[this] def plainTextMarkup(implicit t: PlainTextMarkup): Gen[t.Atom] =
+      Gen.oneofG(webAddress, emailAddress, mathTex)
+
+    private[this] def singleLine(implicit t: SingleLineText): NonEmptyList[Gen[t.Atom]] =
+      NonEmptyList(literal, plainTextMarkup)
+
+    /** Probability [0,9] of an increase in recursive depth. */
+    val DepthIncrease: Array[Int] = Array(5, 1, 1, 1) `JVM|JS` Array(3, 1)
+
+    private[this] def multiLine(t: MultiLineText, depth: Int)(g: Name[Gen[t.Atom]]): NonEmptyList[(Int, Gen[t.Atom])] = {
+      type G  = Gen[t.Atom]
+      type IG = (Int, G)
+      var gs = singleLine(t).map[IG]((9, _)) :::> List[IG](
+                 (9, newLine(t)))
+      if (depth < DepthIncrease.length)
+        gs = (DepthIncrease(depth), unorderedList(t)(g): G) <:: gs
+      gs
+    }
+
+    private[this] def multiLinePlusI(t: MultiLineText)(plus: (Int, Gen[t.Atom])*): Gen[t.Atom] = {
+      type G  = Gen[t.Atom]
+      type IG = (Int, G)
+
+      val plusL = plus.toList
+
+      lazy val lvls: Vector[Need[G]] =
+        (0 to DepthIncrease.length)
+          .toVector
+          .map(i => Need[G](
+            Gen.frequencyL(
+              multiLine(t, i)(Name(lvls(i + 1).value)) :::> plusL
+        )))
+
+      lvls(0).value
+    }
+
+    private[this] def multiLinePlus(t: MultiLineText)(plus: Gen[t.Atom]*): Gen[t.Atom] =
+      multiLinePlusI(t)(plus.map((9, _)): _*)
+
+    private[this] def reqRef(g: Gen[Req.Id])(implicit t: ReqRef): Gen[t.ReqRef] =
+      g map t.ReqRef
+
+    private[this] def tagRef(g: Gen[Tag.Id])(implicit t: TagRef): Gen[t.TagRef] =
+      g map t.TagRef
+
+    private[this] def issue(i: Gen[CustomIssueType.Id], r: Gen[Req.Id])(implicit t: Issue): Gen[t.Issue] =
+      Gen.apply2(t.Issue)(i, inlineIssueDescAtom(r).list)
+
+    private[this] def reqTitle(t: ReqTitle)(r: Gen[Req.Id], i: Gen[CustomIssueType.Id]): Gen[t.Atom] = {
+      @inline implicit def tt: t.type = t
+      val gs = singleLine(t) :::> List[Gen[t.Atom]](reqRef(r), issue(i, r))
+      Gen oneofGL gs
+    }
+
+    // Specific text types
+
+    def recCodeGroupDescAtom = reqTitle(RecCodeGroupDesc) _
+
+    def genericReqDescAtom   = reqTitle(GenericReqDesc) _
+
+    def inlineIssueDescAtom(r: Gen[Req.Id]): Gen[InlineIssueDesc.Atom] = {
+      @inline implicit def t: InlineIssueDesc.type = InlineIssueDesc
+      Gen.oneofGL(reqRef(r) <:: singleLine)
+    }
+
+    def customTextFieldAtom(gr: Gen[Req.Id], gi: Gen[CustomIssueType.Id], gt: Gen[Tag.Id]): Gen[CustomTextField.Atom] = {
+      @inline implicit def t: CustomTextField.type = CustomTextField
+      multiLinePlus(t)(reqRef(gr), issue(gi, gr), tagRef(gt))
+    }
+  }
+
+  val MaxTextAtoms = 20 `JVM|JS` 6
+
+  implicit class TextGenExt[T <: Text.Generic](val g: Gen[T#Atom]) extends AnyVal {
+    def text : GenS[T#OptionalText] = g.list lim MaxTextAtoms
+    def text1: GenS[T#NonEmptyText] = g.list1 lim MaxTextAtoms
+  }
 
   // -------------------------------------------------------------------------------------------------------------------
   // Requirements

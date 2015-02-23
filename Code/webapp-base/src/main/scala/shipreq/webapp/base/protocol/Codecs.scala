@@ -1,7 +1,7 @@
 package shipreq.webapp.base.protocol
 
 import japgolly.nyaya.util.{MultiValues, Multimap}
-import scalaz.{OneAnd, NonEmptyList, \&/, \/, -\/, \/-}
+import scalaz.{OneAnd, NonEmptyList, \&/, \/, -\/, \/-, Name}
 import scalaz.Isomorphism.<=>
 
 import upickle._
@@ -55,6 +55,15 @@ private[protocol] object CodecBase {
 
     @inline def foldrSeq[B](s: Seq[Js.Value], z: B)(f: (T, B) => B): B =
       s.foldRight(z)((j, b) => f(r read j, b))
+
+    @inline def widen[A >: T]: Reader[A] = Reader(r.read)
+  }
+
+  implicit class WriterExt[A](val w: Writer[A]) extends AnyVal {
+    @inline def narrow[B <: A]: Writer[B] = Writer(w.write)
+//    import scalaz.Liskov._
+//    @inline def narrowL[B](implicit ev: B <~< A): Writer[B] = Writer(b => w.write(ev(b)))
+//    @inline def cmap[B](f: B => A): Writer[B] = Writer(b => w.write(f(b)))
   }
 
   def writeIterable[T](ts: Iterable[T])(implicit W: Writer[T]) =
@@ -117,11 +126,17 @@ private[protocol] object CodecBase {
   def intkeyW4[A, B, C, D](k: Int, a: A, b: B, c: C, d: D)(implicit A: Writer[A], B: Writer[B], C: Writer[C], D: Writer[D]) =
     Js.Arr(Js.Num(k), A write a, B write b, C write c, D write d)
 
-  def strkeyW[T](k: String, t: T)(implicit T: Writer[T]) =
-    Js.Arr(Js.Str(k), T write t)
+  def strkeyW[A](k: String, a: A)(implicit A: Writer[A]) =
+    Js.Arr(Js.Str(k), A write a)
+
+  def strkeyW2[A, B](k: String, a: A, b: B)(implicit A: Writer[A], B: Writer[B]) =
+    Js.Arr(Js.Str(k), A write a, B write b)
 
   def iMap[K: Reader : Writer, V: Reader : Writer](key: V => K): ReadWriter[IMap[K, V]] =
     xmap((_: IMap[K, V]).underlyingMap)(m => IMap.empty(key).replaceUnderlying(m))
+
+  @inline def mergeRW[A](implicit r: Reader[A], w: Writer[A]): ReadWriter[A] =
+    ReadWriter[A](w.write, r.read)
 
   /*
   Something like this for ADTs maybe?
@@ -150,6 +165,15 @@ object DataCodecs {
       case Js.Arr()  => None
       case Js.Arr(a) => Some(readJs[A](a))
     })
+
+  implicit def nonEmptyListR[A: Reader]: Reader[NonEmptyList[A]] =
+    Reader(implicitly[Reader[List[A]]].read andThen (l => NonEmptyList.nel(l.head, l.tail)))
+
+  implicit def nonEmptyListW[A: Writer]: Writer[NonEmptyList[A]] =
+    Writer(n => implicitly[Writer[List[A]]] write n.list)
+
+//  implicit def nonEmptyListRW[A: Reader: Writer]: ReadWriter[NonEmptyList[A]] =
+//    xmap[NonEmptyList[A], List[A]](_.list)(l => NonEmptyList.nel(l.head, l.tail))
 
   implicit def disjunction[A: Reader: Writer, B: Reader: Writer]: ReadWriter[A \/ B] =
     ReadWriter[A \/ B]({
@@ -327,6 +351,141 @@ object DataCodecs {
   )
 
   implicit final val fieldSet = caseclass2(FieldSet.apply, FieldSet.unapply)
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Text
+
+  /** Text Codecs */
+  private object TC {
+    import Text._
+    import Generic._
+
+    private[this] final val NEWLINE = 0
+
+    private[this] final val WEBADD   = "/"
+    private[this] final val EMAILADD = "@"
+    private[this] final val MATHTEX  = "="
+    private[this] final val UL       = "*"
+    private[this] final val ISSUE    = "i"
+    private[this] final val REQREF   = "r"
+    private[this] final val TAGREF   = "t"
+
+    lazy val writeAny: Writer[Generic#Atom] =
+      Writer[Generic#Atom]({
+        case a: Literal#Literal              => Js.Str(a.value)
+        case a: NewLine#NewLine              => Js.Num(NEWLINE)
+        case a: PlainTextMarkup#WebAddress   => strkeyW (WEBADD,   a.value)
+        case a: PlainTextMarkup#EmailAddress => strkeyW (EMAILADD, a.value)
+        case a: PlainTextMarkup#MathTeX      => strkeyW (MATHTEX,  a.value)
+        case a: ListMarkup#UnorderedList     => strkeyW (UL,       a.items)(writeListItemNEL)
+        case a: ReqRef#ReqRef                => strkeyW (REQREF,   a.value)
+        case a: TagRef#TagRef                => strkeyW (TAGREF,   a.value)
+        case a: Issue#Issue                  => strkeyW2(ISSUE,    a.typ, a.desc)
+      })
+
+    lazy val writeListItem: Writer[ListMarkup#ListItem] = {
+      implicit val a: Writer[ListMarkup#Atom] = writeAny.narrow
+      implicitly
+    }
+
+    lazy val writeListItemNEL: Writer[NonEmptyList[ListMarkup#ListItem]] = {
+      implicit val li = writeListItem
+      implicitly
+    }
+
+    // Partial Reader
+    type PR[A] = PartialFunction[Js.Value, A]
+
+    def readLiteral(T: Literal): PR[T.Literal] =
+      { case Js.Str(s) => T.Literal(s) }
+
+    def readNewLine(T: NewLine): PR[T.NewLine] =
+      { case Js.Num(n) if n.toInt == 0 => T.newLine }
+
+    def readPlainTextMarkup(T: PlainTextMarkup): PR[T.Atom] = {
+      case Js.Arr(Js.Str(WEBADD),   v) => T.WebAddress  (readJs[String](v))
+      case Js.Arr(Js.Str(EMAILADD), v) => T.EmailAddress(readJs[String](v))
+      case Js.Arr(Js.Str(MATHTEX),  v) => T.MathTeX     (readJs[String](v))
+    }
+
+    def readListMarkup(T: ListMarkup)(implicit ra: Name[Reader[T.Atom]]): PR[T.Atom] = {
+      lazy val liNel: Reader[NonEmptyList[T.ListItem]] = nonEmptyListR(readerListItem(T)(ra.value));
+      { case Js.Arr(Js.Str(UL), v) => T.UnorderedList(readJs(v)(liNel)) }
+    }
+
+    def readerListItem(T: ListMarkup)(implicit r: Reader[T.Atom]): Reader[T.ListItem] = implicitly
+
+    def readSingleLineText(T: SingleLineText): PR[T.Atom] =
+      readLiteral(T) orElse readPlainTextMarkup(T)
+
+    def readMultiLineText(T: MultiLineText)(implicit ra: Name[Reader[T.Atom]]): PR[T.Atom] =
+      readSingleLineText(T) orElse readNewLine(T) orElse readListMarkup(T)
+
+    def readIssue(T: Issue): PR[T.Issue] =
+      { case Js.Arr(Js.Str(ISSUE), a, b) => T.Issue(readJs[CustomIssueType.Id](a), readJs[InlineIssueDesc.OptionalText](b)) }
+
+    def readReqRef(T: ReqRef): PR[T.ReqRef] =
+      { case Js.Arr(Js.Str(REQREF), v) => T.ReqRef(readJs[Req.Id](v)) }
+
+    def readTagRef(T: TagRef): PR[T.TagRef] =
+      { case Js.Arr(Js.Str(TAGREF), v) => T.TagRef(readJs[Tag.Id](v)) }
+
+    def readReqTitle(T: ReqTitle): PR[T.Atom] =
+      readSingleLineText(T) orElse readReqRef(T) orElse readIssue(T)
+
+    /*
+    def readAny0(x: Generic): x.Atom = x match {
+      case k: (x.type with NewLine) => k.NewLine()
+    }
+
+    def readAnyPR(x: Generic): PR[x.Atom] = {
+//      import scala.reflect.runtime.universe._
+//      def asdf[T <: Generic](f: (x.type with T) => PR[x.Atom])(implicit tt: WeakTypeTag[T]): Option[PR[x.Atom]] =
+//        if (tt.tpe)
+//        x match {
+//          case y: (x.type with T) => Some(f(y))
+//          case _ => None
+//        }
+//      Stream(
+//        asdf[NewLine](readNewLine(_))
+//      )
+
+      val newLineReader: Option[PR[x.Atom]] =
+        x match {
+          case y: (x.type with NewLine) => Some(readNewLine(y))
+          case _ => None
+        }
+
+      //      val newLineReader: Option[PR[x.Atom]] =
+//        x match {
+//          case y: (x.type with NewLine) => Some(readNewLine(y))
+//          case _ => None
+//        }
+
+      newLineReader.get
+    }
+    */
+
+    def apply(t: Generic)(pr: (t.type, Name[Reader[t.Atom]]) => PR[t.Atom]): (ReadWriter[t.OptionalText], ReadWriter[t.NonEmptyText]) = {
+      type A = t.Atom
+      implicit lazy val a: ReadWriter[A] = ReadWriter(writeAny.write, pr(t, Name(a)))
+      val otxt  = mergeRW[List[A]]
+      val netxt = mergeRW[NonEmptyList[A]]
+      (otxt, netxt)
+    }
+  }
+
+  implicit final val (recCodeGroupDesc, _) = TC(Text.RecCodeGroupDesc)((t, _) => TC.readReqTitle(t))
+
+  implicit final val (genericReqDesc, _) = TC(Text.GenericReqDesc)((t, _) => TC.readReqTitle(t))
+
+  // lazy because TC.readIssue calls it
+  implicit final lazy val (inlineIssueDesc, inlineIssueDescNE) = TC(Text.InlineIssueDesc)((t, _) =>
+    TC.readSingleLineText(t) orElse TC.readReqRef(t))
+
+  implicit final val (customTextFieldText, _) = TC(Text.CustomTextField)((t, a) =>
+    TC.readMultiLineText(t)(a) orElse TC.readReqRef(t) orElse TC.readIssue(t) orElse TC.readTagRef(t))
+
 
   // -------------------------------------------------------------------------------------------------------------------
   // Requirements
