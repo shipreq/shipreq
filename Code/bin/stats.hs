@@ -12,7 +12,9 @@ import System.Process
 import Text.Printf
 
 mapFst :: (a -> b) -> (a, c) -> (b, c)
+mapSnd :: (a -> b) -> (c, a) -> (c, b)
 mapFst f (a,c) = (f a, c)
+mapSnd f (c,a) = (c, f a)
 
 ------------------------------------------------------------------------------------------------------------------------
 -- Dirs & cloc
@@ -62,10 +64,16 @@ instance Monoid Stat where
   mappend a b = Stat (files a + files b) (loc a + loc b)
   mempty = emptyStat
 
-isEmpty :: Stat -> Bool
+isEmpty     :: Stat -> Bool
+areEmpty    :: Stats -> Bool
+mergeStatsL :: Stats -> Stats
+mergeStatsR :: Stats -> Stats
+
+mergeStatsL (a,b) = (mappend a b, emptyStat)
+mergeStatsR (a,b) = (emptyStat, mappend a b)
+
 isEmpty (Stat a b) = a==0 && b==0
 
-areEmpty :: Stats -> Bool
 areEmpty (a,b) = isEmpty a && isEmpty b
 
 modulesFor :: Group -> [FilePath] -> [Module]
@@ -205,7 +213,26 @@ topLevelModuleStatReport gs =
 
 ------------------------------------------------------------------------------------------------------------------------
 
-sampleData = [GroupD {gname = "base", modstats = [("base-db",(Stat {files = 6, loc = 330},Stat {files = 0, loc = 0})),("base-test",(Stat {files = 0, loc = 0},Stat {files = 3, loc = 167})),("base-util",(Stat {files = 9, loc = 529},Stat {files = 3, loc = 244})),("base-util-sjs",(Stat {files = 6, loc = 470},Stat {files = 0, loc = 0}))]},GroupD {gname = "taskman", modstats = [("taskman-api-impl",(Stat {files = 3, loc = 102},Stat {files = 4, loc = 75})),("taskman-api-logic",(Stat {files = 6, loc = 148},Stat {files = 2, loc = 109})),("taskman-server-impl",(Stat {files = 16, loc = 1144},Stat {files = 6, loc = 443})),("taskman-server-logic",(Stat {files = 13, loc = 816},Stat {files = 6, loc = 517}))]},GroupD {gname = "webapp", modstats = [("webapp-client",(Stat {files = 18, loc = 1059},Stat {files = 1, loc = 10})),("webapp-server",(Stat {files = 130, loc = 8252},Stat {files = 70, loc = 8267})),("webapp-base",(Stat {files = 16, loc = 439},Stat {files = 0, loc = 0}))]}]
+sampleData = [GroupD {gname = "base", modstats = [("base-db",(Stat {files = 6, loc = 330},Stat {files = 0, loc = 0})),("base-test",(Stat {files = 0, loc = 0},Stat {files = 3, loc = 167})),("base-util",(Stat {files = 9, loc = 529},Stat {files = 2, loc = 231})),("base-util-sjs",(Stat {files = 13, loc = 859},Stat {files = 1, loc = 14}))]},GroupD {gname = "taskman", modstats = [("taskman-api-impl",(Stat {files = 3, loc = 102},Stat {files = 4, loc = 75})),("taskman-api-logic",(Stat {files = 6, loc = 148},Stat {files = 2, loc = 109})),("taskman-server-impl",(Stat {files = 16, loc = 1144},Stat {files = 6, loc = 443})),("taskman-server-logic",(Stat {files = 13, loc = 816},Stat {files = 6, loc = 517}))]},GroupD {gname = "webapp", modstats = [("webapp-base",(Stat {files = 38, loc = 2912},Stat {files = 0, loc = 0})),("webapp-base-test",(Stat {files = 0, loc = 0},Stat {files = 11, loc = 1178})),("webapp-client",(Stat {files = 65, loc = 3983},Stat {files = 15, loc = 828})),("webapp-server",(Stat {files = 131, loc = 8577},Stat {files = 69, loc = 8152}))]}]
+
+customiseDetailedView  :: [GroupD] -> [GroupD]
+customiseDetailedView' :: GroupD -> GroupD
+
+customiseDetailedView gs = let f g@ GroupD {gname="webapp"} = customiseDetailedView' g
+                               f g@ GroupD {}               = g
+                            in map f gs
+
+customiseDetailedView' g = let named n     = (\x -> n == (fst x))
+                               get name    = head $ filter (named name) (modstats g)
+                               nBaseTest   = "webapp-base-test"
+                               nBase       = "webapp-base"
+                               sBaseTest   = mergeStatsR $ snd $ get nBaseTest
+                               sBase       = snd $ get nBase
+                               merged      = ("webapp-base{,-test}", mappend sBase sBaseTest)
+                               removeOld   = filter (\x -> not $ or $ map (\n -> named n x) [nBaseTest, nBase]) (modstats g)
+                            in GroupD {gname = "webapp", modstats = [merged] ++ removeOld}
+
+------------------------------------------------------------------------------------------------------------------------
 
 main :: IO ()
 main = do putStrLn "Analysing..."
@@ -214,7 +241,7 @@ main = do putStrLn "Analysing..."
           -- putStrLn $ show gs
           putStrLn $ fmtBreakdowns [
             header
-            ,fmtGroups gs
+            ,fmtGroups $ customiseDetailedView gs
             ,fmtGroups $ map consolidateGroup gs
             ,fmtGroups [consolidateGroups gs]
             ]
