@@ -90,27 +90,4 @@ object Text {
     with Issue
     with TagRef
 
-
-
-
-  // ===================================================================================================================
-
-  /*
-  def _confirm_req: GenericReqDesc.Atom => Unit = {
-    case GenericReqDesc.Literal(_) => ()
-  }
-
-  def _confirm_txt: CustomTextField.Atom => Unit = {
-    case CustomTextField.Literal(_) => ()
-  }
-
-  def _confirm_iss: InlineIssueDesc.Atom => Unit = {
-    case InlineIssueDesc.Literal(_) => ()
-  }
-
-  def _confirm_any: Generic#Atom => Unit = {
-    case _: Literal#Literal => ()
-  }
-  */
-
 }

@@ -1,7 +1,7 @@
 package shipreq.webapp.base.protocol
 
 import japgolly.nyaya.util.{MultiValues, Multimap}
-import scalaz.{OneAnd, NonEmptyList, \&/, \/, -\/, \/-, Name}
+import scalaz.{OneAnd, NonEmptyList, \&/, \/, -\/, \/-, Name, Need}
 import scalaz.Isomorphism.<=>
 
 import upickle._
@@ -151,10 +151,10 @@ private[protocol] object CodecBase {
   })
   */
 }
-import CodecBase._
 
 // =====================================================================================================================
 object DataCodecs {
+  import CodecBase._
 
   @inline implicit def string = BaseCodecs.StringRW
   @inline implicit def unit   = BaseCodecs.UnitRW
@@ -356,7 +356,7 @@ object DataCodecs {
   // Text
 
   /** Text Codecs */
-  private object TC {
+  private[this] object TC {
     import Text._
     import Generic._
 
@@ -372,15 +372,15 @@ object DataCodecs {
 
     lazy val writeAny: Writer[Generic#Atom] =
       Writer[Generic#Atom]({
-        case a: Literal#Literal              => Js.Str(a.value)
-        case a: NewLine#NewLine              => Js.Num(NEWLINE)
-        case a: PlainTextMarkup#WebAddress   => strkeyW (WEBADD,   a.value)
-        case a: PlainTextMarkup#EmailAddress => strkeyW (EMAILADD, a.value)
-        case a: PlainTextMarkup#MathTeX      => strkeyW (MATHTEX,  a.value)
-        case a: ListMarkup#UnorderedList     => strkeyW (UL,       a.items)(writeListItemNEL)
-        case a: ReqRef#ReqRef                => strkeyW (REQREF,   a.value)
-        case a: TagRef#TagRef                => strkeyW (TAGREF,   a.value)
-        case a: Issue#Issue                  => strkeyW2(ISSUE,    a.typ, a.desc)
+        case a: Literal         # Literal       => Js.Str(a.value)
+        case a: NewLine         # NewLine       => Js.Num(NEWLINE)
+        case a: ReqRef          # ReqRef        => strkeyW (REQREF,   a.value)
+        case a: Issue           # Issue         => strkeyW2(ISSUE,    a.typ, a.desc)
+        case a: PlainTextMarkup # WebAddress    => strkeyW (WEBADD,   a.value)
+        case a: PlainTextMarkup # EmailAddress  => strkeyW (EMAILADD, a.value)
+        case a: PlainTextMarkup # MathTeX       => strkeyW (MATHTEX,  a.value)
+        case a: ListMarkup      # UnorderedList => strkeyW (UL,       a.items)(writeListItemNEL)
+        case a: TagRef          # TagRef        => strkeyW (TAGREF,   a.value)
       })
 
     lazy val writeListItem: Writer[ListMarkup#ListItem] = {
@@ -433,38 +433,40 @@ object DataCodecs {
     def readReqTitle(T: ReqTitle): PR[T.Atom] =
       readSingleLineText(T) orElse readReqRef(T) orElse readIssue(T)
 
-    /*
-    def readAny0(x: Generic): x.Atom = x match {
-      case k: (x.type with NewLine) => k.NewLine()
-    }
 
-    def readAnyPR(x: Generic): PR[x.Atom] = {
-//      import scala.reflect.runtime.universe._
-//      def asdf[T <: Generic](f: (x.type with T) => PR[x.Atom])(implicit tt: WeakTypeTag[T]): Option[PR[x.Atom]] =
-//        if (tt.tpe)
-//        x match {
-//          case y: (x.type with T) => Some(f(y))
-//          case _ => None
-//        }
-//      Stream(
-//        asdf[NewLine](readNewLine(_))
-//      )
-
-      val newLineReader: Option[PR[x.Atom]] =
-        x match {
-          case y: (x.type with NewLine) => Some(readNewLine(y))
-          case _ => None
-        }
-
-      //      val newLineReader: Option[PR[x.Atom]] =
-//        x match {
-//          case y: (x.type with NewLine) => Some(readNewLine(y))
-//          case _ => None
-//        }
-
-      newLineReader.get
-    }
-    */
+//    def stuff(t: Generic)(implicit
+//              lit:    Literal         = null,
+//              nl:     NewLine         = null,
+//              sl:     SingleLineText  = null,
+//              ml:     MultiLineText   = null,
+//              ptm:    PlainTextMarkup = null,
+//              reqRef: ReqRef          = null,
+//              tagRef: TagRef          = null,
+//              issue:  Issue           = null): ReadWriter[t.Atom] = {
+//
+//      lazy val rw: Name[ReadWriter[t.Atom]] =
+//        Need(ReadWriter(writeAny.write, pr))
+//
+//      @inline def castReader(a: Generic) = rw.asInstanceOf[Name[Reader[a.Atom]]]
+//
+//      def pr: PR[t.Atom] = {
+//        var prs: List[PR[t.Atom]] = Nil
+//
+//        if (ml     ne null) prs ::= readMultiLineText  (ml)(castReader(ml)) else
+//        if (sl     ne null) prs ::= readSingleLineText (sl)
+//        if (issue  ne null) prs ::= readIssue          (issue)
+//        if (tagRef ne null) prs ::= readTagRef         (tagRef)
+//        if (ptm    ne null) prs ::= readPlainTextMarkup(ptm)
+//        if (reqRef ne null) prs ::= readReqRef         (reqRef)
+//        if (nl     ne null) prs ::= readNewLine        (nl)
+//        if (lit    ne null) prs ::= readLiteral        (lit)
+//
+//        println("PRs = "+(prs.length))
+//        prs.reduce(_ orElse _)
+//      }
+//
+//      rw.value
+//    }
 
     def apply(t: Generic)(pr: (t.type, Name[Reader[t.Atom]]) => PR[t.Atom]): (ReadWriter[t.OptionalText], ReadWriter[t.NonEmptyText]) = {
       type A = t.Atom
@@ -475,17 +477,24 @@ object DataCodecs {
     }
   }
 
-  implicit final val (recCodeGroupDesc, _) = TC(Text.RecCodeGroupDesc)((t, _) => TC.readReqTitle(t))
+  // Specific text types
 
-  implicit final val (genericReqDesc, _) = TC(Text.GenericReqDesc)((t, _) => TC.readReqTitle(t))
+  implicit final val (recCodeGroupDesc, _) = TC(Text.RecCodeGroupDesc)((t, _) =>
+    TC.readReqTitle(t))
+
+  implicit final val (genericReqDesc, _) = TC(Text.GenericReqDesc)((t, _) =>
+    TC.readReqTitle(t))
 
   // lazy because TC.readIssue calls it
   implicit final lazy val (inlineIssueDesc, inlineIssueDescNE) = TC(Text.InlineIssueDesc)((t, _) =>
-    TC.readSingleLineText(t) orElse TC.readReqRef(t))
+    TC.readSingleLineText(t) orElse
+    TC.readReqRef        (t) )
 
   implicit final val (customTextFieldText, _) = TC(Text.CustomTextField)((t, a) =>
-    TC.readMultiLineText(t)(a) orElse TC.readReqRef(t) orElse TC.readIssue(t) orElse TC.readTagRef(t))
-
+    TC.readMultiLineText(t)(a) orElse
+    TC.readReqRef       (t)    orElse
+    TC.readIssue        (t)    orElse
+    TC.readTagRef       (t)    )
 
   // -------------------------------------------------------------------------------------------------------------------
   // Requirements
@@ -561,10 +570,10 @@ object DataCodecs {
   implicit final val project = caseclass7(Project.apply, Project.unapply)
 }
 
-import DataCodecs._
-
 // =====================================================================================================================
 object ProtocolDataCodecs {
+  import CodecBase._
+  import DataCodecs._
 
   implicit final val deletionAction = enum(DeletionAction.values)
 
@@ -640,6 +649,7 @@ object ProtocolDataCodecs {
 
 // =====================================================================================================================
 object ProtocolRemoteCodecs {
+  import CodecBase._
   import Routines._
 
   def remoteRoutine[R <: Routine.Desc](d: R): ReadWriter[d.Remote] =
@@ -659,6 +669,7 @@ object ProtocolRemoteCodecs {
 // =====================================================================================================================
 object DeltaCodecs {
   import shipreq.webapp.base.delta._
+  import CodecBase._
   import DataCodecs.rev
 
   implicit final val partitions = enum(Partition.values)
