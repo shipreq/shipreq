@@ -30,9 +30,7 @@ object Table {
       val crs: Vector[ColumnRenderer] =
         p.viewSettings.columns.map(xxx)
 
-      val rows = Logic.gatherReqs(p.viewSettings, p.project)
-
-      // Add SHRs
+      val rows = Logic.gather(p.viewSettings, p.project)
 
       // Sort
       

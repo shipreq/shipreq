@@ -2,11 +2,26 @@ package shipreq.webapp.client.app.ui.reqtable
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
 import monocle.macros.Lenser
+import scalaz.syntax.equal._
+import shipreq.base.util.ScalaExt._
 import shipreq.base.util.UnivEq
 import shipreq.webapp.client.util.EVar
 
 case class ViewSettings(columns: Vector[Column],
-                        order  : SortCriteria)
+                        order  : SortCriteria) {
+
+  def isVisible(c: Column): Boolean =
+    isVisible(_ ≟ c)
+
+  def isVisible(f: Column => Boolean): Boolean =
+    columns.exists(f)
+
+  def isOrdered(c: Column.SortInconclusive): Boolean =
+    isOrdered(_ ≟ c)
+
+  def isOrdered(f: Column.SortInconclusive => Boolean): Boolean =
+    order.init.exists(_.column |> f)
+}
 
 object ViewSettings {
   private[this] def l = Lenser[ViewSettings]

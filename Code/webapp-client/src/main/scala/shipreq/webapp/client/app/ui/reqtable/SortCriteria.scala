@@ -62,8 +62,6 @@ case class SortCriteria(init: Vector[SortCriterion.Inconclusive], last: SortCrit
 
   def whitelistColumns(w: Set[Column.SortInconclusive]): SortCriteria =
     copy(init = init.filter(w contains _.column))
-
-  val includesCode = init.exists(_.column ≟ Column.Code)
 }
 
 object SortCriteria {

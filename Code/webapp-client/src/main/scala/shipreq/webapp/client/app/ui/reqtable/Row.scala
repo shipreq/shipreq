@@ -3,18 +3,20 @@ package shipreq.webapp.client.app.ui.reqtable
 import shipreq.webapp.base.data._
 
 /**
- * Requirements aren't always rendered in their entirety.
- * The same requirement may appear multiple times in the table with some of its values replaces by values in this class.
+ * Replacement values for a requirement at a specific row.
  *
- * For example, if a row is implied by two sources and the table is sorted by impliciation-source, then the row will
- * appear twice - once for each implied row. This process is dubbed expansion and this class houses the different
- * behaviour each row will exhibit.
+ * Due to sorting criteria, the same requirement may appear multiple times with certain composite values
+ * split across rows. This process is dubbed expansion and this class houses the different values its corresponding row
+ * will display.
+ *
+ * Example: if a row is implied by two sources and the table is sorted by implication-source, then the row will
+ * appear twice - once for each implicatee.
  */
-case class Expansion(implicationSrc: Option[Req.Id],
-                     implicationTgt: Option[Req.Id],
+case class Expansion(implicationSrc: List[Req.Id],
+                     implicationTgt: List[Req.Id],
                      reqCodes      : List[ReqCode])
 object Expansion {
-  val none = Expansion(None, None, Nil)
+  val none = Expansion(Nil, Nil, Nil)
 }
 
 // =====================================================================================================================
