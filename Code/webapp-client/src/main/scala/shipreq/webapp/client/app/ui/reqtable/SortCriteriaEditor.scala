@@ -6,6 +6,7 @@ import scalaz.{Equal, Memo}
 import scalaz.effect.IO
 import scalaz.std.option.optionEqual
 import scalaz.syntax.equal._
+import scalaz.syntax.foldable.ToFoldableOps
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{UnivEq, Util}
 import shipreq.webapp.client.app.ui.SelectOne
@@ -78,9 +79,8 @@ object SortCriteriaEditor {
       UnivEq[Col]
       private val choicesForColumn =
         Memo.mutableHashMapMemo[Col, Vector[Choice[OSM]]](c =>
-          unusedChoice +:
-            SortMethod.valuesAllowed(c).map(m =>
-              Choice(m.some, m.optionLabel, false)))
+          SortMethod.valuesAllowed(c).foldLeft(Vector(unusedChoice))((q, m) =>
+            q :+ Choice(m.some, m.optionLabel, false)))
 
       private val smSelectComponent = SelectOne.Component[OSM]
 
@@ -135,8 +135,9 @@ object SortCriteriaEditor {
       type ModIO = EndoFn[SC] => IO[Unit]
 
       private val smChoices: Vector[Choice[SM]] =
-        SortMethod.ignoreBlanks.map(m =>
-          Choice[SM](m, m.optionLabel, false))
+        SortMethod.ignoreBlanks.list.map(m =>
+          Choice[SM](m, m.optionLabel, false)
+        ).toVector
 
       private val smSelectComponent = SelectOne.Component[SM]
 

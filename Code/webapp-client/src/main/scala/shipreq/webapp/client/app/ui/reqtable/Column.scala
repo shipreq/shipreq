@@ -56,7 +56,7 @@ object Column {
                           customFieldName: data.CustomField => Must[String]) {
 
     @inline def apply(column: Column) = fn(column)
-    
+
     val fn: Column => String = {
       case Column.CustomField(id) => UiText.mustA(customFields(id) flatMap customFieldName)
       case Column.ReqType         => ColumnNames.reqType
@@ -68,4 +68,7 @@ object Column {
       case Column.ImplicationTgt  => ColumnNames.implicationTgt
     }
   }
+
+  def all(customFieldsIds: TraversableOnce[data.CustomField.Id]): Vector[Column] =
+    customFieldsIds.toVector.map(Column.CustomField) ++ Column.builtInValues.list
 }

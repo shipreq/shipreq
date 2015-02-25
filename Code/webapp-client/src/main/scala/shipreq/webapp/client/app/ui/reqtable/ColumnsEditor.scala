@@ -10,7 +10,7 @@ object ColumnsEditor {
 final class ColumnsEditor(columnName: Column.NameResolver) {
 
   val allColumns: Vector[Column] =
-    columnName.customFields.keys.toVector.map(Column.CustomField) ++ Column.builtInValues.list
+    Column.all(columnName.customFields.keys)
 
   def render(_value: Vector[Column], _change: Vector[Column] => IO[Unit]) = {
     val p = OrderedSubsetEditor.Props[Column](value     = _value,

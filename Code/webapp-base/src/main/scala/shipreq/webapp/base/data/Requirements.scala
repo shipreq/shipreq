@@ -182,6 +182,10 @@ final case class ReqCodes(trie: ReqCode.Trie) { // TODO Needed? Also, rename?
 
   @inline def byTarget(t: Target): Set[ReqCode] =
     byTargetMap(t)
+
+  def codeSet: Set[ReqCode] =
+    Trie.fold(trie, UnivEq.emptySet[ReqCode])((q, path, ot) =>
+      ot.fold(q)(_ => q + ReqCode(path)))
 }
 
 
@@ -193,6 +197,8 @@ final case class ReqCodes(trie: ReqCode.Trie) { // TODO Needed? Also, rename?
 final case class ReqCodeGroup(id: ReqCodeGroup.Id, desc: String)
 object ReqCodeGroup {
   final case class Id(value: Long) extends TaggedLong with ReqCode.Target
+
+  implicit val equality: UnivEq[ReqCodeGroup] = deriveUnivEq.sharedInstance
 }
 
 // ===================================================================================================================
@@ -279,6 +285,7 @@ final case class GenericReq(id         : GenericReq.Id,
 }
 object GenericReq {
   final case class Id(value: Long) extends TaggedLong with Req.Id
+  implicit val equality: UnivEq[GenericReq] = deriveUnivEq.sharedInstance
 }
 
 

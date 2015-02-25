@@ -1,5 +1,6 @@
 package shipreq.webapp.client.app.ui.reqtable
 
+import scalaz.NonEmptyList
 import scalaz.syntax.equal._
 import shipreq.base.util.UnivEq
 
@@ -31,10 +32,10 @@ object SortMethod {
   implicit val equality : UnivEq[SortMethod]   = UnivEq.on
 
   // TODO Lazy due to https://github.com/scala-js/scala-js/issues/1490
-  lazy val ignoreBlanks   = Vector[IgnoreBlanks](Asc, Desc)
-  lazy val considerBlanks = Vector[ConsiderBlanks](AscThenBlanks, BlanksThenAsc, BlanksThenDesc, DescThenBlanks)
+  lazy val ignoreBlanks   = NonEmptyList[IgnoreBlanks](Asc, Desc)
+  lazy val considerBlanks = NonEmptyList[ConsiderBlanks](AscThenBlanks, BlanksThenAsc, BlanksThenDesc, DescThenBlanks)
 
-  val valuesAllowed: Column.SortInconclusive => Vector[SortMethod] = {
+  val valuesAllowed: Column.SortInconclusive => NonEmptyList[SortMethod] = {
     case Column.ReqType => ignoreBlanks
     case Column.Code
        | Column.Desc
