@@ -1,5 +1,6 @@
 package shipreq.webapp.base.test
 
+import japgolly.nyaya.util.Multimap
 import shipreq.base.util.{BiMap, IMap}
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.UnsafeTypes._
@@ -56,7 +57,7 @@ object SampleProject {
 
   lazy val reqs     = RevAnd(40, Requirements(IMap.empty(_.id), Pubid.emptyRegister))
   lazy val reqCodes = RevAnd(50, ReqCodes(Map.empty))
-  lazy val reqData  = RevAnd(60, ReqFieldData(Map.empty, Map.empty, BiMap.empty))
+  lazy val reqData  = RevAnd(60, ReqFieldData(Map.empty, Map.empty, ReqFieldData.Implications(Multimap.empty)))
 
   lazy val project = new Project(customIssueTypes, customReqTypes, fields, tagsR, reqs, reqCodes, reqData)
 

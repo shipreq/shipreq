@@ -1,5 +1,6 @@
 package shipreq.webapp.base.data
 
+import japgolly.nyaya.CycleDetector
 import japgolly.nyaya.util.Multimap
 import scala.annotation.tailrec
 import scalaz.{Equal, Order, NonEmptyList}
@@ -284,8 +285,24 @@ object GenericReq {
 object ReqFieldData {
   type Text         = Map[CustomField.Text.Id, Map[Req.Id, Text.CustomTextField.OptionalText]]
   type Tags         = Map[Req.Id, Set[ApplicableTag.Id]]
-  type Implications = BiMap[Req.Id, Req.Id]
+
+
+  /** Unidirectional implication data */
+  type ImplicationsU = Multimap[Req.Id, Set, Req.Id]
+
+  def implicationCycleDetector =
+    CycleDetector.Directed.multimap[Set, Req.Id, Long](_.value, UnivEq.emptySet)
+
+  case class Implications(srcToTgt: ImplicationsU) {
+    lazy val tgtToSrc: ImplicationsU = srcToTgt.reverse
+
+    def members: Set[Req.Id] =
+      srcToTgt.m.toStream.foldLeft(UnivEq.emptySet[Req.Id]) {
+        case (q, (k, vs)) => q + k ++ vs
+      }
+  }
 }
+
 
 case class ReqFieldData(text        : ReqFieldData.Text,
                         tags        : ReqFieldData.Tags,

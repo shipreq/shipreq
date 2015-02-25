@@ -503,7 +503,7 @@ object RandomData {
     rndTags mapByKeySubset reqs
   }
 
-  lazy val reqFieldDataImplications: Gen[ReqFieldData.Implications] = Gen insert BiMap.empty // TODO
+  lazy val reqFieldDataImplications: Gen[ReqFieldData.Implications] = Gen insert ReqFieldData.Implications(Multimap.empty) // TODO
 
 
   def oneofO[A](as: Seq[A]): Option[Gen[A]] = // TODO Move to Nyaya

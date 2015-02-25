@@ -512,6 +512,7 @@ object DataCodecs {
   implicit final val reqId         = _reqId
   implicit final val req           = _req
   implicit final val requirements  = caseclass2(Requirements.apply, Requirements.unapply)
+  implicit final val implications  = xmap((_: ReqFieldData.Implications).srcToTgt)(ReqFieldData.Implications)
   implicit final val reqFieldData  = caseclass3(ReqFieldData.apply, ReqFieldData.unapply)
 
   private def _req = ReadWriter[Req]({

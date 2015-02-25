@@ -187,6 +187,17 @@ object DataProp {
   }
 
   // -------------------------------------------------------------------------------------------------------------------
+  object implications {
+    type T = ReqFieldData.Implications
+
+    def noCycles =
+      ReqFieldData.implicationCycleDetector.noCycleProp("implications")
+        .contramap[T](_.srcToTgt.m)
+
+    lazy val all = noCycles
+  }
+
+  // -------------------------------------------------------------------------------------------------------------------
   object project {
     type T = Project
 
@@ -197,9 +208,9 @@ object DataProp {
       ∧             tags.all.contramap[T](_.tags)
       ∧             reqs.all.contramap[T](_.reqs)
       ∧         reqCodes.all.contramap[T](_.reqCodes)
+      ∧     implications.all.contramap[T](_.reqFieldData.data.implications)
     ) rename "constituents"
 
-    // TODO What about cycles in the ReqFieldData.Implications BiMap? Prevent!
 
     def uniqueHashRefKeys =
       Prop.distinct[T, HashRefKey]("HashRefKey", p =>
@@ -230,7 +241,7 @@ object DataProp {
       ∧ validateReqIds    ("ReqFieldData.text.*.reqIds",      _.reqFieldData.data.text.vstreamf(_.keys.toStream))
       ∧ validateReqIds    ("ReqFieldData.tags keys",          _.reqFieldData.data.tags.keys)
       ∧ validateTagIds    ("ReqFieldData.tags values",        _.reqFieldData.data.tags.vstreamf(_.toStream))
-      ∧ validateReqIds    ("ReqFieldData.implications",       _.reqFieldData.data.implications.toSet)
+      ∧ validateReqIds    ("ReqFieldData.implications",       _.reqFieldData.data.implications.members)
       ) rename "Cross-constituent refs"
     }
 
