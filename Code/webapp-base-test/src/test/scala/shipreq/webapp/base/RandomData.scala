@@ -23,6 +23,7 @@ import shipreq.webapp.base.data._, ReqType.Mnemonic, Field.ApplicableReqTypes
 import shipreq.webapp.base.delta._
 import shipreq.base.util.Debug._
 import DataImplicits._
+import ReqFieldData.{Implications, ImplicationsU}
 
 // TODO RandomData is inaccurate in that CorrectionParts aren't applied.
 
@@ -185,7 +186,7 @@ object RandomData {
   type TagTreeStructure = Map[Tag.Id, Vector[Tag.Id]]
 
   @tailrec
-  def preventCycles(m: TagTreeStructure /*, i: Int = 0*/): TagTreeStructure =
+  def preventTagTreeCycles(m: TagTreeStructure /*, i: Int = 0*/): TagTreeStructure =
     Tag.CycleDetectors.multimap.findCycle(m) match {
       case None     =>
         // println(s"No cycles after $i attempts @ size ${m.keyCount}→${m.valueCount}")
@@ -193,7 +194,7 @@ object RandomData {
       case Some((a, b)) =>
 //        println(s"Found cycle #$i [$a→$b] in ${m.m}")
 //        preventCycles(m.del(a, b).del(b, a), i + 1) // better but slowwwwww
-        preventCycles(m - b /*, i + 1*/)
+        preventTagTreeCycles(m - b /*, i + 1*/)
     }
 
   def tagTreeStructure(tags: Set[Tag.Id]): Gen[TagTreeStructure] =
@@ -204,7 +205,7 @@ object RandomData {
       val idset = Gen.oneof(tagsSeq.head, tagsSeq.tail: _*).set
       idset.map(_.toStream)
         .flatMap(ks => Gen sequence ks.map(k => idset.map(ids => (k, (ids - k).toVector)).sup))
-        .map(s => preventCycles(s.toMap))
+        .map(s => preventTagTreeCycles(s.toMap))
     }
 
   lazy val tagTree: Gen[TagTree] =
@@ -503,8 +504,41 @@ object RandomData {
     rndTags mapByKeySubset reqs
   }
 
-  lazy val reqFieldDataImplications: Gen[ReqFieldData.Implications] = Gen insert ReqFieldData.Implications(Multimap.empty) // TODO
+  type ImplicationsUM = Map[Req.Id, Set[Req.Id]]
+  @tailrec def preventImplicationCycles(m: ImplicationsUM): ImplicationsUM =
+    ReqFieldData.implicationCycleDetector.findCycle(m) match {
+      case None         => m
+      case Some((a, b)) => preventImplicationCycles(m - b)
+    }
 
+  val emptyImplicationsU: ImplicationsU = Multimap.empty
+
+  val MaxImplicationPairs = 100 `JVM|JS` 40
+  // val MaxImplicationsPerSrc = 2  `JVM|JS` 4
+  // val MaxImplicationKeys    = 10 `JVM|JS` 4
+
+  def reqFieldDataImplications(reqIds: Set[Req.Id]): Gen[Implications] = {
+    def fix(m: ImplicationsUM): Implications = {
+      val m2 = preventImplicationCycles(m)
+      // println(m2); println()
+      Implications(Multimap(m2))
+    }
+
+    def method1(g: Gen[Req.Id]) =
+      g.pair
+        .list.lim(MaxImplicationPairs)
+        .map(kvs => emptyImplicationsU.addPairs(kvs: _*).m |> fix)
+
+//    def method2(g: Gen[Req.Id]) =
+//      Gen.tuple2(g, g.set1 lim MaxImplicationsPerSrc)
+//        .list.lim(MaxImplicationKeys)
+//        .map(_.toMap |> fix)
+
+    oneofO(reqIds.toSeq) match {
+      case Some(g) => method1(g)
+      case None    => Gen insert Implications(emptyImplicationsU)
+    }
+  }
 
   def oneofO[A](as: Seq[A]): Option[Gen[A]] = // TODO Move to Nyaya
     if (as.isEmpty)
@@ -525,7 +559,7 @@ object RandomData {
     Gen.apply3(ReqFieldData.apply)(
       reqFieldDataText(txtCols, reqs, TextGen.customTextFieldAtom(gr, gi, gt).ptext),
       reqFieldDataTags(reqs, tags),
-      reqFieldDataImplications)
+      reqFieldDataImplications(reqs))
   }
 
   // -------------------------------------------------------------------------------------------------------------------
