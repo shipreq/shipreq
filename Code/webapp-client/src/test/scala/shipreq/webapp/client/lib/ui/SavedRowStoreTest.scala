@@ -6,7 +6,7 @@ import scalaz.std.AllInstances._
 import utest._
 import japgolly.nyaya._
 import japgolly.nyaya.test._
-import japgolly.nyaya.test.PropTest._
+import shipreq.webapp.client.test.ClientTestSettings._
 import shipreq.webapp.client.test.TestUtil._
 import RowStatus._
 import SavedRowStore.{Row, SS}

@@ -2,7 +2,6 @@ package shipreq.webapp.client.app.ui.reqtable
 
 import japgolly.nyaya._
 import japgolly.nyaya.test._
-import japgolly.nyaya.test.PropTest._
 import japgolly.nyaya.util.Multimap
 import scalaz.std.set.setOrder
 import scalaz.std.stream.streamInstance
@@ -10,6 +9,7 @@ import utest._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
+import shipreq.webapp.client.test.ClientTestSettings._
 
 object LogicTest extends TestSuite {
 
