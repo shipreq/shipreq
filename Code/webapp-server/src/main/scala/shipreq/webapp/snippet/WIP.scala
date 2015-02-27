@@ -3,7 +3,7 @@ package shipreq.webapp.snippet
 import net.liftweb.util.Helpers._
 import scalaz.{Equal, \&/, -\/, \/-}, \&/._
 import scalaz.syntax.equal._
-import shipreq.base.util.Util
+import shipreq.base.util.{IMap, Util}
 import shipreq.base.util.ScalaExt._
 import japgolly.nyaya.util._
 import shipreq.webapp.base.protocol._
@@ -68,7 +68,13 @@ class WIP {
       )))
     }
 
-    new Project(customIssueTypes, customReqTypes, fields, tagsR)
+    lazy val reqs     = RevAnd(40, Requirements(IMap.empty(_.id), Pubid.emptyRegister))
+    lazy val reqCodes = RevAnd(50, ReqCodes(Map.empty))
+    lazy val reqData  = RevAnd(60, ReqFieldData(Map.empty, Map.empty, ReqFieldData.Implications(Multimap.empty)))
+
+    lazy val project = new Project(customIssueTypes, customReqTypes, fields, tagsR, reqs, reqCodes, reqData)
+
+    project
   }
 
   var p = newProject
