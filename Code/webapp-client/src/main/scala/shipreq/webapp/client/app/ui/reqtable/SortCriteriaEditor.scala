@@ -2,7 +2,7 @@ package shipreq.webapp.client.app.ui.reqtable
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import org.scalajs.dom
-import scalaz.{Equal, Memo}
+import scalaz._
 import scalaz.effect.IO
 import scalaz.std.option.optionEqual
 import scalaz.syntax.equal._
@@ -39,23 +39,23 @@ object SortCriteriaEditor {
         p change SortCriteria(f(s.init), g(s.last))
       }
 
-      val li = inconclusive.li(_: Column.SortInconclusive, _: inconclusive.OSM, p.columnName, modIO(_, identity))
+      val li = inconclusive.li(_: inconclusive.OSM, p.columnName, modIO(_, identity))
 
       var lis            = Vector.empty[ReactElement]
       var activeCols     = UnivEq.emptySet[Column]
       var conclusiveCols = UnivEq.emptySet[Column.SortConclusive]
 
       // Active criteria
-      p.value.init.foreach(s =>
-        if (p.sortableColumns.contains(s.column)) {
-          activeCols += s.column
-          lis :+= li(s.column, s.method.some)
+      p.value.init.foreach(sc =>
+        if (p.sortableColumns.contains(sc.column)) {
+          activeCols += sc.column
+          lis :+= li(\/-(sc))
         })
 
       // Inactive criteria
-      Util.filterOutAndSortByName(p.sortableColumns)(activeCols.contains, p.columnName.fn).foreach{
+      Util.filterOutAndSortByName(p.sortableColumns)(activeCols.contains, p.columnName.fn).foreach {
+        case c: Column.SortInconclusive => lis :+= li(-\/(c))
         case c: Column.SortConclusive   => conclusiveCols += c
-        case c: Column.SortInconclusive => lis :+= li(c, None)
       }
 
       <.div(^.cls := "sortCriteriaEd",
@@ -69,51 +69,56 @@ object SortCriteriaEditor {
 
     // =================================================================================================================
     object inconclusive {
+      type SC    = SortCriterion.Inconclusive
       type Col   = Column.SortInconclusive
-      type OSM   = Option[SortMethod]
+      type OSM   = Col \/ SC
       type ModIO = EndoFn[Vector[SortCriterion.Inconclusive]] => IO[Unit]
 
-      private val unusedChoice: Choice[OSM] =
-        Choice(None, "Unused", false) // English
-
-      UnivEq[Col]
+      UnivEq[Col] // Prove it's safe to key memo by Col
       private val choicesForColumn =
-        Memo.mutableHashMapMemo[Col, Vector[Choice[OSM]]](c =>
-          SortMethod.valuesAllowed(c).foldLeft(Vector(unusedChoice))((q, m) =>
-            q :+ Choice(m.some, m.optionLabel, false)))
+        Memo.mutableHashMapMemo[Col, Vector[Choice[OSM]]]{c =>
+          val choice  = (sc: SC) => Choice[OSM](\/-(sc), sc.method.optionLabel, false)
+          val choices = SortCriterion.possibilitiesI(c) map choice
+          val unused  = Choice[OSM](-\/(c), "Unused", false) // English
+          unused +: choices.list.toVector
+        }
 
       private val smSelectComponent = SelectOne.Component[OSM]
 
-      private def updateIO(column: Col, modIO: ModIO)(o: OSM): IO[Unit] = {
-        def isSubjectColumn: SortCriterion.Inconclusive => Boolean =
-          _.column ≟ column
+      private def updateIO(modIO: ModIO): OSM => IO[Unit] = {
+        case -\/(c) =>
+          // Remove
+          modIO(_ filterNot (_.column ≟ c))
 
-        def remove =
-          modIO(_ filterNot isSubjectColumn)
-
-        def set(m: SortMethod) =
+        case \/-(sc) =>
+          // Set
           modIO(ss => {
-            val i = ss indexWhere isSubjectColumn
+            val i = ss indexWhere (_.column ≟ sc.column)
             if (i >= 0)
-              ss.updated(i, ss(i).copy(method = m))
+              ss.updated(i, sc)
             else
-              ss :+ SortCriterion.Inconclusive(column, m)
+              ss :+ sc
           })
-
-        o.fold(remove)(set)
       }
 
       private val Row = DND.Child.dndItemComponentB[Col, (OSM, Column.NameResolver, ModIO)]({
         case (outerAttr, draghnd, col, (value, columnName, modIO)) =>
 
-          <.li(outerAttr, value.isEmpty ?= (^.cls := "off"),
+          <.li(outerAttr, value.isLeft ?= (^.cls := "off"),
             draghnd,
-            smSelectComponent(SelectOne.Props(value, choicesForColumn(col), Some(updateIO(col, modIO)))),
+            smSelectComponent(SelectOne.Props(value, choicesForColumn(col), Some(updateIO(modIO)))),
             columnName(col))
       })
 
-      def li(col: Col, value: OSM, columnName: Column.NameResolver, modIO: ModIO): ReactElement =
+      val columnFromOSM: OSM => Col = {
+        case -\/(c) => c
+        case \/-(c) => c.column
+      }
+
+      def li(value: OSM, columnName: Column.NameResolver, modIO: ModIO): ReactElement = {
+        val col = columnFromOSM(value)
         Row((col, DND.Parent.cProps($, col, moveIO(modIO)), (value, columnName, modIO)))
+      }
 
       private def moveIO(modIO: ModIO)(from: Col, to: Col): IO[Unit] =
         modIO(scs =>

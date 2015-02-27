@@ -29,8 +29,7 @@ object ReqTableTest {
   def rndSortCriteriaI(legalCols: Vector[Column.SortInconclusive]): Gen[Vector[SortCriterion.Inconclusive]] =
     Gen.subset(legalCols).shuffle.flatMap(cs =>
       Gen.sequence(cs.map(c =>
-        Gen.oneofL(SortMethod valuesAllowed c).map(m =>
-          SortCriterion.Inconclusive(c, m)))))
+        Gen.oneofL(SortCriterion possibilitiesI c))))
 
   def rndSortCriteria(gi: Gen[Vector[SortCriterion.Inconclusive]]): Gen[SortCriteria] =
     Gen.apply2(SortCriteria.apply)(gi, rndSortCriteriaC)

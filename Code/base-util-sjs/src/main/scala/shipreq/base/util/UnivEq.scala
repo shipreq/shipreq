@@ -1,6 +1,6 @@
 package shipreq.base.util
 
-import scalaz.{OneAnd, NonEmptyList, Order, Equal}
+import scalaz._
 import scalaz.std.anyVal.intInstance
 
 /**
@@ -28,6 +28,7 @@ object UnivEq {
   @inline implicit def list  [A: UnivEq]           : UnivEq[List[A]]         = force
   @inline implicit def vector[A: UnivEq]           : UnivEq[Vector[A]]       = force
   @inline implicit def map   [K: UnivEq, V: UnivEq]: UnivEq[Map[K, V]]       = force
+  @inline implicit def disj  [A: UnivEq, B: UnivEq]: UnivEq[A \/ B]          = force
   @inline implicit def nel   [A: UnivEq]           : UnivEq[NonEmptyList[A]] = force
 
   @inline implicit def oneAnd[F[_], A](implicit fa: UnivEq[F[A]], a: UnivEq[A]): UnivEq[OneAnd[F, A]] = force
