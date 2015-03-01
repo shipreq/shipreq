@@ -1,8 +1,8 @@
 package shipreq.webapp.client.app.ui.reqtable
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
+import japgolly.scalajs.react.extra.ExternalVar
 import shipreq.webapp.base.data._
-import shipreq.webapp.client.util.EVar
 
 object ReqTable {
 
@@ -25,7 +25,7 @@ object ReqTable {
 
     def render =
       <.div(
-        viewSettingsEditor(EVar overState $),
+        viewSettingsEditor(ExternalVar state $),
         Table.Component(Table.Props($.state, project, columnName)))
   }
 }

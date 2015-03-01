@@ -1,12 +1,12 @@
 package shipreq.webapp.client.app.ui.reqtable
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
+import japgolly.scalajs.react.extra.ExternalVar
 import shipreq.base.util.UnivEq
-import shipreq.webapp.client.util.EVar
 
 object ViewSettingsEditor {
 
-  type Props = EVar[ViewSettings]
+  type Props = ExternalVar[ViewSettings]
 
   def apply(columnName: Column.NameResolver) =
     ReactComponentB[Props]("ViewSettingsEditor")
