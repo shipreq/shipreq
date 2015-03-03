@@ -10,7 +10,7 @@ object TaggedTypes {
     /** The Underlying value type. */
     type U
     def value: U
-    final override def hashCode = value.##
+    override def hashCode = value.##
   }
 
   trait PreventToString {
@@ -35,11 +35,18 @@ object TaggedTypes {
     }
   }
 
-  trait TaggedLong   extends TaggedType { final type U = Long }
-  trait TaggedInt    extends TaggedType { final type U = Int }
-  trait TaggedString extends TaggedType { final type U = String }
+  trait TaggedInt    extends TaggedType { final override type U = Int }
+  trait TaggedString extends TaggedType { final override type U = String }
+
+  trait TaggedLong extends TaggedType {
+    final override type U = Long
+    // Tagged longs are usually IDs and usually used as map keys. (hence val)
+    // Long arithmetic is super slow in JS. Casting to int before calculating hashcode is faster (says @sjrd)
+    final override val hashCode = value.toInt.##
+  }
+
   trait TaggedShort  extends TaggedType {
-    final type U = Short
+    final override type U = Short
     final def toInt = value.toInt
   }
 
