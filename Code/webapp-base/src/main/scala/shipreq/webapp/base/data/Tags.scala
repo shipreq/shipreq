@@ -3,11 +3,12 @@ package shipreq.webapp.base.data
 import japgolly.nyaya.CycleDetector
 import monocle.Lens
 import monocle.macros.Lenser
+import scala.annotation.tailrec
 import scalaz.{Memo, Equal}
 import scalaz.Isomorphism._
 import scalaz.std.AllInstances._
 import scalaz.syntax.equal._
-import shipreq.base.util.{UnivEq, IMap}
+import shipreq.base.util.{Must, UnivEq, IMap}
 import shipreq.base.util.TaggedTypes.TaggedLong
 import shipreq.webapp.base.TypeclassDerivation._
 
@@ -237,7 +238,7 @@ object TagTree {
 }
 
 final case class TagInTree(tag: Tag, children: Vector[Id]) {
-  @inline final def id: Id = tag.id
+  @inline def id: Id = tag.id
 
   def modChildren(f: Vector[Id] => Vector[Id]): TagInTree = {
     val c = f(children)
@@ -249,6 +250,13 @@ final case class TagInTree(tag: Tag, children: Vector[Id]) {
 
   def hasChild(id: Id): Boolean =
     children contains id
+
+  def lookupChildren(implicit tt: TagTree): Stream[Must[TagInTree]] =
+    children.toStream.map(tt.apply)
+
+  /** @return Itself and all reachable children. */
+  def transitiveChildren(implicit tt: TagTree): Must[Set[Id]] =
+    TagInTree.transitiveChildren(lookupChildren, Set(id))
 }
 
 object TagInTree {
@@ -260,4 +268,18 @@ object TagInTree {
   private[this] def l = Lenser[TagInTree]
   val _tag      = l(_.tag)
   val _children = l(_.children)
+
+  /** @return Itself and all reachable children. */
+  @tailrec def transitiveChildren(queue: Stream[Must[TagInTree]], seen: Set[Id])(implicit tt: TagTree): Must[Set[Id]] =
+    if (queue.isEmpty)
+      Must.Exists(seen)
+    else queue.head match {
+      case Must.Exists(focus) =>
+        val id = focus.id
+        if (seen contains id)
+          transitiveChildren(queue.tail, seen)
+        else
+          transitiveChildren(queue.tail append focus.lookupChildren, seen + id)
+      case f: Must.Failed => f
+  }
 }

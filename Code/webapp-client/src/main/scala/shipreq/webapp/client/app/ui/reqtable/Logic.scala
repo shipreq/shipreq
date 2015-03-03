@@ -1,9 +1,16 @@
 package shipreq.webapp.client.app.ui.reqtable
 
 import scalaz.{Apply, NonEmptyList}
+import shipreq.base.util.{UnivEq, Must}
+import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.TransitiveClosure
+import DataImplicits._
 
 private[reqtable] object Logic {
+
+  // ===================================================================================================================
+  // Expansion
 
   private type Expanded[+A] = NonEmptyList[List[A]]
   private type Expander[A]  = (() => Set[A]) => Expanded[A]
@@ -48,11 +55,84 @@ private[reqtable] object Logic {
   private def expanderC[A](vs: ViewSettings, c: Column.SortInconclusive): Expander[A] =
     expander(vs isVisible c, vs isOrdered c)
 
-  private def expansions(impSrcs: Expanded[Req.Id], impTgts: Expanded[Req.Id], codes: Expanded[ReqCode]): NonEmptyList[Expansion] =
+  private def expansions(impSrcs: Expanded[Pubid], impTgts: Expanded[Pubid], codes: Expanded[ReqCode]): NonEmptyList[Expansion] =
     if (isEmptyExp(codes) && isEmptyExp(impSrcs) && isEmptyExp(impTgts))
       emptyExpansions
     else
       Apply[NonEmptyList].apply3(impSrcs, impTgts, codes)(Expansion.apply)
+
+  // ===================================================================================================================
+  // MultiValues
+
+  private final val emptyMultiValues: MultiValues =
+    MultiValues(Nil, UnivEq.emptyMap, UnivEq.emptyMap)
+
+  private def impColFn(p: Project): CustomField.Implication.Id => Req.Id => List[Pubid] = {
+    lazy val tc = TransitiveClosure.auto[Req.Id](p.reqs.data.reqs.keys)(
+      p.reqFieldData.data.implications.srcToTgt.apply)
+
+    fid => {
+      // (source of implication for this column) → (all it transitively implies)
+      val srcs: Stream[(Pubid, Set[Req.Id])] =
+        mustResolve(Stream.empty,
+          p.customField(fid).map(f =>
+            p.reqs.data.reqsByType(f.reqTypeId)
+              .toStream
+              .map(_.tmap2(_.pubId, _.id |> tc.nonRefl))))
+
+      if (srcs.isEmpty)
+        Function const Nil
+      else
+        id => srcs.filter(_._2 contains id).map(_._1).toList
+    }
+  }
+
+  private def impColValuesFn(vs: ViewSettings, p: Project): Req.Id => Map[CustomField.Implication.Id, List[Pubid]] = {
+    val impCols =
+      vs.columns.collect{ case Column.CustomField(id: CustomField.Implication.Id) => id }
+    if (impCols.isEmpty)
+      Function const UnivEq.emptyMap
+    else {
+      val fnfn     = impColFn(p)
+      val fnsByCol = impCols.map(_.mapStrengthR(fnfn)).toMap
+      id => fnsByCol.mapValues(_(id))
+    }
+  }
+
+  private def tagValuesFn(vs: ViewSettings, p: Project): Req.Id => (List[ApplicableTag.Id], Map[CustomField.Tag.Id, List[ApplicableTag.Id]]) = {
+    implicit val tagTree = p.tags.data
+    val reqTags = p.reqFieldData.data.tags
+
+    val tagCols =
+      vs.columns.collect{ case Column.CustomField(id: CustomField.Tag.Id) => id }
+
+    // Traversing the tag tree for used columns is better than calculating the full
+    // transitive closure at O(V²) space and O(V²+VE) time.
+    def tagsForColumn(fid: CustomField.Tag.Id): Set[Tag.Id] = {
+      val m = p.customField(fid).flatMap(field => tagTree(field.tagId).flatMap(_.transitiveChildren))
+      m.fold(failedMust(UnivEq.emptySet), identity)
+    }
+    val tagsByColumn = tagCols.map(_.mapStrengthR(tagsForColumn)).toMap
+
+    id => {
+      val tags   = reqTags(id).toList
+      val cfTags = tagsByColumn.mapValues(legal => tags.filter(legal contains _))
+      (tags, cfTags)
+    }
+  }
+
+  private def multiValuesFn(vs: ViewSettings, p: Project): Req.Id => MultiValues = {
+    val tagValuesFn    = this.tagValuesFn(vs, p)
+    val impColValuesFn = this.impColValuesFn(vs, p)
+    id => {
+      val (tags, cfTags) = tagValuesFn(id)
+      val cfImps         = impColValuesFn(id)
+      MultiValues(tags, cfTags, cfImps)
+    }
+  }
+
+  // ===================================================================================================================
+  // Gathering
 
   /**
    * Gathers [[Row]]s for display in [[ReqTable]].
@@ -66,11 +146,17 @@ private[reqtable] object Logic {
     //   There can potentially be overlap but culling this could be misleading.
 
     // Init
-    val expandImpSrcs = expanderC[Req.Id](vs, Column.ImplicationSrc)
-    val expandImpTgts = expanderC[Req.Id](vs, Column.ImplicationTgt)
+    val expandImpSrcs = expanderC[Pubid](vs, Column.ImplicationSrc)
+    val expandImpTgts = expanderC[Pubid](vs, Column.ImplicationTgt)
     val expandCodes   = expanderC[ReqCode](vs, Column.Code)
+    val pReqs         = p.reqs.data
     val pReqCodes     = p.reqCodes.data
     val pImplications = p.reqFieldData.data.implications
+    val multiValuesFn = this.multiValuesFn(vs, p)
+
+    def pubids(s: Set[Req.Id]): Set[Pubid] =
+      s.foldLeft(UnivEq.emptySet[Pubid])((q, id) =>
+        pReqs.reqM(id).fold(failedMust(q), q + _.pubId))
 
     // Traverse reqs
     p.reqs.data.reqs.vstreamf {
@@ -82,17 +168,47 @@ private[reqtable] object Logic {
         // Filter
 
         // Expansion
-        val impSrcs = expandImpSrcs(() => pImplications.tgtToSrc(id))
-        val impTgts = expandImpTgts(() => pImplications.srcToTgt(id))
+        val impSrcs = expandImpSrcs(() => pImplications.tgtToSrc(id) |> pubids)
+        val impTgts = expandImpTgts(() => pImplications.srcToTgt(id) |> pubids)
         val codes   = expandCodes  (() => pReqCodes.byTarget(id))
         val exps    = expansions(impSrcs, impTgts, codes)
 
-        // Done
-        exps.list.toStream.map(GenericReqRow(r, _))
+        // Build
+        val mv = multiValuesFn(id)
+        exps.list.toStream.map(GenericReqRow(r, _, mv))
     }
-
-    // Add SHRs
 
   }
 
+  // ===================================================================================================================
+  // Sorting
+
+  def sort(criteria: SortCriteria, p: Project, rows: Stream[Row]): List[Row] = {
+    import Sorter._
+
+    // Prepare sorters
+    val sorter  = new FusedSorters(criteria.init map inconclusive, criteria.last |> conclusive)
+    val setup   = new Setup(p)
+    val prepare = sorter.prepFn(setup)
+    val rowMod  = sorter.rowModFn.map(_(setup, false)).getOrElse((r: Row) => r)
+    import sorter.{T => Datum}
+
+    // Prepare data
+    val data = new Array[Datum](rows.length)
+    var i = 0
+    rows.foreach { r =>
+      data(i) = prepare(rowMod(r))
+      i = i + 1
+    }
+
+    // Sort
+    scala.util.Sorting.quickSort(data)(toOrdering(sorter.sortFn))
+
+    // Unpack results
+    data.foldRight[List[Row]](Nil)((d, q) => sorter.row(d) :: q)
+  }
+
+  // AFTER SORTING
+  // - consolidateAdjacentDups
+  // - Add SHRs
 }

@@ -63,17 +63,17 @@ object Column {
     @inline def apply(column: Column) = fn(column)
 
     val fn: Column => String = {
-      case Column.CustomField(id) => UiText.mustA(customFields(id) flatMap customFieldName)
-      case Column.ReqType         => ColumnNames.reqType
-      case Column.PubId           => ColumnNames.pubId
-      case Column.Code            => ColumnNames.code
-      case Column.Desc            => ColumnNames.desc
-      case Column.Tags            => ColumnNames.tags
-      case Column.ImplicationSrc  => ColumnNames.implicationSrc
-      case Column.ImplicationTgt  => ColumnNames.implicationTgt
+      case CustomField(id) => UiText.mustA(customFields(id) flatMap customFieldName)
+      case ReqType         => ColumnNames.reqType
+      case PubId           => ColumnNames.pubId
+      case Code            => ColumnNames.code
+      case Desc            => ColumnNames.desc
+      case Tags            => ColumnNames.tags
+      case ImplicationSrc  => ColumnNames.implicationSrc
+      case ImplicationTgt  => ColumnNames.implicationTgt
     }
   }
 
   def all(customFieldsIds: TraversableOnce[data.CustomField.Id]): Vector[Column] =
-    customFieldsIds.toVector.map(Column.CustomField) ++ Column.builtInValues.list
+    customFieldsIds.toVector.map(CustomField) ++ builtInValues.list
 }

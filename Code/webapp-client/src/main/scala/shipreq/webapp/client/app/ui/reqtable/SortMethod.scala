@@ -89,4 +89,30 @@ object SortMethod {
   // Lazy due to initialisation order. https://github.com/scala-js/scala-js/issues/1490
   lazy val ignoreBlanks   = NonEmptyList[IgnoreBlanks](Asc, Desc)
   lazy val considerBlanks = NonEmptyList[ConsiderBlanks](AscThenBlanks, BlanksThenAsc, BlanksThenDesc, DescThenBlanks)
+
+  def resolverIB[A](f: (IgnoreBlanks with AscHalf) => A)(reverse: A => A): IgnoreBlanks => A = {
+    case Asc  => f(Asc)
+    case Desc => reverse(f(Desc.reverse))
+  }
+
+  def resolverCB[A](f: (ConsiderBlanks with AscHalf) => A)(reverse: A => A): ConsiderBlanks => A = {
+    case c: ConsiderBlanks with AscHalf  => f(c)
+    case c: ConsiderBlanks with DescHalf => reverse(f(c.reverse))
+  }
+
+  def resolver[A](f: (SortMethod with AscHalf) => A)(reverse: A => A): SortMethod => A = {
+    val (a, b) = resolvers(f, f)(reverse)
+    merge(a, b)
+  }
+
+  def resolvers[A](f: (IgnoreBlanks with AscHalf) => A, g: (ConsiderBlanks with AscHalf) => A)(reverse: A => A) = {
+    val ib = resolverIB(f)(reverse)
+    val cb = resolverCB(g)(reverse)
+    (ib, cb)
+  }
+
+  def merge[A](ib: IgnoreBlanks => A, cb: ConsiderBlanks => A): SortMethod => A = {
+    case c: IgnoreBlanks   => ib(c)
+    case c: ConsiderBlanks => cb(c)
+  }
 }

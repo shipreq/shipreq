@@ -242,7 +242,7 @@ object DataProp {
       ∧ validateFieldIds  ("ReqFieldData.text TextField ids", _.reqFieldData.data.text.keys)
       ∧ validateReqIds    ("ReqFieldData.text.*.reqIds",      _.reqFieldData.data.text.vstreamf(_.keys.toStream))
       ∧ validateReqIds    ("ReqFieldData.tags keys",          _.reqFieldData.data.tags.keys)
-      ∧ validateTagIds    ("ReqFieldData.tags values",        _.reqFieldData.data.tags.vstreamf(_.toStream))
+      ∧ validateTagIds    ("ReqFieldData.tags values",        _.reqFieldData.data.tags.allValues)
       ∧ validateReqIds    ("ReqFieldData.implications",       _.reqFieldData.data.implications.members)
       ) rename "Cross-constituent refs"
     }

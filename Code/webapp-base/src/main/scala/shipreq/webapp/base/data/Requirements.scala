@@ -10,6 +10,7 @@ import scalaz.std.tuple.tuple2Equal
 import scalaz.syntax.equal._
 import shapeless.{Generic, :+:, CNil, Coproduct, Inl, Inr}
 import shipreq.base.util._
+import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes._
 import shipreq.webapp.base.TypeclassDerivation._
 
@@ -24,8 +25,8 @@ import shipreq.webapp.base.TypeclassDerivation._
  * Each [[ReqCode]] only refers to a single target, but requirements can have 0..n [[ReqCode]]s.
  */
 final case class ReqCode(backwards: NonEmptyList[ReqCode.Node]) {
-//    def asc = (last :: secondLastToRoot).reverse
-  def txt: String = ???
+  def forwards = backwards.reverse
+  def txt: String = forwards.list.mkString(".") // TODO rename. cache. Also should probably be in Presentation
 }
 
 // TODO all req code text should be lowercase
@@ -266,10 +267,12 @@ object Pubid {
 // Requirements
 
 /** [[Req]] = [[GenericReq]] */
-sealed trait Req {
+sealed abstract class Req {
   val id: Req.Id
   val pubId: Pubid
   val alive: Alive
+
+  @inline final def reqTypeId = pubId.reqTypeId
 }
 object Req {
 
@@ -290,9 +293,7 @@ final case class GenericReq(id         : GenericReq.Id,
                             pubId      : Pubid,
                             desc       : String,
                             // TODO lastUpdated. Need JS-compat datetimeTZ
-                            alive      : Alive) extends Req {
-  @inline def reqTypeId = pubId.reqTypeId
-}
+                            alive      : Alive) extends Req
 object GenericReq {
   final case class Id(value: Long) extends TaggedLong with Req.Id
   implicit val equality: UnivEq[GenericReq] = deriveUnivEq
@@ -301,7 +302,7 @@ object GenericReq {
 
 object ReqFieldData {
   type Text         = Map[CustomField.Text.Id, Map[Req.Id, Text.CustomTextField.OptionalText]]
-  type Tags         = Map[Req.Id, Set[ApplicableTag.Id]]
+  type Tags         = Multimap[Req.Id, Set, ApplicableTag.Id]
 
 
   /** Unidirectional implication data */
@@ -338,4 +339,8 @@ case class Requirements(reqs: IMap[Req.Id, Req], pubids: Pubid.Register) {
 
   def reqIdByPubid(id: Pubid): Option[Req.Id] =
     Pubid.lookup(pubids, id)
+
+  lazy val reqsByType: Multimap[ReqType.Id, Set, Req] =
+    Multimap.empty[ReqType.Id, Set, Req]
+      .addPairs(reqs.vstream(_.mapStrengthL(_.reqTypeId)): _*)
 }

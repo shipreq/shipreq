@@ -53,8 +53,8 @@ object ColumnRenderer {
       <.span("ID") // Use Column.NameResolver
 
     override val render: Row => ReactElement = {
-      case GenericReqRow(req, _) => PubidW(req.pubId, project).render
-      case ReqCodeGroupRow(_, _) => `N/A`
+      case GenericReqRow(req, _, _) => PubidW(req.pubId, project).render
+//      case ReqCodeGroupRow(_, _) => `N/A`
     }
   }
 
@@ -64,8 +64,8 @@ object ColumnRenderer {
       <.span("ReqType") // Use Column.NameResolver
 
     override val render: Row => ReactElement = {
-      case GenericReqRow(req, _) => ReqTypeW(req.reqTypeId, project).render
-      case ReqCodeGroupRow(_, _) => `N/A`
+      case GenericReqRow(req, _, _) => ReqTypeW(req.reqTypeId, project).render
+//      case ReqCodeGroupRow(_, _) => `N/A`
     }
   }
 
@@ -75,8 +75,8 @@ object ColumnRenderer {
       <.span("Code") // Use Column.NameResolver
 
     override val render: Row => ReactElement = {
-      case GenericReqRow(_, e)   => xxx(e.reqCodes)
-      case ReqCodeGroupRow(_, c) => xxx(c :: Nil)
+      case GenericReqRow(_, e, _)   => xxx(e.reqCodes)
+//      case ReqCodeGroupRow(_, c) => xxx(c :: Nil)
     }
 
     def xxx(codes: List[ReqCode]): ReactElement =
@@ -89,8 +89,8 @@ object ColumnRenderer {
       <.span("Desc") // Use Column.NameResolver
 
     override val render: Row => ReactElement = {
-      case GenericReqRow(req, _) => xxx(req.desc)
-      case ReqCodeGroupRow(g, _) => xxx(g.desc)
+      case GenericReqRow(req, _, _) => xxx(req.desc)
+//      case ReqCodeGroupRow(g, _) => xxx(g.desc)
     }
 
     def xxx(desc: String): ReactElement = <.span(desc)
@@ -105,10 +105,10 @@ object ColumnRenderer {
       <.span("TODO") // Use Column.NameResolver
 
     override val render: Row => ReactElement = {
-      case GenericReqRow(req, _) =>
+      case GenericReqRow(req, _, _) =>
         val valueO = reqs.get(req.id)
         ???
-      case ReqCodeGroupRow(_, _) => `N/A`
+//      case ReqCodeGroupRow(_, _) => `N/A`
     }
   }
 
@@ -126,11 +126,11 @@ object ColumnRenderer {
       <.span(scope.fold("Tags")(???)) // Use Column.NameResolver
 
     override val render: Row => ReactElement = {
-      case GenericReqRow(req, _) =>
+      case GenericReqRow(req, _, _) =>
         var reqtags = project.reqFieldData.data.tags(req.id)
         tagWhitelist.foreach{w => reqtags = reqtags.filter(w.contains)}
         ???
-      case ReqCodeGroupRow(_, _) => `N/A`
+//      case ReqCodeGroupRow(_, _) => `N/A`
     }
   }
 }

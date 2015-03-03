@@ -505,7 +505,7 @@ object RandomData {
 
   def reqFieldDataTags(reqs: TraversableOnce[Req.Id], tags: Set[ApplicableTag.Id]): Gen[ReqFieldData.Tags] = {
     val rndTags = Gen.subset(tags).map(_.toSet)
-    rndTags mapByKeySubset reqs
+    (rndTags mapByKeySubset reqs).map(Multimap(_))
   }
 
   type ImplicationsUM = Map[Req.Id, Set[Req.Id]]
@@ -538,17 +538,11 @@ object RandomData {
 //        .list.lim(MaxImplicationKeys)
 //        .map(_.toMap |> fix)
 
-    oneofO(reqIds.toSeq) match {
+    Gen.oneofO(reqIds.toSeq) match {
       case Some(g) => method1(g)
       case None    => Gen insert Implications(emptyImplicationsU)
     }
   }
-
-  def oneofO[A](as: Seq[A]): Option[Gen[A]] = // TODO Move to Nyaya
-    if (as.isEmpty)
-      None
-    else
-      Some(Gen.oneof(as.head, as.tail: _*))
 
   // def customTextFieldAtom(gr: Gen[Req.Id], gi: Gen[CustomIssueType.Id], gt: Gen[ApplicableTag.Id]): Gen[CustomTextField.Atom] = {
   def reqFieldData(reqs   : Set[Req.Id],
@@ -556,9 +550,9 @@ object RandomData {
                    cissues: Set[CustomIssueType.Id],
                    tags   : Set[ApplicableTag.Id]): Gen[ReqFieldData] = {
 
-    val gr = oneofO(reqs.toSeq)
-    val gt = oneofO(tags.toSeq)
-    val gi = oneofO(cissues.toSeq)
+    val gr = Gen.oneofO(reqs.toSeq)
+    val gt = Gen.oneofO(tags.toSeq)
+    val gi = Gen.oneofO(cissues.toSeq)
 
     Gen.apply3(ReqFieldData.apply)(
       reqFieldDataText(txtCols, reqs, TextGen.customTextFieldAtom(gr, gi, gt).ptext),
