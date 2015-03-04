@@ -202,7 +202,7 @@ private[reqtable] object Logic {
     }
 
     // Sort
-    scala.util.Sorting.quickSort(data)(toOrdering(sorter.sortFn))
+    scala.util.Sorting.quickSort(data)(sorter.sortFn.toOrdering)
 
     // Unpack results
     data.foldRight[List[Row]](Nil)((d, q) => sorter.row(d) :: q)

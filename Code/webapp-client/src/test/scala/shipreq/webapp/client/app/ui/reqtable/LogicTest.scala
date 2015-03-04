@@ -256,12 +256,12 @@ object LogicTest extends TestSuite {
       (DescThenBlanks -> f(desc, z)) :: Nil
 
     def testTags(): Unit = {
-      def tag(ids: ApplicableTag.Id*) = GReq().tag(ids: _*)
-      val p       = GReq() + tag(2) + tag(3) + tag(11) + tag(12) + tag(11, 12) + tag(12, 11) !! P
-      val z       = "∅"
+      def t(ids: ApplicableTag.Id*) = GReq().tag(ids: _*)
+      val p       = GReq() + t(2) + t(3) + t(11) + t(12) + t(11, 12) + t(12, 11) !! P
+      val (z,sep) = ("∅","  ")
       val fmtTag  = applicableTag(p).andThen(_.key.value)
-      val fmtRows = (_: Rows).map(tagsInRow(_).ifelse(_.isEmpty, _ => z, _.map(fmtTag).mkString(","))).mkString("  ")
-      test(p, C.Tags, fmtRows)(allSorts(z)(_ + "  " + _,
+      val fmtRows = (_: Rows).map(tagsInRow(_).ifelse(_.isEmpty, _ => z, _ map fmtTag mkString ",")) mkString sep
+      test(p, C.Tags, fmtRows)(allSorts(z)(_ + sep + _,
         asc  = "defer  defer,wip  defer,wip  pri=high  pri=med  wip",
         desc = "wip,defer  wip,defer  wip  pri=med  pri=high  defer"): _*)
     }

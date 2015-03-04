@@ -3,6 +3,7 @@ package shipreq.webapp.client.app.ui.reqtable
 import monocle.Optional
 import monocle.function.index
 import monocle.std.mapIndex
+import scala.annotation.tailrec
 import scalaz.std.option.optionInstance
 
 import shipreq.base.util.ScalaExt._
@@ -23,21 +24,16 @@ object Sorter {
   /** Extracts, pre-processes and normalises data before sorting. */
   type PrepFn[+T] = Setup => Row => T
 
-  type SortFn[-A] = (A, A) => Int
-
   /** Sorts values in [[Expansion]] and [[MultiValues]]. */
   type RowModFn   = Option[(Setup, Dir) => EndoFn[Row]]
 
-  def apply[A](prep: PrepFn[A], rowMod: Sorter.RowModFn = None)(implicit sort: SortFn[A]): Sorter =
+  def apply[A](prep: PrepFn[A], sort: SortFn[A], rowMod: Sorter.RowModFn = None): Sorter =
     new Sorter {
       override type T       = A
       override val prepFn   = prep
       override val sortFn   = sort
       override val rowModFn = rowMod
     }
-
-  type SorterForSMIB = SM.IgnoreBlanks   => Sorter
-  type SorterForSMCB = SM.ConsiderBlanks => Sorter
 
   sealed trait BlankPlacement
   case object BlanksFirst extends BlankPlacement
@@ -62,101 +58,147 @@ object Sorter {
   }
 
   // ===================================================================================================================
+  // SortFn
+
+  object SortFn {
+    val int: SortFn[Int] =
+      SortFn((x, y) => if (x < y) -1 else if (x == y) 0 else 1)
+
+    val intPair: SortFn[(Int, Int)] =
+      int.pair
+
+    val intList: BlankPlacement => SortFn[List[Int]] =
+      int.byBlankPlacement(_.list)
+
+    val intPairList: BlankPlacement => SortFn[List[(Int, Int)]] =
+      intPair.byBlankPlacement(_.list)
+
+    val stringNonEmpty: SortFn[String] =
+      SortFn(_ compareTo _)
+
+    val string: BlankPlacement => SortFn[String] =
+      stringNonEmpty.byBlankPlacement(_.considerBlanks(_.isEmpty))
+  }
+
+  // TODO check if this has a cost
+  //  private implicit class SortIntExt(val _i: Int) extends AnyVal {
+  //    @inline def ?>(next: => Int): Int = if (_i == 0) next else _i
+  //  }
+
+  final case class SortFn[A](f: (A, A) => Int) {
+    @inline def apply(x: A, y: A) = f(x, y)
+
+    def &&&[B](next: SortFn[B]): SortFn[(A, B)] = {
+      val g = next.f
+      SortFn { (x, y) =>
+        val a = f(x._1, y._1)
+        if (a == 0)
+          g(x._2, y._2)
+        else
+          a
+      }
+    }
+
+    def option(bp: BlankPlacement): SortFn[Option[A]] =
+      considerBlanksF[Option[A]](_.isEmpty)(_.get)(bp)
+
+    def list(bp: BlankPlacement): SortFn[List[A]] = {
+      @tailrec def go(as: List[A], bs: List[A]): Int = {
+        val ea = as.isEmpty
+        val eb = bs.isEmpty
+        if (ea) {
+          if (eb) 0 else -1
+        } else {
+          if (eb) 1 else {
+            val r = f(as.head, bs.head)
+            if (r == 0) go(as.tail, bs.tail) else r
+          }
+        }
+      }
+      SortFn(go).considerBlanks(_.isEmpty)(bp)
+    }
+
+    def pair        : SortFn[(A, A)] = this &&& this
+    def strengthL[B]: SortFn[(B, A)] = contramap(_._2)
+    def strengthR[B]: SortFn[(A, B)] = contramap(_._1)
+
+    def byBlankPlacement[B](f: SortFn[A] => BlankPlacement => SortFn[B]): BlankPlacement => SortFn[B] = {
+      val bf = f(this)(BlanksFirst)
+      val bl = f(this)(BlanksLast)
+      ;{
+        case BlanksFirst => bf
+        case BlanksLast  => bl
+      }
+    }
+
+    def considerBlanks(isBlank: A => Boolean)(bp: BlankPlacement): SortFn[A] =
+      considerBlanksF(isBlank)(identity)(bp)
+
+    def considerBlanksF[B](isBlank: B => Boolean)(nonBlank: B => A)(bp: BlankPlacement): SortFn[B] = {
+      val (headBlank, tailBlank) = bp match {
+        case BlanksFirst => (-1, 1)
+        case BlanksLast  => (1, -1)
+      }
+      SortFn { (x, y) =>
+        val bx = isBlank(x)
+        val by = isBlank(y)
+        if (bx) {
+          if (by) 0 else headBlank
+        } else
+          if (by) tailBlank else f(nonBlank(x), nonBlank(y))
+      }
+    }
+
+    def contramap[B](g: B => A): SortFn[B] =
+      SortFn((x, y) => f(g(x), g(y)))
+
+    def applyDir(dir: Dir): SortFn[A] =
+      dir(this)(_.reverse)
+
+    def reverse: SortFn[A] =
+      SortFn((x, y) => -f(x, y))
+
+    def toOrdering: Ordering[A] =
+      new Ordering[A] {
+        def compare(x: A, y: A): Int = f(x, y)
+      }
+  }
+
+  // ===================================================================================================================
   // General
 
-  implicit val intSortFn: SortFn[Int] =
-    Ordering.Int.compare
+  type SorterForSMIB = SM.IgnoreBlanks   => Sorter
+  type SorterForSMCB = SM.ConsiderBlanks => Sorter
 
-  implicit val intPairSortFn: SortFn[(Int, Int)] =
-    sortFnCompose(intSortFn, intSortFn)
-
-  implicit val intListFn: SortFn[List[Int]] =
-    Ordering.Iterable[Int].compare
-
-  implicit val intPairListSortFn: SortFn[List[(Int, Int)]] =
-    Ordering.Iterable[(Int, Int)].compare
-
-  implicit val stringSortFn: SortFn[String] =
-    _ compareTo _
-
-  def sortFnReverse[A](s: SortFn[A]): SortFn[A] =
-    (a, b) => -s(a, b)
-
-  def sortFnCompose[A, B](fa: SortFn[A], fb: SortFn[B]): SortFn[(A, B)] =
-    (a, b) => {
-      var         r = fa(a._1, b._1)
-      if (r == 0) r = fb(a._2, b._2)
-      r
-    }
-
-  def toOrdering[T](f: SortFn[T]): Ordering[T] =
-    new Ordering[T] {
-      def compare(x: T, y: T): Int = f(x, y)
-    }
-
-  def reverse(orig: Sorter): Sorter =
+  def reverseSorter(orig: Sorter): Sorter =
     new Sorter {
       override type T                  = orig.T
       override def prepFn  : PrepFn[T] = orig.prepFn
-      override val sortFn  : SortFn[T] = sortFnReverse(orig.sortFn)
+      override val sortFn  : SortFn[T] = orig.sortFn.reverse
       override def rowModFn: RowModFn  = orig.rowModFn.map(f => (s, dir) => f(s, dir.flip))
     }
 
   def SorterForSMIB[A](s: Sorter): SorterForSMIB =
-    SM.resolverIB{ case Asc => s }(reverse)
+    SM.resolverIB{ case Asc => s }(reverseSorter)
 
   def SorterForSMCB[A](f: BlankPlacement => Sorter): SorterForSMCB =
     SM.resolverCB({
       case b@ AscThenBlanks => f(b)
       case b@ BlanksThenAsc => f(b)
-    })(reverse)
+    })(reverseSorter)
 
-  def caterForBlanks[A, B, C](isBlank: A => Boolean, onBlank: B, onNonBlank: B, f: (B, A) => C)(bp: BlankPlacement): A => C = {
-    def go(ib: B, nb: B): A => C =
-      a => f(if (isBlank(a)) ib else nb, a)
-    bp match {
-      case BlanksFirst => go(onBlank, onNonBlank)
-      case BlanksLast  => go(onNonBlank, onBlank)
-    }
-  }
-
-  val caterForBlanksS: BlankPlacement => String => String =
-    caterForBlanks[String, String, String](_.isEmpty, " ", "?", _ + _)
-
-  val caterForBlanksOS: BlankPlacement => Option[String] => String =
-    b => {
-      val f = caterForBlanksS(b)
-      o => f(o getOrElse "")
-    }
-
-  def stringSorter(prepFn: PrepFn[String]): Sorter =
-    Sorter(prepFn(_) andThen stringNormalise)
-
-  def stringSorterForSMIB(prep: PrepFn[String]): SorterForSMIB =
-    SorterForSMIB(stringSorter(prep))
-
-  def stringSorterForSMCB(prep: PrepFn[String]): SorterForSMCB =
-    SorterForSMCB { bp =>
-      val f = caterForBlanksS(bp)
-      stringSorter(prep(_) andThen f)
-    }
-
-  val stringNormalise: EndoFn[String] =
-    _.toLowerCase // search is case-insensitive
-
-  def trySortList[A](o: Ordering[A]): List[A] => Option[List[A]] = {
-      case Nil
-         | _ :: Nil => None
-      case as       => Some(as.sorted(o))
-    }
-
-  def trySortEndo[A, B](l: Optional[A, B])(mod: B => Option[B]): EndoFn[A] =
+  def tryModEndo[A, B](l: Optional[A, B])(mod: B => Option[B]): EndoFn[A] =
     a => l.modifyF[Option](mod)(a) getOrElse a
 
-  def typicalRowModFn[A, B](l: Optional[Row, List[A]])(f: Setup => A => B)(implicit s: SortFn[B]): RowModFn =
+  def typicalRowModFn[A, B](l: Optional[Row, List[A]], s: SortFn[B])(f: Setup => A => B): RowModFn =
     Some((setup, dir) => {
-      val ord = toOrdering(dir(s)(sortFnReverse)).on(f(setup))
-      trySortEndo(l)(trySortList(ord))
+      val n = f(setup)
+      val o = s.applyDir(dir).strengthR[A].toOrdering
+      val innerSort: List[A] => Option[List[A]] = {
+        case Nil | _ :: Nil => None
+        case as             => as.map(_ mapStrengthL n).sorted(o).map(_._2).some
+      }
+      tryModEndo(l)(innerSort)
     })
 
   // ===================================================================================================================
@@ -165,9 +207,9 @@ object Sorter {
   /**
    * Project data prepared in a way that various sorts will use.
    */
-  class Setup(val p: Project) {
+  final class Setup(val p: Project) {
 
-    val textToString = Presentation.textToString(p)
+    val textNormalise = stringNormalise compose Presentation.textToString(p)
 
     lazy val reqTypesToMnemonicOrder: Map[ReqType.Id, Int] =
       p.reqTypes.map(_.tmap2(_.mnemonic.value, _.reqTypeId))
@@ -196,68 +238,86 @@ object Sorter {
     }
   }
 
+  val stringNormalise: EndoFn[String] =
+    _.toLowerCase
+
   // RecCodeGroups are only displayed when sorting by code.
   // RecCodeGroups cannot have a blank code.
   // Therefore, RecCodeGroups cannot affect the conclusivity of a Pubid sort.
   val pubidSorter = Sorter[(Int, Int)](
-    setup => {
-      val n = pubidNormaliser(setup)
-      ;{ case r: GenericReqRow => n(r.req.pubId) }
-    })
-
-  def pubidListSorter(loc: Optional[Row, List[Pubid]]): SorterForSMCB =
-    SorterForSMCB(bp => Sorter[List[(Int, Int)]](
+    prep =
       setup => {
         val n = pubidNormaliser(setup)
-        row => loc.getMaybe(row).cata(_ map n, Nil)
+        ;{ case r: GenericReqRow => n(r.req.pubId) }
       },
-      typicalRowModFn(loc)(pubidNormaliser)
+    sort = SortFn.intPair
+  )
+
+  def pubidListSorter(loc: Optional[Row, List[Pubid]]): SorterForSMCB =
+    SorterForSMCB(bp =>
+      Sorter[List[(Int, Int)]](
+        prep =
+          setup => {
+            val n = pubidNormaliser(setup)
+            row => loc.getMaybe(row).cata(_ map n, Nil)
+          },
+        sort = SortFn.intPairList(bp),
+        rowMod = typicalRowModFn(loc, SortFn.intPair)(pubidNormaliser)
     ))
 
   val reqTypeSorter = Sorter[Int](
-    setup => {
-      val reqTypeOrder = setup.reqTypesToMnemonicOrder
-      ;{ case r: GenericReqRow => reqTypeOrder(r.req.pubId.reqTypeId) }
-    })
-
-  // TODO Sorting reqcodes by txt is inefficient. Trie => List[Int] would be better.
-  def reqCodeSorter: SorterForSMCB =
-    SorterForSMCB(bp => Sorter[String](
-      _ => {
-        val cb = caterForBlanksOS(bp)
-        row => {
-          // TODO headOption might not work in conjunction with rowModFn & reversing
-          val code = Row._reqCodes.getMaybe(row).toOption.flatMap(_.headOption.map(_.txt))
-          cb(code)
-        }
+    prep =
+      setup => {
+        val reqTypeOrder = setup.reqTypesToMnemonicOrder
+        ;{ case r: GenericReqRow => reqTypeOrder(r.req.pubId.reqTypeId) }
       },
-      typicalRowModFn(Row._reqCodes)(_ => _.txt)
+    sort = SortFn.int
+  )
+
+  def reqCodeSorter: SorterForSMCB =
+    SorterForSMCB(bp =>
+      // TODO Sorting reqcodes by txt is inefficient. Trie => List[Int] would be better.
+      Sorter[String](
+        // TODO headOption might not work in conjunction with rowModFn & reversing
+        prep   = _ => row => Row._reqCodes.getMaybe(row).toOption.flatMap(_.headOption.map(_.txt)) getOrElse "",
+        sort   = SortFn.string(bp),
+        rowMod = typicalRowModFn(Row._reqCodes, SortFn.stringNonEmpty)(_ => _.txt)
     ))
 
   def tagSorter(loc: Optional[Row, List[ApplicableTag.Id]]): SorterForSMCB =
-    SorterForSMCB(bp => Sorter[List[Int]](
-      setup => {
-        val tagOrder = setup.tagOrder
-        ;{ case r: GenericReqRow => r.mv.tags.map(tagOrder) }
-      },
-      typicalRowModFn(loc)(_.tagOrder.apply)
+    SorterForSMCB(bp =>
+      Sorter[List[Int]](
+        prep =
+          setup => {
+            val tagOrder = setup.tagOrder
+            ;{ case r: GenericReqRow => r.mv.tags.map(tagOrder) }
+          },
+        sort = SortFn.intList(bp),
+        rowMod = typicalRowModFn(loc, SortFn.int)(_.tagOrder.apply)
     ))
 
-  def customTextFieldSorter(id: CustomField.Text.Id): SorterForSMCB =
-    stringSorterForSMCB(setup => {
-      val data  = setup.p.reqFieldData.data.text.getOrElse(id, Map.empty)
-      val toStr = Presentation.textToString(setup.p)
-      // Normalisation done in stringSorterForSMCB > stringSorter
-      ;{
-        case r: GenericReqRow => toStr(data.getOrElse(r.req.id, Nil))
-      }
-    })
+  def textSorter(f: Setup => Row => Text.Generic#OptionalText): SorterForSMCB =
+    SorterForSMCB(bp =>
+      Sorter[String](
+        prep =
+          setup => {
+            val g = f(setup)
+            row => g(row) |> setup.textNormalise
+          },
+        sort = SortFn.string(bp)
+      ))
 
-  def textSorter(f: Row => Text.Generic#OptionalText): SorterForSMCB =
-    stringSorterForSMCB(_.textToString compose f)
+  def customTextFieldSorter(id: CustomField.Text.Id): SorterForSMCB =
+    textSorter { setup =>
+      val data = setup.p.reqFieldData.data.text.getOrElse(id, Map.empty)
+      ;{ case r: GenericReqRow => data.getOrElse(r.req.id, Nil) }
+    }
+
+  val descSorter: SorterForSMCB =
+    textSorter(_ => { case r: GenericReqRow => r.req.desc })
 
   // ===================================================================================================================
-  // Edge of the island
+  // Sort criteria
 
   val inconclusiveIB: C.SortInconclusive with C.NoBlanks => SorterForSMIB = {
     case C.ReqType => SorterForSMIB(reqTypeSorter)
@@ -270,7 +330,7 @@ object Sorter {
         case id: CustomField.Tag        .Id => tagSorter(Row._cfTags ^|-? index(id))
         case id: CustomField.Implication.Id => pubidListSorter(Row._cfImps ^|-? index(id))
       }
-    case C.Desc                             => textSorter{ case r: GenericReqRow => r.req.desc }
+    case C.Desc                             => descSorter
     case C.Code                             => reqCodeSorter
     case C.Tags                             => tagSorter(Row._tags)
     case C.ImplicationSrc                   => pubidListSorter(Row._implicationSrc)
@@ -326,10 +386,10 @@ object Sorter {
         Some((setup, dir) => row => fns.foldLeft(row)((r, f) => f(setup, dir)(r)))
     }
 
-    private def eachSortFn: Vector[SortFn[T]] =
+    private def eachSortFn: Vector[(T, T) => Int] =
       ss.zipWithIndex.map {
         case (s, i) =>
-          val f = s.sortFn
+          val f = s.sortFn.f
           (as: T, bs: T) => {
             val a = as(i).asInstanceOf[s.T]
             val b = bs(i).asInstanceOf[s.T]
@@ -338,11 +398,14 @@ object Sorter {
       }
 
     override val sortFn: SortFn[T] =
-      eachSortFn.reduce((f, g) =>
+      SortFn(eachSortFn.reduce { (s, t) =>
+        val f = s
+        val g = t
         (as: T, bs: T) => {
           val r = f(as, bs)
           if (r == 0) g(as, bs) else r
-        })
+        }
+      })
 
     def row(t: T): Row =
       t(rowIndex).asInstanceOf[Row]
