@@ -80,11 +80,6 @@ object Sorter {
       stringNonEmpty.byBlankPlacement(_.considerBlanks(_.isEmpty))
   }
 
-  // TODO check if this has a cost
-  //  private implicit class SortIntExt(val _i: Int) extends AnyVal {
-  //    @inline def ?>(next: => Int): Int = if (_i == 0) next else _i
-  //  }
-
   final case class SortFn[A](f: (A, A) => Int) {
     @inline def apply(x: A, y: A) = f(x, y)
 

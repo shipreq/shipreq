@@ -50,7 +50,7 @@ object ProjectDSL {
   
   case class GReq(desc   : TextInput                           = defaultTextInput,
                   id     : Option[GenericReq.Id]               = None,
-                  reqType: Option[ReqType]                     = None,
+                  reqType: Option[ReqType.Id]                  = None,
                   alive  : Alive                               = Alive,
                   tags   : Set[ApplicableTag.Id]               = Set.empty,
                   impSrcs: Set[Req.Id]                         = Set.empty,
@@ -66,16 +66,15 @@ object ProjectDSL {
 
     def state: Mod[GenericReq] =
       State[S, GenericReq]{ p =>
-        val id          = GenericReq.Id(p.nextId)
-        val reqType     = this.reqType.getOrElse(p.defaultReqType)
-        val reqTypeId   = reqType.reqTypeId
+        val id          = this.id getOrElse GenericReq.Id(p.nextId)
+        val reqTypeId   = this.reqType.getOrElse(p.defaultReqType.reqTypeId)
         val (pr, pubid) = Pubid.alloc(id, reqTypeId, p.pubids)
         val desc        = parseGRD(this.desc)
         val req         = GenericReq(id, pubid, desc, alive)
         val text        = addTextData(p.text, id, cftexts)
         val tags        = p.tags.addvs(id, this.tags)
         val imps        = p.imps.addks(impSrcs, id).addvs(id, impTgts)
-        val p2          = p.copy(nextId = id.value + 1,
+        val p2          = p.copy(nextId = this.id.fold(id.value + 1)(_ => p.nextId),
                                  pubids = pr,
                                  reqs   = p.reqs + req,
                                  text   = text,
@@ -94,7 +93,7 @@ object ProjectDSL {
       Composite(b.state <:: ss)
 
     def state: Mod[Unit] =
-      ss.list.reduce((a,b) => a >> b).map(_ => ())
+      ss.list.reduce((a,b) => b >> a).map(_ => ())
 
     def shuffle: Composite = {
       val x = scala.util.Random.shuffle(ss.list)

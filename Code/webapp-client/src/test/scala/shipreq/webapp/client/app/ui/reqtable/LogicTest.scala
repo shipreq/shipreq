@@ -28,6 +28,14 @@ object LogicTest extends TestSuite {
     case g: GenericReqRow => g.mv.tags
   }
 
+  def pubidExtract(p: Project)(pid: Pubid): (String, Int) =
+    (p.reqType(pid.reqTypeId).fold(sys.error, _.mnemonic.value), pid.pos.value)
+
+  def pubidToStr(p: Project)(pid: Pubid): String = {
+    val (a, b) = pubidExtract(p)(pid)
+    s"$a-$b"
+  }
+
   def firstCodePerRow(r: Row): String =
     codesInRow(r) match {
       case Nil    => ""
@@ -88,7 +96,7 @@ object LogicTest extends TestSuite {
     def universalSort = {
       val revOrder  = vs.order.reverse
       val sorted    = Logic.sort(vs.order, p)(gathered)
-      val reversed  = Logic.sort(revOrder, p)(gathered)
+      //val reversed  = Logic.sort(revOrder, p)(gathered)
       def criRev    = E.equal("[criteria] reverse.reverse = id", revOrder.reverse, vs.order)
       def sortTwice = E.equal("sort.sort = sort", Logic.sort(vs.order, p)(sorted.toStream), sorted)
       def sortRev   = E.pass // TODO FAILS: sort(criteria.reverse) = reverse(sort(cri))
@@ -162,10 +170,9 @@ object LogicTest extends TestSuite {
     type IndivSortIB = (IgnoreBlanks  ,                 Dir) => EvalL
 
     def sortByPubid: IndivSortIB = (sm, dir) => {
-      def extract(pid: Pubid): (String, Int) = (p.reqType(pid.reqTypeId).fold(sys.error, _.mnemonic.value), pid.pos.value)
       val sc     = SortCriteria(Vector.empty, SC.Conclusive(C.PubId, sm))
       val sorted = Logic.sort(sc, p)(gathered)
-      val pubids = sorted.map { case r: GenericReqRow => extract(r.req.pubId)}
+      val pubids = sorted.map { case r: GenericReqRow => pubidExtract(p)(r.req.pubId)}
       E_sorted("Pubids", pubids, dir)
     }
 
@@ -259,12 +266,42 @@ object LogicTest extends TestSuite {
       def t(ids: ApplicableTag.Id*) = GReq().tag(ids: _*)
       val p       = GReq() + t(2) + t(3) + t(11) + t(12) + t(11, 12) + t(12, 11) !! P
       val (z,sep) = ("∅","  ")
-      val fmtTag  = applicableTag(p).andThen(_.key.value)
-      val fmtRows = (_: Rows).map(tagsInRow(_).ifelse(_.isEmpty, _ => z, _ map fmtTag mkString ",")) mkString sep
+      val fmtEach = applicableTag(p).andThen(_.key.value)
+      val fmtRows = (_: Rows).map(tagsInRow(_).ifelse(_.isEmpty, _ => z, _ map fmtEach mkString ",")) mkString sep
       test(p, C.Tags, fmtRows)(allSorts(z)(_ + sep + _,
         asc  = "defer  defer,wip  defer,wip  pri=high  pri=med  wip",
         desc = "wip,defer  wip,defer  wip  pri=med  pri=high  defer"): _*)
     }
+
+    def testDesc(): Unit = {
+      val p       = GReq() + GReq("AT") + GReq("and") + GReq("haha") + GReq("F") !! P
+      val (z,sep) = ("∅"," ")
+      val fmtEach = Presentation.textToString(p)
+      val fmtRows = (_: Rows).map{ case r: GenericReqRow => r.req.desc.ifelse(_.isEmpty, _ => z, fmtEach) } mkString sep
+      test(p, C.Desc, fmtRows)(allSorts(z)(_ + sep + _,
+        asc  = "and AT F haha",
+        desc = "haha F AT and"): _*)
+    }
+
+    def testImpSrc(): Unit = {
+      def t(_id: GenericReq.Id, ids: Req.Id*) = GReq(id = _id, reqType = 3).impSrc(ids: _*)
+      //            FR-1   FR-2      DD-1                           FR-3         FR-4      FR-5
+      val p       = t(1) + t(2, 1) + t(3, 1, 2).copy(reqType = 5) + t(4, 1, 3) + t(5, 3) + t(6, 5) ! P
+      val (z,sep) = ("∅","  ")
+      def fmtEach(s: Pubid, t: Pubid) = pubidToStr(p)(s) + ">" + pubidToStr(p)(t)
+      val fmtRows = (_: Rows).map{ case r: GenericReqRow => r.exp.implicationSrc.ifelse(_.isEmpty, _ => z, _ map (fmtEach(_, r.req.pubId)) mkString ",") } mkString sep
+      test(p, C.ImplicationSrc, fmtRows)(allSorts(z)(_ + sep + _,
+        asc  = "DD-1>FR-3  DD-1>FR-4  FR-1>DD-1  FR-1>FR-2  FR-1>FR-3  FR-2>DD-1  FR-4>FR-5",
+        desc = "FR-4>FR-5  FR-2>DD-1  FR-1>DD-1  FR-1>FR-2  FR-1>FR-3  DD-1>FR-3  DD-1>FR-4"): _*)
+    }
+
+    // ReqType
+    // Code
+    // ImplicationTgt
+    // CustomField.Implication.Id
+    // CustomField.Tag        .Id
+    // CustomField.Text       .Id
+
   }
 
   // ===================================================================================================================
@@ -272,7 +309,9 @@ object LogicTest extends TestSuite {
     'prop - gen.mustSatisfyE(_.all)//(implicitly[Settings].setSeed(0).setDebug.setSampleSize(20))
     'unit {
       'sort {
-        'tags - UnitSort.testTags()
+        'desc   - UnitSort.testDesc()
+        'tags   - UnitSort.testTags()
+        'impSrc - UnitSort.testImpSrc()
       }
     }
   }
