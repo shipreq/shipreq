@@ -249,59 +249,96 @@ object LogicTest extends TestSuite {
     private def vsSortedByCB(c: C.SortInconclusive with C.HasBlanks, sm: ConsiderBlanks): ViewSettings =
       ViewSettings(Vector(c), SortCriteria.default.copy(init = Vector(SC.InconclusiveCB(c, sm))))
 
-    private def test[A: Equal](p: Project, c: C.SortInconclusive with C.HasBlanks, extract: Rows => A)(tests: (ConsiderBlanks, A)*) =
+    private def testCB[A: Equal](p: Project, c: C.SortInconclusive with C.HasBlanks, extract: Rows => A)(tests: Seq[(ConsiderBlanks, A)]) =
       for ((sm, expect) <- tests) {
         val vs = vsSortedByCB(c, sm)
         val r = Logic.gather(vs, p) |> Logic.sort(vs.order, p)
         assertEq(sm.toString, extract(r), expect)
       }
 
-    private def allSorts[A](z: A)(f: (A, A) => A, asc: A, desc: A): Seq[(ConsiderBlanks, A)] =
+    private def allSortsCB[A](z: A)(f: (A, A) => A, asc: A, desc: A): Seq[(ConsiderBlanks, A)] =
       (BlanksThenAsc  -> f(z, asc))  ::
       (AscThenBlanks  -> f(asc, z))  ::
       (BlanksThenDesc -> f(z, desc)) ::
       (DescThenBlanks -> f(desc, z)) :: Nil
 
+    private def vsSortedByIB(c: C.SortInconclusive with C.NoBlanks, sm: IgnoreBlanks): ViewSettings =
+      ViewSettings(Vector(c), SortCriteria.default.copy(init = Vector(SC.InconclusiveIB(c, sm))))
+
+    private def testIB[A: Equal](p: Project, c: C.SortInconclusive with C.NoBlanks, extract: Rows => A)(tests: Seq[(IgnoreBlanks, A)]) =
+      for ((sm, expect) <- tests) {
+        val vs = vsSortedByIB(c, sm)
+        val r = Logic.gather(vs, p) |> Logic.sort(vs.order, p)
+        assertEq(sm.toString, extract(r), expect)
+      }
+
+    private def allSortsIB[A](asc: A, desc: A): Seq[(IgnoreBlanks, A)] =
+      (Asc  -> asc) :: (Desc -> desc) :: Nil
+
+    private val (z,sep) = ("∅","  ")
+    private val _z = (_: Any) => z
+
+    private def rowsToStr (f: GenericReqRow => String) =
+      (_: Rows) map { case r: GenericReqRow => f(r) } mkString sep
+
+    private def rowsToStrL[A](f: GenericReqRow => List[A])(g: GenericReqRow => A => String) =
+      rowsToStr(r => f(r).ifelse(_.isEmpty, _z, _ map g(r) mkString ","))
+
     def testTags(): Unit = {
       def t(ids: ApplicableTag.Id*) = GReq().tag(ids: _*)
       val p       = GReq() + t(2) + t(3) + t(11) + t(12) + t(11, 12) + t(12, 11) !! P
-      val (z,sep) = ("∅","  ")
       val fmtEach = applicableTag(p).andThen(_.key.value)
-      val fmtRows = (_: Rows).map(tagsInRow(_).ifelse(_.isEmpty, _ => z, _ map fmtEach mkString ",")) mkString sep
-      test(p, C.Tags, fmtRows)(allSorts(z)(_ + sep + _,
+      val fmtRows = rowsToStrL(_.mv.tags)(_ => fmtEach)
+      testCB(p, C.Tags, fmtRows)(allSortsCB(z)(_ + sep + _,
         asc  = "defer  defer,wip  defer,wip  pri=high  pri=med  wip",
-        desc = "wip,defer  wip,defer  wip  pri=med  pri=high  defer"): _*)
+        desc = "wip,defer  wip,defer  wip  pri=med  pri=high  defer"))
     }
 
     def testDesc(): Unit = {
       val p       = GReq() + GReq("AT") + GReq("and") + GReq("haha") + GReq("F") !! P
-      val (z,sep) = ("∅"," ")
       val fmtEach = Presentation.textToString(p)
-      val fmtRows = (_: Rows).map{ case r: GenericReqRow => r.req.desc.ifelse(_.isEmpty, _ => z, fmtEach) } mkString sep
-      test(p, C.Desc, fmtRows)(allSorts(z)(_ + sep + _,
-        asc  = "and AT F haha",
-        desc = "haha F AT and"): _*)
+      val fmtRows = rowsToStr(_.req.desc.ifelse(_.isEmpty, _z, fmtEach))
+      testCB(p, C.Desc, fmtRows)(allSortsCB(z)(_ + sep + _,
+        asc  = "and  AT  F  haha",
+        desc = "haha  F  AT  and"))
     }
 
     def testImpSrc(): Unit = {
       def t(_id: GenericReq.Id, ids: Req.Id*) = GReq(id = _id, reqType = 3).impSrc(ids: _*)
-      //            FR-1   FR-2      DD-1                           FR-3         FR-4      FR-5
-      val p       = t(1) + t(2, 1) + t(3, 1, 2).copy(reqType = 5) + t(4, 1, 3) + t(5, 3) + t(6, 5) ! P
-      val (z,sep) = ("∅","  ")
+      //      FR-1   FR-2      DD-1                           FR-3         FR-4      FR-5
+      val p = t(1) + t(2, 1) + t(3, 1, 2).copy(reqType = 5) + t(4, 1, 3) + t(5, 3) + t(6, 5) ! P
       def fmtEach(s: Pubid, t: Pubid) = pubidToStr(p)(s) + ">" + pubidToStr(p)(t)
-      val fmtRows = (_: Rows).map{ case r: GenericReqRow => r.exp.implicationSrc.ifelse(_.isEmpty, _ => z, _ map (fmtEach(_, r.req.pubId)) mkString ",") } mkString sep
-      test(p, C.ImplicationSrc, fmtRows)(allSorts(z)(_ + sep + _,
+      val fmtRows = rowsToStrL(_.exp.implicationSrc)(r => fmtEach(_, r.req.pubId))
+      testCB(p, C.ImplicationSrc, fmtRows)(allSortsCB(z)(_ + sep + _,
         asc  = "DD-1>FR-3  DD-1>FR-4  FR-1>DD-1  FR-1>FR-2  FR-1>FR-3  FR-2>DD-1  FR-4>FR-5",
-        desc = "FR-4>FR-5  FR-2>DD-1  FR-1>DD-1  FR-1>FR-2  FR-1>FR-3  DD-1>FR-3  DD-1>FR-4"): _*)
+        desc = "FR-4>FR-5  FR-2>DD-1  FR-1>DD-1  FR-1>FR-2  FR-1>FR-3  DD-1>FR-3  DD-1>FR-4"))
     }
 
-    // ReqType
+    def testImpTgt(): Unit = {
+      def t(_id: GenericReq.Id, ids: Req.Id*) = GReq(id = _id, reqType = 3).impTgt(ids: _*)
+      //      FR-1   FR-2      DD-1                           FR-3         FR-4      FR-5
+      val p = t(1) + t(2, 1) + t(3, 1, 2).copy(reqType = 5) + t(4, 1, 3) + t(5, 3) + t(6, 5) ! P
+      def fmtEach(s: Pubid, t: Pubid) = pubidToStr(p)(t) + "<" + pubidToStr(p)(s)
+      val fmtRows = rowsToStrL(_.exp.implicationTgt)(r => fmtEach(r.req.pubId, _))
+      testCB(p, C.ImplicationTgt, fmtRows)(allSortsCB(z)(_ + sep + _,
+        asc  = "DD-1<FR-3  DD-1<FR-4  FR-1<DD-1  FR-1<FR-2  FR-1<FR-3  FR-2<DD-1  FR-4<FR-5",
+        desc = "FR-4<FR-5  FR-2<DD-1  FR-1<DD-1  FR-1<FR-2  FR-1<FR-3  DD-1<FR-3  DD-1<FR-4"))
+    }
+
+    def testReqType(): Unit = {
+      def t(_reqTypeId: ReqType.Id) = GReq(reqType = _reqTypeId)
+      val (co, br, mf, fr) = (1, 4, 2, 3)
+      val p = t(co) + t(co) + t(br) + t(br) + t(mf) + t(mf) + t(fr) + t(fr) !! P
+      val fmtRows = rowsToStr(_.req.pubId |> pubidToStr(p))
+      testIB(p, C.ReqType, fmtRows)(allSortsIB(
+        asc  = "BR-1  BR-2  CO-1  CO-2  FR-1  FR-2  MF-1  MF-2",
+        desc = "MF-1  MF-2  FR-1  FR-2  CO-1  CO-2  BR-1  BR-2"))
+    }
+
     // Code
-    // ImplicationTgt
     // CustomField.Implication.Id
     // CustomField.Tag        .Id
     // CustomField.Text       .Id
-
   }
 
   // ===================================================================================================================
@@ -309,9 +346,11 @@ object LogicTest extends TestSuite {
     'prop - gen.mustSatisfyE(_.all)//(implicitly[Settings].setSeed(0).setDebug.setSampleSize(20))
     'unit {
       'sort {
-        'desc   - UnitSort.testDesc()
-        'tags   - UnitSort.testTags()
-        'impSrc - UnitSort.testImpSrc()
+        'desc    - UnitSort.testDesc()
+        'tags    - UnitSort.testTags()
+        'impSrc  - UnitSort.testImpSrc()
+        'impTgt  - UnitSort.testImpTgt()
+        'reqType - UnitSort.testReqType()
       }
     }
   }
