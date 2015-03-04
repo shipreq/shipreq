@@ -140,7 +140,7 @@ object ISubsetEditor {
       def valueSelection: TagMod = {
         def attr(a: A, selected: Boolean): TagMod = {
           def change = IO {
-            val u = state.values.ifelse(selected, _ - a, _ + a)
+            val u = state.values.ifelse(_ => selected, _ - a, _ + a)
             val n = state.copy(values = u)
             mode update n
           }.join

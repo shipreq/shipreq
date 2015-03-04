@@ -14,8 +14,8 @@ object ScalaExt {
     @inline def mapStrengthR[B]   (f: A => B)           : (A, B) = (_a, f(_a))
     @inline def tmap2       [B, C](b: A => B, c: A => C): (B, C) = (b(_a), c(_a))
 
-    @inline def ifelse[B](c: Boolean, t: A => B, f: A => B): B =
-      if (c) t(_a) else f(_a)
+    @inline def ifelse[B](c: A => Boolean, t: A => B, f: A => B): B =
+      if (c(_a)) t(_a) else f(_a)
 
     @inline def some: Option[A] = Some(_a)
   }
