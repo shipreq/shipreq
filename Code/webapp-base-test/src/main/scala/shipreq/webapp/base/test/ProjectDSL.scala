@@ -9,14 +9,14 @@ import ReqFieldData.{Implications, ImplicationsU}
 
 object ProjectDSL {
 
-  type S = TempProject
+  type S = ProjectState
 
   type Mod[A] = State[S, A]
 
   type TextInput = String
   val defaultTextInput: TextInput = ""
 
-  case class TempProject(p: Project, nextId: Long, defaultReqType: ReqType,
+  case class ProjectState(p: Project, nextId: Long, defaultReqType: ReqType,
                          reqs: IMap[Req.Id, Req], pubids: Pubid.Register,
                          text: ReqFieldData.Text, tags: ReqFieldData.Tags, imps: ImplicationsU) {
     def done: Project =
@@ -25,7 +25,7 @@ object ProjectDSL {
         reqFieldData = succ(p.reqFieldData, ReqFieldData(text, tags, Implications(imps))))
   }
 
-  def tempProject(p: Project) = TempProject(p,
+  def projectState(p: Project) = ProjectState(p,
     nextId         = p.reqs.data.reqs.keySet.ifelse(_.isEmpty, _ => 1, _.max.value),
     defaultReqType = p.customReqTypes.data.values.headOption.getOrElse(StaticReqType.values.head),
     reqs           = p.reqs.data.reqs,
@@ -33,12 +33,6 @@ object ProjectDSL {
     text           = p.reqFieldData.data.text,
     tags           = p.reqFieldData.data.tags,
     imps           = p.reqFieldData.data.implications.srcToTgt)
-
-  //  val nextId: Mod[GenericReq.Id] =
-//    State{ s =>
-//      val id = s.nextId
-//      (s.copy(nextId = id + 1), GenericReq.Id(id))
-//    }
 
   def modTextData(d: ReqFieldData.Text, k: CustomField.Text.Id, f: EndoFn[Map[Req.Id, Text.CustomTextField.OptionalText]]) =
     d.updated(k, f(d.getOrElse(k, Map.empty)))
@@ -108,33 +102,11 @@ object ProjectDSL {
     }
 
     def !(p: Project): Project =
-      state.exec(tempProject(p)).done
+      state.exec(projectState(p)).done
 
     def !!(p: Project): Project =
       shuffle.!(p)
   }
 
   implicit def autoCompositeGReq(g: GReq) = Composite(NonEmptyList(g.state))
-
-  /*
-  trait HasMod[A, B] {
-    def mod(a: A): Mod[B]
-  }
-  implicit object GReqHasMod extends HasMod[GReq, GenericReq] {
-    override def mod(a: GReq) = a.state
-  }
-
-  implicit def ModExttttttt[F, A](f: F)(implicit M: HasMod[F, A]): ModExtt[A] = new ModExtt[A](M.mod(f))
-//  implicit class ModExttt[F, A](_f: F)(implicit M: HasMod[F, A]) {
-//    private def mod = M.mod(_f)
-//    def >>[B](m: Mod[B]): Mod[B] = mod.flatMap(_ => m)
-//    def run(p: Project): (Project, A) = ProjectDSL.run(p, mod)
-//  }
-
-  implicit class ModExtt[A](val _m: Mod[A]) extends AnyVal {
-    def >>[B](m: Mod[B]): Mod[B] = _m.flatMap(_ => m)
-    def run(p: Project): (Project, A) = ProjectDSL.run(p, _m)
-  }
-  */
-
 }
