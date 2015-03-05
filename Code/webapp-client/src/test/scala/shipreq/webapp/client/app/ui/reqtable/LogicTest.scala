@@ -354,6 +354,52 @@ object LogicTest extends TestSuite {
         desc = "FR-4<FR-5  FR-2<DD-1  FR-1<DD-1  FR-1<FR-2  FR-1<FR-3  DD-1<FR-3  DD-1<FR-4"))
     }
 
+    def testCustomImpField(): Unit = {
+      // mf1 → fr1 ̉↘
+      //             fr2 → fr3
+      //     ↗ mf2 ↗
+      // br1             ↗ mf4 → fr6
+      //     ↘ br2 → mf3
+      //                 ↘ fr4 → fr5 → mf5
+      def t(i: GenericReq.Id, rt: ReqType.Id, tgts: Req.Id*) = GReq(id = i, reqType = rt, impTgts = tgts.toSet)
+      val (mf, br, fr) = (2: ReqType.Id, 4: ReqType.Id, 3: ReqType.Id)
+      val p =
+        t(11, mf, 31)     +
+        t(12, mf, 32)     +
+        t(13, mf, 14, 34) +
+        t(14, mf, 36)     +
+        t(15, mf)         +
+        t(21, br, 12, 22) +
+        t(22, br, 13)     +
+        t(31, fr, 32)     +
+        t(32, fr, 33)     +
+        t(33, fr)         +
+        t(34, fr, 35)     +
+        t(35, fr, 15)     +
+        t(36, fr)         ! P
+
+      // Expected MFs per row
+      // MF-1 ⇐
+      // MF-2 ⇐
+      // MF-3 ⇐
+      // MF-4 ⇐ 3
+      // MF-5 ⇐ 3
+      // BR-1 ⇐
+      // BR-2 ⇐
+      // FR-1 ⇐ 1
+      // FR-2 ⇐ 1,2
+      // FR-3 ⇐ 1,2
+      // FR-4 ⇐ 3
+      // FR-5 ⇐ 3
+      // FR-6 ⇐ 3,4
+      val cf = CustomField.Implication.Id(6)
+      def fmtEach(s: Pubid, t: Pubid) = pubidToStr(p)(s) + ">" + pubidToStr(p)(t)
+      val fmtRows = rowsToStrL(_.exp.impsForCF(cf))(r => fmtEach(_, r.req.pubId))
+      testCB(p, C.CustomField(cf), fmtRows)(allSortsCB(z, 5)(_ + sep + _,
+        asc  = "MF-1>FR-1  MF-1>FR-2  MF-1>FR-3  MF-2>FR-2  MF-2>FR-3  MF-3>FR-4  MF-3>FR-5  MF-3>FR-6  MF-3>MF-4  MF-3>MF-5  MF-4>FR-6",
+        desc = "MF-4>FR-6  MF-3>FR-4  MF-3>FR-5  MF-3>FR-6  MF-3>MF-4  MF-3>MF-5  MF-2>FR-2  MF-2>FR-3  MF-1>FR-1  MF-1>FR-2  MF-1>FR-3"))
+    }
+
     def testReqType(): Unit = {
       def t(_reqTypeId: ReqType.Id) = GReq(reqType = _reqTypeId)
       val (co, br, mf, fr) = (1, 4, 2, 3)
@@ -365,7 +411,6 @@ object LogicTest extends TestSuite {
     }
 
     // Code
-    // CustomField.Implication.Id
     // CustomField.Text       .Id
   }
 
@@ -383,6 +428,7 @@ object LogicTest extends TestSuite {
           'sorted   - UnitSort.testCustomTagField_sorted()
           'unsorted - UnitSort.testCustomTagField_unsorted()
         }
+        'custImp - UnitSort.testCustomImpField()
       }
     }
   }
