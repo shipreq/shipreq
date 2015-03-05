@@ -21,12 +21,14 @@ object ProjectDSL {
                           defaultReqType: ReqType,
                           reqs          : IMap[Req.Id, Req],
                           pubids        : Pubid.Register,
+                          reqCodeTrie   : ReqCode.Trie,
                           text          : ReqFieldData.Text,
                           tags          : ReqFieldData.Tags,
                           imps          : ImplicationsU) {
     def done: Project =
       p.copy(
         reqs         = succ(p.reqs,         Requirements(reqs, pubids)),
+        reqCodes     = succ(p.reqCodes,     ReqCodes(reqCodeTrie)),
         reqFieldData = succ(p.reqFieldData, ReqFieldData(text, tags, Implications(imps))))
   }
 
@@ -38,6 +40,7 @@ object ProjectDSL {
     defaultReqType = p.customReqTypes.data.values.headOption.getOrElse(StaticReqType.values.head),
     reqs           = p.reqs.data.reqs,
     pubids         = p.reqs.data.pubids,
+    reqCodeTrie    = p.reqCodes.data.trie,
     text           = p.reqFieldData.data.text,
     tags           = p.reqFieldData.data.tags,
     imps           = p.reqFieldData.data.implications.srcToTgt)
@@ -55,18 +58,24 @@ object ProjectDSL {
 
   def parseGRD(i: TextInput): Text.GenericReqDesc.OptionalText =
     if (i.isEmpty) Nil else Text.GenericReqDesc.Literal(i) :: Nil
+
+  def parseCode(s: String): ReqCode = {
+    val ns = s.split('.').reverse.map(ReqCode.Node.apply)
+    ReqCode(NonEmptyList.nel(ns.head, ns.tail.toList))
+  }
+
   
   case class GReq(desc   : TextInput                           = defaultTextInput,
                   id     : Option[GenericReq.Id]               = None,
                   reqType: Option[ReqType.Id]                  = None,
                   alive  : Alive                               = Alive,
+                  codes  : Set[String]                         = Set.empty,
                   tags   : Set[ApplicableTag.Id]               = Set.empty,
                   impSrcs: Set[Req.Id]                         = Set.empty,
                   impTgts: Set[Req.Id]                         = Set.empty,
                   cftexts: Map[CustomField.Text.Id, TextInput] = Map.empty) {
 
-    // TODO missing req codes
-
+    def code  (rcs: String*)                           = copy(codes   = this.codes   ++ rcs)
     def tag   (ids: ApplicableTag.Id*)                 = copy(tags    = this.tags    ++ ids)
     def impSrc(ids: Req.Id*)                           = copy(impSrcs = this.impSrcs ++ ids)
     def impTgt(ids: Req.Id*)                           = copy(impTgts = this.impTgts ++ ids)
@@ -85,12 +94,14 @@ object ProjectDSL {
         val text        = addTextData(p.text, id, cftexts)
         val tags        = p.tags.addvs(id, this.tags)
         val imps        = p.imps.addks(impSrcs, id).addvs(id, impTgts)
-        val p2          = p.copy(nextId = this.id.fold(id.value + 1)(_ => p.nextId),
-                                 pubids = pr,
-                                 reqs   = p.reqs + req,
-                                 text   = text,
-                                 tags   = tags,
-                                 imps   = imps)
+        val codeTrie    = codes.map(parseCode).foldLeft(p.reqCodeTrie)(ReqCode.Trie.put(_, _)(id))
+        val p2          = p.copy(nextId      = this.id.fold(id.value + 1)(_ => p.nextId),
+                                 pubids      = pr,
+                                 reqs        = p.reqs + req,
+                                 reqCodeTrie = codeTrie,
+                                 text        = text,
+                                 tags        = tags,
+                                 imps        = imps)
         (p2, req)
       }
   }

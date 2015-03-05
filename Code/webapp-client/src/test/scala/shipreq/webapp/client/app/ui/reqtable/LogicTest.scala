@@ -422,7 +422,20 @@ object LogicTest extends TestSuite {
         desc = "HAHA  d  Abc"))
     }
 
-    // Code
+    def testReqCodes(): Unit = {
+      def t(codes: String*) = GReq(codes = codes.toSet)
+      val p =
+        GReq().times(2)          +
+        t("a.b.c", "x.y.z")      +
+        t("a")                   +
+        t("a.boo", "x.z", "y.q") +
+        t("abc", "a.b.d")        +
+        t("abc.no")              !! P
+      val fmtRows = rowsToStrL(_.exp.reqCodes)(_ => _.txt)
+      testCB(p, C.Code, fmtRows)(allSortsCB(z, 2)(_ + sep + _,
+        asc  = "a  a.b.c  a.b.d  a.boo  abc  abc.no  x.y.z  x.z  y.q",
+        desc = "y.q  x.z  x.y.z  abc.no  abc  a.boo  a.b.d  a.b.c  a"))
+    }
   }
 
   // ===================================================================================================================
@@ -430,17 +443,18 @@ object LogicTest extends TestSuite {
     'prop - gen.mustSatisfyE(_.all)//(implicitly[Settings].setSeed(0).setDebug.setSampleSize(20))
     'unit {
       'sort {
-        'desc    - UnitSort.testDesc()
-        'tags    - UnitSort.testTags()
-        'impSrc  - UnitSort.testImpSrc()
-        'impTgt  - UnitSort.testImpTgt()
-        'reqType - UnitSort.testReqType()
+        'reqCodes - UnitSort.testReqCodes()
+        'reqType  - UnitSort.testReqType()
+        'desc     - UnitSort.testDesc()
+        'tags     - UnitSort.testTags()
+        'impSrc   - UnitSort.testImpSrc()
+        'impTgt   - UnitSort.testImpTgt()
+        'custImp  - UnitSort.testCustomImpField()
+        'custTxt  - UnitSort.testCustomTextField()
         'custTag {
           'sorted   - UnitSort.testCustomTagField_sorted()
           'unsorted - UnitSort.testCustomTagField_unsorted()
         }
-        'custImp - UnitSort.testCustomImpField()
-        'custTxt - UnitSort.testCustomTextField()
       }
     }
   }
