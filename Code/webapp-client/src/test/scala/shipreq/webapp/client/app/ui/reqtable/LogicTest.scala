@@ -254,11 +254,13 @@ object LogicTest extends TestSuite {
         assertEq(sm.toString, extract(r), expect)
       }
 
-    private def allSortsCB[A](z: A)(f: (A, A) => A, asc: A, desc: A): Seq[(ConsiderBlanks, A)] =
-      (BlanksThenAsc  -> f(z, asc))  ::
-      (AscThenBlanks  -> f(asc, z))  ::
-      (BlanksThenDesc -> f(z, desc)) ::
-      (DescThenBlanks -> f(desc, z)) :: Nil
+    private def allSortsCB[A](z: A, zcount: Int = 1)(f: (A, A) => A, asc: A, desc: A): Seq[(ConsiderBlanks, A)] = {
+      val zz: A = if (zcount > 1) Stream.fill(zcount)(z).reduce(f) else z
+      (BlanksThenAsc  -> f(zz, asc))  ::
+      (AscThenBlanks  -> f(asc, zz))  ::
+      (BlanksThenDesc -> f(zz, desc)) ::
+      (DescThenBlanks -> f(desc, zz)) :: Nil
+    }
 
     private def vsSortedByIB(c: C.SortInconclusive with C.NoBlanks, sm: IgnoreBlanks): ViewSettings =
       ViewSettings(Vector(c), SortCriteria.default.copy(init = Vector(SC.InconclusiveIB(c, sm))))
@@ -282,14 +284,27 @@ object LogicTest extends TestSuite {
     private def rowsToStrL[A](f: GenericReqRow => List[A])(g: GenericReqRow => A => String) =
       rowsToStr(r => f(r).ifelse(_.isEmpty, _z, _ map g(r) mkString ","))
 
+     // ----------------------------------------------------------------------------------------------------------------
+
     def testTags(): Unit = {
       def t(ids: ApplicableTag.Id*) = GReq().tag(ids: _*)
-      val p       = GReq() + t(2) + t(3) + t(11) + t(12) + t(11, 12) + t(12, 11) !! P
+      val p       = GReq().times(2) + t(2) + t(3) + t(11) + t(12) + t(11, 12) + t(12, 11) !! P
       val fmtEach = applicableTag(p).andThen(_.key.value)
       val fmtRows = rowsToStrL(_.mv.tags)(_ => fmtEach)
-      testCB(p, C.Tags, fmtRows)(allSortsCB(z)(_ + sep + _,
+      testCB(p, C.Tags, fmtRows)(allSortsCB(z, 2)(_ + sep + _,
         asc  = "defer  defer,wip  defer,wip  pri=high  pri=med  wip",
         desc = "wip,defer  wip,defer  wip  pri=med  pri=high  defer"))
+    }
+
+    def testCustomTagField(): Unit = {
+      def t(ids: ApplicableTag.Id*) = GReq().tag(ids: _*)
+      val p        = GReq() + t(2) + t(3) + t(2, 3) + t(11, 12, 22, 24, 26) !! P
+      val priField = CustomField.Tag.Id(4)
+      val fmtEach  = applicableTag(p).andThen(_.key.value)
+      val fmtRows  = rowsToStrL(_.mv.cfTags(priField))(_ => fmtEach)
+      testCB(p, C.CustomField(priField), fmtRows)(allSortsCB(z, 2)(_ + sep + _,
+        asc  = "pri=high  pri=high,pri=med  pri=med",
+        desc = "pri=med,pri=high  pri=med  pri=high"))
     }
 
     def testDesc(): Unit = {
@@ -335,7 +350,6 @@ object LogicTest extends TestSuite {
 
     // Code
     // CustomField.Implication.Id
-    // CustomField.Tag        .Id
     // CustomField.Text       .Id
   }
 
@@ -349,6 +363,7 @@ object LogicTest extends TestSuite {
         'impSrc  - UnitSort.testImpSrc()
         'impTgt  - UnitSort.testImpTgt()
         'reqType - UnitSort.testReqType()
+        'custTag - UnitSort.testCustomTagField()
       }
     }
   }

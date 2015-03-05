@@ -285,7 +285,7 @@ object Sorter {
         prep =
           setup => {
             val tagOrder = setup.tagOrder
-            _.fold(_.mv.tags.map(tagOrder))
+            _.fold(loc.getMaybe(_).cata(_ map tagOrder, Nil))
           },
         sort = SortFn.intList(bp),
         rowMod = typicalRowModFn(loc, SortFn.int)(_.tagOrder.apply)

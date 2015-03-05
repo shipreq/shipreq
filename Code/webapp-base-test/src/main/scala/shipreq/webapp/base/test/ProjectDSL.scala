@@ -64,6 +64,9 @@ object ProjectDSL {
     def impTgt(ids: Req.Id*)                           = copy(impTgts = this.impTgts ++ ids)
     def cftext(kvs: (CustomField.Text.Id, TextInput)*) = copy(cftexts = this.cftexts ++ kvs)
 
+    def times(n: Int): Composite =
+      Stream.fill(n - 1)(this).foldLeft(autoCompositeGReq(this))(_ + _)
+
     def state: Mod[GenericReq] =
       State[S, GenericReq]{ p =>
         val id          = this.id getOrElse GenericReq.Id(p.nextId)
