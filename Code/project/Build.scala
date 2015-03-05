@@ -272,6 +272,7 @@ object ShipReq extends Build {
           scalaJSStage in Global := stage,
           jsDependencies += ScalaJS.reactJs % "test" / "react-with-addons.js" commonJSName "React",
           jsDependencies += ScalaJS.sizzleJs % "test" / "sizzle.min.js" commonJSName "Sizzle",
+          emitSourceMaps in Test := false, // PhantomJS doesn't use
           requiresDOM := true,
           jsEnv in Test := PhantomJSEnv().value)
 
