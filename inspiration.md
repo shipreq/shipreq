@@ -10,3 +10,9 @@ I want this product to
 * facilitate better software and make both dev teams & clients happier.
 * be passionately embraced by people who believe in the value of requirements.
 * be something I can use to write better software myself.
+
+On success
+==========
+* It took Steven Erikson 10 years to find a publisher for Gardens of the Moon.
+* J. K. Rowling was rejected by 12 publishers before publishing Harry Potter #1.
+

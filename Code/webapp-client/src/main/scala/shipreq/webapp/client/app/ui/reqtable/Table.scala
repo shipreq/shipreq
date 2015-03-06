@@ -30,7 +30,7 @@ object Table {
       val crs: Vector[ColumnRenderer] =
         p.viewSettings.columns.map(xxx)
 
-      val rows = Logic.gather(p.viewSettings, p.project)
+      val rows = Logic.gather(p.viewSettings, p.project) |> Logic.sort(p.viewSettings.order, p.project)
 
       // Sort
       
