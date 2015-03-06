@@ -251,44 +251,36 @@ object Sorter {
   def pubidListSorter(loc: Optional[Row, List[Pubid]]): SorterForSMCB =
     SorterForSMCB(bp =>
       Sorter[List[(Int, Int)]](
+        rowMod = typicalRowModFn(loc, SortFn.intPair)(pubidNormaliser),
         prep =
           setup => {
             val n = pubidNormaliser(setup)
             row => loc.getMaybe(row).cata(_ map n, Nil)
           },
-        sort = SortFn.intPairList(bp),
-        rowMod = typicalRowModFn(loc, SortFn.intPair)(pubidNormaliser)
+        sort = SortFn.intPairList(bp)
     ))
 
   val reqTypeSorter = Sorter[Int](
-    prep =
-      setup => {
-        val reqTypeOrder = setup.reqTypesToMnemonicOrder
-        _.fold(r => reqTypeOrder(r.req.pubId.reqTypeId))
-      },
+    prep = setup => _.fold(r => setup.reqTypesToMnemonicOrder(r.req.pubId.reqTypeId)),
     sort = SortFn.int
   )
 
   def reqCodeSorter: SorterForSMCB =
-    SorterForSMCB(bp =>
+    SorterForSMCB { bp =>
       // TODO Sorting reqcodes by txt is inefficient. Trie => List[Int] would be better.
+      val norm: ReqCode => String = _.txt
       Sorter[String](
-        // TODO headOption might not work in conjunction with rowModFn & reversing
-        prep   = _ => row => Row._reqCodes.getMaybe(row).toOption.flatMap(_.headOption.map(_.txt)) getOrElse "",
-        sort   = SortFn.string(bp),
-        rowMod = typicalRowModFn(Row._reqCodes, SortFn.stringNonEmpty)(_ => _.txt)
-    ))
+        rowMod = typicalRowModFn(Row._reqCodes, SortFn.stringNonEmpty)(_ => norm),
+        prep   = _ => row => Row._reqCodes.getMaybe(row).toOption.flatMap(_.headOption map norm) getOrElse "",
+        sort   = SortFn.string(bp))
+    }
 
   def tagSorter(loc: Optional[Row, List[ApplicableTag.Id]]): SorterForSMCB =
     SorterForSMCB(bp =>
       Sorter[List[Int]](
-        prep =
-          setup => {
-            val tagOrder = setup.tagOrder
-            _.fold(loc.getMaybe(_).cata(_ map tagOrder, Nil))
-          },
-        sort = SortFn.intList(bp),
-        rowMod = typicalRowModFn(loc, SortFn.int)(_.tagOrder.apply)
+        rowMod = typicalRowModFn(loc, SortFn.int)(_.tagOrder.apply),
+        prep   = setup => _.fold(loc.getMaybe(_).cata(_ map setup.tagOrder, Nil)),
+        sort   = SortFn.intList(bp)
     ))
 
   def textSorter(f: Setup => Row => Text.Generic#OptionalText): SorterForSMCB =
