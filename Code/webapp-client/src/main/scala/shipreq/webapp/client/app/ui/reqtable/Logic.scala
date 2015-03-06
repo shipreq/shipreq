@@ -54,7 +54,7 @@ private[reqtable] object Logic {
   }
 
   private def expanderC[A](vs: ViewSettings, c: Column.SortInconclusive): Expander[A] =
-    expander(vs isVisible c, vs isOrdered c)
+    expander(vs isVisible c, vs isOrderedI c)
 
   private def impColValueFn(p: Project): CustomField.Implication.Id => Req.Id => Set[Pubid] = {
     lazy val tc = TransitiveClosure.auto[Req.Id](p.reqs.data.reqs.keys)(

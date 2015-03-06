@@ -13,10 +13,16 @@ case class ViewSettings(columns: Vector[Column],
   def isVisible(f: Column => Boolean): Boolean =
     columns.exists(f)
 
-  def isOrdered(c: Column.SortInconclusive): Boolean =
+  def isOrdered(c: Column): Boolean =
     isOrdered(_ ≟ c)
 
-  def isOrdered(f: Column.SortInconclusive => Boolean): Boolean =
+  def isOrdered(f: Column => Boolean): Boolean =
+    f(order.last.column) || isOrderedI(f)
+
+  def isOrderedI(c: Column.SortInconclusive): Boolean =
+    isOrderedI(_ ≟ c)
+
+  def isOrderedI(f: Column.SortInconclusive => Boolean): Boolean =
     order.init.exists(_.column |> f)
 }
 
