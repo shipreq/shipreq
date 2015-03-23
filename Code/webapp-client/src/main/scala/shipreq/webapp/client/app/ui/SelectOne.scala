@@ -17,7 +17,8 @@ object SelectOne {
 
   case class Props[A](selected: A,
                       choices : Seq[Choice[A]],
-                      select  : Option[A => IO[Unit]])
+                      select  : Option[A => IO[Unit]],
+                      style   : TagMod = EmptyTag)
 
   def Component[A: Equal] =
     ReactComponentB[Props[A]]("SelectOne")
@@ -53,6 +54,7 @@ object SelectOne {
       } yield io(v)
 
     <.select(
+      props.style,
       ^.value      := selectedValue,
       ^.disabled   := props.select.isEmpty,
       ^.onChange ~~>? onChange,

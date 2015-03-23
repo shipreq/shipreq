@@ -2,6 +2,7 @@ package shipreq.webapp.client.app.ui.reqtable
 
 import scalaz.effect.IO
 import shipreq.webapp.client.app.ui.OrderedSubsetEditor
+import shipreq.webapp.client.app.ui.Style
 
 object ColumnsEditor {
   val Component = OrderedSubsetEditor.Component[Column]
@@ -17,7 +18,9 @@ final class ColumnsEditor(columnName: Column.NameResolver) {
                                               all       = allColumns,
                                               label     = columnName.fn,
                                               mandatory = Column.mandatory,
-                                              change    = _change)
+                                              change    = _change,
+                                              styles    = Style.reqtable.columnSettings.prop)
     ColumnsEditor.Component(p)
   }
 }
+

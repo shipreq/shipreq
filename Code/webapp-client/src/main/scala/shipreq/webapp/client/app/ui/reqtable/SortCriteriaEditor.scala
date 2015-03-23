@@ -1,5 +1,6 @@
 package shipreq.webapp.client.app.ui.reqtable
 
+import japgolly.scalacss.ScalaCssReact._
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import org.scalajs.dom
 import scalaz._
@@ -10,6 +11,7 @@ import scalaz.syntax.foldable.ToFoldableOps
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{UnivEq, Util}
 import shipreq.webapp.client.app.ui.SelectOne
+import shipreq.webapp.client.app.ui.Style.reqtable.{sortingSettings => *}
 import shipreq.webapp.client.util.DND
 
 object SortCriteriaEditor {
@@ -104,10 +106,14 @@ object SortCriteriaEditor {
       private val Row = DND.Child.dndItemComponentB[Col, (OSM, Column.NameResolver, ModIO)]({
         case (outerAttr, draghnd, col, (value, columnName, modIO)) =>
 
-          <.li(outerAttr, value.isLeft ?= (^.cls := "off"),
-            draghnd,
-            smSelectComponent(SelectOne.Props(value, choicesForColumn(col), Some(updateIO(modIO)))),
-            columnName(col))
+          val on = value.isRight
+          val selectProps = SelectOne.Props(
+            value, choicesForColumn(col), Some(updateIO(modIO)), *.dirSelect)
+
+          <.li(outerAttr, *.row(on),
+            draghnd(*.dragHnd),
+            smSelectComponent(selectProps),
+            <.span(*.field(on), columnName(col)))
       })
 
       val columnFromOSM: OSM => Col = {
@@ -146,8 +152,10 @@ object SortCriteriaEditor {
 
       private val smSelectComponent = SelectOne.Component[SM]
 
-      def sortMethodDropdown(value: SM, modIO: ModIO): ReactElement =
-        smSelectComponent(SelectOne.Props(value, smChoices, Some(v => modIO(_.copy(method = v)))))
+      def sortMethodDropdown(value: SM, modIO: ModIO): ReactElement = {
+        val onSelect = Some((v: SM) => modIO(_.copy(method = v)))
+        smSelectComponent(SelectOne.Props(value, smChoices, onSelect, *.conclusiveDir))
+      }
 
       private val colSelectComponent = SelectOne.Component[Col]
 
@@ -155,7 +163,8 @@ object SortCriteriaEditor {
         val colChoices =
           cols.foldLeft(Vector.empty[Choice[Col]])((q, c) => q :+ Choice(c, columnName(c), false))
             .sortBy(_.label)
-        colSelectComponent(SelectOne.Props(value, colChoices, Some(v => modIO(_.copy(column = v)))))
+        val onSelect = Some((v: Col) => modIO(_.copy(column = v)))
+        colSelectComponent(SelectOne.Props(value, colChoices, onSelect, *.conclusiveField))
       }
 
       def ctrls(value: SC, cols: Set[Col], columnName: Column.NameResolver, modIO: ModIO) =

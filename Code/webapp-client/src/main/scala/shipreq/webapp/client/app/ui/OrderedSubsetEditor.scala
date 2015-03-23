@@ -20,11 +20,19 @@ import shipreq.webapp.client.util.DND
  */
 object OrderedSubsetEditor {
 
+  case class Styles(row     : TagMod = EmptyTag,
+                    dragHnd : TagMod = EmptyTag,
+                    checkbox: TagMod = EmptyTag,
+                    label   : TagMod = EmptyTag)
+
+  val noStyle = new Styles()
+
   case class Props[A](value    : Vector[A],
                       all      : GenTraversable[A],
                       label    : A => String,
                       mandatory: A => Boolean,
-                      change   : Vector[A] => IO[Unit])
+                      change   : Vector[A] => IO[Unit],
+                      styles   : Boolean => Styles = (_: Boolean) => noStyle)
 
   def Component[A: Equal] =
     ReactComponentB[Props[A]]("OrderedSubsetEditor")
@@ -53,11 +61,13 @@ object OrderedSubsetEditor {
           else
             ^.onChange ~~> toggleIO
 
-        <.li(outerAttr, (!on) ?= (^.cls := "off"),
-          draghnd,
+        val style = p.styles(on)
+
+        <.li(outerAttr, style.row,
+          draghnd(style.dragHnd),
           <.label(
-            UI.checkbox(on)(checkboxAttr),
-            <.span(^.cls := "label", p.label(a))))
+            UI.checkbox(on)(checkboxAttr)(style.checkbox),
+            <.span(style.label, p.label(a))))
     })
 
     def li(p: Props[A], inactive: Iterable[A])(a: A, on: Boolean): ReactElement =

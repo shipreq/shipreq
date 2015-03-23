@@ -1,6 +1,7 @@
 package hahaa
 
 import org.scalajs.dom._
+import shipreq.webapp.client.lib.ConsoleIO
 import shipreq.webapp.client.protocol.ClientProtocol
 import shipreq.webapp.client.util.DND
 import scalaz.syntax.bind.ToBindOps
@@ -8,6 +9,8 @@ import scala.scalajs.js
 import scalaz.effect.IO
 import scalaz.std.AllInstances._
 import shipreq.webapp.base.protocol.Routines
+import japgolly.scalacss.Defaults._
+import japgolly.scalacss.ScalaCssReact._
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.router._
@@ -81,6 +84,7 @@ object ReactExamples {
               i.element)
       }
 
+      Style.addToDocument()
       val c = ProjectPage.router(BaseUrl.fromWindowOrigin / "wip")
       c() render document.getElementById("eg2")
     })
