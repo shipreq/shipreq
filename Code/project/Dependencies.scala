@@ -60,7 +60,7 @@ object Deps {
     }
   }
 
-  object Scala extends Group("2.11.5", "org.scala-lang") {
+  object Scala extends Group("2.11.6", "org.scala-lang") {
     val compiler = d("scala-compiler")
     val library  = d("scala-library")
     val reflect  = d("scala-reflect")
@@ -124,7 +124,7 @@ object Deps {
   val shapeless = JvmAndJsFork("com.chuusai", "com.github.japgolly.fork.shapeless", "shapeless", "2.1.0", "2.1.0-2")
 
   val μPickle   = JvmAndJs("com.github.japgolly.fork.upickle", "upickle", "custom-3")
-  val μTest     = JvmAndJs("com.lihaoyi",                      "utest",   "0.3.0")
+  val μTest     = JvmAndJs("com.lihaoyi",                      "utest",   "0.3.1")
 
   // Was only needed trying to use Monocle's @Lenses. Monocle's Lenser works without this.
   // val macroParadise = compilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full)
