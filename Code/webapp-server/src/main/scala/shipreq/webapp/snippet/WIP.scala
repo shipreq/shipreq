@@ -79,37 +79,55 @@ class WIP {
     val List(co,mf,fr) = List[ReqType.Id](1,2,3).map(Some(_))
     val List(p1,p3,p5,rel,wip) = List[ApplicableTag.Id](4,3,2,22,11)
     val (p2,p4) = (p3,p5)
-    val mfs = (0 to 28).toVector.map(GenericReq.Id(_))
+    val mfs = (0 to 28).toVector.map(i => GenericReq.Id(i + 1000))
+
+    def fr1Desc = {
+      import Text.GenericReqDesc._
+      List(
+        EmailAddress("japgolly@gmail.com"), Literal(" is on "), WebAddress("https://github.com"),
+        Literal(" cos of "), ReqRef(mfs(6)), Literal(" "), Issue(1, Nil)
+      )
+    }
+    def fr2Desc = {
+      val tbd = {
+        import Text.InlineIssueDesc._
+        List(Literal("Pending "), ReqRef(mfs(26)))
+      }
+      import Text.GenericReqDesc._
+      List(Issue(2, tbd))
+    }
 
     val contentByDsl = (
-      GReq(reqType = mf, id = mfs( 1), desc = "Use Case Editor").tag(p5).tag(rel) // MF-1
-    + GReq(reqType = mf, id = mfs( 2), desc = "Anonymous Share").tag(p2).tag(rel) // MF-2
-    + GReq(reqType = mf, id = mfs( 3), desc = "Export (Read UCs, PDF, DOC, MD, TXT, XLS)").tag(p4) // MF-3
-    + GReq(reqType = mf, id = mfs( 4), desc = "Templates").tag(p2) // MF-4
-    + GReq(reqType = mf, id = mfs( 5), desc = "Field Customisation").tag(p5).tag(wip) // MF-5
-    + GReq(reqType = mf, id = mfs( 6), desc = "Incompletions").tag(p3).tag(wip) // MF-6
-    + GReq(reqType = mf, id = mfs( 7), desc = "Organisation").tag(p5).tag(wip) // MF-7
-    + GReq(reqType = mf, id = mfs( 8), desc = "History/Audit").tag(p3) // MF-8
-    + GReq(reqType = mf, id = mfs( 9), desc = "Collaboration: authoring").tag(p5) // MF-9
-    + GReq(reqType = mf, id = mfs(10), desc = "Collaboration: stakeholders").tag(p5) // MF-10
-    + GReq(reqType = mf, id = mfs(11), desc = "Collaboration: change mgnt & approval").tag(p4) // MF-11
-    + GReq(reqType = mf, id = mfs(12), desc = "Low-level Requirements (CO, FR, BR, etc.)").tag(wip).tag(p5) // MF-12
-    + GReq(reqType = mf, id = mfs(13), desc = "Requirement Relationships").tag(wip).tag(p4) // MF-13
-    + GReq(reqType = mf, id = mfs(14), desc = "Text-generated Diagrams").tag(p2) // MF-14
-    + GReq(reqType = mf, id = mfs(15), desc = "Matrixes").tag(p2) // MF-15
-    + GReq(reqType = mf, id = mfs(16), desc = "CRUDL Matrix").tag(p1) // MF-16
-    + GReq(reqType = mf, id = mfs(17), desc = "Undo & Auto-save").tag(p2) // MF-17
-    + GReq(reqType = mf, id = mfs(18), desc = "Data dictionary").tag(p1) // MF-18
-    + GReq(reqType = mf, id = mfs(19), desc = "Glossary").tag(p1) // MF-19
-    + GReq(reqType = mf, id = mfs(20), desc = "Generic artifact storage (DOC, PDF, PNG, XLS)").tag(p3) // MF-20
-    + GReq(reqType = mf, id = mfs(21), desc = "Doc authoring (V&S, URD, SRS)").tag(p2) // MF-21
-    + GReq(reqType = mf, id = mfs(22), desc = "High-level Requirements").tag(p3).tag(wip) // MF-22
-    + GReq(reqType = mf, id = mfs(23), desc = "Import external requirements").tag(p2) // MF-23
-    + GReq(reqType = mf, id = mfs(24), desc = "Requirement Lint").tag(p3) // MF-24
-    + GReq(reqType = mf, id = mfs(25), desc = "Search").tag(p2) // MF-25
-    + GReq(reqType = mf, id = mfs(26), desc = "Mass text modification (replace)").tag(p1) // MF-26
-    + GReq(reqType = mf, id = mfs(27), desc = "External references").tag(p1) // MF-27
-    + GReq(reqType = mf, id = mfs(28), desc = "Entities").tag(p2) // MF-28
+      GReq(reqType = mf, id = mfs( 1), desc = "Use Case Editor").tag(p5).tag(rel)
+    + GReq(reqType = mf, id = mfs( 2), desc = "Anonymous Share").tag(p2).tag(rel)
+    + GReq(reqType = mf, id = mfs( 3), desc = "Export (Read UCs, PDF, DOC, MD, TXT, XLS)").tag(p4)
+    + GReq(reqType = mf, id = mfs( 4), desc = "Templates").tag(p2)
+    + GReq(reqType = mf, id = mfs( 5), desc = "Field Customisation").tag(p5).tag(wip)
+    + GReq(reqType = mf, id = mfs( 6), desc = "Incompletions").tag(p3).tag(wip)
+    + GReq(reqType = mf, id = mfs( 7), desc = "Organisation").tag(p5).tag(wip)
+    + GReq(reqType = mf, id = mfs( 8), desc = "History/Audit").tag(p3)
+    + GReq(reqType = mf, id = mfs( 9), desc = "Collaboration: authoring").tag(p5)
+    + GReq(reqType = mf, id = mfs(10), desc = "Collaboration: stakeholders").tag(p5)
+    + GReq(reqType = mf, id = mfs(11), desc = "Collaboration: change mgnt & approval").tag(p4)
+    + GReq(reqType = mf, id = mfs(12), desc = "Low-level Requirements (CO, FR, BR, etc.)").tag(wip).tag(p5)
+    + GReq(reqType = mf, id = mfs(13), desc = "Requirement Relationships").tag(wip).tag(p4)
+    + GReq(reqType = mf, id = mfs(14), desc = "Text-generated Diagrams").tag(p2)
+    + GReq(reqType = mf, id = mfs(15), desc = "Matrixes").tag(p2)
+    + GReq(reqType = mf, id = mfs(16), desc = "CRUDL Matrix").tag(p1)
+    + GReq(reqType = mf, id = mfs(17), desc = "Undo & Auto-save").tag(p2)
+    + GReq(reqType = mf, id = mfs(18), desc = "Data dictionary").tag(p1)
+    + GReq(reqType = mf, id = mfs(19), desc = "Glossary").tag(p1)
+    + GReq(reqType = mf, id = mfs(20), desc = "Generic artifact storage (DOC, PDF, PNG, XLS)").tag(p3)
+    + GReq(reqType = mf, id = mfs(21), desc = "Doc authoring (V&S, URD, SRS)").tag(p2)
+    + GReq(reqType = mf, id = mfs(22), desc = "High-level Requirements").tag(p3).tag(wip)
+    + GReq(reqType = mf, id = mfs(23), desc = "Import external requirements").tag(p2)
+    + GReq(reqType = mf, id = mfs(24), desc = "Requirement Lint").tag(p3)
+    + GReq(reqType = mf, id = mfs(25), desc = "Search").tag(p2)
+    + GReq(reqType = mf, id = mfs(26), desc = "Mass text modification (replace)").tag(p1)
+    + GReq(reqType = mf, id = mfs(27), desc = "External references").tag(p1)
+    + GReq(reqType = mf, id = mfs(28), desc = "Entities").tag(p2)
+    + GReq(reqType = fr, desc = fr1Desc).impSrc(mfs(1))
+    + GReq(reqType = fr, desc = fr2Desc).impSrc(mfs(12)).impSrc(mfs(13)).impSrc(mfs(22))
     )
 
     contentByDsl ! project

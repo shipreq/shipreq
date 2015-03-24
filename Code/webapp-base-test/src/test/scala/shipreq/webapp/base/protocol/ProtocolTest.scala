@@ -80,7 +80,7 @@ object ProtocolTest extends TestSuite {
         'RecCodeGroupDesc - test("RecCodeGroupDesc", $.TextGen.recCodeGroupDescAtom($.reqId, $.customIssueTypeId                   ).text)
         'GenericReqDesc   - test("GenericReqDesc",   $.TextGen.genericReqDescAtom  ($.reqId, $.customIssueTypeId                   ).text)
         'InlineIssueDesc  - test("InlineIssueDesc",  $.TextGen.inlineIssueDescAtom ($.reqId                                        ).text)
-        'CustomTextField  - test("CustomTextField",  $.TextGen.customTextFieldAtom ($.reqId, $.customIssueTypeId, $.applicableTagId).text)
+        'CustomTextField  - test("CustomTextField",  $.TextGen.customTextFieldAtom ($.reqId, $.customIssueTypeId, $.applicableTagId).text1)
       }
     }
 

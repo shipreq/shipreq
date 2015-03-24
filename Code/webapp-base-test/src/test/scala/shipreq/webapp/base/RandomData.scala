@@ -500,7 +500,7 @@ object RandomData {
   // -------------------------------------------------------------------------------------------------------------------
   // Req Data
 
-  def reqFieldDataText(cols: Set[CustomField.Text.Id], reqs: Set[Req.Id], txt: Gen[Text.CustomTextField.OptionalText]): Gen[ReqFieldData.Text] =
+  def reqFieldDataText(cols: Set[CustomField.Text.Id], reqs: Set[Req.Id], txt: Gen[Text.CustomTextField.NonEmptyText]): Gen[ReqFieldData.Text] =
     txt mapByKeySubset reqs mapByKeySubset cols
 
   def reqFieldDataTags(reqs: TraversableOnce[Req.Id], tags: Set[ApplicableTag.Id]): Gen[ReqFieldData.Tags] = {
@@ -555,7 +555,7 @@ object RandomData {
     val gi = Gen.oneofO(cissues.toSeq)
 
     Gen.apply3(ReqFieldData.apply)(
-      reqFieldDataText(txtCols, reqs, TextGen.customTextFieldAtom(gr, gi, gt).ptext),
+      reqFieldDataText(txtCols, reqs, TextGen.customTextFieldAtom(gr, gi, gt).ptext1),
       reqFieldDataTags(reqs, tags),
       reqFieldDataImplications(reqs))
   }

@@ -496,7 +496,7 @@ object DataCodecs {
     TC.readSingleLine(t) orElse
     TC.readReqRef    (t) )
 
-  implicit final val (customTextFieldText, _) = TC(Text.CustomTextField)((t, a) =>
+  implicit final val (_, customTextFieldText) = TC(Text.CustomTextField)((t, a) =>
     TC.readMultiLine(t)(a) orElse
     TC.readReqRef   (t)    orElse
     TC.readIssue    (t)    orElse

@@ -443,11 +443,11 @@ object LogicTest extends TestSuite {
 
     def testCustomTextField(): Unit = {
       val (notes, reporter) = (CustomField.Text.Id(2), CustomField.Text.Id(3))
-      def t(n: TextInput, r: TextInput) = GReq(reqType = 5).cftext(notes -> n, reporter -> r)
+      def t(n: String, r: String) = GReq(reqType = 5).cftext(notes, n).cftext(reporter, r)
       val p = GReq() + t("HAHA", "zz") + t("", "f") + t("d", "") + t("Abc", "g") !! P
       val d = p.reqFieldData.data.text(notes)
       val s = Presentation.textToString(p)
-      val fmtRows = rowsToStr(r => d.get(r.req.id).filter(_.nonEmpty).fold(z)(s))
+      val fmtRows = rowsToStr(r => d.get(r.req.id).fold(z)(_.list |> s))
       testCB(p, C.CustomField(notes), fmtRows)(allSortsCB(z, 2)(_ + sep + _,
         asc  = "Abc  d  HAHA",
         desc = "HAHA  d  Abc"))

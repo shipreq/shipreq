@@ -291,7 +291,7 @@ object Req {
 }
 
 final case class GenericReq(id         : GenericReq.Id,
-                            pubId      : Pubid,
+                            pubId      : Pubid, // TODO pubId case
                             desc       : Text.GenericReqDesc.OptionalText,
                             // TODO lastUpdated. Need JS-compat datetimeTZ
                             alive      : Alive) extends Req
@@ -302,7 +302,7 @@ object GenericReq {
 
 
 object ReqFieldData {
-  type Text         = Map[CustomField.Text.Id, Map[Req.Id, Text.CustomTextField.OptionalText]]
+  type Text         = Map[CustomField.Text.Id, Map[Req.Id, Text.CustomTextField.NonEmptyText]]
   type Tags         = Multimap[Req.Id, Set, ApplicableTag.Id]
 
 

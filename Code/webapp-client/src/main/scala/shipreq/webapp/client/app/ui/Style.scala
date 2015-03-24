@@ -5,7 +5,9 @@ import japgolly.scalacss.Defaults._
 import japgolly.scalacss.ScalaCssReact._
 import japgolly.scalacss.StyleS
 import shipreq.webapp.base.AppConsts
+import shipreq.webapp.base.data.{Alive, Dead}
 import shipreq.webapp.client.lib.ConsoleIO
+import scalaz.syntax.equal._
 
 object Style extends StyleSheet.Inline {
   import dsl._
@@ -35,6 +37,10 @@ object Style extends StyleSheet.Inline {
 
   val dragHnd = style(
     color("#000"))
+
+  val aliveDomain = Domain.ofValues[Alive](Alive, Dead)
+  private def aliveStyle(f: Alive => StyleS): Alive => StyleA =
+    styleF(aliveDomain)(f)
 
   object reqtable {
     import ui.reqtable.Column
@@ -78,9 +84,7 @@ object Style extends StyleSheet.Inline {
     // http://stackoverflow.com/questions/446624/table-cell-widths-fixing-width-wrapping-truncating-long-words
     val table = style(
       marginTop(1.6 ex),
-      width(100 %%),
-      tableLayout.fixed,
-      whiteSpace.nowrap)
+      width(100 %%))
 
     val mnemonicLen = AppConsts.reqTypeMnemonicLength.max
 
@@ -97,9 +101,34 @@ object Style extends StyleSheet.Inline {
   } // reqtable
 
   object widgets {
+
+    val hasError = styleS(
+      color("#c00"),
+      backgroundColor("#fee")
+    )
+
+    val hoverShowsInfo = cursor.help
+
+    val dead = styleS(
+      textDecoration := ^.lineThrough,
+      hasError
+    )
+
     val tag = style(
       addClassName("label label-default"),
+      hoverShowsInfo,
       marginRight(1 ex))
+
+    val issue = style(hasError)
+
+    val issueDesc = style(
+      paddingLeft (0.7 ex),
+      paddingRight(0.7 ex))
+
+    val reqRef = aliveStyle(a => styleS(
+      color("#2363A1"),
+      styleIf(a ≟ Dead)(dead),
+      hoverShowsInfo))
   }
 
   def damnit(a: StyleA*) = ()

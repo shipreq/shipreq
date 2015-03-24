@@ -28,13 +28,13 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
     case Column.PubId          => pubId(c)
     case Column.ReqType        => reqType(c)
     case Column.Code           => code(c)
-    case Column.Desc           => placeholder
+    case Column.Desc           => desc(c)
     case Column.Tags           => tags(c)
     case Column.ImplicationSrc => placeholder
     case Column.ImplicationTgt => placeholder
     case Column.CustomField(f) =>
       f match {
-        case id: CustomField.Text       .Id => placeholder
+        case id: CustomField.Text       .Id => cfText(id)(c)
         case id: CustomField.Tag        .Id => cfTags(id)(c)
         case id: CustomField.Implication.Id => placeholder
       }
@@ -51,7 +51,7 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
     new ColumnRenderer(<.span("∅"), Function const <.span("∅"), None)
 
   def pubId = make {
-    case GenericReqRow(req, _, _) => widgets.pubId(req.pubId)()
+    case GenericReqRow(req, _, _) => widgets.pubIdText(req.pubId)()
   }
 
   def reqType = make {
@@ -75,7 +75,18 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
     case GenericReqRow(_, exp, _) => widgets.tagList(exp.cfTags.getOrElse(id, Nil))
   }
 
-//  // ===================================================================================================================
+  def desc = make {
+    case GenericReqRow(req, _, _) => widgets.text(req.desc)
+  }
+
+  val textData = project.reqFieldData.data.text
+  val empty: ReactElement = <.span
+
+  def cfText(id: CustomField.Text.Id) = make {
+    case GenericReqRow(req, _, _) => textData.get(id).flatMap(_ get req.id) map (widgets.text1(_)) getOrElse empty
+  }
+
+  //  // ===================================================================================================================
 //  class Desc extends ColumnRenderer {
 //
 //    override def columnStyle = None
