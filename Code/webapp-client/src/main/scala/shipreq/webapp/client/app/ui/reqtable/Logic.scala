@@ -217,7 +217,7 @@ private[reqtable] object Logic {
   // ===================================================================================================================
   // Sorting
 
-  def sort(vs: ViewSettings, p: Project)(rows: Stream[Row]): List[Row] = {
+  def sort(vs: ViewSettings, p: Project)(rows: Stream[Row]): Stream[Row] = {
     import Sorter._
 
     // Prepare sorters
@@ -240,10 +240,13 @@ private[reqtable] object Logic {
     scala.util.Sorting.quickSort(data)(sorter.sortFn.toOrdering)
 
     // Unpack results
-    data.foldRight[List[Row]](Nil)((d, q) => sorter.row(d) :: q)
+    data.toStream map sorter.row
   }
 
-  // AFTER SORTING
-  // - consolidateAdjacentDups
-  // - Add SHRs
+  // TODO AFTER SORTING: consolidateAdjacentDups
+  // TODO AFTER SORTING: Add SHRs
+
+  // ===================================================================================================================
+  def rowsForTable(vs: ViewSettings, p: Project): Stream[Row] =
+    gather(vs, p) |> sort(vs, p)
 }

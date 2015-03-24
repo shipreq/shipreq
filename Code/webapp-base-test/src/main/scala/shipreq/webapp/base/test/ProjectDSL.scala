@@ -60,11 +60,12 @@ object ProjectDSL {
                   impTgts: Set[Req.Id]                                                 = Set.empty,
                   cftexts: Map[CustomField.Text.Id, Text.CustomTextField.NonEmptyText] = Map.empty) {
 
-    def code  (rcs: String*)                                                 = copy(codes   = this.codes   ++ rcs)
-    def tag   (ids: ApplicableTag.Id*)                                       = copy(tags    = this.tags    ++ ids)
-    def impSrc(ids: Req.Id*)                                                 = copy(impSrcs = this.impSrcs ++ ids)
-    def impTgt(ids: Req.Id*)                                                 = copy(impTgts = this.impTgts ++ ids)
-    def cftext(k: CustomField.Text.Id, v: Text.CustomTextField.NonEmptyText) = copy(cftexts = this.cftexts.updated(k,v))
+    def code   (rcs: String*)                                                 = copy(codes   = this.codes   ++ rcs)
+    def tag    (ids: ApplicableTag.Id*)                                       = copy(tags    = this.tags    ++ ids)
+    def impSrc (ids: Req.Id*)                                                 = copy(impSrcs = this.impSrcs ++ ids)
+    def impTgt (ids: Req.Id*)                                                 = copy(impTgts = this.impTgts ++ ids)
+    def cftext (k: CustomField.Text.Id, v: Text.CustomTextField.NonEmptyText) = copy(cftexts = this.cftexts.updated(k,v))
+    def cftextS(k: CustomField.Text.Id, s: String)                            = if (s.isEmpty) this else cftext(k, s)
 
     def times(n: Int): Composite =
       Stream.fill(n - 1)(this).foldLeft(autoCompositeGReq(this))(_ + _)
@@ -119,8 +120,9 @@ object ProjectDSL {
 
   implicit def autoCompositeGReq(g: GReq) = Composite(NonEmptyList(g.state), None)
 
-  implicit def parseCTF(i: String): Text.CustomTextField.NonEmptyText =
-    NonEmptyList(Text.CustomTextField.Literal(i))
+  implicit def parseCTF(i: String): Text.CustomTextField.NonEmptyText = {
+    if (i.isEmpty) sys.error("Text.CustomTextField can't be empty.") else NonEmptyList(Text.CustomTextField.Literal(i))
+  }
 
   implicit def parseGRD(i: String): Text.GenericReqDesc.OptionalText =
     if (i.isEmpty) Nil else Text.GenericReqDesc.Literal(i) :: Nil

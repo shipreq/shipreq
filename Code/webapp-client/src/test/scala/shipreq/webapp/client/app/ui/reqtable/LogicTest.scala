@@ -53,6 +53,8 @@ object LogicTest extends TestSuite {
   case class LogicTests(vs: ViewSettings, p: Project) {
     val E = EvalOver(this)
 
+    type S[A] = Stream[A]
+
     val gathered    = Logic.gather(vs, p)
     val gatheredG   = gathered.filterT[GenericReqRow]
     val rowReqCodes = gathered.flatMap(codesInRow(_).toStream)
@@ -102,7 +104,7 @@ object LogicTest extends TestSuite {
       ((criRev ==> sortRev) ∧ sortTwice) rename "Universal sort props"
     }
 
-    def reverseSortOnReverseCri(origSorted: List[Row], revCri: ViewSettings): EvalL = {
+    def reverseSortOnReverseCri(origSorted: S[Row], revCri: ViewSettings): EvalL = {
       /*
       def rev[A](c: Column, l: List[A]): List[A] =
         if (revCri isOrdered c) l.reverse else l
@@ -154,10 +156,10 @@ object LogicTest extends TestSuite {
       vs.copy(order = sc)
 
     /** @return error \/ (blank, non-blank) */
-    def separateBlanks[A](expectBlanksFirst: Boolean, as: List[A])(isBlank: A => Boolean): String \/ (List[A], List[A]) = as match {
+    def separateBlanks[A](expectBlanksFirst: Boolean, asi: Iterable[A])(isBlank: A => Boolean): String \/ (List[A], List[A]) = asi.toList match {
       case Nil =>
         \/-(Nil, Nil)
-      case h :: t =>
+      case as@ (h :: t) =>
         val firstBlockBlank = isBlank(h)
         val b1Cond: A => Boolean = if (firstBlockBlank) isBlank else !isBlank(_)
         val block1 = h :: t.takeWhile(b1Cond)
@@ -178,13 +180,15 @@ object LogicTest extends TestSuite {
           \/-(b, nb)
     }
 
-    def E_bnbBlocks[A](name: String, bp: BlankPlacement, as: List[A])(isBlank: A => Boolean, f: (List[A], List[A]) => EvalL): EvalL = {
+    def E_bnbBlocks[A](name: String, bp: BlankPlacement, as: Iterable[A])(isBlank: A => Boolean, f: (List[A], List[A]) => EvalL): EvalL = {
       val expectBlanksFirst = bp match {case BlanksFirst => true; case BlanksLast => false}
       E.either(s"$name make separate blank/non-blank blocks", separateBlanks(expectBlanksFirst, as)(isBlank))(f.tupled)
     }
 
-    def E_sorted[A: Ordering: Equal](name: String, as: List[A], dirChange: Dir): EvalL =
-      E.equal(name + " are sorted", as, dirChange(as.sorted)(_.reverse))
+    def E_sorted[A: Ordering: Equal](name: String, as: Iterable[A], dirChange: Dir): EvalL = {
+      val ass = as.toStream
+      E.equal(name + " are sorted", ass, dirChange(ass.sorted)(_.reverse))
+    }
 
     type IndivSortCB = (ConsiderBlanks, BlankPlacement, Dir) => EvalL
     type IndivSortIB = (IgnoreBlanks  ,                 Dir) => EvalL
@@ -200,7 +204,7 @@ object LogicTest extends TestSuite {
       val sorted     = sortBy(SC.InconclusiveCB(C.Code, sm))
       val data       = sorted map firstCodePerRow
       val name       = s"ReqCodes ($sm)"
-      val intra      = sorted.toStream.map(codesInRow).filter{case _ :: _ :: _ => true; case _ => false}.map(_.map(_.txt))
+      val intra      = sorted.map(codesInRow).filter{case _ :: _ :: _ => true; case _ => false}.map(_.map(_.txt))
       def eachRow    = E.forall(intra)(E_sorted(s"Codes within a single row are sorted.", _, dir))
       def wholeTable = E_bnbBlocks(name, bp, data)(_.isEmpty, (_, nb) => E_sorted(name, nb, dir))
       (wholeTable ∧ eachRow) rename name
@@ -264,7 +268,7 @@ object LogicTest extends TestSuite {
     import ProjectDSL._
     import UnsafeTypes._
     private val P = SampleProject.project
-    private type Rows = List[Row]
+    private type Rows = Stream[Row]
 
     private def testUnsorted[A: Equal](p: Project, c: C.SortInconclusive, extract: Rows => A)(expect: A): Unit = {
       val vs = ViewSettings(Vector(c), SortCriteria.default.copy(init = Vector.empty))
@@ -443,7 +447,7 @@ object LogicTest extends TestSuite {
 
     def testCustomTextField(): Unit = {
       val (notes, reporter) = (CustomField.Text.Id(2), CustomField.Text.Id(3))
-      def t(n: String, r: String) = GReq(reqType = 5).cftext(notes, n).cftext(reporter, r)
+      def t(n: String, r: String) = GReq(reqType = 5).cftextS(notes, n).cftextS(reporter, r)
       val p = GReq() + t("HAHA", "zz") + t("", "f") + t("d", "") + t("Abc", "g") !! P
       val d = p.reqFieldData.data.text(notes)
       val s = Presentation.textToString(p)

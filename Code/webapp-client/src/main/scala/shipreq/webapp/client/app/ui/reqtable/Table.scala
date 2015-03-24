@@ -33,7 +33,7 @@ object Table {
       val crs = p.viewSettings.columns.map(renderers.apply)
 
       // Sort
-      val rows = Logic.gather(p.viewSettings, p.project) |> Logic.sort(p.viewSettings, p.project)
+      val rows = Logic.rowsForTable(p.viewSettings, p.project)
 
       // Render
       // TODO handle zero rows nicely. "33 reqs (SHRs?), 11 deleted, 3 excluded by filter."
