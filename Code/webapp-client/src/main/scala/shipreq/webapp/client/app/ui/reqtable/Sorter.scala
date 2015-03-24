@@ -199,6 +199,8 @@ object Sorter {
   // ===================================================================================================================
   // Specific
 
+  type TagOrder = Map[ApplicableTag.Id, Int]
+
   /**
    * Project data prepared in a way that various sorts will use.
    */
@@ -206,23 +208,33 @@ object Sorter {
 
     val textNormalise = stringNormalise compose Presentation.textToString(p)
 
-    lazy val reqTypesToMnemonicOrder: Map[ReqType.Id, Int] =
-      p.reqTypes.map(_.tmap2(_.mnemonic.value, _.reqTypeId))
-        .sortBy(_._1)
-        .map(_._2)
-        .zipWithIndex
-        .toMap
-        .withDefault(k => failedMust(0)("Unknown reqtype: " + k))
+    def ordermap[A](name: String, as: Stream[A]): Map[A, Int] =
+      as.zipWithIndex.toMap
+      .withDefault(k => failedMust(0)(s"Unknown $name: " + k))
 
-    lazy val tagOrder: Map[ApplicableTag.Id, Int] =
-      p.tags.data.vstream(_.tag)
-        .filterT[ApplicableTag]
-        .map(_.tmap2(_.key.value |> stringNormalise, _.id))
-        .sortBy(_._1)
-        .map(_._2)
-        .zipWithIndex
-        .toMap
-        .withDefault(k => failedMust(0)("Unknown tag: " + k))
+    lazy val reqTypesToMnemonicOrder: Map[ReqType.Id, Int] =
+      ordermap("reqtype",
+        p.reqTypes.map(_.tmap2(_.mnemonic.value, _.reqTypeId))
+          .sortBy(_._1)
+          .map(_._2)
+      )
+
+    lazy val tagByNameOrder: TagOrder =
+      ordermap("tag",
+        p.tags.data.vstream(_.tag)
+          .filterT[ApplicableTag]
+          .map(_.tmap2(_.key.value |> stringNormalise, _.id))
+          .sortBy(_._1)
+          .map(_._2)
+      )
+
+    lazy val tagByPosOrder: TagOrder =
+      ordermap("tag",
+        TagTree.flatten(p.tags.data)(_ => true, TagTree.FlatRow.FilterPolicy.OmitNothing)
+          .toStream
+          .map(_.id)
+          .filterT[ApplicableTag.Id]
+      )
   }
 
   def pubidNormaliser(setup: Setup): Pubid => (Int, Int) = {
@@ -275,11 +287,11 @@ object Sorter {
         sort   = SortFn.string(bp))
     }
 
-  def tagSorter(loc: Optional[Row, List[ApplicableTag.Id]]): SorterForSMCB =
+  def tagSorter(loc: Optional[Row, List[ApplicableTag.Id]], order: Setup => TagOrder): SorterForSMCB =
     SorterForSMCB(bp =>
       Sorter[List[Int]](
-        rowMod = typicalRowModFn(loc, SortFn.int)(_.tagOrder.apply),
-        prep   = setup => _.fold(loc.getMaybe(_).cata(_ map setup.tagOrder, Nil)),
+        rowMod = typicalRowModFn(loc, SortFn.int)(order(_).apply),
+        prep   = setup => _.fold(loc.getMaybe(_).cata(_ map order(setup), Nil)),
         sort   = SortFn.intList(bp)
     ))
 
@@ -314,12 +326,12 @@ object Sorter {
     case C.CustomField(gid) =>
       gid match {
         case id: CustomField.Text       .Id => customTextFieldSorter(id)
-        case id: CustomField.Tag        .Id => tagSorter(Row._cfTags ^|-? index(id))
+        case id: CustomField.Tag        .Id => tagSorter(Row._cfTags ^|-? index(id), _.tagByPosOrder)
         case id: CustomField.Implication.Id => pubidListSorter(Row._cfImps ^|-? index(id))
       }
     case C.Desc                             => descSorter
     case C.Code                             => reqCodeSorter
-    case C.Tags                             => tagSorter(Row._tags)
+    case C.Tags                             => tagSorter(Row._tags, _.tagByNameOrder)
     case C.ImplicationSrc                   => pubidListSorter(Row._implicationSrc)
     case C.ImplicationTgt                   => pubidListSorter(Row._implicationTgt)
   }
