@@ -1,7 +1,10 @@
 package shipreq.webapp.client.app.ui.reqtable
 
+import scala.annotation.tailrec
 import scala.reflect.ClassTag
 import scalaz.NonEmptyList
+import scalaz.syntax.equal._
+import scalaz.syntax.semigroup._
 import shipreq.base.util.{UnivEq, Must}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
@@ -243,10 +246,44 @@ private[reqtable] object Logic {
     data.toStream map sorter.row
   }
 
-  // TODO AFTER SORTING: consolidateAdjacentDups
+  // ===================================================================================================================
+
   // TODO AFTER SORTING: Add SHRs
+
+  def mergeAdjacent[A](input: Stream[A])(m: (A, A) => Option[A]): Stream[A] = {
+    @tailrec def go(seen: Stream[A], last: A, queue: Stream[A]): Stream[A] = {
+      @inline def res = seen append (last #:: Stream.empty)
+      if (queue.isEmpty)
+        res
+      else {
+        val h = queue.head
+        val t = queue.tail
+        m(last, h) match {
+          case None    => go(res, h, t)
+          case Some(a) => go(seen, a, t)
+        }
+      }
+    }
+
+    if (input.isEmpty)
+      input
+    else {
+      go(Stream.empty, input.head, input.tail)
+    }
+  }
+
+  def consolidateAdjacentDups(rows: Stream[Row]): Stream[Row] =
+    mergeAdjacent(rows)((x, y) =>
+      (x, y) match {
+        case (a: GenericReqRow, b: GenericReqRow) =>
+          if (a.req.id ≟ b.req.id)
+            Some(GenericReqRow(a.req, a.exp |+| b.exp, a.mv |+| b.mv))
+          else
+            None
+      }
+    )
 
   // ===================================================================================================================
   def rowsForTable(vs: ViewSettings, p: Project): Stream[Row] =
-    gather(vs, p) |> sort(vs, p)
+    gather(vs, p) |> sort(vs, p) |> consolidateAdjacentDups
 }

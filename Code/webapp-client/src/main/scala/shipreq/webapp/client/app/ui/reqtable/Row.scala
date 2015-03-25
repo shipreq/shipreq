@@ -2,7 +2,10 @@ package shipreq.webapp.client.app.ui.reqtable
 
 import monocle._
 import monocle.macros.Lenser
-import scalaz.Maybe
+import scalaz.{Monoid, Maybe}
+import scalaz.std.map._
+import scalaz.std.list._
+import scalaz.syntax.semigroup._
 import shipreq.base.util.UnivEq
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.TypeclassDerivation._
@@ -34,6 +37,21 @@ case class Expansion(implicationSrc: List[Pubid],
 object Expansion {
   implicit val equality: UnivEq[Expansion] = deriveUnivEq
 
+  implicit val monoid: Monoid[Expansion] =
+    new Monoid[Expansion] {
+      override def zero =
+        Expansion(Nil, Nil, Nil, UnivEq.emptyMap, UnivEq.emptyMap)
+      override def append(a: Expansion, _b: => Expansion) = {
+        val b = _b
+        Expansion(
+          a.implicationSrc |+| b.implicationSrc,
+          a.implicationTgt |+| b.implicationTgt,
+          a.reqCodes       |+| b.reqCodes,
+          a.cfImps         |+| b.cfImps,
+          a.cfTags         |+| b.cfTags)
+      }
+    }
+
   private[this] def l = Lenser[Expansion]
   val _implicationSrc = l(_.implicationSrc)
   val _implicationTgt = l(_.implicationTgt)
@@ -52,6 +70,16 @@ object Expansion {
 case class MultiValues(tags: List[ApplicableTag.Id])
 object MultiValues {
   implicit val equality: UnivEq[MultiValues] = deriveUnivEq
+
+  implicit val monoid: Monoid[MultiValues] =
+    new Monoid[MultiValues] {
+      override def zero =
+        MultiValues(Nil)
+      override def append(a: MultiValues, _b: => MultiValues) = {
+        val b = _b
+        MultiValues(a.tags |+| b.tags)
+      }
+    }
 
   private[this] def l = Lenser[MultiValues]
   val _tags           = l(_.tags)

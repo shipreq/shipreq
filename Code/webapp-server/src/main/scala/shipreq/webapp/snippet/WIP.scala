@@ -126,8 +126,8 @@ class WIP {
     + GReq(reqType = mf, id = mfs(26), desc = "Mass text modification (replace)").tag(p1)
     + GReq(reqType = mf, id = mfs(27), desc = "External references").tag(p1)
     + GReq(reqType = mf, id = mfs(28), desc = "Entities").tag(p2)
-    + GReq(reqType = fr, desc = fr1Desc).impSrc(mfs(1))
-    + GReq(reqType = fr, desc = fr2Desc).impSrc(mfs(12)).impSrc(mfs(13)).impSrc(mfs(22))
+    + GReq(reqType = fr, desc = fr1Desc).impSrc(mfs(12))
+    + GReq(reqType = fr, desc = fr2Desc).impSrc(mfs(1)).impSrc(mfs(13)).impSrc(mfs(22))
     )
 
     contentByDsl ! project
