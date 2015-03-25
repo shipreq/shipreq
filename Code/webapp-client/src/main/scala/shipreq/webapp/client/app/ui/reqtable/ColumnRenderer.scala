@@ -15,55 +15,58 @@ import DataImplicits._
 
 
 final class ColumnRenderer(
+  val column     : Column,
   val header     : ReactElement,
   val render     : Row => ReactElement,
   val columnStyle: Option[StyleA])
 
 object ColumnRenderer {
-  val `N/A`: ReactElement =
-    <.span(*.`N/A`, "–")
+  val `N/A`: ReactElement = <.span(*.`N/A`, "–")
+  val empty: ReactElement = <.span
 }
 
 class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets: ProjectWidgets) {
+  import ColumnRenderer._
 
-  def apply(c: Column): ColumnRenderer = c match {
-    case Column.Pubid          => pubid(c)
-    case Column.ReqType        => reqType(c)
-    case Column.Code           => code(c)
-    case Column.Desc           => desc(c)
-    case Column.Tags           => tags(c)
-    case Column.ImplicationSrc => imps(Row._implicationSrc)(c) //("… ⇒")
-    case Column.ImplicationTgt => imps(Row._implicationTgt)(c) //("⇒ …")
-    case Column.CustomField(f) =>
-      f match {
-        case id: CustomField.Text       .Id => cfText(id)(c)
-        case id: CustomField.Tag        .Id => cfTags(id)(c)
-        case id: CustomField.Implication.Id => imps(Row._cfImps ^|-? index(id))(c)
+  def apply(c: Column): ColumnRenderer = {
+    val cr: Column => ColumnRenderer = 
+      c match {
+        case Column.Pubid          => pubid
+        case Column.ReqType        => reqType
+        case Column.Code           => code
+        case Column.Desc           => desc
+        case Column.Tags           => tags
+        case Column.ImplicationSrc => imps(Row._implicationSrc) //("… ⇒")
+        case Column.ImplicationTgt => imps(Row._implicationTgt) //("⇒ …")
+        case Column.CustomField(f) =>
+          f match {
+            case id: CustomField.Text       .Id => cfText(id)
+            case id: CustomField.Tag        .Id => cfTags(id)
+            case id: CustomField.Implication.Id => imps(Row._cfImps ^|-? index(id))
+          }
       }
+    cr(c)
   }
 
-  protected def makeSY(columnStyle: Option[StyleA])(render: Row => ReactElement): String => ColumnRenderer =
-    s => new ColumnRenderer(<.span(s), render, columnStyle)
+  private def make(render: Row => ReactElement, columnStyle: Option[StyleA] = None): Column => ColumnRenderer =
+    c => makeS(columnName(c), render, columnStyle)(c)
 
-  protected def make(render: Row => ReactElement): Column => ColumnRenderer =
-    c => makeSY(None)(render)(columnName(c))
+  private def makeS(headerName: String, render: Row => ReactElement, columnStyle: Option[StyleA] = None): Column => ColumnRenderer =
+    c => new ColumnRenderer(c, <.span(headerName), render, columnStyle)
 
-  protected def makeS(render: Row => ReactElement): String => ColumnRenderer =
-    makeSY(None)(render)
+  @deprecated("placeholder is for dev purposes only.", "")
+  private def placeholder =
+    makeS("∅", Function const <.span("∅"))
 
-  // @deprecated("placeholder is for dev purposes only.", "")
-  def placeholder =
-    new ColumnRenderer(<.span("∅"), Function const <.span("∅"), None)
-
-  def pubid = make {
+  private def pubid = make {
     case GenericReqRow(req, _, _) => widgets.pubidText(req.pubid)()
   }
 
-  def reqType = make {
+  private def reqType = make {
     case GenericReqRow(req, _, _) => widgets.reqType(req.reqTypeId)()
   }
 
-  def code = {
+  private def code = {
     def render(codes: Vector[ReqCode]): ReactElement =
           <.ul(codes.map(c => <.li(c.txt)))
     make {
@@ -71,27 +74,25 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
     }
   }
 
-  def tags = make {
+  private def tags = make {
     case GenericReqRow(_, _, mv) => widgets.tags(mv.tags)
   }
 
-  def cfTags(id: CustomField.Tag.Id) = make {
+  private def cfTags(id: CustomField.Tag.Id) = make {
     case GenericReqRow(_, exp, _) => widgets.tags(exp.cfTags.getOrElse(id, Vector.empty))
   }
 
-  def desc = make {
+  private def desc = make {
     case GenericReqRow(req, _, _) => widgets.text(req.desc)
   }
 
-  val empty: ReactElement = <.span
-
-  def cfText(id: CustomField.Text.Id) = {
+  private def cfText(id: CustomField.Text.Id) = {
     val textData = project.reqFieldData.data.text.getOrElse(id, Map.empty)
     make {
       case GenericReqRow(req, _, _) => textData.get(req.id) map (widgets.text1(_)) getOrElse empty
     }
   }
 
-  def imps(l: Optional[Row, Vector[Pubid]]) = make(
+  private def imps(l: Optional[Row, Vector[Pubid]]) = make(
     l.getMaybe(_).cata(widgets.pubidRefs, empty))
 }
