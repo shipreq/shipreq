@@ -105,7 +105,7 @@ module.exports = function(grunt) {
           {src:'.bower/jquery/dist/jquery.min.js',       dest:'<%= cfg.assets_dev %>/jquery.js',         nonull:true},
           {src:'.bower/jquery/dist/jquery.min.map',      dest:'<%= cfg.assets_dev %>/jquery.min.map',    nonull:true},
           {src:'.bower/react/react.min.js',              dest:'<%= cfg.vendor.out %>/react.js',          nonull:true},
-          {src:'.bower/react/react.js',                  dest:'<%= cfg.assets_dev %>/react.js',          nonull:true},
+          {src:'.bower/react/react-with-addons.js',      dest:'<%= cfg.assets_dev %>/react.js',          nonull:true},
           {src:'.bower/zeroclipboard/ZeroClipboard.swf', dest:'<%= cfg.vendor.out %>/ZeroClipboard.swf', nonull:true},
           {src:'<%= cfg.vendor.cust %>/viz.js',          dest:'<%= cfg.vendor.out %>/viz.js',            nonull:true},
         ]
