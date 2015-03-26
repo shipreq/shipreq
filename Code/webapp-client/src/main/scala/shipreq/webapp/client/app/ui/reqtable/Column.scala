@@ -1,5 +1,7 @@
 package shipreq.webapp.client.app.ui.reqtable
 
+import shipreq.webapp.base.data.Project
+
 import scalaz.NonEmptyList
 import shipreq.base.util.{Must, IMap, UnivEq}
 import shipreq.webapp.base.{UiText, data}
@@ -57,6 +59,11 @@ object Column {
        | ImplicationSrc
        | ImplicationTgt
        | CustomField(_)  => false
+  }
+
+  object NameResolver {
+    def byProject(p: Project): NameResolver =
+      Column.NameResolver(p.fields.data.customFields, data.CustomField nameP p)
   }
 
   case class NameResolver(customFields   : IMap[data.CustomField.Id, data.CustomField],

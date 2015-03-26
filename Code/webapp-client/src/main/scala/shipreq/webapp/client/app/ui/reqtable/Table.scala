@@ -27,17 +27,6 @@ object Table {
   implicit val propFocus   = Reusable.caseclass3(Focus.unapply)
   implicit val propReuse   = Reusable.caseclass3(Props.unapply)
 
-  def content(viewSettings: ViewSettings,
-              project     : Project,
-              columnName  : Column.NameResolver) = {
-
-    val widgets   = new ProjectWidgets(project)
-    val renderers = new ColumnRenderers(project, columnName, widgets)
-    val crs       = viewSettings.columns.map(renderers.apply)
-    val rows      = Logic.rowsForTable(viewSettings, project).toVector
-    new Content(crs, rows)
-  }
-
   case class Content(crs: Vector[ColumnRenderer], rows: Vector[Row])
 
   case class Focus(rowInd: Int, col: Column, content: Content)
