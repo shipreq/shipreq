@@ -313,7 +313,7 @@ private[reqtable] object Logic {
       (x, y) match {
         case (a: GenericReqRow, b: GenericReqRow) =>
           if (a.req.id ≟ b.req.id)
-            Some(GenericReqRow(a.req, a.exp |+| b.exp, a.mv |+| b.mv))
+            Some(GenericReqRow(a.req, a.exp |+| b.exp, a.mv |+| b.mv)) // TODO resort
           else
             None
       }

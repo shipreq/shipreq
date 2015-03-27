@@ -2,9 +2,8 @@ package shipreq.webapp.client.app.ui.reqtable
 
 import monocle._
 import monocle.macros.Lenser
-import scalaz.{Monoid, Maybe}
+import scalaz.{Equal, Semigroup, Monoid, Maybe}
 import scalaz.std.map._
-import scalaz.std.vector._
 import scalaz.syntax.semigroup._
 import shipreq.base.util.UnivEq
 import shipreq.webapp.base.data._
@@ -36,6 +35,13 @@ case class Expansion(implicationSrc: Vector[Pubid],
 
 object Expansion {
   implicit val equality: UnivEq[Expansion] = deriveUnivEq
+
+  implicit def vectorUniqSemigroup[A: Equal]: Semigroup[Vector[A]] =
+    new Semigroup[Vector[A]] {
+      override def append(x: Vector[A], y: => Vector[A]) =
+        y.foldLeft(x)((q, a) =>
+          if (x.exists(Equal[A].equal(_, a))) q else q :+ a)
+    }
 
   implicit val monoid: Monoid[Expansion] =
     new Monoid[Expansion] {
@@ -69,6 +75,8 @@ object Expansion {
 case class MultiValues(tags: Vector[ApplicableTag.Id])
 object MultiValues {
   implicit val equality: UnivEq[MultiValues] = deriveUnivEq
+
+  import Expansion.vectorUniqSemigroup
 
   implicit val monoid: Monoid[MultiValues] =
     new Monoid[MultiValues] {
