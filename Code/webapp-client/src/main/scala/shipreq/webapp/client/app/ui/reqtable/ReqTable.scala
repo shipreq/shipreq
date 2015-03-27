@@ -41,11 +41,12 @@ object ReqTable {
     val project      = Rx.thunkM($.props).reuseR
     val viewSettings = Rx.thunkM($.state.viewSettings).reuseR
 
+    val vsCols   = viewSettings map (_.columns)
     val colName  = project map Column.NameResolver.byProject
     val vsEditor = colName map ViewSettingsEditor.apply
     val widgets  = project map (new ProjectWidgets(_))
     val colRnd   = Rx.apply3(project, colName, widgets)(new ColumnRenderers(_, _, _))
-    val colRnds  = for {vs <- viewSettings; cr <- colRnd} yield vs.columns map cr.apply // TODO don't care if order changes
+    val colRnds  = for {cols <- vsCols; cr <- colRnd} yield cols map cr.apply
     val rows     = for {vs <- viewSettings; p <- project} yield Logic.rowsForTable(vs, p).toVector
     val content  = Rx.apply2(colRnds, rows)(Table.Content)
 
