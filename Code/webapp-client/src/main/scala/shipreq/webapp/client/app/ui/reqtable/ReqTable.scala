@@ -32,10 +32,6 @@ object ReqTable {
       copy(focus = newFocus)
   }
 
-  // TODO modStateR can be in util
-  def modStateR[S, A]($: BackendScope[_, S])(f: S => A => S): A ~=> IO[Unit] =
-    ReusableFn(a => $.modStateIO(s => f(s)(a)))
-
   final class Backend($: BackendScope[Project, State]) {
 
     val project      = Rx.thunkM($.props).reuseR
@@ -50,8 +46,8 @@ object ReqTable {
     val rows     = for {vs <- viewSettings; p <- project} yield Logic.rowsForTable(vs, p).toVector
     val content  = Rx.apply2(colRnds, rows)(Table.Content)
 
-    val setViewSettings = modStateR($)(_.updateVS)
-    val setFocus        = modStateR($)(_.updateFocus)
+    val setViewSettings = ReusableFn.modStateIO($)(_.updateVS)
+    val setFocus        = ReusableFn.modStateIO($)(_.updateFocus)
 
     def render = {
       import Rx.AutoValue._

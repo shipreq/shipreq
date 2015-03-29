@@ -1,6 +1,7 @@
 package shipreq.webapp.client.util
 
-import japgolly.scalajs.react.ReactComponentB
+import japgolly.scalajs.react.{BackendScope, ReactComponentB}
+import japgolly.scalajs.react.ScalazReact._
 import scala.runtime.AbstractFunction1
 import scalaz.effect.IO
 import shipreq.base.util.UnivEq
@@ -108,6 +109,9 @@ object ReusableFn {
   def apply[A, O](f: A => O): Fn1[A, O] = new Fn1(f)
 
   def apply[A: Reusable, B, O](f: (A, B) => O): Fn2[A, B, O] = new Fn2(f)
+
+  def modStateIO[S, A]($: BackendScope[_, S])(f: S => A => S): A ~=> IO[Unit] =
+    ReusableFn(a => $.modStateIO(s => f(s)(a)))
 
   implicit def anyFn[A, B]: Reusable[ReusableFn[A, B]] =
     Reusable((x, y) => x.reusable.applyOrElse(y, (_: ReusableFn[A, B]) => false))
