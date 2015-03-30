@@ -165,6 +165,7 @@ module.exports = function(grunt) {
               '.bower/jquery-timeago/jquery.timeago.js',
               '.bower/jquery.livequery/dist/jquery.livequery.min.js',
               '.bower/jquery-rangyinputs/rangyinputs-jquery.js',
+              '.bower/jquery-textcomplete/dist/jquery.textcomplete.min.js',
               '.bower/mousetrap/mousetrap.min.js',
               '.bower/mousetrap/plugins/global-bind/mousetrap-global-bind.min.js',
             ]),

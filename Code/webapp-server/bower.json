@@ -8,6 +8,7 @@
     "jquery-autosize": "*",
     "jquery-timeago": "*",
     "jquery-rangyinputs": "https://github.com/timdown/rangyinputs.git",
+    "jquery-textcomplete": "*",
     "zeroclipboard": "*",
     "jquery.livequery": "*",
     "mousetrap": "*",
