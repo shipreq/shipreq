@@ -2,9 +2,12 @@ package shipreq.webapp.client.app.ui.reqtable
 
 import java.util.regex.Pattern
 import japgolly.scalacss.ScalaCssReact._
+import japgolly.scalajs.jquery.TextComplete
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import org.scalajs.dom.console
 import org.scalajs.dom.ext.KeyValue
 import org.scalajs.dom.raw.HTMLInputElement
+import scalajs.js
 
 import scalaz.{\/, -\/, \/-, Tags}
 import scalaz.effect.IO
@@ -22,6 +25,8 @@ import shipreq.webapp.client.app.ui.Style
 object TextSeqEditor {
   type S = String
   type ParseResult[+O] = Option[String] \/ O
+
+  type AutoComplete = Rx[TextComplete.Strategies]
 
   final case class Format(normAll: EndoFn[String], sep: Pattern, normEach: EndoFn[String], ignore: String => Boolean) {
     def apply(input: String): Stream[String] =
@@ -41,11 +46,12 @@ import TextSeqEditor._
 
 final class TextSeqEditor[A](fmt: Format) {
 
-  case class Props(state      : S,
-                   stateUpdate: S => IO[Unit],
-                   abort      : IO[Unit],
-                   parse      : S => ParseResult[A],
-                   commit     : Vector[A] => IO[Unit])
+  case class Props(state       : S,
+                   stateUpdate : S => IO[Unit],
+                   abort       : IO[Unit],
+                   parse       : S => ParseResult[A],
+                   commit      : Vector[A] => IO[Unit],
+                   autoComplete: AutoComplete)
 
   val component =
     ReactComponentB[Props]("TextSeqEditor")
@@ -56,6 +62,16 @@ final class TextSeqEditor[A](fmt: Format) {
         val n = $.getDOMNode().asInstanceOf[HTMLInputElement]
         n.focus()
         n.select()
+
+        // TODO Should update autoComplete if needed on props change
+        val strategies = $.props.autoComplete.value()
+        if (strategies.nonEmpty) {
+          val nn = js.Dynamic.global.$(n)
+          TextComplete(nn, strategies)
+          TextComplete.onSelect(nn) {
+            $.props.stateUpdate(n.value).unsafePerformIO()
+          }
+        }
       }
       .domType[HTMLInputElement]
       .build
@@ -122,6 +138,19 @@ object TagEditor {
             lookup  : Rx[Lookup],
             setState: Option[Cell.State] => IO[Unit]): CellEditor = {
 
+    val autoComplete: AutoComplete =
+      lookup.map { l =>
+        val ks = l.keys.toStream.sorted
+        // TODO Need to merge parts of Validators, this, Presentation, and data.methods in data.xxx
+        val ch = """[A-Za-z0-9\._=\-]"""
+        val searchFn = TextComplete.search(term => ks.filter(_ contains term), false)
+        val s = TextComplete.Strategy(s"\\b($ch+)$$")
+          .search(searchFn)
+          .replace(_ + " ")
+          .index(1)
+        js.Array(s)
+      }
+
     val abort: IO[Unit] =
       setState(None)
 
@@ -132,22 +161,23 @@ object TagEditor {
       s => setState(Some(editor(s)))
 
     def editor(s: S) =
-      CellEditor(lookup, s, update, abort, commit)
+      CellEditor(lookup, autoComplete, s, update, abort, commit)
 
     val init: S =
       initial.map { a =>
-        val m = project.atag(a).map("#" + _.key.value)
+        val m = project.atag(a).map(_.key.value)
         UiText.mustA(m)
       } mkString " "
 
     editor(init)
   }
 
-  case class CellEditor(lookup     : Rx[Lookup],
-                        state      : S,
+  case class CellEditor(lookup      : Rx[Lookup],
+                        autoComplete: AutoComplete,
+                        state       : S,
                         stateUpdate: S => IO[Unit],
-                        abort      : IO[Unit],
-                        commit     : Vector[A] => IO[Unit]) extends Cell.Editing {
+                        abort       : IO[Unit],
+                        commit      : Vector[A] => IO[Unit]) extends Cell.Editing {
 
     def parse(s: S): ParseResult[A] =
       lookup.value().get(s) match {
@@ -155,10 +185,9 @@ object TagEditor {
         case None     => leftNone
       }
 
-    val p = editor.Props(state, stateUpdate, abort, parse, commit)
+    val p = editor.Props(state, stateUpdate, abort, parse, commit, autoComplete)
 
     override def render =
       editor.component(p)
   }
-
 }

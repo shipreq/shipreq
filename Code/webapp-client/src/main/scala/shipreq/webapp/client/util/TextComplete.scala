@@ -18,6 +18,8 @@ object TextComplete {
   sealed trait SearchFn extends JAny
   type ReplaceFn = JFn1[String, JAny]
 
+  type Strategies = JArray[Strategy]
+
   sealed trait Strategy extends Object {
     var `match`: RegExp     = native
     var search : SearchFn   = native
@@ -118,10 +120,10 @@ object TextComplete {
   def apply(target: JQuerySel, strategy: Strategy, options: UndefOr[Options]): JQuerySel =
     apply(target, JArray(strategy), options)
 
-  def apply(target: JQuerySel, strategies: JArray[Strategy]): JQuerySel =
+  def apply(target: JQuerySel, strategies: Strategies): JQuerySel =
     target.textcomplete(strategies)
 
-  def apply(target: JQuerySel, strategies: JArray[Strategy], options: UndefOr[Options]): JQuerySel =
+  def apply(target: JQuerySel, strategies: Strategies, options: UndefOr[Options]): JQuerySel =
     target.textcomplete(strategies, options)
 
   /** If you want to "stop autocompleting". */
@@ -159,4 +161,25 @@ object TextComplete {
   /** Fired when a dropdown is hidden. */
   def onHide(target: JQuerySel)(f: => Unit): JQuerySel =
     target.on(Dynamic.literal(eventHide -> ((() => f): JFn0[Unit])))
+
+  // ===================================================================================================================
+  // Additional niceties
+
+  def ignoreUnhelpful(f: String => Stream[String], allowEmptyTerm: Boolean): String => JArray[String] =
+    term =>
+      if (!allowEmptyTerm && term.isEmpty)
+        new JArray(0)
+      else {
+        val r = f(term)
+        if (r.lengthCompare(1) == 0 && r.head == term)
+          new JArray(0)
+        else
+          JArray(r: _*)
+      }
+
+  def search(f: String => Stream[String], allowEmptyTerm: Boolean): SearchFn = {
+    val g = ignoreUnhelpful(f, allowEmptyTerm)
+    search((term, c) => c(g(term)))
+  }
+
 }
