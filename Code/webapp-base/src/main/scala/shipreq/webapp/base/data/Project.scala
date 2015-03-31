@@ -4,7 +4,7 @@ import monocle.Lens
 import monocle.macros.Lenser
 import scalaz.Memo
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{UnivEq, Must}
+import shipreq.base.util.{Monoidish, UnivEq, Must}
 import DataImplicits._
 
 final case class RevAnd[D](rev: Rev, data: D)
@@ -57,8 +57,8 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
         case _                => Must.Failed(s"$t is not an ApplicableTag")
       })
 
-  def atagSet(ids: Set[ApplicableTag.Id]): Must[Set[ApplicableTag]] =
-    Must.foldMapSet(ids)(atag)
+  def atags[M[X] <: TraversableOnce[X]: Monoidish](ids: M[ApplicableTag.Id]): Must[M[ApplicableTag]] =
+    Must.foldMapM(ids)(atag)
 
   def customField[I <: CustomField.Id, D <: CustomField](id: I)(implicit d: DataIdAux[D, I]): Must[D] =
     fields.data.customFields(id).flatMap(f =>
@@ -95,7 +95,7 @@ final class TagColumnDistribution(p: Project) {
           .map(_.filterT[ApplicableTag.Id].toSet)))
 
   lazy val tagIdsUsedInColumns: TagIds =
-    Must.foldMapSetF(p.customTagFields)(tagIdsForColumn)
+    Must.foldMapMF(p.customTagFields)(tagIdsForColumn)
 
   lazy val tagIdsNotUsedInColumns: TagIds =
     tagIdsUsedInColumns.map(s =>
@@ -107,11 +107,11 @@ final class TagColumnDistribution(p: Project) {
   type Tags = Must[Set[ApplicableTag]]
 
   val tagsForColumn: CustomField.Tag.Id => Tags =
-    tagIdsForColumn(_) flatMap p.atagSet
+    tagIdsForColumn(_) flatMap p.atags[Set]
 
   lazy val tagsUsedInColumns: Tags =
-    tagIdsUsedInColumns flatMap p.atagSet
+    tagIdsUsedInColumns flatMap p.atags[Set]
 
   lazy val tagsNotUsedInColumns: Tags =
-    tagIdsNotUsedInColumns flatMap p.atagSet
+    tagIdsNotUsedInColumns flatMap p.atags[Set]
 }

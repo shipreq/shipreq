@@ -57,9 +57,9 @@ object Must {
     t.foldLeft(Must(z))((mq, a) =>
       for {q <- mq; b <- f(a)} yield g(q, b))
 
-  def foldMapSet[A, B: UnivEq](t: TraversableOnce[A])(f: A => Must[B]): Must[Set[B]] =
-    foldMap(t, UnivEq.emptySet)(f)(_ + _)
+  def foldMapM[A, M[_], B](t: TraversableOnce[A])(f: A => Must[B])(implicit m: Monoidish[M]): Must[M[B]] =
+    foldMap(t, m.empty[B])(f)(m.add)
 
-  def foldMapSetF[A, B: UnivEq](t: TraversableOnce[A])(f: A => Must[Set[B]]): Must[Set[B]] =
-    foldMap(t, UnivEq.emptySet)(f)(_ ++ _)
+  def foldMapMF[A, M[_], B](t: TraversableOnce[A])(f: A => Must[M[B]])(implicit m: Monoidish[M]): Must[M[B]] =
+    foldMap(t, m.empty[B])(f)(m.append)
 }
