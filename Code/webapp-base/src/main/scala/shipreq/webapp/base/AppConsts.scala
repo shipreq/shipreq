@@ -2,20 +2,20 @@ package shipreq.webapp.base
 
 object AppConsts {
 
-  def appName = "ShipReq"
+  final val appName = "ShipReq"
 
   /** Passwords' min & max lengths. */
-  def passwordLength = 8 to 128
+  final val passwordLength = 8 to 128
 
   /** Usernames' min & max lengths. */
-  def usernameLength = 3 to 32
+  final val usernameLength = 3 to 32
 
   /** Email address max length. */
-  def emailMaxLength = 120
+  final val emailMaxLength = 120
 
   /** Limit for generic VARCHAR columns. */
-  def shortTextMaxLength = 255
+  final val shortTextMaxLength = 255
 
   /** Limit the length of seemingly-unbound inputs. Prevents a malicious user creating 1GB rows. */
-  def largeTextMaxLength = 20000
+  final val largeTextMaxLength = 20000
 }

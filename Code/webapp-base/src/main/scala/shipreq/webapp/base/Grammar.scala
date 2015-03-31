@@ -12,30 +12,28 @@ object Grammar {
   }
 
   /** [[shipreq.webapp.base.data.ReqType.Mnemonic]] min & max lengths. */
-  def reqTypeMnemonicLength = 1 to 6
+  final val reqTypeMnemonicLength = 1 to 6
 
-  def reqTypeMnemonicChars =
+  final val reqTypeMnemonicChars =
     new RegexChar("A-Z", "may only consist of letters.")
 
   /** [[shipreq.webapp.base.data.HashRefKey]] min & max lengths. */
-  def hashRefKeyLength = 1 to 20
+  final val hashRefKeyLength = 1 to 20
 
   // DD-18: Hashtag-like refkeys (groupings, incmp) must match this format: /[A-Za-z0-9][A-Za-z0-9_-=.]*/
   // Must not contain: []{}<>#
-  def hashRefKeyChars =
+  final val hashRefKeyChars =
     new RegexChar("""A-Za-z0-9\._=\-""", "may only consist of letters, numbers, and these symbols: . _ = -")
 
   /** [[shipreq.webapp.base.data.FieldRefKey]] min & max lengths. */
-  def fieldRefKeyLength = hashRefKeyLength
+  final val fieldRefKeyLength = hashRefKeyLength
 
   // DD-20: Field refkeys must match this format: /[a-z][a-z0-9_]*/
   // Must not contain: []{}<>.?"
-  def fieldRefKeyChars =
+  final val fieldRefKeyChars =
     new RegexChar("""a-z0-9_""", "may only consist of letters, numbers, and underscores.")
 
   /** [[shipreq.webapp.base.data.ReqCode.Node]] min & max lengths. */
-  def reqCodeNodeLength = hashRefKeyLength
-
-
+  final val reqCodeNodeLength = hashRefKeyLength
 
 }
