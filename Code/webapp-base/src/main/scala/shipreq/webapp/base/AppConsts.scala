@@ -10,18 +10,6 @@ object AppConsts {
   /** Usernames' min & max lengths. */
   def usernameLength = 3 to 32
 
-  /** Requirement types' min & max lengths. */
-  def reqTypeMnemonicLength = 1 to 6
-
-  /** `HashRefKey` min & max lengths. */
-  def hashRefKeyLength = 1 to 20
-
-  /** `FieldRefKey` min & max lengths. */
-  def fieldRefKeyLength = hashRefKeyLength
-
-  /** `ReqCode.Node` min & max lengths. */
-  def reqCodeNodeLength = hashRefKeyLength
-
   /** Email address max length. */
   def emailMaxLength = 120
 

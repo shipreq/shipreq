@@ -19,7 +19,7 @@ import scalaz.syntax.foldable._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.Rx
 import shipreq.base.util.effect.IoUtils
-import shipreq.webapp.base.UiText
+import shipreq.webapp.base.{Grammar, UiText}
 import shipreq.webapp.client.app.ui.Style
 
 object TextSeqEditor {
@@ -141,10 +141,8 @@ object TagEditor {
     val autoComplete: AutoComplete =
       lookup.map { l =>
         val ks = l.keys.toStream.sorted
-        // TODO Need to merge parts of Validators, this, Presentation, and data.methods in data.xxx
-        val ch = """[A-Za-z0-9\._=\-]"""
         val searchFn = TextComplete.search(term => ks.filter(_ contains term), false)
-        val s = TextComplete.Strategy(s"\\b($ch+)$$")
+        val s = TextComplete.Strategy(s"\\b(${Grammar.hashRefKeyChars.+})$$")
           .search(searchFn)
           .replace(_ + " ")
           .index(1)

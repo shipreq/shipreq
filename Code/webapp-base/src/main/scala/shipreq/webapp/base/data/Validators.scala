@@ -1,11 +1,9 @@
 package shipreq.webapp.base.data
 
 import scalaz.{NonEmptyList, Equal}
-import scalaz.std.option.optionEqual
 import scalaz.std.string.stringInstance
-import scalaz.syntax.equal.ToEqualOps
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.base.AppConsts._
+import shipreq.webapp.base.Grammar
 import shipreq.webapp.base.TextMod._
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.data.ReqType.Mnemonic
@@ -23,10 +21,9 @@ object Validators {
   object shared {
 
     // DD-18: Hashtag-like refkeys (groupings, incmp) must match this format: /[A-Za-z0-9][A-Za-z0-9_-=.]*/
-    // Must not contain: []{}<>
     val hashRefKeyU =
-      Rules.whitelistCharsR( """A-Za-z0-9\._=\-""", "may only consist of letters, numbers, and these symbols: . _ = -")
-        .addRule(Rules.lengthInRange(hashRefKeyLength))
+      Grammar.hashRefKeyChars.rule
+        .addRule(Rules lengthInRange Grammar.hashRefKeyLength)
         .correct(noWhitespace.compose)
         .constraint(c => nonEmpty >> (startsWithAlphaNumeric + c))
         .forField(FieldNames.hashRefKey)
@@ -63,8 +60,8 @@ object Validators {
     type S = (Stream[CustomReqType], Option[CustomReqType.Id])
 
     val mnemonicU =
-      Rules.whitelistCharsR("A-Z", "may only consist of letters.")
-        .addRule(Rules.lengthInRange(reqTypeMnemonicLength))
+      Grammar.reqTypeMnemonicChars.rule
+        .addRule(Rules lengthInRange Grammar.reqTypeMnemonicLength)
         .liveCorrect(upperCase.andThen)
         .correct(_ andThen noWhitespace andThen upperCase)
         .constraint(nonEmpty >> _)
@@ -122,10 +119,9 @@ object Validators {
     val nameS = nameU.liftS[S].addValidation(nameUniqueness)
 
     // DD-20: Field refkeys must match this format: /[a-z][a-z0-9_]*/
-    // Must not contain: []{}<>.?"
     val keyU =
-      Rules.whitelistCharsR("""a-z0-9_""", "may only consist of letters, numbers, and underscores.")
-        .addRule(Rules.lengthInRange(fieldRefKeyLength))
+      Grammar.fieldRefKeyChars.rule
+        .addRule(Rules lengthInRange Grammar.fieldRefKeyLength)
         .correct(_ andThen noWhitespace andThen lowerCase)
         .constraint(c => nonEmpty >> (startsWithAlpha + c))
         .forField(FieldNames.fieldRefKey)

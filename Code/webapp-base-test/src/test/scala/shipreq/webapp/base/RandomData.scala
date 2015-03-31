@@ -92,7 +92,7 @@ object RandomData {
   lazy val hashRefKey =
     for {
       h <- Gen.alphanumeric
-      t <- Gen.charof('.', "_=-", 'a' to 'z', 'A' to 'Z', '0' to '9').list.lim(AppConsts.hashRefKeyLength.end - 1)
+      t <- Gen.charof('.', "_=-", 'a' to 'z', 'A' to 'Z', '0' to '9').list.lim(Grammar.hashRefKeyLength.end - 1)
     } yield HashRefKey((h :: t).mkString)
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -258,7 +258,7 @@ object RandomData {
   lazy val fieldRefKey =
     for {
       h <- Gen.lower
-      t <- Gen.charof('_', "", 'a' to 'z', '0' to '9').list.lim(AppConsts.fieldRefKeyLength.end - 1)
+      t <- Gen.charof('_', "", 'a' to 'z', '0' to '9').list.lim(Grammar.fieldRefKeyLength.end - 1)
     } yield FieldRefKey((h :: t).mkString)
 
   def customFieldType =
@@ -564,7 +564,7 @@ object RandomData {
   // Req Codes
 
   lazy val reqCodeNode: Gen[ReqCode.Node] =
-    Gen.charof('_', "", 'a' to 'z', '0' to '9').list1.lim(AppConsts.reqCodeNodeLength.max)
+    Gen.charof('_', "", 'a' to 'z', '0' to '9').list1.lim(Grammar.reqCodeNodeLength.max)
       .map(cs => ReqCode.Node(cs.list.mkString))
 
   lazy val reqCode: GenS[ReqCode] =

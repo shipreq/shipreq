@@ -4,7 +4,7 @@ package ui
 import japgolly.scalacss.Defaults._
 import japgolly.scalacss.ScalaCssReact._
 import japgolly.scalacss.StyleS
-import shipreq.webapp.base.AppConsts
+import shipreq.webapp.base.Grammar
 import shipreq.webapp.base.data.{Alive, Dead}
 import shipreq.webapp.client.lib.ConsoleIO
 import scalaz.syntax.equal._
@@ -88,7 +88,7 @@ object Style extends StyleSheet.Inline {
       marginTop(1.6 ex),
       width(100 %%))
 
-    val mnemonicLen = AppConsts.reqTypeMnemonicLength.max
+    val mnemonicLen = Grammar.reqTypeMnemonicLength.max
 
     val columnPubid   = style(maxWidth((mnemonicLen + 5).ex))
     val columnReqType = style(maxWidth(mnemonicLen.ex))
