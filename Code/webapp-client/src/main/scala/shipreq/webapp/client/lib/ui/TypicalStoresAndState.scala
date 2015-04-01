@@ -1,7 +1,7 @@
 package shipreq.webapp.client.lib.ui
 
 import japgolly.scalajs.react.ScalazReact._
-import monocle.macros.Lenser
+import monocle.macros.Lenses
 import scalaz.effect.IO
 import shipreq.base.util.UnivEq
 
@@ -26,21 +26,15 @@ abstract class TypicalStoresAndState[P, I, K: UnivEq](fields: FieldSet[P, I]) {
   val savedRowStore = SavedRowStore.fields(fields).keyedBy[K]
   val newRowStore   = NewRowStore.of(fields)
 
+  @Lenses
   case class State(newRow: newRowStore.State, savedRows: savedRowStore.State, showDeleted: Boolean)
-
-  object State {
-    private[this] def l = Lenser[State]
-    val _newRow      = l(_.newRow)
-    val _savedRows   = l(_.savedRows)
-    val _showDeleted = l(_.showDeleted)
-  }
 
   type S  = State
   type ST = ReactST[IO, S, Unit]
   val ST = ReactS.FixT[IO, S]
 
-  val savedRowStoreS = savedRowStore.contramap(State._savedRows)
-  val newRowStoreS   = newRowStore  .contramap(State._newRow)
+  val savedRowStoreS = savedRowStore.contramap(State.savedRows)
+  val newRowStoreS   = newRowStore  .contramap(State.newRow)
 
   /**
    * Validators requiring external data (eg. for uniqueness checking) typically need input in this shape.
@@ -49,5 +43,5 @@ abstract class TypicalStoresAndState[P, I, K: UnivEq](fields: FieldSet[P, I]) {
     s => (savedRowStoreS.getAllP(s), k)
 
   def toggleShowDeleted =
-    ST.modT(State._showDeleted.modify(v => !v))
+    ST.modT(State.showDeleted.modify(v => !v))
 }

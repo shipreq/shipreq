@@ -36,13 +36,13 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
         case Column.Code           => code
         case Column.Desc           => desc
         case Column.Tags           => tags
-        case Column.ImplicationSrc => imps(Row._implicationSrc) //("… ⇒")
-        case Column.ImplicationTgt => imps(Row._implicationTgt) //("⇒ …")
+        case Column.ImplicationSrc => imps(Row.implicationSrc) //("… ⇒")
+        case Column.ImplicationTgt => imps(Row.implicationTgt) //("⇒ …")
         case Column.CustomField(f) =>
           f match {
             case id: CustomField.Text       .Id => cfText(id)
             case id: CustomField.Tag        .Id => cfTags(id)
-            case id: CustomField.Implication.Id => imps(Row._cfImps ^|-? index(id))
+            case id: CustomField.Implication.Id => imps(Row.cfImps ^|-? index(id))
           }
       }
     cr(c)
@@ -94,5 +94,5 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
   }
 
   private def imps(l: Optional[Row, Vector[Pubid]]) = make(
-    l.getMaybe(_).cata(widgets.pubidRefs, empty))
+    l.getOption(_).fold(empty)(widgets.pubidRefs))
 }

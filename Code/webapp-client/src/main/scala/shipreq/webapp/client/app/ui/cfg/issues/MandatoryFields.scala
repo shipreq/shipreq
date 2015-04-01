@@ -2,7 +2,7 @@ package shipreq.webapp.client.app.ui.cfg.issues
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.extra.OnUnmount
-import monocle.macros.Lenser
+import monocle.macros.Lenses
 import scala.language.reflectiveCalls
 import scalaz.effect.IO
 import shipreq.base.util.{Must, Refreshable}
@@ -22,6 +22,7 @@ private[issues] object MandatoryFields {
 
   val rowStore = SavedRowStore.data[CustomField](_.mandatory)
 
+  @Lenses
   case class State(rows   : rowStore.State,
                    labelFn: Refreshable[Project, Field => Must[String]])
 
@@ -29,13 +30,7 @@ private[issues] object MandatoryFields {
   val  ST = ReactS.FixT[IO, S]
   type ST = ST.T[Unit]
 
-  object State {
-    private[this] def l = Lenser[State]
-    val _rows    = l(_.rows)
-    val _labelFn = l(_.labelFn)
-  }
-
-  val rowStoreS = rowStore.contramap(State._rows)
+  val rowStoreS = rowStore.contramap(State.rows)
 
   val fieldListener =
     DeltaListener.store(rowStoreS).partialHandler(Partition.Fields)(_.foldId(_ => None, _.some), _.field.toOption)
@@ -60,7 +55,7 @@ private[issues] object MandatoryFields {
     @inline def project = $.props.clientData.project
 
     def refreshLabelFn: IO[Unit] =
-      $ modStateIO State._labelFn.modify(_ refresh project)
+      $ modStateIO State.labelFn.modify(_ refresh project)
 
     def save(id: CustomField.Id): ST = {
       val p = $.props

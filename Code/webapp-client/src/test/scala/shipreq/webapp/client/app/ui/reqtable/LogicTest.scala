@@ -318,7 +318,7 @@ object LogicTest extends TestSuite {
 
      // ----------------------------------------------------------------------------------------------------------------
 
-    val customFieldsL = Project._fields ^|-> RevAnd._data ^|-> FieldSet._customFields
+    val customFieldsL = Project.fields ^|-> RevAnd.data ^|-> FieldSet.customFields
 
     def clearCustomFields = customFieldsL.modify(_ replaceUnderlying Map.empty)
 

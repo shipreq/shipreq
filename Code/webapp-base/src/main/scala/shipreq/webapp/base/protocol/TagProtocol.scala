@@ -1,7 +1,7 @@
 package shipreq.webapp.base.protocol
 
 import japgolly.nyaya.{CycleFree, CycleDetector}
-import monocle.macros.Lenser
+import monocle.macros.GenLens
 import scala.collection.GenTraversable
 import scalaz.{\/, Equal}
 import scalaz.std.AllInstances._
@@ -103,8 +103,7 @@ object TagProtocol {
   }
 
   object PovTag {
-    private[this] def l = Lenser[PovTag]
-    val _tag = l(_.tag)
+    val tag = GenLens[PovTag](_.tag)
 
     object IdAccess extends ObjDataId[PovTag.type, PovTag, Id] {
       override def id(d: PovTag) = d.id

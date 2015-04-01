@@ -305,6 +305,7 @@ object ShipReq extends Build {
       override def project = typicalProject
         .enablePlugins(ScalaJSPlugin)
         .configure(
+          useMacroParadise,
           jsStyleDependsOn(baseUtilSjs, webappBase),
           jsStyleDependsOnS(webappBaseTest)(Compile -> Test, Test -> Test),
           Common.addSourceDialectJsFrom(baseUtilSjs),

@@ -1,8 +1,8 @@
 package shipreq.webapp.client.app.ui.reqtable
 
 import monocle._
-import monocle.macros.Lenser
-import scalaz.{Equal, Semigroup, Monoid, Maybe}
+import monocle.macros.GenLens
+import scalaz.{Equal, Semigroup, Monoid}
 import scalaz.std.map._
 import scalaz.syntax.semigroup._
 import shipreq.base.util.UnivEq
@@ -57,12 +57,11 @@ object Expansion {
       }
     }
 
-  private[this] def l = Lenser[Expansion]
-  val _implicationSrc = l(_.implicationSrc)
-  val _implicationTgt = l(_.implicationTgt)
-  val _reqCodes       = l(_.reqCodes)
-  val _cfImps         = l(_.cfImps)
-  val _cfTags         = l(_.cfTags)
+  val implicationSrc = GenLens[Expansion](_.implicationSrc)
+  val implicationTgt = GenLens[Expansion](_.implicationTgt)
+  val reqCodes       = GenLens[Expansion](_.reqCodes)
+  val cfImps         = GenLens[Expansion](_.cfImps)
+  val cfTags         = GenLens[Expansion](_.cfTags)
 
   val none = Expansion(Vector.empty, Vector.empty, Vector.empty, UnivEq.emptyMap, UnivEq.emptyMap)
 }
@@ -87,8 +86,7 @@ object MultiValues {
       }
     }
 
-  private[this] def l = Lenser[MultiValues]
-  val _tags           = l(_.tags)
+  val tags = GenLens[MultiValues](_.tags)
 }
 
 // =====================================================================================================================
@@ -113,24 +111,23 @@ object Row {
 //  implicit val equalityC: UnivEq[ReqCodeGroupRow] = deriveUnivEq
   implicit val equality : UnivEq[Row]             = deriveUnivEq
 
-  val _expansion = Optional[Row, Expansion] {
-    case r: GenericReqRow => Maybe just r.exp
+  val expansion = Optional[Row, Expansion] {
+    case r: GenericReqRow => Some(r.exp)
   }(e => {
     case GenericReqRow(r, _, m) => GenericReqRow(r, e, m)
   })
 
-  val _multiValues = Optional[Row, MultiValues] {
-    case r: GenericReqRow => Maybe just r.mv
+  val multiValues = Optional[Row, MultiValues] {
+    case r: GenericReqRow => Some(r.mv)
   }(mv => {
     case GenericReqRow(r, e, _) => GenericReqRow(r, e, mv)
   })
 
-  // TODO I am now officially fucking over the "_" prefix on optics.
-  val _implicationSrc = Row._expansion   ^|-> Expansion._implicationSrc
-  val _implicationTgt = Row._expansion   ^|-> Expansion._implicationTgt
-  val _reqCodes       = Row._expansion   ^|-> Expansion._reqCodes
-  val _cfImps         = Row._expansion   ^|-> Expansion._cfImps
-  val _cfTags         = Row._expansion   ^|-> Expansion._cfTags
-  val _tags           = Row._multiValues ^|-> MultiValues._tags
+  val implicationSrc = Row.expansion   ^|-> Expansion.implicationSrc
+  val implicationTgt = Row.expansion   ^|-> Expansion.implicationTgt
+  val reqCodes       = Row.expansion   ^|-> Expansion.reqCodes
+  val cfImps         = Row.expansion   ^|-> Expansion.cfImps
+  val cfTags         = Row.expansion   ^|-> Expansion.cfTags
+  val tags           = Row.multiValues ^|-> MultiValues.tags
 
 }

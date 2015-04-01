@@ -42,7 +42,7 @@ object Deps {
 
     val sizzleJs = "org.webjars" % "sizzle" % "2.1.1"
 
-    object React extends Group("0.8.2", "com.github.japgolly.scalajs-react") {
+    object React extends Group("0.8.3", "com.github.japgolly.scalajs-react") {
       val core    = js("core")
       val test    = js("test")
       val scalaz  = js("ext-scalaz71")
@@ -58,7 +58,7 @@ object Deps {
       val core   = js("scalaz-core")
       val effect = js("scalaz-effect")
     }
-    object Monocle extends Group(Deps.Monocle.version + "-2", "com.github.japgolly.fork.monocle") {
+    object Monocle extends Group(Deps.Monocle.version, "com.github.japgolly.fork.monocle") {
       val core   = js("monocle-core")
       val macros = js("monocle-macro") ++ core
     }
@@ -80,12 +80,12 @@ object Deps {
     val scalacheck = dd("scalaz-scalacheck-binding") ++ concurrent ++ iteratee
   }
 
-  object Monocle extends Group("1.0.1", "com.github.julien-truffaut") {
+  object Monocle extends Group("1.1.0", "com.github.julien-truffaut") {
     val core   = dd("monocle-core")
     val macros = dd("monocle-macro") ++ core
   }
 
-  object Nyaya extends Group("0.5.8", "com.github.japgolly.nyaya") {
+  object Nyaya extends Group("0.5.10", "com.github.japgolly.nyaya") {
     object jvm {
       val core = dd("nyaya-core") ++ Scalaz.core
       val test = dd("nyaya-test")
@@ -130,9 +130,8 @@ object Deps {
   val μPickle   = JvmAndJs("com.github.japgolly.fork.upickle", "upickle", "custom-3")
   val μTest     = JvmAndJs("com.lihaoyi",                      "utest",   "0.3.1")
 
-  // Was only needed trying to use Monocle's @Lenses. Monocle's Lenser works without this.
-  // val macroParadise = compilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full)
-  // def useMacroParadiseJvm = (_: Project).settings(addCompilerPlugin(macroParadise))
+  val macroParadise = compilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full)
+  def useMacroParadise = (_: Project).settings(addCompilerPlugin(macroParadise))
 
   val okHttp      :MS = "com.squareup.okhttp"         % "okhttp"                % "1.5.4"
   val httpCore    :MS = "org.apache.httpcomponents"   % "httpcore"              % "4.3.2"

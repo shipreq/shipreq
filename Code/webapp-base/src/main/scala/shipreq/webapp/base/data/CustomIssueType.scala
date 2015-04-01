@@ -1,6 +1,6 @@
 package shipreq.webapp.base.data
 
-import monocle.macros.Lenser
+import monocle.macros.GenLens
 import shipreq.base.util.TaggedTypes._
 
 final case class CustomIssueType(id: CustomIssueType.Id,
@@ -18,6 +18,5 @@ object CustomIssueType {
     override def setId(a: CustomIssueType, b: Id) = a.copy(id = b)
   }
 
-  private[this] def l = Lenser[CustomIssueType]
-  val _key = l(_.key)
+  val key = GenLens[CustomIssueType](_.key)
 }

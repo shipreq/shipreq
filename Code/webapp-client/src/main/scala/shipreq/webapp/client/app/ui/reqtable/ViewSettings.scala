@@ -1,8 +1,9 @@
 package shipreq.webapp.client.app.ui.reqtable
 
-import monocle.macros.Lenser
+import monocle.macros.Lenses
 import scalaz.syntax.equal._
 
+@Lenses
 case class ViewSettings(columns: Vector[Column],
                         order  : SortCriteria) {
 
@@ -20,10 +21,6 @@ case class ViewSettings(columns: Vector[Column],
 
 
 object ViewSettings {
-  private[this] def l = Lenser[ViewSettings]
-  val _columns        = l(_.columns)
-  val _order          = l(_.order)
-
   def default =
     ViewSettings(Column.builtInValues.list.toVector, SortCriteria.default)
 }

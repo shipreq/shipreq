@@ -1,7 +1,7 @@
 package shipreq.webapp.client.test
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
-import monocle.macros.Lenser
+import monocle.macros.Lenses
 import scalaz.Equal
 import scalaz.std.AllInstances._
 import scalaz.syntax.equal._
@@ -63,13 +63,11 @@ object SampleDataPerson {
   val sampleData = List(person4, person7)
 
   // TODO Use TypicalStoresAndState
+  @Lenses
   case class NewAndSavedRowState(newRow: newRowStore.State, savedRows: savedRowStore.State)
   object NewAndSavedRowState {
-    private[this] def l = Lenser[NewAndSavedRowState]
-    val _newRow      = l(_.newRow)
-    val _savedRows   = l(_.savedRows)
-    val savedRowStoreS = savedRowStore.contramap(_savedRows)
-    val newRowStoreS   = newRowStore  .contramap(_newRow)
+    val savedRowStoreS = savedRowStore.contramap(savedRows)
+    val newRowStoreS   = newRowStore  .contramap(newRow)
 
     val initialState = NewAndSavedRowState(newRowStore.initState, savedRowStore.initStateS(sampleData, _.id))
 

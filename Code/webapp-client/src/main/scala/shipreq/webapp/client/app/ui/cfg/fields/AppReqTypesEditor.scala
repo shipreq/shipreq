@@ -3,7 +3,6 @@ package shipreq.webapp.client.app.ui.cfg.fields
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
 import monocle.Lens
 import monocle.std.map.atMap
-import scalaz.Maybe
 import scalaz.effect.IO
 import scalaz.syntax.bind.ToBindOps
 import scalaz.syntax.equal._
@@ -23,7 +22,7 @@ private[fields] object AppReqTypesEditor {
 
   def initialState(fs: FieldSet): S = UnivEq.emptyMap
 
-  @inline final def _stateFor(k: K): Lens[S, Maybe[EditState[A]]] = atMap.at(k)
+  @inline final def stateFor(k: K): Lens[S, Option[EditState[A]]] = atMap.at(k)
 }
 
 // =====================================================================================================================
@@ -65,8 +64,8 @@ class AppReqTypesEditor(customReqTypes: TraversableOnce[CustomReqType]) {
       val mode: M =
         id match {
           case Some(k) =>
-            @inline def * = _stateFor(k)
-            def setIO(s: EditState[A]): IO[Unit] = $ modStateIO *.set(Maybe.Just(s))
+            @inline def * = stateFor(k)
+            def setIO(s: EditState[A]): IO[Unit] = $ modStateIO *.set(Some(s))
 
             $.state.get(k) match {
 
@@ -80,7 +79,7 @@ class AppReqTypesEditor(customReqTypes: TraversableOnce[CustomReqType]) {
                   state      = es,
                   update     = setIO,
                   finishEdit = _.fold[IO[Unit]](
-                                 $ modStateIO *.set(Maybe.empty))(
+                                 $ modStateIO *.set(None))(
                                  SimpleEditor.onChangeAndEditFinished(cbh)))
             }
 

@@ -1,27 +1,25 @@
 package shipreq.webapp.base.data
 
-import monocle.Lens
-import monocle.macros.Lenser
+import monocle.macros.GenLens
 import scalaz.Memo
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{Monoidish, UnivEq, Must}
+import shipreq.base.util.{Monoidish, Must}
 import DataImplicits._
 
 final case class RevAnd[D](rev: Rev, data: D)
 
 object RevAnd {
-  def _data[D] = Lens((_: RevAnd[D]).data)(b => _.copy(data = b))
+  def data[D] = GenLens[RevAnd[D]](_.data)
 }
 
 object Project {
-  private[this] def l = Lenser[Project]
-  val _customIssueTypes = l(_.customIssueTypes)
-  val _customReqTypes   = l(_.customReqTypes)
-  val _fields           = l(_.fields)
-  val _tags             = l(_.tags)
-  val _reqs             = l(_.reqs)
-  val _reqCodes         = l(_.reqCodes)
-  val _reqFieldData     = l(_.reqFieldData)
+  val customIssueTypes = GenLens[Project](_.customIssueTypes)
+  val customReqTypes   = GenLens[Project](_.customReqTypes)
+  val fields           = GenLens[Project](_.fields)
+  val tags             = GenLens[Project](_.tags)
+  val reqs             = GenLens[Project](_.reqs)
+  val reqCodes         = GenLens[Project](_.reqCodes)
+  val reqFieldData     = GenLens[Project](_.reqFieldData)
 }
 
 final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],

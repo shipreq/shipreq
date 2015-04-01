@@ -2,7 +2,7 @@ package shipreq.webapp.client.app.ui.cfg.fields
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
 import japgolly.scalajs.react.extra.OnUnmount
-import monocle.macros.Lenser
+import monocle.macros.Lenses
 import scala.language.reflectiveCalls
 import scalajs.js.{undefined, UndefOr, Any => JsAny}
 import scalaz.effect.IO
@@ -54,6 +54,7 @@ private[fields] object MainTable {
   /** The type of options in the combobox, from which users can create new fields. */
   type NewSelType = StaticField \/ CustomFieldType
 
+  @Lenses
   case class State(showDeleted     : Boolean,
                    text_state      : text_stores.State,
                    impl_state      : impl_stores.State,
@@ -73,26 +74,17 @@ private[fields] object MainTable {
   }
 
   object State {
-    private[this] def l = Lenser[State]
-    val _showDeleted      = l(_.showDeleted)
-    val _text_state       = l(_.text_state)
-    val _impl_state       = l(_.impl_state)
-    val _tag_state        = l(_.tag_state)
-    val _newFieldTypeSel  = l(_.newFieldTypeSel)
-    val _appReqTypeStates = l(_.appReqTypeStates)
-    val _dnd              = l(_.dnd)
-
     @inline final def _appReqTypeState(k: Field.Id) =
-      _appReqTypeStates ^|-> AppReqTypesEditor._stateFor(k)
+      appReqTypeStates ^|-> AppReqTypesEditor.stateFor(k)
   }
 
   type S  = State
   type ST = ReactST[IO, S, Unit]
   val  ST = ReactS.FixT[IO, S]
 
-  val text_storesS = text_stores.contramap(State._text_state)
-  val impl_storesS = impl_stores.contramap(State._impl_state)
-  val tag_storesS  = tag_stores .contramap(State._tag_state)
+  val text_storesS = text_stores.contramap(State.text_state)
+  val impl_storesS = impl_stores.contramap(State.impl_state)
+  val tag_storesS  = tag_stores .contramap(State.tag_state)
 
   def storesForType(t: CustomFieldType): NewAndSavedStores[S, CustomField.Id, _ <: CustomField, _] =
     t match {
@@ -142,7 +134,7 @@ private[fields] object MainTable {
       })
 
   def clearAppReqTypesEditorState(id: Field.Id): S => S =
-    State._appReqTypeState(id).set(Maybe.empty)
+    State._appReqTypeState(id).set(None)
 
   val Component =
     ReactComponentB[Props]("Cfg: Fields")
@@ -201,7 +193,7 @@ private[fields] object MainTable {
     def validatorState(k: Option[CustomField.Id]): S => V.S =
       validatorStateS(_, k)
 
-    val dndState = $.focusStateL(State._dnd)
+    val dndState = $.focusStateL(State.dnd)
 
     val headerRow = CfgTable.header(List(
       FieldNames.dndDragHandleHeader,
@@ -224,7 +216,7 @@ private[fields] object MainTable {
     val tagSelector       = SelectOneStartNone.tag(project.tags.data)
     val reqTypeSelector   = SelectOneStartNone.reqType(project.reqTypes)
 
-    val reqtypesE = appReqTypesEditor.editor($ focusStateL State._appReqTypeStates)
+    val reqtypesE = appReqTypesEditor.editor($ focusStateL State.appReqTypeStates)
                       .cmapA[(V.S, ApplicableReqTypes)](_.map1(_._2))
 
     object newFieldControl {
@@ -279,7 +271,7 @@ private[fields] object MainTable {
             SelectOne.Props(
               s.newFieldTypeSel,
               choices.sortBy(_.label),
-              Some($ _setStateL State._newFieldTypeSel)
+              Some($ _setStateL State.newFieldTypeSel)
             ),
             onInvoke, UiText.Cfg.startNewButton,
             customFieldStores.exists(_.n.editing(s))))
@@ -295,7 +287,7 @@ private[fields] object MainTable {
     def render =
       <.div(
         newFieldControl(),
-        ShowDeletedToggler($.state.showDeleted, $ runState ST.modT(State._showDeleted.modify(b => !b))),
+        ShowDeletedToggler($.state.showDeleted, $ runState ST.modT(State.showDeleted.modify(b => !b))),
         <.table(
           headerRow,
           <.tbody(renderNewField, renderFields)

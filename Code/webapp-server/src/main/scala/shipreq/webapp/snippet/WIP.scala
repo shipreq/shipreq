@@ -339,7 +339,7 @@ class WIP {
         // Modify subject
         oa match {
           case None    => t1.mapUnderlying(_.mapValues(_ removeChild id) - id) // copy from RemoteDelta
-          case Some(a) => updT(id, Tag._alive set a)(t1)
+          case Some(a) => updT(id, Tag.alive set a)(t1)
         }
       }
 
@@ -424,7 +424,7 @@ class WIP {
           mod(fs => if (fs.order contains f) Nil else List(Delta(-\/(f), None)))
 
         case Delete(id: CF.Id, Restore) =>
-          mod(id)(CF._alive set Alive)
+          mod(id)(CF.alive set Alive)
 
         case Delete(f: StaticField, HardDel | SoftDel) =>
           f.deletable match {
@@ -433,7 +433,7 @@ class WIP {
           }
 
         case Delete(id: CF.Id, SoftDel) =>
-          mod(id)(CF._alive set Dead)
+          mod(id)(CF.alive set Dead)
 
         case Delete(id: CF.Id, HardDel) =>
           apply(Set(id), Nil)
@@ -441,7 +441,7 @@ class WIP {
 
     val mandmod =
       ServerProtocol.routine(Routines.FieldMandatorinessMod){
-        case (id, m) => mod(id)(CF._mandatory set m)
+        case (id, m) => mod(id)(CF.mandatory set m)
       }
 
   }

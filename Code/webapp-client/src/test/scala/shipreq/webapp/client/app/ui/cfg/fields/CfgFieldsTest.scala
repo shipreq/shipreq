@@ -29,7 +29,7 @@ object CfgFieldsTest extends TestSuite {
     var rev = S.fields.rev
 
     def selectNewText() =
-      c.modState(State._newFieldTypeSel set \/-(CustomFieldType.Text))
+      c.modState(State.newFieldTypeSel set \/-(CustomFieldType.Text))
 
     lazy val createButton =
       sole(Sizzle("button:contains('Create')", c))

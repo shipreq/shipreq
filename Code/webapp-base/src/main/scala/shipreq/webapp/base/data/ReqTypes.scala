@@ -1,6 +1,6 @@
 package shipreq.webapp.base.data
 
-import monocle.macros.Lenser
+import monocle.macros.GenLens
 import scalaz.{NonEmptyList, Order, Ordering}
 import scalaz.std.anyVal.intInstance
 import scalaz.syntax.order._
@@ -113,8 +113,7 @@ object CustomReqType {
     override def setId(a: CustomReqType, b: Id) = a.copy(id = b)
   }
 
-  private[this] def l = Lenser[CustomReqType]
-  val _name         = l(_.name)
-  val _mnemonic     = l(_.mnemonic)
-  val _oldMnemonics = l(_.oldMnemonics)
+  val name         = GenLens[CustomReqType](_.name)
+  val mnemonic     = GenLens[CustomReqType](_.mnemonic)
+  val oldMnemonics = GenLens[CustomReqType](_.oldMnemonics)
 }

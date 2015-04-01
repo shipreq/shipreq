@@ -2,7 +2,7 @@ package shipreq.webapp.base.data
 
 import japgolly.nyaya.CycleDetector
 import monocle.Lens
-import monocle.macros.Lenser
+import monocle.macros.GenLens
 import scala.annotation.tailrec
 import scalaz.{Memo, Equal}
 import scalaz.Isomorphism._
@@ -87,12 +87,12 @@ object Tag {
     }
   }
 
-  val _name = Lens((_: Tag).name)(n => {
+  val name = Lens((_: Tag).name)(n => {
     case TagGroup(a, _, b, c, d)      => TagGroup(a, n, b, c, d)
     case ApplicableTag(a, _, b, c, d) => ApplicableTag(a, n, b, c, d)
   })
 
-  val _alive = Lens((_: Tag).alive)(n => {
+  val alive = Lens((_: Tag).alive)(n => {
     case TagGroup(a, b, c, d, _)      => TagGroup(a, b, c, d, n)
     case ApplicableTag(a, b, c, d, _) => ApplicableTag(a, b, c, d, n)
   })
@@ -265,9 +265,8 @@ object TagInTree {
   val filterAlive: TagInTree => Boolean =
     _.tag.alive ≟ Alive
 
-  private[this] def l = Lenser[TagInTree]
-  val _tag      = l(_.tag)
-  val _children = l(_.children)
+  val tag      = GenLens[TagInTree](_.tag)
+  val children = GenLens[TagInTree](_.children)
 
   /** @return Itself and all reachable children. */
   @tailrec def transitiveChildren(queue: Stream[Must[TagInTree]], seen: Set[Id])(implicit tt: TagTree): Must[Set[Id]] =

@@ -2,7 +2,7 @@ package shipreq.webapp.client.lib.ui
 
 import japgolly.scalajs.react.ScalazReact._
 import monocle._
-import monocle.macros.Lenser
+import monocle.macros.GenLens
 import monocle.std.option.some
 import scalaz.Applicative
 
@@ -10,9 +10,8 @@ object NewRowStore {
   final case class Row[I](status: RowStatus, i: I)
 
   final class RowL[I] {
-    private[this] def l = Lenser[Row[I]]
-    val status = l(_.status)
-    val i      = l(_.i)
+    val status = GenLens[Row[I]](_.status)
+    val i      = GenLens[Row[I]](_.i)
   }
 
   type SS[I] = Option[Row[I]]
@@ -46,9 +45,9 @@ final class NewRowStore[S, I](_ss: Lens[S, NewRowStore.SS[I]], rowL: NewRowStore
   private[this] val _i     : Optional[S, I]         = _row ^|-> rowL.i
 
   // TODO annoying changing maybe -> option
-  def get                    : S => Option[Row]       = _row.getMaybe(_).toOption
-  def getI                   : S => Option[I]         = _i.getMaybe(_).toOption
-  def getStatus              : S => Option[RowStatus] = _status.getMaybe(_).toOption
+  def get                    : S => Option[Row]       = _row.getOption
+  def getI                   : S => Option[I]         = _i.getOption
+  def getStatus              : S => Option[RowStatus] = _status.getOption
   def enableEdit             : S => S                 = s => if (editing(s)) s else _ss.set(Some(initRow))(s)
   def editing                : S => Boolean           = _ss.get(_).isDefined
   def remove                 : S => S                 = _ss.set(None)

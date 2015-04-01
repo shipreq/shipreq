@@ -268,7 +268,7 @@ object Sorter {
         prep =
           setup => {
             val n = pubidNormaliser(setup)
-            row => loc.getMaybe(row).cata(_ map n, Vector.empty)
+            row => loc.getOption(row).fold(Vector.empty[(Int, Int)])(_ map n)
           },
         sort = SortFn.intPairVector(bp)
     ))
@@ -283,8 +283,8 @@ object Sorter {
       // TODO Sorting reqcodes by txt is inefficient. Trie => Vector[Int] would be better.
       val norm: ReqCode => String = _.txt
       Sorter[String](
-        rowMod = typicalRowModFn(Row._reqCodes, SortFn.stringNonEmpty)(_ => norm),
-        prep   = _ => row => Row._reqCodes.getMaybe(row).toOption.flatMap(_.headOption map norm) getOrElse "",
+        rowMod = typicalRowModFn(Row.reqCodes, SortFn.stringNonEmpty)(_ => norm),
+        prep   = _ => row => Row.reqCodes.getOption(row).flatMap(_.headOption map norm) getOrElse "",
         sort   = SortFn.string(bp))
     }
 
@@ -292,7 +292,7 @@ object Sorter {
     SorterForSMCB(bp =>
       Sorter[Vector[Int]](
         rowMod = typicalRowModFn(loc, SortFn.int)(order(_).apply),
-        prep   = setup => _.fold(loc.getMaybe(_).cata(_ map order(setup), Vector.empty)),
+        prep   = setup => _.fold(loc.getOption(_).fold(Vector.empty[Int])(_ map order(setup))),
         sort   = SortFn.intVector(bp)
     ))
 
@@ -327,14 +327,14 @@ object Sorter {
     case C.CustomField(gid) =>
       gid match {
         case id: CustomField.Text       .Id => customTextFieldSorter(id)
-        case id: CustomField.Tag        .Id => tagSorter(Row._cfTags ^|-? index(id), _.tagByPosOrder)
-        case id: CustomField.Implication.Id => pubidVectorSorter(Row._cfImps ^|-? index(id))
+        case id: CustomField.Tag        .Id => tagSorter(Row.cfTags ^|-? index(id), _.tagByPosOrder)
+        case id: CustomField.Implication.Id => pubidVectorSorter(Row.cfImps ^|-? index(id))
       }
     case C.Desc                             => descSorter
     case C.Code                             => reqCodeSorter
-    case C.Tags                             => tagSorter(Row._tags, _.tagByNameOrder)
-    case C.ImplicationSrc                   => pubidVectorSorter(Row._implicationSrc)
-    case C.ImplicationTgt                   => pubidVectorSorter(Row._implicationTgt)
+    case C.Tags                             => tagSorter(Row.tags, _.tagByNameOrder)
+    case C.ImplicationSrc                   => pubidVectorSorter(Row.implicationSrc)
+    case C.ImplicationTgt                   => pubidVectorSorter(Row.implicationTgt)
   }
 
   val inconclusive: SC.Inconclusive => Sorter = {

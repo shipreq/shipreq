@@ -1,8 +1,8 @@
 package shipreq.webapp.base.data
 
 import monocle._
+import monocle.macros.GenLens
 import scalaz.{Traverse, NonEmptyList, OneAnd, Equal}
-import scalaz.Maybe.optionMaybeIso
 import scalaz.Isomorphism._
 import scalaz.std.AllInstances._
 import scalaz.syntax.equal._
@@ -265,25 +265,25 @@ object CustomField {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  val _independentName = Optional[CustomField, String](optionMaybeIso to _.independentName)(n => {
+  val independentName = Optional[CustomField, String](_.independentName)(n => {
     case Text(a, _, b, c, d, e) => Text(a, n, b, c, d, e)
     case f: Tag                 => f
     case f: Implication         => f
   })
 
-  val _key = Optional[CustomField, FieldRefKey](optionMaybeIso to _.keyO)(n => {
+  val key = Optional[CustomField, FieldRefKey](_.keyO)(n => {
     case Text(a, b, _, c, d, e) => Text(a, b, n, c, d, e)
     case f: Tag                 => f
     case f: Implication         => f
   })
 
-  val _mandatory = Lens[CustomField, Mandatory](_.mandatory)(n => {
+  def mandatory = Lens[CustomField, Mandatory](_.mandatory)(n => {
     case f: Text        => f.copy(mandatory = n)
     case f: Tag         => f.copy(mandatory = n)
     case f: Implication => f.copy(mandatory = n)
   })
 
-  val _alive = Lens[CustomField, Alive](_.alive)(n => {
+  def alive = Lens[CustomField, Alive](_.alive)(n => {
     case f: Text        => f.copy(alive = n)
     case f: Tag         => f.copy(alive = n)
     case f: Implication => f.copy(alive = n)
@@ -319,5 +319,5 @@ case class FieldSet(customFields: IMap[CustomField.Id, CustomField],
 object FieldSet {
   implicit val equality: Equal[FieldSet] = deriveEqual
 
-  def _customFields = Lens((_: FieldSet).customFields)(b => _.copy(customFields = b))
+  def customFields = GenLens[FieldSet](_.customFields)
 }

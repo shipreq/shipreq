@@ -137,11 +137,11 @@ object RandomData {
     } yield CustomReqType(id, mn, om - mn, n, ir, a)
 
   lazy val customReqTypes = {
-    def dname = Distinct.str.at(CustomReqType._name)
+    def dname = Distinct.str.at(CustomReqType.name)
     def dmnemonic = {
       val distm = Distinct.fstr.xmap(Mnemonic.apply)(_.value).addhs(StaticReqType.mnemonics).distinct
-      val cur = distm.at(CustomReqType._mnemonic)
-      val old = distm.lift[Set].at(CustomReqType._oldMnemonics)
+      val cur = distm.at(CustomReqType.mnemonic)
+      val old = distm.lift[Set].at(CustomReqType.oldMnemonics)
       cur + old
     }
     val d = (dname * dmnemonic).lift[List]
@@ -182,7 +182,7 @@ object RandomData {
   /** HashRefKey uniqueness enforced in Project, not here */
   lazy val tags: Gen[List[Tag]] = {
     val di = distinctId[Tag, Tag.Id]
-    val dn = Distinct.str.at(Tag._name)
+    val dn = Distinct.str.at(Tag.name)
     val d = (di * dn).lift[List]
     tag.list map d.run
   }
@@ -302,8 +302,8 @@ object RandomData {
       f3 <- customFieldImplicationSome(reqTypeIds, art)
     } yield f3.toStream #::: f2.toStream #::: f1
     def id   = distinctId(CustomField.IdAccess)
-    def name = Distinct.str.at(CustomField._independentName)
-    def key  = Distinct.fstr.xmap(FieldRefKey.apply)(_.value).distinct.at(CustomField._key)
+    def name = Distinct.str.at(CustomField.independentName)
+    def key  = Distinct.fstr.xmap(FieldRefKey.apply)(_.value).distinct.at(CustomField.key)
     val dist = (id * name * key).lift[Stream]
     cf.map(fs => emptyDataMap(CustomField) ++ dist.run(fs))
   }
@@ -603,12 +603,12 @@ object RandomData {
     type T = (A, B)
     val keyDist = Distinct.fstr.xmap(HashRefKey.apply)(_.value).distinct
     val issues = keyDist
-      .at(CustomIssueType._key).liftMapValues[CustomIssueType.Id]
-      .at(first[T, A] ^|-> RevAnd._data[CustomIssueTypeIMap] ^|-> imapToMapLens)
+      .at(CustomIssueType.key).liftMapValues[CustomIssueType.Id]
+      .at(first[T, A] ^|-> RevAnd.data[CustomIssueTypeIMap] ^|-> imapToMapLens)
     val tags = keyDist
       .lift[Option].contramap[Tag](_.keyO, setTagKey)
-      .at(TagInTree._tag).liftMapValues[Tag.Id]
-      .at(second[T, B] ^|-> RevAnd._data[TagTree] ^|-> imapToMapLens)
+      .at(TagInTree.tag).liftMapValues[Tag.Id]
+      .at(second[T, B] ^|-> RevAnd.data[TagTree] ^|-> imapToMapLens)
     issues + tags
   }
 

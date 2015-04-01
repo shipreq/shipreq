@@ -2,7 +2,7 @@ package shipreq.webapp.client.lib.ui
 
 import japgolly.scalajs.react.ScalazReact._
 import monocle._
-import monocle.macros.Lenser
+import monocle.macros.GenLens
 import shipreq.base.util.{UnivEq, IMap}
 import scalaz.Applicative
 import shipreq.base.util.ScalaExt._
@@ -12,10 +12,9 @@ object SavedRowStore {
   final case class Row[P, I](status: RowStatus, p: P, i: I)
 
   final class RowL[P, I] {
-    private[this] def l = Lenser[Row[P, I]]
-    val status = l(_.status)
-    val p      = l(_.p)
-    val i      = l(_.i)
+    val status = GenLens[Row[P, I]](_.status)
+    val p      = GenLens[Row[P, I]](_.p)
+    val i      = GenLens[Row[P, I]](_.i)
   }
 
   type SS[K, P, I] = Map[K, Row[P, I]]

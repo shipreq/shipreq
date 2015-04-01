@@ -2,7 +2,7 @@ package shipreq.webapp.client.app.ui.cfg.tags
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
 import japgolly.scalajs.react.extra.OnUnmount
-import monocle.macros.Lenser
+import monocle.macros.Lenses
 import monocle.Optional
 import monocle.std.option.some
 import scala.annotation.tailrec
@@ -59,15 +59,10 @@ private[tags] object MainTable {
 
   type TreeState = Multimap[Id, Vector, Id]
 
+  @Lenses
   case class DetailPaneState(id: Id, parentAddSel: Option[Id], childAddSel: Option[Id])
 
-  object DetailPaneState {
-    private[this] def l = Lenser[DetailPaneState]
-    val _id           = l(_.id)
-    val _parentAddSel = l(_.parentAddSel)
-    val _childAddSel  = l(_.childAddSel)
-  }
-
+  @Lenses
   case class State(showDeleted: Boolean,
                    tg_state: tg_stores.State,
                    at_state: at_stores.State,
@@ -89,24 +84,16 @@ private[tags] object MainTable {
   }
 
   object State {
-    private[this] def l = Lenser[State]
-    val _showDeleted = l(_.showDeleted)
-    val _tg_state    = l(_.tg_state)
-    val _at_state    = l(_.at_state)
-    val _tree        = l(_.tree)
-    val _newSel      = l(_.newSel)
-    val _detailRow   = l(_.detailRow)
-
-    val _detailRowSelParent = _detailRow ^<-? some ^|-> DetailPaneState._parentAddSel
-    val _detailRowSelChild  = _detailRow ^<-? some ^|-> DetailPaneState._childAddSel
+    val detailRowSelParent = detailRow ^<-? some ^|-> DetailPaneState.parentAddSel
+    val detailRowSelChild  = detailRow ^<-? some ^|-> DetailPaneState.childAddSel
   }
 
   type S  = State
   type ST = ReactST[IO, S, Unit]
   val  ST = ReactS.FixT[IO, S]
 
-  val tg_storesS = tg_stores.contramap(State._tg_state)
-  val at_storesS = at_stores.contramap(State._at_state)
+  val tg_storesS = tg_stores.contramap(State.tg_state)
+  val at_storesS = at_stores.contramap(State.at_state)
 
   def storesForType(t: TagType): NewAndSavedStores[S, Id, _ <: Tag, _] =
     t match {
@@ -148,7 +135,7 @@ private[tags] object MainTable {
 
   val tagDeltaListener = new DeltaListener.OneByOne[S, Id, PovTag](
     (s, i) => {
-      val f1 = State._tree.modify(_ delkv i)
+      val f1 = State.tree.modify(_ delkv i)
       val f2 = eachTypesStores.foldLeft(f1)(_ compose _.s.remove(i))
       val f3 = f2 compose maybeCloseDetailPane(_.id ≟ i)
       f3(s)
@@ -158,13 +145,13 @@ private[tags] object MainTable {
         case t: TagGroup      => tg_storesS.s.set(i, t)
         case t: ApplicableTag => at_storesS.s.set(i, t)
       }
-      val f2 = f1 compose State._tree.modify(PovRelations.trustedApply1(d.rels, i, _))
+      val f2 = f1 compose State.tree.modify(PovRelations.trustedApply1(d.rels, i, _))
       val f3 = f2 compose maybeCloseDetailPane(p => (d.tag.alive ≟ Dead) && (p.id ≟ d.tag.id))
       f3(s)
     })
 
   def maybeCloseDetailPane(closeCondition: DetailPaneState => Boolean): S => S =
-    s => if (State._detailRow.get(s) exists closeCondition) State._detailRow.set(None)(s) else s
+    s => if (State.detailRow.get(s) exists closeCondition) State.detailRow.set(None)(s) else s
 
   val Component =
     ReactComponentB[Props]("Cfg: Tags")
@@ -209,7 +196,7 @@ private[tags] object MainTable {
     def newTagControlProps = NewTagControl.props(
       $.state.newSel,
       onNewInvoke,
-      $ _setStateL State._newSel,
+      $ _setStateL State.newSel,
       newRowActive($.state))
 
     val onNewInvoke =
@@ -226,8 +213,8 @@ private[tags] object MainTable {
 
     def setDetail(w: Option[Id]): S => S =
       w match {
-        case None     => State._detailRow set None
-        case Some(id) => State._detailRow modify {
+        case None     => State.detailRow set None
+        case Some(id) => State.detailRow modify {
           case Some(r) if r.id ≟ id => r.copy(id = id).some
           case _                    => DetailPaneState(id, None, None).some
         }
@@ -264,15 +251,15 @@ private[tags] object MainTable {
     def render: ReactElement =
       <.div(
         NewTagControl.Component(newTagControlProps),
-        ShowDeletedToggler($.state.showDeleted, $ runState ST.modT(State._showDeleted.modify(b => !b))),
+        ShowDeletedToggler($.state.showDeleted, $ runState ST.modT(State.showDeleted.modify(b => !b))),
         <.table(
           headerRow,
           <.tbody(rows)
         ),
         DetailPaneFns.render(
           $.state, crudIO.updateIO,
-          parentSel = $ _setStateL State._detailRowSelParent,
-          childSel  = $ _setStateL State._detailRowSelChild ))
+          parentSel = $ _setStateL State.detailRowSelParent,
+          childSel  = $ _setStateL State.detailRowSelChild ))
 
     // -----------------------------------------------------------------------------------------------------------------
     // Subtype
