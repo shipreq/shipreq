@@ -1,8 +1,6 @@
 package shipreq.webapp.client.app.ui.reqtable
 
 import monocle.Optional
-import monocle.function.index
-import monocle.std.mapIndex
 import japgolly.scalacss.ScalaCssReact._
 import japgolly.scalacss.StyleA
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
@@ -11,8 +9,6 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.app.ui.ProjectWidgets
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
-import DataImplicits._
-
 
 final class ColumnRenderer(
   val column     : Column,
@@ -42,7 +38,7 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
           f match {
             case id: CustomField.Text       .Id => cfText(id)
             case id: CustomField.Tag        .Id => cfTags(id)
-            case id: CustomField.Implication.Id => imps(Row.cfImps ^|-? index(id))
+            case id: CustomField.Implication.Id => imps(Row.cfImp(id))
           }
       }
     cr(c)
@@ -78,9 +74,8 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
     case GenericReqRow(_, _, mv) => widgets.tags(mv.tags)
   }
 
-  private def cfTags(id: CustomField.Tag.Id) = make {
-    case GenericReqRow(_, exp, _) => widgets.tags(exp.cfTags.getOrElse(id, Vector.empty))
-  }
+  private def cfTags(id: CustomField.Tag.Id) = make(
+    Row.cfTag(id).getOption(_).filter(_.nonEmpty).fold(empty)(widgets.tags))
 
   private def desc = make {
     case GenericReqRow(req, _, _) => widgets.text(req.desc)
@@ -94,5 +89,5 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
   }
 
   private def imps(l: Optional[Row, Vector[Pubid]]) = make(
-    l.getOption(_).fold(empty)(widgets.pubidRefs))
+    l.getOption(_).filter(_.nonEmpty).fold(empty)(widgets.pubidRefs))
 }

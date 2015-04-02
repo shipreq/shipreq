@@ -82,10 +82,7 @@ private[reqtable] object Logic {
   private def expanderC[A](vs: ViewSettings, c: Column.SortInconclusive): Expander[A] =
     expander(vs isVisible c, vs isOrderedI c)
 
-  private def impColValueFn(p: Project): CustomField.Implication.Id => Req.Id => Set[Pubid] = {
-    lazy val tc = TransitiveClosure.auto[Req.Id](p.reqs.data.reqs.keys)(
-      p.reqFieldData.data.implications.srcToTgt.apply)
-
+  private def impColValueFn(p: Project): CustomField.Implication.Id => Req.Id => Set[Pubid] =
     fid => {
       // (source of implication for this column) → (all it transitively implies)
       val srcs: Stream[(Pubid, Set[Req.Id])] =
@@ -93,7 +90,7 @@ private[reqtable] object Logic {
           p.customField(fid).map(f =>
             p.reqs.data.reqsByType(f.reqTypeId)
               .toStream
-              .map(_.tmap2(_.pubid, _.id |> tc.nonRefl)))
+              .map(_.tmap2(_.pubid, _.id |> p.implicationSrcToTgtTC.nonRefl)))
         )(Stream.empty)
 
       if (srcs.isEmpty)
@@ -101,7 +98,6 @@ private[reqtable] object Logic {
       else
         id => srcs.filter(_._2 contains id).map(_._1).toSet
     }
-  }
 
   private def impColValueExpander(vs: ViewSettings, p: Project): Req.Id => Map[CustomField.Implication.Id, Expanded[Pubid]] = {
     val valueFn = impColValueFn(p)

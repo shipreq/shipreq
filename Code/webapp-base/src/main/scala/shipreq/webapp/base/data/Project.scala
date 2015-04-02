@@ -4,6 +4,7 @@ import monocle.macros.GenLens
 import scalaz.Memo
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{Monoidish, Must}
+import shipreq.webapp.base.TransitiveClosure
 import DataImplicits._
 
 final case class RevAnd[D](rev: Rev, data: D)
@@ -76,7 +77,16 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
       (StaticReqType.valueStream        : Stream[ReqType])
 
   lazy val tagColumnDistribution = new TagColumnDistribution(this)
+
+  /** Transitive closure of implications going source → target. */
+  lazy val implicationSrcToTgtTC: TransitiveClosure[Req.Id] =
+    TransitiveClosure.auto[Req.Id](reqs.data.reqs.keys)(reqFieldData.data.implications.srcToTgt.apply)
+
+  /** Transitive closure of implications going target → source. */
+  lazy val implicationTgtToSrcTC: TransitiveClosure[Req.Id] =
+    TransitiveClosure.auto[Req.Id](reqs.data.reqs.keys)(reqFieldData.data.implications.tgtToSrc.apply)
 }
+
 
 final class TagColumnDistribution(p: Project) {
   // Traversing the tag tree for used columns is better than calculating the full

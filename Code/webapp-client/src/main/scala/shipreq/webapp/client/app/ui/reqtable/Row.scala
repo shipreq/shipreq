@@ -1,6 +1,8 @@
 package shipreq.webapp.client.app.ui.reqtable
 
-import monocle._
+import monocle.{Lens, Optional}
+import monocle.function.index
+import monocle.std.mapIndex
 import monocle.macros.GenLens
 import scalaz.{Equal, Semigroup, Monoid}
 import scalaz.std.map._
@@ -130,4 +132,9 @@ object Row {
   val cfTags         = Row.expansion   ^|-> Expansion.cfTags
   val tags           = Row.multiValues ^|-> MultiValues.tags
 
+  private def mmLens[K, V](k: K): Lens[Map[K, Vector[V]], Vector[V]] =
+    Lens[Map[K, Vector[V]], Vector[V]](_.getOrElse(k, Vector.empty))(vs => _.updated(k, vs))
+
+  def cfImp(id: CustomField.Implication.Id) = cfImps ^|-> mmLens(id)
+  def cfTag(id: CustomField.Tag        .Id) = cfTags ^|-> mmLens(id)
 }

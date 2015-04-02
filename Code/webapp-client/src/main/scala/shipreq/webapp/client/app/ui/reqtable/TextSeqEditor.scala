@@ -13,6 +13,7 @@ import scalaz.effect.IO
 import scalaz.std.vector._
 import scalaz.std.option._
 import scalaz.std.stream._
+import scalaz.syntax.equal._
 import scalaz.syntax.foldable._
 import shapeless.syntax.singleton._
 
@@ -197,14 +198,13 @@ object TagEditor {
 
 // =====================================================================================================================
 // TODO Hide dead reqs & maintain across edits (unless show deleted is on)
+// TODO ImplicationEditor needs validation
 
 object ImplicationEditor {
   import shipreq.webapp.base.data._
+  import DataImplicits._
 
   type A = Req.Id
-
-  // Vector[Pubid] -> initial str
-  // str -> {pubid, desc, req.id} -> req.id
 
   case class LookupV(desc: String, req: Req, display: String) {
     val descNorm = pubidSeqFormat.normEach(desc)
@@ -214,7 +214,7 @@ object ImplicationEditor {
 
   final val editor = new TextSeqEditor[A](pubidSeqFormat)
 
-  def lookupRx(project: Rx[Project], reqDescFn: Rx[Req => String]): Rx[Lookup] =
+  def lookupAll(project: Rx[Project], reqDescFn: Rx[Req => String]): Rx[Lookup] =
     for {
       p       <- project
       reqDesc <- reqDescFn
@@ -229,19 +229,14 @@ object ImplicationEditor {
       mustResolve(m)(Stream.empty).toMap
     }
 
-
-//  def lookupForNoCol(p: Rx[Project]): Rx[Lookup] =
-//    lookupRx(p, _.tagsNotUsedInColumns)
-//
-//  def lookupForCol(p: Rx[Project], f: CustomField.Tag.Id): Rx[Lookup] =
-//    lookupRx(p, _.tagsForColumn(f))
-//
-//  def lookupRx(project: Rx[Project], f: TagColumnDistribution => Must[Set[ApplicableTag]]): Rx[Lookup] =
-//    project.map(p =>
-//      mustResolve(f(p.tagColumnDistribution))(UnivEq.emptySet)
-//        .toStream
-//        .map(_.tmap2(_.key.value, _.id))
-//        .toMap)
+  def lookupForCol(project: Rx[Project], lookup: Rx[Lookup], fid: CustomField.Implication.Id): Rx[Lookup] =
+    for {
+      p <- project
+      l <- lookup
+    } yield {
+      val m = p.customField(fid).map(f => l.filter(t => t._2.req.reqTypeId ≟ f.reqTypeId))
+      mustResolve(m)(Map.empty)
+    }
 
   def apply(initial : Vector[Pubid],
             project : Project,
