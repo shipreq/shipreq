@@ -112,6 +112,9 @@ final class TextSeqEditor[A](fmt: Format) {
         ^.onKeyPress ~~> onKeyPress)
     }
   }
+
+  def cellState(p: Props): Cell.Editing =
+    Cell.Editing(component(p))
 }
 
 // =====================================================================================================================
@@ -142,7 +145,7 @@ object TagEditor {
   def apply(initial : Vector[A],
             project : Project,
             lookup  : Rx[Lookup],
-            setState: Option[Cell.State] => IO[Unit]): CellState = {
+            setState: Option[Cell.State] => IO[Unit]): Cell.State = {
 
     val init: S =
       initial.map { a =>
@@ -159,6 +162,12 @@ object TagEditor {
             .index(1)
         ))
 
+    def parse(s: S): ParseResult[A] =
+      lookup.value().get(s) match {
+        case Some(id) => \/-(id)
+        case None     => leftNone
+      }
+
     val abort: IO[Unit] =
       setState(None)
 
@@ -169,29 +178,10 @@ object TagEditor {
     lazy val update: S => IO[Unit] =
       s => setState(Some(newState(s)))
 
-    def newState(s: S) =
-      new CellState(lookup, autoComplete, s, update, abort, commit)
+    def newState(state: S) =
+      editor cellState editor.Props(state, update, abort, parse, commit, autoComplete)
 
     newState(init)
-  }
-
-  final class CellState(lookup      : Rx[Lookup],
-                        autoComplete: AutoComplete,
-                        state       : S,
-                        stateUpdate : S => IO[Unit],
-                        abort       : IO[Unit],
-                        commit      : Vector[A] => IO[Unit]) extends Cell.Editing {
-
-    def parse(s: S): ParseResult[A] =
-      lookup.value().get(s) match {
-        case Some(id) => \/-(id)
-        case None     => leftNone
-      }
-
-    override def render = {
-      val p = editor.Props(state, stateUpdate, abort, parse, commit, autoComplete)
-      editor.component(p)
-    }
   }
 }
 
@@ -241,7 +231,7 @@ object ImplicationEditor {
   def apply(initial : Vector[Pubid],
             project : Project,
             lookup  : Rx[Lookup],
-            setState: Option[Cell.State] => IO[Unit]): CellState = {
+            setState: Option[Cell.State] => IO[Unit]): Cell.State = {
 
     val init: S =
       initial.map(pid =>
@@ -272,6 +262,12 @@ object ImplicationEditor {
         )
       }
 
+    def parse(s: S): ParseResult[A] =
+      lookup.value().get(s) match {
+        case Some(v) => \/-(v.req.id)
+        case None    => leftNone
+      }
+
     val abort: IO[Unit] =
       setState(None)
 
@@ -282,28 +278,9 @@ object ImplicationEditor {
     lazy val update: S => IO[Unit] =
       s => setState(Some(newState(s)))
 
-    def newState(s: S) =
-      new CellState(lookup, autoComplete, s, update, abort, commit)
+    def newState(state: S) =
+      editor cellState editor.Props(state, update, abort, parse, commit, autoComplete)
 
     newState(init)
-  }
-
-  final class CellState(lookup      : Rx[Lookup],
-                        autoComplete: AutoComplete,
-                        state       : S,
-                        stateUpdate : S => IO[Unit],
-                        abort       : IO[Unit],
-                        commit      : Vector[A] => IO[Unit]) extends Cell.Editing {
-
-    def parse(s: S): ParseResult[A] =
-      lookup.value().get(s) match {
-        case Some(v) => \/-(v.req.id)
-        case None    => leftNone
-      }
-
-    override def render = {
-      val p = editor.Props(state, stateUpdate, abort, parse, commit, autoComplete)
-      editor.component(p)
-    }
   }
 }

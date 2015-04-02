@@ -28,5 +28,9 @@ object Cell {
   trait Editing extends State {
     def render: ReactElement
   }
+  object Editing {
+    def apply(f: => ReactElement): Editing =
+      new Editing { override def render = f }
+  }
 
 }
