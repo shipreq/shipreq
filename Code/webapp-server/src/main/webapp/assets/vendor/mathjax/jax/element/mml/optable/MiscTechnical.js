@@ -1,1 +1,0 @@
-!function(a){{var b=a.mo.OPTYPES;a.TEXCLASS}MathJax.Hub.Insert(a.mo.prototype,{OPTABLE:{postfix:{"⎴":b.WIDEACCENT,"⎵":b.WIDEACCENT,"⏜":b.WIDEACCENT,"⏝":b.WIDEACCENT,"⏠":b.WIDEACCENT,"⏡":b.WIDEACCENT}}}),MathJax.Ajax.loadComplete(a.optableDir+"/MiscTechnical.js")}(MathJax.ElementJax.mml);

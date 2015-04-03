@@ -1,1 +1,0 @@
-!function(a){{var b=a.mo.OPTYPES;a.TEXCLASS}MathJax.Hub.Insert(a.mo.prototype,{OPTABLE:{postfix:{ˍ:b.WIDEACCENT,"˚":b.ACCENT,"˝":b.ACCENT,"˷":b.WIDEACCENT}}}),MathJax.Ajax.loadComplete(a.optableDir+"/SpacingModLetters.js")}(MathJax.ElementJax.mml);
