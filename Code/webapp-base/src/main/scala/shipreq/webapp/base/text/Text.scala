@@ -1,7 +1,8 @@
-package shipreq.webapp.base.data
+package shipreq.webapp.base.text
 
 import scalaz.NonEmptyList
 import shipreq.base.util.UnivEq
+import shipreq.webapp.base.data._
 
 object Text {
 

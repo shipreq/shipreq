@@ -8,7 +8,7 @@ import scalaz.std.option.optionInstance
 
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.Presentation
+import shipreq.webapp.base.text.{Presentation, Text}
 import shipreq.webapp.client.app.ui.reqtable.{SortMethod => SM, SortCriterion => SC, Column => C}
 import SortMethod.{Asc, AscThenBlanks, BlanksThenAsc}
 

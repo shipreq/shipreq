@@ -7,6 +7,7 @@ import scalaz.syntax.semigroup._
 import shipreq.base.util.IMap
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.text.Text
 import ReqFieldData.{Implications, ImplicationsU}
 
 object ProjectDSL {

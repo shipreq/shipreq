@@ -12,6 +12,7 @@ import utest._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.{UnsafeTypes, RandomData}
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.test.BaseTestUtil._
 import shipreq.webapp.base.test.{SampleImplicationGraph, SampleProject, ProjectDSL}
 import shipreq.webapp.client.test.ClientTestSettings._

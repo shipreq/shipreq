@@ -10,6 +10,7 @@ import shipreq.webapp.base.protocol._
 import shipreq.webapp.lib.ServerProtocol
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.delta._
+import shipreq.webapp.base.text.{Text => T}
 import DeletionAction._
 import shipreq.webapp.util.QuietException
 
@@ -86,7 +87,7 @@ class WIP {
     val mfs = (0 to 28).toVector.map(i => GenericReq.Id(i + 1000))
 
     def fr1Desc = {
-      import Text.GenericReqDesc._
+      import T.GenericReqDesc._
       List(
         EmailAddress("japgolly@gmail.com"), Literal(" is on "), WebAddress("https://github.com"),
         Literal(" cos of "), ReqRef(mfs(6)), Literal(" "), Issue(1, Nil),
@@ -95,10 +96,10 @@ class WIP {
     }
     def fr2Desc = {
       val tbd = {
-        import Text.InlineIssueDesc._
+        import T.InlineIssueDesc._
         List(Literal("Pending "), ReqRef(mfs(26)))
       }
-      import Text.GenericReqDesc._
+      import T.GenericReqDesc._
       List(Issue(2, tbd))
     }
 

@@ -12,6 +12,7 @@ import upickle.StdlibCodecs.{MapR, MapW}
 
 import shipreq.base.util._
 import shipreq.base.util.TaggedTypes._
+import shipreq.webapp.base.text.Text
 
 // =====================================================================================================================
 private[protocol] object CodecBase {

@@ -4,9 +4,9 @@ import scala.annotation.tailrec
 import scalaz.NonEmptyList
 import shipreq.base.util.Must
 import shipreq.webapp.base.UiText
-import shipreq.webapp.base.data.Text._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar => G}
+import Text._
 
 /**
  * That which affects users' presentation of their requirements, belongs here.

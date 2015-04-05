@@ -12,6 +12,7 @@ import shapeless.{Generic, :+:, CNil, Coproduct, Inl, Inr}
 import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes._
+import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.TypeclassDerivation._
 
 // ===================================================================================================================
