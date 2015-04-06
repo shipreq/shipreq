@@ -19,13 +19,14 @@ object Validators {
 
   // ===================================================================================================================
   object shared {
+    import Grammar.{hashRefKey => G}
 
     // DD-18: Hashtag-like refkeys (groupings, incmp) must match this format: /[A-Za-z0-9][A-Za-z0-9_-=.]*/
     val hashRefKeyU =
-      Grammar.hashRefKeyChars.rule
-        .addRule(Rules lengthInRange Grammar.hashRefKeyLength)
+      G.allChars.rule
+        .addRule(G.length.rule)
         .correct(noWhitespace.compose)
-        .constraint(c => nonEmpty >> (startsWithAlphaNumeric + c))
+        .constraint(c => nonEmpty >> (G.firstChar.constraint + c))
         .forField(FieldNames.hashRefKey)
         .map(HashRefKey.apply)
 
@@ -58,14 +59,15 @@ object Validators {
   // ===================================================================================================================
   object reqType {
     type S = (Stream[CustomReqType], Option[CustomReqType.Id])
+    import Grammar.{reqTypeMnemonic => G}
 
     val mnemonicU =
-      Grammar.reqTypeMnemonicChars.rule
-        .addRule(Rules lengthInRange Grammar.reqTypeMnemonicLength)
+      G.chars.rule
+        .addRule(G.length.rule)
         .liveCorrect(upperCase.andThen)
         .correct(_ andThen noWhitespace andThen upperCase)
         .constraint(nonEmpty >> _)
-        .forField("Mnemonic")
+        .forField("Mnemonic") // English
         .map(ReqType.Mnemonic)
 
     private def mnemonicUniqueness = {
@@ -103,6 +105,7 @@ object Validators {
   // ===================================================================================================================
   object field {
     type S = (Stream[CustomField], Option[CustomField.Id])
+    import Grammar.{fieldRefKey => G}
 
     // TODO BR-2: A field-set cannot contain more than 30 fields.
 
@@ -120,10 +123,10 @@ object Validators {
 
     // DD-20: Field refkeys must match this format: /[a-z][a-z0-9_]*/
     val keyU =
-      Grammar.fieldRefKeyChars.rule
-        .addRule(Rules lengthInRange Grammar.fieldRefKeyLength)
+      G.allChars.rule
+        .addRule(G.length.rule)
         .correct(_ andThen noWhitespace andThen lowerCase)
-        .constraint(c => nonEmpty >> (startsWithAlpha + c))
+        .constraint(c => nonEmpty >> (G.firstChar.constraint + c))
         .forField(FieldNames.fieldRefKey)
         .map(FieldRefKey.apply)
 

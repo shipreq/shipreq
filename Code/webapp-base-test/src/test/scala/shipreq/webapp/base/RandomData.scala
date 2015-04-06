@@ -33,6 +33,15 @@ object RandomData {
   type StateG[S, A] = StateT[Gen, S, A]
   implicit def gliftS[S, A](g: Gen[A]): StateG[S, A] = StateT(s => g.map(a => (s,a)))
 
+  def grammarChars(c: Grammar.Chars): Gen[Char] =
+    Gen.charof(c.ch1, c.chn, c.rs: _*)
+
+  def grammarStr1[G](g: G)(f: G => Grammar.FirstChar, w: G => Grammar.CharWhitelist, l: G => Grammar.Length): Gen[String] =
+    for {
+      h <- grammarChars(f(g))
+      t <- grammarChars(w(g)).list.lim(l(g).minus1.max)
+    } yield (h :: t).mkString
+
   def someOfWithDups[A, B](as: Seq[A])(f: A => Gen[B]): Gen[Vector[B]] =
     Gen.oneofO(as).fold[Gen[Vector[B]]](Gen insert Vector.empty)(
       _.vector.flatMap(Gen.traverse(_)(f)))
@@ -90,11 +99,8 @@ object RandomData {
   lazy val mandatory =
     Gen.oneof[Mandatory](Mandatory, Mandatory.Not)
 
-  lazy val hashRefKey =
-    for {
-      h <- Gen.alphanumeric
-      t <- Gen.charof('.', "_=-", 'a' to 'z', 'A' to 'Z', '0' to '9').list.lim(Grammar.hashRefKeyLength.end - 1)
-    } yield HashRefKey((h :: t).mkString)
+  lazy val hashRefKey: Gen[HashRefKey] =
+    grammarStr1(Grammar.hashRefKey)(_.firstChar, _.allChars, _.length) map HashRefKey
 
   // -------------------------------------------------------------------------------------------------------------------
   // Custom issue types
@@ -257,10 +263,7 @@ object RandomData {
   }
 
   lazy val fieldRefKey =
-    for {
-      h <- Gen.lower
-      t <- Gen.charof('_', "", 'a' to 'z', '0' to '9').list.lim(Grammar.fieldRefKeyLength.end - 1)
-    } yield FieldRefKey((h :: t).mkString)
+    grammarStr1(Grammar.fieldRefKey)(_.firstChar, _.allChars, _.length) map FieldRefKey
 
   def customFieldType =
     Gen.oneofL(CustomFieldType.values)
@@ -565,7 +568,7 @@ object RandomData {
   // Req Codes
 
   lazy val reqCodeNode: Gen[ReqCode.Node] =
-    Gen.charof('_', "", 'a' to 'z', '0' to '9').list1.lim(Grammar.reqCodeNodeLength.max)
+    Gen.charof('_', "", 'a' to 'z', '0' to '9').list1.lim(Grammar.reqCodeNodeLength.total.max)
       .map(cs => ReqCode.Node(cs.list.mkString))
 
   lazy val reqCode: GenS[ReqCode] =

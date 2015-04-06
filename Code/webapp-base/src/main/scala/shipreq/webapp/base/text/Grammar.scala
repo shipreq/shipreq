@@ -1,47 +1,79 @@
 package shipreq.webapp.base.text
 
-import shipreq.webapp.base.validation.Rules
+import scala.collection.immutable.NumericRange
+import shipreq.webapp.base.validation.{Constraints, Rules}
 
 object Grammar {
-  final class RegexChar(chars: String, ruleErrMsg: String) {
-    @inline def one  = "[" + chars + "]"
-    @inline def not  = "[^" + chars + "]"
-    @inline def *    = "[" + chars + "]*"
-    @inline def +    = "[" + chars + "]+"
-    @inline def rule = Rules.whitelistCharsR(chars, ruleErrMsg)
+  class Chars(val chn: String, val ch1: Char, val rs: NumericRange[Char]*) {
+    final val regex = ((ch1 #:: chn.toStream).map("\\" + _) append rs.toStream.map(r => s"${r.min}-${r.max}")).mkString
+    @inline final def one  = "[" + regex + "]"
+    @inline final def not  = "[^" + regex + "]"
+    @inline final def *    = "[" + regex + "]*"
+    @inline final def +    = "[" + regex + "]+"
+
+    import org.parboiled2._
+    final val charPredicate: CharPredicate =
+      rs.foldLeft(CharPredicate(ch1 :: chn.toList))((q, r) => q ++ CharPredicate(r))
   }
 
-  /** [[shipreq.webapp.base.data.ReqType.Mnemonic]] min & max lengths. */
-  final val reqTypeMnemonicLength = 1 to 6
+  class CharWhitelist(chn: String, ch1: Char, rs: NumericRange[Char]*)(ruleErrMsg: String) extends Chars(chn, ch1, rs: _*) {
+    final val rule = Rules.whitelistCharsR(regex, ruleErrMsg)
+  }
 
-  final val reqTypeMnemonicChars =
-    new RegexChar("A-Z", "may only consist of letters.")
+  class FirstChar(chn: String, ch1: Char, rs: NumericRange[Char]*)(ruleErrMsg: String) extends Chars(chn, ch1, rs: _*) {
+    final val constraint = Constraints.startsWithR(one)(ruleErrMsg)
+  }
+  object FirstChar {
+    val azAZ   = new FirstChar("",             'a', 'b' to 'z', 'A' to 'Z')("must start with a letter.")
+    val azAZ09 = new FirstChar("", '0', '1' to '9', 'a' to 'z', 'A' to 'Z')("must start with a letter or number.")
+  }
 
-  /** [[shipreq.webapp.base.data.HashRefKey]] min & max lengths. */
-  final val hashRefKeyLength = 1 to 20
+  case class Length(total: Range.Inclusive) {
+    val rule   = Rules lengthInRange total
+    val minus1 = (total.min - 1) to (total.max - 1)
+  }
 
+  // ===================================================================================================================
+
+  /** [[shipreq.webapp.base.data.ReqType.Mnemonic]] */
+  object reqTypeMnemonic {
+    val length = Length(1 to 6)
+    val chars  = new CharWhitelist("", 'A', 'B' to 'Z')("may only consist of letters.")
+  }
+
+  // TODO hashrefkey & mnemonic are both case-insensitive but char ranges are defined differently
+
+  /** [[shipreq.webapp.base.data.HashRefKey]] */
   // DD-18: Hashtag-like refkeys (groupings, incmp) must match this format: /[A-Za-z0-9][A-Za-z0-9_-=.]*/
   // Must not contain: []{}<>#
-  final val hashRefKeyChars =
-    new RegexChar("""A-Za-z0-9\._=\-""", "may only consist of letters, numbers, and these symbols: . _ = -")
+  object hashRefKey {
+    val length    = Length(1 to 20)
+    def firstChar = FirstChar.azAZ09
+    val allChars  = new CharWhitelist("_=-", '.', 'A' to 'Z', 'a' to 'z', '0' to '9')("may only consist of letters, numbers, and these symbols: . _ = -")
+  }
 
   /** [[shipreq.webapp.base.data.FieldRefKey]] min & max lengths. */
-  final val fieldRefKeyLength = hashRefKeyLength
-
   // DD-20: Field refkeys must match this format: /[a-z][a-z0-9_]*/
   // Must not contain: []{}<>.?"
-  final val fieldRefKeyChars =
-    new RegexChar("""a-z0-9_""", "may only consist of letters, numbers, and underscores.")
+  object fieldRefKey {
+    def length    = hashRefKey.length
+    def firstChar = FirstChar.azAZ
+    val allChars  = new CharWhitelist("" , '_', 'a' to 'z', '0' to '9')("may only consist of letters, numbers, and underscores.")
+  }
 
   /** [[shipreq.webapp.base.data.ReqCode.Node]] min & max lengths. */
-  final val reqCodeNodeLength = hashRefKeyLength
+  // TODO Grammar.reqCodeNode only has length atm
+  def reqCodeNodeLength = hashRefKey.length
 
-  final val issueDescPrefix = "{ "
-  final val issueDescSuffix = " }"
+  val issueDescPrefix = "{ "
+  val issueDescSuffix = " }"
 
-  final val reflinkPrefix = "["
-  final val reflinkSuffix = "]"
+  val reflinkPrefix = "["
+  val reflinkSuffix = "]"
 
-  final val hashtagPrefix = "#"
+  val hashtagPrefix = "#"
+
+  val mathTexPrefix = "<math>"
+  val mathTexSuffix = "</math>"
 
 }

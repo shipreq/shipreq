@@ -88,7 +88,7 @@ object Style extends StyleSheet.Inline {
       marginTop(1.6 ex),
       width(100 %%))
 
-    val mnemonicLen = Grammar.reqTypeMnemonicLength.max
+    val mnemonicLen = Grammar.reqTypeMnemonic.length.total.max
 
     val columnPubid   = style(maxWidth((mnemonicLen + 5).ex))
     val columnReqType = style(maxWidth(mnemonicLen.ex))

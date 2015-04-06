@@ -133,6 +133,7 @@ final class TextSeqEditor[A](val fmt: Format) {
 
 object TagEditor {
   import shipreq.webapp.base.data._
+  import Grammar.{hashRefKey => G}
 
   type A = ApplicableTag.Id
 
@@ -166,7 +167,7 @@ object TagEditor {
     val autoComplete: AutoComplete =
       lookup.map(l =>
         TC.Strategies(
-          TC.Strategy(s"\\b(${Grammar.hashRefKeyChars.+})$$")
+          TC.Strategy(s"\\b(${G.firstChar.one}${G.allChars.*})$$")
             .search(TC.caseInsensitiveContains(l.keys.toStream.sorted))
             .replace(_ + " ")
             .index(1)
