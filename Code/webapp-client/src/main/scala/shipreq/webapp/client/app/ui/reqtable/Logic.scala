@@ -1,15 +1,13 @@
 package shipreq.webapp.client.app.ui.reqtable
 
-import japgolly.scalacss.{NonEmptyVector, NonEmptyVectorExt}
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
 import scalaz.OneAnd
 import scalaz.syntax.equal._
 import scalaz.syntax.semigroup._
-import shipreq.base.util.{UnivEq, Must}
+import shipreq.base.util.{UnivEq, NonEmptyVector}, NonEmptyVector.NEVOps
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.TransitiveClosure
 import DataImplicits._
 
 private[reqtable] object Logic {
@@ -22,7 +20,7 @@ private[reqtable] object Logic {
   @inline implicit class NonEmptyVectorFor[A](val self: NonEmptyVector[A]) extends AnyVal {
     def flatMap[B](f: A => NonEmptyVector[B]): NonEmptyVector[B] = {
       val h = f(self.head)
-      val t = self.tail.flatMap(a => f(a).vector)
+      val t = self.tail.flatMap(a => f(a).whole)
       nev(h.head, h.tail ++ t)
     }
 
@@ -136,7 +134,7 @@ private[reqtable] object Logic {
         val k  = keys.head
         val ks = keys.tail
         @inline def next(ms: Vector[M], v: Vector[V]) = go(ks, cur.updated(k, v), ms)
-        src(k).foldMapLeft1(next(r, _))((r2, v) => next(r2.vector, v))
+        src(k).foldMapLeft1(next(r, _))((r2, v) => next(r2.whole, v))
       }
     go(src.keys.toVector, Map.empty, Vector.empty)
   }
@@ -227,7 +225,7 @@ private[reqtable] object Logic {
 
         // Build
         val mv = multiValuesFn(id)
-        exps.vector.toStream.map(GenericReqRow(r, _, mv))
+        exps.toStream.map(GenericReqRow(r, _, mv))
     }
   }
 
