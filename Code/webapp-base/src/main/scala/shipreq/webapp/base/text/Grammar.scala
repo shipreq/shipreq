@@ -1,11 +1,15 @@
 package shipreq.webapp.base.text
 
 import scala.collection.immutable.NumericRange
+import scala.runtime.AbstractFunction1
 import shipreq.webapp.base.validation.{Constraints, Rules}
 
 object Grammar {
+  private def quoteCh(c: Char): String =
+    if ("""$()*+-.?[]{|}\""" contains c) "\\" + c else c.toString
+
   class Chars(val chn: String, val ch1: Char, val rs: NumericRange[Char]*) {
-    final val regex = ((ch1 #:: chn.toStream).map("\\" + _) append rs.toStream.map(r => s"${r.min}-${r.max}")).mkString
+    final val regex = ((ch1 #:: chn.toStream).map(quoteCh) append rs.toStream.map(r => s"${r.min}-${r.max}")).mkString
     @inline final def one  = "[" + regex + "]"
     @inline final def not  = "[^" + regex + "]"
     @inline final def *    = "[" + regex + "]*"
@@ -33,6 +37,20 @@ object Grammar {
     val minus1 = (total.min - 1) to (total.max - 1)
   }
 
+  class Surround(val prefix: String, val suffix: String) extends AbstractFunction1[String, String] {
+    def apply(s: String): String = prefix + s + suffix
+  }
+  class Surrounds(val parsing: Surround, val display: Surround)
+  def surrounds(prefix: String, suffix: String) = {
+    val s = new Surround(prefix, suffix)
+    new Surrounds(s, s)
+  }
+  def surrounds(prefix: String, suffix: String, innerPrefix: String, innerSuffix: String) =
+    new Surrounds(
+      new Surround(prefix, suffix),
+      new Surround(prefix + innerPrefix, innerSuffix + suffix)
+    )
+
   // ===================================================================================================================
 
   /** [[shipreq.webapp.base.data.ReqType.Mnemonic]] */
@@ -50,6 +68,7 @@ object Grammar {
     val length    = Length(1 to 20)
     def firstChar = FirstChar.azAZ09
     val allChars  = new CharWhitelist("_=-", '.', 'A' to 'Z', 'a' to 'z', '0' to '9')("may only consist of letters, numbers, and these symbols: . _ = -")
+    val prefix    = "#"
   }
 
   /** [[shipreq.webapp.base.data.FieldRefKey]] min & max lengths. */
@@ -65,15 +84,11 @@ object Grammar {
   // TODO Grammar.reqCodeNode only has length atm
   def reqCodeNodeLength = hashRefKey.length
 
-  val issueDescPrefix = "{ "
-  val issueDescSuffix = " }"
+  val issueDescSurround = surrounds("{", "}", " ", " ")
 
   val reflinkPrefix = "["
   val reflinkSuffix = "]"
 
-  val hashtagPrefix = "#"
-
-  val mathTexPrefix = "<math>"
-  val mathTexSuffix = "</math>"
+  val mathTexSurround = surrounds("<math>", "</math>")
 
 }

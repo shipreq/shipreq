@@ -1,7 +1,7 @@
 package shipreq.webapp.base.data
 
 import monocle.macros.GenLens
-import scalaz.Memo
+import scalaz.{-\/, \/-, Memo}
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{Monoidish, Must}
 import shipreq.webapp.base.TransitiveClosure
@@ -76,6 +76,9 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
     (customReqTypes.data.values.toStream: Stream[ReqType]) #:::
       (StaticReqType.valueStream        : Stream[ReqType])
 
+  lazy val reqTypesByMnemonic: Map[ReqType.Mnemonic, ReqType] =
+    reqTypes.flatMap(t => t.allMnemonics.toStream.map((_, t))).toMap
+
   lazy val tagColumnDistribution = new TagColumnDistribution(this)
 
   /** Transitive closure of implications going source → target. */
@@ -85,6 +88,11 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
   /** Transitive closure of implications going target → source. */
   lazy val implicationTgtToSrcTC: TransitiveClosure[Req.Id] =
     TransitiveClosure.auto[Req.Id](reqs.data.reqs.keys)(reqFieldData.data.implications.tgtToSrc.apply)
+
+  lazy val hashRefs: Map[HashRefKey, HashRefTarget] = (
+      tags.data.vstream(_.tag).filterT[ApplicableTag].map(t => (t.key, -\/(t))) append
+      customIssueTypes.data.vstream(t => (t.key, \/-(t)))
+    ).toMap
 }
 
 

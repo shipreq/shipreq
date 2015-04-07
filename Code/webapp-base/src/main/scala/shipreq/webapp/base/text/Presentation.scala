@@ -26,6 +26,8 @@ object Presentation {
     @inline def unmust: String = UiText.mustA(_m)
   }
 
+  private implicit def surroundDisplay(s: Grammar.Surrounds) = s.display
+
   private implicit class OptionalTextOps[T <: Generic](val _t: T#OptionalText) extends AnyVal {
     @inline def asOption: Option[_t.type] =
       if (_t.isEmpty) None else Some[_t.type](_t)
@@ -42,11 +44,7 @@ object Presentation {
    */
   def reflink(in: String) = G.reflinkPrefix ~ in ~ G.reflinkSuffix
 
-  def hashtag(key: HashRefKey) = G.hashtagPrefix ~ key.value
-
-  final val issueDescPrefix = G.issueDescPrefix ~ " "
-  final val issueDescSuffix = " " ~ G.issueDescSuffix
-  def issueDesc(nonEmptyDesc: String) = issueDescPrefix ~ nonEmptyDesc ~ issueDescSuffix
+  def hashtag(key: HashRefKey) = G.hashRefKey.prefix ~ key.value
 
   // -------------------------------------------------------------------------------------------------------------------
 
@@ -69,7 +67,7 @@ object Presentation {
 
   def issue(id: CustomIssueType.Id, desc: Option[String])(implicit p: Project): Must[String] =
     p.customIssueType(id).map(it =>
-      (hashtag(it.key) /: desc)(_ ~ issueDesc(_)))
+      (hashtag(it.key) /: desc)(_ ~ G.issueDescSurround(_)))
 
   // -------------------------------------------------------------------------------------------------------------------
 
@@ -88,7 +86,7 @@ object Presentation {
               case a: Issue           # Issue         => issue(a.typ, a.desc.asOption map run).unmust
               case a: PlainTextMarkup # WebAddress    => a.value
               case a: PlainTextMarkup # EmailAddress  => a.value
-              case a: PlainTextMarkup # MathTeX       => "<math>" // TODO render math to text how?
+              case a: PlainTextMarkup # MathTeX       => G.mathTexSurround(a.value)
               case a: TagRef          # TagRef        => tagRef(a.value).unmust
               case a: ListMarkup      # UnorderedList =>
                 val newline2 = newline ~ "  "

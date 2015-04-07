@@ -21,7 +21,9 @@ object Text {
 
     /** Literal text, like "hello there" */
     sealed trait Literal extends Generic {
-      case class Literal(value: String) extends Atom
+      case class Literal(value: String) extends Atom {
+        def map(f: String => String): this.type = Literal(f(value)).asInstanceOf[this.type]
+      }
     }
 
     sealed trait NewLine extends Generic {

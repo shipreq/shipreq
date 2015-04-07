@@ -22,7 +22,7 @@ import shipreq.base.util.TaggedTypes.TaggedLong
 import shipreq.base.util.Debug._
 import shipreq.webapp.base.data._, ReqType.Mnemonic, Field.ApplicableReqTypes
 import shipreq.webapp.base.delta._
-import shipreq.webapp.base.text.{Text, Grammar}
+import shipreq.webapp.base.text.{Parsers, Text, Grammar}
 import DataImplicits._
 import ReqFieldData.{Implications, ImplicationsU}
 
@@ -32,6 +32,18 @@ object RandomData {
 
   type StateG[S, A] = StateT[Gen, S, A]
   implicit def gliftS[S, A](g: Gen[A]): StateG[S, A] = StateT(s => g.map(a => (s,a)))
+
+  // TODO Move to Nyaya
+  implicit class GenSChars0Ext(val g: GenS[List[Char]]) extends AnyVal {
+    def string: GenS[String] = g map (_.mkString)
+  }
+  implicit class GenSChars1Ext(val g: GenS[NonEmptyList[Char]]) extends AnyVal {
+    def string1: GenS[String] = g map (_.list.mkString)
+  }
+  implicit class GenCharExt(val g: Gen[Char]) extends AnyVal {
+    def string: GenS[String] = g.list.string
+    def string1: GenS[String] = g.list1.string1
+  }
 
   def grammarChars(c: Grammar.Chars): Gen[Char] =
     Gen.charof(c.ch1, c.chn, c.rs: _*)
@@ -327,45 +339,58 @@ object RandomData {
     import Text._, Generic._
     import Gen.Covariance._
 
+    val allChars = ('\u0001' to '\u0100').seq
+    def charPred(p: org.parboiled2.CharPredicate): Gen[Char] =
+      Gen.oneofO(allChars.filter(p.apply)).get
+
+    lazy val webAddressR = charPred(Parsers.webAddressChar).string1
+    lazy val emailL = charPred(Parsers.emailCharL).string1
+    lazy val emailR = charPred(Parsers.emailCharR).string1
+
     // private[this] implicit def autoSomeG[A](g: Gen[A]) = g.some
     private[this] implicit class NELExt[T <: Generic](val _nel: NonEmptyList[Gen[T#Atom]]) extends AnyVal {
       def <+(o: Option[Gen[T#Atom]]): NonEmptyList[Gen[T#Atom]] =
         o.fold(_nel)(_ <:: _nel)
     }
 
-    private[this] def literal(implicit t: Literal): Gen[t.Literal] =
-      Gen.string1.map(t.Literal)
+    private[this] def genstr = Gen.alphanumericstring // TODO
+    private[this] def genstr1 = Gen.alphanumericstring1
 
-    private[this] def newLine(implicit t: NewLine): Gen[t.NewLine] =
+    def literal(implicit t: Literal): Gen[t.Literal] =
+      genstr1.map(t.Literal) // TODO Certain things need to be ruled out
+
+    def newLine(implicit t: NewLine): Gen[t.NewLine] =
       Gen.insert(t.newLine)
 
-    private[this] def listItem[T <: ListMarkup](g: Name[Gen[T#Atom]]): Gen[T#ListItem] =
+    def listItem[T <: ListMarkup](g: Name[Gen[T#Atom]]): Gen[T#ListItem] =
       Gen.insert(g).flatMap(_.value).list.lim(MaxTextAtoms)
 
-    private[this] def listItems[T <: ListMarkup](g: Name[Gen[T#Atom]]): Gen[NonEmptyList[T#ListItem]] =
+    def listItems[T <: ListMarkup](g: Name[Gen[T#Atom]]): Gen[NonEmptyList[T#ListItem]] =
       listItem(g).list1.lim(20)
 
-    private[this] def unorderedList(t: ListMarkup)(g: Name[Gen[t.Atom]]): Gen[t.UnorderedList] =
+    def unorderedList(t: ListMarkup)(g: Name[Gen[t.Atom]]): Gen[t.UnorderedList] =
       listItems(g) map t.UnorderedList
 
-    private[this] def webAddress(implicit t: PlainTextMarkup): Gen[t.WebAddress] =
+    def webAddress(implicit t: PlainTextMarkup): Gen[t.WebAddress] =
       for {
-        a <- Gen.lowerstring1
-        b <- Gen.string1
+        a <- Gen.oneof("http", "https", "ftp", "ftps", "sftp")
+        b <- webAddressR
       } yield t.WebAddress(a + "://" + b)
 
-    private[this] def emailAddress(implicit t: PlainTextMarkup): Gen[t.EmailAddress] =
+    def emailAddress(implicit t: PlainTextMarkup): Gen[t.EmailAddress] =
       for {
-        (a, b) <- Gen.charof('.', "_+", 'a' to 'z', 'A' to 'Z', '0' to '9').list1.pair
-      } yield t.EmailAddress((a.list ::: '@' :: b.list).mkString)
+        l <- emailL
+        ra <- emailR
+        rb <- emailR.list1.lim(5)
+      } yield t.EmailAddress(l + "@" + (ra :: rb.list).mkString("."))
 
-    private[this] def mathTex(implicit t: PlainTextMarkup): Gen[t.MathTeX] =
-      Gen.string1.map(t.MathTeX)
+    def mathTex(implicit t: PlainTextMarkup): Gen[t.MathTeX] =
+      genstr1.map(s => t.MathTeX(s.replace("</math>", "")))
 
-    private[this] def plainTextMarkup(implicit t: PlainTextMarkup): Gen[t.Atom] =
+    def plainTextMarkup(implicit t: PlainTextMarkup): Gen[t.Atom] =
       Gen.oneofG(webAddress, emailAddress, mathTex)
 
-    private[this] def singleLine(implicit t: SingleLine): NonEmptyList[Gen[t.Atom]] =
+    private[this] def singleLineGens(implicit t: SingleLine): NonEmptyList[Gen[t.Atom]] =
       NonEmptyList(literal, plainTextMarkup)
 
     /** Probability [0,9] of an increase in recursive depth. */
@@ -374,7 +399,7 @@ object RandomData {
     private[this] def multiLine(t: MultiLine, depth: Int)(g: Name[Gen[t.Atom]]): NonEmptyList[(Int, Gen[t.Atom])] = {
       type G  = Gen[t.Atom]
       type IG = (Int, G)
-      var gs = singleLine(t).map[IG]((9, _)) :::> List[IG](
+      var gs = singleLineGens(t).map[IG]((9, _)) :::> List[IG](
                  (9, newLine(t)))
       if (depth < DepthIncrease.length)
         gs = (DepthIncrease(depth), unorderedList(t)(g): G) <:: gs
@@ -403,19 +428,46 @@ object RandomData {
         plus.foldLeft[List[(Int, Gen[t.Atom])]](Nil)((q, o) =>
           o.fold(q)(g => (9, g) :: q)): _*)
 
-    private[this] def reqRef(g: Gen[Req.Id])(implicit t: ReqRef): Gen[t.ReqRef] =
+    def reqRef(g: Gen[Req.Id])(implicit t: ReqRef): Gen[t.ReqRef] =
       g map t.ReqRef
 
-    private[this] def tagRef(g: Gen[ApplicableTag.Id])(implicit t: TagRef): Gen[t.TagRef] =
+    def tagRef(g: Gen[ApplicableTag.Id])(implicit t: TagRef): Gen[t.TagRef] =
       g map t.TagRef
 
-    private[this] def issue(i: Gen[CustomIssueType.Id], r: Option[Gen[Req.Id]])(implicit t: Issue): Gen[t.Issue] =
+    def issue(i: Gen[CustomIssueType.Id], r: Option[Gen[Req.Id]])(implicit t: Issue): Gen[t.Issue] =
       Gen.apply2(t.Issue)(i, inlineIssueDescAtom(r).list)
 
-    private[this] def reqTitle(t: ReqTitle)(r: Option[Gen[Req.Id]], i: Option[Gen[CustomIssueType.Id]]): Gen[t.Atom] = {
+    def reqTitle(t: ReqTitle)(r: Option[Gen[Req.Id]], i: Option[Gen[CustomIssueType.Id]]): Gen[t.Atom] = {
       @inline implicit def tt: t.type = t
-      val gs = singleLine(t) <+ r.map(reqRef(_)) <+ i.map(issue(_, r))
+      val gs = singleLineGens(t) <+ r.map(reqRef(_)) <+ i.map(issue(_, r))
       Gen oneofGL gs
+    }
+
+    def postProcessAtoms[T <: Text.Generic](as: List[T#Atom]): List[T#Atom] =
+      // TODO Use vectors
+      as.foldRight[List[T#Atom]](Nil)((a, q) => {
+        import Text.Generic.{PlainTextMarkup => PTM}
+        import Text.Generic._
+        if (q.isEmpty) a :: q
+        else (a, q.head) match {
+
+          case (x: Literal#Literal , y: Literal#Literal ) => x.map(_ + y.value) :: q.tail
+          case (x: Literal#Literal , y: PTM#EmailAddress) => x.map(_ + " ") :: y :: q.tail
+          case (x: Literal#Literal , y: PTM#WebAddress  ) => x.map(_ + " ") :: y :: q.tail
+          case (x: PTM#EmailAddress, y: Literal#Literal ) => x :: y.map(" " + _) :: q.tail
+          case (x: PTM#EmailAddress, _: PTM#EmailAddress) => x :: q.tail
+          case (x: PTM#EmailAddress, _: PTM#WebAddress  ) => x :: q.tail
+          case (x: PTM#WebAddress  , y: Literal#Literal ) => x :: y.map(" " + _) :: q.tail
+          case (x: PTM#WebAddress  , _: PTM#EmailAddress) => x :: q.tail
+          case (x: PTM#WebAddress  , _: PTM#WebAddress  ) => x :: q.tail
+
+          case _ => a :: q
+        }
+      })
+
+    def postProcessAtoms1[T <: Text.Generic](as: NonEmptyList[T#Atom]): NonEmptyList[T#Atom] = {
+      val l = postProcessAtoms(as.list)
+      NonEmptyList.nel(l.head, l.tail)
     }
 
     // Specific text types
@@ -426,7 +478,7 @@ object RandomData {
 
     def inlineIssueDescAtom(r: Option[Gen[Req.Id]]): Gen[InlineIssueDesc.Atom] = {
       @inline implicit def t: InlineIssueDesc.type = InlineIssueDesc
-      val gs = singleLine(t) <+ r.map(reqRef(_))
+      val gs = singleLineGens(t) <+ r.map(reqRef(_))
       Gen oneofGL gs
     }
 
@@ -443,11 +495,11 @@ object RandomData {
   val MaxTextAtomsInProject = 6 `JVM|JS` 2
 
   implicit class TextGenExt[T <: Text.Generic](val g: Gen[T#Atom]) extends AnyVal {
-    def text : GenS[T#OptionalText] = g.list lim MaxTextAtoms
-    def text1: GenS[T#NonEmptyText] = g.list1 lim MaxTextAtoms
+    def text : GenS[T#OptionalText] = g.list  lim MaxTextAtoms map TextGen.postProcessAtoms
+    def text1: GenS[T#NonEmptyText] = g.list1 lim MaxTextAtoms map TextGen.postProcessAtoms1
 
-    def ptext : GenS[T#OptionalText] = g.list lim MaxTextAtomsInProject
-    def ptext1: GenS[T#NonEmptyText] = g.list1 lim MaxTextAtomsInProject
+    def ptext : GenS[T#OptionalText] = g.list  lim MaxTextAtomsInProject map TextGen.postProcessAtoms
+    def ptext1: GenS[T#NonEmptyText] = g.list1 lim MaxTextAtomsInProject map TextGen.postProcessAtoms1
   }
 
   // -------------------------------------------------------------------------------------------------------------------

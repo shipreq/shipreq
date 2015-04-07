@@ -1,5 +1,6 @@
 package shipreq.webapp.base
 
+import scalaz.\/
 import shipreq.base.util.{UnivEq, IMap}
 
 package object data {
@@ -66,6 +67,7 @@ package object data {
   // ----------------------------------------------------------------------------------------------
   // Data types and functions
 
+  type HashRefTarget       = ApplicableTag \/ CustomIssueType
   type CustomIssueTypeIMap = IMap[CustomIssueType.Id, CustomIssueType]
   type CustomReqTypeIMap   = IMap[CustomReqType.Id, CustomReqType]
   type TagTree             = IMap[Tag.Id, TagInTree]
