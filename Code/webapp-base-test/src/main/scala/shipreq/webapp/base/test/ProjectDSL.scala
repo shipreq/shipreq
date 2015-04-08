@@ -85,7 +85,7 @@ object ProjectDSL {
                                  pubids      = pr,
                                  reqs        = p.reqs + req,
                                  reqCodeTrie = codeTrie,
-                                 text        = p.text ++ text,
+                                 text        = p.text |+| text,
                                  tags        = tags,
                                  imps        = imps)
         (p2, req)

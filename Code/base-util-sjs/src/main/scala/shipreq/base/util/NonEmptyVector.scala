@@ -1,7 +1,7 @@
 package shipreq.base.util
 
 import scala.collection.GenTraversableOnce
-import scalaz.{Order, Equal}
+import scalaz.{Semigroup, Order, Equal}
 import scalaz.std.vector.{vectorEqual, vectorOrder}
 
 final class NonEmptyVector[+A](val head: A, val tail: Vector[A]) {
@@ -89,6 +89,11 @@ object NonEmptyVector extends NonEmptyVectorImplicits0 {
     maybe[A, Option[NonEmptyVector[A]]](v, None)(Some.apply)
 
   implicit def univEq[A: UnivEq]: UnivEq[NonEmptyVector[A]] = UnivEq.force
+
+  implicit def semigroup[A]: Semigroup[NonEmptyVector[A]] =
+    new Semigroup[NonEmptyVector[A]] {
+      override def append(a: NonEmptyVector[A], b: => NonEmptyVector[A]): NonEmptyVector[A] = a ++ b
+    }
 }
 
 trait NonEmptyVectorImplicits1 {
