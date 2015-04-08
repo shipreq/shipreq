@@ -103,23 +103,22 @@ object Parsers {
     def consolidate(cs: Seq[Char \/ t.Atom]): t.OptionalText = {
       var lit = Vector.empty[Char]
 
-      def prependLit(tail: t.OptionalText): t.OptionalText =
-        if (lit.isEmpty) tail else {
+      def addLit(tgt: t.OptionalText): t.OptionalText =
+        if (lit.isEmpty) tgt else {
           val l = t.Literal(lit.mkString)
           lit = Vector.empty
-          l +: tail
+          tgt :+ l
         }
 
       val x =
-      // TODO use foldLeft
-        cs.foldRight[t.OptionalText](Vector.empty)((c, q) =>
+        cs.foldLeft[t.OptionalText](Vector.empty)((q, c) =>
           c match {
             case -\/(ch) => lit :+= ch; q
-            case \/-(to) => to +: prependLit(q)
+            case \/-(to) => addLit(q) :+ to
           }
         )
 
-      prependLit(x)
+      addLit(x)
     }
   }
 
