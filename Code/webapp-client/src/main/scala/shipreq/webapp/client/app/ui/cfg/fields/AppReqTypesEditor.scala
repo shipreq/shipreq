@@ -31,7 +31,7 @@ class AppReqTypesEditor(customReqTypes: TraversableOnce[CustomReqType]) {
 
   val reqtypemap = {
     def allReqTypes: List[ReqType] = {
-      val x = StaticReqType.values.list.foldLeft(Nil: List[ReqType])((q, v) => v :: q)
+      val x = StaticReqType.values.foldLeft(Nil: List[ReqType])((q, v) => v :: q)
       customReqTypes.foldLeft(x)((q, v) => v :: q)
     }
     IMap.empty((_: ReqType).reqTypeId) ++ allReqTypes

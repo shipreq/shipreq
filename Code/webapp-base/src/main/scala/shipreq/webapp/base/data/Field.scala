@@ -2,12 +2,12 @@ package shipreq.webapp.base.data
 
 import monocle._
 import monocle.macros.GenLens
-import scalaz.{Traverse, NonEmptyList, OneAnd, Equal}
+import scalaz.{Traverse, OneAnd, Equal}
 import scalaz.Isomorphism._
 import scalaz.std.AllInstances._
 import scalaz.syntax.equal._
 import shapeless.{Generic, :+:, CNil, Coproduct, Inl, Inr}
-import shipreq.base.util.{Must, IMap, UnivEq}
+import shipreq.base.util.{Must, IMap, UnivEq, NonEmptyVector}
 import shipreq.base.util.TaggedTypes.{TaggedString, TaggedLong}
 import shipreq.webapp.base.delta.Partition
 import shipreq.webapp.base.TypeclassDerivation._
@@ -24,7 +24,7 @@ object StaticFieldType {
   case object StepTree  extends StaticFieldType("Step Tree")
   case object StepGraph extends StaticFieldType("Step Graph")
 
-  val values = NonEmptyList[StaticFieldType](
+  val values = NonEmptyVector[StaticFieldType](
     StepTree,
     StepGraph)
 
@@ -37,7 +37,7 @@ object CustomFieldType {
   case object Tag         extends CustomFieldType("Tag")
   case object Text        extends CustomFieldType("Text")
 
-  val values = NonEmptyList[CustomFieldType](
+  val values = NonEmptyVector[CustomFieldType](
     Implication,
     Tag,
     Text)
@@ -46,8 +46,8 @@ object CustomFieldType {
 }
 
 object FieldType {
-  val values: NonEmptyList[FieldType] =
-    StaticFieldType.values append CustomFieldType.values
+  val values: NonEmptyVector[FieldType] =
+    StaticFieldType.values ++ CustomFieldType.values
 
   implicit val equality: UnivEq[FieldType] = { import AutoDerive._; deriveUnivEq }
 }
@@ -127,8 +127,8 @@ object Field {
 
   def nameP(p: Project) = name(p.customReqTypes.data, p.tags.data)
 
-  def nameAffectingPartitions: NonEmptyList[Partition] =
-    NonEmptyList(Partition.CustomReqTypes, Partition.Tags)
+  def nameAffectingPartitions: NonEmptyVector[Partition] =
+    NonEmptyVector(Partition.CustomReqTypes, Partition.Tags)
 }
 
 import Field.ApplicableReqTypes
@@ -162,14 +162,14 @@ object StaticField {
     "Step Graph", T.StepGraph, useCaseOnly, Mandatory.Not, Deletable, None)
 
   // Non lazy causes utest to crash
-  lazy val values: NonEmptyList[StaticField] =
-    NonEmptyList(NormalAltStepTree, ExceptionStepTree, StepGraph)
+  lazy val values: NonEmptyVector[StaticField] =
+    NonEmptyVector(NormalAltStepTree, ExceptionStepTree, StepGraph)
 
   lazy val (deletable, notDeletable) =
-    values.list.partition(_.deletable ≟ Deletable)
+    values.whole.partition(_.deletable ≟ Deletable)
 
   lazy val names: Set[String] =
-    values.list.map(_.name).toSet
+    values.toStream.map(_.name).toSet
 
   implicit val equality: UnivEq[StaticField] = { import AutoDerive._; deriveUnivEq }
 }

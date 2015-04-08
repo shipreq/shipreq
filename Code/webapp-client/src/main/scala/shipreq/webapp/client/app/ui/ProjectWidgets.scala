@@ -3,8 +3,8 @@ package shipreq.webapp.client.app.ui
 import japgolly.scalacss.ScalaCssReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
-import scalaz.{NonEmptyList, Memo}
-import shipreq.base.util.{Must, UnivEq}
+import scalaz.Memo
+import shipreq.base.util.{NonEmptyVector, Must, UnivEq}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Presentation, Text}
 import shipreq.webapp.client.app.ui.Style.{widgets => *}
@@ -28,10 +28,7 @@ final class ProjectWidgets(project: Project) {
       UI.mustA[Widget, Widget](f(a))(err => ReactComponentB.static("", err).buildU, identity))
 
   def issueO(id: CustomIssueType.Id, desc: Text.InlineIssueDesc.OptionalText): ReactElement =
-    desc match {
-      case Nil    => issue(id)()
-      case h :: t => issue1(id, NonEmptyList.nel(h, t))
-    }
+    NonEmptyVector.maybe(desc, issue(id)(): ReactElement)(issue1(id, _))
 
   val issue = memoM[CustomIssueType.Id]("Issue", id =>
     project.customIssueType(id).map(i =>
@@ -101,7 +98,7 @@ final class ProjectWidgets(project: Project) {
     <.div(tags.map(id => tag(id)(): TagMod): _*)
 
   // TODO move
-  def text1(t: Text.Generic#NonEmptyText, style: TagMod = EmptyTag): ReactElement = text(t.list, style)
+  def text1(t: Text.Generic#NonEmptyText, style: TagMod = EmptyTag): ReactElement = text(t.whole, style)
   def text(t: Text.Generic#OptionalText, style: TagMod = EmptyTag): ReactElement = {
     import Text._
     import Text.Generic._
@@ -113,7 +110,7 @@ final class ProjectWidgets(project: Project) {
       case a: PlainTextMarkup # WebAddress    => <.a(^.href := a.value, a.value)
       case a: PlainTextMarkup # EmailAddress  => <.a(^.href := s"mailto:${a.value}", a.value)
       case a: PlainTextMarkup # MathTeX       => <.span(*.math, ^.dangerouslySetInnerHtml(KaTeX renderToString a.value))
-      case a: ListMarkup      # UnorderedList => <.ul(a.items.list.map(row => <.li(row map atom: _*)): _*)
+      case a: ListMarkup      # UnorderedList => <.ul(a.items.whole.map(row => <.li(row map atom: _*)): _*)
       case a: ReqRef          # ReqRef        => reqRef(a.value)()
       case a: Issue           # Issue         => issueO(a.typ, a.desc)
     }

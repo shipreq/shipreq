@@ -6,7 +6,7 @@ import japgolly.nyaya.test._
 import utest._
 import scalaz.std.AllInstances._
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.base.RandomData
+import shipreq.webapp.base.RandomData, RandomData.CustomGenExt
 import shipreq.webapp.base.data._
 
 object ReqsTest extends TestSuite {
@@ -37,10 +37,10 @@ object ReqsTest extends TestSuite {
 
   def gen: Gen[PubidRegisterProps] =
     for {
-      reqTypeIds ← RandomData.reqTypeId.list1
+      reqTypeIds ← RandomData.reqTypeId.nev
       (pr, reqs) ← RandomData.pubidRegisterAndIds(reqTypeIds)
       req        ← Gen.newOrOld(RandomData.reqId)(reqs)
-      reqType    ← Gen.newOrOld(RandomData.reqTypeId)(reqTypeIds.list)
+      reqType    ← Gen.newOrOld(RandomData.reqTypeId)(reqTypeIds.whole)
     } yield PubidRegisterProps(pr, req, reqType)
 
   override def tests = TestSuite {

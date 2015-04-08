@@ -1,11 +1,11 @@
 package shipreq.webapp.base.data
 
 import monocle.macros.GenLens
-import scalaz.{NonEmptyList, Order, Ordering}
+import scalaz.{Order, Ordering}
 import scalaz.std.anyVal.intInstance
 import scalaz.syntax.order._
 import shapeless.{Generic, :+:, CNil, Coproduct, Inl, Inr, Lazy}
-import shipreq.base.util.{UnivEq, Must}
+import shipreq.base.util.{UnivEq, Must, NonEmptyVector}
 import shipreq.base.util.TaggedTypes._
 import shipreq.webapp.base.TypeclassDerivation._
 import ReqType.Mnemonic
@@ -74,16 +74,16 @@ object StaticReqType {
     override def imp          = ImplicationRequired.Not
   }
 
-  val values: NonEmptyList[StaticReqType] =
-    NonEmptyList(UseCase)
+  val values: NonEmptyVector[StaticReqType] =
+    NonEmptyVector(UseCase)
 
   val valueStream: Stream[StaticReqType] =
-    values.list.toStream
+    values.toStream
 
-  implicit val order = UnivEq.withArbitraryOrder(values.list)
+  implicit val order = UnivEq.withArbitraryOrder(values.whole)
 
   lazy val mnemonics =
-    (UnivEq.emptySet[Mnemonic] /: values.list)(_ ++ _.allMnemonics)
+    values.foldLeft(UnivEq.emptySet[Mnemonic])(_ ++ _.allMnemonics)
 }
 
 

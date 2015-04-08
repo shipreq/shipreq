@@ -1,7 +1,6 @@
 package shipreq.webapp.base.text
 
-import scalaz.NonEmptyList
-import shipreq.base.util.UnivEq
+import shipreq.base.util.{NonEmptyVector, UnivEq}
 import shipreq.webapp.base.data._
 
 object Text {
@@ -18,7 +17,7 @@ object Text {
     case object TagRef        extends AtomType
     case object UnorderedList extends AtomType
 
-    val values = NonEmptyList[AtomType](
+    val values = NonEmptyVector[AtomType](
       Literal, WebAddress, EmailAddress, MathTeX,
       ReqRef, TagRef, Issue,
       NewLine, UnorderedList)
@@ -41,8 +40,8 @@ object Text {
 
   sealed trait Generic {
     sealed trait Atom
-    final type OptionalText = List[Atom]
-    final type NonEmptyText = NonEmptyList[Atom]
+    final type OptionalText = Vector[Atom]
+    final type NonEmptyText = NonEmptyVector[Atom]
 
     implicit def atomEquality[A <: Atom]: UnivEq[A] = UnivEq.force
   }
@@ -62,8 +61,8 @@ object Text {
     }
 
     sealed trait ListMarkup extends Generic {
-      final type ListItem = List[Atom]
-      case class UnorderedList(items: NonEmptyList[ListItem]) extends Atom
+      final type ListItem = Vector[Atom]
+      case class UnorderedList(items: NonEmptyVector[ListItem]) extends Atom
     }
 
     sealed trait PlainTextMarkup extends Generic {

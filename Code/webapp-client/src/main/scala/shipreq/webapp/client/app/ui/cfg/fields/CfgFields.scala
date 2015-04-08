@@ -93,7 +93,7 @@ private[fields] object MainTable {
       case CustomFieldType.Tag         => tag_storesS
     }
 
-  val customFieldStores = CustomFieldType.values.list map storesForType toStream
+  val customFieldStores = CustomFieldType.values.toStream map storesForType
 
   def initialState(p: Props): S = {
     val textFields = Seq.newBuilder[CustomField.Text]
@@ -240,7 +240,7 @@ private[fields] object MainTable {
 
         // Add static fields
         val missingStaticFields: Set[StaticField] =
-          (StaticField.values.list.toSet /: fieldOrder)((q, i) => i.foldId(q - _, _ => q))
+          (StaticField.values.whole.toSet /: fieldOrder)((q, i) => i.foldId(q - _, _ => q))
         missingStaticFields.foreach(f =>
           addChoice(-\/(f), f.name))
 
@@ -562,6 +562,6 @@ private[fields] object MainTable {
         case CustomFieldType.Tag         => tag_renderer
         case CustomFieldType.Implication => impl_renderer
       }
-    val customFieldRenderers = CustomFieldType.values.list map rendererForType toStream
+    val customFieldRenderers = CustomFieldType.values.toStream map rendererForType
   }
 }

@@ -1,8 +1,7 @@
 package shipreq.webapp.base.delta
 
-import scalaz.NonEmptyList
 import upickle.{Reader, Writer}
-import shipreq.base.util.UnivEq
+import shipreq.base.util.{NonEmptyVector, UnivEq}
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.protocol.DataCodecs._
 import shipreq.webapp.base.protocol.ProtocolDataCodecs._
@@ -69,7 +68,7 @@ case object Partition {
   case object Fields           extends AuxC(FieldProtocol.Delta)
   case object Tags             extends AuxO(TagProtocol.PovTag)
 
-  final val values = NonEmptyList[Partition](
+  val values = NonEmptyVector[Partition](
     CustomIssueTypes,
     CustomReqTypes,
     Fields,

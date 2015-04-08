@@ -86,7 +86,7 @@ object CfgReqTypes {
           val norm: t.RowContent = (r.mnemonic.value, r.oldMnemonics, r.name, imp)
           t.row("static", RowStatus.Sync, norm, EmptyTag)(^.key := r.mnemonic.value)
         }
-        StaticReqType.values.list.toStream.map(r => r.mnemonic -> rr(r))
+        StaticReqType.values.toStream.map(r => r.mnemonic -> rr(r))
       }
 
       () => t.table(headerRow, staticRows)

@@ -88,19 +88,19 @@ class WIP {
 
     def fr1Desc = {
       import T.GenericReqDesc._
-      List(
+      Vector(
         EmailAddress("japgolly@gmail.com"), Literal(" is on "), WebAddress("https://github.com"),
-        Literal(" cos of "), ReqRef(mfs(6)), Literal(" "), Issue(1, Nil),
+        Literal(" cos of "), ReqRef(mfs(6)), Literal(" "), Issue(1, Vector.empty),
         MathTeX("c = \\pm\\sqrt{a^2 + b^2}")
       )
     }
     def fr2Desc = {
       val tbd = {
         import T.InlineIssueDesc._
-        List(Literal("Pending "), ReqRef(mfs(26)))
+        Vector(Literal("Pending "), ReqRef(mfs(26)))
       }
       import T.GenericReqDesc._
-      List(Issue(2, tbd))
+      Vector(Issue(2, tbd))
     }
 
     val contentByDsl = (

@@ -20,8 +20,8 @@ import Text.AtomType
 
 object ParsersTest extends TestSuite {
 
-  val counts = AtomType.values.list.map((_, new AtomicInteger)).toMap
-  def count(as: List[Text.Generic#Atom]): Unit =
+  val counts = AtomType.values.toStream.map((_, new AtomicInteger)).toMap
+  def count(as: Iterable[Text.Generic#Atom]): Unit =
     as.foreach { a =>
       val t = AtomType of a
       counts(t).incrementAndGet()

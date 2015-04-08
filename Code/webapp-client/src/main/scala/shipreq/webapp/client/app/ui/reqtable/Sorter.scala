@@ -310,7 +310,7 @@ object Sorter {
   def customTextFieldSorter(id: CustomField.Text.Id): SorterForSMCB =
     textSorter { setup =>
       val data = setup.p.reqFieldData.data.text.getOrElse(id, Map.empty)
-      _.fold(r => data.get(r.req.id).fold[Text.CustomTextField.OptionalText](Nil)(_.list))
+      _.fold(r => data.get(r.req.id).fold[Text.CustomTextField.OptionalText](Vector.empty)(_.whole))
     }
 
   val descSorter: SorterForSMCB =

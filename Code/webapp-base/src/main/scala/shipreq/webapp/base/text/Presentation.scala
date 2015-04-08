@@ -1,8 +1,7 @@
 package shipreq.webapp.base.text
 
 import scala.annotation.tailrec
-import scalaz.NonEmptyList
-import shipreq.base.util.Must
+import shipreq.base.util.{NonEmptyVector, Must}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar => G}
@@ -33,7 +32,7 @@ object Presentation {
       if (_t.isEmpty) None else Some[_t.type](_t)
 
     @inline def net: Option[T#NonEmptyText] =
-      if (_t.isEmpty) None else Some(NonEmptyList.nel(_t.head, _t.tail))
+      NonEmptyVector.option(_t)
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -74,25 +73,25 @@ object Presentation {
   def textToString(implicit p: Project): Generic#OptionalText => String = {
     import Generic._
 
-    def nest(acc: String, newline: String, atoms: List[Generic#Atom]): String = {
-      @tailrec def go(acc: String, atoms: List[Generic#Atom]): String =
-        atoms match {
-          case Nil => acc
-          case h :: t =>
-            val cur = h match {
-              case a: Literal         # Literal       => a.value
-              case a: NewLine         # NewLine       => newline
-              case a: ReqRef          # ReqRef        => reqRef(a.value).unmust
-              case a: Issue           # Issue         => issue(a.typ, a.desc.asOption map run).unmust
-              case a: PlainTextMarkup # WebAddress    => a.value
-              case a: PlainTextMarkup # EmailAddress  => a.value
-              case a: PlainTextMarkup # MathTeX       => G.mathTexSurround(a.value)
-              case a: TagRef          # TagRef        => tagRef(a.value).unmust
-              case a: ListMarkup      # UnorderedList =>
-                val newline2 = newline ~ "  "
-                a.items.list.foldLeft("")((q, li) => nest(s"$q${newline}* ", newline2, li)) ~ newline
-            }
-            go(acc ~ cur, t)
+    def nest(acc: String, newline: String, atoms: Vector[Generic#Atom]): String = {
+      @tailrec def go(acc: String, atoms: Vector[Generic#Atom]): String =
+        if (atoms.isEmpty)
+          acc
+        else {
+          val cur = atoms.head match {
+            case a: Literal         # Literal       => a.value
+            case a: NewLine         # NewLine       => newline
+            case a: ReqRef          # ReqRef        => reqRef(a.value).unmust
+            case a: Issue           # Issue         => issue(a.typ, a.desc.asOption map run).unmust
+            case a: PlainTextMarkup # WebAddress    => a.value
+            case a: PlainTextMarkup # EmailAddress  => a.value
+            case a: PlainTextMarkup # MathTeX       => G.mathTexSurround(a.value)
+            case a: TagRef          # TagRef        => tagRef(a.value).unmust
+            case a: ListMarkup      # UnorderedList =>
+              val newline2 = newline ~ "  "
+              a.items.foldLeft("")((q, li) => nest(s"$q${newline}* ", newline2, li)) ~ newline
+          }
+          go(acc ~ cur, atoms.tail)
         }
 
       go(acc, atoms)

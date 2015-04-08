@@ -1,7 +1,7 @@
 package shipreq.webapp.base.protocol
 
 import japgolly.nyaya.util.{MultiValues, Multimap}
-import scalaz.{OneAnd, NonEmptyList, \&/, \/, -\/, \/-, Name, Need}
+import scalaz.{OneAnd, \&/, \/, -\/, \/-, Name, Need}
 import scalaz.Isomorphism.<=>
 
 import upickle._
@@ -32,8 +32,8 @@ private[protocol] object CodecBase {
     })
 
   // UNSAFE. Make sure tests using exhaustive pattern matching to cover this hierarchy
-  def enum[T: UnivEq](ts: NonEmptyList[T]) = {
-    val table = BiMap(ts.list.zipWithIndex.map(p => p._1 -> ('0' + p._2).toChar.toString).toMap)
+  def enum[T: UnivEq](ts: NonEmptyVector[T]) = {
+    val table = BiMap(ts.whole.zipWithIndex.map(p => p._1 -> ('0' + p._2).toChar.toString).toMap)
     ReadWriter[T](t => Js.Str(table.ab(t)), {
       case Js.Str(k) if table.ba.contains(k) => table.ba(k)
     })
@@ -167,14 +167,14 @@ object GenericCodecs {
       case Js.Arr(a) => Some(readJs[A](a))
     })
 
-  implicit def nonEmptyListR[A: Reader]: Reader[NonEmptyList[A]] =
-    Reader(implicitly[Reader[List[A]]].read andThen (l => NonEmptyList.nel(l.head, l.tail)))
+  implicit def nonEmptyVectorR[A: Reader]: Reader[NonEmptyVector[A]] =
+    Reader(implicitly[Reader[Vector[A]]].read andThen (l => NonEmptyVector(l.head, l.tail)))
 
-  implicit def nonEmptyListW[A: Writer]: Writer[NonEmptyList[A]] =
-    Writer(n => implicitly[Writer[List[A]]] write n.list)
+  implicit def nonEmptyVectorW[A: Writer]: Writer[NonEmptyVector[A]] =
+    Writer(n => implicitly[Writer[Vector[A]]] write n.whole)
 
-//  implicit def nonEmptyListRW[A: Reader: Writer]: ReadWriter[NonEmptyList[A]] =
-//    xmap[NonEmptyList[A], List[A]](_.list)(l => NonEmptyList.nel(l.head, l.tail))
+//  implicit def nonEmptyVectorRW[A: Reader: Writer]: ReadWriter[NonEmptyVector[A]] =
+//    xmap[NonEmptyVector[A], Vector[A]](_.whole)(l => NonEmptyVector(l.head, l.tail))
 
   implicit def disjunction[A: Reader: Writer, B: Reader: Writer]: ReadWriter[A \/ B] =
     ReadWriter[A \/ B]({
@@ -386,7 +386,7 @@ object DataCodecs {
         case a: PlainTextMarkup # WebAddress    => strkeyW (WEBADD,   a.value)
         case a: PlainTextMarkup # EmailAddress  => strkeyW (EMAILADD, a.value)
         case a: PlainTextMarkup # MathTeX       => strkeyW (MATHTEX,  a.value)
-        case a: ListMarkup      # UnorderedList => strkeyW (UL,       a.items)(writeListItemNEL)
+        case a: ListMarkup      # UnorderedList => strkeyW (UL,       a.items)(writeListItemNEV)
         case a: TagRef          # TagRef        => strkeyW (TAGREF,   a.value)
       })
 
@@ -395,7 +395,7 @@ object DataCodecs {
       implicitly
     }
 
-    lazy val writeListItemNEL: Writer[NonEmptyList[ListMarkup#ListItem]] = {
+    lazy val writeListItemNEV: Writer[NonEmptyVector[ListMarkup#ListItem]] = {
       implicit val li = writeListItem
       implicitly
     }
@@ -416,8 +416,8 @@ object DataCodecs {
     }
 
     def readListMarkup(t: ListMarkup)(implicit ra: Name[Reader[t.Atom]]): PR[t.Atom] = {
-      lazy val liNel: Reader[NonEmptyList[t.ListItem]] = nonEmptyListR(readerListItem(t)(ra.value));
-      { case Js.Arr(Js.Str(UL), v) => t.UnorderedList(readJs(v)(liNel)) }
+      lazy val liNev: Reader[NonEmptyVector[t.ListItem]] = nonEmptyVectorR(readerListItem(t)(ra.value));
+      { case Js.Arr(Js.Str(UL), v) => t.UnorderedList(readJs(v)(liNev)) }
     }
 
     def readerListItem(t: ListMarkup)(implicit r: Reader[t.Atom]): Reader[t.ListItem] = implicitly
@@ -478,8 +478,8 @@ object DataCodecs {
     def apply(t: Generic)(pr: (t.type, Name[Reader[t.Atom]]) => PR[t.Atom]): (ReadWriter[t.OptionalText], ReadWriter[t.NonEmptyText]) = {
       type A = t.Atom
       implicit lazy val a: ReadWriter[A] = ReadWriter(writeAny.write, pr(t, Name(a)))
-      val otxt  = mergeRW[List[A]]
-      val netxt = mergeRW[NonEmptyList[A]]
+      val otxt  = mergeRW[Vector[A]]
+      val netxt = mergeRW[NonEmptyVector[A]]
       (otxt, netxt)
     }
   }

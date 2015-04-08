@@ -4,7 +4,7 @@ import scalaz._
 import scalaz.std.AllInstances._
 import scalaz.syntax.bind._
 import scalaz.syntax.semigroup._
-import shipreq.base.util.IMap
+import shipreq.base.util.{NonEmptyVector, IMap, Vector1}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Text
@@ -47,11 +47,11 @@ object ProjectDSL {
 
   def parseCode(s: String): ReqCode = {
     val ns = s.split('.').reverse.map(ReqCode.Node.apply)
-    ReqCode(NonEmptyList.nel(ns.head, ns.tail.toList))
+    ReqCode(NonEmptyVector(ns.head, ns.tail.toVector))
   }
 
   
-  case class GReq(desc   : Text.GenericReqDesc.OptionalText                            = Nil,
+  case class GReq(desc   : Text.GenericReqDesc.OptionalText                            = Vector.empty,
                   id     : Option[GenericReq.Id]                                       = None,
                   reqType: Option[ReqType.Id]                                          = None,
                   alive  : Alive                                                       = Alive,
@@ -85,28 +85,28 @@ object ProjectDSL {
                                  pubids      = pr,
                                  reqs        = p.reqs + req,
                                  reqCodeTrie = codeTrie,
-                                 text        = p.text |+| text,
+                                 text        = p.text ++ text,
                                  tags        = tags,
                                  imps        = imps)
         (p2, req)
       }
   }
 
-  case class Composite(ss: NonEmptyList[Mod[_]], defaultReqType: Option[ReqType]) {
+  case class Composite(ss: NonEmptyVector[Mod[_]], defaultReqType: Option[ReqType]) {
 
     def +(b: GReq): Composite =
-      copy(ss = b.state <:: ss)
+      copy(ss = b.state +: ss)
 
     def state: Mod[Unit] = {
-      var s = ss.list.reduce((a, b) => b >> a).map(_ => ())
+      var s = ss.whole.reduce((a, b) => b >> a).map(_ => ())
       for (rt <- defaultReqType)
         s = State.modify[S](_.copy(defaultReqType = rt)) >> s
       s
     }
 
     def shuffle: Composite = {
-      val x = scala.util.Random.shuffle(ss.list)
-      copy(ss = NonEmptyList.nel(x.head, x.tail))
+      val x = scala.util.Random.shuffle(ss.whole)
+      copy(ss = NonEmptyVector(x.head, x.tail))
     }
 
     def setDefaultReqType(rt: ReqType): Composite =
@@ -119,12 +119,12 @@ object ProjectDSL {
       shuffle.!(p)
   }
 
-  implicit def autoCompositeGReq(g: GReq) = Composite(NonEmptyList(g.state), None)
+  implicit def autoCompositeGReq(g: GReq) = Composite(NonEmptyVector(g.state), None)
 
   implicit def parseCTF(i: String): Text.CustomTextField.NonEmptyText = {
-    if (i.isEmpty) sys.error("Text.CustomTextField can't be empty.") else NonEmptyList(Text.CustomTextField.Literal(i))
+    if (i.isEmpty) sys.error("Text.CustomTextField can't be empty.") else NonEmptyVector(Text.CustomTextField.Literal(i))
   }
 
   implicit def parseGRD(i: String): Text.GenericReqDesc.OptionalText =
-    if (i.isEmpty) Nil else Text.GenericReqDesc.Literal(i) :: Nil
+    if (i.isEmpty) Vector.empty else Vector1(Text.GenericReqDesc.Literal(i))
 }

@@ -60,7 +60,7 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
     val grd = count("Generic Req descs",
       reqs.data.reqs.values.filterT[GenericReq].flatMap(_.desc.toStream))
     val txt = count("Text fields",
-      reqFieldData.data.text.values.toStream.flatMap(_.values.toStream).flatMap(_.list.toStream))
+      reqFieldData.data.text.values.toStream.flatMap(_.values.toStream).flatMap(_.toStream))
     ShowSize.Node.sum("Atoms", grd, txt)
   }
 

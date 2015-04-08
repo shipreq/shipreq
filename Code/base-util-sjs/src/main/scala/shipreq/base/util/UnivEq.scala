@@ -41,7 +41,7 @@ object UnivEq {
       override def order(a: A, b: A) = o.order(a, b)
     }
 
-  def withArbitraryOrder[A](values: List[A]): Order[A] with UnivEq[A] = {
+  def withArbitraryOrder[A](values: Iterable[A]): Order[A] with UnivEq[A] = {
     val fixedOrder = values.zipWithIndex.toMap
     new Order[A] with UnivEq[A] {
       @inline private[this] def int(s: A) = fixedOrder(s)

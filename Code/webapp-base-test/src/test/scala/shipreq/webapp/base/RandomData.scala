@@ -16,7 +16,7 @@ import scalaz.std.set._
 import scalaz.std.stream._
 import scalaz.std.vector._
 
-import shipreq.base.util.{BiMap, IMap}
+import shipreq.base.util.{NonEmptyVector, BiMap, IMap}
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedLong
 import shipreq.base.util.Debug._
@@ -33,6 +33,10 @@ object RandomData {
   type StateG[S, A] = StateT[Gen, S, A]
   implicit def gliftS[S, A](g: Gen[A]): StateG[S, A] = StateT(s => g.map(a => (s,a)))
 
+  implicit class CustomGenExt[A](val g: Gen[A]) extends AnyVal {
+    def nev: GenS[NonEmptyVector[A]] = for {t <- g.vector; h <- g} yield NonEmptyVector(h, t)
+  }
+
   // TODO Move to Nyaya
   implicit class GenSChars0Ext(val g: GenS[List[Char]]) extends AnyVal {
     def string: GenS[String] = g map (_.mkString)
@@ -44,6 +48,9 @@ object RandomData {
     def string: GenS[String] = g.list.string
     def string1: GenS[String] = g.list1.string1
   }
+
+  def oneofV[A](as: NonEmptyVector[A]): Gen[A] =
+    Gen.oneof(as.head, as.tail: _*)
 
   def grammarChars(c: Grammar.Chars): Gen[Char] =
     Gen.charof(c.ch1, c.chn, c.rs: _*)
@@ -137,7 +144,7 @@ object RandomData {
     id map CustomReqType.Id
 
   lazy val staticReqType: Gen[StaticReqType] =
-    Gen.oneofL(StaticReqType.values)
+    oneofV(StaticReqType.values)
 
   lazy val reqTypeId: Gen[ReqType.Id] =
     Gen.oneofG(staticReqType.subst, customReqTypeId.subst)
@@ -167,7 +174,7 @@ object RandomData {
     revAndIMap(customReqType)(d.run)
   }
 
-  val staticReqTypeIdSet = StaticReqType.values.list.toSet[ReqType.Id]
+  val staticReqTypeIdSet = StaticReqType.values.whole.toSet[ReqType.Id]
 
   // -------------------------------------------------------------------------------------------------------------------
   // Tags
@@ -252,10 +259,10 @@ object RandomData {
   // Fields
 
   lazy val staticField: Gen[StaticField] =
-    Gen.oneofL(StaticField.values)
+    oneofV(StaticField.values)
 
   def applicableReqTypes(r: Set[CustomReqType.Id]): Gen[ApplicableReqTypes] = {
-    val all = StaticReqType.values.list.foldLeft(r.map(a => a: ReqType.Id))(_ + _).toList
+    val all = StaticReqType.values.foldLeft(r.map(a => a: ReqType.Id))(_ + _).toList
     val a = Gen.oneof(all.head, all.tail: _*)
     isubset(a, a.set)
   }
@@ -278,7 +285,7 @@ object RandomData {
     grammarStr1(Grammar.fieldRefKey)(_.firstChar, _.allChars, _.length) map FieldRefKey
 
   def customFieldType =
-    Gen.oneofL(CustomFieldType.values)
+    oneofV(CustomFieldType.values)
 
   def customFieldText(art: Gen[ApplicableReqTypes]): Gen[CustomField.Text] =
     Gen.apply6(CustomField.Text.apply)(customFieldTextId, shortText1, fieldRefKey, mandatory, art, alive)
@@ -363,10 +370,10 @@ object RandomData {
       Gen.insert(t.newLine)
 
     def listItem[T <: ListMarkup](g: Name[Gen[T#Atom]]): Gen[T#ListItem] =
-      Gen.insert(g).flatMap(_.value).list.lim(MaxTextAtoms)
+      Gen.insert(g).flatMap(_.value).vector.lim(MaxTextAtoms)
 
-    def listItems[T <: ListMarkup](g: Name[Gen[T#Atom]]): Gen[NonEmptyList[T#ListItem]] =
-      listItem(g).list1.lim(20)
+    def listItems[T <: ListMarkup](g: Name[Gen[T#Atom]]): Gen[NonEmptyVector[T#ListItem]] =
+      listItem(g).nev.lim(20)
 
     def unorderedList(t: ListMarkup)(g: Name[Gen[t.Atom]]): Gen[t.UnorderedList] =
       listItems(g) map t.UnorderedList
@@ -435,7 +442,7 @@ object RandomData {
       g map t.TagRef
 
     def issue(i: Gen[CustomIssueType.Id], r: Option[Gen[Req.Id]])(implicit t: Issue): Gen[t.Issue] =
-      Gen.apply2(t.Issue)(i, inlineIssueDescAtom(r).list)
+      Gen.apply2(t.Issue)(i, inlineIssueDescAtom(r).vector)
 
     def reqTitle(t: ReqTitle)(r: Option[Gen[Req.Id]], i: Option[Gen[CustomIssueType.Id]]): Gen[t.Atom] = {
       @inline implicit def tt: t.type = t
@@ -443,9 +450,8 @@ object RandomData {
       Gen oneofGL gs
     }
 
-    def postProcessAtoms[T <: Text.Generic](as: List[T#Atom]): List[T#Atom] =
-      // TODO Use vectors
-      as.foldRight[List[T#Atom]](Nil)((a0, q) => {
+    def postProcessAtoms[T <: Text.Generic](as: Vector[T#Atom]): Vector[T#Atom] =
+      as.foldLeft[Vector[T#Atom]](Vector.empty)((q, a0) => {
         import Text.Generic.{PlainTextMarkup => PTM}
         import Text.Generic._
 
@@ -454,27 +460,27 @@ object RandomData {
           case o => o
         }
 
-        if (q.isEmpty) a :: q
-        else (a, q.head) match {
+        if (q.isEmpty) q :+ a
+        else (q.last, a) match {
 
-          case (x: Literal#Literal , y: Literal#Literal ) => x.map(_ + y.value) :: q.tail
-          case (x: Literal#Literal , y: PTM#EmailAddress) => x.map(_ + " ") :: y :: q.tail
-          case (x: Literal#Literal , y: PTM#WebAddress  ) => x.map(_ + " ") :: y :: q.tail
-          case (x: PTM#EmailAddress, y: Literal#Literal ) => x :: y.map(" " + _) :: q.tail
-          case (x: PTM#EmailAddress, _: PTM#EmailAddress) => x :: q.tail
-          case (x: PTM#EmailAddress, _: PTM#WebAddress  ) => x :: q.tail
-          case (x: PTM#WebAddress  , y: Literal#Literal ) => x :: y.map(" " + _) :: q.tail
-          case (x: PTM#WebAddress  , _: PTM#EmailAddress) => x :: q.tail
-          case (x: PTM#WebAddress  , _: PTM#WebAddress  ) => x :: q.tail
-          case (_: PTM#WebAddress  , y: Issue#Issue     ) => y :: q.tail
+          case (x: Literal#Literal , y: Literal#Literal ) => q :+ x.map(_ + y.value)
+          case (x: Literal#Literal , y: PTM#EmailAddress) => q :+ x.map(_ + " ") :+ y
+          case (x: Literal#Literal , y: PTM#WebAddress  ) => q :+ x.map(_ + " ") :+ y
+          case (x: PTM#EmailAddress, y: Literal#Literal ) => q :+ x :+ y.map(" " + _)
+          case (x: PTM#EmailAddress, _: PTM#EmailAddress) => q :+ x
+          case (x: PTM#EmailAddress, _: PTM#WebAddress  ) => q :+ x
+          case (x: PTM#WebAddress  , y: Literal#Literal ) => q :+ x :+ y.map(" " + _)
+          case (x: PTM#WebAddress  , _: PTM#EmailAddress) => q :+ x
+          case (x: PTM#WebAddress  , _: PTM#WebAddress  ) => q :+ x
+          case (_: PTM#WebAddress  , y: Issue#Issue     ) => q :+ y
 
-          case _ => a :: q
+          case _ => q :+ a
         }
       })
 
-    def postProcessAtoms1[T <: Text.Generic](as: NonEmptyList[T#Atom]): NonEmptyList[T#Atom] = {
-      val l = postProcessAtoms(as.list)
-      NonEmptyList.nel(l.head, l.tail)
+    def postProcessAtoms1[T <: Text.Generic](as: NonEmptyVector[T#Atom]): NonEmptyVector[T#Atom] = {
+      val r = postProcessAtoms(as.whole)
+      NonEmptyVector(r.head, r.tail)
     }
 
     // Specific text types
@@ -502,11 +508,11 @@ object RandomData {
   val MaxTextAtomsInProject = 6 `JVM|JS` 2
 
   implicit class TextGenExt[T <: Text.Generic](val g: Gen[T#Atom]) extends AnyVal {
-    def text : GenS[T#OptionalText] = g.list  lim MaxTextAtoms map TextGen.postProcessAtoms
-    def text1: GenS[T#NonEmptyText] = g.list1 lim MaxTextAtoms map TextGen.postProcessAtoms1
+    def text : GenS[T#OptionalText] = g.vector lim MaxTextAtoms map TextGen.postProcessAtoms
+    def text1: GenS[T#NonEmptyText] = g.nev    lim MaxTextAtoms map TextGen.postProcessAtoms1
 
-    def ptext : GenS[T#OptionalText] = g.list  lim MaxTextAtomsInProject map TextGen.postProcessAtoms
-    def ptext1: GenS[T#NonEmptyText] = g.list1 lim MaxTextAtomsInProject map TextGen.postProcessAtoms1
+    def ptext : GenS[T#OptionalText] = g.vector lim MaxTextAtomsInProject map TextGen.postProcessAtoms
+    def ptext1: GenS[T#NonEmptyText] = g.nev    lim MaxTextAtomsInProject map TextGen.postProcessAtoms1
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -520,9 +526,9 @@ object RandomData {
     Gen.oneofG(genericReqId)
   }
 
-  def pubidS(reqTypeIds: NonEmptyList[ReqType.Id])(reqId: Req.Id): StateG[Pubid.Register, Pubid] =
+  def pubidS(reqTypeIds: NonEmptyVector[ReqType.Id])(reqId: Req.Id): StateG[Pubid.Register, Pubid] =
     StateT(register =>
-      Gen.oneofL(reqTypeIds).map(reqTypeId =>
+      oneofV(reqTypeIds).map(reqTypeId =>
         Pubid.alloc(reqId, reqTypeId, register)))
 
   def genericReqIdS(pubidS: Req.Id => StateG[Pubid.Register, Pubid]): StateG[Pubid.Register, Req.Id] =
@@ -555,10 +561,10 @@ object RandomData {
     }
   }
 
-  def pubidRegisterAndIds(reqTypeIds: NonEmptyList[ReqType.Id]): GenS[(Pubid.Register, Set[Req.Id])] =
+  def pubidRegisterAndIds(reqTypeIds: NonEmptyVector[ReqType.Id]): GenS[(Pubid.Register, Set[Req.Id])] =
     pubidRegisterAnd(Set.empty[Req.Id], genericReqIdS(pubidS(reqTypeIds)))(_ + _)
 
-  def requirements(reqTypeIds: NonEmptyList[ReqType.Id],
+  def requirements(reqTypeIds: NonEmptyVector[ReqType.Id],
                    genIssueType: Option[Gen[CustomIssueType.Id]]): GenS[Requirements] =
     pubidRegisterAnd(Req.IdAccess.emptyIMap, genericReqS(pubidS(reqTypeIds), genIssueType))(_ + _)
       .map { case (pr, reqs) => Requirements(reqs, pr) }
@@ -634,7 +640,7 @@ object RandomData {
       .map(cs => ReqCode.Node(cs.list.mkString))
 
   lazy val reqCode: GenS[ReqCode] =
-    reqCodeNode.list1.map(ReqCode.apply)
+    reqCodeNode.nev.map(ReqCode.apply)
 
   lazy val reqCodeDFixer = {
     def fix(ss: Set[ReqCode]): ReqCode = {
@@ -642,7 +648,7 @@ object RandomData {
       while (ss contains c) {
         val n1 = c.backwards.head
         val n2 = ReqCode.Node(n1.value + "x")
-        c = ReqCode(NonEmptyList.nel(n2, c.backwards.tail))
+        c = ReqCode(NonEmptyVector(n2, c.backwards.tail))
       }
       c
     }
@@ -683,8 +689,8 @@ object RandomData {
       (issues, tags) ← Gen.tuple2(customIssueTypes, revAndTagTree) map distinctHashRefKeys.run
       cissueIds      = issues.data.keySet
       reqtypes       ← customReqTypes
-      reqTypeIds     = StaticReqType.values :::> reqtypes.data.keys.toList
-      reqTypeIdSet   = reqTypeIds.list.toSet
+      reqTypeIds     = StaticReqType.values ++ reqtypes.data.keys
+      reqTypeIdSet   = reqTypeIds.whole.toSet
       fields         ← revAnd(fieldSet(reqTypeIdSet, tags.data.keySet, reqtypes.data.keySet))
       reqs           ← revAnd(requirements(reqTypeIds, Gen.oneofO(cissueIds.toSeq)))
       reqCodes       ← reqCodes(reqCodeTrie(reqs.data.reqs.keys.toSeq).lim(22 `JVM|JS` 8)) // TODO add SHRs
@@ -701,7 +707,7 @@ object RandomData {
     import Gen.Covariance._
 
     lazy val deletionAction =
-      Gen.oneofL(DeletionAction.values)
+      oneofV(DeletionAction.values)
 
     lazy val reqTypeId: Gen[ReqType.Id] =
       Gen.oneofG(customReqTypeId, staticReqType)

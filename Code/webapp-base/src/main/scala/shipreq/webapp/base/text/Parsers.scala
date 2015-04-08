@@ -1,7 +1,8 @@
 package shipreq.webapp.base.text
 
 import org.parboiled2._
-import scalaz.{NonEmptyList, \/, -\/, \/-}
+import shipreq.base.util.NonEmptyVector
+import scalaz.{\/, -\/, \/-}
 import shapeless._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
@@ -93,27 +94,28 @@ object Parsers {
     )
 
     def nonEmptyText(token: () => Rule1[t.Atom]): Rule1[t.NonEmptyText] = rule(
-      (token().~>(\/-(_)) | literal).+ ~> (consolidate(_: Seq[Char \/ t.Atom]) |> forceNEL)
+      (token().~>(\/-(_)) | literal).+ ~> (consolidate(_: Seq[Char \/ t.Atom]) |> forceNEV)
     )
 
-    def forceNEL[A](as: List[A]): NonEmptyList[A] =
-      NonEmptyList.nel(as.head, as.tail)
+    def forceNEV[A](as: Vector[A]): NonEmptyVector[A] = // TODO No
+      NonEmptyVector(as.head, as.tail)
 
     def consolidate(cs: Seq[Char \/ t.Atom]): t.OptionalText = {
-      var lit = List.empty[Char]
+      var lit = Vector.empty[Char]
 
       def prependLit(tail: t.OptionalText): t.OptionalText =
         if (lit.isEmpty) tail else {
           val l = t.Literal(lit.mkString)
-          lit = Nil
-          l :: tail
+          lit = Vector.empty
+          l +: tail
         }
 
       val x =
-        cs.foldRight[t.OptionalText](Nil)((c, q) =>
+      // TODO use foldLeft
+        cs.foldRight[t.OptionalText](Vector.empty)((c, q) =>
           c match {
-            case -\/(ch) => lit ::= ch; q
-            case \/-(to) => to :: prependLit(q)
+            case -\/(ch) => lit :+= ch; q
+            case \/-(to) => to +: prependLit(q)
           }
         )
 
@@ -177,7 +179,7 @@ object Parsers {
     def issueRef: RuleAB[HashRefTarget, t.Issue] = {
       def id = runPF[HashRefTarget, CustomIssueType.Id] { case \/-(i) => i.id }
       def desc = rule(surround(G.issueDescSurround) ~> ((i: String) => new InlineIssueDescParser(project, i).main.run().get))
-      def optionalDesc = rule(desc ~> (_.list) | push(Nil))
+      def optionalDesc = rule(desc ~> (_.whole) | push(Vector.empty))
       rule(run(id) ~ optionalDesc ~> t.Issue)
     }
   }

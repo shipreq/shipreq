@@ -5,31 +5,12 @@ import scala.reflect.ClassTag
 import scalaz.OneAnd
 import scalaz.syntax.equal._
 import scalaz.syntax.semigroup._
-import shipreq.base.util.{UnivEq, NonEmptyVector}, NonEmptyVector.NEVOps
+import shipreq.base.util.{UnivEq, NonEmptyVector, Vector1}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import DataImplicits._
 
 private[reqtable] object Logic {
-
-  @inline def Vector1[A](a: A) = Vector.empty[A] :+ a
-
-  @inline def nev[A](h: A, t: Vector[A] = Vector.empty): NonEmptyVector[A] =
-    OneAnd[Vector, A](h, t)
-
-  @inline implicit class NonEmptyVectorFor[A](val self: NonEmptyVector[A]) extends AnyVal {
-    def flatMap[B](f: A => NonEmptyVector[B]): NonEmptyVector[B] = {
-      val h = f(self.head)
-      val t = self.tail.flatMap(a => f(a).whole)
-      nev(h.head, h.tail ++ t)
-    }
-
-    def map[B](f: A => B): NonEmptyVector[B] = {
-      val h = f(self.head)
-      val t = self.tail map f
-      nev(h, t)
-    }
-  }
 
   // ===================================================================================================================
   // Expansion
@@ -38,10 +19,10 @@ private[reqtable] object Logic {
   private type Expander[A] = (() => Set[A]) => Expanded[A]
 
   private final val emptyExpansions: NonEmptyVector[Expansion] =
-    nev(Expansion.none)
+    NonEmptyVector(Expansion.none)
 
   @inline private def emptyExpanded[A]: Expanded[A] =
-    nev(Vector.empty)
+    NonEmptyVector(Vector.empty)
 
   @inline private def isEmptyExp[A](e: Expanded[A]): Boolean =
     e.head.isEmpty && e.tail.isEmpty
@@ -66,10 +47,10 @@ private[reqtable] object Logic {
 
     def doExpand: Expander[A] =
       nonEmpty((h, t) =>
-        nev(Vector1(h), t map Vector1))
+        NonEmptyVector(Vector1(h), t map Vector1))
 
     def dontExpand: Expander[A] =
-      nonEmpty((h, t) => nev(h +: t))
+      nonEmpty((h, t) => NonEmptyVector(h +: t))
 
     if (visible) {
       if (expand) doExpand else dontExpand
@@ -129,7 +110,7 @@ private[reqtable] object Logic {
     type M = Map[K, Vector[V]]
     def go(keys: Vector[K], cur: M, r: Vector[M]): NonEmptyVector[M] =
       if (keys.isEmpty)
-        nev(cur, r)
+        NonEmptyVector(cur, r)
       else {
         val k  = keys.head
         val ks = keys.tail

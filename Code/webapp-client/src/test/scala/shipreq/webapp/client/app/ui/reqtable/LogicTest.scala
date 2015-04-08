@@ -446,7 +446,7 @@ object LogicTest extends TestSuite {
       val p = GReq() + t("HAHA", "zz") + t("", "f") + t("d", "") + t("Abc", "g") !! P
       val d = p.reqFieldData.data.text(notes)
       val s = Presentation.textToString(p)
-      val fmtRows = rowsToStr(r => d.get(r.req.id).fold(z)(_.list |> s))
+      val fmtRows = rowsToStr(r => d.get(r.req.id).fold(z)(_.whole |> s))
       testCB(p, C.CustomField(notes), fmtRows)(allSortsCB(z, 2)(_ + sep + _,
         asc  = "Abc  d  HAHA",
         desc = "HAHA  d  Abc"))
