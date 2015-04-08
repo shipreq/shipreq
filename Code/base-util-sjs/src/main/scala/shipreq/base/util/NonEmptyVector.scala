@@ -25,6 +25,9 @@ final class NonEmptyVector[+A](val head: A, val tail: Vector[A]) {
     tail foreach f
   }
 
+  def exists(f: A => Boolean): Boolean =
+    f(head) || tail.exists(f)
+
   @inline def mapTail[B >: A](f: Vector[A] => Vector[B]): NonEmptyVector[B] =
     NonEmptyVector(head, f(tail))
 
@@ -57,6 +60,9 @@ final class NonEmptyVector[+A](val head: A, val tail: Vector[A]) {
 
   def reduceMapLeft1[B](f: A => B)(g: (B, B) => B): B =
     foldMapLeft1(f)((b, a) => g(b, f(a)))
+
+  def reduce[B >: A](f: (B, B) => B): B =
+    reduceMapLeft1[B](a => a)(f)
 
   @inline def toStream = whole.toStream
 }

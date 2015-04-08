@@ -1,7 +1,6 @@
 package shipreq.webapp.client.app.ui.reqtable
 
-import scalaz.NonEmptyList
-import shipreq.base.util.UnivEq
+import shipreq.base.util.{NonEmptyVector, UnivEq}
 import shipreq.base.util.ScalaExt._
 
 sealed trait SortMethod {
@@ -87,8 +86,8 @@ object SortMethod {
   @inline implicit def equality  : UnivEq[SortMethod]     = UnivEq.force
 
   // Lazy due to initialisation order. https://github.com/scala-js/scala-js/issues/1490
-  lazy val ignoreBlanks   = NonEmptyList[IgnoreBlanks](Asc, Desc)
-  lazy val considerBlanks = NonEmptyList[ConsiderBlanks](AscThenBlanks, BlanksThenAsc, BlanksThenDesc, DescThenBlanks)
+  lazy val ignoreBlanks   = NonEmptyVector[IgnoreBlanks](Asc, Desc)
+  lazy val considerBlanks = NonEmptyVector[ConsiderBlanks](AscThenBlanks, BlanksThenAsc, BlanksThenDesc, DescThenBlanks)
 
   def resolverIB[A](f: (IgnoreBlanks with AscHalf) => A)(reverse: A => A): IgnoreBlanks => A = {
     case Asc  => f(Asc)

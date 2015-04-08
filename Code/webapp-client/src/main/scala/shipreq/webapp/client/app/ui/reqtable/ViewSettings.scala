@@ -2,9 +2,10 @@ package shipreq.webapp.client.app.ui.reqtable
 
 import monocle.macros.Lenses
 import scalaz.syntax.equal._
+import shipreq.base.util.NonEmptyVector
 
 @Lenses
-case class ViewSettings(columns: Vector[Column],
+case class ViewSettings(columns: NonEmptyVector[Column],
                         order  : SortCriteria) {
 
   def isVisible(c: Column): Boolean =
@@ -22,5 +23,5 @@ case class ViewSettings(columns: Vector[Column],
 
 object ViewSettings {
   def default =
-    ViewSettings(Column.builtInValues.list.toVector, SortCriteria.default)
+    ViewSettings(Column.builtInValues, SortCriteria.default)
 }

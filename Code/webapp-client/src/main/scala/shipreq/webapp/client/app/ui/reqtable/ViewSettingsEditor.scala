@@ -1,7 +1,7 @@
 package shipreq.webapp.client.app.ui.reqtable
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
-import shipreq.base.util.UnivEq
+import shipreq.base.util.{NonEmptyVector, UnivEq}
 import shipreq.webapp.client.util._
 
 object ViewSettingsEditor {
@@ -26,7 +26,7 @@ object ViewSettingsEditor {
       val p = $.props
       val vs = p.value
 
-      def setColumns(cs: Vector[Column]): ViewSettings = {
+      def setColumns(cs: NonEmptyVector[Column]): ViewSettings = {
         val icols = cs.foldLeft(UnivEq.emptySet[Column.SortInconclusive])((q, c) => c match {
           case i: Column.SortInconclusive => q + i
           case _: Column.SortConclusive   => q
@@ -38,7 +38,7 @@ object ViewSettingsEditor {
         columnsEditor.render(vs.columns, p.set compose setColumns)
 
       def sortCriteria =
-        SortCriteriaEditor.Props(vs.order, vs.columns.toSet, columnName, p setL ViewSettings.order).component
+        SortCriteriaEditor.Props(vs.order, vs.columns.whole.toSet, columnName, p setL ViewSettings.order).component
 
       <.table(
         <.thead(

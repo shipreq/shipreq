@@ -1,9 +1,7 @@
 package shipreq.webapp.client.app.ui.reqtable
 
+import shipreq.base.util.{NonEmptyVector, Must, IMap, UnivEq}
 import shipreq.webapp.base.data.Project
-
-import scalaz.NonEmptyList
-import shipreq.base.util.{Must, IMap, UnivEq}
 import shipreq.webapp.base.{UiText, data}
 import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.client.util.Reusable
@@ -47,8 +45,8 @@ object Column {
   @inline implicit def equality   : UnivEq[Column]                          = UnivEq.force
   @inline implicit def reusability: Reusable[Column]                        = Reusable.byUnivEq
 
-  val builtInValues: NonEmptyList[BuiltIn] =
-    NonEmptyList(Pubid, Code, Desc, ReqType, Tags, ImplicationSrc, ImplicationTgt)
+  val builtInValues: NonEmptyVector[BuiltIn] =
+    NonEmptyVector(Pubid, Code, Desc, ReqType, Tags, ImplicationSrc, ImplicationTgt)
 
   val mandatory: Column => Boolean = {
     case Pubid
@@ -83,6 +81,6 @@ object Column {
     }
   }
 
-  def all(customFieldsIds: TraversableOnce[data.CustomField.Id]): Vector[Column] =
-    customFieldsIds.toVector.map(CustomField) ++ builtInValues.list
+  def all(customFieldsIds: TraversableOnce[data.CustomField.Id]): NonEmptyVector[Column] =
+    customFieldsIds.toVector.map(CustomField) ++: builtInValues
 }

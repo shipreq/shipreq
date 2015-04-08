@@ -354,7 +354,7 @@ object Sorter {
    */
   def sortUnspecified(vs: ViewSettings): RowModFn = {
     val fns =
-      vs.columns
+      vs.columns.whole
         .filterT[C.SortInconclusive]
         .filterNot(vs.isOrdered)
         .map({

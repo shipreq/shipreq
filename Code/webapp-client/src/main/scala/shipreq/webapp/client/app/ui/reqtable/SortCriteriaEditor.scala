@@ -82,7 +82,7 @@ object SortCriteriaEditor {
           val choice  = (sc: SC) => Choice[OSM](\/-(sc), sc.method.optionLabel, false)
           val choices = SortCriterion.possibilitiesI(c) map choice
           val unused  = Choice[OSM](-\/(c), "Unused", false) // English
-          unused +: choices.list.toVector
+          unused +: choices.whole
         }
 
       private val smSelectComponent = SelectOne.Component[OSM]
@@ -146,9 +146,8 @@ object SortCriteriaEditor {
       type ModIO = EndoFn[SC] => IO[Unit]
 
       private val smChoices: Vector[Choice[SM]] =
-        SortMethod.ignoreBlanks.list.map(m =>
-          Choice[SM](m, m.optionLabel, false)
-        ).toVector
+        SortMethod.ignoreBlanks.whole.map(m =>
+          Choice[SM](m, m.optionLabel, false))
 
       private val smSelectComponent = SelectOne.Component[SM]
 

@@ -1,9 +1,8 @@
 package shipreq.webapp.client.app.ui.reqtable
 
-import scalaz.NonEmptyList
 import scalaz.syntax.equal._
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.UnivEq
+import shipreq.base.util.{NonEmptyVector, UnivEq}
 import shipreq.webapp.base.TypeclassDerivation._
 
 sealed trait SortCriterion {
@@ -39,13 +38,13 @@ object SortCriterion {
   @inline implicit def equalityC  : UnivEq[Conclusive]     = deriveUnivEq
   @inline implicit def equality   : UnivEq[SortCriterion]  = deriveUnivEq
 
-  def possibilitiesICB(c: SortInconclusive with HasBlanks): NonEmptyList[InconclusiveCB] =
+  def possibilitiesICB(c: SortInconclusive with HasBlanks): NonEmptyVector[InconclusiveCB] =
     SortMethod.considerBlanks.map(InconclusiveCB(c, _))
 
-  def possibilitiesIIB(c: SortInconclusive with NoBlanks): NonEmptyList[InconclusiveIB] =
+  def possibilitiesIIB(c: SortInconclusive with NoBlanks): NonEmptyVector[InconclusiveIB] =
     SortMethod.ignoreBlanks.map(InconclusiveIB(c, _))
 
-  def possibilitiesI(c: SortInconclusive): NonEmptyList[Inconclusive] = c match {
+  def possibilitiesI(c: SortInconclusive): NonEmptyVector[Inconclusive] = c match {
     case d: SortInconclusive with HasBlanks => possibilitiesICB(d)
     case d: SortInconclusive with NoBlanks  => possibilitiesIIB(d)
   }

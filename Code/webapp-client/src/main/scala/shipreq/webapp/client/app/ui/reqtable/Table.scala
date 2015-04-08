@@ -11,26 +11,27 @@ import scalaz.std.anyVal.intInstance
 import scalaz.syntax.equal._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.effect.IoUtils.{nop, IoExt}
+import shipreq.base.util.NonEmptyVector
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
 import shipreq.webapp.client.util._
 
 object Table {
 
-  implicit val reuseCEs : Reusable[ColumnEditors]          = Reusable.byRef
-  implicit val reuseCRs : Reusable[Vector[ColumnRenderer]] = Reusable.byRef
-  implicit val reuseRows: Reusable[Vector[Row]]            = Reusable.byRef
-  implicit val reuseRow : Reusable[Row]                    = Reusable.byRef
-  implicit val reuseVSs : Reusable[ViewSettings]           = Reusable.byRef
-  implicit val reuseCNR : Reusable[Column.NameResolver]    = Reusable.byRef
-  implicit val reuseCTS : Reusable[Cell.TableState]        = Reusable.byRef
-  implicit val reuseCRS : Reusable[Cell.RowState]          = Reusable.byRef
+  implicit val reuseCEs : Reusable[ColumnEditors]                  = Reusable.byRef
+  implicit val reuseCRs : Reusable[NonEmptyVector[ColumnRenderer]] = Reusable.byRef
+  implicit val reuseRows: Reusable[Vector[Row]]                    = Reusable.byRef
+  implicit val reuseRow : Reusable[Row]                            = Reusable.byRef
+  implicit val reuseVSs : Reusable[ViewSettings]                   = Reusable.byRef
+  implicit val reuseCNR : Reusable[Column.NameResolver]            = Reusable.byRef
+  implicit val reuseCTS : Reusable[Cell.TableState]                = Reusable.byRef
+  implicit val reuseCRS : Reusable[Cell.RowState]                  = Reusable.byRef
 
   implicit val propContent = Reusable.caseclass3(Content.unapply)
   implicit val propFocus   = Reusable.caseclass3(Focus.unapply)
   implicit val propReuse   = Reusable.caseclass4(Props.unapply)
 
-  case class Content(crs: Vector[ColumnRenderer], rows: Vector[Row], ces: ColumnEditors)
+  case class Content(crs: NonEmptyVector[ColumnRenderer], rows: Vector[Row], ces: ColumnEditors)
 
   case class Focus(rowInd: Int, col: Column, content: Content) {
     @inline def row(rows: Vector[Row]): Option[Row] =
@@ -113,7 +114,7 @@ object Table {
       }
 
       def focusShiftCol(add: Int) = focusMod { f =>
-        val cs = $.props.content.crs
+        val cs = $.props.content.crs.whole
         val i = cs.indexWhere(_.column ≟ f.col)
         val j = limit(i + add, cs.size - 1)
         val c = cs(j).column
@@ -169,7 +170,7 @@ object Table {
       <.table(*.table,
         <.thead(
           <.tr(
-            crs.map(cr =>
+            crs.toStream.map(cr =>
               <.th(
                 cr.columnStyle,
                 cr.header)))),
@@ -182,7 +183,7 @@ object Table {
   implicit val rowPropReuse = Reusable.caseclass5(RowProps.unapply)
 
   case class RowProps(row     : Row,
-                      crs     : Vector[ColumnRenderer],
+                      crs     : NonEmptyVector[ColumnRenderer],
                       cells   : Cell.RowState,
                       focus   : Option[Column],
                       setFocus: Column ~=> IO[Unit])
@@ -191,7 +192,7 @@ object Table {
     ReactComponentB[RowProps]("Row")
       .render(p =>
         <.tr(
-          p.crs.map { cr =>
+          p.crs.toStream.map { cr =>
             val col = cr.column
             <.td(
               *.cell(p.focus.exists(_ ≟ col)),

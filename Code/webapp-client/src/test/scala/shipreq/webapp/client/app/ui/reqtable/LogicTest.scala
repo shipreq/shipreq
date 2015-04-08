@@ -3,6 +3,7 @@ package shipreq.webapp.client.app.ui.reqtable
 import japgolly.nyaya._
 import japgolly.nyaya.test._
 import japgolly.nyaya.util.Multimap
+import shipreq.base.util.NonEmptyVector
 import shipreq.webapp.base.text.Presentation
 import scala.reflect.ClassTag
 import scalaz.{\/, \/-, -\/, Equal}
@@ -142,7 +143,7 @@ object LogicTest extends TestSuite {
       this.vs.order.copy(init = Vector(c))
 
     def gatherOn(c: C.SortInconclusive, sc: SortCriteria): Stream[Row] =
-      if (vs isVisible c) gathered else Logic.gather(ViewSettings(Vector(c), sc), p)
+      if (vs isVisible c) gathered else Logic.gather(ViewSettings(NonEmptyVector(c), sc), p)
 
     def sortCriAndGather(c: SC.Inconclusive) =
       sortCri(c).mapStrengthR(gatherOn(c.column, _))
@@ -271,13 +272,13 @@ object LogicTest extends TestSuite {
     private type Rows = Stream[Row]
 
     private def testUnsorted[A: Equal](p: Project, c: C.SortInconclusive, extract: Rows => A)(expect: A): Unit = {
-      val vs = ViewSettings(Vector(c), SortCriteria.default.copy(init = Vector.empty))
+      val vs = ViewSettings(NonEmptyVector(c), SortCriteria.default.copy(init = Vector.empty))
       val r = Logic.gather(vs, p) |> Logic.sort(vs, p)
       assertEq(extract(r), expect)
     }
 
     private def vsSortedByCB(c: C.SortInconclusive with C.HasBlanks, sm: ConsiderBlanks): ViewSettings =
-      ViewSettings(Vector(c), SortCriteria.default.copy(init = Vector(SC.InconclusiveCB(c, sm))))
+      ViewSettings(NonEmptyVector(c), SortCriteria.default.copy(init = Vector(SC.InconclusiveCB(c, sm))))
 
     private def testCB[A: Equal](p: Project, c: C.SortInconclusive with C.HasBlanks, extract: Rows => A)(tests: Seq[(ConsiderBlanks, A)]) =
       for ((sm, expect) <- tests) {
@@ -295,7 +296,7 @@ object LogicTest extends TestSuite {
     }
 
     private def vsSortedByIB(c: C.SortInconclusive with C.NoBlanks, sm: IgnoreBlanks): ViewSettings =
-      ViewSettings(Vector(c), SortCriteria.default.copy(init = Vector(SC.InconclusiveIB(c, sm))))
+      ViewSettings(NonEmptyVector(c), SortCriteria.default.copy(init = Vector(SC.InconclusiveIB(c, sm))))
 
     private def testIB[A: Equal](p: Project, c: C.SortInconclusive with C.NoBlanks, extract: Rows => A)(tests: Seq[(IgnoreBlanks, A)]) =
       for ((sm, expect) <- tests) {

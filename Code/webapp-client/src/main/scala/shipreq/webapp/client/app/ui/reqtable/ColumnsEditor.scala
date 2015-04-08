@@ -1,6 +1,7 @@
 package shipreq.webapp.client.app.ui.reqtable
 
 import scalaz.effect.IO
+import shipreq.base.util.NonEmptyVector
 import shipreq.webapp.client.app.ui.OrderedSubsetEditor
 import shipreq.webapp.client.app.ui.Style
 
@@ -11,16 +12,17 @@ object ColumnsEditor {
 final class ColumnsEditor(columnName: Column.NameResolver) {
 
   val allColumns: Vector[Column] =
-    Column.all(columnName.customFields.keys)
+    Column.all(columnName.customFields.keys).whole
 
-  def render(_value: Vector[Column], _change: Vector[Column] => IO[Unit]) = {
-    val p = OrderedSubsetEditor.Props[Column](value     = _value,
+  def render(_value: NonEmptyVector[Column], _change: NonEmptyVector[Column] => IO[Unit]) = {
+    val _change2: Vector[Column] => IO[Unit] =
+      v => NonEmptyVector.maybe(v, IO(()))(_change)
+    val p = OrderedSubsetEditor.Props[Column](value     = _value.whole,
                                               all       = allColumns,
                                               label     = columnName.fn,
                                               mandatory = Column.mandatory,
-                                              change    = _change,
+                                              change    = _change2,
                                               styles    = Style.reqtable.columnSettings.prop)
     ColumnsEditor.Component(p)
   }
 }
-

@@ -2,22 +2,24 @@ package shipreq.webapp.client.app.ui.reqtable
 
 import japgolly.nyaya.test._
 import scalaz.std.vector._
+import shipreq.base.util.NonEmptyVector
 import shipreq.base.util.ScalaExt._
+import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 
 object ReqTableTest {
 
-  def rndColumns(p: Project): Gen[Vector[Column]] = {
-    val allPossibleColumns    = Column.all(p.fields.data.customFields.keys)
+  def rndColumns(p: Project): Gen[NonEmptyVector[Column]] = {
+    val allPossibleColumns    = Column.all(p.fields.data.customFields.keys).whole
     val (mandatory, optional) = allPossibleColumns partition Column.mandatory
-    Gen.subset(optional).map(_ ++ mandatory).shuffle
+    Gen.subset(optional).map(_ ++ mandatory).shuffle.map(cs => NonEmptyVector(cs.head, cs.tail))
   }
 
   def rndSortMethodI: Gen[SortMethod.IgnoreBlanks] =
-    Gen.oneofL(SortMethod.ignoreBlanks)
+    RandomData.oneofV(SortMethod.ignoreBlanks)
 
   def rndSortMethodB: Gen[SortMethod.ConsiderBlanks] =
-    Gen.oneofL(SortMethod.considerBlanks)
+    RandomData.oneofV(SortMethod.considerBlanks)
 
   def rndSortCriteriaC: Gen[SortCriterion.Conclusive] =
     rndSortMethodI.map(SortCriterion.Conclusive(Column.Pubid, _))
@@ -29,7 +31,7 @@ object ReqTableTest {
   def rndSortCriteriaI(legalCols: Vector[Column.SortInconclusive]): Gen[Vector[SortCriterion.Inconclusive]] =
     Gen.subset(legalCols).shuffle.flatMap(cs =>
       Gen.sequence(cs.map(c =>
-        Gen.oneofL(SortCriterion possibilitiesI c))))
+        RandomData.oneofV(SortCriterion possibilitiesI c))))
 
   def rndSortCriteria(gi: Gen[Vector[SortCriterion.Inconclusive]]): Gen[SortCriteria] =
     Gen.apply2(SortCriteria.apply)(gi, rndSortCriteriaC)
@@ -37,7 +39,7 @@ object ReqTableTest {
   def rndViewSettings(p: Project): Gen[ViewSettings] =
     for {
       cols  ← rndColumns(p)
-      icols = cols.filterT[Column.SortInconclusive].toVector
+      icols = cols.whole.filterT[Column.SortInconclusive].toVector
       order ← rndSortCriteria(rndSortCriteriaI(icols))
     } yield ViewSettings(cols, order)
 
