@@ -460,19 +460,25 @@ object RandomData {
           case o => o
         }
 
+        def i = q.init
         if (q.isEmpty) q :+ a
         else (q.last, a) match {
 
-          case (x: Literal#Literal , y: Literal#Literal ) => q :+ x.map(_ + y.value)
-          case (x: Literal#Literal , y: PTM#EmailAddress) => q :+ x.map(_ + " ") :+ y
-          case (x: Literal#Literal , y: PTM#WebAddress  ) => q :+ x.map(_ + " ") :+ y
-          case (x: PTM#EmailAddress, y: Literal#Literal ) => q :+ x :+ y.map(" " + _)
-          case (x: PTM#EmailAddress, _: PTM#EmailAddress) => q :+ x
-          case (x: PTM#EmailAddress, _: PTM#WebAddress  ) => q :+ x
-          case (x: PTM#WebAddress  , y: Literal#Literal ) => q :+ x :+ y.map(" " + _)
-          case (x: PTM#WebAddress  , _: PTM#EmailAddress) => q :+ x
-          case (x: PTM#WebAddress  , _: PTM#WebAddress  ) => q :+ x
-          case (_: PTM#WebAddress  , y: Issue#Issue     ) => q :+ y
+          case (x: Literal#Literal , y: Literal#Literal ) => i :+ x.map(_ + y.value)
+          case (x: Literal#Literal , y: PTM#EmailAddress) => i :+ x.map(_ + " ") :+ y
+          case (x: Literal#Literal , y: PTM#WebAddress  ) => i :+ x.map(_ + " ") :+ y
+          //case (x: Literal#Literal , y: Issue#Issue     ) => i :+ x.map(_ + " ") :+ y
+          case (x: PTM#EmailAddress, y: Literal#Literal ) => i :+ x :+ y.map(" " + _)
+          case (x: PTM#EmailAddress, _: PTM#EmailAddress) => i :+ x
+          case (x: PTM#EmailAddress, _: PTM#WebAddress  ) => i :+ x
+          case (x: PTM#WebAddress  , y: Literal#Literal ) => i :+ x :+ y.map(" " + _)
+          case (x: PTM#WebAddress  , _: PTM#EmailAddress) => i :+ x
+          case (x: PTM#WebAddress  , _: PTM#WebAddress  ) => i :+ x
+          case (_: PTM#WebAddress  , y: Issue#Issue     ) => i :+ y
+          case (x: Issue#Issue     , y: Literal#Literal ) if x.desc.isEmpty => i :+ x :+ y.map(" " + _)
+          case (x: Issue#Issue     , _: PTM#EmailAddress) if x.desc.isEmpty => i :+ x
+          case (x: Issue#Issue     , _: PTM#WebAddress  ) if x.desc.isEmpty => i :+ x
+          //case (x: Issue#Issue     , _: Issue#Issue     ) if x.desc.isEmpty => i :+ x
 
           case _ => q :+ a
         }
@@ -666,14 +672,29 @@ object RandomData {
   def reqCodes(g: Gen[ReqCode.Trie]) =
     revAnd(g map ReqCodes.apply)
 
+
   // -------------------------------------------------------------------------------------------------------------------
   // Project
+
+  lazy val hashRefFixer = {
+    val g = Grammar.hashRefKey
+    val g1 = g.firstChar.toStream.map(_.toString)
+    val gn = g.allChars.toStream.map(_.toString)
+    def grow(ss: Stream[String]): Stream[String] = {
+      val x = ss append ss.flatMap(s => gn.map(s + _))
+      x append grow(x)
+    }
+    val all = grow(g1)
+    def fix(used: Set[String]): String =
+      all.filter(!used.contains(_)).head
+    Distinct.Fixer.lift(fix).xmap(HashRefKey.apply)(_.value)
+  }
 
   def distinctHashRefKeys = {
     type A = RevAnd[CustomIssueTypeIMap]
     type B = RevAnd[TagTree]
     type T = (A, B)
-    val keyDist = Distinct.fstr.xmap(HashRefKey.apply)(_.value).distinct
+    val keyDist = hashRefFixer.distinct
     val issues = keyDist
       .at(CustomIssueType.key).liftMapValues[CustomIssueType.Id]
       .at(first[T, A] ^|-> RevAnd.data[CustomIssueTypeIMap] ^|-> imapToMapLens)

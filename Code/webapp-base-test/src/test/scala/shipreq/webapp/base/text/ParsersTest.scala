@@ -30,7 +30,7 @@ object ParsersTest extends TestSuite {
   class Tester(p: Project, inputs: List[String]) {
     override def toString = p.toString
 
-    println(p.countAtoms.showTree + "\n")
+    //println(p.countAtoms.showTree + "\n")
 
     val E = EvalOver(this)
 
@@ -51,8 +51,24 @@ object ParsersTest extends TestSuite {
         e = e.init
       }
 
-      E.equal(t, a, e)(Equal.equalA)
+//      if (a != e) debug(t)
+      E.equal(t.takeRight(200), a, e)(Equal.equalA)
+      // E.equal(t.takeRight(200), actual, expect)(Equal.equalA)
     }
+
+//    var first = true
+//    def debug(t: String) = {
+//      if (first) {
+//        first = false
+//        println(">"*200)
+//        println()
+//        println(t)
+//        println()
+//        p.customIssueTypes.data.values.toStream.map(_.toString).sorted foreach println
+//        println()
+//        println("<"*200)
+//      }
+//    }
 
     def testGenericReqDesc(r: GenericReq) = {
       val src = r.desc

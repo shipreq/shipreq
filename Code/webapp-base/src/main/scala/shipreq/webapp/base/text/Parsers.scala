@@ -47,6 +47,9 @@ object Parsers {
     def runPF[A, B](pf: PartialFunction[A, B]): RuleAB[A, B] =
       rule(run((a: A) => pushPF(a)(pf)))
 
+    def runNEV[A]: RuleAB[Vector[A], NonEmptyVector[A]] =
+      rule(run((v: Vector[A]) => test(v.nonEmpty) ~ push(NonEmptyVector(v.head, v.tail))))
+
     def grammarStr[G](g: G)(f: G => Grammar.FirstChar, w: G => Grammar.CharWhitelist, l: G => Grammar.Length): Rule0 =
       rule( f(g).charPredicate ~ (l(g).minus1 times w(g).charPredicate) )
 
@@ -86,6 +89,7 @@ object Parsers {
   trait LiteralParser extends Base {
     override type T <: TG.Literal
 
+    /*
     def literal =
       rule(ANY ~ push(-\/(lastChar)))
 
@@ -120,6 +124,17 @@ object Parsers {
 
       addLit(x)
     }
+    */
+
+    def tokenOrLiteral(token: () => Rule1[t.Atom]): Rule1[t.Atom] = rule(
+      token() | ( capture( ( !(token()) ~ ANY ).+ ) ~> t.Literal )
+    )
+
+    def optionalText(token: () => Rule1[t.Atom]): Rule1[t.OptionalText] =
+      rule(tokenOrLiteral(token).* ~> ((_: Seq[t.Atom]).toVector))
+
+    def nonEmptyText(token: () => Rule1[t.Atom]): Rule1[t.NonEmptyText] =
+      rule(optionalText(token) ~ runNEV)
   }
 
   trait PlainTextMarkupParser extends Base {

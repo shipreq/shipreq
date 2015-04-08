@@ -9,6 +9,9 @@ object Grammar {
     if ("""$()*+-.?[]{|}\""" contains c) "\\" + c else c.toString
 
   class Chars(val chn: String, val ch1: Char, val rs: NumericRange[Char]*) {
+    def toStream: Stream[Char] =
+      ch1 #:: chn.toStream append rs.toStream.flatMap(_.toStream)
+
     final val regex = ((ch1 #:: chn.toStream).map(quoteCh) append rs.toStream.map(r => s"${r.min}-${r.max}")).mkString
     @inline final def one  = "[" + regex + "]"
     @inline final def not  = "[^" + regex + "]"
