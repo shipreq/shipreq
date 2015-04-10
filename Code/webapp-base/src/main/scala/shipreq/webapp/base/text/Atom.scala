@@ -43,8 +43,6 @@ object Atom {
     sealed trait Atom
     final type OptionalText = Vector[Atom]
     final type NonEmptyText = NonEmptyVector[Atom]
-
-    implicit def atomEquality[A <: Atom]: UnivEq[A] = UnivEq.force
   }
 
   /** Literal text, like "hello there" */

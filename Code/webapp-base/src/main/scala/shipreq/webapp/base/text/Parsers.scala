@@ -49,6 +49,9 @@ object Parsers {
     def runNEV[A]: RuleAB[Vector[A], NonEmptyVector[A]] =
       rule(run((v: Vector[A]) => test(v.nonEmpty) ~ push(NonEmptyVector(v.head, v.tail))))
 
+    def runO[A]: RuleAB[Option[A], A] =
+      rule(run((o: Option[A]) => test(o.isDefined) ~ push(o.get)))
+
     def grammarStr[G](g: G)(f: G => Grammar.FirstChar, w: G => Grammar.CharWhitelist, l: G => Grammar.Length): Rule0 =
       rule( f(g).charPredicate ~ (l(g).minus1 times w(g).charPredicate) )
 
@@ -125,12 +128,16 @@ object Parsers {
     }
     */
 
+    protected def atomsToVector = (_: Seq[t.Atom]).toVector
+
+    def literalUntil[O <: HList](stop: () => Rule[HNil, O]): Rule1[t.Literal] = rule(
+      capture(oneOrMore( !(stop()) ~ ANY )) ~> t.Literal)
+
     def tokenOrLiteral(token: () => Rule1[t.Atom]): Rule1[t.Atom] = rule(
-      token() | ( capture( ( !(token()) ~ ANY ).+ ) ~> t.Literal )
-    )
+      token() | literalUntil(token))
 
     def optionalText(token: () => Rule1[t.Atom]): Rule1[t.OptionalText] =
-      rule(tokenOrLiteral(token).* ~> ((_: Seq[t.Atom]).toVector))
+      rule(tokenOrLiteral(token).* ~> atomsToVector)
 
     def nonEmptyText(token: () => Rule1[t.Atom]): Rule1[t.NonEmptyText] =
       rule(optionalText(token) ~ runNEV)
@@ -184,12 +191,17 @@ object Parsers {
 
   trait Issue extends Base {
     override type T <: Atom.Issue
+    import Text.{InlineIssueDesc => I}
+
     def issueRef: RuleAB[HashRefTarget, t.Issue] = {
-      def id = runPF[HashRefTarget, CustomIssueType.Id] { case \/-(i) => i.id }
-      def desc = rule(surround(G.issueDescSurround) ~> ((i: String) => Text.InlineIssueDesc.parserI(project)(i).main.run().get))
-      def optionalDesc = rule(desc ~> (_.whole) | push(Vector.empty))
+      def id           = runPF[HashRefTarget, CustomIssueType.Id] { case \/-(i) => i.id }
+      def optionalDesc = rule(issueInnerDesc ~> (_.whole) | push(Vector.empty))
       rule(run(id) ~ optionalDesc ~> t.Issue)
     }
+
+    // Hack due to https://github.com/sirthias/parboiled2/issues/120
+    // runSubParser can only be used in a method directly in a class, not a trait like this
+    protected def issueInnerDesc: Rule1[I.NonEmptyText] //= rule(runSubParser(I.parserI(project)(_).inline))
   }
 
   // ===================================================================================================================

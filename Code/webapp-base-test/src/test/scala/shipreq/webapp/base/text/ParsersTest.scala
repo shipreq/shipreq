@@ -6,6 +6,7 @@ import japgolly.nyaya.util._
 import japgolly.nyaya.test._
 import japgolly.nyaya.test.PropTest._
 import org.parboiled2._
+import shipreq.base.util.UnivEq
 import scala.util.{Try, Failure, Success}
 import scalaz.Equal
 import scalaz.std.list._
@@ -16,6 +17,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.{RandomData => $}
 import shipreq.webapp.base.test.SampleProject
 import shipreq.webapp.base.test.BaseTestUtil._
+import Text.Equality._
 
 object ParsersTest extends TestSuite {
 
@@ -37,7 +39,7 @@ object ParsersTest extends TestSuite {
 
     val genericReqs = p.reqs.data.reqs.values.filterT[GenericReq]
 
-    def cmp[A <: Text.Generic#Atom](t: String, actual: Iterable[A], expect: Iterable[A]): EvalL = {
+    def cmp[A <: Atom.Generic](t: String, actual: Iterable[A], expect: Iterable[A]): EvalL = {
 
       var a = actual.toVector
       var e = expect.toVector
@@ -51,8 +53,8 @@ object ParsersTest extends TestSuite {
       }
 
 //      if (a != e) debug(t)
-      E.equal(t.takeRight(200), a, e)(Equal.equalA)
-      // E.equal(t.takeRight(200), actual, expect)(Equal.equalA)
+      E.equal(t.takeRight(200), a, e)(UnivEq.vector)
+      // E.equal(t.takeRight(200), actual, expect)
     }
 
 //    var first = true
@@ -113,8 +115,8 @@ object ParsersTest extends TestSuite {
       }
     )
 
-  import Text.{GenericReqDesc => T}
-  import SampleProject.{project  => P}
+  import Text.{GenericReqDesc => T, InlineIssueDesc => I}
+  import SampleProject.{project => P}
 
   def propEmailAddress = parserProp("EmailAddress",
     (_: T.EmailAddress).value, T.parserI(P))(_.emailAddress.run())
@@ -125,13 +127,18 @@ object ParsersTest extends TestSuite {
   def propMathTeX = parserProp("MathTeX",
     (_: T.MathTeX).value |> Grammar.mathTexSurround.display, T.parserI(P))(_.mathtex.run())
 
-  // #TODO{ <math>\frac{22}</math> }
-
   override val tests = TestSuite {
     'manual {
-      'hashHashHash {
-        () // TODO
-      }
+      import shipreq.webapp.base.UnsafeTypes._
+      'hashHashHash -
+        // TODO ReqTitle doesn't allow tags
+        // assertEq(T.parse(P)("#v1.x#v1.0#TBD#TBD{whatever}#pri=high"),
+        assertEq(T.parse(P)("#TBD#TBD{ whatever}#TO"+"DO"),
+          Vector(T.Issue(2, Vector.empty), T.Issue(2, Vector(I.Literal("whatever"))), T.Issue(1, Vector.empty)))
+
+      'innerBraceInIssueDesc -
+        assertEq(T.parse(P)("#TBD{ <math>\\frac{22}</math> }"),
+          Vector(T.Issue(2, Vector(I.MathTeX("\\frac{22}")))))
     }
 
     'small {

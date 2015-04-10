@@ -1,12 +1,19 @@
 package shipreq.webapp.base.text
 
 import org.parboiled2._
+import shipreq.base.util.UnivEq
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.text.{Parsers => P}
 import Atom.{ReqTitle => _, _}
 
 object Text {
   type Generic = Atom.Base
+
+  object Equality {
+    @inline implicit final def eqAtom        [A <: Atom.Generic]: UnivEq[A]              = UnivEq.force
+    @inline implicit final def eqOptionalText[T <: Text.Generic]: UnivEq[T#OptionalText] = UnivEq.force
+    @inline implicit final def eqNonEmptyText[T <: Text.Generic]: UnivEq[T#NonEmptyText] = UnivEq.force
+  }
 
   // ===================================================================================================================
 
@@ -34,15 +41,13 @@ object Text {
 
   sealed trait ReqTitle extends Atom.ReqTitle with DefaultOptional {
     override def parserI(p: Project)(i: ParserInput) = new Parser(p, i)
-    final class Parser(p: Project, i: ParserInput) extends P.ReqTitle[this.type](this, p, i)
+    final class Parser(p: Project, i: ParserInput) extends P.ReqTitle[this.type](this, p, i) {
+      override protected def issueInnerDesc = rule(runSubParser(InlineIssueDesc.parserI(p)(_).inline))
+    }
   }
 
   // ===================================================================================================================
   // Text instances
-
-  object RecCodeGroupDesc extends ReqTitle
-
-  object GenericReqDesc extends ReqTitle
 
   object InlineIssueDesc extends DefaultNonEmpty
     with SingleLine
@@ -52,8 +57,19 @@ object Text {
       with P.SingleLine
       with P.ReqRef {
       val token = () => rule(reqRef | singleLine)
+
+      import Grammar.issueDescSurround.{parsing => G}
+      def inlineEnd = rule(ows ~ G.suffix)
+      val inlineUntil = () => rule(inlineEnd | token())
+      def inline: Rule1[NonEmptyText] = rule(
+        G.prefix ~ ows ~ oneOrMore(token() | literalUntil(inlineUntil)) ~ inlineEnd ~> atomsToVector ~ runNEV
+      )
     }
   }
+
+  object RecCodeGroupDesc extends ReqTitle
+
+  object GenericReqDesc extends ReqTitle
 
   object CustomTextField extends MultiLine
     with ReqRef
