@@ -22,7 +22,7 @@ import shipreq.base.util.TaggedTypes.TaggedLong
 import shipreq.base.util.Debug._
 import shipreq.webapp.base.data._, ReqType.Mnemonic, Field.ApplicableReqTypes
 import shipreq.webapp.base.delta._
-import shipreq.webapp.base.text.{Parsers, Text, Grammar}
+import shipreq.webapp.base.text.{Text, Grammar}
 import DataImplicits._
 import ReqFieldData.{Implications, ImplicationsU}
 
@@ -363,7 +363,9 @@ object RandomData {
   // Text
 
   object TextGen {
-    import Text._, Generic._
+    import shipreq.webapp.base.text._
+    import Atom.{Generic => _, _}
+    import Text.{Generic => _, ReqTitle => _, _}
     import Gen.Covariance._
 
     val allChars = ('\u0001' to '\u0100').seq
@@ -375,8 +377,8 @@ object RandomData {
     lazy val emailR = charPred(Parsers.emailCharR).string1
 
     // private[this] implicit def autoSomeG[A](g: Gen[A]) = g.some
-    private[this] implicit class NELExt[T <: Generic](val _nel: NonEmptyList[Gen[T#Atom]]) extends AnyVal {
-      def <+(o: Option[Gen[T#Atom]]): NonEmptyList[Gen[T#Atom]] =
+    private[this] implicit class NELExt[T <: Atom.Generic](val _nel: NonEmptyList[Gen[T]]) extends AnyVal {
+      def <+(o: Option[Gen[T]]): NonEmptyList[Gen[T]] =
         o.fold(_nel)(_ <:: _nel)
     }
 
@@ -473,8 +475,7 @@ object RandomData {
 
     def postProcessAtoms[T <: Text.Generic](as: Vector[T#Atom]): Vector[T#Atom] =
       as.foldLeft[Vector[T#Atom]](Vector.empty)((q, a0) => {
-        import Text.Generic.{PlainTextMarkup => PTM}
-        import Text.Generic._
+        import Atom.{PlainTextMarkup => PTM}
 
         val a: T#Atom = a0 match {
           case i: Issue#Issue => i.copy(desc = postProcessAtoms(i.desc))

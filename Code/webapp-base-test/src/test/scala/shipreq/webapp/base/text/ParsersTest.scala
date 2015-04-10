@@ -16,14 +16,13 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.{RandomData => $}
 import shipreq.webapp.base.test.SampleProject
 import shipreq.webapp.base.test.BaseTestUtil._
-import Text.AtomType
 
 object ParsersTest extends TestSuite {
 
-  val counts = AtomType.values.toStream.map((_, new AtomicInteger)).toMap
+  val counts = Atom.Type.values.toStream.map((_, new AtomicInteger)).toMap
   def count(as: Iterable[Text.Generic#Atom]): Unit =
     as.foreach { a =>
-      val t = AtomType of a
+      val t = Atom.Type of a
       counts(t).incrementAndGet()
     }
 
@@ -74,15 +73,15 @@ object ParsersTest extends TestSuite {
       val src = r.desc
       count(src)
       val txt = txt2str(src)
-      val parsed = new Parsers.GenericReqDescParser(p, txt).main.run().get
+      val parsed = Text.GenericReqDesc.parse(p)(txt)
       cmp(txt, parsed, src)
     }
 
     def testString(in0: String) = {
       val in1  = Parsers.preprocess(in0)
-      val out1 = new Parsers.GenericReqDescParser(p, in1).main.run().get
+      val out1 = Text.GenericReqDesc.parse(p)(in1)
       val in2  = txt2str(out1)
-      val out2 = new Parsers.GenericReqDescParser(p, in2).main.run().get
+      val out2 = Text.GenericReqDesc.parse(p)(in2)
       count(out1)
       cmp(in1, out1, out2)
     }
@@ -114,17 +113,17 @@ object ParsersTest extends TestSuite {
       }
     )
 
-  val T = Text.GenericReqDesc
-  lazy val newGenericReqDescParser = new Parsers.GenericReqDescParser(SampleProject.project, _: ParserInput)
+  import Text.{GenericReqDesc => T}
+  import SampleProject.{project  => P}
 
   def propEmailAddress = parserProp("EmailAddress",
-    (_: T.EmailAddress).value, newGenericReqDescParser)(_.emailAddress.run())
+    (_: T.EmailAddress).value, T.parserI(P))(_.emailAddress.run())
 
   def propWebAddress = parserProp("WebAddress",
-    (_: T.WebAddress).value, newGenericReqDescParser)(_.webAddress.run())
+    (_: T.WebAddress).value, T.parserI(P))(_.webAddress.run())
 
   def propMathTeX = parserProp("MathTeX",
-    (_: T.MathTeX).value |> Grammar.mathTexSurround.display, newGenericReqDescParser)(_.mathtex.run())
+    (_: T.MathTeX).value |> Grammar.mathTexSurround.display, T.parserI(P))(_.mathtex.run())
 
   // #TODO{ <math>\frac{22}</math> }
 
@@ -148,7 +147,7 @@ object ParsersTest extends TestSuite {
       val graphChar = "#" `JVM|JS` "."
       println("Parser test distribution")
       println("========================")
-      AtomType.values.foreach { t =>
+      Atom.Type.values.foreach { t =>
         val c = counts(t).get()
         printf("%-13s :%7d | %s\n", t.toString, c, graphChar * (c / graphUnit))
       }

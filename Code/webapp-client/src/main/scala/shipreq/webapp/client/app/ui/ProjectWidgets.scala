@@ -6,7 +6,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 import scalaz.Memo
 import shipreq.base.util.{NonEmptyVector, Must, UnivEq}
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.{Presentation, Text}
+import shipreq.webapp.base.text.{Atom, Presentation, Text}
 import shipreq.webapp.client.app.ui.Style.{widgets => *}
 import shipreq.webapp.client.lib.ui.UI
 import shipreq.webapp.client.util.KaTeX
@@ -100,10 +100,9 @@ final class ProjectWidgets(project: Project) {
   // TODO move
   def text1(t: Text.Generic#NonEmptyText, style: TagMod = EmptyTag): ReactElement = text(t.whole, style)
   def text(t: Text.Generic#OptionalText, style: TagMod = EmptyTag): ReactElement = {
-    import Text._
-    import Text.Generic._
+    import Atom._
 
-    lazy val atom: Generic#Atom => TagMod = {
+    lazy val atom: Atom.Generic => TagMod = {
       case a: Literal         # Literal       => <.span(a.value)
       case a: NewLine         # NewLine       => <.br
       case a: TagRef          # TagRef        => tag(a.value)()

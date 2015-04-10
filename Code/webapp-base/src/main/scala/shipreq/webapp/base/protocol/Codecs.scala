@@ -364,8 +364,7 @@ object DataCodecs {
   // -------------------------------------------------------------------------------------------------------------------
   /** Text Codecs */
   private[this] object TC {
-    import Text._
-    import Generic._
+    import shipreq.webapp.base.text.Atom._
 
     private[this] final val NEWLINE = 0
 
@@ -377,8 +376,8 @@ object DataCodecs {
     private[this] final val REQREF   = "r"
     private[this] final val TAGREF   = "t"
 
-    lazy val writeAny: Writer[Generic#Atom] =
-      Writer[Generic#Atom]({
+    lazy val writeAny: Writer[Generic] =
+      Writer[Generic]({
         case a: Literal         # Literal       => Js.Str(a.value)
         case a: NewLine         # NewLine       => Js.Num(NEWLINE)
         case a: ReqRef          # ReqRef        => strkeyW (REQREF,   a.value)
@@ -429,7 +428,7 @@ object DataCodecs {
       readSingleLine(t) orElse readNewLine(t) orElse readListMarkup(t)
 
     def readIssue(t: Issue): PR[t.Issue] =
-      { case Js.Arr(Js.Str(ISSUE), a, b) => t.Issue(readJs[CustomIssueType.Id](a), readJs[InlineIssueDesc.OptionalText](b)) }
+      { case Js.Arr(Js.Str(ISSUE), a, b) => t.Issue(readJs[CustomIssueType.Id](a), readJs[Text.InlineIssueDesc.OptionalText](b)) }
 
     def readReqRef(t: ReqRef): PR[t.ReqRef] =
       { case Js.Arr(Js.Str(REQREF), v) => t.ReqRef(readJs[Req.Id](v)) }
@@ -475,7 +474,7 @@ object DataCodecs {
 //      rw.value
 //    }
 
-    def apply(t: Generic)(pr: (t.type, Name[Reader[t.Atom]]) => PR[t.Atom]): (ReadWriter[t.OptionalText], ReadWriter[t.NonEmptyText]) = {
+    def apply(t: Text.Generic)(pr: (t.type, Name[Reader[t.Atom]]) => PR[t.Atom]): (ReadWriter[t.OptionalText], ReadWriter[t.NonEmptyText]) = {
       type A = t.Atom
       implicit lazy val a: ReadWriter[A] = ReadWriter(writeAny.write, pr(t, Name(a)))
       val otxt  = mergeRW[Vector[A]]

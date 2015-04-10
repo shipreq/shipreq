@@ -7,7 +7,6 @@ import shapeless._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar => G}
-import Text.{Generic => TG}
 
 object Parsers {
   def preprocess: String => String =
@@ -86,8 +85,8 @@ object Parsers {
   // ===================================================================================================================
   // Modules
 
-  trait LiteralParser extends Base {
-    override type T <: TG.Literal
+  trait Literal extends Base {
+    override type T <: Atom.Literal
 
     /*
     def literal =
@@ -137,8 +136,8 @@ object Parsers {
       rule(optionalText(token) ~ runNEV)
   }
 
-  trait PlainTextMarkupParser extends Base {
-    override type T <: TG.PlainTextMarkup
+  trait PlainTextMarkup extends Base {
+    override type T <: Atom.PlainTextMarkup
 
     def webScheme = rule( (("http" | "ftp") ~ 's'.?) | "sftp" )
 
@@ -148,7 +147,7 @@ object Parsers {
       capture(webScheme ~ "://" ~ webAddressChar.+) ~> t.WebAddress
     ) //~ EOT)
 
-    def emailAddress: Rule1[t.EmailAddress] = rule(
+    def emailAddress = rule(
       "mailto:".?
         ~ capture(emailCharL.+ ~ '@' ~ (emailCharR.+ ~ '.').+ ~ emailCharR.+) ~> t.EmailAddress
     ) //~ EOT)
@@ -161,18 +160,13 @@ object Parsers {
       rule( webAddress | emailAddress | mathtex )
   }
 
-  trait SingleLine extends PlainTextMarkupParser with LiteralParser {
-    override type T <: TG.PlainTextMarkup with TG.Literal
-    def singleLine = plainTextMarkup
-  }
-
-  trait NewLineParser extends Base {
-    override type T <: TG.NewLine
+  trait NewLine extends Base {
+    override type T <: Atom.NewLine
     def newLine = rule( "\n" ~ push(t.NewLine()) )
   }
 
-  trait ReqRefParser extends Base {
-    override type T <: TG.ReqRef
+  trait ReqRef extends Base {
+    override type T <: Atom.ReqRef
 
     def reqRef: Rule1[t.ReqRef] = rule(
       G.reflinkPrefix ~ ows ~ reqTypeMnemonic ~ ows ~ ('-' ~ ows).? ~ reqTypePos ~ ows ~ G.reflinkSuffix
@@ -181,47 +175,51 @@ object Parsers {
     )
   }
 
-  trait TagRefParser extends Base {
-    override type T <: TG.TagRef
+  trait TagRef extends Base {
+    override type T <: Atom.TagRef
     def tagRef = runPF[HashRefTarget, t.TagRef] {
       case -\/(tag) => t.TagRef(tag.id)
     }
   }
 
-  trait IssueParser extends Base {
-    override type T <: TG.Issue
+  trait Issue extends Base {
+    override type T <: Atom.Issue
     def issueRef: RuleAB[HashRefTarget, t.Issue] = {
       def id = runPF[HashRefTarget, CustomIssueType.Id] { case \/-(i) => i.id }
-      def desc = rule(surround(G.issueDescSurround) ~> ((i: String) => new InlineIssueDescParser(project, i).main.run().get))
+      def desc = rule(surround(G.issueDescSurround) ~> ((i: String) => Text.InlineIssueDesc.parserI(project)(i).main.run().get))
       def optionalDesc = rule(desc ~> (_.whole) | push(Vector.empty))
       rule(run(id) ~ optionalDesc ~> t.Issue)
     }
   }
 
   // ===================================================================================================================
-  // Specialised
 
-  final class InlineIssueDescParser(val project: Project, val input: ParserInput)
-      extends SingleLine with ReqRefParser {
-
-    override type T = Text.InlineIssueDesc.type
-    override val  t = Text.InlineIssueDesc
-
-    def main = rule(nonEmptyText(token) ~ EOI)
-    val token: () => Rule1[t.Atom] = () => rule(reqRef | singleLine)
+  trait SingleLine extends PlainTextMarkup with Literal {
+    override type T <: Atom.PlainTextMarkup with Atom.Literal
+    def singleLine = plainTextMarkup
   }
 
-  sealed class ReqTitleParser[TT <: TG.ReqTitle](tt: TT, val project: Project, val input: ParserInput)
-      extends SingleLine with ReqRefParser with IssueParser {
+  abstract class TopBase[_T <: Atom.Literal](_t: _T) extends Literal {
+    override final type T = _T
+    override final val  t: T = _t
+    final type TokenRule = () => Rule1[t.Atom]
+    protected val token: TokenRule
+  }
 
-    override type T = TT
-    override val  t = tt
+  abstract class DefaultOptional[_T <: Atom.Literal](_t: _T) extends TopBase(_t) {
+    final def main = rule(optionalText(token) ~ EOI)
+  }
 
-    def main = rule(optionalText(token) ~ EOI)
+  abstract class DefaultNonEmpty[_T <: Atom.Literal](_t: _T) extends TopBase(_t) {
+    final def main = rule(nonEmptyText(token) ~ EOI)
+  }
+
+  abstract class ReqTitle[_T <: Atom.ReqTitle](_t: _T, val project: Project, val input: ParserInput) extends DefaultOptional(_t)
+    with SingleLine
+    with ReqRef
+    with Issue {
+
     def hashToken = rule(hashRef ~ issueRef)
-    val token: () => Rule1[t.Atom] = () => rule(hashToken | reqRef | singleLine)
+    val token = () => rule(hashToken | reqRef | singleLine)
   }
-  
-  final class RecCodeGroupDescParser(p: Project, i: ParserInput) extends ReqTitleParser(Text.RecCodeGroupDesc, p, i)
-  final class GenericReqDescParser  (p: Project, i: ParserInput) extends ReqTitleParser(Text.GenericReqDesc, p, i)
 }

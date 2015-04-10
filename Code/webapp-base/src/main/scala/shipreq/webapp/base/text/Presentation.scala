@@ -5,7 +5,6 @@ import shipreq.base.util.{NonEmptyVector, Must}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar => G}
-import Text._
 
 /**
  * That which affects users' presentation of their requirements, belongs here.
@@ -27,7 +26,7 @@ object Presentation {
 
   private implicit def surroundDisplay(s: Grammar.Surrounds) = s.display
 
-  private implicit class OptionalTextOps[T <: Generic](val _t: T#OptionalText) extends AnyVal {
+  private implicit class OptionalTextOps[T <: Text.Generic](val _t: T#OptionalText) extends AnyVal {
     @inline def asOption: Option[_t.type] =
       if (_t.isEmpty) None else Some[_t.type](_t)
 
@@ -70,14 +69,14 @@ object Presentation {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  def textToString(implicit p: Project): Generic#OptionalText => String = {
-    import Generic._
+  def textToString(implicit p: Project): Text.Generic#OptionalText => String = {
 
-    def nest(acc: String, newline: String, atoms: Vector[Generic#Atom]): String = {
-      @tailrec def go(acc: String, atoms: Vector[Generic#Atom]): String =
+    def nest(acc: String, newline: String, atoms: Vector[Atom.Generic]): String = {
+      @tailrec def go(acc: String, atoms: Vector[Atom.Generic]): String =
         if (atoms.isEmpty)
           acc
         else {
+          import Atom._
           val cur = atoms.head match {
             case a: Literal         # Literal       => a.value
             case a: NewLine         # NewLine       => newline
@@ -97,7 +96,7 @@ object Presentation {
       go(acc, atoms)
     }
 
-    @inline def run: Generic#OptionalText => String = nest("", "\n", _)
+    @inline def run: Text.Generic#OptionalText => String = nest("", "\n", _)
     run
   }
 }

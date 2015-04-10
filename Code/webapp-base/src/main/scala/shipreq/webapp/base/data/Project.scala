@@ -5,7 +5,7 @@ import scalaz.{-\/, \/-, Memo}
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{Monoidish, Must}
 import shipreq.webapp.base.TransitiveClosure
-import shipreq.webapp.base.text.Text
+import shipreq.webapp.base.text.Atom
 import shipreq.webapp.base.util.ShowSize
 import DataImplicits._
 
@@ -33,7 +33,7 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
                          reqCodes        : RevAnd[ReqCodes],
                          reqFieldData    : RevAnd[ReqFieldData]) {
 
-  import japgolly.nyaya._
+  import japgolly.nyaya.{Atom => _, _}
   this assertSatisfies DataProp.project.all
 
   def rev =
@@ -55,8 +55,8 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
     //     append reqFieldData.data.text.values.toStream.flatMap(_.values.toStream).map(_.list)
     //   ).flatMap(_.toStream)
     // ShowSize.Node.countChildren("Atoms", all)(AtomType.of(_).toString)
-    def count(name: String, as: Stream[Text.Generic#Atom]) =
-      ShowSize.Node.countChildren(name, as)(Text.AtomType.of(_).toString)
+    def count(name: String, as: Stream[Atom.Generic]) =
+      ShowSize.Node.countChildren(name, as)(Atom.Type.of(_).toString)
     val grd = count("Generic Req descs",
       reqs.data.reqs.values.filterT[GenericReq].flatMap(_.desc.toStream))
     val txt = count("Text fields",
