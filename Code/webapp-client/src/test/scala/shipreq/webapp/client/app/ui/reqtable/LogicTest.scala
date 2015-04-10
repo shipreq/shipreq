@@ -20,6 +20,7 @@ import shipreq.webapp.client.test.ClientTestSettings._
 import shipreq.webapp.client.app.ui.reqtable.{SortCriterion => SC, Column => C}
 import SortMethod._
 import Sorter._
+import Text.Equality._
 
 object LogicTest extends TestSuite {
 
