@@ -10,7 +10,7 @@ import shipreq.webapp.base.text.{Grammar => G}
 
 object Parsers {
   def preprocess: String => String =
-    _.replace('\t', ' ').replaceAll("\r\n?", "\n").trim
+    _.replace('\t', ' ')
 
   // questionable: :;=?\/
   val emailCharArray = """!$%*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz~""".toCharArray
@@ -26,17 +26,22 @@ object Parsers {
     val t: T
     val project: Project
 
+    /** Beginning Of Input */
+    def BOI = rule(test(cursor == 0))
+
     /** Optional whitespace */
-    def ows = rule( zeroOrMore(' ') )
+    def OWS = rule(zeroOrMore(' '))
 
-    /** Beginning Of Line */
-//    def BOL = rule(test( cursor == 0 || lastChar == '\n' ))
-//    def BOL = rule('\n' | test(cursor == 0))
-    def BOL = rule('\n' | test(cursor == 0 || lastChar == '\n'))
+    /** newline */
+    def NL = rule('\n' | ('\r' ~ '\n'.?))
 
-    /** End Of Line */
-    def EOL = rule( "\n" | EOI )
-    val _EOL = () => EOL
+    /** Optional whitespace and/or newlines */
+    def OWSNL = rule(anyOf(" \r\n").*)
+
+    /** End Of Line (consumes NL) */
+    def EOL = rule(NL | EOI)
+
+    val untilEOL = () => rule(OWS ~ EOL)
 
     def trim = (_: String).trim
 
@@ -46,11 +51,8 @@ object Parsers {
     def popOptional[A]: RuleAB[Option[A], A] =
       rule(run((o: Option[A]) => test(o.isDefined) ~ push(o.get)))
 
-    def popPF[A, B](pf: PartialFunction[A, B]): RuleAB[A, B] = {
-//      val f = pf.lift
-//      rule(MATCH ~> f ~ popOptional)
-      rule(run((a: A) => test(pf isDefinedAt a) ~ push(pf(a))))
-    }
+    def popPF[A, B](pf: PartialFunction[A, B]): RuleAB[A, B] =
+      rule(run((a: A) => test(pf isDefinedAt a) ~ push(pf(a)))) // TODO use pf.lift
 
     def popSeqToNEV[A]: RuleAB[Seq[A], NonEmptyVector[A]] =
       rule(run((v: Seq[A]) => test(v.nonEmpty) ~ push(NonEmptyVector(v.head, v.tail.toVector))))
@@ -104,22 +106,13 @@ object Parsers {
     def literalUntil[O <: HList](stop: () => Rule[HNil, O]): Rule1[t.Literal] =
       rule(capture(oneOrMore( !stop() ~ ANY )) ~> t.Literal)
 
-    def tokenOrLiteral(token: TokenRule): Rule1[t.Atom] =
-      rule(token() | literalUntil(token))
-
-    def optionalTextT(token: TokenRule): Rule1[t.OptionalText] =
-      rule(tokenOrLiteral(token).* ~> atomsToVector)
-
-    def nonEmptyTextT(token: TokenRule): Rule1[t.NonEmptyText] =
-      rule(optionalTextT(token) ~ popNEV)
-
-    def optionalTextUntil(token: TokenRule, end: () => Rule0): Rule1[t.OptionalText] = {
+    def textUntil(token: TokenRule, end: () => Rule0): Rule1[t.OptionalText] = {
       val endOrToken = () => rule(end() | token())
       rule(zeroOrMore(token() | literalUntil(endOrToken)) ~ end() ~> atomsToVector)
     }
 
-    def nonEmptyTextUntil(token: TokenRule, end: () => Rule0): Rule1[t.NonEmptyText] =
-      rule(optionalTextUntil(token, end) ~ popNEV)
+    def text(token: TokenRule): Rule1[t.OptionalText] =
+      textUntil(token, untilEOL)
   }
 
   trait PlainTextMarkup extends Base {
@@ -144,24 +137,25 @@ object Parsers {
 
   trait NewLine extends Base {
     override type T <: Atom.NewLine
-    def newLine = rule( "\n" ~ push(t.NewLine()) )
+    def newLine = rule(OWS ~ NL ~ OWSNL ~ push(t.newLine))
+    // TODO Rename to BlankLine
   }
 
   trait ListMarkup extends Literal {
     override type T <: Atom.ListMarkup with Atom.Literal
 
     def listItem(listToken: TokenRule): Rule1[t.ListItem] =
-      rule(BOL ~ "* " ~ ows ~ optionalTextUntil(listToken, _EOL))
+      rule(OWSNL ~ "* " ~ OWS ~ textUntil(listToken, untilEOL))
 
      def unorderedList(listToken: TokenRule): Rule1[t.UnorderedList] =
-       rule(oneOrMore(listItem(listToken)) ~ popSeqToNEV[t.ListItem] ~> t.UnorderedList)
+       rule((BOI | (OWS ~ NL)) ~ listItem(listToken).+ ~ OWSNL ~ popSeqToNEV[t.ListItem] ~> t.UnorderedList)
   }
 
   trait ReqRef extends Base {
     override type T <: Atom.ReqRef
 
     def reqRef: Rule1[t.ReqRef] = rule(
-      G.reflinkPrefix ~ ows ~ reqTypeMnemonic ~ ows ~ ('-' ~ ows).? ~ reqTypePos ~ ows ~ G.reflinkSuffix
+      G.reflinkPrefix ~ OWS ~ reqTypeMnemonic ~ OWS ~ ('-' ~ OWS).? ~ reqTypePos ~ OWS ~ G.reflinkSuffix
         ~> lookupReq ~ popOptional[Req.Id] ~> t.ReqRef)
   }
 
@@ -208,8 +202,8 @@ object Parsers {
     override final type T = _T
     override final val  t: T = _t
     protected val token: TokenRule
-    final def optionalText = rule(optionalTextT(token) ~ EOI)
-    final def nonEmptyText = rule(nonEmptyTextT(token) ~ EOI)
+    final def optionalText: Rule1[T#OptionalText] = rule(OWS ~ text(token) ~ EOI)
+    final def nonEmptyText: Rule1[T#NonEmptyText] = rule(optionalText ~ popNEV)
   }
 
   abstract class ReqTitle[_T <: Atom.ReqTitle](_t: _T, val project: Project, val input: ParserInput) extends TopBase(_t)

@@ -53,8 +53,8 @@ object Text {
       val token = () => rule(reqRef | singleLine)
 
       import Grammar.issueDescSurround.{parsing => G}
-      val inlineEnd = () => rule(ows ~ G.suffix)
-      def inline: Rule1[NonEmptyText] = rule(G.prefix ~ ows ~ nonEmptyTextUntil(token, inlineEnd))
+      val inlineEnd = () => rule(OWS ~ G.suffix)
+      def inline: Rule1[NonEmptyText] = rule(G.prefix ~ OWS ~ textUntil(token, inlineEnd) ~ popNEV)
     }
   }
 

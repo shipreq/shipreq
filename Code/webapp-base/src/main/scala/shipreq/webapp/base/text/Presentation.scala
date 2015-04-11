@@ -71,6 +71,8 @@ object Presentation {
 
   def textToString(implicit p: Project): Text.Generic#OptionalText => String = {
 
+    val outOfListNewline = "\n\n"
+
     def nest(acc: String, newline: String, atoms: Vector[Atom.Generic]): String = {
       @tailrec def go(acc: String, atoms: Vector[Atom.Generic]): String =
         if (atoms.isEmpty)
@@ -87,7 +89,7 @@ object Presentation {
             case a: PlainTextMarkup # MathTeX       => G.mathTexSurround(a.value)
             case a: TagRef          # TagRef        => tagRef(a.value).unmust
             case a: ListMarkup      # UnorderedList =>
-              val newline2 = newline ~ "  "
+              val newline2 = if (newline eq outOfListNewline) "\n  " else newline ~ "  "
               a.items.foldLeft("")((q, li) => nest(s"$q${newline}* ", newline2, li)) ~ newline
           }
           go(acc ~ cur, atoms.tail)
@@ -96,7 +98,7 @@ object Presentation {
       go(acc, atoms)
     }
 
-    @inline def run: Text.Generic#OptionalText => String = nest("", "\n", _)
+    @inline def run: Text.Generic#OptionalText => String = nest("", outOfListNewline, _)
     run
   }
 }

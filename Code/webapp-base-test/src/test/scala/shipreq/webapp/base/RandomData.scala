@@ -498,8 +498,8 @@ object RandomData {
          | _: PlainTextMarkup # EmailAddress
          | _: PlainTextMarkup # MathTeX
          | _: TagRef          # TagRef        => true
-      case _: NewLine         # NewLine       => false // TODO bullshit
-      case _: ListMarkup      # UnorderedList => false
+      case _: NewLine         # NewLine
+         | _: ListMarkup      # UnorderedList => false
     }
 
     def postProcessAtoms[T <: Text.Generic](as0: Vector[T#Atom]): Vector[T#Atom] = {
@@ -526,8 +526,8 @@ object RandomData {
           case (x: Literal#Literal , y: PTM#WebAddress  ) => i :+ x.map(_ + " ") :+ y
         //case (x: Literal#Literal , y: Issue#Issue     ) => i :+ x.map(_ + " ") :+ y
         //case (x: Literal#Literal , y: TagRef#Tagref   ) => i :+ x.map(_ + " ") :+ y
-        //case (x: Literal#Literal , y: UL              ) => i :+ x.map(_ + " ") :+ y
 
+          case (x: NewLine#NewLine , _: NewLine#NewLine ) => i :+ x
           case (_: NewLine#NewLine , y: UL              ) => i :+ y
 
           case (x: PTM#EmailAddress, y: Literal#Literal ) => i :+ x :+ y.map(" " + _)
@@ -543,15 +543,12 @@ object RandomData {
           case (x: TagRef#TagRef   , y: Literal#Literal ) => i :+ x :+ y.map(" " + _)
           case (x: TagRef#TagRef   , _: PTM#EmailAddress) => i :+ x
           case (x: TagRef#TagRef   , _: PTM#WebAddress  ) => i :+ x
-        //case (x: TagRef#TagRef   , _: Issue#Issue     ) => i :+ x
-        //case (x: TagRef#TagRef   , _: TagRef#TagRef   ) => i :+ x
 
           case (x: Issue#Issue     , y: Literal#Literal ) if x.desc.isEmpty => i :+ x :+ y.map(" " + _)
           case (x: Issue#Issue     , _: PTM#EmailAddress) if x.desc.isEmpty => i :+ x
           case (x: Issue#Issue     , _: PTM#WebAddress  ) if x.desc.isEmpty => i :+ x
-        //case (x: Issue#Issue     , _: Issue#Issue     ) if x.desc.isEmpty => i :+ x
-        //case (x: Issue#Issue     , _: TagRef#TagRef   ) if x.desc.isEmpty => i :+ x
 
+          case (x: UL              , _: NewLine#NewLine ) => i :+ x
           case (x: UL              , y: UL              ) => i :+ x //.copy(items = x.items ++ y.items)
 
           case _ => q :+ a

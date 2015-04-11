@@ -42,22 +42,24 @@ object ParsersTest extends TestSuite {
 
     val customTextFieldValues = p.reqFieldData.data.text.values.toStream.flatMap(_.values.toStream)
 
-    def cmp[A <: Atom.Generic](t: => String, actual: Iterable[A], expect: Iterable[A]): EvalL = {
+    def cmp[A <: Atom.Generic](t: => String, actual0: Iterable[A], expect0: Iterable[A]): EvalL = {
 
-      var a = actual.toVector
-      var e = expect.toVector
+      val actual = actual0.toVector
+      val expect = expect0.toVector
+      var a = actual
+      var e = expect
       while (a.nonEmpty && e.nonEmpty && a.head == e.head) {
         a = a.tail
         e = e.tail
       }
-      while (a.nonEmpty && e.nonEmpty && a.last == e.last) {
-        a = a.init
-        e = e.init
-      }
+//      while (a.nonEmpty && e.nonEmpty && a.last == e.last) {
+//        a = a.init
+//        e = e.init
+//      }
 
 //      if (a != e) debug(t)
-      E.equal(t.takeRight(200), a, e)(UnivEq.vector)
-      // E.equal(t.takeRight(200), actual, expect)
+      E.equal(t.takeRight(200), a, e)
+//       E.equal(t.takeRight(200), actual, expect)
     }
 
 //    var first = true
@@ -86,7 +88,7 @@ object ParsersTest extends TestSuite {
       count(src)
       val txt = txt2str(src)
       val parsed = Text.CustomTextField.parse(p)(txt)
-      cmp(s"[CustomTextField] toStr |> parse = id\n<<$txt>>", parsed, src)
+      cmp(s"[CustomTextField] toStr |> parse = id\n'''$txt'''", parsed, src)
     }
 
     def testString(in0: String) = {
@@ -126,8 +128,12 @@ object ParsersTest extends TestSuite {
       }
     )
 
-  import Text.{GenericReqDesc => T, InlineIssueDesc => I}
+  import Text.{CustomTextField => T, InlineIssueDesc => I}
   import SampleProject.{project => P}
+  @inline val V = Vector
+  @inline def NEV[A](h: A, t: A*) = NonEmptyVector(h, t: _*)
+  @inline def LI[A <: Atom.Generic](as: A*) = as.toVector
+  @inline def L(s: String) = T.Literal(s)
 
   def propEmailAddress = parserProp("EmailAddress",
     (_: T.EmailAddress).value, T.parserI(P))(_.emailAddress.run())
@@ -138,27 +144,43 @@ object ParsersTest extends TestSuite {
   def propMathTeX = parserProp("MathTeX",
     (_: T.MathTeX).value |> Grammar.mathTexSurround.display, T.parserI(P))(_.mathtex.run())
 
-
+  // TODO ReqTitle doesn't allow tags. Rethink this?
 
   override val tests = TestSuite {
     'manual {
       import shipreq.webapp.base.UnsafeTypes._
 
-      def test[A <: Atom.Generic](p: Project, parse: Project => String => Vector[A], text: String)(as: A*): Unit = {
+      def testT[A <: Atom.Generic](p: Project, parse: Project => String => Vector[A], text: String)(as: A*): Unit = {
         val e = as.toVector
         assertEq(parse(p)(text), e)
         val text2 = Presentation.textToString(p)(e)
         assertEq(text2, parse(p)(text2), e)
       }
 
+      def test(text: String)(as: T.Atom*): Unit =
+        testT(P, T.parse, text)(as: _*)
+
       'hashHashHash -
-        // TODO ReqTitle doesn't allow tags
-        // assertEq(T.parse(P)("#v1.x#v1.0#TBD#TBD{whatever}#pri=high"),
-        test(P, T.parse, "#TBD#TBD{ whatever}#TO"+"DO")(
-          T.Issue(2, Vector.empty), T.Issue(2, Vector(I.Literal("whatever"))), T.Issue(1, Vector.empty))
+        test("#v1.x#v1.0#TBD#TBD{ whatever}#pri=high")(
+          T.TagRef(21), T.TagRef(22), T.Issue(2, V.empty), T.Issue(2, Vector(I.Literal("whatever"))), T.TagRef(2))
 
       'innerBraceInIssueDesc -
-        test(P, T.parse, "#TBD{ <math>\\frac{22}</math> }")(T.Issue(2, Vector(I.MathTeX("\\frac{22}"))))
+        test("#TBD{ <math>\\frac{22}</math> }")(T.Issue(2, Vector(I.MathTeX("\\frac{22}"))))
+
+      'whitespace {
+        'empty  - test("    ")()
+        'lit    - test("  hehe  ")(L("hehe"))
+        'email  - test("  asd@abc.com  ")(T.EmailAddress("asd@abc.com"))
+        'li     - test("*     hehe    \n*     yay    ")(T.UnorderedList(NEV(LI(L("hehe")), LI(L("yay")))))
+        'nl     - test("here\nthere")(L("here"), T.newLine, L("there"))
+        'nls    - test("here \n \n\n there")(L("here"), T.newLine, L("there"))
+        'listNL - test("ok\n\n\n*   hehe \n \n\n  \n *  yay \n\n\n bye")(L("ok"), T.UnorderedList(NEV(LI(L("hehe")), LI(L("yay")))), L("bye"))
+      }
+
+      'list {
+        'empty - test("* ")(T.UnorderedList(NEV(LI())))
+        'between - test("before\n* mid\nafter")(L("before"), T.UnorderedList(NEV(LI(L("mid")))), L("after"))
+      }
     }
 
     'small {
