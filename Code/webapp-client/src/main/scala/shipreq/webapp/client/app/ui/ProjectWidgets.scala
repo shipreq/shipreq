@@ -3,6 +3,7 @@ package shipreq.webapp.client.app.ui
 import japgolly.scalacss.ScalaCssReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
+import shipreq.webapp.base.UiText
 import scalaz.Memo
 import shipreq.base.util.{NonEmptyVector, Must, UnivEq}
 import shipreq.webapp.base.data._
@@ -97,6 +98,13 @@ final class ProjectWidgets(project: Project) {
   def tags(tags: Vector[ApplicableTag.Id]): ReactElement =
     <.div(tags.map(id => tag(id)(): TagMod): _*)
 
+  def katex(m: Atom.PlainTextMarkup#MathTeX) =
+    try
+      <.span(*.math, ^.dangerouslySetInnerHtml(KaTeX renderToStringUnsafe m.value))
+    catch {
+      case _: Throwable => <.span(*.mathFail, UiText.mathFailed)
+    }
+
   // TODO move
   def text1(t: Text.AnyNonEmpty, style: TagMod = EmptyTag): ReactElement = text(t.whole, style)
   def text(t: Text.AnyOptional, style: TagMod = EmptyTag): ReactElement = {
@@ -108,7 +116,7 @@ final class ProjectWidgets(project: Project) {
       case a: TagRef          # TagRef        => tag(a.value)()
       case a: PlainTextMarkup # WebAddress    => <.a(^.href := a.value, a.value)
       case a: PlainTextMarkup # EmailAddress  => <.a(^.href := s"mailto:${a.value}", a.value)
-      case a: PlainTextMarkup # MathTeX       => <.span(*.math, ^.dangerouslySetInnerHtml(KaTeX renderToString a.value))
+      case a: PlainTextMarkup # MathTeX       => katex(a)
       case a: ListMarkup      # UnorderedList => <.ul(a.items.whole.map(row => <.li(row map atom: _*)): _*)
       case a: ReqRef          # ReqRef        => reqRef(a.value)()
       case a: Issue           # Issue         => issueO(a.typ, a.desc)

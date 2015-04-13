@@ -13,10 +13,12 @@ import scalajs.js._
 @JSName("katex")
 object KaTeX extends Object {
 
-  def render(math: String, element: Element): Unit = native
+  //def render(math: String, element: Element): Unit = native
 
   /**
-   * @return `<span class="katex">...</span>`
+   * @return `"""<span class="katex">...</span>"""`
+   * @throws RuntimeException if input is invalid
    */
-  def renderToString(math: String): String = native
+  @JSName("renderToString")
+  def renderToStringUnsafe(math: String): String = native
 }

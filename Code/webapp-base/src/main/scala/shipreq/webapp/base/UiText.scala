@@ -6,6 +6,8 @@ object UiText {
 
   def mustFailed = "¿ERR"
 
+  def mathFailed = "{Invalid expression}"
+
   def mustA(m: Must[String], outputOnFailure: String = mustFailed): String = {
     m.fold(e => {
       System.err.println(e) // side-effect!

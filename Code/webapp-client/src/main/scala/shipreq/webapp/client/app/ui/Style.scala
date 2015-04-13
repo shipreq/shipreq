@@ -182,6 +182,7 @@ object Style extends StyleSheet.Inline {
       hoverShowsInfo))
 
     val math = style(margin.horizontal(0.8 ex))
+    val mathFail = style(math, hasError)
   }
 
   def damnit(a: StyleA*) = ()
