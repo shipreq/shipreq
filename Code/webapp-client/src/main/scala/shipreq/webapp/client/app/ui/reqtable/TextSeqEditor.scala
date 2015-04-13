@@ -53,7 +53,7 @@ object TextSeqEditor {
 
 import TextSeqEditor._
 
-final class TextSeqEditor[A](val fmt: Format) {
+final class TextSeqEditor[A](name: String, val fmt: Format) {
 
   case class Props(state       : S,
                    stateUpdate : S => IO[Unit],
@@ -65,7 +65,7 @@ final class TextSeqEditor[A](val fmt: Format) {
   val inputRef = Ref[HTMLInputElement]("i")
 
   val component =
-    ReactComponentB[Props]("TextSeqEditor")
+    ReactComponentB[Props](name)
       .stateless
       .backend(new Backend(_))
       .render(_.backend.render)
@@ -139,7 +139,7 @@ object TagEditor {
 
   type Lookup = Map[String, A]
 
-  final val editor = new TextSeqEditor[A](hashtagSeqFormat)
+  final val editor = new TextSeqEditor[A]("TagEditor", hashtagSeqFormat)
 
   def lookupForNoCol(p: Project): Must[Lookup] =
     lookupG(p, _.tagsNotUsedInColumns)
@@ -211,7 +211,7 @@ object ImplicationEditor {
 
   type A = Req.Id
 
-  final val editor = new TextSeqEditor[A](pubidSeqFormat)
+  final val editor = new TextSeqEditor[A]("ImplicationEditor", pubidSeqFormat)
 
   @inline def norm = editor.fmt.normEach
 
