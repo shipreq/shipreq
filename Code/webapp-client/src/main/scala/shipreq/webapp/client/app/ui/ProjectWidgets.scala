@@ -117,7 +117,7 @@ final class ProjectWidgets(project: Project) {
       case a: PlainTextMarkup # WebAddress    => <.a(^.href := a.value, a.value)
       case a: PlainTextMarkup # EmailAddress  => <.a(^.href := s"mailto:${a.value}", a.value)
       case a: PlainTextMarkup # MathTeX       => katex(a)
-      case a: ListMarkup      # UnorderedList => <.ul(a.items.whole.map(row => <.li(row map atom: _*)): _*)
+      case a: ListMarkup      # UnorderedList => <.ul(*.ul, a.items.whole.map(row => <.li(row map atom: _*)))
       case a: ReqRef          # ReqRef        => reqRef(a.value)()
       case a: Issue           # Issue         => issueO(a.typ, a.desc)
     }

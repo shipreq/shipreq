@@ -112,8 +112,7 @@ object RichTextEditor {
       Cell.Editing(component(p))
   }
 
-  object GenericReqDesc extends Base("GenericReqDescEditor", Text.GenericReqDesc) {
-
+  object GenericReqDesc extends Base("GenericReqDesc editor", Text.GenericReqDesc) {
     def apply(initial : t.OptionalText,
               project : Rx[Project],
               projectWidgets: Rx[ProjectWidgets],
@@ -139,9 +138,36 @@ object RichTextEditor {
         cellState(Props(state, update, abort, commit, project, projectWidgets, autoComplete))
 
       newState(init)
-
-
     }
-
   }
+
+  object CustomTextField extends Base("CustomTextField editor", Text.CustomTextField) {
+    def apply(initial : t.OptionalText,
+              project : Rx[Project],
+              projectWidgets: Rx[ProjectWidgets],
+              setState: Option[Cell.State] => IO[Unit]): Cell.State = {
+
+      def init: S =
+        Presentation.textToString(project.value())(initial)
+
+      val abort: IO[Unit] =
+        setState(None)
+
+      val commit: t.OptionalText => IO[Unit] =
+      // TODO If change occurred, send to server & lock cell. (If unchanged, clear state.)
+        s => setState(None) >>> IO{ println("Sent to ze server: " + s) }
+
+      def autoComplete: AutoComplete =
+        Rx(TC.Strategies()).noReuse
+
+      lazy val update: S => IO[Unit] =
+        s => setState(Some(newState(s)))
+
+      def newState(state: S) =
+        cellState(Props(state, update, abort, commit, project, projectWidgets, autoComplete))
+
+      newState(init)
+    }
+  }
+
 }

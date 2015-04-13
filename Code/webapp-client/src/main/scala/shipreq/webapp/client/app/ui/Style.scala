@@ -164,6 +164,8 @@ object Style extends StyleSheet.Inline {
 
     val blankLine = style(display.block, height(1 em))
 
+    val ul = style(paddingLeft(2.4 ex))
+
     val tag = style(
       addClassName("label label-default"),
       hoverShowsInfo,

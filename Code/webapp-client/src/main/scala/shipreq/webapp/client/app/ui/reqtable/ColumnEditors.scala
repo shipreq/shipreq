@@ -26,7 +26,7 @@ final class ColumnEditors(project       : Rx[Project],
         case Column.ImplicationTgt => imps(Row.implicationTgt, ImplicationEditor declFwd Column.ImplicationTgt)
         case Column.CustomField(f) =>
           f match {
-            // case id: CustomField.Text       .Id => cfText(id)
+            case id: CustomField.Text       .Id => cfText.value()(id)
             case id: CustomField.Tag        .Id => cfTag(id)
             case id: CustomField.Implication.Id => cfImp(id)
           }
@@ -89,4 +89,15 @@ final class ColumnEditors(project       : Rx[Project],
           ImplicationEditor(initialValue, project, lookup3, setLocal)
         }
     }
+
+  val cfText: Rx[CustomField.Text.Id => ColStartEdit] =
+    project.map(p =>
+      Memo.mutableHashMapMemo { id =>
+        val textData = p.reqFieldData.data.text.getOrElse(id, Map.empty)
+        (row, setLocal) => {
+          val initialValue = textData.get(row.id).map(_.whole) getOrElse Vector.empty
+          RichTextEditor.CustomTextField(initialValue, project, projectWidgets, setLocal).some
+        }
+      }
+    )
 }
