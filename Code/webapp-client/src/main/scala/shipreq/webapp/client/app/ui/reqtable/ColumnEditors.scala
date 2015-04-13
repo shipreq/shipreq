@@ -6,10 +6,11 @@ import scalaz.effect.IO
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.Rx
 import shipreq.webapp.base.data._
+import shipreq.webapp.client.app.ui.ProjectWidgets
 
-final class ColumnEditors(project  : Rx[Project],
-                          reqDescFn: Rx[Req => String],
-                          cellset  : Cell.SetIO) {
+final class ColumnEditors(project       : Rx[Project],
+                          projectWidgets: Rx[ProjectWidgets],
+                          cellset       : Cell.SetIO) {
 
   type SetLocal = Option[Cell.State] => IO[Unit]
 
@@ -18,6 +19,7 @@ final class ColumnEditors(project  : Rx[Project],
   def startCellEditing(row: Row, col: Column): Option[IO[Unit]] = {
     val e: ColStartEdit =
       col match {
+        case Column.Desc           => desc
         case Column.Tags           => tags
         case Column.Pubid          => noEdit
         case Column.ImplicationSrc => imps(Row.implicationSrc, ImplicationEditor declFwd Column.ImplicationSrc)
@@ -41,6 +43,14 @@ final class ColumnEditors(project  : Rx[Project],
   val noEdit: ColStartEdit =
     (_, _) => None
 
+  lazy val desc: ColStartEdit = {
+    //val lookup = project map TagEditor.lookupForNoCol
+    (row, setLocal) => {
+      val initialValue = row.fold(_.fold(_.req.desc))
+      RichTextEditor.GenericReqDesc(initialValue, project, projectWidgets, setLocal).some
+    }
+  }
+
   lazy val tags: ColStartEdit = {
     val lookup = project map TagEditor.lookupForNoCol
     (row, setLocal) => {
@@ -59,7 +69,7 @@ final class ColumnEditors(project  : Rx[Project],
     }
 
   lazy val impsLookup =
-    Rx.apply2(project, reqDescFn)(ImplicationEditor.lookupAll)
+    Rx.apply2(project, projectWidgets.map(_.reqDesc))(ImplicationEditor.lookupAll)
 
   def imps(l: Optional[Row, Vector[Pubid]], declFwd : Boolean): ColStartEdit = (row, setLocal) =>
     l.getOption(row).map { initialValue =>

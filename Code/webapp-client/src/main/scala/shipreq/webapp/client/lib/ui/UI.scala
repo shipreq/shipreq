@@ -1,10 +1,12 @@
 package shipreq.webapp.client.lib.ui
 
+import japgolly.scalajs.jquery.TextComplete
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import org.scalajs.dom
-import scala.scalajs.js.{UndefOr, undefined}
+import org.scalajs.dom.html
+import scala.scalajs.js.{Dynamic, UndefOr, undefined}
 import scalaz.effect.IO
-import shipreq.base.util.Must
+import shipreq.base.util.{Rx, Must}
 import shipreq.base.util.effect.IoUtils, IoUtils.IoExt
 import shipreq.webapp.base.UiText
 
@@ -58,4 +60,13 @@ object UI {
       io.fold(IoUtils.nop)(e.preventDefaultIO >>> e.stopPropagationIO >>> _)
     }
 
+  def textComplete[E <: html.Element](target: E, strategies: TextComplete.Strategies, onUpdate: => (String => IO[Unit]))(implicit E: TextEditor[E]): Unit = {
+    if (strategies.nonEmpty) {
+      val tgt = Dynamic.global.$(target)
+      TextComplete(tgt, strategies)
+      TextComplete.onSelect(tgt) {
+        onUpdate(E.value(target)).unsafePerformIO()
+      }
+    }
+  }
 }

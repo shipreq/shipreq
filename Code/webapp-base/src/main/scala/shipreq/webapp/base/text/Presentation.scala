@@ -67,7 +67,8 @@ object Presentation {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  def textToString(implicit p: Project): Text.AnyOptional => String = {
+  def textToString(p: Project): Text.AnyOptional => String = {
+    @inline implicit def implicitProject = p
 
     val outOfListNewline = "\n\n"
 

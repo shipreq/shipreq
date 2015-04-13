@@ -62,7 +62,7 @@ final class TextSeqEditor[A](name: String, val fmt: Format) {
                    commit      : Vector[A] => IO[Unit],
                    autoComplete: AutoComplete)
 
-  val inputRef = Ref[HTMLInputElement]("i")
+  val textEditorRef = Ref[HTMLInputElement]("i")
 
   val component =
     ReactComponentB[Props](name)
@@ -70,21 +70,14 @@ final class TextSeqEditor[A](name: String, val fmt: Format) {
       .backend(new Backend(_))
       .render(_.backend.render)
       .componentDidMount { $ =>
-        val n = inputRef($).get.getDOMNode()
+        val n = textEditorRef($).get.getDOMNode()
         n.focus()
         n.select()
 
         // TODO Should update autoComplete if needed on props change
         val strategies = $.props.autoComplete.value()
-        if (strategies.nonEmpty) {
-          val nn = js.Dynamic.global.$(n)
-          TC(nn, strategies)
-          TC.onSelect(nn) {
-            $.props.stateUpdate(n.value).unsafePerformIO()
-          }
-        }
+        UI.textComplete(n, strategies, $.props.stateUpdate)
       }
-      .domType[HTMLInputElement]
       .build
 
   class Backend($: BackendScope[Props, Unit]) {
@@ -111,7 +104,7 @@ final class TextSeqEditor[A](name: String, val fmt: Format) {
 
       <.div(
         <.input(
-          ^.ref := inputRef,
+          ^.ref := textEditorRef,
           *.cellEditor(parseResult.isLeft),
           ^.`type`      := "text",
           ^.value       := p.state,

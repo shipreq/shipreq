@@ -58,7 +58,7 @@ object ReqTable {
     val colRnd   = Rx.apply3(project, colName, widgets)(new ColumnRenderers(_, _, _))
     val colRnds  = for {cols <- vsCols; cr <- colRnd} yield cols map cr.apply
     val rows     = for {vs <- viewSettings; p <- project} yield Logic.rowsForTable(vs, p).toVector
-    val ces      = new ColumnEditors(project, widgets.map(_.reqDesc), setCell)
+    val ces      = new ColumnEditors(project, widgets, setCell)
     val content  = Rx.apply2(colRnds, rows)(Table.Content(_, _, ces))
 
     def render = {
