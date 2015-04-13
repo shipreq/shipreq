@@ -80,17 +80,38 @@ object RandomData {
       t <- grammarChars(w(g)).list.lim(l(g).minus1.max)
     } yield (h :: t).mkString
 
-  def grammarFixer[G](g: G)(first: G => Grammar.Chars, rest: G => Grammar.Chars) = {
+  class CaseInsensitive(val norm: String, val str: String) {
+    override def hashCode = norm.##
+    override def equals(o: Any) = o match {
+      case x: CaseInsensitive => norm == x.norm
+      case _ => false
+    }
+  }
+  def CaseInsensitive(s: String): CaseInsensitive =
+    new CaseInsensitive(s.toLowerCase, s)
+
+  def legalGrammar[G](g: G)(first: G => Grammar.Chars, rest: G => Grammar.Chars): Stream[String] = {
     val g1 = first(g).toStream.map(_.toString)
     val gn = rest(g).toStream.map(_.toString)
     def grow(ss: Stream[String]): Stream[String] = {
       val x = ss append ss.flatMap(s => gn.map(s + _))
       x append grow(x)
     }
-    val all = grow(g1)
+    grow(g1)
+  }
+
+  def grammarFixer[G](g: G)(first: G => Grammar.Chars, rest: G => Grammar.Chars) = {
+    val all = legalGrammar(g)(first, rest)
     def fix(used: Set[String]): String =
       all.filter(!used.contains(_)).head
     Distinct.Fixer.lift(fix)
+  }
+
+  def grammarFixerIgnoreCase[G](g: G)(first: G => Grammar.Chars, rest: G => Grammar.Chars) = {
+    val all = legalGrammar(g)(first, rest) map CaseInsensitive
+    def fix(used: Set[CaseInsensitive]): CaseInsensitive =
+      all.filter(!used.contains(_)).head
+    Distinct.Fixer.lift(fix).xmap(_.str)(CaseInsensitive)
   }
 
   def someOfWithDups[A, B](as: Seq[A])(f: A => Gen[B]): Gen[Vector[B]] =
@@ -797,7 +818,7 @@ object RandomData {
   // Project
 
   lazy val hashRefFixer =
-    grammarFixer(Grammar.hashRefKey)(_.firstChar, _.allChars)
+    grammarFixerIgnoreCase(Grammar.hashRefKey)(_.firstChar, _.allChars)
       .xmap(HashRefKey.apply)(_.value)
 
   def distinctHashRefKeys = {

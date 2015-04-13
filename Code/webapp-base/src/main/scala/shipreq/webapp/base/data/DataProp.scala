@@ -213,9 +213,10 @@ object DataProp {
 
 
     def uniqueHashRefKeys =
-      Prop.distinct[T, HashRefKey]("HashRefKey", p =>
-        p.customIssueTypes.data.values.toStream.map(_.key) #:::
-        p.tags.data.vstreamf(_.tag.keyO.toStream))
+      Prop.distinct[T, String]("HashRefKey", p => (
+          p.customIssueTypes.data.values.toStream.map(_.key) append
+          p.tags.data.vstreamf(_.tag.keyO.toStream)
+        ).map(_.value.toLowerCase))
 
     def validRefs = {
       def validateFieldIds(name: String, data: T => Traversable[CustomField.Id]) =
