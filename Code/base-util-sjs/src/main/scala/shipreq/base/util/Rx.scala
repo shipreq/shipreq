@@ -27,7 +27,7 @@ sealed abstract class Rx[A] {
 
   // def map2[B](f: (A, B, A) => Option[B]): Rx.Map[A, B] =
 
-  def map[B](f: A => B): Rx.Map[A, B] =
+  def map[B](f: A => B): Rx[B] =
     new Rx.Map(this, f)
 
   def flatMap[B](f: A => Rx[B]): Rx[B] =
@@ -91,6 +91,12 @@ object Rx {
     override def rev  = _revA
     override def peek = _value
 
+    override def map[C](g: B => C): Rx[C] =
+      new Map(xa, g compose f)
+
+    override def flatMap[C](g: B => Rx[C]): Rx[C] =
+      new Rx.FlatMap(xa, g compose f)
+
     override def value(): B = {
       xa.valueSince(_revA).foreach { a =>
         _value = f(a)
@@ -106,6 +112,9 @@ object Rx {
 
     override def rev  = _revA + _value.rev
     override def peek = _value.peek
+
+    override def map[C](g: B => C): Rx[C] =
+      new FlatMap(xa, f(_: A) map g)
 
     override def value(): B = {
       xa.valueSince(_revA).foreach { a =>
