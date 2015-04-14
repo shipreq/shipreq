@@ -98,4 +98,14 @@ object AutoComplete {
 
   def normaliseReqDesc(s: String): String =
     normaliseReqPubid(s).replace(" ", "")
+
+  // ===================================================================================================================
+  // <math>
+
+  private def htmllike = Stream("math")
+
+  def math: Strategy =
+    Strategy("""(^|\s)<([a-z]+)$""", index = 2)
+    .search(term => htmllike.filter(_ startsWith term))
+    .replace2(tag => (s"$$1<$tag>", s"</$tag>"))
 }

@@ -55,7 +55,8 @@ object RichTextEditor {
             legalIf(supportsIssues, p.customIssueTypes.data.values.toStream),
             legalIf(supportsTags  , p.tags.data.vstream(_.tag).filterT[ApplicableTag]),
             prefix = true),
-          AutoComplete.req(AutoComplete.reqItems(p, w.reqDesc), prefix = true)
+          AutoComplete.req(AutoComplete.reqItems(p, w.reqDesc), prefix = true),
+          AutoComplete.math
         )
     }
 
