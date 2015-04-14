@@ -40,7 +40,7 @@ object TextSeqEditor {
   }
 
   val pubidSeqFormat =
-    Format(_.trim, "[ ,]+".r.pattern, _.replace("-", "").toUpperCase, _.isEmpty)
+    Format(_.trim, "[ ,]+".r.pattern, AutoComplete.normaliseReqPubid, _.isEmpty)
 
   val hashtagSeqFormat = {
     val each = "^# *".r
@@ -196,40 +196,24 @@ object TagEditor {
 object ImplicationEditor {
   import shipreq.webapp.base.data._
   import DataImplicits._
+  import AutoComplete.ReqItem
 
   type A = Req.Id
 
   final val editor = new TextSeqEditor[A]("ImplicationEditor", pubidSeqFormat)
 
-  @inline def norm = editor.fmt.normEach
+  case class Lookup(legal: Stream[ReqItem], illegal: Map[String, ParseRejection]) {
+    lazy val legalm = legal.map(_.mapStrengthL(_.pubidStrNorm)).toMap
 
-  case class LookupV(desc: String, req: Req, display: String) {
-    val descNorm = norm(desc)
-  }
-
-  case class Lookup(legal: Map[String, LookupV], illegal: Map[String, ParseRejection]) {
     def outlaw(rej: ParseRejection, f: Req => Boolean): Lookup = {
-      var legal2   = legal
-      var illegal2 = illegal
-      for ((k, v) <- legal)
-        if (f(v.req)) {
-          illegal2 = illegal2.updated(k, rej)
-          legal2 -= k
-        }
-      Lookup(legal2, illegal2)
+      val (ko, ok) = legal.partition(i => f(i.req))
+      val illegal2 = ko.foldLeft(illegal)((m, i) => m.updated(i.pubidStrNorm, rej))
+      Lookup(ok, illegal2)
     }
   }
 
-  def lookupAll(p: Project, reqDesc: Req => String): Must[Lookup] = {
-    val reqs = p.reqs.data.reqs.values.toStream
-    val m = Must.foldMapM[Req, Stream, (String, LookupV)](reqs)(r =>
-      Presentation.pubid(r.pubid)(p).map { pubidTxt =>
-        val key = norm(pubidTxt)
-        (key, LookupV(reqDesc(r), r, pubidTxt))
-      }
-    )
-    m.map(legal => Lookup(legal.toMap, UnivEq.emptyMap))
-  }
+  def lookupAll(p: Project, reqDesc: Req => String): Lookup =
+    Lookup(AutoComplete.reqItems(p, reqDesc), UnivEq.emptyMap)
 
   def lookupForCol(p: Project, l: Lookup, fid: CustomField.Implication.Id): Must[Lookup] =
     p.customField(fid).map(f =>
@@ -263,36 +247,16 @@ object ImplicationEditor {
       ) mkString " "
     }
 
-    val lookup = lookupM.map(mustResolve(_)(Lookup(UnivEq.emptyMap, UnivEq.emptyMap)))
+    val lookup = lookupM.map(mustResolve(_)(Lookup(Stream.empty, UnivEq.emptyMap)))
 
     val autoComplete: AutoComplete =
-      lookup.map { l =>
-        val sorted = l.legal.toStream.sortBy(_._2.tmap2(_.req.pubid.pos.value, _.display))
-
-        def li(v: LookupV): ReactElement =
-          *.reqAutoComplete('req)(r => _('desc)(d =>
-            <.div(
-              <.div(r, v.display),
-              <.div(d, v.desc))
-          ))
-
-        TC.Strategies(
-          TC.Strategy(s"\\b(\\S+)$$")
-            .search[LookupV](term => {
-              val n = norm(term)
-              // TODO [pri=low] Search algorithm won't scale well
-              sorted.filter(x => x._1.contains(n) || x._2.descNorm.contains(n)).map(_._2)
-            })
-            .replace(_.display + " ")
-            .index(1)
-            .template(v => React.renderToStaticMarkup(li(v)))
-        )
-      }
+      lookup.map(l =>
+        AutoComplete.req(l.legal, prefix = false))
 
     val parser: Parser[A] = () => {
       val l = lookup.value()
       s =>
-        l.legal.get(s).map(_.req.id.right) orElse
+        l.legalm.get(s).map(_.req.id.right) orElse
           l.illegal.get(s).map(-\/.apply) getOrElse
             leftNone
     }

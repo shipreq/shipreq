@@ -4,7 +4,7 @@ import monocle.Optional
 import scalaz.Memo
 import scalaz.effect.IO
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.Rx
+import shipreq.base.util.{Must, Rx}
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.app.ui.ProjectWidgets
 
@@ -73,14 +73,14 @@ final class ColumnEditors(project       : Rx[Project],
 
   def imps(l: Optional[Row, Vector[Pubid]], declFwd : Boolean): ColStartEdit = (row, setLocal) =>
     l.getOption(row).map { initialValue =>
-      val lookup2 = for {p <- project; lm <- impsLookup}
-        yield lm.map(ImplicationEditor.lookupForSubject(p, _, row.id, declFwd))
+      val lookup2 = for {p <- project; l <- impsLookup}
+        yield Must(ImplicationEditor.lookupForSubject(p, l, row.id, declFwd))
       ImplicationEditor(initialValue, project, lookup2, setLocal)
     }
 
   val cfImp: CustomField.Implication.Id => ColStartEdit =
     Memo.mutableHashMapMemo { id =>
-      val lookup2 = for {p <- project; lm <- impsLookup} yield lm.flatMap(ImplicationEditor.lookupForCol(p, _, id))
+      val lookup2 = for {p <- project; l <- impsLookup} yield ImplicationEditor.lookupForCol(p, l, id)
       (row, setLocal) =>
         Row.cfImp(id).getOption(row).map { initialValue =>
           val declFwd = ImplicationEditor declFwd id

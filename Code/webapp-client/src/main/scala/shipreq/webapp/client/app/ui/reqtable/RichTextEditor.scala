@@ -21,7 +21,6 @@ import shipreq.webapp.client.lib.ui.{KeyHandler, UI}
 
 // TODO Limit size
 
-
 object RichTextEditor {
 
   type AutoComplete = Rx[TC.Strategies]
@@ -44,16 +43,20 @@ object RichTextEditor {
     def supportsTags   = t match { case _: Atom.TagRef => true; case _ => false }
     def supportsIssues = t match { case _: Atom.Issue  => true; case _ => false }
 
-    def mkAutoComplete(project: Rx[Project]): AutoComplete = {
+    def mkAutoComplete(project: Rx[Project], projectWidgets: Rx[ProjectWidgets]): AutoComplete = {
       @inline def legalIf[A](guard: Boolean, s: => Stream[A]): Stream[A] =
         if (guard) s else Stream.empty
-
-      project.map { p =>
-        AutoComplete.hashtag(
-          legalIf(supportsIssues, p.customIssueTypes.data.values.toStream),
-          legalIf(supportsTags  , p.tags.data.vstream(_.tag).filterT[ApplicableTag]),
-          prefix = true)
-      }
+      for {
+        p <- project
+        w <- projectWidgets
+      } yield
+        TC.Strategies(
+          AutoComplete.hashtag(
+            legalIf(supportsIssues, p.customIssueTypes.data.values.toStream),
+            legalIf(supportsTags  , p.tags.data.vstream(_.tag).filterT[ApplicableTag]),
+            prefix = true),
+          AutoComplete.req(AutoComplete.reqItems(p, w.reqDesc), prefix = true)
+        )
     }
 
     case class Props(state         : S,
@@ -145,7 +148,7 @@ object RichTextEditor {
       // TODO If change occurred, send to server & lock cell. (If unchanged, clear state.)
         s => setState(None) >>> IO{ println("Sent to ze server: " + s) }
 
-      val autoComplete = mkAutoComplete(project)
+      val autoComplete = mkAutoComplete(project, projectWidgets)
 
       lazy val update: S => IO[Unit] =
         s => setState(Some(newState(s)))
@@ -174,7 +177,7 @@ object RichTextEditor {
       // TODO If change occurred, send to server & lock cell. (If unchanged, clear state.)
         s => setState(None) >>> IO{ println("Sent to ze server: " + s) }
 
-      val autoComplete = mkAutoComplete(project)
+      val autoComplete = mkAutoComplete(project, projectWidgets)
 
       lazy val update: S => IO[Unit] =
         s => setState(Some(newState(s)))
@@ -185,5 +188,4 @@ object RichTextEditor {
       newState(init)
     }
   }
-
 }
