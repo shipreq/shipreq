@@ -19,7 +19,7 @@ import scalaz.syntax.foldable._
 import shapeless.syntax.singleton._
 
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{Must, UnivEq, Rx}
+import shipreq.base.util.{Must, UnivEq, Px}
 import shipreq.base.util.effect.IoUtils, IoUtils.IoExt
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.text.{Grammar, Presentation}
@@ -32,7 +32,7 @@ object TextSeqEditor {
   type ParseResult[+O] = ParseRejection \/ O
   type Parser[+O]      = () => S => ParseResult[O]
 
-  type AutoComplete = Rx[TC.Strategies]
+  type AutoComplete = Px[TC.Strategies]
 
   final case class Format(normAll: EndoFn[String], sep: Pattern, normEach: EndoFn[String], ignore: String => Boolean) {
     def apply(input: String): Stream[String] =
@@ -149,7 +149,7 @@ object TagEditor {
 
   def apply(initial : Vector[A],
             project : Project,
-            lookupM : Rx[Must[Lookup]],
+            lookupM : Px[Must[Lookup]],
             setState: Option[Cell.State] => IO[Unit]): Cell.State = {
 
     def init: S =
@@ -236,8 +236,8 @@ object ImplicationEditor {
   }
 
   def apply(initial : Vector[Pubid],
-            project : Rx[Project],
-            lookupM : Rx[Must[Lookup]],
+            project : Px[Project],
+            lookupM : Px[Must[Lookup]],
             setState: Option[Cell.State] => IO[Unit]): Cell.State = {
 
     def init: S = {

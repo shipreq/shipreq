@@ -4,12 +4,12 @@ import monocle.Optional
 import scalaz.Memo
 import scalaz.effect.IO
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{Must, Rx}
+import shipreq.base.util.{Must, Px}
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.app.ui.ProjectWidgets
 
-final class ColumnEditors(project       : Rx[Project],
-                          projectWidgets: Rx[ProjectWidgets],
+final class ColumnEditors(project       : Px[Project],
+                          projectWidgets: Px[ProjectWidgets],
                           cellset       : Cell.SetIO) {
 
   type SetLocal = Option[Cell.State] => IO[Unit]
@@ -69,7 +69,7 @@ final class ColumnEditors(project       : Rx[Project],
     }
 
   lazy val impsLookup =
-    Rx.apply2(project, projectWidgets.map(_.reqDesc))(ImplicationEditor.lookupAll)
+    Px.apply2(project, projectWidgets.map(_.reqDesc))(ImplicationEditor.lookupAll)
 
   def imps(l: Optional[Row, Vector[Pubid]], declFwd : Boolean): ColStartEdit = (row, setLocal) =>
     l.getOption(row).map { initialValue =>
@@ -90,7 +90,7 @@ final class ColumnEditors(project       : Rx[Project],
         }
     }
 
-  val cfText: Rx[CustomField.Text.Id => ColStartEdit] =
+  val cfText: Px[CustomField.Text.Id => ColStartEdit] =
     project.map(p =>
       Memo.mutableHashMapMemo { id =>
         val textData = p.reqFieldData.data.text.getOrElse(id, Map.empty)

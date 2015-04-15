@@ -3,13 +3,15 @@ package shipreq.base.util
 import scalaz.Equal
 
 /**
+ * Px - Performance extension (?)
+ *
  * I can't think of what else to call this.
  * This isn't exactly FRP but it's similar.
  * In FRP, changing a node updates all of its transitive children.
  * In this, changing a node only changes the node, but when any of its transitive children are next asked for a value,
  * they will update themselves.
  */
-sealed abstract class Rx[A] {
+sealed abstract class Px[A] {
 
   def rev: Int
 
@@ -25,20 +27,20 @@ sealed abstract class Rx[A] {
       None
   }
 
-  // def map2[B](f: (A, B, A) => Option[B]): Rx.Map[A, B] =
+  // def map2[B](f: (A, B, A) => Option[B]): Px.Map[A, B] =
 
-  def map[B](f: A => B): Rx[B] =
-    new Rx.Map(this, f)
+  def map[B](f: A => B): Px[B] =
+    new Px.Map(this, f)
 
-  def flatMap[B](f: A => Rx[B]): Rx[B] =
-    new Rx.FlatMap(this, f)
+  def flatMap[B](f: A => Px[B]): Px[B] =
+    new Px.FlatMap(this, f)
 
   //override def toString = value().toString
 }
 
-object Rx {
+object Px {
 
-  sealed abstract class Root[A] extends Rx[A] {
+  sealed abstract class Root[A] extends Px[A] {
     protected val ignoreChange: (A, A) => Boolean
 
     protected var _rev = 0
@@ -84,18 +86,18 @@ object Rx {
     }
   }
 
-  final class Map[A, B](xa: Rx[A], f: A => B) extends Rx[B] {
+  final class Map[A, B](xa: Px[A], f: A => B) extends Px[B] {
     private var _value = f(xa.value())
     private var _revA  = xa.rev
 
     override def rev  = _revA
     override def peek = _value
 
-    override def map[C](g: B => C): Rx[C] =
+    override def map[C](g: B => C): Px[C] =
       new Map(xa, g compose f)
 
-    override def flatMap[C](g: B => Rx[C]): Rx[C] =
-      new Rx.FlatMap(xa, g compose f)
+    override def flatMap[C](g: B => Px[C]): Px[C] =
+      new Px.FlatMap(xa, g compose f)
 
     override def value(): B = {
       xa.valueSince(_revA).foreach { a =>
@@ -106,14 +108,14 @@ object Rx {
     }
   }
 
-  final class FlatMap[A, B](xa: Rx[A], f: A => Rx[B]) extends Rx[B] {
+  final class FlatMap[A, B](xa: Px[A], f: A => Px[B]) extends Px[B] {
     private var _value = f(xa.value())
     private var _revA  = xa.rev
 
     override def rev  = _revA + _value.rev
     override def peek = _value.peek
 
-//    override def map[C](g: B => C): Rx[C] =
+//    override def map[C](g: B => C): Px[C] =
 //      new FlatMap(xa, f(_: A) map g)
 
     override def value(): B = {
@@ -128,7 +130,7 @@ object Rx {
   // ===================================================================================================================
 
   object AutoValue {
-    @inline implicit def autoRxValue[A](x: Rx[A]): A = x.value()
+    @inline implicit def autoPxValue[A](x: Px[A]): A = x.value()
   }
 
   @inline def refresh(xs: ThunkM[_]*): Unit =
@@ -136,7 +138,7 @@ object Rx {
 
   // ===================================================================================================================
 
-  final class NeedIgnoreChange[A, R <: Rx[A]](val f: ((A, A) => Boolean) => R) extends AnyVal {
+  final class NeedIgnoreChange[A, R <: Px[A]](val f: ((A, A) => Boolean) => R) extends AnyVal {
     def noReuse                          : R = f((_, _) => false)
     def reuse(g: (A, A) => Boolean)      : R = f(g)
     def reuseR(implicit ev: A <:< AnyRef): R = f((a, b) => ev(a) eq ev(b))
@@ -152,12 +154,12 @@ object Rx {
   def thunkA[A](f: => A) =
     new NeedIgnoreChange[A, ThunkA[A]](new ThunkA(() => f, _))
 
-  def apply2[A, B, Z](xa: Rx[A], xb: Rx[B])(f: (A, B) => Z): Rx[Z] =
+  def apply2[A, B, Z](xa: Px[A], xb: Px[B])(f: (A, B) => Z): Px[Z] =
     for {a ← xa; b ← xb} yield f(a,b)
 
-  def apply3[A, B, C, Z](xa: Rx[A], xb: Rx[B], xc: Rx[C])(f: (A, B, C) => Z): Rx[Z] =
+  def apply3[A, B, C, Z](xa: Px[A], xb: Px[B], xc: Px[C])(f: (A, B, C) => Z): Px[Z] =
     for {a ← xa; b ← xb; c ← xc} yield f(a,b,c)
 
-  def apply4[A, B, C, D, Z](xa: Rx[A], xb: Rx[B], xc: Rx[C], xd: Rx[D])(f: (A, B, C, D) => Z): Rx[Z] =
+  def apply4[A, B, C, D, Z](xa: Px[A], xb: Px[B], xc: Px[C], xd: Px[D])(f: (A, B, C, D) => Z): Px[Z] =
     for {a ← xa; b ← xb; c ← xc; d ← xd} yield f(a,b,c,d)
 }

@@ -8,11 +8,11 @@ import org.scalajs.dom.raw.HTMLTextAreaElement
 import shipreq.webapp.client.app.ui.ProjectWidgets
 import scalajs.js
 import scalaz.effect.IO
-import shipreq.base.util.Rx
+import shipreq.base.util.Px
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text._
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{Must, UnivEq, Rx}
+import shipreq.base.util.{Must, UnivEq, Px}
 import shipreq.base.util.effect.IoUtils, IoUtils.IoExt
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.text.{Grammar, Presentation}
@@ -23,7 +23,7 @@ import shipreq.webapp.client.lib.ui.{KeyHandler, UI}
 
 object RichTextEditor {
 
-  type AutoComplete = Rx[TC.Strategies]
+  type AutoComplete = Px[TC.Strategies]
   type S = String
 
   val ignoreEnter = KeyHandler.pf {
@@ -43,7 +43,7 @@ object RichTextEditor {
     def supportsTags   = t match { case _: Atom.TagRef => true; case _ => false }
     def supportsIssues = t match { case _: Atom.Issue  => true; case _ => false }
 
-    def mkAutoComplete(project: Rx[Project], projectWidgets: Rx[ProjectWidgets]): AutoComplete = {
+    def mkAutoComplete(project: Px[Project], projectWidgets: Px[ProjectWidgets]): AutoComplete = {
       @inline def legalIf[A](guard: Boolean, s: => Stream[A]): Stream[A] =
         if (guard) s else Stream.empty
       for {
@@ -64,8 +64,8 @@ object RichTextEditor {
                      stateUpdate   : S => IO[Unit],
                      abort         : IO[Unit],
                      commit        : t.OptionalText => IO[Unit],
-                     project       : Rx[Project],
-                     projectWidgets: Rx[ProjectWidgets],
+                     project       : Px[Project],
+                     projectWidgets: Px[ProjectWidgets],
                      autoComplete  : AutoComplete)
 
     val component =
@@ -135,8 +135,8 @@ object RichTextEditor {
   // ===================================================================================================================
   object GenericReqDesc extends Base("GenericReqDesc editor", Text.GenericReqDesc) {
     def apply(initial : t.OptionalText,
-              project : Rx[Project],
-              projectWidgets: Rx[ProjectWidgets],
+              project : Px[Project],
+              projectWidgets: Px[ProjectWidgets],
               setState: Option[Cell.State] => IO[Unit]): Cell.State = {
 
       def init: S =
@@ -164,8 +164,8 @@ object RichTextEditor {
   // ===================================================================================================================
   object CustomTextField extends Base("CustomTextField editor", Text.CustomTextField) {
     def apply(initial : t.OptionalText,
-              project : Rx[Project],
-              projectWidgets: Rx[ProjectWidgets],
+              project : Px[Project],
+              projectWidgets: Px[ProjectWidgets],
               setState: Option[Cell.State] => IO[Unit]): Cell.State = {
 
       def init: S =

@@ -1,7 +1,7 @@
 package shipreq.webapp.client.app.ui.reqtable
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
-import shipreq.base.util.Rx
+import shipreq.base.util.Px
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.app.ui.ProjectWidgets
 import shipreq.webapp.client.util._
@@ -48,22 +48,22 @@ object ReqTable {
     val setFocus        = ReusableFn.modStateIO($)(_.updateFocus)
     val setCell         = ReusableFn.modStateIO($)(_.updateCell)
 
-    val project      = Rx.thunkM($.props).reuseR
-    val viewSettings = Rx.thunkM($.state.viewSettings).reuseR
+    val project      = Px.thunkM($.props).reuseR
+    val viewSettings = Px.thunkM($.state.viewSettings).reuseR
 
     val vsCols   = viewSettings map (_.columns)
     val colName  = project map Column.NameResolver.byProject
     val vsEditor = colName map ViewSettingsEditor.apply
     val widgets  = project map (new ProjectWidgets(_))
-    val colRnd   = Rx.apply3(project, colName, widgets)(new ColumnRenderers(_, _, _))
+    val colRnd   = Px.apply3(project, colName, widgets)(new ColumnRenderers(_, _, _))
     val colRnds  = for {cols <- vsCols; cr <- colRnd} yield cols map cr.apply
     val rows     = for {vs <- viewSettings; p <- project} yield Logic.rowsForTable(vs, p).toVector
     val ces      = new ColumnEditors(project, widgets, setCell)
-    val content  = Rx.apply2(colRnds, rows)(Table.Content(_, _, ces))
+    val content  = Px.apply2(colRnds, rows)(Table.Content(_, _, ces))
 
     def render = {
-      import Rx.AutoValue._
-      Rx.refresh(project, viewSettings)
+      import Px.AutoValue._
+      Px.refresh(project, viewSettings)
 
       val s = $.state
 

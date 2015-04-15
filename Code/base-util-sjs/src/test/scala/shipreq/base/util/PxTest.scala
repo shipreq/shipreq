@@ -3,7 +3,7 @@ package shipreq.base.util
 import scalaz.std.string._
 import utest._
 
-object RxTest extends TestSuite {
+object PxTest extends TestSuite {
 
   def assertEq[A](actual: A, expect: A): Unit =
     if (actual != expect)
@@ -11,13 +11,13 @@ object RxTest extends TestSuite {
 
   override def tests = TestSuite {
 
-    val xa = Rx("a").reuseE
+    val xa = Px("a").reuseE
 
     var vb = "b"
-    val xb = Rx.thunkA(vb).reuseR
+    val xb = Px.thunkA(vb).reuseR
 
     var vc = "c"
-    val xc = Rx.thunkM(vc).reuseR
+    val xc = Px.thunkM(vc).reuseR
 
     var rab   = 0
     var rbc   = 0

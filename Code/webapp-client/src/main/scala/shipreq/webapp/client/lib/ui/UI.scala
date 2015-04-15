@@ -6,7 +6,7 @@ import org.scalajs.dom
 import org.scalajs.dom.html
 import scala.scalajs.js.{Dynamic, UndefOr, undefined}
 import scalaz.effect.IO
-import shipreq.base.util.{Rx, Must}
+import shipreq.base.util.{Px, Must}
 import shipreq.base.util.effect.IoUtils, IoUtils.IoExt
 import shipreq.webapp.base.UiText
 
