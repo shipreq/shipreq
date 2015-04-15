@@ -44,7 +44,6 @@ final class NewRowStore[S, I](_ss: Lens[S, NewRowStore.SS[I]], rowL: NewRowStore
   private[this] val _status: Optional[S, RowStatus] = _row ^|-> rowL.status
   private[this] val _i     : Optional[S, I]         = _row ^|-> rowL.i
 
-  // TODO annoying changing maybe -> option
   def get                    : S => Option[Row]       = _row.getOption
   def getI                   : S => Option[I]         = _i.getOption
   def getStatus              : S => Option[RowStatus] = _status.getOption
