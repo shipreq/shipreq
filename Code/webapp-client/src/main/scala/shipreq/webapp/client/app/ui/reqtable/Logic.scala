@@ -19,10 +19,10 @@ private[reqtable] object Logic {
   private type Expander[A] = (() => Set[A]) => Expanded[A]
 
   private final val emptyExpansions: NonEmptyVector[Expansion] =
-    NonEmptyVector(Expansion.none)
+    NonEmptyVector.one(Expansion.none)
 
   @inline private def emptyExpanded[A]: Expanded[A] =
-    NonEmptyVector(Vector.empty)
+    NonEmptyVector.one(Vector.empty)
 
   @inline private def isEmptyExp[A](e: Expanded[A]): Boolean =
     e.head.isEmpty && e.tail.isEmpty
@@ -50,7 +50,7 @@ private[reqtable] object Logic {
         NonEmptyVector(Vector1(h), t map Vector1))
 
     def dontExpand: Expander[A] =
-      nonEmpty((h, t) => NonEmptyVector(h +: t))
+      nonEmpty((h, t) => NonEmptyVector.one(h +: t))
 
     if (visible) {
       if (expand) doExpand else dontExpand

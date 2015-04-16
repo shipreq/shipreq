@@ -240,7 +240,7 @@ private[fields] object MainTable {
 
         // Add static fields
         val missingStaticFields: Set[StaticField] =
-          (StaticField.values.whole.toSet /: fieldOrder)((q, i) => i.foldId(q - _, _ => q))
+          (StaticField.values.toSet /: fieldOrder)((q, i) => i.foldId(q - _, _ => q))
         missingStaticFields.foreach(f =>
           addChoice(-\/(f), f.name))
 

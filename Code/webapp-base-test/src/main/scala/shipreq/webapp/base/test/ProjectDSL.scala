@@ -119,7 +119,7 @@ object ProjectDSL {
       shuffle.!(p)
   }
 
-  implicit def autoCompositeGReq(g: GReq) = Composite(NonEmptyVector(g.state), None)
+  implicit def autoCompositeGReq(g: GReq) = Composite(NonEmptyVector.one(g.state), None)
 
   implicit def parseCTF(i: String): Text.CustomTextField.NonEmptyText = {
     if (i.isEmpty) sys.error("Text.CustomTextField can't be empty.") else NonEmptyVector(Text.CustomTextField.Literal(i))

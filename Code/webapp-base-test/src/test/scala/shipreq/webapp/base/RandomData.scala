@@ -232,7 +232,7 @@ object RandomData {
     revAndIMap(customReqType)(d.run)
   }
 
-  val staticReqTypeIdSet = StaticReqType.values.whole.toSet[ReqType.Id]
+  val staticReqTypeIdSet = StaticReqType.values.toSet[ReqType.Id]
 
   // -------------------------------------------------------------------------------------------------------------------
   // Tags
@@ -842,7 +842,7 @@ object RandomData {
       cissueIds      = issues.data.keySet
       reqtypes       ← customReqTypes
       reqTypeIds     = StaticReqType.values ++ reqtypes.data.keys
-      reqTypeIdSet   = reqTypeIds.whole.toSet
+      reqTypeIdSet   = reqTypeIds.toSet
       fields         ← revAnd(fieldSet(reqTypeIdSet, tags.data.keySet, reqtypes.data.keySet))
       reqs           ← revAnd(requirements(reqTypeIds, Gen.oneofO(cissueIds.toSeq)))
       reqCodes       ← reqCodes(reqCodeTrie(reqs.data.reqs.keys.toSeq).lim(22 `JVM|JS` 8)) // TODO add SHRs
