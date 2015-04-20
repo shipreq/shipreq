@@ -83,6 +83,9 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
   lazy val customTagFields =
     fields.data.customFields.keys.filterT[CustomField.Tag.Id]
 
+  lazy val customTextFields =
+    fields.data.customFields.keys.filterT[CustomField.Text.Id]
+
   def reqType(i: ReqType.Id): Must[ReqType] =
     i.foldId[Must[ReqType]](Must.Exists(_), customReqTypes.data.apply)
 
