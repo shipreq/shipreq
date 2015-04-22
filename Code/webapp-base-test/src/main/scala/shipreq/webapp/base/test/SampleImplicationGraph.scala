@@ -1,8 +1,8 @@
 package shipreq.webapp.base.test
 
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.UnsafeTypes._
 import ProjectDSL._
+import UnsafeTypes._
 
 /**
  * mf1 → fr1 ̉↘

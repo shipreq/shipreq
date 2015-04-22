@@ -1,4 +1,4 @@
-package shipreq.webapp.base
+package shipreq.webapp.base.test
 
 import scalaz.OneAnd
 import shipreq.base.util.Must
@@ -9,10 +9,7 @@ trait UnsafeTypesLowPriority {
   implicit def autoSome[A](a: A): Option[A] = Some(a)
 }
 
-/**
- * THIS SHOULD ONLY BE USED FOR TESTING.
- */
-object UnsafeTypes extends UnsafeTypesLowPriority { // TODO move into test
+object UnsafeTypes extends UnsafeTypesLowPriority {
   import shipreq.webapp.base.data._
   import shipreq.webapp.base.delta._
 

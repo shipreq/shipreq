@@ -9,10 +9,10 @@ import japgolly.nyaya.test._
 import japgolly.nyaya.test.PropTest._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
-import shipreq.webapp.base.UnsafeTypes._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.{SampleProject => S, TagId}
 import shipreq.webapp.base.test.BaseTestUtil._
+import shipreq.webapp.base.test.UnsafeTypes._
 import TagProtocol._
 import TagTree.FlatRow
 import FlatRow._

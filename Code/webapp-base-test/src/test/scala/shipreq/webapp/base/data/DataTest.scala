@@ -2,8 +2,8 @@ package shipreq.webapp.base.data
 
 import scalaz.std.anyVal._
 import utest._
-import shipreq.webapp.base.UnsafeTypes._
 import shipreq.webapp.base.test.BaseTestUtil._
+import shipreq.webapp.base.test.UnsafeTypes._
 
 object DataTest extends TestSuite {
 

@@ -3,7 +3,7 @@ package shipreq.webapp.base.test
 import japgolly.nyaya.util.Multimap
 import shipreq.base.util.{BiMap, IMap}
 import shipreq.webapp.base.data._, DataImplicits._
-import shipreq.webapp.base.UnsafeTypes._
+import UnsafeTypes._
 
 object SampleProject {
 

@@ -22,7 +22,7 @@ class WIP {
 
   def newProject = {
     import shipreq.webapp.base.data._
-    import shipreq.webapp.base.UnsafeTypes._
+    import shipreq.webapp.base.test.UnsafeTypes._
 
     val customIssueTypes = RevAnd(10, emptyDataMap(CustomIssueType).addAll(
       CustomIssueType(1, "TO"+"DO", "Something you need To Do.", Alive),

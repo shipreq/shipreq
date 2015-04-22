@@ -4,13 +4,13 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 import scalaz.{Equal, \/-}
 import utest._
-import shipreq.webapp.base.UnsafeTypes._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.delta.{Partition, RemoteDeltaG}
 import shipreq.webapp.base.protocol.FieldProtocol._
 import shipreq.webapp.base.protocol.Routine
 import shipreq.webapp.base.protocol.Routines.FieldCrud
 import shipreq.webapp.base.test.{SampleProject => S}
+import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.client.ClientData
 import shipreq.webapp.client.test.TestUtil._
 import shipreq.webapp.client.test._
