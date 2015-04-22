@@ -25,9 +25,8 @@ import shipreq.webapp.base.TypeclassDerivation._
  *
  * Each [[ReqCode]] only refers to a single target, but requirements can have 0..n [[ReqCode]]s.
  */
-final case class ReqCode(backwards: NonEmptyVector[ReqCode.Node]) {
-  def forwards = backwards.reverse
-  def txt: String = forwards.whole.mkString(".") // TODO rename. cache. Also should probably be in PlainText
+final case class ReqCode(code: NonEmptyVector[ReqCode.Node]) {
+  def txt: String = code.whole.mkString(".") // TODO rename. cache. Also should probably be in PlainText
   override def toString = s"ReqCode($txt)"
 }
 
@@ -50,7 +49,11 @@ object ReqCode {
     override def toString = value
   }
 
-  object Node {
+  trait NodeUnivEq {
+    implicit def nodeUnivEq: UnivEq[Node] = UnivEq.force
+  }
+
+  object Node extends NodeUnivEq {
     implicit val order: Order[Node] = {
       import scalaz.Ordering
       val S = Order[String]
@@ -74,14 +77,14 @@ object ReqCode {
   }
 
   implicit val reqCodeOrder = UnivEq.withOrder[ReqCode](
-    Order[NonEmptyVector[Node]].contramap(_.backwards))
+    Order[NonEmptyVector[Node]].contramap(_.code))
 
   /**
    * Something to which a [[ReqCode]] can refer.
    *
    * type [[Target]] = [[ReqCodeGroup]] | [[Req.Id]]
    */
-  sealed trait Target extends TrieNode
+  sealed trait Target
 
   implicit object TargetGeneric extends Generic[Target] {
     override type Repr = Req.Id :+: ReqCodeGroup :+: CNil
@@ -98,93 +101,8 @@ object ReqCode {
 
   implicit val targetEquality: UnivEq[Target] = deriveUnivEq
 
-  /** [[TrieNode]] = [[TrieBranch]] (leaf) | [[Target]] (leaf) */
-  sealed trait TrieNode
-  final case class TrieBranch(target: Option[Target], next: Trie) extends TrieNode
-
-  type Trie = Map[Node, TrieNode]
-
-  object Trie {
-    val empty: Trie = Map.empty
-
-    def simpleFold[A](trie: Trie, z: A)(f: (A, Node, TrieNode) => A): A =
-      trie.foldLeft(z) { case (q, (cn, tn)) => tn match {
-        case TrieBranch(_, next) => simpleFold(next, f(q, cn, tn))(f)
-        case _: Target           => f(q, cn, tn)
-      }}
-
-    /** NonEmptyVector[Node] in f is backwards. */
-    def fold[A](trie: Trie, z: A)(f: (A, NonEmptyVector[Node], Option[Target]) => A): A =
-      foldP[A, Vector[Node], NonEmptyVector[Node]](trie, z, Vector.empty, _.whole)(
-        (p, n) => NonEmptyVector(n, p), f)
-
-    def foldP[A, P0, P1](trie: Trie, z: A, pz: => P0, p0: P1 => P0)(p1: (P0, Node) => P1, f: (A, P1, Option[Target]) => A): A = {
-      def traverseT(q: A, path: P0, t: Trie): A =
-        t.foldLeft(q) {
-          case (q2, (cn, tn)) => traverseN(q2, p1(path, cn), tn)
-        }
-
-      @inline def traverseN(q: A, path: P1, node: TrieNode): A =
-        node match {
-          case TrieBranch(tgt, next) => traverseT(f(q, path, tgt), p0(path), next)
-          case tgt: Target           => f(q, path, Some(tgt))
-        }
-
-      traverseT(z, pz, trie)
-    }
-
-    def flatStream(trie: Trie): Stream[(ReqCode, Target)] = {
-      @inline def rc(h: Node, p: Vector[Node]) = ReqCode(NonEmptyVector(h, p))
-      def go(trie: Trie, p: Vector[Node]): Stream[(ReqCode, Target)] =
-        trie.toStream.sortBy(_._1.value).flatMap {
-          case (cn, TrieBranch(ot, next)) =>
-            ot.map(t => (rc(cn, p), t)).toStream append go(next, cn +: p)
-          case (cn, t: Target) =>
-            Stream((rc(cn, p), t))
-        }
-      go(trie, Vector.empty)
-    }
-
-    def flatten(trie: Trie): Map[ReqCode, Target] =
-      Trie.fold(trie, UnivEq.emptyMap[ReqCode, Target])((m, p, ot) =>
-        ot.fold(m)(t => m.updated(ReqCode(p), t)))
-
-    def putCF(trie: Trie, codeForwards: NonEmptyVector[Node])(target: Target): Trie = {
-      @tailrec def go(t: Trie, codeH: Node, codeT: Vector[Node], unwind: Trie => Trie): Trie =
-        if (codeT.isEmpty) {
-
-          // At target-path's end
-          val newTrieNode: TrieNode =
-            t.get(codeH) match {
-              case Some(TrieBranch(_, next)) => TrieBranch(Some(target), next)
-              case Some(_: Target) => target
-              case None => target
-            }
-          unwind(t.updated(codeH, newTrieNode))
-
-        } else {
-
-          // Still traversing target-path
-          val a = codeT.head
-          val b = codeT.tail
-          t.get(codeH) match {
-            case Some(TrieBranch(ot, onext)) => go(onext, a, b, n ⇒ unwind(t.updated(codeH, TrieBranch(ot, n))))
-            case ot @ Some(_: Target)        => go(empty, a, b, n ⇒ unwind(t.updated(codeH, TrieBranch(ot.asInstanceOf[Option[Target]], n))))
-            case None                        => go(empty, a, b, n ⇒ unwind(t.updated(codeH, TrieBranch(None, n))))
-          }
-        }
-
-      go(trie, codeForwards.head, codeForwards.tail, identity)
-    }
-
-    def put(trie: Trie, code: ReqCode)(target: Target): Trie =
-      putCF(trie, code.backwards.reverse)(target)
-  }
-
-  Equal[(ReqCode, Target)]
-  implicit val trieEquality: Equal[Trie] =
-    Equal[Stream[(ReqCode, Target)]] contramap Trie.flatStream
-
+  type Trie = MTrie.Trie[Node, Target]
+  def emptyTrie: Trie = MTrie.empty[Node, Target]
 }
 
 /**
@@ -202,14 +120,13 @@ object ReqCodeGroup {
  */
 final case class ReqCodes(trie: ReqCode.Trie) {
   import ReqCode.{Node, Target, Trie}
+  import MTrie.Ops
 
   lazy val byTarget: Multimap[Target, Set, ReqCode] =
-    Trie.fold(trie, UnivEq.emptyMultimap[Target, Set, ReqCode])((q, path, tgt) =>
-      tgt.fold(q)(q.add(_, ReqCode(path))))
+    trie.byTargetP(ReqCode.apply)
 
   def codeSet: Set[ReqCode] =
-    Trie.fold(trie, UnivEq.emptySet[ReqCode])((q, path, ot) =>
-      ot.fold(q)(_ => q + ReqCode(path)))
+    trie.pathSetP(ReqCode.apply)
 }
 
 // ===================================================================================================================

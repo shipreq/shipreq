@@ -4,7 +4,7 @@ import japgolly.nyaya._
 import scalaz.syntax.equal._
 import scalaz.std.AllInstances._
 import shipreq.base.util.Debug._
-import shipreq.base.util.{NonEmptyVector, Must}
+import shipreq.base.util.{NonEmptyVector, Must, MTrie}, MTrie.Ops
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.text.{Atom, Text}
 import DataImplicits._
@@ -173,13 +173,12 @@ object DataProp {
   object reqCodes {
     type T = ReqCodes
     import ReqCode._
+    type TrieBranch = MTrie.Branch[Node, Target]
 
     def branchesMustBranch =
       Prop.test[TrieBranch]("TrieBranch branches", _.next.nonEmpty)
-        .forall[T, List](t => Trie.simpleFold[List[TrieBranch]](t.trie, Nil)((q, _, n) => n match {
-          case b: TrieBranch => b :: q
-          case _: Target     => q
-        })) rename "All TrieBranches branch"
+        .forall[T, List](_.trie.foldValues[List[TrieBranch]](Nil)((q, n) => n.fold(_ :: q, _ => q)))
+        .rename("All TrieBranches branch")
 
 //    def noSharedTrieBranches =
 //      Prop.distinct("No shared trie branches", (_: T).nodeIdsInTrie)

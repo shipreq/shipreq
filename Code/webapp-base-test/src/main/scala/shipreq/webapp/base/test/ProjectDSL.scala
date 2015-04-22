@@ -4,7 +4,7 @@ import scalaz._
 import scalaz.std.AllInstances._
 import scalaz.syntax.bind._
 import scalaz.syntax.semigroup._
-import shipreq.base.util.{NonEmptyVector, IMap, Vector1}
+import shipreq.base.util.{NonEmptyVector, IMap, Vector1, MTrie}, MTrie.Ops
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Text
@@ -45,9 +45,9 @@ object ProjectDSL {
     tags           = p.reqFieldData.data.tags,
     imps           = p.reqFieldData.data.implications.srcToTgt)
 
-  def parseCode(s: String): ReqCode = {
-    val ns = s.split('.').reverse.map(ReqCode.Node.apply)
-    ReqCode(NonEmptyVector(ns.head, ns.tail.toVector))
+  def parseCode(s: String) = {
+    val ns = s.split('.').map(ReqCode.Node.apply)
+    NonEmptyVector(ns.head, ns.tail.toVector)
   }
 
   
@@ -80,7 +80,7 @@ object ProjectDSL {
         val text        = cftexts.mapValues(t => Map.empty[Req.Id, Text.CustomTextField.NonEmptyText].updated(id, t))
         val tags        = p.tags.addvs(id, this.tags)
         val imps        = p.imps.addks(impSrcs, id).addvs(id, impTgts)
-        val codeTrie    = codes.map(parseCode).foldLeft(p.reqCodeTrie)(ReqCode.Trie.put(_, _)(id))
+        val codeTrie    = codes.map(parseCode).foldLeft(p.reqCodeTrie)((t, c) => t.put(c, id))
         val p2          = p.copy(nextId      = this.id.fold(id.value + 1)(_ => p.nextId),
                                  pubids      = pr,
                                  reqs        = p.reqs + req,

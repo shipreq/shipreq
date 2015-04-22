@@ -7,6 +7,7 @@ import scalaz.std.AllFunctions._
 import scalaz.std.AllInstances._
 import utest._
 import shipreq.base.util.ScalaExt._
+import shipreq.base.util.MTrie, MTrie.Ops
 import shipreq.webapp.base.RandomData
 
 object ReqCodesTest extends TestSuite {
@@ -14,17 +15,17 @@ object ReqCodesTest extends TestSuite {
 
   case class TrieProps(trie: Trie, target: Target, code: ReqCode) {
     val E          = EvalOver(this)
-    val flat       = Trie.flatten(trie)
-    val flatStream = Trie.flatStream(trie)
+    val flat       = trie.flattenTrie
+    val flatStream = trie.flatStream
 
     def put = {
-      val a = flat.updated(code, target)
-      val n = Trie.put(trie, code)(target) |> Trie.flatten
+      val a = flat.updated(code.code, target)
+      val n = trie.put(code.code, target).flattenTrie
       E.equal("put", a, n)
     }
 
     def createFromFlatten = {
-      val n = flat.foldLeft(Trie.empty) { case (q, (c, t)) => Trie.put(q, c)(t) }
+      val n = flat.foldLeft(emptyTrie) { case (q, (c, t)) => q.put(c, t) }
       E.equal("createFromFlatten", trie, n)
     }
 
@@ -40,7 +41,7 @@ object ReqCodesTest extends TestSuite {
       targets ← RandomData.reqId.set.sup
       trie    ← RandomData.reqCodeTrie(targets.toSeq).lim(10)
       target  ← Gen.newOrOld(RandomData.reqId)(targets)
-      code    ← Gen.newOrOld(RandomData.reqCode)(Trie.flatStream(trie).map(_._1))
+      code    ← Gen.newOrOld(RandomData.reqCode)(trie.flatStream.map(_._1 |> ReqCode.apply))
     } yield TrieProps(trie, target, code)
 
   override def tests = TestSuite {

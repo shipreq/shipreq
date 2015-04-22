@@ -16,7 +16,7 @@ import scalaz.std.set._
 import scalaz.std.stream._
 import scalaz.std.vector._
 
-import shipreq.base.util.{NonEmptyVector, BiMap, IMap}
+import shipreq.base.util.{MTrie, NonEmptyVector, BiMap, IMap}, MTrie.Ops
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedLong
 import shipreq.base.util.Debug._
@@ -781,9 +781,9 @@ object RandomData {
     def fix(ss: Set[ReqCode]): ReqCode = {
       var c = ss.head
       while (ss contains c) {
-        val n1 = c.backwards.head
+        val n1 = c.code.head
         val n2 = ReqCode.Node(n1.value + "x")
-        c = ReqCode(NonEmptyVector(n2, c.backwards.tail))
+        c = ReqCode(NonEmptyVector(n2, c.code.tail))
       }
       c
     }
@@ -795,7 +795,7 @@ object RandomData {
     type FlatValue = (Target, ReqCode)
     someOfWithDups(possibleTargets)(reqCode.strengthL)
       .map(reqCodeDFixer.distinct.at(second[FlatValue, ReqCode]).lift[Vector].run)
-      .map(_.foldLeft(Trie.empty) { case (t, (tgt, c)) => Trie.putCF(t, c.backwards)(tgt) })
+      .map(_.foldLeft(emptyTrie) { case (t, (tgt, c)) => t.put(c.code, tgt) })
   }
 
   def reqCodes(g: Gen[ReqCode.Trie]) =

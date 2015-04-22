@@ -230,6 +230,35 @@ object GenericCodecs {
 
   @inline implicit def iMapAuto[K: UnivEq : Reader : Writer, V: Reader : Writer](implicit d: DataIdAux[V, K]): ReadWriter[IMap[K, V]] =
     iMap(d.id)
+
+  implicit def mtrie[K, V](implicit rk: Reader[K],  wk: Writer[K],  rv: Reader[V],  wv: Writer[V]): ReadWriter[MTrie.Trie[K, V]] = {
+    import MTrie._
+
+    lazy val nodeRW: ReadWriter[Node[K, V]] = {
+      implicit val targetRW =
+        caseclass1(Target.apply[K, V], Target.unapply[K, V])
+      implicit val branchRW =
+        caseclass2(MTrie.Branch.apply[K, V], MTrie.Branch.unapply[K, V])(implicitly, implicitly, trieRW, trieRW)
+
+      ReadWriter[Node[K, V]]({
+        case i: Branch[K, V] => intkeyW(0, i)
+        case i: Target[K, V] => intkeyW(1, i)
+      }, {
+        case Js.Arr(Js.Num(n), v) => n.toInt match {
+          case 0 => readJs[Branch[K, V]](v)
+          case 1 => readJs[Target[K, V]](v)
+        }
+      })
+    }
+
+    lazy val trieRW = {
+      lazy val w = MapW(wk, nodeRW)
+      lazy val r = MapR(rk, nodeRW)
+      ReadWriter[Trie[K, V]](i => w write i, {case i => r read i})
+    }
+
+    trieRW
+  }
 }
 
 // =====================================================================================================================
@@ -537,8 +566,7 @@ object DataCodecs {
   implicit final val reqCodeGroup    = caseclass1(ReqCodeGroup.apply, ReqCodeGroup.unapply)
   implicit final val reqCodeNode     = xmap[ReqCode.Node, String](_.value)(ReqCode.Node.applyFn)
   implicit final val reqCodeTarget   = _reqCodeTarget
-  implicit final val reqCodeTrieNode = _reqCodeTrieNode
-  implicit final val reqCodeTrie     = _reqCodeTrie
+  implicit final val reqCodeTrie     = (mtrie: ReadWriter[ReqCode.Trie])
   implicit final val reqCodes        = caseclass1(ReqCodes.apply, ReqCodes.unapply)
 
   private def _reqCodeTarget = ReadWriter[ReqCode.Target]({
@@ -550,27 +578,6 @@ object DataCodecs {
       case 1 => readJs(v)(reqCodeGroup)
     }
   })
-
-  private lazy val _reqCodeTrieNode: ReadWriter[ReqCode.TrieNode] = {
-    import ReqCode._
-    val trieRW = _reqCodeTrie
-    val branchRW = caseclass2(TrieBranch.apply, TrieBranch.unapply)(implicitly, implicitly, trieRW, trieRW)
-    ReadWriter[TrieNode]({
-      case i: TrieBranch => intkeyW(0, i)(branchRW)
-      case i: Target     => intkeyW(1, i)(reqCodeTarget)
-    }, {
-      case Js.Arr(Js.Num(n), v) => n.toInt match {
-        case 0 => readJs(v)(branchRW)
-        case 1 => readJs(v)(reqCodeTarget)
-      }
-    })
-  }
-  private lazy val _reqCodeTrie: ReadWriter[ReqCode.Trie] = {
-    import ReqCode._
-    lazy val w = MapW(reqCodeNode, _reqCodeTrieNode)
-    lazy val r = MapR(reqCodeNode, _reqCodeTrieNode)
-    ReadWriter[Trie](i => w write i, {case i => r read i})
-  }
 
   // -------------------------------------------------------------------------------------------------------------------
   implicit final val project = caseclass7(Project.apply, Project.unapply)
