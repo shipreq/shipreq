@@ -59,8 +59,8 @@ object ReqTable {
     val textSearch = Px.apply2(project, plainText)(TextSearch.apply)
     val widgets    = Px.apply2(project, plainText)(ProjectWidgets.apply)
     val colRnd     = Px.apply3(project, colName, widgets)(new ColumnRenderers(_, _, _))
-    val colRnds    = for {cols <- vsCols; cr <- colRnd} yield cols map cr.apply
-    val rows       = for {vs <- viewSettings; p <- project; pt <- plainText} yield Logic.rowsForTable(vs, p, pt).toVector
+    val colRnds    = Px.apply2(vsCols, colRnd)(_ map _.apply)
+    val rows       = Px.apply3(viewSettings, project, plainText)(Logic.rowsForTable(_, _, _).toVector)
     val ces        = new ColumnEditors(project, plainText, widgets, textSearch, setCell)
     val content    = Px.apply2(colRnds, rows)(Table.Content(_, _, ces))
 
