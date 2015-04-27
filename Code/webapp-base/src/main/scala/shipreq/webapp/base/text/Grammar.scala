@@ -27,12 +27,17 @@ object Grammar {
   class CharWhitelist(chn: String, ch1: Char, rs: NumericRange[Char]*)(ruleErrMsg: String) extends Chars(chn, ch1, rs: _*) {
     final val rule = Rules.whitelistCharsR(regex, ruleErrMsg)
   }
+  object CharWhitelist {
+    val az09_ = new CharWhitelist("", '_', 'a' to 'z', '0' to '9')("may only consist of letters, numbers, and underscores.")
+  }
 
   class FirstChar(chn: String, ch1: Char, rs: NumericRange[Char]*)(ruleErrMsg: String) extends Chars(chn, ch1, rs: _*) {
     final val constraint = Constraints.startsWithR(one)(ruleErrMsg)
   }
   object FirstChar {
+    val az     = new FirstChar("",             'a', 'b' to 'z')            ("must start with a letter.")
     val azAZ   = new FirstChar("",             'a', 'b' to 'z', 'A' to 'Z')("must start with a letter.")
+    val az09   = new FirstChar("", '0', '1' to '9', 'a' to 'z')            ("must start with a letter or number.")
     val azAZ09 = new FirstChar("", '0', '1' to '9', 'a' to 'z', 'A' to 'Z')("must start with a letter or number.")
   }
 
@@ -80,18 +85,28 @@ object Grammar {
     val prefix    = "#"
   }
 
-  /** [[shipreq.webapp.base.data.FieldRefKey]] min & max lengths. */
+  /** [[shipreq.webapp.base.data.FieldRefKey]] */
   // DD-20: Field refkeys must match this format: /[a-z][a-z0-9_]*/
   // Must not contain: []{}<>.?"
   object fieldRefKey {
     def length    = hashRefKey.length
-    def firstChar = FirstChar.azAZ
-    val allChars  = new CharWhitelist("" , '_', 'a' to 'z', '0' to '9')("may only consist of letters, numbers, and underscores.")
+    def firstChar = FirstChar.az
+    def allChars  = CharWhitelist.az09_
   }
 
-  /** [[shipreq.webapp.base.data.ReqCode.Node]] min & max lengths. */
-  // TODO Grammar.reqCodeNode only has length atm
-  def reqCodeNodeLength = hashRefKey.length
+  /** [[shipreq.webapp.base.data.ReqCode]] */
+  // DD-17: Semantic-ID components must match this format: /[a-z0-9][a-z0-9_]*/
+  // Must not contain: []{}<>.-?:"
+  object reqCode {
+    def nodeLength = hashRefKey.length
+    def firstChar  = FirstChar.az09
+    def allChars   = CharWhitelist.az09_
+
+    def nodeSeparator = '.'
+
+    /** Max number of nodes in [[shipreq.webapp.base.data.ReqCode.Value]] */
+    def maxNodes = 20
+  }
 
   val issueDescSurround = surrounds("{", "}", " ", " ")
 

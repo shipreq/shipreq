@@ -16,6 +16,7 @@ object PlainText {
 
   private implicit class StringOps(val _s: String) extends AnyVal {
     @inline def ~(b: String): String = _s + b
+    @inline def ~(b: Char)  : String = _s + b
   }
 
   private implicit def surroundDisplay(s: Grammar.Surrounds) = s.display
@@ -30,7 +31,7 @@ object PlainText {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  def reqCode(c: ReqCode.Value) = c.reduceMapLeft1(_.value)(_ + "." + _)
+  def reqCode(c: ReqCode.Value) = c.reduceMapLeft1(_.value)(_ ~ G.reqCode.nodeSeparator ~ _)
 
   def hashtag(key: HashRefKey) = G.hashRefKey.prefix ~ key.value
 

@@ -775,8 +775,7 @@ object RandomData {
     import ReqCode._
 
     lazy val node: Gen[Node] =
-      Gen.charof('_', "", 'a' to 'z', '0' to '9').list1.lim(Grammar.reqCodeNodeLength.total.max)
-        .map(cs => Node(cs.list.mkString))
+      grammarStr1(Grammar.reqCode)(_.firstChar, _.allChars, _.nodeLength) map Node.applyFn
 
     lazy val value: GenS[Value] =
       node.nev
