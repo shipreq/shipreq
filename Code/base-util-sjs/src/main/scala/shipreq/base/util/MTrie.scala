@@ -1,6 +1,5 @@
 package shipreq.base.util
 
-import japgolly.nyaya.util.Multimap
 import scala.annotation.tailrec
 import scalaz.{Order, Equal}
 import scalaz.std.map.mapEqual
@@ -15,7 +14,7 @@ object MTrie {
     def fold[A](b: Branch[K, V] => A, t: Value[K, V] => A): A
   }
 
-  final case class Branch[K, V](target: Option[Value[K, V]], next: Trie[K, V]) extends Node[K, V] {
+  final case class Branch[K, V](value: Option[Value[K, V]], next: Trie[K, V]) extends Node[K, V] {
     override def fold[A](b: Branch[K, V] => A, t: Value[K, V] => A) = b(this)
   }
 
@@ -68,7 +67,7 @@ object MTrie {
 
       @inline def traverseN(a: A, path: P1, node: Node): A =
         node.fold(
-          b => traverseT(f(a, path, b.target), p0(path), b.next),
+          b => traverseT(f(a, path, b.value), p0(path), b.next),
           t => f(a, path, Some(t)))
 
       traverseT(z, pz, trie)
@@ -93,7 +92,7 @@ object MTrie {
           val k = kv._1
           @inline def result(t: Value) = (NonEmptyVector.end(p, k), t.value)
           kv._2.fold(
-            b => b.target.map(result).toStream append go(b.next, p :+ k),
+            b => b.value.map(result).toStream append go(b.next, p :+ k),
             v => Stream(result(v)))
         }
       go(trie, Vector.empty)
