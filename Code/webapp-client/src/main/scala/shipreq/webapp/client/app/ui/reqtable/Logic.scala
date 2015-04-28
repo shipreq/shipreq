@@ -1,10 +1,12 @@
 package shipreq.webapp.client.app.ui.reqtable
 
 import scala.annotation.tailrec
+import scala.collection.GenTraversable
+import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
 import scalaz.syntax.equal._
 import scalaz.syntax.semigroup._
-import shipreq.base.util.{UnivEq, NonEmptyVector, Vector1}
+import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
@@ -138,7 +140,7 @@ private[reqtable] object Logic {
         c <- codes
         d <- expandMapValues(cfImps)
         e <- expandMapValues(cfTags)
-      } yield Expansion(a, b, c, d, e)
+      } yield Expansion(a, b, c, Vector.empty[ReqCodeTreeItem], d, e)
 
   // ===================================================================================================================
   // MultiValues
@@ -171,6 +173,8 @@ private[reqtable] object Logic {
     // * Column.ImplicationSrc isn't transitive; custom implication columns are.
     //   There can potentially be overlap but culling this could be misleading.
 
+    // TODO: Add SHRs
+
     // Init
     val expandImpSrcs = expanderC[Pubid](vs, Column.ImplicationSrc)
     val expandImpTgts = expanderC[Pubid](vs, Column.ImplicationTgt)
@@ -192,9 +196,9 @@ private[reqtable] object Logic {
       case r: GenericReq =>
         val id = r.id
 
-        // Remove deleted
+        // TODO: Remove deleted
 
-        // Filter
+        // TODO: Filter
 
         // Expansion
         val impSrcs = expandImpSrcs(() => pImplications.tgtToSrc(id) |> pubids)
@@ -241,8 +245,6 @@ private[reqtable] object Logic {
 
   // ===================================================================================================================
 
-  // TODO AFTER SORTING: Add SHRs
-
   def mergeAdjacent[A](input: Stream[A])(m: (A, A) => Option[A]): Stream[A] = {
     @tailrec def go(seen: Stream[A], last: A, queue: Stream[A]): Stream[A] = {
       @inline def res = seen append (last #:: Stream.empty)
@@ -276,7 +278,68 @@ private[reqtable] object Logic {
       }
     )
 
-  // ===================================================================================================================
+  /** Map with history */
+  def hmap[I, V[x] <: GenTraversable[x], A >: Null <: AnyRef, B >: Null, S[_], O]
+      (input: GenTraversable[I], extract: I => V[A], put: (I, V[B]) => O, f: A => B, g: (A, B, A) => B)
+      (implicit cbfV: CanBuildFrom[Nothing, B, V[B]], cbfS: CanBuildFrom[Nothing, O, S[O]]): S[O] = {
+    var lastA: A = null
+    var lastB: B = null
+    val bs = cbfS()
+    for (i <- input) {
+      val bv = cbfV()
+      for (a <- extract(i)) {
+        val b = if (lastA eq null) f(a) else g(lastA, lastB, a)
+        bv += b
+        lastA = a
+        lastB = b
+      }
+      bs += put(i, bv.result())
+    }
+    bs.result()
+  }
+
+  def mkReqCodeTree[I, V[x] <: GenTraversable[x], S[_], O]
+      (input: GenTraversable[I], extract: I => V[ReqCode.Value], put: (I, V[ReqCodeTreeItem]) => O)
+      (implicit cbfV: CanBuildFrom[Nothing, ReqCodeTreeItem, V[ReqCodeTreeItem]], cbfS: CanBuildFrom[Nothing, O, S[O]])
+      : S[O] =
+    hmap[I, V, ReqCode.Value, ReqCodeTreeItem, S, O](
+      input, extract, put,
+      c => ReqCodeTreeItem(Vector.empty, c),
+      mkReqCodeTreeItem)
+
+  def mkReqCodeTreeItem(prevV: ReqCode.Value, prevI: ReqCodeTreeItem, cur: ReqCode.Value): ReqCodeTreeItem = {
+    import ReqCodeTreeItem._
+    import VectorCase._
+
+    @tailrec
+    def go(ci: Vector[Indent], cv: ReqCode.Value)(pi: Vector[Indent], pv: ReqCode.Value): ReqCodeTreeItem =
+      cv.tail match {
+        case NonEmpty(nextc) if cv.head ≟ pv.head =>
+          pv.tail match {
+            case Empty() =>
+              ReqCodeTreeItem(ci :+ IndentChild, nextc)
+            case NonEmpty(nextp) =>
+              pi match {
+                case Empty() =>
+                  go(ci :+ IndentSpace(pv.head.value.length), nextc)(Vector.empty, nextp)
+                case NonEmpty(is) =>
+                  go(ci :+ is.head, nextc)(is.tail, nextp)
+              }
+          }
+        case _ =>
+          ReqCodeTreeItem(ci, cv)
+      }
+
+    go(Vector.empty, cur)(prevI.indent, prevV)
+  }
+
+  def addReqCodeTreeToRows(rows: Stream[Row]): Stream[Row] =
+    mkReqCodeTree[Row, Vector, Stream, Row](
+      rows,
+      Row.reqCodes.getOption(_) getOrElse Vector.empty,
+      (i, bs) => Row.reqCodeTree.set(bs)(i))
+
+    // ===================================================================================================================
   def rowsForTable(vs: ViewSettings, p: Project, pt: PlainText.ForProject): Stream[Row] =
     gather(vs, p) |> sort(vs, p, pt) |> consolidateAdjacentDups
 }

@@ -8,6 +8,7 @@ import scalaz.{\/, \/-, -\/, Equal}
 import scalaz.std.AllInstances._
 import utest._
 
+import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.NonEmptyVector
 import shipreq.webapp.base.RandomData
@@ -474,6 +475,73 @@ object LogicTest extends TestSuite {
     }
   }
 
+  def testReqCodeTree(): Unit = {
+    val src =
+      """
+        |refs1
+        |refs1.code
+        |refs1.code.short.parse
+        |refs1.code.short.disp
+        |refs1.code.change
+        |refs1.code.change.update
+        |refs1.code.change.warn
+        |refs1.code.display
+        |refs2
+        |refs2.code.short.parse
+        |refs2.code.short.disp
+        |refs2.code.change
+        |refs2.code.change.update
+        |refs2.code.change.warn
+        |refs2.code.display
+      """.stripMargin.trim
+
+    val exp =
+      """
+        |refs1
+        | ^.code
+        | ^ ^.short.parse
+        | ^ ^ |    .disp
+        | ^ ^.change
+        | ^ ^ ^.update
+        | ^ ^ ^.warn
+        | ^ ^.display
+        |refs2
+        | ^.code.short.parse
+        | ^ |    |    .disp
+        | ^ |   .change
+        | ^ |    ^.update
+        | ^ |    ^.warn
+        | ^ |   .display
+      """.stripMargin.trim
+
+    import ReqCode._
+    import ReqCodeTreeItem._
+
+    val mkReqCode: String => Value = line => {
+      val v = line.split("\\.").map(Node.applyFn).toVector
+      NonEmptyVector(v.head, v.tail)
+    }
+
+    def formatTreeItem(t: ReqCodeTreeItem): String = {
+      val c = PlainText reqCode t.suffix
+      if (t.indent.isEmpty) c else
+        t.indent.map {
+          case IndentChild => " ^"
+          case IndentSpace(l) => " |" + (" " * (l - 1))
+        }.foldRight("." + c)(_ + _)
+    }
+
+    def formatTreeItems(ts: Vector[ReqCodeTreeItem]) =
+      ts map formatTreeItem mkString "\n"
+
+    val srcCodes = src.split("\n").map(mkReqCode)
+
+    val actual = Logic.mkReqCodeTree[Value, Vector, Vector, Vector[ReqCodeTreeItem]](srcCodes, Vector1, (_, ts) => ts)
+      .flatten
+
+    assertMultiline(formatTreeItems(actual), exp)
+  }
+
   // ===================================================================================================================
   override def tests = TestSuite {
     'prop - gen.mustSatisfyE(_.all)//(implicitly[Settings].setSeed(0).setDebug.setSampleSize(20))
@@ -496,6 +564,7 @@ object LogicTest extends TestSuite {
           'unsorted - UnitSort.testCustomTagField_unsorted()
         }
       }
+    'reqCodeTree - testReqCodeTree()
     }
   }
 }

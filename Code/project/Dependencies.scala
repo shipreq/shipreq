@@ -75,7 +75,7 @@ object Deps {
     val scalacheck = dd("scalaz-scalacheck-binding") ++ concurrent ++ iteratee
   }
 
-  object Monocle extends Group("1.1.0", "com.github.julien-truffaut") {
+  object Monocle extends Group("1.1.1", "com.github.julien-truffaut") {
     val core   = dd("monocle-core")
     val macros = dd("monocle-macro") ++ core
   }

@@ -14,6 +14,9 @@ final class NonEmptyVector[+A](val head: A, val tail: Vector[A]) {
     case _ => false
   }
 
+  @inline def length: Int =
+    tail.length + 1
+
   def map[B](f: A => B): NonEmptyVector[B] =
     NonEmptyVector(f(head), tail map f)
 
@@ -110,6 +113,14 @@ object NonEmptyVector extends NonEmptyVectorImplicits0 {
     new Semigroup[NonEmptyVector[A]] {
       override def append(a: NonEmptyVector[A], b: => NonEmptyVector[A]): NonEmptyVector[A] = a ++ b
     }
+
+  object Sole {
+    def unapply[A](v: NonEmptyVector[A]) = new Unapply(v)
+    final class Unapply[A](val v: NonEmptyVector[A]) extends AnyVal {
+      def isEmpty = v.tail.nonEmpty
+      def get     = v.head
+    }
+  }
 }
 
 trait NonEmptyVectorImplicits1 {

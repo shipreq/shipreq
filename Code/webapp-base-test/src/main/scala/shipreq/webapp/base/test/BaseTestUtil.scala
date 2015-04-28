@@ -28,6 +28,25 @@ trait BaseTestUtil {
       assert(false)
     }
 
+  def assertMultiline(actual: String, expect: String): Unit =
+    if (actual != expect) {
+      println()
+      val AE = List(actual, expect).map(_.split("\n"))
+      val List(as, es) = AE
+      val lim = as.length max es.length
+      val List(maxA,maxE) = AE.map(x => (0 #:: x.map(_.length).toStream).max)
+      val maxL = lim.toString.length
+      println("A|E")
+      val fmt = s"%${maxL}d: %-${maxA}s |%s| %s\n"
+      for (i <- (0 until lim)) {
+        val List(a, e) = AE.map(s => if (i >= s.length) "" else s(i))
+        val cmp = if (a == e) " " else "≠"
+        printf(fmt, i + 1, a, cmp, e)
+      }
+      println()
+      assert(false)
+    }
+
   def assertSet[A](actual: Set[A])(expect: A*): Unit = {
     val e = expect.toSet
     val missing = e -- actual

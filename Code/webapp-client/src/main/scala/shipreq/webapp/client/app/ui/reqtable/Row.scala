@@ -3,13 +3,44 @@ package shipreq.webapp.client.app.ui.reqtable
 import monocle.{Lens, Optional}
 import monocle.function.index
 import monocle.std.mapIndex
-import monocle.macros.GenLens
+import monocle.macros.Lenses
 import scalaz.{Equal, Semigroup, Monoid}
 import scalaz.std.map._
 import scalaz.syntax.semigroup._
 import shipreq.base.util.UnivEq
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.TypeclassDerivation._
+
+/**
+ * Representation of a ReqCode when viewed like a tree.
+ *
+ * @see [[ViewSettings.viewReqCodesAsTree]]
+ */
+case class ReqCodeTreeItem(indent: Vector[ReqCodeTreeItem.Indent], suffix: ReqCode.Value)
+
+object ReqCodeTreeItem {
+  sealed trait Indent
+
+  /**
+   * Unit of indentation for when a ReqCode is a direct child of the one above.
+   *
+   * `a.b.c.d` after `a.b.c` would result in 3 of these with `.d` as the suffix.
+   */
+  case object IndentChild extends Indent
+
+  /**
+   * Unit of indentation that consumes a fixed number of spaces.
+   *
+   * @param length ≥ 1 The length of the common node (excluding the ".").
+   */
+  case class IndentSpace(length: Int) extends Indent
+
+  implicit def indentEquality: UnivEq[Indent] = UnivEq.force
+  implicit val itemEquality: UnivEq[ReqCodeTreeItem] = deriveUnivEq
+
+}
+
+// =====================================================================================================================
 
 /**
  * Replacement values for a requirement at a specific row.
@@ -22,9 +53,11 @@ import shipreq.webapp.base.TypeclassDerivation._
  * appear twice - once for each implicatee.
  */
 // TODO Make imp naming consistent
+@Lenses
 case class Expansion(implicationSrc: Vector[Pubid],
                      implicationTgt: Vector[Pubid],
                      reqCodes      : Vector[ReqCode.Value],
+                     reqCodeTree   : Vector[ReqCodeTreeItem],
                      cfImps        : Map[CustomField.Implication.Id, Vector[Pubid]],
                      cfTags        : Map[CustomField.Tag.Id,         Vector[ApplicableTag.Id]]) {
 
@@ -36,7 +69,12 @@ case class Expansion(implicationSrc: Vector[Pubid],
 }
 
 object Expansion {
+  val none = Expansion(Vector.empty, Vector.empty, Vector.empty, Vector.empty, UnivEq.emptyMap, UnivEq.emptyMap)
+
   implicit val equality: UnivEq[Expansion] = deriveUnivEq
+
+  implicit val reqCodeTreeM: Monoid[Vector[ReqCodeTreeItem]] =
+    scalaz.std.vector.vectorMonoid
 
   implicit def vectorUniqSemigroup[A: Equal]: Semigroup[Vector[A]] =
     new Semigroup[Vector[A]] {
@@ -54,18 +92,11 @@ object Expansion {
           a.implicationSrc |+| b.implicationSrc,
           a.implicationTgt |+| b.implicationTgt,
           a.reqCodes       |+| b.reqCodes,
+          a.reqCodeTree    |+| b.reqCodeTree,
           a.cfImps         |+| b.cfImps,
           a.cfTags         |+| b.cfTags)
       }
     }
-
-  val implicationSrc = GenLens[Expansion](_.implicationSrc)
-  val implicationTgt = GenLens[Expansion](_.implicationTgt)
-  val reqCodes       = GenLens[Expansion](_.reqCodes)
-  val cfImps         = GenLens[Expansion](_.cfImps)
-  val cfTags         = GenLens[Expansion](_.cfTags)
-
-  val none = Expansion(Vector.empty, Vector.empty, Vector.empty, UnivEq.emptyMap, UnivEq.emptyMap)
 }
 
 // =====================================================================================================================
@@ -73,7 +104,9 @@ object Expansion {
 /**
  * Sortable data (ie. lists) that are never expanded.
  */
+@Lenses
 case class MultiValues(tags: Vector[ApplicableTag.Id])
+
 object MultiValues {
   implicit val equality: UnivEq[MultiValues] = deriveUnivEq
 
@@ -87,8 +120,6 @@ object MultiValues {
         MultiValues(a.tags |+| b.tags)
       }
     }
-
-  val tags = GenLens[MultiValues](_.tags)
 }
 
 // =====================================================================================================================
@@ -128,6 +159,7 @@ object Row {
   val implicationSrc = Row.expansion   ^|-> Expansion.implicationSrc
   val implicationTgt = Row.expansion   ^|-> Expansion.implicationTgt
   val reqCodes       = Row.expansion   ^|-> Expansion.reqCodes
+  val reqCodeTree    = Row.expansion   ^|-> Expansion.reqCodeTree
   val cfImps         = Row.expansion   ^|-> Expansion.cfImps
   val cfTags         = Row.expansion   ^|-> Expansion.cfTags
   val tags           = Row.multiValues ^|-> MultiValues.tags
