@@ -174,17 +174,26 @@ object DataProp {
     type T = ReqCodes
     import ReqCode._
     type TrieBranch = MTrie.Branch[Node, Data]
+    type Terminal = MTrie.Value[Node, Data]
 
     def branchesMustBranch =
       Prop.test[TrieBranch]("TrieBranch branches", _.next.nonEmpty)
         .forall[T, List](_.trie.cataN[List[TrieBranch]](Nil)((q, n) => n.fold(_ :: q, _ => q)))
         .rename("All TrieBranches branch")
 
-//    def noSharedTrieBranches =
-//      Prop.distinct("No shared trie branches", (_: T).nodeIdsInTrie)
+    def nonEmptyData(d: Data) =
+      d.active.nonEmpty || d.refsToGroup.nonEmpty || d.refsToReqs.nonEmpty
+
+    def nonEmptyTerminals =
+      Prop.test[Data]("Terminal not empty", nonEmptyData)
+        .forall[T, List](_.trie.cataN[List[Data]](Nil)((q, n) => n.fold(_ => q, _.value :: q)))
+        .rename("No empty terminals")
+
+    def uniqueIds =
+      Prop.distinct("ID", (_: T).trie.flatStream.flatMap(_._2.ids))
 
     lazy val all =
-      revAnd(branchesMustBranch) rename "ReqCodes"
+      revAnd(branchesMustBranch ∧ nonEmptyTerminals ∧ uniqueIds) rename "ReqCodes"
   }
 
   // -------------------------------------------------------------------------------------------------------------------

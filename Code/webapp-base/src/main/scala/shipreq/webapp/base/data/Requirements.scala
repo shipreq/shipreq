@@ -2,6 +2,7 @@ package shipreq.webapp.base.data
 
 import japgolly.nyaya.CycleDetector
 import japgolly.nyaya.util.Multimap
+import monocle.macros.Lenses
 import scalaz.Order
 import scalaz.std.string.stringInstance
 import scalaz.syntax.equal._
@@ -75,27 +76,15 @@ object ReqCode {
    */
   sealed trait Target
 
-  /**
-   * No current target. Previous target has been unassociated.
-   *
-   * TODO doc why & usage
-   */
-  case object Tombstone extends Target {
-    implicit def equality = UnivEq.force[this.type]
-  }
-
   implicit object TargetGeneric extends Generic[Target] {
-    override type Repr = Req.Id :+: ReqCodeGroup :+: Tombstone.type :+: CNil
-    private val tombstone = Coproduct[Repr](Tombstone)
+    override type Repr = Req.Id :+: ReqCodeGroup :+: CNil
     override def to  (t: Target): Repr = t match {
       case a: Req.Id       => Coproduct[Repr](a)
       case a: ReqCodeGroup => Coproduct[Repr](a)
-      case    Tombstone    => tombstone
     }
     override def from(co: Repr): Target = co match {
-      case Inl(a)           => a
-      case Inr(Inl(a))      => a
-      case Inr(Inr(Inl(a))) => a
+      case Inl(a)      => a
+      case Inr(Inl(a)) => a
       case _ => ???
     }
   }
@@ -106,18 +95,40 @@ object ReqCode {
   final case class Id(value: Long) extends TaggedLong
 
   /**
-   * Data associated with each [[ReqCode.Value]].
+   * Data associated with a ReqCode in the case that the ReqCode exists in the current user-visible tree of ReqCodes.
+   * (As opposed to a ReqCode that exists for technical reasons and doesn't exist as far as the user is concerned.)
    */
-  final case class Data(id: Id, target: Target)
+  @Lenses
+  final case class ActiveData(id: Id, target: Target)
 
-  implicit val dataEquality: UnivEq[Data] = deriveUnivEq
+  /**
+   * Data associated with each [[ReqCode.Value]].
+   *
+   * See `Design/req_codes.ods`.
+   *
+   * @param refsToGroup Previous IDs still referenced in rich text.
+   * @param refsToReqs Previous req-associations still referenced in rich text.
+   */
+  @Lenses
+  final case class Data(active     : Option[ActiveData],
+                        refsToGroup: Set[Id],
+                        refsToReqs : Multimap[Req.Id, Set, Id]) {
+
+    def ids: Stream[Id] =
+      active.toStream.map(_.id) append
+        refsToGroup.toStream append
+        refsToReqs.allValues
+  }
+
+  implicit val activeDataEquality: UnivEq[ActiveData] = deriveUnivEq
+  implicit val dataEquality      : UnivEq[Data]       = deriveUnivEq
 
   type Trie = MTrie.Trie[Node, Data]
   def emptyTrie: Trie = MTrie.empty[Node, Data]
 }
 
 /**
- * A row that exists just to provide a description or summary of its children in the code hierarchy.
+ * A row that exists just to provide a description or summary of its children in the ReqCode hierarchy.
  *
  * Previously called "Semantic Header Row" or "SHR" in the requirements.
  */
@@ -133,13 +144,20 @@ final case class ReqCodes(trie: ReqCode.Trie) {
   import ReqCode._
   import MTrie.Ops
 
-//  lazy val reqCodeById: Map[Id, Value] =
+  def cataA[A](z: A)(f: (A, Value, ActiveData) => A): A =
+    trie.cataV(z)((a, v, d) => d.active.fold(a)(f(a, v, _)))
+
+  lazy val activeReqCodesByTarget: Multimap[Target, Set, Value] =
+    cataA(UnivEq.emptyMultimap[Target, Set, Value])((q, c, d) =>
+      q.add(d.target, c))
+
+  //  lazy val reqCodeById: Map[Id, Value] =
 //    trie.cataV(UnivEq.emptyMap[Id, Value])((q, c, d) =>
 //      q.updated(d.id, c))
 
-  lazy val reqCodesByTarget: Multimap[Target, Set, Value] =
-    trie.cataV(UnivEq.emptyMultimap[Target, Set, Value])((q, c, d) =>
-      q.add(d.target, c))
+//  lazy val reqCodesByTarget: Multimap[Target, Set, Value] =
+//    trie.cataV(UnivEq.emptyMultimap[Target, Set, Value])((q, c, d) =>
+//      q.add(d.target, c))
 
 //  lazy val targetToIds: Multimap[Target, Set, Id] =
 //    trie.cataV(UnivEq.emptyMultimap[Target, Set, Id])((q, _, d) =>

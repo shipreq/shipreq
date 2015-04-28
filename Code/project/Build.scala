@@ -228,6 +228,7 @@ object ShipReq extends Build {
 
       override def project = typicalProject
         .configure(
+          useMacroParadise,
           Common.utestOnJvm,
           dontInline, // crashes scalac 2.11.5
           addCommandAliases(

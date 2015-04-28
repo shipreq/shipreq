@@ -1,10 +1,10 @@
 package shipreq.webapp.base.test
 
-import scalaz._
+import scalaz.{IMap => _, _}
 import scalaz.std.AllInstances._
 import scalaz.syntax.bind._
 import scalaz.syntax.semigroup._
-import shipreq.base.util.{NonEmptyVector, IMap, Vector1, MTrie}, MTrie.Ops
+import shipreq.base.util._, MTrie.Ops
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Text
@@ -42,7 +42,7 @@ object ProjectDSL {
     reqs           = p.reqs.data.reqs,
     pubids         = p.reqs.data.pubids,
     reqCodeTrie    = p.reqCodes.data.trie,
-    maxReqCodeId   = p.reqCodes.data.trie.cataV(0L)((q,_,d) => q max d.id.value),
+    maxReqCodeId   = p.reqCodes.data.cataA(0L)((q,_,d) => q max d.id.value),
     text           = p.reqFieldData.data.text,
     tags           = p.reqFieldData.data.tags,
     imps           = p.reqFieldData.data.implications.srcToTgt)
@@ -75,20 +75,23 @@ object ProjectDSL {
 
     def state: Mod[GenericReq] =
       State[S, GenericReq]{ p =>
+        val id = this.id getOrElse GenericReq.Id(p.nextId)
+
         var maxReqCodeId = p.maxReqCodeId
         def nextReqCodeId() = {
           maxReqCodeId += 1
           ReqCode.Id(maxReqCodeId)
         }
+        def reqCodeData() =
+          ReqCode.Data(Some(ReqCode.ActiveData(nextReqCodeId(), id)), UnivEq.emptySet, UnivEq.emptyMultimap)
 
-        val id          = this.id getOrElse GenericReq.Id(p.nextId)
         val reqTypeId   = this.reqType.getOrElse(p.defaultReqType.reqTypeId)
         val (pr, pubid) = Pubid.alloc(id, reqTypeId, p.pubids)
         val req         = GenericReq(id, pubid, title, alive)
         val text        = cftexts.mapValues(t => Map.empty[Req.Id, Text.CustomTextField.NonEmptyText].updated(id, t))
         val tags        = p.tags.addvs(id, this.tags)
         val imps        = p.imps.addks(impSrcs, id).addvs(id, impTgts)
-        val codeTrie    = codes.map(parseCode).foldLeft(p.reqCodeTrie)((t, c) => t.put(c, ReqCode.Data(nextReqCodeId(), id)))
+        val codeTrie    = codes.map(parseCode).foldLeft(p.reqCodeTrie)((t, c) => t.put(c, reqCodeData()))
         val p2          = p.copy(nextId       = this.id.fold(id.value + 1)(_ => p.nextId),
                                  pubids       = pr,
                                  reqs         = p.reqs + req,

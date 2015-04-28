@@ -62,10 +62,7 @@ object LogicTest extends TestSuite {
     val rowGReqIds   = gatheredG.map(_.req.id).toSet
     val srcGReqIds   = p.reqs.data.reqs.keys.filterT[GenericReq.Id].toSet
     val plainText    = PlainText(p)
-    val liveReqCodes = p.reqCodes.data.trie.cataV(Set.empty[ReqCode.Value])((q, c, d) => d.target match {
-      case ReqCode.Tombstone           => q
-      case _: Req.Id | _: ReqCodeGroup => q + c
-    })
+    val liveReqCodes = p.reqCodes.data.cataA(Set.empty[ReqCode.Value])((q, c, _) => q + c)
 
     // -----------------------------------------------------------------------------------------------------------------
     // Gathering

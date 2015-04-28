@@ -1,0 +1,30 @@
+#!/bin/env scala
+// vim: set ft=scala :
+
+def T(i: Int) = (64+i).toChar.toString
+
+for (a <- (2 to 9)) {
+  def m (f: Int => String): List[String] = (1 to a).toList.map(f)
+
+  val types = m(t => s"${T(t)}:UnivEq") mkString ", "
+  val tuple = m(T).mkString(",")
+
+  println(s"@inline implicit def tuple$a[$types]: UnivEq[($tuple)] = force")
+
+  // var o = List.empty[String]
+  // for (i <- (1 to a)) {
+    // val c = T(i)
+//
+    // def l (hit: String, miss: Int => String): List[String] = (1 to a).toList.map(j => if (i==j) hit else miss(j))
+    // def lc(hit: String, miss: Int => String): String = l(hit,miss).mkString(comma)
+    // def lt(hit: String, miss: Int => String): String = l(hit,miss).mkString("(",comma,")")
+//
+    // o ::= s"@inline def map$i[X](f: $c => X): (${lc("X",T)}) = ${lt(s"f(_t._$i)", "_t._"+_)}"
+    // o ::= s"@inline def put$i[X](x: X): (${lc("X",T)}) = ${lt("x", "_t._"+_)}"
+  // }
+//
+  // println(s"@inline final implicit class Tuple${a}Ext[${mc(T)}](val _t: ${mt(T)}) extends AnyVal {")
+  // println(o.sorted.map("  "+_) mkString "\n")
+  // println("}")
+}
+println()

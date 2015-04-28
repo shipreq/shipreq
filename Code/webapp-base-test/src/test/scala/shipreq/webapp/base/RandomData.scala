@@ -15,7 +15,7 @@ import scalaz.std.set._
 import scalaz.std.stream._
 import scalaz.std.vector._
 
-import shipreq.base.util.{MTrie, NonEmptyVector, BiMap, IMap}, MTrie.Ops
+import shipreq.base.util._, MTrie.Ops
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedLong
 import shipreq.base.util.Debug._
@@ -783,7 +783,7 @@ object RandomData {
     lazy val id =
       RandomData.id map ReqCode.Id
 
-    type FlatInstance = (Id, Value, Target)
+    type FlatInstance = (Value, Data)
 
     val distinctIds =
       Distinct.flong.xmap(Id)(_.value).distinct
@@ -802,18 +802,57 @@ object RandomData {
     }
 
     val distinctFlatInstances = {
-      val id      = distinctIds      at first [FlatInstance, Id]
-      val reqCode = distinctReqCodes at second[FlatInstance, Value]
+      import monocle.std.some
+      val flatData = second[FlatInstance, Data]
+      val dataActive = flatData ^|-? (Data.active ^<-? some)
+
+      val ids1 = distinctIds at ActiveData.id at dataActive
+      val ids2 = distinctIds.lift[Set] at Data.refsToGroup at flatData
+      val ids3 = distinctIds.lift[Set]
+        .liftMapValues.contramap[Multimap[Req.Id, Set, Id]](_.m, (_, m: Map[Req.Id, Set[Id]]) => Multimap(m))
+        // TODO ↑ Use liftMultimapValues when Nyaya gets it
+        .at(flatData ^|-> Data.refsToReqs)
+      val id = ids1 + ids2 + ids3
+
+      val reqCode = distinctReqCodes at first[FlatInstance, Value]
+
       (id * reqCode).lift[Vector]
     }
 
-    def trie(ids: Iterable[Req.Id]) = GenS[Trie] { sz =>
-      val possibleTargets = (ids.toVector: Vector[Target]) :+ Tombstone
-      someOfWithDups(possibleTargets)(t =>
-          for {c <- value; i <- id} yield (i, c, t))
+    val smallIdSet = id.set.lim(3)
+
+    def data(ogReqId: Option[Gen[Req.Id]]): Gen[Data] =
+      ogReqId match {
+        case Some(gReqId) =>
+          for {
+            i       <- id
+            target  <- gReqId
+            oldIds  <- smallIdSet
+            oldReqs <- gReqId.mapTo(smallIdSet).map(Multimap(_))
+            r       <- Gen.chooseint(0, 9)
+          } yield
+            if (r == 0)
+              Data(None, oldIds + i, oldReqs)
+            else if (r == 1)
+              Data(None, oldIds, oldReqs.add(target, i))
+            else
+              Data(Some(ActiveData(i, target)), oldIds, oldReqs)
+        case None =>
+          for {
+            i      <- id
+            oldIds <- smallIdSet
+          } yield
+            Data(None, oldIds + i, UnivEq.emptyMultimap)
+      }
+
+
+    def flatInstance(gData: Gen[Data]): Gen[FlatInstance] =
+      Gen.tuple2(value, gData)
+
+    def trie(ogReqId: Option[Gen[Req.Id]]): GenS[Trie] =
+      flatInstance(data(ogReqId)).vector
         .map(distinctFlatInstances.run)
-        .map(_.foldLeft(emptyTrie) { case (q, (i, c, t)) => q.put(c, Data(i, t)) })
-    }
+        .map(_.foldLeft(emptyTrie) { case (q, (c, d)) => q.put(c, d) })
   }
 
   def revAndReqCodes(g: Gen[ReqCode.Trie]) =
@@ -849,8 +888,9 @@ object RandomData {
       reqTypeIds     = StaticReqType.values ++ reqtypes.data.keys
       reqTypeIdSet   = reqTypeIds.toSet
       fields         ← revAnd(fieldSet(reqTypeIdSet, tags.data.keySet, reqtypes.data.keySet))
-      reqs           ← revAnd(requirements(reqTypeIds, Gen.oneofO(cissueIds.toSeq)))
-      reqCodes       ← revAndReqCodes(reqCode.trie(reqs.data.reqs.keys).lim(22 `JVM|JS` 8)) // TODO add SHRs
+      reqs           ← revAnd(requirements(reqTypeIds, Gen oneofO cissueIds.toSeq))
+      reqIds         = reqs.data.reqs.keys
+      reqCodes       ← revAndReqCodes(reqCode.trie(Gen oneofO reqIds.toSeq).lim(20 `JVM|JS` 6)) // TODO add SHRs
       atagIds        = tags.data.vstream(_.tag).filterT[ApplicableTag].map(_.id).toSet
       textColIds     = fields.data.customFields.values.filterT[CustomField.Text].map(_.id).toSet
       reqIds         = reqs.data.reqs.keySet

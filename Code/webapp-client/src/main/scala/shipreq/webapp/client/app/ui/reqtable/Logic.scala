@@ -179,7 +179,7 @@ private[reqtable] object Logic {
     val expandTagCols = tagColValueExpander(vs, p)
 
     val pReqs         = p.reqs.data
-    val pReqCodes     = p.reqCodes.data
+    val pReqCodes     = p.reqCodes.data.activeReqCodesByTarget
     val pImplications = p.reqFieldData.data.implications
     val multiValuesFn = this.multiValuesFn(vs, p)
 
@@ -199,7 +199,7 @@ private[reqtable] object Logic {
         // Expansion
         val impSrcs = expandImpSrcs(() => pImplications.tgtToSrc(id) |> pubids)
         val impTgts = expandImpTgts(() => pImplications.srcToTgt(id) |> pubids)
-        val codes   = expandCodes  (() => pReqCodes.reqCodesByTarget(id))
+        val codes   = expandCodes  (() => pReqCodes(id))
         val cfImps  = expandImpCols(id)
         val cfTags  = expandTagCols(id)
         val exps    = expansions(impSrcs, impTgts, codes, cfImps, cfTags)
