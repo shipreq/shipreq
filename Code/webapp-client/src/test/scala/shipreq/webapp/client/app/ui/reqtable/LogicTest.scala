@@ -64,7 +64,12 @@ object LogicTest extends TestSuite {
     val rowGReqIds   = gatheredG.map(_.req.id).toSet
     val srcGReqIds   = p.reqs.data.reqs.keys.filterT[GenericReq.Id].toSet
     val plainText    = PlainText(p)
-    val liveReqCodes = p.reqCodes.data.cataA(Set.empty[ReqCode.Value])((q, c, _) => q + c)
+
+    val expectedVisibleReqCodes =
+      p.reqCodes.data.cataA(Set.empty[ReqCode.Value])((q, c, d) => d.target match {
+        case _: Req.Id       => q + c
+        case _: ReqCodeGroup => if (vs.viewReqCodesAsTree) q + c else q
+      })
 
     // -----------------------------------------------------------------------------------------------------------------
     // Gathering
@@ -87,7 +92,7 @@ object LogicTest extends TestSuite {
     def gather =
       ( E.distinct("Rows", gathered)
       ∧ E.allPresent("each generic req id has a row", srcGReqIds, rowGReqIds)
-      ∧ E.allPresent("all req codes are displayed", liveReqCodes, rowReqCodes)
+      ∧ E.allPresent("all req codes are displayed", expectedVisibleReqCodes, rowReqCodes)
       ∧ noEmptyAndNonEmptyReqCodesMixed
       ) rename "Logic.gather"
 

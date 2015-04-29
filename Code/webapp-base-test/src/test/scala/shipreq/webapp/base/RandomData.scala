@@ -620,7 +620,7 @@ object RandomData {
 
     // Specific text types
 
-    def recCodeGroupTitleAtom = reqTitle(RecCodeGroupTitle) _
+    def reqCodeGroupTitleAtom = reqTitle(RecCodeGroupTitle) _
 
     def genericReqTitleAtom   = reqTitle(GenericReqTitle) _
 
@@ -821,36 +821,48 @@ object RandomData {
 
     val smallIdSet = id.set.lim(3)
 
-    def data(ogReqId: Option[Gen[Req.Id]]): Gen[Data] =
-      ogReqId match {
-        case Some(gReqId) =>
-          for {
-            i       <- id
-            target  <- gReqId
-            oldIds  <- smallIdSet
-            oldReqs <- gReqId.mapTo(smallIdSet).map(Multimap(_))
-            r       <- Gen.chooseint(0, 9)
-          } yield
-            if (r == 0)
-              Data(None, oldIds + i, oldReqs)
-            else if (r == 1)
-              Data(None, oldIds, oldReqs.add(target, i))
-            else
-              Data(Some(ActiveData(i, target)), oldIds, oldReqs)
-        case None =>
-          for {
-            i      <- id
-            oldIds <- smallIdSet
-          } yield
-            Data(None, oldIds + i, UnivEq.emptyMultimap)
-      }
+    val gEmptyRefsToReqs: Gen[Multimap[Req.Id, Set, Id]] =
+      Gen.insert(Multimap.empty)
 
+    def data(ogReqId: Option[Gen[Req.Id]], gGroup: Gen[ReqCodeGroup]): Gen[Data] = {
+      import Gen.Covariance._
+
+      val gTarget: Gen[Target] =
+        ogReqId match {
+          case Some(g) => Gen.oneofG(g, g, g, g, gGroup)
+          case None    => gGroup
+        }
+
+      val gRefsToReqs: Gen[Multimap[Req.Id, Set, Id]] =
+        ogReqId match {
+          case Some(g) => g.mapTo(smallIdSet).map(Multimap(_))
+          case None    => gEmptyRefsToReqs
+        }
+
+      for {
+        i           <- id
+        target      <- gTarget
+        refsToGroup <- smallIdSet
+        refsToReqs  <- gRefsToReqs
+        x           <- Gen.chooseint(0, 9)
+      } yield
+        if (x == 0)
+          target match {
+            case t: Req.Id       => Data(None, refsToGroup, refsToReqs.add(t, i))
+            case _: ReqCodeGroup => Data(None, refsToGroup + i , refsToReqs)
+          }
+        else
+          Data(Some(ActiveData(i, target)), refsToGroup, refsToReqs)
+    }
 
     def flatInstance(gData: Gen[Data]): Gen[FlatInstance] =
       Gen.tuple2(value, gData)
 
-    def trie(ogReqId: Option[Gen[Req.Id]]): GenS[Trie] =
-      flatInstance(data(ogReqId)).vector
+    def trie(r: Option[Gen[Req.Id]], i: Option[Gen[CustomIssueType.Id]]): GenS[Trie] =
+      trie(r, TextGen.reqCodeGroupTitleAtom(r, i).text map ReqCodeGroup.apply)
+
+    def trie(ogReqId: Option[Gen[Req.Id]], gGroup: Gen[ReqCodeGroup]): GenS[Trie] =
+      flatInstance(data(ogReqId, gGroup)).vector
         .map(distinctFlatInstances.run)
         .map(_.foldLeft(emptyTrie) { case (q, (c, d)) => q.put(c, d) })
   }
@@ -884,13 +896,15 @@ object RandomData {
     for {
       (issues, tags) ← Gen.tuple2(customIssueTypes, revAndTagTree) map distinctHashRefKeys.run
       cissueIds      = issues.data.keySet
+      cissueIdG      = Gen oneofO cissueIds.toSeq
       reqtypes       ← customReqTypes
       reqTypeIds     = StaticReqType.values ++ reqtypes.data.keys
       reqTypeIdSet   = reqTypeIds.toSet
       fields         ← revAnd(fieldSet(reqTypeIdSet, tags.data.keySet, reqtypes.data.keySet))
-      reqs           ← revAnd(requirements(reqTypeIds, Gen oneofO cissueIds.toSeq))
+      reqs           ← revAnd(requirements(reqTypeIds, cissueIdG))
       reqIds         = reqs.data.reqs.keys
-      reqCodes       ← revAndReqCodes(reqCode.trie(Gen oneofO reqIds.toSeq).lim(20 `JVM|JS` 6)) // TODO add SHRs
+      reqIdG         = Gen oneofO reqIds.toSeq
+      reqCodes       ← revAndReqCodes(reqCode.trie(reqIdG, cissueIdG).lim(20 `JVM|JS` 6))
       atagIds        = tags.data.vstream(_.tag).filterT[ApplicableTag].map(_.id).toSet
       textColIds     = fields.data.customFields.values.filterT[CustomField.Text].map(_.id).toSet
       reqIds         = reqs.data.reqs.keySet
