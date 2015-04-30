@@ -154,7 +154,7 @@ object Table {
       val uniqKey = new KeyUniqueness
       val rowKey: Row => js.Any = {
         case r: GenericReqRow   => uniqKey(r.req.id.value)
-        case r: ReqCodeGroupRow => uniqKey(r.id.value.value)
+        case r: ReqCodeGroupRow => "g" + r.id.value.value.toString
       }
 
       def renderRows =
