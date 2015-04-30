@@ -213,7 +213,7 @@ private[reqtable] object Logic {
       }
 
     val reqCodeGroupRows: Stream[ReqCodeGroupRow] =
-      if (vs.viewReqCodesAsTree)
+      if (vs.viewReqCodeGroups)
         p.reqCodes.data.cataA(Stream.empty[ReqCodeGroupRow])((q, c, d) => d.target match {
           case _: Req.Id       => q
           case g: ReqCodeGroup =>

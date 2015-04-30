@@ -76,7 +76,7 @@ object LogicTest extends TestSuite {
     val expectedVisibleReqCodes =
       p.reqCodes.data.cataA(Set.empty[ReqCode.Value])((q, c, d) => d.target match {
         case _: Req.Id       => q + c
-        case _: ReqCodeGroup => if (vs.viewReqCodesAsTree) q + c else q
+        case _: ReqCodeGroup => if (vs.viewReqCodeGroups) q + c else q
       })
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -509,7 +509,7 @@ object LogicTest extends TestSuite {
       val fmtRows = rowsToStrL1(_.exp.reqCodes, r => Vector1(r.reqCode))(PlainText.reqCode)
       testCB(p, PlainText(p), C.Code, fmtRows)(allSortsCB(z, 2)(_ + sep + _,
         asc  = "a  a.b.c  a.b.d  a.boo  abc  abc.no  x.y.z  x.z  y.q",
-        desc = "y.q  x.z  x.y.z  abc.no  abc  a.boo  a.b.d  a.b.c  a"))
+        desc = "y.q  x.z  x.y.z  abc.no  a.boo  a.b.c  a")) // groups not displayed in DESC
     }
   }
 
