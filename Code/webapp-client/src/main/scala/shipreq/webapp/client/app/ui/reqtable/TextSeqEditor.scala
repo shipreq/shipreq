@@ -39,6 +39,8 @@ object TextSeqEditor {
       (input |> normAll |> sep.split).toStream map normEach filterNot ignore
   }
 
+  // TODO pubidSeqFormat and hashtagSeqFormat avoid Grammar
+
   val pubidSeqFormat =
     Format(_.trim, "[ ,]+".r.pattern, AutoComplete.normaliseReqPubid, _.isEmpty)
 
