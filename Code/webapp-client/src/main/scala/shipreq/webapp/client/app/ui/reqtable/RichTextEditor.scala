@@ -64,7 +64,11 @@ object RichTextEditor {
                      commit        : t.OptionalText => IO[Unit],
                      project       : Px[Project],
                      projectWidgets: Px[ProjectWidgets],
-                     autoComplete  : AutoComplete)
+                     autoComplete  : AutoComplete)  {
+
+      def asCellState: Cell.Editing =
+        Cell.Editing(component(this))
+    }
 
     val component =
       ReactComponentB[Props](name)
@@ -125,9 +129,6 @@ object RichTextEditor {
         <.div(editor, preview)
       }
     }
-
-    def cellState(p: Props): Cell.Editing =
-      Cell.Editing(component(p))
   }
 
   // ===================================================================================================================
@@ -151,13 +152,8 @@ object RichTextEditor {
 
       val autoComplete = mkAutoComplete(project, projectText, textSearch)
 
-      lazy val update: S => IO[Unit] =
-        s => setState(Some(newState(s)))
-
-      def newState(state: S) =
-        cellState(Props(state, update, abort, commit, project, projectWidgets, autoComplete))
-
-      newState(init)
+      Cell.selfManage(setState, init)(
+        Props(_, _, abort, commit, project, projectWidgets, autoComplete).asCellState)
     }
   }
 
@@ -182,13 +178,8 @@ object RichTextEditor {
 
       val autoComplete = mkAutoComplete(project, projectText, textSearch)
 
-      lazy val update: S => IO[Unit] =
-        s => setState(Some(newState(s)))
-
-      def newState(state: S) =
-        cellState(Props(state, update, abort, commit, project, projectWidgets, autoComplete))
-
-      newState(init)
+      Cell.selfManage(setState, init)(
+        Props(_, _, abort, commit, project, projectWidgets, autoComplete).asCellState)
     }
   }
 
@@ -213,13 +204,8 @@ object RichTextEditor {
 
       val autoComplete = mkAutoComplete(project, projectText, textSearch)
 
-      lazy val update: S => IO[Unit] =
-        s => setState(Some(newState(s)))
-
-      def newState(state: S) =
-        cellState(Props(state, update, abort, commit, project, projectWidgets, autoComplete))
-
-      newState(init)
+      Cell.selfManage(setState, init)(
+        Props(_, _, abort, commit, project, projectWidgets, autoComplete).asCellState)
     }
   }
 }

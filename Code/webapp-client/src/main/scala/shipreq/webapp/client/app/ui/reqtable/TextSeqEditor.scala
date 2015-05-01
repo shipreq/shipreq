@@ -60,7 +60,11 @@ final class TextSeqEditor[A](name: String, val fmt: Format) {
                    abort       : IO[Unit],
                    parser      : Parser[A],
                    commit      : Vector[A] => IO[Unit],
-                   autoComplete: AutoComplete)
+                   autoComplete: AutoComplete) {
+
+    def asCellState: Cell.Editing =
+      Cell.Editing(component(this))
+  }
 
   val textEditorRef = Ref[HTMLInputElement]("i")
 
@@ -116,9 +120,6 @@ final class TextSeqEditor[A](name: String, val fmt: Format) {
         ))
     }
   }
-
-  def cellState(p: Props): Cell.Editing =
-    Cell.Editing(component(p))
 }
 
 // =====================================================================================================================
@@ -178,13 +179,8 @@ object TagEditor {
       // TODO If change occurred, send to server & lock cell. (If unchanged, clear state.)
       s => setState(None) >>> IO{ println("Sent to ze server: " + s) }
 
-    lazy val update: S => IO[Unit] =
-      s => setState(Some(newState(s)))
-
-    def newState(state: S) =
-      editor cellState editor.Props(state, update, abort, parser, commit, autoComplete)
-
-    newState(init)
+    Cell.selfManage(setState, init)(
+      editor.Props(_, _, abort, parser, commit, autoComplete).asCellState)
   }
 }
 
@@ -272,12 +268,7 @@ object ImplicationEditor {
     // TODO If change occurred, send to server & lock cell. (If unchanged, clear state.)
       s => setState(None) >>> IO{ println("Sent to ze server: " + s) }
 
-    lazy val update: S => IO[Unit] =
-      s => setState(Some(newState(s)))
-
-    def newState(state: S) =
-      editor cellState editor.Props(state, update, abort, parser, commit, autoComplete)
-
-    newState(init)
+    Cell.selfManage(setState, init)(
+      editor.Props(_, _, abort, parser, commit, autoComplete).asCellState)
   }
 }
