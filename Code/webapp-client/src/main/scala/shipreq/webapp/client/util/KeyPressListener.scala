@@ -67,16 +67,27 @@ trait KeyPressListener extends OnUnmount {
       _modsDown = f(_modsDown, i)
     else
       _keysDown = f(_keysDown, i)
+
+    // keyUp events are not received in all cases (like alt-tab)
+    // Fix what we can.
+    def setMod(code: Int, on: Boolean): Unit =
+      _modsDown = if (on) _modsDown + code else _modsDown - code
+    setMod(KeyCode.alt,   e.altKey)
+    setMod(KeyCode.ctrl,  e.ctrlKey)
+    setMod(KeyCode.shift, e.shiftKey)
+
     i
   }
 
   final def _onKeyDown(e: KeyboardEvent): Unit = {
     _keychange(e)(_ + _)
+    // console.log(s"onKeyDown : ${_modsDown} : ${e.keyCode} ", e)
     onKeyDown(e).unsafePerformIO()
   }
 
   final def _onKeyUp(e: KeyboardEvent): Unit = {
     _keychange(e)(_ - _)
+    // console.log(s"onKeyUp : ${_modsDown} : ${e.keyCode} ", e)
   }
 
   def onKeyDown(e: KeyboardEvent): IO[Unit]
@@ -89,7 +100,10 @@ trait KeyPressListener extends OnUnmount {
 
   protected def matchKeyCodeNoMods[O](pf: PartialFunction[Int, O]): KbEventHO[O] = {
     val pf2 = pf.lift
-    e => if (modsDown.isEmpty) pf2(e.keyCode) else None
+    e => if (modsDown.isEmpty) pf2(e.keyCode) else {
+      // console.log(s"Dropping KB event because mods are down. $modsDown ", e)
+      None
+    }
   }
 
   /**
@@ -98,7 +112,9 @@ trait KeyPressListener extends OnUnmount {
   protected def filterUntargeted[O](f: KbEventHO[O]): KbEventHO[O] =
     e => e.target match {
       case _: HTMLBodyElement => f(e)
-      case _                  => None
+      case _ =>
+        // console.log("Dropping KB event with wrong target: ", e)
+        None
     }
 
   protected def consumeHandledKbEvent[A](f: KbEventHO[IO[A]]): KbEventHO[IO[A]] =
