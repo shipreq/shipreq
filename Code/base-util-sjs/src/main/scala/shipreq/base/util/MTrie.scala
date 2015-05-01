@@ -98,35 +98,35 @@ object MTrie {
       go(trie, Vector.empty)
     }
 
-    def put(loc: Path, value: V): Trie = {
+    def put(path: Path, value: V): Trie = {
       val v = Value[K, V](value)
       @inline def empty = MTrie.empty[K, V]
 
-      @tailrec def go(t: Trie, locH: K, locT: Vector[K], unwind: Trie => Trie): Trie =
-        if (locT.isEmpty) {
+      @tailrec def go(t: Trie, pathH: K, pathT: Vector[K], unwind: Trie => Trie): Trie =
+        if (pathT.isEmpty) {
 
           // At target-path's end
           val newNode: Node =
-            t.get(locH) match {
+            t.get(pathH) match {
               case Some(Branch(_, next)) => Branch(Some(v), next)
               case Some(_: Value)
                  | None                  => v
             }
-          unwind(t.updated(locH, newNode))
+          unwind(t.updated(pathH, newNode))
 
         } else {
 
           // Still traversing target-path
-          val a = locT.head
-          val b = locT.tail
-          t.get(locH) match {
-            case Some(Branch(ot, onext)) => go(onext, a, b, n ⇒ unwind(t.updated(locH, Branch(ot, n))))
-            case ot @ Some(_: Value)     => go(empty, a, b, n ⇒ unwind(t.updated(locH, Branch(ot.asInstanceOf[Option[Value]], n))))
-            case None                    => go(empty, a, b, n ⇒ unwind(t.updated(locH, Branch(None, n))))
+          val a = pathT.head
+          val b = pathT.tail
+          t.get(pathH) match {
+            case Some(Branch(ot, onext)) => go(onext, a, b, n ⇒ unwind(t.updated(pathH, Branch(ot, n))))
+            case ot @ Some(_: Value)     => go(empty, a, b, n ⇒ unwind(t.updated(pathH, Branch(ot.asInstanceOf[Option[Value]], n))))
+            case None                    => go(empty, a, b, n ⇒ unwind(t.updated(pathH, Branch(None, n))))
           }
         }
 
-      go(trie, loc.head, loc.tail, identity)
+      go(trie, path.head, path.tail, identity)
     }
 
     def pathSet: Set[Path] =
