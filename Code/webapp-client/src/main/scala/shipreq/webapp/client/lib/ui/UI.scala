@@ -54,7 +54,7 @@ object UI {
   @inline def mustA[A, N](m: Must[A], outputOnFailure: String = UiText.mustFailed)(implicit x: ReactTag => N, y: A => N): N =
     must(m, outputOnFailure)(y)
 
-  def textComplete[E <: html.Element](target: E, strategies: TextComplete.Strategies, onUpdate: => (String => IO[Unit]))(implicit E: TextEditor[E]): Unit = {
+  def textComplete[E <: html.Element](target: E, strategies: TextComplete.Strategies, onUpdate: => (String => IO[Unit]))(implicit E: TextEditor.OfType[E]): Unit = {
     if (strategies.nonEmpty) {
       val tgt = Dynamic.global.$(target)
       TextComplete(tgt, strategies)

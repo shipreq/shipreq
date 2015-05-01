@@ -1,28 +1,34 @@
 package shipreq.webapp.client.lib.ui
 
+import japgolly.scalajs.react._, vdom.prefix_<^._
 import org.scalajs.dom.html
 
-abstract class TextEditor[_E <: html.Element] {
-  final type E = _E
-  def value(e: E): String
-  def focus(e: E): Unit
-  def select(e: E): Unit
+sealed abstract class TextEditor {
+  type Dom <: html.Element
+  @inline final def asImplicit: TextEditor.OfType[Dom] = this
+
+  def tag: ReactTag
+  def value(d: Dom): String
+  def focus(d: Dom): Unit
+  def select(d: Dom): Unit
 }
 
 object TextEditor {
+  type OfType[D <: html.Element] = TextEditor {type Dom = D}
 
-  //@inline def apply[E <: html.Element](e: E)(implicit i: TextEditor[E]) = i
-
-  implicit object Input extends TextEditor[html.Input] {
-    override def value(e: E) = e.value
-    override def focus(e: E) = e.focus()
-    override def select(e: E) = e.select()
+  implicit object Input extends TextEditor {
+    override type Dom           = html.Input
+    override def tag            = <.input(^.`type` := "text")
+    override def value (d: Dom) = d.value
+    override def focus (d: Dom) = d.focus()
+    override def select(d: Dom) = d.select()
   }
 
-  implicit object TextArea extends TextEditor[html.TextArea] {
-    override def value(e: E) = e.value
-    override def focus(e: E) = e.focus()
-    override def select(e: E) = e.select()
+  implicit object TextArea extends TextEditor {
+    override type Dom           = html.TextArea
+    override def tag            = <.textarea
+    override def value (d: Dom) = d.value
+    override def focus (d: Dom) = d.focus()
+    override def select(d: Dom) = d.select()
   }
-  
 }

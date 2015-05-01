@@ -5,7 +5,6 @@ import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import org.scalajs.dom.ext.KeyValue
-import org.scalajs.dom.raw.HTMLInputElement
 import scala.scalajs.js
 import scalaz.effect.IO
 import scalaz.std.option._
@@ -15,7 +14,7 @@ import scalaz.syntax.foldable._
 import scalaz.{-\/, Tags, \/}
 
 import shipreq.base.util.Px
-import shipreq.webapp.client.lib.ui.{KeyHandler, UI}
+import shipreq.webapp.client.lib.ui.{TextEditor, KeyHandler, UI}
 import shipreq.webapp.client.util.IsOK
 import TextSeqEditor._
 
@@ -34,8 +33,11 @@ object TextSeqEditor {
  *
  * Example: "#tbd #report #pending" or "5,7,9,11".
  */
-final class TextSeqEditor[A](name: String, splitFn: String => Stream[String],
-                             inputStyle: IsOK => TagMod, errorMsgStyle: TagMod) {
+final class TextSeqEditor[A](name         : String,
+                             splitFn      : String => Stream[String],
+                             textEditor   : TextEditor,
+                             inputStyle   : IsOK => TagMod,
+                             errorMsgStyle: TagMod) {
 
   case class Props(state       : String,
                    stateUpdate : String => IO[Unit],
@@ -46,7 +48,9 @@ final class TextSeqEditor[A](name: String, splitFn: String => Stream[String],
     def apply = component(this)
   }
 
-  val textEditorRef = Ref[HTMLInputElement]("i")
+  @inline private implicit def impTextEditor = textEditor.asImplicit
+
+  private val textEditorRef = Ref[textEditor.Dom]("i")
 
   val component =
     ReactComponentB[Props](name)
@@ -55,8 +59,8 @@ final class TextSeqEditor[A](name: String, splitFn: String => Stream[String],
       .render(_.backend.render)
       .componentDidMount { $ =>
         val n = textEditorRef($).get.getDOMNode()
-        n.focus()
-        n.select()
+        textEditor.focus(n)
+        textEditor.select(n)
 
         // TODO Should update autoComplete if needed on props change
         val strategies = $.props.autoComplete.value()
@@ -87,10 +91,9 @@ final class TextSeqEditor[A](name: String, splitFn: String => Stream[String],
       }
 
       <.div(
-        <.input(
+        textEditor.tag(
           inputStyle(IsOK(parseResult)),
           ^.ref         := textEditorRef,
-          ^.`type`      := "text",
           ^.value       := p.state,
           ^.onChange   ~~> onChange,
           ^.onKeyDown  ~~> cancelOnEscape,
