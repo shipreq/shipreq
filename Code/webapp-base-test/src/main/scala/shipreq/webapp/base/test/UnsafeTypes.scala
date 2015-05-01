@@ -1,8 +1,10 @@
 package shipreq.webapp.base.test
 
+import japgolly.nyaya.util.Multimap
 import scalaz.OneAnd
-import shipreq.base.util.Must
+import shipreq.base.util.{NonEmptyVector, Must}
 import shipreq.webapp.base.data.Field.ApplicableReqTypes
+import shipreq.webapp.base.text.Grammar
 
 trait UnsafeTypesLowPriority {
   // implicit def autoSome[A, B](a: A)(implicit f: A => B): Option[B] = Some(f(a))
@@ -18,6 +20,12 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
   implicit def autoFieldRefKey(s: String) = FieldRefKey(s)
   implicit def autoReqCodeNode(s: String) = ReqCode.Node(s)
 
+  implicit def autoReqCode(s: String): ReqCode.Value = {
+    val v = Grammar.reqCode.nodeSeqFormat(s).map(ReqCode.Node.applyFn).toVector
+    NonEmptyVector(v.head, v.tail)
+  }
+
+  implicit def autoReqCodeId        (i: Int) = ReqCode.Id(i)
   implicit def autoReqTypePos       (i: Int) = ReqTypePos(i)
   implicit def autoGenericReqId     (i: Int) = GenericReq.Id(i)
   implicit def autoCustomFieldImpId (i: Int) = CustomField.Implication.Id(i)
@@ -39,8 +47,10 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
   implicit def autoTagGroupIdO       (i: Int): Option[TagGroup.Id]                = Some(i)
   implicit def autoApplicableTagIdO  (i: Int): Option[ApplicableTag.Id]           = Some(i)
 
-
   implicit def tagTreeTree(t: TagTree) = t.mapValues(_.children)
+
+  implicit def autoTrieData(ad: ReqCode.ActiveData): ReqCode.Data =
+    ReqCode.Data(ad, Set.empty, Multimap.empty)
 
   def reqTypesSet1(a: ReqType.Id, as: ReqType.Id*): OneAnd[Set, ReqType.Id] = OneAnd(a, as.toSet)
   def onlyReqTypes(a: ReqType.Id, as: ReqType.Id*): ApplicableReqTypes = ISubset.Only(reqTypesSet1(a, as: _*))

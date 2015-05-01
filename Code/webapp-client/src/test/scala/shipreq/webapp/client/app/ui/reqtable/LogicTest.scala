@@ -496,8 +496,8 @@ object LogicTest extends TestSuite {
     }
 
     def testReqCodes(): Unit = {
-      def req(codes: String*) = GReq(codes = codes.toSet)
-      def grp(code: String)   = RCGroup(code)
+      def req(codes: ReqCode.Value*) = GReq(codes = codes.toSet)
+      def grp(code: ReqCode.Value)   = RCGroup(code)
       val p =
         GReq().times(2)            +
         req("a.b.c", "x.y.z")      +

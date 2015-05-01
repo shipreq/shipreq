@@ -51,11 +51,6 @@ object ProjectDSL {
     tags           = p.reqFieldData.data.tags,
     imps           = p.reqFieldData.data.implications.srcToTgt)
 
-  def parseCode(s: String) = {
-    val ns = s.split('.').map(ReqCode.Node.apply)
-    NonEmptyVector(ns.head, ns.tail.toVector)
-  }
-
   type CFTextId    = CustomField.Text.Id
   type CFTextValue = Text.CustomTextField.NonEmptyText
 
@@ -63,13 +58,13 @@ object ProjectDSL {
                   id     : Option[GenericReq.Id]             = None,
                   reqType: Option[ReqType.Id]                = None,
                   alive  : Alive                             = Alive,
-                  codes  : Set[String]                       = Set.empty,
+                  codes  : Set[ReqCode.Value]                = Set.empty,
                   tags   : Set[ApplicableTag.Id]             = Set.empty,
                   impSrcs: Set[Req.Id]                       = Set.empty,
                   impTgts: Set[Req.Id]                       = Set.empty,
                   cftexts: Map[CFTextId, CFTextValue]        = Map.empty) extends ToState {
 
-    def code   (rcs: String*)                = copy(codes   = this.codes   ++ rcs)
+    def code   (rcs: ReqCode.Value*)         = copy(codes   = this.codes   ++ rcs)
     def tag    (ids: ApplicableTag.Id*)      = copy(tags    = this.tags    ++ ids)
     def impSrc (ids: Req.Id*)                = copy(impSrcs = this.impSrcs ++ ids)
     def impTgt (ids: Req.Id*)                = copy(impTgts = this.impTgts ++ ids)
@@ -97,7 +92,7 @@ object ProjectDSL {
         val text        = cftexts.mapValues(t => Map.empty[Req.Id, CFTextValue].updated(id, t))
         val tags        = p.tags.addvs(id, this.tags)
         val imps        = p.imps.addks(impSrcs, id).addvs(id, impTgts)
-        val codeTrie    = codes.map(parseCode).foldLeft(p.reqCodeTrie)((t, c) => t.put(c, reqCodeData()))
+        val codeTrie    = codes.foldLeft(p.reqCodeTrie)((t, c) => t.put(c, reqCodeData()))
         val p2          = p.copy(nextId       = this.id.fold(id.value + 1)(_ => p.nextId),
                                  pubids       = pr,
                                  reqs         = p.reqs + req,
@@ -110,7 +105,8 @@ object ProjectDSL {
       }
   }
 
-  case class RCGroup(code: String, title: Text.ReqCodeGroupTitle.OptionalText = Vector.empty) extends ToState {
+  case class RCGroup(code : ReqCode.Value,
+                     title: Text.ReqCodeGroupTitle.OptionalText = Vector.empty) extends ToState {
     def state: Mod[ReqCodeGroup] =
       State[S, ReqCodeGroup]{ p =>
 
@@ -123,8 +119,7 @@ object ProjectDSL {
         val g  = ReqCodeGroup(title)
         val ad = ReqCode.ActiveData(nextReqCodeId(), g)
         val d  = ReqCode.Data(Some(ad), UnivEq.emptySet, UnivEq.emptyMultimap)
-        val c  = parseCode(code)
-        val t  = p.reqCodeTrie.put(c, d)
+        val t  = p.reqCodeTrie.put(code, d)
         val p2 = p.copy(reqCodeTrie = t, maxReqCodeId = maxReqCodeId)
         (p2, g)
       }

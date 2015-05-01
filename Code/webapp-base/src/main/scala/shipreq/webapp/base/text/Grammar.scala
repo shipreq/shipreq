@@ -9,6 +9,8 @@ import shipreq.base.util.Util
 import shipreq.webapp.base.validation.{Constraints, Rules}
 
 object Grammar {
+  private val whitespace = "\\s+".r
+
   private def quoteCh(c: Char): String =
     if ("""$()*+-.?[]{|}\""" contains c) "\\" + c else c.toString
 
@@ -119,6 +121,9 @@ object Grammar {
 
     /** Max number of nodes in [[shipreq.webapp.base.data.ReqCode.Value]] */
     def maxNodes = 20
+
+    /** For parsing a single value into nodes */
+    val nodeSeqFormat = SeqFormat(whitespace.replaceAllIn(_, ""), quoteCh(nodeSeparator).r.pattern, identity, _ => false)
   }
 
   val issueDescSurround = surrounds("{", "}", " ", " ")
