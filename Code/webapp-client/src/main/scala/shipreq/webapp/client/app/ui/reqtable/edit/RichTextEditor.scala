@@ -1,4 +1,5 @@
 package shipreq.webapp.client.app.ui.reqtable
+package edit
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.jquery.{TextComplete => TC}

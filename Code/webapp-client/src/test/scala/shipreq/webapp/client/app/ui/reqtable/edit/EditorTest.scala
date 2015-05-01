@@ -1,4 +1,5 @@
 package shipreq.webapp.client.app.ui.reqtable
+package edit
 
 import scalaz.std.anyVal._
 import scalaz.std.set._

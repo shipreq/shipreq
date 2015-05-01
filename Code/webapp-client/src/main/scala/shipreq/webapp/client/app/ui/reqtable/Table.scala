@@ -15,6 +15,7 @@ import shipreq.base.util.NonEmptyVector
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
 import shipreq.webapp.client.util._
+import edit.ColumnEditors
 
 object Table {
 

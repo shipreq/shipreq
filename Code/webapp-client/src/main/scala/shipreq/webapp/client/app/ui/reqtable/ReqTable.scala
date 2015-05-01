@@ -6,6 +6,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.client.app.ui.ProjectWidgets
 import shipreq.webapp.client.util._
+import edit.ColumnEditors
 
 object ReqTable {
 

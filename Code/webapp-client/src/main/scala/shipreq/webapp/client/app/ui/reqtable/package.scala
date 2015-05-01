@@ -1,8 +1,6 @@
 package shipreq.webapp.client.app.ui
 
-import scalacss.ScalaCssReact._
 import shipreq.base.util.Must
-import Style.{reqtable => *}
 
 /**
  * Requirements Table.
@@ -20,7 +18,4 @@ package object reqtable {
 
   @inline def mustResolve[A](m: Must[A])(fallback: => A): A =
     m.fold(failedMust(fallback), identity)
-
-  def textSeqEditor[A](name: String, splitFn: String => Stream[String]): TextSeqEditor[A] =
-    new TextSeqEditor(name, splitFn, *.cellEditor(_), *.cellEditorErrMsg)
 }

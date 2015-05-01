@@ -1,4 +1,5 @@
 package shipreq.webapp.client.app.ui.reqtable
+package edit
 
 import monocle.Optional
 import scalaz.effect.IO

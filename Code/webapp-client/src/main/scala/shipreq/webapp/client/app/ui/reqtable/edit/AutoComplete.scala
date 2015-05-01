@@ -1,4 +1,5 @@
 package shipreq.webapp.client.app.ui.reqtable
+package edit
 
 import scalacss.ScalaCssReact._
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._

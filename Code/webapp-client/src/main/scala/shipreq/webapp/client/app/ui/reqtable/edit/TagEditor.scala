@@ -1,0 +1,69 @@
+package shipreq.webapp.client.app.ui.reqtable
+package edit
+
+import scalaz.effect.IO
+import scalaz.\/-
+import shipreq.base.util.ScalaExt._
+import shipreq.base.util.effect.IoUtils, IoUtils.IoExt
+import shipreq.base.util.{Must, Px, UnivEq}
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.text.Grammar
+import shipreq.webapp.base.UiText
+import shipreq.webapp.client.app.ui.TextSeqEditor, TextSeqEditor._
+
+// TODO Hide dead tags & maintain across edits (unless show deleted is on)
+
+object TagEditor {
+  type A      = ApplicableTag.Id
+  type Lookup = Map[String, ApplicableTag]
+
+  val editor = textSeqEditor[ApplicableTag.Id]("TagEditor", Grammar.hashRefKey.seqFormat.apply)
+
+  def lookupForNoCol(p: Project): Must[Lookup] =
+    lookupG(p, _.tagsNotUsedInColumns)
+
+  def lookupForCol(p: Project, f: CustomField.Tag.Id): Must[Lookup] =
+    lookupG(p, _.tagsForColumn(f))
+
+  def lookupG(p: Project, f: TagColumnDistribution => Must[Set[ApplicableTag]]): Must[Lookup] =
+    f(p.tagColumnDistribution).map(
+      _.toStream
+      .map(_.mapStrengthL(_.key.value))
+      .toMap
+    )
+
+  def apply(initial : Vector[A],
+            project : Project,
+            lookupM : Px[Must[Lookup]],
+            setState: Option[Cell.State] => IO[Unit]): Cell.State = {
+
+    def init: String =
+      initial.map { a =>
+        val m = project.atag(a).map(_.key.value)
+        UiText.mustA(m)
+      } mkString " "
+
+    val lookup = lookupM.map(mustResolve(_)(UnivEq.emptyMap))
+
+    val autoComplete: AutoComplete =
+      lookup.map(l =>
+        AutoComplete.tag(l.values.toStream, prefix = false))
+
+    val parser: Parser[A] =
+      () => s =>
+        lookup.value().get(s) match {
+          case Some(t) => \/-(t.id)
+          case None    => leftNone
+        }
+
+    val abort: IO[Unit] =
+      setState(None)
+
+    val commit: Vector[A] => IO[Unit] =
+      // TODO If change occurred, send to server & lock cell. (If unchanged, clear state.)
+      s => setState(None) >>> IO{ println("Sent to ze server: " + s) }
+
+    Cell.selfManage(setState, init)(
+      editor.Props(_, _, abort, parser, commit, autoComplete).apply)
+  }
+}
