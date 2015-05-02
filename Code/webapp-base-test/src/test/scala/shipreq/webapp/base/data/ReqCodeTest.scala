@@ -46,6 +46,15 @@ object ReqCodeTest extends TestSuite {
         testPass(vs0, "a_")
       }
 
+      'mkLowercase -
+        testPass2(vs0, "AB.CD", "ab.cd")
+
+      'squashUnderscores {
+        testPass2(vs0, "ab__", "ab_")
+        testPass2(vs0, "ab__2", "ab_2")
+        testPass2(vs0, "ab___.c__2", "ab_.c_2")
+      }
+
       'freeMiddleNode -
         testPass(vs0, "aa.b")
 

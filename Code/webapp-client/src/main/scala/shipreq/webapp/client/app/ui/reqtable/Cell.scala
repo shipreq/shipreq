@@ -33,15 +33,18 @@ object Cell {
       new Editing { override def render = f }
   }
 
-  def selfManage[V](setState: Option[State] => IO[Unit],
-                    initialValue: V)
-                   (updateValue: (V, V => IO[Unit]) => ReactElement): State = {
+  def selfManage[V](setState: Option[State] => IO[Unit], initialValue: V)
+                   (updateValue: (V, V => IO[Unit]) => ReactElement): State =
+    selfManageC(setState, identity[V])(initialValue, updateValue)
+
+  def selfManageC[V, C](setState: Option[State] => IO[Unit], correct: V => C)
+                       (initialValue: C, updateValue: (C, V => IO[Unit]) => ReactElement): State = {
 
     lazy val updateFn: V => IO[Unit] =
-      s => setState(Some(stateForValue(s)))
+      v => setState(Some(stateForValue(correct(v))))
 
-    def stateForValue(v: V): State =
-      Editing(updateValue(v, updateFn))
+    def stateForValue(c: C): State =
+      Editing(updateValue(c, updateFn))
 
     stateForValue(initialValue)
   }

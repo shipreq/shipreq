@@ -69,7 +69,7 @@ object Validators {
       G.chars.rule
         .addRule(G.length.rule)
         .liveCorrect(upperCase.andThen)
-        .correct(_ andThen noWhitespace andThen upperCase)
+        .correct(_ andThen noWhitespace)
         .constraint(nonEmpty >> _)
         .forField("Mnemonic") // English
         .map(ReqType.Mnemonic)
@@ -129,7 +129,8 @@ object Validators {
     val keyU =
       G.allChars.rule
         .addRule(G.length.rule)
-        .correct(_ andThen noWhitespace andThen lowerCase)
+        .liveCorrect(lowerCase.andThen)
+        .correct(_ andThen noWhitespace)
         .constraint(c => nonEmpty >> (G.firstChar.constraint + c))
         .forField(FieldNames.fieldRefKey)
         .map(FieldRefKey.apply)
@@ -203,7 +204,8 @@ object Validators {
     val node: ValidatorU[String, String, Node] =
       G.allChars.rule
         .addRule(G.nodeLength.rule)
-        .correct(_ andThen noWhitespace andThen lowerCase)
+        .liveCorrect(squashUnderscores andThen lowerCase andThen _)
+        .correct(_ andThen noWhitespace)
         .constraint(c => nonEmpty >> (G.firstChar.constraint + c))
         .forField(FieldNames.reqCodeNode)
         .map(Node.applyFn)

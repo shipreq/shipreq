@@ -47,6 +47,9 @@ object TextMod {
   val noWhitespace =
     regexReplace(whitespaceRegex, "")
 
+  val squashUnderscores =
+    regexReplace("__+".r, "_")
+
   def truncateToLength(range: Range.Inclusive): Endo[String] =
     truncateToLength(range.end)
 
