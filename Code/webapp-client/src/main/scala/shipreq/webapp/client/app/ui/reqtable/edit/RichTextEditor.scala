@@ -16,7 +16,7 @@ import shipreq.base.util.{Must, UnivEq, Px}
 import shipreq.base.util.effect.IoUtils, IoUtils.IoExt
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
-import shipreq.webapp.client.lib.ui.{KeyHandler, UI}
+import shipreq.webapp.client.lib.ui.{KeyHandlers, UI}
 
 // TODO Limit size
 
@@ -24,10 +24,6 @@ object RichTextEditor {
 
   type AutoComplete = Px[TC.Strategies]
   type S = String
-
-  private val ignoreEnter = KeyHandler.pf {
-    case k if k.key == KeyValue.Enter && KeyHandler.modKeys(k) => IoUtils.nop
-  }
 
   private val correctSingleLineText: EndoFn[String] = {
     val r = "[\\r\\n]+".r
@@ -117,20 +113,11 @@ object RichTextEditor {
 
     class Backend($: BackendScope[Props, Unit]) {
 
-      val cancelOnEscape = KeyHandler.by(_.key) {
-        case KeyValue.Escape => $.props.abort
-      }
+      val keyHandlers =
+        KeyHandlers.commitAndAbort($.props.abort, $.props.commit(parseState), t.singleLine).tagMod
 
-      val commitOnCtrlEnter = KeyHandler.pf {
-        case k if k.key == KeyValue.Enter && KeyHandler.modKeys(k, ctrl = true) =>
-          $.props.commit(parseState)
-      }
-
-      val onChange: ReactEventI => IO[Unit] =
+      val updateState: ReactEventI => IO[Unit] =
         e => $.props.stateUpdate(correctOnChange(e.target.value))
-
-      val onKeyDown =
-        (cancelOnEscape | commitOnCtrlEnter).apif(t.singleLine)(_ | ignoreEnter)
 
       def parseState = {
         val p = $.props
@@ -139,18 +126,17 @@ object RichTextEditor {
 
       def render: ReactElement = {
         val p = $.props
-        val parsed = parseState
 
         def editor =
           <.textarea(
-            ^.ref := textEditorRef,
             *.cellEditor(IsOK),
-            ^.value       := p.state,
-            ^.onChange   ~~> onChange,
-            ^.onKeyDown  ~~> onKeyDown)
+            keyHandlers,
+            ^.ref       := textEditorRef,
+            ^.value     := p.state,
+            ^.onChange ~~> updateState)
 
         def preview =
-          <.div(*.textEditPreview, p.projectWidgets.value() format parsed)
+          <.div(*.textEditPreview, p.projectWidgets.value() format parseState)
 
         <.div(editor, preview)
       }

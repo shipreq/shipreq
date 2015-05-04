@@ -14,7 +14,7 @@ import scalaz.syntax.foldable._
 import scalaz.{-\/, Tags, \/}
 
 import shipreq.base.util.Px
-import shipreq.webapp.client.lib.ui.{TextEditor, KeyHandler, UI}
+import shipreq.webapp.client.lib.ui.{KeyHandlers, TextEditor, UI}
 import shipreq.webapp.client.util.IsOK
 import TextSeqEditor._
 
@@ -70,11 +70,7 @@ final class TextSeqEditor[A](name         : String,
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    val cancelOnEscape = KeyHandler.by(_.key) {
-      case KeyValue.Escape => $.props.abort
-    }
-
-    val onChange: ReactEventI => IO[Unit] =
+    val updateState: ReactEventI => IO[Unit] =
       e => $.props.stateUpdate(e.target.value)
 
     def render: ReactElement = {
@@ -86,18 +82,16 @@ final class TextSeqEditor[A](name         : String,
           .map(parse(_).bimap(Tags.First.apply, Vector.empty :+ _))
           .suml
 
-      def onKeyPress = KeyHandler.by(_.key) {
-        case KeyValue.Enter => parseResult.fold(_ => js.undefined, p.commit)
-      }
+      val keyHandlers =
+        KeyHandlers.commitAndAbort(p.abort, parseResult.fold(_ => js.undefined, p.commit), textEditor.singleLine)
 
       <.div(
         textEditor.tag(
           inputStyle(IsOK(parseResult)),
+          keyHandlers,
           ^.ref         := textEditorRef,
           ^.value       := p.state,
-          ^.onChange   ~~> onChange,
-          ^.onKeyDown  ~~> cancelOnEscape,
-          ^.onKeyPress ~~> onKeyPress),
+          ^.onChange   ~~> updateState),
         parseResult.swap.toOption.flatMap(Tags.First.unwrap).map(err =>
           <.div(errorMsgStyle, err)
         ))

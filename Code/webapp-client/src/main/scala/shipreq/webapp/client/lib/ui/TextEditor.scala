@@ -8,9 +8,12 @@ sealed abstract class TextEditor {
   @inline final def asImplicit: TextEditor.OfType[Dom] = this
 
   def tag: ReactTag
+  def multiLine: Boolean
   def value(d: Dom): String
   def focus(d: Dom): Unit
   def select(d: Dom): Unit
+
+  final def singleLine = !multiLine
 }
 
 object TextEditor {
@@ -19,6 +22,7 @@ object TextEditor {
   implicit object Input extends TextEditor {
     override type Dom           = html.Input
     override def tag            = <.input(^.`type` := "text")
+    override def multiLine      = false
     override def value (d: Dom) = d.value
     override def focus (d: Dom) = d.focus()
     override def select(d: Dom) = d.select()
@@ -27,6 +31,7 @@ object TextEditor {
   implicit object TextArea extends TextEditor {
     override type Dom           = html.TextArea
     override def tag            = <.textarea
+    override def multiLine      = true
     override def value (d: Dom) = d.value
     override def focus (d: Dom) = d.focus()
     override def select(d: Dom) = d.select()
