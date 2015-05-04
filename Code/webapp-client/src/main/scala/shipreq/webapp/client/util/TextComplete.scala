@@ -202,7 +202,7 @@ object TextComplete {
   /**
    * Prevents auto-complete when the only result just what the user already has typed.
    */
-  def ignorePerfectMatch[A](query: Query[A], perfectMatch: (String, A) => Boolean): Query[A] =
+  def ignorePerfectMatch[A](query: Query[A])(perfectMatch: (String, A) => Boolean): Query[A] =
     term => {
       val r = query(term)
       if (r.lengthCompare(1) == 0 && perfectMatch(term, r.head))
@@ -211,8 +211,8 @@ object TextComplete {
         r
     }
 
-  def ignorePerfectMatch(query: Query[String]): Query[String] =
-    ignorePerfectMatch(query, _ == _)
+  def ignorePerfectMatchStr(query: Query[String]): Query[String] =
+    ignorePerfectMatch(query)(_ == _)
 
   /**
    * Normalises term and options before comparison.
@@ -233,7 +233,7 @@ object TextComplete {
    * @param options Pre-sorted options.
    */
   def caseInsensitiveContains(options: Stream[String]): Query[String] =
-    ignorePerfectMatch(
+    ignorePerfectMatchStr(
       normalisedStringQuery(_.toLowerCase, _ contains _, options))
 
   /**
@@ -242,6 +242,6 @@ object TextComplete {
    * @param options Pre-sorted options.
    */
   def caseInsensitiveStartsWith(options: Stream[String]): Query[String] =
-    ignorePerfectMatch(
+    ignorePerfectMatchStr(
       normalisedStringQuery(_.toLowerCase, _ startsWith _, options))
 }

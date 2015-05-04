@@ -1,16 +1,22 @@
 package shipreq.webapp.client.app.ui.reqtable
 package edit
 
+import scala.annotation.tailrec
 import scalacss.ScalaCssReact._
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.jquery.{TextComplete => TC}
+import scalajs.js.{UndefOr, undefined}
+import scalaz.std.string.stringInstance
+import scalaz.syntax.equal._
 import shapeless.syntax.singleton._
-import shipreq.base.util.{UnivEq, Must, Util}
+import shipreq.base.util.MTrie
+import shipreq.base.util.MTrie.Ops
+import shipreq.base.util.{NonEmptyVector, UnivEq, Must, Util}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{TextSearch, PlainText, Grammar}
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
-import TC.{Query, Strategy, StrategyA}
+import TC.{Query, Strategy, StrategyA, Strategies}
 
 object AutoComplete {
 
@@ -98,6 +104,82 @@ object AutoComplete {
 
   @inline def normaliseReqPubid(s: String): String =
     Grammar.pubidSeqFormat.normEach(s)
+
+  // ===================================================================================================================
+  // ReqCodes
+
+  def reqCode(trie: ReqCode.Trie): Strategies = {
+    import Grammar.{reqCode => G}
+    import ReqCode.{Node, Value => Path}
+
+    val sep  = Util.regexEscapeAndWrap(G.nodeSeparator.toString)
+    val node = s"(?:${G.firstChar.one}${G.allChars.*})"
+
+    // Example: abc & abc.def
+    def completeFromStart(trie: ReqCode.Trie): Strategy = {
+      val mainRegex = s"^($node($sep$node)*$sep?)$$" // TODO no negative lookbehind :(
+
+      val searchFn0: TC.Query[(Vector[Node], String)] = { term =>
+
+        // Parse input
+        var nodes = term.split(G.nodeSeparator).toVector
+        var lead: Option[String] = None
+        if (term.last != G.nodeSeparator) {
+          lead = nodes.lastOption
+          nodes = nodes.init
+        }
+        val path = nodes.map(ReqCode.Node.applyFn)
+
+        // Find suggestions
+        val t = NonEmptyVector.maybe(path, trie)(trie.dropPath)
+        var r = t.toStream.filter(_._2.existsV(_.active.isDefined)).map(_._1.value)
+        for (l <- lead)
+          r = r.filter(_ startsWith l)
+        r.sorted.map((path, _))
+      }
+
+      val searchFn = TC.ignorePerfectMatch(searchFn0)(_ ≟ _._2)
+
+      Strategy(mainRegex, index = 1)
+        .search(searchFn)
+        .replace(r => (r._1.map(_.value) :+ r._2).mkString(G.nodeSeparator.toString))
+        .template(_._2)
+    }
+
+    // Example: .xyz
+    def completeFromMid(trie: ReqCode.Trie): Strategy = {
+      val mainRegex = s"^$sep($node)$$"
+
+      val allPaths: Stream[Path] =
+        trie.flatStream.filter(_._2.active.isDefined).map(_._1)
+
+      def isMatch(term: String, path: Path): UndefOr[Path] = {
+        @tailrec def go(prefix: Path, suffix: Vector[Node]): UndefOr[Path] =
+          if (suffix.isEmpty)
+            undefined
+          else if (suffix.head.value startsWith term)
+            prefix :+ suffix.head
+          else
+            go(prefix :+ suffix.head, suffix.tail)
+        go(NonEmptyVector one path.head, path.tail)
+      }
+
+      val searchFn: TC.Query[(Path, String)] = term =>
+        allPaths.map(isMatch(term, _)).filter(_.isDefined).map(_.get)
+          .distinct
+          .map(p => (p, PlainText reqCode p))
+          .sortBy(_._2)
+
+      Strategy(mainRegex, index = 1)
+        .search(searchFn)
+        .replace(PlainText reqCode _._1)
+        .template(_._2)
+    }
+
+    Strategies(
+      completeFromStart(trie),
+      completeFromMid(trie))
+  }
 
   // ===================================================================================================================
   // <math>

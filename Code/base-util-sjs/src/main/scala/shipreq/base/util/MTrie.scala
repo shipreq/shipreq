@@ -12,14 +12,25 @@ object MTrie {
 
   sealed abstract class Node[K, V] {
     def fold[A](b: Branch[K, V] => A, t: Value[K, V] => A): A
+    def exists(b: Branch[K, V] => Boolean, v: Value[K, V] => Boolean): Boolean
+
+    final def existsV(f: V => Boolean): Boolean = {
+      val g = (v: Value[K, V]) => f(v.value)
+      exists(_.value exists g, g)
+    }
   }
 
   final case class Branch[K, V](value: Option[Value[K, V]], next: Trie[K, V]) extends Node[K, V] {
-    override def fold[A](b: Branch[K, V] => A, t: Value[K, V] => A) = b(this)
+    override def fold[A](b: Branch[K, V] => A, t: Value[K, V] => A) =
+      b(this)
+
+    override def exists(b: Branch[K, V] => Boolean, v: Value[K, V] => Boolean) =
+      b(this) || next.values.exists(_.exists(b, v))
   }
 
   final case class Value[K, V](value: V) extends Node[K, V] {
     override def fold[A](b: Branch[K, V] => A, t: Value[K, V] => A) = t(this)
+    override def exists(b: Branch[K, V] => Boolean, v: Value[K, V] => Boolean) = v(this)
   }
 
   // ===================================================================================================================
@@ -98,19 +109,25 @@ object MTrie {
       go(trie, Vector.empty)
     }
 
-    def lookup(path: Path): Option[V] = {
-      @tailrec def go(t: Trie, pathH: K, pathT: Vector[K]): Option[V] =
+    def atPath[A](path: Path, fail: => A)(f: Branch => A, g: Value => A): A = {
+      @tailrec def go(t: Trie, pathH: K, pathT: Vector[K]): A =
         t.get(pathH) match {
-          case None               => None
-          case Some(Value(v))     => if (pathT.isEmpty) Some(v) else None
-          case Some(Branch(v, n)) =>
+          case Some(b@ Branch(_, n)) =>
             NonEmptyVector.option(pathT) match {
-              case None    => v.map(_.value)
+              case None    => f(b)
               case Some(p) => go(n, p.head, p.tail)
             }
+          case Some(n@ Value(_))     => if (pathT.isEmpty) g(n) else fail
+          case None                  => fail
         }
       go(trie, path.head, path.tail)
     }
+
+    def lookup(path: Path): Option[V] =
+      atPath(path, None: Option[V])(_.value.map(_.value), t => Some(t.value))
+
+    def dropPath(path: Path): Trie =
+      atPath(path, Map.empty: Trie)(_.next, _ => Map.empty)
 
     def put(path: Path, value: V): Trie = {
       val v = Value[K, V](value)
@@ -148,5 +165,11 @@ object MTrie {
 
     def pathSetP[P: UnivEq](f: Path => P): Set[P] =
       cataV(UnivEq.emptySet[P])((q, path, _) => q + f(path))
+
+    def nodeExists(b: Branch => Boolean, v: Value => Boolean): Boolean =
+      trie.values.exists(_.exists(b, v))
+
+    def nodeExistsV(f: V => Boolean): Boolean =
+      trie.values.exists(_ existsV f)
   }
 }

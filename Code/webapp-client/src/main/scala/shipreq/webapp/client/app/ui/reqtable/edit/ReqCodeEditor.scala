@@ -36,8 +36,8 @@ object ReqCodeEditor {
         initial.toVector.map(PlainText.reqCode).sorted mkString "\n"
 
       val autoComplete: AutoComplete =
-        Px.const(TextComplete.Strategies())
-      // TODO .xxx should have meaning to auto-complete
+        validationState.map(vs =>
+          AutoComplete.reqCode(vs.trie))
 
       val parser: Parser[A] = () => {
         val vs = validationState.value()
