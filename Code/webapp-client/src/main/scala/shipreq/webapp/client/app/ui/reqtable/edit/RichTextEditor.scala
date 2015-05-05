@@ -97,15 +97,7 @@ object RichTextEditor {
         .stateless
         .backend(new Backend(_))
         .render(_.backend.render)
-        .componentDidMount { $ =>
-          val n = textEditorRef($).get.getDOMNode()
-          n.focus()
-          n.select()
-
-          // TODO Should update autoComplete if needed on props change
-          val strategies = $.props.autoComplete.value()
-          UI.textComplete(n, strategies, $.props.stateUpdate)
-        }
+        .configure(UI.installTextCompleteR(textEditorRef, _.props.autoComplete, _.props.stateUpdate))
         .build
 
     val correctOnChange: EndoFn[String] =

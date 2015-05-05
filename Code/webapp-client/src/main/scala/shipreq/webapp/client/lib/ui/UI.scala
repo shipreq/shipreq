@@ -8,6 +8,7 @@ import scala.scalajs.js.{Dynamic, UndefOr, undefined}
 import scalaz.effect.IO
 import shipreq.base.util.{Px, Must}
 import shipreq.base.util.effect.IoUtils, IoUtils.IoExt
+import shipreq.base.util.ScalaExt.EndoFn
 import shipreq.webapp.base.UiText
 
 object UI {
@@ -63,4 +64,25 @@ object UI {
       }
     }
   }
+
+  def installTextComplete[P, S, B, E <: html.Element](
+          getNode   : ComponentScopeM[P, S, B] => E,
+          strategies: ComponentScopeM[P, S, B] => Px[TextComplete.Strategies],
+          onUpdate  : ComponentScopeM[P, S, B] => String => IO[Unit])
+         (implicit te: TextEditor.OfType[E]): EndoFn[ReactComponentB[P, S, B]] =
+    _.componentDidMount { $ =>
+      val n = getNode($)
+      te.focus(n)
+      te.select(n)
+      // TODO Should update autoComplete if needed on props change
+      textComplete(n, strategies($).value(), onUpdate($))
+    }
+
+  def installTextCompleteR[P, S, B, E <: html.Element](
+          getNode   : RefSimple[E],
+          strategies: ComponentScopeM[P, S, B] => Px[TextComplete.Strategies],
+          onUpdate  : ComponentScopeM[P, S, B] => String => IO[Unit])
+        (implicit te: TextEditor.OfType[E]): EndoFn[ReactComponentB[P, S, B]] =
+    installTextComplete(getNode(_).get.getDOMNode(), strategies, onUpdate)
+
 }
