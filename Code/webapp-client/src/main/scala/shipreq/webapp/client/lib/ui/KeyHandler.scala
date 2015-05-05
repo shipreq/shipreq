@@ -4,6 +4,7 @@ import japgolly.scalajs.react._, ScalazReact._
 import org.scalajs.dom.ext.KeyValue
 import scala.runtime.AbstractFunction1
 import scalajs.js.{UndefOr, undefined}
+import scalaz.\/
 import scalaz.effect.IO
 import shipreq.base.util.UndefOrExt
 import shipreq.base.util.effect.IoUtils, IoUtils.IoExt
@@ -95,4 +96,7 @@ object KeyHandlers {
 
     r
   }
+
+  def commitAndAbortD[A](abort: => IO[Unit], parsed: Any \/ A, commit: A => IO[Unit], singleLine: Boolean) =
+    commitAndAbort(abort, parsed.fold(_ => undefined, commit), singleLine)
 }

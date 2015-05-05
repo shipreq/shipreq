@@ -7,11 +7,12 @@ import scalaz.syntax.traverse._
 import shipreq.base.util.MTrie.Ops
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{Util, NonEmptyVector, UnivEq}
+import shipreq.webapp.base.data.ReqType.Mnemonic
+import shipreq.webapp.base.text.{Text, PlainText, Grammar}
+import shipreq.webapp.base.validation._
+import shipreq.webapp.base.AppConsts
 import shipreq.webapp.base.TextMod._
 import shipreq.webapp.base.UiText.FieldNames
-import shipreq.webapp.base.data.ReqType.Mnemonic
-import shipreq.webapp.base.text.Grammar
-import shipreq.webapp.base.validation._
 import Constraints._
 import GenericValidators._
 
@@ -20,6 +21,16 @@ object Validators {
   val genericName = mandatoryShortText(FieldNames.name)
 
   val genericDesc = optionalLargeText(FieldNames.desc)
+
+//  val genericRichText =
+//    ValidationPart.test[PlainText.ForProject, Text.AnyOptional](
+//      { case (pt, InputCorrected(txt)) => pt.format(txt).length <= AppConsts.largeTextMaxLength },
+//      VFailure.looseMsg("Text too large.")) // english
+
+  def genericRichText(pt: PlainText.ForProject, txt: Text.AnyOptional): ValidationResult[txt.type] =
+    ValidationResult.test[txt.type](
+      pt.format(txt).length <= AppConsts.largeTextMaxLength,
+      txt, VFailure.looseMsg("Text too large.")) // english
 
   // ===================================================================================================================
   object shared {

@@ -77,10 +77,8 @@ final class TextSeqEditor[A, B](name         : String,
       val parseResult: ParseResult[B] =
         parseResultA.flatMap(p.validate)
 
-      val keyHandlers = KeyHandlers.commitAndAbort(
-        p.abort,
-        parseResult.fold(_ => js.undefined, p.commit),
-        textEditor.singleLine)
+      val keyHandlers =
+        KeyHandlers.commitAndAbortD(p.abort, parseResult, p.commit, textEditor.singleLine)
 
       <.div(
         textEditor.tag(

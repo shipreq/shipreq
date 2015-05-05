@@ -3,11 +3,10 @@ package edit
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.jquery.{TextComplete => TC}
-import shipreq.webapp.client.util.{ReusableVal, IsOK}
 import scalacss.ScalaCssReact._
-import org.scalajs.dom.ext.KeyValue
 import org.scalajs.dom.raw.HTMLTextAreaElement
 import shipreq.webapp.client.app.ui.ProjectWidgets
+import scalaz.{\/-, -\/, \/}
 import scalaz.effect.IO
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text._
@@ -17,8 +16,7 @@ import shipreq.base.util.effect.IoUtils, IoUtils.IoExt
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
 import shipreq.webapp.client.lib.ui.{KeyHandlers, UI}
-
-// TODO Limit size
+import shipreq.webapp.client.util.{ReusableVal, IsOK}
 
 object RichTextEditor {
 
@@ -74,7 +72,7 @@ object RichTextEditor {
       val autoComplete = mkAutoComplete(project, projectText, textSearch)
 
       Cell.selfManage(setState, init)(
-        Props(_, _, abort, commit, project, projectWidgets, autoComplete.value()).apply)
+        Props(_, _, abort, commit, project, projectText, projectWidgets, autoComplete.value()).apply)
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -84,6 +82,7 @@ object RichTextEditor {
                      abort         : IO[Unit],
                      commit        : t.OptionalText => IO[Unit],
                      project       : Px[Project],
+                     projectText   : Px[PlainText.ForProject],
                      projectWidgets: Px[ProjectWidgets],
                      autoComplete  : AutoComplete)  {
 
@@ -103,32 +102,31 @@ object RichTextEditor {
 
     class Backend($: BackendScope[Props, Unit]) {
 
-      val keyHandlers =
-        KeyHandlers.commitAndAbort($.props.abort, $.props.commit(parseState), t.singleLine).tagMod
-
       val updateState: ReactEventI => IO[Unit] =
         e => $.props.stateUpdate(correctOnChange(e.target.value))
-
-      def parseState = {
-        val p = $.props
-        t.parse(p.project.value())(p.state)
-      }
 
       def render: ReactElement = {
         val p = $.props
 
-        def editor =
+        val parseResult = {
+          val txt = t.parse(p.project.value())(p.state)
+          Validators.genericRichText(p.projectText.value(), txt).disjunction
+        }
+
+        val keyHandlers =
+          KeyHandlers.commitAndAbortD(p.abort, parseResult, p.commit, t.singleLine)
+
+        val editor =
           <.textarea(
-            *.cellEditor(IsOK),
+            *.cellEditor(IsOK(parseResult)),
             keyHandlers,
             ^.ref       := textEditorRef,
             ^.value     := p.state,
             ^.onChange ~~> updateState)
 
-        def preview =
-          <.div(*.textEditPreview, p.projectWidgets.value() format parseState)
-
-        <.div(editor, preview)
+        parseResult.fold(
+          e => <.div(editor, <.div(cellErrorMsgStyle, e.toText)),
+          v => <.div(editor, "Preview", <.div(*.textEditPreview, p.projectWidgets.value() format v)))
       }
     }
   }
