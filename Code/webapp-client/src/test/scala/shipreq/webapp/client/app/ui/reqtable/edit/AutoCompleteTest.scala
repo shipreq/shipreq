@@ -7,9 +7,11 @@ import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.ext.{KeyValue, KeyCode}
 import scala.scalajs.js, js.Dynamic
+import scalaz.effect.IO
 import scalaz.std.string.stringInstance
 import scalaz.std.vector.vectorEqual
-import org.scalajs.dom.raw.HTMLInputElement
+import org.scalajs.dom.document
+import org.scalajs.dom.raw.HTMLTextAreaElement
 import utest._
 import shipreq.base.util.MTrie.Ops
 import shipreq.webapp.base.data._
@@ -22,36 +24,73 @@ object AutoCompleteTest extends TestSuite {
 
   shipreq.webapp.client.app.ui.Style // Ensure initialised
 
-  def editor(ac: TC.Strategies) =
-    ReactComponentB[String]("AutoComplete test")
-      .getInitialState(s => s)
-      .render { $ =>
-        def change = (e: ReactEventI) => $.setStateIO(e.target.value)
-        <.input(^.`type` := "text", ^.value := $.state, ^.onChange ~~> change)
-      }
-      .componentDidMount { $ =>
-        def n = $.getDOMNode().asInstanceOf[HTMLInputElement]
-        UI.textComplete(n, ac, $.setStateIO(_))
-      }
-      .domType[HTMLInputElement]
-      .build
+  type N = HTMLTextAreaElement
 
-  type Editor = ReactComponentM[_, String, _, TopNode]
+  // Not using React because of https://github.com/ariya/phantomjs/issues/12493
+  // type Editor = ReactComponentM[_, String, _, N]
+
+  class Editor(n: N) {
+    def state: String                   = n.value
+    def setState(s: String): Unit       = n.value = s
+    def setStateIO(s: String): IO[Unit] = IO(setState(s))
+    def getDOMNode(): N                 = n
+  }
+
+  def editor(ac: TC.Strategies) = {
+    //    ReactComponentB[String]("AutoComplete test")
+    //      .getInitialState(s => s)
+    //      .render { $ =>
+    //        def change = (e: ReactEventI) => $.setStateIO(e.target.value)
+    //        <.textarea(^.value := $.state, ^.onChange ~~> change)
+    //      }
+    //      .componentDidMount { $ =>
+    //        def n = $.getDOMNode().asInstanceOf[N]
+    //        UI.textComplete(n, ac, $.setStateIO(_))
+    //        document.body.appendChild(n)
+    //      }
+    //      .domType[N]
+    //      .build
+    //    ReactTestUtils renderIntoDocument editor(c)("")
+
+    val n = document.createElement("textarea").asInstanceOf[HTMLTextAreaElement]
+    document.body.appendChild(n) // https://github.com/ariya/phantomjs/issues/12493
+    val e = new Editor(n)
+    UI.textComplete(n, ac, e.setStateIO)
+    e
+  }
+
   case class TestCtx(editor: Editor, acDomSel: String = "") {
     def $ = Dynamic.global.$(editor.getDOMNode())
   }
 
   def suggest(text: String)(implicit ctx: TestCtx): Unit = {
-    ctx.editor.setState(text)
+    ctx.editor.setState(text.replace("|", ""))
+    val n = ctx.editor.getDOMNode()
+    var p = text.indexOf('|')
+    if (p < 0) p = text.length
+    n.setSelectionRange(p, p)
+    n.selectionEnd = p
     ctx.$.textcomplete("trigger")
   }
 
-  def suggestions(implicit ctx: TestCtx): Vector[String] =
+  def suggestions(implicit ctx: TestCtx): Vector[String] = {
+    // println(Sizzle(".textcomplete-item").headOption.fold("NADA!")(_.outerHTML))
     Sizzle(".textcomplete-item a " + ctx.acDomSel).map(_.textContent).toVector
+  }
+
+  def quote(s: String) = s""""${s.replace("\n", "\\n")}""""
 
   def test(input: String)(exp: String*)(implicit ctx: TestCtx): Unit = {
     suggest(input)
-    assertEq(suggestions, exp.toVector)
+    assertEq(quote(input), suggestions, exp.toVector)
+  }
+
+  def testML(input: String)(exp: String*)(select: String)(implicit ctx: TestCtx, beforeAfters: List[(String, String)]): Unit = {
+    def go(before: String, after: String): Unit = {
+      test(before + input + "|" + after)(exp: _*)
+      testSelect(before + select + after)
+    }
+    for ((b, a) <- beforeAfters) go(b, a)
   }
 
   def keydown(keyCode: Int)(implicit ctx: TestCtx): Unit = {
@@ -61,14 +100,14 @@ object AutoCompleteTest extends TestSuite {
 
   def testSelect(exp: String)(implicit ctx: TestCtx): Unit = {
     keydown(KeyCode.enter)
-    assertEq(ctx.editor.state, exp)
+    assertEq(quote(ctx.editor.state), quote(exp))
   }
 
   // ===================================================================================================================
 
   lazy val acReqItems = AutoComplete.reqItems(project, plainText)
   lazy val acReqP     = AutoComplete.req(textSearch, acReqItems, prefix = true)
-  lazy val cReqP      = ReactTestUtils renderIntoDocument editor(acReqP)("")
+  lazy val cReqP      = editor(acReqP)
 
   // TODO Write more AutoComplete tests
 
@@ -92,7 +131,7 @@ object AutoCompleteTest extends TestSuite {
     tombCodes.foldLeft(t1)((t, c) => t.put(c, tomb))
   }
   lazy val acReqCode  = AutoComplete.reqCode(fakeTrie)
-  lazy val cReqCode   = ReactTestUtils renderIntoDocument editor(acReqCode)("")
+  lazy val cReqCode   = editor(acReqCode)
 
   override def tests = TestSuite {
 
@@ -123,6 +162,14 @@ object AutoCompleteTest extends TestSuite {
 
     'reqCode {
       implicit val ctx = TestCtx(cReqCode)
+      implicit val multilineData = List[(String, String)](
+        ("hehe.no\n", ""),
+        ("", "\nhehe.no"),
+        ("omg.yay\nhehe.no\n", ""),
+        ("", "\nomg.yay\nhehe.no"),
+        ("omg.yay\n", "\nhehe.no"),
+        ("more.again\nomg.yay\n", "\nhehe.no\nok.then"))
+
       'root {
         test("a")("aaaa1", "abc", "amp", "apple", "apply")
         testSelect("aaaa1")
@@ -158,6 +205,10 @@ object AutoCompleteTest extends TestSuite {
         test(".egg")("goat.damn.egg", "goat.damn.egglike", "shit.eggs")
         test(".eggs")("shit.eggs")
       }
+      'multilinePrefix -
+        testML("ap")("apple", "apply")("apple")
+      'multilineMid -
+        testML(".eggs")("shit.eggs")("shit.eggs")
     }
 
   }

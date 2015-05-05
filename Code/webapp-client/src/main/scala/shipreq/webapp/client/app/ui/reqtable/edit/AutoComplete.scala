@@ -114,10 +114,11 @@ object AutoComplete {
 
     val sep  = Util.regexEscapeAndWrap(G.nodeSeparator.toString)
     val node = s"(?:${G.firstChar.one}${G.allChars.*})"
+    val pre  = s"(^|\\s)"
 
     // Example: abc & abc.def
     def completeFromStart(trie: ReqCode.Trie): Strategy = {
-      val mainRegex = s"^($node($sep$node)*$sep?)$$" // TODO no negative lookbehind :(
+      val mainRegex = s"$pre($node($sep$node)*$sep?)$$"
 
       val searchFn0: TC.Query[(Vector[Node], String)] = { term =>
 
@@ -140,15 +141,15 @@ object AutoComplete {
 
       val searchFn = TC.ignorePerfectMatch(searchFn0)(_ ≟ _._2)
 
-      Strategy(mainRegex, index = 1)
+      Strategy(mainRegex, index = 2)
         .search(searchFn)
-        .replace(r => (r._1.map(_.value) :+ r._2).mkString(G.nodeSeparator.toString))
+        .replace(r => "$1" + (r._1.map(_.value) :+ r._2).mkString(G.nodeSeparator.toString))
         .template(_._2)
     }
 
     // Example: .xyz
     def completeFromMid(trie: ReqCode.Trie): Strategy = {
-      val mainRegex = s"^$sep($node)$$"
+      val mainRegex = s"$pre$sep($node)$$"
 
       val allPaths: Stream[Path] =
         trie.flatStream.filter(_._2.active.isDefined).map(_._1)
@@ -170,9 +171,9 @@ object AutoComplete {
           .map(p => (p, PlainText reqCode p))
           .sortBy(_._2)
 
-      Strategy(mainRegex, index = 1)
+      Strategy(mainRegex, index = 2)
         .search(searchFn)
-        .replace(PlainText reqCode _._1)
+        .replace(r => "$1" + PlainText.reqCode(r._1))
         .template(_._2)
     }
 
