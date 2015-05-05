@@ -22,6 +22,8 @@ object ReqCodeEditor {
 
   object ForReqs {
 
+    // TODO Limit number of codes
+
     val lineSplitter = "\\s*[\n\r]\\s*".r.pattern
 
     val editor = textSeqEditor[A]("ReqCode editor",
