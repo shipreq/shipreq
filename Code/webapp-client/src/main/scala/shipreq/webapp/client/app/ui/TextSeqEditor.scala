@@ -12,16 +12,15 @@ import scalaz.std.vector._
 import scalaz.syntax.foldable._
 import scalaz.{-\/, Tags, \/}
 
-import shipreq.base.util.Px
 import shipreq.webapp.client.lib.ui.{KeyHandlers, TextEditor, UI}
-import shipreq.webapp.client.util.IsOK
+import shipreq.webapp.client.util.{ReusableVal, IsOK}
 import TextSeqEditor._
 
 object TextSeqEditor {
   type ParseRejection  = Option[String]
   type ParseResult[+O] = ParseRejection \/ O
   type Parser[+O]      = () => String => ParseResult[O]
-  type AutoComplete    = Px[TC.Strategies]
+  type AutoComplete    = ReusableVal[TC.Strategies]
 
   val leftNone: ParseResult[Nothing] =
     -\/(None)
@@ -57,7 +56,7 @@ final class TextSeqEditor[A, B](name         : String,
       .stateless
       .backend(new Backend(_))
       .render(_.backend.render)
-      .configure(UI.installTextCompleteR(textEditorRef, _.props.autoComplete, _.props.stateUpdate))
+      .configure(UI.installTextComplete2(textEditorRef, _.autoComplete, _.stateUpdate))
       .build
 
   class Backend($: BackendScope[Props, Unit]) {

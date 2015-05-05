@@ -3,12 +3,12 @@ package reqtable
 
 import japgolly.scalajs.react.vdom.prefix_<^._
 import scalacss.ScalaCssReact._
-import scalaz.{-\/, Failure, \/-, Success}
+import scalaz.{-\/, \/-, Failure, Success}
 import shipreq.webapp.base.validation.ValidationResult
 import shipreq.webapp.client.lib.ui.TextEditor
 import shipreq.webapp.client.util.IsOK
 import Style.{reqtable => *}
-import TextSeqEditor.ParseResult
+import TextSeqEditor._
 
 package object edit {
 

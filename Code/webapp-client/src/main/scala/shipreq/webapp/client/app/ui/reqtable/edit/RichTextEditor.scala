@@ -3,7 +3,7 @@ package edit
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.jquery.{TextComplete => TC}
-import shipreq.webapp.client.util.IsOK
+import shipreq.webapp.client.util.{ReusableVal, IsOK}
 import scalacss.ScalaCssReact._
 import org.scalajs.dom.ext.KeyValue
 import org.scalajs.dom.raw.HTMLTextAreaElement
@@ -22,8 +22,7 @@ import shipreq.webapp.client.lib.ui.{KeyHandlers, UI}
 
 object RichTextEditor {
 
-  type AutoComplete = Px[TC.Strategies]
-  type S = String
+  type AutoComplete = ReusableVal[TC.Strategies]
 
   private val correctSingleLineText: EndoFn[String] = {
     val r = "[\\r\\n]+".r
@@ -35,6 +34,26 @@ object RichTextEditor {
   // ===================================================================================================================
   sealed abstract class Base[TextType <: Text.Generic](name: String, final val t: TextType) {
 
+    def supportsTags   = t match { case _: Atom.TagRef => true; case _ => false }
+    def supportsIssues = t match { case _: Atom.Issue  => true; case _ => false }
+
+    def mkAutoComplete(project: Px[Project], projectText: Px[PlainText.ForProject], textSearch: Px[TextSearch]): Px[AutoComplete] = {
+      @inline def legalIf[A](guard: Boolean, s: => Stream[A]): Stream[A] =
+        if (guard) s else Stream.empty
+      for {
+        p <- project
+        t <- projectText
+        s <- textSearch
+      } yield ReusableVal(
+        TC.Strategies(
+          AutoComplete.hashtag(
+            legalIf(supportsIssues, p.customIssueTypes.data.values.toStream),
+            legalIf(supportsTags  , p.tags.data.vstream(_.tag).filterT[ApplicableTag]),
+            prefix = true),
+          AutoComplete.req(s, AutoComplete.reqItems(p, t), prefix = true),
+          AutoComplete.math))
+    }
+
     def apply(initial       : t.OptionalText,
               project       : Px[Project],
               projectText   : Px[PlainText.ForProject],
@@ -42,7 +61,7 @@ object RichTextEditor {
               textSearch    : Px[TextSearch],
               setState      : Option[Cell.State] => IO[Unit]): Cell.State = {
 
-      def init: S =
+      def init: String =
         projectText.value() format initial
 
       val abort: IO[Unit] =
@@ -55,34 +74,13 @@ object RichTextEditor {
       val autoComplete = mkAutoComplete(project, projectText, textSearch)
 
       Cell.selfManage(setState, init)(
-        Props(_, _, abort, commit, project, projectWidgets, autoComplete).apply)
-    }
-
-    def supportsTags   = t match { case _: Atom.TagRef => true; case _ => false }
-    def supportsIssues = t match { case _: Atom.Issue  => true; case _ => false }
-
-    def mkAutoComplete(project: Px[Project], projectText: Px[PlainText.ForProject], textSearch: Px[TextSearch]): AutoComplete = {
-      @inline def legalIf[A](guard: Boolean, s: => Stream[A]): Stream[A] =
-        if (guard) s else Stream.empty
-      for {
-        p <- project
-        t <- projectText
-        s <- textSearch
-      } yield
-        TC.Strategies(
-          AutoComplete.hashtag(
-            legalIf(supportsIssues, p.customIssueTypes.data.values.toStream),
-            legalIf(supportsTags  , p.tags.data.vstream(_.tag).filterT[ApplicableTag]),
-            prefix = true),
-          AutoComplete.req(s, AutoComplete.reqItems(p, t), prefix = true),
-          AutoComplete.math
-        )
+        Props(_, _, abort, commit, project, projectWidgets, autoComplete.value()).apply)
     }
 
     // -----------------------------------------------------------------------------------------------------------------
 
-    case class Props(state         : S,
-                     stateUpdate   : S => IO[Unit],
+    case class Props(state         : String,
+                     stateUpdate   : String => IO[Unit],
                      abort         : IO[Unit],
                      commit        : t.OptionalText => IO[Unit],
                      project       : Px[Project],
@@ -97,7 +95,7 @@ object RichTextEditor {
         .stateless
         .backend(new Backend(_))
         .render(_.backend.render)
-        .configure(UI.installTextCompleteR(textEditorRef, _.props.autoComplete, _.props.stateUpdate))
+        .configure(UI.installTextComplete2(textEditorRef, _.autoComplete, _.stateUpdate))
         .build
 
     val correctOnChange: EndoFn[String] =

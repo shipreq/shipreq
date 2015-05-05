@@ -10,6 +10,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.UiText
 import shipreq.webapp.client.app.ui.TextSeqEditor, TextSeqEditor._
+import shipreq.webapp.client.util.ReusableVal
 
 // TODO Hide dead tags & maintain across edits (unless show deleted is on)
 
@@ -45,9 +46,9 @@ object TagEditor {
 
     val lookup = lookupM.map(mustResolve(_)(UnivEq.emptyMap))
 
-    val autoComplete: AutoComplete =
-      lookup.map(l =>
-        AutoComplete.tag(l.values.toStream, prefix = false))
+    val autoComplete: Px[AutoComplete] =
+      lookup.map(l => ReusableVal(
+        AutoComplete.tag(l.values.toStream, prefix = false)))
 
     val parser: Parser[A] = () => {
       val l = lookup.value()
@@ -65,6 +66,6 @@ object TagEditor {
       s => setState(None) >>> IO{ println("Sent to ze server: " + s) }
 
     Cell.selfManage(setState, init)(
-      editor.Props(_, _, abort, parser, toSetWithoutValidation, commit, autoComplete).apply)
+      editor.Props(_, _, abort, parser, toSetWithoutValidation, commit, autoComplete.value()).apply)
   }
 }

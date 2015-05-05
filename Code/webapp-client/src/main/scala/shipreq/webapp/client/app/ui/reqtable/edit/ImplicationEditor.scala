@@ -12,6 +12,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar, PlainText, TextSearch}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.client.app.ui.TextSeqEditor, TextSeqEditor._
+import shipreq.webapp.client.util.ReusableVal
 
 // TODO Hide dead reqs & maintain across edits (unless show deleted is on)
 // TODO ImplicationEditor needs validation
@@ -72,12 +73,12 @@ object ImplicationEditor {
 
     val lookup = lookupM.map(mustResolve(_)(Lookup(Stream.empty, UnivEq.emptyMap)))
 
-    val autoComplete: AutoComplete =
+    val autoComplete: Px[AutoComplete] =
       for {
         l <- lookup
         s <- textSearch
-      } yield
-        AutoComplete.req(s, l.legal, prefix = false)
+      } yield ReusableVal(
+        AutoComplete.req(s, l.legal, prefix = false))
 
     val parser: Parser[A] = () => {
       val l = lookup.value()
@@ -95,6 +96,6 @@ object ImplicationEditor {
       s => setState(None) >>> IO{ println("Sent to ze server: " + s) }
 
     Cell.selfManage(setState, init)(
-      editor.Props(_, _, abort, parser, toSetWithoutValidation, commit, autoComplete).apply)
+      editor.Props(_, _, abort, parser, toSetWithoutValidation, commit, autoComplete.value()).apply)
   }
 }

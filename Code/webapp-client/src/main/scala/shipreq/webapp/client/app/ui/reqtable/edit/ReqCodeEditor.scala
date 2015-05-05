@@ -9,6 +9,7 @@ import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.client.app.ui.TextSeqEditor, TextSeqEditor._
 import shipreq.webapp.client.app.ui.reqtable._
 import shipreq.webapp.client.lib.ui.TextEditor
+import shipreq.webapp.client.util.ReusableVal
 import shipreq.base.util.effect.IoUtils, IoUtils.IoExt
 import Validators.{reqCode => V}
 
@@ -16,9 +17,9 @@ object ReqCodeEditor {
 
   type A = ReqCode.Value
 
-  def mkAutoComplete(validationState: Px[V.VS]): AutoComplete =
-    validationState.map(vs =>
-      AutoComplete.reqCode(vs.trie))
+  def mkAutoComplete(validationState: Px[V.VS]): Px[AutoComplete] =
+    validationState.map(vs => ReusableVal(
+      AutoComplete.reqCode(vs.trie)))
 
   def mkParser(validationState: Px[V.VS]): Parser[A] = () => {
     val vs = validationState.value()
@@ -51,7 +52,7 @@ object ReqCodeEditor {
         s => setState(None) >>> IO { println("Sent to ze server: " + s) }
 
       Cell.selfManageC(setState, liveCorrect)(
-        init, editor.Props(_, _, abort, parser, validate, commit, autoComplete).apply)
+        init, editor.Props(_, _, abort, parser, validate, commit, autoComplete.value()).apply)
     }
 
     @inline def liveCorrect(t: String) = V.code.liveCorrect(t)
@@ -84,7 +85,7 @@ object ReqCodeEditor {
         s => setState(None) >>> IO { println("Sent to ze server: " + s) }
 
       Cell.selfManageC(setState, liveCorrect)(
-        init, editor.Props(_, _, abort, parser, validate, commit, autoComplete).apply)
+        init, editor.Props(_, _, abort, parser, validate, commit, autoComplete.value()).apply)
     }
 
     def liveCorrect(txt: String): String =

@@ -7,6 +7,22 @@ import scalaz.effect.IO
 import shipreq.base.util.UnivEq
 import shipreq.webapp.base.data.Project
 
+/**
+ * Wrapper denoting that the developer expects that the underlying value will never (or only rarely) change.
+ *
+ * Reference equality of the underlying value will be used, meaning that `A` need not have its own `Reusability` typeclass.
+ */
+final case class ReusableVal[A <: AnyRef](value: A)
+
+object ReusableVal {
+
+  @inline implicit def reusability[A <: AnyRef]: Reusable[ReusableVal[A]] =
+    Reusable.byRef[A].contramap(_.value)
+
+  @inline implicit def autoValue[A <: AnyRef](r: ReusableVal[A]): A =
+    r.value
+}
+
 final class Reusable[A](val reusable: (A, A) => Boolean) extends AnyVal {
   def contramap[B](f: B => A): Reusable[B] =
     Reusable((x, y) => reusable(f(x), f(y)))
@@ -33,6 +49,7 @@ object Reusable {
 
   implicit val reusableInt    : Reusable[Int]     = byUnivEq
   implicit val reusableLong   : Reusable[Long]    = byUnivEq
+  implicit val reusableString : Reusable[String]  = byUnivEq
   implicit val reusableProject: Reusable[Project] = Reusable.by((_: Project).rev.value)
 
   implicit def option[A: Reusable]: Reusable[Option[A]] =
