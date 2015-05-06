@@ -73,7 +73,7 @@ object Validators {
 
   // ===================================================================================================================
   object reqType {
-    type S = (Stream[CustomReqType], Option[CustomReqType.Id])
+    type S = (Stream[CustomReqType], Option[CustomReqTypeId])
     import Grammar.{reqTypeMnemonic => G}
 
     val mnemonicU =
@@ -86,8 +86,8 @@ object Validators {
         .map(ReqType.Mnemonic)
 
     private def mnemonicUniqueness = {
-      val static = (none[CustomReqType.Id], StaticReqType.mnemonics)
-      Uniqueness.againstSetByKeyO[S, CustomReqType.Id, Mnemonic](
+      val static = (none[CustomReqTypeId], StaticReqType.mnemonics)
+      Uniqueness.againstSetByKeyO[S, CustomReqTypeId, Mnemonic](
         sr => sr._2,
         sr => static #:: sr._1.map(_.tmap2(_.id.some, _.allMnemonics))
       ).fieldName(FieldNames.mnemonic)
@@ -180,7 +180,7 @@ object Validators {
           case _                           => None
         }.fieldName(reqTypeIdField)
 
-      val reqTypeIdS = ValidationPartU.requireFromOption[ReqType.Id](reqTypeIdField).liftS[S].toValidator
+      val reqTypeIdS = ValidationPartU.requireFromOption[ReqTypeId](reqTypeIdField).liftS[S].toValidator
                          .addValidation(reqTypeIdUniqueness)
 
       val all = reqTypeIdS ⊗ mandatoryS ⊗ reqTypesS

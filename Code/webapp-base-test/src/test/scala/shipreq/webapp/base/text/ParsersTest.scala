@@ -144,7 +144,7 @@ object ParsersTest extends TestSuite {
   val P = {
     import ProjectDSL._
     import UnsafeTypes._
-    val List(co,mf,fr) = List[ReqType.Id](1,2,3).map(Some(_))
+    val List(co,mf,fr) = List[ReqTypeId](1,2,3).map(Some(_))
     GReq(reqType = fr, id = 11, title = "do stuff") +
     GReq(reqType = fr, id = 12, title = "do more stuff") +
     GReq(reqType = mf, id = 21, title = "Use Case Editor") +

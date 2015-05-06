@@ -56,7 +56,7 @@ object ProjectDSL {
 
   case class GReq(title  : Text.GenericReqTitle.OptionalText = Vector.empty,
                   id     : Option[GenericReqId]              = None,
-                  reqType: Option[ReqType.Id]                = None,
+                  reqType: Option[ReqTypeId]                 = None,
                   alive  : Alive                             = Alive,
                   codes  : Set[ReqCode.Value]                = Set.empty,
                   tags   : Set[ApplicableTag.Id]             = Set.empty,

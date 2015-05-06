@@ -188,12 +188,12 @@ object RandomData {
       .addhs(StaticReqType.mnemonics)
 
   lazy val customReqTypeId =
-    id map CustomReqType.Id
+    id map CustomReqTypeId
 
   lazy val staticReqType: Gen[StaticReqType] =
     oneofV(StaticReqType.values)
 
-  lazy val reqTypeId: Gen[ReqType.Id] =
+  lazy val reqTypeId: Gen[ReqTypeId] =
     Gen.oneofG(staticReqType.subst, customReqTypeId.subst)
 
   def customReqTypeName =
@@ -221,7 +221,7 @@ object RandomData {
     revAndIMap(customReqType)(d.run)
   }
 
-  val staticReqTypeIdSet = StaticReqType.values.toSet[ReqType.Id]
+  val staticReqTypeIdSet = StaticReqType.values.toSet[ReqTypeId]
 
   // -------------------------------------------------------------------------------------------------------------------
   // Tags
@@ -308,8 +308,8 @@ object RandomData {
   lazy val staticField: Gen[StaticField] =
     oneofV(StaticField.values)
 
-  def applicableReqTypes(r: Set[CustomReqType.Id]): Gen[ApplicableReqTypes] = {
-    val all = StaticReqType.values.foldLeft(r.map(a => a: ReqType.Id))(_ + _).toList
+  def applicableReqTypes(r: Set[CustomReqTypeId]): Gen[ApplicableReqTypes] = {
+    val all = StaticReqType.values.foldLeft(r.map(a => a: ReqTypeId))(_ + _).toList
     val a = Gen.oneof(all.head, all.tail: _*)
     isubset(a, a.set)
   }
@@ -345,10 +345,10 @@ object RandomData {
       Gen sequence ids.map(id =>
         customFieldTag(Gen insert id, art)))
 
-  def customFieldImplication(reqTypeId: Gen[ReqType.Id], art: Gen[ApplicableReqTypes]): Gen[CustomField.Implication] =
+  def customFieldImplication(reqTypeId: Gen[ReqTypeId], art: Gen[ApplicableReqTypes]): Gen[CustomField.Implication] =
     Gen.apply5(CustomField.Implication.apply)(customFieldImplicationId, reqTypeId, mandatory, art, alive)
 
-  def customFieldImplicationSome(reqTypeIds: Set[ReqType.Id], art: Gen[ApplicableReqTypes]): Gen[Vector[CustomField.Implication]] =
+  def customFieldImplicationSome(reqTypeIds: Set[ReqTypeId], art: Gen[ApplicableReqTypes]): Gen[Vector[CustomField.Implication]] =
     Gen.subset(reqTypeIds).flatMap(ids =>
       Gen sequence ids.map(id =>
         customFieldImplication(Gen insert id, art)))
@@ -365,20 +365,20 @@ object RandomData {
     }
   }
 
-  def customFields(reqTypeIds: Set[ReqType.Id], tagIds: Set[Tag.Id], art: Gen[ApplicableReqTypes]): Gen[IMap[CustomField.Id, CustomField]] = {
+  def customFields(reqTypeIds: Set[ReqTypeId], tagIds: Set[Tag.Id], art: Gen[ApplicableReqTypes]): Gen[IMap[CustomField.Id, CustomField]] = {
     val cf = for {
       f1 <- customField(art, false, false).stream
       f2 <- customFieldTagSome(tagIds, art)
       f3 <- customFieldImplicationSome(reqTypeIds, art)
     } yield f3.toStream #::: f2.toStream #::: f1
-    def id   = distinctId(CustomField.IdAccess, CustomFieldId)
+    def id   = distinctId(CustomField.IdAccess, CustomFieldIdT)
     def name = Distinct.str.at(CustomField.independentName)
     def key  = Distinct.fstr.xmap(FieldRefKey.apply)(_.value).distinct.at(CustomField.key)
     val dist = (id * name * key).lift[Stream]
     cf.map(fs => emptyDataMap(CustomField) ++ dist.run(fs))
   }
 
-  def fieldSet(reqTypeIds: Set[ReqType.Id], tagIds: Set[Tag.Id], r: Set[CustomReqType.Id]): Gen[FieldSet] =
+  def fieldSet(reqTypeIds: Set[ReqTypeId], tagIds: Set[Tag.Id], r: Set[CustomReqTypeId]): Gen[FieldSet] =
     for {
       cf           ← customFields(reqTypeIds, tagIds, applicableReqTypes(r))
       mandatoryIds = cf.keySet.map(f => f: Field.Id) ++ StaticField.notDeletable
@@ -661,7 +661,7 @@ object RandomData {
     Gen.oneofG(genericReqId)
   }
 
-  def pubidS(reqTypeIds: NonEmptyVector[ReqType.Id])(reqId: ReqId): StateG[PubidRegister, Pubid] =
+  def pubidS(reqTypeIds: NonEmptyVector[ReqTypeId])(reqId: ReqId): StateG[PubidRegister, Pubid] =
     StateT(register =>
       oneofV(reqTypeIds).map(reqTypeId =>
         register.alloc(reqId, reqTypeId)))
@@ -697,10 +697,10 @@ object RandomData {
     }
   }
 
-  def pubidRegisterAndIds(reqTypeIds: NonEmptyVector[ReqType.Id]): GenS[(PubidRegister, Set[ReqId])] =
+  def pubidRegisterAndIds(reqTypeIds: NonEmptyVector[ReqTypeId]): GenS[(PubidRegister, Set[ReqId])] =
     pubidRegisterAnd(Set.empty[ReqId], genericReqIdS(pubidS(reqTypeIds)))(_ + _)
 
-  def requirements(reqTypeIds: NonEmptyVector[ReqType.Id],
+  def requirements(reqTypeIds: NonEmptyVector[ReqTypeId],
                    genIssueType: Option[Gen[CustomIssueType.Id]]): GenS[Requirements] =
     pubidRegisterAnd(Req.IdAccess.emptyIMap, genericReqS(pubidS(reqTypeIds), genIssueType))(_ + _)
       .map { case (pr, reqs) => Requirements(reqs, pr) }
@@ -920,7 +920,7 @@ object RandomData {
     lazy val deletionAction =
       oneofV(DeletionAction.values)
 
-    lazy val reqTypeId: Gen[ReqType.Id] =
+    lazy val reqTypeId: Gen[ReqTypeId] =
       Gen.oneofG(customReqTypeId, staticReqType)
 
     lazy val fieldId: Gen[Field.Id] =

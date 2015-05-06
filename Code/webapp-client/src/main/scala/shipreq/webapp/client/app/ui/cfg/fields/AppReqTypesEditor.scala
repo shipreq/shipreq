@@ -15,7 +15,7 @@ import Field.ApplicableReqTypes
 import ISubsetEditor._
 
 private[fields] object AppReqTypesEditor {
-  type A = ReqType.Id
+  type A = ReqTypeId
   type M = Mode[A]
   type K = Field.Id
   type S = Map[K, EditState[A]]

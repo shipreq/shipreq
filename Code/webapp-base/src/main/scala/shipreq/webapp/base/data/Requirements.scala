@@ -179,7 +179,7 @@ final case class ReqTypePos(value: Int) extends TaggedInt
  *
  * Eg. "FR-3"
  */
-final case class Pubid(reqTypeId: ReqType.Id, pos: ReqTypePos)
+final case class Pubid(reqTypeId: ReqTypeId, pos: ReqTypePos)
 
 object Pubid {
   implicit val equality: UnivEq[Pubid] = deriveUnivEq
@@ -189,9 +189,9 @@ object Pubid {
  * Once a (reqtype x position) is allocated, it is never removed.
  * Thus, the 0-based position in the vector corresponds with 1-based [[ReqTypePos]] values.
  */
-case class PubidRegister(value: Multimap[ReqType.Id, Vector, ReqId]) {
+case class PubidRegister(value: Multimap[ReqTypeId, Vector, ReqId]) {
 
-  def alloc(reqId: ReqId, reqTypeId: ReqType.Id): (PubidRegister, Pubid) = {
+  def alloc(reqId: ReqId, reqTypeId: ReqTypeId): (PubidRegister, Pubid) = {
     val cur = value(reqTypeId)
     val i = cur.indexWhere(_ ≟ reqId)
     if (i >= 0)
@@ -292,7 +292,7 @@ case class Requirements(reqs: IMap[ReqId, Req], pubids: PubidRegister) {
   def reqsByPubidM[M[X] <: TraversableOnce[X]: Monoidish](ids: M[Pubid]): Must[M[Req]] =
     Must.foldMapM(ids)(reqByPubidM)
 
-  lazy val reqsByType: Multimap[ReqType.Id, Set, Req] =
-    UnivEq.emptyMultimap[ReqType.Id, Set, Req]
+  lazy val reqsByType: Multimap[ReqTypeId, Set, Req] =
+    UnivEq.emptyMultimap[ReqTypeId, Set, Req]
       .addPairs(reqs.vstream(_.mapStrengthL(_.reqTypeId)): _*)
 }

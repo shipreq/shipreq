@@ -1,6 +1,6 @@
 package shipreq.webapp.base.data
 
-import monocle.macros.GenLens
+import monocle.macros.{Lenses, GenLens}
 import scalaz.{Order, Ordering}
 import scalaz.std.anyVal.intInstance
 import scalaz.syntax.order._
@@ -10,6 +10,33 @@ import shipreq.base.util.TaggedTypes._
 import shipreq.webapp.base.TypeclassDerivation._
 import ReqType.Mnemonic
 
+/** type [[ReqTypeId]] = [[StaticReqType]] | [[CustomReqTypeId]] */
+sealed trait ReqTypeId {
+  def foldId[A](s: StaticReqType => A, c: CustomReqTypeId => A): A
+}
+
+object ReqTypeId {
+  implicit object IdGeneric extends Generic[ReqTypeId] {
+    override type Repr = StaticReqType :+: CustomReqTypeId :+: CNil
+    override def to  (id: ReqTypeId): Repr = id.foldId(Coproduct[Repr](_), Coproduct[Repr](_))
+    override def from(co: Repr): ReqTypeId = co match {
+      case Inl(s)      => s
+      case Inr(Inl(c)) => c
+      case _           => ???
+    }
+  }
+
+  implicit object IdOrder extends Order[ReqTypeId] with UnivEq[ReqTypeId] {
+    implicitly[Lazy[UnivEq[ReqTypeId]]] // prove Id is actually UnivEq
+    override def order(a: ReqTypeId, b: ReqTypeId) = (a, b) match {
+      case (x: CustomReqTypeId, y: CustomReqTypeId) => Order[CustomReqTypeId].order(x, y)
+      case (x: StaticReqType  , y: StaticReqType  ) => StaticReqType.order(x, y)
+      case (x: StaticReqType  , y: CustomReqTypeId) => Ordering.LT
+      case (x: CustomReqTypeId, y: StaticReqType  ) => Ordering.GT
+    }
+  }
+}
+
 sealed trait ReqType {
   def mnemonic: Mnemonic
   def oldMnemonics: Set[Mnemonic]
@@ -18,7 +45,7 @@ sealed trait ReqType {
 
   def fold[A](s: StaticReqType => A, c: CustomReqType => A): A
 
-  final def reqTypeId: ReqType.Id =
+  final def reqTypeId: ReqTypeId =
     fold(s => s, _.id)
 
   final def allMnemonics: Set[Mnemonic] =
@@ -28,41 +55,18 @@ sealed trait ReqType {
 object ReqType {
   final case class Mnemonic(value: String) extends TaggedString
 
-  /** type [[Id]] = [[StaticReqType]] | [[CustomReqType.Id]] */
-  sealed trait Id {
-    def foldId[A](s: StaticReqType => A, c: CustomReqType.Id => A): A
-  }
-
-  implicit object IdGeneric extends Generic[Id] {
-    override type Repr = StaticReqType :+: CustomReqType.Id :+: CNil
-    override def to  (id: Id): Repr = id.foldId(Coproduct[Repr](_), Coproduct[Repr](_))
-    override def from(co: Repr): Id = co match {
-      case Inl(s)      => s
-      case Inr(Inl(c)) => c
-      case _           => ???
-    }
-  }
-
-  implicit object IdOrder extends Order[Id] with UnivEq[Id] {
-    implicitly[Lazy[UnivEq[Id]]] // prove Id is actually UnivEq
-    override def order(a: Id, b: Id) = (a, b) match {
-      case (x: CustomReqType.Id, y: CustomReqType.Id) => Order[CustomReqType.Id].order(x, y)
-      case (x: StaticReqType   , y: StaticReqType   ) => StaticReqType.order(x, y)
-      case (x: StaticReqType   , y: CustomReqType.Id) => Ordering.LT
-      case (x: CustomReqType.Id, y: StaticReqType   ) => Ordering.GT
-    }
-  }
-
   val filterAlive: ReqType => Boolean =
     _.fold(_ => true, _.alive ≟ Alive)
 
-  def name(customReqTypes: CustomReqTypeIMap): Id => Must[String] =
+  def name(customReqTypes: CustomReqTypeIMap): ReqTypeId => Must[String] =
     _.foldId(s => Must.Exists(s.name), c => customReqTypes(c).map(_.name))
 }
 
-sealed trait StaticReqType extends ReqType with ReqType.Id {
-  override final def fold  [A](s: StaticReqType => A, c: CustomReqType    => A): A = s(this)
-  override final def foldId[A](s: StaticReqType => A, c: CustomReqType.Id => A): A = s(this)
+// =====================================================================================================================
+
+sealed trait StaticReqType extends ReqType with ReqTypeId {
+  override final def fold  [A](s: StaticReqType => A, c: CustomReqType   => A): A = s(this)
+  override final def foldId[A](s: StaticReqType => A, c: CustomReqTypeId => A): A = s(this)
 }
 
 object StaticReqType {
@@ -86,15 +90,19 @@ object StaticReqType {
     values.foldLeft(UnivEq.emptySet[Mnemonic])(_ ++ _.allMnemonics)
 }
 
-
 // =====================================================================================================================
 
-final case class CustomReqType(id: CustomReqType.Id,
-                               mnemonic: Mnemonic,
+final case class CustomReqTypeId(value: Long) extends TaggedLong with ReqTypeId {
+  override def foldId[A](s: StaticReqType => A, c: CustomReqTypeId => A): A = c(this)
+}
+
+@Lenses
+final case class CustomReqType(id          : CustomReqTypeId,
+                               mnemonic    : Mnemonic,
                                oldMnemonics: Set[Mnemonic],
-                               name: String,
-                               imp: ImplicationRequired,
-                               alive: Alive) extends ReqType {
+                               name        : String,
+                               imp         : ImplicationRequired,
+                               alive       : Alive) extends ReqType {
 
   def fullName = s"${mnemonic.value}: $name"
 
@@ -102,16 +110,8 @@ final case class CustomReqType(id: CustomReqType.Id,
 }
 
 object CustomReqType {
-  final case class Id(value: Long) extends TaggedLong with ReqType.Id {
-    override def foldId[A](s: StaticReqType => A, c: Id => A): A = c(this)
-  }
-
-  object IdAccess extends ObjDataId[CustomReqType.type, CustomReqType, Id] {
+  object IdAccess extends ObjDataId[CustomReqType.type, CustomReqType, CustomReqTypeId] {
     override def id(d: CustomReqType) = d.id
     override val unapplyData: AnyRef => Option[CustomReqType] = {case r: CustomReqType => Some(r); case _ => None}
   }
-
-  val name         = GenLens[CustomReqType](_.name)
-  val mnemonic     = GenLens[CustomReqType](_.mnemonic)
-  val oldMnemonics = GenLens[CustomReqType](_.oldMnemonics)
 }

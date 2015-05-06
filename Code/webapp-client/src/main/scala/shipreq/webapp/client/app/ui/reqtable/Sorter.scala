@@ -214,7 +214,7 @@ object Sorter {
       as.zipWithIndex.toMap
       .withDefault(k => failedMust(0)(s"Unknown $name: " + k))
 
-    lazy val reqTypesToMnemonicOrder: Map[ReqType.Id, Int] =
+    lazy val reqTypesToMnemonicOrder: Map[ReqTypeId, Int] =
       ordermap("reqtype",
         p.reqTypes.map(_.tmap2(_.mnemonic.value, _.reqTypeId))
           .sortBy(_._1)

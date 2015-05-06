@@ -81,7 +81,7 @@ class WIP {
 
     import shipreq.webapp.base.test.ProjectDSL._
 
-    val List(co,mf,fr) = List[ReqType.Id](1,2,3).map(Some(_))
+    val List(co,mf,fr) = List[ReqTypeId](1,2,3).map(Some(_))
     val List(p1,p3,p5,rel,wip,v1x) = List[ApplicableTag.Id](4,3,2,22,11,21)
     val (p2,p4) = (p3,p5)
     val mfs = (0 to 28).toVector.map(i => GenericReqId(i + 1000))
@@ -148,7 +148,7 @@ class WIP {
   object reqqq {
     implicit val equality = Equal.equalA[CustomReqType]
 
-    def upd(id: CustomReqType.Id, f: CustomReqType => CustomReqType) =
+    def upd(id: CustomReqTypeId, f: CustomReqType => CustomReqType) =
       mod(_.mod(id, f))
 
     def modR(f: CustomReqTypeIMap => CustomReqTypeIMap): Option[Rev] = {
@@ -182,7 +182,7 @@ class WIP {
       ServerProtocol.routine(Routines.CustomReqTypeCrud)({
         case CrudAction.Create(v)    =>
           val (mnemonic, name, imp) = v
-          val id = CustomReqType.Id(p.customReqTypes.data.keySet.max.value + 1)
+          val id = CustomReqTypeId(p.customReqTypes.data.keySet.max.value + 1)
           val n = CustomReqType(id, mnemonic, Set.empty, name, imp, Alive)
           mod(_ + n)
 

@@ -39,7 +39,7 @@ private[issues] object ReqTypeImplication {
 
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
 
-    def save(id: CustomReqType.Id): ST = {
+    def save(id: CustomReqTypeId): ST = {
       val p = $.props
       Persistence.simpleAsyncUpdate(rowStore)(p.remote, p.clientData, p.cp, $ runState _, id)
     }

@@ -31,8 +31,8 @@ object SampleImplicationGraph {
   val fr6: GenericReqId = 36
 
   lazy val projectDsl = {
-    def t(i: GenericReqId, rt: ReqType.Id, tgts: ReqId*) = GReq(id = i, reqType = rt, impTgts = tgts.toSet)
-    val (mf, br, fr) = (2: ReqType.Id, 4: ReqType.Id, 3: ReqType.Id)
+    def t(i: GenericReqId, rt: ReqTypeId, tgts: ReqId*) = GReq(id = i, reqType = rt, impTgts = tgts.toSet)
+    val (mf, br, fr) = (2: ReqTypeId, 4: ReqTypeId, 3: ReqTypeId)
 
     ( t(mf1, mf, 31)
     + t(mf2, mf, 32)

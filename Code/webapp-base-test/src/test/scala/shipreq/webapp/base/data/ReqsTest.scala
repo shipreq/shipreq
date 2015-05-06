@@ -14,7 +14,7 @@ object ReqsTest extends TestSuite {
   val oneReqPerReqtypeProp =
     Prop.distinctC[Vector, ReqId]("Req ID").forall((_: PubidRegister).value.m.values.toStream)
 
-  case class PubidRegisterProps(register: PubidRegister, req: ReqId, reqType: ReqType.Id) {
+  case class PubidRegisterProps(register: PubidRegister, req: ReqId, reqType: ReqTypeId) {
     val E            = EvalOver(this)
     val (reg2, pid2) = register.alloc(req, reqType)
     val (reg3, pid3) = reg2    .alloc(req, reqType)

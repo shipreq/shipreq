@@ -21,7 +21,7 @@ package object test {
 
   type TestDataIdAux[D, Id] = TestDataId[D] {type I = Id}
 
-  implicit object TagId extends TestObjDataId[Tag.type, Tag, Tag.Id] {
+  implicit object TagIdT extends TestObjDataId[Tag.type, Tag, Tag.Id] {
     override def mkId(l: Long) = ApplicableTag.Id(l)
     override def setId(t: Tag, i: Tag.Id) = t match {
         case x: TagGroup      => x.copy(id = TagGroup     .Id(i.value))
@@ -29,19 +29,19 @@ package object test {
       }
   }
 
-  implicit object ReqId extends TestObjDataId[Req.type, Req, ReqId] {
+  implicit object ReqIdT extends TestObjDataId[Req.type, Req, ReqId] {
     override def mkId(l: Long) = GenericReqId(l)
     override def setId(cf: Req, i: ReqId) = cf match {
         case r: GenericReq => r.copy(id = GenericReqId(i.value))
       }
   }
 
-  implicit object CustomReqTypeId extends TestObjDataId[CustomReqType.type, CustomReqType, CustomReqType.Id] {
-    override def mkId(l: Long) = CustomReqType.Id(l)
-    override def setId(a: CustomReqType, b: CustomReqType.Id) = a.copy(id = b)
+  implicit object CustomReqTypeIdT extends TestObjDataId[CustomReqType.type, CustomReqType, CustomReqTypeId] {
+    override def mkId(l: Long) = CustomReqTypeId(l)
+    override def setId(a: CustomReqType, b: CustomReqTypeId) = a.copy(id = b)
   }
 
-  implicit object CustomFieldId extends TestObjDataId[CustomField.type, CustomField, CustomField.Id] {
+  implicit object CustomFieldIdT extends TestObjDataId[CustomField.type, CustomField, CustomField.Id] {
     import CustomField._
     override def mkId(l: Long) = Text.Id(l)
     override def setId(cf: CustomField, i: Id) = cf match {
@@ -51,7 +51,7 @@ package object test {
       }
   }
 
-  implicit object CustomIssueTypeId extends TestObjDataId[CustomIssueType.type, CustomIssueType, CustomIssueType.Id] {
+  implicit object CustomIssueTypeIdT extends TestObjDataId[CustomIssueType.type, CustomIssueType, CustomIssueType.Id] {
     override def mkId(l: Long) = CustomIssueType.Id(l)
     override def setId(a: CustomIssueType, b: CustomIssueType.Id) = a.copy(id = b)
   }

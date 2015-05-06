@@ -24,7 +24,7 @@ object CfgReqTypes {
   }
 
   val fields = FieldSet3[CustomReqType](_.mnemonic.value, _.name, _.imp)(("", "", ImplicationRequired.Not))
-  val storesAndState = TypicalStoresAndState(fields).keyedBy[CustomReqType.Id]
+  val storesAndState = TypicalStoresAndState(fields).keyedBy[CustomReqTypeId]
   import storesAndState._
 
   val Component =

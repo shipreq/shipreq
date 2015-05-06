@@ -56,7 +56,7 @@ package object data {
 
   type HashRefTarget       = ApplicableTag \/ CustomIssueType
   type CustomIssueTypeIMap = IMap[CustomIssueType.Id, CustomIssueType]
-  type CustomReqTypeIMap   = IMap[CustomReqType.Id, CustomReqType]
+  type CustomReqTypeIMap   = IMap[CustomReqTypeId, CustomReqType]
   type TagTree             = IMap[Tag.Id, TagInTree]
 
   @inline final def emptyDataMap[O, D, Id](o: O)(implicit O: ObjDataId[O, D, Id], ev: UnivEq[Id]): IMap[Id, D] =

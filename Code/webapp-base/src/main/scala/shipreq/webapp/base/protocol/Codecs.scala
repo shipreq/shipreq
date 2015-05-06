@@ -289,17 +289,17 @@ object DataCodecs {
 
   implicit final val reqTypeId = {
     import StaticReqType._
-    ReadWriter[ReqType.Id]({
-      case i: CustomReqType.Id => Js.Str(i.value.toString)
+    ReadWriter[ReqTypeId]({
+      case i: CustomReqTypeId => Js.Str(i.value.toString)
       case UseCase             => Js.Str("u")
     }, {
-      case Js.Str(ParseLong(i)) => CustomReqType.Id(i)
+      case Js.Str(ParseLong(i)) => CustomReqTypeId(i)
       case Js.Str("u")          => UseCase
     })
   }
 
   implicit final val reqTypeMnemonic = tagS(ReqType.Mnemonic.apply)
-  implicit final val customReqTypeId = tagL(CustomReqType.Id.apply)
+  implicit final val customReqTypeId = tagL(CustomReqTypeId.apply)
   implicit final val customReqType   = caseclass6(CustomReqType.apply, CustomReqType.unapply)
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -624,7 +624,7 @@ object ProtocolDataCodecs {
       }
       case Js.Arr(Js.Num(n), a, b, c) => n.toInt match {
         case 1 => TagFieldValues(readJs[Tag.Id](a), readJs[Mandatory](b), readJs[ApplicableReqTypes](c))
-        case 2 => ImplicationFieldValues(readJs[ReqType.Id](a), readJs[Mandatory](b), readJs[ApplicableReqTypes](c))
+        case 2 => ImplicationFieldValues(readJs[ReqTypeId](a), readJs[Mandatory](b), readJs[ApplicableReqTypes](c))
       }
     })
   }

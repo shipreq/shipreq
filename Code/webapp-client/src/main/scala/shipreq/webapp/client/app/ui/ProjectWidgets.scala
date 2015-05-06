@@ -74,7 +74,7 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
   def pubidRefs(ids: Vector[Pubid]): ReactElement =
     <.div(ids.map(id => pubidRef(id)(): TagMod): _*)
 
-  val reqType = memoM[ReqType.Id]("ReqType", id =>
+  val reqType = memoM[ReqTypeId]("ReqType", id =>
     project.reqType(id).map(rt =>
       <.span(
         ^.title := rt.name,

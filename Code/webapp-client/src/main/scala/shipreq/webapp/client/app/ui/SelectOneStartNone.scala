@@ -35,7 +35,7 @@ object SelectOneStartNone {
   import shipreq.webapp.base.data._
   import shipreq.webapp.base.data.TagTree.FlatRow.FilterPolicy
 
-  def reqType(rs: TraversableOnce[ReqType]): SelectOneStartNone[ReqType.Id] = {
+  def reqType(rs: TraversableOnce[ReqType]): SelectOneStartNone[ReqTypeId] = {
     val opts = rs.toStream
                 .map(r => Choice(r.reqTypeId, r.name, disabled = false))
                 .sortBy(_.label)

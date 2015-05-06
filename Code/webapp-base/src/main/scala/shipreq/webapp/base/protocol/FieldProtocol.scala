@@ -22,7 +22,7 @@ object FieldProtocol {
                             mandatory: Mandatory,
                             reqTypes : ApplicableReqTypes) extends Values
 
-  case class ImplicationFieldValues(reqTypeId: ReqType.Id,
+  case class ImplicationFieldValues(reqTypeId: ReqTypeId,
                                     mandatory: Mandatory,
                                     reqTypes : ApplicableReqTypes) extends Values
 

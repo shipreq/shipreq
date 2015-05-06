@@ -92,7 +92,7 @@ sealed trait Field {
 }
 
 object Field {
-  type ApplicableReqTypes = ISubset[Set, ReqType.Id]
+  type ApplicableReqTypes = ISubset[Set, ReqTypeId]
 
   /** type [[Id]] = [[StaticField]] | [[CustomField.Id]] */
   sealed trait Id {
@@ -235,7 +235,7 @@ object CustomField {
 
   // -------------------------------------------------------------------------------------------------------------------
   case class Implication(id       : Implication.Id,
-                         reqTypeId: ReqType.Id,
+                         reqTypeId: ReqTypeId,
                          mandatory: Mandatory,
                          reqTypes : ApplicableReqTypes,
                          alive    : Alive) extends CustomField(CustomFieldType.Implication) {
