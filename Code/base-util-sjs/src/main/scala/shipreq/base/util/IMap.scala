@@ -1,88 +1,38 @@
 package shipreq.base.util
 
-import scala.annotation.elidable
-import scala.collection.GenTraversableOnce
-import scala.collection.generic.Subtractable
-import scalaz.{Order, Equal, Foldable}
-import scalaz.std.iterable._
-import scalaz.std.map._
-import scalaz.syntax.foldable._
+import scalaz.{Equal, Order}
 
 object IMap {
   implicit def equality[K: Order, V: Equal]: Equal[IMap[K, V]] =
-    Equal.equalBy(_.underlyingMap)
+    IMapBase.equality[K, V, IMap[K, V]]
 
   def empty[K: UnivEq, V](k: V => K): IMap[K, V] =
     new IMap(k, Map.empty)
 }
 
-final class IMap[K: UnivEq, V] private (key: V => K, m: Map[K, V]) extends Subtractable[K, IMap[K, V]] {
+final class IMap[K: UnivEq, V] private (key: V => K, m: Map[K, V]) extends IMapBase[K, V, IMap[K, V]](m) {
+
+  override protected def stringPrefix = "IMap"
 
   override protected def repr = this
 
-  override def toString = s"I$m"
-  override def hashCode = m.hashCode
-  override def equals(o: Any) = o match {
-    case n: IMap[_, _] => m equals n.underlyingMap
-    case n: Map[_, _]  => m equals n
-    case _             => false
-  }
+  override protected def setmap(n: Map[K, V]) = new IMap(key, n)
 
-  @inline private[this] def setmap(n: Map[K, V]): IMap[K, V] = new IMap(key, n)
+  override protected def gkey(v: V) = key(v)
 
-  def underlyingMap = m
+  def get(k: K): Option[V] =
+    m.get(k)
 
-  def keys = m.keys
+  def apply(k: K): Must[V] =
+    Must.fromOption(get(k), s"Value not found for $k. Keys = $keySet.")
 
-  def values = m.values
-
-  def keySet = m.keySet
-
-  def size = m.size
-
-  def mapValues[A](f: V => A): Map[K, A] = m.mapValues(f)
-
-  def get(k: K): Option[V] = m.get(k)
-
-  def apply(k: K): Must[V] = Must.fromOption(get(k), s"Value not found for $k . Keys = $keySet.")
-
-  override def -(k: K) = setmap(m - k)
-
-  // ------------------------------------------------
-
-  @inline final def +(v: V) = add(v)
-
-  def add(v: V) = setmap(m.updated(key(v), v))
-
-  def addAll(vs: V*) = addAllF(vs)
-
-  def addAllF[F[_]: Foldable](vs: F[V]) = setmap(vs.foldLeft(m)((n, v) => n.updated(key(v), v)))
-
-  def ++(vs: GenTraversableOnce[V]) = setmap(vs.foldLeft(m)((n, v) => n.updated(key(v), v)))
-
-  def vstream[A](f: V => A): Stream[A] = values.toStream.map(f)
-  def vstreamf[A](f: V => Stream[A]): Stream[A] = values.toStream.flatMap(f)
-
-  @elidable(elidable.ASSERTION)
-  def assertValidKeys(m: Map[K, V]): Unit =
-    for ((k1,v) <- m)
-      assert(key(v) == k1, s"Expected key for [$v] is [${key(v)}] but [$k1] was found.")
-
-  def replaceUnderlying(n: Map[K, V]): IMap[K, V] = {
-    assertValidKeys(n)
-    setmap(n)
-  }
-
-  def mapUnderlying(f: Map[K, V] => Map[K, V]): IMap[K, V] =
-    replaceUnderlying(f(m))
-
-  def mod(k: K, f: V => V)(implicit ev: V <:< AnyRef): IMap[K, V] =
+  def mod(k: K, f: V => V)(implicit ev: V <:< AnyRef): This =
     _mod(k, f, this)
 
-  def modOrPut(k: K, f: V => V, put: => V)(implicit ev: V <:< AnyRef): IMap[K, V] =
+  def modOrPut(k: K, f: V => V, put: => V)(implicit ev: V <:< AnyRef): This =
     _mod(k, f, this add put)
 
-  private def _mod(k: K, f: V => V, nomod: => IMap[K, V])(implicit ev: V <:< AnyRef): IMap[K, V] =
+  private def _mod(k: K, f: V => V, nomod: => IMap[K, V])(implicit ev: V <:< AnyRef): This =
     m.get(k).fold(nomod)(v => {
       val v2 = f(v)
       if (ev(v) eq ev(v2))
@@ -94,28 +44,4 @@ final class IMap[K: UnivEq, V] private (key: V => K, m: Map[K, V]) extends Subtr
         setmap(n)
       }
     })
-
-  def filter (f: (K, V) => Boolean): IMap[K, V] = mapUnderlying(_ filter f.tupled)
-  def filterK(f: K      => Boolean): IMap[K, V] = mapUnderlying(_ filterKeys f)
-  def filterV(f: V      => Boolean): IMap[K, V] = mapUnderlying(_.filter(kv => f(kv._2)))
-
-  def filterNot (f: (K, V) => Boolean): IMap[K, V] = mapUnderlying(_ filterNot f.tupled)
-  def filterNotK(f: K      => Boolean): IMap[K, V] = mapUnderlying(_.filterNot(kv => f(kv._1)))
-  def filterNotV(f: V      => Boolean): IMap[K, V] = mapUnderlying(_.filterNot(kv => f(kv._2)))
 }
-
-/*
-import scalaz.{Order, ==>>}
-
-object IMap {
-  def empty[K, V](k: V => K): IMap[K, V] = new IMap(k, scalaz.IMap.empty)
-}
-
-final class IMap[K: Order, V] private (k: V => K, m: K ==>> V) {
-  @inline private[this] def mod(n: K ==>> V): IMap[K, V] = new IMap(k, n)
-
-  def add(v: V) = mod(m.insert(k(v), v))
-
-  def addAll[F[_]: Foldable](vs: F[V]) = mod(vs.foldLeft(m)((n, v) => n.insert(k(v), v)))
-}
-*/
