@@ -200,7 +200,7 @@ object Sorter {
   // ===================================================================================================================
   // Specific
 
-  type TagOrder = Map[ApplicableTag.Id, Int]
+  type TagOrder = Map[ApplicableTagId, Int]
 
   /**
    * Project data prepared in a way that various sorts will use.
@@ -235,7 +235,7 @@ object Sorter {
         TagTree.flatten(p.tags.data)(_ => true, TagTree.FlatRow.FilterPolicy.OmitNothing)
           .toStream
           .map(_.id)
-          .filterT[ApplicableTag.Id]
+          .filterT[ApplicableTagId]
       )
   }
 
@@ -296,7 +296,7 @@ object Sorter {
         sort   = SortFn.string(bp))
     }
 
-  def tagSorter(loc: Optional[Row, Vector[ApplicableTag.Id]], order: Setup => TagOrder): SorterForSMCB =
+  def tagSorter(loc: Optional[Row, Vector[ApplicableTagId]], order: Setup => TagOrder): SorterForSMCB =
     SorterForSMCB(bp =>
       Sorter[Vector[Int]](
         rowMod = typicalRowModFn(loc, SortFn.int)(order(_).apply),

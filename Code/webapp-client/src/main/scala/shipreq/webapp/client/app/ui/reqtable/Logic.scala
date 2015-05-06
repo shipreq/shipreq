@@ -86,9 +86,9 @@ private[reqtable] object Logic {
     customFieldExpander[CustomField.Implication.Id, Pubid](vs, valueFn)
   }
 
-  private def tagColValueExpander(vs: ViewSettings, p: Project): ReqId => Map[CustomField.Tag.Id, Expanded[ApplicableTag.Id]] = {
+  private def tagColValueExpander(vs: ViewSettings, p: Project): ReqId => Map[CustomField.Tag.Id, Expanded[ApplicableTagId]] = {
     val reqTags = p.reqFieldData.data.tags
-    customFieldExpander[CustomField.Tag.Id, ApplicableTag.Id](vs, c => {
+    customFieldExpander[CustomField.Tag.Id, ApplicableTagId](vs, c => {
       val legal = mustResolve(p.tagColumnDistribution.tagIdsForColumn(c))(UnivEq.emptySet)
       id => reqTags(id) filter legal.contains
     })
@@ -127,7 +127,7 @@ private[reqtable] object Logic {
                          impTgts: Expanded[Pubid],
                          codes  : Expanded[ReqCode.Value],
                          cfImps : Map[CustomField.Implication.Id, Expanded[Pubid]],
-                         cfTags : Map[CustomField.Tag.Id,         Expanded[ApplicableTag.Id]]): NonEmptyVector[Expansion] =
+                         cfTags : Map[CustomField.Tag.Id,         Expanded[ApplicableTagId]]): NonEmptyVector[Expansion] =
     if (   isEmptyExp(codes)
         && isEmptyExp(impSrcs)
         && isEmptyExp(impTgts)
@@ -146,7 +146,7 @@ private[reqtable] object Logic {
   // ===================================================================================================================
   // MultiValues
 
-  private def tagValuesFn(vs: ViewSettings, p: Project): ReqId => Vector[ApplicableTag.Id] = {
+  private def tagValuesFn(vs: ViewSettings, p: Project): ReqId => Vector[ApplicableTagId] = {
     val reqTags = p.reqFieldData.data.tags
     val tagsUsedInColumns = mustResolve(p.tagColumnDistribution.tagIdsUsedInColumns)(UnivEq.emptySet)
     id => reqTags(id).filterNot(tagsUsedInColumns.contains).toVector

@@ -131,13 +131,12 @@ object DataProp {
   // -------------------------------------------------------------------------------------------------------------------
   object tags {
     type T = TagTree
-    import Tag.Id
 
     def uniqueNames =
       Prop.distinct("name", (_: T).vstream(_.tag.name))
 
     def uniqueSiblings =
-      Prop.distinctC[Vector, Id]("siblings").forall((_: T).vstream(_.children))
+      Prop.distinctC[Vector, TagId]("siblings").forall((_: T).vstream(_.children))
 
     def noCycles =
       Tag.CycleDetectors.tagTree.noCycleProp("structure")
@@ -272,7 +271,7 @@ object DataProp {
   object project {
     type T = Project
 
-    case class Refs(fieldIds: Set[CustomField.Id], reqIds: Set[ReqId], reqTypeIds: Set[ReqTypeId], tagIds: Set[Tag.Id])
+    case class Refs(fieldIds: Set[CustomField.Id], reqIds: Set[ReqId], reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId])
 
     def atoms =
       Prop.eval[(String, Stream[Text.AnyOptional])](t => text.anyTextS(t._2).rename(t._1))

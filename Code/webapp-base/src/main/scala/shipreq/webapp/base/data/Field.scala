@@ -212,7 +212,6 @@ object CustomField {
   }
 
   // -------------------------------------------------------------------------------------------------------------------
-  import shipreq.webapp.base.data.Tag.{Id => TagId}
   case class Tag(id       : Tag.Id,
                  tagId    : TagId,
                  mandatory: Mandatory,

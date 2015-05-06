@@ -4,7 +4,6 @@ import scalaz.{\/-, -\/, \/}
 import scalaz.std.AllInstances._
 import shipreq.base.util.{UnivEq, Util}
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.Tag.{Id => TagId}
 import shipreq.webapp.base.delta.{Partition, RemoteDeltaP}
 import shipreq.webapp.base.TypeclassDerivation._
 import Field.ApplicableReqTypes

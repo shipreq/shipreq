@@ -22,7 +22,7 @@ class SelectOneStartNone[A: Equal](options: Vector[Choice[A]]) {
       val selected = ei.data
       val onSelect = ei.editable map SimpleEditor.onChangeAndEditFinished
 
-      // Once a tag is selected, the blank option (None: Option[Tag.Id]) is removed
+      // Once a tag is selected, the blank option (None: Option[TagId]) is removed
 
       selected match {
         case Some(s) => ComponentA(Props(s,    options,  onSelect.map(f => s => f(Some(s)))))
@@ -43,7 +43,7 @@ object SelectOneStartNone {
     new SelectOneStartNone(opts)
   }
 
-  def tag(tt: TagTree): SelectOneStartNone[Tag.Id] = {
+  def tag(tt: TagTree): SelectOneStartNone[TagId] = {
     val flat = TagTree.flatten(tt)(Tag.filterAlive, FilterPolicy.OmitAnythingWithBadParent)
     val opts = flat.map(f => Choice(f.id, f.indentedName, disabled = false))
     new SelectOneStartNone(opts)

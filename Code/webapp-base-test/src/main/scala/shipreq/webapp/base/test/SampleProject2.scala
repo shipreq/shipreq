@@ -10,7 +10,7 @@ object SampleProject2 {
 
   lazy val project = {
     val List(co,mf,fr) = List[ReqTypeId](1,2,3).map(Some(_))
-    val List(p1,p3,p5,rel,wip,v1x) = List[ApplicableTag.Id](4,3,2,22,11,21)
+    val List(p1,p3,p5,rel,wip,v1x) = List[ApplicableTagId](4,3,2,22,11,21)
     val (p2,p4) = (p3,p5)
     val mfs = (0 to 28).toVector.map(i => GenericReqId(i + 1000))
 

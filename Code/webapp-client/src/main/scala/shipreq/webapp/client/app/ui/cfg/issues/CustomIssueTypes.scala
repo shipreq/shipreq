@@ -42,7 +42,7 @@ private[issues] object CustomIssueTypes {
 
   private def validatorState(k: Option[CustomIssueType.Id], cd: ClientData): S => V.S =
     s => {
-      val ts: HashRefKeyVS.Data[Tag.Id] = // TODO cacheable
+      val ts: HashRefKeyVS.Data[TagId] = // TODO cacheable
         (None, cd.project.tags.data.vstream(_.tag)
           .map(t => t.keyO.map(k => (t.id.some, k))).filter(_.isDefined).map(_.get))
       val is: HashRefKeyVS.Data[CustomIssueType.Id] =

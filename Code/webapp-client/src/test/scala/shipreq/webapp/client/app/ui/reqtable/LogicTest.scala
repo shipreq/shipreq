@@ -32,7 +32,7 @@ object LogicTest extends TestSuite {
       case r: ReqCodeGroupRow => Vector1(r.reqCode)
     }
 
-  private def tagsInRow(r: Row): Vector[ApplicableTag.Id] =
+  private def tagsInRow(r: Row): Vector[ApplicableTagId] =
     // Don't use optics here
     r match {
       case r: GenericReqRow   => r.mv.tags
@@ -52,7 +52,7 @@ object LogicTest extends TestSuite {
     if (c.isEmpty) "" else PlainText.reqCode(c.head)
   }
 
-  def applicableTag(p: Project): ApplicableTag.Id => ApplicableTag =
+  def applicableTag(p: Project): ApplicableTagId => ApplicableTag =
     id => p.tags.data.get(id).map(_.tag) match {
       case Some(t: ApplicableTag) => t
       case x => sys.error(s"Not an ApplicableTag: $x")
@@ -362,7 +362,7 @@ object LogicTest extends TestSuite {
     def clearCustomFields = customFieldsL.modify(_ replaceUnderlying Map.empty)
 
     def testTags_sorted(): Unit = {
-      def t(ids: ApplicableTag.Id*) = GReq().tag(ids: _*)
+      def t(ids: ApplicableTagId*) = GReq().tag(ids: _*)
       val p       = GReq().times(2) + t(2) + t(3) + t(11) + t(12) + t(11, 12) + t(12, 11) !! P
       val p2      = clearCustomFields(p)
       val pt      = PlainText(p2)
@@ -374,7 +374,7 @@ object LogicTest extends TestSuite {
     }
 
     def testTags_sorted2(): Unit = {
-      def t(ids: ApplicableTag.Id*) = GReq().tag(ids: _*)
+      def t(ids: ApplicableTagId*) = GReq().tag(ids: _*)
       val p       = GReq() + t(2) + t(11) + t(12) + t(11, 12, 2) + t(3, 12, 11) !! P
       val p2      = customFieldsL.modify(_.filterK(_ == priField))(p)
       val pt      = PlainText(p2)
@@ -387,7 +387,7 @@ object LogicTest extends TestSuite {
 
     /** When tags aren't being sorted by SortCriteria they should be sorted by some default. */
     def testTags_unsorted(): Unit = {
-      def t(ids: ApplicableTag.Id*) = GReq().tag(ids: _*)
+      def t(ids: ApplicableTagId*) = GReq().tag(ids: _*)
       val p       = t(11, 12, 2, 3, 4) ! P
       val p2      = clearCustomFields(p)
       val pt      = PlainText(p2)
@@ -397,7 +397,7 @@ object LogicTest extends TestSuite {
     }
 
     def testCustomTagField_sorted(): Unit = {
-      def t(ids: ApplicableTag.Id*) = GReq().tag(ids: _*)
+      def t(ids: ApplicableTagId*) = GReq().tag(ids: _*)
       val p       = GReq() + t(2) + t(3) + t(2, 3) + t(11, 12, 22, 24, 26) !! P
       val pt      = PlainText(p)
       val fmtEach = applicableTag(p).andThen(_.key.value)
@@ -408,7 +408,7 @@ object LogicTest extends TestSuite {
     }
 
     def testCustomTagField_unsorted(): Unit = {
-      def t(ids: ApplicableTag.Id*) = GReq().tag(ids: _*)
+      def t(ids: ApplicableTagId*) = GReq().tag(ids: _*)
       val p       = GReq() + t(2) + t(3) + t(2, 3, 4) + t(11, 12, 22, 24, 26) ! P
       val pt      = PlainText(p)
       val fmtEach = applicableTag(p).andThen(_.key.value)

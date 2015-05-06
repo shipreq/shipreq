@@ -227,12 +227,12 @@ object RandomData {
   // Tags
 
   lazy val tagGroupId =
-    id map TagGroup.Id
+    id map TagGroupId
 
   lazy val applicableTagId =
-    id map ApplicableTag.Id
+    id map ApplicableTagId
 
-  lazy val tagId: Gen[Tag.Id] = {
+  lazy val tagId: Gen[TagId] = {
     import Gen.Covariance._
     Gen.oneofG(tagGroupId, applicableTagId)
   }
@@ -254,13 +254,13 @@ object RandomData {
 
   /** HashRefKey uniqueness enforced in Project, not here */
   lazy val tags: Gen[List[Tag]] = {
-    val di = distinctId[Tag, Tag.Id]
+    val di = distinctId[Tag, TagId]
     val dn = Distinct.str.at(Tag.name)
     val d = (di * dn).lift[List]
     tag.list map d.run
   }
 
-  type TagTreeStructure = Map[Tag.Id, Vector[Tag.Id]]
+  type TagTreeStructure = Map[TagId, Vector[TagId]]
 
   @tailrec
   def preventTagTreeCycles(m: TagTreeStructure /*, i: Int = 0*/): TagTreeStructure =
@@ -274,7 +274,7 @@ object RandomData {
         preventTagTreeCycles(m - b /*, i + 1*/)
     }
 
-  def tagTreeStructure(tags: Set[Tag.Id]): Gen[TagTreeStructure] =
+  def tagTreeStructure(tags: Set[TagId]): Gen[TagTreeStructure] =
     if (tags.isEmpty)
       Gen.insert(Map.empty)
     else {
@@ -337,10 +337,10 @@ object RandomData {
   def customFieldText(art: Gen[ApplicableReqTypes]): Gen[CustomField.Text] =
     Gen.apply6(CustomField.Text.apply)(customFieldTextId, shortText1, fieldRefKey, mandatory, art, alive)
 
-  def customFieldTag(tagId: Gen[Tag.Id], art: Gen[ApplicableReqTypes]): Gen[CustomField.Tag] =
+  def customFieldTag(tagId: Gen[TagId], art: Gen[ApplicableReqTypes]): Gen[CustomField.Tag] =
     Gen.apply5(CustomField.Tag.apply)(customFieldTagId, tagId, mandatory, art, alive)
 
-  def customFieldTagSome(tagIds: Set[Tag.Id], art: Gen[ApplicableReqTypes]): Gen[Vector[CustomField.Tag]] =
+  def customFieldTagSome(tagIds: Set[TagId], art: Gen[ApplicableReqTypes]): Gen[Vector[CustomField.Tag]] =
     Gen.subset(tagIds).flatMap(ids =>
       Gen sequence ids.map(id =>
         customFieldTag(Gen insert id, art)))
@@ -365,7 +365,7 @@ object RandomData {
     }
   }
 
-  def customFields(reqTypeIds: Set[ReqTypeId], tagIds: Set[Tag.Id], art: Gen[ApplicableReqTypes]): Gen[IMap[CustomField.Id, CustomField]] = {
+  def customFields(reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId], art: Gen[ApplicableReqTypes]): Gen[IMap[CustomField.Id, CustomField]] = {
     val cf = for {
       f1 <- customField(art, false, false).stream
       f2 <- customFieldTagSome(tagIds, art)
@@ -378,7 +378,7 @@ object RandomData {
     cf.map(fs => emptyDataMap(CustomField) ++ dist.run(fs))
   }
 
-  def fieldSet(reqTypeIds: Set[ReqTypeId], tagIds: Set[Tag.Id], r: Set[CustomReqTypeId]): Gen[FieldSet] =
+  def fieldSet(reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId], r: Set[CustomReqTypeId]): Gen[FieldSet] =
     for {
       cf           ← customFields(reqTypeIds, tagIds, applicableReqTypes(r))
       mandatoryIds = cf.keySet.map(f => f: Field.Id) ++ StaticField.notDeletable
@@ -488,7 +488,7 @@ object RandomData {
     def reqRef(g: Gen[ReqId])(implicit t: ReqRef): Gen[t.ReqRef] =
       g map t.ReqRef
 
-    def tagRef(g: Gen[ApplicableTag.Id])(implicit t: TagRef): Gen[t.TagRef] =
+    def tagRef(g: Gen[ApplicableTagId])(implicit t: TagRef): Gen[t.TagRef] =
       g map t.TagRef
 
     def issue(i: Gen[CustomIssueType.Id], r: Option[Gen[ReqId]])(implicit t: Issue): Gen[t.Issue] =
@@ -632,7 +632,7 @@ object RandomData {
 
     def customTextFieldAtom(gr: Option[Gen[ReqId]],
                             gi: Option[Gen[CustomIssueType.Id]],
-                            gt: Option[Gen[ApplicableTag.Id]]): Gen[CustomTextField.Atom] = {
+                            gt: Option[Gen[ApplicableTagId]]): Gen[CustomTextField.Atom] = {
       @inline implicit def t: CustomTextField.type = CustomTextField
       multiLinePlus(t)(gr.map(reqRef(_)), gi.map(issue(_, gr)), gt.map(tagRef(_)))
     }
@@ -711,7 +711,7 @@ object RandomData {
   def reqFieldDataText(cols: Set[CustomField.Text.Id], reqs: Set[ReqId], txt: Gen[Text.CustomTextField.NonEmptyText]): Gen[ReqFieldData.Text] =
     txt mapByKeySubset reqs mapByKeySubset cols
 
-  def reqFieldDataTags(reqs: TraversableOnce[ReqId], tags: Set[ApplicableTag.Id]): Gen[ReqFieldData.Tags] = {
+  def reqFieldDataTags(reqs: TraversableOnce[ReqId], tags: Set[ApplicableTagId]): Gen[ReqFieldData.Tags] = {
     val rndTags = Gen.subset(tags).map(_.toSet)
     (rndTags mapByKeySubset reqs).map(Multimap(_))
   }
@@ -752,11 +752,11 @@ object RandomData {
     }
   }
 
-  // def customTextFieldAtom(gr: Gen[ReqId], gi: Gen[CustomIssueType.Id], gt: Gen[ApplicableTag.Id]): Gen[CustomTextField.Atom] = {
+  // def customTextFieldAtom(gr: Gen[ReqId], gi: Gen[CustomIssueType.Id], gt: Gen[ApplicableTagId]): Gen[CustomTextField.Atom] = {
   def reqFieldData(reqs   : Set[ReqId],
                    txtCols: Set[CustomField.Text.Id],
                    cissues: Set[CustomIssueType.Id],
-                   tags   : Set[ApplicableTag.Id]): Gen[ReqFieldData] = {
+                   tags   : Set[ApplicableTagId]): Gen[ReqFieldData] = {
 
     val gr = Gen.oneofO(reqs.toSeq)
     val gt = Gen.oneofO(tags.toSeq)
@@ -887,7 +887,7 @@ object RandomData {
       .at(first[T, A] ^|-> RevAnd.data[CustomIssueTypeIMap] ^|-> imapToMapLens)
     val tags = keyDist
       .lift[Option].contramap[Tag](_.keyO, setTagKey)
-      .at(TagInTree.tag).liftMapValues[Tag.Id]
+      .at(TagInTree.tag).liftMapValues[TagId]
       .at(second[T, B] ^|-> RevAnd.data[TagTree] ^|-> imapToMapLens)
     issues + tags
   }
@@ -1003,7 +1003,7 @@ object RandomData {
         (p, c) ← tagId.set.pair
       } yield {
         val children = (c - t.id -- p).toVector
-        val parents  = (p - t.id -- c).toStream.map(_ -> none[Tag.Id]).toMap
+        val parents  = (p - t.id -- c).toStream.map(_ -> none[TagId]).toMap
         TagProtocol.PovTag(t, TagProtocol.PovRelations(parents, children))
       }
   }

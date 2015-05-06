@@ -21,11 +21,11 @@ package object test {
 
   type TestDataIdAux[D, Id] = TestDataId[D] {type I = Id}
 
-  implicit object TagIdT extends TestObjDataId[Tag.type, Tag, Tag.Id] {
-    override def mkId(l: Long) = ApplicableTag.Id(l)
-    override def setId(t: Tag, i: Tag.Id) = t match {
-        case x: TagGroup      => x.copy(id = TagGroup     .Id(i.value))
-        case x: ApplicableTag => x.copy(id = ApplicableTag.Id(i.value))
+  implicit object TagIdT extends TestObjDataId[Tag.type, Tag, TagId] {
+    override def mkId(l: Long) = ApplicableTagId(l)
+    override def setId(t: Tag, i: TagId) = t match {
+        case x: TagGroup      => x.copy(id = TagGroupId     (i.value))
+        case x: ApplicableTag => x.copy(id = ApplicableTagId(i.value))
       }
   }
 

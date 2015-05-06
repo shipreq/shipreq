@@ -305,18 +305,18 @@ object DataCodecs {
   // -------------------------------------------------------------------------------------------------------------------
   // Tags
 
-  implicit final val tagGroupId      = tagL(TagGroup.Id.apply)
-  implicit final val applicableTagId = tagL(ApplicableTag.Id.apply)
+  implicit final val tagGroupId      = tagL(TagGroupId.apply)
+  implicit final val applicableTagId = tagL(ApplicableTagId.apply)
   implicit final val tagId           = tagIdRW
   implicit final val tagGroup        = caseclass5(TagGroup.apply, TagGroup.unapply)
   implicit final val applicableTag   = caseclass5(ApplicableTag.apply, ApplicableTag.unapply)
   implicit final val tag             = tagRW
   implicit final val tagInTree       = caseclass2(TagInTree.apply, TagInTree.unapply)
-  implicit final val tagTree         = iMap[Tag.Id, TagInTree](_.tag.id)
+  implicit final val tagTree         = iMap[TagId, TagInTree](_.tag.id)
 
-  private[this] def tagIdRW = ReadWriter[Tag.Id]({
-    case i: ApplicableTag.Id => intkeyW(0, i)(applicableTagId)
-    case i: TagGroup     .Id => intkeyW(1, i)(tagGroupId)
+  private[this] def tagIdRW = ReadWriter[TagId]({
+    case i: ApplicableTagId => intkeyW(0, i)(applicableTagId)
+    case i: TagGroupId      => intkeyW(1, i)(tagGroupId)
   }, {
     case Js.Arr(Js.Num(n), v) => n.toInt match {
       case 0 => readJs(v)(applicableTagId)
@@ -463,7 +463,7 @@ object DataCodecs {
       { case Js.Arr(Js.Str(REQREF), v) => t.ReqRef(readJs[ReqId](v)) }
 
     def readTagRef(t: TagRef): PR[t.TagRef] =
-      { case Js.Arr(Js.Str(TAGREF), v) => t.TagRef(readJs[ApplicableTag.Id](v)) }
+      { case Js.Arr(Js.Str(TAGREF), v) => t.TagRef(readJs[ApplicableTagId](v)) }
 
     def readReqTitle(t: ReqTitle): PR[t.Atom] =
       readSingleLine(t) orElse readReqRef(t) orElse readIssue(t)
@@ -623,7 +623,7 @@ object ProtocolDataCodecs {
         case 0 => TextFieldValues(readJs[String](a), readJs[FieldRefKey](b), readJs[Mandatory](c), readJs[ApplicableReqTypes](d))
       }
       case Js.Arr(Js.Num(n), a, b, c) => n.toInt match {
-        case 1 => TagFieldValues(readJs[Tag.Id](a), readJs[Mandatory](b), readJs[ApplicableReqTypes](c))
+        case 1 => TagFieldValues(readJs[TagId](a), readJs[Mandatory](b), readJs[ApplicableReqTypes](c))
         case 2 => ImplicationFieldValues(readJs[ReqTypeId](a), readJs[Mandatory](b), readJs[ApplicableReqTypes](c))
       }
     })

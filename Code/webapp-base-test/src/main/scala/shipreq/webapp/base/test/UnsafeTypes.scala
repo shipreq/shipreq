@@ -33,8 +33,8 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
   implicit def autoCustomFieldTxtId (i: Int) = CustomField.Text.Id(i)
   implicit def autoCustomIssueTypeId(i: Int) = CustomIssueType.Id(i)
   implicit def autoCustomReqTypeId  (i: Int) = CustomReqTypeId(i)
-  implicit def autoTagGroupId       (i: Int) = TagGroup.Id(i)
-  implicit def autoApplicableTagId  (i: Int) = ApplicableTag.Id(i)
+  implicit def autoTagGroupId       (i: Int) = TagGroupId(i)
+  implicit def autoApplicableTagId  (i: Int) = ApplicableTagId(i)
   implicit def autoRev              (i: Int) = Rev(i)
 
   implicit def autoReqTypePosO       (i: Int): Option[ReqTypePos]                 = Some(i)
@@ -44,8 +44,8 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
   implicit def autoCustomFieldTxtIdO (i: Int): Option[CustomField.Text.Id]        = Some(i)
   implicit def autoCustomIssueTypeIdO(i: Int): Option[CustomIssueType.Id]         = Some(i)
   implicit def autoCustomReqTypeIdO  (i: Int): Option[CustomReqTypeId]            = Some(i)
-  implicit def autoTagGroupIdO       (i: Int): Option[TagGroup.Id]                = Some(i)
-  implicit def autoApplicableTagIdO  (i: Int): Option[ApplicableTag.Id]           = Some(i)
+  implicit def autoTagGroupIdO       (i: Int): Option[TagGroupId]                 = Some(i)
+  implicit def autoApplicableTagIdO  (i: Int): Option[ApplicableTagId]            = Some(i)
 
   implicit def tagTreeTree(t: TagTree) = t.mapValues(_.children)
 
@@ -58,8 +58,8 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
   val allReqTypes: ApplicableReqTypes = ISubset.All()
 
   implicit class UnsafeIntExt(val a: Int) extends AnyVal {
-    def AT = ApplicableTag.Id(a)
-    def TG = TagGroup.Id(a)
+    def AT = ApplicableTagId(a)
+    def TG = TagGroupId(a)
   }
 
   implicit class UnsafeMustExt[A](val m: Must[A]) extends AnyVal {

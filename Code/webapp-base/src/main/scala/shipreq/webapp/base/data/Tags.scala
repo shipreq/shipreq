@@ -14,11 +14,12 @@ import shipreq.webapp.base.TypeclassDerivation._
 // =====================================================================================================================
 // A single tag. No relationships.
 
-import Tag.Id
-import DataImplicits._
+sealed trait TagId extends TaggedLong
+final case class TagGroupId     (value: Long) extends TagId with TaggedLong
+final case class ApplicableTagId(value: Long) extends TagId with TaggedLong
 
 sealed trait Tag {
-  val id: Id
+  val id: TagId
   val name: String
   val desc: Option[String]
   val alive: Alive
@@ -30,7 +31,7 @@ sealed trait Tag {
  * FR-246: BA shall be able to specify that a grouping cannot be applied.
  *         e.g. “Priority” shouldn't be applicable but its children should.
  */
-final case class TagGroup(id           : TagGroup.Id,
+final case class TagGroup(id           : TagGroupId,
                           name         : String,
                           desc         : Option[String],
                           mutexChildren: MutexChildren,
@@ -39,7 +40,7 @@ final case class TagGroup(id           : TagGroup.Id,
   override def tagType = TagType.Group
 }
 
-final case class ApplicableTag(id   : ApplicableTag.Id,
+final case class ApplicableTag(id   : ApplicableTagId,
                                name : String,
                                desc : Option[String],
                                key  : HashRefKey,
@@ -74,9 +75,7 @@ object TagType {
 }
 
 object Tag {
-  sealed trait Id extends TaggedLong
-
-  object IdAccess extends ObjDataId[Tag.type, Tag, Id] {
+  object IdAccess extends ObjDataId[Tag.type, Tag, TagId] {
     override def id(d: Tag) = d.id
     override val unapplyData: AnyRef => Option[Tag] = {case r: Tag => Some(r); case _ => None}
   }
@@ -96,26 +95,19 @@ object Tag {
 
   object CycleDetectors {
     val multimap =
-      CycleDetector.Directed.multimap[Vector, Id, Long](_.value, Vector.empty)
+      CycleDetector.Directed.multimap[Vector, TagId, Long](_.value, Vector.empty)
     // val tagTree = multimap.contramap((_: TagTree).mapValues(_.children))
 
     val tagTree =
-      CycleDetector[TagTree, Id](
+      CycleDetector[TagTree, TagId](
         _.keys.toStream,
-        CycleDetector.Directed.check[TagTree, Id, Long](_.get(_).fold(Stream.empty[Id])(_.children.toStream), _.value))
+        CycleDetector.Directed.check[TagTree, TagId, Long](_.get(_).fold(Stream.empty[TagId])(_.children.toStream), _.value))
   }
 
   import AutoDerive._
   implicit val equalityTG: UnivEq[TagGroup]      = deriveUnivEq
   implicit val equalityAT: UnivEq[ApplicableTag] = deriveUnivEq
   implicit val equality  : UnivEq[Tag]           = deriveUnivEq
-}
-
-object TagGroup {
-  final case class Id(value: Long) extends Tag.Id with TaggedLong
-}
-object ApplicableTag {
-  final case class Id(value: Long) extends Tag.Id with TaggedLong
 }
 
 // =====================================================================================================================
@@ -125,7 +117,7 @@ object TagTree {
   def empty: TagTree = IMap.empty(_.id)
 
   def prettyPrint(tt: TagTree): String = {
-    def lookup(id: Id) = tt.underlyingMap(id)
+    def lookup(id: TagId) = tt.underlyingMap(id)
     val rootIds = tt.values.foldLeft(tt.keySet)(_ -- _.children)
     val roots = rootIds.toStream.map(lookup).sortBy(_.tag.name)
     "TagTree\n" +
@@ -156,8 +148,8 @@ object TagTree {
 
   import FlatRow.{FilterPolicy, Status}
 
-  final case class FlatRow(tag: Tag, depth: Int, parentPath: Vector[Id], status: Status) {
-    @inline final def id: Id = tag.id
+  final case class FlatRow(tag: Tag, depth: Int, parentPath: Vector[TagId], status: Status) {
+    @inline final def id: TagId = tag.id
 
     def key: String =
       if (depth == 0)
@@ -179,15 +171,15 @@ object TagTree {
   val indentation =
     memo[Int, String]("\u00A0\u00A0" * _)
 
-  def topLevelIds(tt: TagTree): Set[Id] = {
-    val allChildren = tt.values.foldLeft(UnivEq.emptySet[Id])((q, t) => t.children.foldLeft(q)(_ + _))
+  def topLevelIds(tt: TagTree): Set[TagId] = {
+    val allChildren = tt.values.foldLeft(UnivEq.emptySet[TagId])((q, t) => t.children.foldLeft(q)(_ + _))
     tt.keySet -- allChildren
   }
 
   def flatten(tt: TagTree) =
     flatRows(topLevelIds(tt), tt.get(_).get) _
 
-  def flatRows(topLvlIds: Set[Id], lookup: Id => TagInTree)
+  def flatRows(topLvlIds: Set[TagId], lookup: TagId => TagInTree)
               (filter: Tag => Boolean, policy: FilterPolicy): Vector[FlatRow] = {
     import Status._
     import FilterPolicy._
@@ -195,7 +187,7 @@ object TagTree {
     val omitAnythingWithBadParent = policy ≟ OmitAnythingWithBadParent
     val omitNothing               = policy ≟ OmitNothing
 
-    def go(r: Vector[FlatRow], t: TagInTree, depth: Int, parentPath: Vector[Id]): Vector[FlatRow] =
+    def go(r: Vector[FlatRow], t: TagInTree, depth: Int, parentPath: Vector[TagId]): Vector[FlatRow] =
       if (filter(t.tag)) {
         var result = r :+ FlatRow(t.tag, depth, parentPath, Good)
         // Append children directly
@@ -231,25 +223,25 @@ object TagTree {
   }
 }
 
-final case class TagInTree(tag: Tag, children: Vector[Id]) {
-  @inline def id: Id = tag.id
+final case class TagInTree(tag: Tag, children: Vector[TagId]) {
+  @inline def id: TagId = tag.id
 
-  def modChildren(f: Vector[Id] => Vector[Id]): TagInTree = {
+  def modChildren(f: Vector[TagId] => Vector[TagId]): TagInTree = {
     val c = f(children)
     if (c eq children) this else TagInTree(tag, c)
   }
 
-  def removeChild(id: Id): TagInTree =
+  def removeChild(id: TagId): TagInTree =
     modChildren(c => if (hasChild(id)) c.filterNot(_ ≟ id) else c)
 
-  def hasChild(id: Id): Boolean =
+  def hasChild(id: TagId): Boolean =
     children contains id
 
   def lookupChildren(implicit tt: TagTree): Stream[Must[TagInTree]] =
     children.toStream.map(tt.apply)
 
   /** @return Itself and all reachable children. */
-  def transitiveChildren(implicit tt: TagTree): Must[Set[Id]] =
+  def transitiveChildren(implicit tt: TagTree): Must[Set[TagId]] =
     TagInTree.transitiveChildren(lookupChildren, Set(id))
 }
 
@@ -263,7 +255,7 @@ object TagInTree {
   val children = GenLens[TagInTree](_.children)
 
   /** @return Itself and all reachable children. */
-  @tailrec def transitiveChildren(queue: Stream[Must[TagInTree]], seen: Set[Id])(implicit tt: TagTree): Must[Set[Id]] =
+  @tailrec def transitiveChildren(queue: Stream[Must[TagInTree]], seen: Set[TagId])(implicit tt: TagTree): Must[Set[TagId]] =
     if (queue.isEmpty)
       Must.Exists(seen)
     else queue.head match {

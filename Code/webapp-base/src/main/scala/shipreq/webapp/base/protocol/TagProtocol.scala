@@ -7,11 +7,10 @@ import scalaz.{\/, Equal}
 import scalaz.std.AllInstances._
 import shipreq.base.util.{UnivEq, Util}
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.{TagId => Id, _}
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.delta.{Partition, RemoteDeltaP}
 import shipreq.webapp.base.TypeclassDerivation._
-import Tag.Id
 
 object TagProtocol {
 
@@ -89,7 +88,7 @@ object TagProtocol {
 
       val parents = tree
         .filter(_._2 contains id)
-        .foldLeft(UnivEq.emptyMap[Tag.Id, Option[Tag.Id]]) {
+        .foldLeft(UnivEq.emptyMap[Id, Option[Id]]) {
           case (m, (parent, sibs)) => m + (parent -> Util.position(sibs, id))
         }
 

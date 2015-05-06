@@ -15,10 +15,10 @@ import shipreq.webapp.client.util.ReusableVal
 // TODO Hide dead tags & maintain across edits (unless show deleted is on)
 
 object TagEditor {
-  type A      = ApplicableTag.Id
+  type A      = ApplicableTagId
   type Lookup = Map[String, ApplicableTag]
 
-  val editor = textSetEditor[ApplicableTag.Id]("TagEditor", Grammar.hashRefKey.seqFormat.apply)
+  val editor = textSetEditor[ApplicableTagId]("TagEditor", Grammar.hashRefKey.seqFormat.apply)
 
   def lookupForNoCol(p: Project): Must[Lookup] =
     lookupG(p, _.tagsNotUsedInColumns)

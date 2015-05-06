@@ -59,13 +59,13 @@ object ProjectDSL {
                   reqType: Option[ReqTypeId]                 = None,
                   alive  : Alive                             = Alive,
                   codes  : Set[ReqCode.Value]                = Set.empty,
-                  tags   : Set[ApplicableTag.Id]             = Set.empty,
+                  tags   : Set[ApplicableTagId]              = Set.empty,
                   impSrcs: Set[ReqId]                        = Set.empty,
                   impTgts: Set[ReqId]                        = Set.empty,
                   cftexts: Map[CFTextId, CFTextValue]        = Map.empty) extends ToState {
 
     def code   (rcs: ReqCode.Value*)         = copy(codes   = this.codes   ++ rcs)
-    def tag    (ids: ApplicableTag.Id*)      = copy(tags    = this.tags    ++ ids)
+    def tag    (ids: ApplicableTagId*)       = copy(tags    = this.tags    ++ ids)
     def impSrc (ids: ReqId*)                 = copy(impSrcs = this.impSrcs ++ ids)
     def impTgt (ids: ReqId*)                 = copy(impTgts = this.impTgts ++ ids)
     def cftext (k: CFTextId, v: CFTextValue) = copy(cftexts = this.cftexts.updated(k,v))

@@ -67,7 +67,7 @@ object TagProtocolTest extends TestSuite {
   val sampleTagTree_f = {
     def t(id: Int, name: String)(children: Int*) = TagInTree(
       ApplicableTag(id, name, None, s"id=$id", if (name contains "*") Dead else Alive),
-      children.toVector.map(ApplicableTag.Id(_)))
+      children.toVector.map(ApplicableTagId(_)))
     TagTree.empty.addAll(
       t( 1, "A"  )(2, 15, 17),
       t( 2, "B*" )(3, 6, 9, 12),

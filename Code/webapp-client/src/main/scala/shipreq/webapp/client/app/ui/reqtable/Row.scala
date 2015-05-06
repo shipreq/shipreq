@@ -29,12 +29,12 @@ case class Expansion(implicationSrc: Vector[Pubid],
                      reqCodes      : Vector[ReqCode.Value],
                      reqCodeTree   : Vector[ReqCodeTreeItem],
                      cfImps        : Map[CustomField.Implication.Id, Vector[Pubid]],
-                     cfTags        : Map[CustomField.Tag.Id,         Vector[ApplicableTag.Id]]) {
+                     cfTags        : Map[CustomField.Tag.Id,         Vector[ApplicableTagId]]) {
 
   def impsForCF(id: CustomField.Implication.Id): Vector[Pubid] =
     cfImps.getOrElse(id, Vector.empty)
 
-  def tagsForCF(id: CustomField.Tag.Id): Vector[ApplicableTag.Id] =
+  def tagsForCF(id: CustomField.Tag.Id): Vector[ApplicableTagId] =
     cfTags.getOrElse(id, Vector.empty)
 }
 
@@ -75,7 +75,7 @@ object Expansion {
  * Sortable data (ie. lists) that are never expanded.
  */
 @Lenses
-case class MultiValues(tags: Vector[ApplicableTag.Id])
+case class MultiValues(tags: Vector[ApplicableTagId])
 
 object MultiValues {
   implicit val equality: UnivEq[MultiValues] = deriveUnivEq

@@ -8,7 +8,7 @@ import shipreq.base.util.ScalaExt._
 import japgolly.nyaya.util._
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.lib.ServerProtocol
-import shipreq.webapp.base.data._, DataImplicits._
+import shipreq.webapp.base.data, data._, DataImplicits._
 import shipreq.webapp.base.delta._
 import shipreq.webapp.base.text.{Text => T}
 import DeletionAction._
@@ -82,7 +82,7 @@ class WIP {
     import shipreq.webapp.base.test.ProjectDSL._
 
     val List(co,mf,fr) = List[ReqTypeId](1,2,3).map(Some(_))
-    val List(p1,p3,p5,rel,wip,v1x) = List[ApplicableTag.Id](4,3,2,22,11,21)
+    val List(p1,p3,p5,rel,wip,v1x) = List[ApplicableTagId](4,3,2,22,11,21)
     val (p2,p4) = (p3,p5)
     val mfs = (0 to 28).toVector.map(i => GenericReqId(i + 1000))
 
@@ -255,7 +255,7 @@ class WIP {
 
   // -------------------------------------------------------------------------------------------------------------------
   object tagCrud {
-    import Tag.Id
+    import data.{TagId => Id}
     import TagProtocol._
 
     def modR(f: TagTree => TagTree): Option[Rev] = {
@@ -313,9 +313,9 @@ class WIP {
         or.fold(res)(PovRelations.trustedApply1(_, i, res)) // TODO Possible cycle error
       })
 
-    def nextId: Tag.Id = TagGroup.Id(p.tags.data.keySet.map(_.value).max + 1)
-    implicit def genIdToTG(g: Tag.Id) = TagGroup.Id(g.value)
-    implicit def genIdToAT(g: Tag.Id) = ApplicableTag.Id(g.value)
+    def nextId: TagId = TagGroupId(p.tags.data.keySet.map(_.value).max + 1)
+    implicit def genIdToTG(g: TagId) = TagGroupId(g.value)
+    implicit def genIdToAT(g: TagId) = ApplicableTagId(g.value)
 
     def build(i: Id): Values => Tag = {
       case TagGroupValues(n, mc, d)     => TagGroup(i, n, d, mc, Alive)

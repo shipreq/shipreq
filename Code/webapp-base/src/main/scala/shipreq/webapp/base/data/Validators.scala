@@ -50,7 +50,7 @@ object Validators {
     }
 
     /** Validation state (external data) required to validate HashRefKey uniqueness. */
-    case class HashRefKeyVS(tagData        : HashRefKeyVS.Data[Tag.Id],
+    case class HashRefKeyVS(tagData        : HashRefKeyVS.Data[TagId],
                             customIssueData: HashRefKeyVS.Data[CustomIssueType.Id])
 
     // DD-19: Hashtag-like refkeys (groupings, incmp) must be unique.
@@ -165,7 +165,7 @@ object Validators {
           case _                  => None
         }.fieldName(tagIdField)
 
-      val tagIdS = ValidationPartU.requireFromOption[Tag.Id](tagIdField).liftS[S].toValidator
+      val tagIdS = ValidationPartU.requireFromOption[TagId](tagIdField).liftS[S].toValidator
                      .addValidation(tagIdUniqueness)
 
       val all = tagIdS ⊗ mandatoryS ⊗ reqTypesS

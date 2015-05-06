@@ -83,7 +83,7 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
     case _: ReqCodeGroupRow => `N/A`
   }
 
-  private def tags(lens: Optional[Row, Vector[ApplicableTag.Id]]) = make {
+  private def tags(lens: Optional[Row, Vector[ApplicableTagId]]) = make {
     case r: GenericReqRow   => maybeEmpty(lens, r)(widgets.tags)
     case _: ReqCodeGroupRow => `N/A`
   }

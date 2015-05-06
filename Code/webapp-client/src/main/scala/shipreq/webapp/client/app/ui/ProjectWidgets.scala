@@ -81,7 +81,7 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
         s"${rt.mnemonic.value}")
     ))
 
-  val tag = memoM[ApplicableTag.Id]("Tag", id =>
+  val tag = memoM[ApplicableTagId]("Tag", id =>
     project.atag(id).map(tag =>
       <.span(
         *.tag,
@@ -90,7 +90,7 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
       )
     ))
 
-  def tags(tags: Vector[ApplicableTag.Id]): ReactElement =
+  def tags(tags: Vector[ApplicableTagId]): ReactElement =
     <.div(tags.map(id => tag(id)(): TagMod): _*)
 
   def katex(m: Atom.PlainTextMarkup#MathTeX) =

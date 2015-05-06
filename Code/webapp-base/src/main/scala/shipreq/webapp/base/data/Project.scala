@@ -63,14 +63,14 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
     ShowSize.Node.sum("Atoms", counted: _*)
   }
 
-  def atag(id: ApplicableTag.Id): Must[ApplicableTag] =
+  def atag(id: ApplicableTagId): Must[ApplicableTag] =
     Must.fromOption(tags.data.get(id), s"No tag found with $id")
       .flatMap(t => t.tag match {
         case a: ApplicableTag => Must(a)
         case _                => Must.Failed(s"$t is not an ApplicableTag")
       })
 
-  def atags[M[X] <: TraversableOnce[X]: Monoidish](ids: M[ApplicableTag.Id]): Must[M[ApplicableTag]] =
+  def atags[M[X] <: TraversableOnce[X]: Monoidish](ids: M[ApplicableTagId]): Must[M[ApplicableTag]] =
     Must.foldMapM(ids)(atag)
 
   def customField[I <: CustomField.Id, D <: CustomField](id: I)(implicit d: DataIdAux[D, I]): Must[D] =
@@ -122,14 +122,14 @@ final class TagColumnDistribution(p: Project) {
   // transitive closure at O(V²) space and O(V²+VE) time.
   private[this] implicit val tagTree = p.tags.data
 
-  type TagIds = Must[Set[ApplicableTag.Id]]
+  type TagIds = Must[Set[ApplicableTagId]]
 
   val tagIdsForColumn: CustomField.Tag.Id => TagIds =
     memo(fid =>
       p.customField(fid).flatMap(field =>
         tagTree(field.tagId)
           .flatMap(_.transitiveChildren)
-          .map(_.filterT[ApplicableTag.Id].toSet)))
+          .map(_.filterT[ApplicableTagId].toSet)))
 
   lazy val tagIdsUsedInColumns: TagIds =
     Must.foldMapMF(p.customTagFields)(tagIdsForColumn)
@@ -137,7 +137,7 @@ final class TagColumnDistribution(p: Project) {
   lazy val tagIdsNotUsedInColumns: TagIds =
     tagIdsUsedInColumns.map(s =>
       tagTree.vstream(_.tag.id)
-        .filterT[ApplicableTag.Id]
+        .filterT[ApplicableTagId]
         .filterNot(s.contains)
         .toSet)
 

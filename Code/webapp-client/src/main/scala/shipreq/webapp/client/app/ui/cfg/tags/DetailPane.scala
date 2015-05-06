@@ -4,11 +4,10 @@ import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import scalaz.Equal
 import scalaz.effect.IO
 import scalaz.std.option.optionEqual
-import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.{TagId => Id, _}
 import shipreq.webapp.client.app.ui.SelectOne
 import shipreq.webapp.client.util.DND
 import SelectOne.Choice
-import Tag.Id
 import TagTree.FlatRow
 
 private[tags] object DetailPane {

@@ -17,7 +17,6 @@ import shipreq.webapp.base.test.{SampleProject => S}
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.client.ClientData
 import shipreq.webapp.client.test._
-import Tag.Id
 import TestUtil._
 
 object CfgTagsTest extends TestSuite {

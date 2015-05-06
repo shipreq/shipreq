@@ -97,13 +97,13 @@ object Atom {
 
   /** An inline tag, like "#pri=high" */
   trait TagRef extends Base {
-    case class TagRef(value: ApplicableTag.Id) extends Atom
+    case class TagRef(value: ApplicableTagId) extends Atom
   }
 
   // Prove that UnivEq[Atom] is acceptable.
   // A proof for all atom args should be added here.
   UnivEq[NonEmptyVector[Vector[String]]]
-  UnivEq[ApplicableTag.Id]
+  UnivEq[ApplicableTagId]
   UnivEq[CustomIssueType.Id]
   UnivEq[ReqId]
 

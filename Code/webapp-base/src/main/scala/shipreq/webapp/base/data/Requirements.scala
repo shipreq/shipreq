@@ -252,7 +252,7 @@ object GenericReq {
 object ReqFieldData {
   /** U = Unidirectional */
   type ImplicationsU = Multimap[ReqId, Set, ReqId]
-  type Tags          = Multimap[ReqId, Set, ApplicableTag.Id]
+  type Tags          = Multimap[ReqId, Set, ApplicableTagId]
   type Text          = Map[CustomField.Text.Id, Map[ReqId, Text.CustomTextField.NonEmptyText]]
 
   def implicationCycleDetector =

@@ -71,7 +71,7 @@ object PlainText {
       } yield
       G.reflinkSurround(pubid(rt, pid.pos))
 
-    def tagRef(id: ApplicableTag.Id): Must[String] =
+    def tagRef(id: ApplicableTagId): Must[String] =
       p.atag(id).map(t => hashtag(t.key))
 
     def issue(id: CustomIssueType.Id, desc: Option[String]): Must[String] =
