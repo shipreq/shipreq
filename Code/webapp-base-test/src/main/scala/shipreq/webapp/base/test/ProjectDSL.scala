@@ -81,7 +81,7 @@ object ProjectDSL {
         var maxReqCodeId = p.maxReqCodeId
         def nextReqCodeId() = {
           maxReqCodeId += 1
-          ReqCode.Id(maxReqCodeId)
+          ReqCodeId(maxReqCodeId)
         }
         def reqCodeData() =
           ReqCode.Data(Some(ReqCode.ActiveData(nextReqCodeId(), id)), UnivEq.emptySet, UnivEq.emptyMultimap)
@@ -113,7 +113,7 @@ object ProjectDSL {
         var maxReqCodeId = p.maxReqCodeId
         def nextReqCodeId() = {
           maxReqCodeId += 1
-          ReqCode.Id(maxReqCodeId)
+          ReqCodeId(maxReqCodeId)
         }
 
         val g  = ReqCodeGroup(title)

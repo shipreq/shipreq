@@ -103,7 +103,7 @@ case class GenericReqRow(req: GenericReq, exp: Expansion, mv: MultiValues) exten
   override def toString = s"\n$req\n$exp\n$mv\n"
 }
 
-case class ReqCodeGroupRow(reqCodeId      : ReqCode.Id,
+case class ReqCodeGroupRow(reqCodeId      : ReqCodeId,
                            group          : ReqCodeGroup,
                            reqCode        : ReqCode.Value,
                            reqCodeTreeItem: Option[ReqCodeTreeItem]) extends Row {
@@ -113,7 +113,7 @@ case class ReqCodeGroupRow(reqCodeId      : ReqCode.Id,
 object Row {
   sealed trait Id
   case class GenericReqRowId(value: GenericReqId) extends Id
-  case class ReqCodeGroupRowId(value: ReqCode.Id) extends Id
+  case class ReqCodeGroupRowId(value: ReqCodeId) extends Id
 
   implicit val idEqualityR : UnivEq[GenericReqRowId]   = deriveUnivEq
   implicit val idEqualityG : UnivEq[ReqCodeGroupRowId] = deriveUnivEq

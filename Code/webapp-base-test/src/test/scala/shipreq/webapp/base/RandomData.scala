@@ -781,12 +781,12 @@ object RandomData {
       node.nev
 
     lazy val id =
-      RandomData.id map ReqCode.Id
+      RandomData.id map ReqCodeId
 
     type FlatInstance = (Value, Data)
 
     val distinctIds =
-      Distinct.flong.xmap(Id)(_.value).distinct
+      Distinct.flong.xmap(ReqCodeId)(_.value).distinct
 
     val distinctReqCodes = {
       def fix(ss: Set[ReqCode.Value]): ReqCode.Value = {
@@ -809,7 +809,7 @@ object RandomData {
       val ids1 = distinctIds at ActiveData.id at dataActive
       val ids2 = distinctIds.lift[Set] at Data.refsToGroup at flatData
       val ids3 = distinctIds.lift[Set]
-        .liftMapValues.contramap[Multimap[ReqId, Set, Id]](_.m, (_, m: Map[ReqId, Set[Id]]) => Multimap(m))
+        .liftMapValues.contramap[Multimap[ReqId, Set, ReqCodeId]](_.m, (_, m: Map[ReqId, Set[ReqCodeId]]) => Multimap(m))
         // TODO ↑ Use liftMultimapValues when Nyaya gets it
         .at(flatData ^|-> Data.refsToReqs)
       val id = ids1 + ids2 + ids3
@@ -821,7 +821,7 @@ object RandomData {
 
     val smallIdSet = id.set.lim(3)
 
-    val gEmptyRefsToReqs: Gen[Multimap[ReqId, Set, Id]] =
+    val gEmptyRefsToReqs: Gen[Multimap[ReqId, Set, ReqCodeId]] =
       Gen.insert(Multimap.empty)
 
     def data(ogReqId: Option[Gen[ReqId]], gGroup: Gen[ReqCodeGroup]): Gen[Data] = {
@@ -833,7 +833,7 @@ object RandomData {
           case None    => gGroup
         }
 
-      val gRefsToReqs: Gen[Multimap[ReqId, Set, Id]] =
+      val gRefsToReqs: Gen[Multimap[ReqId, Set, ReqCodeId]] =
         ogReqId match {
           case Some(g) => g.mapTo(smallIdSet).map(Multimap(_))
           case None    => gEmptyRefsToReqs

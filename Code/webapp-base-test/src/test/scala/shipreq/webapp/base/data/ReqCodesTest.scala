@@ -43,7 +43,7 @@ object ReqCodesTest extends TestSuite {
       targets ← RandomData.reqId.list.sup
       trie    ← RandomData.reqCode.trie(Gen oneofO targets).lim(10)
       target  ← Gen.newOrOld(RandomData.reqId)(targets) // TODO add SHRs
-      maxId   = ReqCode.Id(trie.cataV(0L)((q,_,d) => (q #:: d.ids.map(_.value)).max))
+      maxId   = ReqCodeId(trie.cataV(0L)((q,_,d) => (q #:: d.ids.map(_.value)).max))
       code    ← Gen.newOrOld(RandomData.reqCode.value)(trie.flatStream.map(_._1))
     } yield TrieProps(trie, Data(maxId + 1, target), code)
 

@@ -25,7 +25,7 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
     NonEmptyVector(v.head, v.tail)
   }
 
-  implicit def autoReqCodeId        (i: Int) = ReqCode.Id(i)
+  implicit def autoReqCodeId        (i: Int) = ReqCodeId(i)
   implicit def autoReqTypePos       (i: Int) = ReqTypePos(i)
   implicit def autoGenericReqId     (i: Int) = GenericReqId(i)
   implicit def autoCustomFieldImpId (i: Int) = CustomField.Implication.Id(i)

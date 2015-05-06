@@ -16,6 +16,9 @@ import shipreq.webapp.base.TypeclassDerivation._
 // ===================================================================================================================
 // ReqCodes: A hierarchy of semantic IDs
 
+// TODO Why the hell aren't IDs AnyVals?
+final case class ReqCodeId(value: Long) extends TaggedLong
+
 /**
  * [[ReqCode.Trie]] contains the hierarchy of codes and their targets.
  * [[ReqCodes]] is a bundle of all req-codes in a project.
@@ -89,15 +92,12 @@ object ReqCode {
 
   implicit val targetEquality: UnivEq[Target] = deriveUnivEq
 
-  // TODO Why the hell aren't IDs AnyVals?
-  final case class Id(value: Long) extends TaggedLong
-
   /**
    * Data associated with a ReqCode in the case that the ReqCode exists in the current user-visible tree of ReqCodes.
    * (As opposed to a ReqCode that exists for technical reasons and doesn't exist as far as the user is concerned.)
    */
   @Lenses
-  final case class ActiveData(id: Id, target: Target)
+  final case class ActiveData(id: ReqCodeId, target: Target)
 
   /**
    * Data associated with each [[ReqCode.Value]].
@@ -109,10 +109,10 @@ object ReqCode {
    */
   @Lenses
   final case class Data(active     : Option[ActiveData],
-                        refsToGroup: Set[Id],
-                        refsToReqs : Multimap[ReqId, Set, Id]) {
+                        refsToGroup: Set[ReqCodeId],
+                        refsToReqs : Multimap[ReqId, Set, ReqCodeId]) {
 
-    def ids: Stream[Id] =
+    def ids: Stream[ReqCodeId] =
       active.toStream.map(_.id) append
         refsToGroup.toStream append
         refsToReqs.allValues

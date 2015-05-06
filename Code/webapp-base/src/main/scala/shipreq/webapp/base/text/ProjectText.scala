@@ -28,9 +28,9 @@ abstract class ProjectText[Out](project: Project) {
   }
 
   private val reqCodeGroupTitleMemo =
-    new scala.collection.mutable.HashMap[ReqCode.Id, Out]
+    new scala.collection.mutable.HashMap[ReqCodeId, Out]
 
-  def reqCodeGroupTitle(id: ReqCode.Id, g: ReqCodeGroup): Out =
+  def reqCodeGroupTitle(id: ReqCodeId, g: ReqCodeGroup): Out =
     reqCodeGroupTitleMemo.getOrElseUpdate(id, format(g.title))
 
   def reqTitleById(id: ReqId): Must[Out] =
