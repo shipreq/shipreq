@@ -661,31 +661,31 @@ object RandomData {
     Gen.oneofG(genericReqId)
   }
 
-  def pubidS(reqTypeIds: NonEmptyVector[ReqType.Id])(reqId: Req.Id): StateG[Pubid.Register, Pubid] =
+  def pubidS(reqTypeIds: NonEmptyVector[ReqType.Id])(reqId: Req.Id): StateG[PubidRegister, Pubid] =
     StateT(register =>
       oneofV(reqTypeIds).map(reqTypeId =>
-        Pubid.alloc(reqId, reqTypeId, register)))
+        register.alloc(reqId, reqTypeId)))
 
-  def genericReqIdS(pubidS: Req.Id => StateG[Pubid.Register, Pubid]): StateG[Pubid.Register, Req.Id] =
+  def genericReqIdS(pubidS: Req.Id => StateG[PubidRegister, Pubid]): StateG[PubidRegister, Req.Id] =
     for {
-      id <- genericReqId |> gliftS[Pubid.Register, GenericReq.Id]
+      id <- genericReqId |> gliftS[PubidRegister, GenericReq.Id]
       _  <- pubidS(id)
     } yield id
 
-  def genericReqS(pubidS: Req.Id => StateG[Pubid.Register, Pubid],
+  def genericReqS(pubidS: Req.Id => StateG[PubidRegister, Pubid],
 //                  genReqId: Option[Gen[Req.Id]],
-                  genIssueType: Option[Gen[CustomIssueType.Id]]): StateG[Pubid.Register, GenericReq] =
+                  genIssueType: Option[Gen[CustomIssueType.Id]]): StateG[PubidRegister, GenericReq] =
     for {
-      id     <- genericReqId |> gliftS[Pubid.Register, GenericReq.Id]
+      id     <- genericReqId |> gliftS[PubidRegister, GenericReq.Id]
       pubid  <- pubidS(id)
-      reqIds <- stateGen((r: Pubid.Register) => Gen insert r.allValues)
+      reqIds <- stateGen((r: PubidRegister) => Gen insert r.value.allValues)
       desc   <- TextGen.genericReqTitleAtom(Gen.oneofO(reqIds), genIssueType).text
       live   <- alive
     } yield GenericReq(id, pubid, desc, live)
 
-  def pubidRegisterAnd[A, B](inita: A, genb: StateG[Pubid.Register, B])
-                            (f: (A, B) => A): GenS[(Pubid.Register, A)] = {
-    val init = StateT.stateT[Gen, Pubid.Register, A](inita)
+  def pubidRegisterAnd[A, B](inita: A, genb: StateG[PubidRegister, B])
+                            (f: (A, B) => A): GenS[(PubidRegister, A)] = {
+    val init = StateT.stateT[Gen, PubidRegister, A](inita)
     GenS.choosesize flatMap { sz =>
       val prog = Stream.fill(sz)(genb).foldLeft(init)((sn, ga) =>
         for {
@@ -693,11 +693,11 @@ object RandomData {
           a <- ga
         } yield f(b, a)
       )
-      prog(Pubid.emptyRegister)
+      prog(PubidRegister.empty)
     }
   }
 
-  def pubidRegisterAndIds(reqTypeIds: NonEmptyVector[ReqType.Id]): GenS[(Pubid.Register, Set[Req.Id])] =
+  def pubidRegisterAndIds(reqTypeIds: NonEmptyVector[ReqType.Id]): GenS[(PubidRegister, Set[Req.Id])] =
     pubidRegisterAnd(Set.empty[Req.Id], genericReqIdS(pubidS(reqTypeIds)))(_ + _)
 
   def requirements(reqTypeIds: NonEmptyVector[ReqType.Id],

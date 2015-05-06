@@ -99,7 +99,7 @@ object Parsers {
       (m, n) =>
         project.reqTypesByMnemonic.get(m)
           .map(t => Pubid(t.reqTypeId, n))
-          .flatMap(project.reqs.data.reqIdByPubid)
+          .flatMap(project.reqs.data.pubids.apply)
 
     def hashRef = rule(
       G.hashRefKey.prefix ~ capture(grammarStr(G.hashRefKey)(_.firstChar, _.allChars, _.length))

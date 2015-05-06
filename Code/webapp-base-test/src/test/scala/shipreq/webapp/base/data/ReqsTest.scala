@@ -12,24 +12,24 @@ import shipreq.webapp.base.data._
 object ReqsTest extends TestSuite {
 
   val oneReqPerReqtypeProp =
-    Prop.distinctC[Vector, Req.Id]("Req ID").forall((_: Pubid.Register).m.values.toStream)
+    Prop.distinctC[Vector, Req.Id]("Req ID").forall((_: PubidRegister).value.m.values.toStream)
 
-  case class PubidRegisterProps(register: Pubid.Register, req: Req.Id, reqType: ReqType.Id) {
+  case class PubidRegisterProps(register: PubidRegister, req: Req.Id, reqType: ReqType.Id) {
     val E            = EvalOver(this)
-    val (reg2, pid2) = Pubid.alloc(req, reqType, register)
-    val (reg3, pid3) = Pubid.alloc(req, reqType, reg2)
+    val (reg2, pid2) = register.alloc(req, reqType)
+    val (reg3, pid3) = reg2    .alloc(req, reqType)
 
     def allocPubidLookup =
-      E.equal("lookup(alloc(req)) = req", Pubid.lookup(reg2, pid2), req.some)
+      E.equal("lookup(alloc(req)) = req", reg2(pid2), req.some)
 
     def allocTwiceIsNoop = "allocTwiceIsNoop" rename_: (
       E.equal("Pubid",    pid2, pid3) ∧
       E.equal("Register", reg2, reg3))
 
-    def oneReqPerReqtype(name: String, r: Pubid.Register) =
+    def oneReqPerReqtype(name: String, r: PubidRegister) =
       (oneReqPerReqtypeProp rename s"$name: One req/reqType")(r).liftL
 
-    def all = "Pubid Register" rename_: (
+    def all = "PubidRegister" rename_: (
       (allocPubidLookup ==> allocTwiceIsNoop) ∧
       (oneReqPerReqtype("Input", register) ==> oneReqPerReqtype("After alloc", reg2))
     )

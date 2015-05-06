@@ -24,7 +24,7 @@ object ProjectDSL {
                           nextId        : Long,
                           defaultReqType: ReqType,
                           reqs          : IMap[Req.Id, Req],
-                          pubids        : Pubid.Register,
+                          pubids        : PubidRegister,
                           reqCodeTrie   : ReqCode.Trie,
                           maxReqCodeId  : Long,
                           text          : ReqFieldData.Text,
@@ -87,7 +87,7 @@ object ProjectDSL {
           ReqCode.Data(Some(ReqCode.ActiveData(nextReqCodeId(), id)), UnivEq.emptySet, UnivEq.emptyMultimap)
 
         val reqTypeId   = this.reqType.getOrElse(p.defaultReqType.reqTypeId)
-        val (pr, pubid) = Pubid.alloc(id, reqTypeId, p.pubids)
+        val (pr, pubid) = p.pubids.alloc(id, reqTypeId)
         val req         = GenericReq(id, pubid, title, alive)
         val text        = cftexts.mapValues(t => Map.empty[Req.Id, CFTextValue].updated(id, t))
         val tags        = p.tags.addvs(id, this.tags)

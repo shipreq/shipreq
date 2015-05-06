@@ -160,10 +160,10 @@ object DataProp {
       Prop.forall((_: T).reqs.values.toStream)(t =>
         Prop.equal[Req]("Req's pubid refers to itself in the Pubid register")(
           _.id.some,
-          r => t.reqIdByPubid(r.pubid)))
+          r => t.pubids(r.pubid)))
 
     def pubidsResolveToReqs =
-      Prop.whitelist[T]("Pubid register")(_.reqs.keySet, _.pubids.m.vstreamf(_.toStream))
+      Prop.whitelist[T]("Pubid register")(_.reqs.keySet, _.pubids.value.m.vstreamf(_.toStream))
 
     lazy val all =
       revAnd(reqPubidsInRegister ∧ pubidsResolveToReqs) rename "Requirements"
@@ -329,7 +329,7 @@ object DataProp {
           _.fields.data.customFields.values.toStream.flatMap(f => isubsetContents(f.reqTypes).toStream))
       ∧ validReqTypeIds("CustomField.Implication.reqTypeIds",
           p => fields.filteredFields({ case t: CustomField.Implication => t.reqTypeId})(p.fields.data))
-      ∧ validReqTypeIds("Pubid keys",                      _.reqs.data.pubids.m.keys)
+      ∧ validReqTypeIds("Pubid keys",                      _.reqs.data.pubids.value.m.keys)
       ∧ validFieldIds  ("ReqFieldData.text TextField ids", _.reqFieldData.data.text.keys)
       ∧ validReqIds    ("ReqFieldData.text.*.reqIds",      _.reqFieldData.data.text.vstreamf(_.keys.toStream))
       ∧ validReqIds    ("ReqFieldData.tags keys",          _.reqFieldData.data.tags.keys)

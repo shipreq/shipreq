@@ -182,28 +182,26 @@ final case class ReqTypePos(value: Int) extends TaggedInt
 final case class Pubid(reqTypeId: ReqType.Id, pos: ReqTypePos)
 
 object Pubid {
-
   implicit val equality: UnivEq[Pubid] = deriveUnivEq
+}
 
-  /**
-   * Once a (reqtype x position) is allocated, it is never removed.
-   * Thus, the 0-based position in the vector corresponds with 1-based [[ReqTypePos]] values.
-   */
-  type Register = Multimap[ReqType.Id, Vector, Req.Id]
+/**
+ * Once a (reqtype x position) is allocated, it is never removed.
+ * Thus, the 0-based position in the vector corresponds with 1-based [[ReqTypePos]] values.
+ */
+case class PubidRegister(value: Multimap[ReqType.Id, Vector, Req.Id]) {
 
-  val emptyRegister: Register = UnivEq.emptyMultimap
-
-  def alloc(reqId: Req.Id, reqTypeId: ReqType.Id, register: Register): (Register, Pubid) = {
-    val cur = register(reqTypeId)
+  def alloc(reqId: Req.Id, reqTypeId: ReqType.Id): (PubidRegister, Pubid) = {
+    val cur = value(reqTypeId)
     val i = cur.indexWhere(_ ≟ reqId)
     if (i >= 0)
-      (register, Pubid(reqTypeId, ReqTypePos(i + 1)))
+      (this, Pubid(reqTypeId, ReqTypePos(i + 1)))
     else
-      (register.add(reqTypeId, reqId), Pubid(reqTypeId, ReqTypePos(cur.size + 1)))
+      (PubidRegister(value.add(reqTypeId, reqId)), Pubid(reqTypeId, ReqTypePos(cur.size + 1)))
   }
 
-  def lookup(register: Register, id: Pubid): Option[Req.Id] = {
-    val v = register(id.reqTypeId)
+  def apply(id: Pubid): Option[Req.Id] = {
+    val v = value(id.reqTypeId)
     val i = id.pos.value - 1
     try {
       Some(v(i))
@@ -211,6 +209,11 @@ object Pubid {
       case _: IndexOutOfBoundsException => None
     }
   }
+}
+
+object PubidRegister {
+  implicit def equality: UnivEq[PubidRegister] = deriveUnivEq
+  def empty = PubidRegister(UnivEq.emptyMultimap)
 }
 
 // ===================================================================================================================
@@ -272,16 +275,13 @@ case class ReqFieldData(text        : ReqFieldData.Text,
                         tags        : ReqFieldData.Tags,
                         implications: ReqFieldData.Implications)
 
-case class Requirements(reqs: IMap[Req.Id, Req], pubids: Pubid.Register) {
+case class Requirements(reqs: IMap[Req.Id, Req], pubids: PubidRegister) {
 
   def req(id: Req.Id): Option[Req] =
     reqs.get(id)
 
   def reqByPubid(id: Pubid): Option[Req] =
-    reqIdByPubid(id) flatMap req
-
-  def reqIdByPubid(id: Pubid): Option[Req.Id] =
-    Pubid.lookup(pubids, id)
+    pubids(id) flatMap req
 
   def reqM(id: Req.Id): Must[Req] =
     Must.fromOption(req(id), s"Req $id not found.")
@@ -290,7 +290,7 @@ case class Requirements(reqs: IMap[Req.Id, Req], pubids: Pubid.Register) {
     Must.fromOption(reqByPubid(id), s"Req for $id not found.")
 
   def reqIdByPubidM(id: Pubid): Must[Req.Id] =
-    Must.fromOption(reqIdByPubid(id), s"Req for $id not found.")
+    Must.fromOption(pubids(id), s"Req for $id not found.")
 
   def reqsByPubidM[M[X] <: TraversableOnce[X]: Monoidish](ids: M[Pubid]): Must[M[Req]] =
     Must.foldMapM(ids)(reqByPubidM)

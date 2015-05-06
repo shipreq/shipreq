@@ -73,7 +73,7 @@ class WIP {
       )))
     }
 
-    lazy val reqs     = RevAnd(40, Requirements(IMap.empty(_.id), Pubid.emptyRegister))
+    lazy val reqs     = RevAnd(40, Requirements(IMap.empty(_.id), PubidRegister.empty))
     lazy val reqCodes = RevAnd(50, ReqCodes(Map.empty))
     lazy val reqData  = RevAnd(60, ReqFieldData(Map.empty, Multimap.empty, ReqFieldData.Implications(Multimap.empty)))
 
