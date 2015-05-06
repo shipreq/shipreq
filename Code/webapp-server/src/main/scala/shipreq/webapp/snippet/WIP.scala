@@ -361,7 +361,7 @@ class WIP {
     import CfgAction._
     import shipreq.webapp.base.data.{CustomField => CF, CustomFieldId => Id}
 
-    def apply(deletions: Set[Field.Id], updates: List[Delta]): RemoteDelta = {
+    def apply(deletions: Set[FieldId], updates: List[Delta]): RemoteDelta = {
       delay()
       val rev = p.fields.rev.succ
       val rdg = RemoteDeltaG(Partition.Fields, rev, rev)(deletions, updates)

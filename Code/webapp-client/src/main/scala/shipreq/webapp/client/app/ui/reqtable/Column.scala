@@ -81,6 +81,6 @@ object Column {
     }
   }
 
-  def all(customFieldsIds: TraversableOnce[data.CustomFieldId]): NonEmptyVector[Column] =
-    customFieldsIds.toVector.map(CustomField) ++: builtInValues
+  def all(customFieldIds: TraversableOnce[data.CustomFieldId]): NonEmptyVector[Column] =
+    customFieldIds.toVector.map(CustomField) ++: builtInValues
 }

@@ -76,6 +76,25 @@ case object Deletable extends Deletable with (Boolean <=> Deletable) {
   case object Not extends Deletable
 }
 
+/** type [[FieldId]] = [[StaticField]] | [[CustomFieldId]] */
+sealed trait FieldId {
+  def foldId[A](s: StaticField => A, c: CustomFieldId => A): A
+}
+
+object FieldId {
+  implicit object IdGeneric extends Generic[FieldId] {
+    override type Repr = StaticField :+: CustomFieldId :+: CNil
+    override def to  (id: FieldId): Repr = id.foldId(Coproduct[Repr](_), Coproduct[Repr](_))
+    override def from(co: Repr): FieldId = co match {
+      case Inl(s)      => s
+      case Inr(Inl(c)) => c
+      case _           => ???
+    }
+  }
+
+  implicit val idEquality: UnivEq[FieldId] = deriveUnivEq
+}
+
 sealed trait Field {
   def fieldType: FieldType
   def reqTypes : Field.ApplicableReqTypes
@@ -87,31 +106,14 @@ sealed trait Field {
 
   def fold[A](s: StaticField => A, c: CustomField => A): A
 
-  final def fieldId: Field.Id =
+  final def fieldId: FieldId =
     fold(s => s, _.id)
 }
 
 object Field {
   type ApplicableReqTypes = ISubset[Set, ReqTypeId]
 
-  /** type [[Id]] = [[StaticField]] | [[CustomFieldId]] */
-  sealed trait Id {
-    def foldId[A](s: StaticField => A, c: CustomFieldId => A): A
-  }
-
-  implicit object IdGeneric extends Generic[Id] {
-    override type Repr = StaticField :+: CustomFieldId :+: CNil
-    override def to  (id: Id): Repr = id.foldId(Coproduct[Repr](_), Coproduct[Repr](_))
-    override def from(co: Repr): Id = co match {
-      case Inl(s)      => s
-      case Inr(Inl(c)) => c
-      case _           => ???
-    }
-  }
-
   implicit lazy val applicableReqTypesEquality: UnivEq[ApplicableReqTypes] = implicitly
-
-  implicit val idEquality: UnivEq[Id] = deriveUnivEq
 
   val filterAlive: Field => Boolean =
     _.fold(_ => true, _.alive ≟ Alive)
@@ -138,7 +140,7 @@ sealed abstract class StaticField(         val name     : String,
                                   override val reqTypes : Field.ApplicableReqTypes,
                                   override val mandatory: Mandatory,
                                            val deletable: Deletable,
-                                  override val keyO     : Option[FieldRefKey]) extends Field with Field.Id {
+                                  override val keyO     : Option[FieldRefKey]) extends Field with FieldId {
 
   override final def independentName = Some(name)
 
@@ -174,7 +176,7 @@ object StaticField {
   implicit val equality: UnivEq[StaticField] = { import AutoDerive._; deriveUnivEq }
 }
 
-sealed abstract class CustomFieldId extends TaggedLong with Field.Id {
+sealed abstract class CustomFieldId extends TaggedLong with FieldId {
   final def foldId[A](s: StaticField => A, c: CustomFieldId => A): A = c(this)
 }
 
@@ -297,7 +299,7 @@ object CustomField {
 // Set
 
 case class FieldSet(customFields: IMap[CustomFieldId, CustomField],
-                    order       : Vector[Field.Id]) {
+                    order       : Vector[FieldId]) {
 
   lazy val fields: Must[Vector[Field]] =
     Traverse[Vector].traverseImpl(order) {

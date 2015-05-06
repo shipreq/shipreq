@@ -74,7 +74,7 @@ private[fields] object MainTable {
   }
 
   object State {
-    @inline final def _appReqTypeState(k: Field.Id) =
+    @inline final def _appReqTypeState(k: FieldId) =
       appReqTypeStates ^|-> AppReqTypesEditor.stateFor(k)
   }
 
@@ -115,7 +115,7 @@ private[fields] object MainTable {
       DND.Parent.initialState)
   }
 
-  val fieldDeltaListener = new DeltaListener.OneByOne[S, Field.Id, Delta](
+  val fieldDeltaListener = new DeltaListener.OneByOne[S, FieldId, Delta](
       (s, i) => {
         val s2 = i match {
           case _: StaticField => s
@@ -133,7 +133,7 @@ private[fields] object MainTable {
         clearAppReqTypesEditorState(i)(s2)
       })
 
-  def clearAppReqTypesEditorState(id: Field.Id): S => S =
+  def clearAppReqTypesEditorState(id: FieldId): S => S =
     State._appReqTypeState(id).set(None)
 
   val Component =
@@ -179,10 +179,10 @@ private[fields] object MainTable {
       def updateValuesIO(i: CustomFieldId, v: FieldProtocol.Values) =
         call(UpdateValues(i, v))
 
-      def updateOrderIO(i: Field.Id, p: Position) =
+      def updateOrderIO(i: FieldId, p: Position) =
         call(UpdateOrder(i, p))
 
-      def deleteIO(i: Field.Id, a: DeletionAction) =
+      def deleteIO(i: FieldId, a: DeletionAction) =
         call(Delete(i, a))
     }
 

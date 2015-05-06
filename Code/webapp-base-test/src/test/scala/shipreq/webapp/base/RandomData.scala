@@ -381,7 +381,7 @@ object RandomData {
   def fieldSet(reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId], r: Set[CustomReqTypeId]): Gen[FieldSet] =
     for {
       cf           ← customFields(reqTypeIds, tagIds, applicableReqTypes(r))
-      mandatoryIds = cf.keySet.map(f => f: Field.Id) ++ StaticField.notDeletable
+      mandatoryIds = cf.keySet.map(f => f: FieldId) ++ StaticField.notDeletable
       optionalIds  ← Gen.oneof(StaticField.deletable.head, StaticField.deletable.tail: _*).set
       order        ← Gen.shuffle((mandatoryIds ++ optionalIds).toVector)
     } yield FieldSet(cf, order)
@@ -923,7 +923,7 @@ object RandomData {
     lazy val reqTypeId: Gen[ReqTypeId] =
       Gen.oneofG(customReqTypeId, staticReqType)
 
-    lazy val fieldId: Gen[Field.Id] =
+    lazy val fieldId: Gen[FieldId] =
       Gen.oneofG(customFieldId, staticField)
 
     lazy val applicableReqTypes: Gen[ApplicableReqTypes] =

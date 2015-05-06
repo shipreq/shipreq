@@ -30,20 +30,20 @@ object FieldProtocol {
   implicit val equalImplication: UnivEq[ImplicationFieldValues] = deriveUnivEq
 
   // The field immediately before which the subject field should be ordered. None means append.
-  type Position = Option[Field.Id]
+  type Position = Option[FieldId]
 
   sealed trait CfgAction
   object CfgAction {
     final case class Create      (newValues: Values)                    extends CfgAction
     final case class UpdateValues(id: CustomFieldId, newValues: Values) extends CfgAction
-    final case class UpdateOrder (id: Field.Id, newPos: Position)       extends CfgAction
-    final case class Delete      (id: Field.Id, action: DeletionAction) extends CfgAction
+    final case class UpdateOrder (id: FieldId, newPos: Position)       extends CfgAction
+    final case class Delete      (id: FieldId, action: DeletionAction) extends CfgAction
   }
 
   case class Delta(field: StaticField \/ CustomField, pos: Position)
 
   implicit object Delta extends DataId[Delta] {
-    override type I = Field.Id
+    override type I = FieldId
     override def id(d: Delta) = d.field.fold(s => s, _.id)
     override val unapplyData: AnyRef => Option[Delta] = {case r: Delta => Some(r); case _ => None}
   }
@@ -64,7 +64,7 @@ object FieldProtocol {
       order = order.filterNot(ds.del.contains)
 
       // Insert/update
-      def setOrder(id: Field.Id, pos: Position): Unit =
+      def setOrder(id: FieldId, pos: Position): Unit =
         order = Util.reposition(order, id, pos)
       for (delta <- ds.upd)
         delta match {

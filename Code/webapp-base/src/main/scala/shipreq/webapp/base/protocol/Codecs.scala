@@ -380,7 +380,7 @@ object DataCodecs {
     })
   }
 
-  implicit final val fieldId = ReadWriter[Field.Id]({
+  implicit final val fieldId = ReadWriter[FieldId]({
     case i: CustomFieldId => writeJs(i)
     case i: StaticField   => writeJs(i)
   },
@@ -641,8 +641,8 @@ object ProtocolDataCodecs {
       }
       case Js.Arr(Js.Num(n), a, b) => n.toInt match {
         case 1 => UpdateValues(readJs[CustomFieldId](a), readJs[Values        ](b))
-        case 2 => UpdateOrder (readJs[Field.Id     ](a), readJs[Position      ](b))
-        case 3 => Delete      (readJs[Field.Id     ](a), readJs[DeletionAction](b))
+        case 2 => UpdateOrder (readJs[FieldId      ](a), readJs[Position      ](b))
+        case 3 => Delete      (readJs[FieldId      ](a), readJs[DeletionAction](b))
       }
     })
   }

@@ -17,7 +17,7 @@ import ISubsetEditor._
 private[fields] object AppReqTypesEditor {
   type A = ReqTypeId
   type M = Mode[A]
-  type K = Field.Id
+  type K = FieldId
   type S = Map[K, EditState[A]]
 
   def initialState(fs: FieldSet): S = UnivEq.emptyMap
