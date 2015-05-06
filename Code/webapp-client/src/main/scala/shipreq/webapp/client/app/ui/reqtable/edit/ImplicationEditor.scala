@@ -21,7 +21,7 @@ object ImplicationEditor {
   import AutoComplete.ReqItem
   import DataImplicits._
 
-  type A = Req.Id
+  type A = ReqId
 
   val editor = textSetEditor[A]("ImplicationEditor", Grammar.pubidSeqFormat.apply)
 
@@ -50,7 +50,7 @@ object ImplicationEditor {
    * @param declFwd If true, the user edits what this subject implies (ie. subject → edit-specified).
    *                If false, then it's what implies this subject     (ie. subject ← edit-specified).
    */
-  def lookupForSubject(p: Project, l: Lookup, subject: Req.Id, declFwd: Boolean): Lookup = {
+  def lookupForSubject(p: Project, l: Lookup, subject: ReqId, declFwd: Boolean): Lookup = {
     val (a, b) = if (declFwd) (p.implicationTgtToSrcTC, p.implicationSrcToTgtTC)
                  else         (p.implicationSrcToTgtTC, p.implicationTgtToSrcTC)
     l.outlaw(

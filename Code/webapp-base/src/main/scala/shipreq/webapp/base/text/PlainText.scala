@@ -63,7 +63,7 @@ object PlainText {
 
   def apply(p: Project): ForProject = {
 
-    def reqRef(req: Req.Id): Must[String] =
+    def reqRef(req: ReqId): Must[String] =
       for {
         r   ← p.reqs.data.reqM(req)
         pid = r.pubid

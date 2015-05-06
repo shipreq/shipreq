@@ -99,12 +99,12 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
   lazy val tagColumnDistribution = new TagColumnDistribution(this)
 
   /** Transitive closure of implications going source → target. */
-  lazy val implicationSrcToTgtTC: TransitiveClosure[Req.Id] =
-    TransitiveClosure.auto[Req.Id](reqs.data.reqs.keys)(reqFieldData.data.implications.srcToTgt.apply)
+  lazy val implicationSrcToTgtTC: TransitiveClosure[ReqId] =
+    TransitiveClosure.auto[ReqId](reqs.data.reqs.keys)(reqFieldData.data.implications.srcToTgt.apply)
 
   /** Transitive closure of implications going target → source. */
-  lazy val implicationTgtToSrcTC: TransitiveClosure[Req.Id] =
-    TransitiveClosure.auto[Req.Id](reqs.data.reqs.keys)(reqFieldData.data.implications.tgtToSrc.apply)
+  lazy val implicationTgtToSrcTC: TransitiveClosure[ReqId] =
+    TransitiveClosure.auto[ReqId](reqs.data.reqs.keys)(reqFieldData.data.implications.tgtToSrc.apply)
 
   /** Keys are lowercase */
   lazy val hashRefLookupM: Map[String, HashRefTarget] = (

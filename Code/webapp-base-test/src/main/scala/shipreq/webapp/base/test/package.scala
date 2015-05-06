@@ -29,10 +29,10 @@ package object test {
       }
   }
 
-  implicit object ReqId extends TestObjDataId[Req.type, Req, Req.Id] {
-    override def mkId(l: Long) = GenericReq.Id(l)
-    override def setId(cf: Req, i: Req.Id) = cf match {
-        case r: GenericReq => r.copy(id = GenericReq.Id(i.value))
+  implicit object ReqId extends TestObjDataId[Req.type, Req, ReqId] {
+    override def mkId(l: Long) = GenericReqId(l)
+    override def setId(cf: Req, i: ReqId) = cf match {
+        case r: GenericReq => r.copy(id = GenericReqId(i.value))
       }
   }
 

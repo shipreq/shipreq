@@ -80,7 +80,7 @@ object Atom {
 
   /** Reference to a requirement, like "UC-4" */
   trait ReqRef extends Base {
-    case class ReqRef(value: Req.Id) extends Atom
+    case class ReqRef(value: ReqId) extends Atom
   }
 
   // ReqCodes need IDs?
@@ -105,7 +105,7 @@ object Atom {
   UnivEq[NonEmptyVector[Vector[String]]]
   UnivEq[ApplicableTag.Id]
   UnivEq[CustomIssueType.Id]
-  UnivEq[Req.Id]
+  UnivEq[ReqId]
 
   // ===================================================================================================================
 

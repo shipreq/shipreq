@@ -53,7 +53,7 @@ object EditorTest extends TestSuite {
 
 
       'src {
-        def test(subj: Req.Id, illegal: String): Unit = {
+        def test(subj: ReqId, illegal: String): Unit = {
           val l = lookupForSubject(project, impLookupAll, subj, declFwd(Column.ImplicationSrc))
           val keys = l.illegal.keySet ++ l.legalm.keySet
           assertEq(keys, impAllKeys)
@@ -74,7 +74,7 @@ object EditorTest extends TestSuite {
       }
 
       'col {
-        def test(subj: Req.Id, legal: String): Unit = {
+        def test(subj: ReqId, legal: String): Unit = {
           val fid = CustomField.Implication.Id(6) // major feature
           val l1 = lookupForCol(project, impLookupAll, fid)
           val l = lookupForSubject(project, l1, subj, declFwd(fid))

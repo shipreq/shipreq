@@ -112,7 +112,7 @@ case class ReqCodeGroupRow(reqCodeId      : ReqCode.Id,
 
 object Row {
   sealed trait Id
-  case class GenericReqRowId(value: GenericReq.Id) extends Id
+  case class GenericReqRowId(value: GenericReqId) extends Id
   case class ReqCodeGroupRowId(value: ReqCode.Id) extends Id
 
   implicit val idEqualityR : UnivEq[GenericReqRowId]   = deriveUnivEq

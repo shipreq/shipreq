@@ -64,10 +64,10 @@ private[reqtable] object Logic {
   private def expanderC[A](vs: ViewSettings, c: Column.SortInconclusive): Expander[A] =
     expander(vs isVisible c, vs isOrderedI c)
 
-  private def impColValueFn(p: Project): CustomField.Implication.Id => Req.Id => Set[Pubid] =
+  private def impColValueFn(p: Project): CustomField.Implication.Id => ReqId => Set[Pubid] =
     fid => {
       // (source of implication for this column) → (all it transitively implies)
-      val srcs: Stream[(Pubid, Set[Req.Id])] =
+      val srcs: Stream[(Pubid, Set[ReqId])] =
         mustResolve(
           p.customField(fid).map(f =>
             p.reqs.data.reqsByType(f.reqTypeId)
@@ -81,12 +81,12 @@ private[reqtable] object Logic {
         id => srcs.filter(_._2 contains id).map(_._1).toSet
     }
 
-  private def impColValueExpander(vs: ViewSettings, p: Project): Req.Id => Map[CustomField.Implication.Id, Expanded[Pubid]] = {
+  private def impColValueExpander(vs: ViewSettings, p: Project): ReqId => Map[CustomField.Implication.Id, Expanded[Pubid]] = {
     val valueFn = impColValueFn(p)
     customFieldExpander[CustomField.Implication.Id, Pubid](vs, valueFn)
   }
 
-  private def tagColValueExpander(vs: ViewSettings, p: Project): Req.Id => Map[CustomField.Tag.Id, Expanded[ApplicableTag.Id]] = {
+  private def tagColValueExpander(vs: ViewSettings, p: Project): ReqId => Map[CustomField.Tag.Id, Expanded[ApplicableTag.Id]] = {
     val reqTags = p.reqFieldData.data.tags
     customFieldExpander[CustomField.Tag.Id, ApplicableTag.Id](vs, c => {
       val legal = mustResolve(p.tagColumnDistribution.tagIdsForColumn(c))(UnivEq.emptySet)
@@ -95,14 +95,14 @@ private[reqtable] object Logic {
   }
 
   private def customFieldExpander[K <: CustomField.Id : ClassTag, V]
-      (vs: ViewSettings, f: K => Req.Id => Set[V]): Req.Id => Map[K, Expanded[V]] = {
+      (vs: ViewSettings, f: K => ReqId => Set[V]): ReqId => Map[K, Expanded[V]] = {
 
     val cols = vs.columns.whole.collect{ case Column.CustomField(id: K) => id }
 
     val expandersPerCol = cols.map { c =>
         val expander = expanderC[V](vs, Column.CustomField(c))
         val dataFn   = f(c)
-        val fn       = (id: Req.Id) => expander(() => dataFn(id))
+        val fn       = (id: ReqId) => expander(() => dataFn(id))
         (c, fn)
       }.toMap
 
@@ -146,13 +146,13 @@ private[reqtable] object Logic {
   // ===================================================================================================================
   // MultiValues
 
-  private def tagValuesFn(vs: ViewSettings, p: Project): Req.Id => Vector[ApplicableTag.Id] = {
+  private def tagValuesFn(vs: ViewSettings, p: Project): ReqId => Vector[ApplicableTag.Id] = {
     val reqTags = p.reqFieldData.data.tags
     val tagsUsedInColumns = mustResolve(p.tagColumnDistribution.tagIdsUsedInColumns)(UnivEq.emptySet)
     id => reqTags(id).filterNot(tagsUsedInColumns.contains).toVector
   }
 
-  private def multiValuesFn(vs: ViewSettings, p: Project): Req.Id => MultiValues = {
+  private def multiValuesFn(vs: ViewSettings, p: Project): ReqId => MultiValues = {
     val tagValuesFn = this.tagValuesFn(vs, p)
     id => {
       val tags = tagValuesFn(id)
@@ -186,7 +186,7 @@ private[reqtable] object Logic {
     val pImplications = p.reqFieldData.data.implications
     val multiValuesFn = this.multiValuesFn(vs, p)
 
-    def pubids(s: Set[Req.Id]): Set[Pubid] =
+    def pubids(s: Set[ReqId]): Set[Pubid] =
       s.foldLeft(UnivEq.emptySet[Pubid])((q, id) =>
         pReqs.reqM(id).fold(failedMust(q), q + _.pubid))
 
@@ -215,7 +215,7 @@ private[reqtable] object Logic {
     val reqCodeGroupRows: Stream[ReqCodeGroupRow] =
       if (vs.viewReqCodeGroups)
         p.reqCodes.data.cataA(Stream.empty[ReqCodeGroupRow])((q, c, d) => d.target match {
-          case _: Req.Id       => q
+          case _: ReqId       => q
           case g: ReqCodeGroup =>
             // TODO: Filter
             ReqCodeGroupRow(d.id, g, c, None) #:: q

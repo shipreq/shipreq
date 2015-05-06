@@ -95,7 +95,7 @@ object Parsers {
 
     def reqTypePos = rule( int1n ~> ReqTypePos )
 
-    val lookupReq: (ReqType.Mnemonic, ReqTypePos) => Option[Req.Id] =
+    val lookupReq: (ReqType.Mnemonic, ReqTypePos) => Option[ReqId] =
       (m, n) =>
         project.reqTypesByMnemonic.get(m)
           .map(t => Pubid(t.reqTypeId, n))
@@ -171,7 +171,7 @@ object Parsers {
 
     def reqRef: Rule1[t.ReqRef] = rule(
       prefix ~ OWS ~ reqTypeMnemonic ~ OWS ~ ('-' ~ OWS).? ~ reqTypePos ~ OWS ~ suffix
-        ~> lookupReq ~ popOptional[Req.Id] ~> t.ReqRef)
+        ~> lookupReq ~ popOptional[ReqId] ~> t.ReqRef)
   }
 
   trait TagRef extends Base {

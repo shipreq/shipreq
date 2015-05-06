@@ -12,7 +12,7 @@ object SampleProject2 {
     val List(co,mf,fr) = List[ReqType.Id](1,2,3).map(Some(_))
     val List(p1,p3,p5,rel,wip,v1x) = List[ApplicableTag.Id](4,3,2,22,11,21)
     val (p2,p4) = (p3,p5)
-    val mfs = (0 to 28).toVector.map(i => GenericReq.Id(i + 1000))
+    val mfs = (0 to 28).toVector.map(i => GenericReqId(i + 1000))
 
     def fr1Desc = {
       import T.GenericReqTitle._

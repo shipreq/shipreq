@@ -23,7 +23,7 @@ abstract class ProjectText[Out](project: Project) {
   }
 
   val reqTitle: Req => Out = {
-    val memo = new scala.collection.mutable.HashMap[Req.Id, Out]
+    val memo = new scala.collection.mutable.HashMap[ReqId, Out]
     req => memo.getOrElseUpdate(req.id, _reqTitle(req))
   }
 
@@ -33,15 +33,15 @@ abstract class ProjectText[Out](project: Project) {
   def reqCodeGroupTitle(id: ReqCode.Id, g: ReqCodeGroup): Out =
     reqCodeGroupTitleMemo.getOrElseUpdate(id, format(g.title))
 
-  def reqTitleById(id: Req.Id): Must[Out] =
+  def reqTitleById(id: ReqId): Must[Out] =
     project.reqs.data.reqM(id) map reqTitle
 
-  private val _customTextField: CustomField.Text.Id => Req.Id => Option[Out] =
+  private val _customTextField: CustomField.Text.Id => ReqId => Option[Out] =
     fid => {
       val m = project.reqFieldData.data.text.getOrElse(fid, Map.empty)
       m.get(_) map format1
     }
 
-  val customTextField: CustomField.Text.Id => Req.Id => Option[Out] =
+  val customTextField: CustomField.Text.Id => ReqId => Option[Out] =
     memo { fid => val g = _customTextField(fid); memo(g) }
 }

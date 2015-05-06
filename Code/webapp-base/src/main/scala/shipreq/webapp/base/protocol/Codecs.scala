@@ -460,7 +460,7 @@ object DataCodecs {
       { case Js.Arr(Js.Str(ISSUE), a, b) => t.Issue(readJs[CustomIssueType.Id](a), readJs[Text.InlineIssueDesc.OptionalText](b)) }
 
     def readReqRef(t: ReqRef): PR[t.ReqRef] =
-      { case Js.Arr(Js.Str(REQREF), v) => t.ReqRef(readJs[Req.Id](v)) }
+      { case Js.Arr(Js.Str(REQREF), v) => t.ReqRef(readJs[ReqId](v)) }
 
     def readTagRef(t: TagRef): PR[t.TagRef] =
       { case Js.Arr(Js.Str(TAGREF), v) => t.TagRef(readJs[ApplicableTag.Id](v)) }
@@ -536,7 +536,7 @@ object DataCodecs {
 
   implicit final val reqTypePos    = tagI(ReqTypePos.apply)
   implicit final val pubid         = caseclass2(Pubid.apply, Pubid.unapply)
-  implicit final val genericReqId  = tagL(GenericReq.Id.apply)
+  implicit final val genericReqId  = tagL(GenericReqId.apply)
   implicit final val genericReq    = caseclass4(GenericReq.apply, GenericReq.unapply)
   implicit final val reqId         = _reqId
   implicit final val req           = _req
@@ -553,8 +553,8 @@ object DataCodecs {
     }
   })
 
-  private def _reqId = ReadWriter[Req.Id]({
-    case i: GenericReq.Id => intkeyW(0, i)(genericReqId)
+  private def _reqId = ReadWriter[ReqId]({
+    case i: GenericReqId => intkeyW(0, i)(genericReqId)
   }, {
     case Js.Arr(Js.Num(n), v) => n.toInt match {
       case 0 => readJs(v)(genericReqId)
@@ -574,7 +574,7 @@ object DataCodecs {
   implicit final val reqCodes      = caseclass1(ReqCodes.apply, ReqCodes.unapply)
 
   private def _reqCodeTarget = ReadWriter[ReqCode.Target]({
-    case i: Req.Id         => intkeyW(0, i)(reqId)
+    case i: ReqId          => intkeyW(0, i)(reqId)
     case i: ReqCodeGroup   => intkeyW(1, i)(reqCodeGroup)
   }, {
     case Js.Arr(Js.Num(n), v) => n.toInt match {

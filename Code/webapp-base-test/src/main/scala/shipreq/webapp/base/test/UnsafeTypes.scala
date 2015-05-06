@@ -27,7 +27,7 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
 
   implicit def autoReqCodeId        (i: Int) = ReqCode.Id(i)
   implicit def autoReqTypePos       (i: Int) = ReqTypePos(i)
-  implicit def autoGenericReqId     (i: Int) = GenericReq.Id(i)
+  implicit def autoGenericReqId     (i: Int) = GenericReqId(i)
   implicit def autoCustomFieldImpId (i: Int) = CustomField.Implication.Id(i)
   implicit def autoCustomFieldTagId (i: Int) = CustomField.Tag.Id(i)
   implicit def autoCustomFieldTxtId (i: Int) = CustomField.Text.Id(i)
@@ -38,7 +38,7 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
   implicit def autoRev              (i: Int) = Rev(i)
 
   implicit def autoReqTypePosO       (i: Int): Option[ReqTypePos]                 = Some(i)
-  implicit def autoGenericReqIdO     (i: Int): Option[GenericReq.Id]              = Some(i)
+  implicit def autoGenericReqIdO     (i: Int): Option[GenericReqId]               = Some(i)
   implicit def autoCustomFieldImpIdO (i: Int): Option[CustomField.Implication.Id] = Some(i)
   implicit def autoCustomFieldTagIdO (i: Int): Option[CustomField.Tag.Id]         = Some(i)
   implicit def autoCustomFieldTxtIdO (i: Int): Option[CustomField.Text.Id]        = Some(i)

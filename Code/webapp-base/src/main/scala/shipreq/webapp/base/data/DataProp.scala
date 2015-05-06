@@ -272,7 +272,7 @@ object DataProp {
   object project {
     type T = Project
 
-    case class Refs(fieldIds: Set[CustomField.Id], reqIds: Set[Req.Id], reqTypeIds: Set[ReqType.Id], tagIds: Set[Tag.Id])
+    case class Refs(fieldIds: Set[CustomField.Id], reqIds: Set[ReqId], reqTypeIds: Set[ReqType.Id], tagIds: Set[Tag.Id])
 
     def atoms =
       Prop.eval[(String, Stream[Text.AnyOptional])](t => text.anyTextS(t._2).rename(t._1))

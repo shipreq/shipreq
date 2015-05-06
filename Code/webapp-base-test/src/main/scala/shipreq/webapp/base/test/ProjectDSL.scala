@@ -23,7 +23,7 @@ object ProjectDSL {
   case class ProjectState(p             : Project,
                           nextId        : Long,
                           defaultReqType: ReqType,
-                          reqs          : IMap[Req.Id, Req],
+                          reqs          : IMap[ReqId, Req],
                           pubids        : PubidRegister,
                           reqCodeTrie   : ReqCode.Trie,
                           maxReqCodeId  : Long,
@@ -55,19 +55,19 @@ object ProjectDSL {
   type CFTextValue = Text.CustomTextField.NonEmptyText
 
   case class GReq(title  : Text.GenericReqTitle.OptionalText = Vector.empty,
-                  id     : Option[GenericReq.Id]             = None,
+                  id     : Option[GenericReqId]              = None,
                   reqType: Option[ReqType.Id]                = None,
                   alive  : Alive                             = Alive,
                   codes  : Set[ReqCode.Value]                = Set.empty,
                   tags   : Set[ApplicableTag.Id]             = Set.empty,
-                  impSrcs: Set[Req.Id]                       = Set.empty,
-                  impTgts: Set[Req.Id]                       = Set.empty,
+                  impSrcs: Set[ReqId]                        = Set.empty,
+                  impTgts: Set[ReqId]                        = Set.empty,
                   cftexts: Map[CFTextId, CFTextValue]        = Map.empty) extends ToState {
 
     def code   (rcs: ReqCode.Value*)         = copy(codes   = this.codes   ++ rcs)
     def tag    (ids: ApplicableTag.Id*)      = copy(tags    = this.tags    ++ ids)
-    def impSrc (ids: Req.Id*)                = copy(impSrcs = this.impSrcs ++ ids)
-    def impTgt (ids: Req.Id*)                = copy(impTgts = this.impTgts ++ ids)
+    def impSrc (ids: ReqId*)                 = copy(impSrcs = this.impSrcs ++ ids)
+    def impTgt (ids: ReqId*)                 = copy(impTgts = this.impTgts ++ ids)
     def cftext (k: CFTextId, v: CFTextValue) = copy(cftexts = this.cftexts.updated(k,v))
     def cftextS(k: CFTextId, s: String)      = if (s.isEmpty) this else cftext(k, s)
 
@@ -76,7 +76,7 @@ object ProjectDSL {
 
     def state: Mod[GenericReq] =
       State[S, GenericReq]{ p =>
-        val id = this.id getOrElse GenericReq.Id(p.nextId)
+        val id = this.id getOrElse GenericReqId(p.nextId)
 
         var maxReqCodeId = p.maxReqCodeId
         def nextReqCodeId() = {
@@ -89,7 +89,7 @@ object ProjectDSL {
         val reqTypeId   = this.reqType.getOrElse(p.defaultReqType.reqTypeId)
         val (pr, pubid) = p.pubids.alloc(id, reqTypeId)
         val req         = GenericReq(id, pubid, title, alive)
-        val text        = cftexts.mapValues(t => Map.empty[Req.Id, CFTextValue].updated(id, t))
+        val text        = cftexts.mapValues(t => Map.empty[ReqId, CFTextValue].updated(id, t))
         val tags        = p.tags.addvs(id, this.tags)
         val imps        = p.imps.addks(impSrcs, id).addvs(id, impTgts)
         val codeTrie    = codes.foldLeft(p.reqCodeTrie)((t, c) => t.put(c, reqCodeData()))

@@ -14,24 +14,24 @@ import UnsafeTypes._
  */
 object SampleImplicationGraph {
 
-  val mf1: GenericReq.Id = 11
-  val mf2: GenericReq.Id = 12
-  val mf3: GenericReq.Id = 13
-  val mf4: GenericReq.Id = 14
-  val mf5: GenericReq.Id = 15
+  val mf1: GenericReqId = 11
+  val mf2: GenericReqId = 12
+  val mf3: GenericReqId = 13
+  val mf4: GenericReqId = 14
+  val mf5: GenericReqId = 15
 
-  val br1: GenericReq.Id = 21
-  val br2: GenericReq.Id = 22
+  val br1: GenericReqId = 21
+  val br2: GenericReqId = 22
 
-  val fr1: GenericReq.Id = 31
-  val fr2: GenericReq.Id = 32
-  val fr3: GenericReq.Id = 33
-  val fr4: GenericReq.Id = 34
-  val fr5: GenericReq.Id = 35
-  val fr6: GenericReq.Id = 36
+  val fr1: GenericReqId = 31
+  val fr2: GenericReqId = 32
+  val fr3: GenericReqId = 33
+  val fr4: GenericReqId = 34
+  val fr5: GenericReqId = 35
+  val fr6: GenericReqId = 36
 
   lazy val projectDsl = {
-    def t(i: GenericReq.Id, rt: ReqType.Id, tgts: Req.Id*) = GReq(id = i, reqType = rt, impTgts = tgts.toSet)
+    def t(i: GenericReqId, rt: ReqType.Id, tgts: ReqId*) = GReq(id = i, reqType = rt, impTgts = tgts.toSet)
     val (mf, br, fr) = (2: ReqType.Id, 4: ReqType.Id, 3: ReqType.Id)
 
     ( t(mf1, mf, 31)

@@ -184,7 +184,7 @@ final class TextSearch(project: Project,  plainText: PlainText.ForProject) {
     def filter(f: Req => Boolean): Index =
       new Index(norm, index, filter :+ ((e: IndexEntry) => f(e.req)), searchFn)
 
-    def filterByIds(ids: Set[Req.Id]): Index =
+    def filterByIds(ids: Set[ReqId]): Index =
       filter(ids contains _.id)
 
     def searchOnlyTitles: Index =

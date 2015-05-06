@@ -485,16 +485,16 @@ object RandomData {
         plus.foldLeft[List[(Int, Gen[t.Atom])]](Nil)((q, o) =>
           o.fold(q)(g => (9, g) :: q)): _*)
 
-    def reqRef(g: Gen[Req.Id])(implicit t: ReqRef): Gen[t.ReqRef] =
+    def reqRef(g: Gen[ReqId])(implicit t: ReqRef): Gen[t.ReqRef] =
       g map t.ReqRef
 
     def tagRef(g: Gen[ApplicableTag.Id])(implicit t: TagRef): Gen[t.TagRef] =
       g map t.TagRef
 
-    def issue(i: Gen[CustomIssueType.Id], r: Option[Gen[Req.Id]])(implicit t: Issue): Gen[t.Issue] =
+    def issue(i: Gen[CustomIssueType.Id], r: Option[Gen[ReqId]])(implicit t: Issue): Gen[t.Issue] =
       Gen.apply2(t.Issue)(i, inlineIssueDescAtom(r).vector)
 
-    def reqTitle(t: ReqTitle)(r: Option[Gen[Req.Id]], i: Option[Gen[CustomIssueType.Id]]): Gen[t.Atom] = {
+    def reqTitle(t: ReqTitle)(r: Option[Gen[ReqId]], i: Option[Gen[CustomIssueType.Id]]): Gen[t.Atom] = {
       @inline implicit def tt: t.type = t
       val x = singleLineGens(t)
       val gs = (x append x) <+ r.map(reqRef(_)) <+ i.map(issue(_, r))
@@ -624,13 +624,13 @@ object RandomData {
 
     def genericReqTitleAtom   = reqTitle(GenericReqTitle) _
 
-    def inlineIssueDescAtom(r: Option[Gen[Req.Id]]): Gen[InlineIssueDesc.Atom] = {
+    def inlineIssueDescAtom(r: Option[Gen[ReqId]]): Gen[InlineIssueDesc.Atom] = {
       @inline implicit def t: InlineIssueDesc.type = InlineIssueDesc
       val gs = singleLineGens(t) <+ r.map(reqRef(_))
       Gen oneofGL gs
     }
 
-    def customTextFieldAtom(gr: Option[Gen[Req.Id]],
+    def customTextFieldAtom(gr: Option[Gen[ReqId]],
                             gi: Option[Gen[CustomIssueType.Id]],
                             gt: Option[Gen[ApplicableTag.Id]]): Gen[CustomTextField.Atom] = {
       @inline implicit def t: CustomTextField.type = CustomTextField
@@ -654,29 +654,29 @@ object RandomData {
   // Requirements
 
   lazy val genericReqId =
-    id map GenericReq.Id
+    id map GenericReqId
 
-  lazy val reqId: Gen[Req.Id] = {
+  lazy val reqId: Gen[ReqId] = {
     import Gen.Covariance._
     Gen.oneofG(genericReqId)
   }
 
-  def pubidS(reqTypeIds: NonEmptyVector[ReqType.Id])(reqId: Req.Id): StateG[PubidRegister, Pubid] =
+  def pubidS(reqTypeIds: NonEmptyVector[ReqType.Id])(reqId: ReqId): StateG[PubidRegister, Pubid] =
     StateT(register =>
       oneofV(reqTypeIds).map(reqTypeId =>
         register.alloc(reqId, reqTypeId)))
 
-  def genericReqIdS(pubidS: Req.Id => StateG[PubidRegister, Pubid]): StateG[PubidRegister, Req.Id] =
+  def genericReqIdS(pubidS: ReqId => StateG[PubidRegister, Pubid]): StateG[PubidRegister, ReqId] =
     for {
-      id <- genericReqId |> gliftS[PubidRegister, GenericReq.Id]
+      id <- genericReqId |> gliftS[PubidRegister, GenericReqId]
       _  <- pubidS(id)
     } yield id
 
-  def genericReqS(pubidS: Req.Id => StateG[PubidRegister, Pubid],
-//                  genReqId: Option[Gen[Req.Id]],
+  def genericReqS(pubidS: ReqId => StateG[PubidRegister, Pubid],
+//                  genReqId: Option[Gen[ReqId]],
                   genIssueType: Option[Gen[CustomIssueType.Id]]): StateG[PubidRegister, GenericReq] =
     for {
-      id     <- genericReqId |> gliftS[PubidRegister, GenericReq.Id]
+      id     <- genericReqId |> gliftS[PubidRegister, GenericReqId]
       pubid  <- pubidS(id)
       reqIds <- stateGen((r: PubidRegister) => Gen insert r.value.allValues)
       desc   <- TextGen.genericReqTitleAtom(Gen.oneofO(reqIds), genIssueType).text
@@ -697,8 +697,8 @@ object RandomData {
     }
   }
 
-  def pubidRegisterAndIds(reqTypeIds: NonEmptyVector[ReqType.Id]): GenS[(PubidRegister, Set[Req.Id])] =
-    pubidRegisterAnd(Set.empty[Req.Id], genericReqIdS(pubidS(reqTypeIds)))(_ + _)
+  def pubidRegisterAndIds(reqTypeIds: NonEmptyVector[ReqType.Id]): GenS[(PubidRegister, Set[ReqId])] =
+    pubidRegisterAnd(Set.empty[ReqId], genericReqIdS(pubidS(reqTypeIds)))(_ + _)
 
   def requirements(reqTypeIds: NonEmptyVector[ReqType.Id],
                    genIssueType: Option[Gen[CustomIssueType.Id]]): GenS[Requirements] =
@@ -708,15 +708,15 @@ object RandomData {
   // -------------------------------------------------------------------------------------------------------------------
   // Req Data
 
-  def reqFieldDataText(cols: Set[CustomField.Text.Id], reqs: Set[Req.Id], txt: Gen[Text.CustomTextField.NonEmptyText]): Gen[ReqFieldData.Text] =
+  def reqFieldDataText(cols: Set[CustomField.Text.Id], reqs: Set[ReqId], txt: Gen[Text.CustomTextField.NonEmptyText]): Gen[ReqFieldData.Text] =
     txt mapByKeySubset reqs mapByKeySubset cols
 
-  def reqFieldDataTags(reqs: TraversableOnce[Req.Id], tags: Set[ApplicableTag.Id]): Gen[ReqFieldData.Tags] = {
+  def reqFieldDataTags(reqs: TraversableOnce[ReqId], tags: Set[ApplicableTag.Id]): Gen[ReqFieldData.Tags] = {
     val rndTags = Gen.subset(tags).map(_.toSet)
     (rndTags mapByKeySubset reqs).map(Multimap(_))
   }
 
-  type ImplicationsUM = Map[Req.Id, Set[Req.Id]]
+  type ImplicationsUM = Map[ReqId, Set[ReqId]]
   @tailrec def preventImplicationCycles(m: ImplicationsUM): ImplicationsUM =
     ReqFieldData.implicationCycleDetector.findCycle(m) match {
       case None         => m
@@ -729,19 +729,19 @@ object RandomData {
   // val MaxImplicationsPerSrc = 2  `JVM|JS` 4
   // val MaxImplicationKeys    = 10 `JVM|JS` 4
 
-  def reqFieldDataImplications(reqIds: Set[Req.Id]): Gen[Implications] = {
+  def reqFieldDataImplications(reqIds: Set[ReqId]): Gen[Implications] = {
     def fix(m: ImplicationsUM): Implications = {
       val m2 = preventImplicationCycles(m)
       // println(m2); println()
       Implications(Multimap(m2))
     }
 
-    def method1(g: Gen[Req.Id]) =
+    def method1(g: Gen[ReqId]) =
       g.pair
         .list.lim(MaxImplicationPairs)
         .map(kvs => emptyImplicationsU.addPairs(kvs: _*).m |> fix)
 
-//    def method2(g: Gen[Req.Id]) =
+//    def method2(g: Gen[ReqId]) =
 //      Gen.tuple2(g, g.set1 lim MaxImplicationsPerSrc)
 //        .list.lim(MaxImplicationKeys)
 //        .map(_.toMap |> fix)
@@ -752,8 +752,8 @@ object RandomData {
     }
   }
 
-  // def customTextFieldAtom(gr: Gen[Req.Id], gi: Gen[CustomIssueType.Id], gt: Gen[ApplicableTag.Id]): Gen[CustomTextField.Atom] = {
-  def reqFieldData(reqs   : Set[Req.Id],
+  // def customTextFieldAtom(gr: Gen[ReqId], gi: Gen[CustomIssueType.Id], gt: Gen[ApplicableTag.Id]): Gen[CustomTextField.Atom] = {
+  def reqFieldData(reqs   : Set[ReqId],
                    txtCols: Set[CustomField.Text.Id],
                    cissues: Set[CustomIssueType.Id],
                    tags   : Set[ApplicableTag.Id]): Gen[ReqFieldData] = {
@@ -809,7 +809,7 @@ object RandomData {
       val ids1 = distinctIds at ActiveData.id at dataActive
       val ids2 = distinctIds.lift[Set] at Data.refsToGroup at flatData
       val ids3 = distinctIds.lift[Set]
-        .liftMapValues.contramap[Multimap[Req.Id, Set, Id]](_.m, (_, m: Map[Req.Id, Set[Id]]) => Multimap(m))
+        .liftMapValues.contramap[Multimap[ReqId, Set, Id]](_.m, (_, m: Map[ReqId, Set[Id]]) => Multimap(m))
         // TODO ↑ Use liftMultimapValues when Nyaya gets it
         .at(flatData ^|-> Data.refsToReqs)
       val id = ids1 + ids2 + ids3
@@ -821,10 +821,10 @@ object RandomData {
 
     val smallIdSet = id.set.lim(3)
 
-    val gEmptyRefsToReqs: Gen[Multimap[Req.Id, Set, Id]] =
+    val gEmptyRefsToReqs: Gen[Multimap[ReqId, Set, Id]] =
       Gen.insert(Multimap.empty)
 
-    def data(ogReqId: Option[Gen[Req.Id]], gGroup: Gen[ReqCodeGroup]): Gen[Data] = {
+    def data(ogReqId: Option[Gen[ReqId]], gGroup: Gen[ReqCodeGroup]): Gen[Data] = {
       import Gen.Covariance._
 
       val gTarget: Gen[Target] =
@@ -833,7 +833,7 @@ object RandomData {
           case None    => gGroup
         }
 
-      val gRefsToReqs: Gen[Multimap[Req.Id, Set, Id]] =
+      val gRefsToReqs: Gen[Multimap[ReqId, Set, Id]] =
         ogReqId match {
           case Some(g) => g.mapTo(smallIdSet).map(Multimap(_))
           case None    => gEmptyRefsToReqs
@@ -848,7 +848,7 @@ object RandomData {
       } yield
         if (x == 0)
           target match {
-            case t: Req.Id       => Data(None, refsToGroup, refsToReqs.add(t, i))
+            case t: ReqId       => Data(None, refsToGroup, refsToReqs.add(t, i))
             case _: ReqCodeGroup => Data(None, refsToGroup + i , refsToReqs)
           }
         else
@@ -858,10 +858,10 @@ object RandomData {
     def flatInstance(gData: Gen[Data]): Gen[FlatInstance] =
       Gen.tuple2(value, gData)
 
-    def trie(r: Option[Gen[Req.Id]], i: Option[Gen[CustomIssueType.Id]]): GenS[Trie] =
+    def trie(r: Option[Gen[ReqId]], i: Option[Gen[CustomIssueType.Id]]): GenS[Trie] =
       trie(r, TextGen.reqCodeGroupTitleAtom(r, i).text map ReqCodeGroup.apply)
 
-    def trie(ogReqId: Option[Gen[Req.Id]], gGroup: Gen[ReqCodeGroup]): GenS[Trie] =
+    def trie(ogReqId: Option[Gen[ReqId]], gGroup: Gen[ReqCodeGroup]): GenS[Trie] =
       flatInstance(data(ogReqId, gGroup)).vector
         .map(distinctFlatInstances.run)
         .map(_.foldLeft(emptyTrie) { case (q, (c, d)) => q.put(c, d) })

@@ -133,7 +133,7 @@ object ShowSize {
     ShowSize.lift(rc =>
       Node("Req codes", rc.trie.cataV(0)((q, _, _) => q + 1))
         .countChildren(rc.trie.flatStream.map(_._2.active.map(_.target))) {
-          case Some(_: Req.Id)       => "Req target"
+          case Some(_: ReqId)        => "Req target"
           case Some(_: ReqCodeGroup) => "ReqCodeGroup"
           case None                  => "Tombstones"
         })

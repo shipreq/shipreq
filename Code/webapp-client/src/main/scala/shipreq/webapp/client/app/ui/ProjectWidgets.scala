@@ -54,7 +54,7 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
     PlainText.pubid(project, pubid) map (<.span(_))
   )
 
-  val reqRef = memoM[Req.Id]("Req", id =>
+  val reqRef = memoM[ReqId]("Req", id =>
     for {
       req <- project.reqs.data.reqM(id)
       rt  <- project.reqType(req.pubid.reqTypeId)
@@ -65,7 +65,7 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
         s"[${PlainText.pubid(rt, req.pubid.pos)}]") // TODO use grammar
     )
 
-  def reqRefs(reqs: Vector[Req.Id]): ReactElement =
+  def reqRefs(reqs: Vector[ReqId]): ReactElement =
     <.div(reqs.map(id => reqRef(id)(): TagMod): _*)
 
   val pubidRef = memoMW[Pubid](pubid =>

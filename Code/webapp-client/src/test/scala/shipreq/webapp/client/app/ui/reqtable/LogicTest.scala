@@ -70,12 +70,12 @@ object LogicTest extends TestSuite {
     val gatheredG    = gathered.filterT[GenericReqRow]
     val rowReqCodes  = gathered.flatMap(codesInRow(_).toStream)
     val rowGReqIds   = gatheredG.map(_.req.id).toSet
-    val srcGReqIds   = p.reqs.data.reqs.keys.filterT[GenericReq.Id].toSet
+    val srcGReqIds   = p.reqs.data.reqs.keys.filterT[GenericReqId].toSet
     val plainText    = PlainText(p)
 
     val expectedVisibleReqCodes =
       p.reqCodes.data.cataA(Set.empty[ReqCode.Value])((q, c, d) => d.target match {
-        case _: Req.Id       => q + c
+        case _: ReqId        => q + c
         case _: ReqCodeGroup => if (vs.viewReqCodeGroups) q + c else q
       })
 
@@ -84,7 +84,7 @@ object LogicTest extends TestSuite {
 
     def noEmptyAndNonEmptyReqCodesMixed = {
       val data: Stream[Vector[Vector[ReqCode.Value]]] =
-        Multimap.empty[Req.Id, Vector, Vector[ReqCode.Value]]
+        Multimap.empty[ReqId, Vector, Vector[ReqCode.Value]]
           .addPairs(gatheredG.map(r => (r.req.id, r.exp.reqCodes)): _*)
           .m.values.toStream
       E.forall(data)(l =>
@@ -428,7 +428,7 @@ object LogicTest extends TestSuite {
     }
 
     def testImpSrc(): Unit = {
-      def t(_id: GenericReq.Id, ids: Req.Id*) = GReq(id = _id, reqType = 3).impSrc(ids: _*)
+      def t(_id: GenericReqId, ids: ReqId*) = GReq(id = _id, reqType = 3).impSrc(ids: _*)
       //      FR-1   FR-2      DD-1                           FR-3         FR-4      FR-5
       val p = t(1) + t(2, 1) + t(3, 1, 2).copy(reqType = 5) + t(4, 1, 3) + t(5, 3) + t(6, 5) ! P
       def fmtEach(s: Pubid, t: Pubid) = pubidToStr(p)(s) + ">" + pubidToStr(p)(t)
@@ -439,7 +439,7 @@ object LogicTest extends TestSuite {
     }
 
     def testImpTgt(): Unit = {
-      def t(_id: GenericReq.Id, ids: Req.Id*) = GReq(id = _id, reqType = 3).impTgt(ids: _*)
+      def t(_id: GenericReqId, ids: ReqId*) = GReq(id = _id, reqType = 3).impTgt(ids: _*)
       //      FR-1   FR-2      DD-1                           FR-3         FR-4      FR-5
       val p = t(1) + t(2, 1) + t(3, 1, 2).copy(reqType = 5) + t(4, 1, 3) + t(5, 3) + t(6, 5) ! P
       def fmtEach(s: Pubid, t: Pubid) = pubidToStr(p)(t) + "<" + pubidToStr(p)(s)

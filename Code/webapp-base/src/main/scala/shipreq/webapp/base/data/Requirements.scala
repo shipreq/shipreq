@@ -70,14 +70,14 @@ object ReqCode {
   /**
    * Something to which a [[ReqCode]] can refer.
    *
-   * type [[Target]] = [[ReqCodeGroup]] | [[Req.Id]]
+   * type [[Target]] = [[ReqCodeGroup]] | [[ReqId]]
    */
   sealed trait Target
 
   implicit object TargetGeneric extends Generic[Target] {
-    override type Repr = Req.Id :+: ReqCodeGroup :+: CNil
+    override type Repr = ReqId :+: ReqCodeGroup :+: CNil
     override def to  (t: Target): Repr = t match {
-      case a: Req.Id       => Coproduct[Repr](a)
+      case a: ReqId        => Coproduct[Repr](a)
       case a: ReqCodeGroup => Coproduct[Repr](a)
     }
     override def from(co: Repr): Target = co match {
@@ -110,7 +110,7 @@ object ReqCode {
   @Lenses
   final case class Data(active     : Option[ActiveData],
                         refsToGroup: Set[Id],
-                        refsToReqs : Multimap[Req.Id, Set, Id]) {
+                        refsToReqs : Multimap[ReqId, Set, Id]) {
 
     def ids: Stream[Id] =
       active.toStream.map(_.id) append
@@ -189,9 +189,9 @@ object Pubid {
  * Once a (reqtype x position) is allocated, it is never removed.
  * Thus, the 0-based position in the vector corresponds with 1-based [[ReqTypePos]] values.
  */
-case class PubidRegister(value: Multimap[ReqType.Id, Vector, Req.Id]) {
+case class PubidRegister(value: Multimap[ReqType.Id, Vector, ReqId]) {
 
-  def alloc(reqId: Req.Id, reqTypeId: ReqType.Id): (PubidRegister, Pubid) = {
+  def alloc(reqId: ReqId, reqTypeId: ReqType.Id): (PubidRegister, Pubid) = {
     val cur = value(reqTypeId)
     val i = cur.indexWhere(_ ≟ reqId)
     if (i >= 0)
@@ -200,7 +200,7 @@ case class PubidRegister(value: Multimap[ReqType.Id, Vector, Req.Id]) {
       (PubidRegister(value.add(reqTypeId, reqId)), Pubid(reqTypeId, ReqTypePos(cur.size + 1)))
   }
 
-  def apply(id: Pubid): Option[Req.Id] = {
+  def apply(id: Pubid): Option[ReqId] = {
     val v = value(id.reqTypeId)
     val i = id.pos.value - 1
     try {
@@ -219,77 +219,74 @@ object PubidRegister {
 // ===================================================================================================================
 // Requirements
 
+/** type [[ReqId]] = [[GenericReqId]] */
+sealed trait ReqId extends TaggedLong with ReqCode.Target
+
 /** [[Req]] = [[GenericReq]] */
 sealed abstract class Req {
-  val id: Req.Id
+  val id: ReqId
   val pubid: Pubid
   val alive: Alive
 
   @inline final def reqTypeId = pubid.reqTypeId
 }
+
 object Req {
-
-  /** type [[Id]] = [[Req.Id]] | [[GenericReq.Id]] */
-  sealed trait Id extends TaggedLong with ReqCode.Target
-
-  object IdAccess extends ObjDataId[Req.type, Req, Id] {
+  object IdAccess extends ObjDataId[Req.type, Req, ReqId] {
     override def id(d: Req) = d.id
     override val unapplyData: AnyRef => Option[Req] = {case r: Req => Some(r); case _ => None}
   }
 }
 
-final case class GenericReq(id         : GenericReq.Id,
-                            pubid      : Pubid,
-                            title      : Text.GenericReqTitle.OptionalText,
-                            // TODO lastUpdated. Need JS-compat datetimeTZ
-                            alive      : Alive) extends Req
+final case class GenericReqId(value: Long) extends TaggedLong with ReqId
+
+final case class GenericReq(id   : GenericReqId,
+                            pubid: Pubid,
+                            title: Text.GenericReqTitle.OptionalText,
+                            alive: Alive) extends Req
+
 object GenericReq {
-  final case class Id(value: Long) extends TaggedLong with Req.Id
   implicit val equality: UnivEq[GenericReq] = deriveUnivEq
 }
 
-
 object ReqFieldData {
-  type Text         = Map[CustomField.Text.Id, Map[Req.Id, Text.CustomTextField.NonEmptyText]]
-  type Tags         = Multimap[Req.Id, Set, ApplicableTag.Id]
-
-
-  /** Unidirectional implication data */
-  type ImplicationsU = Multimap[Req.Id, Set, Req.Id]
+  /** U = Unidirectional */
+  type ImplicationsU = Multimap[ReqId, Set, ReqId]
+  type Tags          = Multimap[ReqId, Set, ApplicableTag.Id]
+  type Text          = Map[CustomField.Text.Id, Map[ReqId, Text.CustomTextField.NonEmptyText]]
 
   def implicationCycleDetector =
-    CycleDetector.Directed.multimap[Set, Req.Id, Long](_.value, UnivEq.emptySet)
+    CycleDetector.Directed.multimap[Set, ReqId, Long](_.value, UnivEq.emptySet)
 
   case class Implications(srcToTgt: ImplicationsU) {
     lazy val tgtToSrc: ImplicationsU = srcToTgt.reverse
 
-    def members: Set[Req.Id] =
-      srcToTgt.m.toStream.foldLeft(UnivEq.emptySet[Req.Id]) {
+    def members: Set[ReqId] =
+      srcToTgt.m.toStream.foldLeft(UnivEq.emptySet[ReqId]) {
         case (q, (k, vs)) => q + k ++ vs
       }
   }
 }
 
-
 case class ReqFieldData(text        : ReqFieldData.Text,
                         tags        : ReqFieldData.Tags,
                         implications: ReqFieldData.Implications)
 
-case class Requirements(reqs: IMap[Req.Id, Req], pubids: PubidRegister) {
+case class Requirements(reqs: IMap[ReqId, Req], pubids: PubidRegister) {
 
-  def req(id: Req.Id): Option[Req] =
+  def req(id: ReqId): Option[Req] =
     reqs.get(id)
 
   def reqByPubid(id: Pubid): Option[Req] =
     pubids(id) flatMap req
 
-  def reqM(id: Req.Id): Must[Req] =
+  def reqM(id: ReqId): Must[Req] =
     Must.fromOption(req(id), s"Req $id not found.")
 
   def reqByPubidM(id: Pubid): Must[Req] =
     Must.fromOption(reqByPubid(id), s"Req for $id not found.")
 
-  def reqIdByPubidM(id: Pubid): Must[Req.Id] =
+  def reqIdByPubidM(id: Pubid): Must[ReqId] =
     Must.fromOption(pubids(id), s"Req for $id not found.")
 
   def reqsByPubidM[M[X] <: TraversableOnce[X]: Monoidish](ids: M[Pubid]): Must[M[Req]] =
