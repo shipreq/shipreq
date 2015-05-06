@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import japgolly.nyaya.util.MultiValues
 import scalaz.{Equal, Order}
 
 /**
@@ -72,25 +73,32 @@ final class ISetMapK[T, K[+ _ <: T], V[+ _ <: T]] private[util](rel: RelationPro
 
 // =====================================================================================================================
 
-//final class IMultimapK[T, K[+_ <: T], L[+_], V[+_ <: T]] private[util] (rel: RelationProof[T, V, K], val m: Map[K[T], L[V[T]]])
-//  (implicit ue: UnivEq[K[T]], L: MultiValues[L]) extends IMapBase2[K[T], V[T], L[V[T]], IMultimapK[T, K, L, V]](m) {
-//  type GK = K[T]
-//  type GV = V[T]
-//  type VS = L[GV]
-//
-//  override protected def stringPrefix = "IMultimapK"
-//
-//  override protected def repr = this
-//
-//  override protected def _gkey(v: GV) = rel(v)
-//  override protected def _values(vs: VS) = L.stream(vs)
-//  override protected def _add(to: Map[GK, VS], k: GK, v: GV): Map[GK, VS] = to.updated(k, L.add1(_apply(k), v))
-//
-//  override protected def setmap(n: Map[GK, VS]) = new IMultimapK[T, K, L, V](rel, n)
-//
-//  private def _apply(k: GK): VS =
-//    m.getOrElse(k, L.empty[GV])
-//
-//  def apply[A <: T](k: K[A]): L[V[A]] =
-//    rel.forceCastK(_apply(k))
-//}
+object IMultimapK {
+  implicit def equality[T, K[+_ <: T], L[+_], V[+_ <: T]](implicit k: Order[K[T]], v: Equal[L[V[T]]]): Equal[IMultimapK[T, K, L, V]] =
+    IMapBaseV.equality[K[T], L[V[T]], IMultimapK[T, K, L, V]]
+
+  def empty[T, K[+_ <: T], L[+_], V[+_ <: T]](nt: RelationProof[T, V, K])(implicit ek: UnivEq[K[T]], L: MultiValues[L]): IMultimapK[T, K, L, V] =
+    new IMultimapK[T, K, L, V](nt, UnivEq.emptyMap)
+}
+
+final class IMultimapK[T, K[+ _ <: T], L[+_], V[+ _ <: T]] private[util](rel: RelationProof[T, V, K], val m: Map[K[T], L[V[T]]])
+                                                                        (implicit ek: UnivEq[K[T]], L: MultiValues[L])
+  extends IMapBaseV[K[T], V[T], L[V[T]], IMultimapK[T, K, L, V]](m) {
+
+  type GK = K[T]
+  type GV = V[T]
+  type VS = L[GV]
+
+  override protected def stringPrefix                        = "IMultimapK"
+  override protected def repr                                = this
+  override protected def setmap(n: Map[GK, VS])              = new IMultimapK[T, K, L, V](rel, n)
+  override protected def _gkey(v: GV)                        = rel(v)
+  override protected def _values(vs: VS)                     = L.stream(vs)
+  override protected def _add(to: Map[GK, VS], k: GK, v: GV) = to.updated(k, L.add1(_apply(k), v))
+
+  private def _apply(k: GK): VS =
+    m.getOrElse(k, L.empty[GV])
+
+  def apply[A <: T](k: K[A]): L[V[A]] =
+    rel.forceCastK(_apply(k))
+}
