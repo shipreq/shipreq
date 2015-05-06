@@ -51,7 +51,7 @@ object Validators {
 
     /** Validation state (external data) required to validate HashRefKey uniqueness. */
     case class HashRefKeyVS(tagData        : HashRefKeyVS.Data[TagId],
-                            customIssueData: HashRefKeyVS.Data[CustomIssueType.Id])
+                            customIssueData: HashRefKeyVS.Data[CustomIssueTypeId])
 
     // DD-19: Hashtag-like refkeys (groupings, incmp) must be unique.
     //        e.g. can't have both a grouping and an incompletion with refkey #X.

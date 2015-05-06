@@ -185,7 +185,7 @@ object Parsers {
     import Text.{InlineIssueDesc => I}
 
     def issueRef: RuleAB[HashRefTarget, t.Issue] = {
-      def id           = popPF[HashRefTarget, CustomIssueType.Id] { case \/-(i) => i.id }
+      def id           = popPF[HashRefTarget, CustomIssueTypeId] { case \/-(i) => i.id }
       def optionalDesc = rule(OWS ~ issueInnerDesc ~> (_.whole) | push(Vector.empty))
       rule(run(id) ~ optionalDesc ~> t.Issue)
     }

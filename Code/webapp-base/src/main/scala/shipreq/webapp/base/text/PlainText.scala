@@ -74,7 +74,7 @@ object PlainText {
     def tagRef(id: ApplicableTagId): Must[String] =
       p.atag(id).map(t => hashtag(t.key))
 
-    def issue(id: CustomIssueType.Id, desc: Option[String]): Must[String] =
+    def issue(id: CustomIssueTypeId, desc: Option[String]): Must[String] =
       p.customIssueType(id).map(it =>
         (hashtag(it.key) /: desc)(_ ~ G.issueDescSurround(_)))
 

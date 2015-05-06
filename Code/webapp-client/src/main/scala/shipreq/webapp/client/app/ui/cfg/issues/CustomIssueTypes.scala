@@ -24,7 +24,7 @@ private[issues] object CustomIssueTypes {
   }
 
   val fields = FieldSet2[CustomIssueType](_.key.value, _.desc getOrElse "")(("", ""))
-  val storesAndState = TypicalStoresAndState(fields).keyedBy[CustomIssueType.Id]
+  val storesAndState = TypicalStoresAndState(fields).keyedBy[CustomIssueTypeId]
   import storesAndState._
 
   val Component =
@@ -40,12 +40,12 @@ private[issues] object CustomIssueTypes {
       savedRowStore.initStateIM(p.clientData.project.customIssueTypes.data),
       p.showDeleted)
 
-  private def validatorState(k: Option[CustomIssueType.Id], cd: ClientData): S => V.S =
+  private def validatorState(k: Option[CustomIssueTypeId], cd: ClientData): S => V.S =
     s => {
       val ts: HashRefKeyVS.Data[TagId] = // TODO cacheable
         (None, cd.project.tags.data.vstream(_.tag)
           .map(t => t.keyO.map(k => (t.id.some, k))).filter(_.isDefined).map(_.get))
-      val is: HashRefKeyVS.Data[CustomIssueType.Id] =
+      val is: HashRefKeyVS.Data[CustomIssueTypeId] =
         (k, savedRowStoreS.getAllP(s).map(i => (i.id.some, i.key)))
       HashRefKeyVS(ts, is)
     }
@@ -54,7 +54,7 @@ private[issues] object CustomIssueTypes {
     val crudIO = CrudIO(CustomIssueType, CustomIssueTypeCrud)($.props.cp, $.props.remote, $.props.clientData)
     val supp = TypicalSupp(storesAndState, crudIO)($)
 
-    def valState(k: Option[CustomIssueType.Id]) = validatorState(k, $.props.clientData)
+    def valState(k: Option[CustomIssueTypeId]) = validatorState(k, $.props.clientData)
 
     val rowE = {
       val keyE  = Editors.textInputEditor.applyValidator(V.keyS)

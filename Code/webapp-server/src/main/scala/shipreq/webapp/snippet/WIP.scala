@@ -206,7 +206,7 @@ class WIP {
   val issueTypeCrud = {
     implicit val equality = Equal.equalA[CustomIssueType]
 
-    def upd(id: CustomIssueType.Id, f: CustomIssueType => CustomIssueType) =
+    def upd(id: CustomIssueTypeId, f: CustomIssueType => CustomIssueType) =
       mod(_.mod(id, f))
 
     def modR(f: CustomIssueTypeIMap => CustomIssueTypeIMap): Option[Rev] = {
@@ -239,7 +239,7 @@ class WIP {
     ServerProtocol.routine(Routines.CustomIssueTypeCrud)({
       case CrudAction.Create(v)    =>
         val (key, desc) = v
-        val id = CustomIssueType.Id(p.customIssueTypes.data.keySet.max.value + 1)
+        val id = CustomIssueTypeId(p.customIssueTypes.data.keySet.max.value + 1)
         val n = CustomIssueType(id, key, desc, Alive)
         mod(_ + n)
 

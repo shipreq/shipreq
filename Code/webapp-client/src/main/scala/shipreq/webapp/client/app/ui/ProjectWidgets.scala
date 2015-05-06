@@ -31,17 +31,17 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
     UnivEq.mutableHashMapMemo(a =>
       UI.mustA[Widget, Widget](f(a))(err => ReactComponentB.static("", err).buildU, identity))
 
-  def issueO(id: CustomIssueType.Id, desc: Text.InlineIssueDesc.OptionalText): ReactElement =
+  def issueO(id: CustomIssueTypeId, desc: Text.InlineIssueDesc.OptionalText): ReactElement =
     NonEmptyVector.maybe(desc, issue(id)(): ReactElement)(issue1(id, _))
 
-  val issue = memoM[CustomIssueType.Id]("Issue", id =>
+  val issue = memoM[CustomIssueTypeId]("Issue", id =>
     project.customIssueType(id).map(i =>
       <.span(
         *.issue,
         s"#${i.key.value}") // TODO use grammar
     ))
 
-  def issue1(id: CustomIssueType.Id, desc: Text.InlineIssueDesc.NonEmptyText): ReactElement =
+  def issue1(id: CustomIssueTypeId, desc: Text.InlineIssueDesc.NonEmptyText): ReactElement =
     UI.must(project.customIssueType(id))(i =>
       <.span(
         *.issue,

@@ -92,7 +92,7 @@ object Atom {
 
   /** An inline issue, like "#TBD" */
   trait Issue extends Base {
-    case class Issue(typ: CustomIssueType.Id, desc: Text.InlineIssueDesc.OptionalText) extends Atom
+    case class Issue(typ: CustomIssueTypeId, desc: Text.InlineIssueDesc.OptionalText) extends Atom
   }
 
   /** An inline tag, like "#pri=high" */
@@ -104,7 +104,7 @@ object Atom {
   // A proof for all atom args should be added here.
   UnivEq[NonEmptyVector[Vector[String]]]
   UnivEq[ApplicableTagId]
-  UnivEq[CustomIssueType.Id]
+  UnivEq[CustomIssueTypeId]
   UnivEq[ReqId]
 
   // ===================================================================================================================

@@ -77,7 +77,7 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
     fields.data.customFields(id).flatMap(f =>
       Must.fromOption(d.unapplyData(f), s"$id associated with wrong type: $f"))
 
-  def customIssueType(id: CustomIssueType.Id): Must[CustomIssueType] =
+  def customIssueType(id: CustomIssueTypeId): Must[CustomIssueType] =
     Must.fromOption(customIssueTypes.data.get(id), s"No CustomIssueType found with $id")
 
   lazy val customTagFields =

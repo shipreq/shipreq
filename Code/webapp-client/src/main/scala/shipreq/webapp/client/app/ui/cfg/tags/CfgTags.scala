@@ -179,7 +179,7 @@ private[tags] object MainTable {
     val ts: HashRefKeyVS.Data[Id] =
       (k, s.tagStream.map(t => t.keyO.map(k => (t.id.some, k))).filter(_.isDefined).map(_.get))
 
-    val is: HashRefKeyVS.Data[CustomIssueType.Id] = // TODO cacheable
+    val is: HashRefKeyVS.Data[CustomIssueTypeId] = // TODO cacheable
       (None, cd.project.customIssueTypes.data.values.toStream
         .map(i => (i.id.some, i.key)))
 

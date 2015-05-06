@@ -51,8 +51,8 @@ package object test {
       }
   }
 
-  implicit object CustomIssueTypeIdT extends TestObjDataId[CustomIssueType.type, CustomIssueType, CustomIssueType.Id] {
-    override def mkId(l: Long) = CustomIssueType.Id(l)
-    override def setId(a: CustomIssueType, b: CustomIssueType.Id) = a.copy(id = b)
+  implicit object CustomIssueTypeIdT extends TestObjDataId[CustomIssueType.type, CustomIssueType, CustomIssueTypeId] {
+    override def mkId(l: Long) = CustomIssueTypeId(l)
+    override def setId(a: CustomIssueType, b: CustomIssueTypeId) = a.copy(id = b)
   }
 }

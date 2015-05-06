@@ -281,7 +281,7 @@ object DataCodecs {
   implicit final val fieldRefKey    = tagS(FieldRefKey.apply)
   implicit final val deletionAction = enum(DeletionAction.values)
 
-  implicit final val customIssueTypeId = tagL(CustomIssueType.Id.apply)
+  implicit final val customIssueTypeId = tagL(CustomIssueTypeId.apply)
   implicit final val customIssueType   = caseclass4(CustomIssueType.apply, CustomIssueType.unapply)
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -457,7 +457,7 @@ object DataCodecs {
       readSingleLine(t) orElse readBlankLine(t) orElse readListMarkup(t)
 
     def readIssue(t: Issue): PR[t.Issue] =
-      { case Js.Arr(Js.Str(ISSUE), a, b) => t.Issue(readJs[CustomIssueType.Id](a), readJs[Text.InlineIssueDesc.OptionalText](b)) }
+      { case Js.Arr(Js.Str(ISSUE), a, b) => t.Issue(readJs[CustomIssueTypeId](a), readJs[Text.InlineIssueDesc.OptionalText](b)) }
 
     def readReqRef(t: ReqRef): PR[t.ReqRef] =
       { case Js.Arr(Js.Str(REQREF), v) => t.ReqRef(readJs[ReqId](v)) }

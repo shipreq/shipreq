@@ -10,7 +10,7 @@ object DataTest extends TestSuite {
   import Validators.shared._
 
   @inline def tr(a: Option[TagId], b: HashRefKey) = (a,b)
-  @inline def ir(a: Option[CustomIssueType.Id], b: HashRefKey) = (a,b)
+  @inline def ir(a: Option[CustomIssueTypeId], b: HashRefKey) = (a,b)
 
   val tagData = Stream(tr(1.AT, "abc"), tr(2.AT, "def"))
   val issueData = Stream(ir(1, "tbd"), ir(3, "todo"))
@@ -19,7 +19,7 @@ object DataTest extends TestSuite {
     'validation {
       'hashRefKeyUniqueness {
 
-        def test(input: String, expectValid: Boolean, subjT: Option[TagId] = None, subjI: Option[CustomIssueType.Id] = None): Unit = {
+        def test(input: String, expectValid: Boolean, subjT: Option[TagId] = None, subjI: Option[CustomIssueTypeId] = None): Unit = {
           val vs = HashRefKeyVS((subjT, tagData), (subjI, issueData))
           assertEq(s"[$input] | $subjT, $subjI", hashRefKeyS.isValid(vs, input), expectValid)
         }

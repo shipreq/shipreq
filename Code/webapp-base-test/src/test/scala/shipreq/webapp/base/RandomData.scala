@@ -167,7 +167,7 @@ object RandomData {
   // Custom issue types
 
   lazy val customIssueTypeId =
-    id map CustomIssueType.Id
+    id map CustomIssueTypeId
 
   lazy val customIssueType =
     Gen.apply4(CustomIssueType.apply)(customIssueTypeId, hashRefKey, optionalLargeText, alive)
@@ -491,10 +491,10 @@ object RandomData {
     def tagRef(g: Gen[ApplicableTagId])(implicit t: TagRef): Gen[t.TagRef] =
       g map t.TagRef
 
-    def issue(i: Gen[CustomIssueType.Id], r: Option[Gen[ReqId]])(implicit t: Issue): Gen[t.Issue] =
+    def issue(i: Gen[CustomIssueTypeId], r: Option[Gen[ReqId]])(implicit t: Issue): Gen[t.Issue] =
       Gen.apply2(t.Issue)(i, inlineIssueDescAtom(r).vector)
 
-    def reqTitle(t: ReqTitle)(r: Option[Gen[ReqId]], i: Option[Gen[CustomIssueType.Id]]): Gen[t.Atom] = {
+    def reqTitle(t: ReqTitle)(r: Option[Gen[ReqId]], i: Option[Gen[CustomIssueTypeId]]): Gen[t.Atom] = {
       @inline implicit def tt: t.type = t
       val x = singleLineGens(t)
       val gs = (x append x) <+ r.map(reqRef(_)) <+ i.map(issue(_, r))
@@ -631,7 +631,7 @@ object RandomData {
     }
 
     def customTextFieldAtom(gr: Option[Gen[ReqId]],
-                            gi: Option[Gen[CustomIssueType.Id]],
+                            gi: Option[Gen[CustomIssueTypeId]],
                             gt: Option[Gen[ApplicableTagId]]): Gen[CustomTextField.Atom] = {
       @inline implicit def t: CustomTextField.type = CustomTextField
       multiLinePlus(t)(gr.map(reqRef(_)), gi.map(issue(_, gr)), gt.map(tagRef(_)))
@@ -674,7 +674,7 @@ object RandomData {
 
   def genericReqS(pubidS: ReqId => StateG[PubidRegister, Pubid],
 //                  genReqId: Option[Gen[ReqId]],
-                  genIssueType: Option[Gen[CustomIssueType.Id]]): StateG[PubidRegister, GenericReq] =
+                  genIssueType: Option[Gen[CustomIssueTypeId]]): StateG[PubidRegister, GenericReq] =
     for {
       id     <- genericReqId |> gliftS[PubidRegister, GenericReqId]
       pubid  <- pubidS(id)
@@ -701,7 +701,7 @@ object RandomData {
     pubidRegisterAnd(Set.empty[ReqId], genericReqIdS(pubidS(reqTypeIds)))(_ + _)
 
   def requirements(reqTypeIds: NonEmptyVector[ReqTypeId],
-                   genIssueType: Option[Gen[CustomIssueType.Id]]): GenS[Requirements] =
+                   genIssueType: Option[Gen[CustomIssueTypeId]]): GenS[Requirements] =
     pubidRegisterAnd(Req.IdAccess.emptyIMap, genericReqS(pubidS(reqTypeIds), genIssueType))(_ + _)
       .map { case (pr, reqs) => Requirements(reqs, pr) }
 
@@ -752,10 +752,10 @@ object RandomData {
     }
   }
 
-  // def customTextFieldAtom(gr: Gen[ReqId], gi: Gen[CustomIssueType.Id], gt: Gen[ApplicableTagId]): Gen[CustomTextField.Atom] = {
+  // def customTextFieldAtom(gr: Gen[ReqId], gi: Gen[CustomIssueTypeId], gt: Gen[ApplicableTagId]): Gen[CustomTextField.Atom] = {
   def reqFieldData(reqs   : Set[ReqId],
                    txtCols: Set[CustomField.Text.Id],
-                   cissues: Set[CustomIssueType.Id],
+                   cissues: Set[CustomIssueTypeId],
                    tags   : Set[ApplicableTagId]): Gen[ReqFieldData] = {
 
     val gr = Gen.oneofO(reqs.toSeq)
@@ -858,7 +858,7 @@ object RandomData {
     def flatInstance(gData: Gen[Data]): Gen[FlatInstance] =
       Gen.tuple2(value, gData)
 
-    def trie(r: Option[Gen[ReqId]], i: Option[Gen[CustomIssueType.Id]]): GenS[Trie] =
+    def trie(r: Option[Gen[ReqId]], i: Option[Gen[CustomIssueTypeId]]): GenS[Trie] =
       trie(r, TextGen.reqCodeGroupTitleAtom(r, i).text map ReqCodeGroup.apply)
 
     def trie(ogReqId: Option[Gen[ReqId]], gGroup: Gen[ReqCodeGroup]): GenS[Trie] =
@@ -883,7 +883,7 @@ object RandomData {
     type T = (A, B)
     val keyDist = hashRefFixer.distinct
     val issues = keyDist
-      .at(CustomIssueType.key).liftMapValues[CustomIssueType.Id]
+      .at(CustomIssueType.key).liftMapValues[CustomIssueTypeId]
       .at(first[T, A] ^|-> RevAnd.data[CustomIssueTypeIMap] ^|-> imapToMapLens)
     val tags = keyDist
       .lift[Option].contramap[Tag](_.keyO, setTagKey)
