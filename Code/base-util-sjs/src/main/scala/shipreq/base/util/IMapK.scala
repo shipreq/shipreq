@@ -20,6 +20,14 @@ trait RelationProof[T, F[+_ <: T], G[+_ <: T]] {
 
 // =====================================================================================================================
 
+/**
+ * Higher-Kinded Intrinsic-Invariant Map.
+ *
+ * Rank-2 values are mapped by a rank-2 subset of themselves.
+ * The relationship between map-key and value is guaranteed to be consistent.
+ *
+ * Each value and key has a rank-2 relationship enforced by [[RelationProof]].
+ */
 object IMapK {
   implicit def equality[T, K[+_ <: T], V[+_ <: T]](implicit k: Order[K[T]], v: Equal[V[T]]): Equal[IMapK[T, K, V]] =
     IMapBaseV.equality[K[T], V[T], IMapK[T, K, V]]

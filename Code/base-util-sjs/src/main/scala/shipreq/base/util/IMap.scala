@@ -10,6 +10,12 @@ object IMap {
     new IMap(k, Map.empty)
 }
 
+/**
+ * Intrinsic-Invariant Map.
+ *
+ * Values are mapped by a subset of themselves.
+ * The relationship between map-key and value is guaranteed to be consistent.
+ */
 final class IMap[K: UnivEq, V] private (key: V => K, m: Map[K, V]) extends IMapBase[K, V, IMap[K, V]](m) {
 
   override protected def stringPrefix         = "IMap"
