@@ -35,11 +35,8 @@ object ReqTable {
     def updateFocus(newFocus: Option[Table.Focus]): State =
       copy(focus = newFocus)
 
-    def updateCell(cmd: Cell.SetCmd): State = {
-      val r1 = cellStates(cmd.row)
-      val r2 = cmd.cellState.fold(r1 - cmd.col)(r1.updated(cmd.col, _))
-      copy(cellStates = cellStates.updated(cmd.row, r2))
-    }
+    def updateCell(cmd: Cell.SetCmd): State =
+      copy(cellStates = cellStates.set(cmd))
   }
 
   // -------------------------------------------------------------------------------------------------------------------

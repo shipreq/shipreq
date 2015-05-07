@@ -7,12 +7,27 @@ import shipreq.webapp.client.util.~=>
 
 object Cell {
 
-  type TableState = Map[Row.Id, RowState]
-
   type RowState = Map[Column, State]
 
-  val emptyTableState: TableState =
-    (UnivEq.emptyMap: TableState) withDefaultValue UnivEq.emptyMap
+  final class TableState(m: Map[Row.Id, RowState]) {
+    def apply(id: Row.Id): RowState =
+      m.getOrElse(id, UnivEq.emptyMap)
+
+    def apply(row: Row.Id, col: Column): Option[State] =
+      m.get(row).flatMap(_ get col)
+
+    def set(row: Row.Id, col: Column)(s: Option[State]): TableState = {
+      val r1 = apply(row)
+      val r2 = s.fold(r1 - col)(r1.updated(col, _))
+      new TableState(m.updated(row, r2))
+    }
+
+    def set(cmd: SetCmd): TableState =
+      set(cmd.row, cmd.col)(cmd.cellState)
+  }
+
+  def emptyTableState: TableState =
+    new TableState(UnivEq.emptyMap)
 
   case class SetCmd(row: Row.Id, col: Column, cellState: Option[State])
 
