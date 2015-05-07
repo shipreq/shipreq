@@ -1,6 +1,6 @@
 package shipreq.webapp.base.data
 
-import monocle.macros.{Lenses, GenLens}
+import monocle.macros.Lenses
 import scalaz.{Order, Ordering}
 import scalaz.std.anyVal.intInstance
 import scalaz.syntax.order._
@@ -110,6 +110,8 @@ final case class CustomReqType(id          : CustomReqTypeId,
 }
 
 object CustomReqType {
+  implicit def equality: UnivEq[CustomReqType] = deriveUnivEq
+
   object IdAccess extends ObjDataId[CustomReqType.type, CustomReqType, CustomReqTypeId] {
     override def id(d: CustomReqType) = d.id
     override val unapplyData: AnyRef => Option[CustomReqType] = {case r: CustomReqType => Some(r); case _ => None}

@@ -134,8 +134,7 @@ object Table {
 
     def startCellEditing(row: Row, col: Column): Option[IO[Unit]] = {
       val p = $.props
-      val rowState = p.cells(row.id)
-      if (rowState.get(col).isDefined)
+      if (p.cells(row.id, col).isDefined)
         // Already has cell state
         None
       else

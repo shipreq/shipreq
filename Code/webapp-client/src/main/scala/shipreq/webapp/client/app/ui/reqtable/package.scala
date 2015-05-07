@@ -16,6 +16,9 @@ package object reqtable {
     a
   }
 
-  @inline def mustResolve[A](m: Must[A])(fallback: => A): A =
+  def mustResolve[A](m: Must[A])(fallback: => A): A =
     m.fold(failedMust(fallback), identity)
+
+  def mustResolveO[A](m: Must[A]): Option[A] =
+    m.fold(failedMust(None: Option[A]), Some(_))
 }

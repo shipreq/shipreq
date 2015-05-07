@@ -87,7 +87,13 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
     fields.data.customFields.keys.filterT[CustomField.Text.Id]
 
   def reqType(i: ReqTypeId): Must[ReqType] =
-    i.foldId[Must[ReqType]](Must.Exists(_), customReqTypes.data.apply)
+    i.foldId[Must[ReqType]](Must.apply, customReqTypes.data.apply)
+
+  def reqTypeC(i: CustomReqTypeId): Must[CustomReqType] =
+    reqType(i).flatMap {
+      case c: CustomReqType => Must(c)
+      case f                => Must.Failed(s"$f must be a CustomReqType")
+    }
 
   lazy val reqTypes: Stream[ReqType] =
     (customReqTypes.data.values.toStream: Stream[ReqType]) #:::

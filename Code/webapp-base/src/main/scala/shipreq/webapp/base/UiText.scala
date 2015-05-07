@@ -49,4 +49,7 @@ object UiText {
     def abortNewButton    = "Cancel"
     def retryFailedButton = "Retry"
   }
+
+  def buttonCommitChange = "OK"
+  def buttonAbortChange = "Cancel"
 }

@@ -1,6 +1,7 @@
 package shipreq.base.util
 
 import scala.collection.GenTraversableOnce
+import scala.collection.generic.CanBuildFrom
 import scalaz.Semigroup
 
 /**
@@ -72,6 +73,12 @@ final class NonEmptySet[A] private[util] (val head: A, val tail: Set[A]) {
 
   def toNonEmptyVector: NonEmptyVector[A] =
     NonEmptyVector(head, tail.toVector)
+
+  def mapV[B](f: A => B): NonEmptyVector[B] = {
+    val b = implicitly[CanBuildFrom[Nothing, B, Vector[B]]].apply
+    tail.foreach(b += f(_))
+    NonEmptyVector(f(head), b.result())
+  }
 }
 
 // =====================================================================================================================

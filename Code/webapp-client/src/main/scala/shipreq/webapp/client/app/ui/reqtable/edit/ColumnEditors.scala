@@ -41,6 +41,7 @@ final class ColumnEditors(project       : Px[Project],
             case Column.Code           => codesForReq(r)
             case Column.Title          => genericReqTitle(r)
             case Column.Tags           => tags(r)
+            case Column.ReqType        => reqType(r)
             case Column.Pubid          => noEditor
             case Column.ImplicationSrc => imps(Row.implicationSrc, ImplicationEditor declFwd Column.ImplicationSrc)(r)
             case Column.ImplicationTgt => imps(Row.implicationTgt, ImplicationEditor declFwd Column.ImplicationTgt)(r)
@@ -72,6 +73,14 @@ final class ColumnEditors(project       : Px[Project],
       init(setState)
 
     initialState.map(_ => setState(initialState))
+  }
+
+  val reqType = initEditorO[GenericReqRow] { r =>
+    val initialM = project.value().reqTypeC(r.req.reqTypeId)
+    mustResolveO(initialM).map { initial =>
+      val fields = project.map(_.customReqTypes.data.values.toSet)
+      ReqTypeSelector(initial, fields, _)
+    }
   }
 
   val reqCodeGroupTitle = initEditor[ReqCodeGroupRow](r =>
