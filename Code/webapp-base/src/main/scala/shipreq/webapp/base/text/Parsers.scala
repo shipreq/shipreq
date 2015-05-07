@@ -98,7 +98,7 @@ object Parsers {
     val lookupReq: (ReqType.Mnemonic, ReqTypePos) => Option[ReqId] =
       (m, n) =>
         project.reqTypesByMnemonic.get(m)
-          .map(t => Pubid(t.reqTypeId, n))
+          .map(t => PubidT(t.reqTypeId, n))
           .flatMap(project.reqs.data.pubids.apply)
 
     def hashRef = rule(

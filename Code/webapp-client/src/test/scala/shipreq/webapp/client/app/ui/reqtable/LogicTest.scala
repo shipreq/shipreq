@@ -474,7 +474,7 @@ object LogicTest extends TestSuite {
     }
 
     def testReqType(): Unit = {
-      def t(_reqTypeId: ReqTypeId) = GReq(reqType = _reqTypeId)
+      def t(_reqTypeId: CustomReqTypeId) = GReq(reqType = _reqTypeId)
       val (co, br, mf, fr) = (1, 4, 2, 3)
       val p = t(co) + t(co) + t(br) + t(br) + t(mf) + t(mf) + t(fr) + t(fr) !! P
       val fmtRows = rowsToStr(_.req.pubid |> pubidToStr(p), _z)

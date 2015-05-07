@@ -21,7 +21,7 @@ package object test {
 
   type TestDataIdAux[D, Id] = TestDataId[D] {type I = Id}
 
-  implicit object TagIdT extends TestObjDataId[Tag.type, Tag, TagId] {
+  implicit object TagId_T extends TestObjDataId[Tag.type, Tag, TagId] {
     override def mkId(l: Long) = ApplicableTagId(l)
     override def setId(t: Tag, i: TagId) = t match {
         case x: TagGroup      => x.copy(id = TagGroupId     (i.value))
@@ -29,19 +29,19 @@ package object test {
       }
   }
 
-  implicit object ReqIdT extends TestObjDataId[Req.type, Req, ReqId] {
+  implicit object ReqId_T extends TestObjDataId[ReqT.type, Req, ReqId] {
     override def mkId(l: Long) = GenericReqId(l)
     override def setId(cf: Req, i: ReqId) = cf match {
         case r: GenericReq => r.copy(id = GenericReqId(i.value))
       }
   }
 
-  implicit object CustomReqTypeIdT extends TestObjDataId[CustomReqType.type, CustomReqType, CustomReqTypeId] {
+  implicit object CustomReqTypeId_T extends TestObjDataId[CustomReqType.type, CustomReqType, CustomReqTypeId] {
     override def mkId(l: Long) = CustomReqTypeId(l)
     override def setId(a: CustomReqType, b: CustomReqTypeId) = a.copy(id = b)
   }
 
-  implicit object CustomFieldIdT extends TestObjDataId[CustomField.type, CustomField, CustomFieldId] {
+  implicit object CustomFieldId_T extends TestObjDataId[CustomField.type, CustomField, CustomFieldId] {
     import CustomField._
     override def mkId(l: Long) = Text.Id(l)
     override def setId(cf: CustomField, i: CustomFieldId) = cf match {
@@ -51,7 +51,7 @@ package object test {
       }
   }
 
-  implicit object CustomIssueTypeIdT extends TestObjDataId[CustomIssueType.type, CustomIssueType, CustomIssueTypeId] {
+  implicit object CustomIssueTypeId_T extends TestObjDataId[CustomIssueType.type, CustomIssueType, CustomIssueTypeId] {
     override def mkId(l: Long) = CustomIssueTypeId(l)
     override def setId(a: CustomIssueType, b: CustomIssueTypeId) = a.copy(id = b)
   }

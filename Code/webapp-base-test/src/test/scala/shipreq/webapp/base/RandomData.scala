@@ -371,7 +371,7 @@ object RandomData {
       f2 <- customFieldTagSome(tagIds, art)
       f3 <- customFieldImplicationSome(reqTypeIds, art)
     } yield f3.toStream #::: f2.toStream #::: f1
-    def id   = distinctId(CustomField.IdAccess, CustomFieldIdT)
+    def id   = distinctId(CustomField.IdAccess, CustomFieldId_T)
     def name = Distinct.str.at(CustomField.independentName)
     def key  = Distinct.fstr.xmap(FieldRefKey.apply)(_.value).distinct.at(CustomField.key)
     val dist = (id * name * key).lift[Stream]
@@ -661,18 +661,18 @@ object RandomData {
     Gen.oneofG(genericReqId)
   }
 
-  def pubidS(reqTypeIds: NonEmptyVector[ReqTypeId])(reqId: ReqId): StateG[PubidRegister, Pubid] =
+  def pubidS[T <: ReqTypeId](reqTypeIds: NonEmptyVector[T])(reqId: ReqIdT[T]): StateG[PubidRegister, PubidT[T]] =
     StateT(register =>
       oneofV(reqTypeIds).map(reqTypeId =>
         register.alloc(reqId, reqTypeId)))
 
-  def genericReqIdS(pubidS: ReqId => StateG[PubidRegister, Pubid]): StateG[PubidRegister, ReqId] =
+  def genericReqIdS(pubidS: ReqIdC => StateG[PubidRegister, PubidC]): StateG[PubidRegister, ReqIdC] =
     for {
       id <- genericReqId |> gliftS[PubidRegister, GenericReqId]
       _  <- pubidS(id)
     } yield id
 
-  def genericReqS(pubidS: ReqId => StateG[PubidRegister, Pubid],
+  def genericReqS(pubidS: ReqIdC => StateG[PubidRegister, PubidC],
 //                  genReqId: Option[Gen[ReqId]],
                   genIssueType: Option[Gen[CustomIssueTypeId]]): StateG[PubidRegister, GenericReq] =
     for {
@@ -697,13 +697,18 @@ object RandomData {
     }
   }
 
-  def pubidRegisterAndIds(reqTypeIds: NonEmptyVector[ReqTypeId]): GenS[(PubidRegister, Set[ReqId])] =
-    pubidRegisterAnd(Set.empty[ReqId], genericReqIdS(pubidS(reqTypeIds)))(_ + _)
+  def pubidRegisterAndIds(customReqTypeIds: NonEmptyVector[CustomReqTypeId]): GenS[(PubidRegister, Set[ReqIdC])] =
+    pubidRegisterAnd(Set.empty[ReqIdC], genericReqIdS(pubidS(customReqTypeIds)))(_ + _)
 
-  def requirements(reqTypeIds: NonEmptyVector[ReqTypeId],
+  def requirements(customReqTypeIds: Vector[CustomReqTypeId],
                    genIssueType: Option[Gen[CustomIssueTypeId]]): GenS[Requirements] =
-    pubidRegisterAnd(Req.IdAccess.emptyIMap, genericReqS(pubidS(reqTypeIds), genIssueType))(_ + _)
-      .map { case (pr, reqs) => Requirements(reqs, pr) }
+  NonEmptyVector.maybe(customReqTypeIds,
+    GenS(_ => Gen insert Requirements.empty))( // ← This will change when UseCases are added
+    customReqTypeIdNev =>
+      pubidRegisterAnd(Requirements.emptyData, genericReqS(pubidS(customReqTypeIdNev), genIssueType))(_ + _)
+        .map { case (pr, reqs) => Requirements(reqs, pr) }
+    )
+
 
   // -------------------------------------------------------------------------------------------------------------------
   // Req Data
@@ -898,10 +903,11 @@ object RandomData {
       cissueIds      = issues.data.keySet
       cissueIdG      = Gen oneofO cissueIds.toSeq
       reqtypes       ← customReqTypes
-      reqTypeIds     = StaticReqType.values ++ reqtypes.data.keys
+      reqTypeIdsC    = reqtypes.data.keys.toVector
+      reqTypeIds     = StaticReqType.values ++ reqTypeIdsC
       reqTypeIdSet   = reqTypeIds.toSet
       fields         ← revAnd(fieldSet(reqTypeIdSet, tags.data.keySet, reqtypes.data.keySet))
-      reqs           ← revAnd(requirements(reqTypeIds, cissueIdG))
+      reqs           ← revAnd(requirements(reqTypeIdsC, cissueIdG))
       reqIds         = reqs.data.reqs.keys
       reqIdG         = Gen oneofO reqIds.toSeq
       reqCodes       ← revAndReqCodes(reqCode.trie(reqIdG, cissueIdG).lim(20 `JVM|JS` 6))

@@ -10,7 +10,7 @@ import japgolly.nyaya.test.PropTest._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.test.{SampleProject => S, TagIdT}
+import shipreq.webapp.base.test.{SampleProject => S, TagId_T}
 import shipreq.webapp.base.test.BaseTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
 import TagProtocol._
@@ -60,7 +60,7 @@ object TagProtocolTest extends TestSuite {
       t  <- RandomData.remoteDeltaG.povTag
     } yield {
       val tt2 = (tt /: t.rels.allReferencedIds)((q, id) =>
-        q.modOrPut(id, identity, TagInTree(TagIdT.setId(t.tag, id), Vector.empty)))
+        q.modOrPut(id, identity, TagInTree(TagId_T.setId(t.tag, id), Vector.empty)))
       TagProps(tt2, t.rels, t.tag)
     }
 

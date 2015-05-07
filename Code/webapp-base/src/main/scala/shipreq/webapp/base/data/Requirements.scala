@@ -179,10 +179,11 @@ final case class ReqTypePos(value: Int) extends TaggedInt
  *
  * Eg. "FR-3"
  */
-final case class Pubid(reqTypeId: ReqTypeId, pos: ReqTypePos)
+final case class PubidT[+T <: ReqTypeId](reqTypeId: T, pos: ReqTypePos)
 
-object Pubid {
-  implicit val equality: UnivEq[Pubid] = deriveUnivEq
+object PubidT {
+  UnivEq[ReqTypePos]
+  implicit def equality[T <: ReqTypeId : UnivEq]: UnivEq[PubidT[T]] = UnivEq.force
 }
 
 /**
@@ -191,20 +192,21 @@ object Pubid {
  */
 case class PubidRegister(value: Multimap[ReqTypeId, Vector, ReqId]) {
 
-  def alloc(reqId: ReqId, reqTypeId: ReqTypeId): (PubidRegister, Pubid) = {
+  def alloc[T <: ReqTypeId](reqId: ReqIdT[T], reqTypeId: T): (PubidRegister, PubidT[T]) = {
     val cur = value(reqTypeId)
     val i = cur.indexWhere(_ ≟ reqId)
     if (i >= 0)
-      (this, Pubid(reqTypeId, ReqTypePos(i + 1)))
+      (this, PubidT(reqTypeId, ReqTypePos(i + 1)))
     else
-      (PubidRegister(value.add(reqTypeId, reqId)), Pubid(reqTypeId, ReqTypePos(cur.size + 1)))
+      (PubidRegister(value.add(reqTypeId, reqId)), PubidT(reqTypeId, ReqTypePos(cur.size + 1)))
   }
 
-  def apply(id: Pubid): Option[ReqId] = {
+   def apply[T <: ReqTypeId](id: PubidT[T]): Option[ReqIdT[T]] = {
+//  def apply(id: Pubid): Option[ReqId] = {
     val v = value(id.reqTypeId)
     val i = id.pos.value - 1
     try {
-      Some(v(i))
+      Some(v(i)).asInstanceOf[Option[ReqIdT[T]]] // TODO
     } catch {
       case _: IndexOutOfBoundsException => None
     }
@@ -219,31 +221,36 @@ object PubidRegister {
 // ===================================================================================================================
 // Requirements
 
-/** type [[ReqId]] = [[GenericReqId]] */
-sealed trait ReqId extends TaggedLong with ReqCode.Target
+/** type [[ReqIdT]] = [[GenericReqId]] */
+sealed trait ReqIdT[+RT <: ReqTypeId] extends TaggedLong with ReqCode.Target
 
 /** [[Req]] = [[GenericReq]] */
-sealed abstract class Req {
-  val id: ReqId
-  val pubid: Pubid
+sealed abstract class ReqT[+RT <: ReqTypeId] {
+  val id: ReqIdT[RT]
+  val pubid: PubidT[RT]
   val alive: Alive
 
-  @inline final def reqTypeId = pubid.reqTypeId
+  @inline final def reqTypeId: RT = pubid.reqTypeId
 }
 
-object Req {
-  object IdAccess extends ObjDataId[Req.type, Req, ReqId] {
+object ReqT {
+  object IdAccess extends ObjDataId[ReqT.type, Req, ReqId] {
     override def id(d: Req) = d.id
     override val unapplyData: AnyRef => Option[Req] = {case r: Req => Some(r); case _ => None}
   }
+
+  val idProof: RelationProof[ReqTypeId, ReqT, ReqIdT] =
+    new RelationProof[ReqTypeId, ReqT, ReqIdT] {
+      override def apply[A <: ReqTypeId](v: ReqT[A]): ReqIdT[A] = v.id
+    }
 }
 
-final case class GenericReqId(value: Long) extends TaggedLong with ReqId
+final case class GenericReqId(value: Long) extends TaggedLong with ReqIdT[CustomReqTypeId]
 
 final case class GenericReq(id   : GenericReqId,
-                            pubid: Pubid,
+                            pubid: PubidC,
                             title: Text.GenericReqTitle.OptionalText,
-                            alive: Alive) extends Req
+                            alive: Alive) extends ReqT[CustomReqTypeId]
 
 object GenericReq {
   implicit val equality: UnivEq[GenericReq] = deriveUnivEq
@@ -272,24 +279,30 @@ case class ReqFieldData(text        : ReqFieldData.Text,
                         tags        : ReqFieldData.Tags,
                         implications: ReqFieldData.Implications)
 
-case class Requirements(reqs: IMap[ReqId, Req], pubids: PubidRegister) {
+object Requirements {
+  type Data = IMapK[ReqTypeId, ReqIdT, ReqT]
+  def emptyData = ReqT.idProof.emptyIMapK
+  def empty = Requirements(emptyData, PubidRegister.empty)
+}
 
-  def req(id: ReqId): Option[Req] =
+case class Requirements(reqs: Requirements.Data, pubids: PubidRegister) {
+
+  def req[T <: ReqTypeId](id: ReqIdT[T]): Option[ReqT[T]] =
     reqs.get(id)
 
-  def reqByPubid(id: Pubid): Option[Req] =
+  def reqByPubid[T <: ReqTypeId](id: PubidT[T]): Option[ReqT[T]] =
     pubids(id) flatMap req
 
-  def reqM(id: ReqId): Must[Req] =
+  def reqM[T <: ReqTypeId](id: ReqIdT[T]): Must[ReqT[T]] =
     Must.fromOption(req(id), s"Req $id not found.")
 
-  def reqByPubidM(id: Pubid): Must[Req] =
+  def reqByPubidM[T <: ReqTypeId](id: PubidT[T]): Must[ReqT[T]] =
     Must.fromOption(reqByPubid(id), s"Req for $id not found.")
 
-  def reqIdByPubidM(id: Pubid): Must[ReqId] =
+  def reqIdByPubidM[T <: ReqTypeId](id: PubidT[T]): Must[ReqIdT[T]] =
     Must.fromOption(pubids(id), s"Req for $id not found.")
 
-  def reqsByPubidM[M[X] <: TraversableOnce[X]: Monoidish](ids: M[Pubid]): Must[M[Req]] =
+  def reqsByPubidM[M[X] <: TraversableOnce[X]: Monoidish, T <: ReqTypeId](ids: M[PubidT[T]]): Must[M[ReqT[T]]] =
     Must.foldMapM(ids)(reqByPubidM)
 
   lazy val reqsByType: Multimap[ReqTypeId, Set, Req] =

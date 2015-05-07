@@ -132,8 +132,15 @@ private[protocol] object CodecBase {
   def strkeyW2[A, B](k: String, a: A, b: B)(implicit A: Writer[A], B: Writer[B]) =
     Js.Arr(Js.Str(k), A write a, B write b)
 
+  // TODO Wait, writing keys in iMap is a waste. k ∈ v
+
   def iMap[K: UnivEq : Reader : Writer, V: Reader : Writer](key: V => K): ReadWriter[IMap[K, V]] =
     xmap((_: IMap[K, V]).underlyingMap)(m => IMap.empty(key).replaceUnderlying(m))
+
+  def iMapK[T, K[+ _ <: T], V[+ _ <: T]](rel: RelationProof[T, V, K])
+                                        (implicit rm: Reader[Map[K[T], V[T]]], wm: Writer[Map[K[T], V[T]]],
+                                         ue: UnivEq[K[T]]): ReadWriter[IMapK[T, K, V]] =
+    xmap((_: IMapK[T, K, V]).underlyingMap)(m => rel.emptyIMapK.replaceUnderlying(m))
 
   @inline def mergeRW[A](implicit r: Reader[A], w: Writer[A]): ReadWriter[A] =
     ReadWriter[A](w.write, r.read)
@@ -291,7 +298,7 @@ object DataCodecs {
     import StaticReqType._
     ReadWriter[ReqTypeId]({
       case i: CustomReqTypeId => Js.Str(i.value.toString)
-      case UseCase             => Js.Str("u")
+      case UseCase            => Js.Str("u")
     }, {
       case Js.Str(ParseLong(i)) => CustomReqTypeId(i)
       case Js.Str("u")          => UseCase
@@ -535,12 +542,13 @@ object DataCodecs {
   // Requirements
 
   implicit final val reqTypePos    = tagI(ReqTypePos.apply)
-  implicit final val pubid         = caseclass2(Pubid.apply, Pubid.unapply)
+  implicit final def pubid[T <: ReqTypeId : Reader : Writer] = caseclass2(PubidT.apply[T], PubidT.unapply[T])
   implicit final val genericReqId  = tagL(GenericReqId.apply)
   implicit final val genericReq    = caseclass4(GenericReq.apply, GenericReq.unapply)
   implicit final val reqId         = _reqId
   implicit final val req           = _req
   implicit final val pubidRegister = xmap((_: PubidRegister).value)(PubidRegister.apply)
+  implicit final val requirementsD = iMapK[ReqTypeId, ReqIdT, ReqT](ReqT.idProof)
   implicit final val requirements  = caseclass2(Requirements.apply, Requirements.unapply)
   implicit final val implications  = xmap((_: ReqFieldData.Implications).srcToTgt)(ReqFieldData.Implications)
   implicit final val reqFieldData  = caseclass3(ReqFieldData.apply, ReqFieldData.unapply)

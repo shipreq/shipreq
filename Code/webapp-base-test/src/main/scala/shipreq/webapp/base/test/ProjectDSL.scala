@@ -22,8 +22,8 @@ object ProjectDSL {
 
   case class ProjectState(p             : Project,
                           nextId        : Long,
-                          defaultReqType: ReqType,
-                          reqs          : IMap[ReqId, Req],
+                          defaultReqType: Option[CustomReqType],
+                          reqs          : IMapK[ReqTypeId, ReqIdT, ReqT],
                           pubids        : PubidRegister,
                           reqCodeTrie   : ReqCode.Trie,
                           maxReqCodeId  : Long,
@@ -42,7 +42,7 @@ object ProjectDSL {
 
   def projectState(p: Project) = ProjectState(p,
     nextId         = p.reqs.data.reqs.keySet.ifelse(_.isEmpty, _ => 1, _.max.value),
-    defaultReqType = p.customReqTypes.data.values.headOption.getOrElse(StaticReqType.values.head),
+    defaultReqType = p.customReqTypes.data.values.headOption,
     reqs           = p.reqs.data.reqs,
     pubids         = p.reqs.data.pubids,
     reqCodeTrie    = p.reqCodes.data.trie,
@@ -56,7 +56,7 @@ object ProjectDSL {
 
   case class GReq(title  : Text.GenericReqTitle.OptionalText = Vector.empty,
                   id     : Option[GenericReqId]              = None,
-                  reqType: Option[ReqTypeId]                 = None,
+                  reqType: Option[CustomReqTypeId]           = None,
                   alive  : Alive                             = Alive,
                   codes  : Set[ReqCode.Value]                = Set.empty,
                   tags   : Set[ApplicableTagId]              = Set.empty,
@@ -86,7 +86,7 @@ object ProjectDSL {
         def reqCodeData() =
           ReqCode.Data(Some(ReqCode.ActiveData(nextReqCodeId(), id)), UnivEq.emptySet, UnivEq.emptyMultimap)
 
-        val reqTypeId   = this.reqType.getOrElse(p.defaultReqType.reqTypeId)
+        val reqTypeId   = this.reqType.getOrElse(p.defaultReqType.get.id)
         val (pr, pubid) = p.pubids.alloc(id, reqTypeId)
         val req         = GenericReq(id, pubid, title, alive)
         val text        = cftexts.mapValues(t => Map.empty[ReqId, CFTextValue].updated(id, t))
@@ -125,7 +125,7 @@ object ProjectDSL {
       }
   }
 
-  case class Composite(ss: NonEmptyVector[Mod[_]], defaultReqType: Option[ReqType]) {
+  case class Composite(ss: NonEmptyVector[Mod[_]], defaultReqType: Option[CustomReqType]) {
 
     def +(n: ToState): Composite =
       copy(ss = n.state +: ss)
@@ -133,7 +133,7 @@ object ProjectDSL {
     def state: Mod[Unit] = {
       var s = ss.whole.reduce((a, b) => b >> a).map(_ => ())
       for (rt <- defaultReqType)
-        s = State.modify[S](_.copy(defaultReqType = rt)) >> s
+        s = State.modify[S](_.copy(defaultReqType = Some(rt))) >> s
       s
     }
 
@@ -142,7 +142,7 @@ object ProjectDSL {
       copy(ss = NonEmptyVector(x.head, x.tail))
     }
 
-    def setDefaultReqType(rt: ReqType): Composite =
+    def setDefaultReqType(rt: CustomReqType): Composite =
       copy(defaultReqType = Some(rt))
 
     def !(p: Project): Project =

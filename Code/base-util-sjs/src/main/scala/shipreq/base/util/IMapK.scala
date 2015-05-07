@@ -13,6 +13,9 @@ trait RelationProof[T, F[+_ <: T], G[+_ <: T]] {
 
   @inline def forceCastK[A <: T, K[_]](k: K[F[T]]): K[F[A]] =
     k.asInstanceOf[K[F[A]]]
+
+  def emptyIMapK(implicit ev: UnivEq[G[T]]): IMapK[T, G, F] =
+    IMapK.empty[T, G, F](this)
 }
 
 // =====================================================================================================================

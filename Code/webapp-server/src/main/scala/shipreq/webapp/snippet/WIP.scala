@@ -73,7 +73,7 @@ class WIP {
       )))
     }
 
-    lazy val reqs     = RevAnd(40, Requirements(IMap.empty(_.id), PubidRegister.empty))
+    lazy val reqs     = RevAnd(40, Requirements.empty)
     lazy val reqCodes = RevAnd(50, ReqCodes(Map.empty))
     lazy val reqData  = RevAnd(60, ReqFieldData(Map.empty, Multimap.empty, ReqFieldData.Implications(Multimap.empty)))
 
@@ -81,7 +81,7 @@ class WIP {
 
     import shipreq.webapp.base.test.ProjectDSL._
 
-    val List(co,mf,fr) = List[ReqTypeId](1,2,3).map(Some(_))
+    val List(co,mf,fr) = List[CustomReqTypeId](1,2,3).map(Some(_))
     val List(p1,p3,p5,rel,wip,v1x) = List[ApplicableTagId](4,3,2,22,11,21)
     val (p2,p4) = (p3,p5)
     val mfs = (0 to 28).toVector.map(i => GenericReqId(i + 1000))
