@@ -87,7 +87,7 @@ object ProjectDSL {
           ReqCode.Data(Some(ReqCode.ActiveData(nextReqCodeId(), id)), UnivEq.emptySet, UnivEq.emptyMultimap)
 
         val reqTypeId   = this.reqType.getOrElse(p.defaultReqType.get.id)
-        val (pr, pubid) = p.pubids.alloc(id, reqTypeId)
+        val (pr, pubid) = p.pubids.allocC(reqTypeId)(id)
         val req         = GenericReq(id, pubid, title, alive)
         val text        = cftexts.mapValues(t => Map.empty[ReqId, CFTextValue].updated(id, t))
         val tags        = p.tags.addvs(id, this.tags)

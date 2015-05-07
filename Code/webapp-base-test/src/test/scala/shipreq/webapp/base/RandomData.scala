@@ -661,10 +661,10 @@ object RandomData {
     Gen.oneofG(genericReqId)
   }
 
-  def pubidS[T <: ReqTypeId](reqTypeIds: NonEmptyVector[T])(reqId: ReqIdT[T]): StateG[PubidRegister, PubidT[T]] =
+  def pubidS(reqTypeIds: NonEmptyVector[CustomReqTypeId])(reqId: ReqIdC): StateG[PubidRegister, PubidC] =
     StateT(register =>
       oneofV(reqTypeIds).map(reqTypeId =>
-        register.alloc(reqId, reqTypeId)))
+        register.allocC(reqTypeId)(reqId)))
 
   def genericReqIdS(pubidS: ReqIdC => StateG[PubidRegister, PubidC]): StateG[PubidRegister, ReqIdC] =
     for {

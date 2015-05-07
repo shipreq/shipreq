@@ -14,10 +14,10 @@ object ReqsTest extends TestSuite {
   val oneReqPerReqtypeProp =
     Prop.distinctC[Vector, ReqId]("Req ID").forall((_: PubidRegister).value.m.values.toStream)
 
-  case class PubidRegisterProps(register: PubidRegister, req: ReqId, reqType: ReqTypeId) {
+  case class PubidRegisterProps(register: PubidRegister, req: ReqIdC, reqType: CustomReqTypeId) {
     val E            = EvalOver(this)
-    val (reg2, pid2) = register.alloc(req, reqType)
-    val (reg3, pid3) = reg2    .alloc(req, reqType)
+    val (reg2, pid2) = register.allocC(reqType)(req)
+    val (reg3, pid3) = reg2    .allocC(reqType)(req)
 
     def allocPubidLookup =
       E.equal("lookup(alloc(req)) = req", reg2(pid2), req.some)
@@ -39,8 +39,8 @@ object ReqsTest extends TestSuite {
     for {
       reqTypeIds ← RandomData.customReqTypeId.nev
       (pr, reqs) ← RandomData.pubidRegisterAndIds(reqTypeIds)
-      req        ← Gen.newOrOld(RandomData.reqId)(reqs)
-      reqType    ← Gen.newOrOld(RandomData.reqTypeId)(reqTypeIds.whole)
+      req        ← Gen.newOrOld(RandomData.genericReqId.subst[ReqIdC])(reqs)
+      reqType    ← Gen.newOrOld(RandomData.customReqTypeId)(reqTypeIds.whole)
     } yield PubidRegisterProps(pr, req, reqType)
 
   override def tests = TestSuite {

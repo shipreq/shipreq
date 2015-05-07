@@ -192,7 +192,10 @@ object PubidT {
  */
 case class PubidRegister(value: Multimap[ReqTypeId, Vector, ReqId]) {
 
-  def alloc[T <: ReqTypeId](reqId: ReqIdT[T], reqTypeId: T): (PubidRegister, PubidT[T]) = {
+  def allocC(reqTypeId: CustomReqTypeId)(reqId: ReqIdC): (PubidRegister, PubidC) =
+    _alloc(reqTypeId)(reqId)
+
+  private def _alloc[T <: ReqTypeId](reqTypeId: T)(reqId: ReqIdT[T]): (PubidRegister, PubidT[T]) = {
     val cur = value(reqTypeId)
     val i = cur.indexWhere(_ ≟ reqId)
     if (i >= 0)
@@ -202,11 +205,11 @@ case class PubidRegister(value: Multimap[ReqTypeId, Vector, ReqId]) {
   }
 
    def apply[T <: ReqTypeId](id: PubidT[T]): Option[ReqIdT[T]] = {
-//  def apply(id: Pubid): Option[ReqId] = {
     val v = value(id.reqTypeId)
     val i = id.pos.value - 1
+    @inline def cast(r: ReqId) = r.asInstanceOf[ReqIdT[T]]
     try {
-      Some(v(i)).asInstanceOf[Option[ReqIdT[T]]] // TODO
+      Some(cast(v(i)))
     } catch {
       case _: IndexOutOfBoundsException => None
     }
