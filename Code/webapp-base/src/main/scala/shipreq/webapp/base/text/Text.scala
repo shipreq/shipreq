@@ -64,6 +64,7 @@ object Text {
 
   object ReqCodeGroupTitle extends ReqTitle
 
+  /** Title of a [[shipreq.webapp.base.data.GenericReq]]. Not a generic req-title. */
   object GenericReqTitle extends ReqTitle
 
   object CustomTextField extends Base
