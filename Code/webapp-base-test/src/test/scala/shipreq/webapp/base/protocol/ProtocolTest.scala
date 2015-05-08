@@ -78,10 +78,14 @@ object ProtocolTest extends TestSuite {
 
       'Text {
         import shipreq.webapp.base.text.Text._
-        'ReqCodeGroupTitle - test("ReqCodeGroupTitle", $.TextGen.reqCodeGroupTitleAtom($.reqId, $.customIssueTypeId                   ).text)
-        'GenericReqTitle   - test("GenericReqTitle",   $.TextGen.genericReqTitleAtom  ($.reqId, $.customIssueTypeId                   ).text)
-        'InlineIssueDesc   - test("InlineIssueDesc",   $.TextGen.inlineIssueDescAtom  ($.reqId                                        ).text)
-        'CustomTextField   - test("CustomTextField",   $.TextGen.customTextFieldAtom  ($.reqId, $.customIssueTypeId, $.applicableTagId).text1(CustomTextField))
+        def gr = $.reqId
+        def gc = $.reqCode.id
+        def gi = $.customIssueTypeId
+        def ga = $.applicableTagId
+        'ReqCodeGroupTitle - test("ReqCodeGroupTitle", $.TextGen.reqCodeGroupTitleAtom(gr, gc, gi    ).text)
+        'GenericReqTitle   - test("GenericReqTitle",   $.TextGen.genericReqTitleAtom  (gr, gc, gi    ).text)
+        'InlineIssueDesc   - test("InlineIssueDesc",   $.TextGen.inlineIssueDescAtom  (gr, gc        ).text)
+        'CustomTextField   - test("CustomTextField",   $.TextGen.customTextFieldAtom  (gr, gc, gi, ga).text1(CustomTextField))
       }
     }
 

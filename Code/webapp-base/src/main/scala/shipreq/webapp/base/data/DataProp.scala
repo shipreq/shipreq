@@ -206,7 +206,7 @@ object DataProp {
         .rename("No empty terminals")
 
     def uniqueIds =
-      Prop.distinct("ID", (_: T).trie.flatStream.flatMap(_._2.ids))
+      Prop.distinct("ID", (_: T).allIds)
 
     lazy val all =
       revAnd(branchesMustBranch ∧ nonEmptyTerminals ∧ uniqueIds) rename "ReqCodes"
@@ -279,6 +279,7 @@ object DataProp {
       case a: PlainTextMarkup # MathTeX       => mathtex(a)
       case a: ListMarkup      # UnorderedList => anyTextV(a.items.whole)
       case _: ReqRef          # ReqRef        => nop
+      case _: ReqRef          # CodeRef       => nop
       case a: Issue           # Issue         => anyText(a.desc)
       case _: TagRef          # TagRef        => nop
     } rename "AnyAtom"
@@ -288,7 +289,8 @@ object DataProp {
   object project {
     type T = Project
 
-    case class Refs(fieldIds: Set[CustomFieldId], reqIds: Set[ReqId], reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId])
+    case class Refs(fieldIds: Set[CustomFieldId], reqIds: Set[ReqId], reqCodeIds: Set[ReqCodeId],
+                    reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId])
 
     def atoms =
       Prop.eval[(String, Stream[Text.AnyOptional])](t => text.anyTextS(t._2).rename(t._1))
@@ -317,6 +319,7 @@ object DataProp {
       def mkRefs(p: Project): Refs = Refs(
         p.fields.data.customFields.keySet,
         p.reqs.data.reqs.vstream(_.id).toSet,
+        p.reqCodes.data.allIds.toSet,
         p.reqTypes.map(_.reqTypeId).toSet,
         p.tags.data.keySet)
 
@@ -325,6 +328,7 @@ object DataProp {
 
       def validFieldIds   = whitelist(_._2.fieldIds) _
       def validReqIds     = whitelist(_._2.reqIds) _
+      def validReqCodeIds = whitelist(_._2.reqCodeIds) _
       def validReqTypeIds = whitelist(_._2.reqTypeIds) _
       def validTagIds     = whitelist(_._2.tagIds) _
       def validIssueTypes = whitelist(_._1.customIssueTypes.data.keySet) _
@@ -350,9 +354,10 @@ object DataProp {
       ∧ validReqIds    ("ReqFieldData.tags keys",          _.reqFieldData.data.tags.keys)
       ∧ validTagIds    ("ReqFieldData.tags values",        _.reqFieldData.data.tags.allValues)
       ∧ validReqIds    ("ReqFieldData.implications",       _.reqFieldData.data.implications.members)
-      ∧ validReqIds    ("Atoms: ReqRefs",                  inText { case a: ReqRef#ReqRef => a.value })
-      ∧ validTagIds    ("Atoms: TagRefs",                  inText { case a: TagRef#TagRef => a.value })
-      ∧ validIssueTypes("Atoms: Issues",                   inText { case a: Issue#Issue   => a.typ })
+      ∧ validReqIds    ("Atoms: ReqRefs",                  inText { case a: ReqRef # ReqRef  => a.value })
+      ∧ validReqCodeIds("Atoms: CodeRefs",                 inText { case a: ReqRef # CodeRef => a.value })
+      ∧ validTagIds    ("Atoms: TagRefs",                  inText { case a: TagRef # TagRef  => a.value })
+      ∧ validIssueTypes("Atoms: Issues",                   inText { case a: Issue  # Issue   => a.typ })
       ).rename("Cross-constituent refs").contramap[T](_ mapStrengthR mkRefs)
     }
 

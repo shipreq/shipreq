@@ -157,13 +157,12 @@ final case class ReqCodes(trie: ReqCode.Trie) {
     cataA(UnivEq.emptyMultimap[Target, Set, Value])((q, c, d) =>
       q.add(d.target, c))
 
-  //  lazy val reqCodeById: Map[Id, Value] =
-//    trie.cataV(UnivEq.emptyMap[Id, Value])((q, c, d) =>
-//      q.updated(d.id, c))
+  lazy val reqCodeById: Map[ReqCodeId, Value] =
+    trie.cataV(UnivEq.emptyMap[ReqCodeId, Value])((q, c, d) =>
+      d.ids.foldLeft(q)(_.updated(_, c)))
 
-//  lazy val reqCodesByTarget: Multimap[Target, Set, Value] =
-//    trie.cataV(UnivEq.emptyMultimap[Target, Set, Value])((q, c, d) =>
-//      q.add(d.target, c))
+  def allIds: Stream[ReqCodeId] =
+    trie.flatStream.flatMap(_._2.ids)
 
 //  lazy val targetToIds: Multimap[Target, Set, Id] =
 //    trie.cataV(UnivEq.emptyMultimap[Target, Set, Id])((q, _, d) =>

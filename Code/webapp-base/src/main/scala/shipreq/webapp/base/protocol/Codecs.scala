@@ -406,6 +406,7 @@ object DataCodecs {
     private[this] final val UL       = "*"
     private[this] final val ISSUE    = "i"
     private[this] final val REQREF   = "r"
+    private[this] final val CODEREF  = "c"
     private[this] final val TAGREF   = "t"
 
     lazy val writeAny: Writer[AnyAtom] =
@@ -413,6 +414,7 @@ object DataCodecs {
         case a: Literal         # Literal       => Js.Str(a.value)
         case a: NewLine         # BlankLine     => Js.Num(BLANKLINE)
         case a: ReqRef          # ReqRef        => strkeyW (REQREF,   a.value)
+        case a: ReqRef          # CodeRef       => strkeyW (CODEREF,  a.value)
         case a: Issue           # Issue         => strkeyW2(ISSUE,    a.typ, a.desc)
         case a: PlainTextMarkup # WebAddress    => strkeyW (WEBADD,   a.value)
         case a: PlainTextMarkup # EmailAddress  => strkeyW (EMAILADD, a.value)
@@ -462,8 +464,10 @@ object DataCodecs {
     def readIssue(t: Issue): PR[t.Issue] =
       { case Js.Arr(Js.Str(ISSUE), a, b) => t.Issue(readJs[CustomIssueTypeId](a), readJs[Text.InlineIssueDesc.OptionalText](b)) }
 
-    def readReqRef(t: ReqRef): PR[t.ReqRef] =
-      { case Js.Arr(Js.Str(REQREF), v) => t.ReqRef(readJs[ReqId](v)) }
+    def readReqRef(t: ReqRef): PR[t.Atom] = {
+      case Js.Arr(Js.Str(REQREF),  v) => t.ReqRef (readJs[ReqId]    (v))
+      case Js.Arr(Js.Str(CODEREF), v) => t.CodeRef(readJs[ReqCodeId](v))
+    }
 
     def readTagRef(t: TagRef): PR[t.TagRef] =
       { case Js.Arr(Js.Str(TAGREF), v) => t.TagRef(readJs[ApplicableTagId](v)) }

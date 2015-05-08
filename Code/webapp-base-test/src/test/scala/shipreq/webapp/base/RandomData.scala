@@ -411,9 +411,15 @@ object RandomData {
     lazy val emailR = charPred(Parsers.emailCharR).string1
 
     // private[this] implicit def autoSomeG[A](g: Gen[A]) = g.some
+    private[this] implicit class ELExt[A <: AnyAtom](val _l: List[Gen[A]]) extends AnyVal {
+      def <+(o: Option[Gen[A]]): List[Gen[A]] =
+        o.fold(_l)(_ :: _l)
+    }
     private[this] implicit class NELExt[A <: AnyAtom](val _nel: NonEmptyList[Gen[A]]) extends AnyVal {
       def <+(o: Option[Gen[A]]): NonEmptyList[Gen[A]] =
         o.fold(_nel)(_ <:: _nel)
+      def <++(l: List[Gen[A]]): NonEmptyList[Gen[A]] =
+        l <::: _nel
     }
 
     val strchr  = Gen.oneofG(Gen.chooseint(32, 127), Gen.chooseint(128, 65534)).map(_.toChar)
@@ -492,21 +498,19 @@ object RandomData {
         plus.foldLeft[List[(Int, Gen[t.Atom])]](Nil)((q, o) =>
           o.fold(q)(g => (9, g) :: q)): _*)
 
-    def reqRef(g: Gen[ReqId])(implicit t: ReqRef): Gen[t.ReqRef] =
-      g map t.ReqRef
+    def reqRefs(r: Option[Gen[ReqId]], c: Option[Gen[ReqCodeId]])(implicit t: ReqRef): List[Gen[t.Atom]] = {
+      import Gen.Covariance._
+      var v = List.empty[Gen[t.Atom]]
+      v = v <+ r.map(_ map t.ReqRef)
+      v = v <+ c.map(_ map t.CodeRef)
+      v
+    }
 
     def tagRef(g: Gen[ApplicableTagId])(implicit t: TagRef): Gen[t.TagRef] =
       g map t.TagRef
 
-    def issue(i: Gen[CustomIssueTypeId], r: Option[Gen[ReqId]])(implicit t: Issue): Gen[t.Issue] =
-      Gen.apply2(t.Issue)(i, inlineIssueDescAtom(r).vector)
-
-    def reqTitle(t: ReqTitle)(r: Option[Gen[ReqId]], i: Option[Gen[CustomIssueTypeId]]): Gen[t.Atom] = {
-      @inline implicit def tt: t.type = t
-      val x = singleLineGens(t)
-      val gs = (x append x) <+ r.map(reqRef(_)) <+ i.map(issue(_, r))
-      Gen oneofGL gs
-    }
+    def issue(i: Gen[CustomIssueTypeId], r: Option[Gen[ReqId]], c: Option[Gen[ReqCodeId]])(implicit t: Issue): Gen[t.Issue] =
+      Gen.apply2(t.Issue)(i, inlineIssueDescAtom(r, c).vector)
 
     val isBlankLine: AnyAtom => Boolean = {
       case _: NewLine#BlankLine => true
@@ -516,6 +520,7 @@ object RandomData {
     val legalListItemAtom: AnyAtom => Boolean = {
       case _: Literal         # Literal
          | _: ReqRef          # ReqRef
+         | _: ReqRef          # CodeRef
          | _: Issue           # Issue
          | _: PlainTextMarkup # WebAddress
          | _: PlainTextMarkup # EmailAddress
@@ -627,21 +632,33 @@ object RandomData {
 
     // Specific text types
 
+    def reqTitle(t: ReqTitle)(r: Option[Gen[ReqId]],
+                              c: Option[Gen[ReqCodeId]],
+                              i: Option[Gen[CustomIssueTypeId]]): Gen[t.Atom] = {
+      @inline implicit def tt: t.type = t
+      val x = singleLineGens(t)
+      val gs = (x append x) <++ reqRefs(r, c) <+ i.map(issue(_, r, c))
+      Gen oneofGL gs
+    }
+
     def reqCodeGroupTitleAtom = reqTitle(ReqCodeGroupTitle) _
 
     def genericReqTitleAtom   = reqTitle(GenericReqTitle) _
 
-    def inlineIssueDescAtom(r: Option[Gen[ReqId]]): Gen[InlineIssueDesc.Atom] = {
+    def inlineIssueDescAtom(r: Option[Gen[ReqId]], c: Option[Gen[ReqCodeId]]): Gen[InlineIssueDesc.Atom] = {
       @inline implicit def t: InlineIssueDesc.type = InlineIssueDesc
-      val gs = singleLineGens(t) <+ r.map(reqRef(_))
+      val gs = singleLineGens(t) <++ reqRefs(r, c)
       Gen oneofGL gs
     }
 
-    def customTextFieldAtom(gr: Option[Gen[ReqId]],
-                            gi: Option[Gen[CustomIssueTypeId]],
-                            gt: Option[Gen[ApplicableTagId]]): Gen[CustomTextField.Atom] = {
-      @inline implicit def t: CustomTextField.type = CustomTextField
-      multiLinePlus(t)(gr.map(reqRef(_)), gi.map(issue(_, gr)), gt.map(tagRef(_)))
+    def customTextFieldAtom(r: Option[Gen[ReqId]],
+                            c: Option[Gen[ReqCodeId]],
+                            i: Option[Gen[CustomIssueTypeId]],
+                            a: Option[Gen[ApplicableTagId]]): Gen[CustomTextField.Atom] = {
+      implicit val t: CustomTextField.type = CustomTextField
+      val gs: List[Option[Gen[t.Atom]]] =
+        i.map(issue(_, r, c).subst[t.Atom]) :: a.map(tagRef(_).subst[t.Atom]) :: reqRefs(r, c).map(_.some)
+      multiLinePlus(t)(gs: _*)
     }
   }
 
@@ -668,9 +685,9 @@ object RandomData {
     Gen.oneofG(genericReqId)
   }
 
-  def sAllocPubidC(reqTypeIds: NonEmptyVector[CustomReqTypeId])(reqId: ReqIdC): StateG[PubidRegister, PubidC] =
+  def sAllocPubidC(possibleReqTypeIds: NonEmptyVector[CustomReqTypeId])(reqId: ReqIdC): StateG[PubidRegister, PubidC] =
     StateT(register =>
-      oneofV(reqTypeIds).map(reqTypeId =>
+      oneofV(possibleReqTypeIds).map(reqTypeId =>
         register.allocC(reqTypeId)(reqId)))
 
   def sGenericReqId(pubidS: ReqIdC => StateG[PubidRegister, PubidC]): StateG[PubidRegister, ReqIdC] =
@@ -687,8 +704,7 @@ object RandomData {
       live   ← alive
     } yield GenericReq(id, pubid, desc, live)
 
-  def pubidRegisterAnd[A, B](inita: A, genb: StateG[PubidRegister, B])
-                            (f: (A, B) => A): GenS[(PubidRegister, A)] = {
+  def pubidRegisterAnd[A, B](inita: A, genb: StateG[PubidRegister, B])(f: (A, B) => A): GenS[(PubidRegister, A)] = {
     val init = StateT.stateT[Gen, PubidRegister, A](inita)
     GenS.choosesize flatMap { sz =>
       val prog = Stream.fill(sz)(genb).foldLeft(init)((sn, ga) =>
@@ -768,17 +784,17 @@ object RandomData {
   }
 
   // def customTextFieldAtom(gr: Gen[ReqId], gi: Gen[CustomIssueTypeId], gt: Gen[ApplicableTagId]): Gen[CustomTextField.Atom] = {
-  def reqFieldData(reqs   : Set[ReqId],
-                   txtCols: Set[CustomField.Text.Id],
-                   cissues: Set[CustomIssueTypeId],
-                   tags   : Set[ApplicableTagId]): Gen[ReqFieldData] = {
+  def reqFieldData(reqs    : Set[ReqId],
+                   txtCols : Set[CustomField.Text.Id],
+                   reqCodeG: Option[Gen[ReqCodeId]],
+                   cissueG : Option[Gen[CustomIssueTypeId]],
+                   tags    : Set[ApplicableTagId]): Gen[ReqFieldData] = {
 
     val gr = Gen.oneofO(reqs.toSeq)
     val gt = Gen.oneofO(tags.toSeq)
-    val gi = Gen.oneofO(cissues.toSeq)
 
     Gen.apply3(ReqFieldData.apply)(
-      reqFieldDataText(txtCols, reqs, TextGen.customTextFieldAtom(gr, gi, gt).ptext1(Text.CustomTextField)),
+      reqFieldDataText(txtCols, reqs, TextGen.customTextFieldAtom(gr, reqCodeG, cissueG, gt).ptext1(Text.CustomTextField)),
       reqFieldDataTags(reqs, tags),
       reqFieldDataImplications(reqs))
   }
@@ -863,7 +879,7 @@ object RandomData {
         if (x == 0)
           target match {
             case t: ReqId        => Data(None, refsToGroup, refsToReqs.add(t, i))
-            case _: ReqCodeGroup => Data(None, refsToGroup + i , refsToReqs)
+            case _: ReqCodeGroup => Data(None, refsToGroup + i, refsToReqs)
           }
         else
           Data(Some(ActiveData(i, target)), refsToGroup, refsToReqs)
@@ -871,6 +887,7 @@ object RandomData {
 
     def flatInstance(gData: Gen[Data]): Gen[FlatInstance] =
       Gen.tuple2(value, gData)
+
 
     def trie(ogReqId: Option[Gen[ReqId]], gGroup: Gen[ReqCodeGroup]): GenS[Trie] =
       flatInstance(data(ogReqId, gGroup)).vector
@@ -939,11 +956,13 @@ object RandomData {
       reqIdSet       = reqIds.toSet
       reqIdG         = Gen oneofO reqIds.toSeq
       reqCodes1      ← reqCodes(reqCode.trie(reqIdG, reqCode.gEmptyReqCodeGroup).lim(18 `JVM|JS` 6))
+      activeCodeIds  = reqCodes1.cataA(Vector.empty[ReqCodeId])((q, _, a) => q :+ a.id)
+      activeCodeIdG  = Gen oneofO activeCodeIds
       atagIds        = tags.data.vstream(_.tag).filterT[ApplicableTag].map(_.id).toSet
       textColIds     = fields.data.customFields.values.filterT[CustomField.Text].map(_.id).toSet
-      reqFieldData   ← revAndG(reqFieldData(reqIdSet, textColIds, cissueIds, atagIds))
-      reqs2          ← genmodL(Requirements.reqs)(updateRequirementText(TextGen.genericReqTitleAtom(reqIdG, cissueIdG).text))(reqs1)
-      reqCodes2      ← reqCode.updateGroupText(TextGen.reqCodeGroupTitleAtom(reqIdG, cissueIdG).text)(reqCodes1.trie)
+      reqFieldData   ← revAndG(reqFieldData(reqIdSet, textColIds, activeCodeIdG, cissueIdG, atagIds))
+      reqs2          ← genmodL(Requirements.reqs)(updateRequirementText(TextGen.genericReqTitleAtom(reqIdG, activeCodeIdG, cissueIdG).text))(reqs1)
+      reqCodes2      ← reqCode.updateGroupText(TextGen.reqCodeGroupTitleAtom(reqIdG, activeCodeIdG, cissueIdG).text)(reqCodes1.trie)
       reqs           ← revAnd(reqs2)
       reqCodes       ← revAnd(ReqCodes(reqCodes2))
     } yield Project(issues, reqtypes, fields, tags, reqs, reqCodes, reqFieldData)

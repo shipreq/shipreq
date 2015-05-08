@@ -10,6 +10,7 @@ object Atom {
     case object Literal       extends Type
     case object BlankLine     extends Type
     case object ReqRef        extends Type
+    case object CodeRef       extends Type
     case object Issue         extends Type
     case object WebAddress    extends Type
     case object EmailAddress  extends Type
@@ -26,6 +27,7 @@ object Atom {
       case _: Literal         # Literal       => Literal
       case _: NewLine         # BlankLine     => BlankLine
       case _: ReqRef          # ReqRef        => ReqRef
+      case _: ReqRef          # CodeRef       => CodeRef
       case _: Issue           # Issue         => Issue
       case _: PlainTextMarkup # WebAddress    => WebAddress
       case _: PlainTextMarkup # EmailAddress  => EmailAddress
@@ -78,9 +80,13 @@ object Atom {
     case class MathTeX(value: String) extends Atom
   }
 
-  /** Reference to a requirement, like "UC-4" */
   trait ReqRef extends Base {
+
+    /** Reference to a requirement, like "UC-4" */
     case class ReqRef(value: ReqId) extends Atom
+
+    /** Reference to a [[ReqCode.Target]] */
+    case class CodeRef(value: ReqCodeId) extends Atom
   }
 
   /** An inline issue, like "#TBD" */
