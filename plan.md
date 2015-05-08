@@ -1,63 +1,51 @@
-Next Steps
-==========
-
-Refs in ReqTitles
-
-Rules – ReqTypes / field
-
-ReqCode Refs – parse
-ReqCode Refs – display
-ReqCode Refs – auto-complete
-
-Show deleted – toggle
-Show deleted – filter
-Show deleted – effect on displayed refs
-Show deleted – effect on auto complete
-Show deleted – effect on validation
-
-Table – no rows
-Table – status bar
-
-Issues – Highlight empty cells
-Issues – Highlight imp required
-Issues – Tag enum violations
-
-#### Then…
-
-Filters
-New row
-Cfg hard/soft deletion
-Real project storage
-Project data mod protocol
-Detail view (modal?)
-
-================================================================================
-
 Phase 2
 =======
 
 ### ReqTable
 
-* Modification protocol
+* Refs in ReqTitles
+* Apply ReqTypes-per-field rules
+* ReqCode Refs
+  * parse
+  * display
+  * auto-complete
+* Show deleted
+  * toggle
+  * filter
+  * effect on displayed refs
+  * effect on auto complete
+  * effect on validation
+* Handle no rows
+* Table status bar
+* New req
+  * Template
+  * Functionality
 * Filters
-* Highlight empty, mandatory cells
-* Create new req + new req template
-* Req Codes
-  * Display
-  * Edit
-  * Groups
-* [Change req-type] button + modal + logic
-* [Change common sem-ID prefix] button + modal + logic
-* Deleted stuff
-  * Hide
-  * Handle in display widgets
-  * Handle in editors
-* Copy & paste
-* Bulk restore? Or delete? (Re-read reqs)
-* Row detail view
+* Issues
+  * Highlight empty cells
+  * Highlight imp required
+  * Tag enum violations
+* Bulk
+  * Row selection
+  * Copy & paste
+  * Change reqcode prefix
+  * Deleting/Restoring Reqs
+    * Data representation + derivation
+    * Tree n-level checkboxes
+    * Component
+* Row detail view (modal?)
+* IO
+  * Modification protocol
+  * Async update
+  * Cell locking
+  * Failure handling
+
 
 ### Other
 
+* Real project storage
+  * Constraints & validation
+  * DB & schema
 * Cfg screens & usage/deleted
   * Count usage
   * Show usage
@@ -70,10 +58,6 @@ Phase 2
   * Detail view section: Custom
   * Detail view section: Loose
   * Detail view section: Cfg issues
-* Deleting/Restoring Reqs
-  * Data representation + derivation
-  * Tree n-level checkboxes
-  * Component
 
 
 ================================================================================
