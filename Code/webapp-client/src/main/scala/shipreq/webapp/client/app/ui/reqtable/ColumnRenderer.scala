@@ -79,7 +79,7 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
   }
 
   private def imps(lens: Optional[Row, Vector[Pubid]]) = make {
-    case r: GenericReqRow   => maybeEmpty(lens, r)(widgets.pubidRefs)
+    case r: GenericReqRow   => maybeEmpty(lens, r)(widgets.pubidRefList(false, _))
     case _: ReqCodeGroupRow => `N/A`
   }
 

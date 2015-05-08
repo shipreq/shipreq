@@ -1,6 +1,7 @@
 package shipreq.base.util
 
 import scala.collection.GenTraversableOnce
+import scala.collection.generic.CanBuildFrom
 import scala.math.Ordering
 import scalaz._
 import scalaz.std.vector.{vectorEqual, vectorOrder}
@@ -80,6 +81,18 @@ final class NonEmptyVector[+A](val head: A, val tail: Vector[A]) {
 
   def reduce[B >: A](f: (B, B) => B): B =
     reduceMapLeft1[B](a => a)(f)
+
+  def intercalate[B >: A](b: B): NonEmptyVector[B] =
+    intercalateF(b)(a => a)
+
+  def intercalateF[B](b: B)(f: A => B): NonEmptyVector[B] = {
+    val r = implicitly[CanBuildFrom[Nothing, B, Vector[B]]].apply()
+    for (a <- tail) {
+      r += b
+      r += f(a)
+    }
+    NonEmptyVector(f(head), r.result())
+  }
 
   @inline def toSet[B >: A] = whole.toSet[B]
   @inline def toStream      = whole.toStream

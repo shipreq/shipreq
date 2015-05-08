@@ -6,7 +6,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 import shipreq.webapp.base.UiText
 import shipreq.base.util.{NonEmptyVector, Must, UnivEq}
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text._
+import shipreq.webapp.base.text.{Grammar => G, _}
 import shipreq.webapp.base.util.ReqCodeTreeItem
 import shipreq.webapp.client.app.ui.Style.{widgets => *}
 import shipreq.webapp.client.lib.ui.UI
@@ -54,7 +54,7 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
     PlainText.pubid(project, pubid) map (<.span(_))
   )
 
-  val reqRef = memoM[ReqId]("Req", id =>
+  private def _reqRef(f: String => String): ReqId => Must[ReactTag] = id =>
     for {
       req <- project.reqs.data.reqM(id)
       rt  <- project.reqType(req.pubid.reqTypeId)
@@ -62,17 +62,35 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
       <.span(
         *.reqRef(req.alive),
         ^.title := plainText.reqTitle(req),
-        s"[${PlainText.pubid(rt, req.pubid.pos)}]") // TODO use grammar
-    )
+        f(PlainText.pubid(rt, req.pubid.pos)))
 
-  def reqRefs(reqs: Vector[ReqId]): ReactElement =
-    <.div(reqs.map(id => reqRef(id)(): TagMod): _*)
+  val reqRef: Boolean => ReqId => Widget = {
+    val wo = memoM[ReqId]("Req", _reqRef(identity))
+    val w  = memoM[ReqId]("Req", _reqRef(G.reflinkSurround.display.apply))
+    (surround: Boolean) => if (surround) w else wo
+  }
 
-  val pubidRef = memoMW[Pubid](pubid =>
-    project.reqs.data.reqIdByPubidM(pubid) map reqRef)
+  private val reqRefS = reqRef(true)
 
-  def pubidRefs(ids: Vector[Pubid]): ReactElement =
-    <.div(ids.map(id => pubidRef(id)(): TagMod): _*)
+  private val listSep: TagMod = ", "
+
+  def list[A](as: Vector[A])(f: A => TagMod): ReactElement =
+    <.div(
+      NonEmptyVector.option(as)
+        .map(_.intercalateF(listSep)(f).whole))
+
+  def reqRefList(surround: Boolean, reqs: Vector[ReqId]): ReactElement = {
+    val f = reqRef(surround)
+    list(reqs)(f(_)())
+  }
+
+  def pubidRef(surround: Boolean): Pubid => ReactElement = {
+    val f = reqRef(surround)
+    pubid => UI.must[ReqId, ReactElement](project.reqs.data.reqIdByPubidM(pubid))(f(_)())
+  }
+
+  def pubidRefList(surround: Boolean, ids: Vector[Pubid]): ReactElement =
+    list(ids)(pubidRef(surround)(_))
 
   val reqType = memoM[ReqTypeId]("ReqType", id =>
     project.reqType(id).map(rt =>
@@ -111,7 +129,7 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
       case a: PlainTextMarkup # EmailAddress  => <.a(^.href := s"mailto:${a.value}", a.value)
       case a: PlainTextMarkup # MathTeX       => katex(a)
       case a: ListMarkup      # UnorderedList => <.ul(*.ul, a.items.whole.map(row => <.li(row map atom: _*)))
-      case a: ReqRef          # ReqRef        => reqRef(a.value)()
+      case a: ReqRef          # ReqRef        => reqRefS(a.value)()
       case a: Issue           # Issue         => issueO(a.typ, a.desc)
     }
 
@@ -126,7 +144,7 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
     val indentation = NonEmptyVector.option(item.indent)
     var code = PlainText.reqCode(item.suffix)
     if (indentation.isDefined)
-      code = Grammar.reqCode.nodeSeparator + code
+      code = G.reqCode.nodeSeparator + code
     <.div(
       indentation map reqCodeTreeIdentation,
       <.pre(*.reqCodeTreeCode, code))
