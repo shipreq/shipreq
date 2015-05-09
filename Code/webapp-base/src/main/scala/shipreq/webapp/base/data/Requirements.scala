@@ -122,6 +122,9 @@ object ReqCode {
       active.toStream.map(_.id) append
         refsToGroup.toStream append
         refsToReqs.allValues
+
+    def reqIds: Stream[ReqId] =
+      refsToReqs.keys.toStream append active.map(_.target).toList.filterT[ReqId]
   }
 
   implicit val activeDataEquality: UnivEq[ActiveData] = deriveUnivEq

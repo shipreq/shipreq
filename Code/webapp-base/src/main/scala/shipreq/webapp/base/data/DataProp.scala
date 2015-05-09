@@ -1,6 +1,7 @@
 package shipreq.webapp.base.data
 
 import japgolly.nyaya._
+import scala.reflect.ClassTag
 import scalaz.syntax.equal._
 import scalaz.std.AllInstances._
 import shipreq.base.util.Debug._
@@ -164,8 +165,24 @@ object DataProp {
     def pubidsResolveToReqs =
       Prop.whitelist[T]("Pubid register")(_.reqs.keySet, _.pubids.value.m.vstreamf(_.toStream))
 
+
+    def pubidReqTypeAssociations = {
+      import StaticReqType._
+      def test[T <: ReqTypeId](rt: T, reqIds: Vector[ReqId])(implicit reqIdT: ClassTag[ReqIdT[T]]): FailureReasonO =
+        reqIds.toStream.map {
+          case reqIdT(_) => None
+          case reqId     => Some(s"Illegal association: $reqId to $rt")
+        }.find(_.isDefined).flatten
+      Prop.atom[PubidRegister]("Pubid reqtype-to-req associations",
+        pr => pr.value.m.toStream.map {
+          case (rt: CustomReqTypeId, reqIds) => test(rt, reqIds)
+          case (rt@ UseCase        , reqIds) => test(rt, reqIds)
+        }.find(_.isDefined).flatten
+      ).contramap[T](_.pubids)
+    }
+
     lazy val all =
-      revAnd(reqPubidsInRegister ∧ pubidsResolveToReqs) rename "Requirements"
+      revAnd(reqPubidsInRegister ∧ pubidsResolveToReqs ∧ pubidReqTypeAssociations) rename "Requirements"
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -322,13 +339,12 @@ object DataProp {
         _.allRichText.flatMap(_._2).flatMap(_.toStream).flatMap(go)
       }
 
-      // TODO [assert] req code targets
-
       (  validReqTypeIds("Field.reqTypes",
           _.fields.data.customFields.values.toStream.flatMap(f => isubsetContents(f.reqTypes).toStream))
       ∧ validReqTypeIds("CustomField.Implication.reqTypeIds",
           p => fields.filteredFields({ case t: CustomField.Implication => t.reqTypeId})(p.fields.data))
       ∧ validReqTypeIds("Pubid keys",                      _.reqs.data.pubids.value.m.keys)
+      ∧ validReqIds    ("ReqCode targets"                , _.reqCodes.data.trie.cataV(Set.empty[ReqId])((q, _, d) => q ++ d.reqIds))
       ∧ validFieldIds  ("ReqFieldData.text TextField ids", _.reqFieldData.data.text.keys)
       ∧ validReqIds    ("ReqFieldData.text.*.reqIds",      _.reqFieldData.data.text.vstreamf(_.keys.toStream))
       ∧ validReqIds    ("ReqFieldData.tags keys",          _.reqFieldData.data.tags.keys)
