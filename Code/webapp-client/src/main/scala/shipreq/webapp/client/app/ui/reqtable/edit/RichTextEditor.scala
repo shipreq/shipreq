@@ -6,7 +6,7 @@ import japgolly.scalajs.jquery.{TextComplete => TC}
 import scalacss.ScalaCssReact._
 import org.scalajs.dom.raw.HTMLTextAreaElement
 import shipreq.webapp.client.app.ui.ProjectWidgets
-import scalaz.{\/-, -\/, \/}
+import scalajs.js
 import scalaz.effect.IO
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text._
@@ -32,24 +32,40 @@ object RichTextEditor {
   // ===================================================================================================================
   sealed abstract class Base[TextType <: Text.Generic](name: String, final val t: TextType) {
 
-    def supportsTags   = t match { case _: Atom.TagRef => true; case _ => false }
-    def supportsIssues = t match { case _: Atom.Issue  => true; case _ => false }
+    def supportsPTM     = t match { case _: Atom.PlainTextMarkup => true; case _ => false }
+    def supportsReqRefs = t match { case _: Atom.ReqRef          => true; case _ => false }
+    def supportsTags    = t match { case _: Atom.TagRef          => true; case _ => false }
+    def supportsIssues  = t match { case _: Atom.Issue           => true; case _ => false }
 
     def mkAutoComplete(project: Px[Project], projectText: Px[PlainText.ForProject], textSearch: Px[TextSearch]): Px[AutoComplete] = {
+      import AutoComplete.WithSyntax
+      @inline def $ = AutoComplete
       @inline def legalIf[A](guard: Boolean, s: => Stream[A]): Stream[A] =
         if (guard) s else Stream.empty
+
       for {
         p <- project
         t <- projectText
         s <- textSearch
-      } yield ReusableVal(
-        TC.Strategies(
-          AutoComplete.hashtag(
+      } yield ReusableVal {
+        var ac: TC.Strategies = new js.Array
+
+        if (supportsIssues || supportsTags)
+          ac.push($.hashtag(
             legalIf(supportsIssues, p.customIssueTypes.data.values.toStream),
-            legalIf(supportsTags  , p.tags.data.vstream(_.tag).filterT[ApplicableTag]),
-            prefix = true),
-          AutoComplete.req(s, AutoComplete.reqItems(p, t), prefix = true),
-          AutoComplete.math))
+            legalIf(supportsTags,   p.tags.data.vstream(_.tag).filterT[ApplicableTag]))
+            (WithSyntax))
+
+        if (supportsReqRefs)
+          ac.push(
+            $.reqCode.ref(p, t),
+            $.req(s, $.reqItems(p, t), WithSyntax))
+
+        if (supportsPTM)
+          ac push $.math
+
+        ac
+      }
     }
 
     def apply(initial       : t.OptionalText,

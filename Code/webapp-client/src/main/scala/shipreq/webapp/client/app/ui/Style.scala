@@ -118,11 +118,21 @@ object Style extends StyleSheet.Inline {
       color("#a00")
     )
 
+    private val autoCompleteDesc =
+      styleS(color("#444"), fontStyle.italic, overflow.hidden, maxWidth(36 ex))
+
     val reqAutoComplete = styleC {
       val r = styleS(fontWeight.bold)
-      val d = styleS(color("#444"), fontStyle.italic, overflow.hidden, maxWidth(36 ex))
-      r.named('req) :*: d.named('desc)
+      r.named('req) :*: autoCompleteDesc.named('desc)
     }
+
+    val codeRefToReqAutoComplete = styleC {
+      val code  = styleS(fontWeight.bold)
+      val pubid = styleS(paddingLeft(1 ex), color("#333"))
+      code.named('code) :*: pubid.named('pubid) :*: autoCompleteDesc.named('desc)
+    }
+
+    def codeRefToGroupAutoComplete = reqAutoComplete
 
     val textEditPreview = style(
       padding(h = 0.8.ex, v = 0.2.em),

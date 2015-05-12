@@ -17,6 +17,7 @@ import shipreq.base.util.MTrie.Ops
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.BaseTestUtil._
 import shipreq.webapp.base.test.SampleProject2._
+import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.client.lib.ui.UI
 import shipreq.webapp.client.test.Sizzle
 
@@ -106,7 +107,7 @@ object AutoCompleteTest extends TestSuite {
   // ===================================================================================================================
 
   lazy val acReqItems = AutoComplete.reqItems(project, plainText)
-  lazy val acReqP     = AutoComplete.req(textSearch, acReqItems, prefix = true)
+  lazy val acReqP     = AutoComplete.req(textSearch, acReqItems, AutoComplete.WithSyntax)
   lazy val cReqP      = editor(acReqP)
 
   // TODO Write more AutoComplete tests
@@ -130,8 +131,14 @@ object AutoCompleteTest extends TestSuite {
     )
     tombCodes.foldLeft(t1)((t, c) => t.put(c, tomb))
   }
-  lazy val acReqCode  = AutoComplete.reqCode(fakeTrie)
-  lazy val cReqCode   = editor(acReqCode)
+  lazy val projectC   = (Project.reqCodes ^|-> RevAnd.data).set(ReqCodes(fakeTrie))(project)
+  lazy val plainTextC = PlainText(projectC)
+
+  lazy val acReqCodePrefixes  = AutoComplete.reqCode.prefixes(fakeTrie)
+  lazy val cReqCodePrefixes   = editor(acReqCodePrefixes)
+
+  lazy val acReqCodeRefs = AutoComplete.reqCode.ref(projectC, plainTextC)
+  lazy val cReqCodeRefs  = editor(acReqCodeRefs)
 
   override def tests = TestSuite {
 
@@ -160,8 +167,8 @@ object AutoCompleteTest extends TestSuite {
       }
     }
 
-    'reqCode {
-      implicit val ctx = TestCtx(cReqCode)
+    'reqCodePrefixes {
+      implicit val ctx = TestCtx(cReqCodePrefixes)
       implicit val multilineData = List[(String, String)](
         ("hehe.no\n", ""),
         ("", "\nhehe.no"),
@@ -209,6 +216,38 @@ object AutoCompleteTest extends TestSuite {
         testML("ap")("apple", "apply")("apple")
       'multilineMid -
         testML(".eggs")("shit.eggs")("shit.eggs")
+    }
+
+    'reqCodeRefs {
+      implicit val ctx = TestCtx(cReqCodeRefs, "div > div > span:first-child")
+      'root {
+        test("[app")("apple", "apply")
+        testSelect("[apple] ")
+        test("[goa")("goat.damn.egg.crap", "goat.damn.egg.stuff", "goat.damn.egglike")
+      }
+      'mid -
+        test("[aqu")("abc.aqua")
+      'soleExact -
+        test("[aaaa1")("aaaa1")
+      'path {
+        val arounds = List("abc.around.1", "abc.around.2", "abc.around.now", "abc.around.tbc", "abc.around.torn")
+        test("[abc.arou")(arounds: _*)
+        testSelect("[abc.around.1] ")
+        test("[abc.round")(arounds: _*)
+        test("[a.round")(arounds: _*)
+        test("[c.round")(arounds: _*)
+        test("[g.d.e.s")("goat.damn.egg.stuff")
+      }
+      'skipNode {
+        test("[g.e.s")("goat.damn.egg.stuff")
+        test("[a.now")("abc.around.now")
+        test("[abc.t")("abc.around.tbc", "abc.around.torn", "abc.art")
+        test("[arou.t")("abc.around.tbc", "abc.around.torn")
+      }
+      'dotStart -
+        test("[.egg")("goat.damn.egg.crap", "goat.damn.egg.stuff", "goat.damn.egglike", "shit.eggs")
+      'dotEnd -
+        test("[egg.")("goat.damn.egg.crap", "goat.damn.egg.stuff")
     }
 
   }

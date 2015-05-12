@@ -17,4 +17,6 @@ object Platform {
     a => cache.computeIfAbsent(a, mf)
   }
 
+  abstract class ScalaExt {
+  }
 }

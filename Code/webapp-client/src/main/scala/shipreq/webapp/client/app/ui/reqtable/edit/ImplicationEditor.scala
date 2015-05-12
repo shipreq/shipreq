@@ -78,7 +78,7 @@ object ImplicationEditor {
         l <- lookup
         s <- textSearch
       } yield ReusableVal(
-        AutoComplete.req(s, l.legal, prefix = false))
+        AutoComplete.req(s, l.legal, AutoComplete.WithoutSyntax))
 
     val parser: Parser[A] = () => {
       val l = lookup.value()

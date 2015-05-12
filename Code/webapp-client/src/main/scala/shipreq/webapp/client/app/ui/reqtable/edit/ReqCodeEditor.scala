@@ -19,7 +19,7 @@ object ReqCodeEditor {
 
   def mkAutoComplete(validationState: Px[V.VS]): Px[AutoComplete] =
     validationState.map(vs => ReusableVal(
-      AutoComplete.reqCode(vs.trie)))
+      AutoComplete.reqCode.prefixes(vs.trie)))
 
   def mkParser(validationState: Px[V.VS]): Parser[A] = () => {
     val vs = validationState.value()

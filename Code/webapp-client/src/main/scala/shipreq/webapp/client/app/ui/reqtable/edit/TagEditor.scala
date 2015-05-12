@@ -48,7 +48,7 @@ object TagEditor {
 
     val autoComplete: Px[AutoComplete] =
       lookup.map(l => ReusableVal(
-        AutoComplete.tag(l.values.toStream, prefix = false)))
+        AutoComplete.tag(l.values.toStream)(AutoComplete.WithoutSyntax)))
 
     val parser: Parser[A] = () => {
       val l = lookup.value()

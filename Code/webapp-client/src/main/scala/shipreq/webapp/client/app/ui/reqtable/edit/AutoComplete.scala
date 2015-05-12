@@ -16,48 +16,72 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{TextSearch, PlainText, Grammar}
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
+import shipreq.webapp.client.lib.ui.UI
 import TC.{Query, Strategy, StrategyA, Strategies}
 
 object AutoComplete {
 
-  def optionallyPrefixedStrategy[A](prefixRegex      : String,
-                                    mainRegex        : String,
-                                    searchFn         : Query[A])
-                                   (replacementA     : A => String,
-                                    replacementPrefix: String => String,
-                                    replacementEnd   : String)
-                                   (prefix           : Boolean): Strategy.B3[A] =
-    if (prefix)
-      Strategy(s"$prefixRegex$mainRegex", index = 1)
-        .search(searchFn)
-        .replace(s => replacementPrefix(replacementA(s)) + replacementEnd)
-    else
-      Strategy(s"(^|\\s)$prefixRegex?$mainRegex", index = 2)
-        .search(searchFn)
-        .replace(s => "$1" + replacementA(s) + replacementEnd)
+  sealed trait WithSyntax
+  case object WithSyntax extends WithSyntax
+  case object WithoutSyntax extends WithSyntax
+
+  class Syntax(val prefixRegex: String,
+               val suffixRegex: String,
+               val applySyntax: String => String) {
+    // Util.regexEscapeAndWrap turns empty strings into (?:) which is fine
+    // val acSuffix = if (suffixRegex.isEmpty) "$" else suffixRegex + "?$"
+    
+    def strategy[A](mainRegex     : String,
+                    searchFn      : Query[A])
+                   (replacementA  : A => String,
+                    replacementEnd: String): WithSyntax => Strategy.B3[A] = {
+      case WithSyntax =>
+        Strategy(s"$prefixRegex$mainRegex$suffixRegex?$$", index = 1)
+          .search(searchFn)
+          .replace(s => applySyntax(replacementA(s)) + replacementEnd)
+
+      case WithoutSyntax =>
+        Strategy(s"(^|\\s)$prefixRegex?$mainRegex$suffixRegex?$$", index = 2)
+          .search(searchFn)
+          .replace(s => "$1" + replacementA(s) + replacementEnd)
+    }
+  }
+  
+  object Syntax {
+    def apply(s: Grammar.Surrounds): Syntax = {
+      val (a, b) = s.parsing.regexEscapeAndWrap
+      new Syntax(a, b, s.display.apply)
+    }
+
+    def literal(pre: String, suf: String): Syntax =
+      new Syntax(Util regexEscapeAndWrap pre, Util regexEscapeAndWrap suf, pre + _ + suf)
+  }
 
   // ===================================================================================================================
   // #ISSUE #TAG
 
-  def hashtag(legal: Stream[HashRefKey], prefix: Boolean): Strategy = {
+  val hashtagSyntax = Syntax.literal(Grammar.hashRefKey.prefix, "")
+
+  def hashtag(legal: Stream[HashRefKey]): WithSyntax => Strategy = {
     import Grammar.{hashRefKey => G}
-    val prefixRegex = Util.regexEscapeAndWrap(G.prefix)
-    val mainRegex   = s"(${G.firstChar.one}${G.allChars.*})$$"
-    val searchFn    = TC.caseInsensitiveContains(legal.map(_.value).sorted)
-    optionallyPrefixedStrategy(prefixRegex, mainRegex, searchFn)(identity, G.prefix + _, " ")(prefix)
+    val mainRegex = s"(${G.firstChar.one}${G.allChars.*})"
+    val searchFn  = TC.caseInsensitiveContains(legal.map(_.value).sorted)
+    hashtagSyntax.strategy(mainRegex, searchFn)(identity, " ")(_)
   }
 
-  def hashtag(legalIssues: Stream[CustomIssueType], legalTags: Stream[ApplicableTag], prefix: Boolean): Strategy =
-    hashtag(legalIssues.map(_.key) append legalTags.map(_.key), prefix)
+  def hashtag(legalIssues: Stream[CustomIssueType], legalTags: Stream[ApplicableTag]): WithSyntax => Strategy =
+    hashtag(legalIssues.map(_.key) append legalTags.map(_.key))
 
-  def tag(legal: Stream[ApplicableTag], prefix: Boolean): Strategy =
-    hashtag(legal.map(_.key), prefix)
+  def tag(legal: Stream[ApplicableTag]): WithSyntax => Strategy =
+    hashtag(legal.map(_.key))
 
-  def issue(legal: Stream[CustomIssueType], prefix: Boolean): Strategy =
-    hashtag(legal.map(_.key), prefix)
+  def issue(legal: Stream[CustomIssueType]): WithSyntax => Strategy =
+    hashtag(legal.map(_.key))
 
   // ===================================================================================================================
   // [REF]
+  
+  val reflinkSyntax = Syntax(Grammar.reflinkSurround)
 
   def reqItems(p: Project, pt: PlainText.ForProject): Stream[ReqItem] =
     reqItems(p, pt, p.reqs.data.reqs.values.toStream)
@@ -69,7 +93,7 @@ object AutoComplete {
     mustResolve(m)(Stream.empty).sortBy(_.sortKey)
   }
 
-  def req(textSearch: TextSearch, legal: Stream[ReqItem], prefix: Boolean): StrategyA[ReqItem] = {
+  def req(textSearch: TextSearch, legal: Stream[ReqItem], withSyntax: WithSyntax): StrategyA[ReqItem] = {
     val searchTitles =
       textSearch.ignoreCaseNoWhitespace
         .filterByIds(legal.map(_.req.id).toSet)
@@ -82,8 +106,6 @@ object AutoComplete {
       legal.filter(i => i.pubidStrNorm.contains(np) || titles.contains(i.req.id))
     }
 
-    val (prefixRegex, suffixRegex) = Grammar.reflinkSurround.parsing.regexEscapeAndWrap
-    val mainRegex = s"(\\S+?)$suffixRegex?$$"
     def li(i: ReqItem): ReactElement =
       *.reqAutoComplete('req)(r => _('desc)(d =>
         <.div(
@@ -91,8 +113,7 @@ object AutoComplete {
           <.div(d, i.title))
       ))
 
-    optionallyPrefixedStrategy(prefixRegex, mainRegex, searchFn)(
-      _.pubidStr, Grammar.reflinkSurround.display.apply, " ")(prefix)
+    reflinkSyntax.strategy(s"(\\S+?)", searchFn)(_.pubidStr, " ")(withSyntax)
       .template(i => React.renderToStaticMarkup(li(i)))
   }
 
@@ -108,78 +129,155 @@ object AutoComplete {
   // ===================================================================================================================
   // ReqCodes
 
-  def reqCode(trie: ReqCode.Trie): Strategies = {
+  object reqCode {
     import Grammar.{reqCode => G}
-    import ReqCode.{Node, Value => Path}
+    import ReqCode.{Node, Trie, ActiveData, Value => Path}
 
-    val sep  = Util.regexEscapeAndWrap(G.nodeSeparator.toString)
-    val node = s"(?:${G.firstChar.one}${G.allChars.*})"
-    val pre  = s"(^|\\s)"
+    private val sepStr = G.nodeSeparator.toString
+    private val sep    = Util regexEscapeAndWrap sepStr
+    private val sepR   = sep.r
+    private val node   = s"(?:${G.firstChar.one}${G.allChars.*})"
 
-    // Example: abc & abc.def
-    def completeFromStart(trie: ReqCode.Trie): Strategy = {
-      val mainRegex = s"$pre($node($sep$node)*$sep?)$$"
-
-      val searchFn0: TC.Query[(Vector[Node], String)] = { term =>
-
-        // Parse input
-        var nodes = term.split(G.nodeSeparator).toVector
-        var lead: Option[String] = None
-        if (term.last != G.nodeSeparator) {
-          lead = nodes.lastOption
-          nodes = nodes.init
+    /**
+     * Matches ReqCode prefixes. eg. "1.2" of "1.2.3.4".
+     *
+     * Useful for ReqCode editing.
+     */
+    def prefixes(trie: Trie): Strategies = {
+      @inline def withSyntax = WithoutSyntax
+  
+      // Example: abc & abc.def
+      def completeFromStart(trie: Trie): Strategy = {
+        val mainRegex = s"($node($sep$node)*$sep?)"
+  
+        type A = (Vector[Node], String)
+  
+        val searchFn0: TC.Query[A] = { term =>
+  
+          // Parse input
+          var nodes = term.split(G.nodeSeparator).toVector
+          var lead: Option[String] = None
+          if (term.last != G.nodeSeparator) {
+            lead = nodes.lastOption
+            nodes = nodes.init
+          }
+          val path = nodes.map(Node.applyFn)
+  
+          // Find suggestions
+          val t = NonEmptyVector.maybe(path, trie)(trie.dropPath)
+          var r = t.toStream.filter(_._2.existsV(_.active.isDefined)).map(_._1.value)
+          for (l <- lead)
+            r = r.filter(_ startsWith l)
+          r.sorted.map((path, _))
         }
-        val path = nodes.map(ReqCode.Node.applyFn)
-
-        // Find suggestions
-        val t = NonEmptyVector.maybe(path, trie)(trie.dropPath)
-        var r = t.toStream.filter(_._2.existsV(_.active.isDefined)).map(_._1.value)
-        for (l <- lead)
-          r = r.filter(_ startsWith l)
-        r.sorted.map((path, _))
+  
+        val searchFn = TC.ignorePerfectMatch(searchFn0)(_ ≟ _._2)
+  
+        def replace(r: A) =
+          (r._1.map(_.value) :+ r._2).mkString(G.nodeSeparator.toString)
+  
+        reflinkSyntax.strategy(mainRegex, searchFn)(replace, "")(withSyntax)
+          .template(_._2)
       }
+  
+      // Example: .xyz
+      def completeFromMid(trie: Trie): Strategy = {
+        val mainRegex = s"$sep($node)"
 
-      val searchFn = TC.ignorePerfectMatch(searchFn0)(_ ≟ _._2)
+        val activePaths: Stream[Path] =
+          trie.flatStream.filter(_._2.active.isDefined).map(_._1)
 
-      Strategy(mainRegex, index = 2)
-        .search(searchFn)
-        .replace(r => "$1" + (r._1.map(_.value) :+ r._2).mkString(G.nodeSeparator.toString))
-        .template(_._2)
+        def isMatch(term: String, path: Path): UndefOr[Path] = {
+          @tailrec def go(prefix: Path, suffix: Vector[Node]): UndefOr[Path] =
+            if (suffix.isEmpty)
+              undefined
+            else if (suffix.head.value startsWith term)
+              prefix :+ suffix.head
+            else
+              go(prefix :+ suffix.head, suffix.tail)
+          go(NonEmptyVector one path.head, path.tail)
+        }
+  
+        val searchFn: TC.Query[String] = term =>
+          activePaths.map(isMatch(term, _))
+            .jsDefined
+            .distinctSafe
+            .map(PlainText.reqCode)
+            .sorted
+  
+        reflinkSyntax.strategy(mainRegex, searchFn)(identity, "")(withSyntax)
+      }
+  
+      Strategies(
+        completeFromStart(trie),
+        completeFromMid(trie))
     }
 
-    // Example: .xyz
-    def completeFromMid(trie: ReqCode.Trie): Strategy = {
-      val mainRegex = s"$pre$sep($node)$$"
+    /**
+     * ReqCode references.
+     *
+     * Matches whole paths, wraps in reflink syntax.
+     */
+    def ref(project: Project, pt: PlainText.ForProject): Strategy = {
+      val mainRegex = s"($sep?$node($sep$node)*$sep?)"
 
-      val allPaths: Stream[Path] =
-        trie.flatStream.filter(_._2.active.isDefined).map(_._1)
+      type A = (String, ActiveData)
 
-      def isMatch(term: String, path: Path): UndefOr[Path] = {
-        @tailrec def go(prefix: Path, suffix: Vector[Node]): UndefOr[Path] =
-          if (suffix.isEmpty)
-            undefined
-          else if (suffix.head.value startsWith term)
-            prefix :+ suffix.head
-          else
-            go(prefix :+ suffix.head, suffix.tail)
-        go(NonEmptyVector one path.head, path.tail)
+      val activePaths: Stream[A] =
+        project.reqCodes.data.trie.flatStream
+          .filter(_._2.active.isDefined)
+          .map(x => (PlainText reqCode x._1, x._2.active.get))
+          .sortBy(_._1)
+
+      def termToRegex(term0: String) = {
+        import shipreq.base.util.SafeStringOps._
+        var term = term0
+        var regex = "^"
+        def add(s: String) = regex = regex ~ s
+        if (term startsWith sepStr) {
+          term = term drop sepStr.length
+          add(".+" ~ sep)
+        }
+        var first = true
+        for (n <- sepR.split(term)) {
+          if (first) first = false else add(sep)
+          add(".*" ~ Util.regexEscape(n) ~".*")
+        }
+        if (term endsWith sepStr)
+          add(sep ~ ".+")
+        add("$")
+        regex.r
       }
 
-      val searchFn: TC.Query[(Path, String)] = term =>
-        allPaths.map(isMatch(term, _)).filter(_.isDefined).map(_.get)
-          .distinct
-          .map(p => (p, PlainText reqCode p))
-          .sortBy(_._2)
+      val searchFn: TC.Query[A] = term => {
+        val p = termToRegex(term).pattern
+        activePaths.filter(x => p.matcher(x._1).matches)
+      }
 
-      Strategy(mainRegex, index = 2)
-        .search(searchFn)
-        .replace(r => "$1" + PlainText.reqCode(r._1))
-        .template(_._2)
+      def li(a: A): ReactElement = {
+        val (code, data) = a
+        data.target match {
+          case id: ReqId =>
+            *.codeRefToReqAutoComplete('code)(c => _('pubid)(p => _('desc)(d =>
+              <.div(
+                <.div(
+                  <.span(c, code),
+                  <.span(p, s"(${UI mustA PlainText.pubid(project, id)})"),
+                <.div(d, UI mustA pt.reqTitleById(id))))
+            )))
+          case g: ReqCodeGroup =>
+            *.codeRefToGroupAutoComplete('req)(r => _('desc)(d =>
+              <.div(
+                <.div(r, code),
+                <.div(d, pt.reqCodeGroupTitle(data.id, g)))
+            ))
+        }
+      }
+
+      reflinkSyntax.strategy(mainRegex, searchFn)(_._1, " ")(WithSyntax)
+        .template(i => React.renderToStaticMarkup(li(i)))
     }
 
-    Strategies(
-      completeFromStart(trie),
-      completeFromMid(trie))
   }
 
   // ===================================================================================================================

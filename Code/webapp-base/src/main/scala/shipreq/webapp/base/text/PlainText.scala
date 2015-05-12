@@ -47,6 +47,10 @@ object PlainText {
 
   def hashtag(key: HashRefKey) = G.hashRefKey.prefix ~ key.value
 
+  def pubid(p: Project, id: ReqId): Must[String] =
+    p.reqs.data.reqM(id)
+      .flatMap(r => pubid(p, r.pubid))
+
   def pubid(p: Project, pid: Pubid): Must[String] =
     p.reqType(pid.reqTypeId).map(pubid(_, pid.pos))
 
