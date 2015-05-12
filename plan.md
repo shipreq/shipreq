@@ -5,10 +5,6 @@ Phase 2
 
 * Refs in ReqTitles
 * Apply ReqTypes-per-field rules
-* ReqCode Refs
-  * parse
-  * display
-  * auto-complete
 * Show deleted
   * toggle
   * filter
