@@ -2,27 +2,34 @@ package shipreq.webapp.client.app.ui.reqtable
 
 import monocle.Optional
 import scalacss.ScalaCssReact._
-import scalacss.StyleA
+import scalacss.{Domain, StyleA}
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import shipreq.base.util.Must
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.app.ui.ProjectWidgets
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
+import DataImplicits._
+import ColumnRenderer._
 
 final class ColumnRenderer(
   val column     : Column,
   val header     : ReactElement,
-  val render     : Row => ReactElement,
-  val columnStyle: Option[StyleA])
+  val render     : Row => (Status, ReactElement))
 
 object ColumnRenderer {
-  val `N/A`: ReactElement = <.span(*.`N/A`, "–")
+  sealed trait Status
+  case object Normal extends Status
+  case object `N/A` extends Status {
+    val element: ReactElement = <.span(*.`N/A`, "–")
+  }
+  val statusDomain = Domain.ofValues[Status](Normal, `N/A`)
+
   val empty: ReactElement = <.span
 }
 
 class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets: ProjectWidgets) {
-  import ColumnRenderer._
+  @inline private implicit def naobjtoel(n: `N/A`.type) = n.element
 
   def apply(c: Column): ColumnRenderer = {
     val cr: Column => ColumnRenderer = 
@@ -44,11 +51,13 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
     cr(c)
   }
 
-  private def make(render: Row => ReactElement, columnStyle: Option[StyleA] = None): Column => ColumnRenderer =
-    c => makeS(columnName(c), render, columnStyle)(c)
+  private def make(render: Row => ReactElement): Column => ColumnRenderer =
+    c => makeS(columnName(c), render)(c)
 
-  private def makeS(headerName: String, render: Row => ReactElement, columnStyle: Option[StyleA] = None): Column => ColumnRenderer =
-    c => new ColumnRenderer(c, <.span(headerName), render, columnStyle)
+  private def makeS(headerName: String, render: Row => ReactElement): Column => ColumnRenderer = {
+    val render2 = render.andThen(e => (if (e eq `N/A`.element) `N/A` else Normal, e))
+    c => new ColumnRenderer(c, <.span(headerName), render2)
+  }
 
   private def maybeEmpty[A](lens: Optional[Row, Vector[A]], r: Row)(f: Vector[A] => ReactElement): ReactElement =
     lens.getOption(r).filter(_.nonEmpty).fold(empty)(f)

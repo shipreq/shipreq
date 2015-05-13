@@ -28,7 +28,7 @@ object Style extends StyleSheet.Inline {
     color("#000"))
 
   object reqtable {
-    import ui.reqtable.Column
+    import ui.reqtable.{Column, ColumnRenderer}
 
     object sortingSettings {
 
@@ -87,15 +87,25 @@ object Style extends StyleSheet.Inline {
       border(1 px, solid, "#777".color)
     )
 
-    val cell = boolStyle(focus => styleS(
-      border(1 px, solid, "#ccc".color),
-      padding(v = 2.px, h = 4.px),
-      mixinIf(focus)(
-        backgroundColor("#e9e9ff"),
-        outline(rgba(0, 0, 200, 0.2), 2 px, solid),
-        outlineOffset(-1 px)
+    val cell = styleF[(ColumnRenderer.Status, Boolean)](ColumnRenderer.statusDomain *** Domain.boolean){
+      case (status, focus) => styleS(
+        border(1 px, solid, "#ccc".color),
+        mixinIf(focus)(
+          backgroundColor("#e9e9ff"),
+          outline(rgba(0, 0, 200, 0.2), 2 px, solid),
+          outlineOffset(-1 px)
+        ),
+        (status match {
+          case ColumnRenderer.Normal => mixin(
+            padding(v = 2.px, h = 4.px))
+          case ColumnRenderer.`N/A` => mixin(
+            padding.`0`,
+            backgroundColor("#eee"),
+            textAlign.center,
+            verticalAlign.middle)
+        }): StyleS
       )
-    ))
+    }
 
     val cellEditor = styleF(isOkDomain)(ok => styleS(
 //      borderRadius(4 px),

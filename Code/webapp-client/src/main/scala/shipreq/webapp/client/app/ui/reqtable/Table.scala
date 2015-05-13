@@ -174,7 +174,6 @@ object Table {
             crs.toStream.map(cr =>
               <.th(
                 *.columnHeader,
-                cr.columnStyle,
                 cr.header)))),
         <.tbody(renderRows))
     }
@@ -217,21 +216,14 @@ object Table {
     <.tr(
       p.crs.toStream.map { cr =>
         val col = cr.column
+        val (status, readOnlyView) = cr.render(p.row)
         <.td(
-          *.cell(p.focus.exists(_ ≟ col)),
+          *.cell((status, p.focus.exists(_ ≟ col))),
           ^.onClick ~~>? onCellClick(p setFocus col),
-          cr.columnStyle,
-          renderCell(p.row, cr, p.cells))
+          p.cells.get(cr.column).fold(readOnlyView)(renderCellState))
       })
 
-  @inline def renderCell(row: Row, cr: ColumnRenderer, cells: Cell.RowState) = {
-    def readOnly: ReactElement =
-      cr render row
-
-    def stateful: Cell.State => ReactElement = {
-      case e: Cell.Editing => e.render
-    }
-
-    cells.get(cr.column).fold(readOnly)(stateful)
+  def renderCellState: Cell.State => ReactElement = {
+    case e: Cell.Editing => e.render
   }
 }
