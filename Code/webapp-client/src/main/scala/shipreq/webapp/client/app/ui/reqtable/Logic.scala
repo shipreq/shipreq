@@ -81,32 +81,34 @@ private[reqtable] object Logic {
         id => srcs.filter(_._2 contains id).map(_._1).toSet
     }
 
-  private def impColValueExpander(vs: ViewSettings, p: Project): ReqId => Map[CustomField.Implication.Id, Expanded[Pubid]] = {
+  private def impColValueExpander(vs: ViewSettings, p: Project, ap: Applicability): Req => Map[CustomField.Implication.Id, Expanded[Pubid]] = {
     val valueFn = impColValueFn(p)
-    customFieldExpander[CustomField.Implication.Id, Pubid](vs, valueFn)
+    customFieldExpander[CustomField.Implication.Id, Pubid](vs, ap, valueFn)
   }
 
-  private def tagColValueExpander(vs: ViewSettings, p: Project): ReqId => Map[CustomField.Tag.Id, Expanded[ApplicableTagId]] = {
+  private def tagColValueExpander(vs: ViewSettings, p: Project, ap: Applicability): Req => Map[CustomField.Tag.Id, Expanded[ApplicableTagId]] = {
     val reqTags = p.reqFieldData.data.tags
-    customFieldExpander[CustomField.Tag.Id, ApplicableTagId](vs, c => {
+    customFieldExpander[CustomField.Tag.Id, ApplicableTagId](vs, ap, c => {
       val legal = mustResolve(p.tagColumnDistribution.tagIdsForColumn(c))(UnivEq.emptySet)
       id => reqTags(id) filter legal.contains
     })
   }
 
   private def customFieldExpander[K <: CustomFieldId : ClassTag, V]
-      (vs: ViewSettings, f: K => ReqId => Set[V]): ReqId => Map[K, Expanded[V]] = {
+      (vs: ViewSettings, ap: Applicability, f: K => ReqId => Set[V]): Req => Map[K, Expanded[V]] = {
 
     val cols = vs.columns.whole.collect{ case Column.CustomField(id: K) => id }
 
     val expandersPerCol = cols.map { c =>
-        val expander = expanderC[V](vs, Column.CustomField(c))
+        val col      = Column.CustomField(c)
+        val applic   = ap(col)
+        val expander = expanderC[V](vs, col)
         val dataFn   = f(c)
-        val fn       = (id: ReqId) => expander(() => dataFn(id))
+        val fn       = (r: Req) => expander(() => applic.choose(r, na = Set.empty[V])(dataFn(r.id)))
         (c, fn)
       }.toMap
 
-    id => expandersPerCol.mapValues(_(id))
+    req => expandersPerCol.mapValues(_(req))
   }
 
   private def expandMapValues[K, V](src: Map[K, Expanded[V]]): NonEmptyVector[Map[K, Vector[V]]] = {
@@ -175,11 +177,12 @@ private[reqtable] object Logic {
     //   There can potentially be overlap but culling this could be misleading.
 
     // Init
+    val applicability = Applicability(p)
     val expandImpSrcs = expanderC[Pubid](vs, Column.ImplicationSrc)
     val expandImpTgts = expanderC[Pubid](vs, Column.ImplicationTgt)
     val expandCodes   = expanderC[ReqCode.Value](vs, Column.Code)
-    val expandImpCols = impColValueExpander(vs, p)
-    val expandTagCols = tagColValueExpander(vs, p)
+    val expandImpCols = impColValueExpander(vs, p, applicability)
+    val expandTagCols = tagColValueExpander(vs, p, applicability)
 
     val pReqs         = p.reqs.data
     val pReqCodes     = p.reqCodes.data.activeReqCodesByTarget
@@ -203,8 +206,8 @@ private[reqtable] object Logic {
           val impSrcs = expandImpSrcs(() => pImplications.tgtToSrc(id) |> pubids)
           val impTgts = expandImpTgts(() => pImplications.srcToTgt(id) |> pubids)
           val codes   = expandCodes  (() => pReqCodes(id))
-          val cfImps  = expandImpCols(id)
-          val cfTags  = expandTagCols(id)
+          val cfImps  = expandImpCols(r)
+          val cfTags  = expandTagCols(r)
           val exps    = expansions(impSrcs, impTgts, codes, cfImps, cfTags)
 
           // Build

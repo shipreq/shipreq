@@ -32,39 +32,43 @@ final class ColumnEditors(project       : Px[Project],
   private def initEditorO[R <: Row](f: R => Option[SetState => Cell.State]): InitEditor[R] =
     r => f(r).fold[SetState => Option[Cell.State]](_ => None)(g => g(_).some)
 
+  private val applicability = project.map(Applicability.apply)
+
   def startCellEditing(row: Row, col: Column): Option[IO[Unit]] = {
     val init: InitState =
-      row match {
+      applicability.value().apply(col).choose(row, na = noEditor)(
+        row match {
 
-        case r: GenericReqRow =>
-          col match {
-            case Column.Code           => codesForReq(r)
-            case Column.Title          => genericReqTitle(r)
-            case Column.Tags           => tags(r)
-            case Column.ReqType        => reqType(r)
-            case Column.Pubid          => noEditor
-            case Column.ImplicationSrc => imps(Row.implicationSrc, ImplicationEditor declFwd Column.ImplicationSrc)(r)
-            case Column.ImplicationTgt => imps(Row.implicationTgt, ImplicationEditor declFwd Column.ImplicationTgt)(r)
-            case Column.CustomField(f) =>
-              f match {
-                case id: CustomField.Text       .Id => cfText(id)(r)
-                case id: CustomField.Tag        .Id => cfTag(id)(r)
-                case id: CustomField.Implication.Id => cfImp(id)(r)
-              }
-          }
+          case r: GenericReqRow =>
+            col match {
+              case Column.Code           => codesForReq(r)
+              case Column.Title          => genericReqTitle(r)
+              case Column.Tags           => tags(r)
+              case Column.ReqType        => reqType(r)
+              case Column.Pubid          => noEditor
+              case Column.ImplicationSrc => imps(Row.implicationSrc, ImplicationEditor declFwd Column.ImplicationSrc)(r)
+              case Column.ImplicationTgt => imps(Row.implicationTgt, ImplicationEditor declFwd Column.ImplicationTgt)(r)
+              case Column.CustomField(f) =>
+                f match {
+                  case id: CustomField.Text       .Id => cfText(id)(r)
+                  case id: CustomField.Tag        .Id => cfTag(id)(r)
+                  case id: CustomField.Implication.Id => cfImp(id)(r)
+                }
+            }
 
-        case r: ReqCodeGroupRow =>
-          col match {
-            case Column.Code           => codesForGroup(r)
-            case Column.Title          => reqCodeGroupTitle(r)
-            case Column.Pubid
-               | Column.ReqType
-               | Column.Tags
-               | Column.ImplicationSrc
-               | Column.ImplicationTgt
-               | Column.CustomField(_) => noEditor
-          }
-      }
+          case r: ReqCodeGroupRow =>
+            col match {
+              case Column.Code           => codesForGroup(r)
+              case Column.Title          => reqCodeGroupTitle(r)
+              case Column.Pubid
+                 | Column.ReqType
+                 | Column.Tags
+                 | Column.ImplicationSrc
+                 | Column.ImplicationTgt
+                 | Column.CustomField(_) => noEditor
+            }
+        }
+      )
 
     val setState: SetState =
       s => cellset(Cell.SetCmd(row.id, col, s))

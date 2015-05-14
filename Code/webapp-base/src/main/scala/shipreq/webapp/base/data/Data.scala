@@ -1,5 +1,6 @@
 package shipreq.webapp.base.data
 
+import scala.collection.TraversableLike
 import scalaz.Isomorphism.<=>
 import shipreq.base.util.TaggedTypes._
 import shipreq.base.util.{NonEmptySet, UnivEq}
@@ -50,14 +51,19 @@ final case class HashRefKey(value: String) extends TaggedString
  * An intensional subset over any `Set[A]`.
  */
 sealed abstract class ISubset[A] {
-//  final def filter: Option[A => Boolean] = {
-//    @inline def check(a: A, as: OneAnd[Set, A]) = a == as.head || as.tail.contains(a)
-//    this match {
-//      case Subset.All()    => None
-//      case Subset.Only(as) => Some(check(_, as))
-//      case Subset.Not(as)  => Some(!check(_, as))
-//    }
-//  }
+  final def apply[F[X] <: TraversableLike[X, F[X]]](i: F[A]): F[A] =
+    i filter this.filter
+
+  final def filter: A => Boolean =
+    filterO getOrElse (_ => true)
+
+  final def filterO: Option[A => Boolean] = {
+    this match {
+      case ISubset.All()    => None
+      case ISubset.Only(as) => Some(as.contains)
+      case ISubset.Not(as)  => Some(as.lacks)
+    }
+  }
 }
 object ISubset {
   final case class All [A]()                       extends ISubset[A]

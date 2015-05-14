@@ -214,6 +214,8 @@ object Sorter {
       as.zipWithIndex.toMap
       .withDefault(k => failedMust(0)(s"Unknown $name: " + k))
 
+    val applicability = Applicability(p)
+
     lazy val reqTypesToMnemonicOrder: Map[ReqTypeId, Int] =
       ordermap("reqtype",
         p.reqTypes.map(_.tmap2(_.mnemonic.value, _.reqTypeId))
@@ -304,21 +306,21 @@ object Sorter {
         sort   = SortFn.intVector(bp)
     ))
 
-  def textSorter(f: PlainText.ForProject => Row => String): SorterForSMCB =
+  def textSorter(c: Column, f: PlainText.ForProject => Row => String): SorterForSMCB =
     SorterForSMCB(bp =>
       Sorter[String](
-        prep = setup => row => setup.normalisedText(f(_)(row)),
+        prep = setup => setup.applicability(c).wrap((row: Row) => setup.normalisedText(f(_)(row)))(""),
         sort = SortFn.string(bp)
       ))
 
   def customTextFieldSorter(id: CustomField.Text.Id): SorterForSMCB =
-    textSorter(p => {
+    textSorter(C.CustomField(id), p => {
       case r: GenericReqRow   => p.customTextField(id)(r.req.id) getOrElse ""
       case r: ReqCodeGroupRow => ""
     })
 
   val titleSorter: SorterForSMCB =
-    textSorter(p => {
+    textSorter(C.Title, p => {
       case r: GenericReqRow   => p.reqTitle(r.req)
       case r: ReqCodeGroupRow => p.reqCodeGroupTitle(r.reqCodeId, r.group)
     })

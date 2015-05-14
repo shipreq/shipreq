@@ -4,7 +4,6 @@ Phase 2
 ### ReqTable
 
 * Refs in ReqTitles
-* Apply ReqTypes-per-field rules
 * Show deleted
   * toggle
   * filter
@@ -73,3 +72,7 @@ Phase 2
 * Implications from UC fields ← allow?
 * Implications from LL fields ← no!
 
+* If a field column over a tag group exists and is marked applicable only to a
+  subset of reqtypes, what should happen when related tags are applied to
+  excluded reqtypes? They'll be displayed in the Tags column; should they be
+  marked as issues?

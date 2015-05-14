@@ -4,12 +4,10 @@ import monocle.Optional
 import scalacss.ScalaCssReact._
 import scalacss.{Domain, StyleA}
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
-import shipreq.base.util.Must
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.app.ui.ProjectWidgets
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
-import DataImplicits._
 import ColumnRenderer._
 
 final class ColumnRenderer(
@@ -22,6 +20,7 @@ object ColumnRenderer {
   case object Normal extends Status
   case object `N/A` extends Status {
     val element: ReactElement = <.span(*.`N/A`, "–")
+    val pair: (Status, ReactElement) = (this, element)
   }
   val statusDomain = Domain.ofValues[Status](Normal, `N/A`)
 
@@ -51,12 +50,18 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
     cr(c)
   }
 
+  private val applicability = Applicability(project)
+
   private def make(render: Row => ReactElement): Column => ColumnRenderer =
     c => makeS(columnName(c), render)(c)
 
   private def makeS(headerName: String, render: Row => ReactElement): Column => ColumnRenderer = {
-    val render2 = render.andThen(e => (if (e eq `N/A`.element) `N/A` else Normal, e))
-    c => new ColumnRenderer(c, <.span(headerName), render2)
+    val render2: Row => (Status, ReactElement) =
+      render.andThen(e => if (e eq `N/A`.element) `N/A`.pair else (Normal, e))
+    c => {
+      val render3 = applicability(c).wrap(render2)(`N/A`.pair)
+      new ColumnRenderer(c, <.span(headerName), render3)
+    }
   }
 
   private def maybeEmpty[A](lens: Optional[Row, Vector[A]], r: Row)(f: Vector[A] => ReactElement): ReactElement =
