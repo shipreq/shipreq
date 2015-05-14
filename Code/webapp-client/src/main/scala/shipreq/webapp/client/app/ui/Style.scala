@@ -147,6 +147,7 @@ object Style extends StyleSheet.Inline {
     val textEditPreview = style(
       padding(h = 0.8.ex, v = 0.2.em),
       border(solid, 1 px, "#222".color),
+      minHeight(2 em),
       backgroundColor("#efe")
     )
 
