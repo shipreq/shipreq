@@ -6,7 +6,6 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.client.app.ui.ProjectWidgets
 import shipreq.webapp.client.data.DataReusability._
-import shipreq.webapp.client.util._
 import edit.ColumnEditors
 
 object ReqTable {
@@ -51,6 +50,7 @@ object ReqTable {
     val project      = Px.thunkM($.props)
     val viewSettings = Px.thunkM($.state.viewSettings)
 
+    val vsVar      = viewSettings map (ReusableVar(_)(setViewSettings))
     val vsCols     = viewSettings map (_.columns)
     val colName    = project map Column.NameResolver.byProject
     val vsEditor   = colName map ViewSettingsEditor.apply
@@ -69,11 +69,10 @@ object ReqTable {
 
       val s = $.state
 
-      val focusV        = ReusableVar(s.focus)(setFocus)
-      val viewSettingsV = ReusableVar(viewSettings.value())(setViewSettings)
+      val focusV = ReusableVar(s.focus)(setFocus)
 
       <.div(
-        vsEditor(viewSettingsV),
+        vsEditor(vsVar),
         Table.Component(Table.Props(project, content, s.cellStates, focusV)))
     }
   }
