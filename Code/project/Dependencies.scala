@@ -23,6 +23,7 @@ object Deps {
     protected implicit def d (a: String): MS = (groupId: GroupID) % a % version
     protected implicit def dd(a: String): MS = (groupId: GroupID) %% a % version
     protected implicit def js(a: String): MS = jsGA(groupId, a) % version
+    protected implicit def jsF(a: String, f: ModuleID => ModuleID): MS = f(jsGA(groupId, a) % version)
   }
 
   def JvmAndJs(groupId: String, name: String, version: String) =
@@ -47,7 +48,7 @@ object Deps {
     }
     object ScalaCSS extends Group("0.2.0", "com.github.japgolly.scalacss") {
       val core  = js("core")
-      val react = js("ext-react") ++ core
+      val react = jsF("ext-react", _ exclude("com.github.japgolly.scalajs-react", "core")) ++ core
     }
     object Scalaz extends Group(Deps.Scalaz.version + "-2", "com.github.japgolly.fork.scalaz") {
       val core   = js("scalaz-core")
