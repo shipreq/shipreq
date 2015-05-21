@@ -297,7 +297,7 @@ object LogicTest extends TestSuite {
   // Unit tests
   // Fucking IntelliJ crashes typing these tests inline
 
-  object UnitSort {
+  object UnitTest {
     import ProjectDSL._
     import UnsafeTypes._
     private val P = SampleProject.project
@@ -623,156 +623,161 @@ object LogicTest extends TestSuite {
       testCB(p, PlainText(p), mfField, ShowDead, fmt)(allSortsCB(3, "MF-1,MF-2>FR-1", "MF-2,MF-1>FR-1"))
     }
 
-    def testFilterDead(): Unit = {
+    def testFilterDeadRows(): Unit = {
       def dead = GReq(alive = Dead)
       def alive = GReq()
-      val p = (alive + dead + alive + dead + alive).setDefaultReqType(mf) ! P
-      testUnsorted(p, PlainText(p), C.Pubid, HideDead, rowToPubid(p))("MF-1  MF-3  MF-5")
-    }
-  }
-
-  def testReqCodeTree(): Unit = {
-    val src =
-      """
-        │a.a.1
-        │a.a.2
-        │a.aaa.1
-        │a.aaa.2
-        │a.c
-        │a.c.d
-        │aaa.a.1
-        │aaa.a.2
-        │aaa.aaa.1
-        │aaa.aaa.2
-        │aaa.c
-        │aaa.c.d
-        │b
-        │b.a.1
-        │b.a.2
-        │b.aaa.1
-        │b.aaa.2
-        │b.c
-        │b.c.d
-        │bbb
-        │bbb.a.1
-        │bbb.a.2
-        │bbb.aaa.1
-        │bbb.aaa.2
-        │bbb.c
-        │bbb.c.d
-        │refs1
-        │refs1.code
-        │refs1.code.short.parse
-        │refs1.code.short.disp
-        │refs1.code.change
-        │refs1.code.change.update
-        │refs1.code.change.warn
-        │refs1.code.display
-        │refs2
-        │refs2.code.short.parse
-        │refs2.code.short.disp
-        │refs2.code.change
-        │refs2.code.change.update
-        │refs2.code.change.warn
-        │refs2.code.display
-      """.stripMargin('│').trim
-
-    // Rule #1: Indent bar lines up with first char (az) of string above.
-    // Rule #2: Child's first char (az) is 2 vertical spaces away from first char (az) of parent. (so gap=1)
-
-    val exp =
-      """
-        │a.a.1
-        │| |.2
-        │|.aaa.1
-        │| |  .2
-        │|.c
-        │| |.d
-        │aaa.a.1
-        │|   |.2
-        │|  .aaa.1
-        │|   |  .2
-        │|  .c
-        │|   |.d
-        │b
-        │|.a.1
-        │| |.2
-        │|.aaa.1
-        │| |  .2
-        │|.c
-        │| |.d
-        │bbb
-        │|.a.1
-        │| |.2
-        │|.aaa.1
-        │| |  .2
-        │|.c
-        │| |.d
-        │refs1
-        │|.code
-        │| |.short.parse
-        │| | |    .disp
-        │| |.change
-        │| | |.update
-        │| | |.warn
-        │| |.display
-        │refs2
-        │|.code.short.parse
-        │| |    |    .disp
-        │| |   .change
-        │| |    |.update
-        │| |    |.warn
-        │| |   .display
-      """.stripMargin('│').trim
-
-    import ReqCode._
-
-    val mkReqCode: String => Value = line => {
-      val v = line.split("\\.").map(Node.applyFn).toVector
-      NonEmptyVector(v.head, v.tail)
+      val p = (alive + dead + alive + dead + alive).defaultReqType(mf) ! P
+      val (pt, fmt) = (PlainText(p), rowToPubid(p))
+      testUnsorted(p, pt, C.Pubid, ShowDead, fmt)("MF-1  MF-2  MF-3  MF-4  MF-5")
+      testUnsorted(p, pt, C.Pubid, HideDead, fmt)("MF-1  MF-3  MF-5")
     }
 
-    def formatTreeItems(ts: Vector[ReqCodeTreeItem]) =
-      ts map PlainText.reqCodeTreeItem map (_.replace('│', '|')) mkString "\n"
+    def testReqCodeTree(): Unit = {
+      val src =
+        """
+          │a.a.1
+          │a.a.2
+          │a.aaa.1
+          │a.aaa.2
+          │a.c
+          │a.c.d
+          │aaa.a.1
+          │aaa.a.2
+          │aaa.aaa.1
+          │aaa.aaa.2
+          │aaa.c
+          │aaa.c.d
+          │b
+          │b.a.1
+          │b.a.2
+          │b.aaa.1
+          │b.aaa.2
+          │b.c
+          │b.c.d
+          │bbb
+          │bbb.a.1
+          │bbb.a.2
+          │bbb.aaa.1
+          │bbb.aaa.2
+          │bbb.c
+          │bbb.c.d
+          │refs1
+          │refs1.code
+          │refs1.code.short.parse
+          │refs1.code.short.disp
+          │refs1.code.change
+          │refs1.code.change.update
+          │refs1.code.change.warn
+          │refs1.code.display
+          │refs2
+          │refs2.code.short.parse
+          │refs2.code.short.disp
+          │refs2.code.change
+          │refs2.code.change.update
+          │refs2.code.change.warn
+          │refs2.code.display
+        """.stripMargin('│').trim
 
-    val srcCodes = src.split("\n").map(mkReqCode)
+      // Rule #1: Indent bar lines up with first char (az) of string above.
+      // Rule #2: Child's first char (az) is 2 vertical spaces away from first char (az) of parent. (so gap=1)
 
-    val actual = Logic.mkReqCodeTree[Value, Vector, Vector, Vector[ReqCodeTreeItem]](srcCodes, Vector1, (_, ts) => ts)
-      .flatten
+      val exp =
+        """
+          │a.a.1
+          │| |.2
+          │|.aaa.1
+          │| |  .2
+          │|.c
+          │| |.d
+          │aaa.a.1
+          │|   |.2
+          │|  .aaa.1
+          │|   |  .2
+          │|  .c
+          │|   |.d
+          │b
+          │|.a.1
+          │| |.2
+          │|.aaa.1
+          │| |  .2
+          │|.c
+          │| |.d
+          │bbb
+          │|.a.1
+          │| |.2
+          │|.aaa.1
+          │| |  .2
+          │|.c
+          │| |.d
+          │refs1
+          │|.code
+          │| |.short.parse
+          │| | |    .disp
+          │| |.change
+          │| | |.update
+          │| | |.warn
+          │| |.display
+          │refs2
+          │|.code.short.parse
+          │| |    |    .disp
+          │| |   .change
+          │| |    |.update
+          │| |    |.warn
+          │| |   .display
+        """.stripMargin('│').trim
 
-    assertMultiline(formatTreeItems(actual), exp)
+      import ReqCode._
+
+      val mkReqCode: String => Value = line => {
+        val v = line.split("\\.").map(Node.applyFn).toVector
+        NonEmptyVector(v.head, v.tail)
+      }
+
+      def formatTreeItems(ts: Vector[ReqCodeTreeItem]) =
+        ts map PlainText.reqCodeTreeItem map (_.replace('│', '|')) mkString "\n"
+
+      val srcCodes = src.split("\n").map(mkReqCode)
+
+      val actual = Logic.mkReqCodeTree[Value, Vector, Vector, Vector[ReqCodeTreeItem]](srcCodes, Vector1, (_, ts) => ts)
+        .flatten
+
+      assertMultiline(formatTreeItems(actual), exp)
+    }
   }
 
   // ===================================================================================================================
   override def tests = TestSuite {
     'prop - gen.mustSatisfyE(_.all)//(implicitly[Settings].setSeed(0).setDebug.setSampleSize(20))
     'unit {
+      import UnitTest._
       'sort {
-        'reqCodes - UnitSort.testReqCodes()
-        'reqType  - UnitSort.testReqType()
-        'title    - UnitSort.testTitle()
-        'impSrc   - UnitSort.testImpSrc()
-        'impTgt   - UnitSort.testImpTgt()
-        'custImp  - UnitSort.testCustomImpField()
-        'custTxt  - UnitSort.testCustomTextField()
+        'reqCodes - testReqCodes()
+        'reqType  - testReqType()
+        'title    - testTitle()
+        'impSrc   - testImpSrc()
+        'impTgt   - testImpTgt()
+        'impCust  - testCustomImpField()
+        'custTxt  - testCustomTextField()
         'tags {
-          'sorted1  - UnitSort.testTags_sorted1()
-          'sorted2  - UnitSort.testTags_sorted2()
-          'unsorted - UnitSort.testTags_unsorted()
+          'sorted1  - testTags_sorted1()
+          'sorted2  - testTags_sorted2()
+          'unsorted - testTags_unsorted()
         }
         'custTag {
-          'sorted1   - UnitSort.testCustomTagField_sorted1()
-          'sorted2   - UnitSort.testCustomTagField_sorted2()
-          'unsorted - UnitSort.testCustomTagField_unsorted()
+          'sorted1   - testCustomTagField_sorted1()
+          'sorted2   - testCustomTagField_sorted2()
+          'unsorted - testCustomTagField_unsorted()
         }
       }
       'applicability {
-        'custTxt - UnitSort.testApplicabilityOfCustomTextFields()
-        'custTag - UnitSort.testApplicabilityOfCustomTagFields()
-        'custImp - UnitSort.testApplicabilityOfCustomImpFields()
+        'custTxt - testApplicabilityOfCustomTextFields()
+        'custTag - testApplicabilityOfCustomTagFields()
+        'custImp - testApplicabilityOfCustomImpFields()
       }
-    'reqCodeTree - testReqCodeTree()
-    'filterDead - UnitSort.testFilterDead()
+      'filterDead {
+        'rows    - testFilterDeadRows()
+      }
+      'reqCodeTree - testReqCodeTree()
     }
   }
 }

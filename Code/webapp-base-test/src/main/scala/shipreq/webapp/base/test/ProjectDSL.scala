@@ -144,7 +144,7 @@ object ProjectDSL {
       copy(ss = NonEmptyVector(x.head, x.tail))
     }
 
-    def setDefaultReqType(rt: CustomReqTypeId): Composite =
+    def defaultReqType(rt: CustomReqTypeId): Composite =
       copy(defaultReqType = Some(rt))
 
     def !(p: Project): Project =
