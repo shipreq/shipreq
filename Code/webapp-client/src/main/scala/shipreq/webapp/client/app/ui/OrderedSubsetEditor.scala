@@ -7,7 +7,7 @@ import scalaz.Equal
 import scalaz.effect.IO
 import shipreq.base.util.Util
 import shipreq.webapp.client.lib.ui.UI
-import shipreq.webapp.client.util.DND
+import shipreq.webapp.client.util.{Off, On, DND}
 
 /**
  * Something like this:
@@ -32,7 +32,7 @@ object OrderedSubsetEditor {
                       label    : A => String,
                       mandatory: A => Boolean,
                       change   : Vector[A] => IO[Unit],
-                      styles   : Boolean => Styles = (_: Boolean) => noStyle)
+                      styles   : On => Styles = (_: On) => noStyle)
 
   def Component[A: Equal] =
     ReactComponentB[Props[A]]("OrderedSubsetEditor")
@@ -44,12 +44,12 @@ object OrderedSubsetEditor {
 
   final class Backend[A]($: BackendScope[Props[A], DND.Parent.PState[A]])(implicit E: Equal[A]) {
 
-    val Row = DND.Child.dndItemComponentB[A, (Props[A], Boolean)]({
+    val Row = DND.Child.dndItemComponentB[A, (Props[A], On)]({
       case (outerAttr, draghnd, a, (p, on)) =>
 
         def toggleIO: IO[Unit] =
           IO(
-            if (on)
+            if (On from on)
               p.value.filterNot(E.equal(a, _))
             else
               p.value :+ a
@@ -66,11 +66,11 @@ object OrderedSubsetEditor {
         <.li(outerAttr, style.row,
           draghnd(style.dragHnd),
           <.label(
-            UI.checkbox(on)(checkboxAttr)(style.checkbox),
+            UI.checkbox(On from on)(checkboxAttr)(style.checkbox),
             <.span(style.label, p.label(a))))
     })
 
-    def li(p: Props[A], inactive: Iterable[A])(a: A, on: Boolean): ReactElement =
+    def li(p: Props[A], inactive: Iterable[A])(a: A, on: On): ReactElement =
       Row((a, DND.Parent.cProps($, a, moveIO(p, inactive)), (p, on)))
 
     def moveIO(p: Props[A], inactive: Iterable[A])(from: A, to: A): IO[Unit] =
@@ -85,10 +85,10 @@ object OrderedSubsetEditor {
       val li2 = li(p, orderedInactiveValues) _
 
       val activeRows =
-        p.value.foldLeft(Vector.empty[ReactElement])(_ :+ li2(_, true))
+        p.value.foldLeft(Vector.empty[ReactElement])(_ :+ li2(_, On))
 
       val inactiveRows =
-        orderedInactiveValues.map(li2(_, false))
+        orderedInactiveValues.map(li2(_, Off))
 
       val rows: Vector[ReactElement] =
         activeRows ++ inactiveRows
@@ -101,7 +101,7 @@ object OrderedSubsetEditor {
     var r = DND.move(from, to)(prev)(e)
 
     // Handle moving inactive up into active
-    if (inactive.headOption.filter(e.equal(to, _)).isDefined && !prev.exists(e.equal(from, _)))
+    if (inactive.headOption.exists(e.equal(to, _)) && !prev.exists(e.equal(from, _)))
       r :+= from
 
     // Prevent dragging off mandatory items

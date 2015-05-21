@@ -22,7 +22,7 @@ final class ColumnsEditor(columnName: Column.NameResolver) {
                                               label     = columnName.fn,
                                               mandatory = Column.mandatory,
                                               change    = _change2,
-                                              styles    = Style.reqtable.columnSettings.prop)
+                                              styles    = Style.reqtable.columnsEditor)
     ColumnsEditor.Component(p)
   }
 }

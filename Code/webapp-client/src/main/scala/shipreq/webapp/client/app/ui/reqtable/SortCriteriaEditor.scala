@@ -10,8 +10,8 @@ import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{NonEmptySet, UnivEq, Util}
 import shipreq.base.util.UnivEq.{mutableHashMapMemo => memo}
 import shipreq.webapp.client.app.ui.SelectOne
-import shipreq.webapp.client.app.ui.Style.reqtable.{sortingSettings => *}
-import shipreq.webapp.client.util.{Enabled, DND}
+import shipreq.webapp.client.app.ui.Style.reqtable.{sortCriteriaEditor => *}
+import shipreq.webapp.client.util.{On, Enabled, DND}
 
 object SortCriteriaEditor {
 
@@ -109,14 +109,14 @@ object SortCriteriaEditor {
       private val Row = DND.Child.dndItemComponentB[Col, (OSM, Column.NameResolver, ModIO)]({
         case (outerAttr, draghnd, col, (value, columnName, modIO)) =>
 
-          val on = value.isRight
+          val on = On to value.isRight
           val selectProps = SelectOne.Props(
-            value, choicesForColumn(col), Some(updateIO(modIO)), *.dirSelect)
+            value, choicesForColumn(col), Some(updateIO(modIO)), *.inconclusiveSortMethod)
 
-          <.li(outerAttr, *.row(on),
+          <.li(outerAttr, *.inconclusiveCriterionRow(on),
             draghnd(*.dragHnd),
             smSelectComponent(selectProps),
-            <.span(*.field(on), columnName(col)))
+            <.span(*.inconclusiveColumnName(on), columnName(col)))
       })
 
       val columnFromOSM: OSM => Col = {
@@ -156,7 +156,7 @@ object SortCriteriaEditor {
 
       def sortMethodDropdown(value: SM, modIO: ModIO): ReactElement = {
         val onSelect = Some((v: SM) => modIO(_.copy(method = v)))
-        smSelectComponent(SelectOne.Props(value, smChoices, onSelect, *.conclusiveDir))
+        smSelectComponent(SelectOne.Props(value, smChoices, onSelect, *.conclusiveSortMethod))
       }
 
       private val colSelectComponent = SelectOne.Component[Col]
@@ -166,7 +166,7 @@ object SortCriteriaEditor {
           cols.toNonEmptyVector.map(c => Choice(c, columnName(c), Enabled))
             .sortBy(_.label)
         val onSelect = Some((v: Col) => modIO(_.copy(column = v)))
-        colSelectComponent(SelectOne.Props(value, colChoices, onSelect, *.conclusiveField))
+        colSelectComponent(SelectOne.Props(value, colChoices, onSelect, *.conclusiveColumnName))
       }
 
       def ctrls(value: SC, cols: NonEmptySet[Col], columnName: Column.NameResolver, modIO: ModIO) =

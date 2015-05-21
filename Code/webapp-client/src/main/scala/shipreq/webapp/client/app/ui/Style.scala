@@ -7,26 +7,35 @@ import scalacss.StyleS
 import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.data.{Alive, Dead}
 import shipreq.webapp.client.lib.ConsoleIO
-import shipreq.webapp.client.util.{IsOK, NotOK}
+import shipreq.webapp.client.util._
 import scalaz.syntax.equal._
 
 object Style extends StyleSheet.Inline {
   import dsl._
 
-  val aliveDomain = Domain.ofValues[Alive](Alive, Dead)
-  val isOkDomain = Domain.ofValues[IsOK](IsOK, NotOK)
+  object D {
+    val alive   = Domain.ofValues[Alive]  (Alive, Dead)
+    val isOk    = Domain.ofValues[IsOK]   (IsOK, NotOK) // TODO Rename? Valid/Invalid?
+    val enabled = Domain.ofValues[Enabled](Enabled, Disabled)
+    val on      = Domain.ofValues[On]     (On, Off)
+  }
 
-   // ==================================================================================================================
-
-  val dragHnd = style(
+  /** Drag'n'drop handle Ξ */
+  private val dragHnd = style(
     color("#000"))
 
+  /** An empty style */
+  private val empty = style()
+
+  // ==================================================================================================================
   object reqtable {
     import ui.reqtable.{Column, ColumnRenderer}
 
-    object sortingSettings {
+    // =================================================================================================================
+    object sortCriteriaEditor {
 
-      val row = boolStyle(on => styleS(
+      /** 1. Ξ [▲ Ascending] Code */
+      val inconclusiveCriterionRow = styleF(D.on)(o => styleS(
 //        mixinIf(!on)(
 //          backgroundColor("#e2e2e2")),
         marginBottom(0.7 ex),
@@ -34,31 +43,27 @@ object Style extends StyleSheet.Inline {
 
       def dragHnd = Style.dragHnd
 
-      val dirSelect = style(
+      val inconclusiveSortMethod = style(
         width(28 ex))
 
-      val field = boolStyle(on => styleS(
+      val inconclusiveColumnName = styleF(D.on)(o => styleS(
         marginLeft(1 ex),
-        mixinIf(!on)(
+        mixinIf(Off from o)(
           //textDecoration := ^.lineThrough,
           color("#999"))))
 
-      // ↑ inconclusive | conclusive ↓
-
-      val conclusiveDir = style(
+      val conclusiveSortMethod = style(
         marginLeft(4 ex))
 
-      val conclusiveField = style(
+      val conclusiveColumnName = style(
         marginLeft(1 ex))
     }
 
-    object columnSettings { // TODO This is crazy...
-      import OrderedSubsetEditor.Styles
-
-      val row = style()
-
-      val prop = (on: Boolean) => Styles(row, dragHnd = sortingSettings.dragHnd, label = sortingSettings.field(on))
-    }
+    // =================================================================================================================
+    val columnsEditor =
+      On.memo(on => OrderedSubsetEditor.Styles(
+        dragHnd = sortCriteriaEditor.dragHnd,
+        label   = sortCriteriaEditor.inconclusiveColumnName(on)))
 
     // http://stackoverflow.com/questions/446624/table-cell-widths-fixing-width-wrapping-truncating-long-words
     val table = style(
@@ -102,7 +107,7 @@ object Style extends StyleSheet.Inline {
       )
     }
 
-    val cellEditor = styleF(isOkDomain)(ok => styleS(
+    val cellEditor = styleF(D.isOk)(ok => styleS(
 //      borderRadius(4 px),
       width(100 %%),
 //      boxShadow := "inset 0 1px 1px rgba(0,0,0,.075)",
@@ -181,13 +186,13 @@ object Style extends StyleSheet.Inline {
       padding.horizontal(0.7 ex))
 
     // TODO Has color conflict
-    val reqRef = styleF(aliveDomain)(a => styleS(
+    val reqRef = styleF(D.alive)(a => styleS(
       display.inlineBlock,
       color("#2363A1"),
       mixinIf(a ≟ Dead)(dead),
       hoverShowsInfo))
 
-    val groupRef = styleF(aliveDomain)(a => styleS(
+    val groupRef = styleF(D.alive)(a => styleS(
       reqRef(a),
       mixinIf(a ≟ Dead)(hasError)
     ))
@@ -213,10 +218,10 @@ object Style extends StyleSheet.Inline {
     val reqCodeFlat = style(reqCodePre, display.block)
   }
 
-  def damnit(a: StyleA*) = () // TODO add to ScalaCSS as (force)init(Objects) or something
-  damnit(
-    reqtable.sortingSettings.conclusiveDir,
-    reqtable.columnSettings.row,
+  // -------------------------------------------------------------------------------------------------------------------
+  private def init(a: StyleA*) = () // TODO add to ScalaCSS as (force)init(Objects) or something
+  init(
+    reqtable.sortCriteriaEditor.conclusiveColumnName,
     reqtable.table,
     widgets.tag)
 //  ConsoleIO(_.log(render[String])).unsafePerformIO()
