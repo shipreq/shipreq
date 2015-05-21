@@ -340,7 +340,7 @@ private[fields] object MainTable {
         dragHandle = dragHandle,
         name       = f.name,
         refkey     = renderKeyO(f.keyO),
-        mandatory  = Editors.staticCheckbox(Mandatory ~> f.mandatory),
+        mandatory  = Editors.staticCheckbox(f.mandatory :: Mandatory),
         reqtypes   = appReqTypesEditor.renderReadOnly(f.reqTypes),
         ctrls      = (f.deletable ≟ Deletable) ?= staticDeletion.button(f, SoftDel)
       )(f.fieldType)
@@ -453,7 +453,7 @@ private[fields] object MainTable {
           dragHandle = dragHandle,
           name       = f.name,
           refkey     = f.key.value,
-          mandatory  = Editors.staticCheckbox(Mandatory ~> f.mandatory),
+          mandatory  = Editors.staticCheckbox(f.mandatory :: Mandatory),
           reqtypes   = appReqTypesEditor.renderReadOnly(f.reqTypes),
           ctrls      = deletion.button(f.id, Restore))
     }
@@ -505,7 +505,7 @@ private[fields] object MainTable {
           dragHandle = dragHandle,
           name       = UI mustA f.name(project.tags.data), // TODO is this a Must or an Issue?
           refkey     = unusedField,
-          mandatory  = Editors.staticCheckbox(Mandatory ~> f.mandatory),
+          mandatory  = Editors.staticCheckbox(f.mandatory :: Mandatory),
           reqtypes   = appReqTypesEditor.renderReadOnly(f.reqTypes),
           ctrls      = deletion.button(f.id, Restore)
         )
@@ -558,7 +558,7 @@ private[fields] object MainTable {
           dragHandle = dragHandle,
           name       = UI mustA f.name(project.customReqTypes.data), // TODO is this a Must or an Issue?
           refkey     = unusedField,
-          mandatory  = Editors.staticCheckbox(Mandatory ~> f.mandatory),
+          mandatory  = Editors.staticCheckbox(f.mandatory :: Mandatory),
           reqtypes   = appReqTypesEditor.renderReadOnly(f.reqTypes),
           ctrls      = deletion.button(f.id, Restore)
         )

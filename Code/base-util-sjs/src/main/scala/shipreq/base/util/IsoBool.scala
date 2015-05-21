@@ -10,10 +10,12 @@ trait IsoBool[B] extends (Boolean <=> B) {
 
   protected def neg: B
 
-  final val ~> : B => Boolean = _ == this
+  final def negate(b: B): B = if (b == this) neg else this
+
+  final val :: : B => Boolean = _ == this
   final val <~ : Boolean => B = if (_) this else neg
 
-  final override def from = ~>
+  final override def from = ::
   final override def to   = <~
 }
 
@@ -27,7 +29,7 @@ object IsoBool {
     final def memo[A](f: B => A): B => A = {
       val p = f(pos)
       val n = f(neg)
-      b => if (pos ~> b) p else n
+      b => if (b :: pos) p else n
     }
   }
 

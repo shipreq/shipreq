@@ -49,7 +49,7 @@ object OrderedSubsetEditor {
 
         def toggleIO: IO[Unit] =
           IO(
-            if (On ~> on)
+            if (on :: On)
               p.value.filterNot(E.equal(a, _))
             else
               p.value :+ a
@@ -66,7 +66,7 @@ object OrderedSubsetEditor {
         <.li(outerAttr, style.row,
           draghnd(style.dragHnd),
           <.label(
-            UI.checkbox(On ~> on)(checkboxAttr)(style.checkbox),
+            UI.checkbox(on :: On)(checkboxAttr)(style.checkbox),
             <.span(style.label, p.label(a))))
     })
 

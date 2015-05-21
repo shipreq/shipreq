@@ -27,7 +27,7 @@ private[protocol] object CodecBase {
     ReadWriter[T](i => Js.Str(i.value.toString), { case Js.Str(i) => C(i.toLong)})
 
   def boolCase[T](iso: IsoBool[T]) =
-    ReadWriter[T](t => if (iso ~> t) Js.Num(1) else Js.Num(0), {
+    ReadWriter[T](t => if (t :: iso) Js.Num(1) else Js.Num(0), {
       case Js.Num(n) => iso <~ (n.toInt != 0)
     })
 
