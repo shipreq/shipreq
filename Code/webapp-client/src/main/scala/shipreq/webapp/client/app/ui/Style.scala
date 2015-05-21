@@ -8,7 +8,6 @@ import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.data.{Alive, Dead}
 import shipreq.webapp.client.lib.ConsoleIO
 import shipreq.webapp.client.util._
-import scalaz.syntax.equal._
 
 object Style extends StyleSheet.Inline {
   import dsl._
@@ -27,11 +26,14 @@ object Style extends StyleSheet.Inline {
   /** An empty style */
   private val empty = style()
 
-  // ==================================================================================================================
+  private val hasErrorBackground =
+    backgroundColor("#fee")
+
+  // ===================================================================================================================
   object reqtable {
     import ui.reqtable.{Column, ColumnRenderer}
 
-    // =================================================================================================================
+    // -----------------------------------------------------------------------------------------------------------------
     object sortCriteriaEditor {
 
       /** 1. Ξ [▲ Ascending] Code */
@@ -59,23 +61,24 @@ object Style extends StyleSheet.Inline {
         marginLeft(1 ex))
     }
 
-    // =================================================================================================================
+    // -----------------------------------------------------------------------------------------------------------------
     val columnsEditor =
       On.memo(on => OrderedSubsetEditor.Styles(
         dragHnd = sortCriteriaEditor.dragHnd,
         label   = sortCriteriaEditor.inconclusiveColumnName(on)))
+
+    // -----------------------------------------------------------------------------------------------------------------
 
     // http://stackoverflow.com/questions/446624/table-cell-widths-fixing-width-wrapping-truncating-long-words
     val table = style(
       marginTop(1.6 ex),
       width(100 %%))
 
-    val mnemonicLen = Grammar.reqTypeMnemonic.length.total.max
+    private val mnemonicLen =
+      Grammar.reqTypeMnemonic.length.total.max
 
     val columnPubid   = style(maxWidth((mnemonicLen + 5).ex))
     val columnReqType = style(maxWidth(mnemonicLen.ex))
-//    val columnPubid   = style(maxWidth.fitContent)
-//    val columnReqType = style(maxWidth.fitContent)
 
     val `N/A` = style(
       color("#666".color),
@@ -117,12 +120,6 @@ object Style extends StyleSheet.Inline {
       mixinIf(v :: Invalid)(hasErrorBackground, &.focus(outlineColor("#f88"))),
       padding.horizontal(0.8 ex)
     ))
-//    val cellEditorO = boolStyle(hasError => styleS(
-//      addClassNames("form-group", if (hasError) "has-error" else "has-success")
-//    ))
-//    val cellEditorI = boolStyle(hasError => styleS(
-//      addClassNames("form-control")
-//    ))
 
     val cellEditorErrMsg = style(
       color("#a00")
@@ -153,20 +150,17 @@ object Style extends StyleSheet.Inline {
 
   } // reqtable
 
-
-  val hasErrorBackground =
-    backgroundColor("#fee")
-
+  // ===================================================================================================================
   object widgets {
 
-    val hasError = styleS(
+    private val hasError = mixin(
       color("#c00"),
       hasErrorBackground
     )
 
-    val hoverShowsInfo = cursor.help
+    private val hoverShowsInfo = cursor.help
 
-    val dead = styleS(
+    private val dead = mixin(
       textDecoration := ^.lineThrough,
       hasError
     )
@@ -189,19 +183,19 @@ object Style extends StyleSheet.Inline {
     val reqRef = styleF(D.alive)(a => styleS(
       display.inlineBlock,
       color("#2363A1"),
-      mixinIf(a ≟ Dead)(dead),
+      mixinIf(a :: Dead)(dead),
       hoverShowsInfo))
 
     val groupRef = styleF(D.alive)(a => styleS(
       reqRef(a),
-      mixinIf(a ≟ Dead)(hasError)
+      mixinIf(a :: Dead)(hasError)
     ))
 
     val math = style(margin.horizontal(0.8 ex))
     val mathFail = style(math, hasError)
 
     // Fucking bootstrap
-    val reqCodePre = mixin(
+    private val reqCodePre = mixin(
       margin.`0`,
       padding.`0`,
       background := ^.unset,
@@ -212,13 +206,15 @@ object Style extends StyleSheet.Inline {
       wordWrap.normal,
       whiteSpace.pre
     )
-    val reqCodeTreePre = mixin(reqCodePre, display.inline)
+    private val reqCodeTreePre = mixin(reqCodePre, display.inline)
+
     val reqCodeTreeIndent = style(reqCodeTreePre, color("#dadada".color))
     val reqCodeTreeCode = style(reqCodeTreePre)
     val reqCodeFlat = style(reqCodePre, display.block)
   }
 
-  // -------------------------------------------------------------------------------------------------------------------
+  // ===================================================================================================================
+
   private def init(a: StyleA*) = () // TODO add to ScalaCSS as (force)init(Objects) or something
   init(
     reqtable.sortCriteriaEditor.conclusiveColumnName,
