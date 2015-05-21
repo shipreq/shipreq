@@ -15,7 +15,7 @@ import shipreq.webapp.client.ClientData
 import shipreq.webapp.client.lib.{FilterDead, CrudIO}
 import shipreq.webapp.client.lib.ui._
 import shipreq.webapp.client.protocol.ClientProtocol
-import UI.checkbox
+import shipreq.webapp.client.util.On
 
 object CfgReqTypes {
 
@@ -45,13 +45,18 @@ object CfgReqTypes {
     val crudIO = CrudIO(CustomReqType, CustomReqTypeCrud)($.props.cp, $.props.remote, $.props.clientData)
     val supp = TypicalSupp(storesAndState, crudIO)($)
 
+    val onWhenImplicationRequired = On <=> ImplicationRequired
+
     val rowE = {
       val mnemonicE = Editors.textInputEditor.applyValidator(V.mnemonicS)
       val nameE     = Editors.textInputEditor.applyValidator(V.nameS)
-      val impE      = Editors.checkboxEditor.imap(ImplicationRequired).strengthL[V.S]
+      val impE      = Editors.checkboxEditor.imap(onWhenImplicationRequired).strengthL[V.S]
       val e = Editor.merge3S(fields, mnemonicE, nameE, impE).tupleI.zoomU[S]
       supp.addEditorFeatures(e)(V.all, _._1._2, p => (p.mnemonic, p.name, p.imp))
     }
+
+    def checkbox(i: ImplicationRequired) =
+      UI checkbox (onWhenImplicationRequired from i)
 
     val table = {
       def rowRenderer =
@@ -63,7 +68,7 @@ object CfgReqTypes {
             case ((mnemonic, name, impReq), p) => (mnemonic, p.oldMnemonics, name, impReq)
           }
           override def deletedRow = p =>
-            (p.mnemonic.value, p.oldMnemonics, p.name, checkbox(ImplicationRequired from p.imp)(^.disabled := true))
+            (p.mnemonic.value, p.oldMnemonics, p.name, checkbox(p.imp)(^.disabled := true))
 
           override def render = {
             case (mnemonic, oldMnemonics, name, impReq) =>
@@ -82,7 +87,7 @@ object CfgReqTypes {
 
       val staticRows: t.RowStream = {
         def rr(r: StaticReqType): ReactElement = {
-          val imp = checkbox(ImplicationRequired from r.imp)(^.disabled := true)
+          val imp = checkbox(r.imp)(^.disabled := true)
           val norm: t.RowContent = (r.mnemonic.value, r.oldMnemonics, r.name, imp)
           t.row("static", RowStatus.Sync, norm, EmptyTag)(^.key := r.mnemonic.value)
         }

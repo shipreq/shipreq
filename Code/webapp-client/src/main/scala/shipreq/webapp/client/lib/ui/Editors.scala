@@ -4,6 +4,7 @@ import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import org.scalajs.dom.ext.KeyValue
 import scalaz.effect.IO
 import scalaz.syntax.bind.ToBindOps
+import shipreq.webapp.client.util.On
 import UI._
 import SimpleEditor._
 
@@ -39,27 +40,25 @@ object Editors {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  val checkboxEditor: SimpleEditor[Boolean] =
+  val checkboxEditor: SimpleEditor[On] =
     Editor(ei => {
       val base = checkbox(ei.data)(^.cls := ei.cssClass)
       ei.editable match {
         case None =>
           base(^.readOnly := true, ^.disabled := true)
         case Some(cb) =>
-          @inline def cbh(event: CallbackEvent[Boolean], st: ST = nopST) = cb(callbackH(event, st))
+          @inline def cbh(event: CallbackEvent[On], st: ST = nopST) = cb(callbackH(event, st))
           def handleChange: ReactEventI => IO[Unit] = e => {
-            val b = e.target.checked
+            val b = On <~ e.target.checked
             cbh(OnChange(b)) >> cbh(OnEditFinished(b))
           }
           base(^.onChange ~~> handleChange)
       }
     })
 
-  val List(staticCheckboxOn, staticCheckboxOff) = List(true, false).map(b =>
-    checkboxEditor render EditorI(b, "", None))
-
-  def staticCheckbox(checked: Boolean): ReactElement =
-    if (checked) staticCheckboxOn else staticCheckboxOff
+  val staticCheckbox: On => ReactElement =
+    On.memo(on =>
+      checkboxEditor render EditorI(on, "", None))
 
   // -------------------------------------------------------------------------------------------------------------------
 

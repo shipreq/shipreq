@@ -6,14 +6,17 @@ import shipreq.base.util.IsoBool
 import scalaz.effect.IO
 import shipreq.webapp.client.lib.{ShowDead, FilterDead}
 import shipreq.webapp.client.lib.ui.UI
+import shipreq.webapp.client.util.On
 
 object Checkbox {
 
   def apply[A](bool: IsoBool[A])(set: A => IO[Unit], decor: A => ReactTag => ReactElement) = {
     implicit val reusability = Reusability.by(bool.from)
+    val on = On when bool
+
     ReactComponentB[A]("Checkbox")
       .render { a =>
-        val t = UI.checkbox(bool from a)(^.onChange ~~> set(bool negate a))
+        val t = UI.checkbox(on(a))(^.onChange ~~> set(bool negate a))
         decor(a)(t)
       }
       .configure(Reusability.shouldComponentUpdate)

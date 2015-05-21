@@ -11,16 +11,17 @@ import shipreq.base.util.Must
 import shipreq.base.util.effect.IoUtils, IoUtils.IoExt
 import shipreq.base.util.ScalaExt.EndoFn
 import shipreq.webapp.base.UiText
+import shipreq.webapp.client.util.On
 
 object UI {
 
   def textChangeRecv[R](f: String => R): ReactEventI => R =
     e => f(e.target.value)
 
-  def checkbox(check: Boolean) =
+  def checkbox(on: On) =
     <.input(
       ^.`type` := "checkbox",
-      ^.checked := check)
+      ^.checked := (on :: On))
 
   def rowStatusRowClass(rs: RowStatus): String = rs match {
     case RowStatus.Sync      => "sync"

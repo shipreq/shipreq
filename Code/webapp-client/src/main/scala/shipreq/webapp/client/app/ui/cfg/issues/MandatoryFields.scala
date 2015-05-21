@@ -13,6 +13,7 @@ import shipreq.webapp.client.data.DataReusability._
 import shipreq.webapp.client.lib.HideDead
 import shipreq.webapp.client.lib.ui._
 import shipreq.webapp.client.protocol.ClientProtocol
+import shipreq.webapp.client.util.On
 
 private[issues] object MandatoryFields {
 
@@ -55,7 +56,7 @@ private[issues] object MandatoryFields {
     }
 
     val genEditor =
-      Editors.checkboxEditor.imap(Mandatory)
+      Editors.checkboxEditor.imap(On <=> Mandatory)
         .strengthR[Field].labelSuffix(a => UI.mustA(labelFn.value()(a._2)))
 
     val editor =

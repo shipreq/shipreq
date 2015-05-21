@@ -17,6 +17,15 @@ trait IsoBool[B] extends (Boolean <=> B) {
 
   final override def from = ::
   final override def to   = <~
+
+  final def when[A](i: IsoBool[A]): A => B =
+    a => this <~ (a :: i)
+
+  final def <=>[A](i: IsoBool[A]): B <=> A =
+    new (B <=> A) {
+      override val from: A => B = IsoBool.this when i
+      override val to  : B => A = i when IsoBool.this
+    }
 }
 
 object IsoBool {

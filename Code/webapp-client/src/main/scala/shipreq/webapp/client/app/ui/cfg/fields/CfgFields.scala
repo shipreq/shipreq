@@ -6,7 +6,7 @@ import monocle.macros.Lenses
 import scala.language.reflectiveCalls
 import scalajs.js.{undefined, UndefOr, Any => JsAny}
 import scalaz.effect.IO
-import scalaz.{Equal, Maybe, -\/, \/-, \/}
+import scalaz.{Equal, -\/, \/-, \/}
 import scalaz.syntax.bind.ToBindOps
 import scalaz.syntax.equal._
 
@@ -24,7 +24,7 @@ import shipreq.webapp.client.data.DataReusability._
 import shipreq.webapp.client.lib.{FilterDead, ConsoleIO, FailureIO, SuccessIO}
 import shipreq.webapp.client.lib.ui.{FieldSet => _, _}
 import shipreq.webapp.client.protocol.ClientProtocol
-import shipreq.webapp.client.util.{Disabled, Enabled, DND}
+import shipreq.webapp.client.util.{Disabled, Enabled, DND, On}
 import Field.ApplicableReqTypes
 import FieldProtocol.Delta
 import DeletionAction._
@@ -157,6 +157,11 @@ private[fields] object MainTable {
 
   val rowIdFromEditorInput: ((V.S, Any)) => Option[CustomFieldId] = _._1._2
 
+  val onWhenMandatory = On <=> Mandatory
+
+  def staticMandatoryCheckbox(m: Mandatory) =
+    Editors staticCheckbox (onWhenMandatory from m)
+
   // ===================================================================================================================
   final class Backend(val $: BackendScope[Props, S]) extends OnUnmount {
 
@@ -165,7 +170,7 @@ private[fields] object MainTable {
 
     val nameE      = Editors.textInputEditor.applyValidator(V.nameS)
     val refkeyE    = Editors.textInputEditor.applyValidator(V.keyS)
-    val mandatoryE = Editors.checkboxEditor.imap(Mandatory).strengthL[V.S]
+    val mandatoryE = Editors.checkboxEditor.imap(onWhenMandatory).strengthL[V.S]
 
     def render: ReactElement = {
       pxProject.refresh()
@@ -340,7 +345,7 @@ private[fields] object MainTable {
         dragHandle = dragHandle,
         name       = f.name,
         refkey     = renderKeyO(f.keyO),
-        mandatory  = Editors.staticCheckbox(f.mandatory :: Mandatory),
+        mandatory  = staticMandatoryCheckbox(f.mandatory),
         reqtypes   = appReqTypesEditor.renderReadOnly(f.reqTypes),
         ctrls      = (f.deletable ≟ Deletable) ?= staticDeletion.button(f, SoftDel)
       )(f.fieldType)
@@ -453,7 +458,7 @@ private[fields] object MainTable {
           dragHandle = dragHandle,
           name       = f.name,
           refkey     = f.key.value,
-          mandatory  = Editors.staticCheckbox(f.mandatory :: Mandatory),
+          mandatory  = staticMandatoryCheckbox(f.mandatory),
           reqtypes   = appReqTypesEditor.renderReadOnly(f.reqTypes),
           ctrls      = deletion.button(f.id, Restore))
     }
@@ -505,7 +510,7 @@ private[fields] object MainTable {
           dragHandle = dragHandle,
           name       = UI mustA f.name(project.tags.data), // TODO is this a Must or an Issue?
           refkey     = unusedField,
-          mandatory  = Editors.staticCheckbox(f.mandatory :: Mandatory),
+          mandatory  = staticMandatoryCheckbox(f.mandatory),
           reqtypes   = appReqTypesEditor.renderReadOnly(f.reqTypes),
           ctrls      = deletion.button(f.id, Restore)
         )
@@ -558,7 +563,7 @@ private[fields] object MainTable {
           dragHandle = dragHandle,
           name       = UI mustA f.name(project.customReqTypes.data), // TODO is this a Must or an Issue?
           refkey     = unusedField,
-          mandatory  = Editors.staticCheckbox(f.mandatory :: Mandatory),
+          mandatory  = staticMandatoryCheckbox(f.mandatory),
           reqtypes   = appReqTypesEditor.renderReadOnly(f.reqTypes),
           ctrls      = deletion.button(f.id, Restore)
         )

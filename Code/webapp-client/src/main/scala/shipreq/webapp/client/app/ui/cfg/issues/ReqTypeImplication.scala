@@ -11,6 +11,7 @@ import shipreq.webapp.base.protocol.Routines._
 import shipreq.webapp.client.ClientData
 import shipreq.webapp.client.lib.ui._
 import shipreq.webapp.client.protocol.ClientProtocol
+import shipreq.webapp.client.util.On
 import ReqType.Mnemonic
 
 private[issues] object ReqTypeImplication {
@@ -45,7 +46,7 @@ private[issues] object ReqTypeImplication {
     }
 
     val genEditor =
-      Editors.checkboxEditor.imap(ImplicationRequired)
+      Editors.checkboxEditor.imap(On <=> ImplicationRequired)
         .strengthR[ReqType].labelSuffix(a => label(a._2))
 
     val editor =

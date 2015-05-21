@@ -66,7 +66,7 @@ object OrderedSubsetEditor {
         <.li(outerAttr, style.row,
           draghnd(style.dragHnd),
           <.label(
-            UI.checkbox(on :: On)(checkboxAttr)(style.checkbox),
+            UI.checkbox(on)(checkboxAttr)(style.checkbox),
             <.span(style.label, p.label(a))))
     })
 

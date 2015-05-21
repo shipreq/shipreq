@@ -32,7 +32,7 @@ import shipreq.webapp.client.app.ui.{Checkbox, RowDetailButton}
 import shipreq.webapp.client.lib.{FilterDead, FailureIO, SuccessIO, CrudIO}
 import shipreq.webapp.client.lib.ui._
 import shipreq.webapp.client.protocol.ClientProtocol
-import shipreq.webapp.client.util.{Disabled, DND}
+import shipreq.webapp.client.util.{Disabled, DND, On}
 import TagTree.FlatRow, FlatRow.FilterPolicy
 import TagProtocol.{PovTag, PovRelations}
 
@@ -48,7 +48,7 @@ private[tags] object MainTable {
   val nameE          = Editors.textInputEditor.applyValidator(V.nameS)
   val keyE           = Editors.textInputEditor.applyValidator(V.keyS)
   val descE          = Editors.textareaEditor.applyValidator(V.descS)
-  val mutexChildrenE = Editors.checkboxEditor.imap(MutexChildren).strengthL[V.S]
+  val mutexChildrenE = Editors.checkboxEditor.imap(On <=> MutexChildren).strengthL[V.S]
 
   val tg_fields = FieldSet3[TagGroup](_.name, _.mutexChildren, _.desc getOrElse "")(("", MutexChildren.Not, ""))
   val at_fields = FieldSet3[ApplicableTag](_.name, _.key.value, _.desc getOrElse "")(("", "", ""))
