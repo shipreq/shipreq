@@ -109,7 +109,7 @@ object SortCriteriaEditor {
       private val Row = DND.Child.dndItemComponentB[Col, (OSM, Column.NameResolver, ModIO)]({
         case (outerAttr, draghnd, col, (value, columnName, modIO)) =>
 
-          val on = On to value.isRight
+          val on = On <~ value.isRight
           val selectProps = SelectOne.Props(
             value, choicesForColumn(col), Some(updateIO(modIO)), *.inconclusiveSortMethod)
 

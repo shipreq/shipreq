@@ -1,9 +1,8 @@
 package shipreq.webapp.base.data
 
 import scala.collection.TraversableLike
-import scalaz.Isomorphism.<=>
 import shipreq.base.util.TaggedTypes._
-import shipreq.base.util.{NonEmptySet, UnivEq}
+import shipreq.base.util.{IsoBool, NonEmptySet, UnivEq}
 
 
 final case class Rev(value: Long) extends TaggedLong {
@@ -12,26 +11,18 @@ final case class Rev(value: Long) extends TaggedLong {
 }
 
 
-sealed abstract class Alive {
-//  def fold[A](alive: => A, dead: => A): A
+sealed trait Alive
+case object Alive extends Alive with IsoBool.Obj[Alive] {
+  override protected def neg = Dead
 }
-case object Alive extends Alive with (Boolean <=> Alive) {
-  @inline implicit def equality = UnivEq.force[Alive]
-  override val from             = equality.equal(Alive, _: Alive)
-  override val to               = if (_: Boolean) Alive else Dead
-
-//  override def fold[A](alive: => A, dead: => A): A = alive
-}
-case object Dead extends Alive {
-//  override def fold[A](alive: => A, dead: => A): A = dead
+case object Dead extends Alive with IsoBool[Alive] {
+  override protected def neg = Alive
 }
 
 
 sealed trait ImplicationRequired
-case object ImplicationRequired extends ImplicationRequired with (Boolean <=> ImplicationRequired) {
-  @inline implicit def equality = UnivEq.force[ImplicationRequired]
-  override val from             = equality.equal(ImplicationRequired, _: ImplicationRequired)
-  override val to               = if (_: Boolean) ImplicationRequired else Not
+case object ImplicationRequired extends ImplicationRequired with IsoBool.Obj[ImplicationRequired] {
+  override protected def neg = Not
   case object Not extends ImplicationRequired
 }
 

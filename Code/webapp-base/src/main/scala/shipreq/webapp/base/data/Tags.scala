@@ -4,9 +4,8 @@ import japgolly.nyaya.CycleDetector
 import monocle.Lens
 import monocle.macros.GenLens
 import scala.annotation.tailrec
-import scalaz.Isomorphism._
 import scalaz.syntax.equal._
-import shipreq.base.util.{NonEmptyVector, Must, UnivEq, IMap}
+import shipreq.base.util._
 import shipreq.base.util.TaggedTypes.TaggedLong
 import shipreq.base.util.UnivEq.{immutableHashMapMemo => memo}
 import shipreq.webapp.base.TypeclassDerivation._
@@ -54,10 +53,8 @@ final case class ApplicableTag(id   : ApplicableTagId,
  * FR-254: BA shall be able to track when two or more enum-groupings (FR-253) (or its children) are applied to the same req.
  */
 sealed trait MutexChildren
-case object MutexChildren extends MutexChildren with (Boolean <=> MutexChildren) {
-  @inline implicit def equality = UnivEq.force[MutexChildren]
-  override val from             = equality.equal(MutexChildren, _: MutexChildren)
-  override val to               = if (_: Boolean) MutexChildren else Not
+case object MutexChildren extends MutexChildren with IsoBool.Obj[MutexChildren] {
+  override protected def neg = Not
   case object Not extends MutexChildren
 }
 

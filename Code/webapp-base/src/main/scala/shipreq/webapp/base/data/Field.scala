@@ -61,18 +61,14 @@ object FieldType {
 final case class FieldRefKey(value: String) extends TaggedString
 
 sealed trait Mandatory
-case object Mandatory extends Mandatory with (Boolean <=> Mandatory) {
-  @inline implicit def equality = UnivEq.force[Mandatory]
-  override val from             = equality.equal(Mandatory, _: Mandatory)
-  override val to               = if (_: Boolean) Mandatory else Not
+case object Mandatory extends Mandatory with IsoBool.Obj[Mandatory] {
+  override protected def neg = Not
   case object Not extends Mandatory
 }
 
 sealed trait Deletable
-case object Deletable extends Deletable with (Boolean <=> Deletable) {
-  @inline implicit def equality = UnivEq.force[Deletable]
-  override val from             = equality.equal(Deletable, _: Deletable)
-  override val to               = if (_: Boolean) Deletable else Not
+case object Deletable extends Deletable with IsoBool.Obj[Deletable] {
+  override protected def neg = Not
   case object Not extends Deletable
 }
 

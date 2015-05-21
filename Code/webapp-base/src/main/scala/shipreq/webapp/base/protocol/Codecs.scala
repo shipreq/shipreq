@@ -26,9 +26,9 @@ private[protocol] object CodecBase {
   def tagL[T <: TaggedLong](C: Long => T) =
     ReadWriter[T](i => Js.Str(i.value.toString), { case Js.Str(i) => C(i.toLong)})
 
-  def boolCase[T](iso: Boolean <=> T) =
-    ReadWriter[T](t => if (iso from t) Js.Num(1) else Js.Num(0), {
-      case Js.Num(n) => iso to (n.toInt != 0)
+  def boolCase[T](iso: IsoBool[T]) =
+    ReadWriter[T](t => if (iso ~> t) Js.Num(1) else Js.Num(0), {
+      case Js.Num(n) => iso <~ (n.toInt != 0)
     })
 
   // UNSAFE. Make sure tests using exhaustive pattern matching to cover this hierarchy

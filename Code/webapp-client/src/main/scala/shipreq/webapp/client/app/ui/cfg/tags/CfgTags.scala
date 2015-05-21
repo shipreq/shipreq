@@ -195,7 +195,7 @@ private[tags] object MainTable {
       $.state.newSel,
       onNewInvoke,
       $ _setStateL State.newSel,
-      Disabled to newRowActive($.state))
+      Disabled <~ newRowActive($.state))
 
     val onNewInvoke =
       Some($.modStateIO(s => storesForType(s.newSel).n.enableEdit(s)))

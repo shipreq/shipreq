@@ -87,7 +87,7 @@ private[tags] object DetailPane {
           emptyRelChoice,
           ar.rels.map { r =>
             val s = r.selectable
-            Choice[Option[Id]](s, r.value.indentedName, Disabled to s.isEmpty)
+            Choice[Option[Id]](s, r.value.indentedName, Disabled <~ s.isEmpty)
           })
 
         val dropdown =

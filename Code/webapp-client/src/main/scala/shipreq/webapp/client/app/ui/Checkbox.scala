@@ -2,19 +2,19 @@ package shipreq.webapp.client.app.ui
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.extra._
-import scalaz.Isomorphism.<=>
+import shipreq.base.util.IsoBool
 import scalaz.effect.IO
 import shipreq.webapp.client.lib.{ShowDead, FilterDead}
 import shipreq.webapp.client.lib.ui.UI
 
 object Checkbox {
 
-  def apply[A](bool: Boolean <=> A)(set: A => IO[Unit], decor: A => ReactTag => ReactElement) = {
-    implicit val reusability = Reusability.by(bool.from)
+  def apply[A](bool: IsoBool[A])(set: A => IO[Unit], decor: A => ReactTag => ReactElement) = {
+    implicit val reusability = Reusability.by(bool.~>)
     ReactComponentB[A]("Checkbox")
       .render { a =>
-        val b = bool from a
-        val t = UI.checkbox(b)(^.onChange ~~> set(bool.to(!b)))
+        val b = bool ~> a
+        val t = UI.checkbox(b)(^.onChange ~~> set(bool <~ (!b)))
         decor(a)(t)
       }
       .configure(Reusability.shouldComponentUpdate)

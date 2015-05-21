@@ -20,7 +20,7 @@ object SelectInvoke {
                             enabled    : Enabled)
 
   def render[A: Equal](p: Props[A]): ReactTag = {
-    val disabled = Disabled.from(p.enabled)
+    val disabled = Disabled ~> p.enabled
 
     val select = {
       // Propagate disabledness

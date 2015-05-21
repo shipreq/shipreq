@@ -1,8 +1,7 @@
 package shipreq.webapp.client.lib
 
-import scala.collection.{GenTraversableLike, GenTraversable}
-import scalaz.Isomorphism.<=>
-import shipreq.base.util.UnivEq
+import scala.collection.GenTraversableLike
+import shipreq.base.util.IsoBool
 import shipreq.webapp.base.data.Alive
 
 sealed trait FilterDead {
@@ -18,18 +17,17 @@ sealed trait FilterDead {
     filter.fold((_: A) => true)(_ compose f)
 }
 
-object FilterDead {
-  @inline implicit def equality = UnivEq.force[FilterDead]
+object FilterDead extends IsoBool.ObjOnly[FilterDead] {
+  override protected def pos = ShowDead
+  override protected def neg = HideDead
 }
 
-case object ShowDead extends FilterDead with (Boolean <=> FilterDead) {
-  override val from  : FilterDead => Boolean    = _ == ShowDead
-  override val to    : Boolean => FilterDead    = if (_) ShowDead else HideDead
+case object ShowDead extends FilterDead with IsoBool[FilterDead] {
+  override protected def neg = HideDead
   override val filter: Option[Alive => Boolean] = None
 }
 
-case object HideDead extends FilterDead with (Boolean <=> FilterDead) {
-  override val from  : FilterDead => Boolean    = _ == HideDead
-  override val to    : Boolean => FilterDead    = if (_) HideDead else ShowDead
+case object HideDead extends FilterDead with IsoBool[FilterDead] {
+  override protected def neg = ShowDead
   override val filter: Option[Alive => Boolean] = Some(Alive.equality.equal(Alive, _))
 }

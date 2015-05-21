@@ -48,7 +48,7 @@ object Style extends StyleSheet.Inline {
 
       val inconclusiveColumnName = styleF(D.on)(o => styleS(
         marginLeft(1 ex),
-        mixinIf(Off from o)(
+        mixinIf(Off ~> o)(
           //textDecoration := ^.lineThrough,
           color("#999"))))
 
