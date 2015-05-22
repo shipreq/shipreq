@@ -61,9 +61,18 @@ object UnivEq {
     }
   }
 
-  @inline def emptyMap     [K: UnivEq, V]                    = Map.empty[K, V]
-  @inline def emptySet     [A: UnivEq]                       = Set.empty[A]
-  @inline def emptyMultimap[K: UnivEq, L[_]: MultiValues, V] = Multimap.empty[K, L, V]
+  // Copied from Shapeless
+  trait =:!=[A, B]
+  def _unexpected : Nothing = sys.error("Unexpected invocation")
+  implicit def _neq[A, B] : A =:!= B = null.asInstanceOf[A =:!= B] //new =:!=[A, B] {}
+  implicit def _neqAmbig1[A] : A =:!= A = _unexpected
+  implicit def _neqAmbig2[A] : A =:!= A = _unexpected
+
+
+  @inline def emptyMap        [K: UnivEq, V]         = Map.empty[K, V]
+  @inline def emptySet        [A: UnivEq]            = Set.empty[A]
+  @inline def emptySetMultimap[K: UnivEq, V: UnivEq] = Multimap.empty[K, Set, V]
+  @inline def emptyMultimap   [K: UnivEq, L[_] : MultiValues, V](implicit ev: L[V] =:!= Set[V]) = Multimap.empty[K, L, V]
 
   @inline def mutableHashMapMemo[K: UnivEq, V](f: K => V)   = Memo.mutableHashMapMemo[K, V](f)
   @inline def immutableHashMapMemo[K: UnivEq, V](f: K => V) = Memo.immutableHashMapMemo[K, V](f)

@@ -154,7 +154,7 @@ final case class ReqCodes(trie: ReqCode.Trie) {
     trie.cataV(z)((a, v, d) => d.active.fold(a)(f(a, v, _)))
 
   lazy val activeReqCodesByTarget: Multimap[Target, Set, Value] =
-    cataA(UnivEq.emptyMultimap[Target, Set, Value])((q, c, d) =>
+    cataA(UnivEq.emptySetMultimap[Target, Value])((q, c, d) =>
       q.add(d.target, c))
 
   lazy val reqCodesById: Map[ReqCodeId, Value] =
@@ -174,7 +174,7 @@ final case class ReqCodes(trie: ReqCode.Trie) {
     trie.flatStream.flatMap(_._2.ids)
 
 //  lazy val targetToIds: Multimap[Target, Set, Id] =
-//    trie.cataV(UnivEq.emptyMultimap[Target, Set, Id])((q, _, d) =>
+//    trie.cataV(UnivEq.emptySetMultimap[Target, Id])((q, _, d) =>
 //      q.add(d.target, d.id))
 }
 
@@ -325,7 +325,7 @@ case class Requirements(reqs: Requirements.Data, pubids: PubidRegister) {
   def reqsByPubidM[M[X] <: TraversableOnce[X]: Monoidish, T <: ReqTypeId](ids: M[PubidT[T]]): Must[M[ReqT[T]]] =
     Must.foldMapM(ids)(reqByPubidM)
 
-  lazy val reqsByType: Multimap[ReqTypeId, Set, Req] =
-    UnivEq.emptyMultimap[ReqTypeId, Set, Req]
+  lazy val reqsByType: Multimap[ReqTypeId, Vector, Req] =
+    UnivEq.emptyMultimap[ReqTypeId, Vector, Req]
       .addPairs(reqs.vstream(_.mapStrengthL(_.reqTypeId)): _*)
 }

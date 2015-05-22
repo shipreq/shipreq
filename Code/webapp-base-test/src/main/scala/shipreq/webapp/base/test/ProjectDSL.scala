@@ -84,7 +84,7 @@ object ProjectDSL {
           ReqCodeId(maxReqCodeId)
         }
         def reqCodeData() =
-          ReqCode.Data(Some(ReqCode.ActiveData(nextReqCodeId(), id)), UnivEq.emptySet, UnivEq.emptyMultimap)
+          ReqCode.Data(Some(ReqCode.ActiveData(nextReqCodeId(), id)), UnivEq.emptySet, UnivEq.emptySetMultimap)
 
         val reqTypeId   = this.reqType.getOrElse(p.defaultReqType.get.id)
         val (pr, pubid) = p.pubids.allocC(reqTypeId)(id)
@@ -118,7 +118,7 @@ object ProjectDSL {
 
         val g  = ReqCodeGroup(title)
         val ad = ReqCode.ActiveData(nextReqCodeId(), g)
-        val d  = ReqCode.Data(Some(ad), UnivEq.emptySet, UnivEq.emptyMultimap)
+        val d  = ReqCode.Data(Some(ad), UnivEq.emptySet, UnivEq.emptySetMultimap)
         val t  = p.reqCodeTrie.put(code, d)
         val p2 = p.copy(reqCodeTrie = t, maxReqCodeId = maxReqCodeId)
         (p2, g)
