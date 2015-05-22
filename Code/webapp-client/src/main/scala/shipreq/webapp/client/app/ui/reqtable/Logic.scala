@@ -108,7 +108,7 @@ private[reqtable] object Logic {
         (c, fn)
       }.toMap
 
-    req => expandersPerCol.mapValues(_(req))
+    req => expandersPerCol mapValuesNow (_(req))
   }
 
   private def expandMapValues[K, V](src: Map[K, Expanded[V]]): NonEmptyVector[Map[K, Vector[V]]] = {

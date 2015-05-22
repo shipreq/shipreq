@@ -341,7 +341,7 @@ class WIP {
 
         // Modify subject
         oa match {
-          case None    => t1.mapUnderlying(_.mapValues(_ removeChild id) - id) // copy from RemoteDelta
+          case None    => t1.mapUnderlying(_.mapValuesNow(_ removeChild id) - id) // copy from RemoteDelta
           case Some(a) => updT(id, Tag.alive set a)(t1)
         }
       }

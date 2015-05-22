@@ -129,7 +129,7 @@ object TagProtocol {
 
       // Delete tags
       for (id <- ds.del)
-        t = t.mapUnderlying(_.mapValues(_ removeChild id) - id)
+        t = t.mapUnderlying(_.mapValuesNow(_ removeChild id) - id)
 
       // Insert/update
       // (Separate phases ∵ all ids must exist before updating structure)

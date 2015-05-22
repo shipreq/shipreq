@@ -7,6 +7,7 @@ import scalaz.{Order, Equal, Foldable}
 import scalaz.std.iterable._
 import scalaz.std.map._
 import scalaz.syntax.foldable._
+import ScalaExt._
 
 object IMapBaseV {
   def equality[K: Order, V: Equal, M <: IMapBaseV[K, _, V, M]]: Equal[M] =
@@ -46,7 +47,8 @@ abstract class IMapBaseV[K: UnivEq, VI, VO, This_ <: IMapBaseV[K, VI, VO, This_]
   @inline final def keySet        = m.keySet
   @inline final def size          = m.size
 
-  @inline final def mapValues[A](f: VO => A): Map[K, A] = m.mapValues(f)
+  @inline final def mapValues[A](f: VO => A): Map[K, A] =
+    m mapValuesNow f
 
   override final def -(k: K) =
     setmap(m - k)
@@ -93,7 +95,7 @@ abstract class IMapBase[K: UnivEq, V, This_ <: IMapBase[K, V, This_]] private[ut
   final override protected def _add(to: Map[K, V], k: K, v: V) = to.updated(k, v)
 
   final def filter (f: (K, V) => Boolean): This = mapUnderlying(_ filter f.tupled)
-  final def filterK(f: K      => Boolean): This = mapUnderlying(_ filterKeys f)
+  final def filterK(f: K      => Boolean): This = mapUnderlying(_ filter(kv => f(kv._1)))
   final def filterV(f: V      => Boolean): This = mapUnderlying(_.filter(kv => f(kv._2)))
 
   final def filterNot (f: (K, V) => Boolean): This = mapUnderlying(_ filterNot f.tupled)

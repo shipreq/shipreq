@@ -53,7 +53,7 @@ final class SavedRowStore[S, K: UnivEq, P, I](_ss: Lens[S, SavedRowStore.SS[K, P
   @inline private def initRow(p: P): Row =
     SavedRowStore.Row(RowStatus.Sync, p, pi(p))
 
-          def initStateM(s: Map[K, P])         : SS = s mapValues initRow
+          def initStateM(s: Map[K, P])         : SS = s mapValuesNow initRow
           def initStateS(s: Seq[P], pk: P => K): SS = initStateM(s.foldLeft(UnivEq.emptyMap[K, P])(_ + _.mapStrengthL(pk)))
   @inline def initStateT (s: Seq[KP])          : SS = initStateM(s.toMap)
   @inline def initStateIM(s: IMap[K, P])       : SS = initStateM(s.underlyingMap)

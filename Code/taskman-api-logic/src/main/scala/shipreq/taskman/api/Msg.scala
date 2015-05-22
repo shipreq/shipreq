@@ -1,6 +1,6 @@
 package shipreq.taskman.api
 
-import shipreq.base.util.ScalaExt.Tuple2Ext
+import shipreq.base.util.ScalaExt._
 import shipreq.base.util.Util
 
 /**
@@ -78,7 +78,7 @@ object MsgType {
     val dupGroups = groups.filterNot(_._2.size == 1)
     if (dupGroups.nonEmpty)
       throw new ExceptionInInitializerError(s"${classOf[MsgType].getSimpleName} with duplicate IDs found: $dupGroups")
-    groups.mapValues(_.head).toMap
+    groups.mapValuesNow(_.head)
   }
 
   private[this] val byMsgClass: Map[Class[_ <: Msg], MsgType] = {
@@ -86,7 +86,7 @@ object MsgType {
     val dupGroups = groups.filterNot(_._2.size == 1)
     if (dupGroups.nonEmpty)
       throw new ExceptionInInitializerError(s"${classOf[MsgType].getSimpleName} with duplicate ${classOf[Msg].getSimpleName} classes found: $dupGroups")
-    groups.mapValues(_.head).toMap
+    groups.mapValuesNow(_.head)
   }
 
   private[this] val byMsgClassName: Map[String, MsgType] =

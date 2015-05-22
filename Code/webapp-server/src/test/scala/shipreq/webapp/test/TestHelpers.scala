@@ -41,6 +41,7 @@ import FreeTextTerms._
 import Lenses._
 import LensFns._
 import NodeUtils._
+import ScalaExt._
 import TreeOps._
 import change.Changes.ExistingStepLabelsChanged
 
@@ -374,7 +375,7 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
 
   def freeText(txt: String) = FreeText.parse(txt)(UcParsingCtx.Empty)
 
-  def normaliseFieldValues(fieldValues: FieldValues): FieldValues = fieldValues.mapValues{
+  def normaliseFieldValues(fieldValues: FieldValues): FieldValues = fieldValues.mapValuesNow {
     case v: StepFieldValue => v.norm.asInstanceOf[Field#Value]
     case v: FreeText => v.norm.asInstanceOf[Field#Value]
     case v => v

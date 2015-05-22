@@ -89,7 +89,7 @@ object ProjectDSL {
         val reqTypeId   = this.reqType.getOrElse(p.defaultReqType.get.id)
         val (pr, pubid) = p.pubids.allocC(reqTypeId)(id)
         val req         = GenericReq(id, pubid, title, alive)
-        val text        = cftexts.mapValues(t => Map.empty[ReqId, CFTextValue].updated(id, t))
+        val text        = cftexts.mapValuesNow(t => Map.empty[ReqId, CFTextValue].updated(id, t))
         val tags        = p.tags.addvs(id, this.tags)
         val imps        = p.imps.addks(impSrcs, id).addvs(id, impTgts)
         val codeTrie    = codes.foldLeft(p.reqCodeTrie)((t, c) => t.put(c, reqCodeData()))
