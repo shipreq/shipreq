@@ -18,11 +18,12 @@ final class ColumnRenderer(
 object ColumnRenderer {
   sealed trait Status
   case object Normal extends Status
+  case object DeadRow extends Status
   case object `N/A` extends Status {
     val element: ReactElement = <.span(*.`N/A`, "–")
     val pair: (Status, ReactElement) = (this, element)
   }
-  val statusDomain = Domain.ofValues[Status](Normal, `N/A`)
+  val statusDomain = Domain.ofValues[Status](Normal, DeadRow, `N/A`)
 
   val empty: ReactElement = <.span
 }
@@ -57,7 +58,15 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
 
   private def makeS(headerName: String, render: Row => ReactElement): Column => ColumnRenderer = {
     val render2: Row => (Status, ReactElement) =
-      render.andThen(e => if (e eq `N/A`.element) `N/A`.pair else (Normal, e))
+      row => {
+        val e = render(row)
+        if (e eq `N/A`.element)
+          `N/A`.pair
+        else row.alive match {
+          case Alive => (Normal, e)
+          case Dead  => (DeadRow, e)
+        }
+      }
     c => {
       val render3 = applicability(c).wrap(render2)(`N/A`.pair)
       new ColumnRenderer(c, <.span(headerName), render3)

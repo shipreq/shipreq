@@ -101,6 +101,8 @@ object Style extends StyleSheet.Inline {
         (status match {
           case ColumnRenderer.Normal => mixin(
             padding(v = 2.px, h = 4.px))
+          case ColumnRenderer.DeadRow => mixin(
+            padding(v = 2.px, h = 4.px), backgroundColor("#eee"))
           case ColumnRenderer.`N/A` => mixin(
             padding.`0`,
             backgroundColor("#eee"),

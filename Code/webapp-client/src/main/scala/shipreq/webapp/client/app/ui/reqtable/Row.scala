@@ -96,10 +96,12 @@ object MultiValues {
 
 sealed trait Row {
   def id: Row.Id
+  def alive: Alive
 }
 
 case class GenericReqRow(req: GenericReq, exp: Expansion, mv: MultiValues) extends Row {
   override def id = Row.GenericReqRowId(req.id)
+  override def alive = req.alive
   override def toString = s"\n$req\n$exp\n$mv\n"
 }
 
@@ -108,6 +110,7 @@ case class ReqCodeGroupRow(reqCodeId      : ReqCodeId,
                            reqCode        : ReqCode.Value,
                            reqCodeTreeItem: Option[ReqCodeTreeItem]) extends Row {
   override def id = Row.ReqCodeGroupRowId(reqCodeId)
+  override def alive = Alive
 }
 
 object Row {
