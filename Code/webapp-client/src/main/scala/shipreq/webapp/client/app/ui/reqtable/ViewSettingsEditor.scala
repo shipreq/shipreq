@@ -23,7 +23,8 @@ object ViewSettingsEditor {
 
     val columnsEditor = new ColumnsEditor(columnName)
 
-    val filterDeadEditor = Checkbox.filterDead($.props setL ViewSettings.filterDead)
+    val filterDeadEditor = Checkbox.filterDead(ReusableFn.byName(
+      $.props setL ViewSettings.filterDead))
 
     def render = {
       val p = $.props
