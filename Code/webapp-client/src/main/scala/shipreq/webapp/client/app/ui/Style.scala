@@ -162,14 +162,24 @@ object Style extends StyleSheet.Inline {
 
     private val hoverShowsInfo = cursor.help
 
-    private val dead = mixin(
-      textDecoration := ^.lineThrough,
-      hasError
-    )
+    private val deadMixin = mixin(
+      textDecoration := ^.lineThrough)
+
+    private val deadAndNotError = mixin(
+      deadMixin,
+      color("#999"))
+
+    private val deadAndError = mixin(
+      deadMixin,
+      hasError)
 
     val blankLine = style(display.block, height(1 em))
 
     val ul = style(paddingLeft(2.4 ex))
+
+    val pubidColumnValue = styleF(D.alive)(a => styleS(
+      display.inlineBlock,
+      mixinIf(a :: Dead)(deadAndNotError)))
 
     val tag = style(
       addClassName("label label-default"),
@@ -185,7 +195,7 @@ object Style extends StyleSheet.Inline {
     val reqRef = styleF(D.alive)(a => styleS(
       display.inlineBlock,
       color("#2363A1"),
-      mixinIf(a :: Dead)(dead),
+      mixinIf(a :: Dead)(deadAndError), // ← TODO not always an error
       hoverShowsInfo))
 
     val groupRef = styleF(D.alive)(a => styleS(

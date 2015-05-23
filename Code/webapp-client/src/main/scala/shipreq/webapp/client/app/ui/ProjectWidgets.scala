@@ -56,8 +56,12 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
         issueDescSurroundSuffix)
     )
 
-  val pubidText = memoM[Pubid]("ID", pubid =>
-    PlainText.pubid(project, pubid) map (<.span(_))
+  val pubidColumnValue = memoM[Pubid]("ID", pubid =>
+    for {
+      txt <- PlainText.pubid(project, pubid)
+      req <- project.reqs.data.reqByPubidM(pubid)
+    } yield
+      <.span(*.pubidColumnValue(req.alive), txt)
   )
 
   private def _reqRef(f: String => String): ReqId => Must[ReactElement] = id =>
