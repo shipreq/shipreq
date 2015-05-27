@@ -2,8 +2,8 @@ package shipreq.webapp.client.app.ui
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.extra._
-import shipreq.base.util.IsoBool
 import scalaz.effect.IO
+import shipreq.base.util.IsoBool
 import shipreq.webapp.client.lib.{ShowDead, FilterDead}
 import shipreq.webapp.client.lib.ui.UI
 import shipreq.webapp.client.util.On
