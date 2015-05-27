@@ -48,9 +48,9 @@ object Deps {
     }
     object ScalaCSS extends Group("0.2.0", "com.github.japgolly.scalacss") {
       val core  = js("core")
-      val react = jsF("ext-react", _ exclude("com.github.japgolly.scalajs-react", "core")) ++ core
+      val react = js("ext-react") ++ core
     }
-    object Scalaz extends Group(Deps.Scalaz.version + "-2", "com.github.japgolly.fork.scalaz") {
+    object Scalaz extends Group(Deps.Scalaz.version, "com.github.japgolly.fork.scalaz") {
       val core   = js("scalaz-core")
       val effect = js("scalaz-effect")
     }
@@ -68,7 +68,7 @@ object Deps {
     val all      = compiler ++ library ++ reflect ++ p
   }
 
-  object Scalaz extends Group("7.1.1", "org.scalaz") {
+  object Scalaz extends Group("7.1.2", "org.scalaz") {
     val core       = dd("scalaz-core")
     val effect     = dd("scalaz-effect") ++ core
     val concurrent = dd("scalaz-concurrent") ++ effect
