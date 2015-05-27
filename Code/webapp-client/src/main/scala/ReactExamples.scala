@@ -1,21 +1,76 @@
 package hahaa
 
+import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import japgolly.scalajs.react.extra._
+import japgolly.scalajs.react.extra.router2._
 import org.scalajs.dom._
-import shipreq.webapp.client.lib.ConsoleIO
-import shipreq.webapp.client.protocol.ClientProtocol
-import shipreq.webapp.client.util.DND
-import scalaz.syntax.bind.ToBindOps
 import scala.scalajs.js
 import scalaz.effect.IO
 import scalaz.std.AllInstances._
-import shipreq.webapp.base.protocol.Routines
+import scalaz.syntax.bind.ToBindOps
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
-import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.extra.router._
-import shipreq.webapp.client.app.ui._
+
+import shipreq.base.util.{NonEmptyVector, NonEmptySet, UnivEq}
+import shipreq.webapp.base.protocol.Routines
+import shipreq.webapp.client.ClientData
+import shipreq.webapp.client.app.ui
+import shipreq.webapp.client.lib.ConsoleIO
+import shipreq.webapp.client.protocol.ClientProtocol
+import shipreq.webapp.client.util.DND
 import shipreq.webapp.client.lib.HideDead
+
+object ShipreqWip {
+
+  sealed trait Page
+  case object CfgFields   extends Page
+  case object CfgIssues   extends Page
+  case object CfgReqTypes extends Page
+  case object CfgTags     extends Page
+  case object ReqTable    extends Page
+
+  implicit def pageEq: UnivEq[Page] = UnivEq.force
+
+  val pages = NonEmptyVector[Page](
+    ReqTable, CfgFields, CfgIssues, CfgReqTypes, CfgTags)
+
+  val pageTitle: Page => String = {
+    case ReqTable    => "Requirements Table"
+    case CfgFields   => "Cfg: Fields"
+    case CfgIssues   => "Cfg: Issues"
+    case CfgReqTypes => "Cfg: Requirement Types"
+    case CfgTags     => "Cfg: Tags"
+  }
+
+  def routes(r: Routines.ProjectSPA, cp: ClientProtocol, cd: ClientData) = RouterConfigDsl[Page].buildRule { dsl =>
+
+    def reqTable =
+      ui.reqtable.ReqTable.WIP(cd.project)
+
+    def cfgIssues =
+      ui.cfg.issues.CfgIssues.Props(cp, r.issueTypeCrud, r.reqTypeImpMod, r.fieldMandMod, cd, HideDead).component
+
+    def cfgReqTypes =
+      ui.cfg.CfgReqTypes.Props(cp, r.reqTypeCrud, cd, HideDead).component
+
+    def cfgTags =
+      ui.cfg.tags.CfgTags.Props(cp, r.tagCrud, cd, HideDead).component
+
+    def cfgFields =
+      ui.cfg.fields.CfgFields.Props(cp, r.fieldCrud, cd, HideDead).component
+
+    import dsl._
+    ( staticRoute("#tab",          ReqTable   ) ~> render(reqTable)
+    | staticRoute("#cfg/fields",   CfgFields  ) ~> render(cfgFields)
+    | staticRoute("#cfg/issues",   CfgIssues  ) ~> render(cfgIssues)
+    | staticRoute("#cfg/reqtypes", CfgReqTypes) ~> render(cfgReqTypes)
+    | staticRoute("#cfg/tags",     CfgTags    ) ~> render(cfgTags)
+    )
+  }
+}
+
+// ===================================================================================================================
+
 
 object ReactExamples {
 
@@ -27,77 +82,63 @@ object ReactExamples {
 
   // ===================================================================================================================
 
+  sealed trait TmpPage
+  case object Index extends TmpPage
+  case class Real(page: ShipreqWip.Page) extends TmpPage
+
+  val index = ReactComponentB[RouterCtl[TmpPage]]("Index")
+    .render(ctl =>
+      <.ul(
+        ShipreqWip.pages.whole.map(p =>
+          <.li(ctl.link(Real(p))(ShipreqWip pageTitle p))))
+    ).build
+
+  // val dnd        : Loc = register(location("#demo/dnd",     dragAndDropDemo))
+  // <.li(router.link(ProjectPage.dnd        )("Demo: Drag 'n' Drop")))
+  // def dragAndDropDemo = <.section(DragAndDrop_ol.demo, DragAndDrop_table.demo)
+
+  def layout(ctl: RouterCtl[TmpPage], res: Resolution[TmpPage]): ReactElement =
+    res.page match {
+      case Index => res.render()
+      case _ =>
+        <.div(
+          <.div(
+            ^.textAlign.right,
+            ^.paddingRight := "0.6ex",
+            ^.marginBottom := "1em",
+            ^.backgroundColor := "#ddd",
+            ctl.link(Index)("← Back")),
+          res.render())
+    }
+
   def projectPage(r: Routines.ProjectSPA): IO[Unit] = {
-    import shipreq.webapp.client._
     val cp = ClientProtocol.Lift
     ClientData.init(cp, r.projectInit, clientData => IO {
 
-      object ProjectPage extends RoutingRules {
-        val root       : Loc = register(rootLocation(index))
-        val tab        : Loc = register(location("#tab",          tabR))
-        val cfgFields  : Loc = register(location("#cfg/fields",   cfgFieldsR))
-        val cfgIssues  : Loc = register(location("#cfg/issues",   cfgIssuesR))
-        val cfgReqTypes: Loc = register(location("#cfg/reqtypes", cfgReqTypesR))
-        val cfgTags    : Loc = register(location("#cfg/tags",     cfgTagsR))
-        val dnd        : Loc = register(location("#demo/dnd",     dragAndDropDemo))
+      val routerConfig = RouterConfigDsl[TmpPage].buildConfig { dsl =>
+        import dsl._
 
-        private def index: Renderer = router => {
-          val c = ReactComponentB[Unit]("Index")
-            .render(_ =>
-              <.ul(
-                <.li(router.link(ProjectPage.tab        )("Requirements Table")),
-                <.li(router.link(ProjectPage.cfgFields  )("Cfg: Fields")),
-                <.li(router.link(ProjectPage.cfgIssues  )("Cfg: Issues")),
-                <.li(router.link(ProjectPage.cfgReqTypes)("Cfg: Requirement Types")),
-                <.li(router.link(ProjectPage.cfgTags    )("Cfg: Tags")),
-                <.li(router.link(ProjectPage.dnd        )("Demo: Drag 'n' Drop")))
-            ).buildU
-          c()
-        }
-
-        private def tabR =
-          reqtable.ReqTable.WIP(clientData.project)
-
-        private def cfgIssuesR =
-          cfg.issues.CfgIssues.Props(cp, r.issueTypeCrud, r.reqTypeImpMod, r.fieldMandMod, clientData, HideDead).component
-
-        private def cfgReqTypesR =
-          cfg.CfgReqTypes.Props(cp, r.reqTypeCrud, clientData, HideDead).component
-
-        private def cfgTagsR =
-          cfg.tags.CfgTags.Props(cp, r.tagCrud, clientData, HideDead).component
-
-        private def cfgFieldsR =
-          cfg.fields.CfgFields.Props(cp, r.fieldCrud, clientData, HideDead).component
-
-        def dragAndDropDemo = <.section(DragAndDrop_ol.demo, DragAndDrop_table.demo)
-
-        register(removeTrailingSlashes)
-
-        override protected val notFound = redirect(root, Redirect.Replace)
-
-        override protected def interceptRender(i: InterceptionR): ReactElement =
-          if (i.loc == root)
-            i.element
-          else
-            <.div(
-              <.div(^.backgroundColor := "#ddd", i.router.link(root)("Back", ^.cls := "back")),
-              i.element)
+        ( staticRoute(root, Index) ~> renderR(index(_))
+        | ShipreqWip.routes(r, cp, clientData).pmap[TmpPage](Real){case Real(p) => p}
+        | trimSlashes
+        ).notFound(redirectToPage(Index)(Redirect.Replace))
+          .renderWith(layout)
+          .verify(Index, ShipreqWip.pages.whole.map(Real): _*)
       }
 
-      Style.addToDocument()
-      val c = ProjectPage.router(BaseUrl.fromWindowOrigin / "wip")
-      c() render document.getElementById("eg2")
+      ui.Style.addToDocument()
+      val router = Router(BaseUrl.fromWindowOrigin / "wip", routerConfig)
+      router() render document.getElementById("eg2")
     })
   }
 
   // ===================================================================================================================
 
   def example1(mountNode: Node) = {
-    val HelloMessage = ReactComponentB[String]("HelloMessage")
-      .render(name => <.div("Hello ", name))
+    val ReactTest = ReactComponentB[String]("React test")
+      .render(p => <.div("React: ", p))
       .build
-    React.render(HelloMessage("John"), mountNode)
+    React.render(ReactTest("works."), mountNode)
   }
 
   // ===================================================================================================================
