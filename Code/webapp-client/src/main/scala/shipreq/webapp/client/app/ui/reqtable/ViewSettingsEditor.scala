@@ -15,7 +15,7 @@ object ViewSettingsEditor {
       .stateless
       .backend(new Backend(_, columnName))
       .render(_.backend.render)
-      .configure(Reusability.shouldComponentUpdate)
+      .configure(shouldComponentUpdate)
       .build
 
   final class Backend($: BackendScope[Props, Unit], columnName: Column.NameResolver) {

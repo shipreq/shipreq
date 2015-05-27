@@ -49,7 +49,7 @@ object Table {
       .stateless
       .backend(new Backend(_))
       .render(_.backend.render)
-      .configure(KeyPressListener.install(), Reusability.shouldComponentUpdate)
+      .configure(KeyPressListener.install(), shouldComponentUpdate)
       .build
 
   sealed trait KeyboardAction
@@ -192,7 +192,7 @@ object Table {
   val RowComponent =
     ReactComponentB[RowProps]("Row")
       .render(renderRow(_))
-      .configure(Reusability.shouldComponentUpdate)
+      .configure(shouldComponentUpdate)
       .build
 
   /**

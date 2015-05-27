@@ -19,7 +19,7 @@ object Checkbox {
         val t = UI.checkbox(on(a))(^.onChange ~~> set(bool negate a))
         decor(a)(t)
       }
-      .configure(Reusability.shouldComponentUpdate)
+      .configure(shouldComponentUpdate)
       .build
   }
 

@@ -1,5 +1,7 @@
 package shipreq.webapp.client.app.ui
 
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.extra._
 import shipreq.base.util.Must
 
 /**
@@ -21,4 +23,7 @@ package object reqtable {
 
   def mustResolveO[A](m: Must[A]): Option[A] =
     m.fold(failedMust(None: Option[A]), Some(_))
+
+  @inline def shouldComponentUpdate[P: Reusability, S: Reusability, B, N <: TopNode] =
+    shipreq.webapp.client.app.ui.shouldComponentUpdate[P, S, B, N]
 }
