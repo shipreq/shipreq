@@ -289,7 +289,7 @@ object LogicTest extends TestSuite {
   def gen: Gen[LogicTests] =
     for {
       p  <- RandomData.project
-      vs <- ReqTableTest.rndViewSettings(p)
+      vs <- RandomReqTableData.viewSettings(p)
     } yield
       LogicTests(vs, p)
 

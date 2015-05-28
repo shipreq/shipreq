@@ -8,44 +8,44 @@ import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.lib.{ShowDead, FilterDead}
 
-object ReqTableTest {
+object RandomReqTableData {
 
-  lazy val rndFilterDead: Gen[FilterDead] =
+  lazy val filterDead: Gen[FilterDead] =
     Gen.boolean.map(ShowDead.to)
 
-  def rndColumns(p: Project): Gen[NonEmptyVector[Column]] = {
-    val allPossibleColumns    = Column.all(p.fields.data.customFields.keys).whole
+  def columns(p: Project): Gen[NonEmptyVector[Column]] = {
+    val allPossibleColumns    = Column.all(p.fields.data.customFields.values).whole
     val (mandatory, optional) = allPossibleColumns partition Column.mandatory
     Gen.subset(optional).map(_ ++ mandatory).shuffle.map(cs => NonEmptyVector(cs.head, cs.tail))
   }
 
-  def rndSortMethodI: Gen[SortMethod.IgnoreBlanks] =
+  def sortMethodI: Gen[SortMethod.IgnoreBlanks] =
     RandomData.oneofV(SortMethod.ignoreBlanks)
 
-  def rndSortMethodB: Gen[SortMethod.ConsiderBlanks] =
+  def sortMethodB: Gen[SortMethod.ConsiderBlanks] =
     RandomData.oneofV(SortMethod.considerBlanks)
 
-  def rndSortCriteriaC: Gen[SortCriterion.Conclusive] =
-    rndSortMethodI.map(SortCriterion.Conclusive(Column.Pubid, _))
+  def sortCriteriaC: Gen[SortCriterion.Conclusive] =
+    sortMethodI.map(SortCriterion.Conclusive(Column.Pubid, _))
 
   private def __change_rndSortCriteriaC_if_more_conclusive_criteria_added: Column.SortConclusive => Unit = {
     case Column.Pubid => ()
   }
 
-  def rndSortCriteriaI(legalCols: Vector[Column.SortInconclusive]): Gen[Vector[SortCriterion.Inconclusive]] =
+  def sortCriteriaI(legalCols: Vector[Column.SortInconclusive]): Gen[Vector[SortCriterion.Inconclusive]] =
     Gen.subset(legalCols).shuffle.flatMap(cs =>
       Gen.sequence(cs.map(c =>
         RandomData.oneofV(SortCriterion possibilitiesI c))))
 
-  def rndSortCriteria(gi: Gen[Vector[SortCriterion.Inconclusive]]): Gen[SortCriteria] =
-    Gen.apply2(SortCriteria.apply)(gi, rndSortCriteriaC)
+  def sortCriteria(gi: Gen[Vector[SortCriterion.Inconclusive]]): Gen[SortCriteria] =
+    Gen.apply2(SortCriteria.apply)(gi, sortCriteriaC)
 
-  def rndViewSettings(p: Project): Gen[ViewSettings] =
+  def viewSettings(p: Project): Gen[ViewSettings] =
     for {
-      cols  ← rndColumns(p)
+      cols  ← columns(p)
       icols = cols.whole.filterT[Column.SortInconclusive].toVector
-      order ← rndSortCriteria(rndSortCriteriaI(icols))
-      fdead ← rndFilterDead
+      order ← sortCriteria(sortCriteriaI(icols))
+      fdead ← filterDead
     } yield ViewSettings(cols, order, fdead)
 
 }
