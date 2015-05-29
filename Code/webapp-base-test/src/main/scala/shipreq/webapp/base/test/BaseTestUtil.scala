@@ -1,5 +1,6 @@
 package shipreq.webapp.base.test
 
+import shipreq.base.util.Must
 import shipreq.base.util.ScalaExt._
 import scalaz.Equal
 import scalaz.syntax.equal._
@@ -8,13 +9,17 @@ object BaseTestUtil extends BaseTestUtil
 
 trait BaseTestUtil {
 
+  implicit class MustExtTest[A](m: Must[A]) {
+    def unmust: A = m.fold(fail, identity)
+  }
+
   def assertEq[A: Equal](actual: A, expect: A): Unit =
-    assertEq(None, actual, expect)
+    assertEqO(None, actual, expect)
 
-  def assertEq[A: Equal](name: String, actual: A, expect: A): Unit =
-    assertEq(name.some, actual, expect)
+  def assertEq[A: Equal](name: => String, actual: A, expect: A): Unit =
+    assertEqO(name.some, actual, expect)
 
-  def assertEq[A: Equal](name: Option[String], actual: A, expect: A): Unit =
+  def assertEqO[A: Equal](name: => Option[String], actual: A, expect: A): Unit =
     if (actual ≠ expect) {
       println()
       name.foreach(n => println(s">>>>>>> $n"))
