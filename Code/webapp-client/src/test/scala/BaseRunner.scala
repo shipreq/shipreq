@@ -10,6 +10,14 @@ import scala.concurrent.Await
 import scala.util.{Failure, Success}
 import concurrent.duration._
 
+object BaseRunner {
+  val blacklist = Set(
+    " createException__p1__O (",
+    " fillInStackTrace__jl_Throwable (",
+    " init___T__jl_Throwable (",
+    " init___T (")
+}
+
 import org.scalajs.testinterface.TestUtils
 abstract class BaseRunner(val args: Array[String],
                           val remoteArgs: Array[String],
@@ -63,7 +71,12 @@ abstract class BaseRunner(val args: Array[String],
         thrown.setStackTrace(
           // thrown.getStackTrace.takeWhile(_.getClassName != "utest.framework.TestThunkTree")
           // thrown.getStackTrace.takeWhile(_.getClass.getName.startsWith("utest.") == false)
-          thrown.getStackTrace.take(5)
+        /*
+
+         */
+          thrown.getStackTrace
+            .filterNot(BaseRunner.blacklist exists _.toString.contains)
+            .take(10)
         )
         addFailure(progressString + name + "" + msg)
         addTrace(
