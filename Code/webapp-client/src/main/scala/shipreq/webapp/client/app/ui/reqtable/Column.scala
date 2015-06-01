@@ -10,6 +10,8 @@ sealed trait Column {
   // Ensure correct attribute traits are mixed in
   protected def __sortConcl: Nothing
   protected def __blankable: Nothing
+
+  def alive: Alive
 }
 object Column {
 
@@ -19,7 +21,9 @@ object Column {
   sealed trait SortInconclusive extends Column   { final protected def __sortConcl = ??? }
   sealed trait SortConclusive   extends NoBlanks { final protected def __sortConcl = ??? }
 
-  sealed trait BuiltIn extends Column
+  sealed trait BuiltIn extends Column {
+    override def alive = Alive
+  }
 
   // -------------------------------------------------------------------------------------------------------------------
 

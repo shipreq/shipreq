@@ -30,7 +30,7 @@ final class ColumnsEditor(columnName: Column.NameResolver) {
                                               label     = columnName.fn,
                                               mandatory = Column.mandatory,
                                               change    = update2,
-                                              styles    = Style.reqtable.columnsEditor)
+                                              styles    = (c: Column, o) => Style.reqtable.columnsEditor(c.alive)(o))
     ColumnsEditor.Component(p)
   }
 }

@@ -17,6 +17,7 @@ object Style extends StyleSheet.Inline {
     val validity = Domain.ofValues[Validity](Valid, Invalid)
     val enabled  = Domain.ofValues[Enabled] (Enabled, Disabled)
     val on       = Domain.ofValues[On]      (On, Off)
+    val aliveOn  = alive *** on
   }
 
   /** Drag'n'drop handle Ξ */
@@ -28,6 +29,9 @@ object Style extends StyleSheet.Inline {
 
   private val hasErrorBackground =
     backgroundColor("#fee")
+
+  private def deadColumnLabel(alive: Alive) =
+    mixinIf(alive :: Dead)(textDecoration := ^.lineThrough)
 
   // ===================================================================================================================
   object reqtable {
@@ -48,11 +52,11 @@ object Style extends StyleSheet.Inline {
       val inconclusiveSortMethod = style(
         width(28 ex))
 
-      val inconclusiveColumnName = styleF(D.on)(o => styleS(
+      val inconclusiveColumnName = styleF(D.aliveOn) { case (alive, on) => styleS(
         marginLeft(1 ex),
-        mixinIf(o :: Off)(
-          //textDecoration := ^.lineThrough,
-          color("#999"))))
+        mixinIf(on :: Off)(color("#999")),
+        deadColumnLabel(alive)
+      )}
 
       val conclusiveSortMethod = style(
         marginLeft(4 ex))
@@ -63,9 +67,10 @@ object Style extends StyleSheet.Inline {
 
     // -----------------------------------------------------------------------------------------------------------------
     val columnsEditor =
-      On.memo(on => OrderedSubsetEditor.Styles(
-        dragHnd = sortCriteriaEditor.dragHnd,
-        label   = sortCriteriaEditor.inconclusiveColumnName(on)))
+      Alive.memo(alive =>
+        On.memo(on => OrderedSubsetEditor.Styles(
+          dragHnd = sortCriteriaEditor.dragHnd,
+          label   = sortCriteriaEditor.inconclusiveColumnName(alive, on))))
 
     // -----------------------------------------------------------------------------------------------------------------
 
@@ -85,10 +90,11 @@ object Style extends StyleSheet.Inline {
       margin.horizontal(auto)
     )
 
-    val columnHeader = style(
+    val columnHeader = styleF(D.alive)(alive => styleS(
+      deadColumnLabel(alive),
       backgroundColor("#ddd".color),
       border(1 px, solid, "#777".color)
-    )
+    ))
 
     val cell = styleF[(ColumnRenderer.Status, Boolean)](ColumnRenderer.statusDomain *** Domain.boolean){
       case (status, focus) => styleS(

@@ -26,13 +26,14 @@ object OrderedSubsetEditor {
                     label   : TagMod = EmptyTag)
 
   val noStyle = new Styles()
+  val _noStyle = (_: Any, _: Any) => noStyle
 
   case class Props[A](value    : Vector[A],
                       all      : GenTraversable[A],
                       label    : A => String,
                       mandatory: A => Boolean,
                       change   : Vector[A] => IO[Unit],
-                      styles   : On => Styles = (_: On) => noStyle)
+                      styles   : (A, On) => Styles = _noStyle)
 
   def Component[A: Equal] =
     ReactComponentB[Props[A]]("OrderedSubsetEditor")
@@ -61,7 +62,7 @@ object OrderedSubsetEditor {
           else
             ^.onChange ~~> toggleIO
 
-        val style = p.styles(on)
+        val style = p.styles(a, on)
 
         <.li(outerAttr, style.row,
           draghnd(style.dragHnd),
