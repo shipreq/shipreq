@@ -63,6 +63,9 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
   def atags[M[X] <: TraversableOnce[X]: Monoidish](ids: M[ApplicableTagId]): Must[M[ApplicableTag]] =
     Must.foldMapM(ids)(atag)
 
+  def atags: Stream[ApplicableTag] =
+    tags.data.vstream(_.tag).filterT[ApplicableTag]
+
   def customField[I <: CustomFieldId, D <: CustomField](id: I)(implicit d: DataIdAux[D, I]): Must[D] =
     fields.data.customFields(id).flatMap(f =>
       Must.fromOption(d.unapplyData(f), s"$id associated with wrong type: $f"))
@@ -118,7 +121,7 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
 
   /** Keys are lowercase */
   lazy val hashRefLookupM: Map[String, HashRefTarget] = (
-      tags.data.vstream(_.tag).filterT[ApplicableTag].map(t => (t.key.value.toLowerCase, -\/(t))) append
+      atags.map(t => (t.key.value.toLowerCase, -\/(t))) append
       customIssueTypes.data.vstream(t => (t.key.value.toLowerCase, \/-(t)))
     ).toMap
 

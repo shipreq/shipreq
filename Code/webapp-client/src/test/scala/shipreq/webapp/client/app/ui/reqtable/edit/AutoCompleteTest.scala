@@ -8,11 +8,14 @@ import japgolly.scalajs.react.test._
 import org.scalajs.dom.ext.{KeyValue, KeyCode}
 import scala.scalajs.js, js.Dynamic
 import scalaz.effect.IO
+import scalaz.std.anyVal._
 import scalaz.std.string.stringInstance
+import scalaz.std.tuple.tuple2Equal
 import scalaz.std.vector.vectorEqual
 import org.scalajs.dom.document
 import org.scalajs.dom.raw.HTMLTextAreaElement
 import utest._
+
 import shipreq.base.util.MTrie.Ops
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.BaseTestUtil._
@@ -100,7 +103,18 @@ object AutoCompleteTest extends TestSuite {
 
   def testSelect(exp: String)(implicit ctx: TestCtx): Unit = {
     keydown(KeyCode.enter)
-    assertEq(quote(ctx.editor.state), quote(exp))
+    val i = exp.indexOf('|')
+    if (i < 0)
+      assertEq(quote(ctx.editor.state), quote(exp))
+    else {
+      assertEq(quote(ctx.editor.state), quote(exp.replace("|", "")))
+      testCursorPos(i)
+    }
+  }
+
+  def testCursorPos(pos: Int)(implicit ctx: TestCtx): Unit = {
+    val n = ctx.editor.getDOMNode()
+    assertEq((pos, pos), (n.selectionStart, n.selectionEnd))
   }
 
   // ===================================================================================================================
@@ -108,8 +122,6 @@ object AutoCompleteTest extends TestSuite {
   lazy val acReqItems = AutoComplete.reqItems(project, plainText)
   lazy val acReqP     = AutoComplete.req(textSearch, acReqItems, AutoComplete.WithSyntax)
   lazy val cReqP      = editor(acReqP)
-
-  // TODO Write more AutoComplete tests
 
   lazy val fakeTrie: ReqCode.Trie = {
     import shipreq.webapp.base.test.UnsafeTypes._
@@ -138,13 +150,64 @@ object AutoCompleteTest extends TestSuite {
   lazy val projectC   = (Project.reqCodes ^|-> RevAnd.data).set(ReqCodes(fakeTrie))(project)
   lazy val plainTextC = PlainText(projectC)
 
-  lazy val acReqCodePrefixes  = AutoComplete.reqCode.prefixes(fakeTrie)
-  lazy val cReqCodePrefixes   = editor(acReqCodePrefixes)
+  lazy val cReqCodePrefixes = editor(AutoComplete.reqCode.prefixes(fakeTrie))
 
-  lazy val acReqCodeRefs = AutoComplete.reqCode.ref(projectC, plainTextC)
-  lazy val cReqCodeRefs  = editor(acReqCodeRefs)
+  lazy val cReqCodeRefs  = editor(AutoComplete.reqCode.ref(projectC, plainTextC))
+
+  lazy val cIssuesWithSyntax = editor(AutoComplete.issue(project.customIssueTypes.data.values.toStream)(AutoComplete.WithSyntax))
+
+  lazy val cTagsWithSyntax = editor(AutoComplete.tag(project.atags)(AutoComplete.WithSyntax))
+  lazy val cTagsWithoutSyntax = editor(AutoComplete.tag(project.atags)(AutoComplete.WithoutSyntax))
 
   override def tests = TestSuite {
+
+    'issue {
+      implicit val ctx = TestCtx(cIssuesWithSyntax)
+      'start {
+        test("#T")("TBD", "TODO")
+        testSelect("#TBD ")
+      }
+      'mid {
+        test("#DO")("TODO")
+        testSelect("#TODO ")
+      }
+      'noSyntax {
+        test("#xxxxxxx")() // Clear previous
+        test("T")()
+      }
+    }
+
+    'tagWithSyntax {
+      implicit val ctx = TestCtx(cTagsWithSyntax)
+      'start {
+        test("#pri")("pri=high", "pri=low", "pri=med")
+        testSelect("#pri=high ")
+      }
+      'mid {
+        test("#1")("v1.0", "v1.1", "v1.2", "v1.x")
+        testSelect("#v1.0 ")
+      }
+      'noSyntax {
+        test("#xxxxxxx")() // Clear previous
+        test("pri")()
+      }
+    }
+
+    'tagWithoutSyntax {
+      implicit val ctx = TestCtx(cTagsWithoutSyntax)
+      'start {
+        test("pri")("pri=high", "pri=low", "pri=med")
+        testSelect("pri=high ")
+      }
+      'mid {
+        test("1")("v1.0", "v1.1", "v1.2", "v1.x")
+        testSelect("v1.0 ")
+      }
+      'noSyntax {
+        test("xxxxxxx")() // Clear previous
+        test("#")()
+      }
+    }
 
     'reqPrefixed {
       implicit val ctx = TestCtx(cReqP, "div div:first-child")
@@ -254,5 +317,12 @@ object AutoCompleteTest extends TestSuite {
         test("[egg.")("goat.damn.egg.crap", "goat.damn.egg.stuff")
     }
 
+    'math {
+      implicit val ctx = TestCtx(editor(AutoComplete.math))
+      test("<m")("math")
+      testSelect("<math>|</math>")
+      test("before <m|")("math")
+      testSelect("before <math>|</math>")
+    }
   }
 }

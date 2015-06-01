@@ -25,9 +25,9 @@ object AutoComplete {
   case object WithSyntax extends WithSyntax
   case object WithoutSyntax extends WithSyntax
 
-  class Syntax(val prefixRegex: String,
-               val suffixRegex: String,
-               val applySyntax: String => String) {
+  private class Syntax(val prefixRegex: String,
+                       val suffixRegex: String,
+                       val applySyntax: String => String) {
     // Util.regexEscapeAndWrap turns empty strings into (?:) which is fine
     // val acSuffix = if (suffixRegex.isEmpty) "$" else suffixRegex + "?$"
     
@@ -46,8 +46,8 @@ object AutoComplete {
           .replace(s => "$1" + replacementA(s) + replacementEnd)
     }
   }
-  
-  object Syntax {
+
+  private object Syntax {
     def apply(s: Grammar.Surrounds): Syntax = {
       val (a, b) = s.parsing.regexEscapeAndWrap
       new Syntax(a, b, s.display.apply)
@@ -60,7 +60,7 @@ object AutoComplete {
   // ===================================================================================================================
   // #ISSUE #TAG
 
-  val hashtagSyntax = Syntax.literal(Grammar.hashRefKey.prefix, "")
+  private val hashtagSyntax = Syntax.literal(Grammar.hashRefKey.prefix, "")
 
   def hashtag(legal: Stream[HashRefKey]): WithSyntax => Strategy = {
     import Grammar.{hashRefKey => G}
@@ -80,8 +80,8 @@ object AutoComplete {
 
   // ===================================================================================================================
   // [REF]
-  
-  val reflinkSyntax = Syntax(Grammar.reflinkSurround)
+
+  private val reflinkSyntax = Syntax(Grammar.reflinkSurround)
 
   def reqItems(p: Project, pt: PlainText.ForProject): Stream[ReqItem] =
     reqItems(p, pt, p.reqs.data.reqs.values.toStream)

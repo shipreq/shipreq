@@ -53,7 +53,7 @@ object RichTextEditor {
         if (supportsIssues || supportsTags)
           ac.push($.hashtag(
             legalIf(supportsIssues, p.customIssueTypes.data.values.toStream),
-            legalIf(supportsTags,   p.tags.data.vstream(_.tag).filterT[ApplicableTag]))
+            legalIf(supportsTags,   p.atags))
             (WithSyntax))
 
         if (supportsReqRefs)
