@@ -119,7 +119,7 @@ object LogicTest extends TestSuite {
       def criRev    = E.equal("cri.rev.rev = cri", revOrder.reverse, vs.order)
       def sortTwice = E.equal("sort.sort = sort", Logic.sort(vs, p, plainText)(sorted.toStream), sorted)
       def sortRev   = reverseSortOnReverseCri(sorted, revCri)
-      ((criRev ==> sortRev) ∧ sortTwice) rename "Universal sort props"
+      (criRev ∧ sortRev ∧ sortTwice) rename "Universal sort props"
     }
 
     def reverseSortOnReverseCri(origSorted: S[Row], revCri: ViewSettings): EvalL = {
@@ -272,7 +272,7 @@ object LogicTest extends TestSuite {
       C.all(None).map(individualSort).reduce(_ ∧ _)
 
     def sorting =
-      (individualSorts ==> universalSort) rename "Logic.sort"
+      (individualSorts ∧ universalSort) rename "Logic.sort"
 
     // -----------------------------------------------------------------------------------------------------------------
     def all = gather ∧ sorting
@@ -394,9 +394,16 @@ object LogicTest extends TestSuite {
 
     // -----------------------------------------------------------------------------------------------------------------
 
-    val customFieldsL = Project.fields ^|-> RevAnd.data ^|-> FieldSet.customFields
+    val fieldSetL = Project.fields ^|-> RevAnd.data
 
-    def clearCustomFields = customFieldsL.modify(_ replaceUnderlying Map.empty)
+    def modCustomFields(f: EndoFn[IMap[CustomFieldId, CustomField]]): EndoFn[Project] =
+      fieldSetL.modify { fs =>
+        val cf = f(fs.customFields)
+        FieldSet(cf, StaticField.values.whole ++ cf.values.toVector.map(_.fieldId))
+      }
+
+    def clearCustomFields =
+      modCustomFields(_ replaceUnderlying Map.empty)
 
     def testTags_sorted1(): Unit = {
       def t(ids: ApplicableTagId*) = GReq().tag(ids: _*)
@@ -412,7 +419,7 @@ object LogicTest extends TestSuite {
     def testTags_sorted2(): Unit = {
       def t(ids: ApplicableTagId*) = GReq().tag(ids: _*)
       val p       = GReq() + t(2) + t(11) + t(12) + t(11, 12, 2) + t(3, 12, 11) !! P
-      val p2      = customFieldsL.modify(_.filterK(_ == priField))(p)
+      val p2      = modCustomFields(_.filterK(_ == priField))(p)
       val pt      = PlainText(p2)
       val fmtRows = rowToTagTxt(p, Row.tags)
       testCB(p2, pt, C.Tags, fmtRows)(allSortsCB(2,

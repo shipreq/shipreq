@@ -258,10 +258,10 @@ object DataProp {
     def nonEmptyText: Prop[Text.AnyNonEmpty] = {
       val litval: AnyAtom => String =
         { case a: Literal#Literal => a.value; case _ => "" }
-      val head = ~(isBlankLine | startsWith(" ").contramap(litval))
-      val last = ~(isBlankLine | endsWith(" ").contramap(litval))
+      val head = "Doesn't start with whitespace" rename_: ~(isBlankLine | startsWith(" ").contramap(litval))
+      val last = "Doesn't end with whitespace"   rename_: ~(isBlankLine | endsWith(" ").contramap(litval))
       head.contramap[Text.AnyNonEmpty](_.head) ∧ last.contramap[Text.AnyNonEmpty](_.last)
-    }
+    }.rename("NonEmptyText")
 
     lazy val anyText: Prop[Text.AnyOptional] =
       anyAtom.forallF[Vector] ∧ nonEmptyText.forallF[Option].contramap(NonEmptyVector.option)
@@ -363,7 +363,7 @@ object DataProp {
 
     lazy val all =
       "Project" rename_: (
-        (constituents ∧ atoms) ==> (uniqueHashRefKeys ∧ validRefs)
+        constituents ∧ atoms ∧ uniqueHashRefKeys ∧ validRefs
       )
   }
 }

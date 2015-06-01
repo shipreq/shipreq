@@ -35,7 +35,7 @@ object ReqCodesTest extends TestSuite {
       E.equal("flatten = flatStream.toMap", flat, flatStream.toMap)
 
     def all = "Trie props" rename_: (
-      flattenEqualsFlatStream ∧ (put ==> createFromFlatten))
+      flattenEqualsFlatStream ∧ put ∧ createFromFlatten)
   }
 
   def gen: Gen[TrieProps] =

@@ -114,7 +114,6 @@ object AutoCompleteTest extends TestSuite {
   lazy val fakeTrie: ReqCode.Trie = {
     import shipreq.webapp.base.test.UnsafeTypes._
 
-    val tgt: ReqCode.Data = ReqCode.ActiveData(1, 1)
     val codes = Set[ReqCode.Value](
       "aaaa1", "abc", "amp", "apple", "apply",
       "abc.around.1", "abc.around.2", "abc.around.tbc", "abc.around.torn", "abc.around.now",
@@ -122,9 +121,15 @@ object AutoCompleteTest extends TestSuite {
       "baa", "bcd", "c", "cant", "eggs", "1", "2a", "2b",
       "bcd.aaaz", "shit.eggs", "goat.damn.egg.stuff", "goat.damn.egg.crap", "goat.damn.egglike"
     )
+
+    val nextId: () => ReqCodeId = {
+      var v = 0
+      () => { v += 1; v}
+    }
+    def tgt: ReqCode.Data = ReqCode.ActiveData(nextId(), 1)
     val t1 = codes.foldLeft(ReqCode.emptyTrie)((t, c) => t.put(c, tgt))
 
-    val tomb = ReqCode.Data(None, Set(2), Multimap.empty)
+    def tomb = ReqCode.Data(None, Set(nextId()), Multimap.empty)
     val tombCodes = Set[ReqCode.Value](
       "apple.dead", "ahhdead", "dead.eggs"
     )

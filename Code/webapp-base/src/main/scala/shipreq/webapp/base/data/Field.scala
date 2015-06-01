@@ -1,7 +1,7 @@
 package shipreq.webapp.base.data
 
 import monocle._
-import monocle.macros.GenLens
+import monocle.macros.Lenses
 import scalaz.{Traverse, OneAnd, Equal}
 import scalaz.Isomorphism._
 import scalaz.std.AllInstances._
@@ -293,18 +293,17 @@ object CustomField {
 // =====================================================================================================================
 // Set
 
+@Lenses
 case class FieldSet(customFields: IMap[CustomFieldId, CustomField],
                     order       : Vector[FieldId]) {
 
   lazy val fields: Must[Vector[Field]] =
     Traverse[Vector].traverseImpl(order) {
-      case  f: StaticField    => f
+      case  f: StaticField   => f
       case id: CustomFieldId => customFields(id)
     }
 }
 
 object FieldSet {
   implicit val equality: Equal[FieldSet] = deriveEqual
-
-  def customFields = GenLens[FieldSet](_.customFields)
 }

@@ -30,8 +30,8 @@ object ReqsTest extends TestSuite {
       (oneReqPerReqtypeProp rename s"$name: One req/reqType")(r).liftL
 
     def all = "PubidRegister" rename_: (
-      (allocPubidLookup ==> allocTwiceIsNoop) ∧
-      (oneReqPerReqtype("Input", register) ==> oneReqPerReqtype("After alloc", reg2))
+      allocPubidLookup ∧ allocTwiceIsNoop ∧
+      oneReqPerReqtype("Input", register) ∧ oneReqPerReqtype("After alloc", reg2)
     )
   }
 

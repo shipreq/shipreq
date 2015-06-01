@@ -517,6 +517,9 @@ object RandomData {
       case _ => false
     }
 
+    def trimBlankLines[T <: Atom.Base](as: Vector[T#Atom]): Vector[T#Atom] =
+      dropLast(dropHead(as)(isBlankLine))(isBlankLine)
+
     val legalListItemAtom: AnyAtom => Boolean = {
       case _: Literal         # Literal
          | _: ReqRef          # ReqRef
@@ -564,7 +567,7 @@ object RandomData {
 
       // Trim multiline
       val as = {
-        val v = dropLast(dropHead(as0)(isBlankLine))(isBlankLine)
+        val v = trimBlankLines(as0)
         if (v.isEmpty) v else v.init :+ fixLast(v.last)
       }
 
@@ -622,7 +625,7 @@ object RandomData {
           case _ => q :+ a
         }
       })
-      .map(fix2)
+      .map(fix2) |> trimBlankLines
     }
 
     def postProcessAtoms1[T <: Atom.Literal](t: T)(as: NonEmptyVector[T#Atom]): NonEmptyVector[T#Atom] = {
