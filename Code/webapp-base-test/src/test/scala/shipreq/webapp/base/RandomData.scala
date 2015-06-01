@@ -699,13 +699,16 @@ object RandomData {
       _  <- pubidS(id)
     } yield id
 
-  def sGenericReq(pubidS: ReqIdC => StateG[PubidRegister, PubidC]): StateG[PubidRegister, GenericReq] =
+  def sGenericReq(pubidS: ReqIdC => StateG[PubidRegister, PubidC], rtAlive: ReqTypeId => Alive): StateG[PubidRegister, GenericReq] =
     for {
       id     ← genericReqId |> gliftS[PubidRegister, GenericReqId]
       pubid  ← pubidS(id)
       desc   = Vector.empty
-      live   ← alive
-    } yield GenericReq(id, pubid, desc, live)
+      live0  ← alive
+    } yield {
+      val live = if (rtAlive(pubid.reqTypeId) :: Dead) Dead else live0
+      GenericReq(id, pubid, desc, live)
+    }
 
   def pubidRegisterAnd[A, B](inita: A, genb: StateG[PubidRegister, B])(f: (A, B) => A): GenS[(PubidRegister, A)] = {
     val init = StateT.stateT[Gen, PubidRegister, A](inita)
@@ -723,11 +726,11 @@ object RandomData {
   def pubidRegisterAndIds(customReqTypeIds: NonEmptyVector[CustomReqTypeId]): GenS[(PubidRegister, Set[ReqIdC])] =
     pubidRegisterAnd(Set.empty[ReqIdC], sGenericReqId(sAllocPubidC(customReqTypeIds)))(_ + _)
 
-  def requirements(customReqTypeIds: Vector[CustomReqTypeId]): GenS[Requirements] =
+  def requirements(customReqTypeIds: Vector[CustomReqTypeId], rtAlive: ReqTypeId => Alive): GenS[Requirements] =
     NonEmptyVector.maybe(customReqTypeIds,
       GenS(_ => Gen insert Requirements.empty))( // ← This will change when UseCases are added
       customReqTypeIdNev =>
-        pubidRegisterAnd(Requirements.emptyData, sGenericReq(sAllocPubidC(customReqTypeIdNev)))(_ + _)
+        pubidRegisterAnd(Requirements.emptyData, sGenericReq(sAllocPubidC(customReqTypeIdNev), rtAlive))(_ + _)
           .map { case (pr, reqs) => Requirements(reqs, pr) }
       )
 
@@ -950,11 +953,12 @@ object RandomData {
       cissueIds      = issues.data.keySet
       cissueIdG      = Gen oneofO cissueIds.toSeq
       reqtypes       ← customReqTypes
+      deadReqtypeIds = reqtypes.data.values.toStream.filter(_.alive :: Dead).map(_.id)
       reqTypeIdsC    = reqtypes.data.keys.toVector
       reqTypeIds     = StaticReqType.values ++ reqTypeIdsC
       reqTypeIdSet   = reqTypeIds.whole.toSet
       fields         ← revAndG(fieldSet(reqTypeIdSet, tags.data.keySet, reqtypes.data.keySet))
-      reqs1          ← requirements(reqTypeIdsC)
+      reqs1          ← requirements(reqTypeIdsC, id => Dead <~ (deadReqtypeIds contains id))
       reqIds         = reqs1.reqs.keys
       reqIdSet       = reqIds.toSet
       reqIdG         = Gen oneofO reqIds.toSeq

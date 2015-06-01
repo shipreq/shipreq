@@ -47,4 +47,7 @@ final class IMap[K: UnivEq, V] private (key: V => K, m: Map[K, V]) extends IMapB
         setmap(n)
       }
     })
+
+  def clear: This =
+    IMap.empty(key)
 }

@@ -1,6 +1,6 @@
 package shipreq.webapp.base.data
 
-import monocle.macros.GenLens
+import monocle.macros.{GenLens, Lenses}
 import scalaz.{-\/, \/-}
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{Monoidish, Must}
@@ -17,16 +17,7 @@ object RevAnd {
   def data[D] = GenLens[RevAnd[D]](_.data)
 }
 
-object Project {
-  val customIssueTypes = GenLens[Project](_.customIssueTypes)
-  val customReqTypes   = GenLens[Project](_.customReqTypes)
-  val fields           = GenLens[Project](_.fields)
-  val tags             = GenLens[Project](_.tags)
-  val reqs             = GenLens[Project](_.reqs)
-  val reqCodes         = GenLens[Project](_.reqCodes)
-  val reqFieldData     = GenLens[Project](_.reqFieldData)
-}
-
+@Lenses
 final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
                          customReqTypes  : RevAnd[CustomReqTypeIMap],
                          fields          : RevAnd[FieldSet],
@@ -35,10 +26,7 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
                          reqCodes        : RevAnd[ReqCodes],
                          reqFieldData    : RevAnd[ReqFieldData]) {
 
-  import japgolly.nyaya.{Atom => _, _}
-  this assertSatisfies DataProp.project.all
-
-  lazy val rev: Rev =
+  val rev: Rev =
     customIssueTypes.rev +
     customReqTypes  .rev +
     fields          .rev +
@@ -136,8 +124,13 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
 
   def hashRefLookup(key: String): Option[HashRefTarget] =
     hashRefLookupM.get(key.toLowerCase)
+
+  // Finally, ensure validity
+  import japgolly.nyaya._
+  this assertSatisfies DataProp.project.all
 }
 
+// =====================================================================================================================
 
 final class TagColumnDistribution(p: Project) {
   // Traversing the tag tree for used columns is better than calculating the full

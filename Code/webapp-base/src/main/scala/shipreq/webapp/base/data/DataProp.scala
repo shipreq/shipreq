@@ -306,6 +306,11 @@ object DataProp {
       ∧     implications.all.contramap[T](_.reqFieldData.data.implications)
     ) rename "constituents"
 
+    def aliveReqRequiresAliveReqType =
+      Prop.whitelist[Project]("Alive Req requires Alive ReqType")(
+        _.reqTypes.filter(_.alive :: Alive).map(_.reqTypeId).toSet,
+        _.reqs.data.reqs.values.toStream.filter(_.alive :: Alive).map(_.reqTypeId))
+
     def uniqueHashRefKeys =
       Prop.distinct[T, String]("HashRefKey", p => (
           p.customIssueTypes.data.values.toStream.map(_.key) append
@@ -361,9 +366,7 @@ object DataProp {
       ).rename("Cross-constituent refs").contramap[T](_ mapStrengthR mkRefs)
     }
 
-    lazy val all =
-      "Project" rename_: (
-        constituents ∧ atoms ∧ uniqueHashRefKeys ∧ validRefs
-      )
+    lazy val all: Prop[Project] = "Project" rename_: (
+      constituents ∧ atoms ∧ aliveReqRequiresAliveReqType ∧ uniqueHashRefKeys ∧ validRefs)
   }
 }

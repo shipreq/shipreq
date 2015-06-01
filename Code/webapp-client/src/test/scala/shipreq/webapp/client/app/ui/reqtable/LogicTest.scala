@@ -17,9 +17,8 @@ import shipreq.base.util.NonEmptyVector
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{PlainText, Text}
-import shipreq.webapp.base.test.BaseTestUtil._
-import shipreq.webapp.base.test.{SampleImplicationGraph, SampleProject, ProjectDSL, UnsafeTypes}
-import shipreq.webapp.base.util.ReqCodeTreeItem
+import shipreq.webapp.base.test._, BaseTestUtil._
+import shipreq.webapp.base.util.{Optics, ReqCodeTreeItem}
 import shipreq.webapp.client.app.ui.reqtable.{SortCriterion => SC, Column => C}
 import shipreq.webapp.client.lib.{FilterDead, ShowDead, HideDead}
 import shipreq.webapp.client.test.ClientTestSettings._
@@ -300,7 +299,8 @@ object LogicTest extends TestSuite {
   object UnitTest {
     import ProjectDSL._
     import UnsafeTypes._
-    private val P = SampleProject.project
+    private lazy val PD = SampleProject.project
+    private lazy val PA = TestOptics.customReqTypesAlive.set(Alive)(PD)
     private type Rows = Stream[Row]
 
     private def testUnsorted[A: Equal](p: Project, pt: PlainText.ForProject, c: C, fd: FilterDead, extract: Rows => A)(expect: A): Unit = {
@@ -443,7 +443,7 @@ object LogicTest extends TestSuite {
 
     def testTags_sorted1(): Unit = {
       def t(ids: ApplicableTagId*) = GReq().tag(ids: _*)
-      val p       = GReq().times(2) + t(2) + t(3) + t(11) + t(12) + t(11, 12) + t(12, 11) !! P
+      val p       = GReq().times(2) + t(2) + t(3) + t(11) + t(12) + t(11, 12) + t(12, 11) !! PA
       val p2      = clearCustomFields(p)
       val pt      = PlainText(p2)
       val fmtRows = rowToTagTxt(p, Row.tags)
@@ -454,7 +454,7 @@ object LogicTest extends TestSuite {
 
     def testTags_sorted2(): Unit = {
       def t(ids: ApplicableTagId*) = GReq().tag(ids: _*)
-      val p       = GReq() + t(2) + t(11) + t(12) + t(11, 12, 2) + t(3, 12, 11) !! P
+      val p       = GReq() + t(2) + t(11) + t(12) + t(11, 12, 2) + t(3, 12, 11) !! PA
       val p2      = modCustomFields(_.filterK(_ == priField))(p)
       val pt      = PlainText(p2)
       val fmtRows = rowToTagTxt(p, Row.tags)
@@ -466,7 +466,7 @@ object LogicTest extends TestSuite {
     /** When tags aren't being sorted by SortCriteria they should be sorted by some default. */
     def testTags_unsorted(): Unit = {
       def t(ids: ApplicableTagId*) = GReq().tag(ids: _*)
-      val p       = t(11, 12, 2, 3, 4) ! P
+      val p       = t(11, 12, 2, 3, 4) ! PA
       val p2      = clearCustomFields(p)
       val pt      = PlainText(p2)
       val fmtRows = rowToTagTxt(p, Row.tags)
@@ -475,7 +475,7 @@ object LogicTest extends TestSuite {
 
     def testCustomTagField_sorted1(): Unit = {
       def t(ids: ApplicableTagId*) = GReq(reqType = dd).tag(ids: _*)
-      val p       = GReq() + t(2) + t(3) + t(2, 3) + t(11, 12, 22, 24, 26) ! P
+      val p       = GReq() + t(2) + t(3) + t(2, 3) + t(11, 12, 22, 24, 26) ! PA
       val fmtRows = prefixWithPubid(p, rowToTagTxt(p, Row cfTag priField))
       testCB(p, PlainText(p), priField, ShowDead, fmtRows)(allSortsCB(2,
         asc  = "DD-2:pri=high  DD-4:pri=high  DD-3:pri=med  DD-4:pri=med",
@@ -484,7 +484,7 @@ object LogicTest extends TestSuite {
 
     def testCustomTagField_sorted2(): Unit = {
       def t(ids: ApplicableTagId*) = GReq(reqType = dd).tag(ids: _*)
-      val p       = GReq() + t(2) + t(2, 3) + t(3) + t(11, 12, 22, 24, 26) ! P
+      val p       = GReq() + t(2) + t(2, 3) + t(3) + t(11, 12, 22, 24, 26) ! PA
       val fmtRows = prefixWithPubid(p, rowToTagTxt(p, Row cfTag priField))
       testCB(p, PlainText(p), priField, ShowDead, fmtRows)(allSortsCB(2,
         asc  = "DD-2:pri=high  DD-3:pri=high,pri=med  DD-4:pri=med",
@@ -493,7 +493,7 @@ object LogicTest extends TestSuite {
 
     def testCustomTagField_unsorted(): Unit = {
       def t(ids: ApplicableTagId*) = GReq().tag(ids: _*)
-      val p       = GReq() + t(2) + t(3) + t(2, 3, 4) + t(11, 12, 22, 24, 26) ! P
+      val p       = GReq() + t(2) + t(3) + t(2, 3, 4) + t(11, 12, 22, 24, 26) ! PA
       val pt      = PlainText(p)
       val fmtRows = rowToTagTxt(p, Row cfTag priField)
       testUnsorted(p, pt, priField, ShowDead, fmtRows)(
@@ -502,7 +502,7 @@ object LogicTest extends TestSuite {
     }
 
     def testTitle(): Unit = {
-      val p       = GReq() + GReq("AT") + GReq("and") + GReq("haha") + GReq("F") !! P
+      val p       = GReq() + GReq("AT") + GReq("and") + GReq("haha") + GReq("F") !! PA
       val pt      = PlainText(p)
       val fmtRows = rowToStr(_.req |> pt.reqTitle, r => pt.reqCodeGroupTitle(r.reqCodeId, r.group), _.apif(_.isEmpty, _z))
       testCB(p, pt, C.Title, ShowDead, fmtRows)(allSortsCB(1,
@@ -513,7 +513,7 @@ object LogicTest extends TestSuite {
     def testImpSrc(): Unit = {
       def t(_id: GenericReqId, ids: ReqId*) = GReq(id = _id, reqType = fr).impSrc(ids: _*)
       //      FR-1   FR-2      DD-1                            FR-3         FR-4      FR-5
-      val p = t(1) + t(2, 1) + t(3, 1, 2).copy(reqType = dd) + t(4, 1, 3) + t(5, 3) + t(6, 5) ! P
+      val p = t(1) + t(2, 1) + t(3, 1, 2).copy(reqType = dd) + t(4, 1, 3) + t(5, 3) + t(6, 5) ! PA
       testCB(p, PlainText(p), C.ImplicationSrc, ShowDead, rowToSrcImpTxt(p))(allSortsCB(1,
         asc  = "DD-1>FR-3  DD-1>FR-4  FR-1>DD-1  FR-1>FR-2  FR-1>FR-3  FR-2>DD-1  FR-4>FR-5",
         desc = "FR-4>FR-5  FR-2,FR-1>DD-1  FR-1>FR-2  FR-1,DD-1>FR-3  DD-1>FR-4"))
@@ -522,7 +522,7 @@ object LogicTest extends TestSuite {
     def testImpTgt(): Unit = {
       def t(_id: GenericReqId, ids: ReqId*) = GReq(id = _id, reqType = fr).impTgt(ids: _*)
       //      FR-1   FR-2      DD-1                            FR-3         FR-4      FR-5
-      val p = t(1) + t(2, 1) + t(3, 1, 2).copy(reqType = dd) + t(4, 1, 3) + t(5, 3) + t(6, 5) ! P
+      val p = t(1) + t(2, 1) + t(3, 1, 2).copy(reqType = dd) + t(4, 1, 3) + t(5, 3) + t(6, 5) ! PA
       testCB(p, PlainText(p), C.ImplicationTgt, ShowDead, rowToTgtImpTxt(p))(allSortsCB(1,
         asc  = "DD-1<FR-3  DD-1<FR-4  FR-1<DD-1  FR-1<FR-2  FR-1<FR-3  FR-2<DD-1  FR-4<FR-5",
         desc = "FR-4<FR-5  FR-2,FR-1<DD-1  FR-1<FR-2  FR-1,DD-1<FR-3  DD-1<FR-4"))
@@ -586,7 +586,7 @@ object LogicTest extends TestSuite {
 
     def testReqType(): Unit = {
       def t(_reqTypeId: CustomReqTypeId) = GReq(reqType = _reqTypeId)
-      val p = t(co) + t(co) + t(br) + t(br) + t(mf) + t(mf) + t(fr) + t(fr) !! P
+      val p = t(co) + t(co) + t(br) + t(br) + t(mf) + t(mf) + t(fr) + t(fr) !! PA
       val fmtRows = rowToPubid(p)
       testIB(p, PlainText(p), C.ReqType, ShowDead, fmtRows)(allSortsIB(
         asc  = "BR-1  BR-2  CO-1  CO-2  FR-1  FR-2  MF-1  MF-2",
@@ -595,7 +595,7 @@ object LogicTest extends TestSuite {
 
     def testCustomTextField(): Unit = {
       def t(n: String, r: String) = GReq(reqType = dd).cftextS(notes, n).cftextS(reporter, r)
-      val p   = GReq() + t("HAHA", "zz") + t("", "f") + t("d", "") + t("Abc", "g") !! P
+      val p   = GReq() + t("HAHA", "zz") + t("", "f") + t("d", "") + t("Abc", "g") !! PA
       val pt  = PlainText(p)
       val fmt = rowToCustomText(pt, notes)
       testCB(p, pt, notes, ShowDead, fmt)(allSortsCB(2,
@@ -613,7 +613,7 @@ object LogicTest extends TestSuite {
         req("a.boo", "x.z", "y.q") +
         grp("abc")                 +
         grp("a.b.d")               +
-        req("abc.no")              !! P
+        req("abc.no")              !! PA
       val fmtRows = rowToAsToStr(_.exp.reqCodes, r => Vector1(r.reqCode))(PlainText.reqCode)
       testCB(p, PlainText(p), C.Code, ShowDead, fmtRows)(allSortsCB(2,
         asc  = "a  a.b.c  a.b.d  a.boo  abc  abc.no  x.y.z  x.z,y.q",
@@ -626,7 +626,7 @@ object LogicTest extends TestSuite {
       val p =
         GReq(reqType = mf).cftextS(desc, "MF.desc.ok" ).cftextS(notes, "MF.note.ok") +
         GReq(reqType = co).cftextS(desc, "CO.desc.NO!").cftextS(notes, "CO.note.ok") +
-        GReq(reqType = br).cftextS(desc, "BR.desc.NO!").cftextS(notes, "BR.note.NO!") !! P
+        GReq(reqType = br).cftextS(desc, "BR.desc.NO!").cftextS(notes, "BR.note.NO!") !! PA
       val pt = PlainText(p)
       val ap = Applicability(p)
       def fmt(c: CustomField.Text.Id) =
@@ -641,7 +641,7 @@ object LogicTest extends TestSuite {
 
     def testApplicabilityOfCustomTagFields(): Unit = {
       // Field 5 over 10(Status) not applicable to types 5(DD) 6(SI)
-      val p   = GReq(reqType = mf).tag(wip, defer) + GReq(reqType = si).tag(wip, defer) !! P
+      val p   = GReq(reqType = mf).tag(wip, defer) + GReq(reqType = si).tag(wip, defer) !! PA
       val pt  = PlainText(p)
       val fmt = prefixWithPubid(p, rowToTagTxt(p, Row cfTag statusField))
       testCB(p, pt, statusField, ShowDead, fmt)(allSortsCB(1, "MF-1:wip,defer", "MF-1:defer,wip"))
@@ -652,7 +652,7 @@ object LogicTest extends TestSuite {
       // Field 6 over implications of 2(MF) not applicable to types 6(SI)
       val p = GReq(id = 21, reqType = mf) + GReq(id = 22, reqType = mf) +
         GReq(id = 31, reqType = fr).impSrc(21,22) +
-        GReq(id = 61, reqType = si).impSrc(21,22) ! P
+        GReq(id = 61, reqType = si).impSrc(21,22) ! PA
       val fmt = rowToCustomImpTxt(p, mfField)
       testCB(p, PlainText(p), mfField, ShowDead, fmt)(allSortsCB(1,
         "MF-1>FR-1  MF-1>MF-1  MF-2>FR-1  MF-2>MF-2",
@@ -662,21 +662,21 @@ object LogicTest extends TestSuite {
     def testFilterDeadRows(): Unit = {
       def dead = GReq(alive = Dead)
       def alive = GReq()
-      val p = (alive + dead + alive + dead + alive).defaultReqType(mf) ! P
+      val p = (alive + dead + alive + dead + alive).defaultReqType(mf) ! PD
       val (pt, fmt) = (PlainText(p), rowToPubid(p))
       testUnsorted(p, pt, C.Pubid, ShowDead, fmt)("MF-1  MF-2  MF-3  MF-4  MF-5")
       testUnsorted(p, pt, C.Pubid, HideDead, fmt)("MF-1  MF-3  MF-5")
     }
 
     def testFilterDeadImpsSrc(): Unit = {
-      val p = (GReq(id = 1) + GReq(id = 2, alive = Dead) + GReq(id = 3).impSrc(1,2)).defaultReqType(br) ! P
+      val p = (GReq(id = 1) + GReq(id = 2, alive = Dead) + GReq(id = 3).impSrc(1,2)).defaultReqType(br) ! PD
       val (pt, c, fmt) = (PlainText(p), C.ImplicationSrc, rowToSrcImpTxt(p))
       testUnsorted(p, pt, c, ShowDead, fmt)(s"$z  $z  BR-1,BR-2>BR-3")
       testUnsorted(p, pt, c, HideDead, fmt)(s"$z  BR-1>BR-3")
     }
 
     def testFilterDeadImpsTgt(): Unit = {
-      val p = (GReq(id = 1) + GReq(id = 2, alive = Dead) + GReq(id = 3).impTgt(1,2)).defaultReqType(br) ! P
+      val p = (GReq(id = 1) + GReq(id = 2, alive = Dead) + GReq(id = 3).impTgt(1,2)).defaultReqType(br) ! PD
       val (pt, c, fmt) = (PlainText(p), C.ImplicationTgt, rowToTgtImpTxt(p))
       testUnsorted(p, pt, c, ShowDead, fmt)(s"$z  $z  BR-1,BR-2<BR-3")
       testUnsorted(p, pt, c, HideDead, fmt)(s"$z  BR-1<BR-3")
@@ -706,7 +706,7 @@ object LogicTest extends TestSuite {
         GReq(reqType = co, id = 13, alive = Dead).impSrc(3) +
         GReq(reqType = co, id = 14, alive = Dead).impSrc(4) +
         GReq(reqType = fr, id = 92).impSrc(11, 12, 13, 14)
-        ) ! P
+        ) ! PD
       val (pt, c, fmt) = (PlainText(p), mfField, rowToCustomImpTxt(p, mfField))
 
       testUnsorted(p, pt, c, ShowDead, fmt)(

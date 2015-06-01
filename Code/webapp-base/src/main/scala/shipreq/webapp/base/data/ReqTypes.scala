@@ -42,6 +42,7 @@ sealed trait ReqType {
   def oldMnemonics: Set[Mnemonic]
   def name: String
   def imp: ImplicationRequired
+  def alive: Alive
 
   def fold[A](s: StaticReqType => A, c: CustomReqType => A): A
 
@@ -55,9 +56,6 @@ sealed trait ReqType {
 object ReqType {
   final case class Mnemonic(value: String) extends TaggedString
 
-  val filterAlive: ReqType => Boolean =
-    _.fold(_ => true, _.alive ≟ Alive)
-
   def name(customReqTypes: CustomReqTypeIMap): ReqTypeId => Must[String] =
     _.foldId(s => Must.Exists(s.name), c => customReqTypes(c).map(_.name))
 }
@@ -65,6 +63,7 @@ object ReqType {
 // =====================================================================================================================
 
 sealed trait StaticReqType extends ReqType with ReqTypeId {
+  override def alive = Alive
   override final def fold  [A](s: StaticReqType => A, c: CustomReqType   => A): A = s(this)
   override final def foldId[A](s: StaticReqType => A, c: CustomReqTypeId => A): A = s(this)
 }

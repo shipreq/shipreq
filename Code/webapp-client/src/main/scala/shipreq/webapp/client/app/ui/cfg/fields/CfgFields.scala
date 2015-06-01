@@ -266,7 +266,7 @@ private[fields] object MainTable {
                                                 .filter(TagInTree.filterAlive)
                                                 .exists(t => !s.tagFieldTagIds.contains(t.id))
           case CustomFieldType.Implication => project.reqTypes
-                                                .filter(ReqType.filterAlive)
+                                                .filter(_.alive :: Alive)
                                                 .exists(r => !s.implFieldReqTypeIds.contains(r.reqTypeId))
         }
         for (t <- CustomFieldType.values.whole if allowNewCustomFieldType(t))
