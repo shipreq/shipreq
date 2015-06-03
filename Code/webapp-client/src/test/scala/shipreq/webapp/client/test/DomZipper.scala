@@ -1,19 +1,62 @@
 package shipreq.webapp.client.test
 
+import scalaz.Equal
 import org.scalajs.dom.html
 import shipreq.base.util.UnivEq.{apply => _, force => _, _}
 import shipreq.webapp.base.test.BaseTestUtil._
+import Sizzle.{DOM, Result}
+
+object DomZipper {
+  def apply(dom: Result): DomZipper =
+    apply(null, dom)
+
+  def apply(desc: String, dom: Result): DomZipper =
+    apply(desc, 1, dom, 0)
+
+  def apply(expectedCount: Int, dom: Result, selectIndex: Int): DomZipper =
+    apply(null, expectedCount, dom, selectIndex)
+
+  def apply(desc: String, expectedCount: Int, dom: Result, selectIndex: Int): DomZipper = {
+    assertCount(Option(desc) getOrElse "DomZipper.apply", expectedCount, dom)
+    val n = dom(selectIndex)
+    new DomZipper(n)
+  }
+
+  def assertCount(desc: String, expectedCount: Int, dom: Result): Unit =
+    assertEq(desc + dom.map(d => "\n" + removeReactIds(d.outerHTML).take(160)), dom.length, expectedCount)
+
+  def first(desc: String, dom: Result): DomZipper = {
+    if (dom.isEmpty)
+      fail(desc + ": empty")
+    new DomZipper(dom.head)
+  }
+
+  def removeReactIds(html: String): String =
+    html.replaceAll(""" data-reactid=".*?"""", "")
+
+  implicit val equality: Equal[DomZipper] =
+    Equal.equal((a, b) => a.get isSameNode b.get)
+}
 
 class DomZipper(root: Sizzle.DOM) {
-  import Sizzle.{DOM, Result}
+  override def toString =
+    s"DomZipper(${DomZipper removeReactIds root.outerHTML take 160})"
 
   def getAll(sel: String): Result =
     Sizzle(sel, root)
 
-  def getAll(expectCount: Int, sel: String): Result = {
+  def getAll(expectedCount: Int, sel: String): Result = {
     val r = Sizzle(sel, root)
-    assertEq(sel + r.map("\n" + _.outerHTML.take(160)), expectCount, r.length)
+    DomZipper.assertCount(sel, expectedCount, r)
     r
+  }
+
+  def option(sel: String): Option[DomZipper] = {
+    val r = Sizzle(sel, root)
+    if (r.isEmpty)
+      None
+    else
+      Some(DomZipper(sel, r))
   }
 
   def apply(cssSel: String): DomZipper =
