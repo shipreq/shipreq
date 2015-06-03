@@ -16,7 +16,7 @@ import shipreq.base.util.effect.IoUtils, IoUtils.IoExt
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
 import shipreq.webapp.client.lib.ui.{KeyHandlers, UI}
-import shipreq.webapp.client.util.Validity
+import shipreq.webapp.client.util.{Contextualise, Validity}
 
 object RichTextEditor {
 
@@ -38,7 +38,6 @@ object RichTextEditor {
     def supportsIssues  = t match { case _: Atom.Issue           => true; case _ => false }
 
     def mkAutoComplete(project: Px[Project], projectText: Px[PlainText.ForProject], textSearch: Px[TextSearch]): Px[AutoComplete] = {
-      import AutoComplete.WithSyntax
       @inline def $ = AutoComplete
       @inline def legalIf[A](guard: Boolean, s: => Stream[A]): Stream[A] =
         if (guard) s else Stream.empty
@@ -54,12 +53,12 @@ object RichTextEditor {
           ac.push($.hashtag(
             legalIf(supportsIssues, p.customIssueTypes.data.values.toStream),
             legalIf(supportsTags,   p.atags))
-            (WithSyntax))
+            (Contextualise))
 
         if (supportsReqRefs)
           ac.push(
             $.reqCode.ref(p, t),
-            $.req(s, $.reqItems(p, t), WithSyntax))
+            $.req(s, $.reqItems(p, t), Contextualise))
 
         if (supportsPTM)
           ac push $.math

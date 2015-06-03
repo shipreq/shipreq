@@ -17,73 +17,71 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{TextSearch, PlainText, Grammar}
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
 import shipreq.webapp.client.lib.ui.UI
+import shipreq.webapp.client.util.{Plain, Contextualise}
 import TC.{Query, Strategy, StrategyA, Strategies}
 
 object AutoComplete {
 
-  sealed trait WithSyntax
-  case object WithSyntax extends WithSyntax
-  case object WithoutSyntax extends WithSyntax
-
-  private class Syntax(val prefixRegex: String,
-                       val suffixRegex: String,
-                       val applySyntax: String => String) {
+  private class Context(val prefixRegex: String,
+                        val suffixRegex: String,
+                        val applyContext: String => String) {
     // Util.regexEscapeAndWrap turns empty strings into (?:) which is fine
     // val acSuffix = if (suffixRegex.isEmpty) "$" else suffixRegex + "?$"
     
     def strategy[A](mainRegex     : String,
                     searchFn      : Query[A])
                    (replacementA  : A => String,
-                    replacementEnd: String): WithSyntax => Strategy.B3[A] = {
-      case WithSyntax =>
+                    replacementEnd: String): Contextualise => Strategy.B3[A] = {
+
+      case Contextualise =>
         Strategy(s"$prefixRegex$mainRegex$suffixRegex?$$", index = 1)
           .search(searchFn)
-          .replace(s => applySyntax(replacementA(s)) + replacementEnd)
+          .replace(s => applyContext(replacementA(s)) + replacementEnd)
 
-      case WithoutSyntax =>
+      case Plain =>
         Strategy(s"(^|\\s)$prefixRegex?$mainRegex$suffixRegex?$$", index = 2)
           .search(searchFn)
           .replace(s => "$1" + replacementA(s) + replacementEnd)
     }
   }
 
-  private object Syntax {
-    def apply(s: Grammar.Surrounds): Syntax = {
+  private object Context {
+    def apply(s: Grammar.Surrounds): Context = {
       val (a, b) = s.parsing.regexEscapeAndWrap
-      new Syntax(a, b, s.display.apply)
+      new Context(a, b, s.display.apply)
     }
 
-    def literal(pre: String, suf: String): Syntax =
-      new Syntax(Util regexEscapeAndWrap pre, Util regexEscapeAndWrap suf, pre + _ + suf)
+    def literal(pre: String, suf: String): Context =
+      new Context(Util regexEscapeAndWrap pre, Util regexEscapeAndWrap suf, pre + _ + suf)
   }
 
   // ===================================================================================================================
   // #ISSUE #TAG
 
-  private val hashtagSyntax = Syntax.literal(Grammar.hashRefKey.prefix, "")
+  private val hashtagContext = Context.literal(Grammar.hashRefKey.prefix, "")
 
-  def hashtag(legal: Stream[HashRefKey]): WithSyntax => Strategy = {
+  def hashtag(legal: Stream[HashRefKey]): Contextualise => Strategy = {
     import Grammar.{hashRefKey => G}
     val mainRegex = s"(${G.firstChar.one}${G.allChars.*})"
     val searchFn  = TC.caseInsensitiveContains(legal.map(_.value).sorted)
-    hashtagSyntax.strategy(mainRegex, searchFn)(identity, " ")(_)
+    hashtagContext.strategy(mainRegex, searchFn)(identity, " ")(_)
   }
 
-  def hashtag(legalIssues: Stream[CustomIssueType], legalTags: Stream[ApplicableTag]): WithSyntax => Strategy =
+  def hashtag(legalIssues: Stream[CustomIssueType], legalTags: Stream[ApplicableTag]): Contextualise => Strategy =
     hashtag(
       legalIssues.filter(_.alive :: Alive).map(_.key) append
         legalTags.filter(_.alive :: Alive).map(_.key))
 
-  def issue(legal: Stream[CustomIssueType]): WithSyntax => Strategy =
+  def issue(legal: Stream[CustomIssueType]): Contextualise => Strategy =
     hashtag(legal, Stream.empty)
 
-  def tag(legal: Stream[ApplicableTag]): WithSyntax => Strategy =
+  def tag(legal: Stream[ApplicableTag]): Contextualise => Strategy =
     hashtag(Stream.empty, legal)
 
   // ===================================================================================================================
   // [REF]
 
-  private val reflinkSyntax = Syntax(Grammar.reflinkSurround)
+  private val reflinkContext = Context(Grammar.reflinkSurround)
 
   def reqItems(p: Project, pt: PlainText.ForProject): Stream[ReqItem] =
     reqItems(p, pt, p.reqs.data.reqs.values.toStream)
@@ -95,7 +93,7 @@ object AutoComplete {
     mustResolve(m)(Stream.empty).sortBy(_.sortKey)
   }
 
-  def req(textSearch: TextSearch, legal0: Stream[ReqItem], withSyntax: WithSyntax): StrategyA[ReqItem] = {
+  def req(textSearch: TextSearch, legal0: Stream[ReqItem], Contextualise: Contextualise): StrategyA[ReqItem] = {
     val legal = legal0.filter(_.req.alive :: Alive)
 
     val searchTitles =
@@ -117,7 +115,7 @@ object AutoComplete {
           <.div(d, i.title))
       ))
 
-    reflinkSyntax.strategy(s"(\\S+?)", searchFn)(_.pubidStr, " ")(withSyntax)
+    reflinkContext.strategy(s"(\\S+?)", searchFn)(_.pubidStr, " ")(Contextualise)
       .template(i => React.renderToStaticMarkup(li(i)))
   }
 
@@ -148,8 +146,8 @@ object AutoComplete {
      * Useful for ReqCode editing.
      */
     def prefixes(trie: Trie): Strategies = {
-      @inline def withSyntax = WithoutSyntax
-  
+      @inline def contextualise = Plain
+
       // Example: abc & abc.def
       def completeFromStart(trie: Trie): Strategy = {
         val mainRegex = s"($node($sep$node)*$sep?)"
@@ -180,7 +178,7 @@ object AutoComplete {
         def replace(r: A) =
           (r._1.map(_.value) :+ r._2).mkString(G.nodeSeparator.toString)
   
-        reflinkSyntax.strategy(mainRegex, searchFn)(replace, "")(withSyntax)
+        reflinkContext.strategy(mainRegex, searchFn)(replace, "")(contextualise)
           .template(_._2)
       }
   
@@ -209,7 +207,7 @@ object AutoComplete {
             .map(PlainText.reqCode)
             .sorted
   
-        reflinkSyntax.strategy(mainRegex, searchFn)(identity, "")(withSyntax)
+        reflinkContext.strategy(mainRegex, searchFn)(identity, "")(contextualise)
       }
   
       Strategies(
@@ -278,7 +276,7 @@ object AutoComplete {
         }
       }
 
-      reflinkSyntax.strategy(mainRegex, searchFn)(_._1, " ")(WithSyntax)
+      reflinkContext.strategy(mainRegex, searchFn)(_._1, " ")(Contextualise)
         .template(i => React.renderToStaticMarkup(li(i)))
     }
 

@@ -13,6 +13,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar, PlainText, TextSearch}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.client.app.ui.TextSeqEditor, TextSeqEditor._
+import shipreq.webapp.client.util.Plain
 
 // TODO Hide dead reqs & maintain across edits (unless show deleted is on)
 // TODO ImplicationEditor needs validation
@@ -78,7 +79,7 @@ object ImplicationEditor {
         l <- lookup
         s <- textSearch
       } yield ReusableVal.byRef(
-        AutoComplete.req(s, l.legal, AutoComplete.WithoutSyntax))
+        AutoComplete.req(s, l.legal, Plain))
 
     val parser: Parser[A] = () => {
       val l = lookup.value()

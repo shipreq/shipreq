@@ -22,6 +22,7 @@ import shipreq.webapp.base.test._, BaseTestUtil._
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.client.lib.ui.UI
 import shipreq.webapp.client.test.{PrepareEnv, Sizzle}
+import shipreq.webapp.client.util.{Plain, Contextualise}
 import SampleProject3._
 
 object AutoCompleteTest extends TestSuite {
@@ -120,17 +121,16 @@ object AutoCompleteTest extends TestSuite {
   // ===================================================================================================================
 
   lazy val acReqItems = AutoComplete.reqItems(project, plainText)
-  lazy val acReqP     = AutoComplete.req(textSearch, acReqItems, AutoComplete.WithSyntax)
-  lazy val cReqP      = editor(acReqP)
+  lazy val acReqC     = AutoComplete.req(textSearch, acReqItems, Contextualise)
+  lazy val cReqC      = editor(acReqC)
 
   lazy val cReqCodePrefixes = editor(AutoComplete.reqCode.prefixes(fakeTrie))
+  lazy val cReqCodeRefs     = editor(AutoComplete.reqCode.ref(project2, plainText2))
 
-  lazy val cReqCodeRefs  = editor(AutoComplete.reqCode.ref(projectC, plainTextC))
+  lazy val cIssuesC = editor(AutoComplete.issue(project.customIssueTypes.data.values.toStream)(Contextualise))
 
-  lazy val cIssuesWithSyntax = editor(AutoComplete.issue(project.customIssueTypes.data.values.toStream)(AutoComplete.WithSyntax))
-
-  lazy val cTagsWithSyntax = editor(AutoComplete.tag(project.atags)(AutoComplete.WithSyntax))
-  lazy val cTagsWithoutSyntax = editor(AutoComplete.tag(project.atags)(AutoComplete.WithoutSyntax))
+  lazy val cTagsC = editor(AutoComplete.tag(project.atags)(Contextualise))
+  lazy val cTagsP = editor(AutoComplete.tag(project.atags)(Plain))
 
   // ReqCode data - uses SampleProject2
 
@@ -158,17 +158,17 @@ object AutoCompleteTest extends TestSuite {
     )
     tombCodes.foldLeft(t1)((t, c) => t.put(c, tomb))
   }
-  lazy val projectC = {
+  lazy val project2 = {
     import ProjectDSL._, UnsafeTypes._
     val p = (Project.reqCodes ^|-> RevAnd.data).set(ReqCodes(fakeTrie))(SampleProject2.project)
     (DeadReqCode("dead.ref", target = 1, id = 90) + DeadReqCode("dead.group", id = 91)) ! p
   }
-  lazy val plainTextC = PlainText(projectC)
+  lazy val plainText2 = PlainText(project2)
 
   override def tests = TestSuite {
 
     'issue {
-      implicit val ctx = TestCtx(cIssuesWithSyntax)
+      implicit val ctx = TestCtx(cIssuesC)
       test("#xxxxxxx")() // Clear previous
 
       'start {
@@ -185,8 +185,8 @@ object AutoCompleteTest extends TestSuite {
         test("#D")("TBD", "TODO") // PENDING is dead
     }
 
-    'tagWithSyntax {
-      implicit val ctx = TestCtx(cTagsWithSyntax)
+    'tagC {
+      implicit val ctx = TestCtx(cTagsC)
       test("#xxxxxxx")() // Clear previous
 
       'start {
@@ -203,8 +203,8 @@ object AutoCompleteTest extends TestSuite {
         test("#x")("v1.x", "v2.x") // v3.x is dead
     }
 
-    'tagWithoutSyntax {
-      implicit val ctx = TestCtx(cTagsWithoutSyntax)
+    'tagP {
+      implicit val ctx = TestCtx(cTagsP)
       test("xxxxxxx")() // Clear previous
 
       'start {
@@ -223,8 +223,8 @@ object AutoCompleteTest extends TestSuite {
         test("#x")("v1.x", "v2.x") // v3.x is dead
     }
 
-    'reqPrefixed {
-      implicit val ctx = TestCtx(cReqP, "div div:first-child")
+    'reqC {
+      implicit val ctx = TestCtx(cReqC, "div div:first-child")
 
       def testMF(input: String)(exp: Int*): Unit =
         test(input)(exp.map("MF-" + _): _*)

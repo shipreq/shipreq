@@ -8,12 +8,13 @@ import scalajs.js.{undefined, UndefOr}
 import shipreq.webapp.base.UiText
 import shipreq.base.util.{NonEmptyVector, Must, UnivEq}
 import shipreq.base.util.SafeStringOps._
+import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar => G, _}
 import shipreq.webapp.base.util.ReqCodeTreeItem
 import shipreq.webapp.client.app.ui.Style.{widgets => *}
 import shipreq.webapp.client.lib.ui.UI
-import shipreq.webapp.client.util.KaTeX
+import shipreq.webapp.client.util.{Plain, Contextualise, KaTeX}
 
 object ProjectWidgets {
   def apply(project: Project, plainText: PlainText.ForProject) =
@@ -64,7 +65,7 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
       <.span(*.pubidColumnValue(req.alive), txt)
   )
 
-  private def _reqRef(f: String => String): ReqId => Must[ReactElement] = id =>
+  private def _reqRef(f: EndoFn[String]): ReqId => Must[ReactElement] = id =>
     for {
       req <- project.reqs.data.reqM(id)
       rt  <- project.reqType(req.pubid.reqTypeId)
@@ -74,13 +75,16 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
         ^.title := plainText.reqTitle(req),
         f(PlainText.pubid(rt, req.pubid.pos)))
 
-  val reqRef: Boolean => ReqId => Widget = {
-    val wo = memoM[ReqId]("Req", _reqRef(identity))
-    val w  = memoM[ReqId]("Req", _reqRef(G.reflinkSurround))
-    (surround: Boolean) => if (surround) w else wo
-  }
+  val reqRef: Contextualise => ReqId => Widget =
+    Contextualise.memo { c =>
+      val f: EndoFn[String] = c match {
+        case Contextualise => G.reflinkSurround
+        case Plain         => identity
+      }
+      memoM[ReqId]("Req", _reqRef(f))
+    }
 
-  private val reqRefS = reqRef(true)
+  private val reqRefC = reqRef(Contextualise)
 
   private val listSep: TagMod = ", "
 
@@ -89,19 +93,20 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
       NonEmptyVector.option(as)
         .map(_.intercalateF(listSep)(f).whole))
 
-  def reqRefList(surround: Boolean, reqs: Vector[ReqId]): ReactElement = {
-    val f = reqRef(surround)
+  def reqRefList(c: Contextualise, reqs: Vector[ReqId]): ReactElement = {
+    val f = reqRef(c)
     list(reqs)(f(_)())
   }
 
-  def pubidRef(surround: Boolean): Pubid => ReactElement = {
-    val f = reqRef(surround)
+  def pubidRef(c: Contextualise): Pubid => ReactElement = {
+    val f = reqRef(c)
     pubid => UI.must[ReqId, ReactElement](project.reqs.data.reqIdByPubidM(pubid))(f(_)())
   }
 
-  def pubidRefList(surround: Boolean, ids: Vector[Pubid]): ReactElement =
-    list(ids)(pubidRef(surround)(_))
+  def pubidRefList(c: Contextualise, ids: Vector[Pubid]): ReactElement =
+    list(ids)(pubidRef(c)(_))
 
+  /** Contextualised */
   val codeRef = memoM[ReqCodeId]("CodeRef", id => {
     import Must.Auto._
     import ProjectText.ReqCodeResolution._
@@ -124,7 +129,7 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
       case ActiveCode(c, g: ReqCodeGroup) => toGroup(c, g)
       case DeadGroup(c)                   => ref(c, *.groupRef(Dead), undefined)
       case ReqWithAltCode(c, r)           => toRef(c, r)
-      case ReqWithoutCodes(r)             => reqRefS(r)()
+      case ReqWithoutCodes(r)             => reqRefC(r)()
     }
   })
 
@@ -165,7 +170,7 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
       case a: PlainTextMarkup # EmailAddress  => <.a(^.href := "mailto:" ~ a.value, a.value)
       case a: PlainTextMarkup # MathTeX       => katex(a)
       case a: ListMarkup      # UnorderedList => <.ul(*.ul, a.items.whole.map(row => <.li(row map atom: _*)))
-      case a: ReqRef          # ReqRef        => reqRefS(a.value)()
+      case a: ReqRef          # ReqRef        => reqRefC(a.value)()
       case a: ReqRef          # CodeRef       => codeRef(a.value)()
       case a: Issue           # Issue         => issueO(a.typ, a.desc)
     }

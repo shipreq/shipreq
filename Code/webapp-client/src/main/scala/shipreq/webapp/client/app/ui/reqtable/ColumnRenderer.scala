@@ -2,12 +2,12 @@ package shipreq.webapp.client.app.ui.reqtable
 
 import monocle.Optional
 import scalacss.ScalaCssReact._
-import scalacss.{Domain, StyleA}
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
-import shipreq.base.util.ScalaExt._
+import scalacss.Domain
+import japgolly.scalajs.react._, vdom.prefix_<^._
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.app.ui.ProjectWidgets
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
+import shipreq.webapp.client.util.Plain
 import ColumnRenderer._
 
 final class ColumnRenderer(
@@ -102,7 +102,7 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
   }
 
   private def imps(lens: Optional[Row, Vector[Pubid]]) = make {
-    case r: GenericReqRow   => maybeEmpty(lens, r)(widgets.pubidRefList(false, _))
+    case r: GenericReqRow   => maybeEmpty(lens, r)(widgets.pubidRefList(Plain, _))
     case _: ReqCodeGroupRow => `N/A`
   }
 
