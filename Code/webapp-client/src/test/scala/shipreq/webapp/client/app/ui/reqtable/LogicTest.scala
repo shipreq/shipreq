@@ -346,11 +346,11 @@ object LogicTest extends TestSuite {
     private val sep = "  "
     private val z   = "∅"
     private val _z  = (_: Any) => z
-    private val List(co, mf, fr, br, dd, si) = List[CustomReqTypeId           ](1, 2, 3, 4, 5, 6)
-    private val List(desc, notes, reporter)  = List[CustomField.Text.Id       ](1, 2, 3)
-    private val List(priField, statusField)  = List[CustomField.Tag.Id        ](4, 5)
-    private val List(wip, defer)             = List[ApplicableTagId           ](11, 12)
-    private val List(mfField)                = List[CustomField.Implication.Id](6)
+    private val List(co, mf, fr, br, dd, si)          = List[CustomReqTypeId           ](1, 2, 3, 4, 5, 6)
+    private val List(desc, notes, reporter)           = List[CustomField.Text.Id       ](1, 2, 3)
+    private val List(priField, statusField, verField) = List[CustomField.Tag.Id        ](4, 5, 20)
+    private val List(wip, defer, uat, v1x, v3x)       = List[ApplicableTagId           ](11, 12, 13, 21, 26)
+    private val List(mfField)                         = List[CustomField.Implication.Id](6)
 
     private def rowToStr(f: GenericReqRow => String, g: ReqCodeGroupRow => String): Row => String =
       rowToStr(f, g, identity)
@@ -740,6 +740,25 @@ object LogicTest extends TestSuite {
         """.stripMargin.replace("\n", sep).trim)
     }
 
+    def testFilterDeadTags(): Unit = {
+      val p       = GReq(reqType = fr).tag(v1x, v3x) ! PD
+      val pt      = PlainText(p)
+      val fmtRows = rowToTagTxt(p, Row.tags)
+      testUnsorted(p, pt, C.Tags, ShowDead, fmtRows)("v1.x,v3.x")
+      testUnsorted(p, pt, C.Tags, HideDead, fmtRows)("v1.x")
+    }
+
+    def testFilterDeadTagsInCustomTagField(): Unit = {
+      val p        = GReq(reqType = fr).tag(wip, uat, v1x) ! PD
+      val pt       = PlainText(p)
+      val fmtRowsC = rowToTagTxt(p, Row cfTag statusField)
+      val fmtRowsT = rowToTagTxt(p, Row.tags)
+      testUnsorted(p, pt, statusField, ShowDead, fmtRowsC)("wip,uat")
+      testUnsorted(p, pt, statusField, HideDead, fmtRowsC)("wip")
+      testUnsorted(p, pt, C.Tags, ShowDead, fmtRowsT)("v1.x")
+      testUnsorted(p, pt, C.Tags, HideDead, fmtRowsT)("v1.x")
+    }
+
     def testReqCodeTree(): Unit = {
       val src =
         """
@@ -883,10 +902,12 @@ object LogicTest extends TestSuite {
         'custImp - testApplicabilityOfCustomImpFields()
       }
       'filterDead {
-        'rows    - testFilterDeadRows()
-        'impSrc  - testFilterDeadImpsSrc()
-        'impTgt  - testFilterDeadImpsTgt()
-        'impCust - testFilterDeadCustomImps()
+        'rows     - testFilterDeadRows()
+        'impSrc   - testFilterDeadImpsSrc()
+        'impTgt   - testFilterDeadImpsTgt()
+        'impCust  - testFilterDeadCustomImps()
+        'tags     - testFilterDeadTags()
+        'tagsCust - testFilterDeadTagsInCustomTagField()
       }
       'reqCodeTree - testReqCodeTree()
     }
