@@ -28,7 +28,9 @@ object ReqTypeSelector {
             fields  : Px[Set[A]],
             setState: Option[Cell.State] => IO[Unit]): Cell.State = {
 
-    val fieldsN = fields.map(NonEmptySet(initial, _))
+    val fieldsN = fields
+      .map(_.filter(_.alive :: Alive))
+      .map(NonEmptySet(initial, _))
 
     val abort: IO[Unit] =
       setState(None)
