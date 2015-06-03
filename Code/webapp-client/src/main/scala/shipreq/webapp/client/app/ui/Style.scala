@@ -168,7 +168,9 @@ object Style extends StyleSheet.Inline {
       hasErrorBackground
     )
 
-    private val hoverShowsInfo = cursor.help
+    private val hoverShowsInfo = mixin(
+      display.inlineBlock,
+      cursor.help)
 
     private val deadMixin = mixin(
       textDecoration := ^.lineThrough)
@@ -202,7 +204,9 @@ object Style extends StyleSheet.Inline {
       addClassName(s"label label-${tagLabelSuffix(a)}"),
       hoverShowsInfo))
 
-    // marginRight(1 ex)
+    val reqType = styleF(D.alive)(a => styleS(
+      hoverShowsInfo,
+      mixinIf(a :: Dead)(deadAndNotError)))
 
     val issue = style(hasError)
 
@@ -210,7 +214,6 @@ object Style extends StyleSheet.Inline {
       padding.horizontal(0.7 ex))
 
     val reqRef = styleF(D.`alive * validity`){ case (a, v) => styleS(
-      display.inlineBlock,
       mixinIf(a :: Alive)(color("#2363A1")),
       mixinIf(a :: Dead)(deadMaybeValid(v)),
       hoverShowsInfo

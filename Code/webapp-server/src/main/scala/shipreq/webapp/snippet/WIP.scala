@@ -87,6 +87,7 @@ class WIP {
     val frs = (0 to 10).toVector.map(i => GenericReqId(i + 1000))
     val mfs = (0 to 28).toVector.map(i => GenericReqId(i + 1100))
     val cos = (0 to 10).toVector.map(i => GenericReqId(i + 1200))
+    val sis = (0 to 10).toVector.map(i => GenericReqId(i + 1300))
 
     def fr1Desc = {
       import T.GenericReqTitle._
@@ -141,6 +142,8 @@ class WIP {
 
     + GReq(reqType = co, id = cos(1), alive = Dead, title = "Search entities!").impSrc(mfs(28), mfs(25))
     + GReq(reqType = co, id = cos(2), alive = Dead, title = "Entity-search should consider low-level reqs").impSrc(cos(1), frs(1))
+
+    + GReq(reqType = si, id = sis(1), alive = Dead, title = "Just use excel!").impSrc(mfs(12))
     )
 
     contentByDsl ! project

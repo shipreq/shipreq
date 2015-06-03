@@ -150,6 +150,7 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
   val reqType = memoM[ReqTypeId](id =>
     project.reqType(id).map(rt =>
       <.span(
+        *.reqType(rt.alive),
         ^.title := rt.name,
         rt.mnemonic.value)
     ))
