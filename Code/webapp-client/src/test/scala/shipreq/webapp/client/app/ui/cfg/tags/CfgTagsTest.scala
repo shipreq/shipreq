@@ -108,7 +108,7 @@ object CfgTagsTest extends TestSuite {
         val rels = D.existingChildrenRels(s, t.u, subj)
         assertEq(rels.map(_.name).toList, List("v1.0", "v1.1"))
         // Remove child 'v1.0' from 'Released'
-        testUnlink(subj, rels, "v1.0")(PovRelations(Map(20.TG -> 21.AT), Vector(23.AT)))
+        testUnlink(subj, rels, "v1.0")(PovRelations(Map(20.TG -> 21.AT), Vector(28.AT, 23.AT)))
       }
     }
   }

@@ -37,7 +37,8 @@ object SampleProject {
     TagInTree(ApplicableTag(24, "v1.2",           None, "v1.2",            Alive), Vector()),
     TagInTree(ApplicableTag(25, "v2.x",           None, "v2.x",            Alive), Vector()),
     TagInTree(ApplicableTag(26, "v3.x",           None, "v3.x",            Dead ), Vector()),
-    TagInTree(TagGroup     (27, "Released",       None, MutexChildren.Not, Alive), Vector(22.AT, 23.AT)),
+    TagInTree(TagGroup     (27, "Released",       None, MutexChildren.Not, Alive), Vector(28.AT, 22.AT, 23.AT)),
+    TagInTree(ApplicableTag(28, "v0.9",           None, "v0.9",            Dead ), Vector()),
     TagInTree(ApplicableTag(4, "Low Priority", Some("Nice to have. Stuff that probably won't be implemented."), "pri=low", Alive), Vector()))
 
   lazy val fields = {

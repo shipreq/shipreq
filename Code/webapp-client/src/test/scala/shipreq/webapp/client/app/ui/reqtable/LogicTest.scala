@@ -303,8 +303,11 @@ object LogicTest extends TestSuite {
     private lazy val PA = TestOptics.customReqTypesAlive.set(Alive)(PD)
     private type Rows = Stream[Row]
 
-    private def testUnsorted[A: Equal](p: Project, pt: PlainText.ForProject, c: C, fd: FilterDead, extract: Rows => A)(expect: A): Unit = {
-      val vs = ViewSettings(NonEmptyVector(c), SortCriteria.default.copy(init = Vector.empty), fd)
+    private def testUnsorted[A: Equal](p: Project, pt: PlainText.ForProject, c: C, fd: FilterDead, extract: Rows => A)(expect: A): Unit =
+      testUnsorted2(p, pt, NonEmptyVector one c, fd, extract)(expect)
+
+    private def testUnsorted2[A: Equal](p: Project, pt: PlainText.ForProject, cs: NonEmptyVector[C], fd: FilterDead, extract: Rows => A)(expect: A): Unit = {
+      val vs = ViewSettings(cs, SortCriteria.default.copy(init = Vector.empty), fd)
       val r = Logic.gather(vs, p) |> Logic.sort(vs, p, pt) |> Logic.consolidateAdjacentDups
       assertEq(extract(r), expect)
     }
@@ -346,11 +349,11 @@ object LogicTest extends TestSuite {
     private val sep = "  "
     private val z   = "∅"
     private val _z  = (_: Any) => z
-    private val List(co, mf, fr, br, dd, si)          = List[CustomReqTypeId           ](1, 2, 3, 4, 5, 6)
-    private val List(desc, notes, reporter)           = List[CustomField.Text.Id       ](1, 2, 3)
-    private val List(priField, statusField, verField) = List[CustomField.Tag.Id        ](4, 5, 20)
-    private val List(wip, defer, uat, v1x, v3x)       = List[ApplicableTagId           ](11, 12, 13, 21, 26)
-    private val List(mfField)                         = List[CustomField.Implication.Id](6)
+    private val List(co, mf, fr, br, dd, si)                        = List[CustomReqTypeId           ](1, 2, 3, 4, 5, 6)
+    private val List(desc, notes, reporter)                         = List[CustomField.Text.Id       ](1, 2, 3)
+    private val List(priField, statusField, verField, relField)     = List[CustomField.Tag.Id        ](4, 5, 20, 7)
+    private val List(wip, defer, uat, v09, v10, v11, v1x, v2x, v3x) = List[ApplicableTagId           ](11, 12, 13, 28, 22, 23, 21, 25, 26)
+    private val List(mfField)                                       = List[CustomField.Implication.Id](6)
 
     private def rowToStr(f: GenericReqRow => String, g: ReqCodeGroupRow => String): Row => String =
       rowToStr(f, g, identity)
@@ -426,7 +429,7 @@ object LogicTest extends TestSuite {
       _ map f mkString sep
 
     implicit private def customFieldToColumn(id: CustomFieldId) =
-      C.CustomField(id, Alive)
+      C.CustomField(id, if (id == relField) Dead else Alive)
 
     // -----------------------------------------------------------------------------------------------------------------
 
@@ -759,6 +762,21 @@ object LogicTest extends TestSuite {
       testUnsorted(p, pt, C.Tags, HideDead, fmtRowsT)("v1.x")
     }
 
+    def testFilterDeadCustomTagField() = {
+      val p        = GReq(reqType = fr).tag(v09, v10, v2x) ! PD
+      val pt       = PlainText(p)
+      val fmtRowsC = rowToTagTxt(p, Row cfTag relField)
+      val fmtRowsT = rowToTagTxt(p, Row.tags)
+      // dead-customfield visible
+      val both = NonEmptyVector[C](C.Tags, relField)
+      testUnsorted(p, pt, relField, ShowDead, fmtRowsC)("v0.9,v1.0")
+      testUnsorted2(p, pt, both,    ShowDead, fmtRowsC)("v0.9,v1.0")
+      testUnsorted2(p, pt, both,    ShowDead, fmtRowsT)("v2.x")
+      // dead-customfield not visible
+      testUnsorted(p, pt, C.Tags, HideDead, fmtRowsT)("v1.0,v2.x")
+      testUnsorted(p, pt, C.Tags, ShowDead, fmtRowsT)("v0.9,v1.0,v2.x")
+    }
+
     def testReqCodeTree(): Unit = {
       val src =
         """
@@ -908,6 +926,7 @@ object LogicTest extends TestSuite {
         'impCust  - testFilterDeadCustomImps()
         'tags     - testFilterDeadTags()
         'tagsCust - testFilterDeadTagsInCustomTagField()
+        'tagField - testFilterDeadCustomTagField()
       }
       'reqCodeTree - testReqCodeTree()
     }

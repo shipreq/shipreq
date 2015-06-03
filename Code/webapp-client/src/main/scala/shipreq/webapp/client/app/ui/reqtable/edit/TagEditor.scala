@@ -9,7 +9,7 @@ import shipreq.base.util.effect.IoUtils, IoUtils.IoExt
 import shipreq.base.util.{Must, UnivEq}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Grammar
-import shipreq.webapp.base.UiText
+import shipreq.webapp.base.{TagColumnDistribution, UiText}
 import shipreq.webapp.client.app.ui.TextSeqEditor, TextSeqEditor._
 import shipreq.webapp.client.util.Plain
 
@@ -22,13 +22,13 @@ object TagEditor {
   val editor = textSetEditor[ApplicableTagId]("TagEditor", Grammar.hashRefKey.seqFormat.apply)
 
   def lookupForNoCol(p: Project): Must[Lookup] =
-    lookupG(p, _.tagsNotUsedInColumns)
+    lookupG(p, _.tags.notUsedInColumns)
 
   def lookupForCol(p: Project, f: CustomField.Tag.Id): Must[Lookup] =
-    lookupG(p, _.tagsForColumn(f))
+    lookupG(p, _.tags inColumn f)
 
-  def lookupG(p: Project, f: TagColumnDistribution => Must[Set[ApplicableTag]]): Must[Lookup] =
-    f(p.tagColumnDistribution).map(
+  def lookupG(p: Project, f: TagColumnDistribution.TagIds => Must[Set[ApplicableTag]]): Must[Lookup] =
+    f(p.aliveTagColumnDistribution).map(
       _.toStream
       .map(_.mapStrengthL(_.key.value))
       .toMap

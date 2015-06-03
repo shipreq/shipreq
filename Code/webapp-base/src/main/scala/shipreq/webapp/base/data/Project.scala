@@ -4,8 +4,7 @@ import monocle.macros.{GenLens, Lenses}
 import scalaz.{-\/, \/-}
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{Monoidish, Must}
-import shipreq.base.util.UnivEq.{immutableHashMapMemo => memo}
-import shipreq.webapp.base.TransitiveClosure
+import shipreq.webapp.base.{TagColumnDistribution, TransitiveClosure}
 import shipreq.webapp.base.text.{Atom, Text}
 import shipreq.webapp.base.util.ShowSize
 import DataImplicits._
@@ -74,10 +73,10 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
     Must.fromOption(customIssueTypes.data.get(id), s"No CustomIssueType found with $id")
 
   lazy val customTagFields =
-    fields.data.customFields.keys.filterT[CustomField.Tag.Id]
+    fields.data.customFields.values.filterT[CustomField.Tag]
 
   lazy val customTextFields =
-    fields.data.customFields.keys.filterT[CustomField.Text.Id]
+    fields.data.customFields.values.filterT[CustomField.Text]
 
   def reqType(i: ReqTypeId): Must[ReqType] =
     i.foldId[Must[ReqType]](Must.apply, customReqTypes.data.apply)
@@ -95,7 +94,8 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
   lazy val reqTypesByMnemonic: Map[ReqType.Mnemonic, ReqType] =
     reqTypes.flatMap(t => t.allMnemonics.toStream.map((_, t))).toMap
 
-  lazy val tagColumnDistribution = new TagColumnDistribution(this)
+  lazy val aliveTagColumnDistribution =
+    TagColumnDistribution(this, _.alive :: Alive)
 
   /**
    * Transitive closure of implications going source → target.
@@ -131,42 +131,4 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
   // Finally, ensure validity
   import japgolly.nyaya._
   this assertSatisfies DataProp.project.all
-}
-
-// =====================================================================================================================
-
-final class TagColumnDistribution(p: Project) {
-  // Traversing the tag tree for used columns is better than calculating the full
-  // transitive closure at O(V²) space and O(V²+VE) time.
-  private[this] implicit val tagTree = p.tags.data
-
-  type TagIds = Must[Set[ApplicableTagId]]
-
-  val tagIdsForColumn: CustomField.Tag.Id => TagIds =
-    memo(fid =>
-      p.customField(fid).flatMap(field =>
-        tagTree(field.tagId)
-          .flatMap(_.transitiveChildren)
-          .map(_.filterT[ApplicableTagId].toSet)))
-
-  lazy val tagIdsUsedInColumns: TagIds =
-    Must.foldMapMF(p.customTagFields)(tagIdsForColumn)
-
-  lazy val tagIdsNotUsedInColumns: TagIds =
-    tagIdsUsedInColumns.map(s =>
-      tagTree.vstream(_.tag.id)
-        .filterT[ApplicableTagId]
-        .filterNot(s.contains)
-        .toSet)
-
-  type Tags = Must[Set[ApplicableTag]]
-
-  val tagsForColumn: CustomField.Tag.Id => Tags =
-    tagIdsForColumn(_) flatMap p.atags[Set]
-
-  lazy val tagsUsedInColumns: Tags =
-    tagIdsUsedInColumns flatMap p.atags[Set]
-
-  lazy val tagsNotUsedInColumns: Tags =
-    tagIdsNotUsedInColumns flatMap p.atags[Set]
 }

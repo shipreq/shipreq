@@ -167,7 +167,7 @@ final class TextSearch(project: Project,  plainText: PlainText.ForProject) {
         val title = norm(plainText.reqTitle(r))
         val textFields = Need(norm(
           project.customTextFields.foldLeft("")((q, f) =>
-            plainText.customTextField(f)(r.id).fold(q)(q + "\n" + _))
+            plainText.customTextField(f.id)(r.id).fold(q)(q + "\n" + _))
         ))
         IndexEntry(r, title, textFields)
       }

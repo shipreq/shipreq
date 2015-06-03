@@ -112,7 +112,7 @@ object TagProtocolTest extends TestSuite {
         // Parents and children
         "27" - assertEq(PovRelations.derive(27.TG, S.tagTree), PovRelations(
           parents = Map(20.TG -> 21.AT),
-          children = Vector(22.AT, 23.AT)))
+          children = Vector(28.AT, 22.AT, 23.AT)))
       }
     }
 
