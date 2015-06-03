@@ -67,13 +67,6 @@ trait ActionTester {
     def unless(f: S => Boolean): Action[Unit] =
       when(!f(_))
 
-    def test(f: Result[A] => Unit): Action[A] =
-      newAction { s =>
-        val r = action(s)
-        f(r)
-        r
-      }
-
     def times(n: Int): Action[A] =
       if (n > 1)
         Vector.fill(n)(this).reduce(_ =>> _)
@@ -82,23 +75,44 @@ trait ActionTester {
       else
         throw new java.lang.IllegalArgumentException(s"n ($n) must be ≥ 1.")
 
-    def testBefore(f: A => Unit) = test(r => f(r.before))
-    def testAfter (f: A => Unit) = test(r => f(r.after))
+    def withResult(f: Result[A] => Unit): Action[A] =
+      newAction { s =>
+        val r = action(s)
+        f(r)
+        r
+      }
 
-    def assertBefore[B >: A : Equal](expect: B): Action[A] = testBefore(assertEq("Before action", _, expect))
-    def assertAfter [B >: A : Equal](expect: B): Action[A] = testAfter (assertEq("After action",  _, expect))
+    def assertBefore[B >: A : Equal](expect: B): Action[A] = withResult(r => assertEq("Before action", r.before, expect))
+    def assertAfter [B >: A : Equal](expect: B): Action[A] = withResult(r => assertEq("After action",  r.after,  expect))
 
     def assertChange(implicit e: Equal[A]): Action[A] =
-      test(r => if (r.before ≟ r.after) fail(s"Change expected from [${r.before}]"))
+      withResult(r => if (r.before ≟ r.after) fail(s"Change expected from [${r.before}]"))
 
     def assertNoChange(implicit e: Equal[A]): Action[A] =
-      test(r => assertEq("assertNoChange", r.after, r.before))
+      withResult(r => assertEq("assertNoChange", r.after, r.before))
 
     def assertDelta(delta: A)(implicit n: Numeric[A]): Action[A] =
-      test(r => {
+      withResult(r => {
         val actual = n.minus(r.after, r.before)
         assertEq("Delta", actual, delta)(Equal.equalA)
       })
+
+    def test(f: (A, A) => Boolean, err: => String): Action[A] =
+      withResult(r =>
+        if (!f(r.before, r.after))
+          fail(s"$err. [${r.before}] ==> [${r.after}]."))
+
+    def testBefore(f: A => Boolean, err: => String): Action[A] =
+      test((a, _) => f(a), err)
+
+    def testAfter(f: A => Boolean, err: => String): Action[A] =
+      test((_, a) => f(a), err)
+
+    def assertIncrease(implicit n: Numeric[A]): Action[A] =
+      test(n.gt, "Increase expected")
+
+    def assertDecrease(implicit n: Numeric[A]): Action[A] =
+      test(n.lt, "Decrease expected")
 
     def tapAction(f: Result[A] => Unit): Action[A] =
       newAction(action andThen { r => f(r); r })
