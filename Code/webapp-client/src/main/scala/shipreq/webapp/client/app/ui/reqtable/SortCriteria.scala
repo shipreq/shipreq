@@ -92,7 +92,10 @@ object SortCriteria {
   val defaultConclusive =
     Conclusive(Column.Pubid, SortMethod.Asc)
 
+  def byPubidOnly =
+    SortCriteria(Vector.empty, defaultConclusive)
+
   val default = SortCriteria(
-    Vector(InconclusiveCB(Column.Code,  SortMethod.AscThenBlanks)),
+    Vector(InconclusiveCB(Column.Code, SortMethod.AscThenBlanks)),
     defaultConclusive)
 }

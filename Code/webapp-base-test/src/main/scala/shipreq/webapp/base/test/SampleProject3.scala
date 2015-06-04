@@ -60,11 +60,11 @@ object SampleProject3 {
     + GReq(reqType = mf, id = mfs(24), title = "Requirement Lint"                      ).tag(p3)
     + GReq(reqType = mf, id = mfs(25), title = "Search"                                ).tag(p2)
     + GReq(reqType = mf, id = mfs(26), title = "Mass text modification (replace)"      ).tag(p1)
-    + GReq(reqType = mf, id = mfs(27), title = "External references"                   ).tag(p1)
+    + GReq(reqType = mf, id = mfs(27), title = "External references"                   ).tag(p1).impSrc(frs(2))
     + GReq(reqType = mf, id = mfs(28), title = "Entities", alive = Dead                ).tag(p2)
 
     + GReq(reqType = fr, id = frs(1), title = fr1Desc, codes = Set("uce.sample.1", "uce.sample.1b", "demo.whatever")).impSrc(mfs(12), mfs(19))
-    + GReq(reqType = fr, id = frs(2), title = fr2Desc, codes = Set("uce.sample.2")).impSrc(mfs(1), mfs(13), mfs(22))
+    + GReq(reqType = fr, id = frs(2), title = fr2Desc, codes = Set("uce.sample.2")).impSrc(mfs(1), mfs(13), mfs(22), frs(1))
     + RCGroup("demo", Vector(T.ReqCodeGroupTitle.Literal("Demo group header")))
 
     + GReq(reqType = co, id = cos(1), alive = Dead, title = "Search entities!").impSrc(mfs(28), mfs(25))

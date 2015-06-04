@@ -26,6 +26,11 @@ import shipreq.webapp.client.test.ReactTmpExt._
 import shipreq.webapp.client.test.TestUtil.fakeKeyboardEvent
 import shipreq.webapp.client.util._
 
+object ReqTableScreen {
+  case class CellLoc(row: Int, col: Int)
+}
+import ReqTableScreen.CellLoc
+
 /**
  * Data representation of a rendered ReqTable.
  *
@@ -91,7 +96,7 @@ final class ReqTableScreen(root: => DomZipper) {
     lazy val tbody = $(">tbody")
 
     lazy val columns: Vector[String] =
-      $(">thead") collectInnerHTML "th span"
+      $(">thead") collectInnerText "th"
 
     import ColumnRenderer.{Status, Normal, DeadRow}
 
@@ -118,12 +123,47 @@ final class ReqTableScreen(root: => DomZipper) {
 
     def ensureHasFocus(): Unit =
       focus getOrElse fail("No focus.")
+
+    def columnIndex(title: String): Int = {
+      val i = columns.indexOf(title)
+      if (i < 0) fail(s"Column '$title' not found.")
+      i
+    }
+
+//    def columnValues(columnIndex: Int) =
+//      tbody collectInnerHTML s">tr >td:nth-child(${columnIndex + 1}) >span"
+
+    lazy val pubidColumnIndex =
+      columnIndex("ID")
+
+    lazy val rowPubids: Vector[String] =
+      tbody collectInnerText s">tr >td:nth-child(${pubidColumnIndex + 1})"
+
+    def rowIndexByPubid(pubid: String): Int = {
+      val i = rowPubids.indexOf(pubid)
+      if (i < 0) fail(s"Row with pubid [$pubid] not found.")
+      i
+    }
+
+    def cell(loc: CellLoc): DomZipper =
+      cell(row = loc.row, col = loc.col)
+
+    def cell(row: Int, col: Int): DomZipper =
+      tbody(s">tr:nth-child(${row + 1}) >td:nth-child(${col + 1})")
+
+    def cell(pubid: String, col: String): DomZipper =
+      cell(cellLoc(pubid, col))
+
+    def cellLoc(pubid: String, col: String): CellLoc =
+      CellLoc(row = rowIndexByPubid(pubid), columnIndex(col))
   }
 
   def availCols = viewSettings.columns.allColumns
 }
 
 // =====================================================================================================================
+import shipreq.webapp.client.app.ui.reqtable.{ReqTableScreen => S}
+
 object ReqTableTest extends TestSuite {
   PrepareEnv()
 
@@ -136,7 +176,7 @@ object ReqTableTest extends TestSuite {
   def reset(): Unit =
     c setState ReqTable.initialState(project)
 
-  def * = new ReqTableScreen(new DomZipper(c.getDOMNode()))
+  def * = new S(new DomZipper(c.getDOMNode()))
 
   // ===================================================================================================================
   // Properties
@@ -159,7 +199,7 @@ object ReqTableTest extends TestSuite {
   def propTry[A](name: => String, f: A => Any): Prop[A] =
     propTrySuccess(name).contramap(a => Try(f(a)))
 
-  case class PS(project: Project, screen: ReqTableScreen) {
+  case class PS(project: Project, screen: S) {
     lazy val cfname = CustomField.nameP(project)
 
     def customFieldNames(a: Alive): Set[String] = {
@@ -172,7 +212,6 @@ object ReqTableTest extends TestSuite {
   val builtInColumns = Column.builtInValues.map(Column.NameResolver.builtIn).toSet.whole
 
   val invariants: Prop[PS] = {
-    import shipreq.webapp.client.app.ui.reqtable.{ReqTableScreen => S}
     implicit def autoContraS(p: Prop[S]): Prop[PS] = p.contramap[PS](_.screen)
     def equal(name: => String) = Prop.equal[S](name)
 
@@ -212,7 +251,7 @@ object ReqTableTest extends TestSuite {
     availableColumns & sortableColumns & tableColumns & tableContents
   }
 
-  def assertInvariants(s: ReqTableScreen = *): Unit =
+  def assertInvariants(s: S = *): Unit =
     invariants assert PS(project, s)
 
   // ===================================================================================================================
@@ -223,7 +262,7 @@ object ReqTableTest extends TestSuite {
     override protected def newState    = *
     override protected def defaultLast = assertInvariants
   }
-  import ScreenAction._
+  import ScreenAction.{S => _, _}
 
   def actionProp[A](f: A => Action[_]): Prop[A] = {
     Prop.atom("action", a =>
@@ -251,13 +290,9 @@ object ReqTableTest extends TestSuite {
   def applyViewSettings(vs: ViewSettings): Action[Unit] =
     Action exec c.modState(_ updateVS vs)
 
-  def focusRow(alive: Alive, cellIndex: Int = 0) =
+  def focusCell(loc: S => CellLoc): Action[Unit] =
     Action { s =>
-      val row = alive match {
-        case Alive => DomZipper.first("Alive row", s.table.aliveRows)
-        case Dead  => DomZipper.first("Dead row", s.table.deadRows)
-      }
-      val cell = row.getAll(">td")(cellIndex)
+      val cell = s.table.cell(loc(s)).get
       Simulate.click(cell)
     }
 
@@ -271,6 +306,78 @@ object ReqTableTest extends TestSuite {
 
   // ===================================================================================================================
   // Tests
+
+  def testDeadRowsCantNotEditable(): Unit = {
+    val colCount = *.availCols.length
+
+    val showAllColumns = applyViewSettings {
+      val s  = c.state
+      val vs = s.viewSettings
+      val cn = Column.NameResolver.byProject(s.project)
+      val cs = Column.all(cn.customFields.values)
+      val o  = vs.order.copy(init = Vector.empty) // remove ReqCodeGroups
+      vs.copy(columns = cs, order = o, filterDead = ShowDead)
+    }
+
+    def focus(rowType: Alive, colIndex: Int) =
+      Action { s =>
+        val row = rowType match {
+          case Alive => DomZipper.first("Alive row", s.table.aliveRows)
+          case Dead  => DomZipper.first("Dead row", s.table.deadRows)
+        }
+        val cell = row.getAll(">td")(colIndex)
+        Simulate.click(cell)
+      }
+
+    def editAllColumns(rowType: Alive): Action[Int] = {
+      val editEachCell =
+        (0 until colCount).map { c =>
+          focus(rowType, c).focus(_.table.focus).assertChange >> editFocused
+        }.reduce(_ >> _)
+
+      (showAllColumns >> editEachCell).focus(_.table.inputsInFocusRow getOrElse 0)
+    }
+
+    editAllColumns(Dead).assertAfter(0).run()
+
+    // Ensure our test logic works
+    reset()
+    editAllColumns(Alive).testAfter(_ > 0, "[Alive Row] Cells should be in edit-mode").run()
+  }
+
+  def testBuiltinImplicationColumnEditor() = {
+    def loc        (s: S) = s.table.cellLoc(pubid = "FR-1", col = "Implied By")
+    def cell       (s: S) = s.table.cell(loc(s))
+    def editor     (s: S) = cell(s)("input").as[html.Input]
+    def editorValue(s: S) = editor(s).value
+
+    def test(expect: Validity, err: => String) = (value: String) =>
+      Action.exec2(editor)(ChangeEventData(value) simulate _)
+        .focus(editorValue).assertAfter(value)
+        .focus(editor(_).className).assertAfter(Style.reqtable.cellEditor(expect).className.value, s"$err: [$value]")
+
+    def testValid                      = test(Valid, "Should be valid")
+    def testInvalid(reason: => String) = test(Invalid, reason)
+
+    val setup =
+      applyViewSettings(ViewSettings(Column.builtInValues, SortCriteria.byPubidOnly, ShowDead))
+        .focus(cell(_).innerText).assertAfter("MF-12, MF-19")
+
+    val startEdit =
+      focusCell(loc) >> editFocused >>
+        Action.value(editorValue).assertAfter("MF-12", "Should remove dead")
+
+    // TODO What about an implication cycle with a dead link. Ok? Not ok? What about when when link is undeleted?
+
+    run(setup >> startEdit
+      >> testInvalid("Can't imply self")("FR-1")
+      >> testInvalid("Target is dead")("MF-28")
+      >> testInvalid("Target is dead")("MF-19")
+      >> testInvalid("Should prevent cycles")("MF-27") // because FR-1 → FR-2 → MF-27
+      >> testValid("MF-12")
+      >> testValid("MF-14")
+      >> testValid("MF-12 MF-14"))
+  }
 
   implicit val settings = DefaultSettings.propSettings.setSampleSize(8) //.setDebug
 
@@ -293,33 +400,10 @@ object ReqTableTest extends TestSuite {
           actionProp(applyViewSettings(_) >> filterDeadShowHide)
       }
 
-      'noEditing {
-        val colCount = *.availCols.length
-
-        val showAllColumns = applyViewSettings {
-          val s  = c.state
-          val vs = s.viewSettings
-          val cn = Column.NameResolver.byProject(s.project)
-          val cs = Column.all(cn.customFields.values)
-          val o  = vs.order.copy(init = Vector.empty) // remove ReqCodeGroups
-          vs.copy(columns = cs, order = o, filterDead = ShowDead)
-        }
-
-        def editAllColumns(rowType: Alive): Action[Int] = {
-          val editEachCell =
-            (0 until colCount).map { c =>
-              focusRow(rowType, c).focus(_.table.focus).assertChange >> editFocused
-            }.reduce(_ >> _)
-
-          (showAllColumns >> editEachCell).focus(_.table.inputsInFocusRow getOrElse 0)
-        }
-
-        editAllColumns(Dead).assertAfter(0).run()
-
-        // Ensure our test logic works
-        reset()
-        editAllColumns(Alive).testAfter(_ > 0, "[Alive Row] Cells should be in edit-mode").run()
-      }
+      'notEditable - testDeadRowsCantNotEditable()
     }
+
+    'builtinImpColEditor - testBuiltinImplicationColumnEditor()
+
   }
 }

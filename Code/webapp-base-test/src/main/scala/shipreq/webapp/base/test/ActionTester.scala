@@ -41,6 +41,20 @@ trait ActionTester {
     def run(s: S = newState): Unit =
       action(s)
 
+    def >>-[B](f: A => Action[B]): Action[B] =
+      >>=(r => f(r.after))
+
+    def >>=[B](f: Result[A] => Action[B]): Action[B] =
+      new Action({ s1 =>
+        val r1 = action(s1)
+        val s2 = r1.state
+        last(s2)
+        val next = f(r1)
+        val r2 = next.action(s2)
+        next.last(s2)
+        r2
+      }, Action.nopLast)
+
     def layer[B, C](f: S => B)(g: (B, Result[A], B) => Result[C]): Action[C] =
       newAction { s =>
         val before = f(s)
@@ -82,8 +96,11 @@ trait ActionTester {
         r
       }
 
-    def assertBefore[B >: A : Equal](expect: B): Action[A] = withResult(r => assertEq("Before action", r.before, expect))
-    def assertAfter [B >: A : Equal](expect: B): Action[A] = withResult(r => assertEq("After action",  r.after,  expect))
+    def assertBefore[B >: A : Equal](expect: B): Action[A] = assertBefore(expect, "Before action")
+    def assertAfter [B >: A : Equal](expect: B): Action[A] = assertAfter (expect, "After action")
+
+    def assertBefore[B >: A : Equal](expect: B, err: => String): Action[A] = withResult(r => assertEq(err, r.before, expect))
+    def assertAfter [B >: A : Equal](expect: B, err: => String): Action[A] = withResult(r => assertEq(err,  r.after,  expect))
 
     def assertChange(implicit e: Equal[A]): Action[A] =
       withResult(r => if (r.before ≟ r.after) fail(s"Change expected from [${r.before}]"))
@@ -142,6 +159,10 @@ trait ActionTester {
         Result(f(before), state, g(after))
     }
 
+    // ----------------------------------------------------------------------
+
+    private[ActionTester] val nopLast = (_: Any) => ()
+
     def apply(f: S => Unit): Action[Unit] =
       Action(f, defaultLast)
 
@@ -152,6 +173,12 @@ trait ActionTester {
 
     def exec(f: => Unit): Action[Unit] =
       apply(_ => f)
+
+    def exec2[A, B](f: S => A)(g: A => Unit): Action[Unit] =
+      value(f) >>- (a => Action.exec(g(a)))
+
+    def value[A](f: S => A): Action[A] =
+      new Action(s => { val a = f(s); Result(a, s, a)}, nopLast)
   }
 
   def run(a: Action[_]): Unit = a.run()

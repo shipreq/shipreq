@@ -76,14 +76,18 @@ class DomZipper(root: Sizzle.DOM) {
   def collectInnerHTML[A](sel: String): Vector[String] =
     collect(sel, _.innerHTML)
 
+  def collectInnerText[A](sel: String): Vector[String] =
+    collect(sel, _.textContent)
+
   def get: DOM =
     root
 
   def as[D <: DOM]: D =
     root.asInstanceOf[D]
 
-  def innerHTML: String =
-    root.innerHTML
+  def outerHTML: String = root.outerHTML
+  def innerHTML: String = root.innerHTML
+  def innerText: String = root.textContent
 
   def selectedOptionText: String = {
     val s = as[html.Select]

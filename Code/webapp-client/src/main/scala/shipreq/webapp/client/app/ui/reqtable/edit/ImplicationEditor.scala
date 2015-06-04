@@ -12,11 +12,8 @@ import shipreq.base.util.{Must, UnivEq}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar, PlainText, TextSearch}
 import shipreq.webapp.base.UiText
-import shipreq.webapp.client.app.ui.TextSeqEditor, TextSeqEditor._
+import shipreq.webapp.client.app.ui.TextSeqEditor._
 import shipreq.webapp.client.util.Plain
-
-// TODO Hide dead reqs & maintain across edits (unless show deleted is on)
-// TODO ImplicationEditor needs validation
 
 object ImplicationEditor {
   import AutoComplete.ReqItem
@@ -67,9 +64,11 @@ object ImplicationEditor {
 
     def init: String = {
       val p = project.value()
-      initial.toVector.map(pid =>
-        UiText mustA PlainText.pubid(p, pid)
-      ).sorted mkString " "
+      mustResolve(p.reqs.data.reqsByPubidM(initial.toVector))(Vector.empty)
+        .filter(_.alive :: Alive)
+        .map(r => UiText mustA PlainText.pubid(p, r.pubid))
+        .sorted
+        .mkString(" ")
     }
 
     val lookup = lookupM.map(mustResolve(_)(Lookup(Stream.empty, UnivEq.emptyMap)))

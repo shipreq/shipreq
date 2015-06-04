@@ -87,7 +87,7 @@ object AutoComplete {
     reqItems(p, pt, p.reqs.data.reqs.values.toStream)
 
   def reqItems(p: Project, pt: PlainText.ForProject, legal: Stream[Req]): Stream[ReqItem] = {
-    val m = Must.foldMapM[Req, Stream, ReqItem](legal)(req =>
+    val m = Must.foldMapM[Req, Stream, ReqItem](legal.filter(_.alive :: Alive))(req =>
       p.reqType(req.pubid.reqTypeId).map(rt =>
         new ReqItem(req, rt, pt reqTitle req)))
     mustResolve(m)(Stream.empty).sortBy(_.sortKey)
