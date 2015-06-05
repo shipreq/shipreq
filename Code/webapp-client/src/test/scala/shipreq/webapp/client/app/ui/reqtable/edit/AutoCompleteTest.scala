@@ -159,7 +159,7 @@ object AutoCompleteTest extends TestSuite {
     tombCodes.foldLeft(t1)((t, c) => t.put(c, tomb))
   }
   lazy val project2 = {
-    import ProjectDSL._, UnsafeTypes._
+    import ProjectDsl._, UnsafeTypes._
     val p = (Project.reqCodes ^|-> RevAnd.data).set(ReqCodes(fakeTrie))(SampleProject2.project)
     (DeadReqCode("dead.ref", target = 1, id = 90) + DeadReqCode("dead.group", id = 91)) ! p
   }

@@ -10,11 +10,8 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Text
 import ReqFieldData.{Implications, ImplicationsU}
 
-object ProjectDSL {
-
-  type S = ProjectState
-
-  type Mod[A] = State[S, A]
+object ProjectDslInternals {
+  type Mod[A] = State[ProjectState, A]
 
   trait ToState {
     def state: Mod[_]
@@ -64,6 +61,45 @@ object ProjectDSL {
   type CFTextId    = CustomField.Text.Id
   type CFTextValue = Text.CustomTextField.NonEmptyText
 
+  val emptyReqCodeData = ReqCode.Data(None, UnivEq.emptySet, UnivEq.emptySetMultimap)
+
+  case class Composite(ss: NonEmptyVector[Mod[_]], defaultReqType: Option[CustomReqTypeId]) {
+
+    def +(n: ToState): Composite =
+      copy(ss = n.state +: ss)
+
+    def state: Mod[Unit] = {
+      var s = ss.whole.reduce((a, b) => b >> a).map(_ => ())
+      for (rt <- defaultReqType) {
+        val s1 = s
+        s = State.modify[ProjectState](_.copy(defaultReqType = Some(rt))) >> s1
+      }
+      s
+    }
+
+    def shuffle: Composite = {
+      val x = scala.util.Random.shuffle(ss.whole)
+      copy(ss = NonEmptyVector(x.head, x.tail))
+    }
+
+    def defaultReqType(rt: CustomReqTypeId): Composite =
+      copy(defaultReqType = Some(rt))
+
+    def !(p: Project): Project =
+      state.exec(projectState(p)).done
+
+    def !!(p: Project): Project =
+      shuffle.!(p)
+  }
+}
+
+// =====================================================================================================================
+object ProjectDsl {
+  import ProjectDslInternals._
+
+  implicit def projectDsl_autoComposite(s: ToState): Composite =
+    Composite(NonEmptyVector.one(s.state), None)
+
   case class GReq(title  : Text.GenericReqTitle.OptionalText = Vector.empty,
                   id     : Option[GenericReqId]              = None,
                   reqType: Option[CustomReqTypeId]           = None,
@@ -82,10 +118,10 @@ object ProjectDSL {
     def cftextS(k: CFTextId, s: String)      = if (s.isEmpty) this else cftext(k, s)
 
     def times(n: Int): Composite =
-      Stream.fill(n - 1)(this).foldLeft(autoComposite(this))(_ + _)
+      Stream.fill(n - 1)(this).foldLeft(this: Composite)(_ + _)
 
     def state: Mod[GenericReq] =
-      State[S, GenericReq]{ p =>
+      State[ProjectState, GenericReq]{ p =>
         val id = this.id getOrElse GenericReqId(p.nextId)
 
         def reqCodeData() =
@@ -113,7 +149,7 @@ object ProjectDSL {
   case class RCGroup(code : ReqCode.Value,
                      title: Text.ReqCodeGroupTitle.OptionalText = Vector.empty) extends ToState {
     def state: Mod[ReqCodeGroup] =
-      State[S, ReqCodeGroup]{ p =>
+      State[ProjectState, ReqCodeGroup]{ p =>
         val g  = ReqCodeGroup(title)
         val ad = ReqCode.ActiveData(p.nextReqCodeId(), g)
         val t  = p.reqCodeTrie.modify(code)(_.getOrElse(emptyReqCodeData).copy(active = Some(ad)))
@@ -122,13 +158,11 @@ object ProjectDSL {
       }
   }
 
-  private val emptyReqCodeData = ReqCode.Data(None, UnivEq.emptySet, UnivEq.emptySetMultimap)
-
   case class DeadReqCode(code : ReqCode.Value,
                          id: Option[ReqCodeId] = None,
                          target: Option[ReqId] = None) extends ToState {
     def state: Mod[ReqCodeId] =
-      State[S, ReqCodeId]{ p =>
+      State[ProjectState, ReqCodeId]{ p =>
         val id = this.id getOrElse p.nextReqCodeId()
         val t = p.reqCodeTrie.modify(code) { o =>
           val d = o.getOrElse(emptyReqCodeData) //.copy(active = Some(ReqCode.ActiveData(p.nextReqCodeId(), ReqCodeGroup(Vector.empty))))
@@ -142,41 +176,10 @@ object ProjectDSL {
       }
   }
 
-  case class Composite(ss: NonEmptyVector[Mod[_]], defaultReqType: Option[CustomReqTypeId]) {
-
-    def +(n: ToState): Composite =
-      copy(ss = n.state +: ss)
-
-    def state: Mod[Unit] = {
-      var s = ss.whole.reduce((a, b) => b >> a).map(_ => ())
-      for (rt <- defaultReqType) {
-        val s1 = s
-        s = State.modify[S](_.copy(defaultReqType = Some(rt))) >> s1
-      }
-      s
-    }
-
-    def shuffle: Composite = {
-      val x = scala.util.Random.shuffle(ss.whole)
-      copy(ss = NonEmptyVector(x.head, x.tail))
-    }
-
-    def defaultReqType(rt: CustomReqTypeId): Composite =
-      copy(defaultReqType = Some(rt))
-
-    def !(p: Project): Project =
-      state.exec(projectState(p)).done
-
-    def !!(p: Project): Project =
-      shuffle.!(p)
-  }
-
-  implicit def autoComposite(s: ToState) = Composite(NonEmptyVector.one(s.state), None)
-
-  implicit def parseCTF(i: String): Text.CustomTextField.NonEmptyText = {
+  implicit def projectDsl_parseCTF(i: String): Text.CustomTextField.NonEmptyText = {
     if (i.isEmpty) sys.error("Text.CustomTextField can't be empty.") else NonEmptyVector(Text.CustomTextField.Literal(i))
   }
 
-  implicit def parseGRD(i: String): Text.GenericReqTitle.OptionalText =
+  implicit def projectDsl_parseGRD(i: String): Text.GenericReqTitle.OptionalText =
     if (i.isEmpty) Vector.empty else Vector1(Text.GenericReqTitle.Literal(i))
 }

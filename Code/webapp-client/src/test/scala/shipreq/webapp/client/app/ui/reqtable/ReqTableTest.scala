@@ -332,6 +332,10 @@ sealed trait ReqTableTest0 {
 
   implicit val settings = DefaultSettings.propSettings.setSampleSize(8) //.setDebug
 
+  import ProjectDsl._
+  import UnsafeTypes._
+  import SampleProject.Values._
+
   case class CellEditor(loc: S => CellLoc) {
     def cell       (s: S) = s.table.cell(loc(s))
     def editor     (s: S) = cell(s)("input").as[html.Input]
@@ -429,9 +433,6 @@ sealed trait ReqTableTest0 {
   }
 
   def testCustomImplicationColumnEditor() = {
-    import ProjectDSL.{S => _, _}
-    import UnsafeTypes._
-    val List(co, mf) = List[CustomReqTypeId](1, 2)
     val p = (
       // MF- 1ᵒ → MF-5ᵒ → MF-13
       // MF- 2ˣ → MF-6ᵒ → MF-13 <-- difficult case - it should be displayed as its part of (a chain with ShowDead)
@@ -488,10 +489,6 @@ sealed trait ReqTableTest0 {
   }
 
   def testTagsColumnEditor(): Unit = {
-    import ProjectDSL.{S => _, _}
-    import UnsafeTypes._
-    val List(co) = List[CustomReqTypeId](1)
-    val List(wip, defer, uat, v09, v10, v11, v1x, v2x, v3x) = List[ApplicableTagId](11, 12, 13, 28, 22, 23, 21, 25, 26)
     val p = GReq(reqType = co).tag(wip, uat, v1x, v3x) !
       SampleProject.project |> TestOptics.projectRevs.set(Rev(204))
 

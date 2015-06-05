@@ -2,15 +2,15 @@ package shipreq.webapp.base.test
 
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.text.{Text => T, _}
-import shipreq.webapp.base.test.ProjectDSL._
+import shipreq.webapp.base.test.ProjectDsl._
 import shipreq.webapp.base.test.UnsafeTypes._
 import SampleProject.{project => project0, _}
 
 object SampleProject2 {
 
   lazy val project = {
-    val List(co,mf,fr) = List[CustomReqTypeId](1,2,3).map(Some(_))
-    val List(p1,p3,p5,rel,wip,v1x) = List[ApplicableTagId](4,3,2,22,11,21)
+    import SampleProject.Values._
+    val List(p1,p3,p5) = List[ApplicableTagId](4,3,2)
     val (p2,p4) = (p3,p5)
     val mfs = (0 to 28).toVector.map(i => GenericReqId(i + 1000))
 
@@ -32,13 +32,13 @@ object SampleProject2 {
     }
 
     val contentByDsl = (
-      GReq(reqType = mf, id = mfs( 1), title = "Use Case Editor"                       , codes = Set("uce")).tag(p5).tag(rel)
-    + GReq(reqType = mf, id = mfs( 2), title = "Anonymous Share"                       ).tag(p2).tag(rel)
+      GReq(reqType = mf, id = mfs( 1), title = "Use Case Editor"                       , codes = Set("uce")).tag(p5).tag(v10)
+    + GReq(reqType = mf, id = mfs( 2), title = "Anonymous Share"                       ).tag(p2).tag(v10)
     + GReq(reqType = mf, id = mfs( 3), title = "Export (PDF, XLS)"                     ).tag(p4)
     + GReq(reqType = mf, id = mfs( 4), title = "Templates"                             ).tag(p2)
     + GReq(reqType = mf, id = mfs( 5), title = "Field Customisation"                   ).tag(p5).tag(wip)
     + GReq(reqType = mf, id = mfs( 6), title = "Incompletions"                         ).tag(p3).tag(wip)
-    + GReq(reqType = mf, id = mfs( 7), title = "Organisation"                          ).tag(p5).tag(wip).tag(v1x).tag(rel)
+    + GReq(reqType = mf, id = mfs( 7), title = "Organisation"                          ).tag(p5).tag(wip).tag(v1x).tag(v10)
     + GReq(reqType = mf, id = mfs( 8), title = "History/Audit"                         ).tag(p3)
     + GReq(reqType = mf, id = mfs( 9), title = "Collaboration: authoring"              ).tag(p5)
     + GReq(reqType = mf, id = mfs(10), title = "Collaboration: stakeholders"           ).tag(p5)

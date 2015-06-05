@@ -16,7 +16,7 @@ import utest._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.{RandomData => $}
-import shipreq.webapp.base.test.{SampleProject, ProjectDSL, UnsafeTypes}
+import shipreq.webapp.base.test.{SampleProject, ProjectDsl, UnsafeTypes}
 import shipreq.webapp.base.test.BaseTestUtil._
 import Text.Equality._
 import Atom.AnyAtom
@@ -142,9 +142,9 @@ object ParsersTest extends TestSuite {
 
   import Text.{CustomTextField => T, InlineIssueDesc => I}
   val P = {
-    import ProjectDSL._
+    import ProjectDsl._
     import UnsafeTypes._
-    val List(co,mf,fr) = List[CustomReqTypeId](1,2,3).map(Some(_))
+    import SampleProject.Values._
     GReq(reqType = co, id = 31, title = "be fast").code("co2") + // code inversed: [CO-1] [co2] ReqCodeId = 1
     GReq(reqType = co, id = 32, title = "be good").code("co1") + // code inversed: [CO-2] [co1] ReqCodeId = 2
     GReq(reqType = fr, id = 11, title = "do stuff").code("here.i.am_3") +

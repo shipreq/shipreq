@@ -6,55 +6,67 @@ import UnsafeTypes._
 
 object SampleProject {
 
+  trait Values {
+    val List(co, mf, fr, br, dd, si)                    = List[CustomReqTypeId           ](1, 2, 3, 4, 5, 6)
+    val List(wip, defer, uat)                           = List[ApplicableTagId           ](11, 12, 13)
+    val List(v09, v10, v11, v12, v1x, v2x, v3x)         = List[ApplicableTagId           ](28, 22, 23, 24, 21, 25, 26)
+    val List(descField, notesField, reporterField)      = List[CustomField.Text.Id       ](1, 2, 3)
+    val List(priField, statusField, verField, relField) = List[CustomField.Tag.Id        ](4, 5, 20, 7)
+    val List(mfField)                                   = List[CustomField.Implication.Id](6)
+  }
+
+  object Values extends Values
+  import Values._
+
   lazy val customIssueTypes = RevAnd(10, emptyDataMap(CustomIssueType).addAll(
     CustomIssueType(1, "TO"+"DO", "Something you need To Do.", Alive),
     CustomIssueType(2, "TBD", "To Be Decided.", Alive),
     CustomIssueType(3, "PENDING", "Just pendin'", Dead)))
 
   lazy val customReqTypes = RevAnd(20, emptyDataMap(CustomReqType).addAll(
-    CustomReqType(1, "CO", Set.empty, "Constraint",             ImplicationRequired.Not, Alive),
-    CustomReqType(2, "MF", Set.empty, "Major Feature",          ImplicationRequired.Not, Alive),
-    CustomReqType(3, "FR", Set.empty, "Functional Requirement", ImplicationRequired,     Alive),
-    CustomReqType(4, "BR", Set.empty, "Business Rule",          ImplicationRequired.Not, Alive),
-    CustomReqType(5, "DD", Set("DA", "DDF"), "Data Definition", ImplicationRequired.Not, Dead),
-    CustomReqType(6, "SI", Set.empty, "Solution Idea",          ImplicationRequired,     Dead)))
+    CustomReqType(co, "CO", Set.empty, "Constraint",             ImplicationRequired.Not, Alive),
+    CustomReqType(mf, "MF", Set.empty, "Major Feature",          ImplicationRequired.Not, Alive),
+    CustomReqType(fr, "FR", Set.empty, "Functional Requirement", ImplicationRequired,     Alive),
+    CustomReqType(br, "BR", Set.empty, "Business Rule",          ImplicationRequired.Not, Alive),
+    CustomReqType(dd, "DD", Set("DA", "DDF"), "Data Definition", ImplicationRequired.Not, Dead),
+    CustomReqType(si, "SI", Set.empty, "Solution Idea",          ImplicationRequired,     Dead)))
 
   lazy val tagsR = RevAnd(30, tags)
   lazy val v10d = Some("Released: 17/14/1976\nFirst release.")
   lazy val v11d = Some("Released: 1/2/2001")
   lazy val tags = TagTree.empty.addAll(
-    TagInTree(TagGroup     (1, "Priority",        None, MutexChildren,     Alive), Vector(2.AT, 3.AT, 4.AT)),
-    TagInTree(ApplicableTag(2, "High Priority",   None, "pri=high",        Alive), Vector()),
-    TagInTree(ApplicableTag(3, "Medium Priority", None, "pri=med",         Alive), Vector()),
-    TagInTree(TagGroup     (10, "Status",         None, MutexChildren.Not, Alive), Vector(11.AT, 12.AT, 13.AT)),
-    TagInTree(ApplicableTag(11, "WIP",            None, "wip",             Alive), Vector()),
-    TagInTree(ApplicableTag(12, "Deferred",       None, "defer",           Alive), Vector()),
-    TagInTree(ApplicableTag(13, "In UAT",         None, "uat",             Dead ), Vector()),
-    TagInTree(TagGroup     (20, "Version",        None, MutexChildren.Not, Alive), Vector(27.TG, 21.AT, 25.AT, 26.AT)),
-    TagInTree(ApplicableTag(21, "v1.x",           None, "v1.x",            Alive), Vector(22.AT, 23.AT, 24.AT)),
-    TagInTree(ApplicableTag(22, "v1.0",           v10d, "v1.0",            Alive), Vector()),
-    TagInTree(ApplicableTag(23, "v1.1",           v11d, "v1.1",            Alive), Vector()),
-    TagInTree(ApplicableTag(24, "v1.2",           None, "v1.2",            Alive), Vector()),
-    TagInTree(ApplicableTag(25, "v2.x",           None, "v2.x",            Alive), Vector()),
-    TagInTree(ApplicableTag(26, "v3.x",           None, "v3.x",            Dead ), Vector()),
-    TagInTree(TagGroup     (27, "Released",       None, MutexChildren.Not, Alive), Vector(28.AT, 22.AT, 23.AT)),
-    TagInTree(ApplicableTag(28, "v0.9",           None, "v0.9",            Dead ), Vector()),
-    TagInTree(ApplicableTag(4, "Low Priority", Some("Nice to have. Stuff that probably won't be implemented."), "pri=low", Alive), Vector()))
+    TagInTree(TagGroup     (1    , "Priority",        None, MutexChildren,     Alive), Vector(2.AT, 3.AT, 4.AT)),
+    TagInTree(ApplicableTag(2    , "High Priority",   None, "pri=high",        Alive), Vector()),
+    TagInTree(ApplicableTag(3    , "Medium Priority", None, "pri=med",         Alive), Vector()),
+    TagInTree(TagGroup     (10   , "Status",          None, MutexChildren.Not, Alive), Vector(wip, defer, uat)),
+    TagInTree(ApplicableTag(wip  , "WIP",             None, "wip",             Alive), Vector()),
+    TagInTree(ApplicableTag(defer, "Deferred",        None, "defer",           Alive), Vector()),
+    TagInTree(ApplicableTag(uat  , "In UAT",          None, "uat",             Dead ), Vector()),
+    TagInTree(TagGroup     (20   , "Version",         None, MutexChildren.Not, Alive), Vector(27.TG, v1x, v2x, v3x)),
+    TagInTree(ApplicableTag(v1x  , "v1.x",            None, "v1.x",            Alive), Vector(v10, v11, v12)),
+    TagInTree(ApplicableTag(v10  , "v1.0",            v10d, "v1.0",            Alive), Vector()),
+    TagInTree(ApplicableTag(v11  , "v1.1",            v11d, "v1.1",            Alive), Vector()),
+    TagInTree(ApplicableTag(v12  , "v1.2",            None, "v1.2",            Alive), Vector()),
+    TagInTree(ApplicableTag(v2x  , "v2.x",            None, "v2.x",            Alive), Vector()),
+    TagInTree(ApplicableTag(v3x  , "v3.x",            None, "v3.x",            Dead ), Vector()),
+    TagInTree(TagGroup     (27   , "Released",        None, MutexChildren.Not, Alive), Vector(v09, v10, v11)),
+    TagInTree(ApplicableTag(v09  , "v0.9",            None, "v0.9",            Dead ), Vector()),
+    TagInTree(ApplicableTag(4    , "Low Priority", Some("Nice to have. Stuff that probably won't be implemented."), "pri=low", Alive), Vector()))
 
   lazy val fields = {
     import CustomField._
     RevAnd(40, FieldSet(emptyDataMap(CustomField).addAll(
-      Text       (1, "Description", "desc",     Mandatory,     onlyReqTypes(2, 6, StaticReqType.UseCase), Alive),
-      Text       (2, "Notes",       "notes",    Mandatory.Not, notReqTypes(4),                            Alive),
-      Text       (3, "Reporter",    "reporter", Mandatory,     onlyReqTypes(5, StaticReqType.UseCase),    Dead),
-      Tag        (4, 1.TG,  /* Priority */      Mandatory,     ISubset.All(),                             Alive),
-      Tag        (5, 10.TG, /* Status */        Mandatory.Not, notReqTypes(5, 6),                         Alive),
-      Implication(6, 2,     /* Major Feature */ Mandatory.Not, notReqTypes(6),                            Alive),
-      Tag        (7, 27.TG, /* Released */      Mandatory.Not, ISubset.All(),                             Dead)
+      Text       (descField    , "Description", "desc",     Mandatory,     onlyReqTypes(mf, si, StaticReqType.UseCase), Alive),
+      Text       (notesField   , "Notes",       "notes",    Mandatory.Not, notReqTypes(br),                             Alive),
+      Text       (reporterField, "Reporter",    "reporter", Mandatory,     onlyReqTypes(dd, StaticReqType.UseCase),     Dead),
+      Tag        (priField     , 1.TG,                      Mandatory,     ISubset.All(),                               Alive),
+      Tag        (statusField  , 10.TG,                     Mandatory.Not, notReqTypes(dd, si),                         Alive),
+      Implication(mfField      , mf,                        Mandatory.Not, notReqTypes(si),                             Alive),
+      Tag        (relField     , 27.TG,                     Mandatory.Not, ISubset.All(),                               Dead)
     ), Vector(
-      Text.Id(1), Implication.Id(6), Tag.Id(4), Text.Id(3),
+      descField, mfField, priField, reporterField,
       StaticField.NormalAltStepTree, StaticField.ExceptionStepTree, StaticField.StepGraph,
-      Tag.Id(7), Tag.Id(5), Text.Id(2)
+      relField, statusField, notesField
     )))
   }
 

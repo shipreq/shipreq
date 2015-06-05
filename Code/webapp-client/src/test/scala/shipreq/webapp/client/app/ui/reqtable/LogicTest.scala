@@ -297,11 +297,16 @@ object LogicTest extends TestSuite {
   // Fucking IntelliJ crashes typing these tests inline
 
   object UnitTest {
-    import ProjectDSL._
+    import ProjectDsl._
     import UnsafeTypes._
-    private lazy val PD = SampleProject.project
-    private lazy val PA = TestOptics.customReqTypesAlive.set(Alive)(PD)
-    private type Rows = Stream[Row]
+    import SampleProject.Values._
+
+    private lazy val PD  = SampleProject.project
+    private lazy val PA  = TestOptics.customReqTypesAlive.set(Alive)(PD)
+    private      val sep = "  "
+    private      val z   = "∅"
+    private      val _z  = (_: Any) => z
+    private type Rows    = Stream[Row]
 
     private def testUnsorted[A: Equal](p: Project, pt: PlainText.ForProject, c: C, fd: FilterDead, extract: Rows => A)(expect: A): Unit =
       testUnsorted2(p, pt, NonEmptyVector one c, fd, extract)(expect)
@@ -345,15 +350,6 @@ object LogicTest extends TestSuite {
 
     private def allSortsIB[A](asc: A, desc: A): Seq[(IgnoreBlanks, A)] =
       (Asc  -> asc) :: (Desc -> desc) :: Nil
-
-    private val sep = "  "
-    private val z   = "∅"
-    private val _z  = (_: Any) => z
-    private val List(co, mf, fr, br, dd, si)                        = List[CustomReqTypeId           ](1, 2, 3, 4, 5, 6)
-    private val List(desc, notes, reporter)                         = List[CustomField.Text.Id       ](1, 2, 3)
-    private val List(priField, statusField, verField, relField)     = List[CustomField.Tag.Id        ](4, 5, 20, 7)
-    private val List(wip, defer, uat, v09, v10, v11, v1x, v2x, v3x) = List[ApplicableTagId           ](11, 12, 13, 28, 22, 23, 21, 25, 26)
-    private val List(mfField)                                       = List[CustomField.Implication.Id](6)
 
     private def rowToStr(f: GenericReqRow => String, g: ReqCodeGroupRow => String): Row => String =
       rowToStr(f, g, identity)
@@ -597,11 +593,11 @@ object LogicTest extends TestSuite {
     }
 
     def testCustomTextField(): Unit = {
-      def t(n: String, r: String) = GReq(reqType = dd).cftextS(notes, n).cftextS(reporter, r)
+      def t(n: String, r: String) = GReq(reqType = dd).cftextS(notesField, n).cftextS(reporterField, r)
       val p   = GReq() + t("HAHA", "zz") + t("", "f") + t("d", "") + t("Abc", "g") !! PA
       val pt  = PlainText(p)
-      val fmt = rowToCustomText(pt, notes)
-      testCB(p, pt, notes, ShowDead, fmt)(allSortsCB(2,
+      val fmt = rowToCustomText(pt, notesField)
+      testCB(p, pt, notesField, ShowDead, fmt)(allSortsCB(2,
         asc  = "Abc  d  HAHA",
         desc = "HAHA  d  Abc"))
     }
@@ -627,9 +623,9 @@ object LogicTest extends TestSuite {
       // desc only applies to 2(MF) 6(SI) UC
       // notes applies to all except 4(BR)
       val p =
-        GReq(reqType = mf).cftextS(desc, "MF.desc.ok" ).cftextS(notes, "MF.note.ok") +
-        GReq(reqType = co).cftextS(desc, "CO.desc.NO!").cftextS(notes, "CO.note.ok") +
-        GReq(reqType = br).cftextS(desc, "BR.desc.NO!").cftextS(notes, "BR.note.NO!") !! PA
+        GReq(reqType = mf).cftextS(descField, "MF.desc.ok" ).cftextS(notesField, "MF.note.ok") +
+        GReq(reqType = co).cftextS(descField, "CO.desc.NO!").cftextS(notesField, "CO.note.ok") +
+        GReq(reqType = br).cftextS(descField, "BR.desc.NO!").cftextS(notesField, "BR.note.NO!") !! PA
       val pt = PlainText(p)
       val ap = Applicability(p)
       def fmt(c: CustomField.Text.Id) =
@@ -638,8 +634,8 @@ object LogicTest extends TestSuite {
         val es = prefixes.map(_ + suffix).sorted
         allSortsCB(zcount, es mkString sep, es.reverse mkString sep)
       }
-      testCB(p, pt, desc,  ShowDead, fmt(desc)) (expect(2, ".desc.ok")("MF"))
-      testCB(p, pt, notes, ShowDead, fmt(notes))(expect(1, ".note.ok")("CO", "MF"))
+      testCB(p, pt, descField,  ShowDead, fmt(descField)) (expect(2, ".desc.ok")("MF"))
+      testCB(p, pt, notesField, ShowDead, fmt(notesField))(expect(1, ".note.ok")("CO", "MF"))
     }
 
     def testApplicabilityOfCustomTagFields(): Unit = {

@@ -1,7 +1,7 @@
 package shipreq.webapp.base.test
 
 import shipreq.webapp.base.data._
-import ProjectDSL._
+import ProjectDsl._
 import UnsafeTypes._
 
 /**
@@ -32,7 +32,7 @@ object SampleImplicationGraph {
 
   lazy val projectDsl = {
     def t(i: GenericReqId, rt: CustomReqTypeId, tgts: ReqId*) = GReq(id = i, reqType = rt, impTgts = tgts.toSet)
-    val (mf, br, fr) = (2: CustomReqTypeId, 4: CustomReqTypeId, 3: CustomReqTypeId)
+    import SampleProject.Values._
 
     ( t(mf1, mf, 31)
     + t(mf2, mf, 32)
