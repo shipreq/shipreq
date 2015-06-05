@@ -12,6 +12,7 @@ import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes._
 import shipreq.webapp.base.text.Text, Text.Equality._
+import shipreq.webapp.base.TransitiveClosure
 import shipreq.webapp.base.TypeclassDerivation._
 
 // ===================================================================================================================
@@ -283,6 +284,9 @@ object ReqFieldData {
 
   def implicationCycleDetector =
     CycleDetector.Directed.multimap[Set, ReqId, Long](_.value, UnivEq.emptySet)
+
+  def implicationTransitiveClosure(keys: Iterable[ReqId], dead: Set[ReqId], is: ImplicationsU): TransitiveClosure[ReqId] =
+    TransitiveClosure.auto[ReqId](keys)(is.apply, !dead.contains(_))
 
   case class Implications(srcToTgt: ImplicationsU) {
     lazy val tgtToSrc: ImplicationsU = srcToTgt.reverse

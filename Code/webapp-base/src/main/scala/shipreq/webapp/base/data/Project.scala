@@ -114,11 +114,11 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
   lazy val implicationTgtToSrcTC: TransitiveClosure[ReqId] =
     implicationTransitiveClosure(_.tgtToSrc)
 
-  private def implicationTransitiveClosure(f: Implications => ImplicationsU): TransitiveClosure[ReqId] = {
-    val dead = reqs.data.dead
-    val is = f(reqFieldData.data.implications)
-    TransitiveClosure.auto[ReqId](reqs.data.reqs.keys)(is.apply, !dead.contains(_))
-  }
+  private def implicationTransitiveClosure(f: Implications => ImplicationsU): TransitiveClosure[ReqId] =
+    ReqFieldData.implicationTransitiveClosure(
+      reqs.data.reqs.keys,
+      reqs.data.dead,
+      f(reqFieldData.data.implications))
 
   /** Keys are lowercase */
   lazy val hashRefLookupM: Map[String, HashRefTarget] = (
