@@ -217,6 +217,21 @@ object ShipReq extends Build {
     val dir = "webapp"
     override def project = typicalProject
       .aggregate(webappClient, webappBase, webappBaseTest, webappServer) // not umbrella cos it shouldn't dependOn
+      .configure(cmdAliases)
+
+    lazy val cmdAliases = {
+      def WB = "webapp-base"
+      def WT = "webapp-base-test"
+      def WC = "webapp-client"
+      def WS = "webapp-server"
+      addCommandAliases(
+        "ctbc"-> ";clean ;clear ;tbc",                                       // Clean Test Base & Client
+        "tbc" -> s";$WT/test:compile ;$WC/test:compile ;$WT/test ;$WC/test", // Test Base & Client
+        "js"  -> s";$WC/${Client.jsCmd} ;$WS/linkClientJs",                  // compile JavaScript
+        "up"  -> s";$WS/container:stop ;clear ;$WS/container:start",         // webapp: UP
+        "d"   -> s"$WS/container:stop",                                      // webapp: Down
+        "wd"  -> ";up ;~js")                                                 // WebDev
+    }
 
     // ----------------------------------------------------
     object Base extends Module {
@@ -231,9 +246,7 @@ object ShipReq extends Build {
           useMacroParadise,
           Common.utestOnJvm,
           dontInline, // crashes scalac 2.11.5
-          addCommandAliases(
-            "tbc" -> ";webapp-base-test/test; webapp-client/test",
-            "wd"  -> ";up;WC;~js"))
+          cmdAliases)
         .dependsOn(baseUtilSjs)
     }
 
@@ -245,7 +258,7 @@ object ShipReq extends Build {
         μTest.jvm ++ testScope(Nyaya.jvm.test)
 
       override def project = typicalProject
-        .configure(Common.utestOnJvm)
+        .configure(Common.utestOnJvm, cmdAliases)
         .dependsOn(webappBase)
     }
 
@@ -316,7 +329,7 @@ object ShipReq extends Build {
           Common.addSourceDialectJsFrom(baseUtilSjs),
           testSettings,
           dontInline, // ScalaJS inlines
-          addCommandAliases("js" -> s";$jsCmd;webapp-server/linkClientJs"),
+          cmdAliases,
           debugOrRelease(identity, prodJsSettings))
     }
 
@@ -404,9 +417,7 @@ object ShipReq extends Build {
           testSettings,
           integrationTestSettings,
           dontInline, // crashes scalac 2.11.5
-          addCommandAliases(
-            "up" -> ";container:stop ;clear ;container:start",
-            "d" -> "container:stop"))
+          cmdAliases)
         .settings(
           initialCommands += consoleCmds,
           // Ensure templates can be loaded from the console
