@@ -43,9 +43,10 @@ class WIP {
       TagInTree(TagGroup     (1, "Priority",        None, MutexChildren,     Alive), Vector(2.AT, 3.AT, 4.AT)),
       TagInTree(ApplicableTag(2, "High Priority",   None, "pri=high",        Alive), Vector()),
       TagInTree(ApplicableTag(3, "Medium Priority", None, "pri=med",         Alive), Vector()),
-      TagInTree(TagGroup     (10, "Status",         None, MutexChildren.Not, Alive), Vector(11.AT, 12.AT)),
+      TagInTree(TagGroup     (10, "Status",         None, MutexChildren.Not, Alive), Vector(11.AT, 12.AT, 13.AT)),
       TagInTree(ApplicableTag(11, "WIP",            None, "wip",             Alive), Vector()),
       TagInTree(ApplicableTag(12, "Deferred",       None, "defer",           Alive), Vector()),
+      TagInTree(ApplicableTag(13, "In UAT",         None, "uat",             Dead ), Vector()),
       TagInTree(TagGroup     (20, "Version",        None, MutexChildren.Not, Alive), Vector(27.TG, 21.AT, 25.AT, 26.AT)),
       TagInTree(ApplicableTag(21, "v1.x",           None, "v1.x",            Alive), Vector(22.AT, 23.AT, 24.AT)),
       TagInTree(ApplicableTag(22, "v1.0",           v10d, "v1.0",            Alive), Vector()),
@@ -82,7 +83,7 @@ class WIP {
     import shipreq.webapp.base.test.ProjectDsl._
 
     val List(co, mf, fr, br, dd, si) = List[CustomReqTypeId](1, 2, 3, 4, 5, 6)
-    val List(p1,p3,p5,v10,wip,v1x,v3x) = List[ApplicableTagId](4,3,2,22,11,21,26)
+    val List(p1,p3,p5,v10,wip,v1x,v3x,uat) = List[ApplicableTagId](4,3,2,22,11,21,26,13)
     val (p2,p4) = (p3,p5)
     val frs = (0 to 10).toVector.map(i => GenericReqId(i + 1000))
     val mfs = (0 to 28).toVector.map(i => GenericReqId(i + 1100))
@@ -112,7 +113,7 @@ class WIP {
     + GReq(reqType = mf, id = mfs( 3), title = "Export (PDF, XLS)"                     ).tag(p4)
     + GReq(reqType = mf, id = mfs( 4), title = "Templates"                             ).tag(p2)
     + GReq(reqType = mf, id = mfs( 5), title = "Field Customisation"                   ).tag(p5).tag(wip)
-    + GReq(reqType = mf, id = mfs( 6), title = "Incompletions"                         ).tag(p3).tag(wip)
+    + GReq(reqType = mf, id = mfs( 6), title = "Incompletions"                         ).tag(p3).tag(wip).tag(uat)
     + GReq(reqType = mf, id = mfs( 7), title = "Organisation"                          ).tag(p5).tag(wip).tag(v1x).tag(v10)
     + GReq(reqType = mf, id = mfs( 8), title = "History/Audit"                         ).tag(p3)
     + GReq(reqType = mf, id = mfs( 9), title = "Collaboration: authoring"              ).tag(p5)
@@ -144,6 +145,9 @@ class WIP {
     + GReq(reqType = co, id = cos(2), alive = Dead, title = "Entity-search should consider low-level reqs").impSrc(cos(1), frs(1))
 
     + GReq(reqType = si, id = sis(1), alive = Dead, title = "Just use excel!").impSrc(mfs(12))
+
+    + DeadReqCode("dead.ref", target = mfs(7))
+    + DeadReqCode("dead.group")
     )
 
     contentByDsl ! project
