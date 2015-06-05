@@ -12,7 +12,7 @@ import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes._
 import shipreq.webapp.base.text.Text, Text.Equality._
-import shipreq.webapp.base.TransitiveClosure
+import shipreq.webapp.base.util.TransitiveClosure
 import shipreq.webapp.base.TypeclassDerivation._
 
 // ===================================================================================================================

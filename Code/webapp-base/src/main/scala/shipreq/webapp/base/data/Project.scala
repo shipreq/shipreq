@@ -4,9 +4,8 @@ import monocle.macros.{GenLens, Lenses}
 import scalaz.{-\/, \/-}
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{Monoidish, Must}
-import shipreq.webapp.base.{TagColumnDistribution, TransitiveClosure}
 import shipreq.webapp.base.text.{Atom, Text}
-import shipreq.webapp.base.util.ShowSize
+import shipreq.webapp.base.util.{TransitiveClosure, ShowSize}
 import DataImplicits._
 import ReqFieldData.{Implications, ImplicationsU}
 

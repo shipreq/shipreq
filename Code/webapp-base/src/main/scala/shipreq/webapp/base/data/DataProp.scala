@@ -4,9 +4,7 @@ import japgolly.nyaya._
 import scala.reflect.ClassTag
 import scalaz.syntax.equal._
 import scalaz.std.AllInstances._
-import shipreq.base.util.Debug._
-import shipreq.base.util.{UnivEq, NonEmptyVector, Must, MTrie}, MTrie.Ops
-import shipreq.base.util.ScalaExt._
+import shipreq.base.util._, MTrie.Ops, ScalaExt._, Debug._
 import shipreq.webapp.base.text.{Atom, Text}
 import DataImplicits._
 

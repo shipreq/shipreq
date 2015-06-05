@@ -1,4 +1,4 @@
-package shipreq.webapp.base
+package shipreq.webapp.base.util
 
 import scala.collection.immutable.BitSet
 import scala.reflect.ClassTag

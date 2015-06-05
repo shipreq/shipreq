@@ -8,7 +8,6 @@ import scalaz.syntax.equal._
 import scalaz.syntax.semigroup._
 import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.base.TagColumnDistribution
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.util.ReqCodeTreeItem

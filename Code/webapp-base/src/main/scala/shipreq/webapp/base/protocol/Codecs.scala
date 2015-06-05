@@ -157,7 +157,7 @@ private[protocol] object CodecBase {
 
 // =====================================================================================================================
 object GenericCodecs {
-  import shipreq.webapp.base.data.{DataIdAux, ISubset}
+  import shipreq.webapp.base.data.DataIdAux
   import CodecBase._
 
   @inline implicit def string = BaseCodecs.StringRW

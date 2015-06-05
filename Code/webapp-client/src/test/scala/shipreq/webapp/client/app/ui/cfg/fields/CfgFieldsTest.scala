@@ -4,6 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 import scalaz.{Equal, \/-}
 import utest._
+import shipreq.base.util.ISubset
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.delta.{Partition, RemoteDeltaG}
 import shipreq.webapp.base.protocol.FieldProtocol._

@@ -1,7 +1,7 @@
 package shipreq.webapp.base.test
 
 import japgolly.nyaya.util.Multimap
-import shipreq.base.util.{NonEmptySet, NonEmptyVector, Must}
+import shipreq.base.util.{ISubset, NonEmptySet, NonEmptyVector, Must}
 import shipreq.webapp.base.data.Field.ApplicableReqTypes
 import shipreq.webapp.base.text.Grammar
 

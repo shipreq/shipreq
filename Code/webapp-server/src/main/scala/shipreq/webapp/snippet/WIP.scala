@@ -3,9 +3,9 @@ package shipreq.webapp.snippet
 import net.liftweb.util.Helpers._
 import scalaz.{Equal, \&/, -\/, \/-}, \&/._
 import scalaz.syntax.equal._
-import shipreq.base.util.{IMap, Util}
+import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
-import japgolly.nyaya.util._
+import japgolly.nyaya.util.{Util => _, _}
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.lib.ServerProtocol
 import shipreq.webapp.base.data, data._, DataImplicits._

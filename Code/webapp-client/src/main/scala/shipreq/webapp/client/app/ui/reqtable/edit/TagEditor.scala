@@ -9,7 +9,7 @@ import shipreq.base.util.effect.IoUtils, IoUtils.IoExt
 import shipreq.base.util.{SetDiff, Must, UnivEq}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Grammar
-import shipreq.webapp.base.{TagColumnDistribution, UiText}
+import shipreq.webapp.base.UiText
 import shipreq.webapp.client.app.ui.TextSeqEditor, TextSeqEditor._
 import shipreq.webapp.client.util.Plain
 

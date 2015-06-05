@@ -1,5 +1,6 @@
 package shipreq.webapp.client.app.ui.reqtable
 
+import shipreq.base.util.ISubset
 import shipreq.webapp.base.data._
 import DataImplicits._
 import Applicability.Subject

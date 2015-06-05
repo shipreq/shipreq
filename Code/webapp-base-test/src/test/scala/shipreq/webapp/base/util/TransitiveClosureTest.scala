@@ -1,12 +1,14 @@
-package shipreq.webapp.base
+package shipreq.webapp.base.util
 
 import japgolly.nyaya._
 import japgolly.nyaya.test.PropTest._
-import scalaz.std.stream._
-import utest._
-import shipreq.base.util.{UnivEq, Must}
-import UnivEq.{set => seqEq}
+import shipreq.base.util.UnivEq.{set => seqEq}
+import shipreq.base.util.{Must, UnivEq}
+import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
+import utest._
+
+import scalaz.std.stream._
 
 object TransitiveClosureTest extends TestSuite {
 

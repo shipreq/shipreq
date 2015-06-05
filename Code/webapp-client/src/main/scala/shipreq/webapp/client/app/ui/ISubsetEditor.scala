@@ -5,9 +5,8 @@ import shipreq.webapp.client.lib.ClientUtil
 import scalaz.effect.IO
 import scalaz.syntax.bind.ToBindOps
 import scalaz.syntax.equal._
-import shipreq.base.util.{NonEmptySet, UnivEq, IMap}
+import shipreq.base.util.{NonEmptySet, UnivEq, IMap, ISubset}
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.base.data.ISubset
 import shipreq.webapp.base.TypeclassDerivation._
 
 object ISubsetEditor {

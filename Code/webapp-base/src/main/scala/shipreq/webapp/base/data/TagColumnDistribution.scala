@@ -1,10 +1,9 @@
-package shipreq.webapp.base
+package shipreq.webapp.base.data
 
 import shipreq.base.util.Must
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.UnivEq.{immutableHashMapMemo => memo}
-import data._
-import DataImplicits._
+import shipreq.webapp.base.data.DataImplicits._
 
 abstract class TagColumnDistribution[A] {
   val inColumn: CustomField.Tag.Id => A

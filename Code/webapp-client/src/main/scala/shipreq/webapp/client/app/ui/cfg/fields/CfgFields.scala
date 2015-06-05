@@ -11,7 +11,7 @@ import scalaz.syntax.bind.ToBindOps
 import scalaz.syntax.equal._
 
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{NonEmptySet, NonEmptyVector, Util}
+import shipreq.base.util.{NonEmptySet, NonEmptyVector, Util, ISubset}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.delta.Partition
 import shipreq.webapp.base.data.Validators.{field => V}
