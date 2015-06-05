@@ -4,11 +4,6 @@ Phase 2
 ### ReqTable
 
 * Refs in ReqTitles
-* Show deleted
-  * effect on reqtable view settings
-  * effect on displayed refs
-  * effect on auto complete
-  * effect on validation
 * Handle no rows
 * Table status bar
 * New req
