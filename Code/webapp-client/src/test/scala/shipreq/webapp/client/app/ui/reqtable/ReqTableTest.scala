@@ -341,6 +341,12 @@ sealed trait ReqTableTest0 {
     def editor     (s: S) = cell(s)("input").as[html.Input]
     def editorValue(s: S) = editor(s).value
 
+    def setup(p: Project) =
+      setProject(p) >> showAllColumns >> Action.value(cell(_).innerText)
+
+    def startEdit =
+      focusCell(loc) >> editFocused >> Action.value(editorValue)
+
     def test(expect: Validity, err: => String) = (value: String) =>
       Action.exec2(editor)(ChangeEventData(value) simulate _)
         .focus(editorValue).assertAfter(value)
@@ -395,13 +401,10 @@ sealed trait ReqTableTest0 {
       applyViewSettings(ViewSettings(Column.builtInValues, SortCriteria.byPubidOnly, ShowDead))
         .focus(cell(_).innerText).assertAfter("MF-12, MF-19")
 
-    val startEdit =
-      focusCell(loc) >> editFocused >>
-        Action.value(editorValue).assertAfter("MF-12", "Should remove dead")
-
     // TODO What about an implication cycle with a dead link. Ok? Not ok? What about when when link is undeleted?
 
-    run(setup >> startEdit
+    run(setup
+      >> startEdit.assertAfter("MF-12", "Should remove dead")
       >> testInvalid("Target is dead")("MF-28")
       >> testInvalid("Target is dead")("MF-19")
       >> testInvalid("Should prevent cycles")("MF-27") // because FR-1 → FR-2 → MF-27
@@ -414,16 +417,8 @@ sealed trait ReqTableTest0 {
   def testImplicationTgtColumnEditor() = {
     val ce = CellEditor(_.table.cellLoc(pubid = "MF-3", col = "Implies"))
     import ce._
-
-    val setup =
-      setProject(SampleImplicationGraph.project) >> showAllColumns >>
-        Action.value(cell(_).innerText).assertAfter("FR-4, MF-4")
-
-    val startEdit =
-      focusCell(loc) >> editFocused >>
-        Action.value(editorValue).assertAfter("FR-4 MF-4")
-
-    run(setup >> startEdit
+    run(setup(SampleImplicationGraph.project).assertAfter("FR-4, MF-4")
+      >> startEdit.assertAfter("FR-4 MF-4")
       >> testInvalid("Should prevent cycles")("BR-1") // because BR-1 → BR-2 → FR-3 → BR-1
       >> testInvalid("Should prevent cycles")("BR-2") // because BR-1 → BR-2 → FR-3 → BR-2
       >> testValid("MF-3") // reflexivity is tolerated but should be ignored on save
@@ -469,15 +464,8 @@ sealed trait ReqTableTest0 {
     def mfs(sep: String, mfs: Int*): String =
       mfs.sorted.map("MF-" + _) mkString sep
 
-    val setup =
-      setProject(p) >> showAllColumns >>
-        Action.value(cell(_).innerText).assertAfter(mfs(", ", 1, 5, 2, 6, 7, 8, 9, 10, 13))
-
-    val startEdit =
-      focusCell(loc) >> editFocused >>
-        Action.value(editorValue).assertAfter(mfs(" ", 5, 6), "Should only show direct & alive")
-
-    run(setup >> startEdit
+    run(setup(p).assertAfter(mfs(", ", 1, 5, 2, 6, 7, 8, 9, 10, 13))
+      >> startEdit.assertAfter(mfs(" ", 5, 6), "Should only show direct & alive")
       >> testInvalid("Target is dead")("MF-4")
       >> testInvalid("Target is dead")("MF-8")
       >> testInvalid("Should prevent cycles")("MF-5 CO-5") // because MF-1 → MF-5 → MF-13 → CO-5 → MF-1
@@ -495,15 +483,8 @@ sealed trait ReqTableTest0 {
     val ce = CellEditor(_.table.cellLoc(pubid = "CO-1", col = "Tags"))
     import ce._
 
-    val setup =
-      setProject(p) >> showAllColumns >>
-        Action.value(cell(_).innerText).assertAfter("v1.x v3.x") // wip & uat in Status col
-
-    val startEdit =
-      focusCell(loc) >> editFocused >>
-        Action.value(editorValue).assertAfter("v1.x", "Should remove dead")
-
-    run(setup >> startEdit
+    run(setup(p).assertAfter("v1.x v3.x") // wip & uat in Status col
+      >> startEdit.assertAfter("v1.x", "Should remove dead")
       >> testInvalid("Target is dead")("v0.9")
       >> testInvalid("Target is dead")("v3.x")
       >> testInvalid("Status has its own column")("wip")
@@ -519,15 +500,8 @@ sealed trait ReqTableTest0 {
     val ce = CellEditor(_.table.cellLoc(pubid = "CO-1", col = "Status"))
     import ce._
 
-    val setup =
-      setProject(p) >> showAllColumns >>
-        Action.value(cell(_).innerText).assertAfter("wip uat")
-
-    val startEdit =
-      focusCell(loc) >> editFocused >>
-        Action.value(editorValue).assertAfter("wip", "Should remove dead")
-
-    run(setup >> startEdit
+    run(setup(p).assertAfter("wip uat")
+      >> startEdit.assertAfter("wip", "Should remove dead")
       >> testInvalid("Target is dead")("uat")
       >> testInvalid("Target is dead")("uat2")
       >> testInvalid("Not a status")("v1.0")
