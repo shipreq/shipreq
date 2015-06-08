@@ -207,8 +207,9 @@ object Style extends StyleSheet.Inline {
       case Live => "primary"
       case Dead => "default"
     }
-    val tag = styleF(D.live)(a => styleS(
-      addClassName(s"label label-${tagLabelSuffix(a)}"),
+    val tag = styleF(D.live)(live => styleS(
+      addClassName(s"label label-${tagLabelSuffix(live)}"),
+      mixinIf(live :: Dead)(&.not(_.Hover)(textDecoration := ^.lineThrough)),
       hoverShowsInfo))
 
     val reqType = styleF(D.live)(a => styleS(
