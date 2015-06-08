@@ -63,20 +63,19 @@ object ReqTable {
     val colRnds    = Px.apply2(vsCols, colRnd)(_ map _.apply)
     val rows       = Px.apply3(viewSettings, project, plainText)(Logic.rowsForTable(_, _, _).toVector)
     val stats      = Px.apply3(viewSettings, project, rows)(Logic.stats)
-    val ces        = new ColumnEditors(project, plainText, widgets, textSearch, setCell)
-    val content    = Px.apply3(colRnds, rows, stats)(Table.Content(_, _, _, ces))
+    val colEditors = new ColumnEditors(project, plainText, widgets, textSearch, setCell)
 
     def render = {
       import Px.AutoValue._
       Px.refresh(project, viewSettings)
-
       val s = $.state
 
-      val focusV = ReusableVar(s.focus)(setFocus)
+      val tableProps = Table.Props(
+        project, rows, stats, colRnds, colEditors, s.cellStates, ReusableVar(s.focus)(setFocus))
 
       <.div(
         vsEditor(vsVar),
-        Table.Component(Table.Props(project, content, s.cellStates, focusV)))
+        Table.Component(tableProps))
     }
   }
 }

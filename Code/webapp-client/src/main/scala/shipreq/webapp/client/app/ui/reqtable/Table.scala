@@ -29,25 +29,21 @@ object Table {
   implicit val reusabilityCRS : Reusability[Cell.RowState]                  = Reusability.byRef
   implicit val reusabilityTS  : Reusability[TableStats]                     = Reusability.byRef
 
-  implicit val reusabilityContent = Reusability.caseclass4(Content.unapply)
-  implicit val reusabilityFocus   = Reusability.caseclass3(Focus.unapply)
-  implicit val reusabilityProps   = Reusability.caseclass4(Props.unapply)
+  implicit val reusabilityFocus = Reusability.caseclass2(Focus.unapply)
+  implicit val reusabilityProps = Reusability.caseclass7(Props.unapply)
 
-  // TODO Content shouldn't have crs/ces
-  case class Content(crs  : NonEmptyVector[ColumnRenderer],
-                     rows : Vector[Row],
-                     stats: TableStats,
-                     ces  : ColumnEditors)
-
-  case class Focus(rowInd: Int, col: Column, content: Content) {
+  case class Focus(rowInd: Int, col: Column) {
     @inline def row(rows: Vector[Row]): Option[Row] =
       try { Some(rows(rowInd)) } catch { case _: Throwable => None }
   }
 
-  case class Props(project: Project,
-                   content: Content,
-                   cells  : Cell.TableState,
-                   focus  : ReusableVar[Option[Focus]])
+  case class Props(project     : Project,
+                   rows        : Vector[Row],
+                   stats       : TableStats,
+                   colRenderers: NonEmptyVector[ColumnRenderer],
+                   colEditors  : ColumnEditors,
+                   cells       : Cell.TableState,
+                   focus       : ReusableVar[Option[Focus]])
 
   val Component =
     ReactComponentB[Props]("Table")
@@ -115,12 +111,12 @@ object Table {
         withFocus(f => fv set Some(nf(f)))
 
       def focusShiftRow(add: Int) = focusMod { f =>
-        val r = limit(f.rowInd + add, f.content.rows.length - 1)
+        val r = limit(f.rowInd + add, $.props.rows.length - 1)
         f.copy(rowInd = r)
       }
 
       def focusShiftCol(add: Int) = focusMod { f =>
-        val cs = $.props.content.crs.whole
+        val cs = $.props.colRenderers.whole
         val i = cs.indexWhere(_.column ≟ f.col)
         val j = limit(i + add, cs.size - 1)
         val c = cs(j).column
@@ -133,7 +129,7 @@ object Table {
         case FocusLeft  => focusShiftCol(-1)
         case FocusRight => focusShiftCol(1)
         case FocusNone  => fv set None
-        case EditStart  => withFocusO(f => f.row(p.content.rows) flatMap (startCellEditing(_, f.col)))
+        case EditStart  => withFocusO(f => f.row(p.rows) flatMap (startCellEditing(_, f.col)))
       }
     }
 
@@ -143,17 +139,17 @@ object Table {
         // Already has cell state
         None
       else
-        p.content.ces.startCellEditing(row, col) //.map(_ >>> p.focus.set(None))
+        p.colEditors.startCellEditing(row, col) //.map(_ >>> p.focus.set(None))
     }
 
     // This is ok because $.props.focus is dereferenced INSIDE the function
     val setFocusFn = ReusableFn[Int, Column, IO[Unit]](
-      (i, c) => $.props.focus.set(Some(Focus(i, c, $.props.content))))
+      (i, c) => $.props.focus.set(Some(Focus(i, c))))
 
     def render: ReactElement = {
       val p     = $.props
-      val crs   = p.content.crs
-      val rows  = p.content.rows
+      val crs   = p.colRenderers
+      val rows  = p.rows
       val focus = p.focus.value
 
       val uniqKey = new KeyUniqueness
@@ -184,7 +180,7 @@ object Table {
           <.tbody(renderRows)),
         <.div(
           *.statsSummary,
-          p.content.stats.summary))
+          p.stats.summary))
     }
   }
 
