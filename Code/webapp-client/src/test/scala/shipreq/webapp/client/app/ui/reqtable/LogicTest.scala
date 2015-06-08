@@ -108,11 +108,15 @@ object LogicTest extends TestSuite {
     //   - if req.A then no rows without As
 
     // NOTE: ReqCodes *can* be duplicated. Imagine sorting by MF > Code.
+    def reqCodeProps =
+      E.test("", vs.isVisible(C.Code)) ==> (
+        E.allPresent("all req codes are displayed", expectedVisibleReqCodes, rowReqCodes)
+        ∧ noEmptyAndNonEmptyReqCodesMixed)
+
     def gather =
       ( E.distinct("Rows", gathered)
       ∧ E.allPresent("each generic req id has a row", srcGReqIds, rowGReqIds)
-      ∧ E.allPresent("all req codes are displayed", expectedVisibleReqCodes, rowReqCodes)
-      ∧ noEmptyAndNonEmptyReqCodesMixed
+      ∧ reqCodeProps
       ) rename "Logic.gather"
 
     // -----------------------------------------------------------------------------------------------------------------

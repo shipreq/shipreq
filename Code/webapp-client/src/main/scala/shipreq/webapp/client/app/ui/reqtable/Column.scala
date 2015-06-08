@@ -54,9 +54,9 @@ object Column {
 
   val mandatory: Column => Boolean = {
     case Pubid
-       | Code
        | Title          => true
     case ReqType
+       | Code
        | Tags
        | ImplicationSrc
        | ImplicationTgt
