@@ -637,10 +637,11 @@ object RandomData {
 
     def reqTitle(t: ReqTitle)(r: Option[Gen[ReqId]],
                               c: Option[Gen[ReqCodeId]],
-                              i: Option[Gen[CustomIssueTypeId]]): Gen[t.Atom] = {
+                              i: Option[Gen[CustomIssueTypeId]],
+                              a: Option[Gen[ApplicableTagId]]): Gen[t.Atom] = {
       @inline implicit def tt: t.type = t
       val x = singleLineGens(t)
-      val gs = (x append x) <++ reqRefs(r, c) <+ i.map(issue(_, r, c))
+      val gs = (x append x) <++ reqRefs(r, c) <+ a.map(tagRef(_)) <+ i.map(issue(_, r, c))
       Gen oneofGL gs
     }
 
@@ -794,13 +795,13 @@ object RandomData {
                    txtCols : Set[CustomField.Text.Id],
                    reqCodeG: Option[Gen[ReqCodeId]],
                    cissueG : Option[Gen[CustomIssueTypeId]],
+                   tagG    : Option[Gen[ApplicableTagId]],
                    tags    : Set[ApplicableTagId]): Gen[ReqFieldData] = {
 
     val gr = Gen.oneofO(reqs.toSeq)
-    val gt = Gen.oneofO(tags.toSeq)
 
     Gen.apply3(ReqFieldData.apply)(
-      reqFieldDataText(txtCols, reqs, TextGen.customTextFieldAtom(gr, reqCodeG, cissueG, gt).ptext1(Text.CustomTextField)),
+      reqFieldDataText(txtCols, reqs, TextGen.customTextFieldAtom(gr, reqCodeG, cissueG, tagG).ptext1(Text.CustomTextField)),
       reqFieldDataTags(reqs, tags),
       reqFieldDataImplications(reqs))
   }
@@ -968,10 +969,11 @@ object RandomData {
       activeCodeIds  = reqCodes1.cataA(Vector.empty[ReqCodeId])((q, _, a) => q :+ a.id)
       activeCodeIdG  = Gen oneofO activeCodeIds
       atagIds        = tags.data.vstream(_.tag).filterT[ApplicableTag].map(_.id).toSet
+      atagIdG        = Gen.oneofO(atagIds.toSeq)
       textColIds     = fields.data.customFields.values.filterT[CustomField.Text].map(_.id).toSet
-      reqFieldData   ← revAndG(reqFieldData(reqIdSet, textColIds, activeCodeIdG, cissueIdG, atagIds))
-      reqs2          ← genmodL(Requirements.reqs)(updateRequirementText(TextGen.genericReqTitleAtom(reqIdG, activeCodeIdG, cissueIdG).text))(reqs1)
-      reqCodes2      ← reqCode.updateGroupText(TextGen.reqCodeGroupTitleAtom(reqIdG, activeCodeIdG, cissueIdG).text)(reqCodes1.trie)
+      reqFieldData   ← revAndG(reqFieldData(reqIdSet, textColIds, activeCodeIdG, cissueIdG, atagIdG, atagIds))
+      reqs2          ← genmodL(Requirements.reqs)(updateRequirementText(TextGen.genericReqTitleAtom(reqIdG, activeCodeIdG, cissueIdG, atagIdG).text))(reqs1)
+      reqCodes2      ← reqCode.updateGroupText(TextGen.reqCodeGroupTitleAtom(reqIdG, activeCodeIdG, cissueIdG, atagIdG).text)(reqCodes1.trie)
       reqs           ← revAnd(reqs2)
       reqCodes       ← revAnd(ReqCodes(reqCodes2))
     } yield Project(issues, reqtypes, fields, tags, reqs, reqCodes, reqFieldData)

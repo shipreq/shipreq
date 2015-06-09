@@ -479,7 +479,7 @@ object DataCodecs {
       { case Js.Arr(Js.Str(TAGREF), v) => t.TagRef(readJs[ApplicableTagId](v)) }
 
     def readReqTitle(t: ReqTitle): PR[t.Atom] =
-      readSingleLine(t) orElse readReqRef(t) orElse readIssue(t)
+      readSingleLine(t) orElse readReqRef(t) orElse readTagRef(t) orElse readIssue(t)
 
 
 //    def stuff(t: Generic)(implicit

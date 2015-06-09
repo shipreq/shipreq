@@ -45,6 +45,11 @@ object Text {
   // ===================================================================================================================
   // Text instances
 
+  // After changing the structure of a text type, also update the following:
+  // - Codecs
+  // - Parsing rules in top-level text objects and Parsers
+  // - RandomData
+
   object InlineIssueDesc extends Base
       with A.SingleLine
       with A.ReqRef {
@@ -69,15 +74,15 @@ object Text {
 
   object CustomTextField extends Base
       with A.MultiLine
-      with A.ReqRef
       with A.Issue
+      with A.ReqRef
       with A.TagRef {
 
     override def parserI(p: Project)(i: ParserInput) = new Parser(p, i)
     final class Parser(val project: Project, val input: ParserInput) extends P.TopBase(this)
         with P.MultiLine
-        with P.ReqRef
         with P.Issue
+        with P.ReqRef
         with P.TagRef {
 
       def hashToken = rule(hashRef ~ (tagRef | issueRef))

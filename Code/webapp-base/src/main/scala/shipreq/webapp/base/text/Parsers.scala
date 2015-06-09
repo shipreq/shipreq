@@ -239,10 +239,11 @@ object Parsers {
 
   abstract class ReqTitle[_T <: Atom.ReqTitle](_t: _T, val project: Project, val input: ParserInput) extends TopBase(_t)
     with SingleLine
+    with Issue
     with ReqRef
-    with Issue {
+    with TagRef {
 
-    def hashToken = rule(hashRef ~ issueRef)
+    def hashToken = rule(hashRef ~ (tagRef | issueRef))
     val token = () => rule(hashToken | reqRef | singleLine)
   }
 }

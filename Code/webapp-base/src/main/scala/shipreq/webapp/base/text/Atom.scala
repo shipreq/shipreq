@@ -118,6 +118,7 @@ object Atom {
 
   /** The main title/desc of a top-level requirement. */
   trait ReqTitle extends SingleLine
-    with ReqRef
     with Issue
+    with ReqRef
+    with TagRef
 }
