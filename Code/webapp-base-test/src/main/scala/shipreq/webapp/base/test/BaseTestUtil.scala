@@ -4,6 +4,7 @@ import shipreq.base.util.Must
 import shipreq.base.util.ScalaExt._
 import scalaz.Equal
 import scalaz.syntax.equal._
+import scala.io.AnsiColor._
 
 object BaseTestUtil extends BaseTestUtil
 
@@ -22,13 +23,23 @@ trait BaseTestUtil {
   def assertEqO[A: Equal](name: => Option[String], actual: A, expect: A): Unit =
     if (actual ≠ expect) {
       println()
-      name.foreach(n => println(s">>>>>>> $n"))
-      val as = actual.toString
-      val es = expect.toString
-      if ((as + es) contains "\n")
-        println(s"actual: ↙[\n$as]\nexpect: ↙[\n$es]")
-      else
-        println(s"actual: [$as]\nexpect: [$es]")
+      def lead(s: String) = s"$RED_B$s$RESET "
+      name.foreach(n => println(lead(">>>>>>>") + BOLD + YELLOW + n + RESET))
+
+      val toString: Any => String = {
+        case s: Stream[_] => s.force.toString() // SI-9266
+        case a            => a.toString
+      }
+
+      var as = toString(actual)
+      var es = toString(expect)
+      var pre = "["
+      var post = "]"
+      if ((as + es) contains "\n") {
+        pre = "↙[\n"
+      }
+      println(lead("expect:") + pre + BOLD + GREEN + es + RESET + post)
+      println(lead("actual:") + pre + BOLD + RED + as + RESET + post)
       println()
       assert(false)
     }
