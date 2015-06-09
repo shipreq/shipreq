@@ -200,7 +200,9 @@ object CustomField {
     override def keyO = Some(key)
   }
   object Text {
-    final case class Id(value: Long) extends CustomFieldId
+    final case class Id(value: Long) extends CustomFieldId {
+      override def toString = s"CustomField.Text.Id($value)"
+    }
     object IdAccess extends ObjDataId[Text.type, Text, Id] {
       override def id(d: Text) = d.id
       override val unapplyData: AnyRef => Option[Text] = {case r: Text => Some(r); case _ => None}
@@ -221,7 +223,9 @@ object CustomField {
       tags(tagId).map(_.tag.name)
   }
   object Tag {
-    final case class Id(value: Long) extends CustomFieldId
+    final case class Id(value: Long) extends CustomFieldId  {
+      override def toString = s"CustomField.Tag.Id($value)"
+    }
     object IdAccess extends ObjDataId[Tag.type, Tag, Id] {
       override def id(d: Tag) = d.id
       override val unapplyData: AnyRef => Option[Tag] = {case r: Tag => Some(r); case _ => None}
@@ -242,7 +246,9 @@ object CustomField {
       ReqType.name(customReqTypes)(reqTypeId)
   }
   object Implication {
-    final case class Id(value: Long) extends CustomFieldId
+    final case class Id(value: Long) extends CustomFieldId {
+      override def toString = s"CustomField.Implication.Id($value)"
+    }
     object IdAccess extends ObjDataId[Implication.type, Implication, Id] {
       override def id(d: Implication) = d.id
       override val unapplyData: AnyRef => Option[Implication] = {case r: Implication => Some(r); case _ => None}
