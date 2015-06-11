@@ -133,30 +133,22 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
    * Searches all (live) text fields in each reqs for TagRefs.
    */
   lazy val tagsInText: Multimap[ReqId, Set, ApplicableTagId] = {
-    type Tags = Set[ApplicableTagId]
-    val empty: Tags = UnivEq.emptySet
-
-    def searchText[T <: Atom.TagRef](text: Vector[T#Atom]): EndoFn[Tags] =
-      text.foldLeft(_)((q, a) => a match {
-        case t: Atom.TagRef # TagRef => q + t.value
-        case _                       => q
-      })
-
+    type Tags      = Set[ApplicableTagId]
     val textData   = reqFieldData.data.text
     val textFields = customTextFields.filter(_.live :: Live).map(_.id)
 
-    def searchCustomTextFields(id: ReqId): EndoFn[Tags] =
-      textFields.foldLeft(_)((q, f) =>
+    def searchCustomTextFields(id: ReqId, into: Tags): Tags =
+      textFields.foldLeft(into)((q, f) =>
         textData.get(f).flatMap(_ get id) match {
           case None      => q
-          case Some(txt) => searchText(txt.whole)(q)
+          case Some(txt) => Text.findTags(txt.whole, q)
         }
       )
 
     def findAll(req: Req): Tags =
-      (req match {
-        case r: GenericReq => searchCustomTextFields(r.id) compose searchText(r.title)
-      })(empty)
+      req match {
+        case r: GenericReq => searchCustomTextFields(r.id, Text.findTags(r.title))
+      }
 
     val m = reqs.data.reqs.mapValues(findAll)
     Multimap(m)

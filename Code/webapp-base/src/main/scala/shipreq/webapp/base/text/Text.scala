@@ -2,7 +2,7 @@ package shipreq.webapp.base.text
 
 import org.parboiled2._
 import shipreq.base.util.UnivEq
-import shipreq.webapp.base.data.Project
+import shipreq.webapp.base.data.{ApplicableTagId, Project}
 import shipreq.webapp.base.text.{Atom => A, Parsers => P}
 
 object Text {
@@ -90,4 +90,14 @@ object Text {
       override protected def issueInnerDesc = rule(runSubParser(InlineIssueDesc.parserI(project)(_).inline))
     }
   }
+
+  // ===================================================================================================================
+  // Utilities
+
+  def findTags[T <: Atom.TagRef](text: Vector[T#Atom], into: Set[ApplicableTagId] = UnivEq.emptySet): Set[ApplicableTagId] =
+    text.foldLeft(into)((q, a) => a match {
+      case t: Atom.TagRef#TagRef => q + t.value
+      case _                     => q
+    })
+
 }
