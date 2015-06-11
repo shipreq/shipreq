@@ -322,7 +322,7 @@ object Sorter {
   val titleSorter: SorterForSMCB =
     textSorter(C.Title, p => {
       case r: GenericReqRow   => p.reqTitle(r.req)
-      case r: ReqCodeGroupRow => p.reqCodeGroupTitle(r.reqCodeId, r.group)
+      case r: ReqCodeGroupRow => p.reqCodeGroupTitle(r.groupAndId)
     })
 
   // ===================================================================================================================

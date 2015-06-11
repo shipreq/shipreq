@@ -516,7 +516,7 @@ object LogicTest extends TestSuite {
     def testTitle(): Unit = {
       val p       = GReq() + GReq("AT") + GReq("and") + GReq("haha") + GReq("F") !! PA
       val pt      = PlainText(p)
-      val fmtRows = rowToStr(_.req |> pt.reqTitle, r => pt.reqCodeGroupTitle(r.reqCodeId, r.group), _.apif(_.isEmpty, _z))
+      val fmtRows = rowToStr(_.req |> pt.reqTitle, _.groupAndId |> pt.reqCodeGroupTitle, _.apif(_.isEmpty, _z))
       testCB(p, pt, C.Title, ShowDead, fmtRows)(allSortsCB(1,
         asc  = "and  AT  F  haha",
         desc = "haha  F  AT  and"))

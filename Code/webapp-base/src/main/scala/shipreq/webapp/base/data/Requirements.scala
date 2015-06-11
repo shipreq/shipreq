@@ -139,9 +139,15 @@ object ReqCode {
  *
  * Previously called "Semantic Header Row" or "SHR" in the requirements.
  */
-final case class ReqCodeGroup(title: Text.ReqCodeGroupTitle.OptionalText) extends ReqCode.Target
+final case class ReqCodeGroup(title: Text.ReqCodeGroupTitle.OptionalText) extends ReqCode.Target {
+  @inline def and(id: ReqCodeId): ReqCodeGroup.AndId =
+    ReqCodeGroup.AndId(id, this)
+}
 object ReqCodeGroup {
-  implicit val equality: UnivEq[ReqCodeGroup] = deriveUnivEq
+  final case class AndId(id: ReqCodeId, group: ReqCodeGroup)
+
+  implicit val equality     : UnivEq[ReqCodeGroup] = deriveUnivEq
+  implicit val andIdEquality: UnivEq[AndId]        = deriveUnivEq
 }
 
 /**

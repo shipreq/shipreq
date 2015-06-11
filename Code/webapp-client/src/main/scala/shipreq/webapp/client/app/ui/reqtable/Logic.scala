@@ -272,7 +272,8 @@ private[reqtable] object Logic {
           case _: ReqId        => q
           case g: ReqCodeGroup =>
             // TODO: Filter
-            ReqCodeGroupRow(d.id, g, c, None) #:: q
+            val groupAndId = g and d.id
+            ReqCodeGroupRow(groupAndId, c, None) #:: q
         })
       else
         Stream.empty

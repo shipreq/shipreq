@@ -91,14 +91,14 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
   }
 
   private def code = make {
-    case GenericReqRow(_, exp, _)           => widgets.reqCodes(exp.reqCodeTree, exp.reqCodes)
-    case ReqCodeGroupRow(id, _, _, Some(t)) => widgets.reqCodeTreeItem(t)
-    case ReqCodeGroupRow(id, _, c, None)    => widgets.flatReqCode(c)
+    case GenericReqRow(_, exp, _)       => widgets.reqCodes(exp.reqCodeTree, exp.reqCodes)
+    case ReqCodeGroupRow(_, _, Some(t)) => widgets.reqCodeTreeItem(t)
+    case ReqCodeGroupRow(_, c, None)    => widgets.flatReqCode(c)
   }
 
   private def title = make {
-    case GenericReqRow(req, _, _)     => widgets.reqTitle(req)
-    case ReqCodeGroupRow(id, g, _, _) => widgets.reqCodeGroupTitle(id, g)
+    case GenericReqRow(req, _, _) => widgets.reqTitle(req)
+    case ReqCodeGroupRow(g, _, _) => widgets.reqCodeGroupTitle(g)
   }
 
   private def imps(lens: Optional[Row, Vector[Pubid]]) = make {

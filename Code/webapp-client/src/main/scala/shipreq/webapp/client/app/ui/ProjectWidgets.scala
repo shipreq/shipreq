@@ -130,7 +130,7 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
         yield ref(c, *.reqRef(req.live), plainText reqTitle req)
 
     def toGroup(c: ReqCode.Value, g: ReqCodeGroup): ReactElement =
-      ref(c, *.reqCodeGroupRef(Live), UiText mustA plainText.reqCodeGroupTitle(id, g))
+      ref(c, *.reqCodeGroupRef(Live), UiText mustA plainText.reqCodeGroupTitle(g and id))
 
     def ref(c: ReqCode.Value, style: StyleA, title: UndefOr[String]): ReactElement =
       <.span(
