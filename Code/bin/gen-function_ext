@@ -6,8 +6,18 @@ def T(i: Int) = (64+i).toChar.toString
 
 var com = Seq.empty[String]
 var hom = Seq.empty[String]
+var gen = Seq.empty[String]
+var boo = Seq.empty[String]
 
-for (i <- (2 to 9)) {
+def mergeFn(name: String, i: String, is: String, o: String, op: String) =
+  s"  @inline def $name(y: $i⇒$o): $i⇒$o = ($is) ⇒ _x($is) $op y($is)"
+def and(i: String, is: String) = mergeFn("&&", i, is, "Boolean", "&&")
+def or (i: String, is: String) = mergeFn("||", i, is, "Boolean", "||")
+
+def unify(i: String, is: String, o: String) =
+  s"  @inline def unify(y: $i⇒$o)(u: (⇒$o,⇒$o)⇒$o): $i⇒$o = ($is)⇒u(_x($is),y($is))"
+
+for (i <- (1 to 9)) {
   // def m (f: Int => String): List[String] = (1 to a).toList.map(f)
   // def mc(f: Int => String): String = m(f).mkString(comma)
   // def mt(f: Int => String): String = m(f).mkString("(",comma,")")
@@ -16,17 +26,31 @@ for (i <- (2 to 9)) {
   val As = (0 until i) map A
   val Ac = As mkString ","
   val ac = Ac.toLowerCase
+  val _s = List.fill(i)("_") mkString ","
 
-  com :+= s"  @inline def composeA[$Ac](y: ($Ac)⇒X): ($Ac)⇒Y = y andThenA _x"
-  hom :+= s"  def overTuple$i: HomoTuple${i}Map[X,Y] = _ mapEach _x"
+  if (i > 1) {
+    com :+= s"  @inline def composeA[$Ac](y: ($Ac)⇒X): ($Ac)⇒Y = y andThenA _x"
+    hom :+= s"  def overTuple$i: HomoTuple${i}Map[X,Y] = _ mapEach _x"
 
-  println(s"@inline final implicit class Function${i}Ext[$Ac,R](val _x: ($Ac) ⇒ R) extends AnyVal {")
-  println(s"  @inline def andThenA[Z](y: R⇒Z): ($Ac)⇒Z = ($ac)⇒y(_x($ac))")
-  println("}")
+    gen :+= s"@inline final implicit class Function${i}Ext[$Ac,R](val _x: ($Ac) ⇒ R) extends AnyVal {"
+    gen :+= s"  @inline def andThenA[Z](y: R⇒Z): ($Ac)⇒Z = ($ac)⇒y(_x($ac))"
+    gen :+= unify(s"($Ac)", ac, "R")
+    gen :+= "}"
+  }
+
+  boo :+= s"@inline final implicit class Function${i}BoolExt[$Ac](val _x: ($Ac) ⇒ Boolean) extends AnyVal {"
+  boo :+= s"  @inline def unary_! : ($Ac) ⇒ Boolean = !_x(${_s})"
+  boo :+= and(s"($Ac)", ac)
+  boo :+= or(s"($Ac)", ac)
+  boo :+= "}"
 }
 // println((rt++ra) mkString "\n")
 println(s"@inline final implicit class Function1Ext[X,Y](val _x: X ⇒ Y) extends AnyVal {")
+println(unify("X", "x", "Y"))
 println(com mkString "\n")
 println(hom mkString "\n")
 println("}")
+println(gen mkString "\n")
+println()
+println(boo mkString "\n")
 println()
