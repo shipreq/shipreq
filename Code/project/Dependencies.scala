@@ -9,6 +9,8 @@ object Deps {
   case class MS private[Deps](ms: Seq[ModuleID]) {
     def %(revision: String): MS = MS(ms.map(_ % revision))
     def ++(that: MS): MS = MS(ms ++ that.ms)
+    def exclude(org: String, name: String) = MS(ms.map(_ exclude(org, name)))
+    def removeShapelessFork = exclude("com.github.japgolly.fork.shapeless", "shapeless")
   }
   object MS {
     val empty = MS(Seq.empty)
@@ -31,7 +33,7 @@ object Deps {
 
   case class JvmAndJsFork(jvmGroupId: String, jsGroupId: String, name: String, version: String, jsVersion: String = null) {
     final val jvm: MS = (jvmGroupId: GroupID) %% name % version
-    final val js: MS = jsGA(jsGroupId, name) % Option(jsVersion).getOrElse(version)
+    final val js: MS = (jsGA(jsGroupId, name) % Option(jsVersion).getOrElse(version)).removeShapelessFork
     def apply(jvm: Boolean): MS = if (jvm) this.jvm else js
   }
 
@@ -47,8 +49,8 @@ object Deps {
       val most    = core ++ scalaz ++ monocle ++ extra
     }
     object ScalaCSS extends Group("0.2.0", "com.github.japgolly.scalacss") {
-      val core  = js("core")
-      val react = js("ext-react") ++ core
+      val core  = js("core").removeShapelessFork
+      val react = js("ext-react").removeShapelessFork ++ core
     }
     object Scalaz extends Group(Deps.Scalaz.version, "com.github.japgolly.fork.scalaz") {
       val core   = js("scalaz-core")
@@ -121,9 +123,9 @@ object Deps {
     val combo = dd("specs2-core") ++ dd("specs2-scalacheck")
   }
 
-  val shapeless = JvmAndJsFork("com.chuusai", "com.github.japgolly.fork.shapeless", "shapeless", "2.1.0", "2.1.0-2")
   val parboiled = JvmAndJsFork("org.parboiled", "com.github.japgolly.fork.parboiled", "parboiled", "2.1.0", "2.1.0")
 
+  val shapeless = JvmAndJs("com.chuusai",                      "shapeless", "2.2.0")
   val μPickle   = JvmAndJs("com.github.japgolly.fork.upickle", "upickle", "custom-3")
   val μTest     = JvmAndJs("com.lihaoyi",                      "utest",   "0.3.1")
 
