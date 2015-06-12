@@ -80,12 +80,14 @@ object Grammar {
   /** [[shipreq.webapp.base.data.ReqType.Mnemonic]] */
   object reqTypeMnemonic {
     val length = Length(1 to 6)
-    val chars     = new CharWhitelist("", 'A', 'B' to 'Z')("may only consist of letters.")
-    val parseChar = CharPredicate.Alpha
-    val parsePost = (_: String).toUpperCase
+    val chars  = new CharWhitelist("", 'A', 'B' to 'Z')("may only consist of letters.")
+
+    val caseSensitiveParseChar   = CharPredicate.UpperAlpha
+    val caseInsensitiveParseChar = CharPredicate.Alpha
+    val caseInsensitiveParsePost = (_: String).toUpperCase
   }
 
-  val pubidSeqFormat = SeqFormat(_.trim, "[ ,]+".r.pattern, _.replace("-", "") |> reqTypeMnemonic.parsePost, _.isEmpty)
+  val pubidSeqFormat = SeqFormat(_.trim, "[ ,]+".r.pattern, _.replace("-", "") |> reqTypeMnemonic.caseInsensitiveParsePost, _.isEmpty)
 
   // TODO hashrefkey & mnemonic are both case-insensitive but char ranges are defined differently
 

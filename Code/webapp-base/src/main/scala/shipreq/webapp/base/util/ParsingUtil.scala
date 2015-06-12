@@ -11,9 +11,9 @@ object ParsingUtil {
   // (0 to 65535).filter(i => java.lang.Character.isWhitespace(i.toChar)).map("\\u%04x".format(_)).mkString("\"","","\"")
   val whitespace = CharPredicate("\u0009\u000a\u000b\u000c\u000d\u001c\u001d\u001e\u001f\u0020\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2008\u2009\u200a\u2028\u2029\u205f\u3000".toCharArray)
 
-  val nonWhitespace = whitespace.negated
+  val nonWhitespace = whitespace.negated -- EOI
 
-  val mkReqTypeMnemonic = G.reqTypeMnemonic.parsePost andThen ReqType.Mnemonic.apply
+  val mkReqTypeMnemonicCI = G.reqTypeMnemonic.caseInsensitiveParsePost andThen ReqType.Mnemonic.apply
 
   val trim = (_: String).trim
 
@@ -66,8 +66,8 @@ abstract class ParsingUtil extends Parser {
   def nonGreedyCapture(stopAt: () => Rule0): Rule1[String] =
     rule(capture(oneOrMore(!stopAt() ~ ANY)) ~ stopAt())
 
-  def surroundedBy(s: () => Rule0): Rule1[String] =
-    rule(s() ~ nonGreedyCapture(s))
+//  def surroundedBy(s: () => Rule0): Rule1[String] =
+//    rule(s() ~ nonGreedyCapture(s))
 
   def surround(s: G.Surrounds): Rule1[String] =
     surround(s.parsing)
@@ -77,12 +77,18 @@ abstract class ParsingUtil extends Parser {
     rule(s.prefix ~ nonGreedyCapture(end) ~> trim)
   }
 
-  def reqTypeMnemonic: Rule1[ReqType.Mnemonic] =
-    rule(capture(G.reqTypeMnemonic.length.total times G.reqTypeMnemonic.parseChar) ~> mkReqTypeMnemonic)
+  def reqTypeMnemonicCI: Rule1[ReqType.Mnemonic] =
+    rule(capture(G.reqTypeMnemonic.length.total times G.reqTypeMnemonic.caseInsensitiveParseChar) ~> mkReqTypeMnemonicCI)
+
+  def reqTypeMnemonicCS: Rule1[ReqType.Mnemonic] =
+    rule(capture(G.reqTypeMnemonic.length.total times G.reqTypeMnemonic.caseSensitiveParseChar) ~> ReqType.Mnemonic)
 
   def reqTypePos: Rule1[ReqTypePos] =
     rule(int1n ~> ReqTypePos)
 
   def hashRefStr: Rule1[String] =
     rule(G.hashRefKey.prefix ~ capture(grammarStr(G.hashRefKey)(_.firstChar, _.allChars, _.length)))
+
+  def hashRefStr_! : Rule1[String] =
+    rule(G.hashRefKey.prefix ~!~ capture(grammarStr(G.hashRefKey)(_.firstChar, _.allChars, _.length)))
 }

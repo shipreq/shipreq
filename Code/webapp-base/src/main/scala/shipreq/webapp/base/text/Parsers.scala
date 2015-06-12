@@ -121,7 +121,7 @@ object Parsers {
     import ReqCode._
 
     def pubidRef: Rule1[t.ReqRef] = rule(
-      prefix ~ OWS ~ reqTypeMnemonic ~ OWS ~ ('-' ~ OWS).? ~ reqTypePos ~ OWS ~ suffix
+      prefix ~ OWS ~ reqTypeMnemonicCI ~ OWS ~ ('-' ~ OWS).? ~ reqTypePos ~ OWS ~ suffix
         ~> lookupReq ~ popOptional[ReqId] ~> t.ReqRef)
 
     def reqCodeNode: Rule1[Node] = rule(

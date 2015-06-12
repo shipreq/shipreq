@@ -17,16 +17,17 @@ object FilterSpec {
   }
   type Reqs = NonEmptyVector[ReqsSpec]
 
-  /** Could be MF, hello. Not "MF". Has no spaces, parens () {}, quotes ' " ``, colons. */
-  case class ReqType   (value: Mnemonic)                    extends FilterSpec
+  // TODO Use NonEmptySets instead of NonEmptyVectors
+
   case class SimpleText(text: String)                       extends FilterSpec
-  case class HashRef   (text: String)                       extends FilterSpec
   case class QuotedText(text: String, quoteChar: Char)      extends FilterSpec
   case class Regex     (text: String)                       extends FilterSpec
-  case class Presence  (attr: String)                       extends FilterSpec
-  case class Lack      (attr: String)                       extends FilterSpec
+  case class ReqType   (value: Mnemonic)                    extends FilterSpec
+  case class HashRef   (text: String)                       extends FilterSpec
   case class Implies   (reqs: Reqs)                         extends FilterSpec
   case class ImpliedBy (reqs: Reqs)                         extends FilterSpec
+  case class Presence  (attr: String)                       extends FilterSpec
+  case class Lack      (attr: String)                       extends FilterSpec
   case class AllOf     (clause: NonEmptyVector[FilterSpec]) extends FilterSpec
   case class AnyOf     (clause: NonEmptyVector[FilterSpec]) extends FilterSpec
   case class Not       (expr: FilterSpec)                   extends FilterSpec
@@ -41,7 +42,12 @@ import ParsingUtil._
 
 object FilterParser {
 
-  private val simpleTextChar = CharPredicate(""" :'"`(){}""".toCharArray).negated
+  // Allows ' / -
+  private val simpleTextChar =
+    CharPredicate("""#:"`(){}""".toCharArray).negated -- whitespace -- EOI
+
+  private val attrChar =
+    CharPredicate.AlphaNum
 
   private val mkIntSet1: Int => Set[Int] =
     Set.empty[Int].+
@@ -96,14 +102,15 @@ class FilterParser(val input: ParserInput) extends ParsingUtil {
 
   /** MF or MF-3 or MF-{1,3,5-9,12} */
   def reqsSpec: Rule1[ReqsSpec] =
-    rule(reqTypeMnemonic ~ optional('-' ~!~ numberOrRange) ~> mkReqsSpec)
+    rule(reqTypeMnemonicCI ~ optional('-' ~!~ numberOrRange) ~> mkReqsSpec)
 
   def reqs: Rule1[Reqs] =
     rule((reqsSpec + ',') ~ popSeqToNEV[ReqsSpec])
 
   private case class QuoteRule(char: Char) {
     val charRule: () => Rule0       = () => rule(char)
-    def toRule  : Rule1[QuotedText] = rule(surroundedBy(charRule) ~> (QuotedText(_: String, char)))
+    def toRule  : Rule1[QuotedText] =
+      rule(charRule() ~!~ nonGreedyCapture(charRule) ~> (QuotedText(_: String, char)))
   }
   private val quote1 = QuoteRule('"')
   private val quote2 = QuoteRule('\'')
@@ -115,20 +122,26 @@ class FilterParser(val input: ParserInput) extends ParsingUtil {
   def simpleText: Rule1[SimpleText] =
     rule(capture(simpleTextChar.+) ~> SimpleText)
 
+  def regexChar: Rule0 =
+    rule(!'/' ~ '\\'.? ~ ANY)
+
   def regex: Rule1[Regex] =
-    rule('/' ~!~ capture(oneOrMore(('\\' ~ ANY) | (!'/'))) ~ '/' ~> Regex)
+    rule('/' ~!~ capture(regexChar.+) ~!~ '/' ~> ((s: String) => Regex(s.replace("\\/", "/"))))
 
   def hashRef: Rule1[HashRef] =
-    rule(hashRefStr ~> HashRef)
+    rule(hashRefStr_! ~> HashRef)
 
   def reqType: Rule1[ReqType] =
-    rule(reqTypeMnemonic ~> ReqType)
+    rule(reqTypeMnemonicCS ~> ReqType)
+
+  def attr: Rule1[String] =
+    rule(capture(attrChar.+))
 
   def presence: Rule1[Presence] =
-    rule("has:" ~!~ capture(nonWhitespace.+) ~> Presence)
+    rule("has:" ~!~ attr ~> Presence)
 
   def lack: Rule1[Lack] =
-    rule("no:" ~!~ capture(nonWhitespace.+) ~> Lack)
+    rule("no:" ~!~ attr ~> Lack)
 
   /** implies:MF or impliedBy:FR,CC-1 */
   def implication: Rule1[FilterSpec] =
@@ -145,8 +158,8 @@ class FilterParser(val input: ParserInput) extends ParsingUtil {
   def positive: Rule1[FilterSpec] =
     rule(allOf | anyOf | quotedText | regex | hashRef | presence | lack | implication | reqType | simpleText)
 
-  def negative: Rule1[Not] =
-    rule('-' ~!~ positive ~> Not)
+  def negative: Rule1[FilterSpec] =
+    rule('-' ~!~ (('-' ~!~ expr) | (expr ~> Not)))
 
   def expr: Rule1[FilterSpec] =
     rule(negative | positive)
