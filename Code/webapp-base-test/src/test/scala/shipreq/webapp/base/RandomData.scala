@@ -247,7 +247,7 @@ object RandomData {
     revAndIMap(customReqType)(d.run)
   }
 
-  val staticReqTypeIdSet = StaticReqType.values.toSet[ReqTypeId]
+  val staticReqTypeIdSet = StaticReqType.values.toNES[ReqTypeId]
 
   // -------------------------------------------------------------------------------------------------------------------
   // Tags

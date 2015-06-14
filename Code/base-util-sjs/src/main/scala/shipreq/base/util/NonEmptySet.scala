@@ -74,7 +74,7 @@ final class NonEmptySet[A] private[util] (val head: A, val tail: Set[A]) {
 
   @inline def toStream = whole.toStream
 
-  def toNonEmptyVector: NonEmptyVector[A] =
+  def toNEV: NonEmptyVector[A] =
     NonEmptyVector(head, tail.toVector)
 
   def mapV[B](f: A => B): NonEmptyVector[B] = {

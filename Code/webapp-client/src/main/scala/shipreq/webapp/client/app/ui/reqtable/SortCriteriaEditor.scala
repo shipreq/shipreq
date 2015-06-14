@@ -164,7 +164,7 @@ object SortCriteriaEditor {
 
       def columnDropdown(value: Col, cols: NonEmptySet[Col], columnName: Column.NameResolver, modIO: ModIO): ReactElement = {
         val colChoices =
-          cols.toNonEmptyVector.map(c => Choice(c, columnName(c), Enabled))
+          cols.toNEV.map(c => Choice(c, columnName(c), Enabled))
             .sortBy(_.label)
         val onSelect = Some((v: Col) => modIO(_.copy(column = v)))
         colSelectComponent(SelectOne.Props(value, colChoices, onSelect, *.conclusiveColumnName))

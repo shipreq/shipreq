@@ -112,7 +112,7 @@ final class NonEmptyVector[+A](val head: A, val tail: Vector[A]) {
 
   @inline def toStream = whole.toStream
 
-  @inline def toSet[B >: A : UnivEq]: NonEmptySet[B] =
+  @inline def toNES[B >: A : UnivEq]: NonEmptySet[B] =
     NonEmptySet(head, tail.toSet[B])
 
   private def safeTrans[B](f: Vector[A] => Vector[B]): NonEmptyVector[B] = {

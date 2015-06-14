@@ -47,7 +47,7 @@ object ViewSettingsEditor {
         columnsEditor.render(vs.filterDead, vs.columns, p.vs.set compose setColumns)
 
       def sortCriteria =
-        SortCriteriaEditor.Props(vs.order, vs.columns.toSet, columnName, p.vs setL ViewSettings.order).component
+        SortCriteriaEditor.Props(vs.order, vs.columns.toNES, columnName, p.vs setL ViewSettings.order).component
 
       <.div(
         <.table(
