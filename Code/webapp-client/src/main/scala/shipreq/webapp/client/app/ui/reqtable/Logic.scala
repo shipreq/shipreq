@@ -208,6 +208,102 @@ private[reqtable] object Logic {
   }
 
   // ===================================================================================================================
+  // Gathering
+
+  /**
+   * Gathers [[Row]]s for display in [[ReqTable]].
+   * Performs expansion.
+   * Does not perform any sorting.
+   */
+  def gather(vs: ViewSettings, p: Project, pt: PlainText.ForProject, ts: TextSearch): Stream[Row] = {
+
+    // NOTES:
+    //
+    // * Column.ImplicationSrc isn't transitive; custom implication columns are.
+    //   There can potentially be overlap but culling this could be misleading.
+    //
+    // * The Tags column is not expanded. Only custom tag columns are.
+
+    // The Tags column:
+    // 1. never displays tags allocated to live tag-columns.
+    // 2. doesn't display tags allocated to visible, dead tag-columns.
+    val tagColDist: TagColumnDistribution.TagIds =
+      vs.filterDead match {
+        case HideDead => p.liveTagColumnDistribution
+        case ShowDead => TagColumnDistribution(p, f => f.live match {
+          case Live => true
+          case Dead => vs isVisible Column.CustomField(f.id, Dead)
+        })
+      }
+
+    val filterDead    = Filter(vs.filterDead.filterFnA(_.live), FilterFn.`n/a`)
+    val tagLookup     = this.tagLookup(p)
+    val tagFilter     = this.tagFilter(vs, p)
+    val issueLookup   = this.issueLookup(p)
+    val applicability = Applicability(p)
+    val expandImpSrcs = expanderC[Pubid](vs, Column.ImplicationSrc)
+    val expandImpTgts = expanderC[Pubid](vs, Column.ImplicationTgt)
+    val expandCodes   = expanderC[ReqCode.Value](vs, Column.Code)
+    val expandImpCols = impColValueExpander(vs, p, applicability)
+    val expandTagCols = tagColValueExpander(vs, p, applicability, tagColDist, tagLookup, tagFilter)
+
+    val pReqs         = p.reqs.data
+    val pReqCodes     = p.reqCodes.data.activeReqCodesByTarget
+    val pImplications = p.reqFieldData.data.implications
+    val multiValuesFn = this.multiValuesFn(vs, p, tagColDist, tagLookup, tagFilter)
+
+    def pubid(reqId: ReqId): Option[Pubid] =
+      pReqs.reqM(reqId).fold[Option[Pubid]](failedMust(None), req =>
+        if (filterDead a req) Some(req.pubid) else None)
+
+    def pubids(s: Set[ReqId]): Set[Pubid] =
+      s.foldLeft(UnivEq.emptySet[Pubid])((q, id) =>
+        pubid(id).fold(q)(q + _))
+
+    // A result of None here means the filter has ruled out everything
+    val fullFilter: Option[Filter] =
+      vs.filter.map(filter(_, p, pt, ts, issueLookup, tagLookup)) match {
+        case None               => Some(filterDead)
+        case Some(Some(filter)) => Some(filterDead && filter)
+        case Some(None)         => None
+      }
+
+    fullFilter.fold(Stream.empty[Row]) { filter =>
+
+      def reqRows =
+        p.reqs.data.reqs.vstreamf {
+          case r: GenericReq =>
+            maybeUse(filter a r) {
+              val id = r.id
+
+              // Expansion
+              val impSrcs = expandImpSrcs(() => pImplications.tgtToSrc(id) |> pubids)
+              val impTgts = expandImpTgts(() => pImplications.srcToTgt(id) |> pubids)
+              val codes   = expandCodes  (() => pReqCodes(id))
+              val cfImps  = expandImpCols(r)
+              val cfTags  = expandTagCols(r)
+              val exps    = expansions(impSrcs, impTgts, codes, cfImps, cfTags)
+
+              // Build
+              val mv = multiValuesFn(id)
+              exps.toStream.map(GenericReqRow(r, _, mv))
+            }
+        }
+
+      def reqCodeGroupRows: Stream[ReqCodeGroupRow] =
+        maybeUse(vs.viewReqCodeGroups)(
+          p.reqCodes.data.cataA(Stream.empty[ReqCodeGroupRow])((q, c, d) => d.target match {
+            case _: ReqId        => q
+            case g: ReqCodeGroup =>
+              val groupAndId = g and d.id
+              maybeAdd(q, filter b groupAndId)(ReqCodeGroupRow(groupAndId, c, None))
+          }))
+
+      reqRows append reqCodeGroupRows
+    }
+  }
+
+  // ===================================================================================================================
   //  Filtering
 
   private def filterOrderFn(max: Int)(eval: FilterAst => Int): EndoFn[Min2Vector[FilterAst]] = {
@@ -326,102 +422,6 @@ private[reqtable] object Logic {
       }
 
     interpret(filterAst)
-  }
-
-  // ===================================================================================================================
-  // Gathering
-
-  /**
-   * Gathers [[Row]]s for display in [[ReqTable]].
-   * Performs expansion.
-   * Does not perform any sorting.
-   */
-  def gather(vs: ViewSettings, p: Project, pt: PlainText.ForProject, ts: TextSearch): Stream[Row] = {
-
-    // NOTES:
-    //
-    // * Column.ImplicationSrc isn't transitive; custom implication columns are.
-    //   There can potentially be overlap but culling this could be misleading.
-    //
-    // * The Tags column is not expanded. Only custom tag columns are.
-
-    // The Tags column:
-    // 1. never displays tags allocated to live tag-columns.
-    // 2. doesn't display tags allocated to visible, dead tag-columns.
-    val tagColDist: TagColumnDistribution.TagIds =
-      vs.filterDead match {
-        case HideDead => p.liveTagColumnDistribution
-        case ShowDead => TagColumnDistribution(p, f => f.live match {
-          case Live => true
-          case Dead => vs isVisible Column.CustomField(f.id, Dead)
-        })
-      }
-
-    val filterDead    = Filter(vs.filterDead.filterFnA(_.live), FilterFn.`n/a`)
-    val tagLookup     = this.tagLookup(p)
-    val tagFilter     = this.tagFilter(vs, p)
-    val issueLookup   = this.issueLookup(p)
-    val applicability = Applicability(p)
-    val expandImpSrcs = expanderC[Pubid](vs, Column.ImplicationSrc)
-    val expandImpTgts = expanderC[Pubid](vs, Column.ImplicationTgt)
-    val expandCodes   = expanderC[ReqCode.Value](vs, Column.Code)
-    val expandImpCols = impColValueExpander(vs, p, applicability)
-    val expandTagCols = tagColValueExpander(vs, p, applicability, tagColDist, tagLookup, tagFilter)
-
-    val pReqs         = p.reqs.data
-    val pReqCodes     = p.reqCodes.data.activeReqCodesByTarget
-    val pImplications = p.reqFieldData.data.implications
-    val multiValuesFn = this.multiValuesFn(vs, p, tagColDist, tagLookup, tagFilter)
-
-    def pubid(reqId: ReqId): Option[Pubid] =
-      pReqs.reqM(reqId).fold[Option[Pubid]](failedMust(None), req =>
-        if (filterDead a req) Some(req.pubid) else None)
-
-    def pubids(s: Set[ReqId]): Set[Pubid] =
-      s.foldLeft(UnivEq.emptySet[Pubid])((q, id) =>
-        pubid(id).fold(q)(q + _))
-
-    // A result of None here means the filter has ruled out everything
-    val fullFilter: Option[Filter] =
-      vs.filter.map(filter(_, p, pt, ts, issueLookup, tagLookup)) match {
-        case None               => Some(filterDead)
-        case Some(Some(filter)) => Some(filterDead && filter)
-        case Some(None)         => None
-      }
-
-    fullFilter.fold(Stream.empty[Row]) { filter =>
-
-      def reqRows =
-        p.reqs.data.reqs.vstreamf {
-          case r: GenericReq =>
-            maybeUse(filter a r) {
-              val id = r.id
-
-              // Expansion
-              val impSrcs = expandImpSrcs(() => pImplications.tgtToSrc(id) |> pubids)
-              val impTgts = expandImpTgts(() => pImplications.srcToTgt(id) |> pubids)
-              val codes   = expandCodes  (() => pReqCodes(id))
-              val cfImps  = expandImpCols(r)
-              val cfTags  = expandTagCols(r)
-              val exps    = expansions(impSrcs, impTgts, codes, cfImps, cfTags)
-
-              // Build
-              val mv = multiValuesFn(id)
-              exps.toStream.map(GenericReqRow(r, _, mv))
-            }
-        }
-
-      def reqCodeGroupRows: Stream[ReqCodeGroupRow] =
-        maybeUse(vs.viewReqCodeGroups)(
-          p.reqCodes.data.cataA(Stream.empty[ReqCodeGroupRow])((q, c, d) => d.target match {
-            case _: ReqId        => q
-            case g: ReqCodeGroup =>
-              val groupAndId = g and d.id
-              maybeAdd(q, filter b groupAndId)(ReqCodeGroupRow(groupAndId, c, None))
-          }))
-
-      reqRows append reqCodeGroupRows
-    }
   }
 
   // ===================================================================================================================
