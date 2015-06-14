@@ -19,7 +19,7 @@ final class NonEmptySet[A] private[util] (val head: A, val tail: Set[A]) {
     case _ => false
   }
 
-  @inline def size: Int =
+  def size: Int =
     tail.size + 1
 
   def whole: Set[A] =
@@ -28,7 +28,7 @@ final class NonEmptySet[A] private[util] (val head: A, val tail: Set[A]) {
   def contains(a: A): Boolean =
     (head == a) || (tail contains a)
 
-  @inline def lacks(a: A): Boolean =
+  def lacks(a: A): Boolean =
     !contains(a)
 
   def map[B: UnivEq](f: A => B): NonEmptySet[B] =
@@ -51,10 +51,10 @@ final class NonEmptySet[A] private[util] (val head: A, val tail: Set[A]) {
     else
       new NonEmptySet(head, tail + a)
 
-  @inline def ++(as: GenTraversableOnce[A]): NonEmptySet[A] =
+  def ++(as: GenTraversableOnce[A]): NonEmptySet[A] =
     NonEmptySet(head, tail ++ as)
 
-  @inline def ++(as: NonEmptySet[A]): NonEmptySet[A] =
+  def ++(as: NonEmptySet[A]): NonEmptySet[A] =
     ++(as.whole)
 
   def last: A =
@@ -72,9 +72,9 @@ final class NonEmptySet[A] private[util] (val head: A, val tail: Set[A]) {
   def reduce[B >: A](f: (B, B) => B): B =
     reduceMapLeft1[B](a => a)(f)
 
-  @inline def toStream = whole.toStream
+  def toStream = whole.toStream
 
-  @inline def toNEV: NonEmptyVector[A] =
+  def toNEV: NonEmptyVector[A] =
     NonEmptyVector(head, tail.toVector)
 
   def mapV[B](f: A => B): NonEmptyVector[B] = {
@@ -87,22 +87,22 @@ final class NonEmptySet[A] private[util] (val head: A, val tail: Set[A]) {
 // =====================================================================================================================
 
 object NonEmptySet {
-  @inline def one[A: UnivEq](h: A): NonEmptySet[A] =
+  def one[A: UnivEq](h: A): NonEmptySet[A] =
     new NonEmptySet(h, Set.empty)
 
-  @inline def apply[A: UnivEq](h: A, t: A*): NonEmptySet[A] =
+  def apply[A: UnivEq](h: A, t: A*): NonEmptySet[A] =
     apply(h, t.toSet)
 
   def apply[A: UnivEq](h: A, t: Set[A]): NonEmptySet[A] =
     new NonEmptySet(h, t - h)
 
-  @inline def maybe[A: UnivEq, B](s: Set[A], empty: => B)(f: NonEmptySet[A] => B): B =
+  def maybe[A: UnivEq, B](s: Set[A], empty: => B)(f: NonEmptySet[A] => B): B =
     if (s.isEmpty) empty else f(NonEmptySet(s.head, s.tail))
 
-  @inline def option[A: UnivEq](s: Set[A]): Option[NonEmptySet[A]] =
+  def option[A: UnivEq](s: Set[A]): Option[NonEmptySet[A]] =
     maybe[A, Option[NonEmptySet[A]]](s, None)(Some.apply)
 
-  @inline def force[A: UnivEq](s: Set[A]): NonEmptySet[A] =
+  def force[A: UnivEq](s: Set[A]): NonEmptySet[A] =
     apply(s.head, s.tail)
 
   def unwrapOption[A](o: Option[NonEmptySet[A]]): Set[A] =

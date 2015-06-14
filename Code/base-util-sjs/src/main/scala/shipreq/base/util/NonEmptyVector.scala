@@ -16,7 +16,7 @@ final class NonEmptyVector[+A](val head: A, val tail: Vector[A]) {
     case _ => false
   }
 
-  @inline def length: Int =
+  def length: Int =
     tail.length + 1
 
   def apply(i: Int): Option[A] =
@@ -49,19 +49,19 @@ final class NonEmptyVector[+A](val head: A, val tail: Vector[A]) {
   def exists(f: A => Boolean): Boolean =
     f(head) || tail.exists(f)
 
-  @inline def mapTail[B >: A](f: Vector[A] => Vector[B]): NonEmptyVector[B] =
+  def mapTail[B >: A](f: Vector[A] => Vector[B]): NonEmptyVector[B] =
     NonEmptyVector(head, f(tail))
 
-  @inline def :+[B >: A](a: B): NonEmptyVector[B] =
+  def :+[B >: A](a: B): NonEmptyVector[B] =
     mapTail(_ :+ a)
 
-  @inline def +:[B >: A](a: B): NonEmptyVector[B] =
+  def +:[B >: A](a: B): NonEmptyVector[B] =
     NonEmptyVector(a, head +: tail)
 
-  @inline def ++[B >: A](as: GenTraversableOnce[B]): NonEmptyVector[B] =
+  def ++[B >: A](as: GenTraversableOnce[B]): NonEmptyVector[B] =
     mapTail(_ ++ as)
 
-  @inline def ++[B >: A](b: NonEmptyVector[B]): NonEmptyVector[B] =
+  def ++[B >: A](b: NonEmptyVector[B]): NonEmptyVector[B] =
     ++(b.whole)
 
   def ++:[B >: A](as: Vector[B]): NonEmptyVector[B] =
@@ -89,7 +89,7 @@ final class NonEmptyVector[+A](val head: A, val tail: Vector[A]) {
     reduceMapLeft1[B](a => a)(f)
 
   // Reduce bullshit red in IntelliJ
-  @inline def traverseD[L, B](f: A => L \/ B): L \/ NonEmptyVector[B] =
+  def traverseD[L, B](f: A => L \/ B): L \/ NonEmptyVector[B] =
     NonEmptyVector.traverse1.traverseU(this)(f)
 
   def intercalate[B >: A](b: B): NonEmptyVector[B] =
@@ -110,9 +110,9 @@ final class NonEmptyVector[+A](val head: A, val tail: Vector[A]) {
   def filterNot(f: A => Boolean): Option[NonEmptyVector[A]] =
     filter(!f(_))
 
-  @inline def toStream = whole.toStream
+  def toStream = whole.toStream
 
-  @inline def toNES[B >: A : UnivEq]: NonEmptySet[B] =
+  def toNES[B >: A : UnivEq]: NonEmptySet[B] =
     NonEmptySet(head, tail.toSet[B])
 
   private def safeTrans[B](f: Vector[A] => Vector[B]): NonEmptyVector[B] =
@@ -154,13 +154,13 @@ final class NonEmptyVector[+A](val head: A, val tail: Vector[A]) {
 // =====================================================================================================================
 
 object NonEmptyVector extends NonEmptyVectorImplicits0 {
-  @inline def one[A](h: A): NonEmptyVector[A] =
+  def one[A](h: A): NonEmptyVector[A] =
     new NonEmptyVector(h, Vector.empty)
 
-  @inline def apply[A](h: A, t: A*): NonEmptyVector[A] =
+  def apply[A](h: A, t: A*): NonEmptyVector[A] =
     apply(h, t.toVector)
 
-  @inline def apply[A](h: A, t: Vector[A]): NonEmptyVector[A] =
+  def apply[A](h: A, t: Vector[A]): NonEmptyVector[A] =
     new NonEmptyVector(h, t)
 
   def endOV[A](init: Option[Vector[A]], last: A): NonEmptyVector[A] =
@@ -175,13 +175,13 @@ object NonEmptyVector extends NonEmptyVectorImplicits0 {
     else
       new NonEmptyVector(init.head, init.tail :+ last)
 
-  @inline def maybe[A, B](v: Vector[A], empty: => B)(f: NonEmptyVector[A] => B): B =
+  def maybe[A, B](v: Vector[A], empty: => B)(f: NonEmptyVector[A] => B): B =
     if (v.isEmpty) empty else f(NonEmptyVector(v.head, v.tail))
 
-  @inline def option[A](v: Vector[A]): Option[NonEmptyVector[A]] =
+  def option[A](v: Vector[A]): Option[NonEmptyVector[A]] =
     maybe[A, Option[NonEmptyVector[A]]](v, None)(Some.apply)
 
-  @inline def force[A](v: Vector[A]): NonEmptyVector[A] =
+  def force[A](v: Vector[A]): NonEmptyVector[A] =
     apply(v.head, v.tail)
 
   def unwrapOption[A](o: Option[NonEmptyVector[A]]): Vector[A] =
