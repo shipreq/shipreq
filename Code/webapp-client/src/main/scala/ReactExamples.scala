@@ -105,8 +105,7 @@ object ReactExamples {
           <.div(
             ^.textAlign.right,
             ^.paddingRight := "0.6ex",
-            ^.marginBottom := "1em",
-            ^.backgroundColor := "#ddd",
+            ^.marginTop := "-14px",
             ctl.link(Index)("← Back")),
           res.render())
     }

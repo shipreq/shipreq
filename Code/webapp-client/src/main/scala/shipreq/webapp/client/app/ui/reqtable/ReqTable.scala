@@ -3,9 +3,12 @@ package shipreq.webapp.client.app.ui.reqtable
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
 import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
+import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.filter.FilterAst
 import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.client.app.ui.ProjectWidgets
+import shipreq.webapp.client.app.ui.Style.{reqtable => *}
 import shipreq.webapp.client.data.DataReusability._
 import edit.ColumnEditors
 
@@ -18,14 +21,23 @@ object ReqTable {
       .render(_.backend.render)
       .build
 
+  val StatsSummary = ReactComponentB[TableStats]("Stats")
+    .render(stats =>
+      <.div(
+        *.statsSummary,
+        stats.summary))
+    .configure(shouldComponentUpdate)
+    .build
+
   // -------------------------------------------------------------------------------------------------------------------
 
   def initialState(p: Project): State =
-    State(p, ViewSettings.default, Cell.emptyTableState, None)
+    State(p, ViewSettings.default, FilterEditor.initialState, Cell.emptyTableState, None)
 
   @Lenses
   case class State(project     : Project,
                    viewSettings: ViewSettings,
+                   filter      : FilterEditor.State,
                    cellStates  : Cell.TableState,
                    focus       : Option[Table.Focus]) {
 
@@ -39,6 +51,12 @@ object ReqTable {
 
     def updateCell(cmd: Cell.SetCmd): State =
       copy(cellStates = cellStates.set(cmd))
+
+    def filterFailure(s: FilterEditor.State): State =
+      copy(filter = s)
+
+    def filterSuccess(fs: (FilterEditor.State, Option[FilterAst])): State =
+      updateVS(viewSettings.copy(filter = fs._2)).copy(filter = fs._1)
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -48,6 +66,8 @@ object ReqTable {
     val setViewSettings = ReusableFn($).modStateIO.endoCall(_.updateVS)
     val setFocus        = ReusableFn($).modStateIO.endoCall(_.updateFocus)
     val setCell         = ReusableFn($).modStateIO.endoCall(_.updateCell)
+    val filterFailure   = ReusableFn($).modStateIO.endoCall(_.filterFailure)
+    val filterSuccess   = ReusableFn($).modStateIO.endoCall(_.filterSuccess)
 
     val project      = Px.thunkM($.state.project)
     val viewSettings = Px.thunkM($.state.viewSettings)
@@ -70,11 +90,18 @@ object ReqTable {
       Px.refresh(project, viewSettings)
       val s = $.state
 
+      val filterProps = FilterEditor.Props(
+        s.filter, project.value, filterFailure, filterSuccess)
+
+      val vsProps = ViewSettingsEditor.Props(
+        vsVar, filterProps)
+
       val tableProps = Table.Props(
-        project, rows, stats, colRnds, colEditors, s.cellStates, ReusableVar(s.focus)(setFocus))
+        project, rows, colRnds, colEditors, s.cellStates, ReusableVar(s.focus)(setFocus))
 
       <.div(
-        vsEditor(vsVar),
+        vsEditor(vsProps),
+        StatsSummary(stats),
         Table.Component(tableProps))
     }
   }

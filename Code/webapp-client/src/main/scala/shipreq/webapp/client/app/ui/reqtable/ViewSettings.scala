@@ -4,12 +4,14 @@ import japgolly.scalajs.react.extra.Reusability
 import monocle.macros.Lenses
 import scalaz.syntax.equal._
 import shipreq.base.util.{UnivEq, NonEmptyVector}
+import shipreq.webapp.base.filter.FilterAst
 import shipreq.webapp.base.util.TypeclassDerivation._
 import shipreq.webapp.client.lib.{HideDead, FilterDead}
 
 @Lenses
 case class ViewSettings(columns   : NonEmptyVector[Column],
                         order     : SortCriteria,
+                        filter    : Option[FilterAst],
                         filterDead: FilterDead) {
 
   def isVisible(c: Column): Boolean =
@@ -25,7 +27,7 @@ case class ViewSettings(columns   : NonEmptyVector[Column],
 
   def filterColumns(f: Column => Boolean): ViewSettings =
     columns.filter(f) match {
-      case Some(cols) => ViewSettings(cols, order filterColumns f, filterDead)
+      case Some(cols) => ViewSettings(cols, order filterColumns f, filter, filterDead)
       case None       => ViewSettings.default
     }
 
@@ -63,6 +65,7 @@ object ViewSettings {
     ViewSettings(
       NonEmptyVector(Code, Pubid, Title, Tags, ImplicationSrc),
       SortCriteria.default,
+      None,
       HideDead)
   }
 }

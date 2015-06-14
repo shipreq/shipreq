@@ -2,14 +2,17 @@ package shipreq.webapp.client.app.ui.reqtable
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
 import japgolly.scalajs.react.extra._
+import scalacss.ScalaCssReact._
 import shipreq.base.util.{NonEmptyVector, UnivEq}
 import shipreq.webapp.client.app.ui.Checkbox
+import shipreq.webapp.client.app.ui.Style.{reqtable => *}
 
 object ViewSettingsEditor {
 
   type Component = ReactComponentC.ReqProps[Props, _, _, TopNode]
 
-  type Props = ReusableVar[ViewSettings]
+  case class Props(vs: ReusableVar[ViewSettings], filterProps: FilterEditor.Props)
+  implicit val propsReuse = Reusability.caseclass2(Props.unapply)
 
   def apply(columnName: Column.NameResolver): Component =
     ReactComponentB[Props]("ViewSettingsEditor")
@@ -24,37 +27,44 @@ object ViewSettingsEditor {
     val columnsEditor = new ColumnsEditor(columnName)
 
     val filterDeadEditor = Checkbox.filterDead(
-      ReusableFn.byName($.props.mod).endoCall(_.setFilterDead))
+      ReusableFn.byName($.props.vs.mod).endoCall(_.setFilterDead))
+
+    val th = <.th(*.viewSettingsHeader)
 
     def render = {
       val p = $.props
-      val vs = p.value
+      val vs = p.vs.value
 
       def setColumns(cs: NonEmptyVector[Column]): ViewSettings = {
         val icols = cs.foldLeft(UnivEq.emptySet[Column.SortInconclusive])((q, c) => c match {
           case i: Column.SortInconclusive => q + i
           case _: Column.SortConclusive   => q
         })
-        ViewSettings(cs, vs.order.whitelistColumns(icols), vs.filterDead)
+        ViewSettings(cs, vs.order.whitelistColumns(icols), vs.filter, vs.filterDead)
       }
 
       def columns =
-        columnsEditor.render(vs.filterDead, vs.columns, p.set compose setColumns)
+        columnsEditor.render(vs.filterDead, vs.columns, p.vs.set compose setColumns)
 
       def sortCriteria =
-        SortCriteriaEditor.Props(vs.order, vs.columns.toSet, columnName, p setL ViewSettings.order).component
+        SortCriteriaEditor.Props(vs.order, vs.columns.toSet, columnName, p.vs setL ViewSettings.order).component
 
       <.div(
-        filterDeadEditor(vs.filterDead),
         <.table(
           <.thead(
             <.tr(
-              <.th("Columns"),
-              <.th("Sorting"))),
+              th("Columns"),
+              th("Sorting"),
+              th("Filter"))),
           <.tbody(
             <.tr(
               <.td(columns),
-              <.td(sortCriteria)))))
+              <.td(sortCriteria),
+              <.td(
+                <.div(
+                  filterDeadEditor(vs.filterDead),
+                  FilterEditor.Component(p.filterProps)))
+      ))))
     }
   }
 }

@@ -2,7 +2,7 @@ package shipreq.webapp.base.filter
 
 import java.util.regex.Pattern // PatternSyntaxException not available in Scala.JS
 import scalaz.{-\/, \/-, \/}
-import shipreq.base.util.NonEmptyVector
+import shipreq.base.util.{UnivEq, NonEmptyVector}
 import shipreq.webapp.base.data
 import shipreq.webapp.base.filter.{FilterSpec => S}
 
@@ -40,12 +40,21 @@ object FilterAst {
   case class Tag           (id: data.ApplicableTagId)                         extends FilterAst
   case class CustomIssue   (id: data.CustomIssueTypeId)                       extends FilterAst
   case class Text          (substring: String)                                extends FilterAst
-  case class TextPattern   (regex: Pattern)                                   extends FilterAst
   case class ImpliesAnyOf  (reqs: Reqs)                                       extends FilterAst
   case class ImpliedByAnyOf(reqs: Reqs)                                       extends FilterAst
   case class AllOf         (head: FilterAst, tail: NonEmptyVector[FilterAst]) extends FilterAst
   case class AnyOf         (head: FilterAst, tail: NonEmptyVector[FilterAst]) extends FilterAst
   case class Not           (expr: FilterAst)                                  extends FilterAst
+
+  case class TextPattern(pattern: Pattern) extends FilterAst {
+    override def hashCode = pattern.pattern.##
+    override def equals(o: Any) = o match {
+      case TextPattern(q) => (pattern.pattern == q.pattern) && (pattern.flags == q.flags)
+      case _              => false
+    }
+  }
+
+  implicit def equality: UnivEq[FilterAst] = UnivEq.force
 
   // -------------------------------------------------------------------------------------------------------------------
 

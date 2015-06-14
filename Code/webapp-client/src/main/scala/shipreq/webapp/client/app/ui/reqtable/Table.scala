@@ -27,10 +27,9 @@ object Table {
   implicit val reusabilityCNR : Reusability[Column.NameResolver]            = Reusability.byRef
   implicit val reusabilityCTS : Reusability[Cell.TableState]                = Reusability.byRef
   implicit val reusabilityCRS : Reusability[Cell.RowState]                  = Reusability.byRef
-  implicit val reusabilityTS  : Reusability[TableStats]                     = Reusability.byRef
 
   implicit val reusabilityFocus = Reusability.caseclass2(Focus.unapply)
-  implicit val reusabilityProps = Reusability.caseclass7(Props.unapply)
+  implicit val reusabilityProps = Reusability.caseclass6(Props.unapply)
 
   case class Focus(rowInd: Int, col: Column) {
     @inline def row(rows: Vector[Row]): Option[Row] =
@@ -39,7 +38,6 @@ object Table {
 
   case class Props(project     : Project,
                    rows        : Vector[Row],
-                   stats       : TableStats,
                    colRenderers: NonEmptyVector[ColumnRenderer],
                    colEditors  : ColumnEditors,
                    cells       : Cell.TableState,
@@ -168,11 +166,9 @@ object Table {
         }
 
       // Render
-      <.div(
-        <.table(*.table,
-          HeaderComponent(crs),
-          <.tbody(renderRows)),
-        FooterComponent(p.stats))
+      <.table(*.table,
+        HeaderComponent(crs),
+        <.tbody(renderRows))
     }
   }
 
@@ -186,14 +182,6 @@ object Table {
             <.th(
               *.columnHeader(cr.column.live),
               cr.header)))))
-    .configure(shouldComponentUpdate)
-    .build
-
-  val FooterComponent = ReactComponentB[TableStats]("Footer")
-    .render(stats =>
-      <.div(
-        *.statsSummary,
-        stats.summary))
     .configure(shouldComponentUpdate)
     .build
 

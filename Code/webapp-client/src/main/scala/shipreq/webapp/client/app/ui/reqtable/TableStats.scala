@@ -1,6 +1,7 @@
 package shipreq.webapp.client.app.ui.reqtable
 
 import japgolly.nyaya._
+import japgolly.scalajs.react.extra.Reusability
 import shipreq.base.util.SafeStringOps._
 import shipreq.webapp.base.UiText.EnglishIntExt
 import shipreq.webapp.client.lib.{HideDead, FilterDead, ShowDead}
@@ -24,6 +25,8 @@ object TableStats {
     ∧ Prop.test("expandedReqs ≤ visibleReqs", s => s.expandedReqs <= s.visibleReqs)
     )
   }
+
+  implicit val reusability: Reusability[TableStats] = Reusability.by(_.summary)
 }
 
 case class TableStats(filterDead      : FilterDead,

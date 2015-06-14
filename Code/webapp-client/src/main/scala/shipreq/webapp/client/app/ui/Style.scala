@@ -32,12 +32,22 @@ object Style extends StyleSheet.Inline {
   private val hasErrorBackground =
     backgroundColor("#fee")
 
+  private val hasErrorColor = style(
+    color("#c00"))
+
+  private val errorRedOnRed = mixin(
+    hasErrorColor,
+    hasErrorBackground)
+
   private def deadColumnLabel(live: Live) =
     mixinIf(live :: Dead)(textDecoration := ^.lineThrough)
 
   // ===================================================================================================================
   object reqtable {
     import ui.reqtable.{Column, ColumnRenderer}
+
+    val viewSettingsHeader = style(
+      backgroundColor("#ffe".color))
 
     // -----------------------------------------------------------------------------------------------------------------
     object sortCriteriaEditor {
@@ -75,6 +85,19 @@ object Style extends StyleSheet.Inline {
           label   = sortCriteriaEditor.inconclusiveColumnName(live, on))))
 
     // -----------------------------------------------------------------------------------------------------------------
+    object filterEditor {
+
+      val editor = styleF(D.validity)(v => styleS(
+        marginTop(1.6 em),
+        width(100 %%),
+        height(3 em),
+        mixinIf(v :: Invalid)(hasErrorBackground)
+      ))
+
+      def errorMsg = hasErrorColor
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
 
     val statsSummary = style(
       margin(1 em, `0`),
@@ -101,7 +124,7 @@ object Style extends StyleSheet.Inline {
 
     val columnHeader = styleF(D.live)(live => styleS(
       deadColumnLabel(live),
-      backgroundColor("#ddd".color),
+      backgroundColor("#e0e8f8".color),
       border(1 px, solid, "#777".color)
     ))
 
@@ -170,10 +193,7 @@ object Style extends StyleSheet.Inline {
   // ===================================================================================================================
   object widgets {
 
-    private val hasError = mixin(
-      color("#c00"),
-      hasErrorBackground
-    )
+    private def hasError = errorRedOnRed
 
     private val hoverShowsInfo = mixin(
       display.inlineBlock,
@@ -256,6 +276,7 @@ object Style extends StyleSheet.Inline {
   private def init(a: StyleA*) = () // TODO add to ScalaCSS as (force)init(Objects) or something
   init(
     reqtable.sortCriteriaEditor.conclusiveColumnName,
+    reqtable.filterEditor.errorMsg,
     reqtable.table,
     widgets.issue)
 //  ConsoleIO(_.log(render[String])).unsafePerformIO()

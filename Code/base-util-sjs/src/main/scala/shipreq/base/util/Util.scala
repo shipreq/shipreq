@@ -147,6 +147,12 @@ object Util {
 
     d(m)(n)
   }
+
+  @inline def maybeUse[A](allow: Boolean)(ok: => Stream[A]): Stream[A] =
+    if (allow) ok else Stream.empty
+
+  @inline def maybeAdd[A](have: Stream[A], allow: Boolean)(add: => A): Stream[A] =
+    if (allow) add #:: have else have
 }
 
 object ParseLong {

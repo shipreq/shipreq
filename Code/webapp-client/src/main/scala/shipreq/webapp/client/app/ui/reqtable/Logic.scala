@@ -18,6 +18,7 @@ import shipreq.webapp.base.util.{TransitiveClosure, ReqCodeTreeItem}
 import shipreq.webapp.client.lib.{HideDead, ShowDead, FilterDead}
 import DataImplicits._
 import UnivEq.{mutableHashMapMemo => memo}
+import Util.{maybeAdd, maybeUse}
 
 private[reqtable] object Logic {
 
@@ -38,10 +39,14 @@ private[reqtable] object Logic {
     memo(id => reqTags(id) | tagsInText(id))
   }
 
-  private case class IssueLookup(r: ReqId => Vector[AnyIssue], g: ReqCodeId => Vector[AnyIssue])
+  private class IssueLookup(_r: => (ReqId     => Vector[AnyIssue]),
+                            _g: => (ReqCodeId => Vector[AnyIssue])) {
+    lazy val r = _r
+    lazy val g = _g
+  }
 
   private def issueLookup(p: Project): IssueLookup =
-    IssueLookup(p.issuesInTextR.apply, p.issuesInTextG.apply)
+    new IssueLookup(p.issuesInTextR.apply, p.issuesInTextG.apply)
 
   // ===================================================================================================================
   // Expansion
@@ -238,16 +243,17 @@ private[reqtable] object Logic {
   }
 
   type Filter = FilterFn2[Req, ReqCodeGroup.AndId]
+  @inline def Filter(a: Req => Boolean, b: ReqCodeGroup.AndId => Boolean): Filter = FilterFn2(a, b)
 
   /**
    * @return None means filter everything out. Function const false. Fail-early to an empty set. No results.
    */
-  def filterReqs(filterAst  : FilterAst,
-                 p          : Project,
-                 pt         : PlainText.ForProject,
-                 ts         : TextSearch,
-                 issueLookup: IssueLookup,
-                 tagLookup  : TagLookup): Option[Filter] = {
+  def filter(filterAst  : FilterAst,
+             p          : Project,
+             pt         : PlainText.ForProject,
+             ts         : TextSearch,
+             issueLookup: IssueLookup,
+             tagLookup  : TagLookup): Option[Filter] = {
 
     import FilterAst._, Attr.{AnyIssue, AnyTag}
     type F  = Filter
@@ -256,16 +262,17 @@ private[reqtable] object Logic {
     type FG = ReqCodeGroup.AndId => Boolean
     import FilterFn.`n/a`
     @inline implicit def autoSomeFilter(f: Filter): R = Some(f)
-    @inline def F(a: FR, b: FG): F = FilterFn2(a, b)
 
     // Possible optimisations:
     // - overlap between has Tag & Presence/Lack(AnyTag)
     // - overlap between has Issue & Presence/Lack(AnyIssue)
+    // - overlap between WholeType & SomeOfType
     // - cycle in ImpliesAnyOf & ImpliedByAnyOf is impossible to satisfy
     // - lack & presense of α
     // - AnyOf with 2 contradictions = always pass
     // - AllOf with 2 contradictions = always fail
     // - AnyOf stops when match found, AllOf stops when non-match found. DeMorgan to the faster case.
+    // - Remove duplicates
 
     def interpretN(asts: NonEmptyVector[FilterAst], f: (F, F) => F): R =
       filterFastestFirst(asts)
@@ -273,23 +280,24 @@ private[reqtable] object Logic {
         .map(_ reduce f)
 
     def byTag(f: Set[ApplicableTagId] => Boolean) =
-      F(r => f(tagLookup(r.id)), `n/a`)
+      Filter(r => f(tagLookup(r.id)), `n/a`)
 
-    def byIssueType(f: Vector[AnyIssue] => Boolean) = F(
-      r => f(issueLookup.r(r.id)),
-      g => f(issueLookup.g(g.id)))
+    def byIssueType(f: Vector[AnyIssue] => Boolean) =
+      Filter(
+        r => f(issueLookup.r(r.id)),
+        g => f(issueLookup.g(g.id)))
 
     def byImplication(reqs: FilterAst.Reqs, tc: TransitiveClosure[ReqId]): R = {
       val whitelist = reqs.foldLeft(Set.empty[ReqId])(_ ++ tc(_))
       if (whitelist.isEmpty)
         None
       else
-        F(whitelist contains _.id, `n/a`)
+        Filter(whitelist contains _.id, `n/a`)
     }
 
     def interpret(subj: FilterAst): R =
       subj match {
-        case ReqType(rt)          => F(_.reqTypeId ≟ rt, `n/a`)
+        case ReqType(rt)          => Filter(_.reqTypeId ≟ rt, `n/a`)
         case Tag(tag)             => byTag(_ contains tag)
         case Presence(AnyTag)     => byTag(_.nonEmpty)
         case Presence(AnyIssue)   => byIssueType(_.nonEmpty)
@@ -299,8 +307,8 @@ private[reqtable] object Logic {
         case AnyOf(h, t)          => interpretN(h +: t, _ || _)
         case Not(Not(expr))       => interpret(expr)
         case Not(expr)            => interpret(expr).map(!_)
-        case ImpliesAnyOf(reqs)   => byImplication(reqs, p.implicationSrcToTgtTC)
-        case ImpliedByAnyOf(reqs) => byImplication(reqs, p.implicationTgtToSrcTC)
+        case ImpliesAnyOf(reqs)   => byImplication(reqs, p.implicationTgtToSrcTC)
+        case ImpliedByAnyOf(reqs) => byImplication(reqs, p.implicationSrcToTgtTC)
 
         case Text(substr) =>
           val f = ts.ignoreCaseSingleSpaces.searchFilter(substr)
@@ -308,7 +316,7 @@ private[reqtable] object Logic {
 
         case TextPattern(pat) =>
           val m: String => Boolean = pat.matcher(_).matches
-          F(
+          Filter(
             r => {
               def title  = m(pt reqTitle r)
               def custom = p.liveCustomTextFields.exists(f => pt.customTextField(f.id)(r.id) exists m)
@@ -349,9 +357,10 @@ private[reqtable] object Logic {
         })
       }
 
-    val filterDead    = vs.filterDead.filterFn
+    val filterDead    = Filter(vs.filterDead.filterFnA(_.live), FilterFn.`n/a`)
     val tagLookup     = this.tagLookup(p)
     val tagFilter     = this.tagFilter(vs, p)
+    val issueLookup   = this.issueLookup(p)
     val applicability = Applicability(p)
     val expandImpSrcs = expanderC[Pubid](vs, Column.ImplicationSrc)
     val expandImpTgts = expanderC[Pubid](vs, Column.ImplicationTgt)
@@ -366,47 +375,53 @@ private[reqtable] object Logic {
 
     def pubid(reqId: ReqId): Option[Pubid] =
       pReqs.reqM(reqId).fold[Option[Pubid]](failedMust(None), req =>
-        if (filterDead(req.live)) Some(req.pubid) else None)
+        if (filterDead a req) Some(req.pubid) else None)
 
     def pubids(s: Set[ReqId]): Set[Pubid] =
       s.foldLeft(UnivEq.emptySet[Pubid])((q, id) =>
         pubid(id).fold(q)(q + _))
 
-    val reqRows =
-      p.reqs.data.reqs.vstreamf {
-        case r: GenericReq =>
-          if (filterDead(r.live)) {
-            val id = r.id
-
-            // Expansion
-            val impSrcs = expandImpSrcs(() => pImplications.tgtToSrc(id) |> pubids)
-            val impTgts = expandImpTgts(() => pImplications.srcToTgt(id) |> pubids)
-            val codes   = expandCodes  (() => pReqCodes(id))
-            val cfImps  = expandImpCols(r)
-            val cfTags  = expandTagCols(r)
-            val exps    = expansions(impSrcs, impTgts, codes, cfImps, cfTags)
-
-            // Build
-            val mv = multiValuesFn(id)
-            exps.toStream.map(GenericReqRow(r, _, mv))
-
-          } else
-            Stream.empty[GenericReqRow]
+    // A result of None here means the filter has ruled out everything
+    val fullFilter: Option[Filter] =
+      vs.filter.map(filter(_, p, pt, ts, issueLookup, tagLookup)) match {
+        case None               => Some(filterDead)
+        case Some(Some(filter)) => Some(filterDead && filter)
+        case Some(None)         => None
       }
 
-    val reqCodeGroupRows: Stream[ReqCodeGroupRow] =
-      if (vs.viewReqCodeGroups)
-        p.reqCodes.data.cataA(Stream.empty[ReqCodeGroupRow])((q, c, d) => d.target match {
-          case _: ReqId        => q
-          case g: ReqCodeGroup =>
-            // TODO: Filter
-            val groupAndId = g and d.id
-            ReqCodeGroupRow(groupAndId, c, None) #:: q
-        })
-      else
-        Stream.empty
+    fullFilter.fold(Stream.empty[Row]) { filter =>
 
-    reqRows append reqCodeGroupRows
+      def reqRows =
+        p.reqs.data.reqs.vstreamf {
+          case r: GenericReq =>
+            maybeUse(filter a r) {
+              val id = r.id
+
+              // Expansion
+              val impSrcs = expandImpSrcs(() => pImplications.tgtToSrc(id) |> pubids)
+              val impTgts = expandImpTgts(() => pImplications.srcToTgt(id) |> pubids)
+              val codes   = expandCodes  (() => pReqCodes(id))
+              val cfImps  = expandImpCols(r)
+              val cfTags  = expandTagCols(r)
+              val exps    = expansions(impSrcs, impTgts, codes, cfImps, cfTags)
+
+              // Build
+              val mv = multiValuesFn(id)
+              exps.toStream.map(GenericReqRow(r, _, mv))
+            }
+        }
+
+      def reqCodeGroupRows: Stream[ReqCodeGroupRow] =
+        maybeUse(vs.viewReqCodeGroups)(
+          p.reqCodes.data.cataA(Stream.empty[ReqCodeGroupRow])((q, c, d) => d.target match {
+            case _: ReqId        => q
+            case g: ReqCodeGroup =>
+              val groupAndId = g and d.id
+              maybeAdd(q, filter b groupAndId)(ReqCodeGroupRow(groupAndId, c, None))
+          }))
+
+      reqRows append reqCodeGroupRows
+    }
   }
 
   // ===================================================================================================================
