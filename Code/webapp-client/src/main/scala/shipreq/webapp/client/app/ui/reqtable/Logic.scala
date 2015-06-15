@@ -369,6 +369,7 @@ private[reqtable] object Logic {
     // - AllOf with 2 contradictions = always fail
     // - AnyOf stops when match found, AllOf stops when non-match found. DeMorgan to the faster case.
     // - Remove duplicates
+    // - Implications in AnyOf can be merged "{implies:MF-1 implies:MF-2}" = "implies:MF-{1,2}"
 
     def interpretN(asts: Min2Set[FilterAst], f: (F, F) => F): R =
       filterFastestFirst(asts.toMin2Vector)

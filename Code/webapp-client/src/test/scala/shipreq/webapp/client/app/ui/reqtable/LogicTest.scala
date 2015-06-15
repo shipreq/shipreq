@@ -315,8 +315,10 @@ object LogicTest extends TestSuite {
     import ProjectDsl._
     import UnsafeTypes._
     import SampleProject.Values._
+    import shipreq.webapp.base.filter.{FilterAst => F}, F.Attr._
 
-    private lazy val PD  = SampleProject.project
+    private      def P3  = SampleProject3.project
+    private      def PD  = SampleProject.project
     private lazy val PA  = TestOptics.customReqTypesLive.set(Live)(PD)
     private      val sep = "  "
     private      val z   = "∅"
@@ -333,6 +335,14 @@ object LogicTest extends TestSuite {
         _pcache ::= c
         c
       }
+
+    implicit def autoSomeFilter(f: FilterAst): Filter = Some(f)
+    private def testFilter(p: Project, f: Filter)(live: String, dead: String): Unit = {
+      val fmt = rowToPubid(p)
+      val d = if (dead.isEmpty) live else sortPubidsInString(s"$live  $dead")
+      testUnsorted(p, C.Pubid, f, HideDead, fmt)(live)
+      testUnsorted(p, C.Pubid, f, ShowDead, fmt)(d)
+    }
 
     private def testUnsorted[A: Equal](p: Project, c: C, f: Filter, fd: FilterDead, extract: Rows => A)(expect: A): Unit =
       testUnsorted2(p, NonEmptyVector one c, f, fd, extract)(expect)
@@ -455,6 +465,16 @@ object LogicTest extends TestSuite {
 
     private def prefixWithPubid(p: Project, f: Row => String): Row => String =
       rowToStrAp2(rowToPubid(p), f)((a, b) => if (b ≟ z) z else a + ":" + b)
+
+    private val pubidSep = " +".r.pattern
+    private val pubidFmt = "^([A-Z]+)-(\\d+)$".r
+    private def sortPubidsInString(s: String): String =
+      pubidSep.split(s)
+        .toStream
+        .filterNot(_.isEmpty)
+        .map { case pubidFmt(m, n) => (m, n.toInt) }
+        .sorted
+        .map(t => t._1 + "-" + t._2.toString) mkString sep
 
     implicit private def rowFnToRowsFn(f: Row => String): Rows => String =
       _ map f mkString sep
@@ -953,6 +973,76 @@ object LogicTest extends TestSuite {
 
       assertMultiline(formatTreeItems(actual), exp)
     }
+
+    def testFilterText(): Unit = {
+      testFilter(P3, F.Text("req"))("MF-12  MF-13  MF-22  MF-23  MF-24", dead = "CO-2")
+      testFilter(P3, F.Text("l r"))("MF-12  MF-22  MF-23  MF-27", dead = "CO-2")
+      testFilter(P3, F.Text(" is "))("FR-1  FR-2", "")
+      testFilter(P3, F.Text("github.com"))("FR-1", "")
+    }
+
+    def testFilterTextPattern(): Unit = {
+      val r = """.*\W[A-Z]{3}\W.*""".r.pattern
+      testFilter(P3, F.TextPattern(r))("FR-2  MF-3  MF-21", "") // FR-2 because of …#TBD …
+    }
+
+    def testFilterPresence(): Unit = {
+      testFilter(P3, F.Presence(AnyIssue))("FR-1  FR-2", "")
+    }
+
+    def testFilterLack(): Unit = {
+      testFilter(P3, F.Lack(AnyTag))("FR-1  FR-2", dead = "CO-2")
+    }
+
+    def testFilterTag(): Unit = {
+      testFilter(P3, F.Tag(wip))("MF-5  MF-6  MF-7  MF-12  MF-13  MF-22", "")
+      testFilter(P3, F.Tag(v10))("MF-1  MF-2  MF-7", dead = "CO-1")
+    }
+
+    def testFilterCustomIssue(): Unit = {
+      testFilter(P3, F.CustomIssue(1))("FR-1", "")
+      testFilter(P3, F.CustomIssue(2))("FR-2", "")
+    }
+
+    def testFilterReqType(): Unit = {
+      testFilter(P3, F.ReqType(fr))("FR-1  FR-2", "")
+      testFilter(P3, F.ReqType(co))("", dead = "CO-1  CO-2")
+    }
+
+    def testFilterImplies(): Unit = {
+      import SampleImplicationGraph._
+      testFilter(project, F.ImpliesAnyOf(Set(fr2)))("BR-1  FR-1  FR-2  MF-1  MF-2", "")
+      //                                                reflexivity ↑
+      testFilter(project, F.ImpliesAnyOf(Set(fr5, fr6)))("BR-1  BR-2  FR-4  FR-5  FR-6  MF-3  MF-4", "")
+      //                                                                  ↗ reflexivity ↖
+    }
+
+    def testFilterImpliedBy(): Unit = {
+      import SampleImplicationGraph._
+      testFilter(project, F.ImpliedByAnyOf(Set(mf2)))("FR-2  FR-3  MF-2", "")
+      //                                                  reflexivity ↑
+      testFilter(project, F.ImpliedByAnyOf(Set(mf1, mf2)))("FR-1  FR-2  FR-3  MF-1  MF-2", "")
+      //                                                                      ↑ reflexivity ↖
+    }
+
+    def testFilterImplyNothing(): Unit = {
+      import SampleImplicationGraph._
+      testFilter(project, F.ImpliedByAnyOf(Set.empty))("", "")
+      testFilter(project, F.ImpliesAnyOf  (Set.empty))("", "")
+    }
+
+    def testFilterAll(): Unit = {
+      testFilter(P3, F.AllOf(min2set(F.Tag(wip), F.Tag(v10))))("MF-7", "")
+      testFilter(P3, F.AllOf(min2set(F.Tag(wip), F.Text("req"))))("MF-12  MF-13  MF-22", "")
+    }
+
+    def testFilterAny(): Unit = {
+      testFilter(P3, F.AnyOf(min2set(F.ReqType(co), F.ReqType(fr))))("FR-1  FR-2", dead = "CO-1  CO-2")
+    }
+
+    def testFilterNot(): Unit = {
+      testFilter(P3, F.Not(F.ReqType(mf)))("FR-1  FR-2", dead = "CO-1  CO-2")
+    }
   }
 
   // ===================================================================================================================
@@ -998,6 +1088,21 @@ object LogicTest extends TestSuite {
         'tagsInText - testFilterDeadTagsInText()
         'tagsCust   - testFilterDeadTagsInCustomTagField()
         'tagField   - testFilterDeadCustomTagField()
+      }
+      'filter {
+        'text           - testFilterText()
+        'textPattern    - testFilterTextPattern()
+        'presence       - testFilterPresence()
+        'lack           - testFilterLack()
+        'tag            - testFilterTag()
+        'customIssue    - testFilterCustomIssue()
+        'reqType        - testFilterReqType()
+        'impliesAnyOf   - testFilterImplies()
+        'impliedByAnyOf - testFilterImpliedBy()
+        'implyNothing   - testFilterImplyNothing()
+        'allOf          - testFilterAll()
+        'anyOf          - testFilterAny()
+        'not            - testFilterNot()
       }
       'reqCodeTree - testReqCodeTree()
     }

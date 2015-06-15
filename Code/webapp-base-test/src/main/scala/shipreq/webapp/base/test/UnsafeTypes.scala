@@ -1,7 +1,7 @@
 package shipreq.webapp.base.test
 
 import japgolly.nyaya.util.Multimap
-import shipreq.base.util.{ISubset, NonEmptySet, NonEmptyVector, Must}
+import shipreq.base.util._
 import shipreq.webapp.base.data.Field.ApplicableReqTypes
 import shipreq.webapp.base.text.Grammar
 
@@ -68,4 +68,7 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
 
   implicit def autoNevWhole[A](as: NonEmptyVector[A]): Vector[A] = as.whole
   implicit def autoNesWhole[A](as: NonEmptySet[A]): Set[A] = as.whole
+
+  def min2set[A: UnivEq](a: A, b: A, t: A*): Min2Set[A] =
+    Min2Set(NonEmptySet(a, t.toSet + b)).fold(nes => sys.error(s"Not make a Min2Set from $nes"), a => a)
 }

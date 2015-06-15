@@ -57,7 +57,7 @@ object SampleProject3 {
     + GReq(reqType = mf, id = mfs(21), title = "Doc authoring (V&S, URD, SRS)"        ).tag(p2)
     + GReq(reqType = mf, id = mfs(22), title = "High-level Requirements"              ).tag(p3).tag(wip)
     + GReq(reqType = mf, id = mfs(23), title = "Import external requirements"         ).tag(p2)
-    + GReq(reqType = mf, id = mfs(24), title = "Requirement Lint"                     ).tag(p3)
+    + GReq(reqType = mf, id = mfs(24), title = "Requirement Lint"                     ).tag(p3).tag(v3x)
     + GReq(reqType = mf, id = mfs(25), title = "Search"                               ).tag(p2)
     + GReq(reqType = mf, id = mfs(26), title = "Mass text modification (replace)"     ).tag(p1)
     + GReq(reqType = mf, id = mfs(27), title = "External references"                  ).tag(p1).impSrc(frs(2))
@@ -67,7 +67,7 @@ object SampleProject3 {
     + GReq(reqType = fr, id = frs(2), title = fr2Desc, codes = Set("uce.sample.2")).impSrc(mfs(1), mfs(13), mfs(22), frs(1))
     + RCGroup("demo", Vector(T.ReqCodeGroupTitle.Literal("Demo group header")))
 
-    + GReq(reqType = co, id = cos(1), live = Dead, title = "Search entities!").impSrc(mfs(28), mfs(25))
+    + GReq(reqType = co, id = cos(1), live = Dead, title = "Search entities!").impSrc(mfs(28), mfs(25)).tag(v10, v3x)
     + GReq(reqType = co, id = cos(2), live = Dead, title = "Entity-search should consider low-level reqs").impSrc(cos(1), frs(1))
 
     + DeadReqCode("dead.ref", target = mfs(7))
