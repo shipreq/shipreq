@@ -125,7 +125,7 @@ object Deps {
 
   val parboiled = JvmAndJsFork("org.parboiled", "com.github.japgolly.fork.parboiled", "parboiled", "2.1.0", "2.1.0")
 
-  val shapeless = JvmAndJs("com.chuusai",                      "shapeless", "2.2.0")
+  val shapeless = JvmAndJs("com.chuusai",                      "shapeless", "2.2.2")
   val μPickle   = JvmAndJs("com.github.japgolly.fork.upickle", "upickle", "custom-3")
   val μTest     = JvmAndJs("com.lihaoyi",                      "utest",   "0.3.1")
 
