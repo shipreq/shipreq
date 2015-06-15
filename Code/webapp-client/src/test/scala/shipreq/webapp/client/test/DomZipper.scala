@@ -2,6 +2,7 @@ package shipreq.webapp.client.test
 
 import scalaz.Equal
 import org.scalajs.dom.html
+import scalajs.js.{UndefOr, undefined}
 import shipreq.base.util.UnivEq.{apply => _, force => _, _}
 import shipreq.webapp.base.test.BaseTestUtil._
 import Sizzle.{DOM, Result}
@@ -17,13 +18,24 @@ object DomZipper {
     apply(null, expectedCount, dom, selectIndex)
 
   def apply(desc: String, expectedCount: Int, dom: Result, selectIndex: Int): DomZipper = {
-    assertCount(Option(desc) getOrElse "DomZipper.apply", expectedCount, dom)
+    utest.assert(selectIndex < expectedCount)
+    assertCount(Option(desc) getOrElse "DomZipper.apply", expectedCount, dom, undefined)
     val n = dom(selectIndex)
     new DomZipper(n)
   }
 
-  def assertCount(desc: String, expectedCount: Int, dom: Result): Unit =
-    assertEq(desc + dom.map(d => "\n" + removeReactIds(d.outerHTML).take(160)), dom.length, expectedCount)
+  def assertCount(desc: String, expectedCount: Int, dom: Result, root: UndefOr[DOM]): Unit = {
+    def showDom(inner: Boolean)(d: DOM) = {
+      val html = if (inner) d.innerHTML else d.outerHTML
+      "\n" + removeReactIds(html).take(160)
+    }
+    def detail =
+      if (dom.isEmpty)
+        root.fold("")(showDom(true))
+      else
+        dom.map(showDom(false))
+    assertEq(desc + detail, dom.length, expectedCount)
+  }
 
   def first(desc: String, dom: Result): DomZipper = {
     if (dom.isEmpty)
@@ -38,7 +50,7 @@ object DomZipper {
     Equal.equal((a, b) => a.get isSameNode b.get)
 }
 
-class DomZipper(root: Sizzle.DOM) {
+class DomZipper(root: DOM) {
   override def toString =
     s"DomZipper(${DomZipper removeReactIds root.outerHTML take 160})"
 
@@ -47,7 +59,7 @@ class DomZipper(root: Sizzle.DOM) {
 
   def getAll(expectedCount: Int, sel: String): Result = {
     val r = Sizzle(sel, root)
-    DomZipper.assertCount(sel, expectedCount, r)
+    DomZipper.assertCount(sel, expectedCount, r, root)
     r
   }
 
@@ -63,6 +75,7 @@ class DomZipper(root: Sizzle.DOM) {
     apply(1, cssSel, 0)
 
   def apply(expectedCount: Int, cssSel: String, selectIndex: Int): DomZipper = {
+    utest.assert(selectIndex < expectedCount)
     val n = getAll(expectedCount, cssSel)(selectIndex)
     new DomZipper(n)
   }

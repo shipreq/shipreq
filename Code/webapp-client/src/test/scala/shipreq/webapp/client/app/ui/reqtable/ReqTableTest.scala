@@ -40,11 +40,12 @@ final class ReqTableScreen(root: => DomZipper) {
   lazy val $ = root
 
   object viewSettings {
-    lazy val $ = ReqTableScreen.this.$(">div:nth-child(1)")
+    lazy val $ = ReqTableScreen.this.$(2, ">table", 0)
+    def vsCol(i: Int) = $("tbody tr")(3, ">td", i)
 
     object columns {
       lazy val entirety: Vector[(On, String)] =
-        $("tbody tr")(2, ">td", 0)(">ol").collectD("li", li =>
+        vsCol(0)(">ol").collectD("li", li =>
           (On <~ li("input").as[html.Input].checked, li("label span").innerHTML))
 
       lazy val allColumns: Vector[String] =
@@ -55,7 +56,7 @@ final class ReqTableScreen(root: => DomZipper) {
     }
 
     object sorting {
-      lazy val $ = viewSettings.this.$("tbody tr")(2, ">td", 1)
+      lazy val $ = vsCol(1)
 
       private val all = (SortMethod.ignoreBlanks ++ SortMethod.considerBlanks).whole
       private val readSortMethod: String => Option[SortMethod] = {
@@ -84,7 +85,7 @@ final class ReqTableScreen(root: => DomZipper) {
     }
 
     object filterDead {
-      lazy val $ = viewSettings.this.$(">label input")
+      lazy val $ = vsCol(2)("label input")
 
       lazy val value: FilterDead =
         Checkbox.filterDeadChecked <~ $.as[html.Input].checked
@@ -92,7 +93,7 @@ final class ReqTableScreen(root: => DomZipper) {
   }
 
   object table {
-    lazy val $ = ReqTableScreen.this.$(">div:nth-child(2) >table")
+    lazy val $ = ReqTableScreen.this.$(2, ">table", 1)
     lazy val tbody = $(">tbody")
 
     lazy val columns: Vector[String] =
@@ -217,7 +218,7 @@ sealed trait ReqTableTest0 {
     }
   }
 
-  val builtInColumns = Column.builtInValues.map(Column.NameResolver.builtIn).toSet.whole
+  val builtInColumns = Column.builtInValues.map(Column.NameResolver.builtIn).toNES.whole
 
   val invariants: Prop[PS] = {
     implicit def autoContraS(p: Prop[S]): Prop[PS] = p.contramap[PS](_.screen)
@@ -361,7 +362,7 @@ sealed trait ReqTableTest0 {
       filterDeadToggle.focus(_.availCols.length).assertDelta(-2))
 
   def testDeadToggleInvariants(): Unit =
-    RandomReqTableData.viewSettings(project) mustSatisfy
+    RandomReqTableData.viewSettings(project, allowFilter = true) mustSatisfy
       actionProp(applyViewSettings(_) >> filterDeadShowHide)
 
   def testDeadRowsNotEditable(): Unit = {
@@ -398,7 +399,7 @@ sealed trait ReqTableTest0 {
     import ce._
 
     val setup =
-      applyViewSettings(ViewSettings(Column.builtInValues, SortCriteria.byPubidOnly, ShowDead))
+      applyViewSettings(ViewSettings(Column.builtInValues, SortCriteria.byPubidOnly, None, ShowDead))
         .focus(cell(_).innerText).assertAfter("MF-12, MF-19")
 
     // TODO What about an implication cycle with a dead link. Ok? Not ok? What about when when link is undeleted?

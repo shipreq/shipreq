@@ -318,7 +318,7 @@ private[reqtable] object Logic {
     }
   }
 
-  val filterFastestFirst = {
+  private val filterFastestFirst = {
     import FilterAst._
     @tailrec def evalSpeed(a: FilterAst): Int =
       a match {

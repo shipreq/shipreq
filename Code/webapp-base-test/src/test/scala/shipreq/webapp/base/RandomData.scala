@@ -41,6 +41,14 @@ object RandomData {
     def nes(implicit ev: UnivEq[A]): GenS[NonEmptySet[A]] = for {t <- g.set; h <- g} yield NonEmptySet(h, t)
   }
 
+  implicit class LGExt[A](val _l: List[Gen[A]]) extends AnyVal {
+    def <+(o: Option[Gen[A]]): List[Gen[A]] = o.fold(_l)(_ :: _l)
+  }
+  implicit class NELGExt[A](val _nel: NonEmptyList[Gen[A]]) extends AnyVal {
+    def <+(o: Option[Gen[A]]): NonEmptyList[Gen[A]] = o.fold(_nel)(_ <:: _nel)
+    def <++(l: List[Gen[A]]) : NonEmptyList[Gen[A]] = l <::: _nel
+  }
+
   def genmodL[A, B](l: Lens[A, B])(g: B => Gen[B])(a: A): Gen[A] =
     g(l get a) map (l.set(_)(a))
 
@@ -424,18 +432,6 @@ object RandomData {
     lazy val webAddressR = charPred(Parsers.webAddressChar).string1
     lazy val emailL = charPred(Parsers.emailCharL).string1
     lazy val emailR = charPred(Parsers.emailCharR).string1
-
-    // private[this] implicit def autoSomeG[A](g: Gen[A]) = g.some
-    private[this] implicit class ELExt[A <: AnyAtom](val _l: List[Gen[A]]) extends AnyVal {
-      def <+(o: Option[Gen[A]]): List[Gen[A]] =
-        o.fold(_l)(_ :: _l)
-    }
-    private[this] implicit class NELExt[A <: AnyAtom](val _nel: NonEmptyList[Gen[A]]) extends AnyVal {
-      def <+(o: Option[Gen[A]]): NonEmptyList[Gen[A]] =
-        o.fold(_nel)(_ <:: _nel)
-      def <++(l: List[Gen[A]]): NonEmptyList[Gen[A]] =
-        l <::: _nel
-    }
 
     val strchr  = Gen.oneofG(Gen.chooseint(32, 127), Gen.chooseint(128, 65534)).map(_.toChar)
     val genstr  = strchr.string
@@ -1148,6 +1144,38 @@ object RandomData {
   object filter {
     import shipreq.webapp.base.filter._
 
+    val quotedText =
+      for {
+        q <- Gen.oneof('\'', '"', '`')
+        s <- unicodeString1
+      } yield FilterSpec.QuotedText(s.replace(q, '_'), q)
+
+    private val illegalSimpleTextStart = "/-#(){}'`\"".toCharArray.toSet
+    private def fixSimpleText(s: String): String =
+      if (s.headOption exists illegalSimpleTextStart.contains)
+        "!" + s
+      else if (Validators.reqType.mnemonicU isValidU s)
+        s + "?"
+      else
+        s
+
+    /** An odd number of backslashes cannot precede a slash */
+    private val fixSlashEscaping = """(^|[^\\])(?:\\(?:\\\\)*)/""".r
+
+    private def fixRegex(s: String): String =
+      if (s endsWith "\\")
+        s + "d"
+      else
+        fixSlashEscaping.replaceAllIn(s, "$1/")
+
+    val simpleText =
+      charPred(FilterParser.simpleTextChar).string1
+        .map(s => FilterSpec.SimpleText(fixSimpleText(s)))
+
+    val regex =
+      unicodeString1.map(s => FilterSpec.Regex(fixRegex(s)))
+
+    // -----------------------------------------------------------------------------------------------------------------
     object spec {
       import FilterSpec._
 
@@ -1168,33 +1196,6 @@ object RandomData {
       val attr: Gen[String] =
         charPred(FilterParser.attrChar).string1
 
-      val quotedText =
-        for {
-          q <- Gen.oneof('\'', '"', '`')
-          s <- unicodeString1
-        } yield QuotedText(s.replace(q, '_'), q)
-
-      private val illegalSimpleTextStart = "/-#(){}'`\"".toCharArray.toSet
-      def fixSimpleText(s: String): String =
-        if (s.headOption exists illegalSimpleTextStart.contains)
-          "!" + s
-        else if (Validators.reqType.mnemonicU isValidU s)
-          s + "?"
-        else
-          s
-
-
-      /** An odd number of backslashes cannot precede a slash */
-      private val fixSlashEscaping = """(^|[^\\])(?:\\(?:\\\\)*)/""".r
-
-      def fixRegex(s: String): String =
-        if (s endsWith "\\")
-          s + "d"
-        else
-          fixSlashEscaping.replaceAllIn(s, "$1/")
-
-      val simpleText = charPred(FilterParser.simpleTextChar).string1.map(s => SimpleText(fixSimpleText(s)))
-      val regex      = unicodeString1.map(s => Regex(fixRegex(s)))
       val reqType    = reqTypeMnemonic map ReqType
       val hashRef    = hashRefKey.map(h => HashRef(h.value))
       val implies    = reqs map Implies
@@ -1236,6 +1237,84 @@ object RandomData {
 
       val filterSpec  = expr(4 `JVM|JS` 3)
       val filterSpecO = filterSpec.option
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    object ast {
+      import FilterAst.{Text => FText, _}
+
+      def reqs(id: Gen[ReqId]): Gen[Reqs] =
+        id.set
+
+      val attr     = Gen.oneof[Attr](Attr.AnyIssue, Attr.AnyTag)
+      val presence = attr map Presence
+      val lack     = attr map Lack
+
+      val text: Gen[FText] =
+        Gen.oneofG(
+          simpleText.map(t => FText(t.text)),
+          quotedText.map(t => FText(t.text)))
+
+      val textPattern: Gen[Option[TextPattern]] =
+        regex.map(r => FilterAst.textPattern(r.text).toOption)
+
+      val textPatternish: Gen[FilterAst] =
+        textPattern.flatMap(_.fold(text.subst[FilterAst])(Gen.insert))
+
+      def reqType    (id: Gen[ReqTypeId])        : Gen[ReqType]        = id map ReqType
+      def tag        (id: Gen[ApplicableTagId])  : Gen[Tag]            = id map Tag
+      def customIssue(id: Gen[CustomIssueTypeId]): Gen[CustomIssue]    = id map CustomIssue
+      def implies    (gr: Gen[Reqs])             : Gen[ImpliesAnyOf]   = gr map ImpliesAnyOf
+      def impliedBy  (gr: Gen[Reqs])             : Gen[ImpliedByAnyOf] = gr map ImpliedByAnyOf
+
+      def flat(gr: Option[Gen[ReqId]],
+               gy: Option[Gen[ReqTypeId]],
+               gt: Option[Gen[ApplicableTagId]],
+               gi: Option[Gen[CustomIssueTypeId]]): Gen[FilterAst] = {
+        import Gen.Covariance._
+        val ogr = gr.map(reqs)
+        val gens = (
+          NonEmptyList[Gen[FilterAst]](text, textPatternish, presence, lack)
+            <+ gy.map(reqType)
+            <+ gt.map(tag)
+            <+ gi.map(customIssue)
+            <+ ogr.map(implies)
+            <+ ogr.map(impliedBy))
+        Gen.oneofGL(gens)
+      }
+
+      private def expr(gen: Gen[FilterAst], depth: Int): Gen[FilterAst] =
+        if (depth <= 1)
+          gen
+        else {
+          val next   = expr(gen, depth - 1)
+          val clause = next.nes.lim(8 `JVM|JS` 3)
+
+          val allOf: Gen[FilterAst] =
+            clause.map(Min2Set.maybe1(_)(identity)(AllOf))
+
+          val anyOf: Gen[FilterAst] =
+            clause.map(Min2Set.maybe1(_)(identity)(AnyOf))
+
+          val not: Gen[FilterAst] =
+            next map {
+              case n: Not => n
+              case e      => Not(e)
+            }
+
+          Gen.oneofG(gen, allOf, anyOf, not)
+        }
+
+      def filterAst(genFlat: Gen[FilterAst]) =
+        expr(genFlat, 4 `JVM|JS` 3)
+
+      def forProject(p: Project): Gen[FilterAst] = {
+        val gr: Option[Gen[ReqId]]             = Gen oneofO p.reqs.data.reqs.keys.toSeq
+        val gy: Option[Gen[ReqTypeId]]         = Gen oneofO p.reqTypes.map(_.reqTypeId)
+        val gt: Option[Gen[ApplicableTagId]]   = Gen oneofO p.atags.map(_.id)
+        val gi: Option[Gen[CustomIssueTypeId]] = Gen oneofO p.customIssueTypes.data.keys.toSeq
+        filterAst(flat(gr, gy, gt, gi))
+      }
     }
   }
 }

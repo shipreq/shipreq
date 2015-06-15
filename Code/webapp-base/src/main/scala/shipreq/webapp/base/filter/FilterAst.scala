@@ -58,6 +58,18 @@ object FilterAst {
 
   // -------------------------------------------------------------------------------------------------------------------
 
+  def textPattern(regex: String): String \/ TextPattern =
+    try {
+      val p = Pattern compile regex
+      // Validate regex (Pattern.compile always succeeds in JS)
+      p.matcher("").matches()
+      \/-(TextPattern(p))
+    } catch {
+      // PatternSyntaxException not available in Scala.JS
+      // case e: PatternSyntaxException => error(e.getDescription)
+      case e: Throwable => -\/(s"Invalid regex: /$regex/")
+    }
+
   def apply(p: data.Project, filterSpec: FilterSpec): String \/ FilterAst = {
     type R = String \/ FilterAst
     @inline implicit def autoR(a: FilterAst): R = \/-(a)
@@ -109,18 +121,7 @@ object FilterAst {
         case S.AllOf(inner)        => composite(AllOf, inner)
         case S.AnyOf(inner)        => composite(AnyOf, inner)
         case S.Not(expr)           => translate(expr) map Not
-
-        case S.Regex(regex) =>
-          try {
-            val p = Pattern compile regex
-            // Validate regex (Pattern.compile always succeeds in JS)
-            p.matcher("").matches()
-            TextPattern(p)
-          } catch {
-            // PatternSyntaxException not available in Scala.JS
-            // case e: PatternSyntaxException => error(e.getDescription)
-            case e: Throwable => error(s"Invalid regex: /$regex/")
-          }
+        case S.Regex(regex)        => textPattern(regex)
 
         case S.HashRef(text) =>
           p.hashRefLookup(text) match {

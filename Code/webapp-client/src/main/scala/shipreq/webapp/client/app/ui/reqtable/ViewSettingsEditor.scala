@@ -49,22 +49,21 @@ object ViewSettingsEditor {
       def sortCriteria =
         SortCriteriaEditor.Props(vs.order, vs.columns.toNES, columnName, p.vs setL ViewSettings.order).component
 
-      <.div(
-        <.table(
-          <.thead(
-            <.tr(
-              th("Columns"),
-              th("Sorting"),
-              th("Filter"))),
-          <.tbody(
-            <.tr(
-              <.td(columns),
-              <.td(sortCriteria),
-              <.td(
-                <.div(
-                  filterDeadEditor(vs.filterDead),
-                  FilterEditor.Component(p.filterProps)))
-      ))))
+      <.table(
+        <.thead(
+          <.tr(
+            th("Columns"),
+            th("Sorting"),
+            th("Filter"))),
+        <.tbody(
+          <.tr(
+            <.td(columns),
+            <.td(sortCriteria),
+            <.td(
+              <.div(
+                filterDeadEditor(vs.filterDead),
+                FilterEditor.Component(p.filterProps)))
+      )))
     }
   }
 }
