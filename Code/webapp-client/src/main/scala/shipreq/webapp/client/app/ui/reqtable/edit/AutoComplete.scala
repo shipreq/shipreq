@@ -16,6 +16,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{TextSearch, PlainText, Grammar}
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
+import shipreq.webapp.client.lib.FilterDead
 import shipreq.webapp.client.lib.ui.UI
 import shipreq.webapp.client.util.{Plain, Contextualise}
 import TC.{Query, Strategy, StrategyA, Strategies}
@@ -67,16 +68,21 @@ object AutoComplete {
     hashtagContext.strategy(mainRegex, searchFn)(identity, " ")(_)
   }
 
-  def hashtag(legalIssues: Stream[CustomIssueType], legalTags: Stream[ApplicableTag]): Contextualise => Strategy =
+  def hashtag(issues: Stream[CustomIssueType],
+              tags  : Stream[ApplicableTag],
+              fd    : FilterDead): Contextualise => Strategy =
     hashtag(
-      legalIssues.filter(_.live :: Live).map(_.key) append
-        legalTags.filter(_.live :: Live).map(_.key))
+      fd(issues)(_.live).map(_.key) append
+      fd(tags  )(_.live).map(_.key))
 
-  def issue(legal: Stream[CustomIssueType]): Contextualise => Strategy =
-    hashtag(legal, Stream.empty)
+  def hashtag(p: Project, fd: FilterDead, issues: Boolean, tags: Boolean): Contextualise => Strategy =
+    hashtag(p.customIssueTypes.data.values.toStream, p.atags, fd)
 
-  def tag(legal: Stream[ApplicableTag]): Contextualise => Strategy =
-    hashtag(Stream.empty, legal)
+  def issue(legal: Stream[CustomIssueType], fd: FilterDead): Contextualise => Strategy =
+    hashtag(legal, Stream.empty, fd)
+
+  def tag(legal: Stream[ApplicableTag], fd: FilterDead): Contextualise => Strategy =
+    hashtag(Stream.empty, legal, fd)
 
   // ===================================================================================================================
   // [REF]

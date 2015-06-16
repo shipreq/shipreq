@@ -20,6 +20,7 @@ import shipreq.base.util.MTrie.Ops
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._, BaseTestUtil._
 import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.client.lib.HideDead
 import shipreq.webapp.client.lib.ui.UI
 import shipreq.webapp.client.test.{PrepareEnv, Sizzle}
 import shipreq.webapp.client.util.{Plain, Contextualise}
@@ -127,10 +128,10 @@ object AutoCompleteTest extends TestSuite {
   lazy val cReqCodePrefixes = editor(AutoComplete.reqCode.prefixes(fakeTrie))
   lazy val cReqCodeRefs     = editor(AutoComplete.reqCode.ref(project2, plainText2))
 
-  lazy val cIssuesC = editor(AutoComplete.issue(project.customIssueTypes.data.values.toStream)(Contextualise))
+  lazy val cIssuesC = editor(AutoComplete.issue(project.customIssueTypes.data.values.toStream, HideDead)(Contextualise))
 
-  lazy val cTagsC = editor(AutoComplete.tag(project.atags)(Contextualise))
-  lazy val cTagsP = editor(AutoComplete.tag(project.atags)(Plain))
+  lazy val cTagsC = editor(AutoComplete.tag(project.atags, HideDead)(Contextualise))
+  lazy val cTagsP = editor(AutoComplete.tag(project.atags, HideDead)(Plain))
 
   // ReqCode data - uses SampleProject2
 

@@ -11,7 +11,8 @@ object ViewSettingsEditor {
 
   type Component = ReactComponentC.ReqProps[Props, _, _, TopNode]
 
-  case class Props(vs: ReusableVar[ViewSettings], filterProps: FilterEditor.Props)
+  case class Props(vs: ReusableVar[ViewSettings], filter: ReusableVal[ReactElement])
+
   implicit val propsReuse = Reusability.caseclass2(Props.unapply)
 
   def apply(columnName: Column.NameResolver): Component =
@@ -62,7 +63,7 @@ object ViewSettingsEditor {
             <.td(
               <.div(
                 filterDeadEditor(vs.filterDead),
-                FilterEditor.Component(p.filterProps)))
+                p.filter))
       )))
     }
   }

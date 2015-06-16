@@ -11,6 +11,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.UiText
 import shipreq.webapp.client.app.ui.TextSeqEditor, TextSeqEditor._
+import shipreq.webapp.client.lib.HideDead
 import shipreq.webapp.client.util.Plain
 
 // TODO Hide dead tags & maintain across edits (unless show deleted is on)
@@ -57,7 +58,7 @@ object TagEditor {
 
     val autoComplete: Px[AutoComplete] =
       lookup.map(l => ReusableVal.byRef(
-        AutoComplete.tag(l.values.toStream)(Plain)
+        AutoComplete.tag(l.values.toStream, HideDead)(Plain)
       ))
 
     val parser: Parser[ApplicableTagId] = () => {

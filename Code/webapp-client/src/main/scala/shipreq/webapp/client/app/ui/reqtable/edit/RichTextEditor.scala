@@ -6,7 +6,6 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.jquery.{TextComplete => TC}
 import scalacss.ScalaCssReact._
 import org.scalajs.dom.raw.HTMLTextAreaElement
-import shipreq.webapp.client.app.ui.ProjectWidgets
 import scalajs.js
 import scalaz.effect.IO
 import shipreq.webapp.base.data._
@@ -14,7 +13,9 @@ import shipreq.webapp.base.text._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.effect.IoUtils, IoUtils.IoExt
 import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.client.app.ui.ProjectWidgets
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
+import shipreq.webapp.client.lib.HideDead
 import shipreq.webapp.client.lib.ui.{KeyHandlers, UI}
 import shipreq.webapp.client.util.{Contextualise, Validity}
 
@@ -39,8 +40,6 @@ object RichTextEditor {
 
     def mkAutoComplete(project: Px[Project], projectText: Px[PlainText.ForProject], textSearch: Px[TextSearch]): Px[AutoComplete] = {
       @inline def $ = AutoComplete
-      @inline def legalIf[A](guard: Boolean, s: => Stream[A]): Stream[A] =
-        if (guard) s else Stream.empty
 
       for {
         p <- project
@@ -50,10 +49,7 @@ object RichTextEditor {
         var ac: TC.Strategies = new js.Array
 
         if (supportsIssues || supportsTags)
-          ac.push($.hashtag(
-            legalIf(supportsIssues, p.customIssueTypes.data.values.toStream),
-            legalIf(supportsTags,   p.atags))
-            (Contextualise))
+          ac.push($.hashtag(p, HideDead, issues = supportsIssues, tags = supportsTags)(Contextualise))
 
         if (supportsReqRefs)
           ac.push(
@@ -109,7 +105,7 @@ object RichTextEditor {
         .stateless
         .backend(new Backend(_))
         .render(_.backend.render)
-        .configure(UI.installTextComplete2(textEditorRef, _.autoComplete, _.stateUpdate))
+        .configure(UI.installTextCompleteP(textEditorRef, _.autoComplete, _.stateUpdate))
         .build
 
     val correctOnChange: EndoFn[String] =

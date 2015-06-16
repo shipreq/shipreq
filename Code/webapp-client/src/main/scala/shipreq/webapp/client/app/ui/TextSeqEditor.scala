@@ -57,7 +57,7 @@ final class TextSeqEditor[A, B](name         : String,
       .stateless
       .backend(new Backend(_))
       .render(_.backend.render)
-      .configure(UI.installTextComplete2(textEditorRef, _.autoComplete, _.stateUpdate))
+      .configure(UI.installTextCompleteP(textEditorRef, _.autoComplete, _.stateUpdate))
       .build
 
   class Backend($: BackendScope[Props, Unit]) {

@@ -66,11 +66,10 @@ object ReqTable {
     val setViewSettings = ReusableFn($).modStateIO.endoCall(_.updateVS)
     val setFocus        = ReusableFn($).modStateIO.endoCall(_.updateFocus)
     val setCell         = ReusableFn($).modStateIO.endoCall(_.updateCell)
-    val filterFailure   = ReusableFn($).modStateIO.endoCall(_.filterFailure)
-    val filterSuccess   = ReusableFn($).modStateIO.endoCall(_.filterSuccess)
 
     val project      = Px.thunkM($.state.project)
     val viewSettings = Px.thunkM($.state.viewSettings)
+    val filterState  = Px.thunkM($.state.filter)
 
     val vsVar      = viewSettings map (ReusableVar(_)(setViewSettings))
     val vsCols     = viewSettings map (_.columns)
@@ -85,16 +84,20 @@ object ReqTable {
     val stats      = Px.apply3(viewSettings, project, rows)(Logic.stats)
     val colEditors = new ColumnEditors(project, plainText, widgets, textSearch, setCell)
 
+    val filterComp = FilterEditor.component(
+      FilterEditor.StaticProps(project,
+        s      => $.modStateIO(_ filterFailure s),
+        (a, b) => $.modStateIO(_.filterSuccess(a, b))))
+
+//    val filterEditor = filterState.map(ReusableVal renderComponent filterComp) TODO React
+    val filterEditor = filterState.map(s => ReusableVal.byRef[ReactElement](filterComp(s)))
+
     def render = {
       import Px.AutoValue._
-      Px.refresh(project, viewSettings)
+      Px.refresh(project, viewSettings, filterState)
       val s = $.state
 
-      val filterProps = FilterEditor.Props(
-        s.filter, project.value, filterFailure, filterSuccess)
-
-      val vsProps = ViewSettingsEditor.Props(
-        vsVar, filterProps)
+      val vsProps = ViewSettingsEditor.Props(vsVar, filterEditor)
 
       val tableProps = Table.Props(
         project, rows, colRnds, colEditors, s.cellStates, ReusableVar(s.focus)(setFocus))

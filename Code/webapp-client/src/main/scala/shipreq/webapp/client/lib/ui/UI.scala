@@ -91,11 +91,18 @@ object UI {
       }
     }
 
-  def installTextComplete2[P, S, B, N <: TopNode, E <: html.Element](
+  def installTextCompleteP[P, S, B, N <: TopNode, E <: html.Element](
           getNode   : RefSimple[E],
           strategies: P => ReusableVal[TextComplete.Strategies],
           onUpdate  : P => String => IO[Unit])
         (implicit te: TextEditor.OfType[E]): EndoFn[ReactComponentB[P, S, B, N]] =
     installTextComplete(getNode(_).get.getDOMNode(), (p, _) => strategies(p), (p, _) => onUpdate(p))
+
+  def installTextCompleteB[P, S, B, N <: TopNode, E <: html.Element](
+          getNode   : RefSimple[E],
+          strategies: B => ReusableVal[TextComplete.Strategies],
+          onUpdate  : B => String => IO[Unit])
+        (implicit te: TextEditor.OfType[E]): EndoFn[ReactComponentB[P, S, B, N]] =
+    installTextComplete(getNode(_).get.getDOMNode(), (_, b) => strategies(b), (_, b) => onUpdate(b))
 
 }

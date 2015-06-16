@@ -17,8 +17,8 @@ object FilterAst {
 
   sealed abstract class Attr(val name: String, val additionalNames: String*)
   object Attr {
-    case object AnyIssue extends Attr("issue", "issues")
-    case object AnyTag   extends Attr("tag", "tags")
+    case object AnyIssue extends Attr("issues", "issue")
+    case object AnyTag   extends Attr("tags", "tag")
 
     val values: NonEmptyVector[Attr] =
       NonEmptyVector(AnyTag, AnyIssue)
