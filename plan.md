@@ -3,15 +3,16 @@ Phase 2
 
 ### ReqTable
 
-* Handle no rows
+* Row detail view (modal?)
+* IO
+  * Modification protocol (fake on server-side)
+  * Async update
+  * Cell locking
+  * Failure handling
 * New req
   * Template
   * Functionality
-* Filters
-* Issues
-  * Highlight empty cells
-  * Highlight imp required
-  * Tag enum violations
+
 * Bulk
   * Row selection
   * Copy & paste
@@ -20,13 +21,15 @@ Phase 2
     * Data representation + derivation
     * Tree n-level checkboxes
     * Component
-* Row detail view (modal?)
-* IO
-  * Modification protocol
-  * Async update
-  * Cell locking
-  * Failure handling
 
+* Handle
+  * no live content in project.
+  * all live content filtered out.
+
+* Issues
+  * Highlight empty cells
+  * Highlight imp required
+  * Tag enum violations
 
 ### Other
 
