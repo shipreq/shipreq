@@ -20,10 +20,9 @@ import shipreq.base.util.MTrie.Ops
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._, BaseTestUtil._
 import shipreq.webapp.base.text.PlainText
-import shipreq.webapp.client.lib.HideDead
+import shipreq.webapp.client.lib.{HideDead, Plain, Contextualise}
 import shipreq.webapp.client.lib.ui.UI
 import shipreq.webapp.client.test.{PrepareEnv, Sizzle}
-import shipreq.webapp.client.util.{Plain, Contextualise}
 import SampleProject3._
 
 object AutoCompleteTest extends TestSuite {

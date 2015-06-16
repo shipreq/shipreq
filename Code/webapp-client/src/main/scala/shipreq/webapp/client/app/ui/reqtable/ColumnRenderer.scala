@@ -7,7 +7,8 @@ import japgolly.scalajs.react._, vdom.prefix_<^._
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.app.ui.ProjectWidgets
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
-import shipreq.webapp.client.util.{Valid, Plain}
+import shipreq.webapp.client.lib.Plain
+import shipreq.webapp.client.util.Valid
 import ColumnRenderer._
 
 final class ColumnRenderer(

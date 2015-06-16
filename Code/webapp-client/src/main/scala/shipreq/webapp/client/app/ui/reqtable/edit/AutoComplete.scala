@@ -16,9 +16,8 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{TextSearch, PlainText, Grammar}
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
-import shipreq.webapp.client.lib.FilterDead
+import shipreq.webapp.client.lib.{FilterDead, Plain, Contextualise}
 import shipreq.webapp.client.lib.ui.UI
-import shipreq.webapp.client.util.{Plain, Contextualise}
 import TC.{Query, Strategy, StrategyA, Strategies}
 
 object AutoComplete {

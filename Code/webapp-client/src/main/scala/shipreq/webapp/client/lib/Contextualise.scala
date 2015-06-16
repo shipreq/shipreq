@@ -1,4 +1,4 @@
-package shipreq.webapp.client.util
+package shipreq.webapp.client.lib
 
 import shipreq.base.util.IsoBool
 

@@ -15,8 +15,8 @@ import shipreq.webapp.base.filter._
 import shipreq.webapp.client.app.ui.Style.reqtable.{filterEditor => *}
 import shipreq.webapp.client.app.ui.reqtable.edit.AutoComplete
 import shipreq.webapp.client.lib.ui.UI
-import shipreq.webapp.client.lib.ShowDead
-import shipreq.webapp.client.util.{Contextualise, Valid}
+import shipreq.webapp.client.lib.{ShowDead, Contextualise}
+import shipreq.webapp.client.util.Valid
 
 object FilterEditor {
 

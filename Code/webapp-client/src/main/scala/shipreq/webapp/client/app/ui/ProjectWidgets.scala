@@ -13,6 +13,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar => G, _}
 import shipreq.webapp.base.util.ReqCodeTreeItem
 import shipreq.webapp.client.app.ui.Style.{widgets => *}
+import shipreq.webapp.client.lib.{Contextualise, Plain}
 import shipreq.webapp.client.lib.ui.UI
 import shipreq.webapp.client.util._
 

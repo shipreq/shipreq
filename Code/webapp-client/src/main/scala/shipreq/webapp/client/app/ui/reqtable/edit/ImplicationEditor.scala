@@ -13,7 +13,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar, PlainText, TextSearch}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.client.app.ui.TextSeqEditor._
-import shipreq.webapp.client.util.Plain
+import shipreq.webapp.client.lib.Plain
 
 object ImplicationEditor {
   import AutoComplete.ReqItem
