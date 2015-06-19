@@ -227,7 +227,6 @@ object Table {
           p.cells.get(cr.column).fold(readOnlyView)(renderCellState))
       })
 
-  def renderCellState: Cell.State => ReactElement = {
-    case e: Cell.Editing => e.render
-  }
+  def renderCellState: Cell.State => ReactElement =
+    _.render
 }

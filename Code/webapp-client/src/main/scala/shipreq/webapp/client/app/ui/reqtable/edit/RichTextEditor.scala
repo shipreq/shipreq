@@ -8,16 +8,17 @@ import scalacss.ScalaCssReact._
 import org.scalajs.dom.raw.HTMLTextAreaElement
 import scalajs.js
 import scalaz.effect.IO
-import shipreq.webapp.base.data._
-import shipreq.webapp.base.text._
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.effect.IoUtils, IoUtils.IoExt
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.protocol.ProjectChange
+import shipreq.webapp.base.text._
 import shipreq.webapp.client.app.ui.ProjectWidgets
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
 import shipreq.webapp.client.lib.{HideDead, Contextualise}
 import shipreq.webapp.client.lib.ui.{KeyHandlers, UI}
 import shipreq.webapp.client.util.Validity
+import Text.Equality._
+import ProjectChange._
 
 object RichTextEditor {
 
@@ -63,27 +64,28 @@ object RichTextEditor {
       }
     }
 
+    type SubjectId
+
+    def mkChange: (SubjectId, t.OptionalText) => ProjectChange
+
     def apply(initial       : t.OptionalText,
+              subjectId     : SubjectId,
               project       : Px[Project],
               projectText   : Px[PlainText.ForProject],
               projectWidgets: Px[ProjectWidgets],
-              textSearch    : Px[TextSearch],
-              setState      : Option[Cell.State] => IO[Unit]): Cell.State = {
+              textSearch    : Px[TextSearch])
+             (modCell       : Cell.ModCell,
+              editIO        : EditIO[ProjectChange]): Cell.Cmd = {
 
       def init: String =
         projectText.value() format initial
 
-      val abort: IO[Unit] =
-        setState(None)
-
-      val commit: t.OptionalText => IO[Unit] =
-      // TODO If change occurred, send to server & lock cell. (If unchanged, clear state.)
-        s => setState(None) >>> IO{ println("Sent to ze server: " + s) }
+      val (abort, commit) = editIO.cmapToInitial(initial)(mkChange(subjectId, _)).abortCommit
 
       val autoComplete = mkAutoComplete(project, projectText, textSearch)
 
-      Cell.selfManage(setState, init)(
-        Props(_, _, abort, commit, project, projectText, projectWidgets, autoComplete.value()).apply)
+      Cell.selfManage(modCell, init)((v, s, e) =>
+        Props(v, s, abort, commit(e), project, projectText, projectWidgets, autoComplete.value()).apply)
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -144,7 +146,18 @@ object RichTextEditor {
 
   // ===================================================================================================================
 
-  object GenericReqTitle   extends Base("GenericReqDesc editor",    Text.GenericReqTitle)
-  object ReqCodeGroupTitle extends Base("ReqCodeGroupTitle editor", Text.ReqCodeGroupTitle)
-  object CustomTextField   extends Base("CustomTextField editor",   Text.CustomTextField)
+  object GenericReqTitle extends Base("GenericReqDesc editor", Text.GenericReqTitle) {
+    override type SubjectId = GenericReqId
+    override def mkChange = SetGenericReqTitle
+  }
+
+  object ReqCodeGroupTitle extends Base("ReqCodeGroupTitle editor", Text.ReqCodeGroupTitle) {
+    override type SubjectId = ReqCodeId
+    override def mkChange = SetReqCodeGroupTitle
+  }
+
+  class CustomTextField(fid: CustomField.Text.Id) extends Base("CustomTextField editor", Text.CustomTextField) {
+    override type SubjectId = ReqId
+    override def mkChange = SetCustomTextField(_, fid, _)
+  }
 }

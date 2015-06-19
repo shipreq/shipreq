@@ -4,47 +4,41 @@ package edit
 import japgolly.scalajs.react.extra.Px
 import monocle.Optional
 import scalaz.effect.IO
-import scalaz.syntax.equal._
+import scalaz.syntax.bind.ToBindOps
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.Must
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.protocol.ProjectChange
 import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.client.app.ui.ProjectWidgets
+import shipreq.webapp.client.lib.{FailureIO, SuccessIO}
 import DataImplicits._
+
+object ColumnEditors {
+  case class CellEditor(init: Cell.ModCell => Option[Cell.Cmd]) extends AnyVal
+
+  def noEditor = CellEditor(_ => None)
+}
 
 final class ColumnEditors(project       : Px[Project],
                           plainText     : Px[PlainText.ForProject],
                           projectWidgets: Px[ProjectWidgets],
                           textSearch    : Px[TextSearch],
-                          cellset       : Cell.SetIO) {
+                          modTable      : Cell.ModTable,
+                          saveIO        : (ProjectChange, SuccessIO, FailureIO) => IO[Unit]) {
 
-  type State                = Option[Cell.State]
-  type SetState             = State => IO[Unit]
-  type InitState            = SetState => State
-  type InitEditor[R <: Row] = R => InitState
-
-  private def noEditor: InitState =
-    _ => None
-
-  @inline private implicit def autoSome(c: Cell.State): Option[Cell.State] =
-    Some(c)
-
-  @inline private def initEditor[R <: Row](f: R => SetState => Option[Cell.State]): InitEditor[R] =
-    f
-
-  private def initEditorO[R <: Row](f: R => Option[SetState => Cell.State]): InitEditor[R] =
-    r => f(r).fold[SetState => Option[Cell.State]](_ => None)(g => g(_).some)
+  import ColumnEditors._
 
   private val applicability = project.map(Applicability.apply)
 
   def startCellEditing(row: Row, col: Column): Option[IO[Unit]] =
     row.live match {
       case Live => startCellEditing2(row, col)
-      case Dead  => None
+      case Dead => None
     }
 
   private def startCellEditing2(row: Row, col: Column): Option[IO[Unit]] = {
-    val init: InitState =
+    val editor: CellEditor =
       applicability.value().apply(col).choose(row, na = noEditor)(
         row match {
 
@@ -67,7 +61,7 @@ final class ColumnEditors(project       : Px[Project],
 
           case r: ReqCodeGroupRow =>
             col match {
-              case Column.Code           => codesForGroup(r)
+              case Column.Code           => codeForGroup(r)
               case Column.Title          => reqCodeGroupTitle(r)
               case Column.Pubid
                  | Column.ReqType
@@ -79,74 +73,122 @@ final class ColumnEditors(project       : Px[Project],
         }
       )
 
-    val setState: SetState =
-      s => cellset(Cell.SetCmd(row.id, col, s))
+    val loc = Cell.Loc(row.id, col)
 
-    val initialState: State =
-      init(setState)
+    val modCell = modTable(loc)
 
-    initialState.map(_ => setState(initialState))
-  }
-
-  val reqType = initEditorO[GenericReqRow] { r =>
-    val initialM = project.value().reqTypeC(r.req.reqTypeId)
-    mustResolveO(initialM).map { initial =>
-      val fields = project.map(_.customReqTypes.data.values.toSet)
-      ReqTypeSelector(initial, fields, _)
+    editor.init(modCell) match {
+      case Some(cmd) => Some(modCell(cmd))
+      case None      => None // init returns None = editing not allowed = nothing to do
     }
   }
 
-  val reqCodeGroupTitle = initEditor[ReqCodeGroupRow](r =>
-    RichTextEditor.ReqCodeGroupTitle(r.group.title, project, plainText, projectWidgets, textSearch, _))
+  // ===================================================================================================================
 
-  val genericReqTitle = initEditor[GenericReqRow](r =>
-    RichTextEditor.GenericReqTitle(r.req.title, project, plainText, projectWidgets, textSearch, _))
+  private def mkEditor[R <: Row](f: R => (Cell.ModCell, EditIO[ProjectChange]) => Cell.Cmd) =
+    mkEditorO[R](r => Some(f(r)))
 
-  val codesForGroup = initEditor[ReqCodeGroupRow] { r =>
-    val currentValue = r.reqCode
-    val vs = project.map(p => Validators.reqCode.VS(p.reqCodes.data.trie, Set(currentValue)))
-    ReqCodeEditor.ForGroup(currentValue, vs, _)
+  private def mkEditorO[R <: Row](f: R => Option[(Cell.ModCell, EditIO[ProjectChange]) => Cell.Cmd]): R => CellEditor =
+    r => f(r) match {
+      case Some(g) =>
+        CellEditor { m =>
+          val e = mkEditIO(m)
+          Some(g(m, e))
+        }
+      case None => noEditor
+    }
+
+  private def mkEditIO(modCell: Cell.ModCell): EditIO[ProjectChange] = {
+    def saveLockRespond(modCell: Cell.ModCell, pc: ProjectChange, edit: () => Cell.Edit): IO[Unit] = {
+      def io: IO[Unit] = {
+        val sio  = SuccessIO(modCell(Cell.Clear))
+        def fcmd = Cell.Fail(() => io, () => modCell(edit()))
+        val fio  = FailureIO.lazily(modCell(fcmd))
+        saveIO(pc, sio, fio)
+      }
+      io >> modCell(Cell.Lock)
+    }
+
+    EditIO {
+      case Save(pc, e) => saveLockRespond(modCell, pc, e)
+      case Abort       => modCell(Cell.Clear)
+    }
   }
 
-  val codesForReq = initEditor[GenericReqRow] { r =>
-    val currentValues = project.value().reqCodes.data.activeReqCodesByTarget(r.req.id)
-    val vs = project.map(p => Validators.reqCode.VS(p.reqCodes.data.trie, currentValues))
-    ReqCodeEditor.ForReqs(currentValues, vs, _)
+  // ===================================================================================================================
+
+  val reqType = mkEditorO[GenericReqRow] { r =>
+    val initialM = project.value().reqTypeC(r.req.reqTypeId)
+    mustResolveO(initialM).map { iv =>
+      val id = r.req.id
+      val fields = project.map(_.customReqTypes.data.values.toSet)
+      ReqTypeSelector(iv, id, fields)
+    }
   }
 
-  val tags = initEditor[GenericReqRow] { r =>
-    val l = project map TagEditor.lookupForNoCol
-    val p = project.value()
-    val i = p.reqFieldData.data.tags(r.req.id)
-    TagEditor(i, p, l, _)
+  val genericReqTitle = mkEditor[GenericReqRow] { r =>
+    val id = r.req.id
+    val iv = r.req.title
+    RichTextEditor.GenericReqTitle(iv, id, project, plainText, projectWidgets, textSearch)
   }
 
-  def cfTag(fid: CustomField.Tag.Id) = initEditor[GenericReqRow] { r =>
-    val l = project map (TagEditor.lookupForCol(_, fid))
-    val p = project.value()
-    val i = p.reqFieldData.data.tags(r.req.id) & r.exp.tagsForCF(fid).toSet
-    TagEditor(i, p, l, _)
+  val reqCodeGroupTitle = mkEditor[ReqCodeGroupRow] { r =>
+    val id = r.reqCodeId
+    val iv = r.group.title
+    RichTextEditor.ReqCodeGroupTitle(iv, id, project, plainText, projectWidgets, textSearch)
+  }
+
+  def cfText(fid: CustomField.Text.Id) = mkEditor[GenericReqRow] { r =>
+    val td = project.value().reqFieldData.data.text.getOrElse(fid, Map.empty)
+    val id = r.req.id
+    val iv = td.get(id).map(_.whole) getOrElse Vector.empty
+    val fe = new RichTextEditor.CustomTextField(fid)
+    fe(iv, id, project, plainText, projectWidgets, textSearch)
+  }
+
+  val codesForReq = mkEditor[GenericReqRow] { r =>
+    val id = r.req.id
+    val iv = project.value().reqCodes.data.activeReqCodesByTarget(r.req.id)
+    val vs = project.map(p => Validators.reqCode.VS(p.reqCodes.data.trie, iv))
+    ReqCodeEditor.ForReqs(iv, id, vs)
+  }
+
+  val codeForGroup = mkEditor[ReqCodeGroupRow] { r =>
+    val id = r.reqCodeId
+    val iv = r.reqCode
+    val vs = project.map(p => Validators.reqCode.VS(p.reqCodes.data.trie, Set(iv)))
+    ReqCodeEditor.ForGroup(iv, id, vs)
+  }
+
+  val tags = mkEditor[GenericReqRow] { r =>
+    val id = r.req.id
+    val l  = project map TagEditor.lookupForNoCol
+    val p  = project.value()
+    val iv = p.reqFieldData.data.tags(id)
+    TagEditor(iv, id, p, l)
+  }
+
+  def cfTag(fid: CustomField.Tag.Id) = mkEditor[GenericReqRow] { r =>
+    val id = r.req.id
+    val l  = project map (TagEditor.lookupForCol(_, fid))
+    val p  = project.value()
+    val iv = p.reqFieldData.data.tags(id) & r.exp.tagsForCF(fid).toSet
+    TagEditor(iv, id, p, l)
   }
 
   lazy val impLookup =
     Px.apply2(project, plainText)(ImplicationEditor.lookupAll)
 
-  def imps(l: Optional[Row, Vector[Pubid]], col: Column) = initEditorO[GenericReqRow](r =>
-    l.getOption(r).map(initialValue =>
-      ImplicationEditor(initialValue, r.req.id, col, project, textSearch, impLookup map Must.apply, _)))
+  def imps(l: Optional[Row, Vector[Pubid]], col: Column) = mkEditorO[GenericReqRow](r =>
+    l.getOption(r).map(iv =>
+      ImplicationEditor(iv, r.req.id, col, project, textSearch, impLookup map Must.apply)))
 
-  def cfImp(fid: CustomField.Implication.Id, col: Column) = initEditorO[GenericReqRow] { r =>
+  def cfImp(fid: CustomField.Implication.Id, col: Column) = mkEditorO[GenericReqRow] { r =>
     val lookup = for {p <- project; l <- impLookup} yield ImplicationEditor.lookupForCustomImpCol(p, l, fid)
     Row.cfImp(fid).getOption(r).map { _ =>
       val id = r.req.id
-      val initial = ImplicationEditor.initialValueForCustomColumn(project.value(), fid, id)
-      ImplicationEditor(initial, id, col, project, textSearch, lookup, _)
+      val iv = ImplicationEditor.initialValueForCustomColumn(project.value(), fid, id)
+      ImplicationEditor(iv, id, col, project, textSearch, lookup)
     }
-  }
-
-  def cfText(id: CustomField.Text.Id) = initEditor[GenericReqRow] { r =>
-    val textData = project.value().reqFieldData.data.text.getOrElse(id, Map.empty)
-    val initialValue = textData.get(r.req.id).map(_.whole) getOrElse Vector.empty
-    RichTextEditor.CustomTextField(initialValue, project, plainText, projectWidgets, textSearch, _)
   }
 }

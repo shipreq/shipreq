@@ -2,16 +2,16 @@ package shipreq.webapp.client.app.ui.reqtable
 package edit
 
 import japgolly.scalajs.react.extra.{ReusableVal, Px}
-import scalaz.effect.IO
 import scalaz.\/-
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.effect.IoUtils, IoUtils.IoExt
 import shipreq.base.util.{SetDiff, Must, UnivEq}
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.protocol.ProjectChange
 import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.UiText
 import shipreq.webapp.client.app.ui.TextSeqEditor, TextSeqEditor._
 import shipreq.webapp.client.lib.{Plain, HideDead}
+import ProjectChange.PatchReqTags
 
 object TagEditor {
   type Lookup = Map[String, ApplicableTag]
@@ -32,10 +32,12 @@ object TagEditor {
       .toMap
     )
 
-  def apply(initial : Set[ApplicableTagId],
-            project : Project,
-            lookupM : Px[Must[Lookup]],
-            setState: Option[Cell.State] => IO[Unit]): Cell.State = {
+  def apply(initial  : Set[ApplicableTagId],
+            subjectId: ReqId,
+            project  : Project,
+            lookupM  : Px[Must[Lookup]])
+           (modCell  : Cell.ModCell,
+            editIO   : EditIO[ProjectChange]): Cell.Cmd = {
 
     val lookup = lookupM.map(mustResolve(_)(UnivEq.emptyMap))
 
@@ -66,17 +68,12 @@ object TagEditor {
       }
     }
 
-    val abort: IO[Unit] =
-      setState(None)
+    val (abort, commit) = editIO.setDiff[ApplicableTagId](PatchReqTags(subjectId, _)).abortCommit
 
     val validate: Vector[ApplicableTagId] => ParseResult[SetDiff[ApplicableTagId]] =
       nvs => \/-(SetDiff.compare(initialValues, nvs.toSet))
 
-    val commit: SetDiff[ApplicableTagId] => IO[Unit] =
-      // TODO If change occurred, send to server & lock cell. (If unchanged, clear state.)
-      s => setState(None) >>> IO{ if (s.nonEmpty) println("Sent to ze server: " + s) }
-
-    Cell.selfManage(setState, initialTextValue)(
-      editor.Props(_, _, abort, parser, validate, commit, autoComplete.value()).apply)
+    Cell.selfManage(modCell, initialTextValue)((v, s, e) =>
+      editor.Props(v, s, abort, parser, validate, commit(e), autoComplete.value()).apply)
   }
 }

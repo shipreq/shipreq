@@ -1,5 +1,6 @@
 package shipreq.webapp.client.app.ui.reqtable
 
+import japgolly.scalajs.react.extra.Reusability
 import monocle.{Lens, Optional}
 import monocle.function.index
 import monocle.std.mapIndex
@@ -30,6 +31,10 @@ case class Expansion(implicationSrc: Vector[Pubid],
                      reqCodeTree   : Vector[ReqCodeTreeItem],
                      cfImps        : Map[CustomField.Implication.Id, Vector[Pubid]],
                      cfTags        : Map[CustomField.Tag.Id,         Vector[ApplicableTagId]]) {
+
+  // Workaround for stupid https://issues.scala-lang.org/browse/SI-6391
+  def copyReqCodes   (nv: Vector[ReqCode.Value]  ): Expansion = copy(reqCodes = nv)
+  def copyReqCodeTree(nv: Vector[ReqCodeTreeItem]): Expansion = copy(reqCodeTree = nv)
 
   def impsForCF(id: CustomField.Implication.Id): Vector[Pubid] =
     cfImps.getOrElse(id, Vector.empty)
@@ -126,6 +131,8 @@ object Row {
   implicit val rowEqualityG: UnivEq[ReqCodeGroupRow]   = deriveUnivEq
   implicit val rowEquality : UnivEq[Row]               = deriveUnivEq
 
+  implicit val idReusability: Reusability[Id] = Reusability.byEqual
+
   val expansion = Optional[Row, Expansion] {
     case r: GenericReqRow   => Some(r.exp)
     case _: ReqCodeGroupRow => None
@@ -146,7 +153,7 @@ object Row {
     case r: GenericReqRow   => r.exp.reqCodes
     case r: ReqCodeGroupRow => Vector1(r.reqCode)
   }(nv => {
-    case GenericReqRow(r, e, m) => GenericReqRow(r, e.copy(reqCodes = nv), m)
+    case GenericReqRow(r, e, m) => GenericReqRow(r, e.copyReqCodes(nv), m)
     case r: ReqCodeGroupRow if nv.length == 1 => r.copy(reqCode = nv.head)
     case r: ReqCodeGroupRow if nv.length != 1 => assert(false, s"Can't apply $nv to $r") ;r
   })
@@ -156,7 +163,7 @@ object Row {
     case r: GenericReqRow   => r.exp.reqCodeTree
     case r: ReqCodeGroupRow => r.reqCodeTreeItem.toVector
   }(nv => {
-    case GenericReqRow(r, e, m) => GenericReqRow(r, e.copy(reqCodeTree = nv), m)
+    case GenericReqRow(r, e, m) => GenericReqRow(r, e.copyReqCodeTree(nv), m)
     case r: ReqCodeGroupRow if nv.length == 1 => r.copy(reqCodeTreeItem = Some(nv.head))
     case r: ReqCodeGroupRow if nv.length == 0 => r.copy(reqCodeTreeItem = None)
     case r: ReqCodeGroupRow if nv.length != 1 => assert(false, s"Can't apply $nv to $r") ;r

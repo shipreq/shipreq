@@ -9,14 +9,15 @@ import scala.scalajs.js.{UndefOr, undefined}
 import scalaz.Equal
 import scalaz.effect.IO
 import scalaz.syntax.equal._
-import shipreq.base.util.effect.IoUtils.IoExt
 import shipreq.base.util.NonEmptySet
-import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.protocol.ProjectChange
+import shipreq.webapp.base.UiText
 import shipreq.webapp.client.app.ui.SelectOne
 import shipreq.webapp.client.app.ui.reqtable.Cell
 import shipreq.webapp.client.util.Enabled
 import SelectOne.Choice
+import ProjectChange.SetGenericReqType
 
 object ReqTypeSelector {
 
@@ -24,26 +25,26 @@ object ReqTypeSelector {
 
   private implicit val equality: Equal[A] = Equal.equalBy(_.id)
 
-  def apply(initial : A,
-            fields  : Px[Set[A]],
-            setState: Option[Cell.State] => IO[Unit]): Cell.State = {
+  def apply(initial  : A,
+            subjectId: GenericReqId,
+            fields   : Px[Set[A]])
+           (modCell  : Cell.ModCell,
+            editIO   : EditIO[ProjectChange]): Cell.Cmd = {
 
     val fieldsN = fields
       .map(_.filter(_.live :: Live))
       .map(NonEmptySet(initial, _))
 
-    val abort: IO[Unit] =
-      setState(None)
+    val (abort, commit) = editIO.cmapToInitial(initial.id)(SetGenericReqType(subjectId, _)).cmap[A](_.id).abortCommit
 
-    def commit(s: A): UndefOr[IO[Unit]] =
-      if (s ≟ initial)
+    def commitIfChanged(s: A) =
+      if (s.id ≟ initial.id)
         undefined
       else
-      // TODO If change occurred, send to server & lock cell. (If unchanged, clear state.)
-        setState(None) >>> IO { println("Sent to ze server: " + s) }
+        UndefOr.any2undefOrA(commit)
 
-    Cell.selfManage(setState, initial)(
-      (s, u) => component(Props(s, u, abort, commit(s), fieldsN.value())))
+    Cell.selfManage(modCell, initial)((v, s, e) =>
+      component(Props(v, s, abort, commitIfChanged(v).map(_(e)(v)), fieldsN.value())))
   }
 
   val selectComp = SelectOne.Component[A]

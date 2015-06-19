@@ -2,14 +2,13 @@ package shipreq.webapp.client.app.ui.reqtable
 package edit
 
 import japgolly.scalajs.react.extra.{ReusableVal, Px}
-import scalaz.effect.IO
 import scalaz.syntax.either._
 import scalaz.syntax.equal._
 import scalaz.{\/-, -\/}
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.effect.IoUtils, IoUtils.IoExt
 import shipreq.base.util.{SetDiff, Must, UnivEq}
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.protocol.ProjectChange
 import shipreq.webapp.base.text.{Grammar, PlainText, TextSearch}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.client.app.ui.TextSeqEditor._
@@ -49,8 +48,9 @@ object ImplicationEditor {
             column    : Column,
             project   : Px[Project],
             textSearch: Px[TextSearch],
-            lookupM   : Px[Must[Lookup]],
-            setState  : Option[Cell.State] => IO[Unit]): Cell.State = {
+            lookupM   : Px[Must[Lookup]])
+           (modCell   : Cell.ModCell,
+            editIO    : EditIO[ProjectChange]): Cell.Cmd = {
 
     /**
      * If true, the user edits what this subject implies (ie. subject → edit-specified).
@@ -96,8 +96,15 @@ object ImplicationEditor {
           leftNone
     }
 
-    val abort: IO[Unit] =
-      setState(None)
+    val (abort, commit) = {
+      import ProjectChange._
+      val f: SetDiff[ReqId] => ProjectChange =
+        if (declFwd)
+          PatchImplicationTgt(subjectId, _)
+        else
+          PatchImplicationSrc(subjectId, _)
+      editIO.setDiff(f).abortCommit
+    }
 
     val validate: Vector[ReqId] => ParseResult[SetDiff[ReqId]] = in => {
       val newValues = in.toSet - subjectId // Tolerate reflexivity
@@ -112,11 +119,7 @@ object ImplicationEditor {
         \/-(diff)
     }
 
-    val commit: SetDiff[ReqId] => IO[Unit] =
-    // TODO If change occurred, send to server & lock cell. (If unchanged, clear state.)
-      s => setState(None) >>> IO{ if (s.nonEmpty) println("Sent to ze server: " + s) }
-
-    Cell.selfManage(setState, initialTextValue)(
-      editor.Props(_, _, abort, parser, validate, commit, autoComplete.value()).apply)
+    Cell.selfManage(modCell, initialTextValue)((v, s, e) =>
+      editor.Props(v, s, abort, parser, validate, commit(e), autoComplete.value()).apply)
   }
 }

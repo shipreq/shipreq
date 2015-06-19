@@ -4,12 +4,15 @@ import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
 import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
+import scalaz.effect.IO
+import shipreq.webapp.base.protocol.ProjectChange
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.FilterAst
 import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.client.app.ui.ProjectWidgets
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
 import shipreq.webapp.client.data.DataReusability._
+import shipreq.webapp.client.lib.{FailureIO, SuccessIO}
 import edit.ColumnEditors
 
 object ReqTable {
@@ -49,8 +52,8 @@ object ReqTable {
     def updateFocus(newFocus: Option[Table.Focus]): State =
       copy(focus = newFocus)
 
-    def updateCell(cmd: Cell.SetCmd): State =
-      copy(cellStates = cellStates.set(cmd))
+    def updateCell(loc: Cell.Loc, cmd: Cell.Cmd): State =
+      copy(cellStates = cellStates.set(loc, cmd))
 
     def filterFailure(s: FilterEditor.State): State =
       copy(filter = s)
@@ -65,7 +68,6 @@ object ReqTable {
 
     val setViewSettings = ReusableFn($).modStateIO.endoCall(_.updateVS)
     val setFocus        = ReusableFn($).modStateIO.endoCall(_.updateFocus)
-    val setCell         = ReusableFn($).modStateIO.endoCall(_.updateCell)
 
     val project      = Px.thunkM($.state.project)
     val viewSettings = Px.thunkM($.state.viewSettings)
@@ -82,7 +84,12 @@ object ReqTable {
     val colRnds    = Px.apply2(vsCols, colRnd)(_ map _.apply)
     val rows       = Px.apply4(viewSettings, project, plainText, textSearch)(Logic.rowsForTable).map(_.toVector)
     val stats      = Px.apply3(viewSettings, project, rows)(Logic.stats)
-    val colEditors = new ColumnEditors(project, plainText, widgets, textSearch, setCell)
+
+    val modTable: Cell.ModTable = ReusableFn($).modStateIO.endoCall2(_.updateCell)
+    val saveIO: (ProjectChange, SuccessIO, FailureIO) => IO[Unit] = (pc, sio, fio) => {
+      IO(println(s"Fake-sending: $pc"))
+    }
+    val colEditors = new ColumnEditors(project, plainText, widgets, textSearch, modTable, saveIO)
 
     val filterComp = FilterEditor.component(
       FilterEditor.StaticProps(project,

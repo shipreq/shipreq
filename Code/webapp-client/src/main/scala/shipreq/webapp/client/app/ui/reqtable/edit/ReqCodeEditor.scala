@@ -2,16 +2,16 @@ package shipreq.webapp.client.app.ui.reqtable.edit
 
 import japgolly.scalajs.react.extra.{ReusableVal, Px}
 import scalaz.{\/-, -\/}
-import scalaz.effect.IO
-import shipreq.base.util.Util
+import shipreq.base.util.{SetDiff, Util}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.protocol.ProjectChange
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.client.app.ui.TextSeqEditor, TextSeqEditor._
 import shipreq.webapp.client.app.ui.reqtable._
 import shipreq.webapp.client.lib.ui.TextEditor
-import shipreq.base.util.effect.IoUtils, IoUtils.IoExt
 import Validators.{reqCode => V}
+import ProjectChange.{PatchReqCodes, SetReqCodeGroupCode}
 
 object ReqCodeEditor {
 
@@ -31,8 +31,10 @@ object ReqCodeEditor {
     val editor = new TextSeqEditor[A, A]("ReqCode editor", Stream(_), TextEditor.Input, cellStyle, cellErrorMsgStyle)
 
     def apply(initial        : A,
-              validationState: Px[V.VS],
-              setState       : Option[Cell.State] => IO[Unit]): Cell.State = {
+              subjectId      : ReqCodeId,
+              validationState: Px[V.VS])
+             (modCell        : Cell.ModCell,
+              editIO         : EditIO[ProjectChange]): Cell.Cmd = {
 
       def init         = PlainText reqCode initial
       val autoComplete = mkAutoComplete(validationState)
@@ -44,15 +46,10 @@ object ReqCodeEditor {
           case Some(c) => \/-(c)
         }
 
-      val abort: IO[Unit] =
-        setState(None)
+      val (abort, commit) = editIO.cmapToInitial(initial)(SetReqCodeGroupCode(subjectId, _)).abortCommit
 
-      val commit: A => IO[Unit] =
-      // TODO If change occurred, send to server & lock cell. (If unchanged, clear state.)
-        s => setState(None) >>> IO { println("Sent to ze server: " + s) }
-
-      Cell.selfManageC(setState, liveCorrect)(
-        init, editor.Props(_, _, abort, parser, validate, commit, autoComplete.value()).apply)
+      Cell.selfManageC(modCell, liveCorrect)(init, (v, s, e) =>
+        editor.Props(v, s, abort, parser, validate, commit(e), autoComplete.value()).apply)
     }
 
     @inline def liveCorrect(t: String) = V.code.liveCorrect(t)
@@ -62,30 +59,27 @@ object ReqCodeEditor {
   object ForReqs {
     val lineSplitter = "\\s*[\n\r]\\s*".r.pattern
 
-    val editor = textSetEditor[A, Set[A]]("ReqCode editor",
+    val editor = textSetEditor[A, SetDiff[A]]("ReqCode editor",
       s => lineSplitter.split(s.trim).toStream.filter(_.nonEmpty),
       TextEditor.TextArea)
 
     def apply(initial        : Set[A],
-              validationState: Px[V.VS],
-              setState       : Option[Cell.State] => IO[Unit]): Cell.State = {
+              subjectId      : ReqId,
+              validationState: Px[V.VS])
+             (modCell        : Cell.ModCell,
+              editIO         : EditIO[ProjectChange]): Cell.Cmd = {
 
       def init         = initial.toVector.map(PlainText.reqCode).sorted mkString "\n"
       val autoComplete = mkAutoComplete(validationState)
       val parser       = mkParser(validationState)
 
-      val validate: Vector[A] => ParseResult[Set[A]] =
-        as => V.codeSet.correctAndValidateU(as.toSet)
+      val validate: Vector[A] => ParseResult[SetDiff[A]] =
+        as => V.codeSet.correctAndValidateU(as.toSet).map(SetDiff.compare(initial, _))
 
-      val abort: IO[Unit] =
-        setState(None)
+      val (abort, commit) = editIO.setDiff[A](PatchReqCodes(subjectId, _)).abortCommit
 
-      val commit: Set[A] => IO[Unit] =
-      // TODO If change occurred, send to server & lock cell. (If unchanged, clear state.)
-        s => setState(None) >>> IO { println("Sent to ze server: " + s) }
-
-      Cell.selfManageC(setState, liveCorrect)(
-        init, editor.Props(_, _, abort, parser, validate, commit, autoComplete.value()).apply)
+      Cell.selfManageC(modCell, liveCorrect)(init, (v, s, e) =>
+        editor.Props(v, s, abort, parser, validate, commit(e), autoComplete.value()).apply)
     }
 
     def liveCorrect(txt: String): String =

@@ -71,3 +71,5 @@ Phase 2
   subset of reqtypes, what should happen when related tags are applied to
   excluded reqtypes? They'll be displayed in the Tags column; should they be
   marked as issues?
+
+* When a tag cell is locked should it lock ALL tag cells for that row?

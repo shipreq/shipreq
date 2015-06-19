@@ -1,6 +1,11 @@
 package shipreq.base.util
 
+/**
+ * The difference between two sets.
+ */
 final class SetDiff[A](val removed: Set[A], val added: Set[A]) {
+  assert((removed & added).isEmpty, s"Same item(s) found in removed & added: ${removed & added}")
+
   override def toString =
     s"SetDiff(removed = $removed, added = $added)"
 
@@ -32,4 +37,7 @@ object SetDiff {
 
   def compare[A: UnivEq](before: Set[A], after: Set[A]): SetDiff[A] =
     SetDiff(before -- after, after -- before)
+
+  def compareFn[A: UnivEq](before: Set[A]): Set[A] => SetDiff[A] =
+    compare(before, _)
 }
