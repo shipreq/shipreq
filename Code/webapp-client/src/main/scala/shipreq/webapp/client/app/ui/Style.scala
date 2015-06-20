@@ -24,16 +24,16 @@ object Style extends StyleSheet.Inline {
 
   /** Drag'n'drop handle Ξ */
   private val dragHnd = style(
-    color("#000"))
+    color(c"#000"))
 
   /** An empty style */
   private val empty = style()
 
   private val hasErrorBackground =
-    backgroundColor("#fee")
+    backgroundColor(c"#fee")
 
   private val hasErrorColor = style(
-    color("#c00"))
+    color(c"#c00"))
 
   private val errorRedOnRed = mixin(
     hasErrorColor,
@@ -47,7 +47,7 @@ object Style extends StyleSheet.Inline {
     import ui.reqtable.{Column, ColumnRenderer}
 
     val viewSettingsHeader = style(
-      backgroundColor("#ffe".color))
+      backgroundColor(c"#ffe"))
 
     // -----------------------------------------------------------------------------------------------------------------
     object sortCriteriaEditor {
@@ -55,7 +55,7 @@ object Style extends StyleSheet.Inline {
       /** 1. Ξ [▲ Ascending] Code */
       val inconclusiveCriterionRow = styleF(D.on)(o => styleS(
 //        mixinIf(!on)(
-//          backgroundColor("#e2e2e2")),
+//          backgroundColor(c"#e2e2e2")),
         marginBottom(0.7 ex),
         paddingRight(1 ex)))
 
@@ -66,7 +66,7 @@ object Style extends StyleSheet.Inline {
 
       val inconclusiveColumnName = styleF(D.`live * on`) { case (live, on) => styleS(
         marginLeft(1 ex),
-        mixinIf(on :: Off)(color("#999")),
+        mixinIf(on :: Off)(color(c"#999")),
         deadColumnLabel(live)
       )}
 
@@ -102,8 +102,8 @@ object Style extends StyleSheet.Inline {
     val statsSummary = style(
       margin(1 em, `0`),
       padding(0.2 ex, 1 ex),
-      color("#444"),
-      backgroundColor("#ded"),
+      color(c"#444"),
+      backgroundColor(c"#ded"),
       width(100 %%))
 
     // http://stackoverflow.com/questions/446624/table-cell-widths-fixing-width-wrapping-truncating-long-words
@@ -118,21 +118,21 @@ object Style extends StyleSheet.Inline {
     val columnReqType = style(maxWidth(mnemonicLen.ex))
 
     val `N/A` = style(
-      color("#666".color),
+      color(c"#666"),
       margin.horizontal(auto)
     )
 
     val columnHeader = styleF(D.live)(live => styleS(
       deadColumnLabel(live),
-      backgroundColor("#e0e8f8".color),
-      border(1 px, solid, "#777".color)
+      backgroundColor(c"#e0e8f8"),
+      border(1 px, solid, c"#777")
     ))
 
     val cell = styleF[(ColumnRenderer.Status, Boolean)](ColumnRenderer.statusDomain *** Domain.boolean){
       case (status, focus) => styleS(
-        border(1 px, solid, "#ccc".color),
+        border(1 px, solid, c"#ccc"),
         mixinIf(focus)(
-          backgroundColor("#e9e9ff"),
+          backgroundColor(c"#e9e9ff"),
           outline(rgba(0, 0, 200, 0.2), 2 px, solid),
           outlineOffset(-1 px)
         ),
@@ -140,10 +140,10 @@ object Style extends StyleSheet.Inline {
           case ColumnRenderer.Normal => mixin(
             padding(v = 2.px, h = 4.px))
           case ColumnRenderer.DeadRow => mixin(
-            padding(v = 2.px, h = 4.px), backgroundColor("#eee"))
+            padding(v = 2.px, h = 4.px), backgroundColor(c"#eee"))
           case ColumnRenderer.`N/A` => mixin(
             padding.`0`,
-            backgroundColor("#eee"),
+            backgroundColor(c"#eee"),
             textAlign.center,
             verticalAlign.middle)
         }): StyleS
@@ -155,18 +155,18 @@ object Style extends StyleSheet.Inline {
       width(100 %%),
 //      boxShadow := "inset 0 1px 1px rgba(0,0,0,.075)",
 //      transition := "border-color ease-in-out .15s, box-shadow ease-in-out .15s",
-      //border(1 px, solid, if (hasError) Color("#a94442") else Color("#666")),
-//      outlineColor(if (hasError) Color("#a94442") else Color("#666")),
-      mixinIf(v :: Invalid)(hasErrorBackground, &.focus(outlineColor("#f88"))),
+      //border(1 px, solid, if (hasError) Color(c"#a94442") else Color(c"#666")),
+//      outlineColor(if (hasError) Color(c"#a94442") else Color(c"#666")),
+      mixinIf(v :: Invalid)(hasErrorBackground, &.focus(outlineColor(c"#f88"))),
       padding.horizontal(0.8 ex)
     ))
 
     val cellEditorErrMsg = style(
-      color("#a00")
+      color(c"#a00")
     )
 
     private val autoCompleteDesc =
-      styleS(color("#444"), fontStyle.italic, overflow.hidden, maxWidth(36 ex))
+      styleS(color(c"#444"), fontStyle.italic, overflow.hidden, maxWidth(36 ex))
 
     val reqAutoComplete = styleC {
       val r = styleS(fontWeight.bold)
@@ -175,7 +175,7 @@ object Style extends StyleSheet.Inline {
 
     val codeRefToReqAutoComplete = styleC {
       val code  = styleS(fontWeight.bold)
-      val pubid = styleS(paddingLeft(1 ex), color("#333"))
+      val pubid = styleS(paddingLeft(1 ex), color(c"#333"))
       code.named('code) :*: pubid.named('pubid) :*: autoCompleteDesc.named('desc)
     }
 
@@ -183,9 +183,9 @@ object Style extends StyleSheet.Inline {
 
     val textEditPreview = style(
       padding(h = 0.8.ex, v = 0.2.em),
-      border(solid, 1 px, "#222".color),
+      border(solid, 1 px, c"#222"),
       minHeight(2 em),
-      backgroundColor("#efe")
+      backgroundColor(c"#efe")
     )
 
   } // reqtable
@@ -209,7 +209,7 @@ object Style extends StyleSheet.Inline {
 
     private val deadAndNotError = mixin(
       deadMixin,
-      color("#999"))
+      color(c"#999"))
 
     private val deadAndError = mixin(
       deadMixin,
@@ -229,7 +229,7 @@ object Style extends StyleSheet.Inline {
     }
     val tag = styleF(D.live)(live => styleS(
       addClassName(s"label label-${tagLabelSuffix(live)}"),
-      mixinIf(live :: Dead)(&.not(_.Hover)(textDecoration := ^.lineThrough)),
+      mixinIf(live :: Dead)(&.not(_.hover)(textDecoration := ^.lineThrough)),
       hoverShowsInfo))
 
     val reqType = styleF(D.live)(a => styleS(
@@ -242,7 +242,7 @@ object Style extends StyleSheet.Inline {
       padding.horizontal(0.7 ex))
 
     val reqRef = styleF(D.`live * validity`){ case (a, v) => styleS(
-      mixinIf(a :: Live)(color("#2363A1")),
+      mixinIf(a :: Live)(color(c"#2363A1")),
       mixinIf(a :: Dead)(deadMaybeValid(v)),
       hoverShowsInfo
     )}
@@ -266,15 +266,14 @@ object Style extends StyleSheet.Inline {
     )
     private val reqCodeTreePre = mixin(reqCodePre, display.inline)
 
-    val reqCodeTreeIndent = style(reqCodeTreePre, color("#dadada".color))
+    val reqCodeTreeIndent = style(reqCodeTreePre, color(c"#dadada"))
     val reqCodeTreeCode = style(reqCodeTreePre)
     val reqCodeFlat = style(reqCodePre, display.block)
   }
 
   // ===================================================================================================================
 
-  private def init(a: StyleA*) = () // TODO add to ScalaCSS as (force)init(Objects) or something
-  init(
+  initInnerObjects(
     reqtable.sortCriteriaEditor.conclusiveColumnName,
     reqtable.filterEditor.errorMsg,
     reqtable.table,

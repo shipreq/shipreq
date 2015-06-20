@@ -89,8 +89,7 @@ object ReqTable {
         s      => $.modStateIO(_ filterFailure s),
         (a, b) => $.modStateIO(_.filterSuccess(a, b))))
 
-//    val filterEditor = filterState.map(ReusableVal renderComponent filterComp) TODO React
-    val filterEditor = filterState.map(s => ReusableVal.byRef[ReactElement](filterComp(s)))
+    val filterEditor = filterState.map(ReusableVal renderComponent filterComp)
 
     def render = {
       import Px.AutoValue._

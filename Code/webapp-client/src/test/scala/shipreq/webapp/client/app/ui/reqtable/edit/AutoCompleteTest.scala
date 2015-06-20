@@ -103,7 +103,7 @@ object AutoCompleteTest extends TestSuite {
   }
 
   def testSelect(exp: String)(implicit ctx: TestCtx): Unit = {
-    keydown(KeyCode.enter)
+    keydown(KeyCode.Enter)
     val i = exp.indexOf('|')
     if (i < 0)
       assertEq(quote(ctx.editor.state), quote(exp))

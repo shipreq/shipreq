@@ -15,7 +15,7 @@ object KeyPressListener {
     EventListener[KeyboardEvent].install[P,S,B,N]("keyup",   _.backend._onKeyUp,   _ => document, useCapture)
 
   val modKeys: BitSet =
-    BitSet(KeyCode.alt, KeyCode.ctrl, KeyCode.shift,
+    BitSet(KeyCode.Alt, KeyCode.Ctrl, KeyCode.Shift,
       91, 92, 93, 224, // OSLeft & OSRight
       225)             // AltGraph
 }
@@ -39,9 +39,9 @@ trait KeyPressListener extends OnUnmount {
     // Fix what we can.
     def setMod(code: Int, on: Boolean): Unit =
       _modsDown = if (on) _modsDown + code else _modsDown - code
-    setMod(KeyCode.alt,   e.altKey)
-    setMod(KeyCode.ctrl,  e.ctrlKey)
-    setMod(KeyCode.shift, e.shiftKey)
+    setMod(KeyCode.Alt,   e.altKey)
+    setMod(KeyCode.Ctrl,  e.ctrlKey)
+    setMod(KeyCode.Shift, e.shiftKey)
 
     i
   }

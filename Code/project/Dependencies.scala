@@ -40,7 +40,7 @@ object Deps {
   // -------------------------------------------------------------------------------------------------------------------
 
   object ScalaJS {
-    object React extends Group("0.9.0", "com.github.japgolly.scalajs-react") {
+    object React extends Group("0.9.1", "com.github.japgolly.scalajs-react") {
       val core    = js("core")
       val test    = js("test")
       val scalaz  = js("ext-scalaz71")
@@ -48,7 +48,7 @@ object Deps {
       val extra   = js("extra")
       val most    = core ++ scalaz ++ monocle ++ extra
     }
-    object ScalaCSS extends Group("0.2.0", "com.github.japgolly.scalacss") {
+    object ScalaCSS extends Group("0.3.0", "com.github.japgolly.scalacss") {
       val core  = js("core").removeShapelessFork
       val react = js("ext-react").removeShapelessFork ++ core
     }
@@ -70,7 +70,7 @@ object Deps {
     val all      = compiler ++ library ++ reflect ++ p
   }
 
-  object Scalaz extends Group("7.1.2", "org.scalaz") {
+  object Scalaz extends Group("7.1.3", "org.scalaz") {
     val core       = dd("scalaz-core")
     val effect     = dd("scalaz-effect") ++ core
     val concurrent = dd("scalaz-concurrent") ++ effect

@@ -73,20 +73,18 @@ object Table {
     }
   }
 
-  val KeyCode_f2 = 113 // TODO temporary
-
   final class Backend($: BackendScope[Props, Unit]) extends KeyPressListener {
 
     val keyDispatch =
       consumeHandledKbEvent(
         filterUntargeted(
           matchKeyCodeNoMods {
-            case KeyCode.up     => onKeyboardAction(FocusUp)
-            case KeyCode.down   => onKeyboardAction(FocusDown)
-            case KeyCode.left   => onKeyboardAction(FocusLeft)
-            case KeyCode.right  => onKeyboardAction(FocusRight)
-            case KeyCode.escape => onKeyboardAction(FocusNone)
-            case KeyCode_f2     => onKeyboardAction(EditStart)
+            case KeyCode.Up     => onKeyboardAction(FocusUp)
+            case KeyCode.Down   => onKeyboardAction(FocusDown)
+            case KeyCode.Left   => onKeyboardAction(FocusLeft)
+            case KeyCode.Right  => onKeyboardAction(FocusRight)
+            case KeyCode.Escape => onKeyboardAction(FocusNone)
+            case KeyCode.F2     => onKeyboardAction(EditStart)
           }))
 
     override def onKeyDown(e: dom.KeyboardEvent): IO[Unit] =

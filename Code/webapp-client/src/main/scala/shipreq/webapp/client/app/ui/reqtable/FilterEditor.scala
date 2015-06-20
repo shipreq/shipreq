@@ -20,9 +20,6 @@ import shipreq.webapp.client.util.Valid
 
 object FilterEditor {
 
-  // TODO Move to scalajs-react
-  type ReactEventTA = SyntheticEvent[html.TextArea]
-
   type AutoComplete = ReusableVal[TC.Strategies]
 
   case class StaticProps(project  : Px[Project],
