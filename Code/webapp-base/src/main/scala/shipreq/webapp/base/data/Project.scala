@@ -26,17 +26,22 @@ final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
                          reqCodes        : RevAnd[ReqCodes],
                          reqFieldData    : RevAnd[ReqFieldData]) {
 
-  val rev: Rev =
+  def configRev: Rev =
     customIssueTypes.rev +
     customReqTypes  .rev +
     fields          .rev +
-    tags            .rev +
+    tags            .rev
+
+  def contentRev: Rev =
     reqs            .rev +
     reqCodes        .rev +
     reqFieldData    .rev
 
+  val rev: Rev =
+    configRev + contentRev
+
   override def toString =
-    s"Project($rev)"
+    s"Project(config: $configRev, content: $contentRev)"
     //ShowSize(this).showTree
 
   def allRichText: Stream[(String, Stream[Text.AnyOptional])] =
