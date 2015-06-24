@@ -67,26 +67,21 @@ object Common {
     getMethod(loader, "shipreq.webapp.db.DB", "shutdown").foreach(_ invoke null)
   }
 
-  lazy val settings = (p: Project) => p
+  /** Minimal settings used by benchmark modules too */
+  lazy val settingsMin = (p: Project) => p
     .settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*) // Dependency graph
     .settings(
-      clearScreenTask := { println("\033[2J\033[;H") },
-      organization := "com.beardedlogic.shipreq",
-      organizationName := "Bearded Logic",
-      version := s"${fmtTimeNow("yyyyMMdd")}-${gitRevisionShort}${snapshotSuffix}",
-      isSnapshot := snapshotSuffix.nonEmpty,
+      clearScreenTask          := { println("\033[2J\033[;H") },
+      organization             := "com.beardedlogic.shipreq",
+      organizationName         := "Bearded Logic",
+      version                  := s"${fmtTimeNow("yyyyMMdd")}-${gitRevisionShort}${snapshotSuffix}",
+      isSnapshot               := snapshotSuffix.nonEmpty,
       shellPrompt in ThisBuild := { (s: State) => Project.extract(s).currentRef.project + "> " },
-      incOptions := incOptions.value.withNameHashing(true),
-      updateOptions := updateOptions.value.withCachedResolution(true),
-      aggregate in update := false,
-      javacOptions ++= javacFlags,
-      scalaVersion := Deps.Scala.version,
-      scalacOptions ++= scalacFlags,
-      scalacOptions in Test ++= scalacTestFlags,
-      testOptions in Test += Tests.Cleanup(shutdownTestDb(_))
-    )
+      incOptions               := incOptions.value.withNameHashing(true),
+      updateOptions            := updateOptions.value.withCachedResolution(true),
+      aggregate in update      := false,
+      scalaVersion             := Deps.Scala.version)
     .configure(
-      debugAndReleaseCompilerFlags,
       addCommandAliases(
         "/"    -> "project root",
         "B"    -> "project base",
@@ -106,8 +101,17 @@ object Common {
         "cq"   -> ";clear;testQuick",
         "ccc"  -> ";clear;clean;compile",
         "cctc" -> ";clear;clean;test:compile",
-        "cct"  -> ";clear;clean;test")
-    )
+        "cct"  -> ";clear;clean;test"))
+
+  /** Common settings used by all modules except benchmark */
+  lazy val settings = (p: Project) => settingsMin(p)
+    .settings(
+      javacOptions          ++= javacFlags,
+      scalacOptions         ++= scalacFlags,
+      scalacOptions in Test ++= scalacTestFlags,
+      testOptions   in Test  += Tests.Cleanup(shutdownTestDb(_)))
+    .configure(
+      debugAndReleaseCompilerFlags)
 
   def useHiddenTargetDir: Project => Project =
     _.settings(target <<= baseDirectory(_ / ".target"))
@@ -201,5 +205,19 @@ object Common {
       val s = m.map(p => addCommandAlias(p._1, p._2)).reduce(_ ++ _)
       (_: Project).settings(s: _*)
     }
+
+    // Recompile shared source rather than depending directly
+    // https://github.com/scala-js/scala-js/issues/1067
+    def jsStyleDependsOn(deps: Project*) =
+      deps.foldLeft(identity[Project]_)(_ compose jsStyleDependsOnS(_)(Compile -> Compile, Test -> Test))
+
+    def jsStyleDependsOnS(deps: Project*)(scopes: (Configuration, Configuration)*) = (_: Project)
+      .settings((
+      for {
+        dep    <- deps
+        (a, b) <- scopes
+      } yield
+      unmanagedSourceDirectories in b += (scalaSource in a in dep).value
+      ): _*)
   }
 }

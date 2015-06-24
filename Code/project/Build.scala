@@ -32,6 +32,11 @@ object ShipReq extends Build {
   lazy val taskmanServerImpl   = Taskman.Server.Impl.project
   lazy val taskmanServerSchema = Taskman.Server.Schema.project
 
+  lazy val benchmark     = Benchmark.project
+  lazy val benchmarkBase = Benchmark.Base.project
+  lazy val benchmarkJvm  = Benchmark.Jvm.project
+  lazy val benchmarkJs   = Benchmark.Js.project
+
   sealed trait Module {
     def project: Project
     def dir: String
@@ -46,10 +51,12 @@ object ShipReq extends Build {
 
     def commonSettings: Project => Project =
       _.configure(Common.settings, ideSettings)
-        .settings(libraryDependencies ++= deps.ms)
+
+    def moduleToSettings: Project => Project =
+      _.settings(libraryDependencies ++= deps.ms)
 
     protected def typicalProject: Project =
-      Project(dir, file(dir)).configure(commonSettings).settings(name := dir)
+      Project(dir, file(dir)).configure(commonSettings, moduleToSettings).settings(name := dir)
 
     protected def umbrellaOf(ps: ProjectReference*): Project =
       typicalProject.aggregate(ps: _*).dependsOn(ps.map{p => p: ClasspathDep[ProjectReference]}: _*)
@@ -60,7 +67,7 @@ object ShipReq extends Build {
     def dir = "."
     override def project = Project("root", file(dir))
       .configure(commonSettings, Common.useHiddenTargetDir)
-      .aggregate(base, webapp, taskman)
+      .aggregate(base, webapp, taskman, benchmark)
   }
 
   // ===================================================================================================================
@@ -306,20 +313,6 @@ object ShipReq extends Build {
           .withAsInstanceOfs(CheckedBehavior.Unchecked)
         ))
 
-      // Recompile shared source rather than depending directly
-      // https://github.com/scala-js/scala-js/issues/1067
-      def jsStyleDependsOn(deps: Project*) =
-        deps.foldLeft(identity[Project]_)(_ compose jsStyleDependsOnS(_)(Compile -> Compile, Test -> Test))
-
-      def jsStyleDependsOnS(deps: Project*)(scopes: (Configuration, Configuration)*) = (_: Project)
-        .settings((
-          for {
-            dep    <- deps
-            (a, b) <- scopes
-          } yield
-            unmanagedSourceDirectories in b += (scalaSource in a in dep).value
-          ): _*)
-
       override def project = typicalProject
         .enablePlugins(ScalaJSPlugin)
         .configure(
@@ -425,5 +418,57 @@ object ShipReq extends Build {
         .dependsOn(baseDb, taskmanApi, webappBase)
         .dependsOn(baseUtil, taskmanApiLogic, taskmanApiImpl) // Stupid IDEA auto-import needs this
       }
+  }
+
+  // ===================================================================================================================
+  trait BenchmarkModule extends Module {
+    override def commonSettings: Project => Project =
+      _.configure(Common.settingsMin, ideSettings)
+        .settings(scalacOptions ++= scalacFlags)
+
+    def scalacFlags = Seq(
+      "-unchecked",
+      "-deprecation",
+      "-YclasspathImpl:flat", // https://github.com/scala/scala/pull/4176
+      "-feature", "-language:postfixOps", "-language:implicitConversions", "-language:higherKinds", "-language:existentials")
+  }
+
+  object Benchmark extends BenchmarkModule {
+    val dir = "benchmark"
+
+    override def project = typicalProject
+      .aggregate(benchmarkBase, benchmarkJvm, benchmarkJs) // not umbrella cos it shouldn't dependOn
+
+    // ----------------------------------------------------
+    object Base extends BenchmarkModule {
+      val dir = "benchmark-base"
+
+      override def project = typicalProject
+        .dependsOn(webappBase)
+    }
+
+    // ----------------------------------------------------
+    object Jvm extends BenchmarkModule {
+      import pl.project13.scala.sbt.SbtJmh
+
+      val dir = "benchmark-jvm"
+
+      override def project = typicalProject
+        .enablePlugins(SbtJmh)
+        .dependsOn(benchmarkBase, webappServer)
+    }
+
+    // ----------------------------------------------------
+    object Js extends BenchmarkModule {
+      val dir = "benchmark-jvm"
+
+      override def project = typicalProject
+        .enablePlugins(ScalaJSPlugin)
+        .configure(
+          useMacroParadise,
+          jsStyleDependsOn(benchmarkBase, baseUtilSjs, webappBase, webappClient),
+          Common.addSourceDialectJsFrom(baseUtilSjs),
+          Webapp.Client.prodJsSettings)
+    }
   }
 }
