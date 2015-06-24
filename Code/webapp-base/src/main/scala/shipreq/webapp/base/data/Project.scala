@@ -1,7 +1,7 @@
 package shipreq.webapp.base.data
 
 import japgolly.nyaya.util.Multimap
-import monocle.macros.{GenLens, Lenses}
+import monocle.macros.Lenses
 import scalaz.{Equal, -\/, \/-}
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{UnivEq, Monoidish, Must}
@@ -10,19 +10,6 @@ import shipreq.webapp.base.util.{TransitiveClosure, ShowSize}
 import shipreq.webapp.base.util.TypeclassDerivation._
 import DataImplicits._
 import ReqFieldData.{Implications, ImplicationsU}
-
-final case class RevAnd[D](rev: Rev, data: D)
-
-trait RevAndLowPri {
-  implicit def equality[D](implicit r: UnivEq[Rev], d: Equal[D]): Equal[RevAnd[D]] =
-    Equal.equal((a, b) => (a.rev == b.rev) && d.equal(a.data, b.data))
-}
-object RevAnd extends RevAndLowPri {
-  implicit def universalEquality[D](implicit r: UnivEq[Rev], d: UnivEq[D]): UnivEq[RevAnd[D]] = UnivEq.force
-
-  def rev [D] = GenLens[RevAnd[D]](_.rev)
-  def data[D] = GenLens[RevAnd[D]](_.data)
-}
 
 @Lenses
 final case class Project(customIssueTypes: RevAnd[CustomIssueTypeIMap],
