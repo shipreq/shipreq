@@ -474,7 +474,8 @@ object ShipReq extends Build {
           Webapp.Client.prodJsSettings)
         .settings(
           artifactPath in (Compile, fastOptJS) := ((target in Compile).value / "shipreq-benchmark.js"),
-          scalaJSStage in Test := Stage.PreLink)
+          scalaJSStage in Test := Stage.PreLink,
+          test in Test := ())
     }
   }
 }
