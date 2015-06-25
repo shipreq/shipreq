@@ -460,14 +460,13 @@ object ShipReq extends Build {
 
     // ----------------------------------------------------
     object Js extends BenchmarkModule {
-      val dir = "benchmark-jvm"
+      val dir = "benchmark-js"
 
       override def project = typicalProject
         .enablePlugins(ScalaJSPlugin)
+        .dependsOn(benchmarkBase, webappClient)
         .configure(
           useMacroParadise,
-          jsStyleDependsOn(benchmarkBase, baseUtilSjs, webappBase, webappClient),
-          Common.addSourceDialectJsFrom(baseUtilSjs),
           Webapp.Client.prodJsSettings)
     }
   }
