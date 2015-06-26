@@ -427,11 +427,12 @@ object ShipReq extends Build {
     val dir = "utils"
 
     override def deps =
-      commonsLang ++ testScope(Nyaya.jvm.test)
+      commonsLang ++
+      testScope(Nyaya.jvm.test ++ twitterEval)
 
     override def project = typicalProject
       .configure(Common.utestOnJvm)
-      .dependsOn(webappBaseTest)
+      .dependsOn(webappBaseTest % "compile->test")
   }
 
   // ===================================================================================================================

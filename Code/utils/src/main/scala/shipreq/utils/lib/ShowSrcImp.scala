@@ -25,14 +25,15 @@ object ShowSrcGenericImp {
   implicit val int: ShowSrc[Int] =
     ShowSrc(_ append _)
 
-  val longL: ShowSrc[Long] =
+  implicit val long: ShowSrc[Long] = {
+    val min = Int.MinValue.toLong
+    val max = Int.MaxValue.toLong
     ShowSrc { (sb, a) =>
       sb append a
-      sb append 'L'
+      if (a >= max || a <= min)
+        sb append 'L'
     }
-
-  implicit val long: ShowSrc[Long] =
-    ShowSrc(_ append _)
+  }
 
   implicit val char: ShowSrc[Char] =
     ShowSrc { (sb, a) =>
@@ -140,6 +141,9 @@ object ShowSrcGenericImp {
 
   implicit def nev[A: ShowSrc]: ShowSrc[NonEmptyVector[A]] =
     ShowSrc.prep(importNEV)((s, a) => s.fnN("NonEmptyVector", a.whole))
+
+  def nevV[A: ShowSrc]: ShowSrc[NonEmptyVector[A]] =
+    ShowSrc.prep(importNEV)((s, a) => s.fnN("NonEmptyVector.varargs", a.whole))
 
   implicit def nes[A: ShowSrc]: ShowSrc[NonEmptySet[A]] =
     ShowSrc.prep(importNES)((s, a) => s.fnN("NonEmptySet", a.whole))
@@ -284,7 +288,7 @@ object ShowSrcDataImp {
     import Atom._
     type A = AnyAtom
     lazy val atoms0: ShowSrc[Vector[A]] = vector(atom1)
-    lazy val atoms10: ShowSrc[NonEmptyVector[Vector[A]]] = nev(atoms0)
+    lazy val atoms10: ShowSrc[NonEmptyVector[Vector[A]]] = nevV(atoms0)
     lazy val atom1: ShowSrc[A] =
       ShowSrc { (s, atom) =>
         s append prefix

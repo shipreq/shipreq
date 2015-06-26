@@ -157,6 +157,10 @@ object NonEmptyVector extends NonEmptyVectorImplicits0 {
   def one[A](h: A): NonEmptyVector[A] =
     new NonEmptyVector(h, Vector.empty)
 
+  /** Avoids failed type-inference with NonEmptyVector(Vector.empty[Int], Vector.empty[Int]) */
+  def varargs[A](h: A, t: A*): NonEmptyVector[A] =
+    apply(h, t.toVector)
+
   def apply[A](h: A, t: A*): NonEmptyVector[A] =
     apply(h, t.toVector)
 
