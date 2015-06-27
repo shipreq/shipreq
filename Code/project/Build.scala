@@ -264,7 +264,7 @@ object ShipReq extends Build {
       val dir = "webapp-base-test"
 
       override def deps =
-        μTest.jvm ++ testScope(Nyaya.jvm.test)
+        μTest.jvm ++ Nyaya.jvm.test
 
       override def project = typicalProject
         .configure(Common.utestOnJvm, cmdAliases)
@@ -320,7 +320,7 @@ object ShipReq extends Build {
         .configure(
           useMacroParadise,
           jsStyleDependsOn(baseUtilSjs, webappBase),
-          jsStyleDependsOnS(webappBaseTest)(Compile -> Test, Test -> Test),
+          jsStyleDependsOnS(webappBaseTest)(Compile -> Test),
           Common.addSourceDialectJsFrom(baseUtilSjs),
           testSettings,
           dontInline, // ScalaJS inlines
@@ -427,12 +427,12 @@ object ShipReq extends Build {
     val dir = "utils"
 
     override def deps =
-      commonsLang ++
-      testScope(Nyaya.jvm.test ++ twitterEval)
+      commonsLang ++ Nyaya.jvm.test ++
+      testScope(twitterEval)
 
     override def project = typicalProject
       .configure(Common.utestOnJvm)
-      .dependsOn(webappBaseTest % "compile->test")
+      .dependsOn(webappBaseTest)
   }
 
   // ===================================================================================================================
