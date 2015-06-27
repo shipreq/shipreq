@@ -1,8 +1,10 @@
 package shipreq.base.util
 
 import scala.annotation.tailrec
-import scalaz.{Order, Equal}
+import scalaz.{Applicative, Order, Equal, Traverse}
 import scalaz.std.map.mapEqual
+import scalaz.std.option.optionInstance
+import scalaz.syntax.traverse._
 
 /**
  * A Trie where each level is a Map of keys to nodes.
@@ -43,12 +45,55 @@ object MTrie {
     val  Branch = MTrie.Branch.apply[K, V] _
     val  Value  = MTrie.Value.apply[K, V] _
     def  empty  = MTrie.empty[K, V]
+
+    def fixk = new FixK[K]
   }
 
   def empty[K: UnivEq, V]: Trie[K, V] = UnivEq.emptyMap
 
   implicit def equality[K: Order, V: Equal]: Equal[Trie[K, V]] =
     Equal[Map[NonEmptyVector[K], V]] contramap (_.flattenTrie)
+
+  class FixK[K: UnivEq] {
+    type Trie  [V] = MTrie.Trie[K, V]
+    type Node  [V] = MTrie.Node[K, V]
+    type Branch[V] = MTrie.Branch[K, V]
+    type Value [V] = MTrie.Value[K, V]
+
+    implicit val traverseValue: Traverse[Value] =
+      new Traverse[Value] {
+        override def traverseImpl[G[_], A, B](fa: Value[A])(f: A => G[B])(implicit G: Applicative[G]): G[Value[B]] =
+          G.map(f(fa.value))(Value(_))
+      }
+
+    implicit lazy val traverseBranch: Traverse[Branch] =
+      new Traverse[Branch] {
+        override def traverseImpl[G[_], A, B](fa: Branch[A])(f: A => G[B])(implicit G: Applicative[G]): G[Branch[B]] = {
+          def v: G[Option[Value[B]]] = fa.value.map(_ traverse f).sequence
+          def n: G[Trie[B]]          = fa.next traverse f
+          G.apply2(v, n)(Branch.apply)
+        }
+      }
+
+    implicit lazy val traverseNode: Traverse[Node] =
+      new Traverse[Node] {
+        override def traverseImpl[G[_], A, B](fa: Node[A])(f: A => G[B])(implicit G: Applicative[G]): G[Node[B]] =
+          fa match {
+            case n: Value[A]  => G.map(n traverse f)(x => x)
+            case n: Branch[A] => G.map(n traverse f)(x => x)
+          }
+      }
+
+    implicit lazy val traverseTrie: Traverse[Trie] =
+      new Traverse[Trie] {
+        override def traverseImpl[G[_], A, B](fa: Trie[A])(f: A => G[B])(implicit G: Applicative[G]): G[Trie[B]] = {
+          val z: G[Trie[B]] = G.point(Map.empty)
+          fa.foldLeft(z) { case (gtb, (k, n)) =>
+            G.apply2(gtb, n traverse f)(_.updated(k, _))
+          }
+        }
+      }
+  }
 
   // ===================================================================================================================
 

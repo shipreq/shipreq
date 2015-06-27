@@ -149,14 +149,17 @@ object ShowSize {
     ShowSize.lift(r => Node("Requirements", r.reqs.size))
 //      .addChildren(r.reqsByType.m.toList.map(x => (x._1, x._2.size))) )
 
+  implicit def reqCodeTrie: ShowSize[ReqCode.Trie] =
+    ShowSize.lift(trie =>
+      Node("Req codes", trie.cataV(0)((q, _, _) => q + 1))
+        .countChildren(trie.flatStream.map(_._2.active.map(_.target))) {
+        case Some(_: ReqId)        => "Codes @ reqs"
+        case Some(_: ReqCodeGroup) => "Codes @ groups"
+        case None                  => "Tombstones"
+      })
+
   implicit def reqCodes: ShowSize[ReqCodes] =
-    ShowSize.lift(rc =>
-      Node("Req codes", rc.trie.cataV(0)((q, _, _) => q + 1))
-        .countChildren(rc.trie.flatStream.map(_._2.active.map(_.target))) {
-          case Some(_: ReqId)        => "Req target"
-          case Some(_: ReqCodeGroup) => "ReqCodeGroup"
-          case None                  => "Tombstones"
-        })
+    reqCodeTrie.contramap(_.trie)
 
   implicit def reqDataText: ShowSize[ReqData.Text] =
     ShowSize.lift(r => Node("Text", r.values.toStream.flatMap(_.values.toStream).size))

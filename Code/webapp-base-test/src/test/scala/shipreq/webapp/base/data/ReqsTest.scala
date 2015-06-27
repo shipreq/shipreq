@@ -38,7 +38,8 @@ object ReqsTest extends TestSuite {
   def gen: Gen[PubidRegisterProps] =
     for {
       reqTypeIds ← RandomData.customReqTypeId.nev
-      (pr, reqs) ← RandomData.pubidRegisterAndIds(reqTypeIds)
+      reqCount   ← GenS.choosesize.sup
+      (pr, reqs) ← RandomData.pubidRegisterAndIds(reqCount, reqTypeIds)
       req        ← Gen.newOrOld(RandomData.genericReqId.subst[ReqIdC])(reqs)
       reqType    ← Gen.newOrOld(RandomData.customReqTypeId)(reqTypeIds.whole)
     } yield PubidRegisterProps(pr, req, reqType)

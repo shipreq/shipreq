@@ -433,6 +433,10 @@ object ShipReq extends Build {
     override def project = typicalProject
       .configure(Common.utestOnJvm)
       .dependsOn(webappBaseTest)
+      .settings(
+        connectInput in run  := true,
+        fork         in run  := true,
+        javaOptions  in run ++= Seq("-Xmx4g", "-Xss4m"))
   }
 
   // ===================================================================================================================

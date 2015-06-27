@@ -38,7 +38,7 @@ object ShowSrc {
     (head, body)
   }
 
-  def generateBlock[A](a: A)(implicit s: ShowSrc[A]): String = {
+  def generateBlock[A: ShowSrc](a: A): String = {
     val (head, body) = generate(a)
     head match {
       case Some(h) => s"{\n$h$body\n}"
@@ -51,7 +51,7 @@ object ShowSrc {
     ind + subj.replaceAll("(?<=\n)(?!\n)", ind)
   }
 
-  def generateVar[A](name: String, a: A)(implicit s: ShowSrc[A]): String = {
+  def generateVar[A: ShowSrc](name: String, a: A): String = {
     val (head, body) = generate(a)
     head match {
       case Some(h) => s"val $name = {\n${indent(1, h + body)}\n}\n"
