@@ -50,7 +50,7 @@ object ShowSrcGenericImp {
     }
 
   implicit def option[A: ShowSrc]: ShowSrc[Option[A]] =
-    ShowSrc.prep(importScalaExt) { (s, o) =>
+    ShowSrc.init(importScalaExt) { (s, o) =>
       o match {
         case None    => s append "none"
         case Some(a) => s <~ a; s append ".some"
@@ -132,7 +132,7 @@ object ShowSrcGenericImp {
   }
 
   implicit def scalazDisjunction[A: ShowSrc, B: ShowSrc]: ShowSrc[A \/ B] =
-    ShowSrc.prep(importScalazDisj) { (s, e) =>
+    ShowSrc.init(importScalazDisj) { (s, e) =>
       e match {
         case -\/(v) => s.fn1("-\\/", v)
         case \/-(v) => s.fn1("\\/-", v)
@@ -140,13 +140,13 @@ object ShowSrcGenericImp {
     }
 
   implicit def nev[A: ShowSrc]: ShowSrc[NonEmptyVector[A]] =
-    ShowSrc.prep(importNEV)((s, a) => s.fnN("NonEmptyVector", a.whole))
+    ShowSrc.init(importNEV)((s, a) => s.fnN("NonEmptyVector", a.whole))
 
   def nevV[A: ShowSrc]: ShowSrc[NonEmptyVector[A]] =
-    ShowSrc.prep(importNEV)((s, a) => s.fnN("NonEmptyVector.varargs", a.whole))
+    ShowSrc.init(importNEV)((s, a) => s.fnN("NonEmptyVector.varargs", a.whole))
 
   implicit def nes[A: ShowSrc]: ShowSrc[NonEmptySet[A]] =
-    ShowSrc.prep(importNES)((s, a) => s.fnN("NonEmptySet", a.whole))
+    ShowSrc.init(importNES)((s, a) => s.fnN("NonEmptySet", a.whole))
 
   def taggedType[T <: TaggedType](name: String)(implicit u: ShowSrc[T#U]): ShowSrc[T] = {
     val n = name.trim
@@ -186,7 +186,7 @@ object ShowSrcGenericImp {
 
   def isubset[A: ShowSrc]: ShowSrc[ISubset[A]] = {
     implicit val anes = nes[A]
-    ShowSrc.prep(importISubset){(s, a) =>
+    ShowSrc.init(importISubset){(s, a) =>
       s append "ISubset."
       a match {
         case ISubset.All()    => s append "All()"
@@ -210,13 +210,13 @@ object ShowSrcDataImp {
   val importUnivEq  = "import shipreq.base.util.UnivEq"
 
   private def data[A](f: (State, A) => Unit): ShowSrc[A] =
-    ShowSrc.prep(importData)(f)
+    ShowSrc.init(importData)(f)
 
   private def dataBool[A](testPos: A => Boolean, pos: String, neg: String): ShowSrc[A] =
-    isoBool(testPos, pos, neg) prep importData
+    isoBool(testPos, pos, neg) init importData
 
   private def imapI[K, V: ShowSrc](objName: String): ShowSrc[IMap[K, V]] =
-    imap[K, V](s"emptyDataMap($objName)") prep importDataI
+    imap[K, V](s"emptyDataMap($objName)") init importDataI
 
   implicit val rev                      = taggedType[Rev                       ]("Rev                       ")
   implicit val genericReqId             = taggedType[GenericReqId              ]("GenericReqId              ")
@@ -314,8 +314,8 @@ object ShowSrcDataImp {
   def text(t: Text.Generic)(abbrev: String): (ShowSrc[t.OptionalText], ShowSrc[t.NonEmptyText]) = {
     val `import` = textImport(t)(abbrev)
     val a = textAtom(abbrev + ".").narrow[t.Atom] // .asInstanceOf[ShowSrc[t.Atom]]
-    val z = vector(a) prep `import`
-    val n = nev   (a) prep `import`
+    val z = vector(a) init `import`
+    val n = nev   (a) init `import`
     (z, n)
   }
 
@@ -326,7 +326,7 @@ object ShowSrcDataImp {
 
   implicit lazy val reqDataText: ShowSrc[ReqData.Text] = {
     implicit val vs = map[ReqId, Text.CustomTextField.NonEmptyText]("ReqId", "CTF.NonEmptyText")
-      .prep(textImport(Text.CustomTextField)("CTF"))
+      .init(textImport(Text.CustomTextField)("CTF"))
     map()
   }
 
@@ -344,7 +344,7 @@ object ShowSrcDataImp {
 
   implicit val reqCodeData: ShowSrc[ReqCode.Data] = {
     implicit val refsToReqs: ShowSrc[Multimap[ReqId, Set, ReqCodeId]] =
-      multimap[ReqId, Set, ReqCodeId]("UnivEq.emptySetMultimap[ReqId, ReqCodeId]") prep importUnivEq
+      multimap[ReqId, Set, ReqCodeId]("UnivEq.emptySetMultimap[ReqId, ReqCodeId]") init importUnivEq
     data((s, d) => s.cc3("ReqCode.Data", ReqCode.Data unapply d))
   }
 
@@ -359,7 +359,7 @@ object ShowSrcDataImp {
   }
 
   implicit val reqCodeTrie: ShowSrc[ReqCode.Trie] =
-    (trie("τb", "τv"): ShowSrc[ReqCode.Trie]) prep importRCTrie
+    (trie("τb", "τv"): ShowSrc[ReqCode.Trie]) init importRCTrie
 
   implicit val reqCodes: ShowSrc[ReqCodes] =
     data((s, rc) => s.cc1("ReqCodes", ReqCodes unapply rc)(reqCodeTrie))

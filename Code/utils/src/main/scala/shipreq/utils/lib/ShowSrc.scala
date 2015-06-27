@@ -11,8 +11,8 @@ trait ShowSrc[A] {
 
   //def typeOf(a: A): String
 
-  def prep(s: String): ShowSrc[A] =
-    ShowSrc.prep(s)(apply)
+  def init(s: String): ShowSrc[A] =
+    ShowSrc.init(s)(apply)
 
   def narrow[B <: A]: ShowSrc[B] =
     this.asInstanceOf[ShowSrc[B]]
@@ -25,11 +25,11 @@ object ShowSrc {
     s(state, a)
     val body = state.sb.toString()
     val head: Option[String] =
-      if (state.prepared.isEmpty)
+      if (state.initLines.isEmpty)
         None
       else {
         val sb = new StringBuilder
-        for (p <- state.prepared) {
+        for (p <- state.initLines) {
           sb append p
           sb append '\n'
         }
@@ -77,8 +77,8 @@ object ShowSrc {
   def const[A](f: State => Unit): ShowSrc[A] =
     apply((sb, _a) => f(sb))
 
-  def prep[A](s: String)(f: (State, A) => Unit): ShowSrc[A] =
-    apply(_ prep s, f)
+  def init[A](s: String)(f: (State, A) => Unit): ShowSrc[A] =
+    apply(_ init s, f)
 
   // ===================================================================================================================
 
@@ -88,10 +88,10 @@ object ShowSrc {
     def empty = State(collection.mutable.SortedSet.empty, new StringBuilder)
   }
 
-  case class State(prepared: collection.mutable.SortedSet[String], sb: StringBuilder) {
+  case class State(initLines: collection.mutable.SortedSet[String], sb: StringBuilder) {
 
-    def prep(s: String): Unit =
-      prepared += s
+    def init(s: String): Unit =
+      initLines += s
 
     def <~[A](a: A)(implicit s: ShowSrc[A]): Unit = s(this, a)
 
