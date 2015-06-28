@@ -11,16 +11,86 @@ import ShowSrcDataImp._
 
 object GenerateProject {
 
-  def writeFile(filename: String, content: String): Unit = {
-    import java.nio.file.{Paths, Files}
-    import java.nio.charset.StandardCharsets
-    Files.write(Paths get filename, content getBytes StandardCharsets.UTF_8)
+  object Size10 {
+    val CfgTags              = 10
+    val CfgCustomIssueTypes  = 10
+    val CfgCustomReqTypes    = 10
+    val CfgFields            = 10
+    val Reqs                 = 10
+    val ReqCodeDepth         = 2
+    val ReqCodeSize          = 2
+    val Tags                 = Reqs
+    val Implications         = Reqs
   }
+
+  object Size100 {
+    val CfgTags              = 30
+    val CfgCustomIssueTypes  = 15
+    val CfgCustomReqTypes    = 30
+    val CfgFields            = 25
+    val Reqs                 = 100
+    val ReqCodeDepth         = 6
+    val ReqCodeSize          = 5
+    val Tags                 = Reqs * 2
+    val Implications         = Reqs * 2
+  }
+
+  object Size1000 {
+    val CfgTags              = 100
+    val CfgCustomIssueTypes  =  20
+    val CfgCustomReqTypes    =  50
+    val CfgFields            =  30
+    val Reqs                 = 1000
+    val ReqCodeDepth         = 8
+    val ReqCodeSize          = 6
+    val Tags                 = Reqs * 2
+    val Implications         = Reqs * 2
+  }
+
+  val Size = Size100
+
+  def main(args: Array[String]): Unit = {
+//    autoSelect = true
+
+    val tags0           = sample(RandomData.revAndTagTree, Size.CfgTags)
+    val issues0         = sample(RandomData.customIssueTypes, Size.CfgCustomIssueTypes)
+    val (issues, tags)  = RandomData.distinctHashRefKeys.run((issues0, tags0))
+    val reqtypes        = sample(RandomData.customReqTypes, Size.CfgCustomReqTypes)
+    val reqTypeIds      = StaticReqType.values ++ reqtypes.data.keys
+    val reqTypeIdSet    = reqTypeIds.whole.toSet
+    val fields1         = sample(RandomData.fieldSet2(reqTypeIdSet, tags.data.keySet, reqtypes.data.keySet), Size.CfgFields)
+    val fields          = firstSample(RandomData.revAnd(fields1), 500)
+    val cfg             = ProjectConfig(issues, reqtypes, fields, tags)
+    val atagIds         = cfg.tags.data.vstream(_.tag).filterT[ApplicableTag].map(_.id).toSet
+    val reqsWithoutText = firstSample(RandomData.reqsWithoutText(Size.Reqs, cfg), 0)
+    val reqIds          = reqsWithoutText.reqs.keys
+    val reqIdG          = Gen oneofO reqIds.toSeq
+    val reqIdSet        = reqIds.toSet
+    val liveReqIds      = reqsWithoutText.reqs.values.toStream.filter(_.live :: Live).map(_.id)
+    val liveReqIdG      = Gen oneofO liveReqIds
+    val reqCodeDataG    = RandomData.reqCode.data(liveReqIdG, reqIdG, RandomData.reqCode.gEmptyReqCodeGroup)
+    val reqCodesG       = RandomData.reqCodes(RandomData.reqCode.trie(Size.ReqCodeDepth, reqCodeDataG.sup))
+    val reqCodes        = sample(reqCodesG, Size.ReqCodeSize)
+    val reqTags         = sample(RandomData.reqFieldDataTags(reqIdSet, atagIds), Size.Tags)
+    val reqImps         = sample(RandomData.reqFieldDataImplications(reqIdSet), Size.Implications)
+    val p               = sample(RandomData.genProject(cfg, reqsWithoutText, reqCodes, reqTags, reqImps), Size.Reqs)
+
+    val objName = s"Project_${Size.Reqs}"
+    val code    = ShowSrc.generateObject("shipreq.benchmark.data", objName, "project")(p)
+    val fout    = s"/tmp/$objName.scala"
+
+    println()
+    println(s"Writing ${String.format("%,d", java.lang.Integer valueOf code.length)} bytes to $fout ...")
+    writeFile(fout, code)
+    println("Done.")
+  }
+
+  // ===================================================================================================================
 
   def firstSample[A](gen: Gen[A], size: Int): A =
     gen.f(GenSize(size)).run.unsafePerformIO()
 
-  var autoSelect = false
+  var autoSelect         = false
   var lastPromptResponse = '?'
 
   def sample[A: ShowSize](gen: Gen[A], size: Int): A = {
@@ -31,9 +101,9 @@ object GenerateProject {
       val sz = ShowSize(a).showTree
       println()
       println(sz)
-      println("This ok?")
-      System.out.flush()
       @tailrec def prompt(): Option[A] = {
+        println("This ok?")
+        System.out.flush()
         val ch = Option(io.StdIn.readLine()).flatMap(_.trim.toLowerCase.headOption).getOrElse(lastPromptResponse)
         lastPromptResponse = ch
         ch match {
@@ -68,135 +138,9 @@ object GenerateProject {
     r
   }
 
-  object Size10 {
-    val CfgTags              = 10
-    val CfgCustomIssueTypes  = 10
-    val CfgCustomReqTypes    = 10
-    val CfgFields            = 10
-
-    val Reqs         = 10
-    val ReqCodeDepth = 2
-    val ReqCodeSize  = 2
-    val Tags         = Reqs
-    val Implications = Reqs
-  }
-
-  object Size100 {
-    val CfgTags              = 30
-    val CfgCustomIssueTypes  = 15
-    val CfgCustomReqTypes    = 30
-    val CfgFields            = 25
-
-    val Reqs         = 100
-    val ReqCodeDepth = 6
-    val ReqCodeSize  = 5
-    val Tags         = Reqs * 2
-    val Implications = Reqs * 2
-  }
-
-  object Size1000 {
-    val CfgTags              = 100
-    val CfgCustomIssueTypes  =  20
-    val CfgCustomReqTypes    =  50
-    val CfgFields            =  30
-
-    val Reqs         = 1000
-    val ReqCodeDepth = 8
-    val ReqCodeSize  = 6
-    val Tags         = Reqs * 2
-    val Implications = Reqs * 2
-  }
-
-  val Size = Size100
-
-/*
-  def main(args: Array[String]): Unit = {
-//    val cfg = firstSample(RandomData.projectConfig, 100)
-
-    val tags0           = firstSample(RandomData.revAndTagTree, Size.CfgTags)
-    val issues0         = firstSample(RandomData.customIssueTypes, Size.CfgCustomIssueTypes)
-    val (issues, tags)  = RandomData.distinctHashRefKeys.run((issues0, tags0))
-    val reqtypes        = firstSample(RandomData.customReqTypes, Size.CfgCustomReqTypes)
-    val reqTypeIds      = StaticReqType.values ++ reqtypes.data.keys
-    val reqTypeIdSet    = reqTypeIds.whole.toSet
-    val fields1         = firstSample(RandomData.fieldSet2(reqTypeIdSet, tags.data.keySet, reqtypes.data.keySet), Size.CfgFields)
-    val fields          = firstSample(RandomData.revAnd(fields1), 500)
-    val cfg             = ProjectConfig(issues, reqtypes, fields, tags)
-    val atagIds         = cfg.tags.data.vstream(_.tag).filterT[ApplicableTag].map(_.id).toSet
-
-    val reqsWithoutText = time("Reqs", firstSample(RandomData.quick.reqsWithoutText(Size.Reqs, cfg), 0))
-    println(ShowSize(reqsWithoutText).showTree)
-
-    val reqIds          = reqsWithoutText.reqs.keys
-    val reqIdG          = Gen oneofO reqIds.toSeq
-    val reqIdSet        = reqIds.toSet
-    val liveReqIds      = reqsWithoutText.reqs.values.toStream.filter(_.live :: Live).map(_.id)
-    val liveReqIdG      = Gen oneofO liveReqIds
-
-    val rcd = RandomData.reqCode.data(liveReqIdG, reqIdG, RandomData.reqCode.gEmptyReqCodeGroup)
-    val depth = 8
-    val size = 7
-
-    val x2 = time("NEW ReqCodes", firstSample(RandomData.reqCode.treeLikeTrie.trie(depth, rcd), size))
-    println(ShowSize(x2).showTree)
-
-    //    val x1 = time("x1", firstSample(RandomData.reqCode.trie(liveReqIdG, reqIdG, RandomData.reqCode.gEmptyReqCodeGroup), Size.ReqCodes))
-//    val x1 = time("OLD trie flat", firstSample(RandomData.reqCode.trie2(liveReqIdG, reqIdG, RandomData.reqCode.gEmptyReqCodeGroup), Size.ReqCodes))
-//    println(x1.length)
-
-      val reqCodesG       = RandomData.reqCodes(RandomData.reqCode.trie(liveReqIdG, reqIdG, RandomData.reqCode.gEmptyReqCodeGroup))
-      val reqCodes        = time("OLD ReqCodes", firstSample(reqCodesG, Size.ReqCodes))
-    println(ShowSize(reqCodes).showTree)
-
-//    val reqCodesG       = RandomData.reqCodes(RandomData.reqCode.trie(liveReqIdG, reqIdG, RandomData.reqCode.gEmptyReqCodeGroup))
-//    val reqCodes        = time("ReqCodes", firstSample(reqCodesG, Size.ReqCodes))
-//    println(ShowSize(reqCodes).showTree)
-
-    val reqTags         = time("ReqTags", firstSample(RandomData.reqFieldDataTags(reqIdSet, atagIds), Size.Tags))
-  }
-  */
-
-  def main(args: Array[String]): Unit = {
-//    autoSelect = true
-
-    val tags0           = sample(RandomData.revAndTagTree, Size.CfgTags)
-    val issues0         = sample(RandomData.customIssueTypes, Size.CfgCustomIssueTypes)
-    val (issues, tags)  = RandomData.distinctHashRefKeys.run((issues0, tags0))
-    val reqtypes        = sample(RandomData.customReqTypes, Size.CfgCustomReqTypes)
-    val reqTypeIds      = StaticReqType.values ++ reqtypes.data.keys
-    val reqTypeIdSet    = reqTypeIds.whole.toSet
-    val fields1         = sample(RandomData.fieldSet2(reqTypeIdSet, tags.data.keySet, reqtypes.data.keySet), Size.CfgFields)
-    val fields          = firstSample(RandomData.revAnd(fields1), 500)
-    val cfg             = ProjectConfig(issues, reqtypes, fields, tags)
-    val atagIds         = cfg.tags.data.vstream(_.tag).filterT[ApplicableTag].map(_.id).toSet
-    val reqsWithoutText = firstSample(RandomData.reqsWithoutText(Size.Reqs, cfg), 0)
-    val reqIds          = reqsWithoutText.reqs.keys
-    val reqIdG          = Gen oneofO reqIds.toSeq
-    val reqIdSet        = reqIds.toSet
-    val liveReqIds      = reqsWithoutText.reqs.values.toStream.filter(_.live :: Live).map(_.id)
-    val liveReqIdG      = Gen oneofO liveReqIds
-
-    val reqCodeDataG    = RandomData.reqCode.data(liveReqIdG, reqIdG, RandomData.reqCode.gEmptyReqCodeGroup)
-    val reqCodesG       = RandomData.reqCodes(RandomData.reqCode.trie(Size.ReqCodeDepth, reqCodeDataG.sup))
-    val reqCodes        = sample(reqCodesG, Size.ReqCodeSize)
-
-    val reqTags         = sample(RandomData.reqFieldDataTags(reqIdSet, atagIds), Size.Tags)
-    val reqImps         = sample(RandomData.reqFieldDataImplications(reqIdSet), Size.Implications)
-    lastPromptResponse = '?'
-    val p               = sample(RandomData.genProject(cfg, reqsWithoutText, reqCodes, reqTags, reqImps), 100)
-
-    val objName = s"Project_${Size.Reqs}"
-    val code = ShowSrc.generateObject("shipreq.benchmark.data", objName, "project")(p)
-
-    //    println("=" * 120)
-    //    println(code)
-    //    println("=" * 120)
-
-    println()
-    val fout = s"/tmp/$objName.scala"
-    println(s"Writing ${String.format("%,d", java.lang.Integer valueOf code.length)} bytes to $fout ...")
-    writeFile(fout, code)
-
-    println("Done.")
+  def writeFile(filename: String, content: String): Unit = {
+    import java.nio.file.{Paths, Files}
+    import java.nio.charset.StandardCharsets
+    Files.write(Paths get filename, content getBytes StandardCharsets.UTF_8)
   }
 }
