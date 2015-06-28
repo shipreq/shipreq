@@ -172,12 +172,11 @@ object RandomData {
       r2 <- rev
     } yield if (r1.value <= r2.value) RevRange(r1, r2) else RevRange(r2, r1)
 
-  def revAndIMap[D, I <: TaggedLong](r: Gen[D])(mod: List[D] => List[D])
+  def revAndIMap[D, I <: TaggedLong](r: Gen[List[D]])
                                     (implicit i: DataIdAux[D, I], j: TestDataIdAux[D, I]): Gen[RevAnd[IMap[I, D]]] = {
     val d = distinctId[D, I].lift[List]
-    val f = mod compose d.run
-    val g = f andThen (i.emptyIMap ++ _)
-    revAndG(r.list map g)
+    val g = d.run andThen (i.emptyIMap ++ _)
+    revAndG(r map g)
   }
 
   def distinctId[D, I <: TaggedLong](implicit i: DataIdAux[D, I], j: TestDataIdAux[D, I]) =
@@ -215,7 +214,7 @@ object RandomData {
 
   /** HashRefKey uniqueness enforced in Project, not here */
   lazy val customIssueTypes =
-    revAndIMap(customIssueType)(identity)
+    revAndIMap(customIssueType.list)
 
   // -------------------------------------------------------------------------------------------------------------------
   // ReqTypes
@@ -250,7 +249,7 @@ object RandomData {
       a  <- live
     } yield CustomReqType(id, mn, om - mn, n, ir, a)
 
-  lazy val customReqTypes = {
+  def genCustomReqTypes(g: Gen[List[CustomReqType]]) = {
     def dname = Distinct.str.at(CustomReqType.name)
     def dmnemonic = {
       val distm = reqTypeMnemonicFixer.distinct
@@ -259,8 +258,11 @@ object RandomData {
       cur + old
     }
     val d = (dname * dmnemonic).lift[List]
-    revAndIMap(customReqType)(d.run)
+    revAndIMap(g map d.run)
   }
+
+  lazy val customReqTypes =
+    genCustomReqTypes(customReqType.list)
 
   val staticReqTypeIdSet = StaticReqType.values.toNES[ReqTypeId]
 
@@ -888,25 +890,27 @@ object RandomData {
   // val MaxImplicationsPerSrc = 2  `JVM|JS` 4
   // val MaxImplicationKeys    = 10 `JVM|JS` 4
 
-  def reqFieldDataImplications(reqIds: Set[ReqId]): Gen[Implications] = {
+  type ImpMethod = (Gen[ReqId], ImplicationsUM => Implications) => Gen[Implications]
+
+  val implicationsMethodDefault: ImpMethod = (g, fix) =>
+    g.pair
+      .list.lim(MaxImplicationPairs)
+      .map(kvs => emptyImplicationsU.addPairs(kvs: _*).m |> fix)
+
+  def implicationsMethod2(maxImpsPerSrc: Int, maxImpKeys: Int): ImpMethod = (g, fix) =>
+    Gen.tuple2(g, g.set1 lim maxImpsPerSrc)
+      .list.lim(maxImpKeys)
+      .map(_.toMap |> fix)
+
+  def reqFieldDataImplications(reqIds: Set[ReqId], method: ImpMethod = implicationsMethodDefault): Gen[Implications] = {
     def fix(m: ImplicationsUM): Implications = {
       val m2 = preventImplicationCycles(m)
       // println(m2); println()
       Implications(Multimap(m2))
     }
 
-    def method1(g: Gen[ReqId]) =
-      g.pair
-        .list.lim(MaxImplicationPairs)
-        .map(kvs => emptyImplicationsU.addPairs(kvs: _*).m |> fix)
-
-//    def method2(g: Gen[ReqId]) =
-//      Gen.tuple2(g, g.set1 lim MaxImplicationsPerSrc)
-//        .list.lim(MaxImplicationKeys)
-//        .map(_.toMap |> fix)
-
     Gen.oneofO(reqIds.toSeq) match {
-      case Some(g) => method1(g)
+      case Some(g) => method(g, fix)
       case None    => Gen insert Implications(emptyImplicationsU)
     }
   }
