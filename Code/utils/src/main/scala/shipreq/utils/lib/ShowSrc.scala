@@ -88,16 +88,41 @@ object ShowSrc {
 
   def generateObject[A: ShowSrc](pkg: String, obj: String, value: String)(a: A): String = {
     val (head, tmpvars, body) = generate(a, "def")
+
+    // Next stupid issue on the block: SBT incremental compiler crashes on objects with too many methods
+
+    val sep = "\n\n"
+
+    val tmpvarGroups =
+      (tmpvars map indent(1) getOrElse "").split(sep).grouped(1000).toVector
+
+    val partitions =
+      if (tmpvarGroups.size > 1)
+        tmpvarGroups.init.zipWithIndex.map{case (xs, i) =>
+          val o = s"${obj}__$i"
+          s"""
+            |object $o {
+            |${xs mkString sep}
+            |}
+            |import ${o}._
+          """.stripMargin.trim
+        }.mkString("\n\n")
+      else
+        ""
+
     s"""
        |package $pkg
        |
        |${head getOrElse ""}
        |
+       |$partitions
+       |
        |object $obj {
        |
-       |${tmpvars map indent(1) getOrElse ""}
+       |${tmpvarGroups.last mkString sep}
        |
-       |${indent(1)(body)}
+       |  val $value =
+       |${indent(2)(body)}
        |}
      """.stripMargin.trim
   }
