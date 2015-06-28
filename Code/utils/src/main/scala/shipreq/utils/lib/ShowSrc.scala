@@ -11,8 +11,6 @@ import ShowSrc.State
 trait ShowSrc[A] {
   def apply(state: State, a: A): Unit
 
-  //def typeOf(a: A): String
-
   def init(s: String): ShowSrc[A] =
     ShowSrc.init(s)(apply)
 
@@ -32,16 +30,21 @@ trait ShowSrc[A] {
 
 object ShowSrc {
 
+  private def nonEmptyStr(f: StringBuilder => Unit): Option[String] = {
+    val sb = new StringBuilder
+    f(sb)
+    Some(sb.toString.trim).filter(_.nonEmpty)
+  }
+
+  private def indent(i: Int)(subj: String) = {
+    val ind = "  " * i
+    ind + subj.replaceAll("(?<=\n)(?!\n)", ind)
+  }
+
   def generate[A](a: A, tmpvarDecl: String = "def")(implicit s: ShowSrc[A]): (Option[String], Option[String], String) = {
     val state = State.empty
     s(state, a)
     val result = state.toResult
-
-    def nonEmptyStr(f: StringBuilder => Unit): Option[String] = {
-      val sb = new StringBuilder
-      f(sb)
-      Some(sb.toString.trim).filter(_.nonEmpty)
-    }
 
     val head = nonEmptyStr { sb =>
       for (p <- result.initLines) {
@@ -65,31 +68,10 @@ object ShowSrc {
     (head, tmpvars, result.body)
   }
 
-//  def generateBlock[A: ShowSrc](a: A): String = {
-//    val (head, body) = generate(a)
-//    head match {
-//      case Some(h) => s"{\n$h$body\n}"
-//      case None    => body
-//    }
-//  }
-
-  private def indent(i: Int)(subj: String) = {
-    val ind = "  " * i
-    ind + subj.replaceAll("(?<=\n)(?!\n)", ind)
-  }
-
-//  def generateVar[A: ShowSrc](name: String, a: A): String = {
-//    val (head, body) = generate(a)
-//    head match {
-//      case Some(h) => s"val $name = {\n${indent(1, h + body)}\n}\n"
-//      case None    => s"val $name =\n${indent(1, body)}\n"
-//    }
-//  }
-
-  def generateObject[A: ShowSrc](pkg: String, obj: String, value: String)(a: A): String = {
+  def generateObject[A: ShowSrc](pkg: String, obj: String, term: String)(a: A): String = {
     val (head, tmpvars, body) = generate(a, "def")
 
-    // Next stupid issue on the block: SBT incremental compiler crashes on objects with too many methods
+    // Stupid issue #2: SBT incremental compiler crashes on objects with too many methods
 
     val sep = "\n\n"
 
@@ -121,7 +103,7 @@ object ShowSrc {
        |
        |${tmpvarGroups.last mkString sep}
        |
-       |  val $value =
+       |  val $term =
        |${indent(2)(body)}
        |}
      """.stripMargin.trim
@@ -151,21 +133,22 @@ object ShowSrc {
 
   // ===================================================================================================================
 
+  case class Result(initLines: Stream[String],
+                    tmpVars  : Stream[(String, String)],
+                    body     : String)
+
   implicit def stateToSB(s: State): StringBuilder = s.sb
 
   object State {
     def empty = new State(mutable.SortedSet.empty, mutable.MutableList.empty, new StringBuilder)
   }
 
-  case class Result(initLines: Stream[String],
-                    tmpVars  : Stream[(String, String)],
-                    body     : String)
-
   class State(initLines: mutable.SortedSet[String],
               tmpVars  : mutable.MutableList[(String, String)],
               val sb   : StringBuilder) {
 
-    var tmpVarNames = Set.empty[String]
+    // Stupid issue #1: JVM & compile crash when expressions are too long
+    var tmpVarNames  = Set.empty[String]
     var tmpVarValues = Map.empty[String, String]
 
     private def getFreeName(name: String): String = {
