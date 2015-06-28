@@ -204,10 +204,11 @@ object ShowSrcDataImp {
   import shipreq.webapp.base.data._
   import shipreq.webapp.base.text.{Atom, Text}
 
-  val importData    = "import shipreq.webapp.base.data._"
-  val importDataI   = "import shipreq.webapp.base.data.DataImplicits._"
-  val importRCTrie  = "import shipreq.webapp.base.data.ReqCode.Trie.{Branch => τb, Value => τv}"
-  val importUnivEq  = "import shipreq.base.util.UnivEq"
+  val importData     = "import shipreq.webapp.base.data._"
+  val importDataI    = "import shipreq.webapp.base.data.DataImplicits._"
+  val importRCTrie   = "import shipreq.webapp.base.data.ReqCode.Trie.{Branch => τb, Value => τv}"
+  val importMnemonic = "import shipreq.webapp.base.data.ReqType.Mnemonic"
+  val importUnivEq   = "import shipreq.base.util.UnivEq"
 
   private def data[A](f: (State, A) => Unit): ShowSrc[A] =
     ShowSrc.init(importData)(f)
@@ -228,10 +229,11 @@ object ShowSrcDataImp {
   implicit val customFieldTagId         = taggedType[CustomField.Tag.Id        ]("CustomField.Tag.Id        ")
   implicit val customFieldTextId        = taggedType[CustomField.Text.Id       ]("CustomField.Text.Id       ")
   implicit val customFieldImplicationId = taggedType[CustomField.Implication.Id]("CustomField.Implication.Id")
-  implicit val reqTypeMnemonic          = taggedType[ReqType.Mnemonic          ]("ReqType.Mnemonic          ")
   implicit val hashRefKey               = taggedType[HashRefKey                ]("HashRefKey                ")
   implicit val reqTypePos               = taggedType[ReqTypePos                ]("ReqTypePos                ")
   implicit val fieldRefKey              = taggedType[FieldRefKey               ]("FieldRefKey               ")
+
+  implicit val reqTypeMnemonic = taggedType[ReqType.Mnemonic]("Mnemonic") prep importMnemonic
 
   implicit val tagId: ShowSrc[TagId] =
     data((s, a) => a match {
