@@ -755,7 +755,7 @@ object __Project_100_1 {
 import __Project_100_1._
 
 object Project_100 {
-  val project =
+  val project: Project =
     Project(
       ProjectConfig(
         RevAnd(Rev(1764077044350812039L),customIssueTypes),

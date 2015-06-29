@@ -484,6 +484,8 @@ object ShipReq extends Build {
 
       val dir = "benchmark-js"
 
+      val outputJs = "shipreq-benchmark.js"
+
       override def project = typicalProject
         .enablePlugins(ScalaJSPlugin)
         .dependsOn(webappClient)
@@ -492,7 +494,9 @@ object ShipReq extends Build {
           useMacroParadise,
           Webapp.Client.prodJsSettings)
         .settings(
-          artifactPath in (Compile, fastOptJS) := ((target in Compile).value / "shipreq-benchmark.js"),
+          scalaJSStage in Global := FullOptStage,
+          artifactPath in (Compile, fastOptJS) := ((target in Compile).value / outputJs),
+          artifactPath in (Compile, fullOptJS) := ((target in Compile).value / outputJs),
           scalaJSStage in Test := Stage.PreLink,
           test in Test := ())
     }
