@@ -9,6 +9,7 @@ import upickle.Fns._
 import upickle.TupleCodecs._
 import upickle.StdlibCodecs.{SeqishR, SeqishW}
 import upickle.StdlibCodecs.{MapR, MapW}
+import CodecMacros.caseClass
 
 import shipreq.base.util._
 import shipreq.base.util.TaggedTypes._
@@ -71,58 +72,6 @@ private[protocol] object CodecBase {
 
   def writeIterable[T](ts: Iterable[T])(implicit W: Writer[T]) =
     Js.Arr(ts.foldLeft(List.empty[Js.Value])((q,i) => W.write(i) :: q): _*)
-
-  def caseclass1[A, Z](y: A => Z, u: Z => Option[A])(implicit RA: Reader[A], WA: Writer[A]) =
-    ReadWriter[Z](z => WA write u(z).get, RA.read andThen y)
-
-  def caseclass2[A: Reader : Writer, B: Reader : Writer, Z]
-  (y: (A, B) => Z, u: Z => Option[(A, B)]): ReadWriter[Z] = {
-    val r = Tuple2R[A, B].read
-    val w = Tuple2W[A, B].write
-    ReadWriter[Z](z => w(u(z).get), r andThen y.tupled)
-  }
-
-  def caseclass3[A: Reader : Writer, B: Reader : Writer, C: Reader : Writer, Z]
-  (y: (A, B, C) => Z, u: Z => Option[(A, B, C)]): ReadWriter[Z] = {
-    val r = Tuple3R[A, B, C].read
-    val w = Tuple3W[A, B, C].write
-    ReadWriter[Z](z => w(u(z).get), r andThen y.tupled)
-  }
-
-  def caseclass4[A: Reader : Writer, B: Reader : Writer, C: Reader : Writer, D: Reader : Writer, Z]
-  (y: (A, B, C, D) => Z, u: Z => Option[(A, B, C, D)]): ReadWriter[Z] = {
-    val r = Tuple4R[A, B, C, D].read
-    val w = Tuple4W[A, B, C, D].write
-    ReadWriter[Z](z => w(u(z).get), r andThen y.tupled)
-  }
-  
-  def caseclass5[A: Reader : Writer, B: Reader : Writer, C: Reader : Writer, D: Reader : Writer, E: Reader : Writer, Z]
-  (y: (A, B, C, D, E) => Z, u: Z => Option[(A, B, C, D, E)]): ReadWriter[Z] = {
-    val r = Tuple5R[A, B, C, D, E].read
-    val w = Tuple5W[A, B, C, D, E].write
-    ReadWriter[Z](z => w(u(z).get), r andThen y.tupled)
-  }
-
-  def caseclass6[A: Reader : Writer, B: Reader : Writer, C: Reader : Writer, D: Reader : Writer, E: Reader : Writer, F: Reader : Writer, Z]
-  (y: (A, B, C, D, E, F) => Z, u: Z => Option[(A, B, C, D, E, F)]): ReadWriter[Z] = {
-    val r = Tuple6R[A, B, C, D, E, F].read
-    val w = Tuple6W[A, B, C, D, E, F].write
-    ReadWriter[Z](z => w(u(z).get), r andThen y.tupled)
-  }
-
-  def caseclass7[A: Reader : Writer, B: Reader : Writer, C: Reader : Writer, D: Reader : Writer, E: Reader : Writer, F: Reader : Writer, G: Reader : Writer, Z]
-  (y: (A, B, C, D, E, F, G) => Z, u: Z => Option[(A, B, C, D, E, F, G)]): ReadWriter[Z] = {
-    val r = Tuple7R[A, B, C, D, E, F, G].read
-    val w = Tuple7W[A, B, C, D, E, F, G].write
-    ReadWriter[Z](z => w(u(z).get), r andThen y.tupled)
-  }
-
-  def caseclass8[A: Reader : Writer, B: Reader : Writer, C: Reader : Writer, D: Reader : Writer, E: Reader : Writer, F: Reader : Writer, G: Reader : Writer, H: Reader : Writer, Z]
-  (y: (A, B, C, D, E, F, G, H) => Z, u: Z => Option[(A, B, C, D, E, F, G, H)]): ReadWriter[Z] = {
-    val r = Tuple8R[A, B, C, D, E, F, G, H].read
-    val w = Tuple8W[A, B, C, D, E, F, G, H].write
-    ReadWriter[Z](z => w(u(z).get), r andThen y.tupled)
-  }
 
   def intkeyW[T](k: Int, t: T)(implicit T: Writer[T]) =
     Js.Arr(Js.Num(k), T write t)
@@ -250,22 +199,21 @@ object GenericCodecs {
   @inline implicit def iMapAuto[K: UnivEq : Reader : Writer, V: Reader : Writer](implicit d: DataIdAux[V, K]): ReadWriter[IMap[K, V]] =
     iMap(d.id)
 
-  implicit def mtrie[K, V](implicit rk: Reader[K],  wk: Writer[K],  rv: Reader[V],  wv: Writer[V]): ReadWriter[MTrie.Trie[K, V]] = {
-    import MTrie._
+  implicit def mtrie[K: UnivEq, V](implicit rk: Reader[K],  wk: Writer[K],  rv: Reader[V],  wv: Writer[V]): ReadWriter[MTrie.Trie[K, V]] = {
+    val types = new MTrie.Types[K, V]
+    import types._
 
-    lazy val nodeRW: ReadWriter[Node[K, V]] = {
-      implicit val targetRW =
-        caseclass1(Value.apply[K, V], Value.unapply[K, V])
-      implicit val branchRW =
-        caseclass2(MTrie.Branch.apply[K, V], MTrie.Branch.unapply[K, V])(implicitly, implicitly, trieRW, trieRW)
+    lazy val nodeRW: ReadWriter[Node] = {
+      implicit val targetRW = caseClass[Value]
+      implicit val branchRW = caseClass[Branch]
 
-      ReadWriter[Node[K, V]]({
-        case i: Branch[K, V] => intkeyW(0, i)
-        case i: Value[K, V] => intkeyW(1, i)
+      ReadWriter[Node]({
+        case i: Branch => intkeyW(0, i)
+        case i: Value  => intkeyW(1, i)
       }, {
         case Js.Arr(Js.Num(n), v) => n.toInt match {
-          case 0 => readJs[Branch[K, V]](v)
-          case 1 => readJs[Value[K, V]](v)
+          case 0 => readJs[Branch](v)
+          case 1 => readJs[Value ](v)
         }
       })
     }
@@ -273,7 +221,7 @@ object GenericCodecs {
     lazy val trieRW = {
       lazy val w = MapW(wk, nodeRW)
       lazy val r = MapR(rk, nodeRW)
-      ReadWriter[Trie[K, V]](i => w write i, {case i => r read i})
+      ReadWriter[Trie](i => w write i, {case i => r read i})
     }
 
     trieRW
@@ -290,10 +238,11 @@ object DataCodecs {
   import CodecBase._
   import GenericCodecs._
 
-  @inline implicit def revAnd[T](implicit WT: Writer[T], RT: Reader[T]) =
-    caseclass2(RevAnd.apply[T], RevAnd.unapply[T])(rev, rev, RT, WT)
+  implicit final val rev = tagL(Rev.apply)
 
-  implicit final val rev            = tagL(Rev.apply)
+  @inline implicit def revAnd[T](implicit WT: Writer[T], RT: Reader[T]) =
+    caseClass[RevAnd[T]]
+
   implicit final val live           = boolCase(Live)
   implicit final val impReq         = boolCase(ImplicationRequired)
   implicit final val mutexChildren  = boolCase(MutexChildren)
@@ -304,7 +253,7 @@ object DataCodecs {
   implicit final val deletionAction = enum(DeletionAction.values)
 
   implicit final val customIssueTypeId = tagL(CustomIssueTypeId.apply)
-  implicit final val customIssueType   = caseclass4(CustomIssueType.apply, CustomIssueType.unapply)
+  implicit final val customIssueType   = caseClass[CustomIssueType]
 
   // -------------------------------------------------------------------------------------------------------------------
   // ReqTypes
@@ -322,7 +271,7 @@ object DataCodecs {
 
   implicit final val reqTypeMnemonic = tagS(ReqType.Mnemonic.apply)
   implicit final val customReqTypeId = tagL(CustomReqTypeId.apply)
-  implicit final val customReqType   = caseclass6(CustomReqType.apply, CustomReqType.unapply)
+  implicit final val customReqType   = caseClass[CustomReqType]
 
   // -------------------------------------------------------------------------------------------------------------------
   // Tags
@@ -330,10 +279,10 @@ object DataCodecs {
   implicit final val tagGroupId      = tagL(TagGroupId.apply)
   implicit final val applicableTagId = tagL(ApplicableTagId.apply)
   implicit final val tagId           = tagIdRW
-  implicit final val tagGroup        = caseclass5(TagGroup.apply, TagGroup.unapply)
-  implicit final val applicableTag   = caseclass5(ApplicableTag.apply, ApplicableTag.unapply)
+  implicit final val tagGroup        = caseClass[TagGroup]
+  implicit final val applicableTag   = caseClass[ApplicableTag]
   implicit final val tag             = tagRW
-  implicit final val tagInTree       = caseclass2(TagInTree.apply, TagInTree.unapply)
+  implicit final val tagInTree       = caseClass[TagInTree]
   implicit final val tagTree         = iMap[TagId, TagInTree](_.tag.id)
 
   private[this] def tagIdRW = ReadWriter[TagId]({
@@ -374,9 +323,9 @@ object DataCodecs {
     }
   })
 
-  implicit final val customFieldImpl = caseclass5(CustomField.Implication.apply, CustomField.Implication.unapply)
-  implicit final val customFieldText = caseclass6(CustomField.Text       .apply, CustomField.Text       .unapply)
-  implicit final val customFieldTag  = caseclass5(CustomField.Tag        .apply, CustomField.Tag        .unapply)
+  implicit final val customFieldImpl = caseClass[CustomField.Implication]
+  implicit final val customFieldText = caseClass[CustomField.Text]
+  implicit final val customFieldTag  = caseClass[CustomField.Tag]
   implicit final val customField     = ReadWriter[CustomField]({
     case f: CustomField.Text        => strkeyW("x", f)
     case f: CustomField.Tag         => strkeyW("t", f)
@@ -410,7 +359,7 @@ object DataCodecs {
     customFieldId.read orElse staticField.read
   )
 
-  implicit final val fieldSet = caseclass2(FieldSet.apply, FieldSet.unapply)
+  implicit final val fieldSet = caseClass[FieldSet]
 
   // -------------------------------------------------------------------------------------------------------------------
   /** Text Codecs */
@@ -563,14 +512,14 @@ object DataCodecs {
   // Requirements
 
   implicit final val reqTypePos    = tagI(ReqTypePos.apply)
-  implicit final def pubid[T <: ReqTypeId : Reader : Writer] = caseclass2(PubidT.apply[T], PubidT.unapply[T])
+  implicit final def pubid[T <: ReqTypeId : Reader : Writer] = caseClass[PubidT[T]]
   implicit final val genericReqId  = tagL(GenericReqId.apply)
-  implicit final val genericReq    = caseclass4(GenericReq.apply, GenericReq.unapply)
+  implicit final val genericReq    = caseClass[GenericReq]
   implicit final val reqId         = _reqId
   implicit final val req           = _req
   implicit final val pubidRegister = xmap((_: PubidRegister).value)(PubidRegister.apply)
   implicit final val requirementsD = iMapK[ReqTypeId, ReqIdT, ReqT](ReqT.idProof)
-  implicit final val requirements  = caseclass2(Requirements.apply, Requirements.unapply)
+  implicit final val requirements  = caseClass[Requirements]
   implicit final val implications  = xmap((_: Implications).srcToTgt)(Implications.apply)
 
   private def _req = ReadWriter[Req]({
@@ -592,14 +541,14 @@ object DataCodecs {
   // -------------------------------------------------------------------------------------------------------------------
   // Req Codes
 
-  implicit final val reqCodeGroup  = caseclass1(ReqCodeGroup.apply, ReqCodeGroup.unapply)
+  implicit final val reqCodeGroup  = caseClass[ReqCodeGroup]
   implicit final val reqCodeNode   = xmap[ReqCode.Node, String](_.value)(ReqCode.Node.applyFn)
   implicit final val reqCodeTarget = _reqCodeTarget
   implicit final val reqCodeId     = tagL(ReqCodeId.apply)
-  implicit final val reqCodeAData  = caseclass2(ReqCode.ActiveData.apply, ReqCode.ActiveData.unapply)
-  implicit final val reqCodeData   = caseclass3(ReqCode.Data.apply, ReqCode.Data.unapply)
+  implicit final val reqCodeAData  = caseClass[ReqCode.ActiveData]
+  implicit final val reqCodeData   = caseClass[ReqCode.Data]
   implicit final val reqCodeTrie   = (mtrie: ReadWriter[ReqCode.Trie])
-  implicit final val reqCodes      = caseclass1(ReqCodes.apply, ReqCodes.unapply)
+  implicit final val reqCodes      = caseClass[ReqCodes]
 
   private def _reqCodeTarget = ReadWriter[ReqCode.Target]({
     case i: ReqId          => intkeyW(0, i)(reqId)
@@ -612,8 +561,8 @@ object DataCodecs {
   })
 
   // -------------------------------------------------------------------------------------------------------------------
-  implicit final val projectConfig = caseclass4(ProjectConfig.apply, ProjectConfig.unapply)
-  implicit final val project       = caseclass6(Project.apply, Project.unapply)
+  implicit final val projectConfig = caseClass[ProjectConfig]
+  implicit final val project       = caseClass[Project]
 }
 
 // =====================================================================================================================
@@ -640,7 +589,7 @@ object ProtocolDataCodecs {
   // Field
   import shipreq.webapp.base.protocol.{FieldProtocol => FP}
 
-  implicit final val fieldProtocolDelta = caseclass2(FP.Delta.apply, FP.Delta.unapply)
+  implicit final val fieldProtocolDelta = caseClass[FP.Delta]
   implicit final val fieldProtocolValues = {
     import FP._, Field.ApplicableReqTypes
     ReadWriter[Values]({
@@ -680,10 +629,10 @@ object ProtocolDataCodecs {
   // Tag
   import shipreq.webapp.base.protocol.{TagProtocol => TP}
 
-  implicit final val tagPovRelations     = caseclass2(TP.PovRelations.apply,        TP.PovRelations.unapply)
-  implicit final val tagPov              = caseclass2(TP.PovTag.apply,              TP.PovTag.unapply)
-  implicit final val tagGroupValues      = caseclass3(TP.TagGroupValues.apply,      TP.TagGroupValues.unapply)
-  implicit final val applicableTagValues = caseclass3(TP.ApplicableTagValues.apply, TP.ApplicableTagValues.unapply)
+  implicit final val tagPovRelations     = caseClass[TP.PovRelations]
+  implicit final val tagPov              = caseClass[TP.PovTag]
+  implicit final val tagGroupValues      = caseClass[TP.TagGroupValues]
+  implicit final val applicableTagValues = caseClass[TP.ApplicableTagValues]
   implicit final val tagValues           = ReadWriter[TP.Values]({
     case t: TP.TagGroupValues      => intkeyW(0, t)(tagGroupValues)
     case t: TP.ApplicableTagValues => intkeyW(1, t)(applicableTagValues)
@@ -698,15 +647,15 @@ object ProtocolDataCodecs {
   // ContentUpdate
   import shipreq.webapp.base.protocol.{ContentUpdate => CU}
 
-  implicit final val cuPatchReqTags         = caseclass2(CU.PatchReqTags        .apply, CU.PatchReqTags        .unapply)
-  implicit final val cuPatchImplicationSrc  = caseclass2(CU.PatchImplicationSrc .apply, CU.PatchImplicationSrc .unapply)
-  implicit final val cuPatchImplicationTgt  = caseclass2(CU.PatchImplicationTgt .apply, CU.PatchImplicationTgt .unapply)
-  implicit final val cuPatchReqCodes        = caseclass2(CU.PatchReqCodes       .apply, CU.PatchReqCodes       .unapply)
-  implicit final val cuSetGenericReqType    = caseclass2(CU.SetGenericReqType   .apply, CU.SetGenericReqType   .unapply)
-  implicit final val cuSetReqCodeGroupCode  = caseclass2(CU.SetReqCodeGroupCode .apply, CU.SetReqCodeGroupCode .unapply)
-  implicit final val cuSetReqCodeGroupTitle = caseclass2(CU.SetReqCodeGroupTitle.apply, CU.SetReqCodeGroupTitle.unapply)
-  implicit final val cuSetGenericReqTitle   = caseclass2(CU.SetGenericReqTitle  .apply, CU.SetGenericReqTitle  .unapply)
-  implicit final val cuSetCustomTextField   = caseclass3(CU.SetCustomTextField  .apply, CU.SetCustomTextField  .unapply)
+  implicit final val cuPatchReqTags         = caseClass[CU.PatchReqTags]
+  implicit final val cuPatchImplicationSrc  = caseClass[CU.PatchImplicationSrc]
+  implicit final val cuPatchImplicationTgt  = caseClass[CU.PatchImplicationTgt]
+  implicit final val cuPatchReqCodes        = caseClass[CU.PatchReqCodes]
+  implicit final val cuSetGenericReqType    = caseClass[CU.SetGenericReqType]
+  implicit final val cuSetReqCodeGroupCode  = caseClass[CU.SetReqCodeGroupCode]
+  implicit final val cuSetReqCodeGroupTitle = caseClass[CU.SetReqCodeGroupTitle]
+  implicit final val cuSetGenericReqTitle   = caseClass[CU.SetGenericReqTitle]
+  implicit final val cuSetCustomTextField   = caseClass[CU.SetCustomTextField]
   implicit final val contentUpdate = ReadWriter[CU]({
     case t: CU.PatchReqTags         => intkeyW(0, t)(cuPatchReqTags        )
     case t: CU.PatchImplicationSrc  => intkeyW(1, t)(cuPatchImplicationSrc )
@@ -751,7 +700,7 @@ object ProtocolRemoteCodecs {
   implicit final val tagCrud              = remoteRoutine(TagCrud)
   implicit final val updateProjectContent = remoteRoutine(UpdateProjectContent)
 
-  implicit final val projectSPA = caseclass8(ProjectSPA.apply, ProjectSPA.unapply)
+  implicit final val projectSPA = caseClass[ProjectSPA]
 }
 
 // =====================================================================================================================
