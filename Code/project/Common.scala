@@ -86,6 +86,7 @@ object Common {
       testFrameworks           += new TestFramework("utest.runner.Framework"))
     .configure(
       addCommandAliases(
+        "C"    -> "root/clean",
         "/"    -> "project root",
         "B"    -> "project base",
         "T"    -> "project taskman",
@@ -94,8 +95,8 @@ object Common {
         "TAL"  -> "project taskman-api-logic",
         "TSI"  -> "project taskman-server-impl",
         "TSL"  -> "project taskman-server-logic",
-        "WB"   -> "project webapp-base",
-        "WT"   -> "project webapp-base-test",
+        "WB"   -> "project webapp-base-jvm",
+        "WT"   -> "project webapp-base-test-jvm",
         "WC"   -> "project webapp-client",
         "WS"   -> "project webapp-server",
         "cc"   -> ";clear;compile",

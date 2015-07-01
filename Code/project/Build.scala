@@ -4,12 +4,16 @@ import Common.Functions._
 import Common.Values.releaseMode
 import Dependencies._
 import org.scalajs.sbtplugin.ScalaJSPlugin
-import ScalaJSPlugin.autoImport._
+import org.scalajs.sbtplugin.cross.{CrossProject, CrossType}
+import ScalaJSPlugin.autoImport.{crossProject => _, _}
 
 object ShipReq extends Build {
 
   def project(dir: String) =
     Project(dir, file(dir))
+
+  def crossProject(dir: String) =
+    CrossProject(dir + "-jvm", dir + "-js", file(dir), CrossType.Full).settings(name := dir)
 
   lazy val root =
     Project("root", file("."))
@@ -27,7 +31,7 @@ object ShipReq extends Build {
   lazy val baseUtilJvm = baseUtil.jvm
   lazy val baseUtilJs  = baseUtil.js
   lazy val baseUtil =
-    crossProject.in(file("base-util"))
+    crossProject("base-util")
       .configureBoth(Common.settings)
       .depsForBoth(
         Scalaz.effect ++ Nyaya.core ++ testScope(μTest)
@@ -176,7 +180,7 @@ object ShipReq extends Build {
   lazy val webappMacrosJvm = webappMacros.jvm
   lazy val webappMacrosJs  = webappMacros.js
   lazy val webappMacros =
-    crossProject.in(file("webapp-macros"))
+    crossProject("webapp-macros")
       .configureBoth(webappSettings)
       .depsForBoth(
         μPickle ++
@@ -189,7 +193,7 @@ object ShipReq extends Build {
   lazy val webappBaseJvm = webappBase.jvm
   lazy val webappBaseJs  = webappBase.js
   lazy val webappBase =
-    crossProject.in(file("webapp-base"))
+    crossProject("webapp-base")
       .configureBoth(webappSettings)
       .depsForBoth(
         μPickle ++ Monocle.macros ++ shapeless ++ Nyaya.core ++ parboiled ++
@@ -204,7 +208,7 @@ object ShipReq extends Build {
   lazy val webappBaseTestJvm = webappBaseTest.jvm
   lazy val webappBaseTestJs  = webappBaseTest.js
   lazy val webappBaseTest =
-    crossProject.in(file("webapp-base-test"))
+    crossProject("webapp-base-test")
       .configureBoth(webappSettings)
       .depsForBoth(
         μTest ++ Nyaya.test
@@ -422,7 +426,7 @@ object ShipReq extends Build {
   lazy val benchmarkJvm = benchmark.jvm
   lazy val benchmarkJs  = benchmark.js
   lazy val benchmark =
-    crossProject.in(file("benchmark"))
+    crossProject("benchmark")
       .configureBoth(Benchmark.commonSettings)
       .dependsOn(webappBase)
       .configureJvm(Benchmark.jvmSettings)
