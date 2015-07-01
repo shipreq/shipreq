@@ -1,7 +1,8 @@
 package shipreq.webapp.base.protocol
 
-import upickle.ReadWriter
 import scala.reflect.macros.blackbox.Context
+import shipreq.webapp.macros.MacroUtils._
+import upickle._
 
 object CodecMacros {
 
@@ -10,26 +11,10 @@ object CodecMacros {
   def __caseClassImpl[T: c.WeakTypeTag](c: Context): c.Expr[ReadWriter[T]] = {
     import c.universe._
 
-    val T = weakTypeOf[T]
-    val TC = T.typeSymbol.companion
+    val T      = concreteWeakTypeOf[T](c)
+    val params = primaryConstructorParams(c)
 
-    def fail(msg: String): Nothing =
-      c.abort(c.enclosingPosition, msg)
-
-    def paramType(name: TermName): Type =
-      T.decl(name).typeSignatureIn(T) match {
-        case NullaryMethodType(t) => t
-        case t                    => t
-      }
-
-    val params =
-      T.decls
-        .collectFirst { case m: MethodSymbol if m.isPrimaryConstructor => m }
-        .getOrElse(fail("Unable to discern primary constructor."))
-        .paramLists
-        .headOption
-        .getOrElse(fail("Primary constructor missing paramList."))
-
+    val TC         = T.typeSymbol.companion
     val ReadWriter = Ident(c.mirror staticModule "upickle.ReadWriter")
     val JsArr      = Ident(c.mirror staticModule "upickle.Js.Arr")
     val Fns        = Ident(c.mirror staticModule "upickle.Fns")
@@ -37,20 +22,18 @@ object CodecMacros {
     val readJs     = q"$Fns.readJs"
 
     def invokeWriteJs(param: Symbol) = {
-      val a = param.asTerm.name
-      val A = paramType(a)
+      val a = nameAndType(c)(param)._1
       q"$writeJs(t.$a)"
     }
     def invokeReadJs(vname: TermName, param: Symbol) = {
-      val a = param.asTerm.name
-      val A = paramType(a)
+      val A = nameAndType(c)(param)._2
       q"$readJs[$A]($vname)"
     }
 
     val impl =
       params match {
         case Nil =>
-          fail(s"Class constructor has no parameters.")
+          fail(c, "Class constructor has no parameters.")
 
         case param :: Nil =>
           val j = TermName("j")
