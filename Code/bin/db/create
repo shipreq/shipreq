@@ -7,4 +7,5 @@ s="$sqldir/create-$1.sql"
 [ ! -e "$s" ] && die "File not found: $s"
 
 echo "Creating database $db..."
+echo "$sudo_psql < $s"
 $sudo_psql < "$s"

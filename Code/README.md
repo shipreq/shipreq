@@ -28,8 +28,10 @@ First, be in webapp/
 
     sudo -u postgres cp /var/lib/postgres/data/pg_hba.conf{,.orig}
     sudo -u postgres vim /var/lib/postgres/data/pg_hba.conf
-        Add a line: local all postgres ident
-        Change trust to md5 where appropriate
+    Add before any other rules:
+        local all postgres ident
+    Change trust to md5 where appropriate
+
     sudo systemctl restart postgresql
 
 * Create local DBs
