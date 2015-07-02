@@ -182,14 +182,16 @@ object ShipReq extends Build {
   lazy val webappMacros =
     crossProject("webapp-macros")
       .configureBoth(webappSettings)
+      .dependsOn(baseUtil)
       .depsForBoth(
-        μPickle ++ boopickle ++
+        μPickle ++ boopickle ++ Monocle.core ++
         providedScope(Scala.library) ++
         testScope(μTest)
       )
       .dependsOn(baseUtil)
       .configureBoth(
-        Common.definesMacros
+        Common.definesMacros,
+        useMacroParadise
       )
 
   lazy val webappBaseJvm = webappBase.jvm

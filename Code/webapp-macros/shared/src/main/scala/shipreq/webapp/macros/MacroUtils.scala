@@ -1,8 +1,9 @@
 package shipreq.webapp.macros
 
-import scala.reflect.macros.blackbox.Context
+import scala.annotation.tailrec
 
 object MacroUtils {
+  import scala.reflect.macros.blackbox.Context
 
   def fail(c: Context, msg: String): Nothing =
     c.abort(c.enclosingPosition, msg)
@@ -138,6 +139,17 @@ object MacroUtils {
     c.typecheck(q"""(??? : $baseTrait) match {case $name@$companion(..$matchArgs) => $name }""").tpe
   }
 
+  def flattenBlocks(c: Context)(trees: List[c.universe.Tree]): Vector[c.universe.Tree] = {
+    import c.universe._
+    @tailrec def go(acc: Vector[Tree], ts: List[Tree]): Vector[Tree] =
+      ts match {
+        case                 Nil => acc
+        case Block(a, b) :: tail => go(acc, a ::: b :: tail)
+        case h           :: tail => go(acc :+ h, tail)
+      }
+    go(Vector.empty, trees)
+  }
+
   def modStringHead(s: String, f: Char => Char): String =
     if (s.isEmpty)
       ""
@@ -185,5 +197,27 @@ object MacroUtils {
       h
     else
       terms.tail.foldLeft(h)(Select(_, _))
+  }
+}
+
+object WhiteboxMacroUtils {
+  import scala.reflect.macros.whitebox.Context
+  import MacroUtils._
+
+  def extractStaticAnnotationArgs(c: Context): List[c.universe.Tree] = {
+    import c.universe._
+    c.macroApplication match  {
+      case Apply(Select(Apply(_, args), _), _) => args
+      case x => fail(c, s"Unable to determine annotation args.\n${showRaw(x)}")
+    }
+  }
+
+  def replaceEmptyBodyInAnnotatedObject(c: Context)(annottees: Seq[c.Expr[Any]])(newBody: List[c.universe.Tree]): c.universe.Tree = {
+    import c.universe._
+    annottees.map(_.tree) match {
+      case List(q"object $objName extends $parent { ..$body }") if body.isEmpty =>
+        q"object $objName extends $parent { ..$newBody }"
+      case _ => fail(c, "You must annotate an object definition with an empty body.")
+    }
   }
 }
