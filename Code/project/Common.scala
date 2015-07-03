@@ -25,9 +25,14 @@ object Common {
     p.settings(resourceGenerators in Compile <+= (resourceManaged in Compile, version) map createBuildProps)
   }
 
+  def targetJdk = "1.8"
+
   def scalacFlags = Seq(
     "-unchecked",
     "-deprecation",
+    "-target:jvm-" + targetJdk,
+    //"-Ybackend:GenBCode",
+    //"-Ydelambdafy:method",
     // "-Xstrict-inference", // Don't infer known-unsound types
     // "-Yno-generic-signatures", // Stuffs up json4s
     "-YclasspathImpl:flat", // https://github.com/scala/scala/pull/4176
@@ -41,8 +46,8 @@ object Common {
       cleanKeepFiles ++= Seq("resolution-cache", "streams").map(target.value / _) // stop those constant dep updates
     ),
     nonTestCompilerFlags(
-      // "-optimise",
-      "-Ybackend:GenBCode",
+      // "-optimise", // incompatible with GenBCode
+      //"-Yopt:l:classpath", // new GenBCode optimiser
       "-Yclosure-elim",
       "-Yconst-opt",
       "-Ydead-code",
@@ -51,8 +56,6 @@ object Common {
       // "-Yinline-warnings",
       "-Xelide-below", "OFF")
   )
-
-  def targetJdk = "1.8"
 
   def javacFlags = Seq("-target", targetJdk, "-source", targetJdk)
 
