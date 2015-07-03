@@ -59,12 +59,9 @@ object FilterAst {
   // -------------------------------------------------------------------------------------------------------------------
 
   def textPattern(regex: String): String \/ TextPattern =
-    try {
-      val p = Pattern compile regex
-      // Validate regex (Pattern.compile always succeeds in JS)
-      p.matcher("").matches()
-      \/-(TextPattern(p))
-    } catch {
+    try
+      \/-(TextPattern(Pattern compile regex))
+    catch {
       // PatternSyntaxException not available in Scala.JS
       // case e: PatternSyntaxException => error(e.getDescription)
       case e: Throwable => -\/(s"Invalid regex: /$regex/")
