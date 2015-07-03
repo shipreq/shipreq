@@ -1,21 +1,17 @@
 package shipreq.webapp.base.util
 
-import monocle.Lens
-import shipreq.base.util.{IMap => IM, NonEmptySet, UnivEq}
+import shipreq.base.util.{NonEmpty, IMap, NonEmptySet, UnivEq}
 
-abstract class GenericData[Data] {
+abstract class GenericData {
 
   /**
-   * An attribute of [[Data]].
+   * A data attribute.
    */
   trait AttrBase {
     this: Attr =>
     type A
-    val lens: monocle.Lens[Data, A]
     def value(a: A): ValueFor[this.type]
   }
-
-  type Attr <: AttrBase
 
   /**
    * A value and the attribute to which it applies.
@@ -26,17 +22,24 @@ abstract class GenericData[Data] {
     val value: attr.A
   }
 
+  type Attr  <: AttrBase
   type Value <: ValueBase
 
   type ValueFor[A <: Attr] = Value {val attr: A}
+  type Attrs               = NonEmptySet[Attr]
+  type Values              = IMap[Attr, Value]
+  type NonEmptyValues      = NonEmpty[Values]
+
+  val attrs: Attrs
 
   implicit def equality: UnivEq[Attr]
 
-  val attrs: NonEmptySet[Attr]
+  def emptyValues: Values =
+    IMap.empty(_.attr)
 
-  type IMap = IM[Attr, Value]
-
-  def emptyIMap: IMap = IM.empty(_.attr)
+  protected implicit class FieldDeclarationSyntax(val name: Symbol) {
+    def apply[T] = ???
+  }
 }
 
 // =====================================================================================================================
@@ -44,7 +47,7 @@ import scala.annotation.StaticAnnotation
 import scala.annotation.compileTimeOnly
 
 @compileTimeOnly("Enable macro paradise to expand macro annotations")
-class GenericDataAttrs(lenses: Lens[_, _]*) extends StaticAnnotation {
+class GenericDataAttrs extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro GenericDataMacros.objectImpl
 }
 
@@ -56,67 +59,67 @@ object GenericDataMacros {
   def objectImpl(c: Context)(annottees: c.Expr[Any]*) = {
     import c.universe._
 
-    val args = extractStaticAnnotationArgs(c)
-    if (args.isEmpty)
-      fail(c, "No attributes specified.")
+    var attrNames = Vector.empty[TermName]
+    var attrDefns = List.empty[Tree]
+    var unused    = Vector.empty[Tree]
 
-    val (attrNames, defns) = args.map { arg =>
-      val name = arg match {
-        case Select(_, n) => n
-        case x => fail(c, s"Unable to extract attribute name from: $x")
-      }
+    def processBody(body: List[Tree]): Unit = {
+      body.foreach {
+        case q"scala.Symbol(${n: Literal})[$attrType]" =>
 
-      val prefix: String = {
-        val n = name.toTermName.decodedName.toString
-        n.head.toString.toUpperCase + n.tail
-      }
+          val prefix     = n.value.value.toString
+          val attrName   = prefix
+          val attrNameT  = TermName(attrName)
+          val valueName  = prefix + "Value"
+          val valueNameT = TermName(valueName)
+          val valueNameY = TypeName(valueName)
 
-      val attrName   = prefix
-      val attrNameT  = TermName(attrName)
-      val valueName  = prefix + "Value"
-      val valueNameT = TermName(valueName)
-      val valueNameY = TypeName(valueName)
-
-      val defn =
-        q"""
-          case object $attrNameT extends AttrA($arg) {
-            override def value(a: A) = $valueNameT(a)
-          }
-          final case class $valueNameY(value: $attrNameT.A) extends Value {
-            override val attr: $attrNameT.type = $attrNameT
-          }
-        """
-
-      (attrNameT, defn)
-    }.unzip
-
-    val impl =
-      annottees.map(_.tree) match {
-        case List(q"object $objName extends $parent[$t] { ..$body }") if body.isEmpty =>
-          val T = t
-
-          q"""
-            object $objName extends $parent[$T] {
-              import shipreq.base.util.{IMap => IM, NonEmptySet, UnivEq}
-
-              sealed trait Attr extends AttrBase
-
-              sealed abstract class AttrA[_A](override final val lens: monocle.Lens[$T, _A]) extends Attr {
-                final override type A = _A
+          val defn =
+            q"""
+              case object $attrNameT extends Attr {
+                override type A = $attrType
+                override def value(a: A) = $valueNameT(a)
               }
+              final case class $valueNameY(value: $attrNameT.A) extends Value {
+                override val attr: $attrNameT.type = $attrNameT
+              }
+            """
 
-              sealed trait Value extends ValueBase
+          attrNames :+= attrNameT
+          attrDefns ::= defn
 
-              ..${flattenBlocks(c)(defns)}
-
-              override implicit def equality: UnivEq[Attr] = UnivEq.force
-
-              override val attrs: NonEmptySet[Attr] = NonEmptySet(..$attrNames)
-            }
-           """
-
-        case _ => fail(c, "You must annotate an object definition with an empty body.")
+        case x if x.isEmpty => ()
+        case x => unused :+= x
       }
+    }
+
+    val impl = annottees.map(_.tree) match {
+      case List(q"object $objName extends $parent { ..$body }") =>
+
+        processBody(body)
+
+        if (unused.nonEmpty) {
+          unused foreach println
+          fail(c, "Unrecognised field declarations found.")
+        }
+
+        q"""
+          object $objName extends $parent {
+            import shipreq.base.util.{NonEmptySet, UnivEq}
+
+            sealed trait Attr extends AttrBase
+            sealed trait Value extends ValueBase
+
+            ..${flattenBlocks(c)(attrDefns)}
+
+            override implicit def equality = UnivEq.force[Attr]
+
+            override val attrs = NonEmptySet[Attr](..$attrNames)
+          }
+         """
+
+      case _ => fail(c, "You must annotate an object definition.")
+    }
 
 //    val sep = ("="*120)+"\n"
 //    println(sep + impl + "\n" + sep)
