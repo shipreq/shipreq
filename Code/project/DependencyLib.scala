@@ -106,6 +106,12 @@ object DependencyLib {
 
   // -------------------------------------------------------------------------------------------------------------------
 
+  def scalaItself(ver: String): MultiModule[HasBoth] =
+    new MultiModule[HasBoth](n => {
+      val m = "org.scala-lang" % n % ver
+      Dep(JVM, m) mergeDialects Dep(JS, m)
+    })
+
   object MultiModule {
     def apply[D <: HasDialect](d: Dialect[D], f: String => ModuleID) =
       new MultiModule[D](n => Dep[D](d, f(n)))

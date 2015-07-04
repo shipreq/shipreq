@@ -184,6 +184,7 @@ object ShipReq extends Build {
       .configureBoth(webappSettings)
       .depsForBoth(
         μPickle ++
+        providedScope(Scala.library) ++
         testScope(μTest)
       )
       .configureBoth(

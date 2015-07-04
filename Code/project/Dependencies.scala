@@ -5,7 +5,7 @@ import DependencyLib._
 object Dependencies {
 
   object Scala {
-    private val mm = MultiModule.java("org.scala-lang", version)
+    private val mm = scalaItself(version)
     def version  = "2.11.7"
     val compiler = mm("scala-compiler")
     val library  = mm("scala-library")
