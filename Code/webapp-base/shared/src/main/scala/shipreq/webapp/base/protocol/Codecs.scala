@@ -388,49 +388,47 @@ object DataCodecs {
     private[this] final val TAGREF    = "t"
 
     override def sum[T <: Atom.Base](t: T)(f: t.Atom => ReadWriter[t.Atom], all: Vector[ReadWriter[t.Atom]]): ReadWriter[t.Atom] = {
-      val rs = all.map(rw => rw.read.lift).toStream
-      ReadWriter[t.Atom](
-        a => f(a).write(a),
-        { case j => rs.map(_ apply j).filter(_.isDefined).head.get })
+      val readPF = all.map(_.read).reduce(_ orElse _)
+      ReadWriter[t.Atom](a => f(a).write(a), readPF)
     }
 
-    override def blankLine[T <: NewLine](t: T): ReadWriter[t.BlankLine] = ReadWriter[t.BlankLine](
+    override def blankLine[T <: NewLine](t: T): ReadWriter[t.BlankLine] = ReadWriter(
       a => Js.Num(BLANKLINE),
-    { case Js.Num(n) if n.toInt == 0 => t.blankLine })
+      { case Js.Num(n) if n.toInt == 0 => t.blankLine })
 
-    override def literal[T <: Literal](t: T): ReadWriter[t.Literal] = ReadWriter[t.Literal](
-    a => Js.Str(a.value),
-    { case Js.Str(s) => t.Literal(s) })
+    override def literal[T <: Literal](t: T): ReadWriter[t.Literal] = ReadWriter(
+      a => Js.Str(a.value),
+      { case Js.Str(s) => t.Literal(s) })
 
-    override def webAddress[T <: PlainTextMarkup](t: T): ReadWriter[t.WebAddress] = ReadWriter[t.WebAddress](
+    override def webAddress[T <: PlainTextMarkup](t: T): ReadWriter[t.WebAddress] = ReadWriter(
       a => strkeyW(WEBADD, a.value),
       { case Js.Arr(Js.Str(WEBADD), v) => t.WebAddress(readJs[String](v)) })
 
-    override def emailAddress[T <: PlainTextMarkup](t: T): ReadWriter[t.EmailAddress] = ReadWriter[t.EmailAddress](
+    override def emailAddress[T <: PlainTextMarkup](t: T): ReadWriter[t.EmailAddress] = ReadWriter(
       a => strkeyW(EMAILADD, a.value),
       { case Js.Arr(Js.Str(EMAILADD), v) => t.EmailAddress(readJs[String](v)) })
 
-    override def mathTeX[T <: PlainTextMarkup](t: T): ReadWriter[t.MathTeX] = ReadWriter[t.MathTeX](
+    override def mathTeX[T <: PlainTextMarkup](t: T): ReadWriter[t.MathTeX] = ReadWriter(
       a => strkeyW(MATHTEX, a.value),
       { case Js.Arr(Js.Str(MATHTEX), v) => t.MathTeX(readJs[String](v)) })
 
-    override def reqRef[T <: ReqRef](t: T): ReadWriter[t.ReqRef] = ReadWriter[t.ReqRef](
+    override def reqRef[T <: ReqRef](t: T): ReadWriter[t.ReqRef] = ReadWriter(
       a => strkeyW(REQREF, a.value),
       { case Js.Arr(Js.Str(REQREF), v) => t.ReqRef(readJs[ReqId](v)) })
 
-    override def codeRef[T <: ReqRef](t: T): ReadWriter[t.CodeRef] = ReadWriter[t.CodeRef](
+    override def codeRef[T <: ReqRef](t: T): ReadWriter[t.CodeRef] = ReadWriter(
       a => strkeyW(CODEREF, a.value),
       { case Js.Arr(Js.Str(CODEREF), v) => t.CodeRef(readJs[ReqCodeId](v)) })
 
-    override def tagRef[T <: TagRef](t: T): ReadWriter[t.TagRef] = ReadWriter[t.TagRef](
+    override def tagRef[T <: TagRef](t: T): ReadWriter[t.TagRef] = ReadWriter(
       a => strkeyW(TAGREF, a.value),
       { case Js.Arr(Js.Str(TAGREF), v) => t.TagRef(readJs[ApplicableTagId](v)) })
 
-    override def issue[T <: Issue](t: T)(implicit s: ReadWriter[Text.InlineIssueDesc.OptionalText]): ReadWriter[t.Issue] = ReadWriter[t.Issue](
+    override def issue[T <: Issue](t: T)(implicit s: ReadWriter[Text.InlineIssueDesc.OptionalText]): ReadWriter[t.Issue] = ReadWriter(
       a => strkeyW2(ISSUE, a.typ, a.desc),
       { case Js.Arr(Js.Str(ISSUE), a, b) => t.Issue(readJs[CustomIssueTypeId](a), readJs[Text.InlineIssueDesc.OptionalText](b)) })
 
-    override def unorderedList[T <: ListMarkup](t: T)(implicit s: ReadWriter[NonEmptyVector[t.ListItem]]): ReadWriter[t.UnorderedList] = ReadWriter[t.UnorderedList](
+    override def unorderedList[T <: ListMarkup](t: T)(implicit s: ReadWriter[NonEmptyVector[t.ListItem]]): ReadWriter[t.UnorderedList] = ReadWriter(
       a => strkeyW(UL, a.items),
       { case Js.Arr(Js.Str(UL), v) => t.UnorderedList(readJs(v)(s)) })
   }
