@@ -13,7 +13,7 @@ object HashMacros {
    * - Type must have a primary constructor.
    * - Primary constructor must have more than 0 params.
    */
-  def caseClass[T: c.WeakTypeTag](c: Context): c.Expr[Hash[T]] = {
+  def implCaseClass[T: c.WeakTypeTag](c: Context, debug: Boolean): c.Expr[Hash[T]] = {
     import c.universe._
 
     val T      = concreteWeakTypeOf[T](c)
@@ -40,7 +40,7 @@ object HashMacros {
           q"$Hash.fn[$T](t => joinHashes($hashes))"
       }
 
-    // println("\n" + impl + "\n")
+    if (debug) println("\n" + impl + "\n")
     c.Expr[Hash[T]](impl)
   }
 
@@ -50,7 +50,7 @@ object HashMacros {
    * - Type must have a primary constructor.
    * - Primary constructor must have 0 params.
    */
-  def constClass[T: c.WeakTypeTag](c: Context)(key: c.Expr[String]): c.Expr[Hash[T]] = {
+  def implConstClass[T: c.WeakTypeTag](c: Context, debug: Boolean)(key: c.Expr[String]): c.Expr[Hash[T]] = {
     import c.universe._
 
     val T      = concreteWeakTypeOf[T](c)
@@ -66,19 +66,16 @@ object HashMacros {
           fail(c, s"Class constructor has ${params.length} parameters. Expected 0.")
       }
 
-    // println("\n" + impl + "\n")
+    if (debug) println("\n" + impl + "\n")
     c.Expr[Hash[T]](impl)
   }
-
-  def adtNoDebug[T: c.WeakTypeTag](c: Context): c.Expr[Hash[T]] = adtMaybeDebug[T](c, false)
-  def adtDebug  [T: c.WeakTypeTag](c: Context): c.Expr[Hash[T]] = adtMaybeDebug[T](c, true)
 
   /**
    * Constraints:
    * - Type must be sealed.
    * - Type must be abstract or a trait.
    */
-  def adtMaybeDebug[T: c.WeakTypeTag](c: Context, debug: Boolean): c.Expr[Hash[T]] = {
+  def implADT[T: c.WeakTypeTag](c: Context, debug: Boolean): c.Expr[Hash[T]] = {
     import c.universe._
 
     val T     = weakTypeOf[T]
@@ -90,13 +87,27 @@ object HashMacros {
     if (debug) println("\n" + impl + "\n")
     c.Expr[Hash[T]](impl)
   }
+
+  def quietCaseClass[T: c.WeakTypeTag](c: Context): c.Expr[Hash[T]] = implCaseClass[T](c, false)
+  def debugCaseClass[T: c.WeakTypeTag](c: Context): c.Expr[Hash[T]] = implCaseClass[T](c, true)
+
+  def quietConstClass[T: c.WeakTypeTag](c: Context)(key: c.Expr[String]): c.Expr[Hash[T]] = implConstClass[T](c, false)(key)
+  def debugConstClass[T: c.WeakTypeTag](c: Context)(key: c.Expr[String]): c.Expr[Hash[T]] = implConstClass[T](c, true)(key)
+
+  def quietADT[T: c.WeakTypeTag](c: Context): c.Expr[Hash[T]] = implADT[T](c, false)
+  def debugADT[T: c.WeakTypeTag](c: Context): c.Expr[Hash[T]] = implADT[T](c, true)
+
 }
 
 trait HashMacros {
   def joinHashes(hashes: List[Int]): Int
 
-  final def hashCaseClass [T]             : Hash[T] = macro HashMacros.caseClass[T]
-  final def hashConstClass[T](key: String): Hash[T] = macro HashMacros.constClass[T]
-  final def hashADT       [T]             : Hash[T] = macro HashMacros.adtNoDebug[T]
-  final def _hashADT      [T]             : Hash[T] = macro HashMacros.adtDebug[T]
+  final def hashCaseClass [T]: Hash[T] = macro HashMacros.quietCaseClass[T]
+  final def _hashCaseClass[T]: Hash[T] = macro HashMacros.debugCaseClass[T]
+
+  final def hashConstClass [T](key: String): Hash[T] = macro HashMacros.quietConstClass[T]
+  final def _hashConstClass[T](key: String): Hash[T] = macro HashMacros.debugConstClass[T]
+
+  final def hashADT [T]: Hash[T] = macro HashMacros.quietADT[T]
+  final def _hashADT[T]: Hash[T] = macro HashMacros.debugADT[T]
 }
