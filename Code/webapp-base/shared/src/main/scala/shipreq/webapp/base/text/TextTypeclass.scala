@@ -29,107 +29,198 @@ trait AtomTC[TC[_]] {
 object TextTC {
   def apply[TC[_]](a: AtomTC[TC]): TextTC[TC] =
     new TextTC(a)
-
-  private[TextTC] trait Instance[F[_], G[_], A] {
-    type T <: A
-    val f: F[T]
-    val g: G[T]
-    def genF = f.asInstanceOf[F[A]]
-  }
 }
 
 class TextTC[TC[_]](a: AtomTC[TC]) {
 
-  private def triple[T <: Text.Generic](t: T): (TC[t.Atom], TC[t.OptionalText], TC[t.NonEmptyText]) = {
-    import scala.reflect.ClassTag
-    import TextTC.Instance
+  private def forIssue: (TC[Text.InlineIssueDesc.Atom], TC[Text.InlineIssueDesc.OptionalText], TC[Text.InlineIssueDesc.NonEmptyText]) = {
+    val t = Text.InlineIssueDesc
 
-    type TA = t.Atom
-    type Unapply[A] = TA => Option[A]
+//    val blankLine     = a.blankLine    (t)
+    val literal       = a.literal      (t)    .asInstanceOf[TC[t.Atom]]
+    val webAddress    = a.webAddress   (t)    .asInstanceOf[TC[t.Atom]]
+    val emailAddress  = a.emailAddress (t)    .asInstanceOf[TC[t.Atom]]
+    val mathTeX       = a.mathTeX      (t)    .asInstanceOf[TC[t.Atom]]
+    val reqRef        = a.reqRef       (t)    .asInstanceOf[TC[t.Atom]]
+    val codeRef       = a.codeRef      (t)    .asInstanceOf[TC[t.Atom]]
+//    val tagRef        = a.tagRef       (t)
 
-    type R  = Instance[TC, Unapply, TA]
-    type R0 = Vector[R]
-    type R1 = NonEmptyVector[R]
+    //lazy val issue         = a.issue        (t)// [T <: Atom.Issue     ](t: T)(implicit x: TC[Text.InlineIssueDesc.OptionalText]): TC[t.Issue]
+    //lazy val unorderedList = a.unorderedList(t)// [T <: Atom.ListMarkup](t: T)(implicit x: TC[NonEmptyVector[t.ListItem]])       : TC[t.UnorderedList]
 
-    def instance[A <: TA](tc: TC[A])(pf: PartialFunction[TA, A]): Instance[TC, Unapply, TA] =
-      new Instance[TC, Unapply, TA] {
-        override type T = A
-        override val  f = tc
-        override val  g = pf.lift
-      }
+    val all = Vector[TC[t.Atom]](
+      literal     ,
+      webAddress  ,
+      emailAddress,
+      mathTeX     ,
+      reqRef      ,
+      codeRef     )
 
-    def cast[A <: Atom.Base](ta: A): t.type with A =
-      ta.asInstanceOf[t.type with A]
-
-    def slice[A <: Atom.Base: ClassTag](f: t.type with A =>  Unit): Unit =
-      t match {
-        case x: A => f(cast[A](x))
-        case _ => ()
-      }
-
-    var as: R1 = NonEmptyVector(instance(a literal t) { case r: t.Literal => r })
-
-    def add(r: R): Unit = as :+= r
-
-    slice[Atom.PlainTextMarkup] { x =>
-      add(instance(a webAddress x) { case r: x.WebAddress => r })
-      add(instance(a emailAddress x) { case r: x.EmailAddress => r })
-      add(instance(a mathTeX x) { case r: x.MathTeX => r })
+    val choose: t.Atom => TC[t.Atom] = {
+      case _: t.Literal      => literal
+      case _: t.WebAddress   => webAddress
+      case _: t.EmailAddress => emailAddress
+      case _: t.MathTeX      => mathTeX
+      case _: t.ReqRef       => reqRef
+      case _: t.CodeRef      => codeRef
     }
 
-    slice[Atom.ReqRef] { x =>
-      add(instance(a reqRef x) { case r: x.ReqRef => r })
-      add(instance(a codeRef x) { case r: x.CodeRef => r })
-    }
+    val atom = a.sum(t)(choose, all)
+    val vec  = a.vec(atom)
+    val nev  = a.nev(vec)(atom)
 
-    slice[Atom.TagRef] { x =>
-      add(instance(a tagRef x) { case r: x.TagRef => r })
-    }
-
-    slice[Atom.NewLine] { x =>
-      add(instance(a blankLine x) { case r: x.BlankLine => r })
-    }
-
-    lazy val atom: TC[TA] = {
-
-      slice[Atom.ListMarkup] { x =>
-        implicit val li: TC[NonEmptyVector[x.ListItem]] = a lazily {
-          val va = vec.asInstanceOf[TC[Vector[x.Atom]]]
-           a.nev(a vec va)(va)
-        }
-        add(instance(a unorderedList x){case r: x.UnorderedList => r})
-      }
-
-      slice[Atom.Issue] { x =>
-        add(instance(a.issue(x)(issue3._2)) { case r: x.Issue => r })
-      }
-
-      val av = as.whole
-
-      def resolve: TA => TC[TA] = a => {
-        var result: AnyRef = null
-        val it = av.iterator
-        while ((result eq null) && it.hasNext) {
-          val i = it.next()
-          if ((i g a).isDefined)
-            result = i.f.asInstanceOf[AnyRef]
-        }
-        assert(result ne null, s"Failed to supply typeclass for $a. Should only happen in TextTC is out of sync with the Atom structures.")
-        result.asInstanceOf[TC[TA]]
-      }
-
-      a.sum(t)(resolve, av.map(_.genF))
-    }
-
-    lazy val vec = a lazily (a vec atom)
-
-    (atom, vec, a.nev(vec)(atom))
+    (atom, vec, nev)
   }
 
-  private lazy val issue3 = triple(Text.InlineIssueDesc)
+  private def forCustomTextField : (TC[Text.CustomTextField.Atom], TC[Text.CustomTextField.OptionalText], TC[Text.CustomTextField.NonEmptyText]) = {
+    val t = Text.CustomTextField
+
+    val blankLine     = a.blankLine    (t)    .asInstanceOf[TC[t.Atom]]
+    val literal       = a.literal      (t)    .asInstanceOf[TC[t.Atom]]
+    val webAddress    = a.webAddress   (t)    .asInstanceOf[TC[t.Atom]]
+    val emailAddress  = a.emailAddress (t)    .asInstanceOf[TC[t.Atom]]
+    val mathTeX       = a.mathTeX      (t)    .asInstanceOf[TC[t.Atom]]
+    val reqRef        = a.reqRef       (t)    .asInstanceOf[TC[t.Atom]]
+    val codeRef       = a.codeRef      (t)    .asInstanceOf[TC[t.Atom]]
+    val tagRef        = a.tagRef       (t)    .asInstanceOf[TC[t.Atom]]
+
+    lazy val issue         = a.issue        (t)(issue3._2) .asInstanceOf[TC[t.Atom]]
+    lazy val unorderedList: TC[t.Atom] = a.unorderedList(t)(li)        .asInstanceOf[TC[t.Atom]]
+
+    lazy val all = Vector[TC[t.Atom]](
+      blankLine   ,
+      literal     ,
+      webAddress  ,
+      emailAddress,
+      mathTeX     ,
+      reqRef      ,
+      codeRef     ,
+      tagRef      ,
+      issue       ,
+      unorderedList)
+
+    lazy val choose: t.Atom => TC[t.Atom] = {
+      case _: t.BlankLine     => blankLine
+      case _: t.Literal       => literal
+      case _: t.WebAddress    => webAddress
+      case _: t.EmailAddress  => emailAddress
+      case _: t.MathTeX       => mathTeX
+      case _: t.ReqRef        => reqRef
+      case _: t.CodeRef       => codeRef
+      case _: t.TagRef        => tagRef
+      case _: t.Issue         => issue
+      case _: t.UnorderedList => unorderedList
+    }
+
+    lazy val atom = a.sum(t)(choose, all)
+    lazy val vec  = a.vec(atom)
+    lazy val li: TC[NonEmptyVector[t.ListItem]] = a.lazily(a.nev(a vec vec)(vec))
+    val nev  = a.nev(vec)(atom)
+
+    (atom, vec, nev)
+  }
+
+  private def forGenericReqTitle: (TC[Text.GenericReqTitle.Atom], TC[Text.GenericReqTitle.OptionalText], TC[Text.GenericReqTitle.NonEmptyText]) = {
+    val t = Text.GenericReqTitle
+
+//    val blankLine     = a.blankLine    (t)    .asInstanceOf[TC[t.Atom]]
+    val literal       = a.literal      (t)    .asInstanceOf[TC[t.Atom]]
+    val webAddress    = a.webAddress   (t)    .asInstanceOf[TC[t.Atom]]
+    val emailAddress  = a.emailAddress (t)    .asInstanceOf[TC[t.Atom]]
+    val mathTeX       = a.mathTeX      (t)    .asInstanceOf[TC[t.Atom]]
+    val reqRef        = a.reqRef       (t)    .asInstanceOf[TC[t.Atom]]
+    val codeRef       = a.codeRef      (t)    .asInstanceOf[TC[t.Atom]]
+    val tagRef        = a.tagRef       (t)    .asInstanceOf[TC[t.Atom]]
+
+    val issue         = a.issue        (t)(issue3._2) .asInstanceOf[TC[t.Atom]]
+//    lazy val unorderedList = a.unorderedList(t)(li)        .asInstanceOf[TC[t.Atom]]
+
+    val all = Vector[TC[t.Atom]](
+//      blankLine   ,
+      literal     ,
+      webAddress  ,
+      emailAddress,
+      mathTeX     ,
+      reqRef      ,
+      codeRef     ,
+      tagRef      ,
+      issue       )
+//      unorderedList)
+
+    val choose: t.Atom => TC[t.Atom] = {
+//      case _: t.BlankLine     => blankLine
+      case _: t.Literal       => literal
+      case _: t.WebAddress    => webAddress
+      case _: t.EmailAddress  => emailAddress
+      case _: t.MathTeX       => mathTeX
+      case _: t.ReqRef        => reqRef
+      case _: t.CodeRef       => codeRef
+      case _: t.TagRef        => tagRef
+      case _: t.Issue         => issue
+//      case _: t.UnorderedList => unorderedList
+    }
+
+    val atom = a.sum(t)(choose, all)
+    val vec  = a.vec(atom)
+//    lazy val li   = a.nev(a vec vec)(vec)
+    val nev  = a.nev(vec)(atom)
+
+    (atom, vec, nev)
+  }
+
+
+  private def forReqCodeGroupTitle: (TC[Text.ReqCodeGroupTitle.Atom], TC[Text.ReqCodeGroupTitle.OptionalText], TC[Text.ReqCodeGroupTitle.NonEmptyText]) = {
+    val t = Text.ReqCodeGroupTitle
+
+    //    val blankLine     = a.blankLine    (t)    .asInstanceOf[TC[t.Atom]]
+    val literal       = a.literal      (t)    .asInstanceOf[TC[t.Atom]]
+    val webAddress    = a.webAddress   (t)    .asInstanceOf[TC[t.Atom]]
+    val emailAddress  = a.emailAddress (t)    .asInstanceOf[TC[t.Atom]]
+    val mathTeX       = a.mathTeX      (t)    .asInstanceOf[TC[t.Atom]]
+    val reqRef        = a.reqRef       (t)    .asInstanceOf[TC[t.Atom]]
+    val codeRef       = a.codeRef      (t)    .asInstanceOf[TC[t.Atom]]
+//    val tagRef        = a.tagRef       (t)    .asInstanceOf[TC[t.Atom]]
+
+    val issue         = a.issue        (t)(issue3._2) .asInstanceOf[TC[t.Atom]]
+    //    lazy val unorderedList = a.unorderedList(t)(li)        .asInstanceOf[TC[t.Atom]]
+
+    val all = Vector[TC[t.Atom]](
+      //      blankLine   ,
+      literal     ,
+      webAddress  ,
+      emailAddress,
+      mathTeX     ,
+      reqRef      ,
+      codeRef     ,
+//      tagRef      ,
+      issue       )
+    //      unorderedList)
+
+    val choose: t.Atom => TC[t.Atom] = {
+      //      case _: t.BlankLine     => blankLine
+      case _: t.Literal       => literal
+      case _: t.WebAddress    => webAddress
+      case _: t.EmailAddress  => emailAddress
+      case _: t.MathTeX       => mathTeX
+      case _: t.ReqRef        => reqRef
+      case _: t.CodeRef       => codeRef
+//      case _: t.TagRef        => tagRef
+      case _: t.Issue         => issue
+      //      case _: t.UnorderedList => unorderedList
+    }
+
+    val atom = a.sum(t)(choose, all)
+    val vec  = a.vec(atom)
+    //    lazy val li   = a.nev(a vec vec)(vec)
+    val nev  = a.nev(vec)(atom)
+
+    (atom, vec, nev)
+  }
+
+  private lazy val issue3 = forIssue
 
   implicit val (inlineIssueDescA,   inlineIssueDescO,   inlineIssueDescN)   = issue3
-  implicit val (genericReqTitleA,   genericReqTitleO,   genericReqTitleN)   = triple(Text.GenericReqTitle)
-  implicit val (customTextFieldA,   customTextFieldO,   customTextFieldN)   = triple(Text.CustomTextField)
-  implicit val (reqCodeGroupTitleA, reqCodeGroupTitleO, reqCodeGroupTitleN) = triple(Text.ReqCodeGroupTitle)
+  implicit val (genericReqTitleA,   genericReqTitleO,   genericReqTitleN)   = forGenericReqTitle
+  implicit val (customTextFieldA,   customTextFieldO,   customTextFieldN)   = forCustomTextField
+  implicit val (reqCodeGroupTitleA, reqCodeGroupTitleO, reqCodeGroupTitleN) = forReqCodeGroupTitle
 }
