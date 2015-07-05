@@ -109,4 +109,18 @@ object MacroUtils {
       fail(c, s"Unable to find concrete types for ${tpe.typeSymbol.name}.")
     r
   }
+
+  def modStringHead(s: String, f: Char => Char): String =
+    if (s.isEmpty)
+      ""
+    else {
+      val h = f(s.head).toString
+      if (s.length == 1)
+        h
+      else
+        h + s.tail
+    }
+
+  def lowerCaseHead(s: String): String =
+    modStringHead(s, _.toLower)
 }
