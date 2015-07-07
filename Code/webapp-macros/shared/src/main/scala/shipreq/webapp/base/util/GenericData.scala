@@ -46,9 +46,7 @@ abstract class GenericData {
   def nev(v1: Value, vn: Value*): NonEmptyValues =
     NonEmpty.force(emptyValues + v1 ++ vn)
 
-  protected implicit class FieldDeclarationSyntax(val name: Symbol) {
-    def apply[T] = ???
-  }
+  protected def defAttr[D]: Attr {type Data = D} = ???
 }
 
 // =====================================================================================================================
@@ -74,9 +72,9 @@ object GenericDataMacros {
 
     def processBody(body: List[Tree]): Unit = {
       body.foreach {
-        case q"scala.Symbol(${n: Literal})[$attrType]" =>
+        case q"val ${n: TermName} = defAttr[$attrType]" =>
 
-          val prefix     = n.value.value.toString
+          val prefix     = n.toString
           val attrName   = prefix
           val attrNameT  = TermName(attrName)
           val valueName  = "ValueFor" + prefix
@@ -108,8 +106,10 @@ object GenericDataMacros {
         processBody(body)
 
         if (unused.nonEmpty) {
-          unused foreach println
-          fail(c, "Unrecognised field declarations found.")
+          for (u <- unused)
+            println(showRaw(u))
+          val expl = unused.map(" - " + _.toString) mkString "\n"
+          fail(c, s"Unrecognised field declarations found.\n$expl")
         }
 
         q"""
