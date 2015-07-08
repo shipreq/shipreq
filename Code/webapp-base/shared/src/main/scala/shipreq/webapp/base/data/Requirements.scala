@@ -194,6 +194,7 @@ final case class ReqCodes(trie: ReqCode.Trie) {
 
 object ReqCodes {
   implicit lazy val equality: Equal[ReqCodes] = deriveEqual
+  def empty: ReqCodes = ReqCodes(Map.empty)
 }
 
 // ===================================================================================================================

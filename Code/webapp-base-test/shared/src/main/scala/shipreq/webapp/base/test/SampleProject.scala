@@ -81,7 +81,7 @@ object SampleProject {
   }
 
   lazy val reqs     = RevAnd(40, Requirements.empty)
-  lazy val reqCodes = RevAnd(50, ReqCodes(Map.empty))
+  lazy val reqCodes = RevAnd(50, ReqCodes.empty)
   lazy val reqText  = RevAnd(60, ReqData.emptyText)
   lazy val reqTags  = RevAnd(70, ReqData.emptyTags)
   lazy val reqImps  = RevAnd(80, Implications.empty)
