@@ -1,15 +1,30 @@
 package shipreq.webapp.base.event
 
-import ApplyEventLib._
+import japgolly.nyaya.LogicPropExt
+import scala.collection.GenTraversable
 import shipreq.webapp.base.data.ReqType.Mnemonic
 import shipreq.webapp.base.data.{Validators => V, _}
 import DataImplicits._
 import DeletionAction._
+import ApplyEventLib._
 
 class ApplyEvent(implicit val trust: Trust) {
 
-  // TODO Doesn't check DataProp at the end
-  def apply(event: Event): AP =
+  def apply(events: GenTraversable[Event]): AP =
+    apFoldLeft(apply1)(events) >=> validateDataProps
+
+  private val validateDataProps: AP = {
+    val prop = DataProp.project.allIncludingConfig
+    whenUntrusted(App { p =>
+      val e = prop(p)
+      if (e.success)
+        ok(p)
+      else
+        fail(e.report)
+    })
+  }
+
+  private def apply1(event: Event): AP =
     event match {
       case e: CreateCustomReqType => CustomReqTypeEvents applyCreate e
       case e: UpdateCustomReqType => CustomReqTypeEvents applyUpdate e
@@ -24,7 +39,6 @@ class ApplyEvent(implicit val trust: Trust) {
     val L = Project.customReqTypes ^|-> RevAnd.data
     val imap = IMapApp.data(CustomReqType)
 
-    // Doesn't check mnemonic/name uniqueness - DataProp will do that
     val validateName     = validateWith (V.reqType.nameU)
     val validateMnemonic = validateWithF(V.reqType.mnemonicU)(_.value)
 
@@ -65,7 +79,7 @@ class ApplyEvent(implicit val trust: Trust) {
       e.da match {
         case Restore => setLive(e.id, Live)
         case SoftDel => setLive(e.id, Dead)
-        case HardDel => L @=> imap.remove(e.id) // TODO verify not in use - or is DataProps enough?
+        case HardDel => L @=> imap.remove(e.id)
       }
 
     private def setLive(id: CustomReqTypeId, newValue: Live): AP =

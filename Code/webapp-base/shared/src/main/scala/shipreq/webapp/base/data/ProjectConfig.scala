@@ -82,6 +82,7 @@ final case class ProjectConfig(customIssueTypes: RevAnd[CustomIssueTypeIMap],
     hashRefLookupM.get(key.toLowerCase)
 
   // Finally, ensure validity
-  import japgolly.nyaya._
-  this assertSatisfies DataProp.projectConfig.all
+//  import japgolly.nyaya._
+//  this assertSatisfies DataProp.projectConfig.all
+  //  TODO Delete ↑ once confirmed that Project tightly confirmed in events etc
 }

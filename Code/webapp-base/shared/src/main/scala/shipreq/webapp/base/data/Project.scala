@@ -82,7 +82,8 @@ final case class Project(config      : ProjectConfig,
       f(implications.data))
 
   // Finally, ensure validity
-  import japgolly.nyaya._
-  this assertSatisfies DataProp.project.all
+//  import japgolly.nyaya._
+//  this assertSatisfies DataProp.project.all
+//  TODO Delete ↑ once confirmed that Project tightly confirmed in events etc
 }
 

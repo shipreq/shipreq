@@ -1,6 +1,7 @@
 package shipreq.webapp.base.event
 
 import monocle._
+import scala.collection.GenTraversable
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.IMap
 import shipreq.webapp.base.data.{ObjDataId, Project, Live}
@@ -8,9 +9,6 @@ import shipreq.webapp.base.util.GenericData
 import shipreq.webapp.base.validation.{ValidatorU, ValidationResult}
 
 /**
- *
- *
- *
  * Syntax summary:
  * ===============
  *
@@ -125,6 +123,17 @@ private[event] object ApplyEventLib {
   @inline implicit def autoRun[A, B](f: App[A, B])(implicit a: A): Result[B] =
     f run a
 
+  def apFoldLeft[A, B](f: A => AE[B])(as: GenTraversable[A]): AE[B] =
+    App(b => as.foldLeft(ok(b))(_ ?=> f(_)))
+    // ↓ Should be a tiny bit faster - save for benchmarks
+    // vs => App { start =>
+    //   val i = vs.value.values.iterator
+    //   var q = f(i.next()) run start
+    //   while (i.hasNext && q.isRight)
+    //     q = f(i.next()) =<< q
+    //   q
+    // }
+
   @inline def updateL[A, B](l: Lens[A, B]): B => AE[A] =
     updateC(l.set)
 
@@ -134,7 +143,7 @@ private[event] object ApplyEventLib {
   def updateF[A, B](f: (A, B) => A): B => AE[A] =
     b => App.ok(f(_, b))
 
-  @inline private def whenUntrusted[A](a: => AE[A])(implicit trust: Trust): AE[A] =
+  @inline def whenUntrusted[A](a: => AE[A])(implicit trust: Trust): AE[A] =
     if (trust :: Trusted) nop else a
 
   def validateWith[A](v: ValidatorU[A, _, A])(implicit trust: Trust): AE[A] =
@@ -210,7 +219,7 @@ private[event] object ApplyEventLib {
       App(vs =>
         attr(vs) match {
           case Some(v) => ok(v.value)
-          case None    => fail(s"Attribute [$attr] required but missing from [${vs.value}].")
+          case None    => fail(s"Attribute $attr required but missing from [${vs.value.values mkString ", "}].")
         }
       )
 
@@ -232,15 +241,6 @@ private[event] object ApplyEventLib {
       App.ok(a(_).map(_.value))
 
     final def updateEachValue(updateFn: ^.Value => AD): ^.NonEmptyValues => AD =
-      vs => App(d => vs.values.foldLeft(ok(d))((q, v) => q ?=> updateFn(v)))
-      // ↓ Should be a tiny bit faster - save for benchmarks
-      // vs => App { start =>
-      //   val i = vs.value.values.iterator
-      //   var q = f(i.next()) run start
-      //   while (i.hasNext && q.isRight)
-      //     q = f(i.next()) =<< q
-      //   q
-      // }
-      // Actually it would be better to replace this with a macro. UpdateFn is already generatable.
+      vs => apFoldLeft(updateFn)(vs.values)
   }
 }

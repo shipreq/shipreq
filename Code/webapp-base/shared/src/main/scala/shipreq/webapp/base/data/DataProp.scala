@@ -6,10 +6,17 @@ import scalaz.syntax.equal._
 import scalaz.std.AllInstances._
 import shipreq.base.util._, MTrie.Ops, ScalaExt._, Debug._
 import shipreq.webapp.base.text.{Atom, Text}
+import TaggedTypes.TaggedLong
 import DataImplicits._
 
 object DataProp {
   implicit def autoLiftL(e: Eval) = e.liftL
+
+  def id[T <: TaggedLong] =
+    Prop.test[T]("id > 0", _.value > 0)
+
+  def dataId[O, D, Id <: TaggedLong](o: O)(implicit O: ObjDataId[O, D, Id]) =
+    id[Id].contramap[D](O.id)
 
   val rev =
     Prop.test[Rev]("rev ≥ 0", _.value >= 0)
@@ -51,6 +58,8 @@ object DataProp {
   // -------------------------------------------------------------------------------------------------------------------
   object customReqType {
 
+    def id = dataId(CustomReqType)
+
     def reqType =
       Prop.test[ReqType]("oldMnemonics doesn't contain current mnemonic", a => !a.oldMnemonics.contains(a.mnemonic))
 
@@ -59,7 +68,7 @@ object DataProp {
       Prop.blacklist[CustomReqType]("mnemonic doesn't overlap with static")(
         _ => StaticReqType.mnemonics, a => a.oldMnemonics + a.mnemonic)
 
-    lazy val all = mnemonicStatic ∧ reqType.subst
+    val all = id ∧ mnemonicStatic ∧ reqType.subst
   }
 
   object customReqTypes {
@@ -321,7 +330,7 @@ object DataProp {
       ).rename("Cross-constituent refs").contramap[P](_ mapStrengthR mkRefs)
     }
 
-    lazy val all: Prop[ProjectConfig] = "ProjectConfig" rename_: (
+    val all: Prop[ProjectConfig] = "ProjectConfig" rename_: (
       constituents ∧ uniqueHashRefKeys ∧ validRefs)
   }
 
@@ -402,7 +411,10 @@ object DataProp {
       ).rename("Cross-constituent refs").contramap[P](_ mapStrengthR mkRefs)
     }
 
-    lazy val all: Prop[Project] = "Project" rename_: (
+    val allExcludingConfig: Prop[Project] = "Project" rename_: (
       constituents ∧ atoms ∧ liveReqRequiresLiveReqType ∧ liveReqCodeRequiresLiveTarget ∧ validRefs)
+
+    val allIncludingConfig: Prop[Project] =
+      allExcludingConfig ∧ projectConfig.all.contramap(_.config)
   }
 }

@@ -10,7 +10,7 @@ abstract class GenericData {
   trait AttrBase extends Product with Serializable {
     this: Attr =>
     type Data
-    def :=(d: Data): ValueFor[this.type]
+    def apply(d: Data): ValueFor[this.type]
 
     final def apply(vs: Values): Option[ValueFor[this.type]] =
       vs.get(this).asInstanceOf[Option[ValueFor[this.type]]]
@@ -46,7 +46,8 @@ abstract class GenericData {
   def nev(v1: Value, vn: Value*): NonEmptyValues =
     NonEmpty.force(emptyValues + v1 ++ vn)
 
-  protected def defAttr[D]: Attr {type Data = D} = ???
+  // This really just so that Intellij doesn't highlight EVERYTHING red.
+  protected def defAttr[D]: Attr {type Data = D; def apply(d: D): ValueFor[this.type]} = ???
 }
 
 // =====================================================================================================================
@@ -85,7 +86,7 @@ object GenericDataMacros {
             q"""
               case object $attrNameT extends Attr {
                 override type Data = $attrType
-                override def :=(data: Data) = $valueNameT(data)
+                override def apply(data: Data) = $valueNameT(data)
               }
               final case class $valueNameY(value: $attrNameT.Data) extends Value {
                 override val attr: $attrNameT.type = $attrNameT
@@ -206,7 +207,7 @@ object GenericDataMacros {
       val rw = TermName(c.freshName("rw"))
       val rwDef = q"val $rw = implicitly[ReadWriter[$attr.Data]]": ValDef
       wCases  ::= cq"v: $value => kvs :+= (($key, $rw write v.value))"
-      rCases  ::= cq"$key => $attr := $rw.read(kv._2)"
+      rCases  ::= cq"$key => $attr apply $rw.read(kv._2)"
       init    ::= rwDef
       keysUsed += key.toString()
     }
