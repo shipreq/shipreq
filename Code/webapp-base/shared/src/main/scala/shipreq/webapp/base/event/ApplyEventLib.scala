@@ -3,7 +3,7 @@ package shipreq.webapp.base.event
 import monocle._
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.IMap
-import shipreq.webapp.base.data.{Project, Live}
+import shipreq.webapp.base.data.{ObjDataId, Project, Live}
 import shipreq.webapp.base.util.GenericData
 import shipreq.webapp.base.validation.{ValidatorU, ValidationResult}
 
@@ -31,8 +31,8 @@ import shipreq.webapp.base.validation.{ValidatorU, ValidationResult}
  * Result a         ?=>   App a b         =  Result b
  * Result a         ?=>>  (a => App b c)  =  App b c
  * Lens s t a b     @=>   App a b         =  App s t
- * (b => App c d)  <<=<   App a b         = (a => App c d)
- * (a => App b c)  <<=?   Result a        = App b c
+ * (b => App c d)  <<=<   App a b         =  (a => App c d)
+ * (a => App b c)  <<=?   Result a        =  App b c
  */
 private[event] object ApplyEventLib {
 
@@ -96,6 +96,9 @@ private[event] object ApplyEventLib {
 
   implicit class PLensOps[S, T, A, B](private val l: PLens[S, T, A, B]) extends AnyVal {
     @inline def @=>(a: App[A, B]): App[S, T] = a <=@ l
+
+//    def @=>>[X](f: X => App[A, B]): X => App[S, T] =
+//      f(_) <=@ l
   }
 
   implicit class FnAppOps[A, B, C](private val f: A => App[B, C]) extends AnyVal {
@@ -122,6 +125,15 @@ private[event] object ApplyEventLib {
   @inline implicit def autoRun[A, B](f: App[A, B])(implicit a: A): Result[B] =
     f run a
 
+  @inline def updateL[A, B](l: Lens[A, B]): B => AE[A] =
+    updateC(l.set)
+
+  def updateC[A, B](f: B => A => A): B => AE[A] =
+    b => App.ok(f(b))
+
+  def updateF[A, B](f: (A, B) => A): B => AE[A] =
+    b => App.ok(f(_, b))
+
   @inline private def whenUntrusted[A](a: => AE[A])(implicit trust: Trust): AE[A] =
     if (trust :: Trusted) nop else a
 
@@ -140,13 +152,11 @@ private[event] object ApplyEventLib {
   def ensureLiveBy[V](live: V => Live)(implicit trust: Trust): AE[V] =
     whenUntrusted(App(v => if (live(v) :: Live) ok(v) else fail(s"Subject is dead: $v")))
 
-//  final def modify[A, B](f: B => A => A): B => AE[A] =
-//    a => App.ok(f(a))
-
   // -------------------------------------------------------------------------------------------------------------------
   object IMapApp {
     @inline def apply[K, V](implicit trust: Trust) = new IMapApp[K, V]
     @inline def like[K, V](m: IMap[K, V])(implicit trust: Trust) = apply[K, V]
+    @inline def data[O, D, Id](o: O)(implicit O: ObjDataId[O, D, Id], trust: Trust) = apply[Id, D]
   }
 
   final class IMapApp[K, V](private implicit val trust: Trust) {
