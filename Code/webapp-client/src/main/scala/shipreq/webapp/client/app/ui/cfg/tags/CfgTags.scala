@@ -143,7 +143,7 @@ private[tags] object MainTable {
         case t: TagGroup      => tg_storesS.s.set(i, t)
         case t: ApplicableTag => at_storesS.s.set(i, t)
       }
-      val f2 = f1 compose State.tree.modify(MMTree.ApplyRelations.trustedApply1(_, i)(d.rels))
+      val f2 = f1 compose State.tree.modify(MMTree.ApplyRelations.trustedApply1(_, i, d.rels))
       val f3 = f2 compose maybeCloseDetailPane(p => (d.tag.live ≟ Dead) && (p.id ≟ d.tag.id))
       f3(s)
     })

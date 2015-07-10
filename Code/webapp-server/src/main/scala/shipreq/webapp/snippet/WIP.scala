@@ -332,7 +332,7 @@ class WIP {
           val newTag = build(i)(v)
           tt.modOrPut(i, _.copy(tag = newTag), TagInTree(newTag, Vector.empty))
         }
-        or.fold(res)(MMTree.ApplyRelations.trustedApply1(res, i)) // TODO Possible cycle error
+        or.fold(res)(MMTree.ApplyRelations.trustedApply1(res, i, _)) // TODO Possible cycle error
       })
 
     def nextId: TagId = TagGroupId(p.config.tags.data.keySet.map(_.value).max + 1)

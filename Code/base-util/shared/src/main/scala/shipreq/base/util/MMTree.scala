@@ -63,24 +63,24 @@ object MMTree {
 
   sealed abstract class Apply[A[_]] {
     def safeApply1[I: UnivEq, T](tt: T, id: I)(a: A[I])(implicit T: MMTree[I, T]): (I, I) \/ CycleFree[T] =
-      T.cycleDetector cycleFree trustedApply1(tt, id)(a)
+      T.cycleDetector cycleFree trustedApply1(tt, id, a)
 
     def safeApplyN[I: UnivEq, T](tt: T, as: GenTraversable[(I, A[I])])(implicit T: MMTree[I, T]): (I, I) \/ CycleFree[T] =
       T.cycleDetector cycleFree trustedApplyN(tt, as)
 
     def trustedApplyN[I: UnivEq, T](tt: T, as: GenTraversable[(I, A[I])])(implicit T: MMTree[I, T]): T =
-      as.foldLeft(tt) { case (t, (id, a)) => trustedApply1(t, id)(a) }
+      as.foldLeft(tt) { case (t, (id, a)) => trustedApply1(t, id, a) }
 
-    def trustedApply1[I: UnivEq, T](tt: T, id: I)(a: A[I])(implicit T: MMTree[I, T]): T
+    def trustedApply1[I: UnivEq, T](tt: T, id: I, a: A[I])(implicit T: MMTree[I, T]): T
   }
 
   object ApplyChildren extends Apply[Children] {
-    override def trustedApply1[I: UnivEq, T](tt: T, id: I)(children: Children[I])(implicit T: MMTree[I, T]): T =
+    override def trustedApply1[I: UnivEq, T](tt: T, id: I, children: Children[I])(implicit T: MMTree[I, T]): T =
       T.modChildren(id, _ => children)(tt)
   }
 
   object ApplyParents extends Apply[Parents] {
-    override def trustedApply1[I: UnivEq, T](tt: T, id: I)(parents: Parents[I])(implicit T: MMTree[I, T]): T = {
+    override def trustedApply1[I: UnivEq, T](tt: T, id: I, parents: Parents[I])(implicit T: MMTree[I, T]): T = {
       var t = tt
 
       // Add parents
@@ -97,10 +97,10 @@ object MMTree {
   }
 
   object ApplyRelations extends Apply[Relations] {
-    override def trustedApply1[I: UnivEq, T](tt: T, id: I)(rels: Relations[I])(implicit T: MMTree[I, T]): T = {
+    override def trustedApply1[I: UnivEq, T](tt: T, id: I, rels: Relations[I])(implicit T: MMTree[I, T]): T = {
       var t = tt
-      t = ApplyChildren.trustedApply1(t, id)(rels.children)
-      t = ApplyParents .trustedApply1(t, id)(rels.parents)
+      t = ApplyChildren.trustedApply1(t, id, rels.children)
+      t = ApplyParents .trustedApply1(t, id, rels.parents)
       t
     }
   }

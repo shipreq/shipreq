@@ -34,8 +34,8 @@ object TagProtocolTest extends TestSuite {
       DataProp.tags.tagTree(tt).liftL ==> (povRelationProps ∧ flatTreeProps)
 
     def povRelationProps = (
-        E.equal("deriveRels(applyRels(r)) = r", derive(id, trustedApply1(tt, id)(povRels)), povRels)
-      ∧ E.equal("applyRels(deriveRels(t) = t",  trustedApply1(tt, id)(derive(id, tt))     , tt)
+        E.equal("deriveRels(applyRels(r)) = r", derive(id, trustedApply1(tt, id, povRels)), povRels)
+      ∧ E.equal("applyRels(deriveRels(t) = t",  trustedApply1(tt, id, derive(id, tt))     , tt)
       )
 
     def flatTreeProps = {
