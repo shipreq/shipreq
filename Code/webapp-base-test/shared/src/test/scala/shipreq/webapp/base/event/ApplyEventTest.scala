@@ -64,26 +64,31 @@ object ApplyEventTestFns {
   }
 
   def assertQty(p: Project, es: Event*): Unit = {
-    var customReqTypes = 0
-    var atags          = 0
-    var tagGroups      = 0
+    var customIssueTypes = 0
+    var customReqTypes   = 0
+    var atags            = 0
+    var tagGroups        = 0
     def ifHard(d: DeletionAction, f: => Unit): Unit =
       if (d == HardDel) f
     es foreach {
-      case _: CreateCustomReqType => customReqTypes += 1
-      case _: CreateTagGroup      => tagGroups += 1
-      case _: CreateApplicableTag => atags += 1
-      case DeleteCustomReqType(_, d) => ifHard(d, customReqTypes -= 1)
-      case DeleteApplicableTag(_, d) => ifHard(d, atags -= 1)
-      case DeleteTagGroup     (_, d) => ifHard(d, tagGroups -= 1)
-      case _: UpdateCustomReqType
+      case _: CreateCustomIssueType => customIssueTypes += 1
+      case _: CreateCustomReqType   => customReqTypes += 1
+      case _: CreateTagGroup        => tagGroups += 1
+      case _: CreateApplicableTag   => atags += 1
+      case DeleteCustomIssueType(_, d) => ifHard(d, customIssueTypes -= 1)
+      case DeleteCustomReqType  (_, d) => ifHard(d, customReqTypes -= 1)
+      case DeleteApplicableTag  (_, d) => ifHard(d, atags -= 1)
+      case DeleteTagGroup       (_, d) => ifHard(d, tagGroups -= 1)
+      case _: UpdateCustomIssueType
+         | _: UpdateCustomReqType
          | _: UpdateApplicableTag
          | _: UpdateTagGroup => ()
     }
     val actualAtags = p.config.atags.size
-    assertEq("CustomReqTypes", p.config.customReqTypes.data.size, customReqTypes)
-    assertEq("ApplicableTags", actualAtags, atags)
-    assertEq("TagGroups",      p.config.tags.data.size - actualAtags, tagGroups)
+    assertEq("Σ CustomIssueTypes", p.config.customIssueTypes.data.size, customIssueTypes)
+    assertEq("Σ CustomReqTypes", p.config.customReqTypes.data.size, customReqTypes)
+    assertEq("Σ ApplicableTags", actualAtags, atags)
+    assertEq("Σ TagGroups",      p.config.tags.data.size - actualAtags, tagGroups)
   }
 }
 

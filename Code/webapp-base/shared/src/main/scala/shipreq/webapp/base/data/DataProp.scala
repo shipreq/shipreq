@@ -51,8 +51,12 @@ object DataProp {
 
   // -------------------------------------------------------------------------------------------------------------------
   object customIssueTypes {
+    type T = CustomIssueTypeIMap
 
-    def all = justRevAnd[CustomIssueTypeIMap] rename "CustomIssueTypes"
+    def ids =
+      id[CustomIssueTypeId].forall((_: T).keys.toStream)
+
+    def all = revAnd(ids) rename "CustomIssueTypes"
   }
 
   // -------------------------------------------------------------------------------------------------------------------

@@ -31,6 +31,10 @@ class ApplyEvent(implicit val trust: Trust) {
 
   private def apply1(event: Event): AP =
     event match {
+      case e: CreateCustomIssueType => CustomIssueTypeEvents applyCreate e
+      case e: UpdateCustomIssueType => CustomIssueTypeEvents applyUpdate e
+      case e: DeleteCustomIssueType => CustomIssueTypeEvents applyDelete e
+
       case e: CreateCustomReqType => CustomReqTypeEvents applyCreate e
       case e: UpdateCustomReqType => CustomReqTypeEvents applyUpdate e
       case e: DeleteCustomReqType => CustomReqTypeEvents applyDelete e
@@ -43,6 +47,57 @@ class ApplyEvent(implicit val trust: Trust) {
       case e: UpdateTagGroup => TagGroupEvents applyUpdate e
       case e: DeleteTagGroup => TagGroupEvents applyDelete e
     }
+
+  // ===================================================================================================================
+  object CustomIssueTypeEvents extends GenericDataApp {
+    override val ^ = CustomIssueTypeGD
+    override type Data = CustomIssueType
+
+    val L = Project.customIssueTypes ^|-> RevAnd.data
+    val imap = IMapApp.data(CustomIssueType)
+
+    val validateKey  = validateWithF(V.customIssueType.keyU)(_.value)
+    val validateDesc = validateWithF(V.customIssueType.descU)(_ getOrElse "")
+
+    val readKey  = need(^.Key)  >=> validateKey
+    val readDesc = need(^.Desc) >=> validateDesc
+
+    val updateKey  = updateL(CustomIssueType.key)  <<=< validateKey
+    val updateDesc = updateL(CustomIssueType.desc) <<=< validateDesc
+    val updateLive = updateL(CustomIssueType.live)
+
+    val updateValues = updateEachValue {
+      case v: ^.ValueForKey  => updateKey (v.value)
+      case v: ^.ValueForDesc => updateDesc(v.value)
+    }
+
+    val ensureLive = ensureLiveBy[Data](_.live)
+
+    def applyCreate(e: CreateCustomIssueType): AP = {
+      implicit val vs = e.vs
+
+      val newObject =
+        for {
+          k <- readKey
+          d <- readDesc
+        } yield CustomIssueType(e.id, k, d, Live)
+
+      L @=> (newObject ?=>> imap.add)
+    }
+
+    def applyUpdate(e: UpdateCustomIssueType): AP =
+      L @=> imap.update(e.id, ensureLive >=> updateValues(e.vs))
+
+    def applyDelete(e: DeleteCustomIssueType): AP =
+      e.da match {
+        case Restore => setLive(e.id, Live)
+        case SoftDel => setLive(e.id, Dead)
+        case HardDel => L @=> imap.remove(e.id)
+      }
+
+    private def setLive(id: CustomIssueTypeId, newValue: Live): AP =
+      L @=> imap.update(id, updateLive(newValue))
+  }
 
   // ===================================================================================================================
   object CustomReqTypeEvents extends GenericDataApp {
