@@ -10,6 +10,9 @@ abstract class BenchmarkSuite(val suiteName: String) {
   protected def add(b: Benchmark): Unit =
     bms :+= b
 
+  def addSuite(s: BenchmarkSuite): Unit =
+    bms ++= s.bms
+
   def benchmark(name: String, fn: => Any): Unit =
     add(Benchmark(s"$suiteName.$name", fn))
 

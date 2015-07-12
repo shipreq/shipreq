@@ -4,7 +4,7 @@ import japgolly.scalajs.react._, vdom.prefix_<^._
 import org.scalajs.dom.{console, document, setTimeout}
 import org.scalajs.dom.raw.HTMLPreElement
 import scala.scalajs.js.JSApp
-import shipreq.benchmark.lib.{Benchmark, BenchmarkSuite}
+import shipreq.benchmark.lib.{CompositeSuite, Benchmark, BenchmarkSuite}
 
 object Main extends JSApp {
 
@@ -37,7 +37,7 @@ object Main extends JSApp {
     .render(_.backend.render)
     .build
 
-  class ConsoleBackend($: BackendScope[String, Unit])  {
+  class ConsoleBackend($: BackendScope[String, Unit]) {
     val consoleRef = Ref[HTMLPreElement]("refKey")
 
     def refreshConsole(): Unit =
@@ -61,7 +61,7 @@ object Main extends JSApp {
     .render(_.backend.render)
     .build
 
-  class MainBackend($: BackendScope[Vector[BenchmarkSuite], State])  {
+  class MainBackend($: BackendScope[Vector[BenchmarkSuite], State]) {
 
     def log: Benchmark.Logger =
       msg => $.modState(_ add msg)
@@ -79,8 +79,10 @@ object Main extends JSApp {
       val s = $.state
       s.logs match {
         case Some(l) =>
+          // Benchmark started
           ConsoleComp(s.results.mkString("\n") + "\n\n\n" + l)
         case None =>
+          // Main screen
           val ss = $.props.map { suite =>
             BenchProps(suite, () => start(suite)).render
           }
@@ -94,6 +96,11 @@ object Main extends JSApp {
       Serialisation,
       Deserialisation,
       Hashing)
-    React.render(MainComp(bms), document.body)
+
+    val all = CompositeSuite("All")(bms: _*)
+
+    val main = MainComp(all +: bms)
+
+    React.render(main, document.body)
   }
 }
