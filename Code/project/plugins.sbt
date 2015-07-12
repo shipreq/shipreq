@@ -18,6 +18,9 @@ addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.11.2")
 // Benchmarking
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.2.1")
 
+// Shows new versions available of dependencies
+addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.1.9")
+
 // https://github.com/JetBrains/sbt-ide-settings
 resolvers += Resolver.url("jetbrains-bintray", url("http://dl.bintray.com/jetbrains/sbt-plugins/"))(Resolver.ivyStylePatterns)
 

@@ -2,6 +2,7 @@ import sbt._
 import Keys._
 import java.nio.file.{Files, Path}
 import org.scalajs.sbtplugin.cross.CrossProject
+import com.timushev.sbt.updates.UpdatesKeys._
 import DependencyLib.{Dep, HasJs, HasJvm, HasBoth, JVM, JS, ModDepScope}
 
 object Common {
@@ -76,17 +77,18 @@ object Common {
   lazy val settingsMin = (p: Project) => p
     .settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*) // Dependency graph
     .settings(
-      clearScreenTask          := { println("\033[2J\033[;H") },
-      organization             := "com.beardedlogic.shipreq",
-      organizationName         := "Bearded Logic",
-      version                  := s"${fmtTimeNow("yyyyMMdd")}-${gitRevisionShort}${snapshotSuffix}",
-      isSnapshot               := snapshotSuffix.nonEmpty,
-      shellPrompt in ThisBuild := { (s: State) => Project.extract(s).currentRef.project + "> " },
-      incOptions               := incOptions.value.withNameHashing(true),
-      updateOptions            := updateOptions.value.withCachedResolution(true),
-      aggregate in update      := false,
-      scalaVersion             := Dependencies.Scala.version,
-      testFrameworks           += new TestFramework("utest.runner.Framework"))
+      clearScreenTask             := { println("\033[2J\033[;H") },
+      organization                := "com.beardedlogic.shipreq",
+      organizationName            := "Bearded Logic",
+      version                     := s"${fmtTimeNow("yyyyMMdd")}-${gitRevisionShort}${snapshotSuffix}",
+      isSnapshot                  := snapshotSuffix.nonEmpty,
+      shellPrompt in ThisBuild    := { (s: State) => Project.extract(s).currentRef.project + "> " },
+      incOptions                  := incOptions.value.withNameHashing(true),
+      updateOptions               := updateOptions.value.withCachedResolution(true),
+      aggregate in update         := false,
+      scalaVersion                := Dependencies.Scala.version,
+      dependencyUpdatesExclusions := moduleFilter(name = new PatternFilter("^jetty-(?:server|websocket)$".r.pattern)),
+      testFrameworks              += new TestFramework("utest.runner.Framework"))
     .configure(
       addCommandAliases(
         "C"    -> "root/clean",
