@@ -58,7 +58,7 @@ object Dependencies {
   }
 
   object SLF4J {
-    private val mm = MultiModule.java("org.slf4j", "1.7.7")
+    private val mm = MultiModule.java("org.slf4j", "1.7.12")
     val api = mm("slf4j-api")
     val jcl = mm("jcl-over-slf4j")
   }
