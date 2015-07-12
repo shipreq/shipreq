@@ -41,11 +41,11 @@ class ApplyEvent(implicit val trust: Trust) {
 
       case e: CreateApplicableTag => ApplicableTagEvents applyCreate e
       case e: UpdateApplicableTag => ApplicableTagEvents applyUpdate e
-      case e: DeleteApplicableTag => ApplicableTagEvents applyDelete e
 
       case e: CreateTagGroup => TagGroupEvents applyCreate e
       case e: UpdateTagGroup => TagGroupEvents applyUpdate e
-      case e: DeleteTagGroup => TagGroupEvents applyDelete e
+
+      case e: DeleteTag => TagEvents applyDelete e
     }
 
   // ===================================================================================================================
@@ -161,11 +161,11 @@ class ApplyEvent(implicit val trust: Trust) {
       L @=> (newTag ?=>> (t => imap.add(t) >=> applyParents(t.id)))
     }
 
-    def delete(id: TagId, da: DeletionAction): AP =
-      L @=> (da match {
-        case Restore => restore(id)
-        case SoftDel => softDel(id)
-        case HardDel => hardDel(id)
+    def applyDelete(e: DeleteTag): AP =
+      L @=> (e.da match {
+        case Restore => restore(e.id)
+        case SoftDel => softDel(e.id)
+        case HardDel => hardDel(e.id)
       })
 
     private def setLife(ol: Option[Live]): TagId => AE[TagTree] = {
@@ -293,9 +293,6 @@ class ApplyEvent(implicit val trust: Trust) {
           case v: ^.ValueForParents  => vars setParents v.value
         }
       )
-
-    def applyDelete(e: DeleteApplicableTag): AP =
-      delete(e.id, e.da)
   }
 
   // -----------------------------------------------------------------------------------------------
@@ -338,8 +335,5 @@ class ApplyEvent(implicit val trust: Trust) {
           case v: ^.ValueForParents       => vars setParents v.value
         }
       )
-
-    def applyDelete(e: DeleteTagGroup): AP =
-      delete(e.id, e.da)
   }
 }
