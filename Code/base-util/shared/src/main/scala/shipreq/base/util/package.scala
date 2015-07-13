@@ -1,6 +1,6 @@
 package shipreq.base
 
-import scalaz.{OneAnd, \/}
+import scalaz.\/
 
 package object util {
 
@@ -8,4 +8,7 @@ package object util {
 
   /** Faster than Vector(a) */
   @inline def Vector1[A](a: A): Vector[A] = Vector.empty :+ a
+
+  // The field immediately before which the subject field should be ordered. None means append.
+  type Position[+A] = Option[A]
 }

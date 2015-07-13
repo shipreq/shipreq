@@ -2,7 +2,7 @@ package shipreq.webapp.base.protocol
 
 import scalaz.{\/-, -\/, \/}
 import scalaz.std.AllInstances._
-import shipreq.base.util.{UnivEq, Util}
+import shipreq.base.util.{UnivEq, Position => Pos}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.delta.{Partition, PPI}
 import shipreq.webapp.base.util.TypeclassDerivation._
@@ -30,8 +30,7 @@ object FieldProtocol {
   implicit val equalImplication: UnivEq[ImplicationFieldValues] = deriveUnivEq
   implicit def equalValues     : UnivEq[Values]                 = deriveUnivEq
 
-  // The field immediately before which the subject field should be ordered. None means append.
-  type Position = Option[FieldId]
+  type Position = Pos[FieldId]
 
   sealed trait CfgAction
   object CfgAction {
@@ -63,7 +62,7 @@ object FieldProtocol {
 
     // Insert/update
     def setOrder(id: FieldId, pos: Position): Unit =
-      order = Util.reposition(order, id, pos)
+      order = Pos.set(order, id, pos)
     for (delta <- delta.update)
       delta match {
         case Delta(-\/(staticField), pos) =>

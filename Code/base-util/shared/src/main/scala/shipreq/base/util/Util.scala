@@ -43,27 +43,6 @@ object Util {
     else
       s.substring(0, cutoff - 1) + "\u2026"
 
-  /** Inserts `subj` immediately before a given element, or appends if `before` is None. */
-  def reposition[A: Equal](v: Vector[A], subj: A, before: Option[A]): Vector[A] =
-    before match {
-      case Some(b) =>
-        v.foldLeft(Vector.empty[A])((q, e) => {
-          val q2 = if (e ≟ b) q :+ subj else q
-          if (e ≟ subj) q2 else q2 :+ e
-        })
-      case None =>
-        v.filterNot(_ ≟ subj) :+ subj
-    }
-
-  /**
-   * Dual of `reposition()`.
-   * @return The element immediately following the given subject.
-   */
-  def position[A: Equal](v: Vector[A], subj: A): Option[A] = {
-    val i = v.indexWhere(subj ≟ _)
-    if (i >= 0 && (i + 1) < v.length) Some(v(i + 1)) else None
-  }
-
   def foldAndIndex[A, B, K](as: TraversableOnce[A], z: B, ik: Int => K)(f: (B, K, A) => B): (B, Map[K, A]) = {
     var i = 0
     var m = Map.empty[K, A]

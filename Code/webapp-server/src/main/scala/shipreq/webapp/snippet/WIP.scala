@@ -403,7 +403,7 @@ class WIP {
 
     def mod(id: Id)(f: CF => CF): RemoteDelta =
       mod(fs => fs.customFields.get(id).fold(∅)(newField =>
-        List(Delta(\/-(f(newField)), Util.position(fs.order, id)))))
+        List(Delta(\/-(f(newField)), Position.get(fs.order, id)))))
 
     @inline def ∅ = List.empty[Delta]
 

@@ -10,8 +10,8 @@ import scalaz.{Equal, -\/, \/-, \/}
 import scalaz.syntax.bind.ToBindOps
 import scalaz.syntax.equal._
 
+import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{NonEmptySet, NonEmptyVector, Util, ISubset}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.delta.Partition
 import shipreq.webapp.base.data.Validators.{field => V}
@@ -325,7 +325,7 @@ private[fields] object MainTable {
     def orderIO(from: Field, to: Field): IO[Unit] = {
       val id       = from.fieldId
       val newOrder = DND.move(id, to.fieldId)(fieldOrder)
-      val pos      = Util.position(newOrder, id)
+      val pos      = Position.get(newOrder, id)
       protocol.updateOrderIO(id, pos)(SuccessIO.nop, FailureIO.nop)
     }
 
