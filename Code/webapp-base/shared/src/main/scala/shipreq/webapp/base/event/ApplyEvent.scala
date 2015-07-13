@@ -199,12 +199,12 @@ class ApplyEvent(implicit val trust: Trust) {
             apFoldLeft[TagId, TagTree](subj.children)(childId =>
               imap.needM(childId)(t => App { child =>
                 if (childNeedsModification(child, t))
-                  go(childId) run t
+                  go(childId)(t)
                 else
                   ok(t)
               }))
 
-          modifyChildren >=> modifySubject(id) run t0
+          (modifyChildren >=> modifySubject(id))(t0)
         })
 
       go
@@ -222,7 +222,7 @@ class ApplyEvent(implicit val trust: Trust) {
     final val updatableTag = narrowCC[Tag, Data] >=> ensureLiveBy(_.live)
 
     final class UpdateVars(id: TagId, tagTree: TagTree, tagInTree: TagInTree) {
-      private var tag      = updatableTag run tagInTree.tag
+      private var tag      = updatableTag(tagInTree.tag)
       private var children = tagInTree.children
       private var tt       = tagTree
 
@@ -233,7 +233,7 @@ class ApplyEvent(implicit val trust: Trust) {
         children = v
 
       def setParents(p: Parents): Unit =
-        TagEvents.setParents(id, p).run(tt) match {
+        TagEvents.setParents(id, p)(tt) match {
           case \/-(tt2)  => tt = tt2
           case e@ -\/(_) => tag = e
         }

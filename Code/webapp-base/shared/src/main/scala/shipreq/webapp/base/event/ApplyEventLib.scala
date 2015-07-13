@@ -67,6 +67,8 @@ private[event] object ApplyEventLib {
   /** Custom Kleisli arrow */
   case class App[-A, +B](run: A => Result[B]) extends AnyVal {
 
+    @inline def apply(a: A) = run(a)
+
     @inline def >=>[C](g: App[B, C]): App[A, C] =
       App(run(_) flatMap g.run)
 
@@ -222,7 +224,7 @@ private[event] object ApplyEventLib {
     /** @return Failure unless value exists. */
     def update(k: K, f: AE[V]): AE[M] = {
       val g = need(k) >=> f
-      App(m => g.run(m).map(m + _))
+      App(m => g(m).map(m + _))
     }
 
     /** @return Failure if untrusted and key not found. */
@@ -233,7 +235,7 @@ private[event] object ApplyEventLib {
         k => App(m => if (m containsK k) ok(m - k) else fail(s"$k not found."))
 
     def needM[R](k: K)(f: M => App[V, R]): App[M, R] =
-      App(m => need(k).run(m) ?=> f(m))
+      App(m => need(k)(m) ?=> f(m))
   }
 
   // -------------------------------------------------------------------------------------------------------------------
