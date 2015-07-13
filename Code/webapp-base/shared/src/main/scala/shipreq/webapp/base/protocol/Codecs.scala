@@ -15,15 +15,7 @@ import shipreq.base.util.TaggedTypes._
 import shipreq.webapp.base.text.Text
 
 // =====================================================================================================================
-private[protocol] trait CodecBaseLowPri2 {
-  implicit def SeqishR[T: Reader, V[_]](implicit cbf: CanBuildFrom[Nothing, T, V[T]]) = upickle.StdlibCodecs.SeqishR[T, V]
-  implicit def SeqishW[T: Writer, V[_] <: Iterable[_]]                                = upickle.StdlibCodecs.SeqishW[T, V]
-}
-private[protocol] trait CodecBaseLowPri extends CodecBaseLowPri2 {
-  implicit def MapW[K: Writer, V: Writer] = upickle.StdlibCodecs.MapW[K, V]
-  implicit def MapR[K: Reader, V: Reader] = upickle.StdlibCodecs.MapR[K, V]
-}
-private[protocol] object CodecBase extends CodecBaseLowPri {
+private[protocol] object CodecBase extends StdlibCodecs.Maps {
 
   def tagS[T <: TaggedString](C: String => T) =
     ReadWriter[T](i => Js.Str(i.value), { case Js.Str(i) => C(i)})
