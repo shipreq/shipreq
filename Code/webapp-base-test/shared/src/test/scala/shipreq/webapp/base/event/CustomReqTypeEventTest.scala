@@ -8,6 +8,7 @@ import shipreq.webapp.base.test.UnsafeTypes._
 import ApplyEventTestFns._
 import CustomReqTypeGD._
 import DeletionAction._
+import NoInitialEvents._
 
 trait CustomReqTypeEvents {
   val mfName = "Major Feature"
@@ -61,6 +62,12 @@ object CustomReqTypeEventTest extends TestSuite with CustomReqTypeEvents {
       'dupMne   - assertFail("unique")   (c1, c2, UpdateCustomReqType(2, nev(Mnemonic("MF"))))
     }
 
+    'delete {
+      'whenLiveImpFieldS - assertFail("")(c1, CustomImpFieldEventTest.c1, sd1)
+      'whenLiveImpFieldH - assertFail("")(c1, CustomImpFieldEventTest.c1, hd1)
+      'whenDeadImpFieldS - assertPass    (c1, CustomImpFieldEventTest.c1, CustomImpFieldEventTest.sd1, sd1)
+      'whenDeadImpFieldH - assertFail("")(c1, CustomImpFieldEventTest.c1, CustomImpFieldEventTest.sd1, hd1)
+    }
     // TODO Add tests of HardDeletion failing when subject in use
   }
 }

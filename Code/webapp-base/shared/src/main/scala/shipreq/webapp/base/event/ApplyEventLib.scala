@@ -3,8 +3,9 @@ package shipreq.webapp.base.event
 import monocle._
 import scala.collection.GenTraversable
 import scala.reflect.ClassTag
-import scalaz.{-\/, \/, \/-}
-import shipreq.base.util.{IMap, Valid, Validity}
+import scalaz.{Equal, -\/, \/, \/-}
+import scalaz.syntax.equal._
+import shipreq.base.util._
 import shipreq.webapp.base.data.{Dead, Live, ObjDataId, Project}
 import shipreq.webapp.base.util.GenericData
 import shipreq.webapp.base.validation.{ValidatorU, ValidationResult}
@@ -194,6 +195,36 @@ private[event] object ApplyEventLib {
     else
       App.ok(a => a.asInstanceOf[B])
 
+  def removeFromVector[A: Equal](implicit trust: Trust): A => AE[Vector[A]] = {
+    def doit(a: A, as: Vector[A]): Vector[A] = as.filterNot(_ ≟ a)
+    if (trust :: Trusted)
+      a => App.ok(doit(a, _))
+    else
+      a => App { i =>
+        val o = doit(a, i)
+        if (o.length == i.length)
+          fail(s"Element not found: Expected to find $a in $i.")
+        else
+          ok(o)
+      }
+  }
+
+  def reposition[A: Equal](implicit trust: Trust): (A, Option[A]) => AE[Vector[A]] = {
+    if (trust :: Trusted)
+      (a, pos) => App.ok(Position.set(_, a, pos))
+    else
+      (a, pos) => App { as =>
+        if (!as.exists(_ ≟ a))
+          fail(s"Element not found: Expected to find $a in $as.")
+        else
+          ok(Position.set(as, a, pos))
+      }
+  }
+
+  trait AskTrust {
+    protected implicit def trust: Trust
+  }
+
   // -------------------------------------------------------------------------------------------------------------------
   object IMapApp {
     @inline def apply[K, V](implicit trust: Trust) = new IMapApp[K, V]
@@ -284,13 +315,12 @@ private[event] object ApplyEventLib {
   /**
    * Logic for CRUD events that simply update an ID-keyed IMap.
    */
-  trait IMapStore {
+  trait IMapStore extends AskTrust {
     this: GenericDataApp =>
 
     type Id
     val L: Lens[Project, IMap[Id, Data]]
     def liveLens: Lens[Data, Live]
-    protected implicit def trust: Trust
 
     final val imap       = IMapApp[Id, Data]
     final val ensureLive = ensureLiveBy(liveLens.get)

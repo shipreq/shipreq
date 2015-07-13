@@ -96,6 +96,9 @@ object DataProp {
 
     type Fields = Vector[Field]
 
+    def ids =
+      id[CustomFieldId].forall((_: FieldSet).customFields.keys.toStream)
+
     def uniqueNames =
       Prop.distinct("name", (_: Fields).flatMap(_.independentName.toVector))
 
@@ -132,7 +135,7 @@ object DataProp {
       Prop.distinct("Implication field", filteredFields { case t: CustomField.Implication => t.reqTypeId })
 
     def fieldSet = "FieldSet" rename_: (
-      fields ∧
+      ids ∧ fields ∧
       orderNoDups ∧ orderCustomFieldsIso ∧ orderHasAllUndeletableStaticFields ∧
       tagFieldsUnique ∧ implicationFieldsUnique)
 
@@ -302,7 +305,7 @@ object DataProp {
   object projectConfig {
     type P = ProjectConfig
 
-    case class Refs(reqTypeIds: Set[ReqTypeId])
+    case class Refs(reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId])
 
     def constituents = (
         customIssueTypes.all.contramap[P](_.customIssueTypes)
@@ -317,11 +320,22 @@ object DataProp {
           p.tags.data.vstreamf(_.tag.keyO.toStream)
         ).map(_.value.toLowerCase))
 
+    def liveTagFieldRequiresLiveTag =
+      Prop.whitelist[P]("Live tag-field requires a live tag")(
+        _.tags.data.values.filter(_.tag.live :: Live).map(_.id).toSet,
+        p => fields.filteredFields({ case t: CustomField.Tag if t.live :: Live => t.tagId})(p.fields.data))
+
+    def liveImpFieldRequiresLiveReqType =
+      Prop.whitelist[P]("Live implication-field requires a live req-type")(
+        _.reqTypes.filter(_.live :: Live).map(_.reqTypeId).toSet,
+        p => fields.filteredFields({ case t: CustomField.Implication if t.live :: Live => t.reqTypeId})(p.fields.data))
+
     def validRefs = {
       type TR = (P, Refs)
 
       def mkRefs(p: ProjectConfig): Refs = Refs(
-        p.reqTypes.map(_.reqTypeId).toSet)
+        p.reqTypes.map(_.reqTypeId).toSet,
+        p.tags.data.keySet)
 
       def whitelist[A](refs: TR => Set[A])(name: String, test: P => Traversable[A]) =
         // Two steps here results in better failure messages
@@ -329,16 +343,19 @@ object DataProp {
           .contramap[TR](t => t put2 refs(t))
 
       def validReqTypeIds = whitelist(_._2.reqTypeIds) _
+      def validTagIds     = whitelist(_._2.tagIds) _
 
       (  validReqTypeIds("Field.reqTypes",
           _.fields.data.customFields.values.toStream.flatMap(f => isubsetContents(f.reqTypes).toStream))
+      ∧ validTagIds("CustomField.Tag.tagIds",
+        p => fields.filteredFields({ case t: CustomField.Tag => t.tagId})(p.fields.data))
       ∧ validReqTypeIds("CustomField.Implication.reqTypeIds",
           p => fields.filteredFields({ case t: CustomField.Implication => t.reqTypeId})(p.fields.data))
       ).rename("Cross-constituent refs").contramap[P](_ mapStrengthR mkRefs)
     }
 
     val all: Prop[ProjectConfig] = "ProjectConfig" rename_: (
-      constituents ∧ uniqueHashRefKeys ∧ validRefs)
+      constituents ∧ uniqueHashRefKeys ∧ validRefs ∧ liveTagFieldRequiresLiveTag ∧ liveImpFieldRequiresLiveReqType)
   }
 
   // ===================================================================================================================

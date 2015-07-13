@@ -41,16 +41,27 @@ class ApplyEvent(implicit val trust: Trust) {
 
       case e: CreateApplicableTag => ApplicableTagEvents applyCreate e
       case e: UpdateApplicableTag => ApplicableTagEvents applyUpdate e
+      case e: CreateTagGroup      => TagGroupEvents      applyCreate e
+      case e: UpdateTagGroup      => TagGroupEvents      applyUpdate e
+      case e: DeleteTag           => TagEvents           applyDelete e
 
-      case e: CreateTagGroup => TagGroupEvents applyCreate e
-      case e: UpdateTagGroup => TagGroupEvents applyUpdate e
-
-      case e: DeleteTag => TagEvents applyDelete e
+      case e: CreateCustomTextField => CustomTextFieldEvents applyCreate e
+      case e: UpdateCustomTextField => CustomTextFieldEvents applyUpdate e
+      case e: CreateCustomTagField  => CustomTagFieldEvents  applyCreate e
+      case e: UpdateCustomTagField  => CustomTagFieldEvents  applyUpdate e
+      case e: CreateCustomImpField  => CustomImpFieldEvents  applyCreate e
+      case e: UpdateCustomImpField  => CustomImpFieldEvents  applyUpdate e
+      case e: DeleteCustomField     => FieldEvents           applyDeleteC e
+      case e: DeleteStaticField     => FieldEvents           applyDeleteS e
+      case e: RepositionField       => FieldEvents           applyReposition e
     }
 
+  trait TellTrust extends AskTrust {
+    override final protected implicit def trust = ApplyEvent.this.trust
+  }
+
   // ===================================================================================================================
-  object CustomIssueTypeEvents extends GenericDataApp with IMapStore {
-    override protected implicit def trust = ApplyEvent.this.trust
+  object CustomIssueTypeEvents extends GenericDataApp with IMapStore with TellTrust {
     override val ^        = CustomIssueTypeGD
     override type Id      = CustomIssueTypeId
     override type Data    = CustomIssueType
@@ -335,5 +346,181 @@ class ApplyEvent(implicit val trust: Trust) {
           case v: ^.ValueForParents       => vars setParents v.value
         }
       )
+  }
+
+  // ===================================================================================================================
+  object FieldEvents {
+    val L = Project.fields ^|-> RevAnd.data
+    val M = L ^|-> FieldSet.customFields
+    val O = L ^|-> FieldSet.order
+    val imap = IMapApp[CustomFieldId, CustomField]
+
+    val validateName = validateWith(V.field.nameU)
+    val validateKey  = validateWithF(V.field.keyU)(_.value)
+
+    val ensureLive = ensureLiveBy[CustomField](_.live)
+    val updateLive = updateL(CustomField.live)
+
+    def create(cf: CustomField): AP =
+      L @=> App(fs =>
+        for (cfs <- imap.add(cf)(fs.customFields))
+          yield FieldSet(cfs, fs.order :+ cf.id))
+
+    val repositionField = reposition[FieldId]
+
+    def applyReposition(e: RepositionField): AP =
+      O @=> repositionField(e.id, e.newPos)
+
+    val ensureDeletableSF =
+      App.test[StaticField](
+        sf => Valid <~ (sf.deletable :: Deletable),
+        sf => s"Static field $sf cannot be deleted.")
+
+    val removeFromOrder = removeFromVector[FieldId]
+
+    val deleteSF = ensureDeletableSF >=>> removeFromOrder
+
+    def hardDeleteCustomField(id: CustomFieldId): AE[FieldSet] =
+      App(fs =>
+        for {
+          m <- imap.remove(id)(fs.customFields)
+          o <- removeFromOrder(id)(fs.order)
+        } yield FieldSet(m, o)
+      )
+
+    def applyDeleteC(e: DeleteCustomField): AP =
+      e.da match {
+        case HardDel => L @=> hardDeleteCustomField(e.id)
+        case SoftDel => M @=> setLive(e.id, Dead)
+        case Restore => M @=> setLive(e.id, Live)
+      }
+
+    def applyDeleteS(e: DeleteStaticField): AP =
+      O @=> deleteSF(e.f)
+
+    def setLive(id: CustomFieldId, newValue: Live): AE[imap.M] =
+      imap.update(id, updateLive(newValue))
+  }
+
+  trait CustomFieldApp extends GenericDataApp {
+    import FieldEvents._
+
+    type Data <: CustomField
+    val updateValues: ^.NonEmptyValues => AD
+
+    final def update(id: CustomFieldId, vs: ^.NonEmptyValues)(implicit cc: ClassTag[Data]): AP =
+      M @=> imap.update(id, ensureLive >=> narrowCC[CustomField, Data] >=> updateValues(vs))
+  }
+
+  // -----------------------------------------------------------------------------------------------
+  object CustomTextFieldEvents extends CustomFieldApp {
+    import FieldEvents._
+
+    override val ^ = CustomTextFieldGD
+    override type Data = CustomField.Text
+
+    val readName      = need(^.Name) >=> validateName
+    val readKey       = need(^.Key)  >=> validateKey
+    val readMandatory = need(^.Mandatory)
+    val readReqTypes  = need(^.ReqTypes)
+
+    val updateName      = updateL(CustomField.Text.name) <<=< validateName
+    val updateKey       = updateL(CustomField.Text.key)  <<=< validateKey
+    val updateMandatory = updateL(CustomField.Text.mandatory)
+    val updateReqTypes  = updateL(CustomField.Text.reqTypes)
+
+    val updateValues = updateEachValue {
+      case v: ^.ValueForName      => updateName     (v.value)
+      case v: ^.ValueForKey       => updateKey      (v.value)
+      case v: ^.ValueForMandatory => updateMandatory(v.value)
+      case v: ^.ValueForReqTypes  => updateReqTypes (v.value)
+    }
+
+    def applyCreate(e: CreateCustomTextField): AP = {
+      implicit val vs = e.vs
+      val newField =
+        for {
+          n <- readName
+          k <- readKey
+          m <- readMandatory
+          r <- readReqTypes
+        } yield CustomField.Text(e.id, n, k, m, r, Live)
+      newField ?=>> create
+    }
+
+    def applyUpdate(e: UpdateCustomTextField): AP =
+      update(e.id, e.vs)
+  }
+
+  // -----------------------------------------------------------------------------------------------
+  object CustomTagFieldEvents extends CustomFieldApp {
+    import FieldEvents._
+
+    override val ^ = CustomTagFieldGD
+    override type Data = CustomField.Tag
+
+    val readTagId     = need(^.TagId)
+    val readMandatory = need(^.Mandatory)
+    val readReqTypes  = need(^.ReqTypes)
+
+    val updateTagId     = updateL(CustomField.Tag.tagId)
+    val updateMandatory = updateL(CustomField.Tag.mandatory)
+    val updateReqTypes  = updateL(CustomField.Tag.reqTypes)
+
+    val updateValues = updateEachValue {
+      case v: ^.ValueForTagId     => updateTagId    (v.value)
+      case v: ^.ValueForMandatory => updateMandatory(v.value)
+      case v: ^.ValueForReqTypes  => updateReqTypes (v.value)
+    }
+
+    def applyCreate(e: CreateCustomTagField): AP = {
+      implicit val vs = e.vs
+      val newField =
+        for {
+          t <- readTagId
+          m <- readMandatory
+          r <- readReqTypes
+        } yield CustomField.Tag(e.id, t, m, r, Live)
+      newField ?=>> create
+    }
+
+    def applyUpdate(e: UpdateCustomTagField): AP =
+      update(e.id, e.vs)
+  }
+
+  // -----------------------------------------------------------------------------------------------
+  object CustomImpFieldEvents extends CustomFieldApp {
+    import FieldEvents._
+
+    override val ^ = CustomImpFieldGD
+    override type Data = CustomField.Implication
+
+    val readReqTypeId = need(^.ReqTypeId)
+    val readMandatory = need(^.Mandatory)
+    val readReqTypes  = need(^.ReqTypes)
+
+    val updateReqTypeId = updateL(CustomField.Implication.reqTypeId)
+    val updateMandatory = updateL(CustomField.Implication.mandatory)
+    val updateReqTypes  = updateL(CustomField.Implication.reqTypes)
+
+    val updateValues = updateEachValue {
+      case v: ^.ValueForReqTypeId => updateReqTypeId(v.value)
+      case v: ^.ValueForMandatory => updateMandatory(v.value)
+      case v: ^.ValueForReqTypes  => updateReqTypes (v.value)
+    }
+
+    def applyCreate(e: CreateCustomImpField): AP = {
+      implicit val vs = e.vs
+      val newField =
+        for {
+          t <- readReqTypeId
+          m <- readMandatory
+          r <- readReqTypes
+        } yield CustomField.Implication(e.id, t, m, r, Live)
+      newField ?=>> create
+    }
+
+    def applyUpdate(e: UpdateCustomImpField): AP =
+      update(e.id, e.vs)
   }
 }

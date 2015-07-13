@@ -80,6 +80,38 @@ case class UpdateApplicableTag(id: ApplicableTagId, vs: ApplicableTagGD.NonEmpty
 // =====================================================================================================================
 // Config: Fields
 
+case class RepositionField(id: FieldId, newPos: Position[FieldId]) extends ActiveEvent
+
+case class DeleteStaticField(f: StaticField) extends ActiveEvent
+case class DeleteCustomField(id: CustomFieldId, da: DeletionAction) extends ActiveEvent
+
+@CreateGenericData
+object CustomTextFieldGD extends GenericData {
+  val Name      = defAttr[String]
+  val Key       = defAttr[FieldRefKey]
+  val Mandatory = defAttr[Mandatory]
+  val ReqTypes  = defAttr[Field.ApplicableReqTypes]
+}
+case class CreateCustomTextField(id: CustomField.Text.Id, vs: CustomTextFieldGD.NonEmptyValues) extends ActiveEvent
+case class UpdateCustomTextField(id: CustomField.Text.Id, vs: CustomTextFieldGD.NonEmptyValues) extends ActiveEvent
+
+@CreateGenericData
+object CustomTagFieldGD extends GenericData {
+  val TagId     = defAttr[TagId]
+  val Mandatory = defAttr[Mandatory]
+  val ReqTypes  = defAttr[Field.ApplicableReqTypes]
+}
+case class CreateCustomTagField(id: CustomField.Tag.Id, vs: CustomTagFieldGD.NonEmptyValues) extends ActiveEvent
+case class UpdateCustomTagField(id: CustomField.Tag.Id, vs: CustomTagFieldGD.NonEmptyValues) extends ActiveEvent
+
+@CreateGenericData
+object CustomImpFieldGD extends GenericData {
+  val ReqTypeId = defAttr[ReqTypeId]
+  val Mandatory = defAttr[Mandatory]
+  val ReqTypes  = defAttr[Field.ApplicableReqTypes]
+}
+case class CreateCustomImpField(id: CustomField.Implication.Id, vs: CustomImpFieldGD.NonEmptyValues) extends ActiveEvent
+case class UpdateCustomImpField(id: CustomField.Implication.Id, vs: CustomImpFieldGD.NonEmptyValues) extends ActiveEvent
 
 // =====================================================================================================================
 //  case class PatchReqTags        (id: ReqId, patch: NESD[ApplicableTagId]) extends ContentUpdate

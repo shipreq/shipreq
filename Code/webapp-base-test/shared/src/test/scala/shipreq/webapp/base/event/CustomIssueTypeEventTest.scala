@@ -8,6 +8,7 @@ import shipreq.webapp.base.test.UnsafeTypes._
 import ApplyEventTestFns._
 import CustomIssueTypeGD._
 import DeletionAction._
+import NoInitialEvents._
 
 trait CustomIssueTypeEvents {
   type CE = CreateCustomIssueType

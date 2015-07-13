@@ -41,22 +41,23 @@ object ApplyEventTestFns {
     es.zipWithIndex.map { case (e, i) => s"[${i + 1}/$t] $e" } mkString "\n"
   }
 
-  def assertPass(es: Event*): Unit =
+  def assertPass(es: Event*)(implicit init: InitialEvents): Unit =
     _assertPass(es: _*)
 
-  def _assertPass(es: Event*): Project = {
-    val r = apply(es) run emptyProject
+  def _assertPass(es: Event*)(implicit init: InitialEvents): Project = {
+    val es2 = init ++ es
+    val r = apply(es2) run emptyProject
     val p =
       r match {
         case \/-(v) => v
-        case -\/(e) => fail(s"\nPass expected but failed with '$e'.\nEvents were:\n${fmtEvents(es)}")
+        case -\/(e) => fail(s"\nPass expected but failed with '$e'.\nEvents were:\n${fmtEvents(es2)}")
       }
-    assertQty(p, es: _*)
+    assertQty(p, es2: _*)
     p
   }
 
-  def assertFail(errFrag: String)(es: Event*): Unit = {
-    val r = apply(es) run emptyProject
+  def assertFail(errFrag: String)(es: Event*)(implicit init: InitialEvents): Unit = {
+    val r = apply(init ++ es) run emptyProject
     r match {
       case -\/(e) => assert(e contains errFrag)
       case \/-(_) => fail(s"\nFailure expected but didn't occur.\nEvents were:\n${fmtEvents(es)}")
@@ -67,29 +68,54 @@ object ApplyEventTestFns {
     var customIssueTypes = 0
     var customReqTypes   = 0
     var tags             = 0
+    var customFields     = 0
+    var activeFields     = emptyProject.config.fields.data.order.length
     def ifHard(d: DeletionAction, f: => Unit): Unit =
       if (d == HardDel) f
     es foreach {
       case _: CreateCustomIssueType => customIssueTypes += 1
       case _: CreateCustomReqType   => customReqTypes += 1
+      case _: CreateCustomTextField
+         | _: CreateCustomTagField
+         | _: CreateCustomImpField  => activeFields += 1; customFields += 1
       case _: CreateTagGroup
          | _: CreateApplicableTag   => tags += 1
-      case DeleteCustomIssueType(_, d) => ifHard(d, customIssueTypes -= 1)
-      case DeleteCustomReqType  (_, d) => ifHard(d, customReqTypes -= 1)
-      case DeleteTag            (_, d) => ifHard(d, tags -= 1)
+
+      case DeleteCustomIssueType(_, d)       => ifHard(d, customIssueTypes -= 1)
+      case DeleteCustomReqType  (_, d)       => ifHard(d, customReqTypes -= 1)
+      case DeleteTag            (_, d)       => ifHard(d, tags -= 1)
+      case DeleteStaticField    (_)          => activeFields -= 1
+      case DeleteCustomField    (_, HardDel) => activeFields -= 1; customFields -= 1
+      case DeleteCustomField    (_, SoftDel) => activeFields -= 1
+      case DeleteCustomField    (_, Restore) => activeFields += 1
+
       case _: UpdateCustomIssueType
          | _: UpdateCustomReqType
+         | _: UpdateCustomTextField
+         | _: UpdateCustomTagField
+         | _: UpdateCustomImpField
+         | _: RepositionField
          | _: UpdateApplicableTag
          | _: UpdateTagGroup => ()
     }
     assertEq("Σ CustomIssueTypes", p.config.customIssueTypes.data.size, customIssueTypes)
     assertEq("Σ CustomReqTypes", p.config.customReqTypes.data.size, customReqTypes)
     assertEq("Σ Tags", tags, p.config.tags.data.size)
+    assertEq("Σ CustomFields", customFields, p.config.fields.data.customFields.size)
+    assertEq("Σ ActiveFields", activeFields, p.config.fields.data.fields.unmust.count(_.live :: Live))
   }
 }
 
+case class InitialEvents(es: Event*) {
+  def ++(next: Seq[Event]) = es ++ next
+}
+trait NoInitialEvents {
+  implicit val init = InitialEvents()
+}
+object NoInitialEvents extends NoInitialEvents
+
 // =====================================================================================================================
-abstract class SharedTests extends TestSuite {
+abstract class SharedTests(implicit val init: InitialEvents) extends TestSuite {
   type CE <: Event
   val c1 : CE
   val c2 : CE

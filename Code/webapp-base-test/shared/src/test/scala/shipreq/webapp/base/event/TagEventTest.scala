@@ -9,6 +9,7 @@ import shipreq.webapp.base.test.BaseTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
 import ApplyEventTestFns._
 import DeletionAction._
+import NoInitialEvents._
 
 abstract class SharedTagEventTests extends TestSuite {
   type CE <: Event
@@ -45,6 +46,9 @@ abstract class SharedTagEventTests extends TestSuite {
 
   private def getChildren(t: TagInTree) =
     t.children.map(_.value.toInt)
+
+  def tagId1: TagId
+  val createTagField1 = CustomTagFieldEventTest.mkC1(tagId1)
 
   override def tests = TestSuite {
     'create {
@@ -159,6 +163,11 @@ abstract class SharedTagEventTests extends TestSuite {
         test(r1,  "{AB,D}C")
       }
 
+      'whenLiveTagFieldS - assertFail("")(c1, createTagField1, sd1)
+      'whenLiveTagFieldH - assertFail("")(c1, createTagField1, hd1)
+      'whenDeadTagFieldS - assertPass    (c1, createTagField1, CustomTagFieldEventTest.sd1, sd1)
+      'whenDeadTagFieldH - assertFail("")(c1, createTagField1, CustomTagFieldEventTest.sd1, hd1)
+
       // TODO HardDeletion: If tag in use in [project content]     , prevent hard delete
       // TODO HardDeletion: If tag in use in [tag tree]            , it should be allowed
       // TODO HardDeletion: If tag in use in [other project config], should it should be allowed?
@@ -183,6 +192,7 @@ trait TagGroupEvents {
   def create(id: Int)(parents: Int*)(children: Int*) =
     CreateTagGroup(id, nev(Name(id.toString), Desc(None), MutexChildren(true),
       Children(Vector(children.map(_.TG): _*)), Parents(parents.map(_.TG -> none[TagId]).toMap)))
+  def tagId1 = 1.TG
 
   val c1Name = "Version"
   type CE = CreateTagGroup
@@ -254,6 +264,7 @@ trait ApplicableTagEvents {
   def create(id: Int)(parents: Int*)(children: Int*) =
     CreateApplicableTag(id, nev(Name(id.toString), Desc(None), Key("k" + id),
       Children(Vector(children.map(_.AT): _*)), Parents(parents.map(_.AT -> none[TagId]).toMap)))
+  def tagId1 = 1.AT
 
   val c1Name = "Version"
   type CE = CreateApplicableTag

@@ -59,6 +59,9 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
   implicit class UnsafeIntExt(val a: Int) extends AnyVal {
     def AT = ApplicableTagId(a)
     def TG = TagGroupId(a)
+    def CFText = CustomField.Text.Id(a)
+    def CFTag  = CustomField.Tag.Id(a)
+    def CFImp  = CustomField.Implication.Id(a)
   }
 
   implicit class UnsafeMustExt[A](val m: Must[A]) extends AnyVal {
@@ -73,4 +76,5 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
     Min2Set(NonEmptySet(a, t.toSet + b)).fold(nes => sys.error(s"Not make a Min2Set from $nes"), a => a)
 
   implicit def boolToMutexChildren(b: Boolean) = MutexChildren <~ b
+  implicit def boolToMandatory(b: Boolean) = Mandatory <~ b
 }

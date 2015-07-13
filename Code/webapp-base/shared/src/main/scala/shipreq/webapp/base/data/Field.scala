@@ -190,6 +190,7 @@ object CustomField {
   }
 
   // -------------------------------------------------------------------------------------------------------------------
+  @Lenses
   case class Text(id       : Text.Id,
                   name     : String,
                   key      : FieldRefKey,
@@ -211,6 +212,7 @@ object CustomField {
   }
 
   // -------------------------------------------------------------------------------------------------------------------
+  @Lenses
   case class Tag(id       : Tag.Id,
                  tagId    : TagId,
                  mandatory: Mandatory,
@@ -234,6 +236,7 @@ object CustomField {
   }
 
   // -------------------------------------------------------------------------------------------------------------------
+  @Lenses
   case class Implication(id       : Implication.Id,
                          reqTypeId: ReqTypeId,
                          mandatory: Mandatory,
@@ -299,9 +302,12 @@ object CustomField {
 // =====================================================================================================================
 // Set
 
+/**
+ * @param order Can include dead custom-fields.
+ */
 @Lenses
 case class FieldSet(customFields: FieldSet.CustomFields,
-                    order       : Vector[FieldId]) { // TODO This should be NonEmptyVector
+                    order       : FieldSet.Order) {
 
   lazy val fields: Must[Vector[Field]] =
     Traverse[Vector].traverseImpl(order) {
@@ -311,6 +317,8 @@ case class FieldSet(customFields: FieldSet.CustomFields,
 }
 
 object FieldSet {
+  // TODO FieldSet.Order should be NonEmptyVector.
+  type Order = Vector[FieldId]
   type CustomFields = IMap[CustomFieldId, CustomField]
   def emptyCustomFields: CustomFields = IMap.empty(_.id)
 
