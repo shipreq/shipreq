@@ -35,7 +35,7 @@ private[reqtable] object Logic {
 
   private def tagLookup(p: Project): TagLookup = {
     val reqTags    = p.reqTags.data
-    val tagsInText = p.tagsInTextR
+    val tagsInText = p.atomScan.tagsInReqText
     memo(id => reqTags(id) | tagsInText(id))
   }
 
@@ -45,8 +45,10 @@ private[reqtable] object Logic {
     lazy val g = _g
   }
 
-  private def issueLookup(p: Project): IssueLookup =
-    new IssueLookup(p.issuesInTextR.apply, p.issuesInTextG.apply)
+  private def issueLookup(p: Project): IssueLookup = {
+    val as = p.atomScan
+    new IssueLookup(as.issuesInReqText.apply, as.issuesInGroupText.apply)
+  }
 
   // ===================================================================================================================
   // Expansion

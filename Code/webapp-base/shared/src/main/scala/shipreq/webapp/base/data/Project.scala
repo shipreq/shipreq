@@ -1,6 +1,5 @@
 package shipreq.webapp.base.data
 
-import japgolly.nyaya.util.Multimap
 import monocle.Lens
 import monocle.macros.Lenses
 import scalaz.Equal
@@ -45,7 +44,8 @@ final case class Project(config      : ProjectConfig,
 
   def allRichText: Stream[(String, Stream[Text.AnyOptional])] =
     Stream(
-      ("Generic Req descs", reqs.data.reqs.values.filterT[GenericReq].map(_.title)),
+      ("ReqCodeGroups", reqCodes.data.activeGroups.map(_.group.title)),
+      ("GenericReq titles", reqs.data.reqs.values.filterT[GenericReq].map(_.title)),
       ("Text fields", reqText.data.values.toStream.flatMap(_.values.toStream).map(_.whole)))
 
   def countAtoms: ShowSize.Node = {
@@ -56,6 +56,8 @@ final case class Project(config      : ProjectConfig,
       }
     ShowSize.Node.sum("Atoms", counted: _*)
   }
+
+  lazy val atomScan = AtomScan(this)
 
   /**
    * Transitive closure of implications going source → target.
@@ -79,30 +81,8 @@ final case class Project(config      : ProjectConfig,
       reqs.data.dead,
       f(implications.data))
 
-  lazy val tagsInTextR  : Multimap[ReqId,     Set,  ApplicableTagId] = Multimap(scanAllLiveTextR(Text.findTags(_),   Text.findTags))
-  lazy val issuesInTextR: Multimap[ReqId,     Vector, Atom.AnyIssue] = Multimap(scanAllLiveTextR(Text.findIssues(_), Text.findIssues))
-  lazy val issuesInTextG: Multimap[ReqCodeId, Vector, Atom.AnyIssue] = Multimap(scanAllLiveTextG(Text.findIssues(_)))
-
-  private def scanAllLiveTextR[R](f1: Text.GenericReqTitle.OptionalText => R,
-                                  f2: (Text.CustomTextField.OptionalText, R) => R): Map[ReqId, R] = {
-    val textData   = reqText.data
-    val textFields = config.liveCustomTextFields.map(_.id)
-
-    def searchCustomTextFields(id: ReqId, into: R): R =
-      textFields.foldLeft(into)((q, f) =>
-        textData.get(f).flatMap(_ get id).fold(q)(txt => f2(txt.whole, q)))
-
-    reqs.data.reqs.mapValues {
-      case r: GenericReq => searchCustomTextFields(r.id, f1(r.title))
-    }
-  }
-
-  private def scanAllLiveTextG[R](f: Text.ReqCodeGroupTitle.OptionalText => R): Map[ReqCodeId, R] =
-    reqCodes.data.activeGroups
-      .foldLeft(Map.empty[ReqCodeId, R])((m, g) =>
-        m.updated(g.id, f(g.group.title)))
-
   // Finally, ensure validity
   import japgolly.nyaya._
   this assertSatisfies DataProp.project.all
 }
+

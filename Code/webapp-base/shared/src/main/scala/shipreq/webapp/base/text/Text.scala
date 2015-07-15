@@ -103,22 +103,4 @@ object Text {
    */
   object GenericReqTitle extends ReqTitle
 
-
-  // ===================================================================================================================
-  // Utilities
-
-  import Atom.AnyIssue
-
-  def findIssues(text: Vector[Atom.Issue#Atom], into: Vector[AnyIssue] = Vector.empty): Vector[AnyIssue] =
-    text.foldLeft(into)((q, a) => a match {
-      case i: Atom.Issue#Issue => q :+ i
-      case _                   => q
-    })
-
-  def findTags(text: Vector[Atom.TagRef#Atom], into: Set[ApplicableTagId] = UnivEq.emptySet): Set[ApplicableTagId] =
-    text.foldLeft(into)((q, a) => a match {
-      case t: Atom.TagRef#TagRef => q + t.value
-      case _                     => q
-    })
-
 }
