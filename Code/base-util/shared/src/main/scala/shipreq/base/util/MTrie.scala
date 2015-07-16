@@ -186,9 +186,40 @@ object MTrie {
     def lookup(path: Path): Option[V] =
       atPath(path, None: Option[V])(_.value.map(_.value), t => Some(t.value))
 
-    // I'm cheating by not avoiding deletion here. Will do when needed
     def modify(path: Path)(f: Option[V] => V): Trie =
       valueAtPath(path, put(path, f(None)))(v => put(path, f(Some(v))))
+
+    def remove(path: Path): Trie = {
+      @inline def fail: Trie = trie
+
+      def last(t: Trie, k: K): Trie =
+        t.get(k) match {
+          case Some(Branch(None, _))       => fail
+          case Some(Branch(Some(_), next)) => t.updated(k, Branch(None, next))
+          case Some(_: Value)              => t - k
+          case None                        => fail
+        }
+
+      def notLast(t: Trie, ki: Vector[K], kl: K): Trie =
+        if (ki.isEmpty)
+          last(t, kl)
+        else {
+          val k = ki.head
+          t.get(k) match {
+            case Some(b: Branch) =>
+              val t2 = notLast(b.next, ki.tail, kl)
+              if (t2.nonEmpty)
+                t.updated(k, b.copy(next = t2))
+              else b.value match {
+                case Some(v) => t.updated(k, v)
+                case None    => t - k
+              }
+            case Some(_: Value) | None => fail
+          }
+        }
+
+      notLast(trie, path.init, path.last)
+    }
 
     /**
      * @return A sub-trie beginning at the given path.
