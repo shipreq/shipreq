@@ -154,6 +154,7 @@ object ReqCodeGroup {
 /**
  * All req code data for in a project.
  */
+@Lenses
 final case class ReqCodes(trie: ReqCode.Trie) {
   import ReqCode._
   import MTrie.Ops

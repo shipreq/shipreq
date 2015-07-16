@@ -173,6 +173,9 @@ object DataProp {
   object reqs {
     type T = Requirements
 
+    def ids =
+      id[ReqId].forall((_: T).reqs.keys.toStream)
+
     def reqPubidsInRegister =
       Prop.forall((_: T).reqs.values.toStream)(t =>
         Prop.equal[Req]("Req's pubid refers to itself in the Pubid register")(
@@ -199,7 +202,7 @@ object DataProp {
     }
 
     lazy val all =
-      revAnd(reqPubidsInRegister ∧ pubidsResolveToReqs ∧ pubidReqTypeAssociations) rename "Requirements"
+      revAnd(ids ∧ reqPubidsInRegister ∧ pubidsResolveToReqs ∧ pubidReqTypeAssociations) rename "Requirements"
   }
 
   // -------------------------------------------------------------------------------------------------------------------

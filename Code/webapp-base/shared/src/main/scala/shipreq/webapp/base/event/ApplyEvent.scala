@@ -6,12 +6,14 @@ import scala.reflect.ClassTag
 import scalaz.{-\/, \/-}
 import scalaz.syntax.equal._
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{MMTree, Valid}
+import shipreq.base.util.{MMTree, MTrie, Valid}
 import shipreq.webapp.base.data.{Validators => V, _}
 import shipreq.webapp.base.data.ReqType.Mnemonic
+import shipreq.webapp.base.text.Text
 import DataImplicits._
 import DeletionAction._
 import ApplyEventLib._
+import MTrie.Ops
 
 class ApplyEvent(implicit val trust: Trust) {
 
@@ -54,6 +56,8 @@ class ApplyEvent(implicit val trust: Trust) {
       case e: DeleteCustomField     => FieldEvents           applyDeleteC e
       case e: DeleteStaticField     => FieldEvents           applyDeleteS e
       case e: RepositionField       => FieldEvents           applyReposition e
+
+      case e: CreateGenericReq => ReqEvents createGeneric e
     }
 
   trait TellTrust extends AskTrust {
@@ -522,5 +526,53 @@ class ApplyEvent(implicit val trust: Trust) {
 
     def applyUpdate(e: UpdateCustomImpField): AP =
       update(e.id, e.vs)
+  }
+
+  // ===================================================================================================================
+  object ReqEvents {
+
+    def getCustomReqType(id: CustomReqTypeId): App[Project, CustomReqType] =
+      App(p => CustomReqTypeEvents.imap.need(id)(p.config.customReqTypes.data))
+
+    val genReqs = IMapApp.data(GenericReq)
+
+    val R = Project.reqs ^|-> RevAnd.data
+    val T = Project.reqTags ^|-> RevAnd.data
+    val I = Project.implications ^|-> RevAnd.data ^|-> Implications.srcToTgt
+    val C = Project.reqCodes ^|-> RevAnd.data ^|-> ReqCodes.trie
+
+    def createGeneric(e: CreateGenericReq): AP = {
+      import GenericReqGD._
+      val id = e.id
+
+      App[Project, Project] { p =>
+
+        val reqData = p.reqs.data
+        // TODO Text atoms need to be validated?
+
+        var result =
+          for {
+            rt    ← getCustomReqType(e.rt)(p)
+            title = Title(e.vs).fold(Vector.empty: Text.GenericReqTitle.OptionalText)(_.value.whole)
+            pp    = reqData.pubids.allocC(rt.id)(id)
+            req   = GenericReq(id, pp._2, title, Live)
+            reqs  ← genReqs.add(req)(reqData.genericReqs)
+          } yield R.set(Requirements(reqs, pp._1))(p)
+
+        e.vs.values.foreach {
+          case ValueForTitle   (v) => () // Already used
+          case ValueForTags    (v) => result = result.map(T.modify(_.addvs(id, v.whole)))
+          case ValueForImpTgts (v) => result = result.map(I.modify(_.addvs(id, v.whole)))
+          case ValueForImpSrcs (v) => result = result.map(I.modify(_.addks(v.whole, id)))
+          case ValueForReqCodes(v) =>
+            // TODO need ids for ReqCodes
+            ???
+        }
+
+        result
+      }
+
+    }
+
   }
 }

@@ -71,10 +71,25 @@ trait BaseTestUtil {
       fail(s"Actual: $actual\nExpect: $e\n   Missing: $missing\nUnexpected: $unexpected")
   }
 
-  def fail(msg: String, clearStackTrace: Boolean = true): Nothing = {
-    val e = new AssertionError(BOLD + MAGENTA + msg.replace("\n", s"\n$BOLD$MAGENTA") + RESET)
+  def fail(msg: String, clearStackTrace: Boolean = true): Nothing =
+    _fail(colourMultiline(msg, BOLD + MAGENTA), clearStackTrace)
+
+  def _fail(msg: String, clearStackTrace: Boolean = true): Nothing = {
+    val e = new AssertionError(msg)
     if (clearStackTrace)
       e.setStackTrace(Array.empty)
     throw e
   }
+
+  private def colourMultiline(text: String, colour: String): String =
+    colour + text.replace("\n", "\n" + colour) + RESET
+
+  def assertContainsCI(actual: String, expectFrag: String): Unit =
+    assertContains(actual.toLowerCase, expectFrag.toLowerCase)
+
+  def assertContains(actual: String, expectFrag: String): Unit =
+    if (!actual.contains(expectFrag)) {
+      val a = colourMultiline(actual, BOLD + CYAN)
+      _fail(s"${BOLD}${MAGENTA}Expected [${GREEN}$expectFrag${MAGENTA}] in:$RESET\n$a")
+    }
 }

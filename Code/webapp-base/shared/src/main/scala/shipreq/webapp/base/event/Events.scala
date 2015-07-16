@@ -2,7 +2,9 @@ package shipreq.webapp.base.event
 
 import shipreq.base.util._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.text.Text.GenericReqTitle
 import shipreq.webapp.base.util._
+import Event.NESD
 
 /**
  * A change to a [[Project]].
@@ -12,6 +14,9 @@ import shipreq.webapp.base.util._
  * Only [[ActiveEvent]]s can be written to the DB.
  */
 sealed trait Event
+object Event {
+  type NESD[A] = NonEmpty[SetDiff[A]]
+}
 
 /**
  * Events of which new instances can be created.
@@ -114,17 +119,29 @@ case class CreateCustomImpField(id: CustomField.Implication.Id, vs: CustomImpFie
 case class UpdateCustomImpField(id: CustomField.Implication.Id, vs: CustomImpFieldGD.NonEmptyValues) extends ActiveEvent
 
 // =====================================================================================================================
-//  case class PatchReqTags        (id: ReqId, patch: NESD[ApplicableTagId]) extends ContentUpdate
-//  case class PatchImplicationSrc (id: ReqId, patch: NESD[ReqId])           extends ContentUpdate
-//  case class PatchImplicationTgt (id: ReqId, patch: NESD[ReqId])           extends ContentUpdate
-//  case class PatchReqCodes       (id: ReqId, patch: NESD[ReqCode.Value])   extends ContentUpdate
+// Content
+
+@CreateGenericData
+object GenericReqGD extends GenericData {
+  val Title    = defAttr[GenericReqTitle.NonEmptyText]
+  val ReqCodes = defAttr[NonEmptySet[ReqCode.Value]]
+  val Tags     = defAttr[NonEmptySet[ApplicableTagId]]
+  val ImpSrcs  = defAttr[NonEmptySet[ReqId]]
+  val ImpTgts  = defAttr[NonEmptySet[ReqId]]
+}
+
+case class CreateGenericReq(id: GenericReqId, rt: CustomReqTypeId, vs: GenericReqGD.Values) extends ActiveEvent
+
+// CreateReqCodeGroup
+
+// case class PatchReqTags        (id: ReqId, patch: NESD[ApplicableTagId]) extends ActiveEvent
+// case class PatchImplicationSrc (id: ReqId, patch: NESD[ReqId])           extends ActiveEvent
+// case class PatchImplicationTgt (id: ReqId, patch: NESD[ReqId])           extends ActiveEvent
+// case class PatchReqCodes       (id: ReqId, patch: NESD[ReqCode.Value])   extends ActiveEvent
 //
-//  case class SetGenericReqType   (id: GenericReqId, value: CustomReqTypeId) extends ContentUpdate
-//  case class SetReqCodeGroupCode (id: ReqCodeId,    value: ReqCode.Value)   extends ContentUpdate
+// case class SetGenericReqType   (id: GenericReqId, value: CustomReqTypeId) extends ActiveEvent
+// case class SetReqCodeGroupCode (id: ReqCodeId,    value: ReqCode.Value)   extends ActiveEvent
 //
-//  case class SetReqCodeGroupTitle(id: ReqCodeId,                              value: Text.ReqCodeGroupTitle.OptionalText) extends ContentUpdate
-//  case class SetGenericReqTitle  (id: GenericReqId,                           value: Text.GenericReqTitle.OptionalText)   extends ContentUpdate
-//  case class SetCustomTextField  (id: ReqId,        fid: CustomField.Text.Id, value: Text.CustomTextField.OptionalText)   extends ContentUpdate
-//
-//  implicit val contentUpdateEquality: UnivEq[ContentUpdate] = { import AutoDerive._; deriveUnivEq }
-//}
+// case class SetReqCodeGroupTitle(id: ReqCodeId,                              value: Text.ReqCodeGroupTitle.OptionalText) extends ActiveEvent
+// case class SetGenericReqTitle  (id: GenericReqId,                           value: Text.GenericReqTitle.OptionalText)   extends ActiveEvent
+// case class SetCustomTextField  (id: ReqId,        fid: CustomField.Text.Id, value: Text.CustomTextField.OptionalText)   extends ActiveEvent

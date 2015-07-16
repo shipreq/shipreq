@@ -159,6 +159,7 @@ private[event] object ApplyEventLib {
     //   q
     // }
 
+  // TODO Modify to reject NOP changes?
   @inline def updateL[A, B](l: Lens[A, B]): B => AE[A] =
     updateC(l.set)
 

@@ -59,7 +59,7 @@ object ApplyEventTestFns {
   def assertFail(errFrag: String)(es: Event*)(implicit init: InitialEvents): Unit = {
     val r = apply(init ++ es) run emptyProject
     r match {
-      case -\/(e) => assert(e contains errFrag)
+      case -\/(e) => assertContainsCI(e, errFrag)
       case \/-(_) => fail(s"\nFailure expected but didn't occur.\nEvents were:\n${fmtEvents(es)}")
     }
   }
@@ -70,9 +70,13 @@ object ApplyEventTestFns {
     var tags             = 0
     var customFields     = 0
     var activeFields     = emptyProject.config.fields.data.order.length
+    var reqs             = 0
+
     def ifHard(d: DeletionAction, f: => Unit): Unit =
       if (d == HardDel) f
+
     es foreach {
+      case _: CreateGenericReq      => reqs += 1
       case _: CreateCustomIssueType => customIssueTypes += 1
       case _: CreateCustomReqType   => customReqTypes += 1
       case _: CreateCustomTextField
@@ -98,11 +102,13 @@ object ApplyEventTestFns {
          | _: UpdateApplicableTag
          | _: UpdateTagGroup => ()
     }
+
     assertEq("Σ CustomIssueTypes", p.config.customIssueTypes.data.size, customIssueTypes)
     assertEq("Σ CustomReqTypes", p.config.customReqTypes.data.size, customReqTypes)
     assertEq("Σ Tags", tags, p.config.tags.data.size)
     assertEq("Σ CustomFields", customFields, p.config.fields.data.customFields.size)
     assertEq("Σ ActiveFields", activeFields, p.config.fields.data.fields.unmust.count(_.live :: Live))
+    assertEq("Σ Reqs", reqs, p.reqs.data.reqs.size)
   }
 }
 
