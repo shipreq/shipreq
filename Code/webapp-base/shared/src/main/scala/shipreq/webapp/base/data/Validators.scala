@@ -230,6 +230,16 @@ object Validators {
         VFailure.looseMsg(s"A code cannot have more than ${G.maxNodes} nodes.") // english
       ).toValidator
 
+    val valueAndNodesU: ValidatorU[Value, Value, Value] = {
+      val checkNodes: ValidationPartU[Value, Value] =
+        ValidationPartU { i =>
+          val r1 = i.value.toStream.map(n => node validateU InputCorrected(n.value))
+          val r2: ValidationResult[Stream[Node]] = Traverse[Stream].sequence(r1)
+          r2.map(_ => i.value)
+        }
+      valueU.addValidation(checkNodes)
+    }
+
     def valueUniqueness =
       ValidationPart.test[VS, Value]({ case (vs, InputCorrected(v)) =>
         vs.currentValues.contains(v) || !vs.trie.lookup(v).exists(_.active.isDefined)

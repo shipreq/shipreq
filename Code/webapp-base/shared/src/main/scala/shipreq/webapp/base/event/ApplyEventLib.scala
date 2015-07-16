@@ -3,7 +3,7 @@ package shipreq.webapp.base.event
 import monocle._
 import scala.collection.GenTraversable
 import scala.reflect.ClassTag
-import scalaz.{Equal, -\/, \/, \/-}
+import scalaz.{Equal, -\/, \/, \/-, Traverse}
 import scalaz.syntax.equal._
 import shipreq.base.util._
 import shipreq.webapp.base.data.{Dead, Live, ObjDataId, Project}
@@ -15,14 +15,19 @@ import DeletionAction._
  * Syntax summary:
  * ===============
  *
- * Operator format: <SYM1>=<SYM2>
+ * Operator format: <TYPE₁><CONN><TYPE₂>
  *
- * SYM  TYPE
- * ---  --------
+ * TYPES
+ * -----
  * >    App
  * >>   x => App
  * ?    Result
  * @    Lens
+ *
+ * CONNs
+ * -----
+ * -  Successful output of lhs discarded
+ * =  Successful output of lhs passed to input of rhs
  *
  * App a b          >=>   App b c         =  App a c
  * App b c          <=<   App a b         =  App a c
@@ -34,6 +39,8 @@ import DeletionAction._
  * Lens s t a b     @=>   App a b         =  App s t
  * (b => App c d)  <<=<   App a b         =  (a => App c d)
  * (a => App b c)  <<=?   Result a        =  App b c
+ * Result a         ?-?   Result b        =  Result b
+ * Result a         ?->   App b c         =  App b c
  */
 private[event] object ApplyEventLib {
 
@@ -60,6 +67,21 @@ private[event] object ApplyEventLib {
         case \/-(a)    => f run a
         case e@ -\/(_) => e
       }
+
+    def ?-?[B](f: => Result[B]): Result[B] =
+      r.flatMap(_ => f)
+
+    def ?->[B, C](f: => App[B, C]): App[B, C] =
+      r match {
+        case \/-(_)    => f
+        case e@ -\/(_) => App(_ => e)
+      }
+
+    @inline def join[X, Y](implicit ev: A =:= App[X, Y]): App[X, Y] =
+      r ?=>> ev
+
+    @inline def joinE[X](implicit ev: A =:= App[X, X]): AE[X] =
+      r ?=>> ev
   }
 
   // ===================================================================================================================
@@ -90,7 +112,21 @@ private[event] object ApplyEventLib {
 
     @inline def cmap[Z](f: Z => A): App[Z, B] =
       App(run compose f)
+
+    def traverse[F[_], AA <: A, BB >: B](fa: F[AA])(implicit F: Traverse[F]): Result[F[BB]] =
+      F.traverse(fa)(run)
+
+    def traverseSet[AA <: A, BB >: B](fa: Set[AA])(implicit ev: UnivEq[BB]): Result[Set[BB]] =
+      fa.foldLeft(ok(Set.empty[BB]))((q, a) => for {bs <- q; b <- run(a)} yield bs + b)
   }
+
+//  implicit class InvariantAppOps[A, B](private val app: App[A, B]) extends AnyVal {
+//    def traverse[F[_]](fa: F[A])(implicit F: Traverse[F]): Result[F[B]] =
+//      F.traverse(fa)(app.run)
+//
+//    def traverseSet(fa: Set[A])(implicit ev: UnivEq[B]): Result[Set[B]] =
+//      fa.foldLeft(ok(Set.empty[B]))((q, a) => for {bs <- q; b <- app.run(a)} yield bs + b)
+//  }
 
   object App {
     import ApplyEventLib.{ok => OK}
@@ -132,6 +168,10 @@ private[event] object ApplyEventLib {
   // ===================================================================================================================
   // Lib
 
+  val okUnit: Result[Unit] = ok(())
+
+  val nopUnit: AE[Unit] = App(_ =>  okUnit)
+
   private[this] val _nop = App[Any, Any](ok)
 
   def nop[A] = _nop.asInstanceOf[AE[A]]
@@ -141,6 +181,11 @@ private[event] object ApplyEventLib {
       case scalaz.Success(s) => \/-(s)
       case scalaz.Failure(f) => -\/(f.toText)
     }
+
+  implicit class OptionAppOps[A](private val o: Option[A]) extends AnyVal {
+    @inline def ensureSome(err: => String): Result[A] =
+      o.fold[Result[A]](fail(err))(ok)
+  }
 
   /**
    * If there is an implicit value, allows [[App]]s to be used in for-comprehensions nicely.
@@ -172,12 +217,32 @@ private[event] object ApplyEventLib {
   @inline def whenUntrusted[A](a: => AE[A])(implicit trust: Trust): AE[A] =
     if (trust :: Trusted) nop else a
 
+  @inline def untrustedTest(mustPass: => Boolean, err: => String)(implicit trust: Trust): Result[Unit] =
+    if ((trust :: Trusted) || mustPass) okUnit else fail(err)
+
+  def ensureEqual[A](expect: A)(implicit e: Equal[A], trust: Trust): AE[A] =
+    if (trust :: Trusted) nop else
+      App(a => if (e.equal(a, expect)) ok(a) else fail(s"Expected $expect, got $a"))
+
+  def ensureSome[A](err: =>  String)(implicit trust: Trust): App[Option[A], A] =
+    if (trust :: Trusted)
+      App.ok(_.get)
+    else
+      App(_.fold[Result[A]](fail(err))(ok))
+
+  def ensureNone[A](err: A => String)(implicit trust: Trust): AE[Option[A]] =
+    if (trust :: Trusted)
+      nop
+    else
+      App(_.fold[Result[Option[A]]](ok(None))(a => fail(err(a))))
+
   def validateWith[A](v: ValidatorU[A, _, A])(implicit trust: Trust): AE[A] =
     whenUntrusted(App(v correctAndValidateU _))
 
   def validateWithF[I, A](v: ValidatorU[I, _, A])(i: A => I)(implicit trust: Trust): AE[A] =
     whenUntrusted(App(o => v correctAndValidateU i(o)))
 
+  // TODO rename
   def withUntrustedCheck[B, C](check: (B, C) => Option[String])(ap: (B, C) => B)(implicit trust: Trust): C => AE[B] =
     if (trust :: Trusted)
       c => App.ok(b => ap(b, c))
@@ -186,6 +251,18 @@ private[event] object ApplyEventLib {
 
   def ensureLiveBy[V](live: V => Live)(implicit trust: Trust): AE[V] =
     whenUntrusted(App(v => if (live(v) :: Live) ok(v) else fail(s"Subject is dead: $v")))
+
+  def ensureDeadBy[V](live: V => Live)(implicit trust: Trust): AE[V] =
+    whenUntrusted(App(v => if (live(v) :: Dead) ok(v) else fail(s"Subject is live: $v")))
+
+  case class LiveApp[V](l: Lens[V, Live])(implicit trust: Trust) {
+    private[this] val setLive = l set Live
+    private[this] val setDead = l set Dead
+    val ensureLive: AE[V] = ensureLiveBy(l.get)
+    val ensureDead: AE[V] = ensureDeadBy(l.get)
+    val makeLive  : AE[V] = ensureDead map setLive
+    val makeDead  : AE[V] = ensureLive map setDead
+  }
 
   def narrowCC[A, B <: A](implicit cc: ClassTag[B], trust: Trust): App[A, B] =
     if (trust :: Untrusted)
@@ -242,10 +319,7 @@ private[event] object ApplyEventLib {
      * @return Failure unless value exists.
      */
     def need(k: K): App[M, V] =
-      App(_.get(k) match {
-        case Some(v) => ok(v)
-        case None    => fail(s"$k not found.")
-      })
+      App(_.get(k) ensureSome s"$k not found.")
 
     /** @return Failure if untrusted and value already exists. */
     def add: V => AE[M] =

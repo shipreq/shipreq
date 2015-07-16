@@ -1,8 +1,9 @@
 package shipreq.webapp.base.event
 
+import japgolly.nyaya.util.Multimap
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.Text.GenericReqTitle
+import shipreq.webapp.base.text.Text.{GenericReqTitle, ReqCodeGroupTitle}
 import shipreq.webapp.base.util._
 import Event.NESD
 
@@ -119,12 +120,16 @@ case class CreateCustomImpField(id: CustomField.Implication.Id, vs: CustomImpFie
 case class UpdateCustomImpField(id: CustomField.Implication.Id, vs: CustomImpFieldGD.NonEmptyValues) extends ActiveEvent
 
 // =====================================================================================================================
-// Content
+// Content: Requirements
 
 @CreateGenericData
 object GenericReqGD extends GenericData {
+  // TODO Wait, nonempties here mean update can't clear them!
+  // But wait again, updates don't use GenericReqGD - in which case does it even make sense having this at all?
+  // If all are mandatory and only used in create, just add as create params.
+
   val Title    = defAttr[GenericReqTitle.NonEmptyText]
-  val ReqCodes = defAttr[NonEmptySet[ReqCode.Value]]
+  val ReqCodes = defAttr[NonEmptySet[ReqCode.IdAndValue]]
   val Tags     = defAttr[NonEmptySet[ApplicableTagId]]
   val ImpSrcs  = defAttr[NonEmptySet[ReqId]]
   val ImpTgts  = defAttr[NonEmptySet[ReqId]]
@@ -132,16 +137,41 @@ object GenericReqGD extends GenericData {
 
 case class CreateGenericReq(id: GenericReqId, rt: CustomReqTypeId, vs: GenericReqGD.Values) extends ActiveEvent
 
-// CreateReqCodeGroup
+case class DeleteReq(id: ReqId, da: SoftDeletionAction) extends ActiveEvent
+
+/**
+ * Updates a requirement's reqcodes.
+ *
+ * When a reqcode is renamed it appears both in `remove` and `add`.
+ * Eg. `remove=3, add=(new.name: 3)`.
+ *
+ * @param remove Code to remove. Any referenced in text will be soft-deleted.
+ * @param restore Soft-deleted codes to restore back to active status.
+ * @param add Codes to add. A code can have multiple IDs (see [[ApplyEvent.ReqCodeLogic]] for details) in which case,
+ *            only one becomes active and the rest go into `refsToReqs`.
+ */
+case class PatchReqCodes(id     : ReqId,
+                         remove : Set[ReqCodeId],
+                         restore: Set[ReqCodeId],
+                         add    : Multimap[ReqCode.Value, Set, ReqCodeId]) extends ActiveEvent
 
 // case class PatchReqTags        (id: ReqId, patch: NESD[ApplicableTagId]) extends ActiveEvent
 // case class PatchImplicationSrc (id: ReqId, patch: NESD[ReqId])           extends ActiveEvent
 // case class PatchImplicationTgt (id: ReqId, patch: NESD[ReqId])           extends ActiveEvent
-// case class PatchReqCodes       (id: ReqId, patch: NESD[ReqCode.Value])   extends ActiveEvent
 //
 // case class SetGenericReqType   (id: GenericReqId, value: CustomReqTypeId) extends ActiveEvent
-// case class SetReqCodeGroupCode (id: ReqCodeId,    value: ReqCode.Value)   extends ActiveEvent
-//
-// case class SetReqCodeGroupTitle(id: ReqCodeId,                              value: Text.ReqCodeGroupTitle.OptionalText) extends ActiveEvent
 // case class SetGenericReqTitle  (id: GenericReqId,                           value: Text.GenericReqTitle.OptionalText)   extends ActiveEvent
 // case class SetCustomTextField  (id: ReqId,        fid: CustomField.Text.Id, value: Text.CustomTextField.OptionalText)   extends ActiveEvent
+
+// =====================================================================================================================
+// Content: ReqCode groups
+
+@CreateGenericData
+object ReqCodeGroupGD extends GenericData {
+  val Code  = defAttr[ReqCode.Value]
+  val Title = defAttr[ReqCodeGroupTitle.OptionalText]
+}
+
+case class CreateReqCodeGroup(id: ReqCodeId, vs: ReqCodeGroupGD.NonEmptyValues) extends ActiveEvent
+case class UpdateReqCodeGroup(id: ReqCodeId, vs: ReqCodeGroupGD.NonEmptyValues) extends ActiveEvent
+case class DeleteReqCodeGroup(id: ReqCodeId) extends ActiveEvent

@@ -1,16 +1,18 @@
 package shipreq.webapp.base.event
 
+import japgolly.nyaya.util.Multimap
+import scalaz.{-\/, \/-}
 import utest._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.test.BaseTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
+import shipreq.webapp.base.text.Text.{GenericReqTitle => GRT, ReqCodeGroupTitle}
 import shipreq.webapp.base.util.TypeclassDerivation._
 import ApplyEventTestFns._
 import DeletionAction._
-import UnivEq.option
-import Text.GenericReqTitle
+import MTrie.Ops
+import UnivEq.{option, map, set, boolean}
 
 case class ReqFull(req      : GenericReq,
                    tags     : Set[ApplicableTagId],
@@ -33,6 +35,16 @@ object ReqFull {
 }
 
 object GenericReqEventTest extends TestSuite {
+
+  implicit def rciav(t: (Int, String)) = ReqCode.IdAndValue(t._1, t._2)
+
+  implicit def setLikePatchAdd1(s: Set[(Int, String)]): Multimap[ReqCode.Value, Set, ReqCodeId] =
+    setLikePatchAdd(s map rciav)
+
+  implicit def setLikePatchAdd(s: Set[ReqCode.IdAndValue]): Multimap[ReqCode.Value, Set, ReqCodeId] =
+    Multimap(s.toList.map(iv => iv.value -> Set(iv.id)).toMap)
+
+  val mm = Multimap.empty[ReqCode.Value, Set, ReqCodeId]
 
   val mf: CustomReqTypeId = 100
   val createMF = {
@@ -63,7 +75,7 @@ object GenericReqEventTest extends TestSuite {
   implicit def autoNES[A, B: UnivEq](a: A)(implicit f: A => B) = NonEmptySet[B](f(a))
 
   val empty1 = CreateGenericReq(1, mf, emptyValues)
-  val implied2 = CreateGenericReq(2, mf, emptyValues + ValueForImpSrcs(NonEmptySet(empty1.id)))
+  val implied2 = CreateGenericReq(2, mf, nev(ImpSrcs(NonEmptySet(empty1.id))))
 
   def assertReq(p: Project, id: GenericReqId)(req      : GenericReq,
                                               tags     : Set[ApplicableTagId] = UnivEq.emptySet,
@@ -72,54 +84,384 @@ object GenericReqEventTest extends TestSuite {
                                               reqCodes : Set[ReqCode.Value]   = UnivEq.emptySet): Unit =
     assertEq(p @@ id, Some(ReqFull(req, tags, impliedBy, implies, reqCodes)))
 
+  def createGR(id: GenericReqId, rt: CustomReqTypeId = mf, codes: Set[ReqCode.IdAndValue] = ∅, title: GRT.OptionalText = ∅) = {
+    var vs = emptyValues
+    NonEmptySet.maybe(codes, ())(vs += ReqCodes(_))
+    NonEmptyVector.maybe(title, ())(vs += Title(_))
+    CreateGenericReq(id, rt, vs)
+  }
+
+  def createRCG(id: ReqCodeId, code: ReqCode.Value, title: ReqCodeGroupTitle.OptionalText = ∅) = {
+    import ReqCodeGroupGD._
+    CreateReqCodeGroup(id, nev(Code(code), Title(title)))
+  }
+
+  def updateRCGCode(id: ReqCodeId, code: ReqCode.Value) = {
+    import ReqCodeGroupGD._
+    UpdateReqCodeGroup(id, nev(Code(code)))
+  }
+
+  class ScriptTester {
+    var p = _assertPass()
+
+    def fmtRCs(rc: ReqCodes): Set[String] =
+      rc.trie.cataV(Set.empty[String]) { (q, p, d) =>
+        var n = Set.empty[String]
+        def add(typ: String, id: ReqCodeId, tgt: ReqCode.Target) = {
+          val t = Option(tgt) match {
+            case Some(x: ReqId) => s"Req(#${x.value.toChar.toString})"
+            case Some(g: ReqCodeGroup) => "Grp"
+            case None => ""
+          }
+          n += s"$typ[#${id.value}$t]"
+        }
+        d.active.foreach(a => add("AD", a.id, a.target))
+        for {(req, ids) <- d.refsToReqs.m; id <- ids} add("RR", id, req)
+        for (id <- d.refsToGroup) add("RG", id, null)
+        q ++ n.map(p.reduceMapLeft1(_.value)(_ + "." + _) + ": " + _)
+      }
+
+    var testNo = 0
+    def test(e: Event)(expected: String*): Unit = {
+      testNo += 1
+      ApplyEventTestFns.apply.apply1(e)(p) match {
+        case \/-(p2) => p = p2
+        case -\/(err) => fail(s"$e was expected to pass but failed with: $err")
+      }
+      assertEq(s"Step #$testNo", fmtRCs(p.reqCodes.data), expected.toSet)
+    }
+  }
+
+  val reqA = GenericReqId(97)
+  def patchA(remove: Set[ReqCodeId] = Set.empty,
+             restore: Set[ReqCodeId] = Set.empty,
+             add: Multimap[ReqCode.Value, Set, ReqCodeId] = mm) =
+    PatchReqCodes(reqA, remove = remove, restore = restore, add)
+
+  val reqB = GenericReqId(98)
+  def patchB(remove: Set[ReqCodeId] = Set.empty,
+             restore: Set[ReqCodeId] = Set.empty,
+             add: Multimap[ReqCode.Value, Set, ReqCodeId] = mm) =
+    PatchReqCodes(reqB, remove = remove, restore = restore, add)
+
+  def patch(id: GenericReqId, remove: Set[ReqCodeId] = Set.empty,
+             restore: Set[ReqCodeId] = Set.empty,
+             add: Multimap[ReqCode.Value, Set, ReqCodeId] = mm) =
+    PatchReqCodes(id: GenericReqId, remove = remove, restore = restore, add)
+
+  val delRCG1 = DeleteReqCodeGroup(1)
+
+  val createRefToCode3 = CreateGenericReq(500, mf, nev(
+    Title(NonEmptyVector(GRT.Literal("Ref to #3: "), GRT.CodeRef(3)))))
+
+  val del1 = DeleteReq(1, SoftDel)
+  val delA = DeleteReq(reqA, SoftDel)
+  val delB = DeleteReq(reqB, SoftDel)
+  val restoreA = DeleteReq(reqA, Restore)
+  val restoreCode3From1 = patch(1, restore = Set(3))
+  val removeCode3From1 = patch(1, remove = Set(3))
+
   override def tests = TestSuite {
 
-    'create {
+    'createGenericReq {
       'empty {
         val p = _assertPass(empty1)
         assertReq(p, 1)(GenericReq(1, PubidT(mf, 1), ∅, Live))
       }
 
       'title {
-        val t = NonEmptyVector(GenericReqTitle.Literal("cool"))
-        val p = _assertPass(empty1.copy(vs = nev(ValueForTitle(t))))
+        val t = NonEmptyVector(GRT.Literal("cool"))
+        val p = _assertPass(empty1.copy(vs = nev(Title(t))))
         assertReq(p, 1)(GenericReq(1, PubidT(mf, 1), t.whole, Live))
       }
 
       'tags {
         val t = NonEmptySet(at1)
-        val p = _assertPass(empty1.copy(vs = nev(ValueForTags(t))))
+        val p = _assertPass(empty1.copy(vs = nev(Tags(t))))
         assertReq(p, 1)(GenericReq(1, PubidT(mf, 1), ∅, Live), tags = t.whole)
       }
 
       'impSrc {
         val v = NonEmptySet[ReqId](empty1.id)
-        val p = _assertPass(empty1, CreateGenericReq(5, mf, nev(ValueForImpSrcs(v))))
+        val p = _assertPass(empty1, CreateGenericReq(5, mf, nev(ImpSrcs(v))))
         assertReq(p, 5)(GenericReq(5, PubidT(mf, 2), ∅, Live), impliedBy = v.whole)
         assertReq(p, 1)(GenericReq(1, PubidT(mf, 1), ∅, Live), implies = Set(5))
       }
 
       'impTgt {
         val v = NonEmptySet[ReqId](empty1.id)
-        val p = _assertPass(empty1, CreateGenericReq(5, mf, nev(ValueForImpTgts(v))))
+        val p = _assertPass(empty1, CreateGenericReq(5, mf, nev(ImpTgts(v))))
         assertReq(p, 5)(GenericReq(5, PubidT(mf, 2), ∅, Live), implies = v.whole)
         assertReq(p, 1)(GenericReq(1, PubidT(mf, 1), ∅, Live), impliedBy = Set(5))
       }
 
-      // reqCodes
+      'reqCodes {
+        val rcs = NonEmptySet[ReqCode.IdAndValue](7 -> "a.b.c", 8 -> "d")
+        val p = _assertPass(empty1.copy(vs = nev(ReqCodes(rcs))))
+        assertReq(p, 1)(GenericReq(1, PubidT(mf, 1), ∅, Live), reqCodes = rcs.whole.map(_.value))
+        assertEq(p.reqCodes.data.reqCodesById, rcs.whole.map(_.toTupleIV).toMap)
+      }
 
       'badId           - List(0, -1).foreach(i => assertFail("id")(empty1.copy(id = i)))
       'idInUse         - assertFail("exists")(empty1, empty1)
       'reqTypeNotFound - assertFail("found")(empty1.copy(rt = 666))
       'reqTypeDead     - assertFail("live")(DeleteCustomReqType(mf, SoftDel), empty1)
-      'tagNotFound     - assertFail("tag")(empty1.copy(vs = nev(ValueForTags(6.AT))))
-      'tagIsGroup      - assertFail("tag")(empty1.copy(vs = nev(ValueForTags(tg1.value.AT))))
+      'tagNotFound     - assertFail("tag")(empty1.copy(vs = nev(Tags(6.AT))))
+      'tagIsGroup      - assertFail("tag")(empty1.copy(vs = nev(Tags(tg1.value.AT))))
       // tagIsDead - allow it
-      'impSrcNotFound     - assertFail("")(empty1.copy(vs = nev(ValueForImpSrcs(123))))
-      'impTgtNotFound     - assertFail("")(empty1.copy(vs = nev(ValueForImpTgts(123))))
-      'impSrcSelf         - assertFail("")(empty1.copy(vs = nev(ValueForImpSrcs(1))))
-      'impTgtSelf         - assertFail("")(empty1.copy(vs = nev(ValueForImpTgts(1))))
-      'impCycle           - assertFail("")(empty1, implied2, CreateGenericReq(3, mf, nev(ValueForImpSrcs(2), ValueForImpTgts(1))))
+      'impSrcNotFound     - assertFail("")(empty1.copy(vs = nev(ImpSrcs(123))))
+      'impTgtNotFound     - assertFail("")(empty1.copy(vs = nev(ImpTgts(123))))
+      'impSrcSelf         - assertFail("")(empty1.copy(vs = nev(ImpSrcs(1))))
+      'impTgtSelf         - assertFail("")(empty1.copy(vs = nev(ImpTgts(1))))
+      'impCycle           - assertFail("")(empty1, implied2, CreateGenericReq(3, mf, nev(ImpSrcs(2), ImpTgts(1))))
+      'codeBad            - assertFail("")(empty1.copy(vs = nev(ReqCodes(8 -> "!"))))
+      'codeBadCaps        - assertFail("")(empty1.copy(vs = nev(ReqCodes(8 -> "NO"))))
+      'codeIdInUseByReq   - assertFail("")(createGR(1, codes = Set(5 -> "a")), createGR(2, codes = Set(5 -> "b")))
+      'codeIdInUseByGrp   - assertFail("")(createRCG(5, "a"),                  createGR(2, codes = Set(5 -> "b")))
+      'codeInUseByReq     - assertFail("")(createGR(1, codes = Set(5 -> "a")), createGR(2, codes = Set(6 -> "a")))
+      'codeInUseByGrp     - assertFail("")(createRCG(5, "a"),                  createGR(2, codes = Set(6 -> "a")))
+    }
+
+    'createCodeGroup {
+      'badId          - List(0,-1).foreach(i => assertFail("id")(createRCG(i, "hi")))
+      'badCode        - assertFail("code")  (createRCG(1, "!!"))
+      'codeInCaps     - assertFail("code")  (createRCG(1, "NO"))
+      'idInUseByReq   - assertFail("")      (createGR(9, codes = Set(1 -> "a")), createRCG(1, "b"))
+      'idInUseByGrp   - assertFail("")      (createRCG(1, "a"),                  createRCG(1, "b"))
+      'codeInUseByReq - assertFail("active")(createGR(9, codes = Set(1 -> "a")), createRCG(2, "a"))
+      'codeInUseByGrp - assertFail("active")(createRCG(1, "a"),                  createRCG(2, "a"))
+    }
+
+    'updateCodeGroup {
+      'title {
+        import ReqCodeGroupGD._
+        val t = Vector(ReqCodeGroupTitle.Literal("hi there"))
+        val p = _assertPass(createRCG(1, "a"), UpdateReqCodeGroup(1, nev(Title(t))))
+        val g = p.reqCodes.data.activeGroups.head.group
+        assertEq(g, ReqCodeGroup(t))
+      }
+
+      'badCode    - assertFail("code")     (createRCG(1, "a"), updateRCGCode(1, "!!"))
+      'codeInCaps - assertFail("code")     (createRCG(1, "a"), updateRCGCode(1, "NO"))
+      'idNotFound - assertFail("not found")(updateRCGCode(666, "new"))
+      'idIsReq    - assertFail("group")    (createGR(1, codes = Set(1 -> "a")), updateRCGCode(1, "b"))
+
+      'tgtCodeInUseByReq -
+        assertFail("active")(createRCG(1, "old"), createGR(2, codes = Set(3 -> "new")), updateRCGCode(1, "new"))
+
+      'tgtCodeInUseByGrp -
+        assertFail("active")(createRCG(1, "old"), createRCG(2, "new"), updateRCGCode(1, "new"))
+    }
+
+    'deleteCodeGroup {
+      'ok - {
+        val p = _assertPass(createRCG(1, "a"), delRCG1)
+        assertEq("No CodeRefs means no need to retain anything.", p.reqCodes.data.trie.isEmpty, true)
+      }
+      'notFound - assertFail("not found")(delRCG1)
+      'twice    - assertFail("not found")(createRCG(1, "a"), delRCG1, delRCG1)
+    }
+
+    'patchReqCodes {
+      // positive tests are in the script tests below
+
+      'reqIdNotFound     - assertFail("")(patchA(add = Set(1 -> "mm")))
+      'reqDead           - assertFail("live")(empty1, del1, patch(1, add = Set(5 -> "yay")))
+      'addcodeSym        - assertFail("")(empty1, patch(1, add = Set(7 -> "!!")))
+      'addcodeCaps       - assertFail("")(empty1, patch(1, add = Set(7 -> "NO")))
+      'addIdInUseByReq   - assertFail("")(empty1, createGR(2, codes = Set(3 -> "x")), patch(1, add = Set(3 -> "y")))
+      'addIdInUseByGrp   - assertFail("")(empty1, createRCG(3, "x"),                  patch(1, add = Set(3 -> "y")))
+      'addCodeInUseByReq - assertFail("")(empty1, createGR(2, codes = Set(3 -> "x")), patch(1, add = Set(9 -> "x")))
+      'addCodeInUseByGrp - assertFail("")(empty1, createRCG(3, "x"),                  patch(1, add = Set(9 -> "x")))
+      'removeNotFound    - assertFail("")(empty1,                                     removeCode3From1)
+      'removeOtherReqs   - assertFail("")(empty1, createGR(2, codes = Set(3 -> "x")), removeCode3From1)
+      'removeGrps        - assertFail("")(empty1, createRCG(3, "x"),                  removeCode3From1)
+      'removeDeadOwn     - assertFail("")(createGR(1, codes = Set(3 -> "x")), removeCode3From1, removeCode3From1)
+
+      'restoreNotFound      - assertFail("")(empty1,                                     restoreCode3From1)
+      'restoreLiveOwn       - assertFail("")(createGR(1, codes = Set(3 -> "x")),         restoreCode3From1)
+      'restoreLiveOtherReqs - assertFail("")(empty1, createGR(2, codes = Set(3 -> "x")), restoreCode3From1)
+      'restoreLiveGrps      - assertFail("")(empty1, createRCG(3, "x"),                  restoreCode3From1)
+
+      'restoreDeadOtherReqs -
+        assertFail("")(empty1, createGR(2, codes = Set(3 -> "x")), createRefToCode3, patch(2, remove = Set(3)), restoreCode3From1)
+
+      'restoreDeadGrps -
+        assertFail("")(empty1, createRCG(3, "x"), createRefToCode3, DeleteReqCodeGroup(3), restoreCode3From1)
+
+      // fail when same ID in remove/restore
+      // fail when same ID in add/restore
+    }
+
+    // See Design/req_codes.ods
+    'reqCodes {
+      'script1 {
+        val tester = new ScriptTester
+        import tester.test
+
+        // 1.1: Create RCG ref
+        test(createRCG(3, "a.b.c"))("a.b.c: AD[#3Grp]")
+
+        // Create a CodeRef to #3
+        test(createRefToCode3)("a.b.c: AD[#3Grp]")
+
+        // 1.2: Rename 1→1'
+        test(updateRCGCode(3, "a.x"))("a.x: AD[#3Grp]")
+
+        // 1.3: Delete RCG
+        test(DeleteReqCodeGroup(3))("a.x: RG[#3]")
+
+        // 1.4: Restore RCG
+        // TODO hmmm: when creating the event, it will need to check to reuse the existing id
+        test(createRCG(3, "a.x"))("a.x: AD[#3Grp]")
+
+        // 1.5: Delete RCG
+        test(DeleteReqCodeGroup(3))("a.x: RG[#3]")
+
+        // 1.6: Create RCᵣ
+        val createA = CreateGenericReq(reqA, mf, nev(ReqCodes(4 -> "a.x")))
+        test(createA)("a.x: AD[#4Req(#a)]", "a.x: RG[#3]")
+
+        // 1.7: Rename RCᵣ
+        test(patchA(remove = Set(4), add = Set(4 -> "y")))("y: AD[#4Req(#a)]", "a.x: RG[#3]")
+
+        // 1.8: Restore RCG
+        // TODO hmmm: when creating the event, it will need to check to reuse the existing id
+        test(createRCG(3, "a.x"))("y: AD[#4Req(#a)]", "a.x: AD[#3Grp]")
+      }
+
+      'script2 {
+        val tester = new ScriptTester
+        import tester.test
+
+        // 2.1: Create RCᵣ ref
+        val createA = CreateGenericReq(reqA, mf, nev(
+          Title(NonEmptyVector(GRT.Literal("Ref to self: "), GRT.CodeRef(1))),
+          ReqCodes(1 -> "a.b.c")))
+        test(createA)("a.b.c: AD[#1Req(#a)]")
+
+        // 2.2: Rename 1→1'
+        test(patchA(remove = Set(1), add = Set(1 -> "y.y.z")))("y.y.z: AD[#1Req(#a)]")
+
+        // 2.3: Delete RCᵣ
+        test(delA)("y.y.z: RR[#1Req(#a)]")
+
+        // 2.4: Restore RCᵣ
+        test(restoreA)("y.y.z: AD[#1Req(#a)]")
+
+        // 2.5: Rename 1→n+1
+        test(patchA(add = Set(2 -> "n.a")))("n.a: AD[#2Req(#a)]", "y.y.z: AD[#1Req(#a)]")
+
+        // 2.6: Rename n+1→1
+        test(patchA(remove = Set(2)))("y.y.z: AD[#1Req(#a)]")
+
+        // 2.7: Rename 1→n
+        val expect27 = Seq("n.b: AD[#3Req(#a)]", "n.c: AD[#4Req(#a)]", "y.y.z: RR[#1Req(#a)]")
+        test(patchA(remove = Set(1), add = Set(3 -> "n.b", 4 -> "n.c")))(expect27: _*)
+
+        // Create a CodeRef to #3
+        test(createRefToCode3)(expect27: _*)
+
+        // 2.8: Rename n→n+1
+        test(patchA(restore = Set(1)))(
+          "n.b: AD[#3Req(#a)]", "n.c: AD[#4Req(#a)]", "y.y.z: AD[#1Req(#a)]")
+
+        // 2.9: Rename n+1→1'
+        test(patchA(remove = Set(1,3,4), add = mm.addvs("aaa", Set(1, 3))))(
+          "aaa: AD[#1Req(#a)]", "aaa: RR[#3Req(#a)]")
+
+        // 2.10: Rename 1→n+1
+        test(patchA(add = Set(50 -> "n.d")))(
+          "aaa: AD[#1Req(#a)]", "aaa: RR[#3Req(#a)]", "n.d: AD[#50Req(#a)]")
+
+        // 2.11: Rename n+1→n+1
+        test(patchA(remove = Set(50), add = Set(5 -> "n.ee", 6 -> "n.ef")))(
+          "aaa: AD[#1Req(#a)]", "aaa: RR[#3Req(#a)]", "n.ee: AD[#5Req(#a)]", "n.ef: AD[#6Req(#a)]")
+
+        // 2.12: Rename n+1→n
+        test(patchA(remove = Set(1, 3)))(
+          "aaa: RR[#1Req(#a)]", "aaa: RR[#3Req(#a)]", "n.ee: AD[#5Req(#a)]", "n.ef: AD[#6Req(#a)]")
+
+        // 2.13: Rename n→1
+        // TODO hmmm: restore = Set(1) should be the proper behaviour here really as only one id per target is restored
+        test(patchA(remove = Set(5, 6), restore = Set(1, 3)))(
+          "aaa: AD[#1Req(#a)]", "aaa: RR[#3Req(#a)]")
+
+        // 2.14: Rename 1→n+1
+        test(patchA(add = Set(7 -> "n.f")))(
+          "aaa: AD[#1Req(#a)]", "aaa: RR[#3Req(#a)]", "n.f: AD[#7Req(#a)]")
+
+        // 2.15: Rename n+1→0
+        test(patchA(remove = Set(1, 3, 7)))(
+          "aaa: RR[#1Req(#a)]", "aaa: RR[#3Req(#a)]")
+
+        // 2.16: Restore RCᵣ + n
+        test(patchA(restore = Set(1, 3), add = Set(8 -> "n.h")))(
+          "aaa: AD[#1Req(#a)]", "aaa: RR[#3Req(#a)]", "n.h: AD[#8Req(#a)]")
+
+        // 2.17: Delete RCᵣ + n
+        // n.h goes because it has no refs
+        test(delA)("aaa: RR[#1Req(#a)]", "aaa: RR[#3Req(#a)]")
+
+        // 2.18: Create RCG
+        test(createRCG(9, "aaa"))(
+          "aaa: AD[#9Grp]", "aaa: RR[#1Req(#a)]", "aaa: RR[#3Req(#a)]")
+
+        // 2.19: Rename RCG
+        test(updateRCGCode(9, "ggg"))(
+          "ggg: AD[#9Grp]", "aaa: RR[#1Req(#a)]", "aaa: RR[#3Req(#a)]")
+
+        // 2.20: Create RCᵣ #b
+        test(CreateGenericReq(98, mf, nev(ReqCodes(10 -> "aaa"))))(
+          "ggg: AD[#9Grp]", "aaa: AD[#10Req(#b)]", "aaa: RR[#1Req(#a)]", "aaa: RR[#3Req(#a)]")
+
+        // 2.21: Rename RCᵣ #b
+        test(patchB(remove = Set(10), add = Set(10 -> "bbb")))(
+          "ggg: AD[#9Grp]", "bbb: AD[#10Req(#b)]", "aaa: RR[#1Req(#a)]", "aaa: RR[#3Req(#a)]")
+
+        // 2.22: Restore RCᵣ
+        test(restoreA)(
+          "ggg: AD[#9Grp]", "bbb: AD[#10Req(#b)]", "aaa: AD[#1Req(#a)]", "aaa: RR[#3Req(#a)]")
+      }
+
+      'script3 {
+        val tester = new ScriptTester
+        import tester.test
+
+        // Create req a
+        test(createGR(reqA, codes = Set(1 -> "one", 3 -> "three")))(
+          "one: AD[#1Req(#a)]", "three: AD[#3Req(#a)]")
+
+        // Create refs to it
+        val refs = CreateGenericReq(500, mf, nev(
+          Title(NonEmptyVector(GRT.Literal("Refs to #1 and #3: "), GRT.CodeRef(3), GRT.CodeRef(1)))))
+        test(refs)("one: AD[#1Req(#a)]", "three: AD[#3Req(#a)]")
+
+        // Delete req a
+        test(delA)("one: RR[#1Req(#a)]", "three: RR[#3Req(#a)]")
+
+        // Create req b - usurp a reqcode!!
+        test(createGR(reqB, codes = Set(9 -> "three", 4 -> "four")))(
+          "one: RR[#1Req(#a)]", "three: RR[#3Req(#a)]", "three: AD[#9Req(#b)]", "four: AD[#4Req(#b)]")
+
+        // Restore req a
+        test(restoreA)("one: AD[#1Req(#a)]", "three: RR[#3Req(#a)]", "three: AD[#9Req(#b)]", "four: AD[#4Req(#b)]")
+
+        // Delete req b
+        test(delB)("one: AD[#1Req(#a)]", "three: RR[#3Req(#a)]")
+
+        // Delete req a
+        test(delA)("one: RR[#1Req(#a)]", "three: RR[#3Req(#a)]")
+
+        // Create group - usurp a reqcode!!
+        test(createRCG(8, "one"))("one: RR[#1Req(#a)]", "three: RR[#3Req(#a)]", "one: AD[#8Grp]")
+
+        // Restore req a
+        test(restoreA)("one: RR[#1Req(#a)]", "three: AD[#3Req(#a)]", "one: AD[#8Grp]")
+
+        // Delete group
+        test(DeleteReqCodeGroup(8))("one: RR[#1Req(#a)]", "three: AD[#3Req(#a)]")
+      }
     }
   }
 }

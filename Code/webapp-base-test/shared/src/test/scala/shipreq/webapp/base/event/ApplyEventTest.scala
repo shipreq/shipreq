@@ -46,7 +46,7 @@ object ApplyEventTestFns {
 
   def _assertPass(es: Event*)(implicit init: InitialEvents): Project = {
     val es2 = init ++ es
-    val r = apply(es2) run emptyProject
+    val r = apply(es2)(emptyProject)
     val p =
       r match {
         case \/-(v) => v
@@ -57,7 +57,7 @@ object ApplyEventTestFns {
   }
 
   def assertFail(errFrag: String)(es: Event*)(implicit init: InitialEvents): Unit = {
-    val r = apply(init ++ es) run emptyProject
+    val r = apply(init ++ es)(emptyProject)
     r match {
       case -\/(e) => assertContainsCI(e, errFrag)
       case \/-(_) => fail(s"\nFailure expected but didn't occur.\nEvents were:\n${fmtEvents(es)}")
@@ -70,13 +70,14 @@ object ApplyEventTestFns {
     var tags             = 0
     var customFields     = 0
     var activeFields     = emptyProject.config.fields.data.order.length
-    var reqs             = 0
+    var activeReqs       = 0
+    var rcgs             = 0
 
     def ifHard(d: DeletionAction, f: => Unit): Unit =
       if (d == HardDel) f
 
     es foreach {
-      case _: CreateGenericReq      => reqs += 1
+      case _: CreateGenericReq      => activeReqs += 1
       case _: CreateCustomIssueType => customIssueTypes += 1
       case _: CreateCustomReqType   => customReqTypes += 1
       case _: CreateCustomTextField
@@ -84,14 +85,18 @@ object ApplyEventTestFns {
          | _: CreateCustomImpField  => activeFields += 1; customFields += 1
       case _: CreateTagGroup
          | _: CreateApplicableTag   => tags += 1
+      case _: CreateReqCodeGroup    => rcgs += 1
 
       case DeleteCustomIssueType(_, d)       => ifHard(d, customIssueTypes -= 1)
       case DeleteCustomReqType  (_, d)       => ifHard(d, customReqTypes -= 1)
       case DeleteTag            (_, d)       => ifHard(d, tags -= 1)
       case DeleteStaticField    (_)          => activeFields -= 1
+      case DeleteReq            (_, SoftDel) => activeReqs -= 1
+      case DeleteReq            (_, Restore) => activeReqs += 1
       case DeleteCustomField    (_, HardDel) => activeFields -= 1; customFields -= 1
       case DeleteCustomField    (_, SoftDel) => activeFields -= 1
       case DeleteCustomField    (_, Restore) => activeFields += 1
+      case DeleteReqCodeGroup   (_)          => rcgs -= 1
 
       case _: UpdateCustomIssueType
          | _: UpdateCustomReqType
@@ -99,6 +104,8 @@ object ApplyEventTestFns {
          | _: UpdateCustomTagField
          | _: UpdateCustomImpField
          | _: RepositionField
+         | _: PatchReqCodes
+         | _: UpdateReqCodeGroup
          | _: UpdateApplicableTag
          | _: UpdateTagGroup => ()
     }
@@ -108,7 +115,8 @@ object ApplyEventTestFns {
     assertEq("Σ Tags", tags, p.config.tags.data.size)
     assertEq("Σ CustomFields", customFields, p.config.fields.data.customFields.size)
     assertEq("Σ ActiveFields", activeFields, p.config.fields.data.fields.unmust.count(_.live :: Live))
-    assertEq("Σ Reqs", reqs, p.reqs.data.reqs.size)
+    assertEq("Σ ActiveReqs", activeReqs, p.reqs.data.reqs.values.filter(_.live :: Live).size)
+    assertEq("Σ ReqCodeGroups", rcgs, p.reqCodes.data.activeGroups.size)
   }
 }
 

@@ -189,6 +189,9 @@ object MTrie {
     def modify(path: Path)(f: Option[V] => V): Trie =
       valueAtPath(path, put(path, f(None)))(v => put(path, f(Some(v))))
 
+    def modifyIfExists(path: Path)(f: V => V): Option[Trie] =
+      valueAtPath[Option[Trie]](path, None)(v => Some(put(path, f(v))))
+
     def remove(path: Path): Trie = {
       @inline def fail: Trie = trie
 

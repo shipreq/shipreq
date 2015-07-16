@@ -27,6 +27,14 @@ final case class ReqCodeId(value: Int) extends TaggedInt
  */
 object ReqCode {
 
+  case class IdAndValue(id: ReqCodeId, value: Value) {
+    @inline def toTupleIV: (ReqCodeId, Value) =
+      (id, value)
+    @inline def toTupleVI: (Value, ReqCodeId) =
+      (value, id)
+  }
+  implicit def idAndValueEquality: UnivEq[IdAndValue] = deriveUnivEq
+
   /**
    * A textual ID that refers to a requirement.
    *
@@ -113,6 +121,7 @@ object ReqCode {
    *
    * @param refsToGroup Previous IDs still referenced in rich text.
    * @param refsToReqs Previous req-associations still referenced in rich text.
+   *                   Semantically: TargetReq ← ReqCodeIds
    */
   @Lenses
   final case class Data(active     : Option[ActiveData],
@@ -145,6 +154,8 @@ final case class ReqCodeGroup(title: Text.ReqCodeGroupTitle.OptionalText) extend
     ReqCodeGroup.AndId(id, this)
 }
 object ReqCodeGroup {
+  val empty = ReqCodeGroup(Vector.empty)
+
   final case class AndId(id: ReqCodeId, group: ReqCodeGroup)
 
   implicit val equality     : UnivEq[ReqCodeGroup] = deriveUnivEq
@@ -171,6 +182,10 @@ final case class ReqCodes(trie: ReqCode.Trie) {
   lazy val activeReqCodesByTarget: Multimap[Target, Set, Value] =
     cataA(UnivEq.emptySetMultimap[Target, Value])((q, c, d) =>
       q.add(d.target, c))
+
+  lazy val inactiveIdsByReqId: Multimap[ReqId, Set, ReqCodeId] =
+    trie.cataV(UnivEq.emptySetMultimap[ReqId, ReqCodeId])((q, c, d) =>
+      q ++ d.refsToReqs.m)
 
   lazy val reqCodesById: Map[ReqCodeId, Value] =
     trie.cataV(UnivEq.emptyMap[ReqCodeId, Value])((q, c, d) =>
@@ -286,6 +301,7 @@ object ReqT {
 
 final case class GenericReqId(value: Int) extends TaggedInt with ReqIdT[CustomReqTypeId]
 
+@Lenses
 final case class GenericReq(id   : GenericReqId,
                             pubid: PubidC,
                             title: Text.GenericReqTitle.OptionalText,

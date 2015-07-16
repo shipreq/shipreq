@@ -225,11 +225,14 @@ object DataProp {
         .forall[T, List](_.trie.cataN[List[Data]](Nil)((q, n) => n.fold(_ => q, _.value :: q)))
         .rename("No empty terminals")
 
+    def ids =
+      id[ReqCodeId].forall((_: T).allIds)
+
     def uniqueIds =
       Prop.distinct("ID", (_: T).allIds)
 
     lazy val all =
-      revAnd(branchesMustBranch ∧ nonEmptyTerminals ∧ uniqueIds) rename "ReqCodes"
+      revAnd(branchesMustBranch ∧ nonEmptyTerminals ∧ uniqueIds ∧ ids) rename "ReqCodes"
   }
 
   // -------------------------------------------------------------------------------------------------------------------
