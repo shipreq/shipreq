@@ -70,7 +70,7 @@ object GenericReqEventTest extends TestSuite {
     def @@(id: GenericReqId) = ReqFull.extract(p, id)
   }
 
-  import GenericReqGD._
+  import CreateGenericReqGD._
 
   implicit def autoNES[A, B: UnivEq](a: A)(implicit f: A => B) = NonEmptySet[B](f(a))
 

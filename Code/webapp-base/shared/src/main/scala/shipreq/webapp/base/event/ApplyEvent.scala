@@ -553,11 +553,10 @@ class ApplyEvent(implicit val trust: Trust) {
     def needCustomReqType(id: CustomReqTypeId): App[Project, CustomReqType] =
       App(p => CustomReqTypeEvents.imap.need(id)(p.config.customReqTypes.data))
 
-    def createGeneric(e: CreateGenericReq): AP = {
-      import GenericReqGD._
-      val id = e.id
-
+    def createGeneric(e: CreateGenericReq): AP =
       App[Project, Project] { p =>
+        import CreateGenericReqGD._
+        val id = e.id
 
         val reqData = p.reqs.data
         // TODO Text atoms need to be validated?
@@ -581,7 +580,6 @@ class ApplyEvent(implicit val trust: Trust) {
 
         result
       }
-    }
 
     def applyDelete(e: DeleteReq): AP =
       e.id match {

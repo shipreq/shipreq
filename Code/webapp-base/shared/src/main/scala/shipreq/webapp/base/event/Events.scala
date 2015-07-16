@@ -122,12 +122,13 @@ case class UpdateCustomImpField(id: CustomField.Implication.Id, vs: CustomImpFie
 // =====================================================================================================================
 // Content: Requirements
 
+/**
+ * This is only used in [[CreateGenericReq]].
+ * All fields are optional; any mandatory data is required in the [[CreateGenericReq]] constructor directly. Thus,
+ * when a field is provided, its value must be non-empty (with emptiness representable by omitting the field).
+ */
 @CreateGenericData
-object GenericReqGD extends GenericData {
-  // TODO Wait, nonempties here mean update can't clear them!
-  // But wait again, updates don't use GenericReqGD - in which case does it even make sense having this at all?
-  // If all are mandatory and only used in create, just add as create params.
-
+object CreateGenericReqGD extends GenericData {
   val Title    = defAttr[GenericReqTitle.NonEmptyText]
   val ReqCodes = defAttr[NonEmptySet[ReqCode.IdAndValue]]
   val Tags     = defAttr[NonEmptySet[ApplicableTagId]]
@@ -135,7 +136,7 @@ object GenericReqGD extends GenericData {
   val ImpTgts  = defAttr[NonEmptySet[ReqId]]
 }
 
-case class CreateGenericReq(id: GenericReqId, rt: CustomReqTypeId, vs: GenericReqGD.Values) extends ActiveEvent
+case class CreateGenericReq(id: GenericReqId, rt: CustomReqTypeId, vs: CreateGenericReqGD.Values) extends ActiveEvent
 
 case class DeleteReq(id: ReqId, da: SoftDeletionAction) extends ActiveEvent
 
