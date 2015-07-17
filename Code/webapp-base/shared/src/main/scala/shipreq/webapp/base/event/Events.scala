@@ -3,7 +3,7 @@ package shipreq.webapp.base.event
 import japgolly.nyaya.util.Multimap
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.Text.{GenericReqTitle, ReqCodeGroupTitle}
+import shipreq.webapp.base.text.Text.{GenericReqTitle, CustomTextField, ReqCodeGroupTitle}
 import shipreq.webapp.base.util._
 import Event.NESD
 
@@ -160,9 +160,11 @@ case class PatchReqTags        (id: ReqId, patch: NESD[ApplicableTagId]) extends
 case class PatchImplicationSrc (id: ReqId, patch: NESD[ReqId])           extends ActiveEvent
 case class PatchImplicationTgt (id: ReqId, patch: NESD[ReqId])           extends ActiveEvent
 
-// case class SetGenericReqType   (id: GenericReqId, value: CustomReqTypeId) extends ActiveEvent
-// case class SetGenericReqTitle  (id: GenericReqId,                           value: Text.GenericReqTitle.OptionalText)   extends ActiveEvent
-// case class SetCustomTextField  (id: ReqId,        fid: CustomField.Text.Id, value: Text.CustomTextField.OptionalText)   extends ActiveEvent
+case class SetGenericReqType(id: GenericReqId, value: CustomReqTypeId) extends ActiveEvent
+
+//case class SetGenericReqTitle(id: GenericReqId, value: GenericReqTitle.OptionalText) extends ActiveEvent
+
+//case class SetCustomTextField(id: ReqId, fid: CustomField.Text.Id, value: CustomTextField.OptionalText) extends ActiveEvent
 
 // =====================================================================================================================
 // Content: ReqCode groups

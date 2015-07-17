@@ -12,7 +12,7 @@ import shipreq.webapp.base.util.TypeclassDerivation._
 import ApplyEventTestFns._
 import DeletionAction._
 import MTrie.Ops
-import UnivEq.{option, map, set, boolean}
+import UnivEq.{option, map, set, boolean, int}
 
 case class ReqFull(req      : GenericReq,
                    tags     : Set[ApplicableTagId],
@@ -47,9 +47,12 @@ object GenericReqEventTest extends TestSuite {
   val mm = Multimap.empty[ReqCode.Value, Set, ReqCodeId]
 
   val mf: CustomReqTypeId = 100
-  val createMF = {
+  val fr: CustomReqTypeId = 101
+  val (createMF, createFR) = {
     import CustomReqTypeGD._
-    CreateCustomReqType(mf, nev(Mnemonic("MF"), Name("MajFea"), Imp(false)))
+    ( CreateCustomReqType(mf, nev(Mnemonic("MF"), Name("MajFea"), Imp(false)))
+    , CreateCustomReqType(fr, nev(Mnemonic("FR"), Name("FunReq"), Imp(false)))
+    )
   }
 
   val at1: ApplicableTagId = 11
@@ -67,7 +70,7 @@ object GenericReqEventTest extends TestSuite {
     CreateTagGroup(tg1, nev(Name("TG #1"), Desc(None), MutexChildren(false)))
   }
 
-  implicit val init = InitialEvents(createMF, createAT1, createAT2, createTG1)
+  implicit val init = InitialEvents(createMF, createFR, createAT1, createAT2, createTG1)
 
   implicit class ProjectExt(private val p: Project) extends AnyVal {
     def @@(id: GenericReqId) = ReqFull.extract(p, id)
@@ -546,5 +549,27 @@ object GenericReqEventTest extends TestSuite {
       // 'removeMissingTag = nop
       // 'addExistingTag   = nop
     }
+
+    'setGenericReqType {
+      'ok {
+        var es = Vector[Event](empty3, empty1)
+        def test(e: Event)(expect: PubidC): Unit = {
+          es :+= e
+          val p = _assertPass(es: _*)
+          val d = p.reqs.data
+          assertEq(d.genericReqs.size, 2)
+          assertEq(d.genericReqs.get(1).get.pubid, expect)
+        }
+        test(SetGenericReqType(1, fr))(PubidT(fr, 1))
+        test(SetGenericReqType(1, mf))(PubidT(mf, 2))
+        test(SetGenericReqType(1, fr))(PubidT(fr, 1))
+        test(SetGenericReqType(1, mf))(PubidT(mf, 2))
+      }
+      'reqNotFound     - assertFail("found")(SetGenericReqType(1, fr))
+      'reqIsDead       - assertFail("dead")(empty1, del1, SetGenericReqType(1, fr))
+      'reqTypeNotFound - assertFail("found")(empty1, SetGenericReqType(1, 321))
+      'reqTypeIsDead   - assertFail("live")(empty1, DeleteCustomReqType(fr, SoftDel), SetGenericReqType(1, fr))
+    }
+
   }
 }

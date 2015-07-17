@@ -108,6 +108,7 @@ object ApplyEventTestFns {
          | _: PatchReqTags
          | _: PatchImplicationSrc
          | _: PatchImplicationTgt
+         | _: SetGenericReqType
          | _: UpdateReqCodeGroup
          | _: UpdateApplicableTag
          | _: UpdateTagGroup => ()

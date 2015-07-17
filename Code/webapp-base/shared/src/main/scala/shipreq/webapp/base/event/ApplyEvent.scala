@@ -65,6 +65,7 @@ class ApplyEvent(implicit val trust: Trust) {
       case e: PatchReqTags        => ReqEvents    applyPatchTags           e
       case e: PatchImplicationSrc => ReqEvents    applyPatchImplicationSrc e
       case e: PatchImplicationTgt => ReqEvents    applyPatchImplicationTgt e
+      case e: SetGenericReqType   => ReqEvents    applySetGenericReqType   e
       case e: DeleteReq           => ReqEvents    applyDelete              e
 
       case e: CreateReqCodeGroup => ReqCodeGroupEvents applyCreate e
@@ -641,6 +642,15 @@ class ApplyEvent(implicit val trust: Trust) {
         mm
       })
       a >-> b
+    }
+
+    def applySetGenericReqType(e: SetGenericReqType): AP = {
+      val f: AE[Requirements] = App { r =>
+        val t = r.pubids.allocC(e.value)(e.id)
+        for (m <- grIMap.update(e.id, App.ok(_.copy(pubid = t._2)))(r.genericReqs))
+          yield Requirements(m, t._1)
+      }
+      ensureLive(e.id) >-> (R @=> f)
     }
   }
 
