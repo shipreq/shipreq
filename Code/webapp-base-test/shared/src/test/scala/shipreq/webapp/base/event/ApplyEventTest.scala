@@ -106,6 +106,8 @@ object ApplyEventTestFns {
          | _: RepositionField
          | _: PatchReqCodes
          | _: PatchReqTags
+         | _: PatchImplicationSrc
+         | _: PatchImplicationTgt
          | _: UpdateReqCodeGroup
          | _: UpdateApplicableTag
          | _: UpdateTagGroup => ()

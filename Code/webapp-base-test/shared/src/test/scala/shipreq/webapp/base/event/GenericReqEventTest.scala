@@ -79,6 +79,7 @@ object GenericReqEventTest extends TestSuite {
 
   val empty1 = CreateGenericReq(1, mf, emptyValues)
   val implied2 = CreateGenericReq(2, mf, nev(ImpSrcs(NonEmptySet(empty1.id))))
+  val empty3 = CreateGenericReq(3, mf, emptyValues)
 
   def assertReq(p: Project, id: GenericReqId)(req      : GenericReq,
                                               tags     : Set[ApplicableTagId] = UnivEq.emptySet,
@@ -493,6 +494,54 @@ object GenericReqEventTest extends TestSuite {
       'removeBadTag   - assertFail("no tag found")(empty1, patch(1)(123)())
       'addTagGroup    - assertFail("no tag found")(empty1, patch(1)()(tg1.value.AT))
       'removeTagGroup - assertFail("no tag found")(empty1, patch(1)(tg1.value.AT)())
+
+      // 'removeMissingTag = nop
+      // 'addExistingTag   = nop
+    }
+
+    'patchImps {
+      def setdiff(remove: ReqId*)(add: ReqId*) =
+        NonEmpty.tryO(SetDiff(removed = remove.toSet, added = add.toSet)).getOrElse(sys error "Empty set diff")
+      def testFailure(msgFrag: String)(subj: ReqId, events: Event*)(remove: ReqId*)(add: ReqId*): Unit = {
+        val sd = setdiff(remove: _*)(add: _*)
+        assertFail(msgFrag)(events :+ PatchImplicationSrc(subj, sd): _*)
+        assertFail(msgFrag)(events :+ PatchImplicationTgt(subj, sd): _*)
+      }
+
+      'ok {
+        var es = Vector[Event](empty1, implied2, empty3)
+        def test(subj: ReqId, impTgts: Boolean)(remove: ReqId*)(add: ReqId*)(expect: (ReqId, Set[ReqId])*): Unit = {
+          val sd = setdiff(remove: _*)(add: _*)
+          es :+= (if (impTgts)
+            PatchImplicationTgt(subj, sd)
+          else
+            PatchImplicationSrc(subj, sd))
+          val p = _assertPass(es: _*)
+          val a = p.implications.data.srcToTgt.m
+          assertEq(a, expect.toMap)
+        }
+        implicit def ii(t: (Int, Int)): (ReqId, Set[ReqId]) = (t._1, Set(t._2))
+        implicit def is(t: (Int, Set[Int])): (ReqId, Set[ReqId]) = (t._1, t._2.map(i => i: ReqId))
+
+        // Start: 1 → 2, 3
+        test(2, true) () (3)(1 -> 2, 2 -> 3)
+        test(2, false)(1)() (2 -> 3)
+        test(3, false)(2)(1)(1 -> 3)
+        test(2, false)()(1) (1 -> Set(2, 3))
+        test(1, true) (3)() (1 -> 2)
+        test(1, true) (2)(3)(1 -> 3)
+      }
+
+      'reqNotFound - testFailure("found")(1, empty3)()(3)
+      'reqIsDead   - testFailure("dead") (1, empty1, empty3, del1)()(3)
+      'impNotFound - testFailure("found")(1, empty1)()(8)
+      'impSelf     - testFailure("cycle")(1, empty1)()(1)
+
+      'impCycle {
+        val es = Vector(empty1, implied2, CreateGenericReq(3, mf, nev(ImpSrcs(2))))
+        assertFail("cycle")(es :+ PatchImplicationTgt(3, NonEmpty.force(SetDiff(Set.empty, Set(1)))): _*)
+        assertFail("cycle")(es :+ PatchImplicationSrc(1, NonEmpty.force(SetDiff(Set.empty, Set(3)))): _*)
+      }
 
       // 'removeMissingTag = nop
       // 'addExistingTag   = nop

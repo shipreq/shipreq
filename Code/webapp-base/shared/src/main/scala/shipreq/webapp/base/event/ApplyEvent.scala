@@ -60,10 +60,12 @@ class ApplyEvent(implicit val trust: Trust) {
       case e: DeleteStaticField     => FieldEvents           applyDeleteS e
       case e: RepositionField       => FieldEvents           applyReposition e
 
-      case e: CreateGenericReq => ReqEvents    createGeneric      e
-      case e: PatchReqCodes    => ReqCodeLogic applyPatchReqCodes e
-      case e: PatchReqTags     => ReqEvents    applyPatchTags     e
-      case e: DeleteReq        => ReqEvents    applyDelete        e
+      case e: CreateGenericReq    => ReqEvents    createGeneric            e
+      case e: PatchReqCodes       => ReqCodeLogic applyPatchReqCodes       e
+      case e: PatchReqTags        => ReqEvents    applyPatchTags           e
+      case e: PatchImplicationSrc => ReqEvents    applyPatchImplicationSrc e
+      case e: PatchImplicationTgt => ReqEvents    applyPatchImplicationTgt e
+      case e: DeleteReq           => ReqEvents    applyDelete              e
 
       case e: CreateReqCodeGroup => ReqCodeGroupEvents applyCreate e
       case e: UpdateReqCodeGroup => ReqCodeGroupEvents applyUpdate e
@@ -617,6 +619,27 @@ class ApplyEvent(implicit val trust: Trust) {
       val d = e.patch.value
       val a = validateTags(d.allValues) >-> ensureLive(e.id)
       val b = App.ok(T.modify(_.mod(e.id, d.apply)))
+      a >-> b
+    }
+
+    def applyPatchImplicationTgt(e: PatchImplicationTgt): AP = {
+      val s = e.id
+      val d = e.patch.value
+      val a = ensureLive(e.id)
+      val b = App.ok(I.modify(_.mod(s, d.apply)))
+      a >-> b
+    }
+
+    def applyPatchImplicationSrc(e: PatchImplicationSrc): AP = {
+      val t = e.id
+      val d = e.patch.value
+      val a = ensureLive(e.id)
+      val b = App.ok(I.modify { mm0 =>
+        var mm = mm0
+        d.removed.foreach(id => mm = mm.del(id, t))
+        d.added  .foreach(id => mm = mm.add(id, t))
+        mm
+      })
       a >-> b
     }
   }

@@ -157,8 +157,8 @@ case class PatchReqCodes(id     : ReqId,
                          add    : Multimap[ReqCode.Value, Set, ReqCodeId]) extends ActiveEvent
 
 case class PatchReqTags        (id: ReqId, patch: NESD[ApplicableTagId]) extends ActiveEvent
-// case class PatchImplicationSrc (id: ReqId, patch: NESD[ReqId])           extends ActiveEvent
-// case class PatchImplicationTgt (id: ReqId, patch: NESD[ReqId])           extends ActiveEvent
+case class PatchImplicationSrc (id: ReqId, patch: NESD[ReqId])           extends ActiveEvent
+case class PatchImplicationTgt (id: ReqId, patch: NESD[ReqId])           extends ActiveEvent
 
 // case class SetGenericReqType   (id: GenericReqId, value: CustomReqTypeId) extends ActiveEvent
 // case class SetGenericReqTitle  (id: GenericReqId,                           value: Text.GenericReqTitle.OptionalText)   extends ActiveEvent
