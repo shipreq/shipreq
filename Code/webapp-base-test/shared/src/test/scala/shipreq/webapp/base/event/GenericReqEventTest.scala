@@ -8,6 +8,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.BaseTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.text.Text.{GenericReqTitle => GRT, ReqCodeGroupTitle}
+import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.util.TypeclassDerivation._
 import ApplyEventTestFns._
 import DeletionAction._
@@ -33,6 +34,8 @@ object ReqFull {
       ReqFull(r, tags, impliedBy, implies, reqCodes)
     }
 }
+
+// TODO Test atom validity in all events that accept text
 
 object GenericReqEventTest extends TestSuite {
 
@@ -83,6 +86,11 @@ object GenericReqEventTest extends TestSuite {
   val empty1 = CreateGenericReq(1, mf, emptyValues)
   val implied2 = CreateGenericReq(2, mf, nev(ImpSrcs(NonEmptySet(empty1.id))))
   val empty3 = CreateGenericReq(3, mf, emptyValues)
+
+  val someGRTitle: GRT.OptionalText =
+    Vector(GRT.Literal("Look at "), GRT.WebAddress("https://google.com"))
+
+  val setGRT1 = SetGenericReqTitle(1, someGRTitle)
 
   def assertReq(p: Project, id: GenericReqId)(req      : GenericReq,
                                               tags     : Set[ApplicableTagId] = UnivEq.emptySet,
@@ -569,6 +577,15 @@ object GenericReqEventTest extends TestSuite {
       'reqIsDead       - assertFail("dead")(empty1, del1, SetGenericReqType(1, fr))
       'reqTypeNotFound - assertFail("found")(empty1, SetGenericReqType(1, 321))
       'reqTypeIsDead   - assertFail("live")(empty1, DeleteCustomReqType(fr, SoftDel), SetGenericReqType(1, fr))
+    }
+
+    'setGenericReqTitle {
+      'ok {
+        val p = _assertPass(empty1, setGRT1)
+        assertEq(p.reqs.data.genericReqs.get(1).get.title, someGRTitle)
+      }
+      'reqNotFound - assertFail("found")(setGRT1)
+      'reqIsDead   - assertFail("dead")(empty1, del1, setGRT1)
     }
 
   }

@@ -65,6 +65,7 @@ class ApplyEvent(implicit val trust: Trust) {
       case e: PatchReqTags        => ReqEvents    applyPatchTags           e
       case e: PatchImplicationSrc => ReqEvents    applyPatchImplicationSrc e
       case e: PatchImplicationTgt => ReqEvents    applyPatchImplicationTgt e
+      case e: SetGenericReqTitle  => ReqEvents    applySetGenericReqTitle  e
       case e: SetGenericReqType   => ReqEvents    applySetGenericReqType   e
       case e: DeleteReq           => ReqEvents    applyDelete              e
 
@@ -568,10 +569,8 @@ class ApplyEvent(implicit val trust: Trust) {
     def createGeneric(e: CreateGenericReq): AP =
       App[Project, Project] { p =>
         import CreateGenericReqGD._
-        val id = e.id
-
+        val id      = e.id
         val reqData = p.reqs.data
-        // TODO Text atoms need to be validated?
 
         var result =
           for {
@@ -652,6 +651,12 @@ class ApplyEvent(implicit val trust: Trust) {
       }
       ensureLive(e.id) >-> (R @=> f)
     }
+
+    def applySetGenericReqTitle(e: SetGenericReqTitle): AP = {
+      val f = grIMap.update(e.id, App.ok(_.copy(title = e.value)))
+      ensureLive(e.id) >-> (GR @=> f)
+    }
+
   }
 
   /**

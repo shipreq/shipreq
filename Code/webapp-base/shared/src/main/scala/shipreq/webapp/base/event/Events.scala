@@ -162,7 +162,7 @@ case class PatchImplicationTgt (id: ReqId, patch: NESD[ReqId])           extends
 
 case class SetGenericReqType(id: GenericReqId, value: CustomReqTypeId) extends ActiveEvent
 
-//case class SetGenericReqTitle(id: GenericReqId, value: GenericReqTitle.OptionalText) extends ActiveEvent
+case class SetGenericReqTitle(id: GenericReqId, value: GenericReqTitle.OptionalText) extends ActiveEvent
 
 //case class SetCustomTextField(id: ReqId, fid: CustomField.Text.Id, value: CustomTextField.OptionalText) extends ActiveEvent
 
