@@ -550,6 +550,15 @@ class ApplyEvent(implicit val trust: Trust) {
     val grIMap = IMapApp.data(GenericReq)
     val grLive = LiveApp(GenericReq.live)
 
+    val ensureLive = whenUntrusted[ReqId => App[Project, Any]] {
+      case id: GenericReqId =>
+        App(_.reqs.data.genericReqs.get(id) match {
+          case Some(r) if r.live :: Live => okUnit
+          case Some(_)                   => fail(s"$id is dead.")
+          case None                      => fail(s"$id not found.")
+        })
+    }
+
     def needCustomReqType(id: CustomReqTypeId): App[Project, CustomReqType] =
       App(p => CustomReqTypeEvents.imap.need(id)(p.config.customReqTypes.data))
 
@@ -601,12 +610,12 @@ class ApplyEvent(implicit val trust: Trust) {
       (GR @=> a) >=> (C @=> b)
     }
 
-    def validateTags(tags: => Set[ApplicableTagId]): App[Project, Any] =
-      whenUntrustedA(App((_: Project).config.atags(tags)))
+    val validateTags = whenUntrusted[Set[ApplicableTagId] => App[Project, Any]](
+      tags => App(_.config.atags(tags)))
 
     def applyPatchTags(e: PatchReqTags): AP = {
       val d = e.patch.value
-      val a = validateTags(d.allValues)
+      val a = validateTags(d.allValues) >-> ensureLive(e.id)
       val b = App.ok(T.modify(_.mod(e.id, d.apply)))
       a >-> b
     }

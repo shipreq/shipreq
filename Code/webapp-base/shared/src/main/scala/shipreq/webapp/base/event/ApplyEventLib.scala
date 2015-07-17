@@ -177,13 +177,25 @@ private[event] object ApplyEventLib {
   // ===================================================================================================================
   // Lib
 
-  val okUnit: Result[Unit] = ok(())
+  val okUnit   = ok(())
+  val nopUnit  = App((_: Any) => okUnit)
+  val _nopUnit = (_: Any) => nopUnit
 
-  val nopUnit: App[Any, Unit] = App(_ =>  okUnit)
+  private[this] val nopInstance = App[Any, Any](ok)
+  private[this] val _nopInstance = (_: Any) => nopInstance
 
-  private[this] val _nop = App[Any, Any](ok)
+  def nop[A] = nopInstance.asInstanceOf[AE[A]]
+  def _nop[A, B] = _nopInstance.asInstanceOf[A => AE[B]]
 
-  def nop[A] = _nop.asInstanceOf[AE[A]]
+  class TrustMask[A](val trusted: A) extends AnyVal
+  trait TrustMaskLowPri {
+    implicit def trust_App_A_Any[A]      = new TrustMask[App[A, Any]](nopUnit)
+    implicit def trust_A_App_B_Any[A, B] = new TrustMask[A => App[B, Any]](_nopUnit)
+  }
+  object TrustMask extends TrustMaskLowPri {
+    implicit def trust_AE[A]      = new TrustMask[AE[A]](nop)
+    implicit def trust_A_AE[A, B] = new TrustMask[A => AE[B]](_nop)
+  }
 
   implicit def resultFromValidation[A](r: ValidationResult[A]): Result[A] =
     r match {
@@ -226,11 +238,8 @@ private[event] object ApplyEventLib {
   def updateF[A, B](f: (A, B) => A): B => AE[A] =
     b => App.ok(f(_, b))
 
-  @inline def whenUntrusted[A](a: => AE[A])(implicit trust: Trust): AE[A] =
-    if (trust :: Trusted) nop else a
-
-  @inline def whenUntrustedA[A](a: => App[A, Any])(implicit trust: Trust): App[A, Any] =
-    if (trust :: Trusted) nopUnit else a
+  @inline def whenUntrusted[A](a: => A)(implicit trust: Trust, mask: TrustMask[A]): A =
+    if (trust :: Trusted) mask.trusted else a
 
   def untrustedTest(mustPass: => Boolean, err: => String)(implicit trust: Trust): Result[Unit] =
     if ((trust :: Trusted) || mustPass) okUnit else fail(err)

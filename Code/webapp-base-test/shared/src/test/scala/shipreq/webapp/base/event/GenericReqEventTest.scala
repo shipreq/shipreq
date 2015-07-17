@@ -487,7 +487,8 @@ object GenericReqEventTest extends TestSuite {
         test(at2)()()
       }
 
-      'reqNotFound    - assertFail("")(patch(1)()(at1))
+      'reqIsDead      - assertFail("dead")(empty1, del1, patch(1)()(at1))
+      'reqNotFound    - assertFail("found")(patch(1)()(at1))
       'addBadTag      - assertFail("no tag found")(empty1, patch(1)()(123))
       'removeBadTag   - assertFail("no tag found")(empty1, patch(1)(123)())
       'addTagGroup    - assertFail("no tag found")(empty1, patch(1)()(tg1.value.AT))
