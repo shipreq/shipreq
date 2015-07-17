@@ -27,6 +27,9 @@ final class SetDiff[A](val removed: Set[A], val added: Set[A]) {
 
   def inverse: SetDiff[A] =
     new SetDiff(added, removed)
+
+  def allValues: Set[A] =
+    added ++ removed
 }
 
 object SetDiff {

@@ -1,5 +1,6 @@
 package shipreq.webapp.base.event
 
+import japgolly.nyaya.util.{MultiValues, Multimap}
 import monocle._
 import scala.collection.GenTraversable
 import scala.reflect.ClassTag
@@ -29,6 +30,8 @@ import DeletionAction._
  * -  Successful output of lhs discarded
  * =  Successful output of lhs passed to input of rhs
  *
+ * App a b          >->   App a c         =  App a c
+ * App a c          <-<   App a b         =  App a c
  * App a b          >=>   App b c         =  App a c
  * App b c          <=<   App a b         =  App a c
  * App a b          >=>>  (b => App c d)  =  (a => App c d)
@@ -91,6 +94,12 @@ private[event] object ApplyEventLib {
   case class App[-A, +B](run: A => Result[B]) extends AnyVal {
 
     @inline def apply(a: A) = run(a)
+
+    @inline def >->[AA <: A, C](g: App[AA, C]): App[AA, C] =
+      App(a => run(a) ?-? g(a))
+
+    @inline def <-<[AA <: A, C](g: App[AA, C]): App[AA, B] =
+      g >-> this
 
     @inline def >=>[C](g: App[B, C]): App[A, C] =
       App(run(_) flatMap g.run)
@@ -170,7 +179,7 @@ private[event] object ApplyEventLib {
 
   val okUnit: Result[Unit] = ok(())
 
-  val nopUnit: AE[Unit] = App(_ =>  okUnit)
+  val nopUnit: App[Any, Unit] = App(_ =>  okUnit)
 
   private[this] val _nop = App[Any, Any](ok)
 
@@ -181,6 +190,9 @@ private[event] object ApplyEventLib {
       case scalaz.Success(s) => \/-(s)
       case scalaz.Failure(f) => -\/(f.toText)
     }
+
+  implicit def resultFromMust[A](m: Must[A]): Result[A] =
+    m.toDisjunction
 
   implicit class OptionAppOps[A](private val o: Option[A]) extends AnyVal {
     @inline def ensureSome(err: => String): Result[A] =
@@ -217,7 +229,10 @@ private[event] object ApplyEventLib {
   @inline def whenUntrusted[A](a: => AE[A])(implicit trust: Trust): AE[A] =
     if (trust :: Trusted) nop else a
 
-  @inline def untrustedTest(mustPass: => Boolean, err: => String)(implicit trust: Trust): Result[Unit] =
+  @inline def whenUntrustedA[A](a: => App[A, Any])(implicit trust: Trust): App[A, Any] =
+    if (trust :: Trusted) nopUnit else a
+
+  def untrustedTest(mustPass: => Boolean, err: => String)(implicit trust: Trust): Result[Unit] =
     if ((trust :: Trusted) || mustPass) okUnit else fail(err)
 
   def ensureEqual[A](expect: A)(implicit e: Equal[A], trust: Trust): AE[A] =
@@ -343,6 +358,19 @@ private[event] object ApplyEventLib {
     def needM[R](k: K)(f: M => App[V, R]): App[M, R] =
       App(m => need(k)(m) ?=> f(m))
   }
+
+  // -------------------------------------------------------------------------------------------------------------------
+//  object MultimapApp {
+//    @inline def apply[K, L[_]: MultiValues, V](implicit trust: Trust) = new MultimapApp[K, L, V]
+//    @inline def like[K, L[_]: MultiValues, V](m: => Multimap[K, L, V])(implicit trust: Trust) = apply[K, L, V]
+//  }
+//
+//  final class MultimapApp[K, L[_], V](private implicit val trust: Trust, L: MultiValues[L]) {
+//    type M = Multimap[K, L, V]
+//
+//    def update(k: K, f: AE[L[V]]): AE[M] =
+//      App(m => f(m(k)).map(m.setvs(k, _)))
+//  }
 
   // -------------------------------------------------------------------------------------------------------------------
   trait GenericDataApp {

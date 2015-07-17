@@ -62,6 +62,7 @@ class ApplyEvent(implicit val trust: Trust) {
 
       case e: CreateGenericReq => ReqEvents    createGeneric      e
       case e: PatchReqCodes    => ReqCodeLogic applyPatchReqCodes e
+      case e: PatchReqTags     => ReqEvents    applyPatchTags     e
       case e: DeleteReq        => ReqEvents    applyDelete        e
 
       case e: CreateReqCodeGroup => ReqCodeGroupEvents applyCreate e
@@ -539,7 +540,6 @@ class ApplyEvent(implicit val trust: Trust) {
 
   // ===================================================================================================================
   object ReqEvents {
-
     val R = Project.reqs ^|-> RevAnd.data
     val GR = R ^|-> Requirements.genericReqs
     val T = Project.reqTags ^|-> RevAnd.data
@@ -599,6 +599,16 @@ class ApplyEvent(implicit val trust: Trust) {
       val a = grIMap.update(id, grLive.makeLive)
       val b = ReqCodeLogic.restoreBelongingToReq(id)
       (GR @=> a) >=> (C @=> b)
+    }
+
+    def validateTags(tags: => Set[ApplicableTagId]): App[Project, Any] =
+      whenUntrustedA(App((_: Project).config.atags(tags)))
+
+    def applyPatchTags(e: PatchReqTags): AP = {
+      val d = e.patch.value
+      val a = validateTags(d.allValues)
+      val b = App.ok(T.modify(_.mod(e.id, d.apply)))
+      a >-> b
     }
   }
 

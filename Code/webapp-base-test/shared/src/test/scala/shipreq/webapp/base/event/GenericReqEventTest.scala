@@ -52,10 +52,13 @@ object GenericReqEventTest extends TestSuite {
     CreateCustomReqType(mf, nev(Mnemonic("MF"), Name("MajFea"), Imp(false)))
   }
 
-  val at1: ApplicableTagId = 10
-  val createAT1 = {
+  val at1: ApplicableTagId = 11
+  val at2: ApplicableTagId = 12
+  val (createAT1, createAT2) = {
     import ApplicableTagGD._
-    CreateApplicableTag(at1, nev(Name("AT #1"), Desc(None), Key("at-one")))
+    ( CreateApplicableTag(at1, nev(Name("AT #1"), Desc(None), Key("at-one")))
+    , CreateApplicableTag(at2, nev(Name("AT #2"), Desc(None), Key("at-two")))
+    )
   }
 
   val tg1: TagGroupId = 20
@@ -64,7 +67,7 @@ object GenericReqEventTest extends TestSuite {
     CreateTagGroup(tg1, nev(Name("TG #1"), Desc(None), MutexChildren(false)))
   }
 
-  implicit val init = InitialEvents(createMF, createAT1, createTG1)
+  implicit val init = InitialEvents(createMF, createAT1, createAT2, createTG1)
 
   implicit class ProjectExt(private val p: Project) extends AnyVal {
     def @@(id: GenericReqId) = ReqFull.extract(p, id)
@@ -462,6 +465,36 @@ object GenericReqEventTest extends TestSuite {
         // Delete group
         test(DeleteReqCodeGroup(8))("one: RR[#1Req(#a)]", "three: AD[#3Req(#a)]")
       }
+    }
+
+    'patchTags {
+      def patch(id: ReqId)(remove: ApplicableTagId*)(add: ApplicableTagId*): PatchReqTags =
+        NonEmpty.tryO(SetDiff(removed = remove.toSet, added = add.toSet))
+          .map(PatchReqTags(id, _))
+          .getOrElse(sys error "Empty set diff")
+
+      'ok {
+        var es = Vector[Event](empty1)
+        def test(remove: ApplicableTagId*)(add: ApplicableTagId*)(expect: ApplicableTagId*): Unit = {
+          es :+= patch(1)(remove: _*)(add: _*)
+          val p = _assertPass(es: _*)
+          val a = p.reqTags.data(1)
+          assertEq(a, expect.toSet)
+        }
+        test()(at1, at2)(at1, at2)
+        test(at2)()(at1)
+        test(at1)(at2)(at2)
+        test(at2)()()
+      }
+
+      'reqNotFound    - assertFail("")(patch(1)()(at1))
+      'addBadTag      - assertFail("no tag found")(empty1, patch(1)()(123))
+      'removeBadTag   - assertFail("no tag found")(empty1, patch(1)(123)())
+      'addTagGroup    - assertFail("no tag found")(empty1, patch(1)()(tg1.value.AT))
+      'removeTagGroup - assertFail("no tag found")(empty1, patch(1)(tg1.value.AT)())
+
+      // 'removeMissingTag = nop
+      // 'addExistingTag   = nop
     }
   }
 }

@@ -1,6 +1,6 @@
 package shipreq.base.util
 
-import scalaz.{Monad, \/}
+import scalaz.{Monad, \/, \/-, -\/}
 
 /**
  * A value that we believe must exist but cannot prove to exist via types.
@@ -15,6 +15,9 @@ sealed abstract class Must[+A] {
   def flatMap[B](f: A => Must[B])              : Must[B]
   def fold   [B](e: String => B, f: A => B)    : B
   def filter    (f: A => Boolean, e: => String): Must[A]
+
+  final def toDisjunction: String \/ A =
+    fold(-\/.apply, \/-.apply)
 }
 
 object Must {

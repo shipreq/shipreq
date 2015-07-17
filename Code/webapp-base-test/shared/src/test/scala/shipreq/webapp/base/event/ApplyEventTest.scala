@@ -105,6 +105,7 @@ object ApplyEventTestFns {
          | _: UpdateCustomImpField
          | _: RepositionField
          | _: PatchReqCodes
+         | _: PatchReqTags
          | _: UpdateReqCodeGroup
          | _: UpdateApplicableTag
          | _: UpdateTagGroup => ()
