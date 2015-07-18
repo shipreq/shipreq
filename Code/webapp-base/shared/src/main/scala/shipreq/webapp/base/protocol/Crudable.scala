@@ -1,8 +1,9 @@
 package shipreq.webapp.base.protocol
 
 import boopickle.Pickler
-import shipreq.base.util.{NonEmptyVector, UnivEq}
+import shipreq.base.util.UnivEq
 import shipreq.webapp.base.delta.RemoteDelta
+import shipreq.webapp.base.event.DeletionAction
 
 trait Crudable extends RemoteFn {
   type Id
@@ -41,13 +42,4 @@ object CrudAction {
   final case class Delete[Id, V](id: Id, action: DeletionAction) extends CrudAction[Id, V]
 
   @inline implicit def equality[I: UnivEq, V: UnivEq]: UnivEq[CrudAction[I, V]] = UnivEq.force
-}
-
-sealed abstract class DeletionAction
-object DeletionAction {
-  case object HardDel extends DeletionAction
-  case object SoftDel extends DeletionAction
-  case object Restore extends DeletionAction
-  def values = NonEmptyVector[DeletionAction](HardDel, SoftDel, Restore)
-  @inline implicit def equality: UnivEq[DeletionAction] = UnivEq.force
 }

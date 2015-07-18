@@ -3,6 +3,7 @@ package shipreq.webapp.base.protocol
 import boopickle._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.event.DeletionAction
 import BoopickleMacros._
 import BinCodecGeneric._
 import BinCodecData._

@@ -5,6 +5,7 @@ import scalaz.std.AllInstances._
 import shipreq.base.util.{UnivEq, Position => Pos}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.delta.{Partition, PPI}
+import shipreq.webapp.base.event.DeletionAction
 import shipreq.webapp.base.util.TypeclassDerivation._
 import Field.ApplicableReqTypes
 

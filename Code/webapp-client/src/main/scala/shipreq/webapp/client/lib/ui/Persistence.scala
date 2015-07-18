@@ -4,7 +4,8 @@ import japgolly.scalajs.react.ScalazReact._
 import scalaz.{Need, Name}
 import scalaz.effect.IO
 import shipreq.webapp.base.delta.RemoteDelta
-import shipreq.webapp.base.protocol.{RemoteFn, DeletionAction}
+import shipreq.webapp.base.event.DeletionAction
+import shipreq.webapp.base.protocol.RemoteFn
 import shipreq.webapp.base.validation._
 import shipreq.webapp.client.lib.{CrudIO, FailureIO, SuccessIO}
 import shipreq.webapp.client.protocol.ClientProtocol

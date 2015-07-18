@@ -2,6 +2,7 @@ package shipreq.webapp.client.lib
 
 import scalaz.effect.IO
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.event.DeletionAction
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.client.ClientData
 import shipreq.webapp.client.protocol.ClientProtocol

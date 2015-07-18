@@ -7,7 +7,7 @@ import scalaz.syntax.equal._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.webapp.base.data.{Live, Dead, DataIdAux}
 import shipreq.webapp.base.data.DataImplicits._
-import shipreq.webapp.base.protocol.DeletionAction._
+import shipreq.webapp.base.event.{DeletionAction, HardDel, SoftDel, Restore}
 import shipreq.webapp.client.lib.FilterDead
 
 object CfgTable {

@@ -23,7 +23,7 @@ import shipreq.webapp.base.data.{TagId => Id, _}, DataImplicits._
 import shipreq.webapp.base.delta.Partition
 import shipreq.webapp.base.data.Validators.{tag => V}
 import shipreq.webapp.base.data.Validators.shared.HashRefKeyVS
-import shipreq.webapp.base.protocol.DeletionAction._
+import shipreq.webapp.base.event.{DeletionAction, HardDel, SoftDel, Restore}
 import shipreq.webapp.base.protocol.TagProtocol
 import shipreq.webapp.base.protocol.RemoteFns.TagCrud
 import shipreq.webapp.base.UiText.FieldNames

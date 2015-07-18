@@ -2,8 +2,7 @@ package shipreq.webapp.client.lib.ui
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import scalaz.effect.IO
-import shipreq.webapp.base.protocol.DeletionAction
-import DeletionAction._
+import shipreq.webapp.base.event.{DeletionAction, HardDel, SoftDel, Restore}
 import Deletion._
 
 object Deletion {

@@ -10,8 +10,8 @@ import shipreq.webapp.base.protocol._
 import shipreq.webapp.lib.ServerProtocol
 import shipreq.webapp.base.data, data._, DataImplicits._
 import shipreq.webapp.base.delta._
+import shipreq.webapp.base.event.{DeletionAction, HardDel, SoftDel, Restore}
 import shipreq.webapp.base.text.{Text => T}
-import DeletionAction._
 import shipreq.webapp.util.QuietException
 
 class WIP {

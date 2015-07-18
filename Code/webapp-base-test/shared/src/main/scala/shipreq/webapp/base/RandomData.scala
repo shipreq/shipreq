@@ -22,6 +22,7 @@ import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util.Debug._
 import shipreq.webapp.base.data._, ReqType.Mnemonic, Field.ApplicableReqTypes
 import shipreq.webapp.base.delta._
+import shipreq.webapp.base.event.DeletionAction
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{Text, Grammar}
 import DataImplicits._

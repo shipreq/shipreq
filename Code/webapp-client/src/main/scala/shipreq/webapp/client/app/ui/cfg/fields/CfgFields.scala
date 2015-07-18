@@ -15,7 +15,8 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.delta.Partition
 import shipreq.webapp.base.data.Validators.{field => V}
-import shipreq.webapp.base.protocol.{DeletionAction, FieldProtocol}
+import shipreq.webapp.base.event.{DeletionAction, HardDel, SoftDel, Restore}
+import shipreq.webapp.base.protocol.FieldProtocol
 import shipreq.webapp.base.protocol.RemoteFns.FieldCrud
 import shipreq.webapp.base.UiText, UiText.FieldNames
 import shipreq.webapp.client.ClientData
@@ -27,7 +28,6 @@ import shipreq.webapp.client.protocol.ClientProtocol
 import shipreq.webapp.client.util.{Disabled, Enabled, DND, On}
 import Field.ApplicableReqTypes
 import FieldProtocol.Delta
-import DeletionAction._
 
 object CfgFields {
   case class Props(cp: ClientProtocol, remote: FieldCrud.Instance, clientData: ClientData, filterDead: FilterDead) {
