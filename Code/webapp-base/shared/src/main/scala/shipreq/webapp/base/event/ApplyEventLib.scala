@@ -1,6 +1,5 @@
 package shipreq.webapp.base.event
 
-import japgolly.nyaya.util.{MultiValues, Multimap}
 import monocle._
 import scala.collection.GenTraversable
 import scala.reflect.ClassTag
@@ -10,7 +9,6 @@ import shipreq.base.util._
 import shipreq.webapp.base.data.{Dead, Live, ObjDataId, Project}
 import shipreq.webapp.base.util.GenericData
 import shipreq.webapp.base.validation.{ValidatorU, ValidationResult}
-import DeletionAction._
 
 /**
  * Syntax summary:
