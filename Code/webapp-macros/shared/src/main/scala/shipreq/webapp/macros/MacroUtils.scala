@@ -16,11 +16,11 @@ object MacroUtils {
   def ensureConcrete(c: Context)(t: c.universe.Type): Unit = {
     val sym = t.typeSymbol.asClass
     if (sym.isAbstract)
-      fail(c, s"${sym.name} is abstract which is not allowed.")
+      fail(c, s"ensureConcrete: [${sym.name}] is abstract which is not allowed.")
     if (sym.isTrait)
-      fail(c, s"${sym.name} is a trait which is not allowed.")
+      fail(c, s"ensureConcrete: [${sym.name}] is a trait which is not allowed.")
     if (sym.isSynthetic)
-      fail(c, s"${sym.name} is synthetic which is not allowed.")
+      fail(c, s"ensureConcrete: [${sym.name}] is synthetic which is not allowed.")
   }
 
   def primaryConstructorParams[T: c.WeakTypeTag](c: Context): List[c.universe.Symbol] = {
@@ -62,6 +62,7 @@ object MacroUtils {
   def findConcreteTypes(c: Context)(tpe: c.universe.Type, f: FindSubClasses): Set[c.universe.ClassSymbol] = {
     import c.universe._
 
+    tpe.typeConstructor // https://issues.scala-lang.org/browse/SI-7755
     val sym = tpe.typeSymbol.asClass
 
     if (!sym.isSealed)
@@ -123,4 +124,39 @@ object MacroUtils {
 
   def lowerCaseHead(s: String): String =
     modStringHead(s, _.toLower)
+
+  /**
+   * Create code for a function that will call .apply() on a given type's type companion object.
+   */
+  def tcApplyFn(c: Context)(t: c.universe.Type): c.universe.Select = {
+    import c.universe._
+    val sym = t.typeSymbol
+    val tc  = sym.companion
+    val pre = t match {
+      case TypeRef(p, _, _) => p
+      case x                => fail(c, s"Don't know how to extract `pre` from ${showRaw(x)}")
+    }
+
+    pre match {
+      // Path dependent, eg. `t.Literal`
+      case SingleType(NoPrefix, path) =>
+        Select(Ident(path), tc.asTerm.name)
+
+      // Assume type companion .apply exists
+      case _ =>
+        Select(Ident(tc), TermName("apply"))
+    }
+  }
+
+  def selectFQN(c: Context)(s: String): c.universe.RefTree = {
+    import c.universe._
+    val terms = s.split('.').map(TermName(_): Name)
+    val l = terms.length - 1
+    terms(l) = terms(l).toTypeName
+    val h = Ident(terms.head): RefTree
+    if (l == 0)
+      h
+    else
+      terms.tail.foldLeft(h)(Select(_, _))
+  }
 }

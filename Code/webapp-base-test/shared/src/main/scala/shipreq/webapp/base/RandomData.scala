@@ -81,12 +81,12 @@ object RandomData {
     ((_: Int).toChar) `JVM|JS` ((i: Int) => if (i == 30) ' ' else i.toChar)
 
   def asciiChar   : Gen[Char]   = Gen.chooseint(1, 255) map mkChar
-  def asciiString : Gen[String] = asciiChar.string
-  def asciiString1: Gen[String] = asciiChar.string1
+  def asciiString : GenS[String] = asciiChar.string
+  def asciiString1: GenS[String] = asciiChar.string1
 
   def unicodeChar   : Gen[Char]   = Gen.chooseint(0, 0xd7ff) map mkChar
-  def unicodeString : Gen[String] = unicodeChar.string
-  def unicodeString1: Gen[String] = unicodeChar.string1
+  def unicodeString : GenS[String] = unicodeChar.string
+  def unicodeString1: GenS[String] = unicodeChar.string1
 
 //  private val _charPredAllChars = ('\u0001' to '\ud7ff').seq
   private val _charPredAllChars = ('\u0001' to '\u0100').seq
@@ -149,10 +149,10 @@ object RandomData {
     Gen.positivelong
 
   def shortText1 =
-    Gen.string1.lim(AppConsts.shortTextMaxLength)
+    unicodeString1.lim(AppConsts.shortTextMaxLength)
 
   def shortText =
-    Gen.string.lim(AppConsts.shortTextMaxLength)
+    unicodeString.lim(AppConsts.shortTextMaxLength)
 
   lazy val optionalLargeText =
     shortText1.lim(AppConsts.largeTextMaxLength).option
@@ -456,7 +456,8 @@ object RandomData {
     lazy val emailL = charPred(Parsers.emailCharL).string1
     lazy val emailR = charPred(Parsers.emailCharR).string1
 
-    val strchr  = Gen.oneofG(Gen.chooseint(32, 127), Gen.chooseint(128, 65534)).map(_.toChar)
+    val strchr  = Gen.oneofG(Gen.chooseint(32, 127), Gen.chooseint(128, 0xd7ff)).map(_.toChar)
+//    val strchr = unicodeChar
     val genstr  = strchr.string
     val genstr1 = strchr.string1
 

@@ -183,10 +183,11 @@ object ShipReq extends Build {
     crossProject("webapp-macros")
       .configureBoth(webappSettings)
       .depsForBoth(
-        μPickle ++
+        μPickle ++ boopickle ++
         providedScope(Scala.library) ++
         testScope(μTest)
       )
+      .dependsOn(baseUtil)
       .configureBoth(
         Common.definesMacros
       )
@@ -197,7 +198,7 @@ object ShipReq extends Build {
     crossProject("webapp-base")
       .configureBoth(webappSettings)
       .depsForBoth(
-        μPickle ++ Monocle.macros ++ shapeless ++ Nyaya.core ++ parboiled ++
+        μPickle ++ Monocle.macros ++ shapeless ++ Nyaya.core ++ parboiled ++ boopickle ++
         testScope(μTest) // TODO Move tests into this
       )
       .configureBoth(
@@ -258,7 +259,7 @@ object ShipReq extends Build {
         .dependsOn(baseUtilJs, webappBaseJs, webappBaseTestJs % "test->compile")
         .depsForJs(
           Scalaz.effect ++ React.most ++ Monocle.macros ++ ScalaCSS.react ++
-          μPickle ++ shapeless ++ Nyaya.core ++ parboiled ++
+          μPickle ++ shapeless ++ Nyaya.core ++ parboiled ++ boopickle ++
           testScope(React.test ++ μTest ++ Nyaya.test)
         )
         .configure(

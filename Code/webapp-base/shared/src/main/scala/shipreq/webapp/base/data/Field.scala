@@ -300,7 +300,7 @@ object CustomField {
 // Set
 
 @Lenses
-case class FieldSet(customFields: IMap[CustomFieldId, CustomField],
+case class FieldSet(customFields: FieldSet.CustomFields,
                     order       : Vector[FieldId]) { // TODO This should be NonEmptyVector
 
   lazy val fields: Must[Vector[Field]] =
@@ -311,5 +311,8 @@ case class FieldSet(customFields: IMap[CustomFieldId, CustomField],
 }
 
 object FieldSet {
+  type CustomFields = IMap[CustomFieldId, CustomField]
+  def emptyCustomFields: CustomFields = IMap.empty(_.id)
+
   implicit val equality: Equal[FieldSet] = deriveEqual
 }
