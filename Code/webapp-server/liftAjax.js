@@ -98,7 +98,7 @@
     lift_registerGC: function() {
       var data = "__lift__GC=_",
           version = null;
-      jQuery.ajax({ url : liftAjax.addPageNameAndVersion("/ajax_request/", version), data : data, type : "POST", dataType : "script", timeout : 5000, cache : false, success : liftAjax.lift_successRegisterGC, error : liftAjax.lift_failRegisterGC });
+      jQuery.ajax({ url : liftAjax.addPageNameAndVersion("/A/", version), data : data, type : "POST", dataType : "script", timeout : 5000, cache : false, success : liftAjax.lift_successRegisterGC, error : liftAjax.lift_failRegisterGC });
        },
 
 
@@ -175,19 +175,19 @@
 
        addPageNameAndVersion: function(url, version) {
 
-      var replacement = 'ajax_request/'+lift_page;
+      var replacement = 'A/'+lift_page;
       if (version!=null)
         replacement += ('-'+version.toString(36)) + (liftAjax.lift_ajaxQueue.length > 35 ? 35 : liftAjax.lift_ajaxQueue.length).toString(36);
-      return url.replace('ajax_request', replacement);
+      return url.replace('A', replacement);
     },
 
     lift_actualAjaxCall: function(data, version, onSuccess, onFailure) {
-      jQuery.ajax({ url : liftAjax.addPageNameAndVersion("/ajax_request/", version), data : data, type : "POST", dataType : "script", timeout : 5000, cache : false, success : onSuccess, error : onFailure });
+      jQuery.ajax({ url : liftAjax.addPageNameAndVersion("/A/", version), data : data, type : "POST", dataType : "script", timeout : 5000, cache : false, success : onSuccess, error : onFailure });
     },
 
     lift_actualJSONCall: function(data, onSuccess, onFailure) {
       var version = null;
-      jQuery.ajax({ url : liftAjax.addPageNameAndVersion("/ajax_request/", version), data : data, type : "POST", dataType : "json", timeout : 5000, cache : false, success : onSuccess, error : onFailure });
+      jQuery.ajax({ url : liftAjax.addPageNameAndVersion("/A/", version), data : data, type : "POST", dataType : "json", timeout : 5000, cache : false, success : onSuccess, error : onFailure });
     }
   };
 

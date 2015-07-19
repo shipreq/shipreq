@@ -44,6 +44,12 @@ class Boot extends DI {
     // Prevent "stable" func names in test, and speed up generation routine
     LiftRules.funcNameGenerator = S.generateFuncName _
 
+    // Customise URL paths for built-in resources & AJAX requests
+    LiftRules.ajaxPath = "A"
+    LiftRules.ajaxScriptName = () => "A.js"
+    LiftRules.cometPath = "C"
+    LiftRules.cometScriptName = () => "C.js"
+
     // Register route whitelist
     LiftRules.setSiteMap(AppSiteMap.sitemap)
 
