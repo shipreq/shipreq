@@ -8,7 +8,7 @@ import scalaz.Isomorphism.<=>
 import upickle._
 import upickle.Fns._
 import upickle.TupleCodecs._
-import CodecMacros.{caseClass, _caseClass}
+import MPickleMacros.{caseClass, _caseClass}
 
 import shipreq.base.util._
 import shipreq.base.util.TaggedTypes._

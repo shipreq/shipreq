@@ -4,7 +4,7 @@ import scala.reflect.macros.blackbox.Context
 import shipreq.webapp.macros.MacroUtils._
 import upickle._
 
-object CodecMacros {
+object MPickleMacros {
 
   def caseClass [T]: ReadWriter[T] = macro quietCaseClass[T]
   def _caseClass[T]: ReadWriter[T] = macro debugCaseClass[T]
