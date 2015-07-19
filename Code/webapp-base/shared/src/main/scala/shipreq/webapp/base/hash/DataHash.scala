@@ -118,7 +118,7 @@ final class DataHash(protected val algorithm: Hash.Algorithm) extends GenericDas
     override def nev[A](as: Hash[Vector[A]])(implicit a: Hash[A]) =
       hashNEV(a)
 
-    override def sum[T <: Atom.Base](t: T)(f: t.Atom => Hash[t.Atom], all: Vector[Hash[t.Atom]]): Hash[t.Atom] =
+    override def sum[T <: Atom.Base](t: T)(f: t.Atom => Hash[t.Atom], i: t.Atom => Int, v: Vector[Hash[t.Atom]]): Hash[t.Atom] =
       Hash.fn[t.Atom](a => f(a) hash a)
 
     override def blankLine   [T <: NewLine        ](t: T): Hash[t.BlankLine   ] = hashConstClass("BL")

@@ -383,7 +383,7 @@ object DataCodecs {
     private[this] final val CODEREF   = "c"
     private[this] final val TAGREF    = "t"
 
-    override def sum[T <: Atom.Base](t: T)(f: t.Atom => ReadWriter[t.Atom], all: Vector[ReadWriter[t.Atom]]): ReadWriter[t.Atom] = {
+    override def sum[T <: Atom.Base](t: T)(f: t.Atom => ReadWriter[t.Atom], i: t.Atom => Int, all: Vector[ReadWriter[t.Atom]]): ReadWriter[t.Atom] = {
       val readPF = all.map(_.read).reduce(_ orElse _)
       ReadWriter[t.Atom](a => f(a).write(a), readPF)
     }

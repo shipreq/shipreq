@@ -28,7 +28,8 @@ object TextMacros {
     var allVals     = Vector.empty[TermName]
     var valDefs     = Vector.empty[ValDef]
     var lazyValDefs = Vector.empty[ValDef]
-    var cases       = Vector.empty[CaseDef]
+    var casesA      = Vector.empty[CaseDef]
+    var casesI      = Vector.empty[CaseDef]
     var needLI      = false
 
     def mkLazy(v: ValDef): ValDef = {
@@ -37,6 +38,7 @@ object TextMacros {
       ValDef(m2, a, b, c)
     }
 
+    var index = 0
     for (t <- atomTypeNames) {
       val nStr = lowerCaseHead(t.toString)
       val nTerm = TermName(nStr)
@@ -59,8 +61,9 @@ object TextMacros {
       else
         valDefs :+= valDef
 
-      val caseDef = cq"_: t.${t.toTypeName} => $nTerm"
-      cases :+= caseDef
+      casesA :+= cq"_: t.${t.toTypeName} => $nTerm"
+      casesI :+= cq"_: t.${t.toTypeName} => $index"
+      index += 1
     }
 
     val valMods = if (lazyValDefs.isEmpty) Modifiers() else Modifiers(Flag.LAZY)
@@ -73,8 +76,9 @@ object TextMacros {
       ..$valDefs
       ..$lazyValDefs
       $valMods val all = Vector[TC[t.Atom]](..$allVals)
-      $valMods val choose: t.Atom => TC[t.Atom] = {case ..$cases}
-      $valMods val atom = a.sum(t)(choose, all)
+      $valMods val chooseA: t.Atom => TC[t.Atom] = {case ..$casesA}
+      $valMods val chooseI: t.Atom => Int = {case ..$casesI}
+      $valMods val atom = a.sum(t)(chooseA, chooseI, all)
       $valMods val vec  = a.vec(atom)
       $li
       val nev = a.nev(vec)(atom)
