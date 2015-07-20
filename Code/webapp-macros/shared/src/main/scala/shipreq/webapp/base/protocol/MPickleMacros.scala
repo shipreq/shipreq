@@ -1,13 +1,15 @@
 package shipreq.webapp.base.protocol
 
-import scala.reflect.macros.blackbox.Context
-import shipreq.webapp.macros.MacroUtils._
 import upickle._
 
 object MPickleMacros {
+  def caseClass [T]: ReadWriter[T] = macro MPickleMacroImpls.quietCaseClass[T]
+  def _caseClass[T]: ReadWriter[T] = macro MPickleMacroImpls.debugCaseClass[T]
+}
 
-  def caseClass [T]: ReadWriter[T] = macro quietCaseClass[T]
-  def _caseClass[T]: ReadWriter[T] = macro debugCaseClass[T]
+object MPickleMacroImpls {
+  import scala.reflect.macros.blackbox.Context
+  import shipreq.webapp.macros.MacroUtils._
 
   def quietCaseClass[T: c.WeakTypeTag](c: Context): c.Expr[ReadWriter[T]] = implCaseClass[T](c, false)
   def debugCaseClass[T: c.WeakTypeTag](c: Context): c.Expr[ReadWriter[T]] = implCaseClass[T](c, true)

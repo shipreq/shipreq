@@ -1,8 +1,30 @@
 package shipreq.webapp.base.hash
 
-object HashMacros {
+trait HashMacros {
+  def joinHashes(hashes: List[Int]): Int
+
+  final def hashCaseClass [T]: Hash[T] = macro HashMacroImpls.quietCaseClass[T]
+  final def _hashCaseClass[T]: Hash[T] = macro HashMacroImpls.debugCaseClass[T]
+
+  final def hashConstClass [T](key: String): Hash[T] = macro HashMacroImpls.quietConstClass[T]
+  final def _hashConstClass[T](key: String): Hash[T] = macro HashMacroImpls.debugConstClass[T]
+
+  final def hashADT [T]: Hash[T] = macro HashMacroImpls.quietADT[T]
+  final def _hashADT[T]: Hash[T] = macro HashMacroImpls.debugADT[T]
+}
+
+object HashMacroImpls {
   import shipreq.webapp.macros.MacroUtils._
   import scala.reflect.macros.blackbox.Context
+
+  def quietCaseClass[T: c.WeakTypeTag](c: Context): c.Expr[Hash[T]] = implCaseClass[T](c, false)
+  def debugCaseClass[T: c.WeakTypeTag](c: Context): c.Expr[Hash[T]] = implCaseClass[T](c, true)
+
+  def quietConstClass[T: c.WeakTypeTag](c: Context)(key: c.Expr[String]): c.Expr[Hash[T]] = implConstClass[T](c, false)(key)
+  def debugConstClass[T: c.WeakTypeTag](c: Context)(key: c.Expr[String]): c.Expr[Hash[T]] = implConstClass[T](c, true)(key)
+
+  def quietADT[T: c.WeakTypeTag](c: Context): c.Expr[Hash[T]] = implADT[T](c, false)
+  def debugADT[T: c.WeakTypeTag](c: Context): c.Expr[Hash[T]] = implADT[T](c, true)
 
   private def Hash(c: Context) =
     c.universe.Ident(c.mirror staticModule "shipreq.webapp.base.hash.Hash")
@@ -87,27 +109,4 @@ object HashMacros {
     if (debug) println("\n" + impl + "\n")
     c.Expr[Hash[T]](impl)
   }
-
-  def quietCaseClass[T: c.WeakTypeTag](c: Context): c.Expr[Hash[T]] = implCaseClass[T](c, false)
-  def debugCaseClass[T: c.WeakTypeTag](c: Context): c.Expr[Hash[T]] = implCaseClass[T](c, true)
-
-  def quietConstClass[T: c.WeakTypeTag](c: Context)(key: c.Expr[String]): c.Expr[Hash[T]] = implConstClass[T](c, false)(key)
-  def debugConstClass[T: c.WeakTypeTag](c: Context)(key: c.Expr[String]): c.Expr[Hash[T]] = implConstClass[T](c, true)(key)
-
-  def quietADT[T: c.WeakTypeTag](c: Context): c.Expr[Hash[T]] = implADT[T](c, false)
-  def debugADT[T: c.WeakTypeTag](c: Context): c.Expr[Hash[T]] = implADT[T](c, true)
-
-}
-
-trait HashMacros {
-  def joinHashes(hashes: List[Int]): Int
-
-  final def hashCaseClass [T]: Hash[T] = macro HashMacros.quietCaseClass[T]
-  final def _hashCaseClass[T]: Hash[T] = macro HashMacros.debugCaseClass[T]
-
-  final def hashConstClass [T](key: String): Hash[T] = macro HashMacros.quietConstClass[T]
-  final def _hashConstClass[T](key: String): Hash[T] = macro HashMacros.debugConstClass[T]
-
-  final def hashADT [T]: Hash[T] = macro HashMacros.quietADT[T]
-  final def _hashADT[T]: Hash[T] = macro HashMacros.debugADT[T]
 }

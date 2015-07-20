@@ -1,6 +1,14 @@
 package shipreq.webapp.base.text
 
 object TextMacros {
+
+  /**
+   * @param arg T <: Text.Generic
+   */
+  def generateTypeclasses(arg: Any): Any = macro TextMacroImpls.typeclassImpl
+}
+
+object TextMacroImpls {
   import shipreq.webapp.macros.MacroUtils._
   import scala.reflect.macros.whitebox.Context
 
@@ -89,9 +97,4 @@ object TextMacros {
 
     c.Expr[Any](impl)
   }
-
-  /**
-   * @param arg T <: Text.Generic
-   */
-  def generateTypeclasses(arg: Any): Any = macro typeclassImpl
 }
