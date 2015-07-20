@@ -1,14 +1,12 @@
 package shipreq.webapp.base.protocol
 
 import boopickle._
-import japgolly.nyaya.util.{Multimap, MultiValues}
 import shipreq.base.util._
 import BoopickleMacros._
 
 // =====================================================================================================================
 object ProtocolDataCodecs {
   import shipreq.webapp.base.data._
-//  import CodecBase._
   import BinGenericCodecs._
   import BinDataCodecs._, AtomPicklers.instances._
 

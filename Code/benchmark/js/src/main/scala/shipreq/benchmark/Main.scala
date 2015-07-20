@@ -95,8 +95,6 @@ object Main extends JSApp {
     val bms = Vector(
       BinSerialisation,
       BinDeserialisation,
-      Serialisation,
-      Deserialisation,
       Hashing)
 
     val all = CompositeSuite("All")(bms: _*)

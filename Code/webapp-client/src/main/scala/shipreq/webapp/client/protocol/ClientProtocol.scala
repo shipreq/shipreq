@@ -11,44 +11,6 @@ trait ClientProtocol {
   def call[D <: Routine.Desc](r: Routine.Remote[D])(input: r.d.I, success: r.d.O => IO[Unit], f: FailureIO): IO[Unit]
 }
 
-/*
-object JsonClientProtocol {
-  import upickle._
-  import upickle.Fns._
-
-  def parseJsObject[T: Reader](a: js.Any): Throwable \/ T =
-    try
-      \/-(readJs[T](json.readJs(a)))
-    catch {
-      case e: Throwable => -\/(e)
-    }
-
-  def jsonEffect[T: Reader](f: T => IO[Unit]): js.Any => Unit =
-    a => {
-      val io =
-        parseJsObject[T](a) match {
-          case \/-(b) => f(b)
-          case -\/(e) => handleJsonParsingError(a, e)
-        }
-      io.unsafePerformIO()
-    }
-
-  private def handleJsonParsingError(a: js.Any, e: Throwable): IO[Unit] =
-    ConsoleIO(_.error(s"Parsing failure: $e\nJS: ", a))
-
-  object Lift extends ClientProtocol {
-    override def call[D <: Routine.Desc](r: Routine.Remote[D])(input: r.d.I, success: r.d.O => IO[Unit], f: FailureIO): IO[Unit] = {
-      import r.d.{wi, ro}
-      val i = js.URIUtils.encodeURIComponent(write(input))
-      val q = s"${r.n}=$i"
-      val s = jsonEffect[r.d.O](success)
-      val ff = () => (ConsoleIO(_ error s"AJAX failure on ${r.n} ⇐ $input") >> f.io).unsafePerformIO()
-      IO(LiftAjax.lift_ajaxHandler(q, s, ff, "json"))
-    }
-  }
-}
-*/
-
 object ClientProtocol {
 
   object Default extends ClientProtocol {

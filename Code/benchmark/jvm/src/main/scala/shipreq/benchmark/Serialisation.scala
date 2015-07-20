@@ -4,13 +4,13 @@ import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 import shipreq.webapp.base.data.Project
-import shipreq.webapp.base.protocol.DataCodecs
 import shipreq.webapp.base.protocol.BinDataCodecs
 
+/*
 @State(Scope.Benchmark)
 //@BenchmarkMode(Array(Mode.SampleTime))
 //@OutputTimeUnit(TimeUnit.MICROSECONDS)
-class Serialisation {
+class JsonSerialisation {
 
   implicit val projectCodec = DataCodecs.project
   val p100  = data.project_100
@@ -36,6 +36,7 @@ class Deserialisation {
 //  @Benchmark
 //  def read_1000: Project = upickle.Fns read p1000
 }
+*/
 
 // ===================================================================================================
 

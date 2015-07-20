@@ -1,7 +1,6 @@
 package shipreq.webapp.base.hash
 
-import upickle._
-import upickle.Fns._
+import boopickle._
 import japgolly.nyaya._
 import japgolly.nyaya.util.NyayaUtilAnyExt
 import japgolly.nyaya.test._
@@ -12,7 +11,7 @@ import shipreq.webapp.base.test.BaseTestUtil.assertEq
 import shipreq.base.util.UnivEq.int
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.protocol.DataCodecs._
+import shipreq.webapp.base.protocol.BinDataCodecs._
 import Hash.HashableValueOps
 
 object HashTest extends TestSuite {
@@ -91,15 +90,18 @@ object HashTest extends TestSuite {
 
   import HashScheme.default._
 
-  case class DataHashTest[A: Hash : Reader : Writer](a1: A, a2: A, a3: A) {
+  case class DataHashTest[A: Hash : Pickler](a1: A, a2: A, a3: A) {
     val E = EvalOver(this)
 
     val h1 = a1.hash
     val h2 = a2.hash
     val h3 = a3.hash
 
-    def consistent(h: Int, a: A) =
-      E.equal("consistent: hash(a) = hash(deser(ser(a)))", h, readJs[A](writeJs(a)).hash)
+    def consistent(h: Int, a: A) = {
+      val bb = PickleImpl.intoBytes(a)
+      val a2 = UnpickleImpl[A].fromBytes(bb)
+      E.equal("consistent: hash(a) = hash(deser(ser(a)))", h, a2.hash)
+    }
 
     def allConsistent =
       consistent(h1, a1) ∧ consistent(h2, a2) ∧ consistent(h3, a3)
@@ -113,7 +115,7 @@ object HashTest extends TestSuite {
 
   def dataHashTest[A] = Prop.eval[DataHashTest[A]](_.main)
 
-  def testData[A: Hash : Reader : Writer](g: Gen[A]): Unit = {
+  def testData[A: Hash : Pickler](g: Gen[A]): Unit = {
     val t = for {a <- g; b <- g; c <- g} yield new DataHashTest(a, b, c)
     dataHashTest[A] mustBeSatisfiedBy t
   }
