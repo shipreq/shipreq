@@ -90,6 +90,7 @@ object BinCodecData {
   implicit val pickleReqCodeTarget     : Pickler[ReqCode.Target]     = pickleADT
   implicit val pickleReqCodeActiveData : Pickler[ReqCode.ActiveData] = pickleCaseClass
   implicit val pickleReqCodeData       : Pickler[ReqCode.Data]       = pickleCaseClass
+  implicit val pickleReqCodeIdAndValue : Pickler[ReqCode.IdAndValue] = pickleCaseClass
   implicit val pickleReqCodeTrie       : Pickler[ReqCode.Trie]       = pickleTrie
   implicit val pickleReqCodes          : Pickler[ReqCodes]           = pickleCaseClass
 

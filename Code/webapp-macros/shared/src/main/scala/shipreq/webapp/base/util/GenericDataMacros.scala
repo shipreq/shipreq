@@ -2,11 +2,15 @@ package shipreq.webapp.base.util
 
 import scala.annotation.StaticAnnotation
 import scala.annotation.compileTimeOnly
+import boopickle._
 import upickle._
 
 object GenericDataMacros {
   def upickler (d: GenericData)(keys: d.Attr => String): ReadWriter[d.NonEmptyValues] = macro GenericDataMacroImpls.quietMPickler
   def _upickler(d: GenericData)(keys: d.Attr => String): ReadWriter[d.NonEmptyValues] = macro GenericDataMacroImpls.debugMPickler
+
+  def binpickler (d: GenericData): d.ValueTypeClasses[Pickler] = macro GenericDataMacroImpls.quietBinPickler
+  def _binpickler(d: GenericData): d.ValueTypeClasses[Pickler] = macro GenericDataMacroImpls.debugBinPickler
 }
 
 @compileTimeOnly("Enable macro paradise to expand macro annotations")
@@ -17,6 +21,8 @@ class CreateGenericData extends StaticAnnotation {
 object GenericDataMacroImpls {
   import shipreq.webapp.macros.MacroUtils._
   import scala.reflect.macros.{blackbox, whitebox}
+
+  private def sep = ("_" * 120) + "\n"
 
   /**
    * Populates the body of a [[GenericData]] object.
@@ -94,12 +100,42 @@ object GenericDataMacroImpls {
     c.Expr[Any](impl)
   }
 
+  def resolveAttrsAndValues(c: blackbox.Context, debug: Boolean)(D: c.universe.SingleType): Vector[(c.universe.ModuleSymbol, c.universe.ClassSymbol)] = {
+    import c.universe._
+
+    val attrTrait  = D.member(TypeName("Attr")).asType.toType
+    val valueTrait = D.member(TypeName("Value")).asType.toType
+
+    var attrs  = Vector.empty[ModuleSymbol]
+    var values = Vector.empty[ClassSymbol]
+    for (m <- D.members) {
+      if (m.isModule) {
+        val mm = m.asModule
+        if (mm.moduleClass.asType.toType <:< attrTrait)
+          attrs :+= mm
+      } else if (m.isClass && !m.isAbstract) {
+        val mc = m.asClass
+        if (mc.asType.toType <:< valueTrait)
+          values :+= mc
+      }
+    }
+    attrs = attrs.sortBy(_.name.toString)
+    values = values.sortBy(_.name.toString)
+
+    if (debug) {
+      println(s"Attrs: $attrs")
+      println(s"Values: $values")
+    }
+    if (attrs.length != values.length)
+      fail(c, s"attrs.length != values.length\n$attrs\n$values")
+
+    attrs zip values
+  }
+
   // ===================================================================================================================
 
   def debugMPickler(c: blackbox.Context)(d: c.Expr[GenericData])(keys: c.Expr[d.value.Attr => String]) = implMPickler(c, true )(d)(keys)
   def quietMPickler(c: blackbox.Context)(d: c.Expr[GenericData])(keys: c.Expr[d.value.Attr => String]) = implMPickler(c, false)(d)(keys)
-
-  private def sep = ("_" * 120) + "\n"
 
   def implMPickler(c: blackbox.Context, debug: Boolean)(d: c.Expr[GenericData])(keys: c.Expr[d.value.Attr => String]): c.Expr[ReadWriter[d.value.NonEmptyValues]] = {
     import c.universe._
@@ -120,35 +156,7 @@ object GenericDataMacroImpls {
 
     if (debug) println(s"Keys: $keyLookup")
 
-    val attrsAndValues: Vector[(ModuleSymbol, ClassSymbol)] = {
-      val attrTrait  = D.member(TypeName("Attr")).asType.toType
-      val valueTrait = D.member(TypeName("Value")).asType.toType
-
-      var attrs  = Vector.empty[ModuleSymbol]
-      var values = Vector.empty[ClassSymbol]
-      for (m <- D.members) {
-        if (m.isModule) {
-          val mm = m.asModule
-          if (mm.moduleClass.asType.toType <:< attrTrait)
-            attrs :+= mm
-        } else if (m.isClass && !m.isAbstract) {
-          val mc = m.asClass
-          if (mc.asType.toType <:< valueTrait)
-            values :+= mc
-        }
-      }
-      attrs = attrs.sortBy(_.name.toString)
-      values = values.sortBy(_.name.toString)
-
-      if (debug) {
-        println(s"Attrs: $attrs")
-        println(s"Values: $values")
-      }
-      if (attrs.length != values.length)
-        fail(c, s"attrs.length != values.length\n$attrs\n$values")
-
-      attrs zip values
-    }
+    val attrsAndValues = resolveAttrsAndValues(c, debug)(D)
 
     var init     = List.empty[ValDef]
     var wCases   = List.empty[CaseDef]
@@ -160,9 +168,9 @@ object GenericDataMacroImpls {
       val key = keyLookup.find(_._1 == name).map(_._2) getOrElse fail(c, s"Key not found for $name.\nKeys = $keyLookup")
       val rw = TermName(c.freshName("rw"))
       val rwDef = q"val $rw = implicitly[ReadWriter[$attr.Data]]": ValDef
+      init    ::= rwDef
       wCases  ::= cq"v: $value => kvs :+= (($key, $rw write v.value))"
       rCases  ::= cq"$key => $attr apply $rw.read(kv._2)"
-      init    ::= rwDef
       keysUsed += key.toString()
     }
 
@@ -201,5 +209,41 @@ object GenericDataMacroImpls {
     if (debug) println("\n" + impl + "\n" + sep)
 
     c.Expr[ReadWriter[d.value.NonEmptyValues]](impl)
+  }
+
+  // ===================================================================================================================
+
+  def debugBinPickler(c: blackbox.Context)(d: c.Expr[GenericData]) = implBinPickler(c, true )(d)
+  def quietBinPickler(c: blackbox.Context)(d: c.Expr[GenericData]) = implBinPickler(c, false)(d)
+
+  def implBinPickler(c: blackbox.Context, debug: Boolean)(d: c.Expr[GenericData]): c.Expr[d.value.ValueTypeClasses[Pickler]] = {
+    import c.universe._
+
+    if (debug) println(sep)
+
+    val D = d.actualType.asInstanceOf[SingleType]
+
+    val attrsAndValues = resolveAttrsAndValues(c, debug)(D)
+
+    val pickleCaseClass = Ident(TermName((if (debug) "_" else "") + "pickleCaseClass"))
+    val init =
+      for ((attr, value) <- attrsAndValues) yield {
+        val p = TermName(c.freshName("p"))
+        q"implicit val $p: Pickler[$value] = $pickleCaseClass": ValDef
+      }
+
+    val impl = q""" {
+      import _root_.shipreq.webapp.base.protocol.BoopickleMacros._
+      import $d._
+      ..${flattenBlocks(c)(init.toList)}
+      implicit val value: Pickler[Value] = pickleADT
+      implicit val values: Pickler[Values] = pickleIMap(emptyValues)
+      implicit val nev: Pickler[NonEmptyValues] = pickleNonEmpty(values, implicitly)
+      ValueTypeClasses(value, values, nev)
+    } """
+
+    if (debug) println("\n" + impl + "\n" + sep)
+
+    c.Expr[d.value.ValueTypeClasses[Pickler]](impl)
   }
 }

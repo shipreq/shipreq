@@ -4,6 +4,9 @@ import shipreq.base.util.{NonEmpty, IMap, NonEmptySet, UnivEq}
 
 abstract class GenericData {
 
+  // This really just so that Intellij doesn't highlight EVERYTHING red.
+  protected def defAttr[D]: Attr {type Data = D; def apply(d: D): ValueFor[this.type]} = ???
+
   /**
    * A data attribute.
    */
@@ -46,6 +49,5 @@ abstract class GenericData {
   def nev(v1: Value, vn: Value*): NonEmptyValues =
     NonEmpty.force(emptyValues + v1 ++ vn)
 
-  // This really just so that Intellij doesn't highlight EVERYTHING red.
-  protected def defAttr[D]: Attr {type Data = D; def apply(d: D): ValueFor[this.type]} = ???
+  case class ValueTypeClasses[T[_]](value: T[Value], values: T[Values], nev: T[NonEmptyValues])
 }

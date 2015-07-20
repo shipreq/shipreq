@@ -45,7 +45,10 @@ object NonEmpty {
   implicit def proveSetDiff[A]: ProofA[SetDiff[A]] =
     Proof.testEmptiness(_.isEmpty)
 
-  implicit def proveIMap[M <: IMapBase[K, V, T], K, V, T <: IMapBase[K, V, T]]: ProofA[M] =
+//  implicit def proveIMap[M <: IMapBase[K, V, T], K, V, T <: IMapBase[K, V, T]]: ProofA[M] =
+//    Proof.testEmptiness(_.isEmpty)
+
+  implicit def proveIMap[K, V]: ProofA[IMap[K, V]] =
     Proof.testEmptiness(_.isEmpty)
 
   implicit def proveMap[M <: Map[K, V], K, V]: ProofA[M] =

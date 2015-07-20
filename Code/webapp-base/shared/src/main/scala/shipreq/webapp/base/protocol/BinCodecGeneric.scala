@@ -55,6 +55,9 @@ object BinCodecGeneric extends BasicImplicitPicklers with TuplePicklers {
   implicit def pickleNES[A: UnivEq](implicit p: Pickler[Set[A]]): Pickler[NonEmptySet[A]] =
     p.xmap(l => NonEmptySet(l.head, l.tail))(_.whole)
 
+  implicit def pickleNonEmpty[A](implicit a: Pickler[A], proof: NonEmpty.ProofA[A]): Pickler[NonEmpty[A]] =
+    a.xmap(NonEmpty.tryO(_).getOrElse(sys error "Invalid data"))(_.value)
+
   implicit def pickleISubset[A: UnivEq](implicit as: Pickler[NonEmptySet[A]]): Pickler[ISubset[A]] = {
     import ISubset._
     implicit val a: Pickler[All [A]] = pickleCaseClass
