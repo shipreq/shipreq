@@ -1,30 +1,54 @@
 package shipreq.webapp.lib
 
+import boopickle._
+import java.nio.ByteBuffer
+import java.util.Base64
+import net.liftweb.common.{Full, Empty, Failure => BoxFailure}
 import net.liftweb.http.{BadResponse, S}
-import scalaz.{-\/, \/-, \/}
-import upickle._
-import upickle.Fns._
-
+import scala.util.{Success, Failure => TryFailure}
+import shipreq.base.util.Debug._
 import shipreq.base.util.Util.quickSB
 import shipreq.webapp.base.protocol.{JsEntryPoint, Routine}
 
 object ServerProtocol {
 
-  def parseJson[T: Reader](j: String): Throwable \/ T =
-    try
-      \/-(read[T](j))
-    catch {
-      case e: Throwable => -\/(e)
+  def binaryToBase64(bb: ByteBuffer): String = {
+    val size = bb.limit()
+    val a = new Array[Byte](size)
+    bb.array().copyToArray(a, 0, size)
+    Base64.getEncoder.encodeToString(a)
+  }
+
+  def routine[D <: Routine.Desc](d: D)(f: d.I => d.O): Routine.Remote[D] = {
+    import d.po
+
+    def fail = BadResponse() // TODO log invalid request to support?
+
+    val proc = S.NFuncHolder { () =>
+      val tmp =
+        for {
+          req  <- S.request
+          body <- req.body
+        } yield
+          UnpickleImpl(d.pi).tryFromBytes(ByteBuffer wrap body) match {
+            case Success(input) =>
+              val output = f(input)
+              val binary = PickleImpl.intoBytes(output)
+              BinaryResponse(binary)
+
+            case TryFailure(_) => fail
+          }
+
+      tmp match {
+        case Full(resp)          => resp
+        case Empty               => fail
+        case BoxFailure(_, _, _) => fail
+      }
     }
 
-  def routine[D <: Routine.Desc](d: D)(f: d.I => d.O) = {
-    import d.{ri, wo}
-    val proc = S.SFuncHolder(req =>
-      parseJson[d.I](req) match {
-        case \/-(i) => RawJsonResponse(write[d.O](f(i)))
-        case -\/(_) => BadResponse() // TODO log invalid JSON req to support?
-      })
-    val fnName = S.fmapFunc(proc)(n => n)
+    val fnName = S.formFuncName
+    S.addFunctionMap(fnName, proc)
+
     Routine.Remote[D](fnName, d)
   }
 
@@ -34,13 +58,15 @@ object ServerProtocol {
       f(sb)
       sb append "};"
     }
-    import ep.wi
+    import ep.pi
     @inline def callClient(n: String, i: I): StringBuilder => Unit = sb => {
       sb append JsEntryPoint.client
       sb append "()."
       sb append n
       sb append '('
-      sb append write(i)
+      sb append '"'
+      sb append binaryToBase64(PickleImpl.intoBytes(i))
+      sb append '"'
       sb append ')'
     }
     quickSB(runOnWindowLoad(callClient(ep.name, i)))

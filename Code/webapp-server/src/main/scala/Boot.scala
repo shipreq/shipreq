@@ -6,6 +6,7 @@ import net.liftweb.http.provider.HTTPParam
 import net.liftweb.util.Props
 import net.liftweb.util.Props.RunModes.Test
 import shipreq.webapp.app.{ExceptionHandler, DI, Defaults, AppSiteMap}
+import shipreq.webapp.base.AppConsts
 import shipreq.webapp.db.DB
 import shipreq.webapp.feature.SessionStats
 import shipreq.webapp.lib.Taskman
@@ -45,7 +46,7 @@ class Boot extends DI {
     LiftRules.funcNameGenerator = S.generateFuncName _
 
     // Customise URL paths for built-in resources & AJAX requests
-    LiftRules.ajaxPath = "A"
+    LiftRules.ajaxPath = AppConsts.ajaxPath
     LiftRules.ajaxScriptName = () => "A.js"
     LiftRules.cometPath = "C"
     LiftRules.cometScriptName = () => "C.js"

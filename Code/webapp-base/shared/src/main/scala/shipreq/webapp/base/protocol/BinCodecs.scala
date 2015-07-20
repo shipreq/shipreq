@@ -1,11 +1,12 @@
 package shipreq.webapp.base.protocol
 
 import boopickle._
+import scalaz.{\/, -\/, \/-, \&/}
 import japgolly.nyaya.util.{Multimap, MultiValues}
 import shipreq.base.util._
 import BoopickleMacros._
 
-object BinGenericCodecs extends BasicImplicitPicklers {
+object BinGenericCodecs extends BasicImplicitPicklers with TuplePicklers {
   import shipreq.webapp.base.data.DataIdAux
 
   def taggedL[T <: TaggedTypes.TaggedLong]  (apply: Long   => T) = xmap(apply)(_.value)
@@ -53,6 +54,24 @@ object BinGenericCodecs extends BasicImplicitPicklers {
     implicit lazy val trie  : Pickler[Trie  [K, V]] = lazily(pickleMap)
     trie
   }
+
+  implicit def disjunction[A: Pickler, B: Pickler]: Pickler[A \/ B] = {
+    implicit val l = pickleCaseClass[-\/[A]]
+    implicit val r = pickleCaseClass[\/-[B]]
+    pickleADT
+  }
+
+  implicit def ior[A: Pickler, B: Pickler]: Pickler[A \&/ B] = {
+    import \&/._
+    val ths = pickleCaseClass[This[A]]
+    val tht = pickleCaseClass[That[B]]
+    val bth = pickleCaseClass[Both[A, B]]
+    unsafeSelector(ths, tht, bth) {
+      case _: This[A]    => 0
+      case _: That[B]    => 1
+      case _: Both[A, B] => 2
+    }
+  }
 }
 
 // =====================================================================================================================
@@ -82,6 +101,8 @@ object BinDataCodecs {
   implicit val hashRefKey               = taggedS(HashRefKey)
   implicit val fieldRefKey              = taggedS(FieldRefKey)
   implicit val reqTypeMnemonic          = taggedS(ReqType.Mnemonic)
+
+  implicit final val pickleRevRange = pickleCaseClass[RevRange]
 
   implicit def pickleRevAnd[A: Pickler]: Pickler[RevAnd[A]] = pickleCaseClass
 

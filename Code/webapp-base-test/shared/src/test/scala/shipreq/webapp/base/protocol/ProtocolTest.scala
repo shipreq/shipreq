@@ -1,5 +1,7 @@
 package shipreq.webapp.base.protocol
 
+import boopickle._
+import boopickle.Default.unitPickler
 import java.util.concurrent.atomic.AtomicBoolean
 import scalaz.Equal
 import scalaz.Leibniz.===
@@ -7,9 +9,6 @@ import scalaz.std.anyVal.unitInstance
 import scalaz.std.stream.streamEqual
 import scalaz.syntax.equal._
 import utest._
-import upickle._
-import upickle.Fns._
-import upickle.BaseCodecs.UnitRW
 import japgolly.nyaya._
 import japgolly.nyaya.test.{Gen, Settings}
 import japgolly.nyaya.test.PropTest._
@@ -39,16 +38,16 @@ object ProtocolTest extends TestSuite {
   // -------------------------------------------------------------------------------------------------------------------
 
   def kitR[R <: Routine.Desc](r: R) = {
-    import r.{ri, wi, ro, wo}
+    import r.{pi, po}
     new KitIO[r.I, r.O]("Routines." + r.getClass.getSimpleName.replace("$",""))
   }
 
   def kitEP[I](ep: JsEntryPoint[I, Unit], name: String) = {
-    import ep.{ri, wi}
+    import ep.pi
     new KitIO[I, Unit]("JsEntryPoint." + name)
   }
 
-  class KitIO[I: Reader : Writer, O: Reader : Writer](subject: String) {
+  class KitIO[I: Pickler, O: Pickler](subject: String) {
     private def c(code: String, m: Any) = s"\033[${code}m$m\033[0m"
 
     private type LogFmt = (String, String) => String
@@ -63,21 +62,21 @@ object ProtocolTest extends TestSuite {
       testO(ev.subst(is): _*)(ev.subst(e))
     }
 
-    def testA[A: Reader : Writer : Equal](a: A, lf: LogFmt) = {
-      val j = write(a)
-      println(lf(a.toString, j))
-      val b = read[A](j)
+    def testA[A: Pickler : Equal](a: A, lf: LogFmt) = {
+      val j = PickleImpl.intoBytes(a)
+//      println(lf(a.toString, j))
+      val b = UnpickleImpl[A].fromBytes(j)
       assertEq(b, a)
     }
 
-    def propA[A: Reader : Writer : Equal](lf: LogFmt, name: String) = Prop.equalSelf[A](name, {
-      val first = new AtomicBoolean(true)
+    def propA[A: Pickler : Equal](lf: LogFmt, name: String) = Prop.equalSelf[A](name, {
+//      val first = new AtomicBoolean(true)
       a => {
-        val j = write(a)
-        val b = read[A](j)
+        val j = PickleImpl.intoBytes(a)
+        val b = UnpickleImpl[A].fromBytes(j)
         // if (!x.settings.debug && x.run == 0)
-        if (first.compareAndSet(true, false))
-          println(lf(a.toString, j))
+//        if (first.compareAndSet(true, false))
+//          println(lf(a.toString, j))
         b
       }
     })
@@ -88,27 +87,6 @@ object ProtocolTest extends TestSuite {
 
 
   override def tests = TestSuite {
-
-    'Codecs {
-      import DataCodecs._
-      import TextCodecs.instances._
-      implicit def autoSomeG[A](g: Gen[A]): Option[Gen[A]] = Some(g)
-
-      def test[A: Reader : Writer : Equal](name: String, g: Gen[A]): Unit =
-        g.mustSatisfy(new KitIO[A, Unit](name).propI)//(implicitly[Settings].setDebug.copy(debugMaxLen = 5000))
-
-      'Text {
-        import shipreq.webapp.base.text.Text._
-        def gr = $.reqId
-        def gc = $.reqCode.id
-        def gi = $.customIssueTypeId
-        def ga = $.applicableTagId
-        'ReqCodeGroupTitle - test("ReqCodeGroupTitle", $.TextGen.reqCodeGroupTitleAtom(gr, gc, gi    ).text)
-        'GenericReqTitle   - test("GenericReqTitle",   $.TextGen.genericReqTitleAtom  (gr, gc, gi, ga).text)
-        'InlineIssueDesc   - test("InlineIssueDesc",   $.TextGen.inlineIssueDescAtom  (gr, gc        ).text)
-        'CustomTextField   - test("CustomTextField",   $.TextGen.customTextFieldAtom  (gr, gc, gi, ga).text1(CustomTextField))
-      }
-    }
 
     'Routines {
       import Routine.=>|=>
@@ -148,5 +126,27 @@ object ProtocolTest extends TestSuite {
       'Fields           - test(Partition.Fields)
       'Tags             - test(Partition.Tags)
     }
+
+    'Codecs {
+      import BinDataCodecs._
+      import AtomPicklers.instances._
+      implicit def autoSomeG[A](g: Gen[A]): Option[Gen[A]] = Some(g)
+
+      def test[A: Pickler : Equal](name: String, g: Gen[A]): Unit =
+        g.mustSatisfy(new KitIO[A, Unit](name).propI)//(implicitly[Settings].setDebug.copy(debugMaxLen = 5000))
+
+      'Text {
+        import shipreq.webapp.base.text.Text._
+        def gr = $.reqId
+        def gc = $.reqCode.id
+        def gi = $.customIssueTypeId
+        def ga = $.applicableTagId
+        'ReqCodeGroupTitle - test("ReqCodeGroupTitle", $.TextGen.reqCodeGroupTitleAtom(gr, gc, gi    ).text)
+        'GenericReqTitle   - test("GenericReqTitle",   $.TextGen.genericReqTitleAtom  (gr, gc, gi, ga).text)
+        'InlineIssueDesc   - test("InlineIssueDesc",   $.TextGen.inlineIssueDescAtom  (gr, gc        ).text)
+        'CustomTextField   - test("CustomTextField",   $.TextGen.customTextFieldAtom  (gr, gc, gi, ga).text1(CustomTextField))
+      }
+    }
+
   }
 }

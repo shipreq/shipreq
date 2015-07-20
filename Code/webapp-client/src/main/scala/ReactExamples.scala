@@ -111,7 +111,7 @@ object ReactExamples {
     }
 
   def projectPage(r: Routines.ProjectSPA): IO[Unit] = {
-    val cp = ClientProtocol.Lift
+    val cp = ClientProtocol.Default
     ClientData.init(cp, r.projectInit, clientData => IO {
 
       val routerConfig = RouterConfigDsl[TmpPage].buildConfig { dsl =>

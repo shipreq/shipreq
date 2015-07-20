@@ -28,8 +28,9 @@ final class ClientData(init: Project) extends Broadcaster[LocalDelta] {
 
 object ClientData {
 
-  // TODO failure callback
-  def init(cp: ClientProtocol, rpc: ProjectInit.Remote, s: ClientData => IO[Unit]): IO[Unit] =
-    cp.call(rpc)((), p => s(new ClientData(p)), FailureIO.nop)
+  def init(cp: ClientProtocol, rpc: ProjectInit.Remote, s: ClientData => IO[Unit]): IO[Unit] = {
+    val f = FailureIO(ConsoleIO(_ error "Page initialisation failed.")) // TODO handle failure properly
+    cp.call(rpc)((), p => s(new ClientData(p)), f)
+  }
 
 }

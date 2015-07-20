@@ -2,13 +2,16 @@ package shipreq.webapp.base
 
 object AppConsts {
 
-  final val appName = "ShipReq"
+  val appName = "ShipReq"
+
+  /** The URL path under which AJAX requests are serviced. */
+  val ajaxPath = "A"
 
   /** Passwords' min & max lengths. */
-  final val passwordLength = 8 to 128
+  val passwordLength = 8 to 128
 
   /** Usernames' min & max lengths. */
-  final val usernameLength = 3 to 32
+  val usernameLength = 3 to 32
 
   /** Email address max length. */
   final val emailMaxLength = 120

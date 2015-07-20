@@ -1,14 +1,13 @@
 package shipreq.webapp.base.protocol
 
-import upickle.{Reader, Writer}
+import boopickle.Pickler
 import ProtocolRemoteCodecs._
 
 /**
  * Describes a function exposed in client JS, that the server can invoke.
  */
-final class JsEntryPoint[I,O] private[JsEntryPoint] (val name: String)(implicit RI: Reader[I], WI: Writer[I]) {
-  implicit def ri = RI
-  implicit def wi = WI
+final class JsEntryPoint[I,O] private[JsEntryPoint] (val name: String)(implicit PI: Pickler[I]) {
+  implicit def pi = PI
 }
 
 /**

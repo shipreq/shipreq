@@ -1,7 +1,7 @@
 package shipreq.webapp.base.protocol
 
 import scala.reflect.macros.blackbox.Context
-import shipreq.base.util.UnivEq
+import shipreq.base.util.{NonEmptyVector, UnivEq}
 import shipreq.webapp.macros.MacroUtils._
 import boopickle._
 
@@ -15,6 +15,40 @@ object BoopickleMacros {
     new Pickler[A] {
       override def pickle(a: A)(implicit state: PickleState): Unit = p.pickle(a)
       override def unpickle(implicit state: UnpickleState): A = p.unpickle
+    }
+  }
+
+  def enum[V: UnivEq](nev: NonEmptyVector[V]): Pickler[V] =
+    new Pickler[V] {
+      val vs = nev.whole
+      val vtoi = vs.zipWithIndex.toMap
+      assert(vtoi.size == nev.length, s"Duplicates found in $nev")
+      override def pickle(v: V)(implicit state: PickleState): Unit = {
+        val i = vtoi(v)
+        state.enc.writeInt(i)
+      }
+      override def unpickle(implicit state: UnpickleState): V =
+        state.dec.readIntCode match {
+          case Right(i) => vs(i)
+          case Left(_)  => throw new IllegalArgumentException("Unknown coding")
+      }
+    }
+
+  /**
+   * MAKE SURE index REFLECTS ORDER OF picklers!
+   */
+  def unsafeSelector[T](picklers: Pickler[_ <: T]*)(index: T => Int): Pickler[T] =
+    new Selector[T](picklers.map(_.asInstanceOf[Pickler[T]]).toArray, index)
+
+  class Selector[T](all: Array[Pickler[T]], index: T => Int) extends Pickler[T] {
+    override def pickle(value: T)(implicit state: PickleState): Unit = {
+      val i = index(value)
+      state.enc.writeInt(i)
+      all(i).pickle(value)
+    }
+    override def unpickle(implicit state: UnpickleState): T = {
+      val i = state.dec.readInt
+      all(i).unpickle
     }
   }
 
@@ -177,38 +211,21 @@ object BoopickleMacroImpls {
 //    if (ignored.nonEmpty && !pathDependent)
 //      fail(c, s"Failed to resolve the following: $ignored")
 
+
   def implADT[T: c.WeakTypeTag](c: Context, debug: Boolean): c.Expr[Pickler[T]] = {
     import c.universe._
 
-    val T          = weakTypeOf[T]
-    val types      = findConcreteTypesNE(c)(T, LeavesOnly).toList.sortBy(_.fullName)
-    val typeArgLen = T.typeArgs.length
-
-    val fixTypes = types.map { t =>
-      // Try to deduce types from type constructors
-      val t2: Type =
-        t.typeParams match {
-
-          // Already a type
-          case Nil => t.toType
-
-          // Type holes match that in base type constructor
-          case ps if ps.length == typeArgLen => appliedType(t, T.typeArgs)
-
-          // Give up
-          case _ => fail(c, s"Don't know how to turn a $t into a $T.")
-        }
-
-      require(t2 <:< T, s"$t2 is not a subtype of $T")
-      t2
-    }
+    val T     = weakTypeOf[T]
+    val types = findConcreteTypesNE(c)(T, LeavesOnly)
+                  .toList.sortBy(_.fullName)
+                  .map(t => determineAdtType(c)(T, t))
 
     var picklerNames = Vector.empty[TermName]
     var picklers     = Vector.empty[ValDef]
     var cases        = Vector.empty[CaseDef]
 
     var index = 0
-    for (t <- fixTypes) {
+    for (t <- types) {
 
       val t2: Tree =
         if (t.typeSymbol.isModuleClass)
@@ -233,25 +250,15 @@ object BoopickleMacroImpls {
     }
 
     val impl =
-      if (types.length == 1) {
+      if (types.lengthCompare(1) == 0) {
         val p = picklerNames.head
         q"${picklers.head}; $p"
-
       } else {
-        def pickleImpl = q"""
-            val i = index(value)
-            state.enc.writeInt(i)
-            all(i).pickle(value)
-          """
-        def unpickleImpl = q"""
-            val i = state.dec.readInt
-            all(i).unpickle
-          """
         q"""
           ..$picklers
           val all = Array[Pickler[$T]](..$picklerNames)
           def index(t: $T): Int = t match {case ..$cases}
-          ${newPickler(c)(T, pickleImpl, unpickleImpl)}
+          new Selector[$T](all, index)
         """
       }
 

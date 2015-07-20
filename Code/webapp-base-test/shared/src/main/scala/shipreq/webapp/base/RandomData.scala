@@ -1273,9 +1273,9 @@ object RandomData {
 
     class CrudActionGens[I, V](c: Crudable.Aux[I, V])(idG: Gen[I], vG: Gen[V]) {
       import Gen.Covariance._
-      lazy val create = vG.map(CrudAction.Create[V])
+      lazy val create = vG.map(CrudAction.Create[I, V])
       lazy val update = Gen.apply2(CrudAction.Update[I, V])(idG, vG)
-      lazy val delete = Gen.apply2(CrudAction.Delete[I])(idG, deletionAction)
+      lazy val delete = Gen.apply2(CrudAction.Delete[I, V])(idG, deletionAction)
       lazy val any    = Gen.oneofG[CrudAction[I, V]](create, update, delete)
     }
 

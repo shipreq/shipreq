@@ -92,15 +92,6 @@ object MacroUtils {
       }
     }
 
-//    findSubClasses(sym).toSeq.sortBy(_.name.toString).map { s =>
-//      if (s.typeParams.isEmpty) {
-//        q"""addConcreteType[$s]"""
-//      } else {
-//        val t = unifyCaseClassWithTrait(c)(tpe, s)
-//        q"""addConcreteType[$t]"""
-//      }
-//    }
-
     findSubClasses(sym)
   }
 
@@ -109,6 +100,42 @@ object MacroUtils {
     if (r.isEmpty)
       fail(c, s"Unable to find concrete types for ${tpe.typeSymbol.name}.")
     r
+  }
+
+  /**
+   * findConcreteTypes will spit out type constructors. This will turn them into types.
+   *
+   * @param T The ADT base trait.
+   * @param t The subclass.
+   */
+  def determineAdtType(c: Context)(T: c.universe.Type, t: c.universe.ClassSymbol): c.universe.Type = {
+    val t2 =
+      if (t.typeParams.isEmpty)
+        t.toType
+      else
+        caseClassTypeCtorToType(c)(T, t)
+    require(t2 <:< T, s"$t2 is not a subtype of $T")
+    t2
+  }
+
+  /**
+   * Turns a case class type constructor into a type.
+   *
+   * Eg. caseClassTypeCtorToType(c)(Option[Int], Some[_]) → Some[Int]
+   *
+   * Actually this doesn't work with type variance :(
+   */
+  private def caseClassTypeCtorToType(c: Context)(baseTrait: c.universe.Type, caseclass: c.universe.ClassSymbol): c.universe.Type = {
+    import c.universe._
+
+    val companion = caseclass.companion
+    val apply = companion.typeSignature.member(TermName("apply"))
+    if (apply == NoSymbol)
+      fail(c, s"Don't know how to turn $caseclass into a real type of $baseTrait; it's generic and its companion has no `apply` method.")
+
+    val matchArgs = apply.asMethod.paramLists.flatten.map { arg => pq"_" }
+    val name = TermName(c.freshName("x"))
+    c.typecheck(q"""(??? : $baseTrait) match {case $name@$companion(..$matchArgs) => $name }""").tpe
   }
 
   def modStringHead(s: String, f: Char => Char): String =
