@@ -1,0 +1,32 @@
+digraph G {
+
+nono [label="Avoid no-ops"]
+remove [label="Remove Δ, δ, rev, partitions"]
+tp [label="Trim .protocol code"]
+template [label="Create template event"]
+rpadt [label="Restore pickleADT to Protocol codecs"]
+bc [label="Change broadcast from δ\nEither each listener scans events or new δ"]
+nowip [label="Change WIP into real service"]
+
+node [style=filled fillcolor="#ffcccc"]
+wipuve [label="Make all RemoteFns & WIP use VerifiedEvents"]
+cmd [label="Create input events (commands)"]
+
+node [style=filled fillcolor="#ddffcc"]
+svetcl [label="Send VerifiedEvents to Client"]
+aveic [label="Apply VerifiedEvents in Client"]
+bin [label="Use binary for transport"]
+asfttr [label="Add separate failure type to RemoteFn"]
+
+bin -> svetcl,cmd
+asfttr -> svetcl
+aveic -> wipuve
+
+nono,nowip  -> template
+svetcl -> wipuve -> nowip
+remove -> tp -> rpadt
+cmd -> wipuve
+wipuve -> bc -> remove
+wipuve -> nono
+
+}
