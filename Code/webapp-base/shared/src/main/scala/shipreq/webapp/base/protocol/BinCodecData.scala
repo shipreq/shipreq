@@ -1,125 +1,53 @@
 package shipreq.webapp.base.protocol
 
 import boopickle._
-import scalaz.{\/, -\/, \/-, \&/}
-import japgolly.nyaya.util.{Multimap, MultiValues}
 import shipreq.base.util._
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.text.AtomTC
+import DataImplicits._
+import BinCodecGeneric._
 import BoopickleMacros._
 
-object BinGenericCodecs extends BasicImplicitPicklers with TuplePicklers {
-  import shipreq.webapp.base.data.DataIdAux
+object BinCodecData {
 
-  def taggedL[T <: TaggedTypes.TaggedLong]  (apply: Long   => T) = xmap(apply)(_.value)
-  def taggedI[T <: TaggedTypes.TaggedInt]   (apply: Int    => T) = xmap(apply)(_.value)
-  def taggedS[T <: TaggedTypes.TaggedString](apply: String => T) = xmap(apply)(_.value)
+  implicit val pickleLive         : Pickler[Live]                = pickleBool(Live)
+  implicit val pickleImplRequired : Pickler[ImplicationRequired] = pickleBool(ImplicationRequired)
+  implicit val pickleMandatory    : Pickler[Mandatory]           = pickleBool(Mandatory)
+  implicit val pickleDeletable    : Pickler[Deletable]           = pickleBool(Deletable)
+  implicit val pickleMutexChildren: Pickler[MutexChildren]       = pickleBool(MutexChildren)
 
-  def pickleBool[T](iso: IsoBool[T]): Pickler[T] =
-    xmap(iso.to)(iso.from)
-
-  implicit def pickleMap[K: Pickler, V: Pickler]: Pickler[Map[K, V]] =
-    mapPickler[K, V, Map]
-
-  def pickleIMap[K: UnivEq, V: Pickler](empty: IMap[K, V]): Pickler[IMap[K, V]] =
-    xmap(empty ++ (_: Iterable[V]))(_.values)
-
-  @inline def pickleIMapD[K: UnivEq : Pickler, V: Pickler](implicit d: DataIdAux[V, K]): Pickler[IMap[K, V]] =
-    pickleIMap(d.emptyIMap)
-
-  implicit def pickleNEV[A](implicit p: Pickler[Vector[A]]): Pickler[NonEmptyVector[A]] =
-    p.xmap(l => NonEmptyVector(l.head, l.tail))(_.whole)
-
-  implicit def pickleNES[A: UnivEq](implicit p: Pickler[Set[A]]): Pickler[NonEmptySet[A]] =
-    p.xmap(l => NonEmptySet(l.head, l.tail))(_.whole)
-
-  implicit def pickleISubset[A: UnivEq](implicit as: Pickler[NonEmptySet[A]]): Pickler[ISubset[A]] = {
-    import ISubset._
-    implicit val a: Pickler[All [A]] = pickleCaseClass
-    implicit val o: Pickler[Only[A]] = pickleCaseClass
-    implicit val n: Pickler[Not [A]] = pickleCaseClass
-    pickleADT
-  }
-
-  implicit def pickleMultimap[K: UnivEq, L[_], V](implicit p: Pickler[Map[K, L[V]]], l: MultiValues[L]): Pickler[Multimap[K, L, V]] =
-    p.xmap(Multimap(_))(_.m)
-
-  implicit def setDiff[A: UnivEq](implicit rw: Pickler[Set[A]]): Pickler[SetDiff[A]] =
-    pickleCaseClass
-
-  implicit def pickleTrie[K: Pickler, V: Pickler]: Pickler[MTrie.Trie[K, V]] = {
-    import MTrie.{Branch, Node, Trie, Value}
-    implicit      val value : Pickler[Value [K, V]] = pickleCaseClass
-    implicit      val valueO                        = optionPickler(value)
-    implicit lazy val branch: Pickler[Branch[K, V]] = pickleCaseClass
-    implicit lazy val node  : Pickler[Node  [K, V]] = pickleADT
-    implicit lazy val trie  : Pickler[Trie  [K, V]] = lazily(pickleMap)
-    trie
-  }
-
-  implicit def disjunction[A: Pickler, B: Pickler]: Pickler[A \/ B] = {
-    implicit val l = pickleCaseClass[-\/[A]]
-    implicit val r = pickleCaseClass[\/-[B]]
-    pickleADT
-  }
-
-  implicit def ior[A: Pickler, B: Pickler]: Pickler[A \&/ B] = {
-    import \&/._
-    val ths = pickleCaseClass[This[A]]
-    val tht = pickleCaseClass[That[B]]
-    val bth = pickleCaseClass[Both[A, B]]
-    unsafeSelector(ths, tht, bth) {
-      case _: This[A]    => 0
-      case _: That[B]    => 1
-      case _: Both[A, B] => 2
-    }
-  }
-}
-
-// =====================================================================================================================
-object BinDataCodecs {
-  import shipreq.webapp.base.data._
-  import shipreq.webapp.base.text.AtomTC
-  import DataImplicits._
-  import BinGenericCodecs._
-
-  implicit val live         : Pickler[Live]                = pickleBool(Live)
-  implicit val implRequired : Pickler[ImplicationRequired] = pickleBool(ImplicationRequired)
-  implicit val mandatory    : Pickler[Mandatory]           = pickleBool(Mandatory)
-  implicit val deletable    : Pickler[Deletable]           = pickleBool(Deletable)
-  implicit val mutexChildren: Pickler[MutexChildren]       = pickleBool(MutexChildren)
-
-  implicit val rev                      = taggedL(Rev                       )
-  implicit val genericReqId             = taggedL(GenericReqId              ).reuseByUnivEq
-  implicit val reqCodeId                = taggedL(ReqCodeId                 ).reuseByUnivEq
-  implicit val customReqTypeId          = taggedL(CustomReqTypeId           ).reuseByUnivEq
-  implicit val customIssueTypeId        = taggedL(CustomIssueTypeId         ).reuseByUnivEq
-  implicit val applicableTagId          = taggedL(ApplicableTagId           ).reuseByUnivEq
-  implicit val tagGroupId               = taggedL(TagGroupId                ).reuseByUnivEq
-  implicit val customFieldTagId         = taggedL(CustomField.Tag.Id        ).reuseByUnivEq
-  implicit val customFieldTextId        = taggedL(CustomField.Text.Id       ).reuseByUnivEq
-  implicit val customFieldImplicationId = taggedL(CustomField.Implication.Id).reuseByUnivEq
-  implicit val reqTypePos               = taggedI(ReqTypePos)
-  implicit val hashRefKey               = taggedS(HashRefKey)
-  implicit val fieldRefKey              = taggedS(FieldRefKey)
-  implicit val reqTypeMnemonic          = taggedS(ReqType.Mnemonic)
+  implicit val pickleRev                      = pickleTaggedL(Rev                       )
+  implicit val pickleGenericReqId             = pickleTaggedL(GenericReqId              ).reuseByUnivEq
+  implicit val pickleReqCodeId                = pickleTaggedL(ReqCodeId                 ).reuseByUnivEq
+  implicit val pickleCustomReqTypeId          = pickleTaggedL(CustomReqTypeId           ).reuseByUnivEq
+  implicit val pickleCustomIssueTypeId        = pickleTaggedL(CustomIssueTypeId         ).reuseByUnivEq
+  implicit val pickleApplicableTagId          = pickleTaggedL(ApplicableTagId           ).reuseByUnivEq
+  implicit val pickleTagGroupId               = pickleTaggedL(TagGroupId                ).reuseByUnivEq
+  implicit val pickleCustomFieldTagId         = pickleTaggedL(CustomField.Tag.Id        ).reuseByUnivEq
+  implicit val pickleCustomFieldTextId        = pickleTaggedL(CustomField.Text.Id       ).reuseByUnivEq
+  implicit val pickleCustomFieldImplicationId = pickleTaggedL(CustomField.Implication.Id).reuseByUnivEq
+  implicit val pickleReqTypePos               = pickleTaggedI(ReqTypePos)
+  implicit val pickleHashRefKey               = pickleTaggedS(HashRefKey)
+  implicit val pickleFieldRefKey              = pickleTaggedS(FieldRefKey)
+  implicit val pickleReqTypeMnemonic          = pickleTaggedS(ReqType.Mnemonic)
 
   implicit final val pickleRevRange = pickleCaseClass[RevRange]
 
   implicit def pickleRevAnd[A: Pickler]: Pickler[RevAnd[A]] = pickleCaseClass
 
-  implicit val reqId: Pickler[ReqId] = pickleADT
+  implicit val pickleReqId: Pickler[ReqId] = pickleADT
 
-  implicit val implications: Pickler[Implications] = pickleCaseClass
+  implicit val pickleImplications: Pickler[Implications] = pickleCaseClass
 
-  implicit val reqDataTags: Pickler[ReqData.Tags] = pickleMultimap
-  implicit val revAndReqDataTags = pickleRevAnd(reqDataTags)
+  implicit val pickleReqDataTags: Pickler[ReqData.Tags] = pickleMultimap
+  implicit val pickleRevAndReqDataTags = pickleRevAnd(pickleReqDataTags)
 
   object AtomPicklers extends AtomTC[Pickler] {
     import shipreq.webapp.base.text._
     import Atom._
     import Text.Equality._
 
-    override def lazily[A](f: => Pickler[A]): Pickler[A] =
-      BoopickleMacros.lazily(f)
+    override def lazily[A](f: => Pickler[A]): Pickler[A] = pickleLazily(f)
 
     override def vec[A](implicit a: Pickler[A]) = implicitly
 

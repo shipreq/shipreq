@@ -2,8 +2,7 @@ package shipreq.benchmark
 
 import boopickle.{PickleImpl, UnpickleImpl, Pickler}
 import shipreq.benchmark.lib.BenchmarkSuite
-import shipreq.webapp.base.protocol.BinDataCodecs
-import upickle._
+import shipreq.webapp.base.protocol.BinCodecData
 
 /*
 object JsonSerialisation extends BenchmarkSuite("JsonSerialisation") {
@@ -37,7 +36,7 @@ object JsonDeserialisation extends BenchmarkSuite("JsonDeserialisation") {
 */
 
 object BinSerialisation extends BenchmarkSuite("BinSerialisation") {
-  implicit val projectCodec = BinDataCodecs.pickleProject
+  implicit val projectCodec = BinCodecData.pickleProject
 
   def benchmarkWrite[A: Pickler](name: String, start: => A): Unit =
     initBenchmark(s"write_$name", start)(PickleImpl intoBytes _)
@@ -52,7 +51,7 @@ object BinSerialisation extends BenchmarkSuite("BinSerialisation") {
 
 
 object BinDeserialisation extends BenchmarkSuite("BinDeserialisation") {
-  implicit val projectCodec = BinDataCodecs.pickleProject
+  implicit val projectCodec = BinCodecData.pickleProject
 
   def benchmarkRead[A: Pickler](name: String, start: => A): Unit =
     initBenchmark(s"read_$name", PickleImpl intoBytes start)(b => {

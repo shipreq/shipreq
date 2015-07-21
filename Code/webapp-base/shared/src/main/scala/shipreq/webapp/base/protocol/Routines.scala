@@ -5,10 +5,10 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.delta.RemoteDelta
 import Routine._
 
-import BinGenericCodecs._
-import BinDataCodecs._
-import ProtocolDataCodecs._
-import DeltaCodecs._
+import BinCodecGeneric._
+import BinCodecData._
+import BinCodecProtocolData._
+import BinCodecDelta._
 
 object Routines {
   // After adding a new Routine, also update the following:

@@ -128,7 +128,7 @@ object ProtocolTest extends TestSuite {
     }
 
     'Codecs {
-      import BinDataCodecs._
+      import BinCodecData._
       import AtomPicklers.instances._
       implicit def autoSomeG[A](g: Gen[A]): Option[Gen[A]] = Some(g)
 

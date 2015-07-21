@@ -24,7 +24,7 @@ object Crudable {
     override final type Id = _Id
     override final type V  = _V
 
-    override implicit final def pi: Pickler[I] = ProtocolDataCodecs.pickleCrudAction[_Id, _V]
+    override implicit final def pi: Pickler[I] = BinCodecProtocolData.pickleCrudAction[_Id, _V]
     override implicit final def po: Pickler[O] = PO
   }
 }

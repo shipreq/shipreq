@@ -3,8 +3,8 @@ package shipreq.webapp.base.delta
 import boopickle.Pickler
 import shipreq.base.util.{NonEmptyVector, UnivEq}
 import shipreq.webapp.base.data._, DataImplicits._
-import shipreq.webapp.base.protocol.BinDataCodecs._
-import shipreq.webapp.base.protocol.ProtocolDataCodecs._
+import shipreq.webapp.base.protocol.BinCodecData._
+import shipreq.webapp.base.protocol.BinCodecProtocolData._
 
 sealed trait Partition {
   type Data

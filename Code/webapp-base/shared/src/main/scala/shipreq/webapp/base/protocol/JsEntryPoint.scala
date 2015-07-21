@@ -1,7 +1,7 @@
 package shipreq.webapp.base.protocol
 
 import boopickle.Pickler
-import ProtocolRemoteCodecs._
+import BinCodecProtocolRemotes._
 
 /**
  * Describes a function exposed in client JS, that the server can invoke.

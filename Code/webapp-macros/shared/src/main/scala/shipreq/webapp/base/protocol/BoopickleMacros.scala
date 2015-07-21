@@ -1,7 +1,7 @@
 package shipreq.webapp.base.protocol
 
 import scala.reflect.macros.blackbox.Context
-import shipreq.base.util.{NonEmptyVector, UnivEq}
+import shipreq.base.util.UnivEq
 import shipreq.webapp.macros.MacroUtils._
 import boopickle._
 
@@ -9,30 +9,6 @@ object BoopickleMacros {
 
   def xmap[A, B](ba: B => A)(ab: A => B)(implicit p: Pickler[B]): Pickler[A] =
     p.xmap(ba)(ab)
-
-  def lazily[A](f: => Pickler[A]): Pickler[A] = {
-    lazy val p = f
-    new Pickler[A] {
-      override def pickle(a: A)(implicit state: PickleState): Unit = p.pickle(a)
-      override def unpickle(implicit state: UnpickleState): A = p.unpickle
-    }
-  }
-
-  def enum[V: UnivEq](nev: NonEmptyVector[V]): Pickler[V] =
-    new Pickler[V] {
-      val vs = nev.whole
-      val vtoi = vs.zipWithIndex.toMap
-      assert(vtoi.size == nev.length, s"Duplicates found in $nev")
-      override def pickle(v: V)(implicit state: PickleState): Unit = {
-        val i = vtoi(v)
-        state.enc.writeInt(i)
-      }
-      override def unpickle(implicit state: UnpickleState): V =
-        state.dec.readIntCode match {
-          case Right(i) => vs(i)
-          case Left(_)  => throw new IllegalArgumentException("Unknown coding")
-      }
-    }
 
   /**
    * MAKE SURE index REFLECTS ORDER OF picklers!

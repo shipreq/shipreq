@@ -7,7 +7,7 @@ import japgolly.nyaya.test.PropTestOps._
 import scalaz.Equal
 import utest._
 import shipreq.webapp.base.RandomData
-import BinDataCodecs._
+import BinCodecData._
 
 object BinCodecTest extends TestSuite {
 

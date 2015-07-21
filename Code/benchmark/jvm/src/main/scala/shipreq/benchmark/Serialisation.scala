@@ -4,7 +4,7 @@ import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 import shipreq.webapp.base.data.Project
-import shipreq.webapp.base.protocol.BinDataCodecs
+import shipreq.webapp.base.protocol.BinCodecData
 
 /*
 @State(Scope.Benchmark)
@@ -45,7 +45,7 @@ import boopickle.{PickleImpl, UnpickleImpl}
 @State(Scope.Benchmark)
 class BinSerialisation {
 
-  implicit val projectCodec = BinDataCodecs.pickleProject
+  implicit val projectCodec = BinCodecData.pickleProject
   val p100  = data.project_100
 //  val p1000 = data.project_1000
 
@@ -59,7 +59,7 @@ class BinSerialisation {
 @State(Scope.Benchmark)
 class BinDeserialisation {
 
-  implicit val projectCodec = BinDataCodecs.pickleProject
+  implicit val projectCodec = BinCodecData.pickleProject
   val p100  = PickleImpl intoBytes data.project_100
 //  val p1000 = PickleImpl intoBytes data.project_1000
 

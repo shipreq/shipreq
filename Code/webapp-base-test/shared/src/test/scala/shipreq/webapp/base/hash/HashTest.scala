@@ -11,7 +11,7 @@ import shipreq.webapp.base.test.BaseTestUtil.assertEq
 import shipreq.base.util.UnivEq.int
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.protocol.BinDataCodecs._
+import shipreq.webapp.base.protocol.BinCodecData._
 import Hash.HashableValueOps
 
 object HashTest extends TestSuite {

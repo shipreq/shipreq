@@ -3,21 +3,26 @@ package shipreq.webapp.base.protocol
 import boopickle._
 import shipreq.base.util._
 import BoopickleMacros._
+import BinCodecGeneric._
 
 // =====================================================================================================================
-object ProtocolDataCodecs {
+object BinCodecProtocolData {
   import shipreq.webapp.base.data._
-  import BinGenericCodecs._
-  import BinDataCodecs._, AtomPicklers.instances._
+  import BinCodecData._, AtomPicklers.instances._
 
-  implicit final val pickleDeletionAction = enum(DeletionAction.values)
+  implicit final val pickleDeletionAction = pickleEnum(DeletionAction.values)
 
   def pickleCrudAction[I, V](implicit PI: Pickler[I], PV: Pickler[V]): Pickler[CrudAction[I, V]] = {
     import CrudAction._
     implicit val create = pickleCaseClass[Create[I, V]]
     implicit val update = pickleCaseClass[Update[I, V]]
     implicit val delete = pickleCaseClass[Delete[I, V]]
-    pickleADT
+//    pickleADT // TODO SI-7046
+    unsafeSelector[CrudAction[I, V]](create, update, delete) {
+      case _: Create[I, V] => 0
+      case _: Update[I, V] => 1
+      case _: Delete[I, V] => 2
+    }
   }
 
   // ------------------------------------------------------------------------------------
@@ -103,8 +108,7 @@ object ProtocolDataCodecs {
   }
 
 // =====================================================================================================================
-object ProtocolRemoteCodecs {
-  import BinGenericCodecs.stringPickler
+object BinCodecProtocolRemotes {
   import Routines._
 
   private def remoteRoutine[R <: Routine.Desc](d: R): Pickler[d.Remote] =
@@ -123,13 +127,12 @@ object ProtocolRemoteCodecs {
 }
 
 // =====================================================================================================================
-object DeltaCodecs {
+object BinCodecDelta {
   import shipreq.webapp.base.data.RevRange
   import shipreq.webapp.base.delta._
-  import BinGenericCodecs._
-  import BinDataCodecs.pickleRevRange
+  import BinCodecData.pickleRevRange
 
-  implicit final val picklePartition = enum(Partition.values)
+  implicit final val picklePartition = pickleEnum(Partition.values)
 
   implicit object PickleRemoteDeltaPR extends Pickler[RemoteDeltaPR] {
     override def pickle(r: RemoteDeltaPR)(implicit state: PickleState): Unit = {
