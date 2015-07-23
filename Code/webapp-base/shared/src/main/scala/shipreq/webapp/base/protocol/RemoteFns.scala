@@ -8,7 +8,7 @@ import RemoteFn._
 import BinCodecGeneric._
 import BinCodecData._
 import BinCodecProtocolData._
-import BinEventCodecs._
+import BinCodecEvents._
 
 object RemoteFns {
   // After adding a new Routine, also update the following:

@@ -12,7 +12,7 @@ trait Crudable extends RemoteFn {
   final override type Output  = VerifiedEvents
   final override type Failure = GenericFailure
 
-  final override implicit val pickleOutput  : Pickler[Output]   = BinEventCodecs.pickleVerifiedEvents
+  final override implicit val pickleOutput  : Pickler[Output]   = BinCodecEvents.pickleVerifiedEvents
   final override implicit val pickleFailure : Pickler[Failure]  = BinCodecProtocolData.pickleGenericFailure
   final override implicit val pickleResponse: Pickler[Response] = BinCodecGeneric.pickleXor
 

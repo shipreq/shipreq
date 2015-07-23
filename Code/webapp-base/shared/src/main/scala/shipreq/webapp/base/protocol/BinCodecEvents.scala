@@ -9,7 +9,7 @@ import BinCodecGeneric._
 import BinCodecData._
 import AtomPicklers.instances._
 
-object BinEventCodecs {
+object BinCodecEvents {
 
   implicit val pickleSoftDeletionAction = pickleEnum(SoftDeletionAction.values)
   implicit val pickleDeletionAction     = pickleEnum(DeletionAction.values)
