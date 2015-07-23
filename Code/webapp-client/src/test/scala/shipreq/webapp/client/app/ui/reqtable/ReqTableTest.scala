@@ -16,7 +16,6 @@ import utest.TestSuite
 import ReactTestUtils.Simulate
 
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.delta.RemoteDelta
 import shipreq.webapp.base.protocol.{RemoteFn, RemoteFns}
 import shipreq.webapp.client.app.ui.{Style, Checkbox}
 import shipreq.base.util._
@@ -701,7 +700,7 @@ sealed trait ReqTableTest0 {
         >> ioAssertLastTwoRequestsEqual)
 
     val saveSucceeds = (
-      Action.exec("saveSucceeds", cp.respondToLast(remote)(RemoteDelta.empty))
+      Action.exec("saveSucceeds", cp.respondToLast(remote)(Vector.empty))
         >> Action.nop.assertNoCellState)
 
     run(editCommitWithoutChange >> editChangeCommit >> fail >> retry >> fail >> cancelSaveCommitAgain >> saveSucceeds)

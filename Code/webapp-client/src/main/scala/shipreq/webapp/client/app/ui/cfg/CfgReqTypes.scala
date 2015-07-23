@@ -8,10 +8,9 @@ import scalaz.std.tuple._
 
 import shipreq.base.util.UnivEq
 import shipreq.webapp.base.data._, DataImplicits._
-import shipreq.webapp.base.delta.Partition
 import shipreq.webapp.base.data.Validators.{reqType => V}
 import shipreq.webapp.base.protocol.RemoteFns.CustomReqTypeCrud
-import shipreq.webapp.client.ClientData
+import shipreq.webapp.client.{ChangeListener, ClientData}
 import shipreq.webapp.client.lib.{FilterDead, CrudIO}
 import shipreq.webapp.client.lib.ui._
 import shipreq.webapp.client.protocol.ClientProtocol
@@ -26,13 +25,14 @@ object CfgReqTypes {
   val fields = FieldSet3[CustomReqType](_.mnemonic.value, _.name, _.imp)(("", "", ImplicationRequired.Not))
   val storesAndState = TypicalStoresAndState(fields).keyedBy[CustomReqTypeId]
   import storesAndState._
+  val changeListener = ChangeListener.store(savedRowStoreS)(_.customReqTypes, _.config.customReqTypes.data.get)
 
   val Component =
     ReactComponentB[Props]("Cfg: Req Types")
       .getInitialState(initialState)
       .backend(new Backend(_))
       .render(_.backend.render)
-      .configure(DeltaListener.store(savedRowStoreS)(Partition.CustomReqTypes).install(_.clientData))
+      .configure(changeListener.install(_.clientData))
       .build
 
   private def initialState(p: Props): S =

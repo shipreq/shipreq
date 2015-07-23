@@ -6,9 +6,8 @@ import scala.language.reflectiveCalls
 import scalaz.effect.IO
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._, DataImplicits._
-import shipreq.webapp.base.delta.Partition
 import shipreq.webapp.base.protocol.RemoteFns._
-import shipreq.webapp.client.ClientData
+import shipreq.webapp.client.{ChangeListener, ClientData}
 import shipreq.webapp.client.data.DataReusability._
 import shipreq.webapp.client.lib.HideDead
 import shipreq.webapp.client.lib.ui._
@@ -27,16 +26,15 @@ private[issues] object MandatoryFields {
   val  ST = ReactS.FixT[IO, S]
   type ST = ST.T[Unit]
 
-  val fieldListener =
-    DeltaListener.store(rowStore).partial(Partition.Fields)(_.foldId(_ => None, _.some), _.field.toOption)
+  val changeListener = ChangeListener.store(rowStore)(_.customFieldTypes, _.config.fields.data.customFields.get)
 
   val Component = ReactComponentB[Props]("MandatoryFields")
     .getInitialState(initialState)
     .backend(new Backend(_))
     .render(_.backend.render)
     .configure(
-      fieldListener.install(_.clientData),
-      DeltaListener.refreshOnChange(_.clientData, Field.nameAffectingPartitions)
+      changeListener.install(_.clientData),
+      ChangeListener.refreshWhenFieldNamesChange.install(_.clientData)
     )
     .build
 

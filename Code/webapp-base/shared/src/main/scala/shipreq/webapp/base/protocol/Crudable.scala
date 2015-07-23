@@ -2,18 +2,17 @@ package shipreq.webapp.base.protocol
 
 import boopickle.Pickler
 import shipreq.base.util.UnivEq
-import shipreq.webapp.base.delta.RemoteDelta
-import shipreq.webapp.base.event.DeletionAction
+import shipreq.webapp.base.event.{VerifiedEvents, DeletionAction}
 
 trait Crudable extends RemoteFn {
   type Id
   type V
 
   final override type Input   = CrudAction[Id, V]
-  final override type Output  = RemoteDelta
+  final override type Output  = VerifiedEvents
   final override type Failure = GenericFailure
 
-  final override implicit val pickleOutput  : Pickler[Output]   = BinCodecDelta.pickleRemoteDelta
+  final override implicit val pickleOutput  : Pickler[Output]   = BinEventCodecs.pickleVerifiedEvents
   final override implicit val pickleFailure : Pickler[Failure]  = BinCodecProtocolData.pickleGenericFailure
   final override implicit val pickleResponse: Pickler[Response] = BinCodecGeneric.pickleXor
 

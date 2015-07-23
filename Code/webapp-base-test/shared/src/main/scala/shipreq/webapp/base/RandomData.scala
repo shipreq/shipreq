@@ -21,7 +21,6 @@ import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util.Debug._
 import shipreq.webapp.base.data._, ReqType.Mnemonic, Field.ApplicableReqTypes
-import shipreq.webapp.base.delta._
 import shipreq.webapp.base.event.DeletionAction
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{Text, Grammar}
@@ -297,6 +296,16 @@ object RandomData {
     val atag = applicableTag.subst[Tag]
     Gen.oneofG[Tag](tagGroup.subst, atag, atag, atag)
   }
+
+  lazy val tagAndRels: Gen[(Tag, TagInTree.Relations)] =
+    for {
+      t      ← tag
+      (p, c) ← tagId.set.pair
+    } yield {
+      val children = (c - t.id -- p).toVector
+      val parents  = (p - t.id -- c).toStream.map(_ -> none[TagId]).toMap
+      (t, MMTree.Relations(parents, children))
+    }
 
   /** HashRefKey uniqueness enforced in Project, not here */
   lazy val tags: Gen[List[Tag]] = {
@@ -1174,9 +1183,6 @@ object RandomData {
     lazy val fieldValues: Gen[FP.Values] =
       Gen.oneofG(textFieldValues)
 
-    lazy val fieldDelta: Gen[FP.Delta] =
-      Gen.apply2(FP.Delta.apply)(staticField \/ customField(applicableReqTypes, true, true), fieldPosition)
-
     object fieldCfgAction {
       import FP.CfgAction, CfgAction._
       lazy val create      : Gen[Create]       = fieldValues map Create
@@ -1192,61 +1198,11 @@ object RandomData {
     }
 
     lazy val tagCrudInput =
-      remoteDeltaPR.povTag.flatMap(t => {
-        val a = Gen insert tagProtocolValues(t.tag)
-        val b = Gen insert t.rels
+      tagAndRels.flatMap(t => {
+        val a = Gen insert tagProtocolValues(t._1)
+        val b = Gen insert t._2
         a \&/ b
       })
-  }
-
-  // ===================================================================================================================
-  object remoteDeltaPR {
-    import shipreq.webapp.base.protocol._
-    import RandomData.protocol._
-
-    def forPart: Partition => Gen[RemoteDeltaPR] = {
-      case Partition.CustomIssueTypes => customIssueTypesD
-      case Partition.CustomReqTypes   => customReqTypesD
-      case Partition.Fields           => fieldsD
-      case Partition.Tags             => tagsD
-    }
-
-    def generic(p: Partition)(ir: Gen[p.Id], dr: Gen[p.Data])(implicit ev: UnivEq[p.Id]): Gen[RemoteDeltaPR] = {
-      import p.di
-      for {
-        d  ← dr.list
-        i0 ← ir.set
-        i  = d.foldLeft(i0)(_ - _.id)
-        rr ← revRange
-      } yield RemoteDeltaPR(p, rr)(i, d)
-    }
-
-    lazy val customIssueTypesD =
-      generic(Partition.CustomIssueTypes)(customIssueTypeId, customIssueType)
-
-    lazy val customReqTypesD =
-      generic(Partition.CustomReqTypes)(customReqTypeId, customReqType)
-
-    lazy val fieldsD =
-      generic(Partition.Fields)(fieldId, fieldDelta)
-
-    lazy val tagsD =
-      generic(Partition.Tags)(tagId, povTag)
-
-    lazy val povTag =
-      for {
-        t      ← tag
-        (p, c) ← tagId.set.pair
-      } yield {
-        val children = (c - t.id -- p).toVector
-        val parents  = (p - t.id -- c).toStream.map(_ -> none[TagId]).toMap
-        TagProtocol.PovTag(t, MMTree.Relations(parents, children))
-      }
-  }
-
-  object remoteDelta {
-    def forPart: Partition => Gen[RemoteDelta] =
-      remoteDeltaPR.forPart(_).map(RemoteDelta.empty + _)
   }
 
   // ===================================================================================================================

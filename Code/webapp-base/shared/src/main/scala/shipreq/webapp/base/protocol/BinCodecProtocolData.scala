@@ -32,7 +32,6 @@ object BinCodecProtocolData {
   // Field
 
   import shipreq.webapp.base.protocol.{FieldProtocol => FP}
-  implicit final val pickleFieldProtocolDelta = pickleCaseClass[FP.Delta]
   implicit final val pickleFieldProtocolValues = {
     import FP._, Field.ApplicableReqTypes
     implicit val pText        = pickleCaseClass[TextFieldValues]
@@ -65,7 +64,6 @@ object BinCodecProtocolData {
 
   import shipreq.webapp.base.protocol.{TagProtocol => TP}
   implicit final val pickleTagPovRelations     = pickleCaseClass[MMTree.Relations[TagId]]
-  implicit final val pickleTagPov              = pickleCaseClass[TP.PovTag]
   implicit final val pickleTagGroupValues      = pickleCaseClass[TP.TagGroupValues]
   implicit final val pickleApplicableTagValues = pickleCaseClass[TP.ApplicableTagValues]
   //implicit final val pickleTagValues           = _pickleADT[TP.Values] // TODO SI-7046

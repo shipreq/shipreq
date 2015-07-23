@@ -192,12 +192,12 @@ object UpdateProject {
 
   // TODO tagCrud protocol is crap. Redo it.
   def tagCrud(a: RemoteFns.TagCrud.Action, state: State): UpdateResult = {
-    import TagProtocol.{TagGroupValues, ApplicableTagValues, noRelations}
+    import TagProtocol.{TagGroupValues, ApplicableTagValues}
     def nextId = state.project.idCeilings.tag + 1
     applyEventR(state)(a match {
 
       case CrudAction.Create(vs) =>
-        val rels = vs.b.getOrElse(noRelations)
+        val rels = vs.b getOrElse TagInTree.noRelations
         import rels._
 
         vs.a match {

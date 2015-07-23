@@ -262,8 +262,12 @@ final case class TagInTree(tag: Tag, children: TagInTree.Children) {
 }
 
 object TagInTree {
-  type Parents  = MMTree.Parents [TagId]
-  type Children = MMTree.Children[TagId]
+  type Relations = MMTree.Relations[TagId]
+  type Parents   = MMTree.Parents  [TagId]
+  type Children  = MMTree.Children [TagId]
+
+  val noRelations: Relations =
+    MMTree.Relations.empty
 
   implicit val equality: UnivEq[TagInTree] = deriveUnivEq
 

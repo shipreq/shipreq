@@ -9,7 +9,6 @@ import scalaz.syntax.equal._
 import shapeless.{Generic, :+:, CNil, Coproduct, Inl, Inr}
 import shipreq.base.util._
 import shipreq.base.util.TaggedTypes.{TaggedString, TaggedInt}
-import shipreq.webapp.base.delta.Partition
 import shipreq.webapp.base.util.TypeclassDerivation._
 import Must.Auto._
 
@@ -122,9 +121,6 @@ object Field {
   }
 
   def nameP(p: Project) = name(p.config.customReqTypes.data, p.config.tags.data)
-
-  def nameAffectingPartitions: NonEmptySet[Partition] =
-    NonEmptySet(Partition.CustomReqTypes, Partition.Tags)
 }
 
 import Field.ApplicableReqTypes

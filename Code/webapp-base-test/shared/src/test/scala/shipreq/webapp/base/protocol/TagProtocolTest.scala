@@ -24,7 +24,7 @@ import Relations.derive
 
 object TagProtocolTest extends TestSuite {
 
-  case class TagProps(tt0: TagTree, povRels: PovRelations, t: Tag) {
+  case class TagProps(tt0: TagTree, povRels: TagInTree.Relations, t: Tag) {
     val E = EvalOver(this)
     val tt = tt0.add(TagInTree(t, Vector.empty))
     val id = tt.keys.head
@@ -60,12 +60,12 @@ object TagProtocolTest extends TestSuite {
 
   val tagPropGen: Gen[TagProps] =
     for {
-      tt <- RandomData.tagTree
-      t  <- RandomData.remoteDeltaPR.povTag
+      tt          <- RandomData.tagTree
+      (tag, rels) <- RandomData.tagAndRels
     } yield {
-      val tt2 = (tt /: t.rels.allReferencedIds)((q, id) =>
-        q.modOrPut(id, identity, TagInTree(TagId_T.setId(t.tag, id), Vector.empty)))
-      TagProps(tt2, t.rels, t.tag)
+      val tt2 = (tt /: rels.allReferencedIds)((q, id) =>
+        q.modOrPut(id, identity, TagInTree(TagId_T.setId(tag, id), Vector.empty)))
+      TagProps(tt2, rels, tag)
     }
 
   val sampleTagTree_f = {

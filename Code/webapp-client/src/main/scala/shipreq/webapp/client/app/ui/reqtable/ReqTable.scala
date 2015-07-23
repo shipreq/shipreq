@@ -91,7 +91,7 @@ object ReqTable {
       val p = $.props
       import p._
       val io = cp.call(remote)(i,
-        sio << cd.applyRemoteDelta(_),
+        sio << cd.applyEvents(_),
         cp.consumeGenericFailure(_) >> fio.io)
       //IO(println(s"Fake-sending: $i")) >> io
       io

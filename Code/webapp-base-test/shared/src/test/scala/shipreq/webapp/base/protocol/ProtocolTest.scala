@@ -15,23 +15,13 @@ import japgolly.nyaya.test.PropTest._
 import shipreq.base.util.UnivEq
 import shipreq.webapp.base.test.BaseTestUtil._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.delta._
+import shipreq.webapp.base.event.VerifiedEvents
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.util.TypeclassDerivation._
 import shipreq.webapp.base.{RandomData => $}
 import $.TextGenExt
 
 object ProtocolTest extends TestSuite {
-
-  implicit val equalityRemoteDeltaP = Equal.equal[RemoteDeltaP]((a, b) =>
-    (a.partition == b.partition) &&
-    (a.delete    == b.delete) &&
-    (a.update    == b.update))
-
-  implicit def equalityRemoteDeltaPR: Equal[RemoteDeltaPR] = deriveEqual
-
-  implicit val equalityRemoteDelta = Equal.equal[RemoteDelta]((a, b) =>
-    a.values.toStream ≟ b.values.toStream)
 
   implicit def equalProjectSPA: Equal[RemoteFns.ProjectSPA] = {
 //    import AutoDerive._; deriveEqual
@@ -91,9 +81,9 @@ object ProtocolTest extends TestSuite {
 
   override def tests = TestSuite {
 
-    'Routines {
+    'RemoteFns {
       import RemoteFn.=>|=>
-      type CrudFn[I] = RemoteFn.AuxG[I, RemoteDelta]
+      type CrudFn[I] = RemoteFn.AuxG[I, VerifiedEvents]
 
       def testCrud[I](r: CrudFn[I])(g: Gen[r.Input])(implicit e: Equal[r.Input]): Unit =
         kitR(r).propI mustBeSatisfiedBy g
@@ -113,23 +103,6 @@ object ProtocolTest extends TestSuite {
       def test[I: Equal](ep: JsEntryPoint[I, Unit], name: String)(g: Gen[I]): Unit = kitEP(ep, name).propI mustBeSatisfiedBy g
 
       'reactExamples - test(reactExamples, "reactExamples")($.routines.projectSPA)
-    }
-
-    'Δ {
-      val prop = kitR(RemoteFns.CustomReqTypeCrud).propO
-      def test(p: Partition) = $.remoteDelta forPart confirmTest(p) mustSatisfy prop
-
-      // This just spits out a compiler warning to remind you to add a manual test here
-      def confirmTest(p: Partition) = p match {
-        case Partition.CustomIssueTypes => p
-        case Partition.CustomReqTypes   => p
-        case Partition.Fields           => p
-        case Partition.Tags             => p
-      }
-      'CustomIssueTypes - test(Partition.CustomIssueTypes)
-      'CustomReqTypes   - test(Partition.CustomReqTypes)
-      'Fields           - test(Partition.Fields)
-      'Tags             - test(Partition.Tags)
     }
 
     'Codecs {

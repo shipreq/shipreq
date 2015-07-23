@@ -6,13 +6,12 @@ import scala.language.reflectiveCalls
 import scalaz.std.AllInstances._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._, DataImplicits._
-import shipreq.webapp.base.delta.Partition
 import shipreq.webapp.base.data.Validators.{customIssueType => V}
 import shipreq.webapp.base.data.Validators.shared.HashRefKeyVS
 import shipreq.webapp.base.protocol.RemoteFns._
 import shipreq.webapp.base.util.TextMod
 import shipreq.webapp.base.UiText.FieldNames
-import shipreq.webapp.client.ClientData
+import shipreq.webapp.client.{ClientData, ChangeListener}
 import shipreq.webapp.client.lib.{FilterDead, CrudIO}
 import shipreq.webapp.client.lib.ui._
 import shipreq.webapp.client.protocol.ClientProtocol
@@ -26,13 +25,14 @@ private[issues] object CustomIssueTypes {
   val fields = FieldSet2[CustomIssueType](_.key.value, _.desc getOrElse "")(("", ""))
   val storesAndState = TypicalStoresAndState(fields).keyedBy[CustomIssueTypeId]
   import storesAndState._
+  val changeListener = ChangeListener.store(savedRowStoreS)(_.customIssueTypes, _.config.customIssueTypes.data.get)
 
   val Component =
     ReactComponentB[Props]("Cfg: User-Defined Issue Types")
       .getInitialState(initialState)
       .backend(new Backend(_))
       .render(_.backend.render)
-      .configure(DeltaListener.store(savedRowStoreS)(Partition.CustomIssueTypes).install(_.clientData))
+      .configure(changeListener.install(_.clientData))
       .build
 
   private def initialState(p: Props): S =

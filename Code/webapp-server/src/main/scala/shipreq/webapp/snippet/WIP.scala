@@ -9,7 +9,6 @@ import japgolly.nyaya.util.{Util => _, _}
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.lib.ServerProtocol
 import shipreq.webapp.base.data, data._, DataImplicits._
-import shipreq.webapp.base.delta._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.text.{Text => T}
 import shipreq.webapp.util.QuietException
@@ -176,18 +175,12 @@ class WIP {
 
   val projectInit = ServerProtocol.routine(RemoteFns.ProjectInit)(_ => p)
 
-  def emptyDelta = RemoteDelta.empty
-
-  implicit def singleOptionalDelta(r: Option[RemoteDeltaPR]): RemoteDelta =
-    r.fold(emptyDelta)(emptyDelta + _)
-
   // -------------------------------------------------------------------------------------------------------------------
   object reqqq {
 
     val crud =
       ServerProtocol.routine(RemoteFns.CustomReqTypeCrud)(input =>
-        ???) // TODO Need to change all crud RemoteFns & Crudable over to VerifiedEvents instead of Δ
-        //updateProject(UpdateProject.customReqTypeCrud(input, _)))
+        updateProject(UpdateProject.customReqTypeCrud(input, _)))
 
     val imptoggle =
       ServerProtocol.routine(RemoteFns.ReqTypeImplicationMod)(input =>
@@ -197,26 +190,22 @@ class WIP {
   // -------------------------------------------------------------------------------------------------------------------
   val issueTypeCrud =
     ServerProtocol.routine(RemoteFns.CustomIssueTypeCrud)(input =>
-      ???) // TODO Need to change all crud RemoteFns & Crudable over to VerifiedEvents instead of Δ
-      //updateProject(UpdateProject.customIssueTypeCrud(input, _)))
+      updateProject(UpdateProject.customIssueTypeCrud(input, _)))
 
   // -------------------------------------------------------------------------------------------------------------------
   val tagCrud =
     ServerProtocol.routine(RemoteFns.TagCrud)(input =>
-      ???) // TODO Need to change all crud RemoteFns & Crudable over to VerifiedEvents instead of Δ
-      //updateProject(UpdateProject.tagCrud(input, _)))
+      updateProject(UpdateProject.tagCrud(input, _)))
 
   // -------------------------------------------------------------------------------------------------------------------
   object fieldCrud {
     val cfgAction =
       ServerProtocol.routine(RemoteFns.FieldCrud)(input =>
-        ???) // TODO Need to change all crud RemoteFns & Crudable over to VerifiedEvents instead of Δ
-        //updateProject(UpdateProject.fieldCrud(input, _)))
+        updateProject(UpdateProject.fieldCrud(input, _)))
 
     val mandmod =
       ServerProtocol.routine(RemoteFns.FieldMandatorinessMod)(input =>
-        ???) // TODO Need to change all crud RemoteFns & Crudable over to VerifiedEvents instead of Δ
-        //updateProject(UpdateProject.fieldMandatorinessMod(input, _)))
+        updateProject(UpdateProject.fieldMandatorinessMod(input, _)))
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -224,7 +213,7 @@ class WIP {
     ServerProtocol.routine(RemoteFns.UpdateProjectContent){ i =>
       println(s"RECEIVED: $i")
       delay()
-      RemoteDelta.empty
+      Vector.empty: VerifiedEvents
     }
 
   // -------------------------------------------------------------------------------------------------------------------

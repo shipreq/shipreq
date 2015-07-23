@@ -27,7 +27,7 @@ final class CrudIO[D, I, U, RD <: Crudable.Aux[I, U]](cp: ClientProtocol,
 
   private def crudIO(s: SuccessIO, f: FailureIO, a: CrudAction[I, U]): IO[Unit] = {
     cp.call(remote)(a,
-      s << clientData.applyRemoteDelta(_),
+      s << clientData.applyEvents(_),
       cp.consumeGenericFailure(_) >> f.io)
   }
 

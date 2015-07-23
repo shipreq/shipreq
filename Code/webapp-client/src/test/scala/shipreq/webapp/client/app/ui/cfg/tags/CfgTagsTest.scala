@@ -10,7 +10,7 @@ import utest._
 import shipreq.base.util.MMTree
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.delta.{Partition, RemoteDeltaPR, RemoteDelta}
+import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.RemoteFn
 import shipreq.webapp.base.protocol.RemoteFns.TagCrud
 import shipreq.webapp.base.protocol.TagProtocol._
@@ -54,12 +54,13 @@ object CfgTagsTest extends TestSuite {
     import t._
 
     'recvUpdates {
-      val rev = RevRange single clientData.project.config.tags.rev
-      val upd = PovTag(
-        ApplicableTag(22, "Blah", None, "blah", Live),
-        Relations(Map(1.TG -> priMed.some), Vector(10.TG)))
-      val d = RemoteDeltaPR(Partition.Tags, rev)(Set.empty, upd :: Nil)
-      clientData.applyRemoteDelta(RemoteDelta.empty + d).unsafePerformIO()
+      import ApplicableTagGD._
+      val e = UpdateApplicableTag(v10, nev(
+                Name("Blah"),
+                Parents(Map(1.TG -> priMed.some)),
+                Children(Vector(10.TG))))
+      val ves = verifyEvents(clientData.project)(e)
+      clientData.applyEvents(ves).unsafePerformIO()
 
       assertEq(nameAsTextTree(c).mkString("\n"),
         """
@@ -89,7 +90,7 @@ object CfgTagsTest extends TestSuite {
       val s = MainTable.initialState(props)
       val t = new FakeUpdateIO
 
-      def testUnlink(subj: Tag, rels: Rels, nameOfTagToClick: String)(expectedRels: PovRelations): Unit = {
+      def testUnlink(subj: Tag, rels: Rels, nameOfTagToClick: String)(expectedRels: TagInTree.Relations): Unit = {
         rels.find(_.name == nameOfTagToClick).get.unlink.unsafePerformIO()
         assertEq(t.reqs.size, 1)
         val h = t.reqs.head

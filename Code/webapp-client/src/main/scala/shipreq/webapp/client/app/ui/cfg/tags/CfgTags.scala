@@ -20,21 +20,20 @@ import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{MMTree, UnivEq}
 import shipreq.base.util.UnivEq.{mutableHashMapMemo => memo}
 import shipreq.webapp.base.data.{TagId => Id, _}, DataImplicits._
-import shipreq.webapp.base.delta.Partition
 import shipreq.webapp.base.data.Validators.{tag => V}
 import shipreq.webapp.base.data.Validators.shared.HashRefKeyVS
 import shipreq.webapp.base.event.{DeletionAction, HardDel, SoftDel, Restore}
 import shipreq.webapp.base.protocol.TagProtocol
 import shipreq.webapp.base.protocol.RemoteFns.TagCrud
 import shipreq.webapp.base.UiText.FieldNames
-import shipreq.webapp.client.ClientData
+import shipreq.webapp.client.{ChangeListener, ClientData}
 import shipreq.webapp.client.app.ui.{Checkbox, RowDetailButton}
 import shipreq.webapp.client.lib.{FilterDead, FailureIO, SuccessIO, CrudIO}
 import shipreq.webapp.client.lib.ui._
 import shipreq.webapp.client.protocol.ClientProtocol
 import shipreq.webapp.client.util.{Disabled, DND, On}
 import TagTree.FlatRow, FlatRow.FilterPolicy
-import TagProtocol.{PovTag, PovRelations}
+import TagInTree.Relations
 
 object CfgTags {
   case class Props(cp: ClientProtocol, remote: TagCrud.Instance, clientData: ClientData, filterDead: FilterDead) {
@@ -131,7 +130,15 @@ private[tags] object MainTable {
       Tag.CycleDetectors.multimap.contramap[TreeState](_.m)
   }
 
-  val tagDeltaListener = new DeltaListener.OneByOne[S, Id, PovTag](
+  case class PovTag(tag: Tag, rels: TagInTree.Relations)
+
+  def povTagLookup(p: Project): Id => Option[PovTag] = {
+    val tt = p.config.tags.data
+    val tree = tt.mapValues(_.children)
+    id => tt.get(id).map(v => PovTag(v.tag, MMTree.Relations.derive(v.tag.id, tree)))
+  }
+
+  val changeListener = ChangeListener.oneByOne[S, Id, PovTag](_.tags, povTagLookup)(
     (s, i) => {
       val f1 = State.tree.modify(_ delkv i)
       val f2 = eachTypesStores.foldLeft(f1)(_ compose _.s.remove(i))
@@ -144,7 +151,7 @@ private[tags] object MainTable {
         case t: ApplicableTag => at_storesS.s.set(i, t)
       }
       val f2 = f1 compose State.tree.modify(MMTree.ApplyRelations.trustedApply1(_, i, d.rels))
-      val f3 = f2 compose maybeCloseDetailPane(p => (d.tag.live ≟ Dead) && (p.id ≟ d.tag.id))
+      val f3 = f2 compose maybeCloseDetailPane(p => (d.tag.live :: Dead) && (p.id ≟ d.tag.id))
       f3(s)
     })
 
@@ -156,7 +163,7 @@ private[tags] object MainTable {
       .getInitialState(initialState)
       .backend(new Backend(_))
       .render(_.backend.render)
-      .configure(tagDeltaListener(Partition.Tags).install(_.clientData))
+      .configure(changeListener.install(_.clientData))
       .build
 
   val rowIdFromEditorInput: ((V.S, Any)) => Option[Id] = _._1._2.tagData._1
@@ -399,25 +406,25 @@ private[tags] object MainTable {
     type UpdateIO = (Tag, TagCrud.V, SuccessIO, FailureIO) => IO[Unit]
     type SelUpdate = Option[Id] => IO[Unit]
 
-    def removeChild(child: Id): PovRelations => PovRelations =
+    def removeChild(child: Id): Relations => Relations =
       r => r.copy(children = r.children.filterNot(_ ≟ child))
 
-    def removeParent(parent: Id): PovRelations => PovRelations =
+    def removeParent(parent: Id): Relations => Relations =
       r => r.copy(parents = r.parents - parent)
 
-    def addChild(child: Id): PovRelations => PovRelations =
+    def addChild(child: Id): Relations => Relations =
       r => r.copy(children = r.children :+ child)
 
-    def addParent(parent: Id): PovRelations => PovRelations =
+    def addParent(parent: Id): Relations => Relations =
       r => r.copy(parents = r.parents.updated(parent, None))
 
-    def moveChild(from: Id, to: Id): PovRelations => PovRelations =
+    def moveChild(from: Id, to: Id): Relations => Relations =
       r => r.copy(children = DND.move(from, to)(r.children))
 
     def moveChildIO(s: S, updateIO: UpdateIO, subj: Tag)(from: Id, to: Id): IO[Unit] =
       treeUpdateIO(s, updateIO, subj, moveChild(from, to))
 
-    def treeUpdateIO(s: S, updateIO: UpdateIO, subj: Tag, g: PovRelations => PovRelations): IO[Unit] =
+    def treeUpdateIO(s: S, updateIO: UpdateIO, subj: Tag, g: Relations => Relations): IO[Unit] =
       IO {
         val r = MMTree.Relations.derive(subj.id, s.tree.m)
         val u = \&/.That(g(r))
@@ -426,7 +433,7 @@ private[tags] object MainTable {
         //val lock = c modStateIO storesForType(t.tagType).s.setStatus(t.id, RowStatus.Locked)
       }.join
 
-    def existingRels(s: S, updateIO: UpdateIO, subj: Tag, ids: Seq[Id], removeFn: Id => PovRelations => PovRelations): Rels = {
+    def existingRels(s: S, updateIO: UpdateIO, subj: Tag, ids: Seq[Id], removeFn: Id => Relations => Relations): Rels = {
       var rs = ids.map(getTag(_)(s).get)
       //if (!s.showDeleted)
         rs = rs.filter(Tag.filterLive)
@@ -439,8 +446,8 @@ private[tags] object MainTable {
     def existingParentRels(s: S, updateIO: UpdateIO, subj: Tag): Rels =
       existingRels(s, updateIO, subj, s.childToParent(subj.id).toSeq, removeParent)
 
-    def addRelFilter(s: S, subj: Tag, mod: Id => PovRelations => PovRelations,
-                     relAlreadyExists: (PovRelations, Id) => Boolean): Tag => Boolean =
+    def addRelFilter(s: S, subj: Tag, mod: Id => Relations => Relations,
+                     relAlreadyExists: (Relations, Id) => Boolean): Tag => Boolean =
       t => Tag.filterLive(t) && {
         val r = MMTree.Relations.derive(subj.id, s.tree.m)
         !relAlreadyExists(r, t.id) && {
@@ -452,7 +459,7 @@ private[tags] object MainTable {
       }
 
     def addRels(s: S, subj: Tag, updateIO: UpdateIO, sel: Option[Id], selUpdate: SelUpdate,
-                mod: Id => PovRelations => PovRelations, relAlreadyExists: (PovRelations, Id) => Boolean): AddRels = {
+                mod: Id => Relations => Relations, relAlreadyExists: (Relations, Id) => Boolean): AddRels = {
       val filter = addRelFilter(s, subj, mod, relAlreadyExists)
       val rels = TagTree.flatten(s.tagTree)(filter, FilterPolicy.OmitNothing)
         .filter(_.tag.live ≟ Live)

@@ -6,7 +6,7 @@ import scalaz.{Equal, \/-}
 import utest._
 import shipreq.base.util.ISubset
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.delta.{Partition, RemoteDeltaPR, RemoteDelta}
+import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.FieldProtocol._
 import shipreq.webapp.base.protocol.RemoteFn
 import shipreq.webapp.base.protocol.RemoteFns.FieldCrud
@@ -65,9 +65,9 @@ object CfgFieldsTest extends TestSuite {
     // Server communication
     cp.assertReqsSent(1)
     cp.respondToLast(remote){
-      val newField = CustomField.Text(666, "blahh", "blahh", Mandatory, ISubset.All(), Live)
-      val delta    = RemoteDeltaPR(Partition.Fields, RevRange single rev)(Set.empty, Delta(\/-(newField), None) :: Nil)
-      RemoteDelta.empty + delta
+      import CustomTextFieldGD._
+      val e = CreateCustomTextField(666, nev(Name("blahh"), Key("blahh"), Mandatory(true), ReqTypes(allReqTypes)))
+      verifyEvents(clientData.project)(e)
     }
     rev = rev.succ
     assert(getNewRow.isEmpty)
@@ -75,9 +75,8 @@ object CfgFieldsTest extends TestSuite {
     // Delete newly saved row
     Simulation.click run sole(Sizzle("tr:has(:text[value=blahh]) button:contains('Delete')", c))
     cp.assertReqsSent(2)
-    cp.respondToLast(remote)(RemoteDelta.empty +
-      RemoteDeltaPR(Partition.Fields, RevRange single rev)(Set(CustomField.Text.Id(666)), Nil)
-    )
+    cp.respondToLast(remote)(
+      verifyEvents(clientData.project)(DeleteCustomField(666.CFText, HardDel)))
     rev = rev.succ
 
     assertEq(c.state, initialState)
