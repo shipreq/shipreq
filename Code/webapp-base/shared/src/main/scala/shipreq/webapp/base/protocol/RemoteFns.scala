@@ -11,16 +11,15 @@ import BinCodecProtocolData._
 import BinCodecEvents._
 
 object RemoteFns {
-  // After adding a new Routine, also update the following:
-  // - ProtocolRemoteCodecs
+  // After adding a new RemoteFn, also update the following:
   // - RandomData
-
+  // - ProtocolTest
 
   object ProjectInit extends (Unit =>|=> Project)
 
   // Project config
-  object CustomIssueTypeCrud   extends Crudable.CAux[CustomIssueTypeId, CustomIssueTypeProtocol.Values]
-  object CustomReqTypeCrud     extends Crudable.CAux[CustomReqTypeId,   CustomReqTypeProtocol.Values]
+  object CustomIssueTypeCrud   extends Crudable.CAux[CustomIssueTypeId, (HashRefKey, Option[String])]
+  object CustomReqTypeCrud     extends Crudable.CAux[CustomReqTypeId,   (ReqType.Mnemonic, String, ImplicationRequired)]
   object TagCrud               extends Crudable.CAux[TagId,             TagProtocol.Values \&/ TagInTree.Relations]
   object FieldCrud             extends (FieldProtocol.CfgAction                =>|=> VerifiedEvents)
   object FieldMandatorinessMod extends ((CustomFieldId,   Mandatory          ) =>|=> VerifiedEvents)
