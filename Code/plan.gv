@@ -1,21 +1,23 @@
 digraph G {
 
-remove [label="Remove Δ, δ, Rev, Partition"]
-tp [label="Trim .protocol code"]
+removeS [label="Remove from server:\nUnsafeTypes, ProjectDSL"]
 template [label="Create template event"]
-rpadt [label="Restore pickleADT to Protocol codecs"]
-nowip [label="Change WIP into real service"]
-allve [label="All RemoteFns use VerifiedEvents instead of Δ"]
 
 node [style=filled fillcolor="#ffcccc"]
-wip2 [label="WIP to use UpdateProject & VerifiedEvents"]
-bc [label="Change broadcast from δ\nEither each listener scans events or new δ"]
+nowip [label="Change WIP into real service"]
+tp [label="Trim .protocol code"]
+nwo [label="Refactor new world:\n.event\n.protocol\nClientData, Changes, ChangeListener\nUpdateProject"]
 
 node [style=filled fillcolor="#ddffcc"]
+remove [label="Remove Δ, δ, Rev, Partition"]
+allve [label="All RemoteFns use VerifiedEvents instead of Δ"]
+bc [label="Change broadcast from δ\nEither each listener scans events or new δ"]
+wip2 [label="WIP to use UpdateProject & VerifiedEvents"]
 svetcl [label="Send VerifiedEvents to Client"]
 aveic [label="Apply VerifiedEvents in Client"]
 bin [label="Use binary for transport"]
 asfttr [label="Add separate failure type to RemoteFn"]
+rpadt [label="Restore pickleADT\nto Protocol codecs"]
 
 bin -> svetcl
 asfttr -> svetcl
@@ -23,9 +25,12 @@ aveic -> wip2
 
 nowip  -> template
 svetcl -> wip2 -> nowip
-remove -> tp -> rpadt
+remove -> tp,rpadt
 svetcl -> bc
-allve -> remove
+allve -> remove,nowip
 wip2,bc -> allve
+nowip -> removeS
+remove -> nwo
 
 }
+
