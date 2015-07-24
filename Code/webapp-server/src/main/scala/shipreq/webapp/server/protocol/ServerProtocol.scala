@@ -1,12 +1,11 @@
-package shipreq.webapp.server.lib
+package shipreq.webapp.server.protocol
 
 import boopickle._
 import java.nio.ByteBuffer
 import java.util.Base64
-import net.liftweb.common.{Full, Empty, Failure => BoxFailure}
-import net.liftweb.http.{S, LiftResponse, BadResponse, InternalServerErrorResponse}
-import scalaz.{\/-, -\/, \/}
-import shipreq.base.util.Debug._
+import net.liftweb.common.{Empty, Failure => BoxFailure, Full}
+import net.liftweb.http.{BadResponse, InternalServerErrorResponse, LiftResponse, S}
+import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.Util.quickSB
 import shipreq.base.util.log.HasLogger
 import shipreq.webapp.base.protocol.{JsEntryPoint, RemoteFn}
@@ -20,7 +19,7 @@ object ServerProtocol extends HasLogger {
     Base64.getEncoder.encodeToString(a)
   }
 
-  def routine(fn: RemoteFn)(localFn: fn.Input => fn.Response): fn.Instance = {
+  def remoteFn(fn: RemoteFn)(localFn: fn.Input => fn.Response): fn.Instance = {
     import fn._
 
     val proc = S.NFuncHolder { () =>

@@ -1,19 +1,16 @@
-package shipreq.webapp.server.lib
+package shipreq.webapp.server.protocol
 
 import net.liftweb.http._
-import provider.HTTPCookie
+import net.liftweb.http.provider.HTTPCookie
 
 object RawJsonResponse {
   type RawJson = String
 
   def headers: List[(String, String)] = S.getResponseHeaders(Nil)
-  def cookies: List[HTTPCookie] = S.responseCookies
+  def cookies: List[HTTPCookie]       = S.responseCookies
 
-  def apply(json: RawJson): LiftResponse =
-    new RawJsonResponse(json, headers, cookies, 200)
-
-  def apply(json: RawJson, code: Int): LiftResponse =
-    apply(json, headers, cookies, code)
+  def apply(json: RawJson, code: Int): RawJsonResponse =
+    new RawJsonResponse(json, headers, cookies, code)
 }
 
 case class RawJsonResponse(json: RawJsonResponse.RawJson, headers: List[(String, String)], cookies: List[HTTPCookie], code: Int) extends LiftResponse {

@@ -7,10 +7,10 @@ import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
 import japgolly.nyaya.util.{Util => _, _}
 import shipreq.webapp.base.protocol._
-import shipreq.webapp.server.lib.ServerProtocol
 import shipreq.webapp.base.data, data._, DataImplicits._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.text.{Text => T}
+import shipreq.webapp.server.protocol.ServerProtocol
 import shipreq.webapp.server.util.QuietException
 
 class WIP {
@@ -172,44 +172,44 @@ class WIP {
 
   implicit def blahblah[A](a: A): GenericFailure \/ A = \/-(a)
 
-  val projectInit = ServerProtocol.routine(ProjectInit)(_ => p)
+  val projectInit = ServerProtocol.remoteFn(ProjectInit)(_ => p)
 
   // -------------------------------------------------------------------------------------------------------------------
   object reqqq {
 
     val crud =
-      ServerProtocol.routine(CustomReqTypeCrud)(input =>
+      ServerProtocol.remoteFn(CustomReqTypeCrud)(input =>
         updateProject(UpdateProject.customReqTypeCrud(input, _)))
 
     val imptoggle =
-      ServerProtocol.routine(ReqTypeImplicationMod)(input =>
+      ServerProtocol.remoteFn(ReqTypeImplicationMod)(input =>
         updateProject(UpdateProject.reqTypeImplicationMod(input, _)))
   }
 
   // -------------------------------------------------------------------------------------------------------------------
   val issueTypeCrud =
-    ServerProtocol.routine(CustomIssueTypeCrud)(input =>
+    ServerProtocol.remoteFn(CustomIssueTypeCrud)(input =>
       updateProject(UpdateProject.customIssueTypeCrud(input, _)))
 
   // -------------------------------------------------------------------------------------------------------------------
   val tagCrud =
-    ServerProtocol.routine(TagCrud.Fn)(input =>
+    ServerProtocol.remoteFn(TagCrud.Fn)(input =>
       updateProject(UpdateProject.tagCrud(input, _)))
 
   // -------------------------------------------------------------------------------------------------------------------
   object fieldCrud {
     val cfgAction =
-      ServerProtocol.routine(FieldCrud.Fn)(input =>
+      ServerProtocol.remoteFn(FieldCrud.Fn)(input =>
         updateProject(UpdateProject.fieldCrud(input, _)))
 
     val mandmod =
-      ServerProtocol.routine(FieldMandatorinessMod)(input =>
+      ServerProtocol.remoteFn(FieldMandatorinessMod)(input =>
         updateProject(UpdateProject.fieldMandatorinessMod(input, _)))
   }
 
   // -------------------------------------------------------------------------------------------------------------------
   val updateProjectContent =
-    ServerProtocol.routine(ContentUpdate.Fn){ i =>
+    ServerProtocol.remoteFn(ContentUpdate.Fn){ i =>
       println(s"RECEIVED: $i")
       delay()
       Vector.empty: VerifiedEvents

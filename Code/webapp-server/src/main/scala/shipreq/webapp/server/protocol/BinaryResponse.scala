@@ -1,19 +1,16 @@
-package shipreq.webapp.server.lib
+package shipreq.webapp.server.protocol
 
 import net.liftweb.http._
-import provider.HTTPCookie
+import net.liftweb.http.provider.HTTPCookie
 
 object BinaryResponse {
   type Binary = java.nio.ByteBuffer
 
   def headers: List[(String, String)] = S.getResponseHeaders(Nil)
-  def cookies: List[HTTPCookie] = S.responseCookies
+  def cookies: List[HTTPCookie]       = S.responseCookies
 
-  def apply(bin: Binary): LiftResponse =
-    new BinaryResponse(bin, headers, cookies, 200)
-
-  def apply(bin: Binary, code: Int): LiftResponse =
-    apply(bin, headers, cookies, code)
+  def apply(bin: Binary, code: Int = 200): BinaryResponse =
+    new BinaryResponse(bin, headers, cookies, code)
 }
 
 case class BinaryResponse(bin: BinaryResponse.Binary, headers: List[(String, String)], cookies: List[HTTPCookie], code: Int) extends LiftResponse {
