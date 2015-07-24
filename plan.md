@@ -30,10 +30,6 @@ Phase 2
 
 * Events
   * DB schema and interface
-  * Event application (trusted & untrusted)
-  * Send events to client
-  * Remove deltas
-  * Phase out existing protocols
   * Event RNG & props
   * Benchmark event ap (trusted & untrusted)
   * Rethink hard/soft deletion wrt all event history being kept

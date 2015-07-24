@@ -1,14 +1,29 @@
 digraph G {
 
+// BLOCKED
 removeS [label="Remove from server:\nUnsafeTypes, ProjectDSL"]
-template [label="Create template event"]
+db [label="DB table, event load, event add"]
+realspa [label="Replace /wip with\nreal SPA using real project"]
+testDbCodec [label="Ensure db event codec stability"]
+localProd [label="Get a local prod env working"]
 
+// NEXT
 node [style=filled fillcolor="#ffcccc"]
-nowip [label="Change WIP into real service"]
+newReq [label="Ability to create reqs"]
+newRCG [label="Ability to create ReqCodeGroups"]
+realCU [label="Real responses\nto ContentUpdate cmds"]
+devx [label="Get /x working again and document"]
+template [label="Create template event"]
+devmd [label="Update DEV.md"]
+tesths [label="Ensure hash scheme stability"]
+cfgcss [label="Replace CSS WIP with ScalaCSS"]
+
+// COMPLETE
+node [style=filled fillcolor="#ddffcc"]
+nowip [label="Use real RemoteFn responses in WIP"]
+hash [label="Hashing"]
 tp [label="Trim .protocol code"]
 nwo [label="Refactor new world:\n.event\n.protocol\nClientData, Changes, ChangeListener\nUpdateProject"]
-
-node [style=filled fillcolor="#ddffcc"]
 remove [label="Remove Δ, δ, Rev, Partition"]
 allve [label="All RemoteFns use VerifiedEvents instead of Δ"]
 bc [label="Change broadcast from δ\nEither each listener scans events or new δ"]
@@ -18,8 +33,15 @@ aveic [label="Apply VerifiedEvents in Client"]
 bin [label="Use binary for transport"]
 asfttr [label="Add separate failure type to RemoteFn"]
 rpadt [label="Restore pickleADT\nto Protocol codecs"]
+event [label="Events"]
+eventap [label="Event application & tests"]
+eventbin [label="Binary codecs for events"]
 
-bin -> svetcl
+event -> eventap,eventbin
+bin -> eventbin
+eventbin -> svetcl
+eventap -> aveic
+
 asfttr -> svetcl
 aveic -> wip2
 
@@ -29,8 +51,15 @@ remove -> tp,rpadt
 svetcl -> bc
 allve -> remove,nowip
 wip2,bc -> allve
-nowip -> removeS
-remove -> nwo
+realspa -> removeS
+remove -> nwo -> devmd
 
+template -> db -> testDbCodec
+devx,cfgcss,db -> realspa
+hash -> tesths,eventap
+devx -> localProd
+nowip -> realCU,newReq,newRCG
+newReq,newRCG -> db
+realCU -> realspa
 }
 
