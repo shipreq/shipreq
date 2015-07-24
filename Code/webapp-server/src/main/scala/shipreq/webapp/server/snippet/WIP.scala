@@ -10,7 +10,7 @@ import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.data, data._, DataImplicits._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.text.{Text => T}
-import shipreq.webapp.server.protocol.ServerProtocol
+import shipreq.webapp.server.protocol._
 import shipreq.webapp.server.util.QuietException
 
 class WIP {
@@ -155,56 +155,56 @@ class WIP {
     contentByDsl ! project
   }
 
-  var p = newProject
+  var state = ServerProject initState newProject
 
   val noChange = \/-(Vector.empty[VerifiedEvent])
 
-  def updateProject(f: UpdateProject.State => UpdateProject.UpdateResult): GenericFailure \/ VerifiedEvents =
-    f(UpdateProject.initState(p)) match {
-      case UpdateProject.Updated(s2, ves) =>
-        p = s2.project
+  def updateProject(f: Project => MakeEvent.Result): GenericFailure \/ VerifiedEvents =
+    ServerProject.applyMakeEventResult(f(state.project), state) match {
+      case ServerProject.Updated(s2, ves) =>
+        state = s2
         \/-(ves)
-      case UpdateProject.NoChange =>
+      case ServerProject.NoChange =>
         noChange
-      case UpdateProject.Failed(err) =>
+      case ServerProject.Failed(err) =>
         -\/(GenericFailure(err))
     }
 
   implicit def blahblah[A](a: A): GenericFailure \/ A = \/-(a)
 
-  val projectInit = ServerProtocol.remoteFn(ProjectInit)(_ => p)
+  val projectInit = ServerProtocol.remoteFn(ProjectInit)(_ => state.project)
 
   // -------------------------------------------------------------------------------------------------------------------
   object reqqq {
 
     val crud =
       ServerProtocol.remoteFn(CustomReqTypeCrud)(input =>
-        updateProject(UpdateProject.customReqTypeCrud(input, _)))
+        updateProject(MakeEvent.customReqTypeCrud(input, _)))
 
     val imptoggle =
       ServerProtocol.remoteFn(ReqTypeImplicationMod)(input =>
-        updateProject(UpdateProject.reqTypeImplicationMod(input, _)))
+        updateProject(_ => MakeEvent.reqTypeImplicationMod(input)))
   }
 
   // -------------------------------------------------------------------------------------------------------------------
   val issueTypeCrud =
     ServerProtocol.remoteFn(CustomIssueTypeCrud)(input =>
-      updateProject(UpdateProject.customIssueTypeCrud(input, _)))
+      updateProject(MakeEvent.customIssueTypeCrud(input, _)))
 
   // -------------------------------------------------------------------------------------------------------------------
   val tagCrud =
     ServerProtocol.remoteFn(TagCrud.Fn)(input =>
-      updateProject(UpdateProject.tagCrud(input, _)))
+      updateProject(MakeEvent.tagCrud(input, _)))
 
   // -------------------------------------------------------------------------------------------------------------------
   object fieldCrud {
     val cfgAction =
       ServerProtocol.remoteFn(FieldCrud.Fn)(input =>
-        updateProject(UpdateProject.fieldCrud(input, _)))
+        updateProject(MakeEvent.fieldCrud(input, _)))
 
     val mandmod =
       ServerProtocol.remoteFn(FieldMandatorinessMod)(input =>
-        updateProject(UpdateProject.fieldMandatorinessMod(input, _)))
+        updateProject(_ => MakeEvent.fieldMandatorinessMod(input)))
   }
 
   // -------------------------------------------------------------------------------------------------------------------
