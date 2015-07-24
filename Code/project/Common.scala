@@ -129,6 +129,17 @@ object Common {
       scalacOptions += "-language:experimental.macros",
       libraryDependencies ++= Dependencies.Scala.macroDef(JVM))
 
+  def jsSettings = (p: Project) => {
+    import sbinary.DefaultProtocol.StringFormat
+    import Cache.seqFormat
+    p.settings(
+      // Temp fix for https://github.com/scala-js/scala-js/issues/1817
+      inConfig(Test)(Seq(
+        definedTestNames <<= definedTests map (_.map(_.name).distinct) storeAs definedTestNames
+      ))
+    )
+  }
+
   // ===================================================================================================================
   object Values {
 

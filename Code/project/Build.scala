@@ -33,6 +33,7 @@ object ShipReq extends Build {
   lazy val baseUtil =
     crossProject("base-util")
       .configureBoth(Common.settings)
+      .configureJs(Common.jsSettings)
       .depsForBoth(
         Scalaz.effect ++ Nyaya.core ++ testScope(μTest)
       )
@@ -182,6 +183,7 @@ object ShipReq extends Build {
   lazy val webappMacros =
     crossProject("webapp-macros")
       .configureBoth(webappSettings)
+      .configureJs(Common.jsSettings)
       .dependsOn(baseUtil)
       .depsForBoth(
         μPickle ++ boopickle ++ Monocle.core ++
@@ -199,6 +201,7 @@ object ShipReq extends Build {
   lazy val webappBase =
     crossProject("webapp-base")
       .configureBoth(webappSettings)
+      .configureJs(Common.jsSettings)
       .depsForBoth(
         μPickle ++ Monocle.macros ++ shapeless ++ Nyaya.core ++ parboiled ++ boopickle ++
         testScope(μTest) // TODO Move tests into this
@@ -214,6 +217,7 @@ object ShipReq extends Build {
   lazy val webappBaseTest =
     crossProject("webapp-base-test")
       .configureBoth(webappSettings)
+      .configureJs(Common.jsSettings)
       .depsForBoth(
         μTest ++ Nyaya.test
       )
@@ -265,6 +269,7 @@ object ShipReq extends Build {
           testScope(React.test ++ μTest ++ Nyaya.test)
         )
         .configure(
+          Common.jsSettings,
           webappSettings,
           useMacroParadise,
           WebappClient.testSettings,
@@ -414,6 +419,7 @@ object ShipReq extends Build {
       _.enablePlugins(ScalaJSPlugin)
         .dependsOn(webappClient)
         .configure(
+          Common.jsSettings,
           useMacroParadise,
           WebappClient.prodJsSettings
         )
