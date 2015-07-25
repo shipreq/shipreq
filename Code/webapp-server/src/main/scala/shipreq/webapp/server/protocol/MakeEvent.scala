@@ -1,9 +1,10 @@
-package shipreq.webapp.base.protocol
+package shipreq.webapp.server.protocol
 
 import scalaz.syntax.equal._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
+import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.util.GenericDataMacros._
 import DataImplicits._
 import UnivEq.Implicits._

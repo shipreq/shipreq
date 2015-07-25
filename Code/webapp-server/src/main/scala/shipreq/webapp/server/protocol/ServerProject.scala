@@ -5,7 +5,6 @@ import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.hash.HashScheme
-import shipreq.webapp.base.protocol.MakeEvent
 
 object ServerProject { // TODO Move and rename later
 
