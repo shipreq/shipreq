@@ -24,6 +24,9 @@ object BinCodecEvents {
   implicit val pickleCreateGenericReqGD = binpickler(CreateGenericReqGD).values
   implicit val pickleReqCodeGroupGD     = binpickler(ReqCodeGroupGD).nev
 
+  implicit val pickleProjectTemplate: Pickler[ProjectTemplate] = ConstPickler(ProjectTemplate.Default) // TODO
+
+  implicit val pickleApplyTemplate        : Pickler[ApplyTemplate]         = pickleCaseClass
   implicit val pickleCreateApplicableTag  : Pickler[CreateApplicableTag]   = pickleCaseClass
   implicit val pickleCreateCustomImpField : Pickler[CreateCustomImpField]  = pickleCaseClass
   implicit val pickleCreateCustomIssueType: Pickler[CreateCustomIssueType] = pickleCaseClass

@@ -87,5 +87,7 @@ class ApplyEvent(implicit val trust: Trust) extends ApplyContentEvent {
       case e: CreateReqCodeGroup => ReqCodeGroupEvents applyCreate e
       case e: UpdateReqCodeGroup => ReqCodeGroupEvents applyUpdate e
       case e: DeleteReqCodeGroup => ReqCodeGroupEvents applyDelete e
+
+      case e: ApplyTemplate => apply(e.t.events)
     }
 }

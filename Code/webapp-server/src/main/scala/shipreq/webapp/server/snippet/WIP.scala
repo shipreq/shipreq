@@ -153,6 +153,8 @@ class WIP {
     )
 
     contentByDsl ! project
+
+    //ApplyEvent.untrusted.apply1(ApplyTemplate(ProjectTemplate.Default))(Project.empty).fold(sys.error, p => p)
   }
 
   var state = ServerProject initState newProject

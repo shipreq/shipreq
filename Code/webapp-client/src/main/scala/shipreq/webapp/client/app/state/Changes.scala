@@ -49,6 +49,8 @@ case class Changes(ves: VerifiedEvents, p1: Project, p2: Project) {
       case e: CreateReqCodeGroup    =>
       case e: UpdateReqCodeGroup    =>
       case e: DeleteReqCodeGroup    =>
+
+      case e: ApplyTemplate         => // Always event #0 only - ignore
     }
 
   /** Excludes field position */

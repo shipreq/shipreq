@@ -27,6 +27,14 @@ object Event {
 sealed trait ActiveEvent extends Event
 
 // =====================================================================================================================
+// Config: Templates
+
+/**
+ * Currently only applies to empty projects. Application fails if there is overlap.
+ */
+case class ApplyTemplate(t: ProjectTemplate) extends ActiveEvent
+
+// =====================================================================================================================
 // Config: Custom issue types
 
 @CreateGenericData

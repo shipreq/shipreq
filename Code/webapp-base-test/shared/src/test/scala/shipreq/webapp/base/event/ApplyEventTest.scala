@@ -78,6 +78,15 @@ object ApplyEventTestFns {
       case DeleteCustomField    (_, Restore) => activeFields += 1
       case DeleteReqCodeGroup   (_)          => rcgs -= 1
 
+      case ApplyTemplate(t) => t match {
+        case ProjectTemplate.Default =>
+          customReqTypes   +=  9
+          customIssueTypes +=  3
+          tags             += 16
+          customFields     +=  5
+          activeFields     +=  5
+      }
+
       case _: UpdateCustomIssueType
          | _: UpdateCustomReqType
          | _: UpdateCustomTextField
