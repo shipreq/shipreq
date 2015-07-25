@@ -9,28 +9,29 @@ import DataImplicits._
 import UnivEq.{string, option, vector, map}
 
 /**
- * Translates [[RemoteFn]] inputs into [[Event]]s.
+ * Translates [[RemoteFn]] inputs into [[ActiveEvent]]s.
  */
 object MakeEvent {
 
   sealed trait Result
-  case class  MadeEvent(e: Event)    extends Result
-  case class  Failed(reason: String) extends Result
-  case object NoChange               extends Result
+  case class  MadeEvent(e: ActiveEvent) extends Result
+  case class  Failed(reason: String)    extends Result
+  case object NoChange                  extends Result
 
   // ===================================================================================================================
 
   @inline private implicit class MustExt[A](private val m: Must[A]) extends AnyVal {
-    @inline def toMakeEventResult(f: A => Result): Result = m.fold(Failed, f)
+    @inline def toMakeEventResult(f: A => Result): Result =
+      m.fold(Failed, f)
   }
 
-  private def eventIfNonEmpty[A](a: A)(f: NonEmpty[A] => Event)(implicit proof: NonEmpty.ProofA[A]): Result =
+  private def eventIfNonEmpty[A](a: A)(f: NonEmpty[A] => ActiveEvent)(implicit proof: NonEmpty.ProofA[A]): Result =
     NonEmpty.tryO(a) match {
       case Some(b) => MadeEvent(f(b))
       case None    => NoChange
     }
 
-  @inline private implicit def autoMadeEvent(e: Event) = MadeEvent(e)
+  @inline private implicit def autoMadeEvent(e: ActiveEvent) = MadeEvent(e)
 
   // ===================================================================================================================
 

@@ -9,32 +9,35 @@
 * Add to RandomData (id, data, project).
 * Add to Validators.
 * Add to SampleProject.
-
-* Add to Partition and Partition.values.
-* Add to RemoteDelta.
-* Add to Routines.
-* Add to RandomData (delta, routines).
-* Add to ProtocolTest (delta, routines).
+* Add to DataHash and create a new HashScheme.
+* Maybe add to GenericData object used in Events.
 
 
-[webapp] Data Change Protocol
-=============================
-Server sends Δ to clients. Client has Π.
-Client merges Δ into Π which produces δ.
-δ is sent to listeners within the client which filter it into
-data-domain-specific δᵗ which are then used to process async data changes.
-There are a finite set of τ, each corresponding to specific data domain.
+[webapp] Events & Protocols
+===========================
+Project is built by applying Events.
+DB contains Events.
+New events can only ActiveEvents (a subset of Event).
 
-apply  : Δ → Π → Applied(Π, δ) | Fail
-filter : τ → δ → Option δᵗ
-update : δᵗ → Sᵗ → Sᵗ
+In .protocol, RemoteFns allow client→server communication.
+Most respond with VerifiedEvents.
+Procedure is:
 
-Δ      = RemoteDelta = IMap[Partition, RemoteDeltaPR]
-δ      = LocalDelta  = IMap[Partition, LocalDeltaP]
-δᵗ     = LocalDeltaP
-τ      = Partition
-apply  = RemoteDeltaAp
-filter = LocalDelta.get
+* Server and client both have π.
+* Client: send α to server.
+* Server creates an event: α → ε.
+* Server applies event: ε → π → (π'*, Vec ε*).
+* Server: sends Vec ε* to client.
+* Client applies events: Vec ε* → π → (π',δ)
+* Client broadcasts δ to listeners.
+
+α  - Input to some RemoteFn.
+φ  - Hash of a project.
+ε  - `ActiveEvent`.
+π  - `Project`.
+ε* - (ε,φ). `VerifiedEvent`.
+π* - (π,φ). `ServerProject.State`.
+δ  - Client-side change summary. `Changes`.
 
 
 [webapp-server] Security
