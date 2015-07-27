@@ -34,6 +34,7 @@ object ReqTable {
     State(p.cd.project,
       ViewSettings.default.copy(filterDead = p.fd),
       FilterEditor.initialState,
+      CreationInterface.initState,
       Cell.emptyTableState,
       None)
 
@@ -41,6 +42,7 @@ object ReqTable {
   case class State(project     : Project,
                    viewSettings: ViewSettings,
                    filter      : FilterEditor.State,
+                   creation    : CreationInterface.State,
                    cellStates  : Cell.TableState,
                    focus       : Option[Table.Focus]) {
 
@@ -68,6 +70,7 @@ object ReqTable {
 
     val setViewSettings = ReusableFn($).modStateIO.endoCall(_.updateVS)
     val setFocus        = ReusableFn($).modStateIO.endoCall(_.updateFocus)
+    val setCreation     = ReusableFn($ _setStateL State.creation)
 
     val project      = Px.thunkM($.state.project)
     val viewSettings = Px.thunkM($.state.viewSettings)
@@ -111,11 +114,14 @@ object ReqTable {
 
       val vsProps = ViewSettingsEditor.Props(vsVar, filterEditor)
 
+      val creationProps = CreationInterface.Props(ReusableVar(s.creation)(setCreation))
+
       val tableProps = Table.Props(
         project, rows, colRnds, colEditors, s.cellStates, ReusableVar(s.focus)(setFocus))
 
       <.div(
         vsEditor(vsProps),
+        CreationInterface.Component(creationProps),
         StatsSummary(stats),
         Table.Component(tableProps))
     }

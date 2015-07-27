@@ -63,6 +63,8 @@ object UiText {
     def retryFailedButton = "Retry"
   }
 
+  def reqCodeGroup = "Code Group"
+
   def buttonCommitChange = "OK"
   def buttonAbortChange = "Cancel"
 }
