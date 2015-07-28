@@ -13,7 +13,7 @@ import shipreq.base.util.Validity
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text._
-import shipreq.webapp.client.app.ui.ProjectWidgets
+import shipreq.webapp.client.app.ui.{RemoteDataEditor, ProjectWidgets}
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
 import shipreq.webapp.client.lib.{TIO, HideDead, Contextualise}
 import shipreq.webapp.client.lib.ui.{KeyHandlers, UI}
@@ -75,17 +75,19 @@ object RichTextEditor {
               projectWidgets: Px[ProjectWidgets],
               textSearch    : Px[TextSearch])
              (modCell       : Cell.ModCell,
-              editIO        : EditIO[UpdateContentCmd]): Cell.Cmd = {
+              onCommit0     : UpdateContentOnCommit): Cell.State = {
 
       def init: String =
         projectText.value() format initial
 
-      val (abort, commit) = editIO.cmapToInitial(initial)(mkChange(subjectId, _)).abortCommit
+      val onCommit = onCommit0.cmapToInitial(initial)(mkChange(subjectId, _))
 
       val autoComplete = mkAutoComplete(project, projectText, textSearch)
 
-      Cell.selfManage(modCell, init)((v, s, e) =>
-        Props(v, s, abort, commit(e), project, projectText, projectWidgets, autoComplete.value()).apply)
+      Some(RemoteDataEditor.default[String, String](
+        init, identity, modCell,
+        (s, u, abort, commit) =>
+          Props(s, u, abort, v => commit(onCommit(v)), project, projectText, projectWidgets, autoComplete.value()).apply))
     }
 
     // -----------------------------------------------------------------------------------------------------------------

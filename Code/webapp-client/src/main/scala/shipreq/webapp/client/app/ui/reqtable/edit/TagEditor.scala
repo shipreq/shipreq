@@ -9,8 +9,9 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.UiText
-import shipreq.webapp.client.app.ui.TextSeqEditor, TextSeqEditor._
+import shipreq.webapp.client.app.ui.{RemoteDataEditor, TextSeqEditor}
 import shipreq.webapp.client.lib.{Plain, HideDead}
+import TextSeqEditor._
 import UpdateContentCmd.PatchReqTags
 
 object TagEditor {
@@ -37,7 +38,7 @@ object TagEditor {
             project  : Project,
             lookupM  : Px[Must[Lookup]])
            (modCell  : Cell.ModCell,
-            editIO   : EditIO[UpdateContentCmd]): Cell.Cmd = {
+            onCommit0: UpdateContentOnCommit): Cell.State = {
 
     val lookup = lookupM.map(mustResolve(_)(UnivEq.emptyMap))
 
@@ -68,12 +69,14 @@ object TagEditor {
       }
     }
 
-    val (abort, commit) = editIO.setDiff[ApplicableTagId](PatchReqTags(subjectId, _)).abortCommit
+    val onCommit = onCommit0.setDiff[ApplicableTagId](PatchReqTags(subjectId, _))
 
     val validate: Vector[ApplicableTagId] => ParseResult[SetDiff[ApplicableTagId]] =
       nvs => \/-(SetDiff.compare(initialValues, nvs.toSet))
 
-    Cell.selfManage(modCell, initialTextValue)((v, s, e) =>
-      editor.Props(v, s, abort, parser, validate, commit(e), autoComplete.value()).apply)
+    Some(RemoteDataEditor.default[String, String](
+      initialTextValue, identity, modCell,
+      (s, u, abort, commit) =>
+        editor.Props(s, u, abort, parser, validate, v => commit(onCommit(v)), autoComplete.value()).apply))
   }
 }

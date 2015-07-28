@@ -7,9 +7,10 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.PlainText
-import shipreq.webapp.client.app.ui.TextSeqEditor, TextSeqEditor._
+import shipreq.webapp.client.app.ui.{RemoteDataEditor, TextSeqEditor}
 import shipreq.webapp.client.app.ui.reqtable._
 import shipreq.webapp.client.lib.ui.TextEditor
+import TextSeqEditor._
 import Validators.{reqCode => V}
 import UpdateContentCmd.{PatchReqCodes, SetReqCodeGroupCode}
 
@@ -34,7 +35,7 @@ object ReqCodeEditor {
               subjectId      : ReqCodeId,
               validationState: Px[V.VS])
              (modCell        : Cell.ModCell,
-              editIO         : EditIO[UpdateContentCmd]): Cell.Cmd = {
+              onCommit0      : UpdateContentOnCommit): Cell.State = {
 
       def init         = PlainText reqCode initial
       val autoComplete = mkAutoComplete(validationState)
@@ -46,10 +47,12 @@ object ReqCodeEditor {
           case Some(c) => \/-(c)
         }
 
-      val (abort, commit) = editIO.cmapToInitial(initial)(SetReqCodeGroupCode(subjectId, _)).abortCommit
+      val onCommit = onCommit0.cmapToInitial(initial)(SetReqCodeGroupCode(subjectId, _))
 
-      Cell.selfManageC(modCell, liveCorrect)(init, (v, s, e) =>
-        editor.Props(v, s, abort, parser, validate, commit(e), autoComplete.value()).apply)
+      Some(RemoteDataEditor.default[String, String](
+        init, liveCorrect, modCell,
+        (s, u, abort, commit) =>
+          editor.Props(s, u, abort, parser, validate, v => commit(onCommit(v)), autoComplete.value()).apply))
     }
 
     @inline def liveCorrect(t: String) = V.code.liveCorrect(t)
@@ -67,7 +70,7 @@ object ReqCodeEditor {
               subjectId      : ReqId,
               validationState: Px[V.VS])
              (modCell        : Cell.ModCell,
-              editIO         : EditIO[UpdateContentCmd]): Cell.Cmd = {
+              onCommit0      : UpdateContentOnCommit): Cell.State = {
 
       def init         = initial.toVector.map(PlainText.reqCode).sorted mkString "\n"
       val autoComplete = mkAutoComplete(validationState)
@@ -76,10 +79,12 @@ object ReqCodeEditor {
       val validate: Vector[A] => ParseResult[SetDiff[A]] =
         as => V.codeSet.correctAndValidateU(as.toSet).map(SetDiff.compare(initial, _))
 
-      val (abort, commit) = editIO.setDiff[A](PatchReqCodes(subjectId, _)).abortCommit
+      val onCommit = onCommit0.setDiff[A](PatchReqCodes(subjectId, _))
 
-      Cell.selfManageC(modCell, liveCorrect)(init, (v, s, e) =>
-        editor.Props(v, s, abort, parser, validate, commit(e), autoComplete.value()).apply)
+      Some(RemoteDataEditor.default[String, String](
+        init, liveCorrect, modCell,
+        (s, u, abort, commit) =>
+          editor.Props(s, u, abort, parser, validate, v => commit(onCommit(v)), autoComplete.value()).apply))
     }
 
     def liveCorrect(txt: String): String =

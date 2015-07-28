@@ -13,7 +13,7 @@ import shipreq.base.util.NonEmptySet
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.UiText
-import shipreq.webapp.client.app.ui.SelectOne
+import shipreq.webapp.client.app.ui.{RemoteDataEditor, SelectOne}
 import shipreq.webapp.client.app.ui.reqtable.Cell
 import shipreq.webapp.client.lib.TIO
 import shipreq.webapp.client.util.Enabled
@@ -30,22 +30,24 @@ object ReqTypeSelector {
             subjectId: GenericReqId,
             fields   : Px[Set[A]])
            (modCell  : Cell.ModCell,
-            editIO   : EditIO[UpdateContentCmd]): Cell.Cmd = {
+            onCommit0: UpdateContentOnCommit): Cell.State = {
 
     val fieldsN = fields
       .map(_.filter(_.live :: Live))
       .map(NonEmptySet(initial, _))
 
-    val (abort, commit) = editIO.cmapToInitial(initial.id)(SetGenericReqType(subjectId, _)).cmap[A](_.id).abortCommit
+    val onCommit = onCommit0.cmapToInitial(initial.id)(SetGenericReqType(subjectId, _)).cmap[A](_.id)
 
-    def commitIfChanged(s: A) =
-      if (s.id ≟ initial.id)
+    def commitIfChanged(a: A, commit: RemoteDataEditor.CommitFn): UndefOr[TIO.Commit] =
+      if (a.id ≟ initial.id)
         undefined
       else
-        UndefOr.any2undefOrA(commit)
+        commit(onCommit(a))
 
-    Cell.selfManage(modCell, initial)((v, s, e) =>
-      component(Props(v, s, abort, commitIfChanged(v).map(_(e)(v)), fieldsN.value())))
+    Some(RemoteDataEditor.default[A, A](
+      initial, identity, modCell,
+      (s, u, abort, commit) =>
+        component(Props(s, u, abort, commitIfChanged(s, commit), fieldsN.value()))))
   }
 
   val selectComp = SelectOne.Component[A]

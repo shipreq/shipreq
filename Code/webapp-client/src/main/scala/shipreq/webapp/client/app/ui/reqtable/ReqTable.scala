@@ -52,8 +52,8 @@ object ReqTable {
     def updateFocus(newFocus: Option[Table.Focus]): State =
       copy(focus = newFocus)
 
-    def updateCell(loc: Cell.Loc, cmd: Cell.Cmd): State =
-      copy(cellStates = cellStates.set(loc, cmd))
+    def updateCell(loc: Cell.Loc, state: Cell.State): State =
+      copy(cellStates = cellStates.set(loc, state))
 
     def filterFailure(s: FilterEditor.State): State =
       copy(filter = s)

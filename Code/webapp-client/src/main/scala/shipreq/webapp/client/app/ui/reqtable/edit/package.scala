@@ -5,6 +5,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/-, Failure, Success}
 import shipreq.base.util.Validity
+import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.validation.ValidationResult
 import shipreq.webapp.client.lib.ui.TextEditor
 import Style.{reqtable => *}
@@ -26,4 +27,6 @@ package object edit {
 
   def toSetWithoutValidation[A]: Vector[A] => ParseResult[Set[A]] =
     as => \/-(as.toSet)
+
+  type UpdateContentOnCommit = RemoteDataEditor.CommitFilter[UpdateContentCmd]
 }

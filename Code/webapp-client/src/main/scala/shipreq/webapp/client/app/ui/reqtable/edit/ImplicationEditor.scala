@@ -11,6 +11,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.{Grammar, PlainText, TextSearch}
 import shipreq.webapp.base.UiText
+import shipreq.webapp.client.app.ui.RemoteDataEditor
 import shipreq.webapp.client.app.ui.TextSeqEditor._
 import shipreq.webapp.client.lib.Plain
 
@@ -50,7 +51,7 @@ object ImplicationEditor {
             textSearch: Px[TextSearch],
             lookupM   : Px[Must[Lookup]])
            (modCell   : Cell.ModCell,
-            editIO    : EditIO[UpdateContentCmd]): Cell.Cmd = {
+            onCommit0 : UpdateContentOnCommit): Cell.State = {
 
     /**
      * If true, the user edits what this subject implies (ie. subject → edit-specified).
@@ -96,14 +97,14 @@ object ImplicationEditor {
           leftNone
     }
 
-    val (abort, commit) = {
+    val onCommit = {
       import UpdateContentCmd._
       val f: SetDiff[ReqId] => UpdateContentCmd =
         if (declFwd)
           PatchImplicationTgt(subjectId, _)
         else
           PatchImplicationSrc(subjectId, _)
-      editIO.setDiff(f).abortCommit
+      onCommit0.setDiff(f)
     }
 
     val validate: Vector[ReqId] => ParseResult[SetDiff[ReqId]] = in => {
@@ -119,7 +120,9 @@ object ImplicationEditor {
         \/-(diff)
     }
 
-    Cell.selfManage(modCell, initialTextValue)((v, s, e) =>
-      editor.Props(v, s, abort, parser, validate, commit(e), autoComplete.value()).apply)
+    Some(RemoteDataEditor.default[String, String](
+      initialTextValue, identity, modCell,
+      (s, u, abort, commit) =>
+        editor.Props(s, u, abort, parser, validate, v => commit(onCommit(v)), autoComplete.value()).apply))
   }
 }

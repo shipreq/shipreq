@@ -10,12 +10,12 @@ import shipreq.base.util.Must
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.{TextSearch, PlainText}
-import shipreq.webapp.client.app.ui.ProjectWidgets
+import shipreq.webapp.client.app.ui.{ProjectWidgets, RemoteDataEditor}
 import shipreq.webapp.client.lib.TIO
 import DataImplicits._
 
 object ColumnEditors {
-  case class CellEditor(init: Cell.ModCell => Option[Cell.Cmd]) extends AnyVal
+  case class CellEditor(init: Cell.ModCell => Option[Cell.State]) extends AnyVal
 
   def noEditor = CellEditor(_ => None)
 }
@@ -85,35 +85,19 @@ final class ColumnEditors(project       : Px[Project],
 
   // ===================================================================================================================
 
-  private def mkEditor[R <: Row](f: R => (Cell.ModCell, EditIO[UpdateContentCmd]) => Cell.Cmd) =
+  private val updateContentOnCommit: UpdateContentOnCommit =
+    RemoteDataEditor.CommitFilter(
+      cmd => cb =>
+        cb.lock >> saveIO(cmd, cb.succeeded, cb.failed))
+
+  private def mkEditor[R <: Row](f: R => (Cell.ModCell, UpdateContentOnCommit) => Cell.State) =
     mkEditorO[R](r => Some(f(r)))
 
-  private def mkEditorO[R <: Row](f: R => Option[(Cell.ModCell, EditIO[UpdateContentCmd]) => Cell.Cmd]): R => CellEditor =
+  private def mkEditorO[R <: Row](f: R => Option[(Cell.ModCell, UpdateContentOnCommit) => Cell.State]): R => CellEditor =
     r => f(r) match {
-      case Some(g) =>
-        CellEditor { m =>
-          val e = mkEditIO(m)
-          Some(g(m, e))
-        }
-      case None => noEditor
+      case Some(g) => CellEditor(m => Some(g(m, updateContentOnCommit)))
+      case None    => noEditor
     }
-
-  private def mkEditIO(modCell: Cell.ModCell): EditIO[UpdateContentCmd] = {
-    def saveLockRespond(modCell: Cell.ModCell, pc: UpdateContentCmd, edit: () => Cell.Edit): IO[Unit] = {
-      def io: IO[Unit] = {
-        val sio  = TIO.Success(modCell(Cell.Clear))
-        def fcmd = Cell.Fail(() => io, () => modCell(edit()))
-        val fio  = TIO.Failure.lazily(modCell(fcmd))
-        saveIO(pc, sio, fio) >> modCell(Cell.Lock)
-      }
-      io
-    }
-
-    EditIO {
-      case Save(pc, e) => saveLockRespond(modCell, pc, e)
-      case Abort       => modCell(Cell.Clear)
-    }
-  }
 
   // ===================================================================================================================
 

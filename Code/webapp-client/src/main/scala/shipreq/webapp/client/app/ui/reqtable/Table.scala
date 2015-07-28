@@ -224,9 +224,6 @@ object Table {
         <.td(
           *.cell((status, p.focus.exists(_ ≟ col))),
           ^.onClick ~~>? onCellClick(p setFocus col),
-          p.cells.get(cr.column).fold(readOnlyView)(renderCellState))
+          p.cells.get(cr.column).fold(readOnlyView)(_.render))
       })
-
-  def renderCellState: Cell.State => ReactElement =
-    _.render
 }
