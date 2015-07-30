@@ -39,5 +39,5 @@ object Cell {
   def emptyTableState: TableState =
     new TableState(UnivEq.emptyMap)
 
-  type ModTable = Loc ~=> RemoteDataEditor.SetState
+  type ModTable = Loc ~=> RemoteDataEditor.SetOpState
 }

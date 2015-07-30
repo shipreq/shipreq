@@ -29,7 +29,7 @@ object ReqTypeSelector {
   def apply(initial  : A,
             subjectId: GenericReqId,
             fields   : Px[Set[A]])
-           (setSelf  : RemoteDataEditor.SetState,
+           (setSelf  : RemoteDataEditor.SetOpState,
             onCommit0: UpdateContentOnCommit): Cell.State = {
 
     val fieldsN = fields
@@ -44,10 +44,10 @@ object ReqTypeSelector {
       else
         commit(onCommit(a))
 
-    Some(RemoteDataEditor.default[A, A](
+    RemoteDataEditor.opDefault[A, A](
       initial, identity, setSelf,
       (s, u, abort, commit) =>
-        component(Props(s, u, abort, commitIfChanged(s, commit), fieldsN.value()))))
+        component(Props(s, u, abort, commitIfChanged(s, commit), fieldsN.value())))
   }
 
   val selectComp = SelectOne.Component[A]

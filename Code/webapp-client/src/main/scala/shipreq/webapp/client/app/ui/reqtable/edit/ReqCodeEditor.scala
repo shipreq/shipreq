@@ -34,7 +34,7 @@ object ReqCodeEditor {
     def apply(initial        : A,
               subjectId      : ReqCodeId,
               validationState: Px[V.VS])
-             (setSelf        : RemoteDataEditor.SetState,
+             (setSelf        : RemoteDataEditor.SetOpState,
               onCommit0      : UpdateContentOnCommit): Cell.State = {
 
       def init         = PlainText reqCode initial
@@ -49,10 +49,10 @@ object ReqCodeEditor {
 
       val onCommit = onCommit0.cmapToInitial(initial)(SetReqCodeGroupCode(subjectId, _))
 
-      Some(RemoteDataEditor.default[String, String](
+      RemoteDataEditor.opDefault[String, String](
         init, liveCorrect, setSelf,
         (s, u, abort, commit) =>
-          editor.Props(s, u, abort, parser, validate, v => commit(onCommit(v)), autoComplete.value(), cellStyle, cellErrorMsgStyle).apply))
+          editor.Props(s, u, abort, parser, validate, v => commit(onCommit(v)), autoComplete.value(), cellStyle, cellErrorMsgStyle).apply)
     }
 
     @inline def liveCorrect(t: String) = V.code.liveCorrect(t)
@@ -69,7 +69,7 @@ object ReqCodeEditor {
     def apply(initial        : Set[A],
               subjectId      : ReqId,
               validationState: Px[V.VS])
-             (modCell        : RemoteDataEditor.SetState,
+             (modCell        : RemoteDataEditor.SetOpState,
               onCommit0      : UpdateContentOnCommit): Cell.State = {
 
       def init         = initial.toVector.map(PlainText.reqCode).sorted mkString "\n"
@@ -81,10 +81,10 @@ object ReqCodeEditor {
 
       val onCommit = onCommit0.setDiff[A](PatchReqCodes(subjectId, _))
 
-      Some(RemoteDataEditor.default[String, String](
+      RemoteDataEditor.opDefault[String, String](
         init, liveCorrect, modCell,
         (s, u, abort, commit) =>
-          editor.Props(s, u, abort, parser, validate, v => commit(onCommit(v)), autoComplete.value(), cellStyle, cellErrorMsgStyle).apply))
+          editor.Props(s, u, abort, parser, validate, v => commit(onCommit(v)), autoComplete.value(), cellStyle, cellErrorMsgStyle).apply)
     }
 
     def liveCorrect(txt: String): String =

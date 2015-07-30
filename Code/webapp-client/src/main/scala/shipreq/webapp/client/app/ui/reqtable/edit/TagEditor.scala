@@ -39,7 +39,7 @@ object TagEditor {
             subjectId: ReqId,
             project  : Project,
             lookupM  : Px[Must[Lookup]])
-           (setSelf  : RemoteDataEditor.SetState,
+           (setSelf  : RemoteDataEditor.SetOpState,
             onCommit0: UpdateContentOnCommit): Cell.State = {
 
     val lookup = lookupM.map(mustResolve(_)(UnivEq.emptyMap))
@@ -76,9 +76,9 @@ object TagEditor {
     val validate: Vector[ApplicableTagId] => ParseResult[SetDiff[ApplicableTagId]] =
       nvs => \/-(SetDiff.compare(initialValues, nvs.toSet))
 
-    Some(RemoteDataEditor.default[String, String](
+    RemoteDataEditor.opDefault[String, String](
       initialTextValue, identity, setSelf,
       (s, u, abort, commit) =>
-        editor.Props(s, u, abort, parser, validate, v => commit(onCommit(v)), autoComplete.value(), cellStyle, cellErrorMsgStyle).apply))
+        editor.Props(s, u, abort, parser, validate, v => commit(onCommit(v)), autoComplete.value(), cellStyle, cellErrorMsgStyle).apply)
   }
 }

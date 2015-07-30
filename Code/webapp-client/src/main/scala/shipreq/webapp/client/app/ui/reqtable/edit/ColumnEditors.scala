@@ -13,7 +13,7 @@ import shipreq.webapp.client.app.ui.{ProjectWidgets, RemoteDataEditor}
 import shipreq.webapp.client.lib.TIO
 
 object ColumnEditors {
-  case class CellEditor(init: RemoteDataEditor.SetState => Option[Cell.State]) extends AnyVal
+  case class CellEditor(init: RemoteDataEditor.SetOpState => Option[Cell.State]) extends AnyVal
 
   def noEditor = CellEditor(_ => None)
 }
@@ -88,10 +88,10 @@ final class ColumnEditors(project       : Px[Project],
       cmd => cb =>
         cb.lock >> saveIO(cmd, cb.succeeded, cb.failed))
 
-  private def mkEditor[R <: Row](f: R => (RemoteDataEditor.SetState, UpdateContentOnCommit) => Cell.State) =
+  private def mkEditor[R <: Row](f: R => (RemoteDataEditor.SetOpState, UpdateContentOnCommit) => Cell.State) =
     mkEditorO[R](r => Some(f(r)))
 
-  private def mkEditorO[R <: Row](f: R => Option[(RemoteDataEditor.SetState, UpdateContentOnCommit) => Cell.State]): R => CellEditor =
+  private def mkEditorO[R <: Row](f: R => Option[(RemoteDataEditor.SetOpState, UpdateContentOnCommit) => Cell.State]): R => CellEditor =
     r => f(r) match {
       case Some(g) => CellEditor(m => Some(g(m, updateContentOnCommit)))
       case None    => noEditor
