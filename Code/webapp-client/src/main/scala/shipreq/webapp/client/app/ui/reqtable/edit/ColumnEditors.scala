@@ -164,14 +164,14 @@ final class ColumnEditors(project       : Px[Project],
 
   def imps(l: Optional[Row, Vector[Pubid]], col: Column) = mkEditorO[GenericReqRow](r =>
     l.getOption(r).map(iv =>
-      ImplicationEditor(iv, r.req.id, col, project, textSearch, impLookup map Must.apply)))
+      ImplicationEditor.edit(r.req.id, iv, col, project, textSearch, impLookup map Must.apply, _, _)))
 
   def cfImp(fid: CustomField.Implication.Id, col: Column) = mkEditorO[GenericReqRow] { r =>
     val lookup = for {p <- project; l <- impLookup} yield ImplicationEditor.lookupForCustomImpCol(p, l, fid)
     Row.cfImp(fid).getOption(r).map { _ =>
       val id = r.req.id
       val iv = ImplicationEditor.initialValueForCustomColumn(project.value(), fid, id)
-      ImplicationEditor(iv, id, col, project, textSearch, lookup)
+      ImplicationEditor.edit(id, iv, col, project, textSearch, lookup, _, _)
     }
   }
 }
