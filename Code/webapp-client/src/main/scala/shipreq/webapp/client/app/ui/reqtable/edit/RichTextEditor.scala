@@ -64,23 +64,18 @@ object RichTextEditor {
       }
     }
 
-    type SubjectId
-
-    def mkChange: (SubjectId, t.OptionalText) => UpdateContentCmd
-
     def apply(initial       : t.OptionalText,
-              subjectId     : SubjectId,
               project       : Px[Project],
               projectText   : Px[PlainText.ForProject],
               projectWidgets: Px[ProjectWidgets],
-              textSearch    : Px[TextSearch])
-             (setSelf       : RemoteDataEditor.SetOpState,
-              onCommit0     : UpdateContentOnCommit): RemoteDataEditor.State = {
+              textSearch    : Px[TextSearch],
+              setSelf       : RemoteDataEditor.SetOpStateFor[String],
+              commitFn      : t.OptionalText => RemoteDataEditor.OnCommit): RemoteDataEditor.StateFor[String] = {
 
       def init: String =
         projectText.value() format initial
 
-      val onCommit = onCommit0.cmapToInitial(initial)(mkChange(subjectId, _))
+      val onCommit = RemoteDataEditor.CommitFilter(commitFn).ignoreIfEqual(initial)
 
       val autoComplete = mkAutoComplete(project, projectText, textSearch)
 
@@ -88,6 +83,22 @@ object RichTextEditor {
         init, identity, setSelf,
         (s, u, abort, commit) =>
           Props(s, u, abort, v => commit(onCommit(v)), project, projectText, projectWidgets, autoComplete.value()).apply)
+    }
+
+    type SubjectId
+
+    def mkUpdateContentCmd: (SubjectId, t.OptionalText) => UpdateContentCmd
+
+    def edit(subjectId     : SubjectId,
+             initial       : t.OptionalText,
+             project       : Px[Project],
+             projectText   : Px[PlainText.ForProject],
+             projectWidgets: Px[ProjectWidgets],
+             textSearch    : Px[TextSearch],
+             setSelf       : RemoteDataEditor.SetOpStateFor[String],
+             commitFn      : UpdateContentOnCommit): RemoteDataEditor.StateFor[String] = {
+      val onCommit = commitFn.cmap[t.OptionalText](mkUpdateContentCmd(subjectId, _))
+      apply(initial, project, projectText, projectWidgets, textSearch, setSelf, onCommit)
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -150,16 +161,16 @@ object RichTextEditor {
 
   object GenericReqTitle extends Base("GenericReqDesc editor", Text.GenericReqTitle) {
     override type SubjectId = GenericReqId
-    override def mkChange = SetGenericReqTitle
+    override def mkUpdateContentCmd = SetGenericReqTitle
   }
 
   object ReqCodeGroupTitle extends Base("ReqCodeGroupTitle editor", Text.ReqCodeGroupTitle) {
     override type SubjectId = ReqCodeId
-    override def mkChange = SetReqCodeGroupTitle
+    override def mkUpdateContentCmd = SetReqCodeGroupTitle
   }
 
   class CustomTextField(fid: CustomField.Text.Id) extends Base("CustomTextField editor", Text.CustomTextField) {
     override type SubjectId = ReqId
-    override def mkChange = SetCustomTextField(_, fid, _)
+    override def mkUpdateContentCmd = SetCustomTextField(_, fid, _)
   }
 }

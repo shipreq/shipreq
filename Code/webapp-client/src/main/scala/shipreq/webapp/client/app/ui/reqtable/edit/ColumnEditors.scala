@@ -112,13 +112,13 @@ final class ColumnEditors(project       : Px[Project],
   val genericReqTitle = mkEditor[GenericReqRow] { r =>
     val id = r.req.id
     val iv = r.req.title
-    RichTextEditor.GenericReqTitle(iv, id, project, plainText, projectWidgets, textSearch)
+    RichTextEditor.GenericReqTitle.edit(id, iv, project, plainText, projectWidgets, textSearch, _, _)
   }
 
   val reqCodeGroupTitle = mkEditor[ReqCodeGroupRow] { r =>
     val id = r.reqCodeId
     val iv = r.group.title
-    RichTextEditor.ReqCodeGroupTitle(iv, id, project, plainText, projectWidgets, textSearch)
+    RichTextEditor.ReqCodeGroupTitle.edit(id, iv, project, plainText, projectWidgets, textSearch, _, _)
   }
 
   def cfText(fid: CustomField.Text.Id) = mkEditor[GenericReqRow] { r =>
@@ -126,7 +126,7 @@ final class ColumnEditors(project       : Px[Project],
     val id = r.req.id
     val iv = td.get(id).map(_.whole) getOrElse Vector.empty
     val fe = new RichTextEditor.CustomTextField(fid)
-    fe(iv, id, project, plainText, projectWidgets, textSearch)
+    fe.edit(id, iv, project, plainText, projectWidgets, textSearch, _, _)
   }
 
   private val reqCodeTrie = project.map(_.reqCodes.trie)
