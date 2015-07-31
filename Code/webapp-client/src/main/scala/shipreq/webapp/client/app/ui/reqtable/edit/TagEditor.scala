@@ -18,7 +18,9 @@ import UpdateContentCmd.PatchReqTags
 object TagEditor {
   type Lookup = Map[String, ApplicableTag]
 
-  val editor = new TextSeqEditor[ApplicableTagId, SetDiff[ApplicableTagId]](
+  type TagDiff = SetDiff[ApplicableTagId]
+
+  val editor = new TextSeqEditor[ApplicableTagId, TagDiff](
     "TagEditor", Grammar.hashRefKey.seqFormat.apply, TextEditor.Input)
 
   def lookupForNoCol(p: Project): Must[Lookup] =
@@ -35,12 +37,11 @@ object TagEditor {
       .toMap
     )
 
-  def apply(initial  : Set[ApplicableTagId],
-            subjectId: ReqId,
-            project  : Project,
-            lookupM  : Px[Must[Lookup]])
-           (setSelf  : RemoteDataEditor.SetOpState,
-            onCommit0: UpdateContentOnCommit): RemoteDataEditor.State = {
+  def apply(initial : Set[ApplicableTagId],
+            project : Project,
+            lookupM : Px[Must[Lookup]],
+            setSelf : RemoteDataEditor.SetOpStateFor[String],
+            commitFn: TagDiff => RemoteDataEditor.OnCommit): RemoteDataEditor.StateFor[String] = {
 
     val lookup = lookupM.map(mustResolve(_)(UnivEq.emptyMap))
 
@@ -71,9 +72,9 @@ object TagEditor {
       }
     }
 
-    val onCommit = onCommit0.setDiff[ApplicableTagId](PatchReqTags(subjectId, _))
+    val onCommit = RemoteDataEditor.CommitFilter(commitFn).ignore(_.isEmpty)
 
-    val validate: Vector[ApplicableTagId] => ParseResult[SetDiff[ApplicableTagId]] =
+    val validate: Vector[ApplicableTagId] => ParseResult[TagDiff] =
       nvs => \/-(SetDiff.compare(initialValues, nvs.toSet))
 
     RemoteDataEditor.default[String, String](
@@ -81,4 +82,12 @@ object TagEditor {
       (s, u, abort, commit) =>
         editor.Props(s, u, abort, parser, validate, v => commit(onCommit(v)), autoComplete.value(), cellStyle, cellErrorMsgStyle).apply)
   }
+
+  def edit(subjectId: ReqId,
+           initial  : Set[ApplicableTagId],
+           project  : Project,
+           lookupM  : Px[Must[Lookup]],
+           setSelf  : RemoteDataEditor.SetOpStateFor[String],
+           commitFn : UpdateContentOnCommit): RemoteDataEditor.StateFor[String] =
+    apply(initial, project, lookupM, setSelf, commitFn.cmap[TagDiff](PatchReqTags(subjectId, _)))
 }
