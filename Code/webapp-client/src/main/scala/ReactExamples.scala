@@ -45,7 +45,7 @@ object ShipreqWip {
   def routes(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) = RouterConfigDsl[Page].buildRule { dsl =>
 
     def reqTable =
-      ui.reqtable.ReqTable.Props(cd, cp, r.updateContent, HideDead).component
+      ui.reqtable.ReqTable.Props(cd, cp, r.createContent, r.updateContent, HideDead).component
 
     def cfgIssues =
       ui.cfg.issues.CfgIssues.Props(cp, r.issueTypeCrud, r.reqTypeImpMod, r.fieldMandMod, cd, HideDead).component

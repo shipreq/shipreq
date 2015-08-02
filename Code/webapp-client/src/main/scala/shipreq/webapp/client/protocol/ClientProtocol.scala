@@ -17,10 +17,21 @@ trait ClientProtocol {
    * Eventually this should be replaced with something better.
    */
   def consumeGenericFailure(f: Failed[GenericFailure]): TIO.Failure =
-    TIO.Failure(f match {
-      case -\/(t) => ConsoleIO(_.error("AJAX error: ", t.getMessage))
-      case \/-(e) => ConsoleIO(_.error("Remote error occurred: ", e.msg))
-    })
+    TIO.Failure(ConsoleIO(_.error(genericFailureToText(f))))
+
+  /**
+   * Generic means of handling and consuming generic (protocol/ajax) failure.
+   *
+   * Eventually this should be replaced with something better.
+   */
+  def genericFailureToText(f: Failed[GenericFailure]): String =
+    f match {
+      case -\/(t) => Option(t.getMessage) match {
+        case Some(m) => "AJAX error occurred: " + m
+        case None    => "AJAX error occurred."
+      }
+      case \/-(e) => "Remote error occurred: " + e.msg
+    }
 }
 
 object ClientProtocol {
