@@ -1,12 +1,15 @@
 package shipreq.webapp.server.protocol
 
+import japgolly.nyaya.util.Multimap
 import scalaz.syntax.equal._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol._
+import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.util.GenericDataMacros._
 import DataImplicits._
+import ScalaExt._
 import UnivEq.Implicits._
 
 /**
@@ -26,9 +29,9 @@ object MakeEvent {
       m.fold(Failed, f)
   }
 
-  private def eventIfNonEmpty[A](a: A)(f: NonEmpty[A] => ActiveEvent)(implicit proof: NonEmpty.ProofA[A]): Result =
+  private def eventIfNonEmpty[A](a: A)(f: NonEmpty[A] => Result)(implicit proof: NonEmpty.ProofA[A]): Result =
     NonEmpty.tryO(a) match {
-      case Some(b) => MadeEvent(f(b))
+      case Some(b) => f(b)
       case None    => NoChange
     }
 
@@ -234,15 +237,16 @@ object MakeEvent {
     }
   }
 
-  def createContent(cmd: CreateContentCmd, project: Project): Result = {
-    val nextCodeId: () => ReqCodeId = {
-      var i = project.idCeilings.reqCode
-      () => {
-        i += 1
-        ReqCodeId(i)
-      }
+  private def reqCodeIdCounter(project: Project): () => ReqCodeId = {
+    var i = project.idCeilings.reqCode
+    () => {
+      i += 1
+      ReqCodeId(i)
     }
+  }
 
+  def createContent(cmd: CreateContentCmd, project: Project): Result = {
+    val nextCodeId = reqCodeIdCounter(project)
     cmd match {
       case CreateContentCmd.CreateReqCodeGroup(code, title) =>
         def makeEvent(id: ReqCodeId) =
@@ -267,4 +271,68 @@ object MakeEvent {
         CreateGenericReq(id, i.rt, vs)
     }
   }
+
+  def updateContent(cmd: UpdateContentCmd, project: Project): Result = {
+
+    cmd match {
+      case UpdateContentCmd.SetGenericReqTitle(id, v) =>
+        SetGenericReqTitle(id, v)
+
+      case UpdateContentCmd.PatchReqTags(id, v) =>
+        eventIfNonEmpty(v)(PatchReqTags(id, _))
+
+      case UpdateContentCmd.SetCustomTextField(id, f, v) =>
+        SetCustomTextField(id, f, v)
+
+      case UpdateContentCmd.PatchImplicationSrc(id, v) =>
+        eventIfNonEmpty(v)(PatchImplicationSrc(id, _))
+
+      case UpdateContentCmd.PatchImplicationTgt(id, v) =>
+        eventIfNonEmpty(v)(PatchImplicationTgt(id, _))
+
+      case UpdateContentCmd.PatchReqCodes(id, v) =>
+        eventIfNonEmpty(v) { cs =>
+          var remove : Set[ReqCodeId]                          = UnivEq.emptySet
+          var restore: Set[ReqCodeId]                          = UnivEq.emptySet
+          var add    : Multimap[ReqCode.Value, Set, ReqCodeId] = UnivEq.emptySetMultimap
+          var r      : Option[Result]                          = None
+
+          def fail(err: String): Unit =
+            r = Some(Failed(err))
+
+          for (c <- cs.value.removed)
+            project.reqCodes(c).flatMap(_.active) match {
+              case Some(a) if a.target ≟ id => remove += a.id
+              case Some(_)                  => fail(s"Cannot remove ${PlainText reqCode c}: Doesn't belong to $id.")
+              case None                     => fail(s"Cannot remove ${PlainText reqCode c}: Not found.")
+            }
+
+          if (r.isEmpty) {
+            val nextCodeId = reqCodeIdCounter(project)
+            for (c <- cs.value.added)
+              project.reqCodes(c) match {
+                case Some(d) if d.active.isDefined =>
+                  Failed(s"Code in use: ${PlainText reqCode c}.")
+
+                case od => od.flatMap(_.refsToReqs(id).ifNonEmpty(_.min)) match {
+                  case None    => add = add.add(c, nextCodeId())
+                  case Some(i) => restore += i
+                }
+              }
+          }
+
+          r getOrElse PatchReqCodes(id, remove, restore, add)
+        }
+
+      case UpdateContentCmd.SetGenericReqType(id, v) =>
+        SetGenericReqType(id, v)
+
+      case UpdateContentCmd.SetReqCodeGroupTitle(id, v) =>
+        UpdateReqCodeGroup(id, ReqCodeGroupGD.Title(v))
+
+      case UpdateContentCmd.SetReqCodeGroupCode(id, v) =>
+        UpdateReqCodeGroup(id, ReqCodeGroupGD.Code(v))
+    }
+  }
+
 }

@@ -164,6 +164,7 @@ class WIP {
   def updateProject(f: Project => MakeEvent.Result): GenericFailure \/ VerifiedEvents =
     ServerProject.applyMakeEventResult(f(state.project), state) match {
       case ServerProject.Updated(s2, ves) =>
+        delay()
         state = s2
         \/-(ves)
       case ServerProject.NoChange =>
@@ -215,15 +216,12 @@ class WIP {
       updateProject(MakeEvent.createContent(input, _)))
 
   val updateProjectContent =
-    ServerProtocol.remoteFn(UpdateContentFn){ i =>
-      println(s"RECEIVED: $i")
-      delay()
-      Vector.empty: VerifiedEvents
-    }
+    ServerProtocol.remoteFn(UpdateContentFn)(input =>
+      updateProject(MakeEvent.updateContent(input, _)))
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  def delay(): Unit = Thread.sleep(300)
+  def delay(): Unit = Thread.sleep(200)
 //  def delay(): Unit = Thread.sleep(new java.util.Random().nextInt(80)+80)
 
   def render = {

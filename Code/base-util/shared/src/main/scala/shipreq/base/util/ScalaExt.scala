@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import scala.collection.GenTraversable
 import scala.reflect.ClassTag
 
 object ScalaExt extends Platform.ScalaExt {
@@ -25,6 +26,11 @@ object ScalaExt extends Platform.ScalaExt {
       if (c) t(_a) else _a
 
     @inline def some: Option[A] = Some(_a)
+  }
+
+  implicit class GenTravExt[T[x] <: GenTraversable[x], A](private val t: T[A]) extends AnyVal {
+    def ifNonEmpty[B](f: T[A] => B): Option[B] =
+      if (t.isEmpty) None else Some(f(t))
   }
 
   implicit class StringBuilderExt(val sb: StringBuilder) extends AnyVal {

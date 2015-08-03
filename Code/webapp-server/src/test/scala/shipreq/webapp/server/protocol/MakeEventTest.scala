@@ -103,5 +103,7 @@ object MakeEventTest extends TestSuite {
       assertEq(e2.id, GenericReqId(2))
     }
 
+    // TODO More MakeEvent tests would be good (esp for PatchReqCodes)
+
   }
 }
