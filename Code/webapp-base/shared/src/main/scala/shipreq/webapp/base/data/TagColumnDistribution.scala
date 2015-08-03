@@ -6,6 +6,7 @@ import shipreq.base.util.UnivEq.{immutableHashMapMemo => memo}
 import shipreq.webapp.base.data.DataImplicits._
 
 abstract class TagColumnDistribution[A] {
+  def all: A
   val inColumn: CustomField.Tag.Id => A
   def usedInColumns: A
   def notUsedInColumns: A
@@ -25,6 +26,12 @@ object TagColumnDistribution {
     // transitive closure at O(V²) space and O(V²+VE) time.
     private[this] implicit val tagTree = p.tags
 
+    lazy val allStream =
+      tagTree.vstream(_.tag.id).filterT[ApplicableTagId]
+
+    override lazy val all =
+      Must(allStream.toSet)
+
     override val inColumn =
       memo((fid: CustomField.Tag.Id) =>
         p.customField(fid).flatMap(field =>
@@ -36,11 +43,7 @@ object TagColumnDistribution {
       Must.foldMapMF(p.customTagFields filter tagColumnFilter map (_.id))(inColumn)
 
     override lazy val notUsedInColumns =
-      usedInColumns.map(s =>
-        tagTree.vstream(_.tag.id)
-          .filterT[ApplicableTagId]
-          .filterNot(s.contains)
-          .toSet)
+      usedInColumns.map(s => allStream.filterNot(s.contains).toSet)
 
     lazy val tags =
       map(_ flatMap p.atags[Set])
@@ -48,6 +51,7 @@ object TagColumnDistribution {
 
   // ===================================================================================================================
   final class Mapped[A, B](u: TagColumnDistribution[A], f: A => B) extends TagColumnDistribution[B] {
+    override lazy val all               = f(u.all)
     override      val inColumn          = f compose u.inColumn
     override lazy val usedInColumns     = f(u.usedInColumns)
     override lazy val notUsedInColumns  = f(u.notUsedInColumns)

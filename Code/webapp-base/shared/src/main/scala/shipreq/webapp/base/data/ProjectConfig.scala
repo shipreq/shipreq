@@ -63,6 +63,9 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
       case f                => Must.Failed(s"$f must be a CustomReqType")
     }
 
+  lazy val liveCustomReqTypes: Stream[CustomReqType] =
+    customReqTypes.values.toStream.filter(_.live :: Live)
+
   lazy val reqTypes: Stream[ReqType] =
     (customReqTypes.values.toStream: Stream[ReqType]) append
       (StaticReqType.valueStream   : Stream[ReqType])

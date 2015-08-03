@@ -20,7 +20,7 @@ import shipreq.base.util.Debug._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.UnivEq.{apply => _, force => _, _}
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.protocol.{UpdateContentFn, UpdateContentCmd, RemoteFn}
+import shipreq.webapp.base.protocol.{CreateContentFn, UpdateContentFn, UpdateContentCmd, RemoteFn}
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.test.BaseTestUtil._
 import shipreq.webapp.client.app.state.ClientData
@@ -182,7 +182,7 @@ final class ReqTableScreen(root: => DomZipper) {
   }
 
   object stats {
-    lazy val text = $(">div").innerText
+    lazy val text = $(2, ">div", 1).innerText
 
     lazy val reportedRows: Int =
       text match {
@@ -233,10 +233,11 @@ sealed trait ReqTableTest0 {
 
   val cp = new TestClientProtocol
 
-  val remote = RemoteFn.Instance("x", UpdateContentFn)
+  val createRemote = RemoteFn.Instance("x", CreateContentFn)
+  val updateRemote = RemoteFn.Instance("x", UpdateContentFn)
 
   def propsForProject(p: Project) =
-    ReqTable.Props(new ClientData(p), cp, remote, HideDead)
+    ReqTable.Props(new ClientData(p), cp, createRemote, updateRemote, HideDead)
 
   lazy val initialProps = propsForProject(project)
 
@@ -431,7 +432,7 @@ sealed trait ReqTableTest0 {
 
   def ioAssertReqsSent(expect: Int) = Action.assert(cp assertReqsSent expect)
 
-  val ioAssertLastTwoRequestsEqual = Action.assert(cp.assertLastTwoRequestsEqual(remote))
+  val ioAssertLastTwoUpdateRequestsEqual = Action.assert(cp.assertLastTwoRequestsEqual(updateRemote))
 
   val ioFailLast = Action.exec("failLast", cp.failLast())
 
@@ -689,17 +690,17 @@ sealed trait ReqTableTest0 {
     val retry = (
       clickRetry.assertNowLocked
         >> ioAssertReqsSent(2)
-        >> ioAssertLastTwoRequestsEqual)
+        >> ioAssertLastTwoUpdateRequestsEqual)
 
     val cancelSaveCommitAgain = (
       clickFailOk.assertNowEditing
         >> Action.nop.focus(editorValue).assertAfter(newValue)
         >> commit.assertNowLocked
         >> ioAssertReqsSent(3)
-        >> ioAssertLastTwoRequestsEqual)
+        >> ioAssertLastTwoUpdateRequestsEqual)
 
     val saveSucceeds = (
-      Action.exec("saveSucceeds", cp.respondToLast(remote)(Vector.empty))
+      Action.exec("saveSucceeds", cp.respondToLast(updateRemote)(Vector.empty))
         >> Action.nop.assertNoCellState)
 
     run(editCommitWithoutChange >> editChangeCommit >> fail >> retry >> fail >> cancelSaveCommitAgain >> saveSucceeds)
