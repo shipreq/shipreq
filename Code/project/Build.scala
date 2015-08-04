@@ -334,10 +334,12 @@ object ShipReq extends Build {
 
     def testSettings = (_: Project)
       .dependsOn(webappBaseTestJvm % "test->compile")
-      .settings(
-        // Put webapp on test classpath so templates load
-        unmanagedResourceDirectories in Test += baseDirectory.value / "src/main/webapp",
-        parallelExecution in Test := false)
+      .settings(inConfig(Test)(Seq(
+        fork                         := true,
+        javaOptions                  += "-Drun.mode=test",
+        unmanagedResourceDirectories += baseDirectory.value / "src/main/webapp", // So templates load
+        parallelExecution            := false)
+      ): _*)
 
     lazy val IntegrationTest = config("it") extend Test
     def integrationTestSettings = (_: Project)
