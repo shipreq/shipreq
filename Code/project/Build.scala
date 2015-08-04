@@ -50,7 +50,7 @@ object ShipReq extends Build {
     project("base-db")
       .configure(Common.settings)
       .deps(
-        postgresql ++ slick ++ bonecp ++ flyway ++ logback ++
+        postgresql ++ slick ++ hikariCP ++ flyway ++ logback ++
         providedScope(jodaTime)
       )
       .dependsOn(baseUtilJvm)
@@ -357,7 +357,7 @@ object ShipReq extends Build {
         .dependsOn(baseDb, taskmanApi, webappBaseJvm)
         //.dependsOn(baseUtilJvm, taskmanApiLogic, taskmanApiImpl) // Stupid IDEA auto-import needs this
         .deps(
-          Scalaz.core ++ Lift.webkit ++ Shiro.all ++ scalate ++ commonsLang ++
+          Scalaz.core ++ Lift.webkit ++ Shiro.all ++ scalate ++ commonsLang ++ guava ++
           testScope(μTest ++ scalaTest ++ scalaCheck ++ mockito ++ Lift.testkit ++ commonsIo ++ twitterEval) ++
           depScope("it")(selenium) ++
           (jetty % "container,test") ++ (servlet % "container,test,provided")

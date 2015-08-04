@@ -1,39 +1,39 @@
 package shipreq.base.db
 
 import ch.qos.logback.classic.Level
-import com.jolbox.bonecp.hooks.{AbstractConnectionHook, ConnectionHook}
-import com.jolbox.bonecp.{ConnectionHandle, BoneCPDataSource}
+import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 import org.postgresql.ds.PGSimpleDataSource
 import shipreq.base.util.ErrorOr
 import shipreq.base.util.ExternalValueReader.{get => getEV, Retriever => R, _}
 import shipreq.base.util.log.HasLogger
 
-case class DatabaseConnection(host: String, name: String, schema: Option[String], ds: BoneCPDataSource) {
+case class DatabaseConnection(host: String, name: String, schema: Option[String], ds: HikariDataSource) {
   def desc = s"$host/$name" + schema.map(":" + _).getOrElse("")
 }
 
 object DatabaseConnection extends HasLogger {
 
-  type C = BoneCPDataSource => BoneCPDataSource
+  type PoolCfg = HikariConfig => Unit
+  val noPoolCfg: PoolCfg = _ => ()
 
   def PropertyScope = "db"
 
-  def establish_!(defaults: C = identity)(implicit _s: R[String], _i: R[Int], _l: R[Long], _b: R[Boolean]): DatabaseConnection = {
-    val c = ErrorOr.require_!(get(defaults))
+  def establish_!(poolCfgDefaults: PoolCfg = noPoolCfg)(implicit _s: R[String], _i: R[Int], _l: R[Long], _b: R[Boolean]): DatabaseConnection = {
+    val c = ErrorOr.require_!(get(poolCfgDefaults))
     verify_!(c)
     c
   }
 
-  def get(defaults: C = identity)(implicit _s: R[String], _i: R[Int], _l: R[Long], _b: R[Boolean]): ErrorOr[DatabaseConnection] =
+  def get(poolCfgDefaults: PoolCfg = noPoolCfg)(implicit _s: R[String], _i: R[Int], _l: R[Long], _b: R[Boolean]): ErrorOr[DatabaseConnection] =
     ErrorOr.catchException {
-      dataSource(defaults).map {
-        case (schema, pg, ds) =>
-          DatabaseConnection(pg.getServerName, pg.getDatabaseName, schema, ds)
+      dataSource(poolCfgDefaults).map {
+        case (schema, pgds, hds) =>
+          DatabaseConnection(pgds.getServerName, pgds.getDatabaseName, schema, hds)
     }
   }
 
-  protected def dataSource(defaults: C = identity)(implicit _s: R[String], _i: R[Int], _l: R[Long], _b: R[Boolean])
-  : ErrorOr[(Option[String], PGSimpleDataSource, BoneCPDataSource)] = {
+  protected def dataSource(poolCfgDefaults: PoolCfg = noPoolCfg)(implicit _s: R[String], _i: R[Int], _l: R[Long], _b: R[Boolean]):
+      ErrorOr[(Option[String], PGSimpleDataSource, HikariDataSource)] = {
 
     implicit val scope = scopeByNS(PropertyScope)
     for {
@@ -41,110 +41,108 @@ object DatabaseConnection extends HasLogger {
       username <- getEV[String]("username")
       password <- getEV[String]("password")
     } yield {
-      val ds = new PGSimpleDataSource
-      ds.setDatabaseName(database)
-      ds.setUser(username)
+      val pgds = new PGSimpleDataSource
+      pgds.setDatabaseName(database)
+      pgds.setUser(username)
       // ds.setPassword(password)
-      ds.setDisableColumnSanitiser(true)
-      tryUse("appname"                )(ds.setApplicationName)
-      tryUse("binary_transfer"        )(ds.setBinaryTransfer)
-      tryUse("binary_transfer_disable")(ds.setBinaryTransferDisable)
-      tryUse("binary_transfer_enable" )(ds.setBinaryTransferEnable)
-      tryUse("compatible"             )(ds.setCompatible)
-      tryUse("disableColumnSanitiser" )(ds.setDisableColumnSanitiser)
-      tryUse("login_timeout"          )(ds.setLoginTimeout)
-      tryUse("port"                   )(ds.setPortNumber)
-      tryUse("prepare_threshold"      )(ds.setPrepareThreshold)
-      tryUse("protocol_ver"           )(ds.setProtocolVersion)
-      tryUse("recv_buffer_size"       )(ds.setReceiveBufferSize)
-      tryUse("send_buffer_size"       )(ds.setSendBufferSize)
-      tryUse("host"                   )(ds.setServerName)
-      tryUse("socket_timeout"         )(ds.setSocketTimeout)
-      tryUse("ssl"                    )(ds.setSsl)
-      tryUse("ssl_factory"            )(ds.setSslfactory)
-      tryUse("tcp_keep_alive"         )(ds.setTcpKeepAlive)
-      tryUse("unknown_length"         )(ds.setUnknownLength)
-      tryGet[String]("log_level", "loglevel").foreach(l => ds.setLogLevel(Level.valueOf(l.toUpperCase).toInt))
+      pgds.setDisableColumnSanitiser(true)
+      tryUse("appname"                )(pgds.setApplicationName)
+      tryUse("binary_transfer"        )(pgds.setBinaryTransfer)
+      tryUse("binary_transfer_disable")(pgds.setBinaryTransferDisable)
+      tryUse("binary_transfer_enable" )(pgds.setBinaryTransferEnable)
+      tryUse("compatible"             )(pgds.setCompatible)
+      tryUse("disableColumnSanitiser" )(pgds.setDisableColumnSanitiser)
+      tryUse("login_timeout"          )(pgds.setLoginTimeout)
+      tryUse("port"                   )(pgds.setPortNumber)
+      tryUse("prepare_threshold"      )(pgds.setPrepareThreshold)
+      tryUse("protocol_ver"           )(pgds.setProtocolVersion)
+      tryUse("recv_buffer_size"       )(pgds.setReceiveBufferSize)
+      tryUse("send_buffer_size"       )(pgds.setSendBufferSize)
+      tryUse("host"                   )(pgds.setServerName)
+      tryUse("socket_timeout"         )(pgds.setSocketTimeout)
+      tryUse("ssl"                    )(pgds.setSsl)
+      tryUse("ssl_factory"            )(pgds.setSslfactory)
+      tryUse("tcp_keep_alive"         )(pgds.setTcpKeepAlive)
+      tryUse("unknown_length"         )(pgds.setUnknownLength)
+      tryGet[String]("log_level", "loglevel").foreach(l => pgds.setLogLevel(Level.valueOf(l.toUpperCase).toInt))
 
-      val schema = getO[String]("schema")
-      val searchPath= getO[String]("search_path")
+      val schema     = getO[String]("schema")
+      val searchPath = getO[String]("search_path")
 
       {
         implicit val scope = scopeByNS(PropertyScope, "pool")
-        val pool = {
-          val pool = new BoneCPDataSource()
-          pool.setDefaultTransactionIsolation("READ_COMMITTED") // Shouldn't be doing repeated-reads anyway
-          pool.setDefaultAutoCommit(true)
-          pool.setLogStatementsEnabled(false)
-          defaults(pool)
-        }
-        pool.setJdbcUrl(ds.getUrl)
-        pool.setUsername(username)
-        pool.setPassword(password)
+
+        val hcfg = new HikariConfig
+        hcfg.setTransactionIsolation("TRANSACTION_READ_COMMITTED") // Shouldn't be doing repeated-reads anyway
+        hcfg.setAutoCommit(true)
+
+        poolCfgDefaults(hcfg)
+
+        hcfg.setDataSource(pgds)
+        hcfg.setUsername(username)
+        hcfg.setPassword(password)
 
         (schema, searchPath) match {
-          case (_,          Some(path)) => setSearchPath(path)(pool)
-          case (Some(path), None)       => setSearchPath(path)(pool)
-          case (None      , None)       =>
+          case (_,          Some(path)) => setSearchPath(path)(hcfg)
+          case (Some(path), None)       => setSearchPath(path)(hcfg)
+          case (None      , None)       => ()
         }
 
-        tryUse("acquireIncrement"                 )(pool.setAcquireIncrement)
-        tryUse("acquireRetryAttempts"             )(pool.setAcquireRetryAttempts)
-        tryUse("acquireRetryDelayInMs"            )(pool.setAcquireRetryDelayInMs)
-        tryUse("closeConnectionWatch"             )(pool.setCloseConnectionWatch)
-        tryUse("closeConnectionWatchTimeoutInMs"  )(pool.setCloseConnectionWatchTimeoutInMs)
-        tryUse("connectionHookClassName"          )(pool.setConnectionHookClassName)
-        tryUse("connectionTestStatement"          )(pool.setConnectionTestStatement)
-        tryUse("connectionTimeoutInMs"            )(pool.setConnectionTimeoutInMs)
-        tryUse("defaultCatalog"                   )(pool.setDefaultCatalog)
-        tryUse("disableConnectionTracking"        )(pool.setDisableConnectionTracking)
-        tryUse("disableJMX"                       )(pool.setDisableJMX)
-        tryUse("externalAuth"                     )(pool.setExternalAuth)
-        tryUse("idleConnectionTestPeriodInMinutes")(pool.setIdleConnectionTestPeriodInMinutes)
-        tryUse("idleConnectionTestPeriodInSeconds")(pool.setIdleConnectionTestPeriodInSeconds)
-        tryUse("idleMaxAgeInMinutes"              )(pool.setIdleMaxAgeInMinutes)
-        tryUse("idleMaxAgeInSeconds"              )(pool.setIdleMaxAgeInSeconds)
-        tryUse("initSQL"                          )(pool.setInitSQL)
-        tryUse("lazyInit"                         )(pool.setLazyInit)
-        tryUse("logStatementsEnabled"             )(pool.setLogStatementsEnabled)
-        tryUse("maxConnectionAgeInSeconds"        )(pool.setMaxConnectionAgeInSeconds)
-        tryUse("maxConnectionsPerPartition"       )(pool.setMaxConnectionsPerPartition)
-        tryUse("minConnectionsPerPartition"       )(pool.setMinConnectionsPerPartition)
-        tryUse("partitionCount"                   )(pool.setPartitionCount)
-        tryUse("poolAvailabilityThreshold"        )(pool.setPoolAvailabilityThreshold)
-        tryUse("poolName"                         )(pool.setPoolName)
-        tryUse("queryExecuteTimeLimitInMs"        )(pool.setQueryExecuteTimeLimitInMs)
-        tryUse("serviceOrder"                     )(pool.setServiceOrder)
-        tryUse("statementsCacheSize"              )(pool.setStatementsCacheSize)
-        tryUse("statisticsEnabled"                )(pool.setStatisticsEnabled)
-        tryUse("transactionRecoveryEnabled"       )(pool.setTransactionRecoveryEnabled)
+        tryUse("allowPoolSuspension"     )(hcfg.setAllowPoolSuspension)
+        tryUse("catalog"                 )(hcfg.setCatalog)
+        tryUse("connectionInitSql"       )(hcfg.setConnectionInitSql)
+        tryUse("connectionTestQuery"     )(hcfg.setConnectionTestQuery)
+        tryUse("connectionTimeout"       )(hcfg.setConnectionTimeout)
+        tryUse("idleTimeout"             )(hcfg.setIdleTimeout)
+        tryUse("initializationFailFast"  )(hcfg.setInitializationFailFast)
+        tryUse("isolateInternalQueries"  )(hcfg.setIsolateInternalQueries)
+        tryUse("leakDetectionThreshold"  )(hcfg.setLeakDetectionThreshold)
+        tryUse("maxLifetime"             )(hcfg.setMaxLifetime)
+        tryUse("maximumPoolSize"         )(hcfg.setMaximumPoolSize)
+        tryUse("minimumIdle"             )(hcfg.setMinimumIdle)
+        tryUse("poolName"                )(hcfg.setPoolName)
+        tryUse("registerMbeans"          )(hcfg.setRegisterMbeans)
+        tryUse("transactionIsolation"    )(hcfg.setTransactionIsolation)
+        tryUse("validationTimeout"       )(hcfg.setValidationTimeout)
 
-        (schema, ds, pool)
+        /*
+        tryUse("autoCommit"              )(hcfg.setAutoCommit)
+        tryUse("dataSource"              )(hcfg.setDataSource)
+        tryUse("dataSourceClassName"     )(hcfg.setDataSourceClassName)
+        tryUse("dataSourceJNDI"          )(hcfg.setDataSourceJNDI)
+        tryUse("dataSourceProperties"    )(hcfg.setDataSourceProperties)
+        tryUse("driverClassName"         )(hcfg.setDriverClassName)
+        tryUse("jdbc4ConnectionTest"     )(hcfg.setJdbc4ConnectionTest)
+        tryUse("jdbcUrl"                 )(hcfg.setJdbcUrl)
+        tryUse("metricsTrackerFactory"   )(hcfg.setMetricsTrackerFactory)
+        tryUse("metricRegistry"          )(hcfg.setMetricRegistry)
+        tryUse("healthCheckRegistry"     )(hcfg.setHealthCheckRegistry)
+        tryUse("healthCheckProperties"   )(hcfg.setHealthCheckProperties)
+        tryUse("password"                )(hcfg.setPassword)
+        tryUse("readOnly"                )(hcfg.setReadOnly)
+        tryUse("scheduledExecutorService")(hcfg.setScheduledExecutorService)
+        tryUse("threadFactory"           )(hcfg.setThreadFactory)
+        tryUse("username"                )(hcfg.setUsername)
+        */
+
+        val hds = new HikariDataSource(hcfg)
+        (schema, pgds, hds)
       }
     }
   }
 
   def verify_!(c: DatabaseConnection): Unit = {
     log.info.z(s"Connecting to database: ${c.desc}")
-    log.debug.z(s"Database pool config: ${c.ds.getConfig}")
+    //log.debug.z(s"Database pool config: ${c.ds.get}")
     c.ds.getConnection().close() // test the data source validity
   }
 
-  def setSearchPath(path: String) = {
-    if (path.contains("-")) throw new IllegalArgumentException("PostgreSQL doesn't allow dashes in schema names.")
+  def setSearchPath(path: String): PoolCfg = {
+    if (path.contains("-"))
+      throw new IllegalArgumentException("PostgreSQL doesn't allow dashes in schema names.")
     runOnConnectionAcquire(s"SET search_path TO $path")
   }
 
-  def runOnConnectionAcquire(sql: String): C =
-    ds => {
-      val hook: ConnectionHook = new AbstractConnectionHook {
-        override def onAcquire(conn: ConnectionHandle): Unit = {
-          val s = conn.createStatement()
-          try s.execute(sql)
-          finally s.close()
-        }
-      }
-      ds.setConnectionHook(hook)
-      ds
-    }
+  def runOnConnectionAcquire(sql: String): PoolCfg =
+    _.setConnectionInitSql(sql)
 }

@@ -99,10 +99,11 @@ object Dependencies {
   val javaMail    = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.5.2")
   val jodaTime    = jvmOnly("joda-time"                   % "joda-time"             % "2.3") ++
                     jvmOnly("org.joda"                    % "joda-convert"          % "1.2")
+  val guava       = jvmOnly("com.google.guava"            % "guava"                 % "18.0") ++
+                    jvmOnly("com.google.code.findbugs"    % "jsr305"                % "2.0.3") // cos Scala whinges if annotations not found
   val postgresql  = jvmOnly("org.postgresql"              % "postgresql"            % "9.4-1201-jdbc41")
   val slick       = jvmOnly("com.typesafe.slick"         %% "slick"                 % "2.1.0")
-  val bonecp      = jvmOnly("com.jolbox"                  % "bonecp"                % "0.8.0.RELEASE") ++
-                    jvmOnly("com.google.code.findbugs"    % "jsr305"                % "2.0.2") // required by Guava (which is required by BoneCP)
+  val hikariCP    = jvmOnly("com.zaxxer"                  % "HikariCP"              % "2.4.0")
   val flyway      = jvmOnly("com.googlecode.flyway"       % "flyway-core"           % "2.3.1")
   val logback     = jvmOnly("ch.qos.logback"              % "logback-classic"       % "1.1.3")
   val scalate     = jvmOnly("org.scalatra.scalate"       %% "scalate-core"          % "1.7.1") ++
