@@ -43,7 +43,8 @@ object BinCodecEvents {
   implicit val pickleDeleteReqCodeGroup   : Pickler[DeleteReqCodeGroup]    = pickleCaseClass
   implicit val pickleAddStaticField       : Pickler[AddStaticField]        = pickleCaseClass
   implicit val pickleDeleteStaticField    : Pickler[DeleteStaticField]     = pickleCaseClass
-  implicit val pickleDeleteTag            : Pickler[DeleteTag]             = pickleCaseClass
+  implicit val pickleDeleteApplicableTag  : Pickler[DeleteApplicableTag]   = pickleCaseClass
+  implicit val pickleDeleteTagGroup       : Pickler[DeleteTagGroup]        = pickleCaseClass
   implicit val picklePatchImplicationSrc  : Pickler[PatchImplicationSrc]   = pickleCaseClass
   implicit val picklePatchImplicationTgt  : Pickler[PatchImplicationTgt]   = pickleCaseClass
   implicit val picklePatchReqCodes        : Pickler[PatchReqCodes]         = pickleCaseClass

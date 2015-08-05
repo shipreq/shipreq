@@ -59,9 +59,11 @@ class ApplyEvent(implicit val trust: Trust) extends ApplyContentEvent {
 
       case e: CreateApplicableTag => ApplicableTagEvents applyCreate e
       case e: UpdateApplicableTag => ApplicableTagEvents applyUpdate e
+      case e: DeleteApplicableTag => ApplicableTagEvents applyDelete e
+
       case e: CreateTagGroup      => TagGroupEvents      applyCreate e
       case e: UpdateTagGroup      => TagGroupEvents      applyUpdate e
-      case e: DeleteTag           => TagEvents           applyDelete e
+      case e: DeleteTagGroup      => TagGroupEvents      applyDelete e
 
       case e: CreateCustomTextField => CustomTextFieldEvents applyCreate e
       case e: UpdateCustomTextField => CustomTextFieldEvents applyUpdate e

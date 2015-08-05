@@ -232,8 +232,8 @@ object MakeEvent {
           case None => Failed(s"$tagId not found.")
         }
 
-      case CrudAction.Delete(id, da) =>
-        DeleteTag(id, da)
+      case CrudAction.Delete(id: ApplicableTagId, da) => DeleteApplicableTag(id, da)
+      case CrudAction.Delete(id: TagGroupId,      da) => DeleteTagGroup     (id, da)
     }
   }
 

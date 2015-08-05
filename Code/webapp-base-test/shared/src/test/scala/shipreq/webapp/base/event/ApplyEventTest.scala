@@ -69,7 +69,8 @@ object ApplyEventTestFns {
 
       case DeleteCustomIssueType(_, d)       => ifHard(d, customIssueTypes -= 1)
       case DeleteCustomReqType  (_, d)       => ifHard(d, customReqTypes -= 1)
-      case DeleteTag            (_, d)       => ifHard(d, tags -= 1)
+      case DeleteTagGroup       (_, d)       => ifHard(d, tags -= 1)
+      case DeleteApplicableTag  (_, d)       => ifHard(d, tags -= 1)
       case DeleteStaticField    (_)          => activeFields -= 1
       case DeleteReq            (_, SoftDel) => activeReqs -= 1
       case DeleteReq            (_, Restore) => activeReqs += 1

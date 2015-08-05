@@ -133,11 +133,12 @@ trait ApplyConfigEvent extends AskTrust {
         L @=> (imap.add(t) >=> applyParents(t.id)) >=> updateIdCeiling(t.id))
     }
 
-    def applyDelete(e: DeleteTag): AP =
-      L @=> (e.da match {
-        case Restore => restore(e.id)
-        case SoftDel => softDel(e.id)
-        case HardDel => hardDel(e.id)
+    // TODO Tag delete doesn't check that the TagId subtype. Eg. DeleteTagGroup can delete an ApplicableTag
+    def delete(id: TagId, da: DeletionAction): AP =
+      L @=> (da match {
+        case Restore => restore(id)
+        case SoftDel => softDel(id)
+        case HardDel => hardDel(id)
       })
 
     private def setLife(ol: Option[Live]): TagId => AE[TagTree] = {
@@ -265,6 +266,9 @@ trait ApplyConfigEvent extends AskTrust {
           case v: ^.ValueForParents  => vars setParents v.value
         }
       )
+
+    def applyDelete(e: DeleteApplicableTag): AP =
+      delete(e.id, e.da)
   }
 
   // -----------------------------------------------------------------------------------------------
@@ -307,6 +311,9 @@ trait ApplyConfigEvent extends AskTrust {
           case v: ^.ValueForParents       => vars setParents v.value
         }
       )
+
+    def applyDelete(e: DeleteTagGroup): AP =
+      delete(e.id, e.da)
   }
 
   // ===================================================================================================================

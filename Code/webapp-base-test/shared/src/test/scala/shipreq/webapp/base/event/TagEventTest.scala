@@ -200,9 +200,9 @@ trait TagGroupEvents {
   val c2 = CreateTagGroup(2, nev(Name("Released"), Desc(Some("r")), MutexChildren(true), parent(1)))
   val c3 = CreateTagGroup(3, nev(Name("All"), Desc(None), MutexChildren(false), child(1)))
   val u1 = UpdateTagGroup(1, nev(Desc(Some("versionness"))))
-  val List(hd1,hd2,hd3,hd4) = List(1,2,3,4).map(i => DeleteTag(i.TG, HardDel))
-  val List(sd1,sd2,sd3,sd4) = List(1,2,3,4).map(i => DeleteTag(i.TG, SoftDel))
-  val List( r1, r2, r3, r4) = List(1,2,3,4).map(i => DeleteTag(i.TG, Restore))
+  val List(hd1,hd2,hd3,hd4) = List(1,2,3,4).map(i => DeleteTagGroup(i.TG, HardDel))
+  val List(sd1,sd2,sd3,sd4) = List(1,2,3,4).map(i => DeleteTagGroup(i.TG, SoftDel))
+  val List( r1, r2, r3, r4) = List(1,2,3,4).map(i => DeleteTagGroup(i.TG, Restore))
 
   implicit class CreateTagGroupExt(private val a: CreateTagGroup) {
     def mod(f: Values => Values) =
@@ -272,9 +272,9 @@ trait ApplicableTagEvents {
   val c2 = CreateApplicableTag(2, nev(Name("Released"), Desc(Some("r")), Key("c2"), parent(1)))
   val c3 = CreateApplicableTag(3, nev(Name("All"), Desc(None), Key("c3"), child(1)))
   val u1 = UpdateApplicableTag(1, nev(Desc(Some("versionness"))))
-  val List(hd1,hd2,hd3,hd4) = List(1,2,3,4).map(i => DeleteTag(i.AT, HardDel))
-  val List(sd1,sd2,sd3,sd4) = List(1,2,3,4).map(i => DeleteTag(i.AT, SoftDel))
-  val List( r1, r2, r3, r4) = List(1,2,3,4).map(i => DeleteTag(i.AT, Restore))
+  val List(hd1,hd2,hd3,hd4) = List(1,2,3,4).map(i => DeleteApplicableTag(i.AT, HardDel))
+  val List(sd1,sd2,sd3,sd4) = List(1,2,3,4).map(i => DeleteApplicableTag(i.AT, SoftDel))
+  val List( r1, r2, r3, r4) = List(1,2,3,4).map(i => DeleteApplicableTag(i.AT, Restore))
 
   implicit class CreateApplicableTagExt(private val a: CreateApplicableTag) {
     def mod(f: Values => Values) =

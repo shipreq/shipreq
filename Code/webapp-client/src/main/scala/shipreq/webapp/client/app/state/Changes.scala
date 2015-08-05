@@ -23,9 +23,10 @@ case class Changes(ves: VerifiedEvents, p1: Project, p2: Project) {
       case e: DeleteCustomReqType   => _customReqTypes += e.id
       case e: CreateApplicableTag   => _tags += e.id
       case e: UpdateApplicableTag   => _tags += e.id
+      case e: DeleteApplicableTag   => _tags += e.id
       case e: CreateTagGroup        => _tags += e.id
       case e: UpdateTagGroup        => _tags += e.id
-      case e: DeleteTag             => _tags += e.id
+      case e: DeleteTagGroup        => _tags += e.id
       case e: CreateCustomTextField => _customFieldTypes += e.id
       case e: UpdateCustomTextField => _customFieldTypes += e.id
       case e: CreateCustomTagField  => _customFieldTypes += e.id
