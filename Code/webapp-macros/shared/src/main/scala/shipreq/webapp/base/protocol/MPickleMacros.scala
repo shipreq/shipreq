@@ -10,35 +10,38 @@ object MPickleMacros {
 }
 
 // =====================================================================================================================
-class MPickleMacroImpls(val c: Context) extends MacroUtils {
+
+trait MPickleMacroUtils { self: MacroUtils =>
   import c.universe._
 
-  private class Helper {
+  def importMPickle =
+    q"import _root_.upickle._"
 
-    @volatile var init = Vector.empty[Tree]
-
-    init :+= q"import _root_.upickle._"
-
-    def prepVal(n: String, i: TermName => Tree): TermName = {
-      val v = TermName(c.freshName(n))
-      init :+= i(v)
-      v
-    }
-
-    def prepReader(t: Type): TermName =
-      prepVal("r", v => q"val $v = implicitly[Reader[$t]]")
-
-    def prepWriter(t: Type): TermName =
-      prepVal("w", v => q"val $v = implicitly[Writer[$t]]")
-
-    def impl(t: Type, writeImpl: Tree, readImpl: Tree) =
-      wrap(q"ReadWriter[$t]($writeImpl, $readImpl)")
-
-    def wrap(body: Tree) =
-      q"..$init; $body"
+  def summonR(i: Init, tot: TypeOrTree) = tot match {
+    case GotType(t) => i valImp appliedType(typeOf[Reader[_]], t)
+    case GotTree(t) => i valImp tq"_root_.upickle.Reader[$t]"
   }
 
-  private def Helper = new Helper
+  def summonW(i: Init, tot: TypeOrTree) = tot match {
+    case GotType(t) => i valImp appliedType(typeOf[Writer[_]], t)
+    case GotTree(t) => i valImp tq"_root_.upickle.Writer[$t]"
+  }
+
+  def summonRW(i: Init, t: TypeOrTree) =
+    (summonR(i, t), summonW(i, t))
+
+  def newReadWriter(i: Init, t: Type)(write: Tree, read: Tree): Tree =
+    i.wrap(q"ReadWriter[$t]($write, $read)")
+
+  def writeToJsonStr(writer: TermName, value: Tree): Tree =
+    q"_root_.upickle.json.write($writer.write($value))"
+
+  def readFromJsonStr(reader: TermName, value: Tree): Tree =
+    q"$reader.read(_root_.upickle.json read $value)"
+}
+
+class MPickleMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtils {
+  import c.universe._
 
   def quietCaseClass[T: c.WeakTypeTag]: c.Expr[ReadWriter[T]] = implCaseClass[T](false)
   def debugCaseClass[T: c.WeakTypeTag]: c.Expr[ReadWriter[T]] = implCaseClass[T](true)
@@ -46,16 +49,16 @@ class MPickleMacroImpls(val c: Context) extends MacroUtils {
     val T      = concreteWeakTypeOf[T]
     val TC     = T.typeSymbol.companion
     val params = primaryConstructorParams(T)
-    val helper = Helper
+    val init   = Init(importMPickle)
 
     def invokeWriteJs(subj: TermName, param: Symbol) = {
       val (n, t) = nameAndType(param)
-      val w = helper.prepWriter(t)
+      val w = summonW(init, t)
       q"$w.write($subj.$n)"
     }
     def invokeReadJs(subj: TermName, param: Symbol) = {
       val t = nameAndType(param)._2
-      val r = helper.prepReader(t)
+      val r = summonR(init, t)
       q"$r.read($subj)"
     }
 
@@ -68,7 +71,7 @@ class MPickleMacroImpls(val c: Context) extends MacroUtils {
           val j = TermName("j")
           val w = invokeWriteJs(j, param)
           val r = invokeReadJs(j, param)
-          helper.wrap(q"ReadWriter[$T](j => $w, {case j => $TC($r)} )")
+          init.wrap(q"ReadWriter[$T](j => $w, {case j => $TC($r)} )")
 
         case _ =>
           val j = TermName("j")
@@ -82,7 +85,7 @@ class MPickleMacroImpls(val c: Context) extends MacroUtils {
           }
           val (vals, reads) = tmp.unzip
           val rCases = cq"Js.Arr(..$vals) => $TC(..$reads)"
-          helper.wrap(q"ReadWriter[$T](j => Js.Arr(..$writes), {case $rCases} )")
+          init.wrap(q"ReadWriter[$T](j => Js.Arr(..$writes), {case $rCases} )")
       }
 
     if (debug) println("\n" + impl + "\n")

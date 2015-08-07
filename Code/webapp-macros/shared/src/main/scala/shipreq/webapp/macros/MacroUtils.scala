@@ -14,6 +14,12 @@ abstract class MacroUtils {
   import c.universe._
   import MacroUtils.FindSubClasses
 
+  sealed trait TypeOrTree
+  case class GotType(t: Type) extends TypeOrTree
+  case class GotTree(t: Tree) extends TypeOrTree
+  implicit def autoTypeOrTree1(t: Type): TypeOrTree = GotType(t)
+  implicit def autoTypeOrTree2(t: Tree): TypeOrTree = GotTree(t)
+
   @inline final def DirectOnly = MacroUtils.DirectOnly
   @inline final def LeavesOnly = MacroUtils.LeavesOnly
   @inline final def Everything = MacroUtils.Everything
@@ -272,5 +278,49 @@ abstract class MacroUtils {
       else
         AppliedTypeTree(fqn, t.typeArgs.map(TypeTree(_)))
     }
+  }
+
+  final def tryInferImplicit(t: Type): Option[Tree] =
+    c.inferImplicitValue(t, silent = true) match {
+      case EmptyTree => None
+      case i         => Some(i)
+    }
+
+  final def needInferImplicit(t: Type): Tree =
+    tryInferImplicit(t) getOrElse sys.error(s"Implicit not found: $t")
+
+  implicit val liftInit = Liftable[Init](i => q"..${i.stmts}")
+  class Init {
+    var seen = Map.empty[String, TermName]
+    var stmts: Vector[Tree] = Vector.empty
+
+    def +=(t: Tree): Unit =
+      stmts :+= t
+
+    def valImp(tot: TypeOrTree): TermName = tot match {
+      case GotType(t) => valDef(needInferImplicit(t))
+      case GotTree(t) => valDef(q"implicitly[$t]")
+    }
+
+    def valDef(value: Tree): TermName = {
+      val k = value.toString()
+      seen.get(k) match {
+        case None =>
+          val v = TermName(c.freshName())
+          this += q"val $v = $value"
+          seen = seen.updated(k, v)
+          v
+        case Some(v) => v
+      }
+    }
+
+    def wrap(body: Tree): Tree =
+      q"..$this; $body"
+  }
+
+  def Init(stmts: Tree*): Init = {
+    val i = new Init
+    stmts foreach (i += _)
+    i
   }
 }
