@@ -1,5 +1,8 @@
 package shipreq.webapp.base.text
 
+import scala.reflect.macros.whitebox.Context
+import shipreq.webapp.macros.WhiteboxMacroUtils
+
 object TextMacros {
 
   /**
@@ -8,17 +11,15 @@ object TextMacros {
   def generateTypeclasses(arg: Any): Any = macro TextMacroImpls.typeclassImpl
 }
 
-object TextMacroImpls {
-  import shipreq.webapp.macros.MacroUtils._
-  import scala.reflect.macros.whitebox.Context
+class TextMacroImpls(val c: Context) extends WhiteboxMacroUtils {
+  import c.universe._
 
   val atomFQN = "shipreq.webapp.base.text.Atom.Base.Atom"
 
   /**
    * Using an AtomTC, generate TC[Atom], TC[OptionalText], TC[NonEmptyText] for some text type T.
    */
-  def typeclassImpl(c: Context)(arg: c.Expr[Any]): c.Expr[Any] = {
-    import c.universe._
+  def typeclassImpl(arg: c.Expr[Any]) = {
 
     def debug(msg: => Any): Unit =
       () //println(msg.toString)
@@ -26,7 +27,7 @@ object TextMacroImpls {
     val tType = arg.actualType
     val tTerm = tType.termSymbol
 
-    debug("_" * 120)
+    debug(sep)
     debug(s"tType = $tType")
 
     val atomTypes = tType.members.filter(t => t.isClass && t.isPublic && !t.isAbstract && t.asClass.baseClasses.exists(_.fullName == atomFQN)).toList

@@ -1,5 +1,8 @@
 package shipreq.webapp.base.hash
 
+import scala.reflect.macros.blackbox.Context
+import shipreq.webapp.macros.MacroUtils
+
 trait HashMacros {
   def joinHashes(hashes: List[Int]): Int
 
@@ -13,20 +16,10 @@ trait HashMacros {
   final def _hashADT[T]: Hash[T] = macro HashMacroImpls.debugADT[T]
 }
 
-object HashMacroImpls {
-  import shipreq.webapp.macros.MacroUtils._
-  import scala.reflect.macros.blackbox.Context
+class HashMacroImpls(val c: Context) extends MacroUtils {
+  import c.universe._
 
-  def quietCaseClass[T: c.WeakTypeTag](c: Context): c.Expr[Hash[T]] = implCaseClass[T](c, false)
-  def debugCaseClass[T: c.WeakTypeTag](c: Context): c.Expr[Hash[T]] = implCaseClass[T](c, true)
-
-  def quietConstClass[T: c.WeakTypeTag](c: Context)(key: c.Expr[String]): c.Expr[Hash[T]] = implConstClass[T](c, false)(key)
-  def debugConstClass[T: c.WeakTypeTag](c: Context)(key: c.Expr[String]): c.Expr[Hash[T]] = implConstClass[T](c, true)(key)
-
-  def quietADT[T: c.WeakTypeTag](c: Context): c.Expr[Hash[T]] = implADT[T](c, false)
-  def debugADT[T: c.WeakTypeTag](c: Context): c.Expr[Hash[T]] = implADT[T](c, true)
-
-  private def Hash(c: Context) =
+  private def Hash =
     c.universe.Ident(c.mirror staticModule "shipreq.webapp.base.hash.Hash")
 
   /**
@@ -35,27 +28,29 @@ object HashMacroImpls {
    * - Type must have a primary constructor.
    * - Primary constructor must have more than 0 params.
    */
-  def implCaseClass[T: c.WeakTypeTag](c: Context, debug: Boolean): c.Expr[Hash[T]] = {
+  def quietCaseClass[T: c.WeakTypeTag]: c.Expr[Hash[T]] = implCaseClass[T](false)
+  def debugCaseClass[T: c.WeakTypeTag]: c.Expr[Hash[T]] = implCaseClass[T](true)
+  def implCaseClass[T: c.WeakTypeTag](debug: Boolean): c.Expr[Hash[T]] = {
     import c.universe._
 
-    val T      = concreteWeakTypeOf[T](c)
-    val params = primaryConstructorParams(c)
-    val Hash   = this.Hash(c)
+    val T      = concreteWeakTypeOf[T]
+    val params = primaryConstructorParams(T)
+    val Hash   = this.Hash
 
     val impl =
       params match {
         case Nil =>
-          fail(c, "Class constructor has no parameters.")
+          fail("Class constructor has no parameters.")
 
         case param :: Nil =>
-          val (pName, pType) = nameAndType(c)(param)
+          val (pName, pType) = nameAndType(param)
           q"$Hash[$pType].cmap[$T](_.$pName)"
 
         case _ =>
           val nil = Ident(c.mirror staticModule "scala.collection.immutable.Nil")
 
           val hashes = params.foldLeft(nil: c.universe.Tree) { (q, p) =>
-            val (pName, pType) = nameAndType(c)(p)
+            val (pName, pType) = nameAndType(p)
             q"$q.::($Hash[$pType].hash(t.$pName))"
           }
 
@@ -72,12 +67,14 @@ object HashMacroImpls {
    * - Type must have a primary constructor.
    * - Primary constructor must have 0 params.
    */
-  def implConstClass[T: c.WeakTypeTag](c: Context, debug: Boolean)(key: c.Expr[String]): c.Expr[Hash[T]] = {
+  def quietConstClass[T: c.WeakTypeTag](key: c.Expr[String]): c.Expr[Hash[T]] = implConstClass[T](false)(key)
+  def debugConstClass[T: c.WeakTypeTag](key: c.Expr[String]): c.Expr[Hash[T]] = implConstClass[T](true)(key)
+  def implConstClass[T: c.WeakTypeTag](debug: Boolean)(key: c.Expr[String]): c.Expr[Hash[T]] = {
     import c.universe._
 
-    val T      = concreteWeakTypeOf[T](c)
-    val params = primaryConstructorParams(c)
-    val Hash   = this.Hash(c)
+    val T      = concreteWeakTypeOf[T]
+    val params = primaryConstructorParams(T)
+    val Hash   = this.Hash
 
     val impl =
       params match {
@@ -85,7 +82,7 @@ object HashMacroImpls {
           q"$Hash.constOf[String,$T]($key)"
 
         case _ =>
-          fail(c, s"Class constructor has ${params.length} parameters. Expected 0.")
+          fail(s"Class constructor has ${params.length} parameters. Expected 0.")
       }
 
     if (debug) println("\n" + impl + "\n")
@@ -97,11 +94,13 @@ object HashMacroImpls {
    * - Type must be sealed.
    * - Type must be abstract or a trait.
    */
-  def implADT[T: c.WeakTypeTag](c: Context, debug: Boolean): c.Expr[Hash[T]] = {
+  def quietADT[T: c.WeakTypeTag]: c.Expr[Hash[T]] = implADT[T](false)
+  def debugADT[T: c.WeakTypeTag]: c.Expr[Hash[T]] = implADT[T](true)
+  def implADT[T: c.WeakTypeTag](debug: Boolean): c.Expr[Hash[T]] = {
     import c.universe._
 
     val T     = weakTypeOf[T]
-    val types = findConcreteTypesNE(c)(T, DirectOnly)
+    val types = findConcreteTypesNE(T, DirectOnly)
     val a     = TermName("a")
     val cases = types.map(t => cq"$a : $t => Hash[$t].hash($a)")
     val impl  = q"Hash.fn[$T]{ case ..$cases }"

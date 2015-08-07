@@ -2,6 +2,7 @@ package shipreq.webapp.base.util
 
 import scala.annotation.StaticAnnotation
 import scala.annotation.compileTimeOnly
+import shipreq.webapp.macros._
 import boopickle._
 import upickle._
 
@@ -12,8 +13,8 @@ object GenericDataMacros {
   def gdUnequalValues(d: GenericData, ref: Any, ctx: String): d.Values = macro GenericDataMacroImpls.quietUnequalValues
   def _gdUnequalValues(d: GenericData, ref: Any, ctx: String): d.Values = macro GenericDataMacroImpls.debugUnequalValues
 
-  def upickler (d: GenericData)(keys: d.Attr => String): ReadWriter[d.NonEmptyValues] = macro GenericDataMacroImpls.quietMPickler
-  def _upickler(d: GenericData)(keys: d.Attr => String): ReadWriter[d.NonEmptyValues] = macro GenericDataMacroImpls.debugMPickler
+  def gdMPickler (d: GenericData)(keys: d.Attr => String): ReadWriter[d.NonEmptyValues] = macro GenericDataMacroImpls.quietMPickler
+  def _gdMPickler(d: GenericData)(keys: d.Attr => String): ReadWriter[d.NonEmptyValues] = macro GenericDataMacroImpls.debugMPickler
 
   def binpickler (d: GenericData): d.ValueTypeClasses[Pickler] = macro GenericDataMacroImpls.quietBinPickler
   def _binpickler(d: GenericData): d.ValueTypeClasses[Pickler] = macro GenericDataMacroImpls.debugBinPickler
@@ -21,21 +22,16 @@ object GenericDataMacros {
 
 @compileTimeOnly("Enable macro paradise to expand macro annotations")
 class CreateGenericData extends StaticAnnotation {
-  def macroTransform(annottees: Any*): Any = macro GenericDataMacroImpls.objectImpl
+  def macroTransform(annottees: Any*): Any = macro GenericDataMacroImplsW.objectImpl
 }
 
-object GenericDataMacroImpls {
-  import shipreq.webapp.macros.MacroUtils._
-  import scala.reflect.macros.{blackbox, whitebox}
-
-  private def sep = ("_" * 120) + "\n"
+class GenericDataMacroImplsW(val c: scala.reflect.macros.whitebox.Context) extends WhiteboxMacroUtils {
+  import c.universe._
 
   /**
    * Populates the body of a [[GenericData]] object.
    */
-  def objectImpl(c: whitebox.Context)(annottees: c.Expr[Any]*) = {
-    import c.universe._
-
+  def objectImpl(annottees: c.Expr[Any]*) = {
     var attrNames = Vector.empty[TermName]
     var attrDefns = List.empty[Tree]
     var unused    = Vector.empty[Tree]
@@ -79,7 +75,7 @@ object GenericDataMacroImpls {
           for (u <- unused)
             println(showRaw(u))
           val expl = unused.map(" - " + _.toString) mkString "\n"
-          fail(c, s"Unrecognised field declarations found.\n$expl")
+          fail(s"Unrecognised field declarations found.\n$expl")
         }
 
         q"""
@@ -89,7 +85,7 @@ object GenericDataMacroImpls {
             sealed trait Attr extends AttrBase
             sealed trait Value extends ValueBase
 
-            ..${flattenBlocks(c)(attrDefns)}
+            ..${flattenBlocks(attrDefns)}
 
             override implicit def equality = UnivEq.force[Attr]
 
@@ -97,7 +93,7 @@ object GenericDataMacroImpls {
           }
          """
 
-      case _ => fail(c, "You must annotate an object definition.")
+      case _ => fail("You must annotate an object definition.")
     }
 
 //    val sep = ("="*120)+"\n"
@@ -105,10 +101,12 @@ object GenericDataMacroImpls {
 
     c.Expr[Any](impl)
   }
+}
 
-  def resolveAttrsAndValues(c: blackbox.Context, debug: Boolean)(D: c.universe.SingleType): Vector[(c.universe.ModuleSymbol, c.universe.ClassSymbol)] = {
-    import c.universe._
+class GenericDataMacroImpls(val c: scala.reflect.macros.blackbox.Context) extends MacroUtils {
+  import c.universe._
 
+  def resolveAttrsAndValues(debug: Boolean)(D: SingleType): Vector[(ModuleSymbol, ClassSymbol)] = {
     val attrTrait  = D.member(TypeName("Attr")).asType.toType
     val valueTrait = D.member(TypeName("Value")).asType.toType
 
@@ -133,30 +131,25 @@ object GenericDataMacroImpls {
       println(s"Values: $values")
     }
     if (attrs.length != values.length)
-      fail(c, s"attrs.length != values.length\n$attrs\n$values")
+      fail(s"attrs.length != values.length\n$attrs\n$values")
 
     attrs zip values
   }
 
   // ===================================================================================================================
 
-  private def localNameToExpr(c: blackbox.Context)(ctx: c.Expr[String]): String => c.universe.RefTree = {
-    import c.universe._
-    Some(getStringLiteral(c)(ctx)).filter(_.nonEmpty) match {
+  private def localNameToExpr(ctx: c.Expr[String]): String => RefTree =
+    Some(readMacroArg_string(ctx)).filter(_.nonEmpty) match {
       case None      => n => Ident(TermName(n))
       case Some(pre) => n => Select(Ident(TermName(pre)), TermName(n))
     }
-  }
 
-  def debugAllValues(c: blackbox.Context)(d: c.Expr[GenericData], ctx: c.Expr[String]) = implAllValues(c, true )(d, ctx)
-  def quietAllValues(c: blackbox.Context)(d: c.Expr[GenericData], ctx: c.Expr[String]) = implAllValues(c, false)(d, ctx)
-
-  def implAllValues(c: blackbox.Context, debug: Boolean)(d: c.Expr[GenericData], ctx: c.Expr[String]): c.Expr[d.value.NonEmptyValues] = {
-    import c.universe._
-
+  def debugAllValues(d: c.Expr[GenericData], ctx: c.Expr[String]) = implAllValues(true )(d, ctx)
+  def quietAllValues(d: c.Expr[GenericData], ctx: c.Expr[String]) = implAllValues(false)(d, ctx)
+  def implAllValues(debug: Boolean)(d: c.Expr[GenericData], ctx: c.Expr[String]): c.Expr[d.value.NonEmptyValues] = {
     val D = d.actualType.asInstanceOf[SingleType]
-    val attrsAndValues = resolveAttrsAndValues(c, debug)(D)
-    val nameToExpr = localNameToExpr(c)(ctx)
+    val attrsAndValues = resolveAttrsAndValues(debug)(D)
+    val nameToExpr = localNameToExpr(ctx)
 
     val parts = for ((a,v) <- attrsAndValues) yield {
       val n = lowerCaseHead(a.name.toString)
@@ -173,15 +166,12 @@ object GenericDataMacroImpls {
     c.Expr[d.value.NonEmptyValues](impl)
   }
 
-  def debugUnequalValues(c: blackbox.Context)(d: c.Expr[GenericData], ref: c.Expr[Any], ctx: c.Expr[String]) = implUnequalValues(c, true )(d, ref, ctx)
-  def quietUnequalValues(c: blackbox.Context)(d: c.Expr[GenericData], ref: c.Expr[Any], ctx: c.Expr[String]) = implUnequalValues(c, false)(d, ref, ctx)
-
-  def implUnequalValues(c: blackbox.Context, debug: Boolean)(d: c.Expr[GenericData], ref: c.Expr[Any], ctx: c.Expr[String]): c.Expr[d.value.Values] = {
-    import c.universe._
-
+  def debugUnequalValues(d: c.Expr[GenericData], ref: c.Expr[Any], ctx: c.Expr[String]) = implUnequalValues(true )(d, ref, ctx)
+  def quietUnequalValues(d: c.Expr[GenericData], ref: c.Expr[Any], ctx: c.Expr[String]) = implUnequalValues(false)(d, ref, ctx)
+  def implUnequalValues(debug: Boolean)(d: c.Expr[GenericData], ref: c.Expr[Any], ctx: c.Expr[String]): c.Expr[d.value.Values] = {
     val D = d.actualType.asInstanceOf[SingleType]
-    val attrsAndValues = resolveAttrsAndValues(c, debug)(D)
-    val nameToExpr = localNameToExpr(c)(ctx)
+    val attrsAndValues = resolveAttrsAndValues(debug)(D)
+    val nameToExpr = localNameToExpr(ctx)
 
     val stmts = for ((a,v) <- attrsAndValues) yield {
       val n = lowerCaseHead(a.name.toString)
@@ -192,7 +182,7 @@ object GenericDataMacroImpls {
 
     val impl = q""" {
         var us = $d.emptyValues
-        ..${flattenBlocks(c)(stmts.toList)}
+        ..${flattenBlocks(stmts.toList)}
         us
       } """
 
@@ -202,12 +192,9 @@ object GenericDataMacroImpls {
   }
   // ===================================================================================================================
 
-  def debugMPickler(c: blackbox.Context)(d: c.Expr[GenericData])(keys: c.Expr[d.value.Attr => String]) = implMPickler(c, true )(d)(keys)
-  def quietMPickler(c: blackbox.Context)(d: c.Expr[GenericData])(keys: c.Expr[d.value.Attr => String]) = implMPickler(c, false)(d)(keys)
-
-  def implMPickler(c: blackbox.Context, debug: Boolean)(d: c.Expr[GenericData])(keys: c.Expr[d.value.Attr => String]): c.Expr[ReadWriter[d.value.NonEmptyValues]] = {
-    import c.universe._
-
+  def debugMPickler(d: c.Expr[GenericData])(keys: c.Expr[d.value.Attr => String]) = implMPickler(true )(d)(keys)
+  def quietMPickler(d: c.Expr[GenericData])(keys: c.Expr[d.value.Attr => String]) = implMPickler(false)(d)(keys)
+  def implMPickler(debug: Boolean)(d: c.Expr[GenericData])(keys: c.Expr[d.value.Attr => String]): c.Expr[ReadWriter[d.value.NonEmptyValues]] = {
     if (debug) println(sep)
 
     val D = d.actualType.asInstanceOf[SingleType]
@@ -217,14 +204,14 @@ object GenericDataMacroImpls {
         case Expr(Function(_, Match(_, caseDefs))) =>
           caseDefs map {
             case CaseDef(Select(_, name), _, key@ Literal(Constant(_: String))) => (name.toString, key)
-            case x => fail(c, s"Expecting a case like: {case Attr => Literal}\nGot: ${showRaw(x)}")
+            case x => fail(s"Expecting a case like: {case Attr => Literal}\nGot: ${showRaw(x)}")
           }
-        case _ => fail(c, s"Expecting a function like: {case Attr => Literal}\nGot: ${showRaw(keys)}")
+        case _ => fail(s"Expecting a function like: {case Attr => Literal}\nGot: ${showRaw(keys)}")
       }
 
     if (debug) println(s"Keys: $keyLookup")
 
-    val attrsAndValues = resolveAttrsAndValues(c, debug)(D)
+    val attrsAndValues = resolveAttrsAndValues(debug)(D)
 
     var init     = List.empty[ValDef]
     var wCases   = List.empty[CaseDef]
@@ -233,7 +220,7 @@ object GenericDataMacroImpls {
 
     for ((attr, value) <- attrsAndValues) {
       val name = attr.name.toString
-      val key = keyLookup.find(_._1 == name).map(_._2) getOrElse fail(c, s"Key not found for $name.\nKeys = $keyLookup")
+      val key = keyLookup.find(_._1 == name).map(_._2) getOrElse fail(s"Key not found for $name.\nKeys = $keyLookup")
       val rw = TermName(c.freshName("rw"))
       val rwDef = q"val $rw = implicitly[ReadWriter[$attr.Data]]": ValDef
       init    ::= rwDef
@@ -243,13 +230,13 @@ object GenericDataMacroImpls {
     }
 
     if (keysUsed.size != attrsAndValues.size)
-      fail(c, s"Keys must be unique: $keyLookup")
+      fail(s"Keys must be unique: $keyLookup")
 
-    val DFQN = toSelectFQN(c)(D.typeSymbol.asType)
+    val DFQN = toSelectFQN(D.typeSymbol.asType)
 
     val impl = q""" {
       import _root_.upickle.{ReadWriter, Js}
-      ..${flattenBlocks(c)(init)}
+      ..${flattenBlocks(init)}
       val empty = $DFQN.emptyValues
       ReadWriter[$DFQN.NonEmptyValues](
         vs => {
@@ -269,7 +256,7 @@ object GenericDataMacroImpls {
           if (kvs.isEmpty)
             sys.error("At least one value required.")
           else
-            NonEmpty.force(kvs)
+            shipreq.base.util.NonEmpty.force(kvs)
         }
       )
     } """
@@ -281,17 +268,14 @@ object GenericDataMacroImpls {
 
   // ===================================================================================================================
 
-  def debugBinPickler(c: blackbox.Context)(d: c.Expr[GenericData]) = implBinPickler(c, true )(d)
-  def quietBinPickler(c: blackbox.Context)(d: c.Expr[GenericData]) = implBinPickler(c, false)(d)
-
-  def implBinPickler(c: blackbox.Context, debug: Boolean)(d: c.Expr[GenericData]): c.Expr[d.value.ValueTypeClasses[Pickler]] = {
-    import c.universe._
-
+  def debugBinPickler(d: c.Expr[GenericData]) = implBinPickler(true )(d)
+  def quietBinPickler(d: c.Expr[GenericData]) = implBinPickler(false)(d)
+  def implBinPickler(debug: Boolean)(d: c.Expr[GenericData]): c.Expr[d.value.ValueTypeClasses[Pickler]] = {
     if (debug) println(sep)
 
     val D = d.actualType.asInstanceOf[SingleType]
 
-    val attrsAndValues = resolveAttrsAndValues(c, debug)(D)
+    val attrsAndValues = resolveAttrsAndValues(debug)(D)
 
     val pickleCaseClass = Ident(TermName((if (debug) "_" else "") + "pickleCaseClass"))
     val init =
@@ -303,7 +287,7 @@ object GenericDataMacroImpls {
     val impl = q""" {
       import _root_.shipreq.webapp.base.protocol.BoopickleMacros._
       import $d._
-      ..${flattenBlocks(c)(init.toList)}
+      ..${flattenBlocks(init.toList)}
       implicit val value : Pickler[Value]          = pickleADT
       implicit val values: Pickler[Values]         = pickleIMap(emptyValues)
       implicit val nev   : Pickler[NonEmptyValues] = pickleNonEmptyA(values, implicitly)

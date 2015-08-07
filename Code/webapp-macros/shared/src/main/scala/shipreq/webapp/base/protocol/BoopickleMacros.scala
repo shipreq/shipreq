@@ -1,8 +1,8 @@
 package shipreq.webapp.base.protocol
 
 import scala.reflect.macros.blackbox.Context
+import shipreq.webapp.macros.MacroUtils
 import shipreq.base.util.UnivEq
-import shipreq.webapp.macros.MacroUtils._
 import boopickle._
 
 object BoopickleMacros {
@@ -63,40 +63,29 @@ object BoopickleMacros {
       }
   }
 
-  import BoopickleMacroImpls._
+  final def pickleObject [T]: Pickler[T] = macro BoopickleMacroImpls.quietObject[T]
+  final def _pickleObject[T]: Pickler[T] = macro BoopickleMacroImpls.debugObject[T]
 
-  final def pickleObject [T]: Pickler[T] = macro quietObject[T]
-  final def _pickleObject[T]: Pickler[T] = macro debugObject[T]
+  final def pickleCaseClass [T]: Pickler[T] = macro BoopickleMacroImpls.quietCaseClass[T]
+  final def _pickleCaseClass[T]: Pickler[T] = macro BoopickleMacroImpls.debugCaseClass[T]
 
-  final def pickleCaseClass [T]: Pickler[T] = macro quietCaseClass[T]
-  final def _pickleCaseClass[T]: Pickler[T] = macro debugCaseClass[T]
-
-  final def pickleADT [T]: Pickler[T] = macro quietADT[T]
-  final def _pickleADT[T]: Pickler[T] = macro debugADT[T]
+  final def pickleADT [T]: Pickler[T] = macro BoopickleMacroImpls.quietADT[T]
+  final def _pickleADT[T]: Pickler[T] = macro BoopickleMacroImpls.debugADT[T]
 }
 
 // =====================================================================================================================
-
-object BoopickleMacroImpls {
+class BoopickleMacroImpls(val c: Context) extends MacroUtils {
   import BoopickleMacros._
+  import c.universe._
 
-  def quietObject[T: c.WeakTypeTag](c: Context): c.Expr[Pickler[T]] = implObject[T](c, false)
-  def debugObject[T: c.WeakTypeTag](c: Context): c.Expr[Pickler[T]] = implObject[T](c, true)
-
-  def quietCaseClass[T: c.WeakTypeTag](c: Context): c.Expr[Pickler[T]] = implCaseClass[T](c, false)
-  def debugCaseClass[T: c.WeakTypeTag](c: Context): c.Expr[Pickler[T]] = implCaseClass[T](c, true)
-
-  def quietADT[T: c.WeakTypeTag](c: Context): c.Expr[Pickler[T]] = implADT[T](c, false)
-  def debugADT[T: c.WeakTypeTag](c: Context): c.Expr[Pickler[T]] = implADT[T](c, true)
-
-  def implObject[T: c.WeakTypeTag](c: Context, debug: Boolean): c.Expr[Pickler[T]] = {
-    import c.universe._
-
-    val T = concreteWeakTypeOf[T](c)
+  def quietObject[T: c.WeakTypeTag]: c.Expr[Pickler[T]] = implObject[T](false)
+  def debugObject[T: c.WeakTypeTag]: c.Expr[Pickler[T]] = implObject[T](true)
+  def implObject[T: c.WeakTypeTag](debug: Boolean): c.Expr[Pickler[T]] = {
+    val T = concreteWeakTypeOf[T]
     val t = T.termSymbol
 
     if (!t.isModule)
-      fail(c, s"$t is not an object.")
+      fail(s"$t is not an object.")
 
     val impl = q"ConstPickler($t)"
 
@@ -104,22 +93,20 @@ object BoopickleMacroImpls {
     c.Expr[Pickler[T]](impl)
   }
 
-  private def newPickler(c: Context)(T: c.universe.Type, pickleImpl: c.universe.Tree, unpickleImpl: c.universe.Tree): c.universe.Tree = {
-    import c.universe._
+  private def newPickler(T: Type, pickleImpl: Tree, unpickleImpl: Tree): Tree =
     q"""
       new Pickler[$T] {
         override def pickle(value: $T)(implicit state: PickleState): Unit = {$pickleImpl}
         override def unpickle(implicit state: UnpickleState): $T = {$unpickleImpl}
       }
     """
-  }
 
-  def implCaseClass[T: c.WeakTypeTag](c: Context, debug: Boolean): c.Expr[Pickler[T]] = {
-    import c.universe._
-
-    val T      = concreteWeakTypeOf[T](c)
-    val apply  = tcApplyFn(c)(T)
-    val params = primaryConstructorParams(c)
+  def quietCaseClass[T: c.WeakTypeTag]: c.Expr[Pickler[T]] = implCaseClass[T](false)
+  def debugCaseClass[T: c.WeakTypeTag]: c.Expr[Pickler[T]] = implCaseClass[T](true)
+  def implCaseClass[T: c.WeakTypeTag](debug: Boolean): c.Expr[Pickler[T]] = {
+    val T      = concreteWeakTypeOf[T]
+    val apply  = tcApplyFn(T)
+    val params = primaryConstructorParams(T)
 
     val impl =
       params match {
@@ -127,7 +114,7 @@ object BoopickleMacroImpls {
           q"ConstPickler[$T]($apply())"
 
         case param :: Nil =>
-          val (n, t) = nameAndType(c)(param)
+          val (n, t) = nameAndType(param)
           q"xmap[$T,$t]($apply)(_.$n)"
 
         case _ =>
@@ -136,7 +123,7 @@ object BoopickleMacroImpls {
           var unpickleFields = Vector.empty[Tree]
 
           for (p <- params) {
-            val (n, t) = nameAndType[T](c)(p)
+            val (n, t) = nameAndType[T](p)
             val fp = TermName(c.freshName())
             fieldPicklers  :+= q"val $fp = implicitly[Pickler[$t]]"
             pickleFields   :+= q"state.pickle(value.$n)($fp)"
@@ -150,7 +137,7 @@ object BoopickleMacroImpls {
 
           q""" {
             ..$fieldPicklers
-            ${newPickler(c)(T, pickleImpl, unpickleImpl)}
+            ${newPickler(T, pickleImpl, unpickleImpl)}
           } """
       }
 
@@ -185,16 +172,16 @@ object BoopickleMacroImpls {
 //    }
 //
 //    if (ignored.nonEmpty && !pathDependent)
-//      fail(c, s"Failed to resolve the following: $ignored")
+//      fail(s"Failed to resolve the following: $ignored")
 
 
-  def implADT[T: c.WeakTypeTag](c: Context, debug: Boolean): c.Expr[Pickler[T]] = {
-    import c.universe._
-
+  def quietADT[T: c.WeakTypeTag]: c.Expr[Pickler[T]] = implADT[T](false)
+  def debugADT[T: c.WeakTypeTag]: c.Expr[Pickler[T]] = implADT[T](true)
+  def implADT[T: c.WeakTypeTag](debug: Boolean): c.Expr[Pickler[T]] = {
     val T     = weakTypeOf[T]
-    val types = findConcreteTypesNE(c)(T, LeavesOnly)
+    val types = findConcreteTypesNE(T, LeavesOnly)
                   .toList.sortBy(_.fullName)
-                  .map(t => determineAdtType(c)(T, t))
+                  .map(t => determineAdtType(T, t))
 
     var picklerNames = Vector.empty[TermName]
     var picklers     = Vector.empty[ValDef]
@@ -202,20 +189,7 @@ object BoopickleMacroImpls {
 
     var index = 0
     for (t <- types) {
-
-      val t2: Tree =
-        if (t.typeSymbol.isModuleClass)
-          TypeTree(t)
-        else {
-          // Take the FQN and re-evaluate. Why? I don't know.
-          // But without this there'll be spurious exhaustiveness warnings
-          val fqn = toSelectFQN(c)(t.typeSymbol.asType)
-          if (t.typeArgs.isEmpty)
-            fqn
-          else
-            AppliedTypeTree(fqn, t.typeArgs.map(TypeTree(_)))
-        }
-
+      val t2 = fixAdtTypeForCaseDef(t)
       val fp = TermName(c.freshName())
       picklerNames :+= fp
       picklers :+= q"val $fp = implicitly[Pickler[$t]].asInstanceOf[Pickler[$T]]"

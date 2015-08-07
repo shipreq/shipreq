@@ -3,40 +3,63 @@ package shipreq.webapp.macros
 import scala.annotation.tailrec
 
 object MacroUtils {
-  import scala.reflect.macros.blackbox.Context
+  sealed trait FindSubClasses
+  case object DirectOnly extends FindSubClasses
+  case object LeavesOnly extends FindSubClasses
+  case object Everything extends FindSubClasses
+}
 
-  def fail(c: Context, msg: String): Nothing =
+abstract class MacroUtils {
+  val c: scala.reflect.macros.blackbox.Context
+  import c.universe._
+  import MacroUtils.FindSubClasses
+
+  @inline final def DirectOnly = MacroUtils.DirectOnly
+  @inline final def LeavesOnly = MacroUtils.LeavesOnly
+  @inline final def Everything = MacroUtils.Everything
+
+  final def sep = ("_" * 120) + "\n"
+
+  final def fail(msg: String): Nothing =
     c.abort(c.enclosingPosition, msg)
 
-  def concreteWeakTypeOf[T: c.WeakTypeTag](c: Context): c.universe.Type = {
-    val t = c.universe.weakTypeOf[T]
-    ensureConcrete(c)(t)
+  final def concreteWeakTypeOf[T: c.WeakTypeTag]: Type = {
+    val t = weakTypeOf[T]
+    ensureConcrete(t)
     t
   }
 
-  def ensureConcrete(c: Context)(t: c.universe.Type): Unit = {
+  final def ensureConcrete(t: Type): Unit = {
     val sym = t.typeSymbol.asClass
     if (sym.isAbstract)
-      fail(c, s"ensureConcrete: [${sym.name}] is abstract which is not allowed.")
+      fail(s"ensureConcrete: [${sym.name}] is abstract which is not allowed.")
     if (sym.isTrait)
-      fail(c, s"ensureConcrete: [${sym.name}] is a trait which is not allowed.")
+      fail(s"ensureConcrete: [${sym.name}] is a trait which is not allowed.")
     if (sym.isSynthetic)
-      fail(c, s"ensureConcrete: [${sym.name}] is synthetic which is not allowed.")
+      fail(s"ensureConcrete: [${sym.name}] is synthetic which is not allowed.")
   }
 
-  def primaryConstructorParams[T: c.WeakTypeTag](c: Context): List[c.universe.Symbol] = {
-    import c.universe._
-    val T = weakTypeOf[T]
-    T.decls
+  final def primaryConstructorParams(t: Type): List[Symbol] =
+    t.decls
       .collectFirst { case m: MethodSymbol if m.isPrimaryConstructor => m }
-      .getOrElse(fail(c, "Unable to discern primary constructor."))
+      .getOrElse(fail("Unable to discern primary constructor."))
       .paramLists
       .headOption
-      .getOrElse(fail(c, "Primary constructor missing paramList."))
-  }
+      .getOrElse(fail("Primary constructor missing paramList."))
 
-  def nameAndType[T: c.WeakTypeTag](c: Context)(s: c.universe.Symbol): (c.universe.TermName, c.universe.Type) = {
-    import c.universe._
+  final def primaryConstructorParams_require1(t: Type): Symbol =
+    primaryConstructorParams(t) match {
+      case p :: Nil => p
+      case x        => fail(s"One field expected. ${t.typeSymbol.name} has: $x")
+    }
+
+  final def primaryConstructorParams_require2(t: Type): (Symbol, Symbol) =
+    primaryConstructorParams(t) match {
+      case a :: b :: Nil => (a, b)
+      case x        => fail(s"Two fields expected. ${t.typeSymbol.name} has: $x")
+    }
+
+  final def nameAndType[T: c.WeakTypeTag](s: Symbol): (TermName, Type) = {
     val T = weakTypeOf[T]
 
     def paramType(name: TermName): Type =
@@ -50,30 +73,23 @@ object MacroUtils {
     (a, A)
   }
 
-  sealed trait FindSubClasses
-  case object DirectOnly extends FindSubClasses
-  case object LeavesOnly extends FindSubClasses
-  case object Everything extends FindSubClasses
-
   /**
    * Constraints:
    * - Type must be sealed.
    * - Type must be abstract or a trait.
    */
-  def findConcreteTypes(c: Context)(tpe: c.universe.Type, f: FindSubClasses): Set[c.universe.ClassSymbol] = {
-    import c.universe._
-
+  final def findConcreteTypes(tpe: Type, f: FindSubClasses): Set[ClassSymbol] = {
     tpe.typeConstructor // https://issues.scala-lang.org/browse/SI-7755
     val sym = tpe.typeSymbol.asClass
 
     if (!sym.isSealed)
-      fail(c, s"${sym.name} must be sealed.")
+      fail(s"${sym.name} must be sealed.")
 
     if (!(sym.isAbstract || sym.isTrait))
-      fail(c, s"${sym.name} must be abstract or a trait.")
+      fail(s"${sym.name} must be abstract or a trait.")
 
     if (sym.knownDirectSubclasses.isEmpty)
-      fail(c, s"${sym.name} does not have any sub-classes. This may happen due to a limitation of scalac (SI-7046).")
+      fail(s"${sym.name} does not have any sub-classes. This may happen due to a limitation of scalac (SI-7046).")
 
     def findSubClasses(p: ClassSymbol): Set[ClassSymbol] = {
       p.knownDirectSubclasses.flatMap { sub =>
@@ -81,9 +97,9 @@ object MacroUtils {
         if (subClass.isTrait)
           findSubClasses(subClass)
         else f match {
-          case DirectOnly => Set(subClass)
-          case Everything => Set(subClass) ++ findSubClasses(subClass)
-          case LeavesOnly =>
+          case MacroUtils.DirectOnly => Set(subClass)
+          case MacroUtils.Everything => Set(subClass) ++ findSubClasses(subClass)
+          case MacroUtils.LeavesOnly =>
             val s = findSubClasses(subClass)
             if (s.isEmpty)
               Set(subClass)
@@ -96,10 +112,10 @@ object MacroUtils {
     findSubClasses(sym)
   }
 
-  def findConcreteTypesNE(c: Context)(tpe: c.universe.Type, f: FindSubClasses): Set[c.universe.ClassSymbol] = {
-    val r = findConcreteTypes(c)(tpe, f)
+  final def findConcreteTypesNE(tpe: Type, f: FindSubClasses): Set[ClassSymbol] = {
+    val r = findConcreteTypes(tpe, f)
     if (r.isEmpty)
-      fail(c, s"Unable to find concrete types for ${tpe.typeSymbol.name}.")
+      fail(s"Unable to find concrete types for ${tpe.typeSymbol.name}.")
     r
   }
 
@@ -109,12 +125,12 @@ object MacroUtils {
    * @param T The ADT base trait.
    * @param t The subclass.
    */
-  def determineAdtType(c: Context)(T: c.universe.Type, t: c.universe.ClassSymbol): c.universe.Type = {
+  final def determineAdtType(T: Type, t: ClassSymbol): Type = {
     val t2 =
       if (t.typeParams.isEmpty)
         t.toType
       else
-        caseClassTypeCtorToType(c)(T, t)
+        caseClassTypeCtorToType(T, t)
     require(t2 <:< T, s"$t2 is not a subtype of $T")
     t2
   }
@@ -122,25 +138,22 @@ object MacroUtils {
   /**
    * Turns a case class type constructor into a type.
    *
-   * Eg. caseClassTypeCtorToType(c)(Option[Int], Some[_]) → Some[Int]
+   * Eg. caseClassTypeCtorToType(Option[Int], Some[_]) → Some[Int]
    *
    * Actually this doesn't work with type variance :(
    */
-  private def caseClassTypeCtorToType(c: Context)(baseTrait: c.universe.Type, caseclass: c.universe.ClassSymbol): c.universe.Type = {
-    import c.universe._
-
+  private def caseClassTypeCtorToType(baseTrait: Type, caseclass: ClassSymbol): Type = {
     val companion = caseclass.companion
     val apply = companion.typeSignature.member(TermName("apply"))
     if (apply == NoSymbol)
-      fail(c, s"Don't know how to turn $caseclass into a real type of $baseTrait; it's generic and its companion has no `apply` method.")
+      fail(s"Don't know how to turn $caseclass into a real type of $baseTrait; it's generic and its companion has no `apply` method.")
 
     val matchArgs = apply.asMethod.paramLists.flatten.map { arg => pq"_" }
     val name = TermName(c.freshName("x"))
     c.typecheck(q"""(??? : $baseTrait) match {case $name@$companion(..$matchArgs) => $name }""").tpe
   }
 
-  def flattenBlocks(c: Context)(trees: List[c.universe.Tree]): Vector[c.universe.Tree] = {
-    import c.universe._
+  final def flattenBlocks(trees: List[Tree]): Vector[Tree] = {
     @tailrec def go(acc: Vector[Tree], ts: List[Tree]): Vector[Tree] =
       ts match {
         case                 Nil => acc
@@ -149,8 +162,18 @@ object MacroUtils {
       }
     go(Vector.empty, trees)
   }
+//  final def flattenBlocks(trees: GenTraversable[Tree]): Vector[Tree] = {
+//    import _
+//    @tailrec final def go(acc: Vector[Tree], ts: GenTraversable[Tree]): Vector[Tree] =
+//      ts.headOption match {
+//        case None              => acc
+//        case Some(Block(a, b)) => go(acc, (a :+ b) ++ ts.tail)
+//        case Some(h)           => go(acc :+ h, ts.tail)
+//      }
+//    go(Vector.empty, trees)
+//  }
 
-  def modStringHead(s: String, f: Char => Char): String =
+  final def modStringHead(s: String, f: Char => Char): String =
     if (s.isEmpty)
       ""
     else {
@@ -161,27 +184,46 @@ object MacroUtils {
         h + s.tail
     }
 
-  def lowerCaseHead(s: String): String =
+  final def lowerCaseHead(s: String): String =
     modStringHead(s, _.toLower)
 
-  def getStringLiteral(c: Context)(e: c.Expr[String]): String = {
-    import c.universe._
+  final def readMacroArg_string(e: c.Expr[String]): String =
     e match {
       case Expr(Literal(Constant(s: String))) => s
-      case _ => fail(c, s"Expected a literal string, got: ${showRaw(e)}")
+      case _ => fail(s"Expected a literal string, got: ${showRaw(e)}")
     }
-  }
+
+  final def readMacroArg_tToLitFn[T, V: scala.reflect.Manifest](e: c.Expr[T => V]): List[(Either[Select, Type], Literal)] =
+    e match {
+      case Expr(Function(_, Match(_, caseDefs))) =>
+        caseDefs map {
+
+          // case _: Class => "k"
+          case CaseDef(Typed(_, t: TypeTree), _, key@ Literal(Constant(_: V))) =>
+            (Right(t.tpe), key)
+
+          // case Object => "k"
+          case CaseDef(s@ Select(_, _), _, key@ Literal(Constant(_: V))) =>
+            (Left(s), key)
+
+          case x =>
+            fail(s"Expecting a case like: {case Type => String}\nGot: ${showRaw(x)}")
+        }
+      case _ =>
+        fail(s"Expecting a function like: {case Type => String}\nGot: ${showRaw(e)}")
+    }
 
   /**
    * Create code for a function that will call .apply() on a given type's type companion object.
    */
-  def tcApplyFn(c: Context)(t: c.universe.Type): c.universe.Select = {
-    import c.universe._
+  final def tcApplyFn(t: Type): Select = {
     val sym = t.typeSymbol
     val tc  = sym.companion
+    if (tc == NoSymbol)
+      fail(s"Companion object not found for $sym")
     val pre = t match {
       case TypeRef(p, _, _) => p
-      case x                => fail(c, s"Don't know how to extract `pre` from ${showRaw(x)}")
+      case x                => fail(s"Don't know how to extract `pre` from ${showRaw(x)}")
     }
 
     pre match {
@@ -195,8 +237,7 @@ object MacroUtils {
     }
   }
 
-  def selectFQN(c: Context)(s: String, lastIsType: Boolean): c.universe.RefTree = {
-    import c.universe._
+  final def selectFQN(s: String, lastIsType: Boolean): RefTree = {
     val terms = s.split('.').map(TermName(_): Name)
     val l = terms.length - 1
     // Bad hack
@@ -209,30 +250,27 @@ object MacroUtils {
       terms.tail.foldLeft(h)(Select(_, _))
   }
 
-  def toSelectFQN(c: Context)(t: c.universe.TypeSymbol): c.universe.RefTree = {
+  final def toSelectFQN(t: TypeSymbol): RefTree = {
     // Do this properly later
-    selectFQN(c)(t.fullName, !t.isModuleClass)
-  }
-}
-
-object WhiteboxMacroUtils {
-  import scala.reflect.macros.whitebox.Context
-  import MacroUtils._
-
-  def extractStaticAnnotationArgs(c: Context): List[c.universe.Tree] = {
-    import c.universe._
-    c.macroApplication match  {
-      case Apply(Select(Apply(_, args), _), _) => args
-      case x => fail(c, s"Unable to determine annotation args.\n${showRaw(x)}")
-    }
+    selectFQN(t.fullName, !t.isModuleClass)
   }
 
-  def replaceEmptyBodyInAnnotatedObject(c: Context)(annottees: Seq[c.Expr[Any]])(newBody: List[c.universe.Tree]): c.universe.Tree = {
-    import c.universe._
-    annottees.map(_.tree) match {
-      case List(q"object $objName extends $parent { ..$body }") if body.isEmpty =>
-        q"object $objName extends $parent { ..$newBody }"
-      case _ => fail(c, "You must annotate an object definition with an empty body.")
+  /**
+   * Sometimes using a type directly in a clause like "case _: $t => ...", causes spurious exhaustiveness warnings.
+   * I definitively know why, problably something about compiler-phase order.
+   * This fixes it consistently so far.
+   */
+  final def fixAdtTypeForCaseDef(t: Type): Tree = {
+    if (t.typeSymbol.isModuleClass)
+      TypeTree(t)
+    else {
+      // Take the FQN and re-evaluate. Why? I don't know.
+      // But without this there'll be spurious exhaustiveness warnings
+      val fqn = toSelectFQN(t.typeSymbol.asType)
+      if (t.typeArgs.isEmpty)
+        fqn
+      else
+        AppliedTypeTree(fqn, t.typeArgs.map(TypeTree(_)))
     }
   }
 }

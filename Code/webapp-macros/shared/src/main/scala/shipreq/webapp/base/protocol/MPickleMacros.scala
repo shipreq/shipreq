@@ -1,62 +1,88 @@
 package shipreq.webapp.base.protocol
 
+import scala.reflect.macros.blackbox.Context
+import shipreq.webapp.macros.MacroUtils
 import upickle._
 
 object MPickleMacros {
-  def caseClass [T]: ReadWriter[T] = macro MPickleMacroImpls.quietCaseClass[T]
+  def  caseClass[T]: ReadWriter[T] = macro MPickleMacroImpls.quietCaseClass[T]
   def _caseClass[T]: ReadWriter[T] = macro MPickleMacroImpls.debugCaseClass[T]
 }
 
-object MPickleMacroImpls {
-  import scala.reflect.macros.blackbox.Context
-  import shipreq.webapp.macros.MacroUtils._
+// =====================================================================================================================
+class MPickleMacroImpls(val c: Context) extends MacroUtils {
+  import c.universe._
 
-  def quietCaseClass[T: c.WeakTypeTag](c: Context): c.Expr[ReadWriter[T]] = implCaseClass[T](c, false)
-  def debugCaseClass[T: c.WeakTypeTag](c: Context): c.Expr[ReadWriter[T]] = implCaseClass[T](c, true)
+  private class Helper {
 
-  // TODO Store implicits in vals first
-  def implCaseClass[T: c.WeakTypeTag](c: Context, debug: Boolean): c.Expr[ReadWriter[T]] = {
-    import c.universe._
+    @volatile var init = Vector.empty[Tree]
 
-    val T      = concreteWeakTypeOf[T](c)
-    val params = primaryConstructorParams(c)
+    init :+= q"import _root_.upickle._"
 
-    val TC         = T.typeSymbol.companion
-    val ReadWriter = Ident(c.mirror staticModule "upickle.ReadWriter")
-    val JsArr      = Ident(c.mirror staticModule "upickle.Js.Arr")
-    val Fns        = Ident(c.mirror staticModule "upickle.Fns")
-    val writeJs    = q"$Fns.writeJs"
-    val readJs     = q"$Fns.readJs"
-
-    def invokeWriteJs(param: Symbol) = {
-      val a = nameAndType(c)(param)._1
-      q"$writeJs(t.$a)"
+    def prepVal(n: String, i: TermName => Tree): TermName = {
+      val v = TermName(c.freshName(n))
+      init :+= i(v)
+      v
     }
-    def invokeReadJs(vname: TermName, param: Symbol) = {
-      val A = nameAndType(c)(param)._2
-      q"$readJs[$A]($vname)"
+
+    def prepReader(t: Type): TermName =
+      prepVal("r", v => q"val $v = implicitly[Reader[$t]]")
+
+    def prepWriter(t: Type): TermName =
+      prepVal("w", v => q"val $v = implicitly[Writer[$t]]")
+
+    def impl(t: Type, writeImpl: Tree, readImpl: Tree) =
+      wrap(q"ReadWriter[$t]($writeImpl, $readImpl)")
+
+    def wrap(body: Tree) =
+      q"..$init; $body"
+  }
+
+  private def Helper = new Helper
+
+  def quietCaseClass[T: c.WeakTypeTag]: c.Expr[ReadWriter[T]] = implCaseClass[T](false)
+  def debugCaseClass[T: c.WeakTypeTag]: c.Expr[ReadWriter[T]] = implCaseClass[T](true)
+  def implCaseClass[T: c.WeakTypeTag](debug: Boolean): c.Expr[ReadWriter[T]] = {
+    val T      = concreteWeakTypeOf[T]
+    val TC     = T.typeSymbol.companion
+    val params = primaryConstructorParams(T)
+    val helper = Helper
+
+    def invokeWriteJs(subj: TermName, param: Symbol) = {
+      val (n, t) = nameAndType(param)
+      val w = helper.prepWriter(t)
+      q"$w.write($subj.$n)"
+    }
+    def invokeReadJs(subj: TermName, param: Symbol) = {
+      val t = nameAndType(param)._2
+      val r = helper.prepReader(t)
+      q"$r.read($subj)"
     }
 
     val impl =
       params match {
         case Nil =>
-          fail(c, "Class constructor has no parameters.")
+          fail("Class constructor has no parameters.")
 
         case param :: Nil =>
           val j = TermName("j")
-          q"$ReadWriter[$T](t => ${invokeWriteJs(param)}, {case $j => $TC(${invokeReadJs(j, param)})})"
+          val w = invokeWriteJs(j, param)
+          val r = invokeReadJs(j, param)
+          helper.wrap(q"ReadWriter[$T](j => $w, {case j => $TC($r)} )")
 
         case _ =>
-          val writes = params map (invokeWriteJs(_))
+          val j = TermName("j")
+          var writes = Vector.empty[Tree]
           var nextChar = 'a'.toInt
           val tmp = params map { p =>
             val v = TermName(nextChar.toChar.toString)
             nextChar += 1
+            writes :+= invokeWriteJs(j, p)
             (pq"$v", invokeReadJs(v, p))
           }
           val (vals, reads) = tmp.unzip
-          val readCase = cq"$JsArr(..$vals) => $TC(..$reads)"
-          q"$ReadWriter[$T](t => $JsArr(..$writes), {case $readCase})"
+          val rCases = cq"Js.Arr(..$vals) => $TC(..$reads)"
+          helper.wrap(q"ReadWriter[$T](j => Js.Arr(..$writes), {case $rCases} )")
       }
 
     if (debug) println("\n" + impl + "\n")
