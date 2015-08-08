@@ -315,12 +315,14 @@ object ShipReq extends Build {
       cleanFiles ++= clientJsLinks.value.cleanable.toSeq,
       { val k = Keys.`package` in Compile;        k <<= k.dependsOn(linkClientJs) },
       { val k = start in container.Configuration; k <<= k.dependsOn(linkClientJs) },
-      { val k = test in Test;                     k <<= k.dependsOn(linkClientJs) },
+//      { val k = test in Test;                     k <<= k.dependsOn(linkClientJs) },
       linkClientJs := {
         jsBuildTask.value // Ensure client JS is built
         val log = streams.value.log
-        for ((s, t) <- clientJsLinks.value.links)
-          ln(s, t, log)
+        for ((s, t) <- clientJsLinks.value.links) {
+          log.info(s"Copying $s → $t")
+          IO.copyFile(s, t)
+        }
       })
 
     def warSettings = (_: Project).settings(

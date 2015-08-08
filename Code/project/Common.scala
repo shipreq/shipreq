@@ -75,6 +75,8 @@ object Common {
     getMethod(loader, "shipreq.webapp.db.DB", "shutdown").foreach(_ invoke null)
   }
 
+  private val shipreqCodePathRegex = "^.+/Code/".r
+
   /** Minimal settings used by benchmark modules too */
   lazy val settingsMin = (p: Project) => p
     .settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*) // Dependency graph
@@ -90,7 +92,13 @@ object Common {
       aggregate in update         := true,
       scalaVersion                := Dependencies.Scala.version,
       dependencyUpdatesExclusions := moduleFilter(name = new PatternFilter("^jetty-(?:server|websocket)$".r.pattern)),
-      testFrameworks              += new TestFramework("utest.runner.Framework"))
+      testFrameworks              += new TestFramework("utest.runner.Framework"),
+      target := {
+        val a = target.value.getAbsolutePath
+        val b = shipreqCodePathRegex.replaceFirstIn(a, "/tmp/shipreq.sbt/")
+        file(b)
+      }
+    )
     .configure(
       addCommandAliases(
         "C"    -> "root/clean",
