@@ -7,8 +7,8 @@ import shipreq.webapp.base.data.Field.ApplicableReqTypes
 import shipreq.webapp.base.text.Grammar
 
 trait UnsafeTypesLowPriority {
-   implicit def autoSome[A, B](a: A)(implicit f: A => B): Option[B] = Some(f(a))
-//  implicit def autoSome[A, B](a: A)(implicit f: A => B): Option[B] = Some(a)
+//   implicit def autoSome[A, B](a: A)(implicit f: A => B): Option[B] = Some(f(a))
+  implicit def autoSome[A](a: A): Option[A] = Some(a)
 }
 
 object UnsafeTypes extends UnsafeTypesLowPriority {
