@@ -26,6 +26,7 @@ object BinCodecEvents {
 
   implicit val pickleProjectTemplate: Pickler[ProjectTemplate] = ConstPickler(ProjectTemplate.Default) // TODO
 
+  implicit val pickleAddStaticField       : Pickler[AddStaticField]        = pickleCaseClass
   implicit val pickleApplyTemplate        : Pickler[ApplyTemplate]         = pickleCaseClass
   implicit val pickleCreateApplicableTag  : Pickler[CreateApplicableTag]   = pickleCaseClass
   implicit val pickleCreateCustomImpField : Pickler[CreateCustomImpField]  = pickleCaseClass
@@ -39,9 +40,8 @@ object BinCodecEvents {
   implicit val pickleDeleteCustomField    : Pickler[DeleteCustomField]     = pickleCaseClass
   implicit val pickleDeleteCustomIssueType: Pickler[DeleteCustomIssueType] = pickleCaseClass
   implicit val pickleDeleteCustomReqType  : Pickler[DeleteCustomReqType]   = pickleCaseClass
-  implicit val pickleDeleteReq            : Pickler[DeleteReq]             = pickleCaseClass
   implicit val pickleDeleteReqCodeGroup   : Pickler[DeleteReqCodeGroup]    = pickleCaseClass
-  implicit val pickleAddStaticField       : Pickler[AddStaticField]        = pickleCaseClass
+  implicit val pickleDeleteReq            : Pickler[DeleteReq]             = pickleCaseClass
   implicit val pickleDeleteStaticField    : Pickler[DeleteStaticField]     = pickleCaseClass
   implicit val pickleDeleteTag            : Pickler[DeleteTag]             = pickleCaseClass
   implicit val picklePatchImplicationSrc  : Pickler[PatchImplicationSrc]   = pickleCaseClass
