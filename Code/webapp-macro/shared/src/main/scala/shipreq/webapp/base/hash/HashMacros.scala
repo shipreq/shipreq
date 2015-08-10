@@ -43,14 +43,14 @@ class HashMacroImpls(val c: Context) extends MacroUtils {
           fail("Class constructor has no parameters.")
 
         case param :: Nil =>
-          val (pName, pType) = nameAndType(param)
+          val (pName, pType) = nameAndType(T, param)
           q"$Hash[$pType].cmap[$T](_.$pName)"
 
         case _ =>
           val nil = Ident(c.mirror staticModule "scala.collection.immutable.Nil")
 
           val hashes = params.foldLeft(nil: c.universe.Tree) { (q, p) =>
-            val (pName, pType) = nameAndType(p)
+            val (pName, pType) = nameAndType(T, p)
             q"$q.::($Hash[$pType].hash(t.$pName))"
           }
 

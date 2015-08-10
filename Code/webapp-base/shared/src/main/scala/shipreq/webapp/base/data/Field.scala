@@ -3,10 +3,8 @@ package shipreq.webapp.base.data
 import monocle._
 import monocle.macros.Lenses
 import scalaz.{Traverse, Equal}
-import scalaz.Isomorphism._
 import scalaz.std.AllInstances._
 import scalaz.syntax.equal._
-import shapeless.{Generic, :+:, CNil, Coproduct, Inl, Inr}
 import shipreq.base.util._
 import shipreq.base.util.TaggedTypes.{TaggedString, TaggedInt}
 import shipreq.webapp.base.util.TypeclassDerivation._
@@ -73,20 +71,6 @@ case object Deletable extends Deletable with IsoBool.Obj[Deletable] {
 /** type [[FieldId]] = [[StaticField]] | [[CustomFieldId]] */
 sealed trait FieldId {
   def foldId[A](s: StaticField => A, c: CustomFieldId => A): A
-}
-
-object FieldId {
-  implicit object IdGeneric extends Generic[FieldId] {
-    override type Repr = StaticField :+: CustomFieldId :+: CNil
-    override def to  (id: FieldId): Repr = id.foldId(Coproduct[Repr](_), Coproduct[Repr](_))
-    override def from(co: Repr): FieldId = co match {
-      case Inl(s)      => s
-      case Inr(Inl(c)) => c
-      case _           => ???
-    }
-  }
-
-  implicit def idEquality: UnivEq[FieldId] = deriveUnivEq
 }
 
 sealed trait Field {
@@ -289,6 +273,10 @@ object CustomField {
   implicit def equalTag        : UnivEq[Tag]         = UnivEq.derive
   implicit def equalText       : UnivEq[Text]        = UnivEq.derive
   implicit def equality        : UnivEq[CustomField] = UnivEq.derive
+}
+
+object FieldId {
+  implicit def idEquality: UnivEq[FieldId] = UnivEq.derive
 }
 
 // =====================================================================================================================

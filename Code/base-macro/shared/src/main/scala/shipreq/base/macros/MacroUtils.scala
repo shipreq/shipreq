@@ -68,9 +68,7 @@ abstract class MacroUtils {
       case x        => fail(s"Two fields expected. ${t.typeSymbol.name} has: $x")
     }
 
-  final def nameAndType[T: c.WeakTypeTag](s: Symbol): (TermName, Type) = {
-    val T = weakTypeOf[T]
-
+  final def nameAndType(T: Type, s: Symbol): (TermName, Type) = {
     def paramType(name: TermName): Type =
       T.decl(name).typeSignatureIn(T) match {
         case NullaryMethodType(t) => t
@@ -98,7 +96,7 @@ abstract class MacroUtils {
     sym
   }
 
-  final def crawlADT[A](tpe: Type, f: ClassSymbol => Option[A], errMsg: ClassSymbol => String): Vector[A] = {
+  final def crawlADT[A](tpe: Type, f: ClassSymbol => Option[A], giveUp: ClassSymbol => Vector[A]): Vector[A] = {
     def go(t: Type, as: Vector[A]): Vector[A] = {
       val tb = ensureValidAdtBase(t)
       tb.knownDirectSubclasses.foldLeft(as) { (q, sub) =>
@@ -112,7 +110,7 @@ abstract class MacroUtils {
             if (subClass.isAbstract || subClass.isTrait)
               go(subType, q)
             else
-              fail(errMsg(subClass))
+              q ++ giveUp(subClass)
         }
       }
     }

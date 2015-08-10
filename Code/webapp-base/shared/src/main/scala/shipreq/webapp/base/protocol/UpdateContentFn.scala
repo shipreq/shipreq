@@ -24,7 +24,7 @@ object UpdateContentCmd {
   case class SetGenericReqTitle  (id: GenericReqId,                           value: Text.GenericReqTitle.OptionalText)   extends UpdateContentCmd
   case class SetCustomTextField  (id: ReqId,        fid: CustomField.Text.Id, value: Text.CustomTextField.OptionalText)   extends UpdateContentCmd
 
-  implicit val cmdEquality: UnivEq[UpdateContentCmd] = UnivEq._deriveAuto
+  implicit val cmdEquality: UnivEq[UpdateContentCmd] = UnivEq.deriveAuto
 
   implicit val picklePatchReqTags        : Pickler[PatchReqTags]         = pickleCaseClass
   implicit val picklePatchImplicationSrc : Pickler[PatchImplicationSrc]  = pickleCaseClass

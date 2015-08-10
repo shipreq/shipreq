@@ -101,59 +101,89 @@ object UnivEq extends UnivEqImplicits {
   class MacroImpl(val c: Context) extends MacroUtils {
     import c.universe._
 
-    def quietDeriveAuto[T: c.WeakTypeTag]: c.Expr[UnivEq[T]] = implDeriveAuto(false)
-    def debugDeriveAuto[T: c.WeakTypeTag]: c.Expr[UnivEq[T]] = implDeriveAuto(true)
-    def implDeriveAuto[T: c.WeakTypeTag](debug: Boolean): c.Expr[UnivEq[T]] = {
-      val T = weakTypeOf[T]
-      val m = TermName(if (debug) "_derive" else "derive")
-      c.Expr[UnivEq[T]](q"""
-      import _root_.shipreq.base.util.UnivEq.AutoDerive._
-             _root_.shipreq.base.util.UnivEq.$m[$T]
-      """)
-    }
+    val univEq = c.typeOf[UnivEq[_]]
 
-    def quietDerive[T: c.WeakTypeTag]: c.Expr[UnivEq[T]] = implDerive(false)
-    def debugDerive[T: c.WeakTypeTag]: c.Expr[UnivEq[T]] = implDerive(true)
-    def implDerive[T: c.WeakTypeTag](debug: Boolean): c.Expr[UnivEq[T]] = {
+    def quietDeriveAuto[T: c.WeakTypeTag]: c.Expr[UnivEq[T]] = implDerive(false, true)
+    def debugDeriveAuto[T: c.WeakTypeTag]: c.Expr[UnivEq[T]] = implDerive(true , true)
+    def quietDerive[T: c.WeakTypeTag]: c.Expr[UnivEq[T]] = implDerive(false, false)
+    def debugDerive[T: c.WeakTypeTag]: c.Expr[UnivEq[T]] = implDerive(true , false)
+    def implDerive[T: c.WeakTypeTag](debug: Boolean, auto: Boolean): c.Expr[UnivEq[T]] = {
       if (debug) println()
 
-      val T = weakTypeOf[T]
-      val t = T.typeSymbol
-      var n = 0
-      val univEq = c.typeOf[UnivEq[_]]
+      // Fucking macros ignore implicit params in the enclosing method!
+      val eo = c.internal.enclosingOwner
+      val whitelist: Set[Type] =
+        if (eo.isMethod) {
+          val m = eo.asMethod
+          m.paramLists.flatten.collect { case a if a.isImplicit =>
+            a.typeSignature match {
+              case TypeRef(ThisType(_), a, List(inner)) if a.fullName == "shipreq.base.util.UnivEq" => inner
+              case _ => null
+            }
+          }.filter(_ ne null).toSet
+        } else Set.empty
+      if (debug && whitelist.nonEmpty) println("Whitelist: " + whitelist)
 
-      def found(t: Type, p: Any): Unit =
+      val T = weakTypeOf[T]
+      ensureUnivEq(T, debug, auto,
+        s => whitelist.exists(w => (s <:< w) || (s.toString == w.toString)))
+
+      val impl = q"_root_.shipreq.base.util.UnivEq.force[$T]"
+
+      if (debug) println("\n")// + impl + "\n")
+      c.Expr[UnivEq[T]](impl)
+    }
+
+    def ensureUnivEq(T: Type, debug: Boolean, auto: Boolean, allow: Type => Boolean): Unit = {
+      if (debug) println(s"→ $T")
+      def found(t: Any, p: Any): Unit =
         if (debug) {
-          n += 1
-          printf("%2d. %-90s = %s\n", n, t.toString, p.toString())
+          printf("%-90s = %s\n", t.toString, p.toString())
         }
 
-      if (t.isClass && t.asClass.isCaseClass) {
+      val t = T.typeSymbol
+      if (t.isType && allow(t.asType.toType))
+        found(t, "implicit arg")
+      else if (t.isClass && t.asClass.isCaseClass) {
         // Case class
         ensureConcrete(T)
         val params = primaryConstructorParams(T)
         for (p <- params) {
-          val (_, pt) = nameAndType(p)
-          found(pt, needInferImplicit(appliedType(univEq, pt)))
+          val (pn, pt) = nameAndType(T, p)
+          if (debug) println(s"  .$pn: $pt")
+          val u = appliedType(univEq, pt)
+          if (allow(pt))
+            found(pt, "implicit arg")
+          else
+            tryInferImplicit(u) match {
+              case Some(i) => found(pt, i)
+              case None    => fail(s"Implicit not found: $u") //init += q"implicitly[$u]"
+            }
         }
       } else
         // ADT
         crawlADT(T, p => {
           val pt = p.asType.toType
-          if (p.isModuleClass) {
+          if (allow(pt)) {
+            found(pt, "implicit arg")
+            Some(())
+          } else if (p.isModuleClass) {
             found(pt, "case object")
             Some(())
-          }
-          else
-            tryInferImplicit(appliedType(univEq, pt)).map(found(pt, _))
-        }, p => s"Unable to prove UnivEq[$p]")
-
-      val impl =
-        TypeApply(Select(Select(Select(Select(Select(Ident(termNames.ROOTPKG), TermName("shipreq")),
-        TermName("base")), TermName("util")), TermName("UnivEq")), TermName("force")), TypeTree(T) :: Nil)
-
-      if (debug) println()
-      c.Expr[UnivEq[T]](impl)
+          } else
+            tryInferImplicit(appliedType(univEq, pt)).map(found(pt, _)).orElse {
+              if (auto)
+                Some(ensureUnivEq(pt, debug, auto, allow))
+              else None
+            }
+        }, p => {
+          val pt = p.asType.toType
+          val u = appliedType(univEq, pt)
+          fail(s"Implicit not found: $u")
+          // init += q"implicitly[$u]"
+          // Vector.empty
+        })
     }
+
   }
 }

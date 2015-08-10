@@ -123,7 +123,7 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     val T        = concreteWeakTypeOf[T]
     val apply    = tcApplyFn(T)
     val f        = primaryConstructorParams_require1(T)
-    val (fn, ft) = nameAndType[T](f)
+    val (fn, ft) = nameAndType(T, f)
 
     val (idByte, idInteger, idMake) = implicitIdFns(ft)
     val writeFn = writeIdAnd(T)(fn, idByte, idInteger)(Literal(Constant(null)))
@@ -141,7 +141,7 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     val apply     = tcApplyFn(T)
     val f         = primaryConstructorParams_require1(T)
     val init      = Init()
-    val (fn, ft)  = nameAndType[T](f)
+    val (fn, ft)  = nameAndType(T, f)
     val (fr, fw)  = summonRW(init, ft)
     val readData  = readFromJsonStr(fr, q"d")
     val writeData = writeToJsonStr(fw, q"e.$fn")
@@ -164,8 +164,8 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     val apply      = tcApplyFn(T)
     val (f1, f2)   = primaryConstructorParams_require2(T)
     val init       = Init()
-    val (f1n, f1t) = nameAndType[T](f1)
-    val (f2n, f2t) = nameAndType[T](f2)
+    val (f1n, f1t) = nameAndType(T, f1)
+    val (f2n, f2t) = nameAndType(T, f2)
     val (f2r, f2w) = summonRW(init, f2t)
 
     val (idByte, idInteger, idMake) = implicitIdFns(f1t)
@@ -199,7 +199,7 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
 
     if (debug) println(s"KeyLookup: $keyLookup")
 
-    val ps         = params.tail map (nameAndType[T](_))
+    val ps         = params.tail map (nameAndType(T, _))
     val expKeySize = ps.length - gdArg.size
     if (keyLookup.size != expKeySize)
       fail(s"Expected $expKeySize keys, got ${keyLookup.size}.\n  Fields: $ps\n  Keys: $keyLookup")
@@ -228,7 +228,7 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
       }
 
     val f1 = params.head
-    val (f1n, f1t) = nameAndType[T](f1)
+    val (f1n, f1t) = nameAndType(T, f1)
     val (idByte, idInteger, idMake) = implicitIdFns(f1t)
 
     val writeToObj: Tree = gdNT match {

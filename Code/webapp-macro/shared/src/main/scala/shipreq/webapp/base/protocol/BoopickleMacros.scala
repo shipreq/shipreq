@@ -114,7 +114,7 @@ class BoopickleMacroImpls(val c: Context) extends MacroUtils {
           q"ConstPickler[$T]($apply())"
 
         case param :: Nil =>
-          val (n, t) = nameAndType(param)
+          val (n, t) = nameAndType(T, param)
           q"xmap[$T,$t]($apply)(_.$n)"
 
         case _ =>
@@ -123,7 +123,7 @@ class BoopickleMacroImpls(val c: Context) extends MacroUtils {
           var unpickleFields = Vector.empty[Tree]
 
           for (p <- params) {
-            val (n, t) = nameAndType[T](p)
+            val (n, t) = nameAndType(T, p)
             val fp = TermName(c.freshName())
             fieldPicklers  :+= q"val $fp = implicitly[Pickler[$t]]"
             pickleFields   :+= q"state.pickle(value.$n)($fp)"

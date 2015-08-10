@@ -64,12 +64,12 @@ class MPickleMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     val init   = Init(importMPickle)
 
     def invokeWriteJs(subj: TermName, param: Symbol) = {
-      val (n, t) = nameAndType(param)
+      val (n, t) = nameAndType(T, param)
       val w = summonW(init, t)
       q"$w.write($subj.$n)"
     }
     def invokeReadJs(subj: TermName, param: Symbol) = {
-      val t = nameAndType(param)._2
+      val t = nameAndType(T, param)._2
       val r = summonR(init, t)
       q"$r.read($subj)"
     }
