@@ -1,7 +1,7 @@
 package shipreq.webapp.base.hash
 
 import scala.reflect.macros.blackbox.Context
-import shipreq.webapp.macros.MacroUtils
+import shipreq.base.macros.MacroUtils
 
 trait HashMacros {
   def joinHashes(hashes: List[Int]): Int

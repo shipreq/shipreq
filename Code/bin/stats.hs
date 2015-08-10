@@ -110,6 +110,7 @@ deps = M.fromList [
          ("webapp-client",         ["webapp-base-test", "base-util"]) ,
          ("webapp-base-test",      ["webapp-base"]) ,
          ("webapp-base",           ["webapp-macro", "base-util"]) ,
+         ("webapp-macro",          ["base-util"]) ,
          ("taskman",               ["taskman-api", "taskman-server"]) ,
          ("taskman-api",           ["taskman-api-impl", "taskman-api-logic"]) ,
          ("taskman-api-impl",      ["taskman-api-logic"]) ,
@@ -118,7 +119,8 @@ deps = M.fromList [
          ("taskman-server-impl",   ["taskman-server-logic", "taskman-server-schema", "taskman-api"]) ,
          ("taskman-server-schema", ["base-db"]) ,
          ("taskman-server-logic",  ["taskman-api-logic"]) ,
-         ("base-db",               ["base-util"]) ]
+         ("base-db",               ["base-util"]) ,
+         ("base-util",             ["base-macro"]) ]
 
 topLevelModules = ["taskman", "webapp-client", "webapp-server"]
 

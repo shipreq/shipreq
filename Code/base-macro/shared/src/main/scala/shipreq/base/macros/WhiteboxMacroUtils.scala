@@ -1,4 +1,4 @@
-package shipreq.webapp.macros
+package shipreq.base.macros
 
 abstract class WhiteboxMacroUtils extends MacroUtils {
   val c: scala.reflect.macros.whitebox.Context

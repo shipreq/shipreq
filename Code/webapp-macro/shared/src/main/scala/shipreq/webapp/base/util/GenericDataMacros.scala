@@ -2,7 +2,7 @@ package shipreq.webapp.base.util
 
 import scala.annotation.StaticAnnotation
 import scala.annotation.compileTimeOnly
-import shipreq.webapp.macros._
+import shipreq.base.macros._
 import shipreq.webapp.base.protocol.MPickleMacroUtils
 import boopickle._
 import upickle._

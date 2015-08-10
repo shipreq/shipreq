@@ -1,6 +1,5 @@
-package shipreq.webapp.macros
+package shipreq.base.macros
 
-import shipreq.base.util.ScalaExt._
 import scala.annotation.tailrec
 
 object MacroUtils {
@@ -234,10 +233,10 @@ abstract class MacroUtils {
     }
 
   final def readMacroArg_tToLitFn[T, V: scala.reflect.Manifest](e: c.Expr[T => V]): List[(Either[Select, Type], Literal)] =
-    readMacroArg_tToTree(e).map(_.map2 {
+    readMacroArg_tToTree(e).map(x => (x._1, x._2 match {
       case lit @ Literal(Constant(_: V)) => lit
       case x => fail(s"Expecting a literal value, got: ${showRaw(x)}")
-    })
+    }))
 
   final def readMacroArg_tToTree[T, V](e: c.Expr[T => V]): List[(Either[Select, Type], Tree)] =
     e match {

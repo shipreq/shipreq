@@ -9,6 +9,7 @@ object IdeSettings {
     val moduleTargets = List(
       "base",
       "base-db",
+      "base-macro",
       "base-test",
       "base-util",
       "benchmark",

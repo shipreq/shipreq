@@ -26,7 +26,16 @@ object ShipReq extends Build {
   lazy val base =
     project("base")
       .configure(Common.settings)
-      .aggregate(baseUtilJvm, baseUtilJs, baseDb, baseTest)
+      .aggregate(baseMacroJvm, baseMacroJs, baseUtilJvm, baseUtilJs, baseDb, baseTest)
+
+  lazy val baseMacroJvm = baseMacro.jvm
+  lazy val baseMacroJs  = baseMacro.js
+  lazy val baseMacro =
+    crossProject("base-macro")
+      .configureBoth(Common.settings)
+      .configureJs(Common.jsSettings, Common.noJsTests)
+      .depsForBoth(Scalaz.core ++ Nyaya.core)
+      .configureBoth(Common.definesMacros)
 
   lazy val baseUtilJvm = baseUtil.jvm
   lazy val baseUtilJs  = baseUtil.js
@@ -34,33 +43,29 @@ object ShipReq extends Build {
     crossProject("base-util")
       .configureBoth(Common.settings)
       .configureJs(Common.jsSettings)
+      .dependsOn(baseMacro)
       .depsForBoth(
-        Scalaz.effect ++ Nyaya.core ++ testScope(μTest)
-      )
+        Scalaz.effect ++ Nyaya.core ++ testScope(μTest))
       .depsForJvm(
         SLF4J.api ++ Scalaz.effect ++
         providedScope(logback ++ jodaTime) ++
-        testScope(Specs2.combo ++ Scalaz.scalacheck)
-      )
+        testScope(Specs2.combo ++ Scalaz.scalacheck))
       .configureJvm(
-        dontInline // crashes scalac 2.11.2
-      )
+        dontInline) // crashes scalac 2.11.2
 
   lazy val baseDb =
     project("base-db")
       .configure(Common.settings)
       .deps(
         postgresql ++ slick ++ hikariCP ++ flyway ++ logback ++
-        providedScope(jodaTime)
-      )
+        providedScope(jodaTime))
       .dependsOn(baseUtilJvm)
 
   lazy val baseTest =
     project("base-test")
       .configure(Common.settings)
       .deps(
-        providedScope(scalaTest ++ Specs2.combo)
-      )
+        providedScope(scalaTest ++ Specs2.combo))
       .dependsOn(baseUtilJvm)
       .dependsOn(baseDb % "provided")
       // TODO Delete after upgrade to 2.11 and switch from Manifest to TypeTag
@@ -90,8 +95,7 @@ object ShipReq extends Build {
       .configure(Common.settings)
       .deps(
         Json4s.jackson ++
-        testScope(Specs2.combo ++ scalaCheck ++ Scala.reflect)
-      )
+        testScope(Specs2.combo ++ scalaCheck ++ Scala.reflect))
       .dependsOn(taskmanApiLogic, baseDb)
       .dependsOn(taskmanServerSchema % "test")
       .dependsOn(baseTest % "test")
@@ -107,8 +111,7 @@ object ShipReq extends Build {
     project("taskman-server-logic")
       .configure(Common.settings)
       .deps(
-        jodaTime ++ logback ++ testScope(Specs2.combo)
-      )
+        jodaTime ++ logback ++ testScope(Specs2.combo))
       .dependsOn(taskmanApiLogic)
       .dependsOn(baseTest % "test")
       .configure(dontInline) // crashes scalac 2.11.2
@@ -189,13 +192,10 @@ object ShipReq extends Build {
       .depsForBoth(
         μPickle ++ boopickle ++ Monocle.core ++
         providedScope(Scala.library) ++
-        testScope(μTest)
-      )
-      .dependsOn(baseUtil)
+        testScope(μTest))
       .configureBoth(
         Common.definesMacros,
-        useMacroParadise
-      )
+        useMacroParadise)
 
   lazy val webappBaseJvm = webappBase.jvm
   lazy val webappBaseJs  = webappBase.js

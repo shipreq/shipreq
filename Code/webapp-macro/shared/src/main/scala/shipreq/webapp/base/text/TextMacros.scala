@@ -1,7 +1,7 @@
 package shipreq.webapp.base.text
 
 import scala.reflect.macros.whitebox.Context
-import shipreq.webapp.macros.WhiteboxMacroUtils
+import shipreq.base.macros.WhiteboxMacroUtils
 
 object TextMacros {
 

@@ -1,8 +1,7 @@
-package shipreq.webapp.base.util
+package shipreq.base.util
 
 import scala.reflect.macros.blackbox
-import shipreq.base.util.NonEmptyVector
-import shipreq.webapp.macros.MacroUtils
+import shipreq.base.macros.MacroUtils
 
 object UtilMacros {
 

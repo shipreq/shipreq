@@ -25,7 +25,7 @@ import shipreq.webapp.base.event.{SoftDeletionAction, DeletionAction}
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{Text, Grammar}
 import shipreq.webapp.base.util.GenericData
-import shipreq.webapp.base.util.UtilMacros._
+import shipreq.base.util.UtilMacros._
 import DataImplicits._
 
 // TODO RandomData is inaccurate in that CorrectionParts aren't applied.

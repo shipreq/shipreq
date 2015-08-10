@@ -12,7 +12,7 @@ object Dependencies {
     val reflect  = mm("scala-reflect")
     val p        = mm("scalap")
     val all      = compiler ++ library ++ reflect ++ p
-    val macroDef = reflect ++ (compiler % "provided")
+    val macroDef = reflect ++ library ++ (compiler % "provided")
   }
 
   object Scalaz {

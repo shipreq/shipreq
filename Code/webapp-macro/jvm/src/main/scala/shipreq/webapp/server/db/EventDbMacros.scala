@@ -2,7 +2,7 @@ package shipreq.webapp.server.db
 
 import scala.collection.GenTraversable
 import scala.reflect.macros.blackbox.Context
-import shipreq.webapp.macros.MacroUtils
+import shipreq.base.macros.MacroUtils
 import shipreq.webapp.base.protocol.MPickleMacroUtils
 import shipreq.base.util.TaggedTypes.TaggedInt
 
