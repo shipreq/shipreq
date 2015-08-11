@@ -41,7 +41,7 @@ object CrudAction {
   final case class Update[Id, V](id: Id, newValues: V)           extends CrudAction[Id, V]
   final case class Delete[Id, V](id: Id, action: DeletionAction) extends CrudAction[Id, V]
 
-  @inline implicit def equality[I: UnivEq, V: UnivEq]: UnivEq[CrudAction[I, V]] = UnivEq.force
+  @inline implicit def equality[I: UnivEq, V: UnivEq]: UnivEq[CrudAction[I, V]] = UnivEq.deriveAuto
 
   def pickleCrudAction[I, V](implicit PI: Pickler[I], PV: Pickler[V]): Pickler[CrudAction[I, V]] = {
     implicit val create: Pickler[Create[I, V]] = pickleCaseClass

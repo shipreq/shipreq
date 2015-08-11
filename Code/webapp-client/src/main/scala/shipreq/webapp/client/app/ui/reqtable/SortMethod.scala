@@ -86,9 +86,9 @@ object SortMethod {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  @inline implicit def equalityCB: UnivEq[ConsiderBlanks] = UnivEq.force
-  @inline implicit def equalityIB: UnivEq[IgnoreBlanks]   = UnivEq.force
-  @inline implicit def equality  : UnivEq[SortMethod]     = UnivEq.force
+  @inline implicit def equalityCB: UnivEq[ConsiderBlanks] = UnivEq.derive
+  @inline implicit def equalityIB: UnivEq[IgnoreBlanks]   = UnivEq.derive
+  @inline implicit def equality  : UnivEq[SortMethod]     = UnivEq.derive
 
   // Lazy due to initialisation order. https://github.com/scala-js/scala-js/issues/1490
   lazy val ignoreBlanks   = NonEmptyVector[IgnoreBlanks](Asc, Desc)

@@ -163,7 +163,7 @@ object UnivEq extends UnivEqImplicits {
       } else
         // ADT
         crawlADT(T, p => {
-          val pt = p.asType.toType
+          val pt = determineAdtType(T, p)
           if (allow(pt)) {
             found(pt, "implicit arg")
             Some(())

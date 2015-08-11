@@ -20,7 +20,7 @@ case class IdCeilings(
   reqCode         : Int)
 
 object IdCeilings {
-  implicit def equality: UnivEq[IdCeilings] = UnivEq.force
+  implicit def equality: UnivEq[IdCeilings] = UnivEq.derive
 
   def init(z: Int): IdCeilings =
     IdCeilings(z, z, z, z, z, z)

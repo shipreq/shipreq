@@ -42,11 +42,12 @@ object Column {
 
   // -------------------------------------------------------------------------------------------------------------------
 
+  @inline implicit def equalityCF : UnivEq[CustomField]                     = UnivEq.derive
   @inline implicit def equalityIHB: UnivEq[SortInconclusive with HasBlanks] = UnivEq.force
   @inline implicit def equalityINB: UnivEq[SortInconclusive with NoBlanks]  = UnivEq.force
-  @inline implicit def equalityI  : UnivEq[SortInconclusive]                = UnivEq.force
-  @inline implicit def equalityC  : UnivEq[SortConclusive]                  = UnivEq.force
-  @inline implicit def equality   : UnivEq[Column]                          = UnivEq.force
+  @inline implicit def equalityI  : UnivEq[SortInconclusive]                = UnivEq.derive
+  @inline implicit def equalityC  : UnivEq[SortConclusive]                  = UnivEq.derive
+  @inline implicit def equality   : UnivEq[Column]                          = UnivEq.derive
   @inline implicit def reusability: Reusability[Column]                     = Reusability.byEqual
 
   val builtInValues: NonEmptyVector[BuiltIn] =

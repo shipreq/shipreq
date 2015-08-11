@@ -163,8 +163,10 @@ abstract class MacroUtils {
     val t2 =
       if (t.typeParams.isEmpty)
         t.toType
-      else
+      else if (t.isCaseClass)
         caseClassTypeCtorToType(T, t)
+      else
+        t.toType
     require(t2 <:< T, s"$t2 is not a subtype of $T")
     t2
   }
