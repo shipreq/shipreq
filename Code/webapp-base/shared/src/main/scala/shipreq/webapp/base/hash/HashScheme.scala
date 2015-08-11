@@ -19,8 +19,6 @@ final case class HashScheme private[HashScheme](value: DataHash, id: Short) {
     ProjectHash(this, hash(project))
 }
 
-case class ProjectHash(scheme: HashScheme, hash: Int)
-
 object HashScheme {
   implicit def equality: UnivEq[HashScheme] = UnivEq.force
 
@@ -42,4 +40,10 @@ object HashScheme {
 
   def unsafeGet(id: Short): HashScheme =
     allWhole(id.toInt - 1)
+}
+
+case class ProjectHash(scheme: HashScheme, hash: Int)
+
+object ProjectHash {
+  implicit def equality: UnivEq[ProjectHash] = UnivEq.derive
 }

@@ -3,7 +3,9 @@ package shipreq.base.util
 /**
  * Type indicating that its value has been proven to be non-empty.
  */
-final class NonEmpty[A] private[NonEmpty] (val value: A) extends AnyVal
+final class NonEmpty[A] private[NonEmpty] (val value: A) extends AnyVal {
+  override def toString = s"NonEmpty($value)"
+}
 
 object NonEmpty {
 

@@ -5,6 +5,7 @@ import com.googlecode.flyway.core.dbsupport.{SqlScript, DbSupportFactory}
 import org.apache.commons.io.IOUtils
 import org.postgresql.util.PSQLException
 import org.scalatest.{Exceptional, Outcome, Suite}
+import shipreq.base.util.{ThreadLocalRes, AsciiTable}
 import scala.slick.jdbc.StaticQuery.{queryNA, query, updateNA, update}
 import scala.slick.jdbc.JdbcBackend.{Database, Session}
 import scalaz.Need
@@ -46,6 +47,22 @@ object TestDB {
 
   def withDbHelpers[R](transaction: Boolean)(f: TestDatabaseHelpers => R): R =
     withInstance(transaction)(s => f(TestDatabaseHelpers(s)))
+
+  def threadLocalRes(rollback: Boolean = true) = ThreadLocalRes {
+    TestDB.init()
+    val s = TestDB.Slick.createSession()
+    s.conn.setAutoCommit(false)
+    s
+  }(_.foreach { s =>
+    if (rollback)
+      s.conn.rollback()
+    else
+      s.conn.commit()
+    s.close()
+  })
+
+  def threadLocalResH(rollback: Boolean = true) =
+    threadLocalRes(rollback).strength(TestDatabaseHelpers(_))
 }
 
 trait TestDatabaseSupport extends TestHelpers with TestDatabaseHelpers {
@@ -269,6 +286,27 @@ trait TestDatabaseHelpers extends TestHelpers2 {
 
   def updateUseCaseHeader(ucId: UseCaseIdentId, modFn: UseCaseHeader => UseCaseHeader)(implicit projectId: ProjectId) =
     Locks.SingleUseCase.write(ucId, projectId)(dao.updateUseCaseHeader(ucId, modFn, _))
+
+  def debugSelect(sql: String): Unit = {
+    val stmt = session.conn.createStatement()
+    val rs = stmt.executeQuery(sql)
+    val cols = (1 to rs.getMetaData.getColumnCount).toVector
+    var lines = Vector.empty[Vector[String]]
+    def readLine(f: Int => String): Unit =
+      lines :+= cols.map(f)
+    readLine(rs.getMetaData.getColumnName)
+    while (rs.next())
+      readLine(rs.getString)
+    val table = AsciiTable(lines)
+    println(s"\n> $sql\n$table\n")
+  }
+
+  def debugSelectOnError[A](sql: => String)(f: => A): A =
+    try f catch {
+      case t: Throwable =>
+        debugSelect(sql)
+        throw t
+    }
 }
 
 object TestDatabaseHelpers {

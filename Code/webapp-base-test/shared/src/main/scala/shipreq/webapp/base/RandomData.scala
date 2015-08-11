@@ -1420,6 +1420,7 @@ object RandomData {
   // ===================================================================================================================
   object events {
     import shipreq.webapp.base.event._
+    import shipreq.webapp.base.hash._
 
     val tagChildren: Gen[TagInTree.Children] =
       tagId.vector
@@ -1685,8 +1686,8 @@ object RandomData {
     val updateTagGroup: Gen[UpdateTagGroup] =
       Gen.apply2(UpdateTagGroup)(tagGroupId, tagGroupGD.nonEmptyValues)
 
-    val event: Gen[Event] =
-      oneofVG(valuesForAdt[Event, Gen[Event]] {
+    val activeEvent: Gen[ActiveEvent] =
+      oneofVG(valuesForAdt[ActiveEvent, Gen[ActiveEvent]] {
         case _: AddStaticField        => addStaticField        .subst
         case _: ApplyTemplate         => applyTemplate         .subst
         case _: CreateApplicableTag   => createApplicableTag   .subst
@@ -1722,5 +1723,8 @@ object RandomData {
         case _: UpdateReqCodeGroup    => updateReqCodeGroup    .subst
         case _: UpdateTagGroup        => updateTagGroup        .subst
       })
+
+    val projectHash: Gen[ProjectHash] =
+      Gen.apply2(ProjectHash.apply)(oneofV(HashScheme.all), Gen.int)
   }
 }

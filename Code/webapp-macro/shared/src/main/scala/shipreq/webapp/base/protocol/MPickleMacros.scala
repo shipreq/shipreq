@@ -80,10 +80,11 @@ class MPickleMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
           fail("Class constructor has no parameters.")
 
         case param :: Nil =>
-          val j = TermName("j")
-          val w = invokeWriteJs(j, param)
-          val r = invokeReadJs(j, param)
-          init.wrap(q"ReadWriter[$T](j => $w, {case j => $TC($r)} )")
+          val (n, t) = nameAndType(T, param)
+          val vr     = summonR(init, t)
+          val vw     = summonW(init, t)
+          // invokeReadJs will break PF composition because lhs will always match
+          init.wrap(q"ReadWriter[$T](j => $vw.write(j.$n), $vr.read.andThen($TC.apply))")
 
         case _ =>
           val j = TermName("j")
@@ -117,16 +118,21 @@ class MPickleMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     if (debug) println(s"Keys: $keyCases")
 
     val init        = Init(importMPickle)
+    var defaultCase = Option.empty[(Tree, CaseDef)]
     var wCases      = Vector.empty[CaseDef]
     var roCases     = Vector.empty[CaseDef]
     var rsCases     = Vector.empty[CaseDef]
     var unseenTypes = types
 
-    for ((te, key) <- keyCases)
+    def defaultNotAllowedHere() = fail("Only a class can have an empty key (i.e. be a default).")
+
+    for ((te, key) <- keyCases) {
+      val keyIsBlank = key match {case Literal(Constant(s: String)) => s.isEmpty}
       te match {
 
         // case Obj => key
         case Left(s) =>
+          if (keyIsBlank) defaultNotAllowedHere()
           val t = s.tpe
           val (matchedTypes, remaining) = unseenTypes.partition(_ <:< t)
           unseenTypes = remaining
@@ -145,6 +151,7 @@ class MPickleMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
 
           if (matchedTypes.length == 1 && primaryConstructorParams(t).isEmpty) {
             // Zero-arg case class
+            if (keyIsBlank) defaultNotAllowedHere()
             val apply = tcApplyFn(t)
             val v     = init.valDef(q"$apply(): $t")
             wCases  :+= cq"_: $t => Js.Str($key)"
@@ -153,21 +160,47 @@ class MPickleMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
           } else {
             // Pickle class
             val (vr, vw) = summonRW(init, t)
-            wCases  :+= cq"v: $t => Js.Obj(($key, $vw write v))"
-            roCases :+= cq"$key  => $vr read v"
+            if (keyIsBlank) {
+              if (defaultCase.isDefined)
+                fail("Cannot have more than one default.")
+              if (debug)
+                println(s"Default case: $t")
+              val wc: CaseDef = cq"v: $t => $vw write v"
+              val rc          = q"$vr.read"
+              defaultCase = Some((rc, wc))
+            } else {
+              wCases  :+= cq"v: $t => Js.Obj(($key, $vw write v))"
+              roCases :+= cq"$key  => $vr read v"
+            }
           }
       }
+    }
 
     if (unseenTypes.nonEmpty)
       fail(s"The following types do not have keys: $unseenTypes")
 
+    // Merge read cases
     var rCases = Vector.empty[CaseDef]
     if (rsCases.nonEmpty)
       rCases :+= cq"Js.Str(x) => x match {case ..$rsCases}"
     if (roCases.nonEmpty)
       rCases :+= cq"Js.Obj(x) => val v = x._2; x._1 match {case ..$roCases}"
 
-    val impl = newReadWriter(init, T)(q"{ case ..$wCases }", q"{ case ..$rCases }")
+    // Install default case
+    var rFn = q"{ case ..$rCases }: PartialFunction[Js.Value, $T]"
+    for ((r, w) <- defaultCase) {
+      wCases = w +: wCases
+      rFn = if (rCases.isEmpty)
+          q"$r: PartialFunction[Js.Value, $T]"
+        else {
+          // PFComposition benchmarks suggest this (tmpvar) is faster. Probably bullshit but doesn't hurt.
+          val next = init.valDef(rFn)
+          q"$r.orElse($next): PartialFunction[Js.Value, $T]"
+        }
+    }
+    val wFn = q"{ case ..$wCases }"
+
+    val impl = newReadWriter(init, T)(wFn, rFn)
 
     if (debug) println("\n" + impl + "\n" + sep)
 

@@ -90,15 +90,25 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     var intCases  = Vector.empty[CaseDef]
     var makeCases = Vector.empty[CaseDef]
 
+    init += q"var tmp = Set.empty[Byte]"
+
     for (tc <- types) {
       val t       = tc.asType.toType
       val t2      = fixAdtTypeForCaseDef(t)
       val mono    = implicitMono(t) getOrElse fail(s"MonoId not found for: $t")
       val b       = init.valDef(q"$mono.byte")
+      init += q"tmp += $b"
       byteCases :+= cq"_: $t2 => $b"
       intCases  :+= cq"i: $t2 => $mono integer i"
       makeCases :+= cq"`$b` => $mono.make"
     }
+
+    val errPre = s"$T: "
+    init += q"""def err(e: String) = sys.error($errPre + e + "\nValid data_id_types: "+tmp)"""
+    init += q"""if (tmp.size != ${types.size}) sys.error($errPre + "Duplicate data_id_type found in: " + tmp)"""
+    byteCases :+= cq"""x => err("Invalid data_id_type in byte(): " + x)"""
+    makeCases :+= cq"""x => err("Invalid data_id_type in make(): " + x)"""
+    intCases  :+= cq"""x => err("Invalid data_id: " + x)"""
 
     val impl = q"""
       ..$init

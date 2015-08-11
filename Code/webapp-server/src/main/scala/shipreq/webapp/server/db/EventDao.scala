@@ -6,11 +6,11 @@ import shipreq.webapp.base.hash.{ProjectHash, HashScheme}
 import shipreq.webapp.server.lib.Types.ProjectId
 import EventDao.EventSeq
 
-object EventDbCodecs extends upickle.StdlibCodecs.Seqs {
+object EventDbCodecs {
   import japgolly.nyaya.util.{Multimap, MultiValues}
   import upickle._
   import upickle.Fns._
-  import upickle.BaseCodecs._
+  import upickle.BaseCodecs.StringRW
   import shipreq.base.util._
   import shipreq.webapp.base.data._
   import shipreq.webapp.base.protocol.MPickleMacros._
@@ -20,6 +20,26 @@ object EventDbCodecs extends upickle.StdlibCodecs.Seqs {
 
   private[this] val jsNum0 = Js.Num(0)
   private[this] val jsNum1 = Js.Num(1)
+
+  implicit val pickleInt: ReadWriter[Int] =
+    ReadWriter(i => Js.Num(i), { case Js.Num(i) => i.toInt })
+
+  implicit class ReadWriterExt[A](private val rw: ReadWriter[A]) extends AnyVal {
+    import StdlibCodecs.All._
+    private implicit def _rw = rw
+
+    def set(implicit ev: UnivEq[A]): ReadWriter[Set[A]] =
+      ReadWriter.merge(SeqishR[A, Set], SeqishW[A, Set])
+
+    def vector: ReadWriter[Vector[A]] =
+      ReadWriter.merge(SeqishR[A, Vector], SeqishW[A, Vector])
+
+    def nev: ReadWriter[NonEmptyVector[A]] =
+      pickleNEV(vector)
+
+    def nes(implicit ev: UnivEq[A]): ReadWriter[NonEmptySet[A]] =
+      pickleNES(ev, set)
+  }
 
   private def boolCase[T](iso: IsoBool[T]): ReadWriter[T] =
     ReadWriter(
@@ -35,41 +55,40 @@ object EventDbCodecs extends upickle.StdlibCodecs.Seqs {
       case j        => Some(readJs(j)(rw))
     })
 
-  def setDiff[A: UnivEq](implicit r: Reader[A], w: Writer[A]): ReadWriter[SetDiff[A]] = {
-    val rs: Reader[Set[A]] = implicitly
-    val ws: Writer[Set[A]] = implicitly
+  def setDiff[A: UnivEq](implicit rw: ReadWriter[A]): ReadWriter[SetDiff[A]] = {
+    val rws = rw.set
     ReadWriter(sd => {
       var kvs: List[(String, Js.Value)] = Nil
       if (sd.added.nonEmpty)
-        kvs ::= ("+" -> ws.write(sd.added))
+        kvs ::= ("+" -> rws.write(sd.added))
       if (sd.removed.nonEmpty)
-        kvs ::= ("-" -> ws.write(sd.removed))
+        kvs ::= ("-" -> rws.write(sd.removed))
       Js.Obj(kvs: _*)
     }, {
       case o: Js.Obj =>
         var del = Set.empty[A]
         var add = Set.empty[A]
         o.value.foreach(kv => kv._1 match {
-          case "-" => del = rs.read(kv._2)
-          case "+" => add = rs.read(kv._2)
+          case "-" => del = rws.read(kv._2)
+          case "+" => add = rws.read(kv._2)
         })
         SetDiff(removed = del, add)
     })
   }
 
-  def pickleNonEmpty[N, E](f: N => E)(implicit r: Reader[E], w: Writer[E], proof: NonEmpty.Proof[E, N]): ReadWriter[N] =
+  def pickleNonEmpty[N, E](f: N => E)(implicit rw: ReadWriter[E], proof: NonEmpty.Proof[E, N]): ReadWriter[N] =
     ReadWriter.xmapf(f)(NonEmpty require_! _)
 
-  def pickleNonEmptyA[A](implicit r: Reader[A], w: Writer[A], proof: NonEmpty.ProofA[A]): ReadWriter[NonEmpty[A]] =
+  def pickleNonEmptyA[A](implicit rw: ReadWriter[A], proof: NonEmpty.ProofA[A]): ReadWriter[NonEmpty[A]] =
     pickleNonEmpty(_.value)
 
-  implicit def pickleNEV[A](implicit r: Reader[Vector[A]], w: Writer[Vector[A]]): ReadWriter[NonEmptyVector[A]] =
+  def pickleNEV[A](implicit rw: ReadWriter[Vector[A]]): ReadWriter[NonEmptyVector[A]] =
     pickleNonEmpty(_.whole)
 
-  implicit def pickleNES[A: UnivEq](implicit r: Reader[Set[A]], w: Writer[Set[A]]): ReadWriter[NonEmptySet[A]] =
+  def pickleNES[A: UnivEq](implicit rw: ReadWriter[Set[A]]): ReadWriter[NonEmptySet[A]] =
     pickleNonEmpty(_.whole)
 
-  def pickleNESD[A: UnivEq](implicit r: Reader[A], w: Writer[A]): ReadWriter[Event.NESD[A]] = {
+  def pickleNESD[A: UnivEq](implicit rw: ReadWriter[A]): ReadWriter[Event.NESD[A]] = {
     implicit val sd = setDiff[A]
     pickleNonEmptyA
   }
@@ -95,12 +114,13 @@ object EventDbCodecs extends upickle.StdlibCodecs.Seqs {
   implicit val pickleReqTypeMnemonic         : ReadWriter[ReqType.Mnemonic          ] = caseClass
 
   implicit val pickleReqId: ReadWriter[ReqId] = pickleAdtOS {
-    case _: GenericReqId => "g"
+    case _: GenericReqId => ""
   }
 
   implicit val pickleReqIdNESD = pickleNESD[ReqId]
 
-  implicit val pickleReqCodeIdSet: ReadWriter[Set[ReqCodeId]] = ReadWriter.merge
+  implicit val pickleReqCodeIdSet: ReadWriter[Set[ReqCodeId]] =
+    pickleReqCodeId.set
 
   implicit val pickleFieldId: ReadWriter[FieldId] = pickleAdtOS {
     case _: CustomField.Text       .Id => "x"
@@ -114,8 +134,8 @@ object EventDbCodecs extends upickle.StdlibCodecs.Seqs {
   implicit val pickleFieldIdPosition: ReadWriter[Position[FieldId]] =
     addOptionWithNoneAs0(pickleFieldId)
 
-  implicit val pickleTagId: ReadWriter[TagId] = pickleAdtOS {
-    case _: ApplicableTagId => "a"
+  implicit val pickleTagId: ReadWriter[TagId] = pickleAdtOS[TagId] {
+    case _: ApplicableTagId => ""
     case _: TagGroupId      => "g"
   }
 
@@ -131,7 +151,7 @@ object EventDbCodecs extends upickle.StdlibCodecs.Seqs {
   }
 
   implicit val pickleTagTreeChildren: ReadWriter[TagInTree.Children] =
-    ReadWriter.merge
+    pickleTagId.vector
 
   private val reqCodeValueToString: ReqCode.Value => String =
     ReqCode.valueToStr(_, '.')
@@ -144,7 +164,7 @@ object EventDbCodecs extends upickle.StdlibCodecs.Seqs {
         if (i == -1)
           NonEmptyVector.force(found :+ ReqCode.Node(rem))
         else {
-          val h = rem.substring(0, i - 1)
+          val h = rem.substring(0, i)
           found :+= ReqCode.Node(h)
           go(rem.substring(i + 1))
         }
@@ -170,8 +190,9 @@ object EventDbCodecs extends upickle.StdlibCodecs.Seqs {
     })
 
 
-  implicit def pickleISubset[A: UnivEq : Reader : Writer]: ReadWriter[ISubset[A]] = {
+  implicit def pickleISubset[A: UnivEq : ReadWriter]: ReadWriter[ISubset[A]] = {
     import ISubset._
+    implicit val as = implicitly[ReadWriter[A]].nes
     implicit val o: ReadWriter[Only[A]] = caseClass
     implicit val n: ReadWriter[Not [A]] = caseClass
     pickleAdtOS {
@@ -201,10 +222,10 @@ object EventDbCodecs extends upickle.StdlibCodecs.Seqs {
     }
 
     override def vec[A](implicit a: ReadWriter[A]) =
-      ReadWriter.merge[Vector[A]]
+      a.vector
 
     override def nev[A](as: ReadWriter[Vector[A]])(implicit a: ReadWriter[A]) =
-      ReadWriter.merge[NonEmptyVector[A]]
+      pickleNEV(as)
 
     private[this] final val BLANKLINE = 0
     private[this] final val WEBADD    = "/"
@@ -267,10 +288,10 @@ object EventDbCodecs extends upickle.StdlibCodecs.Seqs {
     ReadWriter.xmap((s: String) => if (s.isEmpty) None else Some(s))(_ getOrElse "")
 
   implicit val pickleApplicableTagIdNES: ReadWriter[NonEmptySet[ApplicableTagId]] =
-    ReadWriter.merge
+    pickleApplicableTagId.nes
 
   implicit val pickleReqIdNES: ReadWriter[NonEmptySet[ReqId]] =
-    ReadWriter.merge
+    pickleReqId.nes
 
   implicit val pickleDeletionAction: ReadWriter[DeletionAction] = pickleAdtOS {
     case SoftDel => "s"
@@ -524,10 +545,10 @@ object EventSqlHelpers {
   import shipreq.base.db.SqlHelpers._
   import EventDbCodecs.eventCodecRegistry
 
-  implicit val GR_EventSeq = GetResult(r => EventSeq(r.<<))
+  implicit val GR_EventSeq = GetResult(r => EventSeq(r.nextInt()))
   implicit object SP_EventSeq extends SetParameter[EventSeq] {
     def apply(v: EventSeq, pp: PositionedParameters): Unit =
-      pp setShort v.id
+      pp setInt v.value
   }
 
   implicit val GR_HashScheme = GetResult(HashScheme unsafeGet _.nextShort())
@@ -547,7 +568,10 @@ object EventSqlHelpers {
   implicit object GR_ActiveEvent extends GetResult[ActiveEvent] {
     def apply(r: PositionedResult) = {
       val typeId     = r.nextShort()
-      val dataIdType = r.nextByte()
+//      val dataIdType = r.nextByte()
+      val dataIdType = r.nextShort().toByte
+//      val dataIdType = r.nextInt().toByte
+//println(s"READ: $dataIdType")
       val dataId     = r.nextObject().asInstanceOf[Integer]
       val data       = r.nextString()
       val codec      = eventCodecRegistry.reader(typeId)
@@ -560,7 +584,11 @@ object EventSqlHelpers {
       val c = eventCodecRegistry.writer(e)
       val d = c._2.write(e)
       pp setShort c._1
-      pp setByte  d._1
+      pp setShort d._1
+//      pp setByte  d._1
+//      pp.setObject(pgObject("char", d._1.toString), java.sql.Types.OTHER)
+//      pp.setObject(pgObject(null, s"""d._1::"char"""".toString), java.sql.Types.OTHER)
+//      println(s"WRITE: ${d._1} ($e)")
       pp.setObject(d._2, java.sql.Types.INTEGER)
       pp.setObject(pgObject("json", d._3), java.sql.Types.OTHER)
     }
@@ -570,8 +598,8 @@ object EventSqlHelpers {
 // =====================================================================================================================
 
 object EventDao {
-  case class EventSeq(id: Short) extends AnyVal {
-    def succ = EventSeq((id.toInt + 1).toShort)
+  case class EventSeq(value: Int) extends AnyVal {
+    //def succ = EventSeq(value + 1)
   }
 }
 
