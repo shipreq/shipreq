@@ -13,6 +13,7 @@ import shipreq.webapp.client.util._
 object Style extends StyleSheet.Inline {
   import dsl._
 
+  /** Domains */
   object D {
     val live     = Domain.ofValues[Live]    (Live, Dead)
     val validity = Domain.ofValues[Validity](Valid, Invalid)
@@ -42,6 +43,15 @@ object Style extends StyleSheet.Inline {
 
   private def deadColumnLabel(live: Live) =
     mixinIf(live :: Dead)(textDecoration := ^.lineThrough)
+
+  // ===================================================================================================================
+  // Config screens
+  object cfg {
+
+    val deadMnemonic = style(
+      color(c"#aaa"),
+      textDecoration := ^.lineThrough)
+  }
 
   // ===================================================================================================================
   object reqtable {
@@ -275,6 +285,7 @@ object Style extends StyleSheet.Inline {
   // ===================================================================================================================
 
   initInnerObjects(
+    cfg.deadMnemonic,
     reqtable.sortCriteriaEditor.conclusiveColumnName,
     reqtable.filterEditor.errorMsg,
     reqtable.table,

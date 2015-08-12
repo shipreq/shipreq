@@ -3,12 +3,13 @@ package shipreq.webapp.client.app.ui.cfg.fields
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
 import monocle.Lens
 import monocle.std.map.atMap
+import scalacss.ScalaCssReact._
 import scalaz.effect.IO
 import scalaz.syntax.bind.ToBindOps
 import scalaz.syntax.equal._
 import shipreq.base.util.{UnivEq, IMap}
 import shipreq.webapp.base.data._
-import shipreq.webapp.client.app.ui.ISubsetEditor
+import shipreq.webapp.client.app.ui.{ISubsetEditor, Style}
 import shipreq.webapp.client.lib.ui.{FieldSet => _, _}
 import shipreq.webapp.client.lib.ConsoleIO
 import Field.ApplicableReqTypes
@@ -47,7 +48,7 @@ class AppReqTypesEditor(customReqTypes: TraversableOnce[CustomReqType]) {
     if (a.fold(_ => true, _.live ≟ Live))
       a.mnemonic.value
     else
-      <.span(CSS.deadInline, a.mnemonic.value)
+      <.span(Style.cfg.deadMnemonic, a.mnemonic.value)
   }
 
   val static = ISubsetEditor.StaticProps[A](preprocess, renderValue, reqtypemap.keys)

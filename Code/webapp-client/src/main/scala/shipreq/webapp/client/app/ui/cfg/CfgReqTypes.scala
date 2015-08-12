@@ -3,6 +3,7 @@ package shipreq.webapp.client.app.ui.cfg
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.extra.OnUnmount
 import scala.language.reflectiveCalls
+import scalacss.ScalaCssReact._
 import scalaz.std.string.stringInstance
 import scalaz.std.tuple._
 
@@ -11,6 +12,7 @@ import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.data.Validators.{reqType => V}
 import shipreq.webapp.base.protocol.CustomReqTypeCrud
 import shipreq.webapp.client.app.state.{ClientData, ChangeListener}
+import shipreq.webapp.client.app.ui.Style
 import shipreq.webapp.client.lib.{FilterDead, CrudIO}
 import shipreq.webapp.client.lib.ui._
 import shipreq.webapp.client.protocol.ClientProtocol
@@ -76,7 +78,7 @@ object CfgReqTypes {
                 if (oldMnemonics.isEmpty)
                   mnemonic
                 else
-                  Seq(mnemonic, <.div(CSS.deadInline, oldMnemonics.toStream.map(_.value).sorted.mkString(", ")))
+                  Seq(mnemonic, <.div(Style.cfg.deadMnemonic, oldMnemonics.toStream.map(_.value).sorted.mkString(", ")))
               Seq(mn, name, impReq)
           }
         }
