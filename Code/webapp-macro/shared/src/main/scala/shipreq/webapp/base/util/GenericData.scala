@@ -1,5 +1,6 @@
 package shipreq.webapp.base.util
 
+import scalaz.{Equal, Order}
 import shipreq.base.util.{NonEmpty, IMap, NonEmptySet, UnivEq}
 
 abstract class GenericData {
@@ -39,7 +40,15 @@ abstract class GenericData {
 
   val attrs: Attrs
 
-  implicit def attrEquality: UnivEq[Attr]
+  implicit val equalityAttr: Order[Attr] with UnivEq[Attr]
+
+  implicit def equalityValue: UnivEq[Value]
+
+  implicit lazy val equalityValues: Equal[Values] =
+    IMap.equality
+
+  implicit def equalityNonEmptyValues: Equal[NonEmptyValues] =
+    NonEmpty.nonEmptyEqual
 
   def emptyValues: Values =
     IMap.empty(_.attr)

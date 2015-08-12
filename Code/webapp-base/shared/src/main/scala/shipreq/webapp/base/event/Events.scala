@@ -3,9 +3,12 @@ package shipreq.webapp.base.event
 import japgolly.nyaya.util.Multimap
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.Text.{GenericReqTitle, CustomTextField, ReqCodeGroupTitle}
+import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.util._
 import Event.NESD
+import Text.{GenericReqTitle, CustomTextField, ReqCodeGroupTitle}
+import Text.Equality._
+import UnivEq.Implicits._
 
 /**
  * A change to a [[Project]].

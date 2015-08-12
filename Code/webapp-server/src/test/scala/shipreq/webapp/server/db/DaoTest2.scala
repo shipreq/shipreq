@@ -5,29 +5,24 @@ import japgolly.nyaya._
 import japgolly.nyaya.test._
 import japgolly.nyaya.test.PropTestOps._
 import shipreq.webapp.base.RandomData
-import shipreq.webapp.server.test.{TestDatabaseHelpers, TestDB}
+import shipreq.webapp.server.test.TestDB
+import scalaz.std.option.optionEqual
+import scalaz.std.tuple.tuple2Equal
 import utest._
-import shipreq.base.util.{ThreadLocalRes, UnivEq}, UnivEq.Implicits._
+import shipreq.webapp.base.event.EventEquality._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.hash.ProjectHash
 import EventDao.EventSeq
 
 object DaoTest2 extends TestSuite {
 
-  val tldb = TestDB.threadLocalResH()
+  val tldb = TestDB.threadLocalResH(false)
     .xmap(t => (t._1, t._2, t._2.newProjectId()))(t => (t._1, t._2))
-
-//  import shipreq.webapp.base.text.Text.Equality._
-//  import shipreq.webapp.base.util.TypeclassDerivation._
-  implicit def activeEventEq = UnivEq.force[ActiveEvent]
-//  implicit def activeEventEq: UnivEq[ActiveEvent] = UnivEq._deriveAuto
-//  implicit def activeEventEq: scalaz.Equal[ActiveEvent] = deriveEqual
 
   override def tests = TestSuite {
     'event {
-
-//      implicit val settings = DefaultSettings.propSettings.setSampleSize(10).setGenSize(10).setDebug.setSingleThreaded.setSeed(0)
-      implicit val settings = DefaultSettings.propSettings.setSampleSize(10000).setGenSize(30) //.setSeed(0).setSingleThreaded
+      // implicit val settings = DefaultSettings.propSettings.setSampleSize(10).setGenSize(10).setDebug.setSingleThreaded.setSeed(0)
+      implicit val settings = DefaultSettings.propSettings.setSampleSize(320).setGenSize(30)
 
       val seqCounter = new AtomicInteger()
 

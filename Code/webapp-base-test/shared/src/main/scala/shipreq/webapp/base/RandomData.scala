@@ -1470,7 +1470,7 @@ object RandomData {
     }
 
     abstract class GenericDataGen[GD <: GenericData](final val gd: GD) {
-      import gd.attrEquality
+      import gd.equalityAttr
 
       def valueFor(a: gd.Attr): Gen[gd.Value]
 

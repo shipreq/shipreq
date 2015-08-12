@@ -62,6 +62,22 @@ class UtilMacroImpls(val c: blackbox.Context) extends MacroUtils {
       """
     }
 
+    def adt: Tree = {
+      val init = Init()
+      val cases = crawlADT[CaseDef](T, p => {
+        val pt = determineAdtType(T, p)
+        tryInferImplicit(appliedType(equal, pt)).map { et =>
+          val e = init.valDef(et)
+          cq"x: $pt => b match {case y: $pt => $e.equal(x,y); case _ => false}"
+        }
+      }, p => {
+        val pt = p.asType.toType
+        val u = appliedType(equal, pt)
+        fail(s"Implicit not found: $u")
+      })
+      init wrap q"_root_.scalaz.Equal.equal[$T]((a,b) => a match {case ..$cases})"
+    }
+
     val impl =
       if (t.isClass && t.asClass.isCaseClass) {
         ensureConcrete(T)
@@ -71,7 +87,7 @@ class UtilMacroImpls(val c: blackbox.Context) extends MacroUtils {
         else
           caseClass1up(params)
       } else
-        fail(s"Derivation not yet supported: Equal[$T]")
+        adt
 
     if (debug) println("\n" + impl + "\n")
     c.Expr[Equal[T]](impl)

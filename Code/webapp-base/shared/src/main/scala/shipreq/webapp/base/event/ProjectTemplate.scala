@@ -1,6 +1,6 @@
 package shipreq.webapp.base.event
 
-import shipreq.base.util.{NonEmptyVector, NonEmptySet, ISubset}
+import shipreq.base.util.{UnivEq, NonEmptyVector, NonEmptySet, ISubset}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.util.GenericDataMacros._
 import Field.ApplicableReqTypes
@@ -137,4 +137,6 @@ object ProjectTemplate {
       qb.events
     }
   }
+
+  implicit def equality: UnivEq[ProjectTemplate] = UnivEq.derive
 }

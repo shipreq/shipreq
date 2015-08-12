@@ -1,5 +1,6 @@
 package shipreq.webapp.base.util
 
+import scalaz.Equal
 import scala.annotation.StaticAnnotation
 import scala.annotation.compileTimeOnly
 import shipreq.base.macros._
@@ -33,6 +34,7 @@ class GenericDataMacroImplsW(val c: scala.reflect.macros.whitebox.Context) exten
    * Populates the body of a [[GenericData]] object.
    */
   def objectImpl(annottees: c.Expr[Any]*) = {
+    val equal     = c.typeOf[Equal[_]]
     var attrNames = Vector.empty[TermName]
     var attrDefns = List.empty[Tree]
     var unused    = Vector.empty[Tree]
@@ -53,9 +55,14 @@ class GenericDataMacroImplsW(val c: scala.reflect.macros.whitebox.Context) exten
               case object $attrNameT extends Attr {
                 override type Data = $attrType
                 override def apply(data: Data) = $valueNameT(data)
+                val dataEquality: Equal[Data] = implicitly[Equal[$attrType]]
               }
               final case class $valueNameY(value: $attrNameT.Data) extends Value {
                 override val attr: $attrNameT.type = $attrNameT
+                override def equals(o: Any): Boolean = o match {
+                  case $valueNameT(v2) => $attrNameT.dataEquality.equal(value, v2)
+                  case _ => false
+                }
               }
             """
 
@@ -81,14 +88,18 @@ class GenericDataMacroImplsW(val c: scala.reflect.macros.whitebox.Context) exten
 
         q"""
           object $objName extends $parent {
+            import scalaz.{Equal, Order}
             import shipreq.base.util.{NonEmptySet, UnivEq}
 
-            sealed trait Attr extends AttrBase
-            sealed trait Value extends ValueBase
+            sealed abstract class Attr extends AttrBase
+            sealed abstract class Value extends ValueBase
 
             ..${flattenBlocks(attrDefns)}
 
-            override implicit def attrEquality = UnivEq.force[Attr]
+            override implicit val equalityAttr: Order[Attr] with UnivEq[Attr] =
+              UnivEq.withArbitraryOrder(Vector(..$attrNames))
+
+            @inline override implicit def equalityValue: UnivEq[Value] = UnivEq.force
 
             override val attrs = NonEmptySet[Attr](..$attrNames)
           }
@@ -174,11 +185,18 @@ class GenericDataMacroImpls(val c: scala.reflect.macros.blackbox.Context) extend
     val attrsAndValues = resolveAttrsAndValues(debug)(D)
     val nameToExpr = localNameToExpr(ctx)
 
+    val equal = c.typeOf[Equal[_]]
+    val data  = TypeName("Data")
     val stmts = for ((a,v) <- attrsAndValues) yield {
-      val n = lowerCaseHead(a.name.toString)
-      val local = nameToExpr(n)
+      val n      = lowerCaseHead(a.name.toString)
+      val local  = nameToExpr(n)
       val refVal = q"$ref.${TermName(n)}"
-      q"if (!implicitly[_root_.scalaz.Equal[$a.Data]].equal($refVal, $local)) us += $a($local)"
+      // We don't want to avoid creating new Equal instances on each invocation as this macro is used as a function.
+      // If not, we could use Init().
+      // val dt     = a.moduleClass.asType.toType.decl(data).asType.toType.dealias
+      // val e      = needInferImplicit(appliedType(equal, dt))
+      val e = q"$a.dataEquality"
+      q"if (!$e.equal($refVal, $local)) us += $a($local)"
     }
 
     val impl = q""" {
