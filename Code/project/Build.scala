@@ -192,6 +192,7 @@ object ShipReq extends Build {
         μPickle ++ boopickle ++ Monocle.core ++
         providedScope(Scala.library) ++
         testScope(μTest))
+      .depsForJvm(postgresql)
       .configureBoth(
         Common.definesMacros,
         useMacroParadise)

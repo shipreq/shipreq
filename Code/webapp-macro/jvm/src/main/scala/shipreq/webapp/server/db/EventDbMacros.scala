@@ -1,5 +1,6 @@
 package shipreq.webapp.server.db
 
+import org.postgresql.util.PGobject
 import scala.reflect.macros.blackbox.Context
 import shipreq.base.macros.MacroUtils
 import shipreq.webapp.base.protocol.MPickleMacroUtils
@@ -14,14 +15,16 @@ import shipreq.base.util.TaggedTypes.TaggedInt
  * @tparam E An event.
  */
 class DbCodec[E](val read : (Byte, Integer, String) => E,
-                 val write: E => (Byte, Integer, String))
+                 val write: E => (PGobject, Integer, String))
 
 object DbCodec {
-  final class MonoId[A](final val byte: Byte, val integer: A => Integer, val make: Integer => A)
+  final class MonoId[A](final val byte: Byte, val integer: A => Integer, val make: Integer => A) {
+    val bytePG = EventDbMacroImpls makeTypeIdPG byte
+  }
   def monoId[A <: TaggedInt](byte: Byte, make: Int => A): MonoId[A] =
     new MonoId(byte, _.value, i => make(i.intValue))
 
-  final case class PolyId[A](byte: A => Byte, integer: A => Integer, make: Byte => Integer => A)
+  final case class PolyId[A](bytePG: A => PGobject, integer: A => Integer, make: Byte => Integer => A)
   def  polyId[A]: DbCodec.PolyId[A] = macro EventDbMacroImpls.quietPolyId[A]
   def _polyId[A]: DbCodec.PolyId[A] = macro EventDbMacroImpls.debugPolyId[A]
 
@@ -32,6 +35,7 @@ object DbCodec {
 
 object EventDbMacros {
   final val noDataIdType: Byte = ' '
+  val noDataIdTypePG = EventDbMacroImpls.makeTypeIdPG(noDataIdType)
 
   def dbCodecIdOnly [E]: DbCodec[E] = macro EventDbMacroImpls.quietDbCodecIdOnly[E]
   def _dbCodecIdOnly[E]: DbCodec[E] = macro EventDbMacroImpls.debugDbCodecIdOnly[E]
@@ -53,6 +57,13 @@ object EventDbMacros {
 object EventDbMacroImpls {
   import upickle._
 
+  def makeTypeIdPG(b: Byte): PGobject = {
+    val o = new PGobject()
+    o.setType("char")
+    o.setValue(b.toChar.toString)
+    o
+  }
+
   def readPickledObject(d: String): Js.Obj =
     json.read(d) match {
       case o: Js.Obj => o
@@ -72,9 +83,9 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
   type IdFns = (Tree, Tree, Tree)
   private def implicitIdFns(t: Type): IdFns = {
     def tryMono: Option[IdFns] =
-      implicitMono(t).map(f => (q"$f.byte", q"$f integer a", q"$f make i"))
+      implicitMono(t).map(f => (q"$f.bytePG", q"$f integer a", q"$f make i"))
     def tryPoly: Option[IdFns] =
-      implicitPoly(t).map(f => (q"$f byte a", q"$f integer a", q"$f.make(b)(i)"))
+      implicitPoly(t).map(f => (q"$f bytePG a", q"$f integer a", q"$f.make(b)(i)"))
     tryMono orElse tryPoly getOrElse fail(s"No implicit MonoId or PolyId instance found for: $t")
   }
 
@@ -97,7 +108,7 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
       val mono    = implicitMono(t) getOrElse fail(s"MonoId not found for: $t")
       val b       = init.valDef(q"$mono.byte")
       init += q"tmp += $b"
-      byteCases :+= cq"_: $t2 => $b"
+      byteCases :+= cq"_: $t2 => $mono.bytePG"
       intCases  :+= cq"i: $t2 => $mono integer i"
       makeCases :+= cq"`$b` => $mono.make"
     }
@@ -159,7 +170,7 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
       ..$init
       new DbCodec[$T](
         (_, _, d) => $apply($readData),
-        e => (noDataIdType, null, $writeData))
+        e => (noDataIdTypePG, null, $writeData))
     """
 
     if (debug) println("\n" + impl + "\n")

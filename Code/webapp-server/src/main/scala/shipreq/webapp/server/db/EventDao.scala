@@ -453,8 +453,8 @@ object EventDbCodecs {
 
   implicit val idTypeFieldId: DbCodec.PolyId[FieldId] =
     new DbCodec.PolyId[FieldId]({
-        case i: CustomFieldId => idTypeCustomFieldId byte i
-        case _: StaticField   => idTypeStaticField.byte
+        case i: CustomFieldId => idTypeCustomFieldId bytePG i
+        case _: StaticField   => idTypeStaticField.bytePG
       }, {
         case i: CustomFieldId => i.value
         case f: StaticField   => idTypeStaticField integer f
@@ -597,7 +597,7 @@ object EventSqlHelpers {
       val c = eventCodecRegistry.writer(e)
       val d = c._2.write(e)
       pp setShort c._1
-      pp.setObject(pgObject("char", d._1.toChar.toString), java.sql.Types.OTHER)
+      pp.setObject(d._1, java.sql.Types.OTHER)
       pp.setObject(d._2, java.sql.Types.INTEGER)
       pp.setObject(pgObject("json", d._3), java.sql.Types.OTHER)
     }
