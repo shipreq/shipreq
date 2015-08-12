@@ -24,7 +24,7 @@ object BinCodecEvents {
   implicit val pickleCreateGenericReqGD = binpickler(CreateGenericReqGD).values
   implicit val pickleReqCodeGroupGD     = binpickler(ReqCodeGroupGD).nev
 
-  implicit val pickleProjectTemplate: Pickler[ProjectTemplate] = ConstPickler(ProjectTemplate.Default) // TODO
+  implicit val pickleProjectTemplate: Pickler[ProjectTemplate] = pickleEnum(ProjectTemplate.values)
 
   implicit val pickleAddStaticField       : Pickler[AddStaticField]        = pickleCaseClass
   implicit val pickleApplyTemplate        : Pickler[ApplyTemplate]         = pickleCaseClass
@@ -64,7 +64,7 @@ object BinCodecEvents {
   implicit val pickleActiveEvent: Pickler[ActiveEvent] = pickleADT
   implicit val pickleEvent      : Pickler[Event]       = pickleADT
 
-  implicit val pickleHashScheme: Pickler[HashScheme] = ConstPickler(HashScheme.latest) // TODO
+  implicit val pickleHashScheme: Pickler[HashScheme] = pickleEnum(HashScheme.all)
 
   implicit val pickleVerifiedEvent : Pickler[VerifiedEvent]  = pickleCaseClass
   implicit val pickleVerifiedEvents: Pickler[VerifiedEvents] = iterablePickler
