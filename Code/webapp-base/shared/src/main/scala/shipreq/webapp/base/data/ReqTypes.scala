@@ -5,7 +5,6 @@ import monocle.macros.Lenses
 import scalaz.{Order, Ordering}
 import scalaz.std.anyVal.intInstance
 import scalaz.syntax.order._
-import shapeless.{Generic, :+:, CNil, Coproduct, Inl, Inr, Lazy}
 import shipreq.base.util.{UnivEq, Must, NonEmptyVector}
 import shipreq.base.util.TaggedTypes._
 import ReqType.Mnemonic
@@ -13,28 +12,6 @@ import ReqType.Mnemonic
 /** type [[ReqTypeId]] = [[StaticReqType]] | [[CustomReqTypeId]] */
 sealed trait ReqTypeId {
   def foldId[A](s: StaticReqType => A, c: CustomReqTypeId => A): A
-}
-
-object ReqTypeId {
-  implicit object IdGeneric extends Generic[ReqTypeId] {
-    override type Repr = StaticReqType :+: CustomReqTypeId :+: CNil
-    override def to  (id: ReqTypeId): Repr = id.foldId(Coproduct[Repr](_), Coproduct[Repr](_))
-    override def from(co: Repr): ReqTypeId = co match {
-      case Inl(s)      => s
-      case Inr(Inl(c)) => c
-      case _           => ???
-    }
-  }
-
-  implicit object IdOrder extends Order[ReqTypeId] with UnivEq[ReqTypeId] {
-    implicitly[Lazy[UnivEq[ReqTypeId]]] // prove Id is actually UnivEq
-    override def order(a: ReqTypeId, b: ReqTypeId) = (a, b) match {
-      case (x: CustomReqTypeId, y: CustomReqTypeId) => Order[CustomReqTypeId].order(x, y)
-      case (x: StaticReqType  , y: StaticReqType  ) => StaticReqType.order(x, y)
-      case (x: StaticReqType  , y: CustomReqTypeId) => Ordering.LT
-      case (x: CustomReqTypeId, y: StaticReqType  ) => Ordering.GT
-    }
-  }
 }
 
 sealed trait ReqType {
@@ -117,5 +94,19 @@ object CustomReqType {
   object IdAccess extends ObjDataId[CustomReqType.type, CustomReqType, CustomReqTypeId] {
     override def id(d: CustomReqType) = d.id
     override val unapplyData: AnyRef => Option[CustomReqType] = {case r: CustomReqType => Some(r); case _ => None}
+  }
+}
+
+// =====================================================================================================================
+
+object ReqTypeId {
+  implicit object IdOrder extends Order[ReqTypeId] with UnivEq[ReqTypeId] {
+    UnivEq.derive[ReqTypeId] // prove Id is actually UnivEq
+    override def order(a: ReqTypeId, b: ReqTypeId) = (a, b) match {
+        case (x: CustomReqTypeId, y: CustomReqTypeId) => Order[CustomReqTypeId].order(x, y)
+        case (x: StaticReqType  , y: StaticReqType  ) => StaticReqType.order(x, y)
+        case (x: StaticReqType  , y: CustomReqTypeId) => Ordering.LT
+        case (x: CustomReqTypeId, y: StaticReqType  ) => Ordering.GT
+      }
   }
 }
