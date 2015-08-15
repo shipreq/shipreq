@@ -28,8 +28,8 @@ object Table {
   implicit val reusabilityCTS : Reusability[Cell.TableState]                = Reusability.byRef
   implicit val reusabilityCRS : Reusability[Cell.RowState]                  = Reusability.byRef
 
-  implicit val reusabilityFocus = Reusability.caseclass2(Focus.unapply)
-  implicit val reusabilityProps = Reusability.caseclass6(Props.unapply)
+  implicit val reusabilityFocus = Reusability.caseClass[Focus]
+  implicit val reusabilityProps = Reusability.caseClass[Props]
 
   case class Focus(rowInd: Int, col: Column) {
     @inline def row(rows: Vector[Row]): Option[Row] =
@@ -185,7 +185,7 @@ object Table {
 
   // ===================================================================================================================
 
-  implicit val rowPropReuse = Reusability.caseclass5(RowProps.unapply)
+  implicit val rowPropReuse = Reusability.caseClass[RowProps]
 
   case class RowProps(row     : Row,
                       crs     : NonEmptyVector[ColumnRenderer],

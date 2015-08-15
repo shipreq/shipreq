@@ -252,7 +252,7 @@ private[tags] object MainTable {
       results
     }
 
-    val filterDeadCheckbox = Checkbox.filterDead_$($ focusStateL State.filterDead)
+    val filterDeadCheckbox = Checkbox.filterDead_$($ zoomL State.filterDead)
 
     def render: ReactElement =
       <.div(

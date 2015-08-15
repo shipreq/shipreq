@@ -47,5 +47,5 @@ abstract class TypicalStoresAndState[P, I, K: UnivEq](fields: FieldSet[P, I]) {
     s => (savedRowStoreS.getAllP(s), k)
 
   def filterDeadCheckbox(c: CompStateFocus[S]): () => ReactElement =
-    Checkbox.filterDead_$(c focusStateL State.filterDead)
+    Checkbox.filterDead_$(c zoomL State.filterDead)
 }

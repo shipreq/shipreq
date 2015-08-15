@@ -157,8 +157,8 @@ object ReactExamples {
       .getInitialState(p => ParentState(p, DND.Parent.initialState))
       .render(T => {
         // console.log(s"DND.State = ${T.state}")
-        val itemsState = T.focusState(_.items)((a, b) => a.copy(items = b))
-        val dndState = T.focusState(_.dnd)((a, b) => a.copy(dnd = b))
+        val itemsState = T.zoom(_.items)((a, b) => a.copy(items = b))
+        val dndState = T.zoom(_.dnd)((a, b) => a.copy(dnd = b))
 
         def move(from: Item, to: Item) =
 //          console.log(s"...Before = ${T.state}")
@@ -201,8 +201,8 @@ object ReactExamples {
       .getInitialState(p => ParentState(p, DND.Parent.initialState))
       .render(T => {
       // console.log(s"DND.State = ${T.state}")
-      val itemsState = T.focusState(_.items)((a, b) => a.copy(items = b))
-      val dndState = T.focusState(_.dnd)((a, b) => a.copy(dnd = b))
+      val itemsState = T.zoom(_.items)((a, b) => a.copy(items = b))
+      val dndState = T.zoom(_.dnd)((a, b) => a.copy(dnd = b))
 
       def move(from: Item, to: Item) =
         //          console.log(s"...Before = ${T.state}")

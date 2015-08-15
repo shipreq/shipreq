@@ -13,7 +13,7 @@ object ViewSettingsEditor {
 
   case class Props(vs: ReusableVar[ViewSettings], filter: ReusableVal[ReactElement])
 
-  implicit val propsReuse = Reusability.caseclass2(Props.unapply)
+  implicit val propsReuse = Reusability.caseClass[Props]
 
   def apply(columnName: Column.NameResolver): Component =
     ReactComponentB[Props]("ViewSettingsEditor")

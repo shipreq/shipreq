@@ -126,10 +126,10 @@ class CreationInterface($             : CompStateFocus[State],
 
   object CreateReqCodeGroup { // ---------------------------------------------------------------------------------------
 
-    val $$ = $ focusStateL State.rcg
-    val setStatus  = $$ focusStateL CreateReqCodeGroupState.status  setStateIO (_: Status)
-    val setReqCode = $$ focusStateL CreateReqCodeGroupState.reqCode setStateIO (_: String)
-    val setTitle   = $$ focusStateL CreateReqCodeGroupState.title   setStateIO (_: String)
+    val $$ = $ zoomL State.rcg
+    val setStatus  = $$ zoomL CreateReqCodeGroupState.status  setStateIO (_: Status)
+    val setReqCode = $$ zoomL CreateReqCodeGroupState.reqCode setStateIO (_: String)
+    val setTitle   = $$ zoomL CreateReqCodeGroupState.title   setStateIO (_: String)
 
     val mkPropsReqCode = ReqCodeEditor.ForGroup.prepare(None, project.map(_.reqCodes.trie))
     val mkPropsTitle   = RichTextEditor.ReqCodeGroupTitle.prepare(project, projectText, projectWidgets, textSearch)
@@ -171,12 +171,12 @@ class CreationInterface($             : CompStateFocus[State],
 
     type Props = (CreationInterface.Props, CustomReqTypeId)
 
-    val $$ = $ focusStateL State.greq
-    val setStatus   = $$ focusStateL CreateGenericReqState.status   setStateIO (_: Status)
-    val setReqCodes = $$ focusStateL CreateGenericReqState.reqCodes setStateIO (_: String)
-    val setTitle    = $$ focusStateL CreateGenericReqState.title    setStateIO (_: String)
-    val setTags     = $$ focusStateL CreateGenericReqState.tags     setStateIO (_: String)
-    val setImp      = $$ focusStateL CreateGenericReqState.imp      setStateIO (_: String)
+    val $$ = $ zoomL State.greq
+    val setStatus   = $$ zoomL CreateGenericReqState.status   setStateIO (_: Status)
+    val setReqCodes = $$ zoomL CreateGenericReqState.reqCodes setStateIO (_: String)
+    val setTitle    = $$ zoomL CreateGenericReqState.title    setStateIO (_: String)
+    val setTags     = $$ zoomL CreateGenericReqState.tags     setStateIO (_: String)
+    val setImp      = $$ zoomL CreateGenericReqState.imp      setStateIO (_: String)
 
     val tagLookup = project.map(p => TagEditor.lookupG(p, _.tags.all))
     val impLookup = Px.apply2(project, projectText)(ImplicationEditor.lookupAll) map Must.apply

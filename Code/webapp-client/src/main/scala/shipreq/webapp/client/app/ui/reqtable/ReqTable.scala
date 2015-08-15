@@ -77,7 +77,7 @@ object ReqTable {
 
     val setViewSettings = ReusableFn($).modStateIO.endoCall(_.updateVS)
     val setFocus        = ReusableFn($).modStateIO.endoCall(_.updateFocus)
-    val setCreation     = $ focusStateL State.creation
+    val setCreation     = $ zoomL State.creation
 
     val project      = Px.thunkM($.state.project)
     val viewSettings = Px.thunkM($.state.viewSettings)

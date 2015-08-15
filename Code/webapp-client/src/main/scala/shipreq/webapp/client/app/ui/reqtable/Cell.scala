@@ -14,7 +14,7 @@ object Cell {
 
   case class Loc(row: R, col: C)
 
-  implicit val locReusability: Reusability[Loc] = Reusability.caseclass2(Loc.unapply)
+  implicit val locReusability: Reusability[Loc] = Reusability.caseClass
 
   final class TableState(m: Map[R, RowState]) {
     def apply(id: R): RowState =

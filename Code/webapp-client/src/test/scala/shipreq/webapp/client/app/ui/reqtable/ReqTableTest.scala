@@ -423,10 +423,7 @@ sealed trait ReqTableTest0 {
   val printTableContent =
     Action.readonly(s => println("\n" + s.table.entireContent + "\n"))
 
-  def baseKeyboardEventData = // TODO Replace when scalajs-react 0.9.2
-    KeyboardEventData(key = "", keyCode = 0, ctrlKey = false, altKey = false, metaKey = false, shiftKey = false)
-
-  val ctrlEnter = baseKeyboardEventData.copy(key = KeyValue.Enter, keyCode = KeyCode.Enter, ctrlKey = true)
+  val ctrlEnter = KeyboardEventData(key = KeyValue.Enter, keyCode = KeyCode.Enter, ctrlKey = true)
 
   val escape = KeyboardEventData(key = KeyValue.Escape, keyCode = KeyCode.Escape)
 

@@ -204,7 +204,7 @@ private[fields] object MainTable {
     def validatorState(k: Option[CustomFieldId]): S => V.S =
       validatorStateS(_, k)
 
-    val dndState = $.focusStateL(State.dnd)
+    val dndState = $.zoomL(State.dnd)
 
     val headerRow = CfgTable.header(List(
       FieldNames.dndDragHandleHeader,
@@ -227,7 +227,7 @@ private[fields] object MainTable {
     val tagSelector       = SelectOneStartNone.tag(project.config.tags)
     val reqTypeSelector   = SelectOneStartNone.reqType(project.config.reqTypes)
 
-    val reqtypesE = appReqTypesEditor.editor($ focusStateL State.appReqTypeStates)
+    val reqtypesE = appReqTypesEditor.editor($ zoomL State.appReqTypeStates)
                       .cmapA[(V.S, ApplicableReqTypes)](_.map1(_._2))
 
     object newFieldControl {
@@ -297,7 +297,7 @@ private[fields] object MainTable {
         UI.abortNewButton($ modStateIO abortNew)
     }
 
-    val filterDeadCheckbox = Checkbox.filterDead_$($ focusStateL State.filterDead)
+    val filterDeadCheckbox = Checkbox.filterDead_$($ zoomL State.filterDead)
 
     def render =
       <.div(
