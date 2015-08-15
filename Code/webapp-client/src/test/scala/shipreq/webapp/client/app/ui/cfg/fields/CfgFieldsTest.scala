@@ -17,6 +17,7 @@ import shipreq.webapp.client.test._
 import MainTable.State
 
 object CfgFieldsTest extends TestSuite {
+  PrepareEnv()
 
   val remote = RemoteFn.Instance("x", FieldCrud.Fn)
   class Tester {
