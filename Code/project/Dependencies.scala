@@ -87,6 +87,12 @@ object Dependencies {
     val combo = mm("specs2-core") ++ mm("specs2-scalacheck")
   }
 
+  object LibJetty {
+    private val mm = MultiModule.java("org.eclipse.jetty", "9.2.3.v20140905")
+    val webapp = mm("jetty-webapp")
+    val runner = mm("jetty-runner")
+  }
+
   val parboiled = jvmAndJsFork("org.parboiled", "parboiled", "2.1.0")("com.github.japgolly.fork.parboiled")
 
   val boopickle = jvmAndJs("me.chrons",                        "boopickle", "1.1.0")
@@ -111,7 +117,6 @@ object Dependencies {
   val commonsLang = jvmOnly("org.apache.commons"          % "commons-lang3"         % "3.4")
   val commonsIo   = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val twitterEval = jvmOnly("com.twitter"                %% "util-eval"             % "6.26.0")
-  val jetty       = jvmOnly("org.eclipse.jetty"           % "jetty-webapp"          % "9.2.3.v20140905")
   val servlet     = jvmOnly("org.eclipse.jetty.orbit"     % "javax.servlet"         % "3.0.0.v201112011016" artifacts Artifact("javax.servlet", "jar", "jar"))
   val mockito     = jvmOnly("org.mockito"                 % "mockito-core"          % "1.9.5")
   val scalaTest   = jvmOnly("org.scalatest"              %% "scalatest"             % "2.2.1")

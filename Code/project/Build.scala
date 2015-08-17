@@ -6,6 +6,7 @@ import Dependencies._
 import org.scalajs.sbtplugin.ScalaJSPlugin
 import org.scalajs.sbtplugin.cross.{CrossProject, CrossType}
 import ScalaJSPlugin.autoImport.{crossProject => _, _}
+import DependencyLib.JVM
 
 object ShipReq extends Build {
 
@@ -173,8 +174,8 @@ object ShipReq extends Build {
       "ctbc"-> ";clean ;clear ;tbc",                                       // Clean Test Base & Client
       "tbc" -> s";$WT/test:compile ;$WC/test:compile ;$WT/test ;$WC/test", // Test Base & Client
       "js"  -> s";$WC/${WebappClient.jsCmd} ;$WS/linkClientJs",            // compile JavaScript
-      "up"  -> s";$WS/container:stop ;clear ;$WS/container:start",         // webapp: UP
-      "d"   -> s"$WS/container:stop",                                      // webapp: Down
+      "up"  -> s";$WS/jetty:stop ;clear ;$WS/jetty:start",                 // webapp: UP
+      "d"   -> s"$WS/jetty:stop",                                          // webapp: Down
       "wd"  -> ";up ;~js")                                                 // WebDev
   }
 
@@ -280,8 +281,10 @@ object ShipReq extends Build {
 
   // -------------------------------------------------------------------------------------------------------------------
   object WebappServer {
-    import com.earldouglas.xsbtwebplugin.PluginKeys.{packageWar, start}
-    import com.earldouglas.xsbtwebplugin.WebPlugin.{container, webSettings}
+    import com.earldouglas.xwp._
+    import ContainerPlugin.autoImport._
+    import JettyPlugin    .autoImport._
+    import WebappPlugin   .autoImport._
 
     val linkClientJs = taskKey[Unit]("Creates symlinks to webapp client resources.")
     val clientJsLinks = settingKey[ClientJsLinks]("Map of symlinks between client and server.")
@@ -310,9 +313,9 @@ object ShipReq extends Build {
     def clientJsSettings = (_: Project).settings(
       clientJsLinks := new ClientJsLinks((target in webappClient).value, baseDirectory.value),
       cleanFiles ++= clientJsLinks.value.cleanable.toSeq,
-      { val k = Keys.`package` in Compile;        k <<= k.dependsOn(linkClientJs) },
-      { val k = start in container.Configuration; k <<= k.dependsOn(linkClientJs) },
-//      { val k = test in Test;                     k <<= k.dependsOn(linkClientJs) },
+      { val k = Keys.`package`; k <<= k.dependsOn(linkClientJs) },
+      // { val k = start in Jetty; k <<= k.dependsOn(linkClientJs) },
+      // { val k = test in Test;   k <<= k.dependsOn(linkClientJs) },
       linkClientJs := {
         jsBuildTask.value // Ensure client JS is built
         val log = streams.value.log
@@ -322,14 +325,25 @@ object ShipReq extends Build {
         }
       })
 
-    def warSettings = (_: Project).settings(
-      // Remove certain files from the WAR
-      excludeFilter in packageWar ~= { (a: FileFilter) =>
-        var b = a || new FileFilter { def accept(f: File) = f.getPath.containsSlice("/_scalate/") }
-        if (releaseMode)
-          b = b || new FileFilter { def accept(f: File) = f.getPath.containsSlice("/dev/") }
-        b
-      })
+    def warSettings = {
+      // Remove dirs from the WAR
+      var dirHitList = Set("_scalate")
+      if (releaseMode)
+        dirHitList += "dev"
+      (_: Project).settings(
+        webappPostProcess := { webappDir =>
+          def go(f: File): Unit = {
+            if (f.isDirectory) {
+              if (dirHitList contains f.getName) {
+                streams.value.log.info(s"Deleting ${f.getAbsolutePath}")
+                IO.delete(f)
+              } else
+                f.listFiles foreach go
+            }
+          }
+          go(webappDir)
+        })
+    }
 
     def testSettings = (_: Project)
       .dependsOn(webappBaseTestJvm % "test->compile")
@@ -353,13 +367,13 @@ object ShipReq extends Build {
 
     def createProject =
       project("webapp-server")
+        .enablePlugins(JettyPlugin, WarPlugin)
         .dependsOn(baseDb, taskmanApi, webappBaseJvm)
-        //.dependsOn(baseUtilJvm, taskmanApiLogic, taskmanApiImpl) // Stupid IDEA auto-import needs this
         .deps(
           Scalaz.core ++ Lift.webkit ++ Shiro.all ++ scalate ++ commonsLang ++ guava ++
           testScope(μTest ++ scalaTest ++ scalaCheck ++ mockito ++ Lift.testkit ++ commonsIo ++ twitterEval) ++
           depScope("it")(selenium) ++
-          (jetty % "container,test") ++ (servlet % "container,test,provided")
+          (LibJetty.webapp % "test") ++ (servlet % "test,provided")
         )
         .configure(
           webappSettings,
@@ -370,11 +384,10 @@ object ShipReq extends Build {
           integrationTestSettings,
           dontInline // crashes scalac 2.11.7
         )
-        .settings(webSettings: _*)
         .settings(
+          containerLibs in Jetty := LibJetty.runner(JVM).map(_.intransitive()),
           initialCommands += consoleCmds,
-          // Ensure templates can be loaded from the console
-          fullClasspath in console in Compile += file("src/main/webapp")
+          fullClasspath in console in Compile += file("src/main/webapp") // So templates can be loaded from console
         )
   }
 
