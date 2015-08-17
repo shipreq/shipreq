@@ -326,11 +326,17 @@ object ShipReq extends Build {
       })
 
     def warSettings = {
-      // Remove dirs from the WAR
       var dirHitList = Set("_scalate")
       if (releaseMode)
         dirHitList += "dev"
+
       (_: Project).settings(
+
+        // Expand this the webapp-server module instead of building a jar
+        // At the minimum, scripts in Release/webapp expect to find WEB-INF/classes/build.properties
+        webappWebInfClasses := true,
+
+        // Remove dirs from the WAR
         webappPostProcess := { webappDir =>
           def go(f: File): Unit = {
             if (f.isDirectory) {

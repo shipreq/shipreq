@@ -13,4 +13,4 @@ fi
 
 time bin/jetty start
 echo
-exec tail -50f log/webapp.log
+exec tail -50f logs/webapp.log

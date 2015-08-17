@@ -110,9 +110,10 @@ Keystore & SSL
 
   These are already configured to be provided via properties.
   The properties are in `start.d/ssl-passwords.ini` and look like this:
-      jetty.keystore.password=OBF:blah1
-      jetty.truststore.password=OBF:blah1
-      jetty.keymanager.password=OBF:blah2
+      jetty.sslContext.keyStorePassword=OBF:blah1
+      jetty.sslContext.trustStorePassword=OBF:blah1
+      jetty.sslContext.keyManagerPassword=OBF:blah2
+
 
 ### Replacing the Certificate
 

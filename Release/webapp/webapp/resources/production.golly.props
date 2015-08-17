@@ -1,16 +1,9 @@
-db.appname  = WEBAPP_PILOT
-db.database = usecase_dev
-db.username = usecase_dev
-db.password = uced
+db.appname  = SHIPREQ
+db.database = shipreq_prod
+db.username = shipreq_prod
+db.password = sqlocal
 
-db.pool.partitionCount             = 4
-db.pool.minConnectionsPerPartition = 0
-db.pool.maxConnectionsPerPartition = 8
-db.pool.acquireIncrement           = 2 // per-partition
-db.pool.logStatementsEnabled       = true
-db.pool.disableJMX                 = true
-db.pool.statisticsEnabled          = false
-db.pool.statementsCacheSize        = 128
+db.pool.maximumPoolSize = 8
 
 shipreq.url                       = https://localhost:443
 shipreq.support.email             = contact@shipreq.com

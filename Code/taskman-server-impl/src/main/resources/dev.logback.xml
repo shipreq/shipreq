@@ -10,9 +10,9 @@
 	</appender>
 
     <appender name="FILE.LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>log/taskman-dev.log</file>
+        <file>logs/taskman-dev.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>log/taskman-dev-%d{yyyyMMdd}.log</fileNamePattern>
+            <fileNamePattern>logs/taskman-dev-%d{yyyyMMdd}.log</fileNamePattern>
             <maxHistory>60</maxHistory>
         </rollingPolicy>
         <encoder>

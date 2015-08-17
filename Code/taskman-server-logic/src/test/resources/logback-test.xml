@@ -12,7 +12,7 @@
 	</appender>
 
 	<appender name="FILE.LOG" class="ch.qos.logback.core.FileAppender">
-		<file>log/taskman-server-logic-test-${bySecond}.log</file>
+		<file>logs/taskman-server-logic-test-${bySecond}.log</file>
 		<encoder>
 			<pattern>%d{HH:mm:ss.SSS} %-5level [%-50logger{50}] %msg%n</pattern>
 		</encoder>

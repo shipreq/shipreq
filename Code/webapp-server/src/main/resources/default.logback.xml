@@ -11,9 +11,9 @@
 	</appender>
 
     <appender name="FILE.LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>log/webapp-dev.log</file>
+        <file>logs/webapp-dev.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>log/webapp-dev-%d{yyyyMMdd}.log</fileNamePattern>
+            <fileNamePattern>logs/webapp-dev-%d{yyyyMMdd}.log</fileNamePattern>
             <maxHistory>60</maxHistory>
         </rollingPolicy>
         <encoder>
@@ -22,9 +22,9 @@
     </appender>
 
     <appender name="FILE.ERR" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>log/webapp-dev.err</file>
+        <file>logs/webapp-dev.err</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>log/webapp-dev-%d{yyyyMMdd}.err</fileNamePattern>
+            <fileNamePattern>logs/webapp-dev-%d{yyyyMMdd}.err</fileNamePattern>
         </rollingPolicy>
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} %-5level [%-50logger{50}] {%thread} %msg%n</pattern>
