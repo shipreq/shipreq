@@ -92,6 +92,8 @@ object Common {
       updateOptions               := updateOptions.value.withCachedResolution(true),
       aggregate in update         := true,
       scalaVersion                := Dependencies.Scala.version,
+      javacOptions               ++= javacFlags,
+      scalacOptions              ++= scalacFlags,
       dependencyUpdatesExclusions := moduleFilter(name = new PatternFilter("^jetty-(?:server|websocket)$".r.pattern)),
       testFrameworks              += new TestFramework("utest.runner.Framework"),
       target := {
@@ -128,8 +130,6 @@ object Common {
   /** Common settings used by standard modules - not benchmarks, not test modules */
   lazy val settings = (p: Project) => settingsMin(p)
     .settings(
-      javacOptions          ++= javacFlags,
-      scalacOptions         ++= scalacFlags,
       scalacOptions in Test ++= scalacTestFlags,
       testOptions   in Test  += Tests.Cleanup(shutdownTestDb(_)))
     .configure(
@@ -137,16 +137,12 @@ object Common {
 
   lazy val testModuleSettings = (p: Project) => settingsMin(p)
     .settings(
-      javacOptions          ++= javacFlags,
-      scalacOptions         ++= scalacTestFlags,
-      testOptions   in Test  += Tests.Cleanup(shutdownTestDb(_)))
+      scalacOptions      ++= scalacTestFlags,
+      testOptions in Test += Tests.Cleanup(shutdownTestDb(_)))
     .configure(
       debugOrRelease(debugSettings, identity))
 
   lazy val macroModuleSettings = (p: Project) => settingsMin(p)
-    .settings(
-      javacOptions  ++= javacFlags,
-      scalacOptions ++= scalacFlags)
     .configure(
       definesMacros,
       debugOrRelease(debugSettings, identity))

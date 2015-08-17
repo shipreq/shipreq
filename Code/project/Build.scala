@@ -417,15 +417,8 @@ object ShipReq extends Build {
       )
 
   object Benchmark {
-    lazy val commonSettings: Project => Project =
+    def commonSettings: Project => Project =
       _.configure(Common.settingsMin)
-        .settings(scalacOptions ++= scalacFlags)
-
-    def scalacFlags = Seq(
-      "-unchecked",
-      "-deprecation",
-      "-YclasspathImpl:flat", // https://github.com/scala/scala/pull/4176
-      "-feature", "-language:postfixOps", "-language:implicitConversions", "-language:higherKinds", "-language:existentials")
 
     def jvmSettings: Project => Project = {
       import pl.project13.scala.sbt.SbtJmh
