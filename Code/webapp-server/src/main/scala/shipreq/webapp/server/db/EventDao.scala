@@ -504,7 +504,7 @@ object EventDbCodecs {
    * This is only seen by the DB and doesn't affect binary codecs, thus there's no need to keep IDs in [0,127] for
    * efficient BooPickle int encoding.
    */
-  val eventCodecRegistry = DbCodec.registry[ActiveEvent] {
+  val eventCodecRegistry = DbCodec.registry[Event, ActiveEvent] {
     // Content
 
     case _: DeleteReq             => 200
@@ -581,7 +581,7 @@ object EventSqlHelpers {
     }
   }
 
-  implicit object GR_ActiveEvent extends GetResult[ActiveEvent] {
+  implicit object GR_Event extends GetResult[Event] {
     def apply(r: PositionedResult) = {
       val typeId     = r.nextShort()
       val dataIdType = r.nextString().head.toByte
@@ -602,6 +602,15 @@ object EventSqlHelpers {
       pp.setObject(pgObject("json", d._3), java.sql.Types.OTHER)
     }
   }
+
+  implicit object GR_VerifiedEvent extends GetResult[VerifiedEvent] {
+    def apply(r: PositionedResult) = {
+      val event      = GR_Event(r)
+      val hashScheme = GR_HashScheme(r)
+      val hash       = r.nextInt()
+      VerifiedEvent(hashScheme, hash, event)
+    }
+  }
 }
 
 // =====================================================================================================================
@@ -617,7 +626,12 @@ trait EventDao {
   def createEvent(p: ProjectId, seq: EventSeq, e: ActiveEvent, h: ProjectHash): Unit =
     InsertEvent(p, seq, e, h).execute
 
-  // TODO Should be a VerifiedEvent
-  def findEvent(p: ProjectId, seq: EventSeq): Option[(ActiveEvent, ProjectHash)] =
+  def findEvent(p: ProjectId, seq: EventSeq): Option[VerifiedEvent] =
     SelectEvent(p, seq).firstOption
+
+  /**
+   * @return Events in order from lowest to highest seq.
+   */
+  def findAllEvents(p: ProjectId): List[(EventSeq, VerifiedEvent)] =
+    SelectAllEvents(p).list
 }

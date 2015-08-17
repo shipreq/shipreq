@@ -7,7 +7,7 @@ import shipreq.base.util.TaggedTypes.JsonStr
 import shipreq.base.db.SqlHelpers._
 import shipreq.base.db.JodaTimeSqlHelpers._
 import shipreq.taskman.api.{EmailAddr, UserId}
-import shipreq.webapp.base.event.ActiveEvent
+import shipreq.webapp.base.event.{VerifiedEvent, ActiveEvent}
 import shipreq.webapp.base.hash.ProjectHash
 import shipreq.webapp.server.lib.Types._
 import shipreq.webapp.server.feature.UcFilter
@@ -283,12 +283,17 @@ private[db] object Sql {
   private val eventAEPH = "type_id, data_id_type, data_id, data, hash_scheme, hash".replace(" ","")
   private val eventAEPH_? = "?,?,?,?,?,?"
 
+  private val eventVE = eventAEPH
+
   // select coalesce(max(seq)+1,1) from event where project_id=?
   @Insert val InsertEvent = update[(ProjectId, EventSeq, ActiveEvent, ProjectHash)](
       s"INSERT INTO event(project_id,seq,$eventAEPH) VALUES(?,?,${eventAEPH_?})")
 
-  val SelectEvent = query[(ProjectId, EventSeq), (ActiveEvent, ProjectHash)](
-    s"SELECT $eventAEPH FROM event WHERE project_id=? AND seq=?")
+  val SelectEvent = query[(ProjectId, EventSeq), VerifiedEvent](
+    s"SELECT $eventVE FROM event WHERE project_id=? AND seq=?")
+
+  val SelectAllEvents = query[ProjectId, (EventSeq, VerifiedEvent)](
+    s"SELECT seq,$eventVE FROM event WHERE project_id=? ORDER BY seq")
 }
 
 

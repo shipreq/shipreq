@@ -33,7 +33,10 @@ object DaoTest2 extends TestSuite {
           val dao = db.dao
           dao.createEvent(projectId, seq, i._1, i._2)
           db.debugSelectOnError(s"select * from event where seq = ${seq.value}") {
-            dao.findEvent(projectId, seq)
+            dao.findEvent(projectId, seq).map(ve => ve.event match {
+              case ae: ActiveEvent => (ae, ve.projectHash)
+              case e               => sys error s"Not an ActiveEvent: $e"
+            })
           }
         },
         Some(_))

@@ -28,9 +28,9 @@ object DbCodec {
   def  polyId[A]: DbCodec.PolyId[A] = macro EventDbMacroImpls.quietPolyId[A]
   def _polyId[A]: DbCodec.PolyId[A] = macro EventDbMacroImpls.debugPolyId[A]
 
-  class Registry[E](val reader: Short => DbCodec[E], val writer: E => (Short, DbCodec[E]))
-  def  registry[E](typeIds: E => Short): DbCodec.Registry[E] = macro EventDbMacroImpls.quietRegistry[E]
-  def _registry[E](typeIds: E => Short): DbCodec.Registry[E] = macro EventDbMacroImpls.debugRegistry[E]
+  class Registry[R, W](val reader: Short => DbCodec[R], val writer: W => (Short, DbCodec[W]))
+  def  registry[R, W <: R](typeIds: R => Short): DbCodec.Registry[R, W] = macro EventDbMacroImpls.quietRegistry[R, W]
+  def _registry[R, W <: R](typeIds: R => Short): DbCodec.Registry[R, W] = macro EventDbMacroImpls.debugRegistry[R, W]
 }
 
 object EventDbMacros {
@@ -281,13 +281,15 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     c.Expr[DbCodec[T]](impl)
   }
 
-  def quietRegistry[T: c.WeakTypeTag](typeIds: c.Expr[T => Short]): c.Expr[DbCodec.Registry[T]] = implRegistry[T](false)(typeIds)
-  def debugRegistry[T: c.WeakTypeTag](typeIds: c.Expr[T => Short]): c.Expr[DbCodec.Registry[T]] = implRegistry[T](true)(typeIds)
-  def implRegistry[T: c.WeakTypeTag](debug: Boolean)(typeIds: c.Expr[T => Short]): c.Expr[DbCodec.Registry[T]] = {
-    val T         = weakTypeOf[T]
-    val types     = findConcreteTypesNE(T, LeavesOnly).map(t => determineAdtType(T, t))
+  def quietRegistry[R: c.WeakTypeTag, W <: R: c.WeakTypeTag](typeIds: c.Expr[R => Short]): c.Expr[DbCodec.Registry[R, W]] = implRegistry[R, W](false)(typeIds)
+  def debugRegistry[R: c.WeakTypeTag, W <: R: c.WeakTypeTag](typeIds: c.Expr[R => Short]): c.Expr[DbCodec.Registry[R, W]] = implRegistry[R, W](true)(typeIds)
+  def  implRegistry[R: c.WeakTypeTag, W <: R: c.WeakTypeTag](debug: Boolean)(typeIds: c.Expr[R => Short]): c.Expr[DbCodec.Registry[R, W]] = {
+    val R         = weakTypeOf[R]
+    val W         = weakTypeOf[W]
+    val types     = findConcreteTypesNE(R, LeavesOnly).map(t => determineAdtType(R, t))
     val dbCodec_  = typeOf[DbCodec[_]]
-    val dbCodecT  = appliedType(dbCodec_, T)
+    val dbCodecR  = appliedType(dbCodec_, R)
+    val dbCodecW  = appliedType(dbCodec_, W)
     val init      = Init()
     var remaining = types
     var rCases    = Vector.empty[CaseDef]
@@ -304,21 +306,24 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
           fail(s"Expected $t to match 1 type. Got: $matched")
         remaining   = unmatched
         val t2      = matched.head
-        val codecT2 = needInferImplicit(appliedType(dbCodec_, t2))
-        val codecT  = init valDef q"$codecT2.asInstanceOf[$dbCodecT]"
-        val wpair   = init valDef q"($idLit: Short, $codecT)"
-        rCases    :+= cq"$idLit => $codecT"
-        wCases    :+= cq"_: $t => $wpair"
+        val codecT  = needInferImplicit(appliedType(dbCodec_, t2))
+        def codecR  = init valDef q"$codecT.asInstanceOf[$dbCodecR]"
+        def codecW  = init valDef q"$codecT.asInstanceOf[$dbCodecW]"
+        rCases    :+= cq"$idLit => $codecR"
+        if (t <:< W) {
+          val wpair = init valDef q"($idLit: Short, $codecW)"
+          wCases  :+= cq"_: $t => $wpair"
+        }
 
       case e => fail(s"Unsupported case: ${showRaw(e)}")
     }
 
     val impl = q"""
       ..$init
-      new DbCodec.Registry[$T](i => (i: @scala.annotation.switch) match {case ..$rCases}, {case ..$wCases})
+      new DbCodec.Registry[$R, $W](i => (i: @scala.annotation.switch) match {case ..$rCases}, {case ..$wCases})
     """
 
     if (debug) println("\n" + impl + "\n")
-    c.Expr[DbCodec.Registry[T]](impl)
+    c.Expr[DbCodec.Registry[R, W]](impl)
   }
 }

@@ -1686,8 +1686,8 @@ object RandomData {
     val updateTagGroup: Gen[UpdateTagGroup] =
       Gen.apply2(UpdateTagGroup)(tagGroupId, tagGroupGD.nonEmptyValues)
 
-    val activeEvent: Gen[ActiveEvent] =
-      oneofVG(valuesForAdt[ActiveEvent, Gen[ActiveEvent]] {
+    val activeEventGens: NonEmptyVector[Gen[ActiveEvent]] =
+      valuesForAdt[ActiveEvent, Gen[ActiveEvent]] {
         case _: AddStaticField        => addStaticField        .subst
         case _: ApplyTemplate         => applyTemplate         .subst
         case _: CreateApplicableTag   => createApplicableTag   .subst
@@ -1722,9 +1722,27 @@ object RandomData {
         case _: UpdateCustomTextField => updateCustomTextField .subst
         case _: UpdateReqCodeGroup    => updateReqCodeGroup    .subst
         case _: UpdateTagGroup        => updateTagGroup        .subst
-      })
+      }
+
+    val activeEvent: Gen[ActiveEvent] =
+      oneofVG(activeEventGens)
+
+    val event: Gen[Event] = {
+      val gens = valuesForAdt[Event, NonEmptyVector[Gen[Event]]] {
+        case _: ActiveEvent => activeEventGens.map(_.subst)
+      }
+      oneofVG(gens flatMap identity)
+    }
+
+    val hashScheme: Gen[HashScheme] =
+      oneofV(HashScheme.all)
+
+    val hash: Gen[Int] = Gen.int
 
     val projectHash: Gen[ProjectHash] =
-      Gen.apply2(ProjectHash.apply)(oneofV(HashScheme.all), Gen.int)
+      Gen.apply2(ProjectHash.apply)(hashScheme, hash)
+
+    val verifiedEvent: Gen[VerifiedEvent] =
+      Gen.apply3(VerifiedEvent.apply)(hashScheme, hash, event)
   }
 }
