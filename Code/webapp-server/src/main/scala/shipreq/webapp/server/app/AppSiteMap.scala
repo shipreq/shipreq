@@ -75,45 +75,6 @@ object AppSiteMap {
       }
   )
 
-  val ShareCreate: PM[ProjectId] = (
-    MenuWithIdParam(ExternalId.Project)("share-create") / "project" / * / "share"
-    >> StaticTitle(mkTitle("New Share"))
-    >> AuthenticationRequired >> ProjectPermissionRequired
-    >> UseTemplate("loggedin/share-create")
-    >> SetNavbarAndPerformEffects(Navbar.Home, Navbar.CurrentProject, Navbar.StaticText("Share Use Cases")) {
-        RequestVars.ProjectId.setByParam(ShareCreate, "ShareCreate --> ProjectId")
-        RequestVars.Project.deriveFromProjectId()
-      }
-  )
-
-  val ShareEdit: PM[ShareUrlToken] = (
-    Menu.param[ShareUrlToken]("share-edit", "_", i => Full(ShareUrlToken(i)), _.value) / "share" / * / "edit"
-    >> TitleFromShareName
-    >> AuthenticationRequired
-    >> PermissionRequired(Permissions.editShare.using(project = RequestVars.Project.some, share = RequestVars.Share.some))
-    >> UseTemplate("loggedin/share-edit")
-    >> SetNavbarAndPerformEffects(Navbar.Home, Navbar.CurrentProject, Navbar.StaticText("Edit Share")) {
-        val token = Need(ShareEdit.currentValue.openOrThrowException("C'est impossible!"))
-        RequestVars.deriveShareAndProjectFromShareUrlToken(token)
-      }
-  )
-
-  val ShareView: PM[ShareUrlToken] = (
-    Menu.param[ShareUrlToken]("share-view", "_", i => Full(ShareUrlToken(i)), _.value) / "share" / *
-    >> UseTemplate("share-view")
-  )
-
-  val ReadOwnUcs: PM[ProjectId] = (
-    MenuWithIdParam(ExternalId.Project)("readOwnUcs") / "project" / * / "read"
-    >> DynamicTitle(mkTitle("Use Cases | " + RequestVars.Project.get.value.name))
-    >> AuthenticationRequired >> ProjectPermissionRequired
-    >> UseTemplate("loggedin/read_own_ucs")
-    >> SetNavbarAndPerformEffects(Navbar.Home, Navbar.CurrentProject, Navbar.StaticText("Use Cases")) {
-        RequestVars.ProjectId.setByParam(ReadOwnUcs, "ReadOwnUcs --> ProjectId")
-        RequestVars.Project.deriveFromProjectId()
-      }
-  )
-
   val UseCaseEditor: PM[UseCaseIdentId] = (
     MenuWithIdParam(ExternalId.UseCase)("uce") / "usecase" / *
     >> AuthenticationRequired >> ProjectPermissionRequired
@@ -138,7 +99,7 @@ object AppSiteMap {
 WIP,
     Home, About, TermsOfService, PrivacyPolicy, Land_BusinessCard
     , Login, Logout, Register1, Register2, ResetPassword1, ResetPassword2
-    , Project, UseCaseEditor, ReadOwnUcs, ShareCreate, ShareEdit, ShareView
+    , Project, UseCaseEditor
     , DemoUseCaseEditor
     , AdminStats
   ) ++ DiagnosticEndpoints.Endpoints
