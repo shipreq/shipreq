@@ -43,11 +43,13 @@ object Common {
 
   def scalacTestFlags = Seq("-language:reflectiveCalls")
 
-  def debugAndReleaseCompilerFlags = debugOrRelease(
+  val debugSettings: Project => Project =
     _.settings(
       scalacOptions ++= Seq("-Xcheckinit"),
       cleanKeepFiles ++= Seq("resolution-cache", "streams").map(target.value / _) // stop those constant dep updates
-    ),
+    )
+
+  val optimisationSettings: Project => Project =
     nonTestCompilerFlags(
       // "-optimise", // incompatible with GenBCode
       //"-Yopt:l:classpath", // new GenBCode optimiser
@@ -58,7 +60,6 @@ object Common {
       "-Yinline-handlers",
       // "-Yinline-warnings",
       "-Xelide-below", "OFF")
-  )
 
   def javacFlags = Seq("-target", targetJdk, "-source", targetJdk)
 
@@ -70,9 +71,9 @@ object Common {
     }
 
   def shutdownTestDb(loader: ClassLoader): Unit = {
-    getMethod(loader, "shipreq.base.test.specs2.db.TestDb", "shutdown").foreach(_ invoke null)
-    getMethod(loader, "shipreq.webapp.test.TestJetty", "shutdown").foreach(_ invoke null)
-    getMethod(loader, "shipreq.webapp.db.DB", "shutdown").foreach(_ invoke null)
+    getMethod(loader, "shipreq.base.test.specs2.db.TestDb",   "shutdown").foreach(_ invoke null)
+    getMethod(loader, "shipreq.webapp.server.test.TestJetty", "shutdown").foreach(_ invoke null)
+    getMethod(loader, "shipreq.webapp.server.db.DB",          "shutdown").foreach(_ invoke null)
   }
 
   private val shipreqCodePathRegex = "^.+/Code/".r
@@ -124,7 +125,7 @@ object Common {
         "cctc" -> ";clear;clean;test:compile",
         "cct"  -> ";clear;clean;test"))
 
-  /** Common settings used by all modules except benchmark */
+  /** Common settings used by standard modules - not benchmarks, not test modules */
   lazy val settings = (p: Project) => settingsMin(p)
     .settings(
       javacOptions          ++= javacFlags,
@@ -132,7 +133,23 @@ object Common {
       scalacOptions in Test ++= scalacTestFlags,
       testOptions   in Test  += Tests.Cleanup(shutdownTestDb(_)))
     .configure(
-      debugAndReleaseCompilerFlags)
+      debugOrRelease(debugSettings, optimisationSettings))
+
+  lazy val testModuleSettings = (p: Project) => settingsMin(p)
+    .settings(
+      javacOptions          ++= javacFlags,
+      scalacOptions         ++= scalacTestFlags,
+      testOptions   in Test  += Tests.Cleanup(shutdownTestDb(_)))
+    .configure(
+      debugOrRelease(debugSettings, identity))
+
+  lazy val macroModuleSettings = (p: Project) => settingsMin(p)
+    .settings(
+      javacOptions  ++= javacFlags,
+      scalacOptions ++= scalacFlags)
+    .configure(
+      definesMacros,
+      debugOrRelease(debugSettings, identity))
 
   def definesMacros: Project => Project =
     _.settings(

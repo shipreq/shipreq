@@ -32,10 +32,9 @@ object ShipReq extends Build {
   lazy val baseMacroJs  = baseMacro.js
   lazy val baseMacro =
     crossProject("base-macro")
-      .configureBoth(Common.settings)
+      .configureBoth(Common.macroModuleSettings)
       .configureJs(Common.jsSettings, Common.noJsTests)
       .depsForBoth(Scalaz.core ++ Nyaya.core)
-      .configureBoth(Common.definesMacros)
 
   lazy val baseUtilJvm = baseUtil.jvm
   lazy val baseUtilJs  = baseUtil.js
@@ -50,8 +49,6 @@ object ShipReq extends Build {
         SLF4J.api ++ Scalaz.effect ++
         providedScope(logback ++ jodaTime) ++
         testScope(Specs2.combo ++ Scalaz.scalacheck))
-      .configureJvm(
-        dontInline) // crashes scalac 2.11.2
 
   lazy val baseDb =
     project("base-db")
@@ -63,7 +60,7 @@ object ShipReq extends Build {
 
   lazy val baseTest =
     project("base-test")
-      .configure(Common.settings)
+      .configure(Common.testModuleSettings)
       .deps(
         providedScope(scalaTest ++ Specs2.combo))
       .dependsOn(baseUtilJvm)
@@ -185,7 +182,10 @@ object ShipReq extends Build {
   lazy val webappMacroJs  = webappMacro.js
   lazy val webappMacro =
     crossProject("webapp-macro")
-      .configureBoth(webappSettings)
+      .configureBoth(
+        Common.macroModuleSettings,
+        useMacroParadise,
+        webappCmdAliases)
       .configureJs(Common.jsSettings, Common.noJsTests)
       .dependsOn(baseUtil)
       .depsForBoth(
@@ -193,9 +193,6 @@ object ShipReq extends Build {
         providedScope(Scala.library) ++
         testScope(μTest))
       .depsForJvm(postgresql)
-      .configureBoth(
-        Common.definesMacros,
-        useMacroParadise)
 
   lazy val webappBaseJvm = webappBase.jvm
   lazy val webappBaseJs  = webappBase.js
@@ -209,7 +206,7 @@ object ShipReq extends Build {
       )
       .configureBoth(
         useMacroParadise,
-        dontInline // crashes scalac 2.11.5
+        dontInline // crashes scalac 2.11.7
       )
       .dependsOn(baseUtil, webappMacro)
 
@@ -217,7 +214,7 @@ object ShipReq extends Build {
   lazy val webappBaseTestJs  = webappBaseTest.js
   lazy val webappBaseTest =
     crossProject("webapp-base-test")
-      .configureBoth(webappSettings)
+      .configureBoth(Common.testModuleSettings, webappCmdAliases)
       .configureJs(Common.jsSettings)
       .depsForBoth(
         μTest ++ Nyaya.test
@@ -274,7 +271,7 @@ object ShipReq extends Build {
           webappSettings,
           useMacroParadise,
           WebappClient.testSettings,
-          dontInline, // ScalaJS inlines
+          dontInline, // crashes 2.11.7 / 0.6.4
           debugOrRelease(identity, WebappClient.prodJsSettings)
         )
   }
@@ -371,7 +368,7 @@ object ShipReq extends Build {
           warSettings,
           testSettings,
           integrationTestSettings,
-          dontInline // crashes scalac 2.11.5
+          dontInline // crashes scalac 2.11.7
         )
         .settings(webSettings: _*)
         .settings(
