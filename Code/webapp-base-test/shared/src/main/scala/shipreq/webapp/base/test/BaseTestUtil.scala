@@ -36,9 +36,15 @@ trait BaseTestUtil {
 
       var as = toString(actual)
       var es = toString(expect)
+      val ss = as :: es :: Nil
       var pre = "["
       var post = "]"
-      if ((as + es) contains "\n") {
+      val htChars = ss.flatMap(s => s.headOption :: s.lastOption :: Nil)
+      if (htChars.forall(_.exists(c => !Character.isWhitespace(c)))) {
+        pre = ""
+        post = ""
+      }
+      if (ss.exists(_ contains "\n")) {
         pre = "↙[\n"
       }
       println(lead("expect:") + pre + BOLD + GREEN + es + RESET + post)
