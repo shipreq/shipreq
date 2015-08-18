@@ -177,10 +177,30 @@ object DaoTest2 extends TestSuite {
 
         //'repositionField        - demo(RandomData.events.repositionField       )
 
-        //'setCustomTextField {
-        //  testRW(SetCustomTextField(2345, CustomField.Text.Id(123), Text.CustomTextField.demo(9, 8, 7, 6)),
-        //  205, 2345, 'g', """{"f":123,"t":[]}""")
-        //}
+        'setCustomTextField {
+          testRW(SetCustomTextField(2345, CustomField.Text.Id(123), Text.CustomTextField.demo(9, 8, 7, 6)),
+          205, 2345, 'g',
+            """
+              │{"f":123,"t":[
+              │"Atom demonstration.",
+              │0,
+              │"Here we go:",
+              │{"*":[
+              │["Req: ",{"r":9}],
+              │["Code: ",{"c":8}],
+              │["Tag: ",{"t":7}],
+              │["Issue(∅): ",{"i":6}],
+              │["Issue(∃): ",{"i":6,"?":["Need to finish ",{"r":9}," and ",{"c":8}]}],
+              │["Issue(∃): ",{"i":6,"?":["Ask ",{"@":"bob@gmail.com"}," about ",{"=":"e=mc^2"}]}],
+              │[],
+              │["Math: ",{"=":"f(x) = {x+1 \\over x - 1} + 9\\pi^2"}],
+              │["Email: ",{"@":"blah@google.com"}],
+              │["Web: ",{"/":"https://shipreq.com"}]
+              │]}
+              │]}
+            """.stripMargin('│').replace("\n", "").trim
+          )
+        }
 
         //'setGenericReqTitle     - demo(RandomData.events.setGenericReqTitle    )
 

@@ -1,8 +1,8 @@
 package shipreq.webapp.base.text
 
 import org.parboiled2._
-import shipreq.base.util.UnivEq
-import shipreq.webapp.base.data.{ApplicableTagId, Project}
+import shipreq.base.util.{NonEmptyVector, UnivEq}
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Atom => A, Parsers => P}
 
 object Text {
@@ -47,7 +47,6 @@ object Text {
 
   // After changing the structure of a text type, also update the following:
   // - AtomTC & TextTC
-  // - Codecs
   // - Parsing rules in top-level text objects and Parsers
   // - RandomData
 
@@ -63,6 +62,12 @@ object Text {
       val inlineEnd = () => rule(OWS ~ G.suffix)
       def inline: Rule1[NonEmptyText] = rule(G.prefix ~ OWS ~ textUntil(token, inlineEnd) ~ popNEV)
     }
+
+    /** Issue descs that demonstrate all types of inner atoms. */
+    def demo(reqId: ReqId, reqCodeId: ReqCodeId): NonEmptyVector[NonEmptyText] =
+      NonEmptyVector(
+        NonEmptyVector(Literal("Need to finish "), ReqRef(reqId), Literal(" and "), CodeRef(reqCodeId)),
+        NonEmptyVector(Literal("Ask "), EmailAddress("bob@gmail.com"), Literal(" about "), MathTeX("e=mc^2")))
   }
 
   object ReqCodeGroupTitle extends Base
@@ -95,6 +100,29 @@ object Text {
       override protected val additionalTokens = () => rule(hashToken | reqRef)
       override protected def issueInnerDesc = rule(runSubParser(InlineIssueDesc.parserI(project)(_).inline))
     }
+
+    /** A text value that demonstrates all types of atoms. */
+    def demo(reqId: ReqId, reqCodeId: ReqCodeId, tagId: ApplicableTagId, issue: CustomIssueTypeId): NonEmptyText = {
+      var uls = NonEmptyVector[ListItem](
+        Vector(Literal("Req: "), ReqRef(reqId)),
+        Vector(Literal("Code: "), CodeRef(reqCodeId)),
+        Vector(Literal("Tag: "), TagRef(tagId)),
+        Vector(Literal("Issue(∅): "), Issue(issue, Vector.empty)))
+      uls ++= InlineIssueDesc.demo(reqId, reqCodeId).map(desc =>
+        Vector(Literal("Issue(∃): "), Issue(issue, desc.whole)))
+      uls ++= NonEmptyVector(
+        Vector(),
+        Vector(Literal("Math: "), MathTeX("""f(x) = {x+1 \over x - 1} + 9\pi^2""")),
+        Vector(Literal("Email: "), EmailAddress("blah@google.com")),
+        Vector(Literal("Web: "), WebAddress("https://shipreq.com"))
+      )
+
+      NonEmptyVector(
+        Literal("Atom demonstration."),
+        blankLine,
+        Literal("Here we go:"),
+        UnorderedList(uls))
+    }
   }
 
   /**
@@ -102,5 +130,4 @@ object Text {
    * Title of a [[shipreq.webapp.base.data.GenericReq]].
    */
   object GenericReqTitle extends ReqTitle
-
 }

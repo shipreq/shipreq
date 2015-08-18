@@ -226,16 +226,13 @@ object EventDbCodecs {
   implicit val pickleApplicableReqTypes: ReadWriter[Field.ApplicableReqTypes] =
     pickleISubset
 
-  // TODO Macros can improve this - sum shouldn't use trail-n-error, leaves shouldn't need to identify themselves
+  // TODO Performance can be improved, probably significantly
   object TextCodecs extends AtomTC[ReadWriter] {
     import shipreq.webapp.base.text._
     import Atom._
 
-    private def strkeyW[A](k: String, a: A)(implicit A: Writer[A]) =
-      Js.Arr(Js.Str(k), A write a)
-
-    private def strkeyW2[A, B](k: String, a: A, b: B)(implicit A: Writer[A], B: Writer[B]) =
-      Js.Arr(Js.Str(k), A write a, B write b)
+    @inline private def strkeyW[A](k: String, a: A)(implicit A: Writer[A]) =
+      Js.Obj((k, A write a))
 
     override def lazily[A](a: => ReadWriter[A]): ReadWriter[A] = {
       lazy val b = a
@@ -254,6 +251,7 @@ object EventDbCodecs {
     private[this] final val MATHTEX   = "="
     private[this] final val UL        = "*"
     private[this] final val ISSUE     = "i"
+    private[this] final val ISSUEDESC = "?"
     private[this] final val REQREF    = "r"
     private[this] final val CODEREF   = "c"
     private[this] final val TAGREF    = "t"
@@ -273,35 +271,46 @@ object EventDbCodecs {
 
     override def webAddress[T <: PlainTextMarkup](t: T): ReadWriter[t.WebAddress] = ReadWriter(
       a => strkeyW(WEBADD, a.value),
-      { case Js.Arr(Js.Str(WEBADD), v) => t.WebAddress(readJs[String](v)) })
+      { case Js.Obj((WEBADD, v)) => t.WebAddress(readJs[String](v)) })
 
     override def emailAddress[T <: PlainTextMarkup](t: T): ReadWriter[t.EmailAddress] = ReadWriter(
       a => strkeyW(EMAILADD, a.value),
-      { case Js.Arr(Js.Str(EMAILADD), v) => t.EmailAddress(readJs[String](v)) })
+      { case Js.Obj((EMAILADD, v)) => t.EmailAddress(readJs[String](v)) })
 
     override def mathTeX[T <: PlainTextMarkup](t: T): ReadWriter[t.MathTeX] = ReadWriter(
       a => strkeyW(MATHTEX, a.value),
-      { case Js.Arr(Js.Str(MATHTEX), v) => t.MathTeX(readJs[String](v)) })
+      { case Js.Obj((MATHTEX, v)) => t.MathTeX(readJs[String](v)) })
 
     override def reqRef[T <: ReqRef](t: T): ReadWriter[t.ReqRef] = ReadWriter(
       a => strkeyW(REQREF, a.value),
-      { case Js.Arr(Js.Str(REQREF), v) => t.ReqRef(readJs[ReqId](v)) })
+      { case Js.Obj((REQREF, v)) => t.ReqRef(readJs[ReqId](v)) })
 
     override def codeRef[T <: ReqRef](t: T): ReadWriter[t.CodeRef] = ReadWriter(
       a => strkeyW(CODEREF, a.value),
-      { case Js.Arr(Js.Str(CODEREF), v) => t.CodeRef(readJs[ReqCodeId](v)) })
+      { case Js.Obj((CODEREF, v)) => t.CodeRef(readJs[ReqCodeId](v)) })
 
     override def tagRef[T <: TagRef](t: T): ReadWriter[t.TagRef] = ReadWriter(
       a => strkeyW(TAGREF, a.value),
-      { case Js.Arr(Js.Str(TAGREF), v) => t.TagRef(readJs[ApplicableTagId](v)) })
+      { case Js.Obj((TAGREF, v)) => t.TagRef(readJs[ApplicableTagId](v)) })
 
-    override def issue[T <: Issue](t: T)(implicit s: ReadWriter[Text.InlineIssueDesc.OptionalText]): ReadWriter[t.Issue] = ReadWriter(
-      a => strkeyW2(ISSUE, a.typ, a.desc),
-      { case Js.Arr(Js.Str(ISSUE), a, b) => t.Issue(readJs[CustomIssueTypeId](a), readJs[Text.InlineIssueDesc.OptionalText](b)) })
+    override def issue[T <: Issue](t: T)(implicit s: ReadWriter[Text.InlineIssueDesc.OptionalText]): ReadWriter[t.Issue] = {
+      val e = Vector.empty[(String, Js.Value)]
+      ReadWriter(
+      a => {
+        var v = e :+ ((ISSUE, writeJs(a.typ)))
+        if (a.desc.nonEmpty)
+          v :+= ((ISSUEDESC, s write a.desc))
+        Js.Obj(v: _*)
+      }, {
+        case Js.Obj((ISSUE, a))                 => t.Issue(readJs[CustomIssueTypeId](a), Vector.empty)
+        case Js.Obj((ISSUE, a), (ISSUEDESC, b)) => t.Issue(readJs[CustomIssueTypeId](a), s read b)
+        //case Js.Obj((ISSUEDESC, b), (ISSUE, a)) => t.Issue(readJs[CustomIssueTypeId](a), s read b)
+      })
+    }
 
     override def unorderedList[T <: ListMarkup](t: T)(implicit s: ReadWriter[NonEmptyVector[t.ListItem]]): ReadWriter[t.UnorderedList] = ReadWriter(
       a => strkeyW(UL, a.items),
-      { case Js.Arr(Js.Str(UL), v) => t.UnorderedList(readJs(v)(s)) })
+      { case Js.Obj((UL, v)) => t.UnorderedList(readJs(v)(s)) })
   }
   import TextCodecs.instances._
 
