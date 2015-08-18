@@ -39,6 +39,11 @@ trait MPickleMacroUtils { self: MacroUtils =>
     case GotTree(t) => i valImp tq"_root_.upickle.Writer[$t]"
   }
 
+  def summonReadWriter(i: Init, tot: TypeOrTree) = tot match {
+    case GotType(t) => i valImp appliedType(typeOf[ReadWriter[_]], t)
+    case GotTree(t) => i valImp tq"_root_.upickle.ReadWriter[$t]"
+  }
+
   def summonRW(i: Init, t: TypeOrTree) =
     (summonR(i, t), summonW(i, t))
 

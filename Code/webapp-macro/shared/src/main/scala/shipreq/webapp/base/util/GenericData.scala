@@ -62,5 +62,8 @@ abstract class GenericData {
   implicit def autoNEV(v: Value): NonEmptyValues =
     NonEmpty.force(emptyValues + v)
 
+  implicit def autoValues(v: Value): Values =
+    emptyValues + v
+
   case class ValueTypeClasses[T[_]](value: T[Value], values: T[Values], nev: T[NonEmptyValues])
 }

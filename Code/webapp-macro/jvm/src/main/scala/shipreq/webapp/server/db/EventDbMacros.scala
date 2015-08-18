@@ -230,8 +230,9 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
         .getOrElse(fail(s"GenericData field $gd not found. Available: ${ps.map(_._1.toString)}"))
     }
 
+    type TT = Tree => Tree
     val init  = Init(importMPickle)
-    var dataW = Vector.empty[Tree]
+    var dataW = Vector.empty[TT => Tree]
     var dataR = Vector.empty[Tree]
 
     for ((pn, pt) <- ps)
@@ -247,7 +248,7 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
 
             // Mandatory field
             case Some(key) =>
-              dataW :+= q"vs :+= (($key, $vw write e.$pn))"
+              dataW :+= ((_:TT) apply q"(($key, $vw write e.$pn))")
               dataR :+= q"$vr read m($key)"
 
             // Optional field
@@ -256,7 +257,8 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
                 val o = optionalJsonObjectFieldHelper(pt)
                 val e = init valDef o.createEmpty
                 val p = q"e.$pn"
-                dataW :+= q"if (!${o isEmpty p}) vs :+= (($key, $vw write $p))"
+                val w = q"(($key, $vw write $p))"
+                dataW :+= ((set: TT) => q"if (!${o isEmpty p}) ${set(w)}")
                 dataR :+= q"m.get($key).fold($e)($vr.read)"
 
               case None => fail(s"Key missing for field: $kn")
@@ -269,19 +271,28 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
     val (idByte, idInteger, idMake) = implicitIdFns(f1t)
 
     val writeToObj: Tree = {
-      val initVec = gdNT match {
-        case None => q"Vector.empty[(String, Js.Value)]"
+      def applyWrites(tt: TT): Tree =
+        q"..${dataW map (_(tt))}"
+
+      gdNT match {
+        case None =>
+          val s: TT = v => q"vs :+= $v"
+          q"""
+            var vs = Vector.empty[(String, Js.Value)]
+            ${applyWrites(s)}
+            json write Js.Obj(vs: _*)
+          """
+
         case Some((gn, gt)) =>
           val gw = summonW(init, gt)
+          val s: TT = v => q"vs = $v +: vs"
           // We know we have a Vector by looking at GenericDataMacros. Unit tests will catch change.
-          q"$gw.write(e.$gn).asInstanceOf[Js.Obj].value.asInstanceOf[Vector[(String, Js.Value)]]"
+          q"""
+            var vs = $gw.write(e.$gn).asInstanceOf[Js.Obj].value.asInstanceOf[Vector[(String, Js.Value)]]
+            ${applyWrites(s)}
+            json write Js.Obj(vs: _*)
+          """
       }
-
-      q"""
-        var vs = $initVec
-        ..$dataW
-        json write Js.Obj(vs: _*)
-      """
     }
 
     val writeFn = writeIdAnd(T)(f1n, idByte, idInteger)(writeToObj)

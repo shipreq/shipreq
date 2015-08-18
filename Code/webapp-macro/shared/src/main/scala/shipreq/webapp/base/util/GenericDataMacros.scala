@@ -148,6 +148,9 @@ class GenericDataMacroImpls(val c: scala.reflect.macros.blackbox.Context) extend
     attrs zip values
   }
 
+  def attrDataType(attr: ModuleSymbol): Type =
+    attr.moduleClass.asType.toType.decl(TypeName("Data")).asType.toType.dealias
+
   // ===================================================================================================================
 
   private def localNameToExpr(ctx: c.Expr[String]): String => RefTree =
@@ -185,15 +188,14 @@ class GenericDataMacroImpls(val c: scala.reflect.macros.blackbox.Context) extend
     val attrsAndValues = resolveAttrsAndValues(debug)(D)
     val nameToExpr = localNameToExpr(ctx)
 
-    val equal = c.typeOf[Equal[_]]
-    val data  = TypeName("Data")
+    // val equal = c.typeOf[Equal[_]]
     val stmts = for ((a,v) <- attrsAndValues) yield {
       val n      = lowerCaseHead(a.name.toString)
       val local  = nameToExpr(n)
       val refVal = q"$ref.${TermName(n)}"
       // We don't want to avoid creating new Equal instances on each invocation as this macro is used as a function.
       // If not, we could use Init().
-      // val dt     = a.moduleClass.asType.toType.decl(data).asType.toType.dealias
+      // val dt     = attrDataType(a)
       // val e      = needInferImplicit(appliedType(equal, dt))
       val e = q"$a.dataEquality"
       q"if (!$e.equal($refVal, $local)) us += $a($local)"
@@ -239,12 +241,12 @@ class GenericDataMacroImpls(val c: scala.reflect.macros.blackbox.Context) extend
     var keysUsed = Set.empty[String]
 
     for ((attr, value) <- attrsAndValues) {
-      val name     = attr.name.toString
-      val key      = keyLookup.find(_._1 == name).map(_._2) getOrElse fail(s"Key not found for $name.\nKeys = $keyLookup")
-      val (vr, vw) = summonRW(init, tq"$attr.Data")
-      wCases     ::= cq"v: $value => kvs :+= (($key, $vw write v.value))"
-      rCases     ::= cq"$key => kvs += $attr apply $vr.read(kv._2)"
-      keysUsed    += key.toString()
+      val name  = attr.name.toString
+      val key   = keyLookup.find(_._1 == name).map(_._2) getOrElse fail(s"Key not found for $name.\nKeys = $keyLookup")
+      val rw    = summonReadWriter(init, attrDataType(attr))
+      wCases  ::= cq"v: $value => kvs :+= (($key, $rw write v.value))"
+      rCases  ::= cq"$key => kvs += $attr apply $rw.read(kv._2)"
+      keysUsed += key.toString()
     }
 
     if (keysUsed.size != attrsAndValues.size)

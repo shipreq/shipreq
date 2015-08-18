@@ -113,7 +113,20 @@ object DaoTest2 extends TestSuite {
 
         //'createCustomTextField  - demo(RandomData.events.createCustomTextField )
 
-        //'createGenericReq       - demo(RandomData.events.createGenericReq      )
+        'createGenericReq {
+          import CreateGenericReqGD._
+          testRW(CreateGenericReq(123, 449099973, Tags(NonEmptySet(ApplicableTagId(166426196)))),
+            230, 123, 'g', """{"T":449099973,"#":166426196}""")
+
+          testRW(CreateGenericReq(123, 1469773577, ImpTgts(NonEmptySet(GenericReqId(2074289209)))),
+            230, 123, 'g', """{"T":1469773577,"<":2074289209}""")
+
+          testRW(CreateGenericReq(123, 1469773577, ImpSrcs(NonEmptySet(GenericReqId(2074289209)))),
+            230, 123, 'g', """{"T":1469773577,">":2074289209}""")
+
+          testRW(CreateGenericReq(123, 1469773577, ReqCodes(ReqCode.IdAndValue(7, "yay"))),
+            230, 123, 'g', """{"T":1469773577,"c":{"yay":7}}""")
+        }
 
         //'createReqCodeGroup     - demo(RandomData.events.createReqCodeGroup    )
 

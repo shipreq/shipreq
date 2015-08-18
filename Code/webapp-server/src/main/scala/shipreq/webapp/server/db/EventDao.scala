@@ -58,6 +58,17 @@ object EventDbCodecs {
     def nev: ReadWriter[NonEmptyVector[A]] =
       pickleNEV(vector)
 
+    /** A single-value nes is stored as just that sole value directly.
+      * Unambiguous as long as A itself never encodes to a Js.Arr. */
+    def nesNice(implicit ev: UnivEq[A]): ReadWriter[NonEmptySet[A]] = {
+      val rws = nes
+      val r1 = rw.read.andThen(NonEmptySet one _)
+      val w1 = rw.write
+      ReadWriter(
+        s => if (s.tail.isEmpty) w1(s.head) else rws.write(s),
+        r1 orElse rws.read)
+    }
+
     def nes(implicit ev: UnivEq[A]): ReadWriter[NonEmptySet[A]] =
       pickleNES(ev, set)
   }
@@ -138,6 +149,9 @@ object EventDbCodecs {
     case _: GenericReqId => ""
   }
 
+  implicit val pickleReqIdNES: ReadWriter[NonEmptySet[ReqId]] =
+    pickleReqId.nesNice
+
   implicit val pickleReqIdNESD = pickleNESD[ReqId]
 
   implicit val pickleReqCodeIdSet: ReadWriter[Set[ReqCodeId]] =
@@ -211,9 +225,9 @@ object EventDbCodecs {
     })
 
 
-  implicit def pickleISubset[A: UnivEq : ReadWriter]: ReadWriter[ISubset[A]] = {
+  def pickleISubsetNice[A: UnivEq : ReadWriter]: ReadWriter[ISubset[A]] = {
     import ISubset._
-    implicit val as = implicitly[ReadWriter[A]].nes
+    implicit val as = implicitly[ReadWriter[A]].nesNice
     implicit val o: ReadWriter[Only[A]] = caseClass
     implicit val n: ReadWriter[Not [A]] = caseClass
     pickleAdtOS {
@@ -224,7 +238,7 @@ object EventDbCodecs {
   }
 
   implicit val pickleApplicableReqTypes: ReadWriter[Field.ApplicableReqTypes] =
-    pickleISubset
+    pickleISubsetNice
 
   // TODO Performance can be improved, probably significantly
   object TextCodecs extends AtomTC[ReadWriter] {
@@ -318,10 +332,7 @@ object EventDbCodecs {
     ReadWriter.xmap((s: String) => if (s.isEmpty) None else Some(s))(_ getOrElse "")
 
   implicit val pickleApplicableTagIdNES: ReadWriter[NonEmptySet[ApplicableTagId]] =
-    pickleApplicableTagId.nes
-
-  implicit val pickleReqIdNES: ReadWriter[NonEmptySet[ReqId]] =
-    pickleReqId.nes
+    pickleApplicableTagId.nesNice
 
   implicit val pickleDeletionAction: ReadWriter[DeletionAction] = pickleAdtOS {
     case SoftDel => "s"
@@ -398,14 +409,14 @@ object EventDbCodecs {
   } nev
 
   implicit val pickleCustomImpFieldGD = gdMPickler(CustomImpFieldGD, true) {
-    case CustomImpFieldGD.ReqTypeId => "r"
+    case CustomImpFieldGD.ReqTypeId => "T"
     case CustomImpFieldGD.Mandatory => "m"
     case CustomImpFieldGD.ReqTypes  => "a"
   } nev
 
   implicit val pickleCreateGenericReqGD = {
     implicit val x = pickleReqCodeIdAndValueNES
-    // Using "r" for reqtype
+    // Using "T" for reqtype
     gdMPickler(CreateGenericReqGD, false) {
       case CreateGenericReqGD.Title    => "t"
       case CreateGenericReqGD.ReqCodes => "c"
@@ -501,7 +512,7 @@ object EventDbCodecs {
   implicit val dbCodecCreateCustomReqType  : DbCodec[CreateCustomReqType]   = dbCodec2
   implicit val dbCodecCreateCustomTagField : DbCodec[CreateCustomTagField]  = dbCodec2
   implicit val dbCodecCreateCustomTextField: DbCodec[CreateCustomTextField] = dbCodec2
-  implicit val dbCodecCreateGenericReq     : DbCodec[CreateGenericReq]      = dbCodecIdGdAnd('vs, 'rt -> "r")
+  implicit val dbCodecCreateGenericReq     : DbCodec[CreateGenericReq]      = dbCodecIdGdAnd('vs, 'rt -> "T")
   implicit val dbCodecCreateReqCodeGroup   : DbCodec[CreateReqCodeGroup]    = dbCodec2
   implicit val dbCodecCreateTagGroup       : DbCodec[CreateTagGroup]        = dbCodec2
   implicit val dbCodecDeleteCustomField    : DbCodec[DeleteCustomField]     = dbCodec2
