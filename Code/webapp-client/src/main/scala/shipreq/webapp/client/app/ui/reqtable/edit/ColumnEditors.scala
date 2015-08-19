@@ -1,16 +1,16 @@
 package shipreq.webapp.client.app.ui.reqtable
 package edit
 
+import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.extra.Px
 import monocle.Optional
-import scalaz.effect.IO
 import scalaz.syntax.bind.ToBindOps
 import shipreq.base.util.Must
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.client.app.ui.{ProjectWidgets, RemoteDataEditor}
-import shipreq.webapp.client.lib.TIO
+import shipreq.webapp.client.lib.TCB
 
 object ColumnEditors {
   type CellEditor = RemoteDataEditor.SetOpState => Option[Cell.State]
@@ -24,19 +24,19 @@ final class ColumnEditors(project       : Px[Project],
                           projectWidgets: Px[ProjectWidgets],
                           textSearch    : Px[TextSearch],
                           modTable      : Cell.ModTable,
-                          saveIO        : (UpdateContentCmd, TIO.Success, TIO.Failure) => IO[Unit]) {
+                          saveIO        : (UpdateContentCmd, TCB.Success, TCB.Failure) => Callback) {
 
   import ColumnEditors._
 
   private val applicability = project.map(Applicability.apply)
 
-  def startCellEditing(row: Row, col: Column): Option[IO[Unit]] =
+  def startCellEditing(row: Row, col: Column): Option[Callback] =
     row.live match {
       case Live => startCellEditing2(row, col)
       case Dead => None
     }
 
-  private def startCellEditing2(row: Row, col: Column): Option[IO[Unit]] = {
+  private def startCellEditing2(row: Row, col: Column): Option[Callback] = {
     val editor: CellEditor =
       applicability.value().apply(col).choose(row, na = noEditor)(
         row match {

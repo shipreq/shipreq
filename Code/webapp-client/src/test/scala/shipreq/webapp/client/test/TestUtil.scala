@@ -5,7 +5,6 @@ import org.scalajs.dom, dom.{EventTarget, KeyboardEvent}
 import scala.scalajs.js, js.{undefined, UndefOr}
 import scalaz.Equal
 import scalaz.std.AllInstances._
-import scalaz.effect.IO
 import japgolly.nyaya.test.Gen
 import shipreq.base.util.Debug._
 import shipreq.base.util.ScalaExt._
@@ -36,13 +35,13 @@ object TestUtil extends BaseTestUtil {
   implicit val eqRowStatus = Equal.equalA[RowStatus]
 
   val failedRowStatus =
-    Failed(IO(()))
+    Failed(Callback.empty)
 
   def genRowStatus: Gen[RowStatus] =
     Gen.oneof(Sync, Locked, failedRowStatus)
 
   def sole[A](a: js.Array[A]): A = {
-    assertEq(a.length, 1)
+    assertEq(s"sole(Array(${a.mkString(", ")}))", a.length, 1)
     a.head
   }
 

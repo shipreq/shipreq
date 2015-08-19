@@ -1,10 +1,9 @@
 package shipreq.webapp.client.app.ui
 
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import japgolly.scalajs.react._, vdom.prefix_<^._
 import org.scalajs.dom
 import scala.collection.GenTraversable
 import scalaz.Equal
-import scalaz.effect.IO
 import shipreq.base.util.Util
 import shipreq.webapp.client.lib.ui.UI
 import shipreq.webapp.client.util.{Off, On, DND}
@@ -32,7 +31,7 @@ object OrderedSubsetEditor {
                       all      : GenTraversable[A],
                       label    : A => String,
                       mandatory: A => Boolean,
-                      change   : Vector[A] => IO[Unit],
+                      change   : Vector[A] => Callback,
                       styles   : (A, On) => Styles = _noStyle)
 
   def Component[A: Equal] =
@@ -48,8 +47,8 @@ object OrderedSubsetEditor {
     val Row = DND.Child.dndItemComponentB[A, (Props[A], On)]({
       case (outerAttr, draghnd, a, (p, on)) =>
 
-        def toggleIO: IO[Unit] =
-          IO(
+        def toggleIO: Callback =
+          CallbackTo(
             if (on :: On)
               p.value.filterNot(E.equal(a, _))
             else
@@ -60,7 +59,7 @@ object OrderedSubsetEditor {
           if (p.mandatory(a))
             ^.disabled := true
           else
-            ^.onChange ~~> toggleIO
+            ^.onChange --> toggleIO
 
         val style = p.styles(a, on)
 
@@ -74,7 +73,7 @@ object OrderedSubsetEditor {
     def li(p: Props[A], inactive: Iterable[A])(a: A, on: On): ReactElement =
       Row((a, DND.Parent.cProps($, a, moveIO(p, inactive)), (p, on)))
 
-    def moveIO(p: Props[A], inactive: Iterable[A])(from: A, to: A): IO[Unit] =
+    def moveIO(p: Props[A], inactive: Iterable[A])(from: A, to: A): Callback =
       p.change(move(p.value, inactive, p.mandatory, E)(from, to))
 
     def render = {

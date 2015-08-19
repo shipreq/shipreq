@@ -8,7 +8,6 @@ import scala.annotation.tailrec
 import scala.language.reflectiveCalls
 import scalajs.js.{undefined, UndefOr, UndefOrOps, Array => JsArray}
 import scalajs.js.JSConverters._
-import scalaz.effect.IO
 import scalaz.\&/
 import scalaz.std.AllInstances._
 import scalaz.syntax.equal._
@@ -27,7 +26,7 @@ import shipreq.webapp.base.protocol.TagCrud
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.client.app.state.{ClientData, ChangeListener}
 import shipreq.webapp.client.app.ui.{Checkbox, RowDetailButton}
-import shipreq.webapp.client.lib.{FilterDead, TIO, CrudIO}
+import shipreq.webapp.client.lib.{FilterDead, TCB, CrudIO}
 import shipreq.webapp.client.lib.ui._
 import shipreq.webapp.client.protocol.ClientProtocol
 import shipreq.webapp.client.util.{Disabled, DND, On}
@@ -85,8 +84,8 @@ private[tags] object MainTable {
   }
 
   type S  = State
-  type ST = ReactST[IO, S, Unit]
-  val  ST = ReactS.FixT[IO, S]
+  type ST = ReactST[CallbackTo, S, Unit]
+  val  ST = ReactS.FixCB[S]
 
   val tg_storesS = tg_stores.contramap(State.tg_state)
   val at_storesS = at_stores.contramap(State.at_state)
@@ -204,7 +203,7 @@ private[tags] object MainTable {
       Disabled <~ newRowActive($.state))
 
     val onNewInvoke =
-      Some($.modStateIO(s => storesForType(s.newSel).n.enableEdit(s)))
+      Some($.modState(s => storesForType(s.newSel).n.enableEdit(s)))
 
     val headerRow = CfgTable.header(List(
       FieldNames.name,
@@ -213,7 +212,7 @@ private[tags] object MainTable {
       FieldNames.desc))
 
     val abortNewButton =
-      UI.abortNewButton($ modStateIO abortNew)
+      UI.abortNewButton($ modState abortNew)
 
     def setDetail(w: Option[Id]): S => S =
       w match {
@@ -277,7 +276,7 @@ private[tags] object MainTable {
     val unusedField: ReactNode = "-"
 
     abstract class SubtypeRenderer[T <: Tag, I, B, D, V](
-        final val editor: Editor[(V.S, I), B, IO, S, D, IO[Unit], V],
+        final val editor: Editor[(V.S, I), B, CallbackTo, S, D, Callback, V],
         final val stores: NewAndSavedStores[S, Id, T, I]) {
 
       val editable = editor.editableByRowStatus($)
@@ -303,7 +302,7 @@ private[tags] object MainTable {
                      (name: ReactNode, refkey: ReactNode, mutexChildren: ReactNode, desc: ReactNode)
                      (ctrls: => TagMod): ReactTag = {
         val focus = oid.map(id =>
-          RowDetailButton.Props.forRow(id)(s.detailRow.map(_.id), $ _modStateIO setDetail))
+          RowDetailButton.Props.forRow(id)(s.detailRow.map(_.id), $ _modState setDetail))
         <.tr(
           ^.key := key,
           ^.classSet1(UI.rowStatusRowClass(rs), "focusrow" -> focus.exists(_.isActive)),
@@ -402,8 +401,8 @@ private[tags] object MainTable {
     
     import DetailPane.{Rel, Rels, AddRel, AddRels, AddSelected}
 
-    type UpdateIO = (Tag, TagCrud.Fn.V, TIO.Success, TIO.Failure) => IO[Unit]
-    type SelUpdate = Option[Id] => IO[Unit]
+    type UpdateIO = (Tag, TagCrud.Fn.V, TCB.Success, TCB.Failure) => Callback
+    type SelUpdate = Option[Id] => Callback
 
     def removeChild(child: Id): Relations => Relations =
       r => r.copy(children = r.children.filterNot(_ ≟ child))
@@ -420,17 +419,17 @@ private[tags] object MainTable {
     def moveChild(from: Id, to: Id): Relations => Relations =
       r => r.copy(children = DND.move(from, to)(r.children))
 
-    def moveChildIO(s: S, updateIO: UpdateIO, subj: Tag)(from: Id, to: Id): IO[Unit] =
+    def moveChildIO(s: S, updateIO: UpdateIO, subj: Tag)(from: Id, to: Id): Callback =
       treeUpdateIO(s, updateIO, subj, moveChild(from, to))
 
-    def treeUpdateIO(s: S, updateIO: UpdateIO, subj: Tag, g: Relations => Relations): IO[Unit] =
-      IO {
+    def treeUpdateIO(s: S, updateIO: UpdateIO, subj: Tag, g: Relations => Relations): Callback =
+      Callback.lazily {
         val r = MMTree.Relations.derive(subj.id, s.tree.m)
         val u = \&/.That(g(r))
-        val f = TIO.Failure.nop
-        updateIO(subj, u, TIO.Success.nop, f)
-        //val lock = c modStateIO storesForType(t.tagType).s.setStatus(t.id, RowStatus.Locked)
-      }.join
+        val f = TCB.Failure.nop
+        updateIO(subj, u, TCB.Success.nop, f)
+        //val lock = c modState storesForType(t.tagType).s.setStatus(t.id, RowStatus.Locked)
+      }
 
     def existingRels(s: S, updateIO: UpdateIO, subj: Tag, ids: Seq[Id], removeFn: Id => Relations => Relations): Rels = {
       var rs = ids.map(getTag(_)(s).get)

@@ -2,8 +2,6 @@ package shipreq.webapp.client.app.ui
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import shipreq.webapp.client.lib.ClientUtil
-import scalaz.effect.IO
-import scalaz.syntax.bind.ToBindOps
 import scalaz.syntax.equal._
 import shipreq.base.util.{NonEmptySet, UnivEq, IMap, ISubset}
 import shipreq.base.util.ScalaExt._
@@ -20,11 +18,11 @@ object ISubsetEditor {
   // -------------------------------------------------------------------------------------------------------------------
   sealed trait Mode[A]
 
-  case class ViewMode[A](value: ISubset[A], startEdit: Option[IO[Unit]]) extends Mode[A]
+  case class ViewMode[A](value: ISubset[A], startEdit: Option[Callback]) extends Mode[A]
 
   case class EditMode[A](state     : EditState[A],
-                         update    : EditState[A] => IO[Unit],
-                         finishEdit: Option[ISubset[A]] => IO[Unit]) extends Mode[A]
+                         update    : EditState[A] => Callback,
+                         finishEdit: Option[ISubset[A]] => Callback) extends Mode[A]
 
   // -------------------------------------------------------------------------------------------------------------------
   sealed abstract class Method(val code: String, val label: String)
@@ -74,7 +72,7 @@ object ISubsetEditor {
     import staticProps._
 
     val radioGroupName =
-      ClientUtil.uniqueStr.unsafePerformIO()
+      ClientUtil.uniqueStr.runNow()
 
     def render: ReactElement =
       $.props match {
@@ -97,8 +95,8 @@ object ISubsetEditor {
       }
 
       val editButton =
-        m.startEdit.map(io =>
-          <.button(^.onClick ~~> io, "Edit"))
+        m.startEdit.map(cb =>
+          <.button(^.onClick --> cb, "Edit"))
 
       val all = editButton.fold[TagMod](values)(btn => Seq(values, btn))
       <.div(all)
@@ -118,7 +116,7 @@ object ISubsetEditor {
             inputRadio(
               ^.value     := v.code,
               ^.checked   := selected,
-              ^.onChange ~~> mode.update(state.copy(method = v))),
+              ^.onChange --> mode.update(state.copy(method = v))),
             <.span(v.label))
         }
 
@@ -130,12 +128,12 @@ object ISubsetEditor {
 
       def valueSelection: TagMod = {
         def attr(a: A, selected: Boolean): TagMod = {
-          def change = IO {
-            val u = state.values.ifelse(_ => selected, _ - a, _ + a)
-            val n = state.copy(values = u)
-            mode update n
-          }.join
-          (^.checked := selected) + (^.onChange ~~> change)
+          def change =
+            CallbackTo {
+              val u = state.values.ifelse(_ => selected, _ - a, _ + a)
+              state.copy(values = u)
+            } >>= mode.update
+          (^.checked := selected) + (^.onChange --> change)
         }
 
         allValueStatic.map { p =>
@@ -148,15 +146,15 @@ object ISubsetEditor {
       }
 
       val saveButton = {
-        val io = state.result.map(v => mode.finishEdit(Some(v)))
+        val cb = state.result.map(v => mode.finishEdit(Some(v)))
         <.button("Save",
-          ^.onClick ~~>? io,
-          ^.disabled  := io.isEmpty)
+          ^.onClick -->? cb,
+          ^.disabled  := cb.isEmpty)
       }
 
       val cancelButton =
         <.button("Cancel",
-          ^.onClick ~~> mode.finishEdit(None))
+          ^.onClick --> mode.finishEdit(None))
 
       <.div(
         <.div(methodSelection),

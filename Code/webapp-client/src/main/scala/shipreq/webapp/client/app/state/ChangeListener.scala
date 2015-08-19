@@ -1,6 +1,6 @@
 package shipreq.webapp.client.app.state
 
-import japgolly.scalajs.react.TopNode
+import japgolly.scalajs.react.{Callback, TopNode}
 import japgolly.scalajs.react.extra.{Listenable, OnUnmount}
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.lib.ui.SavedRowStore
@@ -36,7 +36,10 @@ object ChangeListener {
     def install[P, S, B <: OnUnmount, N <: TopNode](cd: P => ClientData) =
       Listenable.install[P, S, B, N, Changes](cd, $ => changes =>
         if (refresh(changes))
-          $.forceUpdate())
+          $.forceUpdate
+        else
+          Callback.empty
+      )
   }
 
   def refreshWhen(cond: Changes => Boolean): Refresher =

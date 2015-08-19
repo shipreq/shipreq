@@ -2,7 +2,6 @@ package shipreq.webapp.client.lib.ui
 
 import japgolly.scalajs.react._, ScalazReact._
 import scalaz.Equal
-import scalaz.effect.IO
 import shipreq.webapp.base.data.Live
 import shipreq.webapp.base.validation.Validator
 import shipreq.webapp.client.lib.CrudIO
@@ -24,7 +23,7 @@ trait TypicalSupp[P, I, K, U] {
   def saveNeed[B: Equal](extract: P => B) =
     SaveNeed.cmpToExtract[P, B](extract)
 
-  def addEditorFeatures[A, V](e: Editor[A, FS#FieldValue, IO, S, FS#Field, IO[Unit], V])
+  def addEditorFeatures[A, V](e: Editor[A, FS#FieldValue, CallbackTo, S, FS#Field, Callback, V])
                              (vali: Validator[(Stream[P], Option[K]), I, _, U],
                               ak: A => Option[K],
                               extract: P => U)
@@ -36,7 +35,7 @@ trait TypicalSupp[P, I, K, U] {
       .applyOnEditFinishedK(save)(ak)
   }
 
-  def addEditorFeatures2[A, V](e: Editor[A, FS#FieldValue, IO, S, FS#Field, IO[Unit], V])
+  def addEditorFeatures2[A, V](e: Editor[A, FS#FieldValue, CallbackTo, S, FS#Field, Callback, V])
                               (saveFn: Option[K] => sas.ST,
                                ak: A => Option[K]) =
     e.applyRowUpdateAndRevert(savedRowStoreS, newRowStoreS)(ak)

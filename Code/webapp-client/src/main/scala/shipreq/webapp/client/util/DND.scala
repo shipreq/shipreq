@@ -4,8 +4,6 @@ import org.scalajs.dom
 import org.scalajs.dom.console
 import scala.scalajs.js
 import scalaz._
-import scalaz.syntax.bind.ToBindOps
-import scalaz.effect.IO
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 
 /**
@@ -14,7 +12,7 @@ import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
  * 1. Include in parent component state: DND.Parent.PState[A]
  * 2. Initialise parent component state using DND.Parent.initialState[A]
  * 3. Create component for draggable children using DND.Child.dndItemComponent[A]
- * 4. Prepare a DND success callback `move(from: A, to: A): IO[Unit]`
+ * 4. Prepare a DND success callback `move(from: A, to: A): Callback`
  * 5. Render draggable children using DND.Parent.cProps2
  */
 object DND {
@@ -56,7 +54,7 @@ object DND {
       implicit def equality[A](implicit E: Equal[A]): Equal[PState[A]] =
         new Equal[PState[A]] {
           override def equalIsNatural = E.equalIsNatural
-          override def equal(a: PState[A], b: PState[A]): Boolean = (a, b) match {
+          override def equal(sa: PState[A], sb: PState[A]): Boolean = (sa, sb) match {
             case (Inactive,       Inactive      ) => true
             case (Started(a),     Started(b)    ) => E.equal(a, b)
             case (Possible(a, c), Possible(b, d)) => E.equal(a, b) && E.equal(c, d)
@@ -99,8 +97,7 @@ object DND {
       }
     }
 
-    def cProps[M[_], A](c: CompStateFocus[PState[A]], a: A, moveFn: (A, A) => M[Unit])
-                       (implicit A: Applicative[M], M: M ~> IO, E: Equal[A]): Child.CProps[A] =
+    def cProps[A](c: CompStateFocus[PState[A]], a: A, moveFn: (A, A) => Callback)(implicit E: Equal[A]): Child.CProps[A] =
       Child.CProps(
         c.state match {
           case Possible(_, tgt) => E.equal(a, tgt)
@@ -108,17 +105,16 @@ object DND {
         },
         c _runStateF eventHandler(moveFn))
 
-    def cProps2[M[_], A](c: CompStateFocus[PState[A]], a: A, moveFn: (A, A) => M[Unit])
-                        (implicit A: Applicative[M], M: M ~> IO, E: Equal[A]): (A, Child.CProps[A]) =
+    def cProps2[M[_], A](c: CompStateFocus[PState[A]], a: A, moveFn: (A, A) => Callback)(implicit E: Equal[A]): (A, Child.CProps[A]) =
       (a, cProps(c, a, moveFn))
   }
 
   // ===================================================================================================================
   object Child {
-    case class CProps[A](dragover: Boolean, eventHandler: DragEvent[A] => IO[Unit])
+    case class CProps[A](dragover: Boolean, eventHandler: DragEvent[A] => Callback)
     type CState = Boolean
 
-    val ST = ReactS.FixT[IO, Boolean]
+    val ST = ReactS.FixCB[Boolean]
     type ST = ST.T[Unit]
 
     val setStateT = ST setT true
@@ -129,41 +125,41 @@ object DND {
     def dragStart[A](a: A, p: CProps[A]): ReactDragEvent => ST =
       e => {
         val io1 = p.eventHandler(DragEvent.Start(a))
-        val io2 = IO[Unit]{ e.dataTransfer.setData("text", "managed") }
+        val io2 = Callback{ e.dataTransfer.setData("text", "managed") }
         ST.ret(io1 >> io2) >> setStateT
       }
 
     def dragEnd[A](p: CProps[A]): ST =
       ST.ret(p.eventHandler(DragEvent.End)) >> setStateF
 
-    def dragOver[A](a: A, p: CProps[A], s: => CState): ReactDragEvent => IO[Unit] =
-      e => IO {
+    def dragOver[A](a: A, p: CProps[A], s: => CState): ReactDragEvent => Callback =
+      e => Callback {
         //console.log(s"dragOver: dragging = $s / dragover = ${p.dragover}")
         if (!s) {
           e.preventDefault()
           e.dataTransfer.dropEffect = "move"
-          p.eventHandler(DragEvent.Over(a)).unsafePerformIO()
+          p.eventHandler(DragEvent.Over(a)).runNow()
         }
       }
 
-    def drop[A](p: CProps[A]): ReactDragEvent => IO[Unit] =
-      _.preventDefaultIO >> p.eventHandler(DragEvent.Move)
+    def drop[A](p: CProps[A]): ReactDragEvent => Callback =
+      _.preventDefaultCB >> p.eventHandler(DragEvent.Move)
 
     def renderDragHandle[S, A](p: CProps[A], a: A, T: CompStateFocus[CState]): ReactTag =
       <.span(
         ^.className    := "draghandle",
         ^.draggable    := "true",
-        ^.onDragStart ~~> T._runState(dragStart(a, p)),
-        ^.onDragEnd   ~~> T.runState(dragEnd(p)),
+        ^.onDragStart ==> T._runState(dragStart(a, p)),
+        ^.onDragEnd   --> T.runState(dragEnd(p)),
         // onMouseDown={typeof window.isIE9 != 'undefined' && this.handleIE9DragHack}
         "\u2630")
 
     def outerAttrs[A](p: CProps[A], a: A, state: CState): TagMod = (
       ^.classSet("dragging" -> state, "dragover" -> p.dragover)
-        + (^.onDragEnter ~~> preventDefaultIO)
-        + (^.onDragOver  ~~> dragOver(a, p, state))
-        + (^.onDragLeave ~~> p.eventHandler(DragEvent.Leave))
-        + (^.onDrop      ~~> drop(p))
+        + (^.onDragEnter ==> preventDefault)
+        + (^.onDragOver  ==> dragOver(a, p, state))
+        + (^.onDragLeave --> p.eventHandler(DragEvent.Leave))
+        + (^.onDrop      ==> drop(p))
       )
 
     def dndItemComponent[A](f: (TagMod, ReactTag, A) => ReactElement) =

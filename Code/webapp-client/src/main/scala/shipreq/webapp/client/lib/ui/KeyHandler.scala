@@ -1,18 +1,16 @@
 package shipreq.webapp.client.lib.ui
 
-import japgolly.scalajs.react._, ScalazReact._
+import japgolly.scalajs.react._
 import org.scalajs.dom.ext.KeyValue
 import scala.runtime.AbstractFunction1
 import scalajs.js.{UndefOr, undefined}
 import scalaz.\/
-import scalaz.effect.IO
 import shipreq.base.util.UndefOrExt
-import shipreq.base.util.effect.IoUtils, IoUtils.IoExt
-import shipreq.webapp.client.lib.TIO
+import shipreq.webapp.client.lib.TCB
 
-final class KeyHandler(val run: ReactKeyboardEventH => UndefOr[IO[Unit]]) extends AbstractFunction1[ReactKeyboardEventH, IO[Unit]] {
-  override def apply(e: ReactKeyboardEventH): IO[Unit] =
-    run(e).fold(IoUtils.nop)(e.preventDefaultIO >>> e.stopPropagationIO >>> _)
+final class KeyHandler(val run: ReactKeyboardEventH => UndefOr[Callback]) extends AbstractFunction1[ReactKeyboardEventH, Callback] {
+  override def apply(e: ReactKeyboardEventH): Callback =
+    run(e).fold(Callback.empty)(_ << e.preventDefaultCB << e.stopPropagationCB)
 
   def |(b: KeyHandler): KeyHandler =
     new KeyHandler(e => run(e) orElse b.run(e))
@@ -28,16 +26,16 @@ final class KeyHandler(val run: ReactKeyboardEventH => UndefOr[IO[Unit]]) extend
 }
 
 object KeyHandler {
-  def apply(f: ReactKeyboardEventH => UndefOr[IO[Unit]]): KeyHandler =
+  def apply(f: ReactKeyboardEventH => UndefOr[Callback]): KeyHandler =
     new KeyHandler(f)
 
-  private def reshapePF[A](pf: PartialFunction[A, UndefOr[IO[Unit]]]): A => UndefOr[IO[Unit]] =
+  private def reshapePF[A](pf: PartialFunction[A, UndefOr[Callback]]): A => UndefOr[Callback] =
     a => pf.applyOrElse(a, (_: A) => undefined)
 
-  def pf(pf: PartialFunction[ReactKeyboardEventH, UndefOr[IO[Unit]]]): KeyHandler =
+  def pf(pf: PartialFunction[ReactKeyboardEventH, UndefOr[Callback]]): KeyHandler =
     new KeyHandler(reshapePF(pf))
 
-  def by[A](f: ReactKeyboardEventH => A)(pf: PartialFunction[A, UndefOr[IO[Unit]]]): KeyHandler =
+  def by[A](f: ReactKeyboardEventH => A)(pf: PartialFunction[A, UndefOr[Callback]]): KeyHandler =
     new KeyHandler(reshapePF(pf) compose f)
 
   val byKey = by(_.key) _
@@ -62,11 +60,11 @@ final class KeyHandlers(val onKeyDown: UndefOr[KeyHandler], val onKeyPress: Unde
       UndefOrExt.append(this.onKeyDown,  that.onKeyDown) (_ | _),
       UndefOrExt.append(this.onKeyPress, that.onKeyPress)(_ | _))
 
-  import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+  import japgolly.scalajs.react._, vdom.prefix_<^._
   def tagMod: TagMod = {
     var r = EmptyTag
-    onKeyDown .foreach(r += ^.onKeyDown  ~~> _)
-    onKeyPress.foreach(r += ^.onKeyPress ~~> _)
+    onKeyDown .foreach(r += ^.onKeyDown  ==> _)
+    onKeyPress.foreach(r += ^.onKeyPress ==> _)
     r
   }
 }
@@ -84,9 +82,9 @@ object KeyHandlers {
    * - Enter either inserts a newline, or commits.
    * - Ctrl-enter commits.
    */
-  def commitAndAbort(abort: => TIO.Abort, commit: => UndefOr[TIO.Commit], singleLine: Boolean) = {
-    val cancelOnEscape = KeyHandler.byKey { case KeyValue.Escape => abort.io }
-    val commitOnEnter  = KeyHandler.byKey { case KeyValue.Enter => commit.map(_.io) }
+  def commitAndAbort(abort: => TCB.Abort, commit: => UndefOr[TCB.Commit], singleLine: Boolean) = {
+    val cancelOnEscape = KeyHandler.byKey { case KeyValue.Escape => abort.cb }
+    val commitOnEnter  = KeyHandler.byKey { case KeyValue.Enter => commit.map(_.cb) }
 
     var r = KeyHandlers(
       onKeyDown = cancelOnEscape | commitOnEnter.filterModKeys(ctrl = true))
@@ -98,6 +96,6 @@ object KeyHandlers {
     r
   }
 
-  def commitAndAbortD[A](abort: => TIO.Abort, parsed: Any \/ A, commit: A => TIO.Commit, singleLine: Boolean) =
+  def commitAndAbortD[A](abort: => TCB.Abort, parsed: Any \/ A, commit: A => TCB.Commit, singleLine: Boolean) =
     commitAndAbort(abort, parsed.fold(_ => undefined, commit(_)), singleLine)
 }

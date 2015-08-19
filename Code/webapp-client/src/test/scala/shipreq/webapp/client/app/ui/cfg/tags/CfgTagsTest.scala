@@ -1,10 +1,9 @@
 package shipreq.webapp.client.app.ui.cfg.tags
 
-import japgolly.scalajs.react.{TopNode, ReactComponentM_}
+import japgolly.scalajs.react.{Callback, TopNode, ReactComponentM_}
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.raw.{HTMLElement, HTMLInputElement}
 import scala.annotation.tailrec
-import scalaz.effect.IO
 import scalaz.std.AllInstances._
 import utest._
 import shipreq.base.util.MMTree
@@ -35,7 +34,7 @@ object CfgTagsTest extends TestSuite {
 
   class FakeUpdateIO {
     var reqs = Vector.empty[(Tag, TagCrud.Fn.V)]
-    val u: MainTable.DetailPaneFns.UpdateIO = (t, v, _, _) => IO { reqs :+= ((t, v)) }
+    val u: MainTable.DetailPaneFns.UpdateIO = (t, v, _, _) => Callback { reqs :+= ((t, v)) }
   }
 
   val remote = RemoteFn.Instance("x", TagCrud.Fn)
@@ -58,7 +57,7 @@ object CfgTagsTest extends TestSuite {
                 Parents(Map(1.TG -> priMed.some)),
                 Children(Vector(10.TG))))
       val ves = verifyEvents(clientData.project)(e)
-      clientData.applyEvents(ves).unsafePerformIO()
+      clientData.applyEvents(ves).runNow()
 
       assertEq(nameAsTextTree(c).mkString("\n"),
         """
@@ -89,7 +88,7 @@ object CfgTagsTest extends TestSuite {
       val t = new FakeUpdateIO
 
       def testUnlink(subj: Tag, rels: Rels, nameOfTagToClick: String)(expectedRels: TagInTree.Relations): Unit = {
-        rels.find(_.name == nameOfTagToClick).get.unlink.unsafePerformIO()
+        rels.find(_.name == nameOfTagToClick).get.unlink.runNow()
         assertEq(t.reqs.size, 1)
         val h = t.reqs.head
         assertEq(h._1, subj)

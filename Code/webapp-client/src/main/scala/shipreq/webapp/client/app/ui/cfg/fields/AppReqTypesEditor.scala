@@ -1,17 +1,15 @@
 package shipreq.webapp.client.app.ui.cfg.fields
 
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
+import japgolly.scalajs.react._, vdom.prefix_<^._
 import monocle.Lens
 import monocle.std.map.atMap
 import scalacss.ScalaCssReact._
-import scalaz.effect.IO
-import scalaz.syntax.bind.ToBindOps
 import scalaz.syntax.equal._
 import shipreq.base.util.{UnivEq, IMap}
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.app.ui.{ISubsetEditor, Style}
 import shipreq.webapp.client.lib.ui.{FieldSet => _, _}
-import shipreq.webapp.client.lib.ConsoleIO
+import shipreq.webapp.client.lib.ConsoleCB
 import Field.ApplicableReqTypes
 import ISubsetEditor._
 
@@ -59,14 +57,14 @@ class AppReqTypesEditor(customReqTypes: TraversableOnce[CustomReqType]) {
     Editor { ei =>
       val (id, value) = ei.data
 
-      def cbh(cb: ei.CBH): IO[Unit] =
-        ei.editable.fold(ConsoleIO(_ log s"Can't interpret ApplicableReqTypesEditor callback."))(_(cb))
+      def cbh(cb: ei.CBH): Callback =
+        ei.editable.fold(ConsoleCB(_ log s"Can't interpret ApplicableReqTypesEditor callback."))(_(cb))
 
       val mode: M =
         id match {
           case Some(k) =>
             @inline def * = stateFor(k)
-            def setIO(s: EditState[A]): IO[Unit] = $ modStateIO *.set(Some(s))
+            def setIO(s: EditState[A]): Callback = $ modState *.set(Some(s))
 
             $.state.get(k) match {
 
@@ -79,8 +77,8 @@ class AppReqTypesEditor(customReqTypes: TraversableOnce[CustomReqType]) {
                 EditMode[A](
                   state      = es,
                   update     = setIO,
-                  finishEdit = _.fold[IO[Unit]](
-                                 $ modStateIO *.set(None))(
+                  finishEdit = _.fold[Callback](
+                                 $ modState *.set(None))(
                                  SimpleEditor.onChangeAndEditFinished(cbh)))
             }
 

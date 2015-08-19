@@ -3,7 +3,6 @@ package shipreq.webapp.client.app.ui
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import org.scalajs.dom.raw.HTMLDivElement
 import scalaz.Equal
-import scalaz.effect.IO
 import shipreq.webapp.client.util.{Disabled, Enabled}
 
 object SelectInvoke {
@@ -15,7 +14,7 @@ object SelectInvoke {
       .build
 
   final case class Props[A](selection  : SelectOne.Props[A],
-                            invoke     : Option[IO[Unit]],
+                            invoke     : Option[Callback],
                             buttonLabel: String,
                             enabled    : Enabled)
 
@@ -34,7 +33,7 @@ object SelectInvoke {
     val invokeButton =
       <.button(
         ^.disabled  := (disabled || p.invoke.isEmpty),
-        ^.onClick ~~>? p.invoke,
+        ^.onClick -->? p.invoke,
         p.buttonLabel)
 
     <.div(select, invokeButton)

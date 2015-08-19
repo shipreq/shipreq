@@ -1,6 +1,6 @@
 package shipreq.webapp.client.lib
 
-import scalaz.effect.IO
+import japgolly.scalajs.react.Callback
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.DeletionAction
 import shipreq.webapp.base.protocol._
@@ -25,21 +25,21 @@ final class CrudIO[D, I, U, RD <: CrudFn.Aux[I, U]](cp: ClientProtocol,
                                                     clientData: ClientData)
                                                    (implicit I: DataIdAux[D, I]) {
 
-  private def crudIO(s: TIO.Success, f: TIO.Failure, a: CrudAction[I, U]): IO[Unit] = {
+  private def crudIO(s: TCB.Success, f: TCB.Failure, a: CrudAction[I, U]): Callback = {
     cp.call(remote)(a,
       s << clientData.applyEvents(_),
-      cp.consumeGenericFailure(_) >> f.io)
+      cp.consumeGenericFailure(_) >> f)
   }
 
-  def createIO(values: U, s: TIO.Success, f: TIO.Failure): IO[Unit] =
+  def createIO(values: U, s: TCB.Success, f: TCB.Failure): Callback =
     crudIO(s, f, CrudAction.Create(values))
 
-  def updateIO(data: D, u: U, s: TIO.Success, f: TIO.Failure): IO[Unit] =
+  def updateIO(data: D, u: U, s: TCB.Success, f: TCB.Failure): Callback =
     crudIO(s, f, CrudAction.Update(data.id, u))
 
-  def deleteIO(id: I, a: DeletionAction, s: TIO.Success, f: TIO.Failure): IO[Unit] =
+  def deleteIO(id: I, a: DeletionAction, s: TCB.Success, f: TCB.Failure): Callback =
     crudIO(s, f, CrudAction.Delete(id, a))
 
-  def _deleteIO: (I, DeletionAction) => (TIO.Success, TIO.Failure) => IO[Unit] =
+  def _deleteIO: (I, DeletionAction) => (TCB.Success, TCB.Failure) => Callback =
     (id, a) => (s, f) => deleteIO(id, a, s, f)
 }

@@ -2,7 +2,6 @@ package shipreq.webapp.client.lib.ui
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import scalaz.{Applicative, Bind, ~>}
-import scalaz.effect.IO
 import shipreq.webapp.base.validation._
 
 abstract class EditorExt {
@@ -67,8 +66,7 @@ object EditorExt extends EditorExt {
         }
       )
 
-    def editableByRowStatus(c: CompStateFocus[S])
-                           (implicit ev: IO[Unit] =:= D, M: M ~> IO): RowStatus => Option[e.Editable] = {
+    def editableByRowStatus(c: CompStateFocus[S])(implicit ev: Callback =:= D, M: M ~> CallbackTo): RowStatus => Option[e.Editable] = {
       val canedit = e.editable(c runState _.st)
       rs => rs match {
         case RowStatus.Sync | RowStatus.Failed(_) => canedit

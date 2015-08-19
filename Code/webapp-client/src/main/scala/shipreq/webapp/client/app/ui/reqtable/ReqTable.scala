@@ -4,7 +4,6 @@ import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
 import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
-import scalaz.effect.IO
 import shipreq.webapp.base.protocol.{CreateContentFn, CreateContentCmd, UpdateContentFn, UpdateContentCmd}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.FilterAst
@@ -13,7 +12,7 @@ import shipreq.webapp.client.app.state.{Changes, ChangeListener, ClientData}
 import shipreq.webapp.client.app.ui.ProjectWidgets
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
 import shipreq.webapp.client.data.DataReusability._
-import shipreq.webapp.client.lib.{FilterDead, TIO}
+import shipreq.webapp.client.lib.{FilterDead, TCB}
 import shipreq.webapp.client.protocol.ClientProtocol
 import edit.ColumnEditors
 
@@ -75,8 +74,8 @@ object ReqTable {
 
   final class Backend($: BackendScope[Props, State]) extends OnUnmount {
 
-    val setViewSettings = ReusableFn($).modStateIO.endoCall(_.updateVS)
-    val setFocus        = ReusableFn($).modStateIO.endoCall(_.updateFocus)
+    val setViewSettings = ReusableFn($).modState.endoCall(_.updateVS)
+    val setFocus        = ReusableFn($).modState.endoCall(_.updateFocus)
     val setCreation     = $ zoomL State.creation
 
     val project      = Px.thunkM($.state.project)
@@ -95,10 +94,10 @@ object ReqTable {
     val rows       = Px.apply4(viewSettings, project, plainText, textSearch)(Logic.rowsForTable).map(_.toVector)
     val stats      = Px.apply3(viewSettings, project, rows)(Logic.stats)
 
-    val modTable: Cell.ModTable = ReusableFn(loc => s => $.modStateIO(_.updateCell(loc, s)))
+    val modTable: Cell.ModTable = ReusableFn(loc => s => $.modState(_.updateCell(loc, s)))
     // TODO OMG THE COPY-AND-PASTE!
     // TODO Too much repetition of (? => Events) calls
-    val createIO: (CreateContentCmd, TIO.Success, String => TIO.Failure) => IO[Unit] = (i, sio, fio) => {
+    val createIO: (CreateContentCmd, TCB.Success, String => TCB.Failure) => Callback = (i, sio, fio) => {
       val p = $.props
       import p._
       val io = cp.call(createContentFn)(i,
@@ -107,12 +106,12 @@ object ReqTable {
       //IO(println(s"Fake-sending: $i")) >> io
       io
     }
-    val saveIO: (UpdateContentCmd, TIO.Success, TIO.Failure) => IO[Unit] = (i, sio, fio) => {
+    val saveIO: (UpdateContentCmd, TCB.Success, TCB.Failure) => Callback = (i, sio, fio) => {
       val p = $.props
       import p._
       val io = cp.call(updateContentFn)(i,
         sio << cd.applyEvents(_),
-        cp.consumeGenericFailure(_) >> fio.io)
+        cp.consumeGenericFailure(_) >> fio)
       //IO(println(s"Fake-sending: $i")) >> io
       io
     }
@@ -120,8 +119,8 @@ object ReqTable {
 
     val filterComp = FilterEditor.component(
       FilterEditor.StaticProps(project,
-        s      => $.modStateIO(_ filterFailure s),
-        (a, b) => $.modStateIO(_.filterSuccess(a, b))))
+        s      => $.modState(_ filterFailure s),
+        (a, b) => $.modState(_.filterSuccess(a, b))))
 
     val filterEditor = filterState.map(ReusableVal renderComponent filterComp)
 

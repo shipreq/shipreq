@@ -1,10 +1,9 @@
 package shipreq.webapp.client.app.ui
 
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import japgolly.scalajs.react._, vdom.prefix_<^._
 import scalaz.Equal
-import scalaz.effect.IO
 import shipreq.base.util.SetDiff
-import shipreq.webapp.client.lib.TIO
+import shipreq.webapp.client.lib.TCB
 import shipreq.webapp.client.lib.ui.UI
 
 /**
@@ -19,7 +18,7 @@ object RemoteDataEditor {
   sealed trait Status
   case object Editing extends Status
   case object Locked extends Status
-  case class Failed(retry: () => IO[Unit], resumeEdit: () => IO[Unit]) extends Status
+  case class Failed(retry: () => Callback, resumeEdit: () => Callback) extends Status
 
   case class StateFor[+A](value: A, status: Status, renderFn: () => ReactElement) {
     @inline def render: ReactElement =
@@ -34,17 +33,17 @@ object RemoteDataEditor {
   type OpState        = Option[State]
   type OpStateFor[+A] = Option[StateFor[A]]
 
-  type SetOpState        = OpState => IO[Unit]
-  type SetOpStateFor[-A] = OpStateFor[A] => IO[Unit]
+  type SetOpState        = OpState => Callback
+  type SetOpStateFor[-A] = OpStateFor[A] => Callback
 
   class Callbacks(
-    val abort    : TIO.Abort,
-    val lock     : IO[Unit],
-    val succeeded: TIO.Success,
-    val failed   : TIO.Failure)
+    val abort    : TCB.Abort,
+    val lock     : Callback,
+    val succeeded: TCB.Success,
+    val failed   : TCB.Failure)
 
-  type OnCommit = Callbacks => IO[Unit]
-  type CommitFn = OnCommit => TIO.Commit
+  type OnCommit = Callbacks => Callback
+  type CommitFn = OnCommit => TCB.Commit
 
   type MakeOpStateFor[A] = (A, Status) => OpStateFor[A]
 
@@ -55,19 +54,19 @@ object RemoteDataEditor {
                          setSelf   : SetOpStateFor[A],
 //                         abortFn   : MakeOpStateFor[A] => TIO.Abort,
 //                         successFn : TIO.Abort => TIO.Success,
-                         renderEdit: (A, S => IO[Unit], TIO.Abort, CommitFn) => ReactElement,
+                         renderEdit: (A, S => Callback, TCB.Abort, CommitFn) => ReactElement,
                          renderLock: A => ReactElement,
                          renderFail: (A, Failed) => ReactElement): StateFor[A] = {
 
 //    lazy val abort = abortFn(state)
 //    lazy val success = successFn(abort)
 
-    val abort = TIO.Abort(setSelf(None))
-    val success = TIO.Success(abort)
+    val abort = TCB.Abort(setSelf(None))
+    val success = TCB.Success(abort)
 
     def commit(a: A): CommitFn =
       onCommit => {
-        def onFailure: TIO.Failure = TIO.Failure.lazily {
+        def onFailure: TCB.Failure = TCB.Failure.lazily {
           def ff = Failed(() => onCommit(callbacks), () => setSelf(editState(a)))
           setSelf(state(a, ff))
         }
@@ -79,7 +78,7 @@ object RemoteDataEditor {
             success,
             onFailure)
 
-        TIO.Commit.lazily(onCommit(callbacks))
+        TCB.Commit.lazily(onCommit(callbacks))
       }
 
 
@@ -93,7 +92,7 @@ object RemoteDataEditor {
       StateFor(a, status, () => render)
     }
 
-    def recvEdit: S => IO[Unit] =
+    def recvEdit: S => Callback =
       s => setSelf(editState(convInput(s)))
 
     def editState(a: A): StateFor[A] =
@@ -105,7 +104,7 @@ object RemoteDataEditor {
   def default[S, A](initial   : A,
                     convInput : S => A,
                     setSelf   : SetOpStateFor[A],
-                    renderEdit: (A, S => IO[Unit], TIO.Abort, CommitFn) => ReactElement): StateFor[A] =
+                    renderEdit: (A, S => Callback, TCB.Abort, CommitFn) => ReactElement): StateFor[A] =
     core[S, A](
       initial, convInput, setSelf,
 //      _ => TIO.Abort(setSelf(None)),
@@ -120,11 +119,11 @@ object RemoteDataEditor {
   val defaultRenderFail: (Any, Failed) => ReactElement =
     (_, f) => renderRetry(f.retry(), f.resumeEdit())
 
-  private def renderRetry(retryFn: => IO[Unit], resumeFn: => IO[Unit]) =
+  private def renderRetry(retryFn: => Callback, resumeFn: => Callback) =
     <.div(
       "Network error occurred.",
-      <.button("Retry", ^.onClick ~~> retryFn), // English
-      <.button("OK", ^.onClick ~~> resumeFn)) // English
+      <.button("Retry", ^.onClick --> retryFn), // English
+      <.button("OK", ^.onClick --> resumeFn)) // English
 
   // ===================================================================================================================
 
@@ -135,7 +134,7 @@ object RemoteDataEditor {
       CommitFilter(b =>
         g(b) match {
           case Some(a) => f(a)
-          case None    => _.abort.io
+          case None    => _.abort
         }
       )
 

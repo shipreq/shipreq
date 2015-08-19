@@ -1,23 +1,23 @@
 package shipreq.webapp.client.protocol
 
+import japgolly.scalajs.react.Callback
 import scalaz.{-\/, \/-, \/}
-import scalaz.effect.IO
 import shipreq.webapp.base.protocol.{GenericFailure, RemoteFn}
-import shipreq.webapp.client.lib.{ConsoleIO, TIO}
+import shipreq.webapp.client.lib.{ConsoleCB, TCB}
 import ClientProtocol._
 
 trait ClientProtocol {
   def call(i: RemoteFn.Instance)(input  : i.fn.Input,
-                                 success: i.fn.Output => TIO.Success,
-                                 failure: Failed[i.fn.Failure] => TIO.Failure): IO[Unit]
+                                 success: i.fn.Output => TCB.Success,
+                                 failure: Failed[i.fn.Failure] => TCB.Failure): Callback
 
   /**
    * Generic means of handling and consuming generic (protocol/ajax) failure.
    *
    * Eventually this should be replaced with something better.
    */
-  def consumeGenericFailure(f: Failed[GenericFailure]): TIO.Failure =
-    TIO.Failure(ConsoleIO(_.error(genericFailureToText(f))))
+  def consumeGenericFailure(f: Failed[GenericFailure]): TCB.Failure =
+    TCB.Failure(ConsoleCB(_.error(genericFailureToText(f))))
 
   /**
    * Generic means of handling and consuming generic (protocol/ajax) failure.
@@ -87,15 +87,15 @@ object ClientProtocol {
     }
 
     override def call(i: RemoteFn.Instance)(input  : i.fn.Input,
-                                            success: i.fn.Output => TIO.Success,
-                                            failure: Failed[i.fn.Failure] => TIO.Failure): IO[Unit] = IO {
+                                            success: i.fn.Output => TCB.Success,
+                                            failure: Failed[i.fn.Failure] => TCB.Failure): Callback = Callback {
       import i.fn._
       val url = LiftAjax.addPageNameAndVersion(ajaxPath, js.undefined) + "?" + i.key
       val bin = PickleImpl.intoBytes(input)
       val res = postBinary(url, bin).map(UnpickleImpl(pickleResponse) fromBytes _)
-      res.onSuccess { case \/-(o) => success(o)     .unsafePerformIO() }
-      res.onSuccess { case -\/(f) => failure(\/-(f)).unsafePerformIO() }
-      res.onFailure { case t      => failure(-\/(t)).unsafePerformIO() }
+      res.onSuccess { case \/-(o) => success(o)     .runNow() }
+      res.onSuccess { case -\/(f) => failure(\/-(f)).runNow() }
+      res.onFailure { case t      => failure(-\/(t)).runNow() }
     }
   }
 }

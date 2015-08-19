@@ -7,7 +7,6 @@ import japgolly.scalajs.jquery.{TextComplete => TC}
 import scalacss.ScalaCssReact._
 import org.scalajs.dom.raw.HTMLTextAreaElement
 import scalajs.js
-import scalaz.effect.IO
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.Validity
 import shipreq.webapp.base.data._
@@ -15,7 +14,7 @@ import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text._
 import shipreq.webapp.client.app.ui.{VUCA, RemoteDataEditor, ProjectWidgets}
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
-import shipreq.webapp.client.lib.{TIO, HideDead, Contextualise}
+import shipreq.webapp.client.lib.{TCB, HideDead, Contextualise}
 import shipreq.webapp.client.lib.ui.{KeyHandlers, UI}
 import Text.Equality._
 import UpdateContentCmd._
@@ -137,7 +136,7 @@ object RichTextEditor {
 
     class Backend($: BackendScope[Props, Unit]) {
 
-      val updateState: ReactEventI => IO[Unit] =
+      val updateState: ReactEventI => Callback =
         e => $.props.vuca.update(correctOnChange(e.target.value))
 
       def render: ReactElement = {
@@ -153,7 +152,7 @@ object RichTextEditor {
             keyHandlers,
             ^.ref       := textEditorRef,
             ^.value     := p.vuca.value,
-            ^.onChange ~~> updateState)
+            ^.onChange ==> updateState)
 
         parseResult.fold(
           e => <.div(editor, <.div(cellErrorMsgStyle, e.toText)),

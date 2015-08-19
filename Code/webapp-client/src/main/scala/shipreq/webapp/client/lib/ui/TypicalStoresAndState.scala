@@ -1,11 +1,10 @@
 package shipreq.webapp.client.lib.ui
 
-import japgolly.scalajs.react.{ReactElement, CompStateFocus}
+import japgolly.scalajs.react.{CallbackTo, ReactElement, CompStateFocus}
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.MonocleReact._
 import monocle.macros.Lenses
 import shipreq.webapp.client.app.ui.Checkbox
-import scalaz.effect.IO
 import shipreq.base.util.UnivEq
 import shipreq.webapp.client.lib.FilterDead
 
@@ -34,8 +33,8 @@ abstract class TypicalStoresAndState[P, I, K: UnivEq](fields: FieldSet[P, I]) {
   case class State(newRow: newRowStore.State, savedRows: savedRowStore.State, filterDead: FilterDead)
 
   type S  = State
-  type ST = ReactST[IO, S, Unit]
-  val ST = ReactS.FixT[IO, S]
+  type ST = ReactST[CallbackTo, S, Unit]
+  val ST = ReactS.FixCB[S]
 
   val savedRowStoreS = savedRowStore.contramap(State.savedRows)
   val newRowStoreS   = newRowStore  .contramap(State.newRow)

@@ -6,7 +6,6 @@ import org.scalajs.dom.{console, document, KeyboardEvent}
 import org.scalajs.dom.ext.KeyCode
 import org.scalajs.dom.raw.HTMLBodyElement
 import scala.collection.immutable.BitSet
-import scalaz.effect.IO
 
 object KeyPressListener {
 
@@ -28,7 +27,7 @@ trait KeyPressListener extends OnUnmount {
   final def modsDown = _modsDown
   final def keysDown = _keysDown
 
-  private def _keychange(e: KeyboardEvent)(f: (BitSet, Int) => BitSet): Int = {
+  private def _keychange(e: KeyboardEvent)(f: (BitSet, Int) => BitSet): CallbackTo[Int] = CallbackTo {
     val i = e.keyCode
     if (KeyPressListener.modKeys contains i)
       _modsDown = f(_modsDown, i)
@@ -46,18 +45,15 @@ trait KeyPressListener extends OnUnmount {
     i
   }
 
-  final def _onKeyDown(e: KeyboardEvent): Unit = {
-    _keychange(e)(_ + _)
-    // console.log(s"onKeyDown : ${_modsDown} : ${e.keyCode} ", e)
-    onKeyDown(e).unsafePerformIO()
-  }
+  final def _onKeyDown(e: KeyboardEvent): Callback =
+    _keychange(e)(_ + _) >> onKeyDown(e)
+  // console.log(s"onKeyDown : ${_modsDown} : ${e.keyCode} ", e)
 
-  final def _onKeyUp(e: KeyboardEvent): Unit = {
-    _keychange(e)(_ - _)
+  final def _onKeyUp(e: KeyboardEvent): Callback =
+    _keychange(e)(_ - _).void
     // console.log(s"onKeyUp : ${_modsDown} : ${e.keyCode} ", e)
-  }
 
-  def onKeyDown(e: KeyboardEvent): IO[Unit]
+  def onKeyDown(e: KeyboardEvent): Callback
 
   // ---------------------------------------------------------------------------
   // Helpers
@@ -84,11 +80,6 @@ trait KeyPressListener extends OnUnmount {
         None
     }
 
-  protected def consumeHandledKbEvent[A](f: KbEventHO[IO[A]]): KbEventHO[IO[A]] =
-    e => f(e).map(io =>
-      IO {
-        e.preventDefault()
-        e.stopPropagation()
-      }.flatMap(_ => io)
-    )
+  protected def consumeHandledKbEvent[A](f: KbEventHO[CallbackTo[A]]): KbEventHO[CallbackTo[A]] =
+    e => f(e).map(_ << e.preventDefaultCB << e.stopPropagationCB)
 }

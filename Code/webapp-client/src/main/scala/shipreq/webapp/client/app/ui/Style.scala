@@ -7,7 +7,7 @@ import scalacss.StyleS
 import shipreq.base.util._
 import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.data.{Live, Dead}
-import shipreq.webapp.client.lib.ConsoleIO
+import shipreq.webapp.client.lib.ConsoleCB
 import shipreq.webapp.client.util._
 
 object Style extends StyleSheet.Inline {

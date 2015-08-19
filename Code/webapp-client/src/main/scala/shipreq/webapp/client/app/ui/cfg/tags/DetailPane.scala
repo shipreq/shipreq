@@ -1,9 +1,8 @@
 package shipreq.webapp.client.app.ui.cfg.tags
 
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import japgolly.scalajs.react._, vdom.prefix_<^._
 import shipreq.base.util.NonEmptyVector
 import scalaz.Equal
-import scalaz.effect.IO
 import scalaz.std.option.optionEqual
 import shipreq.webapp.base.data.{TagId => Id, _}
 import shipreq.webapp.client.app.ui.SelectOne
@@ -12,17 +11,17 @@ import SelectOne.Choice
 
 private[tags] object DetailPane {
 
-  case class Rel(id: Id, name: String, unlink: IO[Unit])
+  case class Rel(id: Id, name: String, unlink: Callback)
   implicit val relEquivalence = Equal.equalBy((_: Rel).id)
   type Rels = Seq[Rel]
 
   case class AddRel(value: FlatTag, selectable: Option[Id])
-  case class AddSelected(id: Id, onAdd: IO[Unit])
-  case class AddRels(rels: Vector[AddRel], onSelect: Option[Id] => IO[Unit], selected: Option[AddSelected])
+  case class AddSelected(id: Id, onAdd: Callback)
+  case class AddRels(rels: Vector[AddRel], onSelect: Option[Id] => Callback, selected: Option[AddSelected])
 
   case class Props(subjName: String,
                    parents: Rels, parentAdds: AddRels,
-                   children: Rels, childAdds: AddRels, childMoveIO: (Id, Id) => IO[Unit])
+                   children: Rels, childAdds: AddRels, childMoveIO: (Id, Id) => Callback)
 
   type State = DND.Parent.PState[Rel]
 
@@ -37,7 +36,7 @@ private[tags] object DetailPane {
       r.name,
       <.button(
         ^.marginLeft := "2ex",
-        ^.onClick ~~> r.unlink,
+        ^.onClick --> r.unlink,
         "Remove"))
 
   val relDropdownComponent = SelectOne.Component[Option[Id]]
@@ -95,7 +94,7 @@ private[tags] object DetailPane {
         val addButton = {
           val b = <.button(^.marginLeft := 1.ex, buttonLabel)
           ar.selected match {
-            case Some(s) => b(^.onClick ~~> s.onAdd)
+            case Some(s) => b(^.onClick --> s.onAdd)
             case None    => b(^.disabled := true)
           }
         }

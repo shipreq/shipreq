@@ -2,7 +2,6 @@ package shipreq.webapp.client.app.ui.cfg.issues
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.extra.{Px, OnUnmount}
-import scalaz.effect.IO
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.protocol.FieldMandatorinessMod
@@ -22,7 +21,7 @@ private[issues] object MandatoryFields {
   val rowStore = SavedRowStore.data[CustomField](_.mandatory)
 
   type S = rowStore.State
-  val  ST = ReactS.FixT[IO, S]
+  val  ST = ReactS.FixCB[S]
   type ST = ST.T[Unit]
 
   val changeListener = ChangeListener.store(rowStore)(_.customFieldTypes, _.config.fields.customFields.get)

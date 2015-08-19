@@ -5,7 +5,6 @@ import japgolly.scalajs.react.extra.{Px, OnUnmount}
 import monocle.macros.Lenses
 import scala.language.reflectiveCalls
 import scalajs.js.{undefined, UndefOr, Any => JsAny}
-import scalaz.effect.IO
 import scalaz.{Equal, -\/, \/-, \/}
 import scalaz.syntax.bind.ToBindOps
 import scalaz.syntax.equal._
@@ -20,7 +19,7 @@ import shipreq.webapp.base.UiText, UiText.FieldNames
 import shipreq.webapp.client.app.state.{ClientData, ChangeListener}
 import shipreq.webapp.client.app.ui._
 import shipreq.webapp.client.data.DataReusability._
-import shipreq.webapp.client.lib.{FilterDead, ConsoleIO, TIO}
+import shipreq.webapp.client.lib.{FilterDead, ConsoleCB, TCB}
 import shipreq.webapp.client.lib.ui.{FieldSet => _, _}
 import shipreq.webapp.client.protocol.ClientProtocol
 import shipreq.webapp.client.util.{Disabled, Enabled, DND, On}
@@ -77,8 +76,8 @@ private[fields] object MainTable {
   }
 
   type S  = State
-  type ST = ReactST[IO, S, Unit]
-  val  ST = ReactS.FixT[IO, S]
+  type ST = ReactST[CallbackTo, S, Unit]
+  val  ST = ReactS.FixCB[S]
 
   val text_storesS = text_stores.contramap(State.text_state)
   val impl_storesS = impl_stores.contramap(State.impl_state)
@@ -179,10 +178,10 @@ private[fields] object MainTable {
       val remote = $.props.remote
       val cp     = $.props.cp
 
-      private def call(a: CfgAction): (TIO.Success, TIO.Failure) => IO[Unit] =
+      private def call(a: CfgAction): (TCB.Success, TCB.Failure) => Callback =
         (s, f) => cp.call(remote)(a,
           s << $.props.clientData.applyEvents(_),
-          cp.consumeGenericFailure(_) >> f.io)
+          cp.consumeGenericFailure(_) >> f)
 
       def createIO(v: Values) =
         call(Create(v))
@@ -199,7 +198,7 @@ private[fields] object MainTable {
 
     // TODO staticDeletion doesn't handle failure (or lock row)
     val staticDeletion = new Deletion[StaticField](
-      protocol.deleteIO(_, _)(TIO.Success.nop, TIO.Failure.nop))
+      protocol.deleteIO(_, _)(TCB.Success.nop, TCB.Failure.nop))
 
     def validatorState(k: Option[CustomFieldId]): S => V.S =
       validatorStateS(_, k)
@@ -271,13 +270,13 @@ private[fields] object MainTable {
         for (t <- CustomFieldType.values.whole if allowNewCustomFieldType(t))
           add(customFieldChoice(t))
 
-        def staticInvoke(f: StaticField): IO[Unit] =
-          protocol.updateOrderIO(f, None)(TIO.Success.nop, TIO.Failure.nop) // TODO no failure handling
+        def staticInvoke(f: StaticField): Callback =
+          protocol.updateOrderIO(f, None)(TCB.Success.nop, TCB.Failure.nop) // TODO no failure handling
 
-        def customInvoke(t: CustomFieldType): IO[Unit] =
-          IO($ modStateIO storesForType(t).n.enableEdit).join
+        def customInvoke(t: CustomFieldType): Callback =
+          Callback.lazily($ modState storesForType(t).n.enableEdit)
 
-        def onInvoke: Option[IO[Unit]] =
+        def onInvoke: Option[Callback] =
           Some(s.newFieldTypeSel.fold(staticInvoke, customInvoke))
 
         Component(SelectInvoke.Props(
@@ -294,7 +293,7 @@ private[fields] object MainTable {
         customFieldStores.map(_.n.remove).reduce(_ compose _)
 
       val abortButton =
-        UI.abortNewButton($ modStateIO abortNew)
+        UI.abortNewButton($ modState abortNew)
     }
 
     val filterDeadCheckbox = Checkbox.filterDead_$($ zoomL State.filterDead)
@@ -319,11 +318,11 @@ private[fields] object MainTable {
     }
 
     // TODO orderIO doesn't handle failure (or lock row)
-    def orderIO(from: Field, to: Field): IO[Unit] = {
+    def orderIO(from: Field, to: Field): Callback = {
       val id       = from.fieldId
       val newOrder = DND.move(id, to.fieldId)(fieldOrder)
       val pos      = Position.get(newOrder, id)
-      protocol.updateOrderIO(id, pos)(TIO.Success.nop, TIO.Failure.nop)
+      protocol.updateOrderIO(id, pos)(TCB.Success.nop, TCB.Failure.nop)
     }
 
     val renderField: Field => ReactElement = {
@@ -369,7 +368,7 @@ private[fields] object MainTable {
     val unusedField: ReactNode = "-"
 
     abstract class SubtypeRenderer[T <: CustomField, I, B, D, V](
-      final val editor: Editor[(V.S, I), B, IO, S, D, IO[Unit], V],
+      final val editor: Editor[(V.S, I), B, CallbackTo, S, D, Callback, V],
       final val stores: NewAndSavedStores[S, CustomFieldId, T, I]) {
 
       val editable = editor.editableByRowStatus($)

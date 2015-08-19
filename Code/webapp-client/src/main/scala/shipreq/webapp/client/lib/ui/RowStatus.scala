@@ -1,7 +1,6 @@
 package shipreq.webapp.client.lib.ui
 
-import scalaz.Bind
-import scalaz.effect.IO
+import japgolly.scalajs.react.Callback
 
 sealed trait RowStatus
 object RowStatus {
@@ -13,8 +12,8 @@ object RowStatus {
   case object Locked extends RowStatus
 
   /** Failed to coordination Local change with external agent. (Ajax failure) */
-  case class Failed(retry: IO[Unit]) extends RowStatus
+  case class Failed(retry: Callback) extends RowStatus
   object Failed {
-    def lazily(f: => IO[Unit]): Failed = Failed(Bind[IO].join(IO(f)))
+    def lazily(f: => Callback): Failed = Failed(Callback lazily f)
   }
 }

@@ -249,7 +249,7 @@ sealed trait ReqTableTest0 {
 
   def reset(): Unit = {
     cp.reset()
-    c setState initialState
+    c.setState(initialState).runNow()
   }
 
   def * = new S(new DomZipper(c.getDOMNode()))
@@ -385,10 +385,10 @@ sealed trait ReqTableTest0 {
     filterDeadToggle.times(2).focus(_.viewSettings.columns.onColumns).assertNoChange
 
   def setProject(p: Project): Action[Unit] =
-    Action.exec(s"setProject($p)", c setState ReqTable.initialState(propsForProject(p)))
+    Action.exec(s"setProject($p)", c.setState(ReqTable.initialState(propsForProject(p))).runNow())
 
   def applyViewSettings(name: => String, vs: => ViewSettings): Action[Unit] =
-    Action.exec(name, c.modState(_ updateVS vs))
+    Action.exec(name, c.modState(_ updateVS vs).runNow())
 
   val sortByPubid = applyViewSettings("sortByPubid",
     c.state.viewSettings.copy(order = SortCriteria.byPubidOnly))
@@ -416,8 +416,8 @@ sealed trait ReqTableTest0 {
 
   val editFocused = Action("editFocused", { s =>
     s.table.ensureHasFocus()
-    cTable.backend._onKeyDown(F2)
-    cTable.backend._onKeyUp(F2)
+    cTable.backend._onKeyDown(F2).runNow()
+    cTable.backend._onKeyUp(F2).runNow()
   })
 
   val printTableContent =

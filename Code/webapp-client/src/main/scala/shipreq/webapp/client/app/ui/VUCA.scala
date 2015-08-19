@@ -1,7 +1,7 @@
 package shipreq.webapp.client.app.ui
 
-import scalaz.effect.IO
-import shipreq.webapp.client.lib.TIO
+import japgolly.scalajs.react.Callback
+import shipreq.webapp.client.lib.TCB
 
 /**
  * [V]alue
@@ -9,11 +9,11 @@ import shipreq.webapp.client.lib.TIO
  * [C]ommit
  * [A]bort
  */
-case class VUCA[A, -B](value: A, update: A => IO[Unit], commit: B => TIO.Commit, abort: TIO.Abort)
+case class VUCA[A, -B](value: A, update: A => Callback, commit: B => TCB.Commit, abort: TCB.Abort)
 
 object VUCA {
 
   /** Value & Update only. Abort & Commit will do nothing. */
-  @inline def vu[A](value: A, update: A => IO[Unit]): VUCA[A, Any] =
-    VUCA(value, update, TIO.Commit._nop, TIO.Abort.nop)
+  @inline def vu[A](value: A, update: A => Callback): VUCA[A, Any] =
+    VUCA(value, update, TCB.Commit._nop, TCB.Abort.nop)
 }

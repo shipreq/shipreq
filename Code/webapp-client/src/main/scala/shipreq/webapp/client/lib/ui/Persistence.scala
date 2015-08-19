@@ -1,30 +1,30 @@
 package shipreq.webapp.client.lib.ui
 
+import japgolly.scalajs.react.{Callback, CallbackTo}
 import japgolly.scalajs.react.ScalazReact._
 import scalaz.{Need, Name}
-import scalaz.effect.IO
 import shipreq.webapp.base.event.{VerifiedEvents, DeletionAction}
 import shipreq.webapp.base.protocol.RemoteFn
 import shipreq.webapp.base.validation._
 import shipreq.webapp.client.app.state.ClientData
-import shipreq.webapp.client.lib.{CrudIO, TIO}
+import shipreq.webapp.client.lib.{CrudIO, TCB}
 import shipreq.webapp.client.protocol.ClientProtocol
 
 object Persistence {
 
-  type ST[S]           = ReactST[IO, S, Unit]
+  type ST[S]           = ReactST[CallbackTo, S, Unit]
   type SetRowStatus[S] = RowStatus => ST[S]
   type Retry[S]        = Name[ST[S]]
-  type Realise[S]      = ST[S] => IO[Unit]
+  type Realise[S]      = ST[S] => Callback
 
   def retryably[A](f: Name[A] => A): A = {
     lazy val a: A = f(Need(a))
     a
   }
 
-  def failureIO[S](retry: Retry[S])(realise: Realise[S], setStatus: SetRowStatus[S]): TIO.Failure = {
+  def failureIO[S](retry: Retry[S])(realise: Realise[S], setStatus: SetRowStatus[S]): TCB.Failure = {
     def failedStatus = RowStatus.Failed.lazily(realise(retry.value))
-    TIO.Failure(realise(setStatus(failedStatus)))
+    TCB.Failure(realise(setStatus(failedStatus)))
   }
 
 
@@ -37,9 +37,9 @@ object Persistence {
                                  sp: S => P,
                                  setStatus: SetRowStatus[S],
                                  needSave: (P, U) => SaveNeed,
-                                 updateIO: (P, U, TIO.Success, TIO.Failure) => IO[Unit],
+                                 updateIO: (P, U, TCB.Success, TCB.Failure) => Callback,
                                  realise: Realise[S]): ST[S] = {
-    val Fix = ReactS.FixT[IO, S]
+    val Fix = ReactS.FixCB[S]
     type R = Fix.T[Unit]
 
     retryably[R](retry => {
@@ -52,7 +52,7 @@ object Persistence {
         }
       }
       def save(p: P, u: U): R = {
-        val s: TIO.Success = TIO.Success.nop
+        val s: TCB.Success = TCB.Success.nop
         val f = failureIO(retry)(realise, setStatus)
         Fix.ret(updateIO(p, u, s, f))
       }
@@ -66,13 +66,13 @@ object Persistence {
   def asyncUpdateS[S, T, K, P, U, I](validator: Validator[T, I, _, U], store: SavedRowStore[S, K, P, I])
                                     (st: K => S => T,
                                      needSave: (P, U) => SaveNeed,
-                                     updateIO: (P, U, TIO.Success, TIO.Failure) => IO[Unit],
+                                     updateIO: (P, U, TCB.Success, TCB.Failure) => Callback,
                                      realise: Realise[S]): K => ST[S] =
     k => asyncUpdate(
       validator, st(k),
       store.getI(k),
       store.getP(k),
-      store.setStatusST[IO](k),
+      store.setStatusST[CallbackTo](k),
       needSave, updateIO, realise)
 
 
@@ -82,12 +82,12 @@ object Persistence {
                                                                                 cp      : ClientProtocol,
                                                                                 realise : Persistence.Realise[S],
                                                                                 id      : K): ST[S] =
-    ReactS.liftR[IO, S, Unit](state => {
-      val setStatus = store.setStatusST[IO](id)
-      val saveio = retryably[ReactST[IO, S, Unit]](retry => {
+    ReactS.liftR[CallbackTo, S, Unit](state => {
+      val setStatus = store.setStatusST[CallbackTo](id)
+      val saveio = retryably[ReactST[CallbackTo, S, Unit]](retry => {
         val v = store.getI(id)(state)
         val f = Persistence.failureIO(retry)(realise, setStatus)
-        val io = cp.call(remoteFn)((id, v), cd.applyEventsS, cp.consumeGenericFailure(_) >> f.io)
+        val io = cp.call(remoteFn)((id, v), cd.applyEventsS, cp.consumeGenericFailure(_) >> f)
         ReactS retM io
       })
       saveio >> setStatus(RowStatus.Locked)
@@ -101,9 +101,9 @@ object Persistence {
                               si: S => Option[I],
                               removeNew: ReactS[S, Unit],
                               setStatus: SetRowStatus[S],
-                              createIO: (U, TIO.Success, TIO.Failure) => IO[Unit],
+                              createIO: (U, TCB.Success, TCB.Failure) => Callback,
                               realise: Realise[S]): ST[S] = {
-    val Fix = ReactS.FixT[IO, S]
+    val Fix = ReactS.FixCB[S]
     type R = Fix.T[Unit]
 
     retryably[R](retry => {
@@ -112,7 +112,7 @@ object Persistence {
         save(u) >> setStatus(RowStatus.Locked)
       }
       def save(u: U): R = {
-        val s = TIO.Success(realise(removeNew.liftIO))
+        val s = TCB.Success(realise(removeNew.liftCB))
         val f = failureIO(retry)(realise, setStatus)
         Fix.ret(createIO(u, s, f))
       }
@@ -126,13 +126,13 @@ object Persistence {
 
   def asyncCreateS[S, T, U, I](validator: Validator[T, I, _, U], store: NewRowStore[S, I])
                               (st: S => T,
-                               createIO: (U, TIO.Success, TIO.Failure) => IO[Unit],
+                               createIO: (U, TCB.Success, TCB.Failure) => Callback,
                                realise: Realise[S]): ST[S] =
     asyncCreate(
       validator, st,
       store.getI,
       ReactS mod store.remove,
-      store.setStatusST[IO],
+      store.setStatusST[CallbackTo],
       createIO, realise)
 
 
@@ -144,8 +144,8 @@ object Persistence {
                                    createT: S => T,
                                    updateT: K => S => T,
                                    needSave: (P, U) => SaveNeed,
-                                   createIO: (U, TIO.Success, TIO.Failure) => IO[Unit],
-                                   updateIO: (P, U, TIO.Success, TIO.Failure) => IO[Unit],
+                                   createIO: (U, TCB.Success, TCB.Failure) => Callback,
+                                   updateIO: (P, U, TCB.Success, TCB.Failure) => Callback,
                                    realise: Realise[S]): Option[K] => ST[S] = {
     val create = asyncCreateS(v, newStore)(createT, createIO, realise)
     val update = asyncUpdateS(v, savedStore)(updateT, needSave, updateIO, realise)
@@ -156,7 +156,7 @@ object Persistence {
   def asyncSaveT[K, P, U, I](v: Validator[(Stream[P], Option[K]), I, _, U], sas: TypicalStoresAndState[P, I, K])
                             (needSave: (P, U) => SaveNeed,
                              crudIO: CrudIO[P, _, U, _],
-                             realise: sas.ST => IO[Unit]): Option[K] => sas.ST =
+                             realise: sas.ST => Callback): Option[K] => sas.ST =
     asyncSaveS(
       v, sas.savedRowStoreS)(sas.newRowStoreS,
         sas.validatorInput(None), k => sas.validatorInput(Some(k)), needSave,
@@ -165,8 +165,8 @@ object Persistence {
 
   def asyncSaveNS[S, T, K, P, U, I](v: Validator[T, I, _, U],
                                     stores: NewAndSavedStores[S, K, P, I],
-                                    createIO: (U, TIO.Success, TIO.Failure) => IO[Unit])
-                                   (updateIO: (P, U, TIO.Success, TIO.Failure) => IO[Unit],
+                                    createIO: (U, TCB.Success, TCB.Failure) => Callback)
+                                   (updateIO: (P, U, TCB.Success, TCB.Failure) => Callback,
                                     needSave: (P, U) => SaveNeed,
                                     t: Option[K] => S => T,
                                     realise: Realise[S]): Option[K] => ST[S] =
@@ -175,8 +175,8 @@ object Persistence {
 
   def asyncSaveNS2[S, T, K, P, U, I](v: Validator[T, I, _, U],
                                      stores: NewAndSavedStores[S, K, P, I],
-                                     createIO: U => (TIO.Success, TIO.Failure) => IO[Unit])
-                                    (updateIO: (K, U) => (TIO.Success, TIO.Failure) => IO[Unit],
+                                     createIO: U => (TCB.Success, TCB.Failure) => Callback)
+                                    (updateIO: (K, U) => (TCB.Success, TCB.Failure) => Callback,
                                      needSave: (P, U) => SaveNeed,
                                      pk: P => K,
                                      t: Option[K] => S => T,
@@ -191,14 +191,14 @@ object Persistence {
   // ===================================================================================================================
   // Delete
 
-  def asyncDelete[S](deleteIO: (TIO.Success, TIO.Failure) => IO[Unit],
+  def asyncDelete[S](deleteIO: (TCB.Success, TCB.Failure) => Callback,
                      realise: Realise[S],
                      setStatus: SetRowStatus[S]): ST[S] = {
-    val Fix = ReactS.FixT[IO, S]
+    val Fix = ReactS.FixCB[S]
     type R = Fix.T[Unit]
 
     retryably[R](retry => {
-      val s = TIO.Success.nop
+      val s = TCB.Success.nop
       val f = failureIO(retry)(realise, setStatus)
       Fix.ret(deleteIO(s, f)) >> setStatus(RowStatus.Locked)
     })
@@ -206,8 +206,8 @@ object Persistence {
 
 
   def asyncDeletionS[S, K](store: SavedRowStore[S, K, _, _])
-                          (deleteIO: (K, DeletionAction) => (TIO.Success, TIO.Failure) => IO[Unit],
+                          (deleteIO: (K, DeletionAction) => (TCB.Success, TCB.Failure) => Callback,
                            realise: Realise[S]): Deletion[K] =
     new Deletion[K]((id, a) =>
-      realise(asyncDelete(deleteIO(id, a), realise, store.setStatusST[IO](id))))
+      realise(asyncDelete(deleteIO(id, a), realise, store.setStatusST[CallbackTo](id))))
 }

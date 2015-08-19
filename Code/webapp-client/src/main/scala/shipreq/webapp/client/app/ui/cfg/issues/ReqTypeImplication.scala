@@ -2,7 +2,6 @@ package shipreq.webapp.client.app.ui.cfg.issues
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.extra.OnUnmount
-import scalaz.effect.IO
 import scalaz.syntax.equal._
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.protocol.ReqTypeImplicationMod
@@ -20,7 +19,7 @@ private[issues] object ReqTypeImplication {
 
   val rowStore = SavedRowStore.data[CustomReqType](_.imp)
   import rowStore.{State => S}
-  val  ST = ReactS.FixT[IO, S]
+  val  ST = ReactS.FixCB[S]
   type ST = ST.T[Unit]
 
   val changeListener = ChangeListener.store(rowStore)(_.customReqTypes, _.config.customReqTypes.get)

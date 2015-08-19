@@ -1,5 +1,6 @@
 package shipreq.webapp.client.app.ui.reqtable
 
+import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
 import monocle.{Lens, Optional}
 import monocle.function.index

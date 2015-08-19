@@ -1,7 +1,7 @@
 package shipreq.webapp.client.app.ui.reqtable
 
 import japgolly.scalajs.jquery.{TextComplete => TC}
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
+import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
 import org.parboiled2.{ErrorFormatter, ParseError}
 import org.scalajs.dom.html
@@ -9,7 +9,6 @@ import org.scalajs.dom.raw.HTMLTextAreaElement
 import scala.util.{Failure, Success}
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/-}
-import scalaz.effect.IO
 import shipreq.base.util.Valid
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.filter._
@@ -23,8 +22,8 @@ object FilterEditor {
   type AutoComplete = ReusableVal[TC.Strategies]
 
   case class StaticProps(project  : Px[Project],
-                         onFailure: State => IO[Unit],
-                         onSuccess: (State, Option[FilterAst]) => IO[Unit])
+                         onFailure: State => Callback,
+                         onSuccess: (State, Option[FilterAst]) => Callback)
 
   case class State(text: String, error: Option[String])
 
@@ -75,14 +74,14 @@ object FilterEditor {
 
     val inputCorrect = """\s*[\n\r]\s*""".r
 
-    val onChange: ReactEventTA => IO[Unit] =
+    val onChange: ReactEventTA => Callback =
       e => updateFilterText(inputCorrect.replaceAllIn(e.target.value, " "))
 
-    def updateFilterText(text: String): IO[Unit] = {
-      def fail(error: String): IO[Unit] =
+    def updateFilterText(text: String): Callback = {
+      def fail(error: String): Callback =
         sp.onFailure(State(text, Some(error)))
 
-      def succeed(filter: Option[FilterAst]): IO[Unit] =
+      def succeed(filter: Option[FilterAst]): Callback =
         sp.onSuccess(State(text, None), filter)
 
       if (text.trim.isEmpty)
@@ -104,7 +103,7 @@ object FilterEditor {
     }
 
     val filterBase =
-      <.textarea(^.ref := textEditorRef, ^.onChange ~~> onChange)
+      <.textarea(^.ref := textEditorRef, ^.onChange ==> onChange)
 
     def render: ReactElement = {
       val s = $.props

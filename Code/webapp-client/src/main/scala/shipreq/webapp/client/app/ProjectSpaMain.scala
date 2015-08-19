@@ -1,9 +1,8 @@
 package shipreq.webapp.client.app
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
-import japgolly.scalajs.react.extra.router2._
+import japgolly.scalajs.react.extra.router._
 import org.scalajs.dom
-import scalaz.effect.IO
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 
@@ -15,9 +14,9 @@ import shipreq.webapp.client.lib.HideDead
 
 object ProjectSpaMain {
 
-  def main(r: ProjectSPA): IO[Unit] = {
+  def main(r: ProjectSPA): Callback = {
     val cp = ClientProtocol.Default
-    ClientData.init(cp, r.projectInit, clientData => IO {
+    ClientData.init(cp, r.projectInit, clientData => Callback {
       ui.Style.addToDocument()
       val baseUrl = determineBaseUrl(dom.window.location.href)
       val router = Router(baseUrl, routerConfig(r, cp, clientData))

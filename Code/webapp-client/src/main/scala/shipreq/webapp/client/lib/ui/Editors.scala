@@ -2,8 +2,6 @@ package shipreq.webapp.client.lib.ui
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import org.scalajs.dom.ext.KeyValue
-import scalaz.effect.IO
-import scalaz.syntax.bind.ToBindOps
 import shipreq.webapp.client.util.On
 import UI._
 import SimpleEditor._
@@ -19,20 +17,20 @@ object Editors {
         case Some(cb) =>
           @inline def cbh(event: CallbackEvent[String], st: ST = nopST) = cb(callbackH(event, st))
           base(
-            ^.onChange  ~~> textChangeRecv(i => cbh(OnChange(i))),
-            ^.onBlur    ~~> textChangeRecv(i => cbh(OnEditFinished(i))),
-            ^.onKeyDown ~~> cancelOnEscape(s => cbh(OnCancel, s))) // esc doesn't trigger onKeyPress
+            ^.onChange  ==> textChangeRecv(i => cbh(OnChange(i))),
+            ^.onBlur    ==> textChangeRecv(i => cbh(OnEditFinished(i))),
+            ^.onKeyDown ==> cancelOnEscape(s => cbh(OnCancel, s))) // esc doesn't trigger onKeyPress
       }
     })
 
-  def cancelOnEscape(f: ST => IO[Unit]): ReactKeyboardEventH => IO[Unit] =
+  def cancelOnEscape(f: ST => Callback): ReactKeyboardEventH => Callback =
     e => e.key match {
       case KeyValue.Escape =>
         val t = e.target
-        val st = ST.callback(e.preventDefaultIO >> e.stopPropagationIO, IO(t.blur()))
+        val st = ST.callback(e.preventDefaultCB >> e.stopPropagationCB, Callback(t.blur()))
         f(st)
       case _ =>
-        IO(())
+        Callback.empty
     }
 
   val textInputEditor = textEditor(<.input)
@@ -48,11 +46,11 @@ object Editors {
           base(^.readOnly := true, ^.disabled := true)
         case Some(cb) =>
           @inline def cbh(event: CallbackEvent[On], st: ST = nopST) = cb(callbackH(event, st))
-          def handleChange: ReactEventI => IO[Unit] = e => {
+          def handleChange: ReactEventI => Callback = e => {
             val b = On <~ e.target.checked
             cbh(OnChange(b)) >> cbh(OnEditFinished(b))
           }
-          base(^.onChange ~~> handleChange)
+          base(^.onChange ==> handleChange)
       }
     })
 

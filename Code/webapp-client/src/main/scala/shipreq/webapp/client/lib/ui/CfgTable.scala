@@ -2,7 +2,6 @@ package shipreq.webapp.client.lib.ui
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import monocle.Lens
-import scalaz.effect.IO
 import scalaz.syntax.equal._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.webapp.base.data.{Live, Dead, DataIdAux}
@@ -11,7 +10,7 @@ import shipreq.webapp.base.event.{DeletionAction, HardDel, SoftDel, Restore}
 import shipreq.webapp.client.lib.FilterDead
 
 object CfgTable {
-  def apply[S, K <: TaggedInt, P, I, A, B, C, V](editor: Editor[A, B, IO, S, C, IO[Unit], V],
+  def apply[S, K <: TaggedInt, P, I, A, B, C, V](editor: Editor[A, B, CallbackTo, S, C, Callback, V],
                                                   savedStore: SavedRowStore[S, K, P, I],
                                                   newStore: NewRowStore[S, I])(implicit I: DataIdAux[P, K]) =
     new {
@@ -29,7 +28,7 @@ object CfgTable {
 
   def typical[P, I, K <: TaggedInt](sas: TypicalStoresAndState[P, I, K]) = new {
     type A = ((Stream[P], Option[K]), I)
-    def apply[B, C, V](editor: Editor[A, B, IO, sas.S, C, IO[Unit], V]) = new {
+    def apply[B, C, V](editor: Editor[A, B, CallbackTo, sas.S, C, Callback, V]) = new {
       def apply[RowKey, N](rowkey: P => RowKey,
                            rr: RowRenderer[P, V, N],
                            del: Deletion[K],
@@ -67,7 +66,7 @@ object CfgTable {
   }
 }
 
-final class CfgTable[S, K <: TaggedInt, P, I, A, B, C, V, RowKey, R](editor: Editor[A, B, IO, S, C, IO[Unit], V],
+final class CfgTable[S, K <: TaggedInt, P, I, A, B, C, V, RowKey, R](editor: Editor[A, B, CallbackTo, S, C, Callback, V],
                                                                       savedStore: SavedRowStore[S, K, P, I],
                                                                       newStore: NewRowStore[S, I],
                                                                       rowkey: P => RowKey,
@@ -83,8 +82,8 @@ final class CfgTable[S, K <: TaggedInt, P, I, A, B, C, V, RowKey, R](editor: Edi
   type RowContent = R
   type RowStream = Stream[(RowKey, ReactElement)]
 
-  private[this] val ST = ReactS.FixT[IO, S]
-  private[this] def run(s: ST.T[Unit]): IO[Unit] = c.runState(s)
+  private[this] val ST = ReactS.FixCB[S]
+  private[this] def run(s: ST.T[Unit]): Callback = c.runState(s)
   private[this] implicit def endofToReactST(f: S => S) = ST modT f
 
   private[this] val editable = editor.editableByRowStatus(c)
@@ -97,13 +96,13 @@ final class CfgTable[S, K <: TaggedInt, P, I, A, B, C, V, RowKey, R](editor: Edi
 
   def newButton: ReactElement =
     <.button(
-      ^.onClick ~~> run(newStore.enableEdit),
+      ^.onClick --> run(newStore.enableEdit),
       ^.disabled := newStore.editing(c.state),
       "New")
 
   def newCancelButton: ReactElement =
     <.button(
-      ^.onClick ~~> run(newStore.remove),
+      ^.onClick --> run(newStore.remove),
       "Cancel")
 
   def row(classArg: String, rs: RowStatus, content: RowContent, ctrls: => TagMod): ReactTag = {

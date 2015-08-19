@@ -6,11 +6,9 @@ import japgolly.scalajs.react.extra._
 import org.scalajs.dom
 import org.scalajs.dom.ext.KeyCode
 import scala.scalajs.js, js.{UndefOr, undefined}
-import scalaz.effect.IO
 import scalaz.std.anyVal.intInstance
 import scalaz.syntax.equal._
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.effect.IoUtils.{nop, IoExt}
 import shipreq.base.util.NonEmptyVector
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
@@ -87,21 +85,21 @@ object Table {
             case KeyCode.F2     => onKeyboardAction(EditStart)
           }))
 
-    override def onKeyDown(e: dom.KeyboardEvent): IO[Unit] =
-      keyDispatch(e) getOrElse nop
+    override def onKeyDown(e: dom.KeyboardEvent): Callback =
+      keyDispatch(e) getOrElse Callback.empty
 
-    def onKeyboardAction(kb: KeyboardAction): IO[Unit] = {
+    def onKeyboardAction(kb: KeyboardAction): Callback = {
       val p  = $.props
       val fv = p.focus
 
       def limit(i: Int, m: Int): Int =
         if (i < 0) m else if (i > m) 0 else i
 
-      def withFocus(f: Focus => IO[Unit]) =
-        fv.value.fold(nop)(f)
+      def withFocus(f: Focus => Callback) =
+        fv.value.fold(Callback.empty)(f)
 
-      def withFocusO(f: Focus => Option[IO[Unit]]) =
-        fv.value flatMap f getOrElse nop
+      def withFocusO(f: Focus => Option[Callback]) =
+        fv.value flatMap f getOrElse Callback.empty
 
       def focusMod(nf: Focus => Focus) =
         withFocus(f => fv set Some(nf(f)))
@@ -129,7 +127,7 @@ object Table {
       }
     }
 
-    def startCellEditing(row: Row, col: Column): Option[IO[Unit]] = {
+    def startCellEditing(row: Row, col: Column): Option[Callback] = {
       val p = $.props
       if (p.cells(row.id, col).isDefined)
         // Already has cell state
@@ -139,7 +137,7 @@ object Table {
     }
 
     // This is ok because $.props.focus is dereferenced INSIDE the function
-    val setFocusFn = ReusableFn[Int, Column, IO[Unit]](
+    val setFocusFn = ReusableFn[Int, Column, Callback](
       (i, c) => $.props.focus.set(Some(Focus(i, c))))
 
     def render: ReactElement = {
@@ -191,7 +189,7 @@ object Table {
                       crs     : NonEmptyVector[ColumnRenderer],
                       cells   : Cell.RowState,
                       focus   : Option[Column],
-                      setFocus: Column ~=> IO[Unit])
+                      setFocus: Column ~=> Callback)
 
   val RowComponent =
     ReactComponentB[RowProps]("Row")
@@ -207,7 +205,7 @@ object Table {
    * Rather than force all cell children to stop propagation of events, we apply so logic here to filter the events to
    * which we react.
    */
-  def onCellClick(setFocus: => IO[Unit]): ReactMouseEventH => UndefOr[IO[Unit]] = e =>
+  def onCellClick(setFocus: => Callback): ReactMouseEventH => UndefOr[Callback] = e =>
     if (e.target == e.currentTarget || clickToFocusTargets.contains(e.target.tagName.toLowerCase))
       setFocus
     else
@@ -223,7 +221,7 @@ object Table {
         val (status, readOnlyView) = cr.render(p.row)
         <.td(
           *.cell((status, p.focus.exists(_ ≟ col))),
-          ^.onClick ~~>? onCellClick(p setFocus col),
+          ^.onClick ==>? onCellClick(p setFocus col),
           p.cells.get(cr.column).fold(readOnlyView)(_.render))
       })
 }

@@ -1,6 +1,6 @@
 package shipreq.webapp.client.app.ui.cfg.tags
 
-import scalaz.effect.IO
+import japgolly.scalajs.react.Callback
 import shipreq.webapp.base.data.TagType
 import shipreq.webapp.base.UiText
 import shipreq.webapp.client.app.ui.{SelectInvoke, SelectOne}
@@ -14,8 +14,8 @@ private[tags] object NewTagControl {
   val Component = SelectInvoke.Component[TagType]("NewTag")
 
   def props(selected: TagType,
-            invoke  : Option[IO[Unit]],
-            select  : TagType => IO[Unit],
+            invoke  : Option[Callback],
+            select  : TagType => Callback,
             enabled : Enabled): SelectInvoke.Props[TagType] =
 
     SelectInvoke.Props(

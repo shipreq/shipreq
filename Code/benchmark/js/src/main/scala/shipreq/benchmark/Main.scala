@@ -17,7 +17,7 @@ object Main extends JSApp {
       copy(results = (results :+ result).sorted)
   }
 
-  case class BenchProps(suite: BenchmarkSuite, onStart: () => Unit) {
+  case class BenchProps(suite: BenchmarkSuite, onStart: Callback) {
     def render: ReactElement = BenchComp(this)
   }
 
@@ -26,7 +26,7 @@ object Main extends JSApp {
     <.button(
       ^.margin := "2em",
       ^.fontSize := "20px",
-      ^.onClick --> p.onStart(),
+      ^.onClick --> p.onStart,
       s"${p.suite.suiteName}: Start")
     )
     .build
@@ -64,16 +64,15 @@ object Main extends JSApp {
   class MainBackend($: BackendScope[Vector[BenchmarkSuite], State]) {
 
     def log: Benchmark.Logger =
-      msg => $.modState(_ add msg)
+      msg => $.modState(_ add msg).runNow()
 
     def logResult: Benchmark.Logger =
-      msg => $.modState(_ addResult msg)
+      msg => $.modState(_ addResult msg).runNow()
 
-    def start(suite: BenchmarkSuite): Unit = {
-      //$.setState(State(Some("")), () => suite.run(log))
-      $.setState(State(Some(""), Vector.empty))
-      setTimeout(() => suite.run(log, logResult), 100)
-    }
+    def start(suite: BenchmarkSuite): Callback =
+      $.setState(
+        State(Some(""), Vector.empty),
+        Callback(suite.run(log, logResult)))
 
     def render: ReactElement = {
       val s = $.state
@@ -84,7 +83,7 @@ object Main extends JSApp {
         case None =>
           // Main screen
           val ss = $.props.map { suite =>
-            BenchProps(suite, () => start(suite)).render
+            BenchProps(suite, start(suite)).render
           }
           <.div(ss)
       }

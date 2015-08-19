@@ -7,7 +7,6 @@ import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.ext.{KeyValue, KeyCode}
 import scala.scalajs.js, js.Dynamic
-import scalaz.effect.IO
 import scalaz.std.anyVal._
 import scalaz.std.string.stringInstance
 import scalaz.std.tuple.tuple2Equal
@@ -35,8 +34,7 @@ object AutoCompleteTest extends TestSuite {
 
   class Editor(n: N) {
     def state: String                   = n.value
-    def setState(s: String): Unit       = n.value = s
-    def setStateIO(s: String): IO[Unit] = IO(setState(s))
+    def setState(s: String): Callback   = Callback(n.value = s)
     def getDOMNode(): N                 = n
   }
 
@@ -44,13 +42,13 @@ object AutoCompleteTest extends TestSuite {
     //    ReactComponentB[String]("AutoComplete test")
     //      .getInitialState(s => s)
     //      .render { $ =>
-    //        def change = (e: ReactEventI) => $.setStateIO(e.target.value)
+    //        def change = (e: ReactEventI) => $.setState(e.target.value)
     //        <.textarea(^.value := $.state, ^.onChange ~~> change)
     //      }
     //      .domType[N]
     //      .componentDidMount { $ =>
     //        def n = $.getDOMNode()
-    //        UI.textComplete(n, ac, $.setStateIO(_))
+    //        UI.textComplete(n, ac, $.setState(_))
     //        document.body.appendChild(n)
     //      }
     //      .build
@@ -59,7 +57,7 @@ object AutoCompleteTest extends TestSuite {
     val n = document.createElement("textarea").asInstanceOf[HTMLTextAreaElement]
     document.body.appendChild(n) // https://github.com/ariya/phantomjs/issues/12493
     val e = new Editor(n)
-    UI.textComplete(n, ac, e.setStateIO)
+    UI.textComplete(n, ac, e.setState)
     e
   }
 
@@ -76,7 +74,7 @@ object AutoCompleteTest extends TestSuite {
     if (uls.length > 1)
       uls.dropRight(1).foreach(_.style.display = "none")
 
-    ctx.editor.setState(text.replace("|", ""))
+    ctx.editor.setState(text.replace("|", "")).runNow()
     val n = ctx.editor.getDOMNode()
     var p = text.indexOf('|')
     if (p < 0) p = text.length

@@ -1,10 +1,9 @@
 package shipreq.webapp.client.app.ui.reqtable
 
 import scalacss.ScalaCssReact._
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import japgolly.scalajs.react._, vdom.prefix_<^._
 import org.scalajs.dom
 import scalaz.{Equal, \/, -\/, \/-}
-import scalaz.effect.IO
 import scalaz.syntax.equal._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{NonEmptySet, UnivEq, Util}
@@ -18,7 +17,7 @@ object SortCriteriaEditor {
   case class Props(value          : SortCriteria,
                    sortableColumns: NonEmptySet[Column],
                    columnName     : Column.NameResolver,
-                   change         : SortCriteria => IO[Unit]) {
+                   change         : SortCriteria => Callback) {
     @inline def component = Component(this)
   }
 
@@ -35,7 +34,7 @@ object SortCriteriaEditor {
     def render = {
       val p = $.props
 
-      def modIO(f: EndoFn[Vector[SortCriterion.Inconclusive]], g: EndoFn[SortCriterion.Conclusive]): IO[Unit] = {
+      def modIO(f: EndoFn[Vector[SortCriterion.Inconclusive]], g: EndoFn[SortCriterion.Conclusive]): Callback = {
         val s = p.value
         p change SortCriteria(f(s.init), g(s.last))
       }
@@ -79,7 +78,7 @@ object SortCriteriaEditor {
       type SC    = SortCriterion.Inconclusive
       type Col   = Column.SortInconclusive
       type OSM   = Col \/ SC
-      type ModIO = EndoFn[Vector[SortCriterion.Inconclusive]] => IO[Unit]
+      type ModIO = EndoFn[Vector[SortCriterion.Inconclusive]] => Callback
 
       private val choicesForColumn =
         memo[Col, Choices[OSM]]{c =>
@@ -91,7 +90,7 @@ object SortCriteriaEditor {
 
       private val smSelectComponent = SelectOne.Component[OSM]
 
-      private def updateIO(modIO: ModIO): OSM => IO[Unit] = {
+      private def updateIO(modIO: ModIO): OSM => Callback = {
         case -\/(c) =>
           // Remove
           modIO(_ filterNot (_.column ≟ c))
@@ -130,7 +129,7 @@ object SortCriteriaEditor {
         Row((col, DND.Parent.cProps($, col, moveIO(modIO)), (value, columnName, modIO)))
       }
 
-      private def moveIO(modIO: ModIO)(from: Col, to: Col): IO[Unit] =
+      private def moveIO(modIO: ModIO)(from: Col, to: Col): Callback =
         modIO(scs =>
           scs.find(_.column ≟ from).map(a =>
             scs.find(_.column ≟ to).fold(
@@ -147,7 +146,7 @@ object SortCriteriaEditor {
       type Col   = Column.SortConclusive
       type SM    = SortMethod.IgnoreBlanks
       type SC    = SortCriterion.Conclusive
-      type ModIO = EndoFn[SC] => IO[Unit]
+      type ModIO = EndoFn[SC] => Callback
 
       private val smChoices: Choices[SM] =
         SortMethod.ignoreBlanks.map(m =>

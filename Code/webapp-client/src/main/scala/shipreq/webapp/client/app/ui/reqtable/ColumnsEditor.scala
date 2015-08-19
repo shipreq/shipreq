@@ -1,6 +1,6 @@
 package shipreq.webapp.client.app.ui.reqtable
 
-import scalaz.effect.IO
+import japgolly.scalajs.react.Callback
 import shipreq.base.util.NonEmptyVector
 import shipreq.webapp.base.data.CustomField
 import shipreq.webapp.client.app.ui.OrderedSubsetEditor
@@ -20,10 +20,10 @@ final class ColumnsEditor(columnName: Column.NameResolver) {
       Column.all(fields).whole
     }
 
-  def render(filterDead: FilterDead, selected: NonEmptyVector[Column], update: NonEmptyVector[Column] => IO[Unit]) = {
+  def render(filterDead: FilterDead, selected: NonEmptyVector[Column], update: NonEmptyVector[Column] => Callback) = {
 
-    val update2: Vector[Column] => IO[Unit] =
-      v => NonEmptyVector.maybe(v, IO(()))(update)
+    val update2: Vector[Column] => Callback =
+      v => NonEmptyVector.maybe(v, Callback.empty)(update)
 
     val p = OrderedSubsetEditor.Props[Column](value     = selected.whole,
                                               all       = allColumns(filterDead),

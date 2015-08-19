@@ -4,7 +4,6 @@ import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.raw.HTMLInputElement
 import scalaz.Equal
-import scalaz.effect.IO
 import scalaz.std.AllInstances._
 import scalaz.Scalaz.Id
 import utest._
@@ -118,7 +117,7 @@ object EditorTest extends TestSuite {
     // ∃ new | test saved
     c.runState(
       ReactS.mod(newRowStoreS.enableEdit) >> ReactS.mod(newRowStoreS.setField(fields.f1 * "omg"))
-    ).unsafePerformIO()
+    ).runNow()
     assert(newRowStoreS.editing(c.state))
     testSavedUpdateAndRevert()
 
@@ -194,10 +193,10 @@ object EditorTest extends TestSuite {
 
       'allWithAsyncCreateAndUpdate {
         var saves = Vector.empty[SaveI]
-        val s: SaveIO = i => IO(saves :+= i)
+        val s: SaveIO = i => Callback(saves :+= i)
 
-        def testRetry(retry: IO[Unit]): Unit = {
-          retry.unsafePerformIO()
+        def testRetry(retry: Callback): Unit = {
+          retry.runNow()
           assert(saves.length == 2)
           assertEq(saves(0).p, saves(1).p)
           assertEq(saves(0).u, saves(1).u)
@@ -242,21 +241,21 @@ object EditorTest extends TestSuite {
           'rpcSuccess {
             Simulation.focusChangeBlur("blahblah") run tgt
             assertSave()
-            saves(0).s.io.unsafePerformIO()
+            saves(0).s.runNow()
             assertEq(savedRowStoreS.getStatus(7)(c.state), RowStatus.Locked) // success = nop
           }
 
           'rpcFailure {
             Simulation.focusChangeBlur("blahblah") run tgt
             assertSave()
-            saves(0).f.io.unsafePerformIO()
+            saves(0).f.runNow()
             val retry = assertRowStatusFailed(savedRowStoreS.getStatus(7)(c.state)).retry
             testRetry(retry)
           }
         }
 
         'new {
-          c modState newRowStoreS.enableEdit
+          c.modState(newRowStoreS.enableEdit).runNow()
           val tgt = Sel(".new .username").findIn(c).domType[HTMLInputElement].getDOMNode()
 
           def assertNoSave(): Unit = {
@@ -286,14 +285,14 @@ object EditorTest extends TestSuite {
           'rpcSuccess {
             Simulation.focusChangeBlur("blahblah") run tgt
             assertSave()
-            saves(0).s.io.unsafePerformIO()
+            saves(0).s.runNow()
             assertEq(newRowStoreS.getStatus(c.state), None)
           }
 
           'rpcFailure {
             Simulation.focusChangeBlur("blahblah") run tgt
             assertSave()
-            saves(0).f.io.unsafePerformIO()
+            saves(0).f.runNow()
             val retry = assertRowStatusFailed(newRowStoreS.getStatus(c.state).get).retry
             testRetry(retry)
           }

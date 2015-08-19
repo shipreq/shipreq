@@ -3,8 +3,6 @@ package shipreq.webapp.client.app.ui.reqtable
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
 import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
-import scalaz.effect.IO
-import scalaz.syntax.bind.ToBindOps
 import scalaz.syntax.equal.ToEqualOps
 import shipreq.base.util.UnivEq.univEqOption
 import shipreq.base.util.{Must, NonEmptyVector, UnivEq}
@@ -15,7 +13,7 @@ import shipreq.webapp.base.text.{PlainText, TextSearch}
 import shipreq.webapp.client.app.ui.SelectOne.{Choice, Choices}
 import shipreq.webapp.client.app.ui.reqtable.edit.{ImplicationEditor, TagEditor, ReqCodeEditor, RichTextEditor}
 import shipreq.webapp.client.app.ui.{ProjectWidgets, SelectOne, VUCA}
-import shipreq.webapp.client.lib.TIO
+import shipreq.webapp.client.lib.TCB
 import shipreq.webapp.client.util.Enabled
 
 object CreationInterface {
@@ -27,7 +25,7 @@ object CreationInterface {
   type SelType = Option[Type]
   val selectComponent = SelectOne.Component[SelType]
 
-  case class Props(createIO: (CreateContentCmd, TIO.Success, String => TIO.Failure) => IO[Unit], state: State)
+  case class Props(createIO: (CreateContentCmd, TCB.Success, String => TCB.Failure) => Callback, state: State)
 
   @Lenses
   case class State(selectedType: SelType,
@@ -82,7 +80,7 @@ class CreationInterface($             : CompStateFocus[State],
   private def render(p: Props) = {
     val s = p.state
 
-    val select: SelType => IO[Unit] =
+    val select: SelType => Callback =
       $ _setStateL State.selectedType
 
     val selProps = SelectOne.Props[SelType](
@@ -99,37 +97,37 @@ class CreationInterface($             : CompStateFocus[State],
       s.selectedType map detail)
   }
 
-  def ctrls(create: Option[IO[Unit]], status: Status, setStatus: Status => IO[Unit]): TagMod = {
+  def ctrls(create: Option[Callback], status: Status, setStatus: Status => Callback): TagMod = {
     val c: TagMod = createButton(create)
     failureNotice(status, setStatus).fold(c)(c + _)
   }
 
-  def createButton(create: Option[IO[Unit]]) =
+  def createButton(create: Option[Callback]) =
     <.button(
       ^.disabled := create.isEmpty,
-      ^.onClick ~~>? create,
+      ^.onClick -->? create,
       "Create") // english
 
-  def failureNotice(status: Status, setStatus: Status => IO[Unit]): Option[TagMod] =
+  def failureNotice(status: Status, setStatus: Status => Callback): Option[TagMod] =
     status match {
       case Editing | Locked => None
       case Failed(err) => Some(
-        <.div(err, <.button("Got it", ^.onClick ~~> setStatus(Editing)))) // English
+        <.div(err, <.button("Got it", ^.onClick --> setStatus(Editing)))) // English
     }
 
-  def ajax(p: Props, setStatus: Status => IO[Unit], cmd: CreateContentCmd): IO[Unit] = IO {
+  def ajax(p: Props, setStatus: Status => Callback, cmd: CreateContentCmd): Callback = Callback.lazily {
     val remoteCall = p.createIO(cmd,
-      TIO.Success(setStatus(Editing)),
-      f => TIO.Failure(setStatus(Failed(f))))
+      TCB.Success(setStatus(Editing)),
+      f => TCB.Failure(setStatus(Failed(f))))
     remoteCall >> setStatus(Locked)
-  }.join
+  }
 
   object CreateReqCodeGroup { // ---------------------------------------------------------------------------------------
 
     val $$ = $ zoomL State.rcg
-    val setStatus  = $$ zoomL CreateReqCodeGroupState.status  setStateIO (_: Status)
-    val setReqCode = $$ zoomL CreateReqCodeGroupState.reqCode setStateIO (_: String)
-    val setTitle   = $$ zoomL CreateReqCodeGroupState.title   setStateIO (_: String)
+    val setStatus  = $$ zoomL CreateReqCodeGroupState.status  setState (_: Status)
+    val setReqCode = $$ zoomL CreateReqCodeGroupState.reqCode setState (_: String)
+    val setTitle   = $$ zoomL CreateReqCodeGroupState.title   setState (_: String)
 
     val mkPropsReqCode = ReqCodeEditor.ForGroup.prepare(None, project.map(_.reqCodes.trie))
     val mkPropsTitle   = RichTextEditor.ReqCodeGroupTitle.prepare(project, projectText, projectWidgets, textSearch)
@@ -140,7 +138,7 @@ class CreationInterface($             : CompStateFocus[State],
       val propsReqCode = mkPropsReqCode(VUCA.vu(state.reqCode, setReqCode))
       val propsTitle   = mkPropsTitle  (VUCA.vu(state.title,   setTitle))
 
-      val create: Option[IO[Unit]] =
+      val create: Option[Callback] =
         for {
           code  <- propsReqCode.parseResult.toOption
           title <- propsTitle.parseResult.toOption
@@ -172,11 +170,11 @@ class CreationInterface($             : CompStateFocus[State],
     type Props = (CreationInterface.Props, CustomReqTypeId)
 
     val $$ = $ zoomL State.greq
-    val setStatus   = $$ zoomL CreateGenericReqState.status   setStateIO (_: Status)
-    val setReqCodes = $$ zoomL CreateGenericReqState.reqCodes setStateIO (_: String)
-    val setTitle    = $$ zoomL CreateGenericReqState.title    setStateIO (_: String)
-    val setTags     = $$ zoomL CreateGenericReqState.tags     setStateIO (_: String)
-    val setImp      = $$ zoomL CreateGenericReqState.imp      setStateIO (_: String)
+    val setStatus   = $$ zoomL CreateGenericReqState.status   setState (_: Status)
+    val setReqCodes = $$ zoomL CreateGenericReqState.reqCodes setState (_: String)
+    val setTitle    = $$ zoomL CreateGenericReqState.title    setState (_: String)
+    val setTags     = $$ zoomL CreateGenericReqState.tags     setState (_: String)
+    val setImp      = $$ zoomL CreateGenericReqState.imp      setState (_: String)
 
     val tagLookup = project.map(p => TagEditor.lookupG(p, _.tags.all))
     val impLookup = Px.apply2(project, projectText)(ImplicationEditor.lookupAll) map Must.apply
@@ -194,7 +192,7 @@ class CreationInterface($             : CompStateFocus[State],
       val propsTags     = mkPropsTags    (VUCA.vu(state.tags,     setTags))
       val propsImp      = mkPropsImp     (VUCA.vu(state.imp,      setImp))
 
-      val create: Option[IO[Unit]] =
+      val create: Option[Callback] =
         for {
           codes   <- propsReqCodes.parseResult.toOption
           title   <- propsTitle   .parseResult.toOption

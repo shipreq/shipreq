@@ -2,11 +2,9 @@ package shipreq.webapp.client.app.ui
 
 import japgolly.scalajs.jquery.{TextComplete => TC}
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
 import scalaz.{\/, -\/, Tags}
-import scalaz.effect.IO
 import scalaz.std.option._
 import scalaz.std.stream._
 import scalaz.std.vector._
@@ -63,7 +61,7 @@ final class TextSeqEditor[A, B](name: String, splitFn: String => Stream[String],
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    val updateState: ReactEventI => IO[Unit] =
+    val updateState: ReactEventI => Callback =
       e => $.props.vuca.update(e.target.value)
 
     def render: ReactElement = {
@@ -79,7 +77,7 @@ final class TextSeqEditor[A, B](name: String, splitFn: String => Stream[String],
           keyHandlers,
           ^.ref       := textEditorRef,
           ^.value     := p.vuca.value,
-          ^.onChange ~~> updateState),
+          ^.onChange ==> updateState),
         parseResult.fold(
           _.fold(EmptyTag)(err => <.div(p.errorMsgStyle, err)),
           _ => EmptyTag))
