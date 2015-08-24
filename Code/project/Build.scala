@@ -236,12 +236,14 @@ object ShipReq extends Build {
 
     def testSettings = (_: Project)
       .settings(
+        scalaJSOptimizerOptions in fastOptJS ~= { _.withDisableOptimizer(true) },
         scalaJSStage in Global := stage,
         jsDependencies in Test ++= Seq(
           testjs("react-with-addons.js"),
           testjs("jquery.min.js"),
           testjs("jquery.textcomplete.js") dependsOn "testjs/jquery.min.js",
           testjs("sizzle.min.js")),
+        // emitSourceMaps in Compile := false, // I want speed
         emitSourceMaps in Test := false, // PhantomJS doesn't use
         requiresDOM := true,
         jsEnv in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value))
