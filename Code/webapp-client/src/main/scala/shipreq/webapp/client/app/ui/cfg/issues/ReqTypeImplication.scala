@@ -25,7 +25,7 @@ private[issues] object ReqTypeImplication {
   val changeListener = ChangeListener.store(rowStore)(_.customReqTypes, _.config.customReqTypes.get)
 
   val Component = ReactComponentB[Props]("ReqTypeImplication")
-    .getInitialState(initialState)
+    .initialState_P(initialState)
     .backend(new Backend(_))
     .render(_.backend.render)
     .configure(changeListener.install(_.clientData))

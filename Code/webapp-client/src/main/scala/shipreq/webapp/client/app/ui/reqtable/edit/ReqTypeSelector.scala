@@ -58,7 +58,7 @@ object ReqTypeSelector {
                    fields     : NonEmptySet[A])
 
   val component = ReactComponentB[Props]("ReqTypeSelector")
-    .render(render(_))
+    .render_P(render)
     .componentDidMount(selectRef(_).tryFocus)
     .build
 

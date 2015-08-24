@@ -45,7 +45,7 @@ object TestUtil extends BaseTestUtil {
     a.head
   }
 
-  implicit def autodomnode(c: ComponentScope_M[TopNode]) = c.getDOMNode()
+  implicit def autodomnode(c: ComponentScope.Mounted[TopNode]) = c.getDOMNode()
 
   val nopJsFn: js.Function0[js.Any] = () => ((): js.Any)
 

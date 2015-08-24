@@ -20,7 +20,7 @@ object ReqTable {
 
   val Component =
     ReactComponentB[Props]("WIP")
-      .getInitialState(initialState)
+      .initialState_P(initialState)
       .backend(new Backend(_))
       .render(_.backend.render)
       .configure(ChangeListener.update[State](c => _.recvChanges(c)).install(_.cd))
@@ -149,10 +149,10 @@ object ReqTable {
   // -------------------------------------------------------------------------------------------------------------------
 
   val StatsSummary = ReactComponentB[TableStats]("Stats")
-    .render(stats =>
-    <.div(
-      *.statsSummary,
-      stats.summary))
+    .render_P(stats =>
+      <.div(
+        *.statsSummary,
+        stats.summary))
     .configure(shouldComponentUpdate)
     .build
 }

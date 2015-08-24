@@ -25,7 +25,7 @@ object SelectOne {
 
   def Component[A: Equal] =
     ReactComponentB[Props[A]]("SelectOne")
-      .render(render(_))
+      .render_P(render(_))
       .domType[HTMLSelectElement]
       .build
 

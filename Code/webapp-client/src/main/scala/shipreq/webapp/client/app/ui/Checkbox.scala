@@ -14,7 +14,7 @@ object Checkbox {
     val on = On when bool
 
     ReactComponentB[A]("Checkbox")
-      .render { a =>
+      .render_P { a =>
         val t = UI.checkbox(on(a))(^.onChange --> set(bool negate a))
         decor(a)(t)
       }

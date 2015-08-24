@@ -29,7 +29,7 @@ private[issues] object CustomIssueTypes {
 
   val Component =
     ReactComponentB[Props]("Cfg: User-Defined Issue Types")
-      .getInitialState(initialState)
+      .initialState_P(initialState)
       .backend(new Backend(_))
       .render(_.backend.render)
       .configure(changeListener.install(_.clientData))

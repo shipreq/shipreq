@@ -151,7 +151,7 @@ object Table {
   // ===================================================================================================================
 
   val HeaderComponent = ReactComponentB[NonEmptyVector[ColumnRenderer]]("Header")
-    .render(crs =>
+    .render_P(crs =>
       <.thead(
         <.tr(
           crs.toStream.map(cr =>
@@ -173,7 +173,7 @@ object Table {
 
   val RowComponent =
     ReactComponentB[RowProps]("Row")
-      .render(renderRow(_))
+      .render_P(renderRow(_))
       .configure(shouldComponentUpdate)
       .build
 

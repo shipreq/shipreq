@@ -21,7 +21,7 @@ object RowDetailButton {
   }
 
   val Component = ReactComponentB[Props]("RowFocus")
-    .render(render(_))
+    .render_P(render)
     .build
 
   def render(p: Props): ReactElement =

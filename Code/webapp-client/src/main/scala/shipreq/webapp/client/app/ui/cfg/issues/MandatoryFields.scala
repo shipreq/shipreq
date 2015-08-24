@@ -27,7 +27,7 @@ private[issues] object MandatoryFields {
   val changeListener = ChangeListener.store(rowStore)(_.customFieldTypes, _.config.fields.customFields.get)
 
   val Component = ReactComponentB[Props]("MandatoryFields")
-    .getInitialState(initialState)
+    .initialState_P(initialState)
     .backend(new Backend(_))
     .render(_.backend.render)
     .configure(

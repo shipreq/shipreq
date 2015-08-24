@@ -9,7 +9,7 @@ object SelectInvoke {
 
   def Component[A: Equal](name: String) =
     ReactComponentB[Props[A]](name)
-      .render(render(_))
+      .render_P(render(_))
       .domType[HTMLDivElement]
       .build
 

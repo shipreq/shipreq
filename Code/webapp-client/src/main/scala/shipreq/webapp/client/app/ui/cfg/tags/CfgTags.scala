@@ -158,7 +158,7 @@ private[tags] object MainTable {
 
   val Component =
     ReactComponentB[Props]("Cfg: Tags")
-      .getInitialState(initialState)
+      .initialState_P(initialState)
       .backend(new Backend(_))
       .render(_.backend.render)
       .configure(changeListener.install(_.clientData))

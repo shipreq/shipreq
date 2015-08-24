@@ -40,7 +40,7 @@ object AutoCompleteTest extends TestSuite {
 
   def editor(ac: TC.Strategies) = {
     //    ReactComponentB[String]("AutoComplete test")
-    //      .getInitialState(s => s)
+    //      .initialState_P(s => s)
     //      .render { $ =>
     //        def change = (e: ReactEventI) => $.setState(e.target.value)
     //        <.textarea(^.value := $.state, ^.onChange ~~> change)

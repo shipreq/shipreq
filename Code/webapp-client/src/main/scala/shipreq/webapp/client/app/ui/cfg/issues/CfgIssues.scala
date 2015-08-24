@@ -19,7 +19,7 @@ object CfgIssues {
 
   val Component =
     ReactComponentB[Props]("Cfg: Issues")
-      .render(p =>
+      .render_P(p =>
         <.section(
           <.h4("User-Defined Issue Types"),
           CustomIssueTypes.Props(p.cp, p.a, p.cd, p.filterDead).component,

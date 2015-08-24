@@ -132,7 +132,7 @@ private[fields] object MainTable {
 
   val Component =
     ReactComponentB[Props]("Cfg: Fields")
-      .getInitialState(initialState)
+      .initialState_P(initialState)
       .backend(new Backend(_))
       .render(_.backend.render)
       .configure(

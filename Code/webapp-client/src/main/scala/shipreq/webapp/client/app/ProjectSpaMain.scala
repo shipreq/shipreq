@@ -82,7 +82,7 @@ object ProjectSpaMain {
   // UI
 
   val IndexComponent = ReactComponentB[RouterCtl[Page]]("Index")
-    .render(ctl =>
+    .render_P(ctl =>
       <.ul(
         pages.whole.map(p =>
           <.li(ctl.link(p)(p.toString))))
