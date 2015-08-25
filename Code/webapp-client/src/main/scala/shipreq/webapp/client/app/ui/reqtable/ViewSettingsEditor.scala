@@ -1,31 +1,34 @@
 package shipreq.webapp.client.app.ui.reqtable
 
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
+import japgolly.scalajs.react._, vdom.prefix_<^._, MonocleReact._
 import japgolly.scalajs.react.extra._
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{NonEmptyVector, UnivEq}
+import shipreq.webapp.base.data.FieldSet
 import shipreq.webapp.client.app.ui.Checkbox
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
+import shipreq.webapp.client.data.DataReusability._
 
 object ViewSettingsEditor {
 
-  type Component = ReactComponentC.ReqProps[Props, _, _, TopNode]
-
-  case class Props(vs: ReusableVar[ViewSettings], filter: ReusableVal[ReactElement])
+  case class Props(columnName  : Column.NameResolver,
+                   customFields: FieldSet.CustomFields,
+                   vs          : ReusableVar[ViewSettings],
+                   filter      : ReusableVal[ReactElement])
 
   implicit val propsReuse = Reusability.caseClass[Props]
 
-  def apply(columnName: Column.NameResolver): Component =
+  val Component =
     ReactComponentB[Props]("ViewSettingsEditor")
-      .stateless
-      .backend(new Backend(_, columnName))
+      .backend(new Backend(_))
       .render(_.backend.render)
       .configure(shouldComponentUpdate)
       .build
 
-  final class Backend($: BackendScope[Props, Unit], columnName: Column.NameResolver) {
-
-    val columnsEditor = new ColumnsEditor(columnName)
+  final class Backend($: BackendScope[Props, Unit]) {
+    val columnName    = Px.thunkM($.props.columnName)
+    val customFields  = Px.thunkM($.props.customFields)
+    val columnsEditor = Px.apply2(columnName, customFields)(new ColumnsEditor(_, _))
 
     val filterDeadEditor = Checkbox.filterDead(
       ReusableFn.byName($.props.vs.mod).endoCall(_.setFilterDead))
@@ -33,6 +36,7 @@ object ViewSettingsEditor {
     val th = <.th(*.viewSettingsHeader)
 
     def render = {
+      Px.refresh(columnName, customFields)
       val p = $.props
       val vs = p.vs.value
 
@@ -45,10 +49,11 @@ object ViewSettingsEditor {
       }
 
       def columns =
-        columnsEditor.render(vs.filterDead, vs.columns, p.vs.set compose setColumns)
+        columnsEditor.value().render(vs.filterDead, vs.columns, p.vs.set compose setColumns)
 
       def sortCriteria =
-        SortCriteriaEditor.Props(vs.order, vs.columns.toNES, columnName, p.vs setL ViewSettings.order).component
+        SortCriteriaEditor.Props(vs.order, vs.columns.toNES, columnName.value(), p.vs setL ViewSettings.order)
+          .component
 
       <.table(
         <.thead(

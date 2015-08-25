@@ -11,7 +11,7 @@ import SelectOne.{Props, Choice}
  * Same as [[SelectOne]] except that it can be initialised to empty (no choice).
  * Once a choice is selected however, the user can not change it back to empty.
  */
-class SelectOneStartNone[A: Equal](options: Vector[Choice[A]]) {
+class SelectOneStartNone[A: Equal] private[SelectOneStartNone](options: Vector[Choice[A]]) {
 
   private[this] val optionsN =
     NonEmptyVector.option(options)
@@ -36,6 +36,7 @@ class SelectOneStartNone[A: Equal](options: Vector[Choice[A]]) {
     }
 }
 
+// TODO SelectOneStartNone creates new components when input changes which messes with React and browser focus.
 object SelectOneStartNone {
   import shipreq.webapp.base.data._
 

@@ -65,9 +65,29 @@ object Column {
        | _: CustomField => false
   }
 
+  def all(customFields: TraversableOnce[data.CustomField]): NonEmptyVector[Column] =
+    customFields.toVector.map(f => CustomField(f.id, f.live)) ++: builtInValues
+
+  // -------------------------------------------------------------------------------------------------------------------
+
+  case class NameResolver(customFieldNames: Map[data.CustomFieldId, String]) {
+
+    @inline def apply(column: Column) = fn(column)
+
+    val fn: Column => String = {
+      case b: BuiltIn         => NameResolver.builtIn(b)
+      case CustomField(id, _) => customFieldNames(id)
+    }
+  }
+
   object NameResolver {
     def byProject(p: Project): NameResolver =
-      Column.NameResolver(p.config.fields.customFields, data.CustomField nameP p)
+      byFields(p.config.fields.customFields, data.CustomField nameP p)
+
+    def byFields(customFields: data.FieldSet.CustomFields, customFieldName: data.CustomField => Must[String]) =
+      NameResolver(
+        customFields.mapValues(cf =>
+          UiText.mustA(customFieldName(cf))))
 
     val builtIn: BuiltIn => String = {
       case ReqType        => ColumnNames.reqType
@@ -78,19 +98,11 @@ object Column {
       case ImplicationSrc => ColumnNames.implicationSrc
       case ImplicationTgt => ColumnNames.implicationTgt
     }
-  }
 
-  case class NameResolver(customFields   : IMap[data.CustomFieldId, data.CustomField],
-                          customFieldName: data.CustomField => Must[String]) {
-
-    @inline def apply(column: Column) = fn(column)
-
-    val fn: Column => String = {
-      case b: BuiltIn         => NameResolver.builtIn(b)
-      case CustomField(id, _) => UiText.mustA(customFields(id) flatMap customFieldName)
+    implicit val reusability: Reusability[NameResolver] = {
+      import UnivEq.Implicits._
+      implicit val m: Reusability[Map[data.CustomFieldId, String]] = Reusability.byRefOrEqual
+      Reusability.caseClass
     }
   }
-
-  def all(customFields: TraversableOnce[data.CustomField]): NonEmptyVector[Column] =
-    customFields.toVector.map(f => CustomField(f.id, f.live)) ++: builtInValues
 }

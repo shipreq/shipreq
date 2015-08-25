@@ -14,6 +14,7 @@ import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.filter._
 import shipreq.webapp.client.app.ui.Style.reqtable.{filterEditor => *}
 import shipreq.webapp.client.app.ui.reqtable.edit.AutoComplete
+import shipreq.webapp.client.data.DataReusability._
 import shipreq.webapp.client.lib.ui.UI
 import shipreq.webapp.client.lib.{ShowDead, Contextualise}
 
@@ -21,30 +22,31 @@ object FilterEditor {
 
   type AutoComplete = ReusableVal[TC.Strategies]
 
-  case class StaticProps(project  : Px[Project],
-                         onFailure: State => Callback,
-                         onSuccess: (State, Option[FilterAst]) => Callback)
+  type OnFailure = State ~=> Callback
+  type OnSuccess = (State, Option[FilterAst]) ~=> Callback
+
+  case class Props(project  : Project,
+                   onFailure: OnFailure,
+                   onSuccess: OnSuccess,
+                   state    : State)
 
   case class State(text: String, error: Option[String])
 
-  type Props = State
-
-  implicit val stateReuse = Reusability.by((_: State).text)
+  implicit val reusabilityState = Reusability.by((_: State).text)
+  implicit val reusabilityProps = Reusability.caseClass[Props]
 
   def initialState = State("", None)
 
   private val textEditorRef = Ref[HTMLTextAreaElement]("i")
 
-  def component(staticProps: StaticProps) =
+  val Component =
     ReactComponentB[Props]("Filter")
-      .stateless
-      .backend(new Backend(staticProps, _))
+      .backend(new Backend(_))
       .render(_.backend.render)
       .configure(
         UI.installTextCompleteB(textEditorRef, _.autoComplete.value(), _.updateFilterText),
         shouldComponentUpdate)
       .build
-
 
   private val acCommand =
     TC.Strategy.pattern("""(^|[^\w:])([a-z]+)$""", index = 2)
@@ -56,10 +58,11 @@ object FilterEditor {
       .search(TC caseInsensitiveStartsWith FilterAst.Attr.values.toStream.map(_.name))
       .replace("$1" + _ + " ")
 
-  class Backend(sp: StaticProps, $: BackendScope[Props, Unit]) {
+  class Backend($: BackendScope[Props, Unit]) {
+    val project = Px.thunkM($.props.project)
 
     val autoComplete: Px[AutoComplete] =
-      sp.project.map { p =>
+      project.map { p =>
         val hashtag = AutoComplete.hashtag(p, ShowDead, issues = true, tags = true)(Contextualise)
         val ac = TC.Strategies(hashtag, acPresenceLackAttr, acCommand)
         ReusableVal.byRef(ac)
@@ -79,10 +82,10 @@ object FilterEditor {
 
     def updateFilterText(text: String): Callback = {
       def fail(error: String): Callback =
-        sp.onFailure(State(text, Some(error)))
+        $.propsCB >>= (_ onFailure State(text, Some(error)))
 
       def succeed(filter: Option[FilterAst]): Callback =
-        sp.onSuccess(State(text, None), filter)
+        $.propsCB >>= (_.onSuccess(State(text, None), filter))
 
       if (text.trim.isEmpty)
         succeed(None)
@@ -94,7 +97,7 @@ object FilterEditor {
           case Failure(e: Throwable)  => fail(e.getMessage)
           case Success(None)          => succeed(None)
           case Success(Some(spec))    =>
-            FilterAst(sp.project.value(), spec) match {
+            FilterAst(project.value(), spec) match {
               case \/-(ast) => succeed(Some(ast))
               case -\/(err) => fail(err)
             }
@@ -106,7 +109,8 @@ object FilterEditor {
       <.textarea(^.ref := textEditorRef, ^.onChange ==> onChange)
 
     def render: ReactElement = {
-      val s = $.props
+      Px.refresh(project)
+      val s = $.props.state
       <.div(
         filterBase(
           *.editor(Valid <~ s.error.isEmpty),

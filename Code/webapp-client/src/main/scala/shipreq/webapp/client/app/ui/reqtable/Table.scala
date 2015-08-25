@@ -23,7 +23,6 @@ object Table {
   implicit val reusabilityCRs : Reusability[NonEmptyVector[ColumnRenderer]] = Reusability.byRef
   implicit val reusabilityRows: Reusability[Vector[Row]]                    = Reusability.byRef
   implicit val reusabilityRow : Reusability[Row]                            = Reusability.byRef
-  implicit val reusabilityCNR : Reusability[Column.NameResolver]            = Reusability.byRef
   implicit val reusabilityCTS : Reusability[Cell.TableState]                = Reusability.byRef
   implicit val reusabilityCRS : Reusability[Cell.RowState]                  = Reusability.byRef
 

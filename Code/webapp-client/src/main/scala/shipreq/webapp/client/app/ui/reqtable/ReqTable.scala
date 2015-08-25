@@ -76,8 +76,7 @@ object ReqTable {
 
     val vsVar      = viewSettings map (ReusableVar(_)(setViewSettings))
     val vsCols     = viewSettings map (_.columns)
-    val colName    = project map Column.NameResolver.byProject
-    val vsEditor   = colName map ViewSettingsEditor.apply
+    val colName    = project map Column.NameResolver.byProject reuse
     val plainText  = project map PlainText.apply
     val textSearch = Px.apply2(project, plainText)(TextSearch.apply)
     val widgets    = Px.apply2(project, plainText)(ProjectWidgets.apply)
@@ -109,12 +108,15 @@ object ReqTable {
     }
     val colEditors = new ColumnEditors(project, plainText, widgets, textSearch, modTable, saveIO)
 
-    val filterComp = FilterEditor.component(
-      FilterEditor.StaticProps(project,
-        s      => $.modState(_ filterFailure s),
-        (a, b) => $.modState(_.filterSuccess(a, b))))
+    val filterProps: FilterEditor.State => FilterEditor.Props = {
+      import FilterEditor._
+      val onFailure: OnFailure = ReusableFn(s => $.modState(_ filterFailure s))
+      val onSuccess: OnSuccess = ReusableFn(i => $.modState(_.filterSuccess(i._1, i._2)))
+      s => FilterEditor.Props(project.value(), onFailure, onSuccess, s)
+    }
 
-    val filterEditor = filterState.map(ReusableVal renderComponent filterComp)
+    val filterEditor: Px[ReusableVal[ReactElement]] =
+      filterState map filterProps map ReusableVal.renderComponent(FilterEditor.Component)
 
     val creationInterface = new CreationInterface(setCreation, project, plainText, widgets, textSearch)
 
@@ -123,7 +125,9 @@ object ReqTable {
       Px.refresh(project, viewSettings, filterState)
       val s = $.state
 
-      val vsProps = ViewSettingsEditor.Props(vsVar, filterEditor)
+      val customFields = s.project.config.fields.customFields
+
+      val vsProps = ViewSettingsEditor.Props(colName, customFields, vsVar, filterEditor)
 
       val creationProps = CreationInterface.Props(createIO, s.creation)
 
@@ -131,7 +135,7 @@ object ReqTable {
         project, rows, colRnds, colEditors, s.cellStates)
 
       <.div(
-        vsEditor(vsProps),
+        ViewSettingsEditor.Component(vsProps),
         creationInterface.Component(creationProps),
         StatsSummary(stats),
         Table.Component(tableProps))
