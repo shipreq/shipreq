@@ -25,4 +25,7 @@ package object edit {
     as => \/-(as.toSet)
 
   type UpdateContentOnCommit = RemoteDataEditor.CommitFilter[UpdateContentCmd]
+
+  type InitSelfManaged[A, +S] = (A, RemoteDataEditor.RenderEdit[A, S])
+  type InitSelfManagedA[A] = InitSelfManaged[A, A]
 }

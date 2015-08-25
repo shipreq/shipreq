@@ -85,7 +85,7 @@ object ReqTable {
     val rows       = Px.apply4(viewSettings, project, plainText, textSearch)(Logic.rowsForTable).map(_.toVector)
     val stats      = Px.apply3(viewSettings, project, rows)(Logic.stats)
 
-    val modTable: Cell.ModTable = ReusableFn(loc => s => $.modState(_.updateCell(loc, s)))
+    val modTable: Cell.ModTable = ReusableFn(loc => (s, cb) => $.modState(_.updateCell(loc, s), cb))
     // TODO OMG THE COPY-AND-PASTE!
     // TODO Too much repetition of (? => Events) calls
     val createIO: (CreateContentCmd, TCB.Success, String => TCB.Failure) => Callback = (i, sio, fio) => {

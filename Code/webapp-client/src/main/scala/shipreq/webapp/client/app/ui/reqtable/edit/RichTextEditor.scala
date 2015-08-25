@@ -78,18 +78,13 @@ object RichTextEditor {
                     projectText   : Px[PlainText.ForProject],
                     projectWidgets: Px[ProjectWidgets],
                     textSearch    : Px[TextSearch],
-                    setSelf       : RemoteDataEditor.SetOpStateFor[String],
-                    commitFn      : t.OptionalText => RemoteDataEditor.OnCommit): RemoteDataEditor.StateFor[String] = {
+                    commitFn      : t.OptionalText => RemoteDataEditor.OnCommit): InitSelfManagedA[String] = {
 
-      def init = projectText.value() format initial
-
-      val props = prepare(project, projectText, projectWidgets, textSearch)
-
+      def init     = projectText.value() format initial
+      val props    = prepare(project, projectText, projectWidgets, textSearch)
       val onCommit = RemoteDataEditor.CommitFilter(commitFn).ignoreIfEqual(initial)
 
-      RemoteDataEditor.default[String, String](
-        init, identity, setSelf,
-        (s, u, a, commit) => props(VUCA(s, u, v => commit(onCommit(v)), a)).render)
+      (init, (s, u, a, commit) => props(VUCA(s, u, v => commit(onCommit(v)), a)).render)
     }
 
     type SubjectId
@@ -101,10 +96,9 @@ object RichTextEditor {
              projectText   : Px[PlainText.ForProject],
              projectWidgets: Px[ProjectWidgets],
              textSearch    : Px[TextSearch],
-             setSelf       : RemoteDataEditor.SetOpStateFor[String],
-             commitFn      : UpdateContentOnCommit): RemoteDataEditor.StateFor[String] = {
+             commitFn      : UpdateContentOnCommit): InitSelfManagedA[String] = {
       val onCommit = commitFn.cmap[t.OptionalText](mkUpdateContentCmd(subjectId, _))
-      selfManaged(initial, project, projectText, projectWidgets, textSearch, setSelf, onCommit)
+      selfManaged(initial, project, projectText, projectWidgets, textSearch, onCommit)
     }
 
     // -----------------------------------------------------------------------------------------------------------------

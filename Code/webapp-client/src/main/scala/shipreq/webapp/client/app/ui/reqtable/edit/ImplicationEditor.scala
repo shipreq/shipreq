@@ -122,16 +122,13 @@ object ImplicationEditor {
                   project   : Px[Project],
                   textSearch: Px[TextSearch],
                   lookupM   : Px[Must[Lookup]],
-                  setSelf   : RemoteDataEditor.SetOpStateFor[String],
-                  commitFn  : ImpDiff => RemoteDataEditor.OnCommit): RemoteDataEditor.StateFor[String] = {
+                  commitFn  : ImpDiff => RemoteDataEditor.OnCommit): InitSelfManagedA[String] = {
 
     val (props, initialTextValue) = prepare(initial, column, project, textSearch, lookupM)
 
     val onCommit = RemoteDataEditor.CommitFilter(commitFn).ignore(_.isEmpty)
 
-    RemoteDataEditor.default[String, String](
-      initialTextValue, identity, setSelf,
-      (s, u, a, commit) => props(VUCA(s, u, v => commit(onCommit(v)), a)).render)
+    (initialTextValue, (s, u, a, commit) => props(VUCA(s, u, v => commit(onCommit(v)), a)).render)
   }
 
   def edit(subjectId : ReqId,
@@ -140,8 +137,7 @@ object ImplicationEditor {
            project   : Px[Project],
            textSearch: Px[TextSearch],
            lookupM   : Px[Must[Lookup]],
-           setSelf   : RemoteDataEditor.SetOpStateFor[String],
-           commitFn  : UpdateContentOnCommit): RemoteDataEditor.StateFor[String] = {
+           commitFn  : UpdateContentOnCommit): InitSelfManagedA[String] = {
 
     val declFwd = isDeclFwd(column)
 
@@ -155,6 +151,6 @@ object ImplicationEditor {
       commitFn cmap f
     }
 
-    selfManaged(Some((subjectId, initial)), column, project, textSearch, lookupM, setSelf,  onCommit)
+    selfManaged(Some((subjectId, initial)), column, project, textSearch, lookupM, onCommit)
   }
 }

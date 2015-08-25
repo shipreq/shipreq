@@ -48,24 +48,20 @@ object ReqCodeEditor {
 
     def selfManaged(initial : Option[A],
                     trie    : Px[ReqCode.Trie],
-                    setSelf : RemoteDataEditor.SetOpStateFor[String],
-                    commitFn: A => RemoteDataEditor.OnCommit): RemoteDataEditor.StateFor[String] = {
+                    commitFn: A => RemoteDataEditor.OnCommit): InitSelfManagedA[String] = {
 
       def init     = initial.fold("")(PlainText.reqCode)
       val props    = prepare(initial, trie)
       val onCommit = RemoteDataEditor.CommitFilter(commitFn).ignoreIfEqualO(initial)
 
-      RemoteDataEditor.default[String, String](
-        init, liveCorrect, setSelf,
-        (s, u, a, commit) => props(VUCA(s, u, v => commit(onCommit(v)), a)).render)
+      (init, (s, u, a, commit) => props(VUCA(s, u, v => commit(onCommit(v)), a)).render)
     }
 
     def edit(subjectId: ReqCodeId,
              initial  : A,
              trie     : Px[ReqCode.Trie],
-             setSelf  : RemoteDataEditor.SetOpStateFor[String],
              commitFn : UpdateContentOnCommit) =
-      selfManaged(Some(initial), trie, setSelf, commitFn.cmap[A](SetReqCodeGroupCode(subjectId, _)))
+      selfManaged(Some(initial), trie, commitFn.cmap[A](SetReqCodeGroupCode(subjectId, _)))
   }
 
   // ===================================================================================================================
@@ -97,16 +93,13 @@ object ReqCodeEditor {
     def edit(subjectId: ReqId,
              initial  : Set[A],
              trie     : Px[ReqCode.Trie],
-             setSelf  : RemoteDataEditor.SetOpStateFor[String],
-             commitFn : UpdateContentOnCommit): RemoteDataEditor.StateFor[String] = {
+             commitFn : UpdateContentOnCommit): InitSelfManagedA[String] = {
 
       def init     = initial.toVector.map(PlainText.reqCode).sorted mkString "\n"
       val props    = prepare(initial, trie)
       val onCommit = commitFn.setDiff[A](PatchReqCodes(subjectId, _))
 
-      RemoteDataEditor.default[String, String](
-        init, liveCorrect, setSelf,
-        (s, u, a, commit) => props(VUCA(s, u, v => commit(onCommit(v)), a)).render)
+      (init, (s, u, a, commit) => props(VUCA(s, u, v => commit(onCommit(v)), a)).render)
     }
   }
 }

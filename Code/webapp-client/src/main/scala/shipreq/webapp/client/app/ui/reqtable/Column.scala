@@ -2,6 +2,7 @@ package shipreq.webapp.client.app.ui.reqtable
 
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
+import scala.scalajs.js
 import shipreq.base.util.{NonEmptyVector, Must, IMap, UnivEq}
 import shipreq.webapp.base.data.{Live, Project}
 import shipreq.webapp.base.{UiText, data}
@@ -13,6 +14,9 @@ sealed trait Column {
   protected def __blankable: Nothing
 
   def live: Live
+
+  /** A value that can be passed to React to quickly identify columns. */
+  val key: js.Any
 }
 object Column {
 
@@ -22,8 +26,14 @@ object Column {
   sealed trait SortInconclusive extends Column   { final protected def __sortConcl = ??? }
   sealed trait SortConclusive   extends NoBlanks { final protected def __sortConcl = ??? }
 
+  private val nextBuiltInKey: () => js.Any = {
+    var i = 0
+    () => { i += 1; i }
+  }
+
   sealed trait BuiltIn extends Column {
-    override def live = Live
+    override final def live = Live
+    override final val key = nextBuiltInKey()
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -39,7 +49,9 @@ object Column {
   // Field columns
   // - No applicable StaticFields, else they'd be added manually here.
   // - Currently allows any type of CustomField; this may change in future.
-  case class CustomField(id: data.CustomFieldId, live: Live) extends SortInconclusive with HasBlanks
+  case class CustomField(id: data.CustomFieldId, live: Live) extends SortInconclusive with HasBlanks {
+    override val key: js.Any = -id.value
+  }
 
   // -------------------------------------------------------------------------------------------------------------------
 

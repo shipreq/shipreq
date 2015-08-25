@@ -79,23 +79,19 @@ object TagEditor {
   def selfManaged(initial : Set[ApplicableTagId],
                   project : Project,
                   lookupM : Px[Must[Lookup]],
-                  setSelf : RemoteDataEditor.SetOpStateFor[String],
-                  commitFn: TagDiff => RemoteDataEditor.OnCommit): RemoteDataEditor.StateFor[String] = {
+                  commitFn: TagDiff => RemoteDataEditor.OnCommit): InitSelfManagedA[String] = {
 
     val (props, initialTextValue) = prepare(initial, project, lookupM)
 
     val onCommit = RemoteDataEditor.CommitFilter(commitFn).ignore(_.isEmpty)
 
-    RemoteDataEditor.default[String, String](
-      initialTextValue, identity, setSelf,
-      (s, u, a, commit) => props(VUCA(s, u, v => commit(onCommit(v)), a)).render)
+    (initialTextValue, (s, u, a, commit) => props(VUCA(s, u, v => commit(onCommit(v)), a)).render)
   }
 
   def edit(subjectId: ReqId,
            initial  : Set[ApplicableTagId],
            project  : Project,
            lookupM  : Px[Must[Lookup]],
-           setSelf  : RemoteDataEditor.SetOpStateFor[String],
-           commitFn : UpdateContentOnCommit): RemoteDataEditor.StateFor[String] =
-    selfManaged(initial, project, lookupM, setSelf, commitFn.cmap[TagDiff](PatchReqTags(subjectId, _)))
+           commitFn : UpdateContentOnCommit): InitSelfManagedA[String] =
+    selfManaged(initial, project, lookupM, commitFn.cmap[TagDiff](PatchReqTags(subjectId, _)))
 }

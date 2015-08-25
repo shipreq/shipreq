@@ -1,30 +1,29 @@
 package shipreq.webapp.client.app.ui.reqtable
 
 import scalacss.ScalaCssReact._
-import japgolly.scalajs.react._, vdom.prefix_<^._
+import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.extra._
 import org.scalajs.dom
 import org.scalajs.dom.ext.KeyCode
 import shipreq.base.util.NonEmptyVector
 import shipreq.webapp.base.data._
-import shipreq.webapp.client.app.ui.RemoteDataEditor
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
 import shipreq.webapp.client.app.ui.reqtable.edit.ColumnEditors
 import shipreq.webapp.client.data.DataReusability._
+import shipreq.webapp.client.lib.TCB
 import shipreq.webapp.client.util._
 import DomUtil._
 import tmp.ReactPatches._
 
 object Table {
 
-  implicit val reusabilityRDE : Reusability[RemoteDataEditor.State]         = Reusability.byRef
   implicit val reusabilityCEs : Reusability[ColumnEditors]                  = Reusability.byRef
-  implicit val reusabilityCR  : Reusability[ColumnRenderer]                 = Reusability.byRef
-  implicit val reusabilityCRs : Reusability[NonEmptyVector[ColumnRenderer]] = Reusability.byRef
-  implicit val reusabilityRows: Reusability[Vector[Row]]                    = Reusability.byRef
-  implicit val reusabilityRow : Reusability[Row]                            = Reusability.byRef
+  implicit val reusabilityCR  : Reusability[ColumnRenderer]                 = Reusability.byRef // TODO This is a problem
+  implicit val reusabilityCRs : Reusability[NonEmptyVector[ColumnRenderer]] = reusabilityNonEmptyVector
   implicit val reusabilityCTS : Reusability[Cell.TableState]                = Reusability.byRef
   implicit val reusabilityCRS : Reusability[Cell.RowState]                  = Reusability.byRef
+  implicit val reusabilityCCS : Reusability[Cell.State]                     = Reusability.byRef
+  implicit val reusabilityRows: Reusability[Vector[Row]]                    = Reusability.byRef // Each row will be checked anyway
 
   // ===================================================================================================================
   // Table
@@ -47,10 +46,10 @@ object Table {
 
   final class Backend($: BackendScope[Props, Unit]) {
 
-    val startCellEdit = ReusableFn[Row, Column, Callback]((row, col) =>
+    val startCellEdit = ReusableFn[Row, Column, TCB.Finally, Callback]((row, col, fin) =>
       $.propsCB.map { p =>
         if (p.cells(row.id, col).isEmpty)
-          p.colEditors.startCellEditing(row, col)
+          p.colEditors.startCellEditing(row, col, fin)
             .foreach(_.runNow())
       }
     )
@@ -136,7 +135,7 @@ object Table {
   case class RowProps(row      : Row,
                       crs      : NonEmptyVector[ColumnRenderer],
                       cells    : Cell.RowState,
-                      startEdit: Column ~=> Callback)
+                      startEdit: Column ~=> (TCB.Finally ~=> Callback))
 
   val RowComponent =
     ReactComponentB[RowProps]("Row")
@@ -148,8 +147,8 @@ object Table {
     <.tr(
       p.crs.toStream.map { cr =>
         val col = cr.column
-        val cp = CellProps(p.row, cr, p.cells get col, p.startEdit fnA col)
-        CellComponent(cp)
+        val cp = CellProps(p.row, cr, p.cells get col, p startEdit col)
+        CellComponent.withKey(col.key)(cp)
       }
     )
 
@@ -161,7 +160,7 @@ object Table {
   case class CellProps(row      : Row,
                        cr       : ColumnRenderer,
                        cellState: Cell.State,
-                       startEdit: ReusableFnA[Column, Callback])
+                       startEdit: TCB.Finally ~=> Callback)
 
   val CellComponent =
     ReactComponentB[CellProps]("Cell")
@@ -219,7 +218,7 @@ object Table {
         row.children(col).castHtml.focus()
 
     def startEdit: Callback =
-      $.propsCB >>= (_.startEdit())
+      $.propsCB >>= (_ startEdit TCB.Finally(domNode.map(_.focus())))
 
     def render = {
       val p = $.props

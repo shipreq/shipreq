@@ -13,6 +13,7 @@ import scalaz.syntax.semigroup._
 import shipreq.base.util.{UnivEq, Vector1}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.util.ReqCodeTreeItem
+import UnivEq.Implicits._
 
 /**
  * Replacement values for a requirement at a specific row.
@@ -154,7 +155,8 @@ object Row {
   implicit def rowEqualityG: UnivEq[ReqCodeGroupRow]   = UnivEq.derive
   implicit def rowEquality : UnivEq[Row]               = UnivEq.derive
 
-  implicit val idReusability: Reusability[Id] = Reusability.byEqual
+  implicit val reusabilityId    : Reusability[Id]  = Reusability.byEqual
+  implicit val reusabilityRow   : Reusability[Row] = Reusability.byRefOrEqual
 
   val expansion = Optional[Row, Expansion] {
     case r: GenericReqRow   => Some(r.exp)

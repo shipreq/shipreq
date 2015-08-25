@@ -57,4 +57,11 @@ object TCB {
   sealed trait TypeCommit extends Type
   type Commit = TCB[TypeCommit]
   val Commit = new Ctor[TypeCommit]()
+
+  /**
+   * Something to be executed at the end of a process, regardless of its outcome.
+   */
+  sealed trait TypeFinally extends Type
+  type Finally = TCB[TypeFinally]
+  val Finally = new Ctor[TypeFinally]()
 }

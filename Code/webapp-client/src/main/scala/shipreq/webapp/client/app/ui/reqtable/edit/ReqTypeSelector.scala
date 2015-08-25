@@ -25,9 +25,8 @@ object ReqTypeSelector {
 
   def apply(initial  : A,
             subjectId: GenericReqId,
-            fields   : Px[Set[A]])
-           (setSelf  : RemoteDataEditor.SetOpState,
-            onCommit0: UpdateContentOnCommit): RemoteDataEditor.State = {
+            fields   : Px[Set[A]],
+            onCommit0: UpdateContentOnCommit): InitSelfManagedA[A] = {
 
     val fieldsN = fields
       .map(_.filter(_.live :: Live))
@@ -41,9 +40,7 @@ object ReqTypeSelector {
       else
         commit(onCommit(a))
 
-    RemoteDataEditor.default[A, A](
-      initial, identity, setSelf,
-      (s, u, abort, commit) =>
+    (initial, (s, u, abort, commit) =>
         component(Props(s, u, abort, commitIfChanged(s, commit), fieldsN.value())))
   }
 
