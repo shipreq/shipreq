@@ -394,6 +394,7 @@ object ShipReq extends Build {
         )
         .settings(
           containerLibs in Jetty := LibJetty.runner(JVM).map(_.intransitive()),
+          javaOptions in Jetty += "-Xmx1g",
           initialCommands += consoleCmds,
           fullClasspath in console in Compile += file("src/main/webapp") // So templates can be loaded from console
         )
