@@ -57,7 +57,7 @@ object AutoCompleteTest extends TestSuite {
     val n = document.createElement("textarea").asInstanceOf[HTMLTextAreaElement]
     document.body.appendChild(n) // https://github.com/ariya/phantomjs/issues/12493
     val e = new Editor(n)
-    UI.textComplete(n, ac, e.setState)
+    UI.textComplete(n, ac, e.setState).runNow()
     e
   }
 

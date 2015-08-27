@@ -22,13 +22,12 @@ object Main extends JSApp {
   }
 
   val BenchComp = ReactComponentB[BenchProps]("B")
-    .render((p, _) =>
-    <.button(
-      ^.margin := "2em",
-      ^.fontSize := "20px",
-      ^.onClick --> p.onStart,
-      s"${p.suite.suiteName}: Start")
-    )
+    .render_P(p =>
+      <.button(
+        ^.margin := "2em",
+        ^.fontSize := "20px",
+        ^.onClick --> p.onStart,
+        s"${p.suite.suiteName}: Start"))
     .build
 
   val ConsoleComp = ReactComponentB[String]("C")
