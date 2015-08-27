@@ -62,9 +62,9 @@ object AutoComplete {
 
   def hashtag(legal: Stream[HashRefKey]): Contextualise => Strategy = {
     import Grammar.{hashRefKey => G}
-    val mainRegex = s"(${G.firstChar.one}${G.allChars.*})"
+    val mainRegex = s"(|${G.firstChar.one}${G.allChars.*})$$"
     val searchFn  = TC.caseInsensitiveContains(legal.map(_.value).sorted)
-    hashtagContext.strategy(mainRegex, searchFn)(identity, " ")(_)
+    hashtagContext.strategy(mainRegex, searchFn)(identity, "")(_)
   }
 
   def hashtag(issues: Stream[CustomIssueType],

@@ -182,11 +182,11 @@ object AutoCompleteTest extends TestSuite {
 
       'start {
         test("#T")("TBD", "TO"+"DO")
-        testSelect("#TBD ")
+        testSelect("#TBD")
       }
       'mid {
         test("#DO")("TO"+"DO")
-        testSelect("#TO"+"DO ")
+        testSelect("#TO"+"DO")
       }
       'noSyntax -
         test("T")()
@@ -199,11 +199,11 @@ object AutoCompleteTest extends TestSuite {
 
       'start {
         test("#pri")("pri=high", "pri=low", "pri=med")
-        testSelect("#pri=high ")
+        testSelect("#pri=high")
       }
       'mid {
         test("#1")("v1.0", "v1.1", "v1.2", "v1.3", "v1.x")
-        testSelect("#v1.0 ")
+        testSelect("#v1.0")
       }
       'noSyntax -
         test("pri")()
@@ -216,15 +216,15 @@ object AutoCompleteTest extends TestSuite {
 
       'start {
         test("pri")("pri=high", "pri=low", "pri=med")
-        testSelect("pri=high ")
+        testSelect("pri=high")
       }
       'mid {
         test("1")("v1.0", "v1.1", "v1.2", "v1.3", "v1.x")
-        testSelect("v1.0 ")
+        testSelect("v1.0")
       }
       'withSyntax - {
         test("#pri")("pri=high", "pri=low", "pri=med")
-        testSelect("pri=high ")
+        testSelect("pri=high")
       }
       'filterDead -
         test("#x")("v1.x", "v2.x") // v3.x & v4.x are dead
