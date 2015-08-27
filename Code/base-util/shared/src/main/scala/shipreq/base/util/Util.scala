@@ -43,6 +43,13 @@ object Util {
     else
       s.substring(0, cutoff - 1) + "\u2026"
 
+  def deleteVectorElement[A](v: Vector[A], n: Int): Vector[A] = {
+    val b = v.companion.newBuilder[A]
+    var i = 0
+    v.foreach{ x => if (i != n) b += x; i += 1 }
+    b.result
+  }
+
   def foldAndIndex[A, B, K](as: TraversableOnce[A], z: B, ik: Int => K)(f: (B, K, A) => B): (B, Map[K, A]) = {
     var i = 0
     var m = Map.empty[K, A]

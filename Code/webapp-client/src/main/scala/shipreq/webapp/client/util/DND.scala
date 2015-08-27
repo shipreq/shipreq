@@ -1,10 +1,8 @@
 package shipreq.webapp.client.util
 
-import org.scalajs.dom
-import org.scalajs.dom.console
-import scala.scalajs.js
 import scalaz._
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import shipreq.base.util.Util
 
 /**
  * Usage.
@@ -17,19 +15,43 @@ import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
  */
 object DND {
 
-  def move[A](from: A, to: A)(as: Vector[A])(implicit E: Equal[A]): Vector[A] = {
-    var result = Vector.empty[A]
-    var finding = true
-    as.foreach { a =>
-      if (finding && E.equal(from, a))
-        finding = false
-      else {
-        val e = E.equal(to, a)
-        if (e && finding) result :+= from
-        result :+= a
-        if (e && !finding) result :+= from
+  def moveE[A](from: A, to: A)(as: Vector[A])(implicit e: Equal[A]): Vector[A] =
+    move(from, to, as)(e.equal)
+
+  def move[A, B](from: A, to: A, bs: Vector[B])(equal: (A, B) => Boolean): Vector[B] = {
+    var tmp = bs.companion.newBuilder[B]
+    var putLater = -1
+    var fromB: Option[B] = None
+    var i = 0
+    bs.foreach { b =>
+      if (fromB.isEmpty && equal(from, b)) {
+        if (equal(to, b))
+          return bs // nothing to do
+        fromB = Some(b)
+      } else {
+        tmp += b
+        if (equal(to, b)) {
+          fromB match {
+            case None =>
+              putLater = i
+              tmp += b // This is the correct b, we will replace this-1
+            case Some(ins) =>
+              tmp += ins
+          }
+          i += 1
+        }
+        i += 1
       }
     }
+    val tmp2 = tmp.result()
+    val result =
+      if (putLater == -1)
+        tmp2
+      else fromB match {
+        case Some(b) => tmp2.updated(putLater, b)
+        case None    => Util.deleteVectorElement(tmp2, putLater)
+      }
+    assert(result.size == bs.size, s"DND Move failure.\nBefore: $bs\n After: $result")
     result
   }
 
@@ -125,7 +147,7 @@ object DND {
     def dragStart[A](a: A, p: CProps[A]): ReactDragEvent => ST =
       e => {
         val io1 = p.eventHandler(DragEvent.Start(a))
-        val io2 = Callback{ e.dataTransfer.setData("text", "managed") }
+        val io2 = Callback{ e.dataTransfer.setData("text", "managed"); () }
         ST.ret(io1 >> io2) >> setStateT
       }
 

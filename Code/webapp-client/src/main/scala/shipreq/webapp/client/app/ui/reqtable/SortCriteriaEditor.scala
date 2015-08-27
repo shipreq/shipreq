@@ -137,7 +137,7 @@ object SortCriteriaEditor {
               scs.filterNot(_ eq a)
             )(b =>
               // Normal move
-              DND.move(a, b)(scs)(Equal[Col].contramap(_.column)))
+              DND.move(a, b, scs)(_.column ≟ _.column))
           ) getOrElse scs)
     }
 

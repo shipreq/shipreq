@@ -23,6 +23,7 @@ import shipreq.webapp.base.util.{Optics, ReqCodeTreeItem}
 import shipreq.webapp.client.app.ui.reqtable.{SortCriterion => SC, Column => C}
 import shipreq.webapp.client.lib.{FilterDead, ShowDead, HideDead}
 import shipreq.webapp.client.test.ClientTestSettings._
+import shipreq.webapp.client.util.On
 import SortMethod._
 import Sorter._
 import Text.Equality._
@@ -178,7 +179,7 @@ object LogicTest extends TestSuite {
       if (vs isVisible c)
         gathered
       else
-        Logic.gather(ViewSettings(NonEmptyVector(c), sc, vs.filter, vs.filterDead), p, plainText, textSearch)
+        Logic.gather(ViewSettings(columnState(p, c), sc, vs.filter, vs.filterDead), p, plainText, textSearch)
 
     def sortCriAndGather(c: SC.Inconclusive) =
       sortCri(c).mapStrengthR(gatherOn(c.column, _))
@@ -310,6 +311,12 @@ object LogicTest extends TestSuite {
     } yield
       LogicTests(vs, p)
 
+  private def columnState(p: Project, c: Column): ColumnsEditor.State =
+    columnState(p, NonEmptyVector one c)
+
+  private def columnState(p: Project, cs: NonEmptyVector[Column]): ColumnsEditor.State =
+    ColumnsEditor.State.init(Column.allInProject(p).whole)(On <~ cs.whole.contains(_))
+
   // ===================================================================================================================
   // Unit tests
   // Fucking IntelliJ crashes typing these tests inline
@@ -351,21 +358,21 @@ object LogicTest extends TestSuite {
       testUnsorted2(p, NonEmptyVector one c, f, fd, extract)(expect)
 
     private def testUnsorted2[A: Equal](p: Project, cs: NonEmptyVector[C], f: Filter, fd: FilterDead, extract: Rows => A)(expect: A): Unit = {
-      val vs = ViewSettings(cs, SortCriteria.default.copy(init = Vector.empty), f, fd)
+      val vs = ViewSettings(columnState(p, cs), SortCriteria.default.copy(init = Vector.empty), f, fd)
       val pc = pcache(p)
       import pc.{pt, ts}
       val r = Logic.gather(vs, p, pt, ts) |> Logic.sort(vs, p, pt) |> Logic.consolidateAdjacentDups
       assertEq(extract(r), expect)
     }
 
-    private def vsSortedByCB(c: C.SortInconclusive with C.HasBlanks, sm: ConsiderBlanks, f: Filter, fd: FilterDead): ViewSettings =
-      ViewSettings(NonEmptyVector(c), SortCriteria.default.copy(init = Vector(SC.InconclusiveCB(c, sm))), f, fd)
+    private def vsSortedByCB(p: Project, c: C.SortInconclusive with C.HasBlanks, sm: ConsiderBlanks, f: Filter, fd: FilterDead): ViewSettings =
+      ViewSettings(columnState(p, c), SortCriteria.default.copy(init = Vector(SC.InconclusiveCB(c, sm))), f, fd)
 
     private def testCB[A: Equal](p: Project, c: C.SortInconclusive with C.HasBlanks, f: Filter, fd: FilterDead, extract: Rows => A)(tests: Seq[(ConsiderBlanks, A)]) = {
       val pc = pcache(p)
       import pc.{pt, ts}
       for ((sm, expect) <- tests) {
-        val vs = vsSortedByCB(c, sm, f, fd)
+        val vs = vsSortedByCB(p, c, sm, f, fd)
         val r = Logic.gather(vs, p, pt, ts) |> Logic.sort(vs, p, pt) |> Logic.consolidateAdjacentDups
         assertEq(sm.toString, extract(r), expect)
       }
@@ -383,14 +390,14 @@ object LogicTest extends TestSuite {
     private def allSortsCB(zcount: Int, asc: String, desc: String): Seq[(ConsiderBlanks, String)] =
       allSortsCBA(z, zcount)(_ + sep + _, asc, desc)
 
-    private def vsSortedByIB(c: C.SortInconclusive with C.NoBlanks, sm: IgnoreBlanks, f: Filter, fd: FilterDead): ViewSettings =
-      ViewSettings(NonEmptyVector(c), SortCriteria.default.copy(init = Vector(SC.InconclusiveIB(c, sm))), f, fd)
+    private def vsSortedByIB(p: Project, c: C.SortInconclusive with C.NoBlanks, sm: IgnoreBlanks, f: Filter, fd: FilterDead): ViewSettings =
+      ViewSettings(columnState(p, c), SortCriteria.default.copy(init = Vector(SC.InconclusiveIB(c, sm))), f, fd)
 
     private def testIB[A: Equal](p: Project, c: C.SortInconclusive with C.NoBlanks, f: Filter, fd: FilterDead, extract: Rows => A)(tests: Seq[(IgnoreBlanks, A)]) = {
       val pc = pcache(p)
       import pc.{pt, ts}
       for ((sm, expect) <- tests) {
-        val vs = vsSortedByIB(c, sm, f, fd)
+        val vs = vsSortedByIB(p, c, sm, f, fd)
         val r = Logic.gather(vs, p, pt, ts) |> Logic.sort(vs, p, pt) |> Logic.consolidateAdjacentDups
         assertEq(sm.toString, extract(r), expect)
       }

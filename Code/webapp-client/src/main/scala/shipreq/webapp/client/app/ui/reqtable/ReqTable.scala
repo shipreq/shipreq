@@ -33,12 +33,15 @@ object ReqTable {
     def component = Component(this)
   }
 
-  def initialState(p: Props): State =
-    State(p.cd.project,
-      ViewSettings.default.copy(filterDead = p.fd),
+  def initialState(p: Props): State = {
+    val proj = p.cd.project
+    val cols = Column allInProject proj
+    State(proj,
+      ViewSettings.default(cols, Some(Column.NameResolver byProject proj), p.fd),
       FilterEditor.initialState,
       CreationInterface.initState,
       Cell.emptyTableState)
+  }
 
   @Lenses
   case class State(project     : Project,
@@ -49,6 +52,7 @@ object ReqTable {
 
     def recvChanges(changes: Changes): State =
       copy(project = changes.p2) // TODO This obviously affects other things
+      // TODO A custom field removal/addition should affect ViewSettings
 
     def updateVS(newVS: ViewSettings): State =
       copy(viewSettings = newVS)

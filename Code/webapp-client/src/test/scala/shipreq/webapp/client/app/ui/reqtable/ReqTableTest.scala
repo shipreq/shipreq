@@ -399,13 +399,18 @@ sealed trait ReqTableTest0 {
   val sortByPubid = applyViewSettings("sortByPubid",
     c.state.viewSettings.copy(order = SortCriteria.byPubidOnly))
 
+  def selectVisibleColumns(isOn: Column => Boolean, p: Project = c.state.project): ColumnsEditor.State = {
+    val f = isOn || Column.mandatory
+    val cols = Column.allInProject(p).whole
+    ColumnsEditor.State.init(cols)(On <~ f(_))
+  }
+
   val showAllColumns = applyViewSettings("showAllColumns", {
     val s  = c.state
     val vs = s.viewSettings
-    val cn = Column.NameResolver.byProject(s.project)
-    val cs = Column.all(s.project.config.fields.customFields.values)
+    val cs = selectVisibleColumns(_ => true, s.project)
     val o  = vs.order.copy(init = Vector.empty) // remove ReqCodeGroups
-    vs.copy(columns = cs, order = o, filterDead = ShowDead)
+    vs.copy(columnState = cs, order = o, filterDead = ShowDead)
   })
 
   def focusCell(loc: S => CellLoc): Action[Unit] =
@@ -562,7 +567,10 @@ sealed trait ReqTableTest0 {
     import ce._
 
     val setup =
-      applyViewSettings("setup", ViewSettings(Column.builtInValues, SortCriteria.byPubidOnly, None, ShowDead))
+      applyViewSettings("setup", {
+        val cs = selectVisibleColumns(Column.builtInValues.whole.contains)
+        ViewSettings(cs, SortCriteria.byPubidOnly, None, ShowDead)
+      })
         .focus(cell(_).innerText).assertAfter("MF-12, MF-19")
 
     // TODO What about an implication cycle with a dead link. Ok? Not ok? What about when when link is undeleted?

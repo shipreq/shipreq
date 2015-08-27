@@ -2,9 +2,9 @@ package shipreq.webapp.client.app.ui
 
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import org.scalajs.dom
-import scala.collection.GenTraversable
+import shipreq.base.util.UnivEq
 import scalaz.Equal
-import shipreq.base.util.Util
+import scalaz.syntax.equal._
 import shipreq.webapp.client.lib.ui.UI
 import shipreq.webapp.client.util.{Off, On, DND}
 
@@ -13,8 +13,8 @@ import shipreq.webapp.client.util.{Off, On, DND}
  *   1. Ξ [x] Item 3
  *   2. Ξ [x] Item 1
  *   3. Ξ [x] Item 5
- *   4. Ξ [x] Item 2
- *   5. Ξ [ ] Item 5
+ *   4. Ξ [ ] Item 2
+ *   5. Ξ [x] Item 5
  *   6. Ξ [ ] Item 6
  */
 object OrderedSubsetEditor {
@@ -26,36 +26,58 @@ object OrderedSubsetEditor {
 
   val noStyle = new Styles()
   val _noStyle = (_: Any, _: Any) => noStyle
+}
 
-  case class Props[A](value    : Vector[A],
-                      all      : GenTraversable[A],
-                      label    : A => String,
-                      mandatory: A => Boolean,
-                      change   : Vector[A] => Callback,
-                      styles   : (A, On) => Styles = _noStyle)
+final class OrderedSubsetEditor[A: Equal] {
+  import OrderedSubsetEditor._
 
-  def Component[A: Equal] =
-    ReactComponentB[Props[A]]("OrderedSubsetEditor")
+  case class State(all: Vector[(A, On)]) {
+    val on: Vector[A] =
+      all.filter(_._2 :: On).map(_._1)
+
+    def toggle(a: A): State =
+      State(all.map {
+        case (a2, o) if a ≟ a2 => (a2, On negate o)
+        case t                 => t
+      })
+
+    def filter(f: A => Boolean): State =
+      State(all.filter(t => f(t._1)))
+  }
+
+  object State {
+    def init(all: Vector[A])(isOn: A => On): State = {
+      State(all.map(a => (a, isOn(a))))
+    }
+
+    implicit def univEqState(implicit ev: UnivEq[A]): UnivEq[State] =
+      UnivEq.derive
+  }
+
+  case class Props(state    : State,
+                   update   : State => Callback,
+                   label    : A => String,
+                   mandatory: A => Boolean,
+                   filter   : A => Boolean,
+                   styles   : (A, On) => Styles = _noStyle)
+
+  val Component =
+    ReactComponentB[Props]("OrderedSubsetEditor")
       .initialState(DND.Parent.initialState[A])
       .backend(new Backend(_))
       .render(_.backend.render)
       .domType[dom.html.OList]
       .build
 
-  final class Backend[A]($: BackendScope[Props[A], DND.Parent.PState[A]])(implicit E: Equal[A]) {
+  final class Backend($: BackendScope[Props, DND.Parent.PState[A]]) {
 
-    val Row = DND.Child.dndItemComponentB[A, (Props[A], On)]({
+    val Row = DND.Child.dndItemComponentB[A, (Props, On)]({
       case (outerAttr, draghnd, a, (p, on)) =>
 
         def toggleIO: Callback =
-          CallbackTo(
-            if (on :: On)
-              p.value.filterNot(E.equal(a, _))
-            else
-              p.value :+ a
-          ).flatMap(p.change)
+          p.update(p.state toggle a)
 
-        @inline def checkboxAttr: TagMod =
+        def checkboxAttr: TagMod =
           if (p.mandatory(a))
             ^.disabled := true
           else
@@ -70,44 +92,24 @@ object OrderedSubsetEditor {
             <.span(style.label, p.label(a))))
     })
 
-    def li(p: Props[A], inactive: Iterable[A])(a: A, on: On): ReactElement =
-      Row((a, DND.Parent.cProps($, a, moveIO(p, inactive)), (p, on)))
+    def li(p: Props)(a: A, on: On): ReactElement =
+      Row((a, DND.Parent.cProps($, a, moveIO(p)), (p, on)))
 
-    def moveIO(p: Props[A], inactive: Iterable[A])(from: A, to: A): Callback =
-      p.change(move(p.value, inactive, p.mandatory, E)(from, to))
+    def moveIO(p: Props)(from: A, to: A): Callback =
+      p.update(move(p.state)(from, to))
 
     def render = {
       val p = $.props
 
-      val orderedInactiveValues =
-        Util.filterOutAndSortByName(p.all)(a => p.value.exists(E.equal(a, _)), p.label)
-
-      val li2 = li(p, orderedInactiveValues) _
-
-      val activeRows =
-        p.value.foldLeft(Vector.empty[ReactElement])(_ :+ li2(_, On))
-
-      val inactiveRows =
-        orderedInactiveValues.map(li2(_, Off))
-
-      val rows: Vector[ReactElement] =
-        activeRows ++ inactiveRows
+      val rows: Stream[ReactElement] =
+        p.state.all.toStream
+          .filter(p filter _._1)
+          .map(t => li(p)(t._1, t._2))
 
       <.ol(^.cls := "ordsubset", rows)
     }
   }
 
-  def move[A](prev: Vector[A], inactive: Iterable[A], mandatory: A => Boolean, e: Equal[A])(from: A, to: A): Vector[A] = {
-    var r = DND.move(from, to)(prev)(e)
-
-    // Handle moving inactive up into active
-    if (inactive.headOption.exists(e.equal(to, _)) && !prev.exists(e.equal(from, _)))
-      r :+= from
-
-    // Prevent dragging off mandatory items
-    if (mandatory(from) && !r.exists(e.equal(from, _)))
-      r = prev
-
-    r
-  }
+  def move(state: State)(from: A, to: A): State =
+    State(DND.move(from, to, state.all)((a, b) => a ≟ b._1))
 }

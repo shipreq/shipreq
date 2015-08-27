@@ -320,7 +320,7 @@ private[fields] object MainTable {
     // TODO orderIO doesn't handle failure (or lock row)
     def orderIO(from: Field, to: Field): Callback = {
       val id       = from.fieldId
-      val newOrder = DND.move(id, to.fieldId)(fieldOrder)
+      val newOrder = DND.moveE(id, to.fieldId)(fieldOrder)
       val pos      = Position.get(newOrder, id)
       protocol.updateOrderIO(id, pos)(TCB.Success.nop, TCB.Failure.nop)
     }

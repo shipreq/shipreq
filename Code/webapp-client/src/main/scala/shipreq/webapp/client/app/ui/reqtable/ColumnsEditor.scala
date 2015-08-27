@@ -1,36 +1,25 @@
 package shipreq.webapp.client.app.ui.reqtable
 
 import japgolly.scalajs.react.Callback
-import shipreq.base.util.NonEmptyVector
-import shipreq.webapp.base.data.{CustomField, FieldSet}
-import shipreq.webapp.client.app.ui.OrderedSubsetEditor
-import shipreq.webapp.client.app.ui.Style
-import shipreq.webapp.client.lib.FilterDead
+import shipreq.webapp.base.data.FieldSet
+import shipreq.webapp.client.app.ui.{OrderedSubsetEditor, Style}
 
 object ColumnsEditor {
-  val Component = OrderedSubsetEditor.Component[Column]
-}
+  val OSE = new OrderedSubsetEditor[Column]
+  val State = OSE.State
+  type State = OSE.State
 
-final class ColumnsEditor(columnNames: Column.NameResolver, customFields: FieldSet.CustomFields) {
+  def apply(state       : State,
+            update      : State => Callback,
+            columnNames : Column.NameResolver,
+            customFields: FieldSet.CustomFields,
+            filterFn    : Column => Boolean) = {
 
-  val allColumns: FilterDead => Vector[Column] =
-    FilterDead.memo { fd =>
-      val f      = fd.filterFnA[CustomField](_.live)
-      val fields = customFields.values.toStream filter f
-      Column.all(fields).whole
-    }
-
-  def render(filterDead: FilterDead, selected: NonEmptyVector[Column], update: NonEmptyVector[Column] => Callback) = {
-
-    val update2: Vector[Column] => Callback =
-      v => NonEmptyVector.maybe(v, Callback.empty)(update)
-
-    val p = OrderedSubsetEditor.Props[Column](value     = selected.whole,
-                                              all       = allColumns(filterDead),
-                                              label     = columnNames.fn,
-                                              mandatory = Column.mandatory,
-                                              change    = update2,
-                                              styles    = (c: Column, o) => Style.reqtable.columnsEditor(c.live)(o))
-    ColumnsEditor.Component(p)
+    val p = OSE.Props(state, update,
+                      label     = columnNames.fn,
+                      mandatory = Column.mandatory,
+                      filter    = filterFn,
+                      styles    = (c: Column, o) => Style.reqtable.columnsEditor(c.live)(o))
+    OSE.Component(p)
   }
 }

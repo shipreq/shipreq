@@ -3,10 +3,11 @@ package shipreq.webapp.client.app.ui.reqtable
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
 import scala.scalajs.js
-import shipreq.base.util.{NonEmptyVector, Must, IMap, UnivEq}
+import shipreq.base.util.{NonEmptyVector, Must, UnivEq}
 import shipreq.webapp.base.data.{Live, Project}
 import shipreq.webapp.base.{UiText, data}
 import shipreq.webapp.base.UiText.ColumnNames
+import shipreq.webapp.client.lib.FilterDead
 
 sealed trait Column {
   // Ensure correct attribute traits are mixed in
@@ -77,8 +78,14 @@ object Column {
        | _: CustomField => false
   }
 
+  def allInProject(p: Project): NonEmptyVector[Column] =
+    all(p.config.fields.customFields.values)
+
   def all(customFields: TraversableOnce[data.CustomField]): NonEmptyVector[Column] =
     customFields.toVector.map(f => CustomField(f.id, f.live)) ++: builtInValues
+
+  val filterDead: FilterDead => Column => Boolean =
+    FilterDead.memo(_.filterFnA[Column](_.live))
 
   // -------------------------------------------------------------------------------------------------------------------
 

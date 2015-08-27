@@ -6,13 +6,18 @@ import monocle.macros.Lenses
 import scalaz.syntax.equal._
 import shipreq.base.util.{UnivEq, NonEmptyVector}
 import shipreq.webapp.base.filter.FilterAst
-import shipreq.webapp.client.lib.{HideDead, FilterDead}
+import shipreq.webapp.client.lib.{ShowDead, HideDead, FilterDead}
+import shipreq.webapp.client.util.On
 
 @Lenses
-case class ViewSettings(columns   : NonEmptyVector[Column],
-                        order     : SortCriteria,
-                        filter    : Option[FilterAst],
-                        filterDead: FilterDead) {
+case class ViewSettings(columnState: ColumnsEditor.State,
+                        order      : SortCriteria,
+                        filter     : Option[FilterAst],
+                        filterDead : FilterDead) {
+
+  val columns: NonEmptyVector[Column] =
+    // Safe to force because ∃ at least 1 mandatory field
+    NonEmptyVector force columnState.on.filter(Column filterDead filterDead)
 
   def isVisible(c: Column): Boolean =
     isVisible(_ ≟ c)
@@ -25,19 +30,14 @@ case class ViewSettings(columns   : NonEmptyVector[Column],
   @inline def isOrderedI(c: Column.SortInconclusive)            = order.isOrderedI(c)
   @inline def isOrderedI(f: Column.SortInconclusive => Boolean) = order.isOrderedI(f)
 
-  def filterColumns(f: Column => Boolean): ViewSettings =
-    columns.filter(f) match {
-      case Some(cols) => ViewSettings(cols, order filterColumns f, filter, filterDead)
-      case None       => ViewSettings.default
+  def setFilterDead(fd: FilterDead): ViewSettings =
+    if (fd ≟ this.filterDead) this else {
+      val o = filterDead match {
+        case ShowDead => order
+        case HideDead => order filterColumns Column.filterDead(fd)
+      }
+      ViewSettings(columnState, o, filter, fd)
     }
-
-  def setFilterDead(fd: FilterDead): ViewSettings = {
-    val vs = copy(filterDead = fd)
-    fd.filter.fold(vs)(f => vs.filterColumns {
-      case _: Column.BuiltIn        => true
-      case Column.CustomField(_, a) => f(a)
-    })
-  }
 
   /**
    * When `true`, render the reqcode column to resemble a tree. Meaning:
@@ -60,12 +60,18 @@ object ViewSettings {
   implicit def equality   : UnivEq[ViewSettings]      = UnivEq.derive
   implicit val reusability: Reusability[ViewSettings] = Reusability.byEqual
 
-  def default = {
+  def default(allColumns: NonEmptyVector[Column],
+              cnr: Option[Column.NameResolver] = None,
+              fd: FilterDead = HideDead): ViewSettings = {
+    // TODO Project knows custom field order. Use it here...right?
     import Column._
-    ViewSettings(
-      NonEmptyVector(Code, Pubid, Title, Tags, ImplicationSrc),
-      SortCriteria.default,
-      None,
-      HideDead)
+    val on = Vector[Column](Code, Pubid, Title, Tags)
+    val off = {
+      val t = allColumns.whole.filterNot(on.contains)
+      cnr.fold(t)(t sortBy _.fn)
+    }
+    val all = on ++ off
+    val cols = ColumnsEditor.State.init(all)(On <~ on.contains(_))
+    ViewSettings(cols, SortCriteria.default, None, fd)
   }
 }

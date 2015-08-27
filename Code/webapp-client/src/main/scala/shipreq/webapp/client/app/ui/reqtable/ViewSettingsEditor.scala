@@ -3,7 +3,7 @@ package shipreq.webapp.client.app.ui.reqtable
 import japgolly.scalajs.react._, vdom.prefix_<^._, MonocleReact._
 import japgolly.scalajs.react.extra._
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{NonEmptyVector, UnivEq}
+import shipreq.base.util.UnivEq
 import shipreq.webapp.base.data.FieldSet
 import shipreq.webapp.client.app.ui.Checkbox
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
@@ -26,9 +26,6 @@ object ViewSettingsEditor {
       .build
 
   final class Backend($: BackendScope[Props, Unit]) {
-    val columnName    = Px.thunkM($.props.columnName)
-    val customFields  = Px.thunkM($.props.customFields)
-    val columnsEditor = Px.apply2(columnName, customFields)(new ColumnsEditor(_, _))
 
     val filterDeadEditor = Checkbox.filterDead(
       ReusableFn.byName($.props.vs.mod).endoCall(_.setFilterDead))
@@ -36,23 +33,27 @@ object ViewSettingsEditor {
     val th = <.th(*.viewSettingsHeader)
 
     def render = {
-      Px.refresh(columnName, customFields)
       val p = $.props
       val vs = p.vs.value
 
-      def setColumns(cs: NonEmptyVector[Column]): ViewSettings = {
-        val icols = cs.foldLeft(UnivEq.emptySet[Column.SortInconclusive])((q, c) => c match {
+      def setColumns(s: ColumnsEditor.State): ViewSettings = {
+        val icols = s.on.foldLeft(UnivEq.emptySet[Column.SortInconclusive])((q, c) => c match {
           case i: Column.SortInconclusive => q + i
           case _: Column.SortConclusive   => q
         })
-        ViewSettings(cs, vs.order.whitelistColumns(icols), vs.filter, vs.filterDead)
+        ViewSettings(s, vs.order.whitelistColumns(icols), vs.filter, vs.filterDead)
       }
 
       def columns =
-        columnsEditor.value().render(vs.filterDead, vs.columns, p.vs.set compose setColumns)
+        ColumnsEditor(
+          vs.columnState,
+          p.vs.set compose setColumns,
+          p.columnName,
+          p.customFields,
+          Column filterDead vs.filterDead)
 
       def sortCriteria =
-        SortCriteriaEditor.Props(vs.order, vs.columns.toNES, columnName.value(), p.vs setL ViewSettings.order)
+        SortCriteriaEditor.Props(vs.order, vs.columns.toNES, p.columnName, p.vs setL ViewSettings.order)
           .component
 
       <.table(
