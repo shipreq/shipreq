@@ -55,14 +55,18 @@ object UI {
   @inline def mustA[A, N](m: Must[A], outputOnFailure: String = UiText.mustFailed)(implicit x: ReactTag => N, y: A => N): N =
     must(m, outputOnFailure)(y)
 
-  def textComplete[E <: html.Element](target: E, strategies: TextComplete.Strategies, onUpdate: => (String => Callback))(implicit E: TextEditor.OfType[E]): Unit = {
-    if (strategies.nonEmpty) {
+  def textComplete[E <: html.Element](target: E, strategies: TextComplete.Strategies, onUpdate: => (String => Callback))(implicit E: TextEditor.OfType[E]): Callback =
+    Callback.ifTrue(strategies.nonEmpty, Callback {
       val tgt = Dynamic.global.$(target)
       TextComplete(tgt, strategies)
       TextComplete.onSelect(tgt) {
         onUpdate(E.value(target)).runNow()
       }
-    }
+    })
+
+  def textCompleteDestroy(node: html.Element) = Callback {
+    val $n = Dynamic.global.$(node)
+    TextComplete.destroy($n)
   }
 
   def installTextComplete[P, S, B, N <: TopNode, E <: html.Element](
@@ -74,7 +78,7 @@ object UI {
       val n = getNode($)
       te.focus(n)
       te.select(n)
-      textComplete(n, strategies($.props, $.backend), onUpdate($.props, $.backend))
+      textComplete(n, strategies($.props, $.backend), onUpdate($.props, $.backend)).runNow()
     })
     .componentDidUpdate(($, p1, _) => Callback {
       val p2 = $.props
@@ -83,11 +87,12 @@ object UI {
       val s2 = strategies(p2, b)
       if (s1 ~/~ s2) {
         val n = getNode($)
-        val $n = Dynamic.global.$(n)
-        TextComplete.destroy($n)
-        textComplete(n, s2, onUpdate($.props, b))
+        textCompleteDestroy(n).runNow()
+        textComplete(n, s2, onUpdate($.props, b)).runNow()
       }
     })
+    .componentWillUnmount($ =>
+      textCompleteDestroy(getNode($)))
 
   def installTextCompleteP[P, S, B, N <: TopNode, E <: html.Element](
           getNode   : RefSimple[E],
