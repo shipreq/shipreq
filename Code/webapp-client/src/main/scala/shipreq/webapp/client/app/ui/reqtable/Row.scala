@@ -102,8 +102,9 @@ object MultiValues {
 // =====================================================================================================================
 
 sealed trait Row {
-  val id: Row.Id
-  def live: Live
+  val id      : Row.Id
+  def sourceId: Row.SourceId
+  def live    : Live
 }
 
 /**
@@ -111,21 +112,27 @@ sealed trait Row {
  *                   Reason is that the same GenericReq can appear in multiple rows.
  */
 case class GenericReqRow(req: GenericReq, exp: Expansion, mv: MultiValues, instanceId: Int) extends Row {
-  override val id = Row.GenericReqRowId(req.id, instanceId)
-  override def live = req.live
+  override val id       = Row.GenericReqRowId(req.id, instanceId)
+  override def sourceId = Row.GenericReqRowSourceId(req.id)
+  override def live     = req.live
   override def toString = s"\n$req\n$exp\n$mv\n"
 }
 
-case class ReqCodeGroupRow(groupAndId     : ReqCodeGroup.AndId,
-                           reqCode        : ReqCode.Value,
-                           reqCodeTreeItem: Option[ReqCodeTreeItem]) extends Row {
-  override val id   = Row.ReqCodeGroupRowId(reqCodeId)
-  override def live = Live
-  def reqCodeId     = groupAndId.id
-  def group         = groupAndId.group
+case class ReqCodeGroupRow(groupAndId: ReqCodeGroup.AndId, reqCode: ReqCode.Value, reqCodeTreeItem: Option[ReqCodeTreeItem]) extends Row {
+  override val id       = Row.ReqCodeGroupRowId(reqCodeId)
+  override def sourceId = Row.ReqCodeGroupRowSourceId(reqCodeId)
+  override def live     = Live
+  def reqCodeId         = groupAndId.id
+  def group             = groupAndId.group
 }
 
 object Row {
+
+  // ===================================================================================================================
+
+  /**
+   * Uniquely identifies a row, including distinguishing expansions of the same req.
+   */
   sealed trait Id {
     /** A stable, unique value so that React can correctly identify each row. */
     def key: js.Any
@@ -148,15 +155,31 @@ object Row {
       "C" + value.value
   }
 
-  implicit def idEqualityR : UnivEq[GenericReqRowId]   = UnivEq.derive
-  implicit def idEqualityG : UnivEq[ReqCodeGroupRowId] = UnivEq.derive
-  implicit def idEquality  : UnivEq[Id]                = UnivEq.derive
-  implicit def rowEqualityR: UnivEq[GenericReqRow]     = UnivEq.derive
-  implicit def rowEqualityG: UnivEq[ReqCodeGroupRow]   = UnivEq.derive
-  implicit def rowEquality : UnivEq[Row]               = UnivEq.derive
+  implicit def idEqualityR  : UnivEq[GenericReqRowId]   = UnivEq.derive
+  implicit def idEqualityG  : UnivEq[ReqCodeGroupRowId] = UnivEq.derive
+  implicit def idEquality   : UnivEq[Id]                = UnivEq.derive
+  implicit val idReusability: Reusability[Id]           = Reusability.byEqual
 
-  implicit val reusabilityId    : Reusability[Id]  = Reusability.byEqual
-  implicit val reusabilityRow   : Reusability[Row] = Reusability.byRefOrEqual
+  // ===================================================================================================================
+
+  /**
+   * Uniquely identifies the source of a row, disregarding features such as expansions.
+   */
+  sealed trait SourceId
+  case class GenericReqRowSourceId(reqId: GenericReqId) extends SourceId
+  case class ReqCodeGroupRowSourceId(value: ReqCodeId) extends SourceId
+
+  implicit def sourceIdEqualityR  : UnivEq[GenericReqRowSourceId]   = UnivEq.derive
+  implicit def sourceIdEqualityG  : UnivEq[ReqCodeGroupRowSourceId] = UnivEq.derive
+  implicit def sourceIdEquality   : UnivEq[SourceId]                = UnivEq.derive
+  implicit val sourceIdReusability: Reusability[SourceId]           = Reusability.byEqual
+
+  // ===================================================================================================================
+
+  implicit def rowEqualityR  : UnivEq[GenericReqRow]     = UnivEq.derive
+  implicit def rowEqualityG  : UnivEq[ReqCodeGroupRow]   = UnivEq.derive
+  implicit def rowEquality   : UnivEq[Row]               = UnivEq.derive
+  implicit val rowReusability: Reusability[Row]          = Reusability.byRefOrEqual
 
   val expansion = Optional[Row, Expansion] {
     case r: GenericReqRow   => Some(r.exp)

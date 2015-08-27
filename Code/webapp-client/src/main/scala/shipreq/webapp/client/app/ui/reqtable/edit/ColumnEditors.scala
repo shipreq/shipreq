@@ -72,7 +72,7 @@ final class ColumnEditors(project       : Px[Project],
         }
       )
 
-    val loc = Cell.Loc(row.id, col)
+    val loc = Cell.Loc(row.sourceId, col)
 
     val modCell = modTable(loc)
 

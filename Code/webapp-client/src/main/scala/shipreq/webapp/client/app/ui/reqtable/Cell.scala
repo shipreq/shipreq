@@ -8,7 +8,7 @@ object Cell {
 
   type State = RemoteDataEditor.OpState
 
-  type R = Row.Id
+  type R = Row.SourceId
   type C = Column
   type RowState = Map[C, RemoteDataEditor.State]
 

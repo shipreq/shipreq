@@ -48,7 +48,7 @@ object Table {
 
     val startCellEdit = ReusableFn[Row, Column, TCB.Finally, Callback]((row, col, fin) =>
       $.propsCB.map { p =>
-        if (p.cells(row.id, col).isEmpty)
+        if (p.cells(row.sourceId, col).isEmpty)
           p.colEditors.startCellEditing(row, col, fin)
             .foreach(_.runNow())
       }
@@ -62,7 +62,7 @@ object Table {
       def renderRows =
         rows.indices.toReactNodeArray { i =>
           val row   = rows(i)
-          val cells = p.cells(row.id)
+          val cells = p.cells(row.sourceId)
           val rp    = RowProps(row, crs, cells, startCellEdit(row))
           RowComponent.withKey(row.id.key)(rp)
         }
