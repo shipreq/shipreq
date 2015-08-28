@@ -6,6 +6,11 @@ import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 import com.timushev.sbt.updates.UpdatesKeys._
 import DependencyLib.{Dep, HasJs, HasJvm, HasBoth, JVM, JS, ModDepScope}
 
+sealed trait JsTestType
+case object NoTests extends JsTestType
+case object NoDom   extends JsTestType
+case object NeedDom extends JsTestType
+
 object Common {
   import Functions._
   import Values._
@@ -152,26 +157,37 @@ object Common {
       scalacOptions += "-language:experimental.macros",
       libraryDependencies ++= Dependencies.Scala.macroDef(JVM))
 
-  def jsSettings = (p: Project) => {
+  def jsSettings(t: JsTestType) = (p: Project) => {
     import sbinary.DefaultProtocol.StringFormat
     import Cache.seqFormat
     p.settings(
+      scalaJSStage in Global := jsStage,
       // Temp fix for https://github.com/scala-js/scala-js/issues/1817
       inConfig(Test)(Seq(
         definedTestNames <<= definedTests map (_.map(_.name).distinct) storeAs definedTestNames
       ))
-    )
+    ).configure(jsTests(t))
   }
 
-  /**
-   * Prevent modules without any tests creating a test-fastops,js.
-   *
-   * Might not be needed after Scala.JS 0.6.5 is out.
-   */
-  def noJsTests: Project => Project =
-    _.settings(
-      scalaJSStage in Test := PreLinkStage,
-      test := ())
+  def jsStage = if (releaseMode) FullOptStage else FastOptStage
+
+  private def jsTests(t: JsTestType): Project => Project =
+    t match {
+      case NoTests =>
+        _.settings(
+          scalaJSStage in Test := PreLinkStage,
+          test                 := ())
+      case NoDom =>
+        _.settings(
+          requiresDOM           := false)
+//          postLinkJSEnv in Test := NodeJSEnv().value)
+//          postLinkJSEnv  in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value))
+      case NeedDom =>
+        _.settings(
+          requiresDOM            := true,
+          emitSourceMaps in Test := false, // PhantomJS doesn't use
+          postLinkJSEnv  in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value))
+    }
 
   // ===================================================================================================================
   object Values {

@@ -34,7 +34,7 @@ object ShipReq extends Build {
   lazy val baseMacro =
     crossProject("base-macro")
       .configureBoth(Common.macroModuleSettings)
-      .configureJs(Common.jsSettings, Common.noJsTests)
+      .configureJs(Common.jsSettings(NoTests))
       .depsForBoth(Scalaz.core ++ Nyaya.core)
 
   lazy val baseUtilJvm = baseUtil.jvm
@@ -42,7 +42,7 @@ object ShipReq extends Build {
   lazy val baseUtil =
     crossProject("base-util")
       .configureBoth(Common.settings)
-      .configureJs(Common.jsSettings)
+      .configureJs(Common.jsSettings(NoDom))
       .dependsOn(baseMacro)
       .depsForBoth(
         Scalaz.effect ++ Nyaya.core ++ testScope(μTest))
@@ -187,7 +187,7 @@ object ShipReq extends Build {
         Common.macroModuleSettings,
         useMacroParadise,
         webappCmdAliases)
-      .configureJs(Common.jsSettings, Common.noJsTests)
+      .configureJs(Common.jsSettings(NoTests))
       .dependsOn(baseUtil)
       .depsForBoth(
         μPickle ++ boopickle ++ Monocle.core ++
@@ -200,7 +200,7 @@ object ShipReq extends Build {
   lazy val webappBase =
     crossProject("webapp-base")
       .configureBoth(webappSettings)
-      .configureJs(Common.jsSettings, Common.noJsTests)
+      .configureJs(Common.jsSettings(NoTests))
       .depsForBoth(
         μPickle ++ Monocle.macros ++ shapeless ++ Nyaya.core ++ parboiled ++ boopickle ++
         testScope(μTest) // TODO Move tests into this
@@ -216,7 +216,7 @@ object ShipReq extends Build {
   lazy val webappBaseTest =
     crossProject("webapp-base-test")
       .configureBoth(Common.testModuleSettings, webappCmdAliases)
-      .configureJs(Common.jsSettings)
+      .configureJs(Common.jsSettings(NoDom))
       .depsForBoth(
         μTest ++ Nyaya.test
       )
@@ -228,25 +228,20 @@ object ShipReq extends Build {
 
     def dir = "webapp-client"
 
-    def stage  = if (releaseMode) FullOptStage else FastOptStage
-    def jsTask = if (releaseMode) fullOptJS    else fastOptJS
-    def jsCmd  = if (releaseMode) "fullOptJS"  else "fastOptJS"
+    def jsTask = if (releaseMode) fullOptJS   else fastOptJS
+    def jsCmd  = if (releaseMode) "fullOptJS" else "fastOptJS"
 
     def testjs(path: String) = ProvidedJS / s"testjs/$path"
 
     def testSettings = (_: Project)
       .settings(
-        scalaJSOptimizerOptions in fastOptJS ~= { _.withDisableOptimizer(true) },
-        scalaJSStage in Global := stage,
         jsDependencies in Test ++= Seq(
           testjs("react-with-addons.js"),
           testjs("jquery.min.js"),
           testjs("jquery.textcomplete.js") dependsOn "testjs/jquery.min.js",
           testjs("sizzle.min.js")),
         // emitSourceMaps in Compile := false, // I want speed
-        emitSourceMaps in Test := false, // PhantomJS doesn't use
-        requiresDOM := true,
-        jsEnv in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value))
+        scalaJSOptimizerOptions in fastOptJS ~= { _.withDisableOptimizer(true) })
 
     def prodJsSettings = (_: Project).settings(
       emitSourceMaps := false,
@@ -270,7 +265,7 @@ object ShipReq extends Build {
           testScope(React.test ++ μTest ++ Nyaya.test)
         )
         .configure(
-          Common.jsSettings,
+          Common.jsSettings(NeedDom),
           webappSettings,
           useMacroParadise,
           WebappClient.testSettings,
@@ -438,17 +433,14 @@ object ShipReq extends Build {
       _.enablePlugins(ScalaJSPlugin)
         .dependsOn(webappClient)
         .configure(
-          Common.jsSettings,
+          Common.jsSettings(NoTests),
           useMacroParadise,
           WebappClient.prodJsSettings
         )
         .settings(
           // scalaJSStage in Global := FullOptStage,
           artifactPath in (Compile, fastOptJS) := ((target in Compile).value / outputJs),
-          artifactPath in (Compile, fullOptJS) := ((target in Compile).value / outputJs),
-          scalaJSStage in Test := Stage.PreLink,
-          test in Test := ()
-        )
+          artifactPath in (Compile, fullOptJS) := ((target in Compile).value / outputJs))
     }
   }
 
