@@ -12,10 +12,10 @@ final class TCB[T <: TCB.Type] private[TCB] (private val f: () => Unit) extends 
     Callback.lift(f)
 
   @inline def >>(next: Callback): Self =
-    new TCB(cb.flatMap(_ => next).toScalaFunction)
+    new TCB(cb.flatMap(_ => next).toScalaFn)
 
   @inline def <<(prev: Callback): Self =
-    new TCB(prev.flatMap(_ => cb).toScalaFunction)
+    new TCB(prev.flatMap(_ => cb).toScalaFn)
 }
 
 object TCB {
@@ -27,7 +27,7 @@ object TCB {
   final class Ctor[T <: Type] private[TCB]() {
 
     @inline def apply(cb: Callback): TCB[T] =
-      new TCB(cb.toScalaFunction)
+      new TCB(cb.toScalaFn)
 
     val nop: TCB[T] =
       apply(Callback.empty)

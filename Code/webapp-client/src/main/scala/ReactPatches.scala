@@ -7,7 +7,7 @@ import org.scalajs.dom.console
 
 object ReactPatches {
 
-  implicit def patchCallbackOps[A](cb: CallbackTo[A]) = new PatchCallbackOps(cb.toScalaFunction)
+  implicit def patchCallbackOps[A](cb: CallbackTo[A]) = new PatchCallbackOps(cb.toScalaFn)
 
   final class PatchCallbackOps[A](private val f: () => A) extends AnyVal {
     def thiss = CallbackTo lift f
