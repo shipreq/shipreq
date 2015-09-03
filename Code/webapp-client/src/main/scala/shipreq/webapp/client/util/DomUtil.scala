@@ -1,6 +1,7 @@
 package shipreq.webapp.client.util
 
-import japgolly.scalajs.react.{Callback, CallbackTo, ReactKeyboardEventH}
+import japgolly.scalajs.react._
+import scala.annotation.tailrec
 import org.scalajs.dom._
 import DomPatches._
 
@@ -48,4 +49,25 @@ object DomUtil {
         i += max
       sibs(i)
     }
+
+  def isDragWithinNode(e: ReactDragEvent, node: Node): Boolean = {
+    @inline def between(value: Double, from: Double, to: Double) =
+      value >= from && value <= to
+    val r = node.castHtml.getBoundingClientRect()
+    between(e.clientX, r.left, r.right) && between(e.clientY, r.top, r.bottom)
+  }
+
+  @inline implicit class DOMStringListExt(private val d: DOMStringList) extends AnyVal {
+    def exists(f: String => Boolean): Boolean = {
+      @tailrec def go(i: Int): Boolean =
+        if (i == -1)
+          false
+        else if (f(d(i)))
+          true
+        else
+          go(i - 1)
+      go(d.length - 1)
+    }
+  }
+
 }

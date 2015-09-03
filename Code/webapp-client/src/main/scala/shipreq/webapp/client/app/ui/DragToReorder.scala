@@ -7,6 +7,7 @@ import scalaz.syntax.equal._
 import shipreq.base.util.UnivEq
 import shipreq.webapp.client.util.DND
 import shipreq.webapp.client.util.DomPatches._
+import shipreq.webapp.client.util.DomUtil._
 import shipreq.base.util.UnivEq.Implicits._
 import tmp.ReactPatches._
 
@@ -43,6 +44,8 @@ object DragToReorder {
 
   private[DragToReorder] implicit def dragLocEquality   : UnivEq[DragLoc]      = UnivEq.deriveAuto
   private[DragToReorder] implicit val dragLocReusability: Reusability[DragLoc] = Reusability.byEqual
+
+  private[DragToReorder] var instanceCount = 0
 }
 
 // =====================================================================================================================
@@ -52,6 +55,8 @@ final class DragToReorder[A: Reusability] {
   type Item    = DragToReorder.Item [A]
   type Props   = DragToReorder.Props[A]
   type Content = DragToReorder.Content[A]
+
+  val Props = DragToReorder.Props.apply[A] _
 
   case class DragState(items       : Vector[A],
                        dragSource  : Int,
@@ -80,65 +85,93 @@ final class DragToReorder[A: Reusability] {
 
     import CallbackOption.{require, unless}
 
+    val ownMimeType = {
+      instanceCount += 1
+      "application/null/" + instanceCount
+    }
+
     @inline private implicit def autoSomeState(s: DragState): State = Some(s)
 
-    def requireDirectTarget(e: ReactDragEvent) =
-      require(e.target == e.currentTarget)
+//    scalajs.js.timers.setInterval(2000)(println(s"~~ state = ${loc}"))
+//    def loc = $.state.flatMap(_.map(_.dragLoc))
+//    private def withLogging(ctx: Any, eh: EH): EH = {
+//        e =>
+//          Callback.byName(Callback.log(s"$ctx.${e.eventType} : ${e.target.nodeName} ⇒ ${e.currentTarget.nodeName}. DP=${e.defaultPrevented}. Loc=$loc")) >>
+//          eh(e) >>
+//          Callback.byName(Callback.log(s"              DP=${e.defaultPrevented}. Loc=$loc"))
+//    }
+
+    def requireOwnMimeType(e: ReactDragEvent) =
+      require(e.dataTransfer.types.exists(ownMimeType == _))
 
     // This prevents the need to check e.dataTransfer.types
-    val getDragState: CallbackOption[DragState] = $.stateCB.asCBO
-
-    def clearLocOnLeave(expectedLoc: DragLoc): EH =
-      e => for {
-        _ <- requireDirectTarget(e)
-        s <- getDragState
-        _ <- require(s.dragLoc ≟ expectedLoc)
-        _ <- $ setState s.copy(dragLoc = Outside, currentOrder = s.originalOrder)
-      } yield ()
+    val getDragState: CallbackOption[DragState] =
+      $.stateCB.asCBO
 
     val dragOver: EH =
       e => for {
-        _ <- requireDirectTarget(e)
-        _ <- getDragState
-        _ <- e.preventDefaultCB
+        _ ← unless(e.defaultPrevented)
+        _ ← requireOwnMimeType(e)
+        _ ← getDragState
+        _ ← e.preventDefaultCB
+      } yield ()
+
+    // Consume the event (so that Firefox doesn't perform a cancel animation)
+    // and do nothing (because the move is performed in onDragEnd so that drags outside work without the outside needing
+    // an onDrop handler).
+    val drop: EH =
+      e => for {
+        _ ← unless(e.defaultPrevented)
+        _ ← requireOwnMimeType(e)
+        _ ← e.preventDefaultCB
+      } yield ()
+
+    def detectIfDraggedOutside(expectedLoc: Option[DragLoc]): EH =
+      e => for {
+        _ ← requireOwnMimeType(e)
+        s ← getDragState
+        //_ ← Callback.log(s"   Leave check... e.client: ${e.clientX}x${e.clientY}, e.screen: ${e.screenX}x${e.screenY} node:", e.currentTarget.castHtml.getBoundingClientRect())
+        _ ← require(expectedLoc.forall(_ ≟ s.dragLoc))
+        _ ← unless(isDragWithinNode(e, e.currentTarget))
+        _ ← $ setState s.copy(dragLoc = Outside, currentOrder = s.originalOrder)
       } yield ()
 
     val parentTagMod: TagMod = {
       val dragEnter: EH =
         e => for {
-          _ <- requireDirectTarget(e)
-          s <- getDragState
-          _ <- e.preventDefaultCB
-          _ <- $ setState s.copy(dragLoc = InParent)
+          _ ← unless(e.defaultPrevented)
+          _ ← requireOwnMimeType(e)
+          s ← getDragState
+          _ ← e.preventDefaultCB
+          _ ← $ setState s.copy(dragLoc = InParent)
         } yield ()
 
       val dragLeave: EH =
-        clearLocOnLeave(InParent)
+        detectIfDraggedOutside(None)
 
       TagMod(
         ^.onDragEnter ==> dragEnter,
+        ^.onDragLeave ==> dragLeave,
         ^.onDragOver  ==> dragOver,
-        ^.onDragLeave ==> dragLeave
-      )
+        ^.onDrop      ==> drop)
     }
 
     val childTagMod: Int => TagMod =
       UnivEq.mutableHashMapMemo { i =>
         def dragStart: EH =
           e => for {
-            _  ← requireDirectTarget(e)
+            _  ← unless(e.defaultPrevented)
             p  ← $.propsCB
             is = p.items
             _  ← $.setState(DragState(is, i, InChild(i), is.indices.toVector)).async
           } yield {
             val dt = e.dataTransfer
-            dt.setData("application/null", "")
+            dt.setData(ownMimeType, "")
             dt.effectAllowed = DragEffect.Move
           }
 
         def dragEnd: EH =
           e => for {
-            _ ← requireDirectTarget(e)
             s ← getDragState
             p ← $.propsCB.toCBO
             _ ← $ setState None
@@ -149,7 +182,8 @@ final class DragToReorder[A: Reusability] {
 
         def dragEnter: EH =
           e => for {
-            _ ← requireDirectTarget(e)
+            _ ← unless(e.defaultPrevented)
+            _ ← requireOwnMimeType(e)
             s ← getDragState
             _ ← e.preventDefaultCB
             _ ← Callback(e.dataTransfer.dropEffect = DragEffect.Move)
@@ -159,7 +193,7 @@ final class DragToReorder[A: Reusability] {
           } yield ()
 
         val dragLeave: EH =
-          clearLocOnLeave(InChild(i))
+          detectIfDraggedOutside(Some(InChild(i)))
 
         TagMod(
           ^.key          := i,
@@ -167,8 +201,9 @@ final class DragToReorder[A: Reusability] {
           ^.onDragStart ==> dragStart,
           ^.onDragEnd   ==> dragEnd,
           ^.onDragEnter ==> dragEnter,
+          ^.onDragLeave ==> dragLeave,
           ^.onDragOver  ==> dragOver,
-          ^.onDragLeave ==> dragLeave)
+          ^.onDrop      ==> drop)
       }
 
     def render(p: Props, s: State): ReactElement = {
