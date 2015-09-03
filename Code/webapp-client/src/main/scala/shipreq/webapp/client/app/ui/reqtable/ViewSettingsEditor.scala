@@ -50,10 +50,6 @@ object ViewSettingsEditor {
           p.customFields,
           Column filterDead vs.filterDead)
 
-      def sortCriteria =
-        SortCriteriaEditor.Props(vs.order, vs.columns.toNES, p.columnName, p.vs setL ViewSettings.order)
-          .component
-
       <.table(
         <.thead(
           <.tr(
@@ -63,7 +59,7 @@ object ViewSettingsEditor {
         <.tbody(
           <.tr(
             <.td(columns),
-            <.td(sortCriteria),
+            <.td("REMOVED"),
             <.td(
               <.div(
                 filterDeadEditor(vs.filterDead),
