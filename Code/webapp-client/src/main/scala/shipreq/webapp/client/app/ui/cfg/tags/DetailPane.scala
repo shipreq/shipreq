@@ -43,9 +43,19 @@ private[tags] object DetailPane {
   val emptyRelChoice       = Choice[Option[Id]](None, "", Enabled)
 
   final class Backend($: BackendScope[Props, State]) {
-    @inline def p = $.props
 
-    def render: ReactElement =
+    def render(p: Props): ReactElement = {
+      def parentsPane: ReactElement =
+        pane(
+          existingRels(p.parents.sortBy(_.name), <.ul, "This has no parents.", renderRel(_, None)),
+          addableRels(p.parentAdds, "Add Parent"))
+
+      def childrenPane: ReactElement =
+        pane(
+          existingRels(p.children, <.ol, "This has no children.",
+            r => DraggableRel(DND.Parent.cProps2($, r, (from, to) => p.childMoveIO(from.id, to.id)))),
+          addableRels(p.childAdds, "Add Child"))
+
       <.section(
         <.h3(s"Detail: ${p.subjName}"),
         <.table(
@@ -55,17 +65,7 @@ private[tags] object DetailPane {
           <.tbody(<.tr(
             <.td(parentsPane),
             <.td(childrenPane)))))
-
-    def parentsPane: ReactElement =
-      pane(
-        existingRels(p.parents.sortBy(_.name), <.ul, "This has no parents.", renderRel(_, None)),
-        addableRels(p.parentAdds, "Add Parent"))
-
-    def childrenPane: ReactElement =
-      pane(
-        existingRels(p.children, <.ol, "This has no children.",
-          r => DraggableRel(DND.Parent.cProps2($, r, (from, to) => p.childMoveIO(from.id, to.id)))),
-        addableRels(p.childAdds, "Add Child"))
+    }
 
     def pane(existing: ReactElement, addable: TagMod): ReactElement =
       <.div(existing, addable)
@@ -105,7 +105,6 @@ private[tags] object DetailPane {
 
   val Component = ReactComponentB[Props]("Cfg: Tag Detail")
     .initialState[State](DND.Parent.initialState)
-    .backend(new Backend(_))
-    .render(_.backend.render)
+    .renderBackend[Backend]
     .build
 }

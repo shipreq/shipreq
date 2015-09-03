@@ -31,9 +31,7 @@ object Main extends JSApp {
     .build
 
   val ConsoleComp = ReactComponentB[String]("C")
-    .stateless
-    .backend(new ConsoleBackend(_))
-    .render(_.backend.render)
+    .renderBackend[ConsoleBackend]
     .build
 
   class ConsoleBackend($: BackendScope[String, Unit]) {
@@ -43,21 +41,20 @@ object Main extends JSApp {
       for (r <- consoleRef($))
         r.getDOMNode().style.display = "block"
 
-    def render: ReactElement = {
+    def render(props: String): ReactElement = {
       setTimeout(refreshConsole _, 10)
       <.pre(
         ^.width := "100%",
         ^.height := "100%",
         ^.display.none,
         ^.ref := consoleRef,
-        $.props)
+        props)
     }
   }
 
   val MainComp = ReactComponentB[Vector[BenchmarkSuite]]("M")
     .initialState(State(None, Vector.empty))
-    .backend(new MainBackend(_))
-    .render(_.backend.render)
+    .renderBackend[MainBackend]
     .build
 
   class MainBackend($: BackendScope[Vector[BenchmarkSuite], State]) {
@@ -73,20 +70,18 @@ object Main extends JSApp {
         State(Some(""), Vector.empty),
         Callback(suite.run(log, logResult)))
 
-    def render: ReactElement = {
-      val s = $.state
+    def render(p: Vector[BenchmarkSuite], s: State): ReactElement =
       s.logs match {
         case Some(l) =>
           // Benchmark started
           ConsoleComp(s.results.mkString("\n") + "\n\n\n" + l)
         case None =>
           // Main screen
-          val ss = $.props.map { suite =>
+          val ss = p.map { suite =>
             BenchProps(suite, start(suite)).render
           }
           <.div(ss)
       }
-    }
   }
 
   def main(): Unit = {

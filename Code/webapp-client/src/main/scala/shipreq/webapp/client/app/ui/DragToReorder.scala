@@ -171,10 +171,7 @@ final class DragToReorder[A: Reusability] {
           ^.onDragLeave ==> dragLeave)
       }
 
-    def render: ReactElement = {
-      val p = $.props
-      val s = $.state
-
+    def render(p: Props, s: State): ReactElement = {
       def mkItems(order: Iterable[Int], as: Vector[A], status: Int => Status): Vector[Item] = {
         val v = Vector.newBuilder[Item]
         for (i <- order)
@@ -201,8 +198,7 @@ final class DragToReorder[A: Reusability] {
 
   val Component = ReactComponentB[Props]("DND")
     .initialState[State](None)
-    .backend(new Backend(_))
-    .render(_.backend.render)
+    .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build
 }

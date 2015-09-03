@@ -41,8 +41,7 @@ object FilterEditor {
 
   val Component =
     ReactComponentB[Props]("Filter")
-      .backend(new Backend(_))
-      .render(_.backend.render)
+      .renderBackend[Backend]
       .configure(
         UI.installTextCompleteB(textEditorRef, _.autoComplete.value(), _.updateFilterText),
         shouldComponentUpdate)

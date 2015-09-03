@@ -32,8 +32,7 @@ object CfgReqTypes {
   val Component =
     ReactComponentB[Props]("Cfg: Req Types")
       .initialState_P(initialState)
-      .backend(new Backend(_))
-      .render(_.backend.render)
+      .renderBackend[Backend]
       .configure(changeListener.install(_.clientData))
       .build
 

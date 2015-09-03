@@ -53,9 +53,7 @@ final class TextSeqEditor[A, B](name: String, splitFn: String => Stream[String],
 
   val component =
     ReactComponentB[Props](name)
-      .stateless
-      .backend(new Backend(_))
-      .render(_.backend.render)
+      .renderBackend[Backend]
       .configure(UI.installTextCompleteP(textEditorRef, _.autoComplete, _.vuca.update))
       .build
 
@@ -64,8 +62,7 @@ final class TextSeqEditor[A, B](name: String, splitFn: String => Stream[String],
     val updateState: ReactEventI => Callback =
       e => $.props.vuca.update(e.target.value)
 
-    def render: ReactElement = {
-      val p = $.props
+    def render(p: Props): ReactElement = {
       val parseResult = p.parseResult
 
       val keyHandlers =

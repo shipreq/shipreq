@@ -10,7 +10,6 @@ object ISubsetEditor {
 
   def Component[A: UnivEq](staticProps: StaticProps[A]) =
     ReactComponentB[Mode[A]]("ISubsetEditor")
-      .stateless
       .backend(new Backend(_, staticProps))
       .render(_.backend.render)
       .build

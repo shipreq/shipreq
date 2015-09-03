@@ -159,8 +159,7 @@ private[tags] object MainTable {
   val Component =
     ReactComponentB[Props]("Cfg: Tags")
       .initialState_P(initialState)
-      .backend(new Backend(_))
-      .render(_.backend.render)
+      .renderBackend[Backend]
       .configure(changeListener.install(_.clientData))
       .build
 
@@ -253,7 +252,7 @@ private[tags] object MainTable {
 
     val filterDeadCheckbox = Checkbox.filterDead_$($ zoomL State.filterDead)
 
-    def render: ReactElement =
+    def render(s: State): ReactElement =
       <.div(
         NewTagControl.Component(newTagControlProps),
         filterDeadCheckbox(),
@@ -262,7 +261,7 @@ private[tags] object MainTable {
           <.tbody(rows)
         ),
         DetailPaneFns.render(
-          $.state, crudIO.updateIO,
+          s, crudIO.updateIO,
           parentSel = $ _setStateL State.detailRowSelParent,
           childSel  = $ _setStateL State.detailRowSelChild ))
 

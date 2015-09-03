@@ -20,8 +20,7 @@ object ViewSettingsEditor {
 
   val Component =
     ReactComponentB[Props]("ViewSettingsEditor")
-      .backend(new Backend(_))
-      .render(_.backend.render)
+      .renderBackend[Backend]
       .configure(shouldComponentUpdate)
       .build
 
@@ -32,8 +31,7 @@ object ViewSettingsEditor {
 
     val th = <.th(*.viewSettingsHeader)
 
-    def render = {
-      val p = $.props
+    def render(p: Props) = {
       val vs = p.vs.value
 
       def setColumns(s: ColumnsEditor.State): ViewSettings = {

@@ -22,8 +22,7 @@ object ReqTable {
   val Component =
     ReactComponentB[Props]("WIP")
       .initialState_P(initialState)
-      .backend(new Backend(_))
-      .render(_.backend.render)
+      .renderBackend[Backend]
       .configure(ChangeListener.update[State](c => _.recvChanges(c)).install(_.cd))
       .build
 
@@ -126,10 +125,9 @@ object ReqTable {
 
     val creationInterface = new CreationInterface(setCreation, project, plainText, widgets, textSearch)
 
-    def render = {
+    def render(s: State) = {
       import Px.AutoValue._
       Px.refresh(project, viewSettings, filterState)
-      val s = $.state
 
       val customFields = s.project.config.fields.customFields
 

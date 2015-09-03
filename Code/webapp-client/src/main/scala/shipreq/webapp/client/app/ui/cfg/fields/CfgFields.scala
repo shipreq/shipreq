@@ -133,8 +133,7 @@ private[fields] object MainTable {
   val Component =
     ReactComponentB[Props]("Cfg: Fields")
       .initialState_P(initialState)
-      .backend(new Backend(_))
-      .render(_.backend.render)
+      .renderBackend[Backend]
       .configure(
         customFieldChangeListener.install(_.clientData),
         ChangeListener.refreshWhen(c =>

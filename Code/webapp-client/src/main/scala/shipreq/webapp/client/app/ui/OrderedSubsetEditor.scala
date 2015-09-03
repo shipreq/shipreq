@@ -64,8 +64,7 @@ final class OrderedSubsetEditor[A: Equal] {
   val Component =
     ReactComponentB[Props]("OrderedSubsetEditor")
       .initialState(DND.Parent.initialState[A])
-      .backend(new Backend(_))
-      .render(_.backend.render)
+      .renderBackend[Backend]
       .domType[dom.html.OList]
       .build
 
@@ -98,9 +97,7 @@ final class OrderedSubsetEditor[A: Equal] {
     def moveIO(p: Props)(from: A, to: A): Callback =
       p.update(move(p.state)(from, to))
 
-    def render = {
-      val p = $.props
-
+    def render(p: Props) = {
       val rows: Stream[ReactElement] =
         p.state.all.toStream
           .filter(p filter _._1)

@@ -24,16 +24,13 @@ object SortCriteriaEditor {
   val Component =
     ReactComponentB[Props]("SortCriteriaEditor")
       .initialState(DND.Parent.initialState[Column.SortInconclusive])
-      .backend(new Backend(_))
-      .render(_.backend.render)
+      .renderBackend[Backend]
       .domType[dom.html.Div]
       .build
 
   final class Backend($: BackendScope[Props, DND.Parent.PState[Column.SortInconclusive]]) {
 
-    def render = {
-      val p = $.props
-
+    def render(p: Props) = {
       def modIO(f: EndoFn[Vector[SortCriterion.Inconclusive]], g: EndoFn[SortCriterion.Conclusive]): Callback = {
         val s = p.value
         p change SortCriteria(f(s.init), g(s.last))

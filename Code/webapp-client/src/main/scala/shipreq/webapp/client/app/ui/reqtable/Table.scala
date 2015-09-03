@@ -40,9 +40,7 @@ object Table {
 
   val Component =
     ReactComponentB[Props]("Table")
-      .stateless
-      .backend(new Backend(_))
-      .render(_.backend.render)
+      .renderBackend[Backend]
       .configure(shouldComponentUpdate)
       .build
 
@@ -60,10 +58,9 @@ object Table {
       $.props.modViewSettings(
         ViewSettings.order.modify(_ want col)))
 
-    def render: ReactElement = {
-      val p     = $.props
-      val crs   = p.colRenderers
-      val rows  = p.rows
+    def render(p: Props): ReactElement = {
+      val crs  = p.colRenderers
+      val rows = p.rows
 
       def renderRows =
         rows.indices.toReactNodeArray { i =>
@@ -89,8 +86,7 @@ object Table {
   implicit val headerPropReuse = Reusability.caseClass[HeaderProps]
 
   val HeaderComponent = ReactComponentB[HeaderProps]("Header")
-    .backend(new HeaderBackend(_))
-    .render(_.backend.render)
+    .renderBackend[HeaderBackend]
     .configure(shouldComponentUpdate)
     .build
 
@@ -128,8 +124,7 @@ object Table {
         }
       }
 
-    def render = {
-      val p = $.props
+    def render(p: HeaderProps) = {
       def headerCells = {
         var first = true
         p.crs.toStream.map { cr =>
@@ -183,9 +178,7 @@ object Table {
 
   val CellComponent =
     ReactComponentB[CellProps]("Cell")
-      .stateless
-      .backend(new CellBackend(_))
-      .render(_.backend.render)
+      .renderBackend[CellBackend]
       .configure(shouldComponentUpdate)
       .build
 
@@ -240,8 +233,7 @@ object Table {
     def startEdit: Callback =
       $.propsCB >>= (_ startEdit TCB.Finally(domNode.map(_.focus())))
 
-    def render = {
-      val p = $.props
+    def render(p: CellProps) = {
       val (status, roView) = p.cr.render(p.row)
       cellBase(
         *.cell(status),

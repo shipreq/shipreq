@@ -72,7 +72,6 @@ class CreationInterface($             : CompStateFocus[State],
     }
 
   val Component = ReactComponentB[Props]("Creation")
-    .stateless
     .render($ => render($.props))
     //    .configure(shouldComponentUpdate) TODO
     .build
@@ -159,10 +158,7 @@ class CreationInterface($             : CompStateFocus[State],
             <.td(ctrls(create, state.status, setStatus)))))
     }
 
-    val Component = ReactComponentB[Props]("CreateRCG")
-      .stateless
-      .render($ => render($.props))
-      .build
+    val Component = ReactComponentB[Props]("CreateRCG").render_P(render).build
   }
 
   object CreateGenericReq { // ---------------------------------------------------------------------------------------
@@ -219,9 +215,6 @@ class CreationInterface($             : CompStateFocus[State],
             <.td(ctrls(create, state.status, setStatus)))))
     }
 
-    val Component = ReactComponentB[Props]("CreateGR")
-      .stateless
-      .render($ => render($.props))
-      .build
+    val Component = ReactComponentB[Props]("CreateGR").render_P(render).build
   }
 }

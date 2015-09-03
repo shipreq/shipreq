@@ -28,8 +28,7 @@ private[issues] object MandatoryFields {
 
   val Component = ReactComponentB[Props]("MandatoryFields")
     .initialState_P(initialState)
-    .backend(new Backend(_))
-    .render(_.backend.render)
+    .renderBackend[Backend]
     .configure(
       changeListener.install(_.clientData),
       ChangeListener.refreshWhenFieldNamesChange.install(_.clientData)

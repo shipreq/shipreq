@@ -119,9 +119,7 @@ object RichTextEditor {
 
     val component =
       ReactComponentB[Props](name)
-        .stateless
-        .backend(new Backend(_))
-        .render(_.backend.render)
+        .renderBackend[Backend]
         .configure(UI.installTextCompleteP(textEditorRef, _.autoComplete, _.vuca.update))
         .build
 
@@ -133,8 +131,7 @@ object RichTextEditor {
       val updateState: ReactEventI => Callback =
         e => $.props.vuca.update(correctOnChange(e.target.value))
 
-      def render: ReactElement = {
-        val p = $.props
+      def render(p: Props): ReactElement = {
         val parseResult = p.parseResult
 
         val keyHandlers =

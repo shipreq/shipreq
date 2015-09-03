@@ -124,8 +124,7 @@ object SampleDataPerson {
 
     val Component = ReactComponentB[Props]("NewAndSavedRowState")
       .initialState(NewAndSavedRowState.initialState)
-      .backend(new Backend(_))
-      .render(_.backend.render)
+      .renderBackend[Backend]
       .build
   }
 }
