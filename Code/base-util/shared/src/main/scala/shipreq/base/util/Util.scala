@@ -139,6 +139,9 @@ object Util {
 
   @inline def maybeAdd[A](have: Stream[A], allow: Boolean)(add: => A): Stream[A] =
     if (allow) add #:: have else have
+
+  def nextElement[A: UnivEq](as: Vector[A])(a: A): A =
+    as((as.indexOf(a) + 1) % as.length)
 }
 
 object ParseLong {

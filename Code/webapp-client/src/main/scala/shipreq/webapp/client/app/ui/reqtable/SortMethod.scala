@@ -1,6 +1,6 @@
 package shipreq.webapp.client.app.ui.reqtable
 
-import shipreq.base.util.{NonEmptyVector, UnivEq}
+import shipreq.base.util.{Util, NonEmptyVector, UnivEq}
 import shipreq.base.util.ScalaExt._
 
 sealed trait SortMethod {
@@ -92,7 +92,7 @@ object SortMethod {
 
   // Lazy due to initialisation order. https://github.com/scala-js/scala-js/issues/1490
   lazy val ignoreBlanks   = NonEmptyVector[IgnoreBlanks](Asc, Desc)
-  lazy val considerBlanks = NonEmptyVector[ConsiderBlanks](AscThenBlanks, BlanksThenAsc, BlanksThenDesc, DescThenBlanks)
+  lazy val considerBlanks = NonEmptyVector[ConsiderBlanks](AscThenBlanks, DescThenBlanks, BlanksThenAsc, BlanksThenDesc)
 
   def resolverIB[A](f: (IgnoreBlanks with AscHalf) => A)(reverse: A => A): IgnoreBlanks => A = {
     case Asc  => f(Asc)
@@ -119,4 +119,12 @@ object SortMethod {
     case c: IgnoreBlanks   => ib(c)
     case c: ConsiderBlanks => cb(c)
   }
+
+  def nextIB(m: IgnoreBlanks  ): IgnoreBlanks   = Util.nextElement(ignoreBlanks  .whole)(m)
+  def nextCB(m: ConsiderBlanks): ConsiderBlanks = Util.nextElement(considerBlanks.whole)(m)
+  def next(sm: SortMethod): SortMethod =
+    sm match {
+      case m: ConsiderBlanks => nextCB(m)
+      case m: IgnoreBlanks   => nextIB(m)
+    }
 }

@@ -20,6 +20,11 @@ object Style extends StyleSheet.Inline {
     val enabled  = Domain.ofValues[Enabled] (Enabled, Disabled)
     val on       = Domain.ofValues[On]      (On, Off)
 
+    val dragStatus = {
+      import DragToReorder._
+      Domain.ofValues[Status](Normal, DragSource, Tombstone)
+    }
+
     val `live * on`       = live *** on
     val `live * validity` = live *** validity
   }
@@ -106,6 +111,65 @@ object Style extends StyleSheet.Inline {
       ))
 
       def errorMsg = hasErrorColor
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    object sortEditor {
+
+      val outer = style()
+
+      val dragArea = style(
+        display.inlineBlock,
+        paddingRight(12.ex), // ← Gives a bit more room to drag to tail, rather than outside
+        paddingLeft(1 ex))
+
+      val itemOuter = styleF(D.dragStatus)(status =>
+        styleS(
+          marginRight(2 ex),
+          cursor.pointer, // Because click changes sort direction
+          (status match {
+            case DragToReorder.Normal => mixin(
+              display.inlineBlock,
+              border(1 px, solid, c"#bbb"))
+            case DragToReorder.DragSource => mixin(
+              display.inlineBlock,
+              opacity(.4),
+              border(2 px, dashed, c"#000"))
+            case DragToReorder.Tombstone => mixin(
+              display.none)
+          }): StyleS
+        ))
+
+      val itemSortMethod = style(
+        border.none,
+        backgroundColor(c"#ddd"),
+        verticalAlign.middle,
+        textAlign.center,
+        padding(v = 0.2.ex, h = 0.5.ex))
+
+      val sortMethodFull = style(
+        width(0.6.em),
+        height(0.6.em))
+
+      private val sortMethodHalf = mixin(
+        display.block,
+        width(0.55.em),
+        height(0.55.em))
+
+      val sortMethodHalfTop = style(
+        sortMethodHalf,
+        marginBottom(0.2.em))
+
+      val sortMethodHalfBottom = style(
+        sortMethodHalf)
+
+      val itemName = styleF(Domain.boolean)(conclusive =>
+        styleS(
+          border.none,
+          backgroundColor(c"#eee"),
+          padding(v = 0.4.ex, h = 1.ex),
+          verticalAlign.middle,
+          mixinIf(conclusive)(fontWeight.bold)))
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -284,6 +348,7 @@ object Style extends StyleSheet.Inline {
 
   initInnerObjects(
     cfg.deadMnemonic,
+    reqtable.sortEditor.dragArea,
     reqtable.sortCriteriaEditor.conclusiveColumnName,
     reqtable.filterEditor.errorMsg,
     reqtable.table,

@@ -91,7 +91,8 @@ object Column {
 
   case class NameResolver(customFieldNames: Map[data.CustomFieldId, String]) {
 
-    @inline def apply(column: Column) = fn(column)
+    @inline def apply(column: Column): String =
+      fn(column)
 
     val fn: Column => String = {
       case b: BuiltIn         => NameResolver.builtIn(b)

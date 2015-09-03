@@ -54,25 +54,29 @@ object ReqTable {
       copy(project = changes.p2) // TODO This obviously affects other things
       // TODO A custom field removal/addition should affect ViewSettings
 
-    def updateVS(newVS: ViewSettings): State =
-      copy(viewSettings = newVS)
-
     def updateCell(loc: Cell.Loc, state: Cell.State): State =
       copy(cellStates = cellStates.set(loc, state))
 
     def filterFailure(s: FilterEditor.State): State =
       copy(filter = s)
 
-    def filterSuccess(fs: (FilterEditor.State, Option[FilterAst])): State =
-      updateVS(viewSettings.copy(filter = fs._2)).copy(filter = fs._1)
+    def filterSuccess(fs: (FilterEditor.State, Option[FilterAst])): State = {
+      val vs = viewSettings.copy(filter = fs._2)
+      copy(viewSettings = vs, filter = fs._1)
+    }
+  }
+
+  object State {
+    val sortCriteria = viewSettings ^|-> ViewSettings.order
   }
 
   // -------------------------------------------------------------------------------------------------------------------
 
   final class Backend($: BackendScope[Props, State]) extends OnUnmount {
 
-    val setViewSettings = ReusableFn($).modState.endoCall(_.updateVS)
-    val modViewSettings = setViewSettings.contramap[EndoFn[ViewSettings]](_($.state.viewSettings))
+    val setViewSettings = ReusableFn($ zoomL State.viewSettings).setState
+    val modViewSettings = ReusableFn($ zoomL State.viewSettings).modState
+    val setSortCriteria = ReusableFn($ zoomL State.sortCriteria).setState
     val setCreation     = $ zoomL State.creation
 
     val project      = Px.thunkM($.state.project)
@@ -89,6 +93,12 @@ object ReqTable {
     val colRnds    = Px.apply2(vsCols, colRnd)(_ map _.apply)
     val rows       = Px.apply4(viewSettings, project, plainText, textSearch)(Logic.rowsForTable).map(_.toVector)
     val stats      = Px.apply3(viewSettings, project, rows)(Logic.stats)
+
+    val sortEditorProps =
+      for {
+        vs  <- viewSettings
+        nr  <- colName
+      } yield SortEditor.Props(vs.order, setSortCriteria, nr)
 
     val modTable: Cell.ModTable = ReusableFn(loc => (s, cb) => $.modState(_.updateCell(loc, s), cb))
     // TODO OMG THE COPY-AND-PASTE!
@@ -142,6 +152,7 @@ object ReqTable {
         ViewSettingsEditor.Component(vsProps),
         creationInterface.Component(creationProps),
         StatsSummary(stats),
+        SortEditor.Component(sortEditorProps),
         Table.Component(tableProps))
     }
   }

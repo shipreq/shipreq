@@ -1,6 +1,9 @@
 package shipreq.webapp.client.app.ui.reqtable
 
+import japgolly.scalajs.react.ScalazReact._
+import japgolly.scalajs.react.extra.Reusability
 import monocle.macros.Lenses
+import scala.annotation.tailrec
 import scalaz.syntax.equal._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{NonEmptyVector, UnivEq}
@@ -9,6 +12,9 @@ sealed trait SortCriterion {
   def column: Column
   def method: SortMethod
   def reverse: SortCriterion
+  def rotateMethod: SortCriterion
+  def isConclusive: Boolean
+  final def isInconclusive = !isConclusive
 }
 
 object SortCriterion {
@@ -18,18 +24,24 @@ object SortCriterion {
   sealed trait Inconclusive extends SortCriterion {
     override def column: SortInconclusive
     override def reverse: Inconclusive
+    override def rotateMethod: Inconclusive
+    override final def isConclusive = false
   }
 
   case class InconclusiveCB(column: SortInconclusive with HasBlanks, method: ConsiderBlanks) extends Inconclusive {
     override def reverse: InconclusiveCB = copy(method = this.method.reverse)
+    override def rotateMethod: InconclusiveCB = copy(method = SortMethod.nextCB(method))
   }
 
   case class InconclusiveIB(column: SortInconclusive with NoBlanks,  method: IgnoreBlanks)   extends Inconclusive {
     override def reverse: InconclusiveIB = copy(method = this.method.reverse)
+    override def rotateMethod: InconclusiveIB = copy(method = SortMethod.nextIB(method))
   }
 
   case class Conclusive(column: SortConclusive, method: IgnoreBlanks) extends SortCriterion  {
     override def reverse: Conclusive = copy(method = this.method.reverse)
+    override def isConclusive = true
+    override def rotateMethod: Conclusive = copy(method = SortMethod.nextIB(method))
   }
 
   implicit def equalityIIB: UnivEq[InconclusiveIB] = UnivEq.derive
@@ -37,6 +49,8 @@ object SortCriterion {
   implicit def equalityI  : UnivEq[Inconclusive]   = UnivEq.derive
   implicit def equalityC  : UnivEq[Conclusive]     = UnivEq.derive
   implicit def equality   : UnivEq[SortCriterion]  = UnivEq.derive
+
+  implicit val reusability: Reusability[SortCriterion] = Reusability.byRefOrEqual
 
   def possibilitiesICB(c: SortInconclusive with HasBlanks): NonEmptyVector[InconclusiveCB] =
     SortMethod.considerBlanks.map(InconclusiveCB(c, _))
@@ -72,6 +86,9 @@ case class SortCriteria(init: Vector[Inconclusive], last: Conclusive) {
 //    case c: Column.SortInconclusive => removeColumnI(c)
 //    case _: Column.SortConclusive   => this
 //  }
+
+  def all: NonEmptyVector[SortCriterion] =
+    init ++: NonEmptyVector.one[SortCriterion](last)
 
   def whitelistColumns(w: Set[Column.SortInconclusive]): SortCriteria =
     copy(init = init.filter(w contains _.column))
@@ -109,19 +126,12 @@ case class SortCriteria(init: Vector[Inconclusive], last: Conclusive) {
   def want(column: Column): SortCriteria = {
     import SortMethod._
 
-    def next[A: UnivEq](as: Vector[A])(a: A): A =
-      as((as.indexOf(a) + 1) % as.length)
-
     column match {
       case c: Column.SortInconclusive =>
         val newInit =
           if (init.headOption.exists(_.column ≟ c)) {
             // Column(I) already primary
-            val h = init.head match {
-              case ex: InconclusiveCB => ex.column / next(considerBlanks.whole)(ex.method)
-              case ex: InconclusiveIB => ex.column / next(ignoreBlanks  .whole)(ex.method)
-            }
-            h +: init.tail
+            init.head.rotateMethod +: init.tail
           } else init.find(_.column ≟ c) match {
             case Some(existing) =>
               //  Column(I) exists but isn't primary
@@ -141,7 +151,7 @@ case class SortCriteria(init: Vector[Inconclusive], last: Conclusive) {
           if (c ≟ last.column) {
             if (init.isEmpty)
               // Column(C) already primary
-              c / next(ignoreBlanks.whole)(last.method)
+              last.rotateMethod
             else
               // Column(C) exists but isn't primary
               last
@@ -151,10 +161,27 @@ case class SortCriteria(init: Vector[Inconclusive], last: Conclusive) {
         SortCriteria(Vector.empty, newLast)
     }
   }
+
+  def rotateSortMethod(column: Column): Option[SortCriteria] =
+    column match {
+      case c: Column.SortInconclusive =>
+        val i = init.indexWhere(_.column ≟ c)
+        if (i < 0)
+          None
+        else
+          Some(copy(init = init.updated(i, init(i).rotateMethod)))
+      case c: Column.SortConclusive =>
+        if (c ≟ last.column)
+          Some(copy(last = last.rotateMethod))
+        else
+          None
+    }
+
 }
 
 object SortCriteria {
   implicit def equality: UnivEq[SortCriteria] = UnivEq.derive
+  implicit val reusability: Reusability[SortCriteria] = Reusability.byRefOrEqual
 
   val defaultConclusive =
     Column.Pubid / SortMethod.Asc
@@ -163,6 +190,22 @@ object SortCriteria {
     SortCriteria(Vector.empty, defaultConclusive)
 
   val default = SortCriteria(
-    Vector(Column.Code / SortMethod.AscThenBlanks),
+    Vector(Column.Code / SortMethod.AscThenBlanks, Column.Title / SortMethod.BlanksThenAsc),
     defaultConclusive)
+
+  def attempt(n: Vector[SortCriterion]): Option[SortCriteria] = {
+    var init = Vector.empty[Inconclusive]
+    val l = n.length
+    @tailrec def go(i: Int): Option[SortCriteria] =
+      if (i == l)
+        None
+      else n(i) match {
+        case c: Inconclusive =>
+          init :+= c
+          go(i + 1)
+        case c: Conclusive =>
+          Some(SortCriteria(init, c))
+      }
+    go(0)
+  }
 }
