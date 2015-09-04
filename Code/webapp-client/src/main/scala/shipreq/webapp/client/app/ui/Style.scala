@@ -300,7 +300,8 @@ object Style extends StyleSheet.Inline {
     val ul = style(paddingLeft(2.4 ex))
 
     val pubidColumnValue = styleF(D.live)(a => styleS(
-      display.inlineBlock,
+      display.inline,
+      whiteSpace.nowrap,
       mixinIf(a :: Dead)(deadAndNotError)))
 
     private def tagLabelSuffix(live: Live) = live match {
