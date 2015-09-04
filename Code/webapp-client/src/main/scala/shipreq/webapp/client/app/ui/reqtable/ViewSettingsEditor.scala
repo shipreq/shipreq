@@ -2,8 +2,9 @@ package shipreq.webapp.client.app.ui.reqtable
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, MonocleReact._
 import japgolly.scalajs.react.extra._
+import shipreq.webapp.client.util.{Off, On}
 import scalacss.ScalaCssReact._
-import shipreq.base.util.UnivEq
+import shipreq.base.util.{NonEmptyVector, UnivEq}
 import shipreq.webapp.base.data.FieldSet
 import shipreq.webapp.client.app.ui.Checkbox
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
@@ -39,12 +40,12 @@ object ViewSettingsEditor {
           case i: Column.SortInconclusive => q + i
           case _: Column.SortConclusive   => q
         })
-        ViewSettings(s, vs.order.whitelistColumns(icols), vs.filter, vs.filterDead)
+        ViewSettings(NonEmptyVector force s.on, vs.order.whitelistColumns(icols), vs.filter, vs.filterDead)
       }
 
       def columns =
         ColumnsEditor(
-          vs.columnState,
+          ColumnsEditor.State(vs.columns.whole.map((_, On)) ++ Column.all(p.customFields.values).whole.filterNot(vs.isVisible).map((_, Off))),
           p.vs.set compose setColumns,
           p.columnName,
           p.customFields,

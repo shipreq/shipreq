@@ -10,14 +10,10 @@ import shipreq.webapp.client.lib.{ShowDead, HideDead, FilterDead}
 import shipreq.webapp.client.util.On
 
 @Lenses
-case class ViewSettings(columnState: ColumnsEditor.State,
+case class ViewSettings(columns    : NonEmptyVector[Column],
                         order      : SortCriteria,
                         filter     : Option[FilterAst],
                         filterDead : FilterDead) {
-
-  val columns: NonEmptyVector[Column] =
-    // Safe to force because ∃ at least 1 mandatory field
-    NonEmptyVector force columnState.on.filter(Column filterDead filterDead)
 
   def isVisible(c: Column): Boolean =
     isVisible(_ ≟ c)
@@ -30,13 +26,14 @@ case class ViewSettings(columnState: ColumnsEditor.State,
   @inline def isOrderedI(c: Column.SortInconclusive)            = order.isOrderedI(c)
   @inline def isOrderedI(f: Column.SortInconclusive => Boolean) = order.isOrderedI(f)
 
+  def filterColumns(f: Column => Boolean): Option[ViewSettings] =
+    columns.filter(f).map(cols =>
+      ViewSettings(cols, order filterColumns f, filter, filterDead))
+
   def setFilterDead(fd: FilterDead): ViewSettings =
-    if (fd ≟ this.filterDead) this else {
-      val o = filterDead match {
-        case ShowDead => order
-        case HideDead => order filterColumns Column.filterDead(fd)
-      }
-      ViewSettings(columnState, o, filter, fd)
+    filterColumns(Column filterDead fd) match {
+      case Some(vs) => vs.copy(filterDead = fd)
+      case None     => ViewSettings.default(fd)
     }
 
   /**
@@ -60,18 +57,9 @@ object ViewSettings {
   implicit def equality   : UnivEq[ViewSettings]      = UnivEq.derive
   implicit val reusability: Reusability[ViewSettings] = Reusability.byEqual
 
-  def default(allColumns: NonEmptyVector[Column],
-              cnr: Option[Column.NameResolver] = None,
-              fd: FilterDead = HideDead): ViewSettings = {
-    // TODO Project knows custom field order. Use it here...right?
+  def default(fd: FilterDead = HideDead): ViewSettings = {
     import Column._
-    val on = Vector[Column](Code, Pubid, Title, Tags)
-    val off = {
-      val t = allColumns.whole.filterNot(on.contains)
-      cnr.fold(t)(t sortBy _.fn)
-    }
-    val all = on ++ off
-    val cols = ColumnsEditor.State.init(all)(On <~ on.contains(_))
+    val cols = NonEmptyVector[Column](Code, Pubid, Title, Tags)
     ViewSettings(cols, SortCriteria.default, None, fd)
   }
 }

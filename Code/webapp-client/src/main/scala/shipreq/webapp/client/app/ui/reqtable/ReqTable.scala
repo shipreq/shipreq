@@ -35,9 +35,8 @@ object ReqTable {
 
   def initialState(p: Props): State = {
     val proj = p.cd.project
-    val cols = Column allInProject proj
     State(proj,
-      ViewSettings.default(cols, Some(Column.NameResolver byProject proj), p.fd),
+      ViewSettings.default(p.fd),
       FilterEditor.initialState,
       CreationInterface.initState,
       Cell.emptyTableState)
