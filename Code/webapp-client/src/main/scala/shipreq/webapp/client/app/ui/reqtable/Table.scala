@@ -102,7 +102,7 @@ object Table {
 
   class HeaderBackend($: BackendScope[HeaderProps, Unit]) {
 
-    def onKeyDown(e: ReactKeyboardEventH): Callback =
+    def onKeyDown(col: Column)(e: ReactKeyboardEventH): Callback =
       for {
         _  <- CallbackOption.require(checkModKeys(e))
         cb <- CallbackOption.matchPF(e.nativeEvent.keyCode) {
@@ -111,6 +111,7 @@ object Table {
                 case KeyCode.Left   => moveFocus_-(e.currentTarget, -1)
                 case KeyCode.Right  => moveFocus_-(e.currentTarget,  1)
                 case KeyCode.Escape => Callback(e.currentTarget.blur())
+                case KeyCode.Space  => $.propsCB.flatMap(_ clickSort col)
               }
         _ <- cb
         _ <- e.preventDefaultCB
@@ -152,7 +153,7 @@ object Table {
                 *.columnHeader(c.live, i.status),
                 i.mod,
                 ^.tabIndex   := (if (isFirst) 0 else -1),
-                ^.onKeyDown ==> onKeyDown,
+                ^.onKeyDown ==> onKeyDown(c),
                 ^.onClick   --> $.props.clickSort(c),
                 name(c)
               )}))
