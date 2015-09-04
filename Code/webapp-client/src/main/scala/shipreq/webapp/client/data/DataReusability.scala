@@ -1,10 +1,10 @@
 package shipreq.webapp.client.data
 
-import shipreq.base.util.NonEmptyVector
-import shipreq.base.util.UnivEq.Implicits._
-import japgolly.scalajs.react.extra.Reusability
 import japgolly.scalajs.react.ScalazReact._
+import japgolly.scalajs.react.extra.Reusability
+import shipreq.base.util.{NonEmptySet, NonEmptyVector}
 import shipreq.webapp.base.data._
+import shipreq.webapp.client.util.{Enabled, On}
 
 object DataReusability {
 
@@ -14,4 +14,10 @@ object DataReusability {
 
   def reusabilityNonEmptyVector[A: Reusability]: Reusability[NonEmptyVector[A]] =
     Reusability.by(_.whole)
+
+  def reusabilityNonEmptySet[A: Reusability]: Reusability[NonEmptySet[A]] =
+    Reusability.by(_.whole)
+
+  implicit val reusabilityOn      = Reusability.byEqual[On]
+  implicit val reusabilityEnabled = Reusability.byEqual[Enabled]
 }

@@ -1,10 +1,11 @@
 package shipreq.webapp.client.app.ui.reqtable
 
-import japgolly.scalajs.react._, vdom.prefix_<^._, MonocleReact._
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import shipreq.webapp.client.util.{Off, On}
+import japgolly.scalajs.react.vdom.prefix_<^._
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{NonEmptyVector, UnivEq}
+import scalaz.syntax.equal._
+import shipreq.base.util.NonEmptySet
 import shipreq.webapp.base.data.FieldSet
 import shipreq.webapp.client.app.ui.Checkbox
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
@@ -27,6 +28,18 @@ object ViewSettingsEditor {
 
   final class Backend($: BackendScope[Props, Unit]) {
 
+    val toggleColumn = ReusableFn((c: Column) =>
+      $.propsCB >>= { p =>
+        val vs = p.vs.value
+        val newCols =
+          if (vs.isVisible(c))
+            vs.columns.filterNot(_ ≟ c) // Turn off
+          else
+            Some(vs.columns :+ c)       // Turn on
+        val newVS = vs setColumns newCols.getOrElse(vs.columns)
+        p.vs set newVS
+      })
+
     val filterDeadEditor = Checkbox.filterDead(
       ReusableFn.byName($.props.vs.mod).endoCall(_.setFilterDead))
 
@@ -35,16 +48,15 @@ object ViewSettingsEditor {
     def render(p: Props) = {
       val vs = p.vs.value
 
-      def setColumns(s: ColumnsEditor.State): ViewSettings =
-        vs.setColumns(NonEmptyVector force s.on)
-
-      def columns =
-        ColumnsEditor(
-          ColumnsEditor.State(vs.columns.whole.map((_, On)) ++ Column.all(p.customFields.values).whole.filterNot(vs.isVisible).map((_, Off))),
-          p.vs.set compose setColumns,
+      def columns = {
+        val all = Column.all(p.customFields.values).toNES.whole filter Column.filterDead(vs.filterDead)
+        val p2 = ColumnsEditor.Props(
+          vs.columns.toNES,
+          toggleColumn,
           p.columnName,
-          p.customFields,
-          Column filterDead vs.filterDead)
+          NonEmptySet force all)
+        ColumnsEditor.Component(p2)
+      }
 
       <.table(
         <.thead(
