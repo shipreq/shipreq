@@ -9,7 +9,7 @@ import shipreq.webapp.client.util.On
 
 object Checkbox {
 
-  def apply[A](bool: IsoBool[A])(set: A ~=> Callback, decor: A => ReactTag => ReactElement) = {
+  def apply[A](bool: IsoBool[A])(set: A => Callback, decor: A => ReactTag => ReactElement) = {
     implicit val reusability = Reusability.by(bool.from)
     val on = On when bool
 
@@ -24,11 +24,11 @@ object Checkbox {
 
   def filterDeadChecked = ShowDead
 
-  def filterDead(set: FilterDead ~=> Callback) =
+  def filterDead(set: FilterDead => Callback) =
     Checkbox(filterDeadChecked)(set, _ => chk => <.label(chk, "Show deleted content."))
 
   def filterDead_$($: CompStateFocus[FilterDead]): () => ReactElement = {
-    val component = filterDead(ReusableFn($).setState)
+    val component = filterDead($ setState _)
     () => component($.state)
   }
 }
