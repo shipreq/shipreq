@@ -72,9 +72,4 @@ object ReactPatches {
 //    val and = Condition[Boolean, Boolean](identity)(false)
 //    def pass[A] = Condition[A, Boolean](_ => true)(false)
 //  }
-
-  implicit class PatchBackendScope[P,S](private val $: BackendScope[P, S]) extends AnyVal {
-    @inline def propsCB: CallbackTo[P] = CallbackTo($.props)
-    @inline def stateCB: CallbackTo[S] = CallbackTo($.state)
-  }
 }

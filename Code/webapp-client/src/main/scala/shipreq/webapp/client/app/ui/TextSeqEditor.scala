@@ -60,7 +60,7 @@ final class TextSeqEditor[A, B](name: String, splitFn: String => Stream[String],
   class Backend($: BackendScope[Props, Unit]) {
 
     val updateState: ReactEventI => Callback =
-      e => $.props.vuca.update(e.target.value)
+      e => $.props >>= (_.vuca.update(e.target.value))
 
     def render(p: Props): ReactElement = {
       val parseResult = p.parseResult

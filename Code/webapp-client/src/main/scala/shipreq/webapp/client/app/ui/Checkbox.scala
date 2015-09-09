@@ -27,8 +27,8 @@ object Checkbox {
   def filterDead(set: FilterDead => Callback) =
     Checkbox(filterDeadChecked)(set, _ => chk => <.label(chk, "Show deleted content."))
 
-  def filterDead_$($: CompStateFocus[FilterDead]): () => ReactElement = {
+  def filterDead_$($: StateAccessCB[FilterDead]): () => ReactElement = {
     val component = filterDead($ setState _)
-    () => component($.state)
+    () => component($.state.runNow())
   }
 }
