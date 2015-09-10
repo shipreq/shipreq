@@ -1,5 +1,7 @@
 package shipreq.webapp.client.lib
 
+import japgolly.scalajs.react.ScalazReact._
+import japgolly.scalajs.react.extra.Reusability
 import scala.collection.GenTraversableLike
 import shipreq.base.util.IsoBool
 import shipreq.webapp.base.data.Live
@@ -20,6 +22,7 @@ sealed trait FilterDead {
 object FilterDead extends IsoBool.ObjOnly[FilterDead] {
   override protected def pos = ShowDead
   override protected def neg = HideDead
+  implicit val reusability = Reusability.byEqual[FilterDead]
 }
 
 case object ShowDead extends FilterDead with IsoBool[FilterDead] {

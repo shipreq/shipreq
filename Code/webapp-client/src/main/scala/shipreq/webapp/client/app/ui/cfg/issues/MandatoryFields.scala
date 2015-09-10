@@ -40,15 +40,12 @@ private[issues] object MandatoryFields {
 
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
 
-    @inline def project = $.props.clientData.project
-
-    val pxProject = Px.thunkM(project)
+    val pxProject = Px.bs($).propsA(_.clientData.project)
     val labelFn   = pxProject map Field.nameP
 
-    def save(id: CustomFieldId): ST = {
-      val p = $.props
-      Persistence.simpleAsyncUpdate(rowStore)(p.remote, p.clientData, p.cp, $ runState _, id)
-    }
+    def save(id: CustomFieldId): CallbackTo[ST] =
+      $.props.map(p =>
+        Persistence.simpleAsyncUpdate(rowStore)(p.remote, p.clientData, p.cp, $ runState _, id))
 
     val genEditor =
       Editors.checkboxEditor.imap(On <=> Mandatory)
@@ -57,7 +54,7 @@ private[issues] object MandatoryFields {
     val editor =
       genEditor.cmapA[(Mandatory, CustomField)](a => a)
         .zoomU[S].applyRowUpdate(rowStore)(_._2.id)
-        .paddSTA(a => { case OnEditFinished(_) => save(a._2.id) })
+        .paddSTA(a => { case OnEditFinished(_) => save(a._2.id).runNow() })
 
     val editable = editor.editableByRowStatus($)
 
@@ -69,8 +66,8 @@ private[issues] object MandatoryFields {
         ^.key := f.name,
         <.td(genEditor render EditorI((f.mandatory, f), "", None)))
 
-    def renderCustomField(f: CustomField) = {
-      val r = rowStore.get(f.id)($.state)
+    def renderCustomField(f: CustomField, s: S) = {
+      val r = rowStore.get(f.id)(s)
       <.tr(
         ^.key := f.id.value,
         <.td(
@@ -78,16 +75,14 @@ private[issues] object MandatoryFields {
           UI.rowStatusCtrls(r.status, EmptyTag)))
     }
 
-    def renderRows: ReactNode =
-      UI.must(project.config.fields.fields)(
+    def renderRows(p: Project, s: S): ReactNode =
+      UI.must(p.config.fields.fields)(
         HideDead(_)(_.live).toReactNodeArray(
-          _.fold(renderStaticField, renderCustomField)))
+          _.fold(renderStaticField, renderCustomField(_, s))))
 
-    def render: ReactElement = {
-      pxProject.refresh()
+    def render(p: Props, s: S): ReactElement =
       <.table(
         <.thead(<.tr(<.th("Mandatory Fields"))),
-        <.tbody(renderRows))
-    }
+        <.tbody(renderRows(p.clientData.project, s)))
   }
 }

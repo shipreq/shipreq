@@ -50,7 +50,7 @@ object Table {
   final class Backend($: BackendScope[Props, Unit]) {
 
     val startCellEdit = ReusableFn[Row, Column, TCB.Finally, Callback]((row, col, fin) =>
-      $.propsCB.map { p =>
+      $.props.map { p =>
         if (p.cells(row.sourceId, col).isEmpty)
           p.colEditors.startCellEditing(row, col, fin)
             .foreach(_.runNow())
@@ -58,11 +58,11 @@ object Table {
     )
 
     val reorderColumns = ReusableFn((cols: NonEmptyVector[Column]) =>
-      $.props.modViewSettings(_ setColumns cols))
+      $.props >>= (_.modViewSettings(_ setColumns cols)))
 
     val clickHeaderToSort = ReusableFn((col: Column) =>
-      $.props.modViewSettings(
-        ViewSettings.order.modify(_ want col)))
+      $.props >>= (_.modViewSettings(
+        ViewSettings.order.modify(_ want col))))
 
     def render(p: Props): ReactElement = {
       val crs  = p.colRenderers
@@ -111,7 +111,7 @@ object Table {
                 case KeyCode.Left   => moveFocus_-(e.currentTarget, -1)
                 case KeyCode.Right  => moveFocus_-(e.currentTarget,  1)
                 case KeyCode.Escape => Callback(e.currentTarget.blur())
-                case KeyCode.Space  => $.propsCB.flatMap(_ clickSort col)
+                case KeyCode.Space  => $.props.flatMap(_ clickSort col)
               }
         _ <- cb
         _ <- e.preventDefaultCB
@@ -138,27 +138,27 @@ object Table {
     val dnd = ColumnDND.helper(
       newOrder =>
         NonEmptyVector.maybe(newOrder, Callback.empty)(no =>
-          $.propsCB.flatMap(_ reorder no)),
+          $.props.flatMap(_ reorder no)),
 
-      content => {
-        val name = $.props.colName
-        var first = true
-        <.thead(
-          content.rootMod,
-          <.tr(
-            content.items.map { i =>
-              val isFirst = first && { first = false; true }
-              val c = i.data
-              <.th(
-                *.columnHeader(c.live, i.status),
-                i.mod,
-                ^.tabIndex   := (if (isFirst) 0 else -1),
-                ^.onKeyDown ==> onKeyDown(c),
-                ^.onClick   --> $.props.clickSort(c),
-                name(c)
-              )}))
-      }
-    )
+      content =>
+        $.props map { p =>
+          val name = p.colName
+          var first = true
+          <.thead(
+            content.rootMod,
+            <.tr(
+              content.items.map { i =>
+                val isFirst = first && { first = false; true }
+                val c = i.data
+                <.th(
+                  *.columnHeader(c.live, i.status),
+                  i.mod,
+                  ^.tabIndex   := (if (isFirst) 0 else -1),
+                  ^.onKeyDown ==> onKeyDown(c),
+                  ^.onClick   --> p.clickSort(c),
+                  name(c)
+                )}))
+      })
 
     def render(p: HeaderProps) =
       dnd(p.cols.whole)
@@ -254,7 +254,7 @@ object Table {
         row.children(col).castHtml.focus()
 
     def startEdit: Callback =
-      $.propsCB >>= (_ startEdit TCB.Finally(domNode.map(_.focus())))
+      $.props >>= (_ startEdit TCB.Finally(domNode.map(_.focus())))
 
     def render(p: CellProps) = {
       val (status, roView) = p.cr.render(p.row)

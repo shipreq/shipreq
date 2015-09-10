@@ -66,7 +66,7 @@ object EditorExt extends EditorExt {
         }
       )
 
-    def editableByRowStatus(c: CompStateFocus[S])(implicit ev: Callback =:= D, M: M ~> CallbackTo): RowStatus => Option[e.Editable] = {
+    def editableByRowStatus(c: StateAccessCB[S])(implicit ev: Callback =:= D, M: M ~> CallbackTo): RowStatus => Option[e.Editable] = {
       val canedit = e.editable(c runState _.st)
       rs => rs match {
         case RowStatus.Sync | RowStatus.Failed(_) => canedit

@@ -53,7 +53,7 @@ class AppReqTypesEditor(customReqTypes: TraversableOnce[CustomReqType]) {
 
   val component = ISubsetEditor.Component(static)
 
-  def editor($: CompStateFocus[S]): SimpleEditor2[(Option[K], ApplicableReqTypes), ApplicableReqTypes] =
+  def editor($: StateAccessCB[S]): SimpleEditor2[(Option[K], ApplicableReqTypes), ApplicableReqTypes] =
     Editor { ei =>
       val (id, value) = ei.data
 
@@ -66,7 +66,7 @@ class AppReqTypesEditor(customReqTypes: TraversableOnce[CustomReqType]) {
             @inline def * = stateFor(k)
             def setIO(s: EditState[A]): Callback = $ modState *.set(Some(s))
 
-            $.state.get(k) match {
+            $.state.runNow().get(k) match {
 
               case None =>
                 ViewMode(

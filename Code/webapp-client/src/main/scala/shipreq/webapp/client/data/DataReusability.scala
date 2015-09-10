@@ -4,7 +4,7 @@ import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
 import shipreq.base.util.{NonEmptySet, NonEmptyVector}
 import shipreq.webapp.base.data._
-import shipreq.webapp.client.util.{Enabled, On}
+import shipreq.webapp.base.protocol.RemoteFn
 
 object DataReusability {
 
@@ -18,6 +18,5 @@ object DataReusability {
   def reusabilityNonEmptySet[A: Reusability]: Reusability[NonEmptySet[A]] =
     Reusability.by(_.whole)
 
-  implicit val reusabilityOn      = Reusability.byEqual[On]
-  implicit val reusabilityEnabled = Reusability.byEqual[Enabled]
+  implicit def reusabilityRemote[Fn <: RemoteFn.Instance] = Reusability.by((_: Fn).key)
 }

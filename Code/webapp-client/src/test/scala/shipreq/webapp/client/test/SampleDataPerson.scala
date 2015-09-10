@@ -79,6 +79,8 @@ object SampleDataPerson {
 
     class Backend($: BackendScope[Props, NewAndSavedRowState]) {
       val e = {
+        implicit def autoRunIDontCare[A](cb: CallbackTo[A]): A = cb.runNow()
+
         var e1 = textInputEditor.addCssClass("username")
         var e2 = textareaEditor.addCssClass("desc")
         if ($.props.fieldValidation) {
@@ -102,18 +104,20 @@ object SampleDataPerson {
           )
           en = en.applyOnEditFinishedK(f)(_._2)
         })
+
         en
       }
 
+      //def renderRow(a: ((String, String), Option[Long])) =
       def renderRow(a: e.InputA) =
         e.render(EditorI(a, "", e.editable($ runState _.st)))
 
-      def render: ReactElement = {
-        val newRow = newRowStoreS.getI($.state).fold(EmptyTag)(i => {
+      def render(s: NewAndSavedRowState): ReactElement = {
+        val newRow = newRowStoreS.getI(s).fold(EmptyTag)(i => {
           val v = renderRow((i, None))
           <.div(^.cls := "new", v._1, v._2)
         })
-        val saved = savedRowStoreS.getAll($.state).map(row => {
+        val saved = savedRowStoreS.getAll(s).map(row => {
           val id = row.p.id
           val v = renderRow((row.i, id.some))
           <.div(^.key := id, ^.cls := s"id-$id", v._1, v._2)

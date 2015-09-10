@@ -119,16 +119,16 @@ object DND {
       }
     }
 
-    def cProps[A](c: CompStateFocus[PState[A]], a: A, moveFn: (A, A) => Callback)(implicit E: Equal[A]): Child.CProps[A] =
+    def cProps[A]($: StateAccessCB[PState[A]], a: A, moveFn: (A, A) => Callback)(implicit E: Equal[A]): Child.CProps[A] =
       Child.CProps(
-        c.state match {
+        $.state.runNow() match {
           case Possible(_, tgt) => E.equal(a, tgt)
           case _                => false
         },
-        c _runStateF eventHandler(moveFn))
+        $ _runStateF eventHandler(moveFn))
 
-    def cProps2[M[_], A](c: CompStateFocus[PState[A]], a: A, moveFn: (A, A) => Callback)(implicit E: Equal[A]): (A, Child.CProps[A]) =
-      (a, cProps(c, a, moveFn))
+    def cProps2[M[_], A]($: StateAccessCB[PState[A]], a: A, moveFn: (A, A) => Callback)(implicit E: Equal[A]): (A, Child.CProps[A]) =
+      (a, cProps($, a, moveFn))
   }
 
   // ===================================================================================================================
@@ -167,12 +167,12 @@ object DND {
     def drop[A](p: CProps[A]): ReactDragEvent => Callback =
       _.preventDefaultCB >> p.eventHandler(DragEvent.Move)
 
-    def renderDragHandle[S, A](p: CProps[A], a: A, T: CompStateFocus[CState]): ReactTag =
+    def renderDragHandle[S, A](p: CProps[A], a: A, $: StateAccessCB[CState]): ReactTag =
       <.span(
         ^.className    := "draghandle",
         ^.draggable    := "true",
-        ^.onDragStart ==> T._runState(dragStart(a, p)),
-        ^.onDragEnd   --> T.runState(dragEnd(p)),
+        ^.onDragStart ==> $._runState(dragStart(a, p)),
+        ^.onDragEnd   --> $.runState(dragEnd(p)),
         // onMouseDown={typeof window.isIE9 != 'undefined' && this.handleIE9DragHack}
         "\u2630")
 
@@ -187,17 +187,17 @@ object DND {
     def dndItemComponent[A](f: (TagMod, ReactTag, A) => ReactElement) =
       ReactComponentB[(A, DND.Child.CProps[A])]("DndItem")
         .initialState(DND.Child.initialState)
-        .render { c =>
-          val (a, p) = c.props
-          f(outerAttrs(p, a, c.state), renderDragHandle(p, a, c), a)
+        .renderPS { ($, props, s) =>
+          val (a, p) = props
+          f(outerAttrs(p, a, s), renderDragHandle(p, a, $.accessCB), a)
         }.build
 
     def dndItemComponentB[A, B](f: (TagMod, ReactTag, A, B) => ReactElement) =
       ReactComponentB[(A, DND.Child.CProps[A], B)]("DndItem")
         .initialState(DND.Child.initialState)
-        .render { c =>
-          val (a, p, b) = c.props
-          f(outerAttrs(p, a, c.state), renderDragHandle(p, a, c), a, b)
+        .renderPS { ($, props, s) =>
+          val (a, p, b) = props
+          f(outerAttrs(p, a, s), renderDragHandle(p, a, $.accessCB), a, b)
         }.build
   }
 }

@@ -1,6 +1,6 @@
 package shipreq.webapp.client.lib.ui
 
-import japgolly.scalajs.react.{CallbackTo, ReactElement, CompStateFocus}
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.MonocleReact._
 import monocle.macros.Lenses
@@ -45,6 +45,6 @@ abstract class TypicalStoresAndState[P, I, K: UnivEq](fields: FieldSet[P, I]) {
   def validatorInput(k: Option[K]): S => (Stream[P], Option[K]) =
     s => (savedRowStoreS.getAllP(s), k)
 
-  def filterDeadCheckbox(c: CompStateFocus[S]): () => ReactElement =
+  def filterDeadCheckbox(c: StateAccessCB[S]): () => ReactElement =
     Checkbox.filterDead_$(c zoomL State.filterDead)
 }

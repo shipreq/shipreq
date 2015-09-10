@@ -58,7 +58,7 @@ object FilterEditor {
       .replace("$1" + _ + " ")
 
   class Backend($: BackendScope[Props, Unit]) {
-    val project = Px.thunkM($.props.project)
+    val project = Px.bs($).propsM(_.project)
 
     val autoComplete: Px[AutoComplete] =
       project.map { p =>
@@ -81,10 +81,10 @@ object FilterEditor {
 
     def updateFilterText(text: String): Callback = {
       def fail(error: String): Callback =
-        $.propsCB >>= (_ onFailure State(text, Some(error)))
+        $.props >>= (_ onFailure State(text, Some(error)))
 
       def succeed(filter: Option[FilterAst]): Callback =
-        $.propsCB >>= (_.onSuccess(State(text, None), filter))
+        $.props >>= (_.onSuccess(State(text, None), filter))
 
       if (text.trim.isEmpty)
         succeed(None)
@@ -107,9 +107,9 @@ object FilterEditor {
     val filterBase =
       <.textarea(^.ref := textEditorRef, ^.onChange ==> onChange)
 
-    def render: ReactElement = {
+    def render(p: Props): ReactElement = {
       Px.refresh(project)
-      val s = $.props.state
+      val s = p.state
       <.div(
         filterBase(
           *.editor(Valid <~ s.error.isEmpty),

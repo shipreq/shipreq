@@ -11,7 +11,7 @@ object ISubsetEditor {
   def Component[A: UnivEq](staticProps: StaticProps[A]) =
     ReactComponentB[Mode[A]]("ISubsetEditor")
       .backend(new Backend(_, staticProps))
-      .render(_.backend.render)
+      .renderBackend
       .build
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -73,8 +73,8 @@ object ISubsetEditor {
     val radioGroupName =
       ClientUtil.uniqueStr.runNow()
 
-    def render: ReactElement =
-      $.props match {
+    def render(props: Mode[A]): ReactElement =
+      props match {
         case m: ViewMode[A] => renderViewMode(m)
         case m: EditMode[A] => renderEditMode(m)
       }

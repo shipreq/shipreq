@@ -1,7 +1,7 @@
 package shipreq.webapp.client.app.ui.cfg
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
-import japgolly.scalajs.react.extra.OnUnmount
+import japgolly.scalajs.react.extra._
 import scala.language.reflectiveCalls
 import scalacss.ScalaCssReact._
 import scalaz.std.string.stringInstance
@@ -13,6 +13,7 @@ import shipreq.webapp.base.data.Validators.{reqType => V}
 import shipreq.webapp.base.protocol.CustomReqTypeCrud
 import shipreq.webapp.client.app.state.{ClientData, ChangeListener}
 import shipreq.webapp.client.app.ui.Style
+import shipreq.webapp.client.data.DataReusability._
 import shipreq.webapp.client.lib.{FilterDead, CrudIO}
 import shipreq.webapp.client.lib.ui._
 import shipreq.webapp.client.protocol.ClientProtocol
@@ -23,6 +24,7 @@ object CfgReqTypes {
   case class Props(cp: ClientProtocol, remote: CustomReqTypeCrud.Instance, clientData: ClientData, filterDead: FilterDead) {
     def component = Component(this)
   }
+  implicit val reusability = Reusability.caseClass[Props]
 
   val fields = FieldSet3[CustomReqType](_.mnemonic.value, _.name, _.imp)(("", "", ImplicationRequired.Not))
   val storesAndState = TypicalStoresAndState(fields).keyedBy[CustomReqTypeId]
@@ -43,8 +45,8 @@ object CfgReqTypes {
 
   // ===================================================================================================================
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
-    val crudIO = CrudIO(CustomReqType, CustomReqTypeCrud)($.props.cp, $.props.remote, $.props.clientData)
-    val supp = TypicalSupp(storesAndState, crudIO)($)
+    val crudIO = Px.bs($).propsA.map(p => CrudIO(CustomReqType, CustomReqTypeCrud)(p.cp, p.remote, p.clientData))
+    val supp = TypicalSupp(storesAndState)(crudIO.value(), $)
 
     val onWhenImplicationRequired = On <=> ImplicationRequired
 
@@ -82,7 +84,7 @@ object CfgReqTypes {
           }
         }
 
-      val t = CfgTable.typical(storesAndState)(rowE)(_.mnemonic, rowRenderer, supp.deletion, _.live, $)
+      val t = CfgTable.typical(storesAndState)(rowE)(_.mnemonic, rowRenderer, () => supp.deletion.value(), _.live, $)
 
       val headerRow = CfgTable.header(List("Mnemonic", "Name", "Implication Required"))
 

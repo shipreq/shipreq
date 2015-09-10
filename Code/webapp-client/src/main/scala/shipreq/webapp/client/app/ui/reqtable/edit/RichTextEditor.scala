@@ -129,7 +129,7 @@ object RichTextEditor {
     class Backend($: BackendScope[Props, Unit]) {
 
       val updateState: ReactEventI => Callback =
-        e => $.props.vuca.update(correctOnChange(e.target.value))
+        e => $.props >>= (_.vuca.update(correctOnChange(e.target.value)))
 
       def render(p: Props): ReactElement = {
         val parseResult = p.parseResult

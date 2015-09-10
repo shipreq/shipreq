@@ -1,7 +1,7 @@
 package shipreq.webapp.client.app.state
 
 import japgolly.scalajs.react.Callback
-import japgolly.scalajs.react.extra.Broadcaster
+import japgolly.scalajs.react.extra.{Reusability, Broadcaster}
 import scalaz.{-\/, \/-}
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.{ApplyEvent, VerifiedEvents}
@@ -32,6 +32,8 @@ final class ClientData(init: Project) extends Broadcaster[Changes] {
 }
 
 object ClientData {
+
+  @inline implicit def reusability = Reusability.byRef[ClientData]
 
   def init(cp: ClientProtocol, remoteInit: ProjectInit.Instance, onSuccess: ClientData => Callback): Callback =
     cp.call(remoteInit)((),

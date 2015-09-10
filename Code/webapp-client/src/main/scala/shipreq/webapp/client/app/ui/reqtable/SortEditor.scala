@@ -44,7 +44,7 @@ object SortEditor {
   class Backend($: BackendScope[Props, Unit]) {
 
     def rotateSortMethod(c: Column): Callback =
-      $.propsCB >>= { p =>
+      $.props >>= { p =>
         val sc = p.value
         val nv = sc.rotateSortMethod(c) getOrElse sc
         p update nv
@@ -52,45 +52,46 @@ object SortEditor {
 
     val component = D.helper(
       newOrder =>
-        $.propsCB >>= { p =>
+        $.props >>= { p =>
           val newValue = SortCriteria.attempt(newOrder) getOrElse p.value.copy(last = SortCriteria.defaultConclusive)
           p update newValue
         },
-      content => {
-        val nameResolver = $.props.nameResolver
-        var conclusiveSeen = false
+      content =>
+        $.props map { p =>
+          val nameResolver = p.nameResolver
+          var conclusiveSeen = false
 
-        def renderItem(i:  D.Item) = {
-          val col = i.data.column
-          val conclusive = i.data.isConclusive
-          val status =
-            if (conclusiveSeen && !conclusive)
-              DragToReorder.Tombstone
-            else
-              i.status
-          conclusiveSeen |= conclusive
+          def renderItem(i:  D.Item) = {
+            val col = i.data.column
+            val conclusive = i.data.isConclusive
+            val status =
+              if (conclusiveSeen && !conclusive)
+                DragToReorder.Tombstone
+              else
+                i.status
+            conclusiveSeen |= conclusive
 
-          <.table(
-            *.itemOuter(status),
-            i.mod,
-            ^.onClick --> rotateSortMethod(col),
-            <.tbody(
-              <.tr(
-                <.td(
-                  *.itemSortMethod,
-                  renderSortMethod(i.data.method)),
-                <.td(
-                  *.itemName(conclusive),
-                  nameResolver(col)))))
-        }
+            <.table(
+              *.itemOuter(status),
+              i.mod,
+              ^.onClick --> rotateSortMethod(col),
+              <.tbody(
+                <.tr(
+                  <.td(
+                    *.itemSortMethod,
+                    renderSortMethod(i.data.method)),
+                  <.td(
+                    *.itemName(conclusive),
+                    nameResolver(col)))))
+          }
 
-        <.div(*.outer,
-          "Sort: ",
-          <.div(
-            *.dragArea,
-            content.rootMod,
-            content.items map renderItem)
-        )
+          <.div(*.outer,
+            "Sort: ",
+            <.div(
+              *.dragArea,
+              content.rootMod,
+              content.items map renderItem)
+          )
       })
 
     def render(p: Props) =

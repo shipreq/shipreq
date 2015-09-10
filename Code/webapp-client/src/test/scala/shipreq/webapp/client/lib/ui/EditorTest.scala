@@ -117,7 +117,7 @@ object EditorTest extends TestSuite {
     // ∃ new | test saved
     c.runState(
       ReactS.mod(newRowStoreS.enableEdit) >> ReactS.mod(newRowStoreS.setField(fields.f1 * "omg"))
-    ).runNow()
+    )
     assert(newRowStoreS.editing(c.state))
     testSavedUpdateAndRevert()
 
@@ -255,7 +255,7 @@ object EditorTest extends TestSuite {
         }
 
         'new {
-          c.modState(newRowStoreS.enableEdit).runNow()
+          c.modState(newRowStoreS.enableEdit)
           val tgt = Sel(".new .username").findIn(c).domType[HTMLInputElement].getDOMNode()
 
           def assertNoSave(): Unit = {

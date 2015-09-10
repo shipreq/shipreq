@@ -29,7 +29,7 @@ object ViewSettingsEditor {
   final class Backend($: BackendScope[Props, Unit]) {
 
     val toggleColumn = ReusableFn((c: Column) =>
-      $.propsCB >>= { p =>
+      $.props >>= { p =>
         val vs = p.vs.value
         val newCols =
           if (vs.isVisible(c))
@@ -41,7 +41,7 @@ object ViewSettingsEditor {
       })
 
     val filterDeadEditor = Checkbox.filterDead(
-      ReusableFn.byName($.props.vs.mod).endoCall(_.setFilterDead))
+      ReusableFn.byName($.props.runNow().vs.mod).endoCall(_.setFilterDead))
 
     val th = <.th(*.viewSettingsHeader)
 

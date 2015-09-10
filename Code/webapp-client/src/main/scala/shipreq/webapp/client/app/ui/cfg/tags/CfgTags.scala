@@ -1,7 +1,7 @@
 package shipreq.webapp.client.app.ui.cfg.tags
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
-import japgolly.scalajs.react.extra.OnUnmount
+import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
 import monocle.std.option.some
 import scala.annotation.tailrec
@@ -26,6 +26,7 @@ import shipreq.webapp.base.protocol.TagCrud
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.client.app.state.{ClientData, ChangeListener}
 import shipreq.webapp.client.app.ui.{Checkbox, RowDetailButton}
+import shipreq.webapp.client.data.DataReusability._
 import shipreq.webapp.client.lib.{FilterDead, TCB, CrudIO}
 import shipreq.webapp.client.lib.ui._
 import shipreq.webapp.client.protocol.ClientProtocol
@@ -37,6 +38,7 @@ object CfgTags {
   case class Props(cp: ClientProtocol, remote: TagCrud.Fn.Instance, clientData: ClientData, filterDead: FilterDead) {
     def component: ReactComponentU_ = MainTable.Component(this)
   }
+  implicit val reusability = Reusability.caseClass[Props]
 }
 
 import CfgTags.Props
@@ -190,16 +192,17 @@ private[tags] object MainTable {
 
   // ===================================================================================================================
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
-    val crudIO = CrudIO(Tag, TagCrud.Fn)($.props.cp, $.props.remote, $.props.clientData)
+    val crudIO = Px.bs($).propsA.map(p =>
+      CrudIO(Tag, TagCrud.Fn)(p.cp, p.remote, p.clientData))
 
     def validatorState(k: Option[Id]): S => V.S =
-      MainTable.validatorState(_, $.props.clientData, k)
+      s => $.props.map(p => MainTable.validatorState(s, p.clientData, k)).runNow() // TODO runNow = safe?
 
-    def newTagControlProps = NewTagControl.props(
-      $.state.newSel,
+    def newTagControlProps(state: State) = NewTagControl.props(
+      state.newSel,
       onNewInvoke,
       $ _setStateL State.newSel,
-      Disabled <~ newRowActive($.state))
+      Disabled <~ newRowActive(state))
 
     val onNewInvoke =
       Some($.modState(s => storesForType(s.newSel).n.enableEdit(s)))
@@ -232,8 +235,7 @@ private[tags] object MainTable {
       memo[Int, Indenter](indent(_, identity))
     }
 
-    def rows: TagMod = {
-      val s         = $.state
+    def rows(s: State): TagMod = {
       val renderers = (tg_renderer.all(s) #::: at_renderer.all(s)).foldLeft(UnivEq.emptyMap[Id, F])(_ + _)
       val flatTree  = FlatTag.flatten(s.tagTree)(s.tagFilter, FilterPolicy.OmitAnythingWithBadParent)
       val results   = JsArray.apply[ReactNode]()
@@ -254,14 +256,14 @@ private[tags] object MainTable {
 
     def render(s: State): ReactElement =
       <.div(
-        NewTagControl.Component(newTagControlProps),
+        NewTagControl.Component(newTagControlProps(s)),
         filterDeadCheckbox(),
         <.table(
           headerRow,
-          <.tbody(rows)
+          <.tbody(rows(s))
         ),
         DetailPaneFns.render(
-          s, crudIO.updateIO,
+          s, crudIO.value().updateIO,
           parentSel = $ _setStateL State.detailRowSelParent,
           childSel  = $ _setStateL State.detailRowSelChild ))
 
@@ -280,8 +282,8 @@ private[tags] object MainTable {
 
       val editable = editor.editableByRowStatus($)
 
-      val deletion =
-        Persistence.asyncDeletionS(stores.s)(crudIO._deleteIO, $ runState _)
+      val deletion = crudIO.map(c =>
+        Persistence.asyncDeletionS(stores.s)(c._deleteIO, $ runState _))
 
       def ei(s: S, r: stores.s.Row): editor.Input = {
         val a = (validatorState(r.p.id.some)(s), r.i)
@@ -340,9 +342,14 @@ private[tags] object MainTable {
       @inline def stores = tg_storesS
       val toValues  = TagCrud.TagGroupValues.apply _
       val toValuesT = (toValues andThenA \&/.This.apply).tupled
-      val saveFn    = Persistence.asyncSaveNS(V.tagGroup map toValuesT, stores, crudIO.createIO)(crudIO.updateIO,
-        (t,u) => SaveNeed.equal(u.onlyThis.get, toValues(t.name, t.mutexChildren, t.desc)),
-        validatorState, $ runState _)
+      val saveFn    =
+        crudIO.map(c =>
+          Persistence.asyncSaveNS(V.tagGroup map toValuesT, stores, c.createIO)(
+            c.updateIO,
+            (t,u) => SaveNeed.equal(u.onlyThis.get, toValues(t.name, t.mutexChildren, t.desc)),
+            validatorState,
+            $ runState _)
+        ).extract
       Editor.merge3S(tg_fields, nameE, mutexChildrenE, descE).tupleI.zoomU[S]
         .applyRowUpdateAndRevert(stores)(rowIdFromEditorInput)
         .applyOnEditFinishedK(saveFn)(rowIdFromEditorInput)
@@ -356,10 +363,13 @@ private[tags] object MainTable {
       override def renderLive(s: S, indent: Indenter, key: String)(row: stores.s.Row): ReactTag = {
         val (name, mutexChildren, desc) = editor render ei(s, row)
         val t = row.p
-        rowTemplate(s, t.id, row.status, key)(indent(name), unusedField, mutexChildren, desc)(deletion.button(t.id, SoftDel))
+        val del = deletion.value().button(t.id, SoftDel)
+        rowTemplate(s, t.id, row.status, key)(indent(name), unusedField, mutexChildren, desc)(del)
       }
-      override def renderDead (s: S, indent: Indenter, key: String)(rs: RowStatus, t: TagGroup): ReactTag =
-        rowTemplate(s, t.id, rs, key)(indent(<.span(t.name)), unusedField, "TODO", renderDeadDesc(t.desc))(deletion.button(t.id, Restore))
+      override def renderDead (s: S, indent: Indenter, key: String)(rs: RowStatus, t: TagGroup): ReactTag = {
+        val restore = deletion.value().button(t.id, Restore)
+        rowTemplate(s, t.id, rs, key)(indent(<.span(t.name)), unusedField, "TODO", renderDeadDesc(t.desc))(restore)
+      }
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -369,9 +379,12 @@ private[tags] object MainTable {
       @inline def stores = at_storesS
       val toValues  = TagCrud.ApplicableTagValues.apply _
       val toValuesT = (toValues andThenA \&/.This.apply).tupled
-      val saveFn    = Persistence.asyncSaveNS(V.applTag map toValuesT, stores, crudIO.createIO)(crudIO.updateIO,
-        (t,u) => SaveNeed.equal(u.onlyThis.get, toValues(t.name, t.key, t.desc)),
-        validatorState, $ runState _)
+      val saveFn    =
+        crudIO.map(c =>
+          Persistence.asyncSaveNS(V.applTag map toValuesT, stores, c.createIO)(c.updateIO,
+          (t,u) => SaveNeed.equal(u.onlyThis.get, toValues(t.name, t.key, t.desc)),
+          validatorState, $ runState _)
+        ).extract
       Editor.merge3S(at_fields, nameE, keyE, descE).tupleI.zoomU[S]
         .applyRowUpdateAndRevert(stores)(rowIdFromEditorInput)
         .applyOnEditFinishedK(saveFn)(rowIdFromEditorInput)
@@ -385,10 +398,13 @@ private[tags] object MainTable {
       override def renderLive(s: S, indent: Indenter, key: String)(row: stores.s.Row): ReactTag = {
         val (name, refkey, desc) = editor render ei(s, row)
         val t = row.p
-        rowTemplate(s, t.id, row.status, key)(indent(name), refkey, unusedField, desc)(deletion.button(t.id, SoftDel))
+        val del = deletion.value().button(t.id, SoftDel)
+        rowTemplate(s, t.id, row.status, key)(indent(name), refkey, unusedField, desc)(del)
       }
-      override def renderDead (s: S, indent: Indenter, key: String)(rs: RowStatus, t: ApplicableTag): ReactTag =
-        rowTemplate(s, t.id, rs, key)(indent(<.span(t.name)), t.key.value, unusedField, renderDeadDesc(t.desc))(deletion.button(t.id, Restore))
+      override def renderDead(s: S, indent: Indenter, key: String)(rs: RowStatus, t: ApplicableTag): ReactTag = {
+        val restore = deletion.value().button(t.id, Restore)
+        rowTemplate(s, t.id, rs, key)(indent(<.span(t.name)), t.key.value, unusedField, renderDeadDesc(t.desc))(restore)
+      }
     }
 
   } // end Backend

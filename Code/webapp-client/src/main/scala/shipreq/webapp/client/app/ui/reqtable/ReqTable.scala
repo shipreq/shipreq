@@ -78,9 +78,9 @@ object ReqTable {
     val setSortCriteria = ReusableFn($ zoomL State.sortCriteria).setState
     val setCreation     = $ zoomL State.creation
 
-    val project      = Px.thunkM($.state.project)
-    val viewSettings = Px.thunkM($.state.viewSettings)
-    val filterState  = Px.thunkM($.state.filter)
+    val project      = Px.bs($).stateM(_.project)
+    val viewSettings = Px.bs($).stateM(_.viewSettings)
+    val filterState  = Px.bs($).stateM(_.filter)
 
     val vsVar      = viewSettings map (ReusableVar(_)(setViewSettings))
     val vsCols     = viewSettings map (_.columns)
@@ -102,24 +102,24 @@ object ReqTable {
     val modTable: Cell.ModTable = ReusableFn(loc => (s, cb) => $.modState(_.updateCell(loc, s), cb))
     // TODO OMG THE COPY-AND-PASTE!
     // TODO Too much repetition of (? => Events) calls
-    val createIO: (CreateContentCmd, TCB.Success, String => TCB.Failure) => Callback = (i, sio, fio) => {
-      val p = $.props
-      import p._
-      val io = cp.call(createContentFn)(i,
-        sio << cd.applyEvents(_),
-        f => cp.consumeGenericFailure(f) >> fio(cp.genericFailureToText(f)))
-      //IO(println(s"Fake-sending: $i")) >> io
-      io
-    }
-    val saveIO: (UpdateContentCmd, TCB.Success, TCB.Failure) => Callback = (i, sio, fio) => {
-      val p = $.props
-      import p._
-      val io = cp.call(updateContentFn)(i,
-        sio << cd.applyEvents(_),
-        cp.consumeGenericFailure(_) >> fio)
-      //IO(println(s"Fake-sending: $i")) >> io
-      io
-    }
+    val createIO: (CreateContentCmd, TCB.Success, String => TCB.Failure) => Callback =
+      (i, sio, fio) => $.props >>= { p =>
+        import p._
+        val io = cp.call(createContentFn)(i,
+          sio << cd.applyEvents(_),
+          f => cp.consumeGenericFailure(f) >> fio(cp.genericFailureToText(f)))
+        //IO(println(s"Fake-sending: $i")) >> io
+        io
+      }
+    val saveIO: (UpdateContentCmd, TCB.Success, TCB.Failure) => Callback =
+      (i, sio, fio) => $.props >>= { p =>
+        import p._
+        val io = cp.call(updateContentFn)(i,
+          sio << cd.applyEvents(_),
+          cp.consumeGenericFailure(_) >> fio)
+        //IO(println(s"Fake-sending: $i")) >> io
+        io
+      }
     val colEditors = new ColumnEditors(project, plainText, widgets, textSearch, modTable, saveIO)
 
     val filterProps: FilterEditor.State => FilterEditor.Props = {

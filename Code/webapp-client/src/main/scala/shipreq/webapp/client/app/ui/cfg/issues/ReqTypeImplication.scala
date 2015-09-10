@@ -38,10 +38,9 @@ private[issues] object ReqTypeImplication {
 
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
 
-    def save(id: CustomReqTypeId): ST = {
-      val p = $.props
-      Persistence.simpleAsyncUpdate(rowStore)(p.remote, p.clientData, p.cp, $ runState _, id)
-    }
+    def save(id: CustomReqTypeId): CallbackTo[ST] =
+      $.props.map(p =>
+        Persistence.simpleAsyncUpdate(rowStore)(p.remote, p.clientData, p.cp, $ runState _, id))
 
     val genEditor =
       Editors.checkboxEditor.imap(On <=> ImplicationRequired)
@@ -50,7 +49,7 @@ private[issues] object ReqTypeImplication {
     val editor =
       genEditor.cmapA[(ImplicationRequired, CustomReqType)](a => a)
         .zoomU[S].applyRowUpdate(rowStore)(_._2.id)
-        .paddSTA(a => { case OnEditFinished(_) => save(a._2.id) })
+        .paddSTA(a => { case OnEditFinished(_) => save(a._2.id).runNow() })
 
     val editable = editor.editableByRowStatus($)
 
@@ -59,8 +58,8 @@ private[issues] object ReqTypeImplication {
 
     type Rows = Stream[(Mnemonic, ReactElement)]
 
-    def customRows: Rows =
-      rowStore.getAll($.state).filter(_.p.live ≟ Live).map(r => {
+    def customRows(s: S): Rows =
+      rowStore.getAll(s).filter(_.p.live ≟ Live).map(r => {
         val re: ReactElement =
           <.tr(^.key := r.p.id.value,
             <.td(
@@ -77,12 +76,12 @@ private[issues] object ReqTypeImplication {
         (s.mnemonic, re)
       })
 
-    def renderRows =
-      (staticRows #::: customRows).sortBy(_._1).map(_._2).toReactNodeArray
+    def renderRows(s: S) =
+      (staticRows #::: customRows(s)).sortBy(_._1).map(_._2).toReactNodeArray
 
-    def render: ReactElement =
+    def render(s: S): ReactElement =
       <.table(
         <.thead(<.tr(<.th("Req-Types Requiring Implication"))),
-        <.tbody(renderRows))
+        <.tbody(renderRows(s)))
   }
 }

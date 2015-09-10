@@ -1,6 +1,7 @@
 package shipreq.webapp.client.protocol
 
 import japgolly.scalajs.react.Callback
+import japgolly.scalajs.react.extra.Reusability
 import scalaz.{-\/, \/-, \/}
 import shipreq.webapp.base.protocol.{GenericFailure, RemoteFn}
 import shipreq.webapp.client.lib.{ConsoleCB, TCB}
@@ -36,6 +37,8 @@ trait ClientProtocol {
 
 object ClientProtocol {
   type Failed[O] = Throwable \/ O
+
+  @inline implicit def reusability = Reusability.byRef[ClientProtocol]
 
   object Default extends ClientProtocol {
     import boopickle._

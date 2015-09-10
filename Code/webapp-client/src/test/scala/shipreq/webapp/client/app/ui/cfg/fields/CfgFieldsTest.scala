@@ -28,7 +28,7 @@ object CfgFieldsTest extends TestSuite {
     lazy val c          = ReactTestUtils.renderIntoDocument(re)
 
     def selectNewText() =
-      c.modState(State.newFieldTypeSel set \/-(CustomFieldType.Text)).runNow()
+      c.modState(State.newFieldTypeSel set \/-(CustomFieldType.Text))
 
     lazy val createButton =
       sole(Sizzle("button:contains('Create')", c))

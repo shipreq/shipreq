@@ -1,7 +1,7 @@
 package shipreq.webapp.client.app.ui.cfg.fields
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
-import japgolly.scalajs.react.extra.{Px, OnUnmount}
+import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
 import scala.language.reflectiveCalls
 import scalajs.js.{undefined, UndefOr, Any => JsAny}
@@ -29,6 +29,7 @@ object CfgFields {
   case class Props(cp: ClientProtocol, remote: FieldCrud.Fn.Instance, clientData: ClientData, filterDead: FilterDead) {
     def component: ReactComponentU_ = MainTable.Component(this)
   }
+  implicit val reusability = Reusability.caseClass[Props]
 }
 
 import CfgFields.Props
@@ -160,44 +161,16 @@ private[fields] object MainTable {
   // ===================================================================================================================
   final class Backend(val $: BackendScope[Props, S]) extends OnUnmount {
 
-    val pxProject = Px.thunkM($.props.clientData.project)
-    lazy val backend2 = pxProject.map(new DynBackend(this, _))
+    val projectPx = Px.bs($).propsA(_.clientData.project)
+    val projectBackend = projectPx.map(new ProjectBackend(this, _))
+    val protocol = Px.bs($).propsA.map(p => ProtocolBackend(p.cp, p.remote, p.clientData))
 
     val nameE      = Editors.textInputEditor.applyValidator(V.nameS)
     val refkeyE    = Editors.textInputEditor.applyValidator(V.keyS)
     val mandatoryE = Editors.checkboxEditor.imap(onWhenMandatory).strengthL[V.S]
 
-    def render: ReactElement = {
-      pxProject.refresh()
-      backend2.value().render
-    }
-
-    object protocol {
-      import FieldCrud._, CfgAction._
-      val remote = $.props.remote
-      val cp     = $.props.cp
-
-      private def call(a: CfgAction): (TCB.Success, TCB.Failure) => Callback =
-        (s, f) => cp.call(remote)(a,
-          s << $.props.clientData.applyEvents(_),
-          cp.consumeGenericFailure(_) >> f)
-
-      def createIO(v: Values) =
-        call(Create(v))
-
-      def updateValuesIO(i: CustomFieldId, v: Values) =
-        call(UpdateValues(i, v))
-
-      def updateOrderIO(i: FieldId, p: Position) =
-        call(UpdateOrder(i, p))
-
-      def deleteIO(i: FieldId, a: DeletionAction) =
-        call(Delete(i, a))
-    }
-
-    // TODO staticDeletion doesn't handle failure (or lock row)
-    val staticDeletion = new Deletion[StaticField](
-      protocol.deleteIO(_, _)(TCB.Success.nop, TCB.Failure.nop))
+    def render(s: S): ReactElement =
+      projectBackend.value().render(s)
 
     def validatorState(k: Option[CustomFieldId]): S => V.S =
       validatorStateS(_, k)
@@ -212,14 +185,40 @@ private[fields] object MainTable {
       FieldNames.mandatory,
       FieldNames.applicableReqTypes))
 
-    def fieldOrder = $.props.clientData.project.config.fields.order
   }
 
   // ===================================================================================================================
-  // Certain vals here depend on parts of Project beyond .config.fields
+  case class ProtocolBackend(cp: ClientProtocol, remote: FieldCrud.Fn.Instance, cd: ClientData) {
+    import FieldCrud._, CfgAction._
 
-  final class DynBackend(backend: Backend, project: Project) {
-    import backend.{backend2 => _, _}
+    private def call(a: CfgAction): (TCB.Success, TCB.Failure) => Callback =
+      (s, f) => cp.call(remote)(a,
+        s << cd.applyEvents(_),
+        cp.consumeGenericFailure(_) >> f)
+
+    def createIO(v: Values) =
+      call(Create(v))
+
+    def updateValuesIO(i: CustomFieldId, v: Values) =
+      call(UpdateValues(i, v))
+
+    def updateOrderIO(i: FieldId, p: Position) =
+      call(UpdateOrder(i, p))
+
+    def deleteIO(i: FieldId, a: DeletionAction) =
+      call(Delete(i, a))
+
+    // TODO staticDeletion doesn't handle failure (or lock row)
+    val staticDeletion = new Deletion[StaticField](
+      deleteIO(_, _)(TCB.Success.nop, TCB.Failure.nop))
+  }
+  // implicit val protocolBackendReusability = Reusability.caseClass[ProtocolBackend]
+
+  // ===================================================================================================================
+  final class ProjectBackend(backend: Backend, project: Project) {
+    import backend.{projectBackend => _, _}
+
+    val fieldOrder = project.config.fields.order
 
     val appReqTypesEditor = new AppReqTypesEditor(project.config.customReqTypes.values)
     val tagSelector       = SelectOneStartNone.tag(project.config.tags)
@@ -236,9 +235,7 @@ private[fields] object MainTable {
 
       val Component = SelectInvoke.Component[NewSelType]("NewField")
 
-      def apply() = {
-        val s = $.state
-
+      def apply(s: S) = {
         def choice(value: NewSelType, label: String): Choice[NewSelType] =
           Choice(value, label, Enabled)
 
@@ -270,10 +267,11 @@ private[fields] object MainTable {
           add(customFieldChoice(t))
 
         def staticInvoke(f: StaticField): Callback =
-          protocol.updateOrderIO(f, None)(TCB.Success.nop, TCB.Failure.nop) // TODO no failure handling
+          Callback.byName(
+            protocol.value().updateOrderIO(f, None)(TCB.Success.nop, TCB.Failure.nop)) // TODO no failure handling
 
         def customInvoke(t: CustomFieldType): Callback =
-          Callback.lazily($ modState storesForType(t).n.enableEdit)
+          Callback.byName($ modState storesForType(t).n.enableEdit)
 
         def onInvoke: Option[Callback] =
           Some(s.newFieldTypeSel.fold(staticInvoke, customInvoke))
@@ -297,22 +295,22 @@ private[fields] object MainTable {
 
     val filterDeadCheckbox = Checkbox.filterDead_$($ zoomL State.filterDead)
 
-    def render =
+    def render(s: S) =
       <.div(
-        newFieldControl(),
+        newFieldControl(s),
         filterDeadCheckbox(),
         <.table(
           headerRow,
-          <.tbody(renderNewField, renderFields)
+          <.tbody(renderNewField(s), renderFields(s))
         ))
 
-    def renderNewField: Option[ReactElement] =
-      customFieldRenderers.map(_ renderNewO $.state).flatMap(_.toStream).headOption
+    def renderNewField(s: S): Option[ReactElement] =
+      customFieldRenderers.map(_ renderNewO s).flatMap(_.toStream).headOption
 
-    def renderFields: TagMod = {
+    def renderFields(s: S): TagMod = {
       var content = fieldOrder.toStream
-        .flatMap(_.foldId[Stream[Field]](s => Stream(s), $.state.customFields.get(_).toStream))
-      content = $.state.filterDead(content)(_.live)
+        .flatMap(_.foldId[Stream[Field]](s => Stream(s), s.customFields.get(_).toStream))
+      content = s.filterDead(content)(_.live)
       content.toReactNodeArray(renderField)
     }
 
@@ -321,7 +319,7 @@ private[fields] object MainTable {
       val id       = from.fieldId
       val newOrder = DND.moveE(id, to.fieldId)(fieldOrder)
       val pos      = Position.get(newOrder, id)
-      protocol.updateOrderIO(id, pos)(TCB.Success.nop, TCB.Failure.nop)
+      protocol.value().updateOrderIO(id, pos)(TCB.Success.nop, TCB.Failure.nop)
     }
 
     val renderField: Field => ReactElement = {
@@ -333,7 +331,7 @@ private[fields] object MainTable {
       renderField2(f, dragHandle)(outerAttr))
 
     def renderField2(gf: Field, dragHandle: ReactTag): ReactTag = gf match {
-      case f: CustomField => rendererForType(f.fieldType).render($.state, dragHandle, f.id)
+      case f: CustomField => rendererForType(f.fieldType).render($.state.runNow(), dragHandle, f.id)
       case s: StaticField => renderStaticField(s, dragHandle)
     }
 
@@ -344,7 +342,7 @@ private[fields] object MainTable {
         refkey     = renderKeyO(f.keyO),
         mandatory  = staticMandatoryCheckbox(f.mandatory),
         reqtypes   = appReqTypesEditor.renderReadOnly(f.reqTypes),
-        ctrls      = (f.deletable ≟ Deletable) ?= staticDeletion.button(f, SoftDel)
+        ctrls      = (f.deletable ≟ Deletable) ?= protocol.value().staticDeletion.button(f, SoftDel)
       )(f.fieldType)
 
     def renderKeyO(k: Option[FieldRefKey]): TagMod =
@@ -372,7 +370,8 @@ private[fields] object MainTable {
 
       val editable = editor.editableByRowStatus($)
 
-      val deletion = Persistence.asyncDeletionS(stores.s)(protocol.deleteIO, $ runState _)
+      val _deletion = protocol.map(p => Persistence.asyncDeletionS(stores.s)(p.deleteIO, $ runState _))
+      def deletion = _deletion.value()
 
       def fieldType: CustomFieldType
       @inline final implicit def ifieldType: FieldType = fieldType
@@ -401,7 +400,7 @@ private[fields] object MainTable {
         val tag = row.p
         tag.live match {
           case Live => renderLive(s, dragHandle, row)
-          case Dead => renderDead (s, dragHandle, row.status, tag)(^.cls := "dead")
+          case Dead => renderDead(s, dragHandle, row.status, tag)(^.cls := "dead")
         }
       }
 
@@ -418,9 +417,12 @@ private[fields] object MainTable {
       val toValues  = FieldCrud.TextFieldValues.apply _
       val toValuesT = toValues.tupled
       val validator = V.textField map toValuesT
-      val saveFn    = Persistence.asyncSaveNS2(validator, stores, protocol.createIO)(protocol.updateValuesIO,
-        SaveNeed.cmpToExtract(t => toValues(t.name, t.key, t.mandatory, t.reqTypes)),
-        _.id, validatorState, $ runState _)
+      val saveFn    =
+        protocol.map(p =>
+          Persistence.asyncSaveNS2(validator, stores, p.createIO)(p.updateValuesIO,
+          SaveNeed.cmpToExtract(t => toValues(t.name, t.key, t.mandatory, t.reqTypes)),
+          _.id, validatorState, $ runState _)
+        ).extract
       Editor.merge4S(text_fields, nameE, refkeyE, mandatoryE, reqtypesE).tupleI.zoomU[S]
         .applyRowUpdateAndRevert(stores)(rowIdFromEditorInput)
         .applyOnEditFinishedK(saveFn)(rowIdFromEditorInput)
@@ -469,9 +471,12 @@ private[fields] object MainTable {
       val toValues  = FieldCrud.TagFieldValues.apply _
       val toValuesT = toValues.tupled
       val validator = V.tagField.all map toValuesT
-      val saveFn    = Persistence.asyncSaveNS2(validator, stores, protocol.createIO)(protocol.updateValuesIO,
-        SaveNeed.cmpToExtract(t => toValues(t.tagId, t.mandatory, t.reqTypes)),
-        _.id, validatorState, $ runState _)
+      val saveFn    =
+        protocol.map(p =>
+          Persistence.asyncSaveNS2(validator, stores, p.createIO)(p.updateValuesIO,
+          SaveNeed.cmpToExtract(t => toValues(t.tagId, t.mandatory, t.reqTypes)),
+          _.id, validatorState, $ runState _)
+        ).extract
       Editor.merge3S(tag_fields, tagSelE, mandatoryE, reqtypesE).tupleI.zoomU[S]
         .applyRowUpdateAndRevert(stores)(rowIdFromEditorInput)
         .applyOnEditFinishedK(saveFn)(rowIdFromEditorInput)
@@ -522,9 +527,12 @@ private[fields] object MainTable {
       val toValues    = FieldCrud.ImplicationFieldValues.apply _
       val toValuesT   = toValues.tupled
       val validator   = V.implField.all map toValuesT
-      val saveFn      = Persistence.asyncSaveNS2(validator, stores, protocol.createIO)(protocol.updateValuesIO,
-        SaveNeed.cmpToExtract(t => toValues(t.reqTypeId, t.mandatory, t.reqTypes)),
-        _.id, validatorState, $ runState _)
+      val saveFn      =
+        protocol.map(p =>
+          Persistence.asyncSaveNS2(validator, stores, p.createIO)(p.updateValuesIO,
+          SaveNeed.cmpToExtract(t => toValues(t.reqTypeId, t.mandatory, t.reqTypes)),
+          _.id, validatorState, $ runState _)
+        ).extract
       Editor.merge3S(impl_fields, reqTypeSelE, mandatoryE, reqtypesE).tupleI.zoomU[S]
         .applyRowUpdateAndRevert(stores)(rowIdFromEditorInput)
         .applyOnEditFinishedK(saveFn)(rowIdFromEditorInput)
