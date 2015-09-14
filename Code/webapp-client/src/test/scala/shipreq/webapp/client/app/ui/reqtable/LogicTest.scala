@@ -583,9 +583,8 @@ object LogicTest extends TestSuite {
     testUnsorted(p, C.Tags, None, ShowDead, fmtRowsT)("v0.9,v1.0,v2.x")
   }
 
-  // ----------------------------------------------------------------------------------
   /** See `Requirements/analysis-deletion.ods`. */
-  object FilterDeadTagsComprehensive {
+  object DeadTags {
     private val liveCF = notesField
     private val deadCF = reporterField
 
@@ -617,7 +616,7 @@ object LogicTest extends TestSuite {
     private val fmtRowsNoFilter = prefixWithPubidNoZ(p, rowToTagTxt(p, Row.tags))
     private val fmtRowsHasFilter = rowToPubid(p)
 
-    private def testNoFilter(fd: FilterDead)(tags: String*): Unit = {
+    private def test(fd: FilterDead)(tags: String*): Unit = {
       val withIds = tags.zipWithIndex.map(_.map2(_ + 1))
 
       // No filter
@@ -635,12 +634,12 @@ object LogicTest extends TestSuite {
     }
 
     def testHideDead(): Unit =
-      testNoFilter(HideDead)(
+      test(HideDead)(
         L, L, L, Z, // live req, live tag
         Z, D, D, Z) // live req, dead tag - Ds here cos they're in live text = not auto-removable = issues = show
 
     def testShowDead(): Unit =
-      testNoFilter(ShowDead)(
+      test(ShowDead)(
         L, L, L, L, // live req, live tag
         D, D, D, D, // live req, dead tag
         L, L, L, L, // dead req, live tag
@@ -898,9 +897,12 @@ object LogicTest extends TestSuite {
       'tags       - testFilterDeadTags()
       'tagsCust   - testFilterDeadTagsInCustomTagField()
       'tagField   - testFilterDeadCustomTagField()
-      'tagComprehensive {
-        'hideDead - FilterDeadTagsComprehensive.testHideDead()
-        'showDead - FilterDeadTagsComprehensive.testShowDead()
+    }
+    'deadData {
+      // These comprehensively test all combinations of dead data
+      'tags {
+        'hideDead - DeadTags.testHideDead()
+        'showDead - DeadTags.testShowDead()
       }
     }
     'filter {
