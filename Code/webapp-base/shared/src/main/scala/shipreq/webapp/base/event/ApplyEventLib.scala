@@ -248,14 +248,17 @@ private[event] object ApplyEventLib {
   def untrustedTest(mustPass: => Boolean, err: => String)(implicit trust: Trust): Result[Unit] =
     if ((trust :: Trusted) || mustPass) okUnit else fail(err)
 
-  def ensureLiveFn[I, D](f: (Project, I) => Option[D])(getLive: D => Live)(implicit trust: Trust): I => App[Project, Any] =
+  def ensureLiveFnP[I, D](f: (Project, I) => Option[D])(getLive: (D, Project) => Live)(implicit trust: Trust): I => App[Project, Any] =
     whenUntrusted(id =>
       App(p => f(p, id) match {
-        case Some(d) if getLive(d) :: Live => okUnit
-        case Some(_)                       => fail(s"$id is dead.")
-        case None                          => fail(s"$id not found.")
+        case Some(d) if getLive(d, p) :: Live => okUnit
+        case Some(_)                          => fail(s"$id is dead.")
+        case None                             => fail(s"$id not found.")
       })
     )
+
+  def ensureLiveFn[I, D](f: (Project, I) => Option[D])(getLive: D => Live)(implicit trust: Trust): I => App[Project, Any] =
+    ensureLiveFnP(f)((d, _) => getLive(d))
 
   def ensureEqual[A](expect: A)(implicit e: Equal[A], trust: Trust): AE[A] =
     if (trust :: Trusted) nop else
@@ -287,10 +290,10 @@ private[event] object ApplyEventLib {
       c => App(b => check(b, c).fold(ok(ap(b, c)))(fail))
 
   def ensureLiveBy[V](live: V => Live)(implicit trust: Trust): AE[V] =
-    whenUntrusted(App(v => if (live(v) :: Live) ok(v) else fail(s"Subject is dead: $v")))
+    whenUntrusted(App(v => if (live(v) :: Live) ok(v) else fail(s"Datum is dead: $v")))
 
   def ensureDeadBy[V](live: V => Live)(implicit trust: Trust): AE[V] =
-    whenUntrusted(App(v => if (live(v) :: Dead) ok(v) else fail(s"Subject is live: $v")))
+    whenUntrusted(App(v => if (live(v) :: Dead) ok(v) else fail(s"Datum is live: $v")))
 
   case class LiveApp[V](l: Lens[V, Live])(implicit trust: Trust) {
     private[this] val setLive = l set Live

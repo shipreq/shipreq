@@ -88,7 +88,7 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
   }
 
   private def code = make {
-    case GenericReqRow(_, exp, _, _)    => widgets.reqCodes(exp.reqCodeTree, exp.reqCodes)
+    case GenericReqRow(_, _, exp, _, _) => widgets.reqCodes(exp.reqCodeTree, exp.reqCodes)
     case ReqCodeGroupRow(_, _, Some(t)) => widgets.reqCodeTreeItem(t)
     case ReqCodeGroupRow(_, c, None)    => widgets.flatReqCode(c)
   }

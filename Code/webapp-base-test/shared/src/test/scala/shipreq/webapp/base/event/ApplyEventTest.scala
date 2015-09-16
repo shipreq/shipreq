@@ -109,7 +109,7 @@ object ApplyEventTestFns {
     assertEq("Σ Tags", tags, p.config.tags.size)
     assertEq("Σ CustomFields", customFields, p.config.fields.customFields.size)
     assertEq("Σ ActiveFields", activeFields, p.config.fields.fields.count(_.live :: Live))
-    assertEq("Σ ActiveReqs", activeReqs, p.reqs.reqs.values.filter(_.live :: Live).size)
+    assertEq("Σ ActiveReqs", activeReqs, p.reqs.reqs.values.filter(_.live(p.config.customReqTypes) :: Live).size)
     assertEq("Σ ReqCodeGroups", rcgs, p.reqCodes.activeGroups.size)
     validateIdCeilings(p)
   }

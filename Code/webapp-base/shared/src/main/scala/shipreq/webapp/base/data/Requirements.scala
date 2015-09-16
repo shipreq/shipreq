@@ -278,9 +278,11 @@ sealed trait ReqIdT[+RT <: ReqTypeId] extends TaggedInt with ReqCode.Target
 sealed abstract class ReqT[+RT <: ReqTypeId] {
   val id: ReqIdT[RT]
   val pubid: PubidT[RT]
-  val live: Live
 
-  @inline final def reqTypeId: RT = pubid.reqTypeId
+  def live(customReqTypes: CustomReqTypeIMap): Live
+
+  @inline final def reqTypeId: RT =
+    pubid.reqTypeId
 }
 
 object ReqT {
@@ -296,11 +298,23 @@ object ReqT {
 
 final case class GenericReqId(value: Int) extends TaggedInt with ReqIdT[CustomReqTypeId]
 
+/**
+ * A generic/low-level requirement comprised, primarily, of a custom req type and a title.
+ *
+ * @param liveExplicitly Whether the user has explicitly marked this req as deleted or not.
+ */
 @Lenses
-final case class GenericReq(id   : GenericReqId,
-                            pubid: PubidC,
-                            title: Text.GenericReqTitle.OptionalText,
-                            live : Live) extends ReqT[CustomReqTypeId]
+final case class GenericReq(id            : GenericReqId,
+                            pubid         : PubidC,
+                            title         : Text.GenericReqTitle.OptionalText,
+                            liveExplicitly: Live) extends ReqT[CustomReqTypeId] {
+
+  override def live(customReqTypes: CustomReqTypeIMap): Live =
+    liveExplicitly match {
+      case Live => customReqTypes.need(pubid.reqTypeId).live
+      case Dead => Dead
+    }
+}
 
 object GenericReq {
   implicit def equality: UnivEq[GenericReq] = UnivEq.derive
@@ -328,12 +342,6 @@ case class Requirements(genericReqs: GenericReqIMap, pubids: PubidRegister) {
 
   def isEmpty = reqs.isEmpty
   def nonEmpty = !isEmpty
-
-  lazy val dead: Set[ReqId] =
-    reqs.filterV(_.live :: Dead).keySet
-
-  lazy val deadCount: Int =
-    dead.size
 
   def getReq[T <: ReqTypeId](id: ReqIdT[T]): Option[ReqT[T]] =
     id match {

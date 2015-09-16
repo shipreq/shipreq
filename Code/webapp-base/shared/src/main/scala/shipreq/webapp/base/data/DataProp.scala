@@ -360,14 +360,9 @@ object DataProp {
       ∧ implications.all.contramap[P](_.implications)
     ) rename "constituents"
 
-    def liveReqRequiresLiveReqType =
-      Prop.whitelist[Project]("Live Req requires Live ReqType")(
-        _.config.reqTypes.filter(_.live :: Live).map(_.reqTypeId).toSet,
-        _.reqs.reqs.values.toStream.filter(_.live :: Live).map(_.reqTypeId))
-
     def liveReqCodeRequiresLiveTarget =
       Prop.whitelist[Project]("Live ReqCode requires Live Target")(
-        _.reqs.reqs.values.toStream.filter(_.live :: Live).map(_.id).toSet,
+        p => p.reqs.reqs.values.toStream.filter(_.live(p.config.customReqTypes) :: Live).map(_.id).toSet,
         _.reqCodes.cataA(UnivEq.emptySet[ReqId])((q, _, a) => a.target match {
           case id: ReqId       => q + id
           case _: ReqCodeGroup => q
@@ -423,7 +418,7 @@ object DataProp {
     // TODO Validate IdCeiling
 
     val allExcludingConfig: Prop[Project] = "Project" rename_: (
-      constituents ∧ atoms ∧ liveReqRequiresLiveReqType ∧ liveReqCodeRequiresLiveTarget ∧ validRefs)
+      constituents ∧ atoms ∧ liveReqCodeRequiresLiveTarget ∧ validRefs)
 
     val allIncludingConfig: Prop[Project] =
       allExcludingConfig ∧ projectConfig.all.contramap(_.config)

@@ -66,9 +66,10 @@ object AtomScan {
     }
 
     // Parse reqs
+    val rts = p.config.customReqTypes
     p.reqs.reqs.values.foreach {
       case r: GenericReq =>
-        scan(r.live, reqId = r.id)(r.title)
+        scan(r.live(rts), reqId = r.id)(r.title)
     }
 
     // Parse custom-text-field text

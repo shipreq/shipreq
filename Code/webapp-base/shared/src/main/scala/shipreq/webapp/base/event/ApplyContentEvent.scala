@@ -22,15 +22,19 @@ trait ApplyContentEvent extends ApplyConfigEvent {
     val updateIdCeiling = updateIdCeilingFn(IdCeilings.req)
 
     val grIMap = IMapApp.data(GenericReq)
-    val grLive = LiveApp(GenericReq.live)
+
+    val grLiveExplicitly = LiveApp(GenericReq.liveExplicitly)
 
     val ensureLive =
-      ensureLiveFn((p, reqId: ReqId) => reqId match {
+      ensureLiveFnP((p, reqId: ReqId) => reqId match {
         case id: GenericReqId => p.reqs.genericReqs.get(id)
-      })(_.live)
+      })(_ live _.config.customReqTypes)
 
     val ensureLiveTextField =
       ensureLiveFn((p, id: CustomField.Text.Id) => p.config.fields.customFields.get(id))(_.live)
+
+    val ensureLiveCustomReqTypeId =
+      ensureLiveFn((p, id: CustomReqTypeId) => p.config.customReqTypes get id)(_.live)
 
     def needCustomReqType(id: CustomReqTypeId): App[Project, CustomReqType] =
       App(p => CustomReqTypeEvents.imap.need(id)(p.config.customReqTypes))
@@ -43,7 +47,7 @@ trait ApplyContentEvent extends ApplyConfigEvent {
 
         var result =
           for {
-            rt    ← needCustomReqType(e.rt)(p)
+            rt    ← (needCustomReqType(e.rt) >=> ensureLiveBy(_.live))(p)
             title = Title.get(e.vs).fold(Vector.empty: Text.GenericReqTitle.OptionalText)(_.value.whole)
             pp    = reqData.pubids.allocC(rt.id)(id)
             req   = GenericReq(id, pp._2, title, Live)
@@ -70,13 +74,13 @@ trait ApplyContentEvent extends ApplyConfigEvent {
       }
 
     def deleteGenericReq(id: GenericReqId): AP = {
-      val a = grIMap.update(id, grLive.makeDead)
+      val a = grIMap.update(id, grLiveExplicitly.makeDead)
       val b = ReqCodeLogic.removeBelongingToReq(id)
       (GR @=> a) >=> b
     }
 
     def restoreGenericReq(id: GenericReqId): AP = {
-      val a = grIMap.update(id, grLive.makeLive)
+      val a = grIMap.update(id, grLiveExplicitly.makeLive)
       val b = ReqCodeLogic.restoreBelongingToReq(id)
       (GR @=> a) >=> (C @=> b)
     }
@@ -123,7 +127,7 @@ trait ApplyContentEvent extends ApplyConfigEvent {
         for (m <- grIMap.update(e.id, App.ok(_.copy(pubid = t._2)))(r.genericReqs))
           yield Requirements(m, t._1)
       }
-      ensureLive(e.id) >-> (R @=> f)
+      ensureLive(e.id) >-> ensureLiveCustomReqTypeId(e.value) >-> (R @=> f)
     }
 
     def applySetGenericReqTitle(e: SetGenericReqTitle): AP = {

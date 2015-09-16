@@ -91,14 +91,12 @@ object AutoComplete {
     reqItems(p, pt, p.reqs.reqs.values.toStream)
 
   def reqItems(p: Project, pt: PlainText.ForProject, legal: Stream[Req]): Stream[ReqItem] = {
-    legal.filter(_.live :: Live)
+    legal.filter(_.live(p.config.customReqTypes) :: Live)
       .map(req => new ReqItem(req, p.config.reqType(req.pubid.reqTypeId), pt reqTitle req))
       .sortBy(_.sortKey)
   }
 
-  def req(textSearch: TextSearch, legal0: Stream[ReqItem], Contextualise: Contextualise): StrategyA[ReqItem] = {
-    val legal = legal0.filter(_.req.live :: Live)
-
+  def req(textSearch: TextSearch, legal: Stream[ReqItem], Contextualise: Contextualise): StrategyA[ReqItem] = {
     val searchTitles =
       textSearch.ignoreCaseNoWhitespace
         .filterReqsIds(legal.map(_.req.id).toSet)

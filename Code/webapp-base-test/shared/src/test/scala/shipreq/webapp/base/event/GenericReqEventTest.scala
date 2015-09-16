@@ -242,7 +242,7 @@ object GenericReqEventTest extends TestSuite {
       'badId           - List(0, -1).foreach(i => assertFail("id")(empty1.copy(id = i)))
       'idInUse         - assertFail("exists")(empty1, empty1)
       'reqTypeNotFound - assertFail("found")(empty1.copy(rt = 666))
-      'reqTypeDead     - assertFail("live")(DeleteCustomReqType(mf, Delete), empty1)
+      'reqTypeDead     - assertFail("dead")(DeleteCustomReqType(mf, Delete), empty1)
       'tagNotFound     - assertFail("tag")(empty1.copy(vs = nev(Tags(6.AT))))
       'tagIsGroup      - assertFail("tag")(empty1.copy(vs = nev(Tags(tg1.value.AT))))
       // tagIsDead - allow it
@@ -596,7 +596,7 @@ object GenericReqEventTest extends TestSuite {
       'reqNotFound     - assertFail("found")(SetGenericReqType(1, fr))
       'reqIsDead       - assertFail("dead")(empty1, del1, SetGenericReqType(1, fr))
       'reqTypeNotFound - assertFail("found")(empty1, SetGenericReqType(1, 321))
-      'reqTypeIsDead   - assertFail("live")(empty1, DeleteCustomReqType(fr, Delete), SetGenericReqType(1, fr))
+      'reqTypeIsDead   - assertFail("dead")(empty1, DeleteCustomReqType(fr, Delete), SetGenericReqType(1, fr))
     }
 
     'setGenericReqTitle {

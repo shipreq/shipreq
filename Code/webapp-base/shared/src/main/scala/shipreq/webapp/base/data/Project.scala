@@ -43,6 +43,12 @@ final case class Project(config      : ProjectConfig,
     s"Project($idCeilings)"
     //ShowSize(this).showTree
 
+  lazy val deadReqIds: Set[ReqId] =
+    reqs.reqs.filterV(_.live(config.customReqTypes) :: Dead).keySet
+
+  lazy val deadReqCount: Int =
+    deadReqIds.size
+
   def allRichText: Stream[(String, Stream[Text.AnyOptional])] =
     Stream(
       ("ReqCodeGroups", reqCodes.activeGroups.map(_.group.title)),
@@ -79,7 +85,7 @@ final case class Project(config      : ProjectConfig,
   private def implicationTransitiveClosure(f: Implications => Implications.Uni): TransitiveClosure[ReqId] =
     Implications.transitiveClosure(
       reqs.reqs.keys,
-      reqs.dead,
+      deadReqIds,
       f(implications))
 
   // Finally, ensure validity

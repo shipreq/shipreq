@@ -138,7 +138,7 @@ private[reqtable] object Logic {
 
       // (source of implication for this column) → (all it transitively implies)
       val srcs: Stream[(Pubid, Set[ReqId])] =
-        fd(reqsOfSubjectType)(_.live)
+        fd(reqsOfSubjectType)(_ live p.config.customReqTypes)
           .map(r => (r.pubid, p.implicationSrcToTgtTC(r.id)))
 
       id => srcs.filter(_._2 contains id).map(_._1).toSet
@@ -263,7 +263,7 @@ private[reqtable] object Logic {
         })
       }
 
-    val filterDead    = Filter(vs.filterDead.filterFnA(_.live), FilterFn.`n/a`)
+    val filterDead    = Filter(vs.filterDead.filterFnA(_ live p.config.customReqTypes), FilterFn.`n/a`)
     val tagLookup     = this.tagLookup(p, vs.filterDead)
     val issueLookup   = this.issueLookup(p, vs.filterDead)
     val applicability = Applicability(p)
@@ -317,7 +317,7 @@ private[reqtable] object Logic {
               // Build
               val mv = multiValuesFn(id)
               exps.toStream.zipWithIndex.map(x =>
-                GenericReqRow(r, x._1, mv, x._2))
+                GenericReqRow(r, r live p.config.customReqTypes, x._1, mv, x._2))
             }
         }
 
@@ -515,7 +515,7 @@ private[reqtable] object Logic {
       (x, y) match {
         case (a: GenericReqRow, b: GenericReqRow) =>
           if (a.req.id ≟ b.req.id)
-            Some(GenericReqRow(a.req, a.exp |+| b.exp, a.mv |+| b.mv, a.instanceId)) // TODO resort
+            Some(GenericReqRow(a.req, a.live, a.exp |+| b.exp, a.mv |+| b.mv, a.instanceId)) // TODO resort
           else
             None
         case (_: GenericReqRow,   _: ReqCodeGroupRow)
@@ -615,7 +615,7 @@ private[reqtable] object Logic {
       _expansionRows += c
     }
 
-    val totalDead = p.reqs.deadCount
+    val totalDead = p.deadReqCount
     val totalLive = p.reqs.reqs.size - totalDead
 
     TableStats(vs.filterDead,

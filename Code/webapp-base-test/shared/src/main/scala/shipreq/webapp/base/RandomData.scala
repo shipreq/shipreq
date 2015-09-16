@@ -751,16 +751,14 @@ object RandomData {
       _  <- pubidS(id)
     } yield id
 
-  def sGenericReq(pubidS: ReqIdC => StateG[PubidRegister, PubidC], rtLive: ReqTypeId => Live): StateG[PubidRegister, GenericReq] =
+  def sGenericReq(pubidS: ReqIdC => StateG[PubidRegister, PubidC]): StateG[PubidRegister, GenericReq] =
     for {
       id     ← genericReqId |> gliftS[PubidRegister, GenericReqId]
       pubid  ← pubidS(id)
       desc   = Vector.empty
-      live0  ← live
-    } yield {
-      val live = if (rtLive(pubid.reqTypeId) :: Dead) Dead else live0
-      GenericReq(id, pubid, desc, live)
-    }
+      l      ← live
+    } yield
+      GenericReq(id, pubid, desc, l)
 
   def pubidRegisterAnd[A, B](reqCount: Int, inita: A, genb: StateG[PubidRegister, B])(f: (A, B) => A): Gen[(PubidRegister, A)] = {
     val init = StateT.stateT[Gen, PubidRegister, A](inita)
@@ -776,19 +774,16 @@ object RandomData {
   def pubidRegisterAndIds(reqCount: Int, customReqTypeIds: NonEmptyVector[CustomReqTypeId]): Gen[(PubidRegister, Set[ReqIdC])] =
     pubidRegisterAnd(reqCount, Set.empty[ReqIdC], sGenericReqId(sAllocPubidC(customReqTypeIds)))(_ + _)
 
-  def requirements(reqCount: Int, customReqTypeIds: Vector[CustomReqTypeId], rtLive: ReqTypeId => Live): Gen[Requirements] =
+  def requirements(reqCount: Int, customReqTypeIds: Vector[CustomReqTypeId]): Gen[Requirements] =
     NonEmptyVector.maybe(customReqTypeIds,
       Gen insert Requirements.empty)( // ← This will change when UseCases are added
       customReqTypeIdNev =>
-        pubidRegisterAnd(reqCount, emptyDataMap(GenericReq), sGenericReq(sAllocPubidC(customReqTypeIdNev), rtLive))(_ + _)
+        pubidRegisterAnd(reqCount, emptyDataMap(GenericReq), sGenericReq(sAllocPubidC(customReqTypeIdNev)))(_ + _)
           .map { case (pr, reqs) => Requirements(reqs, pr) }
       )
 
-  def reqsWithoutText(reqCount: Int, cfg: ProjectConfig): Gen[Requirements] = {
-    val reqTypeIdsC    = cfg.customReqTypes.keys.toVector
-    val deadReqtypeIds = cfg.customReqTypes.values.toStream.filter(_.live :: Dead).map(_.id)
-    requirements(reqCount, reqTypeIdsC, id => Dead <~ (deadReqtypeIds contains id))
-  }
+  def reqsWithoutText(reqCount: Int, cfg: ProjectConfig): Gen[Requirements] =
+    requirements(reqCount, cfg.customReqTypes.keys.toVector)
 
 //  /**
 //   * I mistakenly thought reqsWithoutText was really slow, so I wrote this faster replacement.
@@ -1137,7 +1132,7 @@ object RandomData {
       reqIds          = reqsWithoutText.reqs.keys
       reqIdG          = Gen oneofO reqIds.toSeq
       reqIdSet        = reqIds.toSet
-      liveReqIds      = reqsWithoutText.reqs.values.toStream.filter(_.live :: Live).map(_.id)
+      liveReqIds      = reqsWithoutText.reqs.values.toStream.filter(_.live(cfg.customReqTypes) :: Live).map(_.id)
       liveReqIdG      = Gen oneofO liveReqIds
       reqCodeDataG    = reqCode.data(liveReqIdG, reqIdG, reqCode.gEmptyReqCodeGroup).lim(3 `JVM|JS` 2)
       reqCodes        ← reqCodes(reqCode.trie(2 `JVM|JS` 2, reqCodeDataG))

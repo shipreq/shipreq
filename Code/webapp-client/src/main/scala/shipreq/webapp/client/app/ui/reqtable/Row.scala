@@ -111,10 +111,9 @@ sealed trait Row {
  * @param instanceId An arbitrary number that, coupled with `req.id` serves to uniquely identify a row.
  *                   Reason is that the same GenericReq can appear in multiple rows.
  */
-case class GenericReqRow(req: GenericReq, exp: Expansion, mv: MultiValues, instanceId: Int) extends Row {
+case class GenericReqRow(req: GenericReq, live: Live, exp: Expansion, mv: MultiValues, instanceId: Int) extends Row {
   override val id       = Row.GenericReqRowId(req.id, instanceId)
   override def sourceId = Row.GenericReqRowSourceId(req.id)
-  override def live     = req.live
   override def toString = s"\n$req\n$exp\n$mv\n"
 }
 
@@ -185,23 +184,23 @@ object Row {
     case r: GenericReqRow   => Some(r.exp)
     case _: ReqCodeGroupRow => None
   }(nv => {
-    case GenericReqRow(r, _, m, i) => GenericReqRow(r, nv, m, i)
-    case r: ReqCodeGroupRow        => r
+    case GenericReqRow(r, l, _, m, i) => GenericReqRow(r, l, nv, m, i)
+    case r: ReqCodeGroupRow           => r
   })
 
   val multiValues = Optional[Row, MultiValues] {
     case r: GenericReqRow   => Some(r.mv)
     case _: ReqCodeGroupRow => None
   }(nv => {
-    case GenericReqRow(r, e, _, i) => GenericReqRow(r, e, nv, i)
-    case r: ReqCodeGroupRow        => r
+    case GenericReqRow(r, l, e, _, i) => GenericReqRow(r, l, e, nv, i)
+    case r: ReqCodeGroupRow           => r
   })
 
   val reqCodes = Lens[Row, Vector[ReqCode.Value]] {
     case r: GenericReqRow   => r.exp.reqCodes
     case r: ReqCodeGroupRow => Vector1(r.reqCode)
   }(nv => {
-    case GenericReqRow(r, e, m, i) => GenericReqRow(r, e.copyReqCodes(nv), m, i)
+    case GenericReqRow(r, l, e, m, i)         => GenericReqRow(r, l, e.copyReqCodes(nv), m, i)
     case r: ReqCodeGroupRow if nv.length == 1 => r.copy(reqCode = nv.head)
     case r: ReqCodeGroupRow if nv.length != 1 => assert(false, s"Can't apply $nv to $r") ;r
   })
@@ -211,7 +210,7 @@ object Row {
     case r: GenericReqRow   => r.exp.reqCodeTree
     case r: ReqCodeGroupRow => r.reqCodeTreeItem.toVector
   }(nv => {
-    case GenericReqRow(r, e, m, i) => GenericReqRow(r, e.copyReqCodeTree(nv), m, i)
+    case GenericReqRow(r, l, e, m, i) => GenericReqRow(r, l, e.copyReqCodeTree(nv), m, i)
     case r: ReqCodeGroupRow if nv.length == 1 => r.copy(reqCodeTreeItem = Some(nv.head))
     case r: ReqCodeGroupRow if nv.length == 0 => r.copy(reqCodeTreeItem = None)
     case r: ReqCodeGroupRow if nv.length != 1 => assert(false, s"Can't apply $nv to $r") ;r

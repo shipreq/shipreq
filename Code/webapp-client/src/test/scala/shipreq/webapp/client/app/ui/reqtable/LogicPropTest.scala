@@ -5,7 +5,6 @@ import japgolly.nyaya.test._
 import japgolly.nyaya.util.Multimap
 import scalaz.{\/, \/-, -\/, Equal}
 import scalaz.std.AllInstances._
-import scalaz.syntax.equal._
 import utest._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
@@ -29,7 +28,7 @@ object LogicPropTest extends TestSuite {
 
     val expectVisible: ReqId => Boolean =
       if (vs.filterDead == HideDead)
-        id => p.reqs.req(id).live ≟ Live
+        id => p.reqs.req(id).live(p.config.customReqTypes) :: Live
       else
         _ => true
 

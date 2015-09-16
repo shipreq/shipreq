@@ -63,7 +63,7 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
   val pubidColumnValue = memo[Pubid] { pubid =>
     val txt = PlainText.pubid(project, pubid)
     val req = project.reqs.reqByPubid(pubid)
-    <.span(*.pubidColumnValue(req.live), txt)
+    <.span(*.pubidColumnValue(req live project.config.customReqTypes), txt)
   }
 
   private def _reqRef1(f: EndoFn[String], style: Req => TagMod): ReqId => ReactElement =
@@ -84,7 +84,7 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
       }
       Validity.memo { v2 =>
         val g = deadValidity(v2)
-        val style: Req => TagMod = req => *.reqRef(g(req.live))
+        val style: Req => TagMod = req => *.reqRef(g(req live project.config.customReqTypes))
         memo(_reqRef1(f, style))
       }
     }
@@ -122,7 +122,7 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
 
     def toRef(c: ReqCode.Value, r: ReqId): ReactElement = {
       val req = project.reqs.req(r)
-      ref(c, *.reqRef(req.live), plainText reqTitle req)
+      ref(c, *.reqRef(req live project.config.customReqTypes), plainText reqTitle req)
     }
 
     def toGroup(c: ReqCode.Value, g: ReqCodeGroup): ReactElement =
