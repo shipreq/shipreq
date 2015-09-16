@@ -5,7 +5,6 @@ import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.extra.Px
 import monocle.Optional
 import scalaz.syntax.bind.ToBindOps
-import shipreq.base.util.Must
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.{TextSearch, PlainText}
@@ -109,13 +108,11 @@ final class ColumnEditors(project       : Px[Project],
 
   // ===================================================================================================================
 
-  val reqType = mkEditorO[GenericReqRow, CustomReqType] { r =>
-    val initialM = project.value().config.reqTypeC(r.req.reqTypeId)
-    mustResolveO(initialM).map { iv =>
-      val id = r.req.id
-      val fields = project.map(_.config.customReqTypes.values.toSet)
-      ReqTypeSelector(iv, id, fields, _)
-    }
+  val reqType = mkEditor[GenericReqRow, CustomReqType] { r =>
+    val iv = project.value().config.reqTypeC(r.req.reqTypeId)
+    val id = r.req.id
+    val fields = project.map(_.config.customReqTypes.values.toSet)
+    ReqTypeSelector(iv, id, fields, _)
   }
 
   val genericReqTitle = mkEditor[GenericReqRow, String] { r =>
@@ -173,7 +170,7 @@ final class ColumnEditors(project       : Px[Project],
 
   def imps(l: Optional[Row, Vector[Pubid]], col: Column) = mkEditorO[GenericReqRow, String](r =>
     l.getOption(r).map(iv =>
-      ImplicationEditor.edit(r.req.id, iv, col, project, textSearch, impLookup map Must.apply, _)))
+      ImplicationEditor.edit(r.req.id, iv, col, project, textSearch, impLookup, _)))
 
   def cfImp(fid: CustomField.Implication.Id, col: Column) = mkEditorO[GenericReqRow, String] { r =>
     val lookup = for {p <- project; l <- impLookup} yield ImplicationEditor.lookupForCustomImpCol(p, l, fid)

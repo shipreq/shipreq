@@ -23,15 +23,14 @@ case class ReqFull(req      : GenericReq,
 object ReqFull {
   implicit def equality: UnivEq[ReqFull] = UnivEq.derive
 
-  def extract(p: Project, id: GenericReqId): Option[ReqFull] =
-    p.reqs.req(id).map{ r2 =>
-      val r = r2 match {case x: GenericReq => x}
-      val tags      = p.reqTags(id)
-      val impliedBy = p.implications.tgtToSrc(id)
-      val implies   = p.implications.srcToTgt(id)
-      val reqCodes  = p.reqCodes.activeReqCodesByTarget(id)
-      ReqFull(r, tags, impliedBy, implies, reqCodes)
-    }
+  def extract(p: Project, id: GenericReqId): Option[ReqFull] = {
+    val r = p.reqs.req(id) match {case x: GenericReq => x}
+    val tags      = p.reqTags(id)
+    val impliedBy = p.implications.tgtToSrc(id)
+    val implies   = p.implications.srcToTgt(id)
+    val reqCodes  = p.reqCodes.activeReqCodesByTarget(id)
+    ReqFull(r, tags, impliedBy, implies, reqCodes)
+  }
 }
 
 // TODO Test atom validity in all events that accept text
@@ -522,10 +521,10 @@ object GenericReqEventTest extends TestSuite {
 
       'reqIsDead      - assertFail("dead")(empty1, del1, patch(1)()(at1))
       'reqNotFound    - assertFail("found")(patch(1)()(at1))
-      'addBadTag      - assertFail("no tag found")(empty1, patch(1)()(123))
-      'removeBadTag   - assertFail("no tag found")(empty1, patch(1)(123)())
-      'addTagGroup    - assertFail("no tag found")(empty1, patch(1)()(tg1.value.AT))
-      'removeTagGroup - assertFail("no tag found")(empty1, patch(1)(tg1.value.AT)())
+      'addBadTag      - assertFail("not found")(empty1, patch(1)()(123))
+      'removeBadTag   - assertFail("not found")(empty1, patch(1)(123)())
+      'addTagGroup    - assertFail("not found")(empty1, patch(1)()(tg1.value.AT))
+      'removeTagGroup - assertFail("not found")(empty1, patch(1)(tg1.value.AT)())
 
       // 'removeMissingTag = nop
       // 'addExistingTag   = nop

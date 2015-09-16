@@ -29,7 +29,7 @@ object LogicPropTest extends TestSuite {
 
     val expectVisible: ReqId => Boolean =
       if (vs.filterDead == HideDead)
-        id => p.reqs.req(id).get.live ≟ Live
+        id => p.reqs.req(id).live ≟ Live
       else
         _ => true
 

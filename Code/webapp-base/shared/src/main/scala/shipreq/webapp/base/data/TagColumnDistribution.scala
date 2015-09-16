@@ -1,6 +1,5 @@
 package shipreq.webapp.base.data
 
-import shipreq.base.util.Must
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.UnivEq.{immutableHashMapMemo => memo}
 import shipreq.webapp.base.data.DataImplicits._
@@ -21,7 +20,7 @@ object TagColumnDistribution {
     new TagIds(p, tagColumnFilter)
 
   // ===================================================================================================================
-  final class TagIds(p: ProjectConfig, tagColumnFilter: CustomField.Tag => Boolean) extends TagColumnDistribution[Must[Set[ApplicableTagId]]] {
+  final class TagIds(p: ProjectConfig, tagColumnFilter: CustomField.Tag => Boolean) extends TagColumnDistribution[Set[ApplicableTagId]] {
     // Traversing the tag tree for used columns is better than calculating the full
     // transitive closure at O(V²) space and O(V²+VE) time.
     private[this] implicit val tagTree = p.tags
@@ -30,23 +29,25 @@ object TagColumnDistribution {
       tagTree.vstream(_.tag.id).filterT[ApplicableTagId]
 
     override lazy val all =
-      Must(allStream.toSet)
+      allStream.toSet
 
     override val inColumn =
-      memo((fid: CustomField.Tag.Id) =>
-        p.customField(fid).flatMap(field =>
-          tagTree(field.tagId)
-            .flatMap(_.transitiveChildren)
-            .map(_.filterT[ApplicableTagId].toSet)))
+      memo { (fid: CustomField.Tag.Id) =>
+        val field = p.customField(fid)
+        val tag = tagTree.need(field.tagId)
+        tag.transitiveChildren.filterT[ApplicableTagId].toSet
+      }
 
-    override lazy val usedInColumns =
-      Must.foldMapMF(p.customTagFields filter tagColumnFilter map (_.id))(inColumn)
+    override lazy val usedInColumns = {
+      val tagIds = p.customTagFields filter tagColumnFilter map (_.id)
+      tagIds.foldLeft(Set.empty[ApplicableTagId])(_ | inColumn(_))
+    }
 
     override lazy val notUsedInColumns =
-      usedInColumns.map(s => allStream.filterNot(s.contains).toSet)
+      allStream.filterNot(usedInColumns.contains).toSet
 
-    lazy val tags =
-      map(_ flatMap p.atags[Set])
+    lazy val tags: TagColumnDistribution[Set[ApplicableTag]] =
+      map(_ map p.atag)
   }
 
   // ===================================================================================================================

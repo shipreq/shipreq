@@ -1,9 +1,11 @@
 package shipreq.webapp.base.data
 
 import monocle.macros.Lenses
-import scalaz.{-\/, Equal, \/-}
+import scalaz.{\/, -\/, \/-, Equal}
+import scalaz.std.option.toRight
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{UtilMacros, Monoidish, Must}
+import shipreq.base.util.UtilMacros
+import shipreq.webapp.base.util.Must._
 import DataImplicits._
 
 object ProjectConfig {
@@ -24,15 +26,20 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
                                fields          : FieldSet,
                                tags            : TagTree) {
 
-  def atag(id: ApplicableTagId): Must[ApplicableTag] =
-    Must.fromOption(tags.get(id), s"No tag found with $id")
-      .flatMap(t => t.tag match {
-      case a: ApplicableTag => Must(a)
-      case _                => Must.Failed(s"$t is not an ApplicableTag")
-    })
+  def atagValidate(id: ApplicableTagId): Option[String] =
+    tags.get(id) match {
+      case Some(tit) => tit.tag match {
+        case _: ApplicableTag => None
+        case t: TagGroup      => Some(s"$t is not an ApplicableTag.")
+      }
+      case None               => Some(s"$id not found.")
+    }
 
-  def atags[M[X] <: TraversableOnce[X]: Monoidish](ids: M[ApplicableTagId]): Must[M[ApplicableTag]] =
-    Must.foldMapM(ids)(atag)
+  def atag(id: ApplicableTagId): ApplicableTag =
+    tags.need(id).tag match {
+      case a: ApplicableTag => a
+      case t: TagGroup      => mustNotHappen(s"$t is not an ApplicableTag.")
+    }
 
   def atags: Stream[ApplicableTag] =
     tags.vstream(_.tag).filterT[ApplicableTag]
@@ -40,12 +47,21 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
   lazy val deadATagIds: Set[ApplicableTagId] =
     atags.filter(_.live :: Dead).map(_.id).toSet
 
-  def customField[I <: CustomFieldId, D <: CustomField](id: I)(implicit d: DataIdAux[D, I]): Must[D] =
-    fields.customFields(id).flatMap(f =>
-      Must.fromOption(d.unapplyData(f), s"$id associated with wrong type: $f"))
+  def customField[I <: CustomFieldId, D <: CustomField](id: I)(implicit d: DataIdAux[D, I]): D = {
+    val f = fields.customFields.need(id)
+    d.unapplyData(f) mustExistElse s"$id associated with wrong type: $f"
+  }
 
-  def customIssueType(id: CustomIssueTypeId): Must[CustomIssueType] =
-    Must.fromOption(customIssueTypes.get(id), s"No CustomIssueType found with $id")
+  def customFieldAttempt[I <: CustomFieldId, D <: CustomField](id: I)(implicit d: DataIdAux[D, I]): String \/ D =
+    fields.customFields.get(id) match {
+      case Some(f) =>
+        toRight(d unapplyData f)(s"$id associated with wrong type: $f")
+      case None =>
+        -\/(s"$id not found.")
+    }
+
+  def customIssueType(id: CustomIssueTypeId): CustomIssueType =
+    customIssueTypes.need(id)
 
   lazy val customTagFields =
     fields.customFields.values.filterT[CustomField.Tag]
@@ -56,13 +72,13 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
   lazy val liveCustomTextFields =
     customTextFields.filter(_.live :: Live)
 
-  def reqType(i: ReqTypeId): Must[ReqType] =
-    i.foldId[Must[ReqType]](Must.apply, customReqTypes.apply)
+  def reqType(i: ReqTypeId): ReqType =
+    i.foldId[ReqType](identity, customReqTypes.need)
 
-  def reqTypeC(i: CustomReqTypeId): Must[CustomReqType] =
-    reqType(i).flatMap {
-      case c: CustomReqType => Must(c)
-      case f                => Must.Failed(s"$f must be a CustomReqType")
+  def reqTypeC(i: CustomReqTypeId): CustomReqType =
+    reqType(i) match {
+      case c: CustomReqType => c
+      case f                => mustNotHappen(s"$f must be a CustomReqType")
     }
 
   lazy val liveCustomReqTypes: Stream[CustomReqType] =

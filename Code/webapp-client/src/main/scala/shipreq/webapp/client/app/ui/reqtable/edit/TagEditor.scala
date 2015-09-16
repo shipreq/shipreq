@@ -4,11 +4,10 @@ package edit
 import japgolly.scalajs.react.extra.{ReusableVal, Px}
 import scalaz.\/-
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{SetDiff, Must, UnivEq}
+import shipreq.base.util.SetDiff
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.Grammar
-import shipreq.webapp.base.UiText
 import shipreq.webapp.client.app.ui.{RemoteDataEditor, TextSeqEditor, VUCA}
 import shipreq.webapp.client.lib.ui.TextEditor
 import shipreq.webapp.client.lib.{Plain, HideDead}
@@ -23,25 +22,22 @@ object TagEditor {
   val editor = new TextSeqEditor[ApplicableTagId, TagDiff](
     "TagEditor", Grammar.hashRefKey.seqFormat.apply, TextEditor.Input)
 
-  def lookupForNoCol(p: Project): Must[Lookup] =
+  def lookupForNoCol(p: Project): Lookup =
     lookupG(p, _.tags.notUsedInColumns)
 
-  def lookupForCol(p: Project, f: CustomField.Tag.Id): Must[Lookup] =
+  def lookupForCol(p: Project, f: CustomField.Tag.Id): Lookup =
     lookupG(p, _.tags inColumn f)
 
-  def lookupG(p: Project, f: TagColumnDistribution.TagIds => Must[Set[ApplicableTag]]): Must[Lookup] =
-    f(p.config.liveTagColumnDistribution).map(_
+  def lookupG(p: Project, f: TagColumnDistribution.TagIds => Set[ApplicableTag]): Lookup =
+    f(p.config.liveTagColumnDistribution)
       .toStream
       .filter(_.live :: Live)
       .map(_.mapStrengthL(_.key.value))
       .toMap
-    )
 
-  def prepare(initial : Set[ApplicableTagId],
-              project : Project,
-              lookupM : Px[Must[Lookup]]): (VUCA[String, TagDiff] => editor.Props, String) = {
-
-    val lookup = lookupM.map(mustResolve(_)(UnivEq.emptyMap))
+  def prepare(initial: Set[ApplicableTagId],
+              project: Project,
+              lookup : Px[Lookup]): (VUCA[String, TagDiff] => editor.Props, String) = {
 
     val (initialValues, initialTextValue) = {
       val lm  = lookup.value()
@@ -49,10 +45,10 @@ object TagEditor {
       val ids = initial & ls
 
       val text =
-        ids.toVector.map { a =>
-          val m = project.config.atag(a).map(_.key.value)
-          UiText.mustA(m)
-        }.sorted mkString " "
+        ids.toVector
+          .map(a => project.config.atag(a).key.value)
+          .sorted
+          .mkString(" ")
 
       (ids, text)
     }
@@ -78,10 +74,10 @@ object TagEditor {
 
   def selfManaged(initial : Set[ApplicableTagId],
                   project : Project,
-                  lookupM : Px[Must[Lookup]],
+                  lookup  : Px[Lookup],
                   commitFn: TagDiff => RemoteDataEditor.OnCommit): InitSelfManagedA[String] = {
 
-    val (props, initialTextValue) = prepare(initial, project, lookupM)
+    val (props, initialTextValue) = prepare(initial, project, lookup)
 
     val onCommit = RemoteDataEditor.CommitFilter(commitFn).ignore(_.isEmpty)
 
@@ -91,7 +87,7 @@ object TagEditor {
   def edit(subjectId: ReqId,
            initial  : Set[ApplicableTagId],
            project  : Project,
-           lookupM  : Px[Must[Lookup]],
+           lookup   : Px[Lookup],
            commitFn : UpdateContentOnCommit): InitSelfManagedA[String] =
-    selfManaged(initial, project, lookupM, commitFn.cmap[TagDiff](PatchReqTags(subjectId, _)))
+    selfManaged(initial, project, lookup, commitFn.cmap[TagDiff](PatchReqTags(subjectId, _)))
 }

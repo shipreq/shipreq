@@ -10,6 +10,7 @@ import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes._
 import shipreq.webapp.base.text.Text, Text.Equality._
+import shipreq.webapp.base.util.Must._
 import DataImplicits._
 
 // ===================================================================================================================
@@ -186,14 +187,14 @@ final case class ReqCodes(trie: ReqCode.Trie) {
     trie.cataV(UnivEq.emptyMap[ReqCodeId, Value])((q, c, d) =>
       d.ids.foldLeft(q)(_.updated(_, c)))
 
-  def reqCode(id: ReqCodeId): Must[Value] =
-    Must.fromOption(reqCodesById get id, s"No req code associated with $id.")
+  def reqCode(id: ReqCodeId): Value =
+    reqCodesById get id mustExistElse s"No req code associated with $id."
 
-  def apply(code: Value): Option[Data] =
+  def get(code: Value): Option[Data] =
     trie.lookup(code)
 
-  def applyM(code: Value): Must[Data] =
-    Must.fromOption(apply(code), s"No node at reqcode ${code.whole mkString "."}.")
+  def apply(code: Value): Data =
+    get(code) mustExistElse s"No node at reqcode ${code.whole mkString "."}."
 
   def allIds: Stream[ReqCodeId] =
     trie.flatStream.flatMap(_._2.ids)
@@ -334,28 +335,22 @@ case class Requirements(genericReqs: GenericReqIMap, pubids: PubidRegister) {
   lazy val deadCount: Int =
     dead.size
 
-  def req[T <: ReqTypeId](id: ReqIdT[T]): Option[ReqT[T]] =
+  def getReq[T <: ReqTypeId](id: ReqIdT[T]): Option[ReqT[T]] =
     id match {
       case i: GenericReqId => genericReqs.get(i)
     }
 
-  def reqByPubid[T <: ReqTypeId](id: PubidT[T]): Option[ReqT[T]] =
-    pubids(id) flatMap req
+  def getReqByPubid[T <: ReqTypeId](id: PubidT[T]): Option[ReqT[T]] =
+    pubids(id) flatMap getReq
 
-  def reqM[T <: ReqTypeId](id: ReqIdT[T]): Must[ReqT[T]] =
-    Must.fromOption(req(id), s"Req $id not found.")
+  def req[T <: ReqTypeId](id: ReqIdT[T]): ReqT[T] =
+    getReq(id) mustExistElse s"Req $id not found."
 
-  def reqsM[M[X] <: TraversableOnce[X]: Monoidish, T <: ReqTypeId](ids: M[ReqIdT[T]]): Must[M[ReqT[T]]] =
-    Must.foldMapM(ids)(reqM)
+  def reqByPubid[T <: ReqTypeId](id: PubidT[T]): ReqT[T] =
+    getReqByPubid(id) mustExistElse s"Req for $id not found."
 
-  def reqByPubidM[T <: ReqTypeId](id: PubidT[T]): Must[ReqT[T]] =
-    Must.fromOption(reqByPubid(id), s"Req for $id not found.")
-
-  def reqIdByPubidM[T <: ReqTypeId](id: PubidT[T]): Must[ReqIdT[T]] =
-    Must.fromOption(pubids(id), s"Req for $id not found.")
-
-  def reqsByPubidM[M[X] <: TraversableOnce[X]: Monoidish, T <: ReqTypeId](ids: M[PubidT[T]]): Must[M[ReqT[T]]] =
-    Must.foldMapM(ids)(reqByPubidM)
+  def reqIdByPubid[T <: ReqTypeId](id: PubidT[T]): ReqIdT[T] =
+    pubids(id) mustExistElse s"Req for $id not found."
 
   lazy val reqsByType: Multimap[ReqTypeId, Vector, Req] =
     UnivEq.emptyMultimap[ReqTypeId, Vector, Req]

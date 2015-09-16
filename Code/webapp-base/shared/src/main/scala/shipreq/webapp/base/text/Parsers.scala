@@ -134,7 +134,7 @@ object Parsers {
 
     val lookupCode: Seq[Node] => Option[ReqCodeId] = ss =>
       NonEmptyVector.maybe(ss.toVector, None: Option[ReqCodeId])(code =>
-        project.reqCodes(code).flatMap(_.active.map(_.id)))
+        project.reqCodes.get(code).flatMap(_.active.map(_.id)))
 
     def reqRef: Rule1[t.Atom] =
       rule(codeRef | pubidRef)

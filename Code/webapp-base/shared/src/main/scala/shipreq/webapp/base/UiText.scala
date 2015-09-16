@@ -1,23 +1,8 @@
 package shipreq.webapp.base
 
-import shipreq.base.util.Must
-
 object UiText {
 
-  def mustFailed = "¿ERR"
-
   def mathFailed = "{Invalid expression}"
-
-  def mustA(m: Must[String], outputOnFailure: String = mustFailed): String = {
-    m.fold(e => {
-      System.err.println(e) // side-effect!
-      outputOnFailure
-    }, identity)
-  }
-
-  @inline implicit class Unmust[A](val _m: Must[String]) extends AnyVal {
-    @inline def unmust: String = UiText.mustA(_m)
-  }
 
   @inline implicit class EnglishIntExt(val _i: Int) extends AnyVal {
     def unitsOf(name: String, pluralised: String = null): String = {

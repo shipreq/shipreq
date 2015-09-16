@@ -49,7 +49,7 @@ private[issues] object MandatoryFields {
 
     val genEditor =
       Editors.checkboxEditor.imap(On <=> Mandatory)
-        .strengthR[Field].labelSuffix(a => UI.mustA(labelFn.value()(a._2)))
+        .strengthR[Field].labelSuffix(a => labelFn.value()(a._2))
 
     val editor =
       genEditor.cmapA[(Mandatory, CustomField)](a => a)
@@ -75,10 +75,11 @@ private[issues] object MandatoryFields {
           UI.rowStatusCtrls(r.status, EmptyTag)))
     }
 
-    def renderRows(p: Project, s: S): ReactNode =
-      UI.must(p.config.fields.fields)(
-        HideDead(_)(_.live).toReactNodeArray(
-          _.fold(renderStaticField, renderCustomField(_, s))))
+    def renderRows(p: Project, s: S): ReactNode = {
+      val fs = p.config.fields.fields
+      HideDead(fs)(_.live).toReactNodeArray(
+        _.fold(renderStaticField, renderCustomField(_, s)))
+    }
 
     def render(p: Props, s: S): ReactElement =
       <.table(

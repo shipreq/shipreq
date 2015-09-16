@@ -6,7 +6,6 @@ import japgolly.scalajs.react.extra._
 import org.scalajs.dom
 import org.scalajs.dom.html
 import scala.scalajs.js.{Dynamic, UndefOr, undefined}
-import shipreq.base.util.Must
 import shipreq.base.util.ScalaExt.EndoFn
 import shipreq.webapp.base.UiText
 import shipreq.webapp.client.util.On
@@ -43,17 +42,6 @@ object UI {
 
   def abortNewButton(cb: Callback): ReactTag =
     <.button(^.onClick --> cb, UiText.Cfg.abortNewButton)
-
-  def must[A, N](m: Must[A], outputOnFailure: String = UiText.mustFailed)(render: A => N)(implicit x: ReactTag => N): N = {
-    m.fold(e => {
-      dom.console.error(e) // side-effect!
-      <.span(^.cls := "mustfailed", ^.color.red, outputOnFailure)
-    }, render)
-  }
-
-  /** A is for auto! */
-  @inline def mustA[A, N](m: Must[A], outputOnFailure: String = UiText.mustFailed)(implicit x: ReactTag => N, y: A => N): N =
-    must(m, outputOnFailure)(y)
 
   def textComplete[E <: html.Element](target: E, strategies: TextComplete.Strategies, onUpdate: => (String => Callback))(implicit E: TextEditor.OfType[E]): Callback =
     Callback.ifTrue(strategies.nonEmpty, Callback {

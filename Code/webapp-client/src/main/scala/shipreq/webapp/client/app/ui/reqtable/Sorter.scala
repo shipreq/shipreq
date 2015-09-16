@@ -212,7 +212,6 @@ object Sorter {
 
     def ordermap[A](name: String, as: Stream[A]): Map[A, Int] =
       as.zipWithIndex.toMap
-      .withDefault(k => failedMust(0)(s"Unknown $name: " + k))
 
     val applicability = Applicability(p)
 

@@ -1,6 +1,7 @@
 package shipreq.base.util
 
-import scalaz.{Equal, Order}
+import scalaz.{Equal, Order, \/}
+import scalaz.std.option.toRight
 
 object IMap {
   implicit def equality[K: Order, V: Equal]: Equal[IMap[K, V]] =
@@ -26,8 +27,14 @@ final class IMap[K: UnivEq, V] private (key: V => K, m: Map[K, V]) extends IMapB
   def get(k: K): Option[V] =
     m.get(k)
 
-  def apply(k: K): Must[V] =
-    Must.fromOption(get(k), s"Value not found for $k. Keys = $keySet.")
+  def need(k: K): V =
+    get(k) getOrElse sys.error(badKeyMsg(k))
+
+  def attempt(k: K): String \/ V =
+    toRight(get(k))(badKeyMsg(k))
+
+  private def badKeyMsg(k: K): String =
+    s"Value not found for $k. Keys = $keySet."
 
   def mod(k: K, f: V => V)(implicit ev: V <:< AnyRef): This =
     _mod(k, f, this)

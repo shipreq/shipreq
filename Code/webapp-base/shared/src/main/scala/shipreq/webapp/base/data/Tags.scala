@@ -155,11 +155,11 @@ final case class TagInTree(tag: Tag, children: TagInTree.Children) {
   def hasChild(id: TagId): Boolean =
     children contains id
 
-  def lookupChildren(implicit tt: TagTree): Stream[Must[TagInTree]] =
-    children.toStream.map(tt.apply)
+  def lookupChildren(implicit tt: TagTree): Stream[TagInTree] =
+    children.toStream.map(tt.need)
 
   /** @return Itself and all reachable children. */
-  def transitiveChildren(implicit tt: TagTree): Must[Set[TagId]] =
+  def transitiveChildren(implicit tt: TagTree): Set[TagId] =
     TagInTree.transitiveChildren(lookupChildren, Set(id))
 }
 
@@ -181,18 +181,17 @@ object TagInTree {
   val live     = tag ^|-> Tag.live
 
   /** @return Itself and all reachable children. */
-  @tailrec def transitiveChildren(queue: Stream[Must[TagInTree]], seen: Set[TagId])(implicit tt: TagTree): Must[Set[TagId]] =
+  @tailrec def transitiveChildren(queue: Stream[TagInTree], seen: Set[TagId])(implicit tt: TagTree): Set[TagId] =
     if (queue.isEmpty)
-      Must.Exists(seen)
-    else queue.head match {
-      case Must.Exists(focus) =>
-        val id = focus.id
-        if (seen contains id)
-          transitiveChildren(queue.tail, seen)
-        else
-          transitiveChildren(queue.tail append focus.lookupChildren, seen + id)
-      case f: Must.Failed => f
-  }
+      seen
+    else {
+      val focus = queue.head
+      val id = focus.id
+      if (seen contains id)
+        transitiveChildren(queue.tail, seen)
+      else
+        transitiveChildren(queue.tail append focus.lookupChildren, seen + id)
+    }
 }
 
 // =====================================================================================================================

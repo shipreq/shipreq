@@ -63,11 +63,6 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
     def CFImp  = CustomField.Implication.Id(a)
   }
 
-  implicit class UnsafeMustExt[A](val m: Must[A]) extends AnyVal {
-    def get = m.fold(sys.error, identity)
-  }
-  implicit def autoMustGet[A](m: Must[A]): A = m.get
-
   implicit def autoNevWhole[A](as: NonEmptyVector[A]): Vector[A] = as.whole
   implicit def autoNesWhole[A](as: NonEmptySet[A]): Set[A] = as.whole
 

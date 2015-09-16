@@ -5,7 +5,7 @@ import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
 import scalaz.syntax.equal.ToEqualOps
 import shipreq.base.util.UnivEq.univEqOption
-import shipreq.base.util.{Must, NonEmptyVector, UnivEq}
+import shipreq.base.util.{NonEmptyVector, UnivEq}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.CreateContentCmd
@@ -173,7 +173,7 @@ class CreationInterface($             : StateAccessCB[State],
     val setImp      = $$ zoomL CreateGenericReqState.imp      setState (_: String)
 
     val tagLookup = project.map(p => TagEditor.lookupG(p, _.tags.all))
-    val impLookup = Px.apply2(project, projectText)(ImplicationEditor.lookupAll) map Must.apply
+    val impLookup = Px.apply2(project, projectText)(ImplicationEditor.lookupAll)
 
     val mkPropsReqCodes = ReqCodeEditor.ForReqs.prepare(Set.empty, project.map(_.reqCodes.trie))
     val mkPropsTitle    = RichTextEditor.GenericReqTitle.prepare(project, projectText, projectWidgets, textSearch)

@@ -1,6 +1,5 @@
 package shipreq.webapp.client.app.ui.reqtable
 
-import shipreq.base.util.ISubset
 import shipreq.webapp.base.data._
 import DataImplicits._
 import Applicability.Subject
@@ -13,7 +12,7 @@ object Applicability {
 
   def apply(project: Project): Applicability = {
     val reqTypeFilter: Column => ReqTypeId => Boolean = {
-      case Column.CustomField(id, _) => mustResolve(project.config.customField(id).map(_.reqTypes))(ISubset.All()).filter
+      case Column.CustomField(id, _) => project.config.customField(id).reqTypes.filter
       case _: Column.BuiltIn         => pass
     }
     new Applicability(reqTypeFilter)

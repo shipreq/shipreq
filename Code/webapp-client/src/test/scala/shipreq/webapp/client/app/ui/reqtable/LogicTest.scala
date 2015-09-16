@@ -35,7 +35,7 @@ object LogicTestUtil {
     }
 
   def pubidExtract(p: Project)(pid: Pubid): (String, Int) =
-    (p.config.reqType(pid.reqTypeId).fold(sys.error, _.mnemonic.value), pid.pos.value)
+    (p.config.reqType(pid.reqTypeId).mnemonic.value, pid.pos.value)
 
   def pubidToStr(p: Project)(pid: Pubid): String = {
     val (a, b) = pubidExtract(p)(pid)

@@ -125,6 +125,15 @@ private[event] object ApplyEventLib {
 
     def traverseSet[AA <: A, BB >: B](fa: Set[AA])(implicit ev: UnivEq[BB]): Result[Set[BB]] =
       fa.foldLeft(ok(Set.empty[BB]))((q, a) => for {bs <- q; b <- run(a)} yield bs + b)
+
+    def attempt: App[A, B] =
+      App(a =>
+        try run(a)
+        catch {
+          case e: Throwable =>
+            val msg = Option(e.getMessage).filter(_.nonEmpty)
+            fail(msg getOrElse s"Error occurred: $e")
+        })
   }
 
 //  implicit class InvariantAppOps[A, B](private val app: App[A, B]) extends AnyVal {
@@ -200,9 +209,6 @@ private[event] object ApplyEventLib {
       case scalaz.Success(s) => \/-(s)
       case scalaz.Failure(f) => -\/(f.toText)
     }
-
-  implicit def resultFromMust[A](m: Must[A]): Result[A] =
-    m.toDisjunction
 
   implicit class OptionAppOps[A](private val o: Option[A]) extends AnyVal {
     @inline def ensureSome(err: => String): Result[A] =

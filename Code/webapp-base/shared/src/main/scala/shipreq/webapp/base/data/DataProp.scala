@@ -18,17 +18,6 @@ object DataProp {
   def dataId[O, D, Id <: TaggedInt](o: O)(implicit O: ObjDataId[O, D, Id]) =
     id[Id].contramap[D](O.id)
 
-  def must[A](name: => String): Prop[Must[A]] =
-    Prop.atom[Must[A]](name, _.fold(Some(_), _ => None))
-
-  def must[A, B](name: => String, f: A => Must[B]): Prop[A] =
-    must[B](name).contramap(f)
-
-  def mustThen[A](name: => String, ifExists: Prop[A]): Prop[Must[A]] =
-    Prop.eval[Must[A]](m => m.fold(
-      e => Eval.atom(name, m, Some(e)),
-      a => ifExists(a).liftL))
-
   def isubsetContents[A]: ISubset[A] => Set[A] = {
     case ISubset.All()   => Set.empty[A]
     case ISubset.Only(v) => v.whole
@@ -97,8 +86,7 @@ object DataProp {
       Prop.distinct("FieldRefKey", (_: Fields).flatMap(_.keyO.toVector))
 
     def fields =
-      mustThen[Fields]("FieldSet.config.fields", uniqueNames ∧ uniqueKeys)
-        .contramap[FieldSet](_.fields)
+      (uniqueNames ∧ uniqueKeys).contramap[FieldSet](_.fields)
 
     def orderNoDups =
       Prop.distinct("order", (_: FieldSet).order)

@@ -510,7 +510,7 @@ private[fields] object MainTable {
       override def renderDead(s: S, dragHandle: ReactTag, rs: RowStatus, f: CustomField.Tag): ReactTag =
         renderRow(rs)(
           dragHandle = dragHandle,
-          name       = UI mustA f.name(project.config.tags), // TODO is this a Must or an Issue?
+          name       = f.name(project.config.tags),
           refkey     = unusedField,
           mandatory  = staticMandatoryCheckbox(f.mandatory),
           reqtypes   = appReqTypesEditor.renderReadOnly(f.reqTypes),
@@ -566,7 +566,7 @@ private[fields] object MainTable {
       override def renderDead(s: S, dragHandle: ReactTag, rs: RowStatus, f: CustomField.Implication): ReactTag =
         renderRow(rs)(
           dragHandle = dragHandle,
-          name       = UI mustA f.name(project.config.customReqTypes), // TODO is this a Must or an Issue?
+          name       = f.name(project.config.customReqTypes),
           refkey     = unusedField,
           mandatory  = staticMandatoryCheckbox(f.mandatory),
           reqtypes   = appReqTypesEditor.renderReadOnly(f.reqTypes),

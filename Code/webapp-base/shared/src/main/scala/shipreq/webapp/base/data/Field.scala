@@ -7,7 +7,6 @@ import scalaz.std.AllInstances._
 import scalaz.syntax.equal._
 import shipreq.base.util._
 import shipreq.base.util.TaggedTypes.{TaggedString, TaggedInt}
-import Must.Auto._
 
 // =====================================================================================================================
 // Types
@@ -94,8 +93,8 @@ object Field {
   implicit lazy val applicableReqTypesEquality: UnivEq[ApplicableReqTypes] = implicitly
 
   def name(customReqTypes: CustomReqTypeIMap, tags: TagTree) = {
-    val cn: CustomField => Must[String] = CustomField.name(customReqTypes, tags)
-    val fn: Field       => Must[String] = {
+    val cn: CustomField => String = CustomField.name(customReqTypes, tags)
+    val fn: Field       => String = {
       case f: StaticField => f.name
       case f: CustomField => cn(f)
     }
@@ -198,8 +197,8 @@ object CustomField {
     override def independentName = None
     override def keyO = None
 
-    def name(tags: TagTree): Must[String] =
-      tags(tagId).map(_.tag.name)
+    def name(tags: TagTree): String =
+      tags.need(tagId).tag.name
   }
   object Tag {
     final case class Id(value: Int) extends CustomFieldId  {
@@ -221,7 +220,7 @@ object CustomField {
     override def independentName = None
     override def keyO = None
 
-    def name(customReqTypes: CustomReqTypeIMap): Must[String] =
+    def name(customReqTypes: CustomReqTypeIMap): String =
       ReqType.name(customReqTypes)(reqTypeId)
   }
   object Implication {
@@ -260,7 +259,7 @@ object CustomField {
     case f: Implication => f.copy(live = n)
   })
 
-  def name(customReqTypes: CustomReqTypeIMap, tags: TagTree): CustomField => Must[String] = {
+  def name(customReqTypes: CustomReqTypeIMap, tags: TagTree): CustomField => String = {
     case f: Text        => f.name
     case f: Tag         => f.name(tags)
     case f: Implication => f.name(customReqTypes)
@@ -288,10 +287,10 @@ object FieldId {
 case class FieldSet(customFields: FieldSet.CustomFields,
                     order       : FieldSet.Order) {
 
-  lazy val fields: Must[Vector[Field]] =
-    Traverse[Vector].traverseImpl(order) {
-      case  f: StaticField   => f
-      case id: CustomFieldId => customFields(id)
+  lazy val fields: Vector[Field] =
+    order map {
+      case f : StaticField   => f
+      case id: CustomFieldId => customFields need id
     }
 }
 

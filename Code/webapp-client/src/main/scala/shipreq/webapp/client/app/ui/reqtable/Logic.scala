@@ -131,11 +131,10 @@ private[reqtable] object Logic {
   private def impColValueFn(p: Project, fd: FilterDead): CustomField.Implication.Id => ReqId => Set[Pubid] =
     fid => {
 
-      val reqsOfSubjectType: Stream[Req] =
-        mustResolve(
-          p.config.customField(fid).map(f =>
-            p.reqs.reqsByType(f.reqTypeId).toStream)
-        )(Stream.empty)
+      val reqsOfSubjectType: Stream[Req] = {
+        val f = p.config.customField(fid)
+        p.reqs.reqsByType(f.reqTypeId).toStream
+      }
 
       // (source of implication for this column) → (all it transitively implies)
       val srcs: Stream[(Pubid, Set[ReqId])] =
@@ -156,7 +155,7 @@ private[reqtable] object Logic {
                                   tagColDist: TagColumnDistribution.TagIds,
                                   tagLookup : TagLookup): Req => Map[CustomField.Tag.Id, Expanded[ApplicableTagId]] = {
     customFieldExpander[CustomField.Tag.Id, ApplicableTagId](vs, ap, c => {
-      val legal = mustResolve(tagColDist inColumn c)(UnivEq.emptySet)
+      val legal = tagColDist inColumn c
       id => tagLookup(id).all & legal
     })
   }
@@ -220,7 +219,7 @@ private[reqtable] object Logic {
                           p         : Project,
                           tagColDist: TagColumnDistribution.TagIds,
                           tagLookup : TagLookup): ReqId => Vector[ApplicableTagId] = {
-    val tagsUsedInColumns = mustResolve(tagColDist.usedInColumns)(UnivEq.emptySet)
+    val tagsUsedInColumns = tagColDist.usedInColumns
     id => (tagLookup(id).all &~ tagsUsedInColumns).toVector
   }
 
@@ -279,9 +278,13 @@ private[reqtable] object Logic {
     val pImplications = p.implications
     val multiValuesFn = this.multiValuesFn(vs, p, tagColDist, tagLookup)
 
-    def pubid(reqId: ReqId): Option[Pubid] =
-      pReqs.reqM(reqId).fold[Option[Pubid]](failedMust(None), req =>
-        if (filterDead a req) Some(req.pubid) else None)
+    def pubid(reqId: ReqId): Option[Pubid] = {
+      val req = pReqs.req(reqId)
+      if (filterDead a req)
+        Some(req.pubid)
+      else
+        None
+    }
 
     def pubids(s: Set[ReqId]): Set[Pubid] =
       s.foldLeft(UnivEq.emptySet[Pubid])((q, id) =>

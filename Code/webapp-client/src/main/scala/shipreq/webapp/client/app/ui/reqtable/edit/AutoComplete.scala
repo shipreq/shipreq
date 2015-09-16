@@ -11,13 +11,12 @@ import scalaz.syntax.equal._
 import shapeless.syntax.singleton._
 import shipreq.base.util.MTrie
 import shipreq.base.util.MTrie.Ops
-import shipreq.base.util.{NonEmptyVector, UnivEq, Must, Util}
+import shipreq.base.util.{NonEmptyVector, Util}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{TextSearch, PlainText, Grammar}
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
 import shipreq.webapp.client.lib.{FilterDead, Plain, Contextualise}
-import shipreq.webapp.client.lib.ui.UI
 import TC.{Query, Strategy, StrategyA, Strategies}
 
 object AutoComplete {
@@ -92,10 +91,9 @@ object AutoComplete {
     reqItems(p, pt, p.reqs.reqs.values.toStream)
 
   def reqItems(p: Project, pt: PlainText.ForProject, legal: Stream[Req]): Stream[ReqItem] = {
-    val m = Must.foldMapM[Req, Stream, ReqItem](legal.filter(_.live :: Live))(req =>
-      p.config.reqType(req.pubid.reqTypeId).map(rt =>
-        new ReqItem(req, rt, pt reqTitle req)))
-    mustResolve(m)(Stream.empty).sortBy(_.sortKey)
+    legal.filter(_.live :: Live)
+      .map(req => new ReqItem(req, p.config.reqType(req.pubid.reqTypeId), pt reqTitle req))
+      .sortBy(_.sortKey)
   }
 
   def req(textSearch: TextSearch, legal0: Stream[ReqItem], Contextualise: Contextualise): StrategyA[ReqItem] = {
@@ -269,8 +267,8 @@ object AutoComplete {
               <.div(
                 <.div(
                   <.span(c, code),
-                  <.span(p, s"(${UI mustA PlainText.pubid(project, id)})"),
-                <.div(d, UI mustA pt.reqTitleById(id))))
+                  <.span(p, s"(${PlainText.pubid(project, id)})"),
+                <.div(d, pt.reqTitleById(id))))
             )))
           case g: ReqCodeGroup =>
             *.codeRefToGroupAutoComplete('req)(r => _('desc)(d =>

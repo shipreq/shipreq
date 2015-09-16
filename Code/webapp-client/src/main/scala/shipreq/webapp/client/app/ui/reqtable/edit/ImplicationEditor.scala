@@ -6,7 +6,7 @@ import scalaz.syntax.either._
 import scalaz.syntax.equal._
 import scalaz.{\/-, -\/}
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{SetDiff, Must, UnivEq}
+import shipreq.base.util.{SetDiff, UnivEq}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.{Grammar, PlainText, TextSearch}
@@ -38,15 +38,15 @@ object ImplicationEditor {
   def lookupAll(p: Project, pt: PlainText.ForProject): Lookup =
     Lookup(AutoComplete.reqItems(p, pt), UnivEq.emptyMap)
 
-  def lookupForCustomImpCol(p: Project, l: Lookup, fid: CustomField.Implication.Id): Must[Lookup] =
-    p.config.customField(fid).map(f =>
-      l.outlaw(None, _.reqTypeId ≠ f.reqTypeId))
-
-  def initialValueForCustomColumn(p: Project, fid: CustomField.Implication.Id, id: ReqId): Stream[Pubid] = {
-    val impIds = p.implications.tgtToSrc(id).toStream
-    val impReqs = unmust(p.reqs.reqsM(impIds))
-    impReqs.map(_.pubid)
+  def lookupForCustomImpCol(p: Project, l: Lookup, fid: CustomField.Implication.Id): Lookup = {
+    val f = p.config.customField(fid)
+    l.outlaw(None, _.reqTypeId ≠ f.reqTypeId)
   }
+
+  def initialValueForCustomColumn(p: Project, fid: CustomField.Implication.Id, id: ReqId): Stream[Pubid] =
+    p.implications.tgtToSrc(id)
+      .toStream
+      .map(p.reqs.req(_).pubid)
 
   /**
    * If true, the user edits what this subject implies (ie. subject → edit-specified).
@@ -62,29 +62,28 @@ object ImplicationEditor {
               column    : Column,
               project   : Px[Project],
               textSearch: Px[TextSearch],
-              lookupM   : Px[Must[Lookup]]): (VUCA[String, ImpDiff] => editor.Props, String) = {
+              lookup    : Px[Lookup]): (VUCA[String, ImpDiff] => editor.Props, String) = {
 
     val declFwd = isDeclFwd(column)
 
     val (initialValues, initialTextValue) = {
       val p = project.value()
 
-      val reqs = unmust(
-        for {
-          lu ← lookupM.value()
-          ls = initial.foldLeft(lu.legal.map(_.req.id).toSet)(_ - _._1)
-          rs ← p.reqs.reqsByPubidM(initial.fold(Vector.empty[Pubid])(_._2.toVector))
-        } yield rs.filter(ls contains _.id))
+      val reqs = {
+        val legal = initial.foldLeft(lookup.value().legal.map(_.req.id).toSet)(_ - _._1)
+        initial.fold(Stream.empty[Pubid])(_._2.toStream)
+          .map(p.reqs.reqByPubid)
+          .filter(legal contains _.id)
+      }
+
 
       val text = reqs
-        .map(r => UiText mustA PlainText.pubid(p, r.pubid))
+        .map(r => PlainText.pubid(p, r.pubid))
         .sorted
         .mkString(" ")
 
       (reqs.map(_.id).toSet, text)
     }
-
-    val lookup = lookupM.map(mustResolve(_)(Lookup(Stream.empty, UnivEq.emptyMap)))
 
     val autoComplete: Px[AutoComplete] =
       for {
@@ -121,10 +120,10 @@ object ImplicationEditor {
                   column    : Column,
                   project   : Px[Project],
                   textSearch: Px[TextSearch],
-                  lookupM   : Px[Must[Lookup]],
+                  lookup    : Px[Lookup],
                   commitFn  : ImpDiff => RemoteDataEditor.OnCommit): InitSelfManagedA[String] = {
 
-    val (props, initialTextValue) = prepare(initial, column, project, textSearch, lookupM)
+    val (props, initialTextValue) = prepare(initial, column, project, textSearch, lookup)
 
     val onCommit = RemoteDataEditor.CommitFilter(commitFn).ignore(_.isEmpty)
 
@@ -136,7 +135,7 @@ object ImplicationEditor {
            column    : Column,
            project   : Px[Project],
            textSearch: Px[TextSearch],
-           lookupM   : Px[Must[Lookup]],
+           lookup    : Px[Lookup],
            commitFn  : UpdateContentOnCommit): InitSelfManagedA[String] = {
 
     val declFwd = isDeclFwd(column)
@@ -151,6 +150,6 @@ object ImplicationEditor {
       commitFn cmap f
     }
 
-    selfManaged(Some((subjectId, initial)), column, project, textSearch, lookupM, onCommit)
+    selfManaged(Some((subjectId, initial)), column, project, textSearch, lookup, onCommit)
   }
 }

@@ -3,9 +3,9 @@ package shipreq.webapp.client.app.ui.reqtable
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
 import scala.scalajs.js
-import shipreq.base.util.{NonEmptyVector, Must, UnivEq}
+import shipreq.base.util.{NonEmptyVector, UnivEq}
 import shipreq.webapp.base.data.{Live, Project}
-import shipreq.webapp.base.{UiText, data}
+import shipreq.webapp.base.data
 import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.client.lib.FilterDead
 
@@ -102,10 +102,10 @@ object Column {
     def byProject(p: Project): NameResolver =
       byFields(p.config.fields.customFields, data.CustomField nameP p)
 
-    def byFields(customFields: data.FieldSet.CustomFields, customFieldName: data.CustomField => Must[String]) =
+    def byFields(customFields: data.FieldSet.CustomFields, customFieldName: data.CustomField => String) =
       NameResolver(
         customFields.mapValues(cf =>
-          UiText.mustA(customFieldName(cf))))
+          customFieldName(cf)))
 
     val builtIn: BuiltIn => String = {
       case ReqType        => ColumnNames.reqType

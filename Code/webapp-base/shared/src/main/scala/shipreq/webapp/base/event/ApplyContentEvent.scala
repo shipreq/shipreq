@@ -82,7 +82,12 @@ trait ApplyContentEvent extends ApplyConfigEvent {
     }
 
     val validateTags = whenUntrusted[Set[ApplicableTagId] => App[Project, Any]](
-      tags => App(_.config.atags(tags)))
+      tags => App(p =>
+        tags.toStream.map(p.config.atagValidate).find(_.isDefined) match {
+          case Some(None) | None => okUnit
+          case Some(Some(err))   => fail(err)
+        }
+      ))
 
     def applyPatchTags(e: PatchReqTags): AP = {
       val d = e.patch.value

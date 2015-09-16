@@ -29,9 +29,6 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
   private def memo[A: UnivEq](f: A => ReactElement): A => ReactElement =
     UnivEq mutableHashMapMemo f
 
-  private def memoM[A: UnivEq](f: A => Must[ReactElement]): A => ReactElement =
-    memo(a => UI.mustA(f(a)))
-
   private val deadValidity: Validity => Live => (Live, Validity) =
     Validity.memo(validityWhenDead =>
       Live.memo {
@@ -45,41 +42,39 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
   def issueO(id: CustomIssueTypeId, desc: Text.InlineIssueDesc.OptionalText): ReactElement =
     NonEmptyVector.maybe(desc, issue(id))(issue1(id, _))
 
-  val issue = memoM[CustomIssueTypeId](id =>
-    project.config.customIssueType(id).map(i =>
-      <.span(
-        *.issue,
-        G.hashRefKey.prefix ~ i.key.value)
-    ))
+  val issue = memo[CustomIssueTypeId] { id =>
+    val i = project.config.customIssueType(id)
+    <.span(
+      *.issue,
+      G.hashRefKey.prefix ~ i.key.value)
+  }
 
   private val issueDescSurroundPrefix = G.issueDescSurround.prefix.trim
   private val issueDescSurroundSuffix = G.issueDescSurround.suffix.trim
-  def issue1(id: CustomIssueTypeId, desc: Text.InlineIssueDesc.NonEmptyText): ReactElement =
-    UI.must(project.config.customIssueType(id))(i =>
-      <.span(
-        *.issue,
-        G.hashRefKey.prefix ~ i.key.value ~ issueDescSurroundPrefix,
-        format1(desc)(*.issueDesc),
-        issueDescSurroundSuffix)
-    )
+  def issue1(id: CustomIssueTypeId, desc: Text.InlineIssueDesc.NonEmptyText): ReactElement = {
+    val i = project.config.customIssueType(id)
+    <.span(
+      *.issue,
+      G.hashRefKey.prefix ~ i.key.value ~ issueDescSurroundPrefix,
+      format1(desc)(*.issueDesc),
+      issueDescSurroundSuffix)
+  }
 
-  val pubidColumnValue = memoM[Pubid](pubid =>
-    for {
-      txt <- PlainText.pubid(project, pubid)
-      req <- project.reqs.reqByPubidM(pubid)
-    } yield
-      <.span(*.pubidColumnValue(req.live), txt)
-  )
+  val pubidColumnValue = memo[Pubid] { pubid =>
+    val txt = PlainText.pubid(project, pubid)
+    val req = project.reqs.reqByPubid(pubid)
+    <.span(*.pubidColumnValue(req.live), txt)
+  }
 
-  private def _reqRef1(f: EndoFn[String], style: Req => TagMod): ReqId => Must[ReactElement] = id =>
-    for {
-      req <- project.reqs.reqM(id)
-      rt  <- project.config.reqType(req.pubid.reqTypeId)
-    } yield
+  private def _reqRef1(f: EndoFn[String], style: Req => TagMod): ReqId => ReactElement =
+    id => {
+      val req = project.reqs.req(id)
+      val rt  = project.config.reqType(req.pubid.reqTypeId)
       <.span(
         style(req),
         ^.title := plainText.reqTitle(req),
         f(PlainText.pubid(rt, req.pubid.pos)))
+    }
 
   private val _reqRef2: Contextualise => Validity => ReqId => ReactElement =
     Contextualise.memo { c =>
@@ -90,7 +85,7 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
       Validity.memo { v2 =>
         val g = deadValidity(v2)
         val style: Req => TagMod = req => *.reqRef(g(req.live))
-        memoM(_reqRef1(f, style))
+        memo(_reqRef1(f, style))
       }
     }
 
@@ -114,24 +109,24 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
 
   def pubidRef(c: Contextualise, validityWhenDead: Validity): Pubid => ReactElement = {
     val f = reqRef(c, validityWhenDead)
-    pubid => UI.must[ReqId, ReactElement](project.reqs.reqIdByPubidM(pubid))(f)
+    pubid => f(project.reqs.reqIdByPubid(pubid))
   }
 
   def pubidRefList(c: Contextualise, validityWhenDead: Validity)(ids: Vector[Pubid]): ReactElement =
     list(ids, sepComma)(pubidRef(c, validityWhenDead))
 
   /** Contextualised */
-  val codeRef = memoM[ReqCodeId] { id =>
-    import Must.Auto._
+  val codeRef = memo[ReqCodeId] { id =>
     import ProjectText.ReqCodeResolution._
     implicit def liveWithValidity(a: Live) = invalidWhenDead(a)
 
-    def toRef(c: ReqCode.Value, r: ReqId): Must[ReactElement] =
-      for (req <- project.reqs.reqM(r))
-        yield ref(c, *.reqRef(req.live), plainText reqTitle req)
+    def toRef(c: ReqCode.Value, r: ReqId): ReactElement = {
+      val req = project.reqs.req(r)
+      ref(c, *.reqRef(req.live), plainText reqTitle req)
+    }
 
     def toGroup(c: ReqCode.Value, g: ReqCodeGroup): ReactElement =
-      ref(c, *.reqCodeGroupRef(Live), UiText mustA plainText.reqCodeGroupTitle(g and id))
+      ref(c, *.reqCodeGroupRef(Live), plainText.reqCodeGroupTitle(g and id))
 
     def ref(c: ReqCode.Value, style: StyleA, title: UndefOr[String]): ReactElement =
       <.span(
@@ -139,7 +134,7 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
         ^.title := title,
         G.reflinkSurround(PlainText reqCode c))
 
-    ProjectText.resolveReqCode(id, project.reqCodes).flatMap {
+    ProjectText.resolveReqCode(id, project.reqCodes) match {
       case ActiveCode(c, r: ReqId)        => toRef(c, r)
       case ActiveCode(c, g: ReqCodeGroup) => toGroup(c, g)
       case DeadGroup(c)                   => ref(c, *.reqCodeGroupRef(Dead), undefined)
@@ -148,22 +143,21 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
     }
   }
 
-  val reqType = memoM[ReqTypeId](id =>
-    project.config.reqType(id).map(rt =>
-      <.span(
-        *.reqType(rt.live),
-        ^.title := rt.name,
-        rt.mnemonic.value)
-    ))
+  val reqType = memo[ReqTypeId] { id =>
+    val rt = project.config.reqType(id)
+    <.span(
+      *.reqType(rt.live),
+      ^.title := rt.name,
+      rt.mnemonic.value)
+  }
 
-  val tag = memoM[ApplicableTagId](id =>
-    project.config.atag(id).map(tag =>
-      <.span(
-        *.tag(tag.live),
-        ^.title := tag.name,
-        tag.key.value
-      )
-    ))
+  val tag = memo[ApplicableTagId] { id =>
+    val tag = project.config.atag(id)
+    <.span(
+      *.tag(tag.live),
+      ^.title := tag.name,
+      tag.key.value)
+  }
 
   def tagList(ids: Vector[ApplicableTagId]): ReactElement =
     list(ids, sepSpace)(tag)

@@ -1,8 +1,9 @@
 package shipreq.webapp.base.text
 
 import scalaz.syntax.equal._
-import shipreq.base.util.{Util, NonEmptySet, Must, UnivEq}
+import shipreq.base.util.{NonEmptySet, UnivEq, Util}
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.util.Must._
 
 object ProjectText {
   @inline def apply[Out](project: Project, _format: Text.AnyOptional => Out): ProjectText[Out] =
@@ -31,10 +32,9 @@ object ProjectText {
    *  - If target exists, display the semID.
    *  - If target doesn't exist, display the semID and mark it as an issue.
    */
-  def resolveReqCode(id: ReqCodeId, rc: ReqCodes): Must[ReqCodeResolution] = {
+  def resolveReqCode(id: ReqCodeId, rc: ReqCodes): ReqCodeResolution = {
     import ReqCodeResolution._
     import ReqCode._
-    import Must.Auto._
     import PlainText.reqCode
 
     // "display the closest semID" is translated here to closest via Levenshtein distance.
@@ -47,16 +47,16 @@ object ProjectText {
       }
     }
 
-    rc.reqCode(id).flatMap(code =>
-      rc.applyM(code).flatMap {
-        case Data(Some(ad), _, _) if ad.id ≟ id => ActiveCode(code, ad.target)
-        case d if d.refsToGroup.contains(id)    => DeadGroup(code)
-        case d => d.refsToReqs.m.find(_._2 contains id) match {
-          case Some((reqId, _))                 => findAlt(reqId, code) getOrElse[ReqCodeResolution] ReqWithoutCodes(reqId)
-          case None                             => Must.Failed(s"$id not found in $code: $d")
+    val code = rc.reqCode(id)
+    rc(code) match {
+      case Data(Some(ad), _, _) if ad.id ≟ id => ActiveCode(code, ad.target)
+      case d if d.refsToGroup.contains(id)    => DeadGroup(code)
+      case d =>
+        d.refsToReqs.m.find(_._2 contains id) match {
+          case Some((reqId, _)) => findAlt(reqId, code) getOrElse[ReqCodeResolution] ReqWithoutCodes(reqId)
+          case None             => mustNotHappen(s"$id not found in $code: $d")
         }
-      }
-    )
+    }
   }
 }
 
@@ -83,8 +83,8 @@ abstract class ProjectText[Out](project: Project) {
   def reqCodeGroupTitle(g: ReqCodeGroup.AndId): Out =
     reqCodeGroupTitleMemo.getOrElseUpdate(g.id, format(g.group.title))
 
-  def reqTitleById(id: ReqId): Must[Out] =
-    project.reqs.reqM(id) map reqTitle
+  def reqTitleById(id: ReqId): Out =
+    reqTitle(project.reqs.req(id))
 
   private val _customTextField: CustomField.Text.Id => ReqId => Option[Out] =
     fid => {

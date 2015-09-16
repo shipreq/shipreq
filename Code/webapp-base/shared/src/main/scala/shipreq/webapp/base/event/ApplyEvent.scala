@@ -13,10 +13,10 @@ object ApplyEvent {
 class ApplyEvent(implicit val trust: Trust) extends ApplyContentEvent {
 
   def apply(events: GenTraversable[Event]): AP =
-    apFoldLeft(events)(_apply1) >=> validateDataProps
+    apFoldLeft(events)(apply1Safe) >=> validateDataProps
 
   def apply1(event: Event): AP =
-    _apply1(event) >=> validateDataProps
+    apply1Safe(event) >=> validateDataProps
 
   private val validateDataProps: AP = whenUntrusted {
     val prop = DataProp.project.allIncludingConfig
@@ -34,7 +34,7 @@ class ApplyEvent(implicit val trust: Trust) extends ApplyContentEvent {
       nop
     else
       App { p =>
-        val applyAll = apFoldLeft(ves)(ve => _apply1(ve.event)) >=> validateDataProps
+        val applyAll = apFoldLeft(ves)(ve => apply1Safe(ve.event)) >=> validateDataProps
         applyAll(p).flatMap(validateHash(_, ves.last))
         // TODO On failure, replay to find the first mismatching event
       }
@@ -47,7 +47,10 @@ class ApplyEvent(implicit val trust: Trust) extends ApplyContentEvent {
       fail(s"Hash mismatch on $ve. Got $h2.")
   }
 
-  private def _apply1(event: Event): AP =
+  private def apply1Safe(event: Event): AP =
+    apply1Unsafe(event).attempt
+
+  private def apply1Unsafe(event: Event): AP =
     event match {
       case e: CreateCustomIssueType => CustomIssueTypeEvents applyCreate e
       case e: UpdateCustomIssueType => CustomIssueTypeEvents applyUpdate e

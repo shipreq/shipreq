@@ -3,7 +3,6 @@ package shipreq.webapp.base.test
 import scala.io.AnsiColor._
 import scalaz.Equal
 import scalaz.syntax.equal._
-import shipreq.base.util.Must
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.data.Project
@@ -12,10 +11,6 @@ import shipreq.webapp.base.hash.HashScheme
 object BaseTestUtil extends BaseTestUtil
 
 trait BaseTestUtil {
-
-  implicit class MustExtTest[A](m: Must[A]) {
-    def unmust: A = m.fold(fail(_), identity)
-  }
 
   def assertEq[A: Equal](actual: A, expect: A): Unit =
     assertEqO(None, actual, expect)

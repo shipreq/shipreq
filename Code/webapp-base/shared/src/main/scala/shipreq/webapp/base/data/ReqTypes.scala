@@ -5,7 +5,7 @@ import monocle.macros.Lenses
 import scalaz.{Order, Ordering}
 import scalaz.std.anyVal.intInstance
 import scalaz.syntax.order._
-import shipreq.base.util.{UnivEq, Must, NonEmptyVector}
+import shipreq.base.util.{UnivEq, NonEmptyVector}
 import shipreq.base.util.TaggedTypes._
 import ReqType.Mnemonic
 
@@ -33,8 +33,8 @@ sealed trait ReqType {
 object ReqType {
   final case class Mnemonic(value: String) extends TaggedString
 
-  def name(customReqTypes: CustomReqTypeIMap): ReqTypeId => Must[String] =
-    _.foldId(s => Must.Exists(s.name), c => customReqTypes(c).map(_.name))
+  def name(customReqTypes: CustomReqTypeIMap): ReqTypeId => String =
+    _.foldId(_.name, customReqTypes.need(_).name)
 }
 
 // =====================================================================================================================

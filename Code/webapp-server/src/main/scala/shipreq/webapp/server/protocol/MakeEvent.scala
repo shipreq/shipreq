@@ -1,6 +1,7 @@
 package shipreq.webapp.server.protocol
 
 import japgolly.nyaya.util.Multimap
+import scalaz.\/
 import scalaz.syntax.equal._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
@@ -24,9 +25,9 @@ object MakeEvent { // TODO Move
 
   // ===================================================================================================================
 
-  @inline private implicit class MustExt[A](private val m: Must[A]) extends AnyVal {
+  @inline private implicit class DisjExt[A](private val v: String \/ A) extends AnyVal {
     @inline def toMakeEventResult(f: A => Result): Result =
-      m.fold(Failed, f)
+      v.fold(Failed, f)
   }
 
   private def eventIfNonEmpty[A](a: A)(f: NonEmpty[A] => Result)(implicit proof: NonEmpty.ProofA[A]): Result =
@@ -63,7 +64,7 @@ object MakeEvent { // TODO Move
         CreateCustomIssueType(id, values)
 
       case CrudAction.Update(id, vs) =>
-        project.config.customIssueType(id) toMakeEventResult { cur =>
+        project.config.customIssueTypes.attempt(id) toMakeEventResult { cur =>
           val (key, desc) = vs
           val vs2 = gdUnequalValues(CustomIssueTypeGD, cur, "")
           eventIfNonEmpty(vs2)(UpdateCustomIssueType(id, _))
@@ -83,10 +84,12 @@ object MakeEvent { // TODO Move
         CreateCustomReqType(id, values)
 
       case CrudAction.Update(id, vs) =>
-        project.config.reqTypeC(id) toMakeEventResult { cur =>
-          val (mnemonic, name, imp) = vs
-          val vs2 = gdUnequalValues(CustomReqTypeGD, cur, "")
-          eventIfNonEmpty(vs2)(UpdateCustomReqType(id, _))
+        project.config.reqType(id) match {
+          case cur: CustomReqType =>
+            val (mnemonic, name, imp) = vs
+            val vs2 = gdUnequalValues(CustomReqTypeGD, cur, "")
+            eventIfNonEmpty(vs2)(UpdateCustomReqType(id, _))
+          case f => Failed(s"$f must be a CustomReqType.")
         }
 
       case CrudAction.Delete(id, da) =>
@@ -114,19 +117,19 @@ object MakeEvent { // TODO Move
         CreateCustomImpField(id, gdAllValues(CustomImpFieldGD, "vs"))
 
       case CfgAction.UpdateValues(id: CustomField.Text.Id, vs: TextFieldValues) =>
-        project.config.customField(id) toMakeEventResult { cur =>
+        project.config.customFieldAttempt(id) toMakeEventResult { cur =>
           val vs2 = gdUnequalValues(CustomTextFieldGD, cur, "vs")
           eventIfNonEmpty(vs2)(UpdateCustomTextField(id, _))
         }
 
       case CfgAction.UpdateValues(id: CustomField.Tag.Id, vs: TagFieldValues) =>
-        project.config.customField(id) toMakeEventResult { cur =>
+        project.config.customFieldAttempt(id) toMakeEventResult { cur =>
           val vs2 = gdUnequalValues(CustomTagFieldGD, cur, "vs")
           eventIfNonEmpty(vs2)(UpdateCustomTagField(id, _))
         }
 
       case CfgAction.UpdateValues(id: CustomField.Implication.Id, vs: ImplicationFieldValues) =>
-        project.config.customField(id) toMakeEventResult { cur =>
+        project.config.customFieldAttempt(id) toMakeEventResult { cur =>
           val vs2 = gdUnequalValues(CustomImpFieldGD, cur, "vs")
           eventIfNonEmpty(vs2)(UpdateCustomImpField(id, _))
         }
@@ -251,7 +254,7 @@ object MakeEvent { // TODO Move
       case CreateContentCmd.CreateReqCodeGroup(code, title) =>
         def makeEvent(id: ReqCodeId) =
           MadeEvent(CreateReqCodeGroup(id, gdAllValues(ReqCodeGroupGD, "")))
-        project.reqCodes.apply(code) match {
+        project.reqCodes.get(code) match {
           case Some(d) if d.active.isDefined     => Failed("Code in use.")
           case Some(d) if d.refsToGroup.nonEmpty => makeEvent(d.refsToGroup.min)
           case _                                 => makeEvent(nextCodeId())
@@ -301,7 +304,7 @@ object MakeEvent { // TODO Move
             r = Some(Failed(err))
 
           for (c <- cs.value.removed)
-            project.reqCodes(c).flatMap(_.active) match {
+            project.reqCodes.get(c).flatMap(_.active) match {
               case Some(a) if a.target ≟ id => remove += a.id
               case Some(_)                  => fail(s"Cannot remove ${PlainText reqCode c}: Doesn't belong to $id.")
               case None                     => fail(s"Cannot remove ${PlainText reqCode c}: Not found.")
@@ -310,7 +313,7 @@ object MakeEvent { // TODO Move
           if (r.isEmpty) {
             val nextCodeId = reqCodeIdCounter(project)
             for (c <- cs.value.added)
-              project.reqCodes(c) match {
+              project.reqCodes.get(c) match {
                 case Some(d) if d.active.isDefined =>
                   Failed(s"Code in use: ${PlainText reqCode c}.")
 
