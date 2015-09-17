@@ -34,13 +34,13 @@ object CustomReqTypeEventTest extends TestSuite with CustomReqTypeEvents {
 
   override def tests = TestSuite {
     'create {
-      'needName - assertFail("Name")          (c1.mod(_ - Name))
-      'needMne  - assertFail("Mnemonic")      (c1.mod(_ - Mnemonic))
-      'needImp  - assertFail("Imp")           (c1.mod(_ - Imp))
-      'badName  - assertFail("blank")         (c1.mod(_ + Name("")))
-      'badMne   - assertFail("Mnemonic")      (c1.mod(_ + Mnemonic("?")))
-      'dupName  - assertFail("unique")        (c1, c2.mod(_ + Name(mfName)))
-      'dupMne   - assertFail("unique")        (c1, c2.mod(_ + Mnemonic("MF")))
+      'needName - assertFail("Name")    (c1.mod(_ - Name))
+      'needMne  - assertFail("Mnemonic")(c1.mod(_ - Mnemonic))
+      'needImp  - assertFail("Imp")     (c1.mod(_ - Imp))
+      'badName  - assertFail("blank")   (c1.mod(_ + Name("")))
+      'badMne   - assertFail("Mnemonic")(c1.mod(_ + Mnemonic("?")))
+      'dupName  - assertFail("unique")  (c1, c2.mod(_ + Name(mfName)))
+      'dupMne   - assertFail("unique")  (c1, c2.mod(_ + Mnemonic("MF")))
     }
 
     'update {
@@ -55,10 +55,10 @@ object CustomReqTypeEventTest extends TestSuite with CustomReqTypeEvents {
         es :+= UpdateCustomReqType(1, nev(Mnemonic("MF"), Imp(ImplicationRequired.Not)))
         assertEq(r ,CustomReqType(1, "MF", Set("M", "X"), "xxx", ImplicationRequired.Not, Live))
       }
-      'badName  - assertFail("blank")    (c1, UpdateCustomReqType(1, nev(Name(""))))
-      'badMne   - assertFail("Mnemonic") (c1, UpdateCustomReqType(1, nev(Mnemonic("?"))))
-      'dupName  - assertFail("unique")   (c1, c2, UpdateCustomReqType(2, nev(Name(mfName))))
-      'dupMne   - assertFail("unique")   (c1, c2, UpdateCustomReqType(2, nev(Mnemonic("MF"))))
+      'badName  - assertFail("blank")   (c1, UpdateCustomReqType(1, nev(Name(""))))
+      'badMne   - assertFail("Mnemonic")(c1, UpdateCustomReqType(1, nev(Mnemonic("?"))))
+      'dupName  - assertFail("unique")  (c1, c2, UpdateCustomReqType(2, nev(Name(mfName))))
+      'dupMne   - assertFail("unique")  (c1, c2, UpdateCustomReqType(2, nev(Mnemonic("MF"))))
     }
 
     'delete {
