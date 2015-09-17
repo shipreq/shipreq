@@ -97,10 +97,5 @@ final case class Project(config      : ProjectConfig,
       reqs.reqs.keys,
       deadReqIds,
       f(implications))
-
-  // Finally, ensure validity
-//  import japgolly.nyaya._
-//  this assertSatisfies DataProp.project.all
-//  TODO Delete ↑ once confirmed that Project tightly confirmed in events etc
 }
 
