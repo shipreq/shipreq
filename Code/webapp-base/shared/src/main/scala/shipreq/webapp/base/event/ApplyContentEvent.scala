@@ -136,25 +136,9 @@ trait ApplyContentEvent extends ApplyConfigEvent {
     }
 
     def applySetCustomTextField(e: SetCustomTextField): AP = {
-      val modText: AE[ReqData.Text] = App.ok { t =>
-        val m = t.get(e.fid) getOrElse Map.empty
-
-        // TODO Pretty-much same logic repeated twice here - should use Monocle
-
-        val m2 = NonEmptyVector.option(e.value) match {
-          case Some(nev) => m.updated(e.id, nev)
-          case None      => m - e.id
-        }
-
-        if (m2.nonEmpty)
-          t.updated(e.fid, m2)
-        else
-          t - e.fid
-      }
-
+      val modText: AE[ReqData.Text] = App.ok(ReqData.textAt(e.fid, e.id).set(e.value))
       ensureLive(e.id) >-> ensureLiveTextField(e.fid) >-> (TX @=> modText)
     }
-
   }
 
   /**

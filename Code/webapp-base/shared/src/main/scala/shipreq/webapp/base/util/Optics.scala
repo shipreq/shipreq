@@ -7,6 +7,16 @@ import shipreq.base.util.{UnivEq, IMap}
 
 object Optics {
 
+  def nonEmptyMapIso[K, V]: Iso[Option[Map[K, V]], Map[K, V]] =
+    Iso[Option[Map[K, V]], Map[K, V]](_ getOrElse Map.empty)(m => if (m.isEmpty) None else Some(m))
+
+  def nonEmptyMapValue[K, V, O, I](k: K, iso: PIso[Option[V], Option[V], O, I]): PLens[Map[K, V], Map[K, V], O, I] =
+    PLens[Map[K, V], Map[K, V], O, I](m => iso.get(m get k))(i => m =>
+      iso.reverseGet(i) match {
+        case Some(v) => m.updated(k, v)
+        case None    => m - k
+      })
+
   def imapTraversal[K: UnivEq, V]: Traversal[IMap[K, V], V] = {
     type I = IMap[K, V]
     val streamTraversal = PTraversal.fromTraverse[Stream, V, V]

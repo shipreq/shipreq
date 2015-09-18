@@ -1,5 +1,6 @@
 package shipreq.webapp.base.text
 
+import monocle.Iso
 import shipreq.base.util.{NonEmptyVector, UnivEq}
 import shipreq.webapp.base.data._
 
@@ -46,6 +47,9 @@ object Atom {
     sealed trait Atom
     final type OptionalText = Vector[Atom]
     final type NonEmptyText = NonEmptyVector[Atom]
+
+    final val NonEmptyIso: Iso[Option[NonEmptyText], OptionalText] =
+      Iso[Option[NonEmptyText], OptionalText](_.fold(Vector.empty[Atom])(_.whole))(NonEmptyVector.option)
   }
 
   /** Literal text, like "hello there" */
