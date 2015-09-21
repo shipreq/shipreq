@@ -415,10 +415,23 @@ object DataProp {
       ).rename("Cross-constituent refs").contramap[P](_ mapStrengthR mkRefs)
     }
 
-    // TODO Validate IdCeiling
+    val validateIdCeiling: Prop[Project] = {
+      val idCeilingIndices = 0 until IdCeilings.zero.productArity
+      @inline def lookup(ic: IdCeilings, i: Int): Int =
+        ic.productElement(i).asInstanceOf[Int]
+      Prop.atom("IdCeiling", p => {
+        val actual = p.idCeilings
+        val ref = IdCeilings.calculate(p)
+        // The actual high-water mark must be at least as high as current levels
+        if (idCeilingIndices.exists(i => lookup(actual, i) < lookup(ref, i)))
+          Some(s"Invalid ID ceiling(s).\nHave: $actual\nCalc: $ref")
+        else
+          None
+      })
+    }
 
     val allExcludingConfig: Prop[Project] = "Project" rename_: (
-      constituents ∧ atoms ∧ liveReqCodeRequiresLiveTarget ∧ validRefs)
+      constituents ∧ atoms ∧ liveReqCodeRequiresLiveTarget ∧ validRefs ∧ validateIdCeiling)
 
     val allIncludingConfig: Prop[Project] =
       allExcludingConfig ∧ projectConfig.all.contramap(_.config)
