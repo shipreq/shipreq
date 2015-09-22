@@ -1,1 +1,1 @@
-../webapp/src/main/resources/db_migrations
+../webapp-server/src/main/resources/db_migrations
