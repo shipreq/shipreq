@@ -20,7 +20,7 @@ object HashSchemeTest extends TestSuite {
     SampleProject3.project :: Nil
 
   def calc(hs: HashScheme): List[Int] =
-    projectData map hs.hash
+    projectData map hs.value.hashProject.hash
 
   override def tests = TestSuite {
     'latest - assertEq(calc(HashScheme.latest), List(-313536696, 1780548659))

@@ -21,6 +21,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util.Debug._
 import shipreq.webapp.base.data._, ReqType.Mnemonic, Field.ApplicableReqTypes
+import shipreq.webapp.base.event.ApplyEvent.LogicVer
 import shipreq.webapp.base.event.DeletionAction
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{Text, Grammar}
@@ -1731,10 +1732,20 @@ object RandomData {
 
     val hash: Gen[Int] = Gen.int
 
-    val projectHash: Gen[ProjectHash] =
-      Gen.apply2(ProjectHash.apply)(hashScheme, hash)
+    val logicVer: Gen[LogicVer] =
+      Gen insert LogicVer.Current
+
+    val hashScope: Gen[HashScope] =
+      oneofV(HashScope.all)
+
+    val hashRec: Gen[HashRec] =
+      Gen.apply4(HashRec.apply)(hashScope, logicVer, hashScheme, hash)
+
+    val hashRecs: Gen[HashRec.Collection] =
+      hashRec.stream.map(_.map(r => (r.copy(hash = 0), r)).toMap.values.toSet)
+      // ↑ Avoids duplicates in the event_hash PK
 
     val verifiedEvent: Gen[VerifiedEvent] =
-      Gen.apply3(VerifiedEvent.apply)(hashScheme, hash, event)
+      Gen.apply2(VerifiedEvent.apply)(event, hashRecs)
   }
 }

@@ -43,7 +43,7 @@ object ProjectCreate extends SingleOpStatefulSnippet {
 
       case DbSuccess(id) =>
         val t = ProjectTemplate.Default
-        dao.createEvent(id, EventSeq(0), ApplyTemplate(t), t.projectHash)
+        dao.createEvent(id, EventSeq(0), ApplyTemplate(t), t.hashRecs)
         \/-(id)
 
       case NameAlreadyInUse =>

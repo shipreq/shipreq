@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import japgolly.nyaya._
 import japgolly.nyaya.test._
 import japgolly.nyaya.test.PropTestOps._
-import scalaz.std.option.optionEqual
+import scalaz.std.vector.vectorEqual
 import scalaz.std.tuple.tuple2Equal
 import utest._
 import shipreq.base.util._
@@ -13,7 +13,7 @@ import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.event.EventEquality._
-import shipreq.webapp.base.hash.ProjectHash
+import shipreq.webapp.base.hash.HashRec
 import shipreq.webapp.base.test.BaseTestUtil._
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.server.test.TestDB
@@ -29,22 +29,24 @@ object DaoTest2 extends TestSuite {
 
     val seqCounter = new AtomicInteger()
 
-    val prop = Prop.equal[(ActiveEvent, ProjectHash)]("load . save = id")(
+    val prop = Prop.equal[(ActiveEvent, HashRec.Collection)]("load . save = id")(
       i => {
         val seq = EventSeq(seqCounter.incrementAndGet())
         implicit val (s, db, projectId) = tldb.get()
         val dao = db.dao
         dao.createEvent(projectId, seq, i._1, i._2)
-        db.debugSelectOnError(s"select * from event where seq = ${seq.value}") {
-          dao.findEvent(projectId, seq).map(ve => ve.event match {
-            case ae: ActiveEvent => (ae, ve.projectHash)
-            case e               => sys error s"Not an ActiveEvent: $e"
-          })
-        }
+        val loaded =
+          db.debugSelectOnError(s"select * from event e, event_hash eh where e.project_id=eh.project_id and e.seq=eh.seq and e.seq = ${seq.value}") {
+            dao.findAllEvents(projectId).filter(_._1 == seq).map(r => r._2.event match {
+              case ae: ActiveEvent => (ae, r._2.hashRecs)
+              case e               => sys error s"Not an ActiveEvent: $e"
+            })
+          }
+        loaded
       },
-      Some(_))
+      Vector1(_))
 
-    val rnd = Gen.tuple2(RandomData.events.activeEvent, RandomData.events.projectHash)
+    val rnd = Gen.tuple2(RandomData.events.activeEvent, RandomData.events.hashRecs)
 
     tldb around prop.mustBeSatisfiedBy(rnd)
   }

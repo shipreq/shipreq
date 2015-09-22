@@ -7,8 +7,8 @@ import shipreq.base.util.TaggedTypes.JsonStr
 import shipreq.base.db.SqlHelpers._
 import shipreq.base.db.JodaTimeSqlHelpers._
 import shipreq.taskman.api.{EmailAddr, UserId}
-import shipreq.webapp.base.event.{VerifiedEvent, ActiveEvent}
-import shipreq.webapp.base.hash.ProjectHash
+import shipreq.webapp.base.event.{VerifiedEvent, ActiveEvent, Event}
+import shipreq.webapp.base.hash.HashRec
 import shipreq.webapp.server.lib.Types._
 import shipreq.webapp.server.feature.UcFilter
 import shipreq.webapp.server.security.PasswordAndSalt
@@ -280,20 +280,24 @@ private[db] object Sql {
 
   import EventDao.EventSeq
 
-  private val eventAEPH = "type_id, data_id_type, data_id, data, hash_scheme, hash".replace(" ","")
-  private val eventAEPH_? = "?,?,?,?,?,?"
+  private final val eventE = "type_id,data_id_type,data_id,data"
+  private final val eventE_? = "?,?,?,?"
 
-  private val eventVE = eventAEPH
+  private final val eventHR = "scope,logic_ver,hash_scheme,hash"
+  private final val eventHR_? = "?,?,?,?"
 
   // select coalesce(max(seq)+1,1) from event where project_id=?
-  @Insert val InsertEvent = update[(ProjectId, EventSeq, ActiveEvent, ProjectHash)](
-      s"INSERT INTO event(project_id,seq,$eventAEPH) VALUES(?,?,${eventAEPH_?})")
+  @Insert val InsertEvent = update[(ProjectId, EventSeq, ActiveEvent)](
+    s"INSERT INTO event(project_id,seq,$eventE) VALUES(?,?,${eventE_?})")
 
-  val SelectEvent = query[(ProjectId, EventSeq), VerifiedEvent](
-    s"SELECT $eventVE FROM event WHERE project_id=? AND seq=?")
+  @Insert val InsertEventHashRecs = update[(ProjectId, EventSeq, HashRec)](
+    s"INSERT INTO event_hash(project_id,seq,$eventHR) VALUES(?,?,${eventHR_?})")
 
-  val SelectAllEvents = query[ProjectId, (EventSeq, VerifiedEvent)](
-    s"SELECT seq,$eventVE FROM event WHERE project_id=? ORDER BY seq")
+  val SelectAllEvents = query[ProjectId, (EventSeq, Event)](
+    s"SELECT seq,$eventE FROM event WHERE project_id=? ORDER BY seq")
+
+  val SelectAllEventHashes = query[ProjectId, (EventSeq, HashRec)](
+    s"SELECT seq,$eventHR FROM event_hash WHERE project_id=?")
 }
 
 

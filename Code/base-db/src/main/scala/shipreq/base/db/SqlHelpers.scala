@@ -6,10 +6,20 @@ import shipreq.base.util.TaggedTypes._
 
 object SqlHelpers {
 
-  @inline def pgObject(typ: String, value: String): PGobject = {
+  def pgObject(typ: String, value: String): PGobject = {
     val o = new PGobject()
     o.setType(typ)
     o.setValue(value)
+    o
+  }
+
+  /**
+   * @param c [0..255]
+   */
+  def pgChar(c: Char): PGobject = {
+    val o = new PGobject()
+    o.setType("char")
+    o.setValue(c.toString)
     o
   }
 
@@ -18,7 +28,8 @@ object SqlHelpers {
   }
 
   implicit class SetParameterExt[A](val sp: SetParameter[A]) extends AnyVal {
-    def contramap[Z](f: Z => A): SetParameter[Z] = ContramapSP(f, sp)
+    def contramap[Z](f: Z => A): SetParameter[Z] =
+      ContramapSP(f, sp)
   }
 
   trait SqlForType[T] {
@@ -49,12 +60,20 @@ object SqlHelpers {
     override def setO(p: PositionedParameters, v: Option[String]): Unit = p.setStringOption(v)
   }
 
-  implicit class PositionedResultExt(val r: PositionedResult) extends AnyVal {
+  implicit class PositionedParametersExt(private val pp: PositionedParameters) extends AnyVal {
+    def setPgChar(c: Char): Unit =
+      pp.setObject(pgChar(c), java.sql.Types.OTHER)
+  }
+
+  implicit class PositionedResultExt(private val r: PositionedResult) extends AnyVal {
     def nextTagged[T <: TaggedType](implicit S: SqlForType[T#U], TC: TaggedTypeCtor[T]): T =
       TC(S.next(r))
 
     def nextTaggedO[T <: TaggedType](implicit S: SqlForType[T#U], TC: TaggedTypeCtor[T]): Option[T] =
       S.nextO(r).map(TC.apply)
+
+    def nextPgChar(): Char =
+      r.nextString().head
   }
 
   def GR_Tagged[T <: TaggedType](implicit S: SqlForType[T#U], TC: TaggedTypeCtor[T]): GetResult[T] =

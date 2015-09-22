@@ -1,9 +1,11 @@
 package shipreq.webapp.server.db
 
 import scala.annotation.tailrec
+import shipreq.base.util._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.hash.{ProjectHash, HashScheme}
+import shipreq.webapp.base.hash._
 import shipreq.webapp.server.lib.Types.ProjectId
+import ApplyEvent.LogicVer
 import EventDao.EventSeq
 
 object EventDbCodecs {
@@ -11,7 +13,6 @@ object EventDbCodecs {
   import upickle._
   import upickle.Fns._
   import upickle.BaseCodecs.StringRW
-  import shipreq.base.util._
   import shipreq.webapp.base.data._
   import shipreq.webapp.base.protocol.MPickleMacros._
   import shipreq.webapp.base.text.AtomTC
@@ -602,24 +603,51 @@ object EventSqlHelpers {
       pp setInt v.value
   }
 
-  implicit val GR_HashScheme = GetResult(HashScheme unsafeGet _.nextShort())
+  implicit val GR_HashScheme = GetResult(r => HashScheme unsafeGet HashSchemeId(r.nextPgChar()))
   implicit object SP_HashScheme extends SetParameter[HashScheme] {
     def apply(v: HashScheme, pp: PositionedParameters): Unit =
-      pp setShort v.id
+      pp setPgChar v.id.value
   }
 
-  implicit val GR_ProjectHash = GetResult(r => ProjectHash(r.<<, r.<<))
-  implicit object SP_ProjectHash extends SetParameter[ProjectHash] {
-    def apply(v: ProjectHash, pp: PositionedParameters): Unit = {
-      SP_HashScheme(v.scheme, pp)
-      pp setInt v.hash
+  private val (hashScopeToChar, charToHashScope, _, _) =
+    UtilMacros.adtIso[HashScope, Char] {
+      case HashScope.WholeProject    => 'P'
+      case HashScope.CfgIssueTypes   => 'I'
+      case HashScope.CfgReqTypes     => 'R'
+      case HashScope.CfgFields       => 'F'
+      case HashScope.CfgTags         => 'T'
+      case HashScope.Reqs            => 'r'
+      case HashScope.ReqCodes        => 'c'
+      case HashScope.TextFieldData   => 'x'
+      case HashScope.TagData         => 't'
+      case HashScope.ImplicationData => 'i'
+    }
+  implicit val GR_HashScope = GetResult(r => charToHashScope(r.nextPgChar()))
+  implicit object SP_HashScope extends SetParameter[HashScope] {
+    def apply(v: HashScope, pp: PositionedParameters): Unit =
+      pp setPgChar hashScopeToChar(v)
+  }
+
+  implicit val GR_LogicVer = GetResult(r => LogicVer(r.nextPgChar()))
+  implicit object SP_LogicVer extends SetParameter[LogicVer] {
+    def apply(v: LogicVer, pp: PositionedParameters): Unit =
+      pp setPgChar v.value
+  }
+
+  implicit val GR_HashRec = GetResult(r => HashRec(r.<<, r.<<, r.<<, r.<<))
+  implicit object SP_HashRec extends SetParameter[HashRec] {
+    def apply(v: HashRec, pp: PositionedParameters): Unit = {
+      pp >> v.scope
+      pp >> v.logicVer
+      pp >> v.scheme
+      pp >> v.hash
     }
   }
 
   implicit object GR_Event extends GetResult[Event] {
     def apply(r: PositionedResult) = {
       val typeId     = r.nextShort()
-      val dataIdType = r.nextString().head.toByte
+      val dataIdType = r.nextPgChar().toByte
       val dataId     = r.nextObject().asInstanceOf[Integer]
       val data       = r.nextString()
       val codec      = eventCodecRegistry.reader(typeId)
@@ -637,15 +665,6 @@ object EventSqlHelpers {
       pp.setObject(pgObject("json", d._3), java.sql.Types.OTHER)
     }
   }
-
-  implicit object GR_VerifiedEvent extends GetResult[VerifiedEvent] {
-    def apply(r: PositionedResult) = {
-      val event      = GR_Event(r)
-      val hashScheme = GR_HashScheme(r)
-      val hash       = r.nextInt()
-      VerifiedEvent(hashScheme, hash, event)
-    }
-  }
 }
 
 // =====================================================================================================================
@@ -657,18 +676,34 @@ object EventDao {
 }
 
 trait EventDao {
-  this: DaoS =>
+  this: DaoT =>
   import Sql._
 
-  def createEvent(p: ProjectId, seq: EventSeq, e: ActiveEvent, h: ProjectHash): Unit =
-    InsertEvent(p, seq, e, h).execute
-
-  def findEvent(p: ProjectId, seq: EventSeq): Option[VerifiedEvent] =
-    SelectEvent(p, seq).firstOption
+  def createEvent(p: ProjectId, seq: EventSeq, e: ActiveEvent, hrs: HashRec.Collection): Unit = {
+    InsertEvent(p, seq, e).execute
+    for (hr <- hrs)
+      InsertEventHashRecs(p, seq, hr).execute // TODO Send in bulk
+  }
 
   /**
    * @return Events in order from lowest to highest seq.
    */
-  def findAllEvents(p: ProjectId): Vector[(EventSeq, VerifiedEvent)] =
-    SelectAllEvents(p).buildColl[Vector]
+  def findAllEvents(p: ProjectId): Vector[(EventSeq, VerifiedEvent)] = {
+    // TODO EventDao.findAllEvents has shithouse impl
+
+    class Tmp(val e: Event) {
+      var hrs = Set.empty[HashRec]
+    }
+
+    val map = collection.mutable.HashMap.empty[EventSeq, Tmp]
+    for (t <- SelectAllEvents(p))
+      map.put(t._1, new Tmp(t._2))
+    for (t <- SelectAllEventHashes(p))
+      map(t._1).hrs += t._2
+
+    val result = Vector.newBuilder[(EventSeq, VerifiedEvent)]
+    for ((seq, tmp) <- map)
+      result += ((seq, VerifiedEvent(tmp.e, tmp.hrs)))
+    result.result().sortBy(_._1.value)
+  }
 }

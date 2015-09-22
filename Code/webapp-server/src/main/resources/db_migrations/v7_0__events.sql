@@ -8,7 +8,7 @@ CREATE TABLE event (
   hash_scheme  SMALLINT    NOT NULL CHECK (hash_scheme > 0),
   hash         INTEGER     NOT NULL,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE(project_id, seq));
+  PRIMARY KEY (project_id, seq));
 
 COMMENT ON TABLE  event              IS 'An append-only sequence of modification events applied to an empty project.';
 COMMENT ON COLUMN event.seq          IS 'Order in which events for a Project are to be applied.';

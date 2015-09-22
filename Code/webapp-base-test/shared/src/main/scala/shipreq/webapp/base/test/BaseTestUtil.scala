@@ -6,7 +6,7 @@ import scalaz.syntax.equal._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.data.Project
-import shipreq.webapp.base.hash.HashScheme
+import shipreq.webapp.base.hash.HashRec
 
 object BaseTestUtil extends BaseTestUtil
 
@@ -102,9 +102,8 @@ trait BaseTestUtil {
 
   def _verifyEvent(p: Project, e: Event): (Project, VerifiedEvent) = {
     val p2 = ApplyEvent.untrusted.apply1(e)(p).fold(sys.error, identity)
-    val hs = HashScheme.latest
-    val h = hs hash p2
-    (p2, VerifiedEvent(hs, h, e))
+    val hrs = HashRec.changes(p, p2)
+    (p2, VerifiedEvent(e, hrs))
   }
 
   def verifyEvents(p0: Project)(es: Event*): VerifiedEvents = {

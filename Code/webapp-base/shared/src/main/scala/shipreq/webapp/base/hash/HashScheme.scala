@@ -1,22 +1,17 @@
 package shipreq.webapp.base.hash
 
-import shipreq.base.util.{UnivEq, NonEmptyVector}
-import shipreq.webapp.base.data.Project
+import shipreq.base.util.{NonEmptyVector, UnivEq}
 
-final case class HashScheme private[HashScheme](value: DataHash, id: Short) {
+final case class HashSchemeId(value: Char) extends AnyVal
+
+final case class HashScheme private[HashScheme](value: DataHash, id: HashSchemeId) {
   override val hashCode = value.##
   override def equals(o: Any): Boolean =
     o match {
       case b: AnyRef => b eq this
       case _         => false
     }
-  override def toString = s"HashScheme($id)"
-
-  def hash(project: Project): Int =
-    value.hashProject hash project
-
-  def apply(project: Project): ProjectHash =
-    ProjectHash(this, hash(project))
+  override def toString = s"HashScheme(${id.value})"
 }
 
 object HashScheme {
@@ -31,19 +26,13 @@ object HashScheme {
     NonEmptyVector(new DataHash(MurmurHash3))
 
   val all: NonEmptyVector[HashScheme] =
-    raw.mapWithIndex((h, i) => HashScheme(h, (i + 1).toShort))
+    raw.mapWithIndex((h, i) => HashScheme(h, HashSchemeId((i + 97).toChar)))
 
   val latest: HashScheme =
     all.last
 
   private[this] val allWhole = all.whole
 
-  def unsafeGet(id: Short): HashScheme =
-    allWhole(id.toInt - 1)
-}
-
-case class ProjectHash(scheme: HashScheme, hash: Int)
-
-object ProjectHash {
-  implicit def equality: UnivEq[ProjectHash] = UnivEq.derive
+  def unsafeGet(id: HashSchemeId): HashScheme =
+    allWhole(id.value.toInt - 97)
 }

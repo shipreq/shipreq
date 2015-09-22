@@ -2,18 +2,45 @@ package shipreq.webapp.base.event
 
 import japgolly.nyaya.LogicPropExt
 import scalaz.{\/-, \/}
+import shipreq.base.util.UnivEq
 import shipreq.webapp.base.data.{Project, DataProp}
+import shipreq.webapp.base.hash.HashRec
 import ApplyEventLib._, SE.SE
 
 object ApplyEvent {
-  val trusted   = new ApplyEvent()(Trusted)
+
+  /**
+   * Applies trusted events (i.e. events that have been verified previously and usually stored in the DB already).
+   */
+  val trusted = new ApplyEvent()(Trusted)
+
+  /**
+   * Applies untrusted events (i.e. new events created in response to a user request).
+   */
   val untrusted = new ApplyEvent()(Untrusted)
+
+  case class LogicVer(value: Char) extends AnyVal
+  object LogicVer {
+    /**
+     * When logic changes in a way that breaks backwards-compatibility this value must be changed to a new value.
+     *
+     * Doing so allows logic bugfixes or improvements to be made here without breaking the ability to load and apply
+     * events created previously. Application logic can use this value to identify and ignore data integrity checks where
+     * discrepancy is expected and desired.
+     */
+    final val Current = LogicVer('1')
+    // When this ↑ first changes.
+    //   1) Update HashRec.merge to handle it.
+    //   2) Update BinCodecEvents & make it stop using ConstPickler.
+    //   3) Update RandomData.
+
+    implicit def equality: UnivEq[LogicVer] = UnivEq.derive
+  }
 }
 
 final class ApplyEvent(implicit val trust: Trust) extends ApplyContentEvent {
   type Result = String \/ Project
   type Events = Iterable[Event]
-  type VerifiedEvents = Iterable[VerifiedEvent]
 
   def apply(events: Events)(p: Project): Result =
     applyAllSafe(events) exec p
@@ -33,20 +60,27 @@ final class ApplyEvent(implicit val trust: Trust) extends ApplyContentEvent {
       }
     }
 
-  def applyVerified(ves: VerifiedEvents)(p: Project): Result =
+  def applyVerified(ves: Traversable[VerifiedEvent])(p: Project): Result =
     if (ves.isEmpty)
       \/-(p)
-    else
+    else {
+      val s = ves.toStream
+      val events = s.map(_.event)
+      val finalHashRecs = s.map(_.hashRecs) reduceLeft HashRec.merge
       // TODO On failure, replay to find the first mismatching event
-      (applyAllSafe(ves.map(_.event)) >> validateHash(ves.last)) exec p
+      val plan = applyAllSafe(events) >> validateHashRecs(finalHashRecs)
+      plan exec p
+    }
 
-  private def validateHash(ve: VerifiedEvent): SE[Unit] =
+  private def validateHashRecs(recs: HashRec.Collection): SE[Unit] =
     SE.testO { p =>
-      val h2 = ve.projectHash.scheme hash p
-      if (ve.projectHash.hash == h2)
+      val isValid = (_: HashRec).isValid(p)
+      if (recs forall isValid)
         None
-      else
-        Some(s"Hash mismatch on $ve. Got $h2.")
+      else {
+        val failures = recs.filterNot(isValid)
+        Some(s"Hash mismatch: ${failures mkString ", "}")
+      }
     }
 
   private def safely(apply: SE[Unit]): SE[Unit] =

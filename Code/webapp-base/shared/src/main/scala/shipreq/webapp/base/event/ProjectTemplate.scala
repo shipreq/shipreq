@@ -3,7 +3,7 @@ package shipreq.webapp.base.event
 import scalaz.{-\/, \/-}
 import shipreq.base.util.{UnivEq, NonEmptyVector, NonEmptySet, ISubset}
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.hash.{HashScheme, ProjectHash}
+import shipreq.webapp.base.hash.HashRec
 import shipreq.webapp.base.util.GenericDataMacros._
 import Field.ApplicableReqTypes
 
@@ -14,10 +14,10 @@ import Field.ApplicableReqTypes
 sealed trait ProjectTemplate {
   def events: Vector[Event]
 
-  val projectHash: ProjectHash =
+  val hashRecs: HashRec.Collection =
     ApplyEvent.untrusted(events)(Project.empty) match {
       case -\/(err) => sys.error(s"Invalid ProjectTemplate: $this. Failed with: $err")
-      case \/-(p2)  => HashScheme.latest(p2)
+      case \/-(p2)  => HashRec.changes(Project.empty, p2)
     }
 }
 

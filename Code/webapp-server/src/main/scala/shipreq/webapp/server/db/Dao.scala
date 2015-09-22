@@ -41,7 +41,7 @@ private[db] class Dao(_session: Session) extends DaoT {
 /**
  * Database interfacing methods that do not require a transaction.
  */
-sealed trait DaoS extends EventDao {
+sealed trait DaoS {
   import Sql._
 
   implicit val session: Session
@@ -268,7 +268,7 @@ sealed trait DaoS extends EventDao {
 /**
  * All database interfacing methods, including those that require a transaction.
  */
-sealed trait DaoT extends DaoS {
+sealed trait DaoT extends DaoS with EventDao {
   import shipreq.webapp.server.lib.Misc.ShortExt
   import Sql._
 
