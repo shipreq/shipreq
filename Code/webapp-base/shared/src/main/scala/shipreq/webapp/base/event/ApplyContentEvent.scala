@@ -1,10 +1,11 @@
 package shipreq.webapp.base.event
 
 import japgolly.nyaya.util.Multimap
+import scala.annotation.tailrec
 import scalaz.syntax.equal._
 import shipreq.base.util._
 import shipreq.webapp.base.data.{Validators => V, _}
-import shipreq.webapp.base.text.Text
+import shipreq.webapp.base.text.{Grammar, Text}
 import ApplyEventLib._, SE.SE
 import DataImplicits._
 import MTrie.Ops
@@ -185,6 +186,10 @@ trait ApplyContentEvent extends ApplyConfigEvent {
     def ensureActiveDataTargetIs(t: Target): ActiveData => SE[Unit] =
       whenUntrusted(ad => SE.test(ad.target ≟ t, s"Expected ReqCode target to be $t, found: ${ad.target}."))
 
+    def ensureRefToReqExists(v: Value, d: Data, rc: ReqCodeId)(reqId: ReqId): SE[Unit] =
+      whenUntrusted(
+        SE.test(d.refsToReqs(reqId) contains rc, s"Ref to ${show(reqId)} not found in ${show(v)}."))
+
     def ensureReqCodeGroup(t: Target): SE[Unit] =
       whenUntrusted(needReqCodeGroup(t).void)
 
@@ -341,21 +346,59 @@ trait ApplyContentEvent extends ApplyConfigEvent {
     /**
      * Restore a requirement's inactive ReqCode back to active status.
      *
-     * If the ReqCode is already active with another ID, then it has been usurped while inactive, in which case this
-     * function returns without modification or error.
+     * If the ReqCode is already active with another ID, then it has been usurped while it was inactive.
+     * Usurped ReqCodes are renamed to avoid conflict before being restored.
      */
     def restoreReqCode(trie: Trie, reqId: ReqId, id: ReqCodeId, v: Value): SE[Trie] =
       for {
         d <- needData(trie, v)
-        _ <- whenUntrusted(SE.test(d.refsToReqs(reqId) contains id, s"${show(reqId)} not found in $v"))
+        _ <- ensureRefToReqExists(v, d, id)(reqId)
       } yield
-      if (d.active.isEmpty) {
-        val ad = ActiveData(id, reqId)
-        val rr = d.refsToReqs.del(reqId, id)
-        trie.put(v, Data(Some(ad), d.refsToGroup, rr))
-      } else
-        // ReqCode has been usurped while it was inactive - now it will have to stay inactive
-        trie
+        if (d.active.isEmpty) {
+          // ReqCode is available. Restore simply.
+          val ad = ActiveData(id, reqId)
+          val rr = d.refsToReqs.del(reqId, id)
+          trie.put(v, Data(Some(ad), d.refsToGroup, rr))
+        } else {
+          // ReqCode has been usurped. Rename before restoration.
+          val v2  = renameReqCodeToAvoidConflict(v, trie)
+          val ad2 = ActiveData(id, reqId)
+          val rr2 = UnivEq.emptySetMultimap[ReqId, ReqCodeId].setvs(reqId, d.refsToReqs(reqId) - id)
+          val d2  = Data(Some(ad2), UnivEq.emptySet,  rr2)
+          trie
+            .put(v, d.copy(refsToReqs = d.refsToReqs.delk(reqId)))
+            .put(v2, d2)
+        }
+
+    private val maxNodeLen = Grammar.reqCode.nodeLength.total.max
+
+    /**
+     * Rename a ReqCode so that the resulting code is available/free.
+     *
+     * To minimise disruption to other reqs and avoid further potential collisions, the resulting code will not exist
+     * in the ReqCode trie at all (as opposed to selecting an existing node with inactive data).
+     */
+    def renameReqCodeToAvoidConflict(conflicted: Value, trie: Trie): Value = {
+      val init     = conflicted.init
+      val t        = NonEmptyVector.maybe(init, trie)(trie.dropPath)
+
+      @tailrec
+      def go(root: String, i: Int): Node = {
+        val s = root + "_" + i
+        if (s.length > maxNodeLen)
+          go(root.init, 2)
+        else {
+          val n = Node(s)
+          if (t hasValueK n)
+            go(root, i + 1)
+          else
+            n
+        }
+      }
+
+      val n = go(conflicted.last.value, 2)
+      NonEmptyVector.end(init, n)
+    }
 
     /**
      * Restore a requirement's inactive ReqCodes back to active status.

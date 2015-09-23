@@ -7,6 +7,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.BaseTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
+import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.text.Text.{GenericReqTitle => GRT, CustomTextField => CTF, InlineIssueDesc => IID, ReqCodeGroupTitle}
 import shipreq.webapp.base.text.Text.Equality._
 import ApplyEventTestFns._
@@ -158,7 +159,8 @@ object GenericReqEventTest extends TestSuite {
         case \/-(p2)  => p = p2
         case -\/(err) => fail(s"$e was expected to pass but failed with: $err")
       }
-      assertEq(s"Step #$testNo", fmtRCs(p.reqCodes), expected.toSet)
+      def norm(s: Set[String]) = s.toVector.sorted
+      assertEq(s"Step #$testNo", norm(fmtRCs(p.reqCodes)), norm(expected.toSet))
       es :+= e
       assertQty(p, es: _*)
     }
@@ -458,7 +460,8 @@ object GenericReqEventTest extends TestSuite {
           "ggg: AD[#9Grp]", "bbb: AD[#10Req(#b)]", "aaa: AD[#1Req(#a)]", "aaa: RR[#3Req(#a)]")
       }
 
-      'script3 {
+      // Tests req restoration with reqcode conflict resolution
+      'script3a {
         val tester = new ScriptTester
         import tester.test
 
@@ -474,27 +477,91 @@ object GenericReqEventTest extends TestSuite {
         // Delete req a
         test(delA)("one: RR[#1Req(#a)]", "three: RR[#3Req(#a)]")
 
-        // Create req b - usurp a reqcode!!
+        // Create req b - usurp the reqcode [three]
         test(createGR(reqB, codes = Set(9 -> "three", 4 -> "four")))(
           "one: RR[#1Req(#a)]", "three: RR[#3Req(#a)]", "three: AD[#9Req(#b)]", "four: AD[#4Req(#b)]")
 
         // Restore req a
-        test(restoreA)("one: AD[#1Req(#a)]", "three: RR[#3Req(#a)]", "three: AD[#9Req(#b)]", "four: AD[#4Req(#b)]")
+        test(restoreA)("one: AD[#1Req(#a)]", "three_2: AD[#3Req(#a)]", "three: AD[#9Req(#b)]", "four: AD[#4Req(#b)]")
 
         // Delete req b
-        test(delB)("one: AD[#1Req(#a)]", "three: RR[#3Req(#a)]")
+        test(delB)("one: AD[#1Req(#a)]", "three_2: AD[#3Req(#a)]")
 
         // Delete req a
-        test(delA)("one: RR[#1Req(#a)]", "three: RR[#3Req(#a)]")
+        test(delA)("one: RR[#1Req(#a)]", "three_2: RR[#3Req(#a)]")
 
-        // Create group - usurp a reqcode!!
-        test(createRCG(8, "one"))("one: RR[#1Req(#a)]", "three: RR[#3Req(#a)]", "one: AD[#8Grp]")
+        // Create group - usurp the reqcode [one]
+        test(createRCG(8, "one"))("one: RR[#1Req(#a)]", "three_2: RR[#3Req(#a)]", "one: AD[#8Grp]")
 
         // Restore req a
-        test(restoreA)("one: RR[#1Req(#a)]", "three: AD[#3Req(#a)]", "one: AD[#8Grp]")
+        test(restoreA)("one_2: AD[#1Req(#a)]", "three_2: AD[#3Req(#a)]", "one: AD[#8Grp]")
 
         // Delete group
-        test(DeleteReqCodeGroup(8))("one: RR[#1Req(#a)]", "three: AD[#3Req(#a)]")
+        test(DeleteReqCodeGroup(8))("one_2: AD[#1Req(#a)]", "three_2: AD[#3Req(#a)]")
+      }
+
+      // Tests req restoration with reqcode conflict resolution (including a ref-to-req being migrated)
+      'script3b {
+        val tester = new ScriptTester
+        import tester.test
+
+        // Create req a
+        test(createGR(reqA, codes = Set(1 -> "one", 3 -> "three")))(
+          "one: AD[#1Req(#a)]", "three: AD[#3Req(#a)]")
+
+        // Create refs to it
+        val refs = CreateGenericReq(500, mf, nev(
+          Title(NonEmptyVector(GRT.Literal("Refs to #1 and #3: "), GRT.CodeRef(3), GRT.CodeRef(1)))))
+        test(refs)("one: AD[#1Req(#a)]", "three: AD[#3Req(#a)]")
+
+        // Merge refs
+        test(patchA(remove = Set(1, 3), add = mm.addvs("aaa", Set(1, 3))))(
+          "aaa: AD[#1Req(#a)]", "aaa: RR[#3Req(#a)]")
+
+        // Delete req a
+        test(delA)("aaa: RR[#1Req(#a)]", "aaa: RR[#3Req(#a)]")
+
+        // Usurp reqcode [aaa]
+        test(createGR(reqB, codes = Set(7 -> "aaa")))(
+          "aaa: AD[#7Req(#b)]", "aaa: RR[#1Req(#a)]", "aaa: RR[#3Req(#a)]")
+
+        // Restore req a
+        test(restoreA)("aaa: AD[#7Req(#b)]", "aaa_2: AD[#1Req(#a)]", "aaa_2: RR[#3Req(#a)]")
+      }
+
+      'autoConflictResolution {
+        def maxMinus(minus: Int) = {
+          val len = Grammar.reqCode.nodeLength.total.max - minus
+          val cs = (0 until len).map(i => (i + 97).toChar).toArray
+          String valueOf cs
+        }
+        def m0 = maxMinus(0)
+        def m1 = maxMinus(1)
+        def m2 = maxMinus(2)
+        def m3 = maxMinus(3)
+        def m4 = maxMinus(4)
+        def test(conflicted: String, inUse: Set[String], expect: String): Unit = {
+          _test(conflicted, inUse, expect)
+          val f = "x.y." + (_: String)
+          _test(f(conflicted), (inUse map f) + (f(expect) + ".ah"), f(expect))
+        }
+        def _test(conflicted: String, inUse: Set[String], expect: String): Unit = {
+          val t = (inUse + conflicted).foldLeft(ReqCode.Trie.empty)((q, s) =>
+            q.put(s, ReqCode.ActiveData(0, 0)))
+          val actual = apply.ReqCodeLogic.renameReqCodeToAvoidConflict(conflicted, t)
+          assertEq[ReqCode.Value](actual, expect)
+        }
+        def suf(pre: String, to: Int, from: Int = 2): Set[String] =
+          (from to to).toStream.map(pre + "_" + _).toSet
+        'simpleEasy       - test("abc", ∅                                    , "abc_2")
+        'simpleScan       - test("abc", suf("abc", 104)                      , "abc_105")
+        'max              - test(m0,    ∅                                    , m2 + "_2")
+        'max1Easy         - test(m1,    ∅                                    , m2 + "_2")
+        'max1Scan         - test(m1,    suf(m2, 5)                           , m2 + "_6")
+        'max2Easy         - test(m2,    ∅                                    , m2 + "_2")
+        'max2Scan         - test(m2,    suf(m2, 8)                           , m2 + "_9")
+        'max2Drop         - test(m2,    suf(m2, 9)                           , m3 + "_2")
+        'max2DropDropScan - test(m2,    suf(m2, 9) | suf(m3, 99) | suf(m4, 4), m4 + "_5")
       }
     }
 

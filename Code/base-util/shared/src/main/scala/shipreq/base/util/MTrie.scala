@@ -186,6 +186,9 @@ object MTrie {
     def lookup(path: Path): Option[V] =
       atPath(path, None: Option[V])(_.value.map(_.value), t => Some(t.value))
 
+    def lookupK(k: K): Option[V] =
+      trie.get(k).flatMap(_.fold(_.value.map(_.value), t => Some(t.value)))
+
     def modify(path: Path)(f: Option[V] => V): Trie =
       valueAtPath(path, put(path, f(None)))(v => put(path, f(Some(v))))
 
@@ -272,5 +275,12 @@ object MTrie {
 
     def nodeExistsV(f: V => Boolean): Boolean =
       trie.values.exists(_ existsV f)
+
+    def hasValueK(k: K): Boolean =
+      trie.get(k) match {
+        case None               => false
+        case Some(Value(_))     => true
+        case Some(Branch(v, _)) => v.isDefined
+      }
   }
 }
