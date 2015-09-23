@@ -129,6 +129,27 @@ trait NoInitialEvents {
 }
 object NoInitialEvents extends NoInitialEvents
 
+class EventTester(implicit init: InitialEvents) {
+  var p = _assertPass()
+  var es = init.es.toVector
+
+  var testNo = 0
+
+  def justApply(es: Event*): Unit =
+    es foreach (apply(_)(_ => ()))
+
+  def apply(e: Event)(assert: (=> String) => Unit): Unit = {
+    testNo += 1
+    ApplyEventTestFns.apply.apply1(e)(p) match {
+      case \/-(p2)  => p = p2
+      case -\/(err) => fail(s"$e was expected to pass but failed with: $err")
+    }
+    es :+= e
+    assert(s"Step #$testNo")
+    assertQty(p, es: _*)
+  }
+}
+
 // =====================================================================================================================
 abstract class SharedTests(implicit val init: InitialEvents) extends TestSuite {
   type CE <: Event

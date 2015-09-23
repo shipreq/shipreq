@@ -131,10 +131,7 @@ object GenericReqEventTest extends TestSuite {
     UpdateReqCodeGroup(id, nev(Code(code)))
   }
 
-  class ScriptTester {
-    var p = _assertPass()
-    var es = implicitly[InitialEvents].es.toVector
-
+  class ScriptTester extends EventTester {
     def fmtRCs(rc: ReqCodes): Set[String] =
       rc.trie.cataV(Set.empty[String]) { (q, p, d) =>
         var n = Set.empty[String]
@@ -152,18 +149,11 @@ object GenericReqEventTest extends TestSuite {
         q ++ n.map(p.reduceMapLeft1(_.value)(_ + "." + _) + ": " + _)
       }
 
-    var testNo = 0
-    def test(e: Event)(expected: String*): Unit = {
-      testNo += 1
-      ApplyEventTestFns.apply.apply1(e)(p) match {
-        case \/-(p2)  => p = p2
-        case -\/(err) => fail(s"$e was expected to pass but failed with: $err")
+    def test(e: Event)(expected: String*): Unit =
+      this(e) { name =>
+        def norm(s: Set[String]) = s.toVector.sorted
+        assertEq(name, norm(fmtRCs(p.reqCodes)), norm(expected.toSet))
       }
-      def norm(s: Set[String]) = s.toVector.sorted
-      assertEq(s"Step #$testNo", norm(fmtRCs(p.reqCodes)), norm(expected.toSet))
-      es :+= e
-      assertQty(p, es: _*)
-    }
   }
 
   val reqA = GenericReqId(97)
