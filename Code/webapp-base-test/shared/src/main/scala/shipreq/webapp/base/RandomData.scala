@@ -964,7 +964,7 @@ object RandomData {
       val ids3 = distinctIds.lift[Set]
         .liftMapValues.contramap[Multimap[ReqId, Set, ReqCodeId]](_.m, (_, m: Map[ReqId, Set[ReqCodeId]]) => Multimap(m))
         // TODO ↑ Use liftMultimapValues when Nyaya gets it
-        .at(Data.refsToReqs)
+        .at(Data.reqInactive)
       val id = ids1 + ids2 + ids3
 
       // TODO add to Nyaya ↓
@@ -985,7 +985,7 @@ object RandomData {
 
     val smallIdSet = id.set.lim(3)
 
-    val gEmptyRefsToReqs: Gen[Multimap[ReqId, Set, ReqCodeId]] =
+    val gEmptyReqInactive: Gen[Multimap[ReqId, Set, ReqCodeId]] =
       Gen.insert(Multimap.empty)
 
     def data(ogLiveReqId: Option[Gen[ReqId]], ogReqId: Option[Gen[ReqId]], gGroup: Gen[ReqCodeGroup]): GenS[Data] =
@@ -998,26 +998,26 @@ object RandomData {
             case None    => gGroup
           }
 
-        val gRefsToReqs: Gen[Multimap[ReqId, Set, ReqCodeId]] =
+        val gReqInactive: Gen[Multimap[ReqId, Set, ReqCodeId]] =
           ogReqId match {
             case Some(g) => g.mapTo(smallIdSet).lim(sz.value).map(Multimap(_))
-            case None    => gEmptyRefsToReqs
+            case None    => gEmptyReqInactive
           }
 
         for {
           i           <- id
           target      <- gTarget
           refsToGroup <- smallIdSet
-          refsToReqs  <- gRefsToReqs
+          reqInactive <- gReqInactive
           x           <- Gen.chooseint(0, 9)
         } yield {
           if (x == 0)
             target match {
-              case t: ReqId        => Data(None, refsToGroup, refsToReqs.add(t, i))
-              case _: ReqCodeGroup => Data(None, refsToGroup + i, refsToReqs)
+              case t: ReqId        => Data(None, refsToGroup, reqInactive.add(t, i))
+              case _: ReqCodeGroup => Data(None, refsToGroup + i, reqInactive)
             }
           else
-            Data(Some(ActiveData(i, target)), refsToGroup, refsToReqs)
+            Data(Some(ActiveData(i, target)), refsToGroup, reqInactive)
         }
     }
 

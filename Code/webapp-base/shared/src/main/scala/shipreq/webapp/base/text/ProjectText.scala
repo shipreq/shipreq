@@ -52,7 +52,7 @@ object ProjectText {
       case Data(Some(ad), _, _) if ad.id ≟ id => ActiveCode(code, ad.target)
       case d if d.refsToGroup.contains(id)    => DeadGroup(code)
       case d =>
-        d.refsToReqs.m.find(_._2 contains id) match {
+        d.reqInactive.m.find(_._2 contains id) match {
           case Some((reqId, _)) => findAlt(reqId, code) getOrElse[ReqCodeResolution] ReqWithoutCodes(reqId)
           case None             => mustNotHappen(s"$id not found in $code: $d")
         }

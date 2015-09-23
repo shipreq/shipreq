@@ -162,7 +162,7 @@ case class DeleteReq(id: ReqId, da: DeletionAction) extends ActiveEvent
  * @param remove Code to remove. Any referenced in text will be soft-deleted.
  * @param restore Soft-deleted codes to restore back to active status.
  * @param add Codes to add. A code can have multiple IDs (see [[ApplyEvent.ReqCodeLogic]] for details) in which case,
- *            only one becomes active and the rest go into `refsToReqs`.
+ *            only one becomes active and the rest go into `reqInactive`.
  */
 case class PatchReqCodes(id     : ReqId,
                          remove : Set[ReqCodeId],

@@ -197,7 +197,7 @@ object DataProp {
         .rename("All TrieBranches branch")
 
     def nonEmptyData(d: Data) =
-      d.active.nonEmpty || d.refsToGroup.nonEmpty || d.refsToReqs.nonEmpty
+      d.active.nonEmpty || d.refsToGroup.nonEmpty || d.reqInactive.nonEmpty
 
     def nonEmptyTerminals =
       Prop.test[Data]("Terminal not empty", nonEmptyData)

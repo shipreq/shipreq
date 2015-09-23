@@ -144,7 +144,7 @@ object GenericReqEventTest extends TestSuite {
           n += s"$typ[#${id.value}$t]"
         }
         d.active.foreach(a => add("AD", a.id, a.target))
-        for {(req, ids) <- d.refsToReqs.m; id <- ids} add("RR", id, req)
+        for {(req, ids) <- d.reqInactive.m; id <- ids} add("RR", id, req)
         for (id <- d.refsToGroup) add("RG", id, null)
         q ++ n.map(p.reduceMapLeft1(_.value)(_ + "." + _) + ": " + _)
       }

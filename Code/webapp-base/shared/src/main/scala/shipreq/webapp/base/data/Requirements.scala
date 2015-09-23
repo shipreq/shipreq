@@ -116,21 +116,24 @@ object ReqCode {
    * See `Design/req_codes.ods`.
    *
    * @param refsToGroup Previous IDs still referenced in rich text.
-   * @param refsToReqs Previous req-associations still referenced in rich text.
-   *                   Semantically: TargetReq ← ReqCodeIds
+   * @param reqInactive Inactive associations to this reqcode by reqs.
+   *                    When a req is dead, all its reqcodes move into this.
+   *                    When a req is live, it can also contain IDs referenced in rich text that have been renamed such
+   *                    that they now share this reqcode (i.e. Give a req two codes [a] & [b], create refs to both,
+   *                    change req's codes to just [c], [c] gets [a]'s ID actively and [b]'s ID inactively here).
    */
   @Lenses
   final case class Data(active     : Option[ActiveData],
                         refsToGroup: Set[ReqCodeId],
-                        refsToReqs : Multimap[ReqId, Set, ReqCodeId]) {
+                        reqInactive: Multimap[ReqId, Set, ReqCodeId]) {
 
     def ids: Stream[ReqCodeId] =
       active.toStream.map(_.id) append
         refsToGroup.toStream append
-        refsToReqs.allValues
+        reqInactive.allValues
 
     def reqIds: Stream[ReqId] =
-      refsToReqs.keys.toStream append active.map(_.target).toList.filterT[ReqId]
+      reqInactive.keys.toStream append active.map(_.target).toList.filterT[ReqId]
   }
 
   implicit def activeDataEquality: UnivEq[ActiveData] = UnivEq.derive
@@ -181,7 +184,7 @@ final case class ReqCodes(trie: ReqCode.Trie) {
 
   lazy val inactiveIdsByReqId: Multimap[ReqId, Set, ReqCodeId] =
     trie.cataV(UnivEq.emptySetMultimap[ReqId, ReqCodeId])((q, c, d) =>
-      q ++ d.refsToReqs.m)
+      q ++ d.reqInactive.m)
 
   lazy val reqCodesById: Map[ReqCodeId, Value] =
     trie.cataV(UnivEq.emptyMap[ReqCodeId, Value])((q, c, d) =>

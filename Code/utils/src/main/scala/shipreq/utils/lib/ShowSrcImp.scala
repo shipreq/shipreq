@@ -350,7 +350,7 @@ object ShowSrcDataImp {
     data((s, d) => s.cc2("ReqCode.ActiveData", ReqCode.ActiveData unapply d))
 
   implicit val reqCodeData: ShowSrc[ReqCode.Data] = {
-    implicit val refsToReqs: ShowSrc[Multimap[ReqId, Set, ReqCodeId]] =
+    implicit val reqInactive: ShowSrc[Multimap[ReqId, Set, ReqCodeId]] =
       multimap[ReqId, Set, ReqCodeId]("UnivEq.emptySetMultimap[ReqId, ReqCodeId]") init importUnivEq
     data((s, d) => s.cc3("ReqCode.Data", ReqCode.Data unapply d))
   }

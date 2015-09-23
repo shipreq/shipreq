@@ -189,7 +189,7 @@ trait ApplyContentEvent {
 
     def ensureRefToReqExists(v: Value, d: Data, rc: ReqCodeId)(reqId: ReqId): SE[Unit] =
       whenUntrusted(
-        SE.test(d.refsToReqs(reqId) contains rc, s"Ref to ${show(reqId)} not found in ${show(v)}."))
+        SE.test(d.reqInactive(reqId) contains rc, s"Ref to ${show(reqId)} not found in ${show(v)}."))
 
     def ensureReqCodeGroup(t: Target): SE[Unit] =
       whenUntrusted(needReqCodeGroup(t).void)
@@ -249,23 +249,23 @@ trait ApplyContentEvent {
           ensureInactiveData(d, v) |>> {
             val ad = ActiveData(id, target)
             var rg = d.refsToGroup
-            var rr = d.refsToReqs
+            var ri = d.reqInactive
             target match {
-              case r: ReqId        => rr = rr.del(r, id)
+              case r: ReqId        => ri = ri.del(r, id)
               case g: ReqCodeGroup => rg = rg - id
             }
-            t.put(v, Data(Some(ad), rg, rr))
+            t.put(v, Data(Some(ad), rg, ri))
           }
         else
           needActiveData(d, v) |>> {
-            var rr = d.refsToReqs
+            var ri = d.reqInactive
             target match {
-              case reqId: ReqId => rr = rr.add(reqId, id)
+              case reqId: ReqId => ri = ri.add(reqId, id)
               case g: ReqCodeGroup =>
                 // This should never happen
                 sys.error(s"addReqCode → mod → (grp ∧ ¬addToActive) - $id $v $target ⇏ $g")
             }
-            t.put(v, d.copy(refsToReqs = rr))
+            t.put(v, d.copy(reqInactive = ri))
           }
 
       t.valueAtPath(v, createNode)(modifyNode)
@@ -301,15 +301,15 @@ trait ApplyContentEvent {
      */
     def remove(trie: Trie, v: Value, d: Data, a: ActiveData, keepRef: ReqCodeId => Boolean): Trie = {
       var refsToGroup = d.refsToGroup
-      var refsToReqs  = d.refsToReqs
+      var reqInactive  = d.reqInactive
       val id = a.id
       if (keepRef(id))
         a.target match {
-          case t: ReqId        => refsToReqs = refsToReqs.add(t, id)
+          case t: ReqId        => reqInactive = reqInactive.add(t, id)
           case _: ReqCodeGroup => refsToGroup += id
         }
-      if (refsToGroup.nonEmpty || refsToReqs.nonEmpty)
-        trie.put(v, Data(None, refsToGroup, refsToReqs))
+      if (refsToGroup.nonEmpty || reqInactive.nonEmpty)
+        trie.put(v, Data(None, refsToGroup, reqInactive))
       else
         trie.remove(v)
     }
@@ -358,16 +358,16 @@ trait ApplyContentEvent {
         if (d.active.isEmpty) {
           // ReqCode is available. Restore simply.
           val ad = ActiveData(id, reqId)
-          val rr = d.refsToReqs.del(reqId, id)
-          trie.put(v, Data(Some(ad), d.refsToGroup, rr))
+          val ri = d.reqInactive.del(reqId, id)
+          trie.put(v, Data(Some(ad), d.refsToGroup, ri))
         } else {
           // ReqCode has been usurped. Rename before restoration.
           val v2  = renameReqCodeToAvoidConflict(v, trie)
           val ad2 = ActiveData(id, reqId)
-          val rr2 = UnivEq.emptySetMultimap[ReqId, ReqCodeId].setvs(reqId, d.refsToReqs(reqId) - id)
-          val d2  = Data(Some(ad2), UnivEq.emptySet,  rr2)
+          val ri2 = UnivEq.emptySetMultimap[ReqId, ReqCodeId].setvs(reqId, d.reqInactive(reqId) - id)
+          val d2  = Data(Some(ad2), UnivEq.emptySet,  ri2)
           trie
-            .put(v, d.copy(refsToReqs = d.refsToReqs.delk(reqId)))
+            .put(v, d.copy(reqInactive = d.reqInactive.delk(reqId)))
             .put(v2, d2)
         }
 

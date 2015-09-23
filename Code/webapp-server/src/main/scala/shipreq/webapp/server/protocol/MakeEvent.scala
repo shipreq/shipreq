@@ -317,7 +317,7 @@ object MakeEvent { // TODO Move
                 case Some(d) if d.active.isDefined =>
                   Failed(s"Code in use: ${PlainText reqCode c}.")
 
-                case od => od.flatMap(_.refsToReqs(id).ifNonEmpty(_.min)) match {
+                case od => od.flatMap(_.reqInactive(id).ifNonEmpty(_.min)) match {
                   case None    => add = add.add(c, nextCodeId())
                   case Some(i) => restore += i
                 }

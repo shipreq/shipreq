@@ -178,7 +178,7 @@ object ProjectDsl {
           val d = o.getOrElse(emptyReqCodeData) //.copy(active = Some(ReqCode.ActiveData(p.nextReqCodeId(), ReqCodeGroup(Vector.empty))))
           target match {
             case None      => d.copy(refsToGroup = d.refsToGroup + id)
-            case Some(tgt) => d.copy(refsToReqs = d.refsToReqs.add(tgt, id))
+            case Some(tgt) => d.copy(reqInactive = d.reqInactive.add(tgt, id))
           }
         }
         val p2 = p.copy(reqCodeTrie = t, maxReqCodeId = p.newMaxReqCodeId)
