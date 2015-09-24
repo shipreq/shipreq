@@ -296,14 +296,14 @@ trait ApplyContentEvent {
     /**
      * Remove a single code.
      *
-     * @param keepRef Determine whether a reference should be kept of the current id and target.
-     *                If `false`, the data is gone completely.
+     * @param makeInactive Determine whether a reference should be kept of the current id and target.
+     *                     If `false`, the data is gone completely.
      */
-    def remove(trie: Trie, v: Value, d: Data, a: ActiveData, keepRef: ReqCodeId => Boolean): Trie = {
+    def remove(trie: Trie, v: Value, d: Data, a: ActiveData, makeInactive: ReqCodeId => Boolean): Trie = {
       var refsToGroup = d.refsToGroup
       var reqInactive  = d.reqInactive
       val id = a.id
-      if (keepRef(id))
+      if (makeInactive(id))
         a.target match {
           case t: ReqId        => reqInactive = reqInactive.add(t, id)
           case _: ReqCodeGroup => refsToGroup += id
@@ -315,27 +315,27 @@ trait ApplyContentEvent {
     }
 
     /**
-     * @param keepRef Determine whether a reference should be kept of the current id and target.
-     *                If `false`, the data is gone completely.
+     * @param makeInactive Determine whether a reference should be kept of the current id and target.
+     *                     If `false`, the data is gone completely.
      */
-    def removeValues(vs: Iterable[Value], keepRef: ReqCodeId => Boolean, validateTarget: ActiveData => SE[Unit]): SE[Unit] =
+    def removeValues(vs: Iterable[Value], makeInactive: ReqCodeId => Boolean, validateTarget: ActiveData => SE[Unit]): SE[Unit] =
       getTrie.foldMapBind(vs)(v => t =>
         for {
           d <- needData(t, v)
           a <- needActiveData(d, v)
           _ <- validateTarget(a)
-        } yield remove(t, v, d, a, keepRef)
+        } yield remove(t, v, d, a, makeInactive)
       ) >>= Project.reqCodeTrie.set
 
-    def removeValue(v: Value, keepRef: ReqCodeId => Boolean, validateTarget: ActiveData => SE[Unit]): SE[Unit] =
-      removeValues(set1(v), keepRef, validateTarget)
+    def removeValue(v: Value, makeInactive: ReqCodeId => Boolean, validateTarget: ActiveData => SE[Unit]): SE[Unit] =
+      removeValues(set1(v), makeInactive, validateTarget)
 
-    def removeId(id: ReqCodeId, keepRef: ReqCodeId => Boolean, validateTarget: ActiveData => SE[Unit]): SE[Unit] =
-      removeIds(set1(id), keepRef, validateTarget)
+    def removeId(id: ReqCodeId, makeInactive: ReqCodeId => Boolean, validateTarget: ActiveData => SE[Unit]): SE[Unit] =
+      removeIds(set1(id), makeInactive, validateTarget)
 
-    def removeIds(ids: Set[ReqCodeId], keepRef: ReqCodeId => Boolean, validateTarget: ActiveData => SE[Unit]): SE[Unit] =
+    def removeIds(ids: Set[ReqCodeId], makeInactive: ReqCodeId => Boolean, validateTarget: ActiveData => SE[Unit]): SE[Unit] =
       needValues(ids, (_, v) => v) >>= (vs =>
-        removeValues(vs, keepRef, validateTarget))
+        removeValues(vs, makeInactive, validateTarget))
 
     def removeBelongingToReq(reqId: ReqId): SE[Unit] =
       SE.get >>= { p =>
@@ -450,11 +450,11 @@ trait ApplyContentEvent {
 
     def applyPatchReqCodes(e: PatchReqCodes): SE[Unit] =
       for {
-        referenced ← SE.get(_.atomScan.codeRefs)
-        keepRefIds = e.add.values.foldLeft(referenced)(_ &~_)
-        _          ← removeIds(e.remove, keepRefIds.contains, ensureActiveDataTargetIs(e.id))
-        _          ← restoreReqCodesById(e.id, e.restore)
-        _          ← addCodesToTarget(e.id, e.add)
+        refd ← SE.get(_.atomScan.codeRefs)
+        keep = e.add.values.foldLeft(refd)(_ &~_)
+        _    ← removeIds(e.remove, keep.contains, ensureActiveDataTargetIs(e.id))
+        _    ← restoreReqCodesById(e.id, e.restore)
+        _    ← addCodesToTarget(e.id, e.add)
       } yield ()
   }
 
