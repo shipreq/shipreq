@@ -1,16 +1,16 @@
 package shipreq.webapp.client.app.state
 
-import shipreq.base.util.UnivEq.emptySet
+import scalaz.Equal
+import scalaz.syntax.equal._
+import shipreq.base.util.UnivEq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 
 case class Changes(ves: VerifiedEvents, p1: Project, p2: Project) {
-
   private var _customReqTypes  : Set[CustomReqTypeId  ] = emptySet
   private var _customIssueTypes: Set[CustomIssueTypeId] = emptySet
   private var _customFieldTypes: Set[CustomFieldId    ] = emptySet
-  private var _tags            : Set[TagId            ] = emptySet
-  private var _fieldOrder   = false
+  private var _tagsChanged  = false
   private var _staticFields = false
 
   for (ve <- ves)
@@ -20,12 +20,12 @@ case class Changes(ves: VerifiedEvents, p1: Project, p2: Project) {
       case e: DeleteCustomIssueType => _customIssueTypes += e.id
       case e: CreateCustomReqType   => _customReqTypes += e.id
       case e: UpdateCustomReqType   => _customReqTypes += e.id
-      case e: DeleteCustomReqType   => _customReqTypes += e.id
-      case e: CreateApplicableTag   => _tags += e.id
-      case e: UpdateApplicableTag   => _tags += e.id
-      case e: CreateTagGroup        => _tags += e.id
-      case e: UpdateTagGroup        => _tags += e.id
-      case e: DeleteTag             => _tags += e.id
+      case e: DeleteCustomReqType   => _customReqTypes += e.id // Affects GenericReq.live & ReqCodes
+      case _: CreateApplicableTag
+         | _: UpdateApplicableTag
+         | _: CreateTagGroup
+         | _: UpdateTagGroup
+         | _: DeleteTag             => _tagsChanged = true
       case e: CreateCustomTextField => _customFieldTypes += e.id
       case e: UpdateCustomTextField => _customFieldTypes += e.id
       case e: CreateCustomTagField  => _customFieldTypes += e.id
@@ -35,7 +35,7 @@ case class Changes(ves: VerifiedEvents, p1: Project, p2: Project) {
       case e: DeleteCustomField     => _customFieldTypes += e.id
       case e: DeleteStaticField     => _staticFields = true
       case e: AddStaticField        => _staticFields = true
-      case e: RepositionField       => _fieldOrder = true
+      case e: RepositionField       =>
 
       case e: CreateGenericReq      =>
       case e: PatchReqCodes         =>
@@ -53,17 +53,37 @@ case class Changes(ves: VerifiedEvents, p1: Project, p2: Project) {
       case e: ApplyTemplate         => // Always event #0 only - ignore
     }
 
+  private def changed[A: Equal](f: Project => A): Boolean =
+    f(p1) ≠ f(p2)
+
+  private def compareMaps[Map, Id, Data: Equal](m: Project => Map)(ids: Map => Set[Id])(data: (Project, Map, Id) => Data): Set[Id] = {
+    val m1       = m(p1)
+    val m2       = m(p2)
+    val ids1     = ids(m1)
+    val ids2     = ids(m2)
+    val common   = ids1 & ids2
+    val newOrDel = (ids1 | ids2) &~ common
+    val changes  = common.filter(id => data(p1, m1, id) ≠ data(p2, m2, id))
+    changes | newOrDel
+  }
+
   /** Excludes field position */
-  val customFieldTypes = _customFieldTypes
+  val customFieldTypes =
+    _customFieldTypes | compareMaps(_.config.fields.customFields)(_.keySet)((p,m,i) => m.need(i).live(p.config))
 
   val staticFields = _staticFields
 
   /** Excludes addition/removal of fields */
-  val fieldOrder = _fieldOrder
+  val fieldOrder = changed(_.config.fields.order)
 
   val customReqTypes   = _customReqTypes
   val customIssueTypes = _customIssueTypes
-  val tags             = _tags
+
+  val tags: Set[TagId] =
+    if (_tagsChanged)
+      compareMaps(_.config.tags)(_.keySet)((_,m,i) => m need i)
+    else
+      emptySet
 
   val fieldNames: Boolean =
     customFieldTypes.nonEmpty || customReqTypes.nonEmpty || tags.nonEmpty
