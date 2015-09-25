@@ -172,7 +172,7 @@ object LogicTest extends TestSuite {
 
   private def rowToCustomText(pt: PlainText.ForProject, id: CustomField.Text.Id): Row => String = {
     val f = pt.customTextField(id)
-    rowToStr(r => f(r.req.id) getOrElse z, _z)
+    rowToStr(r => f(r.req) getOrElse z, _z)
   }
 
   private def rowToImpTxt(p: Project, lens: Optional[Row, Vector[Pubid]], dir: String): Row => String = {

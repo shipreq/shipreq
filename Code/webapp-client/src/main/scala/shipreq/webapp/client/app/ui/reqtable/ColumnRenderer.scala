@@ -111,7 +111,7 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
   private def cfText(id: CustomField.Text.Id) = {
     val f = widgets.customTextField(id)
     make {
-      case r: GenericReqRow   => f(r.req.id).fold(empty)(w => w)
+      case r: GenericReqRow   => f(r.req).fold(empty)(w => w)
       case _: ReqCodeGroupRow => `N/A`
     }
   }

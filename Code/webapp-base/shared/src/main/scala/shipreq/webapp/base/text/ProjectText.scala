@@ -4,9 +4,12 @@ import scalaz.syntax.equal._
 import shipreq.base.util.{Memo, NonEmptySet, Util}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.util.Must._
+import DataImplicits._
+import ProjectText.FormatAtomFn
 
 object ProjectText {
-  @inline def apply[Out](project: Project, _format: Text.AnyOptional => Out): ProjectText[Out] =
+  type FormatAtomFn[Out] = (Live, Text.AnyOptional) => Out
+  @inline def apply[Out](project: Project, _format: FormatAtomFn[Out]): ProjectText[Out] =
     new ProjectText[Out](project) {
       override val format = _format
     }
@@ -61,26 +64,36 @@ object ProjectText {
 }
 
 abstract class ProjectText[Out](project: Project) {
+  final val cfg = project.config
 
-  val format: Text.AnyOptional => Out
+  val format: FormatAtomFn[Out]
 
-  val format1: Text.AnyNonEmpty => Out =
-    nev => format(nev.whole)
+  val format1: (Live, Text.AnyNonEmpty) => Out =
+    (l, nev) => format(l, nev.whole)
+
+  private def memoByReqId = Memo.by[Req, ReqId](_.id)
 
   val reqTitle: Req => Out =
-    Memo.by[Req, ReqId, Out](_.id) {
-      case r: GenericReq => format(r.title)
+    memoByReqId {
+      case r: GenericReq => format(r live cfg.customReqTypes, r.title)
     }
 
   val reqCodeGroupTitle: ReqCodeGroup.AndId => Out =
-    Memo.by((_: ReqCodeGroup.AndId).id)(g => format(g.group.title))
+    Memo.by((_: ReqCodeGroup.AndId).id)(g =>
+      format(g.group.live, g.group.title))
 
   def reqTitleById(id: ReqId): Out =
     reqTitle(project.reqs.req(id))
 
-  val customTextField: CustomField.Text.Id => ReqId => Option[Out] =
-    Memo.curry2 { fid =>
-      val m = project.reqText.getOrElse(fid, Map.empty)
-      m.get(_) map format1
+  val customTextField: CustomField.Text.Id => Req => Option[Out] =
+    Memo { fid =>
+      project.reqText.get(fid) match {
+        case Some(m) =>
+          val liveField = cfg.fields.customFields.need(fid).live(cfg)
+          memoByReqId(r =>
+            m.get(r.id) map (format1(liveField && r.live(cfg.customReqTypes), _)))
+        case None =>
+          Function const None
+      }
     }
 }

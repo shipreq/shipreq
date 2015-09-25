@@ -314,7 +314,7 @@ object Sorter {
 
   def customTextFieldSorter(id: CustomField.Text.Id, c: Column): SorterForSMCB =
     textSorter(c, p => {
-      case r: GenericReqRow   => p.customTextField(id)(r.req.id) getOrElse ""
+      case r: GenericReqRow   => p.customTextField(id)(r.req) getOrElse ""
       case r: ReqCodeGroupRow => ""
     })
 

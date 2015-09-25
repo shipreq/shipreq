@@ -30,6 +30,9 @@ object RichTextEditor {
 
   private val textEditorRef = Ref[HTMLTextAreaElement]("i")
 
+  // This is an editor - you can't edit Dead stuff. Assume all content is Live.
+  @inline private def hardcodedLive = Live
+
   // ===================================================================================================================
   sealed abstract class Base[TextType <: Text.Generic](name: String, final val t: TextType) {
 
@@ -80,7 +83,7 @@ object RichTextEditor {
                     textSearch    : Px[TextSearch],
                     commitFn      : t.OptionalText => RemoteDataEditor.OnCommit): InitSelfManagedA[String] = {
 
-      def init     = projectText.value() format initial
+      def init     = projectText.value().format(hardcodedLive, initial)
       val props    = prepare(project, projectText, projectWidgets, textSearch)
       val onCommit = RemoteDataEditor.CommitFilter(commitFn).ignoreIfEqual(initial)
 
@@ -147,7 +150,7 @@ object RichTextEditor {
 
         parseResult.fold(
           e => <.div(editor, <.div(cellErrorMsgStyle, e.toText)),
-          v => <.div(editor, "Preview", <.div(*.textEditPreview, p.projectWidgets format v)))
+          v => <.div(editor, "Preview", <.div(*.textEditPreview, p.projectWidgets.format(hardcodedLive, v))))
       }
     }
   }

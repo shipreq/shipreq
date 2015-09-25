@@ -4,7 +4,13 @@ import shipreq.base.util.TaggedTypes._
 import shipreq.base.util.IsoBool
 
 
-sealed trait Live
+sealed abstract class Live {
+  final def &&(that: => Live): Live =
+    Live <~ ((this :: Live) && (that :: Live))
+
+  final def ||(that: => Live): Live =
+    Live <~ ((this :: Live) || (that :: Live))
+}
 case object Live extends Live with IsoBool.Obj[Live] {
   override protected def neg = Dead
 }

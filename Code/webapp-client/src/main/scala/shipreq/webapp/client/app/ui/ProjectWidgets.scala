@@ -39,8 +39,8 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
 
   @inline private def memo[A: UnivEq](f: A => ReactElement) = Memo(f)
 
-  def issueO(id: CustomIssueTypeId, desc: Text.InlineIssueDesc.OptionalText): ReactElement =
-    NonEmptyVector.maybe(desc, issue(id))(issue1(id, _))
+  def issueO(liveText: Live, id: CustomIssueTypeId, desc: Text.InlineIssueDesc.OptionalText): ReactElement =
+    NonEmptyVector.maybe(desc, issue(id))(issue1(liveText, id, _))
 
   val issue = memo[CustomIssueTypeId] { id =>
     val i = project.config.customIssueType(id)
@@ -51,12 +51,12 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
 
   private val issueDescSurroundPrefix = G.issueDescSurround.prefix.trim
   private val issueDescSurroundSuffix = G.issueDescSurround.suffix.trim
-  def issue1(id: CustomIssueTypeId, desc: Text.InlineIssueDesc.NonEmptyText): ReactElement = {
+  def issue1(liveText: Live, id: CustomIssueTypeId, desc: Text.InlineIssueDesc.NonEmptyText): ReactElement = {
     val i = project.config.customIssueType(id)
     <.span(
       *.issue,
       G.hashRefKey.prefix ~ i.key.value ~ issueDescSurroundPrefix,
-      format1(desc)(*.issueDesc),
+      format1(liveText, desc)(*.issueDesc),
       issueDescSurroundSuffix)
   }
 
@@ -162,6 +162,19 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
   def tagList(ids: Vector[ApplicableTagId]): ReactElement =
     list(ids, sepSpace)(tag)
 
+  val tagInText: Live => ApplicableTagId => ReactElement =
+    Live.memo { liveText =>
+      memo[ApplicableTagId] { id =>
+        val tag = project.config.atag(id)
+        val liveTag = tag.live
+        val valid = Invalid <~ ((liveText :: Live) && (liveTag :: Dead))
+        <.span(
+          *.tagInText(liveTag, valid),
+          ^.title := tag.name,
+          tag.key.value)
+      }
+    }
+
   def katex(m: Atom.PlainTextMarkup#MathTeX) =
     try
       <.span(*.math, ^.dangerouslySetInnerHtml(KaTeX renderToStringUnsafe m.value))
@@ -169,20 +182,20 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
       case _: Throwable => <.span(*.mathFail, UiText.mathFailed)
     }
 
-  override val format = (input: Text.AnyOptional) => {
+  override val format: ProjectText.FormatAtomFn[ReactTag] = (live, input) => {
     import Atom._
 
     lazy val atom: AnyAtom => TagMod = {
       case a: Literal         # Literal       => <.span(a.value)
       case a: NewLine         # BlankLine     => <.div(*.blankLine)
-      case a: TagRef          # TagRef        => tag(a.value)
+      case a: TagRef          # TagRef        => tagInText(live)(a.value)
       case a: PlainTextMarkup # WebAddress    => <.a(^.href := a.value, a.value)
       case a: PlainTextMarkup # EmailAddress  => <.a(^.href := "mailto:" ~ a.value, a.value)
       case a: PlainTextMarkup # MathTeX       => katex(a)
       case a: ListMarkup      # UnorderedList => <.ul(*.ul, a.items.whole.map(row => <.li(row map atom: _*)))
       case a: ReqRef          # ReqRef        => reqRefInText(a.value)
       case a: ReqRef          # CodeRef       => codeRef(a.value)
-      case a: Issue           # Issue         => issueO(a.typ, a.desc)
+      case a: Issue           # Issue         => issueO(live, a.typ, a.desc)
     }
 
     <.span(input map atom: _*)

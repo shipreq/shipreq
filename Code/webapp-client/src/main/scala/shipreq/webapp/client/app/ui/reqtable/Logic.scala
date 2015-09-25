@@ -446,7 +446,7 @@ private[reqtable] object Logic {
           Filter(
             r => {
               def title  = m(pt reqTitle r)
-              def custom = p.config.liveCustomTextFields.exists(f => pt.customTextField(f.id)(r.id) exists m)
+              def custom = p.config.liveCustomTextFields.exists(f => pt.customTextField(f.id)(r) exists m)
               title || custom
             },
             g => m(pt reqCodeGroupTitle g))

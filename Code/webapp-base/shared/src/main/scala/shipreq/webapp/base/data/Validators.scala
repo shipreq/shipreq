@@ -29,7 +29,7 @@ object Validators {
 
   def genericRichText(pt: PlainText.ForProject, txt: Text.AnyOptional): ValidationResult[txt.type] =
     ValidationResult.test[txt.type](
-      pt.format(txt).length <= AppConsts.largeTextMaxLength,
+      pt.format(Live, txt).length <= AppConsts.largeTextMaxLength,
       txt, VFailure.looseMsg("Text too large.")) // english
 
   // ===================================================================================================================

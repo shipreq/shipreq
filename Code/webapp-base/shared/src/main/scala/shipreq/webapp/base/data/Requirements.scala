@@ -151,6 +151,8 @@ object ReqCode {
 final case class ReqCodeGroup(title: Text.ReqCodeGroupTitle.OptionalText) extends ReqCode.Target {
   @inline def and(id: ReqCodeId): ReqCodeGroup.AndId =
     ReqCodeGroup.AndId(id, this)
+
+  def live = Live
 }
 object ReqCodeGroup {
   val empty = ReqCodeGroup(Vector.empty)

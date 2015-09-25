@@ -21,9 +21,13 @@ object Memo {
     (a, b) => m((a, b))
   }
 
-  def by[I, K: UnivEq, O](k: I => K)(f: I => O): I => O = {
-    val m = platform.looseMemo[K, O]()
-    i => m(k(i), f(i))
+  def by[I, K](k: I => K) = new By(k)
+
+  final class By[I, K] private[Memo] (private val k: I => K) extends AnyVal {
+    def apply[O](f: I => O)(implicit ev: UnivEq[K]): I => O = {
+      val m = platform.looseMemo[K, O]()
+      i => m(k(i), f(i))
+    }
   }
 }
 

@@ -95,8 +95,8 @@ object PlainText {
 
     val outOfListNewline = "\n\n"
 
-    val format: Text.AnyOptional => String = {
-      def nest(acc: String, newline: String, atoms: Vector[AnyAtom]): String = {
+    val format: ProjectText.FormatAtomFn[String] = {
+      def nest(acc: String, newline: String, live: Live, atoms: Vector[AnyAtom]): String = {
         @tailrec def go(acc: String, atoms: Vector[AnyAtom]): String =
           if (atoms.isEmpty)
             acc
@@ -107,21 +107,21 @@ object PlainText {
               case a: NewLine         # BlankLine     => newline
               case a: ReqRef          # ReqRef        => reqRef(a.value)
               case a: ReqRef          # CodeRef       => codeRef(a.value)
-              case a: Issue           # Issue         => issue(a.typ, a.desc.asOption map run)
+              case a: Issue           # Issue         => issue(a.typ, a.desc.asOption map (run(live, _)))
               case a: PlainTextMarkup # WebAddress    => a.value
               case a: PlainTextMarkup # EmailAddress  => a.value
               case a: PlainTextMarkup # MathTeX       => G.mathTexSurround(a.value)
               case a: TagRef          # TagRef        => tagRef(a.value)
               case a: ListMarkup      # UnorderedList =>
                 val newline2 = if (newline eq outOfListNewline) "\n  " else newline ~ "  "
-                a.items.foldLeft("")((q, li) => nest(s"$q${newline}* ", newline2, li)) ~ newline
+                a.items.foldLeft("")((q, li) => nest(s"$q${newline}* ", newline2, live, li)) ~ newline
             }
             go(acc ~ cur, atoms.tail)
           }
-
         go(acc, atoms)
       }
-      @inline def run: Text.AnyOptional => String = nest("", outOfListNewline, _)
+
+      @inline def run(live: Live, atoms: Vector[AnyAtom]) = nest("", outOfListNewline, live, atoms)
       run
     }
 

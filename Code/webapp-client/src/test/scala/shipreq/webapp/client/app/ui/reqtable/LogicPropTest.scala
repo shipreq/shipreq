@@ -81,7 +81,7 @@ object LogicPropTest extends TestSuite {
     // Sorting
 
     implicit def textOrd[T <: Text.Generic] =
-      implicitly[Ordering[String]].on[T#OptionalText](t => plainText.format(t).toLowerCase)
+      implicitly[Ordering[String]].on[T#OptionalText](t => plainText.format(Live, t).toLowerCase)
 
     def universalSort = {
       val revOrder  = vs.order.reverse
