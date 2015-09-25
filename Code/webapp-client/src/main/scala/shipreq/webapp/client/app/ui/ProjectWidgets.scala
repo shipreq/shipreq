@@ -151,12 +151,21 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
       rt.mnemonic.value)
   }
 
+  private def tagWithoutStyle(t: ApplicableTag): ReactTag = {
+    var desc = if (t.name.compareToIgnoreCase(t.key.value) == 0) "" else t.name
+    for (d <- t.desc) {
+      if (desc.nonEmpty)
+        desc += "\n\n"
+      desc += d
+    }
+    <.span(
+      desc.nonEmpty ?= (^.title := desc),
+      t.key.value)
+  }
+
   val tag = memo[ApplicableTagId] { id =>
     val tag = project.config.atag(id)
-    <.span(
-      *.tag(tag.live),
-      ^.title := tag.name,
-      tag.key.value)
+    tagWithoutStyle(tag)(*.tag(tag.live))
   }
 
   def tagList(ids: Vector[ApplicableTagId]): ReactElement =
@@ -168,10 +177,7 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
         val tag = project.config.atag(id)
         val liveTag = tag.live
         val valid = Invalid <~ ((liveText :: Live) && (liveTag :: Dead))
-        <.span(
-          *.tagInText(liveTag, valid),
-          ^.title := tag.name,
-          tag.key.value)
+        tagWithoutStyle(tag)(*.tagInText(liveTag, valid))
       }
     }
 

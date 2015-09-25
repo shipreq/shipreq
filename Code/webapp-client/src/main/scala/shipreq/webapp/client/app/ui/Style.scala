@@ -3,7 +3,7 @@ package ui
 
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
-import scalacss.StyleS
+import scalacss.{PseudoElement, Pseudo, StyleS}
 import shipreq.base.util._
 import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.data.{Live, Dead}
@@ -48,6 +48,8 @@ object Style extends StyleSheet.Inline {
 
   private def deadColumnLabel(live: Live) =
     mixinIf(live :: Dead)(textDecoration := ^.lineThrough)
+
+  private val hasTitle = Pseudo.Custom("[title]", PseudoElement)
 
   // ===================================================================================================================
   // Config screens
@@ -277,8 +279,7 @@ object Style extends StyleSheet.Inline {
 
     private val refColour = color(c"#2363A1")
 
-    private val hoverShowsInfo = mixin(
-      display.inlineBlock,
+    private val hoverShowsInfo = hasTitle(
       cursor.help)
 
     private val deadMixin = mixin(
@@ -306,20 +307,24 @@ object Style extends StyleSheet.Inline {
       whiteSpace.nowrap,
       mixinIf(a :: Dead)(deadAndNotError)))
 
+    private def tagBase(live: Live) = mixin(
+      display.inlineBlock,
+      mixinIf(live :: Dead)(&.not(_.hover)(textDecoration := ^.lineThrough)),
+      hoverShowsInfo)
+
     private def tagLabelSuffix(live: Live) = live match {
       case Live => "primary"
       case Dead => "default"
     }
     val tag = styleF(D.live)(live => styleS(
-      addClassName(s"label label-${tagLabelSuffix(live)}"),
-      mixinIf(live :: Dead)(&.not(_.hover)(textDecoration := ^.lineThrough)),
-      hoverShowsInfo))
+      tagBase(live),
+      addClassName(s"label label-${tagLabelSuffix(live)}")))
 
     val tagInText = styleF(D.`live * validity`){ case (l, v) => styleS(
+      tagBase(l),
       mixinIf(l :: Live)(refColour),
-      mixinIf(l :: Dead)(deadMaybeValid(v)),
-      mixinIf(l :: Dead)(&.not(_.hover)(textDecoration := ^.lineThrough)),
-      hoverShowsInfo)}
+      mixinIf(l :: Dead)(deadMaybeValid(v)))
+    }
 
     val reqType = styleF(D.live)(a => styleS(
       hoverShowsInfo,
