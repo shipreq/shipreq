@@ -22,6 +22,19 @@ object DomUtil {
     e.metaKey  == metaKey  &&
     e.shiftKey == shiftKey
 
+  def keyCodeSwitch(e       : ReactKeyboardEventH,
+                    altKey  : Boolean = false,
+                    ctrlKey : Boolean = false,
+                    metaKey : Boolean = false,
+                    shiftKey: Boolean = false)
+                   (keyCodeSwitch: PartialFunction[Int, Callback]): CallbackOption[Unit] =
+    for {
+      _  <- CallbackOption.require(checkModKeys(e, altKey, ctrlKey, metaKey, shiftKey))
+      cb <- CallbackOption.matchPF(e.nativeEvent.keyCode)(keyCodeSwitch)
+      _  <- cb
+      _  <- e.preventDefaultCB
+    } yield ()
+
   /**
    * Determine the index of an element amongst its parent's children.
    *

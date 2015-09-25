@@ -103,19 +103,14 @@ object Table {
   class HeaderBackend($: BackendScope[HeaderProps, Unit]) {
 
     def onKeyDown(col: Column)(e: ReactKeyboardEventH): Callback =
-      for {
-        _  <- CallbackOption.require(checkModKeys(e))
-        cb <- CallbackOption.matchPF(e.nativeEvent.keyCode) {
-                case KeyCode.Up     => moveFocus_|(e.currentTarget, _ - 1)
-                case KeyCode.Down   => moveFocus_|(e.currentTarget, _ => 0)
-                case KeyCode.Left   => moveFocus_-(e.currentTarget, -1)
-                case KeyCode.Right  => moveFocus_-(e.currentTarget,  1)
-                case KeyCode.Escape => Callback(e.currentTarget.blur())
-                case KeyCode.Space  => $.props.flatMap(_ clickSort col)
-              }
-        _ <- cb
-        _ <- e.preventDefaultCB
-      } yield ()
+      keyCodeSwitch(e) {
+        case KeyCode.Up     => moveFocus_|(e.currentTarget, _ - 1)
+        case KeyCode.Down   => moveFocus_|(e.currentTarget, _ => 0)
+        case KeyCode.Left   => moveFocus_-(e.currentTarget, -1)
+        case KeyCode.Right  => moveFocus_-(e.currentTarget,  1)
+        case KeyCode.Escape => Callback(e.currentTarget.blur())
+        case KeyCode.Space  => $.props.flatMap(_ clickSort col)
+      }
 
     def moveFocus_-(cur: dom.html.Element, by: Int): Callback =
       siblingAtOffset(cur, by)
@@ -224,19 +219,15 @@ object Table {
       e.target == e.currentTarget || e.target.tabIndex < 0
 
     def onKeyDown(e: ReactKeyboardEventH): Callback =
-      for {
-        _  <- CallbackOption.require(doesEventTargetCell(e) && checkModKeys(e))
-        cb <- CallbackOption.matchPF(e.nativeEvent.keyCode) {
-                case KeyCode.F2     => startEdit
-                case KeyCode.Up     => moveFocus_|(-1)
-                case KeyCode.Down   => moveFocus_|( 1)
-                case KeyCode.Left   => moveFocus_-(-1)
-                case KeyCode.Right  => moveFocus_-( 1)
-                case KeyCode.Escape => domNode.map(_.blur())
-              }
-        _ <- cb
-        _ <- e.preventDefaultCB
-      } yield ()
+      CallbackOption.require(doesEventTargetCell(e)) >>
+      keyCodeSwitch(e) {
+        case KeyCode.F2     => startEdit
+        case KeyCode.Up     => moveFocus_|(-1)
+        case KeyCode.Down   => moveFocus_|( 1)
+        case KeyCode.Left   => moveFocus_-(-1)
+        case KeyCode.Right  => moveFocus_-( 1)
+        case KeyCode.Escape => domNode.map(_.blur())
+      }
 
     def moveFocus_-(by: Int): Callback =
       for {
