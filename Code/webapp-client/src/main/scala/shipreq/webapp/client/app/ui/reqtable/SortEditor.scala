@@ -19,7 +19,6 @@ import shipreq.webapp.client.lib.ui.Assets
  * - Drag outside to remove criterion.
  */
 object SortEditor {
-  val D = new DragToReorder[SortCriterion]
 
   case class Props(value       : SortCriteria,
                    update      : SortCriteria ~=> Callback,
@@ -50,18 +49,19 @@ object SortEditor {
         p update nv
       }
 
-    val component = D.helper(
+    val dnd = new DragToReorder[SortCriterion](
       newOrder =>
         $.props >>= { p =>
           val newValue = SortCriteria.attempt(newOrder) getOrElse p.value.copy(last = SortCriteria.defaultConclusive)
           p update newValue
         },
+
       content =>
         $.props map { p =>
           val nameResolver = p.nameResolver
           var conclusiveSeen = false
 
-          def renderItem(i:  D.Item) = {
+          def renderItem(i:  DragToReorder.Item[SortCriterion]) = {
             val col = i.data.column
             val conclusive = i.data.isConclusive
             val status =
@@ -95,7 +95,7 @@ object SortEditor {
       })
 
     def render(p: Props) =
-      component(p.value.all.whole)
+      dnd.Component(p.value.all.whole)
   }
 
   val Component = ReactComponentB[Props]("SortEditor")

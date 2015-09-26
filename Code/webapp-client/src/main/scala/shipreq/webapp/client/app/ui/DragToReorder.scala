@@ -2,7 +2,6 @@ package shipreq.webapp.client.app.ui
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.vdom.TagMod
-import japgolly.scalajs.react.extra._
 import scalaz.syntax.equal._
 import shipreq.base.util.{Memo, UnivEq}
 import shipreq.webapp.client.util.DND
@@ -32,9 +31,7 @@ object DragToReorder {
 
   case class Content[A](rootMod: TagMod, items: Vector[Item[A]])
 
-  case class Props[A](items      : Vector[A],
-                      updateItems: Vector[A] ~=> Callback,
-                      render     : Content[A] ~=> CallbackTo[ReactElement])
+  type Props[A] = Vector[A]
 
   /** Where the drag cursor is currently located. */
   private[DragToReorder] sealed trait DragLoc
@@ -42,25 +39,19 @@ object DragToReorder {
   private[DragToReorder] case object InParent       extends DragLoc
   private[DragToReorder] case class InChild(i: Int) extends DragLoc
 
-  private[DragToReorder] implicit def dragLocEquality   : UnivEq[DragLoc]      = UnivEq.deriveAuto
-  private[DragToReorder] implicit val dragLocReusability: Reusability[DragLoc] = Reusability.byEqual
+  private[DragToReorder] implicit def dragLocEquality: UnivEq[DragLoc] = UnivEq.deriveAuto
 
   private[DragToReorder] var instanceCount = 0
 }
 
 // =====================================================================================================================
-final class DragToReorder[A: Reusability] {
+final class DragToReorder[A](updateItems: Vector[A] => Callback,
+                             renderFn   : DragToReorder.Content[A] => CallbackTo[ReactElement]) {
   import DragToReorder._
 
   type Item    = DragToReorder.Item [A]
   type Props   = DragToReorder.Props[A]
   type Content = DragToReorder.Content[A]
-
-  def helper(update: Vector[A] => Callback, render: Content => CallbackTo[ReactElement]): Vector[A] => ReactElement = {
-    val u = ReusableFn(update)
-    val r = ReusableFn(render)
-    as => Component(Props(as, u, r))
-  }
 
   case class DragState(items       : Vector[A],
                        dragSource  : Int,
@@ -79,10 +70,6 @@ final class DragToReorder[A: Reusability] {
   }
 
   type State = Option[DragState]
-
-  private implicit val reusabilityAs    = Reusability.vector[A]
-  private implicit def reusabilityDS    = Reusability.caseClass[DragState]
-          implicit val reusabilityProps = Reusability.caseClass[Props]
 
   final class Backend($: BackendScope[Props, State]) {
     type EH = ReactDragEvent => Callback
@@ -165,8 +152,7 @@ final class DragToReorder[A: Reusability] {
         def dragStart: EH =
           e => for {
             _  ← unless(e.defaultPrevented)
-            p  ← $.props
-            is = p.items
+            is ← $.props
             _  ← $.setState(DragState(is, i, InChild(i), is.indices.toVector)).async
           } yield {
             val dt = e.dataTransfer
@@ -181,7 +167,7 @@ final class DragToReorder[A: Reusability] {
             _ ← $ setState None
             o = s.orderWithoutTombstone
             _ ← unless(o ≟ s.originalOrder)
-            _ ← p updateItems o.map(s.items.apply)
+            _ ← updateItems(o map s.items.apply)
           } yield ()
 
         def dragEnter: EH =
@@ -221,7 +207,7 @@ final class DragToReorder[A: Reusability] {
       val items: Vector[Item] =
         s match {
           case None =>
-            mkItems(p.items.indices, p.items, _ => Normal)
+            mkItems(p.indices, p, _ => Normal)
 
           case Some(ds) =>
             val onDragSrc = ds.dragLoc match {
@@ -231,13 +217,12 @@ final class DragToReorder[A: Reusability] {
             mkItems(ds.currentOrder, ds.items, i => if (i ≟ ds.dragSource) onDragSrc else Normal)
         }
 
-      p.render(Content(parentTagMod, items)).runNow()
+      renderFn(Content(parentTagMod, items)).runNow()
     }
   }
 
   val Component = ReactComponentB[Props]("DND")
     .initialState[State](None)
     .renderBackend[Backend]
-    .configure(Reusability.shouldComponentUpdate)
     .build
 }

@@ -93,8 +93,6 @@ object Table {
 
   implicit val headerPropReuse = Reusability.caseClass[HeaderProps]
 
-  val ColumnDND = new DragToReorder[Column]
-
   val HeaderComponent = ReactComponentB[HeaderProps]("Header")
     .renderBackend[HeaderBackend]
     .configure(shouldComponentUpdate)
@@ -130,7 +128,7 @@ object Table {
         }
       }
 
-    val dnd = ColumnDND.helper(
+    val columnDND = new DragToReorder[Column](
       newOrder =>
         NonEmptyVector.maybe(newOrder, Callback.empty)(no =>
           $.props.flatMap(_ reorder no)),
@@ -156,7 +154,7 @@ object Table {
       })
 
     def render(p: HeaderProps) =
-      dnd(p.cols.whole)
+      columnDND.Component(p.cols.whole)
   }
 
   // ===================================================================================================================
