@@ -69,7 +69,7 @@ object GenerateProject {
     val reqIds          = reqsWithoutText.reqs.keys
     val reqIdG          = Gen oneofO reqIds.toSeq
     val reqIdSet        = reqIds.toSet
-    val liveReqIds      = reqsWithoutText.reqs.values.toStream.filter(_.live :: Live).map(_.id)
+    val liveReqIds      = reqsWithoutText.reqs.values.toStream.filter(_.live(cfg.customReqTypes) :: Live).map(_.id)
     val liveReqIdG      = Gen oneofO liveReqIds
     val reqCodeDataG    = $.reqCode.data(liveReqIdG, reqIdG, $.reqCode.gEmptyReqCodeGroup)
     val reqCodesG       = $.reqCodes($.reqCode.trie(Size.ReqCodeDepth, reqCodeDataG.sup))
