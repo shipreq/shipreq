@@ -1,7 +1,5 @@
 package shipreq.webapp.client.app.ui.reqtable
 
-import shipreq.webapp.client.lib.ui.UI
-
 import scalacss.ScalaCssReact._
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.extra._
@@ -91,6 +89,32 @@ object Table {
   }
 
   // ===================================================================================================================
+
+  def moveFocus(cur: dom.html.Element, ↔ : Movement = Movement.None, ↕ : Movement = Movement.None): Callback =
+    Callback {
+      val cell: dom.html.Element =
+        if ("INPUT" == cur.tagName) // Selection checkbox
+          cur.parentElement
+        else
+          cur
+      val z = TableCellZipper(cell) move_- ↔ move_| ↕
+      val f: dom.html.Element =
+        if (z.colIndex == 0)
+          z.focus.children(0).castHtml // Selection checkbox
+        else
+          z.focus
+      f.focus()
+    }
+
+  def focusKeyHandlers(e: ReactKeyboardEventH): PartialFunction[Int, Callback] = {
+    case KeyCode.Up     => moveFocus(e.currentTarget, ↕ = Movement.Prev)
+    case KeyCode.Down   => moveFocus(e.currentTarget, ↕ = Movement.Next)
+    case KeyCode.Left   => moveFocus(e.currentTarget, ↔ = Movement.Prev)
+    case KeyCode.Right  => moveFocus(e.currentTarget, ↔ = Movement.Next)
+    case KeyCode.Escape => Callback(e.target.blur())
+  }
+
+  // ===================================================================================================================
   // Header row
 
   case class HeaderProps(cols        : NonEmptyVector[Column],
@@ -109,33 +133,14 @@ object Table {
 
   class HeaderBackend($: BackendScope[HeaderProps, Unit]) {
 
-    def onKeyDown(col: Column)(e: ReactKeyboardEventH): Callback =
-      keyCodeSwitch(e) {
-        case KeyCode.Up     => moveFocus_|(e.currentTarget, _ - 1)
-        case KeyCode.Down   => moveFocus_|(e.currentTarget, _ => 0)
-        case KeyCode.Left   => moveFocus_-(e.currentTarget, -1)
-        case KeyCode.Right  => moveFocus_-(e.currentTarget,  1)
-        case KeyCode.Escape => Callback(e.currentTarget.blur())
-        case KeyCode.Space  => $.props.flatMap(_ clickSort col)
-      }
+    def selColKeyDown(e: ReactKeyboardEventH): Callback =
+      keyCodeSwitch(e)(focusKeyHandlers(e))
 
-    def moveFocus_-(cur: dom.html.Element, by: Int): Callback =
-      siblingAtOffset(cur, by)
-        .map(_.castHtml.focus())
-
-    def moveFocus_|(th: dom.html.Element, chooseRow: Int => Int): Callback =
-      siblingIndex(th).map { col =>
-        val tr     = th.parentElement
-        val thead  = tr.parentElement
-        val table  = thead.parentElement
-        val tbody  = table.children(1)
-        val rows   = tbody.children
-        val rowcnt = rows.length
-        if (rowcnt > 0) {
-          val row = chooseRow(rowcnt)
-          rows(row).children(col).castHtml.focus()
-        }
-      }
+    def dataColKeyDown(col: Column)(e: ReactKeyboardEventH): Callback =
+      keyCodeSwitch(e)(
+        focusKeyHandlers(e) orElse {
+          case KeyCode.Space => $.props.flatMap(_ clickSort col)
+        })
 
     val columnDND = new DragToReorder[Column](
       newOrder =>
@@ -149,7 +154,8 @@ object Table {
           val selectionCell =
             <.th(
               *.selectionRowHeader,
-              UI checkboxLikeEventHandlers p.setSelection(p.selection.totalToggle),
+              ^.onKeyDown ==> selColKeyDown,
+              ^.onClick   --> p.setSelection(p.selection.totalToggle),
               p.selection totalCheckbox p.setSelection)
 
           val cols =
@@ -159,7 +165,7 @@ object Table {
                 *.columnHeader(c.live, i.status),
                 i.mod,
                 ^.tabIndex   := -1,
-                ^.onKeyDown ==> onKeyDown(c),
+                ^.onKeyDown ==> dataColKeyDown(c),
                 ^.onClick   --> p.clickSort(c),
                 name(c)
               )
@@ -200,10 +206,14 @@ object Table {
     val rowStatus: ColumnRenderer.Status =
       if (row.live :: Dead) ColumnRenderer.DeadRow else ColumnRenderer.Normal
 
+    def selCellKeyDown(e: ReactKeyboardEventH): Callback =
+      keyCodeSwitch(e)(focusKeyHandlers(e))
+
     val selectionCell =
       <.td(
         *.cell(rowStatus),
-        UI checkboxLikeEventHandlers p.setSelection(p.selection oneToggle row.sourceId),
+        ^.onKeyDown ==> selCellKeyDown,
+        ^.onClick   --> p.setSelection(p.selection oneToggle row.sourceId),
         p.selection.oneCheckbox(row.sourceId, p.setSelection))
 
     val cols =
@@ -252,29 +262,10 @@ object Table {
 
     def onKeyDown(e: ReactKeyboardEventH): Callback =
       CallbackOption.require(doesEventTargetCell(e)) >>
-      keyCodeSwitch(e) {
-        case KeyCode.F2     => startEdit
-        case KeyCode.Up     => moveFocus_|(-1)
-        case KeyCode.Down   => moveFocus_|( 1)
-        case KeyCode.Left   => moveFocus_-(-1)
-        case KeyCode.Right  => moveFocus_-( 1)
-        case KeyCode.Escape => domNode.map(_.blur())
-      }
-
-    def moveFocus_-(by: Int): Callback =
-      for {
-        cur <- domNode
-        tgt <- siblingAtOffset(cur, by)
-      } yield
-        tgt.castHtml.focus()
-
-    def moveFocus_|(by: Int): Callback =
-      for {
-        cur <- domNode
-        col <- siblingIndex(cur)
-        row <- siblingAtOffset(cur.parentElement, by)
-      } yield
-        row.children(col).castHtml.focus()
+        keyCodeSwitch(e)(
+          focusKeyHandlers(e) orElse {
+            case KeyCode.F2 => startEdit
+          })
 
     def startEdit: Callback =
       $.props >>= (_ startEdit TCB.Finally(domNode.map(_.focus())))

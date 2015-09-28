@@ -156,6 +156,23 @@ object Util {
     } else
       whenEmpty
   }
+
+  /**
+   * Fit an index within the acceptable window of indices.
+   *
+   * @param i The index needing correction.
+   * @param length The length of the collection. Must be > 0.
+   * @return 0 ≤ new-index < length
+   */
+  def fitCollectionIndex(i: Int, length: Int): Int = {
+    assert(length > 0, "Length must be > 0, got: " + length)
+    var j = i
+    while (j >= length)
+      j %= length
+    while (j < 0)
+      j += length
+    j
+  }
 }
 
 object ParseLong {
