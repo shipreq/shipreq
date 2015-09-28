@@ -30,6 +30,7 @@ object DomUtil {
                    (keyCodeSwitch: PartialFunction[Int, Callback]): CallbackOption[Unit] =
     for {
       _  <- CallbackOption.require(checkModKeys(e, altKey, ctrlKey, metaKey, shiftKey))
+      _  <- CallbackOption.unless(e.defaultPrevented)
       cb <- CallbackOption.matchPF(e.nativeEvent.keyCode)(keyCodeSwitch)
       _  <- cb
       _  <- e.preventDefaultCB

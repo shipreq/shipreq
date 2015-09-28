@@ -199,10 +199,12 @@ object Style extends StyleSheet.Inline {
       margin.horizontal(auto)
     )
 
+    private val columnHeaderBase = mixin(
+      backgroundColor(c"#e0e8f8"))
+
     val columnHeader = styleF(D.live *** D.dragStatus) { case (live, status) => styleS(
-      cursor.pointer,
+      columnHeaderBase,
       deadColumnLabel(live),
-      backgroundColor(c"#e0e8f8"),
       cursor.pointer, // Because click affects sorting
       (status match {
         case DragToReorder.Normal => mixin(
@@ -212,6 +214,9 @@ object Style extends StyleSheet.Inline {
           border(2 px, dashed, c"#779"))
       }): StyleS
     )}
+
+    val selectionRowHeader = style(
+      columnHeaderBase)
 
     val cell = styleF(ColumnRenderer.statusDomain){ status =>
       styleS(

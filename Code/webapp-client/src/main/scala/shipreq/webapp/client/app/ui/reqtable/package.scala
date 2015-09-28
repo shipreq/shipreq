@@ -11,6 +11,10 @@ import japgolly.scalajs.react.extra._
  */
 package object reqtable {
 
+  type RowSelection = Selection[Row.SourceId]
+  type RowSelectionVisible = Selection.Visible[Row.SourceId]
+
   @inline def shouldComponentUpdate[P: Reusability, S: Reusability, B, N <: TopNode] =
     shipreq.webapp.client.app.ui.shouldComponentUpdate[P, S, B, N]
+    // Reusability.shouldComponentUpdateWithOverlay[P, S, B, N]
 }

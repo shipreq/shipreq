@@ -4,21 +4,36 @@ import japgolly.scalajs.jquery.TextComplete
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
 import org.scalajs.dom
+import org.scalajs.dom.ext.KeyCode
 import org.scalajs.dom.html
 import scala.scalajs.js.{Dynamic, UndefOr, undefined}
 import shipreq.base.util.ScalaExt.EndoFn
 import shipreq.webapp.base.UiText
-import shipreq.webapp.client.util.On
+import shipreq.webapp.client.util.{DomUtil, On}
 
 object UI {
 
   def textChangeRecv[R](f: String => R): ReactEventI => R =
     e => f(e.target.value)
 
-  def checkbox(on: On) =
-    <.input(
-      ^.`type` := "checkbox",
-      ^.checked := (on :: On))
+  val checkbox: On => ReactTag =
+    On.memo(on =>
+      <.input(
+        ^.`type` := "checkbox",
+        ^.checked := (on :: On)))
+
+  /**
+   * Clicking, or pressing space = change.
+   */
+  def checkboxLikeEventHandlers(onChange: Callback): TagMod = {
+    def handleKey: ReactKeyboardEventH => Callback =
+      DomUtil.keyCodeSwitch(_) {
+        case KeyCode.Space => onChange
+      }
+    TagMod(
+      ^.onClick   --> onChange,
+      ^.onKeyDown ==> handleKey)
+  }
 
   def rowStatusRowClass(rs: RowStatus): String = rs match {
     case RowStatus.Sync      => "sync"

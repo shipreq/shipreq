@@ -1,5 +1,7 @@
 package shipreq.webapp.client.app.ui.reqtable
 
+import shipreq.webapp.client.lib.ui.UI
+
 import scalacss.ScalaCssReact._
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.extra._
@@ -39,6 +41,8 @@ object Table {
                    colRenderers   : NonEmptyVector[ColumnRenderer],
                    colEditors     : ColumnEditors,
                    cells          : Cell.TableState,
+                   selection      : RowSelectionVisible,
+                   setSelection   : RowSelection ~=> Callback,
                    modViewSettings: EndoFn[ViewSettings] ~=> Callback)
 
   val Component =
@@ -68,17 +72,20 @@ object Table {
       val crs  = p.colRenderers
       val rows = p.rows
 
-      def renderRows =
+      val headerProps = HeaderProps(
+        crs.map(_.column), p.colName, p.selection, p.setSelection, reorderColumns, clickHeaderToSort)
+
+      val renderRows =
         rows.indices.toReactNodeArray { i =>
           val row   = rows(i)
           val cells = p.cells(row.sourceId)
-          val rp    = RowProps(row, crs, cells, startCellEdit(row))
+          val rp    = RowProps(row, crs, cells, p.selection, p.setSelection, startCellEdit(row))
           RowComponent.withKey(row.id.key)(rp)
         }
 
       // Render
       <.table(*.table,
-        HeaderComponent(HeaderProps(crs.map(_.column), p.colName, reorderColumns, clickHeaderToSort)),
+        HeaderComponent(headerProps),
         <.tbody(renderRows))
     }
   }
@@ -86,10 +93,12 @@ object Table {
   // ===================================================================================================================
   // Header row
 
-  case class HeaderProps(cols     : NonEmptyVector[Column],
-                         colName  : Column.NameResolver,
-                         reorder  : NonEmptyVector[Column] ~=> Callback,
-                         clickSort: Column ~=> Callback)
+  case class HeaderProps(cols        : NonEmptyVector[Column],
+                         colName     : Column.NameResolver,
+                         selection   : RowSelectionVisible,
+                         setSelection: RowSelection ~=> Callback,
+                         reorder     : NonEmptyVector[Column] ~=> Callback,
+                         clickSort   : Column ~=> Callback)
 
   implicit val headerPropReuse = Reusability.caseClass[HeaderProps]
 
@@ -136,21 +145,31 @@ object Table {
       content =>
         $.props map { p =>
           val name = p.colName
-          var first = true
+
+          val selectionCell =
+            <.th(
+              *.selectionRowHeader,
+              UI checkboxLikeEventHandlers p.setSelection(p.selection.totalToggle),
+              p.selection totalCheckbox p.setSelection)
+
+          val cols =
+            content.items.map { i =>
+              val c = i.data
+              <.th(
+                *.columnHeader(c.live, i.status),
+                i.mod,
+                ^.tabIndex   := -1,
+                ^.onKeyDown ==> onKeyDown(c),
+                ^.onClick   --> p.clickSort(c),
+                name(c)
+              )
+            }
+
           <.thead(
             content.rootMod,
             <.tr(
-              content.items.map { i =>
-                val isFirst = first && { first = false; true }
-                val c = i.data
-                <.th(
-                  *.columnHeader(c.live, i.status),
-                  i.mod,
-                  ^.tabIndex   := (if (isFirst) 0 else -1),
-                  ^.onKeyDown ==> onKeyDown(c),
-                  ^.onClick   --> p.clickSort(c),
-                  name(c)
-                )}))
+              selectionCell,
+              cols))
       })
 
     def render(p: HeaderProps) =
@@ -160,10 +179,12 @@ object Table {
   // ===================================================================================================================
   // Rows
 
-  case class RowProps(row      : Row,
-                      crs      : NonEmptyVector[ColumnRenderer],
-                      cells    : Cell.RowState,
-                      startEdit: Column ~=> (TCB.Finally ~=> Callback))
+  case class RowProps(row         : Row,
+                      crs         : NonEmptyVector[ColumnRenderer],
+                      cells       : Cell.RowState,
+                      selection   : RowSelectionVisible,
+                      setSelection: RowSelection ~=> Callback,
+                      startEdit   : Column ~=> (TCB.Finally ~=> Callback))
 
   implicit val rowPropReuse = Reusability.caseClass[RowProps]
 
@@ -173,14 +194,27 @@ object Table {
       .configure(shouldComponentUpdate)
       .build
 
-  def renderRow(p: RowProps) =
-    <.tr(
+  def renderRow(p: RowProps) = {
+    val row = p.row
+
+    val rowStatus: ColumnRenderer.Status =
+      if (row.live :: Dead) ColumnRenderer.DeadRow else ColumnRenderer.Normal
+
+    val selectionCell =
+      <.td(
+        *.cell(rowStatus),
+        UI checkboxLikeEventHandlers p.setSelection(p.selection oneToggle row.sourceId),
+        p.selection.oneCheckbox(row.sourceId, p.setSelection))
+
+    val cols =
       p.crs.toStream.map { cr =>
         val col = cr.column
-        val cp = CellProps(p.row, cr, p.cells get col, p startEdit col)
+        val cp = CellProps(row, cr, p.cells get col, p startEdit col)
         CellComponent.withKey(col.key)(cp)
       }
-    )
+
+    <.tr(selectionCell, cols)
+  }
 
   // ===================================================================================================================
   // Cells

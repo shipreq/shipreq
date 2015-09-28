@@ -12,7 +12,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.{FilterAst, FilterSpec}
 import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.client.app.state.{Changes, ChangeListener, ClientData}
-import shipreq.webapp.client.app.ui.ProjectWidgets
+import shipreq.webapp.client.app.ui.{Selection, ProjectWidgets}
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
 import shipreq.webapp.client.data.DataReusability._
 import shipreq.webapp.client.lib.{FilterDead, TCB}
@@ -43,6 +43,7 @@ object ReqTable {
     var s = State(proj,
       ViewSettings.default(p.fd),
       FilterEditor.initialState,
+      Selection.empty,
       CreationInterface.initState,
       Cell.emptyTableState)
     p.filterSpec.foreach(f => s = s setFilterSpec f)
@@ -53,6 +54,7 @@ object ReqTable {
   case class State(project     : Project,
                    viewSettings: ViewSettings,
                    filter      : FilterEditor.State,
+                   selection   : RowSelection,
                    creation    : CreationInterface.State,
                    cellStates  : Cell.TableState) {
 
@@ -105,11 +107,13 @@ object ReqTable {
     val setViewSettings = ReusableFn($ zoomL State.viewSettings).setState
     val modViewSettings = ReusableFn($ zoomL State.viewSettings).modState
     val setSortCriteria = ReusableFn($ zoomL State.sortCriteria).setState
+    val setSelection    = ReusableFn($ zoomL State.selection).setState
     val setCreation     = $ zoomL State.creation
 
     val project      = Px.bs($).stateM(_.project)
     val viewSettings = Px.bs($).stateM(_.viewSettings)
     val filterState  = Px.bs($).stateM(_.filter)
+    val selection    = Px.bs($).stateM(_.selection)
 
     val vsVar      = viewSettings map (ReusableVar(_)(setViewSettings))
     val vsCols     = viewSettings map (_.columns)
@@ -121,6 +125,7 @@ object ReqTable {
     val colRnds    = Px.apply2(vsCols, colRnd)(_ map _.apply)
     val rows       = Px.apply4(viewSettings, project, plainText, textSearch)(Logic.rowsForTable).map(_.toVector)
     val stats      = Px.apply3(viewSettings, project, rows)(Logic.stats)
+    val selVis     = for {rs <- rows; s <- selection} yield s visible rs.foldLeft(Set.empty[Row.SourceId])(_ + _.sourceId)
 
     val sortEditorProps =
       for {
@@ -165,14 +170,14 @@ object ReqTable {
 
     def render(s: State) = {
       import Px.AutoValue._
-      Px.refresh(project, viewSettings, filterState)
+      Px.refresh(project, viewSettings, filterState, selection)
 
       val vsProps = ViewSettingsEditor.Props(colName, s.project.config, vsVar, filterEditor)
 
       val creationProps = CreationInterface.Props(createIO, s.creation)
 
       val tableProps = Table.Props(
-        project, rows, colName, colRnds, colEditors, s.cellStates, modViewSettings)
+        project, rows, colName, colRnds, colEditors, s.cellStates, selVis, setSelection, modViewSettings)
 
       <.div(
         ViewSettingsEditor.Component(vsProps),
