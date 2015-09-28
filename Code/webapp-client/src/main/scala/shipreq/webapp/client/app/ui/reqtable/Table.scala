@@ -106,13 +106,19 @@ object Table {
       f.focus()
     }
 
-  def focusKeyHandlers(e: ReactKeyboardEventH): PartialFunction[Int, Callback] = {
-    case KeyCode.Up     => moveFocus(e.currentTarget, ↕ = Movement.Prev)
-    case KeyCode.Down   => moveFocus(e.currentTarget, ↕ = Movement.Next)
-    case KeyCode.Left   => moveFocus(e.currentTarget, ↔ = Movement.Prev)
-    case KeyCode.Right  => moveFocus(e.currentTarget, ↔ = Movement.Next)
-    case KeyCode.Escape => Callback(e.target.blur())
-  }
+  def focusKeyHandlers(e: ReactKeyboardEventH): CallbackOption[Unit] =
+    keyCodeSwitch(e) {
+      case KeyCode.Up       => moveFocus(e.currentTarget, ↕ = Movement.Prev)
+      case KeyCode.Down     => moveFocus(e.currentTarget, ↕ = Movement.Next)
+      case KeyCode.Left     => moveFocus(e.currentTarget, ↔ = Movement.Prev)
+      case KeyCode.Right    => moveFocus(e.currentTarget, ↔ = Movement.Next)
+      case KeyCode.Home     => moveFocus(e.currentTarget, ↔ = Movement.Head)
+      case KeyCode.End      => moveFocus(e.currentTarget, ↔ = Movement.Last)
+      case KeyCode.Escape   => Callback(e.target.blur())
+    } | keyCodeSwitch(e, ctrlKey = true) {
+      case KeyCode.Home     => moveFocus(e.currentTarget, Movement.Head, Movement.Head)
+      case KeyCode.End      => moveFocus(e.currentTarget, Movement.Last, Movement.Last)
+    }
 
   // ===================================================================================================================
   // Header row
@@ -134,13 +140,12 @@ object Table {
   class HeaderBackend($: BackendScope[HeaderProps, Unit]) {
 
     def selColKeyDown(e: ReactKeyboardEventH): Callback =
-      keyCodeSwitch(e)(focusKeyHandlers(e))
+      focusKeyHandlers(e)
 
     def dataColKeyDown(col: Column)(e: ReactKeyboardEventH): Callback =
-      keyCodeSwitch(e)(
-        focusKeyHandlers(e) orElse {
-          case KeyCode.Space => $.props.flatMap(_ clickSort col)
-        })
+      focusKeyHandlers(e) | keyCodeSwitch(e) {
+        case KeyCode.Space => $.props.flatMap(_ clickSort col)
+      }
 
     val columnDND = new DragToReorder[Column](
       newOrder =>
@@ -207,7 +212,7 @@ object Table {
       if (row.live :: Dead) ColumnRenderer.DeadRow else ColumnRenderer.Normal
 
     def selCellKeyDown(e: ReactKeyboardEventH): Callback =
-      keyCodeSwitch(e)(focusKeyHandlers(e))
+      focusKeyHandlers(e)
 
     val selectionCell =
       <.td(
@@ -261,11 +266,11 @@ object Table {
       e.target == e.currentTarget || e.target.tabIndex < 0
 
     def onKeyDown(e: ReactKeyboardEventH): Callback =
-      CallbackOption.require(doesEventTargetCell(e)) >>
-        keyCodeSwitch(e)(
-          focusKeyHandlers(e) orElse {
-            case KeyCode.F2 => startEdit
-          })
+      CallbackOption.require(doesEventTargetCell(e)) >> (
+        focusKeyHandlers(e) | keyCodeSwitch(e) {
+          case KeyCode.F2 => startEdit
+        }
+      )
 
     def startEdit: Callback =
       $.props >>= (_ startEdit TCB.Finally(domNode.map(_.focus())))
