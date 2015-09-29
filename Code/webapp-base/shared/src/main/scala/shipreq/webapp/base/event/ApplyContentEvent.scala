@@ -302,7 +302,7 @@ trait ApplyContentEvent {
      * @param makeInactive Determine whether a reference should be kept of the current id and target.
      *                     If `false`, the data is gone completely.
      */
-    def remove(trie: Trie, v: Value, d: Data, a: ActiveData, makeInactive: ReqCodeId => Boolean): Trie = {
+    def remove(trie: Trie, v: Value, d: Data, a: ActiveData, rememberGroup: Boolean, makeInactive: ReqCodeId => Boolean): Trie = {
       var lastGroup   = d.lastGroup
       var refsToGroup = d.refsToGroup
       var reqInactive = d.reqInactive
@@ -312,7 +312,7 @@ trait ApplyContentEvent {
           if (makeInactive(id))
             reqInactive = reqInactive.add(t, id)
         case g: ReqCodeGroup =>
-          lastGroup = if (g.isEmpty) None else Some(g)
+          lastGroup = if (rememberGroup && g.nonEmpty) Some(g) else None
           if (makeInactive(id))
             refsToGroup += id
       }
@@ -327,31 +327,31 @@ trait ApplyContentEvent {
      * @param makeInactive Determine whether a reference should be kept of the current id and target.
      *                     If `false`, the data is gone completely.
      */
-    def _removeValues(t: Trie, vs: Iterable[Value], makeInactive: ReqCodeId => Boolean, validateTarget: ActiveData => SE[Unit]): SE[Trie] =
+    def _removeValues(t: Trie, vs: Iterable[Value], rememberGroup: Boolean, makeInactive: ReqCodeId => Boolean, validateTarget: ActiveData => SE[Unit]): SE[Trie] =
       foldMapBind(t, vs)(v => t =>
         for {
           d <- needData(t, v)
           a <- needActiveData(d, v)
           _ <- validateTarget(a)
-        } yield remove(t, v, d, a, makeInactive)
+        } yield remove(t, v, d, a, rememberGroup, makeInactive)
       )
 
     /**
      * @param makeInactive Determine whether a reference should be kept of the current id and target.
      *                     If `false`, the data is gone completely.
      */
-    def removeValues(vs: Iterable[Value], makeInactive: ReqCodeId => Boolean, validateTarget: ActiveData => SE[Unit]): SE[Unit] =
-      lensMod(Project.reqCodeTrie)(_removeValues(_, vs, makeInactive, validateTarget))
+    def removeValues(vs: Iterable[Value], rememberGroup: Boolean, makeInactive: ReqCodeId => Boolean, validateTarget: ActiveData => SE[Unit]): SE[Unit] =
+      lensMod(Project.reqCodeTrie)(_removeValues(_, vs, rememberGroup, makeInactive, validateTarget))
 
-    def removeValue(v: Value, makeInactive: ReqCodeId => Boolean, validateTarget: ActiveData => SE[Unit]): SE[Unit] =
-      removeValues(set1(v), makeInactive, validateTarget)
+    def removeValue(v: Value, rememberGroup: Boolean, makeInactive: ReqCodeId => Boolean, validateTarget: ActiveData => SE[Unit]): SE[Unit] =
+      removeValues(set1(v), rememberGroup, makeInactive, validateTarget)
 
-    def removeId(id: ReqCodeId, makeInactive: ReqCodeId => Boolean, validateTarget: ActiveData => SE[Unit]): SE[Unit] =
-      removeIds(set1(id), makeInactive, validateTarget)
+    def removeId(id: ReqCodeId, rememberGroup: Boolean, makeInactive: ReqCodeId => Boolean, validateTarget: ActiveData => SE[Unit]): SE[Unit] =
+      removeIds(set1(id), rememberGroup, makeInactive, validateTarget)
 
-    def removeIds(ids: Set[ReqCodeId], makeInactive: ReqCodeId => Boolean, validateTarget: ActiveData => SE[Unit]): SE[Unit] =
+    def removeIds(ids: Set[ReqCodeId], rememberGroup: Boolean, makeInactive: ReqCodeId => Boolean, validateTarget: ActiveData => SE[Unit]): SE[Unit] =
       needValues(ids, (_, v) => v) >>= (vs =>
-        removeValues(vs, makeInactive, validateTarget))
+        removeValues(vs, rememberGroup, makeInactive, validateTarget))
 
     def makeInactiveAllBelongingToReq(reqId: ReqId): SE[Unit] =
       makeInactiveAllBelongingToReqs(set1(reqId))
@@ -361,7 +361,7 @@ trait ApplyContentEvent {
         p  ← SE.get
         m  = p.reqCodes.activeReqCodesByTarget
         t1 = p.reqCodes.trie
-        t2 ← foldMapBind(t1, reqIds)(reqId => _removeValues(_, m(reqId), _ => true, ensureActiveDataTargetIs(reqId)))
+        t2 ← foldMapBind(t1, reqIds)(reqId => _removeValues(_, m(reqId), true, _ => true, ensureActiveDataTargetIs(reqId)))
         _  ← Project.reqCodeTrie set t2
       } yield ()
 
@@ -486,7 +486,7 @@ trait ApplyContentEvent {
       for {
         refd ← SE.get(_.atomScan.codeRefs)
         keep = e.add.values.foldLeft(refd)(_ &~_)
-        _    ← removeIds(e.remove, keep.contains, ensureActiveDataTargetIs(e.id))
+        _    ← removeIds(e.remove, true, keep.contains, ensureActiveDataTargetIs(e.id))
         _    ← restoreReqCodesById(e.id, e.restore)
         _    ← addCodesToTarget(e.id, e.add)
       } yield ()
@@ -516,7 +516,7 @@ trait ApplyContentEvent {
         d  ← needData(t, v)
         a  ← needActiveData(d, v)
         g  ← needReqCodeGroup(a.target)
-        t2 = remove(t, v, d, a, _ => false)
+        t2 = remove(t, v, d, a, false, _ => false)
         t3 ← _addUnvalidated(t2, id, newCode, g, addToActive = true)
         _  ← Project.reqCodeTrie set t3
       } yield ()
@@ -544,7 +544,7 @@ trait ApplyContentEvent {
     def applyDelete(e: DeleteReqCodeGroup): SE[Unit] =
       for {
         refd ← SE.get(_.atomScan.codeRefs)
-        _    ← removeId(e.id, refd.contains, ad => ensureReqCodeGroup(ad.target))
+        _    ← removeId(e.id, true, refd.contains, ad => ensureReqCodeGroup(ad.target))
       } yield ()
   }
 }

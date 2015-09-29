@@ -274,11 +274,16 @@ object GenericReqEventTest extends TestSuite {
       'replaceLast    - {
         // Adding a new RCG should clear out .lastGroup
         val p = _assertPass(createRCG(1, "abc.def", "old"), delRCG1, createRCG(2, "abc.def", "new"))
-        val v = p.reqCodes.trie.flatStream.toVector
-        assertEq("Trie size", v.size, 1)
-        assertEq(v.head._1, "abc.def": ReqCode.Value)
-        assertEq(v.head._2, ReqCode.Data.empty.copy(active = Some(ReqCode.ActiveData(2, ReqCodeGroup("new")))))
+        val d = assertSoleReqCode(p, "abc.def")
+        assertEq(d, ReqCode.Data.empty.copy(active = Some(ReqCode.ActiveData(2, ReqCodeGroup("new")))))
       }
+    }
+
+    def assertSoleReqCode(p: Project, code: ReqCode.Value): ReqCode.Data = {
+      val v = p.reqCodes.trie.flatStream.toVector
+      assertEq("Trie size", v.size, 1)
+      assertEq("Sole req code", v.head._1, code)
+      v.head._2
     }
 
     'updateCodeGroup {
@@ -288,6 +293,13 @@ object GenericReqEventTest extends TestSuite {
         val p = _assertPass(createRCG(1, "a"), UpdateReqCodeGroup(1, nev(Title(t))))
         val g = p.reqCodes.activeGroups.head.group
         assertEq(g, ReqCodeGroup(t))
+      }
+
+      'code {
+        import ReqCodeGroupGD._
+        val p = _assertPass(createRCG(1, "hehe.grr", "Ze Title"), UpdateReqCodeGroup(1, nev(Code("fine.then"))))
+        val d = assertSoleReqCode(p, "fine.then")
+        assertEq(d, ReqCode.Data.empty.copy(active = Some(ReqCode.ActiveData(1, ReqCodeGroup("Ze Title")))))
       }
 
       'badCode    - assertFail("code")     (createRCG(1, "a"), updateRCGCode(1, "!!"))
@@ -309,10 +321,8 @@ object GenericReqEventTest extends TestSuite {
       }
       'okNonEmpty - {
         val p = _assertPass(createRCG(1, "abc.def", "hehe"), delRCG1)
-        val v = p.reqCodes.trie.flatStream.toVector
-        assertEq("Trie size", v.size, 1)
-        assertEq(v.head._1, "abc.def": ReqCode.Value)
-        assertEq(v.head._2, ReqCode.Data.empty.copy(lastGroup = Some(ReqCodeGroup("hehe"))))
+        val d = assertSoleReqCode(p, "abc.def")
+        assertEq(d, ReqCode.Data.empty.copy(lastGroup = Some(ReqCodeGroup("hehe"))))
       }
       'notFound - assertFail("not found")(delRCG1)
       'twice    - assertFail("not found")(createRCG(1, "a"), delRCG1, delRCG1)
