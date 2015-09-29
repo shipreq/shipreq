@@ -12,11 +12,14 @@ sealed abstract class GenericDashHasher {
   protected val algorithm: Hash.Algorithm
   import algorithm._
 
-  implicit class Hash_StringExt(val str: String) { // TODO extends AnyVal
-    def @@[A](h: Hash[A]): Hash[A] = {
-      val nameHash = hashString.hash(str) :: Nil
-      Hash.fn[A](a => joinHashes(h.hash(a) :: nameHash))
-    }
+  /**
+   * Mixes the hash with a hash of `name` so that identical values in different places don't have identical hashes.
+   *
+   * @param name Some arbitrary string.
+   */
+  final def withName[A](name: String, h: Hash[A]): Hash[A] = {
+    val q = hashString.hash(name) :: Nil
+    Hash.fn[A](a => joinHashes(h.hash(a) :: q))
   }
 
   def hashTaggedType[T <: TaggedType](implicit h: Hash[T#U]): Hash[T] =
@@ -28,7 +31,7 @@ sealed abstract class GenericDashHasher {
   private val hashNone = "∅".hash
 
   implicit def hashOption[A: Hash]: Hash[Option[A]] = {
-    val some = "!" @@ Hash[A]
+    val some = withName("!", Hash[A])
     Hash.fn(_.fold(hashNone)(some.hash))
   }
 
@@ -50,7 +53,7 @@ sealed abstract class GenericDashHasher {
     hashUnordered[Iterable, V].cmap(_.values)
 
   implicit def disjunction[A: Hash, B: Hash]: Hash[A \/ B] = {
-    val l = "!" @@ Hash[A]
+    val l = withName("!", Hash[A])
     val r = Hash[B]
     Hash.fn(_.fold(l.hash, r.hash))
   }
@@ -59,8 +62,8 @@ sealed abstract class GenericDashHasher {
     import ISubset._
     implicit val anes = hashNES[A]
     implicit val all : Hash[All [A]] = hashConstClass("Al")
-    implicit val only: Hash[Only[A]] = "On" @@ hashCaseClass
-    implicit val not : Hash[Not [A]] = "No" @@ hashCaseClass
+    implicit val only: Hash[Only[A]] = withName("On", hashCaseClass)
+    implicit val not : Hash[Not [A]] = withName("No", hashCaseClass)
     // TODO hashADT can't handle this ↓
     Hash.fn {
       case a: All [A] => all  hash a
@@ -119,19 +122,19 @@ sealed abstract class DataHasher extends GenericDashHasher {
       Hash.fn[t.Atom](a => f(a) hash a)
 
     override def blankLine   [T <: NewLine        ](t: T): Hash[t.BlankLine   ] = hashConstClass("BL")
-    override def literal     [T <: Literal        ](t: T): Hash[t.Literal     ] = "LI" @@ hashCaseClass
-    override def webAddress  [T <: PlainTextMarkup](t: T): Hash[t.WebAddress  ] = "WA" @@ hashCaseClass
-    override def emailAddress[T <: PlainTextMarkup](t: T): Hash[t.EmailAddress] = "EA" @@ hashCaseClass
-    override def mathTeX     [T <: PlainTextMarkup](t: T): Hash[t.MathTeX     ] = "MX" @@ hashCaseClass
-    override def reqRef      [T <: ReqRef         ](t: T): Hash[t.ReqRef      ] = "RR" @@ hashCaseClass
-    override def codeRef     [T <: ReqRef         ](t: T): Hash[t.CodeRef     ] = "CR" @@ hashCaseClass
-    override def tagRef      [T <: TagRef         ](t: T): Hash[t.TagRef      ] = "TR" @@ hashCaseClass
+    override def literal     [T <: Literal        ](t: T): Hash[t.Literal     ] = withName("LI", hashCaseClass)
+    override def webAddress  [T <: PlainTextMarkup](t: T): Hash[t.WebAddress  ] = withName("WA", hashCaseClass)
+    override def emailAddress[T <: PlainTextMarkup](t: T): Hash[t.EmailAddress] = withName("EA", hashCaseClass)
+    override def mathTeX     [T <: PlainTextMarkup](t: T): Hash[t.MathTeX     ] = withName("MX", hashCaseClass)
+    override def reqRef      [T <: ReqRef         ](t: T): Hash[t.ReqRef      ] = withName("RR", hashCaseClass)
+    override def codeRef     [T <: ReqRef         ](t: T): Hash[t.CodeRef     ] = withName("CR", hashCaseClass)
+    override def tagRef      [T <: TagRef         ](t: T): Hash[t.TagRef      ] = withName("TR", hashCaseClass)
 
     override def issue[T <: Issue](t: T)(implicit h: Hash[Text.InlineIssueDesc.OptionalText]): Hash[t.Issue] =
-      "IS" @@ hashCaseClass
+      withName("IS", hashCaseClass)
 
     override def unorderedList[T <: ListMarkup](t: T)(implicit h: Hash[NonEmptyVector[t.ListItem]]): Hash[t.UnorderedList] =
-      "UL" @@ hashCaseClass
+      withName("UL", hashCaseClass)
   }
 
   import HashAtoms.instances._
