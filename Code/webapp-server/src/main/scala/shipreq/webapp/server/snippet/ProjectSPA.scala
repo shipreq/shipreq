@@ -65,10 +65,9 @@ object ProjectSPA extends DI with HasLogger {
   def loadProjectEvents_!(projectId: ProjectId): State =
     loadProjectEvents(projectId) match {
       case \/-(s) => s
-      case -\/((err, seqs)) => sys.error(
-        s"Error building project #${projectId.value} from DB events: $err"
-        + s"\n\nSeqs: ${seqs.map(_.value) mkString ", "}"
-      )
+      case -\/((err, seqs)) =>
+        val seqStr = NonEmptySet.maybe(seqs.toStream.map(_.value).toSet, "∅")(ConciseIntSetFormat.spaced)
+        sys error s"Error building project #${projectId.value} from DB events: $err\n\nSeqs: $seqStr"
     }
 
   val rightUnit = \/-(())

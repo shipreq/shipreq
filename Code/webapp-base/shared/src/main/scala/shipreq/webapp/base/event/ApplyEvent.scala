@@ -1,7 +1,8 @@
 package shipreq.webapp.base.event
 
 import japgolly.nyaya.LogicPropExt
-import scalaz.{\/-, \/}
+import scala.annotation.tailrec
+import scalaz.{-\/, \/-, \/}
 import shipreq.base.util.UnivEq
 import shipreq.webapp.base.data.{Project, DataProp}
 import shipreq.webapp.base.hash.HashRec
@@ -67,9 +68,11 @@ final class ApplyEvent(implicit val trust: Trust) extends ApplyConfigEvent with 
       val s = ves.toStream
       val events = s.map(_.event)
       val finalHashRecs = s.map(_.hashRecs) reduceLeft HashRec.merge
-      // TODO On failure, replay to find the first mismatching event
       val plan = applyAllSafe(events) >> validateHashRecs(finalHashRecs)
-      plan exec p
+      plan exec p leftMap (bulkError =>
+        findFirstFailure(0, s, p, None) getOrElse
+          s"Bulk validation failed but incremental passed.\n$bulkError"
+      )
     }
 
   private def validateHashRecs(recs: HashRec.Collection): SE[Unit] =
@@ -79,7 +82,21 @@ final class ApplyEvent(implicit val trust: Trust) extends ApplyConfigEvent with 
         None
       else {
         val failures = recs.filterNot(isValid)
-        Some(s"Hash mismatch: ${failures mkString ", "}")
+        Some(s"Hash Mismatch. ${failures.size} mismatches:${failures.map("\n  - " + _) mkString ""}")
+      }
+    }
+
+  @tailrec
+  private def findFirstFailure(index: Int, ves: Stream[VerifiedEvent], p: Project, lastHR: Option[HashRec.Collection]): Option[String] =
+    if (ves.isEmpty)
+      None
+    else {
+      val h = ves.head
+      val hr = lastHR.fold(h.hashRecs)(HashRec.merge(_, h.hashRecs))
+      val plan = apply1Safe(h.event) >> validateHashRecs(hr)
+      plan exec p match {
+        case \/-(p2)  => findFirstFailure(index + 1, ves.tail, p2, Some(hr))
+        case -\/(err) => Some(s"$err\nEvent #$index = ${h.event}")
       }
     }
 
