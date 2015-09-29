@@ -115,6 +115,8 @@ object ReqCode {
    *
    * See `Design/req_codes.ods`.
    *
+   * @param lastGroup A group previously assigned to this reqcode, since deleted.
+   *                  If `active` is a group, then this must be `None`.
    * @param refsToGroup Previous IDs still referenced in rich text.
    * @param reqInactive Inactive associations to this reqcode by reqs.
    *                    When a req is dead, all its reqcodes move into this.
@@ -124,8 +126,12 @@ object ReqCode {
    */
   @Lenses
   final case class Data(active     : Option[ActiveData],
+                        lastGroup  : Option[ReqCodeGroup],
                         refsToGroup: Set[ReqCodeId],
                         reqInactive: Multimap[ReqId, Set, ReqCodeId]) {
+
+    def nonEmpty: Boolean =
+      active.nonEmpty || lastGroup.nonEmpty || refsToGroup.nonEmpty || reqInactive.nonEmpty
 
     def ids: Stream[ReqCodeId] =
       active.toStream.map(_.id) append
@@ -134,6 +140,10 @@ object ReqCode {
 
     def reqIds: Stream[ReqId] =
       reqInactive.keys.toStream append active.map(_.target).toList.filterT[ReqId]
+  }
+
+  object Data {
+    val empty = Data(None, None, UnivEq.emptySet, UnivEq.emptySetMultimap)
   }
 
   implicit def activeDataEquality: UnivEq[ActiveData] = UnivEq.derive
@@ -149,6 +159,9 @@ object ReqCode {
  * Previously called "Semantic Header Row" or "SHR" in the requirements.
  */
 final case class ReqCodeGroup(title: Text.ReqCodeGroupTitle.OptionalText) extends ReqCode.Target {
+  @inline def isEmpty : Boolean = title.isEmpty
+  @inline def nonEmpty: Boolean = !isEmpty
+
   @inline def and(id: ReqCodeId): ReqCodeGroup.AndId =
     ReqCodeGroup.AndId(id, this)
 

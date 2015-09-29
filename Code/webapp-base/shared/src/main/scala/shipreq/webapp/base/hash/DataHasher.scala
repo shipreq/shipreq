@@ -8,7 +8,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.AtomTC
 import Hash.HashableValueOps
 
-abstract class GenericDashHasher {
+sealed abstract class GenericDashHasher {
   protected val algorithm: Hash.Algorithm
   import algorithm._
 
@@ -70,7 +70,7 @@ abstract class GenericDashHasher {
   }
 }
 
-final class DataHasher(protected val algorithm: Hash.Algorithm) extends GenericDashHasher {
+sealed abstract class DataHasher extends GenericDashHasher {
   import algorithm._
 
   implicit val hashLive         : Hash[Live]                = Hash by Live.from
@@ -141,9 +141,6 @@ final class DataHasher(protected val algorithm: Hash.Algorithm) extends GenericD
   implicit val hashReqCodeGroup      : Hash[ReqCodeGroup]       = hashCaseClass
   implicit val hashReqCodeTarget     : Hash[ReqCode.Target]     = hashADT
   implicit val hashReqCodeActiveData : Hash[ReqCode.ActiveData] = hashCaseClass
-  implicit val hashReqCodeData       : Hash[ReqCode.Data]       = hashCaseClass
-  implicit val hashReqCodeTrie       : Hash[ReqCode.Trie]       = hashTrie
-  implicit val hashReqCodes          : Hash[ReqCodes]           = hashCaseClass
 
   implicit val hashStaticReqTypeUC: Hash[StaticReqType.UseCase.type] = hashConstClass("UC")
   implicit val hashStaticReqType  : Hash[StaticReqType]              = hashADT
@@ -190,5 +187,25 @@ final class DataHasher(protected val algorithm: Hash.Algorithm) extends GenericD
 
   implicit val hashIdCeilings   : Hash[IdCeilings]    = hashCaseClass
   implicit val hashProjectConfig: Hash[ProjectConfig] = hashCaseClass
-  implicit val hashProject      : Hash[Project]       = hashCaseClass
+
+  implicit val hashReqCodeData: Hash[ReqCode.Data]
+  implicit val hashReqCodeTrie: Hash[ReqCode.Trie]
+  implicit val hashReqCodes   : Hash[ReqCodes]
+  implicit val hashProject    : Hash[Project]
+}
+
+final class DataHasherV1(protected val algorithm: Hash.Algorithm) extends DataHasher {
+  import algorithm._
+  implicit val hashReqCodeData: Hash[ReqCode.Data] = hashCaseClassExcept('lastGroup)
+  implicit val hashReqCodeTrie: Hash[ReqCode.Trie] = hashTrie
+  implicit val hashReqCodes   : Hash[ReqCodes]     = hashCaseClass
+  implicit val hashProject    : Hash[Project]      = hashCaseClass
+}
+
+final class DataHasherCurrent(protected val algorithm: Hash.Algorithm) extends DataHasher {
+  import algorithm._
+  implicit val hashReqCodeData: Hash[ReqCode.Data] = hashCaseClass
+  implicit val hashReqCodeTrie: Hash[ReqCode.Trie] = hashTrie
+  implicit val hashReqCodes   : Hash[ReqCodes]     = hashCaseClass
+  implicit val hashProject    : Hash[Project]      = hashCaseClass
 }

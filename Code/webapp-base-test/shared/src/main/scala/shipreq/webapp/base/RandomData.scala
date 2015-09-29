@@ -1007,18 +1007,21 @@ object RandomData {
         for {
           i           <- id
           target      <- gTarget
+          lastGroup   <- gGroup.option
           refsToGroup <- smallIdSet
           reqInactive <- gReqInactive
           x           <- Gen.chooseint(0, 9)
-        } yield {
+        } yield
           if (x == 0)
             target match {
-              case t: ReqId        => Data(None, refsToGroup, reqInactive.add(t, i))
-              case _: ReqCodeGroup => Data(None, refsToGroup + i, reqInactive)
+              case t: ReqId        => Data(None, lastGroup, refsToGroup    , reqInactive.add(t, i))
+              case _: ReqCodeGroup => Data(None, lastGroup, refsToGroup + i, reqInactive)
             }
           else
-            Data(Some(ActiveData(i, target)), refsToGroup, reqInactive)
-        }
+            target match {
+              case t: ReqId        => Data(Some(ActiveData(i, target)), lastGroup, refsToGroup, reqInactive)
+              case _: ReqCodeGroup => Data(Some(ActiveData(i, target)), None     , refsToGroup, reqInactive)
+            }
     }
 
     def trieValue(d: Gen[Data]): Gen[Trie.Value] = d map Trie.Value

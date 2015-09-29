@@ -68,7 +68,8 @@ abstract class MacroUtils {
       case x        => fail(s"Two fields expected. ${t.typeSymbol.name} has: $x")
     }
 
-  final def nameAndType(T: Type, s: Symbol): (TermName, Type) = {
+  type NameAndType = (TermName, Type)
+  final def nameAndType(T: Type, s: Symbol): NameAndType = {
     def paramType(name: TermName): Type =
       T.decl(name).typeSignatureIn(T) match {
         case NullaryMethodType(t) => t

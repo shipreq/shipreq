@@ -238,7 +238,7 @@ trait ApplyContentEvent {
       def createNode: R =
         if (addToActive) {
           val ad = ActiveData(id, target)
-          val d = Data(Some(ad), UnivEq.emptySet, UnivEq.emptySetMultimap)
+          val d = Data.empty.copy(active = Some(ad))
           SE ret t.put(v, d)
         } else
           SE fail s"${show(v)} not found."
@@ -246,14 +246,18 @@ trait ApplyContentEvent {
       def modifyNode(d: Data): R =
         if (addToActive)
           ensureInactiveData(d, v) |>> {
-            val ad = ActiveData(id, target)
-            var rg = d.refsToGroup
-            var ri = d.reqInactive
+            val ad          = ActiveData(id, target)
+            var lastGroup   = d.lastGroup
+            var refsToGroup = d.refsToGroup
+            var reqInactive = d.reqInactive
             target match {
-              case r: ReqId        => ri = ri.del(r, id)
-              case g: ReqCodeGroup => rg = rg - id
+              case r: ReqId =>
+                reqInactive = reqInactive.del(r, id)
+              case g: ReqCodeGroup =>
+                refsToGroup = refsToGroup - id
+                lastGroup = None
             }
-            t.put(v, Data(Some(ad), rg, ri))
+            t.put(v, Data(Some(ad), lastGroup, refsToGroup, reqInactive))
           }
         else
           needActiveData(d, v) |>> {
@@ -299,16 +303,22 @@ trait ApplyContentEvent {
      *                     If `false`, the data is gone completely.
      */
     def remove(trie: Trie, v: Value, d: Data, a: ActiveData, makeInactive: ReqCodeId => Boolean): Trie = {
+      var lastGroup   = d.lastGroup
       var refsToGroup = d.refsToGroup
-      var reqInactive  = d.reqInactive
+      var reqInactive = d.reqInactive
       val id = a.id
-      if (makeInactive(id))
-        a.target match {
-          case t: ReqId        => reqInactive = reqInactive.add(t, id)
-          case _: ReqCodeGroup => refsToGroup += id
-        }
-      if (refsToGroup.nonEmpty || reqInactive.nonEmpty)
-        trie.put(v, Data(None, refsToGroup, reqInactive))
+      a.target match {
+        case t: ReqId =>
+          if (makeInactive(id))
+            reqInactive = reqInactive.add(t, id)
+        case g: ReqCodeGroup =>
+          lastGroup = if (g.isEmpty) None else Some(g)
+          if (makeInactive(id))
+            refsToGroup += id
+      }
+      val d2 = Data(None, lastGroup, refsToGroup, reqInactive)
+      if (d2.nonEmpty)
+        trie.put(v, d2)
       else
         trie.remove(v)
     }
@@ -370,13 +380,13 @@ trait ApplyContentEvent {
           // ReqCode is available. Restore simply.
           val ad = ActiveData(id, reqId)
           val ri = d.reqInactive.del(reqId, id)
-          trie.put(v, Data(Some(ad), d.refsToGroup, ri))
+          trie.put(v, Data(Some(ad), d.lastGroup, d.refsToGroup, ri))
         } else {
           // ReqCode has been usurped. Rename before restoration.
           val v2  = renameReqCodeToAvoidConflict(v, trie)
           val ad2 = ActiveData(id, reqId)
           val ri2 = UnivEq.emptySetMultimap[ReqId, ReqCodeId].setvs(reqId, d.reqInactive(reqId) - id)
-          val d2  = Data(Some(ad2), UnivEq.emptySet,  ri2)
+          val d2  = Data(Some(ad2), d.lastGroup, UnivEq.emptySet, ri2)
           trie
             .put(v, d.copy(reqInactive = d.reqInactive.delk(reqId)))
             .put(v2, d2)

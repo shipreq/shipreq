@@ -64,8 +64,6 @@ object ProjectDslInternals {
   type CFTextValue  = Text.CustomTextField.NonEmptyText
   type CFTextValueO = Text.CustomTextField.OptionalText
 
-  val emptyReqCodeData = ReqCode.Data(None, UnivEq.emptySet, UnivEq.emptySetMultimap)
-
   case class Composite(ss: NonEmptyVector[Mod[_]], defaultReqType: Option[CustomReqTypeId]) extends ToState {
 
     def +(n: ToState): Composite =
@@ -125,7 +123,7 @@ object ProjectDsl {
     def impTgt (ids: ReqId*)                 : GReq = copy(impTgts = this.impTgts ++ ids)
     def cftext (k: CFTextId, v: CFTextValue) : GReq = copy(cftexts = this.cftexts.updated(k,v))
     def cftextO(k: CFTextId, v: CFTextValueO): GReq = NonEmptyVector.maybe(v, this)(cftext(k, _))
-    def cftextS(k: CFTextId, s: String)      : GReq = if (s.isEmpty) this else cftext(k, s)
+    def cftextS(k: CFTextId, s: String)      : GReq = if (s.isEmpty) this else {import UnsafeTypes._ ;cftext(k, s)}
 
     def times(n: Int): Composite =
       Stream.fill(n - 1)(this).foldLeft(this: Composite)(_ + _)
@@ -135,7 +133,7 @@ object ProjectDsl {
         val id = this.id getOrElse GenericReqId(p.nextId)
 
         def reqCodeData() =
-          ReqCode.Data(Some(ReqCode.ActiveData(p.nextReqCodeId(), id)), UnivEq.emptySet, UnivEq.emptySetMultimap)
+          ReqCode.Data.empty.copy(active = Some(ReqCode.ActiveData(p.nextReqCodeId(), id)))
 
         val reqTypeId   = this.reqType.getOrElse(p.defaultReqType.get)
         val (pr, pubid) = p.pubids.allocC(reqTypeId)(id)
@@ -162,7 +160,7 @@ object ProjectDsl {
       State[ProjectState, ReqCodeGroup]{ p =>
         val g  = ReqCodeGroup(title)
         val ad = ReqCode.ActiveData(p.nextReqCodeId(), g)
-        val t  = p.reqCodeTrie.modify(code)(_.getOrElse(emptyReqCodeData).copy(active = Some(ad)))
+        val t  = p.reqCodeTrie.modify(code)(_.getOrElse(ReqCode.Data.empty).copy(active = Some(ad)))
         val p2 = p.copy(reqCodeTrie = t, maxReqCodeId = p.newMaxReqCodeId)
         (p2, g)
       }
@@ -175,7 +173,7 @@ object ProjectDsl {
       State[ProjectState, ReqCodeId]{ p =>
         val id = this.id getOrElse p.nextReqCodeId()
         val t = p.reqCodeTrie.modify(code) { o =>
-          val d = o.getOrElse(emptyReqCodeData) //.copy(active = Some(ReqCode.ActiveData(p.nextReqCodeId(), ReqCodeGroup(Vector.empty))))
+          val d = o.getOrElse(ReqCode.Data.empty) //.copy(active = Some(ReqCode.ActiveData(p.nextReqCodeId(), ReqCodeGroup(Vector.empty))))
           target match {
             case None      => d.copy(refsToGroup = d.refsToGroup + id)
             case Some(tgt) => d.copy(reqInactive = d.reqInactive.add(tgt, id))
@@ -185,13 +183,6 @@ object ProjectDsl {
         (p2, id)
       }
   }
-
-  implicit def projectDsl_parseCTF(i: String): Text.CustomTextField.NonEmptyText = {
-    if (i.isEmpty) sys.error("Text.CustomTextField can't be empty.") else NonEmptyVector(Text.CustomTextField.Literal(i))
-  }
-
-  implicit def projectDsl_parseGRD(i: String): Text.GenericReqTitle.OptionalText =
-    if (i.isEmpty) Vector.empty else Vector1(Text.GenericReqTitle.Literal(i))
 
   def reqTitleTagRefs   = new MrTagRef(Text.GenericReqTitle)
   def customTextTagRefs = new MrTagRef(Text.CustomTextField)

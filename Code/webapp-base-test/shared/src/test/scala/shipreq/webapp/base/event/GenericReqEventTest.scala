@@ -271,6 +271,14 @@ object GenericReqEventTest extends TestSuite {
       'idInUseByGrp   - assertFail("")      (createRCG(1, "a"),                  createRCG(1, "b"))
       'codeInUseByReq - assertFail("in use")(createGR(9, codes = Set(1 -> "a")), createRCG(2, "a"))
       'codeInUseByGrp - assertFail("in use")(createRCG(1, "a"),                  createRCG(2, "a"))
+      'replaceLast    - {
+        // Adding a new RCG should clear out .lastGroup
+        val p = _assertPass(createRCG(1, "abc.def", "old"), delRCG1, createRCG(2, "abc.def", "new"))
+        val v = p.reqCodes.trie.flatStream.toVector
+        assertEq("Trie size", v.size, 1)
+        assertEq(v.head._1, "abc.def": ReqCode.Value)
+        assertEq(v.head._2, ReqCode.Data.empty.copy(active = Some(ReqCode.ActiveData(2, ReqCodeGroup("new")))))
+      }
     }
 
     'updateCodeGroup {
@@ -295,9 +303,16 @@ object GenericReqEventTest extends TestSuite {
     }
 
     'deleteCodeGroup {
-      'ok - {
-        val p = _assertPass(createRCG(1, "a"), delRCG1)
-        assertEq("No CodeRefs means no need to retain anything.", p.reqCodes.trie.isEmpty, true)
+      'okEmpty - {
+        val p = _assertPass(createRCG(1, "abc.def"), delRCG1)
+        assertEq("No CodeRefs & no title = no need to retain anything.", p.reqCodes.trie.isEmpty, true)
+      }
+      'okNonEmpty - {
+        val p = _assertPass(createRCG(1, "abc.def", "hehe"), delRCG1)
+        val v = p.reqCodes.trie.flatStream.toVector
+        assertEq("Trie size", v.size, 1)
+        assertEq(v.head._1, "abc.def": ReqCode.Value)
+        assertEq(v.head._2, ReqCode.Data.empty.copy(lastGroup = Some(ReqCodeGroup("hehe"))))
       }
       'notFound - assertFail("not found")(delRCG1)
       'twice    - assertFail("not found")(createRCG(1, "a"), delRCG1, delRCG1)

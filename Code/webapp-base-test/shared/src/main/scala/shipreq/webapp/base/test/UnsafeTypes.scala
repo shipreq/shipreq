@@ -4,7 +4,7 @@ import japgolly.nyaya.util.Multimap
 import scala.collection.generic.CanBuildFrom
 import shipreq.base.util._
 import shipreq.webapp.base.data.Field.ApplicableReqTypes
-import shipreq.webapp.base.text.Grammar
+import shipreq.webapp.base.text.{Grammar, Text}
 
 trait UnsafeTypesLowPriority {
 //   implicit def autoSome[A, B](a: A)(implicit f: A => B): Option[B] = Some(f(a))
@@ -49,7 +49,7 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
   implicit def tagTreeTree(t: TagTree) = t.mapValues(_.children)
 
   implicit def autoTrieData(ad: ReqCode.ActiveData): ReqCode.Data =
-    ReqCode.Data(ad, Set.empty, Multimap.empty)
+    ReqCode.Data.empty.copy(active = ad)
 
   def onlyReqTypes(a: ReqTypeId, as: ReqTypeId*): ApplicableReqTypes = ISubset.Only(NonEmptySet(a, as: _*))
   def notReqTypes(a: ReqTypeId, as: ReqTypeId*): ApplicableReqTypes = ISubset.Not(NonEmptySet(a, as: _*))
@@ -83,4 +83,27 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
     val sd = SetDiff(removed = remove.toSet, add.toSet)
     NonEmpty(sd) getOrElse sys.error(s"nesd()() called with no data.")
   }
+
+  private def __checkLiteral(s: String): String =
+    if (s.isEmpty)
+      sys.error("Invalid literal: empty string.")
+    else if (s.trim != s)
+      sys.error(s"Invalid literal: '$s' isn't trimmed.")
+    else
+      s
+
+  implicit def autoTextA_CustomTextField  (s: String): Text.CustomTextField  .Atom = Text.CustomTextField   Literal __checkLiteral(s)
+  implicit def autoTextA_ReqCodeGroupTitle(s: String): Text.ReqCodeGroupTitle.Atom = Text.ReqCodeGroupTitle Literal __checkLiteral(s)
+  implicit def autoTextA_GenericReqTitle  (s: String): Text.GenericReqTitle  .Atom = Text.GenericReqTitle   Literal __checkLiteral(s)
+  implicit def autoTextA_InlineIssueDesc  (s: String): Text.InlineIssueDesc  .Atom = Text.InlineIssueDesc   Literal __checkLiteral(s)
+
+  implicit def autoTextO_CustomTextField  (s: String): Text.CustomTextField  .OptionalText = Vector1(s)
+  implicit def autoTextO_ReqCodeGroupTitle(s: String): Text.ReqCodeGroupTitle.OptionalText = Vector1(s)
+  implicit def autoTextO_GenericReqTitle  (s: String): Text.GenericReqTitle  .OptionalText = Vector1(s)
+  implicit def autoTextO_InlineIssueDesc  (s: String): Text.InlineIssueDesc  .OptionalText = Vector1(s)
+
+  implicit def autoTextN_CustomTextField  (s: String): Text.CustomTextField  .NonEmptyText = NonEmptyVector one s
+  implicit def autoTextN_ReqCodeGroupTitle(s: String): Text.ReqCodeGroupTitle.NonEmptyText = NonEmptyVector one s
+  implicit def autoTextN_GenericReqTitle  (s: String): Text.GenericReqTitle  .NonEmptyText = NonEmptyVector one s
+  implicit def autoTextN_InlineIssueDesc  (s: String): Text.InlineIssueDesc  .NonEmptyText = NonEmptyVector one s
 }

@@ -51,14 +51,18 @@ object ProjectText {
     }
 
     val code = rc.reqCode(id)
-    rc(code) match {
-      case Data(Some(ad), _, _) if ad.id ≟ id => ActiveCode(code, ad.target)
-      case d if d.refsToGroup.contains(id)    => DeadGroup(code)
-      case d =>
-        d.reqInactive.m.find(_._2 contains id) match {
-          case Some((reqId, _)) => findAlt(reqId, code) getOrElse[ReqCodeResolution] ReqWithoutCodes(reqId)
-          case None             => mustNotHappen(s"$id not found in $code: $d")
-        }
+    val data = rc(code)
+    data.active match {
+      case Some(ad) if ad.id ≟ id =>
+        ActiveCode(code, ad.target)
+      case None =>
+        if (data.refsToGroup contains id)
+          DeadGroup (code)
+        else
+          data.reqInactive.m.find(_._2 contains id) match {
+            case Some((reqId, _)) => findAlt(reqId, code) getOrElse ReqWithoutCodes(reqId)
+            case None             => mustNotHappen(s"$id not found in $code: $data")
+          }
     }
   }
 }

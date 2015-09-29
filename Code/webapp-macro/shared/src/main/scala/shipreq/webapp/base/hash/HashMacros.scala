@@ -2,17 +2,21 @@ package shipreq.webapp.base.hash
 
 import scala.reflect.macros.blackbox.Context
 import shipreq.base.macros.MacroUtils
+import shipreq.base.util.Util
 
 trait HashMacros {
   def joinHashes(hashes: List[Int]): Int
 
-  final def hashCaseClass [T]: Hash[T] = macro HashMacroImpls.quietCaseClass[T]
+  final def  hashCaseClass[T]: Hash[T] = macro HashMacroImpls.quietCaseClass[T]
   final def _hashCaseClass[T]: Hash[T] = macro HashMacroImpls.debugCaseClass[T]
 
-  final def hashConstClass [T](key: String): Hash[T] = macro HashMacroImpls.quietConstClass[T]
+  final def  hashCaseClassExcept[T](fields: Symbol*): Hash[T] = macro HashMacroImpls.quietCaseClassExcept[T]
+  final def _hashCaseClassExcept[T](fields: Symbol*): Hash[T] = macro HashMacroImpls.debugCaseClassExcept[T]
+
+  final def  hashConstClass[T](key: String): Hash[T] = macro HashMacroImpls.quietConstClass[T]
   final def _hashConstClass[T](key: String): Hash[T] = macro HashMacroImpls.debugConstClass[T]
 
-  final def hashADT [T]: Hash[T] = macro HashMacroImpls.quietADT[T]
+  final def  hashADT[T]: Hash[T] = macro HashMacroImpls.quietADT[T]
   final def _hashADT[T]: Hash[T] = macro HashMacroImpls.debugADT[T]
 }
 
@@ -28,13 +32,13 @@ class HashMacroImpls(val c: Context) extends MacroUtils {
    * - Type must have a primary constructor.
    * - Primary constructor must have more than 0 params.
    */
-  def quietCaseClass[T: c.WeakTypeTag]: c.Expr[Hash[T]] = implCaseClass[T](false)
-  def debugCaseClass[T: c.WeakTypeTag]: c.Expr[Hash[T]] = implCaseClass[T](true)
-  def implCaseClass[T: c.WeakTypeTag](debug: Boolean): c.Expr[Hash[T]] = {
+  def quietCaseClass[T: c.WeakTypeTag]: c.Expr[Hash[T]] = implCaseClass[T](false, identity)
+  def debugCaseClass[T: c.WeakTypeTag]: c.Expr[Hash[T]] = implCaseClass[T](true , identity)
+  def implCaseClass[T: c.WeakTypeTag](debug: Boolean, preprocessParams: List[NameAndType] => List[NameAndType]): c.Expr[Hash[T]] = {
     import c.universe._
 
     val T      = concreteWeakTypeOf[T]
-    val params = primaryConstructorParams(T)
+    val params = preprocessParams(primaryConstructorParams(T).map(nameAndType(T, _)))
     val Hash   = this.Hash
 
     val impl =
@@ -42,15 +46,12 @@ class HashMacroImpls(val c: Context) extends MacroUtils {
         case Nil =>
           fail("Class constructor has no parameters.")
 
-        case param :: Nil =>
-          val (pName, pType) = nameAndType(T, param)
+        case (pName, pType) :: Nil =>
           q"$Hash[$pType].cmap[$T](_.$pName)"
 
         case _ =>
           val nil = Ident(c.mirror staticModule "scala.collection.immutable.Nil")
-
-          val hashes = params.foldLeft(nil: c.universe.Tree) { (q, p) =>
-            val (pName, pType) = nameAndType(T, p)
+          val hashes = params.foldLeft(nil: c.universe.Tree) { case (q, (pName, pType)) =>
             q"$q.::($Hash[$pType].hash(t.$pName))"
           }
 
@@ -59,6 +60,34 @@ class HashMacroImpls(val c: Context) extends MacroUtils {
 
     if (debug) println("\n" + showCode(impl) + "\n")
     c.Expr[Hash[T]](impl)
+  }
+
+  /**
+   * Constraints:
+   * - Type must be concrete (not abstract, synthetic, or a trait)
+   * - Type must have a primary constructor.
+   * - Primary constructor must have more than 0 params.
+   */
+  def quietCaseClassExcept[T: c.WeakTypeTag](fields: c.Expr[scala.Symbol]*): c.Expr[Hash[T]] = implCaseClassExcept[T](false, fields)
+  def debugCaseClassExcept[T: c.WeakTypeTag](fields: c.Expr[scala.Symbol]*): c.Expr[Hash[T]] = implCaseClassExcept[T](true , fields)
+  def implCaseClassExcept[T: c.WeakTypeTag](debug: Boolean, fields: Seq[c.Expr[scala.Symbol]]): c.Expr[Hash[T]] = {
+    if (fields.isEmpty)
+      fail("At least one field name is required.")
+    val fieldVector = fields.map(readMacroArg_symbol).toVector
+    val fieldSet = fieldVector.toSet
+    if (fieldSet.size != fieldVector.size) {
+      val dups = fieldSet.foldLeft(fieldVector)((q, f) => Util.deleteVectorElement(q, q indexOf f))
+      fail("Duplicate field names found: " + dups.mkString(", "))
+    }
+
+    implCaseClass[T](debug, ps => {
+      val r = ps.filterNot(fieldSet contains _._1.decodedName.toString)
+      if ((ps.size - r.size) != fieldSet.size) {
+        val missing = fieldSet &~ ps.map(_._1.decodedName.toString).toSet
+        fail(s"Field(s) not found: ${missing mkString ", "}")
+      }
+      r
+    })
   }
 
   /**

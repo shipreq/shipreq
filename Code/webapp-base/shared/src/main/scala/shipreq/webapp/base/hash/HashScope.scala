@@ -32,7 +32,7 @@ object HashScope {
       ImplicationData)
 
   val all: NonEmptyVector[HashScope] =
-    defaultSet.toNEV :+ WholeProject
+    WholeProject +: defaultSet.toNEV
 
   def overlap(a: HashScope, b: HashScope): Boolean =
     (a == b) ||

@@ -196,13 +196,21 @@ object DataProp {
         .forall[T, List](_.trie.cataN[List[TrieBranch]](Nil)((q, n) => n.fold(_ :: q, _ => q)))
         .rename("All TrieBranches branch")
 
-    def nonEmptyData(d: Data) =
-      d.active.nonEmpty || d.refsToGroup.nonEmpty || d.reqInactive.nonEmpty
+    def nonEmptyData: Prop[Data] =
+      Prop.test[Data]("Data not empty.", _.nonEmpty)
 
-    def nonEmptyTerminals =
-      Prop.test[Data]("Terminal not empty", nonEmptyData)
-        .forall[T, List](_.trie.cataN[List[Data]](Nil)((q, n) => n.fold(_ => q, _.value :: q)))
-        .rename("No empty terminals")
+    def activeGroupPreventsInactiveGroup: Prop[Data] =
+      Prop.atom("Active group prevents inactive group.", d =>
+        d.active match {
+          case Some(ActiveData(id, _: ReqCodeGroup)) if d.lastGroup.nonEmpty =>
+            Some(s"ReqCode #$id has active & inactive groups.")
+          case _ => None
+        }
+      )
+
+    def allData: Prop[T] =
+      (nonEmptyData ∧ activeGroupPreventsInactiveGroup)
+        .forall[T, List](_.trie.cataV[List[Data]](Nil)((q, _, d) => d :: q))
 
     def ids =
       id[ReqCodeId].forall((_: T).allIds)
@@ -211,7 +219,7 @@ object DataProp {
       Prop.distinct("ID", (_: T).allIds)
 
     lazy val all =
-      (branchesMustBranch ∧ nonEmptyTerminals ∧ uniqueIds ∧ ids) rename "ReqCodes"
+      (branchesMustBranch ∧ allData ∧ uniqueIds ∧ ids) rename "ReqCodes"
   }
 
   // -------------------------------------------------------------------------------------------------------------------

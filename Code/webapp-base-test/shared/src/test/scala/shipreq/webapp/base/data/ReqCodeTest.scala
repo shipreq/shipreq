@@ -14,7 +14,7 @@ object ReqCodeTest extends TestSuite {
       .put("aa",     ActiveData(1, 100))
       .put("aa.b.c", ActiveData(2, 100))
       .put("aa.b.d", ActiveData(3, ReqCodeGroup(Vector.empty)))
-      .put("aa.b.e", Data(None, Set(1), Multimap.empty))
+      .put("aa.b.e", Data(None, None, Set(1), Multimap.empty))
 
   val vs0 = VS(sampleCodeTrie, Set.empty)
   val vs2 = VS(sampleCodeTrie, Set("aa.b.c"))
