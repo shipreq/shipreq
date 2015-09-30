@@ -112,11 +112,17 @@ final case class GenericReq(id            : GenericReqId,
                             title         : Text.GenericReqTitle.OptionalText,
                             liveExplicitly: Live) extends ReqT[CustomReqTypeId] {
 
+  private def liveDeps(customReqTypes: CustomReqTypeIMap): Live =
+    customReqTypes.need(pubid.reqTypeId).live
+
   override def live(customReqTypes: CustomReqTypeIMap): Live =
-    liveExplicitly match {
-      case Live => customReqTypes.need(pubid.reqTypeId).live
-      case Dead => Dead
-    }
+    liveExplicitly && liveDeps(customReqTypes)
+
+  /**
+   * If [[liveExplicitly]] was [[Live]], would the final live value be [[Live]] too.
+   */
+  def recoverable(customReqTypes: CustomReqTypeIMap): Boolean =
+    liveDeps(customReqTypes) :: Live
 }
 
 object GenericReq {

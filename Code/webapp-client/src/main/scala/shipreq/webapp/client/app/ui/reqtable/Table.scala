@@ -26,7 +26,6 @@ object Table {
   implicit val reusabilityCTS : Reusability[Cell.TableState]                = Reusability.byRef
   implicit val reusabilityCRS : Reusability[Cell.RowState]                  = Reusability.byRef
   implicit val reusabilityCCS : Reusability[Cell.State]                     = Reusability.byRef
-  implicit val reusabilityRows: Reusability[Vector[Row]]                    = Reusability.byRef // Each row will be checked anyway
 
   // ===================================================================================================================
   // Table
@@ -34,7 +33,7 @@ object Table {
   implicit val reusabilityProps = Reusability.caseClass[Props]
 
   case class Props(project        : Project,
-                   rows           : Vector[Row],
+                   rows           : Rows,
                    colName        : Column.NameResolver,
                    colRenderers   : NonEmptyVector[ColumnRenderer],
                    colEditors     : ColumnEditors,

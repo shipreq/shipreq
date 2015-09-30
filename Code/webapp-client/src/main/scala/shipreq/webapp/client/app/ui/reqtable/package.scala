@@ -11,6 +11,9 @@ import japgolly.scalajs.react.extra._
  */
 package object reqtable {
 
+  type Rows = Vector[Row]
+  implicit val reusabilityRows: Reusability[Rows] = Reusability.byRef // Each row will be checked anyway
+
   type RowSelection = Selection[Row.SourceId]
   type RowSelectionVisible = Selection.Visible[Row.SourceId]
 

@@ -194,7 +194,9 @@ final case class ReqCodeGroup(title: Text.ReqCodeGroupTitle.OptionalText) {
   @inline def and(id: ReqCodeId): ReqCodeGroup.AndId =
     ReqCodeGroup.AndId(id, this)
 
+  // TODO Not true anymore ↓
   def live = Live
+  def recoverable = true
 }
 
 object ReqCodeGroup {

@@ -172,17 +172,22 @@ object ReqTable {
       import Px.AutoValue._
       Px.refresh(project, viewSettings, filterState, selection)
 
-      val vsProps = ViewSettingsEditor.Props(colName, s.project.config, vsVar, filterEditor)
+      val cfg = s.project.config
+
+      val vsProps = ViewSettingsEditor.Props(colName, cfg, vsVar, filterEditor)
 
       val creationProps = CreationInterface.Props(createIO, s.creation)
 
       val tableProps = Table.Props(
         project, rows, colName, colRnds, colEditors, s.cellStates, selVis, setSelection, modViewSettings)
 
+      val selCtrlProps = SelectionCtrls.Props(selVis, cfg, rows)
+
       <.div(
         ViewSettingsEditor.Component(vsProps),
         creationInterface.Component(creationProps),
         StatsSummary(stats),
+        SelectionCtrls.Component(selCtrlProps),
         SortEditor.Component(sortEditorProps),
         Table.Component(tableProps))
     }
