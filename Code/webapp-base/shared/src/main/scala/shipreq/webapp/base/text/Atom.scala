@@ -42,6 +42,7 @@ object Atom {
   type AnyIssue = Issue#Issue
 
   // ===================================================================================================================
+  // Basics - reduces down to either SingleLine or MultiLine
 
   sealed trait Base {
     sealed trait Atom
@@ -85,34 +86,6 @@ object Atom {
     case class MathTeX(value: String) extends Atom
   }
 
-  trait ReqRef extends Base {
-
-    /** Reference to a requirement, like "UC-4" */
-    case class ReqRef(value: ReqId) extends Atom
-
-    /** Reference to a [[ReqCode.Target]] */
-    case class CodeRef(value: ReqCodeId) extends Atom
-  }
-
-  /** An inline issue, like "#TBD" */
-  trait Issue extends Base {
-    case class Issue(typ: CustomIssueTypeId, desc: Text.InlineIssueDesc.OptionalText) extends Atom
-  }
-
-  /** An inline tag, like "#pri=high" */
-  trait TagRef extends Base {
-    case class TagRef(value: ApplicableTagId) extends Atom
-  }
-
-  // Prove that UnivEq[Atom] is acceptable.
-  // A proof for all atom args should be added here.
-  UnivEq[NonEmptyVector[Vector[String]]]
-  UnivEq[ApplicableTagId]
-  UnivEq[CustomIssueTypeId]
-  UnivEq[ReqId]
-
-  // ===================================================================================================================
-
   trait SingleLine extends Literal with PlainTextMarkup {
     val multiLine = false
   }
@@ -120,6 +93,36 @@ object Atom {
   trait MultiLine extends SingleLine with NewLine with ListMarkup  {
     override final val multiLine = true
   }
+
+  // ===================================================================================================================
+  // Optional bells 'n' whistles
+
+  /** An inline issue, like "#TBD" */
+  trait Issue extends Base {
+    case class Issue(typ: CustomIssueTypeId, desc: Text.InlineIssueDesc.OptionalText) extends Atom
+  }
+
+  trait ReqRef extends Base {
+    /** Reference to a requirement, like "UC-4" */
+    case class ReqRef(value: ReqId) extends Atom
+
+    /** Reference to a [[ReqCode.Target]] */
+    case class CodeRef(value: ReqCodeId) extends Atom
+  }
+
+  /** An inline tag, like "#pri=high" */
+  trait TagRef extends Base {
+    case class TagRef(value: ApplicableTagId) extends Atom
+  }
+
+  // ===================================================================================================================
+
+  // Prove that UnivEq[Atom] is acceptable.
+  // A proof for all atom args should be added here.
+  UnivEq[NonEmptyVector[Vector[String]]]
+  UnivEq[ApplicableTagId]
+  UnivEq[CustomIssueTypeId]
+  UnivEq[ReqId]
 
   /** The main title/desc of a top-level requirement. */
   trait ReqTitle extends SingleLine

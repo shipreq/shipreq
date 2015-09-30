@@ -50,6 +50,12 @@ object Text {
   // - Parsing rules in top-level text objects and Parsers
   // - RandomData
 
+  /**
+   * A "generic-req title", not a "generic req-title".
+   * Title of a [[shipreq.webapp.base.data.GenericReq]].
+   */
+  object GenericReqTitle extends ReqTitle
+
   object InlineIssueDesc extends Base
       with A.SingleLine
       with A.ReqRef {
@@ -125,9 +131,4 @@ object Text {
     }
   }
 
-  /**
-   * A "generic-req title", not a "generic req-title".
-   * Title of a [[shipreq.webapp.base.data.GenericReq]].
-   */
-  object GenericReqTitle extends ReqTitle
 }
