@@ -17,20 +17,35 @@ import shipreq.webapp.base.test.SampleProject3
  */
 object HashSchemeTest extends TestSuite {
 
+  val Vector(hV1, hL) = HashScheme.all.whole
+
   val P0 = Project.empty
   lazy val P3 = SampleProject3.project
 
   def hashes(h: HashScheme, p: Project): Map[HashScope, Int] =
     HashScope.all.whole.map(s => s -> HashScope.hash(s, h.value, p)).toMap
 
-  def fmt(m: Map[HashScope, Int]): String =
+  def makeSet(m: Map[HashScope, Int]) =
     HashScope.all.toStream
-      .flatMap(s => m.get(s).map(v => "0x%-8x ~ %s".format(v, s)).toStream)
+      .map(s => (s, m.getOrElse(s, Hash.UnsupportedValue)))
+      .toSet
+
+  def fmt(s: Set[(HashScope, Int)]) =
+    s.toStream
+      .sortBy(_._1.toString)
+      .map(t => "0x%08x ~ %s".format(t._2, t._1))
       .mkString(", ")
 
   def assertHashes(h: HashScheme, p: Project, ts: (HashScope, Int)*): Unit = {
-    val name = if (p eq P0) "P0" else if (p eq P3) "P3" else p.toString
-    assertEq(name, fmt(hashes(h, p)), fmt(ts.toMap))
+    def nameH = if (h eq hL) "latest" else if (h eq hV1) "v1" else h.toString
+    def nameP = if (p eq P0) "P0" else if (p eq P3) "P3" else p.toString
+    def name = s"$nameH : $nameP"
+    var a = makeSet(hashes(h, p))
+    var e = makeSet(ts.toMap)
+    val common = a & e
+    a &~= common
+    e &~= common
+    assertEq(name, fmt(a), fmt(e))
   }
 
   import HashScope._
@@ -40,7 +55,7 @@ object HashSchemeTest extends TestSuite {
 
   override def tests = TestSuite {
     'v1 {
-      val h = HashScheme.all.head
+      val h = hV1
       assertHashes(h, P0,
         0xed4fcf48 ~ WholeProject,
         0x47de4849 ~ CfgIssueTypes,
@@ -65,7 +80,7 @@ object HashSchemeTest extends TestSuite {
         0x314932cc ~ TagData)
     }
     'latest - {
-      val h = HashScheme.latest
+      val h = hL
       assertHashes(h, P0,
         0xed4fcf48 ~ WholeProject,
         0x47de4849 ~ CfgIssueTypes,
@@ -83,7 +98,7 @@ object HashSchemeTest extends TestSuite {
         0x4e7f121c ~ ReqCodes,
         0xb31f8764 ~ ImplicationData,
         0x5a1d6a0a ~ CfgTags,
-        0xa0139eb8 ~ TextFieldData,
+        0xa0139eb8 ~ TextFieldData, // TODO same as empty - P3 doesn't use
         0x4b71a1ac ~ CfgReqTypes,
         0x3e1ac0cb ~ CfgFields,
         0x45f6c01d ~ Reqs,
