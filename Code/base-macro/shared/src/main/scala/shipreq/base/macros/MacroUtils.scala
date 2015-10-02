@@ -360,7 +360,7 @@ abstract class MacroUtils {
     }
 
   final def needInferImplicit(t: Type): Tree =
-    tryInferImplicit(t) getOrElse sys.error(s"Implicit not found: $t")
+    tryInferImplicit(t) getOrElse fail(s"Implicit not found: $t")
 
   implicit val liftInit = Liftable[Init](i => q"..${i.stmts}")
   class Init {
