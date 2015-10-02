@@ -54,9 +54,9 @@ object DaoTest2 extends TestSuite {
   private val q3 = "\"\"\""
   def demo[E <: ActiveEvent](gen: Gen[E]) = {
     import EventDbCodecs.eventCodecRegistry
-    val es = gen.data(GenSize(3), SampleSize(10)).run.unsafePerformIO()
+    val es = gen.samples(GenCtx(GenSize(3)), 10).toList
     println("_"*120)
-    for (e <- es.toList) {
+    for (e <- es) {
       val c = eventCodecRegistry.writer(e)
       val d = c._2.write(e)
       val json = Option(d._3).fold("null")(q3 + _ + q3)

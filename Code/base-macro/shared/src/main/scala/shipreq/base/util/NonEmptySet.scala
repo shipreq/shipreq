@@ -76,6 +76,7 @@ final class NonEmptySet[A] private[util] (val head: A, val tail: Set[A]) {
     reduceMapLeft1[B](a => a)(f)
 
   def toStream = whole.toStream
+  def toVector = whole.toVector
 
   def toNEV: NonEmptyVector[A] =
     NonEmptyVector(head, tail.toVector)

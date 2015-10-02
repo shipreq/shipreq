@@ -57,9 +57,9 @@ object GenerateProject {
 //    autoSelect = true
 
     val tags0           = sample($.tagTree, Size.CfgTags)
-    val issues0         = firstSample($.revAndIMap($.customIssueType fill Size.CfgCustomIssueTypes), 50)
+    val issues0         = firstSample($.revAndIMap($.customIssueType list Size.CfgCustomIssueTypes), 50)
     val (issues, tags)  = $.distinctHashRefKeys.run((issues0, tags0))
-    val reqtypes        = firstSample($.genCustomReqTypes($.customReqType fill Size.CfgCustomReqTypes), 50)
+    val reqtypes        = firstSample($.genCustomReqTypes($.customReqType list Size.CfgCustomReqTypes), 50)
     val reqTypeIds      = StaticReqType.values ++ reqtypes.keys
     val reqTypeIdSet    = reqTypeIds.whole.toSet
     val fields          = sample($.fieldSet2(reqTypeIdSet, tags.keySet, reqtypes.keySet), Size.CfgFields)
@@ -67,12 +67,12 @@ object GenerateProject {
     val atagIds         = cfg.tags.vstream(_.tag).filterT[ApplicableTag].map(_.id).toSet
     val reqsWithoutText = firstSample($.reqsWithoutText(Size.Reqs, cfg), 0)
     val reqIds          = reqsWithoutText.reqs.keys
-    val reqIdG          = Gen oneofO reqIds.toSeq
+    val reqIdG          = Gen tryGenChoose reqIds.toIndexedSeq
     val reqIdSet        = reqIds.toSet
     val liveReqIds      = reqsWithoutText.reqs.values.toStream.filter(_.live(cfg.customReqTypes) :: Live).map(_.id)
-    val liveReqIdG      = Gen oneofO liveReqIds
+    val liveReqIdG      = Gen tryGenChoose liveReqIds
     val reqCodeDataG    = $.reqCode.data(liveReqIdG, reqIdG, $.reqCode.gEmptyReqCodeGroup)
-    val reqCodesG       = $.reqCodes($.reqCode.trie(Size.ReqCodeDepth, reqCodeDataG.sup))
+    val reqCodesG       = $.reqCodes($.reqCode.trie(Size.ReqCodeDepth, reqCodeDataG))
     val reqCodes        = sample(reqCodesG, Size.ReqCodeSize)
     val reqTags         = sample($.reqFieldDataTags(reqIdSet, atagIds), Size.Tags)
     val impMethod       = $.implicationsMethod2(Size.ImplicationsPerSrc, Size.Implications)
@@ -92,7 +92,7 @@ object GenerateProject {
   // ===================================================================================================================
 
   def firstSample[A](gen: Gen[A], size: Int): A =
-    gen.f(GenSize(size)).run.unsafePerformIO()
+    gen.samples(GenCtx(GenSize(size)), 1).next()
 
   var autoSelect         = false
   var lastPromptResponse = '?'

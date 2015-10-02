@@ -120,7 +120,7 @@ object ParsersTest extends TestSuite {
   }
 
   def tester: Gen[Tester] =
-    for {p <- $.project; ss <- $.TextGen.genstr1.list1.map(_.list)} yield new Tester(p, ss)
+    for {p <- $.project; ss <- $.TextGen.genChar.string1.list1} yield new Tester(p, ss)
 
   // -------------------------------------------------------------------------------------------------------------------
 

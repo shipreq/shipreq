@@ -31,7 +31,7 @@ object Dependencies {
   }
 
   object Nyaya {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.nyaya", "0.5.11")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.nyaya", "0.6.0-SNAPSHOT")
     val core = mm("nyaya-core") ++ Scalaz.core
     val test = mm("nyaya-test")
   }

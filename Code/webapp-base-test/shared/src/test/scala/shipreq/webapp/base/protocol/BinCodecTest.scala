@@ -18,7 +18,7 @@ object BinCodecTest extends TestSuite {
       a2
     })
 
-  implicit val settings = DefaultSettings.propSettings.setSampleSize(8*4).setGenSize(100) //.setSeed(5)
+  implicit val settings = DefaultSettings.propSettings.setSampleSize(8*4) //.setSeed(5).setDebug
 
   override def tests = TestSuite {
 
@@ -35,6 +35,5 @@ object BinCodecTest extends TestSuite {
 //    RandomData.project.map(_.implications) mustSatisfy prop // PASS
 
     RandomData.project mustSatisfy prop
-
   }
 }

@@ -35,13 +35,13 @@ object RandomReqTableData {
   }
 
   def sortMethodI: Gen[SortMethod.IgnoreBlanks] =
-    RandomData.oneofV(SortMethod.ignoreBlanks)
+    RandomData.chooseV(SortMethod.ignoreBlanks)
 
   def sortMethodB: Gen[SortMethod.ConsiderBlanks] =
-    RandomData.oneofV(SortMethod.considerBlanks)
+    RandomData.chooseV(SortMethod.considerBlanks)
 
   def columnC: Gen[Column.SortConclusive] =
-    Gen insert Column.Pubid
+    Gen pure Column.Pubid
 
   private def `change ↖columnCon↖ if more conclusive criteria added`: Column.SortConclusive => Unit = {
     case Column.Pubid => ()
@@ -54,7 +54,7 @@ object RandomReqTableData {
     NonEmptyVector force (Column.builtInValues.whole: Vector[Column]).filterT[Column.SortInconclusive].toVector
 
   val builtInColumnIsG: Gen[Column.SortInconclusive] =
-    RandomData oneofV builtInColumnIs
+    RandomData chooseV builtInColumnIs
 
   case class ColumnIGen(legalCustomFieldColumns: Vector[Column.CustomField]) {
     val legalCustomFieldColumnNEV = NonEmptyVector option legalCustomFieldColumns
@@ -63,7 +63,7 @@ object RandomReqTableData {
       builtInColumnIs ++ legalCustomFieldColumns
 
     def columnI: Gen[Column.SortInconclusive] =
-      RandomData oneofV legalColumnIs
+      RandomData chooseV legalColumnIs
 
     def colIs: Gen[Vector[Column.SortInconclusive]] =
       Gen.subset(legalColumnIs.whole).shuffle
@@ -76,7 +76,7 @@ object RandomReqTableData {
     Gen.apply2(Column.CustomField)(RandomData.customFieldId, RandomData.live)
 
   def sortCriI(colI: Column.SortInconclusive): Gen[SortCriterion.Inconclusive] =
-    RandomData.oneofV(SortCriterion possibilitiesI colI)
+    RandomData.chooseV(SortCriterion possibilitiesI colI)
 
   def sortCriIs(colIs: Vector[Column.SortInconclusive]): Gen[Vector[SortCriterion.Inconclusive]] =
     Gen.sequence(colIs map sortCriI)
@@ -85,7 +85,7 @@ object RandomReqTableData {
     sortCriteriaC.map(SortCriteria(scIs, _))
 
   val noFilter: Gen[Option[FilterAst]] =
-    Gen insert None
+    Gen pure None
 
   def viewSettings(p: Project, allowFilter: Boolean): Gen[ViewSettings] =
     for {

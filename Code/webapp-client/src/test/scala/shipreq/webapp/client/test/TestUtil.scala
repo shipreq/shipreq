@@ -38,7 +38,7 @@ object TestUtil extends BaseTestUtil {
     Failed(Callback.empty)
 
   def genRowStatus: Gen[RowStatus] =
-    Gen.oneof(Sync, Locked, failedRowStatus)
+    Gen.choose(Sync, Locked, failedRowStatus)
 
   def sole[A](a: js.Array[A]): A = {
     assertEq(s"sole(Array(${a.mkString(", ")}))", a.length, 1)

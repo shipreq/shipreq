@@ -56,8 +56,8 @@ object NewRowStoreTest extends TestSuite {
   val l = Lens((_: FakeS).ss)(b => _.copy(ss = b))
 
   def genA   = Gen.int
-  def genB   = Gen.alphanumericstring1.lim(4)
-  def genRow = Gen.apply2(Row.apply[(Int, String)])(genRowStatus, Gen.pair(genA, genB))
+  def genB   = Gen.alphaNumericString(1 to 4)
+  def genRow = Gen.lift2(genRowStatus, genA *** genB)(Row.apply)
   def genS   = Gen.apply2(FakeS)(Gen.int, genRow.option)
   def g      =
     for {
