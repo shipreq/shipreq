@@ -1,6 +1,7 @@
 package shipreq.webapp.base.data
 
 import nyaya.prop._
+import scala.annotation.tailrec
 import scala.reflect.ClassTag
 import scalaz.syntax.equal._
 import scalaz.std.AllInstances._
@@ -8,6 +9,7 @@ import shipreq.base.util._, MTrie.Ops, ScalaExt._, Debug._
 import shipreq.webapp.base.text.{Atom, Text}
 import TaggedTypes.TaggedInt
 import DataImplicits._
+import ScalaExt._
 
 object DataProp {
   implicit def autoLiftL(e: Eval) = e.liftL
@@ -233,6 +235,68 @@ object DataProp {
   }
 
   // -------------------------------------------------------------------------------------------------------------------
+  object deletionReasons {
+    type T = DeletionReasons
+
+    def ids: Prop[T] =
+      Prop.atom("Valid IDs", dr => {
+        val len = dr.reasons.length
+        var unreferenced = dr.reasons.indices.toSet
+
+        val testIdFn = (id: DeletionReasonId) => {
+          val n = id.value
+          unreferenced -= n
+          n >= 0 && n < len
+        }
+
+        val allPass = dr.reqApplication.values.forall(_.forall(_ forall testIdFn))
+
+        if (!allPass) {
+          val errors = dr.reqApplication.streamKV
+            .filter(_._2.isDefined)
+            .map(_.map2(_.get))
+            .filterNot(x => testIdFn(x._2))
+            .map(x => s"${x._1} → ${x._2}")
+            .toVector
+          Some(s"Found ${errors.size} invalid DeletionReasonIds: ${errors mkString ", "}")
+        } else if (unreferenced.nonEmpty)
+          Some(s"There exist deletion reasons with deletion targets: $unreferenced")
+        else
+          None
+      })
+
+    def reqApplicationVectors: Prop[T] = {
+      @tailrec
+      def go(v: Vector[Option[DeletionReasonId]], i: Int, prev: Int): Option[String] =
+        if (i == -1)
+          None
+        else
+          v(i) match {
+            case Some(id) =>
+              val n = id.value
+              if (n < prev)
+                go(v, i - 1, n)
+              else
+                Some(s"Not in order: $v")
+            case None => go(v, i - 1, prev)
+          }
+
+      val test: Vector[Option[DeletionReasonId]] => Option[String] = v => {
+        val l = v.length
+        if (l < 2)
+          None
+        else
+          go(v, l - 1, Int.MaxValue)
+      }
+
+      Prop.atom("reqApplication vectors",
+        _.reqApplication.values.toStream.map(test).find(_.isDefined).flatten)
+    }
+
+    val all = ids ∧ reqApplicationVectors
+  }
+
+  // -------------------------------------------------------------------------------------------------------------------
   object text {
     import Atom._
 
@@ -353,9 +417,10 @@ object DataProp {
         .forallF[Stream].contramap[P](_.allRichText) rename "Atoms"
 
     def constituents = (
-                reqs.all.contramap[P](_.reqs)
-      ∧     reqCodes.all.contramap[P](_.reqCodes)
-      ∧ implications.all.contramap[P](_.implications)
+                   reqs.all.contramap[P](_.reqs)
+      ∧        reqCodes.all.contramap[P](_.reqCodes)
+      ∧    implications.all.contramap[P](_.implications)
+      ∧ deletionReasons.all.contramap[P](_.deletionReasons)
     ) rename "constituents"
 
     def liveReqCodeRequiresLiveTarget =
@@ -410,6 +475,7 @@ object DataProp {
       ∧ validReqCodeIds("Atoms: CodeRefs",            inText { case a: ReqRef # CodeRef => a.value })
       ∧ validTagIds    ("Atoms: TagRefs",             inText { case a: TagRef # TagRef  => a.value })
       ∧ validIssueTypes("Atoms: Issues",              inText { case a: Issue  # Issue   => a.typ })
+      ∧ validReqIds    ("DeletionReason reqIds",      _.deletionReasons.reqApplication.keys)
       ).rename("Cross-constituent refs").contramap[P](_ mapStrengthR mkRefs)
     }
 

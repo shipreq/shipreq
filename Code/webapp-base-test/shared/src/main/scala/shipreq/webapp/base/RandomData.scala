@@ -709,6 +709,15 @@ object RandomData {
       gs :+= a.map(tagRef(_))
       multiLinePlus(t)(gs: _*)
     }
+
+    def deletionReasonAtom(r: Option[Gen[ReqId]],
+                           c: Option[Gen[ReqCodeId]],
+                           a: Option[Gen[ApplicableTagId]]): Gen[DeletionReason.Atom] = {
+      implicit val t: DeletionReason.type = DeletionReason
+      var gs: Vector[Option[Gen[t.Atom]]] = reqRefs(r, c).map(_.some)
+      gs :+= a.map(tagRef(_))
+      multiLinePlus(t)(gs: _*)
+    }
   }
 
   val MaxTextAtoms: SizeSpec = 0 to (30 `JVM|JS` 8)
@@ -1053,6 +1062,30 @@ object RandomData {
     issues + tags
   }
 
+  def deletionReasons(gReqId: Option[Gen[ReqId]], gText: Gen[Text.DeletionReason.NonEmptyText]): Gen[DeletionReasons] =
+    //Gen insert DeletionReasons.empty/*
+    gReqId match {
+      case None => Gen pure DeletionReasons.empty
+      case Some(g) =>
+        for {
+          reasons  ← gText.vector
+          ids      = reasons.indices.toStream.map(i => Option(DeletionReasonId(i)))
+          idToReqs ← g.set1.fill(reasons.length).map(ids zip _)
+        } yield {
+          var ra = DeletionReasons.emptyReqApplication
+          idToReqs.foreach { t =>
+            val t1h = t._1.hashCode
+            t._2.foreach { reqId =>
+              val h = reqId.hashCode ^ t1h
+              if ((h &  3) == 0) ra = ra.add(reqId, None) // 25% chance
+                                 ra = ra.add(reqId, t._1)
+              if ((h & 12) == 0) ra = ra.add(reqId, None) // 25% chance
+            }
+          }
+          DeletionReasons(reasons, ra)
+        }
+    }
+
   lazy val projectConfig: Gen[ProjectConfig] =
     for {
       (issues, tags) ← Gen.tuple2(customIssueTypes, tagTree) map distinctHashRefKeys.run
@@ -1077,12 +1110,15 @@ object RandomData {
     val atagIds        = cfg.tags.vstream(_.tag).filterT[ApplicableTag].map(_.id).toSet
     val atagIdG        = Gen.tryGenChoose(atagIds.toSeq)
     val textColIds     = cfg.fields.customFields.values.filterT[CustomField.Text].map(_.id).toSet
+    val rcgTitleText   = TextGen.reqCodeGroupTitleAtom(reqIdG, activeCodeIdG, cissueIdG).text
+    val delReasonText  = TextGen.deletionReasonAtom(reqIdG, activeCodeIdG, atagIdG).text1(Text.DeletionReason)
     for {
-      reqText        ← reqFieldDataText2(reqIdSet, textColIds, activeCodeIdG, cissueIdG, atagIdG)
-      updReqText     = updateRequirementText(TextGen.genericReqTitleAtom(reqIdG, activeCodeIdG, cissueIdG, atagIdG).text) _
-      reqs           ← genmodL(Requirements.genericReqs)(updReqText)(reqsWithoutText)
-      reqCodes2      ← reqCode.updateGroupText(TextGen.reqCodeGroupTitleAtom(reqIdG, activeCodeIdG, cissueIdG).text)(reqCodes1.trie)
-    } yield IdCeilings.supply(Project(cfg, reqs, ReqCodes(reqCodes2), reqText, reqTags, reqImps, _))
+      reqText    ← reqFieldDataText2(reqIdSet, textColIds, activeCodeIdG, cissueIdG, atagIdG)
+      updReqText = updateRequirementText(TextGen.genericReqTitleAtom(reqIdG, activeCodeIdG, cissueIdG, atagIdG).text) _
+      reqs       ← genmodL(Requirements.genericReqs)(updReqText)(reqsWithoutText)
+      reqCodes2  ← reqCode.updateGroupText(rcgTitleText)(reqCodes1.trie)
+      dr         ← deletionReasons(reqIdG, delReasonText)
+    } yield IdCeilings.supply(Project(cfg, reqs, ReqCodes(reqCodes2), reqText, reqTags, reqImps, dr, _))
   }
 
   lazy val project: Gen[Project] =

@@ -74,7 +74,16 @@ object SampleProject3 {
     + DeadReqCode("dead.group")
   )
 
-    contentByDsl ! project0
+  val dr = DeletionReasons(
+    Vector("Who needs a use case edtior?!", "Bobsaidso.", "Bob said so."),
+    DeletionReasons.emptyReqApplication
+      .add(mfs(1), 0)
+      .add(cos(2), None)
+      .add(cos(2), 1)
+      .add(cos(2), 2)
+  )
+
+    (contentByDsl ! project0).copy(deletionReasons = dr)
   }
 
   lazy val plainText  = PlainText(project)

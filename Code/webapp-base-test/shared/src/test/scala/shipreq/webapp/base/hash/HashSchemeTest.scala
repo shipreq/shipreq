@@ -82,7 +82,7 @@ object HashSchemeTest extends TestSuite {
     'latest - {
       val h = hL
       assertHashes(h, P0,
-        0xed4fcf48 ~ WholeProject,
+        0xa36e703b ~ WholeProject,
         0x47de4849 ~ CfgIssueTypes,
         0x47de4849 ~ CfgReqTypes,
         0xbd8a78f7 ~ CfgFields,
@@ -91,9 +91,10 @@ object HashSchemeTest extends TestSuite {
         0xa0139eb8 ~ ReqCodes,
         0xa0139eb8 ~ TextFieldData,
         0xa0139eb8 ~ TagData,
-        0xa0139eb8 ~ ImplicationData)
+        0xa0139eb8 ~ ImplicationData,
+        0x35ed6368 ~ DeletionReasons)
       assertHashes(h, P3,
-        0xa1493797 ~ WholeProject,
+        0x5e053c40 ~ WholeProject,
         0x67a3e1b9 ~ CfgIssueTypes,
         0x4b71a1ac ~ CfgReqTypes,
         0x3e1ac0cb ~ CfgFields,
@@ -102,7 +103,8 @@ object HashSchemeTest extends TestSuite {
         0x4e7f121c ~ ReqCodes,
         0xa0139eb8 ~ TextFieldData, // TODO same as empty - P3 doesn't use
         0x314932cc ~ TagData,
-        0xb31f8764 ~ ImplicationData)
+        0xb31f8764 ~ ImplicationData,
+        0x17af358b ~ DeletionReasons)
     }
   }
 }

@@ -34,6 +34,7 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
   implicit def autoCustomReqTypeId  (i: Int) = CustomReqTypeId(i)
   implicit def autoTagGroupId       (i: Int) = TagGroupId(i)
   implicit def autoApplicableTagId  (i: Int) = ApplicableTagId(i)
+  implicit def autoDeletionReasonId (i: Int) = DeletionReasonId(i)
 
   implicit def autoReqCodeIdO        (i: Int): Option[ReqCodeId]                  = Some(i)
   implicit def autoReqTypePosO       (i: Int): Option[ReqTypePos]                 = Some(i)
@@ -45,6 +46,7 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
   implicit def autoCustomReqTypeIdO  (i: Int): Option[CustomReqTypeId]            = Some(i)
   implicit def autoTagGroupIdO       (i: Int): Option[TagGroupId]                 = Some(i)
   implicit def autoApplicableTagIdO  (i: Int): Option[ApplicableTagId]            = Some(i)
+  implicit def autoDeletionReasonIdO (i: Int): Option[DeletionReasonId]           = Some(i)
 
   implicit def tagTreeTree(t: TagTree) = t.mapValues(_.children)
 
@@ -96,14 +98,17 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
   implicit def autoTextA_ReqCodeGroupTitle(s: String): Text.ReqCodeGroupTitle.Atom = Text.ReqCodeGroupTitle Literal __checkLiteral(s)
   implicit def autoTextA_GenericReqTitle  (s: String): Text.GenericReqTitle  .Atom = Text.GenericReqTitle   Literal __checkLiteral(s)
   implicit def autoTextA_InlineIssueDesc  (s: String): Text.InlineIssueDesc  .Atom = Text.InlineIssueDesc   Literal __checkLiteral(s)
+  implicit def autoTextA_DeletionReason   (s: String): Text.DeletionReason   .Atom = Text.DeletionReason    Literal __checkLiteral(s)
 
   implicit def autoTextO_CustomTextField  (s: String): Text.CustomTextField  .OptionalText = Vector1(s)
   implicit def autoTextO_ReqCodeGroupTitle(s: String): Text.ReqCodeGroupTitle.OptionalText = Vector1(s)
   implicit def autoTextO_GenericReqTitle  (s: String): Text.GenericReqTitle  .OptionalText = Vector1(s)
   implicit def autoTextO_InlineIssueDesc  (s: String): Text.InlineIssueDesc  .OptionalText = Vector1(s)
+  implicit def autoTextO_DeletionReason   (s: String): Text.DeletionReason   .OptionalText = Vector1(s)
 
   implicit def autoTextN_CustomTextField  (s: String): Text.CustomTextField  .NonEmptyText = NonEmptyVector one s
   implicit def autoTextN_ReqCodeGroupTitle(s: String): Text.ReqCodeGroupTitle.NonEmptyText = NonEmptyVector one s
   implicit def autoTextN_GenericReqTitle  (s: String): Text.GenericReqTitle  .NonEmptyText = NonEmptyVector one s
   implicit def autoTextN_InlineIssueDesc  (s: String): Text.InlineIssueDesc  .NonEmptyText = NonEmptyVector one s
+  implicit def autoTextN_DeletionReason   (s: String): Text.DeletionReason   .NonEmptyText = NonEmptyVector one s
 }

@@ -23,26 +23,27 @@ object Project {
   import ReqData._ // for equality
   implicit lazy val equality: Equal[Project] = UtilMacros.deriveEqual
 
-  val empty: Project = {
-    val cfg      = ProjectConfig.empty
-    val reqs     = Requirements.empty
-    val reqCodes = ReqCodes.empty
-    val reqText  = ReqData.emptyText
-    val reqTags  = ReqData.emptyTags
-    val reqImps  = Implications.empty
-    val ids      = IdCeilings.zero
-    Project(cfg, reqs, reqCodes, reqText, reqTags, reqImps, ids)
-  }
+  val empty: Project =
+    Project(
+      ProjectConfig.empty,
+      Requirements.empty,
+      ReqCodes.empty,
+      ReqData.emptyText,
+      ReqData.emptyTags,
+      Implications.empty,
+      DeletionReasons.empty,
+      IdCeilings.zero)
 }
 
 @Lenses
-final case class Project(config      : ProjectConfig,
-                         reqs        : Requirements,
-                         reqCodes    : ReqCodes,
-                         reqText     : ReqData.Text,
-                         reqTags     : ReqData.Tags,
-                         implications: Implications,
-                         idCeilings  : IdCeilings) {
+final case class Project(config         : ProjectConfig,
+                         reqs           : Requirements,
+                         reqCodes       : ReqCodes,
+                         reqText        : ReqData.Text,
+                         reqTags        : ReqData.Tags,
+                         implications   : Implications,
+                         deletionReasons: DeletionReasons,
+                         idCeilings     : IdCeilings) {
 
   override def toString =
     s"Project($idCeilings)"

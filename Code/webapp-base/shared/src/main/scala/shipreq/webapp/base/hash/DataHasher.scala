@@ -77,6 +77,7 @@ sealed abstract class DataHasher extends GenericDashHasher {
   implicit val hashDeletable    : Hash[Deletable]           = Hash by Deletable.from
   implicit val hashMutexChildren: Hash[MutexChildren]       = Hash by MutexChildren.from
 
+  implicit val hashDeletionReasonId         = hashTaggedType[DeletionReasonId]
   implicit val hashGenericReqId             = hashTaggedType[GenericReqId]
   implicit val hashReqCodeId                = hashTaggedType[ReqCodeId]
   implicit val hashCustomReqTypeId          = hashTaggedType[CustomReqTypeId]
@@ -186,24 +187,28 @@ sealed abstract class DataHasher extends GenericDashHasher {
   implicit val hashIdCeilings   : Hash[IdCeilings]    = hashCaseClass
   implicit val hashProjectConfig: Hash[ProjectConfig] = hashCaseClass
 
-  implicit val hashReqCodeData: Hash[ReqCode.Data]
-  implicit val hashReqCodeTrie: Hash[ReqCode.Trie]
-  implicit val hashReqCodes   : Hash[ReqCodes]
-  implicit val hashProject    : Hash[Project]
+  implicit val hashReqCodeData    : Hash[ReqCode.Data]
+  implicit val hashReqCodeTrie    : Hash[ReqCode.Trie]
+  implicit val hashReqCodes       : Hash[ReqCodes]
+  implicit val hashDeletionReasons: Hash[DeletionReasons]
+  implicit val hashProject        : Hash[Project]
 }
 
 final class DataHasherV1(protected val algorithm: Hash.Algorithm) extends DataHasher {
   import algorithm._
-  implicit val hashReqCodeData: Hash[ReqCode.Data] = hashCaseClassExcept('lastGroup)
-  implicit val hashReqCodeTrie: Hash[ReqCode.Trie] = hashTrie
-  implicit val hashReqCodes   : Hash[ReqCodes]     = hashCaseClass
-  implicit val hashProject    : Hash[Project]      = hashCaseClass
+  implicit val hashReqCodeData    : Hash[ReqCode.Data]    = hashCaseClassExcept('lastGroup)
+  implicit val hashReqCodeTrie    : Hash[ReqCode.Trie]    = hashTrie
+  implicit val hashReqCodes       : Hash[ReqCodes]        = hashCaseClass
+  implicit val hashDeletionReasons: Hash[DeletionReasons] = Hash.unsupported
+  implicit val hashProject        : Hash[Project]         = hashCaseClassExcept('deletionReasons)
 }
 
 final class DataHasherCurrent(protected val algorithm: Hash.Algorithm) extends DataHasher {
   import algorithm._
-  implicit val hashReqCodeData: Hash[ReqCode.Data] = hashCaseClass
-  implicit val hashReqCodeTrie: Hash[ReqCode.Trie] = hashTrie
-  implicit val hashReqCodes   : Hash[ReqCodes]     = hashCaseClass
-  implicit val hashProject    : Hash[Project]      = hashCaseClass
+  import HashAtoms.instances._
+  implicit val hashReqCodeData    : Hash[ReqCode.Data]    = hashCaseClass
+  implicit val hashReqCodeTrie    : Hash[ReqCode.Trie]    = hashTrie
+  implicit val hashReqCodes       : Hash[ReqCodes]        = hashCaseClass
+  implicit val hashDeletionReasons: Hash[DeletionReasons] = hashCaseClass
+  implicit val hashProject        : Hash[Project]         = hashCaseClass
 }

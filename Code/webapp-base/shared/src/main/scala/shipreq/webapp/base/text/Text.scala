@@ -50,11 +50,13 @@ object Text {
   // - Parsing rules in top-level text objects and Parsers
   // - RandomData
 
+
   /**
    * A "generic-req title", not a "generic req-title".
    * Title of a [[shipreq.webapp.base.data.GenericReq]].
    */
   object GenericReqTitle extends ReqTitle
+
 
   object InlineIssueDesc extends Base
       with A.SingleLine
@@ -76,6 +78,7 @@ object Text {
         NonEmptyVector(Literal("Ask "), EmailAddress("bob@gmail.com"), Literal(" about "), MathTeX("e=mc^2")))
   }
 
+
   object ReqCodeGroupTitle extends Base
       with A.SingleLine
       with A.Issue
@@ -90,6 +93,7 @@ object Text {
       override protected def issueInnerDesc = rule(runSubParser(InlineIssueDesc.parserI(project)(_).inline))
     }
   }
+
 
   object CustomTextField extends Base
       with A.MultiLine
@@ -128,6 +132,21 @@ object Text {
         blankLine,
         Literal("Here we go:"),
         UnorderedList(uls))
+    }
+  }
+
+
+  object DeletionReason extends Base
+      with A.MultiLine
+      with A.ReqRef
+      with A.TagRef {
+    override def parserI(p: Project)(i: ParserInput) = new Parser(p, i)
+    final class Parser(val project: Project, val input: ParserInput) extends P.TopBase(this)
+        with P.MultiLine
+        with P.ReqRef
+        with P.TagRef {
+      def hashToken = rule(hashRef ~ tagRef)
+      override protected val additionalTokens = () => rule(hashToken | reqRef)
     }
   }
 

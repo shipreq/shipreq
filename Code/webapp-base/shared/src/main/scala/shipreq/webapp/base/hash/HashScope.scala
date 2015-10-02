@@ -16,6 +16,7 @@ object HashScope {
   case object TextFieldData   extends HashScope
   case object TagData         extends HashScope
   case object ImplicationData extends HashScope
+  case object DeletionReasons extends HashScope
 
   implicit def equality: UnivEq[HashScope] = UnivEq.derive
 
@@ -29,7 +30,8 @@ object HashScope {
       ReqCodes       ,
       TextFieldData  ,
       TagData        ,
-      ImplicationData)
+      ImplicationData,
+      DeletionReasons)
 
   val all: NonEmptyVector[HashScope] =
     WholeProject +: defaultSet.toNEV
@@ -50,5 +52,6 @@ object HashScope {
       case TextFieldData   => h.hashReqDataText      hash p.reqText
       case TagData         => h.hashReqDataTags      hash p.reqTags
       case ImplicationData => h.hashImplications     hash p.implications
+      case DeletionReasons => h.hashDeletionReasons  hash p.deletionReasons
     }
 }
