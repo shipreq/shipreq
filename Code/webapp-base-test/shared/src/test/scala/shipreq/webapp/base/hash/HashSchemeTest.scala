@@ -25,7 +25,7 @@ object HashSchemeTest extends TestSuite {
 
   def fmt(m: Map[HashScope, Int]): String =
     HashScope.all.toStream
-      .flatMap(s => m.get(s).map(v => "%s → 0x%-8x".format(s, v)).toStream)
+      .flatMap(s => m.get(s).map(v => "0x%-8x ~ %s".format(v, s)).toStream)
       .mkString(", ")
 
   def assertHashes(h: HashScheme, p: Project, ts: (HashScope, Int)*): Unit = {
@@ -34,17 +34,60 @@ object HashSchemeTest extends TestSuite {
   }
 
   import HashScope._
+  implicit class NumExt(val i: Int) extends AnyVal {
+    def ~[A](a: A) = (a, i)
+  }
 
   override def tests = TestSuite {
     'v1 {
       val h = HashScheme.all.head
-      assertHashes(h, P0, WholeProject → 0xed4fcf48, CfgIssueTypes → 0x47de4849, ReqCodes → 0xa0139eb8, ImplicationData → 0xa0139eb8, CfgTags → 0x47de4849, TextFieldData → 0xa0139eb8, CfgReqTypes → 0x47de4849, CfgFields → 0xbd8a78f7, Reqs → 0x57815d25, TagData → 0xa0139eb8)
-      assertHashes(h, P3, WholeProject → 0x6a210433, CfgIssueTypes → 0x67a3e1b9, ReqCodes → 0xdcbd2f53, ImplicationData → 0xb31f8764, CfgTags → 0x5a1d6a0a, TextFieldData → 0xa0139eb8, CfgReqTypes → 0x4b71a1ac, CfgFields → 0x3e1ac0cb, Reqs → 0x45f6c01d, TagData → 0x314932cc)
+      assertHashes(h, P0,
+        0xed4fcf48 ~ WholeProject,
+        0x47de4849 ~ CfgIssueTypes,
+        0xa0139eb8 ~ ReqCodes,
+        0xa0139eb8 ~ ImplicationData,
+        0x47de4849 ~ CfgTags,
+        0xa0139eb8 ~ TextFieldData,
+        0x47de4849 ~ CfgReqTypes,
+        0xbd8a78f7 ~ CfgFields,
+        0x57815d25 ~ Reqs,
+        0xa0139eb8 ~ TagData)
+      assertHashes(h, P3,
+        0x6a210433 ~ WholeProject,
+        0x67a3e1b9 ~ CfgIssueTypes,
+        0xdcbd2f53 ~ ReqCodes,
+        0xb31f8764 ~ ImplicationData,
+        0x5a1d6a0a ~ CfgTags,
+        0xa0139eb8 ~ TextFieldData,
+        0x4b71a1ac ~ CfgReqTypes,
+        0x3e1ac0cb ~ CfgFields,
+        0x45f6c01d ~ Reqs,
+        0x314932cc ~ TagData)
     }
     'latest - {
       val h = HashScheme.latest
-      assertHashes(h, P0, WholeProject → 0xed4fcf48, CfgIssueTypes → 0x47de4849, ReqCodes → 0xa0139eb8, ImplicationData → 0xa0139eb8, CfgTags → 0x47de4849, TextFieldData → 0xa0139eb8, CfgReqTypes → 0x47de4849, CfgFields → 0xbd8a78f7, Reqs → 0x57815d25, TagData → 0xa0139eb8)
-      assertHashes(h, P3, WholeProject → 0xa1493797, CfgIssueTypes → 0x67a3e1b9, ReqCodes → 0x4e7f121c, ImplicationData → 0xb31f8764, CfgTags → 0x5a1d6a0a, TextFieldData → 0xa0139eb8, CfgReqTypes → 0x4b71a1ac, CfgFields → 0x3e1ac0cb, Reqs → 0x45f6c01d, TagData → 0x314932cc)
+      assertHashes(h, P0,
+        0xed4fcf48 ~ WholeProject,
+        0x47de4849 ~ CfgIssueTypes,
+        0xa0139eb8 ~ ReqCodes,
+        0xa0139eb8 ~ ImplicationData,
+        0x47de4849 ~ CfgTags,
+        0xa0139eb8 ~ TextFieldData,
+        0x47de4849 ~ CfgReqTypes,
+        0xbd8a78f7 ~ CfgFields,
+        0x57815d25 ~ Reqs,
+        0xa0139eb8 ~ TagData)
+      assertHashes(h, P3,
+        0xa1493797 ~ WholeProject,
+        0x67a3e1b9 ~ CfgIssueTypes,
+        0x4e7f121c ~ ReqCodes,
+        0xb31f8764 ~ ImplicationData,
+        0x5a1d6a0a ~ CfgTags,
+        0xa0139eb8 ~ TextFieldData,
+        0x4b71a1ac ~ CfgReqTypes,
+        0x3e1ac0cb ~ CfgFields,
+        0x45f6c01d ~ Reqs,
+        0x314932cc ~ TagData)
     }
   }
 }
