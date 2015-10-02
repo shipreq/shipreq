@@ -57,27 +57,27 @@ object HashSchemeTest extends TestSuite {
     'v1 {
       val h = hV1
       assertHashes(h, P0,
-        0xed4fcf48 ~ WholeProject,
-        0x47de4849 ~ CfgIssueTypes,
-        0x47de4849 ~ CfgReqTypes,
-        0xbd8a78f7 ~ CfgFields,
-        0x47de4849 ~ CfgTags,
-        0x57815d25 ~ Reqs,
-        0xa0139eb8 ~ ReqCodes,
-        0xa0139eb8 ~ TextFieldData,
-        0xa0139eb8 ~ TagData,
-        0xa0139eb8 ~ ImplicationData)
+        0xed4fcf48 ~ WholeProject,    // Don't change
+        0x47de4849 ~ CfgIssueTypes,   // Don't change
+        0x47de4849 ~ CfgReqTypes,     // Don't change
+        0xbd8a78f7 ~ CfgFields,       // Don't change
+        0x47de4849 ~ CfgTags,         // Don't change
+        0x57815d25 ~ Reqs,            // Don't change
+        0xa0139eb8 ~ ReqCodes,        // Don't change
+        0xa0139eb8 ~ TextFieldData,   // Don't change
+        0xa0139eb8 ~ TagData,         // Don't change
+        0xa0139eb8 ~ ImplicationData) // Don't change
       assertHashes(h, P3,
-        0x6a210433 ~ WholeProject,
-        0x67a3e1b9 ~ CfgIssueTypes,
-        0x4b71a1ac ~ CfgReqTypes,
-        0x3e1ac0cb ~ CfgFields,
-        0x5a1d6a0a ~ CfgTags,
-        0x45f6c01d ~ Reqs,
-        0xdcbd2f53 ~ ReqCodes,
-        0xa0139eb8 ~ TextFieldData,
-        0x314932cc ~ TagData,
-        0xb31f8764 ~ ImplicationData)
+        0x6a210433 ~ WholeProject,    // Don't change
+        0x67a3e1b9 ~ CfgIssueTypes,   // Don't change
+        0x4b71a1ac ~ CfgReqTypes,     // Don't change
+        0x3e1ac0cb ~ CfgFields,       // Don't change
+        0x5a1d6a0a ~ CfgTags,         // Don't change
+        0x45f6c01d ~ Reqs,            // Don't change
+        0xdcbd2f53 ~ ReqCodes,        // Don't change
+        0xa0139eb8 ~ TextFieldData,   // Don't change
+        0x314932cc ~ TagData,         // Don't change
+        0xb31f8764 ~ ImplicationData) // Don't change
     }
     'latest - {
       val h = hL
