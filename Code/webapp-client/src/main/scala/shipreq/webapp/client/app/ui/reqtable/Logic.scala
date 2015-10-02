@@ -289,16 +289,32 @@ private[reqtable] object Logic {
       s.foldLeft(UnivEq.emptySet[Pubid])((q, id) =>
         pubid(id).fold(q)(q + _))
 
-    // A result of None here means the filter has ruled out everything
+    val opOpFilter = vs.filter.map(filter(_, p, pt, ts, issueLookup, tagLookup))
+
+    /**
+     * Full = the cumulative result off all factors that would contribute to potentially filter content.
+     *
+     * A result of `None` here means the filter has ruled out everything.
+     */
     val fullFilter: Option[Filter] =
-      vs.filter.map(filter(_, p, pt, ts, issueLookup, tagLookup)) match {
+      opOpFilter match {
         case None               => Some(filterDead)
         case Some(Some(filter)) => Some(filterDead && filter)
         case Some(None)         => None
       }
 
+    /** Was a filter expression used (i.e. a filter that isn't FilterDead) */
+    def filterExprUsed = opOpFilter.exists(_.isDefined)
+
+    /** When a filter expression is present, we still want to show relevant ReqCodeGroups of visible rows. */
+    val restoreFilteredRCGs = vs.viewReqCodeGroups && filterExprUsed
+
+    // Create rows
     fullFilter.fold(Vector.empty[Row]) { filter =>
-      var output = Vector.empty[Row]
+      var output           = Vector.empty[Row]
+      val restorableRCGs   = DataLog.list[ReqCodeGroupRow].disableUnless(restoreFilteredRCGs)
+      val codesSeen        = DataLog.mtrie[ReqCode.Node].disableUnless(restoreFilteredRCGs)
+      val seeExpandedCodes = codesSeen.addFn[Expanded[ReqCode.Value]](add => _.foreach(_ foreach add))
 
       // Add requirements
       p.reqs.reqs.values.foreach {
@@ -320,6 +336,8 @@ private[reqtable] object Logic {
               val live = r live p.config.customReqTypes
               output :+= GenericReqRow(r, live, exp, mv, i)
             }
+
+            seeExpandedCodes(codes)
           }
       }
 
@@ -329,9 +347,22 @@ private[reqtable] object Logic {
           case _: ReqId        =>
           case g: ReqCodeGroup =>
             val groupAndId = g and d.id
-            if (filter b groupAndId)
-              output :+= ReqCodeGroupRow(groupAndId, c, None)
+            val row = ReqCodeGroupRow(groupAndId, c, None)
+            if (filter b groupAndId) {
+              codesSeen.add(c)
+              output :+= row
+            } else
+              // TODO if (filterDead allows rcg)
+              restorableRCGs.add(row)
         })
+      }
+
+      // Add back filtered out ReqCodeGroups
+      if (restoreFilteredRCGs) {
+        val visTrie = codesSeen.get()
+        for (row <- restorableRCGs.get())
+          if (visTrie.dropPath(row.reqCode).nonEmpty)
+            output :+= row
       }
 
       output

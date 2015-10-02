@@ -224,6 +224,9 @@ object LogicTest extends TestSuite {
   private def prefixWithPubidNoZ(p: Project, f: Row => String): Row => String =
     rowToStrAp2(rowToPubid(p), f)((a, b) => if (b ≟ z) a else a + ":" + b)
 
+  private val rowToReqCodes: Row => String =
+    rowToAsToStr(_.exp.reqCodes, r => Vector1(r.reqCode))(PlainText.reqCode)
+
   private val pubidSep = " +".r.pattern
   private val pubidFmt = "^([A-Z]+)-(\\d+)$".r
   private def sortPubidsInString(s: String): String =
@@ -424,8 +427,7 @@ object LogicTest extends TestSuite {
       grp("abc")                 +
       grp("a.b.d")               +
       req("abc.no")              !! PA
-    val fmtRows = rowToAsToStr(_.exp.reqCodes, r => Vector1(r.reqCode))(PlainText.reqCode)
-    testCB(p, C.Code, None, ShowDead, fmtRows)(allSortsCB(2,
+    testCB(p, C.Code, None, ShowDead, rowToReqCodes)(allSortsCB(2,
       asc  = "a  a.b.c  a.b.d  a.boo  abc  abc.no  x.y.z  x.z,y.q",
       desc = "y.q,x.z  x.y.z  abc.no  a.boo  a.b.c  a")) // groups not displayed in DESC
   }
@@ -915,6 +917,48 @@ object LogicTest extends TestSuite {
     testFilter(P3, F.Not(F.ReqType(mf)))("FR-1  FR-2", dead = "CO-1  CO-2")
   }
 
+  /**
+   * When a filter is active, only RCGs with visible children should be shown.
+   */
+  def testReqCodesWhenFiltered(): Unit =
+    for (fd <- (HideDead :: ShowDead :: Nil)) {
+      // TODO Test Dead RCGs are filtered out
+      var expect = UnivEq.emptySet[String]
+      def grpShow(code: String) = {expect += code; RCGroup(code)}
+      def reqShow(code: String) = {expect += code; GReq(codes = Set(code), title = "show")}
+      def grp____(code: String) = RCGroup(code)
+      def req____(code: String) = GReq(codes = Set(code), title = "hide")
+      val p = (
+
+        grpShow("a")         +
+        reqShow("a.1")       +
+        req____("a.2")       +
+
+        grp____("b")         +
+        req____("b.1")       +
+        req____("b.2")       +
+
+        grpShow("c")         +
+        grpShow("c.x")       +
+        reqShow("c.x.a.1")   +
+
+        grp____("d")         +
+        grp____("d.x")       +
+        req____("d.x.a.1")   +
+
+        grpShow("e")         +
+        grp____("e.z.x")     +
+        req____("e.z.x.a.1") +
+        grpShow("e.z.y")     +
+        reqShow("e.z.y.a.1") +
+
+        grp____("lone")      +
+        grp____("lone.1")    ) !! PD
+
+      val expectStr = expect.toVector.sorted.mkString(sep)
+      testCB(p, C.Code, F.Text("show"), ShowDead, rowToReqCodes)(Seq(BlanksThenAsc -> expectStr))
+    }
+
   // ===================================================================================================================
 
   // NOTE: The Tags column is *not* expanded. Only custom tag columns are.
@@ -981,6 +1025,7 @@ object LogicTest extends TestSuite {
       'anyOf          - testFilterAny()
       'not            - testFilterNot()
     }
+    'reqCodesWhenFiltered - testReqCodesWhenFiltered()
     'reqCodeTree - testReqCodeTree()
   }
 }
