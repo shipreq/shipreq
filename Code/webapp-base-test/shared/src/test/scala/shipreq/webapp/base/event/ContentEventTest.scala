@@ -36,7 +36,7 @@ object ReqFull {
 
 // TODO Test atom validity in all events that accept text
 
-object GenericReqEventTest extends TestSuite {
+object ContentEventTest extends TestSuite {
 
   implicit def rciav(t: (Int, String)) = ReqCode.IdAndValue(t._1, t._2)
 
