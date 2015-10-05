@@ -36,7 +36,15 @@ object ApplyEventTestFns {
   }
 
   def assertFail(errFrag: String)(es: Event*)(implicit init: InitialEvents): Unit = {
-    val r = apply(init ++ es)(Project.empty)
+    // Only the last event should fail - apply init and ensure ok
+    val vb = Vector.newBuilder[Event]
+    vb ++= init.es
+    vb ++= es
+    val ev = vb.result()
+    val p1 = _assertPass(ev.init: _*)(NoInitialEvents.init)
+
+    // Now apply the last event
+    val r = apply.apply1(ev.last)(p1)
     r match {
       case -\/(e) => assertContainsCI(e, errFrag)
       case \/-(_) => fail(s"\nFailure expected but didn't occur.\nEvents were:\n${fmtEvents(es)}")
