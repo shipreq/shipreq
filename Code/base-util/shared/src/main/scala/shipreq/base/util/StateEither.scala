@@ -44,6 +44,9 @@ final class StateEither[S, E, +A](val run: S => Result[S, E, A]) extends AnyVal 
   @inline def <*[B](next: StateEither[S, E, B]): StateEither[S, E, A] =
     flatTap(_ => next)
 
+  def tap[B](f: A => B): StateEither[S, E, A] =
+    this <* map(f)
+
   /**
    * Return a value.
    *
@@ -81,6 +84,10 @@ final class StateEither[S, E, +A](val run: S => Result[S, E, A]) extends AnyVal 
   /** Alias for `map`. */
   @inline def |>[B](f: A => B): StateEither[S, E, B] =
     map(f)
+
+  /** Alias for `tap`. */
+  @inline def <|[B](f: A => B): StateEither[S, E, A] =
+    tap(f)
 
   /** Alias for `flatMap`. */
   @inline def >>=[B](f: A => StateEither[S, E, B]): StateEither[S, E, B] =
