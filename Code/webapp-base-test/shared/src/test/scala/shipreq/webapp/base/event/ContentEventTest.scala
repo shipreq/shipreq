@@ -866,6 +866,75 @@ object ContentEventTest extends TestSuite {
         'ok       - assertPass(createRCG1, delRCG1, restoreRCG1)
         'ok2      - assertPass(createRCG1, delRCG1, restoreRCG1, delRCG1, restoreRCG1)
       }
+
+      'reason {
+        val t = new EventTester()
+        def p = t.p
+        type R = String
+        def dead: R = "dead"
+        def live: R = "live"
+        def none: R = "none"
+        def test(e: Event)(reqA: R, rcg1: R)(reqB: R, rcg2: R): Unit =
+          t(e)(name => {
+            def fmt(txt: Option[Text.DeletionReason.NonEmptyText]) =
+              txt.fold(none)(_.mkString("").replaceAll("Literal\\((.*?)\\)", "$1"))
+
+            def req(id: GenericReqId): R =
+              p.reqs.genericReqs.need(id) match {
+                case r if r.live(p.config.customReqTypes) :: Live => live
+                case _                                            => fmt(p.deletionReasons getLatest id)
+              }
+
+            // RCGs don't get reasons
+            def rcg(c: ReqCode.Value): R =
+              p.reqCodes(c) match {
+                case _: ReqCode.ActiveGroup     => live
+                case d if d.deadGroup.isDefined => dead
+                case _                          => none
+              }
+
+            val actualL = req(ContentEventTest.reqA) :: rcg(RCG1_code) ::
+                          req(ContentEventTest.reqB) :: rcg(RCG2_code) ::
+                          req(ContentEventTest.reqC) :: rcg(RCG3_code) :: Nil
+            val expectL = reqA :: rcg1 :: reqB :: rcg2 :: live :: live :: Nil
+            val List(a,e) = List(actualL, expectL).map(_ mkString "  ")
+            assertEq(name, a, e)
+          })
+
+        // Create A,B,C,G1,G2,G3
+        t.justApply(createGR(reqA), createGR(reqB), createGR(reqC), createRCG1, createRCG2)
+        test(createRCG3)(live, live)(live, live)
+
+        // Delete A,B,G1,G2 with reason
+        val dr1 = "dr#1"
+        test(DeleteReqs(NonEmptySet(reqA, reqB), Set(1, 2), dr1))(dr1, dead)(dr1, dead)
+
+        // Restore B,G2
+        test(RestoreContent(Set(reqB), Set(2)))(dr1, dead)(live, live)
+
+        // Delete B,G2 - no reason
+        test(DeleteReqs(NonEmptySet(reqB), Set(2), ∅))(dr1, dead)(none, dead)
+
+        // Restore B,G2
+        test(RestoreContent(Set(reqB), Set(2)))(dr1, dead)(live, live)
+
+        // Delete B,G2 - no reason
+        test(DeleteReqs(NonEmptySet(reqB), Set(2), ∅))(dr1, dead)(none, dead)
+
+        // Restore B,G2
+        test(RestoreContent(Set(reqB), Set(2)))(dr1, dead)(live, live)
+
+        // Delete B,G2 with reason
+        val dr2 = "dr#2"
+        test(DeleteReqs(NonEmptySet(reqB), Set(2), dr2))(dr1, dead)(dr2, dead)
+
+        // Restore A,B,G1,G2
+        test(RestoreContent(Set(reqA, reqB), Set(1, 2)))(live, live)(live, live)
+
+        // Delete A,B with reason
+        val dr3 = "dr#3"
+        test(DeleteReqs(NonEmptySet(reqA, reqB), ∅, dr3))(dr3, live)(dr3, live)
+      }
     }
 
   }

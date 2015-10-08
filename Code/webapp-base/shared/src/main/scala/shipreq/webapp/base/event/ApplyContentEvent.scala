@@ -104,7 +104,32 @@ trait ApplyContentEvent {
         t2 <- ReqCodeLogic.inactivateBelongingToReqsT(t1, reqIds)
         t3 <- ReqCodeLogic.inactivateGroupsByIdT(t2, e.reqCodeGroups, remember = true)
         _  <- Project.reqCodeTrie set t3
+        _  <- Project.deletionReasons modify (addDeletionReason(_, e.reason, e.reqs))
       } yield ()
+    }
+
+    private def addDeletionReason(dr    : DeletionReasons,
+                                  reason: Text.DeletionReason.OptionalText,
+                                  reqIds: NonEmptySet[ReqId]): DeletionReasons = {
+
+      def noReason: DeletionReasons = {
+        var r = dr.reqApplication
+        for (reqId <- reqIds) {
+          val prev = r(reqId)
+          if (prev.nonEmpty && prev.last.isDefined) // No last reason means nothing to change
+            r = r.add(reqId, None)
+        }
+        DeletionReasons(dr.reasons, r)
+      }
+
+      def hasReason(r: Text.DeletionReason.NonEmptyText): DeletionReasons = {
+        val id = Some(DeletionReasonId(dr.reasons.length))
+        DeletionReasons(
+          dr.reasons :+ r,
+          reqIds.foldLeft(dr.reqApplication)(_.add(_, id)))
+      }
+
+      NonEmptyVector.maybe(reason, noReason)(hasReason)
     }
 
     def validateTags(tagIds: => Iterable[ApplicableTagId]): SE[Unit] =
