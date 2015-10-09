@@ -117,12 +117,11 @@ case class GenericReqRow(req: GenericReq, live: Live, exp: Expansion, mv: MultiV
   override def toString = s"\n$req\n$exp\n$mv\n"
 }
 
-case class ReqCodeGroupRow(groupAndId: ReqCodeGroup.AndId, reqCode: ReqCode.Value, reqCodeTreeItem: Option[ReqCodeTreeItem]) extends Row {
+case class ReqCodeGroupRow(group: ReqCodeGroup, reqCode: ReqCode.Value, reqCodeTreeItem: Option[ReqCodeTreeItem]) extends Row {
   override val id       = Row.ReqCodeGroupRowId(reqCodeId)
   override def sourceId = Row.ReqCodeGroupRowSourceId(reqCodeId)
   override def live     = group.live
-  def reqCodeId         = groupAndId.id
-  def group             = groupAndId.group
+  def reqCodeId         = group.id
 }
 
 object Row {

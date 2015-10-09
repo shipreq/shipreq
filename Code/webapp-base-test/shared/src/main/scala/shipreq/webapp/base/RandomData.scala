@@ -968,29 +968,33 @@ object RandomData {
 
     val smallIdSet = id.set(0 to 3)
 
-    val gEmptyReqInactive: Gen[Multimap[ReqId, Set, ReqCodeId]] =
-      Gen.pure(Multimap.empty)
+    val gEmptyReqInactive: Gen[ReqInactive] =
+      Gen pure emptyReqInactive
 
-    def data(ogLiveReqId: Option[Gen[ReqId]], ogReqId: Option[Gen[ReqId]], gGroup: Gen[ReqCodeGroup])(implicit ss: SizeSpec): Gen[Data] =
+    private val gEmptyText: Gen[Text.ReqCodeGroupTitle.OptionalText] =
+      Gen pure Vector.empty
+
+    def data(ogLiveReqId: Option[Gen[ReqId]], ogReqId: Option[Gen[ReqId]],
+             gGroupText: Gen[Text.ReqCodeGroupTitle.OptionalText] = gEmptyText)(implicit ss: SizeSpec): Gen[Data] =
+
       ss.gen flatMap { sz =>
-
         val gReqInactive: Gen[ReqInactive] =
           ogReqId match {
             case Some(g) => g.mapTo(smallIdSet)(0 to sz).map(Multimap(_))
             case None    => gEmptyReqInactive
           }
 
-        val gReqCodeGroupAndId: Gen[ReqCodeGroup.AndId] =
-         Gen.apply2(ReqCodeGroup.AndId.apply)(id, gGroup)
+        val gLiveReqCodeGroup: Gen[LiveReqCodeGroup] =
+          Gen.apply2(LiveReqCodeGroup.apply)(id, gGroupText)
 
         val gDeadGroup: Gen[DeadGroup] =
-          gReqCodeGroupAndId.option
+          Gen.apply2(DeadReqCodeGroup.apply)(id, gGroupText).option
 
         val gInactive: Gen[Inactive] =
           Gen.apply2(Inactive.apply)(gDeadGroup, gReqInactive)
 
         val gActiveGroup: Gen[ActiveGroup] =
-          Gen.apply2(ActiveGroup.apply)(gReqCodeGroupAndId, gReqInactive)
+          Gen.apply2(ActiveGroup.apply)(gLiveReqCodeGroup, gReqInactive)
 
         val gActiveReq: Option[Gen[ActiveReq]] =
           ogLiveReqId map (gReqId =>
@@ -1010,25 +1014,16 @@ object RandomData {
     def codeSet(maxDepth: Int): Gen[CodeSet] =
       mtrie(node, Gen.unit, maxDepth)
 
-    val emptyReqCodeGroup = ReqCodeGroup(Vector.empty)
-    val gEmptyReqCodeGroup = Gen pure emptyReqCodeGroup
-
     def updateGroupText(gt: Gen[Text.ReqCodeGroupTitle.OptionalText])(src: Trie): Gen[Trie] = {
       type F = EndoFn[Trie]
       type G = Gen[F]
 
-      val vecOfGens = src.cataV(Vector.empty[G]) { (q, code, data) =>
-        var result = q
-
-        // Only one will work which is ok cos data cannot have both an active & inactive group
-        def modLens(o: Optional[Data, Text.ReqCodeGroupTitle.OptionalText]): Unit =
-          o.getOption(data).foreach(_ =>
-            result :+= gt.map[F](txt => _.put(code, o.set(txt)(data))))
-
-        modLens(reqCodeDataActiveGroupTitle)
-        modLens(reqCodeDataDeadGroupTitle)
-        result
-      }
+      val vecOfGens = src.cataV(Vector.empty[G])((q, code, data) =>
+        reqCodeDataGroupTitle.getOption(data) match {
+          case Some(txt) => q :+ gt.map[F](txt => _.put(code, reqCodeDataGroupTitle.set(txt)(data)))
+          case None      => q
+        }
+      )
 
       val genVec = Gen.sequence(vecOfGens)
       genVec.map(_.foldLeft(src)((q, f) => f(q)))
@@ -1130,7 +1125,7 @@ object RandomData {
       reqIdSet        = reqIds.toSet
       liveReqIds      = reqsWithoutText.reqs.values.toStream.filter(_.live(cfg.customReqTypes) :: Live).map(_.id)
       liveReqIdG      = Gen tryGenChoose liveReqIds
-      reqCodeDataG    = reqCode.data(liveReqIdG, reqIdG, reqCode.gEmptyReqCodeGroup)(0 to (3 `JVM|JS` 2))
+      reqCodeDataG    = reqCode.data(liveReqIdG, reqIdG)(0 to (3 `JVM|JS` 2))
       reqCodes        ← reqCodes(reqCode.trie(reqCodeDataG, 2 `JVM|JS` 2))
       reqTags         ← reqFieldDataTags(reqIdSet, atagIds)
       reqImps         ← reqFieldDataImplications(reqIdSet)

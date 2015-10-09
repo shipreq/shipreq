@@ -37,7 +37,7 @@ object SelectionCtrls {
               case r: ReqCodeGroupRow =>
                 r.live match {
                   case Live => deletable += 1
-                  //case Dead => if (r.group.recoverable) restorable += 1
+                  case Dead => restorable += 1
                 }
             }
           }

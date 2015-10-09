@@ -101,7 +101,7 @@ object ReqCode {
   /**
    * A [[ReqCodeGroup]] previously assigned to a ReqCode, since deleted.
    */
-  type DeadGroup = Option[ReqCodeGroup.AndId]
+  type DeadGroup = Option[DeadReqCodeGroup]
 
   /**
    * Data stored at each node in the ReqCode trie.
@@ -149,9 +149,8 @@ object ReqCode {
   }
 
   @Lenses
-  case class ActiveGroup(groupAndId: ReqCodeGroup.AndId, reqInactive: ReqInactive) extends Data {
-    @inline  def id        = groupAndId.id
-    @inline  def group     = groupAndId.group
+  case class ActiveGroup(group: LiveReqCodeGroup, reqInactive: ReqInactive) extends Data {
+    @inline  def id        = group.id
     override def nonEmpty  = true
     override def isActive  = true
     override def activeId  = Some(id)
@@ -159,10 +158,6 @@ object ReqCode {
     override def ids       = id #:: _inactiveIds
     override def modReqInactive(f: ReqInactive => ReqInactive) =
       copy(reqInactive = f(reqInactive))
-  }
-  object ActiveGroup {
-    val group = groupAndId ^|-> ReqCodeGroup.AndId.group
-    val id    = groupAndId ^|-> ReqCodeGroup.AndId.id
   }
 
   object Data {
@@ -186,27 +181,29 @@ object ReqCode {
  *
  * Previously called "Semantic Header Row" or "SHR" in the requirements.
  */
+sealed abstract class ReqCodeGroup {
+  val id: ReqCodeId
+  val title: Text.ReqCodeGroupTitle.OptionalText
+  def live: Live
+
+  final def isEmpty : Boolean = title.isEmpty
+  final def nonEmpty: Boolean = !isEmpty
+}
+
 @Lenses
-final case class ReqCodeGroup(title: Text.ReqCodeGroupTitle.OptionalText) {
-  @inline def isEmpty : Boolean = title.isEmpty
-  @inline def nonEmpty: Boolean = !isEmpty
+final case class LiveReqCodeGroup(id: ReqCodeId, title: Text.ReqCodeGroupTitle.OptionalText) extends ReqCodeGroup {
+  override def live = Live
+}
 
-  @inline def and(id: ReqCodeId): ReqCodeGroup.AndId =
-    ReqCodeGroup.AndId(id, this)
-
-  // TODO Not true anymore ↓
-  def live = Live
-  def recoverable = true
+@Lenses
+final case class DeadReqCodeGroup(id: ReqCodeId, title: Text.ReqCodeGroupTitle.OptionalText) extends ReqCodeGroup {
+  override def live = Dead
 }
 
 object ReqCodeGroup {
-  val empty = ReqCodeGroup(Vector.empty)
-
-  @Lenses
-  final case class AndId(id: ReqCodeId, group: ReqCodeGroup)
-
-  implicit def equality     : UnivEq[ReqCodeGroup] = UnivEq.derive
-  implicit def andIdEquality: UnivEq[AndId]        = UnivEq.derive
+  implicit def equalLive: UnivEq[LiveReqCodeGroup] = UnivEq.derive
+  implicit def equalDead: UnivEq[DeadReqCodeGroup] = UnivEq.derive
+  implicit def equalBase: UnivEq[ReqCodeGroup]     = UnivEq.derive
 }
 
 /**
@@ -232,8 +229,7 @@ final case class ReqCodes(trie: ReqCode.Trie) {
   private lazy val scan = new Scan
   private class Scan {
     private val _allIds         = Stream.newBuilder[ReqCodeId]
-    private val _activeGroups   = List.newBuilder[ReqCodeGroup.AndId]
-    private val _inactiveGroups = List.newBuilder[ReqCodeGroup.AndId]
+    private val _groups         = Stream.newBuilder[ReqCodeGroup]
     private val _reqCodesById   = Map.newBuilder[ReqCodeId, Value]
     var _activeReqCodesByReqId: Multimap[ReqId, Set, Value] = UnivEq.emptySetMultimap
     var _inactiveIdsByReqId: Multimap[ReqId, Set, ReqCodeId] = UnivEq.emptySetMultimap
@@ -246,28 +242,23 @@ final case class ReqCodes(trie: ReqCode.Trie) {
 
       _inactiveIdsByReqId ++= data.reqInactive.m
 
-      data.deadGroup.map(_inactiveGroups += _)
+      data.deadGroup.map(_groups += _)
 
       data match {
         case d: ActiveReq   => _activeReqCodesByReqId = _activeReqCodesByReqId.add(d.reqId, code)
-        case d: ActiveGroup => _activeGroups += d.groupAndId
+        case d: ActiveGroup => _groups += d.group
         case _: Inactive    => ()
       }
     }
 
-    val activeGroups          = _activeGroups.result()
-    val inactiveGroups        = _inactiveGroups.result()
+    val groups                = _groups.result()
     val reqCodesById          = _reqCodesById.result()
     val allIds                = _allIds.result()
     val activeReqCodesByReqId = _activeReqCodesByReqId
     val inactiveIdsByReqId    = _inactiveIdsByReqId
   }
 
-  // TODO Are {in,}activeGroups useful really?
-  // 1) (RCG,id) likely isn't enough anymore, better would be (RCG,id,live, maybe code too?)
-  // 2) Logic.gather doesn't use this
-  @inline def activeGroups         : List[ReqCodeGroup.AndId]        = scan.activeGroups
-  @inline def inactiveGroups       : List[ReqCodeGroup.AndId]        = scan.inactiveGroups
+  @inline def groups               : Stream[ReqCodeGroup]            = scan.groups
   @inline def reqCodesById         : Map[ReqCodeId, Value]           = scan.reqCodesById
   @inline def activeReqCodesByReqId: Multimap[ReqId, Set, Value]     = scan.activeReqCodesByReqId
   @inline def inactiveIdsByReqId   : Multimap[ReqId, Set, ReqCodeId] = scan.inactiveIdsByReqId

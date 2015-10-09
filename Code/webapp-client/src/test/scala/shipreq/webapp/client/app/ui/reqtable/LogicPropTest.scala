@@ -47,8 +47,9 @@ object LogicPropTest extends TestSuite {
       val b = Set.newBuilder[ReqCode.Value]
       p.reqCodes.activeReqCodesByReqId.values.foreach(b ++= _)
       if (vs.viewReqCodeGroups)
-        p.reqCodes.activeGroups.foreach(g =>
-          b += p.reqCodes.reqCode(g.id))
+        p.reqCodes.groups.foreach(g =>
+          if ((g.live :: Live) || (vs.filterDead :: ShowDead))
+            b += p.reqCodes.reqCode(g.id))
       b.result()
     }
 

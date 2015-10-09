@@ -5,7 +5,7 @@ import scalaz.\/
 import shipreq.base.util.TaggedTypes.TaggedType
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.AtomTC
+import shipreq.webapp.base.text.{AtomTC, Text}
 import Hash.HashableValueOps
 
 sealed abstract class GenericDashHasher {
@@ -135,10 +135,11 @@ sealed abstract class DataHasher extends GenericDashHasher {
 
   import HashAtoms.instances._
 
-  implicit val hashReqDataText       : Hash[ReqData.Text]       = hashMap
-  implicit val hashReqCodeNode       : Hash[ReqCode.Node]       = hashCaseClass
-  implicit val hashReqCodeGroup      : Hash[ReqCodeGroup]       = hashCaseClass
-  implicit val hashReqCodeGroupAndId : Hash[ReqCodeGroup.AndId] = hashCaseClass
+  implicit val hashReqDataText       : Hash[ReqData.Text]     = hashMap
+  implicit val hashReqCodeNode       : Hash[ReqCode.Node]     = hashCaseClass
+  implicit val hashLiveReqCodeGroup  : Hash[LiveReqCodeGroup] = hashCaseClass
+  implicit val hashDeadReqCodeGroup  : Hash[DeadReqCodeGroup] = hashCaseClass
+  implicit val hashReqCodeGroup      : Hash[ReqCodeGroup]     = hashADT
 
   implicit val hashStaticReqTypeUC: Hash[StaticReqType.UseCase.type] = hashConstClass("UC")
   implicit val hashStaticReqType  : Hash[StaticReqType]              = hashADT
@@ -195,8 +196,9 @@ sealed abstract class DataHasher extends GenericDashHasher {
 
 object DataHasherV1 {
   sealed trait Target
+  case class OldReqCodeGroup(title: Text.ReqCodeGroupTitle.OptionalText)
   case class ReqTarget(id: ReqId) extends Target
-  case class GrpTarget(grp: ReqCodeGroup) extends Target
+  case class GrpTarget(grp: OldReqCodeGroup) extends Target
   final case class ActiveData(id: ReqCodeId, target: Target)
   final case class Data(active: Option[ActiveData],
                         oldGroups: Set[ReqCodeId],
@@ -205,6 +207,8 @@ object DataHasherV1 {
 final class DataHasherV1(protected val algorithm: Hash.Algorithm) extends DataHasher {
   import algorithm._
   import DataHasherV1._
+  import HashAtoms.instances._
+  implicit val hashReqCodeGroup2: Hash[OldReqCodeGroup] = hashCaseClass
   implicit val hashReqCodeTarget1: Hash[ReqTarget] = hashCaseClass
   implicit val hashReqCodeTarget2: Hash[GrpTarget] = hashCaseClass
   implicit val hashReqCodeTarget: Hash[Target] = hashADT
@@ -213,7 +217,7 @@ final class DataHasherV1(protected val algorithm: Hash.Algorithm) extends DataHa
 
   implicit val hashReqCodeData: Hash[ReqCode.Data] = hashReqCodeDataProxy.cmap {
     case d: ReqCode.Inactive => Data(None, d.deadGroup.map(_.id).toSet, d.reqInactive)
-    case d: ReqCode.ActiveGroup => Data(Some(ActiveData(d.id, GrpTarget(d.group))), Set.empty, d.reqInactive)
+    case d: ReqCode.ActiveGroup => Data(Some(ActiveData(d.id, GrpTarget(OldReqCodeGroup(d.group.title)))), Set.empty, d.reqInactive)
     case d: ReqCode.ActiveReq => Data(Some(ActiveData(d.id, ReqTarget(d.reqId))), d.deadGroup.map(_.id).toSet, d.reqInactive)
   }
 

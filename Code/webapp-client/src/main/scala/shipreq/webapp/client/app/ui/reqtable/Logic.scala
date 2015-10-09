@@ -342,25 +342,17 @@ private[reqtable] object Logic {
       }
 
       // Add ReqCodeGroups
-      if (vs.viewReqCodeGroups) {
-
-        def processGroup(groupAndId: ReqCodeGroup.AndId): Unit = {
-          val code = p.reqCodes reqCode groupAndId.id
-          val row = ReqCodeGroupRow(groupAndId, code, None)
-          if (filter b groupAndId) {
+      if (vs.viewReqCodeGroups)
+        for (g <- p.reqCodes.groups) {
+          val code = p.reqCodes reqCode g.id
+          val row = ReqCodeGroupRow(g, code, None)
+          if (filter b g) {
             codesSeen.add(row.reqCode)
             output :+= row
           } else
+            // TODO Check if group is Dead and if ShowDead is on
             restorableRCGs.add(row)
         }
-
-        // TODO This is shit
-        for (g <- p.reqCodes.activeGroups)
-          processGroup(g)
-        if (vs.filterDead :: ShowDead)
-          for (g <- p.reqCodes.inactiveGroups)
-            processGroup(g)
-      }
 
       // Add back filtered out ReqCodeGroups
       if (restoreFilteredRCGs) {
@@ -409,8 +401,8 @@ private[reqtable] object Logic {
     filterOrderFn(3)(evalSpeed)
   }
 
-  type Filter = FilterFn2[Req, ReqCodeGroup.AndId]
-  @inline def Filter(a: Req => Boolean, b: ReqCodeGroup.AndId => Boolean): Filter = FilterFn2(a, b)
+  type Filter = FilterFn2[Req, ReqCodeGroup]
+  @inline def Filter(a: Req => Boolean, b: ReqCodeGroup => Boolean): Filter = FilterFn2(a, b)
 
   /**
    * @return None means filter everything out. Function const false. Fail-early to an empty set. No results.
@@ -426,7 +418,7 @@ private[reqtable] object Logic {
     type F  = Filter
     type R  = Option[Filter]
     type FR = Req => Boolean
-    type FG = ReqCodeGroup.AndId => Boolean
+    type FG = ReqCodeGroup => Boolean
     import FilterFn.`n/a`
     @inline implicit def autoSomeFilter(f: Filter): R = Some(f)
 

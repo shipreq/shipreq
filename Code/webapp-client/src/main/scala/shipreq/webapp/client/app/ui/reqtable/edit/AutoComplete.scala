@@ -275,7 +275,7 @@ object AutoComplete {
             *.codeRefToGroupAutoComplete('req)(r => _('desc)(d =>
               <.div(
                 <.div(r, code),
-                <.div(d, pt.reqCodeGroupTitle(a.groupAndId)))
+                <.div(d, pt.reqCodeGroupTitle(a.group)))
             ))
         }
       }

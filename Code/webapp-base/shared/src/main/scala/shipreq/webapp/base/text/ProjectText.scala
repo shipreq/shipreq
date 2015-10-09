@@ -19,11 +19,11 @@ object ProjectText {
   /** Judgement on how a ReqCode-based reference (eg. [email.failure]) should be displayed */
   sealed trait ReqCodeResolution
   object ReqCodeResolution {
-    case class ActiveCodeToReq     (code: ReqCode.Value, reqId: ReqId)              extends ReqCodeResolution
-    case class ReqWithAltCode      (code: ReqCode.Value, reqId: ReqId)              extends ReqCodeResolution
-    case class ReqWithoutActiveCode(code: ReqCode.Value, reqId: ReqId)              extends ReqCodeResolution
-    case class ActiveCodeToGroup   (code: ReqCode.Value, group: ReqCodeGroup.AndId) extends ReqCodeResolution
-    case class DeadGroup           (code: ReqCode.Value)                            extends ReqCodeResolution
+    case class ActiveCodeToReq     (code: ReqCode.Value, reqId: ReqId)            extends ReqCodeResolution
+    case class ReqWithAltCode      (code: ReqCode.Value, reqId: ReqId)            extends ReqCodeResolution
+    case class ReqWithoutActiveCode(code: ReqCode.Value, reqId: ReqId)            extends ReqCodeResolution
+    case class ActiveCodeToGroup   (code: ReqCode.Value, group: LiveReqCodeGroup) extends ReqCodeResolution
+    case class DeadGroup           (code: ReqCode.Value, group: DeadReqCodeGroup) extends ReqCodeResolution
   }
 
   /**
@@ -53,13 +53,16 @@ object ProjectText {
 
     val code = rc.reqCode(id)
     rc(code) match {
-      case d: ActiveReq   if d.id ≟ id        => ActiveCodeToReq(code, d.reqId)
-      case d: ActiveGroup if d.id ≟ id        => ActiveCodeToGroup(code, d.groupAndId)
-      case d if d.deadGroup.exists(_.id ≟ id) => DeadGroup(code)
-      case data =>
-        data.reqInactive.m.find(_._2 contains id) match {
-          case Some((reqId, _)) => findAlt(reqId, code) getOrElse ReqWithoutActiveCode(code, reqId)
-          case None             => mustNotHappen(s"$id not found in $code: $data")
+      case d: ActiveReq   if d.id ≟ id => ActiveCodeToReq(code, d.reqId)
+      case d: ActiveGroup if d.id ≟ id => ActiveCodeToGroup(code, d.group)
+      case d =>
+        d.deadGroup match {
+          case Some(g) if g.id ≟ id => DeadGroup(code, g)
+          case _ =>
+            d.reqInactive.m.find(_._2 contains id) match {
+              case Some((reqId, _)) => findAlt(reqId, code) getOrElse ReqWithoutActiveCode(code, reqId)
+              case None             => mustNotHappen(s"$id not found in $code: $d")
+            }
         }
     }
   }
@@ -80,9 +83,9 @@ abstract class ProjectText[Out](project: Project) {
       case r: GenericReq => format(r live cfg.customReqTypes, r.title)
     }
 
-  val reqCodeGroupTitle: ReqCodeGroup.AndId => Out =
-    Memo.by((_: ReqCodeGroup.AndId).id)(g =>
-      format(g.group.live, g.group.title))
+  val reqCodeGroupTitle: ReqCodeGroup => Out =
+    Memo.by((_: ReqCodeGroup).id)(g =>
+      format(g.live, g.title))
 
   def reqTitleById(id: ReqId): Out =
     reqTitle(project.reqs.req(id))

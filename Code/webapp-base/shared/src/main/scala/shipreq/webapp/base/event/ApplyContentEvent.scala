@@ -238,7 +238,7 @@ trait ApplyContentEvent {
     def needActiveGroup(d: Data, v: Value): SE[ActiveGroup] =
       narrowCC[Data, ActiveGroup](d, s"${show(v)} is not an ActiveGroup.")
 
-    def needDeadGroup(d: Data, v: Value): SE[ReqCodeGroup.AndId] =
+    def needDeadGroup(d: Data, v: Value): SE[DeadReqCodeGroup] =
       optionGet(d.deadGroup, s"Expected to find dead group at ${show(v)}.")
 
     def needCode(id: ReqCodeId): SE[Value] =
@@ -260,6 +260,9 @@ trait ApplyContentEvent {
           SE.Ok(p, found.result())
       }
     }
+
+    private def awakenGroup(g: DeadReqCodeGroup) = LiveReqCodeGroup(g.id, g.title)
+    private def killGroup  (g: LiveReqCodeGroup) = DeadReqCodeGroup(g.id, g.title)
 
     sealed trait Adder[A] {
       def reqCodeId(a: A): ReqCodeId
@@ -296,7 +299,7 @@ trait ApplyContentEvent {
     }
 
     /** Command to add an active ReqCodeGroup. */
-    case class AddGroup(code: Value, codeValidated: Validated, g: ReqCodeGroup.AndId)
+    case class AddGroup(code: Value, codeValidated: Validated, g: LiveReqCodeGroup)
 
     implicit object GroupAdder extends Adder[AddGroup] {
       override def reqCodeId(a: AddGroup) = a.g.id
@@ -382,7 +385,7 @@ trait ApplyContentEvent {
     def inactivateGroup(trie: Trie, code: Value, a: ActiveGroup, remember: Boolean): Trie = {
       val dg: DeadGroup =
         if (remember) // Adding "… && a.group.nonEmpty" means "remember" must also check if refs this code exist
-          Some(a.groupAndId)
+          Some(killGroup(a.group))
         else
           None
       val d2 = Inactive(dg, a.reqInactive)
@@ -497,7 +500,7 @@ trait ApplyContentEvent {
         case d: Inactive =>
           // ReqCode is available. Restore simply.
           needDeadGroup(d, code) |> { g =>
-            val a = ActiveGroup(g, d.reqInactive)
+            val a = ActiveGroup(awakenGroup(g), d.reqInactive)
             trie.put(code, a)
           }
 
@@ -505,7 +508,7 @@ trait ApplyContentEvent {
           // ReqCode has been usurped. Rename before restoration.
           needDeadGroup(d, code) |> { g =>
             val v2 = renameReqCodeToAvoidConflict(code, trie)
-            val d2 = ActiveGroup(g, emptyReqInactive)
+            val d2 = ActiveGroup(awakenGroup(g), emptyReqInactive)
             trie
               .put(code, d.copy(deadGroup = None))
               .put(v2, d2)
@@ -567,8 +570,8 @@ trait ApplyContentEvent {
       for {
         c ← GD.need(^.Code)
         t = GD.want(^.Title)(Vector.empty)
-        g = if (t.isEmpty) ReqCodeGroup.empty else ReqCodeGroup(t)
-        _ ← addOne(AddGroup(c, Unvalidated, g and e.id))
+        g = LiveReqCodeGroup(e.id, t)
+        _ ← addOne(AddGroup(c, Unvalidated, g))
       } yield ()
     }
 
@@ -579,11 +582,11 @@ trait ApplyContentEvent {
         d  ← needData(t, v)
         ag ← needActiveGroup(d, v)
         t2 = inactivateGroup(t, v, ag, false)
-        t3 ← addOneT(t2, AddGroup(newCode, Unvalidated, ag.groupAndId))
+        t3 ← addOneT(t2, AddGroup(newCode, Unvalidated, ag.group))
         _  ← Project.reqCodeTrie set t3
       } yield ()
 
-    private def modifyGroup(id: ReqCodeId, f: ReqCodeGroup => ReqCodeGroup): SE[Unit] =
+    private def modifyGroup(id: ReqCodeId, f: LiveReqCodeGroup => LiveReqCodeGroup): SE[Unit] =
       for {
         t  ← getTrie
         v  ← needCode(id)

@@ -25,21 +25,13 @@ object TestOptics {
   private val reqCodeDataDeadGroupSome = reqCodeDataDeadGroup ^<-? atSome
 
   val reqCodeDataDeadGroupId: Optional[Data, ReqCodeId] =
-    reqCodeDataDeadGroupSome ^|-> ReqCodeGroup.AndId.id
+    reqCodeDataDeadGroupSome ^|-> DeadReqCodeGroup.id
 
-  val reqCodeDataDeadGroupGroup: Optional[Data, ReqCodeGroup] =
-    reqCodeDataDeadGroupSome ^|-> ReqCodeGroup.AndId.group
+  private val reqCodeActiveGroupId: Lens[ActiveGroup, ReqCodeId] =
+    ActiveGroup.group ^|-> LiveReqCodeGroup.id
 
-  val reqCodeDataDeadGroupTitle: Optional[Data, ReqCodeGroupTitle.OptionalText] =
-    reqCodeDataDeadGroupGroup ^|-> ReqCodeGroup.title
-
-  val reqCodeDataActiveGroup = Prism[Data, ActiveGroup]({
-    case d: ActiveGroup => Some(d)
-    case _              => None
-  })(d => d)
-
-  val reqCodeDataActiveGroupTitle: Optional[Data, ReqCodeGroupTitle.OptionalText] =
-    reqCodeDataActiveGroup ^|-> ActiveGroup.group ^|-> ReqCodeGroup.title
+  private val reqCodeActiveGroupTitle: Lens[ActiveGroup, ReqCodeGroupTitle.OptionalText] =
+    ActiveGroup.group ^|-> LiveReqCodeGroup.title
 
   val reqCodeDataActiveId = Optional[Data, ReqCodeId]({
     case d: ActiveReq   => Some(d.id)
@@ -47,7 +39,7 @@ object TestOptics {
     case d: Inactive    => None
   })(n => {
     case d: ActiveReq   => d.copy(id = n)
-    case d: ActiveGroup => ActiveGroup.id.set(n)(d)
+    case d: ActiveGroup => reqCodeActiveGroupId.set(n)(d)
     case d: Inactive    => d
   })
 
@@ -57,7 +49,17 @@ object TestOptics {
     case d: Inactive    => d.copy(reqInactive = n)
   })
 
-  val reqCodeTrieFixK = Trie.fixk
+  val reqCodeDataGroupTitle = Optional[Data, ReqCodeGroupTitle.OptionalText]({
+    case d: ActiveGroup => Some(d.group.title)
+    case d: ActiveReq   => d.deadGroup.map(_.title)
+    case d: Inactive    => d.deadGroup.map(_.title)
+  })(n => {
+    case d: ActiveGroup => reqCodeActiveGroupTitle.set(n)(d)
+    case d: ActiveReq   => d.copy(deadGroup = d.deadGroup.map(DeadReqCodeGroup.title set n))
+    case d: Inactive    => d.copy(deadGroup = d.deadGroup.map(DeadReqCodeGroup.title set n))
+  })
+
+  private val reqCodeTrieFixK = Trie.fixk
   val reqCodeTrieValueTraversal: Traversal[Trie, Data] =
     PTraversal.fromTraverse[reqCodeTrieFixK.Trie, Data, Data](reqCodeTrieFixK.traverseTrie)
 }

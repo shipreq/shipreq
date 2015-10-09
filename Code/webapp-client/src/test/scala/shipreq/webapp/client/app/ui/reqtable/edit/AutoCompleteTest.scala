@@ -162,7 +162,7 @@ object AutoCompleteTest extends TestSuite {
     def tgt: ReqCode.Data = ReqCode.ActiveReq(nextId(), 1, None, ReqCode.emptyReqInactive)
     val t1 = codes.foldLeft(ReqCode.Trie.empty)((t, c) => t.put(c, tgt))
 
-    def tomb = ReqCode.Data.empty.copy(deadGroup = Some(ReqCodeGroup("asdf") and nextId()))
+    def tomb = ReqCode.Data.empty.copy(deadGroup = Some(DeadReqCodeGroup(nextId(), "asdf")))
     val tombCodes = Set[ReqCode.Value](
       "apple.dead", "ahhdead", "dead.eggs"
     )

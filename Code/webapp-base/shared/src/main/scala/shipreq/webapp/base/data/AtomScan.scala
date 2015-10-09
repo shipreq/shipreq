@@ -84,8 +84,8 @@ object AtomScan {
     }
 
     // Parse ReqCode groups
-    for (gi <- p.reqCodes.activeGroups)
-      scan(Live, reqCodeId = gi.id)(gi.group.title)
+    for (g <- p.reqCodes.groups)
+      scan(g.live, reqCodeId = g.id)(g.title)
 
     new AtomScan(tagRefs.result(), issues.result(), codeRefs)
   }

@@ -126,7 +126,7 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
     }
 
     def toGroup(c: ReqCode.Value, g: ReqCodeGroup): ReactElement =
-      ref(c, *.reqCodeGroupRef(Live), plainText.reqCodeGroupTitle(g and id))
+      ref(c, *.reqCodeGroupRef(g.live), plainText.reqCodeGroupTitle(g))
 
     def ref(c: ReqCode.Value, style: StyleA, title: UndefOr[String]): ReactElement =
       <.span(
@@ -135,10 +135,10 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
         G.reflinkSurround(PlainText reqCode c))
 
     ProjectText.resolveReqCode(id, project.reqCodes) match {
-      case ActiveCodeToReq(c, r)      => toRef(c, r)
-      case ActiveCodeToGroup(c, g)    => toGroup(c, g.group)
-      case DeadGroup(c)               => ref(c, *.reqCodeGroupRef(Dead), undefined)
-      case ReqWithAltCode(c, r)       => toRef(c, r)
+      case ActiveCodeToReq     (c, r) => toRef(c, r)
+      case ActiveCodeToGroup   (c, g) => toGroup(c, g)
+      case DeadGroup           (c, g) => toGroup(c, g)
+      case ReqWithAltCode      (c, r) => toRef(c, r)
       case ReqWithoutActiveCode(_, r) => reqRefInText(r)
     }
   }
