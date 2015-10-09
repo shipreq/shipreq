@@ -262,7 +262,9 @@ private[reqtable] object Logic {
         })
       }
 
-    val filterDead    = Filter(vs.filterDead.filterFnA(_ live p.config.customReqTypes), FilterFn.`n/a`)
+    val filterDeadReq = vs.filterDead.filterFnA[Req](_ live p.config.customReqTypes)
+    val filterDeadRCG = vs.filterDead.filterFnA[ReqCodeGroup](_.live)
+    val filterDead    = Filter(filterDeadReq, filterDeadRCG)
     val tagLookup     = this.tagLookup(p, vs.filterDead)
     val issueLookup   = this.issueLookup(p, vs.filterDead)
     val applicability = Applicability(p)
@@ -350,8 +352,8 @@ private[reqtable] object Logic {
             codesSeen.add(row.reqCode)
             output :+= row
           } else
-            // TODO Check if group is Dead and if ShowDead is on
-            restorableRCGs.add(row)
+            if (filterDeadRCG(g))
+              restorableRCGs.add(row)
         }
 
       // Add back filtered out ReqCodeGroups

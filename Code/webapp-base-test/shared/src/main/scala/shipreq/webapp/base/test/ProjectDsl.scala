@@ -175,7 +175,8 @@ object ProjectDsl {
    */
   case class DeadReqCode(code    : ReqCode.Value,
                          id      : Option[ReqCodeId] = None,
-                         oldReqId: Option[ReqId] = None) extends ToState {
+                         oldReqId: Option[ReqId] = None,
+                         title   : String = "dead group") extends ToState {
     def state: Mod[ReqCodeId] =
       State[ProjectState, ReqCodeId]{ p =>
         import UnsafeTypes._
@@ -183,7 +184,7 @@ object ProjectDsl {
         val t = p.reqCodeTrie.modify(code) { o =>
           val d = o.getOrElse(ReqCode.Data.empty)
           oldReqId match {
-            case None    => TestOptics.reqCodeDataDeadGroup.set(Some(DeadReqCodeGroup(id, "dead group")))(d)
+            case None    => TestOptics.reqCodeDataDeadGroup.set(Some(DeadReqCodeGroup(id, title)))(d)
             case Some(r) => TestOptics.reqCodeDataReqInactive.modify(_.add(r, id))(d)
           }
         }

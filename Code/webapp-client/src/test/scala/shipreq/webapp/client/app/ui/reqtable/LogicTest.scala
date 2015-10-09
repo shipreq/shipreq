@@ -917,47 +917,113 @@ object LogicTest extends TestSuite {
     testFilter(P3, F.Not(F.ReqType(mf)))("FR-1  FR-2", dead = "CO-1  CO-2")
   }
 
+  private class RCGFilterTester {
+    var expect = UnivEq.emptySet[String]
+
+    val #### = true  // Expect: visible
+    val ____ = false // Expect: hidden
+
+    val filterHit = "pass" // Filter will match
+    val no        = "no"   // Filter won't match
+
+    def grp(expectVisible: Boolean, live: Live, title: String, code: String) = {
+      if (expectVisible) expect += code
+      if (live :: Live) RCGroup(code, title) else DeadReqCode(code, title = title)
+    }
+
+    def req(expectVisible: Boolean, live: Live, title: String, code: String) = {
+      if (expectVisible) expect += code
+      GReq(codes = Set(code), title = title, live = live)
+    }
+
+    def test(p: Project, fd: FilterDead): Unit = {
+      val expectStr = expect.toVector.sorted.mkString(sep)
+      testCB(p, C.Code, F.Text(filterHit), fd, rowToReqCodes)(Seq(BlanksThenAsc -> expectStr))
+    }
+
+    def common = (
+      grp(####, Live, no       , "a"          ) + // 1 immediate visible child req
+      req(####, Live, filterHit, "a.1"        ) +
+      req(____, Live, no       , "a.2"        ) +
+
+      grp(____, Live, no       , "b"          ) + // 0 children visible
+      req(____, Live, no       , "b.1"        ) +
+      req(____, Live, no       , "b.2"        ) +
+
+      grp(####, Live, no       , "c"          ) + // child group visible
+      grp(####, Live, no       , "c.x"        ) + // 1 non-immediate visible child
+      req(####, Live, filterHit, "c.x.a.1"    ) +
+
+      grp(____, Live, no       , "d"          ) + // child group invisible
+      grp(____, Live, no       , "d.x"        ) + // non-immediate child invisible
+      req(____, Live, no       , "d.x.a.1"    ) +
+
+      grp(####, Live, no       , "e"          ) + // 1/2 child groups visible
+      grp(____, Live, no       , "e.z.x"      ) +
+      req(____, Live, no       , "e.z.x.a.1"  ) +
+      grp(####, Live, no       , "e.z.y"      ) +
+      req(####, Live, filterHit, "e.z.y.a.1"  ) +
+
+      grp(____, Live, no       , "lone"       ) +
+      grp(____, Live, no       , "lone.1"     ) +
+
+      grp(____, Dead, no       , "lone_dead"  ) +
+      grp(____, Dead, no       , "lone_dead.1") )
+  }
+
   /**
    * When a filter is active, only RCGs with visible children should be shown.
    */
-  def testReqCodesWhenFiltered(): Unit =
-    for (fd <- (HideDead :: ShowDead :: Nil)) {
-      // TODO Test Dead RCGs are filtered out
-      var expect = UnivEq.emptySet[String]
-      def grpShow(code: String) = {expect += code; RCGroup(code)}
-      def reqShow(code: String) = {expect += code; GReq(codes = Set(code), title = "show")}
-      def grp____(code: String) = RCGroup(code)
-      def req____(code: String) = GReq(codes = Set(code), title = "hide")
-      val p = (
+  def testReqCodeGroupWhenFilteredAndHideDead(): Unit = {
+    val t = new RCGFilterTester
+    import t._
+    val p = (
+      grp(____, Dead, filterHit, "dflf") + req(####, Live, filterHit, "dflf.1") +
+      grp(____, Dead, filterHit, "dfln") + req(____, Live, no       , "dfln.1") +
+      grp(____, Dead, filterHit, "dfdf") + req(____, Dead, filterHit, "dfdf.1") +
+      grp(____, Dead, filterHit, "dfdn") + req(____, Dead, no       , "dfdn.1") +
+      grp(____, Dead, no       , "dnlf") + req(####, Live, filterHit, "dnlf.1") +
+      grp(____, Dead, no       , "dnln") + req(____, Live, no       , "dnln.1") +
+      grp(____, Dead, no       , "dndf") + req(____, Dead, filterHit, "dndf.1") +
+      grp(____, Dead, no       , "dndn") + req(____, Dead, no       , "dndn.1") +
+      grp(####, Live, filterHit, "lflf") + req(####, Live, filterHit, "lflf.1") +
+      grp(####, Live, filterHit, "lfln") + req(____, Live, no       , "lfln.1") +
+      grp(####, Live, filterHit, "lfdf") + req(____, Dead, filterHit, "lfdf.1") +
+      grp(####, Live, filterHit, "lfdn") + req(____, Dead, no       , "lfdn.1") +
+      grp(####, Live, no       , "lnlf") + req(####, Live, filterHit, "lnlf.1") +
+      grp(____, Live, no       , "lnln") + req(____, Live, no       , "lnln.1") +
+      grp(____, Live, no       , "lndf") + req(____, Dead, filterHit, "lndf.1") +
+      grp(____, Live, no       , "lndn") + req(____, Dead, no       , "lndn.1") +
+      common) !! PA
+    test(p, HideDead)
+  }
 
-        grpShow("a")         +
-        reqShow("a.1")       +
-        req____("a.2")       +
-
-        grp____("b")         +
-        req____("b.1")       +
-        req____("b.2")       +
-
-        grpShow("c")         +
-        grpShow("c.x")       +
-        reqShow("c.x.a.1")   +
-
-        grp____("d")         +
-        grp____("d.x")       +
-        req____("d.x.a.1")   +
-
-        grpShow("e")         +
-        grp____("e.z.x")     +
-        req____("e.z.x.a.1") +
-        grpShow("e.z.y")     +
-        reqShow("e.z.y.a.1") +
-
-        grp____("lone")      +
-        grp____("lone.1")    ) !! PD
-
-      val expectStr = expect.toVector.sorted.mkString(sep)
-      testCB(p, C.Code, F.Text("show"), ShowDead, rowToReqCodes)(Seq(BlanksThenAsc -> expectStr))
-    }
+  /**
+   * When a filter is active, only RCGs with visible children should be shown.
+   */
+  def testReqCodeGroupWhenFilteredAndShowDead(): Unit = {
+    val t = new RCGFilterTester
+    import t._
+    val p = (
+      grp(####, Dead, filterHit, "dflf") + req(####, Live, filterHit, "dflf.1") +
+      grp(####, Dead, filterHit, "dfln") + req(____, Live, no       , "dfln.1") +
+      grp(####, Dead, filterHit, "dfdf") + req(####, Dead, filterHit, "dfdf.1") +
+      grp(####, Dead, filterHit, "dfdn") + req(____, Dead, no       , "dfdn.1") +
+      grp(####, Dead, no       , "dnlf") + req(####, Live, filterHit, "dnlf.1") +
+      grp(____, Dead, no       , "dnln") + req(____, Live, no       , "dnln.1") +
+      grp(####, Dead, no       , "dndf") + req(####, Dead, filterHit, "dndf.1") +
+      grp(____, Dead, no       , "dndn") + req(____, Dead, no       , "dndn.1") +
+      grp(####, Live, filterHit, "lflf") + req(####, Live, filterHit, "lflf.1") +
+      grp(####, Live, filterHit, "lfln") + req(____, Live, no       , "lfln.1") +
+      grp(####, Live, filterHit, "lfdf") + req(####, Dead, filterHit, "lfdf.1") +
+      grp(####, Live, filterHit, "lfdn") + req(____, Dead, no       , "lfdn.1") +
+      grp(####, Live, no       , "lnlf") + req(####, Live, filterHit, "lnlf.1") +
+      grp(____, Live, no       , "lnln") + req(____, Live, no       , "lnln.1") +
+      grp(####, Live, no       , "lndf") + req(####, Dead, filterHit, "lndf.1") +
+      grp(____, Live, no       , "lndn") + req(____, Dead, no       , "lndn.1") +
+      common) !! PA
+    test(p, ShowDead)
+  }
 
   // ===================================================================================================================
 
@@ -1025,7 +1091,10 @@ object LogicTest extends TestSuite {
       'anyOf          - testFilterAny()
       'not            - testFilterNot()
     }
-    'reqCodesWhenFiltered - testReqCodesWhenFiltered()
+    'reqCodeGroupsWithFilter {
+      'hideDead - testReqCodeGroupWhenFilteredAndHideDead()
+      'showDead - testReqCodeGroupWhenFilteredAndShowDead()
+    }
     'reqCodeTree - testReqCodeTree()
   }
 }
