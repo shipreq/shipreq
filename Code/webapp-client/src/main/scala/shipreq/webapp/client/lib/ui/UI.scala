@@ -83,9 +83,11 @@ object UI {
       te.select(n)
       textComplete(n, strategies($.props, $.backend), onUpdate($.props, $.backend)).runNow()
     })
-    .componentDidUpdate(($, p1, _) => Callback {
+    .componentDidUpdate(i => Callback {
+      val $  = i.$
+      val p1 = i.prevProps
       val p2 = $.props
-      val b = $.backend
+      val b  = $.backend
       val s1 = strategies(p1, b)
       val s2 = strategies(p2, b)
       if (s1 ~/~ s2) {
@@ -102,13 +104,13 @@ object UI {
           strategies: P => ReusableVal[TextComplete.Strategies],
           onUpdate  : P => String => Callback)
         (implicit te: TextEditor.OfType[E]): EndoFn[ReactComponentB[P, S, B, N]] =
-    installTextComplete(getNode(_).get.getDOMNode(), (p, _) => strategies(p), (p, _) => onUpdate(p))
+    installTextComplete(getNode(_).get, (p, _) => strategies(p), (p, _) => onUpdate(p))
 
   def installTextCompleteB[P, S, B, N <: TopNode, E <: html.Element](
           getNode   : RefSimple[E],
           strategies: B => ReusableVal[TextComplete.Strategies],
           onUpdate  : B => String => Callback)
         (implicit te: TextEditor.OfType[E]): EndoFn[ReactComponentB[P, S, B, N]] =
-    installTextComplete(getNode(_).get.getDOMNode(), (_, b) => strategies(b), (_, b) => onUpdate(b))
+    installTextComplete(getNode(_).get, (_, b) => strategies(b), (_, b) => onUpdate(b))
 
 }

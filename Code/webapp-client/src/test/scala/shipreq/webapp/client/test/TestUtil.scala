@@ -45,6 +45,17 @@ object TestUtil extends BaseTestUtil {
     a.head
   }
 
+  implicit class JsArrayTestExt[A](private val a: js.Array[A]) extends AnyVal {
+    def sole(): A =
+      a.length match {
+        case 1 => a(0)
+        case n => fail(s"Expected an array with one element, found $n: ${a.mkString("[",",","]")}")
+    }
+
+    def soleDom[N <: A]()(implicit ev: A <:< org.scalajs.dom.Element): N =
+      sole().asInstanceOf[N]
+  }
+
   implicit def autodomnode(c: CompScope.Mounted[TopNode]) = c.getDOMNode()
 
   val nopJsFn: js.Function0[js.Any] = () => ((): js.Any)

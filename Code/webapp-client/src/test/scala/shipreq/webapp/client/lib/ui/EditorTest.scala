@@ -9,6 +9,7 @@ import scalaz.Scalaz.Id
 import utest._
 import shipreq.base.util.ScalaExt._
 import Editors._
+import shipreq.webapp.client.test.Sizzle
 import shipreq.webapp.client.test.TestUtil._
 import shipreq.webapp.client.test.SampleDataPerson._
 import NewAndSavedRowState._
@@ -67,12 +68,12 @@ object EditorTest extends TestSuite {
   def testUpdateRevert[P,B,N<:TopNode](c: ReactComponentM[P, NewAndSavedRowState, B, N]): Unit = {
 //    val c = ReactTestUtils.renderIntoDocument(Component(props))
 
-    def test(tgtsel: Sel, revertable: Boolean, teste: String => Unit, testn: => Unit): Unit = {
-      val tgt = tgtsel.findIn(c).domType[HTMLInputElement]
+    def test(tgtCss: String, revertable: Boolean, teste: String => Unit, testn: => Unit): Unit = {
+      val tgt = Sizzle(tgtCss, c.getDOMNode()).soleDom[HTMLInputElement]()
       val expect4 = savedRowStoreS.getI(4)(c.state)
 
       def test1(expect: String): Unit = {
-        val nodeValue = tgt.getDOMNode().value
+        val nodeValue = tgt.value
         assertEq(nodeValue, expect)
         teste(expect)
         val state4 = savedRowStoreS.getI(4)(c.state)
@@ -95,7 +96,7 @@ object EditorTest extends TestSuite {
 
     def testSavedUpdateAndRevert(): Unit = {
       val expectN = newRowStoreS.getI(c.state)
-      test(Sel(".id-7 .username"), true, expect => {
+      test(".id-7 .username", true, expect => {
         val state = savedRowStoreS.getI(7)(c.state)
         assertEq(state, (expect, ""))
       }, {
@@ -105,7 +106,7 @@ object EditorTest extends TestSuite {
     }
 
     def testNewUpdateAndRevert(): Unit =
-      test(Sel(".new .username"), false, expect => {
+      test(".new .username", false, expect => {
         val state = newRowStoreS.getI(c.state)
         assertEq(state, (expect, "TO"+"DO").some)
       }, ())
@@ -147,7 +148,7 @@ object EditorTest extends TestSuite {
       def test(i: String, expect: Option[String]): Unit = {
         val re: ReactElement = e.render(EditorI(i, "", None))
         val tgt = ReactTestUtils.renderIntoDocument(re)
-        val actual = Sel(".errorMsg").findInO(tgt).map(_.getDOMNode().innerHTML)
+        val actual = Sizzle(".errorMsg", tgt).headOption.map(_.innerHTML)
         assertEq(actual, expect)
       }
       test("Start!ed", "Username can only contain letters, numbers and underscores.".some)
@@ -163,7 +164,7 @@ object EditorTest extends TestSuite {
     'weirdKeyDownIssue {
       val props = Props(fieldValidation = false, updateRevert = true, saveIO = None)
       val c = ReactTestUtils.renderIntoDocument(Component(props))
-      val tgt = Sel(".id-7 .username").findIn(c).domType[HTMLInputElement].getDOMNode()
+      val tgt = Sizzle(".id-7 .username", c).soleDom[HTMLInputElement]()
       def test(prefix: String, expect: String): Unit = {
         assertEq(s"$prefix.input", tgt.value, expect)
         assertEq(s"$prefix.state", savedRowStoreS.getI(7)(c.state)._1, expect)
@@ -184,7 +185,7 @@ object EditorTest extends TestSuite {
         val props = Props(fieldValidation = true, updateRevert = true, saveIO = None)
         val c = ReactTestUtils.renderIntoDocument(Component(props))
         testUpdateRevert(c)
-        val u4 = Sel(".id-4 .username").findIn(c).domType[HTMLInputElement].getDOMNode()
+        val u4 = Sizzle(".id-4 .username", c).soleDom[HTMLInputElement]()
         (Simulation.focus >> ChangeEventData("  HeHe").simulation) run u4
         assertEq("Live correction", u4.value, "  hehe")
         Simulation.blur run u4
@@ -206,7 +207,7 @@ object EditorTest extends TestSuite {
         val c = ReactTestUtils.renderIntoDocument(Component(props))
 
         'saved {
-          val tgt = Sel(".id-7 .username").findIn(c).domType[HTMLInputElement].getDOMNode()
+          val tgt = Sizzle(".id-7 .username", c).soleDom[HTMLInputElement]()
 
           def assertNoSave(): Unit = {
             assert(saves.isEmpty)
@@ -256,7 +257,7 @@ object EditorTest extends TestSuite {
 
         'new {
           c.modState(newRowStoreS.enableEdit)
-          val tgt = Sel(".new .username").findIn(c).domType[HTMLInputElement].getDOMNode()
+          val tgt = Sizzle(".new .username", c).soleDom[HTMLInputElement]
 
           def assertNoSave(): Unit = {
             assert(saves.isEmpty)

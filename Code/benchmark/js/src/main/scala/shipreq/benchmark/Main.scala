@@ -94,6 +94,6 @@ object Main extends JSApp {
 
     val main = MainComp(all +: bms)
 
-    React.render(main, document.body)
+    ReactDOM.render(main, document.body)
   }
 }
