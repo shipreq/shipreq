@@ -39,7 +39,7 @@ object Main extends JSApp {
 
     def refreshConsole(): Unit =
       for (r <- consoleRef($))
-        r.getDOMNode().style.display = "block"
+        r.style.display = "block"
 
     def render(props: String): ReactElement = {
       setTimeout(refreshConsole _, 10)
@@ -94,6 +94,6 @@ object Main extends JSApp {
 
     val main = MainComp(all +: bms)
 
-    React.render(main, document.body)
+    ReactDOM.render(main, document.body)
   }
 }

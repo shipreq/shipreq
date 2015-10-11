@@ -49,9 +49,11 @@ object Link extends DispatchSnippet with SnippetHelpers {
 
   val clientJs = {
     val reactUrl = if (useDevResources) s"$devAssetPath/react.js" else s"$vendorAssetPath/react.js"
+    val reactDomUrl = if (useDevResources) s"$devAssetPath/react-dom.js" else s"$vendorAssetPath/react-dom.js"
     val clientJsUrl = if (useDevResources) s"$devAssetPath/webapp-client-fastopt.js" else "/assets/C.js"
     static(
       <script type="text/javascript" src={reactUrl}></script>
+      <script type="text/javascript" src={reactDomUrl}></script>
       <script type="text/javascript" src={clientJsUrl}></script>)
   }
 

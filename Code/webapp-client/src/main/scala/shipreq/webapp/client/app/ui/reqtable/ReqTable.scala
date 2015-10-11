@@ -26,7 +26,7 @@ object ReqTable {
       .initialState_P(initialState)
       .renderBackend[Backend]
       .configure(ChangeListener.update[State](c => _.recvChanges(c)).install(_.cd))
-      .componentWillReceiveProps(($, p) => $.backend.willReceiveProps($.props, p))
+      .componentWillReceiveProps(i => i.$.backend.willReceiveProps(i.$.props, i.nextProps))
       .build
 
   case class Props(cd             : ClientData,

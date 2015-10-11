@@ -107,8 +107,10 @@ module.exports = function(grunt) {
           {src:'<%= cfg.bower %>/jquery/dist/jquery.min.map',      dest:'<%= cfg.assets_dev %>/jquery.min.map',    nonull:true},
           {src:'<%= cfg.bower %>/react/react.min.js',              dest:'<%= cfg.vendor.out %>/react.js',          nonull:true},
           {src:'<%= cfg.bower %>/react/react-with-addons.js',      dest:'<%= cfg.assets_dev %>/react.js',          nonull:true},
+          {src:'<%= cfg.bower %>/react/react-dom.min.js',          dest:'<%= cfg.vendor.out %>/react-dom.js',      nonull:true},
+          {src:'<%= cfg.bower %>/react/react-dom.js',              dest:'<%= cfg.assets_dev %>/react-dom.js',      nonull:true},
           {src:'<%= cfg.bower %>/zeroclipboard/ZeroClipboard.swf', dest:'<%= cfg.vendor.out %>/ZeroClipboard.swf', nonull:true},
-          {src:'<%= cfg.vendor.cust %>/viz.js',          dest:'<%= cfg.vendor.out %>/viz.js',            nonull:true},
+          {src:'<%= cfg.vendor.cust %>/viz.js',                    dest:'<%= cfg.vendor.out %>/viz.js',            nonull:true},
         ]
       },
 
@@ -153,6 +155,7 @@ module.exports = function(grunt) {
               '<%= cfg.bower %>/jquery-textcomplete/dist/jquery.textcomplete.min.js',
               '<%= cfg.bower %>/mousetrap/mousetrap.min.js',
               '<%= cfg.bower %>/mousetrap/plugins/global-bind/mousetrap-global-bind.min.js',
+              //'<%= cfg.bower %>/react/react-dom.min.js', // This is on every page atm. React isn't.
             ]),
           jsConcatTask('zeroclipboard', [
             '<%= cfg.bower %>/zeroclipboard/ZeroClipboard.js',

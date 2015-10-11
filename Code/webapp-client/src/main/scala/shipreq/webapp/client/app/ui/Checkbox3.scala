@@ -17,8 +17,8 @@ object Checkbox3 {
 
   implicit val propsReusability: Reusability[Props] = Reusability.by(_.state)
 
-  private def updateDom($: CompScope.DuringCallbackM[Props, Unit, Unit, Input], p: Props): Callback =
-    updateDom($.getDOMNode(), p.state)
+  private def updateDom($: CompScope.Mounted[Input], nextProps: Props): Callback =
+    updateDom($.getDOMNode(), nextProps.state)
 
   private def updateDom(d: Input, s: State3) = Callback {
     d.checked       = s.exists(_ :: On)
@@ -40,7 +40,7 @@ object Checkbox3 {
     .renderP(render)
     .domType[Input]
     .componentDidMount($ => updateDom($, $.props))
-    .componentWillReceiveProps(updateDom)
+    .componentWillReceiveProps(i => updateDom(i.$, i.nextProps))
     .configure(Reusability.shouldComponentUpdate)
     .build
 }

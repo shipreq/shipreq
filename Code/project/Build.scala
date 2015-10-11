@@ -237,6 +237,7 @@ object ShipReq extends Build {
       .settings(
         jsDependencies in Test ++= Seq(
           testjs("react-with-addons.js"),
+          testjs("react-dom.js"),
           testjs("jquery.min.js"),
           testjs("jquery.textcomplete.js") dependsOn "testjs/jquery.min.js",
           testjs("sizzle.min.js")),
