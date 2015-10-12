@@ -4,11 +4,12 @@ import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
 import shipreq.base.util.UnivEq
 import shipreq.webapp.base.data._
+import shipreq.webapp.client.app.ui.Modal
 import shipreq.webapp.client.data.DataReusability._
 
 object SelectionCtrls {
 
-  case class Props(sel: RowSelectionVisible, cfg: ProjectConfig, rows: Rows)
+  case class Props(sel: RowSelectionVisible, cfg: ProjectConfig, rows: Rows, setModal: Modal.SetFn)
 
 //  implicit def equalProps: UnivEq[Props]      = UnivEq.derive
   implicit def reuseProps: Reusability[Props] = Reusability.caseClass
@@ -17,12 +18,12 @@ object SelectionCtrls {
 
     def render(p: Props) = {
 
-      val selCount = p.sel.visibleSelection.size
+      val totalSelected = p.sel.visibleSelection.size
 
       var deletable  = 0
       var restorable = 0
 
-      if (selCount != 0) {
+      if (totalSelected != 0) {
         var remaining = p.sel.visibleSelection // because the same sourceId can appear more than once
         p.rows foreach { row =>
           val id = row.sourceId
@@ -45,17 +46,26 @@ object SelectionCtrls {
       }
 
       def infoText =
-        selCount match {
+        totalSelected match {
           case 0 => "0 items selected."
           case 1 => "1 item selected."
           case n => n.toString + " items selected."
         }
 
+      def TEST_MODAL =
+        Modal(<.p("Press ",
+          <.button("Back", ^.onClick --> p.setModal(None)),
+          " to return."))
+
       def button(count: Int, label: String) =
         if (count == 0)
-          <.button(^.disabled := true, label)
+          <.button(
+            ^.disabled := true,
+            label)
         else
-          <.button(if (count == selCount) label else s"$label ($count)")
+          <.button(
+            ^.onClick --> p.setModal(TEST_MODAL),
+            if (count == totalSelected) label else s"$label ($count)")
 
 
       val delButton = button(deletable, "Delete")

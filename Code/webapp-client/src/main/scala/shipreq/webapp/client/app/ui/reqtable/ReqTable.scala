@@ -6,13 +6,12 @@ import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import scalaz.{\/-, -\/}
 import scalaz.syntax.equal._
-import shipreq.base.util.ScalaExt.EndoFn
 import shipreq.webapp.base.protocol.{CreateContentFn, CreateContentCmd, UpdateContentFn, UpdateContentCmd}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.{FilterAst, FilterSpec}
 import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.client.app.state.{Changes, ChangeListener, ClientData}
-import shipreq.webapp.client.app.ui.{Selection, ProjectWidgets}
+import shipreq.webapp.client.app.ui.{Modal, ProjectWidgets, Selection}
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
 import shipreq.webapp.client.data.DataReusability._
 import shipreq.webapp.client.lib.{FilterDead, TCB}
@@ -45,7 +44,8 @@ object ReqTable {
       FilterEditor.initialState,
       Selection.empty,
       CreationInterface.initState,
-      Cell.emptyTableState)
+      Cell.emptyTableState,
+      Modal.init)
     p.filterSpec.foreach(f => s = s setFilterSpec f)
     s
   }
@@ -56,7 +56,8 @@ object ReqTable {
                    filter      : FilterEditor.State,
                    selection   : RowSelection,
                    creation    : CreationInterface.State,
-                   cellStates  : Cell.TableState) {
+                   cellStates  : Cell.TableState,
+                   modal       : Modal.State) {
 
     def recvChanges(changes: Changes): State =
       copy(project = changes.p2) // TODO This obviously affects other things
@@ -107,7 +108,8 @@ object ReqTable {
     val setViewSettings = ReusableFn($ zoomL State.viewSettings).setState
     val modViewSettings = ReusableFn($ zoomL State.viewSettings).modState
     val setSortCriteria = ReusableFn($ zoomL State.sortCriteria).setState
-    val setSelection    = ReusableFn($ zoomL State.selection).setState
+    val setSelection    = ReusableFn($ zoomL State.selection   ).setState
+    val setModal        = ReusableFn($ zoomL State.modal       ).setState
     val setCreation     = $ zoomL State.creation
 
     val project      = Px.bs($).stateM(_.project)
@@ -168,7 +170,7 @@ object ReqTable {
 
     val creationInterface = new CreationInterface(setCreation, project, plainText, widgets, textSearch)
 
-    def render(s: State) = {
+    def render(s: State): ReactElement = {
       import Px.AutoValue._
       Px.refresh(project, viewSettings, filterState, selection)
 
@@ -181,15 +183,18 @@ object ReqTable {
       val tableProps = Table.Props(
         project, rows, colName, colRnds, colEditors, s.cellStates, selVis, setSelection, modViewSettings)
 
-      val selCtrlProps = SelectionCtrls.Props(selVis, cfg, rows)
+      val selCtrlProps = SelectionCtrls.Props(selVis, cfg, rows, setModal)
 
-      <.div(
-        ViewSettingsEditor.Component(vsProps),
-        creationInterface.Component(creationProps),
-        StatsSummary(stats),
-        SelectionCtrls.Component(selCtrlProps),
-        SortEditor.Component(sortEditorProps),
-        Table.Component(tableProps))
+      def mainScreen =
+        <.div(
+          ViewSettingsEditor.Component(vsProps),
+          creationInterface.Component(creationProps),
+          StatsSummary(stats),
+          SelectionCtrls.Component(selCtrlProps),
+          SortEditor.Component(sortEditorProps),
+          Table.Component(tableProps))
+
+      s.modal renderOrElse mainScreen
     }
   }
 
