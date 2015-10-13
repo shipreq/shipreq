@@ -91,6 +91,23 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
   lazy val reqTypesByMnemonic: Map[ReqType.Mnemonic, ReqType] =
     reqTypes.flatMap(t => t.allMnemonics.toStream.map((_, t))).toMap
 
+  lazy val reqTypeOrder: Map[ReqTypeId, Int] =
+    reqTypes.map(_.tmap2(_.mnemonic.value, _.reqTypeId))
+      .sortBy(_._1)
+      .map(_._2)
+      .zipWithIndex
+      .toMap
+
+  lazy val pubidOrdering: Ordering[Pubid] =
+    new Ordering[Pubid] {
+      val rto = reqTypeOrder
+      override def compare(x: Pubid, y: Pubid): Int =
+        (rto(x.reqTypeId) - rto(y.reqTypeId)) match {
+          case 0 => x.pos.value - y.pos.value
+          case n => n
+        }
+    }
+
   lazy val liveTagColumnDistribution =
     TagColumnDistribution(this, _.live(this) :: Live)
 

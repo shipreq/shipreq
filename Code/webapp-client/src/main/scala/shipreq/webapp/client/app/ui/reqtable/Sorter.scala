@@ -215,12 +215,8 @@ object Sorter {
 
     val applicability = Applicability(p)
 
-    lazy val reqTypesToMnemonicOrder: Map[ReqTypeId, Int] =
-      ordermap("reqtype",
-        p.config.reqTypes.map(_.tmap2(_.mnemonic.value, _.reqTypeId))
-          .sortBy(_._1)
-          .map(_._2)
-      )
+    @inline def reqTypesToMnemonicOrder =
+      p.config.reqTypeOrder
 
     lazy val tagByNameOrder: TagOrder =
       ordermap("tag",

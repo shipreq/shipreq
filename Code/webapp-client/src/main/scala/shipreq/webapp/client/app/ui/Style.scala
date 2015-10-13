@@ -1,6 +1,7 @@
 package shipreq.webapp.client.app
 package ui
 
+import japgolly.scalajs.react.vdom.prefix_<^.{^ => ^^, _}
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 import scalacss.{PseudoElement, Pseudo, StyleS}
@@ -50,6 +51,8 @@ object Style extends StyleSheet.Inline {
     mixinIf(live :: Dead)(textDecoration := ^.lineThrough)
 
   private val hasTitle = Pseudo.Custom("[title]", PseudoElement)
+
+  private val hoverShowsInfo = hasTitle(cursor.help)
 
   // ===================================================================================================================
   // Config screens
@@ -275,6 +278,32 @@ object Style extends StyleSheet.Inline {
       backgroundColor(c"#efe")
     )
 
+    object deleteRestore {
+
+      val reqRow = styleF(Domain.boolean *** D.live) { case (root, live) => styleS(
+        mixinIf(!root)(cursor.pointer), // Because clicking the row toggles selection
+        mixinIf(live :: Dead)(backgroundColor(c"#fee"), color(c"#a00"))
+      )}
+
+      val reqItem =
+        style(marginLeft(0.5 ex))
+
+      val impliedByPrefix =
+        style(marginRight(0.5 ex))
+
+      val impliedByItem = styleF(D.live)(l => styleS(
+        hoverShowsInfo,
+        mixinIf(l :: Live)(color(c"#111")),
+        mixinIf(l :: Dead)(
+          //textDecoration := ^.lineThrough,
+          color(c"#daa"))
+      ))
+
+      val indent: Int => TagMod =
+        Memo(n => TagMod(^^.display.`inline-block`, ^^.width := s"${n * 3}ex"))
+
+    }
+
   } // reqtable
 
   // ===================================================================================================================
@@ -283,9 +312,6 @@ object Style extends StyleSheet.Inline {
     private def hasError = errorRedOnRed
 
     private val refColour = color(c"#2363A1")
-
-    private val hoverShowsInfo = hasTitle(
-      cursor.help)
 
     private val deadMixin = mixin(
       textDecoration := ^.lineThrough)
@@ -378,6 +404,7 @@ object Style extends StyleSheet.Inline {
     reqtable.sortCriteriaEditor.conclusiveColumnName,
     reqtable.filterEditor.errorMsg,
     reqtable.table,
+    reqtable.deleteRestore.impliedByItem(Live),
     widgets.issue)
 //  ConsoleIO(_.log(render[String])).unsafePerformIO()
 //  ConsoleIO(_.info(s"Styles: ${Style.register.styles.length}")).unsafePerformIO()

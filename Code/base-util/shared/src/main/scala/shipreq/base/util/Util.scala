@@ -173,6 +173,12 @@ object Util {
       j += length
     j
   }
+
+  def togglePresence[A](as: Set[A])(a: A): Set[A] =
+    if (as contains a)
+      as - a
+    else
+      as + a
 }
 
 object ParseLong {

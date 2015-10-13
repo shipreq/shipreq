@@ -11,7 +11,7 @@ object Modal {
   type State = Option[Modal]
   type SetFn = State ~=> Callback
 
-  def init: State =
+  def none: State =
     None
 
   def apply(re: ReactElement): Modal =

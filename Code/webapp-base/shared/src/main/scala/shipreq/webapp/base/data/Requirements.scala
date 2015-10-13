@@ -119,9 +119,11 @@ final case class GenericReq(id            : GenericReqId,
     liveExplicitly && liveDeps(customReqTypes)
 
   /**
+   * Can this requirement be restored directly?
+   *
    * If [[liveExplicitly]] was [[Live]], would the final live value be [[Live]] too.
    */
-  def recoverable(customReqTypes: CustomReqTypeIMap): Boolean =
+  def isRestorable(customReqTypes: CustomReqTypeIMap): Boolean =
     liveDeps(customReqTypes) :: Live
 }
 

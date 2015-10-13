@@ -8,8 +8,9 @@ import org.scalajs.dom.ext.KeyCode
 import org.scalajs.dom.html
 import scala.scalajs.js.{Dynamic, UndefOr, undefined}
 import shipreq.base.util.ScalaExt.EndoFn
+import shipreq.base.util.{NonEmptyVector, Util}
 import shipreq.webapp.base.UiText
-import shipreq.webapp.client.util.{DomUtil, On}
+import shipreq.webapp.client.util.{DomUtil, Off, On}
 
 object UI {
 
@@ -21,6 +22,15 @@ object UI {
       <.input(
         ^.`type` := "checkbox",
         ^.checked := (on :: On)))
+
+  def checkboxOfSetPresence[A](as: Set[A])(a: A, update: Set[A] => Callback): ReactTag = {
+    val currentState = On <~ as.contains(a)
+    def toggled = currentState match {
+      case On  => as - a
+      case Off => as + a
+    }
+    checkbox(currentState)(^.onChange --> update(toggled))
+  }
 
   /**
    * Clicking, or pressing space = change.
@@ -34,6 +44,14 @@ object UI {
       ^.onClick   --> onChange,
       ^.onKeyDown ==> handleKey)
   }
+
+  val sepComma: TagMod = ", "
+  val sepSpace: TagMod = " "
+
+  def vector[A, B](as: Vector[A], separator: TagMod)(renderEach: A => B)(implicit g: B => TagMod): ReactTag =
+    <.span(
+      NonEmptyVector.option(as)
+        .map(_.intercalateF(separator)(g compose renderEach).whole))
 
   def rowStatusRowClass(rs: RowStatus): String = rs match {
     case RowStatus.Sync      => "sync"

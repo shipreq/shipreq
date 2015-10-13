@@ -45,7 +45,7 @@ object ReqTable {
       Selection.empty,
       CreationInterface.initState,
       Cell.emptyTableState,
-      Modal.init)
+      Modal.none)
     p.filterSpec.foreach(f => s = s setFilterSpec f)
     s
   }
@@ -183,7 +183,7 @@ object ReqTable {
       val tableProps = Table.Props(
         project, rows, colName, colRnds, colEditors, s.cellStates, selVis, setSelection, modViewSettings)
 
-      val selCtrlProps = SelectionCtrls.Props(selVis, cfg, rows, setModal)
+      val selCtrlProps = SelectionCtrls.Props(selVis, cfg, rows, setModal, project, widgets)
 
       def mainScreen =
         <.div(
