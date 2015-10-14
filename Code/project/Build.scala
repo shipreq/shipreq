@@ -45,7 +45,8 @@ object ShipReq extends Build {
       .configureJs(Common.jsSettings(NoDom))
       .dependsOn(baseMacro)
       .depsForBoth(
-        Scalaz.effect ++ Nyaya.prop ++ testScope(μTest))
+        Scalaz.effect ++ Nyaya.prop ++
+        testScope(μTest ++ Nyaya.test))
       .depsForJvm(
         SLF4J.api ++ Scalaz.effect ++
         providedScope(logback ++ jodaTime) ++

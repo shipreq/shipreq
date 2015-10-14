@@ -49,6 +49,7 @@ object MTrie {
     type Branch = MTrie.Branch[K, V]
     type Value  = MTrie.Value[K, V]
     type Entry  = (K, Node)
+    type Path   = NonEmptyVector[K]
     val  Branch = MTrie.Branch.apply[K, V] _
     val  Value  = MTrie.Value.apply[K, V] _
     def  empty  = MTrie.empty[K, V]
@@ -212,15 +213,6 @@ object MTrie {
       valueAtPath[Option[Trie]](path, None)(v => Some(put(path, f(v))))
 
     def remove(path: Path): Trie = {
-      @inline def fail: Trie = trie
-
-      def last(t: Trie, k: K): Trie =
-        t.get(k) match {
-          case Some(Branch(None, _))       => fail
-          case Some(Branch(Some(_), next)) => t.updated(k, Branch(None, next))
-          case Some(_: Value)              => t - k
-          case None                        => fail
-        }
 
       def notLast(t: Trie, ki: Vector[K], kl: K): Trie =
         if (ki.isEmpty)
@@ -229,15 +221,26 @@ object MTrie {
           val k = ki.head
           t.get(k) match {
             case Some(b: Branch) =>
-              val t2 = notLast(b.next, ki.tail, kl)
-              if (t2.nonEmpty)
-                t.updated(k, b.copy(next = t2))
+              val next0 = b.next
+              val next = notLast(next0, ki.tail, kl)
+              if (next eq next0)
+                t
+              else if (next.nonEmpty)
+                t.updated(k, b.copy(next = next))
               else b.value match {
                 case Some(v) => t.updated(k, v)
                 case None    => t - k
               }
-            case Some(_: Value) | None => fail
+            case Some(_: Value) | None => t
           }
+        }
+
+      def last(t: Trie, k: K): Trie =
+        t.get(k) match {
+          case Some(Branch(None, _))       => t
+          case Some(Branch(Some(_), next)) => t.updated(k, Branch(None, next))
+          case Some(_: Value)              => t - k
+          case None                        => t
         }
 
       notLast(trie, path.init, path.last)
