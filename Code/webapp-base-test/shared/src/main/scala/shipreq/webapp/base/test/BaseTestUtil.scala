@@ -18,11 +18,15 @@ trait BaseTestUtil {
   def assertEq[A: Equal](name: => String, actual: A, expect: A): Unit =
     assertEqO(name.some, actual, expect)
 
+  private def lead(s: String) = s"$RED_B$s$RESET "
+  private def failureStart(name: Option[String], leadSize: Int): Unit = {
+    println()
+    name.foreach(n => println(lead(">" * leadSize) + BOLD + YELLOW + n + RESET))
+  }
+
   def assertEqO[A: Equal](name: => Option[String], actual: A, expect: A): Unit =
     if (actual ≠ expect) {
-      println()
-      def lead(s: String) = s"$RED_B$s$RESET "
-      name.foreach(n => println(lead(">>>>>>>") + BOLD + YELLOW + n + RESET))
+      failureStart(name, 7)
 
       val toString: Any => String = {
         case s: Stream[_] => s.force.toString() // SI-9266
@@ -67,13 +71,32 @@ trait BaseTestUtil {
       fail("assertMultiline failed.")
     }
 
-  def assertSet[A](actual: Set[A])(expect: A*): Unit = {
-    val e = expect.toSet
-    val missing = e -- actual
-    val unexpected = actual -- e
-    if (missing.nonEmpty || unexpected.nonEmpty)
-      fail(s"Actual: $actual\nExpect: $e\n   Missing: $missing\nUnexpected: $unexpected")
-  }
+  def assertSet[A](actual: Set[A])(expect: A*): Unit = assertSet(actual, expect.toSet)
+  def assertSet[A](actual: Set[A], expect: Set[A]): Unit = assertSetO(None, actual, expect)
+  def assertSet[A](name: => String, actual: Set[A])(expect: A*): Unit = assertSet(name, actual, expect.toSet)
+  def assertSet[A](name: => String, actual: Set[A], expect: Set[A]): Unit = assertSetO(Some(name), actual, expect)
+
+  def assertSetO[A](name: => Option[String], actual: Set[A], expect: Set[A]): Unit =
+    if (actual != expect) {
+      val missing = expect -- actual
+      val unexpected = actual -- expect
+
+      val leadSize = 9
+      //if (missing.nonEmpty || unexpected.nonEmpty)
+      //fail(s"Actual: $actual\nExpect: $expect\n   Missing: $missing\nUnexpected: $unexpected")
+      def show(title: String, col: String, s: Set[A]): Unit =
+        if (s.nonEmpty) {
+          //val x = if (s.size == 1) s.head.toString else s.mkString("{ ",", "," }")
+          val x = s.iterator.map(_.toString).toVector.sorted.mkString("\n" + (" " * (leadSize + 1)))
+          println(lead(title) + col + x + RESET)
+        }
+
+      failureStart(name, leadSize)
+      show(" missing:", BOLD + CYAN, missing)
+      show("unwanted:", BOLD + RED, unexpected)
+      println()
+      fail(s"assertSet${name.fold("")("(" + _ + ")")} failed.")
+    }
 
   def fail(msg: String, clearStackTrace: Boolean = true): Nothing =
     _fail(colourMultiline(msg, BOLD + MAGENTA), clearStackTrace)
