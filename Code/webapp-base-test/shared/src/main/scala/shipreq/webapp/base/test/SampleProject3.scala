@@ -65,7 +65,7 @@ object SampleProject3 {
 
     + GReq(reqType = fr, id = frs(1), title = fr1Desc, codes = Set("uce.sample.1", "uce.sample.1b", "demo.whatever")).impSrc(mfs(12), mfs(19))
     + GReq(reqType = fr, id = frs(2), title = fr2Desc, codes = Set("uce.sample.2")).impSrc(mfs(1), mfs(13), mfs(22), frs(1))
-    + RCGroup("demo", Vector(T.ReqCodeGroupTitle.Literal("Demo group header")))
+    + RCGroup("demo", title = Vector(T.ReqCodeGroupTitle.Literal("Demo group header")))
 
     + GReq(reqType = co, id = cos(1), live = Dead, title = "Search entities!").impSrc(mfs(28), mfs(25)).tag(v10, v3x)
     + GReq(reqType = co, id = cos(2), live = Dead, title = "Entity-search should consider low-level reqs").impSrc(cos(1), frs(1))

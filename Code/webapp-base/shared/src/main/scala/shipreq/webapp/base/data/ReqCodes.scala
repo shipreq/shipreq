@@ -79,6 +79,8 @@ object ReqCode {
       }
     }
 
+    implicit val ordering = order.toScalaOrdering
+
     val applyFn: String => Node =
       Memo(new Node(_))
 

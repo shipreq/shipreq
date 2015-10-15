@@ -62,7 +62,7 @@ object SampleProject2 {
     + GReq(reqType = mf, id = mfs(28), title = "Entities"                              ).tag(p2)
     + GReq(reqType = fr, title = fr1Desc, codes = Set("uce.sample.1", "uce.sample.1b", "demo.whatever")).impSrc(mfs(12))
     + GReq(reqType = fr, title = fr2Desc, codes = Set("uce.sample.2")).impSrc(mfs(1)).impSrc(mfs(13)).impSrc(mfs(22))
-    + RCGroup("demo", Vector(T.ReqCodeGroupTitle.Literal("Demo group header")))
+    + RCGroup("demo", title = Vector(T.ReqCodeGroupTitle.Literal("Demo group header")))
     )
 
     contentByDsl ! project0

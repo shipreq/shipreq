@@ -36,11 +36,15 @@ object ProjectDslInternals {
       ReqCodeId(newMaxReqCodeId)
     }
 
-    def newActiveGroup(t: Text.ReqCodeGroupTitle.OptionalText) =
-      ReqCode.ActiveGroup(LiveReqCodeGroup(nextReqCodeId(), t), ReqCode.emptyReqInactive)
+    def newActiveGroup(id: Option[ReqCodeId], t: Text.ReqCodeGroupTitle.OptionalText) =
+      ReqCode.ActiveGroup(
+        LiveReqCodeGroup(id getOrElse nextReqCodeId(), t),
+        ReqCode.emptyReqInactive)
 
-    def newActiveReq(reqId: ReqId) =
-      ReqCode.ActiveReq(nextReqCodeId(), reqId, None, ReqCode.emptyReqInactive)
+    def newActiveReq(id: Option[ReqCodeId], reqId: ReqId) =
+      ReqCode.ActiveReq(
+        id getOrElse nextReqCodeId(), reqId,
+        None, ReqCode.emptyReqInactive)
 
     def done: Project =
       IdCeilings.supply(ids =>
@@ -144,7 +148,7 @@ object ProjectDsl {
         val text        = cftexts.mapValuesNow(t => Map.empty[ReqId, CFTextValue].updated(id, t))
         val tags        = p.tags.addvs(id, this.tags)
         val imps        = p.imps.addks(impSrcs, id).addvs(id, impTgts)
-        val codeTrie    = codes.foldLeft(p.reqCodeTrie)((t, c) => t.put(c, p.newActiveReq(id)))
+        val codeTrie    = codes.foldLeft(p.reqCodeTrie)((t, c) => t.put(c, p.newActiveReq(None, id)))
         val p2          = p.copy(nextId       = this.id.fold(id.value + 1)(_ => p.nextId),
                                  pubids       = pr,
                                  reqs         = p.reqs + req,
@@ -158,10 +162,11 @@ object ProjectDsl {
   }
 
   case class RCGroup(code : ReqCode.Value,
+                     id   : Option[ReqCodeId] = None,
                      title: Text.ReqCodeGroupTitle.OptionalText = Vector.empty) extends ToState {
     def state: Mod[LiveReqCodeGroup] =
       State[ProjectState, LiveReqCodeGroup]{ p =>
-        val ad = p.newActiveGroup(title)
+        val ad = p.newActiveGroup(id, title)
         val t  = p.reqCodeTrie.modify(code)(_.fold(ad)(old => ad.copy(reqInactive = old.reqInactive)))
         val p2 = p.copy(reqCodeTrie = t, maxReqCodeId = p.newMaxReqCodeId)
         (p2, ad.group)

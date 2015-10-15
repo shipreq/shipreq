@@ -83,7 +83,8 @@ object SelectionCtrls {
     val cancel = $.props.flatMap(_ setModal Modal.none)
 
     def deleteModal(p: Props, selected: DelRest): Modal = {
-      val props = Deletion.initProps(p.project, p.widgets, cancel, selected.reqs)
+      val props1 = Deletion.initProps1(p.project, selected.reqs, selected.rcgs.map(_.id)(collection.breakOut))
+      val props = Deletion.makeProps(props1, p.widgets, cancel)
       Modal(Deletion.Component(props))
     }
   }

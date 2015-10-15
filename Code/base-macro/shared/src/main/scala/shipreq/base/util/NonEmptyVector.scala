@@ -35,6 +35,9 @@ final class NonEmptyVector[+A](val head: A, val tail: Vector[A]) {
     else
       head +: tail.init
 
+  def initNonEmpty: Option[NonEmptyVector[A]] = NonEmptyVector option init
+  def tailNonEmpty: Option[NonEmptyVector[A]] = NonEmptyVector option tail
+
   def map[B](f: A => B): NonEmptyVector[B] =
     NonEmptyVector(f(head), tail map f)
 
