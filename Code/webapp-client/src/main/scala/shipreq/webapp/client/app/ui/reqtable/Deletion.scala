@@ -1,6 +1,7 @@
 package shipreq.webapp.client.app.ui.reqtable
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, MonocleReact._
+import japgolly.scalajs.react.extra.ReusableFn
 import monocle.macros.Lenses
 import scala.annotation.tailrec
 import scala.collection.TraversableOnce
@@ -56,7 +57,7 @@ object Deletion {
     val initSelReqs   = calcInitiallySelectedReqs(p, deletableReqs, directSelReqIds)
     val initSelGroups = calcInitiallySelectedGroups(p, directSelGroups, deletableGroups, initSelReqs)
 
-    val state = State(initSelReqs, Selection(initSelGroups))
+    val state = State(Selection(initSelReqs), Selection(initSelGroups))
     Props1(p, deletableReqs, deletableGroups, state)
   }
 
@@ -286,7 +287,7 @@ object Deletion {
   }
 
   @Lenses
-  case class State(selectedReqIds: Set[ReqId], selectedRCGs: Selection[ReqCodeId])
+  case class State(selectedReqIds: Selection[ReqId], selectedRCGs: Selection[ReqCodeId])
 
   val alwaysOn = UI.checkbox(On)(^.readOnly := true, ^.disabled := true)
 
@@ -298,7 +299,8 @@ object Deletion {
 
     val visibleRCGs: Set[ReqCodeId] = $.props.runNow().deletableGroups.map(_.id)(collection.breakOut)
 
-    val setRcgSel = $ _setStateL State.selectedRCGs
+    val setReqSel = ReusableFn($ _setStateL State.selectedReqIds)
+    val setRcgSel = ReusableFn($ _setStateL State.selectedRCGs)
 
     val cancelButton: ReactElement =
       <.button(^.onClick --> $.props.flatMap(_.cancel), "Cancel")
@@ -308,34 +310,26 @@ object Deletion {
       Memo.by((_: Req).id)(widgets.reqRefBasic(_, identity, style))
     }
 
-    def render(p: Props, s: State): ReactElement = {
-      val selectedReqIds = s.selectedReqIds
-      val selectedRCGs = s.selectedRCGs
+    // -----------------------------------------------------------------------------------------------------------------
+    def renderReqs(p: Props, s: State): TagMod = {
+      val selAll = s.selectedReqIds.updateBy(setReqSel)
 
       // Copy-paste with initProps()
       def liveGivenState(r: Req): Live =
-        (Dead <~ selectedReqIds.contains(r.id)) && r.live(customReqTypes)
+        (Dead <~ s.selectedReqIds.selected.contains(r.id)) && r.live(customReqTypes)
 
       def renderImpliedByItem(req: Req): ReactElement =
         renderImpliedByItemMemo(liveGivenState(req))(req)
 
-      def renderRow(rr: ReqRow): TagMod = {
+      def reqRow(rr: ReqRow): TagMod = {
         import rr._
         val live = liveGivenState(req)
 
-        val checkboxAndToggle: (ReactTag, TagMod) =
-          if (indent == 0)
-            (alwaysOn, EmptyTag)
-          else {
-            val update = $.modState(State.selectedReqIds set Util.togglePresence(selectedReqIds)(req.id))
-            val toggle = ^.onClick --> update
-            val chkbox = UI.checkbox(On <~ selectedReqIds.contains(req.id))(^.onChange --> update)
-            (chkbox, toggle)
-          }
-        val checkbox      = checkboxAndToggle._1
-        val toggleOnClick = checkboxAndToggle._2
+        val isRoot = indent == 0
 
-        val td = <.td(*.reqRow(toggleOnClick eq EmptyTag, live), toggleOnClick)
+        val sel = if (isRoot) None else Some(selAll(req.id))
+
+        val td = <.td(*.reqRow(isRoot, live), sel.map(_.onClick))
 
         val reqTitle =
           <.span(
@@ -352,38 +346,69 @@ object Deletion {
               UI.vector(impliedBy, UI.sepComma)(renderImpliedByItem))
 
         <.tr(
-          td(<.span(*.indent(indent)), checkbox, reqTitle),
+          td(<.span(*.indent(indent)), sel.fold(alwaysOn)(_.checkbox), reqTitle),
           td(impBy))
       }
 
-      val vs = selectedRCGs.visible(visibleRCGs)
+      <.table(
+        <.tbody(
+          p.deletableReqs.map(reqRow): _*))
+    }
 
-      def omfomf(r: GroupRow): TagMod = {
+    // -----------------------------------------------------------------------------------------------------------------
+    def renderGroups(p: Props, s: State): TagMod = {
+      val selAll = s.selectedRCGs.updateBy(setRcgSel).visible(visibleRCGs)
 
+      val reqLive: ReqId => Live =
+        Dead <~ s.selectedReqIds.selected.contains(_)
+
+      val groupLive: ReqCodeId => Live =
+        Dead <~ s.selectedRCGs.selected.contains(_)
+
+      def groupRow(r: GroupRow): TagMod = {
         val liveCodes: Vector[String] = {
-          val ls = r.liveSubs(Dead <~ selectedReqIds.contains(_), Dead <~ selectedRCGs.selected.contains(_))
+          val ls = r.liveSubs(reqLive, groupLive)
           (SortedSet.empty[String] ++ ls).toVector
         }
 
+        val sel = selAll(r.id)
+
+        val td = <.td(sel.onClick)
+
         <.tr(
-          <.td(selectedRCGs.oneCheckbox(r.id, setRcgSel)),
-          <.td(r.codeStr),
-          <.td(widgets reqCodeGroupTitle r.group),
-          <.td(liveCodes.length, ^.title := liveCodes.mkString("\n")))
+          td(sel.checkbox),
+          td(r.codeStr),
+          td(widgets reqCodeGroupTitle r.group),
+          td(liveCodes.length, ^.title := liveCodes.mkString("\n")))
       }
 
-      <.div(
-        <.div("Reqs to delete"),
-        <.table(<.tbody(p.deletableReqs.map(renderRow): _*)),
+      def selAllBox: TagMod =
+        if (p.deletableGroups.length < 2)
+          EmptyTag
+        else
+          selAll.total.checkboxAndOnClick
 
-        <.div("RCGs to delete"),
-        <.table(
-          <.thead(<.tr(
-            <.th(vs totalCheckbox setRcgSel),
+      <.table(
+        <.thead(
+          <.tr(
+            <.th(selAllBox),
             <.th(UiText.ColumnNames.code),
             <.th(UiText.ColumnNames.title),
             <.th("Sub-Codes"))),
-          <.tbody(p.deletableGroups.map(omfomf): _*)),
+        <.tbody(
+          p.deletableGroups.map(groupRow): _*))
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    def render(p: Props, s: State): ReactElement = {
+
+      <.div(
+        <.div("Requirements to delete"),
+        renderReqs(p, s),
+
+        // if (p.deletableGroups.nonEmpty)
+        <.div(UiText.reqCodeGroups + " to delete"),
+        renderGroups(p, s),
 
         <.div("Reason"),
 
