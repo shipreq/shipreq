@@ -170,6 +170,7 @@ object Common {
     import Cache.seqFormat
     p.settings(
       scalaJSStage in Global := jsStage,
+      parallelExecution in testOnly := false,
       // Temp fix for https://github.com/scala-js/scala-js/issues/1817
       inConfig(Test)(Seq(
         definedTestNames <<= definedTests map (_.map(_.name).distinct) storeAs definedTestNames
