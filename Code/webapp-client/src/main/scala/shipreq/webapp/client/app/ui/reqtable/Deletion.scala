@@ -230,7 +230,7 @@ object Deletion {
     def makeRcgRow(c: Code, g: LiveReqCodeGroup): GroupRow = {
       var subReqs = Set.newBuilder[(ReqId, String)]
       var subGrps = Set.newBuilder[(ReqCodeId, String)]
-      def subCodeStr(c2: Code) = PlainText.reqCode(c ++ c2)
+      def subCodeStr(c2: Code) = "." + PlainText.reqCode(c2)
 
       p.reqCodes.trie.dropPath(c).foreachPathAndValue {
         case (k, a: ActiveReq)   => subReqs += ((a.reqId, subCodeStr(k)))

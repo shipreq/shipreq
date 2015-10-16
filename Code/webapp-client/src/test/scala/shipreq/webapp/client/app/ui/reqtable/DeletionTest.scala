@@ -1,6 +1,7 @@
 package shipreq.webapp.client.app.ui.reqtable
 
 import utest._
+import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{UnivEq, IMap, Util}
 import shipreq.base.util.UnivEq.Implicits._
 import shipreq.webapp.base.data._
@@ -45,6 +46,7 @@ object DeletionTestData {
 
   private implicit class RCGroupExt(private val x: RCGroup) {
     private val id = x.id.getOrElse(sys error s"$x needs an id.")
+    private def codeStr = ReqCode.valueToStr(x.code, '.')
 
     def select = {
       _selectedRCGs += id
@@ -58,15 +60,19 @@ object DeletionTestData {
     }
 
     def visible = {
-      _expectDeletableRCGs += GroupRow(LiveReqCodeGroup(id, x.title), ReqCode.valueToStr(x.code, '.'), ∅, ∅)
+      _expectDeletableRCGs += GroupRow(LiveReqCodeGroup(id, x.title), codeStr, ∅, ∅)
       x
     }
 
     def subs(req: String, rcg: String) = {
+      // No point showing the same prefix in all subcodes
+      val fixCodeR = ("^" + codeStr.replace(".", "\\.")).r
+      val fixCode: EndoFn[String] = fixCodeR.replaceFirstIn(_, "")
+
       _expectDeletableRCGs = _expectDeletableRCGs.modOrPut(id, row =>
         row.copy(
-          subReqs = pairs(req, GenericReqId),
-          subGroups = pairs(rcg, ReqCodeId))
+          subReqs = pairs(req, GenericReqId).map(_ map2 fixCode),
+          subGroups = pairs(rcg, ReqCodeId).map(_ map2 fixCode))
         , sys error s"$id not found")
       x
     }
