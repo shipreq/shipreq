@@ -90,20 +90,6 @@ object RichTextEditor {
       (init, (s, u, a, commit) => props(VUCA(s, u, v => commit(onCommit(v)), a)).render)
     }
 
-    type SubjectId
-    def mkUpdateContentCmd: (SubjectId, t.OptionalText) => UpdateContentCmd
-
-    def edit(subjectId     : SubjectId,
-             initial       : t.OptionalText,
-             project       : Px[Project],
-             projectText   : Px[PlainText.ForProject],
-             projectWidgets: Px[ProjectWidgets],
-             textSearch    : Px[TextSearch],
-             commitFn      : UpdateContentOnCommit): InitSelfManagedA[String] = {
-      val onCommit = commitFn.cmap[t.OptionalText](mkUpdateContentCmd(subjectId, _))
-      selfManaged(initial, project, projectText, projectWidgets, textSearch, onCommit)
-    }
-
     // -----------------------------------------------------------------------------------------------------------------
 
     case class Props(vuca          : VUCA[String, t.OptionalText],
@@ -155,20 +141,39 @@ object RichTextEditor {
     }
   }
 
+  sealed abstract class Base2[TextType <: Text.Generic](name: String, _t: TextType) extends Base(name, _t) {
+
+    type SubjectId
+    def mkUpdateContentCmd: (SubjectId, t.OptionalText) => UpdateContentCmd
+
+    def edit(subjectId     : SubjectId,
+             initial       : t.OptionalText,
+             project       : Px[Project],
+             projectText   : Px[PlainText.ForProject],
+             projectWidgets: Px[ProjectWidgets],
+             textSearch    : Px[TextSearch],
+             commitFn      : UpdateContentOnCommit): InitSelfManagedA[String] = {
+      val onCommit = commitFn.cmap[t.OptionalText](mkUpdateContentCmd(subjectId, _))
+      selfManaged(initial, project, projectText, projectWidgets, textSearch, onCommit)
+    }
+  }
+
   // ===================================================================================================================
 
-  object GenericReqTitle extends Base("GenericReqDesc editor", Text.GenericReqTitle) {
+  object GenericReqTitle extends Base2("GenericReqDesc editor", Text.GenericReqTitle) {
     override type SubjectId = GenericReqId
     override def mkUpdateContentCmd = SetGenericReqTitle
   }
 
-  object ReqCodeGroupTitle extends Base("ReqCodeGroupTitle editor", Text.ReqCodeGroupTitle) {
+  object ReqCodeGroupTitle extends Base2("ReqCodeGroupTitle editor", Text.ReqCodeGroupTitle) {
     override type SubjectId = ReqCodeId
     override def mkUpdateContentCmd = SetReqCodeGroupTitle
   }
 
-  class CustomTextField(fid: CustomField.Text.Id) extends Base("CustomTextField editor", Text.CustomTextField) {
+  class CustomTextField(fid: CustomField.Text.Id) extends Base2("CustomTextField editor", Text.CustomTextField) {
     override type SubjectId = ReqId
     override def mkUpdateContentCmd = SetCustomTextField(_, fid, _)
   }
+
+  object DeletionReason extends Base("DeletionReason editor", Text.DeletionReason)
 }

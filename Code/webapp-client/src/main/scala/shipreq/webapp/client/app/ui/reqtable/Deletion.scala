@@ -1,19 +1,20 @@
 package shipreq.webapp.client.app.ui.reqtable
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, MonocleReact._
-import japgolly.scalajs.react.extra.ReusableFn
+import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
 import scala.annotation.tailrec
 import scala.collection.TraversableOnce
 import scala.collection.immutable.SortedSet
 import scalacss.ScalaCssReact._
-import scalajs.js
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.base.UiText
-import shipreq.webapp.client.app.ui.{Selection, ProjectWidgets}
+import shipreq.webapp.client.app.ui.{VUCA, Selection, ProjectWidgets}
 import shipreq.webapp.client.app.ui.Style.reqtable.{deleteRestore => *}
+import shipreq.webapp.client.app.ui.reqtable.edit.RichTextEditor
+import shipreq.webapp.client.data.DataReusability._
 import shipreq.webapp.client.lib.ui.UI
 import shipreq.webapp.client.util.On
 import MTrie.Ops
@@ -57,7 +58,7 @@ object Deletion {
     val initSelReqs   = calcInitiallySelectedReqs(p, deletableReqs, directSelReqIds)
     val initSelGroups = calcInitiallySelectedGroups(p, directSelGroups, deletableGroups, initSelReqs)
 
-    val state = State(Selection(initSelReqs), Selection(initSelGroups))
+    val state = State(Selection(initSelReqs), Selection(initSelGroups), "")
     Props1(p, deletableReqs, deletableGroups, state)
   }
 
@@ -276,23 +277,31 @@ object Deletion {
 
   case class Props(project        : Project,
                    widgets        : ProjectWidgets,
+                   projectText    : PlainText.ForProject,
+                   textSearch     : TextSearch,
                    cancel         : Callback,
                    deletableReqs  : DeletableReqs,
                    deletableGroups: DeletableGroups,
                    initialState   : State)
 
-  def makeProps(props1 : Props1, widgets: ProjectWidgets, cancel: Callback): Props = {
+  def makeProps(props1     : Props1,
+                widgets    : ProjectWidgets,
+                projectText: PlainText.ForProject,
+                textSearch : TextSearch,
+                cancel     : Callback): Props = {
     import props1._
-    Props(project, widgets, cancel, deletableReqs, deletableGroups, initialState)
+    Props(project, widgets, projectText, textSearch, cancel, deletableReqs, deletableGroups, initialState)
   }
 
   @Lenses
-  case class State(selectedReqIds: Selection[ReqId], selectedRCGs: Selection[ReqCodeId])
+  case class State(selectedReqIds: Selection[ReqId], selectedRCGs: Selection[ReqCodeId], reason: String)
 
   val alwaysOn = UI.checkbox(On)(^.readOnly := true, ^.disabled := true)
 
   class Backend($: BackendScope[Props, State]) {
     // Not worried about concurrent project updates.
+    // Usage is that Props are only assigned once to create the component - all subsequent updates are by state
+
     val project = $.props.map(_.project).runNow()
     val widgets = $.props.map(_.widgets).runNow()
     val customReqTypes = project.config.customReqTypes
@@ -301,6 +310,14 @@ object Deletion {
 
     val setReqSel = ReusableFn($ _setStateL State.selectedReqIds)
     val setRcgSel = ReusableFn($ _setStateL State.selectedRCGs)
+
+    val reasonEditor: State => ReactElement = {
+      implicit def autoPx[A](a: A): Px[A] = Px.const(a)
+      val p = $.props.runNow()
+      val e = RichTextEditor.DeletionReason.prepare(p.project, p.projectText, p.widgets, p.textSearch)
+      val u = $ _setStateL State.reason
+      s => e(VUCA.vu(s.reason, u)).render
+    }
 
     val cancelButton: ReactElement =
       <.button(^.onClick --> $.props.flatMap(_.cancel), "Cancel")
@@ -419,10 +436,15 @@ object Deletion {
             <.div(*.section, UiText.reqCodeGroups + " to delete"),
             renderGroups(p, s))
 
+      def reasonSection =
+        <.section(
+          <.div(*.section, "Reason for deletion"),
+          reasonEditor(s))
+
       <.div(
         reqSection,
         groupSection,
-        <.section(<.div(*.section, "Reason")),
+        reasonSection,
         <.div("Delete"),
         cancelButton)
     }

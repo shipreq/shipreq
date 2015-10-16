@@ -189,7 +189,8 @@ object ReqTable {
       val tableProps = Table.Props(
         project, rows, colName, colRnds, colEditors, s.cellStates, visibleSelection, modViewSettings)
 
-      val selCtrlProps = SelectionCtrls.Props(visibleSelection, cfg, rows, setModal, project, widgets)
+      val selCtrlProps = SelectionCtrls.Props(
+        visibleSelection, cfg, rows, setModal, project, widgets, plainText, textSearch)
 
       def mainScreen =
         <.div(

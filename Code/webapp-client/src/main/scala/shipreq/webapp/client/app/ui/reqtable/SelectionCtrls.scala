@@ -4,14 +4,25 @@ import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
 import scalajs.js
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.client.app.ui.{ProjectWidgets, Modal}
 import shipreq.webapp.client.data.DataReusability._
 
 object SelectionCtrls {
 
-  case class Props(sel: RowSelectionVisible, cfg: ProjectConfig, rows: Rows, setModal: Modal.SetFn, project: Project, widgets: ProjectWidgets)
+  case class Props(sel        : RowSelectionVisible,
+                   cfg        : ProjectConfig,
+                   rows       : Rows,
+                   setModal   : Modal.SetFn,
+                   project    : Project,
+                   widgets    : ProjectWidgets,
+                   projectText: PlainText.ForProject,
+                   textSearch : TextSearch)
 
-//  implicit def equalProps: UnivEq[Props]      = UnivEq.derive
+  // These two are only used in callbacks so are always reusable
+  private implicit def reusabilityPlainText : Reusability[PlainText.ForProject] = Reusability.always
+  private implicit def reusabilityTextSearch: Reusability[TextSearch]           = Reusability.always
+
   implicit def reuseProps: Reusability[Props] = Reusability.caseClass
 
   private class DelRest {
@@ -84,7 +95,7 @@ object SelectionCtrls {
 
     def deleteModal(p: Props, selected: DelRest): Modal = {
       val props1 = Deletion.initProps1(p.project, selected.reqs, selected.rcgs.map(_.id)(collection.breakOut))
-      val props = Deletion.makeProps(props1, p.widgets, cancel)
+      val props = Deletion.makeProps(props1, p.widgets, p.projectText, p.textSearch, cancel)
       Modal(Deletion.Component(props))
     }
   }
