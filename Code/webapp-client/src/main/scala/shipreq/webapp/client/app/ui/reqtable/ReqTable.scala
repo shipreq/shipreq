@@ -142,7 +142,11 @@ object ReqTable {
         nr  <- colName
       } yield SortEditor.Props(vs.order, setSortCriteria, nr)
 
-    val modTable: Cell.ModTable = ReusableFn(loc => (s, cb) => $.modState(_.updateCell(loc, s), cb))
+    val modTable: Cell.ModTable =
+      ReusableFn(loc => (s, cb) => $.modState(_.updateCell(loc, s), cb))
+
+    val modTable2: Cell.ModTable2 =
+      ReusableFn(f => $.modState(State.cellStates modify f))
 
     private def callServer[I, F <: (I =>|=> VerifiedEvents)](remoteFn: Props => RemoteFn.InstanceFor[F]): CallServer[I] =
       (i, sio, fio) => $.props >>= (p =>
@@ -185,7 +189,7 @@ object ReqTable {
         project, rows, colName, colRnds, colEditors, s.cellStates, visibleSelection, modViewSettings)
 
       val selCtrlProps = SelectionCtrls.Props(
-        visibleSelection, cfg, rows, setModal, project, widgets, plainText, textSearch)
+        visibleSelection, cfg, rows, setModal, project, widgets, plainText, textSearch, saveIO, modTable2)
 
       def mainScreen =
         <.div(

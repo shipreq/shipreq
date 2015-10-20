@@ -343,6 +343,15 @@ object MakeEvent { // TODO Move
 
       case UpdateContentCmd.SetReqCodeGroupCode(id, v) =>
         UpdateReqCodeGroup(id, ReqCodeGroupGD.Code(v))
+
+      case UpdateContentCmd.DeleteReqs(reqs, reqCodeGroups, reason) =>
+        DeleteReqs(reqs, reqCodeGroups, reason)
+
+      case UpdateContentCmd.DeleteReqCodeGroups(ids) =>
+        DeleteReqCodeGroups(ids)
+
+      case UpdateContentCmd.RestoreContent(reqs, reqCodes) =>
+        RestoreContent(reqs, reqCodes)
     }
   }
 

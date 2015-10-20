@@ -130,12 +130,15 @@ object RemoteDataEditor {
       postAbort, postLock,
 //      _ => TIO.Abort(setSelf(None)),
 //      TIO.Success(_),
-      renderEdit, defaultRenderLock, defaultRenderFail)
+      renderEdit, _defaultRenderLock, defaultRenderFail)
 
   // ===================================================================================================================
 
-  val defaultRenderLock: Any => ReactElement =
-    _ => UI.spinner
+  @inline def defaultRenderLock: ReactElement =
+    UI.spinner
+
+  val _defaultRenderLock: Any => ReactElement =
+    _ => defaultRenderLock
 
   val defaultRenderFail: (Any, Failed) => ReactElement =
     (_, f) => renderRetry(f.reason, f.retry(), f.resumeEdit())

@@ -8,9 +8,11 @@ import scala.collection.TraversableOnce
 import scala.collection.immutable.SortedSet
 import scalacss.ScalaCssReact._
 import shipreq.base.util._
-import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.base.UiText
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.protocol.UpdateContentCmd.DeleteReqs
+import shipreq.webapp.base.text.{TextSearch, PlainText}
+import shipreq.webapp.base.util.Must._
 import shipreq.webapp.client.app.ui.{VUCA, Selection, ProjectWidgets}
 import shipreq.webapp.client.app.ui.Style.reqtable.{deleteRestore => *}
 import shipreq.webapp.client.app.ui.reqtable.edit.RichTextEditor
@@ -24,6 +26,7 @@ object Deletion {
                    widgets        : ProjectWidgets,
                    projectText    : PlainText.ForProject,
                    textSearch     : TextSearch,
+                   perform        : DeleteReqs => Callback,
                    cancel         : Callback,
                    deletableReqs  : DeletableReqs,
                    deletableGroups: DeletableGroups,
@@ -33,9 +36,10 @@ object Deletion {
                 widgets    : ProjectWidgets,
                 projectText: PlainText.ForProject,
                 textSearch : TextSearch,
+                perform    : DeleteReqs => Callback,
                 cancel     : Callback): Props = {
     import props1._
-    Props(project, widgets, projectText, textSearch, cancel, deletableReqs, deletableGroups, initialState)
+    Props(project, widgets, projectText, textSearch, perform, cancel, deletableReqs, deletableGroups, initialState)
   }
 
   case class ReqRow(req: Req, indent: Int, impliedBy: Vector[Req])
@@ -308,12 +312,12 @@ object Deletion {
     val setReqSel = ReusableFn($ _setStateL State.selectedReqIds)
     val setRcgSel = ReusableFn($ _setStateL State.selectedRCGs)
 
-    val reasonEditor: State => ReactElement = {
+    val reasonEditorProps: State => RichTextEditor.DeletionReason.Props = {
       implicit def autoPx[A](a: A): Px[A] = Px.const(a)
       val p = $.props.runNow()
       val e = RichTextEditor.DeletionReason.prepare(p.project, p.projectText, p.widgets, p.textSearch)
       val u = $ _setStateL State.reason
-      s => e(VUCA.vu(s.reason, u)).render
+      s => e(VUCA.vu(s.reason, u))
     }
 
     val cancelButton: ReactElement =
@@ -433,16 +437,31 @@ object Deletion {
             <.div(*.section, UiText.reqCodeGroups + " to delete"),
             renderGroups(p, s))
 
+      val reason = reasonEditorProps(s)
       def reasonSection =
         <.section(
           <.div(*.section, "Reason for deletion"),
-          reasonEditor(s))
+          reason.render)
+
+      val commit: Option[Callback] =
+        for {
+          reqs          ← NonEmptySet.option(s.selectedReqIds.selected)
+          reqCodeGroups = s.selectedRCGs.selected
+          dr            ← reason.parseResult.toOption
+        } yield
+        p perform DeleteReqs(reqs, reqCodeGroups, dr)
+
+      def deleteButton =
+        <.button(
+          ^.disabled := commit.isEmpty,
+          ^.onClick -->? commit,
+          "Delete")
 
       <.div(
         reqSection,
         groupSection,
         reasonSection,
-        <.div("Delete"),
+        deleteButton,
         cancelButton)
     }
   }

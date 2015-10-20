@@ -2,10 +2,13 @@ package shipreq.webapp.client.app.ui.reqtable
 
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
+import org.scalajs.dom
+import shipreq.webapp.base.protocol.UpdateContentCmd
+import shipreq.webapp.client.lib.TCB
 import scalajs.js
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{TextSearch, PlainText}
-import shipreq.webapp.client.app.ui.{ProjectWidgets, Modal}
+import shipreq.webapp.client.app.ui.{RemoteDataEditor, ProjectWidgets, Modal}
 import shipreq.webapp.client.data.DataReusability._
 
 object SelectionCtrls {
@@ -17,7 +20,9 @@ object SelectionCtrls {
                    project    : Project,
                    widgets    : ProjectWidgets,
                    projectText: PlainText.ForProject,
-                   textSearch : TextSearch)
+                   textSearch : TextSearch,
+                   saveIO     : CallServer[UpdateContentCmd],
+                   modTable2  : Cell.ModTable2)
 
   // These two are only used in callbacks so are always reusable
   private implicit def reusabilityPlainText : Reusability[PlainText.ForProject] = Reusability.always
@@ -94,8 +99,50 @@ object SelectionCtrls {
     val cancel = $.props.flatMap(_ setModal Modal.none)
 
     def deleteModal(p: Props, selected: DelRest): Modal = {
+      val perform: UpdateContentCmd.DeleteReqs => Callback =
+        dr => $.props >>= { p =>
+
+          val locs = {
+            import Cell.Loc
+
+            def reqLocs = dr.reqs.whole.iterator.map {
+              case i: GenericReqId => Loc(Row.GenericReqRowSourceId(i), None)
+            }
+
+            def groupLocs = dr.reqCodeGroups.iterator.map(i => Loc(Row.ReqCodeGroupRowSourceId(i), None))
+
+            (reqLocs ++ groupLocs).toList
+          }
+
+          def setRowStates(state: Cell.State) =
+            p.modTable2(ts => locs.foldLeft(ts)(_.set(_, state)))
+
+          val lockRows = {
+            import RemoteDataEditor._
+            val locked = Some(StateFor((), Locked, () => defaultRenderLock))
+            setRowStates(locked)
+          }
+
+          def unlockRows =
+            setRowStates(None)
+
+          def callServer: Callback = {
+            val s = TCB.Success(unlockRows)
+            val f = (err: String) => TCB.Failure.lazily(
+              if (dom.confirm(s"Deletion failed. $err\n\nRetry?"))
+                callServer
+              else
+                unlockRows
+            )
+            p.saveIO(dr, s, f)
+          }
+
+          // TODO Should also deselect all
+          lockRows >> callServer >> p.setModal(None)
+        }
+
       val props1 = Deletion.initProps1(p.project, selected.reqs, selected.rcgs.map(_.id)(collection.breakOut))
-      val props = Deletion.makeProps(props1, p.widgets, p.projectText, p.textSearch, cancel)
+      val props = Deletion.makeProps(props1, p.widgets, p.projectText, p.textSearch, perform, cancel)
       Modal(Deletion.Component(props))
     }
   }

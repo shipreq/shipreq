@@ -1,6 +1,8 @@
 package shipreq.webapp.client.app.ui.reqtable
 
+import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.extra.{Reusability, ~=>}
+import shipreq.base.util.ScalaExt.EndoFn
 import shipreq.base.util.UnivEq
 import shipreq.webapp.client.app.ui.RemoteDataEditor
 
@@ -18,16 +20,22 @@ object Cell {
   sealed trait RowState {
     def apply(c: C): State = None
     def byColumns: Map[C, S] = UnivEq.emptyMap
+    def allowEdit(c: C): Boolean
   }
 
   object RowState {
-    case object Empty extends RowState
+    case object Empty extends RowState {
+      override def allowEdit(c: C) = true
+    }
 
-    case class WholeRow(state: S) extends RowState
+    case class WholeRow(state: S) extends RowState {
+      override def allowEdit(c: C) = false
+    }
 
     case class Cells(state: Map[C, S]) extends RowState {
       override def apply(c: C) = state get c
       override def byColumns: Map[C, S] = state
+      override def allowEdit(c: C) = !state.contains(c)
     }
   }
 
@@ -55,4 +63,6 @@ object Cell {
     new TableState(UnivEq.emptyMap)
 
   type ModTable = Loc ~=> RemoteDataEditor.SetOpState
+
+  type ModTable2 = EndoFn[TableState] ~=> Callback
 }

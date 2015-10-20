@@ -8,7 +8,7 @@ import org.scalajs.dom.ext.KeyCode
 import shipreq.base.util.NonEmptyVector
 import shipreq.base.util.ScalaExt.EndoFn
 import shipreq.webapp.base.data._
-import shipreq.webapp.client.app.ui.DragToReorder
+import shipreq.webapp.client.app.ui.{RemoteDataEditor, DragToReorder}
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
 import shipreq.webapp.client.app.ui.reqtable.edit.ColumnEditors
 import shipreq.webapp.client.data.DataReusability._
@@ -51,7 +51,7 @@ object Table {
 
     val startCellEdit = ReusableFn[Row, Column, TCB.Finally, Callback]((row, col, fin) =>
       $.props.map { p =>
-        if (p.cells(row.sourceId)(col).isEmpty)
+        if (p.cells(row.sourceId).allowEdit(col))
           p.colEditors.startCellEditing(row, col, fin)
             .foreach(_.runNow())
       }
@@ -73,9 +73,9 @@ object Table {
 
       val renderRows =
         rows.indices.toReactNodeArray { i =>
-          val row   = rows(i)
-          val cells = p.cells(row.sourceId)
-          val rp    = RowProps(row, crs, cells, p.selection, startCellEdit(row))
+          val row = rows(i)
+          val rs  = p.cells(row.sourceId)
+          val rp  = RowProps(row, crs, rs, p.selection, startCellEdit(row))
           RowComponent.withKey(row.id.key)(rp)
         }
 
@@ -209,14 +209,30 @@ object Table {
     def selCellKeyDown(e: ReactKeyboardEventH): Callback =
       focusKeyHandlers(e)
 
-    val sel = p.selection(row.sourceId)
-
     val selectionCell =
-      <.td(
-        *.cell(rowStatus),
-        ^.onKeyDown ==> selCellKeyDown,
-        sel.onClick,
-        sel.checkbox(^.tabIndex := -1))
+      p.cells match {
+
+        case Cell.RowState.Empty | _: Cell.RowState.Cells =>
+          val sel = p.selection(row.sourceId)
+          <.td(
+            *.cell(rowStatus),
+            ^.onKeyDown ==> selCellKeyDown,
+            sel.onClick,
+            sel.checkbox(^.tabIndex := -1))
+
+        case Cell.RowState.WholeRow(w) =>
+          w.status match {
+            case RemoteDataEditor.Locked =>
+              <.td(*.cell(rowStatus), w.render)
+
+            case _ =>
+              // Currently, whole-row state is only used when a row is being deleted/restored.
+              // To save dev-time, if the RPC fails an alert popups asking to retry/cancel, thus this part of the code
+              // should only execute when the row is locked. Whole-row editing + failure won't occur.
+              dom.console.warn(w.toString)
+              <.td(*.cell(rowStatus))
+          }
+      }
 
     val cols =
       p.crs.toStream.map { cr =>
