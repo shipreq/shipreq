@@ -17,12 +17,12 @@ object ColumnEditors {
     _ => None
 }
 
-final class ColumnEditors(project       : Px[Project],
-                          plainText     : Px[PlainText.ForProject],
-                          projectWidgets: Px[ProjectWidgets],
-                          textSearch    : Px[TextSearch],
-                          modTable      : Cell.ModTable,
-                          saveIO        : CallServer[UpdateContentCmd]) {
+final class ColumnEditors(project        : Px[Project],
+                          plainText      : Px[PlainText.ForProject],
+                          projectWidgets : Px[ProjectWidgets],
+                          textSearch     : Px[TextSearch],
+                          cellSetLocState: Cell.SetLocState,
+                          saveIO         : CallServer[UpdateContentCmd]) {
 
   import ColumnEditors._
 
@@ -72,7 +72,7 @@ final class ColumnEditors(project       : Px[Project],
 
     val loc = Cell.Loc(row.sourceId, Some(col))
 
-    val modCell = modTable(loc)
+    val modCell = cellSetLocState(loc)
 
     editor(modCell) match {
       case Some(cmd) => Some(modCell(cmd, Callback.empty))

@@ -13,16 +13,16 @@ import shipreq.webapp.client.data.DataReusability._
 
 object SelectionCtrls {
 
-  case class Props(sel        : RowSelectionVisible,
-                   cfg        : ProjectConfig,
-                   rows       : Rows,
-                   setModal   : Modal.SetFn,
-                   project    : Project,
-                   widgets    : ProjectWidgets,
-                   projectText: PlainText.ForProject,
-                   textSearch : TextSearch,
-                   saveIO     : CallServer[UpdateContentCmd],
-                   modTable2  : Cell.ModTable2)
+  case class Props(sel          : RowSelectionVisible,
+                   cfg          : ProjectConfig,
+                   rows         : Rows,
+                   setModal     : Modal.SetFn,
+                   project      : Project,
+                   widgets      : ProjectWidgets,
+                   projectText  : PlainText.ForProject,
+                   textSearch   : TextSearch,
+                   saveIO       : CallServer[UpdateContentCmd],
+                   modCellStates: Cell.ModifyFn)
 
   // These two are only used in callbacks so are always reusable
   private implicit def reusabilityPlainText : Reusability[PlainText.ForProject] = Reusability.always
@@ -115,7 +115,7 @@ object SelectionCtrls {
           }
 
           def setRowStates(state: Cell.State) =
-            p.modTable2(ts => locs.foldLeft(ts)(_.set(_, state)))
+            p.modCellStates(ts => locs.foldLeft(ts)(_.set(_, state)))
 
           val lockRows = {
             import RemoteDataEditor._

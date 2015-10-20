@@ -64,7 +64,7 @@ object ReqTable {
       copy(project = changes.p2) // TODO This obviously affects other things
       // TODO A custom field removal/addition should affect ViewSettings
 
-    def updateCell(loc: Cell.Loc, state: Cell.State): State =
+    def updateCellLoc(loc: Cell.Loc, state: Cell.State): State =
       copy(cellStates = cellStates.set(loc, state))
 
     def filterFailure(s: FilterEditor.State): State =
@@ -142,10 +142,10 @@ object ReqTable {
         nr  <- colName
       } yield SortEditor.Props(vs.order, setSortCriteria, nr)
 
-    val modTable: Cell.ModTable =
-      ReusableFn(loc => (s, cb) => $.modState(_.updateCell(loc, s), cb))
+    val cellSetLocState: Cell.SetLocState =
+      ReusableFn(loc => (s, cb) => $.modState(_.updateCellLoc(loc, s), cb))
 
-    val modTable2: Cell.ModTable2 =
+    val cellModifyFn: Cell.ModifyFn =
       ReusableFn(f => $.modState(State.cellStates modify f))
 
     private def callServer[I, F <: (I =>|=> VerifiedEvents)](remoteFn: Props => RemoteFn.InstanceFor[F]): CallServer[I] =
@@ -161,7 +161,7 @@ object ReqTable {
     val saveIO: CallServer[UpdateContentCmd] =
       callServer(_.updateContentFn)
 
-    val colEditors = new ColumnEditors(project, plainText, widgets, textSearch, modTable, saveIO)
+    val colEditors = new ColumnEditors(project, plainText, widgets, textSearch, cellSetLocState, saveIO)
 
     val filterProps: FilterEditor.State => FilterEditor.Props = {
       import FilterEditor._
@@ -189,7 +189,7 @@ object ReqTable {
         project, rows, colName, colRnds, colEditors, s.cellStates, visibleSelection, modViewSettings)
 
       val selCtrlProps = SelectionCtrls.Props(
-        visibleSelection, cfg, rows, setModal, project, widgets, plainText, textSearch, saveIO, modTable2)
+        visibleSelection, cfg, rows, setModal, project, widgets, plainText, textSearch, saveIO, cellModifyFn)
 
       def mainScreen =
         <.div(

@@ -62,7 +62,7 @@ object Cell {
   def emptyTableState: TableState =
     new TableState(UnivEq.emptyMap)
 
-  type ModTable = Loc ~=> RemoteDataEditor.SetOpState
+  type SetLocState = Loc ~=> RemoteDataEditor.SetOpState
 
-  type ModTable2 = EndoFn[TableState] ~=> Callback
+  type ModifyFn = EndoFn[TableState] ~=> Callback
 }
