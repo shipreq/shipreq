@@ -12,6 +12,7 @@ import UnsafeTypes._
 
 object DeletionTestData {
   import ProjectDsl._
+  import ProjectDslInternals.{ToState, Composite}
   import SampleProject.Values._
 
   private var _selectedReqIds = Vector.empty[ReqId]
@@ -38,6 +39,9 @@ object DeletionTestData {
       _expectUnselectedReqs += id
       x
     }
+
+    /** Req will be ignored and not appear in the Deletion screen */
+    def no = x
   }
 
   private val pairStr = "^(\\d+):(.*)$".r
@@ -76,88 +80,101 @@ object DeletionTestData {
         , sys error s"$id not found")
       x
     }
+
+    /** Group will be ignored and not appear in the Deletion screen */
+    def no = x
   }
 
-  private def ___req(id: GenericReqId, codes: ReqCode.Value*) =
-    GReq(id = id, codes = codes.toSet)
+  private val dead = ReqCode.Node("dead")
 
-  private def rcg___(id: ReqCodeId, code: ReqCode.Value) =
-    RCGroup(id = id, code = code)
+  private def ___req(id: GenericReqId, codes: ReqCode.Value*)(f: EndoFn[GReq]): Composite = {
+    val a = f(GReq(id = id, codes = codes.toSet))
+    val d1 = a.copy(live = Dead, id = GenericReqId(id.value + 10000), codes = a.codes.map(_ :+ dead))
+    val d2 = a.copy(live = Dead, id = GenericReqId(id.value + 20000), codes = a.codes.map(dead +: _))
+    a + d1 + d2
+  }
+
+  private def rcg___(id: ReqCodeId, code: ReqCode.Value)(f: EndoFn[RCGroup]): Composite = {
+    val a = f(RCGroup(id = id, code = code))
+    val d1 = DeadReqCode(code :+ dead, id = ReqCodeId(id.value + 10000))
+    val d2 = DeadReqCode(dead +: code, id = ReqCodeId(id.value + 20000))
+    a + d1 + d2
+  }
 
   // =================================================================================================================
   private val p =
-    ( ___req(100).select          // Simple reqs - no relations
-    + ___req(101)
-    + rcg___(900, "a").select     // Simple groups - no relations
-    + rcg___(901, "b")
+    ( ___req(100)(_.select)          // Simple reqs - no relations
+    + ___req(101)(_.no)
+    + rcg___(900, "a")(_.select)     // Simple groups - no relations
+    + rcg___(901, "b")(_.no)
 
     // =================================================================================================================
     // ReqCodes
 
-    + rcg___(910, "c"      ).auto.subs("110:c.a.1", "912:c.a.1.g, 911:c.a") // Select because only child group being (indirectly) deleted
-    + rcg___(911, "c.a"    ).auto.subs("110:c.a.1", "912:c.a.1.g")          // Select because all children being (directly) deleted
-    + ___req(110, "c.a.1"  ).select
-    + rcg___(912, "c.a.1.g").auto      // Select because its sub-selection with no children
+    + rcg___(910, "c"      )(_.auto.subs("110:c.a.1", "912:c.a.1.g, 911:c.a")) // Select because only child group being (indirectly) deleted
+    + rcg___(911, "c.a"    )(_.auto.subs("110:c.a.1", "912:c.a.1.g")         ) // Select because all children being (directly) deleted
+    + ___req(110, "c.a.1"  )(_.select                                        )
+    + rcg___(912, "c.a.1.g")(_.auto                                          ) // Select because its sub-selection with no children
 
-    + rcg___(920, "cn1"       )        // Negative test of above (live sibling)
-    + rcg___(921, "cn1.a"     )        // Nope: cos of live req at .2
-    + ___req(120, "cn1.a.1"   ).select
-    + rcg___(922, "cn1.a.1.g1").auto
-    + ___req(121, "cn1.a.2"   )
-    + rcg___(923, "cn1.a.2.g" )        // Nope: cos of live parent
+    + rcg___(920, "cn1"       )(_.no    ) // Negative test of above (live sibling)
+    + rcg___(921, "cn1.a"     )(_.no    ) // Nope: cos of live req at .2
+    + ___req(120, "cn1.a.1"   )(_.select)
+    + rcg___(922, "cn1.a.1.g1")(_.auto  )
+    + ___req(121, "cn1.a.2"   )(_.no    )
+    + rcg___(923, "cn1.a.2.g" )(_.no    ) // Nope: cos of live parent
 
-    + rcg___(930, "cn2"          )        // Negative test of above (live child)
-    + rcg___(931, "cn2.a"        )        // Nope: cos of live req at .1.g.s
-    + ___req(130, "cn2.a.1"      ).select
-    + rcg___(932, "cn2.a.1.g"    )        // Nope: cos of live req at .s
-    + ___req(131, "cn2.a.1.g.s"  )
-    + rcg___(933, "cn2.a.1.g.s.g")        // Nope: cos of live parent
+    + rcg___(930, "cn2"          )(_.no    ) // Negative test of above (live child)
+    + rcg___(931, "cn2.a"        )(_.no    ) // Nope: cos of live req at .1.g.s
+    + ___req(130, "cn2.a.1"      )(_.select)
+    + rcg___(932, "cn2.a.1.g"    )(_.no    ) // Nope: cos of live req at .s
+    + ___req(131, "cn2.a.1.g.s"  )(_.no    )
+    + rcg___(933, "cn2.a.1.g.s.g")(_.no    ) // Nope: cos of live parent
 
-    + rcg___(940, "d"            ).auto.subs("140:d.a.1, 141:d.a.1.b.g.1, 142:d.a.1.b.g.2", "941:d.a.1.b.g, 942:d.a.1.b.g.2.x")
-    + ___req(140, "d.a.1"        ).select
-    + rcg___(941, "d.a.1.b.g"    ).auto.subs("141:d.a.1.b.g.1, 142:d.a.1.b.g.2", "942:d.a.1.b.g.2.x")
-    + ___req(141, "d.a.1.b.g.1"  ).select
-    + ___req(142, "d.a.1.b.g.2"  ).select
-    + rcg___(942, "d.a.1.b.g.2.x").auto
+    + rcg___(940, "d"            )(_.auto.subs("140:d.a.1, 141:d.a.1.b.g.1, 142:d.a.1.b.g.2", "941:d.a.1.b.g, 942:d.a.1.b.g.2.x"))
+    + ___req(140, "d.a.1"        )(_.select                                                                                      )
+    + rcg___(941, "d.a.1.b.g"    )(_.auto.subs("141:d.a.1.b.g.1, 142:d.a.1.b.g.2", "942:d.a.1.b.g.2.x")                          )
+    + ___req(141, "d.a.1.b.g.1"  )(_.select                                                                                      )
+    + ___req(142, "d.a.1.b.g.2"  )(_.select                                                                                      )
+    + rcg___(942, "d.a.1.b.g.2.x")(_.auto                                                                                        )
 
-    + rcg___(950, "dn1"            )        // Negative test of above
-    + ___req(150, "dn1.a.1"        ).select
-    + rcg___(951, "dn1.a.1.b.g"    )
-    + ___req(151, "dn1.a.1.b.g.1"  )
-    + ___req(152, "dn1.a.1.b.g.2"  ).select
-    + rcg___(952, "dn1.a.1.b.g.2.x").auto
+    + rcg___(950, "dn1"            )(_.no    ) // Negative test of above
+    + ___req(150, "dn1.a.1"        )(_.select)
+    + rcg___(951, "dn1.a.1.b.g"    )(_.no    )
+    + ___req(151, "dn1.a.1.b.g.1"  )(_.no    )
+    + ___req(152, "dn1.a.1.b.g.2"  )(_.select)
+    + rcg___(952, "dn1.a.1.b.g.2.x")(_.auto  )
 
     // =================================================================================================================
     // Implications
 
-    + ___req(300)            .select
-    + ___req(301).impSrc(300).auto   // All implying reqs marked for deletion
-    + ___req(302).impSrc(301).auto   // All implying reqs marked for deletion
+    + ___req(300)(_            .select)
+    + ___req(301)(_.impSrc(300).auto  ) // All implying reqs marked for deletion
+    + ___req(302)(_.impSrc(301).auto  ) // All implying reqs marked for deletion
 
-    + ___req(310)                 .select
-    + ___req(311)
-    + ___req(312).impSrc(310, 311).visible // Visible (due to 310) but not selected (due to 311)
-    + ___req(313).impSrc(312)     .visible // Visible (due to 312) but not selected (due to 311)
+    + ___req(310)(_                 .select )
+    + ___req(311)(_                 .no     )
+    + ___req(312)(_.impSrc(310, 311).visible) // Visible (due to 310) but not selected (due to 311)
+    + ___req(313)(_.impSrc(312)     .visible) // Visible (due to 312) but not selected (due to 311)
 
-    + ___req(320)
-    + ___req(321).impSrc(320)     .select
-    + ___req(322).impSrc(321)     .auto    // All implying reqs marked for deletion
-    + ___req(323).impSrc(321, 320).visible // Visible (due to 321) but not selected (due to 320)
+    + ___req(320)(_                 .no     )
+    + ___req(321)(_.impSrc(320)     .select )
+    + ___req(322)(_.impSrc(321)     .auto   ) // All implying reqs marked for deletion
+    + ___req(323)(_.impSrc(321, 320).visible) // Visible (due to 321) but not selected (due to 320)
 
     // =================================================================================================================
     // Implications & ReqCodes
 
-    + ___req(500             )            .select
-    + ___req(501, "both0.1"  ).impSrc(500).auto                                      // Sole implied marked for deletion
-    + rcg___(700, "both0"    )            .auto.subs("501:both0.1", "701:both0.1.x") // Sole child (501) marked for deletion
-    + rcg___(701, "both0.1.x")            .auto                                      // Sole parent (501) marked for deletion
+    + ___req(500             )(_            .select                                   )
+    + ___req(501, "both0.1"  )(_.impSrc(500).auto                                     ) // Sole implied marked for deletion
+    + rcg___(700, "both0"    )(_            .auto.subs("501:both0.1", "701:both0.1.x")) // Sole child (501) marked for deletion
+    + rcg___(701, "both0.1.x")(_            .auto                                     ) // Sole parent (501) marked for deletion
 
-    + ___req(510             )                .select
-    + ___req(511             )
-    + ___req(512, "both1.1"  ).impSrc(510,511).visible                                      // 1 live imp, 1 deleting imp
-    + rcg___(710, "both1"    )                .visible.subs("512:both1.1", "711:both1.1.x") // Sole child visible but not initially selected
-  //+ rcg___(711, "both1.1.x")                .visible                                      // IGNORE: Sole parent visible but not initially selected
-    + rcg___(711, "both1.1.x")                .auto                                         // It has no live children on screen init. Just easier.
+    + ___req(510             )(_                .select                                      )
+    + ___req(511             )(_                .no                                          )
+    + ___req(512, "both1.1"  )(_.impSrc(510,511).visible                                     ) // 1 live imp, 1 deleting imp
+    + rcg___(710, "both1"    )(_                .visible.subs("512:both1.1", "711:both1.1.x")) // Sole child visible but not initially selected
+  //+ rcg___(711, "both1.1.x")(_                .visible                                     ) // IGNORE: Sole parent visible but not initially selected
+    + rcg___(711, "both1.1.x")(_                .auto                                        ) // It has no live children on screen init. Just easier.
 
     ).defaultReqType(fr) ! SampleProject.project
   // =================================================================================================================
@@ -234,13 +251,13 @@ object DeletionTest extends TestSuite {
     'deletableGroups {
       val e = expectDeletableRCGs
       val a = result.deletableGroups
-      assertSet("Deletable RCGs", a.toSet, e.toSet)
-      assertEq("Deletable RCG count", a.length, e.length)
+      assertSet("Deletable groups", a.toSet, e.toSet)
+      assertEq("Deletable group count", a.length, e.length)
       for ((ar,er) <- a zip e)
-        assertEq("Deletable RCG", ar, er)
+        assertEq("Deletable group", ar, er)
     }
 
-    'initialSelReqs   - assertSet("Initially reqs"  , result.initialState.selectedReqs  .selected, expectInitialReqs)
-    'initialSelGroups - assertSet("Initially groups", result.initialState.selectedGroups.selected, expectInitialRCGs)
+    'initialReqs   - assertSet("Initial reqs"  , result.initialState.selectedReqs  .selected, expectInitialReqs)
+    'initialGroups - assertSet("Initial groups", result.initialState.selectedGroups.selected, expectInitialRCGs)
   }
 }

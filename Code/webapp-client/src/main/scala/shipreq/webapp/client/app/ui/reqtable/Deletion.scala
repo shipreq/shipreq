@@ -97,16 +97,19 @@ object Deletion {
 
     var reqRows = Vector.newBuilder[ReqRow]
 
+    val reqFilter: Req => Boolean =
+      _.live(p.config.customReqTypes) :: Live
+
     def go(reqs: TraversableOnce[Req], level: Int): Unit = {
 
       // Sort current tier of reqs
-      val reqArray = reqs.toArray
+      val reqArray = reqs.toIterator.filter(reqFilter).toArray
       sortReqs(reqArray)
 
       for (r <- reqArray) {
 
         // Gather implied-by
-        val impByArray: Array[Req] = imps_<(r.id).map(lookupReq)(collection.breakOut)
+        val impByArray: Array[Req] = imps_<(r.id).iterator.map(lookupReq).filter(reqFilter).toArray
         sortReqs(impByArray)
         val impBy = impByArray.toVector
 
@@ -197,13 +200,13 @@ object Deletion {
   @tailrec
   private def codesOfUselessChildGroups(trie: Trie, queue: List[Code], acc: Set[Code]): Set[Code] =
     queue match {
-      case h :: t =>
+      case code :: queueTail =>
         val acc2 =
-          if (isUselessLookingDown(trie, h))
-            acc | codesOfActiveChildGroups(trie, h) + h
+          if (isUselessLookingDown(trie, code))
+            acc | codesOfActiveChildGroups(trie, code) + code
           else
             acc
-        codesOfUselessChildGroups(trie, t, acc2)
+        codesOfUselessChildGroups(trie, queueTail, acc2)
       case Nil => acc
     }
 

@@ -1,5 +1,6 @@
 package shipreq.webapp.base.test
 
+import nyaya.prop._
 import scalaz.{IMap => _, _}
 import scalaz.std.AllInstances._
 import scalaz.syntax.bind._
@@ -41,10 +42,14 @@ object ProjectDslInternals {
         LiveReqCodeGroup(id getOrElse nextReqCodeId(), t),
         ReqCode.emptyReqInactive)
 
-    def newActiveReq(id: Option[ReqCodeId], reqId: ReqId) =
-      ReqCode.ActiveReq(
-        id getOrElse nextReqCodeId(), reqId,
-        None, ReqCode.emptyReqInactive)
+    def assignReqCodeToReq(t: ReqCode.Trie, c: ReqCode.Value, id: Option[ReqCodeId], reqId: ReqId, reqLive: Live): ReqCode.Trie = {
+      import ReqCode._
+      def rcid() = id getOrElse nextReqCodeId()
+      reqLive match {
+        case Live => t.modify(c)(e => ActiveReq(rcid(), reqId, e.flatMap(_.deadGroup), e.fold(emptyReqInactive)(_.reqInactive)))
+        case Dead => t.modify(c)(_.getOrElse(Data.empty).modReqInactive(_.add(reqId, rcid())))
+      }
+    }
 
     def done: Project =
       IdCeilings.supply(ids =>
@@ -96,8 +101,11 @@ object ProjectDslInternals {
     def defaultReqType(rt: CustomReqTypeId): Composite =
       copy(defaultReqType = Some(rt))
 
-    def !(p: Project): Project =
-      state.exec(projectState(p)).done
+    def !(p: Project): Project = {
+      val p2 = state.exec(projectState(p)).done
+      DataProp.project.allIncludingConfig assert p2
+      p2
+    }
 
     def !!(p: Project): Project =
       shuffle.!(p)
@@ -148,7 +156,7 @@ object ProjectDsl {
         val text        = cftexts.mapValuesNow(t => Map.empty[ReqId, CFTextValue].updated(id, t))
         val tags        = p.tags.addvs(id, this.tags)
         val imps        = p.imps.addks(impSrcs, id).addvs(id, impTgts)
-        val codeTrie    = codes.foldLeft(p.reqCodeTrie)((t, c) => t.put(c, p.newActiveReq(None, id)))
+        val codeTrie    = codes.foldLeft(p.reqCodeTrie)((t, c) => p.assignReqCodeToReq(t, c, None, id, live))
         val p2          = p.copy(nextId       = this.id.fold(id.value + 1)(_ => p.nextId),
                                  pubids       = pr,
                                  reqs         = p.reqs + req,
