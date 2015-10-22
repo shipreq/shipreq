@@ -4,6 +4,7 @@ package shipreq.webapp.base.data
 import nyaya.prop._
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
+import scalaz.{Monoid, Foldable}
 import scalaz.syntax.equal._
 import scalaz.std.AllInstances._
 import shipreq.base.util._, MTrie.Ops, ScalaExt._, Debug._
@@ -14,6 +15,24 @@ import ScalaExt._
 
 object DataProp {
   implicit def autoLiftL(e: Eval) = e.liftL
+
+  implicit val iteratorFoldable: Foldable[Iterator] =
+    new Foldable[Iterator] {
+      def foldMap[A, B](fa: Iterator[A])(f: A => B)(implicit F: Monoid[B]) =
+        foldLeft(fa, F.zero)((x, y) => Monoid[B].append(x, f(y)))
+
+      def foldRight[A, B](fa: Iterator[A], b: => B)(f: (A, => B) => B) =
+        fa.foldRight(b)(f(_, _))
+
+      override def foldLeft[A, B](fa: Iterator[A], b: B)(f: (B, A) => B): B =
+        fa.foldLeft(b)(f)
+
+      override def any[A](fa: Iterator[A])(p: A => Boolean): Boolean =
+        fa.exists(p)
+
+      override def all[A](fa: Iterator[A])(p: A => Boolean): Boolean =
+        fa.forall(p)
+    }
 
   def id[T <: TaggedInt] =
     Prop.test[T]("id > 0", _.value > 0)
@@ -37,7 +56,7 @@ object DataProp {
     type T = CustomIssueTypeIMap
 
     def ids =
-      id[CustomIssueTypeId].forall((_: T).keys.toStream)
+      id[CustomIssueTypeId].forall((_: T).keysIterator)
 
     def all = ids rename "CustomIssueTypes"
   }
@@ -68,7 +87,7 @@ object DataProp {
       Prop.distinct("name", (_: T).values.toStream.map(_.name))
 
     def each =
-      customReqType.all.forall[T, Stream](_.values.toStream)
+      customReqType.all.forall[T, Iterator](_.valuesIterator)
 
     lazy val all =
       (uniqueMnemonics ∧ uniqueNames ∧ each) rename "CustomReqTypes"
@@ -80,7 +99,7 @@ object DataProp {
     type Fields = Vector[Field]
 
     def ids =
-      id[CustomFieldId].forall((_: FieldSet).customFields.keys.toStream)
+      id[CustomFieldId].forall((_: FieldSet).customFields.keysIterator)
 
     def uniqueNames =
       Prop.distinct("name", (_: Fields).flatMap(_.independentName.toVector))
@@ -130,7 +149,7 @@ object DataProp {
     type T = TagTree
 
     def ids =
-      id[TagId].forall((_: T).keys.toStream)
+      id[TagId].forall((_: T).keysIterator)
 
     def uniqueNames =
       Prop.distinct("name", (_: T).vstream(_.tag.name))
@@ -156,10 +175,10 @@ object DataProp {
     type T = Requirements
 
     def ids =
-      id[ReqId].forall((_: T).reqs.keys.toStream)
+      id[ReqId].forall((_: T).reqs.keysIterator)
 
     def reqPubidsInRegister =
-      Prop.forall((_: T).reqs.values.toStream)(t =>
+      Prop.forall((_: T).reqs.valuesIterator)(t =>
         Prop.equal[Req]("Req's pubid refers to itself in the Pubid register")(
           _.id.some,
           r => t.pubids(r.pubid)))
@@ -171,12 +190,12 @@ object DataProp {
     def pubidReqTypeAssociations = {
       import StaticReqType._
       def test[T <: ReqTypeId](rt: T, reqIds: Vector[ReqId])(implicit reqIdT: ClassTag[ReqIdT[T]]): FailureReasonO =
-        reqIds.toStream.map {
+        reqIds.iterator.map {
           case reqIdT(_) => None
           case reqId     => Some(s"Illegal association: $reqId to $rt")
         }.find(_.isDefined).flatten
       Prop.atom[PubidRegister]("Pubid reqtype-to-req associations",
-        pr => pr.value.m.toStream.map {
+        pr => pr.value.m.iterator.map {
           case (rt: CustomReqTypeId, reqIds) => test(rt, reqIds)
           case (rt@ UseCase        , reqIds) => test(rt, reqIds)
         }.find(_.isDefined).flatten
@@ -282,7 +301,7 @@ object DataProp {
       }
 
       Prop.atom("reqApplication vectors",
-        _.reqApplication.values.toStream.map(test).find(_.isDefined).flatten)
+        _.reqApplication.values.iterator.map(test).find(_.isDefined).flatten)
     }
 
     val all = ids ∧ reqApplicationVectors
@@ -333,6 +352,7 @@ object DataProp {
 
     lazy val anyTextV: Prop[Vector[Text.AnyOptional]] = anyText.forallF
     lazy val anyTextS: Prop[Stream[Text.AnyOptional]] = anyText.forallF
+    lazy val anyTextI: Prop[Iterator[Text.AnyOptional]] = anyText.forallF
 
     val nop = Eval.pass()
 
@@ -373,7 +393,7 @@ object DataProp {
       type TR = (P, Refs)
 
       def mkRefs(p: ProjectConfig): Refs = Refs(
-        p.reqTypes.map(_.reqTypeId).toSet,
+        p.reqTypes.map(_.reqTypeId)(collection.breakOut),
         p.tags.keySet)
 
       def whitelist[A](refs: TR => Set[A])(name: String, test: P => Traversable[A]) =
@@ -405,8 +425,8 @@ object DataProp {
                     reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId])
 
     def atoms =
-      Prop.eval[(String, Stream[Text.AnyOptional])](t => text.anyTextS(t._2).rename(t._1))
-        .forallF[Stream].contramap[P](_.allRichText) rename "Atoms"
+      Prop.eval[(String, Iterator[Text.AnyOptional])](t => text.anyTextI(t._2).rename(t._1))
+        .forallF[List].contramap[P](_.allRichText) rename "Atoms"
 
     def constituents = (
                    reqs.all.contramap[P](_.reqs)
@@ -417,7 +437,7 @@ object DataProp {
 
     def liveReqCodeRequiresLiveTarget =
       Prop.whitelist[Project]("Live ReqCode requires Live Target")(
-        p => p.reqs.reqs.values.toStream.filter(_.live(p.config.customReqTypes) :: Live).map(_.id).toSet,
+        p => p.reqs.reqs.valuesIterator.filter(_.live(p.config.customReqTypes) :: Live).map(_.id).toSet,
         _.reqCodes.activeReqCodesByReqId.keySet)
 
     def validRefs = {
@@ -426,9 +446,9 @@ object DataProp {
 
       def mkRefs(p: Project): Refs = Refs(
         p.config.fields.customFields.keySet,
-        p.reqs.reqs.vstream(_.id).toSet,
+        p.reqs.reqs.valuesIterator.map(_.id).toSet,
         p.reqCodes.idSet,
-        p.config.reqTypes.map(_.reqTypeId).toSet,
+        p.config.reqTypes.map(_.reqTypeId)(collection.breakOut),
         p.config.tags.keySet)
 
       def whitelist[A](refs: TR => Set[A])(name: String, test: P => Traversable[A]) =
@@ -443,16 +463,6 @@ object DataProp {
       def validTagIds     = whitelist(_._2.tagIds) _
       def validIssueTypes = whitelist(_._1.config.customIssueTypes.keySet) _
 
-      def inText[A](f: PartialFunction[AnyAtom, A]): P => Traversable[A] = {
-        def go(a0: AnyAtom): Stream[A] = a0 match {
-          case a if f.isDefinedAt(a)         => f(a) +: Stream.empty
-          case a: ListMarkup # UnorderedList => a.items.toStream.flatMap(_.toStream).flatMap(go)
-          case a: Issue      # Issue         => a.desc.toStream.flatMap(go)
-          case _                             => Stream.empty
-        }
-        _.allRichText.flatMap(_._2).flatMap(_.toStream).flatMap(go)
-      }
-
       ( validReqTypeIds("Pubid keys",                 _.reqs.pubids.value.m.keys)
       ∧ validReqIds    ("ReqCode ReqIds (active)",    _.reqCodes.activeReqCodesByReqId.keys)
       ∧ validReqIds    ("ReqCode ReqIds (inactive)",  _.reqCodes.inactiveIdsByReqId.keys)
@@ -461,10 +471,10 @@ object DataProp {
       ∧ validReqIds    ("ReqData.config.tags keys",   _.reqTags.keys)
       ∧ validTagIds    ("ReqData.config.tags values", _.reqTags.allValues)
       ∧ validReqIds    ("ReqData.implications",       _.implications.members)
-      ∧ validReqIds    ("Atoms: ReqRefs",             inText { case a: ReqRef # ReqRef  => a.value })
-      ∧ validReqCodeIds("Atoms: CodeRefs",            inText { case a: ReqRef # CodeRef => a.value })
-      ∧ validTagIds    ("Atoms: TagRefs",             inText { case a: TagRef # TagRef  => a.value })
-      ∧ validIssueTypes("Atoms: Issues",              inText { case a: Issue  # Issue   => a.typ })
+      ∧ validReqIds    ("Atoms: ReqRefs",             _.atomScan.reqRefs)
+      ∧ validReqCodeIds("Atoms: CodeRefs",            _.atomScan.codeRefs)
+      ∧ validTagIds    ("Atoms: TagRefs",             _.atomScan.tagRefs.all.all)
+      ∧ validIssueTypes("Atoms: Issues",              _.atomScan.issues.all.all.map(_.typ))
       ∧ validReqIds    ("DeletionReason reqIds",      _.deletionReasons.reqApplication.keys)
       ).rename("Cross-constituent refs").contramap[P](_ mapStrengthR mkRefs)
     }

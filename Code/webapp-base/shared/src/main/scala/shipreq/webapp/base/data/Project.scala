@@ -65,18 +65,18 @@ final case class Project(config         : ProjectConfig,
   }
 
   /** Dead or alive */
-  def allRichText: Stream[(String, Stream[Text.AnyOptional])] =
-    Stream(
-      ("Deletion reasons", deletionReasons.reasons.toStream.map(_.whole)),
-      ("ReqCodeGroups", reqCodes.groups.map(_.title)),
-      ("GenericReq titles", reqs.reqs.values.filterT[GenericReq].map(_.title)),
-      ("Text fields", reqText.values.toStream.flatMap(_.values.toStream).map(_.whole)))
+  def allRichText: List[(String, Iterator[Text.AnyOptional])] =
+    ("Deletion reasons",  deletionReasons.reasons.iterator.map(_.whole))                 ::
+    ("ReqCodeGroups",     reqCodes.groups.iterator.map(_.title))                         ::
+    ("GenericReq titles", reqs.reqs.values.filterTI[GenericReq].map(_.title))            ::
+    ("Text fields",       reqText.valuesIterator.flatMap(_.valuesIterator).map(_.whole)) ::
+    Nil
 
   def countAtoms: ShowSize.Node = {
     val counted =
       allRichText.map {
         case (name, txts) =>
-          ShowSize.Node.countChildren(name, txts.flatMap(_.toStream))(Atom.Type.of(_).toString)
+          ShowSize.Node.countChildren(name, txts.toStream.flatMap(_.toStream))(Atom.Type.of(_).toString)
       }
     ShowSize.Node.sum("Atoms", counted: _*)
   }

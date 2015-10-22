@@ -236,8 +236,8 @@ final case class ReqCodes(trie: ReqCode.Trie) {
 
   private lazy val scan = new Scan
   private class Scan {
-    private val _allIds         = Stream.newBuilder[ReqCodeId]
-    private val _groups         = Stream.newBuilder[ReqCodeGroup]
+    private val _allIds         = List.newBuilder[ReqCodeId]
+    private val _groups         = List.newBuilder[ReqCodeGroup]
     private val _reqCodesById   = Map.newBuilder[ReqCodeId, Value]
     var _activeReqCodesByReqId: Multimap[ReqId, Set, Value] = UnivEq.emptySetMultimap
     var _inactiveIdsByReqId: Multimap[ReqId, Set, ReqCodeId] = UnivEq.emptySetMultimap
@@ -250,13 +250,13 @@ final case class ReqCodes(trie: ReqCode.Trie) {
 
       _inactiveIdsByReqId ++= data.reqInactive.m
 
-      data.deadGroup.map(_groups += _)
-
       data match {
         case d: ActiveReq   => _activeReqCodesByReqId = _activeReqCodesByReqId.add(d.reqId, code)
         case d: ActiveGroup => _groups += d.group
         case _: Inactive    => ()
       }
+
+      data.deadGroup.map(_groups += _)
     }
 
     val groups                = _groups.result()
@@ -266,11 +266,12 @@ final case class ReqCodes(trie: ReqCode.Trie) {
     val inactiveIdsByReqId    = _inactiveIdsByReqId
   }
 
-  @inline def groups               : Stream[ReqCodeGroup]            = scan.groups
+  /** All groups, dead and live. */
+  @inline def groups               : List[ReqCodeGroup]              = scan.groups
   @inline def reqCodesById         : Map[ReqCodeId, Value]           = scan.reqCodesById
   @inline def activeReqCodesByReqId: Multimap[ReqId, Set, Value]     = scan.activeReqCodesByReqId
   @inline def inactiveIdsByReqId   : Multimap[ReqId, Set, ReqCodeId] = scan.inactiveIdsByReqId
-  @inline def idStream             : Stream[ReqCodeId]               = scan.allIds
+  @inline def idStream             : List[ReqCodeId]                 = scan.allIds
 
   /** Active and inactive [[ReqCodeId]]s alike. */
   lazy val idSet = idStream.toSet

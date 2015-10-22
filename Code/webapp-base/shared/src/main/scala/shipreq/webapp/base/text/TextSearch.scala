@@ -241,7 +241,7 @@ final class TextSearch(project: Project,  plainText: PlainText.ForProject) {
         val title = norm(plainText reqCodeGroupTitle g)
         IndexEntryG(g, title)
       }
-      project.reqCodes.groups map each
+      project.reqCodes.groups.iterator map each
     }
 
     val indexR = IMap.empty[ReqId,     IndexEntryR](_.req.id)   ++ indexValuesR

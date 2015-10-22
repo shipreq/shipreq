@@ -65,9 +65,12 @@ object ScalaExt extends Platform.ScalaExt {
     @inline def castOption: Option[A] = s.asInstanceOf[Option[A]]
   }
 
-  implicit class IterableExt[A](val _a: Iterable[A]) extends AnyVal {
-    def filterT[T <: A](implicit t: ClassTag[T]): Stream[T] =
-      _a.toStream.flatMap(t.unapply(_).toStream)
+  implicit class IterableExt[A](private val as: Iterable[A]) extends AnyVal {
+    def filterT[T <: A](implicit t: ClassTag[T]): Stream[T] = // TODO deprecate?
+      as.toStream.flatMap(t.unapply(_).toStream)
+
+    def filterTI[T <: A](implicit t: ClassTag[T]): Iterator[T] =
+      as.iterator.flatMap(t.unapply(_).iterator)
   }
 
   implicit class StreamExt[A](val _a: Stream[A]) extends AnyVal {

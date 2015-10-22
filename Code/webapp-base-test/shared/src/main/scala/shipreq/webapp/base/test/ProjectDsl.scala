@@ -70,7 +70,7 @@ object ProjectDslInternals {
     reqs           = p.reqs.genericReqs,
     pubids         = p.reqs.pubids,
     reqCodeTrie    = p.reqCodes.trie,
-    maxReqCodeId   = (0 #:: p.reqCodes.idStream.map(_.value)).max,
+    maxReqCodeId   = p.reqCodes.idStream match {case Nil => 0; case l => l.iterator.map(_.value).max},
     text           = p.reqText,
     tags           = p.reqTags,
     imps           = p.implications.srcToTgt)

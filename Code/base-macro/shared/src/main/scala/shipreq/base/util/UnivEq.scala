@@ -98,6 +98,7 @@ object UnivEq extends UnivEqImplicits {
   @inline def emptyMultimap   [K: UnivEq, L[_] : MultiValues, V](implicit ev: L[V] =:!= Set[V]) = Multimap.empty[K, L, V]
 
   @inline def emptyMutableSet[A: UnivEq] = collection.mutable.Set.empty[A]
+  @inline def setBuilder     [A: UnivEq] = Set.newBuilder[A]
 
   // ===================================================================================================================
 
