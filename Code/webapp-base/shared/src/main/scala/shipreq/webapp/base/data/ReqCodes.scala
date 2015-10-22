@@ -130,10 +130,12 @@ object ReqCode {
     def deadGroup: DeadGroup
 
     /** Active & inactive */
-    def ids: Stream[ReqCodeId]
+    def ids: List[ReqCodeId]
 
-    protected final def _inactiveIds: Stream[ReqCodeId] =
-      deadGroup.toStream.map(_.id) append reqInactive.allValues
+    protected final def _inactiveIds: List[ReqCodeId] = {
+      val a = reqInactive.m.valuesIterator.flatMap(_.iterator).toList
+      deadGroup.fold(a)(_.id :: a)
+    }
   }
 
   @Lenses
@@ -151,7 +153,7 @@ object ReqCode {
     override def nonEmpty = true
     override def isActive = true
     override def activeId = Some(id)
-    override def ids      = id #:: _inactiveIds
+    override def ids      = id :: _inactiveIds
     override def modReqInactive(f: ReqInactive => ReqInactive) =
       copy(reqInactive = f(reqInactive))
   }
@@ -163,7 +165,7 @@ object ReqCode {
     override def isActive  = true
     override def activeId  = Some(id)
     override def deadGroup = None
-    override def ids       = id #:: _inactiveIds
+    override def ids       = id :: _inactiveIds
     override def modReqInactive(f: ReqInactive => ReqInactive) =
       copy(reqInactive = f(reqInactive))
   }
@@ -236,7 +238,8 @@ final case class ReqCodes(trie: ReqCode.Trie) {
 
   private lazy val scan = new Scan
   private class Scan {
-    private val _allIds         = List.newBuilder[ReqCodeId]
+    private val _idList         = List.newBuilder[ReqCodeId]
+    private val _idSet          = Set.newBuilder[ReqCodeId]
     private val _groups         = List.newBuilder[ReqCodeGroup]
     private val _reqCodesById   = Map.newBuilder[ReqCodeId, Value]
     var _activeReqCodesByReqId: Multimap[ReqId, Set, Value] = UnivEq.emptySetMultimap
@@ -244,9 +247,11 @@ final case class ReqCodes(trie: ReqCode.Trie) {
 
     trie.foreachPathAndValue { (code, data) =>
 
-      val ids = data.ids
-      _allIds ++= ids
-      _reqCodesById ++= ids.map((_, code))
+      for (id <- data.ids) {
+        _idList += id
+        _idSet += id
+        _reqCodesById += ((id, code))
+      }
 
       _inactiveIdsByReqId ++= data.reqInactive.m
 
@@ -261,20 +266,37 @@ final case class ReqCodes(trie: ReqCode.Trie) {
 
     val groups                = _groups.result()
     val reqCodesById          = _reqCodesById.result()
-    val allIds                = _allIds.result()
+    val idList                = _idList.result()
+    val idSet                 = _idSet.result()
     val activeReqCodesByReqId = _activeReqCodesByReqId
     val inactiveIdsByReqId    = _inactiveIdsByReqId
   }
 
   /** All groups, dead and live. */
-  @inline def groups               : List[ReqCodeGroup]              = scan.groups
-  @inline def reqCodesById         : Map[ReqCodeId, Value]           = scan.reqCodesById
-  @inline def activeReqCodesByReqId: Multimap[ReqId, Set, Value]     = scan.activeReqCodesByReqId
-  @inline def inactiveIdsByReqId   : Multimap[ReqId, Set, ReqCodeId] = scan.inactiveIdsByReqId
-  @inline def idStream             : List[ReqCodeId]                 = scan.allIds
+  @inline def groups: List[ReqCodeGroup] =
+    scan.groups
+
+  @inline def reqCodesById: Map[ReqCodeId, Value] =
+    scan.reqCodesById
+
+  @inline def activeReqCodesByReqId: Multimap[ReqId, Set, Value] =
+    scan.activeReqCodesByReqId
+
+  /** Unlike the active case, the same code can have multiple inactive IDs. */
+  @inline def inactiveIdsByReqId: Multimap[ReqId, Set, ReqCodeId] =
+    scan.inactiveIdsByReqId
+
+  /**
+   * Active and inactive [[ReqCodeId]]s alike.
+   *
+   * This is needed in addition to [[idSet]] so that [[DataProp]] can detect duplicate IDs.
+   */
+  @inline def idList: List[ReqCodeId] =
+    scan.idList
 
   /** Active and inactive [[ReqCodeId]]s alike. */
-  lazy val idSet = idStream.toSet
+  @inline def idSet: Set[ReqCodeId] =
+    scan.idSet
 }
 
 object ReqCodes {

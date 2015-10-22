@@ -226,10 +226,10 @@ object DataProp {
         .forall[T, List](_.trie.cataV[List[Data]](Nil)((q, _, d) => d :: q))
 
     def idFormat =
-      id[ReqCodeId].forall((_: T).idStream)
+      id[ReqCodeId].forall((_: T).idList)
 
     def uniqueIds =
-      Prop.distinct("ID", (_: T).idStream)
+      Prop.distinct("ID", (_: T).idList)
 
     lazy val all =
       (branchesMustBranch ∧ allData ∧ uniqueIds ∧ idFormat) rename "ReqCodes"
