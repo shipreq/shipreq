@@ -5,11 +5,11 @@ import monocle.function.index
 import monocle.std.mapIndex
 import scala.annotation.tailrec
 import scalaz.std.option.optionInstance
-
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{PlainText, Text}
 import shipreq.webapp.client.app.ui.reqtable.{SortMethod => SM, SortCriterion => SC, Column => C}
+import ColumnRenderer.SortableDeletionReason
 import SortMethod.{Asc, AscThenBlanks, BlanksThenAsc}
 
 trait Sorter {
@@ -301,12 +301,18 @@ object Sorter {
         sort   = SortFn.intVector(bp)
     ))
 
-  def textSorter(c: Column, f: PlainText.ForProject => Row => String): SorterForSMCB =
+  def textSorterS(c: Column, f: Setup => PlainText.ForProject => Row => String): SorterForSMCB =
     SorterForSMCB(bp =>
       Sorter[String](
-        prep = setup => setup.applicability(c).wrap((row: Row) => setup.normalisedText(f(_)(row)))(""),
+        prep = setup => {
+          val g = f(setup)
+          setup.applicability(c).wrap((row: Row) => setup.normalisedText(g(_)(row)))("")
+        },
         sort = SortFn.string(bp)
       ))
+
+  def textSorter(c: Column, f: PlainText.ForProject => Row => String): SorterForSMCB =
+    textSorterS(c, _ => f)
 
   def customTextFieldSorter(id: CustomField.Text.Id, c: Column): SorterForSMCB =
     textSorter(c, p => {
@@ -318,6 +324,12 @@ object Sorter {
     textSorter(C.Title, p => {
       case r: GenericReqRow   => p.reqTitle(r.req)
       case r: ReqCodeGroupRow => p.reqCodeGroupTitle(r.group)
+    })
+
+  def deletionReasonSorter: SorterForSMCB =
+    textSorterS(C.DeletionReason, s => pt => {
+      case r: GenericReqRow   => SortableDeletionReason.req(s.p, pt, r.req)
+      case _: ReqCodeGroupRow => SortableDeletionReason.reqCodeGroup
     })
 
   // ===================================================================================================================
@@ -339,6 +351,7 @@ object Sorter {
     case C.Tags                             => tagSorter(Row.tags, _.tagByNameOrder)
     case C.ImplicationSrc                   => pubidVectorSorter(Row.implicationSrc)
     case C.ImplicationTgt                   => pubidVectorSorter(Row.implicationTgt)
+    case C.DeletionReason                   => deletionReasonSorter
   }
 
   val inconclusive: SC.Inconclusive => Sorter = {

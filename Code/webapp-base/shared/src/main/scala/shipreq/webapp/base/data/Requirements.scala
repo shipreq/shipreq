@@ -112,19 +112,16 @@ final case class GenericReq(id            : GenericReqId,
                             title         : Text.GenericReqTitle.OptionalText,
                             liveExplicitly: Live) extends ReqT[CustomReqTypeId] {
 
-  private def liveDeps(customReqTypes: CustomReqTypeIMap): Live =
-    customReqTypes.need(pubid.reqTypeId).live
+  import GenericReq.ImplicitLiveStatus
+
+  def implicitLiveStatus(customReqTypes: CustomReqTypeIMap): ImplicitLiveStatus =
+    customReqTypes.need(pubid.reqTypeId).live match {
+      case Live => ImplicitLiveStatus.NoImpact
+      case Dead => ImplicitLiveStatus.ReqTypeIsDead
+    }
 
   override def live(customReqTypes: CustomReqTypeIMap): Live =
-    liveExplicitly && liveDeps(customReqTypes)
-
-  /**
-   * Can this requirement be restored directly?
-   *
-   * If [[liveExplicitly]] was [[Live]], would the final live value be [[Live]] too.
-   */
-  def isRestorable(customReqTypes: CustomReqTypeIMap): Boolean =
-    liveDeps(customReqTypes) :: Live
+    liveExplicitly && implicitLiveStatus(customReqTypes).live
 }
 
 object GenericReq {
@@ -133,6 +130,19 @@ object GenericReq {
   object IdAccess extends ObjDataId[GenericReq.type, GenericReq, GenericReqId] {
     override def id(d: GenericReq) = d.id
     override val unapplyData: AnyRef => Option[GenericReq] = {case r: GenericReq => Some(r); case _ => None}
+  }
+
+  /**
+   * In order for a requirement to be live, its dependencies must allow it.
+   *
+   * This encodes the impact of a requirement's dependencies on its live status.
+   */
+  sealed trait ImplicitLiveStatus {
+    def live: Live
+  }
+  object ImplicitLiveStatus {
+    case object NoImpact      extends ImplicitLiveStatus { override def live = Live }
+    case object ReqTypeIsDead extends ImplicitLiveStatus { override def live = Dead }
   }
 }
 

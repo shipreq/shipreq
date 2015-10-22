@@ -25,6 +25,7 @@ object UiText {
     def tags           = "Tags"
     def implicationSrc = "Implied By"
     def implicationTgt = "Implies"
+    def deletionReason = "Deletion Reason"
   }
 
   object FieldNames {

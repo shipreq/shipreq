@@ -4,7 +4,7 @@ import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
 import scala.scalajs.js
 import shipreq.base.util.{NonEmptyVector, UnivEq}
-import shipreq.webapp.base.data.{Live, Project, ProjectConfig}
+import shipreq.webapp.base.data.{Dead, Live, Project, ProjectConfig}
 import shipreq.webapp.base.data
 import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.client.lib.FilterDead
@@ -33,19 +33,25 @@ object Column {
   }
 
   sealed trait BuiltIn extends Column {
-    override final def live = Live
     override final val key = nextBuiltInKey()
+  }
+  sealed trait BuiltInLive extends BuiltIn {
+    override final def live = Live
+  }
+  sealed trait BuiltInDead extends BuiltIn {
+    override final def live = Dead
   }
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  case object Pubid          extends BuiltIn with SortConclusive
-  case object Code           extends BuiltIn with SortInconclusive with HasBlanks
-  case object Title          extends BuiltIn with SortInconclusive with HasBlanks
-  case object ReqType        extends BuiltIn with SortInconclusive with NoBlanks
-  case object Tags           extends BuiltIn with SortInconclusive with HasBlanks
-  case object ImplicationSrc extends BuiltIn with SortInconclusive with HasBlanks
-  case object ImplicationTgt extends BuiltIn with SortInconclusive with HasBlanks
+  case object Pubid          extends BuiltInLive with SortConclusive
+  case object Code           extends BuiltInLive with SortInconclusive with HasBlanks
+  case object Title          extends BuiltInLive with SortInconclusive with HasBlanks
+  case object ReqType        extends BuiltInLive with SortInconclusive with NoBlanks
+  case object Tags           extends BuiltInLive with SortInconclusive with HasBlanks
+  case object ImplicationSrc extends BuiltInLive with SortInconclusive with HasBlanks
+  case object ImplicationTgt extends BuiltInLive with SortInconclusive with HasBlanks
+  case object DeletionReason extends BuiltInDead with SortInconclusive with HasBlanks
 
   // Field columns
   // - No applicable StaticFields, else they'd be added manually here.
@@ -66,7 +72,7 @@ object Column {
   @inline implicit def reusability: Reusability[Column]                     = Reusability.byEqual
 
   val builtInValues: NonEmptyVector[BuiltIn] =
-    NonEmptyVector(Pubid, Code, Title, ReqType, Tags, ImplicationSrc, ImplicationTgt)
+    NonEmptyVector(Pubid, Code, Title, ReqType, Tags, ImplicationSrc, ImplicationTgt, DeletionReason)
 
   val mandatory: Set[BuiltIn] =
     UnivEq.emptySet[BuiltIn] + Pubid + Title
@@ -112,6 +118,7 @@ object Column {
       case Tags           => ColumnNames.tags
       case ImplicationSrc => ColumnNames.implicationSrc
       case ImplicationTgt => ColumnNames.implicationTgt
+      case DeletionReason => ColumnNames.deletionReason
     }
 
     implicit val reusability: Reusability[NameResolver] = {

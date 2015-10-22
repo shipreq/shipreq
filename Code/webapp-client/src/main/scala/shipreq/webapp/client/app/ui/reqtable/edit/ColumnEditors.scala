@@ -45,9 +45,10 @@ final class ColumnEditors(project        : Px[Project],
               case Column.Title          => genericReqTitle(r, fin)
               case Column.Tags           => tags(r, fin)
               case Column.ReqType        => reqType(r, fin)
-              case Column.Pubid          => noEditor
               case Column.ImplicationSrc => imps(Row.implicationSrc, col)(r, fin)
               case Column.ImplicationTgt => imps(Row.implicationTgt, col)(r, fin)
+              case Column.Pubid
+                 | Column.DeletionReason => noEditor
               case Column.CustomField(f, _) =>
                 f match {
                   case id: CustomField.Text       .Id => cfText(id)(r, fin)
@@ -65,6 +66,7 @@ final class ColumnEditors(project        : Px[Project],
                  | Column.Tags
                  | Column.ImplicationSrc
                  | Column.ImplicationTgt
+                 | Column.DeletionReason
                  | _: Column.CustomField => noEditor
             }
         }

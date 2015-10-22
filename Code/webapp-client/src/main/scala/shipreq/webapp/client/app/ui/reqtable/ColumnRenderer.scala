@@ -5,7 +5,9 @@ import scalacss.ScalaCssReact._
 import scalacss.Domain
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import shipreq.base.util.Valid
+import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.text.ProjectText
 import shipreq.webapp.client.app.ui.ProjectWidgets
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
 import shipreq.webapp.client.lib.Plain
@@ -17,15 +19,45 @@ final class ColumnRenderer(
 
 object ColumnRenderer {
   sealed trait Status
-  case object Normal extends Status
+
+  case object Normal  extends Status
   case object DeadRow extends Status
-  case object `N/A` extends Status {
-    val element: ReactElement = <.span(*.`N/A`, "–")
-    val pair: (Status, ReactElement) = (this, element)
+  case object `N/A`   extends Status {
+    val tag    : ReactTag               = <.span(*.`N/A`, "–")
+    val element: ReactElement           = tag
+    val pair   : (Status, ReactElement) = (this, element)
   }
+
   val statusDomain = Domain.ofValues[Status](Normal, DeadRow, `N/A`)
 
-  val empty: ReactElement = <.span
+  val emptyTag: ReactTag     = <.span
+  val empty   : ReactElement = emptyTag
+
+  // -------------------------------------------------------------------------------------------------------------------
+
+  object RenderDeletionReason extends ProjectText.DeletionReasonFormatter[ReactTag] {
+    override type PT = ProjectWidgets
+
+    override protected def `n/a` =
+      `N/A`.tag
+
+    override protected def noReasonGiven =
+      emptyTag
+
+    override protected def reqTypeIsDead(pt: PT, rt: ReqType) =
+      <.span(
+        UiText.ColumnNames.reqType + " ",
+        pt.reqType(rt.reqTypeId),
+        " is deleted.")
+  }
+
+  object SortableDeletionReason extends ProjectText.DeletionReasonFormatter[String] {
+    override type PT = ProjectText[String]
+    override protected def `n/a` = ""
+    override protected def noReasonGiven = ""
+    override protected def reqTypeIsDead(pt: PT, rt: ReqType) =
+      UiText.ColumnNames.reqType + " " + rt.mnemonic.value + " is deleted."
+  }
 }
 
 class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets: ProjectWidgets) {
@@ -41,6 +73,7 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
         case Column.Tags           => tags(Row.tags)
         case Column.ImplicationSrc => imps(Row.implicationSrc) //("… ⇒")
         case Column.ImplicationTgt => imps(Row.implicationTgt) //("⇒ …")
+        case Column.DeletionReason => deletionReason
         case Column.CustomField(f, _) =>
           f match {
             case id: CustomField.Text       .Id => cfText(id)
@@ -114,5 +147,10 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
       case r: GenericReqRow   => f(r.req).fold(empty)(w => w)
       case _: ReqCodeGroupRow => `N/A`
     }
+  }
+
+  private def deletionReason = make {
+    case r: GenericReqRow   => RenderDeletionReason.req(project, widgets, r.req)
+    case _: ReqCodeGroupRow => RenderDeletionReason.reqCodeGroup
   }
 }

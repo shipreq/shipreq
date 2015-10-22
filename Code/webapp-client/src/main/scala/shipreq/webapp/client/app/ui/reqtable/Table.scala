@@ -162,8 +162,12 @@ object Table {
           val cols =
             content.items.map { i =>
               val c = i.data
+              val live = c match {
+                case Column.DeletionReason => Live // Don't render this title with strike-through
+                case _                     => c.live
+              }
               <.th(
-                *.columnHeader(c.live, i.status),
+                *.columnHeader(live, i.status),
                 i.mod,
                 ^.tabIndex   := -1,
                 ^.onKeyDown ==> dataColKeyDown(c),

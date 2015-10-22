@@ -59,9 +59,13 @@ object SelectionCtrls {
           remaining -= id
           row match {
             case r: GenericReqRow =>
+              import GenericReq.ImplicitLiveStatus._
               r.live match {
                 case Live => delReqs += r.req
-                case Dead => if (r.req.isRestorable(p.cfg.customReqTypes)) resReqs += r.req
+                case Dead => r.req.implicitLiveStatus(p.cfg.customReqTypes) match {
+                  case NoImpact      => resReqs += r.req
+                  case ReqTypeIsDead => ()
+                }
               }
             case r: ReqCodeGroupRow =>
               r.live match {

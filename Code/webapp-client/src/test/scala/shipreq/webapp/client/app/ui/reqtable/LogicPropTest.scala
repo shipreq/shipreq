@@ -240,6 +240,7 @@ object LogicPropTest extends TestSuite {
       case C.Tags            => nop
       case C.ImplicationSrc  => nop
       case C.ImplicationTgt  => nop
+      case C.DeletionReason  => nop
       case C.CustomField(id, _) =>
         id match {
           case i: CustomField.Implication.Id => nop

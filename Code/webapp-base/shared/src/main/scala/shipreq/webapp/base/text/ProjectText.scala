@@ -66,6 +66,32 @@ object ProjectText {
         }
     }
   }
+
+  // -------------------------------------------------------------------------------------------------------------------
+
+  abstract class DeletionReasonFormatter[Out] {
+    type PT <: ProjectText[Out]
+
+    protected def `n/a`: Out
+    protected def noReasonGiven: Out
+    protected def reqTypeIsDead(pt: PT, rt: ReqType): Out
+
+    final def reqCodeGroup = `n/a`
+
+    final def req(p: Project, pt: PT, req: Req): Out =
+      req match {
+        case r: GenericReq =>
+          import GenericReq.ImplicitLiveStatus._
+          r.liveExplicitly match { // explicit must be checked before implicit
+            case Live =>
+              r.implicitLiveStatus(p.config.customReqTypes) match {
+                case NoImpact      => `n/a` // req is live
+                case ReqTypeIsDead => reqTypeIsDead(pt, p.config.reqType(r.pubid.reqTypeId))
+              }
+            case Dead => pt.latestDeletionReason(r.id) getOrElse noReasonGiven
+          }
+      }
+  }
 }
 
 abstract class ProjectText[Out](project: Project) {
@@ -101,4 +127,8 @@ abstract class ProjectText[Out](project: Project) {
           Function const None
       }
     }
+
+  val latestDeletionReason: ReqId => Option[Out] =
+    Memo(id =>
+      project.deletionReasons.getLatest(id).map(format1(Dead, _)))
 }
