@@ -89,7 +89,7 @@ object DataProp {
     def each =
       customReqType.all.forall[T, Iterator](_.valuesIterator)
 
-    lazy val all =
+    val all =
       (uniqueMnemonics ∧ uniqueNames ∧ each) rename "CustomReqTypes"
   }
 
@@ -140,7 +140,7 @@ object DataProp {
       orderNoDups ∧ orderCustomFieldsIso ∧ orderHasAllUndeletableStaticFields ∧
       tagFieldsUnique ∧ implicationFieldsUnique)
 
-    lazy val all =
+    val all =
       fieldSet rename "Fields"
   }
 
@@ -166,7 +166,7 @@ object DataProp {
     def tagTree =
       (ids ∧ uniqueNames ∧ uniqueSiblings ∧ noCycles ∧ noDeadLinks) rename "TagTree"
 
-    lazy val all =
+    val all =
       tagTree rename "Tags"
   }
 
@@ -202,7 +202,7 @@ object DataProp {
       ).contramap[T](_.pubids)
     }
 
-    lazy val all =
+    val all =
       (ids ∧ reqPubidsInRegister ∧ pubidsResolveToReqs ∧ pubidReqTypeAssociations) rename "Requirements"
   }
 
@@ -231,7 +231,7 @@ object DataProp {
     def uniqueIds =
       Prop.distinct("ID", (_: T).idList)
 
-    lazy val all =
+    val all =
       (branchesMustBranch ∧ allData ∧ uniqueIds ∧ idFormat) rename "ReqCodes"
   }
 
@@ -242,7 +242,7 @@ object DataProp {
     def noCycles =
       Implications.cycleDetector.noCycleProp("implications").contramap[T](_.srcToTgt.m)
 
-    lazy val all = noCycles
+    val all = noCycles
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -347,14 +347,7 @@ object DataProp {
       head.contramap[Text.AnyNonEmpty](_.head) ∧ last.contramap[Text.AnyNonEmpty](_.last)
     }.rename("NonEmptyText")
 
-    lazy val anyText: Prop[Text.AnyOptional] =
-      anyAtom.forallF[Vector] ∧ nonEmptyText.forallF[Option].contramap(NonEmptyVector.option)
-
-    lazy val anyTextV: Prop[Vector[Text.AnyOptional]] = anyText.forallF
-    lazy val anyTextS: Prop[Stream[Text.AnyOptional]] = anyText.forallF
-    lazy val anyTextI: Prop[Iterator[Text.AnyOptional]] = anyText.forallF
-
-    val nop = Eval.pass()
+    private val nop = Eval.pass()
 
     lazy val anyAtom: Prop[AnyAtom] = Prop.eval[AnyAtom] {
       case a: Literal         # Literal       => literal(a)
@@ -368,6 +361,13 @@ object DataProp {
       case a: Issue           # Issue         => anyText(a.desc)
       case _: TagRef          # TagRef        => nop
     } rename "AnyAtom"
+
+    lazy val anyText: Prop[Text.AnyOptional] =
+      anyAtom.forallF[Vector] ∧ nonEmptyText.forallF[Option].contramap(NonEmptyVector.option)
+
+    lazy val anyTextV: Prop[Vector[Text.AnyOptional]] = anyText.forallF
+
+    val anyTextI: Prop[Iterator[Text.AnyOptional]] = anyText.forallF
   }
 
   // ===================================================================================================================
