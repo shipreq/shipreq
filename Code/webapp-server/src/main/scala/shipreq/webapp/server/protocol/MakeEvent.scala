@@ -351,7 +351,10 @@ object MakeEvent { // TODO Move
         DeleteReqCodeGroups(ids)
 
       case UpdateContentCmd.RestoreContent(reqs, reqCodes) =>
-        RestoreContent(reqs, reqCodes)
+        if (reqs.isEmpty && reqCodes.isEmpty)
+          Failed("No content specified.")
+        else
+          RestoreContent(reqs, reqCodes)
     }
   }
 

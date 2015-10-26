@@ -82,6 +82,14 @@ object SelectionCtrls {
     }
   }
 
+  def locsOfReqs(ids: Iterator[ReqId]): Iterator[Loc] =
+    ids.map {
+      case i: GenericReqId => Loc(Row.GenericReqRowSourceId(i), None)
+    }
+
+  def locsOfGroups(ids: Iterator[ReqCodeId]): Iterator[Loc] =
+    ids.map(id => Loc(Row.ReqCodeGroupRowSourceId(id), None))
+
   class Backend($: BackendScope[Props, Unit]) {
 
     def render(p: Props) = {
@@ -103,7 +111,7 @@ object SelectionCtrls {
         s + suffix
       }
 
-      val delButton = {
+      val deleteButton = {
         val d = ss.deletable
 
         def delReqsAndGroups =
@@ -128,23 +136,48 @@ object SelectionCtrls {
         delReqsAndGroups orElse delGroupsOnly getOrElse cantDelete
       }
 
-//      def button(count: Int, label: String, modal: => Modal) =
-//        if (count == 0)
-//          <.button(
-//            ^.disabled := true,
-//            label)
-//        else
-//          <.button(
-//            ^.onClick --> p.setModal(modal),
-//            addCount(label, count))
-//      val resButton = button(restorable.total, "Restore", TEST_MODAL)
+      val restoreButton = {
+        val r = ss.restorable
+        if (r.total == 0)
+          <.button(^.disabled := true, "Restore")
+        else {
+          def cmd = UpdateContentCmd.RestoreContent(
+            r.reqs.map(_.id)(collection.breakOut),
+            r.groups.map(_.id)(collection.breakOut))
+          <.button(
+            ^.onClick --> restoreIO(cmd),
+            addCount("Restore", r.total))
+        }
+      }
 
-      <.div(infoText, delButton)
+      <.div(infoText, deleteButton, restoreButton)
     }
 
     val cancel = $.props.flatMap(_ setModal Modal.none)
 
-    def updateRowsIO(cmd: UpdateContentCmd, locs: List[Loc]): Callback = {
+    def deleteGroupsIO(groups: NonEmptySet[ReqCodeId]): Callback = {
+      val cmd = UpdateContentCmd.DeleteReqCodeGroups(groups)
+      val locs = locsOfGroups(cmd.ids.iterator).toList
+      callRemoteAndUpdateRows(cmd, locs)
+    }
+
+    def deleteReqsIO(cmd: UpdateContentCmd.DeleteReqs): Callback = {
+      val locs = locsOfReqs(cmd.reqs.iterator) ++ locsOfGroups(cmd.reqCodeGroups.iterator)
+      callRemoteAndUpdateRows(cmd, locs.toList)
+    }
+
+    def deleteReqsModal(p: Props, reqs: NonEmptySet[ReqId], groups: Set[ReqCodeId]): Modal = {
+      val props1 = Deletion.initProps1(p.project, reqs, groups)
+      val props = Deletion.makeProps(props1, p.widgets, p.projectText, p.textSearch, deleteReqsIO, cancel)
+      Modal(Deletion.Component(props))
+    }
+
+    def restoreIO(cmd: UpdateContentCmd.RestoreContent): Callback = {
+      val locs = locsOfReqs(cmd.reqs.iterator) ++ locsOfGroups(cmd.reqCodes.iterator)
+      callRemoteAndUpdateRows(cmd, locs.toList)
+    }
+
+    private def callRemoteAndUpdateRows(cmd: UpdateContentCmd, locs: List[Loc]): Callback = {
       def setRowStates(state: Cell.State) =
         $.props >>= (_.modCellStates(ts => locs.foldLeft(ts)(_.set(_, state))))
 
@@ -179,26 +212,6 @@ object SelectionCtrls {
       }
     }
 
-    def deleteGroupsIO(groups: NonEmptySet[ReqCodeId]): Callback = {
-      val cmd = UpdateContentCmd.DeleteReqCodeGroups(groups)
-      val locs: List[Loc] =
-        cmd.ids.whole.map(id => Loc(Row.ReqCodeGroupRowSourceId(id), None))(collection.breakOut)
-      updateRowsIO(cmd, locs)
-    }
-
-    def deleteReqsIO(cmd: UpdateContentCmd.DeleteReqs): Callback = {
-      def reqLocs = cmd.reqs.whole.iterator.map {
-        case i: GenericReqId => Loc(Row.GenericReqRowSourceId(i), None)
-      }
-      def groupLocs = cmd.reqCodeGroups.iterator.map(i => Loc(Row.ReqCodeGroupRowSourceId(i), None))
-      updateRowsIO(cmd, (reqLocs ++ groupLocs).toList)
-    }
-
-    def deleteReqsModal(p: Props, reqs: NonEmptySet[ReqId], groups: Set[ReqCodeId]): Modal = {
-      val props1 = Deletion.initProps1(p.project, reqs, groups)
-      val props = Deletion.makeProps(props1, p.widgets, p.projectText, p.textSearch, deleteReqsIO, cancel)
-      Modal(Deletion.Component(props))
-    }
   }
 
   val Component = ReactComponentB[Props]("SelCtrls")
