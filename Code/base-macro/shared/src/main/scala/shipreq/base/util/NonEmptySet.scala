@@ -104,13 +104,20 @@ object NonEmptySet {
     new NonEmptySet(h, t - h)
 
   def maybe[A: UnivEq, B](s: Set[A], empty: => B)(f: NonEmptySet[A] => B): B =
-    if (s.isEmpty) empty else f(NonEmptySet(s.head, s.tail))
+    if (s.isEmpty)
+      empty
+    else
+      f(force(s))
 
   def option[A: UnivEq](s: Set[A]): Option[NonEmptySet[A]] =
     maybe[A, Option[NonEmptySet[A]]](s, None)(Some.apply)
 
-  def force[A: UnivEq](s: Set[A]): NonEmptySet[A] =
-    apply(s.head, s.tail)
+  def force[A: UnivEq](s: Set[A]): NonEmptySet[A] = {
+    val h = s.head
+    // Until Scala 2.12, s-h is faster than .tail
+    // apply() also performs s-h so we don't bother here
+    apply(h, s)
+  }
 
   def unwrapOption[A](o: Option[NonEmptySet[A]]): Set[A] =
     o.fold(Set.empty[A])(_.whole)
