@@ -42,7 +42,7 @@ final class NonEmptyVector[+A](val head: A, val tail: Vector[A]) {
     NonEmptyVector(f(head), tail map f)
 
   def mapToNES[B: UnivEq](f: A => B): NonEmptySet[B] =
-    NonEmptySet force whole.iterator.map(f).toSet
+    NonEmptySet force iterator.map(f).toSet
 
   def flatMap[B](f: A => NonEmptyVector[B]): NonEmptyVector[B] =
     reduceMapLeft1(f)(_ ++ _)
@@ -135,6 +135,9 @@ final class NonEmptyVector[+A](val head: A, val tail: Vector[A]) {
 
   def filterNot(f: A => Boolean): Option[NonEmptyVector[A]] =
     filter(!f(_))
+
+  def iterator: Iterator[A] =
+    whole.iterator
 
   def toStream = whole.toStream
 

@@ -86,6 +86,9 @@ final class NonEmptySet[A] private[util] (val head: A, val tail: Set[A]) {
     tail.foreach(b += f(_))
     NonEmptyVector(f(head), b.result())
   }
+
+  def iterator: Iterator[A] =
+    whole.iterator
 }
 
 // =====================================================================================================================
