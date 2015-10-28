@@ -27,7 +27,7 @@ object ShipReq extends Build {
   lazy val base =
     project("base")
       .configure(Common.settings)
-      .aggregate(baseMacroJvm, baseMacroJs, baseUtilJvm, baseUtilJs, baseDb, baseTest)
+      .aggregate(baseMacroJvm, baseMacroJs, baseUtilJvm, baseUtilJs, baseDb, baseTestJvm, baseTestJs)
 
   lazy val baseMacroJvm = baseMacro.jvm
   lazy val baseMacroJs  = baseMacro.js
@@ -60,16 +60,20 @@ object ShipReq extends Build {
         providedScope(jodaTime))
       .dependsOn(baseUtilJvm)
 
+  lazy val baseTestJvm = baseTest.jvm
+  lazy val baseTestJs  = baseTest.js
   lazy val baseTest =
-    project("base-test")
-      .configure(Common.testModuleSettings)
-      .deps(
-        providedScope(scalaTest ++ Specs2.combo))
-      .dependsOn(baseUtilJvm)
-      .dependsOn(baseDb % "provided")
-      // TODO Delete after upgrade to 2.11 and switch from Manifest to TypeTag
-      .settings(scalacOptions in Compile ~= removeValues("-deprecation"))
-      .settings(scalacOptions in Compile += "-nowarn")
+    crossProject("base-test")
+      .configureBoth(Common.testModuleSettings)
+      .dependsOn(baseUtil)
+      .depsForBoth(providedScope(Nyaya.gen))
+      .configureBoth(_
+        // TODO Delete after upgrade to 2.11 and switch from Manifest to TypeTag
+        .settings(scalacOptions in Compile ~= removeValues("-deprecation"))
+        .settings(scalacOptions in Compile += "-nowarn"))
+      .configureJvm(_
+        .deps(providedScope(scalaTest ++ Specs2.combo))
+        .dependsOn(baseDb % "provided"))
 
   // ===================================================================================================================
   // taskman-* : Async task execution system.
@@ -97,7 +101,7 @@ object ShipReq extends Build {
         testScope(Specs2.combo ++ scalaCheck ++ Scala.reflect))
       .dependsOn(taskmanApiLogic, baseDb)
       .dependsOn(taskmanServerSchema % "test")
-      .dependsOn(baseTest % "test")
+      .dependsOn(baseTestJvm % "test")
       //.dependsOn(baseUtilJvm) // Stupid IDEA auto-import needs this
 
   lazy val taskmanApi =
@@ -112,7 +116,7 @@ object ShipReq extends Build {
       .deps(
         jodaTime ++ logback ++ testScope(Specs2.combo))
       .dependsOn(taskmanApiLogic)
-      .dependsOn(baseTest % "test")
+      .dependsOn(baseTestJvm % "test")
       .configure(dontInline) // crashes scalac 2.11.2
       //.dependsOn(baseUtilJvm) // Stupid IDEA auto-import needs this
 
@@ -139,7 +143,7 @@ object ShipReq extends Build {
         testScope(Akka.testkit ++ Specs2.combo)
       )
       .dependsOn(taskmanServerLogic, taskmanServerSchema, taskmanApi)
-      .dependsOn(baseTest % "test")
+      .dependsOn(baseTestJvm % "test")
       .settings(assemblySettings: _*)
       .settings(
         initialCommands += consoleCmds,
@@ -222,7 +226,7 @@ object ShipReq extends Build {
       .depsForBoth(
         μTest ++ Nyaya.test
       )
-      .dependsOn(webappBase)
+      .dependsOn(baseTest, webappBase)
 
   // -------------------------------------------------------------------------------------------------------------------
   object WebappClient {
