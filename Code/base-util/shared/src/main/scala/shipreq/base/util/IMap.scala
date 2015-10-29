@@ -1,6 +1,7 @@
 package shipreq.base.util
 
-import scalaz.{Equal, Order, \/}
+import monocle._
+import scalaz.{Applicative, Equal, Order, \/}
 import scalaz.std.option.toRight
 
 object IMap {
@@ -9,6 +10,18 @@ object IMap {
 
   def empty[K: UnivEq, V](k: V => K): IMap[K, V] =
     new IMap(k, Map.empty)
+
+  def traversal[K: UnivEq, V]: Traversal[IMap[K, V], V] = {
+    type I = IMap[K, V]
+    val it = Optics.iterableTraversal[V]
+    new PTraversal[I, I, V, V] {
+      override def modifyF[F[_] : Applicative](f: V => F[V])(i: I): F[I] = {
+        val c = i.clear
+        val iso = Iso[I, Iterable[V]](_.values)(c ++ _)
+        (iso ^|->> it).modifyF(f)(i)
+      }
+    }
+  }
 }
 
 /**

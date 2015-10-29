@@ -2,10 +2,9 @@ package shipreq.webapp.base.data
 
 import nyaya.util.Multimap
 import monocle.Lens
-import shipreq.base.util.UnivEq
+import shipreq.base.util.{Optics, UnivEq}
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.text.Text.Equality._
-import shipreq.webapp.base.util.Optics
 
 /**
  * Data attributed to requirements beyond their basic definitions.
@@ -18,10 +17,10 @@ object ReqData {
     Optics.nonEmptyMapIso[ReqId, Text.CustomTextField.NonEmptyText]
 
   def textOuter(id: CustomField.Text.Id) =
-    Optics.nonEmptyMapValue(id, textOuterIso)
+    Optics.nonEmptyMapValueLens(id, textOuterIso)
 
   def textInner(id: ReqId) =
-    Optics.nonEmptyMapValue(id, Text.CustomTextField.NonEmptyIso)
+    Optics.nonEmptyMapValueLens(id, Text.CustomTextField.NonEmptyIso)
 
   def textAt(o: CustomField.Text.Id, i: ReqId): Lens[Text, Text.CustomTextField.OptionalText] =
     textOuter(o) ^|-> textInner(i)
