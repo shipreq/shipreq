@@ -40,8 +40,10 @@ import WebappBaseGen._
 
 object RandomData {
 
+  /*
   def genmodL[A, B](l: Lens[A, B])(g: B => Gen[B])(a: A): Gen[A] =
     g(l get a) map (l.set(_)(a))
+  */
 
 //    val trimLeftR = "^\\s+".r
 //    def trimLeft(s: String) = trimLeftR.replaceAllIn(s, "")
