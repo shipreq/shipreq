@@ -54,7 +54,7 @@ object ProjectDslInternals {
     def done: Project =
       IdCeilings.supply(ids =>
         p.copy(
-          reqs         = succ(p.reqs,         Requirements(reqs, pubids)),
+          reqs         = succ(p.reqs,         Requirements(reqs, p.reqs.useCases, pubids)),
           reqCodes     = succ(p.reqCodes,     ReqCodes(reqCodeTrie)),
           reqText      = succ(p.reqText,      text),
           reqTags      = succ(p.reqTags,      tags),

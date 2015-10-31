@@ -33,6 +33,7 @@ package object test {
     override def mkId(l: Int) = GenericReqId(l)
     override def setId(cf: Req, i: ReqId) = cf match {
         case r: GenericReq => r.copy(id = GenericReqId(i.value))
+        case r: UseCase    => r.copy(id = UseCaseId   (i.value))
       }
   }
 

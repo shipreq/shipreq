@@ -24,7 +24,7 @@ trait ApplyContentEvent {
     private val grLiveExplicitly = LiveAccessor(GenericReq.liveExplicitly)(_.id.toString)
     private val ucLiveExplicitly = LiveAccessor(UseCase.liveExplicitly)(_.id.toString)
 
-    val updateGenericReqIdCeiling = updateIdCeilingFn(IdCeilings.genericReq)
+    val updateReqIdCeiling = updateIdCeilingFn(IdCeilings.req)
 
     def ensureLiveReqId(reqId: ReqId): SE[Unit] =
       whenUntrusted(
@@ -84,7 +84,7 @@ trait ApplyContentEvent {
         reqs    ← grIMap.create(req)
         _       ← Project.pubidRegister set pp._1
         _       ← foreachValue(id, e.vs)
-        _       ← updateGenericReqIdCeiling(id)
+        _       ← updateReqIdCeiling(id)
       } yield ()
     }
 

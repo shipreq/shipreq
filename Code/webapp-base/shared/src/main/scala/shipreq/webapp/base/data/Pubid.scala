@@ -33,8 +33,12 @@ object PubidT {
  */
 case class PubidRegister(value: Multimap[ReqTypeId, Vector, ReqId]) {
 
+  // TODO Should be GR not C
   def allocC(reqTypeId: CustomReqTypeId)(reqId: ReqIdC): (PubidRegister, PubidC) =
     _alloc(reqTypeId)(reqId)
+
+  def allocUC(id: UseCaseId): (PubidRegister, PubidT[StaticReqType.UseCase]) =
+    _alloc(StaticReqType.UseCase)(id)
 
   private def _alloc[T <: ReqTypeId](reqTypeId: T)(reqId: ReqIdT[T]): (PubidRegister, PubidT[T]) = {
     val cur = value(reqTypeId)

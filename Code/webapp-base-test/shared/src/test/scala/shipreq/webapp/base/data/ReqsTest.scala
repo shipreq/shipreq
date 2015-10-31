@@ -11,7 +11,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 
-object ReqsTest extends TestSuite {
+object ReqsTest extends TestSuite { // TODO Update for UCs
 
   val oneReqPerReqtypeProp =
     Prop.distinctC[Vector, ReqId]("Req ID").forall((_: PubidRegister).value.m.values.toStream)
@@ -39,12 +39,13 @@ object ReqsTest extends TestSuite {
 
   def gen: Gen[PubidRegisterProps] =
     for {
-      reqTypeIds ← RandomData.customReqTypeId.nev
-      reqCount   ← Gen.chooseSize
-      (pr, reqs) ← RandomData.pubidRegisterAndIds(reqCount, reqTypeIds)
-      req        ← Gen.newOrOld(RandomData.genericReqId: Gen[ReqIdC], reqs.toIndexedSeq)
-      reqType    ← Gen.newOrOld(RandomData.customReqTypeId, reqTypeIds.whole)
-    } yield PubidRegisterProps(pr, req, reqType)
+      reqTypeIds ← RandomData.customReqTypeId.vector1
+      grCount    ← Gen.chooseSize
+      ucCount    ← Gen.chooseSize
+      prAndIds   ← RandomData.pubidRegisterAndIds(reqTypeIds, grCount, ucCount)
+      req        ← Gen.newOrOld(RandomData.genericReqId: Gen[ReqIdC], prAndIds.grIds)
+      reqType    ← Gen.newOrOld(RandomData.customReqTypeId, reqTypeIds)
+    } yield PubidRegisterProps(prAndIds.pr, req, reqType)
 
   override def tests = TestSuite {
     gen.mustSatisfyE(_.all)

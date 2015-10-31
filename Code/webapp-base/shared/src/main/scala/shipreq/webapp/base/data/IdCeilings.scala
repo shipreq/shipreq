@@ -1,7 +1,6 @@
 package shipreq.webapp.base.data
 
 import monocle.macros.Lenses
-import scala.collection.GenTraversable
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util.{IMap, UnivEq}
 
@@ -16,8 +15,7 @@ case class IdCeilings(
   customReqType   : Int,
   customField     : Int,
   tag             : Int,
-  genericReq      : Int,
-  useCase         : Int,
+  req             : Int,
   useCaseStep     : Int,
   reqCode         : Int)
 
@@ -25,14 +23,14 @@ object IdCeilings {
   implicit def equality: UnivEq[IdCeilings] = UnivEq.derive
 
   def init(z: Int): IdCeilings =
-    IdCeilings(z, z, z, z, z, z, z, z)
+    IdCeilings(z, z, z, z, z, z, z)
 
   def zero = init(0)
 
-  def maxOf(ts: GenTraversable[TaggedInt]): Int =
+  def maxOf(ts: TraversableOnce[TaggedInt]): Int =
     maxOfF(ts)(_.value)
 
-  def maxOfF[F](ts: GenTraversable[F])(f: F => Int): Int =
+  def maxOfF[F](ts: TraversableOnce[F])(f: F => Int): Int =
     ts.foldLeft(0)(_ max f(_))
 
   /**
@@ -42,14 +40,13 @@ object IdCeilings {
    * 2) Verifying that a new calculation never results in a higher number.
    */
   def calculate(p: Project): IdCeilings = {
-    def imapKeys[K <: TaggedInt](m: IMap[K, _]) = maxOf(m.keys)
+    def imapKeys[K <: TaggedInt](m: IMap[K, _]) = maxOf(m.keysIterator)
     IdCeilings(
       customIssueType = imapKeys(p.config.customIssueTypes),
       customReqType   = imapKeys(p.config.customReqTypes),
       customField     = imapKeys(p.config.fields.customFields),
       tag             = imapKeys(p.config.tags),
-      genericReq      = imapKeys(p.reqs.genericReqs),
-      useCase         = imapKeys(p.reqs.useCases),
+      req             = imapKeys(p.reqs.genericReqs) max imapKeys(p.reqs.useCases),
       useCaseStep     = imapKeys(p.reqs.useCaseSteps),
       reqCode         = maxOf(p.reqCodes.idList))
   }

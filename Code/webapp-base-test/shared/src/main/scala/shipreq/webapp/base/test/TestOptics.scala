@@ -2,9 +2,9 @@ package shipreq.webapp.base.test
 
 import monocle._
 import monocle.std.option.{some => atSome}
-import shipreq.base.util.IMap
+import shipreq.base.util.{VectorTree, IMap}
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.Text.ReqCodeGroupTitle
+import shipreq.webapp.base.text.Text
 
 object TestOptics {
 
@@ -30,7 +30,7 @@ object TestOptics {
   private val reqCodeActiveGroupId: Lens[ActiveGroup, ReqCodeId] =
     ActiveGroup.group ^|-> LiveReqCodeGroup.id
 
-  private val reqCodeActiveGroupTitle: Lens[ActiveGroup, ReqCodeGroupTitle.OptionalText] =
+  private val reqCodeActiveGroupTitle: Lens[ActiveGroup, Text.ReqCodeGroupTitle.OptionalText] =
     ActiveGroup.group ^|-> LiveReqCodeGroup.title
 
   val reqCodeDataActiveId = Optional[Data, ReqCodeId]({
@@ -49,7 +49,7 @@ object TestOptics {
     case d: Inactive    => d.copy(reqInactive = n)
   })
 
-  val reqCodeDataGroupTitle = Optional[Data, ReqCodeGroupTitle.OptionalText]({
+  val reqCodeDataGroupTitle = Optional[Data, Text.ReqCodeGroupTitle.OptionalText]({
     case d: ActiveGroup => Some(d.group.title)
     case d: ActiveReq   => d.deadGroup.map(_.title)
     case d: Inactive    => d.deadGroup.map(_.title)
@@ -62,4 +62,13 @@ object TestOptics {
   private val reqCodeTrieFixK = Trie.fixk
   val reqCodeTrieValueTraversal: Traversal[Trie, Data] =
     PTraversal.fromTraverse[reqCodeTrieFixK.Trie, Data, Data](reqCodeTrieFixK.traverseTrie)
+
+  val genericReqTitlesInReqs: Traversal[Requirements, Text.GenericReqTitle.OptionalText] =
+    Requirements.genericReqs ^|->> IMap.traversal[GenericReqId, GenericReq] ^|-> GenericReq.title
+
+  val useCasesInReqs: Traversal[Requirements, UseCase] =
+    Requirements.useCases ^|->> IMap.traversal[UseCaseId, UseCase]
+
+  val useCaseStepTextsInUseCase: Traversal[UseCase, Text.UseCaseStep.OptionalText] =
+    UseCase.stepsTraversal ^|->> VectorTree.traversal ^|-> UseCaseStep.title
 }

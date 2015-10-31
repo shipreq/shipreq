@@ -49,10 +49,16 @@ sealed abstract class GenericDashHasher {
     trie
   }
 
-  implicit def hashVectorTree[A: Hash]: Hash[VectorTree[A]] = {
+  implicit def hashVectorTree[A](implicit ha: Hash[A]): Hash[VectorTree[A]] = {
     import VectorTree._
-    implicit lazy val node    : Hash[Node[A]]     = hashCaseClass
-    implicit lazy val children: Hash[Children[A]] = hashVector[Node[A]]
+
+    implicit lazy val node: Hash[Node[A]] =
+      Hash.fn[Node[A]](n => joinHashes(
+        ha.hash(n.value) :: children.hash(n.children) :: Nil))
+
+    implicit lazy val children: Hash[Children[A]] =
+      hashVector[Node[A]]
+
     hashCaseClass
   }
 

@@ -26,4 +26,7 @@ object AppConsts {
 
   /** Limit the length of seemingly-unbound inputs. Prevents a malicious user creating 1GB rows. */
   final val largeTextMaxLength = 20000
+
+  // TODO
+  final val useCaseStepTreeMaxDepth = 4
 }

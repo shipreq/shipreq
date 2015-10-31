@@ -10,7 +10,7 @@ import monocle.std.option.{some => atSome}
 import monocle.std.tuple2._
 import monocle.std.tuple3._
 import scala.annotation.tailrec
-import scala.collection.GenTraversable
+import scala.collection.{AbstractIterator, GenTraversable}
 import scala.collection.immutable.ListSet
 import scalaz.{State, StateT, Need}
 import scalaz.std.list._
@@ -32,6 +32,7 @@ import shipreq.webapp.base.text.{Text, Grammar}
 import shipreq.webapp.base.util.GenericData
 import shipreq.base.util.UtilMacros._
 import DataImplicits._
+import Optics.Implicits._
 import TestOptics.{customReqTypesLive => _, _}
 import WebappBaseGen._
 
@@ -636,7 +637,9 @@ object RandomData {
       Gen.chooseGenNE(gs)
     }
 
-    def genericReqTitleAtom   = reqTitle(GenericReqTitle) _
+    def genericReqTitleAtom = reqTitle(GenericReqTitle) _
+
+    def useCaseTitleAtom = reqTitle(UseCaseTitle) _
 
     def inlineIssueDescAtom(r: Option[Gen[ReqId]], c: Option[Gen[ReqCodeId]]): Gen[InlineIssueDesc.Atom] = {
       @inline implicit def t: InlineIssueDesc.type = InlineIssueDesc
@@ -663,6 +666,18 @@ object RandomData {
       gs :+= a.map(tagRef(_))
       multiLinePlus(t)(gs: _*)
     }
+
+    def useCaseStepAtom(r: Option[Gen[ReqId]],
+                        c: Option[Gen[ReqCodeId]],
+                        i: Option[Gen[CustomIssueTypeId]],
+                        a: Option[Gen[ApplicableTagId]]): Gen[UseCaseStep.Atom] = {
+      implicit val t: UseCaseStep.type = UseCaseStep
+      var gs = singleLineGens(t)
+      gs ++= reqRefs(r, c)
+      gs ++= i.map(issue(_, r, c))
+      gs ++= a.map(tagRef(_))
+      Gen.chooseGenNE(gs)
+    }
   }
 
   val MaxTextAtoms: SizeSpec = 0 to (30 `JVM|JS` 8)
@@ -683,137 +698,147 @@ object RandomData {
   // -------------------------------------------------------------------------------------------------------------------
   // Requirements
 
-  lazy val genericReqId =
-    id map GenericReqId
+  val genericReqId  = id map GenericReqId
+  val useCaseId     = id map UseCaseId
+  val useCaseStepId = id map UseCaseStepId
 
-  lazy val reqId: Gen[ReqId] =
-    Gen.chooseGen(genericReqId)
+  val reqId: Gen[ReqId] =
+    Gen.chooseGen(genericReqId, genericReqId, useCaseId)
 
-  def sAllocPubidC(possibleReqTypeIds: NonEmptyVector[CustomReqTypeId])(reqId: ReqIdC): StateGen[PubidRegister, PubidC] =
-    StateT(register =>
-      Gen.chooseNE(possibleReqTypeIds).map(reqTypeId =>
-        register.allocC(reqTypeId)(reqId)))
+  def useCaseSteps(g: Gen[UseCaseStep])(implicit ss: SizeSpec): Gen[UseCase.Steps] =
+    genVectorTree(g, AppConsts.useCaseStepTreeMaxDepth)
 
-  def sGenericReqId(pubidS: ReqIdC => StateGen[PubidRegister, PubidC]): StateGen[PubidRegister, ReqIdC] =
-    for {
-      id <- genericReqId.toStateGen[PubidRegister]
-      _  <- pubidS(id)
-    } yield id
+  class PubidRegisterBuilder {
+    private[PubidRegisterBuilder] var pr = PubidRegister.empty
 
-  def sGenericReq(pubidS: ReqIdC => StateGen[PubidRegister, PubidC]): StateGen[PubidRegister, GenericReq] =
-    for {
-      id     ← genericReqId.toStateGen[PubidRegister]
-      pubid  ← pubidS(id)
-      desc   = Vector.empty
-      l      ← live.toStateGen
-    } yield
-      GenericReq(id, pubid, desc, l)
+    def apply[A](f: PubidRegister => (PubidRegister, A)): A = {
+      val r = f(pr)
+      pr = r._1
+      r._2
+    }
 
-  def pubidRegisterAnd[A, B](reqCount: Int, inita: A, genb: StateGen[PubidRegister, B])(f: (A, B) => A): Gen[(PubidRegister, A)] = {
-    val init = StateGen.ret[PubidRegister, A](inita)
-    val prog = Iterator.fill(reqCount)(genb).foldLeft(init)((sn, ga) =>
-      for {
-        b <- sn
-        a <- ga
-      } yield f(b, a)
-    )
-    prog(PubidRegister.empty)
+    def result() = pr
   }
 
-  def pubidRegisterAndIds(reqCount: Int, customReqTypeIds: NonEmptyVector[CustomReqTypeId]): Gen[(PubidRegister, Set[ReqIdC])] =
-    pubidRegisterAnd(reqCount, Set.empty[ReqIdC], sGenericReqId(sAllocPubidC(customReqTypeIds)))(_ + _)
+  object PubidRegisterBuilder {
+    def apply(): PubidRegisterBuilder =
+      new PubidRegisterBuilder
 
-  def requirements(reqCount: Int, customReqTypeIds: Vector[CustomReqTypeId]): Gen[Requirements] =
-    NonEmptyVector.maybe(customReqTypeIds,
-      Gen pure Requirements.empty)( // ← This will change when UseCases are added
-      customReqTypeIdNev =>
-        pubidRegisterAnd(reqCount, emptyDataMap(GenericReq), sGenericReq(sAllocPubidC(customReqTypeIdNev)))(_ + _)
-          .map { case (pr, reqs) => Requirements(reqs, pr) }
-      )
+    def apply(init: PubidRegister): PubidRegisterBuilder = {
+      val b = apply()
+      b.pr = init
+      b
+    }
+  }
 
-  def reqsWithoutText(reqCount: Int, cfg: ProjectConfig): Gen[Requirements] =
-    requirements(reqCount, cfg.customReqTypes.keys.toVector)
+  case class PRAndIds(grIds: Vector[GenericReqId], ucIds: Vector[UseCaseId], pr: PubidRegister)
 
-//  /**
-//   * I mistakenly thought reqsWithoutText was really slow, so I wrote this faster replacement.
-//   *
-//   * reqsWithoutText() is fast enough & simpler. Disabling this.
-//   */
-//  def reqsWithoutText_Quick(reqCount: Int, cfg: ProjectConfig): Gen[Requirements] = {
-//    val reqTypeIdsV    = cfg.customReqTypes.data.keys.toVector
-//    val deadReqtypeIds = cfg.customReqTypes.data.values.toStream.filter(_.live :: Dead).map(_.id)
-//
-//    type A = Vector[(CustomReqTypeId, Int)]
-//
-//    val scale: EndoFn[A] = v => {
-//      val sum = v.foldLeft(0)(_ + _._2)
-//      val c   = reqCount.toDouble / sum.toDouble
-//      val v2  = v.map(_.map2(n => (c * n).toInt))
-//      val off = reqCount - v2.foldLeft(0)(_ + _._2)
-//      if (off != 0 && v2.nonEmpty)
-//        v2.updated(0, v2(0).map2(_ + off))
-//      else
-//        v2
-//    }
-//
-//    val chooseQty = Gen.chooseint(0, reqCount)
-//    val qtyPerReqType = Gen.sequence(reqTypeIdsV.map(id => chooseQty.map((id, _)))) map scale
-//
-//    val idVector = qtyPerReqType flatMap { a =>
-//      val ids = a.foldLeft(Vector.empty[CustomReqTypeId])((q, t) => q ++ Vector.fill(t._2)(t._1))
-//      assert(ids.length == reqCount, s"Expect ${reqCount} ids, got: ${ids.length}")
-//      Gen.shuffle(ids)
-//    }
-//
-//    val justDead: Gen[Live] = Gen pure Dead
-//    val genLive: Gen[Live] = Gen.oneof[Live](Live, Live, Live, Live, Live, Dead)
-//    val rtLive: ReqTypeId => Live = id => Dead <~ (deadReqtypeIds contains id)
-//
-//    type SF = EndoFn[(PubidRegister, Requirements.ById)]
-//    def mksf(sf: SF): SF = sf
-//
-//    def genOne(id: GenericReqId, reqTypeId: CustomReqTypeId): Gen[SF] =
-//      for {
-//        live <- if (rtLive(reqTypeId) :: Dead) justDead else genLive
-//      } yield mksf {state =>
-//        val (pr0, rs0)  = state
-//        val (pr, pubid) = pr0.allocC(reqTypeId)(id)
-//        val req = GenericReq(id, pubid, Vector.empty, live)
-//        val rs = rs0 + req
-//        (pr, rs)
-//      }
-//
-//    val __gsf =
-//    genericReqId.flatMap { startId =>
-//      idVector.flatMap { reqTypeVec =>
-//
-//        val _gSF: Gen[SF] =
-//        (0 until reqCount).foldLeft(Gen.pure(identity: SF)) { (sf1, i) =>
-//
-//            val id        = GenericReqId(startId.value + i)
-//            val reqTypeId = reqTypeVec(i)
-//
-//            val sf2 = genOne(id, reqTypeId)
-//            val sf3 = for {a <- sf1; b <- sf2} yield b compose a
-//            sf3
-//          }
-//
-//        _gSF
-//      }
-//    }
-//
-//    __gsf.map { sf =>
-//      val (pr, rs) = sf(PubidRegister.empty, Requirements.emptyById)
-//      Requirements(rs, pr)
-//    }
-//  }
+  def pubidRegisterAndIds(rtIds: Vector[CustomReqTypeId], genericReqCount: Int, useCaseCount: Int): Gen[PRAndIds] = {
+    val ucIdsG = useCaseId.vector(useCaseCount)
 
-  def updateRequirementText(gt: Gen[Text.GenericReqTitle.OptionalText])(data: GenericReqIMap): Gen[GenericReqIMap] = {
-    val streamOfGens = data.valuesIterator.map {
-        case v: GenericReq => gt.map(t => v.copy(title = t))
+    Gen { ctx =>
+      val pr = PubidRegisterBuilder()
+
+      val grs: Vector[GenericReqId] =
+        NonEmptyVector.option(rtIds) match {
+
+          case Some(rtIdNev) if genericReqCount > 0 =>
+            val ids = genericReqId.unique_!.vector(genericReqCount) run ctx
+            val rtG = Gen.chooseNE(rtIdNev)
+            for (id <- ids) {
+              val rt = rtG run ctx
+              pr(_.allocC(rt)(id))
+            }
+            ids
+
+          case _ => Vector.empty
+        }
+
+      val ucs: Vector[UseCaseId] = {
+        val idFixer = Distinct.fint.addhs(grs.iterator.map(_.value)).xmap(UseCaseId)(_.value).distinct.lift[Vector]
+        val ids     = idFixer run ucIdsG.run(ctx)
+        for (id <- ids)
+          pr(_.allocUC(id))
+        ids
       }
-    val genStream = Gen.sequence(streamOfGens)
-    genStream.map(emptyDataMap(GenericReq) ++ _)
+
+      PRAndIds(grs, ucs, pr.result())
+    }
+  }
+
+  def reqsWithoutText(cfg: ProjectConfig, genericReqCount: Int, useCaseCount: Int): Gen[Requirements] =
+    reqsWithoutText(cfg.customReqTypes.keysIterator.toVector, genericReqCount, useCaseCount)
+
+  def reqsWithoutText(rtIds: Vector[CustomReqTypeId], genericReqCount: Int, useCaseCount: Int): Gen[Requirements] = {
+    Gen { ctx =>
+      val prAndIds = pubidRegisterAndIds(rtIds, genericReqCount, useCaseCount) run ctx
+      val pr = prAndIds.pr
+
+      val grs: GenericReqIMap =
+        rtIds.foldLeft(emptyDataMap(GenericReq))((m0, rt) =>
+          pr.value(rt).iterator.zipWithIndex.foldLeft(m0) { (m, x) =>
+            val id    = x._1.asInstanceOf[GenericReqId]
+            val pubid = PubidT(rt, ReqTypePos(x._2 + 1))
+            val grG   = live map (GenericReq(id, pubid, Vector.empty, _))
+            m + grG.run(ctx)
+          }
+        )
+
+      val ucs: UseCaseIMap = {
+        val stepG  = useCaseStepId.unique_! map (UseCaseStep(_, Vector.empty))
+        val stepsG = useCaseSteps(stepG)(0 to 4)
+        pr.value(StaticReqType.UseCase).iterator.zipWithIndex.foldLeft(emptyDataMap(UseCase)) { (m, x) =>
+          val id = x._1.asInstanceOf[UseCaseId]
+          val pos = ReqTypePos(x._2 + 1)
+          val ucG = for {
+            stepsNA <- stepsG
+            stepsE  <- stepsG
+            l       <- live
+          } yield UseCase(id, pos, Vector.empty, stepsNA, stepsE, l)
+          m + ucG.run(ctx)
+        }
+      }
+
+      Requirements(grs, ucs, pr)
+    }
+  }
+
+  def setReqText(reqs: Requirements,
+                 c   : Option[Gen[ReqCodeId]],
+                 i   : Option[Gen[CustomIssueTypeId]],
+                 a   : Option[Gen[ApplicableTagId]]): Gen[Requirements] = {
+    val r = Gen.tryGenChoose(reqs.reqs.keysIterator.toIndexedSeq)
+    setReqText(reqs, r, c, i, a)
+  }
+
+  def setReqText(reqs: Requirements,
+                 r   : Option[Gen[ReqId]],
+                 c   : Option[Gen[ReqCodeId]],
+                 i   : Option[Gen[CustomIssueTypeId]],
+                 a   : Option[Gen[ApplicableTagId]]): Gen[Requirements] =
+    r match {
+      case Some(g) =>
+        setReqText(reqs,
+          TextGen.genericReqTitleAtom(Some(g), c, i, a).text,
+          TextGen.useCaseTitleAtom   (Some(g), c, i, a).text,
+          TextGen.useCaseStepAtom    (Some(g), c, i, a).text)
+      case None =>
+        Gen pure reqs
+    }
+
+  def setReqText(reqs: Requirements,
+                 grG : Gen[Text.GenericReqTitle.OptionalText],
+                 ucG : Gen[Text.UseCaseTitle.OptionalText],
+                 usG : Gen[Text.UseCaseStep.OptionalText]): Gen[Requirements] = {
+
+    val updateGRs: Requirements => Gen[Requirements] =
+      TestOptics.genericReqTitlesInReqs.setF(grG)
+
+    val updateUCs: Requirements => Gen[Requirements] =
+      TestOptics.useCasesInReqs.modifyF(
+        useCaseStepTextsInUseCase.setF(usG)(_) flatMap UseCase.title.setF(ucG))
+
+    updateGRs(reqs) flatMap updateUCs
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -1037,22 +1062,20 @@ object RandomData {
                  reqImps        : Implications): Gen[Project] = {
     val cissueIds      = cfg.customIssueTypes.keySet
     val cissueIdG      = Gen tryGenChoose cissueIds.toSeq
-    val reqIds         = reqsWithoutText.reqs.keys
-    val reqIdG         = Gen tryGenChoose reqIds.toSeq
-    val reqIdSet       = reqIds.toSet
     val activeCodeIds  = reqCodes1.trie.allValues.flatMap(_.activeId.toStream)
     val activeCodeIdG  = Gen tryGenChoose activeCodeIds
     val atagIds        = cfg.tags.valuesIterator.map(_.tag).filterT[ApplicableTag].map(_.id).toSet
     val atagIdG        = Gen.tryGenChoose(atagIds.toSeq)
     val textColIds     = cfg.fields.customFields.values.filterT[CustomField.Text].map(_.id).toSet
+    val reqIdSet       = reqsWithoutText.reqs.keySet
+    val reqIdG         = Gen tryGenChoose reqIdSet.toIndexedSeq
     val rcgTitleText   = TextGen.reqCodeGroupTitleAtom(reqIdG, activeCodeIdG, cissueIdG).text
     val delReasonText  = TextGen.deletionReasonAtom(reqIdG, activeCodeIdG, atagIdG).text1(Text.DeletionReason)
     for {
-      reqText    ← reqFieldDataText2(reqIdSet, textColIds, activeCodeIdG, cissueIdG, atagIdG)
-      updReqText = updateRequirementText(TextGen.genericReqTitleAtom(reqIdG, activeCodeIdG, cissueIdG, atagIdG).text) _
-      reqs       ← genmodL(Requirements.genericReqs)(updReqText)(reqsWithoutText)
-      reqCodes2  ← reqCode.updateGroupText(rcgTitleText)(reqCodes1.trie)
-      dr         ← deletionReasons(reqIdG, delReasonText)
+      reqText   ← reqFieldDataText2(reqIdSet, textColIds, activeCodeIdG, cissueIdG, atagIdG)
+      reqs      ← setReqText(reqsWithoutText, reqIdG, activeCodeIdG, cissueIdG, atagIdG)
+      reqCodes2 ← reqCode.updateGroupText(rcgTitleText)(reqCodes1.trie)
+      dr        ← deletionReasons(reqIdG, delReasonText)
     } yield IdCeilings.supply(Project(cfg, reqs, ReqCodes(reqCodes2), reqText, reqTags, reqImps, dr, _))
   }
 
@@ -1061,12 +1084,12 @@ object RandomData {
       cfg             ← projectConfig
       atagIds         = cfg.tags.valuesIterator.map(_.tag).filterT[ApplicableTag].map(_.id).toSet
       reqCount        ← Gen.chooseSize
-      reqsWithoutText ← reqsWithoutText(reqCount, cfg)
-      reqIds          = reqsWithoutText.reqs.keys
-      reqIdG          = Gen tryGenChoose reqIds.toSeq
-      reqIdSet        = reqIds.toSet
-      liveReqIds      = reqsWithoutText.reqs.values.toStream.filter(_.live(cfg.customReqTypes) :: Live).map(_.id)
-      liveReqIdG      = Gen tryGenChoose liveReqIds
+      ucCount         ← Gen.chooseSize map (_ >> 1)
+      reqsWithoutText ← reqsWithoutText(cfg, reqCount, ucCount)
+      reqIdSet        = reqsWithoutText.reqs.keySet
+      reqIdG          = Gen tryGenChoose reqIdSet.toIndexedSeq
+      liveReqIds      = reqsWithoutText.reqs.valuesIterator.filter(_.live(cfg.customReqTypes) :: Live).map(_.id)
+      liveReqIdG      = Gen tryGenChoose liveReqIds.toIndexedSeq
       reqCodeDataG    = reqCode.data(liveReqIdG, reqIdG)(0 to (3 `JVM|JS` 2))
       reqCodes        ← reqCodes(reqCode.trie(reqCodeDataG, 2 `JVM|JS` 2))
       reqTags         ← reqFieldDataTags(reqIdSet, atagIds)

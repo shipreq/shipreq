@@ -88,9 +88,16 @@ object BinCodecGeneric extends BasicImplicitPicklers with TuplePicklers {
 
   implicit def pickleVectorTree[A: Pickler]: Pickler[VectorTree[A]] = {
     import VectorTree._
-    implicit lazy val node    : Pickler[Node[A]]     = pickleCaseClass
-    implicit lazy val children: Pickler[Children[A]] = iterablePickler[Node[A], Vector]
-    pickleCaseClass
+    object N extends Pickler[Node[A]] {
+      val ch = iterablePickler[Node[A], Vector](this, implicitly)
+      override def pickle(node: Node[A])(implicit state: PickleState): Unit = {
+        state.pickle(node.value)
+        state.pickle(node.children)(ch)
+      }
+      override def unpickle(implicit state: UnpickleState): Node[A] =
+        Node.apply(state.unpickle[A], state.unpickle(ch))
+    }
+    N.ch.xmap(VectorTree.apply)(_.children)
   }
 
   implicit def pickleXor[A: Pickler, B: Pickler]: Pickler[A \/ B] = {

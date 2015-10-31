@@ -1,5 +1,6 @@
 package shipreq.webapp.base.data
 
+import monocle.Traversal
 import nyaya.util.Multimap
 import monocle.macros.Lenses
 import scalaz.Equal
@@ -151,6 +152,9 @@ object UseCase {
 
   type Steps = VectorTree[UseCaseStep]
 
+  val stepsTraversal =
+    Traversal.apply2[UseCase, UseCase.Steps](_.stepsNA, _.stepsE)((na, e, uc) => uc.copy(stepsNA = na, stepsE = e))
+
   @inline def emptySteps: Steps =
     VectorTree.empty
 
@@ -160,6 +164,7 @@ object UseCase {
 
 case class UseCaseStepId(value: Int) extends SubReqId
 
+@Lenses
 case class UseCaseStep(id: UseCaseStepId, title: Text.UseCaseStep.OptionalText)
 
 object UseCaseStep {
