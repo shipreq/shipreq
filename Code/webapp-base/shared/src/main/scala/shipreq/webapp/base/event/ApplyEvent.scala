@@ -3,7 +3,7 @@ package shipreq.webapp.base.event
 import nyaya.prop.LogicPropExt
 import scala.annotation.tailrec
 import scalaz.{-\/, \/-, \/}
-import shipreq.base.util.UnivEq
+import shipreq.base.util.{Valid, UnivEq}
 import shipreq.webapp.base.data.{Project, DataProp}
 import shipreq.webapp.base.hash.HashRec
 import ApplyEventLib._, SE.SE
@@ -77,7 +77,7 @@ final class ApplyEvent(implicit val trust: Trust) extends ApplyConfigEvent with 
 
   private def validateHashRecs(recs: HashRec.Collection): SE[Unit] =
     SE.testO { p =>
-      val isValid = (_: HashRec).isValid(p)
+      val isValid = (_: HashRec).validate(p) :: Valid
       if (recs forall isValid)
         None
       else {

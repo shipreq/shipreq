@@ -621,10 +621,12 @@ object EventSqlHelpers {
   private val (hashScopeToChar, charToHashScope, _, _) =
     UtilMacros.adtIso[HashScope, Char] {
       case HashScope.WholeProject    => 'P'
+      case HashScope.Config          => 'C'
       case HashScope.CfgIssueTypes   => 'I'
       case HashScope.CfgReqTypes     => 'R'
       case HashScope.CfgFields       => 'F'
       case HashScope.CfgTags         => 'T'
+      case HashScope.Content         => 'D'
       case HashScope.Reqs            => 'r'
       case HashScope.ReqCodes        => 'c'
       case HashScope.TextFieldData   => 'x'
@@ -644,7 +646,7 @@ object EventSqlHelpers {
       pp setPgChar v.value
   }
 
-  implicit val GR_HashRec = GetResult(r => HashRec(r.<<, r.<<, r.<<, r.<<))
+  implicit val GR_HashRec = GetResult(r => HashRec(r.<<, r.<<, r.<<)(r.<<))
   implicit object SP_HashRec extends SetParameter[HashRec] {
     def apply(v: HashRec, pp: PositionedParameters): Unit = {
       pp >> v.scope
@@ -702,7 +704,7 @@ trait EventDao {
     // TODO EventDao.findAllEvents has shithouse impl
 
     class Tmp(val e: Event) {
-      var hrs = Set.empty[HashRec]
+      var hrs = HashRec.emptyCollection
     }
 
     val map = collection.mutable.HashMap.empty[EventSeq, Tmp]

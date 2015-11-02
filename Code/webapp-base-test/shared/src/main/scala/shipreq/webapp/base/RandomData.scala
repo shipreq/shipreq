@@ -9,6 +9,7 @@ import monocle.std.tuple2._
 import monocle.std.tuple3._
 import scala.annotation.tailrec
 import scala.collection.GenTraversable
+import scala.collection.immutable.ListSet
 import scalaz.{NonEmptyList, State, StateT, Need}
 import scalaz.std.list._
 import scalaz.std.option.{none => _, _}
@@ -1681,11 +1682,10 @@ object RandomData {
       chooseV(HashScope.all)
 
     val hashRec: Gen[HashRec] =
-      Gen.apply4(HashRec.apply)(hashScope, logicVer, hashScheme, hash)
+      Gen.lift4(hashScope, logicVer, hashScheme, hash.option)(HashRec(_, _, _)(_))
 
     val hashRecs: Gen[HashRec.Collection] =
-      hashRec.stream.map(_.map(r => (r.copy(hash = 0), r)).toMap.values.toSet)
-      // ↑ Avoids duplicates in the event_hash PK
+      hashRec.stream.map(_.to[ListSet])
 
     val verifiedEvent: Gen[VerifiedEvent] =
       Gen.apply2(VerifiedEvent.apply)(event, hashRecs)

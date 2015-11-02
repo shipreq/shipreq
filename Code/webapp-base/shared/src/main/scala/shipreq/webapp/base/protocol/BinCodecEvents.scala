@@ -8,6 +8,7 @@ import BoopickleMacros._
 import BinCodecGeneric._
 import BinCodecData._
 import AtomPicklers.instances._
+import ApplyEvent.LogicVer
 
 object BinCodecEvents {
 
@@ -67,7 +68,24 @@ object BinCodecEvents {
   implicit val pickleHashScheme    : Pickler[HashScheme]          = pickleEnum(HashScheme.all)
   implicit val pickleHashScope     : Pickler[HashScope]           = pickleEnum(HashScope.all)
   implicit val pickleLogicVer      : Pickler[ApplyEvent.LogicVer] = ConstPickler(ApplyEvent.LogicVer.Current)
-  implicit val pickleHashRec       : Pickler[HashRec]             = pickleCaseClass
-  implicit val pickleVerifiedEvent : Pickler[VerifiedEvent]       = pickleCaseClass
-  implicit val pickleVerifiedEvents: Pickler[VerifiedEvents]      = iterablePickler
+
+  implicit val pickleHashRec: Pickler[HashRec] =
+    new Pickler[HashRec] {
+      val oi = optionPickler[Int]
+      override def pickle(x: HashRec)(implicit s: PickleState): Unit = {
+        s.pickle(x.scope)
+        s.pickle(x.logicVer)
+        s.pickle(x.scheme)
+        s.pickle(x.hash)(oi)
+      }
+
+      override def unpickle(implicit s: UnpickleState) = HashRec(
+        s.unpickle[HashScope],
+        s.unpickle[LogicVer],
+        s.unpickle[HashScheme])(
+        s.unpickle(oi))
+    }
+
+  implicit val pickleVerifiedEvent : Pickler[VerifiedEvent]  = pickleCaseClass
+  implicit val pickleVerifiedEvents: Pickler[VerifiedEvents] = iterablePickler
 }

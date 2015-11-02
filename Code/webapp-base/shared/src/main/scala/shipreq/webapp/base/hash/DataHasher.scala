@@ -191,6 +191,7 @@ sealed abstract class DataHasher extends GenericDashHasher {
   implicit val hashReqCodeTrie    : Hash[ReqCode.Trie]
   implicit val hashReqCodes       : Hash[ReqCodes]
   implicit val hashDeletionReasons: Hash[DeletionReasons]
+           val hashProjectContent : Hash[Project]
   implicit val hashProject        : Hash[Project]
 }
 
@@ -234,6 +235,7 @@ final class DataHasherV1(protected val algorithm: Hash.Algorithm) extends DataHa
   implicit val hashReqCodeTrie    : Hash[ReqCode.Trie]    = hashTrie
   implicit val hashReqCodes       : Hash[ReqCodes]        = hashCaseClass
   implicit val hashDeletionReasons: Hash[DeletionReasons] = Hash.unsupported
+           val hashProjectContent : Hash[Project]         = hashCaseClassExcept('deletionReasons, 'config)
   implicit val hashProject        : Hash[Project]         = hashCaseClassExcept('deletionReasons)
 }
 
@@ -247,5 +249,6 @@ final class DataHasherCurrent(protected val algorithm: Hash.Algorithm) extends D
   implicit val hashReqCodeTrie       : Hash[ReqCode.Trie]        = hashTrie
   implicit val hashReqCodes          : Hash[ReqCodes]            = hashCaseClass
   implicit val hashDeletionReasons   : Hash[DeletionReasons]     = hashCaseClass
+           val hashProjectContent    : Hash[Project]             = hashCaseClassExcept('config)
   implicit val hashProject           : Hash[Project]             = hashCaseClass
 }

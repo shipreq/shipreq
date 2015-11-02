@@ -7,7 +7,7 @@ import shipreq.base.util.UnivEq
 
 object TransitiveClosure {
   def auto[A: UnivEq: ClassTag](as: TraversableOnce[A])(directChildren: A => Iterable[A], follow: A => Boolean) = {
-    val map = as.toStream.zipWithIndex.toMap
+    val map = as.toIterator.zipWithIndex.toMap
     val array = new Array[A](map.size)
     for ((k,v) <- map)
       array(v) = k
