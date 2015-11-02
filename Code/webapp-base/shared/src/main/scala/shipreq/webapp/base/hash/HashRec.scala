@@ -5,6 +5,7 @@ import scalaz.syntax.equal._
 import shipreq.base.util._
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.ApplyEvent.LogicVer
+import shipreq.webapp.base.util.TransitiveClosure
 import UnivEq.Implicits.univEqInt
 
 /**
@@ -55,21 +56,51 @@ object HashRec {
     r
   }
 
-  // HashRec.merge ignores LogicVer (because it hasn't changed yet)
-  def merge(earlier: Collection, later: Collection): Collection =
-    if (earlier.isEmpty)
-      later
-    else if (later.isEmpty)
-      earlier
+  def merge(older: Collection, newer: Collection): Collection =
+    if (older.isEmpty)
+      newer
+    else if (newer.isEmpty)
+      older
     else {
       // Add non-overlapping old
-      val totalNew = later.iterator.map(HashScope reflSubsets _.scope).reduce(_ union _)
-      var result = later
-      for (rec <- earlier) {
-        val totalOld = HashScope reflSubsets rec.scope
+      val totalNew = newer.iterator.map(reflSubsets).reduce(_ union _)
+      var result = newer
+      for (oldRec <- older) {
+        val totalOld = reflSubsets(oldRec)
         if (!totalOld.exists(totalNew.contains))
-          result += rec
+          result += oldRec
       }
       result
     }
+
+  val reflSubsetFn: (LogicVer, HashScheme, HashScope) => Set[HashScope] = {
+    import HashScope._
+    type Lookup = HashScope => Set[HashScope]
+
+    def mkReflSubsets(directNonReflSubsets: Lookup): Lookup = {
+      val tc = TransitiveClosure.auto(all.whole)(directNonReflSubsets, _ => true)
+      all.iterator.map(s => (s, tc(s))).toMap.apply
+    }
+
+    val latest = mkReflSubsets {
+      case WholeProject    => Set(Config, Content)
+      case Config          => Set(CfgIssueTypes, CfgReqTypes, CfgFields, CfgTags)
+      case Content         => Set(Reqs, ReqCodes, TextFieldData, TagData, ImplicationData, DeletionReasons)
+      case CfgIssueTypes
+         | CfgReqTypes
+         | CfgFields
+         | CfgTags
+         | Reqs
+         | ReqCodes
+         | TextFieldData
+         | TagData
+         | ImplicationData
+         | DeletionReasons => Set.empty
+    }
+
+    (_, _, scope) => latest(scope)
+  }
+
+  val reflSubsets: HashRec => Set[HashScope] =
+    r => reflSubsetFn(r.logicVer, r.scheme, r.scope)
 }

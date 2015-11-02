@@ -2,7 +2,6 @@ package shipreq.webapp.base.hash
 
 import shipreq.base.util._
 import shipreq.webapp.base.data.Project
-import shipreq.webapp.base.util.TransitiveClosure
 
 sealed abstract class HashScope
 
@@ -37,27 +36,6 @@ object HashScope {
     TagData        ,
     ImplicationData,
     DeletionReasons)
-
-  val directNonReflSubsets: HashScope => Set[HashScope] = {
-    case WholeProject    => Set(Config, Content)
-    case Config          => Set(CfgIssueTypes, CfgReqTypes, CfgFields, CfgTags)
-    case Content         => Set(Reqs, ReqCodes, TextFieldData, TagData, ImplicationData, DeletionReasons)
-    case CfgIssueTypes
-       | CfgReqTypes
-       | CfgFields
-       | CfgTags
-       | Reqs
-       | ReqCodes
-       | TextFieldData
-       | TagData
-       | ImplicationData
-       | DeletionReasons => Set.empty
-  }
-
-  val reflSubsets: HashScope => Set[HashScope] = {
-    val tc = TransitiveClosure.auto(all.whole)(directNonReflSubsets, _ => true)
-    all.iterator.map(s => (s, tc(s))).toMap.apply
-  }
 
   def hash(scope: HashScope, h: DataHasher, p: Project): Int =
     scope match {
