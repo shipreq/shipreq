@@ -12,6 +12,9 @@ object UtilMacros {
   def  adtIso[Adt, T](f: Adt => T): AdtIso[Adt, T] = macro UtilMacroImpls.quietAdtIso[Adt, T]
   def _adtIso[Adt, T](f: Adt => T): AdtIso[Adt, T] = macro UtilMacroImpls.debugAdtIso[Adt, T]
 
+  def  adtValues[T]: NonEmptyVector[T] = macro UtilMacroImpls.quietAdtValues[T]
+  def _adtValues[T]: NonEmptyVector[T] = macro UtilMacroImpls.debugAdtValues[T]
+
   def  valuesForAdt[T, V](f: T => V): NonEmptyVector[V] = macro UtilMacroImpls.quietValuesForAdt[T, V]
   def _valuesForAdt[T, V](f: T => V): NonEmptyVector[V] = macro UtilMacroImpls.debugValuesForAdt[T, V]
 
@@ -72,6 +75,25 @@ class UtilMacroImpls(val c: blackbox.Context) extends MacroUtils {
 
     if (debug) println("\n" + showCode(impl) + "\n")
     c.Expr[AdtIso[Adt, T]](impl)
+  }
+
+  def quietAdtValues[T: c.WeakTypeTag]: c.Expr[NonEmptyVector[T]] = implAdtValues(false)
+  def debugAdtValues[T: c.WeakTypeTag]: c.Expr[NonEmptyVector[T]] = implAdtValues(true)
+  def implAdtValues[T: c.WeakTypeTag](debug: Boolean): c.Expr[NonEmptyVector[T]] = {
+    val T     = weakTypeOf[T]
+    val types = findConcreteTypesNE(T, LeavesOnly)
+
+    val values = types.iterator.map { cs =>
+      if (cs.isModuleClass)
+        toSelectFQN(cs)
+      else
+        fail(s"Case object expected. Found: $cs")
+    }.toList
+
+    val impl = q"_root_.shipreq.base.util.NonEmptyVector.varargs[$T](..$values)"
+
+    if (debug) println("\n" + showCode(impl) + "\n")
+    c.Expr[NonEmptyVector[T]](impl)
   }
 
   def quietValuesForAdt[T: c.WeakTypeTag, V: c.WeakTypeTag](f: c.Expr[T => V]): c.Expr[NonEmptyVector[V]] = implValuesForAdt(false)(f)

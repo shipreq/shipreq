@@ -21,7 +21,7 @@ object FilterAst {
     case object AnyTag   extends Attr("tags", "tag")
 
     val values: NonEmptyVector[Attr] =
-      NonEmptyVector(AnyTag, AnyIssue)
+      UtilMacros.adtValues[Attr]
 
     def availableText: String =
       values.whole.map(_.name).mkString(", ")

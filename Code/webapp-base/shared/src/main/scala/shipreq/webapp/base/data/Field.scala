@@ -2,11 +2,10 @@ package shipreq.webapp.base.data
 
 import monocle._
 import monocle.macros.Lenses
-import scalaz.{Traverse, Equal}
-import scalaz.std.AllInstances._
-import scalaz.syntax.equal._
+import scalaz.Equal
 import shipreq.base.util._
-import shipreq.base.util.TaggedTypes.{TaggedString, TaggedInt}
+import TaggedTypes.{TaggedString, TaggedInt}
+import UnivEq.Implicits._
 
 // =====================================================================================================================
 // Types
@@ -19,9 +18,8 @@ object StaticFieldType {
   case object StepTree  extends StaticFieldType("Step Tree")
   case object StepGraph extends StaticFieldType("Step Graph")
 
-  val values = NonEmptyVector[StaticFieldType](
-    StepTree,
-    StepGraph)
+  val values: NonEmptyVector[StaticFieldType] =
+    UtilMacros.adtValues[StaticFieldType]
 
   implicit def equality: UnivEq[StaticFieldType] = UnivEq.derive
 }
@@ -31,10 +29,8 @@ object CustomFieldType {
   case object Tag         extends CustomFieldType("Tag")
   case object Text        extends CustomFieldType("Text")
 
-  val values = NonEmptyVector[CustomFieldType](
-    Implication,
-    Tag,
-    Text)
+  val values: NonEmptyVector[CustomFieldType] =
+    UtilMacros.adtValues[CustomFieldType]
 
   implicit def equality: UnivEq[CustomFieldType] = UnivEq.derive
 }

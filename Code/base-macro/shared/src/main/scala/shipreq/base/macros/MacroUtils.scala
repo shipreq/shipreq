@@ -398,4 +398,9 @@ abstract class MacroUtils {
   }
 
   def LitNil = Ident(c.mirror staticModule "scala.collection.immutable.Nil")
+
+  def identityExpr[T: c.WeakTypeTag]: c.Expr[T => T] = {
+    val T = weakTypeOf[T]
+    c.Expr[T => T](q"(t: $T) => t")
+  }
 }

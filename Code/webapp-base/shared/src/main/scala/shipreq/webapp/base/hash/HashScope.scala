@@ -1,6 +1,6 @@
 package shipreq.webapp.base.hash
 
-import shipreq.base.util.{NonEmptySet, NonEmptyVector, UnivEq}
+import shipreq.base.util._
 import shipreq.webapp.base.data.Project
 
 sealed trait HashScope
@@ -20,6 +20,9 @@ object HashScope {
 
   implicit def equality: UnivEq[HashScope] = UnivEq.derive
 
+  val all: NonEmptyVector[HashScope] =
+    UtilMacros.adtValues[HashScope]
+
   val defaultSet: NonEmptySet[HashScope] =
     NonEmptySet(
       CfgIssueTypes  ,
@@ -32,9 +35,6 @@ object HashScope {
       TagData        ,
       ImplicationData,
       DeletionReasons)
-
-  val all: NonEmptyVector[HashScope] =
-    WholeProject +: defaultSet.toNEV
 
   def overlap(a: HashScope, b: HashScope): Boolean =
     (a == b) ||
