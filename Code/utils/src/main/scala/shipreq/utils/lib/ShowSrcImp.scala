@@ -232,6 +232,8 @@ object ShowSrcDataImp {
     imap[K, V](s"emptyDataMap($objName)") init importDataI
 
   implicit val deletionReasonId         = taggedType[DeletionReasonId          ]("DeletionReasonId          ")
+  implicit val useCaseId                = taggedType[UseCaseId                 ]("UseCaseId                 ")
+  implicit val useCaseStepId            = taggedType[UseCaseStepId             ]("UseCaseStepId             ")
   implicit val genericReqId             = taggedType[GenericReqId              ]("GenericReqId              ")
   implicit val reqCodeId                = taggedType[ReqCodeId                 ]("ReqCodeId                 ")
   implicit val customReqTypeId          = taggedType[CustomReqTypeId           ]("CustomReqTypeId           ")
@@ -256,6 +258,7 @@ object ShowSrcDataImp {
   implicit val reqId: ShowSrc[ReqId] =
     data((s, a) => a match {
       case id: GenericReqId => s <~ id
+      case id: UseCaseId    => s <~ id
     })
 
   implicit val customFieldId: ShowSrc[CustomFieldId] =
@@ -332,11 +335,13 @@ object ShowSrcDataImp {
     (z intoVar name, n intoVar name)
   }
 
+  implicit      val (     useCaseTitleZ,      useCaseTitleN) = text2(Text.UseCaseTitle     )("UCT")
+  implicit      val (      useCaseStepZ,       useCaseStepN) = text2(Text.UseCaseStep      )("UCST")
   implicit      val (reqCodeGroupTitleZ, reqCodeGroupTitleN) = text2(Text.ReqCodeGroupTitle)("RCGT")
-  implicit      val (genericReqTitleZ  , genericReqTitleN  ) = text2(Text.GenericReqTitle)  ("GRT")
-  implicit      val (customTextFieldZ  , customTextFieldN  ) = text2(Text.CustomTextField)  ("CTF")
-  implicit      val (deletionReasonZ   , deletionReasonN   ) = text2(Text.DeletionReason)   ("DR")
-  implicit lazy val (inlineIssueDescZ  , inlineIssueDescN  ) = text (Text.InlineIssueDesc)  ("IID")
+  implicit      val (  genericReqTitleZ,   genericReqTitleN) = text2(Text.GenericReqTitle  )("GRT")
+  implicit      val (  customTextFieldZ,   customTextFieldN) = text2(Text.CustomTextField  )("CTF")
+  implicit      val (   deletionReasonZ,    deletionReasonN) = text2(Text.DeletionReason   )("DR")
+  implicit lazy val (  inlineIssueDescZ,   inlineIssueDescN) = text (Text.InlineIssueDesc  )("IID")
 
   implicit lazy val reqDataText: ShowSrc[ReqData.Text] = {
     implicit val vs =
@@ -383,7 +388,7 @@ object ShowSrcDataImp {
       case d: ReqCode.Inactive    => s <~ d
     })
 
-  def trie[K: ShowSrc, V: ShowSrc](branchCtor: String, valueCtor: String, trieType: String, trieVarname: String): ShowSrc[MTrie.Trie[K, V]] = {
+  def mtrie[K: ShowSrc, V: ShowSrc](branchCtor: String, valueCtor: String, trieType: String, trieVarname: String): ShowSrc[MTrie.Trie[K, V]] = {
     import MTrie.{Branch, Node, Trie, Value}
          val value : ShowSrc[Value[K, V]]  = ShowSrc((s, v) => s.cc1(valueCtor, Value unapply v))
          val valueO                        = option(value)
@@ -397,7 +402,7 @@ object ShowSrcDataImp {
   }
 
   implicit val reqCodeTrie: ShowSrc[ReqCode.Trie] =
-    (trie("τb", "τv", "ReqCode.Trie", "reqCodeTrie"): ShowSrc[ReqCode.Trie]) init importRCTrie init importData
+    (mtrie("τb", "τv", "ReqCode.Trie", "reqCodeTrie"): ShowSrc[ReqCode.Trie]) init importRCTrie init importData
 
   implicit val reqCodes: ShowSrc[ReqCodes] =
     data((s, rc) => s.cc1("ReqCodes", ReqCodes unapply rc)(reqCodeTrie))
@@ -429,20 +434,42 @@ object ShowSrcDataImp {
     "greq" @@ data((s, r) =>
       s.cc4("GenericReq", GenericReq unapply r)(implicitly, implicitly, genericReqTitleZ, implicitly))
 
+  def vectorTree[A](implicit a: ShowSrc[A]): ShowSrc[VectorTree[A]] = {
+    import VectorTree._
+    val nodeAlias = "VTN"
+    lazy val node    : ShowSrc[Node      [A]] = ShowSrc((s, n) => s.cc2(nodeAlias, Node unapply n)(a, children))
+    lazy val children: ShowSrc[Children  [A]] = vector(node)
+         val root    : ShowSrc[VectorTree[A]] = ShowSrc((s, t) => s.cc1("VectorTree", VectorTree unapply t)(children))
+    root init s"import shipreq.base.util.VectorTree, VectorTree.{Node => $nodeAlias}"
+  }
+
+  implicit val useCaseStep: ShowSrc[UseCaseStep] =
+    data((s, a) => s.cc2("UseCaseStep", UseCaseStep unapply a))
+
+  implicit val useCaseSteps: ShowSrc[UseCase.Steps] =
+    vectorTree
+
+  implicit val useCase: ShowSrc[UseCase] =
+    data((s, a) => s.cc6("UseCase", UseCase unapply a))
+
   implicit val req: ShowSrc[Req] =
     ShowSrc((s, req) => req match {
       case gr: GenericReq => s <~ gr
+      case uc: UseCase    => s <~ uc
     })
 
-  implicit val requirementsById: ShowSrc[GenericReqIMap] =
+  implicit val genericReqIMap: ShowSrc[GenericReqIMap] =
     "genericReqs" @@ imapI("GenericReq")
+
+  implicit val useCaseIMap: ShowSrc[UseCaseIMap] =
+    "useCases" @@ imapI("UseCase")
 
   implicit val requirements: ShowSrc[Requirements] =
     data((s, r) =>
       if (r.isEmpty)
         s append "Requirements.empty"
       else
-        s.cc2("Requirements", Requirements unapply r))
+        s.cc3("Requirements", Requirements unapply r))
 
   implicit val customIssueType: ShowSrc[CustomIssueType] =
     data((s, a) => s.cc4("CustomIssueType", CustomIssueType unapply a))
@@ -512,7 +539,7 @@ object ShowSrcDataImp {
     "tagTree" @@ imap("TagTree.empty")
 
   implicit val idCeilings: ShowSrc[IdCeilings] =
-    data((s, a) => s.cc6("IdCeilings", IdCeilings unapply a))
+    data((s, a) => s.cc7("IdCeilings", IdCeilings unapply a))
 
   implicit val deletionReasonsReqApplication: ShowSrc[DeletionReasons.ReqApplication] =
     multimap[ReqId, Vector, Option[DeletionReasonId]]("DeletionReasons.emptyReqApplication")

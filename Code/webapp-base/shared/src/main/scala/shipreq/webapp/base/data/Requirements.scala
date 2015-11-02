@@ -208,22 +208,13 @@ case class Requirements(genericReqs: GenericReqIMap,
                         useCases   : UseCaseIMap,
                         pubids     : PubidRegister) {
 
+  def isEmpty = reqs.isEmpty
+  def nonEmpty = !isEmpty
+
   lazy val reqs: IMap[ReqId, Req] =
     IMap.empty[ReqId, Req](_.id) ++
       genericReqs.valuesIterator ++
       useCases.valuesIterator
-
-  // This may be used in cases where calculating useCaseSteps will be a waste of time and memory.
-  // The penalty is that no contextual info is preserved.
-  def useCaseStepIterator: Iterator[UseCaseStep] =
-    useCases.valuesIterator.flatMap(_.stepIterator)
-
-  lazy val useCaseSteps: UseCaseStepIMap =
-    useCases.valuesIterator.foldLeft(emptyDataMap(UseCaseStepWithCtx))((m, uc) =>
-      m addAllF uc.stepsWithCtx)
-
-  def isEmpty = reqs.isEmpty
-  def nonEmpty = !isEmpty
 
   def getReq[T <: ReqTypeId](id: ReqIdT[T]): Option[ReqT[T]] =
     id match {
@@ -246,4 +237,13 @@ case class Requirements(genericReqs: GenericReqIMap,
   lazy val reqsByType: Multimap[ReqTypeId, Vector, Req] =
     reqs.valuesIterator.foldLeft(UnivEq.emptyMultimap[ReqTypeId, Vector, Req])((q, r) =>
       q.add(r.reqTypeId, r))
+
+  // This may be used in cases where calculating useCaseSteps will be a waste of time and memory.
+  // The penalty is that no contextual info is preserved.
+  def useCaseStepIterator: Iterator[UseCaseStep] =
+    useCases.valuesIterator.flatMap(_.stepIterator)
+
+  lazy val useCaseSteps: UseCaseStepIMap =
+    useCases.valuesIterator.foldLeft(emptyDataMap(UseCaseStepWithCtx))((m, uc) =>
+      m addAllF uc.stepsWithCtx)
 }

@@ -52,7 +52,13 @@ object ShowSrcTest extends TestSuite {
     true
   })
 
-  implicit val settings = DefaultSettings.propSettings.setSampleSize(8*10).setGenSize(10) //.setSeed(5)
+  val Threads = sys.runtime.availableProcessors() - 1
+
+  implicit val settings = DefaultSettings.propSettings
+    .setSampleSize(Threads * 2)
+    .setGenSize(10)
+    //.setDebug
+    //.setSeed(5)
 
   override def tests = TestSuite {
     RandomData.project mustSatisfy showSrcIso

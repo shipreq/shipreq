@@ -13,6 +13,8 @@ import ShowSrcDataImp._
 
 object GenerateProject {
 
+  val UseCasePercentage = 0.2
+
   object Size10 {
     val CfgTags              = 10
     val CfgCustomIssueTypes  =  2
@@ -57,6 +59,9 @@ object GenerateProject {
   def main(args: Array[String]): Unit = {
 //    autoSelect = true
 
+    val useCaseCount    = (UseCasePercentage * Size.Reqs).toInt
+    val genericReqCount = Size.Reqs - useCaseCount
+
     val tags0           = sample($.tagTree, Size.CfgTags)
     val issues0         = firstSample($.revAndIMap($.customIssueType list Size.CfgCustomIssueTypes), 50)
     val (issues, tags)  = $.distinctHashRefKeys.run((issues0, tags0))
@@ -66,12 +71,11 @@ object GenerateProject {
     val fields          = sample($.fieldSet2(reqTypeIdSet, tags.keySet, reqtypes.keySet), Size.CfgFields)
     val cfg             = ProjectConfig(issues, reqtypes, fields, tags)
     val atagIds         = cfg.tags.valuesIterator.map(_.tag).filterT[ApplicableTag].map(_.id).toSet
-    val reqsWithoutText = firstSample($.reqsWithoutText(Size.Reqs, cfg), 0)
-    val reqIds          = reqsWithoutText.reqs.keys
-    val reqIdG          = Gen tryGenChoose reqIds.toIndexedSeq
-    val reqIdSet        = reqIds.toSet
-    val liveReqIds      = reqsWithoutText.reqs.values.toStream.filter(_.live(cfg.customReqTypes) :: Live).map(_.id)
-    val liveReqIdG      = Gen tryGenChoose liveReqIds
+    val reqsWithoutText = firstSample($.reqsWithoutText(cfg, genericReqCount, useCaseCount), 20)
+    val reqIdSet        = reqsWithoutText.reqs.keySet
+    val reqIdG          = Gen tryGenChoose reqIdSet.toIndexedSeq
+    val liveReqIds      = reqsWithoutText.reqs.valuesIterator.filter(_.live(cfg.customReqTypes) :: Live).map(_.id)
+    val liveReqIdG      = Gen tryGenChoose liveReqIds.toIndexedSeq
     val reqCodeDataG    = $.reqCode.data(liveReqIdG, reqIdG)
     val reqCodesG       = $.reqCodes($.reqCode.trie(reqCodeDataG, Size.ReqCodeDepth))
     val reqCodes        = sample(reqCodesG, Size.ReqCodeSize)
@@ -85,7 +89,7 @@ object GenerateProject {
     val fout    = s"/tmp/$objName.scala"
 
     println()
-    println(s"Writing ${String.format("%,d", java.lang.Integer valueOf code.length)} bytes to $fout ...")
+    println(s"Writing ${"%,d" format code.length} bytes to $fout ...")
     writeFile(fout, code)
     println("Done.")
   }

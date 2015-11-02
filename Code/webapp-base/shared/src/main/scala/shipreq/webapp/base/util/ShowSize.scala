@@ -146,7 +146,13 @@ object ShowSize {
     })
 
   implicit def requirements: ShowSize[Requirements] =
-    ShowSize.lift(r => Node("Requirements", r.reqs.size))
+    ShowSize.lift(r =>
+      Node("Requirements", r.reqs.size)
+        .countChildren(r.reqs.values) {
+          case _: GenericReq => "GenericReq"
+          case _: UseCase    => "UseCase"
+        }
+    )
 //      .addChildren(r.reqsByType.m.toList.map(x => (x._1, x._2.size))) )
 
   implicit def reqCodeTrie: ShowSize[ReqCode.Trie] =

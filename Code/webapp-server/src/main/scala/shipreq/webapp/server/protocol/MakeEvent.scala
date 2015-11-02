@@ -277,7 +277,7 @@ object MakeEvent { // TODO Move
           val v = cs.map(c => ReqCode.IdAndValue(nextCodeId(), c))
           vs += CreateGenericReqGD.ReqCodes(v)
         }
-        val id = GenericReqId(project.idCeilings.genericReq + 1)
+        val id = GenericReqId(project.idCeilings.req + 1)
         CreateGenericReq(id, i.rt, vs)
     }
   }
