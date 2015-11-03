@@ -1,6 +1,7 @@
 package shipreq.base.util
 
 import monocle._
+import nyaya.prop.Prop
 import scala.annotation.tailrec
 import scala.collection.AbstractIterator
 import scalaz.Applicative
@@ -28,6 +29,17 @@ final case class VectorTree[+A](children: Children[A]) extends Parent[A] {
  *       ...
  */
 object VectorTree {
+  // TODO Clean this file up - it's a fucking mess.
+
+  /**
+   * Dimensions of a [[VectorTree]].
+   *
+   * @param maxLength Largest number of children per parent.
+   * @param maxDepth Root is depth 0, root→children is depth 1, root→children→children is depth 2, etc.
+   */
+  case class Dims(maxLength: Int, maxDepth: Int)
+
+  implicit def dimsEquality: UnivEq[Dims] = UnivEq.derive
 
 //  class Types[A] {
 //    type Root     = VectorTree[A]
@@ -47,6 +59,30 @@ object VectorTree {
 //
 //    final def modChildren(f: Children[A] => Children[A]): This =
 //      setChildren(f(children))
+
+    def dims: Dims = {
+      var maxDepth = 0
+      var maxLength = 0
+
+      def go(depth: Int, p: Parent[A]): Unit =
+        if (p.children.isEmpty) {
+
+          if (depth > maxDepth)
+            maxDepth = depth
+
+        } else {
+          val l = p.children.length
+          if (l > maxLength)
+            maxLength = l
+
+          val d2 = depth + 1
+          p.children foreach (go(d2, _))
+        }
+
+      go(0, this)
+
+      Dims(maxLength, maxDepth)
+    }
 
     final def needAtLocation(pos: Location): A =
       getAtLocation(pos) getOrElse sys.error(s"Node not found at position ${pos.whole mkString "."}.")
@@ -164,4 +200,18 @@ object VectorTree {
 
   def nodeTraversal[A]: Traversal[Node[A], A] =
     nodePTraversal[A, A]
+
+  def maxDimsProp(maxLengthInclusive: Int, maxDepthInclusive: Int): Prop[VectorTree[Any]] = {
+    def checkDim(name: String, actual: Dims => Int, maxInc: Int) =
+      Prop.atom[Dims]("VectorTree max " + name, d => {
+        val a = actual(d)
+        if (a <= maxInc)
+          None
+        else
+          Some(s"$a exceeds limit of $maxInc.")
+      })
+
+    (checkDim("length", _.maxLength, maxLengthInclusive) ∧ checkDim("depth", _.maxDepth, maxDepthInclusive)).
+      contramap[VectorTree[Any]](_.dims).rename("VectorTree max dimensions")
+  }
 }

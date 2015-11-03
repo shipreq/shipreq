@@ -708,7 +708,7 @@ object RandomData {
     Gen.chooseGen(genericReqId, genericReqId, useCaseId)
 
   def useCaseSteps(g: Gen[UseCaseStep])(implicit ss: SizeSpec): Gen[UseCase.Steps] =
-    genVectorTree(g, AppConsts.useCaseStepTreeMaxDepth)
+    genVectorTree(g, AppConsts.useCaseStepsMaxDepth)
 
   class PubidRegisterBuilder {
     private[PubidRegisterBuilder] var pr = PubidRegister.empty

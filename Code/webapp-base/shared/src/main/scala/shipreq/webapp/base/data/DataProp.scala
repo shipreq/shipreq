@@ -10,6 +10,7 @@ import scalaz.std.list.listInstance
 import scalaz.std.option.optionInstance
 import scalaz.std.vector.vectorInstance
 import shipreq.base.util._
+import shipreq.webapp.base.AppConsts
 import shipreq.webapp.base.text.{Atom, Text}
 import DataImplicits._
 import Debug._
@@ -177,6 +178,11 @@ object DataProp {
     def ids =
       id[ReqId].forall((_: T).reqs.keysIterator)
 
+    def idsUnique =
+      Prop.equal[T]("Req IDs are unique")(
+        _.reqs.size,
+        r => r.genericReqs.size + r.useCases.size)
+
     def reqPubidsInRegister =
       Prop.forall((_: T).reqs.valuesIterator)(t =>
         Prop.equal[Req]("Req's pubid refers to itself in the Pubid register")(
@@ -185,7 +191,6 @@ object DataProp {
 
     def pubidsResolveToReqs =
       Prop.whitelist[T]("Pubid register")(_.reqs.keySet, _.pubids.value.valueIterator)
-
 
     def pubidReqTypeAssociations = {
       import StaticReqType._
@@ -202,8 +207,32 @@ object DataProp {
       ).contramap[T](_.pubids)
     }
 
-    val all =
-      (ids ∧ reqPubidsInRegister ∧ pubidsResolveToReqs ∧ pubidReqTypeAssociations) rename "Requirements"
+    def useCaseSteps: Prop[T] = {
+      def stepTrees = {
+        val eachTree = VectorTree.maxDimsProp(
+          maxLengthInclusive = AppConsts.useCaseStepsMaxLength,
+          maxDepthInclusive  = AppConsts.useCaseStepsMaxDepth)
+
+        val treesInUseCase: Prop[UseCase] =
+          eachTree.contramap[UseCase](_.stepsNA).rename("normal & alt steps") ∧
+          eachTree.contramap[UseCase](_.stepsE).rename("exception steps")
+
+        treesInUseCase.forall((_: T).useCases.valuesIterator) rename "UC trees"
+      }
+
+      def ids = {
+        val valid  = id[UseCaseStepId].forallF[Stream]
+        val unique = Prop.distinctC[Stream, UseCaseStepId]("ids")
+        (valid ∧ unique).contramap[T](_.useCaseStepIterator.map(_.id).toStream) rename "ids"
+      }
+
+      (ids ∧ stepTrees) rename "UC steps"
+    }
+
+    val all = "Requirements" rename_: (
+      ids ∧ idsUnique ∧
+      useCaseSteps ∧
+      reqPubidsInRegister ∧ pubidsResolveToReqs ∧ pubidReqTypeAssociations)
   }
 
   // -------------------------------------------------------------------------------------------------------------------
