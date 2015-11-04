@@ -3,8 +3,7 @@ package shipreq.webapp.client.test
 import scalaz.Equal
 import org.scalajs.dom.html
 import scalajs.js.{UndefOr, undefined}
-import shipreq.base.util.UnivEq.{apply => _, force => _, _}
-import shipreq.webapp.base.test.BaseTestUtil._
+import shipreq.webapp.base.test.WebappTestUtil._
 import Sizzle.{DOM, Result}
 
 object DomZipper {

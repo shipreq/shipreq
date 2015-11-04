@@ -2,7 +2,7 @@ package shipreq.webapp.client.app.ui.reqtable.edit
 
 import scalaz.std.string._
 import utest._
-import shipreq.webapp.base.test.BaseTestUtil._
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.client.test.PrepareEnv
 
 object ReqCodeEditorTest extends TestSuite {

@@ -23,7 +23,7 @@ import shipreq.base.util.UnivEq.{apply => _, force => _, _}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.{CreateContentFn, UpdateContentFn, UpdateContentCmd, RemoteFn}
 import shipreq.webapp.base.test._
-import shipreq.webapp.base.test.BaseTestUtil._
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.client.app.state.ClientData
 import shipreq.webapp.client.app.ui.{Style, Checkbox}
 import shipreq.webapp.client.lib._

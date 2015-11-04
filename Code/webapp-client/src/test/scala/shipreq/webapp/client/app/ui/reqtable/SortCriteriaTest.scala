@@ -3,10 +3,8 @@ package shipreq.webapp.client.app.ui.reqtable
 import nyaya.prop._
 import nyaya.test._
 import nyaya.test.PropTest._
-import scalaz.syntax.equal._
 import utest._
-import shipreq.base.util.UnivEq.Implicits._
-import shipreq.webapp.base.test.BaseTestUtil._
+import shipreq.webapp.base.test.WebappTestUtil._
 import SortCriterion._
 import SortMethod._
 import Column._

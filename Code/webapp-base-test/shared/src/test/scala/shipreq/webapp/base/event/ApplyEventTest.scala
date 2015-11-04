@@ -2,10 +2,9 @@ package shipreq.webapp.base.event
 
 import scalaz.{-\/, \/-}
 import utest._
-import shipreq.base.util.UnivEq.Implicits._
 import shipreq.webapp.base.AppConsts
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.test.BaseTestUtil._
+import shipreq.webapp.base.test.WebappTestUtil._
 import ApplyEventTestFns._
 import DeletionAction._
 

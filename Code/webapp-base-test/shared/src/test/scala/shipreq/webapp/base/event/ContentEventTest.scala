@@ -5,15 +5,13 @@ import scalaz.{\&/, -\/, \/-}
 import utest._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.test.BaseTestUtil._
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.text.Text
-import shipreq.webapp.base.text.Text.Equality._
 import ApplyEventTestFns._
 import MTrie.Ops
 import Text.{GenericReqTitle => GRT, CustomTextField => CTF, InlineIssueDesc => IID, ReqCodeGroupTitle}
-import UnivEq.Implicits._
 
 case class ReqFull(req      : GenericReq,
                    tags     : Set[ApplicableTagId],

@@ -2,8 +2,7 @@ package shipreq.webapp.base.test
 
 import scala.io.AnsiColor._
 import scalaz.Equal
-import scalaz.syntax.equal._
-import BaseTestUtil._
+import WebappTestUtil._
 
 trait ActionTester {
   protected type S

@@ -3,7 +3,7 @@ package shipreq.webapp.base.data
 import nyaya.util.Multimap
 import shipreq.webapp.base.text.Grammar
 import utest._
-import shipreq.webapp.base.test.BaseTestUtil._
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
 import ReqCode._
 import Validators.reqCode._

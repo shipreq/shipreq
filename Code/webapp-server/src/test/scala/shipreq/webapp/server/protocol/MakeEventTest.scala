@@ -2,11 +2,10 @@ package shipreq.webapp.server.protocol
 
 import scalaz.{\/-, -\/}
 import utest._
-import shipreq.base.util.UnivEq.Implicits._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol._
-import shipreq.webapp.base.test.BaseTestUtil._
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.SampleProject
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.text.Text

@@ -5,7 +5,8 @@ import shipreq.base.util.UtilMacros
 import shipreq.base.util.UnivEq.Implicits._
 import shipreq.webapp.base.text.Text.Equality._
 
-object EventEquality {
+object EventEquality extends EventEquality
+trait EventEquality {
   implicit val equalAddStaticField       : Equal[AddStaticField]        = UtilMacros.deriveEqual
   implicit val equalApplyTemplate        : Equal[ApplyTemplate]         = UtilMacros.deriveEqual
   implicit val equalCreateApplicableTag  : Equal[CreateApplicableTag]   = UtilMacros.deriveEqual

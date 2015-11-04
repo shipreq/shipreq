@@ -7,19 +7,15 @@ import nyaya.util._
 import nyaya.test._
 import nyaya.test.PropTest._
 import org.parboiled2._
-import shipreq.base.util.{NonEmptyVector, UnivEq}
+import shipreq.base.util.NonEmptyVector
 import scala.util.{Try, Failure, Success}
 import scalaz.Equal
-import scalaz.std.list._
-import scalaz.std.string._
-import scalaz.std.stream._
 import utest._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.{RandomData => $}
 import shipreq.webapp.base.test.{SampleProject, ProjectDsl, UnsafeTypes}
-import shipreq.webapp.base.test.BaseTestUtil._
-import Text.Equality._
+import shipreq.webapp.base.test.WebappTestUtil._
 import Atom.AnyAtom
 
 object ParsersTest extends TestSuite {

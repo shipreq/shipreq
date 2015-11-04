@@ -3,7 +3,7 @@ package shipreq.webapp.base.hash
 import utest._
 import scala.collection.immutable.ListSet
 import shipreq.webapp.base.event.ApplyEvent.LogicVer
-import shipreq.webapp.base.test.BaseTestUtil._
+import shipreq.webapp.base.test.WebappTestUtil._
 
 object HashRecTest extends TestSuite {
 

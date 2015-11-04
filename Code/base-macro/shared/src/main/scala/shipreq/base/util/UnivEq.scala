@@ -13,10 +13,10 @@ trait UnivEq[A] extends Equal[A] {
   final override def equal(a: A, b: A) = a == b
 }
 
-sealed abstract class UnivEqImplicits {
-  protected val instance = new UnivEq[Any] {}
+abstract class UnivEqImplicits {
 
-  @inline protected def univEqForce[A]: UnivEq[A] = instance.asInstanceOf[UnivEq[A]]
+  @inline protected def univEqForce[A]: UnivEq[A] =
+    UnivEq.__instance.asInstanceOf[UnivEq[A]]
 
   @inline implicit def univEqUnit   : UnivEq[Unit]    = univEqForce
   @inline implicit def univEqString : UnivEq[String]  = univEqForce
@@ -54,10 +54,12 @@ sealed abstract class UnivEqImplicits {
 }
 
 object UnivEq extends UnivEqImplicits {
+  val __instance = new UnivEq[Any] {}
+
   @inline def apply[F](implicit u: UnivEq[F]): UnivEq[F] = u
 
   @inline def force[A]: UnivEq[A] =
-    instance.asInstanceOf[UnivEq[A]]
+    univEqForce[A]
 
   def  derive[A]: UnivEq[A] = macro MacroImpl.quietDerive[A]
   def _derive[A]: UnivEq[A] = macro MacroImpl.debugDerive[A]

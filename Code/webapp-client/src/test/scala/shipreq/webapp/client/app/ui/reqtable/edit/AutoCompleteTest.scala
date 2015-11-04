@@ -7,7 +7,6 @@ import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.ext.{KeyValue, KeyCode}
 import scala.scalajs.js, js.Dynamic
-import scalaz.std.anyVal._
 import scalaz.std.string.stringInstance
 import scalaz.std.tuple.tuple2Equal
 import scalaz.std.vector.vectorEqual
@@ -17,7 +16,7 @@ import utest._
 
 import shipreq.base.util.MTrie.Ops
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.test._, BaseTestUtil._
+import shipreq.webapp.base.test._, WebappTestUtil._
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.client.lib.{HideDead, Plain, Contextualise}
 import shipreq.webapp.client.lib.ui.UI

@@ -2,22 +2,18 @@ package shipreq.webapp.base.protocol
 
 import boopickle._
 import boopickle.Default.unitPickler
-import java.util.concurrent.atomic.AtomicBoolean
 import scalaz.Equal
 import scalaz.Leibniz.===
-import scalaz.std.anyVal.unitInstance
-import scalaz.std.stream.streamEqual
 import scalaz.syntax.equal._
 import utest._
 import nyaya.prop._
 import nyaya.gen.Gen
 import nyaya.test.Settings
 import nyaya.test.PropTest._
-import shipreq.base.util.{UtilMacros, UnivEq}
-import shipreq.webapp.base.test.BaseTestUtil._
+import shipreq.base.util.UtilMacros
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.VerifiedEvents
-import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.{RandomData => $}
 import $.TextGenExt
 

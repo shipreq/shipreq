@@ -5,17 +5,13 @@ import nyaya.gen.Gen
 import nyaya.prop._
 import nyaya.test._
 import nyaya.test.PropTestOps._
-import scalaz.std.vector.vectorEqual
-import scalaz.std.tuple.tuple2Equal
 import utest._
 import shipreq.base.util._
-import shipreq.base.util.UnivEq._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.event.EventEquality._
 import shipreq.webapp.base.hash.HashRec
-import shipreq.webapp.base.test.BaseTestUtil._
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.server.test.TestDB
 import EventDao.EventSeq
@@ -173,7 +169,7 @@ object DaoTest2 extends TestSuite {
         }
 
         'patchReqCodes {
-          val mm = emptySetMultimap[ReqCode.Value, ReqCodeId]
+          val mm = UnivEq.emptySetMultimap[ReqCode.Value, ReqCodeId]
           testRW(PatchReqCodes(666, Set(3), Set(1095731751, 1055755379), mm),
             203, 666, 'g', """{"-":3,"^":[1095731751,1055755379]}""")
 

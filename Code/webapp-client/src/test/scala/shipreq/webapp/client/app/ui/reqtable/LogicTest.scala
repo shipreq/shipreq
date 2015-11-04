@@ -3,8 +3,6 @@ package shipreq.webapp.client.app.ui.reqtable
 import monocle.Optional
 import scala.annotation.tailrec
 import scalaz.Equal
-import scalaz.std.AllInstances._
-import scalaz.syntax.equal._
 import utest._
 import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
@@ -13,7 +11,7 @@ import shipreq.webapp.base.{event => E}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.FilterAst
 import shipreq.webapp.base.text.{TextSearch, PlainText, Text}
-import shipreq.webapp.base.test._, BaseTestUtil._
+import shipreq.webapp.base.test._, WebappTestUtil._
 import shipreq.webapp.base.util.ReqCodeTreeItem
 import shipreq.webapp.client.app.ui.reqtable.{SortCriterion => SC, Column => C}
 import shipreq.webapp.client.lib.{FilterDead, ShowDead, HideDead}

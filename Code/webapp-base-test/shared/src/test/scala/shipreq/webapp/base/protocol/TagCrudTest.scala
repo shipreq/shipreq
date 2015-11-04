@@ -1,8 +1,5 @@
 package shipreq.webapp.base.protocol
 
-import scalaz.std.vector._
-import scalaz.std.string._
-import scalaz.syntax.equal._
 import utest._
 import nyaya.prop._
 import nyaya.gen.Gen
@@ -13,7 +10,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.{SampleProject => S, TagId_T}
-import shipreq.webapp.base.test.BaseTestUtil._
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
 import DataImplicits._
 import TagCrud._

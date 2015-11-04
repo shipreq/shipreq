@@ -1,16 +1,12 @@
-package shipreq.webapp.base.test
+package shipreq.base.test
 
 import scala.io.AnsiColor._
 import scalaz.Equal
-import scalaz.syntax.equal._
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.base.event._
-import shipreq.webapp.base.data.Project
-import shipreq.webapp.base.hash.HashRec
 
-object BaseTestUtil extends BaseTestUtil
+object BaseTestUtil extends BaseTestEquality with BaseTestUtil
 
-trait BaseTestUtil {
+trait BaseTestUtil extends scalaz.syntax.ToEqualOps {
 
   def assertEq[A: Equal](actual: A, expect: A): Unit =
     assertEqO(None, actual, expect)
@@ -119,28 +115,4 @@ trait BaseTestUtil {
       val a = colourMultiline(actual, BOLD + CYAN)
       _fail(s"${BOLD}${MAGENTA}Expected [${GREEN}$expectFrag${MAGENTA}] in:$RESET\n$a")
     }
-
-  def verifyEvent(p: Project, e: Event): VerifiedEvent =
-    _verifyEvent(p, e)._2
-
-  def _verifyEvent(p: Project, e: Event): (Project, VerifiedEvent) = {
-    val p2 = ApplyEvent.untrusted.apply1(e)(p).fold(sys.error, identity)
-    val hrs = HashRec.changes(p, p2)
-    (p2, VerifiedEvent(e, hrs))
-  }
-
-  def verifyEvents(p0: Project)(es: Event*): VerifiedEvents = {
-    var p = p0
-    es.toVector.map { e =>
-      val (p2, ve) = _verifyEvent(p, e)
-      p = p2
-      ve
-    }
-  }
-
-  def applyEventSuccessfully(p: Project, e: Event): Project =
-    _verifyEvent(p, e)._1
-
-  def applyEventsSuccessfully(p: Project, es: Event*): Project =
-    es.foldLeft(p)(applyEventSuccessfully)
 }

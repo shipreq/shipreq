@@ -7,9 +7,10 @@ import shipreq.webapp.base.text.{Atom => A, Parsers => P}
 
 object Text {
 
-  object Equality {
-    @inline implicit final def eqAnyAtom      [A <: Atom.AnyAtom]: UnivEq[A]         = UnivEq.force
-    @inline implicit final def eqAnyAtomVector[A <: Atom.AnyAtom]: UnivEq[Vector[A]] = UnivEq.force
+  object Equality extends Equality
+  trait Equality {
+    @inline implicit final def univEqAnyAtom      [A <: Atom.AnyAtom]: UnivEq[A]         = UnivEq.force
+    @inline implicit final def univEqAnyAtomVector[A <: Atom.AnyAtom]: UnivEq[Vector[A]] = UnivEq.force
   }
 
   type Generic = Base with A.Literal

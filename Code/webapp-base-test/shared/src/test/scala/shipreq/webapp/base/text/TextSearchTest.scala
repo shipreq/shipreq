@@ -4,10 +4,8 @@ import nyaya.prop._
 import nyaya.test._
 import nyaya.test.PropTest._
 import scalaz.Memo
-import scalaz.std.anyVal.booleanInstance
-import scalaz.std.string.stringInstance
 import utest._
-import shipreq.webapp.base.test.BaseTestUtil._
+import shipreq.webapp.base.test.WebappTestUtil._
 import TextSearch._
 
 object TextSearchTest extends TestSuite {

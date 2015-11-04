@@ -6,12 +6,9 @@ import nyaya.test._
 import nyaya.test.PropTestOps._
 import scala.util.{Failure, Success, Try}
 import scalaz.Equal
-import scalaz.syntax.equal._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data.{Project => P}
-import shipreq.webapp.base.data.ReqData.{equalityTags, equalityText}
-import shipreq.webapp.base.text.Text.Equality._
-import shipreq.webapp.base.test.BaseTestUtil._
+import shipreq.webapp.base.test.WebappTestUtil._
 import utest._
 import ShowSrcDataImp._
 

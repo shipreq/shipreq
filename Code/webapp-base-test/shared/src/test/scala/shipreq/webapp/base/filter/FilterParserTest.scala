@@ -7,11 +7,11 @@ import org.parboiled2.{ErrorFormatter, ParseError}
 import scala.util.{Failure, Success}
 import utest._
 import shipreq.base.util.Debug._
-import shipreq.base.util.{NonEmptySet, NonEmptyVector, UnivEq}, UnivEq.Implicits._
+import shipreq.base.util._
 import shipreq.webapp.base.{RandomData => $}
 import shipreq.webapp.base.data.HashRefKey
 import shipreq.webapp.base.data.ReqType.Mnemonic
-import shipreq.webapp.base.test.BaseTestUtil._
+import shipreq.webapp.base.test.WebappTestUtil._
 import FilterSpec._
 
 object FilterParserTest extends TestSuite {

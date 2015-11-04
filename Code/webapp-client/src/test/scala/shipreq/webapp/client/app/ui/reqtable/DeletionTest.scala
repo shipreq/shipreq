@@ -3,10 +3,9 @@ package shipreq.webapp.client.app.ui.reqtable
 import utest._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{NonEmptySet, UnivEq, IMap, Util}
-import shipreq.base.util.UnivEq.Implicits._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._
-import BaseTestUtil._
+import WebappTestUtil._
 import Deletion.{Props1, GroupRow, ReqRow}
 import UnsafeTypes._
 

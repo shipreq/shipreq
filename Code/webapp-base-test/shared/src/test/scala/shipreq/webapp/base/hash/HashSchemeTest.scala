@@ -1,9 +1,8 @@
 package shipreq.webapp.base.hash
 
 import utest._
-import shipreq.base.util.UnivEq.Implicits._
 import shipreq.webapp.base.data.Project
-import shipreq.webapp.base.test.BaseTestUtil._
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.SampleProject3
 
 /**
