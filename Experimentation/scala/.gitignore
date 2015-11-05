@@ -1,0 +1,10 @@
+.project
+.classpath
+.idea_modules
+target
+*.pid
+*.out
+*.err
+.cache
+.target
+project/sjsincoptbench.sbt
