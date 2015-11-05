@@ -5,7 +5,7 @@ import scala.collection.mutable.MutableList
 import scala.collection.mutable.{ Map => MutableMap }
 import lib.Types._
 import feature.uc.step._
-import shipreq.webapp.base.AppConsts.{UseCaseStepLabels => Labelers}
+import shipreq.webapp.base.data.StaticField.NormalAltStepTree.{stepLabelsPerLevel => Labelers}
 
 /**
  * @since 06/05/2013

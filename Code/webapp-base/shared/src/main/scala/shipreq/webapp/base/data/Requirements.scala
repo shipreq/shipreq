@@ -185,6 +185,9 @@ case class UseCaseStepWithCtx(useCase: UseCase,
                               step   : UseCaseStep) {
   @inline def useCaseId = useCase.id
   @inline def stepId    = step.id
+
+  def label(mnemonicPrefix: Boolean): String =
+    field.stepLabel(useCase.pos, loc, mnemonicPrefix)
 }
 
 object UseCaseStepWithCtx {

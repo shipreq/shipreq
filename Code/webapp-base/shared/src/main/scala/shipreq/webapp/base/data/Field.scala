@@ -7,6 +7,7 @@ import scalaz.Equal
 import shipreq.base.util._
 import ScalaExt._
 import TaggedTypes.{TaggedString, TaggedInt}
+import IndexLabel._
 import UnivEq.Implicits._
 
 // =====================================================================================================================
@@ -134,15 +135,70 @@ object StaticField {
 
   sealed trait UseCaseStepTree {
     this: StaticField =>
+
+    final def stepLabel(ucNumber: ReqTypePos, loc: VectorTree.Location, mnemonicPrefix: Boolean): String =
+      Util.quickSB { sb =>
+        @inline def sep = '.'
+        if (mnemonicPrefix) {
+          sb append StaticReqType.UseCase.mnemonic.value
+          sb append '-'
+        }
+        sb append ucNumber.value
+        for (p <- stepLabelPrefix) {
+          sb append sep
+          sb append p
+        }
+        loc.foreachWithIndex { (index, level) =>
+          sb append sep
+          sb append stepLabelsPerLevel(level).label(index)
+        }
+      }
+
+    def stepLabelPrefix: Option[String]
+
+    val stepLabelsPerLevel: Vector[IndexLabel]
+
+    /**
+      * Maximum number of levels (inclusive) where the root (no steps) is 0.
+      */
+    final def maxDepth = stepLabelsPerLevel.length
   }
 
-  case object NormalAltStepTree extends StaticField(
-    "Normal and Alternate Courses", T.StepTree, useCaseOnly, Mandatory.Not, Deletable.Not, None)
-    with UseCaseStepTree
+  // UC-8.0.1.a.i.1
+  // UC-8.E.1.a.i.1
+  // ______|↑_↑_↑_↑
+  private val sharedUseCaseStepLabels: Vector[IndexLabel] =
+    Vector(NumericFrom1, Alpha, Roman, NumericFrom1)
 
-  case object ExceptionStepTree extends StaticField(
-    "Exception Courses", T.StepTree, useCaseOnly, Mandatory.Not, Deletable.Not, None)
-    with UseCaseStepTree
+  case object NormalAltStepTree
+    extends StaticField("Normal and Alternate Courses", T.StepTree, useCaseOnly, Mandatory.Not, Deletable.Not, None)
+       with UseCaseStepTree {
+
+    // UC-8.0.1.a.i.1
+    // ____|_________
+    override def stepLabelPrefix: Option[String] =
+      None
+
+    // UC-8.0.1.a.i.1
+    // ____|↑_+_+_+_+
+    override val stepLabelsPerLevel =
+      NumericFrom0 +: sharedUseCaseStepLabels
+  }
+
+  case object ExceptionStepTree
+    extends StaticField("Exception Courses", T.StepTree, useCaseOnly, Mandatory.Not, Deletable.Not, None)
+       with UseCaseStepTree {
+
+    // UC-8.E.1.a.i.1
+    // ____|↑|_______
+    override val stepLabelPrefix: Option[String] =
+      Some("E")
+
+    // UC-8.E.1.a.i.1
+    // ______|+_+_+_+
+    override val stepLabelsPerLevel =
+      sharedUseCaseStepLabels
+  }
 
   case object StepGraph extends StaticField(
     "Step Graph", T.StepGraph, useCaseOnly, Mandatory.Not, Deletable, None)

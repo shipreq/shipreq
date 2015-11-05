@@ -209,13 +209,16 @@ object DataProp {
 
     def useCaseSteps: Prop[T] = {
       def stepTrees = {
-        val eachTree = VectorTree.maxDimsProp(
-          maxLengthInclusive = AppConsts.useCaseStepsMaxLength,
-          maxDepthInclusive  = AppConsts.useCaseStepsMaxDepth)
+        import StaticField.{NormalAltStepTree => N, ExceptionStepTree => E}
+
+        def eachTree(f: StaticField.UseCaseStepTree) =
+          VectorTree.maxDimsProp(
+            maxLengthInclusive = AppConsts.useCaseStepsMaxLength,
+            maxDepthInclusive  = f.maxDepth)
 
         val treesInUseCase: Prop[UseCase] =
-          eachTree.contramap[UseCase](_.stepsNA).rename("normal & alt steps") ∧
-          eachTree.contramap[UseCase](_.stepsE).rename("exception steps")
+          eachTree(N).contramap[UseCase](_.stepsNA).rename(N.name) ∧
+          eachTree(E).contramap[UseCase](_.stepsE ).rename(E.name)
 
         treesInUseCase.forall((_: T).useCases.valuesIterator) rename "UC trees"
       }

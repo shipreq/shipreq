@@ -3,7 +3,7 @@ package test
 
 import shipreq.webapp.server.lib.Types.{StepLabel, LocalStepId}
 import feature.uc.step.{StepNode, TreeNode}
-import shipreq.webapp.base.AppConsts.UseCaseStepLabels
+import shipreq.webapp.base.data.StaticField.NormalAltStepTree.stepLabelsPerLevel
 
 case class StepNodeWithText(
   id: LocalStepId,
@@ -18,7 +18,7 @@ case class StepNodeWithText(
     children: List[StepNodeWithText] = this.children
     ) = StepNodeWithText(id, level, labelIndex, text, children)
 
-  @inline final def labelMaker = UseCaseStepLabels(level)
+  @inline final def labelMaker = stepLabelsPerLevel(level)
   override final def label = StepLabel(labelMaker.labelTmp(labelIndex))
 
   // Manually specify else it will recurse forever because this is Traversable

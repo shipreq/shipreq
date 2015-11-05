@@ -2,7 +2,7 @@ package shipreq.webapp.server
 package feature.uc.step
 
 import org.scalatest.WordSpec
-import shipreq.webapp.base.AppConsts.{UseCaseStepLabels => Labelers}
+import shipreq.webapp.base.data.StaticField.NormalAltStepTree.{stepLabelsPerLevel => Labelers}
 import lib.Types._
 import TreeOps._
 import test._

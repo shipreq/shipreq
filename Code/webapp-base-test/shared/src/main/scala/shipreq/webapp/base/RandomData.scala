@@ -707,8 +707,8 @@ object RandomData {
   val reqId: Gen[ReqId] =
     Gen.chooseGen(genericReqId, genericReqId, useCaseId)
 
-  def useCaseSteps(g: Gen[UseCaseStep])(implicit ss: SizeSpec): Gen[UseCase.Steps] =
-    genVectorTree(g, AppConsts.useCaseStepsMaxDepth)
+  def useCaseSteps(g: Gen[UseCaseStep], f: StaticField.UseCaseStepTree)(implicit ss: SizeSpec): Gen[UseCase.Steps] =
+    genVectorTree(g, f.maxDepth)
 
   class PubidRegisterBuilder {
     private[PubidRegisterBuilder] var pr = PubidRegister.empty
@@ -788,13 +788,13 @@ object RandomData {
 
       val ucs: UseCaseIMap = {
         val stepG  = useCaseStepId.unique_! map (UseCaseStep(_, Vector.empty))
-        val stepsG = useCaseSteps(stepG)(0 to 4)
+        def stepsG(f: StaticField.UseCaseStepTree) = useCaseSteps(stepG, f)(0 to 4)
         pr.value(StaticReqType.UseCase).iterator.zipWithIndex.foldLeft(emptyDataMap(UseCase)) { (m, x) =>
           val id = x._1.asInstanceOf[UseCaseId]
           val pos = ReqTypePos(x._2 + 1)
           val ucG = for {
-            stepsNA <- stepsG
-            stepsE  <- stepsG
+            stepsNA <- stepsG(StaticField.NormalAltStepTree)
+            stepsE  <- stepsG(StaticField.ExceptionStepTree)
             l       <- live
           } yield UseCase(id, pos, Vector.empty, stepsNA, stepsE, l)
           m + ucG.run(ctx)

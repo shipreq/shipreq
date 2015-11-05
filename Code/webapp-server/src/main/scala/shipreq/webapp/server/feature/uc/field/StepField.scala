@@ -15,9 +15,11 @@ import text.StepTextUpdater
 import Changes._
 import Lenses._
 import StepFieldConsts._
-import shipreq.webapp.base.AppConsts.{useCaseStepsMaxLength => MaxStepsPerLevel, useCaseStepsMaxDepth => MaxStepDepth}
+import shipreq.webapp.base.AppConsts.{useCaseStepsMaxLength => MaxStepsPerLevel}
 
 object StepFieldConsts {
+  val MaxStepDepth = 5 //////////////////////////////////// bullshit
+
   def MaxStepViolationMsg = Some(s"That would cause you to have ${MaxStepsPerLevel + 1} steps at the same level, which exceeds the maximum allowed.")
   def MaxStepViolationChangeFailure = ChangeFailure(VFailure.looseMsg(MaxStepViolationMsg.get))
   def MaxLevelViolationMsg = Some(s"That would cause your steps to be ${MaxStepDepth + 1} levels deep, which exceeds the maximum allowed.")

@@ -5,11 +5,11 @@ import nyaya.gen._
 import nyaya.test.PropTest._
 import nyaya.test._
 import utest._
-import scalaz.std.AllInstances._
+import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.BaseUtilGen._
+import shipreq.base.util.{VectorTree, NonEmptyVector}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
-import shipreq.webapp.base.data._
 
 object ReqsTest extends TestSuite { // TODO Update for UCs
 
@@ -48,6 +48,33 @@ object ReqsTest extends TestSuite { // TODO Update for UCs
     } yield PubidRegisterProps(prAndIds.pr, req, reqType)
 
   override def tests = TestSuite {
-    gen.mustSatisfyE(_.all)
+    'pubidRegister - gen.mustSatisfyE(_.all)
+
+    'ucStepLabels {
+      import StaticField.{NormalAltStepTree => N, ExceptionStepTree => E}
+      implicit def autoPos(i: Int) = ReqTypePos(i)
+      implicit def str2loc(s: String) = NonEmptyVector force s.split('.').toVector.map(_.toInt)
+
+      def test(f: StaticField.UseCaseStepTree, uc: ReqTypePos, l: VectorTree.Location, exp: String): Unit = {
+        assertEq(f.stepLabel(uc, l, false), exp)
+        assertEq(f.stepLabel(uc, l, true), "UC-" + exp)
+      }
+
+      'na {
+        test(N, 7, "0",         "7.0")
+        test(N, 7, "0.0",       "7.0.1")
+        test(N, 7, "0.0.0",     "7.0.1.a")
+        test(N, 7, "0.0.0.0",   "7.0.1.a.i")
+        test(N, 7, "0.0.0.0.0", "7.0.1.a.i.1")
+        test(N, 3, "2.5.6.4.1", "3.2.6.g.v.2")
+      }
+      'e {
+        test(E, 7, "0",       "7.E.1")
+        test(E, 7, "0.0",     "7.E.1.a")
+        test(E, 7, "0.0.0",   "7.E.1.a.i")
+        test(E, 7, "0.0.0.0", "7.E.1.a.i.1")
+        test(E, 3, "5.6.4.1", "3.E.6.g.v.2")
+      }
+    }
   }
 }

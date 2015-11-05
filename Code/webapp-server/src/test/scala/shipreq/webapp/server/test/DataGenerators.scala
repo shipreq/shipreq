@@ -20,11 +20,12 @@ import feature.uc.field._
 import feature.uc.step._
 import text.{StepText, FreeText}
 import StepFieldConsts.StartingLabelIndices
-import shipreq.webapp.base.AppConsts.{useCaseStepsMaxLength => MaxStepsPerLevel, useCaseStepsMaxDepth => MaxStepDepth}
+import StepFieldConsts.MaxStepDepth
+import shipreq.webapp.base.AppConsts.{useCaseStepsMaxLength => MaxStepsPerLevel}
 import text.ParsingConfig._
 import TreeOps._
 import UseCaseFns.generateStepAndLabelBiMap
-import shipreq.webapp.base.AppConsts.UseCaseStepLabels
+import shipreq.webapp.base.data.StaticField.NormalAltStepTree.{stepLabelsPerLevel => UseCaseStepLabels}
 
 object DataGenerators extends Logger {
   import TestHelpers._

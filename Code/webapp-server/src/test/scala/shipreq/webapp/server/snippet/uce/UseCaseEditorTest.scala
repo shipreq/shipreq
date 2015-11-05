@@ -15,7 +15,8 @@ import change.{UcUpdateResult, ChangeConstraint, UseCaseUpdater}
 import field.{StepField, ExceptionCourseField, NormalCourseField}
 import persist.UseCaseSaveCheckpoint
 import step.StepNode
-import shipreq.webapp.base.AppConsts.{useCaseStepsMaxLength => MaxStepsPerLevel, useCaseStepsMaxDepth => MaxStepDepth}
+import shipreq.webapp.base.AppConsts.{useCaseStepsMaxLength => MaxStepsPerLevel}
+import shipreq.webapp.server.feature.uc.field.StepFieldConsts.MaxStepDepth
 import Renderer.TitleId
 import test.{CssTestHelpers, TestData, TestHelpers}
 import UseCaseEditor._

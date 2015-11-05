@@ -1,7 +1,7 @@
 package shipreq.webapp.server.test
 
 import shipreq.webapp.server.lib.Types._
-import shipreq.webapp.base.AppConsts.UseCaseStepLabels
+import shipreq.webapp.base.data.StaticField.NormalAltStepTree.{stepLabelsPerLevel => UseCaseStepLabels}
 
 /**
  * Very old way of generating trees.
