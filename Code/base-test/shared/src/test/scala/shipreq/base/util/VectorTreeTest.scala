@@ -17,7 +17,8 @@ object VectorTreeTest extends TestSuite {
   def allNodes[A](n: Node[A]): Vector[A] =
     n.children.flatMap(allNodes) :+ n.value
 
-  type PV = Prop[VectorTree[Int]]
+  type VTI = VectorTree[Int]
+  type PV = Prop[VTI]
 
   def values: PV =
     Prop.equal("values")(
@@ -53,8 +54,20 @@ object VectorTreeTest extends TestSuite {
         Dims(maxLength = ml, maxDepth = md)
       })
 
+  def canShift: PV = {
+    def x(name: String, can: VTI => Location => Boolean, proof: VTI => Location => Option[VTI]): PV =
+      Prop.atom("canShift" + name, t =>
+        t.locIterator
+          .find(l => can(t)(l) ≠ proof(t)(l).isDefined)
+          .map("Discrepancy at " + _))
+
+    "CanShift" rename_: (
+      x("Left" , _.canShiftLeft , _.shiftLeft ) ∧
+      x("Right", _.canShiftRight, _.shiftRight) )
+  }
+
   def props: PV =
-    (values ∧ locAndValueIterator ∧ dims) rename "VectorTree props"
+    (values ∧ locAndValueIterator ∧ dims ∧ canShift) rename "VectorTree props"
 
   // ===================================================================================================================
 

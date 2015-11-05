@@ -24,6 +24,9 @@ final case class VectorTree[+A](children: Children[A]) extends Parent[A] {
   def foreach[U](f: (Location, A) => U): Unit =
     locAndValueIterator(f).foreach(_ => ())
 
+  def locIterator: Iterator[Location] =
+    locAndValueIterator((l, _) => l)
+
   def locAndValueIterator[B](f: (Location, A) => B): Iterator[B] =
     childrenIterator(Vector.empty, f)
 
@@ -67,6 +70,9 @@ final case class VectorTree[+A](children: Children[A]) extends Parent[A] {
   def remove(at: Location): Option[VectorTree[A]] =
     modifyChildren(at.init)(_ delete at.last)
 
+  def canShiftLeft(at: Location): Boolean =
+    at.length >= 2
+
   /**
     * Decreases the indent/level of a node.
     *
@@ -93,6 +99,9 @@ final case class VectorTree[+A](children: Children[A]) extends Parent[A] {
         )
       )
     }
+
+  def canShiftRight(at: Location): Boolean =
+    at.last > 0
 
   /**
     * Increases the indent/level of a node.
