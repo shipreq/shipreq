@@ -7,6 +7,24 @@
     <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/react/0.14.2/react-dom.js"></script>
     <style type="text/css">
       td,input {font-size:135%}
+
+
+        .fadeanim-enter {
+            opacity: 0.01;
+        }
+        .fadeanim-enter.fadeanim-enter-active {
+            opacity: 1;
+            transition: opacity 110ms ease-in;
+        }
+        .fadeanim-leave {
+            opacity: 1;
+        }
+        .fadeanim-leave.fadeanim-leave-active {
+            opacity: 0.01;
+            transition: opacity 110ms ease-in;
+        }
+
+
     </style>
 </head>
 <body>

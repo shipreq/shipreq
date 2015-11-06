@@ -9,7 +9,7 @@ import japgolly.scalajs.react._, vdom.prefix_<^._, MonocleReact._
 
 /**
   * Preview available:
-  * - when editing and focused and dirty
+  * - when editing and focused and (dirty or has been edited since receiving focus)
   *
   * Editor opens:
   * - when clicked
@@ -91,7 +91,7 @@ object FocusPreviewExperiment {
     case class Props(value: String, index: Int, focusIndex: Int => Callback)
 
     @Lenses
-    case class State(value: String, index: Int, edit: Option[String], focus: Boolean)
+    case class State(value: String, index: Int, edit: Option[String], focus: Boolean, changedSinceFocus: Boolean)
 
     object SimpleParser {
       val token = """^(.*?)\[([^\[]+?)\](.*)$""".r
@@ -115,6 +115,9 @@ object FocusPreviewExperiment {
         <.span(go(s, Vector.empty): _*)
     }
 
+    // Values here correspond to values in CSS in index.html
+    val tg = Addons.ReactCssTransitionGroup("fadeanim", enterTimeout = 110, leaveTimeout = 110, component = "div")
+
     class Backend($: BackendScope[Props, State]) {
 
       val ref = Ref[dom.html.Input]("i")
@@ -130,25 +133,23 @@ object FocusPreviewExperiment {
 
           case Some(t) =>
             def onChange(e: ReactEventI): Callback =
-              $.setStateL(State.edit)(Some(e.target.value))
+              $.modState(s => s.copy(edit = Some(e.target.value), changedSinceFocus = true))
 
             def onKey(e: ReactKeyboardEventI): Callback =
               CallbackOption.keyCodeSwitch(e) {
-                case KeyCode.Escape => $.setStateL(State.edit)(None)
-                case KeyCode.Enter => $.setState(State(t, s.index, None, false))
+                case KeyCode.Escape => $.setState(State(s.value, s.index, None, false, false))
+                case KeyCode.Enter => $.setState(State(t, s.index, None, false, false))
                 case KeyCode.Down => p.focusIndex(s.index + 1)
                 case KeyCode.Up => p.focusIndex(s.index - 1)
               }
 
             def onFocus: Callback =
-              $.setStateL(State.focus)(true)
+              $.modState(s => s.copy(focus = true, changedSinceFocus = false))
 
             def onBlur: Callback =
-              $.modState { s0 =>
-                var s = s0.copy(focus = false)
-                if (s.edit.exists(_ == s.value))
-                  s = s.copy(edit = None)
-                s
+              $.modState { s =>
+                val newEdit = s.edit.filter(_ != s.value)
+                s.copy(edit = newEdit, focus = false, changedSinceFocus = false)
               }
 
             val input =
@@ -162,11 +163,16 @@ object FocusPreviewExperiment {
                 ^.onBlur --> onBlur,
                 ^.value := t)
 
-            val preview =
-              Some(TagMod(
-                <.div("Preview:"),
-                <.div(^.backgroundColor := "#efe", SimpleParser(t)))
-              ).filter(_ => s.focus && (s.value != t))
+            val showPreview = s.focus && (s.changedSinceFocus || s.value != t)
+
+            def preview =
+              if (showPreview)
+                tg(
+                  <.div(^.key := 9,
+                    <.div("Preview:"),
+                    <.div(^.backgroundColor := "#efe", SimpleParser(t))))
+              else
+                tg()
 
             <.div(input, preview)
         }
@@ -191,9 +197,8 @@ object FocusPreviewExperiment {
     }
 
     val Comp = ReactComponentB[Props]("Row")
-      .initialState_P[State](p => State(p.value, p.index, None, false))
+      .initialState_P[State](p => State(p.value, p.index, None, false, false))
       .renderBackend[Backend]
       .build
   }
-
 }
