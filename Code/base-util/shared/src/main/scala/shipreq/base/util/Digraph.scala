@@ -28,6 +28,9 @@ object Digraph {
     def dir(fwd: Boolean): UniDir[A] =
       if (fwd) forwards else backwards
 
+    def memberIterator: Iterator[A] =
+      Digraph.memberIterator(forwards)
+
     def members: Set[A] =
       Digraph.members(forwards)
   }
@@ -48,6 +51,10 @@ object Digraph {
 
   def transitiveClosure[A: UnivEq : ClassTag](keys: Iterable[A], dead: Set[A], dag: UniDir[A]): TransitiveClosure[A] =
     TransitiveClosure.auto[A](keys)(dag.apply, !dead.contains(_))
+
+  def memberIterator[A](dag: UniDir[A]): Iterator[A] =
+    dag.m.iterator.flatMap(e =>
+      collection.Iterator.single(e._1) ++ e._2.iterator)
 
   def members[A: UnivEq](dag: UniDir[A]): Set[A] = {
     val b = UnivEq.setBuilder[A]
