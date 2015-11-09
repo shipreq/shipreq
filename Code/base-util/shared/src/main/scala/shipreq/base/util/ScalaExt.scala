@@ -65,12 +65,80 @@ object ScalaExt extends Platform.ScalaExt {
     @inline def castOption: Option[A] = s.asInstanceOf[Option[A]]
   }
 
+  implicit class IteratorExt[A](private val as: Iterator[A]) extends AnyVal {
+    def filterT[T <: A](implicit t: ClassTag[T]): Iterator[T] =
+      as.flatMap(t.unapply(_).iterator)
+  }
+
   implicit class IterableExt[A](private val as: Iterable[A]) extends AnyVal {
     def filterT[T <: A](implicit t: ClassTag[T]): Stream[T] = // TODO deprecate?
       as.toStream.flatMap(t.unapply(_).toStream)
 
     def filterTI[T <: A](implicit t: ClassTag[T]): Iterator[T] =
-      as.iterator.flatMap(t.unapply(_).iterator)
+      as.iterator.filterT[T]
+  }
+
+  implicit class VectorExt[A](private val as: Vector[A]) extends AnyVal {
+    def isIndexValid(i: Int): Boolean =
+      i < as.length && i >= 0
+
+    def get(index: Int): Option[A] =
+      getFlatMap(index)(Some(_))
+
+    def getFlatMap[B](index: Int)(f: A => Option[B]): Option[B] =
+      if (isIndexValid(index))
+        f(as(index))
+      else
+        None
+
+    def updateIndexOrNull[B >: A](index: Int, f: A => B): Vector[B] =
+      if (isIndexValid(index))
+        as.updated(index, f(as(index)))
+      else
+        null
+
+    def updateIndex[B >: A](index: Int, f: A => B): Option[Vector[B]] =
+      Option(updateIndexOrNull(index, f))
+
+    def tryUpdateIndexOrNull[B >: A](index: Int, f: A => Option[B]): Vector[B] =
+      if (isIndexValid(index))
+        f(as(index)) match {
+          case None    => null
+          case Some(b) => as.updated(index, b)
+        }
+      else
+        null
+
+    def tryUpdateIndex[B >: A](index: Int, f: A => Option[B]): Option[Vector[B]] =
+      Option(tryUpdateIndexOrNull(index, f))
+
+    def insert[B >: A](index: Int, b: B): Option[Vector[B]] =
+      if (index == 0)
+        Some(b +: as)
+      else if (index < 0)
+        None
+      else (index - as.length) match {
+        case 0          => Some(as :+ b)
+        case n if n < 0 => Some(as.patch(index, b :: Nil, 0))
+        case _          => None
+      }
+
+    def deleteOrNull(index: Int): Vector[A] =
+      if (isIndexValid(index))
+        as.patch(index, Nil, 1)
+      else
+        null
+
+    def delete(index: Int): Option[Vector[A]] =
+      Option(deleteOrNull(index))
+  }
+
+  implicit class VectorNExt[A >: Null](private val as: Vector[A]) extends AnyVal {
+    def getOrNull(index: Int): A =
+      if (as.isIndexValid(index))
+        as(index)
+      else
+        null
   }
 
   implicit class StreamExt[A](private val s: Stream[A]) extends AnyVal {
