@@ -186,16 +186,16 @@ object ShowSrcGenericImp {
     }
   }
 
-  def dagUni[A](fix: String)(implicit A: ShowSrc[A], AS: ShowSrc[Set[A]]): ShowSrc[DAG.UniDir[A]] =
+  def digraphUni[A](fix: String)(implicit A: ShowSrc[A], AS: ShowSrc[Set[A]]): ShowSrc[Digraph.UniDir[A]] =
     multimap(fix + ".emptyUniDir")(A, AS)
 
-  def dagBi[A](fix: String)(implicit B: ShowSrc[DAG.UniDir[A]]): ShowSrc[DAG.BiDir[A]] =
+  def digraphBi[A](fix: String)(implicit B: ShowSrc[Digraph.UniDir[A]]): ShowSrc[Digraph.BiDir[A]] =
     ShowSrc((s, a) =>
       if (a.forwards.isEmpty) {
         s append fix
         s append ".emptyBiDir"
       } else
-        s.cc1(fix + ".BiDir", DAG.BiDir unapply a))
+        s.cc1(fix + ".BiDir", Digraph.BiDir unapply a))
 
   def wrapAndType[A](ss: ShowSrc[A], typ: String): ShowSrc[A] =
     ShowSrc { (s, a) =>
@@ -283,10 +283,10 @@ object ShowSrcDataImp {
   implicit val setApplicableTagId = set(null)(applicableTagId)
 
   implicit val implicationsUni: ShowSrc[Implications.UniDir] =
-    dagUni("Implications")(reqId, setReqId)
+    digraphUni("Implications")(reqId, setReqId)
 
   implicit val implications: ShowSrc[Implications.BiDir] =
-    "implications" @@ dagBi("Implications")
+    "implications" @@ digraphBi("Implications")
 
   implicit val reqDataTags: ShowSrc[ReqData.Tags] =
     "reqDataTags" @@ multimap("ReqData.emptyTags")

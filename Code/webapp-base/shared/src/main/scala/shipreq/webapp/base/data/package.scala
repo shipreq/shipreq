@@ -1,7 +1,7 @@
 package shipreq.webapp.base
 
 import scalaz.{Equal, \/}
-import shipreq.base.util.{DAG, MMTree, UnivEq, IMap}
+import shipreq.base.util.{Digraph, MMTree, UnivEq, IMap}
 
 package object data {
 
@@ -56,7 +56,7 @@ package object data {
   // ----------------------------------------------------------------------------------------------
   // Data types and functions
 
-  val Implications = new DAG.Fix[ReqId, Int]("implications", _.value)
+  val Implications = new Digraph.FixAcyclic[ReqId, Int]("implications", _.value)
   type Implications = Implications.BiDir
 
   type HashRefTarget       = ApplicableTag \/ CustomIssueType
