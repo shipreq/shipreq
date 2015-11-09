@@ -237,12 +237,7 @@ object DataProp {
 
   // -------------------------------------------------------------------------------------------------------------------
   object implications {
-    type T = Implications
-
-    def noCycles =
-      Implications.cycleDetector.noCycleProp("implications").contramap[T](_.srcToTgt.m)
-
-    val all = noCycles
+    @inline def all = Implications.propBi
   }
 
   // -------------------------------------------------------------------------------------------------------------------

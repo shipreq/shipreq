@@ -17,7 +17,7 @@ object Project {
   val tags                : Lens[Project, TagTree            ] = config ^|-> ProjectConfig.tags
   val genericReqs         : Lens[Project, GenericReqIMap     ] = reqs ^|-> Requirements.genericReqs
   val pubidRegister       : Lens[Project, PubidRegister      ] = reqs ^|-> Requirements.pubids
-  val implicationsSrcToTgt: Lens[Project, Implications.Uni   ] = implications ^|-> Implications.srcToTgt
+  val implicationsSrcToTgt: Lens[Project, Implications.UniDir] = implications ^<-> Implications.biToUni
   val reqCodeTrie         : Lens[Project, ReqCode.Trie       ] = reqCodes ^|-> ReqCodes.trie
 
   import ReqData._ // for equality
@@ -30,7 +30,7 @@ object Project {
       ReqCodes.empty,
       ReqData.emptyText,
       ReqData.emptyTags,
-      Implications.empty,
+      Implications.emptyBiDir,
       DeletionReasons.empty,
       IdCeilings.zero)
 }
@@ -41,7 +41,7 @@ final case class Project(config         : ProjectConfig,
                          reqCodes       : ReqCodes,
                          reqText        : ReqData.Text,
                          reqTags        : ReqData.Tags,
-                         implications   : Implications,
+                         implications   : Implications.BiDir,
                          deletionReasons: DeletionReasons,
                          idCeilings     : IdCeilings) {
 
@@ -89,7 +89,7 @@ final case class Project(config         : ProjectConfig,
    * Note: Dead reqs are included (reflexively and when direct implications) but are not followed.
    */
   lazy val implicationSrcToTgtTC: TransitiveClosure[ReqId] =
-    implicationTransitiveClosure(_.srcToTgt)
+    implicationTransitiveClosure(_.forwards)
 
   /**
    * Transitive closure of implications going target → source.
@@ -97,9 +97,9 @@ final case class Project(config         : ProjectConfig,
    * Note: Dead reqs are included (reflexively and when direct implications) but are not followed.
    */
   lazy val implicationTgtToSrcTC: TransitiveClosure[ReqId] =
-    implicationTransitiveClosure(_.tgtToSrc)
+    implicationTransitiveClosure(_.backwards)
 
-  private def implicationTransitiveClosure(f: Implications => Implications.Uni): TransitiveClosure[ReqId] =
+  private def implicationTransitiveClosure(f: Implications => Implications.UniDir): TransitiveClosure[ReqId] =
     Implications.transitiveClosure(
       reqs.reqs.keys,
       deadReqIds,

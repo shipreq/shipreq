@@ -25,8 +25,8 @@ object ReqFull {
   def extract(p: Project, id: GenericReqId): Option[ReqFull] = {
     val r = p.reqs.req(id) match {case x: GenericReq => x}
     val tags      = p.reqTags(id)
-    val impliedBy = p.implications.tgtToSrc(id)
-    val implies   = p.implications.srcToTgt(id)
+    val impliedBy = p.implications.backwards(id)
+    val implies   = p.implications.forwards(id)
     val reqCodes  = p.reqCodes.activeReqCodesByReqId(id)
     ReqFull(r, tags, impliedBy, implies, reqCodes)
   }
@@ -721,7 +721,7 @@ object ContentEventTest extends TestSuite {
           else
             PatchImplicationSrc(subj, sd))
           val p = _assertPass(es: _*)
-          val a = p.implications.srcToTgt.m
+          val a = p.implications.forwards.m
           assertEq(a, expect.toMap)
         }
         implicit def ii(t: (Int, Int)): (ReqId, Set[ReqId]) = (t._1, Set(t._2))

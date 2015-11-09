@@ -186,6 +186,17 @@ object ShowSrcGenericImp {
     }
   }
 
+  def dagUni[A](fix: String)(implicit A: ShowSrc[A], AS: ShowSrc[Set[A]]): ShowSrc[DAG.UniDir[A]] =
+    multimap(fix + ".emptyUniDir")(A, AS)
+
+  def dagBi[A](fix: String)(implicit B: ShowSrc[DAG.UniDir[A]]): ShowSrc[DAG.BiDir[A]] =
+    ShowSrc((s, a) =>
+      if (a.forwards.isEmpty) {
+        s append fix
+        s append ".emptyBiDir"
+      } else
+        s.cc1(fix + ".BiDir", DAG.BiDir unapply a))
+
   def wrapAndType[A](ss: ShowSrc[A], typ: String): ShowSrc[A] =
     ShowSrc { (s, a) =>
       ss(s, a)
@@ -271,15 +282,11 @@ object ShowSrcDataImp {
   implicit val setReqTypeMnemonic = set(null)(reqTypeMnemonic)
   implicit val setApplicableTagId = set(null)(applicableTagId)
 
-  implicit val implicationsUni: ShowSrc[Implications.Uni] =
-    multimap("Implications.emptyUni")(reqId, setReqId)
+  implicit val implicationsUni: ShowSrc[Implications.UniDir] =
+    dagUni("Implications")(reqId, setReqId)
 
-  implicit val implications: ShowSrc[Implications] =
-    "implications" @@ data((s, a) =>
-      if (a.srcToTgt.isEmpty)
-        s append "Implications.empty"
-      else
-        s.cc1("Implications", Implications unapply a))
+  implicit val implications: ShowSrc[Implications.BiDir] =
+    "implications" @@ dagBi("Implications")
 
   implicit val reqDataTags: ShowSrc[ReqData.Tags] =
     "reqDataTags" @@ multimap("ReqData.emptyTags")

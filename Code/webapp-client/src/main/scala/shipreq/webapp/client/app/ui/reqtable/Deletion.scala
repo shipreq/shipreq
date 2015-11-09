@@ -84,8 +84,8 @@ object Deletion {
 
   private def calcDeletableReqs(p: Project, directSel: NonEmptySet[ReqId]): DeletableReqs = {
     val lookupReq = p.reqs.reqs.need _
-    val imps_>    = p.implications.srcToTgt
-    val imps_<    = p.implications.tgtToSrc
+    val imps_>    = p.implications.forwards
+    val imps_<    = p.implications.backwards
 
     val reqOrder = Ordering.by((_: Req).pubid)(p.config.pubidOrdering)
 

@@ -168,7 +168,7 @@ object ShowSize {
     ShowSize.lift(r => Node("Tags", r.vstream(_.size).sum))
 
   implicit def implications: ShowSize[Implications] =
-    ShowSize.lift(r => Node("Implications", r.srcToTgt.vstream(_.size).sum))
+    ShowSize.lift(r => Node("Implications", r.forwards.vstream(_.size).sum))
 
   implicit def tagTree: ShowSize[TagTree] =
     ShowSize.lift(tt =>

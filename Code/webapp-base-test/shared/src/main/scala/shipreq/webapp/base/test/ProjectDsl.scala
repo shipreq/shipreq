@@ -26,7 +26,7 @@ object ProjectDslInternals {
                           maxReqCodeId  : Int,
                           text          : ReqData.Text,
                           tags          : ReqData.Tags,
-                          imps          : Implications.Uni) {
+                          imps          : Implications.UniDir) {
 
     private var _newMaxReqCodeId = maxReqCodeId
 
@@ -58,7 +58,7 @@ object ProjectDslInternals {
           reqCodes     = succ(p.reqCodes,     ReqCodes(reqCodeTrie)),
           reqText      = succ(p.reqText,      text),
           reqTags      = succ(p.reqTags,      tags),
-          implications = succ(p.implications, Implications(imps)),
+          implications = succ(p.implications, Implications.BiDir(imps)),
           idCeilings   = ids))
   }
 
@@ -73,7 +73,7 @@ object ProjectDslInternals {
     maxReqCodeId   = p.reqCodes.idList match {case Nil => 0; case l => l.iterator.map(_.value).max},
     text           = p.reqText,
     tags           = p.reqTags,
-    imps           = p.implications.srcToTgt)
+    imps           = p.implications.forwards)
 
   type CFTextId     = CustomField.Text.Id
   type CFTextValue  = Text.CustomTextField.NonEmptyText

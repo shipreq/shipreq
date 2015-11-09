@@ -334,8 +334,8 @@ private[reqtable] object Logic {
             val live = r live p.config.customReqTypes
 
             // Expansion
-            val impSrcs = expandImpSrcs(() => pImplications.tgtToSrc(id) |> pubids)
-            val impTgts = expandImpTgts(() => pImplications.srcToTgt(id) |> pubids)
+            val impSrcs = expandImpSrcs(() => pImplications.backwards(id) |> pubids)
+            val impTgts = expandImpTgts(() => pImplications.forwards(id) |> pubids)
             val codes   = expandCodes  (() => reqCodesByReq(live)(id))
             val cfImps  = expandImpCols(r)
             val cfTags  = expandTagCols(r)

@@ -44,7 +44,7 @@ object ImplicationEditor {
   }
 
   def initialValueForCustomColumn(p: Project, fid: CustomField.Implication.Id, id: ReqId): Stream[Pubid] =
-    p.implications.tgtToSrc(id)
+    p.implications.backwards(id)
       .toStream
       .map(p.reqs.req(_).pubid)
 
@@ -104,7 +104,7 @@ object ImplicationEditor {
       val diff = SetDiff.compare(initialValues, newValues)
 
       val pi = project.value().implications
-      var is = if (declFwd) pi.srcToTgt else pi.tgtToSrc
+      var is = pi.dir(declFwd)
       for (i <- initial)
         is = is.mod(i._1, diff.apply)
       if (Implications.cycleDetector.hasCycle(is.m))

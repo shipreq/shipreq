@@ -862,8 +862,6 @@ object RandomData {
       case Some((a, b)) => preventImplicationCycles(m - b)
     }
 
-  val emptyImplicationsU = Implications.emptyUni
-
   val MaxImplicationPairs: SizeSpec = 0 to (100 `JVM|JS` 40)
   // val MaxImplicationsPerSrc = 2  `JVM|JS` 4
   // val MaxImplicationKeys    = 10 `JVM|JS` 4
@@ -873,7 +871,7 @@ object RandomData {
   val implicationsMethodDefault: ImpMethod = (g, fix) =>
     g.pair
       .list(MaxImplicationPairs)
-      .map(kvs => emptyImplicationsU.addPairs(kvs: _*).m |> fix)
+      .map(kvs => Implications.emptyUniDir.addPairs(kvs: _*).m |> fix)
 
   def implicationsMethod2(maxImpsPerSrc: Int, maxImpKeys: Int): ImpMethod = (g, fix) =>
     Gen.tuple2(g, g.set1(1 to maxImpsPerSrc))
@@ -884,12 +882,12 @@ object RandomData {
     def fix(m: ImplicationsUM): Implications = {
       val m2 = preventImplicationCycles(m)
       // println(m2); println()
-      Implications(Multimap(m2))
+      Implications.BiDir(Multimap(m2))
     }
 
     Gen.tryGenChoose(reqIds.toSeq) match {
       case Some(g) => method(g, fix)
-      case None    => Gen pure Implications(emptyImplicationsU)
+      case None    => Gen pure Implications.emptyBiDir
     }
   }
 
