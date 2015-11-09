@@ -13,12 +13,12 @@ for (a <- (2 to 9)) {
 
   var o = List.empty[String]
 
-  o ::= s"@inline def mapEach[B](f: A ⇒ B): ($BB) = (${fnc(i => s"f(_t._$i)")})"
+  o ::= s"@inline def mapEach[B](f: A ⇒ B): ($BB) = (${fnc(i => s"f(t._$i)")})"
 
   y ::= s"type HomoTuple$a[A] = ($AA)"
   z ::= s"type HomoTuple${a}Map[A,B] = (($AA)) ⇒ ($BB)"
 
-  println(s"@inline final implicit class HomoTuple${a}Ext[A](val _t: ($AA)) extends AnyVal {")
+  println(s"@inline final implicit class HomoTuple${a}Ext[A](private val t: ($AA)) extends AnyVal {")
   println(o.sorted.map("  "+_) mkString "\n")
   println("}")
 }
