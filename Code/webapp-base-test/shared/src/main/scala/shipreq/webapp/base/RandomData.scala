@@ -707,8 +707,21 @@ object RandomData {
   val reqId: Gen[ReqId] =
     Gen.chooseGen(genericReqId, genericReqId, useCaseId)
 
-  def useCaseSteps(g: Gen[UseCaseStep], f: StaticField.UseCaseStepTree)(implicit ss: SizeSpec): Gen[UseCase.Steps] =
-    genVectorTree(g, f.maxDepth)
+  def useCaseSteps(g: Gen[UseCaseStep], f: StaticField.UseCaseStepTree)(implicit ss: SizeSpec): Gen[UseCase.Steps] = {
+    val gt = genVectorTree(g, f.maxDepth)
+    f match {
+      case StaticField.NormalAltStepTree =>
+        // Root step is required
+        Gen { ctx =>
+          val t = gt run ctx
+          if (t.isEmpty)
+            VectorTree(Vector(VectorTree.Node(g run ctx, Vector.empty)))
+          else
+            t
+        }
+      case _ => gt
+    }
+  }
 
   class PubidRegisterBuilder {
     private[PubidRegisterBuilder] var pr = PubidRegister.empty

@@ -25,6 +25,10 @@ final case class VectorTree[+A](children: Children[A]) extends Parent[A] {
 
   override def toString = prettyPrintLabeled()
 
+  def isEmpty = children.isEmpty
+
+  @inline def nonEmpty = !isEmpty
+
   def map[B](f: A => B): VectorTree[B] =
     VectorTree(children map (_ map f))
 

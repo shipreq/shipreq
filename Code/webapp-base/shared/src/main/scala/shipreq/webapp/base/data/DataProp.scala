@@ -207,40 +207,46 @@ object DataProp {
       ).contramap[T](_.pubids)
     }
 
-    def useCaseSteps: Prop[T] = {
-      def stepTrees = {
-        import StaticField.{NormalAltStepTree => N, ExceptionStepTree => E}
-
-        def eachTree(f: StaticField.UseCaseStepTree) =
-          VectorTree.maxDimsProp(
-            maxLengthInclusive = AppConsts.useCaseStepsMaxLength,
-            maxDepthInclusive  = f.maxDepth)
-
-        val treesInUseCase: Prop[UseCase] =
-          eachTree(N).contramap[UseCase](_.stepsNA).rename(N.name) ∧
-          eachTree(E).contramap[UseCase](_.stepsE ).rename(E.name)
-
-        treesInUseCase.forall((_: T).useCases.imap.valuesIterator) rename "UC trees"
-      }
-
-      def ids = {
-        val valid  = id[UseCaseStepId].forallF[Stream]
-        val unique = Prop.distinctC[Stream, UseCaseStepId]("ids")
-        (valid ∧ unique).contramap[T](_.useCases.stepIterator.map(_.id).toStream) rename "ids"
-      }
-
-      def flowIds =
-        Prop.whitelist[T]("flow")(
-          _.useCases.stepIterator.map(_.id).toSet,
-          _.useCases.stepFlow.memberIterator.toList)
-
-      (ids ∧ stepTrees ∧ flowIds) rename "UC steps"
-    }
-
     val all = "Requirements" rename_: (
       ids ∧ idsUnique ∧
-      useCaseSteps ∧
+      useCases.all.contramap[T](_.useCases).rename("Use Cases") ∧
       reqPubidsInRegister ∧ pubidsResolveToReqs ∧ pubidReqTypeAssociations)
+  }
+
+  object useCases {
+    type T = UseCases
+
+    def stepIds = {
+      val valid  = id[UseCaseStepId].forallF[Stream]
+      val unique = Prop.distinctC[Stream, UseCaseStepId]("step id")
+      (valid ∧ unique).contramap[T](_.stepIterator.map(_.id).toStream) rename "step ids"
+    }
+
+    def stepTrees = {
+      import StaticField.{NormalAltStepTree => N, ExceptionStepTree => E}
+
+      def rootStepExists =
+        Prop.test[UseCase]("Root step", _.stepsNA.nonEmpty)
+
+      def eachTree(f: StaticField.UseCaseStepTree) =
+        VectorTree.maxDimsProp(
+          maxLengthInclusive = AppConsts.useCaseStepsMaxLength,
+          maxDepthInclusive  = f.maxDepth)
+
+      val treesInUseCase: Prop[UseCase] =
+        eachTree(N).contramap[UseCase](_.stepsNA).rename(N.name) ∧
+        eachTree(E).contramap[UseCase](_.stepsE ).rename(E.name) ∧
+        rootStepExists
+
+      treesInUseCase.forall((_: T).imap.valuesIterator) rename "UC trees"
+    }
+
+    def idsInStepFlow =
+      Prop.whitelist[T]("StepFlow ids")(
+        _.stepIterator.map(_.id).toSet,
+        _.stepFlow.memberIterator.toList)
+
+    val all = stepIds ∧ stepTrees ∧ idsInStepFlow
   }
 
   // -------------------------------------------------------------------------------------------------------------------
