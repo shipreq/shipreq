@@ -121,7 +121,7 @@ object Dependencies {
   val twitterEval = jvmOnly("com.twitter"                %% "util-eval"             % "6.26.0")
   val servlet     = jvmOnly("org.eclipse.jetty.orbit"     % "javax.servlet"         % "3.0.0.v201112011016" artifacts Artifact("javax.servlet", "jar", "jar"))
   val mockito     = jvmOnly("org.mockito"                 % "mockito-core"          % "1.9.5")
-  val scalaTest   = jvmOnly("org.scalatest"              %% "scalatest"             % "2.2.1")
+  val scalaTest   = jvmOnly("org.scalatest"              %% "scalatest"             % "2.2.5")
   val scalaCheck  = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.11.3")
   val selenium    = jvmOnly("org.seleniumhq.selenium"     % "selenium-java"         % "2.35.0" excludeAll(
     ExclusionRule(name = "selenium-android-driver"),
