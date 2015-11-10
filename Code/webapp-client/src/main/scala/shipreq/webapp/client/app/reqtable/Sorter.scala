@@ -259,7 +259,7 @@ object Sorter {
         val n = pubidNormaliser(setup)
         val `n/a` = (-1, -1)
         ;{
-          case r: GenericReqRow   => n(r.req.pubid)
+          case r: ReqRow          => n(r.req.pubid)
           case r: ReqCodeGroupRow => `n/a`
         }
       },
@@ -280,7 +280,7 @@ object Sorter {
 
   val reqTypeSorter = Sorter[Int](
     prep = setup => {
-      case r: GenericReqRow   => setup.reqTypesToMnemonicOrder(r.req.pubid.reqTypeId)
+      case r: ReqRow          => setup.reqTypesToMnemonicOrder(r.req.pubid.reqTypeId)
       case r: ReqCodeGroupRow => -1
     },
     sort = SortFn.int
@@ -319,19 +319,19 @@ object Sorter {
 
   def customTextFieldSorter(id: CustomField.Text.Id, c: Column): SorterForSMCB =
     textSorter(c, p => {
-      case r: GenericReqRow   => p.customTextField(id)(r.req) getOrElse ""
+      case r: ReqRow          => p.customTextField(id)(r.req) getOrElse ""
       case r: ReqCodeGroupRow => ""
     })
 
   val titleSorter: SorterForSMCB =
     textSorter(C.Title, p => {
-      case r: GenericReqRow   => p.reqTitle(r.req)
+      case r: ReqRow          => p.reqTitle(r.req)
       case r: ReqCodeGroupRow => p.reqCodeGroupTitle(r.group)
     })
 
   def deletionReasonSorter: SorterForSMCB =
     textSorterS(C.DeletionReason, s => pt => {
-      case r: GenericReqRow   => SortableDeletionReason.req(s.p, pt, r.req)
+      case r: ReqRow          => SortableDeletionReason.req(s.p, pt, r.req)
       case _: ReqCodeGroupRow => SortableDeletionReason.reqCodeGroup
     })
 

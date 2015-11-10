@@ -327,28 +327,26 @@ private[reqtable] object Logic {
       val seeExpandedCodes = codesSeen.addFn[Expanded[ReqCode.Value]](add => _.foreach(_ foreach add))
 
       // Add requirements
-      p.reqs.reqs.values.foreach {
-        case r: GenericReq =>
-          if (filter a r) {
-            val id = r.id
-            val live = r live p.config.customReqTypes
+      for (r <- p.reqs.reqs.values)
+        if (filter a r) {
+          val id = r.id
+          val live = r live p.config.customReqTypes
 
-            // Expansion
-            val impSrcs = expandImpSrcs(() => pImplications.backwards(id) |> pubids)
-            val impTgts = expandImpTgts(() => pImplications.forwards(id) |> pubids)
-            val codes   = expandCodes  (() => reqCodesByReq(live)(id))
-            val cfImps  = expandImpCols(r)
-            val cfTags  = expandTagCols(r)
-            val exps    = expansions(impSrcs, impTgts, codes, cfImps, cfTags)
+          // Expansion
+          val impSrcs = expandImpSrcs(() => pImplications.backwards(id) |> pubids)
+          val impTgts = expandImpTgts(() => pImplications.forwards(id) |> pubids)
+          val codes   = expandCodes  (() => reqCodesByReq(live)(id))
+          val cfImps  = expandImpCols(r)
+          val cfTags  = expandTagCols(r)
+          val exps    = expansions(impSrcs, impTgts, codes, cfImps, cfTags)
 
-            // Build
-            val mv = multiValuesFn(id)
-            exps.foreachWithIndex((exp, i) =>
-              output :+= GenericReqRow(r, live, exp, mv, i))
+          // Build
+          val mv = multiValuesFn(id)
+          exps.foreachWithIndex((exp, i) =>
+            output :+= ReqRow(r, live, exp, mv, i))
 
-            seeExpandedCodes(codes)
-          }
-      }
+          seeExpandedCodes(codes)
+        }
 
       // Add ReqCodeGroups
       if (vs.viewReqCodeGroups)
@@ -554,13 +552,13 @@ private[reqtable] object Logic {
   def consolidateAdjacentDups(rows: Stream[Row]): Stream[Row] =
     mergeAdjacent(rows)((x, y) =>
       (x, y) match {
-        case (a: GenericReqRow, b: GenericReqRow) =>
+        case (a: ReqRow, b: ReqRow) =>
           if (a.req.id ==* b.req.id)
-            Some(GenericReqRow(a.req, a.live, a.exp |+| b.exp, a.mv |+| b.mv, a.instanceId)) // TODO resort
+            Some(ReqRow(a.req, a.live, a.exp |+| b.exp, a.mv |+| b.mv, a.instanceId)) // TODO resort
           else
             None
-        case (_: GenericReqRow,   _: ReqCodeGroupRow)
-           | (_: ReqCodeGroupRow, _: GenericReqRow)
+        case (_: ReqRow,          _: ReqCodeGroupRow)
+           | (_: ReqCodeGroupRow, _: ReqRow)
            | (_: ReqCodeGroupRow, _: ReqCodeGroupRow) => None
       }
     )
@@ -645,7 +643,7 @@ private[reqtable] object Logic {
     rows foreach {
       case _: ReqCodeGroupRow =>
         _codeGroups += 1
-      case r: GenericReqRow =>
+      case r: ReqRow =>
         val id = r.req.id
         val c = _counts.getOrElse(id, 0)
         if (c == 0)

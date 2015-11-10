@@ -10,7 +10,7 @@ import utest._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.{TextSearch, PlainText, Text}
+import shipreq.webapp.base.text.{Atom, PlainText, Text, TextSearch}
 import shipreq.webapp.client.app.reqtable.{SortCriterion => SC, Column => C}
 import shipreq.webapp.client.data.{FilterDead, ShowDead, HideDead}
 import shipreq.webapp.client.test.ClientTestSettings._
@@ -36,7 +36,7 @@ object LogicPropTest extends TestSuite {
     val plainText   = PlainText(p)
     val textSearch  = TextSearch(p, plainText)
     val gathered    = Logic.gather(vs, p, plainText, textSearch)
-    val gatheredG   = gathered.filterT[GenericReqRow]
+    val gatheredG   = gathered.filterT[ReqRow]
     val rowReqCodes = gathered.flatMap(codesInRow(_).toStream)
     val rowGReqIds  = gatheredG.map(_.req.id).toSet
     val srcGReqIds  = p.reqs.reqs.keys.filterT[GenericReqId].filter(expectVisible).toSet
@@ -85,7 +85,7 @@ object LogicPropTest extends TestSuite {
     // -----------------------------------------------------------------------------------------------------------------
     // Sorting
 
-    implicit def textOrd[T <: Text.Generic] =
+    implicit def textOrd[T <: Atom.Base] =
       implicitly[Ordering[String]].on[T#OptionalText](t => plainText.format(Live, t).toLowerCase)
 
     def universalSort = {
@@ -196,7 +196,7 @@ object LogicPropTest extends TestSuite {
       val sorted = Logic.sort(newViewSettingsForSort(sc), p, plainText)(gathered)
       val na     = ("", -1)
       val pubids = sorted.map {
-        case r: GenericReqRow   => pubidExtract(p)(r.req.pubid)
+        case r: ReqRow          => pubidExtract(p)(r.req.pubid)
         case r: ReqCodeGroupRow => na
       }
       E_sorted("Pubids", pubids, dir)
@@ -215,7 +215,7 @@ object LogicPropTest extends TestSuite {
     def sortByTitle: IndivSortCB = (sm, bp, dir) => {
       val sorted     = sortBy(SC.InconclusiveCB(C.Title, sm))
       val data       = sorted.map {
-        case r: GenericReqRow   => r.req.title
+        case r: ReqRow          => r.req.title
         case r: ReqCodeGroupRow => r.group.title
       }
       val name       = s"Desc ($sm)"

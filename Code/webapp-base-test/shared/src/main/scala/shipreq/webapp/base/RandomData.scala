@@ -818,7 +818,7 @@ object RandomData {
         UseCases.empty.copy(imap = ucs).stepIterator.map(_.id).toVector
 
       val stepFlow: UseCases.StepFlow =
-        genDigraphBiO(Gen.tryGenChoose(ucStepIds))(implicitly, 0 to 6) run ctx
+        genDigraphBiO(Gen.tryGenChoose(ucStepIds))(implicitly, 0 to 4) run ctx
 
       Requirements(grs, UseCases(ucs, stepFlow), pr)
     }

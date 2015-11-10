@@ -21,14 +21,14 @@ object LogicTestUtil {
   def codesInRow(r: Row): Vector[ReqCode.Value] =
   // Don't use optics here
     r match {
-      case r: GenericReqRow   => r.exp.reqCodes
+      case r: ReqRow          => r.exp.reqCodes
       case r: ReqCodeGroupRow => Vector1(r.reqCode)
     }
 
   def tagsInRow(r: Row): Vector[ApplicableTagId] =
   // Don't use optics here
     r match {
-      case r: GenericReqRow   => r.mv.tags
+      case r: ReqRow          => r.mv.tags
       case r: ReqCodeGroupRow => Vector.empty
     }
 
@@ -149,23 +149,23 @@ object LogicTest extends TestSuite {
   private def allSortsIB[A](asc: A, desc: A): Seq[(IgnoreBlanks, A)] =
     (Asc  -> asc) :: (Desc -> desc) :: Nil
 
-  private def rowToStr(f: GenericReqRow => String, g: ReqCodeGroupRow => String): Row => String =
+  private def rowToStr(f: ReqRow => String, g: ReqCodeGroupRow => String): Row => String =
     rowToStr(f, g, identity)
 
-  private def rowToStr(f: GenericReqRow => String, g: ReqCodeGroupRow => String, h: String => String): Row => String = {
-    case r: GenericReqRow   => h(f(r))
+  private def rowToStr(f: ReqRow => String, g: ReqCodeGroupRow => String, h: String => String): Row => String = {
+    case r: ReqRow          => h(f(r))
     case r: ReqCodeGroupRow => h(g(r))
   }
 
-  private def rowToAsToStr[A](f: GenericReqRow => Vector[A])(h: A => String): Row => String =
+  private def rowToAsToStr[A](f: ReqRow => Vector[A])(h: A => String): Row => String =
     rowToAsToStr(f, _ => Vector.empty)(h)
 
-  private def rowToAsToStr[A](f: GenericReqRow => Vector[A], g: ReqCodeGroupRow => Vector[A])(h: A => String): Row => String = {
+  private def rowToAsToStr[A](f: ReqRow => Vector[A], g: ReqCodeGroupRow => Vector[A])(h: A => String): Row => String = {
     val i = (_: Vector[A]).ifelse(_.isEmpty, _z, _ map h mkString ",")
     rowToStr(i compose f, i compose g)
   }
 
-  private def rowToAsToStr2[A](f: GenericReqRow => Vector[A])(g: GenericReqRow => A => String) =
+  private def rowToAsToStr2[A](f: ReqRow => Vector[A])(g: ReqRow => A => String) =
     rowToStr(r => f(r).ifelse(_.isEmpty, _z, _ map g(r) mkString ","), _z)
 
   private def rowToCustomText(pt: PlainText.ForProject, id: CustomField.Text.Id): Row => String = {

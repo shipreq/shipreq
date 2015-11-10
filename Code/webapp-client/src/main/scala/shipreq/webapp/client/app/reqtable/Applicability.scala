@@ -25,7 +25,7 @@ object Applicability {
   implicit object SubjectRow extends Subject[Row] {
     override def apply(reqTypeFilter: ReqTypeId => Boolean)(row: Row): Boolean =
       row match {
-        case r: GenericReqRow   => SubjectReq(reqTypeFilter)(r.req)
+        case r: ReqRow          => SubjectReq(reqTypeFilter)(r.req)
         case _: ReqCodeGroupRow => true
       }
   }

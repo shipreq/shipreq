@@ -124,10 +124,10 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
     @inline implicit def autoSome(f: StartEditFn) = f.some
     row match {
 
-      case r: GenericReqRow =>
+      case r: ReqRow =>
         col match {
           case Column.Code                                           => ForReqCodes.forReq(r)
-          case Column.Title                                          => ForRichText.GenericReqTitle(r)
+          case Column.Title                                          => ForRichText.reqTitle(r)
           case Column.Tags                                           => ForTags(r, None)
           case Column.ReqType                                        => ForReqType(r)
           case Column.ImplicationSrc                                 => ForImplications(r, col, Row.implicationSrc)
@@ -162,7 +162,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
 
     @inline def col = Column.Code
 
-    def forReq(row: GenericReqRow): StartEditFn = {
+    def forReq(row: ReqRow): StartEditFn = {
       val rowId         = row.sourceId
       val id            = row.req.id
       val lens          = editLens ^|-> EditState.atCell(rowId, col)
@@ -218,11 +218,16 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
 
     @inline def col = Column.ReqType
 
-    def apply(row: GenericReqRow): StartEditFn = {
-      val rowId     = row.sourceId
+    def apply(row: ReqRow): Option[StartEditFn] =
+      row.req match {
+        case r: GenericReq => Some(apply(row.sourceId, r))
+        case _: UseCase    => None
+      }
+
+    def apply(rowId: Row.ReqRowSourceId, req: GenericReq): StartEditFn = {
       val lens      = editLens ^|-> EditState.atCell(rowId, col)
-      val id        = row.req.id
-      val initial   = pxProject.value().config.reqTypeC(row.req.reqTypeId)
+      val id        = req.id
+      val initial   = pxProject.value().config.reqTypeC(req.reqTypeId)
       val pxChoices = ReqTypeSelector.pxChoices(initial, pxCustomReqTypes)
 
       val is = new State(ignoreEqual(initial), initial, pxChoices, t => SetGenericReqType(id, t.id), lens, rowId)
@@ -255,11 +260,11 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
 
     val pxLookupAll = Px.apply2(pxProject, pxPlainText)(ImplicationEditor.Lookup.all)
 
-    def apply(row: GenericReqRow, col: Column, rowLens: Optional[Row, Vector[Pubid]]): Option[StartEditFn] =
+    def apply(row: ReqRow, col: Column, rowLens: Optional[Row, Vector[Pubid]]): Option[StartEditFn] =
       rowLens.getOption(row).map(pubids =>
         startEdit(row, col, pxLookupAll, pubids))
 
-    def apply(row: GenericReqRow, col: Column, fid: CustomField.Implication.Id): Option[StartEditFn] = {
+    def apply(row: ReqRow, col: Column, fid: CustomField.Implication.Id): Option[StartEditFn] = {
       val lookup = Px.apply2(pxProject, pxLookupAll)(ImplicationEditor.Lookup.forCustomColumn(_, _, fid))
       Row.cfImp(fid).getOption(row).map { _ =>
         val pubids = ImplicationEditor.initialValueForCustomColumn(pxProject.value(), fid, row.req.id)
@@ -267,7 +272,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
       }
     }
 
-    private def startEdit(row: GenericReqRow, col: Column, pxLookup: Px[Lookup], pubids: Seq[Pubid]): StartEditFn = {
+    private def startEdit(row: ReqRow, col: Column, pxLookup: Px[Lookup], pubids: Seq[Pubid]): StartEditFn = {
       val rowId     = row.sourceId
       val lens      = editLens ^|-> EditState.atCell(rowId, col)
       val subjectId = row.req.id
@@ -310,7 +315,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
     import shipreq.webapp.client.widgets.TagEditor
     import TagEditor.Lookup
 
-    def apply(row: GenericReqRow, fid: Option[CustomField.Tag.Id]): StartEditFn = {
+    def apply(row: ReqRow, fid: Option[CustomField.Tag.Id]): StartEditFn = {
       val rowId    = row.sourceId
       val col      = fid.fold[Column](Column.Tags)(Column.CustomField(_, Live))
       val lens     = editLens ^|-> EditState.atCell(rowId, col)
@@ -385,13 +390,18 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
       }
     }
 
+    def reqTitle(reqRow: ReqRow) =
+      reqRow.req match {
+        case gr: GenericReq => GenericReqTitle(reqRow.sourceId, gr)
+      }
+
     object GenericReqTitle extends Base(RichTextEditor.GenericReqTitle) {
-      def apply(r: GenericReqRow): StartEditFn =
+      def apply(rowId: Row.ReqRowSourceId, req: GenericReq): StartEditFn =
         startEdit(
-          rowId        = r.sourceId,
+          rowId        = rowId,
           col          = Column.Title,
-          cmd          = SetGenericReqTitle(r.req.id, _),
-          initialValue = r.req.title)
+          cmd          = SetGenericReqTitle(req.id, _),
+          initialValue = req.title)
     }
 
     object ReqCodeGroupTitle extends Base(RichTextEditor.ReqCodeGroupTitle) {
@@ -404,7 +414,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
     }
 
     object CustomTextField extends Base(RichTextEditor.CustomTextField) {
-      def apply(r: GenericReqRow, id: CustomField.Text.Id): StartEditFn =
+      def apply(r: ReqRow, id: CustomField.Text.Id): StartEditFn =
         startEdit(
           rowId        = r.sourceId,
           col          = Column.CustomField(id, Live),

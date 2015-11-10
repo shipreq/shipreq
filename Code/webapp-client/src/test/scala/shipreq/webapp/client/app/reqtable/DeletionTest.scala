@@ -6,7 +6,7 @@ import shipreq.base.util.{NonEmptySet, UnivEq, IMap, Util}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._
 import WebappTestUtil._
-import Deletion.{Props1, GroupRow, ReqRow}
+import Deletion.{Props1, GroupRow}
 import UnsafeTypes._
 
 object DeletionTestData {

@@ -42,6 +42,7 @@ sealed trait ReqIdT[+RT <: ReqTypeId] extends ReqOrSubReqId
 sealed abstract class ReqT[+RT <: ReqTypeId] {
   val id: ReqIdT[RT]
   val pubid: PubidT[RT]
+  val title: Text.AnyOptional
 
   def live(customReqTypes: CustomReqTypeIMap): Live
 
@@ -49,7 +50,7 @@ sealed abstract class ReqT[+RT <: ReqTypeId] {
     pubid.reqTypeId
 }
 
-object ReqT {
+object ReqT extends ReqTEquality {
   object IdAccess extends ObjDataId[ReqT.type, Req, ReqId] {
     override def id(d: Req) = d.id
     override val unapplyData: AnyRef => Option[Req] = {case r: Req => Some(r); case _ => None}
@@ -225,6 +226,10 @@ object UseCases {
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Collective
+
+sealed trait ReqTEquality {
+  implicit def equality: UnivEq[Req] = UnivEq.derive
+}
 
 object Requirements {
   implicit lazy val equality: Equal[Requirements] =
