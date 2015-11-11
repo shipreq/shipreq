@@ -18,7 +18,7 @@
     </project-components>
 
     <extensions defaultExtensionNs="org.intellij.scala">
-        <syntheticMemberInjector implementation="org.jetbrains.example.injector.Injector"/>
+        <syntheticMemberInjector implementation="shipreq.idea.ShipReqMacroExpander"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
