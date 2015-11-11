@@ -1,0 +1,25 @@
+# SBT IDEA plugin usage example
+
+These sources can be used to quickly add some functionality to Scala plugin or IntelliJ IDEA in general.
+
+## General information
+
+- To start using it just clone it. Import in IDEA and run it using IDEA run configuration.
+
+- To build plugin dist, run sbt package-plugin.
+
+## Important points to know
+
+- ideaBuild key in build.sbt contains dependency to IDEA, you can change it.
+
+- ideaExternalPlugins key in build.sbt contains dependency to scala-plugin dist, you should provide full link with update id.
+
+- Don't forget to replace name in build.sbt. You also need to change name in resources/META-INF/plugin.xml.
+
+- plugin.xml also contains possibility to add API through extension points. As example API for macro injections were used.
+
+- Git repository also contains two IDEA artifacts and IDEA run configuration files.
+If you add library, don't forget to add to libraries artifact, otherwise run from IDEA will be broken.
+
+- IDEA run configuration contains links to directory, where IDEA dependency will be downloaded. If this directory is changed, you will need to update run configuration,
+otherwise running IDEA from IDEA will be broken.

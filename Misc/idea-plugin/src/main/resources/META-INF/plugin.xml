@@ -1,0 +1,28 @@
+<idea-plugin version="2">
+    <id>shipreq.idea-plugin</id>
+    <name>ShipReq IDEA Plugin</name>
+    <version>0.1</version>
+
+    <description>ShipReq IntelliJ IDEA plugin for custom Scala macros.</description>
+
+    <idea-version since-build="143.381.42"/>
+
+    <depends>org.intellij.scala</depends>
+
+    <application-components>
+        <!-- TODO put your components here -->
+    </application-components>
+
+    <project-components>
+        <!-- TODO put your components here -->
+    </project-components>
+
+    <extensions defaultExtensionNs="org.intellij.scala">
+        <syntheticMemberInjector implementation="shipreq.idea.ShipReqInjector"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- TODO put your extensions here -->
+    </extensions>
+
+</idea-plugin>

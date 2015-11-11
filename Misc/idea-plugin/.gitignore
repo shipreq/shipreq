@@ -1,0 +1,17 @@
+.idea/dictionaries/
+.idea/inspectionProfiles/
+.idea/libraries/
+.idea/modules/
+.idea/scopes/
+.idea/copyright/
+.idea/.name
+.idea/*.xml
+**/*.iml
+!.idea/vcs.xml
+!.idea/ant.xml
+!.idea/uiDesigner.xml
+/classes
+/dist
+/out
+/idea
+target/
