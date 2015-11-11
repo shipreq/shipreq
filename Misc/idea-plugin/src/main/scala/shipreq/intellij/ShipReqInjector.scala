@@ -1,10 +1,10 @@
-package shipreq.idea
+package shipreq.intellij
 
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScGenericCall, ScReferenceExpression}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScPatternDefinition
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScObject, ScTypeDefinition}
 import org.jetbrains.plugins.scala.lang.psi.impl.toplevel.typedef.SyntheticMembersInjector
-import shipreq.idea.Utils._
+import shipreq.intellij.Utils._
 import ShipReqInjector._
 
 object ShipReqInjector {

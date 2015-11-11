@@ -1,4 +1,4 @@
-package shipreq.idea
+package shipreq.intellij
 
 import scala.reflect.ClassTag
 
