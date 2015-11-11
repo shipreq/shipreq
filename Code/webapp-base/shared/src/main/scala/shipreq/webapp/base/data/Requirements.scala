@@ -159,6 +159,12 @@ object UseCase {
   @inline def emptySteps: Steps =
     VectorTree.empty
 
+  def emptyStepsWithRoot(id: UseCaseStepId): Steps =
+    VectorTree single UseCaseStep(id, Vector.empty)
+
+  def empty(id: UseCaseId, pos: ReqTypePos, title: Text.UseCaseTitle.OptionalText, stepId: UseCaseStepId): UseCase =
+    UseCase(id, pos, title, emptyStepsWithRoot(stepId), emptySteps, Live)
+
   implicit def stepEquality: UnivEq[UseCaseStep] = UnivEq.derive
   implicit def equality    : UnivEq[UseCase]     = UnivEq.derive
 }

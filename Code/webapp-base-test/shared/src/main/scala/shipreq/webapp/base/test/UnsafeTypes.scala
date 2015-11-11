@@ -135,6 +135,14 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
 //      s.split('.').iterator
 //        .map(s => IndexLabel.NumericFrom0.parse(s).get)
 //        .toVector
+
+  implicit def autoReqCodeIdAndValue(t: (Int, String)) = ReqCode.IdAndValue(t._1, t._2)
+
+  implicit def setLikePatchAdd1(s: Set[(Int, String)]): Multimap[ReqCode.Value, Set, ReqCodeId] =
+    setLikePatchAdd(s map autoReqCodeIdAndValue)
+
+  implicit def setLikePatchAdd(s: Set[ReqCode.IdAndValue]): Multimap[ReqCode.Value, Set, ReqCodeId] =
+    Multimap(s.toList.map(iv => iv.value -> Set(iv.id)).toMap)
 }
 
 object UnsafeTypes extends UnsafeTypesMedPriority {
