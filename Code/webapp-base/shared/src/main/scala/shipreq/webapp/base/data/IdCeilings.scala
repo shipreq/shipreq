@@ -1,5 +1,6 @@
 package shipreq.webapp.base.data
 
+import monocle.Lens
 import monocle.macros.Lenses
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util.{IMap, UnivEq}
@@ -11,13 +12,22 @@ import shipreq.base.util.{IMap, UnivEq}
  */
 @Lenses
 case class IdCeilings(
-  customIssueType : Int,
-  customReqType   : Int,
-  customField     : Int,
-  tag             : Int,
-  req             : Int,
-  useCaseStep     : Int,
-  reqCode         : Int)
+    customIssueType : Int,
+    customReqType   : Int,
+    customField     : Int,
+    tag             : Int,
+    req             : Int,
+    useCaseStep     : Int,
+    reqCode         : Int) {
+
+  def update(lens: Lens[IdCeilings, Int], n: Int): IdCeilings = {
+    val i = lens.get(this)
+    if (n > i)
+      lens.set(n)(this)
+    else
+      this
+  }
+}
 
 object IdCeilings {
   implicit def equality: UnivEq[IdCeilings] = UnivEq.derive

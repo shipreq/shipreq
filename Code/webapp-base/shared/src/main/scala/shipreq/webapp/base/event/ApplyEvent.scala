@@ -196,6 +196,7 @@ final class ApplyEvent(implicit val trust: Trust) extends ApplyConfigEvent with 
       case e: SetGenericReqTitle    => GenericReqEvents       applySetGenericReqTitle  e
       case e: SetGenericReqType     => GenericReqEvents       applySetGenericReqType   e
       case e: SetUseCaseTitle       => UseCaseEvents          applySetUseCaseTitle     e
+      case e: CreateUseCase         => UseCaseEvents          applyCreateUseCase       e
       case e: PatchReqCodes         => ReqCodeLogic           applyPatchReqCodes       e
       case e: CreateReqCodeGroup    => ReqCodeGroupEvents     applyCreate              e
       case e: UpdateReqCodeGroup    => ReqCodeGroupEvents     applyUpdate              e

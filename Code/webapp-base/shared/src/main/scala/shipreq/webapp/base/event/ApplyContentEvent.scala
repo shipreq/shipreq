@@ -138,12 +138,24 @@ trait ApplyContentEvent {
         t3 <- ReqCodeLogic.restoreGroupsByIdT(t2, e.reqCodeGroups)
         _  <- Project.reqCodeTrie set t3
       } yield ()
+
+    def setReqCodes(id: ReqId, v: NonEmptySet[ReqCode.IdAndValue]): SE[Unit] =
+      ReqCodeLogic.addAllToReq(v.whole, id, addToActive = true)
+
+    def setReqTags(id: ReqId, v: NonEmptySet[ApplicableTagId]): SE[Unit] =
+      Project.reqTags.modify(_.addvs(id, v.whole))
+
+    def setReqImpSrcs(id: ReqId, v: NonEmptySet[ReqId]): SE[Unit] =
+      Project.implicationsSrcToTgt.modify(_.addks(v.whole, id))
+
+    def setReqImpTgts(id: ReqId, v: NonEmptySet[ReqId]): SE[Unit] =
+      Project.implicationsSrcToTgt.modify(_.addvs(id, v.whole))
   }
 
   // ===================================================================================================================
 
   object GenericReqEvents {
-    import ContentCommon.{grIMap, updateReqIdCeiling, ensureLiveReqId, ensureLiveReq}
+    import ContentCommon.{ucIMap => _, _}
 
     def ensureLiveCustomReqType(rt: CustomReqType): SE[Unit] =
       ensureLive(rt.live)(show(rt))
@@ -163,10 +175,10 @@ trait ApplyContentEvent {
       def foreachValue(id: GenericReqId, vs: ^.Values): SE[Unit] =
         SE.foldMapRun(vs.values) {
           case ^.ValueForTitle   (v) => SE.nop // Handled below
-          case ^.ValueForTags    (v) => Project.reqTags.modify(_.addvs(id, v.whole))
-          case ^.ValueForImpTgts (v) => Project.implicationsSrcToTgt.modify(_.addvs(id, v.whole))
-          case ^.ValueForImpSrcs (v) => Project.implicationsSrcToTgt.modify(_.addks(v.whole, id))
-          case ^.ValueForReqCodes(v) => ReqCodeLogic.addAllToReq(v.whole, id, addToActive = true)
+          case ^.ValueForTags    (v) => setReqTags   (id, v)
+          case ^.ValueForImpTgts (v) => setReqImpTgts(id, v)
+          case ^.ValueForImpSrcs (v) => setReqImpSrcs(id, v)
+          case ^.ValueForReqCodes(v) => setReqCodes  (id, v)
       }
 
       @inline def emptyTitle: Text.GenericReqTitle.OptionalText =
@@ -206,11 +218,39 @@ trait ApplyContentEvent {
   // ===================================================================================================================
 
   object UseCaseEvents {
-    import ContentCommon.{ucIMap, ensureLiveReqId}
+    import ContentCommon.{grIMap => _, _}
 
     def applySetUseCaseTitle(e: SetUseCaseTitle): SE[Unit] =
       ensureLiveReqId(e.id) >>
         ucIMap.updateF(e.id, _.copy(title = e.value))
+
+    val applyCreateUseCase: CreateUseCase => SE[Unit] = {
+      val ^ = CreateUseCaseGD
+
+      def foreachValue(id: UseCaseId, vs: ^.Values): SE[Unit] =
+        SE.foldMapRun(vs.values) {
+          case ^.ValueForTitle   (v) => SE.nop // Handled below
+          case ^.ValueForTags    (v) => setReqTags   (id, v)
+          case ^.ValueForImpTgts (v) => setReqImpTgts(id, v)
+          case ^.ValueForImpSrcs (v) => setReqImpSrcs(id, v)
+          case ^.ValueForReqCodes(v) => setReqCodes  (id, v)
+      }
+
+      e => for {
+        p       ← SE.get
+        id      = e.id
+        // TODO validate step id
+        title   = ^.Title.get(e.vs).fold(Text.UseCaseTitle.empty)(_.value.whole)
+        pp      = p.reqs.pubids.allocUC(id)
+        uc      = UseCase.empty(id, pp._2.pos, title, e.stepId)
+        ucs     ← ucIMap.create(uc)
+        _       ← Project.pubidRegister set pp._1
+        _       ← foreachValue(id, e.vs)
+        _       ← Project.idCeilings.modify(i => i.copy(
+                    req         = i.req         max id,
+                    useCaseStep = i.useCaseStep max e.stepId))
+      } yield ()
+    }
   }
 
   // ===================================================================================================================

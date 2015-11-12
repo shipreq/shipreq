@@ -214,16 +214,8 @@ private[event] object ApplyEventLib {
         else
           ret(RelPos.set(as, a, pos))
 
-  def updateIdCeilingFn(lens: Lens[IdCeilings, Int]): Int => SE[Unit] = {
-    val l = Project.idCeilings ^|-> lens
-    n => mod { p =>
-      val i = l.get(p)
-      if (n > i)
-        l.set(n)(p)
-      else
-        p
-    }
-  }
+  def updateIdCeilingFn(lens: Lens[IdCeilings, Int]): Int => SE[Unit] =
+    x => mod(Project.idCeilings.modify(_.update(lens, x)))
 
   def imapNeed[K, V](imap: IMap[K, V])(k: K): SE[V] =
     SE.retOption(imap get k, s"$k not found.")
