@@ -121,7 +121,7 @@ object ContentEventTest extends TestSuite {
   override def tests = TestSuite {
 
     'createCodeGroup {
-      'badId          - List(0,-1).foreach(i => assertFail("id")(createRCG(i, "hi")))
+      'badId          - assertBadIdsRejected(createRCG(_, "hi"))
       'badCode        - assertFail("code")  (createRCG(1, "!!"))
       'codeInCaps     - assertFail("code")  (createRCG(1, "NO"))
       'idInUseByGR    - assertFail("")      (createGR(9, codes = Set(1 -> "a"))      , createRCG(1, "b"))

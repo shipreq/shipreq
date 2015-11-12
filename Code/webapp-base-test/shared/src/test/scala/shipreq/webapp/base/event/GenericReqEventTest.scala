@@ -60,7 +60,7 @@ object GenericReqEventTest extends TestSuite {
         assertEq(p.reqCodes.reqCodesById, rcs.whole.map(_.toTupleIV).toMap)
       }
 
-      'badId           - List(0, -1).foreach(i => assertFail("id")(emptyGR1.copy(id = i)))
+      'badId           - assertBadIdsRejected(i => emptyGR1.copy(id = i))
       'idInUseByGR     - assertFail("exists")(emptyGR1, emptyGR1)
       'idInUseByUC     - assertFail("exists")(createUC(emptyGR1.id.value.UC, 1), emptyGR1)
       'reqTypeNotFound - assertFail("found")(emptyGR1.copy(rt = 666))

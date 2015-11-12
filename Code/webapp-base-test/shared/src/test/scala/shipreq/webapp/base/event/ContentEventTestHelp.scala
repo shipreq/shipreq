@@ -8,6 +8,9 @@ import shipreq.webapp.base.test.WebappTestUtil._
 import ApplyEventTestFns._
 import shipreq.webapp.base.text.{Text => T}
 
+/**
+ * Doesn't check title.
+ */
 case class DetachedGenericReq(req      : GenericReq,
                               tags     : Set[ApplicableTagId],
                               impliedBy: Set[ReqId],
@@ -27,6 +30,9 @@ object DetachedGenericReq {
     }
 }
 
+/**
+ * Doesn't check title or step trees.
+ */
 case class DetachedUseCase(req      : UseCase,
                            tags     : Set[ApplicableTagId],
                            impliedBy: Set[ReqId],
@@ -49,6 +55,11 @@ object DetachedUseCase {
 // =====================================================================================================================
 
 object ContentEventTestHelp {
+
+  implicit class ProjectEventTestExt(private val p: Project) extends AnyVal {
+    def needUC(id: UseCaseId): UseCase =
+      p.reqs.useCases.imap need id
+  }
 
   def createRCG(id: ReqCodeId, code: ReqCode.Value, title: T.ReqCodeGroupTitle.OptionalText = ∅) = {
     import ReqCodeGroupGD._
@@ -117,7 +128,7 @@ object ContentEventTestHelp {
       PatchReqCodes(id, remove = remove, restore = restore, add)
   }
 
-  // =====================================================================================================================
+  // ===================================================================================================================
 
   def assertSoleReqCode(p: Project, code: ReqCode.Value): ReqCode.Data = {
     val v = p.reqCodes.trie.flatStream.toVector
@@ -126,6 +137,9 @@ object ContentEventTestHelp {
     v.head._2
   }
 
+  /**
+    * Doesn't check title.
+    */
   def assertGR(p: Project, id: GenericReqId)(req      : GenericReq,
                                              tags     : Set[ApplicableTagId] = UnivEq.emptySet,
                                              impliedBy: Set[ReqId]           = UnivEq.emptySet,
@@ -135,6 +149,9 @@ object ContentEventTestHelp {
       DetachedGenericReq.extract(p, id),
       Some(DetachedGenericReq(req, tags, impliedBy, implies, reqCodes)))
 
+  /**
+    * Doesn't check title or step trees.
+    */
   def assertUC(p: Project, id: UseCaseId)(uc       : UseCase,
                                           tags     : Set[ApplicableTagId] = UnivEq.emptySet,
                                           impliedBy: Set[ReqId]           = UnivEq.emptySet,
@@ -144,7 +161,29 @@ object ContentEventTestHelp {
       DetachedUseCase.extract(p, id),
       Some(DetachedUseCase(uc, tags, impliedBy, implies, reqCodes)))
 
+  def assertUcSteps(s: UseCase.Steps, keys: String*): Unit =
+    assertUcStepsO(None, s, keys: _*)
+
+  def assertUcSteps(name: => String, s: UseCase.Steps, keys: String*): Unit =
+    assertUcStepsO(Some(name), s, keys: _*)
+
+  def assertUcStepsO(name: => Option[String], s: UseCase.Steps, keys: String*): Unit =
+    assertSetO(name,
+      s.locIterator.map(_.map(_.toString).mkString(".")).toSet,
+      keys.toSet)
+
+  def assertAllUcSteps(uc: UseCase)(nc: String*)(e: String*): Unit = {
+    def prefix = "UC-" + uc.pos.value + " "
+    assertUcSteps(prefix + "NC/AC", uc.stepsNA, nc: _*)
+    assertUcSteps(prefix + "EC"   , uc.stepsE , e: _*)
+  }
+
+  def assertBadIdsRejected(f: Int => ActiveEvent)(implicit ie: InitialEvents): Unit =
+    badIds.foreach(i => assertFail("id")(f(i)))
+
   // ===================================================================================================================
+
+  private val badIds = List(0, -1)
 
   val mf: CustomReqTypeId = 100
   val fr: CustomReqTypeId = 101

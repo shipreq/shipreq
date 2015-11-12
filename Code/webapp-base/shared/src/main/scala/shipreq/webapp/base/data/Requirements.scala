@@ -133,6 +133,12 @@ final case class UseCase(id            : UseCaseId,
   override def live(customReqTypes: CustomReqTypeIMap): Live =
     liveUC
 
+  def steps(f: StaticField.UseCaseStepTree): UseCase.Steps =
+    f match {
+      case StaticField.NormalAltStepTree => stepsNA
+      case StaticField.ExceptionStepTree => stepsE
+    }
+
   val stepsWithCtx: Stream[UseCaseStepWithCtx] = {
     def go(field: StaticField.UseCaseStepTree, tree: UseCase.Steps) =
       tree.locAndValueIterator(UseCaseStepWithCtx(this, field, _, _))
