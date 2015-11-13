@@ -3,6 +3,7 @@ package shipreq.webapp.base.data
 import nyaya.prop._
 import scala.annotation.tailrec
 import scala.collection.GenTraversableOnce
+import scala.collection.mutable
 import scala.reflect.ClassTag
 import scalaz.{Monoid, Foldable}
 import scalaz.syntax.equal._
@@ -24,20 +25,21 @@ object DataProp {
 
   implicit val iteratorFoldable: Foldable[Iterator] =
     new Foldable[Iterator] {
-      def foldMap[A, B](fa: Iterator[A])(f: A => B)(implicit F: Monoid[B]) =
-        foldLeft(fa, F.zero)((x, y) => Monoid[B].append(x, f(y)))
+      def foldMap[A, B](fa: Iterator[A])(f: A => B)(implicit F: Monoid[B]) = foldLeft(fa, F.zero)((x, y) => Monoid[B].append(x, f(y)))
+      def foldRight[A, B](fa: Iterator[A], b: => B)(f: (A, => B) => B)     = fa.foldRight(b)(f(_, _))
+      override def foldLeft[A, B](fa: Iterator[A], b: B)(f: (B, A) => B)   = fa.foldLeft(b)(f)
+      override def any[A](fa: Iterator[A])(p: A => Boolean)                = fa.exists(p)
+      override def all[A](fa: Iterator[A])(p: A => Boolean)                = fa.forall(p)
+    }
 
-      def foldRight[A, B](fa: Iterator[A], b: => B)(f: (A, => B) => B) =
-        fa.foldRight(b)(f(_, _))
-
-      override def foldLeft[A, B](fa: Iterator[A], b: B)(f: (B, A) => B): B =
-        fa.foldLeft(b)(f)
-
-      override def any[A](fa: Iterator[A])(p: A => Boolean): Boolean =
-        fa.exists(p)
-
-      override def all[A](fa: Iterator[A])(p: A => Boolean): Boolean =
-        fa.forall(p)
+  // TODO Should probably do a similar thing app-wide to reduce JS size
+  implicit val setFoldable: Foldable[Set] =
+    new Foldable[Set] {
+      def foldMap[A, B](fa: Set[A])(f: A => B)(implicit F: Monoid[B]) = foldLeft(fa, F.zero)((x, y) => Monoid[B].append(x, f(y)))
+      def foldRight[A, B](fa: Set[A], b: => B)(f: (A, => B) => B)     = fa.foldRight(b)(f(_, _))
+      override def foldLeft[A, B](fa: Set[A], b: B)(f: (B, A) => B)   = fa.foldLeft(b)(f)
+      override def any[A](fa: Set[A])(p: A => Boolean)                = fa.exists(p)
+      override def all[A](fa: Set[A])(p: A => Boolean)                = fa.forall(p)
     }
 
   def id[T <: TaggedInt] =
@@ -51,6 +53,30 @@ object DataProp {
     case ISubset.Only(v) => v.whole
     case ISubset.Not(v)  => v.whole
   }
+
+  /**
+   * WARNING: Ignores negative numbers.
+   */
+  def uniqueNonNegInts[C[x] <: Traversable[x], A](name: => String, f: A => Int): Prop[C[A]] =
+    Prop.atom[C[A]]("Unique " + name, as => {
+      val log = mutable.BitSet.empty
+      if (as.forall(a => {
+        val i = f(a)
+        (i < 0) || log.add(i)
+      }))
+        None
+      else {
+        val is = as.toIterator.map(f).toList
+        val dups = is.diff(is.distinct).sorted
+        Some(dups.mkString("Dups detected: [", ",", "]"))
+      }
+    })
+
+  /**
+   * WARNING: Ignores negative numbers.
+   */
+  def uniqueNonNegIntsT[C[x] <: Traversable[x], A <: TaggedInt](name: => String): Prop[C[A]] =
+    uniqueNonNegInts[C, A](name, _.value)
 
   // -------------------------------------------------------------------------------------------------------------------
   object customIssueTypes {
@@ -156,7 +182,7 @@ object DataProp {
       Prop.distinctI("name", (_: T).valuesIterator.map(_.tag.name))
 
     def uniqueSiblings =
-      Prop.distinctC[Vector, TagId]("siblings").forall((_: T).valuesIterator.map(_.children))
+      uniqueNonNegIntsT[Vector, TagId]("siblings").forall((_: T).valuesIterator.map(_.children))
 
     def noCycles =
       Tag.CycleDetectors.tagTree.noCycleProp("structure")
@@ -179,9 +205,7 @@ object DataProp {
       id[ReqId].forall((_: T).reqs.keysIterator)
 
     def idsUnique =
-      Prop.equal[T]("Req IDs are unique")(
-        _.reqs.size,
-        r => r.genericReqs.size + r.useCases.imap.size)
+      uniqueNonNegIntsT[Set, ReqId]("req IDs").contramap[T](_.reqs.keySet)
 
     def reqPubidsInRegister =
       Prop.forall((_: T).reqs.valuesIterator)(t =>
@@ -218,7 +242,7 @@ object DataProp {
 
     def stepIds = {
       val valid  = id[UseCaseStepId].forallF[Set]
-      val unique = Prop.distinctC[Set, UseCaseStepId]("step id")
+      val unique = uniqueNonNegIntsT[Set, UseCaseStepId]("step ids")
       (valid ∧ unique).contramap[T](_.stepIndex.keySet) rename "step ids"
     }
 
@@ -300,7 +324,7 @@ object DataProp {
       id[ReqCodeId].forall((_: T).idList)
 
     def uniqueIds =
-      Prop.distinct("ID", (_: T).idList)
+      uniqueNonNegIntsT[List, ReqCodeId]("IDs").contramap[T](_.idList)
 
     val all =
       (branchesMustBranch ∧ allData ∧ uniqueIds ∧ idFormat) rename "ReqCodes"
