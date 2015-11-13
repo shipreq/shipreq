@@ -3,10 +3,9 @@ package edit
 
 import japgolly.scalajs.react.extra.{ReusableVal, Px}
 import scalaz.syntax.either._
-import scalaz.syntax.equal._
 import scalaz.{\/-, -\/}
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{SetDiff, UnivEq}
+import shipreq.base.util.{SetDiff, UnivEq, univEqOps}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.{Grammar, PlainText, TextSearch}
@@ -40,7 +39,7 @@ object ImplicationEditor {
 
   def lookupForCustomImpCol(p: Project, l: Lookup, fid: CustomField.Implication.Id): Lookup = {
     val f = p.config.customField(fid)
-    l.outlaw(None, _.reqTypeId ≠ f.reqTypeId)
+    l.outlaw(None, _.reqTypeId !=* f.reqTypeId)
   }
 
   def initialValueForCustomColumn(p: Project, fid: CustomField.Implication.Id, id: ReqId): Stream[Pubid] =

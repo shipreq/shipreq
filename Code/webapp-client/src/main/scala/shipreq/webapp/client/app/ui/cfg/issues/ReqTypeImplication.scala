@@ -2,7 +2,6 @@ package shipreq.webapp.client.app.ui.cfg.issues
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.extra.OnUnmount
-import scalaz.syntax.equal._
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.protocol.ReqTypeImplicationMod
 import shipreq.webapp.client.app.state.{ClientData, ChangeListener}
@@ -59,7 +58,7 @@ private[issues] object ReqTypeImplication {
     type Rows = Stream[(Mnemonic, ReactElement)]
 
     def customRows(s: S): Rows =
-      rowStore.getAll(s).filter(_.p.live ≟ Live).map(r => {
+      rowStore.getAll(s).filter(_.p.live :: Live).map(r => {
         val re: ReactElement =
           <.tr(^.key := r.p.id.value,
             <.td(

@@ -1,7 +1,6 @@
 package shipreq.webapp.base.event
 
 import scala.reflect.ClassTag
-import scalaz.syntax.equal._
 import shipreq.base.util._
 import shipreq.webapp.base.data.{Validators => V, _}
 import shipreq.webapp.base.util.GenericData
@@ -90,7 +89,7 @@ trait ApplyConfigEvent {
     private def reqsToCascadeReqTypeLiveChange(id: CustomReqTypeId): SE[Set[ReqId]] =
       SE.get(_.reqs.genericReqs
         .values.toStream
-        .filter(r => (r.reqTypeId ≟ id) && (r.liveExplicitly :: Live))
+        .filter(r => r.reqTypeId ==* id && r.liveExplicitly :: Live)
         .map(_.id: ReqId)
         .toSet)
   }
@@ -114,7 +113,7 @@ trait ApplyConfigEvent {
 
     def ensureParentsValid(id: TagId, p: Parents, tt: TagTree): SE[Unit] =
       whenUntrusted(SE.test(
-        p.keys.forall(k => (k ≠ id) && tt.containsK(k)),
+        p.keys.forall(k => k !=* id && tt.containsK(k)),
         s"Invalid parent(s) for ${show(id)}: ${p.keySet -- (tt - id).keySet}"))
 
     def updateParents(tt: TagTree, id: TagId, p: Parents): SE[TagTree] =
@@ -134,12 +133,12 @@ trait ApplyConfigEvent {
         tt.mod(id, TagInTree.live set newLife)
 
       def childNeedsModification(child: TagInTree, parentId: TagId, parentLive: Live, tt: TagTree): Boolean =
-        (child.tag.live ≟ parentLive) && {
+        (child.tag.live ==* parentLive) && {
           val cid = child.tag.id
           !tt.values.exists(x =>
-            (x.id ≠ parentId) &&
-              (x.tag.live ≟ parentLive) &&
-              x.children.exists(_ ≟ cid)
+            x.id !=* parentId &&
+            x.tag.live ==* parentLive &&
+            x.children.exists(_ ==* cid)
           )
         }
 

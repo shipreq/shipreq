@@ -38,7 +38,7 @@ case class PubidRegister(value: Multimap[ReqTypeId, Vector, ReqId]) {
 
   private def _alloc[T <: ReqTypeId](reqTypeId: T)(reqId: ReqIdT[T]): (PubidRegister, PubidT[T]) = {
     val cur = value(reqTypeId)
-    val i = cur.indexWhere(_ ≟ reqId)
+    val i = cur.indexWhere(_ ==* reqId)
     if (i >= 0)
       (this, PubidT(reqTypeId, ReqTypePos(i + 1)))
     else

@@ -4,9 +4,8 @@ import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
 import monocle.macros.Lenses
 import scala.annotation.tailrec
-import scalaz.syntax.equal._
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{NonEmptyVector, UnivEq}
+import shipreq.base.util.{NonEmptyVector, UnivEq, univEqOps}
 
 sealed trait SortCriterion {
   def column: Column
@@ -80,7 +79,7 @@ import SortCriterion._
 @Lenses
 case class SortCriteria(init: Vector[Inconclusive], last: Conclusive) {
 //  def removeColumnI(c: Column.SortInconclusive): SortCriteria =
-//    copy(init = init.filterNot(_.column ≟ c))
+//    copy(init = init.filterNot(_.column ==* c))
 //
 //  def removeColumn: Column => SortCriteria = {
 //    case c: Column.SortInconclusive => removeColumnI(c)
@@ -97,13 +96,13 @@ case class SortCriteria(init: Vector[Inconclusive], last: Conclusive) {
     SortCriteria(init.map(_.reverse), last.reverse)
 
   def isOrdered(c: Column): Boolean =
-    isOrdered(_ ≟ c)
+    isOrdered(_ ==* c)
 
   def isOrdered(f: Column => Boolean): Boolean =
     f(last.column) || isOrderedI(f)
 
   def isOrderedI(c: Column.SortInconclusive): Boolean =
-    isOrderedI(_ ≟ c)
+    isOrderedI(_ ==* c)
 
   def isOrderedI(f: Column.SortInconclusive => Boolean): Boolean =
     init.exists(_.column |> f)
@@ -129,10 +128,10 @@ case class SortCriteria(init: Vector[Inconclusive], last: Conclusive) {
     column match {
       case c: Column.SortInconclusive =>
         val newInit =
-          if (init.headOption.exists(_.column ≟ c)) {
+          if (init.headOption.exists(_.column ==* c)) {
             // Column(I) already primary
             init.head.rotateMethod +: init.tail
-          } else init.find(_.column ≟ c) match {
+          } else init.find(_.column ==* c) match {
             case Some(existing) =>
               //  Column(I) exists but isn't primary
               existing +: init.filterNot(_ eq existing)
@@ -148,7 +147,7 @@ case class SortCriteria(init: Vector[Inconclusive], last: Conclusive) {
 
       case c: Column.SortConclusive =>
         val newLast =
-          if (c ≟ last.column) {
+          if (c ==* last.column) {
             if (init.isEmpty)
               // Column(C) already primary
               last.rotateMethod
@@ -165,13 +164,13 @@ case class SortCriteria(init: Vector[Inconclusive], last: Conclusive) {
   def rotateSortMethod(column: Column): Option[SortCriteria] =
     column match {
       case c: Column.SortInconclusive =>
-        val i = init.indexWhere(_.column ≟ c)
+        val i = init.indexWhere(_.column ==* c)
         if (i < 0)
           None
         else
           Some(copy(init = init.updated(i, init(i).rotateMethod)))
       case c: Column.SortConclusive =>
-        if (c ≟ last.column)
+        if (c ==* last.column)
           Some(copy(last = last.rotateMethod))
         else
           None

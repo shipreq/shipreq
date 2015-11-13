@@ -185,12 +185,12 @@ object MakeEvent { // TODO Move
             var children: Option[TagInTree.Children] = None
             var parents : Option[TagInTree.Parents]  = None
             for (rels <- vs.b) {
-              if (tit.children ≠ rels.children)
+              if (tit.children !=* rels.children)
                 children = Some(rels.children)
               // TODO Shouldn't need to rebuild treeStructure
               val treeStructure = project.config.tags.mapValues(_.children)
               val ps = MMTree.Relations.deriveParents(tagId, treeStructure)
-              if (ps ≠ rels.parents)
+              if (ps !=* rels.parents)
                 parents = Some(rels.parents)
             }
 
@@ -203,9 +203,9 @@ object MakeEvent { // TODO Move
                 parents .foreach(p => us += Parents (p))
                 vs.a match {
                   case Some(v: ApplicableTagValues) =>
-                    if (v.name ≠ cur.name) us += Name(v.name)
-                    if (v.key  ≠ cur.key ) us += Key (v.key)
-                    if (v.desc ≠ cur.desc) us += Desc(v.desc)
+                    if (v.name !=* cur.name) us += Name(v.name)
+                    if (v.key  !=* cur.key ) us += Key (v.key)
+                    if (v.desc !=* cur.desc) us += Desc(v.desc)
                     build
                   case None =>
                     build
@@ -221,9 +221,9 @@ object MakeEvent { // TODO Move
                 parents .foreach(p => us += Parents (p))
                 vs.a match {
                   case Some(v: TagGroupValues) =>
-                    if (v.name          ≠ cur.name         ) us += Name         (v.name)
-                    if (v.mutexChildren ≠ cur.mutexChildren) us += MutexChildren(v.mutexChildren)
-                    if (v.desc          ≠ cur.desc         ) us += Desc         (v.desc)
+                    if (v.name          !=* cur.name         ) us += Name         (v.name)
+                    if (v.mutexChildren !=* cur.mutexChildren) us += MutexChildren(v.mutexChildren)
+                    if (v.desc          !=* cur.desc         ) us += Desc         (v.desc)
                     build
                   case None =>
                     build
@@ -313,9 +313,9 @@ object MakeEvent { // TODO Move
           import ReqCode._
           for (c <- cs.value.removed)
             project.reqCodes.get(c) match {
-              case Some(a: ActiveReq) if a.reqId ≟ reqId => remove += a.id
-              case od if od.exists(_.isActive)           => fail(s"Cannot remove ${PlainText reqCode c}: Doesn't belong to $reqId.")
-              case _                                     => fail(s"Cannot remove ${PlainText reqCode c}: Not found.")
+              case Some(a: ActiveReq) if a.reqId ==* reqId => remove += a.id
+              case od if od.exists(_.isActive)             => fail(s"Cannot remove ${PlainText reqCode c}: Doesn't belong to $reqId.")
+              case _                                       => fail(s"Cannot remove ${PlainText reqCode c}: Not found.")
             }
 
           if (r.isEmpty) {

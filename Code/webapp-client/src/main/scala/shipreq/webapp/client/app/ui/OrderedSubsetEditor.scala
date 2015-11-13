@@ -2,9 +2,9 @@ package shipreq.webapp.client.app.ui
 
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import org.scalajs.dom
-import shipreq.base.util.UnivEq
 import scalaz.Equal
 import scalaz.syntax.equal._
+import shipreq.base.util.UnivEq
 import shipreq.webapp.client.lib.ui.UI
 import shipreq.webapp.client.util.{Off, On, DND}
 

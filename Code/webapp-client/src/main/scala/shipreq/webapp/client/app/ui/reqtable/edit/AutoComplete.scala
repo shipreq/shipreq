@@ -10,7 +10,7 @@ import scalaz.{\/-, -\/, \/}
 import scalaz.std.string.stringInstance
 import scalaz.syntax.equal._
 import shapeless.syntax.singleton._
-import shipreq.base.util.MTrie
+import shipreq.base.util.{MTrie, univEqOps}
 import shipreq.base.util.MTrie.Ops
 import shipreq.base.util.{NonEmptyVector, Util}
 import shipreq.base.util.ScalaExt._
@@ -27,7 +27,7 @@ object AutoComplete {
                         val applyContext: String => String) {
     // Util.regexEscapeAndWrap turns empty strings into (?:) which is fine
     // val acSuffix = if (suffixRegex.isEmpty) "$" else suffixRegex + "?$"
-    
+
     def strategy[A](mainRegex     : String,
                     searchFn      : Query[A])
                    (replacementA  : A => String,
@@ -156,11 +156,11 @@ object AutoComplete {
       // Example: abc & abc.def
       def completeFromStart(trie: Trie): Strategy = {
         val mainRegex = s"($node($sep$node)*$sep?)"
-  
+
         type A = (Vector[Node], String)
-  
+
         val searchFn0: TC.Query[A] = { term =>
-  
+
           // Parse input
           var nodes = term.split(G.nodeSeparator).toVector
           var lead: Option[String] = None
@@ -169,7 +169,7 @@ object AutoComplete {
             nodes = nodes.init
           }
           val path = nodes.map(Node.applyFn)
-  
+
           // Find suggestions
           val t = NonEmptyVector.maybe(path, trie)(trie.dropPath)
           var r = t.toStream.filter(_._2.existsV(_.isActive)).map(_._1.value)
@@ -177,16 +177,16 @@ object AutoComplete {
             r = r.filter(_ startsWith l)
           r.sorted.map((path, _))
         }
-  
-        val searchFn = TC.ignorePerfectMatch(searchFn0)(_ ≟ _._2)
-  
+
+        val searchFn = TC.ignorePerfectMatch(searchFn0)(_ ==* _._2)
+
         def replace(r: A) =
           (r._1.map(_.value) :+ r._2).mkString(G.nodeSeparator.toString)
-  
+
         reflinkContext.strategy(mainRegex, searchFn)(replace, "")(contextualise)
           .template((v, _) => v._2)
       }
-  
+
       // Example: .xyz
       def completeFromMid(trie: Trie): Strategy = {
         val mainRegex = s"$sep($node)"
@@ -204,17 +204,17 @@ object AutoComplete {
               go(prefix :+ suffix.head, suffix.tail)
           go(NonEmptyVector one path.head, path.tail)
         }
-  
+
         val searchFn: TC.Query[String] = term =>
           activePaths.map(isMatch(term, _))
             .jsDefined
             .distinctSafe
             .map(PlainText.reqCode)
             .sorted
-  
+
         reflinkContext.strategy(mainRegex, searchFn)(identity, "")(contextualise)
       }
-  
+
       Strategies(
         completeFromStart(trie),
         completeFromMid(trie))

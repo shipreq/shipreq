@@ -53,11 +53,11 @@ object ProjectText {
 
     val code = rc.reqCode(id)
     rc(code) match {
-      case d: ActiveReq   if d.id ≟ id => ActiveCodeToReq(code, d.reqId)
-      case d: ActiveGroup if d.id ≟ id => ActiveCodeToGroup(code, d.group)
+      case d: ActiveReq   if d.id ==* id => ActiveCodeToReq(code, d.reqId)
+      case d: ActiveGroup if d.id ==* id => ActiveCodeToGroup(code, d.group)
       case d =>
         d.deadGroup match {
-          case Some(g) if g.id ≟ id => DeadGroup(code, g)
+          case Some(g) if g.id ==* id => DeadGroup(code, g)
           case _ =>
             d.reqInactive.m.find(_._2 contains id) match {
               case Some((reqId, _)) => findAlt(reqId, code) getOrElse ReqWithoutActiveCode(code, reqId)

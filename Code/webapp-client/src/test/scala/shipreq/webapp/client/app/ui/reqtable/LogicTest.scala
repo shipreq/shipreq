@@ -217,10 +217,10 @@ object LogicTest extends TestSuite {
     r => f(a(r), b(r))
 
   private def prefixWithPubid(p: Project, f: Row => String): Row => String =
-    rowToStrAp2(rowToPubid(p), f)((a, b) => if (b ≟ z) z else a + ":" + b)
+    rowToStrAp2(rowToPubid(p), f)((a, b) => if (b ==* z) z else a + ":" + b)
 
   private def prefixWithPubidNoZ(p: Project, f: Row => String): Row => String =
-    rowToStrAp2(rowToPubid(p), f)((a, b) => if (b ≟ z) a else a + ":" + b)
+    rowToStrAp2(rowToPubid(p), f)((a, b) => if (b ==* z) a else a + ":" + b)
 
   private val rowToReqCodes: Row => String =
     rowToAsToStr(_.exp.reqCodes, r => Vector1(r.reqCode))(PlainText.reqCode)

@@ -4,7 +4,6 @@ import japgolly.scalajs.react._, vdom.prefix_<^._
 import monocle.Lens
 import monocle.std.map.atMap
 import scalacss.ScalaCssReact._
-import scalaz.syntax.equal._
 import shipreq.base.util.{UnivEq, IMap}
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.app.ui.{ISubsetEditor, Style}
@@ -43,7 +42,7 @@ class AppReqTypesEditor(customReqTypes: TraversableOnce[CustomReqType]) {
 
   val renderValue: A => ReactNode = id => {
     val a = lookup(id)
-    if (a.fold(_ => true, _.live ≟ Live))
+    if (a.fold(_ => true, _.live :: Live))
       a.mnemonic.value
     else
       <.span(Style.cfg.deadMnemonic, a.mnemonic.value)

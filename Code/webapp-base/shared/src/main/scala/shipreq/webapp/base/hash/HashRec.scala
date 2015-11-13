@@ -24,7 +24,7 @@ case class HashRec(scope   : HashScope,
 
   def validate(p: Project): Validity =
     hash match {
-      case Some(h) => Valid <~ (h ≟ recalc(p))
+      case Some(h) => Valid <~ (h ==* recalc(p))
       case None    => Valid
     }
 }
@@ -49,7 +49,7 @@ object HashRec {
     for (s <- scopes) {
       val h1 = HashScope.hash(s, d, p1)
       val h2 = HashScope.hash(s, d, p2)
-      if (h1 ≠ h2)
+      if (h1 !=* h2)
         r += HashRec(s, lv, scheme)(Some(h2))
     }
     r

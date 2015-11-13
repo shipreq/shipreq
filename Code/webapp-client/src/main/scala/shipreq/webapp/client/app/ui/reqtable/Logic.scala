@@ -466,11 +466,11 @@ private[reqtable] object Logic {
 
     def interpret(subj: FilterAst): R =
       subj match {
-        case ReqType(rt)          => Filter(_.reqTypeId ≟ rt, `n/a`)
+        case ReqType(rt)          => Filter(_.reqTypeId ==* rt, `n/a`)
         case Tag(tag)             => byTag(_ contains tag)
         case Presence(AnyTag)     => byTag(_.nonEmpty)
         case Presence(AnyIssue)   => byIssueType(_.nonEmpty)
-        case CustomIssue(it)      => byIssueType(_.exists(_.typ ≟ it))
+        case CustomIssue(it)      => byIssueType(_.exists(_.typ ==* it))
         case Lack(a)              => interpret(Not(Presence(a)))
         case AllOf(as)            => interpretN(as, _ && _)
         case AnyOf(as)            => interpretN(as, _ || _)
@@ -555,7 +555,7 @@ private[reqtable] object Logic {
     mergeAdjacent(rows)((x, y) =>
       (x, y) match {
         case (a: GenericReqRow, b: GenericReqRow) =>
-          if (a.req.id ≟ b.req.id)
+          if (a.req.id ==* b.req.id)
             Some(GenericReqRow(a.req, a.live, a.exp |+| b.exp, a.mv |+| b.mv, a.instanceId)) // TODO resort
           else
             None
@@ -609,7 +609,7 @@ private[reqtable] object Logic {
     @tailrec
     def go(ci: Vector[Indent], cv: ReqCode.Value)(pi: Vector[Indent], pv: ReqCode.Value): ReqCodeTreeItem =
       cv.tail match {
-        case NonEmpty(nextc) if cv.head ≟ pv.head =>
+        case NonEmpty(nextc) if cv.head ==* pv.head =>
           pv.tail match {
             case Empty() =>
               ReqCodeTreeItem(ci :+ IndentChild, nextc)

@@ -2,8 +2,7 @@ package shipreq.webapp.client.app.ui
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import shipreq.webapp.client.lib.ClientUtil
-import scalaz.syntax.equal._
-import shipreq.base.util.{NonEmptySet, UnivEq, IMap, ISubset}
+import shipreq.base.util.{NonEmptySet, IMap, ISubset, UnivEq, univEqOps}
 import shipreq.base.util.ScalaExt._
 
 object ISubsetEditor {
@@ -109,7 +108,7 @@ object ISubsetEditor {
 
       val methodSelection =
         Method.all.map { v =>
-          val selected = v ≟ state.method
+          val selected = v ==* state.method
           <.label(
             ^.classSet1("isubsetM", "checked" -> selected),
             inputRadio(

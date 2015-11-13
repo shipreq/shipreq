@@ -4,8 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import scalacss.ScalaCssReact._
-import scalaz.syntax.equal._
-import shipreq.base.util.NonEmptySet
+import shipreq.base.util.{NonEmptySet, univEqOps}
 import shipreq.webapp.base.data.ProjectConfig
 import shipreq.webapp.client.app.ui.Checkbox
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
@@ -33,7 +32,7 @@ object ViewSettingsEditor {
         val vs = p.vs.value
         val newCols =
           if (vs.isVisible(c))
-            vs.columns.filterNot(_ ≟ c) // Turn off
+            vs.columns.filterNot(_ ==* c) // Turn off
           else
             Some(vs.columns :+ c)       // Turn on
         val newVS = vs setColumns newCols.getOrElse(vs.columns)

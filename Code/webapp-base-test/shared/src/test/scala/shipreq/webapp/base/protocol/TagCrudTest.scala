@@ -5,7 +5,7 @@ import nyaya.prop._
 import nyaya.gen.Gen
 import nyaya.test._
 import nyaya.test.PropTest._
-import shipreq.base.util.MMTree
+import shipreq.base.util.{MMTree, univEqOps}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
@@ -37,7 +37,7 @@ object TagCrudTest extends TestSuite {
 
     def flatTreeProps = {
       def flatTree(policy: FilterPolicy) = flatten(tt)(_.id.value % 3 == 0, policy)
-      def removeBad(rows: Vector[FlatTag]) = rows.filterNot(_.status ≟ Status.Bad)
+      def removeBad(rows: Vector[FlatTag]) = rows.filterNot(_.status ==* Status.Bad)
       val fno = flatTree(OmitNothing)
       val fbb = flatTree(OmitBadBranches)
       val fbp = flatTree(OmitAnythingWithBadParent)

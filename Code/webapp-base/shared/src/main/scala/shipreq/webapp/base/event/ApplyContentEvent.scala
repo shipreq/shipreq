@@ -223,7 +223,7 @@ trait ApplyContentEvent {
       })
 
     def ensureActiveReqIs(reqId: ReqId): ActiveReq => SE[Unit] =
-      whenUntrusted(a => SE.test(a.reqId ≟ reqId, s"Expected ReqCode target to be $reqId, found: ${a.reqId}."))
+      whenUntrusted(a => SE.test(a.reqId ==* reqId, s"Expected ReqCode target to be $reqId, found: ${a.reqId}."))
 
     def ensureRefToReqExists(v: Value, d: Data, rc: ReqCodeId)(reqId: ReqId): SE[Unit] =
       whenUntrusted(

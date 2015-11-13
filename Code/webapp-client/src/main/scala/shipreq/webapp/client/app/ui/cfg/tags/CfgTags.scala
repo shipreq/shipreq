@@ -16,7 +16,7 @@ import scalaz.syntax.bind.ToBindOps
 import nyaya.prop.CycleDetector
 import nyaya.util.Multimap
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{MMTree, Memo, UnivEq}
+import shipreq.base.util.{MMTree, Memo, UnivEq, univEqOps}
 import shipreq.webapp.base.data.{TagId => Id, _}, DataImplicits._
 import shipreq.webapp.base.data.Validators.{tag => V}
 import shipreq.webapp.base.data.Validators.shared.HashRefKeyVS
@@ -141,7 +141,7 @@ private[tags] object MainTable {
     (s, i) => {
       val f1 = State.tree.modify(_ delkv i)
       val f2 = eachTypesStores.foldLeft(f1)(_ compose _.s.remove(i))
-      val f3 = f2 compose maybeCloseDetailPane(_.id ≟ i)
+      val f3 = f2 compose maybeCloseDetailPane(_.id ==* i)
       f3(s)
     },
     (s, i, d) => {
@@ -150,7 +150,7 @@ private[tags] object MainTable {
         case t: ApplicableTag => at_storesS.s.set(i, t)
       }
       val f2 = f1 compose State.tree.modify(MMTree.ApplyRelations.trustedApply1(_, i, d.rels))
-      val f3 = f2 compose maybeCloseDetailPane(p => (d.tag.live :: Dead) && (p.id ≟ d.tag.id))
+      val f3 = f2 compose maybeCloseDetailPane(p => (d.tag.live :: Dead) && (p.id ==* d.tag.id))
       f3(s)
     })
 
@@ -219,8 +219,8 @@ private[tags] object MainTable {
       w match {
         case None     => State.detailRow set None
         case Some(id) => State.detailRow modify {
-          case Some(r) if r.id ≟ id => r.copy(id = id).some
-          case _                    => DetailPaneState(id, None, None).some
+          case Some(r) if r.id ==* id => r.copy(id = id).some
+          case _                      => DetailPaneState(id, None, None).some
         }
       }
 
@@ -412,14 +412,14 @@ private[tags] object MainTable {
   object DetailPaneFns {
     // TODO CfgTags' DetailPane doesn't lock rows or handle ajax failure
     // TODO Don't allow detail pane for deleted rows
-    
+
     import DetailPane.{Rel, Rels, AddRel, AddRels, AddSelected}
 
     type UpdateIO = (Tag, TagCrud.Fn.V, TCB.Success, TCB.Failure) => Callback
     type SelUpdate = Option[Id] => Callback
 
     def removeChild(child: Id): Relations => Relations =
-      r => r.copy(children = r.children.filterNot(_ ≟ child))
+      r => r.copy(children = r.children.filterNot(_ ==* child))
 
     def removeParent(parent: Id): Relations => Relations =
       r => r.copy(parents = r.parents - parent)
@@ -476,7 +476,7 @@ private[tags] object MainTable {
       val rels = FlatTag.flatten(s.tagTree)(filter, FilterPolicy.OmitNothing)
         .filter(_.tag.live :: Live)
         .map(row => AddRel(row,
-            if (row.status ≟ FlatTag.Status.Good) row.id.some else None))
+            if (row.status ==* FlatTag.Status.Good) row.id.some else None))
       AddRels(rels, selUpdate,
         sel.map(selId => AddSelected(selId, treeUpdateIO(s, updateIO, subj, mod(selId)))))
     }

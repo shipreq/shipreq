@@ -2,8 +2,6 @@ package shipreq.webapp.base.event
 
 import monocle._
 import scala.reflect.ClassTag
-import scalaz.Equal
-import scalaz.syntax.equal._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
@@ -168,20 +166,20 @@ private[event] object ApplyEventLib {
     else
       ret(a.asInstanceOf[B])
 
-  def appendNewToVector[A: Equal](implicit trust: Trust): A => Vector[A] => SE[Vector[A]] = {
+  def appendNewToVector[A: UnivEq](implicit trust: Trust): A => Vector[A] => SE[Vector[A]] = {
     def doit(a: A, as: Vector[A]): Vector[A] = as :+ a
     if (trust :: Trusted)
       a => as => ret(doit(a, as))
     else
       a => as =>
-        if (as.exists(_ ≟ a))
+        if (as.exists(_ ==* a))
           fail(s"Element $a already exists in $as.")
         else
           ret(doit(a, as))
   }
 
-  def removeFromVector[A: Equal](implicit trust: Trust): A => Vector[A] => SE[Vector[A]] = {
-    def doit(a: A, as: Vector[A]): Vector[A] = as.filterNot(_ ≟ a)
+  def removeFromVector[A: UnivEq](implicit trust: Trust): A => Vector[A] => SE[Vector[A]] = {
+    def doit(a: A, as: Vector[A]): Vector[A] = as.filterNot(_ ==* a)
     if (trust :: Trusted)
       a => as => ret(doit(a, as))
     else
@@ -194,12 +192,12 @@ private[event] object ApplyEventLib {
       }
   }
 
-  def repositionFn[A: Equal](implicit trust: Trust): (A, Option[A]) => Vector[A] => SE[Vector[A]] =
+  def repositionFn[A: UnivEq](implicit trust: Trust): (A, Option[A]) => Vector[A] => SE[Vector[A]] =
     if (trust :: Trusted)
       (a, pos) => as => ret(RelPos.set(as, a, pos))
     else
       (a, pos) => as =>
-        if (!as.exists(_ ≟ a))
+        if (!as.exists(_ ==* a))
           fail(s"Element not found: Expected to find $a in $as.")
         else
           ret(RelPos.set(as, a, pos))

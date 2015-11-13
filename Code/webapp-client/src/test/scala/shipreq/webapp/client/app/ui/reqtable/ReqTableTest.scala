@@ -286,7 +286,7 @@ sealed trait ReqTableTest0 {
 
     def customFieldNames(a: Live): Set[String] = {
       val cfs   = project.config.fields.customFields.values.toStream
-      val names = cfs.filter(_.live ≟ a).map(cfname(_).unmust)
+      val names = cfs.filter(_.live ==* a).map(cfname(_).unmust)
       names.toSet
     }
   }
@@ -338,7 +338,7 @@ sealed trait ReqTableTest0 {
           if (fv == s.stats.reportedReqs)
             None
           else
-            Some(s"${s.stats.reportedReqs} ≠ $fv (${s.stats.reportedReqFormulaText})")
+            Some(s"${s.stats.reportedReqs} !=* $fv (${s.stats.reportedReqFormulaText})")
         )
       })
 

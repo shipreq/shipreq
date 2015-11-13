@@ -3,11 +3,10 @@ package shipreq.webapp.client.app.ui
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.vdom.TagMod
 import org.scalajs.dom.raw.DragEffect
-import scalaz.syntax.equal._
-import shipreq.base.util.{Memo, UnivEq}
+import shipreq.base.util.{Memo, UnivEq, univEqOps}
+import shipreq.base.util.UnivEq.Implicits._
 import shipreq.webapp.client.util.DND
 import shipreq.webapp.client.util.DomUtil._
-import shipreq.base.util.UnivEq.Implicits._
 
 object DragToReorder {
 
@@ -20,7 +19,7 @@ object DragToReorder {
 
   /**
    * Item has been dragged out to indicate deletion.
-   * 
+   *
    * You must still render a node for this, do not omit it because it will prevent expected events from firing.
    * Use `display: none` instead.
    */
@@ -63,7 +62,7 @@ final class DragToReorder[A](updateItems: Vector[A] => Callback,
 
     def orderWithoutTombstone: Vector[Int] =
       dragLoc match {
-        case Outside               => currentOrder.filterNot(_ ≟ dragSource)
+        case Outside               => currentOrder.filterNot(_ ==* dragSource)
         case InParent | InChild(_) => currentOrder
       }
   }
@@ -121,7 +120,7 @@ final class DragToReorder[A](updateItems: Vector[A] => Callback,
         _ ← requireOwnMimeType(e)
         s ← getDragState
         //_ ← Callback.log(s"   Leave check... e.client: ${e.clientX}x${e.clientY}, e.screen: ${e.screenX}x${e.screenY} node:", e.currentTarget.castHtml.getBoundingClientRect())
-        _ ← require(expectedLoc.forall(_ ≟ s.dragLoc))
+        _ ← require(expectedLoc.forall(_ ==* s.dragLoc))
         _ ← unless(isDragWithinNode(e, e.currentTarget))
         _ ← $ setState s.copy(dragLoc = Outside, currentOrder = s.originalOrder)
       } yield ()
@@ -165,7 +164,7 @@ final class DragToReorder[A](updateItems: Vector[A] => Callback,
             p ← $.props.toCBO
             _ ← $ setState None
             o = s.orderWithoutTombstone
-            _ ← unless(o ≟ s.originalOrder)
+            _ ← unless(o ==* s.originalOrder)
             _ ← updateItems(o map s.items.apply)
           } yield ()
 
@@ -177,7 +176,7 @@ final class DragToReorder[A](updateItems: Vector[A] => Callback,
             _ ← e.preventDefaultCB
             _ ← Callback(e.dataTransfer.dropEffect = DragEffect.Move)
             l = InChild(i)
-            _ ← unless((s.dragSource ≟ i) && (s.dragLoc ≟ l))
+            _ ← unless((s.dragSource ==* i) && (s.dragLoc ==* l))
             _ ← $ setState s.copy(dragLoc = l, currentOrder = DND.moveE(s.dragSource, i)(s.currentOrder))
           } yield ()
 
@@ -213,7 +212,7 @@ final class DragToReorder[A](updateItems: Vector[A] => Callback,
               case Outside               => Tombstone
               case InParent | InChild(_) => DragSource
             }
-            mkItems(ds.currentOrder, ds.items, i => if (i ≟ ds.dragSource) onDragSrc else Normal)
+            mkItems(ds.currentOrder, ds.items, i => if (i ==* ds.dragSource) onDragSrc else Normal)
         }
 
       renderFn(Content(parentTagMod, items)).runNow()

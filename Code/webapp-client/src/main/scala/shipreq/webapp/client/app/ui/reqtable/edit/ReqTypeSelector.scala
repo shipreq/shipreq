@@ -35,7 +35,7 @@ object ReqTypeSelector {
     val onCommit = onCommit0.cmapToInitial(initial.id)(SetGenericReqType(subjectId, _)).cmap[A](_.id)
 
     def commitIfChanged(a: A, commit: RemoteDataEditor.CommitFn): UndefOr[TCB.Commit] =
-      if (a.id ≟ initial.id)
+      if (a.id ==* initial.id)
         undefined
       else
         commit(onCommit(a))

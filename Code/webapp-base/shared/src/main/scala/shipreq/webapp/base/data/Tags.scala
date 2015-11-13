@@ -116,7 +116,7 @@ object TagTree {
     val roots = rootIds.toStream.map(lookup).sortBy(_.tag.name)
     "TagTree\n" +
     nyaya.util.Util.asciiTree(roots)(_.children.map(lookup),
-      t => s"${t.tag.name} (${t.id.value})${if (t.tag.live ≟ Dead) " DEAD" else ""}",
+      t => s"${t.tag.name} (${t.id.value})${if (t.tag.live ==* Dead) " DEAD" else ""}",
       "  ")
   }
 
@@ -152,7 +152,7 @@ final case class TagInTree(tag: Tag, children: TagInTree.Children) {
   }
 
   def removeChild(id: TagId): TagInTree =
-    modChildren(c => if (hasChild(id)) c.filterNot(_ ≟ id) else c)
+    modChildren(c => if (hasChild(id)) c.filterNot(_ ==* id) else c)
 
   def hasChild(id: TagId): Boolean =
     children contains id
@@ -248,8 +248,8 @@ object FlatTag {
     import Status._
     import FilterPolicy._
 
-    val omitAnythingWithBadParent = policy ≟ OmitAnythingWithBadParent
-    val omitNothing               = policy ≟ OmitNothing
+    val omitAnythingWithBadParent = policy ==* OmitAnythingWithBadParent
+    val omitNothing               = policy ==* OmitNothing
 
     def go(r: Vector[FlatTag], t: TagInTree, depth: Int, parentPath: Vector[TagId]): Vector[FlatTag] =
       if (filter(t.tag)) {

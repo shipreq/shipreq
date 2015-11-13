@@ -3,9 +3,7 @@ package shipreq.webapp.client.app.ui.reqtable
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
 import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
-import scalaz.syntax.equal.ToEqualOps
-import shipreq.base.util.UnivEq.univEqOption
-import shipreq.base.util.{NonEmptyVector, UnivEq}
+import shipreq.base.util.{NonEmptyVector, UnivEq, univEqOps}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.CreateContentCmd
@@ -15,6 +13,7 @@ import shipreq.webapp.client.app.ui.reqtable.edit.{ImplicationEditor, TagEditor,
 import shipreq.webapp.client.app.ui.{ProjectWidgets, SelectOne, VUCA}
 import shipreq.webapp.client.lib.TCB
 import shipreq.webapp.client.util.Enabled
+import UnivEq.univEqOption
 
 object CreationInterface {
   sealed trait Type
@@ -36,7 +35,7 @@ object CreationInterface {
   case object Editing extends Status
   case object Locked extends Status
   case class Failed(reason: String) extends Status
-  implicit def statusEquality: UnivEq[Status] = UnivEq.force
+  implicit def statusEquality: UnivEq[Status] = UnivEq.deriveAuto
 
   @Lenses
   case class CreateReqCodeGroupState(status: Status, reqCode: String, title: String)
@@ -141,7 +140,7 @@ class CreationInterface($             : StateAccessCB[State],
         for {
           code  <- propsReqCode.parseResult.toOption
           title <- propsTitle.parseResult.toOption
-          if state.status ≠ Locked
+          if state.status !=* Locked
         } yield
           ajax(p, setStatus, CreateContentCmd.CreateReqCodeGroup(code, title))
 
@@ -194,7 +193,7 @@ class CreationInterface($             : StateAccessCB[State],
           title   <- propsTitle   .parseResult.toOption
           tags    <- propsTags    .parseResult.toOption
           impSrcs <- propsImp     .parseResult.toOption
-          if state.status ≠ Locked
+          if state.status !=* Locked
         } yield
           ajax(p._1, setStatus, CreateContentCmd.CreateGenericReq(p._2, title, codes.added, tags.added, impSrcs.added))
 

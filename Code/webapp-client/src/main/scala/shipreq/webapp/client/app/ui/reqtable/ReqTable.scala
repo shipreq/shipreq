@@ -96,7 +96,7 @@ object ReqTable {
 
     def willReceiveProps(oldProps: Props, nextProps: Props): Callback = {
       val updateFD =
-        if (oldProps.fd ≟ nextProps.fd) ST.nop else
+        if (oldProps.fd ==* nextProps.fd) ST.nop else
           ST.modT(State.viewSettings.modify(_ setFilterDead nextProps.fd))
 
       val updateFS =

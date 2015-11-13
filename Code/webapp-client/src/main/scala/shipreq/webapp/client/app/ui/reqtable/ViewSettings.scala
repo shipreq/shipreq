@@ -3,8 +3,7 @@ package shipreq.webapp.client.app.ui.reqtable
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
 import monocle.macros.Lenses
-import scalaz.syntax.equal._
-import shipreq.base.util.{UnivEq, NonEmptyVector}
+import shipreq.base.util.{NonEmptyVector, UnivEq, univEqOps}
 import shipreq.webapp.base.filter.FilterAst
 import shipreq.webapp.client.lib.{ShowDead, HideDead, FilterDead}
 import shipreq.webapp.client.util.On
@@ -16,7 +15,7 @@ case class ViewSettings(columns    : NonEmptyVector[Column],
                         filterDead : FilterDead) {
 
   def isVisible(c: Column): Boolean =
-    isVisible(_ ≟ c)
+    isVisible(_ ==* c)
 
   def isVisible(f: Column => Boolean): Boolean =
     columns.exists(f)
@@ -59,12 +58,12 @@ case class ViewSettings(columns    : NonEmptyVector[Column],
    */
   final val viewReqCodesAsTree: Boolean =
     order.init.headOption.exists(s =>
-      s.column ≟ Column.Code)
+      s.column ==* Column.Code)
 
   // Doesn't make sense showing ReqCodeGroups below everything they represent.
   final val viewReqCodeGroups: Boolean =
     order.init.headOption.exists(s =>
-      (s.column ≟ Column.Code) && s.method.ascending)
+      (s.column ==* Column.Code) && s.method.ascending)
 }
 
 

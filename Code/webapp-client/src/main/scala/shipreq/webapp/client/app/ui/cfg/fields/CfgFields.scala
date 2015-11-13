@@ -7,7 +7,6 @@ import scala.language.reflectiveCalls
 import scalajs.js.{undefined, UndefOr, Any => JsAny}
 import scalaz.{Equal, -\/, \/-, \/}
 import scalaz.syntax.bind.ToBindOps
-import scalaz.syntax.equal._
 
 import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
@@ -341,7 +340,7 @@ private[fields] object MainTable {
         refkey     = renderKeyO(f.keyO),
         mandatory  = staticMandatoryCheckbox(f.mandatory),
         reqtypes   = appReqTypesEditor.renderReadOnly(f.reqTypes),
-        ctrls      = (f.deletable ≟ Deletable) ?= protocol.value().staticDeletion.button(f, Delete)
+        ctrls      = (f.deletable :: Deletable) ?= protocol.value().staticDeletion.button(f, Delete)
       )(f.fieldType)
 
     def renderKeyO(k: Option[FieldRefKey]): TagMod =
