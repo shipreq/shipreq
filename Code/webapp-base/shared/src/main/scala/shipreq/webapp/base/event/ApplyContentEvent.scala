@@ -7,16 +7,17 @@ import shipreq.base.util._
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.data.{Validators => V, _}
 import shipreq.webapp.base.text.{Grammar, Text}
-import ApplyEventLib._, SE.SE
+import ApplyEventLib._
 import DataImplicits._
 import MTrie.Ops
+import SE.{SE, monadSE}
 
 trait ApplyContentEvent {
   this: ApplyEvent =>
 
   object ContentCommon {
     val grIMap = IMapStore(Project.genericReqs)
-    val ucIMap = IMapStore(Project.useCases)
+    val ucIMap = IMapStore(Project.useCaseIMap)
 
     private val grLiveExplicitly = LiveAccessor(GenericReq.liveExplicitly)(_.id.toString)
     private val ucLiveExplicitly = LiveAccessor(UseCase.liveExplicitly)(_.id.toString)
@@ -302,6 +303,29 @@ trait ApplyContentEvent {
         _  ← postAddStep(e.ucId, e.id, e.field)
       } yield ()
     }
+
+    def needStepIndex(id: UseCaseStepId): SE[UseCases.StepTreeKey] =
+      SE.get(_.reqs.useCases.stepIndex.get(id)) >>= (optionGet(_, s"${show(id)} not found."))
+
+    def modStep(id: UseCaseStepId)(mod: (UseCaseSteps.Tree, VectorTree.Location) => SE[UseCaseSteps.Tree]): SE[Unit] =
+      for {
+        idx  ← needStepIndex(id)
+        ucId = idx.useCaseId
+        f    = idx.field
+        _    ← ucIMap.update(ucId, uc => {
+                 // TODO would be faster to just scan rather than use withCtx if withCtx isn't used otherwise (so far it's not)
+                 val ctx = f.useCaseSteps.get(uc).withCtx.need(id)
+                 ensureLiveReq(uc) >> f.useCaseStepTree.modifyF[SE](mod(_, ctx.loc))(uc)
+               })
+      } yield ()
+
+    def applyShiftUseCaseStepLeft(e: ShiftUseCaseStepLeft): SE[Unit] =
+      modStep(e.id)((t, l) =>
+        optionGet(t shiftLeft l, s"${show(e.id)} cannot be shifted left."))
+
+    def applyShiftUseCaseStepRight(e: ShiftUseCaseStepRight): SE[Unit] =
+      modStep(e.id)((t, l) =>
+        optionGet(t shiftRight l, s"${show(e.id)} cannot be shifted right."))
   }
 
   // ===================================================================================================================

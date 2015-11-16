@@ -155,11 +155,11 @@ object UseCaseEventTest extends TestSuite {
       'okTailEC     - testSteps(AddUseCaseStep(4, 1, EC, ∅))("0")("0")
       'okInsertNCAC - testSteps(AddUseCaseStep(4, 1, NCAC, V0))("0", "0.0")()
       'okInsertEC   - testSteps(AddUseCaseStep(4, 1, EC, ∅), AddUseCaseStep(5, 1, EC, V0))("0")("0", "0.0")
-      'ucNotFound   - assertFail("found")(addStepTo1)
+      'ucNotFound   - assertFail("not found")(addStepTo1)
       'ucDead       - assertFail("dead")(emptyUC1, delUC1, addStepTo1)
       'badId        - assertBadIdsRejected(AddUseCaseStep(_, 1, NCAC, ∅))(init.add(emptyUC1))
       'idInUse      - assertFail("exists")(emptyUC1, addStepTo1, addStepTo1)
-      'locNotFound  - assertFail("cannot be added")(emptyUC1, AddUseCaseStep(5, 1, EC, V0))
+      'locNotFound  - assertFail("cannot")(emptyUC1, AddUseCaseStep(5, 1, EC, V0))
       'maxLenAtRoot - assertFail("exceeds limit")(maxLenEvs(AddUseCaseStep(_, 1, EC, ∅)): _*)
       'maxLenAtL0   - assertFail("exceeds limit")(maxLenEvs(AddUseCaseStep(_, 1, NCAC, V0)): _*)
     }
@@ -171,8 +171,8 @@ object UseCaseEventTest extends TestSuite {
       'ok           - testSteps(add, shift)("0", "1")()
       'stepNotFound - assertFail("found")(shift)
       'ucDead       - assertFail("dead")(emptyUC1, add, delUC1, shift)
-      'notRoot      - assertFail("???")(emptyUC1, ShiftUseCaseStepLeft(1))
-      'notLvl0      - assertFail("???")(emptyUC1, add, shift, shift)
+      'notRoot      - assertFail("cannot")(emptyUC1, ShiftUseCaseStepLeft(1))
+      'notLvl0      - assertFail("cannot")(emptyUC1, add, shift, shift)
     }
 
     'shiftUseCaseStepRight {
@@ -182,8 +182,8 @@ object UseCaseEventTest extends TestSuite {
       'ok           - testSteps(add, shift)("0", "0.0")()
       'stepNotFound - assertFail("found")(shift)
       'ucDead       - assertFail("dead")(emptyUC1, add, delUC1, shift)
-      'notRoot      - assertFail("???")(emptyUC1, ShiftUseCaseStepRight(1))
-      'noParent     - assertFail("???")(emptyUC1, add, shift, shift)
+      'notRoot      - assertFail("cannot")(emptyUC1, ShiftUseCaseStepRight(1))
+      'noParent     - assertFail("cannot")(emptyUC1, add, shift, shift)
 
       // UC-8.0.1.a.i.1
       'maxDepthNCAC {
@@ -201,7 +201,7 @@ object UseCaseEventTest extends TestSuite {
         testSteps(es: _*)((1 to 5) map (List.fill(_)(0) mkString "."): _*)()
 
         addShift(99, 5) // over
-        assertFail("???")(es: _*)
+        assertFail("exceeds limit")(es: _*)
       }
 
       // UC-8.E.1.a.i.1
@@ -220,7 +220,7 @@ object UseCaseEventTest extends TestSuite {
         testSteps(es: _*)("0")((1 to 4) map (List.fill(_)(0) mkString "."): _*)
 
         addShift(99, 4) // over
-        assertFail("???")(es: _*)
+        assertFail("exceeds limit")(es: _*)
       }
     }
 

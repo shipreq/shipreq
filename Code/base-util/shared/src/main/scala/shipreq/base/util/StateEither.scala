@@ -1,6 +1,6 @@
 package shipreq.base.util
 
-import scalaz.{-\/, \/-, \/}
+import scalaz.{Monad, -\/, \/-, \/}
 import StateEither.{Failure, Ok, Result}
 
 /**
@@ -182,6 +182,13 @@ object StateEither {
     def foldMapRun[A](as: Iterable[A])(f: A => SE[Unit]): SE[Unit] =
       // as.foldLeft(nop)(_ >> f(_))
       Util.mapReduce(as, nop)(f, _ >> _)
+
+    implicit val monadSE: Monad[SE] =
+      new Monad[SE] {
+        override def point[A]   (a: => A)                 : SE[A] = get(_ => a)
+        override def bind [A, B](fa: SE[A])(f: A => SE[B]): SE[B] = fa >>= f
+        override def map  [A, B](fa: SE[A])(f: A => B)    : SE[B] = fa map f
+      }
   }
 
   // ===================================================================================================================
