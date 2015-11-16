@@ -2,6 +2,7 @@ package shipreq.webapp.base.event
 
 import nyaya.util.Multimap
 import scala.annotation.tailrec
+import scalaz.std.option.optionInstance
 import shipreq.base.util._
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.data.{Validators => V, _}
@@ -226,6 +227,29 @@ trait ApplyContentEvent {
       ensureLiveReqId(e.id) >>
         ucIMap.updateF(e.id, _.copy(title = e.value))
 
+    def postAddStep(ucId: UseCaseId, stepId: UseCaseStepId, field: StaticField.UseCaseStepTree): SE[Unit] =
+      postAddStep(ucId, stepId, field,
+        (r, ucs) => r.copy(useCases = ucs),
+        (ic, i) => ic.copy(useCaseStep = i))
+
+    def postAddStep(ucId: UseCaseId, stepId: UseCaseStepId, field: StaticField.UseCaseStepTree,
+                    updReqs: (Requirements, UseCases) => Requirements,
+                    updStepIdCeil: (IdCeilings, Int) => IdCeilings): SE[Unit] =
+      SE.mod { p =>
+        // Update step index
+        val ptr = UseCases.StepTreeKey(ucId, field)
+        val si2 = p.reqs.useCases.stepIndex.updated(stepId, ptr)
+        val ucs2 = p.reqs.useCases.copy(stepIndex = si2)
+
+        // Update reqs
+        val reqs2 = updReqs(p.reqs, ucs2)
+
+        // Update ID ceilings
+        val ic2 = updStepIdCeil(p.idCeilings, p.idCeilings.useCaseStep max stepId)
+
+        p.copy(reqs = reqs2, idCeilings = ic2)
+      }
+
     val applyCreateUseCase: CreateUseCase => SE[Unit] = {
       val ^ = CreateUseCaseGD
 
@@ -238,23 +262,10 @@ trait ApplyContentEvent {
           case ^.ValueForReqCodes(v) => setReqCodes  (id, v)
       }
 
-      def bulkUpdateProject(pr: PubidRegister, id: UseCaseId, stepId: UseCaseStepId): Project => Project = p => {
-        // Update step index
-        val ptr = UseCases.StepTreePtr(id, StaticField.NormalAltStepTree)
-        val si2 = p.reqs.useCases.stepIndex.updated(stepId, ptr)
-        val ucs2 = p.reqs.useCases.copy(stepIndex = si2)
-
-        // Update PR
-        val reqs2 = p.reqs.copy(useCases = ucs2, pubids = pr)
-
-        // Update ID ceilings
-        val ic = p.idCeilings
-        val ic2 = ic.copy(
-                    req         = ic.req         max id,
-                    useCaseStep = ic.useCaseStep max stepId)
-
-        p.copy(reqs = reqs2, idCeilings = ic2)
-      }
+      def postAdd(pr: PubidRegister, ucId: UseCaseId, stepId: UseCaseStepId): SE[Unit] =
+        postAddStep(ucId, stepId, StaticField.NormalAltStepTree,
+          (r, ucs) => r.copy(useCases = ucs, pubids = pr),
+          (ic, i) => ic.copy(useCaseStep = i, req = ic.req max ucId))
 
       e => for {
         _       <- ensureStepDoesntExist(e.stepId)
@@ -263,8 +274,32 @@ trait ApplyContentEvent {
         pp      ← SE get (_.reqs.pubids allocUC id)
         uc      = UseCase.empty(id, pp._2.pos, title, e.stepId)
         _       ← ucIMap.create(uc)
-        _       ← SE mod bulkUpdateProject(pp._1, id, e.stepId)
+        _       ← postAdd(pp._1, id, e.stepId)
         _       ← foreachValue(id, e.vs)
+      } yield ()
+    }
+
+    def applyAddUseCaseStep(e: AddUseCaseStep): SE[Unit] = {
+      val step = UseCaseStep(e.id, Text.UseCaseStep.empty)
+      val tree = e.field.useCaseStepTree
+
+      def insert(loc: VectorTree.Location, uc: UseCase): SE[Unit] =
+        tree.modifyF(_.insertAfter(loc, step))(uc) match {
+          case Some(uc2) => ucIMap addOrUpdate uc2
+          case None =>
+            val locStr = e.field.stepLabel(uc.pos, loc, false)
+            SE fail s"${show(step.id)} cannot be added to ${show(uc.id)} at location: $locStr"
+        }
+
+      def append(uc: UseCase): SE[Unit] =
+        ucIMap addOrUpdate tree.modify(_ append step)(uc)
+
+      for {
+        _  ← ensureStepDoesntExist(step.id)
+        uc ← ucIMap.need(e.ucId)
+        _  ← ensureLiveReq(uc)
+        _  ← NonEmptyVector.maybe(e.at, append(uc))(insert(_, uc))
+        _  ← postAddStep(e.ucId, e.id, e.field)
       } yield ()
     }
   }

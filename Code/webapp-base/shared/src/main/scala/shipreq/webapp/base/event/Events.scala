@@ -187,7 +187,6 @@ case class ShiftUseCaseStepLeft (id: UseCaseStepId)                             
 case class ShiftUseCaseStepRight(id: UseCaseStepId)                               extends ActiveEvent
 case class SetUseCaseStepText   (id: UseCaseStepId, value: StepText.OptionalText) extends ActiveEvent
 
-
 // =====================================================================================================================
 // Content: ReqCode groups
 

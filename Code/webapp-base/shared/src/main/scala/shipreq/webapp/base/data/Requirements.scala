@@ -132,12 +132,6 @@ final case class UseCase(id            : UseCaseId,
   override def live(customReqTypes: CustomReqTypeIMap): Live =
     liveUC
 
-  def steps(f: StaticField.UseCaseStepTree): UseCaseSteps =
-    f match {
-      case StaticField.NormalAltStepTree => stepsNA
-      case StaticField.ExceptionStepTree => stepsE
-    }
-
   def stepIterator: Iterator[UseCaseStep] =
     stepsNA.tree.valueIterator ++ stepsE.tree.valueIterator
 }
@@ -227,11 +221,21 @@ case class UseCases(imap: UseCaseIMap, stepIndex: UseCases.StepIndex, stepFlow: 
 }
 
 object UseCases {
-  case class StepTreePtr(useCaseId: UseCaseId, field: StaticField.UseCaseStepTree)
 
-  implicit def equalStepTreePtr: UnivEq[StepTreePtr] = UnivEq.derive
+  /**
+   * Information sufficient to uniquely identify a step tree within a project.
+   */
+  case class StepTreeKey(useCaseId: UseCaseId, field: StaticField.UseCaseStepTree)
 
-  type StepIndex = Map[UseCaseStepId, StepTreePtr]
+  implicit def equalStepTreeKey: UnivEq[StepTreeKey] = UnivEq.derive
+
+  /**
+   * An index of all [[UseCaseStep]]s and the static portions of their locations.
+   *
+   * This is calculable state which is normally never manually-managed, but is in this case due to the frequency of step
+   * lookup and the ease of maintaining it (very few events affect it).
+   */
+  type StepIndex = Map[UseCaseStepId, StepTreeKey]
 
   implicit def equalStepIndex: UnivEq[StepIndex] = UnivEq.univEqMap
 
@@ -243,8 +247,8 @@ object UseCases {
       uc ← imap.valuesIterator
       id = uc.id
       f  ← StaticField.useCaseStepTrees
-      s  ← uc.steps(f).tree.valueIterator
-    } m = m.updated(s.id, StepTreePtr(id, f))
+      s  ← f.useCaseStepTree.get(uc).valueIterator
+    } m = m.updated(s.id, StepTreeKey(id, f))
     m
   }
 
@@ -257,6 +261,9 @@ object UseCases {
   def empty: UseCases =
     UseCases(emptyDataMap(UseCase), emptyStepIndex, StepFlow.emptyBiDir)
 
+  /**
+   * A version [[UseCases]] that omits calculable state (i.e. [[StepIndex]]).
+   */
   case class Stateless(imap: UseCaseIMap, stepFlow: StepFlow) {
     def withState: UseCases =
       statelessIso get this

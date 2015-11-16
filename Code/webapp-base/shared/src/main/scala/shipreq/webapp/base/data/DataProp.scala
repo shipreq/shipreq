@@ -273,7 +273,7 @@ object DataProp {
           uc ← ucs.imap.valuesIterator
           id = uc.id
           f  ← StaticField.useCaseStepTrees
-          s  ← uc.steps(f).tree.valueIterator
+          s  ← f.useCaseStepTree.get(uc).valueIterator
         } {
           count += 1
           ucs.stepIndex.get(s.id) match {

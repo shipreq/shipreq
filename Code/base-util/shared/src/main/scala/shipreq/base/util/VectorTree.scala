@@ -23,7 +23,7 @@ final case class VectorTree[+A](children: Children[A]) extends Parent[A] {
 
   override def getValue = None
 
-  override def toString = prettyPrintLabeled()
+  override def toString = s"VectorTree($deepSize nodes)"
 
   def isEmpty = children.isEmpty
 
@@ -283,6 +283,12 @@ object VectorTree extends VectorTreeLowPri {
           n.value
         }
       }
+
+    def deepSize: Int = {
+      var i = 0
+      valueIterator.foreach(_ => i += 1)
+      i
+    }
 
     final def childrenIterator[B](posInit: Vector[Int], f: (Location, A) => B): Iterator[B] =
       new AbstractIterator[B] {

@@ -40,14 +40,14 @@ object UseCaseEventTest extends TestSuite {
 
   def addStepTo1 = AddUseCaseStep(4, 1, NCAC, ∅)
 
-  def maxLenRange = 0 to AppConsts.useCaseStepsMaxLength + 1
+  def maxLenRange = 0 to AppConsts.useCaseStepsMaxLength
 
   def testSteps(es: ActiveEvent*)(nc: String*)(e: String*): Unit = {
     var es2 = es.toList
     if (!es2.exists(_ eq emptyUC1))
       es2 = emptyUC1 :: es2
     val p = _assertPass(es2: _*)
-    assertUC(p, 1)(UC1)
+    assertUC(p, 1)(UC1, ignoreSteps = true)
     assertAllUcSteps(p needUC 1)(nc: _*)(e: _*)
   }
 
@@ -141,7 +141,7 @@ object UseCaseEventTest extends TestSuite {
     'setUseCaseTitle {
       'ok {
         val p = _assertPass(emptyUC1, setTitleUC1)
-        assertEq(p.reqs.genericReqs.get(1).get.title, someTitleUC)
+        assertEq(p.reqs.useCases.imap.need(1).title, someTitleUC)
       }
       'ucNotFound - assertFail("found")(setTitleUC1)
       'ucIsDead   - assertFail("dead")(emptyUC1, delUC1, setTitleUC1)
@@ -159,9 +159,9 @@ object UseCaseEventTest extends TestSuite {
       'ucDead       - assertFail("dead")(emptyUC1, delUC1, addStepTo1)
       'badId        - assertBadIdsRejected(AddUseCaseStep(_, 1, NCAC, ∅))(init.add(emptyUC1))
       'idInUse      - assertFail("exists")(emptyUC1, addStepTo1, addStepTo1)
-      'locNotFound  - assertFail("???")(emptyUC1, AddUseCaseStep(5, 1, EC, V0))
-      'maxLenAtRoot - assertFail("???")(maxLenEvs(AddUseCaseStep(_, 1, EC, ∅)): _*)
-      'maxLenAtL0   - assertFail("???")(maxLenEvs(AddUseCaseStep(_, 1, NCAC, V0)): _*)
+      'locNotFound  - assertFail("cannot be added")(emptyUC1, AddUseCaseStep(5, 1, EC, V0))
+      'maxLenAtRoot - assertFail("exceeds limit")(maxLenEvs(AddUseCaseStep(_, 1, EC, ∅)): _*)
+      'maxLenAtL0   - assertFail("exceeds limit")(maxLenEvs(AddUseCaseStep(_, 1, NCAC, V0)): _*)
     }
 
     'shiftUseCaseStepLeft {

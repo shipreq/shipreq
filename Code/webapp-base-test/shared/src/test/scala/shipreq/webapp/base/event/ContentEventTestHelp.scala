@@ -8,9 +8,6 @@ import shipreq.webapp.base.test.WebappTestUtil._
 import ApplyEventTestFns._
 import shipreq.webapp.base.text.{Text => T}
 
-/**
- * Doesn't check title.
- */
 case class DetachedGenericReq(req      : GenericReq,
                               tags     : Set[ApplicableTagId],
                               impliedBy: Set[ReqId],
@@ -30,9 +27,6 @@ object DetachedGenericReq {
     }
 }
 
-/**
- * Doesn't check title or step trees.
- */
 case class DetachedUseCase(req      : UseCase,
                            tags     : Set[ApplicableTagId],
                            impliedBy: Set[ReqId],
@@ -143,29 +137,34 @@ object ContentEventTestHelp {
     v.head._2
   }
 
-  /**
-    * Doesn't check title.
-    */
   def assertGR(p: Project, id: GenericReqId)(req      : GenericReq,
                                              tags     : Set[ApplicableTagId] = UnivEq.emptySet,
                                              impliedBy: Set[ReqId]           = UnivEq.emptySet,
                                              implies  : Set[ReqId]           = UnivEq.emptySet,
                                              reqCodes : Set[ReqCode.Value]   = UnivEq.emptySet): Unit =
     assertEq(
+      s"assertGR(${id.value})",
       DetachedGenericReq.extract(p, id),
       Some(DetachedGenericReq(req, tags, impliedBy, implies, reqCodes)))
 
-  /**
-    * Doesn't check title or step trees.
-    */
-  def assertUC(p: Project, id: UseCaseId)(uc       : UseCase,
-                                          tags     : Set[ApplicableTagId] = UnivEq.emptySet,
-                                          impliedBy: Set[ReqId]           = UnivEq.emptySet,
-                                          implies  : Set[ReqId]           = UnivEq.emptySet,
-                                          reqCodes : Set[ReqCode.Value]   = UnivEq.emptySet): Unit =
-    assertEq(
-      DetachedUseCase.extract(p, id),
-      Some(DetachedUseCase(uc, tags, impliedBy, implies, reqCodes)))
+  def assertUC(p: Project, id: UseCaseId)(uc         : UseCase,
+                                          tags       : Set[ApplicableTagId] = UnivEq.emptySet,
+                                          impliedBy  : Set[ReqId]           = UnivEq.emptySet,
+                                          implies    : Set[ReqId]           = UnivEq.emptySet,
+                                          reqCodes   : Set[ReqCode.Value]   = UnivEq.emptySet,
+                                          ignoreSteps: Boolean              = false): Unit = {
+    var d = DetachedUseCase.extract(p, id)
+    var e = DetachedUseCase(uc, tags, impliedBy, implies, reqCodes)
+
+    if (ignoreSteps) {
+      def f(x: DetachedUseCase): DetachedUseCase =
+        x.copy(req = x.req.copy(stepsNA = UseCaseSteps.empty, stepsE = UseCaseSteps.empty))
+      d = d map f
+      e = f(e)
+    }
+
+    assertEq(s"assertUC(${id.value})", d, Some(e))
+  }
 
   def assertUcSteps(s: UseCaseSteps.Tree, keys: String*): Unit =
     assertUcStepsO(None, s, keys: _*)
