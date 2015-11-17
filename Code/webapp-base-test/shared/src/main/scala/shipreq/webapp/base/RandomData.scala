@@ -133,7 +133,7 @@ object RandomData {
       _.vector.flatMap(Gen.traverse(_)(f)))
 
   val id =
-    Gen.int.map(i => if (i == 0) 1 else Math.abs(i))
+    Gen.chooseInt(1, 2048)
 
   val shortText1        = unicodeChar.string(1 to AppConsts.shortTextMaxLength)
   val shortText         = unicodeChar.string(0 to AppConsts.shortTextMaxLength)

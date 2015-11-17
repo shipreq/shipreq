@@ -56,6 +56,7 @@ object DataProp {
 
   /**
    * WARNING: Ignores negative numbers.
+   * WARNING: Slow with large number values.
    */
   def uniqueNonNegInts[C[x] <: Traversable[x], A](name: => String, f: A => Int): Prop[C[A]] =
     Prop.atom[C[A]]("Unique " + name, as => {
@@ -74,6 +75,7 @@ object DataProp {
 
   /**
    * WARNING: Ignores negative numbers.
+   * WARNING: Slow with large number values.
    */
   def uniqueNonNegIntsT[C[x] <: Traversable[x], A <: TaggedInt](name: => String): Prop[C[A]] =
     uniqueNonNegInts[C, A](name, _.value)
