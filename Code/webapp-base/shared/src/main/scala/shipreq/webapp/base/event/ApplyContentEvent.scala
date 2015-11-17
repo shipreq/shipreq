@@ -1,5 +1,6 @@
 package shipreq.webapp.base.event
 
+import monocle.Lens
 import nyaya.util.Multimap
 import scala.annotation.tailrec
 import scalaz.std.option.optionInstance
@@ -113,18 +114,11 @@ trait ApplyContentEvent {
 
     def applyPatchImplicationTgt(e: PatchImplicationTgt): SE[Unit] =
       ensureLiveReqId(e.id) >>
-      Project.implicationsSrcToTgt.modify(_.mod(e.id, e.patch.value.apply))
+      Project.implicationsSrcToTgt.modify(e.patch.value.applyToMultimapValues(_)(e.id))
 
-    def applyPatchImplicationSrc(e: PatchImplicationSrc): SE[Unit] = {
-      val t = e.id
-      val d = e.patch.value
-      ensureLiveReqId(e.id) >> Project.implicationsSrcToTgt.modify { mm0 =>
-        var mm = mm0
-        d.removed.foreach(id => mm = mm.del(id, t))
-        d.added  .foreach(id => mm = mm.add(id, t))
-        mm
-      }
-    }
+    def applyPatchImplicationSrc(e: PatchImplicationSrc): SE[Unit] =
+      ensureLiveReqId(e.id) >>
+      Project.implicationsSrcToTgt.modify(e.patch.value.applyToMultimapKeys(_)(e.id))
 
     def applySetCustomTextField(e: SetCustomTextField): SE[Unit] =
       ensureLiveReqId(e.id) >>
@@ -222,8 +216,31 @@ trait ApplyContentEvent {
     import ContentCommon.{grIMap => _, _}
     import StaticField.{UseCaseStepTree => StepField, NormalAltStepTree => NCAC}
 
-    def ensureStepDoesntExist(id: UseCaseStepId): SE[Unit] =
-      whenUntrusted(SE.test(!_.reqs.useCases.stepIndex.contains(id), s"${show(id)} already exists."))
+    val StepFlowUni: Lens[Project, UseCases.StepFlow.UniDir] =
+      Project.useCases ^|-> UseCases.stepFlow ^<-> UseCases.StepFlow.biToUni
+
+    @inline def ensureStepExists(id: UseCaseStepId): SE[Unit] =
+      ensureStepExistence(id, true)
+
+    @inline def ensureStepDoesntExist(id: UseCaseStepId): SE[Unit] =
+      ensureStepExistence(id, false)
+
+    def ensureStepExistence(id: UseCaseStepId, expectToExist: Boolean): SE[Unit] =
+      whenUntrusted(SE.test(
+        _.reqs.useCases.stepIndex.contains(id) ==* expectToExist,
+        show(id) + (if (expectToExist) " not found." else " already exists.")))
+
+    def ensureStepsExist(_ids: => Traversable[UseCaseStepId]): SE[Unit] =
+      whenUntrusted(SE.testO { p =>
+        val si = p.reqs.useCases.stepIndex
+        val ids = _ids
+        if (ids forall si.contains)
+          None
+        else {
+          val bad = ids.toSet -- si.keySet
+          Some(bad.toList.map(_.value).sorted.mkString("Step(s) not found: {", ",","}."))
+        }
+      })
 
     def applySetUseCaseTitle(e: SetUseCaseTitle): SE[Unit] =
       ensureLiveReqId(e.id) >>
@@ -341,20 +358,57 @@ trait ApplyContentEvent {
     private def badStepIndex(id: UseCaseStepId) =
       s"${show(id)} at index location."
 
-    // TODO Rename SetUseCaseStepText => UpdateUseCaseStep
-    def applyUpdateUseCaseStep(e: SetUseCaseStepText): SE[Unit] =
-      modStep(e.id)((t, _, l) =>
-        optionGet(t.modifyValue(l)(_.copy(title = e.value)), badStepIndex(e.id)))
+    val applyUpdateUseCaseStep: UpdateUseCaseStep => SE[Unit] = {
+      val ^ = UseCaseStepGD
+      val GD = GenericDataApp[UseCaseStep](^)
+
+      val noFlow = SetDiff.empty[UseCaseStepId]
+
+      def getFlow(values: UseCaseStepGD.Values, a: UseCaseStepGD.Attr {type Data = NonEmpty[SetDiff[UseCaseStepId]]}): SetDiff[UseCaseStepId] =
+        a.get(values).fold(noFlow)(_.value)
+
+      def updateFlow(id: UseCaseStepId, flow_← : SetDiff[UseCaseStepId], flow_→ : SetDiff[UseCaseStepId]): SE[Unit] =
+        if (flow_←.isEmpty && flow_→.isEmpty)
+          SE.nop
+        else
+          ensureStepsExist(flow_→.allValues ++ flow_←.allValues) >>
+          StepFlowUni.modify { f0 =>
+            var f = f0
+            f = flow_→.applyToMultimapValues(f)(id)
+            f = flow_←.applyToMultimapKeys(f)(id)
+            f
+          }
+
+      def updateTitle(id: UseCaseStepId, title: Text.UseCaseStep.OptionalText): SE[Unit] =
+        modStep(id)((t, _, l) =>
+          optionGet(t.modifyValue(l)(_.copy(title = title)), badStepIndex(id)))
+
+      e => {
+        val gd       = e.vs.value
+        def updFlow  = updateFlow(e.id, getFlow(gd, ^.FlowIn), getFlow(gd, ^.FlowOut))
+        def updTitle = ^.Title.get(gd).fold(SE.nop)(v => updateTitle(e.id, v.value))
+
+        ensureStepExists(e.id) >> updFlow >> updTitle
+      }
+    }
 
     def isRoot(loc: VectorTree.Location): Boolean =
       loc.head ==* 0 && loc.tail.isEmpty
+
+    private def postDelete(deleted: VectorTree.Node[UseCaseStep]): Project => Project =
+      Project.useCases.modify { ucs =>
+        val ids = deleted.valueIterator.map(_.id).toSet
+        val si2 = ucs.stepIndex -- ids
+        val sf2 = ucs.stepFlow.modify(_.delks(ids).delvs(ids))
+        ucs.copy(stepIndex = si2, stepFlow = sf2)
+      }
 
     def applyDeleteUseCaseStep(e: DeleteUseCaseStep): SE[Unit] =
       modStep(e.id)((t1, f, l) =>
         for {
           _ <- whenUntrusted(SE.test(!(f ==* NCAC && isRoot(l)), "Root step cannot be deleted."))
           g <- optionGet(t1.removeNodeO(l), badStepIndex(e.id))
-          _ ← Project.useCaseStepIndex.modify(_ -- g._2.valueIterator.map(_.id))
+          _ ← postDelete(g._2)
         } yield g._1
       )
   }

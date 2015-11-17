@@ -213,6 +213,8 @@ object UseCaseStepWithCtx {
  * @param stepIndex An index of all [[UseCaseStep]]s and the static portions of their locations.
  *                  This is calculable state which is normally never manually-managed, but is in this case due to the
  *                  frequency of step lookup and the ease of maintaining it (only two events affect it).
+ * @param stepFlow Explicitly declared flow between steps.
+ *                 Note that the position of steps provides implicit flow that isn't stored here (or anywhere).
  */
 @Lenses
 case class UseCases(imap: UseCaseIMap, stepIndex: UseCases.StepIndex, stepFlow: UseCases.StepFlow) {

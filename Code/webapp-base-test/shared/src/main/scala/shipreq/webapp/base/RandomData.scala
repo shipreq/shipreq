@@ -1434,6 +1434,9 @@ object RandomData {
     val useCaseStepText =
       useCaseStepTextAtom.text
 
+    val stepFlowSetDiff =
+      genNonEmptySetDiff(useCaseStepId)
+
     val deletionReason =
       TextGen.deletionReasonAtom(Some(reqId), Some(reqCode.id), Some(applicableTagId)).text
 
@@ -1531,6 +1534,15 @@ object RandomData {
         case MutexChildren => mutexChildren         map MutexChildren.apply
         case Children      => tagChildren           map Children     .apply
         case Parents       => tagParents            map Parents      .apply
+      }
+    }
+
+    object useCaseStepGD extends GenericDataGen(UseCaseStepGD) {
+      import gd._
+      override def valueFor(a: Attr): Gen[Value] = a match {
+        case Title   => useCaseStepText map Title  .apply
+        case FlowIn  => stepFlowSetDiff map FlowIn .apply
+        case FlowOut => stepFlowSetDiff map FlowOut.apply
       }
     }
 
@@ -1635,9 +1647,6 @@ object RandomData {
     val setGenericReqType: Gen[SetGenericReqType] =
       Gen.apply2(SetGenericReqType)(genericReqId, customReqTypeId)
 
-    val setUseCaseStepText: Gen[SetUseCaseStepText] =
-      Gen.apply2(SetUseCaseStepText)(useCaseStepId, useCaseStepText)
-
     val setUseCaseTitle: Gen[SetUseCaseTitle] =
       Gen.apply2(SetUseCaseTitle)(useCaseId, useCaseTitle)
 
@@ -1670,6 +1679,9 @@ object RandomData {
 
     val updateTagGroup: Gen[UpdateTagGroup] =
       Gen.apply2(UpdateTagGroup)(tagGroupId, tagGroupGD.nonEmptyValues)
+
+    val updateUseCaseStep: Gen[UpdateUseCaseStep] =
+      Gen.apply2(UpdateUseCaseStep)(useCaseStepId, useCaseStepGD.nonEmptyValues)
 
     val activeEventGens: NonEmptyVector[Gen[ActiveEvent]] =
       valuesForAdt[ActiveEvent, Gen[ActiveEvent]] {
@@ -1704,7 +1716,6 @@ object RandomData {
         case _: SetGenericReqTitle    => setGenericReqTitle
         case _: SetGenericReqType     => setGenericReqType
         case _: SetUseCaseTitle       => setUseCaseTitle
-        case _: SetUseCaseStepText    => setUseCaseStepText
         case _: ShiftUseCaseStepLeft  => shiftUseCaseStepLeft
         case _: ShiftUseCaseStepRight => shiftUseCaseStepRight
         case _: UpdateApplicableTag   => updateApplicableTag
@@ -1715,6 +1726,7 @@ object RandomData {
         case _: UpdateCustomTextField => updateCustomTextField
         case _: UpdateReqCodeGroup    => updateReqCodeGroup
         case _: UpdateTagGroup        => updateTagGroup
+        case _: UpdateUseCaseStep     => updateUseCaseStep
       }
 
     val activeEvent: Gen[ActiveEvent] =

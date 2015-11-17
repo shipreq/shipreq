@@ -52,11 +52,11 @@ case class Changes(ves: VerifiedEvents, p1: Project, p2: Project) {
          | _: SetCustomTextField
          | _: SetGenericReqTitle
          | _: SetGenericReqType
-         | _: SetUseCaseStepText
          | _: SetUseCaseTitle
          | _: ShiftUseCaseStepLeft
          | _: ShiftUseCaseStepRight
          | _: UpdateReqCodeGroup
+         | _: UpdateUseCaseStep
 
          | _: ApplyTemplate         => () // Always event #0 only - ignore
     }

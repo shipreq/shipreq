@@ -37,7 +37,6 @@ trait EventEquality {
   implicit val equalSetCustomTextField   : Equal[SetCustomTextField   ] = UtilMacros.deriveEqual
   implicit val equalSetGenericReqTitle   : Equal[SetGenericReqTitle   ] = UtilMacros.deriveEqual
   implicit val equalSetGenericReqType    : Equal[SetGenericReqType    ] = UtilMacros.deriveEqual
-  implicit val equalSetUseCaseStepText   : Equal[SetUseCaseStepText   ] = UtilMacros.deriveEqual
   implicit val equalSetUseCaseTitle      : Equal[SetUseCaseTitle      ] = UtilMacros.deriveEqual
   implicit val equalShiftUseCaseStepLeft : Equal[ShiftUseCaseStepLeft ] = UtilMacros.deriveEqual
   implicit val equalShiftUseCaseStepRight: Equal[ShiftUseCaseStepRight] = UtilMacros.deriveEqual
@@ -49,6 +48,7 @@ trait EventEquality {
   implicit val equalUpdateCustomTextField: Equal[UpdateCustomTextField] = UtilMacros.deriveEqual
   implicit val equalUpdateReqCodeGroup   : Equal[UpdateReqCodeGroup   ] = UtilMacros.deriveEqual
   implicit val equalUpdateTagGroup       : Equal[UpdateTagGroup       ] = UtilMacros.deriveEqual
+  implicit val equalUpdateUseCaseStep    : Equal[UpdateUseCaseStep    ] = UtilMacros.deriveEqual
 
   implicit val equalActiveEvent: Equal[ActiveEvent] = UtilMacros.deriveEqual
 }

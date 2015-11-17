@@ -200,7 +200,7 @@ final class ApplyEvent(implicit val trust: Trust) extends ApplyConfigEvent with 
       case e: AddUseCaseStep        => UseCaseEvents          applyAddUseCaseStep        e
       case e: ShiftUseCaseStepLeft  => UseCaseEvents          applyShiftUseCaseStepLeft  e
       case e: ShiftUseCaseStepRight => UseCaseEvents          applyShiftUseCaseStepRight e
-      case e: SetUseCaseStepText=> UseCaseEvents          applyUpdateUseCaseStep e
+      case e: UpdateUseCaseStep     => UseCaseEvents          applyUpdateUseCaseStep     e
       case e: DeleteUseCaseStep     => UseCaseEvents          applyDeleteUseCaseStep     e
       case e: PatchReqCodes         => ReqCodeLogic           applyPatchReqCodes         e
       case e: CreateReqCodeGroup    => ReqCodeGroupEvents     applyCreate                e

@@ -5,7 +5,7 @@ import utest._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.base.test.UnsafeTypes._
+import shipreq.webapp.base.test.UnsafeTypes, UnsafeTypes._
 import shipreq.webapp.base.text.Text.{UseCaseTitle =>  UCT, UseCaseStep => UCST}
 import ApplyEventTestFns._
 import ContentEventTestHelp._
@@ -25,7 +25,8 @@ object UseCaseEventTest extends TestSuite {
   val someStepText: UCST.OptionalText =
     Vector(UCST.Literal("blah "), UCST.WebAddress("https://omfg.com"))
 
-  val setStepTitle4 = SetUseCaseStepText(4, someStepText)
+  val ^ = UseCaseStepGD
+  val setStepTitle4 = UpdateUseCaseStep(4, ^.Title(someStepText))
 
   implicit val init = testHelpInit
 
@@ -231,23 +232,66 @@ object UseCaseEventTest extends TestSuite {
         AddUseCaseStep(8, 1, NCAC, Vector(0, 0)),
         ShiftUseCaseStepRight(8))                 // 1.0.1.a
 
-      'okLeaf       - testSteps(create3 :+ DeleteUseCaseStep(8): _*)("0", "0.0")()
-      'okParent     - testSteps(create3 :+ DeleteUseCaseStep(7): _*)("0")()
-      'stepNotFound - assertFail("found")(DeleteUseCaseStep(7))
-      'ucDead       - assertFail("dead")(create3 :+ delUC1 :+ DeleteUseCaseStep(8): _*)
-      'notRootN     - assertFail("root")(emptyUC1, DeleteUseCaseStep(1))
-      'okRootE      - testSteps(AddUseCaseStep(6, 1, EC, ∅), DeleteUseCaseStep(6))("0")()
-    }
+      'okLeaf        - testSteps(create3 :+ DeleteUseCaseStep(8): _*)("0", "0.0")()
+      'okParent      - testSteps(create3 :+ DeleteUseCaseStep(7): _*)("0")()
+      'stepNotFound  - assertFail("found")(DeleteUseCaseStep(7))
+      'ucDead        - assertFail("dead")(create3 :+ delUC1 :+ DeleteUseCaseStep(8): _*)
+      'notRootN      - assertFail("root")(emptyUC1, DeleteUseCaseStep(1))
+      'okRootE       - testSteps(AddUseCaseStep(6, 1, EC, ∅), DeleteUseCaseStep(6))("0")()
 
-    'setUseCaseStepText {
-      'ok {
-        val p = _assertPass(emptyUC1, addStepTo1, setStepTitle4)
-        assertEq(p.reqs.useCases.imap.need(1).stepsNA.withCtx.need(4).step.title, someStepText)
+      'cascadeToFlow - {
+        val es = create3 ++ Seq(
+          AddUseCaseStep(9, 1, NCAC, V0),                 // add 1.1
+          UpdateUseCaseStep(1, ^.FlowOut(nesd()(7))),     // 1.0     → [1.0.1]
+          UpdateUseCaseStep(7, ^.FlowOut(nesd()(9))),     // 1.0.1   → [1.1]
+          UpdateUseCaseStep(8, ^.FlowOut(nesd()(1,7,9))), // 1.0.1.a → [1.0, 1.0.1, 1.1]
+          UpdateUseCaseStep(9, ^.FlowOut(nesd()(1))),     // 1.1     → [1.0]
+          DeleteUseCaseStep(7))                           // del 1.0.1
+        val p = _assertPass(es: _*)
+        val e = UseCases.StepFlow.emptyUniDir.addPairs(9 -> 1) // 1.1 → [1.0]
+              .add(1, 0).delkv(0) // TODO temp hack. Fix Nyaya to remove keys with empty values.
+        assertEq(p.reqs.useCases.stepFlow.forwards, e)
       }
-      'stepNotFound - assertFail("found")(setStepTitle4)
-      'ucIsDead     - assertFail("dead")(emptyUC1, addStepTo1, delUC1, setStepTitle4)
     }
 
-    // TODO Test step flow changes - add | mod | del node + children
+    'updateUseCaseStep {
+      'title {
+        'ok {
+          val p = _assertPass(emptyUC1, addStepTo1, setStepTitle4)
+          assertEq(p.reqs.useCases.imap.need(1).stepsNA.withCtx.need(4).step.title, someStepText)
+        }
+        'stepNotFound - assertFail("found")(setStepTitle4)
+        'ucIsDead     - assertFail("dead")(emptyUC1, addStepTo1, delUC1, setStepTitle4)
+      }
+      'flow {
+        def nesd(remove: UseCaseStepId*)(add: UseCaseStepId*) = UnsafeTypes.nesd(remove: _*)(add: _*)
+        'ok {
+          val p = _assertPass(emptyUC1,
+            AddUseCaseStep(2, 1, NCAC, ∅),
+            AddUseCaseStep(3, 1, EC, ∅),
+            AddUseCaseStep(4, 1, EC, ∅),
+            AddUseCaseStep(5, 1, NCAC, ∅),
+            UpdateUseCaseStep(4, ^.FlowOut(nesd()(1, 2, 4))),                       //               4→[1,2,4]
+            UpdateUseCaseStep(4, ^.FlowOut(nesd(1, 4)())),                          //               4→[2]
+            UpdateUseCaseStep(3, ^.FlowIn(nesd()(1, 2, 4))),                        // 1→[3], 2→[3], 4→[2,3]
+            UpdateUseCaseStep(3, ^.FlowIn(nesd(2)())),                              // 1→[3],        4→[2,3]
+            UpdateUseCaseStep(5, ^.nev(^.FlowIn(nesd()(1)),^.FlowOut(nesd()(2))) )) // 1→[3,5],      4→[2,3], 5→[2]
+          val e = UseCases.StepFlow.emptyUniDir.addPairs(
+            1 -> 3,
+            1 -> 5,
+            4 -> 2,
+            4 -> 3,
+            5 -> 2)
+          assertEq(p.reqs.useCases.stepFlow.forwards, e)
+        }
+        'subjStepNotFound - assertFail("not found")(emptyUC1, UpdateUseCaseStep(9, ^.FlowIn (nesd()(1))))
+        'iAddStepNotFound - assertFail("not found")(emptyUC1, UpdateUseCaseStep(1, ^.FlowIn (nesd()(9))))
+        'iDelStepNotFound - assertFail("not found")(emptyUC1, UpdateUseCaseStep(1, ^.FlowIn (nesd(9)())))
+        'oAddStepNotFound - assertFail("not found")(emptyUC1, UpdateUseCaseStep(1, ^.FlowOut(nesd()(9))))
+        'oDelStepNotFound - assertFail("not found")(emptyUC1, UpdateUseCaseStep(1, ^.FlowOut(nesd(9)())))
+        // 'oDelStepIsNoop
+        // 'iDelStepIsNoop
+      }
+    }
   }
 }

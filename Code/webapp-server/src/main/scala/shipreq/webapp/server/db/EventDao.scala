@@ -174,6 +174,8 @@ object EventDbCodecs {
 
   implicit val pickleReqIdNESD = pickleNESD[ReqId]
 
+  implicit val pickleUseCaseStepIdNESD = pickleNESD[UseCaseStepId]
+
   implicit val pickleReqCodeIdSet: ReadWriter[Set[ReqCodeId]] =
     pickleReqCodeId.setNice
 
@@ -468,6 +470,12 @@ object EventDbCodecs {
     case ReqCodeGroupGD.Title => "t"
   } nev
 
+  implicit val pickleUseCaseStepGD = gdMPickler(UseCaseStepGD, true) {
+    case UseCaseStepGD.Title   => "t"
+    case UseCaseStepGD.FlowIn  => "<"
+    case UseCaseStepGD.FlowOut => ">"
+  } nev
+
   implicit val pickleReqCodeValueToIds: ReadWriter[Multimap[ReqCode.Value, Set, ReqCodeId]] = {
     val empty = UnivEq.emptySetMultimap[ReqCode.Value, ReqCodeId]
     ReadWriter(mm => {
@@ -574,7 +582,6 @@ object EventDbCodecs {
   implicit val dbCodecSetCustomTextField   : DbCodec[SetCustomTextField   ] = dbCodecIdAnd('fid -> "f", 'value -> "t")
   implicit val dbCodecSetGenericReqTitle   : DbCodec[SetGenericReqTitle   ] = dbCodec2
   implicit val dbCodecSetGenericReqType    : DbCodec[SetGenericReqType    ] = dbCodec2
-  implicit val dbCodecSetUseCaseStepText   : DbCodec[SetUseCaseStepText   ] = dbCodec2
   implicit val dbCodecSetUseCaseTitle      : DbCodec[SetUseCaseTitle      ] = dbCodec2
   implicit val dbCodecShiftUseCaseStepLeft : DbCodec[ShiftUseCaseStepLeft ] = dbCodecIdOnly
   implicit val dbCodecShiftUseCaseStepRight: DbCodec[ShiftUseCaseStepRight] = dbCodecIdOnly
@@ -586,6 +593,7 @@ object EventDbCodecs {
   implicit val dbCodecUpdateCustomTextField: DbCodec[UpdateCustomTextField] = dbCodec2
   implicit val dbCodecUpdateReqCodeGroup   : DbCodec[UpdateReqCodeGroup   ] = dbCodec2
   implicit val dbCodecUpdateTagGroup       : DbCodec[UpdateTagGroup       ] = dbCodec2
+  implicit val dbCodecUpdateUseCaseStep    : DbCodec[UpdateUseCaseStep    ] = dbCodec2
 
   /**
    * Assigns each event a `type_id`.
@@ -618,7 +626,7 @@ object EventDbCodecs {
     case _: DeleteUseCaseStep     => 253
     case _: ShiftUseCaseStepLeft  => 254
     case _: ShiftUseCaseStepRight => 255
-    case _: SetUseCaseStepText    => 256
+    case _: UpdateUseCaseStep     => 256
 
     // Config
 

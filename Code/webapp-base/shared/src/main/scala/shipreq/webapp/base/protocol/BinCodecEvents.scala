@@ -24,6 +24,7 @@ object BinCodecEvents {
   implicit val pickleCreateGenericReqGD = binpickler(CreateGenericReqGD).values
   implicit val pickleCreateUseCaseGD    = binpickler(CreateUseCaseGD   ).values
   implicit val pickleReqCodeGroupGD     = binpickler(ReqCodeGroupGD    ).nev
+  implicit val pickleUseCaseStepGD      = binpickler(UseCaseStepGD     ).nev
 
   implicit val pickleProjectTemplate: Pickler[ProjectTemplate] = pickleEnum(ProjectTemplate.values)
 
@@ -57,7 +58,6 @@ object BinCodecEvents {
   implicit val pickleSetCustomTextField   : Pickler[SetCustomTextField   ] = pickleCaseClass
   implicit val pickleSetGenericReqTitle   : Pickler[SetGenericReqTitle   ] = pickleCaseClass
   implicit val pickleSetGenericReqType    : Pickler[SetGenericReqType    ] = pickleCaseClass
-  implicit val pickleSetUseCaseStepText   : Pickler[SetUseCaseStepText   ] = pickleCaseClass
   implicit val pickleSetUseCaseTitle      : Pickler[SetUseCaseTitle      ] = pickleCaseClass
   implicit val pickleShiftUseCaseStepLeft : Pickler[ShiftUseCaseStepLeft ] = pickleCaseClass
   implicit val pickleShiftUseCaseStepRight: Pickler[ShiftUseCaseStepRight] = pickleCaseClass
@@ -69,6 +69,7 @@ object BinCodecEvents {
   implicit val pickleUpdateCustomTextField: Pickler[UpdateCustomTextField] = pickleCaseClass
   implicit val pickleUpdateReqCodeGroup   : Pickler[UpdateReqCodeGroup   ] = pickleCaseClass
   implicit val pickleUpdateTagGroup       : Pickler[UpdateTagGroup       ] = pickleCaseClass
+  implicit val pickleUpdateUseCaseStep    : Pickler[UpdateUseCaseStep    ] = pickleCaseClass
 
   implicit val pickleActiveEvent: Pickler[ActiveEvent] = pickleADT
   implicit val pickleEvent      : Pickler[Event      ] = pickleADT

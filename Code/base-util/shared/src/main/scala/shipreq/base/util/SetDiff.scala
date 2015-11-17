@@ -1,5 +1,7 @@
 package shipreq.base.util
 
+import nyaya.util.Multimap
+
 /**
  * The difference between two sets.
  */
@@ -22,18 +24,33 @@ final class SetDiff[A](val removed: Set[A], val added: Set[A]) {
 
   def nonEmpty = !isEmpty
 
-  def apply(to: Set[A]): Set[A] =
-    (to -- removed) ++ added
-
   def inverse: SetDiff[A] =
     new SetDiff(added, removed)
 
   def allValues: Set[A] =
     added ++ removed
+
+  def apply(to: Set[A]): Set[A] =
+    (to -- removed) ++ added
+
+  def applyToMultimapKeys[V](mm: Multimap[A, Set, V])(v: V): Multimap[A, Set, V] = {
+    var tmp = mm
+    removed.foreach(a => tmp = tmp.del(a, v))
+    added  .foreach(a => tmp = tmp.add(a, v))
+    tmp
+  }
+
+  def applyToMultimapValues[K](mm: Multimap[K, Set, A])(k: K): Multimap[K, Set, A] =
+    mm.mod(k, apply)
 }
 
 object SetDiff {
   implicit def equality[A: UnivEq]: UnivEq[SetDiff[A]] = UnivEq.force
+
+  def empty[A: UnivEq]: SetDiff[A] = {
+    val e = UnivEq.emptySet[A]
+    apply(e, e)
+  }
 
   def apply[A: UnivEq](removed: Set[A], added: Set[A]): SetDiff[A] =
     new SetDiff(removed, added)

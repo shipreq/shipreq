@@ -6,7 +6,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.util._
 import Event.NESD
-import Text.{UseCaseStep => StepText, _}
+import Text.{UseCaseStep => StepTitle, _}
 import Text.Equality._
 import UnivEq.Implicits._
 
@@ -177,15 +177,22 @@ case class CreateUseCase(id: UseCaseId, stepId: UseCaseStepId, vs: CreateUseCase
 
 case class SetUseCaseTitle(id: UseCaseId, value: UseCaseTitle.OptionalText) extends ActiveEvent
 
+@CreateGenericData
+object UseCaseStepGD extends GenericData {
+  val Title   = defAttr[StepTitle.OptionalText]
+  val FlowIn  = defAttr[NESD[UseCaseStepId]]
+  val FlowOut = defAttr[NESD[UseCaseStepId]]
+}
+
 case class AddUseCaseStep(id   : UseCaseStepId,
                           ucId : UseCaseId,
                           field: StaticField.UseCaseStepTree,
                           at   : VectorTree.ParentLocation) extends ActiveEvent
 
-case class DeleteUseCaseStep    (id: UseCaseStepId)                               extends ActiveEvent
-case class ShiftUseCaseStepLeft (id: UseCaseStepId)                               extends ActiveEvent
-case class ShiftUseCaseStepRight(id: UseCaseStepId)                               extends ActiveEvent
-case class SetUseCaseStepText   (id: UseCaseStepId, value: StepText.OptionalText) extends ActiveEvent
+case class UpdateUseCaseStep    (id: UseCaseStepId, vs: UseCaseStepGD.NonEmptyValues) extends ActiveEvent
+case class ShiftUseCaseStepLeft (id: UseCaseStepId)                                   extends ActiveEvent
+case class ShiftUseCaseStepRight(id: UseCaseStepId)                                   extends ActiveEvent
+case class DeleteUseCaseStep    (id: UseCaseStepId)                                   extends ActiveEvent
 
 // =====================================================================================================================
 // Content: ReqCode groups

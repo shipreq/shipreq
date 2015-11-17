@@ -113,7 +113,6 @@ object ApplyEventTestFns {
          | _: SetCustomTextField
          | _: SetGenericReqTitle
          | _: SetGenericReqType
-         | _: SetUseCaseStepText
          | _: SetUseCaseTitle
          | _: ShiftUseCaseStepLeft
          | _: ShiftUseCaseStepRight
@@ -124,7 +123,8 @@ object ApplyEventTestFns {
          | _: UpdateCustomTagField
          | _: UpdateCustomTextField
          | _: UpdateReqCodeGroup
-         | _: UpdateTagGroup => ()
+         | _: UpdateTagGroup
+         | _: UpdateUseCaseStep => ()
     }
 
     val cfg = p.config
