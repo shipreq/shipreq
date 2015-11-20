@@ -1,6 +1,7 @@
 import sbt._
 import scala.languageFeature._
 import DependencyLib._
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.toScalaJSGroupID
 
 object Dependencies {
 
@@ -94,6 +95,8 @@ object Dependencies {
     val webapp = mm("jetty-webapp")
     val runner = mm("jetty-runner")
   }
+
+  val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %%%! "benchmark" % "0.1.0")
 
   val parboiled = jvmAndJsFork("org.parboiled", "parboiled", "2.1.0")("com.github.japgolly.fork.parboiled")
 

@@ -443,15 +443,17 @@ object ShipReq extends Build {
 
       _.enablePlugins(ScalaJSPlugin)
         .dependsOn(webappClient)
+        .depsForJs(scalajsBenchmark)
         .configure(
           Common.jsSettings(NoTests),
           useMacroParadise,
           WebappClient.prodJsSettings
         )
-        .settings(
-          // scalaJSStage in Global := FullOptStage,
-          artifactPath in (Compile, fastOptJS) := ((target in Compile).value / outputJs),
-          artifactPath in (Compile, fullOptJS) := ((target in Compile).value / outputJs))
+        //.settings(
+        //  // skip in packageJSDependencies := false,
+        //  // scalaJSStage in Global := FullOptStage,
+        //  artifactPath in (Compile, fastOptJS) := ((target in Compile).value / outputJs),
+        //  artifactPath in (Compile, fullOptJS) := ((target in Compile).value / outputJs))
     }
   }
 

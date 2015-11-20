@@ -1,18 +1,15 @@
 package shipreq.benchmark
 
-import shipreq.benchmark.lib.BenchmarkSuite
+import japgolly.scalajs.benchmark._, gui._
 import shipreq.webapp.base.hash.Hash.HashableValueOps
 import shipreq.webapp.base.hash.HashScheme
 
-object Hashing extends BenchmarkSuite("Hashing") {
+object Hashing {
   implicit val projectHash = HashScheme.latest.value.hashProject
-  val p100  = data.project_100
-//  val p1000 = data.project_1000
 
-  override def configureOptions =
-    _.minSamples = 100
-
-  benchmark("hash_100", p100.hash)
-
-//  benchmark("hash_1000", p1000.hash)
+  val suite = GuiSuite(
+    Suite("Hashing")(
+      projectBM("Hash project")(_.hash)
+    )
+  )
 }

@@ -1,7 +1,8 @@
 package shipreq.benchmark
 
 import boopickle.{PickleImpl, UnpickleImpl, Pickler}
-import shipreq.benchmark.lib.BenchmarkSuite
+import japgolly.scalajs.benchmark._, gui._
+import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.protocol.BinCodecData
 
 /*
@@ -35,34 +36,21 @@ object JsonDeserialisation extends BenchmarkSuite("JsonDeserialisation") {
 }
 */
 
-object BinSerialisation extends BenchmarkSuite("BinSerialisation") {
+object Serialisation {
   implicit val projectCodec = BinCodecData.pickleProject
 
-  def benchmarkWrite[A: Pickler](name: String, start: => A): Unit =
-    initBenchmark(s"write_$name", start)(PickleImpl intoBytes _)
+  val deserBM = projectBM.map(PickleImpl intoBytes _)
 
-  override def configureOptions =
-    _.minSamples = 50
+  val suite = GuiSuite(
+    Suite("Binary Serialisation")(
 
-  benchmarkWrite("100", data.project_100)
+      projectBM("project.write")(
+        PickleImpl intoBytes _),
 
-//  benchmarkWrite("1000", data.project_1000)
-}
-
-
-object BinDeserialisation extends BenchmarkSuite("BinDeserialisation") {
-  implicit val projectCodec = BinCodecData.pickleProject
-
-  def benchmarkRead[A: Pickler](name: String, start: => A): Unit =
-    initBenchmark(s"read_$name", PickleImpl intoBytes start)(b => {
-      b.rewind()
-      UnpickleImpl[A] fromBytes b
-    })
-
-  override def configureOptions =
-    _.minSamples = 20
-
-  benchmarkRead("100", data.project_100)
-
-//  benchmarkRead("1000", data.project_1000)
+      deserBM("project.read") { b =>
+        b.rewind()
+        UnpickleImpl[Project] fromBytes b
+      }
+    )
+  )
 }
