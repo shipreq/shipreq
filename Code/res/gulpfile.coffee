@@ -3,16 +3,18 @@ concat    = require 'gulp-concat'
 debug     = require 'gulp-debug'
 del       = require 'del'
 expect    = require 'gulp-expect-file'
+less      = require 'gulp-less'
 minifycss = require 'gulp-minify-css'
 rename    = require 'gulp-rename'
 uglify    = require 'gulp-uglify'
 
-cfg_bower       = 'bower/'
-cfg_ws_root     = '../webapp-server/'
-cfg_ws_webapp   = cfg_ws_root + 'src/main/webapp/'
-cfg_ws_dev      = cfg_ws_webapp + 'assets'
-cfg_ws_prod     = cfg_ws_webapp + 'a'
-cfg_ws_customJs = cfg_ws_root + 'src/main/javascript/'
+cfg_bower        = 'bower/'
+cfg_ws_root      = '../webapp-server/'
+cfg_ws_webapp    = cfg_ws_root + 'src/main/webapp/'
+cfg_ws_dev       = cfg_ws_webapp + 'assets'
+cfg_ws_prod      = cfg_ws_webapp + 'a'
+cfg_ws_customJs  = cfg_ws_root + 'src/main/javascript/'
+cfg_ws_customCss = cfg_ws_root + 'src/main/styles/'
 
 nonRetardedSrc = (a) -> gulp.src(a).pipe expect a
 
@@ -29,7 +31,7 @@ devProdTasks = (name, srcs, mapBoth, mapDevTask, mapProdTask) ->
 devProdJs = (name, outfile, srcs) ->
   b = (b) -> b.pipe concat outfile
   d = (d) -> d.pipe gulp.dest cfg_ws_dev
-  #p = (p) -> p.pipe gulp.dest cfg_ws_prod
+  # p = (p) -> p.pipe gulp.dest cfg_ws_prod
   p = (p) -> p.pipe(uglify()).pipe gulp.dest cfg_ws_prod
   devProdTasks(name, srcs, b, d, p)
 
@@ -39,15 +41,6 @@ devProdJs = (name, outfile, srcs) ->
 
 # WEBSERVER
 
-# Put everything in devprod assets/ for dev, or a/ for prod.
-# Minify everything in prod.
-# Even vendor stuff goes under devprod assets/ or a/
-
-# Base            - bootstrap, maybe jq
-# project <: base - react, etc, maybe katex too
-# x <: y - whatever
-
-# Compile bootstrap
 # JS versions ⇒ Scala consts for CDN
 
 gulp.task 'ws:clean', ->
@@ -62,10 +55,7 @@ gulp.task 'ws:vendor', ->
     .pipe gulp.dest cfg_ws_dev
     .pipe gulp.dest cfg_ws_prod
 
-###
-{src:'<%= cfg.bower %>/jquery/dist/jquery.min.map',      dest:'<%= cfg.assets_dev %>/jquery.min.map',    nonull:true},
-###
-devProdJs 'ws:anon', 'anon.js', (f) ->
+devProdJs 'ws:anon', 'app.js', (f) ->
   [
     cfg_ws_customJs + 'google-analytics.js'
     cfg_bower + 'bootstrap/js/alert.js'
@@ -95,7 +85,15 @@ devProdJs 'ws:project', 'project.js', (f) ->
     f(cfg_bower + 'jquery-textcomplete/dist/jquery.textcomplete')
   ]
 
+gulp.task 'ws:css', ->
+  nonRetardedSrc [cfg_ws_customCss + '**/*.less', '!bootstrap-*']
+    .pipe less paths: [cfg_bower + 'bootstrap/less']
+    .pipe concat 'app.css'
+    .pipe gulp.dest cfg_ws_dev
+    .pipe minifycss()
+    .pipe gulp.dest cfg_ws_prod
+
 gulp.task 'ws', ['ws:clean'], ->
-  gulp.start ['ws:vendor', 'ws:anon', 'ws:project']
+  gulp.start ['ws:vendor', 'ws:anon', 'ws:project', 'ws:css']
 
 gulp.task 'default', ['ws']
