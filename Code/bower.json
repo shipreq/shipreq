@@ -14,7 +14,7 @@
     "mousetrap": "*",
     "jquery.ui": "~1.10",
     "react": "0.14.x",
-    "katex": "https://github.com/Khan/KaTeX/releases/download/v0.3.0/katex.tar.gz",
+    "katex": "*",
 
     "qunit": "*",
     "sizzle": "*",

@@ -48,7 +48,7 @@ module.exports = function(grunt) {
         out: '<%= cfg.assets %>/vendor',
       },
       katex: {
-        src: '<%= cfg.bower %>/katex',
+        src: '<%= cfg.bower %>/katex/dist',
         out: '<%= cfg.vendor.out %>/katex',
       },
     },

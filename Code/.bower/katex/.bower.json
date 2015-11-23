@@ -1,14 +1,44 @@
 {
-  "name": "katex",
-  "_cacheHeaders": {
-    "ETag": "\"9e91b289b953c7d084d946b2341301d3\"",
-    "Last-Modified": "Wed, 01 Apr 2015 23:02:17 GMT",
-    "Content-Length": "707069",
-    "Content-Type": "application/octet-stream",
-    "Content-Disposition": "attachment; filename=katex.tar.gz"
+  "name": "KaTeX",
+  "version": "0.5.1",
+  "main": [
+    "dist/katex.min.js",
+    "dist/katex.min.css"
+  ],
+  "homepage": "http://khan.github.io/KaTeX/",
+  "description": "Fast math typesetting for the web.",
+  "moduleType": [
+    "amd",
+    "globals",
+    "node"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Khan/KaTeX.git"
   },
-  "_release": "e-tag:9e91b289b",
-  "_source": "https://github.com/Khan/KaTeX/releases/download/v0.3.0/katex.tar.gz",
+  "ignore": [
+    "**/.*",
+    "/*.txt",
+    "/*.js",
+    "/*.md",
+    "/package.json",
+    "/Makefile",
+    "/build",
+    "/test",
+    "/src",
+    "/contrib",
+    "/dockers",
+    "/metrics",
+    "/static"
+  ],
+  "_release": "0.5.1",
+  "_resolution": {
+    "type": "version",
+    "tag": "v0.5.1",
+    "commit": "2e773e2f837dbb41fb2fc815e8cf46aa3e9cbf03"
+  },
+  "_source": "git://github.com/Khan/KaTeX.git",
   "_target": "*",
-  "_originalSource": "https://github.com/Khan/KaTeX/releases/download/v0.3.0/katex.tar.gz"
+  "_originalSource": "katex"
 }
