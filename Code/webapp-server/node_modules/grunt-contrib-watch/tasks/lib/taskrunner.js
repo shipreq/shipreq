@@ -2,7 +2,7 @@
  * grunt-contrib-watch
  * http://gruntjs.com/
  *
- * Copyright (c) 2013 "Cowboy" Ben Alman, contributors
+ * Copyright (c) 2014 "Cowboy" Ben Alman, contributors
  * Licensed under the MIT license.
  */
 
@@ -11,9 +11,14 @@
 var path = require('path');
 var EE = require('events').EventEmitter;
 var util = require('util');
+var _ = require('lodash');
+var async = require('async');
 
 // Track which targets to run after reload
 var reloadTargets = [];
+
+// A default target name for config where targets are not used (keep this unique)
+var defaultTargetName = '_$_default_$_';
 
 module.exports = function(grunt) {
 
@@ -53,6 +58,11 @@ module.exports = function(grunt) {
     self.options = self._options(grunt.config([self.name, 'options']) || {}, defaults || {});
     self.reload = false;
     self.nameArgs = (grunt.task.current.nameArgs) ? grunt.task.current.nameArgs : self.name;
+
+    // Normalize cwd option
+    if (typeof self.options.cwd === 'string') {
+      self.options.cwd = { files: self.options.cwd, spawn: self.options.cwd };
+    }
 
     // Function to call when closing the task
     self.done = done || grunt.task.current.async();
@@ -123,7 +133,7 @@ module.exports = function(grunt) {
       var cfg = {
         files: config.files,
         tasks: config.tasks,
-        name: 'default',
+        name: defaultTargetName,
         options: self._options(config.options || {}, self.options),
       };
       targets.push(cfg);
@@ -139,7 +149,7 @@ module.exports = function(grunt) {
       // The cwd to spawn within
       cwd: process.cwd(),
       // Additional cli args to append when spawning
-      cliArgs: grunt.util._.without.apply(null, [[].slice.call(process.argv, 2)].concat(grunt.cli.tasks)),
+      cliArgs: _.without.apply(null, [[].slice.call(process.argv, 2)].concat(grunt.cli.tasks)),
       interrupt: false,
       nospawn: false,
       spawn: true,
@@ -147,11 +157,11 @@ module.exports = function(grunt) {
       event: ['all'],
       target: null,
     });
-    return grunt.util._.defaults.apply(grunt.util._, args);
+    return _.defaults.apply(_, args);
   };
 
   // Run the current queue of task runs
-  Runner.prototype.run = grunt.util._.debounce(function run() {
+  Runner.prototype.run = _.debounce(function run() {
     var self = this;
     if (self.queue.length < 1) {
       self.running = false;
@@ -188,7 +198,7 @@ module.exports = function(grunt) {
 
     // Run each target
     var shouldComplete = true;
-    grunt.util.async.forEachSeries(self.queue, function(name, next) {
+    async.forEachSeries(self.queue, function(name, next) {
       var tr = self.targets[name];
       if (!tr) { return next(); }
 
@@ -211,7 +221,18 @@ module.exports = function(grunt) {
 
   // Push targets onto the queue
   Runner.prototype.add = function add(target) {
+    var self = this;
     if (!this.targets[target.name || 0]) {
+
+      // Private method for getting latest config for a watch target
+      target._getConfig = function(name) {
+        var cfgPath = [self.name];
+        if (target.name !== defaultTargetName) { cfgPath.push(target.name); }
+        if (name) { cfgPath.push(name); }
+        return grunt.config(cfgPath);
+      };
+
+      // Create a new TaskRun instance
       var tr = new TaskRun(target);
 
       // Add livereload to task runs
@@ -285,7 +306,10 @@ module.exports = function(grunt) {
       grunt.task.run(self.nameArgs);
       self.running = false;
     }
+    grunt.fail.forever_warncount = 0;
+    grunt.fail.forever_errorcount = 0;
     grunt.warn = grunt.fail.warn = function(e) {
+      grunt.fail.forever_warncount ++;
       var message = typeof e === 'string' ? e : e.message;
       grunt.log.writeln(('Warning: ' + message).yellow);
       if (!grunt.option('force')) {
@@ -293,6 +317,7 @@ module.exports = function(grunt) {
       }
     };
     grunt.fatal = grunt.fail.fatal = function(e) {
+      grunt.fail.forever_errorcount ++;
       var message = typeof e === 'string' ? e : e.message;
       grunt.log.writeln(('Fatal error: ' + message).red);
       rerun();
@@ -303,7 +328,7 @@ module.exports = function(grunt) {
   Runner.prototype.clearRequireCache = function() {
     // If a non-string argument is passed, it's an array of filepaths, otherwise
     // each filepath is passed individually.
-    var filepaths = typeof arguments[0] !== 'string' ? arguments[0] : grunt.util.toArray(arguments);
+    var filepaths = typeof arguments[0] !== 'string' ? arguments[0] : Array.prototype.slice(arguments);
     // For each filepath, clear the require cache, if necessary.
     filepaths.forEach(function(filepath) {
       var abspath = path.resolve(filepath);

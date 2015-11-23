@@ -2,12 +2,13 @@
  * grunt-contrib-watch
  * http://gruntjs.com/
  *
- * Copyright (c) 2013 "Cowboy" Ben Alman, contributors
+ * Copyright (c) 2014 "Cowboy" Ben Alman, contributors
  * Licensed under the MIT license.
  */
 
 var path = require('path');
 var Gaze = require('gaze').Gaze;
+var _ = require('lodash');
 var waiting = 'Waiting...';
 var changedFiles = Object.create(null);
 var watchers = [];
@@ -29,12 +30,10 @@ module.exports = function(grunt) {
 
   // When task runner has started
   taskrun.on('start', function() {
-    grunt.log.ok();
     Object.keys(changedFiles).forEach(function(filepath) {
       // Log which file has changed, and how.
       grunt.log.ok('File "' + filepath + '" ' + changedFiles[filepath] + '.');
     });
-    grunt.log.writeln();
     // Reset changedFiles
     changedFiles = Object.create(null);
   });
@@ -78,7 +77,7 @@ module.exports = function(grunt) {
       dateFormat = df;
     }
 
-    if (taskrun.running === false) { grunt.log.write(waiting); }
+    if (taskrun.running === false) { grunt.log.writeln(waiting); }
 
     // initialize taskrun
     var targets = taskrun.init(name, {target: target});
@@ -87,13 +86,18 @@ module.exports = function(grunt) {
       if (typeof target.files === 'string') { target.files = [target.files]; }
 
       // Process into raw patterns
-      var patterns = grunt.util._.chain(target.files).flatten().map(function(pattern) {
+      var patterns = _.chain(target.files).flatten().map(function(pattern) {
         return grunt.config.process(pattern);
       }).value();
 
       // Validate the event option
       if (typeof target.options.event === 'string') {
         target.options.event = [target.options.event];
+      }
+
+      // Set cwd if options.cwd.file is set
+      if (typeof target.options.cwd !== 'string' && target.options.cwd.files) {
+        target.options.cwd = target.options.cwd.files;
       }
 
       // Create watcher per target
@@ -119,8 +123,8 @@ module.exports = function(grunt) {
         this.on('all', function(status, filepath) {
 
           // Skip events not specified
-          if (!grunt.util._.contains(target.options.event, 'all') &&
-              !grunt.util._.contains(target.options.event, status)) {
+          if (!_.contains(target.options.event, 'all') &&
+              !_.contains(target.options.event, status)) {
             return;
           }
 
@@ -132,7 +136,7 @@ module.exports = function(grunt) {
           }
 
           // If Gruntfile.js changed, reload self task
-          if (/gruntfile\.(js|coffee)/i.test(filepath)) {
+          if (target.options.reload || /gruntfile\.(js|coffee)/i.test(filepath)) {
             taskrun.reload = true;
           }
 

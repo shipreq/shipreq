@@ -1,4 +1,4 @@
-# grunt-contrib-watch v0.5.3 [![Build Status](https://travis-ci.org/gruntjs/grunt-contrib-watch.png?branch=master)](https://travis-ci.org/gruntjs/grunt-contrib-watch)
+# grunt-contrib-watch v0.6.1 [![Build Status](https://travis-ci.org/gruntjs/grunt-contrib-watch.png?branch=master)](https://travis-ci.org/gruntjs/grunt-contrib-watch)
 
 > Run predefined tasks whenever watched file patterns are added, changed or deleted.
 
@@ -124,6 +124,26 @@ watch: {
 },
 ```
 
+#### options.reload
+Type: `Boolean`
+Default: `false`
+
+By default, if `Gruntfile.js` is being watched, then changes to it will trigger the watch task to restart, and reload the `Gruntfile.js` changes.
+When `reload` is set to `true`, changes to *any* of the watched files will trigger the watch task to restart.
+This is especially useful if your `Gruntfile.js` is dependent on other files.
+
+```js
+watch: {
+  configFiles: {
+    files: [ 'Gruntfile.js', 'config/*.js' ],
+    options: {
+      reload: true
+    }
+  }
+}
+```
+
+
 #### options.forever
 Type: `Boolean`
 Default: true
@@ -176,6 +196,39 @@ watch: {
   },
 },
 ```
+
+It's possible to get livereload working over https connections. To do this, pass an object to `livereload` with a `key` and `cert` paths specified.
+
+Example:
+```js
+watch: {
+  css: {
+    files: '**/*.sass',
+    tasks: ['sass'],
+    options: {
+      livereload: {
+        port: 9000,
+        key: grunt.file.read('path/to/ssl.key'),
+        cert: grunt.file.read('path/to/ssl.crt')
+        // you can pass in any other options you'd like to the https server, as listed here: http://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener
+      }
+    },
+  },
+},
+```
+
+
+#### options.cwd
+Type: `String|Object`
+Default: `process.cwd()`
+
+Ability to set the current working directory. Defaults to `process.cwd()`. Can either be a string to set the cwd to match files and spawn tasks. Or an object to set each independently. Such as `options: { cwd: { files: 'match/files/from/here', spawn: 'but/spawn/files/from/here' } }`.
+
+#### options.livereloadOnError
+Type: `Boolean`  
+Default: `true`  
+
+Option to prevent the livereload if the executed tasks encountered an error.  If set to `false`, the livereload will only be triggered if all tasks completed successfully.
 
 ### Examples
 
@@ -242,13 +295,15 @@ grunt.initConfig({
     },
   },
   jshint: {
-    all: ['lib/*.js'],
+    all: {
+      src: ['lib/*.js'],
+    },
   },
 });
 
 // on watch events configure jshint:all to only run on changed file
 grunt.event.on('watch', function(action, filepath) {
-  grunt.config(['jshint', 'all'], filepath);
+  grunt.config('jshint.all.src', filepath);
 });
 ```
 
@@ -259,7 +314,7 @@ If you save multiple files simultaneously you may opt for a more robust method:
 ```js
 var changedFiles = Object.create(null);
 var onChange = grunt.util._.debounce(function() {
-  grunt.config(['jshint', 'all'], Object.keys(changedFiles));
+  grunt.config('jshint.all.src', Object.keys(changedFiles));
   changedFiles = Object.create(null);
 }, 200);
 grunt.event.on('watch', function(action, filepath) {
@@ -320,7 +375,7 @@ grunt.initConfig({
 Once you've started a live reload server you'll be able to access the live reload script. To enable live reload on your page, add a script tag before your closing `</body>` tag pointing to the `livereload.js` script:
 
 ```html
-<script src="http://localhost:35729/livereload.js"></script>
+<script src="//localhost:35729/livereload.js"></script>
 ```
 
 Feel free to add this script to your template situation and toggle with some sort of `dev` flag.
@@ -384,7 +439,7 @@ This is because of your system's max opened file limit. For OSX the default is v
 In some versions of OSX the above solution doesn't work. In that case try `launchctl limit maxfiles 10480 10480 ` and restart your terminal. See [here](http://superuser.com/questions/261023/how-to-change-default-ulimit-values-in-mac-os-x-10-6).
 
 #### Can I use this with Grunt v0.3?
-Yes. Although `grunt-contrib-watch` is a replacement watch task for Grunt v0.4, version `grunt-contrib-watch@0.1.x` is compatible with Grunt v0.3. `grunt-contrib-watch >= 0.2.x` is **only* compatible and recommended to use with Grunt v0.4.
+`grunt-contrib-watch@0.1.x` is compatible with Grunt v0.3 but it is highly recommended to upgrade Grunt instead.
 
 #### Why is the watch devouring all my memory/cpu?
 Likely because of an enthusiastic pattern trying to watch thousands of files. Such as `'**/*.js'` but forgetting to exclude the `node_modules` folder with `'!**/node_modules/**'`. Try grouping your files within a subfolder or be more explicit with your file matching pattern.
@@ -401,6 +456,8 @@ Spawning does cause a performance hit (usually 500ms for most environments). It 
 
 ## Release History
 
+ * 2014-03-19   v0.6.1   Fix for watch targets named "default"
+ * 2014-03-11   v0.6.0   Clear changed files after triggering live reload to ensure they're only triggered once. cwd option now accepts separate settings for files and spawn. Fix to make interrupt work more than once. Enable live reload over HTTPS. Print newline after initial 'Waiting...' Remove deprecated grunt.util libs Add reload option to specify files other than Gruntfile files to reload. Update to gaze@0.5.1 Use fork of tiny-lr (which has quiter operation, support for HTTPS and windows path fixes) Add livereloadOnError, which if set to false will not trigger live reload if there is an error.
  * 2013-08-25   v0.5.3   Fixed for live reload missing files.
  * 2013-08-16   v0.5.2   Fixed issue running tasks after gruntfile is reloaded. Ignores empty file paths.
  * 2013-07-20   v0.5.1   Fixed issue with options resetting.
@@ -426,4 +483,4 @@ Spawning does cause a performance hit (usually 500ms for most environments). It 
 
 Task submitted by [Kyle Robinson Young](http://dontkry.com)
 
-*This file was generated on Sun Aug 25 2013 17:29:57.*
+*This file was generated on Wed Mar 19 2014 13:09:11.*
