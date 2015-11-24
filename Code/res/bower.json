@@ -15,6 +15,7 @@
     "jquery.ui": "~1.10",
     "react": "0.14.x",
     "katex": "*",
+    "react-collapse": "*",
 
     "qunit": "*",
     "sizzle": "*",

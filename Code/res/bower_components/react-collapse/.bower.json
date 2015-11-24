@@ -1,0 +1,45 @@
+{
+  "name": "react-collapse",
+  "version": "1.4.0",
+  "description": "Component-wrapper for collapse animation with react-motion for elements with variable (and dynamic) height",
+  "main": "react-collapse.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bower-registry/react-collapse.git"
+  },
+  "keywords": [
+    "component",
+    "react-component",
+    "react-motion",
+    "react",
+    "collapse",
+    "slide-down",
+    "slide-up"
+  ],
+  "authors": [
+    "Nik Butenko <nik@butenko.me> (http://butenko.me/)"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/nkbt/react-collapse",
+  "dependencies": {
+    "react": "^0.14",
+    "react-motion": "^0.3",
+    "react-height": "^1.0.0"
+  },
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "_release": "1.4.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "v1.4.0",
+    "commit": "c1257d86a415c6f68544d7401b7851b29b701186"
+  },
+  "_source": "git://github.com/bower-registry/react-collapse.git",
+  "_target": "*",
+  "_originalSource": "react-collapse"
+}
