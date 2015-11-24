@@ -8,7 +8,7 @@ minifycss = require 'gulp-minify-css'
 rename    = require 'gulp-rename'
 uglify    = require 'gulp-uglify'
 
-cfg_bower        = 'bower/'
+cfg_bower        = 'bower_components/'
 cfg_wc_root      = '../webapp-client/'
 cfg_ws_root      = '../webapp-server/'
 cfg_ws_webapp    = cfg_ws_root + 'src/main/webapp/'
