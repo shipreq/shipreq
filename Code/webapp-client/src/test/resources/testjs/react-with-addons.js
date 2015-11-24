@@ -1,1 +1,0 @@
-../../../../../.bower/react/react-with-addons.js

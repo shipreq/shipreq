@@ -9,6 +9,7 @@ rename    = require 'gulp-rename'
 uglify    = require 'gulp-uglify'
 
 cfg_bower        = 'bower/'
+cfg_wc_root      = '../webapp-client/'
 cfg_ws_root      = '../webapp-server/'
 cfg_ws_webapp    = cfg_ws_root + 'src/main/webapp/'
 cfg_ws_dev       = cfg_ws_webapp + 'dev/'
@@ -101,8 +102,21 @@ gulp.task 'ws', ['ws:clean'], ->
 
 # ======================================================================================================================
 # webapp-client
-#
+
 # create JS for unit tests
+gulp.task 'wc:testjs', ->
+  nonRetardedSrc [
+        cfg_bower + 'sizzle/dist/sizzle.min.js'
+        cfg_bower + 'jquery/dist/jquery.min.js'
+        cfg_bower + 'jquery-textcomplete/dist/jquery.textcomplete.min.js'
+        cfg_bower + 'react/react-with-addons.js'
+        cfg_bower + 'react/react-dom.min.js'
+      ]
+    .pipe concat 'test.js'
+    .pipe uglify()
+    .pipe gulp.dest cfg_wc_root + 'src/test/resources'
+
+gulp.task 'wc', ['wc:testjs']
 
 # ======================================================================================================================
-gulp.task 'default', ['ws']
+gulp.task 'default', ['wc','ws']

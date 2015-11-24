@@ -239,16 +239,9 @@ object ShipReq extends Build {
     def jsTask = if (releaseMode) fullOptJS   else fastOptJS
     def jsCmd  = if (releaseMode) "fullOptJS" else "fastOptJS"
 
-    def testjs(path: String) = ProvidedJS / s"testjs/$path"
-
     def testSettings = (_: Project)
       .settings(
-        jsDependencies in Test ++= Seq(
-          testjs("react-with-addons.js"),
-          testjs("react-dom.js"),
-          testjs("jquery.min.js"),
-          testjs("jquery.textcomplete.js") dependsOn "testjs/jquery.min.js",
-          testjs("sizzle.min.js")),
+        jsDependencies in Test += ProvidedJS / "test.js",
         // emitSourceMaps in Compile := false, // I want speed
         scalaJSOptimizerOptions in fastOptJS ~= { _.withDisableOptimizer(true) })
 
