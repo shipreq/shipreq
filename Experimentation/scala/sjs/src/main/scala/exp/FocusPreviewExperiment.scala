@@ -198,6 +198,7 @@ object FocusPreviewExperiment {
       edit set Some(e)
   }
 
+  type CB_OnSuccess = Callback
 
   /**
     * For a bunch of rows and columns:
@@ -230,6 +231,103 @@ object FocusPreviewExperiment {
     * ---- Take 2. ((CBˢ, F => CBᶠ) => CB¹) => CB²
     */
   object RemoteDataStuff {
+    import RemoteDataStuff_NoRows_JustCells.{Status, genericWrapRemoteCall, ParentState => CellStates}
+
+    /*
+    sealed trait RowState[+C, +F]
+    sealed trait RowStatus[+F] extends RowState[Nothing, F]
+    case class WholeRow[F](status: Status[F]) extends RowStatus[F]
+    case class Cells[C, F](state: CellStates[C, F]) extends RowState[C, F] {
+      assert(state.nonEmpty)
+    }
+
+    type ParentState[R, +C, +F] = Map[R, RowState[C, F]]
+    def initParentState[R]: ParentState[R, Any, Any] = Map.empty
+
+    class InBackendR[S, R, C, F]($: BackendScope[_, S],
+                                 stateLens: Lens[S, ParentState[R, C, F]]) {
+
+      private def rowLens(r: R): Lens[S, Option[RowState[C, F]]] = {
+        import monocle._, Monocle._
+        stateLens ^|-> at(r)
+      }
+
+      private val rowStatusPrism: Prism[RowState[C, F], RowStatus[F]] =
+        monocle.macros.GenPrism[RowState[C, F], RowStatus[F]]
+
+      private val cellStatesPrism: Prism[RowState[C, F], Cells[C, F]] =
+        monocle.macros.GenPrism[RowState[C, F], Cells[C, F]]
+
+      private def cellStatesLens(r: R): Lens[S, CellStates[C, F]] = {
+        val rl = rowLens(r)
+        //val cs = rl ^<-? cellStatesPrism
+        Lens[S, CellStates[C, F]](
+          s => rl.get(s).flatMap(cellStatesPrism.getOption).fold[CellStates[C, F]](Map.empty)(_.state)
+        )(
+          n => if (n.isEmpty)
+            rl set None
+          else
+            rl set Some(Cells(n))
+        )
+      }
+
+      def getRowState(r: R)(s: S): Option[RowState[C, F]] =
+        rowLens(r).get(s)
+
+      def getRowStatus(r: R)(s: S): Option[RowStatus[F]] =
+        getRowState(r)(s) flatMap rowStatusPrism.getOption
+
+//      def inBackendC(r: R) =
+//        new RemoteDataStuff_NoRows_JustCells.InBackend[S, C, F]($, )
+    }
+    */
+
+    type RowStatus[+F] = Status[F]
+
+    case class RowState[C, +F](rowStatus: Option[RowStatus[F]], cells: CellStates[C, F])
+
+    type ParentState[R, C, +F] = Map[R, RowState[C, F]]
+    def initParentState[R]: ParentState[R, Any, Any] = Map.empty
+
+    class InBackendR[S, R, C, F]($: BackendScope[_, S],
+                                 stateLens: Lens[S, ParentState[R, C, F]]) {
+
+      private val emptyRowState = RowState[C, F](None, Map.empty)
+      private val rowState_rowStatus = monocle.macros.GenLens[RowState[C, F]](_.rowStatus)
+      private val rowState_cells = monocle.macros.GenLens[RowState[C, F]](_.cells)
+
+      private def rowState(r: R): Lens[S, RowState[C, F]] = {
+        import monocle._, Monocle._
+        stateLens ^|-> Lens[ParentState[R, C, F], RowState[C, F]](
+          _.getOrElse(r, emptyRowState)
+        )(
+          n => _.updated(r, n)
+        )
+      }
+
+      private def cellStatesLens(r: R): Lens[S, CellStates[C, F]] =
+        rowState(r) ^|-> rowState_cells
+
+      def getRowState(r: R)(s: S): RowState[C, F] =
+        rowState(r).get(s)
+
+      def getRowStatus(r: R)(s: S): Option[RowStatus[F]] =
+        getRowState(r)(s).rowStatus
+
+      def inBackendC(r: R) =
+        new RemoteDataStuff_NoRows_JustCells.InBackend[S, C, F]($, cellStatesLens(r))
+
+      def getRowAll(r: R)(s: S) = {
+        val l = rowState(r)
+        val rs = l get s
+        (rs, new RemoteDataStuff_NoRows_JustCells.InBackend[S, C, F]($, l ^|-> rowState_cells))
+      }
+
+      def wrapRemoteCall(r: R, call: (CB_OnSuccess, F => Callback) => Callback): Callback = {
+        val l = rowState(r) ^|-> rowState_rowStatus
+        genericWrapRemoteCall[F]($ modState l.set(_), call)
+      }
+    }
 
   }
 
@@ -242,50 +340,56 @@ object FocusPreviewExperiment {
     }
 
     type ParentState[C, +F] = Map[C, Status[F]]
-    def initParentState[C, F]: ParentState[C, F] = Map.empty
+    def initParentState[C]: ParentState[C, Any] = Map.empty
 
     def renderLocked = <.div("LOCKED, MATE.")
 
-    type CB_OnSuccess = Callback
+    def genericWrapRemoteCall[F](setStatus: Option[Status[F]] => Callback,
+                                 call: (CB_OnSuccess, F => Callback) => Callback): Callback = {
+      val clearStatus = setStatus(None)
+      def onSuccess = clearStatus
+      def onFailure: F => Callback = f => setStatus(Some(Failed(f, Callback byName doIt, clearStatus)))
+      lazy val doIt = call(onSuccess, onFailure) >> setStatus(Some(Locked))
+      doIt
+    }
 
     class InBackend[S, C, F]($: BackendScope[_, S],
                              stateLens: Lens[S, ParentState[C, F]]
                              //,renderFailed: Failed[F] => ReactElement?
                             ) {
       private type M = ParentState[C, F]
-      private def cellLens(c: C): Lens[S, Option[Status[F]]] =
-        stateLens ^|-> Lens[M, Option[Status[F]]](
-          _.get(c)
-        )({
-          case None => _ - c
-          case Some(s) => _.updated(c, s)
-        })
+      private def cellLens(c: C): Lens[S, Option[Status[F]]] = {
+        import monocle._, Monocle._
+        stateLens ^|-> at(c)
+//        stateLens ^|-> Lens[M, Option[Status[F]]](
+//          _.get(c)
+//        )({
+//          case None => _ - c
+//          case Some(s) => _.updated(c, s)
+//        })
+      }
 
       def getStatus(c: C)(s: S): Option[Status[F]] =
         cellLens(c) get s
 
       def wrapRemoteCall(c: C, call: (CB_OnSuccess, F => Callback) => Callback): Callback = {
         val l = cellLens(c)
-        val clearStatus = $.modState(l set None)
-        def onSuccess = clearStatus
-        def onFailure: F => Callback = f => $.modState(l set Some(Failed(f, Callback byName doIt, clearStatus)))
-        lazy val doIt = call(onSuccess, onFailure) >> $.modState(l set Some(Locked))
-        doIt
+        genericWrapRemoteCall[F]($ modState l.set(_), call)
       }
 
-      def forChild(s: S, c: C) =
-        new ForChild[C, F] {
-          override def status: Option[Status[F]] =
-            getStatus(c)(s)
-          override def wrapRemoteCall(call: (CB_OnSuccess, F => Callback) => Callback): Callback =
-            InBackend.this.wrapRemoteCall(c, call)
-        }
+//      def forChild(s: S, c: C) =
+//        new ForChild[C, F] {
+//          override def status: Option[Status[F]] =
+//            getStatus(c)(s)
+//          override def wrapRemoteCall(call: (CB_OnSuccess, F => Callback) => Callback): Callback =
+//            InBackend.this.wrapRemoteCall(c, call)
+//        }
     }
 
-    trait ForChild[C, F] {
-      def status: Option[Status[F]]
-      def wrapRemoteCall(call: (CB_OnSuccess, F => Callback) => Callback): Callback
-    }
+//    trait ForChild[C, F] {
+//      def status: Option[Status[F]]
+//      def wrapRemoteCall(call: (CB_OnSuccess, F => Callback) => Callback): Callback
+//    }
 
   }
 
