@@ -1,6 +1,7 @@
 import sbt._
 import Keys._
 import java.nio.file.{Files, Path}
+import scala.concurrent.duration._
 import org.scalajs.sbtplugin.cross.CrossProject
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 import com.timushev.sbt.updates.UpdatesKeys._
@@ -113,6 +114,7 @@ object Common {
       scalacOptions              ++= scalacFlags,
       dependencyUpdatesExclusions := moduleFilter(name = new PatternFilter("^jetty-(?:server|websocket)$".r.pattern)),
       testFrameworks              += new TestFramework("utest.runner.Framework"),
+      minForcegcInterval          := 3.minutes,
       target                      := redirectTargetDir(target.value)
     )
     .configure(
