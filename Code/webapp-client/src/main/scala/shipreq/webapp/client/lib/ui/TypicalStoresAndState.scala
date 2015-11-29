@@ -45,6 +45,6 @@ abstract class TypicalStoresAndState[P, I, K: UnivEq](fields: FieldSet[P, I]) {
   def validatorInput(k: Option[K]): S => (Stream[P], Option[K]) =
     s => (savedRowStoreS.getAllP(s), k)
 
-  def filterDeadCheckbox(c: StateAccessCB[S]): () => ReactElement =
+  def filterDeadCheckbox(c: CompState.Access[S]): () => ReactElement =
     Checkbox.filterDead_$(c zoomL State.filterDead)
 }

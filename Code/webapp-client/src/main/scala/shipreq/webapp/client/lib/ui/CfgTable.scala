@@ -22,7 +22,7 @@ object CfgTable {
                                    del: () => Deletion[K],
                                    live: P => Live,
                                    filterDead: S => FilterDead,
-                                   c: StateAccessCB[S])
+                                   c: CompState.Access[S])
                                   (implicit O: Ordering[RowKey]): CfgTable[S, K, P, I, A, B, C, V, RowKey, N] =
         new CfgTable(editor, savedStore, newStore, rowkey, rr, newRowA, savedRowA, del, live, filterDead, c)
     }
@@ -34,7 +34,7 @@ object CfgTable {
                            rr: RowRenderer[P, V, N],
                            del: () => Deletion[K],
                            live: P => Live,
-                           c: StateAccessCB[sas.S])
+                           c: CompState.Access[sas.S])
                           (implicit I: DataIdAux[P, K], O: Ordering[RowKey])
       : CfgTable[sas.S, K, P, I, A, B, C, V, RowKey, N] = {
           def rowA(k: Option[K], i: I): editor.InputA = (sas.validatorInput(k)(c.state.runNow()), i)
@@ -49,7 +49,7 @@ object CfgTable {
     <.thead(<.tr(headers.map(<.th(_)), <.th("Ctrls")))
 
 
-  def outer[P, I, K](sas: TypicalStoresAndState[P, I, K])(c: StateAccessCB[sas.S]): ReactElement => ReactElement = {
+  def outer[P, I, K](sas: TypicalStoresAndState[P, I, K])(c: CompState.Access[sas.S]): ReactElement => ReactElement = {
     val checkbox = sas.filterDeadCheckbox(c)
     <.div(checkbox(), _)
   }
@@ -77,7 +77,7 @@ final class CfgTable[S, K <: TaggedInt, P, I, A, B, C, V, RowKey, R](editor: Edi
                                                                       deletion: () => Deletion[K],
                                                                       live: P => Live,
                                                                       filterDead: S => FilterDead,
-                                                                      c: StateAccessCB[S])
+                                                                      c: CompState.Access[S])
                                                                      (implicit I: DataIdAux[P, K], O: Ordering[RowKey]) {
   /** Row content prior to being rendered into DOM. */
   type RowContent = R

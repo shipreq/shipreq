@@ -119,7 +119,7 @@ object DND {
       }
     }
 
-    def cProps[A]($: StateAccessCB[PState[A]], a: A, moveFn: (A, A) => Callback)(implicit E: Equal[A]): Child.CProps[A] =
+    def cProps[A]($: CompState.Access[PState[A]], a: A, moveFn: (A, A) => Callback)(implicit E: Equal[A]): Child.CProps[A] =
       Child.CProps(
         $.state.runNow() match {
           case Possible(_, tgt) => E.equal(a, tgt)
@@ -127,7 +127,7 @@ object DND {
         },
         $ _runStateF eventHandler(moveFn))
 
-    def cProps2[M[_], A]($: StateAccessCB[PState[A]], a: A, moveFn: (A, A) => Callback)(implicit E: Equal[A]): (A, Child.CProps[A]) =
+    def cProps2[M[_], A]($: CompState.Access[PState[A]], a: A, moveFn: (A, A) => Callback)(implicit E: Equal[A]): (A, Child.CProps[A]) =
       (a, cProps($, a, moveFn))
   }
 
@@ -167,7 +167,7 @@ object DND {
     def drop[A](p: CProps[A]): ReactDragEvent => Callback =
       _.preventDefaultCB >> p.eventHandler(DragEvent.Move)
 
-    def renderDragHandle[S, A](p: CProps[A], a: A, $: StateAccessCB[CState]): ReactTag =
+    def renderDragHandle[S, A](p: CProps[A], a: A, $: CompState.Access[CState]): ReactTag =
       <.span(
         ^.className    := "draghandle",
         ^.draggable    := "true",

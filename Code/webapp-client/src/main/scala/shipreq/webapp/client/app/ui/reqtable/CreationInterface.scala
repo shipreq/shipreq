@@ -54,7 +54,7 @@ object CreationInterface {
 // =====================================================================================================================
 import shipreq.webapp.client.app.ui.reqtable.CreationInterface._
 
-class CreationInterface($             : StateAccessCB[State],
+class CreationInterface($             : CompState.Access[State],
                         project       : Px[Project],
                         projectText   : Px[PlainText.ForProject],
                         projectWidgets: Px[ProjectWidgets],
