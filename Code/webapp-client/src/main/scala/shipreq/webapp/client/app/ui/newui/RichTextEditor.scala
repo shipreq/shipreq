@@ -6,6 +6,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import org.scalajs.dom
 import scalacss.ScalaCssReact._
+import shipreq.base.util.univEqOps
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text._
@@ -16,6 +17,7 @@ import shipreq.webapp.client.data.DataReusability._
 import shipreq.webapp.client.lib.ui.KeyHandlers
 import shipreq.webapp.client.lib.ui.feature._
 import shipreq.webapp.client.lib.{Contextualise, HideDead}
+import Text.Equality._
 
 sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, final val text: TextType) {
   private def supportsPTM     = text match { case _: Atom.PlainTextMarkup => true; case _ => false }
@@ -45,6 +47,8 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
                    textSearch    : TextSearch,
                    projectWidgets: ProjectWidgets,
                    edit          : ExternalVar[String],
+                   preview       : PreviewFeature.ForChild,
+                   preEditValue  : Option[text.OptionalText],
                    commit        : text.OptionalText => Callback,
                    keyHandlers   : KeyHandlers)
 
@@ -85,10 +89,15 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
           ^.value := p.edit.value,
           ^.onChange ==> updateState)
 
+      def preview =
+        <.div(
+          "Preview",
+          <.div(*.textEditPreview, p.projectWidgets.format(hardcodedLive, richText)))
+
       <.div(
         editor,
         validated.renderFailure,
-        "Preview", <.div(*.textEditPreview, p.projectWidgets.format(hardcodedLive, richText)))
+        p.preview.preview(p.preEditValue.forall(richText !=* _))(preview))
     }
   }
 

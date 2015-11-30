@@ -41,9 +41,9 @@ class PreviewFeature[S, E, K]($: CompState.WriteAccess[S], lens: Lens[S, Option[
   def showPreview_?(focusData: Option[FocusData[K]], isDirty: => Boolean): Boolean =
     focusData.exists(_.changedSinceFocus || isDirty)
 
-  def forChild(k: K, fi: Option[FocusData[K]]): ForChild[K] = {
+  def forChild(k: K, fi: Option[FocusData[K]]): ForChild = {
     val self = this
-    new ForChild[K] {
+    new ForChild {
       override val focusData                          = fi.filter(hasKey(k))
       override def showPreview_?(isDirty: => Boolean) = self.showPreview_?(focusData, isDirty)
       override def onFocus                            = self onFocus k
@@ -57,11 +57,14 @@ object PreviewFeature {
 
   case class FocusData[+K](key: K, changedSinceFocus: Boolean)
 
-  trait ForChild[+K] {
-    val focusData: Option[FocusData[K]]
+  trait ForChild {
+    val focusData: Option[FocusData[Any]]
     def showPreview_?(isDirty: => Boolean): Boolean
     def onFocus: Callback
     def onBlur: Callback
     def onEdit: Callback
+
+    final def preview[A](isDirty: => Boolean)(a: => A): Option[A] =
+      if (showPreview_?(isDirty)) Some(a) else None
   }
 }
