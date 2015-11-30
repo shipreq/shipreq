@@ -80,6 +80,7 @@ object UI {
   def abortNewButton(cb: Callback): ReactTag =
     <.button(^.onClick --> cb, UiText.Cfg.abortNewButton)
 
+  @deprecated("Moved to AutoCompleteFeature","")
   def textComplete[E <: html.Element](target: E, strategies: TextComplete.Strategies, onUpdate: => (String => Callback))(implicit E: TextEditor.OfType[E]): Callback =
     Callback.ifTrue(strategies.nonEmpty, Callback {
       val tgt = Dynamic.global.$(target)
@@ -89,11 +90,13 @@ object UI {
       }
     })
 
+  @deprecated("Moved to AutoCompleteFeature","")
   def textCompleteDestroy(node: html.Element) = Callback {
     val $n = Dynamic.global.$(node)
     TextComplete.destroy($n)
   }
 
+  @deprecated("Moved to AutoCompleteFeature","")
   def installTextComplete[P, S, B, N <: TopNode, E <: html.Element](
           getNode   : CompScope.DuringCallbackM[P, S, B, N] => E,
           strategies: (P, B) => ReusableVal[TextComplete.Strategies],
@@ -121,6 +124,7 @@ object UI {
     .componentWillUnmount($ =>
       textCompleteDestroy(getNode($)))
 
+  @deprecated("Moved to AutoCompleteFeature","")
   def installTextCompleteP[P, S, B, N <: TopNode, E <: html.Element](
           getNode   : RefSimple[E],
           strategies: P => ReusableVal[TextComplete.Strategies],
@@ -128,6 +132,7 @@ object UI {
         (implicit te: TextEditor.OfType[E]): EndoFn[ReactComponentB[P, S, B, N]] =
     installTextComplete(getNode(_).get, (p, _) => strategies(p), (p, _) => onUpdate(p))
 
+  @deprecated("Moved to AutoCompleteFeature","")
   def installTextCompleteB[P, S, B, N <: TopNode, E <: html.Element](
           getNode   : RefSimple[E],
           strategies: B => ReusableVal[TextComplete.Strategies],

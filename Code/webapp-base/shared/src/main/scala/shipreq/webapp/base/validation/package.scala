@@ -1,7 +1,7 @@
 package shipreq.webapp.base
 
 import shipreq.base.util.TaggedTypes.{TaggedTypeCtor, TaggedType}
-import scalaz.Validation
+import scalaz.{\/, Validation}
 
 package object validation {
 
@@ -11,6 +11,9 @@ package object validation {
 
     def option[A](value: Option[A], f: => VFailure): ValidationResult[A] =
       value.fold[ValidationResult[A]](Validation failure f)(Validation.success)
+
+    def from_\/[E, A](d: E \/ A)(f: E => VFailure): ValidationResult[A] =
+      d.fold(Validation failure f(_),  apply)
 
     @inline def test[A](cond: Boolean, a: => A, f: => VFailure): ValidationResult[A] =
       if (cond) Validation.success(a) else Validation.failure(f)

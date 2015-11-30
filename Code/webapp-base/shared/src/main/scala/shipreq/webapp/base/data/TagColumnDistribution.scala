@@ -4,6 +4,7 @@ import shipreq.base.util.Memo
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data.DataImplicits._
 
+// TODO s/column/tagField/
 abstract class TagColumnDistribution[A] {
   def all: A
   val inColumn: CustomField.Tag.Id => A

@@ -2,11 +2,13 @@ package shipreq.webapp.base.validation
 
 import scalaz.{Validation => _, _}
 import scalaz.Isomorphism.<=>
+import scalaz.std.stream._
 import scalaz.syntax.functor._
 import scalaz.syntax.traverse._
 import scalaz.Validation.FlatMap._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.GenTuple, GenTuple._
+import shipreq.webapp.base.text.Grammar
 
 final class CorrectionPart[S, I, C](val liveCorrect: I => I,
                                     val fullCorrect: (S, I) => InputCorrected[C],
@@ -58,6 +60,9 @@ object CorrectionPartU {
 
   @inline def apply3[I, C](lc: I => I, f: I => C, ci: C => I): CorrectionPartU[I, C] =
     new CorrectionPartU(lc, (_, i) => InputCorrected(f(i)), ci)
+
+  def liftSF(seqFmt: Grammar.SeqFormat): CorrectionPartU[String, Stream[String]] =
+    apply(seqFmt.stream, seqFmt.merge)
 
   def lift [I, C](iso: I <=> C): CorrectionPartU[I, C] = apply(iso.to, iso.from)
   def liftE[A]   (f: A => A)   : CorrectionPartU[A, A] = apply(f, identity)
@@ -230,4 +235,9 @@ object Validator {
         new ValidationPart[S, C, V]((s, c) => f(c.value).validate(s, c))) {
       override def correctAndValidate(s: S, i: I): ValidationResult[V] = f(i).correctAndValidate(s, i)
     }
+
+  def seqText[S, V](seqFmt: Grammar.SeqFormat)(f: S => String => ValidationResult[V]): Validator[S, String, Stream[String], Stream[V]] =
+    Validator(
+      CorrectionPartU.liftSF(seqFmt).liftS[S],
+      ValidationPart[S, Stream[String], Stream[V]]((s, c) => c.value traverse f(s)))
 }

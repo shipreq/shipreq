@@ -2,7 +2,7 @@ package shipreq.webapp.client.data
 
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
-import shipreq.base.util.{NonEmptySet, NonEmptyVector}
+import shipreq.base.util.{UnivEq, NonEmptySet, NonEmptyVector}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.RemoteFn
 import shipreq.webapp.client.app.ui.ProjectWidgets
@@ -26,4 +26,12 @@ object DataReusability {
     Reusability.by(_.whole)
 
   implicit def reusabilityRemote[Fn <: RemoteFn.Instance] = Reusability.by((_: Fn).key)
+
+  implicit class ReusabilityObjExt(private val r: Reusability.type) extends AnyVal {
+    def byUnivEq[A: UnivEq]: Reusability[A] =
+      Reusability.by_==[A]
+
+    def byUnivEq[A, B: UnivEq](f: A => B): Reusability[A] =
+      byUnivEq[B] contramap f
+  }
 }

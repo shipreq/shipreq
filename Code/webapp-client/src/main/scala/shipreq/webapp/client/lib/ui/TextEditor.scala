@@ -7,7 +7,7 @@ sealed abstract class TextEditor {
   type Dom <: html.Element
   @inline final def asImplicit: TextEditor.OfType[Dom] = this
 
-  def tag: ReactTag
+  def tag: ReactTagOf[Dom]
   def multiLine: Boolean
   def value(d: Dom): String
   def focus(d: Dom): Unit
