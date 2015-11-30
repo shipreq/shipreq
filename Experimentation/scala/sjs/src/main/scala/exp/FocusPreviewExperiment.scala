@@ -138,6 +138,94 @@ object FocusPreviewExperiment {
 
   } // PreviewLogic
 
+
+  /*
+
+  provides means to:
+  - start or focus an editor
+  - update the edit state
+  - clear the edit state
+  - abort useless edit on blur
+
+  provide to a child:
+  - the last good value
+  - the current edit value and a means to update it
+  - onBlur hook to abort useless edits
+  - cmd to start/focus the editor
+  - whether an edit is useless
+
+THIS IS CONFLATING
+
+  - start an editor
+  - update the edit state
+  - clear the edit state
+  - abort useless edit on blur
+
+  provides means to:
+  - update the edit state
+  - clear the edit state
+
+  provide to a child:
+  - the last good value
+  - the current edit value and a means to update it
+  - onBlur hook to abort useless edits
+  - cmd to start/focus the editor
+  - whether an edit is useless
+
+   */
+  class EditorLogicStuasdasdasdasdasdff[S, V, E]($: CompState.WriteAccess[S],
+                                     editLens: Lens[S, Option[E]],
+                                     getValue: S => V,
+                                     initEdit: V => E,
+                                     tryToFocus: Callback){
+//                                     isEditUseless: (V, E) => Boolean){
+
+    def startEditor: Callback =
+      $.modState(
+        s => editLens.modify(_ orElse Some(initEdit(getValue(s))))(s),
+        tryToFocus)
+
+    def focus(s: S): Callback = {
+      editLens.get(s) match {
+        case None    => startEditor
+        case Some(_) => tryToFocus
+      }
+    }
+
+    def forChild(s: S) = {
+      val el = editLens
+
+      val value: V =
+        getValue(s)
+
+      val edit: ExternalVar[Option[E]] =
+        ExternalVar.at(el)(s, $)
+
+      val focusSelf: Callback =
+        Callback byName focus(s)
+
+      def onBlur(isEditUseless: (V, E) => Boolean): Callback =
+          Callback.ifTrue(
+            edit.value.exists(isEditUseless(value, _)),
+            $.modState(el set None))
+      }
+  }
+  class EditorLogicStuasdasdasdasdasdff2[S, V, E, K]($: CompState.WriteAccess[S],
+                                     editLens: K => Lens[S, Option[E]],
+                                     getValue: K => S => V,
+                                     initEdit: V => E,
+                                     tryToFocus: K => Callback){
+    def apply(k: K) = {
+      new EditorLogicStuasdasdasdasdasdff[S, V, E](
+        $,
+        editLens(k),
+        getValue(k),
+        initEdit,
+        tryToFocus(k)
+      )
+    }
+  }
+
   /**
     * Editor opens:
     * - when clicked
@@ -337,6 +425,119 @@ object FocusPreviewExperiment {
 //    }
 
   }
+
+  // ===================================================================================================================
+  // ===================================================================================================================
+  object Temp {
+    def genericWrapRemoteCall[F](setStatus: Option[Status[F]] => Callback,
+                                 call: (CB_OnSuccess, F => Callback) => Callback): Callback = {
+      val clearStatus = setStatus(None)
+      def onSuccess = clearStatus
+      def onFailure: F => Callback = f => setStatus(Some(Failed(f, Callback byName doIt, clearStatus)))
+      lazy val doIt = call(onSuccess, onFailure) >> setStatus(Some(Locked))
+      doIt
+    }
+
+    sealed trait Status[+F]
+    case object Locked extends Status[Nothing]
+    case class Failed[F](failure: F, retry: Callback, resumeEdit: Callback) extends Status[F] {
+      def retryButton = <.button("Retry", ^.onClick --> retry)
+      def resumeEditButton = <.button("Cancel", ^.onClick --> resumeEdit)
+    }
+
+    object ZeroD {
+      type State[+F] = Option[Status[F]]
+      def initState: State[Nothing] = None
+
+      class BackendZero[S, F]($: CompState.WriteAccess[S], stateLens: Lens[S, State[F]]) {
+        def getStatus(s: S): Option[Status[F]] =
+          stateLens get s
+        def wrapRemoteCall(call: (CB_OnSuccess, F => Callback) => Callback): Callback =
+          genericWrapRemoteCall[F]($ modState stateLens.set(_), call)
+      }
+    }
+
+    object OneD {
+      type State[C, +F] = Map[C, Status[F]]
+      def initState[C]: State[C, Nothing] = Map.empty
+
+      class BackendOne[S, C, F]($: CompState.WriteAccess[S], stateLens: Lens[S, State[C, F]]) {
+        private type M = State[C, F]
+
+        private def cellLens(c: C): Lens[S, Option[Status[F]]] = {
+          import monocle._, Monocle._
+          stateLens ^|-> at(c)
+        }
+
+        def apply(c: C) =
+          new ZeroD.BackendZero[S, F]($, cellLens(c))
+
+//        def getStatus(c: C)(s: S): Option[Status[F]] =
+//          cellLens(c) get s
+//
+//        def wrapRemoteCall(c: C, call: (CB_OnSuccess, F => Callback) => Callback): Callback = {
+//          val l = cellLens(c)
+//          genericWrapRemoteCall[F]($ modState l.set(_), call)
+//        }
+      }
+    }
+
+    object TwoD {
+      type RowStatus[+F] = Status[F]
+      import OneD.{State => CellStates}
+
+      case class RowState[C, +F](rowStatus: Option[RowStatus[F]], cells: CellStates[C, F])
+
+      type State[R, C, +F] = Map[R, RowState[C, F]]
+      def initState[R]: State[R, Any, Any] = Map.empty
+
+      class BackendTwo[S, R, C, F]($: CompState.WriteAccess[S],
+                                   stateLens: Lens[S, State[R, C, F]]) {
+
+        private val emptyRowState = RowState[C, F](None, Map.empty)
+        private val rowState_rowStatus = monocle.macros.GenLens[RowState[C, F]](_.rowStatus)
+        private val rowState_cells = monocle.macros.GenLens[RowState[C, F]](_.cells)
+
+        private def rowState(r: R): Lens[S, RowState[C, F]] = {
+          import monocle._, Monocle._
+          stateLens ^|-> Lens[State[R, C, F], RowState[C, F]](
+            _.getOrElse(r, emptyRowState)
+          )(
+            n => _.updated(r, n)
+          )
+        }
+
+        private def cellStatesLens(r: R): Lens[S, CellStates[C, F]] =
+          rowState(r) ^|-> rowState_cells
+
+        def getRowState(r: R)(s: S): RowState[C, F] =
+          rowState(r).get(s)
+
+        def getRowStatus(r: R)(s: S): Option[RowStatus[F]] =
+          getRowState(r)(s).rowStatus
+
+        def apply(r: R) =
+          new OneD.BackendOne[S, C, F]($, cellStatesLens(r))
+
+        def getRowAll(r: R)(s: S) = {
+          val l = rowState(r)
+          val rs = l get s
+          (rs, new OneD.BackendOne[S, C, F]($, l ^|-> rowState_cells))
+        }
+
+        def wrapRemoteCall(r: R, call: (CB_OnSuccess, F => Callback) => Callback): Callback = {
+          val l = rowState(r) ^|-> rowState_rowStatus
+          genericWrapRemoteCall[F]($ modState l.set(_), call)
+        }
+      }
+
+
+    }
+
+
+  }
+  // ===================================================================================================================
+  // ===================================================================================================================
 
   // ===================================================================================================================
   import PreviewLogic._
