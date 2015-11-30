@@ -1,10 +1,12 @@
 package shipreq.webapp.client.lib.ui.feature
 
-import org.scalajs.dom.ext.KeyCode
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
+import scalacss.ScalaCssReact._
 import shipreq.base.util.{Valid, Validity}
 import shipreq.webapp.base.validation._
+import shipreq.webapp.client.app.ui.Style.{reqtable => *} // TODO not really
+import shipreq.webapp.client.lib.ui.KeyHandlers
 
 sealed abstract class EditValidationFeature[+A] {
   def validated: Option[A]
@@ -14,11 +16,11 @@ sealed abstract class EditValidationFeature[+A] {
   final def validity: Validity =
     Valid <~ validated.isDefined
 
-  final def commitOnEnter(e: ReactKeyboardEvent, f: A => Callback): CallbackOption[Unit] =
-    CallbackOption.liftOption(validated) >>= (a =>
-      CallbackOption.keyCodeSwitch(e) {
-        case KeyCode.Enter => f(a)
-      })
+  final def commitByKeyboard(f: A => Callback, singleLine: Boolean): KeyHandlers =
+    validated match {
+      case Some(a) => KeyHandlers.commit(f(a), singleLine)
+      case None    => KeyHandlers.empty
+    }
 }
 
 object EditValidationFeature {
@@ -41,12 +43,15 @@ object EditValidationFeature {
 
   import scalaz._
 
+  private def errorTag: ReactTag =
+    <.div(*.cellEditorErrMsg)
+
   implicit val HandleValidationResult: Handler[ValidationResult] =
     new Handler[ValidationResult] {
       override def apply[A](result: ValidationResult[A]) =
         result match {
           case Success(a) => new WhenValid(a)
-          case Failure(f) => new WhenInvalid(() => <.div(f.toText)) // TODO Do better
+          case Failure(f) => new WhenInvalid(() => errorTag(f.toText)) // TODO Do better
         }
     }
 

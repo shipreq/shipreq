@@ -86,4 +86,11 @@ object AutoCompleteFeature {
           onUpdate  : B => String => Callback)
         (implicit te: TextEditor.OfType[E]): EndoFn[ReactComponentB[P, S, B, N]] =
     install(getNode(_).get, (_, b) => strategies(b), (_, b) => onUpdate(b))
+
+  def installBP[P, S, B, N <: TopNode, E <: html.Element](
+          getNode   : RefSimple[E],
+          strategies: B => ForChild,
+          onUpdate  : P => String => Callback)
+        (implicit te: TextEditor.OfType[E]): EndoFn[ReactComponentB[P, S, B, N]] =
+    install(getNode(_).get, (_, b) => strategies(b), (p, _) => onUpdate(p))
 }

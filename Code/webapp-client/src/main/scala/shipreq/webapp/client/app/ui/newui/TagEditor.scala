@@ -10,6 +10,7 @@ import shipreq.webapp.base.text.Grammar.{hashRefKey => G}
 import shipreq.webapp.base.validation._
 import shipreq.webapp.client.app.ui.reqtable.edit.AutoComplete
 import shipreq.webapp.client.data.DataReusability._
+import shipreq.webapp.client.lib.ui.KeyHandlers
 import shipreq.webapp.client.lib.ui.feature._
 import shipreq.webapp.client.lib.{HideDead, Plain}
 
@@ -35,10 +36,10 @@ object TagEditor {
       apply(p.config.liveTagColumnDistribution.tags.notUsedInColumns)
   }
 
-  case class Props(edit     : ExternalVar[String],
-                   lookup   : Lookup,
-                   commit   : Set[ApplicableTagId] => Callback,
-                   onKeyDown: ReactKeyboardEventI => CallbackOption[Unit])
+  case class Props(edit       : ExternalVar[String],
+                   lookup     : Lookup,
+                   commit     : Set[ApplicableTagId] => Callback,
+                   keyHandlers: KeyHandlers)
 
   implicit val reusabilityLookup: Reusability[Lookup] =
     Reusability.byRef[Lookup] || Reusability.byUnivEq(_.underlyingMap)
@@ -62,26 +63,20 @@ object TagEditor {
       def doCommit(ids: Stream[ApplicableTag]): Callback =
         p commit ids.map(_.id).toSet
 
-      def onKey(e: ReactKeyboardEventI): Callback =
-        p.onKeyDown(e) | validated.commitOnEnter(e, doCommit)
+      def keyHandlers: KeyHandlers =
+        p.keyHandlers + validated.commitByKeyboard(doCommit, true)
 
       <.input.text(
-        ^.onKeyDown ==> onKey,
+        keyHandlers,
         ^.onChange  ==> ((e: ReactEventI) => p.edit.set(e.target.value)),
         ^.value      := p.edit.value)
     }
   }
 
-  private def installAutoComplete =
-    AutoCompleteFeature.install[Props, Unit, Backend, TopNode, dom.html.Input](
-      editorRef(_).get,
-      (p, b) => b.pxAutoComplete.value(),
-      (p, b) => p.edit.set)
-
   val component =
     ReactComponentB[Props]("TagEditor")
       .renderBackend[Backend]
       // TODO .configure(Reusability.shouldComponentUpdate)
-      .configure(installAutoComplete)
+      .configure(AutoCompleteFeature.installBP(editorRef, _.pxAutoComplete.value(), _.edit.set))
       .build
 }

@@ -80,6 +80,8 @@ object KeyHandlers {
             onKeyPress: UndefOr[KeyHandler] = undefined): KeyHandlers =
     new KeyHandlers(onKeyDown, onKeyPress)
 
+  def empty = apply()
+
   @inline implicit def toTagMod(k: KeyHandlers) = k.tagMod
 
   /**
@@ -87,20 +89,32 @@ object KeyHandlers {
    * - Enter either inserts a newline, or commits.
    * - Ctrl-enter commits.
    */
-  def commitAndAbort(abort: => TCB.Abort, commit: => UndefOr[TCB.Commit], singleLine: Boolean) = {
-    val cancelOnEscape = KeyHandler.byKey { case KeyValue.Escape => abort.cb }
-    val commitOnEnter  = KeyHandler.byKey { case KeyValue.Enter => commit.map(_.cb) }
+  def commitAndAbort(abort: => TCB.Abort, commit: => UndefOr[TCB.Commit], singleLine: Boolean): KeyHandlers =
+    this.abort(abort.cb) + this.commit(commit.map(_.cb), singleLine)
 
-    var r = KeyHandlers(
-      onKeyDown = cancelOnEscape | commitOnEnter.filterModKeys(ctrl = true))
+  def commitAndAbortD[A](abort: => TCB.Abort, parsed: Any \/ A, commit: A => TCB.Commit, singleLine: Boolean): KeyHandlers =
+    commitAndAbort(abort, parsed.fold(_ => undefined, commit(_)), singleLine)
+
+  // TODO Delete above?
+
+  def abort(abort: => Callback): KeyHandlers =
+    KeyHandlers(onKeyDown = KeyHandler.byKey { case KeyValue.Escape => abort })
+
+  /**
+   * - Enter either inserts a newline, or commits.
+   * - Ctrl-enter commits.
+   */
+  def commit(commit: => UndefOr[Callback], singleLine: Boolean): KeyHandlers = {
+    val commitOnEnter = KeyHandler.byKey { case KeyValue.Enter => commit }
+    val base = KeyHandlers(onKeyDown = commitOnEnter.filterModKeys(ctrl = true))
 
     // If enter unused, use for commit too
     if (singleLine)
-      r += KeyHandlers(onKeyPress = commitOnEnter.filterModKeys())
-
-    r
+      base + KeyHandlers(onKeyPress = commitOnEnter.filterModKeys())
+    else
+      base
   }
 
-  def commitAndAbortD[A](abort: => TCB.Abort, parsed: Any \/ A, commit: A => TCB.Commit, singleLine: Boolean) =
-    commitAndAbort(abort, parsed.fold(_ => undefined, commit(_)), singleLine)
+  def commitDisjunction[A](parsed: Any \/ A)(f: A => Callback, singleLine: Boolean): KeyHandlers =
+    commit(parsed.fold(_ => undefined, f(_)), singleLine)
 }

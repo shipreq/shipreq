@@ -5,6 +5,7 @@ import japgolly.scalajs.react.extra.Reusability
 import shipreq.base.util.{UnivEq, NonEmptySet, NonEmptyVector}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.RemoteFn
+import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.client.app.ui.ProjectWidgets
 
 object DataReusability {
@@ -14,6 +15,10 @@ object DataReusability {
   implicit val reusabilityProjectConfig: Reusability[ProjectConfig] = Reusability.byRef
 
   implicit val reusabilityProjectWidgets: Reusability[ProjectWidgets] = Reusability.byRef
+
+  implicit val reusabilityPlainText: Reusability[PlainText.ForProject] = Reusability.byRef
+
+  implicit val reusabilityTextSearch: Reusability[TextSearch] = Reusability.byRef
 
   implicit val reusabilityTagTree: Reusability[TagTree] = Reusability.byRef
 
