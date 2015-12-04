@@ -3,9 +3,12 @@ package shipreq.webapp.client.lib.ui.feature
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import scalacss.ScalaCssReact._
+import scalaz.Need
 import shipreq.base.util.{Valid, Validity}
 import shipreq.webapp.base.validation._
-import shipreq.webapp.client.app.ui.Style.{reqtable => *} // TODO not really
+import shipreq.webapp.client.app.ui.Style.{reqtable => *}
+
+// TODO not really
 import shipreq.webapp.client.lib.ui.KeyHandlers
 
 sealed abstract class EditValidationFeature[+A] {
@@ -13,12 +16,15 @@ sealed abstract class EditValidationFeature[+A] {
 
   def renderFailure: Option[ReactElement]
 
+//  final def validatedN[B](f: A => B): Option[Need[B]] =
+//    validated.map(a => Need(f(a)))
+
   final def validity: Validity =
     Valid <~ validated.isDefined
 
   final def commitByKeyboard(f: A => Callback, singleLine: Boolean): KeyHandlers =
     validated match {
-      case Some(a) => KeyHandlers.commit(f(a), singleLine)
+      case Some(a) => KeyHandlers.commit(Some(f(a)), singleLine)
       case None    => KeyHandlers.empty
     }
 }

@@ -312,7 +312,7 @@ object Deletion {
         edit           = ExternalVar.at(State.reason)(s, $),
         preview        = PreviewFeature.AlwaysShow,
         preEditValue   = None,
-        commit         = _ => Callback.empty)
+        tagMod         = _ => EmptyTag)
 
     val cancelButton: ReactElement =
       <.button(^.onClick --> $.props.flatMap(_.cancel), "Cancel")

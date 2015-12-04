@@ -130,6 +130,9 @@ object ValidationPartU {
   @inline def apply[C, V](f: InputCorrected[C] => ValidationResult[V]): ValidationPartU[C, V] =
     new ValidationPart((_, c) => f(c))
 
+  @inline def lift[C, V](f: C => ValidationResult[V]): ValidationPartU[C, V] =
+    new ValidationPart((_, c) => f(c.value))
+
   def test[A](test: InputCorrected[A] => Boolean, fail: VFailure): ValidationPartU[A, A] = {
     val failure = Failure(fail)
     apply[A, A](a => if (test(a)) Success(a.value) else failure)

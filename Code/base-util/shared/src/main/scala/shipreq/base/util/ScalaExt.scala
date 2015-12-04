@@ -2,6 +2,7 @@ package shipreq.base.util
 
 import scala.collection.GenTraversable
 import scala.reflect.ClassTag
+import scalaz.Semigroup
 
 object ScalaExt extends Platform.ScalaExt {
 
@@ -59,6 +60,13 @@ object ScalaExt extends Platform.ScalaExt {
   implicit class StringExt(private val s: String) extends AnyVal {
     def flatMapSB(f: (Char, StringBuilder) => Unit): String =
       Util.quickSB(sb => s.foreach(c => f(c, sb)))
+  }
+
+  implicit class OptionExt[A](private val o: Option[A]) extends AnyVal {
+    def ++(n: Option[A])(implicit s: Semigroup[A]): Option[A] =
+      o.fold(n)(a =>
+        n.fold(o)(b =>
+          Some(s.append(a, b))))
   }
 
   implicit class FuckingSomeExt[A](private val s: Some[A]) extends AnyVal {

@@ -4,9 +4,9 @@ import utest._
 
 object PolyMapTest extends TestSuite {
 
-  val M = PolyMap.Fix[Option[Int]]
-  val noneKey = M.lens[None.type](None)[String]
-  val someKey = M.lens[Some[Int]](Some(666))[Int]
+  val M = PolyMap.Fix[Option[Int], Any]
+  val noneKey = M.accessKey[None.type](None)[String].value
+  val someKey = M.accessKey[Some[Int]](Some(666))[Int].value
 
   override def tests = TestSuite {
     var m = M.empty
@@ -24,6 +24,10 @@ object PolyMapTest extends TestSuite {
     m = noneKey.set(None)(m)
     assert(noneKey.get(m) == None)
     assert(someKey.get(m) == Option(111))
+
+    // Check generic access too
+    assert(m.get(None)      == None)
+    assert(m.get(Some(666)) == Option(111))
 
     m = someKey.set(None)(m)
     assert(noneKey.get(m) == None)

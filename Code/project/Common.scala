@@ -115,6 +115,7 @@ object Common {
       dependencyUpdatesExclusions := moduleFilter(name = new PatternFilter("^jetty-(?:server|websocket)$".r.pattern)),
       testFrameworks              += new TestFramework("utest.runner.Framework"),
       minForcegcInterval          := 3.minutes,
+      triggeredMessage            := Watched.clearWhenTriggered,
       target                      := redirectTargetDir(target.value)
     )
     .configure(

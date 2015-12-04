@@ -1,0 +1,114 @@
+package shipreq.webapp.client.app.ui.newui
+
+import japgolly.scalajs.react.extra._
+import japgolly.scalajs.react._, vdom.prefix_<^._
+import org.scalajs.dom
+import shipreq.webapp.base.validation.Validator
+import shipreq.webapp.client.app.ui.reqtable.edit.AutoComplete
+import shipreq.webapp.client.lib.ui.feature._
+import scalaz.{\/-, -\/}
+import shipreq.base.util.{UnivEq, SetDiff, Util}
+import shipreq.webapp.base.UiText
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.protocol.UpdateContentCmd
+import shipreq.webapp.base.text.{Grammar, PlainText}
+import shipreq.webapp.client.app.ui.{RemoteDataEditor, TextSeqEditor, VUCA}
+import shipreq.webapp.client.lib.ui.TextEditor
+import TextSeqEditor._
+import Validators.{reqCode => V}
+import UpdateContentCmd.{PatchReqCodes, SetReqCodeGroupCode}
+import shipreq.webapp.client.data.DataReusability._
+
+sealed abstract class ReqCodeEditor[Data: Reusability] {
+
+  val textEditor: TextEditor
+
+  val validator: Validator[V.VS, String, _, Data]
+
+  def liveCorrect(t: String): String
+
+  def dataToSet(d: Option[Data]): Set[ReqCode.Value]
+
+  case class Props(edit        : ExternalVar[String],
+                   initialValue: Option[Data],
+                   trie        : ReqCode.Trie,
+                   tagMod      : Option[Data] => TagMod)
+
+  private val editorRef = Ref[textEditor.Dom]("i")
+
+  final class Backend($: BackendScope[Props, Unit]) {
+    private val pxTrie = Px.bs($).propsA(_.trie)
+    private val pxInit = Px.bs($).propsA(_.initialValue)
+
+    val pxValidationState =
+      Px.apply2(pxTrie, pxInit)((t, i) => V.VS(t, dataToSet(i)))
+
+    val pxAutoComplete = pxTrie.map(t =>
+      AutoCompleteFeature.Strategies( // TODO Fix AutoComplete
+        AutoComplete.reqCode.prefixes(t): _*))
+
+    def render(p: Props) = {
+      val vs = pxValidationState.value()
+      val validated = EditValidationFeature(validator.correctAndValidate(vs, p.edit.value))
+
+      <.div(
+        textEditor.tag(
+          ^.ref        := editorRef,
+          ^.onChange  ==> ((e: ReactEventI) => p.edit.set(liveCorrect(e.target.value))),
+          ^.value      := p.edit.value,
+          p.tagMod(validated.validated)),
+        validated.renderFailure)
+    }
+  }
+
+  @inline private implicit def impTextEditor = textEditor.asImplicit
+
+  val Component =
+    ReactComponentB[Props]("ReqCodeEditor")
+      .renderBackend[Backend]
+      // TODO .configure(Reusability.shouldComponentUpdate)
+      .configure(AutoCompleteFeature.installBP(editorRef, _.pxAutoComplete.value(), _.edit.set))
+      .build
+}
+
+object ReqCodeEditor {
+
+  // ===================================================================================================================
+  object Single extends ReqCodeEditor[ReqCode.Value] {
+    override val textEditor                          = TextEditor.Input
+    override val validator                           = V.code
+    override def liveCorrect(txt: String)            = V.code.liveCorrect(txt)
+    override def dataToSet(d: Option[ReqCode.Value]) = d.toSet
+
+//      val validate: Vector[A] => ParseResult[A] =
+//        _.headOption match {
+//          case None    => -\/(Some(UiText.FieldNames.reqCode + " cannot be blank.")) // english
+//          case Some(c) => \/-(c)
+//        }
+
+  }
+
+  // ===================================================================================================================
+  object Multiple extends ReqCodeEditor[Set[ReqCode.Value]] {
+
+    override val textEditor = TextEditor.TextArea
+
+    val seqFmt = Grammar.SeqFormat(_.trim, "\\s*[\n\r]\\s*".r.pattern, identity, _.isEmpty, _ mkString "\n")
+
+    override val validator =
+      Validator.seqText(seqFmt)(V.code.correctAndValidate _ curried)
+        .map(_.toSet)
+        .andThen(V.codeSet.liftS)
+
+    override def liveCorrect(txt: String): String =
+      if (txt.trim.isEmpty)
+        ""
+      else {
+        val r = txt.split("[\n\r]").map(V.code.liveCorrect).mkString("\n")
+        Util.fixBeforeAfter(txt, r)(_ endsWith "\n", _ + "\n")
+      }
+
+    override def dataToSet(d: Option[Set[ReqCode.Value]]) =
+      d getOrElse UnivEq.emptySet
+  }
+}

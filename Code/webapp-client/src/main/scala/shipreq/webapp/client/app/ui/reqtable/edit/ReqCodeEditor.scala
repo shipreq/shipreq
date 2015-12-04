@@ -30,7 +30,7 @@ object ReqCodeEditor {
   object ForGroup {
     val editor = new TextSeqEditor[A, A]("ReqCode editor", Stream(_), TextEditor.Input)
 
-    @inline def liveCorrect(t: String) = V.code.liveCorrect(t)
+//    @inline def liveCorrect(t: String) = V.code.liveCorrect(t)
 
     def prepare(initial: Option[A], trie: Px[ReqCode.Trie]): VUCA[String, A] => editor.Props = {
       val validationState = trie.map(V.VS(_, initial.toSet))
@@ -71,13 +71,13 @@ object ReqCodeEditor {
 
     val editor = new TextSeqEditor[A, SetDiff[A]]("ReqCode editor", lineSplit, TextEditor.TextArea)
 
-    def liveCorrect(txt: String): String =
-      if (txt.trim.isEmpty)
-        ""
-      else {
-        val r = txt.split("[\n\r]").map(V.code.liveCorrect).mkString("\n")
-        Util.fixBeforeAfter(txt, r)(_ endsWith "\n", _ + "\n")
-      }
+//    def liveCorrect(txt: String): String =
+//      if (txt.trim.isEmpty)
+//        ""
+//      else {
+//        val r = txt.split("[\n\r]").map(V.code.liveCorrect).mkString("\n")
+//        Util.fixBeforeAfter(txt, r)(_ endsWith "\n", _ + "\n")
+//      }
 
     def prepare(initial: Set[A], trie: Px[ReqCode.Trie]): VUCA[String, SetDiff[A]] => editor.Props = {
       val validationState = trie.map(V.VS(_, initial))

@@ -6,6 +6,7 @@ import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import scalaz.{\/-, -\/}
 import scalaz.syntax.equal._
+import shipreq.base.util.PolyMap
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.VerifiedEvents
@@ -16,6 +17,7 @@ import shipreq.webapp.client.app.ui.{Modal, ProjectWidgets, Selection}
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
 import shipreq.webapp.client.data.DataReusability._
 import shipreq.webapp.client.lib.FilterDead
+import shipreq.webapp.client.lib.ui.feature._
 import shipreq.webapp.client.protocol.ClientProtocol
 import edit.ColumnEditors
 
@@ -23,7 +25,7 @@ object ReqTable {
 
   val Component =
     ReactComponentB[Props]("ReqTable")
-      .initialState_P(initialState)
+      .initialState_P(State.init)
       .renderBackend[Backend]
       .configure(ChangeListener.update[State](c => _.recvChanges(c)).install(_.cd))
       .componentWillReceiveProps(i => i.$.backend.willReceiveProps(i.$.props, i.nextProps))
@@ -38,25 +40,15 @@ object ReqTable {
     def component = Component(this)
   }
 
-  def initialState(p: Props): State = {
-    val proj = p.cd.project
-    var s = State(proj,
-      ViewSettings.default(p.fd),
-      FilterEditor.initialState,
-      Selection.empty,
-      CreationInterface.initState,
-      Cell.emptyTableState,
-      Modal.none)
-    p.filterSpec.foreach(f => s = s setFilterSpec f)
-    s
-  }
-
   @Lenses
   case class State(project     : Project,
                    viewSettings: ViewSettings,
                    filter      : FilterEditor.State,
                    selection   : RowSelection,
                    creation    : CreationInterface.State,
+                   editStates  : EditState.Table,
+                   asyncStates : AsyncState.TableState,
+                   //focusData  : PreviewFeature.FocusData[],
                    cellStates  : Cell.TableState,
                    modal       : Modal.State) {
 
@@ -86,6 +78,21 @@ object ReqTable {
 
   object State {
     val sortCriteria = viewSettings ^|-> ViewSettings.order
+
+    def init(p: Props): State = {
+      val proj = p.cd.project
+      var s = State(proj,
+        ViewSettings      .default(p.fd),
+        FilterEditor      .initialState,
+        Selection         .empty,
+        CreationInterface .initState,
+        EditState         .empty,
+        AsyncState        .initState,
+        Cell              .emptyTableState,
+        Modal             .none)
+      p.filterSpec.foreach(f => s = s setFilterSpec f)
+      s
+    }
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -171,8 +178,6 @@ object ReqTable {
     val saveIO: CallServer[UpdateContentCmd] =
       callServer(_.updateContentFn)
 
-    val colEditors = new ColumnEditors(project, plainText, widgets, textSearch, cellSetLocState, saveIO)
-
     val filterProps: FilterEditor.State => FilterEditor.Props = {
       import FilterEditor._
       val onFailure: OnFailure = ReusableFn(s => $.modState(_ filterFailure s))
@@ -182,6 +187,16 @@ object ReqTable {
 
     val filterEditor: Px[ReusableVal[ReactElement]] =
       filterState map filterProps map ReusableVal.renderComponent(FilterEditor.Component)
+
+    val cellEditors: CellEditors =
+      new CellEditorsImpl[State]($,
+                                 State.editStates,
+                                 State.asyncStates,
+                                 project,
+                                 plainText,
+                                 widgets,
+                                 textSearch,
+                                 saveIO)
 
     val creationInterface = new CreationInterface(setCreation, project, plainText, widgets, textSearch)
 
@@ -197,7 +212,7 @@ object ReqTable {
       val creationProps = CreationInterface.Props(createIO, s.creation)
 
       val tableProps = Table.Props(
-        project, rows, colName, colRnds, colEditors, s.cellStates, visibleSelection, modViewSettings)
+        project, rows, colName, colRnds, cellEditors, s.editStates,s.asyncStates, visibleSelection, modViewSettings)
 
       val selCtrlProps = SelectionCtrls.Props(
         visibleSelection, cfg, rows, setModal, project, widgets, plainText, textSearch, saveIO, cellModifyFn)

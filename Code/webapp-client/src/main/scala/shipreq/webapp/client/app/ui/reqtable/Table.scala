@@ -5,20 +5,22 @@ import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.extra._
 import org.scalajs.dom
 import org.scalajs.dom.ext.KeyCode
-import shipreq.base.util.NonEmptyVector
+import shipreq.base.util.{PolyMap, NonEmptyVector}
 import shipreq.base.util.ScalaExt.EndoFn
 import shipreq.webapp.base.data._
-import shipreq.webapp.client.app.ui.{RemoteDataEditor, DragToReorder}
+import shipreq.webapp.client.app.ui.DragToReorder
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
-import shipreq.webapp.client.app.ui.reqtable.edit.ColumnEditors
 import shipreq.webapp.client.data.DataReusability._
-import shipreq.webapp.client.lib.TCB
+import shipreq.webapp.client.lib.ui.feature.AsyncActionFeature
 import shipreq.webapp.client.util._
 import DomUtil._
 
+import AsyncActionFeature.Table.RowState
+import AsyncActionFeature.{Locked, Failed, renderLocked}
+
+
 object Table {
 
-  implicit val reusabilityCEs : Reusability[ColumnEditors]                  = Reusability.byRef
   implicit val reusabilityCR  : Reusability[ColumnRenderer]                 = Reusability.byRef // TODO This is a problem
   implicit val reusabilityCs  : Reusability[NonEmptyVector[Column]]         = reusabilityNonEmptyVector
   implicit val reusabilityCRs : Reusability[NonEmptyVector[ColumnRenderer]] = reusabilityNonEmptyVector
@@ -26,8 +28,34 @@ object Table {
   implicit val reusabilityCRS : Reusability[Cell.RowState]                  = Reusability.byRef
   implicit val reusabilityCCS : Reusability[Cell.State]                     = Reusability.byRef
 
+  implicit val reusabilityCCSAasdqwasd1: Reusability[CellEditor] = Reusability.never
+  implicit val reusabilityCCSAasdqw1: Reusability[CellEditors] = Reusability.never
+  implicit val reusabilityCCSAasdqwe1: Reusability[AsyncState.TableState] = Reusability.never
+  implicit val reusabilityCCSAasdqwe2: Reusability[AsyncState.RowState] = Reusability.never
+  implicit val reusabilityCCSAasdqwe3: Reusability[AsyncState.Single] = Reusability.never
+  implicit val reusabilityCCSAasd: Reusability[EditState.Table] = Reusability.never
+  implicit val reusabilityCCSAr0d: Reusability[EditState.AtRow] = Reusability.never
+
   // ===================================================================================================================
   // Table
+
+  object TODO_DELETE {
+    def traverse[T[X] <: TraversableOnce[X], A](ta: => T[A])(f: A => Callback): Callback =
+      Callback(
+        ta.foreach(a =>
+          f(a).runNow()))
+
+    @inline def sequence[T[X] <: TraversableOnce[X]](tca: => T[Callback]): Callback =
+      traverse(tca)(identity)
+
+    def traverseO[A](oa: => Option[A])(f: A => Callback): Callback =
+      Callback(
+        oa.foreach(a =>
+          f(a).runNow()))
+
+    @inline def sequenceO[A](oca: => Option[Callback]): Callback =
+      traverseO(oca)(identity)
+  }
 
   implicit val reusabilityProps = Reusability.caseClass[Props]
 
@@ -35,8 +63,9 @@ object Table {
                    rows           : Rows,
                    colName        : Column.NameResolver,
                    colRenderers   : NonEmptyVector[ColumnRenderer],
-                   colEditors     : ColumnEditors,
-                   cells          : Cell.TableState,
+                   cellEditors    : CellEditors,
+                   editState      : EditState.Table,
+                   asyncState     : AsyncState.TableState,
                    selection      : RowSelectionVisible,
                    modViewSettings: EndoFn[ViewSettings] ~=> Callback)
 
@@ -46,15 +75,13 @@ object Table {
       .configure(shouldComponentUpdate)
       .build
 
+  /** Input is a callback to run after editing starts. */
+  type StartEdit = Callback ~=> Callback
+
   final class Backend($: BackendScope[Props, Unit]) {
 
-    val startCellEdit = ReusableFn[Row, Column, TCB.Finally, Callback]((row, col, fin) =>
-      $.props.map { p =>
-        if (p.cells(row.sourceId).allowEdit(col))
-          p.colEditors.startCellEditing(row, col, fin)
-            .foreach(_.runNow())
-      }
-    )
+    val startCellEdit = ReusableFn[Row, Column, Callback, Callback]((r, c, focus) =>
+      $.props >>= (_.cellEditors.startEdit(r, c, focus) getOrElse Callback.empty))
 
     val reorderColumns = ReusableFn((cols: NonEmptyVector[Column]) =>
       $.props >>= (_.modViewSettings(_ setColumns cols)))
@@ -73,8 +100,9 @@ object Table {
       val renderRows =
         rows.indices.toReactNodeArray { i =>
           val row = rows(i)
-          val rs  = p.cells(row.sourceId)
-          val rp  = RowProps(row, crs, rs, p.selection, startCellEdit(row))
+          val rs2  = EditState.getRow(p.editState, row.sourceId)
+          val as = AsyncState.get(p.asyncState)(row.sourceId)
+          val rp  = RowProps(row, crs, p.cellEditors, rs2, as , p.selection, startCellEdit(row))
           RowComponent.withKey(row.id.key)(rp)
         }
 
@@ -189,11 +217,16 @@ object Table {
   // ===================================================================================================================
   // Rows
 
-  case class RowProps(row      : Row,
-                      crs      : NonEmptyVector[ColumnRenderer],
-                      cells    : Cell.RowState,
-                      selection: RowSelectionVisible,
-                      startEdit: Column ~=> (TCB.Finally ~=> Callback))
+  val noEdit: StartEdit =
+    ReusableFn(_ => Callback.empty)
+
+  case class RowProps(row        : Row,
+                      crs        : NonEmptyVector[ColumnRenderer],
+                      cellEditors: CellEditors,
+                      editState  : EditState.AtRow,
+                      asyncState : AsyncState.RowState,
+                      selection  : RowSelectionVisible,
+                      startEdit  : Column ~=> StartEdit)
 
   implicit val rowPropReuse = Reusability.caseClass[RowProps]
 
@@ -203,7 +236,7 @@ object Table {
       .configure(shouldComponentUpdate)
       .build
 
-  def renderRow(p: RowProps) = {
+  def renderRow(p: RowProps): ReactTagOf[dom.html.TableRow] = {
     val row = p.row
 
     val rowStatus: ColumnRenderer.Status =
@@ -212,48 +245,60 @@ object Table {
     def selCellKeyDown(e: ReactKeyboardEventH): Callback =
       focusKeyHandlers(e)
 
-    val selectionCell =
-      p.cells match {
+    val td = <.td(*.cell(rowStatus))
 
-        case Cell.RowState.Empty | _: Cell.RowState.Cells =>
-          val sel = p.selection(row.sourceId)
-          <.td(
-            *.cell(rowStatus),
-            ^.onKeyDown ==> selCellKeyDown,
-            sel.onClick,
-            sel.checkbox(^.tabIndex := -1))
+    def renderRowNormal(cells: AsyncState.ColStates) = {
+      val sel = p.selection(row.sourceId)
 
-        case Cell.RowState.WholeRow(w) =>
-          w.status match {
-            case RemoteDataEditor.Locked =>
-              <.td(*.cell(rowStatus), w.render)
+      def selCell =
+        td(
+          ^.onKeyDown ==> selCellKeyDown,
+          sel.onClick,
+          sel.checkbox(^.tabIndex := -1))
 
-            case _ =>
-              // Currently, whole-row state is only used when a row is being deleted/restored.
-              // To save dev-time, if the RPC fails an alert popups asking to retry/cancel, thus this part of the code
-              // should only execute when the row is locked. Whole-row editing + failure won't occur.
-              dom.console.warn(w.toString)
-              <.td(*.cell(rowStatus))
-          }
-      }
+      def colCells =
+        p.crs.iterator.map { cr =>
+          val col = cr.column
+          val cp = CellProps(row, cr, p.editState get col, cells get col, p startEdit col)
+          CellComponent.withKey(col.key)(cp)
+        }.toReactNodeArray
 
-    val cols =
-      p.crs.toStream.map { cr =>
-        val col = cr.column
-        val cp = CellProps(row, cr, p cells col, p startEdit col)
-        CellComponent.withKey(col.key)(cp)
-      }
+      <.tr(selCell, colCells)
+    }
 
-    <.tr(selectionCell, cols)
+    def renderRowLocked = {
+      def colCells =
+        p.crs.iterator.map { cr =>
+          val col = cr.column
+          val cp = CellProps(row, cr, None, None, noEdit)
+          CellComponent.withKey(col.key)(cp)
+        }.toReactNodeArray
+
+      <.tr(td(renderLocked), colCells)
+    }
+
+    p.asyncState match {
+      case RowState(None        , cells) => renderRowNormal(cells)
+      case RowState(Some(Locked), _    ) => renderRowLocked
+      case RowState(Some(s)     , _    ) =>
+        // Currently, whole-row state is only used when a row is being deleted/restored.
+        // To save dev-time, if the RPC fails an alert popups asking to retry/cancel, thus this part of the code
+        // should only execute when the row is locked. Whole-row editing + failure won't occur.
+        dom.console.warn(s.toString)
+        <.tr(
+          td(^.colSpan := (p.crs.length + 1),
+            renderAsyncState(s)))
+    }
   }
 
   // ===================================================================================================================
   // Cells
 
-  case class CellProps(row      : Row,
-                       cr       : ColumnRenderer,
-                       cellState: Cell.State,
-                       startEdit: TCB.Finally ~=> Callback)
+  case class CellProps(row        : Row,
+                       cr         : ColumnRenderer,
+                       cellEditor : Option[CellEditor],
+                       asyncState : AsyncState.Single,
+                       startEdit  : StartEdit)
 
   implicit val cellPropReuse = Reusability.caseClass[CellProps]
 
@@ -289,15 +334,24 @@ object Table {
       )
 
     def startEdit: Callback =
-      $.props >>= (_ startEdit TCB.Finally(domNode.map(_.focus())))
+      $.props >>= (_ startEdit domNode.map(_.focus()))
 
     def render(p: CellProps) = {
+      val col = p.cr.column
       val (status, roView) = p.cr.render(p.row)
+      // TODO roView should be non-strict or a fn
+
+      def editView: Option[ReactElement] =
+        p.cellEditor.flatMap(_.render(p.row, col))
+
       cellBase(
         *.cell(status),
         ^.onDblClick --> startEdit,
         ^.onKeyDown ==> onKeyDown,
-        p.cellState.fold(roView)(_.render))
+        p.asyncState match {
+          case None    => editView getOrElse[ReactElement] roView
+          case Some(s) => renderAsyncState(s): ReactElement
+        })
     }
   }
 }

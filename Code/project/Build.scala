@@ -296,8 +296,10 @@ object ShipReq extends Build {
       private val devMap = {
         val t = w / "dev"
         val js = s"${sPrefix}fastopt.js"
-        Map(s/js -> t/tName,
-            s/(js + ".map") -> t/(tName + ".map"))
+        val sourceMap = js + ".map"
+        Map(
+          s/js -> t/tName,
+          s/sourceMap -> t/sourceMap) // Can't rename the sourcemap without changing it at the end of the JS
       }
       private val releaseMap =
         Map(s/s"${sPrefix}opt.js" -> w/"a"/tName)

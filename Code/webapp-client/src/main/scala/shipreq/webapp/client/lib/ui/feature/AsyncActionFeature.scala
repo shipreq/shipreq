@@ -35,7 +35,7 @@ object AsyncActionFeature {
       <.button("Retry", ^.onClick --> retry)
 
     def resumeEditButton =
-      <.button("Cancel", ^.onClick --> resumeEdit)
+      <.button("Abort", ^.onClick --> resumeEdit)
   }
 
   def renderLocked =
@@ -110,12 +110,20 @@ object AsyncActionFeature {
   object Table {
     import Keyed.{State => State1D}
 
-    case class RowState[C, +F](rowStatus: Option[Status[F]], cols: State1D[C, F])
-
     type State[R, C, +F] = Map[R, RowState[C, F]]
+
+    case class RowState[C, +F](rowStatus: Option[Status[F]], cols: State1D[C, F])
 
     def initState[R: UnivEq, C: UnivEq]: State[R, C, Nothing] =
       UnivEq.emptyMap
+
+    private[this] val _emptyRowState = RowState[Any, Nothing](None, Map.empty)
+
+    def emptyRowState[C]: RowState[C, Nothing] =
+      _emptyRowState.asInstanceOf[RowState[C, Nothing]]
+
+    def get[R, C, F](s: State[R, C, F])(r: R): RowState[C, F] =
+      s.getOrElse(r, emptyRowState)
 
     final class Feature[S, R, C, F]($: CompState.WriteAccess[S], lens: Lens[S, State[R, C, F]]) {
       private val rowState_rowStatus = GenLens[RowState[C, F]](_.rowStatus)
@@ -137,10 +145,36 @@ object AsyncActionFeature {
       def rowStatus(r: R)(s: S): Option[Status[F]] =
         rowState(r)(s).rowStatus
 
+      def hasState_?(r: R, c: C)(s: S): Boolean = {
+        val rs = rowState(r)(s)
+        rs.rowStatus.isDefined || rs.cols.get(c).isDefined
+      }
+
       def wrapAsync(r: R, call: AsyncCall[F]): Callback = {
         val l = lensR(r) ^|-> rowState_rowStatus
         genericWrapAsync[F]($ modState l.set(_), call)
       }
+    }
+
+    def Fix[R: UnivEq, C: UnivEq, F] = new Fix[R, C, F]
+    final class Fix[R: UnivEq, C: UnivEq, F] {
+      type Row        = R
+      type Col        = C
+      type Failure    = F
+      type TableState = AsyncActionFeature.Table.State[R, C, F]
+      type RowState   = AsyncActionFeature.Table.RowState[C, F]
+      type ColStates  = State1D[C, F]
+      type Single     = AsyncActionFeature.Single.State[F]
+      type Status     = AsyncActionFeature.Status[F]
+      type Feature[S] = AsyncActionFeature.Table.Feature[S, R, C, F]
+
+      def initState = Table.initState[R, C]
+
+      def Feature[S]($: CompState.WriteAccess[S])(lens: Lens[S, State[R, C, F]]): Feature[S] =
+        new AsyncActionFeature.Table.Feature($, lens)
+
+      def get(s: State[R, C, F])(r: R): RowState =
+        Table.get(s)(r)
     }
   }
 }

@@ -10,9 +10,27 @@ import shipreq.webapp.client.app.ui.ProjectWidgets
 
 object DataReusability {
 
+  implicit class ReusabilityObjExt(private val r: Reusability.type) extends AnyVal {
+    def byUnivEq[A: UnivEq]: Reusability[A] =
+      Reusability.by_==[A]
+
+    def byUnivEq[A, B: UnivEq](f: A => B): Reusability[A] =
+      byUnivEq[B] contramap f
+
+    def byRefOrUnivEq[A <: AnyRef : UnivEq]: Reusability[A] =
+      Reusability.byRef[A] || byUnivEq[A]
+
+    def byRefOrUnivEq[A <: AnyRef, B: UnivEq](f: A => B): Reusability[A] =
+      Reusability.byRef[A] || byUnivEq(f)
+  }
+
   implicit val reusabilityProject: Reusability[Project] = Reusability.byRef
 
   implicit val reusabilityProjectConfig: Reusability[ProjectConfig] = Reusability.byRef
+
+  implicit val reusabilityReqCodeTrie: Reusability[ReqCode.Trie] = Reusability.byRef
+
+  implicit val reusabilityReqCodeValue: Reusability[ReqCode.Value] = Reusability.byRefOrUnivEq
 
   implicit val reusabilityProjectWidgets: Reusability[ProjectWidgets] = Reusability.byRef
 
@@ -31,12 +49,4 @@ object DataReusability {
     Reusability.by(_.whole)
 
   implicit def reusabilityRemote[Fn <: RemoteFn.Instance] = Reusability.by((_: Fn).key)
-
-  implicit class ReusabilityObjExt(private val r: Reusability.type) extends AnyVal {
-    def byUnivEq[A: UnivEq]: Reusability[A] =
-      Reusability.by_==[A]
-
-    def byUnivEq[A, B: UnivEq](f: A => B): Reusability[A] =
-      byUnivEq[B] contramap f
-  }
 }

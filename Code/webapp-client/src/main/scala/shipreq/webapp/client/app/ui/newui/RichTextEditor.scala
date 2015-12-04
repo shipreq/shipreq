@@ -14,7 +14,6 @@ import shipreq.webapp.client.app.ui.ProjectWidgets
 import shipreq.webapp.client.app.ui.Style.{reqtable => *} // TODO Not anymore
 import shipreq.webapp.client.app.ui.reqtable.edit.AutoComplete
 import shipreq.webapp.client.data.DataReusability._
-import shipreq.webapp.client.lib.ui.KeyHandlers
 import shipreq.webapp.client.lib.ui.feature._
 import shipreq.webapp.client.lib.{Contextualise, HideDead}
 import Text.Equality._
@@ -49,8 +48,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
                    edit          : ExternalVar[String],
                    preview       : PreviewFeature.ForChild,
                    preEditValue  : Option[text.OptionalText],
-                   commit        : text.OptionalText => Callback,
-                   keyHandlers   : KeyHandlers = KeyHandlers.empty) {
+                   tagMod        : Option[text.OptionalText] => TagMod) {
 
     val richText = text.parse(project)(edit.value)
     val validated = EditValidationFeature(Validators.genericRichText(plainText, richText))
@@ -59,7 +57,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
   private val editorRef = Ref[dom.html.TextArea]("i")
 
   // This is an editor - you can't edit Dead stuff. Assume all content is Live.
-  @inline private def hardcodedLive = Live
+  @inline def hardcodedLive = Live
 
   val liveCorrect: EndoFn[String] =
     if (text.singleLine)
@@ -79,19 +77,17 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
       e => $.props >>= (_.edit.set(liveCorrect(e.target.value)))
 
     def render(p: Props) = {
-      def keyHandlers: KeyHandlers =
-        p.keyHandlers + p.validated.commitByKeyboard(p.commit, text.singleLine)
-
       def editor =
         <.textarea(
           *.cellEditor(p.validated.validity),
-          keyHandlers,
-          ^.ref := editorRef,
-          ^.value := p.edit.value,
+          p.tagMod(p.validated.validated),
+          ^.ref       := editorRef,
+          ^.value     := p.edit.value,
           ^.onChange ==> updateState)
 
       def preview =
         <.div(
+          ^.ref := "p",
           "Preview",
           <.div(*.textEditPreview, p.projectWidgets.format(hardcodedLive, p.richText)))
 
@@ -103,7 +99,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
   }
 
   val Component =
-    ReactComponentB[Props]("TagEditor")
+    ReactComponentB[Props]("RichTextEditor:" + name)
       .renderBackend[Backend]
       // TODO .configure(Reusability.shouldComponentUpdate)
       .configure(AutoCompleteFeature.installBP(editorRef, _.pxAutoComplete.value(), _.edit.set))
@@ -122,7 +118,7 @@ object RichTextEditor {
 
   object ReqCodeGroupTitle extends RichTextEditor("RCGT", Text.ReqCodeGroupTitle)
 
-  object DeletionReason extends RichTextEditor("DR", Text.DeletionReason)
+  object CustomTextField extends RichTextEditor("CTF", Text.CustomTextField)
 
-  final class CustomTextField(fid: CustomField.Text.Id) extends RichTextEditor("CTF", Text.CustomTextField)
+  object DeletionReason extends RichTextEditor("DR", Text.DeletionReason)
 }

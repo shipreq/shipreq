@@ -10,9 +10,8 @@ import scalaz.{\/-, -\/, \/}
 import scalaz.std.string.stringInstance
 import scalaz.syntax.equal._
 import shapeless.syntax.singleton._
-import shipreq.base.util.{MTrie, univEqOps}
+import shipreq.base.util._
 import shipreq.base.util.MTrie.Ops
-import shipreq.base.util.{NonEmptyVector, Util}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{TextSearch, PlainText, Grammar}

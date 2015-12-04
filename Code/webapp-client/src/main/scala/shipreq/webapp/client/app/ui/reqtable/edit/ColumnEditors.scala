@@ -17,6 +17,7 @@ object ColumnEditors {
     _ => None
 }
 
+@deprecated("","")
 final class ColumnEditors(project        : Px[Project],
                           plainText      : Px[PlainText.ForProject],
                           projectWidgets : Px[ProjectWidgets],
@@ -157,6 +158,18 @@ final class ColumnEditors(project        : Px[Project],
     val iv = p.reqTags(id)
     TagEditor.edit(id, iv, p, l, _)
   }
+//  val tags2 = mkEditor[GenericReqRow, String] { r =>
+//    import shipreq.webapp.client.app.ui.newui.{TagEditor => T}
+//
+//    val p  = project.value()
+//    val l = T.Lookup.notUsedInTagFields(p)
+//    T.Props(     ,//   edit       : ExternalVar[String],
+//            l     ,//  lookup     : Lookup,
+//                 ,//  commit     : Set[ApplicableTagId] => Callback,
+//                 )//  keyHandlers: KeyHandlers)
+//
+//    updContentOnCommit => ???
+//  }
 
   def cfTag(fid: CustomField.Tag.Id) = mkEditor[GenericReqRow, String] { r =>
     val id = r.req.id
