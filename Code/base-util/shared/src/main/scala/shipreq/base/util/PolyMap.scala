@@ -1,7 +1,8 @@
 package shipreq.base.util
 
+/*
 import monocle.{Iso, Lens}
-import PolyMap._
+import PolyMap.Value
 
 /**
  * A map where keys are polymorphic and the value type depends on the key type.
@@ -121,3 +122,4 @@ object PolyMap {
     }
   }
 }
+*/

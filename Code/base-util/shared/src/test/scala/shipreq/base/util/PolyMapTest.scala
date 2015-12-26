@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+/*
 import utest._
 
 object PolyMapTest extends TestSuite {
@@ -35,3 +36,4 @@ object PolyMapTest extends TestSuite {
     assert(m.isEmpty)
   }
 }
+*/

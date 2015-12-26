@@ -15,6 +15,10 @@ import shipreq.webapp.client.app.ui.ProjectWidgets
 import shipreq.webapp.client.lib.TCB
 import shipreq.webapp.client.lib.ui.KeyHandlers
 
+// =====================================================================================================================
+// Interfaces (i.e. the entire point of this file)
+// =====================================================================================================================
+
 trait CellEditors {
   def startEdit(row: Row, col: Column, focus: => Callback): Option[Callback]
 }
@@ -22,6 +26,10 @@ trait CellEditors {
 trait CellEditor {
   def render(row: Row, col: Column): Option[ReactElement]
 }
+
+// =====================================================================================================================
+// Implementation
+// =====================================================================================================================
 
 final class CellEditorsImpl[S]($               : CompState.Access[S],
                                editLens        : Lens[S, EditState.Table],
@@ -45,25 +53,24 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
   private type CellLens = Lens[S, Option[CellEditor]]
 
   private trait CellEditorImpl[State] extends CellEditor { this: State =>
-    val rowId: Row.SourceId
-    val lens: CellLens
+    val rowId   : Row.SourceId
+    val lens    : CellLens
+    val rendered: Some[ReactElement]
 
     final def abort: Callback =
       $.modState(lens set None)
 
-    def commit(cmd: UpdateContentCmd): Callback =
+    final def commit(cmd: UpdateContentCmd): Callback =
       async.wrapAsync(rowId, (s, f) => saveIO(cmd, s >> abort, f))
 
-    def commitOrIgnore[A, B](a: A)(filterIgnorable: A => Option[B])(cmd: B => UpdateContentCmd): Callback =
+    final def commitOrIgnore[A, B](a: A)(filterIgnorable: A => Option[B])(cmd: B => UpdateContentCmd): Callback =
       filterIgnorable(a) match {
         case Some(b) => commit(cmd(b))
         case None    => abort
       }
 
-    def commitAndAbort[A, B](o: Option[A])(commitFn: A => Callback) =
+    final def commitAndAbort[A, B](o: Option[A])(commitFn: A => Callback) =
       KeyHandlers.commit(o map commitFn, true) + KeyHandlers.abort(abort)
-
-    val rendered: Some[ReactElement]
 
     final override def render(row: Row, col: Column) =
       if (areEditPreConditionsSatisfied(row, col))
@@ -101,40 +108,36 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
 
       case r: GenericReqRow =>
         col match {
-          case Column.Code           => ReqCodeCellEditor.forReq(r)
-          case Column.Title          => RichTextCellEditor.GenericReqTitle(r)
-          case Column.Tags           => TagCellEditor(r, None)
-          case Column.ReqType        => ReqTypeCellEditor(r)
-          case Column.ImplicationSrc => ImpCellEditor(r, col, Row.implicationSrc)
-          case Column.ImplicationTgt => ImpCellEditor(r, col, Row.implicationTgt)
+          case Column.Code                                           => ForReqCodes.forReq(r)
+          case Column.Title                                          => ForRichText.GenericReqTitle(r)
+          case Column.Tags                                           => ForTags(r, None)
+          case Column.ReqType                                        => ForReqType(r)
+          case Column.ImplicationSrc                                 => ForImplications(r, col, Row.implicationSrc)
+          case Column.ImplicationTgt                                 => ForImplications(r, col, Row.implicationTgt)
           case Column.Pubid
-             | Column.DeletionReason => noEditor
-          case Column.CustomField(f, _) =>
-            f match {
-              case id: CustomField.Text       .Id => RichTextCellEditor.CustomTextField(r, id)
-              case id: CustomField.Tag        .Id => TagCellEditor(r, id.some)
-              case id: CustomField.Implication.Id => ImpCellEditor(r, col, id)
-            }
+             | Column.DeletionReason                                 => noEditor
+          case Column.CustomField(id: CustomField.Text       .Id, _) => ForRichText.CustomTextField(r, id)
+          case Column.CustomField(id: CustomField.Tag        .Id, _) => ForTags(r, id.some)
+          case Column.CustomField(id: CustomField.Implication.Id, _) => ForImplications(r, col, id)
         }
 
       case r: ReqCodeGroupRow =>
         col match {
-          case Column.Code           => ReqCodeCellEditor.forGroup(r)
-          case Column.Title          => RichTextCellEditor.ReqCodeGroupTitle(r)
+          case Column.Code              => ForReqCodes.forGroup(r)
+          case Column.Title             => ForRichText.ReqCodeGroupTitle(r)
           case Column.Pubid
              | Column.ReqType
              | Column.Tags
              | Column.ImplicationSrc
              | Column.ImplicationTgt
              | Column.DeletionReason
-             | _: Column.CustomField => noEditor
+             | Column.CustomField(_, _) => noEditor
         }
     }
   }
 
   // ===================================================================================================================
-
-  object ReqCodeCellEditor {
+  object ForReqCodes {
     import shipreq.webapp.client.app.ui.newui.ReqCodeEditor
 
     def forReq(row: GenericReqRow): StartEdit = {
@@ -161,11 +164,11 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
       lens set is.some
     }
 
-    private case class StateSingle(text: String,
-                                   rowId: Row.SourceId,
+    private case class StateSingle(text   : String,
+                                   rowId  : Row.SourceId,
                                    initial: ReqCode.Value,
-                                   cmd: ReqCode.Value => UpdateContentCmd,
-                                   lens: CellLens) extends CellEditorImpl[StateSingle] {
+                                   cmd    : ReqCode.Value => UpdateContentCmd,
+                                   lens   : CellLens) extends CellEditorImpl[StateSingle] {
 
       def evar = ExternalVar(text)(s => $.modState(lens set copy(text = s).some))
 
@@ -178,11 +181,11 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
         Some(ReqCodeEditor.Single.Component(props))
     }
 
-    private case class StateMultiple(text: String,
-                                   rowId: Row.SourceId,
-                                   initial: Set[ReqCode.Value],
-                                   cmd: NESD[ReqCode.Value] => UpdateContentCmd,
-                                   lens: CellLens) extends CellEditorImpl[StateMultiple] {
+    private case class StateMultiple(text   : String,
+                                     rowId  : Row.SourceId,
+                                     initial: Set[ReqCode.Value],
+                                     cmd    : NESD[ReqCode.Value] => UpdateContentCmd,
+                                     lens   : CellLens) extends CellEditorImpl[StateMultiple] {
 
       def evar = ExternalVar(text)(s => $.modState(lens set copy(text = s).some))
 
@@ -197,16 +200,15 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
   }
 
   // ===================================================================================================================
-
-  object ReqTypeCellEditor {
+  object ForReqType {
     import shipreq.webapp.client.app.ui.newui.ReqTypeSelector
     import ReqTypeSelector.A
 
     val pxCustomReqTypes = ReqTypeSelector.pxCustomReqTypes(pxProject)
 
     def apply(row: GenericReqRow): StartEdit = {
-      val id = row.req.id
-      val initial = pxProject.value().config.reqTypeC(row.req.reqTypeId)
+      val id        = row.req.id
+      val initial   = pxProject.value().config.reqTypeC(row.req.reqTypeId)
       val pxChoices = ReqTypeSelector.pxChoices(initial, pxCustomReqTypes)
 
       val lens: CellLens =
@@ -217,11 +219,11 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
     }
 
     private case class State(ignoreInitial: A => Option[A],
-                             edit: A,
-                             pxChoices: Px[NonEmptySet[A]],
-                             cmd: A => SetGenericReqType,
-                             rowId: Row.SourceId,
-                             lens: CellLens) extends CellEditorImpl[State] {
+                             edit         : A,
+                             pxChoices    : Px[NonEmptySet[A]],
+                             cmd          : A => SetGenericReqType,
+                             rowId        : Row.SourceId,
+                             lens         : CellLens) extends CellEditorImpl[State] {
 
       def evar = ExternalVar(edit)(e => $.modState(lens set copy(edit = e).some))
 
@@ -237,7 +239,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
 
   // ===================================================================================================================
 
-  object ImpCellEditor {
+  object ForImplications {
     import shipreq.webapp.client.app.ui.newui.ImplicationEditor
     import ImplicationEditor.{Lookup, ValidationFn}
 
@@ -282,12 +284,12 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
       lens set is.some
     }
 
-    private case class State(text: String,
-                             cmd: NESD[ReqId] => UpdateContentCmd,
-                             rowId: Row.SourceId,
+    private case class State(text  : String,
+                             cmd   : NESD[ReqId] => UpdateContentCmd,
+                             rowId : Row.SourceId,
                              lookup: Px[Lookup],
-                             valFn: Px[ValidationFn],
-                             lens: CellLens) extends CellEditorImpl[State] {
+                             valFn : Px[ValidationFn],
+                             lens  : CellLens) extends CellEditorImpl[State] {
 
       def evar = ExternalVar(text)(s => $.modState(lens set copy(text = s).some))
 
@@ -305,17 +307,15 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
 
   // ===================================================================================================================
 
-  object TagCellEditor {
+  object ForTags {
     import shipreq.webapp.client.app.ui.newui.TagEditor
     import TagEditor.Lookup
 
     def apply(row: GenericReqRow, fid: Option[CustomField.Tag.Id]): StartEdit = {
-
-      val lookupFn = fid.fold[Project => Lookup](Lookup.notUsedInTagFields)(Lookup.forTagField)
-
-      val p = pxProject.value()
-      val lookup = lookupFn(p)
-      val id = row.req.id
+      val lookupFn        = fid.fold[Project => Lookup](Lookup.notUsedInTagFields)(Lookup.forTagField)
+      val p               = pxProject.value()
+      val lookup          = lookupFn(p)
+      val id              = row.req.id
       val (initial, text) = TagEditor.initialValues(p.reqTags(id), p.config, lookup)
 
       val lens: CellLens =
@@ -325,12 +325,12 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
       lens set is.some
     }
 
-    private case class State(text: String,
-                             cmd: NESD[ApplicableTagId] => PatchReqTags,
-                             rowId: Row.SourceId,
+    private case class State(text   : String,
+                             cmd    : NESD[ApplicableTagId] => PatchReqTags,
+                             rowId  : Row.SourceId,
                              initial: Set[ApplicableTagId],
-                             lookup: Lookup, // TODO Should make dynamic
-                             lens: CellLens) extends CellEditorImpl[State] {
+                             lookup : Lookup, // TODO Should make dynamic
+                             lens   : CellLens) extends CellEditorImpl[State] {
 
       def evar = ExternalVar(text)(s => $.modState(lens set copy(text = s).some))
 
@@ -346,74 +346,76 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
 
   // ===================================================================================================================
 
-  import shipreq.webapp.client.app.ui.newui.RichTextEditor
+  object ForRichText {
+    import shipreq.webapp.client.app.ui.newui.RichTextEditor
 
-  abstract class RichTextCellEditor[T <: Text.Generic](val editor: RichTextEditor[T]) {
-    val T: editor.text.type = editor.text
+    abstract class Base[T <: Text.Generic](val editor: RichTextEditor[T]) {
+      val T: editor.text.type = editor.text
 
-    def startEdit(rowId: Row.SourceId,
-                  col: Column,
-                  cmd: T.OptionalText => UpdateContentCmd,
-                  initialValue: T.OptionalText): StartEdit = {
+      def startEdit(rowId       : Row.SourceId,
+                    col         : Column,
+                    cmd         : T.OptionalText => UpdateContentCmd,
+                    initialValue: T.OptionalText): StartEdit = {
 
-      def it = pxPlainText.value().format(editor.hardcodedLive, initialValue)
+        val it: String =
+          pxPlainText.value().format(editor.hardcodedLive, initialValue)
 
-      val lens: CellLens =
-        editLens ^|-> EditState.atCell(rowId, col)
+        val lens: CellLens =
+          editLens ^|-> EditState.atCell(rowId, col)
 
-      val is = new State(it, rowId, cmd, Some(initialValue), lens)
-      lens set is.some
+        val is = new State(it, rowId, cmd, Some(initialValue), lens)
+        lens set is.some
+      }
+
+      private case class State(text   : String,
+                               rowId  : Row.SourceId,
+                               cmd    : T.OptionalText => UpdateContentCmd,
+                               initial: Some[T.OptionalText],
+                               lens   : CellLens) extends CellEditorImpl[State] {
+
+        def evar = ExternalVar(text)(s => $.modState(lens set copy(text = s).some))
+
+        def tagMod: Option[T.OptionalText] => TagMod =
+          commitAndAbort(_)(t => commit(cmd(t)))
+
+        def preview = ??? // TODO ///////////////////////////////////////////////////////////////////////////////////
+
+        import Px.AutoValue._
+
+        def props = editor.Props(
+          pxProject, pxPlainText, pxTextSearch, pxProjectWidgets,
+          evar, preview, initial, tagMod)
+
+        override val rendered =
+          Some(editor.Component(props))
+      }
     }
 
-    private case class State(text: String,
-                             rowId: Row.SourceId,
-                             cmd: T.OptionalText => UpdateContentCmd,
-                             initial: Some[T.OptionalText],
-                             lens: CellLens) extends CellEditorImpl[State] {
-
-      def evar = ExternalVar(text)(s => $.modState(lens set copy(text = s).some))
-
-      def tagMod: Option[T.OptionalText] => TagMod =
-        commitAndAbort(_)(t => commit(cmd(t)))
-
-      def preview = ??? // TODO ///////////////////////////////////////////////////////////////////////////////////
-
-      import Px.AutoValue._
-
-      def props = editor.Props(pxProject, pxPlainText, pxTextSearch, pxProjectWidgets,
-        evar, preview, initial, tagMod)
-
-      override val rendered =
-        Some(editor.Component(props))
-    }
-  }
-
-  object RichTextCellEditor {
-    object GenericReqTitle extends RichTextCellEditor(RichTextEditor.GenericReqTitle) {
+    object GenericReqTitle extends Base(RichTextEditor.GenericReqTitle) {
       def apply(r: GenericReqRow): StartEdit =
         startEdit(
-          r.sourceId,
-          Column.Title,
-          SetGenericReqTitle(r.req.id, _),
-          r.req.title)
+          rowId        = r.sourceId,
+          col          = Column.Title,
+          cmd          = SetGenericReqTitle(r.req.id, _),
+          initialValue = r.req.title)
     }
 
-    object ReqCodeGroupTitle extends RichTextCellEditor(RichTextEditor.ReqCodeGroupTitle) {
+    object ReqCodeGroupTitle extends Base(RichTextEditor.ReqCodeGroupTitle) {
       def apply(r: ReqCodeGroupRow): StartEdit =
         startEdit(
-          r.sourceId,
-          Column.Title,
-          SetReqCodeGroupTitle(r.reqCodeId, _),
-          r.group.title)
+          rowId        = r.sourceId,
+          col          = Column.Title,
+          cmd          = SetReqCodeGroupTitle(r.reqCodeId, _),
+          initialValue = r.group.title)
     }
 
-    object CustomTextField extends RichTextCellEditor(RichTextEditor.CustomTextField) {
+    object CustomTextField extends Base(RichTextEditor.CustomTextField) {
       def apply(r: GenericReqRow, id: CustomField.Text.Id): StartEdit =
         startEdit(
-          r.sourceId,
-          Column.CustomField(id, Live),
-          SetCustomTextField(r.req.id, id, _),
-          ReqData.textAt(id, r.req.id).get(pxProject.value().reqText))
+          rowId        = r.sourceId,
+          col          = Column.CustomField(id, Live),
+          cmd          = SetCustomTextField(r.req.id, id, _),
+          initialValue = ReqData.textAt(id, r.req.id).get(pxProject.value().reqText))
     }
   }
 }

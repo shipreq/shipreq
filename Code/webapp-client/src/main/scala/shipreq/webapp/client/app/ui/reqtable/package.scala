@@ -3,7 +3,7 @@ package shipreq.webapp.client.app.ui
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
 import monocle.Lens
-import shipreq.base.util.{UnivEq, PolyMap}
+import shipreq.base.util.UnivEq
 import shipreq.webapp.client.lib.TCB
 import shipreq.webapp.client.lib.ui.feature.AsyncActionFeature
 
@@ -28,7 +28,6 @@ package object reqtable {
     shipreq.webapp.client.app.ui.shouldComponentUpdate[P, S, B, N]
     // Reusability.shouldComponentUpdateWithOverlay[P, S, B, N]
 
-  //val EditState = PolyMap.Table.Fix[Row.SourceId, Column, CellEditor]
   object EditState {
     type R = Row.SourceId
     type C = Column

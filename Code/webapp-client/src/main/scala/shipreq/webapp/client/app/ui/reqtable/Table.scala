@@ -5,7 +5,7 @@ import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.extra._
 import org.scalajs.dom
 import org.scalajs.dom.ext.KeyCode
-import shipreq.base.util.{PolyMap, NonEmptyVector}
+import shipreq.base.util.NonEmptyVector
 import shipreq.base.util.ScalaExt.EndoFn
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.app.ui.DragToReorder

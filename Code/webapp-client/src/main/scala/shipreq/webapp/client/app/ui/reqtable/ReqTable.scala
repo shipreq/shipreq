@@ -6,7 +6,6 @@ import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import scalaz.{\/-, -\/}
 import scalaz.syntax.equal._
-import shipreq.base.util.PolyMap
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.VerifiedEvents
