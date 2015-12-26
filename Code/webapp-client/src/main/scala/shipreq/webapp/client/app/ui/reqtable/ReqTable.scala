@@ -18,7 +18,6 @@ import shipreq.webapp.client.data.DataReusability._
 import shipreq.webapp.client.lib.FilterDead
 import shipreq.webapp.client.lib.ui.feature._
 import shipreq.webapp.client.protocol.ClientProtocol
-import edit.ColumnEditors
 
 object ReqTable {
 
@@ -47,7 +46,7 @@ object ReqTable {
                    creation    : CreationInterface.State,
                    editStates  : EditState.Table,
                    asyncStates : AsyncState.TableState,
-                   //focusData  : PreviewFeature.FocusData[],
+                   previewState: PreviewFeature.State[FocusId],
                    cellStates  : Cell.TableState,
                    modal       : Modal.State) {
 
@@ -87,6 +86,7 @@ object ReqTable {
         CreationInterface .initState,
         EditState         .empty,
         AsyncState        .initState,
+        PreviewFeature    .initState,
         Cell              .emptyTableState,
         Modal             .none)
       p.filterSpec.foreach(f => s = s setFilterSpec f)
@@ -187,10 +187,13 @@ object ReqTable {
     val filterEditor: Px[ReusableVal[ReactElement]] =
       filterState map filterProps map ReusableVal.renderComponent(FilterEditor.Component)
 
+    val previewFeature = new PreviewFeature($, State.previewState)
+
     val cellEditors: CellEditors =
       new CellEditorsImpl[State]($,
                                  State.editStates,
                                  State.asyncStates,
+                                 previewFeature,
                                  project,
                                  plainText,
                                  widgets,

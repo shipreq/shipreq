@@ -9,7 +9,8 @@ import PreviewFeature.{FocusData, ForChild}
  * Preview available:
  * - when editing and focused and (dirty or has been edited since receiving focus)
  */
-class PreviewFeature[S, E, K]($: CompState.WriteAccess[S], lens: Lens[S, Option[FocusData[K]]])(implicit EK: Equal[K]) {
+final class PreviewFeature[S, K]($: CompState.WriteAccess[S], lens: Lens[S, Option[FocusData[K]]])
+                                (implicit EK: Equal[K]) {
 
   private val hasKey: K => FocusData[K] => Boolean =
     if (EK.equalIsNatural)
@@ -41,6 +42,12 @@ class PreviewFeature[S, E, K]($: CompState.WriteAccess[S], lens: Lens[S, Option[
   def showPreview_?(focusData: Option[FocusData[K]], isDirty: => Boolean): Boolean =
     focusData.exists(_.changedSinceFocus || isDirty)
 
+  def state(s: S): Option[FocusData[K]] =
+    lens.get(s)
+
+  def forChild(k: K, s: S): ForChild =
+    forChild(k, state(s))
+
   def forChild(k: K, fi: Option[FocusData[K]]): ForChild = {
     val self = this
     new ForChild {
@@ -54,6 +61,11 @@ class PreviewFeature[S, E, K]($: CompState.WriteAccess[S], lens: Lens[S, Option[
 }
 
 object PreviewFeature {
+
+  type State[+K] = Option[FocusData[K]]
+
+  def initState: State[Nothing] =
+    None
 
   case class FocusData[+K](key: K, changedSinceFocus: Boolean)
 

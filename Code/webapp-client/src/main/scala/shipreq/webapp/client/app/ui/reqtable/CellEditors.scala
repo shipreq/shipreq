@@ -14,6 +14,7 @@ import shipreq.webapp.base.text.{PlainText, Text, TextSearch}
 import shipreq.webapp.client.app.ui.ProjectWidgets
 import shipreq.webapp.client.lib.TCB
 import shipreq.webapp.client.lib.ui.KeyHandlers
+import shipreq.webapp.client.lib.ui.feature.PreviewFeature
 
 // =====================================================================================================================
 // Interfaces (i.e. the entire point of this file)
@@ -34,6 +35,7 @@ trait CellEditor {
 final class CellEditorsImpl[S]($               : CompState.Access[S],
                                editLens        : Lens[S, EditState.Table],
                                asyncLens       : Lens[S, AsyncState.TableState],
+                               previewFeature  : PreviewFeature[S, FocusId],
                                pxProject       : Px[Project],
                                pxPlainText     : Px[PlainText.ForProject],
                                pxProjectWidgets: Px[ProjectWidgets],
@@ -55,7 +57,10 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
   private trait CellEditorImpl[State] extends CellEditor { this: State =>
     val rowId   : Row.SourceId
     val lens    : CellLens
-    val rendered: Some[ReactElement]
+    val rendered: CallbackTo[Some[ReactElement]]
+
+    protected def renderOnce[A](a: A)(implicit e: A => ReactElement): CallbackTo[Some[ReactElement]] =
+      renderOnce(e(a))
 
     final def abort: Callback =
       $.modState(lens set None)
@@ -74,7 +79,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
 
     final override def render(row: Row, col: Column) =
       if (areEditPreConditionsSatisfied(row, col))
-        rendered
+        rendered.runNow() // TODO Would this not mess with reusability?
       else
         None
   }
@@ -178,7 +183,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
       def props = ReqCodeEditor.Single.Props(evar, initial.some, pxProject.value().reqCodes.trie, tagMod)
 
       override val rendered =
-        Some(ReqCodeEditor.Single.Component(props))
+        renderOnce(ReqCodeEditor.Single.Component(props))
     }
 
     private case class StateMultiple(text   : String,
@@ -195,7 +200,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
       def props = ReqCodeEditor.Multiple.Props(evar, initial.some, pxProject.value().reqCodes.trie, tagMod)
 
       override val rendered =
-        Some(ReqCodeEditor.Multiple.Component(props))
+        renderOnce(ReqCodeEditor.Multiple.Component(props))
     }
   }
 
@@ -233,7 +238,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
       def props = ReqTypeSelector.Props(evar, Some(TCB Abort abort), commit, pxChoices.value())
 
       override val rendered =
-        Some(ReqTypeSelector.Component(props))
+        renderOnce(ReqTypeSelector.Component(props))
     }
   }
 
@@ -301,7 +306,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
       def props = ImplicationEditor.Props(evar, lookup, valFn, pxTextSearch, tagMod)
 
       override val rendered =
-        Some(ImplicationEditor.Component(props))
+        renderOnce(ImplicationEditor.Component(props))
     }
   }
 
@@ -340,7 +345,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
       def props = TagEditor.Props(evar, lookup, tagMod)
 
       override val rendered =
-        Some(TagEditor.Component(props))
+        renderOnce(TagEditor.Component(props))
     }
   }
 
@@ -363,12 +368,15 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
         val lens: CellLens =
           editLens ^|-> EditState.atCell(rowId, col)
 
-        val is = new State(it, rowId, cmd, Some(initialValue), lens)
+        val focusId = FocusId.AtCell(rowId, col)
+
+        val is = new State(it, rowId, focusId, cmd, Some(initialValue), lens)
         lens set is.some
       }
 
       private case class State(text   : String,
                                rowId  : Row.SourceId,
+                               focusId: FocusId.AtCell,
                                cmd    : T.OptionalText => UpdateContentCmd,
                                initial: Some[T.OptionalText],
                                lens   : CellLens) extends CellEditorImpl[State] {
@@ -378,16 +386,21 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
         def tagMod: Option[T.OptionalText] => TagMod =
           commitAndAbort(_)(t => commit(cmd(t)))
 
-        def preview = ??? // TODO ///////////////////////////////////////////////////////////////////////////////////
+        def preview =
+          $.state.map(s =>
+            previewFeature.forChild(focusId, s))
 
         import Px.AutoValue._
 
-        def props = editor.Props(
-          pxProject, pxPlainText, pxTextSearch, pxProjectWidgets,
-          evar, preview, initial, tagMod)
+        def props =
+          preview.map(p =>
+            editor.Props(
+              pxProject, pxPlainText, pxTextSearch, pxProjectWidgets,
+              evar, p, initial, tagMod))
 
         override val rendered =
-          Some(editor.Component(props))
+          props.map(p =>
+            Some(editor.Component(p): ReactElement))
       }
     }
 

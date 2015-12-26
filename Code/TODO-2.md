@@ -1,10 +1,9 @@
-* Add PreviewFeature (there's a TODO in CellEditors)
-
 * Each editor should get focus when opened -
   either make the focus callback passed in though CellEditors.startEdit work,
   or use each component's didMount CB like ReqTypeSelector.
 
 * Test all the editors and all the expected features.
+  * Preview (including when multiple are open/dirty)
 
 * Clean up the new stuff. (Tidy up, reduce duplication)
 

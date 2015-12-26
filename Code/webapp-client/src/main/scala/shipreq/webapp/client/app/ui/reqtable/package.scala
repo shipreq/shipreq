@@ -28,6 +28,13 @@ package object reqtable {
     shipreq.webapp.client.app.ui.shouldComponentUpdate[P, S, B, N]
     // Reusability.shouldComponentUpdateWithOverlay[P, S, B, N]
 
+  sealed trait FocusId
+  object FocusId {
+    case class AtCell(row: Row.SourceId, col: Column) extends FocusId
+
+    implicit def equality: UnivEq[FocusId] = UnivEq.deriveAuto
+  }
+
   object EditState {
     type R = Row.SourceId
     type C = Column
