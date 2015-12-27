@@ -187,12 +187,14 @@ object ReqTable {
     val filterEditor: Px[ReusableVal[ReactElement]] =
       filterState map filterProps map ReusableVal.renderComponent(FilterEditor.Component)
 
+    val asyncFeature = AsyncState.Feature($)(State.asyncStates)
+
     val previewFeature = new PreviewFeature($, State.previewState)
 
     val cellEditors: CellEditors =
       new CellEditorsImpl[State]($,
                                  State.editStates,
-                                 State.asyncStates,
+                                 asyncFeature,
                                  previewFeature,
                                  project,
                                  plainText,
@@ -217,7 +219,7 @@ object ReqTable {
         project, rows, colName, colRnds, cellEditors, s.editStates,s.asyncStates, visibleSelection, modViewSettings)
 
       val selCtrlProps = SelectionCtrls.Props(
-        visibleSelection, cfg, rows, setModal, project, widgets, plainText, textSearch, saveIO, cellModifyFn)
+        visibleSelection, cfg, rows, setModal, project, widgets, plainText, textSearch, saveIO, asyncFeature)
 
       def mainScreen =
         <.div(

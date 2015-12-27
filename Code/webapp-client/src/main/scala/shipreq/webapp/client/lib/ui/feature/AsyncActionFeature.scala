@@ -1,6 +1,7 @@
 package shipreq.webapp.client.lib.ui.feature
 
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.extra.Reusability
 import japgolly.scalajs.react.vdom.prefix_<^._
 import monocle.macros.GenLens
 import monocle.Lens
@@ -125,7 +126,7 @@ object AsyncActionFeature {
     def get[R, C, F](s: State[R, C, F])(r: R): RowState[C, F] =
       s.getOrElse(r, emptyRowState)
 
-    final class Feature[S, R, C, F]($: CompState.WriteAccess[S], lens: Lens[S, State[R, C, F]]) {
+    final class Feature[S, R, C, F]($: CompState.WriteAccess[S], lens: Lens[S, State[R, C, F]]) extends FeatureAnon[R, C, F] {
       private val rowState_rowStatus = GenLens[RowState[C, F]](_.rowStatus)
       private val rowState_cols      = GenLens[RowState[C, F]](_.cols)
       private val emptyRowState      = RowState[C, F](None, Map.empty)
@@ -150,23 +151,42 @@ object AsyncActionFeature {
         rs.rowStatus.isDefined || rs.cols.get(c).isDefined
       }
 
-      def wrapAsync(r: R, call: AsyncCall[F]): Callback = {
+      override def wrapAsync(r: R, call: AsyncCall[F]): Callback = {
         val l = lensR(r) ^|-> rowState_rowStatus
         genericWrapAsync[F]($ modState l.set(_), call)
       }
+
+      override def setRowStatuses(rs: Iterable[R], value: => Option[Status[F]]): Callback =
+        Callback.byName {
+          val v = value
+          val f = rowState_rowStatus set v
+          val modAll = rs.iterator.map(lensR(_) modify f).foldLeft[S => S](identity)(_ compose _)
+          $ modState modAll
+        }
     }
+
+    trait FeatureAnon[R, C, F] {
+      def wrapAsync(r: R, call: AsyncCall[F]): Callback
+      def setRowStatuses(rs: Iterable[R], value: => Option[Status[F]]): Callback
+
+      final def setRowStatus(r: R, value: => Option[Status[F]]): Callback =
+        setRowStatuses(r :: Nil, value)
+    }
+
+     implicit def reusabilityTableFeatureAnon[R, C, F]: Reusability[FeatureAnon[R, C, F]] = Reusability.byRef
 
     def Fix[R: UnivEq, C: UnivEq, F] = new Fix[R, C, F]
     final class Fix[R: UnivEq, C: UnivEq, F] {
-      type Row        = R
-      type Col        = C
-      type Failure    = F
-      type TableState = AsyncActionFeature.Table.State[R, C, F]
-      type RowState   = AsyncActionFeature.Table.RowState[C, F]
-      type ColStates  = State1D[C, F]
-      type Single     = AsyncActionFeature.Single.State[F]
-      type Status     = AsyncActionFeature.Status[F]
-      type Feature[S] = AsyncActionFeature.Table.Feature[S, R, C, F]
+      type Row         = R
+      type Col         = C
+      type Failure     = F
+      type TableState  = AsyncActionFeature.Table.State[R, C, F]
+      type RowState    = AsyncActionFeature.Table.RowState[C, F]
+      type ColStates   = State1D[C, F]
+      type Single      = AsyncActionFeature.Single.State[F]
+      type Status      = AsyncActionFeature.Status[F]
+      type Feature[S]  = AsyncActionFeature.Table.Feature[S, R, C, F]
+      type FeatureAnon = AsyncActionFeature.Table.FeatureAnon[R, C, F]
 
       def initState = Table.initState[R, C]
 

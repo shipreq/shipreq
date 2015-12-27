@@ -1,11 +1,10 @@
-* SelectionCtrls needs updating.
-
 * Each editor should get focus when opened -
   either make the focus callback passed in though CellEditors.startEdit work,
   or use each component's didMount CB like ReqTypeSelector.
 
 * Manually test all the editors and all the expected features.
   * Preview (including when multiple are open/dirty)
+  * Create manual test script.
 
 * Fix unit tests.
 
@@ -13,6 +12,8 @@
   * Clean up imports in newui
   * Fix new TODOs in patch.
   * Fix any ???s in patch.
+
+* Reenable Reusability.
 
 * Remove:
   * RemoteDataEditor

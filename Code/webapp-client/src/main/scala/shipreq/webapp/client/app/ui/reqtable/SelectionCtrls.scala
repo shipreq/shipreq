@@ -7,11 +7,19 @@ import shipreq.base.util.{NonEmptyVector, NonEmptySet}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.{TextSearch, PlainText}
-import shipreq.webapp.client.app.ui.{RemoteDataEditor, ProjectWidgets, Modal}
+import shipreq.webapp.client.app.ui.{Modal, ProjectWidgets}
 import shipreq.webapp.client.data.DataReusability._
 import shipreq.webapp.client.lib.TCB
-import Cell.Loc
+import shipreq.webapp.client.lib.ui.feature.AsyncActionFeature.Locked
 
+/**
+  * Renders a bar that provides the user with information and action-buttons pertaining to the rows selected the
+  * ReqTable.
+  *
+  * Example:
+  *
+  *   15 items selected.  [Delete (14/15) →]  [Restore (1/15)]
+  */
 object SelectionCtrls {
 
   case class Props(sel          : RowSelectionVisible,
@@ -23,11 +31,11 @@ object SelectionCtrls {
                    projectText  : PlainText.ForProject,
                    textSearch   : TextSearch,
                    saveIO       : CallServer[UpdateContentCmd],
-                   modCellStates: Cell.ModifyFn)
+                   async        : AsyncState.FeatureAnon)
 
   // These two are only used in callbacks so are always reusable
-  private implicit def reusabilityPlainText : Reusability[PlainText.ForProject] = Reusability.always
-  private implicit def reusabilityTextSearch: Reusability[TextSearch]           = Reusability.always
+  private implicit def reusabilityPlainText : Reusability[PlainText.ForProject]  = Reusability.always
+  private implicit def reusabilityTextSearch: Reusability[TextSearch]            = Reusability.always
 
   implicit def reuseProps: Reusability[Props] = Reusability.caseClass
 
@@ -82,13 +90,13 @@ object SelectionCtrls {
     }
   }
 
-  def locsOfReqs(ids: Iterator[ReqId]): Iterator[Loc] =
+  def locsOfReqs(ids: Iterator[ReqId]): Iterator[AsyncState.Row] =
     ids.map {
-      case i: GenericReqId => Loc(Row.GenericReqRowSourceId(i), None)
+      case i: GenericReqId => Row.GenericReqRowSourceId(i)
     }
 
-  def locsOfGroups(ids: Iterator[ReqCodeId]): Iterator[Loc] =
-    ids.map(id => Loc(Row.ReqCodeGroupRowSourceId(id), None))
+  def locsOfGroups(ids: Iterator[ReqCodeId]): Iterator[AsyncState.Row] =
+    ids.map(Row.ReqCodeGroupRowSourceId)
 
   class Backend($: BackendScope[Props, Unit]) {
 
@@ -177,26 +185,22 @@ object SelectionCtrls {
       callRemoteAndUpdateRows(cmd, locs.toList)
     }
 
-    private def callRemoteAndUpdateRows(cmd: UpdateContentCmd, locs: List[Loc]): Callback = {
-      def setRowStates(state: Cell.State) =
-        $.props >>= (_.modCellStates(ts => locs.foldLeft(ts)(_.set(_, state))))
+    private def callRemoteAndUpdateRows(cmd: UpdateContentCmd, rows: List[AsyncState.Row]): Callback = {
+      val async = $.props.map(_.async).runNow()
 
-      def unlockRows =
-        setRowStates(None)
+      def lockRows: Callback =
+        async.setRowStatuses(rows, Some(Locked))
 
-      def uncheckRows =
+      def unlockRows: Callback =
+        async.setRowStatuses(rows, None)
+
+      def uncheckRows: Callback =
         $.props >>= { p =>
-          val newSel = p.sel clearAll locs.map(_.row)
+          val newSel = p.sel clearAll rows
           p.sel updateFn newSel
         }
 
       $.props >>= { p =>
-        val lockRows = {
-          import RemoteDataEditor._
-          val locked = Some(StateFor((), Locked, () => defaultRenderLock))
-          setRowStates(locked)
-        }
-
         def callServer: Callback = {
           val s = TCB.Success(unlockRows >> uncheckRows)
           val f = (err: String) => TCB.Failure.lazily(

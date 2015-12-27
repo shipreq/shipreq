@@ -14,7 +14,6 @@ import shipreq.webapp.base.text.{PlainText, Text, TextSearch}
 import shipreq.webapp.client.app.ui.ProjectWidgets
 import shipreq.webapp.client.lib.TCB
 import shipreq.webapp.client.lib.ui.KeyHandlers
-import shipreq.webapp.client.lib.ui.feature.PreviewFeature
 
 // =====================================================================================================================
 // Interfaces (i.e. the entire point of this file)
@@ -34,15 +33,13 @@ trait CellEditor {
 
 final class CellEditorsImpl[S]($               : CompState.Access[S],
                                editLens        : Lens[S, EditState.Table],
-                               asyncLens       : Lens[S, AsyncState.TableState],
+                               async           : AsyncState.Feature[S],
                                previewFeature  : Preview.Feature[S],
                                pxProject       : Px[Project],
                                pxPlainText     : Px[PlainText.ForProject],
                                pxProjectWidgets: Px[ProjectWidgets],
                                pxTextSearch    : Px[TextSearch],
                                saveIO          : CallServer[UpdateContentCmd]) extends CellEditors {
-
-  private val async = AsyncState.Feature($)(asyncLens)
 
   private val pxApplicability = pxProject.map(Applicability.apply)
 
