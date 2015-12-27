@@ -123,4 +123,11 @@ object PreviewFeature {
     override def onBlur                             = Callback.empty
     override def onEdit                             = Callback.empty
   }
+
+  @inline def FixKey[K] = new FixKey[K]
+  final class FixKey[K] {
+    type Feature[S]  = PreviewFeature[S, K]
+    type ForChildren = PreviewFeature.ForChildren[K]
+    type State       = PreviewFeature.State[K]
+  }
 }

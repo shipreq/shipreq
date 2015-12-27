@@ -5,7 +5,7 @@ import japgolly.scalajs.react.extra._
 import monocle.Lens
 import shipreq.base.util.UnivEq
 import shipreq.webapp.client.lib.TCB
-import shipreq.webapp.client.lib.ui.feature.AsyncActionFeature
+import shipreq.webapp.client.lib.ui.feature._
 
 /**
  * Requirements Table.
@@ -27,14 +27,6 @@ package object reqtable {
   @inline def shouldComponentUpdate[P: Reusability, S: Reusability, B, N <: TopNode] =
     shipreq.webapp.client.app.ui.shouldComponentUpdate[P, S, B, N]
     // Reusability.shouldComponentUpdateWithOverlay[P, S, B, N]
-
-  sealed trait FocusId
-  object FocusId {
-    case class AtCell(row: Row.SourceId, col: Column) extends FocusId
-    case class InCI(typ: CreationInterface.Type, col: Column) extends FocusId
-
-    implicit def equality: UnivEq[FocusId] = UnivEq.deriveAuto
-  }
 
   object EditState {
     type R = Row.SourceId
@@ -70,4 +62,12 @@ package object reqtable {
       case f: AsyncActionFeature.Failed[AsyncState.Failure] =>
         <.div(f.failure, f.retryButton, f.resumeEditButton)
     }
+
+  sealed trait FocusId
+  object FocusId {
+    case class AtCell(row: Row.SourceId, col: Column) extends FocusId
+    case class InCI(typ: CreationInterface.Type, col: Column) extends FocusId
+    implicit def equality: UnivEq[FocusId] = UnivEq.deriveAuto
+  }
+  val Preview = PreviewFeature.FixKey[FocusId]
 }

@@ -35,7 +35,7 @@ trait CellEditor {
 final class CellEditorsImpl[S]($               : CompState.Access[S],
                                editLens        : Lens[S, EditState.Table],
                                asyncLens       : Lens[S, AsyncState.TableState],
-                               previewFeature  : PreviewFeature[S, FocusId],
+                               previewFeature  : Preview.Feature[S],
                                pxProject       : Px[Project],
                                pxPlainText     : Px[PlainText.ForProject],
                                pxProjectWidgets: Px[ProjectWidgets],

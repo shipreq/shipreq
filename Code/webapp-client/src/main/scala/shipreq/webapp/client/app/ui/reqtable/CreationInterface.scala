@@ -27,7 +27,7 @@ object CreationInterface {
 
   case class Props(createIO    : CallServer[CreateContentCmd],
                    state       : State,
-                   previewState: PreviewFeature.State[FocusId])
+                   previewState: Preview.State)
 
   @Lenses
   case class State(selectedType: SelType,
@@ -58,7 +58,7 @@ object CreationInterface {
 import shipreq.webapp.client.app.ui.reqtable.CreationInterface._
 
 class CreationInterface($               : CompState.Access[State],
-                        previewFeature  : PreviewFeature.ForChildren[FocusId],
+                        previewFeature  : Preview.ForChildren,
                         pxProject       : Px[Project],
                         pxProjectText   : Px[PlainText.ForProject],
                         pxProjectWidgets: Px[ProjectWidgets],

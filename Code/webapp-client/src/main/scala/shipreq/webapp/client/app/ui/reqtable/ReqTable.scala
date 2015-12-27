@@ -46,7 +46,7 @@ object ReqTable {
                    creation    : CreationInterface.State,
                    editStates  : EditState.Table,
                    asyncStates : AsyncState.TableState,
-                   previewState: PreviewFeature.State[FocusId],
+                   previewState: Preview.State,
                    cellStates  : Cell.TableState,
                    modal       : Modal.State) {
 
