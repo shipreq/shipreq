@@ -4,6 +4,7 @@ import scalaz.std.string._
 import utest._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.client.test.PrepareEnv
+import shipreq.webapp.client.app.ui.newui.ReqCodeEditor
 
 object ReqCodeEditorTest extends TestSuite {
   PrepareEnv()
@@ -12,7 +13,7 @@ object ReqCodeEditorTest extends TestSuite {
     'forReqs {
       'liveCorrect {
         def test(in: String, out: String): Unit =
-          assertEq(ReqCodeEditor.ForReqs.liveCorrect(in), out)
+          assertEq(ReqCodeEditor.Multiple.liveCorrect(in), out)
         def testOk(is: String*): Unit =
           is.foreach(i => test(i, i))
 
@@ -58,7 +59,7 @@ object ReqCodeEditorTest extends TestSuite {
     'forGroups {
       'liveCorrect {
         def test(in: String, out: String): Unit =
-          assertEq(ReqCodeEditor.ForGroup.liveCorrect(in), out)
+          assertEq(ReqCodeEditor.Single.liveCorrect(in), out)
         def testOk(is: String*): Unit =
           is.foreach(i => test(i, i))
 

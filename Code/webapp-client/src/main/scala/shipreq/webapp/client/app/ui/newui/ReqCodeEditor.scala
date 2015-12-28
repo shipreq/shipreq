@@ -37,7 +37,6 @@ sealed abstract class ReqCodeEditor[Data: Reusability] {
 
   final class Backend($: BackendScope[Props, Unit]) {
     private val pxTrie = Px.bs($).propsA(_.trie)
-    private val pxInit = Px.bs($).propsA(_.initialValue)
 
     val pxAutoComplete = pxTrie.map(t =>
       AutoCompleteFeature.Strategies( // TODO Fix AutoComplete
@@ -58,7 +57,8 @@ sealed abstract class ReqCodeEditor[Data: Reusability] {
 
   @inline private implicit def impTextEditor = textEditor.asImplicit
 
-  val Component =
+  // lazy else there'll be a FieldNotInitialised error via .configure → impTextEditor → textEditor
+  lazy val Component =
     ReactComponentB[Props]("ReqCodeEditor")
       .renderBackend[Backend]
       // TODO .configure(Reusability.shouldComponentUpdate)
@@ -69,21 +69,22 @@ sealed abstract class ReqCodeEditor[Data: Reusability] {
 object ReqCodeEditor {
 
   // ===================================================================================================================
+
+  /**
+    * Editor for a single ReqCode (as is the case in ReqCodeGroups).
+    */
   object Single extends ReqCodeEditor[ReqCode.Value] {
     override val textEditor                          = TextEditor.Input
     override val validator                           = V.code
     override def liveCorrect(txt: String)            = V.code.liveCorrect(txt)
     override def dataToSet(d: Option[ReqCode.Value]) = d.toSet
-
-//      val validate: Vector[A] => ParseResult[A] =
-//        _.headOption match {
-//          case None    => -\/(Some(UiText.FieldNames.reqCode + " cannot be blank.")) // english
-//          case Some(c) => \/-(c)
-//        }
-
   }
 
   // ===================================================================================================================
+
+  /**
+    * Editor for multiple ReqCodes.
+    */
   object Multiple extends ReqCodeEditor[Set[ReqCode.Value]] {
 
     override val textEditor = TextEditor.TextArea

@@ -57,7 +57,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
     val rendered: CallbackTo[Some[ReactElement]]
 
     protected def renderOnce[A](a: A)(implicit e: A => ReactElement): CallbackTo[Some[ReactElement]] =
-      renderOnce(e(a))
+      CallbackTo pure Some(e(a))
 
     final def abort: Callback =
       $.modState(lens set None)

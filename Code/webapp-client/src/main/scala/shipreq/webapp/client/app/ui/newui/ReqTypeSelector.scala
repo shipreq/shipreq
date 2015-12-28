@@ -20,14 +20,14 @@ object ReqTypeSelector {
 
   private val selectRef = Ref[HTMLSelectElement]("i")
 
-  case class Props(edit  : ExternalVar[A],
-                   abort : Option[TCB.Abort],
-                   commit: Option[TCB.Commit],
+  case class Props(edit   : ExternalVar[A],
+                   abort  : Option[TCB.Abort],
+                   commit : Option[TCB.Commit],
                    choices: NonEmptySet[A])
 
   val Component = ReactComponentB[Props]("ReqTypeSelector")
     .render_P(render)
-    .componentDidMount(selectRef(_).tryFocus) // TODO Here?
+    //.componentDidMount(selectRef(_).tryFocus)
     .build
 
   def render(p: Props): ReactElement = {
