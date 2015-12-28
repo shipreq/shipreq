@@ -48,8 +48,8 @@ sealed abstract class ReqCodeEditor[Data: Reusability] {
       <.div(
         textEditor.tag(
           ^.ref        := editorRef,
-          ^.onChange  ==> ((e: ReactEventI) => p.edit.set(liveCorrect(e.target.value))),
           ^.value      := p.edit.value,
+          ^.onChange  ==> ((e: ReactEventI) => p.edit.set(liveCorrect(e.target.value))),
           p.tagMod(validated.validated)),
         validated.renderFailure)
     }

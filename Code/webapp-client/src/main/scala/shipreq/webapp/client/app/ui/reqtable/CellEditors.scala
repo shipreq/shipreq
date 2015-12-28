@@ -71,8 +71,8 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
         case None    => abort
       }
 
-    final def commitAndAbort[A, B](o: Option[A])(commitFn: A => Callback) =
-      KeyHandlers.commit(o map commitFn, true) + KeyHandlers.abort(abort)
+    final def commitAndAbort[A, B](singleLine: Boolean, o: Option[A])(commitFn: A => Callback) =
+      KeyHandlers.commit(o map commitFn, singleLine) + KeyHandlers.abort(abort)
 
     final override def render(row: Row, col: Column) =
       if (areEditPreConditionsSatisfied(row, col))
@@ -175,7 +175,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
       def evar = ExternalVar(text)(s => $.modState(lens set copy(text = s).some))
 
       def tagMod: Option[ReqCode.Value] => TagMod =
-        commitAndAbort(_)(commitOrIgnore(_)(ignoreEqual(initial))(cmd))
+        commitAndAbort(true, _)(commitOrIgnore(_)(ignoreEqual(initial))(cmd))
 
       def props = ReqCodeEditor.Single.Props(evar, initial.some, pxProject.value().reqCodes.trie, tagMod)
 
@@ -192,7 +192,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
       def evar = ExternalVar(text)(s => $.modState(lens set copy(text = s).some))
 
       def tagMod: Option[Set[ReqCode.Value]] => TagMod =
-        commitAndAbort(_)(commitOrIgnore(_)(ignoreEmptySetDiff(initial))(cmd))
+        commitAndAbort(false, _)(commitOrIgnore(_)(ignoreEmptySetDiff(initial))(cmd))
 
       def props = ReqCodeEditor.Multiple.Props(evar, initial.some, pxProject.value().reqCodes.trie, tagMod)
 
@@ -296,7 +296,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
       def evar = ExternalVar(text)(s => $.modState(lens set copy(text = s).some))
 
       def tagMod: Option[SetDiff[ReqId]] => TagMod =
-        commitAndAbort(_)(commitOrIgnore(_)(NonEmpty(_))(cmd))
+        commitAndAbort(true, _)(commitOrIgnore(_)(NonEmpty(_))(cmd))
 
       import Px.AutoValue._
 
@@ -337,7 +337,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
       def evar = ExternalVar(text)(s => $.modState(lens set copy(text = s).some))
 
       def tagMod: Option[Stream[ApplicableTag]] => TagMod =
-        commitAndAbort(_)(commitOrIgnore(_)(ignoreEmptySetDiff(initial, _.map(_.id).toSet))(cmd))
+        commitAndAbort(true, _)(commitOrIgnore(_)(ignoreEmptySetDiff(initial, _.map(_.id).toSet))(cmd))
 
       def props = TagEditor.Props(evar, lookup, tagMod)
 
@@ -381,7 +381,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
         def evar = ExternalVar(text)(s => $.modState(lens set copy(text = s).some))
 
         def tagMod: Option[T.OptionalText] => TagMod =
-          commitAndAbort(_)(t => commit(cmd(t)))
+          commitAndAbort(T.singleLine, _)(t => commit(cmd(t)))
 
         def preview =
           $.state.map(s =>

@@ -255,13 +255,13 @@ object Table {
     }
 
     p.asyncState match {
-      case RowState(None        , cells) => renderRowNormal(cells)
-      case RowState(Some(Locked), _    ) => renderRowLocked
-      case RowState(Some(s)     , _    ) =>
+      case RowState(None                      , cells) => renderRowNormal(cells)
+      case RowState(Some(Locked)              , _    ) => renderRowLocked
+      case RowState(Some(s: AsyncState.Failed), _    ) =>
         // Currently, whole-row state is only used when a row is being deleted/restored.
         // To save dev-time, if the RPC fails an alert popups asking to retry/cancel, thus this part of the code
         // should only execute when the row is locked. Whole-row editing + failure won't occur.
-        dom.console.warn(s.toString)
+        dom.console.warn(s.failure)
         <.tr(
           td(^.colSpan := (p.crs.length + 1),
             renderAsyncState(s)))

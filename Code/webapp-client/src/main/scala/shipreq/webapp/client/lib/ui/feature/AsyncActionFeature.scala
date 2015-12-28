@@ -185,6 +185,7 @@ object AsyncActionFeature {
       type ColStates   = State1D[C, F]
       type Single      = AsyncActionFeature.Single.State[F]
       type Status      = AsyncActionFeature.Status[F]
+      type Failed      = AsyncActionFeature.Failed[F]
       type Feature[S]  = AsyncActionFeature.Table.Feature[S, R, C, F]
       type FeatureAnon = AsyncActionFeature.Table.FeatureAnon[R, C, F]
 

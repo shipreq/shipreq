@@ -1,9 +1,3 @@
-* Manually test all the editors and all the expected features.
-  * Preview (including when multiple are open/dirty)
-  * Create manual test script.
-
-* Fix unit tests.
-
 * Clean up the new stuff. (Tidy up, reduce duplication)
   * Clean up imports in newui
   * Fix new TODOs in patch.
@@ -27,3 +21,5 @@
     somewhere to have multiple fields + looseMsg, make that an addon construct.
   * Failure needs to turn into VDOM nicely (not just .toGenericText with CRs in it).
 
+* Ensure custom-text fields trimmed after parsing.
+* Cancel text-complete popup on blur
