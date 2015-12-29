@@ -4,7 +4,6 @@ import scalaz.std.string._
 import utest._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.client.test.PrepareEnv
-import shipreq.webapp.client.app.ui.newui.ReqCodeEditor
 
 object ReqCodeEditorTest extends TestSuite {
   PrepareEnv()

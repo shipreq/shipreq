@@ -1,12 +1,10 @@
-package shipreq.webapp.client.app.ui.newui
+package shipreq.webapp.client.app.ui.reqtable.edit
 
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import org.scalajs.dom
 import shipreq.webapp.base.validation.{ValidationPartU, VFailure, ValidationResult, Validator}
 import shipreq.webapp.client.app.ui.reqtable.Column
-import shipreq.webapp.client.app.ui.reqtable.edit.AutoComplete
-import shipreq.webapp.client.app.ui.reqtable.edit.AutoComplete.ReqItem
 import shipreq.webapp.client.data.DataReusability._
 import shipreq.webapp.client.lib.ui.feature.{EditValidationFeature, AutoCompleteFeature}
 import scalaz.syntax.either._
@@ -16,6 +14,7 @@ import shipreq.base.util.{SetDiff, UnivEq, univEqOps}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar, PlainText, TextSearch}
 import shipreq.webapp.client.lib.Plain
+import AutoComplete.ReqItem
 import DataImplicits._
 
 object ImplicationEditor {

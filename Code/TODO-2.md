@@ -6,8 +6,6 @@
 * Reenable Reusability.
 
 * Remove:
-  * PolyMap (?)
-  * reqtable.edit
   * LocalEditorFeature (?)
 
 * Add React Collapse and use in previews. (NOT HERE - there's a branch for this)

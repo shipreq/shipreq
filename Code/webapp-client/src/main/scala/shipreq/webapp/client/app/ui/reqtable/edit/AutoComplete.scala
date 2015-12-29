@@ -1,5 +1,4 @@
-package shipreq.webapp.client.app.ui.reqtable
-package edit
+package shipreq.webapp.client.app.ui.reqtable.edit
 
 import scala.annotation.tailrec
 import scalacss.ScalaCssReact._

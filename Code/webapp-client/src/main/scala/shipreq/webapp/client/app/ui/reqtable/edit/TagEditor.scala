@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.ui.newui
+package shipreq.webapp.client.app.ui.reqtable.edit
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
@@ -9,7 +9,6 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Grammar.{hashRefKey => G}
 import shipreq.webapp.base.validation._
-import shipreq.webapp.client.app.ui.reqtable.edit.AutoComplete
 import shipreq.webapp.client.data.DataReusability._
 import shipreq.webapp.client.lib.ui.feature._
 import shipreq.webapp.client.lib.{HideDead, Plain}

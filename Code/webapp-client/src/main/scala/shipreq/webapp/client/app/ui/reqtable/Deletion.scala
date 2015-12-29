@@ -15,7 +15,7 @@ import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.client.app.ui.{Selection, ProjectWidgets}
 import shipreq.webapp.client.app.ui.Style.reqtable.{deleteRestore => *}
 import shipreq.webapp.client.lib.ui.feature.PreviewFeature
-import shipreq.webapp.client.app.ui.newui.RichTextEditor
+import shipreq.webapp.client.app.ui.reqtable.edit.RichTextEditor
 import shipreq.webapp.client.lib.ui.UI
 import MTrie.Ops
 

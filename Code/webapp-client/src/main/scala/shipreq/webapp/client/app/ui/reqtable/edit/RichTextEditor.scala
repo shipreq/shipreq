@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.ui.newui
+package shipreq.webapp.client.app.ui.reqtable.edit
 
 import japgolly.scalajs.jquery.TextComplete
 import japgolly.scalajs.react._
@@ -12,7 +12,6 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text._
 import shipreq.webapp.client.app.ui.ProjectWidgets
 import shipreq.webapp.client.app.ui.Style.{reqtable => *} // TODO Not anymore
-import shipreq.webapp.client.app.ui.reqtable.edit.AutoComplete
 import shipreq.webapp.client.data.DataReusability._
 import shipreq.webapp.client.lib.ui.feature._
 import shipreq.webapp.client.lib.{Contextualise, HideDead}

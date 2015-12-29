@@ -1,9 +1,8 @@
-package shipreq.webapp.client.app.ui.newui
+package shipreq.webapp.client.app.ui.reqtable.edit
 
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import shipreq.webapp.base.validation.Validator
-import shipreq.webapp.client.app.ui.reqtable.edit.AutoComplete
 import shipreq.webapp.client.lib.ui.feature._
 import shipreq.base.util.{UnivEq, Util}
 import shipreq.webapp.base.data._

@@ -140,7 +140,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
 
   // ===================================================================================================================
   object ForReqCodes {
-    import shipreq.webapp.client.app.ui.newui.ReqCodeEditor
+    import shipreq.webapp.client.app.ui.reqtable.edit.ReqCodeEditor
 
     def forReq(row: GenericReqRow): StartEdit = {
       val id      = row.req.id
@@ -203,7 +203,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
 
   // ===================================================================================================================
   object ForReqType {
-    import shipreq.webapp.client.app.ui.newui.ReqTypeSelector
+    import shipreq.webapp.client.app.ui.reqtable.edit.ReqTypeSelector
     import ReqTypeSelector.A
 
     val pxCustomReqTypes = ReqTypeSelector.pxCustomReqTypes(pxProject)
@@ -242,7 +242,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
   // ===================================================================================================================
 
   object ForImplications {
-    import shipreq.webapp.client.app.ui.newui.ImplicationEditor
+    import shipreq.webapp.client.app.ui.reqtable.edit.ImplicationEditor
     import ImplicationEditor.{Lookup, ValidationFn}
 
     val pxLookupAll = Px.apply2(pxProject, pxPlainText)(ImplicationEditor.Lookup.all)
@@ -310,7 +310,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
   // ===================================================================================================================
 
   object ForTags {
-    import shipreq.webapp.client.app.ui.newui.TagEditor
+    import shipreq.webapp.client.app.ui.reqtable.edit.TagEditor
     import TagEditor.Lookup
 
     def apply(row: GenericReqRow, fid: Option[CustomField.Tag.Id]): StartEdit = {
@@ -349,7 +349,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
   // ===================================================================================================================
 
   object ForRichText {
-    import shipreq.webapp.client.app.ui.newui.RichTextEditor
+    import shipreq.webapp.client.app.ui.reqtable.edit.RichTextEditor
 
     abstract class Base[T <: Text.Generic](val editor: RichTextEditor[T]) {
       val T: editor.text.type = editor.text

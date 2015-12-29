@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.ui.newui
+package shipreq.webapp.client.app.ui.reqtable.edit
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.{ExternalVar, Px}

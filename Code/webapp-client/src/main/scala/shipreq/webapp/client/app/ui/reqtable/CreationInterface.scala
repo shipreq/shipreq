@@ -8,12 +8,12 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.CreateContentCmd
 import shipreq.webapp.base.text.{PlainText, TextSearch}
-import shipreq.webapp.client.app.ui.SelectOne.{Choice, Choices}
-import shipreq.webapp.client.app.ui.newui.{ImplicationEditor, ReqCodeEditor, RichTextEditor, TagEditor}
 import shipreq.webapp.client.app.ui.{ProjectWidgets, SelectOne}
+import shipreq.webapp.client.app.ui.reqtable.edit.{ImplicationEditor, ReqCodeEditor, RichTextEditor, TagEditor}
 import shipreq.webapp.client.lib.TCB
 import shipreq.webapp.client.lib.ui.feature.PreviewFeature
 import shipreq.webapp.client.util.Enabled
+import SelectOne.{Choice, Choices}
 import UnivEq.univEqOption
 
 object CreationInterface {
