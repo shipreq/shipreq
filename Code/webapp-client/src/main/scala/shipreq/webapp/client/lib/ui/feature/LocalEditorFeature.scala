@@ -1,5 +1,6 @@
 package shipreq.webapp.client.lib.ui.feature
 
+/*
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.ExternalVar
 import monocle.Lens
@@ -90,9 +91,4 @@ object LocalEditorFeature {
   //  }
 
 }
-
-/*
-Validation:
-  - Validate A -> F \/ B
-  -
- */
+*/

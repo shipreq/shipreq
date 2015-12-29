@@ -40,7 +40,7 @@ package object reqtable {
 
   @inline def shouldComponentUpdate[P: Reusability, S: Reusability, B, N <: TopNode] =
     shipreq.webapp.client.app.ui.shouldComponentUpdate[P, S, B, N]
-  // Reusability.shouldComponentUpdateWithOverlay[P, S, B, N]
+    // Reusability.shouldComponentUpdateWithOverlay[P, S, B, N]
 
   // -----------------------------------------------------------------------------------------------
 

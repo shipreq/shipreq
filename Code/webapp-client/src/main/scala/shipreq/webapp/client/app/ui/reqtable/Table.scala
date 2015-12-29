@@ -62,8 +62,8 @@ object Table {
       val renderRows =
         rows.indices.toReactNodeArray { i =>
           val row = rows(i)
-          val rs2  = EditState.getRow(p.editState, row.sourceId)
-          val as = AsyncState.get(p.asyncState)(row.sourceId)
+          val rs2 = EditState.getRow(p.editState, row.sourceId)
+          val as  = AsyncState.get(p.asyncState)(row.sourceId)
           val rp  = RowProps(row, crs, p.cellEditors, rs2, as , p.selection, startCellEdit(row))
           RowComponent.withKey(row.id.key)(rp)
         }

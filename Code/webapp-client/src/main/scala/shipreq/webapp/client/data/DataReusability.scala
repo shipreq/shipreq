@@ -2,7 +2,7 @@ package shipreq.webapp.client.data
 
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
-import shipreq.base.util.{UnivEq, NonEmptySet, NonEmptyVector}
+import shipreq.base.util.{NonEmptySet, NonEmptyVector, UnivEq}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.RemoteFn
 import shipreq.webapp.base.text.{Atom, TextSearch, PlainText}

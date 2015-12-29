@@ -7,9 +7,9 @@ import shipreq.webapp.client.lib.ui.feature._
 import shipreq.base.util.{UnivEq, Util}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Grammar
+import shipreq.webapp.client.data.DataReusability._
 import shipreq.webapp.client.lib.ui.TextEditor
 import Validators.{reqCode => V}
-import shipreq.webapp.client.data.DataReusability._
 
 sealed abstract class ReqCodeEditor[Data: Reusability] {
 

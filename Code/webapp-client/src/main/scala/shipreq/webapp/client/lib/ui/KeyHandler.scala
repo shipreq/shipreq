@@ -6,7 +6,6 @@ import scala.runtime.AbstractFunction1
 import scalajs.js.{UndefOr, undefined}
 import scalaz.{Monoid, \/}
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.client.lib.TCB
 
 final class KeyHandler(val run: ReactKeyboardEventH => Option[Callback]) extends AbstractFunction1[ReactKeyboardEventH, Callback] {
   override def apply(e: ReactKeyboardEventH): Callback =
@@ -90,21 +89,6 @@ object KeyHandlers {
   def empty = apply()
 
   @inline implicit def toTagMod(k: KeyHandlers) = k.tagMod
-
-  /**
-   * - Escape aborts.
-   * - Enter either inserts a newline, or commits.
-   * - Ctrl-enter commits.
-   */
-  @deprecated("","")
-  def commitAndAbort(abort: => TCB.Abort, commit: => Option[TCB.Commit], singleLine: Boolean): KeyHandlers =
-    this.abort(abort.cb) + this.commit(commit.map(_.cb), singleLine)
-
-  @deprecated("","")
-  def commitAndAbortD[A](abort: => TCB.Abort, parsed: Any \/ A, commit: A => TCB.Commit, singleLine: Boolean): KeyHandlers =
-    commitAndAbort(abort, parsed.fold(_ => None, commit(_).some), singleLine)
-
-  // TODO Delete above?
 
   def abort(abort: => Callback): KeyHandlers =
     KeyHandlers(onKeyDown = KeyHandler.byKey { case KeyValue.Escape => abort.some })
