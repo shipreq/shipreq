@@ -27,18 +27,17 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
   def mkAutoComplete(p: Project, pt: PlainText.ForProject, ts: TextSearch): AutoCompleteFeature.ForChild = {
     var ac = Vector.empty[TextComplete.Strategy]
 
-    if (supportsIssues || supportsTags)
-      ac :+= AutoComplete.hashtag(p, HideDead, issues = supportsIssues, tags = supportsTags)(Contextualise)
+    ac ++= AutoComplete.hashtag(p, HideDead, issues = supportsIssues, tags = supportsTags)(Contextualise)
 
     if (supportsReqRefs) {
-      ac :+= AutoComplete.reqCode.ref(p, pt)
-      ac :+= AutoComplete.req(ts, AutoComplete.reqItems(p, pt), Contextualise)
+      ac ++= AutoComplete.reqCode.ref(p, pt)
+      ac ++= AutoComplete.req(ts, AutoComplete.reqItems(p, pt), Contextualise)
     }
 
     if (supportsPTM)
-      ac :+= AutoComplete.math
+      ac ++= AutoComplete.math
 
-    AutoCompleteFeature.Strategies(ac: _*)
+    ac
   }
 
   case class Props(project       : Project,

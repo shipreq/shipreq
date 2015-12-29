@@ -73,8 +73,7 @@ object TagEditor {
     private val pxLookup = Px.bs($).propsA(_.lookup)
 
     val pxAutoComplete = pxLookup.map(l =>
-      AutoCompleteFeature.Strategies( // TODO Fix AutoComplete
-        AutoComplete.tag(l.values.toStream, HideDead)(Plain)))
+      AutoComplete.tag(l.values.toStream, HideDead)(Plain))
 
     def render(p: Props) = {
       val validated = EditValidationFeature(p.parseResult)

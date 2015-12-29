@@ -1,15 +1,9 @@
 package shipreq.webapp.client.app.ui.reqtable
 package edit
 
-import nyaya.util.Multimap
-import japgolly.scalajs.jquery.{TextComplete => TC}
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
-import japgolly.scalajs.react.test._
-import org.scalajs.dom.ext.{KeyValue, KeyCode}
+import japgolly.scalajs.react._
+import org.scalajs.dom.ext.KeyCode
 import scala.scalajs.js, js.Dynamic
-import scalaz.std.string.stringInstance
-import scalaz.std.tuple.tuple2Equal
-import scalaz.std.vector.vectorEqual
 import org.scalajs.dom.document
 import org.scalajs.dom.raw.{HTMLTextAreaElement, HTMLUListElement}
 import utest._
@@ -19,7 +13,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._, WebappTestUtil._
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.client.lib.{HideDead, Plain, Contextualise}
-import shipreq.webapp.client.lib.ui.UI
+import shipreq.webapp.client.lib.ui.feature.AutoCompleteFeature
 import shipreq.webapp.client.test.{PrepareEnv, Sizzle}
 import SampleProject3._
 
@@ -37,7 +31,7 @@ object AutoCompleteTest extends TestSuite {
     def getDOMNode(): N                 = n
   }
 
-  def editor(ac: TC.Strategies) = {
+  def editor(ac: AutoCompleteFeature.Strategies) = {
     //    ReactComponentB[String]("AutoComplete test")
     //      .initialState_P(s => s)
     //      .render { $ =>
@@ -56,7 +50,7 @@ object AutoCompleteTest extends TestSuite {
     val n = document.createElement("textarea").asInstanceOf[HTMLTextAreaElement]
     document.body.appendChild(n) // https://github.com/ariya/phantomjs/issues/12493
     val e = new Editor(n)
-    UI.textComplete(n, ac, e.setState).runNow()
+    AutoCompleteFeature.lowLevelInstall(n, ac.toJsArray, e.setState).runNow()
     e
   }
 

@@ -39,8 +39,7 @@ sealed abstract class ReqCodeEditor[Data: Reusability] {
     private val pxTrie = Px.bs($).propsA(_.trie)
 
     val pxAutoComplete = pxTrie.map(t =>
-      AutoCompleteFeature.Strategies( // TODO Fix AutoComplete
-        AutoComplete.reqCode.prefixes(t): _*))
+      AutoComplete.reqCode.prefixes(t))
 
     def render(p: Props) = {
       val validated = EditValidationFeature(p.parseResult)

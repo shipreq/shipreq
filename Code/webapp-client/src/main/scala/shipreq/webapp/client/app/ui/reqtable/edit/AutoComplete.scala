@@ -3,12 +3,10 @@ package edit
 
 import scala.annotation.tailrec
 import scalacss.ScalaCssReact._
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.scalajs.jquery.{TextComplete => TC}
 import scalajs.js.{UndefOr, undefined}
 import scalaz.{\/-, -\/, \/}
-import scalaz.std.string.stringInstance
-import scalaz.syntax.equal._
 import shapeless.syntax.singleton._
 import shipreq.base.util._
 import shipreq.base.util.MTrie.Ops
@@ -17,7 +15,8 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{TextSearch, PlainText, Grammar}
 import shipreq.webapp.client.app.ui.Style.{reqtable => *}
 import shipreq.webapp.client.lib.{FilterDead, Plain, Contextualise}
-import TC.{Query, Strategy, StrategyA, Strategies}
+import shipreq.webapp.client.lib.ui.feature.AutoCompleteFeature.{Strategies, autoLiftSingleStrategy}
+import TC.{Query, Strategy}
 
 object AutoComplete {
 
@@ -59,7 +58,7 @@ object AutoComplete {
 
   private val hashtagContext = Context.literal(Grammar.hashRefKey.prefix, "")
 
-  def hashtag(legal: Stream[HashRefKey]): Contextualise => Strategy = {
+  def hashtag(legal: Stream[HashRefKey]): Contextualise => Strategies = {
     import Grammar.{hashRefKey => G}
     val mainRegex = s"(|${G.firstChar.one}${G.allChars.*})$$"
     val searchFn  = TC.caseInsensitiveContains(legal.map(_.value).sorted)
@@ -68,21 +67,24 @@ object AutoComplete {
 
   def hashtag(issues: Stream[CustomIssueType],
               tags  : Stream[ApplicableTag],
-              fd    : FilterDead): Contextualise => Strategy =
+              fd    : FilterDead): Contextualise => Strategies =
     hashtag(
       fd(issues)(_.live).map(_.key) append
       fd(tags  )(_.live).map(_.key))
 
-  def hashtag(p: Project, fd: FilterDead, issues: Boolean, tags: Boolean): Contextualise => Strategy =
-    hashtag(
-      if (issues) p.config.customIssueTypes.values.toStream else Stream.empty,
-      if (tags)   p.config.atags                            else Stream.empty,
-      fd)
+  def hashtag(p: Project, fd: FilterDead, issues: Boolean, tags: Boolean): Contextualise => Strategies =
+    if (issues || tags)
+      hashtag(
+        if (issues) p.config.customIssueTypes.values.toStream else Stream.empty,
+        if (tags)   p.config.atags                            else Stream.empty,
+        fd)
+    else
+      _ => Vector.empty
 
-  def issue(legal: Stream[CustomIssueType], fd: FilterDead): Contextualise => Strategy =
+  def issue(legal: Stream[CustomIssueType], fd: FilterDead): Contextualise => Strategies =
     hashtag(legal, Stream.empty, fd)
 
-  def tag(legal: Stream[ApplicableTag], fd: FilterDead): Contextualise => Strategy =
+  def tag(legal: Stream[ApplicableTag], fd: FilterDead): Contextualise => Strategies =
     hashtag(Stream.empty, legal, fd)
 
   // ===================================================================================================================
@@ -99,7 +101,7 @@ object AutoComplete {
       .sortBy(_.sortKey)
   }
 
-  def req(textSearch: TextSearch, legal: Stream[ReqItem], Contextualise: Contextualise): StrategyA[ReqItem] = {
+  def req(textSearch: TextSearch, legal: Stream[ReqItem], Contextualise: Contextualise): Strategies = {
     val searchTitles =
       textSearch.ignoreCaseNoWhitespace
         .filterReqsIds(legal.map(_.req.id).toSet)
@@ -214,7 +216,7 @@ object AutoComplete {
         reflinkContext.strategy(mainRegex, searchFn)(identity, "")(contextualise)
       }
 
-      Strategies(
+      Vector(
         completeFromStart(trie),
         completeFromMid(trie))
     }
@@ -224,7 +226,7 @@ object AutoComplete {
      *
      * Matches whole paths, wraps in reflink syntax.
      */
-    def ref(project: Project, pt: PlainText.ForProject): Strategy = {
+    def ref(project: Project, pt: PlainText.ForProject): Strategies = {
       val mainRegex = s"($sep?$node($sep$node)*$sep?)"
 
       type A = (String, ActiveGroup \/ ActiveReq)
@@ -293,7 +295,7 @@ object AutoComplete {
 
   private def htmllike = Stream("math")
 
-  def math: Strategy =
+  def math: Strategies =
     Strategy.pattern("""(^|\s)<([a-z]+)$""", index = 2)
     .search(term => htmllike.filter(_ startsWith term))
     .replace2(tag => (s"$$1<$tag>", s"</$tag>"))

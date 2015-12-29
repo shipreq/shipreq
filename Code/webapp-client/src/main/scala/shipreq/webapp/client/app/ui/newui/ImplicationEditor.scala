@@ -137,8 +137,7 @@ object ImplicationEditor {
         l <- pxLookup
         s <- pxTextSearch
       } yield
-        AutoCompleteFeature.Strategies( // TODO Fix AutoComplete
-          AutoComplete.req(s, l.legal, Plain))
+        AutoComplete.req(s, l.legal, Plain)
 
     def render(p: Props) = {
       val validated = EditValidationFeature(p.parseResult)

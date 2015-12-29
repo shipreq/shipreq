@@ -6,6 +6,7 @@ import japgolly.scalajs.react.extra._
 import org.scalajs.dom.html
 import scala.scalajs.js
 import shipreq.base.util.ScalaExt.EndoFn
+import shipreq.base.util.Vector1
 import shipreq.webapp.client.lib.ui.TextEditor
 
 /**
@@ -19,19 +20,22 @@ object AutoCompleteFeature {
   implicit val reusabilityStrategies: Reusability[Strategies] =
     Reusability.fn((a, b) =>
       (a eq b) ||
-      a.js.corresponds(b.js)(_ eq _))
+      a.corresponds(b)(_ eq _))
 
-  final class Strategies(private[AutoCompleteFeature] val js: TextComplete.Strategies)
+  type Strategies = Vector[TextComplete.Strategy]
 
-  def Strategies(ss: TextComplete.Strategy*) =
-    new Strategies(js.Array(ss: _*))
+  implicit def autoLiftSingleStrategy[A](a: A)(implicit f: A => TextComplete.Strategy): Strategies =
+    Vector1(f(a))
 
   type ForChild = Strategies
 
-  private def textComplete[E <: html.Element](target: E,
-                                              strategies: TextComplete.Strategies,
-                                              onUpdate: => (String => Callback))
-                                             (implicit E: TextEditor.OfType[E]): Callback =
+  /**
+   * Public only for unit-tests. For React components, use one of the `install…` methods.
+   */
+  def lowLevelInstall[E <: html.Element](target    : E,
+                                         strategies: TextComplete.Strategies,
+                                         onUpdate  : => (String => Callback))
+                                        (implicit E: TextEditor.OfType[E]): Callback =
     Callback.ifTrue(strategies.nonEmpty, Callback {
       val tgt = js.Dynamic.global.$(target)
       TextComplete(tgt, strategies)
@@ -40,7 +44,7 @@ object AutoCompleteFeature {
       }
     })
 
-  private def textCompleteDestroy(node: html.Element): Callback =
+  def lowLevelDestroy(node: html.Element): Callback =
     Callback {
       val $n = js.Dynamic.global.$(node)
       TextComplete.destroy($n)
@@ -55,7 +59,7 @@ object AutoCompleteFeature {
       val n = getNode($)
       te.focus(n)
       te.select(n)
-      textComplete(n, strategies($.props, $.backend).js, onUpdate($.props, $.backend)).runNow()
+      lowLevelInstall(n, strategies($.props, $.backend).toJsArray, onUpdate($.props, $.backend)).runNow()
     })
     .componentDidUpdate(i => Callback {
       val $  = i.$
@@ -66,12 +70,12 @@ object AutoCompleteFeature {
       val s2 = strategies(p2, b)
       if (s1 ~/~ s2) {
         val n = getNode($)
-        textCompleteDestroy(n).runNow()
-        textComplete(n, s2.js, onUpdate($.props, b)).runNow()
+        lowLevelDestroy(n).runNow()
+        lowLevelInstall(n, s2.toJsArray, onUpdate($.props, b)).runNow()
       }
     })
     .componentWillUnmount($ =>
-      textCompleteDestroy(getNode($)))
+      lowLevelDestroy(getNode($)))
 
   def installP[P, S, B, N <: TopNode, E <: html.Element](
           getNode   : RefSimple[E],

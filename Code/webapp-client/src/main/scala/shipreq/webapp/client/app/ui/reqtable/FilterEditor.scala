@@ -4,7 +4,6 @@ import japgolly.scalajs.jquery.{TextComplete => TC}
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
 import org.parboiled2.{ErrorFormatter, ParseError}
-import org.scalajs.dom.html
 import org.scalajs.dom.raw.HTMLTextAreaElement
 import scala.util.{Failure, Success}
 import scalacss.ScalaCssReact._
@@ -15,12 +14,10 @@ import shipreq.webapp.base.filter._
 import shipreq.webapp.client.app.ui.Style.reqtable.{filterEditor => *}
 import shipreq.webapp.client.app.ui.reqtable.edit.AutoComplete
 import shipreq.webapp.client.data.DataReusability._
-import shipreq.webapp.client.lib.ui.UI
 import shipreq.webapp.client.lib.{ShowDead, Contextualise}
+import shipreq.webapp.client.lib.ui.feature.AutoCompleteFeature
 
 object FilterEditor {
-
-  type AutoComplete = ReusableVal[TC.Strategies]
 
   type OnFailure = State ~=> Callback
   type OnSuccess = (State, Option[FilterAst]) ~=> Callback
@@ -43,16 +40,16 @@ object FilterEditor {
     ReactComponentB[Props]("Filter")
       .renderBackend[Backend]
       .configure(
-        UI.installTextCompleteB(textEditorRef, _.autoComplete.value(), _.updateFilterText),
+        AutoCompleteFeature.installB(textEditorRef, _.autoComplete.value(), _.updateFilterText),
         shouldComponentUpdate)
       .build
 
-  private val acCommand =
+  private val acCommand: TC.Strategy =
     TC.Strategy.pattern("""(^|[^\w:])([a-z]+)$""", index = 2)
       .search(TC caseInsensitiveStartsWith Stream("has", "no", "implies", "impliedBy"))
       .replace("$1" + _ + ":")
 
-  private val acPresenceLackAttr =
+  private val acPresenceLackAttr: TC.Strategy =
     TC.Strategy.pattern("""\b((?:has|no):)([a-z]*)$""", index = 2)
       .search(TC caseInsensitiveStartsWith FilterAst.Attr.values.toStream.map(_.name))
       .replace("$1" + _ + " ")
@@ -60,11 +57,10 @@ object FilterEditor {
   class Backend($: BackendScope[Props, Unit]) {
     val project = Px.bs($).propsM(_.project)
 
-    val autoComplete: Px[AutoComplete] =
+    val autoComplete: Px[AutoCompleteFeature.Strategies] =
       project.map { p =>
-        val hashtag = AutoComplete.hashtag(p, ShowDead, issues = true, tags = true)(Contextualise)
-        val ac = TC.Strategies(hashtag, acPresenceLackAttr, acCommand)
-        ReusableVal.byRef(ac)
+        val hashtags = AutoComplete.hashtag(p, ShowDead, issues = true, tags = true)(Contextualise)
+        hashtags :+ acPresenceLackAttr :+ acCommand
       }
 
     val parseErrorFormatter = new ErrorFormatter(
