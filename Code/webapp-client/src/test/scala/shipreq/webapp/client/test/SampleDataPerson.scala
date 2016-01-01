@@ -10,8 +10,8 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.util.TextMod._
 import shipreq.webapp.base.validation.Constraints._
 import shipreq.webapp.base.validation._
-import shipreq.webapp.client.lib.TCB
-import shipreq.webapp.client.lib.ui._
+import shipreq.webapp.client.app.cfg.shared._
+import shipreq.webapp.client.data.TCB
 import Editors._
 
 object SampleDataPerson {

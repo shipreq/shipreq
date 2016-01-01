@@ -10,15 +10,15 @@ import shipreq.base.util.{NonEmptyVector, UnivEq}
 import shipreq.webapp.base.filter.FilterSpec
 import shipreq.webapp.base.protocol.ProjectSPA
 import shipreq.webapp.client.app.state.ClientData
+import shipreq.webapp.client.data.{FilterDead, HideDead}
 import shipreq.webapp.client.protocol.ClientProtocol
-import shipreq.webapp.client.lib.{FilterDead, HideDead}
 
 object ProjectSpaMain {
 
   def main(r: ProjectSPA): Callback = {
     val cp = ClientProtocol.Default
     ClientData.init(cp, r.projectInit, clientData => Callback {
-      ui.Style.addToDocument()
+      Style.addToDocument()
       val baseUrl = determineBaseUrl(dom.window.location.href)
       val router = Router(baseUrl, routerConfig(r, cp, clientData))
       router() render dom.document.getElementById("tgt")
@@ -69,20 +69,20 @@ object ProjectSpaMain {
 
       def reqTable = {
         val s = reqTableNextState()
-        ui.reqtable.ReqTable.Props(cd, cp, r.createContent, r.updateContent, s.fd, s.fs).component
+        reqtable.ReqTable.Props(cd, cp, r.createContent, r.updateContent, s.fd, s.fs).component
       }
 
       def cfgIssues(ctl: RouterCtl) =
-        ui.cfg.issues.CfgIssues.Props(cp, r.issueTypeCrud, r.reqTypeImpMod, r.fieldMandMod, cd, HideDead, ctl).component
+        cfg.issues.CfgIssues.Props(cp, r.issueTypeCrud, r.reqTypeImpMod, r.fieldMandMod, cd, HideDead, ctl).component
 
       def cfgReqTypes(ctl: RouterCtl) =
-        ui.cfg.CfgReqTypes.Props(cp, r.reqTypeCrud, cd, HideDead, ctl).component
+        cfg.reqtypes.CfgReqTypes.Props(cp, r.reqTypeCrud, cd, HideDead, ctl).component
 
       def cfgTags =
-        ui.cfg.tags.CfgTags.Props(cp, r.tagCrud, cd, HideDead).component
+        cfg.tags.CfgTags.Props(cp, r.tagCrud, cd, HideDead).component
 
       def cfgFields =
-        ui.cfg.fields.CfgFields.Props(cp, r.fieldCrud, cd, HideDead).component
+        cfg.fields.CfgFields.Props(cp, r.fieldCrud, cd, HideDead).component
 
       import dsl._
 

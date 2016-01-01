@@ -4,7 +4,8 @@ import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.extra.Reusability
 import scalaz.{-\/, \/-, \/}
 import shipreq.webapp.base.protocol.{GenericFailure, RemoteFn}
-import shipreq.webapp.client.lib.{ConsoleCB, TCB}
+import shipreq.webapp.client.data.TCB
+import shipreq.webapp.client.lib.Logger
 import ClientProtocol._
 
 trait ClientProtocol {
@@ -18,7 +19,7 @@ trait ClientProtocol {
    * Eventually this should be replaced with something better.
    */
   def consumeGenericFailure(f: Failed[GenericFailure]): TCB.Failure =
-    TCB.Failure(ConsoleCB(_.error(genericFailureToText(f))))
+    TCB.Failure(Logger(_.error(genericFailureToText(f))))
 
   /**
    * Generic means of handling and consuming generic (protocol/ajax) failure.

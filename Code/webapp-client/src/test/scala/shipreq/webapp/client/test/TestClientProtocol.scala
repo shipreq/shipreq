@@ -4,7 +4,7 @@ import japgolly.scalajs.react.Callback
 import scalaz.{-\/, Equal}
 import scalaz.std.AllInstances._
 import shipreq.webapp.base.protocol.RemoteFn
-import shipreq.webapp.client.lib.TCB
+import shipreq.webapp.client.data.TCB
 import shipreq.webapp.client.protocol.ClientProtocol
 import shipreq.webapp.client.protocol.ClientProtocol.Failed
 import shipreq.webapp.client.test.TestUtil._

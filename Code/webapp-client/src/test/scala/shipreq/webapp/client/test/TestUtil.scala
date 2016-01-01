@@ -9,7 +9,7 @@ import nyaya.gen.Gen
 import shipreq.base.util.Debug._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.test.WebappTestUtil
-import shipreq.webapp.client.lib.ui._
+import shipreq.webapp.client.app.cfg.shared._
 import RowStatus._
 
 object TestUtil extends WebappTestUtil {

@@ -6,7 +6,8 @@ import scalaz.{-\/, \/-}
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.{ApplyEvent, VerifiedEvents}
 import shipreq.webapp.base.protocol.ProjectInit
-import shipreq.webapp.client.lib.{ConsoleCB, TCB}
+import shipreq.webapp.client.data.TCB
+import shipreq.webapp.client.lib.Logger
 import shipreq.webapp.client.protocol.ClientProtocol
 
 final class ClientData(init: Project) extends Broadcaster[Changes] {
@@ -23,7 +24,7 @@ final class ClientData(init: Project) extends Broadcaster[Changes] {
         broadcast(Changes(ves, p1, p2))
       case -\/(err) =>
         // TODO Do more when VerifiedEvent application fails
-        ConsoleCB(_ error s"Update failed. $err")
+        Logger(_ error s"Update failed. $err")
     }
   }
 

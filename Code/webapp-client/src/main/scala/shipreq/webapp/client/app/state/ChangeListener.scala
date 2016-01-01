@@ -3,7 +3,7 @@ package shipreq.webapp.client.app.state
 import japgolly.scalajs.react.{Callback, TopNode}
 import japgolly.scalajs.react.extra.{Listenable, OnUnmount}
 import shipreq.webapp.base.data._
-import shipreq.webapp.client.lib.ui.SavedRowStore
+import shipreq.webapp.client.app.cfg.shared.SavedRowStore
 
 object ChangeListener {
 
