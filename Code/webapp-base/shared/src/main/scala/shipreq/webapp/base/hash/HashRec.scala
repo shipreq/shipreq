@@ -5,6 +5,7 @@ import scalaz.syntax.equal._
 import shipreq.base.util._
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.ApplyEvent.LogicVer
+import HashRec.ValidationFailure
 import UnivEq.Implicits.univEqInt
 
 /**
@@ -19,17 +20,31 @@ case class HashRec(scope   : HashScope,
                    scheme  : HashScheme)(
                val hash    : Option[Int]) {
 
+  override def toString =
+    s"HashRec($scope, $logicVer, $scheme)($hash)"
+
   def recalc(p: Project): Int =
     HashScope.hash(scope, scheme.value, p)
 
   def validate(p: Project): Validity =
-    hash match {
-      case Some(h) => Valid <~ (h ==* recalc(p))
-      case None    => Valid
+    Valid <~ validateF(p).isEmpty
+
+  def validateF(p: Project): Option[ValidationFailure] =
+    hash.flatMap { e =>
+      val a = recalc(p)
+      if (e ==* a)
+        None
+      else
+        Some(ValidationFailure(expect = e, actual = a))
     }
 }
 
 object HashRec {
+
+  case class ValidationFailure(expect: Int, actual: Int) {
+    def msg = s"$actual should be $expect."
+  }
+
   type Collection = ListSet[HashRec]
 
   val emptyCollection: Collection =

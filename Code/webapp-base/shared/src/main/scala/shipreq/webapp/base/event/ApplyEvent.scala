@@ -76,15 +76,23 @@ final class ApplyEvent(implicit val trust: Trust) extends ApplyConfigEvent with 
     }
 
   private def validateHashRecs(recs: HashRec.Collection): SE[Unit] =
-    SE.testO { p =>
-      val isValid = (_: HashRec).validate(p) :: Valid
-      if (recs forall isValid)
+    SE.testO(p =>
+      if (recs.forall(_.validate(p) :: Valid))
         None
       else {
-        val failures = recs.filterNot(isValid)
+        val failures = recs.iterator
+          .map(r => (r, r validateF p))
+          .filter(_._2.isDefined)
+          .map { t =>
+            val r = t._1
+            val f = t._2.get
+            s"$r failed: ${f.msg}"
+          }
+          .toVector
+          .sorted
         Some(s"Hash Mismatch. ${failures.size} mismatches:${failures.map("\n  - " + _) mkString ""}")
       }
-    }
+    )
 
   @tailrec
   private def findFirstFailure(index: Int, ves: Stream[VerifiedEvent], p: Project, lastHR: Option[HashRec.Collection]): Option[String] =
