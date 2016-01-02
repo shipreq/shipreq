@@ -9,6 +9,9 @@ import SizeSpec.DisableDefault._
 
 object BaseUtilGen {
 
+  implicit def NevToNonEmptySeq[A] = Gen.ToNonEmptySeq[NonEmptyVector[A], A](_.whole)
+  implicit def NesToNonEmptySeq[A] = Gen.ToNonEmptySeq[NonEmptySet   [A], A](_.whole.toVector)
+
   implicit def BaseUtilGen_GenExt[A](g: Gen[A]) = new BaseUtilGen_GenExt(g.run)
   class BaseUtilGen_GenExt[A](private val _g: Gen.Run[A]) extends AnyVal {
     private implicit def g = Gen(_g)
@@ -18,6 +21,11 @@ object BaseUtilGen {
 
     def nes(implicit ss: SizeSpec, ev: UnivEq[A]): Gen[NonEmptySet[A]] =
       for {t <- g.set(ss); h <- g} yield NonEmptySet(h, t)
+  }
+
+  implicit class BaseUtilGen_OptionGenExt[A](private val o: Option[Gen[A]]) extends AnyVal {
+    def setE(implicit ss: SizeSpec): Gen[Set[A]] =
+      o.fold(Gen pure Set.empty[A])(_.set(ss))
   }
 
   def genISubset[A: UnivEq](g: Gen[NonEmptySet[A]]): Gen[ISubset[A]] =

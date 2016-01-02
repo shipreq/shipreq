@@ -3,13 +3,13 @@ package shipreq.webapp.client.app.reqtable
 import nyaya.gen._
 import nyaya.test._
 import scalaz.std.vector._
+import shipreq.base.test.BaseUtilGen.NevToNonEmptySeq
 import shipreq.base.util.NonEmptyVector
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.FilterAst
 import shipreq.webapp.client.data.{ShowDead, FilterDead}
-import RandomData.NevToNonEmptySeq
 
 object RandomReqTableData {
 

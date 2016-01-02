@@ -33,13 +33,11 @@ import shipreq.webapp.base.util.GenericData
 import shipreq.base.util.UtilMacros._
 import DataImplicits._
 import TestOptics.{customReqTypesLive => _, _}
+import WebappBaseGen._
 
 // TODO RandomData is inaccurate in that CorrectionParts aren't applied.
 
 object RandomData {
-
-  implicit def NevToNonEmptySeq[A] = Gen.ToNonEmptySeq[NonEmptyVector[A], A](_.whole)
-  implicit def NesToNonEmptySeq[A] = Gen.ToNonEmptySeq[NonEmptySet   [A], A](_.whole.toVector)
 
   type StateG[S, A] = StateT[Gen, S, A]
   implicit def gliftS[S, A](g: Gen[A]): StateG[S, A] = StateT(s => g.map(a => (s,a)))
@@ -1379,24 +1377,6 @@ object RandomData {
 
     val deletionReason =
       TextGen.deletionReasonAtom(Some(reqId), Some(reqCode.id), Some(applicableTagId)).text
-
-    abstract class GenericDataGen[GD <: GenericData](final val gd: GD) {
-      import gd.equalityAttr
-
-      def valueFor(a: gd.Attr): Gen[gd.Value]
-
-      val attr = Gen.chooseNE(gd.attrs)
-
-      lazy val values: Gen[gd.Values] =
-        attr.set
-          .flatMap(as => Gen sequence as.toVector.map(valueFor))
-          .map(_.foldLeft(gd.emptyValues)(_ + _))
-
-      val nonEmptyValues: Gen[gd.NonEmptyValues] =
-        attr.nes
-          .flatMap(as => Gen sequence as.toVector.map(valueFor))
-          .map(vs => gd.nev(vs.head, vs.tail: _*))
-    }
 
     object customIssueTypeGD extends GenericDataGen(CustomIssueTypeGD) {
       import gd._
