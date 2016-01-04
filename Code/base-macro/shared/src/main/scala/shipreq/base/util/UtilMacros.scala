@@ -18,6 +18,9 @@ object UtilMacros {
   def  valuesForAdt[T, V](f: T => V): NonEmptyVector[V] = macro UtilMacroImpls.quietValuesForAdt[T, V]
   def _valuesForAdt[T, V](f: T => V): NonEmptyVector[V] = macro UtilMacroImpls.debugValuesForAdt[T, V]
 
+  def  valuesForAdtF[T, V](f: T => V): (NonEmptyVector[V], T => V) = macro UtilMacroImpls.quietValuesForAdtF[T, V]
+  def _valuesForAdtF[T, V](f: T => V): (NonEmptyVector[V], T => V) = macro UtilMacroImpls.debugValuesForAdtF[T, V]
+
   def  deriveEqual[A]: Equal[A] = macro UtilMacroImpls.quietDeriveEqual[A]
   def _deriveEqual[A]: Equal[A] = macro UtilMacroImpls.debugDeriveEqual[A]
 }
@@ -113,6 +116,15 @@ class UtilMacroImpls(val c: blackbox.Context) extends MacroUtils {
 
     if (debug) println("\n" + showCode(impl) + "\n")
     c.Expr[NonEmptyVector[V]](impl)
+  }
+
+  def quietValuesForAdtF[T: c.WeakTypeTag, V: c.WeakTypeTag](f: c.Expr[T => V]): c.Expr[(NonEmptyVector[V], T => V)] = implValuesForAdtF(false)(f)
+  def debugValuesForAdtF[T: c.WeakTypeTag, V: c.WeakTypeTag](f: c.Expr[T => V]): c.Expr[(NonEmptyVector[V], T => V)] = implValuesForAdtF(true)(f)
+  def implValuesForAdtF[T: c.WeakTypeTag, V: c.WeakTypeTag](debug: Boolean)(f: c.Expr[T => V]): c.Expr[(NonEmptyVector[V], T => V)] = {
+    val nev = implValuesForAdt[T, V](false)(f)
+    val impl = q"($nev, $f)"
+    if (debug) println("\n" + showCode(impl) + "\n")
+    c.Expr[(NonEmptyVector[V], T => V)](impl)
   }
 
   private val equal = c.typeOf[Equal[_]]
