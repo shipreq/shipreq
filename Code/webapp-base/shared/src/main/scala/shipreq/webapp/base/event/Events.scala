@@ -191,9 +191,10 @@ object ReqCodeGroupGD extends GenericData {
 case class CreateReqCodeGroup(id: ReqCodeId, vs: ReqCodeGroupGD.NonEmptyValues) extends ActiveEvent
 case class UpdateReqCodeGroup(id: ReqCodeId, vs: ReqCodeGroupGD.NonEmptyValues) extends ActiveEvent
 
+// TODO Would it be better to have a ReqCodeGroupId which is a subtype of ReqCodeId?
 case class DeleteReqCodeGroups(ids: NonEmptySet[ReqCodeId]) extends ActiveEvent
 
 // =====================================================================================================================
 // Content: Shared
 
-case class RestoreContent(reqs: Set[ReqId], reqCodes: Set[ReqCodeId]) extends ActiveEvent
+case class RestoreContent(reqs: Set[ReqId], reqCodeGroups: Set[ReqCodeId]) extends ActiveEvent

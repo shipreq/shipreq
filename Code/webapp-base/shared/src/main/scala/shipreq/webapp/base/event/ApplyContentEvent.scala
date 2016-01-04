@@ -615,7 +615,7 @@ trait ApplyContentEvent {
       _  <- ReqEvents.restore(e.reqs)
       t1 <- ReqCodeLogic.getTrie
       t2 <- ReqCodeLogic.restoreBelongingToReqsT(t1, e.reqs)
-      t3 <- ReqCodeLogic.restoreGroupsByIdT(t2, e.reqCodes)
+      t3 <- ReqCodeLogic.restoreGroupsByIdT(t2, e.reqCodeGroups)
       _  <- Project.reqCodeTrie set t3
     } yield ()
 

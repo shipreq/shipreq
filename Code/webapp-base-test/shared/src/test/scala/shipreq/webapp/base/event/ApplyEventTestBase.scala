@@ -85,7 +85,7 @@ object ApplyEventTestFns {
         activeRCGs -= d.reqCodeGroups.size
 
       case r: RestoreContent =>
-        activeRCGs += r.reqCodes.size
+        activeRCGs += r.reqCodeGroups.size
 
       case _: UpdateCustomIssueType
          | _: UpdateCustomReqType

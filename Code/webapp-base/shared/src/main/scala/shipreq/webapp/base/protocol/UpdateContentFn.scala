@@ -26,7 +26,7 @@ object UpdateContentCmd {
 
   case class DeleteReqs         (reqs: NonEmptySet[ReqId], reqCodeGroups: Set[ReqCodeId], reason: Text.DeletionReason.OptionalText) extends UpdateContentCmd
   case class DeleteReqCodeGroups(ids: NonEmptySet[ReqCodeId])                                                                       extends UpdateContentCmd
-  case class RestoreContent     (reqs: Set[ReqId], reqCodes: Set[ReqCodeId])                                                        extends UpdateContentCmd
+  case class RestoreContent     (reqs: Set[ReqId], reqCodeGroups: Set[ReqCodeId])                                                   extends UpdateContentCmd
 
   implicit val cmdEquality: UnivEq[UpdateContentCmd] = UnivEq.deriveAuto
 
