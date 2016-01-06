@@ -78,17 +78,27 @@ object HashRec {
       older
     else {
       // Add non-overlapping old
-      val totalNew = newer.iterator.map(reflSubsets).reduce(_ union _)
+
+      val totalNew = {
+        val b = Set.newBuilder[HashScope]
+        for (n <- newer) {
+          b ++= reflSubsets(n)
+          b ++= n.scheme.invalidScopes
+        }
+        b.result()
+      }
+      val totalNewContains = totalNew.contains _
+
       var result = newer
       for (oldRec <- older) {
         val totalOld = reflSubsets(oldRec)
-        if (!totalOld.exists(totalNew.contains))
+        if (!totalOld.exists(totalNewContains))
           result += oldRec
       }
       result
     }
 
-  val reflSubsetFn: (LogicVer, HashScheme, HashScope) => Set[HashScope] = {
+  val reflSubsets: HashRec => Set[HashScope] = {
     import HashScope._
     type Lookup = HashScope => Set[HashScope]
 
@@ -113,9 +123,9 @@ object HashRec {
          | DeletionReasons => Set.empty
     }
 
-    (_, _, scope) => latest(scope)
+    // The original idea was that logicVer and hashScheme would be used to affect the results here.
+    // 1) That's problematic in that how can fake hashSchemes be added in tests.
+    // 2) The newer HashScheme.invalidScopes already provides some functionality that was previously envisioned to go here.
+    r => latest(r.scope)
   }
-
-  val reflSubsets: HashRec => Set[HashScope] =
-    r => reflSubsetFn(r.logicVer, r.scheme, r.scope)
 }

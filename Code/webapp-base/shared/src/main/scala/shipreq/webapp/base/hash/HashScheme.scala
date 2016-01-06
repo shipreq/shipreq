@@ -1,6 +1,6 @@
 package shipreq.webapp.base.hash
 
-import shipreq.base.util.{NonEmptyVector, UnivEq}
+import shipreq.base.util._
 
 final case class HashSchemeId(value: Char) extends AnyVal
 
@@ -19,7 +19,7 @@ final case class HashSchemeId(value: Char) extends AnyVal
  * - Update `HashSchemeTest`. Rename `latest` to `vₙ` and add a new `latest` test with values that consider the
  *   newly-added data structure changes.
  */
-final case class HashScheme private[hash](value: DataHasher, id: HashSchemeId) {
+final case class HashScheme private[hash](value: DataHasher, id: HashSchemeId, invalidScopes: Set[HashScope]) {
   override val hashCode = value.##
   override def equals(o: Any): Boolean =
     o match {
@@ -34,16 +34,39 @@ object HashScheme {
 
   /**
    * Order is oldest to most recent.
-   *
-   * APPEND-ONLY. DO NOT ALTER POSITION OF EXISTING ENTRIES.
    */
-  private[this] val raw: NonEmptyVector[DataHasher] =
-    NonEmptyVector(
-      new DataHasherV1(MurmurHash3),
-      new DataHasherCurrent(MurmurHash3))
+  val all: NonEmptyVector[HashScheme] = {
 
-  val all: NonEmptyVector[HashScheme] =
-    raw.mapWithIndex((h, i) => HashScheme(h, HashSchemeId((i + 97).toChar)))
+    var i = 'a'.toInt - 1
+
+    def make(d: DataHasher)(scopeValidity: HashScope => Validity): HashScheme = {
+      i += 1
+      val id = HashSchemeId(i.toChar)
+      val invalidScopes = HashScope.all.iterator.filter(scopeValidity(_) :: Invalid).toSet
+      HashScheme(d, id, invalidScopes)
+    }
+
+    import HashScope._
+
+    // APPEND-ONLY. DO NOT ALTER POSITION OF EXISTING ENTRIES.
+    NonEmptyVector(
+      make(new DataHasherV1(MurmurHash3)) {
+        case WholeProject
+           | Config
+           | CfgIssueTypes
+           | CfgReqTypes
+           | CfgFields
+           | CfgTags
+           | Content
+           | Reqs
+           | ReqCodes
+           | TextFieldData
+           | TagData
+           | ImplicationData => Valid
+        case DeletionReasons => Invalid
+      },
+      make(new DataHasherCurrent(MurmurHash3))(_ => Valid))
+  }
 
   val latest: HashScheme =
     all.last
