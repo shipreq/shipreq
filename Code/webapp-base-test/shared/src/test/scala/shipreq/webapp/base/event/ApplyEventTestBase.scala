@@ -24,13 +24,21 @@ object ApplyEventTestFns {
 
   def _assertPass(es: Event*)(implicit init: InitialEvents): Project = {
     val es2 = init ++ es
-    val r = apply(es2)(Project.empty)
-    val p =
-      r match {
-        case \/-(v) => v
-        case -\/(e) => fail(s"\nPass expected but failed with '$e'.\nEvents were:\n${fmtEvents(es2)}")
-      }
-    assertQty(p, es2: _*)
+
+    def go(ae: ApplyEvent): Project = {
+      val r = ae(es2)(Project.empty)
+      val p =
+        r match {
+          case \/-(v) => v
+          case -\/(e) => fail(s"\nPass expected but failed with '$e' (${ae.trust}).\nEvents were:\n${fmtEvents(es2)}")
+        }
+      assertQty(p, es2: _*)
+      p
+    }
+
+    val p = go(ApplyEvent.untrusted)
+    val p2 = go(ApplyEvent.trusted)
+    assertEq(p, p2)
     p
   }
 

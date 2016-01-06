@@ -2,11 +2,12 @@ package shipreq.webapp.base.event
 
 import monocle._
 import scala.reflect.ClassTag
+import scalaz.Equal
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.util.GenericData
-import shipreq.webapp.base.validation.{ValidatorU, ValidationResult}
+import shipreq.webapp.base.validation.{InputCorrected, ValidatorU, ValidationResult}
 
 private[event] object ApplyEventLib {
   type Error = String
@@ -49,11 +50,22 @@ private[event] object ApplyEventLib {
       case scalaz.Failure(f) => fail(f.toText)
     }
 
-  def validateWith[A](v: ValidatorU[A, _, A])(implicit trust: Trust): A => SE[A] =
-    whenUntrusted(a => v correctAndValidateU a)
+  def validateA[A](v: ValidatorU[A, A, A], fieldName: => String)(implicit trust: Trust, eq: Equal[A]): A => SE[A] =
+    whenUntrusted(_validate(v, fieldName))
 
-  def validateWithF[I, A](v: ValidatorU[I, _, A])(i: A => I)(implicit trust: Trust): A => SE[A] =
-    whenUntrusted(a => v.correctAndValidateU(i(a)))
+  def validateO[I, O](v: ValidatorU[I, O, O], fieldName: => String)(implicit trust: Trust, eq: Equal[I]): O => SE[O] =
+    whenUntrusted(o => _validate(v, fieldName)(v ci o))
+
+  def validateI[I, O](v: ValidatorU[I, I, O], fieldName: => String)(f: O => I)(implicit trust: Trust, eq: Equal[I]): O => SE[O] =
+    whenUntrusted(o => _validate(v, fieldName)(f(o)))
+
+  private def _validate[I, C, O](v: ValidatorU[I, C, O], fieldName: => String)(i: I)(implicit trust: Trust, eq: Equal[I]): SE[O] = {
+    val c = v.correctedU(i)
+    if (eq.equal(i, v ci c.value))
+      v validateU c
+    else
+      fail(s"Preprocessing not applied to $fieldName:\na: [$i]\ne: [${c.value}]")
+  }
 
   def ensureNone[A](oa: Option[A])(err: A => String)(implicit trust: Trust): SE[Unit] =
     whenUntrusted(oa.fold(nop)(a => fail(err(a))))

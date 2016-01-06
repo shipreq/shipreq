@@ -2,10 +2,12 @@ package shipreq.webapp.base.event
 
 import scala.reflect.ClassTag
 import shipreq.base.util._
+import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.data.{Validators => V, _}
 import shipreq.webapp.base.util.GenericData
 import ApplyEventLib._, SE.SE
 import DataImplicits._
+import UnivEq.Implicits._
 
 trait ApplyConfigEvent {
   this: ApplyEvent =>
@@ -16,8 +18,8 @@ trait ApplyConfigEvent {
     val GD   = GenericDataApp[CustomIssueType](^)
     val imap = IMapStoreL(Project.customIssueTypes)(CustomIssueType.live)
 
-    val validateKey  = validateWithF(V.customIssueType.keyU)(_.value)
-    val validateDesc = validateWithF(V.customIssueType.descU)(_ getOrElse "")
+    val validateKey  = validateI(V.customIssueType.keyU, FieldNames.hashRefKey)(_.value)
+    val validateDesc = validateO(V.customIssueType.descU, FieldNames.desc)
 
     val updateIdCeiling = updateIdCeilingFn(IdCeilings.customIssueType)
 
@@ -50,8 +52,8 @@ trait ApplyConfigEvent {
     val GD   = GenericDataApp[CustomReqType](^)
     val imap = IMapStoreL(Project.customReqTypes)(CustomReqType.live)
 
-    val validateName     = validateWith (V.reqType.nameU)
-    val validateMnemonic = validateWithF(V.reqType.mnemonicU)(_.value)
+    val validateName     = validateA(V.reqType.nameU, FieldNames.name)
+    val validateMnemonic = validateI(V.reqType.mnemonicU, FieldNames.mnemonic)(_.value)
 
     val updateIdCeiling = updateIdCeilingFn(IdCeilings.customReqType)
 
@@ -101,9 +103,9 @@ trait ApplyConfigEvent {
 
     val imap = IMapStore(Project.tags)
 
-    val validateName = validateWith(V.tag.nameU)
-    val validateDesc = validateWithF(V.tag.descU)(_ getOrElse "")
-    val validateKey  = validateWithF(V.tag.keyU)(_.value)
+    val validateName = validateA(V.tag.nameU, FieldNames.name)
+    val validateDesc = validateO(V.tag.descU, FieldNames.desc)
+    val validateKey  = validateI(V.tag.keyU , FieldNames.hashRefKey)(_.value)
 
     val updateIdCeiling = updateIdCeilingFn(IdCeilings.tag)
 
@@ -276,8 +278,8 @@ trait ApplyConfigEvent {
 
     val updateIdCeiling = updateIdCeilingFn(IdCeilings.customField)
 
-    val validateName = validateWith(V.field.nameU)
-    val validateKey  = validateWithF(V.field.keyU)(_.value)
+    val validateName = validateA(V.field.nameU, FieldNames.name)
+    val validateKey  = validateI(V.field.keyU, FieldNames.fieldRefKey)(_.value)
 
     def create(cf: CustomField): SE[Unit] =
       for {

@@ -4,6 +4,7 @@ import nyaya.util.Multimap
 import scala.annotation.tailrec
 import scalaz.syntax.equal._
 import shipreq.base.util._
+import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.data.{Validators => V, _}
 import shipreq.webapp.base.text.{Grammar, Text}
 import ApplyEventLib._, SE.SE
@@ -211,7 +212,7 @@ trait ApplyContentEvent {
 
     val updateIdCeiling = updateIdCeilingFn(IdCeilings.reqCode)
 
-    val validateCode = validateWith(V.reqCode.valueAndNodesU)
+    val validateCode = validateA(V.reqCode.valueAndNodesU, FieldNames.reqCode)
 
     val getTrie = SE get Project.reqCodeTrie.get
 
