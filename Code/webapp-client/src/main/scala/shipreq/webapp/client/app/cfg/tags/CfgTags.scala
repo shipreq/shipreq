@@ -4,23 +4,22 @@ import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
 import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
 import monocle.std.option.some
+import nyaya.prop.CycleDetector
+import nyaya.util.Multimap
 import scala.annotation.tailrec
 import scala.language.reflectiveCalls
 import scalajs.js.{undefined, UndefOr, UndefOrOps, Array => JsArray}
 import scalajs.js.JSConverters._
 import scalaz.\&/
-import scalaz.std.AllInstances._
-import scalaz.syntax.equal._
 import scalaz.syntax.bind.ToBindOps
+import scalaz.syntax.equal._
 
-import nyaya.prop.CycleDetector
-import nyaya.util.Multimap
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{MMTree, Memo, UnivEq, univEqOps}
 import shipreq.webapp.base.data.{TagId => Id, _}, DataImplicits._
 import shipreq.webapp.base.data.Validators.{tag => V}
 import shipreq.webapp.base.data.Validators.shared.HashRefKeyVS
-import shipreq.webapp.base.event.{DeletionAction, Delete, Restore}
+import shipreq.webapp.base.event.{Delete, Restore}
 import shipreq.webapp.base.protocol.TagCrud
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.client.app.cfg.shared._

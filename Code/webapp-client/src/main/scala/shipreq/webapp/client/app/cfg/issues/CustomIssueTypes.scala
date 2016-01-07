@@ -3,9 +3,9 @@ package shipreq.webapp.client.app.cfg.issues
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.extra._
 import scala.language.reflectiveCalls
-import scalaz.std.AllInstances._
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.base.data._, DataImplicits._
+import shipreq.base.util.UnivEq.Implicits._
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.Validators.{customIssueType => V}
 import shipreq.webapp.base.data.Validators.shared.HashRefKeyVS
 import shipreq.webapp.base.filter.FilterSpec
@@ -19,6 +19,7 @@ import shipreq.webapp.client.data.FilterDead
 import shipreq.webapp.client.lib.CrudActionIO
 import shipreq.webapp.client.lib.DataReusability._
 import shipreq.webapp.client.protocol.ClientProtocol
+import DataImplicits._
 
 private[issues] object CustomIssueTypes {
 

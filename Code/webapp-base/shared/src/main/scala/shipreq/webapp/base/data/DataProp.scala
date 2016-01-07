@@ -1,4 +1,3 @@
-
 package shipreq.webapp.base.data
 
 import nyaya.prop._
@@ -6,12 +5,18 @@ import scala.annotation.tailrec
 import scala.reflect.ClassTag
 import scalaz.{Monoid, Foldable}
 import scalaz.syntax.equal._
-import scalaz.std.AllInstances._
-import shipreq.base.util._, MTrie.Ops, ScalaExt._, Debug._
+import scalaz.std.list.listInstance
+import scalaz.std.option.optionInstance
+import scalaz.std.stream.streamInstance
+import scalaz.std.vector.vectorInstance
+import shipreq.base.util._
 import shipreq.webapp.base.text.{Atom, Text}
-import TaggedTypes.TaggedInt
 import DataImplicits._
+import Debug._
+import MTrie.Ops
 import ScalaExt._
+import TaggedTypes.TaggedInt
+import UnivEq.Implicits._
 
 object DataProp {
   implicit def autoLiftL(e: Eval) = e.liftL
