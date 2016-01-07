@@ -265,7 +265,7 @@ object DataProp {
             .toVector
           Some(s"Found ${errors.size} invalid DeletionReasonIds: ${errors mkString ", "}")
         } else if (unreferenced.nonEmpty)
-          Some(s"There exist deletion reasons with deletion targets: $unreferenced")
+          Some(s"There exist deletion reasons without deletion targets: $unreferenced")
         else
           None
       })
@@ -418,7 +418,7 @@ object DataProp {
     case class Refs(fieldIds: Set[CustomFieldId], reqIds: Set[ReqId], reqCodeIds: Set[ReqCodeId],
                     reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId])
 
-    def atoms =
+    def atoms: Prop[P] =
       Prop.eval[(String, Iterator[Text.AnyOptional])](t => text.anyTextI(t._2).rename(t._1))
         .forallF[List].contramap[P](_.allRichText) rename "Atoms"
 

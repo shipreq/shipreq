@@ -1,6 +1,7 @@
 package shipreq.webapp.base.event
 
 import nyaya.gen._
+import nyaya.prop.LogicPropExt
 import nyaya.util.Multimap
 import scalaz.{-\/, BindRec}
 import shipreq.base.test.BaseUtilGen._
@@ -166,6 +167,10 @@ object GenSuccEvent {
 }
 class GenSuccEvent(p: Project) {
   private implicit val gss: SizeSpec = 0 to 3
+
+  // If the starting state isn't valid, event application will never succeed and thus, loop forever
+  if (p ne Project.empty)
+    DataProp.project.allIncludingConfig assert p
 
   private val cfg = p.config
 

@@ -4,7 +4,7 @@ import nyaya.prop.LogicPropExt
 import scala.annotation.tailrec
 import scalaz.{-\/, \/-, \/}
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{NonEmptyVector, Valid, UnivEq}
+import shipreq.base.util.{univEqOps, NonEmptyVector, Valid, UnivEq}
 import shipreq.webapp.base.data.{Project, DataProp}
 import shipreq.webapp.base.hash.HashRec
 import ApplyEventLib._, SE.SE
@@ -24,7 +24,11 @@ object ApplyEvent {
    */
   val untrusted = new ApplyEvent()(Untrusted)
 
-  case class LogicVer(value: Char) extends AnyVal
+  case class LogicVer(value: Char) extends AnyVal {
+    def isCurrent: Boolean =
+      value ==* LogicVer.Current.value
+  }
+
   object LogicVer {
 
     // When this first changes.
@@ -66,18 +70,22 @@ final class ApplyEvent(implicit val trust: Trust) extends ApplyConfigEvent with 
       }
     }
 
-  def applyVerified(ves: Traversable[VerifiedEvent])(p: Project): Result =
+  def applyVerified(ves: Iterable[VerifiedEvent])(p: Project): Result =
     if (ves.isEmpty)
       \/-(p)
     else {
-      val s = ves.toStream
-      val events = s.map(_.event)
-      val finalHashRecs = s.map(_.hashRecs) reduceLeft HashRec.merge
-      val plan = applyAllSafe(events) >> validateHashRecs(finalHashRecs)
-      plan exec p leftMap (bulkError =>
-        findFirstFailure(0, s, p, None) getOrElse
-          s"Bulk validation failed but incremental passed.\n$bulkError"
-      )
+      val events          = ves.map(_.event)(collection.breakOut): List[Event]
+      val initialHashRecs = HashRec(p)
+      val finalHashRecs   = ves.iterator.map(_.hashRecs).foldLeft(initialHashRecs)(HashRec.merge)
+      val plan            = applyAllSafe(events) >> validateHashRecs(finalHashRecs)
+
+      plan.exec(p).leftMap(bulkError =>
+        findFirstFailure(p, ves) match {
+          case \/-(msg) => msg
+          case -\/(p2) =>
+            println(s"FinalHashRecs: ${inspectHRs(p2, finalHashRecs)}")
+            s"Bulk validation failed but incremental passed.\n$bulkError"
+        })
     }
 
   private def validateHashRecs(recs: HashRec.Collection): SE[Unit] =
@@ -95,19 +103,52 @@ final class ApplyEvent(implicit val trust: Trust) extends ApplyConfigEvent with 
       }
     )
 
-  @tailrec
-  private def findFirstFailure(index: Int, ves: Stream[VerifiedEvent], p: Project, lastHR: Option[HashRec.Collection]): Option[String] =
-    if (ves.isEmpty)
-      None
-    else {
-      val h = ves.head
-      val hr = lastHR.fold(h.hashRecs)(HashRec.merge(_, h.hashRecs))
-      val plan = apply1Safe(h.event) >> validateHashRecs(hr)
-      plan exec p match {
-        case \/-(p2)  => findFirstFailure(index + 1, ves.tail, p2, Some(hr))
-        case -\/(err) => Some(s"$err\nEvent #$index = ${h.event}")
+  private def inspectHRs(p2: Project, rs: HashRec.Collection) = rs.iterator.map("\n  - " + _.inspect(p2)) mkString ""
+
+  private def findFirstFailure(p: Project, ves: Iterable[VerifiedEvent]): Project \/ String = {
+    val it = ves.iterator
+
+    @tailrec
+    def go(index: Int, p: Project, lastHR: HashRec.Collection): Project \/ String =
+      if (it.hasNext) {
+        val h = it.next()
+        val hr = HashRec.merge(lastHR, h.hashRecs)
+        val plan = apply1Safe(h.event) >> validateHashRecs(hr)
+
+        println("="*120)
+        println(s"Event #$index = ${h.event.toString.replaceFirst("\\(.+", "")}")
+
+        plan exec p match {
+          case \/-(p2)  =>
+
+            println(s"VE.HashRecs: ${inspectHRs(p2, h.hashRecs)}")
+            println(s"Merged HashRecs: ${inspectHRs(p2, hr)}")
+            println()
+
+//            def pv(v: VerifiedEvent) = v.hashRecs.map(_.inspect(p2)).mkString(", ")
+//            def pvs(vs: VerifiedEvents) = (s"${vs.length} events." +: vs.map(v => s"  - ${EventStats name v.event} - ${pv(v)}")).mkString("\n")
+
+            go(index + 1, p2, hr)
+          case -\/(err) =>
+            println()
+            println(h.event)
+            println()
+            println(err)
+            println()
+            \/-(s"$err\nEvent #$index = ${h.event}")
+        }
+      } else {
+
+        println("="*120)
+        println("All events applied and verified. Oops.")
+        println(s"lastHR: ${inspectHRs(p, lastHR)}")
+        println()
+
+        -\/(p)
       }
-    }
+
+    go(0, p, HashRec(p))
+  }
 
   private def safely(apply: SE[Unit]): SE[Unit] =
     (apply >> validateDataProps) attempt onError

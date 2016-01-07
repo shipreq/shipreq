@@ -26,6 +26,8 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
                                fields          : FieldSet,
                                tags            : TagTree) {
 
+  override def toString = "ProjectConfig(…)"
+
   def atagValidate(id: ApplicableTagId): Option[String] =
     tags.get(id) match {
       case Some(tit) => tit.tag match {

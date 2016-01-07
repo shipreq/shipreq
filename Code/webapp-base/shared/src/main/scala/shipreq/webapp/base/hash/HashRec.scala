@@ -21,7 +21,14 @@ case class HashRec(scope   : HashScope,
                val hash    : Option[Int]) {
 
   override def toString =
-    s"HashRec($scope, $logicVer, $scheme)($hash)"
+    s"HashRec($scope, $logicVer, $scheme)(${hash.fold("∅")(_.toString)})"
+
+  def inspect(p: Project): String =
+    hash.fold("pass") { e =>
+      val a = recalc(p)
+      val op = if (e ==* a) "=" else "≠"
+      s"[$logicVer $scheme $scope $e  $op  $a]"
+    }
 
   def recalc(p: Project): Int =
     HashScope.hash(scope, scheme.value, p)
@@ -30,13 +37,17 @@ case class HashRec(scope   : HashScope,
     Valid <~ validateF(p).isEmpty
 
   def validateF(p: Project): Option[ValidationFailure] =
-    hash.flatMap { e =>
-      val a = recalc(p)
-      if (e ==* a)
-        None
-      else
-        Some(ValidationFailure(expect = e, actual = a))
-    }
+    if (logicVer.isCurrent)
+      hash.flatMap { e =>
+        val a = recalc(p)
+        if (e ==* a)
+          None
+        else
+          Some(ValidationFailure(expect = e, actual = a))
+      }
+    else
+      // Can't validate old logic; new logic is always applied.
+      None
 }
 
 object HashRec {
@@ -55,6 +66,17 @@ object HashRec {
 
   val defaultHashScopes = HashScope.defaultSet.whole
 
+  def apply(p: Project): HashRec.Collection = {
+    val scheme = HashScheme.latest
+    var r = emptyCollection
+    val d = scheme.value
+    for (s <- defaultHashScopes) {
+      val h = HashScope.hash(s, d, p)
+      r += HashRec(s, LogicVer.Current, scheme)(Some(h))
+    }
+    r
+  }
+
   def changes(p1: Project, p2: Project): HashRec.Collection =
     __changes(defaultHashScopes, LogicVer.Current, HashScheme.latest, p1, p2)
 
@@ -72,7 +94,9 @@ object HashRec {
   }
 
   def merge(older: Collection, newer: Collection): Collection =
-    if (older.isEmpty)
+    // Any existence of old logic completely invalidates past results because there's (currently) no way of determining
+    // how the change in logic impacts previously-generated hashes. Therefore, we throw out all old hashes.
+    if (older.isEmpty || newer.exists(!_.logicVer.isCurrent))
       newer
     else if (newer.isEmpty)
       older

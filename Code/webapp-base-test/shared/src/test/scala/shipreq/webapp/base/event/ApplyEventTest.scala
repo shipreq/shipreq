@@ -10,9 +10,10 @@ import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.ApplyEvent.LogicVer
-import shipreq.webapp.base.hash.{HashScheme, HashRec}
+import shipreq.webapp.base.hash._
 import shipreq.webapp.base.hash.HashTestUtil.hashSchemes
-import shipreq.base.util.univEqOps
+import shipreq.webapp.base.text.Text
+import shipreq.base.util.{NonEmptyVector, univEqOps}
 
 object ApplyEventTest extends TestSuite {
 
@@ -98,24 +99,40 @@ object ApplyEventTest extends TestSuite {
   }
   */
 
-  val OldLogicVer1 = LogicVer(1)
-  val OldLogicVer2 = LogicVer(2)
-  val LogicVers = OldLogicVer1 +: OldLogicVer2 +: LogicVer.all
+  val OldLogicVer = LogicVer(33)
+  val LogicVers = OldLogicVer +: LogicVer.all
+
+  def verifyEvent(p1: Project, e1: Event) = {
+
+    val p2 = ApplyEvent.untrusted.apply1(e1)(p1) match {
+      case \/-(p) => p
+      case -\/(x) => fail(s"Init failed: $x")
+    }
+
+    val hrs = HashRec.changes(p1, p2)
+    assert(hrs.nonEmpty)
+    val ve = VerifiedEvent(e1, hrs)
+
+    (p2, ve)
+  }
+
+  def assertApplicationFailure(vef: VerifiedEvent, p1: Project): Unit =
+    ApplyEvent.untrusted.applyVerified(List(vef))(p1) match {
+      case \/-(p) => fail(s"applyVerified passed when it shouldn't have.")
+      case -\/(e) => ()
+    }
+
+//  val corruptProject: Project => Project = {
+//    val drt = NonEmptyVector one Text.DeletionReason.Literal("OMG")
+//    Project.deletionReasons.modify(d => d.copy(reasons = d.reasons :+ drt))
+//  }
 
   override def tests = TestSuite {
     'applyVerified {
 
       val p1 = Project.empty
       val e1 = DeleteStaticField(StaticField.StepGraph)
-
-      val p2 = ApplyEvent.untrusted.apply1(e1)(p1) match {
-        case \/-(p) => p
-        case -\/(x) => fail(s"Init failed: $x")
-      }
-
-      val hrs = HashRec.changes(p1, p2)
-      assert(hrs.nonEmpty)
-      val ve = VerifiedEvent(e1, hrs)
+      val (p2, ve) = verifyEvent(p1, e1)
 
       'pass {
         ApplyEvent.untrusted.applyVerified(List(ve))(p1) match {
@@ -126,12 +143,16 @@ object ApplyEventTest extends TestSuite {
 
       'fail {
         val vef = ve.copy(hashRecs = ve.hashRecs.map(r => HashRec(r.scope, r.logicVer, r.scheme)(r.hash.map(_ + 1))))
-        ApplyEvent.untrusted.applyVerified(List(vef))(p1) match {
-          case \/-(p) => fail(s"applyVerified passed when it shouldn't have.")
-          case -\/(e) => e
-        }
+        assertApplicationFailure(vef, p1)
+      }
+
+      'checkUnspecifiedScopes {
+        val (_, ve) = verifyEvent(Project.empty, ApplyTemplate(ProjectTemplate.Default))
+        val vef = ve.copy(hashRecs = ve.hashRecs.drop(1))
+        assertApplicationFailure(vef, Project.empty)
       }
     }
+
     'stuff {
 
       def log(s: => String): Unit = println(s)
@@ -142,11 +163,13 @@ object ApplyEventTest extends TestSuite {
 
       def gen(initProject: Project = Project.empty) =
         Gen { ctx =>
+//          println("Gen starting.")
+//          try {
 
           var lvs = genLogicVerSeq run ctx
           var hss = genHashSchemeSeq run ctx
-          val lvCount = lvs.length
-          val hsCount = hss.length
+//          val lvCount = lvs.length
+//          val hsCount = hss.length
 
           var p = initProject
           var stats = EventStats.empty
@@ -159,17 +182,23 @@ object ApplyEventTest extends TestSuite {
           advanceLogicVer()
           advanceHashScheme()
 
+          // TODO Remove
+//          lv = LogicVer.Current
+//          lvs = Vector.empty
+
           def addEvent(): Unit = {
+
             val ((s2, p2), e) = GenSuccEvent(p).applicableEventS(stats)(EventStats.observeFn) run ctx
 
-            // Mutate project to simulate old application-logic
-            val p3 = if (lv ==* LogicVer.Current) p2 else
-              Project.idCeilings.modify(IdCeilings.customField.modify(_ + lv.value.toInt))(p2)
+            var hr = HashRec.__changes(HashRec.defaultHashScopes, lv, hs, p, p2)
 
-            val hr = HashRec.__changes(HashRec.defaultHashScopes, lv, hs, p, p3)
+            // Old logic means hashes that are obsolete and no longer match
+            if (lv !=* LogicVer.Current)
+              hr = hr.map(r => HashRec(r.scope, r.logicVer, r.scheme)(r.hash.map(_ ^ 0xffff0000)))
+
             ves :+= VerifiedEvent(e, hr)
             stats = s2
-            p = p3
+            p = p2
           }
 
           while (lvs.nonEmpty || hss.nonEmpty) {
@@ -195,24 +224,61 @@ object ApplyEventTest extends TestSuite {
 //              ves.map(v => s"  - ${EventStats name v.event} - ${v.hashRecs.map(r => s"L${r.logicVer.value.toInt} H${r.scheme.id.value.toInt}").mkString("[",", ", "]")}"))
 //              .mkString("\n") + "\n")
 
+          // TODO Merge and show stats
+
           ves
+//          }finally{
+//            println("Gen finished.")
+//          }
       }
 
       val g = gen()
 
-      val prop = Prop.atom[VerifiedEvents]("", ves => {
-        val r = ApplyEvent.trusted.applyVerified(ves)(Project.empty)
-        if (r.isLeft)
-          log(
-            ( s"Generated: ${ves.length} events." +:
-              ves.map(v => s"  - ${EventStats name v.event} - ${v.hashRecs.map(r => s"L${r.logicVer.value.toInt} H${r.scheme.id.value.toInt} ${r.scope}").mkString("[",", ", "]")}"))
-              .mkString("\n") + "\n")
+      def mkProp(AE: ApplyEvent) = Prop.atom[VerifiedEvents](AE.trust.toString, ves => {
+//        println("Prop running.")
 
+        def getP2 = AE(ves.map(_.event))(Project.empty).toOption
+
+        def printHashValues(): Unit =
+          for (p2 <- getP2) {
+            println("=" * 100)
+            println(s"Hash values (${AE.trust})")
+            val scopes    = ves.iterator.flatMap(_.hashRecs.iterator.map(_.scope)).toSet
+            val schemes   = ves.iterator.flatMap(_.hashRecs.iterator.map(_.scheme)).toSet
+            val logicVers = ves.iterator.flatMap(_.hashRecs.iterator.map(_.logicVer)).toSet
+            for {
+              scope  <- scopes
+              scheme <- schemes
+              logic  <- logicVers
+            } {
+              def h(p: Project) = HashScope.hash(scope, scheme.value, p)
+              println(s"  > $scope $logic $scheme = ${h(Project.empty)} → ${h(p2)}")
+            }
+            println()
+          }
+
+        val r = AE.applyVerified(ves)(Project.empty)
+        if (r.isLeft)
+          for (p2 <- getP2)
+            log {
+              //          printHashValues()
+              //AE.applyVerified2(ves)(Project.empty)
+              def pv(v: VerifiedEvent) = v.hashRecs.map(_.inspect(p2)).mkString(", ")
+              def pvs(vs: VerifiedEvents) = (s"${vs.length} events." +: vs.map(v => s"  - ${EventStats name v.event} - ${pv(v)}")).mkString("\n")
+              "Generated: " + pvs(ves) + "\n"
+            }
+
+//        println("Prop finished.")
         r.swap.toOption
       })
 
+//      val prop = (mkProp(ApplyEvent.untrusted) & mkProp(ApplyEvent.trusted)).rename("Verified event application")
+      val prop = mkProp(ApplyEvent.trusted)
+
+//      g.mustSatisfy(prop)(defaultPropSettings)
       //g.mustSatisfy(prop)(defaultPropSettings.setSeed(84).setSampleSize(10).setDebug)
-      g.bugHunt(944)(prop)
+//      g.bugHunt(689, 1000, printFailure = false)(prop)
+      g.bugHunt(seeds = 1000)(prop)(defaultPropSettings)
 
       // TODO should also wipe some hashrecs to demonstrate manual intervention
 
