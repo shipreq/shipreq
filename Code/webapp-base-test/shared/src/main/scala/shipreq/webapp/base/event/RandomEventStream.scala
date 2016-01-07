@@ -13,110 +13,11 @@ import shipreq.webapp.base.event.Event.NESD
 import shipreq.webapp.base.hash._
 import shipreq.webapp.base.test.WebappBaseGen._
 import shipreq.webapp.base.text.Text
+import ApplicableEventGen.ObserveFn
 import RandomData.{fieldRefKey, hashRefKey, implicationRequired, mandatory, mutexChildren}
 import RandomData.{reqCode, reqTypeMnemonic, TextGen, TextGenExt, unicodeString1}
 import ScalaExt._
 import UtilMacros._
-import GenSuccEvent.ObserveFn
-
-object EventStats {
-
-  val (allNames, name) =
-    valuesForAdtF[Event, String] {
-      case _: AddStaticField        => "AddStaticField"
-      case _: ApplyTemplate         => "ApplyTemplate"
-      case _: CreateApplicableTag   => "CreateApplicableTag"
-      case _: CreateCustomImpField  => "CreateCustomImpField"
-      case _: CreateCustomIssueType => "CreateCustomIssueType"
-      case _: CreateCustomReqType   => "CreateCustomReqType"
-      case _: CreateCustomTagField  => "CreateCustomTagField"
-      case _: CreateCustomTextField => "CreateCustomTextField"
-      case _: CreateGenericReq      => "CreateGenericReq"
-      case _: CreateReqCodeGroup    => "CreateReqCodeGroup"
-      case _: CreateTagGroup        => "CreateTagGroup"
-      case _: DeleteCustomField     => "DeleteCustomField"
-      case _: DeleteCustomIssueType => "DeleteCustomIssueType"
-      case _: DeleteCustomReqType   => "DeleteCustomReqType"
-      case _: DeleteReqCodeGroups   => "DeleteReqCodeGroups"
-      case _: DeleteReqs            => "DeleteReqs"
-      case _: DeleteStaticField     => "DeleteStaticField"
-      case _: DeleteTag             => "DeleteTag"
-      case _: PatchImplicationSrc   => "PatchImplicationSrc"
-      case _: PatchImplicationTgt   => "PatchImplicationTgt"
-      case _: PatchReqCodes         => "PatchReqCodes"
-      case _: PatchReqTags          => "PatchReqTags"
-      case _: RepositionField       => "RepositionField"
-      case _: RestoreContent        => "RestoreContent"
-      case _: SetCustomTextField    => "SetCustomTextField"
-      case _: SetGenericReqTitle    => "SetGenericReqTitle"
-      case _: SetGenericReqType     => "SetGenericReqType"
-      case _: UpdateApplicableTag   => "UpdateApplicableTag"
-      case _: UpdateCustomImpField  => "UpdateCustomImpField"
-      case _: UpdateCustomIssueType => "UpdateCustomIssueType"
-      case _: UpdateCustomReqType   => "UpdateCustomReqType"
-      case _: UpdateCustomTagField  => "UpdateCustomTagField"
-      case _: UpdateCustomTextField => "UpdateCustomTextField"
-      case _: UpdateReqCodeGroup    => "UpdateReqCodeGroup"
-      case _: UpdateTagGroup        => "UpdateTagGroup"
-    }
-    .map1(_.sorted)
-
-  val allNamesList = allNames.whole.toList
-
-  private val maxNameLen = allNames.iterator.map(_.length).max
-
-  private[EventStats] val reportLineFmt = s"| %-${maxNameLen}s | %7s | %3s |"
-  private[EventStats] val reportLineHdr = reportLineFmt.format("EVENT", "GOOD", "BAD")
-  private[EventStats] val reportLineSep = s"+-${"-" * maxNameLen}-+-${"-"*7}-+-${"-"*3}-+"
-
-  val empty = EventStats(Nil, Nil)
-
-  val observeFn: ObserveFn[EventStats] =
-    _.add(_, _)
-
-}
-case class EventStats(ok: List[String], ko: List[String]) {
-  import EventStats._
-
-  def add(e: Event, r: ApplyEvent.Result): EventStats = {
-    val n = name(e)
-    r.fold(err => {
-//        if (!err.contains("\n"))
-//        if (n.contains("Patch"))
-//          println(s"[Event Application Failure] $err\n$e\n")
-        copy(ko = n :: ko)
-      }, (_: Project) => copy(ok = n :: ok))
-  }
-
-  private def lookup(ss: List[String]): String => String =
-    ss.foldLeft(Map.empty[String, Int])((m, s) => m.updated(s, 1 + m.getOrElse(s, 0)))
-      .mapValuesNow(_.toString)
-      .withDefaultValue("")
-      .apply
-
-  def report: String = {
-    val mOK = lookup(ok)
-    val mKO = lookup(ko)
-    val content = allNamesList.map(s => reportLineFmt.format(s, mOK(s), mKO(s)))
-
-    val (cOK, cKO) = (ok, ko).mapEach(_.size)
-    val c = cOK + cKO
-    def per(i: Int) = (i.toDouble / c.toDouble * 100).toInt.toString + "%"
-    val total = reportLineFmt.format("Σ", cOK.toString, cKO.toString)
-    val totalP = reportLineFmt.format("Σ%", per(cOK), per(cKO))
-
-    val (dOK, dKO) = (ok, ko).mapEach(_.toSet.size)
-    def distPer(i: Int) = (i.toDouble / allNames.length.toDouble * 100).toInt.toString + "%"
-    val dist = reportLineFmt.format("Event type coverage", distPer(dOK), per(dKO))
-
-    ( reportLineSep :: reportLineHdr ::
-      reportLineSep :: content :::
-      reportLineSep :: total :: totalP :: dist ::
-      reportLineSep :: Nil
-    ) mkString "\n"
-  }
-}
-
 
 /**
   * Generates a random event stream that can be successfully applied.
@@ -125,47 +26,45 @@ case class EventStats(ok: List[String], ko: List[String]) {
   * make sense as a consecutive stream.
   */
 object RandomEventStream {
-
-  def applicableEventS[S](observe: ObserveFn[S]): StateGen[(S, Project), Event] =
-    StateGen(sp =>
-      GenSuccEvent(sp._2).applicableEventS(sp._1)(observe))
-
-  def addVerifiedEventS[S](succ: StateGen[(S, Project), Event]): StateGen[((S, Project), VerifiedEvents), VerifiedEvent] =
-    StateGen { case orig @ (sp1, vs) =>
-      succ(sp1).map { case (sp2, e2) =>
-        val hrs = HashRec.changes(sp1._2, sp2._2)
-        val v2 = VerifiedEvent(e2, hrs)
-        ((sp2, vs :+ v2), v2)
-      }
-    }
-
-  def eventStreamS[S](gen: StateGen[((S, Project), VerifiedEvents), VerifiedEvent])(implicit ss: SizeSpec): StateGen[((S, Project), VerifiedEvents), Unit] = {
-    val SSS = scalaz.StateT.stateTMonadState[((S, Project), VerifiedEvents), Gen]
-    import SSS.monadSyntax._
-    // TODO Speed up replicateM_ (?)
-    StateGen(spv => ss.gen.flatMap(n => gen.replicateM_(n)(spv)))
-  }
-
-  def genEventStreamS[S](s0: S, p0: Project = Project.empty)(observe: ObserveFn[S])(implicit ss: SizeSpec): Gen[(S, VerifiedEvents)] =
-    eventStreamS(addVerifiedEventS(applicableEventS(observe)))(ss)((s0, p0), Vector.empty)
-      .map { case (((s, _), vs), ()) => (s, vs) }
-
-  // -------------------------------------------------------------------------------------------------------------------
-
-  def withEventStats(p: Project = Project.empty)(implicit ss: SizeSpec): Gen[(EventStats, VerifiedEvents)] =
-    genEventStreamS(EventStats.empty, p)(EventStats.observeFn)
-
-  // TODO Terrible
-//  def plain(p: Project = Project.empty)(implicit ss: SizeSpec): Gen[VerifiedEvents] =
-//    genEventStreamS(())((_, _, _) => ()).map(_._2)
+//  def applicableEventS[S](observe: ObserveFn[S]): StateGen[(S, Project), Event] =
+//    StateGen(sp =>
+//      ApplicableEventGen(sp._2).applicableEventS(sp._1)(observe))
+//
+//  def addVerifiedEventS[S](succ: StateGen[(S, Project), Event]): StateGen[((S, Project), VerifiedEvents), VerifiedEvent] =
+//    StateGen { case orig @ (sp1, vs) =>
+//      succ(sp1).map { case (sp2, e2) =>
+//        val hrs = HashRec.changes(sp1._2, sp2._2)
+//        val v2 = VerifiedEvent(e2, hrs)
+//        ((sp2, vs :+ v2), v2)
+//      }
+//    }
+//
+//  def eventStreamS[S](gen: StateGen[((S, Project), VerifiedEvents), VerifiedEvent])(implicit ss: SizeSpec): StateGen[((S, Project), VerifiedEvents), Unit] = {
+//    val SSS = scalaz.StateT.stateTMonadState[((S, Project), VerifiedEvents), Gen]
+//    import SSS.monadSyntax._
+//    // TO DO Speed up replicateM_ (?)
+//    StateGen(spv => ss.gen.flatMap(n => gen.replicateM_(n)(spv)))
+//  }
+//
+//  def genEventStreamS[S](s0: S, p0: Project = Project.empty)(observe: ObserveFn[S])(implicit ss: SizeSpec): Gen[(S, VerifiedEvents)] =
+//    eventStreamS(addVerifiedEventS(applicableEventS(observe)))(ss)((s0, p0), Vector.empty)
+//      .map { case (((s, _), vs), ()) => (s, vs) }
+//
+//  // -------------------------------------------------------------------------------------------------------------------
+//
+//  def withEventStats(p: Project = Project.empty)(implicit ss: SizeSpec): Gen[(EventStats, VerifiedEvents)] =
+//    genEventStreamS(EventStats.empty, p)(EventStats.observeFn)
 }
 
-object GenSuccEvent {
-  @inline def apply(p: Project) = new GenSuccEvent(p)
+// =====================================================================================================================
+
+object ApplicableEventGen {
+  @inline def apply(p: Project) = new ApplicableEventGen(p)
 
   type ObserveFn[S] = (S, Event, ApplyEvent.Result) => S
 }
-class GenSuccEvent(p: Project) {
+
+class ApplicableEventGen(p: Project) {
   private implicit val gss: SizeSpec = 0 to 3
 
   // If the starting state isn't valid, event application will never succeed and thus, loop forever

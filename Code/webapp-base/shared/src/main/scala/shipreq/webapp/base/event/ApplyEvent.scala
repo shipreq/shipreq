@@ -82,9 +82,7 @@ final class ApplyEvent(implicit val trust: Trust) extends ApplyConfigEvent with 
       plan.exec(p).leftMap(bulkError =>
         findFirstFailure(p, ves) match {
           case \/-(msg) => msg
-          case -\/(p2) =>
-            println(s"FinalHashRecs: ${inspectHRs(p2, finalHashRecs)}")
-            s"Bulk validation failed but incremental passed.\n$bulkError"
+          case -\/(p2)  => s"Bulk validation failed but incremental passed.\n$bulkError"
         })
     }
 
@@ -103,49 +101,22 @@ final class ApplyEvent(implicit val trust: Trust) extends ApplyConfigEvent with 
       }
     )
 
-  private def inspectHRs(p2: Project, rs: HashRec.Collection) = rs.iterator.map("\n  - " + _.inspect(p2)) mkString ""
-
   private def findFirstFailure(p: Project, ves: Iterable[VerifiedEvent]): Project \/ String = {
     val it = ves.iterator
 
     @tailrec
     def go(index: Int, p: Project, lastHR: HashRec.Collection): Project \/ String =
       if (it.hasNext) {
-        val h = it.next()
-        val hr = HashRec.merge(lastHR, h.hashRecs)
+        val h    = it.next()
+        val hr   = HashRec.merge(lastHR, h.hashRecs)
         val plan = apply1Safe(h.event) >> validateHashRecs(hr)
 
-        println("="*120)
-        println(s"Event #$index = ${h.event.toString.replaceFirst("\\(.+", "")}")
-
         plan exec p match {
-          case \/-(p2)  =>
-
-            println(s"VE.HashRecs: ${inspectHRs(p2, h.hashRecs)}")
-            println(s"Merged HashRecs: ${inspectHRs(p2, hr)}")
-            println()
-
-//            def pv(v: VerifiedEvent) = v.hashRecs.map(_.inspect(p2)).mkString(", ")
-//            def pvs(vs: VerifiedEvents) = (s"${vs.length} events." +: vs.map(v => s"  - ${EventStats name v.event} - ${pv(v)}")).mkString("\n")
-
-            go(index + 1, p2, hr)
-          case -\/(err) =>
-            println()
-            println(h.event)
-            println()
-            println(err)
-            println()
-            \/-(s"$err\nEvent #$index = ${h.event}")
+          case \/-(p2)  => go(index + 1, p2, hr)
+          case -\/(err) => \/-(s"$err\nEvent #$index = ${h.event}")
         }
-      } else {
-
-        println("="*120)
-        println("All events applied and verified. Oops.")
-        println(s"lastHR: ${inspectHRs(p, lastHR)}")
-        println()
-
+      } else
         -\/(p)
-      }
 
     go(0, p, HashRec(p))
   }

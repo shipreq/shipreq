@@ -23,13 +23,6 @@ case class HashRec(scope   : HashScope,
   override def toString =
     s"HashRec($scope, $logicVer, $scheme)(${hash.fold("∅")(_.toString)})"
 
-  def inspect(p: Project): String =
-    hash.fold("pass") { e =>
-      val a = recalc(p)
-      val op = if (e ==* a) "=" else "≠"
-      s"[$logicVer $scheme $scope $e  $op  $a]"
-    }
-
   def recalc(p: Project): Int =
     HashScope.hash(scope, scheme.value, p)
 
