@@ -94,6 +94,10 @@ object Dependencies {
     private val mm = MultiModule.java("org.eclipse.jetty", "9.3.2.v20150730")
     val webapp = mm("jetty-webapp")
     val runner = mm("jetty-runner")
+
+    // Upgrade this in step with Jetty or else java.lang.SecurityExceptions will abound.
+    // It's a transitive dependency of jetty-server
+    val servletApi = jvmOnly("javax.servlet" % "javax.servlet-api" % "3.1.0")
   }
 
   val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %%%! "benchmark" % "0.2.2")
@@ -122,7 +126,6 @@ object Dependencies {
   val commonsLang = jvmOnly("org.apache.commons"          % "commons-lang3"         % "3.4")
   val commonsIo   = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val twitterEval = jvmOnly("com.twitter"                %% "util-eval"             % "6.30.0")
-  val servlet     = jvmOnly("org.eclipse.jetty.orbit"     % "javax.servlet"         % "3.0.0.v201112011016" artifacts Artifact("javax.servlet", "jar", "jar"))
   val mockito     = jvmOnly("org.mockito"                 % "mockito-core"          % "1.9.5")
   val scalaTest   = jvmOnly("org.scalatest"              %% "scalatest"             % "2.2.5")
   val scalaCheck  = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.11.3")

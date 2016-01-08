@@ -381,7 +381,8 @@ object ShipReq extends Build {
           Scalaz.core ++ Lift.webkit ++ Shiro.all ++ scalate ++ commonsLang ++ guava ++
           testScope(μTest ++ scalaTest ++ scalaCheck ++ mockito ++ Lift.testkit ++ commonsIo ++ twitterEval) ++
           depScope("it")(selenium) ++
-          (LibJetty.webapp % "test") ++ (servlet % "test,provided")
+          (LibJetty.webapp % "test") ++
+          (LibJetty.servletApi % "test,provided")
         )
         .configure(
           webappSettings,
