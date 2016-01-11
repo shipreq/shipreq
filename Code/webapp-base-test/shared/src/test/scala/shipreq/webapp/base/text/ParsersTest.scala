@@ -20,6 +20,12 @@ import Atom.AnyAtom
 
 object ParsersTest extends TestSuite {
 
+  def quoteStr(s: String): String =
+    s"[${s.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")}]"
+
+  def preprocessStr(s: String, multiLine: Boolean): String =
+    String valueOf Parsers.preprocess(s, multiLine)
+
   val counts = Atom.Type.values.toStream.map((_, new AtomicInteger)).toMap
   def count(as: Iterable[AnyAtom]): Unit =
     as.foreach { a =>
@@ -108,13 +114,25 @@ object ParsersTest extends TestSuite {
     }
 
     def testStringML(in0: String) = {
-      val in1    = String valueOf Parsers.preprocess(in0, multiLine = true)
+      val in1    = preprocessStr(in0, multiLine = true)
       val parser = Text.CustomTextField.parser(p)(in0) // in0, not in1, cos it should preprocess by itself
       val par1   = assertSuccess(parser, parser.optionalText.run())
       val in2    = txt2str(par1)
+      val in3    = preprocessStr(in2, multiLine = true)
       val par2   = Text.CustomTextField.parse(p)(in2)
+//      if (in2 startsWith "\n")
+//        println(
+//          List(
+//            "in0" -> in0,
+//            "in1" -> in1,
+//            "par1" -> par1.toString,
+//            "in2" -> in2,
+//            "in3" -> in3,
+//            "par2" -> par2.toString)
+//            .map{case (k,v) => s"$k: [${v.replace("\n", "↲")}]"}.mkString("\n") + "\n")
       count(par1)
       cmp(in1, par1, par2).rename("parse |> toStr |> parse = parse") ∧
+      Eval.equal("txt2str |> preprocess = txt2str", in0, in2, in3) ∧
       DataProp.text.anyText(par1).liftL.rename("DataProp.anyText")
     }
 
@@ -173,6 +191,12 @@ object ParsersTest extends TestSuite {
   def propMathTeX = parserProp("MathTeX",
     (_: T.MathTeX).value |> Grammar.mathTexSurround.display, T.parserI(P))(_.mathtex.run())
 
+  val whitespaceCombos: Set[String] = {
+    val chars = List(' ', '\n', '\r', '\t')
+    val words = (1 to 3).iterator.flatMap(n => chars.combinations(n).flatMap(_.permutations)).map(_.mkString)
+    words.toSet
+  }
+
   override val tests = TestSuite {
     'preprocess {
       // This isn't a standard trim - see preprocess() for explanation
@@ -189,7 +213,7 @@ object ParsersTest extends TestSuite {
 
       def testT[A <: AnyAtom](p: Project, parse: Project => String => Vector[A], text: String)(as: A*): Unit = {
         val e = as.toVector
-        assertEq(parse(p)(text), e)
+        assertEq(quoteStr(preprocessStr(text, true)), parse(p)(text), e)
         val text2 = PlainText(p).format(Live, e)
         assertEq(text2, parse(p)(text2), e)
       }
@@ -213,6 +237,8 @@ object ParsersTest extends TestSuite {
         'nls     - test("here \n \n\n there")(L("here"), T.blankLine, L("there"))
         'listNL  - test("ok\n\n\n*   hehe \n \n\n  \n *  yay \n\n\n bye")(L("ok"), T.UnorderedList(NEV(LI(L("hehe")), LI(L("yay")))), L("bye"))
         'codeRef - test("[ here . i . am_3 ]")(T.CodeRef(3))
+        'headNL  - whitespaceCombos.foreach(w => test(w + "good")(T.Literal("good")))
+        'tailNL  - whitespaceCombos.foreach(w => test("good" + w)(T.Literal("good")))
       }
 
       'list {
@@ -243,7 +269,8 @@ object ParsersTest extends TestSuite {
     // Eg. Dead text can have CodeRefs to dead codes.
     // Parsing text only happens to live text, and it only looks at active codes.
     'big {
-      tester.mustSatisfyE(_.all) //(DefaultSettings.propSettings.setSampleSize(1000).setSeed(1).setGenSize(4).setDebug.setSingleThreaded)
+//      tester.bugHunt(0, 10000)(Prop eval (_.all)) //(DefaultSettings.propSettings.setSampleSize(1000).setSeed(1).setGenSize(4).setDebug.setSingleThreaded)
+      tester.mustSatisfyE(_.all) //(DefaultSettings.propSettings.setSampleSize(20000).setDebug)
       println()
       val graphUnit = 1000 `JVM|JS` 10
       val graphChar = "#" `JVM|JS` "."

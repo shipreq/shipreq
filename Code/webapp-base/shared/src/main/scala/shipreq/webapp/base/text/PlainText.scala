@@ -65,6 +65,8 @@ object PlainText {
 
   type ForProject = ProjectText[String]
 
+  private final val bullet = "* "
+
   def apply(p: Project): ForProject = {
 
     def codeRef(id: ReqCodeId): String = {
@@ -102,6 +104,7 @@ object PlainText {
           if (atoms.isEmpty)
             acc
           else {
+            val nextAtoms = atoms.tail
             import Atom._
             val cur = atoms.head match {
               case a: Literal         # Literal       => a.value
@@ -114,10 +117,14 @@ object PlainText {
               case a: PlainTextMarkup # MathTeX       => G.mathTexSurround(a.value)
               case a: TagRef          # TagRef        => tagRef(a.value)
               case a: ListMarkup      # UnorderedList =>
-                val newline2 = if (newline eq outOfListNewline) "\n  " else newline ~ "  "
-                a.items.foldLeft("")((q, li) => nest(s"$q${newline}* ", newline2, live, li)) ~ newline
+                val listNL = if (newline eq outOfListNewline) "\n  " else newline ~ "  "
+                val r = a.items.foldLeft("") { (q, li) =>
+                  val pre = if (q.isEmpty && acc.isEmpty) bullet else q ~ newline ~ bullet
+                  nest(pre, listNL, live, li)
+                }
+                if (nextAtoms.isEmpty) r else r ~ newline
             }
-            go(acc ~ cur, atoms.tail)
+            go(acc ~ cur, nextAtoms)
           }
         go(acc, atoms)
       }

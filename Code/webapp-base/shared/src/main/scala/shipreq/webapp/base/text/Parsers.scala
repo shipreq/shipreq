@@ -39,21 +39,30 @@ object Parsers {
     // ----------------------------------------------------------------
     // Trim
 
-    // This only trims newlines and not spaces because
+    // Because there are special cases, not all whitespace is trimmed.
+    // Not all whitespace need be trimmed because the parser already contains space handing - for example, literals are
+    // trimmed as they're parsed, as confirmed by tests.
+    //
+    // Special cases:
     // 1) "* " is a valid multiline bullet with no content. "*" is not.
-    // 2) The parser already contains space handing such that literals are trimmed, as confirmed by tests.
-    def isWhitespace(c: Char): Boolean =
-      (c: @switch) match {
+    def canTrim(i: Int): Boolean =
+      (a(i): @switch) match {
+
         case '\n' | '\r' => true
-        case _           => false
+
+        case ' ' =>
+          // Space need only be preserved after an asterisk
+          !(multiLine && i != 0 && a(i - 1) == '*')
+
+        case _ => false
       }
 
     val last = a.length - 1
     var x = 0
     var y = last
 
-    while (y >= 0 && isWhitespace(a(y))) y -= 1
-    while (x < y  && isWhitespace(a(x))) x += 1
+    while (y >= 0 && canTrim(y)) y -= 1
+    while (x < y  && canTrim(x)) x += 1
     if (y < 0)
       Array.empty[Char]
     else if (x == 0 && y == last)
