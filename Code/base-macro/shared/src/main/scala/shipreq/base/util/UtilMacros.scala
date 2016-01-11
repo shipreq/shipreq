@@ -15,6 +15,9 @@ object UtilMacros {
   def  adtValues[T]: NonEmptyVector[T] = macro UtilMacroImpls.quietAdtValues[T]
   def _adtValues[T]: NonEmptyVector[T] = macro UtilMacroImpls.debugAdtValues[T]
 
+  def  adtValuesManual[T](vs: T*): NonEmptyVector[T] = macro UtilMacroImpls.quietAdtValuesManual[T]
+  def _adtValuesManual[T](vs: T*): NonEmptyVector[T] = macro UtilMacroImpls.debugAdtValuesManual[T]
+
   def  valuesForAdt[T, V](f: T => V): NonEmptyVector[V] = macro UtilMacroImpls.quietValuesForAdt[T, V]
   def _valuesForAdt[T, V](f: T => V): NonEmptyVector[V] = macro UtilMacroImpls.debugValuesForAdt[T, V]
 
@@ -80,6 +83,52 @@ class UtilMacroImpls(val c: blackbox.Context) extends MacroUtils {
     c.Expr[AdtIso[Adt, T]](impl)
   }
 
+  def quietAdtValuesManual[T: c.WeakTypeTag](vs: c.Expr[T]*): c.Expr[NonEmptyVector[T]] = implAdtValuesManual(false)(vs)
+  def debugAdtValuesManual[T: c.WeakTypeTag](vs: c.Expr[T]*): c.Expr[NonEmptyVector[T]] = implAdtValuesManual(true )(vs)
+  def implAdtValuesManual[T: c.WeakTypeTag](debug: Boolean)(vs: Seq[c.Expr[T]]): c.Expr[NonEmptyVector[T]] = {
+    val T = weakTypeOf[T]
+
+    val all = findConcreteTypesNE(T, LeavesOnly).map(_.fullName)
+    var unseen = all
+
+    /*
+    v.tree match {
+      case Select(This(_), name) => name isn't the FQN :(
+      case t => fail("Don't know how to interpret " + showRaw(t))
+    */
+    val hack = """^Select\([^,]+, ([^,)]+)\)$""".r
+
+    for (v <- vs)
+      showRaw(v.tree) match {
+        case hack(name) =>
+          if (!all.contains(name))
+            fail(s"'$name' isn't part of legal values: $all")
+          if (!unseen.contains(name))
+            fail(s"Duplicate value: '$name'")
+          unseen -= name
+
+        case x => fail("Don't know how to interpret " + x)
+      }
+
+    if (unseen.nonEmpty)
+      fail("Not all value accounted for: " + unseen.map("\n  - " + _).mkString)
+
+    if (vs.isEmpty)
+      fail(s"At least one value is required to make a NonEmptyVector.")
+
+    val addValues = vs.map(v => q"b += $v")
+
+    val impl =
+      q"""
+         val b = Vector.newBuilder[$T]
+         ..$addValues
+         _root_.shipreq.base.util.NonEmptyVector force b.result()
+       """
+
+    if (debug) println("\n" + showCode(impl) + "\n")
+    c.Expr[NonEmptyVector[T]](impl)
+  }
+
   def quietAdtValues[T: c.WeakTypeTag]: c.Expr[NonEmptyVector[T]] = implAdtValues(false)
   def debugAdtValues[T: c.WeakTypeTag]: c.Expr[NonEmptyVector[T]] = implAdtValues(true)
   def implAdtValues[T: c.WeakTypeTag](debug: Boolean): c.Expr[NonEmptyVector[T]] = {
@@ -106,7 +155,7 @@ class UtilMacroImpls(val c: blackbox.Context) extends MacroUtils {
     val V       = weakTypeOf[V]
     val valueFn = readMacroArg_tToTree(f)
     val values  = valueFn.map(_._2)
-    val types   = deterministicOrderT(findConcreteAdtTypesNE(T, LeavesOnly))
+    val types   = findConcreteAdtTypesNE(T, LeavesOnly)
     val unseen  = types.filterNot(t => valueFn.exists(t <:< _._1.fold(_.tpe, identity)))
 
     if (unseen.nonEmpty)

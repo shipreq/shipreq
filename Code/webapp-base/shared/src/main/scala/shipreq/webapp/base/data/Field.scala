@@ -142,8 +142,9 @@ object StaticField {
     "Step Graph", T.StepGraph, useCaseOnly, Mandatory.Not, Deletable, None)
 
   // Non lazy causes utest to crash
+  // ORDER MATTERS as this is the default order of fields use in new projects
   lazy val values: NonEmptyVector[StaticField] =
-    NonEmptyVector(NormalAltStepTree, ExceptionStepTree, StepGraph)
+    UtilMacros.adtValuesManual[StaticField](NormalAltStepTree, ExceptionStepTree, StepGraph)
 
   lazy val (deletable, notDeletable) =
     values.whole.partition(_.deletable :: Deletable)
