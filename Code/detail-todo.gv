@@ -1,0 +1,20 @@
+digraph G {
+
+newroute [label="Add route for req detail"]
+detail_links [label="Make ReqTable link to detail page"]
+singstate [label="Use single state for all ProjectSPA pages"]
+fixhack [label="Fix ProjectSPA/var/filter hack"]
+
+node [style=filled fillcolor="#ddddff"]
+detail [label="Add a detail page"]
+notfound [label="Detail page:\nreq not found"]
+struct [label="Detail page:\ndisplay fields"]
+update [label="Detail page:\nsend/recv changes"]
+back [label="Detail page:\nback to reqtable"]
+
+newroute -> detail_links
+singstate -> fixhack,back
+detail -> notfound,struct,update,back
+detail -> newroute
+
+}
