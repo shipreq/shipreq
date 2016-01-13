@@ -447,8 +447,11 @@ object ShowSrcDataImp {
   implicit val useCaseStep: ShowSrc[UseCaseStep] =
     data((s, a) => s.cc2("UseCaseStep", UseCaseStep unapply a))
 
-  implicit val useCaseSteps: ShowSrc[UseCase.Steps] =
-    vectorTree
+  implicit val useCaseStepsTree: ShowSrc[UseCaseSteps.Tree] =
+    "useCaseStepTree" @@ vectorTree
+
+  implicit val useCaseSteps: ShowSrc[UseCaseSteps] =
+    data((s, a) => s.cc1("UseCaseSteps", UseCaseSteps unapply a))
 
   implicit val useCase: ShowSrc[UseCase] =
     data((s, a) => s.cc6("UseCase", UseCase unapply a))
@@ -472,7 +475,10 @@ object ShowSrcDataImp {
     "useCaseStepFlow" @@ digraphBi("UseCases.StepFlow")
 
   implicit val useCases: ShowSrc[UseCases] =
-    "useCases" @@ data((s, a) => s.cc2("UseCases", UseCases unapply a))
+    "useCases" @@ data { (s, a) =>
+      s.cc2("UseCases.Stateless", UseCases.Stateless unapply UseCases.statelessIso.reverseGet(a))
+      s append ".withState"
+    }
 
   implicit val requirements: ShowSrc[Requirements] =
     data((s, r) =>
