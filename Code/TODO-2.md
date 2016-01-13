@@ -1,5 +1,3 @@
-* Ensure custom-text fields trimmed after parsing.
-
 * Cancel text-complete popup on blur.
 
 * Would by nice to redo the .validation package but can also live with it for now.
