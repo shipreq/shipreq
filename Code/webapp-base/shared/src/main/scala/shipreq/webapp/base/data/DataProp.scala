@@ -2,12 +2,12 @@ package shipreq.webapp.base.data
 
 import nyaya.prop._
 import scala.annotation.tailrec
+import scala.collection.GenTraversableOnce
 import scala.reflect.ClassTag
 import scalaz.{Monoid, Foldable}
 import scalaz.syntax.equal._
 import scalaz.std.list.listInstance
 import scalaz.std.option.optionInstance
-import scalaz.std.stream.streamInstance
 import scalaz.std.vector.vectorInstance
 import shipreq.base.util._
 import shipreq.webapp.base.text.{Atom, Text}
@@ -81,10 +81,10 @@ object DataProp {
     type T = CustomReqTypeIMap
 
     def uniqueMnemonics =
-      Prop.distinct("mnemonic", (_: T).values.toStream.flatMap(b => b.mnemonic #:: b.oldMnemonics.toStream).map(_.value))
+      Prop.distinctI("mnemonic", (_: T).valuesIterator.flatMap(_.allMnemonics).map(_.value))
 
     def uniqueNames =
-      Prop.distinct("name", (_: T).values.toStream.map(_.name))
+      Prop.distinctI("name", (_: T).valuesIterator.map(_.name))
 
     def each =
       customReqType.all.forall[T, Iterator](_.valuesIterator)
@@ -124,16 +124,16 @@ object DataProp {
     def orderHasAllUndeletableStaticFields =
       Prop.allPresent[FieldSet]("order ⊇ undeletable static")(Function const StaticField.notDeletable.toSet, _.order)
 
-    def filteredFields[T](f: PartialFunction[CustomField, T]): FieldSet => Stream[T] = {
+    def filteredFields[T](f: PartialFunction[CustomField, T]): FieldSet => Iterator[T] = {
       val ff = f.lift
-      _.customFields.values.toStream.flatMap(ff(_).toStream)
+      _.customFields.valuesIterator.map(ff).filterDefined
     }
 
     def tagFieldsUnique =
-      Prop.distinct("Tag field", filteredFields { case t: CustomField.Tag => t.tagId })
+      Prop.distinctI("Tag field", filteredFields { case t: CustomField.Tag => t.tagId })
 
     def implicationFieldsUnique =
-      Prop.distinct("Implication field", filteredFields { case t: CustomField.Implication => t.reqTypeId })
+      Prop.distinctI("Implication field", filteredFields { case t: CustomField.Implication => t.reqTypeId })
 
     def fieldSet = "FieldSet" rename_: (
       ids ∧ fields ∧
@@ -390,7 +390,7 @@ object DataProp {
         p.reqTypes.map(_.reqTypeId)(collection.breakOut),
         p.tags.keySet)
 
-      def whitelist[A](refs: TR => Set[A])(name: String, test: P => Traversable[A]) =
+      def whitelist[A](refs: TR => Set[A])(name: String, test: P => TraversableOnce[A]) =
         // Two steps here results in better failure messages
         Prop.whitelist[(P, Set[A])](name + " resolve")(_._2, _._1 |> test)
           .contramap[TR](t => t put2 refs(t))
@@ -399,7 +399,7 @@ object DataProp {
       def validTagIds     = whitelist(_._2.tagIds) _
 
       (  validReqTypeIds("Field.reqTypes",
-          _.fields.customFields.values.toStream.flatMap(f => isubsetContents(f.reqTypes).toStream))
+          _.fields.customFields.valuesIterator.flatMap(f => isubsetContents(f.reqTypes)))
       ∧ validTagIds("CustomField.Tag.tagIds",
         p => fields.filteredFields({ case t: CustomField.Tag => t.tagId})(p.fields))
       ∧ validReqTypeIds("CustomField.Implication.reqTypeIds",
