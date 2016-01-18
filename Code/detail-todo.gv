@@ -2,15 +2,15 @@ digraph G {
 rankdir=LR
 
 graphviz [label="Use graphviz or a replacement"]
-newroute [label="Add route for req detail"]
 detail_links [label="Make ReqTable link to detail page"]
 
 node [style=filled fillcolor="#33aa33"]
 singstate [label="Use single state for all ProjectSPA pages"]
 fixhack [label="Fix ProjectSPA/var/filter hack"]
+newroute [label="Add route for req detail"]
+detail [label="Add a detail page"]
 
 node [style=filled fillcolor="#ddddff"]
-detail [label="Add a detail page"]
 notfound [label="Detail page:\nreq not found"]
 struct [label="Detail page:\ndisplay fields"]
 update [label="Detail page:\nsend/recv changes"]

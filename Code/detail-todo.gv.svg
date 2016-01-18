@@ -24,28 +24,18 @@
 <path fill="none" stroke="black" d="M575.608,-406.18C608.739,-403.76 644.657,-401.136 675.659,-398.872"/>
 <polygon fill="black" stroke="black" points="676.254,-402.338 685.973,-398.118 675.744,-395.356 676.254,-402.338"/>
 </g>
-<!-- newroute -->
-<g id="node2" class="node"><title>newroute</title>
-<ellipse fill="none" stroke="black" cx="467.562" cy="-144" rx="94.7833" ry="18"/>
-<text text-anchor="middle" x="467.562" y="-140.3" font-family="Times,serif" font-size="14.00">Add route for req detail</text>
-</g>
 <!-- detail_links -->
-<g id="node3" class="node"><title>detail_links</title>
+<g id="node2" class="node"><title>detail_links</title>
 <ellipse fill="none" stroke="black" cx="757.039" cy="-144" rx="133.776" ry="18"/>
 <text text-anchor="middle" x="757.039" y="-140.3" font-family="Times,serif" font-size="14.00">Make ReqTable link to detail page</text>
 </g>
-<!-- newroute&#45;&gt;detail_links -->
-<g id="edge1" class="edge"><title>newroute&#45;&gt;detail_links</title>
-<path fill="none" stroke="black" d="M562.693,-144C578.845,-144 595.95,-144 613.041,-144"/>
-<polygon fill="black" stroke="black" points="613.096,-147.5 623.096,-144 613.095,-140.5 613.096,-147.5"/>
-</g>
 <!-- singstate -->
-<g id="node4" class="node"><title>singstate</title>
+<g id="node3" class="node"><title>singstate</title>
 <ellipse fill="#33aa33" stroke="black" cx="155.986" cy="-49" rx="155.972" ry="18"/>
 <text text-anchor="middle" x="155.986" y="-45.3" font-family="Times,serif" font-size="14.00">Use single state for all ProjectSPA pages</text>
 </g>
 <!-- fixhack -->
-<g id="node5" class="node"><title>fixhack</title>
+<g id="node4" class="node"><title>fixhack</title>
 <ellipse fill="#33aa33" stroke="black" cx="467.562" cy="-18" rx="118.079" ry="18"/>
 <text text-anchor="middle" x="467.562" y="-14.3" font-family="Times,serif" font-size="14.00">Fix ProjectSPA/var/filter hack</text>
 </g>
@@ -65,9 +55,19 @@
 <path fill="none" stroke="black" d="M272.701,-60.9611C310.528,-64.8712 351.686,-69.1256 386.309,-72.7044"/>
 <polygon fill="black" stroke="black" points="386.054,-76.1967 396.361,-73.7435 386.774,-69.2338 386.054,-76.1967"/>
 </g>
+<!-- newroute -->
+<g id="node5" class="node"><title>newroute</title>
+<ellipse fill="#33aa33" stroke="black" cx="467.562" cy="-144" rx="94.7833" ry="18"/>
+<text text-anchor="middle" x="467.562" y="-140.3" font-family="Times,serif" font-size="14.00">Add route for req detail</text>
+</g>
+<!-- newroute&#45;&gt;detail_links -->
+<g id="edge1" class="edge"><title>newroute&#45;&gt;detail_links</title>
+<path fill="none" stroke="black" d="M562.693,-144C578.845,-144 595.95,-144 613.041,-144"/>
+<polygon fill="black" stroke="black" points="613.096,-147.5 623.096,-144 613.095,-140.5 613.096,-147.5"/>
+</g>
 <!-- detail -->
 <g id="node6" class="node"><title>detail</title>
-<ellipse fill="#ddddff" stroke="black" cx="155.986" cy="-207" rx="73.387" ry="18"/>
+<ellipse fill="#33aa33" stroke="black" cx="155.986" cy="-207" rx="73.387" ry="18"/>
 <text text-anchor="middle" x="155.986" y="-203.3" font-family="Times,serif" font-size="14.00">Add a detail page</text>
 </g>
 <!-- detail&#45;&gt;newroute -->
