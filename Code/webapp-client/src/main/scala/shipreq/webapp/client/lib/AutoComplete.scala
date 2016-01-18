@@ -134,7 +134,7 @@ object AutoComplete {
     UnivEq.derive
 
   @inline def normaliseReqPubid(s: String): String =
-    Grammar.pubidSeqFormat.normEach(s)
+    Grammar.pubid.seqFormat.normEach(s)
 
   // ===================================================================================================================
   // ReqCodes

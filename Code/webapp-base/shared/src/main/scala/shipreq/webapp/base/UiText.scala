@@ -43,6 +43,7 @@ object UiText {
     def dndDragHandleHeader = ""
     def usage               = "Usage"
     def implicationRequired = "Implication Required"
+    def reqType             = ColumnNames.reqType
   }
 
   object Cfg {

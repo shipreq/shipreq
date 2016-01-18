@@ -3,13 +3,16 @@ package shipreq.webapp.client.app
 import japgolly.scalajs.react._, vdom.prefix_<^._, MonocleReact._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.router.{RouterCtl => RouterCtl_, _}
-import monocle.macros.Lenses
+import monocle._
+import monocle.macros._
 import org.scalajs.dom
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 
 import shipreq.base.util.{NonEmptyVector, UnivEq}
+import shipreq.webapp.base.data.{ReqTypePos, ReqType}
 import shipreq.webapp.base.protocol.ProjectSPA
+import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.client.app.cfg.shared.Usage
 import shipreq.webapp.client.app.state.ClientData
 import shipreq.webapp.client.data.{FilterDead, HideDead}
@@ -41,15 +44,16 @@ object ProjectSpaMain {
     case object CfgReqTypes extends Page
     case object CfgTags     extends Page
     case object ReqTable    extends Page
+
+    case class ReqDetail(rtm: ReqType.Mnemonic, pos: ReqTypePos) extends Page
+
+    object ReqDetail {
+      val stringPrism: Prism[String, ReqDetail] =
+        Grammar.pubid.stringPrism ^<-> GenIso.fields[ReqDetail].reverse
+    }
   }
 
-  implicit def pageEq: UnivEq[Page] = UnivEq.derive
-
-  val pages = {
-    import Page._
-    NonEmptyVector[Page](
-      Index, ReqTable, CfgFields, CfgIssues, CfgReqTypes, CfgTags)
-  }
+  implicit def pageEq: UnivEq[Page] = UnivEq.deriveAuto
 
   def determineBaseUrl(url: String) = {
     val pat = "^([^/#?]+//[^/#?]+/[^/#?]+/[^/#?]+)(?:[/#?].*|$)".r.pattern
@@ -61,11 +65,13 @@ object ProjectSpaMain {
   // UI
 
   val IndexComponent = ReactComponentB[RouterCtl]("Index")
-    .render_P(ctl =>
+    .render_P { ctl =>
+      import Page._
       <.ul(
-        pages.whole.map(p =>
+        Vector(ReqTable, CfgFields, CfgIssues, CfgReqTypes, CfgTags).map(p =>
           <.li(ctl.link(p)(p.toString))))
-    ).build
+    }
+    .build
 }
 
 
@@ -79,18 +85,28 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
       import dsl._
       import Page._
 
+      val reqTablePath = "/table"
+
+      val dynPage = dynRenderR((page: Page, r) => Component(Props(page, r)))
+
       def staticPage(route: StaticDsl.Route[Unit], page: Page) =
         staticRoute(route, page) ~> renderR(r => Component(Props(page, r)))
 
-      ( staticPage(root,            Index      )
-      | staticPage("/table",        ReqTable   )
-      | staticPage("/cfg/fields",   CfgFields  )
-      | staticPage("/cfg/issues",   CfgIssues  )
+      def reqDetailRoute =
+        dynamicRouteCT(reqTablePath / remainingPath.pmapL(ReqDetail.stringPrism)) ~> dynPage autoCorrect
+
+      ( staticPage(root           , Index      )
+      | staticPage(reqTablePath   , ReqTable   )
+      | staticPage("/cfg/fields"  , CfgFields  )
+      | staticPage("/cfg/issues"  , CfgIssues  )
       | staticPage("/cfg/reqtypes", CfgReqTypes)
-      | staticPage("/cfg/tags",     CfgTags    )
+      | staticPage("/cfg/tags"    , CfgTags    )
+      | reqDetailRoute
       | trimSlashes
       ).notFound(redirectToPage(Index)(Redirect.Replace))
-        .verify(Index, pages.whole: _*)
+        .verify(
+          Index, ReqTable, CfgFields, CfgIssues, CfgReqTypes, CfgTags,
+          ReqDetail(ReqType.Mnemonic("A"), ReqTypePos(1)))
     }
 
   case class Props(page: Page, routerCtl: RouterCtl)
@@ -124,12 +140,27 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
           content)
 
       p.page match {
-        case Page.Index       => IndexComponent(p.routerCtl)
-        case Page.CfgFields   => layout(cfg.fields.CfgFields.Props(cp, r.fieldCrud, cd, fd).component)
-        case Page.CfgIssues   => layout(cfg.issues.CfgIssues.Props(cp, r.issueTypeCrud, r.reqTypeImpMod, r.fieldMandMod, cd, fd, usageShow).component)
-        case Page.CfgReqTypes => layout(cfg.reqtypes.CfgReqTypes.Props(cp, r.reqTypeCrud, cd, fd, usageShow).component)
-        case Page.CfgTags     => layout(cfg.tags.CfgTags.Props(cp, r.tagCrud, cd, fd).component)
-        case Page.ReqTable    => layout(reqTable.Component(s.reqTable))
+
+        case Page.Index =>
+          IndexComponent(p.routerCtl)
+
+        case Page.CfgFields =>
+          layout(cfg.fields.CfgFields.Props(cp, r.fieldCrud, cd, fd).component)
+
+        case Page.CfgIssues =>
+          layout(cfg.issues.CfgIssues.Props(cp, r.issueTypeCrud, r.reqTypeImpMod, r.fieldMandMod, cd, fd, usageShow).component)
+
+        case Page.CfgReqTypes =>
+          layout(cfg.reqtypes.CfgReqTypes.Props(cp, r.reqTypeCrud, cd, fd, usageShow).component)
+
+        case Page.CfgTags =>
+          layout(cfg.tags.CfgTags.Props(cp, r.tagCrud, cd, fd).component)
+
+        case Page.ReqTable =>
+          layout(reqTable.Component(s.reqTable))
+
+        case Page.ReqDetail(rtm, pos) =>
+          layout(reqdetail.ReqDetail.Props(rtm, pos, cd.project()).component)
       }
     }
   }

@@ -59,7 +59,7 @@ object ImplicationEditor {
     val text =
       reqs.map(r => PlainText.pubid(p, r.pubid))
         .sorted |>
-        Grammar.pubidSeqFormat.merge
+        Grammar.pubid.seqFormat.merge
 
     (reqs.map(_.id).toSet, text)
   }
@@ -97,7 +97,7 @@ object ImplicationEditor {
         l.illegal.get(s).map(-\/.apply) getOrElse
         -\/("Invalid: " + s)
 
-    Validator.seqText(Grammar.pubidSeqFormat)(
+    Validator.seqText(Grammar.pubid.seqFormat)(
       (l: Lookup) => s =>
         checkEach(l, s).leftMap(VFailure.looseMsg).validation)
   }
