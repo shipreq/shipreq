@@ -174,6 +174,7 @@ object Common {
     import sbinary.DefaultProtocol.StringFormat
     import Cache.seqFormat
     p.settings(
+      scalaJSUseRhino in Global := false,
       scalaJSStage in Global := jsStage,
       parallelExecution in testOnly := false,
       // Temp fix for https://github.com/scala-js/scala-js/issues/1817
@@ -193,14 +194,14 @@ object Common {
           test                 := ())
       case NoDom =>
         _.settings(
-          requiresDOM           := false)
-//          postLinkJSEnv in Test := NodeJSEnv().value)
-//          postLinkJSEnv  in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value))
+          requiresDOM := false)
+//          jsEnv in Test := NodeJSEnv().value)
+//          jsEnv in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value))
       case NeedDom =>
         _.settings(
           requiresDOM            := true,
           emitSourceMaps in Test := false, // PhantomJS doesn't use
-          postLinkJSEnv  in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value))
+          jsEnv          in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value))
     }
 
   // ===================================================================================================================
