@@ -111,10 +111,10 @@ final class ReqTableObs(val $ : DomZipper) {
     }
   }
 
-//  object table {
-//    val $ = ReqTableObs.this.$.down(">table", 2 of 2)
-//    val tbody = $.down(">tbody")
-//
+  object table {
+    val $ = ReqTableObs.this.$.down("ReqTable", ">table", 2 of 2)
+    val tbody = $.down("ReqTable", ">tbody")
+
 //    val columns: Vector[String] =
 //      $.down(">thead") collectInnerText "th"
 //
@@ -138,7 +138,7 @@ final class ReqTableObs(val $ : DomZipper) {
 //    private def byStatus(s: Status, wrap: String => String): String =
 //      Vector(true, false).map(f => wrap(cell(s, f))).mkString(",")
 //
-//    val allRows  = tbody getAll ">tr"
+    val allRows  = tbody getAll ">tr"
 //    val deadRows = tbody getAll byStatus(DeadRow, row)
 //    val liveRows = tbody getAll byStatus(Normal, row)
 //    val focusRow = tbody downO byFocus(true, row)
@@ -182,40 +182,40 @@ final class ReqTableObs(val $ : DomZipper) {
 //
 //    def entireContent =
 //      tbody.collect(">tr", _.collectInnerText(">td").mkString("│ ", " │ ", " │")).mkString("\n")
-//  }
-//
-//  object stats {
-//    val text = $.down(">div", 2 of 2).innerText
-//
-//    val reportedRows: Int =
-//      text match {
-//        case reportedRowCount(n) => n.toInt
-//        case u => fail(s"Unable to extract row count from [$u].")
-//      }
-//
-//    val reportedReqs: Int =
-//      text match {
-//        case reportedReqCount(n) => n.toInt
-//        case u => fail(s"Unable to extract req count from [$u].")
-//      }
-//
-//    val reportedReqFormulaText: Option[String] = {
-//      val m = reportedReqFormula.matcher(text)
-//      if (m.matches) {
-//        val f = m group 1
-//        if (f == "0 deleted") None else Some(f)
-//      } else
-//        None
-//    }
-//
-//    val reportedReqFormulaValue: Option[Int] =
-//      reportedReqFormulaText.map{ t =>
-//        val f = nonFormula.replaceAllIn(t, "")
-//        val i = new Calculator(f).InputLine.run()
-//        //println(s"$t  ==>  $f  ==  $i")
-//        i
-//      }
-//  }
+  }
+
+  object stats {
+    val text = $.down("Stats", ">div", 2 of 4).innerText
+
+    val reportedRows: Int =
+      text match {
+        case reportedRowCount(n) => n.toInt
+        case u => fail(s"Unable to extract row count from [$u].")
+      }
+
+    val reportedReqs: Int =
+      text match {
+        case reportedReqCount(n) => n.toInt
+        case u => fail(s"Unable to extract req count from [$u].")
+      }
+
+    val reportedReqFormulaText: Option[String] = {
+      val m = reportedReqFormula.matcher(text)
+      if (m.matches) {
+        val f = m group 1
+        if (f == "0 deleted") None else Some(f)
+      } else
+        None
+    }
+
+    val reportedReqFormulaValue: Option[Int] =
+      reportedReqFormulaText.map{ t =>
+        val f = nonFormula.replaceAllIn(t, "")
+        val i = new Calculator(f).InputLine.run()
+        //println(s"$t  ==>  $f  ==  $i")
+        i
+      }
+  }
 
   def availCols = viewSettings.columns.allColumns
 }
@@ -230,58 +230,30 @@ object Stuff {
 
 //  // TODO Move following into Nyaya
 //
-//  @inline def existance[A](name: String) = new ExistanceB[A](name)
-//  final class ExistanceB[A](val name: String) { //extends AnyVal {
-//  def apply[B](expect: A => Boolean, expected: A => Set[B], testData: A => Traversable[B]): Prop[A] = {
-//    lazy val yes = Prop.allPresent[A](name + " available")(expected, testData)
-//    lazy val no = Prop.blacklist[A](name + " not available")(expected, testData)
-//    Prop.test[A](name, expect).ifelse(yes, no)
-//  }
-//  }
-//
 //  import scala.util.Try
 //  def propTrySuccess(name: => String): Prop[Try[Any]] =
 //    Prop.test(name, _.isSuccess)
 //
 //  def propTry[A](name: => String, f: A => Any): Prop[A] =
 //    propTrySuccess(name).contramap(a => Try(f(a)))
-//
-//  case class PS(project: Project, screen: S) {
-//    lazy val cfname = CustomField.nameP(project)
-//
-//    def customFieldNames(a: Live): Set[String] = {
-//      val cfs   = project.config.fields.customFields.values.toStream
-//      val names = cfs.filter(_.live(project.config) ==* a).map(cfname)
-//      names.toSet
-//    }
-//  }
 
   val builtInColumns = Column.builtInValues.map(Column.NameResolver.builtIn).toNES.whole
 
-  def propO[O](name: String, f: String => Prop[S]) = {
-    val p = f(name)
-    *.point(_ => name, (o, _) => {val r = p(o); if (r.success) None else Some(r.failureTree)})
-  }
-
-//  def propPS[O](name: String, f: String => Prop[PS]) = {
+//  def propO[O](name: String, f: String => Prop[S]) = {
 //    val p = f(name)
-//    *.point(_ => name, (o, _) => {val r = p(o); if (r.success) None else Some(r.failureTree)})
+//    *.point(_ => name, i => {val r = p(i.obs); if (r.success) None else Some(r.failureTree)})
 //  }
 
   val invariants = {
-//    implicit def autoContraS(p: Prop[S]): Prop[PS] = p.contramap[PS](_.screen)
-//    def equal(name: => String) = Prop.equal[S](name)
 
     def availableColumns = {
       val ** = *.focus("Available columns").collection(_.obs.availCols)
 
       val uniqueColumns =
-//        propO("Unique columns", Prop.distinct(_, (_: S).availCols))
         **.assertDistinct
 
       val builtInColumnsAlwaysAvailable =
         **.assertContainsAll(_ + " contains all built-in.", _ => builtInColumns)
-//        propO("Built-in columns always available", Prop.allPresent[S](_)(_ => builtInColumns, _.availCols))
 
       def customFieldNames(project: Project, a: Live): Set[String] = {
         val cfname = CustomField.nameP(project)
@@ -292,14 +264,11 @@ object Stuff {
 
       val liveCustomFieldColumnsAlwaysAvailable =
         **.assertContainsAll(_ + " contains all live custom field columns.", i => customFieldNames(i.state, Live))
-//        propO("Live custom field columns available", Prop.allPresent[PS](_)(_ customFieldNames Live, _.screen.availCols))
 
       val deadColumns =
         **.assertExistence("dead custom field columns",
           _.obs.viewSettings.filterDead.value :: ShowDead,
           i => customFieldNames(i.state, Dead))
-//        propO(existance[PS]("Dead custom field columns")(_.screen.viewSettings.filterDead.value :: ShowDead,
-//          _ customFieldNames Dead, _.screen.availCols)
 
       liveCustomFieldColumnsAlwaysAvailable & builtInColumnsAlwaysAvailable & deadColumns & uniqueColumns
     }
@@ -319,25 +288,29 @@ object Stuff {
 //
 //      rowEitherDeadOrLive & oneFocusMax
 //    }
-//
-//    def stats = {
-//      val rowCount = equal("Reported row count")(_.table.allRows.length, _.stats.reportedRows)
-//
-//      val reqFormula = Prop.atom[S]("Req formula", s => {
-//        s.stats.reportedReqFormulaValue.flatMap(fv =>
-//          if (fv == s.stats.reportedReqs)
-//            None
-//          else
-//            Some(s"${s.stats.reportedReqs} !=* $fv (${s.stats.reportedReqFormulaText})")
-//        )
-//      })
-//
+
+    def stats = {
+      val rowCount =
+        *.assertEqual(_ => "Reported row count matches rows in table.",
+          _.obs.table.allRows.length, _.obs.stats.reportedRows)
+
+      val reqFormula =
+        *.point(_ => "Req formula.", os => {
+          os.obs.stats.reportedReqFormulaValue.flatMap(fv =>
+            if (fv == os.obs.stats.reportedReqs)
+              None
+            else
+              Some(s"${os.obs.stats.reportedReqs} ≠ $fv (${os.obs.stats.reportedReqFormulaText})")
+          )
+        })
+
 //      "Stats" rename_: (rowCount & reqFormula)
-//    }
-//
+      rowCount & reqFormula
+    }
+
 //    "Invariants" rename_: (
 //      availableColumns & sortableColumns & tableColumns & tableContents & stats)
-    availableColumns
+    availableColumns & stats
   }
 
 //  def assertInvariants(s: S = *): Unit =

@@ -87,15 +87,27 @@ package object teststate {
     def failed = failure.isDefined
   }
 
+  // Actually this is ShowValue
   case class Show[A](show: A => String) extends AnyVal {
-    def apply(a: A): String =
-      // Handle \n, \t, spaces (so surrounds), long strings
-      "[" + show(a) + "]"
+    @inline def apply(a: A): String =
+      show(a)
 
+    def map(f: String => String): Show[A] =
+    Show(a => f(show(a)))
   }
+
   object Show {
-    implicit val showString: Show[String] = Show(identity)
     implicit val showInt: Show[Int] = Show(_.toString)
+
+    implicit val showString: Show[String] = Show[String](s =>
+      // Handle \n, \t, spaces (so surrounds), long strings (?)
+      "\"" + s + "\""
+    )
+  }
+
+  case class ShowError[A](show: A => String) extends AnyVal
+  object ShowError {
+    implicit val showErrorString: ShowError[String] = ShowError(identity)
   }
 
   implicit def focusDsla2ToCheck[O, S, E, A](b: FocusDsl[O, S, E]#A2[A]) = b.check
@@ -139,7 +151,7 @@ package object teststate {
       showChildren = _.failure.isDefined)
   }
 
-  def formatHistory[E](history: History[E], options: Options)(implicit showError: Show[E]): String = {
+  def formatHistory[E](history: History[E], options: Options)(implicit showError: ShowError[E]): String = {
     val sb = new StringBuilder
 
     def appendIndent(indent: Int): Unit = {
@@ -187,4 +199,15 @@ package object teststate {
 
     sb.result()
   }
+
+  case class ROS[+Ref, +Obs, +State](ref: Ref, obs: Obs, state: State) {
+    val os: OS[Obs, State] =
+      OS(obs, state)
+
+    val sos: Some[OS[Obs, State]] =
+      Some(os)
+  }
+
+  case class OS[+O, +S](obs: O, state: S)
+
 }
