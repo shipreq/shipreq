@@ -4,7 +4,7 @@ import org.scalajs.dom.{Element, Node, window}
 import org.scalajs.dom.html
 import scala.reflect.ClassTag
 import scala.scalajs.js
-import DomZipper.{CssSelLookup, DOM, EitherLike, Layer, MofN, Sole}
+import DomZipper.{CssSelLookup, DOM, HndDown, Layer, MofN, Sole, showNameSel}
 
 object DomZipper {
   type DOM = Node
@@ -19,11 +19,15 @@ object DomZipper {
       override def apply(a: A) = f(a)
     }
 
-  trait EitherLike {
-    type Or[L, R]
-    def left[L, R](l: L): L Or R
-    def right[L, R](r: R): L Or R
-    def fold[L, R, O](x: L Or R)(l: L => O, r: R => O): O
+  trait HndDown {
+    type Result[A]
+    def pass[A](a: A): Result[A]
+    def fail[A](e: String): Result[A]
+    def apply[A](e: Either[String, A]): Result[A] =
+      e match {
+        case Right(a) => pass(a)
+        case Left(s) => fail(s)
+      }
   }
 
   // ===================================================================================================================
@@ -37,6 +41,7 @@ object DomZipper {
     implicit def domFromReact[A <: CompScope.Mounted[TopNode]]: DomLike[A] =
       DomLike(ReactDOM.findDOMNode)
 
+    /*
     implicit object UseScalazEither extends EitherLike {
       import scalaz._
       override type Or[L, R] = L \/ R
@@ -44,11 +49,31 @@ object DomZipper {
       override def right[L, R](r: R)                              = \/-(r)
       override def fold[L, R, O](x: L Or R)(l: L => O, r: R => O) = x.fold(l, r)
     }
+    */
+
+    implicit object JustThrow extends HndDown {
+      override type Result[A]         = A
+      override def pass[A](a: A)      = a
+      override def fail[A](e: String) = sys error removeReactIds(e)
+    }
+
+    def removeReactIds(html: String): String =
+      html.replaceAll(""" data-reactid=".*?"""", "")
   }
 
   // ===================================================================================================================
 
-  case class Layer(name: String, sel: String, dom: DOM)
+  def showNameSel(name: String, sel: String): String =
+    (Option(name).filter(_.nonEmpty), Option(sel).filter(_.nonEmpty)) match {
+      case (Some(n), Some(s)) => s"$n [$s]"
+      case (None   , Some(s)) => s
+      case (Some(n), None   ) => n
+      case (None   , None   ) => "?"
+    }
+
+  case class Layer(name: String, sel: String, dom: DOM) {
+    def show = showNameSel(name, sel)
+  }
 
   def root(implicit $: CssSelLookup): DomZipper =
     new DomZipper(Vector.empty[Layer] :+ Layer("window.document", "", window.document), $)
@@ -57,7 +82,7 @@ object DomZipper {
     apply("<manual>", tgt)
 
   def apply[A](name: String, tgt: A)(implicit domLike: DomLike[A], $: CssSelLookup): DomZipper =
-    new DomZipper(Vector.empty[Layer] :+ Layer(name, "?", domLike(tgt)), $)
+    new DomZipper(Vector.empty[Layer] :+ Layer(name, "", domLike(tgt)), $)
 
   case class MofN(m: Int, n: Int) {
     override def toString = s"$m of $n"
@@ -89,49 +114,56 @@ final class DomZipper private[test](layers: Vector[Layer], $: CssSelLookup) {
   def innerHTML: String = to[html.Element].fold("")(_.innerHTML)
   def innerText: String = dom.textContent
 
-  def down(sel: String)(implicit e: EitherLike): e.Or[String, DomZipper] =
-    down("…", sel)
+  def downE(sel: String): Either[String, DomZipper] =
+    downE("", sel)
 
-  def down(sel: String, which: MofN)(implicit e: EitherLike): e.Or[String, DomZipper] =
-    down("…", sel, which)
+  def downE(sel: String, which: MofN): Either[String, DomZipper] =
+    downE("", sel, which)
 
-  def down(name: String, sel: String)(implicit e: EitherLike): e.Or[String, DomZipper] =
-    down(name, sel, Sole)
+  def downE(name: String, sel: String): Either[String, DomZipper] =
+    downE(name, sel, Sole)
 
-  def down(name: String, sel: String, which: MofN)(implicit e: EitherLike): e.Or[String, DomZipper] = {
+  def downE(name: String, sel: String, which: MofN): Either[String, DomZipper] = {
     val results = $(sel, dom)
     if (results.length != which.n)
-      e.left(failMsg(s"Expected ${which.n} results, got ${results.length}."))
+      Left(failMsg(s"Query failed: ${showNameSel(name, sel)}. Expected ${which.n} results, not ${results.length}."))
     else {
       val nextLayer = Layer(name, sel, results(which.m - 1))
-      e.right(addLayer(nextLayer))
+      Right(addLayer(nextLayer))
     }
   }
+
+  def downO(sel: String)                           : Option[DomZipper] = downE(sel)             .right.toOption
+  def downO(sel: String, which: MofN)              : Option[DomZipper] = downE(sel, which)      .right.toOption
+  def downO(name: String, sel: String)             : Option[DomZipper] = downE(name, sel)       .right.toOption
+  def downO(name: String, sel: String, which: MofN): Option[DomZipper] = downE(name, sel, which).right.toOption
+
+  def down(sel: String)                           (implicit h: HndDown): h.Result[DomZipper] = h(downE(sel)             )
+  def down(sel: String, which: MofN)              (implicit h: HndDown): h.Result[DomZipper] = h(downE(sel, which)      )
+  def down(name: String, sel: String)             (implicit h: HndDown): h.Result[DomZipper] = h(downE(name, sel)       )
+  def down(name: String, sel: String, which: MofN)(implicit h: HndDown): h.Result[DomZipper] = h(downE(name, sel, which))
+
+//  def down_!(sel: String)                           (implicit e: HndDown): DomZipper = need_!(e)(down(sel))
+//  def down_!(sel: String, which: MofN)              (implicit e: HndDown): DomZipper = need_!(e)(down(sel, which))
+//  def down_!(name: String, sel: String)             (implicit e: HndDown): DomZipper = need_!(e)(down(name, sel))
+//  def down_!(name: String, sel: String, which: MofN)(implicit e: HndDown): DomZipper = need_!(e)(down(name, sel, which))
 
   private def addLayer(nextLayer: Layer) =
     new DomZipper(layers :+ nextLayer, $)
 
-//  def downO(sel: String)                           : Option[DomZipper] = down(sel)             .toOption
-//  def downO(sel: String, which: MofN)              : Option[DomZipper] = down(sel, which)      .toOption
-//  def downO(name: String, sel: String)             : Option[DomZipper] = down(name, sel)       .toOption
-//  def downO(name: String, sel: String, which: MofN): Option[DomZipper] = down(name, sel, which).toOption
-
-  def down_!(sel: String)                           (implicit e: EitherLike): DomZipper = need_!(e)(down(sel))
-  def down_!(sel: String, which: MofN)              (implicit e: EitherLike): DomZipper = need_!(e)(down(sel, which))
-  def down_!(name: String, sel: String)             (implicit e: EitherLike): DomZipper = need_!(e)(down(name, sel))
-  def down_!(name: String, sel: String, which: MofN)(implicit e: EitherLike): DomZipper = need_!(e)(down(name, sel, which))
-
   def describe: String =
-    s"Desc: ${layers.map(_.name) mkString " → "}\nPath: ${layers.map(_.sel) mkString " → "}\nHTML: $outerHTML"
+    s"DESC: ${layers.map(_.show) mkString " → "}\nHTML: $outerHTML"
 
   private def failMsg(msg: String): String =
     msg + "\n" + describe
 
-  private def need_!(e: EitherLike)(x: e.Or[String, DomZipper]): DomZipper =
-    e.fold[String, DomZipper, DomZipper](x)(sys.error, identity)
+  // ======= hmmmm… =======
+
+  def getAll(sel: String) =
+    $(sel, dom)
 
   def collectDom[A](sel: String, f: DOM => A): Vector[A] =
-    $(sel, dom).foldLeft(Vector.empty[A])(_ :+ f(_))
+    getAll(sel).foldLeft(Vector.empty[A])(_ :+ f(_))
 
   def collect[A](sel: String, f: DomZipper => A): Vector[A] =
     collectDom(sel, d => f(addLayer(Layer("collect", sel, d))))
@@ -141,6 +173,28 @@ final class DomZipper private[test](layers: Vector[Layer], $: CssSelLookup) {
 
   def collectInnerText[A](sel: String): Vector[String] =
     collectDom(sel, _.textContent)
+
+  // ======= hmmmm… =======
+
+  def getAll1(sel: String) = {
+    val x = getAll(sel)
+    assert(x.nonEmpty, s"No matches found for $sel") // TODO nooo.....
+    x
+  }
+
+  def collectDom1[A](sel: String, f: DOM => A): Vector[A] =
+    getAll1(sel).foldLeft(Vector.empty[A])(_ :+ f(_))
+
+  def collect1[A](sel: String, f: DomZipper => A): Vector[A] =
+    collectDom1(sel, d => f(addLayer(Layer("collect", sel, d))))
+
+  def collectInnerHTML1[A](sel: String): Vector[String] =
+    collect1(sel, _.innerHTML)
+
+  def collectInnerText1[A](sel: String): Vector[String] =
+    collectDom1(sel, _.textContent)
+
+  // ======= hmmmm… =======
 
   def inputChecked: Option[Boolean] =
     to[html.Input].map(_.checked)
@@ -177,9 +231,6 @@ final class DomZipper private[test](layers: Vector[Layer], $: CssSelLookup) {
 //      fail(desc + ": empty")
 //    new DomZipper(dom.head)
 //  }
-//
-//  def removeReactIds(html: String): String =
-//    html.replaceAll(""" data-reactid=".*?"""", "")
 //
 //  implicit val equality: Equal[DomZipper] =
 //    Equal.equal((a, b) => a.get isSameNode b.get)
