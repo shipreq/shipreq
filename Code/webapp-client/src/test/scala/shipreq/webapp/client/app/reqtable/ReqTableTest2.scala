@@ -117,9 +117,12 @@ final class ReqTableObs(val $ : DomZipper) {
 
 //    val columns: Vector[String] =
 //      $.down(">thead") collectInnerText "th"
-//
-//    import ColumnRenderer.{Status, Normal, DeadRow}
-//
+
+    import ColumnRenderer.{Status, Normal, DeadRow}
+
+    private def cell(s: Status): String =
+      "td." + Style.reqtable.cell(s).className.value
+
 //    private def cell(s: Status, focus: Boolean): String =  {
 //      var r = "td." + Style.reqtable.cell(s).className.value
 //      if (focus)
@@ -128,19 +131,19 @@ final class ReqTableObs(val $ : DomZipper) {
 //        r += ":not(:focus)"
 //      r
 //    }
-//
-//    private def row(inner: String): String =
-//      s">tr:has($inner)"
-//
+
+    private def row(inner: String): String =
+      s">tr:has($inner)"
+
 //    private def byFocus(focus: Boolean, wrap: String => String): String =
 //      ColumnRenderer.statusDomain.toStream.map(s => wrap(cell(s, focus))).mkString(",")
-//
-//    private def byStatus(s: Status, wrap: String => String): String =
-//      Vector(true, false).map(f => wrap(cell(s, f))).mkString(",")
-//
+
+    private def byStatus(s: Status, wrap: String => String): String =
+      wrap(cell(s))
+
     val allRows  = tbody getAll ">tr"
-//    val deadRows = tbody getAll byStatus(DeadRow, row)
-//    val liveRows = tbody getAll byStatus(Normal, row)
+    val deadRows = tbody getAll byStatus(DeadRow, row)
+    val liveRows = tbody getAll byStatus(Normal, row)
 //    val focusRow = tbody downO byFocus(true, row)
 //    val focus    = tbody downO byFocus(true, identity)
 //
@@ -278,16 +281,18 @@ object Stuff {
 //
 //    def tableColumns = equal("Table columns = selected VS columns")(
 //      _.table.columns, _.viewSettings.columns.onColumns)
-//
-//    def tableContents: Prop[PS] = {
-//      val rowEitherDeadOrLive = equal("Rows are either dead or live")(
-//        _.table.allRows.length,
-//        t => t.table.liveRows.length + t.table.deadRows.length)
-//
+
+    def tableContents = {
+      val rowEitherDeadOrLive =
+        *.assertEqual(_ => "Rows are either dead or live.",
+          _.obs.table.allRows.length,
+          t => t.obs.table.liveRows.length + t.obs.table.deadRows.length)
+
 //      val oneFocusMax = propTry[S]("Maximum one focus", _.table.focus)
 //
 //      rowEitherDeadOrLive & oneFocusMax
-//    }
+      rowEitherDeadOrLive
+    }
 
     def stats = {
       val rowCount =
@@ -310,11 +315,8 @@ object Stuff {
 
 //    "Invariants" rename_: (
 //      availableColumns & sortableColumns & tableColumns & tableContents & stats)
-    availableColumns & stats
+    availableColumns & tableContents & stats
   }
-
-//  def assertInvariants(s: S = *): Unit =
-//    invariants assert PS(project, s)
 }
 
 // ===================================================================================================================
