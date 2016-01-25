@@ -128,6 +128,41 @@ object Stuff {
 //      selectableColumns & sortableColumns & tableColumns & tableContents & stats)
     selectableColumns & tableColumns & tableContents & stats
   }
+
+  // ===================================================================================================================
+
+  implicit def equalFromUnivEq[A: UnivEq] = teststate.Equal.byUnivEq[A]
+  implicit def autoGetDomFromZipper(d: DomZipper): ReactOrDomNode = d.dom.domAsHtml
+  implicit val showFilterDead = Show.byToString[FilterDead]
+
+  def enterFilter(f: String) = {
+    val e = ChangeEventData(f)
+    *.action(s"Enter filter: '$f'").act(e simulate _.obs.viewSettings.filter.input).noStateUpdate
+  }
+
+  val filterDeadToggle =
+    *.action("filterDeadToggle").act(Simulate change _.obs.viewSettings.filterDead.$).noStateUpdate
+      .addCheck(*.focus("FilterDead").value(_.obs.filterDead).assertChanges)
+
+  def setFilterDead(fd: FilterDead) =
+    filterDeadToggle.unless(_.obs.filterDead == fd)
+
+  val filterDeadShowHide =
+    setFilterDead(HideDead) >>
+    filterDeadToggle.times(2).addCheck(
+      *.focus("On-columns").value(_.obs.viewSettings.columns.onColumns).assertDoesntChange)
+
+  val tablePubids = *.focus("Visible pubids").collection(_.obs.table.rowPubids)
+
+  def testFilter = (
+    enterFilter("-MF")
+      >> filterDeadToggle
+        .addCheck(tablePubids.before.assertEqualIgnoringOrder(_ + " (before)", _ => List("FR-1", "FR-2")))
+        .addCheck(tablePubids.after .assertEqualIgnoringOrder(_ + " (after)", _ => List("FR-1", "FR-2", "CO-1", "CO-2")))
+      >> enterFilter("FR")
+      >> filterDeadToggle
+        .addCheck(tablePubids.assertEqualIgnoringOrder(s => s, _ => List("FR-1", "FR-2")).beforeAndAfter)
+  )
 }
 
 // ===================================================================================================================
@@ -163,5 +198,6 @@ object ReqTableTest2 extends TestSuite {
 
   override def tests = TestSuite {
     'initialState - runTest(Action.empty)
+    'filter - runTest(testFilter)
   }
 }

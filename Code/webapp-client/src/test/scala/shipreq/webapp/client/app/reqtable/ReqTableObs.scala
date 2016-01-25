@@ -129,25 +129,25 @@ final class ReqTableObs(val $ : DomZipper) {
 //
 //    def ensureHasFocus(): Unit =
 //      focus getOrElse fail("No focus.")
-//
-//    private def findIndex(subj: String, in: Vector[String], err: => String): Int = {
-//      val i = in.indexOf(subj)
-//      if (i < 0) fail(s"$err\n$in")
-//      i
-//    }
-//
-//    def columnIndex(title: String): Int =
-//      findIndex(title, columns, s"Column '$title' not found.")
-//
-//    val pubidColumnIndex =
-//      columnIndex("ID")
-//
-//    val rowPubids: Vector[String] =
-//      tbody collectInnerText s">tr >td:nth-child(${pubidColumnIndex + 1})"
-//
-//    def rowIndexByPubid(pubid: String): Int =
-//      findIndex(pubid, rowPubids, s"Row with pubid [$pubid] not found.")
-//
+
+    private def findIndex(subj: String, in: Vector[String], err: => String): Int = {
+      val i = in.indexOf(subj)
+      if (i < 0) fail(s"$err\n$in")
+      i
+    }
+
+    def columnIndex(title: String): Int =
+      findIndex(title, columns, s"Column '$title' not found.")
+
+    val pubidColumnIndex =
+      columnIndex("ID")
+
+    val rowPubids: Vector[String] =
+      tbody collectInnerText s">tr >td:nth-child(${pubidColumnIndex + 1})"
+
+    def rowIndexByPubid(pubid: String): Int =
+      findIndex(pubid, rowPubids, s"Row with pubid [$pubid] not found.")
+
 //    def cell(loc: CellLoc): DomZipper =
 //      cell(row = loc.row, col = loc.col)
 //

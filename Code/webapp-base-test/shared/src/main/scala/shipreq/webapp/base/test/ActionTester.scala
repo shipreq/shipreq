@@ -1,5 +1,7 @@
 package shipreq.webapp.base.test
 
+/*
+TODO Delete ActionTester
 import scala.io.AnsiColor._
 import scalaz.Equal
 import WebappTestUtil._
@@ -316,3 +318,4 @@ trait ActionTester {
   def run(a: Action[_]): Unit = a.run()
   def runDebug(a: Action[_]): Unit = a.runDebug()
 }
+*/
