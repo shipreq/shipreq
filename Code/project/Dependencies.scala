@@ -39,6 +39,11 @@ object Dependencies {
     val test = mm("nyaya-test")
   }
 
+  object TestState {
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.test-state", "0.1.0-SNAPSHOT")
+    val core = mm("core")
+  }
+
   object React {
     private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "0.10.5-SNAPSHOT")
     val core    = mm("core")
