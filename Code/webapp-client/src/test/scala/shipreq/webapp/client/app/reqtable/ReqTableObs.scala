@@ -81,8 +81,8 @@ final class ReqTableObs(val $ : DomZipper) {
     }
 
     object filterDead {
-      val $ = filter.$.down("label input")
-      val value: FilterDead = Checkbox.filterDeadChecked <~ $.to_![html.Input].checked
+      val checkbox = filter.$.down("input[type=checkbox]")
+      val value: FilterDead = Checkbox.filterDeadChecked <~ checkbox.to_![html.Input].checked
     }
   }
 

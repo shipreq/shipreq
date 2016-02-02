@@ -37,7 +37,7 @@ import teststate._
 // =====================================================================================================================
 
 object Stuff {
-  val * = Dsl.sync[Unit, ReqTableObs, Project, String]
+  val * = Dsl.sync[ReactComponentM[_, ReqTable.State, _, TopNode], ReqTableObs, Project, String]
 
 //  // TODO Move following into Nyaya
 //
@@ -139,18 +139,24 @@ object Stuff {
   implicit def autoGetDomFromZipper(d: DomZipper): ReactOrDomNode = d.dom.domAsHtml
   implicit val showFilterDead = Show.byToString[FilterDead]
 
+  def applyViewSettings(name: => String, f: ViewSettings => ViewSettings): *.Action =
+    *.action(name).act(_.ref.zoomL(ReqTable.State.viewSettings).modState(f))
+
+  // TODO Would be better if this clicked on table column header
+  val sortByPubid = applyViewSettings("sortByPubid", _.copy(order = SortCriteria.byPubidOnly))
+
   def enterFilter(f: String) = {
     val e = ChangeEventData(f)
-    *.action(s"Enter filter: '$f'").act(e simulate _.obs.viewSettings.filter.input)
+    *.action(s"enterFilter('$f')").act(e simulate _.obs.viewSettings.filter.input)
       .addCheck(*.focus("Filter").value(_.obs.viewSettings.filter.input.value).assert.equal(f).after)
   }
 
   val filterDeadToggle =
-    *.action("filterDeadToggle").act(Simulate change _.obs.viewSettings.filterDead.$)
+    *.action("filterDeadToggle").act(Simulate change _.obs.viewSettings.filterDead.checkbox)
       .addCheck(*.focus("FilterDead").value(_.obs.filterDead).assert.changeOccurs)
 
   def setFilterDead(fd: FilterDead) =
-    filterDeadToggle.unless(_.obs.filterDead == fd)
+    filterDeadToggle.unless(_.obs.filterDead == fd).rename(s"setFilterDead($fd)")
 
   val filterDeadShowHide =
     setFilterDead(HideDead) >>
@@ -160,7 +166,8 @@ object Stuff {
   val tablePubids = *.focus("Visible pubids").collection(_.obs.table.rowPubids)
 
   def testFilter = (
-    enterFilter("-MF")
+    sortByPubid
+      >> enterFilter("-MF")
       >> filterDeadToggle
         .addCheck(tablePubids.assert.equalIgnoringOrder(_ => List("FR-1", "FR-2")).before)
         .addCheck(tablePubids.assert.equalIgnoringOrder(_ => List("FR-1", "FR-2", "CO-1", "CO-2")).after)
@@ -193,8 +200,10 @@ object ReqTableTest2 extends TestSuite {
 
     ReactTestUtils.withRenderedIntoDocument(Outer(initialState)) { c =>
       def newObs = new ReqTableObs(DomZipper(c))
-      val tt = Test(action, invariants)(_ => newObs)
-      val h =  tt.run(initialState.project, ())
+      val tt = Test(action, invariants).observe(_ => newObs)
+      val h =  tt.run(initialState.project, c)
+//      println(h.format(History.Options.colored.alwaysShowChildren))
+//      println(h.format(History.Options.colored))
       h.assert(History.Options.colored)
     }
   }
