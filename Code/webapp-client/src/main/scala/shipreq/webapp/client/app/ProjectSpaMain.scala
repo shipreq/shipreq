@@ -121,8 +121,7 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
   class Backend($: BackendScope[Props, State]) {
     val setFilterDead = ReusableFn($ zoomL State.filterDead).setState
 
-    val reqTableState = $ zoomL State.reqTable
-    val reqTable = new ReqTable(cd, cp, r.createContent, r.updateContent)
+    val reqTable = ReqTable(ReqTable.StaticProps(cd, cp, r.createContent, r.updateContent, $ zoomL State.reqTable))
 
     val usageShow =
       Usage.Show((fd, fs) =>
@@ -160,7 +159,7 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
           layout(cfg.tags.CfgTags.Props(cp, r.tagCrud, cd, fd).component)
 
         case Page.ReqTable =>
-          layout(reqTable.Component(ReqTable.Props(reqTableState, s.reqTable)))
+          layout(reqTable(s.reqTable))
 
         case Page.ReqDetail(rtm, pos) =>
           layout(reqdetail.ReqDetail.Props(rtm, pos, cd.project()).component)

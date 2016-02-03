@@ -191,14 +191,9 @@ object ReqTableTest2 extends TestSuite {
   def runTest(action: *.Action) = {
     val cd = new ClientData(SampleProject3.project)
     val cp = new TestClientProtocol
-
-    val reqTable = new ReqTable(cd, cp, createRemote, updateRemote)
-    val Outer = StatefulParent[ReqTable.State] { ($, s) =>
-      reqTable.Component(ReqTable.Props($, s))
-    }
+    val outer = StatefulParent.spc(ReqTable)(ReqTable.StaticProps(cd, cp, createRemote, updateRemote, _))
     val initialState = ReqTable.State.init(cd, HideDead, None)
-
-    ReactTestUtils.withRenderedIntoDocument(Outer(initialState)) { c =>
+    ReactTestUtils.withRenderedIntoDocument(outer(initialState)) { c =>
       def newObs = new ReqTableObs(DomZipper(c))
       val tt = Test(action, invariants).observe(_ => newObs)
       val h =  tt.run(initialState.project, c)

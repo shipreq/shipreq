@@ -1,6 +1,7 @@
 package shipreq.webapp.client.app.reqtable
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
+import japgolly.scalajs.react.experimental.StaticPropComponent
 import japgolly.scalajs.react.extra._
 import monocle.Lens
 import monocle.macros.Lenses
@@ -20,7 +21,19 @@ import shipreq.webapp.client.feature._
 import shipreq.webapp.client.protocol.ClientProtocol
 import shipreq.webapp.client.widgets.ProjectWidgets
 
-object ReqTable {
+object ReqTable extends StaticPropComponent.Template("ReqTable") {
+  override protected def configureBackend = new Backend(_, _)
+  override protected def configureRender  = _.renderBackend
+  override protected def configure = _.configure(
+    Listenable.install(_.static.cd, $ => ((c: Changes) => $.props.static.state_$.modState(_ recvChanges c))))
+
+  case class StaticProps(cd             : ClientData,
+                         cp             : ClientProtocol,
+                         createContentFn: CreateContentFn.Instance,
+                         updateContentFn: UpdateContentFn.Instance,
+                         state_$        : CompState.Access[State])
+
+  override type DynamicProps = State
 
   @Lenses
   case class State(project     : Project,
@@ -79,27 +92,10 @@ object ReqTable {
     }
   }
 
-  case class Props(state_$: CompState.Access[State], state: State)
-}
-
-import ReqTable._
-
-class ReqTable(cd             : ClientData,
-               cp             : ClientProtocol,
-               createContentFn: CreateContentFn.Instance,
-               updateContentFn: UpdateContentFn.Instance) {
-
-  val Component =
-    ReactComponentB[Props]("ReqTable")
-      .renderBackend[Backend]
-      .configure(Listenable.install(_ => cd, $ => ((c: Changes) => $.props.state_$.modState(_ recvChanges c))))
-      .build
-
   // -------------------------------------------------------------------------------------------------------------------
 
-  final class Backend($: BackendScope[Props, Unit]) extends OnUnmount {
-    // TODO Put a proper solution in place in scalajs-react for static properties
-    val state_$ = $.props.runNow().state_$
+  final class Backend(SP: StaticProps, $: BackendScope) extends OnUnmount {
+    import SP._
 
     private def reusableStateFn[A](f: A => State => State): A ~=> Callback =
       ReusableFn(a => state_$.modState(f(a)))
@@ -117,10 +113,10 @@ class ReqTable(cd             : ClientData,
     val setModal        = reusableSetState(State.modal)
     val setCreation     = state_$ zoomL State.creation
 
-    val project      = Px.bs($).propsM(_.state.project)
-    val viewSettings = Px.bs($).propsM(_.state.viewSettings)
-    val filterState  = Px.bs($).propsM(_.state.filter)
-    val selection    = Px.bs($).propsM(_.state.selection)
+    val project      = Px.bsMP($).propsM(_.project)
+    val viewSettings = Px.bsMP($).propsM(_.viewSettings)
+    val filterState  = Px.bsMP($).propsM(_.filter)
+    val selection    = Px.bsMP($).propsM(_.selection)
 
     val vsVar      = viewSettings map (ReusableVar(_)(setViewSettings))
     val vsCols     = viewSettings map (_.columns)
@@ -134,7 +130,7 @@ class ReqTable(cd             : ClientData,
     val stats      = Px.apply3(viewSettings, project, rows)(Logic.stats)
 
     val rowsWithAsyncWholeRowStatuses: Px.ThunkM[Set[Row.SourceId]] =
-      Px.bs($).propsM(_.state.asyncStates.iterator
+      Px.bsMP($).propsM(_.asyncStates.iterator
         .filter(_._2.rowStatus.isDefined)
         .map(_._1)
         .toSet)
@@ -188,8 +184,7 @@ class ReqTable(cd             : ClientData,
       new CreationInterface(setCreation, previewFeature, project, plainText, widgets, textSearch)
 
     // -----------------------------------------------------------------------------------------------------------------
-    def render(p: Props): ReactElement = {
-      val s: State = p.state
+    def render(s: DynamicProps): ReactElement = {
       Px.refresh(project, viewSettings, filterState, selection, rowsWithAsyncWholeRowStatuses)
       import Px.AutoValue._
 
