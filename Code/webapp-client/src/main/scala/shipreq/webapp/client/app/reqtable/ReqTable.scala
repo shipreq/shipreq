@@ -20,7 +20,7 @@ import shipreq.webapp.client.lib.DataReusability._
 import shipreq.webapp.client.data.FilterDead
 import shipreq.webapp.client.feature._
 import shipreq.webapp.client.protocol.ClientProtocol
-import shipreq.webapp.client.widgets.ProjectWidgets
+import shipreq.webapp.client.widgets.high.ProjectWidgets
 
 object ReqTable extends StaticPropComponent.Template("ReqTable") {
   override protected def configureBackend = new Backend(_, _)

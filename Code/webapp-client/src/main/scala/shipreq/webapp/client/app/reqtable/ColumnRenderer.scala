@@ -10,7 +10,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.ProjectText
 import shipreq.webapp.client.app.Style.{reqtable => *}
 import shipreq.webapp.client.data.Plain
-import shipreq.webapp.client.widgets.ProjectWidgets
+import shipreq.webapp.client.widgets.high.ProjectWidgets
 import ColumnRenderer._
 
 final class ColumnRenderer(

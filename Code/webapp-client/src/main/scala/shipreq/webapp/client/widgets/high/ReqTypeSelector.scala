@@ -1,4 +1,4 @@
-package shipreq.webapp.client.widgets
+package shipreq.webapp.client.widgets.high
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.{ExternalVar, Px}
@@ -8,6 +8,7 @@ import shipreq.base.util.NonEmptySet
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.data.{Enabled, TCB}
+import shipreq.webapp.client.widgets.SelectOne
 import SelectOne.Choice
 
 object ReqTypeSelector {

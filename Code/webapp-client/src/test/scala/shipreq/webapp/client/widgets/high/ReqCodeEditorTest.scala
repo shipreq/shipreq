@@ -1,4 +1,4 @@
-package shipreq.webapp.client.widgets
+package shipreq.webapp.client.widgets.high
 
 import scalaz.std.string._
 import utest._

@@ -31,8 +31,7 @@ object Checkbox3 {
   private def render($: CompScope.DuringCallbackU[Props, Unit, Unit], p: Props) = {
     val s = p.state
     val setNext = $.propsCB >>= (_ set nextState(s))
-    <.input(
-      ^.`type` := "checkbox",
+    <.input.checkbox(
       ClientUtil checkboxLikeEventHandlers setNext)
   }
 

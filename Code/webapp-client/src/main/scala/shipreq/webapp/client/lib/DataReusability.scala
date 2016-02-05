@@ -8,7 +8,7 @@ import shipreq.webapp.base.protocol.RemoteFn
 import shipreq.webapp.base.text.{Atom, TextSearch, PlainText}
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.validation.Validator
-import shipreq.webapp.client.widgets.ProjectWidgets
+import shipreq.webapp.client.widgets.high.ProjectWidgets
 
 object DataReusability {
 

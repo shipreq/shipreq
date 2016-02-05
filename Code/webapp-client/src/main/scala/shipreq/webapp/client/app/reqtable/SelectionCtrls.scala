@@ -11,7 +11,7 @@ import shipreq.webapp.client.data.TCB
 import shipreq.webapp.client.feature.AsyncActionFeature.Locked
 import shipreq.webapp.client.feature.Modal
 import shipreq.webapp.client.lib.DataReusability._
-import shipreq.webapp.client.widgets.ProjectWidgets
+import shipreq.webapp.client.widgets.high.ProjectWidgets
 
 /**
   * Renders a bar that provides the user with information and action-buttons pertaining to the rows selected the

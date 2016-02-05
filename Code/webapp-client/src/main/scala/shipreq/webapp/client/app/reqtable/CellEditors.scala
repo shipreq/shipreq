@@ -13,7 +13,7 @@ import shipreq.webapp.base.protocol.UpdateContentCmd._
 import shipreq.webapp.base.text.{PlainText, Text, TextSearch}
 import shipreq.webapp.client.data.TCB
 import shipreq.webapp.client.lib.KeyHandlers
-import shipreq.webapp.client.widgets.ProjectWidgets
+import shipreq.webapp.client.widgets.high.ProjectWidgets
 
 // =====================================================================================================================
 // Interfaces (i.e. the entire point of this file)
@@ -156,7 +156,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
 
   // ===================================================================================================================
   object ForReqCodes {
-    import shipreq.webapp.client.widgets.ReqCodeEditor
+    import shipreq.webapp.client.widgets.high.ReqCodeEditor
 
     def trie() = pxProject.value().reqCodes.trie
 
@@ -211,7 +211,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
 
   // ===================================================================================================================
   object ForReqType {
-    import shipreq.webapp.client.widgets.ReqTypeSelector
+    import shipreq.webapp.client.widgets.high.ReqTypeSelector
     import ReqTypeSelector.A
 
     val pxCustomReqTypes = ReqTypeSelector.pxCustomReqTypes(pxProject)
@@ -250,7 +250,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
   // ===================================================================================================================
 
   object ForImplications {
-    import shipreq.webapp.client.widgets.ImplicationEditor
+    import shipreq.webapp.client.widgets.high.ImplicationEditor
     import ImplicationEditor.{Lookup, ValidationFn}
 
     val pxLookupAll = Px.apply2(pxProject, pxPlainText)(ImplicationEditor.Lookup.all)
@@ -307,7 +307,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
   // ===================================================================================================================
 
   object ForTags {
-    import shipreq.webapp.client.widgets.TagEditor
+    import shipreq.webapp.client.widgets.high.TagEditor
     import TagEditor.Lookup
 
     def apply(row: GenericReqRow, fid: Option[CustomField.Tag.Id]): StartEditFn = {
@@ -343,7 +343,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
   // ===================================================================================================================
 
   object ForRichText {
-    import shipreq.webapp.client.widgets.RichTextEditor
+    import shipreq.webapp.client.widgets.high.RichTextEditor
 
     abstract class Base[T <: Text.Generic](val editor: RichTextEditor[T]) {
       val T: editor.text.type = editor.text

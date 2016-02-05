@@ -11,6 +11,7 @@ import shipreq.webapp.base.text.{PlainText, TextSearch}
 import shipreq.webapp.client.data.{Enabled, TCB}
 import shipreq.webapp.client.feature.PreviewFeature
 import shipreq.webapp.client.widgets._
+import shipreq.webapp.client.widgets.high._
 import SelectOne.{Choice, Choices}
 import UnivEq.univEqOption
 

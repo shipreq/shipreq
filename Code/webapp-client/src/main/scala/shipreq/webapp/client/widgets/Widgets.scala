@@ -7,8 +7,7 @@ object Widgets {
 
   val checkbox: On => ReactTag =
     On.memo(on =>
-      <.input(
-        ^.`type` := "checkbox",
+      <.input.checkbox(
         ^.checked := (on :: On)))
 
   val checkboxAlwaysOn =
