@@ -36,7 +36,7 @@ final class ReqTableObs(val $ : DomZipper.Temp) {
     object columns {
       val entirety: Vector[(On, String)] =
         vsCol(1).collect1("label", l =>
-          (On <~ l.down("input").inputChecked.get, l.down(">span").innerHTML))
+          (On <~ l.down("input").inputChecked, l.down(">span").innerHTML))
 
       val allColumns: Vector[String] =
         entirety.map(_._2)
@@ -82,7 +82,7 @@ final class ReqTableObs(val $ : DomZipper.Temp) {
 
     object filterDead {
       val checkbox = filter.$.down("input[type=checkbox]")
-      val value: FilterDead = Checkbox.filterDeadChecked <~ checkbox.inputChecked.get
+      val value: FilterDead = Checkbox.filterDeadChecked <~ checkbox.inputChecked
     }
   }
 

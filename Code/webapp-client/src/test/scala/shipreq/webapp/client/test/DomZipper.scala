@@ -4,7 +4,7 @@ import org.scalajs.dom.{Element, Node, window}
 import org.scalajs.dom.html
 import scala.reflect.ClassTag
 import scala.scalajs.js
-import DomZipper.{CssSelLookup, DOM, HndDown, Layer, MofN, Sole}
+import DomZipper.{CssSelLookup, DOM, HandleError, Layer, MofN, Sole}
 import DomZipper.Implicits.removeReactIds
 
 object DomZipper {
@@ -25,15 +25,47 @@ object DomZipper {
       override def apply(a: A) = f(a)
     }
 
-  trait HndDown {
+  trait HandleError {
     type Result[A]
     def pass[A](a: A): Result[A]
-    def fail[A](e: String): Result[A]
+    def fail[A](e: => String): Result[A]
+    def map[A, B](r: Result[A])(f: A => B): Result[B]
+
     def apply[A](e: Either[String, A]): Result[A] =
       e match {
         case Right(a) => pass(a)
         case Left(s) => fail(s)
       }
+  }
+
+  object ThrowErrors extends HandleError {
+    override type Result[A]                         = A
+    override def pass[A](a: A)                      = a
+    override def fail[A](e: => String)              = sys error e
+    override def map[A, B](r: Result[A])(f: A => B) = f(r)
+  }
+
+  object ReturnWithEitherMsg extends HandleError {
+    override type Result[A]                         = Either[String, A]
+    override def pass[A](a: A)                      = Right(a)
+    override def fail[A](e: => String)              = Left(e)
+    override def map[A, B](r: Result[A])(f: A => B) = r.right map f
+    override def apply[A](e: Either[String, A])     = e
+  }
+
+  object ReturnOption extends HandleError {
+    override type Result[A]                         = Option[A]
+    override def pass[A](a: A)                      = Some(a)
+    override def fail[A](e: => String)              = None
+    override def map[A, B](r: Result[A])(f: A => B) = r map f
+  }
+
+  object ReturnScalazDisjunction extends HandleError {
+    import scalaz._
+    override type Result[A]                         = String \/ A
+    override def pass[A](a: A)                      = \/-(a)
+    override def fail[A](e: => String)              = -\/(e)
+    override def map[A, B](r: Result[A])(f: A => B) = r map f
   }
 
   // ===================================================================================================================
@@ -47,21 +79,7 @@ object DomZipper {
     implicit def domFromReact[D <: TopNode with DOM]: DomLikeAux[CompScope.Mounted[D], D] =
       DomLike(ReactDOM.findDOMNode)
 
-    /*
-    implicit object UseScalazEither extends EitherLike {
-      import scalaz._
-      override type Or[L, R] = L \/ R
-      override def left[L, R](l: L)                               = -\/(l)
-      override def right[L, R](r: R)                              = \/-(r)
-      override def fold[L, R, O](x: L Or R)(l: L => O, r: R => O) = x.fold(l, r)
-    }
-    */
-
-    implicit object JustThrow extends HndDown {
-      override type Result[A]         = A
-      override def pass[A](a: A)      = a
-      override def fail[A](e: String) = sys error removeReactIds(e)
-    }
+    implicit val hndError = DomZipper.ThrowErrors
 
     def removeReactIds(html: String): String = // TODO Remove
       html.replaceAll(""" data-reactid=".*?"""", "")
@@ -109,17 +127,15 @@ final class DomZipper[+D <: DOM] private[test](prevLayers: Vector[Layer[DOM]], c
   val dom: D =
     curLayer.dom
 
-  def as_![D2 <: DOM]: DomZipper[D2] =
-    this.asInstanceOf[DomZipper[D2]]
+  def as[D2 <: DOM](implicit h: HandleError, ct: ClassTag[D2]): h.Result[DomZipper[D2]] =
+    h.map(domAs[D2])(d =>
+      new DomZipper(prevLayers, curLayer.copy(dom = d), $))
 
-  def as[D2 <: DOM](implicit ct: ClassTag[D2]): Option[DomZipper[D2]] =
-    getDom[D2].map(d2 => new DomZipper(prevLayers, curLayer.copy(dom = d2), $))
-
-  def getDom_![D2 <: DOM]: D2 =
-    dom.asInstanceOf[D2]
-
-  def getDom[D2 <: DOM](implicit ct: ClassTag[D2]): Option[D2] =
-    ct.unapply(dom)
+  def domAs[D2 <: DOM](implicit h: HandleError, ct: ClassTag[D2]): h.Result[D2] =
+    ct.unapply(dom) match {
+      case Some(d) => h pass d
+      case None => h fail s"${dom.nodeName} is not a ${ct.runtimeClass}."
+    }
 
   def dynamicMethod[A](f: js.Dynamic => Any): Option[A] =
     f(dom.asInstanceOf[js.Dynamic]).asInstanceOf[js.UndefOr[A]].toOption
@@ -132,42 +148,27 @@ final class DomZipper[+D <: DOM] private[test](prevLayers: Vector[Layer[DOM]], c
   def innerText: String = dom.textContent
   def value: String = dynamicString(_.value)
 
-  def downE(sel: String): Either[String, DomZipper[DOM]] =
-    downE("", sel)
+  def down(sel: String)(implicit h: HandleError): h.Result[DomZipper[DOM]] =
+    down("", sel)
 
-  def downE(sel: String, which: MofN): Either[String, DomZipper[DOM]] =
-    downE("", sel, which)
+  def down(sel: String, which: MofN)(implicit h: HandleError): h.Result[DomZipper[DOM]] =
+    down("", sel, which)
 
-  def downE(name: String, sel: String): Either[String, DomZipper[DOM]] =
-    downE(name, sel, Sole)
+  def down(name: String, sel: String)(implicit h: HandleError): h.Result[DomZipper[DOM]] =
+    down(name, sel, Sole)
 
-  def downE(name: String, sel: String, which: MofN): Either[String, DomZipper[DOM]] = {
+  def down(name: String, sel: String, which: MofN)(implicit h: HandleError): h.Result[DomZipper[DOM]] = {
     val results = $(sel, dom)
     if (results.length != which.n)
-      Left {
+      h.fail {
         val q = Option(name).filter(_.nonEmpty).fold("Q")(_ + " q")
         failMsg(s"${q}uery failed: [$sel]. Expected ${which.n} results, not ${results.length}.")
       }
     else {
       val nextLayer = Layer(name, sel, results(which.m - 1))
-      Right(addLayer(nextLayer))
+      h.pass(addLayer(nextLayer))
     }
   }
-
-  def downO(sel: String)                           : Option[DomZipper[DOM]] = downE(sel)             .right.toOption
-  def downO(sel: String, which: MofN)              : Option[DomZipper[DOM]] = downE(sel, which)      .right.toOption
-  def downO(name: String, sel: String)             : Option[DomZipper[DOM]] = downE(name, sel)       .right.toOption
-  def downO(name: String, sel: String, which: MofN): Option[DomZipper[DOM]] = downE(name, sel, which).right.toOption
-
-  def down(sel: String)                           (implicit h: HndDown): h.Result[DomZipper[DOM]] = h(downE(sel)             )
-  def down(sel: String, which: MofN)              (implicit h: HndDown): h.Result[DomZipper[DOM]] = h(downE(sel, which)      )
-  def down(name: String, sel: String)             (implicit h: HndDown): h.Result[DomZipper[DOM]] = h(downE(name, sel)       )
-  def down(name: String, sel: String, which: MofN)(implicit h: HndDown): h.Result[DomZipper[DOM]] = h(downE(name, sel, which))
-
-//  def down_!(sel: String)                           (implicit e: HndDown): DomZipper = need_!(e)(down(sel))
-//  def down_!(sel: String, which: MofN)              (implicit e: HndDown): DomZipper = need_!(e)(down(sel, which))
-//  def down_!(name: String, sel: String)             (implicit e: HndDown): DomZipper = need_!(e)(down(name, sel))
-//  def down_!(name: String, sel: String, which: MofN)(implicit e: HndDown): DomZipper = need_!(e)(down(name, sel, which))
 
   private def addLayer[D2 <: DOM](nextLayer: Layer[D2]) =
     new DomZipper(prevLayers :+ curLayer, nextLayer, $)
@@ -220,15 +221,12 @@ final class DomZipper[+D <: DOM] private[test](prevLayers: Vector[Layer[DOM]], c
 
   // ======= hmmmm… =======
 
-  // TODO Use dep types for return types.
-  // inputChecked
-
-  def inputChecked: Option[Boolean] =
-    getDom[html.Input].map(_.checked)
+  def inputChecked(implicit h: HandleError): h.Result[Boolean] =
+    h.map(domAs[html.Input])(_.checked)
 
   /** The currently selected option in a &lt;select&gt; dropdown. */
-  def selectedOption: Option[html.Option] =
-    getDom[html.Select].flatMap(s =>
+  def selectedOption(implicit h: HandleError): h.Result[Option[html.Option]] =
+    h.map(domAs[html.Select])(s =>
       if (s.selectedIndex >= 0)
         Some(s.options(s.selectedIndex))
       else
@@ -236,8 +234,8 @@ final class DomZipper[+D <: DOM] private[test](prevLayers: Vector[Layer[DOM]], c
     )
 
   /** The text value of the currently selected option in a &lt;select&gt; dropdown. */
-  def selectedOptionText: Option[String] =
-    selectedOption.map(_.text)
+  def selectedOptionText(implicit h: HandleError): h.Result[Option[String]] =
+    h.map(selectedOption)(_.map(_.text))
 }
 
 //  def assertCount(desc: String, expectedCount: Int, dom: Result, root: UndefOr[DOM]): Unit = {
