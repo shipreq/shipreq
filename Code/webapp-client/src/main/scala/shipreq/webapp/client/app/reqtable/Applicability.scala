@@ -7,7 +7,7 @@ import Applicability.Subject
 /**
  * Rules in project config prohibit certain combinations of column and requirement.
  */
-object Applicability {
+object Applicability { // TODO Now that time has passed, this looks stupid, over-specialised and confusing. Redo.
   private val pass = (_: Any) => true
 
   def apply(project: Project): Applicability = {

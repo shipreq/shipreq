@@ -1,7 +1,6 @@
 package shipreq.webapp.base.data
 
 import nyaya.util.Multimap
-import scalaz.syntax.equal._
 import shipreq.base.util._
 import shipreq.base.util.TaggedTypes._
 

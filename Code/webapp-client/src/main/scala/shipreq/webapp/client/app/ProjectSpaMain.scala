@@ -110,6 +110,7 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
     }
 
   import reqtable.ReqTable
+  import reqdetail.ReqDetail
 
   case class Props(page: Page, routerCtl: RouterCtl)
 
@@ -136,6 +137,10 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
       pxPlainText, pxTextSearch, pxProjectWidgets,
       reqDetailRC,
       $ zoomL State.reqTable))
+
+    val reqDetail = ReqDetail(ReqDetail.StaticProps(
+      cd, cp, r.updateContent,
+      pxPlainText, pxTextSearch, pxProjectWidgets))
 
     val usageShow =
       Usage.Show((fd, fs) =>
@@ -176,7 +181,7 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
           layout(reqTable(s.reqTable))
 
         case Page.ReqDetail(pubid) =>
-          layout(reqdetail.ReqDetail.Props(pubid, cd.project()).component)
+          layout(reqDetail(ReqDetail.DynamicProps(pubid)))
       }
     }
   }

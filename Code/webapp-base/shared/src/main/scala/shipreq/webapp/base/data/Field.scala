@@ -97,7 +97,7 @@ object Field {
 
   implicit lazy val applicableReqTypesEquality: UnivEq[ApplicableReqTypes] = implicitly
 
-  def name(customReqTypes: CustomReqTypeIMap, tags: TagTree) = {
+  def name(customReqTypes: CustomReqTypeIMap, tags: TagTree): Field => String = {
     val cn: CustomField => String = CustomField.name(customReqTypes, tags)
     val fn: Field       => String = {
       case f: StaticField => f.name
@@ -106,7 +106,8 @@ object Field {
     fn
   }
 
-  def nameP(p: Project) = name(p.config.customReqTypes, p.config.tags)
+  def nameP(p: Project): Field => String =
+    name(p.config.customReqTypes, p.config.tags)
 }
 
 import Field.ApplicableReqTypes
@@ -314,6 +315,9 @@ case class FieldSet(customFields: FieldSet.CustomFields,
       case f : StaticField   => f
       case id: CustomFieldId => customFields need id
     }
+
+  def fieldsForReqType(reqTypeId: ReqTypeId): Vector[Field] =
+    fields.filter(_.reqTypes.filter(reqTypeId))
 
   def staticFieldIterator: Iterator[StaticField] =
     order.filterTI[StaticField]
