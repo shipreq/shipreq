@@ -11,6 +11,7 @@ import shipreq.webapp.client.data.TCB
 import shipreq.webapp.client.feature.AsyncActionFeature.Locked
 import shipreq.webapp.client.feature.Modal
 import shipreq.webapp.client.lib.DataReusability._
+import shipreq.webapp.client.protocol.ServerCall
 import shipreq.webapp.client.widgets.high.ProjectWidgets
 
 /**
@@ -31,7 +32,7 @@ object SelectionCtrls {
                    widgets      : ProjectWidgets,
                    projectText  : PlainText.ForProject,
                    textSearch   : TextSearch,
-                   saveIO       : CallServer[UpdateContentCmd],
+                   saveIO       : ServerCall[UpdateContentCmd],
                    async        : AsyncState.FeatureAnon)
 
   // These two are only used in callbacks so are always reusable

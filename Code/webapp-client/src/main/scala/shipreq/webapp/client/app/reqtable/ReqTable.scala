@@ -1,6 +1,6 @@
 package shipreq.webapp.client.app.reqtable
 
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
+import japgolly.scalajs.react._, vdom.prefix_<^._, MonocleReact._
 import japgolly.scalajs.react.experimental.StaticPropComponent
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.router.RouterCtl
@@ -8,18 +8,15 @@ import monocle.Lens
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import scalaz.{\/-, -\/}
-import scalaz.syntax.equal._
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.event.VerifiedEvents
 import shipreq.webapp.base.filter.{FilterAst, FilterSpec}
 import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.client.app.state.{Changes, ClientData}
 import shipreq.webapp.client.app.Style.{reqtable => *}
-import shipreq.webapp.client.lib.DataReusability._
 import shipreq.webapp.client.data.FilterDead
 import shipreq.webapp.client.feature._
-import shipreq.webapp.client.protocol.ClientProtocol
+import shipreq.webapp.client.protocol.{ClientProtocol, ServerCall}
 import shipreq.webapp.client.widgets.high.ProjectWidgets
 
 object ReqTable extends StaticPropComponent.Template("ReqTable") {
@@ -152,18 +149,11 @@ object ReqTable extends StaticPropComponent.Template("ReqTable") {
         nr  <- pxColName
       } yield SortEditor.Props(vs.order, setSortCriteria, nr)
 
-    private def callServer[I, F <: (I =>|=> VerifiedEvents)](remoteFn: RemoteFn.InstanceFor[F]): CallServer[I] =
-      (i, sio, fio) =>
-        cp.call(remoteFn)(
-          i,
-          s => cd.applyEventsS(s) >> sio,
-          f => cp.consumeGenericFailure(f) >> fio(cp.genericFailureToText(f)))
+    val createIO: ServerCall[CreateContentCmd] =
+      ServerCall.to(createContentFn, cp, cd)
 
-    val createIO: CallServer[CreateContentCmd] =
-      callServer(createContentFn)
-
-    val updateIO: CallServer[UpdateContentCmd] =
-      callServer(updateContentFn)
+    val updateIO: ServerCall[UpdateContentCmd] =
+      ServerCall.to(updateContentFn, cp, cd)
 
     val filterProps: FilterEditor.State => FilterEditor.Props = {
       import FilterEditor._

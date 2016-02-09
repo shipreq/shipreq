@@ -2,7 +2,6 @@ package shipreq.webapp.client.app.reqtable
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.TagMod
 import monocle.{Lens, Optional}
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
@@ -13,6 +12,7 @@ import shipreq.webapp.base.protocol.UpdateContentCmd._
 import shipreq.webapp.base.text.{PlainText, Text, TextSearch}
 import shipreq.webapp.client.data.TCB
 import shipreq.webapp.client.lib.KeyHandlers
+import shipreq.webapp.client.protocol.ServerCall
 import shipreq.webapp.client.widgets.high.ProjectWidgets
 
 // =====================================================================================================================
@@ -42,7 +42,7 @@ final class CellEditorsImpl[S]($               : CompState.Access[S],
                                pxPlainText     : Px[PlainText.ForProject],
                                pxProjectWidgets: Px[ProjectWidgets],
                                pxTextSearch    : Px[TextSearch],
-                               saveIO          : CallServer[UpdateContentCmd]) extends CellEditors {
+                               saveIO          : ServerCall[UpdateContentCmd]) extends CellEditors {
 
   private val pxApplicability = pxProject.map(Applicability.apply)
 

@@ -24,11 +24,6 @@ package object reqtable {
   type RowSelection        = Selection[Row.SourceId]
   type RowSelectionVisible = Selection.LegalWithUpdateFn[Row.SourceId]
 
-  type CallServer[-I] = (I, TCB.Success, String => TCB.Failure) => Callback
-
-  implicit def reusabilityCallServer[I]: Reusability[CallServer[I]] =
-    Reusability.byRef // All are vals in ReqTable
-
   implicit def reusabilityCR: Reusability[ColumnRenderer] =
     Reusability.byRef // TODO This is a problem
 
