@@ -64,7 +64,7 @@ object Table {
           val row = rows(i)
           val rs2 = EditState.getRow(p.editState, row.sourceId)
           val as  = AsyncState.get(p.asyncState)(row.sourceId)
-          val rp  = RowProps(row, crs, p.cellEditors, rs2, as , p.selection, startCellEdit(row))
+          val rp  = RowProps(row, crs, rs2, as, p.selection, startCellEdit(row))
           RowComponent.withKey(row.id.key)(rp)
         }
 
@@ -152,7 +152,6 @@ object Table {
 
   case class RowProps(row        : Row,
                       crs        : NonEmptyVector[ColumnRenderer],
-                      cellEditors: CellEditors,
                       editState  : EditState.AtRow,
                       asyncState : AsyncState.RowState,
                       selection  : RowSelectionVisible,
