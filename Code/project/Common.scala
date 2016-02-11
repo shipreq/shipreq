@@ -81,7 +81,7 @@ object Common {
   }
 
   val redirectTargetDir: File => File =
-    System.getenv("SHIPREQ_TARGET") match {
+    System.getenv(if (releaseMode) "SHIPREQ_RELEASE_TARGET" else "SHIPREQ_TARGET") match {
       case null | "" => identity
       case envValue =>
         val newTarget = envValue.replaceFirst("/*$", "/")
