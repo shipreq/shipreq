@@ -26,7 +26,7 @@ object Table {
                    colName        : Column.NameResolver,
                    colRenderers   : NonEmptyVector[ColumnRenderer],
                    cellEditors    : ContentEditorFeature.TwoD.Feature[Row, Column],
-                   editState      : ContentEditorFeature.TwoD.State[Row.SourceId, Column],
+                   editState      : ContentEditorFeature.TwoD.State.ReadOnly[Row.SourceId, Column],
                    asyncState     : AsyncState.TableState,
                    selection      : RowSelectionVisible,
                    modViewSettings: EndoFn[ViewSettings] ~=> Callback)
@@ -152,7 +152,7 @@ object Table {
 
   case class RowProps(row        : Row,
                       crs        : NonEmptyVector[ColumnRenderer],
-                      editState  : ContentEditorFeature.OneD.State[Column],
+                      editState  : ContentEditorFeature.OneD.State.ReadOnly[Column],
                       asyncState : AsyncState.RowState,
                       selection  : RowSelectionVisible,
                       startEdit  : Column ~=> StartEdit)

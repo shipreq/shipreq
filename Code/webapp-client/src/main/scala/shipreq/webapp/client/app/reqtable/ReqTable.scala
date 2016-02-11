@@ -43,7 +43,7 @@ object ReqTable extends StaticPropComponent.Template("ReqTable") {
                    filter      : FilterEditor.State,
                    selection   : RowSelection,
                    creation    : CreationInterface.State,
-                   editStates  : ContentEditorFeature.TwoD.State[Row.SourceId, Column],
+                   editStates  : ContentEditorFeature.TwoD.State[Row.SourceId, Column, Column],
                    asyncStates : AsyncState.TableState,
                    previewState: Preview.State,
                    modal       : Modal.State) {
@@ -81,14 +81,14 @@ object ReqTable extends StaticPropComponent.Template("ReqTable") {
     def init(cd: ClientData, fd: FilterDead, filterSpec: Option[FilterSpec]): State = {
       val proj = cd.project()
       var s = State(proj,
-        ViewSettings             .default(fd),
-        FilterEditor             .initialState,
-        Selection                .empty,
-        CreationInterface        .initState,
-        ContentEditorFeature.TwoD.initState,
-        AsyncState               .initState,
-        PreviewFeature           .initState,
-        Modal                    .none)
+        ViewSettings.default(fd),
+        FilterEditor.initialState,
+        Selection.empty,
+        CreationInterface.initState,
+        ContentEditorFeature.TwoD.State.init,
+        AsyncState.initState,
+        PreviewFeature.initState,
+        Modal.none)
       filterSpec.foreach(f => s = s setFilterSpec f)
       s
     }
