@@ -186,9 +186,7 @@ object Common {
   private def jsTests(t: JsTestType): Project => Project =
     t match {
       case NoTests =>
-        _.settings(
-          scalaJSStage in Test := PreLinkStage,
-          test                 := ())
+        _.settings(test :=())
       case NoDom =>
         _.settings(
           requiresDOM := false)
