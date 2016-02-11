@@ -66,7 +66,7 @@ object ContentEditorFeature {
   /**
     * This is effectively mutable because of the underlying usage of Pxs and reading of PreviewFeature state.
     */
-  sealed trait EditorInstance {
+  trait EditorInstance {
     def render(): Option[ReactElement]
   }
 
@@ -468,7 +468,9 @@ object ContentEditorFeature {
 
   object OneD {
 
-    final class State[A, B](private[OneD] val values: Map[A, EditorInstance], p: Prism[A, B]) extends State.ReadOnly[B] {
+    final class State[A, B](private[feature] val values: Map[A, EditorInstance], p: Prism[A, B]) extends State.ReadOnly[B] {
+      override def toString = s"OneD.State($values)"
+
       def isEmpty = values.isEmpty
 
       def apply(key: B): ZeroD.State =
@@ -492,9 +494,9 @@ object ContentEditorFeature {
         var m = values
 
         // Include everything from big which isn't covered by small
-        for ((b, v) <- parent.values)
-          if (p.getOption(b).isEmpty)
-            m = m.updated(b, v)
+        for ((a, v) <- parent.values)
+          if (p.getOption(a).isEmpty)
+            m = m.updated(a, v)
 
         new State(m, Prism.id[A])
       }
@@ -546,9 +548,11 @@ object ContentEditorFeature {
 
   object TwoD {
 
-    final class State[A2, B2, A1, B1](values: Map[A2, OneD.State[A1, A1]],
+    final class State[A2, B2, A1, B1](private[feature] val values: Map[A2, OneD.State[A1, A1]],
                                       f2: B2 => A2,
                                       p1: Prism[A1, B1]) extends State.ReadOnly[B2, B1] {
+      override def toString = s"TwoD.State($values)"
+
       @inline def isEmpty = values.isEmpty
 
       def apply(key: B2): OneD.State[A1, B1] =

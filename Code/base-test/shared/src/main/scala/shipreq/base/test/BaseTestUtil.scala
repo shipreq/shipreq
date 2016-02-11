@@ -1,12 +1,29 @@
 package shipreq.base.test
 
 import scala.io.AnsiColor._
-import scalaz.Equal
+import scalaz.{Equal, Order}
+import scalaz.std.string.stringInstance
+import shipreq.base.util.UnivEq
 import shipreq.base.util.ScalaExt._
 
-object BaseTestUtil extends BaseTestEquality with BaseTestUtil
+object BaseTestUtil extends BaseTestEquality with BaseTestUtil {
+
+  class BaseTestUtilOpsAny[A](private val a: A) extends AnyVal {
+    def assertEq(expect: A)(implicit e: Equal[A]): Unit =
+      BaseTestUtil.assertEq(a, expect)
+
+    def assertEqN(name: => String, expect: A)(implicit e: Equal[A]): Unit =
+      BaseTestUtil.assertEq(name, a, expect)
+  }
+}
 
 trait BaseTestUtil extends scalaz.syntax.ToEqualOps {
+
+  implicit def BaseTestUtilOpsAny[A](a: A) =
+    new BaseTestUtil.BaseTestUtilOpsAny(a)
+
+  def forceUnivEqOrderByToString[A]: Order[A] with UnivEq[A] =
+    UnivEq.withOrder(Order.orderBy(_.toString))
 
   def assertEq[A: Equal](actual: A, expect: A): Unit =
     assertEqO(None, actual, expect)
