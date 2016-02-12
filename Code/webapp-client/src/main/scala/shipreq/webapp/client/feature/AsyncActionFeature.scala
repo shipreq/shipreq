@@ -3,10 +3,9 @@ package shipreq.webapp.client.feature
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.Reusability
 import japgolly.scalajs.react.vdom.prefix_<^._
-import monocle.macros.GenLens
-import monocle.Lens
-import monocle.function.At.at
-import monocle.std.map.atMap
+import japgolly.scalajs.react.MonocleReact._
+import monocle.{Lens, Prism}
+import scala.annotation.elidable
 import shipreq.base.util.UnivEq
 import shipreq.webapp.client.app.Assets
 import shipreq.webapp.client.data.TCB
@@ -23,6 +22,7 @@ import shipreq.webapp.client.data.TCB
   * - Logic to wrap around async actions to handle state management.
   */
 object AsyncActionFeature {
+  // TODO Names in this file are terrible: wrapAsync{,D1}; statusD[12]; setD1{,s}
 
   /**
     * @tparam F The type of async failure.
@@ -67,140 +67,183 @@ object AsyncActionFeature {
   /**
    * Provides the feature for a single value.
    */
-  object Single {
+  object D0 {
     type State[+F] = Option[Status[F]]
 
     def initState: State[Nothing] =
       None
 
-    final class Feature[S, F]($: CompState.WriteAccess[S], lens: Lens[S, State[F]]) {
-      def status(s: S): Option[Status[F]] =
-        lens get s
-
-      def wrapAsync(call: AsyncCall[F]): Callback =
-        genericWrapAsync[F]($ modState lens.set(_), call)
+    abstract class Feature[-F] {
+      def wrapAsync(call: AsyncCall[F]): Callback
     }
+
+    def Feature[F]($: CompState.WriteAccess[State[F]]): Feature[F] =
+      new Feature[F] {
+        override def wrapAsync(call: AsyncCall[F]) =
+          genericWrapAsync[F]($ setState _, call)
+      }
   }
 
   // ===================================================================================================================
 
-  /**
-   * Provides the feature for a set of values with a key.
-   */
-  object Keyed {
-    type State[K, +F] = Map[K, Status[F]]
+  object D1 {
+    final class State[A, B, +F](val statusD1: D0.State[F],
+                                val values: Map[A, Status[F]],
+                                p: Prism[A, B]) extends State.ReadOnly[B, F] {
+      @elidable(elidable.FINE)
+      override def toString = s"D1.State($statusD1, $values)"
 
-    def initState[K: UnivEq]: State[K, Any] =
-      UnivEq.emptyMap
+      override def isEmpty: Boolean =
+        values.isEmpty && statusD1.isEmpty
 
-    final class Feature[S, K, F]($: CompState.WriteAccess[S], lens: Lens[S, State[K, F]]) {
-      private type M = State[K, F]
+      override def apply(key: B): D0.State[F] =
+        values.get(p reverseGet key)
 
-      private def lensK(c: K): Lens[S, Option[Status[F]]] =
-        lens ^|-> at(c)
+      def set[FF >: F](key: B, o: D0.State[FF]): State[A, B, FF] = {
+        val m = Dimensions.set1(p)(values, key, o)
+        new State(statusD1, m, p)
+      }
 
-      def apply(k: K): Single.Feature[S, F] =
-        new Single.Feature($, lensK(k))
+      def setD1[FF >: F](o: D0.State[FF]): State[A, B, FF] =
+        new State(o, values, p)
+
+      override def mapK[C](q: Prism[B, C]): State[A, C, F] =
+        new State(statusD1, values, p ^<-? q)
+
+      def mergeInto[FF >: F](parent: State[A, A, FF]): State[A, A, FF] = {
+        val m = Dimensions.merge(p)(parent.values, values)
+        new State(statusD1, m, Prism.id[A])
+      }
+
+//      def iterator: Iterator[(B, Status[F])] =
+//          .map(x => p.getOption(x._1) match {
+//            case Some(b) => (b, x._2)
+//            case None    => null
+//          })
+//          .filter(_ ne null)
+
     }
+
+    object State {
+      type Simple[K, +F] = State[K, K, F]
+
+      sealed abstract class ReadOnly[K, +F] {
+        def isEmpty: Boolean
+        def statusD1: D0.State[F]
+        def apply(key: K): D0.State[F]
+        def mapK[C](q: Prism[K, C]): ReadOnly[C, F]
+      }
+
+      implicit def reusabilityState1[K, F]: Reusability[ReadOnly[K, F]] =
+        Reusability.byRef || Reusability.whenTrue(_.isEmpty)
+
+      private[AsyncActionFeature] def empty[A, B](p: Prism[A, B]): State[A, B, Nothing] =
+        new State(None, Map.empty, p)
+
+      private[AsyncActionFeature] def emptyA[A]: State[A, A, Nothing] =
+        empty(Prism.id[A])
+
+      def init[A: UnivEq]: State[A, A, Nothing] =
+        emptyA
+
+      def at[A, B, F](b: B): Lens[State[A, B, F], D0.State[F]] =
+        Lens((_: State[A, B, F])(b))(o => _.set(b, o))
+
+      def atD1[A, B, F]: Lens[State[A, B, F], D0.State[F]] =
+        Lens((_: State[A, B, F]).statusD1)(o => _.setD1(o))
+    }
+
+    abstract class Feature[-K, -F] {
+      def apply(k: K): D0.Feature[F]
+      def wrapAsyncD1(call: AsyncCall[F]): Callback
+    }
+
+    def Feature[A, B, F]($: CompState.WriteAccess[State[A, B, F]]): Feature[B, F] =
+      new Feature[B, F] {
+        override def apply(b: B) =
+          D0.Feature($ zoomL State.at(b))
+
+        override def wrapAsyncD1(call: AsyncCall[F]) =
+          genericWrapAsync[F]($.zoomL(State.atD1) setState _, call)
+      }
   }
 
   // ===================================================================================================================
 
-  /**
-   * Provides the feature for a table of rows and columns.
-   *
-   * Also provides a separate state for entire rows.
-   */
-  object Table {
-    import Keyed.{State => State1D}
+  object D2 {
 
-    type State[R, C, +F] = Map[R, RowState[C, F]]
+    final class State[A2, B2, A1, B1, F](val statusD2: D0.State[F],
+                                         val values: Map[A2, D1.State[A1, A1, F]],
+                                         f2: B2 => A2,
+                                         p1: Prism[A1, B1]) extends State.ReadOnly[B2, B1, F] {
+      @elidable(elidable.FINE)
+      override def toString = s"D2.State($statusD2, $values)"
 
-    case class RowState[C, +F](rowStatus: Option[Status[F]], cols: State1D[C, F])
+      override def isEmpty: Boolean =
+        values.isEmpty && statusD2.isEmpty
 
-    def initState[R: UnivEq, C: UnivEq]: State[R, C, Nothing] =
-      UnivEq.emptyMap
-
-    private[this] val _emptyRowState = RowState[Any, Nothing](None, Map.empty)
-
-    def emptyRowState[C]: RowState[C, Nothing] =
-      _emptyRowState.asInstanceOf[RowState[C, Nothing]]
-
-    def get[R, C, F](s: State[R, C, F])(r: R): RowState[C, F] =
-      s.getOrElse(r, emptyRowState)
-
-    final class Feature[S, R, C, F]($: CompState.WriteAccess[S], lens: Lens[S, State[R, C, F]]) extends FeatureAnon[R, C, F] {
-      private val rowState_rowStatus = GenLens[RowState[C, F]](_.rowStatus)
-      private val rowState_cols      = GenLens[RowState[C, F]](_.cols)
-      private val emptyRowState      = RowState[C, F](None, Map.empty)
-
-      private def lensR(r: R): Lens[S, RowState[C, F]] =
-        Lens(rowState(r))(n => lens.modify(_.updated(r, n)))
-
-      private def lensC(r: R): Lens[S, State1D[C, F]] =
-        lensR(r) ^|-> rowState_cols
-
-      def apply(r: R): Keyed.Feature[S, C, F] =
-        new Keyed.Feature($, lensC(r))
-
-      def rowState(r: R)(s: S): RowState[C, F] =
-        lens.get(s).getOrElse(r, emptyRowState)
-
-      def rowStatus(r: R)(s: S): Option[Status[F]] =
-        rowState(r)(s).rowStatus
-
-      def hasState_?(r: R, c: C)(s: S): Boolean = {
-        val rs = rowState(r)(s)
-        rs.rowStatus.isDefined || rs.cols.get(c).isDefined
-      }
-
-      override def wholeRowAsync(r: R, call: AsyncCall[F]): Callback = {
-        val l = lensR(r) ^|-> rowState_rowStatus
-        genericWrapAsync[F]($ modState l.set(_), call)
-      }
-
-      override def setRowStatuses(rs: Iterable[R], value: => Option[Status[F]]): Callback =
-        Callback.byName {
-          val v = value
-          val f = rowState_rowStatus set v
-          val modAll = rs.iterator.map(lensR(_) modify f).foldLeft[S => S](identity)(_ compose _)
-          $ modState modAll
+      override def apply(key: B2): D1.State[A1, B1, F] =
+        values.get(f2(key)) match {
+          case Some(s) => s mapK p1
+          case None    => D1.State.empty(p1)
         }
+
+      def set(k: B2, v: D1.State[A1, B1, F]): State[A2, B2, A1, B1, F] = {
+        val m = Dimensions.set2(values)(f2(k), v mergeInto _.getOrElse(D1.State.emptyA))(_.isEmpty)
+        new State(statusD2, m, f2, p1)
+      }
+
+      def mod(k: B2, f: D1.State[A1, B1, F] => D1.State[A1, B1, F]): State[A2, B2, A1, B1, F] =
+        set(k, f(apply(k)))
+
+      override def mapK2[C2](f: C2 => B2): State[A2, C2, A1, B1, F] =
+        new State(statusD2, values, f2 compose f, p1)
+
+      override def mapK1[C1](q: Prism[B1, C1]): State[A2, B2, A1, C1, F] =
+        new State(statusD2, values, f2, p1 ^<-? q)
     }
 
-    trait FeatureAnon[R, C, F] {
-      def wholeRowAsync(r: R, call: AsyncCall[F]): Callback
-      def setRowStatuses(rs: Iterable[R], value: => Option[Status[F]]): Callback
+    object State {
+      type Simple[K2, K1, F] = State[K2, K2, K1, K1, F]
 
-      final def setRowStatus(r: R, value: => Option[Status[F]]): Callback =
-        setRowStatuses(r :: Nil, value)
+      def init[K2: UnivEq, K1: UnivEq, F]: State[K2, K2, K1, K1, F] =
+        new State(None, UnivEq.emptyMap, identity[K2], Prism.id[K1])
+
+      sealed abstract class ReadOnly[K2, K1, +F] {
+        def isEmpty: Boolean
+        def apply(key: K2): D1.State.ReadOnly[K1, F]
+        def statusD2: D0.State[F]
+        def mapK2[K](f: K => K2): ReadOnly[K, K1, F]
+        def mapK1[K](q: Prism[K1, K]): ReadOnly[K2, K, F]
+      }
+
+      implicit def reusabilityState2[K2, K1, F]: Reusability[ReadOnly[K2, K1, F]] =
+        Reusability.byRef || Reusability.whenTrue(_.isEmpty)
+
+      def at[A2, B2, A1, B1, F](k: B2): Lens[State[A2, B2, A1, B1, F], D1.State[A1, B1, F]] =
+        Lens((_: State[A2, B2, A1, B1, F])(k))(o => _.set(k, o))
     }
 
-    implicit def reusabilityFeatureAnon[R, C, F]: Reusability[FeatureAnon[R, C, F]] = Reusability.byRef
-    implicit def reusabilityState      [R, C, F]: Reusability[State      [R, C, F]] = Reusability.byRef
-    implicit def reusabilityRowState      [C, F]: Reusability[RowState      [C, F]] = Reusability.byRef
+    abstract class Feature[-K2, -K1, -F] {
+      def apply(k2: K2): D1.Feature[K1, F]
+      def setD1s(ks: Iterable[K2], value: => D0.State[F]): Callback
 
-    def Fix[R: UnivEq, C: UnivEq, F] = new Fix[R, C, F]
-    final class Fix[R: UnivEq, C: UnivEq, F] {
-      type Row         = R
-      type Col         = C
-      type Failure     = F
-      type TableState  = AsyncActionFeature.Table.State[R, C, F]
-      type RowState    = AsyncActionFeature.Table.RowState[C, F]
-      type ColStates   = State1D[C, F]
-      type Single      = AsyncActionFeature.Single.State[F]
-      type Status      = AsyncActionFeature.Status[F]
-      type Failed      = AsyncActionFeature.Failed[F]
-      type Feature[S]  = AsyncActionFeature.Table.Feature[S, R, C, F]
-      type FeatureAnon = AsyncActionFeature.Table.FeatureAnon[R, C, F]
-
-      def initState = Table.initState[R, C]
-
-      def Feature[S]($: CompState.WriteAccess[S])(lens: Lens[S, State[R, C, F]]): Feature[S] =
-        new AsyncActionFeature.Table.Feature($, lens)
-
-      def get(s: State[R, C, F])(r: R): RowState =
-        Table.get(s)(r)
+      final def setD1(k: K2, value: => D0.State[F]): Callback =
+        setD1s(k :: Nil, value)
     }
+
+    def Feature[A2, B2, A1, B1, F]($: CompState.WriteAccess[State[A2, B2, A1, B1, F]]): Feature[B2, B1, F] =
+      new Feature[B2, B1, F] {
+        override def apply(b: B2) =
+          D1.Feature($ zoomL State.at(b))
+
+        override def setD1s(ks: Iterable[B2], value: => D0.State[F]): Callback =
+          Callback.ifTrue(ks.nonEmpty,
+            $.modState { s =>
+              val v = value
+              ks.foldLeft(s)(_.mod(_, _ setD1 v))
+            }
+          )
+      }
   }
 }

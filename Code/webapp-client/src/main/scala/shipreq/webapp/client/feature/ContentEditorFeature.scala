@@ -87,7 +87,7 @@ object ContentEditorFeature {
 
     object Feature {
       def apply[S, P](static: Static[S, P],
-                      async : AsyncActionFeature.Single.Feature[S, String])
+                      async : AsyncActionFeature.D0.Feature[String])
                      (lens  : Lens[S, State],
                       editor: Option[Editor[P]]): Feature =
         editor match {
@@ -102,7 +102,7 @@ object ContentEditorFeature {
     }
 
     final private class MainFeatureImpl[S, P](static: Static[S, P],
-                                              async : AsyncActionFeature.Single.Feature[S, String],
+                                              async : AsyncActionFeature.D0.Feature[String],
                                               lens  : Lens[S, State],
                                               editor: Editor[P]) extends Feature {
       import static._
@@ -526,7 +526,7 @@ object ContentEditorFeature {
     }
 
     def Feature[S, P, K](static: Static[S, P],
-                         async : AsyncActionFeature.Keyed.Feature[S, K, String])
+                         async : AsyncActionFeature.D1.Feature[K, String])
                         (lens  : Lens[S, State[K, K]],
                          editor: K => Option[Editor[P]]): Feature[K] =
       new Feature[K] {
@@ -592,13 +592,13 @@ object ContentEditorFeature {
 
     object Feature {
       def apply[S, P, K2, K1](static: Static[S, P],
-                              async : AsyncActionFeature.Table.Feature[S, K2, K1, String])
+                              async : AsyncActionFeature.D2.Feature[K2, K1, String])
                              (lens  : Lens[S, State[K2, K2, K1, K1]],
                               editor: K2 => K1 => Option[Editor[P]]): Feature[K2, K1] =
         withKeyId(static, async, identity[K2])(lens, editor)
 
       def withKeyId[S, P, K2, K2Id, K1](static: Static[S, P],
-                                        async : AsyncActionFeature.Table.Feature[S, K2Id, K1, String],
+                                        async : AsyncActionFeature.D2.Feature[K2Id, K1, String],
                                         id    : K2 => K2Id)
                                        (lens  : Lens[S, State[K2Id, K2Id, K1, K1]],
                                         editor: K2 => K1 => Option[Editor[P]]): Feature[K2, K1] =

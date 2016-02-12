@@ -32,20 +32,21 @@ package object reqtable {
   implicit val reusabilityContentEditorFeature: Reusability[ContentEditorFeature.D2.Feature[Row, Column]] =
     Reusability.byRef
 
+  implicit val reusabilityAsyncFeature: Reusability[AsyncActionFeature.D2.Feature[Row.SourceId, Column, String]] =
+    Reusability.byRef
+
   @inline def shouldComponentUpdate[P: Reusability, S: Reusability, B, N <: TopNode] =
     shipreq.webapp.client.app.shouldComponentUpdate[P, S, B, N]
     // Reusability.shouldComponentUpdateWithOverlay[P, S, B, N]
 
   // -----------------------------------------------------------------------------------------------
 
-  val AsyncState = AsyncActionFeature.Table.Fix[Row.SourceId, Column, String]
-
-  def renderAsyncState(s: AsyncState.Status): ReactTag =
+  def renderAsyncState(s: AsyncActionFeature.Status[String]): ReactTag =
     s match {
       case AsyncActionFeature.Locked =>
         AsyncActionFeature.renderLocked
 
-      case f: AsyncActionFeature.Failed[AsyncState.Failure] =>
+      case f: AsyncActionFeature.Failed[String] =>
         <.div(f.failure, f.retryButton, f.resumeEditButton)
     }
 

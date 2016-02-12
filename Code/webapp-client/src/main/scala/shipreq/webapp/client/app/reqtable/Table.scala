@@ -12,7 +12,6 @@ import shipreq.webapp.client.app.Style.{reqtable => *}
 import shipreq.webapp.client.feature.{AsyncActionFeature, ContentEditorFeature}
 import shipreq.webapp.client.lib._
 import shipreq.webapp.client.widgets.DragToReorder
-import AsyncActionFeature.Table.RowState
 import AsyncActionFeature.{Locked, renderLocked}
 import DataReusability._
 import DomUtil._
@@ -27,7 +26,7 @@ object Table {
                    colRenderers   : NonEmptyVector[ColumnRenderer],
                    cellEditors    : ContentEditorFeature.D2.Feature[Row, Column],
                    editState      : ContentEditorFeature.D2.State.ReadOnly[Row.SourceId, Column],
-                   asyncState     : AsyncState.TableState,
+                   asyncState     : AsyncActionFeature.D2.State.ReadOnly[Row.SourceId, Column, String],
                    selection      : RowSelectionVisible,
                    modViewSettings: EndoFn[ViewSettings] ~=> Callback)
 
@@ -63,7 +62,7 @@ object Table {
         rows.indices.toReactNodeArray { i =>
           val row = rows(i)
           val rs2 = p.editState(row.sourceId)
-          val as  = AsyncState.get(p.asyncState)(row.sourceId)
+          val as  = p.asyncState(row.sourceId)
           val rp  = RowProps(row, crs, rs2, as, p.selection, startCellEdit(row))
           RowComponent.withKey(row.id.key)(rp)
         }
@@ -153,7 +152,7 @@ object Table {
   case class RowProps(row        : Row,
                       crs        : NonEmptyVector[ColumnRenderer],
                       editState  : ContentEditorFeature.D1.State.ReadOnly[Column],
-                      asyncState : AsyncState.RowState,
+                      asyncState : AsyncActionFeature.D1.State.ReadOnly[Column, String],
                       selection  : RowSelectionVisible,
                       startEdit  : Column ~=> StartEdit)
 
@@ -176,7 +175,7 @@ object Table {
 
     val td = <.td(*.cell(rowStatus))
 
-    def renderRowNormal(cells: AsyncState.ColStates) = {
+    def renderRowNormal = {
       val sel = p.selection(row.sourceId)
 
       def selCell =
@@ -188,7 +187,7 @@ object Table {
       def colCells =
         p.crs.iterator.map { cr =>
           val col = cr.column
-          val cp = CellProps(row, cr, p editState col, cells get col, p startEdit col)
+          val cp = CellProps(row, cr, p editState col, p asyncState col, p startEdit col)
           CellComponent.withKey(col.key)(cp)
         }.toReactNodeArray
 
@@ -206,10 +205,10 @@ object Table {
       <.tr(td(renderLocked), colCells)
     }
 
-    p.asyncState match {
-      case RowState(None                      , cells) => renderRowNormal(cells)
-      case RowState(Some(Locked)              , _    ) => renderRowLocked
-      case RowState(Some(s: AsyncState.Failed), _    ) =>
+    p.asyncState.statusD1 match {
+      case None                                        => renderRowNormal
+      case Some(Locked)                                => renderRowLocked
+      case Some(s: AsyncActionFeature.Failed[String]) =>
         // Currently, whole-row state is only used when a row is being deleted/restored.
         // To save dev-time, if the RPC fails an alert popups asking to retry/cancel, thus this part of the code
         // should only execute when the row is locked. Whole-row editing + failure won't occur.
@@ -226,7 +225,7 @@ object Table {
   case class CellProps(row       : Row,
                        cr        : ColumnRenderer,
                        cellEditor: ContentEditorFeature.D0.State,
-                       asyncState: AsyncState.Single,
+                       asyncState: AsyncActionFeature.D0.State[String],
                        startEdit : StartEdit)
 
   implicit val cellPropReuse = Reusability.caseClass[CellProps]

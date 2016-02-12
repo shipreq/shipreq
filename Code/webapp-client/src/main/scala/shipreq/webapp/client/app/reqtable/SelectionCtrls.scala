@@ -8,11 +8,12 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.client.data.TCB
-import shipreq.webapp.client.feature.AsyncActionFeature.Locked
+import shipreq.webapp.client.feature.AsyncActionFeature
 import shipreq.webapp.client.feature.Modal
 import shipreq.webapp.client.lib.DataReusability._
 import shipreq.webapp.client.protocol.ServerCall
 import shipreq.webapp.client.widgets.high.ProjectWidgets
+import AsyncActionFeature.Locked
 
 /**
   * Renders a bar that provides the user with information and action-buttons pertaining to the rows selected the
@@ -33,7 +34,7 @@ object SelectionCtrls {
                    projectText  : PlainText.ForProject,
                    textSearch   : TextSearch,
                    saveIO       : ServerCall[UpdateContentCmd],
-                   async        : AsyncState.FeatureAnon)
+                   async        : AsyncActionFeature.D2.Feature[Row.SourceId, Column, String])
 
   // These two are only used in callbacks so are always reusable
   private implicit def reusabilityPlainText : Reusability[PlainText.ForProject]  = Reusability.always
@@ -92,12 +93,12 @@ object SelectionCtrls {
     }
   }
 
-  def locsOfReqs(ids: Iterator[ReqId]): Iterator[AsyncState.Row] =
+  def locsOfReqs(ids: Iterator[ReqId]): Iterator[Row.SourceId] =
     ids.map {
       case i: GenericReqId => Row.GenericReqRowSourceId(i)
     }
 
-  def locsOfGroups(ids: Iterator[ReqCodeId]): Iterator[AsyncState.Row] =
+  def locsOfGroups(ids: Iterator[ReqCodeId]): Iterator[Row.SourceId] =
     ids.map(Row.ReqCodeGroupRowSourceId)
 
   class Backend($: BackendScope[Props, Unit]) {
@@ -187,14 +188,14 @@ object SelectionCtrls {
       callRemoteAndUpdateRows(cmd, locs.toList)
     }
 
-    private def callRemoteAndUpdateRows(cmd: UpdateContentCmd, rows: List[AsyncState.Row]): Callback = {
+    private def callRemoteAndUpdateRows(cmd: UpdateContentCmd, rows: List[Row.SourceId]): Callback = {
       val async = $.props.map(_.async).runNow()
 
       def lockRows: Callback =
-        async.setRowStatuses(rows, Some(Locked))
+        async.setD1s(rows, Some(Locked))
 
       def unlockRows: Callback =
-        async.setRowStatuses(rows, None)
+        async.setD1s(rows, None)
 
       def uncheckRows: Callback =
         $.props >>= { p =>

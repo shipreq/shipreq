@@ -44,7 +44,7 @@ object ReqTable extends StaticPropComponent.Template("ReqTable") {
                    selection   : RowSelection,
                    creation    : CreationInterface.State,
                    editStates  : ContentEditorFeature.D2.State.Simple[Row.SourceId, Column],
-                   asyncStates : AsyncState.TableState,
+                   asyncStates : AsyncActionFeature.D2.State.Simple[Row.SourceId, Column, String],
                    previewState: Preview.State,
                    modal       : Modal.State) {
 
@@ -86,7 +86,7 @@ object ReqTable extends StaticPropComponent.Template("ReqTable") {
         Selection.empty,
         CreationInterface.initState,
         ContentEditorFeature.D2.State.init,
-        AsyncState.initState,
+        AsyncActionFeature.D2.State.init,
         PreviewFeature.initState,
         Modal.none)
       filterSpec.foreach(f => s = s setFilterSpec f)
@@ -130,8 +130,8 @@ object ReqTable extends StaticPropComponent.Template("ReqTable") {
     val pxStats   = Px.apply3(pxViewSettings, pxProject, pxRows)(Logic.stats)
 
     val pxRowsWithAsyncWholeRowStatuses: Px.ThunkM[Set[Row.SourceId]] =
-      Px.bsMP($).propsM(_.asyncStates.iterator
-        .filter(_._2.rowStatus.isDefined)
+      Px.bsMP($).propsM(_.asyncStates.values.iterator
+        .filter(_._2.statusD1.isDefined)
         .map(_._1)
         .toSet)
 
@@ -165,7 +165,7 @@ object ReqTable extends StaticPropComponent.Template("ReqTable") {
     val pxFilterEditor: Px[ReusableVal[ReactElement]] =
       pxFilterState map filterProps map ReusableVal.renderComponent(FilterEditor.Component)
 
-    val asyncFeature = AsyncState.Feature(state_$)(State.asyncStates)
+    val asyncFeature = AsyncActionFeature.D2.Feature(state_$ zoomL State.asyncStates)
 
     val previewFeature = new PreviewFeature(state_$, State.previewState)
 

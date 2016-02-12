@@ -17,11 +17,8 @@ import shipreq.base.util.NonEmptyVector
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 // import shipreq.webapp.client.app.Style.{reqtable => *}
-import shipreq.webapp.client.feature.AsyncActionFeature
 import shipreq.webapp.client.lib._
 import shipreq.webapp.client.widgets.DragToReorder
-import AsyncActionFeature.Table.RowState
-import AsyncActionFeature.{Locked, renderLocked}
 import DataReusability._
 import DomUtil._
 
