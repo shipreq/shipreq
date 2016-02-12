@@ -1,4 +1,4 @@
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.6")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.7")
 
 // Web app support plugin for XSbt using Jetty Web Server
 addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "2.0.4")
