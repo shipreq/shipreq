@@ -6,6 +6,9 @@ abstract class Intersection[A, B] {
   val getOption: A => Option[B]
   val reverseGetOption: B => Option[A]
 
+  def reverse: Intersection[B, A] =
+    Intersection(reverseGetOption)(getOption)
+
   def get(a: A, default: => B): B =
     getOption(a).getOrElse(default)
 
@@ -26,28 +29,22 @@ abstract class Intersection[A, B] {
 }
 
 object Intersection {
+
   private final class Id[A] extends Intersection[A, A] {
-    override val getOption = Some(_: A)
-    override val reverseGetOption = getOption
-
-    override def get(a: A, default: => A): A =
-      a
-
-    override def reverseGet(a: A, default: => A): A =
-      a
-
-    override def fold[C](a: A, f: A => C)(default: => C): C =
-      f(a)
-
-    override def reverseFold[C](a: A, f: A => C)(default: => C): C =
-      f(a)
-
-    override def composeIntersection[C](that: Intersection[A, C]): Intersection[A, C] =
-      that
+    override val getOption                                              = Some(_: A)
+    override val reverseGetOption                                       = getOption
+    override def reverse                                                = this
+    override def get                (a: A, default: => A)               = a
+    override def reverseGet         (a: A, default: => A)               = a
+    override def fold               [C](a: A, f: A => C)(default: => C) = f(a)
+    override def reverseFold        [C](a: A, f: A => C)(default: => C) = f(a)
+    override def composeIntersection[C](that: Intersection[A, C])       = that
   }
 
+  private[this] val idInstance = new Id[Any]
+
   def id[A]: Intersection[A, A] =
-    new Id[A]
+    idInstance.asInstanceOf[Id[A]]
 
   def apply[A, B](f: A => Option[B])(g: B => Option[A]): Intersection[A, B] =
     new Intersection[A, B] {
