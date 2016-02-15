@@ -114,14 +114,6 @@ object AsyncActionFeature {
         val m = Dimensions.merge(p)(parent.values, values)
         new State(statusD1, m, Prism.id[A])
       }
-
-//      def iterator: Iterator[(B, Status[F])] =
-//          .map(x => p.getOption(x._1) match {
-//            case Some(b) => (b, x._2)
-//            case None    => null
-//          })
-//          .filter(_ ne null)
-
     }
 
     object State {
@@ -174,7 +166,7 @@ object AsyncActionFeature {
 
     final class State[A2, B2, A1, B1, F](val statusD2: D0.State[F],
                                          val values: Map[A2, D1.State[A1, A1, F]],
-                                         f2: B2 => A2,
+                                         p2: Prism[A2, B2],
                                          p1: Prism[A1, B1]) extends State.ReadOnly[B2, B1, F] {
       @elidable(elidable.FINE)
       override def toString = s"D2.State($statusD2, $values)"
@@ -183,38 +175,42 @@ object AsyncActionFeature {
         values.isEmpty && statusD2.isEmpty
 
       override def apply(key: B2): D1.State[A1, B1, F] =
-        values.get(f2(key)) match {
+        values.get(p2 reverseGet key) match {
           case Some(s) => s mapK p1
           case None    => D1.State.empty(p1)
         }
 
       def set(k: B2, v: D1.State[A1, B1, F]): State[A2, B2, A1, B1, F] = {
-        val m = Dimensions.set2(values)(f2(k), v mergeInto _.getOrElse(D1.State.emptyA))(_.isEmpty)
-        new State(statusD2, m, f2, p1)
+        val m = Dimensions.set2(values)(p2.reverseGet(k), v mergeInto _.getOrElse(D1.State.emptyA))(_.isEmpty)
+        new State(statusD2, m, p2, p1)
       }
 
       def mod(k: B2, f: D1.State[A1, B1, F] => D1.State[A1, B1, F]): State[A2, B2, A1, B1, F] =
         set(k, f(apply(k)))
 
-      override def mapK2[C2](f: C2 => B2): State[A2, C2, A1, B1, F] =
-        new State(statusD2, values, f2 compose f, p1)
+      override def mapK2[C2](q: Prism[B2, C2]): State[A2, C2, A1, B1, F] =
+        new State(statusD2, values, p2 ^<-? q, p1)
 
       override def mapK1[C1](q: Prism[B1, C1]): State[A2, B2, A1, C1, F] =
-        new State(statusD2, values, f2, p1 ^<-? q)
+        new State(statusD2, values, p2, p1 ^<-? q)
+
+      override def iterator: Iterator[(B2, D1.State[A1, B1, F])] =
+        Dimensions.iterator(p2, values)(_ mapK p1)
     }
 
     object State {
       type Simple[K2, K1, F] = State[K2, K2, K1, K1, F]
 
       def init[K2: UnivEq, K1: UnivEq, F]: State[K2, K2, K1, K1, F] =
-        new State(None, UnivEq.emptyMap, identity[K2], Prism.id[K1])
+        new State(None, UnivEq.emptyMap, Prism.id[K2], Prism.id[K1])
 
       sealed abstract class ReadOnly[K2, K1, +F] {
         def isEmpty: Boolean
         def apply(key: K2): D1.State.ReadOnly[K1, F]
         def statusD2: D0.State[F]
-        def mapK2[K](f: K => K2): ReadOnly[K, K1, F]
+        def mapK2[K](f: Prism[K2, K]): ReadOnly[K, K1, F]
         def mapK1[K](q: Prism[K1, K]): ReadOnly[K2, K, F]
+        def iterator: Iterator[(K2, D1.State.ReadOnly[K1, F])]
       }
 
       implicit def reusabilityState2[K2, K1, F]: Reusability[ReadOnly[K2, K1, F]] =

@@ -35,4 +35,12 @@ object Dimensions {
     m
   }
 
+  def iterator[A, B, V, W](p: Prism[A, B], m: Map[A, V])(f: V => W): Iterator[(B, W)] =
+    m.iterator
+      .map(x => p.getOption(x._1) match {
+        case Some(b) => (b, f(x._2))
+        case None    => null
+      })
+      .filter(_ ne null)
+
 }
