@@ -37,15 +37,7 @@ package object reqtable {
 
   // -----------------------------------------------------------------------------------------------
 
-  val EditFieldKeyToColumn = Intersection[EditFieldKey, Column] {
-    case EditFieldKey.ReqType         => Some(Column.ReqType              )
-    case EditFieldKey.Code            => Some(Column.Code                 )
-    case EditFieldKey.Title           => Some(Column.Title                )
-    case EditFieldKey.Tags            => Some(Column.Tags                 )
-    case EditFieldKey.ImplicationSrc  => Some(Column.ImplicationSrc       )
-    case EditFieldKey.ImplicationTgt  => Some(Column.ImplicationTgt       )
-    case EditFieldKey.CustomField(id) => Some(Column.CustomField(id, Live))
-  } {
+  val ColumnToEditFieldKey = Intersection[Column, EditFieldKey] {
     case Column.ReqType               => Some(EditFieldKey.ReqType        )
     case Column.Code                  => Some(EditFieldKey.Code           )
     case Column.Title                 => Some(EditFieldKey.Title          )
@@ -56,6 +48,14 @@ package object reqtable {
     case Column.Pubid
        | Column.DeletionReason
        | Column.CustomField(_, Dead)  => None
+  } {
+    case EditFieldKey.ReqType         => Some(Column.ReqType              )
+    case EditFieldKey.Code            => Some(Column.Code                 )
+    case EditFieldKey.Title           => Some(Column.Title                )
+    case EditFieldKey.Tags            => Some(Column.Tags                 )
+    case EditFieldKey.ImplicationSrc  => Some(Column.ImplicationSrc       )
+    case EditFieldKey.ImplicationTgt  => Some(Column.ImplicationTgt       )
+    case EditFieldKey.CustomField(id) => Some(Column.CustomField(id, Live))
   }
 
   // -----------------------------------------------------------------------------------------------
