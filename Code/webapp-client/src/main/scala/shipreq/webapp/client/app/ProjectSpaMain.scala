@@ -149,11 +149,9 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
 
     def initReqTableEditor: ReqTable.InitEditor = {
       import ContentEditorFeature._
-      new D2.InitChild[ReqTable.State, Row, Column, FocusId] {
+      new D2.InitChild[Row, Column, FocusId] {
         override type Parent    = State
         override val parent     = $: CompState.Access[Parent]
-        override val stateLens  = State.reqTable
-        override val state      = parent zoomL stateLens
         override val preview    = previewFeature
         override val editorLens =
           (r: Row, c: Column) =>
@@ -167,7 +165,8 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
       pxPlainText, pxTextSearch, pxProjectWidgets,
       initReqTableEditor,
       asyncFeature.mapK1(EditFieldKeyToColumn),
-      reqDetailRC))
+      reqDetailRC,
+      $ zoomL State.reqTable))
 
     val reqDetail = ReqDetail(ReqDetail.StaticProps(
       cd, cp, r.updateContent,

@@ -4,7 +4,6 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import monocle.Lens
 import scala.annotation.elidable
-import scalaz.Equal
 import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
@@ -35,6 +34,18 @@ import shipreq.webapp.client.widgets.high.ProjectWidgets
  *
  * - To start editing, apply keys from the feature until you arrive at `D0.Feature`, then call `.startEdit()`.
  *   (Pass the feature to child components if needed.)
+ *
+ * Sharing State
+ * =============
+ *
+ * It may be desirable to have shared state between components (for example: `ReqTable` and `ReqDetail`).
+ *
+ * Say we have T as our top component, and two child components C₁ and C₂ which want to share editor state.
+ *
+ * - Add the highest dimension's `State` to T (eg. `TwoD.State`).
+ *
+ * - If the keys used by C₁ and C₂ differ, create a type K' to contain all values of both key types. Next create
+ *   [[Intersection]]s to map from the top-level keys K' to each child's keys.
  */
 object ContentEditorFeature {
 
@@ -640,11 +651,9 @@ object ContentEditorFeature {
     /**
      * A means for a child to initialise itself when the state is in the parent in an unknown shape.
      */
-    abstract class InitChild[S, K2, K1, P] {
+    abstract class InitChild[K2, K1, P] {
       type Parent
       val parent    : CompState.Access[Parent]
-      val state     : CompState.Access[S]
-      val stateLens : Lens[Parent, S]
       val editorLens: (K2, K1) => Option[Lens[Parent, D0.State]]
       val preview   : PreviewFeature[Parent, P]
 

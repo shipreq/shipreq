@@ -218,11 +218,9 @@ object ReqTableTest2 extends TestSuite {
 
       def initReqTableEditor: ReqTable.InitEditor = {
         import ContentEditorFeature._
-        new D2.InitChild[ReqTable.State, Row, Column, FocusId] {
+        new D2.InitChild[Row, Column, FocusId] {
           override type Parent    = State
           override val parent     = $: CompState.Access[Parent]
-          override val stateLens  = State.reqTable
-          override val state      = parent zoomL stateLens
           override val preview    = previewFeature
           override val editorLens =
             (r: Row, c: Column) =>
@@ -236,7 +234,9 @@ object ReqTableTest2 extends TestSuite {
         pxPlainText, pxTextSearch, pxProjectWidgets,
         initReqTableEditor,
         asyncFeature.mapK1(EditFieldKeyToColumn),
-        reqDetailRC))
+        reqDetailRC,
+        $ zoomL State.reqTable))
+
     }((reqTable, $, s) =>
       reqTable(ReqTable.DynamicProps(
         s.editStates.mapK1(EditFieldKeyToColumn),

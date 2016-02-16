@@ -25,7 +25,7 @@ object ReqTable extends StaticPropComponent.Template("ReqTable") {
   override protected def configure = _.configure(
     Listenable.install(_.static.cd, $ => (c: Changes) => $.props.static.state_$.modState(_ recvChanges c)))
 
-  type InitEditor = ContentEditorFeature.D2.InitChild[State, Row, Column, FocusId]
+  type InitEditor = ContentEditorFeature.D2.InitChild[Row, Column, FocusId]
 
   case class StaticProps(cd              : ClientData,
                          cp              : ClientProtocol,
@@ -36,10 +36,8 @@ object ReqTable extends StaticPropComponent.Template("ReqTable") {
                          pxProjectWidgets: Px[ProjectWidgets],
                          initEditor      : InitEditor,
                          asyncFeature    : AsyncActionFeature.D2.Feature[Row.SourceId, Column, String],
-                         reqDetailRC     : RouterCtl[ExternalPubid]) {
-    @inline def state_$: CompState.Access[State] =
-      initEditor.state
-  }
+                         reqDetailRC     : RouterCtl[ExternalPubid],
+                         state_$         : CompState.Access[State])
 
   case class DynamicProps(editStates  : ContentEditorFeature.D2.State.ReadOnly[Row.SourceId, Column],
                           asyncStates : AsyncActionFeature.D2.State.ReadOnly[Row.SourceId, Column, String],
