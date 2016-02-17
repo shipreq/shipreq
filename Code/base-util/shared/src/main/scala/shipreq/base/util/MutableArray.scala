@@ -2,6 +2,7 @@ package shipreq.base.util
 
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
+import ScalaExt._
 
 /**
   * Scala arrays don't support in-place modification.
@@ -12,6 +13,8 @@ final class MutableArray[A](val underlying: Array[Any]) {
   @inline def length = underlying.length
   @inline def isEmpty = underlying.isEmpty
   @inline def nonEmpty = underlying.nonEmpty
+  @inline def iterator = array.iterator
+  @inline def toIterable = array.toIterable
 
   def array: Array[A] =
     underlying.asInstanceOf[Array[A]]
@@ -38,6 +41,11 @@ final class MutableArray[A](val underlying: Array[Any]) {
     scala.util.Sorting.quickSort(array)(o)
     this
   }
+
+  def sortBy[B](f: A => B)(implicit o: Ordering[B]): MutableArray[A] =
+    map(_ mapStrengthL f)
+      .sort(Ordering.by((_: (B, A))._1))
+      .map(_._2)
 
   def to[Col[_]](implicit cbf: CanBuildFrom[Nothing, A, Col[A]]): Col[A] =
     mapOut[A, Col[A]](identity)

@@ -120,11 +120,13 @@ object Column {
     }
 
   /**
-    * Direction of implications relative to row-subject.
-    *
-    * If forwards, the user edits what this subject implies (ie. subject → edit-specified).
-    * If backwards, then it's what implies this subject     (ie. subject ← edit-specified).
-    */
+   * Direction of implications relative to row-subject.
+   *
+   * If forwards, the user edits what this subject implies (ie. subject → edit-specified).
+   * If backwards, then it's what implies this subject     (ie. subject ← edit-specified).
+   *
+   * Note: Copy of reqdetail.Cell.implicationDirection
+   */
   def implicationDirection(column: Column): Direction =
     column match {
       case Column.CustomField(_, _) => data.CustomField.Implication.dir

@@ -4,7 +4,9 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.experimental.StaticPropComponent
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
+import shipreq.base.util.MutableArray
 import scalaz.{-\/, \/-}
+import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.{UpdateContentCmd, UpdateContentFn}
@@ -80,19 +82,40 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
         val static = Static(
           initEditor.parent, initEditor.preview, pxProject, pxPlainText, pxProjectWidgets, pxTextSearch, updateIO)
 
+        // TODO Imps: Need to filter values
+        // Editor.ImplicationsAll(row.req, Column.implicationDirection(col), pubids))
+
         val edit: Cell => Option[Editor[Cell]] = cell =>
           Some(cell match {
-            case Cell.CustomField(fid: CustomField.Text.Id) =>
-              Editor.CustomTextField(req, fid, cell)
+            case Cell.Title                                        => Editor.GenericReqTitle(req, cell)
+            case Cell.Code                                         => Editor.ReqCodesForReq(req)
+//            case Cell.ImplicationSrc                               =>
+//            case Cell.ImplicationTgt                               =>
+            case Cell.ReqType                                      => Editor.ReqType(req)
+            case Cell.Tags                                         => Editor.Tags(req, None)
+            case Cell.CustomField(fid: CustomField.Tag        .Id) => Editor.Tags(req, Some(fid))
+            case Cell.CustomField(fid: CustomField.Text       .Id) => Editor.CustomTextField(req, fid, cell)
+            case Cell.CustomField(fid: CustomField.Implication.Id) => Editor.ImplicationsCustomField(req, fid)
           })
 
         initEditor.feature((cell, el) =>
           D0.Feature(static, s.asyncFeature(cell))(el, edit(cell)))
       }
 
+      def renderAsyncEditorOrValue(cell: Cell, view: => TagMod): TagMod = {
+        def startEdit = editFeature(cell).startEdit(focus)
+        def editor = s.edit(cell).flatMap(_.render())
+        TagMod(
+          ^.onDblClick -->? startEdit,
+          s.async(cell) match {
+            case None    => editor.fold(view)(e => e)
+            case Some(s) => s.render: TagMod
+          })
+      }
+
       def renderTitle: ReactElement =
-        s.edit(Cell.Title).flatMap(_.render()) getOrElse
-          pw.reqTitle(req)
+        <.div(
+          renderAsyncEditorOrValue(Cell.Title, pw.reqTitle(req)))
 
       def renderRows =
         <.table(
@@ -108,36 +131,35 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
       def renderRowTitle(row: Row): ReactNode =
         row match {
           case Row.CustomField(f) => fieldName(f)
-          case Row.Code           => UiText.ColumnNames.code
-          case Row.ReqType        => UiText.ColumnNames.reqType
-          case Row.Tags           => UiText.ColumnNames.tags
+          case Row.Code           => UiText.FieldNames.reqCodes
+          case Row.ReqType        => UiText.FieldNames.reqType
+          case Row.Tags           => UiText.FieldNames.tags
           case Row.Implications   => UiText.FieldNames.implications
         }
+
+      def focus: Callback = Callback.empty // TODO
 
       // TODO Much much overlap with Table.CellProps
       def renderRowData(row: Row): TagMod =
         row match {
 
           case Row.CustomField(f: CustomField.Text) =>
+            renderAsyncEditorOrValue(
+              Cell.CustomField(f.id),
+              pw.customTextField(f.id)(req).fold(emptyRow)(w => w))
 
-            def focus: Callback =
-              Callback.empty // TODO
+          case Row.Code =>
+            val codeSet = project.reqCodes.activeReqCodesByReqId(req.id)
+            val codes = MutableArray(codeSet).sortBy(PlainText.reqCode).to[List]
+            // TODO ↑ needn't do each time
+            renderAsyncEditorOrValue(
+              Cell.Code,
+              pw.flatReqCodes(codes))
 
-            val cell = Cell.CustomField(f.id)
-            def startEdit = editFeature(cell).startEdit(focus)
-            def editor = s.edit(cell).flatMap(_.render())
-            def roView = pw.customTextField(f.id)(req).fold(emptyRow)(w => w)
-
-            TagMod(
-              ^.onDblClick -->? startEdit,
-              s.async(cell) match {
-                case None    => editor getOrElse[ReactElement] roView
-                case Some(s) => s.render
-              })
-
-
-          case _ =>
-            "TODO"
+          // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//          CustomField(Implication(_, _, _, _, _)), CustomField(Tag(_, _, _, _, _)), Implications, Tags, ReqType
+          case _ => "TODO"
+          // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         }
 
       rows(project, req)

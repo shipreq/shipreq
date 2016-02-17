@@ -3,7 +3,7 @@ package shipreq.webapp.client.app.reqdetail
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
 import shipreq.webapp.client.lib.KeyGen
-import shipreq.base.util.{Intersection, UnivEq}
+import shipreq.base.util._
 import shipreq.webapp.base.data
 import shipreq.webapp.base.data.{CustomFieldId, Field}
 import shipreq.webapp.client.feature.ContentEditorFeature.EditFieldKey
@@ -43,9 +43,10 @@ object Row {
       Tags        ,
       Implications)
 
+  import data.StaticField._
   val fromField: Field => Row = {
     case f: data.CustomField => CustomField(f)
-    // case ExceptionStepTree, NormalAltStepTree, StepGraph
+    case ExceptionStepTree | NormalAltStepTree | StepGraph => ??? // TODO
   }
 }
 
@@ -67,6 +68,21 @@ object Cell {
 
   implicit val reusability: Reusability[Cell] =
     Reusability.byEqual
+
+  /**
+   * Direction of implications relative to row-subject.
+   *
+   * If forwards, the user edits what this subject implies (ie. subject → edit-specified).
+   * If backwards, then it's what implies this subject     (ie. subject ← edit-specified).
+   *
+   * Note: Copy of reqtable.Column.implicationDirection
+   */
+  def implicationDirection(cell: Cell): Direction =
+    cell match {
+      case CustomField(_) => data.CustomField.Implication.dir
+      case ImplicationTgt => Forwards
+      case _              => Backwards
+    }
 
   val EditFieldKeyIntersection = Intersection[Cell, EditFieldKey] {
     case Cell.ReqType         => Some(EditFieldKey.ReqType        )

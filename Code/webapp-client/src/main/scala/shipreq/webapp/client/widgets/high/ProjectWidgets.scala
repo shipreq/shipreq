@@ -236,7 +236,7 @@ final class ProjectWidgets private(project    : Project,
   def flatReqCode(c: ReqCode.Value): ReactElement =
     <.pre(*.reqCodeFlat, PlainText reqCode c)
 
-  def flatReqCodes(reqCodes: Vector[ReqCode.Value]): TagMod =
+  def flatReqCodes(reqCodes: TraversableOnce[ReqCode.Value]): TagMod =
     reqCodes map flatReqCode
 
   def reqCodes(tree: Vector[ReqCodeTreeItem], flat: Vector[ReqCode.Value]): ReactElement =
