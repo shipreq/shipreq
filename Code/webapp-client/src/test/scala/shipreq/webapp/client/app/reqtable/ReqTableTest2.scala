@@ -224,7 +224,7 @@ object ReqTableTest2 extends TestSuite {
           override val preview    = previewFeature
           override val editorLens =
             (r: Row, c: Column) =>
-              EditFieldKeyToColumn.reverse.getOption(c).map(efk =>
+              Column.EditFieldKeyIntersection.getOption(c).map(efk =>
                 State.editStates ^|-> D2.State.at(r.sourceId) ^|-> D1.State.at(efk))
         }
       }
@@ -233,14 +233,14 @@ object ReqTableTest2 extends TestSuite {
         cd, cp, remotes.createContent, remotes.updateContent,
         pxPlainText, pxTextSearch, pxProjectWidgets,
         initReqTableEditor,
-        asyncFeature.mapK1(EditFieldKeyToColumn),
+        asyncFeature.mapK1(Column.EditFieldKeyIntersection.reverse),
         reqDetailRC,
         $ zoomL State.reqTable))
 
     }((reqTable, $, s) =>
       reqTable(ReqTable.DynamicProps(
-        s.editStates.mapK1(EditFieldKeyToColumn),
-        s.asyncStates.mapK1(EditFieldKeyToColumn),
+        s.editStates.mapK1(Column.EditFieldKeyIntersection.reverse),
+        s.asyncStates.mapK1(Column.EditFieldKeyIntersection.reverse),
         s.previewState,
         s.reqTable))
     )
