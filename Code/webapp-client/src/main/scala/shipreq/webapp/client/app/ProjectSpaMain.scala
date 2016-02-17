@@ -9,7 +9,7 @@ import org.scalajs.dom
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{Intersection, UnivEq}
-import shipreq.webapp.base.data.{Dead, Live, ExternalPubid, ReqType, ReqTypePos}
+import shipreq.webapp.base.data.{ExternalPubid, ReqType, ReqTypePos}
 import shipreq.webapp.base.protocol.ProjectSPA
 import shipreq.webapp.base.text.{TextSearch, PlainText, Grammar}
 import shipreq.webapp.client.app.cfg.shared.Usage
@@ -109,9 +109,25 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
           ReqDetail(ExternalPubid(ReqType.Mnemonic("A"), ReqTypePos(1))))
     }
 
+  // ===================================================================================================================
   import ContentEditorFeature.EditFieldKey
-  import reqtable.{Column, Row, ReqTable, FocusId}
+  import reqtable.{Column, Row, ReqTable}
   import reqdetail.ReqDetail
+
+  sealed trait FocusId
+  object FocusId {
+    case class Content(row: Row.SourceId, f: EditFieldKey) extends FocusId
+    case class ReqTableCI(value: reqtable.FocusId.InCI) extends FocusId
+    implicit def equality: UnivEq[FocusId] = UnivEq.deriveAuto
+
+    val toReqTable = Intersection[FocusId, reqtable.FocusId] {
+      case Content(r, f) => Column.EditFieldKeyIntersection.reverse.getOptionMap(f, reqtable.FocusId.AtCell(r, _))
+      case ReqTableCI(a) => Some(a)
+    } {
+      case reqtable.FocusId.AtCell(r, c) => Column.EditFieldKeyIntersection.getOptionMap(c, Content(r, _))
+      case a: reqtable.FocusId.InCI      => Some(ReqTableCI(a))
+    }
+  }
 
   case class Props(page: Page, routerCtl: RouterCtl)
 
@@ -129,6 +145,7 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
     HideDead,
     ReqTable.State.init(cd, HideDead, None))
 
+  // ===================================================================================================================
   class Backend($: BackendScope[Props, State]) {
     import cd.pxProject
 
@@ -149,10 +166,10 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
 
     def initReqTableEditor: ReqTable.InitEditor = {
       import ContentEditorFeature._
-      new D2.InitChild[Row, Column, FocusId] {
+      new D2.InitChild[Row, Column, reqtable.FocusId] {
         override type Parent    = State
         override val parent     = $: CompState.Access[Parent]
-        override val preview    = previewFeature
+        override val preview    = previewFeature.mapK(FocusId.toReqTable)
         override val editorLens =
           (r: Row, c: Column) =>
             Column.EditFieldKeyIntersection.getOption(c).map(efk =>
@@ -211,7 +228,7 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
           layout(reqTable(ReqTable.DynamicProps(
             s.editStates.mapK1(Column.EditFieldKeyIntersection.reverse),
             s.asyncStates.mapK1(Column.EditFieldKeyIntersection.reverse),
-            s.previewState,
+            s.previewState.mapK(FocusId.toReqTable),
             s.reqTable)))
 
         case Page.ReqDetail(pubid) =>

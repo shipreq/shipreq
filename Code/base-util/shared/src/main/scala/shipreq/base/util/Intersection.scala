@@ -14,6 +14,9 @@ abstract class Intersection[A, B] {
   def fold[C](a: A, f: B => C)(default: => C): C =
     getOption(a).fold(default)(f)
 
+  def getOptionMap[C](a: A, f: B => C): Option[C] =
+    getOption(a).map(f)
+
   def composeIntersection[C](that: Intersection[B, C]): Intersection[A, C] =
     Intersection[A, C](getOption(_) flatMap that.getOption)(that.reverse.getOption(_) flatMap reverse.getOption)
 
@@ -31,6 +34,7 @@ object Intersection {
     override val reverse                                                = this
     override def get                (a: A, default: => A)               = a
     override def fold               [C](a: A, f: A => C)(default: => C) = f(a)
+    override def getOptionMap       [C](a: A, f: A => C)                = Some(f(a))
     override def composeIntersection[C](that: Intersection[A, C])       = that
   }
 

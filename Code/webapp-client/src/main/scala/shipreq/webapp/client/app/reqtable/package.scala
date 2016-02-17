@@ -51,6 +51,7 @@ package object reqtable {
   object FocusId {
     case class AtCell(row: Row.SourceId, col: Column) extends FocusId
     case class InCI(typ: CreationInterface.Type, col: Column) extends FocusId
+    implicit def equalityCI: UnivEq[InCI] = UnivEq.deriveAuto
     implicit def equality: UnivEq[FocusId] = UnivEq.deriveAuto
   }
 
