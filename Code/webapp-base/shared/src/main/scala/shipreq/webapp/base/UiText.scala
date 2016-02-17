@@ -44,6 +44,7 @@ object UiText {
     def usage               = "Usage"
     def implicationRequired = "Implication Required"
     def reqType             = ColumnNames.reqType
+    def implications        = "Implications"
   }
 
   object Cfg {

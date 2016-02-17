@@ -2,6 +2,7 @@ package shipreq.webapp.client.feature
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
+import japgolly.scalajs.react.ScalazReact._
 import monocle.Lens
 import scala.annotation.elidable
 import shipreq.base.util._
@@ -84,7 +85,7 @@ object ContentEditorFeature {
       UnivEq.deriveAuto
 
     implicit val reusability: Reusability[EditFieldKey] =
-      Reusability.by_==
+      Reusability.byEqual
   }
 
   /**
@@ -576,6 +577,21 @@ object ContentEditorFeature {
 
       def nop: Feature[Any] =
         apply(_ => D0.Feature.nop)
+    }
+
+    /**
+      * A means for a child to initialise itself when the state is in the parent in an unknown shape.
+      */
+    abstract class InitChild[K, P] {
+      type Parent
+      val parent    : CompState.Access[Parent]
+      val editorLens: K => Option[Lens[Parent, D0.State]]
+      val preview   : PreviewFeature[Parent, P]
+
+      def feature(f: (K, Lens[Parent, D0.State]) => D0.Feature): Feature[K] =
+        D1.Feature.optional[K](k =>
+          editorLens(k).map(el =>
+            f(k, el)))
     }
   }
 

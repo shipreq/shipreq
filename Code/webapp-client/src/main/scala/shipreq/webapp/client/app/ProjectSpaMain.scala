@@ -8,7 +8,7 @@ import monocle.macros._
 import org.scalajs.dom
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{Intersection, UnivEq}
+import shipreq.base.util.{Intersection, UnivEq, univEqOps}
 import shipreq.webapp.base.data.{ExternalPubid, ReqType, ReqTypePos}
 import shipreq.webapp.base.protocol.ProjectSPA
 import shipreq.webapp.base.text.{TextSearch, PlainText, Grammar}
@@ -112,7 +112,7 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
   // ===================================================================================================================
   import ContentEditorFeature.EditFieldKey
   import reqtable.{Column, Row, ReqTable}
-  import reqdetail.ReqDetail
+  import reqdetail.{ReqDetail, Cell}
 
   sealed trait FocusId
   object FocusId {
@@ -232,7 +232,40 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
             s.reqTable)))
 
         case Page.ReqDetail(pubid) =>
-          layout(reqDetail(ReqDetail.DynamicProps(pubid)))
+          layout(reqDetail(ReqDetail.DynamicProps(
+            pubid,
+            id => {
+              // TODO This crap shouldn't be recalculated each render
+              val r = Row.GenericReqRowSourceId(id)
+
+              val focusIdToCell = Intersection[FocusId, Cell] {
+                case FocusId.Content(rs, f) =>
+                  if (r ==* rs)
+                    Cell.EditFieldKeyIntersection.reverse.getOption(f)
+                  else
+                    None
+                case FocusId.ReqTableCI(_) => None
+              }(c => Cell.EditFieldKeyIntersection.getOptionMap(c, FocusId.Content(r, _)))
+
+              val initEditor = {
+                import ContentEditorFeature._
+                new D1.InitChild[Cell, Cell] {
+                  override type Parent    = State
+                  override val parent     = $: CompState.Access[Parent]
+                  override val preview    = previewFeature.mapK(focusIdToCell)
+                  override val editorLens =
+                    (c: Cell) =>
+                      Cell.EditFieldKeyIntersection.getOption(c).map(efk =>
+                        State.editStates ^|-> D2.State.at(r) ^|-> D1.State.at(efk))
+                }
+              }
+
+              ReqDetail.ReqState(
+                initEditor,
+                asyncFeature(r).mapK(Cell.EditFieldKeyIntersection.reverse),
+                s.editStates(r).mapK(Cell.EditFieldKeyIntersection.reverse),
+                s.asyncStates(r).mapK(Cell.EditFieldKeyIntersection.reverse))
+            })))
       }
     }
   }

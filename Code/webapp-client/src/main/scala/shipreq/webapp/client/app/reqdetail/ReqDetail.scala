@@ -1,26 +1,19 @@
 package shipreq.webapp.client.app.reqdetail
 
-import japgolly.scalajs.react._, vdom.prefix_<^._
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.experimental.StaticPropComponent
 import japgolly.scalajs.react.extra._
-import org.scalajs.dom
-import org.scalajs.dom.ext.KeyCode
+import japgolly.scalajs.react.vdom.prefix_<^._
+import scalaz.{-\/, \/-}
 import shipreq.webapp.base.UiText
-import shipreq.webapp.base.protocol.UpdateContentFn
-import shipreq.webapp.base.text.{TextSearch, PlainText}
-import shipreq.webapp.client.app.state.ClientData
-import shipreq.webapp.client.protocol.ClientProtocol
-import shipreq.webapp.client.widgets.high.ProjectWidgets
-import scalacss.ScalaCssReact._
-import scalaz.{\/, -\/, \/-}
-import shipreq.base.util.NonEmptyVector
-import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
-// import shipreq.webapp.client.app.Style.{reqtable => *}
-import shipreq.webapp.client.lib._
-import shipreq.webapp.client.widgets.DragToReorder
-import DataReusability._
-import DomUtil._
+import shipreq.webapp.base.protocol.{UpdateContentCmd, UpdateContentFn}
+import shipreq.webapp.base.text.{PlainText, TextSearch}
+import shipreq.webapp.client.app.state.ClientData
+import shipreq.webapp.client.protocol.{ServerCall, ClientProtocol}
+import shipreq.webapp.client.widgets.high.ProjectWidgets
+import shipreq.webapp.client.feature._
+import shipreq.webapp.client.lib.DataReusability._
 
 object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
   override protected def configureBackend = new Backend(_, _)
@@ -28,7 +21,9 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 //  override protected def configure = _.configure(
 //    Listenable.install(_.static.cd, $ => (c: Changes) => $.props.static.state_$.modState(_ recvChanges c)))
 
-  // TODO All needed?
+  type InitEditor = ContentEditorFeature.D1.InitChild[Cell, Cell]
+
+  // TODO Remove unused
   case class StaticProps(cd              : ClientData,
                          cp              : ClientProtocol,
                          updateContentFn : UpdateContentFn.Instance,
@@ -36,82 +31,185 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
                          pxTextSearch    : Px[TextSearch],
                          pxProjectWidgets: Px[ProjectWidgets])
 
-  case class DynamicProps(extPubid: ExternalPubid)
+  case class DynamicProps(extPubid: ExternalPubid,
+                          reqState: GenericReqId => ReqState)
+
+  case class ReqState(initEditor      : InitEditor,
+                      asyncFeature    : AsyncActionFeature.D1.Feature[Cell, String],
+                      edit : ContentEditorFeature.D1.State.ReadOnly[Cell],
+                      async: AsyncActionFeature  .D1.State.ReadOnly[Cell, String])
 
   final class Backend(SP: StaticProps, $: BackendScope) {
     import SP._
     import cd.pxProject
 
     val pxFieldNameFn = pxProject.map(Field.nameP)
-    val pxFieldRenderer = pxProjectWidgets.map(new FieldRenderer(_))
 
-    def render(p: DynamicProps): ReactElement = {
-      val project = pxProject.value()
-      project.findReq(p.extPubid) match {
-        case \/-(req)                                 => renderDetail(project, p.extPubid, req)
-        case -\/(PubidQueryError.InvalidReqType)      => renderNotFound(s"${UiText.FieldNames.reqType} ${p.extPubid.mnemonic.value} not found.")
-        case -\/(PubidQueryError.InvalidPos(rt, len)) => renderNotFound(s"${PlainText pubid p.extPubid} not found.")
-      }
-    }
+    val updateIO: ServerCall[UpdateContentCmd] =
+      ServerCall.to(updateContentFn, cp, cd)
 
     def renderNotFound(failureReason: String): ReactElement =
       <.div(
         <.h2("ERROR"),
         <.h5(failureReason))
 
-    def renderDetail(project: Project, ep: ExternalPubid, req: Req): ReactElement = {
+    def render(p: DynamicProps): ReactElement = {
+      val project = pxProject.value()
+
+      project.findReq(p.extPubid) match {
+        case \/-(req)                                 => renderDetail(p, project, req match { case g: GenericReq => g })
+        case -\/(PubidQueryError.InvalidReqType)      => renderNotFound(s"${UiText.FieldNames.reqType} ${p.extPubid.mnemonic.value} not found.")
+        case -\/(PubidQueryError.InvalidPos(rt, len)) => renderNotFound(s"${PlainText pubid p.extPubid} not found.")
+      }
+    }
+
+    def rows(project: Project, req: Req): Vector[Row] = {
+      val fields = project.config.fields.fieldsForReqType(req.reqTypeId)
+      Row.head ++ fields.iterator.map(Row.fromField)
+    }
+
+    def renderDetail(p: DynamicProps, project: Project, req: GenericReq): ReactElement = {
+      val pw = pxProjectWidgets.value()
+      val s = p.reqState(req.id)
+      val fieldName = pxFieldNameFn.value()
+
+      val editFeature = {
+        import ContentEditorFeature._
+        import s.initEditor
+
+        val static = Static(
+          initEditor.parent, initEditor.preview, pxProject, pxPlainText, pxProjectWidgets, pxTextSearch, updateIO)
+
+        val edit: Cell => Option[Editor[Cell]] = cell =>
+          Some(cell match {
+            case Cell.CustomField(fid: CustomField.Text.Id) =>
+              Editor.CustomTextField(req, fid, cell)
+          })
+
+        initEditor.feature((cell, el) =>
+          D0.Feature(static, s.asyncFeature(cell))(el, edit(cell)))
+      }
+
+      def renderTitle: ReactElement =
+        s.edit(Cell.Title).flatMap(_.render()) getOrElse
+          pw.reqTitle(req)
+
+      def renderRows =
+        <.table(
+          <.tbody(
+            rows(project, req).iterator.map(renderRow)))
+
+      def renderRow(row: Row): ReactElement =
+        <.tr(
+          ^.key := row.key,
+          <.th(renderRowTitle(row)),
+          <.td(renderRowData(row)))
+
+      def renderRowTitle(row: Row): ReactNode =
+        row match {
+          case Row.CustomField(f) => fieldName(f)
+          case Row.Code           => UiText.ColumnNames.code
+          case Row.ReqType        => UiText.ColumnNames.reqType
+          case Row.Tags           => UiText.ColumnNames.tags
+          case Row.Implications   => UiText.FieldNames.implications
+        }
+
+      // TODO Much much overlap with Table.CellProps
+      def renderRowData(row: Row): TagMod =
+        row match {
+
+          case Row.CustomField(f: CustomField.Text) =>
+
+            def focus: Callback =
+              Callback.empty // TODO
+
+            val cell = Cell.CustomField(f.id)
+            def startEdit = editFeature(cell).startEdit(focus)
+            def editor = s.edit(cell).flatMap(_.render())
+            def roView = pw.customTextField(f.id)(req).fold(emptyRow)(w => w)
+
+            TagMod(
+              ^.onDblClick -->? startEdit,
+              s.async(cell) match {
+                case None    => editor getOrElse[ReactElement] roView
+                case Some(s) => s.render
+              })
+
+
+          case _ =>
+            "TODO"
+        }
+
+      rows(project, req)
+
       <.div(
-        <.h2(s"${PlainText pubid ep}: [TITLE HERE]"),
-        renderFields(project.config.fields.fieldsForReqType(req.reqTypeId), req),
+        <.h2(
+          PlainText.pubid(p.extPubid) + ": ",
+          renderTitle),
+        renderRows,
         <.code(<.pre(req.toString)))
     }
 
-    def renderFields(fields: Vector[Field], req: Req): ReactElement = {
-      val nameFn = pxFieldNameFn.value()
-      val r = pxFieldRenderer.value()
 
-      def row(f: Field) =
-        <.tr(
-          <.th(nameFn(f)),
-          <.td(r.renderField(f)(req)))
 
-      <.table(<.tbody(fields.iterator.map(row)))
+
+  } // Backend
+
+
+  /*
+
+      renderFields(project.config.fields.fieldsForReqType(req.reqTypeId), req),
+
+  def renderFields(fields: Vector[Field], req: Req): ReactElement = {
+
+    val temp = req match {
+      case g: GenericReq => g
     }
+
+    def row(f: Field) =
+      <.tr(
+        <.th(
+          nameFn(f)),
+        <.td(
+          ??? // RowComponent (RowProps(temp))
+        ))
+
+    <.table(<.tbody(fields.iterator.map(row)))
   }
-}
+  */
 
-//object FieldRenderer {
-//  sealed trait Type
-//
-//  case object SingleLineText extends Type
-//}
+  // ===================================================================================================================
+  // Row
 
-class FieldRenderer(widgets: ProjectWidgets) {
-  val empty: ReactElement = <.span
+  val emptyRow: ReactElement = <.span
 
-  def renderField(field: Field): Req => ReactElement =
-    field match {
+  /*
+  case class RowProps(req: GenericReq,
+                      row: Row,
+                      editState: ContentEditorFeature.D0.State,
+                      widgets: ProjectWidgets)
 
-      case f: CustomField.Text =>
-        val g = widgets.customTextField(f.id)
-        req => g(req).fold(empty)(w => w)
+  implicit val reusabilityRowProps = {
+    implicit def reusabilityGenericReq = Reusability.byRef[GenericReq]
+    Reusability.caseClass[RowProps]
+  }
 
-      // TODO Add field for tags not in custom fields. (Will also need to extract.)
+  val RowComponent =
+    ReactComponentB[RowProps]("Row")
+      .render_P(renderRow)
+      .configure(Reusability.shouldComponentUpdate)
+      .build
 
-      case f: CustomField.Tag =>
-        // TODO Extract relevant tags
-        _ => <.span("TODO: " + f)
+  def renderRow(p: RowProps): ReactElement =
+    p.row match {
 
-      case f: CustomField.Implication =>
-        _ => <.span("TODO: " + f)
+      case Row.CustomField(id: CustomField.Text.Id) =>
+        p.editState.flatMap(_.render()) getOrElse
+          p.widgets.customTextField(id)(p.req).fold(emptyRow)(w => w)
 
-      case StaticField.NormalAltStepTree =>
-        _ => <.span("TODO: NormalAltStepTree")
-
-      case StaticField.ExceptionStepTree =>
-        _ => <.span("TODO: ExceptionStepTree")
-
-      case StaticField.StepGraph =>
-        _ => <.span("TODO: StepGraph")
+      case _ =>
+        <.span("TODO")
     }
+  */
+
 }
