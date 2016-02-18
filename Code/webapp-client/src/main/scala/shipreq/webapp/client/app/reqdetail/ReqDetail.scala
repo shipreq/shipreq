@@ -4,19 +4,18 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.experimental.StaticPropComponent
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
-import shipreq.base.util.{Valid, MutableArray}
-import shipreq.webapp.client.data.{Plain, ShowDead, FilterDead, DataLogic}
 import scalaz.{-\/, \/-}
-import shipreq.base.util.ScalaExt._
+import shipreq.base.util.{Direction, MutableArray, Valid}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.{UpdateContentCmd, UpdateContentFn}
 import shipreq.webapp.base.text.{PlainText, TextSearch}
 import shipreq.webapp.client.app.state.ClientData
-import shipreq.webapp.client.protocol.{ServerCall, ClientProtocol}
-import shipreq.webapp.client.widgets.high.ProjectWidgets
+import shipreq.webapp.client.data.{Plain, ShowDead, FilterDead, DataLogic}
 import shipreq.webapp.client.feature._
 import shipreq.webapp.client.lib.DataReusability._
+import shipreq.webapp.client.protocol.{ServerCall, ClientProtocol}
+import shipreq.webapp.client.widgets.high.ProjectWidgets
 
 object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
   override protected def configureBackend = new Backend(_, _)
@@ -72,6 +71,38 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
       Row.head ++ fields.iterator.map(Row.fromField)
     }
 
+    class Temp(project: Project, req: GenericReq, upstreamFD: FilterDead) {
+      val live = req.live(project.config.customReqTypes)
+      val filterDead = live match {
+        case Live => upstreamFD
+        case Dead => ShowDead
+      }
+      val codeSet         = project.reqCodes.activeReqCodesByReqId(req.id)
+      val codes           = MutableArray(codeSet).sortBySchwartzian(PlainText.reqCode).to[List]
+      val tagDist         = DataLogic.tagFieldDist(project.config, filterDead, _ => true)
+      val tagLookup       = DataLogic.tagLookup(project, filterDead)
+      val generalTagSet   = DataLogic.generalTags(tagDist, tagLookup)(req.id)
+      val tagOrderByName  = DataLogic.tagOrderByName(project.config.tags)
+      val tagOrderByPos   = DataLogic.tagOrderByPos(project.config.tags)
+      val generalTags     = MutableArray(generalTagSet).sortBy(tagOrderByName.apply).to[Vector]
+      val pubidText       = PlainText.pubid(project, req.pubid)
+      val impFilter       = DataLogic.impValueFilter(project.config, filterDead)
+      val customImpLookup = DataLogic.customFieldImps(project, impFilter)
+
+      val generalImps: Direction => Vector[Pubid] =
+        Direction.memo(dir =>
+          project.implications(dir)(req.id)
+            .iterator
+            .map(project.reqs.req)
+            .filter(impFilter)
+            .map(_.pubid)
+            .to[Vector]
+        )
+    }
+
+//    def generalImplicationValues(project: Project, req: GenericReq): Direction => Vector[Pubid] =
+//      Direction.memo { dir => }
+
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     def renderDetail(p: DynamicProps, project: Project, req: GenericReq): ReactElement = {
       val pw = pxProjectWidgets.value()
@@ -85,15 +116,18 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
         val static = Static(
           initEditor.parent, initEditor.preview, pxProject, pxPlainText, pxProjectWidgets, pxTextSearch, updateIO)
 
-        // TODO Imps: Need to filter values
-        // Editor.ImplicationsAll(row.req, Column.implicationDirection(col), pubids))
+        def generalImps(cell: Cell) = {
+          // TODO OMG!
+          val temp = new Temp(project, req, p.filterDead)
+          Editor.ImplicationsAll(req, Cell.implicationDirection(cell), temp.generalImps(Cell.implicationDirection(cell)))
+        }
 
         val edit: Cell => Option[Editor[Cell]] = cell =>
           Some(cell match {
             case Cell.Title                                        => Editor.GenericReqTitle(req, cell)
             case Cell.Code                                         => Editor.ReqCodesForReq(req)
-//            case Cell.ImplicationSrc                               =>
-//            case Cell.ImplicationTgt                               =>
+            case Cell.ImplicationSrc
+               | Cell.ImplicationTgt                               => generalImps(cell)
             case Cell.ReqType                                      => Editor.ReqType(req)
             case Cell.Tags                                         => Editor.Tags(req, None)
             case Cell.CustomField(fid: CustomField.Tag        .Id) => Editor.Tags(req, Some(fid))
@@ -106,22 +140,8 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
       }
 
       // TODO ↓ needn't do all this each time
-      val live = req.live(project.config.customReqTypes)
-      val filterDead = live match {
-        case Live => p.filterDead
-        case Dead => ShowDead
-      }
-      val codeSet         = project.reqCodes.activeReqCodesByReqId(req.id)
-      val codes           = MutableArray(codeSet).sortBySchwartzian(PlainText.reqCode).to[List]
-      val tagDist         = DataLogic.tagFieldDist(project.config, filterDead, _ => true)
-      val tagLookup       = DataLogic.tagLookup(project, filterDead)
-      val generalTagSet   = DataLogic.generalTags(tagDist, tagLookup)(req.id)
-      val tagOrderByName  = DataLogic.tagOrderByName(project.config.tags)
-      val tagOrderByPos   = DataLogic.tagOrderByPos(project.config.tags)
-      val generalTags     = MutableArray(generalTagSet).sortBy(tagOrderByName.apply).to[Vector]
-      val pubidText       = PlainText.pubid(p.extPubid)
-      val impFilter       = DataLogic.impValueFilter(project.config, filterDead)
-      val customImpLookup = DataLogic.customFieldImps(project, impFilter)
+      val temp = new Temp(project, req, p.filterDead)
+      import temp._
 
       def renderAsyncEditorOrValue(cell: Cell, view: => TagMod): TagMod = {
         def startEdit = editFeature(cell).startEdit(focus)
@@ -202,9 +222,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
           case Row.Implications =>
             def one(cell: Cell) = {
-              def dir    = Cell.implicationDirection(cell)
-              def ids    = project.implications(dir)(req.id)
-              def pubids = ids.iterator.map(project.reqs.req).filter(impFilter).map(_.pubid)
+              def pubids = temp.generalImps(Cell.implicationDirection(cell))
               renderImpCell(cell, pubids)
             }
             <.div(
