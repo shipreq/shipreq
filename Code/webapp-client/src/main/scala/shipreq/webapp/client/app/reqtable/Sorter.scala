@@ -223,13 +223,8 @@ object Sorter {
       DataLogic.tagOrderByPos(p.config.tags)
   }
 
-  def pubidNormaliser(setup: Setup): Pubid => (Int, Int) = {
-    val reqTypeOrder = setup.reqTypesToMnemonicOrder
-    p => {
-      val o = reqTypeOrder(p.reqTypeId)
-      (o, p.pos.value)
-    }
-  }
+  def pubidNormaliser(setup: Setup): Pubid => (Int, Int) =
+    DataLogic.pubidSortKeyFn(setup.p.config)
 
   @inline def stringNormalise: EndoFn[String] =
     DataLogic.normaliseStringForSorting

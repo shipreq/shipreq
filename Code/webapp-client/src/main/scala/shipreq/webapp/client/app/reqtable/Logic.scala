@@ -95,33 +95,20 @@ private[reqtable] object Logic {
   private def expanderC[A](vs: ViewSettings, c: Column.SortInconclusive): Expander[A] =
     expander(vs isVisible c, vs isOrderedI c)
 
-  private def impColValueFn(p: Project, fd: FilterDead): CustomField.Implication.Id => ReqId => Set[Pubid] =
-    fid => {
-
-      val reqsOfSubjectType: Stream[Req] = {
-        val f = p.config.customField(fid)
-        p.reqs.reqsByType(f.reqTypeId).toStream
-      }
-
-      // (source of implication for this column) → (all it transitively implies)
-      val srcs: Stream[(Pubid, Set[ReqId])] =
-        fd(reqsOfSubjectType)(_ live p.config.customReqTypes)
-          .map(r => (r.pubid, p.implicationSrcToTgtTC(r.id)))
-
-      id => srcs.filter(_._2 contains id).map(_._1).toSet
-    }
-
-  private def impColValueExpander(vs: ViewSettings, p: Project, ap: Applicability): Req => Map[CustomField.Implication.Id, Expanded[Pubid]] = {
-    val valueFn = impColValueFn(p, vs.filterDead)
-    customFieldExpander[CustomField.Implication.Id, Pubid](vs, ap, valueFn)
+  private def impColValueFn(p: Project, fd: FilterDead): CustomField.Implication.Id => ReqId => Set[Pubid] = {
+    val filter = DataLogic.impValueFilter(p.config, fd)
+    val lookup = DataLogic.customFieldImps(p, filter)
+    fid => lookup(p.config.customField(fid))
   }
+
+  private def impColValueExpander(vs: ViewSettings, p: Project, ap: Applicability): Req => Map[CustomField.Implication.Id, Expanded[Pubid]] =
+    customFieldExpander(vs, ap, impColValueFn(p, vs.filterDead))
 
   private def tagColValueExpander(vs        : ViewSettings,
                                   ap        : Applicability,
                                   tagColDist: TagColumnDistribution.TagIds,
                                   tagLookup : TagLookup): Req => Map[CustomField.Tag.Id, Expanded[ApplicableTagId]] =
-    customFieldExpander[CustomField.Tag.Id, ApplicableTagId](
-      vs, ap, fid => DataLogic.customFieldTags(tagColDist, tagLookup, fid))
+    customFieldExpander(vs, ap, fid => DataLogic.customFieldTags(tagColDist, tagLookup, fid))
 
   private def customFieldExpander[K <: CustomFieldId : ClassTag, V: UnivEq]
       (vs: ViewSettings, ap: Applicability, f: K => ReqId => Set[V]): Req => Map[K, Expanded[V]] = {
@@ -218,7 +205,7 @@ private[reqtable] object Logic {
     val expandTagCols = tagColValueExpander(vs, applicability, tagColDist, tagLookup)
 
     // The segregation of live/dead is because live reqs can have inactive reqcodes (leftovers of CodeRefs).
-    // It would be errornous to display inactive reqs for a live req.
+    // It would be erroneous to display inactive reqs for a live req.
     val reqCodesByReq = Live.memo {
       case Live =>
         p.reqCodes.activeReqCodesByReqId

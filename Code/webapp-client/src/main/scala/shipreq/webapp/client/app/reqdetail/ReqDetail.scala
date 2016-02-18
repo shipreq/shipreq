@@ -4,8 +4,8 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.experimental.StaticPropComponent
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
-import shipreq.base.util.MutableArray
-import shipreq.webapp.client.data.{ShowDead, FilterDead, DataLogic}
+import shipreq.base.util.{Valid, MutableArray}
+import shipreq.webapp.client.data.{Plain, ShowDead, FilterDead, DataLogic}
 import scalaz.{-\/, \/-}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.UiText
@@ -111,14 +111,17 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
         case Live => p.filterDead
         case Dead => ShowDead
       }
-      val codeSet        = project.reqCodes.activeReqCodesByReqId(req.id)
-      val codes          = MutableArray(codeSet).sortBySchwartzian(PlainText.reqCode).to[List]
-      val tagDist        = DataLogic.tagFieldDist(project.config, filterDead, _ => true)
-      val tagLookup      = DataLogic.tagLookup(project, filterDead)
-      val generalTagSet  = DataLogic.generalTags(tagDist, tagLookup)(req.id)
-      val tagOrderByName = DataLogic.tagOrderByName(project.config.tags)
-      val tagOrderByPos  = DataLogic.tagOrderByPos(project.config.tags)
-      val generalTags    = MutableArray(generalTagSet).sortBy(tagOrderByName.apply).to[Vector]
+      val codeSet         = project.reqCodes.activeReqCodesByReqId(req.id)
+      val codes           = MutableArray(codeSet).sortBySchwartzian(PlainText.reqCode).to[List]
+      val tagDist         = DataLogic.tagFieldDist(project.config, filterDead, _ => true)
+      val tagLookup       = DataLogic.tagLookup(project, filterDead)
+      val generalTagSet   = DataLogic.generalTags(tagDist, tagLookup)(req.id)
+      val tagOrderByName  = DataLogic.tagOrderByName(project.config.tags)
+      val tagOrderByPos   = DataLogic.tagOrderByPos(project.config.tags)
+      val generalTags     = MutableArray(generalTagSet).sortBy(tagOrderByName.apply).to[Vector]
+      val pubidText       = PlainText.pubid(p.extPubid)
+      val impFilter       = DataLogic.impValueFilter(project.config, filterDead)
+      val customImpLookup = DataLogic.customFieldImps(project, impFilter)
 
       def renderAsyncEditorOrValue(cell: Cell, view: => TagMod): TagMod = {
         def startEdit = editFeature(cell).startEdit(focus)
@@ -132,7 +135,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
       }
 
       def renderTitle: ReactElement =
-        <.div(
+        <.span(
           renderAsyncEditorOrValue(Cell.Title, pw.reqTitle(req)))
 
       def renderRows =
@@ -156,6 +159,15 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
         }
 
       def focus: Callback = Callback.empty // TODO
+
+      def renderImpCell(cell: Cell, value: => TraversableOnce[Pubid]) = {
+        def pubids = MutableArray(value)
+          .sortBySchwartzian(DataLogic.pubidSortKeyFn(project.config))
+          .to[Vector]
+        renderAsyncEditorOrValue(
+          cell,
+          pw.pubidRefList(Plain, Valid)(pubids))
+      }
 
       // TODO Much much overlap with Table.CellProps
       def renderRowData(row: Row): TagMod =
@@ -182,22 +194,34 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
               pw.tagList(generalTags))
 
           case Row.CustomField(f: CustomField.Tag) =>
-            val tagSet = DataLogic.customFieldTags(tagDist, tagLookup, f.id)(req.id)
-            val tags = MutableArray(tagSet).sortBy(tagOrderByPos.apply).to[Vector]
-
+            def tagSet = DataLogic.customFieldTags(tagDist, tagLookup, f.id)(req.id)
+            def tags = MutableArray(tagSet).sortBy(tagOrderByPos.apply).to[Vector]
             renderAsyncEditorOrValue(
               Cell.CustomField(f.id),
               pw.tagList(tags))
 
-//          CustomField(Implication(_, _, _, _, _)), CustomField(Tag(_, _, _, _, _)), Implications, Tags
-          case _ => "TODO"
+          case Row.Implications =>
+            def one(cell: Cell) = {
+              def dir    = Cell.implicationDirection(cell)
+              def ids    = project.implications(dir)(req.id)
+              def pubids = ids.iterator.map(project.reqs.req).filter(impFilter).map(_.pubid)
+              renderImpCell(cell, pubids)
+            }
+            <.div(
+              <.span(one(Cell.ImplicationSrc)),
+              <.span(s"→ $pubidText →"),
+              <.span(one(Cell.ImplicationTgt)))
+
+          case Row.CustomField(f: CustomField.Implication) =>
+            val pubids = customImpLookup(f)(req.id)
+            renderImpCell(Cell.CustomField(f.id), pubids)
         }
 
       rows(project, req)
 
       <.div(
         <.h2(
-          PlainText.pubid(p.extPubid) + ": ",
+          pubidText + ": ",
           renderTitle),
         renderRows,
         <.code(<.pre(req.toString)))
