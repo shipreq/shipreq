@@ -6,11 +6,11 @@ import org.scalajs.dom
 import scalaz.{\/, \/-, -\/}
 import scalaz.syntax.either._
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{Direction, SetDiff, UnivEq, univEqOps}
+import shipreq.base.util.{Ref => _, _}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar, PlainText, TextSearch}
 import shipreq.webapp.base.validation.{ValidationPartU, VFailure, ValidationResult, Validator}
-import shipreq.webapp.client.data.Plain
+import shipreq.webapp.client.data.{DataLogic, Plain}
 import shipreq.webapp.client.lib.AutoComplete
 import shipreq.webapp.client.lib.DataReusability._
 import shipreq.webapp.client.feature.{EditValidationFeature, AutoCompleteFeature}
@@ -42,10 +42,11 @@ object ImplicationEditor {
   implicit def univEqLookup: UnivEq[Lookup] =
     UnivEq.derive
 
-  def initialValueForCustomColumn(p: Project, fid: CustomField.Implication.Id, id: ReqId): Stream[Pubid] =
-    p.implications.backwards(id)
-      .toStream
+  def initialValueForCustomColumn(p: Project, fid: CustomField.Implication.Id, id: ReqId): List[Pubid] =
+    MutableArray(p.implications.backwards(id))
       .map(p.reqs.req(_).pubid)
+      .sortBySchwartzian(DataLogic.pubidSortKeyFn(p.config))
+      .to[List]
 
   def initialValueAndText(initial: Option[(ReqId, Seq[Pubid])], p: Project, l: Lookup): (Set[ReqId], String) = {
     val reqs = {

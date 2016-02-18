@@ -146,7 +146,6 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
           case Cell.CustomField(fid: CustomField.Tag        .Id) => Editor.Tags(req, Some(fid))
           case Cell.CustomField(fid: CustomField.Text       .Id) => Editor.CustomTextField(req, fid, cell)
           case Cell.CustomField(fid: CustomField.Implication.Id) => Editor.ImplicationsCustomField(req, fid)
-          // TODO Does the editor do its own pubid sorting? It should use DataLogic. ↑ ↑
         })
 
       initEditor.feature((cell, el) =>
