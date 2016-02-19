@@ -306,6 +306,51 @@ object Style extends StyleSheet.Inline {
   } // reqtable
 
   // ===================================================================================================================
+  object reqdetail {
+
+    val header = style(
+      fontSize(220 %%),
+      display.flex)
+
+    val headerTitle = style(
+      marginLeft(1 ex),
+      flexGrow(1))
+
+    val mainTable = style(
+      width(100 %%),
+      marginTop(2 em))
+
+    private def padSizeL = 0.8 ex
+
+    def rowCell = styleS(
+      padding.vertical(0.4 em),
+      paddingLeft(padSizeL))
+
+    val rowTitle = style(
+      rowCell,
+      whiteSpace.pre,
+      paddingRight(1.4 ex))
+
+    val rowValue = style(
+      rowCell,
+      paddingRight(padSizeL),
+      width(100 %%))
+
+    val generalImpsCont = style(
+      display.flex,
+      alignItems.center,
+      width(100 %%))
+
+    val generalImpsSide = style(
+      border(^.dashed, 1 px),
+      minHeight(1.59 em),
+      flexGrow(1))
+
+    val generalImpsMiddle = style(
+      margin.horizontal(1 ex))
+  }
+
+  // ===================================================================================================================
   object widgets {
 
     private def hasError = errorRedOnRed
@@ -404,6 +449,7 @@ object Style extends StyleSheet.Inline {
     reqtable.filterEditor.errorMsg,
     reqtable.table,
     reqtable.deleteRestore.impliedByItem(Live),
+    reqdetail.mainTable,
     widgets.issue)
 //  ConsoleIO(_.log(render[String])).unsafePerformIO()
 //  ConsoleIO(_.info(s"Styles: ${Style.register.styles.length}")).unsafePerformIO()

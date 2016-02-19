@@ -4,6 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.experimental.StaticPropComponent
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
+import scalacss.ScalaCssReact._
 import scalaz.{\/, -\/, \/-}
 import shipreq.base.util.{Memo, Direction, MutableArray, Valid}
 import shipreq.webapp.base.UiText
@@ -11,6 +12,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.{UpdateContentCmd, UpdateContentFn}
 import shipreq.webapp.base.text.{PlainText, TextSearch}
 import shipreq.webapp.client.app.state.ClientData
+import shipreq.webapp.client.app.Style.{reqdetail => *}
 import shipreq.webapp.client.data.{Plain, ShowDead, FilterDead, DataLogic}
 import shipreq.webapp.client.feature._
 import shipreq.webapp.client.lib.DataReusability._
@@ -195,20 +197,30 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
           })
       }
 
-      def renderTitle: ReactElement =
-        <.span(
-          renderAsyncEditorOrValue(Cell.Title, pw.reqTitle(req)))
+      def renderHeader: ReactElement =
+        <.div(
+          *.header,
+          <.div(
+            pubidText + ": "),
+          <.div(
+            *.headerTitle,
+              renderAsyncEditorOrValue(Cell.Title, pw.reqTitle(req))))
 
       def renderRows =
         <.table(
+          *.mainTable,
           <.tbody(
             rows(project, req).iterator.map(renderRow)))
 
       def renderRow(row: Row): ReactElement =
         <.tr(
           ^.key := row.key,
-          <.th(renderRowTitle(row)),
-          <.td(renderRowData(row)))
+          <.th(
+            *.rowTitle,
+            renderRowTitle(row)),
+          <.td(
+            *.rowValue,
+            renderRowData(row)))
 
       def renderRowTitle(row: Row): ReactNode =
         row match {
@@ -259,18 +271,23 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
             def one(cell: Cell) =
               renderImpCell(cell, data.generalImps(cell.implicationDirection))
             <.div(
-              <.span(one(Cell.ImplicationSrc)),
-              <.span(s"→ $pubidText →"),
-              <.span(one(Cell.ImplicationTgt)))
+              *.generalImpsCont,
+              <.div(
+                *.generalImpsSide,
+                one(Cell.ImplicationSrc)),
+              <.div(
+                *.generalImpsMiddle,
+                s"→ $pubidText →"),
+              <.div(
+                *.generalImpsSide,
+                one(Cell.ImplicationTgt)))
 
           case Row.CustomField(f: CustomField.Implication) =>
             renderImpCell(Cell.CustomField(f.id), data.customImps(f))
         }
 
       <.div(
-        <.h2(
-          pubidText + ": ",
-          renderTitle),
+        renderHeader,
         renderRows)
     }
 
