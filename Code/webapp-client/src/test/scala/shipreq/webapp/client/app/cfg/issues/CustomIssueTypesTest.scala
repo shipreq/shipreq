@@ -6,7 +6,6 @@ import scalaz.std.anyVal._
 import shipreq.webapp.base.protocol.{CustomIssueTypeCrud, RemoteFn}
 import shipreq.webapp.base.test.SampleProject
 import shipreq.webapp.client.app.cfg.shared.Usage
-import shipreq.webapp.client.app.state.ClientData
 import shipreq.webapp.client.data.{FilterDead, HideDead}
 import shipreq.webapp.client.test.TestUtil._
 import shipreq.webapp.client.test._
@@ -17,7 +16,7 @@ object CustomIssueTypesTest extends TestSuite {
   override def tests = TestSuite {
     val filterDead = ReactTestVar[FilterDead](HideDead)
     val remote     = RemoteFn.Instance("x", CustomIssueTypeCrud)
-    val clientData = new ClientData(SampleProject.project)
+    val clientData = TestClientData(SampleProject.project)
     val cp         = new TestClientProtocol
     val props      = new CustomIssueTypes.Props(cp, remote, clientData, filterDead.reusableVar(), Usage.Show((_, _) => <.a))
     val re         = props.component

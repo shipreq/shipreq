@@ -11,30 +11,18 @@ import shipreq.webapp.client.lib.DataReusability.reusabilityProject
 import shipreq.webapp.client.lib.Logger
 import shipreq.webapp.client.protocol.ClientProtocol
 
-final class ClientData(init: Project) extends Broadcaster[Changes] {
+abstract class ClientData extends Broadcaster[Changes] {
+  val pxProject: Px[Project]
 
-  private[this] val pvar: Px.Var[Project] =
-    Px(init)
+  def applyEvents(ves: VerifiedEvents): Callback
 
-  def pxProject: Px[Project] =
-    pvar
+  // ---------------------------------------------
 
   def project(): Project =
-    pvar.value()
+    pxProject.value()
 
   @inline def projectCB: CallbackTo[Project] =
     CallbackTo(project())
-
-  def applyEvents(ves: VerifiedEvents): Callback =
-    projectCB >>= (p1 =>
-      ApplyEvent.trusted.applyVerified(ves)(p1) match {
-        case \/-(p2) =>
-          Callback(pvar.set(p2)) >> broadcast(Changes(ves, p1, p2))
-        case -\/(err) =>
-          // TODO Do more when VerifiedEvent application fails
-          Logger(_ error s"Update failed. $err")
-      }
-    )
 
   def applyEventsS(ves: VerifiedEvents): TCB.Success =
     TCB.Success(applyEvents(ves))
@@ -44,8 +32,25 @@ object ClientData {
 
   @inline implicit def reusability = Reusability.byRef[ClientData]
 
+  private class Impl(init: Project) extends ClientData {
+    override val pxProject = Px(init)
+
+    override def applyEvents(ves: VerifiedEvents): Callback =
+      projectCB >>= (p1 =>
+        ApplyEvent.trusted.applyVerified(ves)(p1) match {
+
+          case \/-(p2) =>
+            Callback(pxProject.set(p2)) >> broadcast(Changes(ves, p1, p2))
+
+          case -\/(err) =>
+            // TODO Do more when VerifiedEvent application fails
+            Logger(_ error s"Update failed. $err")
+        }
+      )
+  }
+
   def init(cp: ClientProtocol, remoteInit: ProjectInit.Instance, onSuccess: ClientData => Callback): Callback =
     cp.call(remoteInit)((),
-      p => TCB.Success(onSuccess(new ClientData(p))),
+      p => TCB.Success(onSuccess(new Impl(p))),
       cp.consumeGenericFailure) // TODO handle failure properly
 }

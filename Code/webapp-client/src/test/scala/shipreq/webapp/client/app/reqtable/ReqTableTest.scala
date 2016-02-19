@@ -30,7 +30,6 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.{CreateContentFn, UpdateContentFn, UpdateContentCmd, RemoteFn}
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.client.app.state.ClientData
 import shipreq.webapp.client.app.{ProjectSpaMain, Style}
 import shipreq.webapp.client.lib._
 import shipreq.webapp.client.test._
@@ -190,7 +189,7 @@ object ReqTableTest extends TestSuite {
   def runTest(action: *.Action) = {
     val reqDetailRC = MockRouterCtl[ExternalPubid]()
     val cp = new TestClientProtocol
-    val cd = new ClientData(SampleProject3.project)
+    val cd = TestClientData(SampleProject3.project)
     import cd.pxProject
 
     val pxPlainText      = pxProject map PlainText.apply

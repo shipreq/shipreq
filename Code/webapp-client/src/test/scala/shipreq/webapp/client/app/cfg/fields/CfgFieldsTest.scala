@@ -10,7 +10,6 @@ import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.{FieldCrud, RemoteFn}
 import shipreq.webapp.base.test.{SampleProject => S}
 import shipreq.webapp.base.test.UnsafeTypes._
-import shipreq.webapp.client.app.state.ClientData
 import shipreq.webapp.client.data.{FilterDead, HideDead}
 import shipreq.webapp.client.test.TestUtil._
 import shipreq.webapp.client.test._
@@ -22,7 +21,7 @@ object CfgFieldsTest extends TestSuite {
   val remote = RemoteFn.Instance("x", FieldCrud.Fn)
   class Tester {
     lazy val filterDead = ReactTestVar[FilterDead](HideDead)
-    lazy val clientData = new ClientData(S.project)
+    lazy val clientData = TestClientData(S.project)
     lazy val cp         = new TestClientProtocol
     lazy val props      = new CfgFields.Props(cp, remote, clientData, filterDead.reusableVar())
     lazy val re         = MainTable.Component(props)
