@@ -5,17 +5,23 @@ import nyaya.test._
 import nyaya.test.PropTestOps._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.extra.Px
 import japgolly.scalajs.react.test._
+import monocle.macros.Lenses
 import org.parboiled2.Parser.DeliveryScheme.Throw
 import org.scalajs.dom, dom.html
 import org.scalajs.dom.ext.{KeyCode, KeyValue}
+import shipreq.webapp.base.text.{TextSearch, PlainText}
+import shipreq.webapp.client.data._
+import shipreq.webapp.client.widgets.high.ProjectWidgets
+import shipreq.webapp.client.feature._
+import ContentEditorFeature.EditFieldKey
 import scalajs.js
 import scalaz.Equal
 import scalaz.std.option._
 import scalaz.syntax.equal._
-import utest.TestSuite
+import utest._
 import ReactTestUtils.Simulate
-
 import shipreq.base.util._
 import shipreq.base.util.Debug._
 import shipreq.base.util.ScalaExt._
@@ -25,745 +31,238 @@ import shipreq.webapp.base.protocol.{CreateContentFn, UpdateContentFn, UpdateCon
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.client.app.state.ClientData
-import shipreq.webapp.client.app.Style
+import shipreq.webapp.client.app.{ProjectSpaMain, Style}
 import shipreq.webapp.client.lib._
-import shipreq.webapp.client.test.{TestClientProtocol, DomZipper, PrepareEnv}
+import shipreq.webapp.client.test._
 import shipreq.webapp.client.test.TestUtil.fakeKeyboardEvent
 import shipreq.webapp.client.widgets.Checkbox
 import UpdateContentCmd._
-/*
-object ReqTableScreen {
-  case class CellLoc(row: Int, col: Int)
-
-  val reportedRowCount = "^(\\d+) row.*".r
-  val reportedReqCount = ".*\\D(\\d+) reqs?.*".r
-  val reportedReqFormula = ".*\\d reqs? +\\((.+?)\\).*".r.pattern
-
-  val nonFormula = "[^0-9+-]+".r
-}
-import ReqTableScreen.CellLoc
-
-/**
- * Data representation of a rendered ReqTable.
- *
- * Inspects actual DOM to derive values.
- */
-final class ReqTableScreen(root: => DomZipper) {
-  import ReqTableScreen._
-
-  lazy val $ = root
-
-  object viewSettings {
-    lazy val $ = ReqTableScreen.this.$(2, ">table", 0)
-    def vsCol(i: Int) = $("tbody tr")(3, ">td", i)
-
-    object columns {
-      lazy val entirety: Vector[(On, String)] =
-        vsCol(0)(">ol").collectD("li", li =>
-          (On <~ li("input").as[html.Input].checked, li("label span").innerHTML))
-
-      lazy val allColumns: Vector[String] =
-        entirety.map(_._2)
-
-      lazy val onColumns: Vector[String] =
-        entirety.filter(_._1 :: On).map(_._2)
-    }
-
-    object sorting {
-      lazy val $ = vsCol(1)
-
-      private val all = (SortMethod.ignoreBlanks ++ SortMethod.considerBlanks).whole
-      private val readSortMethod: String => Option[SortMethod] = {
-        case "Unused" => None
-        case s => all.find(_.optionLabel == s).fold(sys error s"Unknown sort method: $s")(Some(_))
-      }
-
-      private val readSortMethodIB: String => SortMethod.IgnoreBlanks =
-        s => SortMethod.ignoreBlanks.whole.find(_.optionLabel == s).getOrElse(sys error s"Unknown sort method: $s")
-
-      lazy val inconclusive: Vector[(Option[SortMethod], String)] =
-        $("ol").collectD("li", li =>
-          (li("select").selectedOptionText |> readSortMethod, li("select + span").innerHTML))
-
-      lazy val conclusiveOrder: SortMethod.IgnoreBlanks =
-        $(2, "ol+div select", 0).selectedOptionText |> readSortMethodIB
-
-      lazy val conclusiveColumnSelected: String =
-        $(2, "ol+div select", 1).selectedOptionText
-
-      lazy val conclusiveColumns: Vector[String] =
-        $(2, "ol+div select", 1) collectInnerHTML "option"
-
-      lazy val visibleColumns: Vector[String] =
-        inconclusive.map(_._2) ++ conclusiveColumns
-    }
-
-    object filter {
-      lazy val $ = vsCol(2)
-
-      lazy val input = $("textarea")
-    }
-
-    object filterDead {
-      lazy val $ = filter.$("label input")
-
-      lazy val value: FilterDead =
-        Checkbox.filterDeadChecked <~ $.as[html.Input].checked
-    }
-  }
-
-  object table {
-    lazy val $ = ReqTableScreen.this.$(2, ">table", 1)
-    lazy val tbody = $(">tbody")
-
-    lazy val columns: Vector[String] =
-      $(">thead") collectInnerText "th"
-
-    import ColumnRenderer.{Status, Normal, DeadRow}
-
-    private def cell(s: Status, focus: Boolean): String =  {
-      var r = "td." + Style.reqtable.cell(s).className.value
-      if (focus)
-        r += ":focus"
-      else
-        r += ":not(:focus)"
-      r
-    }
-
-    private def row(inner: String): String =
-      s">tr:has($inner)"
-
-    private def byFocus(focus: Boolean, wrap: String => String): String =
-      ColumnRenderer.statusDomain.toStream.map(s => wrap(cell(s, focus))).mkString(",")
-
-    private def byStatus(s: Status, wrap: String => String): String =
-      Vector(true, false).map(f => wrap(cell(s, f))).mkString(",")
-
-    lazy val allRows  = tbody getAll ">tr"
-    lazy val deadRows = tbody getAll byStatus(DeadRow, row)
-    lazy val liveRows = tbody getAll byStatus(Normal, row)
-    lazy val focusRow = tbody option byFocus(true, row)
-    lazy val focus    = tbody option byFocus(true, identity)
-
-    lazy val inputsInFocusRow: Option[Int] =
-      focusRow.map(_.getAll("input,select,textarea").length)
-
-    def ensureHasFocus(): Unit =
-      focus getOrElse fail("No focus.")
-
-    private def findIndex(subj: String, in: Vector[String], err: => String): Int = {
-      val i = in.indexOf(subj)
-      if (i < 0) fail(s"$err\n$in")
-      i
-    }
-
-    def columnIndex(title: String): Int =
-      findIndex(title, columns, s"Column '$title' not found.")
-
-    lazy val pubidColumnIndex =
-      columnIndex("ID")
-
-    lazy val rowPubids: Vector[String] =
-      tbody collectInnerText s">tr >td:nth-child(${pubidColumnIndex + 1})"
-
-    def rowIndexByPubid(pubid: String): Int =
-      findIndex(pubid, rowPubids, s"Row with pubid [$pubid] not found.")
-
-    def cell(loc: CellLoc): DomZipper =
-      cell(row = loc.row, col = loc.col)
-
-    def cell(row: Int, col: Int): DomZipper =
-      tbody(s">tr:nth-child(${row + 1}) >td:nth-child(${col + 1})")
-
-    def cell(pubid: String, col: String): DomZipper =
-      cell(cellLoc(pubid, col))
-
-    def cellLoc(pubid: String, col: String): CellLoc =
-      CellLoc(row = rowIndexByPubid(pubid), columnIndex(col))
-
-    def entireContent =
-      tbody.collectD(">tr",
-        _.collectInnerText(">td").mkString("│ ", " │ ", " │")
-      ).mkString("\n")
-  }
-
-  object stats {
-    lazy val text = $(2, ">div", 1).innerText
-
-    lazy val reportedRows: Int =
-      text match {
-        case reportedRowCount(n) => n.toInt
-        case u => fail(s"Unable to extract row count from [$u].")
-      }
-
-    lazy val reportedReqs: Int =
-      text match {
-        case reportedReqCount(n) => n.toInt
-        case u => fail(s"Unable to extract req count from [$u].")
-      }
-
-    lazy val reportedReqFormulaText: Option[String] = {
-      val m = reportedReqFormula.matcher(text)
-      if (m.matches) {
-        val f = m group 1
-        if (f == "0 deleted") None else Some(f)
-      } else
-        None
-    }
-
-    lazy val reportedReqFormulaValue: Option[Int] =
-      reportedReqFormulaText.map{ t =>
-        val f = nonFormula.replaceAllIn(t, "")
-        val i = new Calculator(f).InputLine.run()
-        //println(s"$t  ==>  $f  ==  $i")
-        i
-      }
-  }
-
-  def availCols = viewSettings.columns.allColumns
-}
+import DomZipper.Implicits._
+import teststate._
 
 // =====================================================================================================================
-import shipreq.webapp.client.app.ui.reqtable.{ReqTableScreen => S}
 
-// Mitigate IntelliJ being so slow with μTest
-sealed trait ReqTableTest0 {
-  PrepareEnv()
+object Stuff {
+  val * = Dsl.sync[ReactComponentM[_, ReqTableTest2.State, _, TopNode], ReqTableObs, Project, String]
 
-  import ReqTable.State
-  lazy val vs_order_init = ViewSettings.order ^|-> SortCriteria.init
-  lazy val s_order_init = State.viewSettings ^|-> vs_order_init
-  lazy val s_filterDead = State.viewSettings ^|-> ViewSettings.filterDead
+//  // TODO Move following into Nyaya
+//
+//  import scala.util.Try
+//  def propTrySuccess(name: => String): Prop[Try[Any]] =
+//    Prop.test(name, _.isSuccess)
+//
+//  def propTry[A](name: => String, f: A => Any): Prop[A] =
+//    propTrySuccess(name).contramap(a => Try(f(a)))
 
-  lazy val project = SampleProject3.project
+  val mandatoryColumns = FilterDead.memo(fd =>
+    Column.mandatory.iterator
+      .filter(fd.filterFnA(_.live))
+      .map(Column.NameResolver.builtIn)
+      .toSet)
 
-  val cp = new TestClientProtocol
+//  def propO[O](name: String, f: String => Prop[S]) = {
+//    val p = f(name)
+//    *.point(_ => name, i => {val r = p(i.obs); if (r.success) None else Some(r.failureTree)})
+//  }
 
-  val createRemote = RemoteFn.Instance("x", CreateContentFn)
-  val updateRemote = RemoteFn.Instance("x", UpdateContentFn)
+  val invariants = {
 
-  def propsForProject(p: Project) =
-    ReqTable.Props(new ClientData(p), cp, createRemote, updateRemote, HideDead)
+    def selectableColumns = {
+      val ** = *.focus("Selectable columns").collection(_.obs.selectableCols)
 
-  lazy val initialProps = propsForProject(project)
-
-  lazy val initialState = ReqTable.initialState(initialProps)
-
-  lazy val c = ReactTestUtils renderIntoDocument initialProps.component
-
-  lazy val cTable = Table.Component castM ReactTestUtils.findRenderedComponentWithType(c, Table.Component.jsCtor)
-
-  def reset(): Unit = {
-    cp.reset()
-    c.setState(initialState).runNow()
-  }
-
-  def * = new S(new DomZipper(c.getDOMNode()))
-
-  // ===================================================================================================================
-  // Properties
-
-  // TODO Move following into Nyaya
-
-  @inline def existance[A](name: String) = new ExistanceB[A](name)
-  final class ExistanceB[A](val name: String) { //extends AnyVal {
-    def apply[B](expect: A => Boolean, expected: A => Set[B], testData: A => Traversable[B]): Prop[A] = {
-      lazy val yes = Prop.allPresent[A](name + " available")(expected, testData)
-      lazy val no = Prop.blacklist[A](name + " not available")(expected, testData)
-      Prop.test[A](name, expect).ifelse(yes, no)
-    }
-  }
-
-  import scala.util.Try
-  def propTrySuccess(name: => String): Prop[Try[Any]] =
-    Prop.test(name, _.isSuccess)
-
-  def propTry[A](name: => String, f: A => Any): Prop[A] =
-    propTrySuccess(name).contramap(a => Try(f(a)))
-
-  case class PS(project: Project, screen: S) {
-    lazy val cfname = CustomField.nameP(project)
-
-    def customFieldNames(a: Live): Set[String] = {
-      val cfs   = project.config.fields.customFields.values.toStream
-      val names = cfs.filter(_.live ==* a).map(cfname(_).unmust)
-      names.toSet
-    }
-  }
-
-  val builtInColumns = Column.builtInValues.map(Column.NameResolver.builtIn).toNES.whole
-
-  val invariants: Prop[PS] = {
-    implicit def autoContraS(p: Prop[S]): Prop[PS] = p.contramap[PS](_.screen)
-    def equal(name: => String) = Prop.equal[S](name)
-
-    def availableColumns = {
       val uniqueColumns =
-        Prop.distinct("Unique columns", (_: S).availCols)
+        **.assert.distinct
 
-      val builtInColumnsAlwaysAvailable =
-        Prop.allPresent[S]("Built-in columns always available")(_ => builtInColumns, _.availCols)
+      def customFieldNames(project: Project, a: Live): Set[String] = {
+        val cfname = CustomField.nameP(project)
+        project.config.fields.customFields.valuesIterator
+          .filter(_.live(project.config) ==* a).map(cfname)
+          .toSet
+      }
 
       val liveCustomFieldColumnsAlwaysAvailable =
-        Prop.allPresent[PS]("Live custom field columns available")(_ customFieldNames Live, _.screen.availCols)
+        **.assert.containsAll("live custom field columns", i => customFieldNames(i.state, Live))
 
       val deadColumns =
-        existance[PS]("Dead custom field columns")(_.screen.viewSettings.filterDead.value :: ShowDead,
-          _ customFieldNames Dead, _.screen.availCols)
+        **.assert.existenceOfAll("dead custom field columns",
+          _.obs.filterDead :: ShowDead,
+          i => customFieldNames(i.state, Dead))
 
-      liveCustomFieldColumnsAlwaysAvailable & builtInColumnsAlwaysAvailable & deadColumns & uniqueColumns
+      uniqueColumns & liveCustomFieldColumnsAlwaysAvailable & deadColumns
     }
 
-    def sortableColumns = equal("Sortable columns = selected VS columns")(
-      _.viewSettings.sorting.visibleColumns.sorted, _.viewSettings.columns.onColumns.sorted)
+//    def sortableColumns = equal("Sortable columns = selected VS columns")(
+//      _.viewSettings.sorting.visibleColumns.sorted, _.viewSettings.columns.onColumns.sorted)
 
-    def tableColumns = equal("Table columns = selected VS columns")(
-      _.table.columns, _.viewSettings.columns.onColumns)
+    def tableColumns =
+      *.focus("Table columns").collection(_.obs.table.fieldColumns)
+        .assert.equalIgnoringOrder(
+          i => mandatoryColumns(i.obs.filterDead) ++ i.obs.viewSettings.columns.onColumns)
 
-    def tableContents: Prop[PS] = {
-      val rowEitherDeadOrLive = equal("Rows are either dead or live")(
-        _.table.allRows.length,
-        t => t.table.liveRows.length + t.table.deadRows.length)
+    def tableContents = {
+      val rowEitherDeadOrLive = *.focus("")
+        .compare(
+          _.obs.table.allRows.length,
+          i => i.obs.table.liveRows.length + i.obs.table.deadRows.length)
+        .assert.equal
+        .rename("Rows are either dead or live.")
 
-      val oneFocusMax = propTry[S]("Maximum one focus", _.table.focus)
-
-      rowEitherDeadOrLive & oneFocusMax
+//      val oneFocusMax = propTry[S]("Maximum one focus", _.table.focus)
+//
+//      rowEitherDeadOrLive & oneFocusMax
+      rowEitherDeadOrLive
     }
 
     def stats = {
-      val rowCount = equal("Reported row count")(_.table.allRows.length, _.stats.reportedRows)
+      val rowCount =
+        *.focus("")
+        .compare(_.obs.table.allRows.length, _.obs.stats.reportedRows)
+        .assert.equal
+        .rename("Reported row count matches rows in table.")
 
-      val reqFormula = Prop.atom[S]("Req formula", s => {
-        s.stats.reportedReqFormulaValue.flatMap(fv =>
-          if (fv == s.stats.reportedReqs)
-            None
-          else
-            Some(s"${s.stats.reportedReqs} !=* $fv (${s.stats.reportedReqFormulaText})")
-        )
-      })
+      val reqFormula =
+        *.point("Req formula.", os => {
+          os.obs.stats.reportedReqFormulaValue.flatMap(fv =>
+            if (fv == os.obs.stats.reportedReqs)
+              None
+            else
+              Some(s"${os.obs.stats.reportedReqs} ≠ $fv (${os.obs.stats.reportedReqFormulaText})")
+          )
+        })
 
-      "Stats" rename_: (rowCount & reqFormula)
+//      "Stats" rename_: (rowCount & reqFormula)
+      rowCount & reqFormula
     }
 
-    "Invariants" rename_: (
-      availableColumns & sortableColumns & tableColumns & tableContents & stats)
+//    "Invariants" rename_: (
+//      selectableColumns & sortableColumns & tableColumns & tableContents & stats)
+    selectableColumns & tableColumns & tableContents & stats
   }
-
-  def assertInvariants(s: S = *): Unit =
-    invariants assert PS(project, s)
 
   // ===================================================================================================================
-  // Actions
 
-  object ScreenAction extends ActionTester {
-    override protected type S          = ReqTableScreen
-    override protected def newState    = *
-    override protected def defaultLast = assertInvariants
-  }
-  import ScreenAction.{S => _, _}
+  implicit def equalFromUnivEq[A: UnivEq] = teststate.Equal.byUnivEq[A]
+  implicit def autoGetDomFromZipper(d: DomZipper.Temp): ReactOrDomNode = d.dom.domAsHtml
+  implicit val showFilterDead = Show.byToString[FilterDead]
 
-  def actionProp[A](f: A => Action[_]): Prop[A] = {
-    Prop.atom("action", a =>
-      try {
-        run(f(a))
-        None
-      } catch {
-        case e: Throwable => Some(e.getMessage)
-      }
-    )
-  }
+  def applyViewSettings(name: => String, f: ViewSettings => ViewSettings): *.Action =
+    *.action(name).act(_.ref.zoomL(ReqTableTest2.State.reqTable ^|-> ReqTable.State.viewSettings).modState(f))
+
+  // TODO Would be better if this clicked on table column header
+  val sortByPubid = applyViewSettings("sortByPubid", _.copy(order = SortCriteria.byPubidOnly))
 
   def enterFilter(f: String) = {
     val e = ChangeEventData(f)
-    Action(s"enterFilter($f)", e simulate _.viewSettings.filter.input.get)
+    *.action(s"enterFilter('$f')").act(e simulate _.obs.viewSettings.filter.input)
+      .addCheck(*.focus("Filter").value(_.obs.viewSettings.filter.input.value).assert.equal(f).after)
   }
 
   val filterDeadToggle =
-    Action("filterDeadToggle", Simulate change _.viewSettings.filterDead.$.get)
-      .focus(_.viewSettings.filterDead.value)
-      .assertChange
+    *.action("filterDeadToggle").act(Simulate change _.obs.viewSettings.filterDead.checkbox)
+      .addCheck(*.focus("FilterDead").value(_.obs.filterDead).assert.changeOccurs)
 
-  def setFilterDead(fd: FilterDead): Action[Unit] =
-    filterDeadToggle.unless(_.viewSettings.filterDead.value == fd)
+  def setFilterDead(fd: FilterDead) =
+    filterDeadToggle.unless(_.obs.filterDead == fd).rename(s"setFilterDead($fd)")
 
   val filterDeadShowHide =
     setFilterDead(HideDead) >>
-    filterDeadToggle.times(2).focus(_.viewSettings.columns.onColumns).assertNoChange
+    filterDeadToggle.times(2).addCheck(
+      *.focus("On-columns").value(_.obs.viewSettings.columns.onColumns).assert.not.changeOccurs)
 
-  def setProject(p: Project): Action[Unit] =
-    Action.exec(s"setProject($p)", c.setState(ReqTable.initialState(propsForProject(p))).runNow())
+  val tablePubids = *.focus("Visible pubids").collection(_.obs.table.rowPubids)
 
-  def applyViewSettings(name: => String, vs: => ViewSettings): Action[Unit] =
-    Action.exec(name, c.zoomL(State.viewSettings).setState(vs).runNow())
-
-  val sortByPubid = applyViewSettings("sortByPubid",
-    c.state.viewSettings.copy(order = SortCriteria.byPubidOnly))
-
-  def selectVisibleColumns(isOn: Column => Boolean, p: Project = c.state.project): ColumnsEditor.State = {
-    val f = isOn || Column.mandatory
-    val cols = Column.allInProject(p).whole
-    ColumnsEditor.State.init(cols)(On <~ f(_))
-  }
-
-  val showAllColumns = applyViewSettings("showAllColumns", {
-    val s  = c.state
-    val vs = s.viewSettings
-    val cs = selectVisibleColumns(_ => true, s.project)
-    val o  = vs.order.copy(init = Vector.empty) // remove ReqCodeGroups
-    vs.copy(columnState = cs, order = o, filterDead = ShowDead)
-  })
-
-  def focusCell(loc: S => CellLoc): Action[Unit] =
-    Action.apply2({ s =>
-      val l = loc(s)
-      //(s"focusCell($l)", l)
-      ("focusCell", l)
-    })((s, l) => {
-      val cell = s.table.cell(l).get
-      println("Clicking: " + cell)
-      Simulate.click(cell)
-      println("After click: " + dom.document.activeElement)
-      cell.asInstanceOf[dom.html.Element].focus()
-      println("After manual focus: " + dom.document.activeElement)
-      println(cell.outerHTML)
-      Simulate.doubleClick(cell)
-      println(cell.outerHTML)
-    })
-
-//  val F2 = fakeKeyboardEvent(keyCode = KeyCode.F2, target = dom.document.body)
-
-  val editFocused = Action("editFocused", { s =>
-    println("F2 on: " + dom.document.activeElement)
-    s.table.ensureHasFocus()
-    println("F2 on: " + dom.document.activeElement)
-    KeyboardEventData(keyCode = KeyCode.F2) simulateKeyDownPressUp dom.document.activeElement
-//    cTable.backend._onKeyDown(F2).runNow()
-//    cTable.backend._onKeyUp(F2).runNow()
-  })
-
-  val printTableContent =
-    Action.readonly(s => println("\n" + s.table.entireContent + "\n"))
-
-  val ctrlEnter = KeyboardEventData(key = KeyValue.Enter, keyCode = KeyCode.Enter, ctrlKey = true)
-
-  val escape = KeyboardEventData(key = KeyValue.Escape, keyCode = KeyCode.Escape)
-
-  def ioAssertReqsSent(expect: Int) = Action.assert(cp assertReqsSent expect)
-
-  val ioAssertLastTwoUpdateRequestsEqual = Action.assert(cp.assertLastTwoRequestsEqual(updateRemote))
-
-  val ioFailLast = Action.exec("failLast", cp.failLast())
-
-  // ===================================================================================================================
-  // Tests
-
-  implicit val settings = DefaultSettings.propSettings.setSampleSize(8) //.setDebug
-
-  import ProjectDsl._
-  import UnsafeTypes._
-  import SampleProject.Values._
-
-  case class CellEditor(loc: S => CellLoc) {
-    private def editorCss       = "input,textarea"
-    private def retryButtonCss  = "button:contains(Retry)"
-    private def failOkButtonCss = "button:contains(OK)"
-
-    def cell        (s: S) = s.table.cell(loc(s))
-    def editing_?   (s: S) = cell(s).collectInnerHTML(editorCss).nonEmpty
-    def locked_?    (s: S) = cell(s).collectInnerHTML("img").nonEmpty
-    def failed_?    (s: S) = cell(s).collectInnerHTML(retryButtonCss).nonEmpty
-    def editor      (s: S) = cell(s)(editorCss).as[html.Input]
-    def editorValue (s: S) = editor(s).value
-    def retryButton (s: S) = cell(s)(retryButtonCss).as[html.Button]
-    def failOkButton(s: S) = cell(s)(failOkButtonCss).as[html.Button]
-
-    implicit class CEActionExt[A](a: Action[A]) {
-      def assertNowEditing      = a.focus(editing_?).assertBefore(false).assertAfter(true)
-      def assertNowLocked       = a.focus(locked_?) .assertBefore(false).assertAfter(true)
-      def assertNoLongerEditing = a.focus(editing_?).assertBefore(true).assertAfter(false)
-      def assertNoLongerLocked  = a.focus(locked_?) .assertBefore(true).assertAfter(false)
-
-      def assertNoCellState = a
-        .focus(editing_?).assertAfter(false)
-        .focus(locked_?).assertAfter(false)
-        .focus(failed_?).assertAfter(false)
-    }
-
-    def printCell(): Unit =
-      println(cell(*).outerHTML)
-
-    def setup(p: Project) =
-      setProject(p) >> showAllColumns >> Action.value(cell(_).innerText)
-
-    val tryStartEdit =
-      focusCell(loc) >> editFocused
-
-    val startEdit =
-      tryStartEdit >> Action.value(editorValue)
-
-    val assertEditDoesNothing =
-      tryStartEdit.focus(editing_?).assertAfter(false)
-
-    def enterValue(text: String) =
-      Action.exec2(s"enterValue($text)", editor)(ChangeEventData(text) simulate _)
-
-    def test(expect: Validity, err: => String) = (value: String) =>
-      enterValue(value)
-        .focus(editorValue).assertAfter(value)
-        .focus(editor(_).className).assertAfter(Style.reqtable.cellEditor(expect).className.value, s"$err: [$value]")
-
-    val testValid                      = test(Valid, "Should be valid")
-    def testInvalid(reason: => String) = test(Invalid, reason)
-
-    val commit =
-      Action.exec2("commit", editor)(ctrlEnter simulateKeyDown _).assertNoLongerEditing
-
-    val clickRetry =
-      Action.exec2("clickRetry", retryButton)(Simulate click _)
-
-    val clickFailOk =
-      Action.exec2("clickFailOk", failOkButton)(Simulate click _)
-  }
-
-  def testDeadColumns(): Unit = run(
-    filterDeadToggle.assertAfter(ShowDead).focus(_.availCols.length).assertDelta(2) >>
-      filterDeadToggle.focus(_.availCols.length).assertDelta(-2))
-
-  def testDeadToggleInvariants(): Unit =
-    RandomReqTableData.viewSettings(project, allowFilter = true) mustSatisfy
-      actionProp(applyViewSettings("testDeadToggleInvariants", _) >> filterDeadShowHide)
-
-  def testDeadRowsNotEditable(): Unit = {
-    val colCount = *.availCols.length
-
-    def focus(rowType: Live, colIndex: Int) =
-      Action(s"focus($rowType, $colIndex)", { s =>
-        val row = rowType match {
-          case Live => DomZipper.first("Live row", s.table.liveRows)
-          case Dead => DomZipper.first("Dead row", s.table.deadRows)
-        }
-        val cell = row.getAll(">td")(colIndex)
-        Simulate.click(cell)
-      })
-
-    def editAllColumns(rowType: Live): Action[Int] = {
-      val editEachCell =
-        (0 until colCount).map { c =>
-          focus(rowType, c).focus(_.table.focus).assertChange >> editFocused
-        }.reduce(_ >> _)
-
-      (showAllColumns >> editEachCell).focus(_.table.inputsInFocusRow getOrElse 0)
-    }
-
-    editAllColumns(Dead).assertAfter(0).run()
-
-    // Ensure test logic works
-    reset()
-    editAllColumns(Live).testAfter(_ > 0, "[Live Row] Cells should be in edit-mode").run()
-  }
-
-  def testImplicationSrcColumnEditor() = {
-    val ce = CellEditor(_.table.cellLoc(pubid = "FR-1", col = "Implied By"))
-    import ce._
-
-    val setup =
-      applyViewSettings("setup", {
-        val cs = selectVisibleColumns(Column.builtInValues.whole.contains)
-        ViewSettings(cs, SortCriteria.byPubidOnly, None, ShowDead)
-      })
-        .focus(cell(_).innerText).assertAfter("MF-12, MF-19")
-
-    // TODO What about an implication cycle with a dead link. Ok? Not ok? What about when when link is undeleted?
-
-    run(setup
-      >> startEdit.assertAfter("MF-12", "Should remove dead")
-      >> testInvalid("Target is dead")("MF-28")
-      >> testInvalid("Target is dead")("MF-19")
-      >> testInvalid("Should prevent cycles")("MF-27") // because FR-1 → FR-2 → MF-27
-      >> testValid("FR-1") // reflexivity is tolerated but should be ignored on save
-      >> testValid("MF-12")
-      >> testValid("MF-14")
-      >> testValid("MF-12 MF-14"))
-  }
-
-  def testImplicationTgtColumnEditor() = {
-    val ce = CellEditor(_.table.cellLoc(pubid = "MF-3", col = "Implies"))
-    import ce._
-    run(setup(SampleImplicationGraph.project).assertAfter("FR-4, MF-4")
-      >> startEdit.assertAfter("FR-4 MF-4")
-      >> testInvalid("Should prevent cycles")("BR-1") // because BR-1 → BR-2 → FR-3 → BR-1
-      >> testInvalid("Should prevent cycles")("BR-2") // because BR-1 → BR-2 → FR-3 → BR-2
-      >> testValid("MF-3") // reflexivity is tolerated but should be ignored on save
-      >> testValid("FR-4 MF-4")
-      >> testValid("MF-4 FR-6")
-      >> testValid("MF-2"))
-  }
-
-  def testCustomImplicationColumnEditor() = {
-    val p = (
-      // MF- 1ᵒ → MF-5ᵒ → MF-13
-      // MF- 2ˣ → MF-6ᵒ → MF-13 <-- difficult case - it should be displayed as its part of (a chain with ShowDead)
-      // MF- 3ᵒ → MF-7ˣ → MF-13 <-- important case - shouldn't hold for FR-1 even in ShowDead
-      // MF- 4ˣ → MF-8ˣ → MF-13
-      // MF- 9ᵒ → CO-1ᵒ → MF-13
-      // MF-10ˣ → CO-2ᵒ → MF-13 <-- difficult case - it should be displayed as its part of (a chain with ShowDead)
-      // MF-11ᵒ → CO-3ˣ → MF-13 <-- important case - shouldn't hold for FR-1 even in ShowDead
-      // MF-12ˣ → CO-4ˣ → MF-13
-      //          CO-5ᵒ → MF-1↖
-      GReq(reqType = mf, id = 1) +
-      GReq(reqType = mf, id = 2, live = Dead) +
-      GReq(reqType = mf, id = 3) +
-      GReq(reqType = mf, id = 4, live = Dead) +
-      GReq(reqType = mf, id = 5).impSrc(1) +
-      GReq(reqType = mf, id = 6).impSrc(2) +
-      GReq(reqType = mf, id = 7, live = Dead).impSrc(3) +
-      GReq(reqType = mf, id = 8, live = Dead).impSrc(4) +
-      GReq(reqType = mf, id = 9) +
-      GReq(reqType = mf, id = 10, live = Dead) +
-      GReq(reqType = mf, id = 11) +
-      GReq(reqType = mf, id = 12, live = Dead) +
-      GReq(reqType = co, id = 51).impSrc(9) +
-      GReq(reqType = co, id = 52).impSrc(10) +
-      GReq(reqType = co, id = 53, live = Dead).impSrc(11) +
-      GReq(reqType = co, id = 54, live = Dead).impSrc(12) +
-      GReq(reqType = co, id = 55).impTgt(1) +
-      GReq(reqType = mf, id = 13).impSrc(5, 6, 7, 8, 51, 52, 53, 54)
-    ) ! SampleProject.project
-
-    val ce = CellEditor(_.table.cellLoc(pubid = "MF-13", col = "Major Feature"))
-    import ce._
-
-    def mfs(sep: String, mfs: Int*): String =
-      mfs.sorted.map("MF-" + _) mkString sep
-
-    run(setup(p).assertAfter(mfs(", ", 1, 5, 2, 6, 7, 8, 9, 10, 13))
-      >> startEdit.assertAfter(mfs(" ", 5, 6), "Should only show direct & live")
-      >> testInvalid("Target is dead")("MF-4")
-      >> testInvalid("Target is dead")("MF-8")
-      >> testInvalid("Should prevent cycles")("MF-5 CO-5") // because MF-1 → MF-5 → MF-13 → CO-5 → MF-1
-      >> testValid("MF-13") // reflexivity is tolerated but should be ignored on save
-      >> testValid("MF-5 MF-6")
-      >> testValid("MF-5 MF-6 MF-1")
-      >> testValid("MF-3")
-      >> testValid("MF-1"))
-  }
-
-  def testTagsColumnEditor(): Unit = {
-    val p = GReq(reqType = co, title = reqTitleTagRefs(v11, v13, v4x)).tag(wip, uat, v11, v1x, v3x) !
-      SampleProject.project
-
-    val ce = CellEditor(_.table.cellLoc(pubid = "CO-1", col = "Tags"))
-    import ce._
-
-    run(setup(p).assertAfter("v1.3 v1.x v3.x v4.x") // wip & uat in Status col
-      >> startEdit.assertAfter("v1.1 v1.x", "Should only show direct & live")
-      >> testInvalid("Target is dead")("v0.9")
-      >> testInvalid("Target is dead")("v3.x")
-      >> testInvalid("Target is dead")("v4.x")
-      >> testInvalid("Status has its own column")("wip")
-      >> testValid("v1.3") // declared in text too = ok
-      >> testValid("v1.x")
-      >> testValid("v1.x v1.0")
-      >> testValid("v1.1"))
-  }
-
-  def testCustomTagColumnEditor(): Unit = {
-    val p = GReq(reqType = co, title = reqTitleTagRefs(prod, uat3)).tag(wip, uat, v1x, v3x) !
-      SampleProject.project
-
-    val ce = CellEditor(_.table.cellLoc(pubid = "CO-1", col = "Status"))
-    import ce._
-
-    run(setup(p).assertAfter("wip uat uat3 prod")
-      >> startEdit.assertAfter("wip", "Should only show direct & live")
-      >> testInvalid("Target is dead")("uat")
-      >> testInvalid("Target is dead")("uat2")
-      >> testInvalid("Target is dead")("uat3")
-      >> testInvalid("Not a status")("v1.0")
-      >> testInvalid("Not a status")("v3.x")
-      >> testValid("prod") // declared in text too = ok
-      >> testValid("wip")
-      >> testValid("wip defer")
-      >> testValid("defer"))
-  }
-
-  def testEditIO(): Unit = {
-    val ce = CellEditor(_.table.cellLoc(pubid = "MF-6", col = "Title"))
-    import ce._
-
-    val newValue = "issues!"
-
-    val editCommitWithoutChange =
-      startEdit.assertAfter("Incompletions") >> commit >> ioAssertReqsSent(0)
-
-    val editChangeCommit = (
-      startEdit.assertAfter("Incompletions")
-        >> enterValue(newValue)
-        >> commit.assertNowLocked
-        >> assertEditDoesNothing
-        >> ioAssertReqsSent(1)
-        >> Action.assert(assert(cp.last.input.toString contains newValue)))
-
-    val fail = (
-      ioFailLast.focus(failed_?).assertAfter(true, "Should be in failed state after I/O failure")
-        >> assertEditDoesNothing)
-
-    val retry = (
-      clickRetry.assertNowLocked
-        >> ioAssertReqsSent(2)
-        >> ioAssertLastTwoUpdateRequestsEqual)
-
-    val cancelSaveCommitAgain = (
-      clickFailOk.assertNowEditing
-        >> Action.nop.focus(editorValue).assertAfter(newValue)
-        >> commit.assertNowLocked
-        >> ioAssertReqsSent(3)
-        >> ioAssertLastTwoUpdateRequestsEqual)
-
-    val saveSucceeds = (
-      Action.exec("saveSucceeds", cp.respondToLast(updateRemote)(Vector.empty))
-        >> Action.nop.assertNoCellState)
-
-    run(editCommitWithoutChange >> editChangeCommit >> fail >> retry >> fail >> cancelSaveCommitAgain >> saveSucceeds)
-  }
-
-  def testFilter(): Unit = run(
+  def testFilter = (
     sortByPubid
       >> enterFilter("-MF")
-      >> filterDeadToggle.focus(_.table.rowPubids)
-          .assertBefore(Vector("FR-1", "FR-2"))
-          .assertAfter(Vector("CO-1", "CO-2", "FR-1", "FR-2"))
+      >> filterDeadToggle
+        .addCheck(tablePubids.assert.equalIgnoringOrder(_ => List("FR-1", "FR-2")).before)
+        .addCheck(tablePubids.assert.equalIgnoringOrder(_ => List("FR-1", "FR-2", "CO-1", "CO-2")).after)
       >> enterFilter("FR")
-      >> filterDeadToggle.focus(_.table.rowPubids)
-          .assertBefore(Vector("FR-1", "FR-2"))
-          .assertAfter(Vector("FR-1", "FR-2"))
+      >> filterDeadToggle
+        .addCheck(tablePubids.assert.equalIgnoringOrder(_ => List("FR-1", "FR-2")).beforeAndAfter)
   )
 }
 
-object ReqTableTest extends TestSuite with ReqTableTest0 {
+// ===================================================================================================================
 
-  import utest.TestableSymbol
-  override def tests = TestSuite {
-    reset()
+object ReqTableTest2 extends TestSuite {
 
-    'initialState - assertInvariants()
+  PrepareEnv()
 
-    'dead {
-      'cols        - testDeadColumns()
-      'toggle      - testDeadToggleInvariants()
-//      'notEditable - testDeadRowsNotEditable()
+  import Stuff._
+
+  val remotes = MockRemotes.projectSPA
+
+  @Lenses
+  case class State(editStates  : ContentEditorFeature.D2.State.Simple[Row.SourceId, EditFieldKey],
+                   asyncStates : AsyncActionFeature.D2.State.Simple[Row.SourceId, EditFieldKey, String],
+                   previewState: PreviewFeature.State[FocusId],
+                   reqTable    : ReqTable.State)
+
+  def runTest(action: *.Action) = {
+    val reqDetailRC = MockRouterCtl[ExternalPubid]()
+    val cp = new TestClientProtocol
+    val cd = new ClientData(SampleProject3.project)
+    import cd.pxProject
+
+    val pxPlainText      = pxProject map PlainText.apply
+    val pxTextSearch     = Px.apply2(pxProject, pxPlainText)(TextSearch.apply)
+    val pxProjectWidgets = Px.apply2(pxProject, pxPlainText)(ProjectWidgets(_, _, reqDetailRC))
+
+    val outer = StatefulParent.init{ ($: CompState.Access[State], s: State) =>
+
+      val asyncFeature: AsyncActionFeature.D2.Feature[Row.SourceId, EditFieldKey, String] =
+        AsyncActionFeature.D2.Feature($ zoomL State.asyncStates)
+
+      val previewFeature = new PreviewFeature($, State.previewState)
+
+      def initReqTableEditor: ReqTable.InitEditor = {
+        import ContentEditorFeature._
+        new D2.InitChild[Row, Column, FocusId] {
+          override type Parent    = State
+          override val parent     = $: CompState.Access[Parent]
+          override val preview    = previewFeature
+          override val editorLens =
+            (r: Row, c: Column) =>
+              Column.EditFieldKeyIntersection.getOption(c).map(efk =>
+                State.editStates ^|-> D2.State.at(r.sourceId) ^|-> D1.State.at(efk))
+        }
+      }
+
+      ReqTable(ReqTable.StaticProps(
+        cd, cp, remotes.createContent, remotes.updateContent,
+        pxPlainText, pxTextSearch, pxProjectWidgets,
+        initReqTableEditor,
+        asyncFeature.mapK1(Column.EditFieldKeyIntersection.reverse),
+        reqDetailRC,
+        $ zoomL State.reqTable))
+
+    }((reqTable, $, s) =>
+      reqTable(ReqTable.DynamicProps(
+        s.editStates.mapK1(Column.EditFieldKeyIntersection.reverse),
+        s.asyncStates.mapK1(Column.EditFieldKeyIntersection.reverse),
+        s.previewState,
+        s.reqTable))
+    )
+
+    def initialState = State(
+      ContentEditorFeature.D2.State.init,
+      AsyncActionFeature.D2.State.init,
+      PreviewFeature.initState,
+      ReqTable.State.init(cd, HideDead, None))
+
+    ReactTestUtils.withRenderedIntoDocument(outer(initialState)) { c =>
+      def newObs = new ReqTableObs(DomZipper(c))
+      val tt = Test(action, invariants).observe(_ => newObs)
+      val h =  tt.run(initialState.reqTable.project, c)
+//      println(h.format(History.Options.colored.alwaysShowChildren))
+//      println(h.format(History.Options.colored))
+      h.assert(History.Options.colored)
     }
-// TODO Editor tests disabled cos fucking PhantomJS can't handle .focus() or :focus()
-//    'editor {
-//      'impSrc       - testImplicationSrcColumnEditor()
-//      'impTgt       - testImplicationTgtColumnEditor()
-//      'customImpCol - testCustomImplicationColumnEditor()
-//      'tags         - testTagsColumnEditor()
-//      'customTagCol - testCustomTagColumnEditor()
-//      'io           - testEditIO()
-//    }
+  }
 
-    'filter - testFilter()
+  override def tests = TestSuite {
+    'initialState - runTest(Action.empty)
+    'filter - runTest(testFilter)
   }
 }
-*/ // TODO ReqTableTests disabled
