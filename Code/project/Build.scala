@@ -258,7 +258,7 @@ object ShipReq extends Build {
         ))
 
     def createProject =
-      project(WebappClient.dir)
+      project(dir)
         .enablePlugins(ScalaJSPlugin)
         .dependsOn(baseUtilJs, webappBaseJs, webappBaseTestJs % "test->compile")
         .depsForJs(
@@ -270,9 +270,9 @@ object ShipReq extends Build {
           Common.jsSettings(NeedDom),
           webappSettings,
           useMacroParadise,
-          WebappClient.testSettings,
+          testSettings,
           dontInline, // crashes 2.11.7 / 0.6.4
-          debugOrRelease(identity, WebappClient.prodJsSettings)
+          debugOrRelease(identity, prodJsSettings)
         )
   }
 

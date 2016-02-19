@@ -167,19 +167,12 @@ object Common {
       scalacOptions += "-language:experimental.macros",
       libraryDependencies ++= Dependencies.Scala.macroDef(JVM))
 
-  def jsSettings(t: JsTestType) = (p: Project) => {
-    import sbinary.DefaultProtocol.StringFormat
-    import Cache.seqFormat
+  def jsSettings(t: JsTestType) = (p: Project) =>
     p.settings(
-      scalaJSUseRhino in Global := false,
-      scalaJSStage in Global := jsStage,
-      parallelExecution in testOnly := false,
-      // Temp fix for https://github.com/scala-js/scala-js/issues/1817
-      inConfig(Test)(Seq(
-        definedTestNames <<= definedTests map (_.map(_.name).distinct) storeAs definedTestNames
-      ))
+      scalaJSUseRhino   in Global   := false,
+      scalaJSStage      in Global   := jsStage,
+      parallelExecution in testOnly := false
     ).configure(jsTests(t))
-  }
 
   def jsStage = if (releaseMode) FullOptStage else FastOptStage
 
