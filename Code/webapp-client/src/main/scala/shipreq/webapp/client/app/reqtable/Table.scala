@@ -106,7 +106,7 @@ object Table {
           $.props.flatMap(_ reorder no)),
 
       content =>
-        $.props map { p =>
+        $.props map[ReactElement] { p =>
           val name = p.colName
 
           val selectionCell =
@@ -301,7 +301,7 @@ object Table {
       val z = TableCellZipper(cell) move_- ↔ move_| ↕
       val f: dom.html.Element =
         if (z.colIndex == 0)
-          z.focus.children(0).castHtml // Selection checkbox
+          z.focus.children(0).domAsHtml // Selection checkbox
         else
           z.focus
       f.focus()

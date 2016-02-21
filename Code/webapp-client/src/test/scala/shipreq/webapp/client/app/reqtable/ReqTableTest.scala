@@ -177,7 +177,7 @@ object ReqTableTest extends TestSuite {
     val pxTextSearch     = Px.apply2(pxProject, pxPlainText)(TextSearch.apply)
     val pxProjectWidgets = Px.apply2(pxProject, pxPlainText)(ProjectWidgets(_, _, reqDetailRC))
 
-    val outer = StatefulParent.init{ ($: CompState.Access[State], s: State) =>
+    val outer = WithExternalCompStateAccess.init { ($: CompState.Access[State], s: State) =>
 
       val asyncFeature: AsyncActionFeature.D2.Feature[Row.SourceId, EditFieldKey, String] =
         AsyncActionFeature.D2.Feature($ zoomL State.asyncStates)
