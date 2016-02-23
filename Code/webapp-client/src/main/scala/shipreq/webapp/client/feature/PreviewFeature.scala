@@ -2,9 +2,10 @@ package shipreq.webapp.client.feature
 
 import japgolly.scalajs.react._, ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
-import monocle._
+import monocle.Lens
 import scalaz.Equal
 import scalaz.std.option.optionEqual
+import shipreq.base.util.Intersection
 import shipreq.webapp.client.jsfacade.ReactCollapse
 import PreviewFeature._
 
@@ -37,6 +38,14 @@ import PreviewFeature._
  */
 final class PreviewFeature[S, K]($: CompState.Access[S], lens: Lens[S, State[K]])(implicit EK: Equal[K])
   extends ForChildren[K] {
+
+  def mapK[A](p: Intersection[K, A]): PreviewFeature[S, A] = {
+    val l = (Lens[S, State[A]]
+      (s => lens.get(s).mapK(p))
+      (sa => lens.set(sa.mapK(p.reverse))))
+    val e: Equal[A] = optionEqual[K].contramap(p.reverse.getOption)
+    new PreviewFeature($, l)(e)
+  }
 
   private val hasKey: K => FocusData[K] => Boolean =
     if (EK.equalIsNatural)
@@ -90,12 +99,21 @@ object PreviewFeature {
 
   type State[+K] = Option[FocusData[K]]
 
+  @inline implicit class PFStateOps[K](private val s: State[K]) extends AnyVal {
+    def mapK[A](i: Intersection[K, A]): State[A] =
+      s.flatMap(_ omap i.getOption)
+  }
+
   def initState: State[Nothing] =
     None
 
-  case class FocusData[+K](key: K, changedSinceFocus: Boolean)
+  case class FocusData[+K](key: K, changedSinceFocus: Boolean) {
+    def omap[A](f: K => Option[A]): Option[FocusData[A]] =
+      f(key).map(FocusData(_, changedSinceFocus))
+  }
 
-  trait ForChildren[-K] {
+  trait ForChildren[K] {
+    def mapK[A](p: Intersection[K, A]): ForChildren[A]
     def forChild(k: K, s: State[K]): ForChild
   }
 

@@ -2,6 +2,7 @@ package shipreq.webapp.client.app.cfg.tags
 
 import japgolly.scalajs.react.{Callback, TopNode, ReactComponentM_}
 import japgolly.scalajs.react.test._
+import org.scalajs.dom.Element
 import org.scalajs.dom.raw.{HTMLElement, HTMLInputElement}
 import scala.annotation.tailrec
 import scalaz.std.AllInstances._
@@ -13,8 +14,7 @@ import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.{TagCrud, RemoteFn}, TagCrud._
 import shipreq.webapp.base.test.{SampleProject => S}, S.Values._
 import shipreq.webapp.base.test.UnsafeTypes._
-import shipreq.webapp.client.app.state.ClientData
-import shipreq.webapp.client.data.HideDead
+import shipreq.webapp.client.data.{FilterDead, HideDead}
 import shipreq.webapp.client.test._
 import DataImplicits._
 import MMTree.{Relations, ApplyRelations}
@@ -22,7 +22,7 @@ import TestUtil._
 
 object CfgTagsTest extends TestSuite {
 
-  @tailrec def nameCellToText(d: Sizzle.DOM, prefix: String): String =
+  @tailrec def nameCellToText(d: Element, prefix: String): String =
     d match {
       case _ if d.tagName == "INPUT"                       => prefix + d.asInstanceOf[HTMLInputElement].value
       case h: HTMLElement if h.className contains "indent" => nameCellToText(d.firstElementChild, prefix + "- ")
@@ -39,9 +39,10 @@ object CfgTagsTest extends TestSuite {
 
   val remote = RemoteFn.Instance("x", TagCrud.Fn)
   class Tester {
-    lazy val clientData = new ClientData(S.project)
+    lazy val filterDead = ReactTestVar[FilterDead](HideDead)
+    lazy val clientData = TestClientData(S.project)
     lazy val cp         = new TestClientProtocol
-    lazy val props      = new CfgTags.Props(cp, remote, clientData, HideDead)
+    lazy val props      = new CfgTags.Props(cp, remote, clientData, filterDead.reusableVar())
     lazy val re         = MainTable.Component(props)
     lazy val c          = ReactTestUtils.renderIntoDocument(re)
   }
@@ -56,7 +57,7 @@ object CfgTagsTest extends TestSuite {
                 Name("Blah"),
                 Parents(Map(1.TG -> priMed.some)),
                 Children(Vector(10.TG))))
-      val ves = verifyEvents(clientData.project)(e)
+      val ves = verifyEvents(clientData.project())(e)
       clientData.applyEvents(ves).runNow()
 
       assertEq(nameAsTextTree(c).mkString("\n"),

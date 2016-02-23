@@ -2,9 +2,11 @@ package shipreq.webapp.client.feature
 
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
+import japgolly.scalajs.react.extra.components.TriStateCheckbox
+import monocle.Iso
 import shipreq.base.util.UnivEq
 import shipreq.webapp.client.data.{Off, On}
-import shipreq.webapp.client.widgets.{Checkbox3, Widgets}
+import shipreq.webapp.client.widgets.Widgets
 import Selection._
 
 /**
@@ -19,6 +21,7 @@ final class Selection[A] private[Selection](val selected: Set[A]) extends Select
   def updateByNoReuse(f: Selection[A] => Callback): WithUpdateFn[A] =
     updateBy(ReusableFn(f))
 }
+
 
 object Selection {
   def apply[A](selected: Set[A]): Selection[A] =
@@ -140,14 +143,36 @@ object Selection {
         case Off => Selection(hiddenSelection)
       }
 
+    private val get3 =
+      TS3Iso.reverseGet(get)
+
+    private val nextState =
+      TS2Iso.get(get3.nextDeterminate)
+
     override def toggle: Selection[A] =
-      set(Checkbox3 nextState get)
+      set(nextState)
 
     override def checkbox: ReactElement =
-      Checkbox3.Component(Checkbox3.Props(get, updateFn compose set))
+      TriStateCheckbox.Props(get3, updateFn(toggle)).render
 
     override def checkboxAndOnClick: TagMod =
       TagMod(checkbox, onClick)
+  }
+
+  val TS2Iso = Iso[TriStateCheckbox.Determinate, On] {
+    case TriStateCheckbox.Unchecked => Off
+    case TriStateCheckbox.Checked   => On
+  } {
+    case Off => TriStateCheckbox.Unchecked
+    case On  => TriStateCheckbox.Checked
+  }
+
+  val TS3Iso = Iso[TriStateCheckbox.State, Option[On]] {
+    case s: TriStateCheckbox.Determinate => Some(TS2Iso get s)
+    case TriStateCheckbox.Indeterminate  => None
+  } {
+    case Some(s) => TS2Iso reverseGet s
+    case None    => TriStateCheckbox.Indeterminate
   }
 
   // ===================================================================================================================

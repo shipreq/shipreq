@@ -2,12 +2,14 @@ package shipreq.webapp.client.app.reqtable
 
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
-import scala.scalajs.js
-import shipreq.base.util.{NonEmptyVector, UnivEq}
-import shipreq.webapp.base.data.{Dead, Live, Project, ProjectConfig}
+import shipreq.base.util._
+import shipreq.webapp.base.data.{Dead, Live, Project, ProjectConfig, Field}
+import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data
 import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.client.data.FilterDead
+import shipreq.webapp.client.lib.KeyGen
+import shipreq.webapp.client.feature.ContentEditorFeature.EditFieldKey
 
 sealed trait Column {
   // Ensure correct attribute traits are mixed in
@@ -17,7 +19,7 @@ sealed trait Column {
   def live: Live
 
   /** A value that can be passed to React to quickly identify columns. */
-  val key: js.Any
+  val key: String
 }
 object Column {
 
@@ -27,13 +29,8 @@ object Column {
   sealed trait SortInconclusive extends Column   { final protected def __sortConcl = ??? }
   sealed trait SortConclusive   extends NoBlanks { final protected def __sortConcl = ??? }
 
-  private val nextBuiltInKey: () => js.Any = {
-    var i = 0
-    () => { i += 1; i }
-  }
-
   sealed trait BuiltIn extends Column {
-    override final val key = nextBuiltInKey()
+    override final val key = KeyGen.global.next()
   }
   sealed trait BuiltInLive extends BuiltIn {
     override final def live = Live
@@ -57,7 +54,7 @@ object Column {
   // - No applicable StaticFields, else they'd be added manually here.
   // - Currently allows any type of CustomField; this may change in future.
   case class CustomField(id: data.CustomFieldId, live: Live) extends SortInconclusive with HasBlanks {
-    override val key: js.Any = -id.value
+    override val key = "f" + id.value
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -85,8 +82,60 @@ object Column {
   def all(c: ProjectConfig): NonEmptyVector[Column] =
     c.fields.customFields.values.toVector.map(f => CustomField(f.id, f live c)) ++: builtInValues
 
+  def all(c: ProjectConfig, fd: FilterDead): NonEmptyVector[Column] =
+    NonEmptyVector.force(all(c).whole filter filterDead(fd))
+
   val filterDead: FilterDead => Column => Boolean =
     FilterDead.memo(_.filterFnA[Column](_.live))
+
+  val EditFieldKeyIntersection = Intersection[Column, EditFieldKey] {
+    case Column.ReqType               => Some(EditFieldKey.ReqType        )
+    case Column.Code                  => Some(EditFieldKey.Code           )
+    case Column.Title                 => Some(EditFieldKey.Title          )
+    case Column.Tags                  => Some(EditFieldKey.Tags           )
+    case Column.ImplicationSrc        => Some(EditFieldKey.ImplicationSrc )
+    case Column.ImplicationTgt        => Some(EditFieldKey.ImplicationTgt )
+    case Column.CustomField(id, Live) => Some(EditFieldKey.CustomField(id))
+    case Column.Pubid
+       | Column.DeletionReason
+       | Column.CustomField(_, Dead)  => None
+  } {
+    case EditFieldKey.ReqType         => Some(Column.ReqType              )
+    case EditFieldKey.Code            => Some(Column.Code                 )
+    case EditFieldKey.Title           => Some(Column.Title                )
+    case EditFieldKey.Tags            => Some(Column.Tags                 )
+    case EditFieldKey.ImplicationSrc  => Some(Column.ImplicationSrc       )
+    case EditFieldKey.ImplicationTgt  => Some(Column.ImplicationTgt       )
+    case EditFieldKey.CustomField(id) => Some(Column.CustomField(id, Live))
+  }
+
+  def field(c: Column, p: ProjectConfig): Option[Field] =
+    c match {
+      case ReqType
+         | Pubid
+         | Code
+         | Title
+         | Tags
+         | ImplicationSrc
+         | ImplicationTgt
+         | DeletionReason     => None
+      case CustomField(id, _) => Some(p.customField(id))
+    }
+
+  /**
+   * Direction of implications relative to row-subject.
+   *
+   * If forwards, the user edits what this subject implies (ie. subject → edit-specified).
+   * If backwards, then it's what implies this subject     (ie. subject ← edit-specified).
+   *
+   * Note: Copy of reqdetail.Cell.implicationDirection
+   */
+  def implicationDirection(column: Column): Direction =
+    column match {
+      case Column.CustomField(_, _) => data.CustomField.Implication.dir
+      case Column.ImplicationTgt    => Forwards
+      case _                        => Backwards
+    }
 
   // -------------------------------------------------------------------------------------------------------------------
 

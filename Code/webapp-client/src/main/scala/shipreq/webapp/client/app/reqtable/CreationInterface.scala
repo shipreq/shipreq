@@ -10,7 +10,9 @@ import shipreq.webapp.base.protocol.CreateContentCmd
 import shipreq.webapp.base.text.{PlainText, TextSearch}
 import shipreq.webapp.client.data.{Enabled, TCB}
 import shipreq.webapp.client.feature.PreviewFeature
+import shipreq.webapp.client.protocol.ServerCall
 import shipreq.webapp.client.widgets._
+import shipreq.webapp.client.widgets.high._
 import SelectOne.{Choice, Choices}
 import UnivEq.univEqOption
 
@@ -23,7 +25,7 @@ object CreationInterface {
   type SelType = Option[Type]
   val selectComponent = SelectOne.Component[SelType]
 
-  case class Props(createIO    : CallServer[CreateContentCmd],
+  case class Props(createIO    : ServerCall[CreateContentCmd],
                    state       : State,
                    previewState: Preview.State)
 
@@ -202,7 +204,7 @@ class CreationInterface($               : CompState.Access[State],
 
     val pxImpValidationFn =
       pxProject.map(p =>
-        ImplicationEditor.validationFn(p, None, Set.empty, ImplicationEditor isDeclFwd Column.ImplicationSrc))
+        ImplicationEditor.validationFn(p, None, Set.empty, Column implicationDirection Column.ImplicationSrc))
 
     val pxTagLookup = pxProject map TagEditor.Lookup.all
 

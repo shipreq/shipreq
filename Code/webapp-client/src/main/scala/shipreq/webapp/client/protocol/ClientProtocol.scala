@@ -47,7 +47,7 @@ object ClientProtocol {
     import org.scalajs.dom
     import org.scalajs.dom.ext.AjaxException
     import scala.concurrent.{Future, Promise}
-    import scala.scalajs.concurrent.JSExecutionContext.Implicits.runNow
+    import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
     import scala.scalajs.js
     import scala.scalajs.js.typedarray._
     import scala.scalajs.js.typedarray.TypedArrayBufferOps._

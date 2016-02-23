@@ -13,7 +13,6 @@ import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.data.Validators.{reqType => V}
 import shipreq.webapp.base.filter.FilterSpec
 import shipreq.webapp.base.protocol.CustomReqTypeCrud
-import shipreq.webapp.client.app.ProjectSpaMain
 import shipreq.webapp.client.app.Style
 import shipreq.webapp.client.app.cfg.shared._
 import shipreq.webapp.client.app.state.{ClientData, ChangeListener}
@@ -28,8 +27,8 @@ object CfgReqTypes {
   case class Props(cp        : ClientProtocol,
                    remote    : CustomReqTypeCrud.Instance,
                    clientData: ClientData,
-                   filterDead: FilterDead,
-                   routerCtl : ProjectSpaMain.RouterCtl) {
+                   filterDead: ReusableVar[FilterDead],
+                   usageShow : Usage.Show) {
     def component = Component(this)
   }
   implicit val reusability = Reusability.caseClass[Props]
@@ -47,15 +46,15 @@ object CfgReqTypes {
       .build
 
   private def initialState(p: Props): S =
-    State(newRowStore.initState,
-      savedRowStore.initStateIM(p.clientData.project.config.customReqTypes),
-      p.filterDead)
+    State(
+      newRowStore.initState,
+      savedRowStore.initStateIM(p.clientData.project().config.customReqTypes))
 
   // ===================================================================================================================
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
-    val project    = Px.bs($).propsM(_.clientData.project)
-    val filterDead = Px.bs($).stateM(_.filterDead)
-    val routerCtl  = Px.bs($).propsM(_.routerCtl)
+    val project    = Px.bs($).propsM(_.clientData.project())
+    val filterDead = Px.bs($).propsM(_.filterDead.value)
+    val usageShow  = Px.bs($).propsM(_.usageShow)
 
     val crudIO = Px.bs($).propsA.map(p => CrudActionIO(CustomReqType, CustomReqTypeCrud)(p.cp, p.remote, p.clientData))
     val supp = TypicalSupp(storesAndState)(crudIO.value(), $)
@@ -76,9 +75,9 @@ object CfgReqTypes {
     val usageFn = Usage((_: ReqType).reqTypeId)(
       _.reqTypeCount,
       FilterSpec ReqType _.mnemonic,
-      project, filterDead, routerCtl)
+      project, filterDead, usageShow)
 
-    val table = {
+    val cfgTable = {
       def rowRenderer =
         new CfgTable.RowRenderer[CustomReqType, rowE.View, (TagMod, Set[ReqType.Mnemonic], TagMod, TagMod, Option[Usage.View])] {
           override def newRow = {
@@ -101,32 +100,34 @@ object CfgReqTypes {
           }
         }
 
-      val t = CfgTable.typical(storesAndState)(rowE)(_.mnemonic, rowRenderer, () => supp.deletion.value(), _.live, $)
+      CfgTable.typical(storesAndState, $.props.map(_.filterDead.value))(rowE)(_.mnemonic, rowRenderer, () => supp.deletion.value(), _.live, $)
+    }
 
+    val table = {
       val headerRow = CfgTable.header(List(
         FieldNames.mnemonic,
         FieldNames.name,
         FieldNames.implicationRequired,
         FieldNames.usage))
 
-      val staticRows: t.RowStream = {
+      val staticRows: cfgTable.RowStream = {
         def rr(r: StaticReqType): ReactElement = {
           val imp = checkbox(r.imp)(^.disabled := true)
           val usage = Some(usageFn(r))
-          val norm: t.RowContent = (r.mnemonic.value, r.oldMnemonics, r.name, imp, usage)
-          t.row("static", RowStatus.Sync, norm, EmptyTag)(^.key := r.mnemonic.value)
+          val norm: cfgTable.RowContent = (r.mnemonic.value, r.oldMnemonics, r.name, imp, usage)
+          cfgTable.row("static", RowStatus.Sync, norm, EmptyTag)(^.key := r.mnemonic.value)
         }
         StaticReqType.values.toStream.map(r => r.mnemonic -> rr(r))
       }
 
-      () => t.table(headerRow, staticRows)
+      () => cfgTable.table(headerRow, staticRows)
     }
 
     val outer =
-      CfgTable.outer(storesAndState)($)
+      cfgTable.wrapWithFilterDeadCheckbox(fd => $.props.flatMap(_.filterDead set fd))
 
     def render: ReactElement = {
-      Px.refresh(project, filterDead, routerCtl)
+      Px.refresh(project, filterDead, usageShow)
       outer(table())
     }
   }

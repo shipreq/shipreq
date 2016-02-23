@@ -39,8 +39,13 @@ object Dependencies {
     val test = mm("nyaya-test")
   }
 
+  object TestState {
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.test-state", "0.1.0-SNAPSHOT")
+    val core = mm("core")
+  }
+
   object React {
-    private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "0.10.3")
+    private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "0.11.0-SNAPSHOT")
     val core    = mm("core")
     val test    = mm("test")
     val scalaz  = mm("ext-scalaz72") ++ Scalaz.effect
@@ -50,7 +55,7 @@ object Dependencies {
   }
 
   object ScalaCSS {
-    private val mm = MultiModule.js("com.github.japgolly.scalacss", "0.3.2")
+    private val mm = MultiModule.js("com.github.japgolly.scalacss", "0.4.0")
     val core  = mm("core")
     val react = mm("ext-react") ++ core
   }

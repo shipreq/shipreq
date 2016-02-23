@@ -1,33 +1,37 @@
 package shipreq.webapp.client.app.cfg.shared
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
-import monocle.Lens
-import scalaz.syntax.equal._
+import japgolly.scalajs.react.extra._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.webapp.base.data.{Live, Dead, DataIdAux}
 import shipreq.webapp.base.data.DataImplicits._
-import shipreq.webapp.base.event.{DeletionAction, Delete, Restore}
+import shipreq.webapp.base.event.{Delete, Restore}
 import shipreq.webapp.client.data.FilterDead
+import shipreq.webapp.client.widgets.Checkbox
 
 // TODO So many c.state.runNow()s in CfgTable
 object CfgTable {
-  def apply[S, K <: TaggedInt, P, I, A, B, C, V](editor: Editor[A, B, CallbackTo, S, C, Callback, V],
-                                                  savedStore: SavedRowStore[S, K, P, I],
-                                                  newStore: NewRowStore[S, I])(implicit I: DataIdAux[P, K]) =
-    new {
-      @inline def build[RowKey, N](rowkey: P => RowKey,
-                                   rr: RowRenderer[P, V, N],
-                                   newRowA: I => A,
-                                   savedRowA: K => A,
-                                   del: () => Deletion[K],
-                                   live: P => Live,
-                                   filterDead: S => FilterDead,
-                                   c: CompState.Access[S])
-                                  (implicit O: Ordering[RowKey]): CfgTable[S, K, P, I, A, B, C, V, RowKey, N] =
-        new CfgTable(editor, savedStore, newStore, rowkey, rr, newRowA, savedRowA, del, live, filterDead, c)
+  def apply[S, K <: TaggedInt, P, I, A, B, C, V](editor    : Editor[A, B, CallbackTo, S, C, Callback, V],
+                                                 savedStore: SavedRowStore[S, K, P, I],
+                                                 newStore  : NewRowStore[S, I])(implicit I: DataIdAux[P, K]) =
+    new Tmp[S, K, P, I, A, B, C, V](editor, savedStore, newStore)(I)
+
+  final class Tmp[S, K <: TaggedInt, P, I, A, B, C, V](editor    : Editor[A, B, CallbackTo, S, C, Callback, V],
+                                                 savedStore: SavedRowStore[S, K, P, I],
+                                                 newStore  : NewRowStore[S, I])(implicit I: DataIdAux[P, K]) {
+      @inline def build[RowKey, N](rowkey      : P => RowKey,
+                                   rr          : RowRenderer[P, V, N],
+                                   newRowA     : I => A,
+                                   savedRowA   : K => A,
+                                   del         : () => Deletion[K],
+                                   live        : P => Live,
+                                   filterDeadCB: CallbackTo[FilterDead],
+                                   c           : CompState.Access[S])
+                                  (implicit O  : Ordering[RowKey]): CfgTable[S, K, P, I, A, B, C, V, RowKey, N] =
+        new CfgTable(editor, savedStore, newStore, rowkey, rr, newRowA, savedRowA, del, live, filterDeadCB, c)
     }
 
-  def typical[P, I, K <: TaggedInt](sas: TypicalStoresAndState[P, I, K]) = new {
+  def typical[P, I, K <: TaggedInt](sas: TypicalStoresAndState[P, I, K], filterDeadCB: CallbackTo[FilterDead]) = new {
     type A = ((Stream[P], Option[K]), I)
     def apply[B, C, V](editor: Editor[A, B, CallbackTo, sas.S, C, Callback, V]) = new {
       def apply[RowKey, N](rowkey: P => RowKey,
@@ -40,19 +44,13 @@ object CfgTable {
           def rowA(k: Option[K], i: I): editor.InputA = (sas.validatorInput(k)(c.state.runNow()), i)
           def newRowA  (i: I)  = rowA(None, i)
           def savedRowA(id: K) = rowA(Some(id), sas.savedRowStoreS.getI(id)(c.state.runNow()))
-          new CfgTable(editor, sas.savedRowStoreS, sas.newRowStoreS, rowkey, rr, newRowA, savedRowA, del, live, _.filterDead, c)
+          new CfgTable(editor, sas.savedRowStoreS, sas.newRowStoreS, rowkey, rr, newRowA, savedRowA, del, live, filterDeadCB, c)
         }
       }
     }
 
   def header(headers: List[String]): ReactElement =
     <.thead(<.tr(headers.map(<.th(_)), <.th("Ctrls")))
-
-
-  def outer[P, I, K](sas: TypicalStoresAndState[P, I, K])(c: CompState.Access[sas.S]): ReactElement => ReactElement = {
-    val checkbox = sas.filterDeadCheckbox(c)
-    <.div(checkbox(), _)
-  }
 
   /**
    * @tparam P Persisted data. Data known to be saved.
@@ -67,18 +65,18 @@ object CfgTable {
   }
 }
 
-final class CfgTable[S, K <: TaggedInt, P, I, A, B, C, V, RowKey, R](editor: Editor[A, B, CallbackTo, S, C, Callback, V],
-                                                                      savedStore: SavedRowStore[S, K, P, I],
-                                                                      newStore: NewRowStore[S, I],
-                                                                      rowkey: P => RowKey,
-                                                                      rr: CfgTable.RowRenderer[P, V, R],
-                                                                      newRowA: I => A,
-                                                                      savedRowA: K => A,
-                                                                      deletion: () => Deletion[K],
-                                                                      live: P => Live,
-                                                                      filterDead: S => FilterDead,
-                                                                      c: CompState.Access[S])
-                                                                     (implicit I: DataIdAux[P, K], O: Ordering[RowKey]) {
+final class CfgTable[S, K <: TaggedInt, P, I, A, B, C, V, RowKey, R](editor      : Editor[A, B, CallbackTo, S, C, Callback, V],
+                                                                     savedStore  : SavedRowStore[S, K, P, I],
+                                                                     newStore    : NewRowStore[S, I],
+                                                                     rowkey      : P => RowKey,
+                                                                     rr          : CfgTable.RowRenderer[P, V, R],
+                                                                     newRowA     : I => A,
+                                                                     savedRowA   : K => A,
+                                                                     deletion    : () => Deletion[K],
+                                                                     live        : P => Live,
+                                                                     filterDeadCB: CallbackTo[FilterDead],
+                                                                     c           : CompState.Access[S])
+                                                                    (implicit I: DataIdAux[P, K], O: Ordering[RowKey]) {
   /** Row content prior to being rendered into DOM. */
   type RowContent = R
   type RowStream = Stream[(RowKey, ReactElement)]
@@ -126,9 +124,10 @@ final class CfgTable[S, K <: TaggedInt, P, I, A, B, C, V, RowKey, R](editor: Edi
 
   def savedRows: RowStream = {
     val state = c.state.runNow()
+    val filterDead = filterDeadCB.runNow()
     val del = deletion()
     var rs = savedStore.getAll(state)
-    rs = filterDead(state)(rs)(rowLive)
+    rs = filterDead(rs)(rowLive)
     rs.map(r => {
       val el = live(r.p) match {
         case Live => savedLiveRow(r.status, r.p, del)
@@ -158,4 +157,9 @@ final class CfgTable[S, K <: TaggedInt, P, I, A, B, C, V, RowKey, R](editor: Edi
       <.table(
         header,
         <.tbody(newRow, allSortableRows(static))))
+
+  def wrapWithFilterDeadCheckbox(set: FilterDead => Callback): ReactElement => ReactElement = {
+    val checkbox = Checkbox.filterDead(ReusableFn(set))
+    inner => <.div(checkbox(filterDeadCB.runNow()), inner)
+  }
 }

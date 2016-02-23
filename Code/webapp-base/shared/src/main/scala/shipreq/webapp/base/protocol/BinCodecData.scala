@@ -10,11 +10,12 @@ import BoopickleMacros._
 
 object BinCodecData {
 
-  implicit val pickleLive         : Pickler[Live]                = pickleBool(Live)
+  implicit val pickleLive         : Pickler[Live               ] = pickleBool(Live)
+  implicit val pickleDirection    : Pickler[Direction          ] = pickleBool(Forwards)
   implicit val pickleImplRequired : Pickler[ImplicationRequired] = pickleBool(ImplicationRequired)
-  implicit val pickleMandatory    : Pickler[Mandatory]           = pickleBool(Mandatory)
-  implicit val pickleDeletable    : Pickler[Deletable]           = pickleBool(Deletable)
-  implicit val pickleMutexChildren: Pickler[MutexChildren]       = pickleBool(MutexChildren)
+  implicit val pickleMandatory    : Pickler[Mandatory          ] = pickleBool(Mandatory)
+  implicit val pickleDeletable    : Pickler[Deletable          ] = pickleBool(Deletable)
+  implicit val pickleMutexChildren: Pickler[MutexChildren      ] = pickleBool(MutexChildren)
 
   implicit val pickleGenericReqId             = pickleTaggedI(GenericReqId              ).reuseByUnivEq
   implicit val pickleReqCodeId                = pickleTaggedI(ReqCodeId                 ).reuseByUnivEq

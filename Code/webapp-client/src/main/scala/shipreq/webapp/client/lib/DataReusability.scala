@@ -7,8 +7,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.RemoteFn
 import shipreq.webapp.base.text.{Atom, TextSearch, PlainText}
 import shipreq.webapp.base.text.Text.Equality._
-import shipreq.webapp.base.validation.Validator
-import shipreq.webapp.client.widgets.ProjectWidgets
+import shipreq.webapp.client.widgets.high.ProjectWidgets
 
 object DataReusability {
 
@@ -43,6 +42,10 @@ object DataReusability {
   implicit val reusabilityTagTree: Reusability[TagTree] = Reusability.byRef
 
   implicit val reusabilityCustomFields: Reusability[FieldSet.CustomFields] = Reusability.byRefOrEqual
+
+  implicit val reusabilityExternalPubid: Reusability[ExternalPubid] = Reusability.byRefOrUnivEq
+
+  implicit val reusabilityGenericReqId: Reusability[GenericReqId] = Reusability.byUnivEq
 
   implicit def reusabilityOptionalText[A <: Atom.AnyAtom]: Reusability[Vector[A]] = Reusability.byRefOrUnivEq
 

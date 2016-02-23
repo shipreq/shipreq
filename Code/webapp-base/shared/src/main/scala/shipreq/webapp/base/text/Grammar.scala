@@ -1,7 +1,9 @@
 package shipreq.webapp.base.text
 
 import java.util.regex.Pattern
+import monocle._
 import org.parboiled2.CharPredicate
+import shipreq.webapp.base.data.{ReqTypePos, ReqType}
 import scala.collection.immutable.NumericRange
 import scala.runtime.AbstractFunction1
 import shipreq.base.util.ScalaExt._
@@ -46,8 +48,9 @@ object Grammar {
   }
 
   case class Length(total: Range.Inclusive) {
-    val rule   = Rules lengthInRange total
-    val minus1 = (total.min - 1) to (total.max - 1)
+    val rule     = Rules lengthInRange total
+    val minus1   = (total.min - 1) to (total.max - 1)
+    def regexMod = s"{${total.min},${total.max}}"
   }
 
   class Surround(val prefix: String, val suffix: String) extends AbstractFunction1[String, String] {
@@ -89,14 +92,34 @@ object Grammar {
     val length = Length(1 to 6)
     val chars  = new CharWhitelist("", 'A', 'B' to 'Z')("may only consist of letters.")
 
-    val caseSensitiveParseChar   = CharPredicate.UpperAlpha
+    val caseInsensitiveRegexStr  = "[a-zA-Z]" + length.regexMod
     val caseInsensitiveParseChar = CharPredicate.Alpha
+
     val caseInsensitiveParsePost = (_: String).toUpperCase
+    val caseSensitiveParseChar   = CharPredicate.UpperAlpha
   }
 
-  val pubidSeqFormat = SeqFormat(
-    _.trim, "[ ,]+".r.pattern, _.replace("-", "") |> reqTypeMnemonic.caseInsensitiveParsePost, _.isEmpty,
-    _ mkString " ")
+  object pubid {
+    val caseInsensitiveRegexStr = "(" + reqTypeMnemonic.caseInsensitiveRegexStr + """)\s*(?:-\s*)?(\d+)"""
+    val caseInsensitiveRegex    = caseInsensitiveRegexStr.r
+
+    /**
+     * This doesn't guarantee validity.
+     * Both reqtype and pos still need to be checked against a Project in order to create a valid Pubid, thus,
+     * ReqTypePos can be 0 here. This allows something like UC-0 to be recognised as a typo and presented as not-found.
+     */
+    val stringPrism = Prism[String, (ReqType.Mnemonic, ReqTypePos)]({
+      case caseInsensitiveRegex(a, b) =>
+        val rtm = ReqType.Mnemonic(reqTypeMnemonic caseInsensitiveParsePost a)
+        val pos = ReqTypePos(b.toInt)
+        Some((rtm, pos))
+      case _ => None
+    })(t => t._1.value + "-" + t._2.value)
+
+    val seqFormat = SeqFormat(
+      _.trim, "[ ,]+".r.pattern, _.replace("-", "") |> reqTypeMnemonic.caseInsensitiveParsePost, _.isEmpty,
+      _ mkString " ")
+  }
 
   // TODO hashrefkey & mnemonic are both case-insensitive but char ranges are defined differently
 

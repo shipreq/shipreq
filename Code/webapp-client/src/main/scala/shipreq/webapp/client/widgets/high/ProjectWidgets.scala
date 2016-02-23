@@ -1,8 +1,9 @@
-package shipreq.webapp.client.widgets
+package shipreq.webapp.client.widgets.high
 
-import scalacss.ScalaCssReact._
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.prefix_<^._
+import scalacss.ScalaCssReact._
 import scalacss.StyleA
 import scalajs.js.{undefined, UndefOr}
 import shipreq.base.util._
@@ -19,8 +20,8 @@ import shipreq.webapp.client.lib.ClientUtil.{renderVector, sepComma, sepSpace}
 import ProjectWidgets.{apply => _, _}
 
 object ProjectWidgets {
-  def apply(project: Project, plainText: PlainText.ForProject) =
-    new ProjectWidgets(project, plainText)
+  def apply(project: Project, plainText: PlainText.ForProject, reqDetailRC: RouterCtl[ExternalPubid]) =
+    new ProjectWidgets(project, plainText, reqDetailRC)
 
   val deadValidity: Validity => Live => (Live, Validity) =
     Validity.memo(validityWhenDead =>
@@ -33,7 +34,9 @@ object ProjectWidgets {
   val invalidWhenDead = deadValidity(Invalid)
 }
 
-final class ProjectWidgets private(project: Project, plainText: PlainText.ForProject) extends ProjectText[ReactTag](project) {
+final class ProjectWidgets private(project    : Project,
+                                   plainText  : PlainText.ForProject,
+                                   reqDetailRC: RouterCtl[ExternalPubid]) extends ProjectText[ReactTag](project) {
 
   private implicit def surroundDisplay(s: G.Surrounds) = s.display
 
@@ -60,10 +63,13 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
       issueDescSurroundSuffix)
   }
 
-  val pubidColumnValue = memo[Pubid] { pubid =>
-    val txt = PlainText.pubid(project, pubid)
+  val pubidDetailLink = memo[Pubid] { pubid =>
+    val ep = pubid.external(project)
+    val txt = PlainText.pubid(ep)
     val req = project.reqs.reqByPubid(pubid)
-    <.span(*.pubidColumnValue(req live project.config.customReqTypes), txt)
+    reqDetailRC.link(ep)(
+      *.pubidColumnValue(req live project.config.customReqTypes),
+      txt)
   }
 
   /**
@@ -141,13 +147,20 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
     }
   }
 
-  val reqType = memo[ReqTypeId] { id =>
-    val rt = project.config.reqType(id)
-    <.span(
-      *.reqType(rt.live),
-      ^.title := rt.name,
-      rt.mnemonic.value)
-  }
+  val reqTypeFull: ReqTypeId => ReactElement =
+    id => {
+      val rt = project.config.reqType(id)
+      <.span(s"${rt.mnemonic.value}: ${rt.name}")
+    }
+
+  val reqTypeShort: ReqTypeId => ReactElement =
+    memo { id =>
+      val rt = project.config.reqType(id)
+      <.span(
+        *.reqTypeShort(rt.live),
+        ^.title := rt.name,
+        rt.mnemonic.value)
+    }
 
   private def tagWithoutStyle(c: Contextualise, t: ApplicableTag): ReactTag = {
     var desc = if (t.name.compareToIgnoreCase(t.key.value) == 0) "" else t.name
@@ -230,7 +243,7 @@ final class ProjectWidgets private(project: Project, plainText: PlainText.ForPro
   def flatReqCode(c: ReqCode.Value): ReactElement =
     <.pre(*.reqCodeFlat, PlainText reqCode c)
 
-  def flatReqCodes(reqCodes: Vector[ReqCode.Value]): TagMod =
+  def flatReqCodes(reqCodes: TraversableOnce[ReqCode.Value]): TagMod =
     reqCodes map flatReqCode
 
   def reqCodes(tree: Vector[ReqCodeTreeItem], flat: Vector[ReqCode.Value]): ReactElement =

@@ -1,7 +1,6 @@
 package shipreq.webapp.base.data
 
 import nyaya.util.Multimap
-import scalaz.syntax.equal._
 import shipreq.base.util._
 import shipreq.base.util.TaggedTypes._
 
@@ -21,10 +20,23 @@ final case class ReqTypePos(value: Int) extends TaggedInt
  *
  * Eg. "FR-3"
  */
-final case class PubidT[+T <: ReqTypeId](reqTypeId: T, pos: ReqTypePos)
+final case class PubidT[+T <: ReqTypeId](reqTypeId: T, pos: ReqTypePos) {
+  def external(p: Project): ExternalPubid = {
+    val rt = p.config.reqType(reqTypeId)
+    ExternalPubid(rt.mnemonic, pos)
+  }
+}
 
 object PubidT {
   implicit def equality[T <: ReqTypeId : UnivEq]: UnivEq[PubidT[T]] = UnivEq.derive
+}
+
+/**
+ * A [[Pubid]] as seen from outside of a project, or from the user's perspective.
+ */
+final case class ExternalPubid(mnemonic: ReqType.Mnemonic, pos: ReqTypePos)
+object ExternalPubid {
+  implicit def equality: UnivEq[ExternalPubid] = UnivEq.derive
 }
 
 /**

@@ -1,11 +1,12 @@
 package shipreq.webapp.client.app.cfg.issues
 
+import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.test._
 import scalaz.std.anyVal._
 import shipreq.webapp.base.protocol.{CustomIssueTypeCrud, RemoteFn}
 import shipreq.webapp.base.test.SampleProject
-import shipreq.webapp.client.app.state.ClientData
-import shipreq.webapp.client.data.HideDead
+import shipreq.webapp.client.app.cfg.shared.Usage
+import shipreq.webapp.client.data.{FilterDead, HideDead}
 import shipreq.webapp.client.test.TestUtil._
 import shipreq.webapp.client.test._
 import utest._
@@ -13,10 +14,11 @@ import utest._
 object CustomIssueTypesTest extends TestSuite {
 
   override def tests = TestSuite {
+    val filterDead = ReactTestVar[FilterDead](HideDead)
     val remote     = RemoteFn.Instance("x", CustomIssueTypeCrud)
-    val clientData = new ClientData(SampleProject.project)
+    val clientData = TestClientData(SampleProject.project)
     val cp         = new TestClientProtocol
-    val props      = new CustomIssueTypes.Props(cp, remote, clientData, HideDead, MockRouterCtl())
+    val props      = new CustomIssueTypes.Props(cp, remote, clientData, filterDead.reusableVar(), Usage.Show((_, _) => <.a))
     val re         = props.component
     val c          = ReactTestUtils.renderIntoDocument(re)
 

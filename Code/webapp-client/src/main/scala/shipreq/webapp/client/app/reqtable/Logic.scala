@@ -15,8 +15,9 @@ import shipreq.webapp.base.filter.FilterAst
 import shipreq.webapp.base.text.Atom.AnyIssue
 import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.base.util.ReqCodeTreeItem
-import shipreq.webapp.client.data.{HideDead, ShowDead, FilterDead}
+import shipreq.webapp.client.data.{DataLogic, HideDead, ShowDead, FilterDead}
 import DataImplicits._
+import DataLogic.{ReqTags, TagLookup}
 import MTrie.Ops
 import Debug._
 
@@ -24,39 +25,6 @@ import Debug._
  * Deletion complicates everything. See `Requirements/analysis-deletion.ods` for details.
  */
 private[reqtable] object Logic {
-
-  /**
-   * Set of tags associated with a requirement.
-   */
-  private case class ReqTags(other: Set[ApplicableTagId], deadTagsInLiveText: Set[ApplicableTagId]) {
-    def all: Set[ApplicableTagId] =
-      other | deadTagsInLiveText
-
-    def exists(f: Set[ApplicableTagId] => Boolean): Boolean =
-      f(other) || f(deadTagsInLiveText)
-  }
-
-  private type TagLookup = ReqId => ReqTags
-
-  private def tagLookup(p: Project, fd: FilterDead): TagLookup = {
-    val reqTags = p.reqTags
-    val tagsInText = p.atomScan.tagRefs
-
-    fd match {
-      case HideDead =>
-        val deadTags = p.config.deadATagIds
-        Memo { id =>
-          val inText = tagsInText(id).live
-          val liveTags = (reqTags(id) | inText) &~ deadTags // Dead tags on live reqs are ignored unless in text
-          ReqTags(liveTags, deadTagsInLiveText = inText & deadTags)
-        }
-
-      case ShowDead =>
-        // [deadTagsInLiveText = Set.empty] is technically wrong but when (FilterDead == ShowDead) putting everything
-        // in `other` is more efficient and achieves the same result (confirmed in LogicTest.filterDead.tagComprehensive)
-        Memo(id => ReqTags(reqTags(id) | tagsInText(id).all, deadTagsInLiveText = Set.empty))
-    }
-  }
 
   private final class IssueLookup(p: Project, fd: FilterDead) {
     import AtomScan._
@@ -127,37 +95,20 @@ private[reqtable] object Logic {
   private def expanderC[A](vs: ViewSettings, c: Column.SortInconclusive): Expander[A] =
     expander(vs isVisible c, vs isOrderedI c)
 
-  private def impColValueFn(p: Project, fd: FilterDead): CustomField.Implication.Id => ReqId => Set[Pubid] =
-    fid => {
-
-      val reqsOfSubjectType: Stream[Req] = {
-        val f = p.config.customField(fid)
-        p.reqs.reqsByType(f.reqTypeId).toStream
-      }
-
-      // (source of implication for this column) → (all it transitively implies)
-      val srcs: Stream[(Pubid, Set[ReqId])] =
-        fd(reqsOfSubjectType)(_ live p.config.customReqTypes)
-          .map(r => (r.pubid, p.implicationSrcToTgtTC(r.id)))
-
-      id => srcs.filter(_._2 contains id).map(_._1).toSet
-    }
-
-  private def impColValueExpander(vs: ViewSettings, p: Project, ap: Applicability): Req => Map[CustomField.Implication.Id, Expanded[Pubid]] = {
-    val valueFn = impColValueFn(p, vs.filterDead)
-    customFieldExpander[CustomField.Implication.Id, Pubid](vs, ap, valueFn)
+  private def impColValueFn(p: Project, fd: FilterDead): CustomField.Implication.Id => ReqId => Set[Pubid] = {
+    val filter = DataLogic.impValueFilter(p.config, fd)
+    val lookup = DataLogic.customFieldImps(p, filter)
+    fid => lookup(p.config.customField(fid))
   }
+
+  private def impColValueExpander(vs: ViewSettings, p: Project, ap: Applicability): Req => Map[CustomField.Implication.Id, Expanded[Pubid]] =
+    customFieldExpander(vs, ap, impColValueFn(p, vs.filterDead))
 
   private def tagColValueExpander(vs        : ViewSettings,
-                                  p         : Project,
                                   ap        : Applicability,
                                   tagColDist: TagColumnDistribution.TagIds,
-                                  tagLookup : TagLookup): Req => Map[CustomField.Tag.Id, Expanded[ApplicableTagId]] = {
-    customFieldExpander[CustomField.Tag.Id, ApplicableTagId](vs, ap, c => {
-      val legal = tagColDist inColumn c
-      id => tagLookup(id).all & legal
-    })
-  }
+                                  tagLookup : TagLookup): Req => Map[CustomField.Tag.Id, Expanded[ApplicableTagId]] =
+    customFieldExpander(vs, ap, fid => DataLogic.customFieldTags(tagColDist, tagLookup, fid))
 
   private def customFieldExpander[K <: CustomFieldId : ClassTag, V: UnivEq]
       (vs: ViewSettings, ap: Applicability, f: K => ReqId => Set[V]): Req => Map[K, Expanded[V]] = {
@@ -170,7 +121,7 @@ private[reqtable] object Logic {
         val applic   = ap(col)
         val expander = expanderC[V](vs, col)
         val dataFn   = f(colId)
-        val fn       = (r: Req) => expander(() => applic.choose(r, na = UnivEq.emptySet[V])(dataFn(r.id)))
+        val fn       = (r: Req) => expander(() => applic.choose(r, `n/a` = UnivEq.emptySet[V])(dataFn(r.id)))
         (colId, fn)
       }.toMap
 
@@ -214,21 +165,11 @@ private[reqtable] object Logic {
   // ===================================================================================================================
   // MultiValues
 
-  private def tagValuesFn(vs        : ViewSettings,
-                          p         : Project,
-                          tagColDist: TagColumnDistribution.TagIds,
-                          tagLookup : TagLookup): ReqId => Vector[ApplicableTagId] = {
-    val tagsUsedInColumns = tagColDist.usedInColumns
-    id => (tagLookup(id).all &~ tagsUsedInColumns).toVector
-  }
-
-  private def multiValuesFn(vs        : ViewSettings,
-                            p         : Project,
-                            tagColDist: TagColumnDistribution.TagIds,
+  private def multiValuesFn(tagColDist: TagColumnDistribution.TagIds,
                             tagLookup : TagLookup): ReqId => MultiValues = {
-    val tagValuesFn = this.tagValuesFn(vs, p, tagColDist, tagLookup)
+    val tagValuesFn = DataLogic.generalTags(tagColDist, tagLookup)
     id => {
-      val tags = tagValuesFn(id)
+      val tags = tagValuesFn(id).toVector
       MultiValues(tags)
     }
   }
@@ -250,32 +191,21 @@ private[reqtable] object Logic {
     //
     // * The Tags column is not expanded. Only custom tag columns are.
 
-    // The Tags column:
-    // 1. never displays tags allocated to live tag-columns.
-    // 2. doesn't display tags allocated to visible, dead tag-columns.
-    val tagColDist: TagColumnDistribution.TagIds =
-      vs.filterDead match {
-        case HideDead => p.config.liveTagColumnDistribution
-        case ShowDead => TagColumnDistribution(p.config, f => f.live(p.config) match {
-          case Live => true
-          case Dead => vs isVisible Column.CustomField(f.id, Dead)
-        })
-      }
-
     val filterDeadReq = vs.filterDead.filterFnA[Req](_ live p.config.customReqTypes)
     val filterDeadRCG = vs.filterDead.filterFnA[ReqCodeGroup](_.live)
     val filterDead    = Filter(filterDeadReq, filterDeadRCG)
-    val tagLookup     = this.tagLookup(p, vs.filterDead)
+    val tagColDist    = DataLogic.tagFieldDist(p.config, vs.filterDead, vs isVisible Column.CustomField(_, Dead))
+    val tagLookup     = DataLogic.tagLookup(p, vs.filterDead)
     val issueLookup   = this.issueLookup(p, vs.filterDead)
     val applicability = Applicability(p)
     val expandImpSrcs = expanderC[Pubid](vs, Column.ImplicationSrc)
     val expandImpTgts = expanderC[Pubid](vs, Column.ImplicationTgt)
     val expandCodes   = expanderC[ReqCode.Value](vs, Column.Code)
     val expandImpCols = impColValueExpander(vs, p, applicability)
-    val expandTagCols = tagColValueExpander(vs, p, applicability, tagColDist, tagLookup)
+    val expandTagCols = tagColValueExpander(vs, applicability, tagColDist, tagLookup)
 
     // The segregation of live/dead is because live reqs can have inactive reqcodes (leftovers of CodeRefs).
-    // It would be errornous to display inactive reqs for a live req.
+    // It would be erroneous to display inactive reqs for a live req.
     val reqCodesByReq = Live.memo {
       case Live =>
         p.reqCodes.activeReqCodesByReqId
@@ -285,7 +215,7 @@ private[reqtable] object Logic {
     }
 
     val pImplications = p.implications
-    val multiValuesFn = this.multiValuesFn(vs, p, tagColDist, tagLookup)
+    val multiValuesFn = this.multiValuesFn(tagColDist, tagLookup)
 
     def pubid(reqId: ReqId): Option[Pubid] = {
       val req = p.reqs.req(reqId)
@@ -503,27 +433,15 @@ private[reqtable] object Logic {
   def sort(vs: ViewSettings, p: Project, pt: PlainText.ForProject)(rows: Vector[Row]): Stream[Row] = {
     import Sorter._
 
-    // Prepare sorters
     val sorter  = new FusedSorters(vs.order.init map inconclusive, vs.order.last |> conclusive)
     val setup   = new Setup(p, pt)
     val prepare = sorter.prepFn(setup)
     val rowMod  = Sorter.consolidateRowModFns(Sorter.sortUnspecified(vs) :: sorter.rowModFn :: Nil)
     val rowEndo = rowMod.map(_(setup, KeepDir)) getOrElse ((r: Row) => r)
-    import sorter.{T => Datum}
 
-    // Prepare data
-    val data = new Array[Datum](rows.length)
-    var i = 0
-    rows.foreach { r =>
-      data(i) = prepare(rowEndo(r))
-      i = i + 1
-    }
-
-    // Sort
-    scala.util.Sorting.quickSort(data)(sorter.sortFn.toOrdering)
-
-    // Unpack results
-    data.toStream map sorter.row
+    MutableArray.map(rows)(r => prepare(rowEndo(r)))
+      .sort(sorter.sortFn.toOrdering)
+      .mapOut(sorter.row)
   }
 
   // ===================================================================================================================

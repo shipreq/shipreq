@@ -251,31 +251,26 @@ object Style extends StyleSheet.Inline {
     ))
 
     val cellEditorErrMsg = style(
-      color(c"#a00")
-    )
+      color(c"#a00"))
 
-    private val autoCompleteDesc =
-      styleS(color(c"#444"), fontStyle.italic, overflow.hidden, maxWidth(36 ex))
+    val autoCompleteItemTitle = style(
+      fontWeight.bold)
 
-    val reqAutoComplete = styleC {
-      val r = styleS(fontWeight.bold)
-      r.named('req) :*: autoCompleteDesc.named('desc)
-    }
+    val autoCompleteItemTitle2 = style(
+      paddingLeft(1 ex),
+      color(c"#333"))
 
-    val codeRefToReqAutoComplete = styleC {
-      val code  = styleS(fontWeight.bold)
-      val pubid = styleS(paddingLeft(1 ex), color(c"#333"))
-      code.named('code) :*: pubid.named('pubid) :*: autoCompleteDesc.named('desc)
-    }
-
-    def codeRefToGroupAutoComplete = reqAutoComplete
+    val autoCompleteItemDesc = style(
+      color(c"#444"),
+      fontStyle.italic,
+      overflow.hidden,
+      maxWidth(36 ex))
 
     val textEditPreview = style(
       padding(h = 0.8.ex, v = 0.2.em),
       border(solid, 1 px, c"#222"),
       minHeight(2 em),
-      backgroundColor(c"#efe")
-    )
+      backgroundColor(c"#efe"))
 
     object deleteRestore {
 
@@ -309,6 +304,54 @@ object Style extends StyleSheet.Inline {
     }
 
   } // reqtable
+
+  // ===================================================================================================================
+  object reqdetail {
+
+    val header = style(
+      fontSize(220 %%),
+      display.flex)
+
+    val headerId = style(
+      whiteSpace.pre)
+
+    val headerTitle = style(
+      marginLeft(1 ex),
+      flexGrow(1))
+
+    val mainTable = style(
+      width(100 %%),
+      marginTop(2 em))
+
+    private def padSizeL = 0.8 ex
+
+    def rowCell = styleS(
+      padding.vertical(0.4 em),
+      paddingLeft(padSizeL))
+
+    val rowTitle = style(
+      rowCell,
+      whiteSpace.pre,
+      paddingRight(1.4 ex))
+
+    val rowValue = style(
+      rowCell,
+      paddingRight(padSizeL),
+      width(100 %%))
+
+    val generalImpsCont = style(
+      display.flex,
+      alignItems.center,
+      width(100 %%))
+
+    val generalImpsSide = style(
+      border(^.dashed, 1 px),
+      minHeight(1.59 em),
+      flexGrow(1))
+
+    val generalImpsMiddle = style(
+      margin.horizontal(1 ex))
+  }
 
   // ===================================================================================================================
   object widgets {
@@ -361,7 +404,7 @@ object Style extends StyleSheet.Inline {
       mixinIf(l :: Dead)(deadMaybeValid(v)))
     }
 
-    val reqType = styleF(D.live)(a => styleS(
+    val reqTypeShort = styleF(D.live)(a => styleS(
       hoverShowsInfo,
       mixinIf(a :: Dead)(deadAndNotError)))
 
@@ -409,6 +452,7 @@ object Style extends StyleSheet.Inline {
     reqtable.filterEditor.errorMsg,
     reqtable.table,
     reqtable.deleteRestore.impliedByItem(Live),
+    reqdetail.mainTable,
     widgets.issue)
 //  ConsoleIO(_.log(render[String])).unsafePerformIO()
 //  ConsoleIO(_.info(s"Styles: ${Style.register.styles.length}")).unsafePerformIO()

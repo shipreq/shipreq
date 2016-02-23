@@ -4,8 +4,6 @@ import java.net.URL
 import scala.collection.GenTraversable
 import scala.collection.immutable.TreeMap
 import scala.util.Try
-import scalaz.Equal
-import scalaz.syntax.equal._
 import ScalaExt.StringBuilderExt
 
 object Util {
@@ -179,6 +177,9 @@ object Util {
       as - a
     else
       as + a
+
+  def mapToOrder[A](as: TraversableOnce[A]): Map[A, Int] =
+    as.toIterator.zipWithIndex.toMap
 }
 
 object ParseLong {

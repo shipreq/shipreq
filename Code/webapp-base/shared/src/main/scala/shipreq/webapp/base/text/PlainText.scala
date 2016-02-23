@@ -59,7 +59,13 @@ object PlainText {
   }
 
   def pubid(reqType: ReqType, pos: ReqTypePos): String =
-    reqType.mnemonic.value ~ "-" ~ pos.value
+    pubid(reqType.mnemonic, pos)
+
+  def pubid(externalPubid: ExternalPubid): String =
+    pubid(externalPubid.mnemonic, externalPubid.pos)
+
+  def pubid(mnemonic: ReqType.Mnemonic, pos: ReqTypePos): String =
+    mnemonic.value ~ "-" ~ pos.value
 
   // -------------------------------------------------------------------------------------------------------------------
 

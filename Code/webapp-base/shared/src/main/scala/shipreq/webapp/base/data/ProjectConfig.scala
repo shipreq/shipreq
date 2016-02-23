@@ -114,6 +114,12 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
   lazy val liveTagColumnDistribution =
     TagColumnDistribution(this, _.live(this) :: Live)
 
+  def deadTagColumnDistribution(deadTagFilter: CustomField.Tag.Id => Boolean): TagColumnDistribution.TagIds =
+    TagColumnDistribution(this, f => f.live(this) match {
+      case Live => true
+      case Dead => deadTagFilter(f.id)
+    })
+
   /** Keys are lowercase */
   lazy val hashRefLookupM: Map[String, HashRefTarget] =
     ( atagIterator                   .map(t => (t.key.value.toLowerCase, -\/(t))) ++

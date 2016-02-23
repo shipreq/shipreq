@@ -25,9 +25,14 @@ import shipreq.webapp.client.widgets._
 import Field.ApplicableReqTypes
 
 object CfgFields {
-  case class Props(cp: ClientProtocol, remote: FieldCrud.Fn.Instance, clientData: ClientData, filterDead: FilterDead) {
+  case class Props(cp        : ClientProtocol,
+                   remote    : FieldCrud.Fn.Instance,
+                   clientData: ClientData,
+                   filterDead: ReusableVar[FilterDead]) {
+
     def component: ReactComponentU_ = MainTable.Component(this)
   }
+
   implicit val reusability = Reusability.caseClass[Props]
 }
 
@@ -52,8 +57,7 @@ private[fields] object MainTable {
   type NewSelType = StaticField \/ CustomFieldType
 
   @Lenses
-  case class State(filterDead      : FilterDead,
-                   text_state      : text_stores.State,
+  case class State(text_state      : text_stores.State,
                    impl_state      : impl_stores.State,
                    tag_state       : tag_stores.State,
                    newFieldTypeSel : NewSelType,
@@ -96,14 +100,13 @@ private[fields] object MainTable {
     val textFields = Seq.newBuilder[CustomField.Text]
     val implFields = Seq.newBuilder[CustomField.Implication]
     val tagFields  = Seq.newBuilder[CustomField.Tag]
-    val fs         = p.clientData.project.config.fields
+    val fs         = p.clientData.project().config.fields
     fs.customFields.values.foreach {
       case f: CustomField.Text        => textFields += f
       case f: CustomField.Implication => implFields += f
       case f: CustomField.Tag         => tagFields  += f
     }
     State(
-      filterDead      = p.filterDead,
       text_state      = text_stores.initState(_.initStateS(textFields.result(), _.id)),
       impl_state      = impl_stores.initState(_.initStateS(implFields.result(), _.id)),
       tag_state       = tag_stores .initState(_.initStateS(tagFields .result(), _.id)),
@@ -160,7 +163,7 @@ private[fields] object MainTable {
   // ===================================================================================================================
   final class Backend(val $: BackendScope[Props, S]) extends OnUnmount {
 
-    val projectPx = Px.bs($).propsA(_.clientData.project)
+    val projectPx = Px.bs($).propsA(_.clientData.project())
     val projectBackend = projectPx.map(new ProjectBackend(this, _))
     val protocol = Px.bs($).propsA.map(p => ProtocolBackend(p.cp, p.remote, p.clientData))
 
@@ -168,8 +171,8 @@ private[fields] object MainTable {
     val refkeyE    = Editors.textInputEditor.applyValidator(V.keyS)
     val mandatoryE = Editors.checkboxEditor.imap(onWhenMandatory).strengthL[V.S]
 
-    def render(s: S): ReactElement =
-      projectBackend.value().render(s)
+    def render(p: Props, s: S): ReactElement =
+      projectBackend.value().render(p.filterDead.value, s)
 
     def validatorState(k: Option[CustomFieldId]): S => V.S =
       validatorStateS(_, k)
@@ -183,7 +186,6 @@ private[fields] object MainTable {
       FieldNames.fieldRefKey,
       FieldNames.mandatory,
       FieldNames.applicableReqTypes))
-
   }
 
   // ===================================================================================================================
@@ -292,23 +294,23 @@ private[fields] object MainTable {
         abortNewButton($ modState abortNew)
     }
 
-    val filterDeadCheckbox = Checkbox.filterDead_$($ zoomL State.filterDead)
+    val filterDeadCheckbox = Checkbox.filterDead(v => $.props.flatMap(_.filterDead set v))
 
-    def render(s: S) =
+    def render(fd: FilterDead, s: S) =
       <.div(
         newFieldControl(s),
-        filterDeadCheckbox(),
+        filterDeadCheckbox(fd),
         <.table(
           headerRow,
-          <.tbody(renderNewField(s), renderFields(s))))
+          <.tbody(renderNewField(s), renderFields(fd, s))))
 
     def renderNewField(s: S): Option[ReactElement] =
       customFieldRenderers.map(_ renderNewO s).flatMap(_.toStream).headOption
 
-    def renderFields(s: S): TagMod = {
+    def renderFields(fd: FilterDead, s: S): TagMod = {
       var content = fieldOrder.toStream
         .flatMap(_.foldId[Stream[Field]](s => Stream(s), s.customFields.get(_).toStream))
-      content = s.filterDead(content)(_ live project.config)
+      content = fd(content)(_ live project.config)
       content.toReactNodeArray(renderField)
     }
 

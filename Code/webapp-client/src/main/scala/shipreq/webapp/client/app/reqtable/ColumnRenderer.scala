@@ -10,7 +10,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.ProjectText
 import shipreq.webapp.client.app.Style.{reqtable => *}
 import shipreq.webapp.client.data.Plain
-import shipreq.webapp.client.widgets.ProjectWidgets
+import shipreq.webapp.client.widgets.high.ProjectWidgets
 import ColumnRenderer._
 
 final class ColumnRenderer(
@@ -47,7 +47,7 @@ object ColumnRenderer {
     override protected def reqTypeIsDead(pt: PT, rt: ReqType) =
       <.span(
         UiText.ColumnNames.reqType + " ",
-        pt.reqType(rt.reqTypeId),
+        pt.reqTypeShort(rt.reqTypeId),
         " is deleted.")
   }
 
@@ -111,12 +111,12 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
     make(Function const <.span("∅"))
 
   private def pubid = make {
-    case r: GenericReqRow   => widgets.pubidColumnValue(r.req.pubid)
+    case r: GenericReqRow   => widgets.pubidDetailLink(r.req.pubid)
     case _: ReqCodeGroupRow => `N/A`
   }
 
   private def reqType = make {
-    case r: GenericReqRow   => widgets.reqType(r.req.reqTypeId)
+    case r: GenericReqRow   => widgets.reqTypeShort(r.req.reqTypeId)
     case _: ReqCodeGroupRow => `N/A`
   }
 

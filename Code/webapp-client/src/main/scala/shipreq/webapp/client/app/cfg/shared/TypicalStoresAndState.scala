@@ -2,11 +2,8 @@ package shipreq.webapp.client.app.cfg.shared
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.ScalazReact._
-import japgolly.scalajs.react.MonocleReact._
 import monocle.macros.Lenses
 import shipreq.base.util.UnivEq
-import shipreq.webapp.client.data.FilterDead
-import shipreq.webapp.client.widgets.Checkbox
 
 object TypicalStoresAndState {
   def apply[P, I](fields: FieldSet[P, I]) = new B[P, I, fields.type](fields)
@@ -30,7 +27,7 @@ abstract class TypicalStoresAndState[P, I, K: UnivEq](fields: FieldSet[P, I]) {
   val newRowStore   = NewRowStore.of(fields)
 
   @Lenses
-  case class State(newRow: newRowStore.State, savedRows: savedRowStore.State, filterDead: FilterDead)
+  case class State(newRow: newRowStore.State, savedRows: savedRowStore.State)
 
   type S  = State
   type ST = ReactST[CallbackTo, S, Unit]
@@ -44,7 +41,4 @@ abstract class TypicalStoresAndState[P, I, K: UnivEq](fields: FieldSet[P, I]) {
    */
   def validatorInput(k: Option[K]): S => (Stream[P], Option[K]) =
     s => (savedRowStoreS.getAllP(s), k)
-
-  def filterDeadCheckbox(c: CompState.Access[S]): () => ReactElement =
-    Checkbox.filterDead_$(c zoomL State.filterDead)
 }

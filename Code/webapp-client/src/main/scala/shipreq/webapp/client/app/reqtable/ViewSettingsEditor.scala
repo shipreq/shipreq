@@ -48,12 +48,12 @@ object ViewSettingsEditor {
       val vs = p.vs.value
 
       def columns = {
-        val all = Column.all(p.projectConfig).toNES.whole filter Column.filterDead(vs.filterDead)
+        val all = Column.all(p.projectConfig, vs.filterDead)
         val p2 = ColumnsEditor.Props(
           vs.columns.toNES,
           toggleColumn,
           p.columnName,
-          NonEmptySet force all)
+          all.toNES)
         ColumnsEditor.Component(p2)
       }
 

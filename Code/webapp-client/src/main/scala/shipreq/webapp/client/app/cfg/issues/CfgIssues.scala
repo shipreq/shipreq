@@ -1,8 +1,9 @@
 package shipreq.webapp.client.app.cfg.issues
 
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
+import japgolly.scalajs.react._, vdom.prefix_<^._
+import japgolly.scalajs.react.extra.ReusableVar
 import shipreq.webapp.base.protocol._
-import shipreq.webapp.client.app.ProjectSpaMain
+import shipreq.webapp.client.app.cfg.shared.Usage
 import shipreq.webapp.client.app.state.ClientData
 import shipreq.webapp.client.data.FilterDead
 import shipreq.webapp.client.protocol.ClientProtocol
@@ -14,8 +15,8 @@ object CfgIssues {
                    b         : ReqTypeImplicationMod.Instance,
                    c         : FieldMandatorinessMod.Instance,
                    cd        : ClientData,
-                   filterDead: FilterDead,
-                   routerCtl : ProjectSpaMain.RouterCtl) {
+                   filterDead: ReusableVar[FilterDead],
+                   usageShow : Usage.Show) {
     @inline def component = Component(this)
   }
 
@@ -25,7 +26,7 @@ object CfgIssues {
         import p._
         <.section(
           <.h4("User-Defined Issue Types"),
-          CustomIssueTypes.Props(cp, a, cd, filterDead, routerCtl).component,
+          CustomIssueTypes.Props(cp, a, cd, filterDead, usageShow).component,
           <.h4("Other Causes of Issues"),
           <.table(<.tbody(
             <.td(ReqTypeImplication.Props(cp, b, cd).component),

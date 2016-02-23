@@ -9,7 +9,7 @@ sealed abstract class ISubset[A] {
   final def apply[F[X] <: TraversableLike[X, F[X]]](i: F[A]): F[A] =
     i filter this.filter
 
-  final def filter: A => Boolean =
+  final val filter: A => Boolean =
     filterO getOrElse (_ => true)
 
   final def filterO: Option[A => Boolean] = {

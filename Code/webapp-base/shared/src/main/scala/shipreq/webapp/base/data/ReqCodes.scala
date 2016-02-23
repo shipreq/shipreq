@@ -230,6 +230,9 @@ final case class ReqCodes(trie: ReqCode.Trie) {
   def get(code: Value): Option[Data] =
     trie.lookup(code)
 
+  def getById(id: ReqCodeId): Option[Data] =
+    reqCodesById.get(id).flatMap(get)
+
   def lookup(id: ReqCodeId): Data =
     apply(reqCode(id))
 

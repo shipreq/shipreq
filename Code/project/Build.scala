@@ -258,21 +258,21 @@ object ShipReq extends Build {
         ))
 
     def createProject =
-      project(WebappClient.dir)
+      project(dir)
         .enablePlugins(ScalaJSPlugin)
         .dependsOn(baseUtilJs, webappBaseJs, webappBaseTestJs % "test->compile")
         .depsForJs(
           Scalaz.effect ++ React.most ++ Monocle.macros ++ ScalaCSS.react ++
           μPickle ++ shapeless ++ Nyaya.prop ++ parboiled ++ boopickle ++
-          testScope(React.test ++ μTest ++ Nyaya.test)
+          testScope(React.test ++ μTest ++ TestState.core ++ Nyaya.test)
         )
         .configure(
           Common.jsSettings(NeedDom),
           webappSettings,
           useMacroParadise,
-          WebappClient.testSettings,
+          testSettings,
           dontInline, // crashes 2.11.7 / 0.6.4
-          debugOrRelease(identity, WebappClient.prodJsSettings)
+          debugOrRelease(identity, prodJsSettings)
         )
   }
 
