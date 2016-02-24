@@ -1,9 +1,10 @@
-package shipreq.webapp.client.test
+package shipreq.webapp.client.test.domzipper
 
 import org.scalajs.dom.{Element, Node, window}
 import org.scalajs.dom.html
 import scala.reflect.ClassTag
 import scala.scalajs.js
+import shipreq.webapp.client.test.Sizzle
 
 object DomZipper {
   type DOM = Node
@@ -120,10 +121,6 @@ object DomZipper {
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 import DomZipper._
-
-abstract class TempHackWhileInShipreq {
-
-type DomZipper = DomZipperAt[DOM]
 
 final class DomZipperAt[+D <: DOM] private[test](prevLayers: Vector[Layer[DOM]], curLayer: Layer[D], $: CssSelLookup) {
 
@@ -272,5 +269,3 @@ final class DomZipperAt[+D <: DOM] private[test](prevLayers: Vector[Layer[DOM]],
 //    DomZipperAt.assertCount(sel, expectedCount, r, root)
 //    r
 //  }
-
-}
