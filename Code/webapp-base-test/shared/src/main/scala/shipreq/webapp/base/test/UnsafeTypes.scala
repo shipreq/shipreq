@@ -119,4 +119,13 @@ object UnsafeTypes extends UnsafeTypesLowPriority {
   implicit def autoTextN_GenericReqTitle  (s: String): Text.GenericReqTitle  .NonEmptyText = NonEmptyVector one s
   implicit def autoTextN_InlineIssueDesc  (s: String): Text.InlineIssueDesc  .NonEmptyText = NonEmptyVector one s
   implicit def autoTextN_DeletionReason   (s: String): Text.DeletionReason   .NonEmptyText = NonEmptyVector one s
+
+
+  private val extpubFmt = "^([a-zA-Z]+)-?(\\d+)$".r
+
+  implicit def autoExtPubid(s: String): ExternalPubid =
+    s match {
+      case extpubFmt(a, b) => ExternalPubid(a, b.toInt)
+      case w => sys error s"This isn't an ExternalPubid: $w"
+    }
 }

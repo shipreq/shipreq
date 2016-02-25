@@ -15,22 +15,6 @@ object ProjectSpaTest extends TestSuite {
 
   PrepareEnv()
 
-  def runTest(action: *.Action) = {
-    val cp   = new TestClientProtocol
-    val cd   = TestClientData(SampleProject3.project)
-    val spa  = new ProjectSpaMain(MockRemotes.projectSPA, cp, cd)
-    val rc   = MockRouterCtl[Page]()
-    val init = TestState(Page.ReqTable, cd.project())
-
-    ComponentTester(spa.Component)(Props(init.page, rc)) { tester =>
-      val tt  = Test(action, invariants).observe(_.observe())
-      val h   = tt.run(init, Ref(cd, tester))
-      // println(h.format(History.Options.colored.alwaysShowChildren))
-      h.assert(History.Options.colored)
-      // println(h.format(History.Options.colored))
-    }
-  }
-
   def reqTableAfterLocalConfigUpdate: *.Action = (
     testReqTable(RT.showHideColumn("Priority") >> RT.sortBy("Priority"))
       >> setPage(Page.CfgFields)
