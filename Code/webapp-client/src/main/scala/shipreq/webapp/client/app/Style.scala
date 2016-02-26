@@ -370,6 +370,7 @@ object Style extends StyleSheet.Inline {
     val generalImpsSide = style(
       border(^.dashed, 1 px),
       minHeight(1.59 em),
+      flexBasis := "0",
       flexGrow(1))
 
     val generalImpsMiddle = style(
