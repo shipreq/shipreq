@@ -57,6 +57,7 @@ object UiText {
 
   def reqCodeGroup = "Code Group"
   def reqCodeGroups = "Code Groups"
+  def useCase = "Use Case"
 
   def buttonCommitChange = "OK"
   def buttonAbortChange = "Cancel"

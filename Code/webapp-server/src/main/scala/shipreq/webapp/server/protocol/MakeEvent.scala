@@ -279,6 +279,20 @@ object MakeEvent { // TODO Move
         }
         val id = GenericReqId(project.idCeilings.req + 1)
         CreateGenericReq(id, i.rt, vs)
+
+      case i: CreateContentCmd.CreateUseCase =>
+        var vs = CreateUseCaseGD.emptyValues
+        for (v <- NonEmptyVector.option(i.title)) vs += CreateUseCaseGD.Title(v)
+        for (v <- NonEmptySet.option(i.tags))     vs += CreateUseCaseGD.Tags(v)
+        for (v <- NonEmptySet.option(i.impSrcs))  vs += CreateUseCaseGD.ImpSrcs(v)
+        for (cs <- NonEmptySet.option(i.reqCodes)) {
+          // If a code is in use, ApplyEvent will catch it
+          val v = cs.map(c => ReqCode.IdAndValue(nextCodeId(), c))
+          vs += CreateUseCaseGD.ReqCodes(v)
+        }
+        val id = UseCaseId(project.idCeilings.req + 1)
+        val stepId = UseCaseStepId(project.idCeilings.useCaseStep + 1)
+        CreateUseCase(id, stepId, vs)
     }
   }
 

@@ -3,13 +3,12 @@ package shipreq.webapp.client.app.reqtable
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
 import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
-import shipreq.base.util.{NonEmptyVector, UnivEq, univEqOps}
+import shipreq.base.util.{MutableArray, NonEmptyVector, UnivEq, univEqOps}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.CreateContentCmd
 import shipreq.webapp.base.text.{PlainText, TextSearch}
 import shipreq.webapp.client.data.{Enabled, TCB}
-import shipreq.webapp.client.feature.PreviewFeature
 import shipreq.webapp.client.protocol.ServerCall
 import shipreq.webapp.client.widgets._
 import shipreq.webapp.client.widgets.high._
@@ -18,8 +17,10 @@ import UnivEq.univEqOption
 
 object CreationInterface {
   sealed trait Type
-  case object ReqCodeGroupType extends Type
   case class GenericReqType(rt: CustomReqTypeId) extends Type
+  case object UseCaseType                        extends Type
+  case object ReqCodeGroupType                   extends Type
+
   implicit def typeEquality: UnivEq[Type] = UnivEq.force
 
   type SelType = Option[Type]
@@ -32,7 +33,7 @@ object CreationInterface {
   @Lenses
   case class State(selectedType: SelType,
                    rcg         : CreateReqCodeGroupState,
-                   greq        : CreateGenericReqState)
+                   req         : CreateReqState)
 
   sealed trait Status
   case object Editing extends Status
@@ -44,14 +45,14 @@ object CreationInterface {
   case class CreateReqCodeGroupState(status: Status, reqCode: String, title: String)
 
   @Lenses
-  case class CreateGenericReqState(status: Status, reqCodes: String, title: String, tags: String, imp: String)
+  case class CreateReqState(status: Status, reqCodes: String, title: String, tags: String, imp: String)
 
   implicit val reusabilityState: Reusability[State] = Reusability.byRef
 
   def initState: State =
     State(None,
       CreateReqCodeGroupState(Editing, "", ""),
-      CreateGenericReqState(Editing, "", "", "", ""))
+      CreateReqState(Editing, "", "", "", ""))
 }
 
 // =====================================================================================================================
@@ -68,10 +69,11 @@ class CreationInterface($               : CompState.Access[State],
     pxProject.map { p =>
       val blank = Choice[SelType](None, "", Enabled)
       val rcg   = Choice[SelType](Some(ReqCodeGroupType), UiText.reqCodeGroup, Enabled)
-      val rts   = p.config.liveCustomReqTypes
+      val uc    = Choice[SelType](Some(UseCaseType), UiText.useCase, Enabled)
+      val grs   = MutableArray(p.config.liveCustomReqTypes)
                     .map(rt => Choice[SelType](Some(GenericReqType(rt.id)), rt.fullName, Enabled))
                     .sortBy(_.label)
-      (NonEmptyVector(blank) :+ rcg) ++ rts
+      NonEmptyVector(blank) ++ grs.array :+ uc :+ rcg
     }
 
   val Component = ReactComponentB[Props]("Creation")
@@ -90,6 +92,7 @@ class CreationInterface($               : CompState.Access[State],
 
     val detail: Type => TagMod = {
       case GenericReqType(rt) => CreateGenericReq.Component((p, rt))
+      case UseCaseType        => CreateUseCase.Component(p)
       case ReqCodeGroupType   => CreateReqCodeGroup.Component(p)
     }
 
@@ -131,7 +134,9 @@ class CreationInterface($               : CompState.Access[State],
   implicit def contravariantReusableFnInput[A, B, C <: A](f: A ~=> B): C ~=> B =
     f.asInstanceOf[C ~=> B]
 
-  object CreateReqCodeGroup { // ---------------------------------------------------------------------------------------
+  // ===================================================================================================================
+
+  object CreateReqCodeGroup {
 
     val $$ = $ zoomL State.rcg
     val setStatus  = $$ zoomL CreateReqCodeGroupState.status  setState (_: Status)
@@ -187,18 +192,15 @@ class CreationInterface($               : CompState.Access[State],
     val Component = ReactComponentB[Props]("CreateRCG").render_P(render).build
   }
 
-  object CreateGenericReq { // ---------------------------------------------------------------------------------------
+  // ===================================================================================================================
 
-    type Props = (CreationInterface.Props, CustomReqTypeId)
-
-    val $$ = $ zoomL State.greq
-    val setStatus   = $$ zoomL CreateGenericReqState.status   setState (_: Status)
-    val setImp      = ReusableFn($$ zoomL CreateGenericReqState.imp      setState (_: String))
-    val setReqCodes = ReusableFn($$ zoomL CreateGenericReqState.reqCodes setState (_: String))
-    val setTitle    = ReusableFn($$ zoomL CreateGenericReqState.title    setState (_: String))
-    val setTags     = ReusableFn($$ zoomL CreateGenericReqState.tags     setState (_: String))
-
-    val titleFocus = FocusId.InCI(GenericReqType(CustomReqTypeId(-1)), Column.Title)
+  object CreateReqShared {
+    val $$ = $ zoomL State.req
+    val setStatus   = $$ zoomL CreateReqState.status   setState (_: Status)
+    val setImp      = ReusableFn($$ zoomL CreateReqState.imp      setState (_: String))
+    val setReqCodes = ReusableFn($$ zoomL CreateReqState.reqCodes setState (_: String))
+    val setTitle    = ReusableFn($$ zoomL CreateReqState.title    setState (_: String))
+    val setTags     = ReusableFn($$ zoomL CreateReqState.tags     setState (_: String))
 
     val pxImpLookup = Px.apply2(pxProject, pxProjectText)(ImplicationEditor.Lookup.all)
 
@@ -208,24 +210,73 @@ class CreationInterface($               : CompState.Access[State],
 
     val pxTagLookup = pxProject map TagEditor.Lookup.all
 
+    private val reqFormHeader =
+      <.thead(
+        <.tr(
+          <.th(UiText.ColumnNames.title),
+          <.th(UiText.ColumnNames.code),
+          <.th(UiText.ColumnNames.tags),
+          <.th(UiText.ColumnNames.implicationSrc),
+          <.th))
+
+    def renderReqForm(reqCodes: ReactElement,
+                      title   : ReactElement,
+                      tags    : ReactElement,
+                      imps    : ReactElement,
+                      ctrls   : TagMod) = {
+      <.table(
+        reqFormHeader,
+        <.tbody(
+          <.tr(
+            <.td(title),
+            <.td(reqCodes),
+            <.td(tags),
+            <.td(imps),
+            <.td(ctrls))))
+    }
+
+    import Px.AutoValue._
+
+    def getPropsReqCodes(state: CreateReqState) =
+      ReqCodeEditor.Multiple.Props(
+        ReusableVar(state.reqCodes)(setReqCodes),
+        None,
+        pxProject.reqCodes.trie,
+        _noExtra)
+
+    def getPropsTags(state: CreateReqState) =
+      TagEditor.Props(
+        ReusableVar(state.tags)(setTags),
+        pxTagLookup,
+        _noExtra)
+
+    def getPropsImps(state: CreateReqState) =
+      ImplicationEditor.Props(
+        ReusableVar(state.imp)(setImp),
+        pxImpLookup,
+        pxImpValidationFn,
+        pxTextSearch,
+        _noExtra)
+  }
+
+  // ===================================================================================================================
+
+  object CreateGenericReq {
+    import CreateReqShared._
+
+    type Props = (CreationInterface.Props, CustomReqTypeId)
+
+    val titleFocus = FocusId.InCI(GenericReqType(CustomReqTypeId(-1)), Column.Title)
+
     def render(pp: Props) = {
       import Px.AutoValue._
 
       val p = pp._1
-      val state = p.state.greq
+      val state = p.state.req
 
-      val propsReqCodes =
-        ReqCodeEditor.Multiple.Props(
-          ReusableVar(state.reqCodes)(setReqCodes),
-          None,
-          pxProject.reqCodes.trie,
-          _noExtra)
-
-      val propsTags =
-        TagEditor.Props(
-          ReusableVar(state.tags)(setTags),
-          pxTagLookup,
-          _noExtra)
+      val propsReqCodes = getPropsReqCodes(state)
+      val propsTags     = getPropsTags(state)
+      val propsImp      = getPropsImps(state)
 
       val propsTitle =
         RichTextEditor.GenericReqTitle.Props(
@@ -236,14 +287,6 @@ class CreationInterface($               : CompState.Access[State],
           ReusableVar(state.title)(setTitle),
           previewFeature.forChild(titleFocus, p.previewState),
           None,
-          _noExtra)
-
-      val propsImp =
-        ImplicationEditor.Props(
-          ReusableVar(state.imp)(setImp),
-          pxImpLookup,
-          pxImpValidationFn,
-          pxTextSearch,
           _noExtra)
 
       val create: Option[Callback] =
@@ -259,23 +302,67 @@ class CreationInterface($               : CompState.Access[State],
           ajax(p, setStatus, cmd)
         }
 
-      <.table(
-        <.thead(
-          <.tr(
-            <.th(UiText.ColumnNames.code),
-            <.th(UiText.ColumnNames.title),
-            <.th(UiText.ColumnNames.tags),
-            <.th(UiText.ColumnNames.implicationSrc),
-            <.th())),
-        <.tbody(
-          <.tr(
-            <.td(propsReqCodes.render),
-            <.td(propsTitle   .render),
-            <.td(propsTags    .render),
-            <.td(propsImp     .render),
-            <.td(ctrls(create, state.status, setStatus)))))
+      renderReqForm(
+        propsReqCodes.render,
+        propsTitle   .render,
+        propsTags    .render,
+        propsImp     .render,
+        ctrls(create, state.status, setStatus))
     }
 
     val Component = ReactComponentB[Props]("CreateGR").render_P(render).build
+  }
+
+  // ===================================================================================================================
+
+  object CreateUseCase {
+    import CreateReqShared._
+
+    type Props = CreationInterface.Props
+
+    val titleFocus = FocusId.InCI(UseCaseType, Column.Title)
+
+    def render(p: Props) = {
+      import Px.AutoValue._
+
+      val state = p.state.req
+
+      val propsReqCodes = getPropsReqCodes(state)
+      val propsTags     = getPropsTags(state)
+      val propsImp      = getPropsImps(state)
+
+      val propsTitle =
+        RichTextEditor.UseCaseTitle.Props(
+          pxProject,
+          pxProjectText,
+          pxTextSearch,
+          pxProjectWidgets,
+          ReusableVar(state.title)(setTitle),
+          previewFeature.forChild(titleFocus, p.previewState),
+          None,
+          _noExtra)
+
+      val create: Option[Callback] =
+        for {
+          codes   <- propsReqCodes.parseResult.toOption
+          title   <- propsTitle   .parseResult.toOption
+          tags    <- propsTags    .parseResult.toOption
+          impSrcs <- propsImp     .parseResult.toOption
+          if state.status !=* Locked
+        } yield {
+          val tagIds = tags.map(_.id).toSet
+          val cmd = CreateContentCmd.CreateUseCase(title, codes, tagIds, impSrcs.added)
+          ajax(p, setStatus, cmd)
+        }
+
+      renderReqForm(
+        propsReqCodes.render,
+        propsTitle   .render,
+        propsTags    .render,
+        propsImp     .render,
+        ctrls(create, state.status, setStatus))
+    }
+
+    val Component = ReactComponentB[Props]("CreateUC").render_P(render).build
   }
 }
