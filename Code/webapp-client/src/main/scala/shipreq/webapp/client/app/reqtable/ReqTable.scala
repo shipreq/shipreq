@@ -209,12 +209,7 @@ object ReqTable extends StaticPropComponent.Template("ReqTable") {
             case Column.CustomField(id: CustomField.Text       .Id, Live) => Editor.CustomTextField(r.req, id, focusId)
             case Column.CustomField(id: CustomField.Tag        .Id, Live) => Editor.Tags(r.req, Some(id))
             case Column.CustomField(id: CustomField.Implication.Id, Live) => Editor.ImplicationsCustomField(r.req, id)
-
-            case Column.ReqType =>
-              r.req match {
-                case gr: GenericReq => Editor.ReqType(gr)
-                case _: UseCase     => None
-              }
+            case Column.ReqType                                           => Editor.reqType(r.req)
 
             case Column.Pubid
                | Column.DeletionReason

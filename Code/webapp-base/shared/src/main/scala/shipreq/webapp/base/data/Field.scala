@@ -137,8 +137,13 @@ object StaticField {
 
   @inline final private[this] def T = StaticFieldType
 
-  sealed trait UseCaseStepTree {
-    this: StaticField =>
+  sealed abstract class UseCaseStepTree(_name     : String,
+                                        _fieldType: StaticFieldType,
+                                        _reqTypes : Field.ApplicableReqTypes,
+                                        _mandatory: Mandatory,
+                                        _deletable: Deletable,
+                                        _keyO     : Option[FieldRefKey])
+      extends StaticField(_name, _fieldType, _reqTypes, _mandatory, _deletable, _keyO) {
 
     val useCaseSteps: Lens[UseCase, UseCaseSteps]
     val useCaseStepTree: Lens[UseCase, UseCaseSteps.Tree] // Has to be lazy to be implemented here. No.
@@ -177,9 +182,8 @@ object StaticField {
   private val sharedUseCaseStepLabels: Vector[IndexLabel] =
     Vector(NumericFrom1, Alpha, Roman, NumericFrom1)
 
-  case object NormalAltStepTree
-    extends StaticField("Normal and Alternate Courses", T.StepTree, useCaseOnly, Mandatory.Not, Deletable.Not, None)
-       with UseCaseStepTree {
+  case object NormalAltStepTree extends UseCaseStepTree(
+      "Normal and Alternate Courses", T.StepTree, useCaseOnly, Mandatory.Not, Deletable.Not, None) {
 
     override val useCaseSteps = GenLens[UseCase](_.stepsNA)
     override val useCaseStepTree = useCaseSteps ^|-> UseCaseSteps.tree
@@ -195,9 +199,8 @@ object StaticField {
       NumericFrom0 +: sharedUseCaseStepLabels
   }
 
-  case object ExceptionStepTree
-    extends StaticField("Exception Courses", T.StepTree, useCaseOnly, Mandatory.Not, Deletable.Not, None)
-       with UseCaseStepTree {
+  case object ExceptionStepTree extends UseCaseStepTree(
+      "Exception Courses", T.StepTree, useCaseOnly, Mandatory.Not, Deletable.Not, None) {
 
     override val useCaseSteps = GenLens[UseCase](_.stepsE)
     override val useCaseStepTree = useCaseSteps ^|-> UseCaseSteps.tree

@@ -48,7 +48,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
    *
    * Cached by its inputs.
    */
-  class Data(val project: Project, val req: GenericReq, upstreamFD: FilterDead) {
+  class Data(val project: Project, val req: Req, upstreamFD: FilterDead) {
     val live = req.live(project.config.customReqTypes)
 
     val filterDead = live match {
@@ -114,9 +114,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
         e <- pxExtPubid
         f <- pxUpstreamFD
       } yield
-        p.findReq(e).map {
-          case gr: GenericReq => new Data(p, gr, f)
-        }
+        p.findReq(e).map(new Data(p, _, f))
 
     val updateIO: ServerCall[UpdateContentCmd] =
       ServerCall.to(updateContentFn, cp, cd)
@@ -137,18 +135,19 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
         Editor.ImplicationsAll(req, dir, data.generalImps(dir))
       }
 
-      val edit: Cell => Option[Editor[Cell]] = cell =>
-        Some(cell match {
+      @inline implicit def autoSome[P](e: Editor[P]): Option[Editor[P]] = Some(e)
+      def edit(cell: Cell): Option[Editor[Cell]] =
+        cell match {
           case Cell.Title                                        => Editor.ReqTitle(req, cell)
           case Cell.Code                                         => Editor.ReqCodesForReq(req)
           case Cell.ImplicationSrc
              | Cell.ImplicationTgt                               => generalImps(cell)
-          case Cell.ReqType                                      => Editor.ReqType(req)
+          case Cell.ReqType                                      => Editor.reqType(req)
           case Cell.Tags                                         => Editor.Tags(req, None)
           case Cell.CustomField(fid: CustomField.Tag        .Id) => Editor.Tags(req, Some(fid))
           case Cell.CustomField(fid: CustomField.Text       .Id) => Editor.CustomTextField(req, fid, cell)
           case Cell.CustomField(fid: CustomField.Implication.Id) => Editor.ImplicationsCustomField(req, fid)
-        })
+        }
 
       initEditor.feature((cell, el) =>
         D0.Feature(static, asyncFeature(cell))(el, edit(cell)))
@@ -225,11 +224,12 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
       def renderRowTitle(row: Row): ReactNode =
         row match {
-          case Row.CustomField(f) => fieldName(f)
-          case Row.Code           => UiText.FieldNames.reqCodes
-          case Row.ReqType        => UiText.FieldNames.reqType
-          case Row.Tags           => UiText.FieldNames.tags
-          case Row.Implications   => UiText.FieldNames.implications
+          case Row.CustomField(f)  => fieldName(f)
+          case Row.Code            => UiText.FieldNames.reqCodes
+          case Row.ReqType         => UiText.FieldNames.reqType
+          case Row.Tags            => UiText.FieldNames.tags
+          case Row.Implications    => UiText.FieldNames.implications
+          case Row.UseCaseSteps(f) => f.name
         }
 
       def renderImpCell(cell: Cell, pubids: => Vector[Pubid]) =
@@ -285,6 +285,9 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
           case Row.CustomField(f: CustomField.Implication) =>
             renderImpCell(Cell.CustomField(f.id), data.customImps(f))
+
+          case Row.UseCaseSteps(f) =>
+            "TODO!"
         }
 
       <.div(

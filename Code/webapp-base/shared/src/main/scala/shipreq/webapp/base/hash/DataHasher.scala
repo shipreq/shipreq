@@ -208,6 +208,7 @@ sealed abstract class DataHasher extends GenericDashHasher {
   implicit val hashStaticFieldNS    : Hash[StaticField.NormalAltStepTree.type] = hashConstClass("NS")
   implicit val hashStaticFieldES    : Hash[StaticField.ExceptionStepTree.type] = hashConstClass("ES")
   implicit val hashCustomField      : Hash[CustomField                       ] = hashADT
+  implicit val hashStaticFieldUCT   : Hash[StaticField.UseCaseStepTree       ] = hashADT
   implicit val hashStaticField      : Hash[StaticField                       ] = hashADT
   implicit val hashFieldId          : Hash[FieldId                           ] = hashADT
   implicit val hashFieldSet         : Hash[FieldSet                          ] = hashCaseClass

@@ -105,6 +105,12 @@ object ContentEditorFeature {
     case class ReqTitle           [+P](req: Req, focusId: P)                                   extends Editor[P]
     case class ReqCodeGroupTitle  [+P](rcg: ReqCodeGroup, focusId: P)                          extends Editor[P]
     case class CustomTextField    [+P](req: Req, fid: CustomField.Text.Id, focusId: P)         extends Editor[P]
+
+    def reqType(req: Req): Option[ReqType] =
+      req match {
+        case r: GenericReq => Some(ReqType(r))
+        case _: UseCase    => None
+      }
   }
 
   /**
