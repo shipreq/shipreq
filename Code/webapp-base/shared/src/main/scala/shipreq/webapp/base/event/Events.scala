@@ -230,6 +230,7 @@ case class PatchReqCodes(id     : ReqId,
 case class PatchReqTags        (id: ReqId, patch: NESD[ApplicableTagId]) extends ActiveEvent
 case class PatchImplicationSrc (id: ReqId, patch: NESD[ReqId])           extends ActiveEvent
 case class PatchImplicationTgt (id: ReqId, patch: NESD[ReqId])           extends ActiveEvent
+// TODO Better for PatchImplication to take a Direction?
 
 case class SetCustomTextField(id: ReqId, fid: CustomField.Text.Id, value: CustomTextField.OptionalText) extends ActiveEvent
 

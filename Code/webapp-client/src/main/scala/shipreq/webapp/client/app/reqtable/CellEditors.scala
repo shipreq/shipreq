@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.reqtable
+delme package shipreq.webapp.client.app.reqtable
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._

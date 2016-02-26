@@ -16,8 +16,6 @@ object Common {
   import Functions._
   import Values._
 
-  val clearScreenTask = TaskKey[Unit]("clear", "Clears the screen.")
-
   def generateBuildPropFile(filename: String = "build.properties", prefix: String = "build.") = (p: Project) => {
     def createBuildProps(outDir: File, version: String) = {
       val outFile = outDir / filename
@@ -83,7 +81,7 @@ object Common {
   }
 
   val redirectTargetDir: File => File =
-    System.getenv("SHIPREQ_TARGET") match {
+    System.getenv(if (releaseMode) "SHIPREQ_RELEASE_TARGET" else "SHIPREQ_TARGET") match {
       case null | "" => identity
       case envValue =>
         val newTarget = envValue.replaceFirst("/*$", "/")
@@ -100,7 +98,6 @@ object Common {
   lazy val settingsMin = (p: Project) => p
     .enablePlugins(net.virtualvoid.sbt.graph.DependencyGraphPlugin)
     .settings(
-      clearScreenTask             := { println("\033[2J\033[;H") },
       organization                := "com.beardedlogic.shipreq",
       organizationName            := "Bearded Logic",
       version                     := s"${fmtTimeNow("yyyyMMdd")}-${gitRevisionShort}${snapshotSuffix}",
@@ -120,30 +117,30 @@ object Common {
     )
     .configure(
       addCommandAliases(
-        "C"    -> "root/clean",
-        "/"    -> "project root",
-        "B"    -> "project base",
-        "BU"   -> "project base-util-jvm",
-        "BT"   -> "project base-test-jvm",
-        "T"    -> "project taskman",
-        "W"    -> "project webapp",
-        "TAI"  -> "project taskman-api-impl",
-        "TAL"  -> "project taskman-api-logic",
-        "TSI"  -> "project taskman-server-impl",
-        "TSL"  -> "project taskman-server-logic",
-        "WB"   -> "project webapp-base-jvm",
-        "WT"   -> "project webapp-base-test-jvm",
-        "WC"   -> "project webapp-client",
-        "WS"   -> "project webapp-server",
-        "BM"   -> "project benchmark-jvm",
-        "BMJ"  -> "project benchmark-js",
-        "cc"   -> ";clear;compile",
-        "ctc"  -> ";clear;test:compile",
-        "ct"   -> ";clear;test",
-        "cq"   -> ";clear;testQuick",
-        "ccc"  -> ";clear;clean;compile",
-        "cctc" -> ";clear;clean;test:compile",
-        "cct"  -> ";clear;clean;test"))
+        "B"   -> "project base",
+        "BU"  -> "project base-util-jvm",
+        "BT"  -> "project base-test-jvm",
+        "T"   -> "project taskman",
+        "W"   -> "project webapp",
+        "TAI" -> "project taskman-api-impl",
+        "TAL" -> "project taskman-api-logic",
+        "TSI" -> "project taskman-server-impl",
+        "TSL" -> "project taskman-server-logic",
+        "WB"  -> "project webapp-base-jvm",
+        "WT"  -> "project webapp-base-test-jvm",
+        "WC"  -> "project webapp-client",
+        "WS"  -> "project webapp-server",
+        "BM"  -> "project benchmark-jvm",
+        "BMJ" -> "project benchmark-js",
+        "/"   -> "project root",
+        "C"   -> "root/clean",
+        "T"   -> ";root/clean;root/test",
+        "c"   -> "compile",
+        "tc"  -> "test:compile",
+        "t"   -> "test",
+        "cc"  -> ";clean;compile",
+        "ctc" -> ";clean;test:compile",
+        "ct"  -> ";clean;test"))
 
   /** Common settings used by standard modules - not benchmarks, not test modules */
   lazy val settings = (p: Project) => settingsMin(p)
@@ -170,37 +167,29 @@ object Common {
       scalacOptions += "-language:experimental.macros",
       libraryDependencies ++= Dependencies.Scala.macroDef(JVM))
 
-  def jsSettings(t: JsTestType) = (p: Project) => {
-    import sbinary.DefaultProtocol.StringFormat
-    import Cache.seqFormat
+  def jsSettings(t: JsTestType) = (p: Project) =>
     p.settings(
-      scalaJSStage in Global := jsStage,
-      parallelExecution in testOnly := false,
-      // Temp fix for https://github.com/scala-js/scala-js/issues/1817
-      inConfig(Test)(Seq(
-        definedTestNames <<= definedTests map (_.map(_.name).distinct) storeAs definedTestNames
-      ))
+      scalaJSUseRhino   in Global   := false,
+      scalaJSStage      in Global   := jsStage,
+      parallelExecution in testOnly := false
     ).configure(jsTests(t))
-  }
 
   def jsStage = if (releaseMode) FullOptStage else FastOptStage
 
   private def jsTests(t: JsTestType): Project => Project =
     t match {
       case NoTests =>
-        _.settings(
-          scalaJSStage in Test := PreLinkStage,
-          test                 := ())
+        _.settings(test :=())
       case NoDom =>
         _.settings(
-          requiresDOM           := false)
-//          postLinkJSEnv in Test := NodeJSEnv().value)
-//          postLinkJSEnv  in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value))
+          requiresDOM := false)
+//          jsEnv in Test := NodeJSEnv().value)
+//          jsEnv in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value))
       case NeedDom =>
         _.settings(
           requiresDOM            := true,
           emitSourceMaps in Test := false, // PhantomJS doesn't use
-          postLinkJSEnv  in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value))
+          jsEnv          in Test := new PhantomJS2Env(scalaJSPhantomJSClassLoader.value))
     }
 
   // ===================================================================================================================

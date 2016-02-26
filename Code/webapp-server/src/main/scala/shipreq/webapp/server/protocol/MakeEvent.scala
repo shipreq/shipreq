@@ -296,10 +296,10 @@ object MakeEvent { // TODO Move
       case UpdateContentCmd.SetCustomTextField(id, f, v) =>
         SetCustomTextField(id, f, v)
 
-      case UpdateContentCmd.PatchImplicationSrc(id, v) =>
+      case UpdateContentCmd.PatchImplications(id, Backwards, v) =>
         eventIfNonEmpty(v)(PatchImplicationSrc(id, _))
 
-      case UpdateContentCmd.PatchImplicationTgt(id, v) =>
+      case UpdateContentCmd.PatchImplications(id, Forwards, v) =>
         eventIfNonEmpty(v)(PatchImplicationTgt(id, _))
 
       case UpdateContentCmd.PatchReqCodes(reqId, v) =>

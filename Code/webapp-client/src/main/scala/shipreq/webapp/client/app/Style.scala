@@ -53,6 +53,24 @@ object Style extends StyleSheet.Inline {
 
   private val hoverShowsInfo = hasTitle(cursor.help)
 
+  private def hasError = errorRedOnRed
+
+  private val deadMixin = mixin(
+    textDecoration := ^.lineThrough)
+
+  private def deadMaybeValid(v: Validity) = v match {
+    case Valid   => deadAndNotError
+    case Invalid => deadAndError
+  }
+
+  private val deadAndNotError = mixin(
+    deadMixin,
+    color(c"#999"))
+
+  private val deadAndError = mixin(
+    deadMixin,
+    hasError)
+
   // ===================================================================================================================
   // Config screens
   object cfg {
@@ -65,6 +83,11 @@ object Style extends StyleSheet.Inline {
   // ===================================================================================================================
   object reqtable {
     import shipreq.webapp.client.app.reqtable.{Column, ColumnRenderer}
+
+    val pubidColumnValue = styleF(D.live)(a => styleS(
+      display.inline,
+      whiteSpace.nowrap,
+      mixinIf(a :: Dead)(deadAndNotError)))
 
     val viewSettingsHeader = style(
       backgroundColor(c"#ffe"))
@@ -251,31 +274,26 @@ object Style extends StyleSheet.Inline {
     ))
 
     val cellEditorErrMsg = style(
-      color(c"#a00")
-    )
+      color(c"#a00"))
 
-    private val autoCompleteDesc =
-      styleS(color(c"#444"), fontStyle.italic, overflow.hidden, maxWidth(36 ex))
+    val autoCompleteItemTitle = style(
+      fontWeight.bold)
 
-    val reqAutoComplete = styleC {
-      val r = styleS(fontWeight.bold)
-      r.named('req) :*: autoCompleteDesc.named('desc)
-    }
+    val autoCompleteItemTitle2 = style(
+      paddingLeft(1 ex),
+      color(c"#333"))
 
-    val codeRefToReqAutoComplete = styleC {
-      val code  = styleS(fontWeight.bold)
-      val pubid = styleS(paddingLeft(1 ex), color(c"#333"))
-      code.named('code) :*: pubid.named('pubid) :*: autoCompleteDesc.named('desc)
-    }
-
-    def codeRefToGroupAutoComplete = reqAutoComplete
+    val autoCompleteItemDesc = style(
+      color(c"#444"),
+      fontStyle.italic,
+      overflow.hidden,
+      maxWidth(36 ex))
 
     val textEditPreview = style(
       padding(h = 0.8.ex, v = 0.2.em),
       border(solid, 1 px, c"#222"),
       minHeight(2 em),
-      backgroundColor(c"#efe")
-    )
+      backgroundColor(c"#efe"))
 
     object deleteRestore {
 
@@ -298,7 +316,7 @@ object Style extends StyleSheet.Inline {
         style(marginRight(0.5 ex))
 
       val impliedByItem = styleF(D.live)(l => styleS(
-        hoverShowsInfo,
+        // hoverShowsInfo, // It's a link to ReqDetail now
         mixinIf(l :: Live)(color(c"#111")),
         mixinIf(l :: Dead)(
           //textDecoration := ^.lineThrough,
@@ -311,36 +329,61 @@ object Style extends StyleSheet.Inline {
   } // reqtable
 
   // ===================================================================================================================
+  object reqdetail {
+
+    val header = style(
+      fontSize(220 %%),
+      display.flex)
+
+    val headerId = style(
+      whiteSpace.pre)
+
+    val headerTitle = style(
+      marginLeft(1 ex),
+      flexGrow(1))
+
+    val mainTable = style(
+      width(100 %%),
+      marginTop(2 em))
+
+    private def padSizeL = 0.8 ex
+
+    def rowCell = styleS(
+      padding.vertical(0.4 em),
+      paddingLeft(padSizeL))
+
+    val rowTitle = style(
+      rowCell,
+      whiteSpace.pre,
+      paddingRight(1.4 ex))
+
+    val rowValue = style(
+      rowCell,
+      paddingRight(padSizeL),
+      width(100 %%))
+
+    val generalImpsCont = style(
+      display.flex,
+      alignItems.center,
+      width(100 %%))
+
+    val generalImpsSide = style(
+      border(^.dashed, 1 px),
+      minHeight(1.59 em),
+      flexGrow(1))
+
+    val generalImpsMiddle = style(
+      margin.horizontal(1 ex))
+  }
+
+  // ===================================================================================================================
   object widgets {
 
-    private def hasError = errorRedOnRed
-
     private val refColour = color(c"#2363A1")
-
-    private val deadMixin = mixin(
-      textDecoration := ^.lineThrough)
-
-    private def deadMaybeValid(v: Validity) = v match {
-      case Valid   => deadAndNotError
-      case Invalid => deadAndError
-    }
-
-    private val deadAndNotError = mixin(
-      deadMixin,
-      color(c"#999"))
-
-    private val deadAndError = mixin(
-      deadMixin,
-      hasError)
 
     val blankLine = style(display.block, height(1 em))
 
     val ul = style(paddingLeft(2.4 ex))
-
-    val pubidColumnValue = styleF(D.live)(a => styleS(
-      display.inline,
-      whiteSpace.nowrap,
-      mixinIf(a :: Dead)(deadAndNotError)))
 
     private def tagBase(live: Live) = mixin(
       display.inlineBlock,
@@ -361,7 +404,7 @@ object Style extends StyleSheet.Inline {
       mixinIf(l :: Dead)(deadMaybeValid(v)))
     }
 
-    val reqType = styleF(D.live)(a => styleS(
+    val reqTypeShort = styleF(D.live)(a => styleS(
       hoverShowsInfo,
       mixinIf(a :: Dead)(deadAndNotError)))
 
@@ -371,9 +414,9 @@ object Style extends StyleSheet.Inline {
       padding.horizontal(0.7 ex))
 
     val reqRef = styleF(D.`live * validity`){ case (l, v) => styleS(
+      // hoverShowsInfo, // It's a link to ReqDetail now
       mixinIf(l :: Live)(refColour),
-      mixinIf(l :: Dead)(deadMaybeValid(v)),
-      hoverShowsInfo
+      mixinIf(l :: Dead)(deadMaybeValid(v))
     )}
 
     def reqCodeGroupRef = reqRef
@@ -409,6 +452,7 @@ object Style extends StyleSheet.Inline {
     reqtable.filterEditor.errorMsg,
     reqtable.table,
     reqtable.deleteRestore.impliedByItem(Live),
+    reqdetail.mainTable,
     widgets.issue)
 //  ConsoleIO(_.log(render[String])).unsafePerformIO()
 //  ConsoleIO(_.info(s"Styles: ${Style.register.styles.length}")).unsafePerformIO()

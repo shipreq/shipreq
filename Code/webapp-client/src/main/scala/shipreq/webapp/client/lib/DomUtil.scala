@@ -9,11 +9,8 @@ import shipreq.base.util.ScalaExt._
 
 object DomUtil {
 
-  @inline implicit class PatchNode(private val n: Node) extends AnyVal {
-    @inline def castDom[T <: Node] = n.asInstanceOf[T]
-    @inline def castHtml = castDom[html.Element]
-    // TODO Is above needed after scalajs-react upgrade?
-  }
+//  @inline implicit class PatchNode(private val n: Node) extends AnyVal {
+//  }
 
   @inline implicit class PatchHtmlElement(private val e: html.Element) extends AnyVal {
     def disabledU: js.UndefOr[Boolean] =
@@ -73,33 +70,18 @@ object DomUtil {
   def isDragWithinNode(e: ReactDragEvent, node: Node): Boolean = {
     @inline def between(value: Double, from: Double, to: Double) =
       value >= from && value <= to
-    val r = node.castHtml.getBoundingClientRect()
+    val r = node.domAsHtml.getBoundingClientRect()
     between(e.clientX, r.left, r.right) && between(e.clientY, r.top, r.bottom)
   }
 
-  def checkModKeys(e       : ReactKeyboardEventH,
-                   altKey  : Boolean = false,
-                   ctrlKey : Boolean = false,
-                   metaKey : Boolean = false,
-                   shiftKey: Boolean = false): Boolean =
-    e.altKey   == altKey   &&
-    e.ctrlKey  == ctrlKey  &&
-    e.metaKey  == metaKey  &&
-    e.shiftKey == shiftKey
-
-  def keyCodeSwitch(e       : ReactKeyboardEventH,
+  def keyCodeSwitch(e       : ReactKeyboardEvent,
                     altKey  : Boolean = false,
                     ctrlKey : Boolean = false,
                     metaKey : Boolean = false,
                     shiftKey: Boolean = false)
                    (keyCodeSwitch: PartialFunction[Int, Callback]): CallbackOption[Unit] =
-    for {
-      _  <- CallbackOption.require(checkModKeys(e, altKey, ctrlKey, metaKey, shiftKey))
-      _  <- CallbackOption.unless(e.defaultPrevented)
-      cb <- CallbackOption.matchPF(e.nativeEvent.keyCode)(keyCodeSwitch)
-      _  <- cb
-      _  <- e.preventDefaultCB
-    } yield ()
+    CallbackOption.asEventDefault(e,
+      CallbackOption.keyCodeSwitch(e, altKey, ctrlKey, metaKey, shiftKey)(keyCodeSwitch))
 
   /**
    * Determine the index of an element amongst its parent's children.
@@ -160,7 +142,7 @@ object DomUtil {
    * @param focus Either table>thead>tr>th or table>tbody>tr>td
    */
   case class TableCellZipper(focus: html.Element) {
-    @inline implicit private def autoCastHtml(e: Element) = e.castHtml
+    @inline implicit private def autoCastHtml(e: Element) = e.domAsHtml
 
     def focusRow    : html.Element = focus.parentElement    // TH | TD
     def focusSection: html.Element = focusRow.parentElement // THEAD | TBODY

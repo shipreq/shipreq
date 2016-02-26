@@ -24,15 +24,15 @@ case class ViewSettings(columns    : NonEmptyVector[Column],
   @inline def isOrderedI(c: Column.SortInconclusive)            = order.isOrderedI(c)
   @inline def isOrderedI(f: Column.SortInconclusive => Boolean) = order.isOrderedI(f)
 
-  def filterColumns(f: Column => Boolean): Option[ViewSettings] =
+  def tryFilterColumns(f: Column => Boolean): Option[ViewSettings] =
     columns.filter(f).map(cols =>
       ViewSettings(cols, order filterColumns f, filter, filterDead))
 
+  def filterColumns(f: Column => Boolean): ViewSettings =
+    tryFilterColumns(f) getOrElse ViewSettings.default(filterDead)
+
   def setFilterDead(fd: FilterDead): ViewSettings =
-    filterColumns(Column filterDead fd) match {
-      case Some(vs) => vs.copy(filterDead = fd)
-      case None     => ViewSettings.default(fd)
-    }
+    copy(filterDead = fd).filterColumns(Column filterDead fd)
 
   def setColumns(newCols0: NonEmptyVector[Column]): ViewSettings = {
     // Ensure mandatory columns are present

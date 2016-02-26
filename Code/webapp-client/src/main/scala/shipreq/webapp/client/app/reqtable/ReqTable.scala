@@ -1,42 +1,50 @@
 package shipreq.webapp.client.app.reqtable
 
-import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
+import japgolly.scalajs.react._, vdom.prefix_<^._, MonocleReact._
+import japgolly.scalajs.react.experimental.StaticPropComponent
 import japgolly.scalajs.react.extra._
+import japgolly.scalajs.react.extra.router.RouterCtl
+import monocle.Lens
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import scalaz.{\/-, -\/}
-import scalaz.syntax.equal._
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.event.VerifiedEvents
 import shipreq.webapp.base.filter.{FilterAst, FilterSpec}
 import shipreq.webapp.base.text.{TextSearch, PlainText}
-import shipreq.webapp.client.app.state.{Changes, ChangeListener, ClientData}
+import shipreq.webapp.client.app.state.{Changes, ClientData}
 import shipreq.webapp.client.app.Style.{reqtable => *}
-import shipreq.webapp.client.lib.DataReusability._
 import shipreq.webapp.client.data.FilterDead
 import shipreq.webapp.client.feature._
-import shipreq.webapp.client.protocol.ClientProtocol
-import shipreq.webapp.client.widgets.ProjectWidgets
+import shipreq.webapp.client.protocol.{ClientProtocol, ServerCall}
+import shipreq.webapp.client.widgets.high.ProjectWidgets
 
-object ReqTable {
+object ReqTable extends StaticPropComponent.Template("ReqTable") {
+  override protected def configureBackend = new Backend(_, _)
+  override protected def configureRender  = _.renderBackend
+  override protected def configure = _
+    .componentWillMount(_.backend.syncProjectState)
+    .configure(
+      Listenable.install(_.static.cd, $ => (c: Changes) => $.props.static.state_$.modState(_ updateProject c.p2)))
 
-  val Component =
-    ReactComponentB[Props]("ReqTable")
-      .initialState_P(State.init)
-      .renderBackend[Backend]
-      .configure(ChangeListener.update[State](c => _.recvChanges(c)).install(_.cd))
-      .componentWillReceiveProps(i => i.$.backend.willReceiveProps(i.$.props, i.nextProps))
-      .build
+  type InitEditor = ContentEditorFeature.D2.InitChild[Row, Column, FocusId]
 
-  case class Props(cd             : ClientData,
-                   cp             : ClientProtocol,
-                   createContentFn: CreateContentFn.Instance,
-                   updateContentFn: UpdateContentFn.Instance,
-                   fd             : FilterDead,
-                   filterSpec     : Option[FilterSpec]) {
-    def component = Component(this)
-  }
+  case class StaticProps(cd              : ClientData,
+                         cp              : ClientProtocol,
+                         createContentFn : CreateContentFn.Instance,
+                         updateContentFn : UpdateContentFn.Instance,
+                         pxPlainText     : Px[PlainText.ForProject],
+                         pxTextSearch    : Px[TextSearch],
+                         pxProjectWidgets: Px[ProjectWidgets],
+                         initEditor      : InitEditor,
+                         asyncFeature    : AsyncActionFeature.D2.Feature[Row.SourceId, Column, String],
+                         reqDetailRC     : RouterCtl[ExternalPubid],
+                         state_$         : CompState.Access[State])
+
+  case class DynamicProps(editStates  : ContentEditorFeature.D2.State.ReadOnly[Row.SourceId, Column],
+                          asyncStates : AsyncActionFeature.D2.State.ReadOnly[Row.SourceId, Column, String],
+                          previewState: Preview.State,
+                          state       : State)
 
   @Lenses
   case class State(project     : Project,
@@ -44,14 +52,18 @@ object ReqTable {
                    filter      : FilterEditor.State,
                    selection   : RowSelection,
                    creation    : CreationInterface.State,
-                   editStates  : EditState.Table,
-                   asyncStates : AsyncState.TableState,
-                   previewState: Preview.State,
                    modal       : Modal.State) {
 
-    def recvChanges(changes: Changes): State =
-      copy(project = changes.p2) // TODO This obviously affects other things
-      // TODO A custom field removal/addition should affect ViewSettings
+    def updateProject(p2: Project): State = {
+      val legal = Column.all(p2.config, viewSettings.filterDead).whole.toSet
+      State(
+        p2,
+        viewSettings.filterColumns(legal.contains),
+        filter,
+        selection,
+        creation,
+        modal)
+    }
 
     def filterFailure(s: FilterEditor.State): State =
       copy(filter = s)
@@ -68,145 +80,189 @@ object ReqTable {
         case -\/(err) => filterFailure(FilterEditor.State(txt, Some(err)))
       }
     }
+
+    def setFilterDead(fd: FilterDead): State =
+      if (viewSettings.filterDead ==* fd)
+        this
+      else
+        State.viewSettings.modify(_ setFilterDead fd)(this)
   }
 
   object State {
     val sortCriteria = viewSettings ^|-> ViewSettings.order
 
-    def init(p: Props): State = {
-      val proj = p.cd.project
+    def init(cd: ClientData, fd: FilterDead, filterSpec: Option[FilterSpec]): State = {
+      val proj = cd.project()
       var s = State(proj,
-        ViewSettings      .default(p.fd),
-        FilterEditor      .initialState,
-        Selection         .empty,
-        CreationInterface .initState,
-        EditState         .empty,
-        AsyncState        .initState,
-        PreviewFeature    .initState,
-        Modal             .none)
-      p.filterSpec.foreach(f => s = s setFilterSpec f)
+        ViewSettings.default(fd),
+        FilterEditor.initialState,
+        Selection.empty,
+        CreationInterface.initState,
+        Modal.none)
+      filterSpec.foreach(f => s = s setFilterSpec f)
       s
     }
   }
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  final class Backend($: BackendScope[Props, State]) extends OnUnmount {
+  final class Backend(SP: StaticProps, $: BackendScope) extends OnUnmount {
+    import SP._
+    import cd.pxProject
 
-    val ST = ReactS.FixCB[State]
+    def syncProjectState: Callback =
+      $.props.map(_.state) flatMap { state =>
+        val p1 = state.project
+        val p2 = pxProject.value()
+        if (p1 ne p2)
+          state_$.setState(state updateProject p2)
+        else
+          Callback.empty
+      }
 
-    def willReceiveProps(oldProps: Props, nextProps: Props): Callback = {
-      val updateFD =
-        if (oldProps.fd ==* nextProps.fd) ST.nop else
-          ST.modT(State.viewSettings.modify(_ setFilterDead nextProps.fd))
+    // TODO Move these to scalajs-react?
+    private def reusableStateFn[A](f: A => State => State): A ~=> Callback =
+      ReusableFn(a => state_$.modState(f(a)))
 
-      val updateFS =
-        nextProps.filterSpec.fold(ST.nop)(fs =>
-          ST.modT(_ setFilterSpec fs))
+    private def reusableSetState[A](l: Lens[State, A]): A ~=> Callback =
+      reusableStateFn(l.set)
 
-      $.runState(updateFD >> updateFS)
-    }
+    private def reusableModState[A](l: Lens[State, A]): (A => A) ~=> Callback =
+      reusableStateFn(l.modify)
 
-    val setViewSettings = ReusableFn($ zoomL State.viewSettings).setState
-    val modViewSettings = ReusableFn($ zoomL State.viewSettings).modState
-    val setSortCriteria = ReusableFn($ zoomL State.sortCriteria).setState
-    val setSelection    = ReusableFn($ zoomL State.selection   ).setState
-    val setModal        = ReusableFn($ zoomL State.modal       ).setState
-    val setCreation     = $ zoomL State.creation
+    val setViewSettings = reusableSetState(State.viewSettings)
+    val modViewSettings = reusableModState(State.viewSettings)
+    val setSortCriteria = reusableSetState(State.sortCriteria)
+    val setSelection    = reusableSetState(State.selection)
+    val setModal        = reusableSetState(State.modal)
+    val setCreation     = state_$ zoomL State.creation
 
-    val project      = Px.bs($).stateM(_.project)
-    val viewSettings = Px.bs($).stateM(_.viewSettings)
-    val filterState  = Px.bs($).stateM(_.filter)
-    val selection    = Px.bs($).stateM(_.selection)
+    val pxViewSettings = Px.bsMP($).propsM(_.state.viewSettings)
+    val pxFilterState  = Px.bsMP($).propsM(_.state.filter)
+    val pxSelection    = Px.bsMP($).propsM(_.state.selection)
 
-    val vsVar      = viewSettings map (ReusableVar(_)(setViewSettings))
-    val vsCols     = viewSettings map (_.columns)
-    val colName    = project map Column.NameResolver.byProject reuse
-    val plainText  = project map PlainText.apply
-    val textSearch = Px.apply2(project, plainText)(TextSearch.apply)
-    val widgets    = Px.apply2(project, plainText)(ProjectWidgets.apply)
-    val colRnd     = Px.apply3(project, colName, widgets)(new ColumnRenderers(_, _, _))
-    val colRnds    = Px.apply2(vsCols, colRnd)(_ map _.apply)
-    val rows       = Px.apply4(viewSettings, project, plainText, textSearch)(Logic.rowsForTable).map(_.toVector)
-    val stats      = Px.apply3(viewSettings, project, rows)(Logic.stats)
+    val pxVsVar   = pxViewSettings map (ReusableVar(_)(setViewSettings))
+    val pxVsCols  = pxViewSettings map (_.columns)
+    val pxColName = pxProject map Column.NameResolver.byProject reuse
+    val pxColRnd  = Px.apply3(pxProject, pxColName, pxProjectWidgets)(new ColumnRenderers(_, _, _))
+    val pxColRnds = Px.apply2(pxVsCols, pxColRnd)(_ map _.apply)
+    val pxRows    = Px.apply4(pxViewSettings, pxProject, pxPlainText, pxTextSearch)(Logic.rowsForTable).map(_.toVector)
+    val pxStats   = Px.apply3(pxViewSettings, pxProject, pxRows)(Logic.stats)
 
-    val rowsWithAsyncWholeRowStatuses: Px.ThunkM[Set[Row.SourceId]] =
-      Px.bs($).stateM(_.asyncStates.iterator
-        .filter(_._2.rowStatus.isDefined)
+    val pxRowsWithAsyncWholeRowStatuses: Px.ThunkM[Set[Row.SourceId]] =
+      Px.bsMP($).propsM(_.asyncStates.iterator
+        .filter(_._2.statusD1.isDefined)
         .map(_._1)
         .toSet)
 
-    val visibleSelection =
+    val pxVisibleSelection =
       for {
-        rs <- rows
-        s  <- selection
-        wr <- rowsWithAsyncWholeRowStatuses
+        rs <- pxRows
+        s  <- pxSelection
+        wr <- pxRowsWithAsyncWholeRowStatuses
       } yield
         s.updateBy(setSelection).legal(rs.iterator.map(_.sourceId).toSet &~ wr)
 
-    val sortEditorProps =
+    val pxSortEditorProps =
       for {
-        vs  <- viewSettings
-        nr  <- colName
+        vs  <- pxViewSettings
+        nr  <- pxColName
       } yield SortEditor.Props(vs.order, setSortCriteria, nr)
 
-    private def callServer[I, F <: (I =>|=> VerifiedEvents)](remoteFn: Props => RemoteFn.InstanceFor[F]): CallServer[I] =
-      (i, sio, fio) => $.props >>= (p =>
-        p.cp.call(remoteFn(p))(
-          i,
-          s => p.cd.applyEventsS(s) >> sio,
-          f => p.cp.consumeGenericFailure(f) >> fio(p.cp.genericFailureToText(f))))
+    val createIO: ServerCall[CreateContentCmd] =
+      ServerCall.to(createContentFn, cp, cd)
 
-    val createIO: CallServer[CreateContentCmd] =
-      callServer(_.createContentFn)
-
-    val updateIO: CallServer[UpdateContentCmd] =
-      callServer(_.updateContentFn)
+    val updateIO: ServerCall[UpdateContentCmd] =
+      ServerCall.to(updateContentFn, cp, cd)
 
     val filterProps: FilterEditor.State => FilterEditor.Props = {
       import FilterEditor._
-      val onFailure: OnFailure = ReusableFn(s => $.modState(_ filterFailure s))
-      val onSuccess: OnSuccess = ReusableFn(i => $.modState(_.filterSuccess(i._1, i._2)))
-      s => FilterEditor.Props(project.value(), onFailure, onSuccess, s)
+      val onFailure: OnFailure = ReusableFn(s => state_$.modState(_ filterFailure s))
+      val onSuccess: OnSuccess = ReusableFn(i => state_$.modState(_.filterSuccess(i._1, i._2)))
+      s => FilterEditor.Props(pxProject.value(), onFailure, onSuccess, s)
     }
 
-    val filterEditor: Px[ReusableVal[ReactElement]] =
-      filterState map filterProps map ReusableVal.renderComponent(FilterEditor.Component)
+    val pxFilterEditor: Px[ReusableVal[ReactElement]] =
+      pxFilterState map filterProps map ReusableVal.renderComponent(FilterEditor.Component)
 
-    val asyncFeature = AsyncState.Feature($)(State.asyncStates)
+    val contentEditorFeature = {
+      import ContentEditorFeature._
 
-    val previewFeature = new PreviewFeature($, State.previewState)
+      val static = Static(
+        initEditor.parent, initEditor.preview, pxProject, pxPlainText, pxProjectWidgets, pxTextSearch, updateIO)
 
-    val cellEditors: CellEditors =
-      new CellEditorsImpl[State]($, State.editStates, asyncFeature, previewFeature, project, plainText, widgets,
-        textSearch, updateIO)
+      val edit: Row => Column => Option[Editor[FocusId]] = row => col => {
+        @inline implicit def autoSome[P](e: Editor[P]): Option[Editor[P]] = Some(e)
+        @inline def focusId = FocusId.AtCell(row.sourceId, col)
 
-    val creationInterface = new CreationInterface(setCreation, previewFeature, project, plainText, widgets, textSearch)
+        def imps(row: GenericReqRow, rowLens: monocle.Optional[Row, Vector[Pubid]]) =
+          rowLens.getOption(row).map(pubids =>
+            Editor.ImplicationsAll(row.req, Column.implicationDirection(col), pubids))
+
+        row match {
+          case r: GenericReqRow => col match {
+            case Column.Code                                              => Editor.ReqCodesForReq(r.req)
+            case Column.Title                                             => Editor.GenericReqTitle(r.req, focusId)
+            case Column.Tags                                              => Editor.Tags(r.req, None)
+            case Column.ReqType                                           => Editor.ReqType(r.req)
+            case Column.ImplicationSrc                                    => imps(r, Row.implicationSrc)
+            case Column.ImplicationTgt                                    => imps(r, Row.implicationTgt)
+            case Column.CustomField(id: CustomField.Text       .Id, Live) => Editor.CustomTextField(r.req, id, focusId)
+            case Column.CustomField(id: CustomField.Tag        .Id, Live) => Editor.Tags(r.req, Some(id))
+            case Column.CustomField(id: CustomField.Implication.Id, Live) => Editor.ImplicationsCustomField(r.req, id)
+            case Column.Pubid
+               | Column.DeletionReason
+               | Column.CustomField(_, Dead)                              => None
+          }
+
+          case r: ReqCodeGroupRow => col match {
+            case Column.Code              => Editor.ReqCodeForReqCodeGroup(r.group, r.reqCode)
+            case Column.Title             => Editor.ReqCodeGroupTitle(r.group, focusId)
+            case Column.Pubid
+               | Column.ReqType
+               | Column.Tags
+               | Column.ImplicationSrc
+               | Column.ImplicationTgt
+               | Column.DeletionReason
+               | Column.CustomField(_, _) => None
+          }
+        }
+      }
+
+      initEditor.feature((row, col, el) =>
+        D0.Feature(static, asyncFeature(row.sourceId)(col))(el, edit(row)(col)))
+    }
+
+    val creationInterface =
+      new CreationInterface(setCreation, initEditor.preview, pxProject, pxPlainText, pxProjectWidgets, pxTextSearch)
 
     // -----------------------------------------------------------------------------------------------------------------
-    def render(s: State): ReactElement = {
-      Px.refresh(project, viewSettings, filterState, selection, rowsWithAsyncWholeRowStatuses)
+    def render(p: DynamicProps): ReactElement = {
+      Px.refresh(pxViewSettings, pxFilterState, pxSelection, pxRowsWithAsyncWholeRowStatuses)
       import Px.AutoValue._
+      import p.{state => s}
 
       val cfg = s.project.config
 
-      def vsProps = ViewSettingsEditor.Props(colName, cfg, vsVar, filterEditor)
+      def vsProps = ViewSettingsEditor.Props(pxColName, cfg, pxVsVar, pxFilterEditor)
 
-      def creationProps = CreationInterface.Props(createIO, s.creation, s.previewState)
+      def creationProps = CreationInterface.Props(createIO, s.creation, p.previewState)
 
       def tableProps = Table.Props(
-        project, rows, colName, colRnds, cellEditors, s.editStates,s.asyncStates, visibleSelection, modViewSettings)
+        pxProject, pxRows, pxColName, pxColRnds, contentEditorFeature, p.editStates, p.asyncStates, pxVisibleSelection,
+        modViewSettings)
 
       def selCtrlProps = SelectionCtrls.Props(
-        visibleSelection, cfg, rows, setModal, project, widgets, plainText, textSearch, updateIO, asyncFeature)
+        pxVisibleSelection, cfg, pxRows, setModal, pxProject, pxProjectWidgets, pxPlainText, pxTextSearch, updateIO,
+        asyncFeature)
 
       def mainScreen =
         <.div(
           ViewSettingsEditor.Component(vsProps),
           creationInterface.Component(creationProps),
-          StatsSummary(stats),
+          StatsSummary(pxStats),
           SelectionCtrls.Component(selCtrlProps),
-          SortEditor.Component(sortEditorProps),
+          SortEditor.Component(pxSortEditorProps),
           Table.Component(tableProps))
 
       s.modal renderOrElse mainScreen

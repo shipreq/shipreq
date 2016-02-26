@@ -178,11 +178,11 @@ object ShipReq extends Build {
     def WC = "webapp-client"
     def WS = "webapp-server"
     addCommandAliases(
-      "ctbc"-> ";clean ;clear ;tbc",                                       // Clean Test Base & Client
+      "ctbc"-> ";clean ;tbc",                                              // Clean Test Base & Client
       "tbc" -> s";$WT/test:compile ;$WC/test:compile ;$WT/test ;$WC/test", // Test Base & Client
       "js"  -> s";$WC/${WebappClient.jsCmd} ;$WS/linkClientJs",            // compile JavaScript
       "jsp" -> s";$WC/${WebappClient.jsCmd} ;$WS/webappPrepare",           // compile JavaScript, auto deploy
-      "up"  -> s";$WS/jetty:stop ;clear ;$WS/jetty:start",                 // webapp: UP
+      "up"  -> s";$WS/jetty:stop  ;$WS/jetty:start",                       // webapp: UP
       "d"   -> s"$WS/jetty:stop",                                          // webapp: Down
       "wd"  -> ";up ;~js")                                                 // WebDev
   }
@@ -258,21 +258,21 @@ object ShipReq extends Build {
         ))
 
     def createProject =
-      project(WebappClient.dir)
+      project(dir)
         .enablePlugins(ScalaJSPlugin)
         .dependsOn(baseUtilJs, webappBaseJs, webappBaseTestJs % "test->compile")
         .depsForJs(
           Scalaz.effect ++ React.most ++ Monocle.macros ++ ScalaCSS.react ++
           μPickle ++ shapeless ++ Nyaya.prop ++ parboiled ++ boopickle ++
-          testScope(React.test ++ μTest ++ Nyaya.test)
+          testScope(React.test ++ μTest ++ TestState.core ++ Nyaya.test)
         )
         .configure(
           Common.jsSettings(NeedDom),
           webappSettings,
           useMacroParadise,
-          WebappClient.testSettings,
+          testSettings,
           dontInline, // crashes 2.11.7 / 0.6.4
-          debugOrRelease(identity, WebappClient.prodJsSettings)
+          debugOrRelease(identity, prodJsSettings)
         )
   }
 

@@ -21,7 +21,7 @@ object TextEditor {
 
   implicit object Input extends TextEditor {
     override type Dom           = html.Input
-    override def tag            = <.input(^.`type` := "text")
+    override def tag            = <.input.text
     override def multiLine      = false
     override def value (d: Dom) = d.value
     override def focus (d: Dom) = d.focus()

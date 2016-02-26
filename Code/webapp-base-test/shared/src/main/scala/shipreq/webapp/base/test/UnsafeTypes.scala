@@ -129,6 +129,14 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
   implicit def autoText_UseCaseStepN(s: String): Text.UseCaseStep.NonEmptyText = NonEmptyVector one s
   implicit def autoText_UseCaseStepO(s: String): Text.UseCaseStep.OptionalText = Vector1(s)
 
+  private val extpubFmt = "^([a-zA-Z]+)-?(\\d+)$".r
+
+  implicit def autoExtPubid(s: String): ExternalPubid =
+    s match {
+      case extpubFmt(a, b) => ExternalPubid(a, b.toInt)
+      case w => sys error s"This isn't an ExternalPubid: $w"
+    }
+
 //  /** "0.0" ⇒ NonEmptyVector(0,0) */
 //  implicit def vectorTreeLocFromString(s: String): VectorTree.Location =
 //    NonEmptyVector force

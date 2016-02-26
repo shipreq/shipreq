@@ -1,6 +1,6 @@
 package shipreq.webapp.base.protocol
 
-import shipreq.base.util.{NonEmptySet, SetDiff, UnivEq}
+import shipreq.base.util.{Direction, NonEmptySet, SetDiff, UnivEq}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Text
 import boopickle._, BoopickleMacros._, BinCodecGeneric._, BinCodecData._, AtomPicklers.instances._
@@ -13,8 +13,7 @@ sealed trait UpdateContentCmd
 object UpdateContentCmd {
 
   case class PatchReqTags        (id: ReqId, patch: SetDiff[ApplicableTagId]) extends UpdateContentCmd
-  case class PatchImplicationSrc (id: ReqId, patch: SetDiff[ReqId])           extends UpdateContentCmd
-  case class PatchImplicationTgt (id: ReqId, patch: SetDiff[ReqId])           extends UpdateContentCmd
+  case class PatchImplications   (id: ReqId, dir: Direction, patch: SetDiff[ReqId]) extends UpdateContentCmd
   case class PatchReqCodes       (id: ReqId, patch: SetDiff[ReqCode.Value])   extends UpdateContentCmd
 
   case class SetGenericReqType   (id: GenericReqId, value: CustomReqTypeId) extends UpdateContentCmd
@@ -32,8 +31,7 @@ object UpdateContentCmd {
   implicit val cmdEquality: UnivEq[UpdateContentCmd] = UnivEq.deriveAuto
 
   implicit val picklePatchReqTags        : Pickler[PatchReqTags        ] = pickleCaseClass
-  implicit val picklePatchImplicationSrc : Pickler[PatchImplicationSrc ] = pickleCaseClass
-  implicit val picklePatchImplicationTgt : Pickler[PatchImplicationTgt ] = pickleCaseClass
+  implicit val picklePatchImplications   : Pickler[PatchImplications   ] = pickleCaseClass
   implicit val picklePatchReqCodes       : Pickler[PatchReqCodes       ] = pickleCaseClass
   implicit val pickleSetGenericReqType   : Pickler[SetGenericReqType   ] = pickleCaseClass
   implicit val pickleSetReqCodeGroupCode : Pickler[SetReqCodeGroupCode ] = pickleCaseClass

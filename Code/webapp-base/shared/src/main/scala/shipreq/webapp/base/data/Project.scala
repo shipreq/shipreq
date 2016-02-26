@@ -2,7 +2,7 @@ package shipreq.webapp.base.data
 
 import monocle.Lens
 import monocle.macros.Lenses
-import scalaz.Equal
+import scalaz.{Equal, \/, -\/, \/-}
 import scalaz.std.anyVal.intInstance
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{TransitiveClosure, UtilMacros}
@@ -36,6 +36,12 @@ object Project {
       Implications.emptyBiDir,
       DeletionReasons.empty,
       IdCeilings.zero)
+}
+
+sealed abstract class PubidQueryError
+object PubidQueryError {
+  case object InvalidReqType extends PubidQueryError
+  case class InvalidPos(reqType: ReqType, maxLegalPos: Int) extends PubidQueryError
 }
 
 @Lenses
@@ -109,5 +115,20 @@ final case class Project(config         : ProjectConfig,
       reqs.reqs.keys,
       deadReqIds,
       f(implications))
-}
 
+  def findReq(externalPubid: ExternalPubid): PubidQueryError \/ Req =
+    findReq(externalPubid.mnemonic, externalPubid.pos)
+
+  def findReq(mnemonic: ReqType.Mnemonic, pos: ReqTypePos): PubidQueryError \/ Req =
+    config.reqTypesByMnemonic.get(mnemonic) match {
+      case None =>
+        -\/(PubidQueryError.InvalidReqType)
+      case Some(rt) =>
+        val i = pos.value - 1
+        val register = reqs.pubids.value(rt.reqTypeId)
+        if (register.isIndexValid(i))
+          \/-(reqs req register(i))
+        else
+          -\/(PubidQueryError.InvalidPos(rt, register.length))
+    }
+}

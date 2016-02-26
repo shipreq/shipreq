@@ -1,26 +1,31 @@
 package shipreq.webapp.client.app.cfg.shared
 
 import japgolly.scalajs.react._, vdom.prefix_<^._
-import japgolly.scalajs.react.extra.Px
+import japgolly.scalajs.react.vdom.ReactTagOf
+import japgolly.scalajs.react.extra._
+import org.scalajs.dom.html
 import shipreq.webapp.base.data.{LDStats, Project}
 import shipreq.webapp.base.filter.FilterSpec
-import shipreq.webapp.client.app.ProjectSpaMain._
 import shipreq.webapp.client.data.FilterDead
 
 object Usage {
   type View = ReactElement
+  type Show = ReusableVal[(FilterDead, () => FilterSpec) => ReactTagOf[html.Anchor]]
 
-  def apply[Id, Data](id        : Data => Id)
-                     (stats     : Project => LDStats[Id, Int],
-                      filterSpec: Data => FilterSpec,
-                      project   : Px[Project],
-                      filterDead: Px[FilterDead],
-                      routerCtl : Px[RouterCtl]): Data => View = {
+  def Show(f: (FilterDead, () => FilterSpec) => ReactTagOf[html.Anchor]): Show =
+    ReusableVal(f)(Reusability.byRef)
+
+  def apply[Id, Data](id          : Data => Id)
+                     (stats       : Project => LDStats[Id, Int],
+                      filterSpec  : Data => FilterSpec,
+                      pxProject   : Px[Project],
+                      pxFilterDead: Px[FilterDead],
+                      pxShow      : Px[Show]): Data => View = {
     val px: Px[Data => View] =
       for {
-        rc <- routerCtl
-        fd <- filterDead
-        p  <- project
+        fd   <- pxFilterDead
+        p    <- pxProject
+        show <- pxShow
       } yield {
         val lookup = fd ldStatsAccessor stats(p)
         d => {
@@ -28,12 +33,8 @@ object Usage {
           def desc = count // + " occurrences"
           if (count == 0)
             <.span(desc)
-          else {
-            def showReqTable(e: ReactEvent) =
-              ReqTableNextState(fd, Some(filterSpec(d))).set >>
-                rc.setEH(ReqTable)(e)
-            <.a(^.href := "#", ^.onClick ==> showReqTable, desc)
-          }
+          else
+            show.value(fd, () => filterSpec(d))(desc)
         }
       }
     px.extract

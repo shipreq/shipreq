@@ -25,8 +25,11 @@ object Digraph {
     lazy val backwards: UniDir[A] =
       forwards.reverse
 
-    def dir(fwd: Boolean): UniDir[A] =
-      if (fwd) forwards else backwards
+    def apply(dir: Direction): UniDir[A] =
+      dir match {
+        case Forwards  => forwards
+        case Backwards => backwards
+      }
 
     def memberIterator: Iterator[A] =
       Digraph.memberIterator(forwards)

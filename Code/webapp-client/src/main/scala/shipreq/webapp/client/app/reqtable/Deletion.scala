@@ -13,9 +13,10 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd.DeleteReqs
 import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.client.app.Style.reqtable.{deleteRestore => *}
+import shipreq.webapp.client.data.Plain
 import shipreq.webapp.client.feature.{PreviewFeature, Selection}
-import shipreq.webapp.client.lib.ClientUtil
-import shipreq.webapp.client.widgets.{ProjectWidgets, RichTextEditor, Widgets}
+import shipreq.webapp.client.widgets.Widgets
+import shipreq.webapp.client.widgets.high.{ProjectWidgets, RichTextEditor}
 import MTrie.Ops
 
 object Deletion {
@@ -317,11 +318,6 @@ object Deletion {
     val cancelButton: ReactElement =
       <.button(^.onClick --> $.props.flatMap(_.cancel), "Cancel")
 
-    private val renderImpliedByItemMemo = Live.memo { live =>
-      val style: Req => TagMod = _ => *.impliedByItem(live)
-      Memo.by((_: Req).id)(widgets.reqRefBasic(_, identity, style))
-    }
-
     // -----------------------------------------------------------------------------------------------------------------
     def renderReqs(p: Props, s: State): TagMod = {
       val selAll = s.selectedReqs.updateBy(setReqSel)
@@ -330,8 +326,8 @@ object Deletion {
       def liveGivenState(r: Req): Live =
         (Dead <~ s.selectedReqs.selected.contains(r.id)) && r.live(customReqTypes)
 
-      def renderImpliedByItem(req: Req): ReactElement =
-        renderImpliedByItemMemo(liveGivenState(req))(req)
+      val renderImpliedByItem =
+        widgets.PubidFormat(Plain, *.impliedByItem(_), liveFn = liveGivenState)
 
       def reqRow(rr: ReqRow): TagMod = {
         import rr._
@@ -353,7 +349,7 @@ object Deletion {
           else
             <.span(
               <.span(*.impliedByPrefix, "⇐"),
-              ClientUtil.renderVector(impliedBy, ClientUtil.sepComma)(renderImpliedByItem))
+              renderImpliedByItem.reqs(impliedBy))
 
         <.tr(
           td(<.span(*.indent(indent)), sel.fold(Widgets.checkboxAlwaysOn)(_.checkbox), reqTitle),

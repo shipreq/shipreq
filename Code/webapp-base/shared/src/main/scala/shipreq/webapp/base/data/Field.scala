@@ -91,6 +91,9 @@ sealed trait Field {
 
   final def fieldId: FieldId =
     fold(s => s, _.id)
+
+  final def applicable(reqTypeId: ReqTypeId): Applicable =
+    Applicable <~ reqTypes.filter(reqTypeId)
 }
 
 object Field {
@@ -98,7 +101,7 @@ object Field {
 
   implicit lazy val applicableReqTypesEquality: UnivEq[ApplicableReqTypes] = implicitly
 
-  def name(customReqTypes: CustomReqTypeIMap, tags: TagTree) = {
+  def name(customReqTypes: CustomReqTypeIMap, tags: TagTree): Field => String = {
     val cn: CustomField => String = CustomField.name(customReqTypes, tags)
     val fn: Field       => String = {
       case f: StaticField => f.name
@@ -107,7 +110,8 @@ object Field {
     fn
   }
 
-  def nameP(p: Project) = name(p.config.customReqTypes, p.config.tags)
+  def nameP(p: Project): Field => String =
+    name(p.config.customReqTypes, p.config.tags)
 }
 
 import Field.ApplicableReqTypes
@@ -329,6 +333,9 @@ object CustomField {
       override def id(d: Implication) = d.id
       override val unapplyData: AnyRef => Option[Implication] = {case r: Implication => Some(r); case _ => None}
     }
+
+    // Implication fields always look backwards (i.e. refer to implication sources)
+    def dir = Backwards
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -385,11 +392,20 @@ object FieldId {
 case class FieldSet(customFields: FieldSet.CustomFields,
                     order       : FieldSet.Order) {
 
+  def get(id: FieldId): Option[Field] =
+    id match {
+      case f : StaticField   => if (order contains f) Some(f) else None
+      case id: CustomFieldId => customFields get id
+    }
+
   lazy val fields: Vector[Field] =
     order map {
       case f : StaticField   => f
       case id: CustomFieldId => customFields need id
     }
+
+  def fieldsForReqType(reqTypeId: ReqTypeId): Vector[Field] =
+    fields.filter(_.applicable(reqTypeId) :: Applicable)
 
   def staticFieldIterator: Iterator[StaticField] =
     order.filterTI[StaticField]

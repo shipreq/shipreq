@@ -4,11 +4,14 @@ import monocle.Optional
 import monocle.function.Index.index
 import monocle.std.map.mapIndex
 import scala.annotation.tailrec
+import scala.reflect.ClassTag
 import scalaz.std.option.optionInstance
+import shipreq.base.util.MutableArray
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.{PlainText, Text}
+import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.client.app.reqtable.{SortMethod => SM, SortCriterion => SC, Column => C}
+import shipreq.webapp.client.data.DataLogic
 import ColumnRenderer.SortableDeletionReason
 import SortMethod.{Asc, AscThenBlanks, BlanksThenAsc}
 
@@ -113,9 +116,7 @@ object Sorter {
       SortFn(go).considerBlanks(_.isEmpty)(bp)
     }
 
-    def pair        : SortFn[(A, A)] = this &&& this
-    def strengthL[B]: SortFn[(B, A)] = contramap(_._2)
-    def strengthR[B]: SortFn[(A, B)] = contramap(_._1)
+    def pair: SortFn[(A, A)] = this &&& this
 
     def byBlankPlacement[B](f: SortFn[A] => BlankPlacement => SortFn[B]): BlankPlacement => SortFn[B] = {
       val bf = f(this)(BlanksFirst)
@@ -185,22 +186,22 @@ object Sorter {
   def tryModEndo[A, B](l: Optional[A, B])(mod: B => Option[B]): EndoFn[A] =
     a => l.modifyF[Option](mod)(a) getOrElse a
 
-  def typicalRowModFn[A, B](l: Optional[Row, Vector[A]], s: SortFn[B])(f: Setup => A => B): RowModFn =
+  def typicalRowModFn[A: ClassTag, B](l: Optional[Row, Vector[A]], s: SortFn[B])(f: Setup => A => B): RowModFn =
     Some((setup, dir) => {
       val n = f(setup)
-      val o = s.applyDir(dir).strengthR[A].toOrdering
+      val o = s.applyDir(dir).toOrdering
       def innerSort(i: Vector[A]): Option[Vector[A]] =
         if (i.isEmpty || i.tail.isEmpty)
           None
         else
-          i.map(_ mapStrengthL n).sorted(o).map(_._2).some
+          MutableArray(i).sortBySchwartzian(n)(o).to[Vector].some
       tryModEndo(l)(innerSort)
     })
 
   // ===================================================================================================================
   // Specific
 
-  type TagOrder = Map[ApplicableTagId, Int]
+  type TagOrder = DataLogic.TagOrder
 
   /**
    * Project data prepared in a way that various sorts will use.
@@ -210,45 +211,23 @@ object Sorter {
     def normalisedText(f: PlainText.ForProject => String) =
       stringNormalise(f(plainText))
 
-    def ordermap[A](name: String, as: TraversableOnce[A]): Map[A, Int] =
-      as.toIterator.zipWithIndex.toMap
-
     val applicability = Applicability(p)
 
     @inline def reqTypesToMnemonicOrder =
       p.config.reqTypeOrder
 
     lazy val tagByNameOrder: TagOrder =
-      ordermap("tag",
-        p.config.tags.valuesIterator
-          .map(_.tag)
-          .filterT[ApplicableTag]
-          .map(_.tmap2(_.key.value |> stringNormalise, _.id))
-          .toVector
-          .sortBy(_._1)
-          .iterator
-          .map(_._2)
-      )
+      DataLogic.tagOrderByName(p.config.tags)
 
     lazy val tagByPosOrder: TagOrder =
-      ordermap("tag",
-        FlatTag.flatten(p.config.tags)(_ => true, FlatTag.FilterPolicy.OmitNothing)
-          .toStream
-          .map(_.id)
-          .filterT[ApplicableTagId]
-      )
+      DataLogic.tagOrderByPos(p.config.tags)
   }
 
-  def pubidNormaliser(setup: Setup): Pubid => (Int, Int) = {
-    val reqTypeOrder = setup.reqTypesToMnemonicOrder
-    p => {
-      val o = reqTypeOrder(p.reqTypeId)
-      (o, p.pos.value)
-    }
-  }
+  def pubidNormaliser(setup: Setup): Pubid => (Int, Int) =
+    DataLogic.pubidSortKeyFn(setup.p.config)
 
-  val stringNormalise: EndoFn[String] =
-    _.toLowerCase
+  @inline def stringNormalise: EndoFn[String] =
+    DataLogic.normaliseStringForSorting
 
   // ReqCodeGroups are only displayed when sorting by code.
   // ReqCodeGroups cannot have a blank code.

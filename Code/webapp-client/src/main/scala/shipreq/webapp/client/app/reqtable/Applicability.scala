@@ -1,37 +1,38 @@
 package shipreq.webapp.client.app.reqtable
 
 import shipreq.webapp.base.data._
-import DataImplicits._
 import Applicability.Subject
 
 /**
  * Rules in project config prohibit certain combinations of column and requirement.
  */
-object Applicability {
-  private val pass = (_: Any) => true
+object Applicability { // TODO Now that time has passed, this looks stupid, over-specialised and confusing. Redo.
+  private val alwaysApplicable: Any => Applicable =
+    _ => Applicable
 
   def apply(project: Project): Applicability = {
-    val reqTypeFilter: Column => ReqTypeId => Boolean = {
-      case Column.CustomField(id, _) => project.config.customField(id).reqTypes.filter
-      case _: Column.BuiltIn         => pass
-    }
+    val reqTypeFilter: Column => ReqTypeId => Applicable =
+      c => Column.field(c, project.config) match {
+        case Some(f) => f.applicable
+        case None    => alwaysApplicable
+      }
     new Applicability(reqTypeFilter)
   }
 
   sealed trait Subject[A] {
-    def apply(reqTypeFilter: ReqTypeId => Boolean)(a: A): Boolean
+    def apply(reqTypeFilter: ReqTypeId => Applicable)(a: A): Applicable
   }
 
   implicit object SubjectRow extends Subject[Row] {
-    override def apply(reqTypeFilter: ReqTypeId => Boolean)(row: Row): Boolean =
+    override def apply(reqTypeFilter: ReqTypeId => Applicable)(row: Row): Applicable =
       row match {
         case r: ReqRow          => SubjectReq(reqTypeFilter)(r.req)
-        case _: ReqCodeGroupRow => true
+        case _: ReqCodeGroupRow => Applicable
       }
   }
 
   implicit object SubjectReq extends Subject[Req] {
-    override def apply(reqTypeFilter: ReqTypeId => Boolean)(r: Req): Boolean =
+    override def apply(reqTypeFilter: ReqTypeId => Applicable)(r: Req): Applicable =
       reqTypeFilter(r.reqTypeId)
   }
 }
@@ -39,7 +40,7 @@ object Applicability {
 /**
  * Determination of which columns and rows are not-applicable.
  */
-class Applicability(reqTypeFilter: Column => ReqTypeId => Boolean) {
+class Applicability(reqTypeFilter: Column => ReqTypeId => Applicable) {
 
   def apply(c: Column): ApplicabilityC =
     new ApplicabilityC(reqTypeFilter(c))
@@ -48,14 +49,17 @@ class Applicability(reqTypeFilter: Column => ReqTypeId => Boolean) {
     c => apply(c).wrap(f(c))(`n/a`)
 }
 
-class ApplicabilityC(reqTypeFilter: ReqTypeId => Boolean) {
+class ApplicabilityC(reqTypeFilter: ReqTypeId => Applicable) {
 
-  @inline def apply[S](s: S)(implicit e: Subject[S]): Boolean =
+  @inline def apply[S](s: S)(implicit e: Subject[S]): Applicable =
     e(reqTypeFilter)(s)
 
-  def choose[S: Subject, A](s: S, na: => A)(ok: => A): A =
-    if (apply(s)) ok else na
+  def choose[S: Subject, A](s: S, `n/a`: => A)(ok: => A): A =
+    apply(s) match {
+      case Applicable    => ok
+      case NotApplicable => `n/a`
+    }
 
   def wrap[S: Subject, A](f: S => A)(`n/a`: A): S => A =
-    r => if (apply(r)) f(r) else `n/a`
+    r => choose(r, `n/a`)(f(r))
 }

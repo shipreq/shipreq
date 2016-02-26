@@ -26,8 +26,8 @@ private[issues] object CustomIssueTypes {
   case class Props(cp        : ClientProtocol,
                    remote    : CustomIssueTypeCrud.Instance,
                    clientData: ClientData,
-                   filterDead: FilterDead,
-                   routerCtl : ProjectSpaMain.RouterCtl) {
+                   filterDead: ReusableVar[FilterDead],
+                   usageShow : Usage.Show) {
     @inline def component = Component(this)
   }
   implicit val reusability = Reusability.caseClass[Props]
@@ -45,13 +45,13 @@ private[issues] object CustomIssueTypes {
       .build
 
   private def initialState(p: Props): S =
-    State(newRowStore.initState,
-      savedRowStore.initStateIM(p.clientData.project.config.customIssueTypes),
-      p.filterDead)
+    State(
+      newRowStore.initState,
+      savedRowStore.initStateIM(p.clientData.project().config.customIssueTypes))
 
   private def validatorState(k: Option[CustomIssueTypeId], cd: CallbackTo[ClientData]): S => V.S = {
     val tags: Px[HashRefKeyVS.Data[TagId]] =
-      Px.cbA(cd.map(_.project.config.tags))
+      Px.cbA(cd.map(_.project().config.tags))
         .map(_.valuesIterator.map(t => t.tag.keyO.map(k => (t.tag.id.some, k))).filterDefined.toStream)
         .map((None, _))
     s => {
@@ -62,9 +62,9 @@ private[issues] object CustomIssueTypes {
   }
 
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
-    val project    = Px.bs($).propsM(_.clientData.project)
-    val filterDead = Px.bs($).stateM(_.filterDead)
-    val routerCtl  = Px.bs($).propsM(_.routerCtl)
+    val project    = Px.bs($).propsM(_.clientData.project())
+    val filterDead = Px.bs($).propsM(_.filterDead.value)
+    val usageShow  = Px.bs($).propsM(_.usageShow)
 
     val crudIO =
       Px.bs($).propsA.map(p =>
@@ -96,9 +96,9 @@ private[issues] object CustomIssueTypes {
     val usageFn = Usage((_: CustomIssueType).id)(
       _.atomScan.issueCounts,
       FilterSpec HashRef _.key,
-      project, filterDead, routerCtl)
+      project, filterDead, usageShow)
 
-    val table = {
+    val cfgTable = {
       def rowRenderer =
         new CfgTable.RowRenderer[CustomIssueType, rowE.View, (TagMod, TagMod, Option[Usage.View])] {
           override def newRow = {
@@ -116,23 +116,28 @@ private[issues] object CustomIssueTypes {
         }
       }
 
-      // TODO Few c.state.runNow()s in CustomIssueTypes
-      val t = CfgTable(rowE, savedRowStoreS, newRowStoreS).build(
-        _.key, rowRenderer,
-        i => (valState(None)($.state.runNow()), i),
-        k => (valState(k.some)($.state.runNow()), savedRowStoreS.getI(k)($.state.runNow())),
-        () => supp.deletion.value(), _.live, _.filterDead, $)
+      // TODO Few $.state.runNow() in CustomIssueTypes - safe because in lambdas
+      def s = $.state.runNow()
+      CfgTable(rowE, savedRowStoreS, newRowStoreS).build(
+          _.key, rowRenderer,
+          i => (valState(None)(s), i),
+          k => (valState(k.some)(s), savedRowStoreS.getI(k)(s)),
+          () => supp.deletion.value(),
+          _.live,
+          $.props.map(_.filterDead.value),
+          $)
+    }
 
+    val table = {
       val headerRow = CfgTable.header(List(FieldNames.hashRefKey, FieldNames.desc, FieldNames.usage))
-
-      () => t.table(headerRow, Stream.empty)
+      () => cfgTable.table(headerRow, Stream.empty)
     }
 
     val outer =
-      CfgTable.outer(storesAndState)($)
+      cfgTable.wrapWithFilterDeadCheckbox(fd => $.props.flatMap(_.filterDead set fd))
 
     def render: ReactElement = {
-      Px.refresh(project, filterDead, routerCtl)
+      Px.refresh(project, filterDead, usageShow)
       outer(table())
     }
   }

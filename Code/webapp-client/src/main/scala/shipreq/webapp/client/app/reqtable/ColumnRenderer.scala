@@ -10,7 +10,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.ProjectText
 import shipreq.webapp.client.app.Style.{reqtable => *}
 import shipreq.webapp.client.data.Plain
-import shipreq.webapp.client.widgets.ProjectWidgets
+import shipreq.webapp.client.widgets.high.ProjectWidgets
 import ColumnRenderer._
 
 final class ColumnRenderer(
@@ -47,7 +47,7 @@ object ColumnRenderer {
     override protected def reqTypeIsDead(pt: PT, rt: ReqType) =
       <.span(
         UiText.ColumnNames.reqType + " ",
-        pt.reqType(rt.reqTypeId),
+        pt.reqTypeShort(rt.reqTypeId),
         " is deleted.")
   }
 
@@ -110,13 +110,16 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
   private def placeholder =
     make(Function const <.span("∅"))
 
+  private val pubidColumnValue =
+    widgets.PubidFormat(Plain, *.pubidColumnValue(_), titleFn = _ => None)
+
   private def pubid = make {
-    case r: ReqRow          => widgets.pubidColumnValue(r.req.pubid)
+    case r: ReqRow          => pubidColumnValue(r.req)
     case _: ReqCodeGroupRow => `N/A`
   }
 
   private def reqType = make {
-    case r: ReqRow          => widgets.reqType(r.req.reqTypeId)
+    case r: ReqRow          => widgets.reqTypeShort(r.req.reqTypeId)
     case _: ReqCodeGroupRow => `N/A`
   }
 
@@ -132,7 +135,7 @@ class ColumnRenderers(project: Project, columnName: Column.NameResolver, widgets
   }
 
   private def imps(lens: Optional[Row, Vector[Pubid]]) = make {
-    case r: ReqRow          => maybeEmpty(lens, r)(widgets.pubidRefList(Plain, Valid))
+    case r: ReqRow          => maybeEmpty(lens, r)(widgets.implicationList)
     case _: ReqCodeGroupRow => `N/A`
   }
 

@@ -459,24 +459,24 @@ class ApplicableEventGen(p: Project) {
     Gen.tryGenChooseLazily(ids).map(_ map DeleteUseCaseStep)
   }
 
-  private def patchImplications[A](cmd: (ReqId, NESD[ReqId]) => A, fwd: Boolean): Option[Gen[A]] =
+  private def patchImplications[A](cmd: (ReqId, NESD[ReqId]) => A, dir: Direction): Option[Gen[A]] =
     if (liveReqIds.length < 2)
       None
     else
       liveReqId.map { gReqId =>
         gReqId.flatMap { id =>
           Gen.choose_!(liveReqIds.filter(_ !=* id)).set1.map { ids =>
-            val sd = SetDiff.xor(p.implications.dir(fwd)(id), ids)
+            val sd = SetDiff.xor(p.implications(dir)(id), ids)
             cmd(id, NonEmpty force sd)
           }
         }
       }
 
   def patchImplicationSrc: Option[Gen[PatchImplicationSrc]] =
-    patchImplications(PatchImplicationSrc, false)
+    patchImplications(PatchImplicationSrc, Backwards)
 
   def patchImplicationTgt: Option[Gen[PatchImplicationTgt]] =
-    patchImplications(PatchImplicationTgt, true)
+    patchImplications(PatchImplicationTgt, Forwards)
 
   def patchReqCodes: Option[Gen[PatchReqCodes]] =
     liveReqId.map(gReqId =>

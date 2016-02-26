@@ -57,7 +57,7 @@ object SortEditor {
         },
 
       content =>
-        $.props map { p =>
+        $.props map[ReactElement] { p =>
           val nameResolver = p.nameResolver
           var conclusiveSeen = false
 

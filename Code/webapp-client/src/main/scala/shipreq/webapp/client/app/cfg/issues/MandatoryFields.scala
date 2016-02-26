@@ -35,11 +35,11 @@ private[issues] object MandatoryFields {
     .build
 
   private def initialState(p: Props) =
-    rowStore.initStateIM(p.clientData.project.config.fields.customFields)
+    rowStore.initStateIM(p.clientData.project().config.fields.customFields)
 
   final class Backend($: BackendScope[Props, S]) extends OnUnmount {
 
-    val pxProject = Px.bs($).propsA(_.clientData.project)
+    val pxProject = Px.bs($).propsA(_.clientData.project())
     val labelFn   = pxProject map Field.nameP
 
     def save(id: CustomFieldId): CallbackTo[ST] =
@@ -83,6 +83,6 @@ private[issues] object MandatoryFields {
     def render(p: Props, s: S): ReactElement =
       <.table(
         <.thead(<.tr(<.th("Mandatory Fields"))),
-        <.tbody(renderRows(p.clientData.project, s)))
+        <.tbody(renderRows(p.clientData.project(), s)))
   }
 }

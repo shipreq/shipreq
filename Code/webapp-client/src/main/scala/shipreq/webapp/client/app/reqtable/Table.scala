@@ -9,10 +9,9 @@ import shipreq.base.util.NonEmptyVector
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.app.Style.{reqtable => *}
-import shipreq.webapp.client.feature.AsyncActionFeature
+import shipreq.webapp.client.feature.{AsyncActionFeature, ContentEditorFeature}
 import shipreq.webapp.client.lib._
 import shipreq.webapp.client.widgets.DragToReorder
-import AsyncActionFeature.Table.RowState
 import AsyncActionFeature.{Locked, renderLocked}
 import DataReusability._
 import DomUtil._
@@ -25,9 +24,9 @@ object Table {
                    rows           : Rows,
                    colName        : Column.NameResolver,
                    colRenderers   : NonEmptyVector[ColumnRenderer],
-                   cellEditors    : CellEditors,
-                   editState      : EditState.Table,
-                   asyncState     : AsyncState.TableState,
+                   cellEditors    : ContentEditorFeature.D2.Feature[Row, Column],
+                   editState      : ContentEditorFeature.D2.State.ReadOnly[Row.SourceId, Column],
+                   asyncState     : AsyncActionFeature.D2.State.ReadOnly[Row.SourceId, Column, String],
                    selection      : RowSelectionVisible,
                    modViewSettings: EndoFn[ViewSettings] ~=> Callback)
 
@@ -43,7 +42,7 @@ object Table {
   final class Backend($: BackendScope[Props, Unit]) {
 
     val startCellEdit = ReusableFn[Row, Column, Callback, Callback]((r, c, focus) =>
-      $.props >>= (_.cellEditors.startEdit(r, c, focus) getOrElse Callback.empty))
+      $.props >>= (_.cellEditors(r)(c).startEdit(focus) getOrElse Callback.empty))
 
     val reorderColumns = ReusableFn((cols: NonEmptyVector[Column]) =>
       $.props >>= (_.modViewSettings(_ setColumns cols)))
@@ -62,9 +61,9 @@ object Table {
       val renderRows =
         rows.indices.toReactNodeArray { i =>
           val row = rows(i)
-          val rs2 = EditState.getRow(p.editState, row.sourceId)
-          val as  = AsyncState.get(p.asyncState)(row.sourceId)
-          val rp  = RowProps(row, crs, p.cellEditors, rs2, as , p.selection, startCellEdit(row))
+          val rs2 = p.editState(row.sourceId)
+          val as  = p.asyncState(row.sourceId)
+          val rp  = RowProps(row, crs, rs2, as, p.selection, startCellEdit(row))
           RowComponent.withKey(row.id.key)(rp)
         }
 
@@ -107,7 +106,7 @@ object Table {
           $.props.flatMap(_ reorder no)),
 
       content =>
-        $.props map { p =>
+        $.props map[ReactElement] { p =>
           val name = p.colName
 
           val selectionCell =
@@ -152,9 +151,8 @@ object Table {
 
   case class RowProps(row        : Row,
                       crs        : NonEmptyVector[ColumnRenderer],
-                      cellEditors: CellEditors,
-                      editState  : EditState.AtRow,
-                      asyncState : AsyncState.RowState,
+                      editState  : ContentEditorFeature.D1.State.ReadOnly[Column],
+                      asyncState : AsyncActionFeature.D1.State.ReadOnly[Column, String],
                       selection  : RowSelectionVisible,
                       startEdit  : Column ~=> StartEdit)
 
@@ -177,7 +175,7 @@ object Table {
 
     val td = <.td(*.cell(rowStatus))
 
-    def renderRowNormal(cells: AsyncState.ColStates) = {
+    def renderRowNormal = {
       val sel = p.selection(row.sourceId)
 
       def selCell =
@@ -189,7 +187,7 @@ object Table {
       def colCells =
         p.crs.iterator.map { cr =>
           val col = cr.column
-          val cp = CellProps(row, cr, p.editState get col, cells get col, p startEdit col)
+          val cp = CellProps(row, cr, p editState col, p asyncState col, p startEdit col)
           CellComponent.withKey(col.key)(cp)
         }.toReactNodeArray
 
@@ -207,17 +205,17 @@ object Table {
       <.tr(td(renderLocked), colCells)
     }
 
-    p.asyncState match {
-      case RowState(None                      , cells) => renderRowNormal(cells)
-      case RowState(Some(Locked)              , _    ) => renderRowLocked
-      case RowState(Some(s: AsyncState.Failed), _    ) =>
+    p.asyncState.statusD1 match {
+      case None                                       => renderRowNormal
+      case Some(Locked)                               => renderRowLocked
+      case Some(s: AsyncActionFeature.Failed[String]) =>
         // Currently, whole-row state is only used when a row is being deleted/restored.
         // To save dev-time, if the RPC fails an alert popups asking to retry/cancel, thus this part of the code
         // should only execute when the row is locked. Whole-row editing + failure won't occur.
         dom.console.warn(s.failure)
         <.tr(
           td(^.colSpan := (p.crs.length + 1),
-            renderAsyncState(s)))
+            s.render))
     }
   }
 
@@ -226,8 +224,8 @@ object Table {
 
   case class CellProps(row       : Row,
                        cr        : ColumnRenderer,
-                       cellEditor: Option[CellEditor],
-                       asyncState: AsyncState.Single,
+                       cellEditor: ContentEditorFeature.D0.State,
+                       asyncState: AsyncActionFeature.D0.State[String],
                        startEdit : StartEdit)
 
   implicit val cellPropReuse = Reusability.caseClass[CellProps]
@@ -273,12 +271,11 @@ object Table {
       $.props >>= (_ startEdit focus)
 
     def render(p: CellProps) = {
-      val col = p.cr.column
       val (status, roView) = p.cr.render(p.row)
       // TODO roView should be non-strict or a fn
 
       def editView: Option[ReactElement] =
-        p.cellEditor.flatMap(_.render(p.row, col))
+        p.cellEditor.flatMap(_.render())
 
       cellBase(
         *.cell(status),
@@ -286,7 +283,7 @@ object Table {
         ^.onKeyDown ==> onKeyDown,
         p.asyncState match {
           case None    => editView getOrElse[ReactElement] roView
-          case Some(s) => renderAsyncState(s): ReactElement
+          case Some(s) => s.render
         })
     }
   }
@@ -304,7 +301,7 @@ object Table {
       val z = TableCellZipper(cell) move_- ↔ move_| ↕
       val f: dom.html.Element =
         if (z.colIndex == 0)
-          z.focus.children(0).castHtml // Selection checkbox
+          z.focus.children(0).domAsHtml // Selection checkbox
         else
           z.focus
       f.focus()

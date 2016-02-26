@@ -18,11 +18,11 @@ object UiText {
   }
 
   object ColumnNames {
-    def reqType        = "Type"
+    def reqType        = FieldNames.reqType
     def pubid          = "ID"
-    def code           = "Code"
+    def code           = FieldNames.reqCode
     def title          = "Title"
-    def tags           = "Tags"
+    def tags           = FieldNames.tags
     def implicationSrc = "Implied By"
     def implicationTgt = "Implies"
     def deletionReason = "Deletion Reason"
@@ -32,6 +32,7 @@ object UiText {
     def hashRefKey          = "Key"
     def fieldRefKey         = hashRefKey
     def reqCode             = "Code"
+    def reqCodes            = "Codes"
     def reqCodeNode         = "Code node"
     def name                = "Name"
     def desc                = "Description"
@@ -43,6 +44,9 @@ object UiText {
     def dndDragHandleHeader = ""
     def usage               = "Usage"
     def implicationRequired = "Implication Required"
+    def reqType             = "Type"
+    def tags                = "Tags"
+    def implications        = "Implications"
   }
 
   object Cfg {

@@ -114,11 +114,9 @@ object AutoComplete {
     }
 
     def li(i: ReqItem): ReactElement =
-      *.reqAutoComplete('req)(r => _('desc)(d =>
-        <.div(
-          <.div(r, i.pubidStr),
-          <.div(d, i.title))
-      ))
+      <.div(
+        <.div(*.autoCompleteItemTitle, i.pubidStr),
+        <.div(*.autoCompleteItemDesc, i.title))
 
     reflinkContext.strategy(s"(\\S+?)", searchFn)(_.pubidStr, " ")(Contextualise)
       .template((i, _) => ReactDOMServer.renderToStaticMarkup(li(i)))
@@ -134,7 +132,7 @@ object AutoComplete {
     UnivEq.derive
 
   @inline def normaliseReqPubid(s: String): String =
-    Grammar.pubidSeqFormat.normEach(s)
+    Grammar.pubid.seqFormat.normEach(s)
 
   // ===================================================================================================================
   // ReqCodes
@@ -270,19 +268,15 @@ object AutoComplete {
         val code = a._1
         a._2 match {
           case \/-(a) =>
-            *.codeRefToReqAutoComplete('code)(c => _('pubid)(p => _('desc)(d =>
+            <.div(
               <.div(
-                <.div(
-                  <.span(c, code),
-                  <.span(p, s"(${PlainText.pubid(project, a.reqId)})"),
-                <.div(d, pt.reqTitleById(a.reqId))))
-            )))
+                <.span(*.autoCompleteItemTitle, code),
+                <.span(*.autoCompleteItemTitle2, s"(${PlainText.pubid(project, a.reqId)})"),
+              <.div(*.autoCompleteItemDesc, pt.reqTitleById(a.reqId))))
           case -\/(a) =>
-            *.codeRefToGroupAutoComplete('req)(r => _('desc)(d =>
-              <.div(
-                <.div(r, code),
-                <.div(d, pt.reqCodeGroupTitle(a.group)))
-            ))
+            <.div(
+              <.div(*.autoCompleteItemTitle, code),
+              <.div(*.autoCompleteItemDesc, pt.reqCodeGroupTitle(a.group)))
         }
       }
 

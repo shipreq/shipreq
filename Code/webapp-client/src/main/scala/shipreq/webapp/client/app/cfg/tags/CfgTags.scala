@@ -33,7 +33,10 @@ import FlatTag.FilterPolicy
 import TagInTree.Relations
 
 object CfgTags {
-  case class Props(cp: ClientProtocol, remote: TagCrud.Fn.Instance, clientData: ClientData, filterDead: FilterDead) {
+  case class Props(cp        : ClientProtocol,
+                   remote    : TagCrud.Fn.Instance,
+                   clientData: ClientData,
+                   filterDead: ReusableVar[FilterDead]) {
     def component: ReactComponentU_ = MainTable.Component(this)
   }
   implicit val reusability = Reusability.caseClass[Props]
@@ -59,8 +62,7 @@ private[tags] object MainTable {
   case class DetailPaneState(id: Id, parentAddSel: Option[Id], childAddSel: Option[Id])
 
   @Lenses
-  case class State(filterDead: FilterDead,
-                   tg_state  : tg_stores.State,
+  case class State(tg_state  : tg_stores.State,
                    at_state  : at_stores.State,
                    tree      : TreeState,
                    newSel    : TagType,
@@ -73,9 +75,6 @@ private[tags] object MainTable {
 
     lazy val tagTree: TagTree =
       tagStream.foldLeft(TagTree.empty)((q, t) => q add TagInTree(t, tree(t.id)))
-
-    val tagFilter: Tag => Boolean =
-      filterDead.filterFnA[Tag](_.live)
   }
 
   object State {
@@ -101,12 +100,12 @@ private[tags] object MainTable {
   def initialState(p: Props): S = {
     val tgs = Seq.newBuilder[TagGroup]
     val ats = Seq.newBuilder[ApplicableTag]
-    val tagtree = p.clientData.project.config.tags
+    val tagtree = p.clientData.project().config.tags
     tagtree.values.foreach(_.tag match {
       case t: TagGroup      => tgs += t
       case t: ApplicableTag => ats += t
     })
-    State(p.filterDead,
+    State(
       tg_state  = tg_stores.initState(_.initStateS(tgs.result(), _.id)),
       at_state  = at_stores.initState(_.initStateS(ats.result(), _.id)),
       tree      = Multimap(tagtree.mapValues(_.children)),
@@ -182,7 +181,7 @@ private[tags] object MainTable {
       (k, s.tagStream.map(t => t.keyO.map(k => (t.id.some, k))).filter(_.isDefined).map(_.get))
 
     val is: HashRefKeyVS.Data[CustomIssueTypeId] = // TODO cacheable
-      (None, cd.project.config.customIssueTypes.values.toStream
+      (None, cd.project().config.customIssueTypes.values.toStream
         .map(i => (i.id.some, i.key)))
 
     (s.tagStream, HashRefKeyVS(ts, is))
@@ -233,9 +232,9 @@ private[tags] object MainTable {
       Memo.int[Indenter](indent(_, identity))
     }
 
-    def rows(s: State): TagMod = {
+    def rows(fd: FilterDead, s: State): TagMod = {
       val renderers = (tg_renderer.all(s) #::: at_renderer.all(s)).foldLeft(UnivEq.emptyMap[Id, F])(_ + _)
-      val flatTree  = FlatTag.flatten(s.tagTree)(s.tagFilter, FilterPolicy.OmitAnythingWithBadParent)
+      val flatTree  = FlatTag.flatten(s.tagTree)(fd.filterFnA[Tag](_.live), FilterPolicy.OmitAnythingWithBadParent)
       val results   = JsArray.apply[ReactNode]()
       @inline def append(r: ReactNode): Unit = results push r
 
@@ -250,20 +249,22 @@ private[tags] object MainTable {
       results
     }
 
-    val filterDeadCheckbox = Checkbox.filterDead_$($ zoomL State.filterDead)
+    val filterDeadCheckbox = Checkbox.filterDead(v => $.props.flatMap(_.filterDead set v))
 
-    def render(s: State): ReactElement =
+    def render(p: Props, s: State): ReactElement = {
+      val fd = p.filterDead.value
       <.div(
         NewTagControl.Component(newTagControlProps(s)),
-        filterDeadCheckbox(),
+        filterDeadCheckbox(fd),
         <.table(
           headerRow,
-          <.tbody(rows(s))
+          <.tbody(rows(fd, s))
         ),
         DetailPaneFns.render(
           s, crudIO.value().updateIO,
           parentSel = $ _setStateL State.detailRowSelParent,
-          childSel  = $ _setStateL State.detailRowSelChild ))
+          childSel  = $ _setStateL State.detailRowSelChild))
+    }
 
     // -----------------------------------------------------------------------------------------------------------------
     // Subtype

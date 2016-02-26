@@ -1,12 +1,10 @@
 package shipreq.webapp.client.test
 
+import org.scalajs.dom._
 import scala.scalajs.js
 
 @js.native
 object Sizzle extends js.Object {
-
-  type DOM    = org.scalajs.dom.Element
-  type Result = js.Array[DOM]
 
   /*
   Sizzle( String selector[, DOMElement|DOMDocument context[, Array results]] )
@@ -25,8 +23,8 @@ object Sizzle extends js.Object {
    */
 
   def apply(selector: String,
-            context: DOM = js.native,
-            results: Result = js.native): Result = js.native
+            context: Node = js.native,
+            results: js.Array[Element] = js.native): js.Array[Element] = js.native
 
 
   /*
@@ -43,7 +41,7 @@ object Sizzle extends js.Object {
   selector: A css selector
    */
 
-  def matchesSelector(element: DOM, selector: String): Boolean = js.native
+  def matchesSelector(element: Element, selector: String): Boolean = js.native
 
   /*
   Sizzle.matches( String selector, Array<DOMElement> elements )
@@ -56,5 +54,5 @@ object Sizzle extends js.Object {
 
   elements: An array of DOMElements to filter against the specified selector.
    */
-  def matches(selector: String, elements: js.Array[DOM]): js.Array[DOM] = js.native
+  def matches(selector: String, elements: js.Array[Element]): js.Array[Element] = js.native
 }

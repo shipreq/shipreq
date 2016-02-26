@@ -8,7 +8,7 @@ import IsoBool._
  *
  * Mix into the base type and override [[this.companion]] there.
  */
-trait IsoBool[B <: IsoBool[B]] extends (Boolean <=> B) {
+trait IsoBool[B <: IsoBool[B]] extends (Boolean <=> B) with Product with Serializable {
   this: B =>
 
   def companion: Object[B]
