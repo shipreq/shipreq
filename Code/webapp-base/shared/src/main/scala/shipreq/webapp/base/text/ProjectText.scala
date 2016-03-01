@@ -133,7 +133,7 @@ abstract class ProjectText[Out](project: Project) {
         case Some(m) =>
           val liveField = cfg.fields.customFields.need(fid).live(cfg)
           memoByReqId(r =>
-            m.get(r.id) map (format1(liveField && r.live(cfg.customReqTypes), _)))
+            m.get(r.id) map (format1(liveField & r.live(cfg.customReqTypes), _)))
         case None =>
           Function const None
       }

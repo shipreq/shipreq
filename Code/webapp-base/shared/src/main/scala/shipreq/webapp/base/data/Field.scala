@@ -300,7 +300,7 @@ object CustomField {
       tags.need(tagId).tag.name
 
     override def live(cfg: ProjectConfig) =
-      liveExplicitly && cfg.live(tagId)
+      liveExplicitly & cfg.live(tagId)
   }
   object Tag {
     final case class Id(value: Int) extends CustomFieldId  {
@@ -326,7 +326,7 @@ object CustomField {
       ReqType.name(customReqTypes)(reqTypeId)
 
     override def live(cfg: ProjectConfig) =
-      liveExplicitly && cfg.live(reqTypeId)
+      liveExplicitly & cfg.live(reqTypeId)
   }
   object Implication {
     final case class Id(value: Int) extends CustomFieldId {

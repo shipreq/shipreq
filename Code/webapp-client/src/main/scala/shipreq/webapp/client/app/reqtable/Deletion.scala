@@ -135,7 +135,7 @@ object Deletion {
 
     // Copy-paste with Backend#render
     def liveGivenState(r: Req): Live =
-      (Dead <~ select.contains(r.id)) && r.live(p.config.customReqTypes)
+      (Dead <~ select.contains(r.id)) & r.live(p.config.customReqTypes)
 
     // Decide which implied reqs to recommend cascading deletion
     // (I'm sure there's a smarter way but this will do)
@@ -324,7 +324,7 @@ object Deletion {
 
       // Copy-paste with initProps()
       def liveGivenState(r: Req): Live =
-        (Dead <~ s.selectedReqs.selected.contains(r.id)) && r.live(customReqTypes)
+        (Dead <~ s.selectedReqs.selected.contains(r.id)) & r.live(customReqTypes)
 
       val renderImpliedByItem =
         widgets.PubidFormat(Plain, *.impliedByItem(_), liveFn = liveGivenState)

@@ -81,7 +81,7 @@ final case class GenericReq(id            : GenericReqId,
     }
 
   override def live(customReqTypes: CustomReqTypeIMap): Live =
-    liveExplicitly && implicitLiveStatus(customReqTypes).live
+    liveExplicitly & implicitLiveStatus(customReqTypes).live
 }
 
 object GenericReq {

@@ -65,12 +65,12 @@ object IsoBool {
   trait WithBoolOps[B <: IsoBool[B]] extends IsoBool[B] {
     this: B =>
 
-    final def &&(that: => B): B = {
+    final def &(that: => B): B = {
       val pos = companion.positive
       pos <~ ((this :: pos) && (that :: pos))
     }
 
-    final def ||(that: => B): B = {
+    final def |(that: => B): B = {
       val pos = companion.positive
       pos <~ ((this :: pos) || (that :: pos))
     }
