@@ -6,14 +6,14 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import scalacss.ScalaCssReact._
 import scalaz.{\/, -\/, \/-}
-import shipreq.base.util.{Memo, Direction, MutableArray, Valid}
+import shipreq.base.util._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.{UpdateContentCmd, UpdateContentFn}
-import shipreq.webapp.base.text.{PlainText, TextSearch}
+import shipreq.webapp.base.text.{Text, PlainText, TextSearch}
 import shipreq.webapp.client.app.state.ClientData
 import shipreq.webapp.client.app.Style.{reqdetail => *}
-import shipreq.webapp.client.data.{Plain, ShowDead, FilterDead, DataLogic}
+import shipreq.webapp.client.data._
 import shipreq.webapp.client.feature._
 import shipreq.webapp.client.lib.DataReusability._
 import shipreq.webapp.client.protocol.{ServerCall, ClientProtocol}
@@ -95,6 +95,50 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
     val customImps: CustomField.Implication => Vector[Pubid] =
       Memo(f =>
         sortPubids(customImpLookup(f)(req.id)))
+
+    final class UseCaseData(val uc: UseCase) {
+
+      private def stepTreeProps(field   : StaticField.UseCaseStepTree,
+                                filter  : UseCaseSteps.Tree => Range,
+                                defaultFirst: Text.UseCaseTitle.OptionalText,
+                                tailStep: Boolean) = {
+        val t = field.useCaseStepTree.get(uc)
+        val i = filter(t)
+        Temp(field, t, i, defaultFirst, tailStep)
+      }
+
+      val stepsN = stepTreeProps(
+        StaticField.NormalAltStepTree,
+        _ => 0 to 0,
+        uc.title,
+        false)
+
+      val stepsA = stepTreeProps(
+        StaticField.NormalAltStepTree,
+        1 until _.children.length,
+        Vector.empty,
+        true)
+
+      val stepsE = stepTreeProps(
+        StaticField.ExceptionStepTree,
+        _.children.indices,
+        Vector.empty,
+        true)
+    }
+
+    val useCaseData: Option[UseCaseData] =
+      req match {
+        case uc: UseCase => Some(new UseCaseData(uc))
+        case _           => None
+      }
+  }
+
+  case class Temp(field: StaticField.UseCaseStepTree,
+                  tree: UseCaseSteps.Tree,
+                  filter: Range,
+                  defaultFirst: Text.UseCaseTitle.OptionalText,
+                  tailStep: Boolean) {
+    val mdt = tree.maxDepthTree
   }
 
   // TODO Better performance if cells are (components + shouldComponentRender) or cached
@@ -171,7 +215,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
     def rows(project: Project, req: Req): Vector[Row] = {
       val fields = project.config.fields.fieldsForReqType(req.reqTypeId)
-      Row.head ++ fields.iterator.map(Row.fromField)
+      fields.foldLeft(Row.head)(_ ++ Row.fromField(_))
     }
 
     def focus: Callback = Callback.empty // TODO
@@ -220,12 +264,14 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
       def renderRowTitle(row: Row): ReactNode =
         row match {
-          case Row.CustomField(f)  => fieldName(f)
-          case Row.Code            => UiText.FieldNames.reqCodes
-          case Row.ReqType         => UiText.FieldNames.reqType
-          case Row.Tags            => UiText.FieldNames.tags
-          case Row.Implications    => UiText.FieldNames.implications
-          case Row.UseCaseSteps(f) => f.name
+          case Row.CustomField(f) => fieldName(f)
+          case Row.Code           => UiText.FieldNames.reqCodes
+          case Row.ReqType        => UiText.FieldNames.reqType
+          case Row.Tags           => UiText.FieldNames.tags
+          case Row.Implications   => UiText.FieldNames.implications
+          case Row.UseCaseStepsN  => UiText.FieldNames.useCaseStepTreeN
+          case Row.UseCaseStepsA  => UiText.FieldNames.useCaseStepTreeA
+          case Row.UseCaseStepsE  => UiText.FieldNames.useCaseStepTreeE
         }
 
       def renderImpCell(cell: Cell, pubids: => Vector[Pubid]) =
@@ -282,7 +328,11 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
           case Row.CustomField(f: CustomField.Implication) =>
             renderImpCell(Cell.CustomField(f.id), data.customImps(f))
 
-          case Row.UseCaseSteps(f) =>
+          case Row.UseCaseStepsN => renderStepTree(data.useCaseData.get.stepsN)
+          case Row.UseCaseStepsA => renderStepTree(data.useCaseData.get.stepsA)
+          case Row.UseCaseStepsE => renderStepTree(data.useCaseData.get.stepsE)
+
+            /*
             val uc = data.req match {
               case x: UseCase => x
               case x => sys error s"Not a use case: $x"
@@ -304,7 +354,77 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
                              _ => Callback.empty) // update    : UpdateContentCmd.ForUseCaseStep => Callback
               .render)
             rows.toReactNodeArray
+            */
         }
+
+      // TODO Move
+      def renderStepTree(temp: Temp) = {
+        import shipreq.webapp.client.app.Style.reqdetail.{useCaseStep => *}
+        import uce._
+        val uc = data.useCaseData.get.uc
+        val pos = uc.pubid.pos
+        val flow = data.project.reqs.useCases.stepFlow
+
+        var first = temp.defaultFirst.nonEmpty
+        val x = temp.tree.subtreeLocAndValueIterator(temp.filter, (loc, step) => {
+
+          def header =
+            <.div(
+              *.header(loc.length - 1),
+              temp.field.stepLabel(pos, loc, mnemonicPrefix = false) + ".")
+
+          def body = {
+
+            // TODO Not like this
+            val d = if (first) {
+              first = false
+              temp.defaultFirst
+            } else
+              Vector.empty
+
+            val p =
+            StepText.Props(step,
+                           d,
+                           flow,
+                           pw,
+                           None,           // TODO editState : ContentEditorFeature.D0.State,
+                           None,           // TODO asyncState: AsyncActionFeature.D0.State[String],
+                           Callback.empty) // TODO startEdit : Callback) {
+            p.render
+          }
+
+          def ctrls = {
+            import temp.{mdt, field => f}
+            val onAction: Controls.OnAction = _ => Callback.empty    // TODO
+            val p = Controls.Props(delete     = f.canDelete(loc),
+                                   shiftLeft  = f.canShiftLeft(loc),
+                                   leftIsDown = false, // TODO Boolean
+                                   shiftRight = f.canShiftRight(loc, mdt),
+                                   add        = f.canAdd(loc),
+                                   onAction   = onAction)
+            p.render
+          }
+
+          <.div(*.container,
+            header,
+            body,
+            ctrls)
+
+        }).toReactNodeArray
+
+        def runAction(cmd: UpdateContentCmd): Callback =
+          // TODO UseCaseStep buttons should use AsyncFeature
+          updateIO(cmd, TCB.Success.nop, f => TCB.Failure(Callback.alert(f)))
+
+        if (temp.tailStep) {
+          def cmd = UpdateContentCmd.AddUseCaseStep(uc.id, temp.field, Vector.empty)
+          val cb = runAction(cmd)
+          val ctrls = Controls.addTailStep(cb).render
+          x push <.div(*.container, ctrls)
+        }
+
+        x
+      }
 
       <.div(
         renderHeader,

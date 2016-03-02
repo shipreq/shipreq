@@ -47,6 +47,9 @@ object UiText {
     def reqType             = "Type"
     def tags                = "Tags"
     def implications        = "Implications"
+    def useCaseStepTreeN    = "Normal Course"
+    def useCaseStepTreeA    = "Alternative Courses"
+    def useCaseStepTreeE    = "Exceptions"
   }
 
   object Cfg {

@@ -382,6 +382,7 @@ object Style extends StyleSheet.Inline {
 
       val container = style(
         display.flex,
+        justifyContent.flexEnd, // So that controls in tail-step rows appear on the right.
         width(100 %%))
 
       val header = styleF(D.ucStepIndent)(lvl =>

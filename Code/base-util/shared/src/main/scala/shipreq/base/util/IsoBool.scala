@@ -41,7 +41,7 @@ object IsoBool {
    * Mix into the companion object for the type.
    */
   trait Object[B <: IsoBool[B]] {
-    implicit final def equality = UnivEq.force[B]
+    implicit final def equality: UnivEq[B] = UnivEq.force
 
     def positive: B with IsoBool[B]
     def negative: B with IsoBool[B]

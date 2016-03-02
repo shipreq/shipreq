@@ -106,6 +106,10 @@ final case class VectorTree[+A](children: Children[A]) extends Parent[A] {
   def locAndValueIterator[B](f: (Location, A) => B): Iterator[B] =
     childrenIterator(Vector.empty, f)
 
+  def subtreeLocAndValueIterator[B](rootIndices: TraversableOnce[Int], f: (Location, A) => B): Iterator[B] =
+    rootIndices.toIterator.flatMap(i =>
+      children(i).locAndValueIterator(NonEmptyVector one i, f))
+
   def append[B >: A](value: B): VectorTree[B] =
     appendN(leaf(value))
 
@@ -366,7 +370,7 @@ object VectorTree extends VectorTreeLowPri {
       i
     }
 
-    final def childrenIterator[B](posInit: Vector[Int], f: (Location, A) => B): Iterator[B] =
+    final def childrenIterator[B](parent: ParentLocation, f: (Location, A) => B): Iterator[B] =
       new AbstractIterator[B] {
         var index = 0
         var queue = List.empty[Iterator[B]]
@@ -378,7 +382,7 @@ object VectorTree extends VectorTreeLowPri {
           queue match {
             case Nil =>
               val n = children(index)
-              val p = NonEmptyVector.end(posInit, index)
+              val p = NonEmptyVector.end(parent, index)
               val b = f(p, n.value)
               index += 1
               val i = n.childrenIterator(p.whole, f)
@@ -429,6 +433,9 @@ object VectorTree extends VectorTreeLowPri {
 
     def setChildren[B >: A](c: Children[B]): Node[B] =
       Node(value, c)
+
+    def locAndValueIterator[B](currentLocation: Location, f: (Location, A) => B): Iterator[B] =
+      Iterator.single(f(currentLocation, value)) ++ childrenIterator(currentLocation.whole, f)
   }
 
   // ===================================================================================================================

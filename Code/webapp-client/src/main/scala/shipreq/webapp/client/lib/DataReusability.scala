@@ -3,7 +3,7 @@ package shipreq.webapp.client.lib
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
 import shipreq.base.util.TaggedTypes.TaggedInt
-import shipreq.base.util.{VectorTree, NonEmptySet, NonEmptyVector, UnivEq}
+import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.RemoteFn
 import shipreq.webapp.base.text.{Atom, TextSearch, PlainText}
@@ -48,6 +48,8 @@ object DataReusability {
 
   private[this] val taggedIntReuse = Reusability.byUnivEq[TaggedInt]
   implicit def reusabilityTaggedInt[T <: TaggedInt]: Reusability[T] = taggedIntReuse.narrow
+
+  implicit val reusabilityPermission: Reusability[Permission] = Reusability.byUnivEq
 
   implicit def reusabilityOptionalText[A <: Atom.AnyAtom]: Reusability[Vector[A]] = Reusability.byRefOrUnivEq
 
