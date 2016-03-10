@@ -208,6 +208,8 @@ final class DomZipperAt[+D <: DOM] private[test](prevLayers: Vector[Layer[DOM]],
   final class Collector[E <: Element](sel: String, requireMatch: Boolean) {
     def as[EE <: E] = this.asInstanceOf[Collector[EE]]
 
+    @inline def asHtml(implicit ev: html.Element <:< E) = this.asInstanceOf[Collector[html.Element]]
+
     def get()(implicit h: HandleError): h.Result[Vector[E]] = {
       val v = $(sel, dom).toVector.asInstanceOf[Vector[E]] // Should be better
       if (requireMatch && v.isEmpty)

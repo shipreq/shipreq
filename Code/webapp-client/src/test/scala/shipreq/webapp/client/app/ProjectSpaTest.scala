@@ -1,7 +1,6 @@
 package shipreq.webapp.client.app
 
 import japgolly.scalajs.react.test._
-import teststate._
 import utest._
 import shipreq.webapp.base.event.{Delete, DeleteCustomField}
 import shipreq.webapp.base.test._

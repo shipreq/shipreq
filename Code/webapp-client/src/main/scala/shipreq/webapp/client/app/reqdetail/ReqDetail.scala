@@ -365,13 +365,20 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
         val pos = uc.pubid.pos
         val flow = data.project.reqs.useCases.stepFlow
 
+        val stepLabel = ReactAttr.devOnly("data-step-label") := 1
+
         var first = temp.defaultFirst.nonEmpty
         val x = temp.tree.subtreeLocAndValueIterator(temp.filter, (loc, step) => {
 
-          def header =
+          def header = {
+            val full = temp.field.stepLabel(pos, loc, mnemonicPrefix = false)
+            val short = if (loc.length == 1) full else temp.field.stepLabelsPerLevel(loc.length - 1).label(loc.last)
             <.div(
               *.header(loc.length - 1),
-              temp.field.stepLabel(pos, loc, mnemonicPrefix = false) + ".")
+              stepLabel,
+              ^.title := full,
+              short + ".")
+          }
 
           def body = {
 

@@ -9,7 +9,7 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.data._
 import shipreq.webapp.client.test._
-import teststate._
+import teststate.Exports._
 
 object ReqTableTestDsl {
   val * = Dsl.sync[CompState.AccessD[ReqTable.State], ReqTableObs, Project, String]
@@ -111,7 +111,7 @@ object ReqTableTestDsl {
 
   // ===================================================================================================================
 
-  implicit def equalFromUnivEq[A: UnivEq] = teststate.Equal.byUnivEq[A]
+  implicit def equalFromUnivEq[A: UnivEq] = Equal.by_==[A]
   implicit def autoGetDomFromZipper(d: DomZipper): ReactOrDomNode = d.dom.domAsHtml
   implicit val showFilterDead = Show.byToString[FilterDead]
 

@@ -1,8 +1,24 @@
 package shipreq.webapp.client.app.reqdetail
 
-import scala.util.{Failure, Success, Try}
+import shipreq.webapp.base.UiText
+import shipreq.base.util.ScalaExt._
 import shipreq.webapp.client.test._
 import DomZipper.Implicits._
+import ReqDetailTestDsl.Mode
+
+object ReqDetailObs {
+
+  case class NAE[A](normal: A, alt: A, exception: A) {
+    def map[B](f: A => B): NAE[B] =
+      NAE(f(normal), f(alt), f(exception))
+
+    def reduce[B](f: (A, A) => A): A =
+      f(f(normal, alt), exception)
+  }
+
+  import UiText.FieldNames._
+  val TreeNames = NAE(useCaseStepTreeN, useCaseStepTreeA, useCaseStepTreeE)
+}
 
 final class ReqDetailObs($: DomZipper) {
 
@@ -12,12 +28,37 @@ final class ReqDetailObs($: DomZipper) {
     val reason = errorRoot.get.innerText
   }
 
-  object ok {
+  object generic {
+    val headerRow = $.down(">div")
+
+    val pubid = headerRow.down(">div", 1 of 2).innerText.replace(":", "").trim
+
     val table = $.down(">table")
+
+    val fields =
+      table.down(">tbody").collect1(">tr")
+        .map(z => z.down(">th").innerText -> z.down(">td"))
+        .toMap
   }
 
-  val isOk: Boolean =
-    errorRoot.isEmpty
+  object uc {
+    import generic._
+
+    val treeCells = ReqDetailObs.TreeNames.map(fields)
+
+    val treeStepTitles = treeCells.map(_.collect0(s"*[data-step-label]").asHtml.mapDom(_.title))
+
+    val stepTitles: Vector[String] = treeStepTitles.reduce(_ ++ _)
+  }
+
+  val mode: Mode =
+    if (errorRoot.isDefined)
+      Mode.Error
+    else if (generic.pubid.startsWith("UC-"))
+      Mode.UC
+    else
+      Mode.GR
+
 //    (Try(ok), Try(error)) match {
 //      case (Success(_), Failure(_)) => true
 //      case (Failure(_), Success(_)) => false
