@@ -81,8 +81,8 @@ object ProjectSpaTestDsl {
         (s, d) => s.copy(s.page, d.project, d.ep))
 
   def runTest(action: *.Action): Unit = {
-    val cp   = new TestClientProtocol
     val cd   = TestClientData(SampleProject4.project)
+    val cp   = MockServer(cd)
     val spa  = new ProjectSpaMain(MockRemotes.projectSPA, cp, cd)
     val rc   = MockRouterCtl[Page]()
     val init = TestState(Page.ReqTable, cd.project(), None)

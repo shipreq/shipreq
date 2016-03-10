@@ -33,8 +33,8 @@ object ReqTableTest extends TestSuite {
 
   def runTest(action: *.Action): Unit = {
     val reqDetailRC = MockRouterCtl[ExternalPubid]()
-    val cp = new TestClientProtocol
     val cd = TestClientData(SampleProject3.project)
+    val cp = MockServer(cd)
     import cd.pxProject
 
     val pxPlainText      = pxProject map PlainText.apply
