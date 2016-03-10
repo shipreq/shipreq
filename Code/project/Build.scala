@@ -271,6 +271,7 @@ object ShipReq extends Build {
           webappSettings,
           useMacroParadise,
           testSettings,
+          // IntegrationTesting.testWithBrowser(),
           dontInline, // crashes 2.11.7 / 0.6.4
           debugOrRelease(identity, prodJsSettings)
         )
