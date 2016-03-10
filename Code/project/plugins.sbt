@@ -1,5 +1,7 @@
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.7")
 
+resolvers += "Scala.js for 2.11.8" at "https://oss.sonatype.org/content/repositories/orgscala-js-1032/"
+
 libraryDependencies += "org.scala-js" %% "seleniumjsenv" % "0.1.0"
 
 // Web app support plugin for XSbt using Jetty Web Server
