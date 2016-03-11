@@ -26,13 +26,14 @@ object Controls {
                          shiftLeft : Permission,
                          leftIsDown: Boolean,
                          shiftRight: Permission,
+                         rightIsUp : Boolean,
                          add       : Permission,
                          onAction  : OnAction) {
     @inline def render = Component(this)
   }
 
   def addTailStep(cb: Callback): Props =
-    Props(Deny, Deny, false, Deny, add = Allow, onAction = {
+    Props(Deny, Deny, false, Deny, false, add = Allow, onAction = {
       case Add => cb
       case _   => Callback.empty
     })
@@ -47,6 +48,7 @@ object Controls {
   private val tagLeft  = tagBase("«")
   private val tagRight = tagBase("»")
   private val tagDown  = tagBase("↓")
+  private val tagUp    = tagBase("↑")
 
   final class Backend($: BackendScope[Props, Unit]) {
     def onAction(a: Action): Callback =
@@ -62,7 +64,7 @@ object Controls {
       <.div(*.ctrls,
         btn(Delete    , p.delete    , tagDel),
         btn(ShiftLeft , p.shiftLeft , if (p.leftIsDown) tagDown else tagLeft),
-        btn(ShiftRight, p.shiftRight, tagRight),
+        btn(ShiftRight, p.shiftRight, if (p.rightIsUp) tagUp else tagRight),
         btn(Add       , p.add       , tagAdd))
   }
 

@@ -56,15 +56,18 @@ final class ReqDetailObs($: DomZipper) {
       treeCells.map(_.collect1(">div").map(StepRow))
 
     case class StepRow($: DomZipper) {
-      private def ctrl(label: String): html.Button =
-        $.down(s"button:contains('$label')").domAs[html.Button]
+      private def ctrl(label: String, label2: String = null): html.Button = {
+        val ls  = label :: Option(label2).toList
+        val sel = ls.map(l => s"button:contains('$l')") mkString ","
+        $.down(sel).domAs[html.Button]
+      }
 
       val title: Option[String] =
         $.collect0(s"*[data-step-label]").asHtml.mapDom(_.title).headOption
 
       lazy val del   = ctrl("-")
-      lazy val left  = ctrl("«")
-      lazy val right = ctrl("»")
+      lazy val left  = ctrl("«", "↓")
+      lazy val right = ctrl("»", "↑")
       lazy val add   = ctrl("+")
     }
 

@@ -98,31 +98,39 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
     final class UseCaseData(val uc: UseCase) {
 
-      private def stepTreeProps(field   : StaticField.UseCaseStepTree,
-                                filter  : UseCaseSteps.Tree => Range,
+      private def stepTreeProps(field       : StaticField.UseCaseStepTree,
+                                filter      : UseCaseSteps.Tree => Range,
                                 defaultFirst: Text.UseCaseTitle.OptionalText,
-                                tailStep: Boolean) = {
+                                leftIsDownAt: VectorTree.Location => Boolean,
+                                rightIsUpAt : VectorTree.Location => Boolean,
+                                tailStep    : Boolean) = {
         val t = field.useCaseStepTree.get(uc)
         val i = filter(t)
-        Temp(field, t, i, defaultFirst, tailStep)
+        Temp(field, t, i, defaultFirst, leftIsDownAt, rightIsUpAt, tailStep)
       }
 
       val stepsN = stepTreeProps(
         StaticField.NormalAltStepTree,
         _ => 0 to 0,
         uc.title,
+        _ => false, // l => l.length ==* 2 && l.tail.head !=* 0, ← Correct but bad UX
+        _ => false,
         false)
 
       val stepsA = stepTreeProps(
         StaticField.NormalAltStepTree,
         1 until _.children.length,
         Vector.empty,
+        _ => false,
+        _ ==* (NonEmptyVector one 1),
         true)
 
       val stepsE = stepTreeProps(
         StaticField.ExceptionStepTree,
         _.children.indices,
         Vector.empty,
+        _ => false,
+        _ => false,
         true)
     }
 
@@ -133,11 +141,13 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
       }
   }
 
-  case class Temp(field: StaticField.UseCaseStepTree,
-                  tree: UseCaseSteps.Tree,
-                  filter: Range,
+  case class Temp(field       : StaticField.UseCaseStepTree,
+                  tree        : UseCaseSteps.Tree,
+                  filter      : Range,
                   defaultFirst: Text.UseCaseTitle.OptionalText,
-                  tailStep: Boolean) {
+                  leftIsDownAt: VectorTree.Location => Boolean,
+                  rightIsUpAt : VectorTree.Location => Boolean,
+                  tailStep    : Boolean) {
     val mdt = tree.maxDepthTree
   }
 
@@ -372,6 +382,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
           updateIO(cmd, TCB.Success.nop, f => TCB.Failure(Callback.alert(f)))
 
         var first = temp.defaultFirst.nonEmpty
+
         val x = temp.tree.subtreeLocAndValueIterator(temp.filter, (loc, step) => {
 
           val fullStepLabel = temp.field.stepLabel(pos, loc, mnemonicPrefix = false)
@@ -417,11 +428,11 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
               case Controls.Add        => runAction(UpdateContentCmd.AddUseCaseStep(uc.id, f, loc.whole))
             }
 
-
             val p = Controls.Props(delete     = f.canDelete(loc),
                                    shiftLeft  = f.canShiftLeft(loc),
-                                   leftIsDown = false, // TODO Boolean
+                                   leftIsDown = temp leftIsDownAt loc,
                                    shiftRight = f.canShiftRight(loc, mdt),
+                                   rightIsUp  = temp rightIsUpAt loc,
                                    add        = f.canAdd(loc),
                                    onAction   = onAction)
             p.render
