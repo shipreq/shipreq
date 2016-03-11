@@ -2,6 +2,7 @@ package shipreq.webapp.client.app.reqdetail
 
 import org.scalajs.dom.html
 import shipreq.webapp.base.UiText
+import shipreq.base.util.univEqOps
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.client.test._
 import DomZipper.Implicits._
@@ -16,6 +17,9 @@ object ReqDetailObs {
 
     def reduce[B](f: (A, A) => A): A =
       f(f(normal, alt), exception)
+
+    def get[B](f: A => Option[B]): Option[B] =
+      f(normal) orElse f(alt) orElse f(exception)
   }
 
   import UiText.FieldNames._
@@ -48,12 +52,6 @@ final class ReqDetailObs($: DomZipper) {
 
     val treeCells = ReqDetailObs.TreeNames.map(fields)
 
-    val treeStepTitles: NAE[Vector[String]] =
-      treeCells.map(_.collect0(s"*[data-step-label]").asHtml.mapDom(_.title))
-
-    val stepTitles: Vector[String] =
-      treeStepTitles.reduce(_ ++ _)
-
     val stepRows: NAE[Vector[StepRow]] =
       treeCells.map(_.collect1(">div").map(StepRow))
 
@@ -61,11 +59,23 @@ final class ReqDetailObs($: DomZipper) {
       private def ctrl(label: String): html.Button =
         $.down(s"button:contains('$label')").domAs[html.Button]
 
+      val title: Option[String] =
+        $.collect0(s"*[data-step-label]").asHtml.mapDom(_.title).headOption
+
       lazy val del   = ctrl("-")
       lazy val left  = ctrl("«")
       lazy val right = ctrl("»")
       lazy val add   = ctrl("+")
     }
+
+    def row(label: String): StepRow =
+      stepRows.get(_.find(_.title.exists(_ ==* label))) getOrElse sys.error("Step row not found: " + label)
+
+    val treeStepTitles: NAE[Vector[String]] =
+      stepRows.map(_.flatMap(_.title.toVector))
+
+    val stepTitles: Vector[String] =
+      treeStepTitles.reduce(_ ++ _)
 
     def tailStepRowAC = stepRows.alt.last
     def tailStepRowEC = stepRows.exception.last

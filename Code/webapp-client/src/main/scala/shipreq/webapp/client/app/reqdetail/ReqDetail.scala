@@ -367,6 +367,10 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
         val stepLabel = ReactAttr.devOnly("data-step-label") := 1
 
+        def runAction(cmd: UpdateContentCmd): Callback =
+        // TODO UseCaseStep buttons should use AsyncFeature
+          updateIO(cmd, TCB.Success.nop, f => TCB.Failure(Callback.alert(f)))
+
         var first = temp.defaultFirst.nonEmpty
         val x = temp.tree.subtreeLocAndValueIterator(temp.filter, (loc, step) => {
 
@@ -406,7 +410,14 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
           def ctrls = {
             import temp.{mdt, field => f}
-            val onAction: Controls.OnAction = _ => Callback.empty    // TODO
+            val onAction: Controls.OnAction = {
+              case Controls.Delete     => runAction(UpdateContentCmd.DeleteUseCaseStep    (step.id))
+              case Controls.ShiftLeft  => runAction(UpdateContentCmd.ShiftUseCaseStepLeft (step.id))
+              case Controls.ShiftRight => runAction(UpdateContentCmd.ShiftUseCaseStepRight(step.id))
+              case Controls.Add        => runAction(UpdateContentCmd.AddUseCaseStep(uc.id, f, loc.whole))
+            }
+
+
             val p = Controls.Props(delete     = f.canDelete(loc),
                                    shiftLeft  = f.canShiftLeft(loc),
                                    leftIsDown = false, // TODO Boolean
@@ -423,10 +434,6 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
             ctrls)
 
         }).toReactNodeArray
-
-        def runAction(cmd: UpdateContentCmd): Callback =
-          // TODO UseCaseStep buttons should use AsyncFeature
-          updateIO(cmd, TCB.Success.nop, f => TCB.Failure(Callback.alert(f)))
 
         if (temp.tailStep) {
           def cmd = UpdateContentCmd.AddUseCaseStep(uc.id, temp.field, Vector.empty)

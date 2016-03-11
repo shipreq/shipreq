@@ -61,8 +61,20 @@ object ReqDetailTestDsl {
     })
 
   def addTailStepAC: *.Action1 =
-    *.action("Add AC tail step").noStateUpdate.act(Simulate click _.obs.uc.tailStepRowAC.add)
+    *.action("Add AC tail step").act(Simulate click _.obs.uc.tailStepRowAC.add)
 
   def addTailStepEC: *.Action1 =
-    *.action("Add EC tail step").noStateUpdate.act(Simulate click _.obs.uc.tailStepRowEC.add)
+    *.action("Add EC tail step").act(Simulate click _.obs.uc.tailStepRowEC.add)
+
+  def addStep(label: String): *.Action1 =
+    *.action("Add " + label).act(Simulate click _.obs.uc.row(label).add)
+
+  def delStep(label: String): *.Action1 =
+    *.action("Delete " + label).act(Simulate click _.obs.uc.row(label).del)
+
+  def shiftStepLeft(label: String): *.Action1 =
+    *.action("ShiftLeft " + label).act(Simulate click _.obs.uc.row(label).left)
+
+  def shiftStepRight(label: String): *.Action1 =
+    *.action("ShiftRight " + label).act(Simulate click _.obs.uc.row(label).right)
 }

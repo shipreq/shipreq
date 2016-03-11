@@ -48,6 +48,14 @@ object ReqDetailTest extends TestSuite {
       addTailStepEC
         .addCheck(allSteps.assert.equalConst("1.0", "1.0.1", "1.0.2", "1.0.3", "1.1", "1.1.1").before)
         .addCheck(allSteps.assert.equalConst("1.0", "1.0.1", "1.0.2", "1.0.3", "1.1", "1.1.1", "1.E.1").after)
+      >> delStep("1.1")
+        .addCheck(allSteps.assert.equalConst("1.0", "1.0.1", "1.0.2", "1.0.3", "1.E.1").after)
+      >> shiftStepLeft("1.0.3")
+        .addCheck(allSteps.assert.equalConst("1.0", "1.0.1", "1.0.2", "1.1", "1.E.1").after)
+      >> shiftStepRight("1.1")
+        .addCheck(allSteps.assert.equalConst("1.0", "1.0.1", "1.0.2", "1.0.3", "1.E.1").after)
+      >> addStep("1.E.1")
+        .addCheck(allSteps.assert.equalConst("1.0", "1.0.1", "1.0.2", "1.0.3", "1.E.1", "1.E.1.a").after)
       ))
 
 //    val u = ReqDetail.Props("EMMEFF", 5, project).component
