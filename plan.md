@@ -3,19 +3,9 @@ Phase 2
 
 ### ReqTable
 
-* Row detail view (modal?)
-* New req
-  * Template
-  * Functionality
-
 * Bulk
-  * Row selection
   * Copy & paste
   * Change reqcode prefix
-  * Deleting/Restoring Reqs
-    * Data representation + derivation
-    * Tree n-level checkboxes
-    * Component
 
 * Handle
   * no live content in project.
@@ -29,15 +19,10 @@ Phase 2
 ### Other
 
 * Events
-  * DB schema and interface
-  * Event RNG & props
-  * Benchmark event ap (trusted & untrusted)
   * Rethink hard/soft deletion wrt all event history being kept
 
 * Cfg screens & usage/deleted
-  * Count usage
-  * Show usage
-  * Prevent deletion
+  * Prevent deletion when usage > 0 (?)
 * Loose issue
 * Issues screen
   * Screen (composite of views, filter, buttons, summary)
@@ -71,3 +56,4 @@ Phase 2
   marked as issues?
 
 * When a tag cell is locked should it lock ALL tag cells for that row?
+
