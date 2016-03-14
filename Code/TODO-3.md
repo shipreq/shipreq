@@ -27,3 +27,10 @@ Req Table
 * Re-enable old tests and test with selenium.
 * Test & fix focus on edit start/end.
 
+Graphs
+======
+
+* UC step graph (single UC)
+* UC step graph (all UCs! …maybe)
+* Implication graph (single req on ReqDetail page)
+
