@@ -8,3 +8,6 @@
 .*.swn
 .metadata
 .idea
+
+# git worktree
+*.wt
