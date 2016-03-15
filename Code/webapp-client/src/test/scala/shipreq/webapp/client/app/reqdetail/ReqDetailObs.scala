@@ -4,6 +4,7 @@ import org.scalajs.dom.html
 import shipreq.webapp.base.UiText
 import shipreq.base.util.univEqOps
 import shipreq.base.util.ScalaExt._
+import shipreq.webapp.client.data.{ShowDead, FilterDead}
 import shipreq.webapp.client.test._
 import DomZipper.Implicits._
 import ReqDetailTestDsl.Mode
@@ -40,6 +41,10 @@ final class ReqDetailObs($: DomZipper) {
     val pubid = headerRow.down(">div", 1 of 2).innerText.replace(":", "").trim
 
     val table = $.down(">table")
+
+    val filterDeadInput = $.down(">label input").domAs[html.Input]
+
+    val filterDead = ShowDead <~ filterDeadInput.checked
 
     val fields =
       table.down(">tbody").collect1(">tr")
@@ -98,4 +103,6 @@ final class ReqDetailObs($: DomZipper) {
 //      case (Success(_), Success(_)) => sys error "Ok or Error, which one? Not both."
 //      case (Failure(a), Failure(b)) => sys error s"Ok & Error both failed.\nOK - $a\nKO - $b"
 //    }
+
+  override def toString = s"ReqDetailObs($mode)"
 }

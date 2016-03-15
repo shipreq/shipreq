@@ -144,8 +144,10 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
     }
 
   // ===================================================================================================================
-  import reqtable.{Column, Row, ReqTable}
+  import reqtable.{Column, Row, ReqTable, ViewSettings}
   import reqdetail.{ReqDetail, Cell}
+
+  val reqTableVS = State.reqTable ^|-> ReqTable.State.viewSettings
 
   def initState = State(
     ContentEditorFeature.D2.State.init,
@@ -162,7 +164,10 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
     val routerCtl = $.props.runNow().routerCtl
     val reqDetailRC = routerCtl.contramap(Page.ReqDetail.apply)
 
-    val setFilterDead = ReusableFn($ zoomL State.filterDead).setState
+    val setFilterDead: FilterDead ~=> Callback =
+      ReusableFn(fd => $.modState(
+        State.filterDead.set(fd) compose
+        reqTableVS.modify(_ setFilterDead fd)))
 
     val pxPlainText      = pxProject map PlainText.apply
     val pxTextSearch     = Px.apply2(pxProject, pxPlainText)(TextSearch.apply)
@@ -285,7 +290,7 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
         case Page.ReqDetail(pubid) =>
           val props = ReqDetail.DynamicProps(
             pubid,
-            s.filterDead,
+            fd,
             reqDetailReqPropsFn(s))
           layout(reqDetail(props), Page.ReqTable)
       }

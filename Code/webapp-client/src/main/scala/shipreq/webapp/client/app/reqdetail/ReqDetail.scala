@@ -4,6 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.experimental.StaticPropComponent
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
+import shipreq.webapp.client.widgets.Checkbox
 import scalacss.ScalaCssReact._
 import scalaz.{\/, -\/, \/-}
 import shipreq.base.util._
@@ -35,7 +36,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
                          pxProjectWidgets: Px[ProjectWidgets])
 
   case class DynamicProps(extPubid  : ExternalPubid,
-                          filterDead: FilterDead,
+                          filterDead: ReusableVar[FilterDead],
                           reqProps  : ReqId => ReqProps)
 
   case class ReqProps(initEditor  : InitEditor,
@@ -160,7 +161,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
     val pxFieldNameFn = pxProject.map(Field.nameP)
     val pxExtPubid    = Px.bsMP($).propsM(_.extPubid)
-    val pxUpstreamFD  = Px.bsMP($).propsM(_.filterDead)
+    val pxUpstreamFD  = Px.bsMP($).propsM(_.filterDead.value)
 
     val pxData: Px[PubidQueryError \/ Data] =
       for {
@@ -169,6 +170,9 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
         f <- pxUpstreamFD
       } yield
         p.findReq(e).map(new Data(p, _, f))
+
+    val filterDeadCheckbox =
+      Checkbox.filterDead(v => $.props.flatMap(_.filterDead set v))
 
     val updateIO: ServerCall[UpdateContentCmd] =
       ServerCall.to(updateContentFn, cp, cd)
@@ -458,6 +462,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
       <.div(
         renderHeader,
+        filterDeadCheckbox(props.filterDead.value),
         renderRows)
     }
 

@@ -135,9 +135,12 @@ object ReqTableTestDsl {
       .addCheck(*.focus("Filter").value(_.obs.viewSettings.filter.input.value).assert.equal(f).after)
   }
 
+  val filterDead =
+    *.focus("FilterDead").value(_.obs.filterDead)
+
   val filterDeadToggle =
     *.action("filterDeadToggle").act(Simulate change _.obs.viewSettings.filterDead.checkbox)
-      .addCheck(*.focus("FilterDead").value(_.obs.filterDead).assert.changeOccurs)
+      .addCheck(filterDead.assert.changeOccurs)
 
   def setFilterDead(fd: FilterDead) =
     filterDeadToggle.unless(_.obs.filterDead == fd).rename(s"setFilterDead($fd)")

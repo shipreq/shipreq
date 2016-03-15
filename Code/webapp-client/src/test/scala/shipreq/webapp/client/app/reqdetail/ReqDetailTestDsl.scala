@@ -5,9 +5,12 @@ import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{UnivEq, univEqOps}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.client.data.FilterDead
 import teststate.Exports._
 
 object ReqDetailTestDsl {
+  implicit val showFilterDead = Show.byToString[FilterDead]
+  implicit val equalFilterDead = Equal.by_==[FilterDead]
 
   sealed abstract class Mode
   object Mode {
@@ -77,4 +80,11 @@ object ReqDetailTestDsl {
 
   def shiftStepRight(label: String): *.Action =
     *.action("ShiftRight " + label).act(Simulate click _.obs.uc.row(label).right)
+
+  val filterDead =
+    *.focus("FilterDead").value(_.obs.generic.filterDead)
+
+  val filterDeadToggle =
+    *.action("Toggle FilterDead").act(Simulate change _.obs.generic.filterDeadInput)
+      .addCheck(filterDead.assert.changeOccurs)
 }
