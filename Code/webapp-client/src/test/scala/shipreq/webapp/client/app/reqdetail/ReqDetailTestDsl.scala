@@ -54,7 +54,7 @@ object ReqDetailTestDsl {
 
   val invariants: *.Invariant =
     *.focus("Mode").obsAndState(_.mode, _.mode).assert.equal &
-    *.choose("Mode invariants", _.obs.mode match {
+    *.chooseInvariant("Mode invariants", _.obs.mode match {
       case Mode.GR    => invariantsGR
       case Mode.UC    => invariantsUC
       case Mode.Error => invariantsWhenBad

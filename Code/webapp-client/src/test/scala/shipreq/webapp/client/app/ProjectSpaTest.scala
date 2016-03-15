@@ -20,7 +20,6 @@ object ProjectSpaTest extends TestSuite {
       >> setPage(Page.CfgFields)
       >> applyEvents("Delete Priority field", DeleteCustomField(priField, Delete))
       >> setPage(Page.ReqTable)
-      >> testReqTable()
   )
 
   override def tests = TestSuite {

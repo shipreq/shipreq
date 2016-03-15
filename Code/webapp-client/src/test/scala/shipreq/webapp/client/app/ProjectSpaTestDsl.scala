@@ -4,6 +4,7 @@ import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 import monocle.macros.Lenses
+import shipreq.base.util.Debug._
 import scala.util.{Failure, Success, Try}
 import teststate.Exports._
 import shipreq.webapp.base.data.{ExternalPubid, Project}
@@ -22,7 +23,7 @@ object ProjectSpaTestDsl {
   implicit def tryToEither[A](t: Try[A]): Maybe[A] =
     t match {
       case Success(s) => Right(s)
-      case Failure(f) => Left(f.toString)
+      case Failure(f) => Left("Try failed: " + f.toString)
     }
 
   case class Ref(cd: TestClientData, tester: ComponentTester[Props, State, _, TopNode]) {
@@ -30,30 +31,54 @@ object ProjectSpaTestDsl {
       def inner = DomZipper(tester.component).down(">*", 2 of 2)
       new Obs(
         cd.project(),
-        Try(new ReqDetailObs(inner)),
-        Try(new ReqTableObs(inner)))
+        Try(new ReqTableObs(inner)),
+        Try(new ReqDetailObs(inner)))
     }
   }
 
   case class Obs(project  : Project,
-                 reqDetail: Maybe[ReqDetailObs],
-                 reqTable : Maybe[ReqTableObs])
+                 reqTable : Maybe[ReqTableObs],
+                 reqDetail: Maybe[ReqDetailObs])
 
   @Lenses
   case class TestState(page: Page, project: Project, detailState: RD.State)
 
   val * = Dsl.sync[Ref, Obs, TestState, String]
 
-  val invariants: *.Invariant =
-    *.emptyInvariant
+  implicit val transformRT =
+    RT.*.transformer
+      .mapR[Ref](_.tester.component zoomL State.reqTable)
+      .pmapO[Obs](_.reqTable)
+      .mapS(TestState.project.get)((a, b) => TestState.project.set(b)(a)) // TODO Add Monocle support
 
-  def setPage(p: Page): *.Action =
+  implicit val transformRD =
+    RD.*.transformer
+      .mapR[Ref](_ => ())
+      .pmapO[Obs](_.reqDetail)
+      .mapS[TestState](s => RD.TestState(s.project, s.detailState))((s, d) => s.copy(s.page, d.project, d.ep))
+
+  val invariantsRT = RT.invariants.lift
+  val invariantsRD = RD.invariants.lift
+
+  val invariants: *.Invariant =
+    *.chooseInvariant("Page invariants", _.state.page match {
+      case Page.ReqTable     => invariantsRT
+      case Page.ReqDetail(_) => invariantsRD
+      case _                 => emptyInvariants
+    })
+
+  def setPage(p: Page): *.Action = p match {
+    case Page.ReqDetail(_) => sys error "Use setPageToReqDetail instead."
+    case _                 => _setPage(p)
+  }
+
+  private def _setPage(p: Page): *.Action =
     *.action(s"Set page to $p")
       .act(_.ref.tester.modProps(_.copy(page = p)))
       .updateState(_.copy(page = p))
 
   def setPageToReqDetail(ep: ExternalPubid, detailState: RD.State): *.Action =
-    setPage(Page.ReqDetail(ep)).updateState(_.copy(detailState = detailState))
+    _setPage(Page.ReqDetail(ep)).updateState(_.copy(detailState = detailState))
 
   def applyEvents(e: Event*): *.Action =
     applyEvents(e.mkString("Apply events: ", ", ", "."), e: _*)
@@ -63,22 +88,11 @@ object ProjectSpaTestDsl {
       .act(_.ref.cd.applyTestEvents(e: _*))
       .updateStateBy(i => i.state.copy(project = i.obs.project))
 
-  def testReqTable(action: RT.*.Action = emptyAction): *.Action =
-    liftReqTableTests(Test(action)).asAction("Test ReqTable")
+  def liftReqTableTests(tc: RT.*.TestContent): *.TestContent = tc.lift
+  def liftReqDetailTests(tc: RD.*.TestContent): *.TestContent = tc.lift
 
-  def liftReqTableTests(tc: RT.*.TestContent): *.TestContent =
-    tc.addInvariants(RT.invariants)
-      .mapR[Ref](_.tester.component zoomL State.reqTable)
-      .pmapO[Obs](_.reqTable)
-      .mapS[TestState](TestState.project.get, (a, b) => TestState.project.set(b)(a)) // TODO Add Monocle support
-
-  def liftReqDetailTests(tc: RD.*.TestContent): *.TestContent =
-    tc // TODO .addInvariants(RD.invariants)
-      .mapR[Ref](_ => ())
-      .pmapO[Obs](_.reqDetail)
-      .mapS[TestState](
-        s => RD.TestState(s.project, s.detailState),
-        (s, d) => s.copy(s.page, d.project, d.ep))
+  def testReqTable(action: RT.*.Action): *.Action = liftReqTableTests(Test(action)).asAction("Test ReqTable")
+  def testReqDetail(action: RD.*.Action): *.Action = liftReqDetailTests(Test(action)).asAction("Test ReqDetail")
 
   def runTest(action: *.Action): Unit = {
     val cd   = TestClientData(SampleProject4.project)

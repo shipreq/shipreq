@@ -6,6 +6,7 @@ import japgolly.scalajs.react.extra.router.{RouterCtl => RouterCtl_, _}
 import monocle._
 import monocle.macros._
 import org.scalajs.dom
+import scala.annotation.elidable
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{Intersection, UnivEq, univEqOps}
@@ -48,7 +49,10 @@ object ProjectSpaMain {
     case object CfgTags     extends Page
     case object ReqTable    extends Page
 
-    case class ReqDetail(pubid: ExternalPubid) extends Page
+    case class ReqDetail(pubid: ExternalPubid) extends Page {
+      @elidable(elidable.INFO)
+      override def toString = s"ReqDetail(${PlainText pubid pubid})"
+    }
 
     object ReqDetail {
       val stringPrism: Prism[String, ReqDetail] =
