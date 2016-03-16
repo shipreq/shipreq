@@ -3,6 +3,7 @@ package shipreq.webapp.client.widgets
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
 import shipreq.base.util.IsoBool
+import shipreq.webapp.base.UiText
 import shipreq.webapp.client.data.{ShowDead, FilterDead, On}
 
 object Checkbox {
@@ -23,7 +24,7 @@ object Checkbox {
   def filterDeadChecked = ShowDead
 
   def filterDead(set: FilterDead => Callback) =
-    Checkbox(filterDeadChecked)(set, _ => chk => <.label(chk, "Show deleted content."))
+    Checkbox(filterDeadChecked)(set, _ => chk => <.label(chk, UiText.Life.showDead))
 
   def filterDead_$($: CompState.Access[FilterDead]): () => ReactElement = {
     val component = filterDead($ setState _)

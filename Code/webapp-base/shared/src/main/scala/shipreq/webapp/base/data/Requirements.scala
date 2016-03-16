@@ -45,6 +45,9 @@ sealed abstract class ReqT[+RT <: ReqTypeId] {
 
   def live(customReqTypes: CustomReqTypeIMap): Live
 
+  /** Can this req's (explicit-) live state be changed? */
+  def allowLiveChange(customReqTypes: CustomReqTypeIMap): Permission
+
   @inline final def reqTypeId: RT =
     pubid.reqTypeId
 }
@@ -82,6 +85,12 @@ final case class GenericReq(id            : GenericReqId,
 
   override def live(customReqTypes: CustomReqTypeIMap): Live =
     liveExplicitly & implicitLiveStatus(customReqTypes).live
+
+  override def allowLiveChange(customReqTypes: CustomReqTypeIMap): Permission =
+    implicitLiveStatus(customReqTypes) match {
+      case ImplicitLiveStatus.NoImpact      => Allow
+      case ImplicitLiveStatus.ReqTypeIsDead => Deny
+    }
 }
 
 object GenericReq {
@@ -131,6 +140,9 @@ final case class UseCase(id            : UseCaseId,
 
   override def live(customReqTypes: CustomReqTypeIMap): Live =
     liveUC
+
+  override def allowLiveChange(customReqTypes: CustomReqTypeIMap): Permission =
+    Allow
 
   def stepIterator: Iterator[UseCaseStep] =
     stepsNA.tree.valueIterator ++ stepsE.tree.valueIterator

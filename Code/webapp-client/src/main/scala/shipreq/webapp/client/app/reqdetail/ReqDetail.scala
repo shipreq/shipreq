@@ -4,7 +4,6 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.experimental.StaticPropComponent
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
-import shipreq.webapp.client.widgets.Checkbox
 import scalacss.ScalaCssReact._
 import scalaz.{\/, -\/, \/-}
 import shipreq.base.util._
@@ -12,19 +11,19 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.{UpdateContentCmd, UpdateContentFn}
 import shipreq.webapp.base.text.{Text, PlainText, TextSearch}
+import shipreq.webapp.client.app.reqtable.ColumnRenderer.RenderDeletionReason // TODO No!
 import shipreq.webapp.client.app.state.ClientData
 import shipreq.webapp.client.app.Style.{reqdetail => *}
 import shipreq.webapp.client.data._
 import shipreq.webapp.client.feature._
 import shipreq.webapp.client.lib.DataReusability._
 import shipreq.webapp.client.protocol.{ServerCall, ClientProtocol}
+import shipreq.webapp.client.widgets.Checkbox
 import shipreq.webapp.client.widgets.high.ProjectWidgets
 
 object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
   override protected def configureBackend = new Backend(_, _)
   override protected def configureRender  = _.renderBackend
-//  override protected def configure = _.configure(
-//    Listenable.install(_.static.cd, $ => (c: Changes) => $.props.static.state_$.modState(_ recvChanges c)))
 
   type InitEditor = ContentEditorFeature.D1.InitChild[Cell, Cell]
 
@@ -56,6 +55,9 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
       case Live => upstreamFD
       case Dead => ShowDead
     }
+
+    val fields = project.config.fields.fieldsForReqType(req.reqTypeId)
+    val rows = fields.foldLeft(Row head filterDead)(_ ++ Row.fromField(_))
 
     val pubidText = PlainText.pubid(project, req.pubid)
 
@@ -174,6 +176,11 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
     val filterDeadCheckbox =
       Checkbox.filterDead(v => $.props.flatMap(_.filterDead set v))
 
+    val showDeadFakeCheckbox =
+      <.label(
+        <.input.checkbox(^.checked := true, ^.disabled := true),
+        UiText.Life.showDead)
+
     val updateIO: ServerCall[UpdateContentCmd] =
       ServerCall.to(updateContentFn, cp, cd)
 
@@ -227,11 +234,6 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
       }
     }
 
-    def rows(project: Project, req: Req): Vector[Row] = {
-      val fields = project.config.fields.fieldsForReqType(req.reqTypeId)
-      fields.foldLeft(Row.head)(_ ++ Row.fromField(_))
-    }
-
     def focus: Callback = Callback.empty // TODO
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -264,7 +266,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
         <.table(
           *.mainTable,
           <.tbody(
-            rows(project, req).iterator.map(renderRow)))
+            data.rows.iterator.map(renderRow)))
 
       def renderRow(row: Row): ReactElement =
         <.tr(
@@ -286,6 +288,8 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
           case Row.UseCaseStepsN  => UiText.FieldNames.useCaseStepTreeN
           case Row.UseCaseStepsA  => UiText.FieldNames.useCaseStepTreeA
           case Row.UseCaseStepsE  => UiText.FieldNames.useCaseStepTreeE
+          case Row.DeletionReason => UiText.FieldNames.deletionReason
+          case Row.Life           => UiText.Life.field
         }
 
       def renderImpCell(cell: Cell, pubids: => Vector[Pubid]) =
@@ -369,6 +373,23 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
               .render)
             rows.toReactNodeArray
             */
+
+          case Row.DeletionReason =>
+            RenderDeletionReason.req(project, pw, req)
+
+          case Row.Life =>
+            data.live match {
+              case Live =>
+                TagMod(
+                  UiText.Life.live + ".",
+                  <.button(UiText.Life.delete)) // TODO
+
+              case Dead =>
+                TagMod(
+                  UiText.Life.dead + ".",
+                  req.allowLiveChange(project.config.customReqTypes).option(
+                    <.button(UiText.Life.restore))) // TODO
+            }
         }
 
       // TODO Move
@@ -460,9 +481,15 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
         x
       }
 
+      def renderFilterDead: ReactNode =
+        data.live match {
+          case Live => filterDeadCheckbox(props.filterDead.value)
+          case Dead => showDeadFakeCheckbox
+        }
+
       <.div(
         renderHeader,
-        filterDeadCheckbox(props.filterDead.value),
+        renderFilterDead,
         renderRows)
     }
 

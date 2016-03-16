@@ -4,6 +4,7 @@ import org.scalajs.dom.html
 import shipreq.webapp.base.UiText
 import shipreq.base.util.univEqOps
 import shipreq.base.util.ScalaExt._
+import shipreq.webapp.base.data.{Dead, Live}
 import shipreq.webapp.client.data.{ShowDead, FilterDead}
 import shipreq.webapp.client.test._
 import DomZipper.Implicits._
@@ -46,10 +47,24 @@ final class ReqDetailObs($: DomZipper) {
 
     val filterDead = ShowDead <~ filterDeadInput.checked
 
-    val fields =
+    val filterDeadLocked = filterDeadInput.disabled
+
+    val fields: Map[String, DomZipper] =
       table.down(">tbody").collect1(">tr")
         .map(z => z.down(">th").innerText -> z.down(">td"))
         .toMap
+
+    val lifeRow = fields(UiText.Life.field)
+
+    val live: Live = {
+      val t = lifeRow.innerText
+      if (t startsWith UiText.Life.live)
+        Live
+      else if (t startsWith UiText.Life.dead)
+        Dead
+      else
+        sys error s"Expected live or dead, got: $t"
+    }
   }
 
   object uc {

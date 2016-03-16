@@ -9,7 +9,7 @@ import scala.util.{Failure, Success, Try}
 import teststate.Exports._
 import shipreq.webapp.base.data.{ExternalPubid, Project}
 import shipreq.webapp.base.event.Event
-import shipreq.webapp.base.test.{MockRemotes, SampleProject4}
+import shipreq.webapp.base.test.{MockRemotes, SampleProject5}
 import shipreq.webapp.client.app.reqdetail.{ReqDetailObs, ReqDetailTestDsl => RD}
 import shipreq.webapp.client.app.reqtable.{ReqTableObs, ReqTableTestDsl => RT}
 import shipreq.webapp.client.test._
@@ -95,7 +95,7 @@ object ProjectSpaTestDsl {
   def testReqDetail(action: RD.*.Action): *.Action = liftReqDetailTests(Test(action)).asAction("Test ReqDetail")
 
   def runTest(action: *.Action): Unit = {
-    val cd   = TestClientData(SampleProject4.project)
+    val cd   = TestClientData(SampleProject5.project)
     val cp   = MockServer(cd)
     val spa  = new ProjectSpaMain(MockRemotes.projectSPA, cp, cd)
     val rc   = MockRouterCtl[Page]()
@@ -105,7 +105,7 @@ object ProjectSpaTestDsl {
       val tt  = Test(action, invariants).observe(_.observe())
       val h   = tt.run(init, Ref(cd, tester))
       h.assert(History.Options.colored.alwaysShowChildren)
-      println(h.format(History.Options.colored.alwaysShowChildren))
+      // println(h.format(History.Options.colored.alwaysShowChildren))
     }
   }
 

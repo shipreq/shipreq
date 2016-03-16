@@ -37,12 +37,16 @@ object ReqDetailTest extends TestSuite {
     runTest(ep, false)(test)
   }
 
+  // yeah i'm being lazy
+  def testLifeRowInnerText(expect: String) =
+    *.focus("Life row").value(_.obs.generic.lifeRow.innerText).assert.equal(expect)
+
   override def tests = TestSuite {
 
     'badReqType - testError("QL-1", "Type QL not found.")
     'badReq     - testError("FR-9", "FR-9 not found.")
 
-    'gr - test("FR-1")()
+    'gr - test("FR-1")(*.emptyTest addInvariants testLifeRowInnerText("Alive.Kill"))
 
     'uc - test("UC-1")(Test(
       addTailStepEC
@@ -57,6 +61,15 @@ object ReqDetailTest extends TestSuite {
       >> addStep("1.E.1")
         .addCheck(allSteps.assert.equal("1.0", "1.0.1", "1.0.2", "1.0.3", "1.E.1", "1.E.1.a").after)
       ))
+
+
+    // TODO emptyTest addInvariants = abuse
+
+    'deadExplicitly - test("MF-19")(*.emptyTest addInvariants testLifeRowInnerText("Dead.Resurrect"))
+
+    'deadImplicitly - test("SI-1")(*.emptyTest addInvariants testLifeRowInnerText("Dead."))
+
+    'deadImplicitlyAndExplicitly - test("SI-2")(*.emptyTest addInvariants testLifeRowInnerText("Dead."))
 
 //    val u = ReqDetail.Props("EMMEFF", 5, project).component
 //    val m = ReactTestUtils.renderIntoDocument(u)

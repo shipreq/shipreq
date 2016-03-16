@@ -3,9 +3,10 @@ package shipreq.webapp.client.app.reqdetail
 import japgolly.scalajs.react.test.ReactTestUtils.Simulate
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{UnivEq, univEqOps}
+import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
-import shipreq.webapp.client.data.FilterDead
+import shipreq.webapp.client.data.{ShowDead, FilterDead}
 import teststate.Exports._
 
 object ReqDetailTestDsl {
@@ -46,11 +47,24 @@ object ReqDetailTestDsl {
   val invariantsWhenBad: *.Invariant =
     *.emptyInvariant
 
-  val invariantsGR: *.Invariant =
-    *.focus("Pubid").obsAndState(_.generic.pubid.some, _.pubidStr).assert.equal
+  val invariantsGR: *.Invariant = {
+    val pubid = *.focus("Pubid").obsAndState(_.generic.pubid.some, _.pubidStr).assert.equal
+
+    val delReasonField = *.focus("DeletedReasons visible")
+      .value(_.obs.generic.fields contains UiText.FieldNames.deletionReason)
+      .assert.equalBy(_.obs.generic.filterDead :: ShowDead)
+
+    val filterDeadLocked =
+      *.focus("FilterDead locked").value(_.obs.generic.filterDeadLocked).assert.equalBy(_.obs.generic.live :: Dead)
+
+    val showingDead =
+      *.focus("FilterDead").value(_.obs.generic.filterDead).assert.equal(ShowDead).when(_.obs.generic.live :: Dead)
+
+    pubid & delReasonField & filterDeadLocked & showingDead
+  }
 
   val invariantsUC: *.Invariant = {
-    def stepsAreUnique = allSteps.assert.distinct
+    val stepsAreUnique = allSteps.assert.distinct
 
     invariantsGR & stepsAreUnique
   }

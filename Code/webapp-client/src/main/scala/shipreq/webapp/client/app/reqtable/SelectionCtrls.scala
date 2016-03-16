@@ -3,7 +3,7 @@ package shipreq.webapp.client.app.reqtable
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
 import org.scalajs.dom
-import shipreq.base.util.{NonEmptyVector, NonEmptySet}
+import shipreq.base.util.{Allow, NonEmptyVector, NonEmptySet}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.{TextSearch, PlainText}
@@ -73,16 +73,9 @@ object SelectionCtrls {
             case ReqRow(r, Live, _, _, _) =>
               delReqs += r
 
-            case ReqRow(gr: GenericReq, Dead, _, _, _) =>
-              import GenericReq.ImplicitLiveStatus._
-              gr.implicitLiveStatus(p.cfg.customReqTypes) match {
-                case NoImpact      => resReqs += gr
-                case ReqTypeIsDead => ()
-              }
-
-            case ReqRow(uc: UseCase, Dead, _, _, _) =>
-              uc.liveUC // Will give a compiler-error reminder if removed in place of a implicitLiveStatus() like GR
-              resReqs += uc
+            case ReqRow(r, Dead, _, _, _) =>
+              if (r.allowLiveChange(p.cfg.customReqTypes) :: Allow)
+                resReqs += r
 
             case r: ReqCodeGroupRow =>
               r.live match {

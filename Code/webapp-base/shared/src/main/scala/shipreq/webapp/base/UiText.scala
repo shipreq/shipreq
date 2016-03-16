@@ -25,7 +25,7 @@ object UiText {
     def tags           = FieldNames.tags
     def implicationSrc = "Implied By"
     def implicationTgt = "Implies"
-    def deletionReason = "Deletion Reason"
+    def deletionReason = FieldNames.deletionReason
   }
 
   object FieldNames {
@@ -50,12 +50,31 @@ object UiText {
     def useCaseStepTreeN    = "Normal Course"
     def useCaseStepTreeA    = "Alternative Courses"
     def useCaseStepTreeE    = "Exceptions"
+    def deletionReason      = "Deletion Reason"
   }
 
   object Cfg {
     def startNewButton    = "Create"
     def abortNewButton    = "Cancel"
     def retryFailedButton = "Retry"
+  }
+
+  object Life {
+    /*
+    def field    = "Active Status"
+    def live     = "Active"
+    def dead     = "Deleted"
+    def delete   = "Delete"
+    def restore  = "Restore"
+    def showDead = "Show deleted content."
+    */
+
+    def field    = "Life Status"
+    def live     = "Alive"
+    def dead     = "Dead"
+    def delete   = "Kill"
+    def restore  = "Resurrect"
+    def showDead = "Show dead content."
   }
 
   def reqCodeGroup = "Code Group"

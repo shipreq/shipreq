@@ -1,12 +1,11 @@
 Req Detail
 ==========
-* Add UI to show/hide deleted.
-* Show dead fields, deletion reason, etc.
-* Add Delete/Restore Req button.
+* Make Delete/Restore button work.
 * Test:
   * dead not editable, live editable. (invariant)
   * del/restore.
-  * dead req overrides filterDead setting.
+  * inapplicable fields hidden.
+  * dead fields hidden/shown.
 
 UC Step Deletion
 ================
