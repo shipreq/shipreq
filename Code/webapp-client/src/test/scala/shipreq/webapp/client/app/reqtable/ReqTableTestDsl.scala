@@ -54,9 +54,8 @@ object ReqTableTestDsl {
         **.assert.containsAll("live custom field columns", i => customFieldNames(i.state, Live))
 
       val deadColumns =
-        **.assert.existenceOfAll("dead custom field columns",
-          _.obs.filterDead :: ShowDead,
-          i => customFieldNames(i.state, Dead))
+        **.assert.existenceOfAllBy("dead custom field columns", i => customFieldNames(i.state, Dead))(
+          _.obs.filterDead :: ShowDead)
 
       uniqueColumns & liveCustomFieldColumnsAlwaysAvailable & deadColumns
     }
