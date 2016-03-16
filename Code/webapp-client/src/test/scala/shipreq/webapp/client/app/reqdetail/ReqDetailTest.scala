@@ -6,6 +6,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.SampleProject3._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.client.app.ProjectSpaMain.Page
 import shipreq.webapp.client.app.ProjectSpaTestDsl
 import shipreq.webapp.client.test._
 import teststate.Exports._
@@ -25,9 +26,9 @@ object ReqDetailTest extends TestSuite {
     import ProjectSpaTestDsl._
 
     ProjectSpaTestDsl.runTest(
-      setPageToReqDetail(ep, if (error) None else Some(ep))
-        >> liftReqDetailTests(tc).asAction(s"Req Detail (${PlainText.pubid(ep)})")
-    )
+      liftReqDetailTests(tc).asAction(s"Req Detail (${PlainText.pubid(ep)})"),
+      page = Page.ReqDetail(ep),
+      rd = if (error) None else Some(ep))
   }
 
   def testError(ep: ExternalPubid, error: String): Unit =

@@ -4,9 +4,9 @@ import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 import monocle.macros.Lenses
-import shipreq.base.util.Debug._
 import scala.util.{Failure, Success, Try}
 import teststate.Exports._
+import shipreq.base.util.Debug._
 import shipreq.webapp.base.data.{ExternalPubid, Project}
 import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.test.{MockRemotes, SampleProject5}
@@ -94,12 +94,16 @@ object ProjectSpaTestDsl {
   def testReqTable(action: RT.*.Action): *.Action = liftReqTableTests(Test(action)).asAction("Test ReqTable")
   def testReqDetail(action: RD.*.Action): *.Action = liftReqDetailTests(Test(action)).asAction("Test ReqDetail")
 
-  def runTest(action: *.Action): Unit = {
-    val cd   = TestClientData(SampleProject5.project)
+  def runTest(action: *.Action,
+              project: Project  = SampleProject5.project,
+              page   : Page     = Page.ReqTable,
+              rd     : RD.State = None)
+            : Unit = {
+    val cd   = TestClientData(project)
     val cp   = MockServer(cd)
     val spa  = new ProjectSpaMain(MockRemotes.projectSPA, cp, cd)
     val rc   = MockRouterCtl[Page]()
-    val init = TestState(Page.ReqTable, cd.project(), None)
+    val init = TestState(page, cd.project(), rd)
 
     ComponentTester(spa.Component)(Props(init.page, rc)) { tester =>
       val tt  = Test(action, invariants).observe(_.observe())
