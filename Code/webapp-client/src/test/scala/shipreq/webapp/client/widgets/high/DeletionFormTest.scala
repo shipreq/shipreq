@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.reqtable
+package shipreq.webapp.client.widgets.high
 
 import utest._
 import shipreq.base.util.ScalaExt._
@@ -6,10 +6,10 @@ import shipreq.base.util.{NonEmptySet, UnivEq, IMap, Util}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._
 import WebappTestUtil._
-import Deletion.{Props1, GroupRow}
+import DeletionForm.{Props1, GroupRow}
 import UnsafeTypes._
 
-object DeletionTestData {
+object DeletionFormTestData {
   import ProjectDsl._
   import ProjectDslInternals.{ToState, Composite}
   import SampleProject.Values._
@@ -197,7 +197,7 @@ object DeletionTestData {
     |. 512 <- 510 511
   """.stripMargin.trim
 
-  lazy val result               = Deletion.initProps1(p, NonEmptySet force _selectedReqIds, _selectedRCGs)
+  lazy val result               = DeletionForm.initProps1(p, NonEmptySet force _selectedReqIds, _selectedRCGs)
   lazy val expectInitialReqs    = _expectInitialReqs
   lazy val expectInitialRCGs    = _expectInitialRCGs
   lazy val expectUnselectedReqs = _expectUnselectedReqs
@@ -222,8 +222,8 @@ object DeletionTestData {
     }
 }
 
-object DeletionTest extends TestSuite {
-  import DeletionTestData._
+object DeletionFormTest extends TestSuite {
+  import DeletionFormTestData._
 
   implicit val rcgRowEquality = UnivEq.derive[GroupRow]
 

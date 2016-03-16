@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.reqtable
+package shipreq.webapp.client.widgets.high
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, MonocleReact._
 import japgolly.scalajs.react.extra._
@@ -16,10 +16,9 @@ import shipreq.webapp.client.app.Style.reqtable.{deleteRestore => *}
 import shipreq.webapp.client.data.Plain
 import shipreq.webapp.client.feature.{PreviewFeature, Selection}
 import shipreq.webapp.client.widgets.Widgets
-import shipreq.webapp.client.widgets.high.{ProjectWidgets, RichTextEditor}
 import MTrie.Ops
 
-object Deletion {
+object DeletionForm {
 
   case class Props(project        : Project,
                    widgets        : ProjectWidgets,

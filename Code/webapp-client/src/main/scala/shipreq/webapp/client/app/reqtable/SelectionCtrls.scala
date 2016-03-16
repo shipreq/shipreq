@@ -12,7 +12,7 @@ import shipreq.webapp.client.feature.AsyncActionFeature
 import shipreq.webapp.client.feature.Modal
 import shipreq.webapp.client.lib.DataReusability._
 import shipreq.webapp.client.protocol.ServerCall
-import shipreq.webapp.client.widgets.high.ProjectWidgets
+import shipreq.webapp.client.widgets.high.{DeletionForm, ProjectWidgets}
 import AsyncActionFeature.Locked
 
 /**
@@ -175,9 +175,9 @@ object SelectionCtrls {
     }
 
     def deleteReqsModal(p: Props, reqs: NonEmptySet[ReqId], groups: Set[ReqCodeId]): Modal = {
-      val props1 = Deletion.initProps1(p.project, reqs, groups)
-      val props = Deletion.makeProps(props1, p.widgets, p.projectText, p.textSearch, deleteReqsIO, cancel)
-      Modal(Deletion.Component(props))
+      val props1 = DeletionForm.initProps1(p.project, reqs, groups)
+      val props = DeletionForm.makeProps(props1, p.widgets, p.projectText, p.textSearch, deleteReqsIO, cancel)
+      Modal(DeletionForm.Component(props))
     }
 
     def restoreIO(cmd: UpdateContentCmd.RestoreContent): Callback = {
