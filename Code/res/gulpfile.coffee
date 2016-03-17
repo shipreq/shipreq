@@ -20,11 +20,14 @@ cfg_ws_customCss = cfg_ws_root + 'src/main/styles/'
 nonRetardedSrc = (a) -> gulp.src(a).pipe expect a
 
 devProdTasks = (name, srcs, mapBoth, mapDevTask, mapProdTask) ->
-  mkSrc = (dev) ->
-    devprod = (prefix, d = '', p = '.min', suffix = '.js') -> prefix + (if dev then d else p) + suffix
-    nonRetardedSrc srcs devprod
   nameD = name + ':dev'
   nameP = name + ':prod'
+
+  mkSrc = (dev) ->
+    devprod = (prefix, d = '', p = '.min', suffix = '.js') -> prefix + (if dev then d else p) + suffix
+    nonRetardedSrc(srcs(devprod))
+      .pipe(debug({title: (if dev then nameD else nameP) + ' ←'}))
+
   gulp.task(nameD, -> mapDevTask  mapBoth mkSrc true)
   gulp.task(nameP, -> mapProdTask mapBoth mkSrc false)
   gulp.task name, [nameD, nameP]
@@ -84,7 +87,7 @@ devProdJs 'ws:project', 'project.js', (f) ->
     f(cfg_bower + 'jquery-textcomplete/dist/jquery.textcomplete')
     cfg_bower + 'react-motion/build/react-motion.js'
     cfg_bower + 'react-height/react-height.js'
-    cfg_bower + 'react-collapse/build/react-collapse.js'
+    f(cfg_bower + 'react-collapse/build/react-collapse')
   ]
 
 gulp.task 'ws:css', ->
