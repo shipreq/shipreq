@@ -78,19 +78,15 @@ object ReqDetailTest extends TestSuite {
         visibleFields.assert(expectVisible).contains("Description")
       def t(pubid: ExternalPubid, expectVisible: Boolean) =
         test(pubid)(*.emptyTest addInvariants check(expectVisible))
-
       'mf1 - t("MF-1", true)
       'fr1 - t("FR-1", false)
-
-      /*
-      import ProjectSpaTestDsl._
-      ProjectSpaTestDsl.runTest(
-        setPageToReqDetail("FR-1", Some("FR-1"))
-          addCheck check(true).before.lift  // Applicable     to MF-1
-          addCheck check(false).after.lift, // Not-applicable to FR-1
-        page = Page.ReqDetail("MF-1"), rd = Some("MF-1"))
-      */
     }
+
+    'deleteRestore - test("UC-1")(Test(
+      changeLife.updateState(stateMode set Mode.Delete).addCheck(life.assert.equal(Live).before)
+      >> deleteDelete                                  .addCheck(life.assert.equal(Dead).after)
+      >> changeLife                                    .addCheck(life.assert.equal(Live).after)
+    ))
 
 
   }

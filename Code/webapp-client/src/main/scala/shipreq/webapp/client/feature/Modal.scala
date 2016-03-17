@@ -26,4 +26,7 @@ object Modal {
     @inline def renderOrElse(default: => ReactElement): ReactElement =
       o.fold(default)(_.render)
   }
+
+  implicit val reuse: Reusability[State] =
+    Reusability.option(Reusability.never[Modal])
 }

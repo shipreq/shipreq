@@ -83,6 +83,7 @@ object ProjectSpaMain {
   // ===================================================================================================================
   // Component stuff (TODO Refactor)
   import reqtable.{Column, Row, ReqTable}
+  import reqdetail.ReqDetail
 
   sealed trait FocusId
   object FocusId {
@@ -106,7 +107,8 @@ object ProjectSpaMain {
                    asyncStates : AsyncActionFeature.D2.State.Simple[Row.SourceId, EditFieldKey, String],
                    previewState: PreviewFeature.State[FocusId],
                    filterDead  : FilterDead,
-                   reqTable    : ReqTable.State)
+                   reqTable    : ReqTable.State,
+                   reqDetail   : ReqDetail.State)
 }
 
 
@@ -154,7 +156,8 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
     AsyncActionFeature.D2.State.init,
     PreviewFeature.initState,
     HideDead,
-    ReqTable.State.init(cd, HideDead, None))
+    ReqTable.State.init(cd, HideDead, None),
+    ReqDetail.initState)
 
   // ===================================================================================================================
   class Backend($: BackendScope[Props, State]) extends OnUnmount {
@@ -245,6 +248,9 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
       cd, cp, r.updateContent,
       pxPlainText, pxTextSearch, pxProjectWidgets))
 
+    val reqDetailSetState: ReqDetail.State ~=> Callback =
+      ReusableFn($.zoomL(State.reqDetail).setState(_))
+
     val usageShow =
       Usage.Show((fd, fs) =>
         routerCtl
@@ -291,7 +297,8 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
           val props = ReqDetail.DynamicProps(
             pubid,
             fd,
-            reqDetailReqPropsFn(s))
+            reqDetailReqPropsFn(s),
+            ReusableVar(s.reqDetail)(reqDetailSetState))
           layout(reqDetail(props), Page.ReqTable)
       }
     }

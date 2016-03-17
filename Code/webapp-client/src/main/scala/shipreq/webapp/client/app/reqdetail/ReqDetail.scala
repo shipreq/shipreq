@@ -19,7 +19,7 @@ import shipreq.webapp.client.feature._
 import shipreq.webapp.client.lib.DataReusability._
 import shipreq.webapp.client.protocol.{ServerCall, ClientProtocol}
 import shipreq.webapp.client.widgets.Checkbox
-import shipreq.webapp.client.widgets.high.ProjectWidgets
+import shipreq.webapp.client.widgets.high.{DeletionForm, ProjectWidgets}
 
 object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
   override protected def configureBackend = new Backend(_, _)
@@ -36,12 +36,18 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
   case class DynamicProps(extPubid  : ExternalPubid,
                           filterDead: ReusableVar[FilterDead],
-                          reqProps  : ReqId => ReqProps)
+                          reqProps  : ReqId => ReqProps,
+                          state     : ReusableVar[State])
 
   case class ReqProps(initEditor  : InitEditor,
                       asyncFeature: AsyncActionFeature  .D1.Feature[Cell, String],
                       edit        : ContentEditorFeature.D1.State.ReadOnly[Cell],
                       async       : AsyncActionFeature  .D1.State.ReadOnly[Cell, String])
+
+  type State = Modal.State
+
+  def initState: State =
+    Modal.none
 
   /**
    * All data associated with a requirement required for this screen.
@@ -188,6 +194,15 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
     val updateIO: ServerCall[UpdateContentCmd] =
       ServerCall.to(updateContentFn, cp, cd)
 
+    def runAction(cmd: UpdateContentCmd): Callback =
+      updateIO(cmd, TCB.Success.nop, f => TCB.Failure(Callback.alert(f))) // TODO use AsyncFeature
+
+    def setModal(modal: Modal.State): Callback =
+      $.props >>= (_.state set modal)
+
+    def clearModal: Callback =
+      setModal(Modal.none)
+
     type EditFeature = ContentEditorFeature.D1.Feature[Cell]
 
     def createEditFeature(initEditor  : InitEditor,
@@ -229,14 +244,15 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
     val emptyRow: ReactElement = <.span
 
-    def render(p: DynamicProps): ReactElement = {
-      Px.refresh(pxExtPubid, pxUpstreamFD)
-      pxData.value() match {
-        case \/-(data)                                => renderDetail(p, data)
-        case -\/(PubidQueryError.InvalidReqType)      => renderNotFound(s"${UiText.FieldNames.reqType} ${p.extPubid.mnemonic.value} not found.")
-        case -\/(PubidQueryError.InvalidPos(rt, len)) => renderNotFound(s"${PlainText pubid p.extPubid} not found.")
+    def render(p: DynamicProps): ReactElement =
+      p.state.value renderOrElse {
+        Px.refresh(pxExtPubid, pxUpstreamFD)
+        pxData.value() match {
+          case \/-(data)                                => renderDetail(p, data)
+          case -\/(PubidQueryError.InvalidReqType)      => renderNotFound(s"${UiText.FieldNames.reqType} ${p.extPubid.mnemonic.value} not found.")
+          case -\/(PubidQueryError.InvalidPos(rt, len)) => renderNotFound(s"${PlainText pubid p.extPubid} not found.")
+        }
       }
-    }
 
     def focus: Callback = Callback.empty // TODO
 
@@ -386,13 +402,17 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
               case Live =>
                 TagMod(
                   UiText.Life.live + ".",
-                  <.button(UiText.Life.delete)) // TODO
+                  <.button(
+                    ^.onClick --> delete(req.id),
+                    UiText.Life.delete))
 
               case Dead =>
                 TagMod(
                   UiText.Life.dead + ".",
                   req.allowLiveChange(project.config.customReqTypes).option(
-                    <.button(UiText.Life.restore))) // TODO
+                    <.button(
+                      ^.onClick --> restore(req.id),
+                      UiText.Life.restore)))
             }
         }
 
@@ -405,10 +425,6 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
         val flow = data.project.reqs.useCases.stepFlow
 
         val stepLabel = ReactAttr.devOnly("data-step-label") := 1
-
-        def runAction(cmd: UpdateContentCmd): Callback =
-        // TODO UseCaseStep buttons should use AsyncFeature
-          updateIO(cmd, TCB.Success.nop, f => TCB.Failure(Callback.alert(f)))
 
         var first = temp.defaultFirst.nonEmpty
 
@@ -496,6 +512,20 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
         renderFilterDead,
         renderRows)
     }
+
+    def delete(id: ReqId): Callback =
+      CallbackTo {
+        def run(cmd: UpdateContentCmd): Callback =
+          runAction(cmd) >> clearModal
+
+        import Px.AutoValue._
+        val props1 = DeletionForm.initProps1(pxProject, NonEmptySet one id, Set.empty)
+        val props = DeletionForm.makeProps(props1, pxProjectWidgets, pxPlainText, pxTextSearch, run, clearModal)
+        Some(Modal(DeletionForm.Component(props)))
+      } >>= setModal
+
+    def restore(id: ReqId): Callback =
+      runAction(UpdateContentCmd.RestoreContent(Set(id), Set.empty))
 
   } // Backend
 }

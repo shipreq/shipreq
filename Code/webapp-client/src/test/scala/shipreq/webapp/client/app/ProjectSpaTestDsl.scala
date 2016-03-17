@@ -108,6 +108,8 @@ object ProjectSpaTestDsl {
     ComponentTester(spa.Component)(Props(init.page, rc)) { tester =>
       val tt  = Test(action, invariants).observe(_.observe())
       val h   = tt.run(init, Ref(cd, tester))
+      if (h.failed)
+        println(s"${"="*120}\n${tester.component.getDOMNode().outerHTML}\n")
       h.assert(History.Options.colored.alwaysShowChildren)
       // println(h.format(History.Options.colored.alwaysShowChildren))
     }

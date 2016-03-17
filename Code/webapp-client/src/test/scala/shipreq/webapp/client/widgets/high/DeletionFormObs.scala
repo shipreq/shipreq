@@ -1,0 +1,24 @@
+package shipreq.webapp.client.widgets.high
+
+import org.scalajs.dom.html
+import shipreq.webapp.client.test.DomZipper
+import DomZipper.Implicits._
+
+object DeletionFormObs {
+
+  def option($: DomZipper): Option[DeletionFormObs] =
+    $.findSelfOrChildWithAttribute("data-deletion-form")
+      .map(new DeletionFormObs(_))
+}
+
+class DeletionFormObs($: DomZipper) {
+
+  val reasonEditor: html.TextArea =
+    $.down("textarea").domAs[html.TextArea]
+
+  val deleteButton: html.Button =
+    $.down("button", 1 of 2).domAs[html.Button]
+
+  val cancelButton: html.Button =
+    $.down("button", 2 of 2).domAs[html.Button]
+}

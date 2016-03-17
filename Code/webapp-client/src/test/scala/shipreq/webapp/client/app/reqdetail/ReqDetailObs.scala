@@ -6,6 +6,7 @@ import shipreq.base.util.univEqOps
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data.{Dead, Live}
 import shipreq.webapp.client.data.{ShowDead, FilterDead}
+import shipreq.webapp.client.widgets.high.DeletionFormObs
 import shipreq.webapp.client.test._
 import DomZipper.Implicits._
 import ReqDetailTestDsl.Mode
@@ -36,6 +37,8 @@ final class ReqDetailObs($: DomZipper) {
     val reason = errorRoot.get.innerText
   }
 
+  val deletionForm = DeletionFormObs.option($)
+
   object generic {
     val headerRow = $.down(">div")
 
@@ -65,6 +68,9 @@ final class ReqDetailObs($: DomZipper) {
       else
         sys error s"Expected live or dead, got: $t"
     }
+
+    val lifeChangeButton: Option[html.Button] =
+      lifeRow.collect01("button").as[html.Button].get()
   }
 
   object uc {
@@ -107,15 +113,10 @@ final class ReqDetailObs($: DomZipper) {
   val mode: Mode =
     if (errorRoot.isDefined)
       Mode.Error
+    else if (deletionForm.isDefined)
+      Mode.Delete
     else
       Mode.Details
-
-//    (Try(ok), Try(error)) match {
-//      case (Success(_), Failure(_)) => true
-//      case (Failure(_), Success(_)) => false
-//      case (Success(_), Success(_)) => sys error "Ok or Error, which one? Not both."
-//      case (Failure(a), Failure(b)) => sys error s"Ok & Error both failed.\nOK - $a\nKO - $b"
-//    }
 
   override def toString = s"ReqDetailObs($mode)"
 }

@@ -4,6 +4,7 @@ import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
 import org.scalajs.dom
 import shipreq.base.util.{Allow, NonEmptyVector, NonEmptySet}
+import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.{TextSearch, PlainText}
@@ -128,18 +129,18 @@ object SelectionCtrls {
             val count = rs.length + d.groups.length
             <.button(
               ^.onClick --> p.setModal(modal),
-              addCount("Delete", count, " →"))
+              addCount(UiText.Life.delete, count, " →"))
           }
 
         def delGroupsOnly =
           NonEmptyVector.option(d.groups).map { gs =>
             <.button(
               ^.onClick --> deleteGroupsIO(gs.mapToNES(_.id)),
-              addCount("Delete Groups", gs.length))
+              addCount(UiText.Life.delete + " Groups", gs.length))
           }
 
         def cantDelete =
-          <.button(^.disabled := true, "Delete")
+          <.button(^.disabled := true, UiText.Life.delete)
 
         delReqsAndGroups orElse delGroupsOnly getOrElse cantDelete
       }
@@ -147,14 +148,14 @@ object SelectionCtrls {
       val restoreButton = {
         val r = ss.restorable
         if (r.total == 0)
-          <.button(^.disabled := true, "Restore")
+          <.button(^.disabled := true, UiText.Life.restore)
         else {
           def cmd = UpdateContentCmd.RestoreContent(
             r.reqs.map(_.id)(collection.breakOut),
             r.groups.map(_.id)(collection.breakOut))
           <.button(
             ^.onClick --> restoreIO(cmd),
-            addCount("Restore", r.total))
+            addCount(UiText.Life.restore, r.total))
         }
       }
 

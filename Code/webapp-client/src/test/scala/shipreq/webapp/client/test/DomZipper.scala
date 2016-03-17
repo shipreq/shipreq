@@ -167,6 +167,9 @@ object DomZipper {
       e2
     }
 
+    def getDZ()(implicit h: HandleError): h.Result[C[DomZipperAt[E]]] =
+      h.map(get())(cont.map(_)(d => from.addLayer(Layer("collect", sel, d))))
+
     def mapDom[A](f: E => A)(implicit h: HandleError): h.Result[C[A]] =
       h.map(get())(cont.map(_)(f))
 
@@ -271,6 +274,12 @@ final class DomZipperAt[+D <: DOM] private[test](prevLayers: Vector[Layer[DOM]],
   def collect01(sel: String) = new Collector[Option, Element](this, sel, Container01)
   def collect0n(sel: String) = new Collector[Vector, Element](this, sel, Container0N)
   def collect1n(sel: String) = new Collector[Vector, Element](this, sel, Container1N)
+
+  def findSelfOrChildWithAttribute(attr: String)(implicit h: HandleError): h.Result[Option[DomZipperAt[Element]]] =
+    dom.attributes.getNamedItem(attr) match {
+      case null => collect01(s"*[$attr]").getDZ()
+      case _    => h.map(as[Element])(Some(_))
+    }
 }
 
 //  def assertCount(desc: String, expectedCount: Int, dom: Result, root: UndefOr[DOM]): Unit = {

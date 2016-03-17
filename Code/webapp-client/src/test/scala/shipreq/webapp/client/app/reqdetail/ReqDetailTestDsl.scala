@@ -1,6 +1,7 @@
 package shipreq.webapp.client.app.reqdetail
 
 import japgolly.scalajs.react.test.ReactTestUtils.Simulate
+import monocle.macros.Lenses
 import shipreq.base.util.{UnivEq, univEqOps}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
@@ -14,7 +15,7 @@ object ReqDetailTestDsl {
   object Mode {
     case object Error   extends Mode
     case object Details extends Mode
-
+    case object Delete extends Mode
     implicit def univEq: UnivEq[Mode] = UnivEq.derive
     implicit def equal : Equal [Mode] = Equal.by_==
     implicit def show  : Show  [Mode] = Show.byToString
@@ -23,8 +24,10 @@ object ReqDetailTestDsl {
   def unspecifiedState: State =
     State(ExternalPubid(ReqType.Mnemonic("UNSPECIFIED TEST STATE"), ReqTypePos(1)), Mode.Error)
 
+  @Lenses
   case class State(ep: ExternalPubid, mode: Mode)
 
+  @Lenses
   case class TestState(project: Project, state: State) {
     def ep = state.ep
     def mode = state.mode
@@ -33,6 +36,8 @@ object ReqDetailTestDsl {
 
     //lazy val req = ep.map(project.findReq(_).toOption.get)
   }
+
+  val stateMode = TestState.state ^|-> State.mode
 
   val * = Dsl.sync[Unit, ReqDetailObs, TestState, String]
 
@@ -70,6 +75,7 @@ object ReqDetailTestDsl {
     *.focus("Mode").obsAndState(_.mode, _.mode).assert.equal &
     *.chooseInvariant("Mode invariants", i => i.state.mode match {
       case Mode.Error   => invariantsWhenBad
+      case Mode.Delete => emptyInvariants
       case Mode.Details =>
         if (i.state.pubidStr startsWith "UC-")
           invariantsUC
@@ -104,4 +110,26 @@ object ReqDetailTestDsl {
 
   val visibleFields =
     *.focus("Visible fields").collection(_.obs.generic.fields.keys)
+
+  val life =
+    *.focus("Life").value(_.obs.generic.live)
+
+  val changeLife =
+    *.action(NameFn(_.map(_.obs.generic.live) match {
+      case None       => "Change life"
+      case Some(Live) => UiText.Life.delete + " req"
+      case Some(Dead) => UiText.Life.restore + " req"
+      })).act(Simulate click _.obs.generic.lifeChangeButton.get)
+
+  // Hit delete on the delete screen
+  def deleteDelete =
+    *.action("Hit Delete")
+      .act(Simulate click _.obs.deletionForm.get.deleteButton)
+      .updateState(stateMode set Mode.Details)
+
+  // Hit cancel on the delete screen
+  def deleteCancel =
+    *.action("Hit Cancel")
+      .act(Simulate click _.obs.deletionForm.get.cancelButton)
+      .updateState(stateMode set Mode.Details)
 }

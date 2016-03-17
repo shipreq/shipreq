@@ -117,6 +117,9 @@ gulp.task 'wc:testjs', ->
         cfg_bower + 'react/react-with-addons.js'
         cfg_bower + 'react/react-dom.min.js'
         cfg_bower + 'react/react-dom-server.min.js'
+        cfg_bower + 'react-motion/build/react-motion.js'
+        cfg_bower + 'react-height/react-height.js'
+        cfg_bower + 'react-collapse/build/react-collapse.min.js'
       ]
     .pipe concat 'test.js'
     .pipe uglify()

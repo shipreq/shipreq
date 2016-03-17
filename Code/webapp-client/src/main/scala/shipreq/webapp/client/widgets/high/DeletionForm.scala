@@ -30,16 +30,6 @@ object DeletionForm {
                    deletableGroups: DeletableGroups,
                    initialState   : State)
 
-  def makeProps(props1     : Props1,
-                widgets    : ProjectWidgets,
-                projectText: PlainText.ForProject,
-                textSearch : TextSearch,
-                perform    : DeleteReqs => Callback,
-                cancel     : Callback): Props = {
-    import props1._
-    Props(project, widgets, projectText, textSearch, perform, cancel, deletableReqs, deletableGroups, initialState)
-  }
-
   case class ReqRow(req: Req, indent: Int, impliedBy: Vector[Req])
 
   case class GroupRow(group    : LiveReqCodeGroup,
@@ -76,6 +66,16 @@ object DeletionForm {
 
     val state = State(Selection(initSelReqs), Selection(initSelGroups), "")
     Props1(p, deletableReqs, deletableGroups, state)
+  }
+
+  def makeProps(props1     : Props1,
+                widgets    : ProjectWidgets,
+                projectText: PlainText.ForProject,
+                textSearch : TextSearch,
+                perform    : DeleteReqs => Callback,
+                cancel     : Callback): Props = {
+    import props1._
+    Props(project, widgets, projectText, textSearch, perform, cancel, deletableReqs, deletableGroups, initialState)
   }
 
   // ===================================================================================================================
@@ -303,6 +303,8 @@ object DeletionForm {
     val setRcgSel = ReusableFn($ _setStateL State.selectedGroups)
     val setReason = ReusableFn($ _setStateL State.reason)
 
+    val devOnlyId = TagMod.devOnly("data-deletion-form".reactAttr := 1)
+
     def reasonEditorProps(p: Props, s: State): RichTextEditor.DeletionReason.Props =
       RichTextEditor.DeletionReason.Props(
         project        = p.project,
@@ -448,6 +450,7 @@ object DeletionForm {
           "Delete")
 
       <.div(
+        devOnlyId,
         reqSection,
         groupSection,
         reasonSection,

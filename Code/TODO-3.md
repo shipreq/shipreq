@@ -1,9 +1,7 @@
 Req Detail
 ==========
-* Make Delete/Restore button work.
 * Test:
   * dead not editable, live editable. (invariant)
-  * del/restore.
 
 UC Step Deletion
 ================
