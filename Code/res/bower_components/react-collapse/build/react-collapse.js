@@ -56,18 +56,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 	
-	Object.defineProperty(exports, '__esModule', {
-	  value: true
-	});
+	// Babel6 does not hack the default behaviour of ES Modules anymore, so we should export
 	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+	var Collapse = __webpack_require__(1).default;
 	
-	var _Collapse = __webpack_require__(1);
-	
-	var _Collapse2 = _interopRequireDefault(_Collapse);
-
-	exports['default'] = _Collapse2['default'];
-	module.exports = exports['default'];
+	module.exports = Collapse;
 
 /***/ },
 /* 1 */
@@ -75,15 +68,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 	
-	Object.defineProperty(exports, '__esModule', {
-	  value: true
-	});
-	
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-	
-	function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
 	
 	var _react = __webpack_require__(2);
 	
@@ -97,62 +86,68 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _reactHeight2 = _interopRequireDefault(_reactHeight);
 	
-	var Collapse = _react2['default'].createClass({
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
+	
+	var stringHeight = function stringHeight(height) {
+	  return Math.max(0, parseFloat(height)).toFixed(1);
+	};
+	
+	var Collapse = _react2.default.createClass({
 	  displayName: 'Collapse',
 	
 	  propTypes: {
-	    isOpened: _react2['default'].PropTypes.bool.isRequired,
-	    children: _react2['default'].PropTypes.node.isRequired,
-	    fixedHeight: _react2['default'].PropTypes.number,
-	    style: _react2['default'].PropTypes.object,
-	    springConfig: _react2['default'].PropTypes.arrayOf(_react2['default'].PropTypes.number)
+	    isOpened: _react2.default.PropTypes.bool.isRequired,
+	    children: _react2.default.PropTypes.node.isRequired,
+	    fixedHeight: _react2.default.PropTypes.number,
+	    style: _react2.default.PropTypes.object, // eslint-disable-line react/forbid-prop-types
+	    springConfig: _react2.default.PropTypes.objectOf(_react2.default.PropTypes.number),
+	    keepCollapsedContent: _react2.default.PropTypes.bool
 	  },
 	
 	  getDefaultProps: function getDefaultProps() {
-	    return { fixedHeight: -1, style: {} };
+	    return { fixedHeight: -1, style: {}, keepCollapsedContent: false };
 	  },
-	
 	  getInitialState: function getInitialState() {
-	    return { height: -1 };
+	    return { height: -1, isOpenedChanged: false };
 	  },
-	
 	  componentWillMount: function componentWillMount() {
-	    this.height = '0.0';
+	    this.height = stringHeight(0);
+	    this.renderStatic = true;
+	  },
+	  componentWillReceiveProps: function componentWillReceiveProps(_ref) {
+	    var isOpened = _ref.isOpened;
+	
+	    this.setState({ isOpenedChanged: isOpened !== this.props.isOpened });
 	  },
 	
 	  shouldComponentUpdate: _reactAddonsPureRenderMixin.shouldComponentUpdate,
 	
 	  onHeightReady: function onHeightReady(height) {
+	    if (this.renderStatic && this.props.isOpened) {
+	      this.height = stringHeight(height);
+	    }
 	    this.setState({ height: height });
 	  },
-	
-	  renderFixed: function renderFixed() {
+	  getMotionHeight: function getMotionHeight(height) {
 	    var _props = this.props;
 	    var isOpened = _props.isOpened;
-	    var style = _props.style;
-	    var children = _props.children;
-	    var fixedHeight = _props.fixedHeight;
 	    var springConfig = _props.springConfig;
+	    var isOpenedChanged = this.state.isOpenedChanged;
 	
-	    var props = _objectWithoutProperties(_props, ['isOpened', 'style', 'children', 'fixedHeight', 'springConfig']);
+	    var newHeight = isOpened ? Math.max(0, parseFloat(height)).toFixed(1) : stringHeight(0);
 	
-	    return _react2['default'].createElement(
-	      _reactMotion.Motion,
-	      {
-	        defaultStyle: { height: 0 },
-	        style: { height: (0, _reactMotion.spring)(isOpened ? fixedHeight : 0, springConfig) } },
-	      function (_ref) {
-	        var height = _ref.height;
-	        return !isOpened && parseFloat(height).toFixed(1) === '0.0' ? null : _react2['default'].createElement(
-	          'div',
-	          _extends({ style: _extends({}, style, { height: height, overflow: 'hidden' }) }, props),
-	          children
-	        );
-	      }
-	    );
+	    // No need to animate if content is closed and it was closed previously
+	    // Also no need to animate if height did not change
+	    var skipAnimation = !isOpenedChanged && !isOpened || this.height === newHeight;
+	
+	    var springHeight = (0, _reactMotion.spring)(isOpened ? Math.max(0, height) : 0, springConfig);
+	    var instantHeight = isOpened ? Math.max(0, height) : 0;
+	
+	    return skipAnimation ? instantHeight : springHeight;
 	  },
-	
-	  render: function render() {
+	  renderFixed: function renderFixed() {
 	    var _this = this;
 	
 	    var _props2 = this.props;
@@ -161,45 +156,138 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var children = _props2.children;
 	    var fixedHeight = _props2.fixedHeight;
 	    var springConfig = _props2.springConfig;
+	    var keepCollapsedContent = _props2.keepCollapsedContent;
 	
-	    var props = _objectWithoutProperties(_props2, ['isOpened', 'style', 'children', 'fixedHeight', 'springConfig']);
+	    var props = _objectWithoutProperties(_props2, ['isOpened', 'style', 'children', 'fixedHeight', 'springConfig', 'keepCollapsedContent']);
+	
+	    if (this.renderStatic) {
+	      this.renderStatic = false;
+	      var newStyle = { overflow: 'hidden', height: isOpened ? fixedHeight : 0 };
+	
+	      if (!keepCollapsedContent && !isOpened) {
+	        return null;
+	      }
+	      this.height = stringHeight(fixedHeight);
+	      return _react2.default.createElement(
+	        'div',
+	        _extends({ style: _extends({}, newStyle, style) }, props),
+	        children
+	      );
+	    }
+	
+	    return _react2.default.createElement(
+	      _reactMotion.Motion,
+	      {
+	        defaultStyle: { height: isOpened ? 0 : fixedHeight },
+	        style: { height: this.getMotionHeight(fixedHeight) } },
+	      function (_ref2) {
+	        var height = _ref2.height;
+	
+	        _this.height = stringHeight(height);
+	
+	        // TODO: this should be done using onEnd from ReactMotion, which is not yet implemented
+	        // See https://github.com/chenglou/react-motion/issues/235
+	        if (!keepCollapsedContent && !isOpened && _this.height === stringHeight(0)) {
+	          return null;
+	        }
+	
+	        var newStyle = { overflow: 'hidden', height: height };
+	
+	        return _react2.default.createElement(
+	          'div',
+	          _extends({ style: _extends({}, newStyle, style) }, props),
+	          children
+	        );
+	      }
+	    );
+	  },
+	  renderHeightReporter: function renderHeightReporter() {
+	    var children = this.props.children;
+	
+	    return _react2.default.createElement(
+	      _reactHeight2.default,
+	      { onHeightReady: this.onHeightReady },
+	      children
+	    );
+	  },
+	  render: function render() {
+	    var _this2 = this;
+	
+	    var _props3 = this.props;
+	    var isOpened = _props3.isOpened;
+	    var style = _props3.style;
+	    var children = _props3.children;
+	    var fixedHeight = _props3.fixedHeight;
+	    var springConfig = _props3.springConfig;
+	    var keepCollapsedContent = _props3.keepCollapsedContent;
+	
+	    var props = _objectWithoutProperties(_props3, ['isOpened', 'style', 'children', 'fixedHeight', 'springConfig', 'keepCollapsedContent']);
 	
 	    if (fixedHeight > -1) {
 	      return this.renderFixed();
 	    }
 	
+	    var renderStatic = this.renderStatic;
 	    var height = this.state.height;
 	
-	    var stringHeight = parseFloat(height).toFixed(1);
+	    var currentStringHeight = parseFloat(height).toFixed(1);
+	
+	    if (height > -1 && renderStatic) {
+	      this.renderStatic = false;
+	    }
 	
 	    // Cache Content so it is not re-rendered on each animation step
-	    var content = _react2['default'].createElement(
-	      _reactHeight2['default'],
-	      { onHeightReady: this.onHeightReady },
-	      children
-	    );
+	    var content = this.renderHeightReporter();
 	
-	    return _react2['default'].createElement(
+	    if (renderStatic) {
+	      var newStyle = { overflow: 'hidden', height: isOpened ? 'auto' : 0 };
+	
+	      if (!isOpened && height > -1) {
+	        if (!keepCollapsedContent) {
+	          return null;
+	        }
+	        return _react2.default.createElement(
+	          'div',
+	          _extends({ style: _extends({ height: 0, overflow: 'hidden' }, style) }, props),
+	          content
+	        );
+	      }
+	
+	      return _react2.default.createElement(
+	        'div',
+	        _extends({ style: _extends({}, newStyle, style) }, props),
+	        content
+	      );
+	    }
+	
+	    return _react2.default.createElement(
 	      _reactMotion.Motion,
 	      {
-	        defaultStyle: { height: 0 },
-	        style: { height: (0, _reactMotion.spring)(isOpened ? height : 0, springConfig) } },
+	        defaultStyle: { height: isOpened ? 0 : Math.max(0, height) },
+	        style: { height: this.getMotionHeight(height) } },
 	      function (st) {
-	        _this.height = Math.max(0, parseFloat(st.height)).toFixed(1);
+	        _this2.height = stringHeight(st.height);
 	
 	        // TODO: this should be done using onEnd from ReactMotion, which is not yet implemented
 	        // See https://github.com/chenglou/react-motion/issues/235
-	        if (!isOpened && _this.height === '0.0') {
-	          return null;
+	        if (!isOpened && _this2.height === '0.0') {
+	          if (!keepCollapsedContent) {
+	            return null;
+	          }
+	          return _react2.default.createElement(
+	            'div',
+	            _extends({ style: _extends({ height: 0, overflow: 'hidden' }, style) }, props),
+	            content
+	          );
 	        }
 	
-	        var newStyle = isOpened && _this.height === stringHeight ? { height: 'auto' } : {
+	        var newStyle = isOpened && _this2.height === currentStringHeight ? { height: 'auto' } : {
 	          height: st.height, overflow: 'hidden'
 	        };
 	
-	        return _react2['default'].createElement(
+	        return _react2.default.createElement(
 	          'div',
-	          _extends({ style: _extends({}, style, newStyle) }, props),
+	          _extends({ style: _extends({}, newStyle, style) }, props),
 	          content
 	        );
 	      }
@@ -207,8 +295,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	});
 	
-	exports['default'] = Collapse;
-	module.exports = exports['default'];
+	exports.default = Collapse;
 
 /***/ },
 /* 2 */

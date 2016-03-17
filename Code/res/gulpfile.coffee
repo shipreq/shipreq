@@ -84,7 +84,7 @@ devProdJs 'ws:project', 'project.js', (f) ->
     f(cfg_bower + 'jquery-textcomplete/dist/jquery.textcomplete')
     cfg_bower + 'react-motion/build/react-motion.js'
     cfg_bower + 'react-height/react-height.js'
-    cfg_bower + 'react-collapse/react-collapse.js'
+    cfg_bower + 'react-collapse/build/react-collapse.js'
   ]
 
 gulp.task 'ws:css', ->

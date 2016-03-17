@@ -1,11 +1,16 @@
 {
   "name": "react-collapse",
-  "version": "1.4.0",
+  "version": "2.0.0",
   "description": "Component-wrapper for collapse animation with react-motion for elements with variable (and dynamic) height",
-  "main": "react-collapse.js",
+  "main": [
+    "build/react-collapse.js",
+    "build/react-collapse.js.map",
+    "build/react-collapse.min.js",
+    "build/react-collapse.min.js.map"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/bower-registry/react-collapse.git"
+    "url": "https://github.com/nkbt/react-collapse.git"
   },
   "keywords": [
     "component",
@@ -24,7 +29,7 @@
   "dependencies": {
     "react": "^0.14",
     "react-motion": "^0.3",
-    "react-height": "^1.0.0"
+    "react-height": "https://npmcdn.com/react-height@^2/bower.zip"
   },
   "ignore": [
     "**/.*",
@@ -33,13 +38,12 @@
     "test",
     "tests"
   ],
-  "_release": "1.4.0",
-  "_resolution": {
-    "type": "version",
-    "tag": "v1.4.0",
-    "commit": "c1257d86a415c6f68544d7401b7851b29b701186"
+  "_cacheHeaders": {
+    "Content-Length": "22700",
+    "Content-Type": "application/zip; charset=utf-8"
   },
-  "_source": "git://github.com/bower-registry/react-collapse.git",
+  "_source": "https://npmcdn.com/react-collapse/bower.zip",
   "_target": "*",
-  "_originalSource": "react-collapse"
+  "_originalSource": "https://npmcdn.com/react-collapse/bower.zip",
+  "_direct": true
 }
