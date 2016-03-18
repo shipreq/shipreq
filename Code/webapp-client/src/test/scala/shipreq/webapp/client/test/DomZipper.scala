@@ -123,7 +123,7 @@ object DomZipper {
 
   val EditableSel: String =
     List("input", "textarea", "select")
-      .map(_ + ":not(:disabled):not(:read-only)")
+      .map(_ + ":not(:disabled)") // :not(:read-only) | Firefox errors out when :read-only is used
       .mkString(",")
 
   trait Container[C[_]] {
