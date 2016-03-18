@@ -6,7 +6,7 @@ import shipreq.base.util.{UnivEq, univEqOps}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
-import shipreq.webapp.client.data.ShowDead
+import shipreq.webapp.client.data.{FilterDead, HideDead, ShowDead}
 import shipreq.webapp.client.test.TestState._
 
 object ReqDetailTestDsl {
@@ -44,7 +44,20 @@ object ReqDetailTestDsl {
   def checkErrorReason(e: String) =
     *.focus("Error reason").value(_.obs.error.reason).assert.equal(e)
 
-  val allSteps = *.focus("All steps").collection(_.obs.uc.stepTitles)
+  val allSteps =
+    *.focus("All steps").collection(_.obs.uc.stepTitles)
+
+  val filterDead =
+    *.focus("FilterDead").value(_.obs.generic.filterDead)
+
+  val visibleFields =
+    *.focus("Visible fields").collection(_.obs.generic.fields.keys)
+
+  val life =
+    *.focus("Life").value(_.obs.generic.live)
+
+  val editorCount =
+    *.focus("Editor count").value(_.obs.editables.length)
 
   val invariantsWhenBad: *.Invariant =
     *.emptyInvariant
@@ -59,10 +72,13 @@ object ReqDetailTestDsl {
     val filterDeadLocked =
       *.focus("FilterDead locked").value(_.obs.generic.filterDeadLocked).assert.equalBy(_.obs.generic.live :: Dead)
 
-    val showingDead =
-      *.focus("FilterDead").value(_.obs.generic.filterDead).assert.equal(ShowDead).when(_.obs.generic.live :: Dead)
+    val whenDead =
+      ( filterDead.assert.equal(ShowDead)
+      & editorCount.assert.equal(0)
+      )
+      .when(_.obs.generic.live :: Dead)
 
-    pubid & delReasonField & filterDeadLocked & showingDead
+    pubid & delReasonField & filterDeadLocked & whenDead
   }
 
   val invariantsUC: *.Invariant = {
@@ -101,18 +117,17 @@ object ReqDetailTestDsl {
   def shiftStepRight(label: String): *.Action =
     *.action("ShiftRight " + label).act(Simulate click _.obs.uc.row(label).right)
 
-  val filterDead =
-    *.focus("FilterDead").value(_.obs.generic.filterDead)
-
   val filterDeadToggle =
     *.action("Toggle FilterDead").act(Simulate change _.obs.generic.filterDeadInput)
       .addCheck(filterDead.assert.changesTo(!_))
 
-  val visibleFields =
-    *.focus("Visible fields").collection(_.obs.generic.fields.keys)
+  def setFilterDead(fd: FilterDead) =
+    filterDeadToggle
+      .rename(fd.toString)
+      .unless(_.obs.generic.filterDead :: fd)
 
-  val life =
-    *.focus("Life").value(_.obs.generic.live)
+  def hideDead = setFilterDead(HideDead)
+  def showDead = setFilterDead(ShowDead)
 
   val changeLife =
     *.action(NameFn(_.map(_.obs.generic.live) match {
@@ -132,4 +147,11 @@ object ReqDetailTestDsl {
     *.action("Hit Cancel")
       .act(Simulate click _.obs.deletionForm.get.cancelButton)
       .updateState(stateMode set Mode.Details)
+
+  val doubleClickTitle =
+    *.action("Double-click title").act(Simulate doubleClick _.obs.generic.titleDom)
+
+  def doubleClickFieldValue(field: String) =
+    *.action("Double-click " + field).act(Simulate doubleClick _.obs.generic.fields(field).dom)
+
 }

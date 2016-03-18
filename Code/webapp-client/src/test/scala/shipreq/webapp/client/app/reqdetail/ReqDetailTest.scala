@@ -5,7 +5,7 @@ import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.client.app.ProjectSpaMain.Page
 import shipreq.webapp.client.app.ProjectSpaTestDsl
-import shipreq.webapp.client.data.ShowDead
+import shipreq.webapp.client.data.{HideDead, ShowDead}
 import shipreq.webapp.client.test._
 import TestState._
 import utest._
@@ -36,6 +36,9 @@ object ReqDetailTest extends TestSuite {
   // yeah i'm being lazy
   def testLifeRowInnerText(expect: String) =
     *.focus("Life row").value(_.obs.generic.lifeRow.innerText).assert.equal(expect)
+
+  val reporterFieldExistence =
+    visibleFields.assert.existenceOf("Reporter")(_.obs.generic.filterDead :: ShowDead)
 
   override def tests = TestSuite {
 
@@ -68,7 +71,7 @@ object ReqDetailTest extends TestSuite {
 
     'deadFields - test("UC-1")(Test(
       filterDeadToggle
-        .addCheck(visibleFields.assert.existenceOf("Reporter")(_.obs.generic.filterDead :: ShowDead).beforeAndAfter)
+        .addCheck(reporterFieldExistence.beforeAndAfter)
         .times(3)
     ))
 
@@ -87,6 +90,13 @@ object ReqDetailTest extends TestSuite {
       >> changeLife                                     +> life.assert.equal(Live)
     ))
 
+    'editors - test("UC-1")(Test(
+      doubleClickTitle                     +> editorCount.assert.beforeAndAfter(0, 1) <+ filterDead.assert.equal(HideDead)
+      >> doubleClickFieldValue("Notes")    +> editorCount.assert.equal(2)
+      >> showDead                          +> editorCount.assert.equal(2)
+      >> doubleClickFieldValue("Reporter") +> editorCount.assert.equal(2) // dead field
+      >> hideDead                          +> editorCount.assert.equal(2)
+    , reporterFieldExistence))
 
   }
 }

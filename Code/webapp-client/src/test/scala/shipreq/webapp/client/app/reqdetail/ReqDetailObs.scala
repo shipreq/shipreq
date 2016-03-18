@@ -1,6 +1,7 @@
 package shipreq.webapp.client.app.reqdetail
 
 import org.scalajs.dom.html
+import scala.util.Try
 import shipreq.webapp.base.UiText
 import shipreq.base.util.univEqOps
 import shipreq.base.util.ScalaExt._
@@ -42,19 +43,21 @@ final class ReqDetailObs($: DomZipper) {
   object generic {
     val headerRow = $.down(">div")
 
-    val pubid = headerRow.down(">div", 1 of 2).innerText.replace(":", "").trim
+    val pubid = headerRow.down(">*", 1 of 2).innerText.replace(":", "").trim
+
+    val titleDom = headerRow.down(">*", 2 of 2).asHtml.dom
 
     val table = $.down(">table")
 
-    val filterDeadInput = $.down(">label input").domAs[html.Input]
+    val filterDeadInput = $.down(">label input").domAs[html.Input]: html.Input
 
     val filterDead = ShowDead <~ filterDeadInput.checked
 
     val filterDeadLocked = filterDeadInput.disabled
 
-    val fields: Map[String, DomZipper] =
+    val fields: Map[String, DomZipperAt[html.TableCell]] =
       table.down(">tbody").collect1n(">tr")
-        .map(z => z.down(">th").innerText -> z.down(">td"))
+        .map(z => z.down(">th").innerText -> z.down(">td").as[html.TableCell])
         .toMap
 
     val lifeRow = fields(UiText.Life.field)
@@ -109,6 +112,9 @@ final class ReqDetailObs($: DomZipper) {
     def tailStepRowAC = stepRows.alt.last
     def tailStepRowEC = stepRows.exception.last
   }
+
+  val editables =
+    $.editables0n.get().filterNot(_ == Try(generic.filterDeadInput).getOrElse(null))
 
   val mode: Mode =
     if (errorRoot.isDefined)

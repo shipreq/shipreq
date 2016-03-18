@@ -174,8 +174,14 @@ object ContentEditorFeature {
                   Applicable // No field specified
                 case Some(fid) =>
                   p.config.fields.get(fid) match {
-                    case Some(f) => f.applicable(r.reqTypeId)  // Check field
-                    case None    => NotApplicable              // Field has been removed
+
+                    // Check field
+                    case Some(f) =>
+                      f.applicable(r.reqTypeId) & (Applicable <~ f.live(p.config) :: Live)
+
+                    // Field has been removed
+                    case None =>
+                      NotApplicable
                   }
               }) :: Applicable
 

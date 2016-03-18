@@ -1,8 +1,3 @@
-Req Detail
-==========
-* Test:
-  * dead not editable, live editable. (invariant)
-
 UC Step Deletion
 ================
 1. Whole tree includes dead.

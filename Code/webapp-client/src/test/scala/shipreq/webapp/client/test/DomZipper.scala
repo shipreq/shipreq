@@ -121,6 +121,11 @@ object DomZipper {
 
   // ===================================================================================================================
 
+  val EditableSel: String =
+    List("input", "textarea", "select")
+      .map(_ + ":not(:disabled):not(:read-only)")
+      .mkString(",")
+
   trait Container[C[_]] {
     def apply(sel: String, es: CssSelLookupResult)(implicit h: HandleError): h.Result[C[Element]]
     def map[A, B](c: C[A])(f: A => B): C[B]
@@ -274,6 +279,9 @@ final class DomZipperAt[+D <: DOM] private[test](prevLayers: Vector[Layer[DOM]],
   def collect01(sel: String) = new Collector[Option, Element](this, sel, Container01)
   def collect0n(sel: String) = new Collector[Vector, Element](this, sel, Container0N)
   def collect1n(sel: String) = new Collector[Vector, Element](this, sel, Container1N)
+
+  def editables0n = collect0n(EditableSel)
+  def editables1n = collect1n(EditableSel)
 
   def findSelfOrChildWithAttribute(attr: String)(implicit h: HandleError): h.Result[Option[DomZipperAt[Element]]] =
     dom.attributes.getNamedItem(attr) match {
