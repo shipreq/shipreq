@@ -12,7 +12,7 @@ object InBrowserTesting {
   val ConfigFirefox = config("firefox")
   val ConfigChrome  = config("chrome")
 
-  private def browserConfig(cfg: Configuration, browser: SeleniumBrowser): Project => Project =
+  private def browserConfig(cfg: Configuration, env: SeleniumJSEnv): Project => Project =
     _.settings(
       inConfig(cfg)(
         Defaults.testSettings ++
@@ -78,14 +78,14 @@ object InBrowserTesting {
        // test                 := (test                 in Test).value,
 
           // In-browser settings
-          jsEnv           := new SeleniumJSEnv(browser),
+          jsEnv           := env,
           requiresDOM     := true,
           scalaJSUseRhino := false)))
 
   def js: Project => Project =
     _.configure(
-      browserConfig(ConfigFirefox, Firefox),
-      browserConfig(ConfigChrome, Chrome))
+      browserConfig(ConfigFirefox, new SeleniumJSEnv(Firefox)),
+      browserConfig(ConfigChrome, new SeleniumJSEnv(Chrome)))
     .settings(
       testAll := {
         (test in Test         ).value
