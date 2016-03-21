@@ -3,12 +3,15 @@ package shipreq.webapp.client.app.reqtable
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test.ReactTestUtils.Simulate
 import japgolly.scalajs.react.test._
+import org.scalajs.dom.html
 import shipreq.base.util.UnivEq.{apply => _, force => _}
 import shipreq.base.util._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
+import shipreq.webapp.client.app.Style
 import shipreq.webapp.client.data._
 import shipreq.webapp.client.test._
+import DomZipper.Implicits._
 import TestState._
 
 object ReqTableTestDsl {
@@ -26,6 +29,15 @@ object ReqTableTestDsl {
 //  def propTry[A](name: => String, f: A => Any): Prop[A] =
 //    propTrySuccess(name).contramap(a => Try(f(a)))
 
+  def selectVisibleColumns(isOn: Column => Boolean, p: ProjectConfig, fd: FilterDead): NonEmptyVector[Column] = {
+    // I want Pubid as the first column so that obs.table.entireContent is readable
+    val set: Set[Column] = Column.mandatory ++ Column.all(p, fd).whole.filter(isOn) - Column.Pubid
+    NonEmptyVector(Column.Pubid, set.toVector)
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Focuses
+
   val mandatoryColumns = FilterDead.memo(fd =>
     Column.mandatory.iterator
       .filter(fd.filterFnA(_.live))
@@ -35,10 +47,93 @@ object ReqTableTestDsl {
   def visibleColumns(obs: ReqTableObs): Set[String] =
     mandatoryColumns(obs.filterDead) ++ obs.viewSettings.columns.onColumns
 
+  val selectableColumns = *.focus("Selectable columns").collection(_.obs.selectableCols)
+
+  val filterDead = *.focus("FilterDead").value(_.obs.filterDead)
+
+  val tablePubids = *.focus("Visible pubids").collection(_.obs.table.rowPubids)
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  val editorInvalidSel: String =
+    "." + Style.reqtable.cellEditor(Invalid).className.value +
+    ",." + Style.reqtable.cellEditorErrMsg.className.value
+
+  final case class CellEditor(loc: ReqTableObs => ReqTableObs.CellLoc) {
+
+    private implicit def ROStoOS(r: *.ROS) = r.os
+
+//    def cellText = *.focus("Cell innerText").value(cell(_).innerText)
+
+    private def editorCss       = DomZipper.EditableSel
+    private def retryButtonCss  = "button:contains(Retry)"
+    private def failOkButtonCss = "button:contains(OK)"
+
+    val cell        = *.focus("Subject cell").value(s => s.obs.table.cell(loc(s.obs)))
+    val cellText    = cell.map(_.innerText) rename "Cell innerText"
+    val editing     = cell.map(_ exists editorCss) rename "Editing"
+//    val locked       = cell(s).collectInnerHTML("img").nonEmpty
+//    val failed       = cell(s).collectInnerHTML(retryButtonCss).nonEmpty
+    val editor      = cell.map(_.down(editorCss).domAs[html.Input])
+//    val editorClass = editor.map(_.className) rename "Editor class"
+    val editorValue = editor.map(_.value) rename "Editor value"
+//    val retryButton  = cell(s)(retryButtonCss).as[html.Button]
+//    val failOkButton = cell(s)(failOkButtonCss).as[html.Button]
+
+    val editorValidity = *.focus("Editor validity").value(Invalid <~ cell.run(_).exists(editorInvalidSel))
+//
+//    implicit class CEActionExt[A](a: Action[A]) {
+//      def assertNowEditing      = a.focus(editing_?).assertBefore(false).assertAfter(true)
+//      def assertNowLocked       = a.focus(locked_?) .assertBefore(false).assertAfter(true)
+//      def assertNoLongerEditing = a.focus(editing_?).assertBefore(true).assertAfter(false)
+//      def assertNoLongerLocked  = a.focus(locked_?) .assertBefore(true).assertAfter(false)
+//
+//      def assertNoCellState = a
+//        .focus(editing_?).assertAfter(false)
+//        .focus(locked_?).assertAfter(false)
+//        .focus(failed_?).assertAfter(false)
+//    }
+//
+//    def printCell(): Unit =
+//      println(cell(*).outerHTML)
+
+//    def setup(p: Project) =
+//      (setProject(p) >> showAllColumns).group("Setup")
+
+    val tryStartEdit =
+      *.action("Start editor").act(Simulate doubleClick cell.run(_).dom)
+
+    val startEdit =
+      tryStartEdit +> editing.assert.equal(true)
+
+//    val assertEditDoesNothing =
+//      tryStartEdit.focus(editing_?).assertAfter (false)
+//
+  def enterValue(text: String, desc: String = "Enter value") =
+    *.action(s"$desc: ${text.show}").act(ChangeEventData(text) simulate editor.run(_)) +>
+      editorValue.assert.equal(text)
+
+    def testValid  (text: String) = enterValue(text, "Enter valid value")   +> editorValidity.assert.equal(Valid)
+    def testInvalid(text: String) = enterValue(text, "Enter invalid value") +> editorValidity.assert.equal(Invalid)
+
+//    val commit =
+//      Action.exec2("commit", editor)(ctrlEnter simulateKeyDown _).assertNoLongerEditing
+//
+//    val clickRetry =
+//      Action.exec2("clickRetry", retryButton)(Simulate click _)
+//
+//    val clickFailOk =
+//      Action.exec2("clickFailOk", failOkButton)(Simulate click _)
+  }
+
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Invariants
+
   val invariants = {
 
     def selectableColumns = {
-      val ** = *.focus("Selectable columns").collection(_.obs.selectableCols)
+      def ** = ReqTableTestDsl.selectableColumns
 
       val uniqueColumns =
         **.assert.distinct
@@ -108,12 +203,33 @@ object ReqTableTestDsl {
     selectableColumns & sortColumns & tableColumns & tableContents & stats
   }
 
-  // ===================================================================================================================
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Actions
 
   implicit def autoGetDomFromZipper(d: DomZipper): ReactOrDomNode = d.dom.domAsHtml
 
-  def applyViewSettings(name: => String, f: ViewSettings => ViewSettings): *.Action =
-    *.action(name).act(_.ref.modState(ReqTable.State.viewSettings modify f))
+  def applyViewSettings(vs: ViewSettings): *.Action =
+    applyViewSettings("ApplyViewSettings: " + vs, _ => vs)
+
+  def applyViewSettings(name: => String, f: ReqTable.State => ViewSettings): *.Action =
+    *.action(name).act(_.ref.modState(s => s.copy(viewSettings = f(s))))
+
+  def setProject(p: Project): *.Action =
+    *.action("Set project.").act(_.ref.modState(_.updateProject(p))).updateState(_ => p)
+
+  val showAllColumns = applyViewSettings("Show all columns.", s => {
+    val fd = ShowDead
+    val vs = s.viewSettings
+    val cs = selectVisibleColumns(_ => true, s.project.config, fd)
+    val o  = vs.order.copy(init = Vector.empty) // remove ReqCodeGroups
+    vs.copy(columns = cs, order = o, filterDead = fd)
+  })
+
+  val showBuiltInColumnsSortedByPubid = applyViewSettings("Show built-in columns sorted by pubid.", s => {
+    val fd = ShowDead
+    val cs = selectVisibleColumns(Column.builtInValues.whole.contains, s.project.config, fd)
+    ViewSettings(cs, SortCriteria.byPubidOnly, None, fd)
+  })
 
   def showHideColumn(columnName: String): *.Action =
     *.action("Show/hide " + columnName)
@@ -132,9 +248,6 @@ object ReqTableTestDsl {
       .addCheck(*.focus("Filter").value(_.obs.viewSettings.filter.input.value).assert.equal(f).after)
   }
 
-  val filterDead =
-    *.focus("FilterDead").value(_.obs.filterDead)
-
   val filterDeadToggle =
     *.action("filterDeadToggle").act(Simulate change _.obs.viewSettings.filterDead.checkbox)
       .addCheck(filterDead.assert.change)
@@ -147,5 +260,5 @@ object ReqTableTestDsl {
     filterDeadToggle.times(2).addCheck(
       *.focus("On-columns").value(_.obs.viewSettings.columns.onColumns).assert.noChange)
 
-  val tablePubids = *.focus("Visible pubids").collection(_.obs.table.rowPubids)
+  val logTable = *.print(_.obs.table.entireContent)
 }

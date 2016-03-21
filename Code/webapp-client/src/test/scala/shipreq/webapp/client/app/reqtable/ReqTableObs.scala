@@ -190,20 +190,22 @@ final class ReqTableObs($ : DomZipper) {
     def rowIndexByPubid(pubid: String): Int =
       findIndex(pubid, rowPubids, s"Row with pubid [$pubid] not found.")
 
-//    def cell(loc: CellLoc): DomZipper =
-//      cell(row = loc.row, col = loc.col)
-//
-//    def cell(row: Int, col: Int): DomZipper =
-//      tbody down s">tr:nth-child(${row + 1}) >td:nth-child(${col + 1})"
-//
-//    def cell(pubid: String, col: String): DomZipper =
-//      cell(cellLoc(pubid, col))
-//
-//    def cellLoc(pubid: String, col: String): CellLoc =
-//      CellLoc(row = rowIndexByPubid(pubid), columnIndex(col))
-//
-//    def entireContent =
-//      tbody.collect(">tr", _.collectInnerText(">td").mkString("│ ", " │ ", " │")).mkString("\n")
+    def cell(loc: CellLoc): DomZipperAt[html.TableCell] =
+      cell(row = loc.row, col = loc.col)
+
+    def cell(row: Int, col: Int): DomZipperAt[html.TableCell] =
+      tbody.down(s">tr:nth-child(${row + 1}) >td:nth-child(${col + 1})").as[html.TableCell]
+
+    def cell(pubid: String, col: String): DomZipperAt[html.TableCell] =
+      cell(cellLoc(pubid, col))
+
+    def cellLoc(pubid: String, col: String): CellLoc =
+      CellLoc(row = rowIndexByPubid(pubid), columnIndex(col))
+
+    lazy val entireContent =
+      tbody.collect0n(">tr").getDZ().iterator
+        .map(_.collect1n(">td").innerText.mkString("│ ", "\t│ ", " │"))
+        .mkString("\n")
   }
 
   // ===================================================================================================================

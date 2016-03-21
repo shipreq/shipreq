@@ -2,6 +2,7 @@ package shipreq.webapp.client.test.domzipper
 
 import org.scalajs.dom.{Element, Node, window}
 import org.scalajs.dom.html
+import teststate.typeclass.Show
 import scala.reflect.ClassTag
 import scala.scalajs.js
 import shipreq.webapp.client.test.Sizzle
@@ -85,6 +86,12 @@ object DomZipper {
     implicit class IntExt(private val i: Int) extends AnyVal {
       def of(n: Int) = MofN(i, n)
     }
+
+    implicit def showDomZipper[D <: DOM]: Show[DomZipperAt[D]] =
+      Show(_.dom.toString)
+
+    implicit def showDom[D <: DOM]: Show[D] =
+      Show.byToString
   }
 
   // ===================================================================================================================
@@ -160,6 +167,12 @@ object DomZipper {
   }
 
   final class Collector[C[_], E <: Element](from: DomZipperAt[DOM], sel: String, cont: Container[C]) {
+
+    def isEmpty: Boolean =
+      from.directSelect(sel).isEmpty
+
+    def nonEmpty: Boolean = !isEmpty
+
     def as[EE <: E] =
       this.asInstanceOf[Collector[C, EE]]
 
@@ -288,6 +301,9 @@ final class DomZipperAt[+D <: DOM] private[test](prevLayers: Vector[Layer[DOM]],
       case null => collect01(s"*[$attr]").getDZ()
       case _    => h.map(as[Element])(Some(_))
     }
+
+  def exists(sel: String): Boolean =
+    collect0n(sel).nonEmpty
 }
 
 //  def assertCount(desc: String, expectedCount: Int, dom: Result, root: UndefOr[DOM]): Unit = {

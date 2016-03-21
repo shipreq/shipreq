@@ -393,9 +393,6 @@ sealed trait ReqTableTest0 {
   def setProject(p: Project): Action[Unit] =
     Action.exec(s"setProject($p)", c.setState(ReqTable.initialState(propsForProject(p))).runNow())
 
-  def applyViewSettings(name: => String, vs: => ViewSettings): Action[Unit] =
-    Action.exec(name, c.zoomL(State.viewSettings).setState(vs).runNow())
-
   val sortByPubid = applyViewSettings("sortByPubid",
     c.state.viewSettings.copy(order = SortCriteria.byPubidOnly))
 
@@ -459,76 +456,6 @@ sealed trait ReqTableTest0 {
 
   implicit val settings = DefaultSettings.propSettings.setSampleSize(8) //.setDebug
 
-  import ProjectDsl._
-  import UnsafeTypes._
-  import SampleProject.Values._
-
-  case class CellEditor(loc: S => CellLoc) {
-    private def editorCss       = "input,textarea"
-    private def retryButtonCss  = "button:contains(Retry)"
-    private def failOkButtonCss = "button:contains(OK)"
-
-    def cell        (s: S) = s.table.cell(loc(s))
-    def editing_?   (s: S) = cell(s).collectInnerHTML(editorCss).nonEmpty
-    def locked_?    (s: S) = cell(s).collectInnerHTML("img").nonEmpty
-    def failed_?    (s: S) = cell(s).collectInnerHTML(retryButtonCss).nonEmpty
-    def editor      (s: S) = cell(s)(editorCss).as[html.Input]
-    def editorValue (s: S) = editor(s).value
-    def retryButton (s: S) = cell(s)(retryButtonCss).as[html.Button]
-    def failOkButton(s: S) = cell(s)(failOkButtonCss).as[html.Button]
-
-    implicit class CEActionExt[A](a: Action[A]) {
-      def assertNowEditing      = a.focus(editing_?).assertBefore(false).assertAfter(true)
-      def assertNowLocked       = a.focus(locked_?) .assertBefore(false).assertAfter(true)
-      def assertNoLongerEditing = a.focus(editing_?).assertBefore(true).assertAfter(false)
-      def assertNoLongerLocked  = a.focus(locked_?) .assertBefore(true).assertAfter(false)
-
-      def assertNoCellState = a
-        .focus(editing_?).assertAfter(false)
-        .focus(locked_?).assertAfter(false)
-        .focus(failed_?).assertAfter(false)
-    }
-
-    def printCell(): Unit =
-      println(cell(*).outerHTML)
-
-    def setup(p: Project) =
-      setProject(p) >> showAllColumns >> Action.value(cell(_).innerText)
-
-    val tryStartEdit =
-      focusCell(loc) >> editFocused
-
-    val startEdit =
-      tryStartEdit >> Action.value(editorValue)
-
-    val assertEditDoesNothing =
-      tryStartEdit.focus(editing_?).assertAfter(false)
-
-    def enterValue(text: String) =
-      Action.exec2(s"enterValue($text)", editor)(ChangeEventData(text) simulate _)
-
-    def test(expect: Validity, err: => String) = (value: String) =>
-      enterValue(value)
-        .focus(editorValue).assertAfter(value)
-        .focus(editor(_).className).assertAfter(Style.reqtable.cellEditor(expect).className.value, s"$err: [$value]")
-
-    val testValid                      = test(Valid, "Should be valid")
-    def testInvalid(reason: => String) = test(Invalid, reason)
-
-    val commit =
-      Action.exec2("commit", editor)(ctrlEnter simulateKeyDown _).assertNoLongerEditing
-
-    val clickRetry =
-      Action.exec2("clickRetry", retryButton)(Simulate click _)
-
-    val clickFailOk =
-      Action.exec2("clickFailOk", failOkButton)(Simulate click _)
-  }
-
-  def testDeadColumns(): Unit = run(
-    filterDeadToggle.assertAfter(ShowDead).focus(_.availCols.length).assertDelta(2) >>
-      filterDeadToggle.focus(_.availCols.length).assertDelta(-2))
-
   def testDeadToggleInvariants(): Unit =
     RandomReqTableData.viewSettings(project, allowFilter = true) mustSatisfy
       actionProp(applyViewSettings("testDeadToggleInvariants", _) >> filterDeadShowHide)
@@ -560,131 +487,6 @@ sealed trait ReqTableTest0 {
     // Ensure test logic works
     reset()
     editAllColumns(Live).testAfter(_ > 0, "[Live Row] Cells should be in edit-mode").run()
-  }
-
-  def testImplicationSrcColumnEditor() = {
-    val ce = CellEditor(_.table.cellLoc(pubid = "FR-1", col = "Implied By"))
-    import ce._
-
-    val setup =
-      applyViewSettings("setup", {
-        val cs = selectVisibleColumns(Column.builtInValues.whole.contains)
-        ViewSettings(cs, SortCriteria.byPubidOnly, None, ShowDead)
-      })
-        .focus(cell(_).innerText).assertAfter("MF-12, MF-19")
-
-    // TODO What about an implication cycle with a dead link. Ok? Not ok? What about when when link is undeleted?
-
-    run(setup
-      >> startEdit.assertAfter("MF-12", "Should remove dead")
-      >> testInvalid("Target is dead")("MF-28")
-      >> testInvalid("Target is dead")("MF-19")
-      >> testInvalid("Should prevent cycles")("MF-27") // because FR-1 → FR-2 → MF-27
-      >> testValid("FR-1") // reflexivity is tolerated but should be ignored on save
-      >> testValid("MF-12")
-      >> testValid("MF-14")
-      >> testValid("MF-12 MF-14"))
-  }
-
-  def testImplicationTgtColumnEditor() = {
-    val ce = CellEditor(_.table.cellLoc(pubid = "MF-3", col = "Implies"))
-    import ce._
-    run(setup(SampleImplicationGraph.project).assertAfter("FR-4, MF-4")
-      >> startEdit.assertAfter("FR-4 MF-4")
-      >> testInvalid("Should prevent cycles")("BR-1") // because BR-1 → BR-2 → FR-3 → BR-1
-      >> testInvalid("Should prevent cycles")("BR-2") // because BR-1 → BR-2 → FR-3 → BR-2
-      >> testValid("MF-3") // reflexivity is tolerated but should be ignored on save
-      >> testValid("FR-4 MF-4")
-      >> testValid("MF-4 FR-6")
-      >> testValid("MF-2"))
-  }
-
-  def testCustomImplicationColumnEditor() = {
-    val p = (
-      // MF- 1ᵒ → MF-5ᵒ → MF-13
-      // MF- 2ˣ → MF-6ᵒ → MF-13 <-- difficult case - it should be displayed as its part of (a chain with ShowDead)
-      // MF- 3ᵒ → MF-7ˣ → MF-13 <-- important case - shouldn't hold for FR-1 even in ShowDead
-      // MF- 4ˣ → MF-8ˣ → MF-13
-      // MF- 9ᵒ → CO-1ᵒ → MF-13
-      // MF-10ˣ → CO-2ᵒ → MF-13 <-- difficult case - it should be displayed as its part of (a chain with ShowDead)
-      // MF-11ᵒ → CO-3ˣ → MF-13 <-- important case - shouldn't hold for FR-1 even in ShowDead
-      // MF-12ˣ → CO-4ˣ → MF-13
-      //          CO-5ᵒ → MF-1↖
-      GReq(reqType = mf, id = 1) +
-      GReq(reqType = mf, id = 2, live = Dead) +
-      GReq(reqType = mf, id = 3) +
-      GReq(reqType = mf, id = 4, live = Dead) +
-      GReq(reqType = mf, id = 5).impSrc(1) +
-      GReq(reqType = mf, id = 6).impSrc(2) +
-      GReq(reqType = mf, id = 7, live = Dead).impSrc(3) +
-      GReq(reqType = mf, id = 8, live = Dead).impSrc(4) +
-      GReq(reqType = mf, id = 9) +
-      GReq(reqType = mf, id = 10, live = Dead) +
-      GReq(reqType = mf, id = 11) +
-      GReq(reqType = mf, id = 12, live = Dead) +
-      GReq(reqType = co, id = 51).impSrc(9) +
-      GReq(reqType = co, id = 52).impSrc(10) +
-      GReq(reqType = co, id = 53, live = Dead).impSrc(11) +
-      GReq(reqType = co, id = 54, live = Dead).impSrc(12) +
-      GReq(reqType = co, id = 55).impTgt(1) +
-      GReq(reqType = mf, id = 13).impSrc(5, 6, 7, 8, 51, 52, 53, 54)
-    ) ! SampleProject.project
-
-    val ce = CellEditor(_.table.cellLoc(pubid = "MF-13", col = "Major Feature"))
-    import ce._
-
-    def mfs(sep: String, mfs: Int*): String =
-      mfs.sorted.map("MF-" + _) mkString sep
-
-    run(setup(p).assertAfter(mfs(", ", 1, 5, 2, 6, 7, 8, 9, 10, 13))
-      >> startEdit.assertAfter(mfs(" ", 5, 6), "Should only show direct & live")
-      >> testInvalid("Target is dead")("MF-4")
-      >> testInvalid("Target is dead")("MF-8")
-      >> testInvalid("Should prevent cycles")("MF-5 CO-5") // because MF-1 → MF-5 → MF-13 → CO-5 → MF-1
-      >> testValid("MF-13") // reflexivity is tolerated but should be ignored on save
-      >> testValid("MF-5 MF-6")
-      >> testValid("MF-5 MF-6 MF-1")
-      >> testValid("MF-3")
-      >> testValid("MF-1"))
-  }
-
-  def testTagsColumnEditor(): Unit = {
-    val p = GReq(reqType = co, title = reqTitleTagRefs(v11, v13, v4x)).tag(wip, uat, v11, v1x, v3x) !
-      SampleProject.project
-
-    val ce = CellEditor(_.table.cellLoc(pubid = "CO-1", col = "Tags"))
-    import ce._
-
-    run(setup(p).assertAfter("v1.3 v1.x v3.x v4.x") // wip & uat in Status col
-      >> startEdit.assertAfter("v1.1 v1.x", "Should only show direct & live")
-      >> testInvalid("Target is dead")("v0.9")
-      >> testInvalid("Target is dead")("v3.x")
-      >> testInvalid("Target is dead")("v4.x")
-      >> testInvalid("Status has its own column")("wip")
-      >> testValid("v1.3") // declared in text too = ok
-      >> testValid("v1.x")
-      >> testValid("v1.x v1.0")
-      >> testValid("v1.1"))
-  }
-
-  def testCustomTagColumnEditor(): Unit = {
-    val p = GReq(reqType = co, title = reqTitleTagRefs(prod, uat3)).tag(wip, uat, v1x, v3x) !
-      SampleProject.project
-
-    val ce = CellEditor(_.table.cellLoc(pubid = "CO-1", col = "Status"))
-    import ce._
-
-    run(setup(p).assertAfter("wip uat uat3 prod")
-      >> startEdit.assertAfter("wip", "Should only show direct & live")
-      >> testInvalid("Target is dead")("uat")
-      >> testInvalid("Target is dead")("uat2")
-      >> testInvalid("Target is dead")("uat3")
-      >> testInvalid("Not a status")("v1.0")
-      >> testInvalid("Not a status")("v3.x")
-      >> testValid("prod") // declared in text too = ok
-      >> testValid("wip")
-      >> testValid("wip defer")
-      >> testValid("defer"))
   }
 
   def testEditIO(): Unit = {
@@ -726,44 +528,17 @@ sealed trait ReqTableTest0 {
 
     run(editCommitWithoutChange >> editChangeCommit >> fail >> retry >> fail >> cancelSaveCommitAgain >> saveSucceeds)
   }
-
-  def testFilter(): Unit = run(
-    sortByPubid
-      >> enterFilter("-MF")
-      >> filterDeadToggle.focus(_.table.rowPubids)
-          .assertBefore(Vector("FR-1", "FR-2"))
-          .assertAfter(Vector("CO-1", "CO-2", "FR-1", "FR-2"))
-      >> enterFilter("FR")
-      >> filterDeadToggle.focus(_.table.rowPubids)
-          .assertBefore(Vector("FR-1", "FR-2"))
-          .assertAfter(Vector("FR-1", "FR-2"))
-  )
 }
 
 object ReqTableTest extends TestSuite with ReqTableTest0 {
-
-  import utest.TestableSymbol
   override def tests = TestSuite {
-    reset()
-
-    'initialState - assertInvariants()
-
     'dead {
-      'cols        - testDeadColumns()
       'toggle      - testDeadToggleInvariants()
 //      'notEditable - testDeadRowsNotEditable()
     }
-// TODO Editor tests disabled cos fucking PhantomJS can't handle .focus() or :focus()
 //    'editor {
-//      'impSrc       - testImplicationSrcColumnEditor()
-//      'impTgt       - testImplicationTgtColumnEditor()
-//      'customImpCol - testCustomImplicationColumnEditor()
-//      'tags         - testTagsColumnEditor()
-//      'customTagCol - testCustomTagColumnEditor()
 //      'io           - testEditIO()
 //    }
-
-    'filter - testFilter()
   }
 }
 */ // TODO ReqTableTests disabled
