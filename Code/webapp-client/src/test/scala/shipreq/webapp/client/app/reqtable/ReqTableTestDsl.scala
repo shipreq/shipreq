@@ -104,17 +104,17 @@ object ReqTableTestDsl {
       *.action("Start editor").act(Simulate doubleClick cell.run(_).dom)
 
     val startEdit =
-      tryStartEdit +> editing.assert.equal(true)
+      tryStartEdit +> editing.assert(true)
 
 //    val assertEditDoesNothing =
 //      tryStartEdit.focus(editing_?).assertAfter (false)
 //
   def enterValue(text: String, desc: String = "Enter value") =
     *.action(s"$desc: ${text.show}").act(ChangeEventData(text) simulate editor.run(_)) +>
-      editorValue.assert.equal(text)
+      editorValue.assert(text)
 
-    def testValid  (text: String) = enterValue(text, "Enter valid value")   +> editorValidity.assert.equal(Valid)
-    def testInvalid(text: String) = enterValue(text, "Enter invalid value") +> editorValidity.assert.equal(Invalid)
+    def testValid  (text: String) = enterValue(text, "Enter valid value")   +> editorValidity.assert(Valid)
+    def testInvalid(text: String) = enterValue(text, "Enter invalid value") +> editorValidity.assert(Invalid)
 
 //    val commit =
 //      Action.exec2("commit", editor)(ctrlEnter simulateKeyDown _).assertNoLongerEditing
@@ -245,7 +245,7 @@ object ReqTableTestDsl {
   def enterFilter(f: String) = {
     val e = ChangeEventData(f)
     *.action(s"enterFilter('$f')").act(e simulate _.obs.viewSettings.filter.input)
-      .addCheck(*.focus("Filter").value(_.obs.viewSettings.filter.input.value).assert.equal(f).after)
+      .addCheck(*.focus("Filter").value(_.obs.viewSettings.filter.input.value).assert(f).after)
   }
 
   val filterDeadToggle =

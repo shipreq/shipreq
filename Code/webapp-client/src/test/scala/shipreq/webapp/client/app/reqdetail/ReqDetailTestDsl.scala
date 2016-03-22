@@ -42,7 +42,7 @@ object ReqDetailTestDsl {
   val * = Dsl.sync[Unit, ReqDetailObs, TestState, String]
 
   def checkErrorReason(e: String) =
-    *.focus("Error reason").value(_.obs.error.reason).assert.equal(e)
+    *.focus("Error reason").value(_.obs.error.reason).assert(e)
 
   val allSteps =
     *.focus("All steps").collection(_.obs.uc.stepTitles)
@@ -73,8 +73,8 @@ object ReqDetailTestDsl {
       *.focus("FilterDead locked").value(_.obs.generic.filterDeadLocked).assert.equalBy(_.obs.generic.live :: Dead)
 
     val whenDead =
-      ( filterDead.assert.equal(ShowDead)
-      & editorCount.assert.equal(0)
+      ( filterDead.assert(ShowDead)
+      & editorCount.assert(0)
       )
       .when(_.obs.generic.live :: Dead)
 

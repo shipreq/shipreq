@@ -35,7 +35,7 @@ object ReqDetailTest extends TestSuite {
 
   // yeah i'm being lazy
   def testLifeRowInnerText(expect: String) =
-    *.focus("Life row").value(_.obs.generic.lifeRow.innerText).assert.equal(expect)
+    *.focus("Life row").value(_.obs.generic.lifeRow.innerText).assert(expect)
 
   val reporterFieldExistence =
     visibleFields.assert.existenceOf("Reporter")(_.obs.generic.filterDead :: ShowDead)
@@ -48,17 +48,17 @@ object ReqDetailTest extends TestSuite {
     'gr - test("FR-1")(*.emptyTest addInvariants testLifeRowInnerText("Alive.Kill"))
 
     'uc - test("UC-1")(Test(
-      allSteps.assert.equal("1.0", "1.0.1", "1.0.2", "1.0.3", "1.1", "1.1.1")
+      allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.1", "1.1.1")
         +> addTailStepEC
-        +> allSteps.assert.equal("1.0", "1.0.1", "1.0.2", "1.0.3", "1.1", "1.1.1", "1.E.1")
+        +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.1", "1.1.1", "1.E.1")
         >> delStep("1.1")
-        +> allSteps.assert.equal("1.0", "1.0.1", "1.0.2", "1.0.3", "1.E.1")
+        +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.E.1")
         >> shiftStepLeft("1.0.3")
-        +> allSteps.assert.equal("1.0", "1.0.1", "1.0.2", "1.1", "1.E.1")
+        +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.1", "1.E.1")
         >> shiftStepRight("1.1")
-        +> allSteps.assert.equal("1.0", "1.0.1", "1.0.2", "1.0.3", "1.E.1")
+        +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.E.1")
         >> addStep("1.E.1")
-        +> allSteps.assert.equal("1.0", "1.0.1", "1.0.2", "1.0.3", "1.E.1", "1.E.1.a")
+        +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.E.1", "1.E.1.a")
     ))
 
     // TODO emptyTest addInvariants = abuse
@@ -77,7 +77,7 @@ object ReqDetailTest extends TestSuite {
 
     'inapplicableFields - {
       def check(expectVisible: Boolean) =
-        visibleFields.assert(expectVisible).contains("Description")
+        visibleFields.assertB(expectVisible).contains("Description")
       def t(pubid: ExternalPubid, expectVisible: Boolean) =
         test(pubid)(*.emptyTest addInvariants check(expectVisible))
       'mf1 - t("MF-1", true)
@@ -85,17 +85,17 @@ object ReqDetailTest extends TestSuite {
     }
 
     'deleteRestore - test("UC-1")(Test(
-      changeLife.updateState(stateMode set Mode.Delete) <+ life.assert.equal(Live)
-      >> deleteDelete                                   +> life.assert.equal(Dead)
-      >> changeLife                                     +> life.assert.equal(Live)
+      changeLife.updateState(stateMode set Mode.Delete) <+ life.assert(Live)
+      >> deleteDelete                                   +> life.assert(Dead)
+      >> changeLife                                     +> life.assert(Live)
     ))
 
     'editors - test("UC-1")(Test(
-      doubleClickTitle                     +> editorCount.assert.beforeAndAfter(0, 1) <+ filterDead.assert.equal(HideDead)
-      >> doubleClickFieldValue("Notes")    +> editorCount.assert.equal(2)
-      >> showDead                          +> editorCount.assert.equal(2)
-      >> doubleClickFieldValue("Reporter") +> editorCount.assert.equal(2) // dead field
-      >> hideDead                          +> editorCount.assert.equal(2)
+      doubleClickTitle                     +> editorCount.assert.beforeAndAfter(0, 1) <+ filterDead.assert(HideDead)
+      >> doubleClickFieldValue("Notes")    +> editorCount.assert(2)
+      >> showDead                          +> editorCount.assert(2)
+      >> doubleClickFieldValue("Reporter") +> editorCount.assert(2) // dead field
+      >> hideDead                          +> editorCount.assert(2)
     , reporterFieldExistence))
 
   }

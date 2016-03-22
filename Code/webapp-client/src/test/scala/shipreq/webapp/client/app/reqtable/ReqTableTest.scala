@@ -129,7 +129,7 @@ object ReqTableTest extends TestSuite {
 
   def testDeadColumns = (
     filterDeadToggle
-      +> filterDead.assert.equal(ShowDead)
+      +> filterDead.assert(ShowDead)
       +> selectableColumns.size.assert.increaseBy(3) // DeletionReasons + Reporter + Released
       >> filterDeadToggle
     ) +> selectableColumns.size.assert.noChange
@@ -175,8 +175,8 @@ object ReqTableTest extends TestSuite {
     import ce._
     // TODO What about an implication cycle with a dead link. Ok? Not ok? What about when when link is undeleted?
     runTest(
-      showBuiltInColumnsSortedByPubid +> cellText.assert.equal("MF-12, MF-19")
-        >> startEdit +> editorValue.assert.equal("MF-12") // Should remove dead
+      showBuiltInColumnsSortedByPubid +> cellText.assert("MF-12, MF-19")
+        >> startEdit +> editorValue.assert("MF-12") // Should remove dead
         >> testInvalid("MF-28").suffix(" (Dead target)")
         >> testInvalid("MF-19").suffix(" (Dead target)")
         >> testInvalid("MF-27").suffix(" (Causes cycle)") // because FR-1 → FR-2 → MF-27
@@ -190,8 +190,8 @@ object ReqTableTest extends TestSuite {
     val ce = CellEditor(_.table.cellLoc(pubid = "MF-3", col = "Implies"))
     import ce._
     runTest(
-      showAllColumns +> cellText.assert.equal("FR-4, MF-4")
-        >> startEdit +> editorValue.assert.equal("FR-4 MF-4")
+      showAllColumns +> cellText.assert("FR-4, MF-4")
+        >> startEdit +> editorValue.assert("FR-4 MF-4")
         >> testInvalid("BR-1").suffix(" (Causes cycle)") // because BR-1 → BR-2 → FR-3 → BR-1
         >> testInvalid("BR-2").suffix(" (Causes cycle)") // because BR-1 → BR-2 → FR-3 → BR-2
         >> testValid("MF-3") // reflexivity is tolerated but should be ignored on save
@@ -239,8 +239,8 @@ object ReqTableTest extends TestSuite {
       mfs.sorted.map("MF-" + _) mkString sep
 
     runTest(
-      showAllColumns +> cellText.assert.equal(mfs(", ", 1, 5, 2, 6, 7, 8, 9, 10, 13))
-        >> startEdit +> editorValue.assert.equal(mfs(" ", 5, 6)) // Should only show direct & live
+      showAllColumns +> cellText.assert(mfs(", ", 1, 5, 2, 6, 7, 8, 9, 10, 13))
+        >> startEdit +> editorValue.assert(mfs(" ", 5, 6)) // Should only show direct & live
         >> testInvalid("MF-4").suffix(" (Dead target)")
         >> testInvalid("MF-8").suffix(" (Dead target)")
         >> testInvalid("MF-5 CO-5").suffix(" (Causes cycle)") // because MF-1 → MF-5 → MF-13 → CO-5 → MF-1
@@ -260,8 +260,8 @@ object ReqTableTest extends TestSuite {
     import ce._
 
     runTest(
-      showAllColumns +> cellText.assert.equal("v1.3 v1.x v3.x v4.x") // wip & uat in Status col
-        >> startEdit +> editorValue.assert.equal("v1.1 v1.x") // Should only show direct & live
+      showAllColumns +> cellText.assert("v1.3 v1.x v3.x v4.x") // wip & uat in Status col
+        >> startEdit +> editorValue.assert("v1.1 v1.x") // Should only show direct & live
         >> testInvalid("v0.9").suffix(" (Dead target)")
         >> testInvalid("v3.x").suffix(" (Dead target)")
         >> testInvalid("v4.x").suffix(" (Dead target)")
@@ -281,8 +281,8 @@ object ReqTableTest extends TestSuite {
     import ce._
 
     runTest(
-      showAllColumns +> cellText.assert.equal("wip uat uat3 prod")
-        >> startEdit +> editorValue.assert.equal("wip") // Should only show direct & live
+      showAllColumns +> cellText.assert("wip uat uat3 prod")
+        >> startEdit +> editorValue.assert("wip") // Should only show direct & live
         >> testInvalid("uat").suffix(" (Dead target)")
         >> testInvalid("uat2").suffix(" (Dead target)")
         >> testInvalid("uat3").suffix(" (Dead target)")
