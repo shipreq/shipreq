@@ -73,6 +73,12 @@ object ReqTableTestDsl {
 
   val escape = KeyboardEventData(key = KeyValue.Escape, keyCode = KeyCode.Escape)
 
+  sealed abstract class CellState
+  case object Normal  extends CellState
+  case object Editing extends CellState
+  case object Locked  extends CellState
+  case object Failed  extends CellState
+
   final case class CellEditor(loc: ReqTableObs => ReqTableObs.CellLoc) {
 
     private implicit def ROStoOS(r: *.ROS) = r.os
@@ -83,18 +89,30 @@ object ReqTableTestDsl {
 
     val cell        = *.focus("Subject cell").value(s => s.obs.table.cell(loc(s.obs)))
     val cellText    = cell.map(_.innerText)                               rename "Cell innerText"
-    val editing     = cell.map(_ exists editorCss)                        rename "Editing"
-    val locked      = cell.map(_ exists "img")                            rename "Locked"
-    val failed      = cell.map(_ exists retryButtonCss)                   rename "Async failure"
     val retryButton = cell.map(_.down(retryButtonCss).domAs[html.Button]) rename "Retry button"
     val abortButton = cell.map(_.down(abortButtonCss).domAs[html.Button]) rename "Abort button"
     val editor      = cell.map(_.down(editorCss).forceDomAs[html.Input])  rename "Editor"
     val editorValue = editor.map(_.value)                                 rename "Editor value"
 
+    private val _editing = cell.map(_ exists editorCss)      rename "Editing"
+    private val _locked  = cell.map(_ exists "img")          rename "Locked"
+    private val _failed  = cell.map(_ exists retryButtonCss) rename "Async failure"
+
     val editorValidity = *.focus("Editor validity").value(Invalid <~ cell.run(_).exists(editorInvalidSel))
 
-    val assertNormalStatus =
-      editing.assert(false) & locked.assert(false) & failed.assert(false)
+    def assertState(s: CellState) = {
+      var e,l,f = false
+      s match {
+        case Normal  => ()
+        case Editing => e = true
+        case Locked  => l = true
+        case Failed  => f = true
+      }
+      _editing.assert(e) & _locked.assert(l) & _failed.assert(f)
+    }
+
+    val assertNotEditing =
+      _editing.assert(false)
 
     val tryStartEdit =
       *.action("Start editor.").act(Simulate doubleClick cell.run(_).dom)
@@ -102,22 +120,22 @@ object ReqTableTestDsl {
     val startEdit = (
       tryStartEdit
         +> svrReqs.assert.noChange
-        +> editing.assert(true))
+        +> assertState(Editing))
 
     val assertCantStartEdit = (
       tryStartEdit.rename("Attempt to start editor.")
         +> svrReqs.assert.noChange
-        +> editing.assert(false))
+        +> assertNotEditing)
 
-  def enterValue(text: String, desc: String = "Enter value") =
-    *.action(s"$desc: ${text.show}").act(ChangeEventData(text) simulate editor.run(_)) +>
-      editorValue.assert(text)
+    def enterValue(text: String, desc: String = "Enter value") =
+      *.action(s"$desc: ${text.show}").act(ChangeEventData(text) simulate editor.run(_)) +>
+        editorValue.assert(text)
 
     def testValid  (text: String) = enterValue(text, "Enter valid value")   +> editorValidity.assert(Valid)
     def testInvalid(text: String) = enterValue(text, "Enter invalid value") +> editorValidity.assert(Invalid)
 
     val commit =
-      *.action("Press ctrl-enter.").act(ctrlEnter simulateKeyDown editor.run(_)) +> editing.assert(false)
+      *.action("Press ctrl-enter.").act(ctrlEnter simulateKeyDown editor.run(_)) +> assertNotEditing
 
     val clickRetry =
       *.action("Click Retry.").act(Simulate click retryButton.run(_))

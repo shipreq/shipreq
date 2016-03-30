@@ -103,7 +103,7 @@ object ReqTableTest extends TestSuite {
   // TODO Move
   import nyaya.gen._
   import nyaya.test.Settings
-  import teststate.data._
+  import teststate.data.ROS
   def zxc[F[_], R, O, S, E](g: Gen[Actions[F, R, O, S, E]])(name: NameFn[ROS[R, O, S]])(implicit s: Settings): Actions[F, R, O, S, E] =
       g.samples(GenCtx(s.genSize))
       .take(s.sampleSize.value)
@@ -298,7 +298,6 @@ object ReqTableTest extends TestSuite {
 
   def testEditIO(): Unit = {
 
-    // TODO Invariant: Only one {Failed, Locked, Editing} at a time
     val ce = CellEditor(_.table.cellLoc(pubid = "MF-6", col = "Title"))
     import ce._
 
@@ -317,34 +316,34 @@ object ReqTableTest extends TestSuite {
         >> enterValue(newValue)
         >> commit
         +> svrReqs.assert.increment
-        +> locked.assert(true)
+        +> assertState(Locked)
         >> assertCantStartEdit
       ) group "editChangeCommit"
 
     val fail = (
       svrFailLast
-        +> failed.assert(true) // Should be in failed state after I/O failure
+        +> assertState(Failed) // Should be in failed state after I/O failure
         >> assertCantStartEdit)
 
     val retry = (
       clickRetry
-        +> locked.assert(true)
+        +> assertState(Locked)
         +> svrReqs.assert.increment
         +> svrAssertLastTwoReqsEqual
       )
 
     val cancelSaveCommitAgain = (
       clickAbort
-        +> editing.assert(true)
+        +> assertState(Editing)
         +> editorValue.assert(newValue)
         >> commit
-        +> locked.assert(true)
+        +> assertState(Locked)
         +> svrReqs.assert.increment
         +> svrAssertLastTwoReqsEqual
       ) group "cancelSaveCommitAgain"
 
     val saveSucceeds =
-      svrAutoRespondToLast +> assertNormalStatus
+      svrAutoRespondToLast +> assertState(Normal)
 
     runTest(svrDisableAutoRespond >>
 //      editCommitWithoutChange >> // TODO Test failing due to real bug. Fix!
