@@ -26,7 +26,7 @@ object ReqDetailTest extends TestSuite {
   }
 
   def testError(ep: ExternalPubid, error: String): Unit =
-    runTest(ep, true)(*.emptyPlan addInvariants checkErrorReason(error))
+    runTest(ep, true)(Plan invariants checkErrorReason(error))
 
   def test(ep: ExternalPubid)(test: *.Plan = *.emptyPlan): Unit = {
     runTest(ep, false)(test)
@@ -44,7 +44,7 @@ object ReqDetailTest extends TestSuite {
     'badReqType - testError("QL-1", "Type QL not found.")
     'badReq     - testError("FR-9", "FR-9 not found.")
 
-    'gr - test("FR-1")(*.emptyPlan addInvariants testLifeRowInnerText("Alive.Kill"))
+    'gr - test("FR-1")(Plan invariants testLifeRowInnerText("Alive.Kill"))
 
     'uc - test("UC-1")(Plan.action(
       allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.1", "1.1.1")
@@ -60,13 +60,11 @@ object ReqDetailTest extends TestSuite {
         +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.E.1", "1.E.1.a")
     ))
 
-    // TODO emptyPlan addInvariants = abuse
+    'deadExplicitly - test("MF-19")(Plan invariants testLifeRowInnerText("Dead.Resurrect"))
 
-    'deadExplicitly - test("MF-19")(*.emptyPlan addInvariants testLifeRowInnerText("Dead.Resurrect"))
+    'deadImplicitly - test("SI-1")(Plan invariants testLifeRowInnerText("Dead."))
 
-    'deadImplicitly - test("SI-1")(*.emptyPlan addInvariants testLifeRowInnerText("Dead."))
-
-    'deadImplicitlyAndExplicitly - test("SI-2")(*.emptyPlan addInvariants testLifeRowInnerText("Dead."))
+    'deadImplicitlyAndExplicitly - test("SI-2")(Plan invariants testLifeRowInnerText("Dead."))
 
     'deadFields - test("UC-1")(Plan.action(
       filterDeadToggle
@@ -78,7 +76,7 @@ object ReqDetailTest extends TestSuite {
       def check(expectVisible: Boolean) =
         visibleFields.assertB(expectVisible).contains("Description")
       def t(pubid: ExternalPubid, expectVisible: Boolean) =
-        test(pubid)(*.emptyPlan addInvariants check(expectVisible))
+        test(pubid)(Plan invariants check(expectVisible))
       'mf1 - t("MF-1", true)
       'fr1 - t("FR-1", false)
     }
