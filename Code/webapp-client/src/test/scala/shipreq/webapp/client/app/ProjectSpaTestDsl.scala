@@ -43,7 +43,7 @@ object ProjectSpaTestDsl {
   @Lenses
   case class TestState(page: Page, project: Project, detailState: RD.State)
 
-  val * = Dsl.sync[Ref, Obs, TestState, String]
+  val * = Dsl[Ref, Obs, TestState]
 
   implicit val transformRT =
     RT.*.transformer
@@ -88,11 +88,14 @@ object ProjectSpaTestDsl {
       .act(_.ref.cd.applyTestEvents(e: _*))
       .updateStateBy(i => i.state.copy(project = i.obs.project))
 
-  def liftReqTableTests(tc: RT.*.TestContent): *.TestContent = tc.lift
-  def liftReqDetailTests(tc: RD.*.TestContent): *.TestContent = tc.lift
+  def liftReqTableTests (p: RT.*.Plan): *.Plan = p.lift
+  def liftReqDetailTests(p: RD.*.Plan): *.Plan = p.lift
 
-  def testReqTable(action: RT.*.Action): *.Action = liftReqTableTests(Test(action)).asAction("Test ReqTable")
-  def testReqDetail(action: RD.*.Action): *.Action = liftReqDetailTests(Test(action)).asAction("Test ReqDetail")
+  def testReqTable(action: RT.*.Action): *.Action =
+    liftReqTableTests(Plan.action(action)).asAction("Test ReqTable")
+
+  def testReqDetail(action: RD.*.Action): *.Action =
+    liftReqDetailTests(Plan.action(action)).asAction("Test ReqDetail")
 
   def runTest(action : *.Action,
               project: Project  = SampleProject5.project,
@@ -106,7 +109,7 @@ object ProjectSpaTestDsl {
     val init = TestState(page, cd.project(), rd)
 
     ComponentTester(spa.Component)(Props(init.page, rc)) { tester =>
-      val tt  = Test(action, invariants).observe(_.observe())
+      val tt  = Plan(action, invariants).test(Observer(_.observe()))
       val r   = tt.run(init, Ref(cd, svr, tester))
       if (r.failed)
         println(s"${"="*120}\n${removeReactIds(tester.component.getDOMNode().outerHTML)}\n")

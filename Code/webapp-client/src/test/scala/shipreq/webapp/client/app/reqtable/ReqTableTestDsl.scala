@@ -20,10 +20,10 @@ object ReqTableTestDsl {
 
   case class Ref($: CompState.AccessD[ReqTable.State], svr: MockServer)
 
-  val * = Dsl.sync[Ref, ReqTableObs, Project, String]
+  val * = Dsl[Ref, ReqTableObs, Project]
 
-  def apply(action: *.Action = emptyAction): *.TestContent =
-    Test(action, invariants)
+  def apply(action: *.Action = emptyAction): *.Plan =
+    Plan(action, invariants)
 
 //  // TODO Move following into Nyaya
 //

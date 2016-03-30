@@ -91,7 +91,7 @@ object ReqTableTest extends TestSuite {
     ReactTestUtils.withRenderedIntoDocument(outer(initialState)) { c =>
       val ref = Ref(c zoomL State.reqTable, cp)
       def newObs = new ReqTableObs(cp, DomZipper(c))
-      val t = Test(action, invariants).observe(_ => newObs)
+      val t = Plan(action, invariants).test(Observer watch newObs)
       val r = t.run(initialState.reqTable.project, ref)
       r.assert()
     }

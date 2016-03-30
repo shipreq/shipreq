@@ -39,7 +39,7 @@ object ReqDetailTestDsl {
 
   val stateMode = TestState.state ^|-> State.mode
 
-  val * = Dsl.sync[Unit, ReqDetailObs, TestState, String]
+  val * = Dsl[Unit, ReqDetailObs, TestState]
 
   def checkErrorReason(e: String) =
     *.focus("Error reason").value(_.obs.error.reason).assert(e)
@@ -91,7 +91,7 @@ object ReqDetailTestDsl {
     *.focus("Mode").obsAndState(_.mode, _.mode).assert.equal &
     *.chooseInvariant("Mode invariants", i => i.state.mode match {
       case Mode.Error   => invariantsWhenBad
-      case Mode.Delete => emptyInvariants
+      case Mode.Delete  => emptyInvariants
       case Mode.Details =>
         if (i.state.pubidStr startsWith "UC-")
           invariantsUC
