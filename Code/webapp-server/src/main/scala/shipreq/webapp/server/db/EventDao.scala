@@ -134,7 +134,7 @@ object EventDbCodecs {
   def pickleNES[A: UnivEq](implicit rw: ReadWriter[Set[A]]): ReadWriter[NonEmptySet[A]] =
     pickleNonEmpty(_.whole)
 
-  def pickleNESD[A: UnivEq](implicit rw: ReadWriter[A]): ReadWriter[Event.NESD[A]] = {
+  def pickleNESD[A: UnivEq](implicit rw: ReadWriter[A]): ReadWriter[SetDiff.NE[A]] = {
     implicit val sd = setDiff[A]
     pickleNonEmptyA
   }

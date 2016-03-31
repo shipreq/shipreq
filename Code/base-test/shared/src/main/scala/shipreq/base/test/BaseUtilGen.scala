@@ -107,7 +107,7 @@ object BaseUtilGen {
     level(maxDepth)
   }
 
-  def genNonEmptySetDiff[A: UnivEq](g: Gen[A])(implicit ss: SizeSpec): Gen[NonEmpty[SetDiff[A]]] = {
+  def genNonEmptySetDiff[A: UnivEq](g: Gen[A])(implicit ss: SizeSpec): Gen[SetDiff.NE[A]] = {
     val set = g.set(ss)
     val attempt =
       for {

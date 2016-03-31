@@ -5,7 +5,6 @@ import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.util._
-import Event.NESD
 import Text.{UseCaseStep => StepTitle, _}
 import Text.Equality._
 import UnivEq.Implicits._
@@ -18,9 +17,6 @@ import UnivEq.Implicits._
  * Only [[ActiveEvent]]s can be written to the DB.
  */
 sealed trait Event
-object Event {
-  type NESD[A] = NonEmpty[SetDiff[A]]
-}
 
 /**
  * Events of which new instances can be created.
@@ -180,8 +176,8 @@ case class SetUseCaseTitle(id: UseCaseId, value: UseCaseTitle.OptionalText) exte
 @CreateGenericData
 object UseCaseStepGD extends GenericData {
   val Title   = defAttr[StepTitle.OptionalText]
-  val FlowIn  = defAttr[NESD[UseCaseStepId]]
-  val FlowOut = defAttr[NESD[UseCaseStepId]]
+  val FlowIn  = defAttr[SetDiff.NE[UseCaseStepId]]
+  val FlowOut = defAttr[SetDiff.NE[UseCaseStepId]]
 }
 
 case class AddUseCaseStep(id   : UseCaseStepId,
@@ -227,9 +223,9 @@ case class PatchReqCodes(id     : ReqId,
                          restore: Set[ReqCodeId],
                          add    : Multimap[ReqCode.Value, Set, ReqCodeId]) extends ActiveEvent
 
-case class PatchReqTags        (id: ReqId, patch: NESD[ApplicableTagId]) extends ActiveEvent
-case class PatchImplicationSrc (id: ReqId, patch: NESD[ReqId])           extends ActiveEvent
-case class PatchImplicationTgt (id: ReqId, patch: NESD[ReqId])           extends ActiveEvent
+case class PatchReqTags        (id: ReqId, patch: SetDiff.NE[ApplicableTagId]) extends ActiveEvent
+case class PatchImplicationSrc (id: ReqId, patch: SetDiff.NE[ReqId])           extends ActiveEvent
+case class PatchImplicationTgt (id: ReqId, patch: SetDiff.NE[ReqId])           extends ActiveEvent
 // TODO Better for PatchImplication to take a Direction?
 
 case class SetCustomTextField(id: ReqId, fid: CustomField.Text.Id, value: CustomTextField.OptionalText) extends ActiveEvent

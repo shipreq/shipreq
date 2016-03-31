@@ -9,7 +9,6 @@ import shipreq.base.test.IncCounter
 import shipreq.base.util._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.event.Event.NESD
 import shipreq.webapp.base.hash._
 import shipreq.webapp.base.test.WebappBaseGen._
 import shipreq.webapp.base.text.Text
@@ -459,7 +458,7 @@ class ApplicableEventGen(p: Project) {
     Gen.tryGenChooseLazily(ids).map(_ map DeleteUseCaseStep)
   }
 
-  private def patchImplications[A](cmd: (ReqId, NESD[ReqId]) => A, dir: Direction): Option[Gen[A]] =
+  private def patchImplications[A](cmd: (ReqId, SetDiff.NE[ReqId]) => A, dir: Direction): Option[Gen[A]] =
     if (liveReqIds.length < 2)
       None
     else

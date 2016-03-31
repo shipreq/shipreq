@@ -94,7 +94,7 @@ object ReqCodeEditor {
   /**
     * Editor for multiple ReqCodes.
     */
-  object Multiple extends ReqCodeEditor[Set[ReqCode.Value], NonEmpty[SetDiff[ReqCode.Value]]] {
+  object Multiple extends ReqCodeEditor[Set[ReqCode.Value], SetDiff.NE[ReqCode.Value]] {
 
     override val textEditor = TextEditor.TextArea
 

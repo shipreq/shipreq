@@ -8,7 +8,6 @@ import scala.annotation.elidable
 import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.event.Event.NESD
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.{PlainText, TextSearch}
 import shipreq.webapp.client.data.TCB
@@ -390,7 +389,7 @@ object ContentEditorFeature {
             pxProject.map(p =>
               ImplicationEditor.validationFn(p, subjectId.some, initialValues, dir))
 
-          val cmd: NESD[ReqId] => UpdateContentCmd =
+          val cmd: SetDiff.NE[ReqId] => UpdateContentCmd =
             UpdateContentCmd.PatchImplications(subjectId, dir, _)
 
           val extra: ImplicationEditor.Extra =

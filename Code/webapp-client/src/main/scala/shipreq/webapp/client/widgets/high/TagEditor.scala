@@ -51,7 +51,7 @@ object TagEditor {
   }
 
   /** Extra properties to apply to the tag. Input is parsed tags, if valid. */
-  type Extra = ValidUpdateVR[NonEmpty[SetDiff[ApplicableTagId]]] ~=> TagMod
+  type Extra = ValidUpdateVR[SetDiff.NE[ApplicableTagId]] ~=> TagMod
 
   case class Props(preEditValue: Option[Set[ApplicableTagId]],
                    edit        : ReusableVar[String],

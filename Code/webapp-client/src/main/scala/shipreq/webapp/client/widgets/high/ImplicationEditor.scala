@@ -65,7 +65,7 @@ object ImplicationEditor {
   }
 
   /** Extra properties to apply to the tag. */
-  type Extra = ValidUpdateVR[NonEmpty[SetDiff[ReqId]]] ~=> TagMod
+  type Extra = ValidUpdateVR[SetDiff.NE[ReqId]] ~=> TagMod
 
   case class Props(edit        : ReusableVar[String],
                    lookup      : Lookup,

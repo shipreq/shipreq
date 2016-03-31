@@ -356,7 +356,7 @@ trait ApplyContentEvent {
 
       val noFlow = SetDiff.empty[UseCaseStepId]
 
-      def getFlow(values: UseCaseStepGD.Values, a: UseCaseStepGD.Attr {type Data = NonEmpty[SetDiff[UseCaseStepId]]}): SetDiff[UseCaseStepId] =
+      def getFlow(values: UseCaseStepGD.Values, a: UseCaseStepGD.Attr {type Data = SetDiff.NE[UseCaseStepId]}): SetDiff[UseCaseStepId] =
         a.get(values).fold(noFlow)(_.value)
 
       def updateFlow(id: UseCaseStepId, flow_← : SetDiff[UseCaseStepId], flow_→ : SetDiff[UseCaseStepId]): SE[Unit] =

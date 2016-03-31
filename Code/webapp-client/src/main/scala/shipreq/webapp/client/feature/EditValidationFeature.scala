@@ -41,12 +41,12 @@ object EditValidationFeature {
   def validate[A](a: A)(v: A => ValidationResult[A])(implicit e: Equal[A]): Result[A] =
     compare(v(a))(a)(e)
 
-  def setDiff[A](vr: ValidationResult[SetDiff[A]]): Result[NonEmpty[SetDiff[A]]] =
+  def setDiff[A](vr: ValidationResult[SetDiff[A]]): Result[SetDiff.NE[A]] =
     apply(
       ValidUpdate.fromValidation(vr)
         .flatMap(ValidUpdate.setDiffNE))
 
-  def compareSetOption[A: UnivEq](vr: ValidationResult[Set[A]])(previous: Option[Set[A]]): Result[NonEmpty[SetDiff[A]]] =
+  def compareSetOption[A: UnivEq](vr: ValidationResult[Set[A]])(previous: Option[Set[A]]): Result[SetDiff.NE[A]] =
     setDiff(
       vr.map(SetDiff.compareOption(previous, _)))
 }

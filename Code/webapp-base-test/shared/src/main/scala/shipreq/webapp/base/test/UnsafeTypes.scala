@@ -88,7 +88,7 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
 
   def ∅[A](implicit cbf: CanBuildFrom[Nothing, Nothing, A]): A = cbf().result()
 
-  def nesd[A: UnivEq](remove: A*)(add: A*): NonEmpty[SetDiff[A]] = {
+  def nesd[A: UnivEq](remove: A*)(add: A*): SetDiff.NE[A] = {
     val sd = SetDiff(removed = remove.toSet, add.toSet)
     NonEmpty(sd) getOrElse sys.error(s"nesd()() called with no data.")
   }

@@ -98,6 +98,6 @@ object ValidUpdate {
     else
       Success(d)
 
-  def setDiffNE[A](d: SetDiff[A]): ValidUpdate[Nothing, NonEmpty[SetDiff[A]]] =
+  def setDiffNE[A](d: SetDiff[A]): ValidUpdate[Nothing, SetDiff.NE[A]] =
     setDiff(d).map(NonEmpty.force)
 }

@@ -45,6 +45,8 @@ final class SetDiff[A](val removed: Set[A], val added: Set[A]) {
 }
 
 object SetDiff {
+  type NE[A] = NonEmpty[SetDiff[A]]
+
   implicit def equality[A: UnivEq]: UnivEq[SetDiff[A]] = UnivEq.force
 
   def empty[A: UnivEq]: SetDiff[A] = {
