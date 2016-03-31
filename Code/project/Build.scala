@@ -170,8 +170,10 @@ object ShipReq extends Build {
     project("webapp")
       .configure(webappSettings)
       .aggregate(
-        webappMacroJvm, webappMacroJs, webappBaseJvm, webappBaseJs, webappBaseTestJvm, webappBaseTestJs,
-        webappClient, webappServer)
+        webappMacroJvm, webappBaseJvm, webappBaseServerJvm, webappBaseTestJvm,
+        webappMacroJs , webappBaseJs , webappBaseServerJs , webappBaseTestJs ,
+        webappClient,
+        webappServer)
 
   lazy val webappSettings =
     Common.settings.andThen(_.configure(webappCmdAliases))
