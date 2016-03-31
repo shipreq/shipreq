@@ -141,34 +141,21 @@ object ReqTableTest extends TestSuite {
           .map(applyViewSettings(_) >> filterDeadShowHide)
       )("testDeadToggleInvariants"))
 
-//  def testDeadRowsNotEditable(): Unit = {
-//    val colCount = *.availCols.length
-//
-//    def focus(rowType: Live, colIndex: Int) =
-//      Action(s"focus($rowType, $colIndex)", { s =>
-//        val row = rowType match {
-//          case Live => DomZipper.first("Live row", s.table.liveRows)
-//          case Dead => DomZipper.first("Dead row", s.table.deadRows)
-//        }
-//        val cell = row.getAll(">td")(colIndex)
-//        Simulate.click(cell)
-//      })
-//
-//    def editAllColumns(rowType: Live): Action[Int] = {
-//      val editEachCell =
-//        (0 until colCount).map { c =>
-//          focus(rowType, c).focus(_.table.focus).assertChange >> editFocused
-//        }.reduce(_ >> _)
-//
-//      (showAllColumns >> editEachCell).focus(_.table.inputsInFocusRow getOrElse 0)
-//    }
-//
-//    editAllColumns(Dead).assertAfter(0).run()
-//
-//    // Ensure test logic works
-//    reset()
-//    editAllColumns(Live).testAfter(_ > 0, "[Live Row] Cells should be in edit-mode").run()
-//  }
+  def testDeadNotEditable =
+    Plan.action(
+      showAllColumns(ShowDead) >> *.chooseAction("Edit all dead columns.", i => {
+        val cn = Column.NameResolver.byProject(i.state)
+        Column.all(i.state.config, ShowDead)
+          .iterator
+          .filter(_.live :: Dead)
+          .map { c =>
+            val n = cn(c)
+            val ce = cellEditor("MF-1", n)
+            import ce._
+            (tryStartEdit +> assertState(Normal)).group(s"Try to edit $n.")
+          }.reduce(_ >> _)
+      })
+    )
 
   def testImplicationSrcColumnEditor = {
     val ce = cellEditor(pubid = "FR-1", col = "Implied By")
@@ -375,7 +362,7 @@ object ReqTableTest extends TestSuite {
     'dead {
       'cols        - runTest(Plan action testDeadColumns named "testDeadColumns")
       // 'toggle      - runTest(testDeadToggleInvariants) TODO Should dead col stay on but hidden when ShowDead→HideDead?
-      // 'notEditable - testDeadRowsNotEditable()
+      'notEditable - runTest(testDeadNotEditable named "testDeadNotEditable")
     }
 
     'editor {
@@ -399,8 +386,6 @@ object ReqTableTest extends TestSuite {
         'reqCodes - runTest(testNopEditsBy("MF-1", ColumnNames.code)("Trailing \\n." -> (_ + "\n")))
       }
     }
-
-//    'real - realBrowserMTest(runTest(emptyAction))
 
   }
 }

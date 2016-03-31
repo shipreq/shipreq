@@ -247,13 +247,16 @@ object ReqTableTestDsl {
   def setProject(p: Project): *.Action =
     *.action("Set project.").act(_.ref.$.modState(_.updateProject(p))).updateState(_ => p)
 
-  val showAllColumns = applyViewSettings("Show all columns.", s => {
-    val fd = ShowDead
-    val vs = s.viewSettings
-    val cs = selectVisibleColumns(_ => true, s.project.config, fd)
-    val o  = vs.order.copy(init = Vector.empty) // remove ReqCodeGroups
-    vs.copy(columns = cs, order = o, filterDead = fd)
-  })
+  def showAllColumns: *.Action =
+    showAllColumns(ShowDead)
+
+  def showAllColumns(fd: FilterDead): *.Action =
+    applyViewSettings("Show all columns.", s => {
+      val vs = s.viewSettings
+      val cs = selectVisibleColumns(_ => true, s.project.config, fd)
+      val o  = vs.order.copy(init = Vector.empty) // remove ReqCodeGroups
+      vs.copy(columns = cs, order = o, filterDead = fd)
+    })
 
   val showBuiltInColumnsSortedByPubid = applyViewSettings("Show built-in columns sorted by pubid.", s => {
     val fd = ShowDead
