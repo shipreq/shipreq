@@ -303,51 +303,50 @@ object MakeEvent {
         SetUseCaseTitle(id, v)
 
       case UpdateContentCmd.PatchReqTags(id, v) =>
-        eventIfNonEmpty(v)(PatchReqTags(id, _))
+        PatchReqTags(id, v)
 
       case UpdateContentCmd.SetCustomTextField(id, f, v) =>
         SetCustomTextField(id, f, v)
 
       case UpdateContentCmd.PatchImplications(id, Backwards, v) =>
-        eventIfNonEmpty(v)(PatchImplicationSrc(id, _))
+        PatchImplicationSrc(id, v)
 
       case UpdateContentCmd.PatchImplications(id, Forwards, v) =>
-        eventIfNonEmpty(v)(PatchImplicationTgt(id, _))
+        PatchImplicationTgt(id, v)
 
-      case UpdateContentCmd.PatchReqCodes(reqId, v) =>
-        eventIfNonEmpty(v) { cs =>
-          var remove : Set[ReqCodeId]                          = UnivEq.emptySet
-          var restore: Set[ReqCodeId]                          = UnivEq.emptySet
-          var add    : Multimap[ReqCode.Value, Set, ReqCodeId] = UnivEq.emptySetMultimap
-          var r      : Option[Result]                          = None
+      case UpdateContentCmd.PatchReqCodes(reqId, cs) => {
+        var remove : Set[ReqCodeId]                          = UnivEq.emptySet
+        var restore: Set[ReqCodeId]                          = UnivEq.emptySet
+        var add    : Multimap[ReqCode.Value, Set, ReqCodeId] = UnivEq.emptySetMultimap
+        var r      : Option[Result]                          = None
 
-          def fail(err: String): Unit =
-            r = Some(Failure(err))
+        def fail(err: String): Unit =
+          r = Some(Failure(err))
 
-          import ReqCode._
-          for (c <- cs.value.removed)
-            project.reqCodes.get(c) match {
-              case Some(a: ActiveReq) if a.reqId ==* reqId => remove += a.id
-              case od if od.exists(_.isActive)             => fail(s"Cannot remove ${PlainText reqCode c}: Doesn't belong to $reqId.")
-              case _                                       => fail(s"Cannot remove ${PlainText reqCode c}: Not found.")
-            }
-
-          if (r.isEmpty) {
-            val nextCodeId = reqCodeIdCounter(project)
-            for (c <- cs.value.added)
-              project.reqCodes.get(c) match {
-                case Some(d) if d.isActive =>
-                  Failure(s"Code in use: ${PlainText reqCode c}.")
-
-                case od => od.flatMap(_.reqInactive(reqId).ifNonEmpty(_.min)) match {
-                  case None    => add = add.add(c, nextCodeId())
-                  case Some(i) => restore += i
-                }
-              }
+        import ReqCode._
+        for (c <- cs.value.removed)
+          project.reqCodes.get(c) match {
+            case Some(a: ActiveReq) if a.reqId ==* reqId => remove += a.id
+            case od if od.exists(_.isActive)             => fail(s"Cannot remove ${PlainText reqCode c}: Doesn't belong to $reqId.")
+            case _                                       => fail(s"Cannot remove ${PlainText reqCode c}: Not found.")
           }
 
-          r getOrElse PatchReqCodes(reqId, remove, restore, add)
+        if (r.isEmpty) {
+          val nextCodeId = reqCodeIdCounter(project)
+          for (c <- cs.value.added)
+            project.reqCodes.get(c) match {
+              case Some(d) if d.isActive =>
+                Failure(s"Code in use: ${PlainText reqCode c}.")
+
+              case od => od.flatMap(_.reqInactive(reqId).ifNonEmpty(_.min)) match {
+                case None    => add = add.add(c, nextCodeId())
+                case Some(i) => restore += i
+              }
+            }
         }
+
+        r getOrElse PatchReqCodes(reqId, remove, restore, add)
+      }
 
       case UpdateContentCmd.SetGenericReqType(id, v) =>
         SetGenericReqType(id, v)

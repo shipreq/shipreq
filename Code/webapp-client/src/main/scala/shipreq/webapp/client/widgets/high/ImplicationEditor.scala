@@ -9,7 +9,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{Ref => _, _}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar, PlainText, TextSearch}
-import shipreq.webapp.base.validation.{ValidationPartU, VFailure, ValidationResult, Validator}
+import shipreq.webapp.base.validation._
 import shipreq.webapp.client.data.{DataLogic, Plain}
 import shipreq.webapp.client.lib.AutoComplete
 import shipreq.webapp.client.lib.DataReusability._
@@ -65,7 +65,7 @@ object ImplicationEditor {
   }
 
   /** Extra properties to apply to the tag. */
-  type Extra = Option[SetDiff[ReqId]] ~=> TagMod
+  type Extra = ValidUpdateVR[NonEmpty[SetDiff[ReqId]]] ~=> TagMod
 
   case class Props(edit        : ReusableVar[String],
                    lookup      : Lookup,
@@ -130,11 +130,11 @@ object ImplicationEditor {
         AutoComplete.req(s, l.legal, Plain)
 
     def render(p: Props) = {
-      val validated = EditValidationFeature(p.parseResult)
+      val validated = EditValidationFeature.setDiff(p.parseResult)
 
       <.div(
         <.input.text(
-          p.extra(validated.validated),
+          p.extra(validated.value),
           ^.onChange  ==> ((e: ReactEventI) => p.edit.set(e.target.value)),
           ^.ref        := editorRef,
           ^.value      := p.edit.value),

@@ -11,6 +11,7 @@ import shipreq.base.util.UnivEq.{apply => _, force => _}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{PlainText, TextSearch}
+import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.client.data._
 import shipreq.webapp.client.feature.ContentEditorFeature.EditFieldKey
 import shipreq.webapp.client.feature._
@@ -170,7 +171,7 @@ object ReqTableTest extends TestSuite {
 //  }
 
   def testImplicationSrcColumnEditor = {
-    val ce = CellEditor(_.table.cellLoc(pubid = "FR-1", col = "Implied By"))
+    val ce = cellEditor(pubid = "FR-1", col = "Implied By")
     import ce._
     // TODO What about an implication cycle with a dead link. Ok? Not ok? What about when when link is undeleted?
     Plan.action(
@@ -186,7 +187,7 @@ object ReqTableTest extends TestSuite {
   }
 
   def testImplicationTgtColumnEditor = {
-    val ce = CellEditor(_.table.cellLoc(pubid = "MF-3", col = "Implies"))
+    val ce = cellEditor(pubid = "MF-3", col = "Implies")
     import ce._
     Plan.action(
       showAllColumns +> cellText.assert("FR-4, MF-4")
@@ -200,7 +201,7 @@ object ReqTableTest extends TestSuite {
     ) withInitialState SampleImplicationGraph.project
   }
 
-  def testCustomImplicationColumnEditor() = {
+  def testCustomImplicationColumnEditor = {
     val p = (
       // MF- 1ᵒ → MF-5ᵒ → MF-13
       // MF- 2ˣ → MF-6ᵒ → MF-13 <-- difficult case - it should be displayed as its part of (a chain with ShowDead)
@@ -231,7 +232,7 @@ object ReqTableTest extends TestSuite {
       GReq(reqType = mf, id = 13).impSrc(5, 6, 7, 8, 51, 52, 53, 54)
       ) ! SampleProject.project
 
-    val ce = CellEditor(_.table.cellLoc(pubid = "MF-13", col = "Major Feature"))
+    val ce = cellEditor(pubid = "MF-13", col = "Major Feature")
     import ce._
 
     def mfs(sep: String, mfs: Int*): String =
@@ -255,7 +256,7 @@ object ReqTableTest extends TestSuite {
     val p = GReq(reqType = co, title = reqTitleTagRefs(v11, v13, v4x)).tag(wip, uat, v11, v1x, v3x) !
       SampleProject.project
 
-    val ce = CellEditor(_.table.cellLoc(pubid = "CO-1", col = "Tags"))
+    val ce = cellEditor(pubid = "CO-1", col = "Tags")
     import ce._
 
     Plan.action(
@@ -276,7 +277,7 @@ object ReqTableTest extends TestSuite {
     val p = GReq(reqType = co, title = reqTitleTagRefs(prod, uat3)).tag(wip, uat, v1x, v3x) !
       SampleProject.project
 
-    val ce = CellEditor(_.table.cellLoc(pubid = "CO-1", col = "Status"))
+    val ce = cellEditor(pubid = "CO-1", col = "Status")
     import ce._
 
     Plan.action(
@@ -294,16 +295,9 @@ object ReqTableTest extends TestSuite {
     ) withInitialState p
   }
 
-  def testEditorIO = {
-    val ce = CellEditor(_.table.cellLoc(pubid = "MF-6", col = "Title"))
+  def testEditorTitleIO = {
+    val ce = cellEditor(pubid = "MF-6", col = "Title")
     import ce._
-
-    val editCommitWithoutChange = (
-      startEdit
-        +> cellText.assert("Incompletions")
-        >> commit
-        +> svrReqs.assert.noChange
-      ) group "editCommitWithoutChange"
 
     val newValue = "issues!"
 
@@ -344,10 +338,32 @@ object ReqTableTest extends TestSuite {
 
     Plan.action(
       svrDisableAutoRespond >>
-//      editCommitWithoutChange >> // TODO Test failing due to real bug. Fix!
       editChangeCommit >> fail >> retry >> fail >> cancelSaveCommitAgain >> saveSucceeds)
   }
 
+  val nopMod = ("No change.", (s: String) => s)
+
+  def testNopEdits(pubid: String, col: String): *.Plan =
+    testNopEditsBy(pubid, col)("Trailing whitespace." -> (_ + " "))
+
+  def testNopEditsBy(pubid: String, col: String)(mods: (String, String => String)*): *.Plan = {
+    val ce = cellEditor(pubid, col)
+    import ce._
+
+    val post = svrReqs.assert.noChange & assertState(Normal).after
+
+    val commitNop = commit +> post
+
+    val nopEdit = (x: (String, String => String)) =>
+      (startEdit >> modifyValue(x._2) >> commitNop) group x._1
+
+    Plan.action(
+      showAllColumns
+        >> (startEdit >> commitNop).group("Commit without edit.")
+        >> (nopMod +: mods).map(nopEdit).reduce(_ >> _)
+        >> (startEdit >> abortEdit +> post).group("Abort.")
+    ) named s"NOP edits: $pubid/$col"
+  }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -363,12 +379,25 @@ object ReqTableTest extends TestSuite {
     }
 
     'editor {
-      'impSrc       - runTest(testImplicationSrcColumnEditor    named "testImplicationSrcColumnEditor"   )
-      'impTgt       - runTest(testImplicationTgtColumnEditor    named "testImplicationTgtColumnEditor"   )
-      'customImpCol - runTest(testCustomImplicationColumnEditor named "testCustomImplicationColumnEditor")
-      'tags         - runTest(testTagsColumnEditor              named "testTagsColumnEditor"             )
-      'customTagCol - runTest(testCustomTagColumnEditor         named "testCustomTagColumnEditor"        )
-      'io           - runTest(testEditorIO                      named "testEditorIO"                     )
+      'impSrc  - runTest(testImplicationSrcColumnEditor    named "testImplicationSrcColumnEditor"   )
+      'impTgt  - runTest(testImplicationTgtColumnEditor    named "testImplicationTgtColumnEditor"   )
+      'impCol  - runTest(testCustomImplicationColumnEditor named "testCustomImplicationColumnEditor")
+      'tags    - runTest(testTagsColumnEditor              named "testTagsColumnEditor"             )
+      'tagCol  - runTest(testCustomTagColumnEditor         named "testCustomTagColumnEditor"        )
+      'titleIO - runTest(testEditorTitleIO                 named "testEditorTitleIO"                )
+
+      'nop {
+        // RCG title
+        // RCG code
+        'title    - runTest(testNopEdits("MF-6", ColumnNames.title))
+        'textCol  - runTest(testNopEdits("MF-1", "Description"))
+        'impSrc   - runTest(testNopEdits("MF-1", ColumnNames.implicationSrc))
+        'impTgt   - runTest(testNopEdits("MF-1", ColumnNames.implicationTgt))
+        'impCol   - runTest(testNopEdits("MF-1", "Major Feature"))
+        'tags     - runTest(testNopEdits("MF-1", ColumnNames.tags))
+        'tagCol   - runTest(testNopEdits("MF-1", "Status"))
+        'reqCodes - runTest(testNopEditsBy("MF-1", ColumnNames.code)("Trailing \\n." -> (_ + "\n")))
+      }
     }
 
 //    'real - realBrowserMTest(runTest(emptyAction))

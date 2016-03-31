@@ -2,30 +2,32 @@ package shipreq.webapp.client.widgets.high
 
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react._, vdom.prefix_<^._
-import shipreq.webapp.base.validation.Validator
-import shipreq.webapp.client.feature._
-import shipreq.base.util.{UnivEq, Util}
+import shipreq.base.util.{Ref => _, _}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Grammar
+import shipreq.webapp.base.validation.{Validator, ValidUpdateVR}
+import shipreq.webapp.client.feature._
 import shipreq.webapp.client.lib.DataReusability._
 import shipreq.webapp.client.lib.{AutoComplete, TextEditor}
 import Validators.{reqCode => V}
 
-sealed abstract class ReqCodeEditor[Data: Reusability] {
+sealed abstract class ReqCodeEditor[In: Reusability, Out] {
 
   val textEditor: TextEditor
 
-  val validator: Validator[V.VS, String, _, Data]
+  val validator: Validator[V.VS, String, _, In]
 
   def liveCorrect(t: String): String
 
-  def dataToSet(d: Option[Data]): Set[ReqCode.Value]
+  def dataToSet(d: Option[In]): Set[ReqCode.Value]
+
+  def editValidation(p: Props): EditValidationFeature.Result[Out]
 
   /** Extra properties to apply to the tag. */
-  type Extra = Option[Data] ~=> TagMod
+  type Extra = ValidUpdateVR[Out] ~=> TagMod
 
   case class Props(edit        : ReusableVar[String],
-                   initialValue: Option[Data],
+                   initialValue: Option[In],
                    trie        : ReqCode.Trie,
                    extra       : Extra) {
 
@@ -47,14 +49,14 @@ sealed abstract class ReqCodeEditor[Data: Reusability] {
       AutoComplete.reqCode.prefixes(t))
 
     def render(p: Props) = {
-      val validated = EditValidationFeature(p.parseResult)
+      val validated = editValidation(p)
 
       <.div(
         textEditor.tag(
           ^.ref        := editorRef,
           ^.value      := p.edit.value,
           ^.onChange  ==> ((e: ReactEventI) => p.edit.set(liveCorrect(e.target.value))),
-          p.extra(validated.validated)),
+          p.extra(validated)),
         validated.renderFailure)
     }
   }
@@ -77,11 +79,14 @@ object ReqCodeEditor {
   /**
     * Editor for a single ReqCode (as is the case in ReqCodeGroups).
     */
-  object Single extends ReqCodeEditor[ReqCode.Value] {
+  object Single extends ReqCodeEditor[ReqCode.Value, ReqCode.Value] {
     override val textEditor                          = TextEditor.Input
     override val validator                           = V.code
     override def liveCorrect(txt: String)            = V.code.liveCorrect(txt)
     override def dataToSet(d: Option[ReqCode.Value]) = d.toSet
+
+    override def editValidation(p: Props) =
+      EditValidationFeature.compareOption(p.parseResult)(p.initialValue)
   }
 
   // ===================================================================================================================
@@ -89,7 +94,7 @@ object ReqCodeEditor {
   /**
     * Editor for multiple ReqCodes.
     */
-  object Multiple extends ReqCodeEditor[Set[ReqCode.Value]] {
+  object Multiple extends ReqCodeEditor[Set[ReqCode.Value], NonEmpty[SetDiff[ReqCode.Value]]] {
 
     override val textEditor = TextEditor.TextArea
 
@@ -110,5 +115,8 @@ object ReqCodeEditor {
 
     override def dataToSet(d: Option[Set[ReqCode.Value]]) =
       d getOrElse UnivEq.emptySet
+
+    override def editValidation(p: Props) =
+      EditValidationFeature.compareSetOption(p.parseResult)(p.initialValue)
   }
 }

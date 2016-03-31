@@ -250,28 +250,15 @@ object ContentEditorFeature {
       private def commit(cmd: UpdateContentCmd): Callback =
         async.wrapAsync((s, f) => saveIO(cmd, s >> abort, f))
 
-      private def commitOrIgnore[A, B](a: A)(filterIgnorable: A => Option[B])(cmd: B => UpdateContentCmd): Callback =
-        filterIgnorable(a) match {
-          case Some(b) => commit(cmd(b))
-          case None    => abort
-        }
+      private def commitK[A, B](singleLine: Boolean, v: ValidUpdate[Any, A])(cmd: A => UpdateContentCmd): KeyHandlers =
+        KeyHandlers.commit(v match {
+          case ValidUpdate.Success(a) => Some(commit(cmd(a)))
+          case ValidUpdate.Unchanged  => Some(abort)
+          case ValidUpdate.Failure(_) => None
+        }, singleLine)
 
-      private def commitAndAbort[A, B](singleLine: Boolean, o: Option[A])(commitFn: A => Callback) =
-        KeyHandlers.commit(o map commitFn, singleLine) + KeyHandlers.abort(abort)
-
-      private def ignoreEqual[A: UnivEq](initial: A): A => Option[A] =
-        value =>
-          if (value ==* initial)
-            None
-          else
-            value.some
-
-      private def ignoreEmptySetDiff[A: UnivEq](initial: Set[A]): Set[A] => Option[NESD[A]] =
-        value =>
-          NonEmpty(SetDiff.compare(before = initial, after = value))
-
-      private def ignoreEmptySetDiff[A, B: UnivEq](initial: Set[B], f: A => Set[B]): A => Option[NESD[B]] =
-        ignoreEmptySetDiff(initial) compose f
+      private def commitAbortK[A, B](singleLine: Boolean, v: ValidUpdate[Any, A])(cmd: A => UpdateContentCmd) =
+        commitK(singleLine, v)(cmd) + KeyHandlers.abort(abort)
 
       /**
        * Instance of [[EditorInstance]] that ensures editing is allowed before rendering.
@@ -307,9 +294,7 @@ object ContentEditorFeature {
 
           val extra: ReqCodeEditor.Multiple.Extra =
             ReusableFn(
-              commitAndAbort(false, _)(
-                commitOrIgnore(_)(
-                  ignoreEmptySetDiff(initialValues))(UpdateContentCmd.PatchReqCodes(id, _))))
+              commitAbortK(false, _)(UpdateContentCmd.PatchReqCodes(id, _)))
 
           rvarStrToStartEditFn(new StateMultiple(_, Some(initialValues), extra), initialText)
         }
@@ -327,9 +312,7 @@ object ContentEditorFeature {
 
           val extra: ReqCodeEditor.Single.Extra =
             ReusableFn(
-              commitAndAbort(true, _)(
-                commitOrIgnore(_)(
-                  ignoreEqual(initialValue))(UpdateContentCmd.SetReqCodeGroupCode(id, _))))
+              commitAbortK(true, _)(UpdateContentCmd.SetReqCodeGroupCode(id, _)))
 
           rvarStrToStartEditFn(new StateSingle(_, Some(initialValue), extra), initialText)
         }
@@ -349,6 +332,10 @@ object ContentEditorFeature {
         import ReqTypeSelector.A
 
         val pxCustomReqTypes = ReqTypeSelector.pxCustomReqTypes(pxProject)
+
+        // TODO Only ReqTypeSelector needs ignoreEqual. Delete and make ReqTypeSelector work like everything else.
+        private def ignoreEqual[A: UnivEq](initial: A): A => Option[A] =
+          value => if (value ==* initial) None else value.some
 
         def apply(req: GenericReq): StartEditFn = {
           val id        = req.id
@@ -374,7 +361,6 @@ object ContentEditorFeature {
           override val renderCB = renderDynamic(ReqTypeSelector.Component(props))
         }
       }
-
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -409,9 +395,7 @@ object ContentEditorFeature {
 
           val extra: ImplicationEditor.Extra =
             ReusableFn(
-              commitAndAbort(true, _)(
-                commitOrIgnore(_)(
-                  NonEmpty(_))(cmd)))
+              commitAbortK(true, _)(cmd))
 
           rvarStrToStartEditFn(new State(_, pxLookup, pxValFn, extra), initialText)
         }
@@ -443,17 +427,16 @@ object ContentEditorFeature {
 
           val extra: TagEditor.Extra =
             ReusableFn(
-              commitAndAbort(true, _)(
-                commitOrIgnore(_)(
-                  ignoreEmptySetDiff(initialValues, _.map(_.id).toSet))(UpdateContentCmd.PatchReqTags(id, _))))
+              commitAbortK(true, _)(UpdateContentCmd.PatchReqTags(id, _)))
 
-          rvarStrToStartEditFn(new State(_, pxLookup, extra), initialText)
+          rvarStrToStartEditFn(new State(Some(initialValues), _, pxLookup, extra), initialText)
         }
 
-        private class State(rvar  : ReusableVar[String],
-                            lookup: Px[Lookup],
-                            extra : TagEditor.Extra) extends EditorInstanceImpl {
-          def props = TagEditor.Props(rvar, lookup.value(), extra)
+        private class State(initialValues: Some[Set[ApplicableTagId]],
+                            rvar         : ReusableVar[String],
+                            lookup       : Px[Lookup],
+                            extra        : TagEditor.Extra) extends EditorInstanceImpl {
+          def props = TagEditor.Props(initialValues, rvar, lookup.value(), extra)
           override val renderCB = renderDynamic(props.render)
         }
       }
@@ -473,8 +456,7 @@ object ContentEditorFeature {
 
             val extra: editor.Extra =
               ReusableFn(
-                commitAndAbort(T.singleLine, _)(t =>
-                  commit(cmd(t))))
+                commitAbortK(T.singleLine, _)(cmd))
 
             val initialText: String =
               pxPlainText.value().format(editor.hardcodedLive, initialValue)

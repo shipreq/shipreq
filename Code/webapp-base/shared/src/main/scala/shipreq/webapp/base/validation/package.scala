@@ -1,7 +1,8 @@
 package shipreq.webapp.base
 
-import shipreq.base.util.TaggedTypes.{TaggedTypeCtor, TaggedType}
-import scalaz.{\/, Validation}
+import scalaz.{Validation, \/}
+import shipreq.base.util.TaggedTypes.{TaggedType, TaggedTypeCtor}
+import shipreq.base.util.ValidUpdate
 
 package object validation {
 
@@ -28,4 +29,6 @@ package object validation {
   type CorrectionPartU[I, C] = CorrectionPart[Unit, I, C]
   type ValidationPartU[C, V] = ValidationPart[Unit, C, V]
   type ValidatorU[I, C, V]   = Validator[Unit, I, C, V]
+
+  type ValidUpdateVR[+A] = ValidUpdate[VFailure, A]
 }

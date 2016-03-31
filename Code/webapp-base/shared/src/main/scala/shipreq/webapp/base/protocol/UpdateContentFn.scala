@@ -12,9 +12,9 @@ import Text.Equality._
 sealed abstract class UpdateContentCmd
 object UpdateContentCmd {
 
-  case class PatchReqTags        (id: ReqId, patch: SetDiff[ApplicableTagId])       extends UpdateContentCmd
-  case class PatchImplications   (id: ReqId, dir: Direction, patch: SetDiff[ReqId]) extends UpdateContentCmd
-  case class PatchReqCodes       (id: ReqId, patch: SetDiff[ReqCode.Value])         extends UpdateContentCmd
+  case class PatchReqTags        (id: ReqId, patch: NonEmpty[SetDiff[ApplicableTagId]])       extends UpdateContentCmd
+  case class PatchImplications   (id: ReqId, dir: Direction, patch: NonEmpty[SetDiff[ReqId]]) extends UpdateContentCmd
+  case class PatchReqCodes       (id: ReqId, patch: NonEmpty[SetDiff[ReqCode.Value]])         extends UpdateContentCmd
 
   case class SetGenericReqType   (id: GenericReqId, value: CustomReqTypeId) extends UpdateContentCmd
   case class SetReqCodeGroupCode (id: ReqCodeId,    value: ReqCode.Value)   extends UpdateContentCmd

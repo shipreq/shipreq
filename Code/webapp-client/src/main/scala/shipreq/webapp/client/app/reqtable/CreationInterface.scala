@@ -246,6 +246,7 @@ class CreationInterface($               : CompState.Access[State],
 
     def getPropsTags(state: CreateReqState) =
       TagEditor.Props(
+        None,
         ReusableVar(state.tags)(setTags),
         pxTagLookup,
         _noExtra)
@@ -291,13 +292,12 @@ class CreationInterface($               : CompState.Access[State],
 
       val create: Option[Callback] =
         for {
-          codes   <- propsReqCodes.parseResult.toOption
-          title   <- propsTitle   .parseResult.toOption
-          tags    <- propsTags    .parseResult.toOption
-          impSrcs <- propsImp     .parseResult.toOption
+          codes   <- propsReqCodes.parseResult   .toOption
+          title   <- propsTitle   .parseResult   .toOption
+          tagIds  <- propsTags    .parseResultSet.toOption
+          impSrcs <- propsImp     .parseResult   .toOption
           if state.status !=* Locked
         } yield {
-          val tagIds = tags.map(_.id).toSet
           val cmd = CreateContentCmd.CreateGenericReq(pp._2, title, codes, tagIds, impSrcs.added)
           ajax(p, setStatus, cmd)
         }
@@ -344,13 +344,12 @@ class CreationInterface($               : CompState.Access[State],
 
       val create: Option[Callback] =
         for {
-          codes   <- propsReqCodes.parseResult.toOption
-          title   <- propsTitle   .parseResult.toOption
-          tags    <- propsTags    .parseResult.toOption
-          impSrcs <- propsImp     .parseResult.toOption
+          codes   <- propsReqCodes.parseResult   .toOption
+          title   <- propsTitle   .parseResult   .toOption
+          tagIds  <- propsTags    .parseResultSet.toOption
+          impSrcs <- propsImp     .parseResult   .toOption
           if state.status !=* Locked
         } yield {
-          val tagIds = tags.map(_.id).toSet
           val cmd = CreateContentCmd.CreateUseCase(title, codes, tagIds, impSrcs.added)
           ajax(p, setStatus, cmd)
         }

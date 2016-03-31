@@ -5,10 +5,11 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import org.scalajs.dom
 import scalacss.ScalaCssReact._
-import shipreq.base.util.univEqOps
+import shipreq.base.util.{ValidUpdate, univEqOps}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text._
+import shipreq.webapp.base.validation.ValidUpdateVR
 import shipreq.webapp.client.jsfacade.TextComplete
 import shipreq.webapp.client.app.Style.{reqtable => *} // TODO Not anymore
 import shipreq.webapp.client.data.{Contextualise, HideDead}
@@ -40,7 +41,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
   }
 
   /** Extra properties to apply to the tag. */
-  type Extra = Option[text.OptionalText] ~=> TagMod
+  type Extra = ValidUpdateVR[text.OptionalText] ~=> TagMod
 
   val noExtra: Extra =
     ReusableFn(_ => EmptyTag)
@@ -56,7 +57,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
     val richText    = text.parse(project)(edit.value)
     val parseResult = Validators.genericRichText(plainText, richText)
-    val validated   = EditValidationFeature(parseResult)
+    val validated   = EditValidationFeature.compareOption(parseResult)(preEditValue)
 
     def render = Component(this)
   }
@@ -91,7 +92,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
       def editor =
         <.textarea(
           *.cellEditor(p.validated.validity),
-          p.extra(p.validated.validated),
+          p.extra(p.validated.value),
           ^.ref       := editorRef,
           ^.value     := p.edit.value,
           ^.onBlur   --> p.preview.onBlur,

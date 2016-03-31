@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import org.scalajs.dom
-import shipreq.base.util.IMap
+import shipreq.base.util.{IMap, NonEmpty, SetDiff}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Grammar.{hashRefKey => G}
@@ -51,14 +51,18 @@ object TagEditor {
   }
 
   /** Extra properties to apply to the tag. Input is parsed tags, if valid. */
-  type Extra = Option[Stream[ApplicableTag]] ~=> TagMod
+  type Extra = ValidUpdateVR[NonEmpty[SetDiff[ApplicableTagId]]] ~=> TagMod
 
-  case class Props(edit  : ReusableVar[String],
-                   lookup: Lookup,
-                   extra : Extra) {
+  case class Props(preEditValue: Option[Set[ApplicableTagId]],
+                   edit        : ReusableVar[String],
+                   lookup      : Lookup,
+                   extra       : Extra) {
 
-    val parseResult =
+    val parseResult: ValidationResult[Stream[ApplicableTag]] =
       validator.correctAndValidate(lookup, edit.value)
+
+    val parseResultSet: ValidationResult[Set[ApplicableTagId]] =
+      parseResult.map(_.map(_.id)(collection.breakOut))
 
     def render = Component(this)
   }
@@ -82,11 +86,11 @@ object TagEditor {
       AutoComplete.tag(l.values.toStream, HideDead)(Plain))
 
     def render(p: Props) = {
-      val validated = EditValidationFeature(p.parseResult)
+      val validated = EditValidationFeature.compareSetOption(p.parseResultSet)(p.preEditValue)
 
       <.div(
         <.input.text(
-          p.extra(validated.validated),
+          p.extra(validated.value),
           ^.onChange  ==> ((e: ReactEventI) => p.edit.set(e.target.value)),
           ^.ref        := editorRef,
           ^.value      := p.edit.value),

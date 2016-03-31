@@ -9,7 +9,6 @@ import shipreq.base.util.UnivEq.{apply => _, force => _}
 import shipreq.base.util._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.protocol.RemoteFn
 import shipreq.webapp.client.app.Style
 import shipreq.webapp.client.data._
 import shipreq.webapp.client.test._
@@ -79,6 +78,9 @@ object ReqTableTestDsl {
   case object Locked  extends CellState
   case object Failed  extends CellState
 
+  def cellEditor(pubid: String, col: String): CellEditor =
+    CellEditor(_.table.cellLoc(pubid = pubid, col = col))
+
   final case class CellEditor(loc: ReqTableObs => ReqTableObs.CellLoc) {
 
     private implicit def ROStoOS(r: *.ROS) = r.os
@@ -131,11 +133,21 @@ object ReqTableTestDsl {
       *.action(s"$desc: ${text.show}").act(ChangeEventData(text) simulate editor.run(_)) +>
         editorValue.assert(text)
 
+    def modifyValue(mod: String => String, desc: String = "Modify value") =
+      *.chooseAction(desc + ".", i => {
+        val value1 = editorValue.run(i)
+        val value2 = mod(value1)
+        enterValue(value2, desc)
+      })
+
     def testValid  (text: String) = enterValue(text, "Enter valid value")   +> editorValidity.assert(Valid)
     def testInvalid(text: String) = enterValue(text, "Enter invalid value") +> editorValidity.assert(Invalid)
 
     val commit =
-      *.action("Press ctrl-enter.").act(ctrlEnter simulateKeyDown editor.run(_)) +> assertNotEditing
+      *.action("Press Ctrl-Enter.").act(ctrlEnter simulateKeyDown editor.run(_)) +> assertNotEditing
+
+    val abortEdit =
+      *.action("Press Escape.").act(escape simulateKeyDown editor.run(_)) +> assertState(Normal)
 
     val clickRetry =
       *.action("Click Retry.").act(Simulate click retryButton.run(_))

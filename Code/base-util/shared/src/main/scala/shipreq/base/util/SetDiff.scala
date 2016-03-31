@@ -58,6 +58,12 @@ object SetDiff {
   def compare[A: UnivEq](before: Set[A], after: Set[A]): SetDiff[A] =
     SetDiff(before -- after, after -- before)
 
+  def compareOption[A: UnivEq](before: Option[Set[A]], after: Set[A]): SetDiff[A] =
+    before match {
+      case Some(b) => compare(b, after)
+      case None    => SetDiff(removed = Set.empty, added = after)
+    }
+
   def compareFn[A: UnivEq](before: Set[A]): Set[A] => SetDiff[A] =
     compare(before, _)
 
