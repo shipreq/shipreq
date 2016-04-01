@@ -99,19 +99,6 @@ object ReqTableTest extends TestSuite {
     }
   }
 
-  // TODO Move
-  import nyaya.gen._
-  import nyaya.test.Settings
-  import teststate.data.ROS
-  def zxc[F[_], R, O, S, E](g: Gen[Actions[F, R, O, S, E]])(name: NameFn[ROS[R, O, S]])(implicit s: Settings): Actions[F, R, O, S, E] =
-      g.samples(GenCtx(s.genSize))
-      .take(s.sampleSize.value)
-      .map(_.group("TODO .groupIfNotGrouped"))
-      .zipWithIndex
-      .map(x => x._1.nameMod(n => s"[${x._2 + 1}/${s.sampleSize.value}] ${n.value}"))
-      .foldLeft[Actions[F, R, O, S, E]](emptyAction)(_ >> _)
-      .group(name)
-
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   import ProjectDsl._, UnsafeTypes._
 
@@ -135,15 +122,13 @@ object ReqTableTest extends TestSuite {
     ) +> selectableColumns.size.assert.noChange
 
   def testDeadToggleInvariants =
-    *.chooseAction("testDeadToggleInvariants", i =>
-      zxc(
-        RandomReqTableData.viewSettings(i.state, allowFilter = true)
-          .map(applyViewSettings(_) >> filterDeadShowHide)
-      )("testDeadToggleInvariants"))
+    *.genActionsBy("testDeadToggleInvariants")(i =>
+      RandomReqTableData.viewSettings(i.state, allowFilter = true)
+        .map(applyViewSettings(_) >> filterDeadShowHide))
 
   def testDeadNotEditable =
     Plan.action(
-      showAllColumns(ShowDead) >> *.chooseAction("Edit all dead columns.", i => {
+      showAllColumns(ShowDead) >> *.chooseAction("Edit all dead columns.") { i =>
         val cn = Column.NameResolver.byProject(i.state)
         Column.all(i.state.config, ShowDead)
           .iterator
@@ -153,8 +138,9 @@ object ReqTableTest extends TestSuite {
             val ce = cellEditor("MF-1", n)
             import ce._
             (tryStartEdit +> assertState(Normal)).group(s"Try to edit $n.")
-          }.reduce(_ >> _)
-      })
+          }
+          .combine
+      }
     )
 
   def testImplicationSrcColumnEditor = {
@@ -347,7 +333,7 @@ object ReqTableTest extends TestSuite {
     Plan.action(
       showAllColumns
         >> (startEdit >> commitNop).group("Commit without edit.")
-        >> (nopMod +: mods).map(nopEdit).reduce(_ >> _)
+        >> (nopMod +: mods).map(nopEdit).combine
         >> (startEdit >> abortEdit +> post).group("Abort.")
     ) named s"NOP edits: $pubid/$col"
   }

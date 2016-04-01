@@ -43,7 +43,9 @@ object Dependencies {
 
   object TestState {
     private val mm = MultiModule.jvmAndJs("com.github.japgolly.test-state", "0.1.0-SNAPSHOT")
-    val core = mm("core")
+    val core   = mm("core")
+    val scalaz = mm("scalaz") ++ core ++ Scalaz.core
+    val nyaya  = mm("nyaya") ++ scalaz ++ Nyaya.gen ++ Nyaya.test
   }
 
   object React {

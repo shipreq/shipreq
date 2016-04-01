@@ -21,7 +21,7 @@ object ReqTableTestDsl {
 
   val * = Dsl[Ref, ReqTableObs, Project]
 
-  def apply(action: *.Action = emptyAction): *.Plan =
+  def apply(action: *.Action = *.emptyAction): *.Plan =
     Plan(action, invariants)
 
 //  // TODO Move following into Nyaya
@@ -117,7 +117,7 @@ object ReqTableTestDsl {
       _editing.assert(false)
 
     val tryStartEdit =
-      *.action("Start editor.").act(Simulate doubleClick cell.run(_).dom)
+      *.action("Start editor.")(Simulate doubleClick cell.run(_).dom)
 
     val startEdit = (
       tryStartEdit
@@ -130,11 +130,11 @@ object ReqTableTestDsl {
         +> assertNotEditing)
 
     def enterValue(text: String, desc: String = "Enter value") =
-      *.action(s"$desc: ${text.show}").act(ChangeEventData(text) simulate editor.run(_)) +>
+      *.action(s"$desc: ${text.show}")(ChangeEventData(text) simulate editor.run(_)) +>
         editorValue.assert(text)
 
     def modifyValue(mod: String => String, desc: String = "Modify value") =
-      *.chooseAction(desc + ".", i => {
+      *.chooseAction(desc + ".")(i => {
         val value1 = editorValue.run(i)
         val value2 = mod(value1)
         enterValue(value2, desc)
@@ -144,16 +144,16 @@ object ReqTableTestDsl {
     def testInvalid(text: String) = enterValue(text, "Enter invalid value") +> editorValidity.assert(Invalid)
 
     val commit =
-      *.action("Press Ctrl-Enter.").act(ctrlEnter simulateKeyDown editor.run(_)) +> assertNotEditing
+      *.action("Press Ctrl-Enter.")(ctrlEnter simulateKeyDown editor.run(_)) +> assertNotEditing
 
     val abortEdit =
-      *.action("Press Escape.").act(escape simulateKeyDown editor.run(_)) +> assertState(Normal)
+      *.action("Press Escape.")(escape simulateKeyDown editor.run(_)) +> assertState(Normal)
 
     val clickRetry =
-      *.action("Click Retry.").act(Simulate click retryButton.run(_))
+      *.action("Click Retry.")(Simulate click retryButton.run(_))
 
     val clickAbort =
-      *.action("Click Abort.").act(Simulate click abortButton.run(_))
+      *.action("Click Abort.")(Simulate click abortButton.run(_))
   }
 
 
@@ -176,10 +176,10 @@ object ReqTableTestDsl {
       }
 
       val liveCustomFieldColumnsAlwaysAvailable =
-        **.assert.containsAll("live custom field columns", i => customFieldNames(i.state, Live))
+        **.assert.containsAll("live custom field columns")(i => customFieldNames(i.state, Live))
 
       val deadColumns =
-        **.assert.existenceOfAllBy("dead custom field columns", i => customFieldNames(i.state, Dead))(
+        **.assert.existenceOfAllBy("dead custom field columns")(i => customFieldNames(i.state, Dead))(
           _.obs.filterDead :: ShowDead)
 
       uniqueColumns & liveCustomFieldColumnsAlwaysAvailable & deadColumns
@@ -188,7 +188,7 @@ object ReqTableTestDsl {
     def sortColumns = {
       val names = *.focus("Sort criteria").collection(_.obs.sorting.names)
       names.assert.distinct &
-      names.assert.containsOnly("visible columns", i => visibleColumns(i.obs))
+      names.assert.containsOnly("visible columns")(i => visibleColumns(i.obs))
     }
 
     def tableColumns =
@@ -217,7 +217,7 @@ object ReqTableTestDsl {
         .rename("Reported row count matches rows in table.")
 
       val reqFormula =
-        *.point("Req formula.", os => {
+        *.point("Req formula.")(os => {
           os.obs.stats.reportedReqFormulaValue.flatMap(fv =>
             if (fv == os.obs.stats.reportedReqs)
               None
@@ -242,10 +242,10 @@ object ReqTableTestDsl {
     applyViewSettings("ApplyViewSettings: " + vs, _ => vs)
 
   def applyViewSettings(name: => String, f: ReqTable.State => ViewSettings): *.Action =
-    *.action(name).act(_.ref.$.modState(s => s.copy(viewSettings = f(s))))
+    *.action(name)(_.ref.$.modState(s => s.copy(viewSettings = f(s))))
 
   def setProject(p: Project): *.Action =
-    *.action("Set project.").act(_.ref.$.modState(_.updateProject(p))).updateState(_ => p)
+    *.action("Set project.")(_.ref.$.modState(_.updateProject(p))).updateState(_ => p)
 
   def showAllColumns: *.Action =
     showAllColumns(ShowDead)
@@ -265,24 +265,24 @@ object ReqTableTestDsl {
   })
 
   def showHideColumn(columnName: String): *.Action =
-    *.action("Show/hide " + columnName)
-      .act(Simulation.change run _.obs.viewSettings.columns.column(columnName).checkbox)
+    *.action("Show/hide " + columnName)(
+      Simulation.change run _.obs.viewSettings.columns.column(columnName).checkbox)
 
   def sortBy(columnName: String): *.Action =
-    *.action("Sort by " + columnName)
-      .act(Simulation.click run _.obs.table.column(columnName).headerCell)
+    *.action("Sort by " + columnName)(
+      Simulation.click run _.obs.table.column(columnName).headerCell)
 
   val sortByPubid =
     sortBy(UiText.ColumnNames.pubid)
 
   def enterFilter(f: String) = {
     val e = ChangeEventData(f)
-    *.action(s"enterFilter('$f')").act(e simulate _.obs.viewSettings.filter.input)
+    *.action(s"enterFilter('$f')")(e simulate _.obs.viewSettings.filter.input)
       .addCheck(*.focus("Filter").value(_.obs.viewSettings.filter.input.value).assert(f).after)
   }
 
   val filterDeadToggle =
-    *.action("filterDeadToggle").act(Simulate change _.obs.viewSettings.filterDead.checkbox)
+    *.action("filterDeadToggle")(Simulate change _.obs.viewSettings.filterDead.checkbox)
       .addCheck(filterDead.assert.change)
 
   def setFilterDead(fd: FilterDead) =
@@ -295,11 +295,11 @@ object ReqTableTestDsl {
 
   val logTable = *.print(_.obs.table.entireContent)
 
-  val svrDisableAutoRespond = *.action("Disable auto-respond.").act(_.ref.svr.autoRespond = false)
+  val svrDisableAutoRespond = *.action("Disable auto-respond.")(_.ref.svr.autoRespond = false)
 
-  val svrAutoRespondToLast = *.action("Server responds.").act(_.ref.svr.autoRespondToLast())
+  val svrAutoRespondToLast = *.action("Server responds.")(_.ref.svr.autoRespondToLast())
 
-  val svrFailLast = *.action("Fail last server request.").act(_.ref.svr.failLast())
+  val svrFailLast = *.action("Fail last server request.")(_.ref.svr.failLast())
 
   val svrAssertLastTwoReqsEqual = svrLastTwoReqs.map(_.input)(Show.byToString).assert.equal(Equal.by_==, implicitly)
 }

@@ -89,9 +89,9 @@ object ReqDetailTestDsl {
 
   val invariants: *.Invariant =
     *.focus("Mode").obsAndState(_.mode, _.mode).assert.equal &
-    *.chooseInvariant("Mode invariants", i => i.state.mode match {
+    *.chooseInvariant("Mode invariants")(i => i.state.mode match {
       case Mode.Error   => invariantsWhenBad
-      case Mode.Delete  => emptyInvariants
+      case Mode.Delete  => *.emptyInvariant
       case Mode.Details =>
         if (i.state.pubidStr startsWith "UC-")
           invariantsUC
@@ -100,25 +100,25 @@ object ReqDetailTestDsl {
     })
 
   def addTailStepAC: *.Action =
-    *.action("Add AC tail step").act(Simulate click _.obs.uc.tailStepRowAC.add)
+    *.action("Add AC tail step")(Simulate click _.obs.uc.tailStepRowAC.add)
 
   def addTailStepEC: *.Action =
-    *.action("Add EC tail step").act(Simulate click _.obs.uc.tailStepRowEC.add)
+    *.action("Add EC tail step")(Simulate click _.obs.uc.tailStepRowEC.add)
 
   def addStep(label: String): *.Action =
-    *.action("Add " + label).act(Simulate click _.obs.uc.row(label).add)
+    *.action("Add " + label)(Simulate click _.obs.uc.row(label).add)
 
   def delStep(label: String): *.Action =
-    *.action("Delete " + label).act(Simulate click _.obs.uc.row(label).del)
+    *.action("Delete " + label)(Simulate click _.obs.uc.row(label).del)
 
   def shiftStepLeft(label: String): *.Action =
-    *.action("ShiftLeft " + label).act(Simulate click _.obs.uc.row(label).left)
+    *.action("ShiftLeft " + label)(Simulate click _.obs.uc.row(label).left)
 
   def shiftStepRight(label: String): *.Action =
-    *.action("ShiftRight " + label).act(Simulate click _.obs.uc.row(label).right)
+    *.action("ShiftRight " + label)(Simulate click _.obs.uc.row(label).right)
 
   val filterDeadToggle =
-    *.action("Toggle FilterDead").act(Simulate change _.obs.generic.filterDeadInput)
+    *.action("Toggle FilterDead")(Simulate change _.obs.generic.filterDeadInput)
       .addCheck(filterDead.assert.changeTo(!_))
 
   def setFilterDead(fd: FilterDead) =
@@ -134,24 +134,22 @@ object ReqDetailTestDsl {
       case None       => "Change life"
       case Some(Live) => UiText.Life.delete + " req"
       case Some(Dead) => UiText.Life.restore + " req"
-      })).act(Simulate click _.obs.generic.lifeChangeButton.get)
+      }))(Simulate click _.obs.generic.lifeChangeButton.get)
 
   // Hit delete on the delete screen
   def deleteDelete =
-    *.action("Hit Delete")
-      .act(Simulate click _.obs.deletionForm.get.deleteButton)
+    *.action("Hit Delete")(Simulate click _.obs.deletionForm.get.deleteButton)
       .updateState(stateMode set Mode.Details)
 
   // Hit cancel on the delete screen
   def deleteCancel =
-    *.action("Hit Cancel")
-      .act(Simulate click _.obs.deletionForm.get.cancelButton)
+    *.action("Hit Cancel")(Simulate click _.obs.deletionForm.get.cancelButton)
       .updateState(stateMode set Mode.Details)
 
   val doubleClickTitle =
-    *.action("Double-click title").act(Simulate doubleClick _.obs.generic.titleDom)
+    *.action("Double-click title")(Simulate doubleClick _.obs.generic.titleDom)
 
   def doubleClickFieldValue(field: String) =
-    *.action("Double-click " + field).act(Simulate doubleClick _.obs.generic.fields(field).dom)
+    *.action("Double-click " + field)(Simulate doubleClick _.obs.generic.fields(field).dom)
 
 }

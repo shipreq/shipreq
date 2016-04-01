@@ -61,10 +61,10 @@ object ProjectSpaTestDsl {
   val invariantsRD = RD.invariants.lift
 
   val invariants: *.Invariant =
-    *.chooseInvariant("Page invariants", _.state.page match {
+    *.chooseInvariant("Page invariants")(_.state.page match {
       case Page.ReqTable     => invariantsRT
       case Page.ReqDetail(_) => invariantsRD
-      case _                 => emptyInvariants
+      case _                 => *.emptyInvariant
     })
 
   def setPage(p: Page): *.Action = p match {
@@ -73,8 +73,7 @@ object ProjectSpaTestDsl {
   }
 
   private def _setPage(p: Page): *.Action =
-    *.action(s"Set page to $p")
-      .act(_.ref.tester.modProps(_.copy(page = p)))
+    *.action(s"Set page to $p")(_.ref.tester.modProps(_.copy(page = p)))
       .updateState(_.copy(page = p))
 
   def setPageToReqDetail(ep: ExternalPubid, mode: RD.Mode): *.Action =
@@ -84,8 +83,7 @@ object ProjectSpaTestDsl {
     applyEvents(e.mkString("Apply events: ", ", ", "."), e: _*)
 
   def applyEvents(name: => String, e: Event*): *.Action =
-    *.action(name)
-      .act(_.ref.cd.applyTestEvents(e: _*))
+    *.action(name)(_.ref.cd.applyTestEvents(e: _*))
       .updateStateBy(i => i.state.copy(project = i.obs.project))
 
   def liftReqTableTests (p: RT.*.Plan): *.Plan = p.lift

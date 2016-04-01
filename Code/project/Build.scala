@@ -279,7 +279,7 @@ object ShipReq extends Build {
         .depsForJs(
           Scalaz.effect ++ React.most ++ Monocle.macros ++ ScalaCSS.react ++
           μPickle ++ shapeless ++ Nyaya.prop ++ parboiled ++ boopickle ++
-          testScope(React.test ++ μTest ++ TestState.core ++ Nyaya.test)
+          testScope(React.test ++ TestState.nyaya ++ μTest ++ Nyaya.test)
         )
         .configure(
           Common.jsSettings(NeedDom),
