@@ -52,7 +52,7 @@ final class ReqDetailObs($: HtmlDomZipper) {
 
     val filterDead = ShowDead <~ filterDeadInput.checked
 
-    val filterDeadLocked = filterDeadInput.disabled
+    val filterDeadLocked = filterDeadInput.disabled getOrElse false
 
     val fields: Map[String, HtmlDomZipperAt[html.TableCell]] =
       table(">tbody").collect1n(">tr")

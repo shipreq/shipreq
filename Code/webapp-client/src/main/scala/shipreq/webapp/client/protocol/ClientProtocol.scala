@@ -57,7 +57,7 @@ object ClientProtocol {
     val timeoutMs = 120 * 1000
 
     def base64ToBinary(base64: String): ByteBuffer = {
-      val binstr = dom.atob(base64)
+      val binstr = dom.window.atob(base64)
       val buf = new Int8Array(binstr.length)
       var i = 0
       binstr.foreach { ch =>

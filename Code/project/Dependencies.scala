@@ -19,7 +19,7 @@ object Dependencies {
   }
 
   object Scalaz {
-    private val mm = MultiModule.jvmAndJsFork("org.scalaz", "7.2.0")("com.github.japgolly.fork.scalaz")
+    private val mm = MultiModule.jvmAndJs("org.scalaz", "7.2.2")
     val core       = mm("scalaz-core")
     val effect     = mm("scalaz-effect") ++ core
     val concurrent = mm("scalaz-concurrent") ++ effect
@@ -28,7 +28,7 @@ object Dependencies {
   }
 
   object Monocle {
-    private val mm = MultiModule.jvmAndJsFork("com.github.julien-truffaut", "1.2.0")("com.github.japgolly.fork.monocle")
+    private val mm = MultiModule.jvmAndJsFork("com.github.julien-truffaut", "1.2.0")("com.github.japgolly.fork.monocle", "-2")
     val core   = mm("monocle-core")
     val macros = mm("monocle-macro") ++ core
   }
@@ -46,7 +46,7 @@ object Dependencies {
     val core            = mm("core")
     val scalaz          = mm("scalaz") ++ core ++ Scalaz.core
     val nyaya           = mm("nyaya") ++ scalaz ++ Nyaya.gen ++ Nyaya.test
-    val domZipperSizzle = mm("dom-zipper-sizzle").exclude("org.scala-js", "scalajs-dom_sjs0.6_2.11") // TODO
+    val domZipperSizzle = mm("dom-zipper-sizzle")
   }
 
   object React {
@@ -110,7 +110,7 @@ object Dependencies {
     val servletApi = jvmOnly("javax.servlet" % "javax.servlet-api" % "3.1.0")
   }
 
-  val scalajsDom       = jsOnly("org.scala-js"                          %%%! "scalajs-dom" % "0.8.2")
+  val scalajsDom       = jsOnly("org.scala-js"                          %%%! "scalajs-dom" % "0.9.0")
   val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %%%! "benchmark"   % "0.2.2")
 
   val parboiled = jvmAndJsFork("org.parboiled", "parboiled", "2.1.0")("com.github.japgolly.fork.parboiled")

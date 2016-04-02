@@ -2,7 +2,7 @@ package shipreq.webapp.client.app.reqtable
 
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
-import org.scalajs.dom
+import org.scalajs.dom.window
 import shipreq.base.util.{Allow, NonEmptyVector, NonEmptySet}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
@@ -205,7 +205,7 @@ object SelectionCtrls {
         def callServer: Callback = {
           val s = TCB.Success(unlockRows >> uncheckRows)
           val f = (err: String) => TCB.Failure.lazily(
-            if (dom.confirm(s"Deletion failed. $err\n\nRetry?"))
+            if (window.confirm(s"Deletion failed. $err\n\nRetry?"))
               callServer
             else
               unlockRows
