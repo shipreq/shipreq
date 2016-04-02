@@ -2,7 +2,6 @@ package shipreq.webapp.client.app.reqtable
 
 import org.parboiled2.Parser.DeliveryScheme.Throw
 import org.scalajs.dom.html
-import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{UnivEq, univEqOps}
 import shipreq.base.util.UnivEq.{apply => _, force => _, _}
 import shipreq.webapp.client.data._
@@ -10,7 +9,6 @@ import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.client.app.Style
 import shipreq.webapp.client.test._
 import shipreq.webapp.client.widgets.Checkbox
-import DomZipper.Implicits._
 
 object ReqTableObs {
   case class CellLoc(row: Int, col: Int)
@@ -27,7 +25,7 @@ object ReqTableObs {
  *
  * Inspects actual DOM to derive values.
  */
-final class ReqTableObs(cp: TestClientProtocol, $ : DomZipper) {
+final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
   import ReqTableObs._
 
   val svrReqs = cp.reqs
@@ -39,19 +37,19 @@ final class ReqTableObs(cp: TestClientProtocol, $ : DomZipper) {
     }
 
   object viewSettings {
-    val $ = ReqTableObs.this.$.down("ViewSettings", ">table", 1 of 2)
-    def vsCol(i: Int) = $.down("column #" + i, "tbody tr").down(">td", i of 3)
+    val $ = ReqTableObs.this.$("ViewSettings", ">table", 1 of 2)
+    def vsCol(i: Int) = $("column #" + i, "tbody tr")(">td", i of 3)
 
     object columns {
 
-      case class ColumnDom(outer: DomZipperAt[html.Label]) {
-        val checkbox = outer.down("input").as[html.Input]
-        val on       = On <~ checkbox.inputChecked
-        val name     = outer.down(">span").innerHTML
+      case class ColumnDom(outer: HtmlDomZipperAt[html.Label]) {
+        val checkbox = outer("input").domAs[html.Input]
+        val on       = On <~ checkbox.checked
+        val name     = outer(">span").innerHTML
       }
 
       val entirety: Vector[ColumnDom] =
-        vsCol(1).collect1n("label").as[html.Label].map(ColumnDom)
+        vsCol(1).collect1n("label").as[html.Label].mapZippers(ColumnDom)
 
       def column(name: String): ColumnDom =
         findOne(name, entirety)(_.name)
@@ -65,13 +63,13 @@ final class ReqTableObs(cp: TestClientProtocol, $ : DomZipper) {
 
     object filter {
       val $ = vsCol(3)
-      val input = $.down("textarea")
+      val input = $("textarea").domAs[html.TextArea]
       val value = input.value
     }
 
     object filterDead {
-      val checkbox = filter.$.down("input[type=checkbox]")
-      val value: FilterDead = Checkbox.filterDeadChecked <~ checkbox.inputChecked
+      val checkbox = filter.$("input[type=checkbox]").domAs[html.Input]
+      val value: FilterDead = Checkbox.filterDeadChecked <~ checkbox.checked
     }
   }
 
@@ -85,50 +83,50 @@ final class ReqTableObs(cp: TestClientProtocol, $ : DomZipper) {
 //    private val readSortMethodIB: String => SortMethod.IgnoreBlanks =
 //      s => SortMethod.ignoreBlanks.whole.find(_.optionLabel == s).getOrElse(sys error s"Unknown sort method: $s")
 
-    val $: DomZipper = ReqTableObs.this.$.down("Sort row", ">div:contains('Sort')")
+    val $: HtmlDomZipper = ReqTableObs.this.$("Sort row", ">div:contains('Sort')")
 
     //    val criteriaDom = $.collect1("tr", tr => (
-    //      tr.down("td", 2 of 2).innerText,
-    //      tr.down("td", 1 of 2).down("*[title]").domAs[html.Element].title))
+    //      tr("td", 2 of 2).innerText,
+    //      tr("td", 1 of 2)("*[title]").domAs[html.Element].title))
 
     case class CriteriaDom(nameDom: html.Element, orderDom: html.Element) {
       val name = nameDom.textContent
     }
 
-    val criteriaDom = $.collect1n("tr").map(tr => CriteriaDom(
-      tr.down("td", 2 of 2).asHtml.dom,
-      tr.down("td", 1 of 2).down("*[title]").asHtml.dom))
+    val criteriaDom = $.collect1n("tr").mapZippers(tr => CriteriaDom(
+      tr("td", 2 of 2).dom,
+      tr("td", 1 of 2)("*[title]").dom))
 
     val names: Vector[String] =
       criteriaDom.map(_.name)
 
 //      val inconclusive: Vector[(String, SortMethod)] =
-//        $.down("ol").collect("li", li =>
-//          (li.down("select").selectedOptionText.get |> readSortMethod, li.down("select + span").innerHTML))
+//        $("ol").collect("li", li =>
+//          (li("select").selectedOptionText.get |> readSortMethod, li("select + span").innerHTML))
 
 //      val conclusiveOrder: SortMethod.IgnoreBlanks =
-//        $.down("ol+div select", 1 of 2).selectedOptionText.get |> readSortMethodIB
+//        $("ol+div select", 1 of 2).selectedOptionText.get |> readSortMethodIB
 //
 //      val conclusiveColumnSelected: String =
-//        $.down("ol+div select", 2 of 2).selectedOptionText.get
+//        $("ol+div select", 2 of 2).selectedOptionText.get
 //
 //      val conclusiveColumns: Vector[String] =
-//        $.down("ol+div select", 2 of 2) collectInnerHTML "option"
+//        $("ol+div select", 2 of 2) collectInnerHTML "option"
 //
 //      val visibleColumns: Vector[String] =
 //        inconclusive.map(_._2) ++ conclusiveColumns
   }
 
   object table {
-    val $ = ReqTableObs.this.$.down("ReqTable", ">table", 2 of 2)
-    val tbody = $.down("ReqTable", ">tbody")
+    val $ = ReqTableObs.this.$("ReqTable", ">table", 2 of 2)
+    val tbody = $("ReqTable", ">tbody")
 
     case class ColumnDom(headerCell: html.TableCell) {
       val name = headerCell.textContent
     }
 
     val columnDoms: Vector[ColumnDom] =
-      $.down(">thead").collect1n("th").as[html.TableCell].mapDom(ColumnDom)
+      $(">thead").collect1n("th").as[html.TableCell].mapDoms(ColumnDom)
 
     val columns: Vector[String] =
       columnDoms map (_.name)
@@ -162,9 +160,9 @@ final class ReqTableObs(cp: TestClientProtocol, $ : DomZipper) {
     private def byStatus(s: Status, wrap: String => String): String =
       wrap(cell(s))
 
-    val allRows  = tbody collect0n ">tr" get()
-    val deadRows = tbody collect0n byStatus(DeadRow, row) get()
-    val liveRows = tbody collect0n byStatus(Normal, row) get()
+    val allRows  = tbody collect0n ">tr" doms
+    val deadRows = tbody collect0n byStatus(DeadRow, row) doms
+    val liveRows = tbody collect0n byStatus(Normal, row) doms
 //    val focusRow = tbody downO byFocus(true, row)
 //    val focus    = tbody downO byFocus(true, identity)
 //
@@ -187,33 +185,33 @@ final class ReqTableObs(cp: TestClientProtocol, $ : DomZipper) {
       columnIndex("ID")
 
     val rowPubids: Vector[String] =
-      tbody collect0n s">tr >td:nth-child(${pubidColumnIndex + 1})" innerText()
+      tbody collect0n s">tr >td:nth-child(${pubidColumnIndex + 1})" innerTexts
 
     def rowIndexByPubid(pubid: String): Int =
       findIndex(pubid, rowPubids, s"Row with pubid [$pubid] not found.")
 
-    def cell(loc: CellLoc): DomZipperAt[html.TableCell] =
+    def cell(loc: CellLoc): HtmlDomZipperAt[html.TableCell] =
       cell(row = loc.row, col = loc.col)
 
-    def cell(row: Int, col: Int): DomZipperAt[html.TableCell] =
-      tbody.down(s">tr:nth-child(${row + 1}) >td:nth-child(${col + 1})").as[html.TableCell]
+    def cell(row: Int, col: Int): HtmlDomZipperAt[html.TableCell] =
+      tbody(s">tr:nth-child(${row + 1}) >td:nth-child(${col + 1})").as[html.TableCell]
 
-    def cell(pubid: String, col: String): DomZipperAt[html.TableCell] =
+    def cell(pubid: String, col: String): HtmlDomZipperAt[html.TableCell] =
       cell(cellLoc(pubid, col))
 
     def cellLoc(pubid: String, col: String): CellLoc =
       CellLoc(row = rowIndexByPubid(pubid), columnIndex(col))
 
     lazy val entireContent =
-      tbody.collect0n(">tr").getDZ().iterator
-        .map(_.collect1n(">td").innerText.mkString("│ ", "\t│ ", " │"))
+      tbody.collect0n(">tr").zippers.iterator
+        .map(_.collect1n(">td").innerTexts.mkString("│ ", "\t│ ", " │"))
         .mkString("\n")
   }
 
   // ===================================================================================================================
 
   object stats {
-    val text = $.down("Stats", ">div", 2 of 4).innerText
+    val text = $("Stats", ">div", 2 of 4).innerText
 
     val reportedRows: Int =
       text match {

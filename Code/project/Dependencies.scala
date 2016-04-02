@@ -43,9 +43,10 @@ object Dependencies {
 
   object TestState {
     private val mm = MultiModule.jvmAndJs("com.github.japgolly.test-state", "0.1.0-SNAPSHOT")
-    val core   = mm("core")
-    val scalaz = mm("scalaz") ++ core ++ Scalaz.core
-    val nyaya  = mm("nyaya") ++ scalaz ++ Nyaya.gen ++ Nyaya.test
+    val core            = mm("core")
+    val scalaz          = mm("scalaz") ++ core ++ Scalaz.core
+    val nyaya           = mm("nyaya") ++ scalaz ++ Nyaya.gen ++ Nyaya.test
+    val domZipperSizzle = mm("dom-zipper-sizzle").exclude("org.scala-js", "scalajs-dom_sjs0.6_2.11") // TODO
   }
 
   object React {
@@ -109,7 +110,8 @@ object Dependencies {
     val servletApi = jvmOnly("javax.servlet" % "javax.servlet-api" % "3.1.0")
   }
 
-  val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %%%! "benchmark" % "0.2.2")
+  val scalajsDom       = jsOnly("org.scala-js"                          %%%! "scalajs-dom" % "0.8.2")
+  val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %%%! "benchmark"   % "0.2.2")
 
   val parboiled = jvmAndJsFork("org.parboiled", "parboiled", "2.1.0")("com.github.japgolly.fork.parboiled")
 

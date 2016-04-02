@@ -12,7 +12,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.client.app.Style
 import shipreq.webapp.client.data._
 import shipreq.webapp.client.test._
-import DomZipper.Implicits._
+import teststate.domzipper.DomZipper.EditableSel
 import TestState._
 
 object ReqTableTestDsl {
@@ -85,16 +85,16 @@ object ReqTableTestDsl {
 
     private implicit def ROStoOS(r: *.ROS) = r.os
 
-    private def editorCss      = DomZipper.EditableSel
+    private def editorCss      = EditableSel
     private def retryButtonCss = "button:contains(Retry)"
     private def abortButtonCss = "button:contains(Abort)"
 
     val cell        = *.focus("Subject cell").value(s => s.obs.table.cell(loc(s.obs)))
-    val cellText    = cell.map(_.innerText)                               rename "Cell innerText"
-    val retryButton = cell.map(_.down(retryButtonCss).domAs[html.Button]) rename "Retry button"
-    val abortButton = cell.map(_.down(abortButtonCss).domAs[html.Button]) rename "Abort button"
-    val editor      = cell.map(_.down(editorCss).forceDomAs[html.Input])  rename "Editor"
-    val editorValue = editor.map(_.value)                                 rename "Editor value"
+    val cellText    = cell.map(_.innerText)                          rename "Cell innerText"
+    val retryButton = cell.map(_(retryButtonCss).domAs[html.Button]) rename "Retry button"
+    val abortButton = cell.map(_(abortButtonCss).domAs[html.Button]) rename "Abort button"
+    val editor      = cell.map(_(editorCss).forceDomAs[html.Input])  rename "Editor"
+    val editorValue = editor.map(_.value)                            rename "Editor value"
 
     private val _editing = cell.map(_ exists editorCss)      rename "Editing"
     private val _locked  = cell.map(_ exists "img")          rename "Locked"

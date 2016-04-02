@@ -1,6 +1,11 @@
 package shipreq.webapp.client
 
-package object test {
+import org.scalajs.dom.html
+import teststate.domzipper.{DomZipper => DZ}
+import teststate.typeclass.Show
+
+package object test
+  extends teststate.domzipper.sizzle.Exports {
 
   object PrepareEnv {
     def apply(): Unit = ()
@@ -13,10 +18,16 @@ package object test {
     console.error = console.info
   }
 
-  import shipreq.webapp.client.test.{domzipper => dz}
-  import dz.DomZipper.DOM
+  // TODO Hmmmm
+  implicit def showDomZipper[D <: DZ.Base, N <: DZ.NextBase, Out[_]]: Show[DZ[D, N, Out]] =
+    Show(_.describeLoc)
 
-  type DomZipperAt[+D <: DOM] = dz.DomZipperAt[D]
-  type DomZipper              = DomZipperAt[DOM]
-  val DomZipper               = dz.DomZipper
+  import japgolly.scalajs.react._
+
+  def removeReactIds(html: String): String = // TODO Remove
+    html.replaceAll(""" data-reactid=".*?"""", "")
+
+  def reactDomZipper[D <: TopNode](c: CompScope.Mounted[D]): DomZipperAt[D] =
+    DomZipper("React component", c.getDOMNode()) // TODO Can't we use .displayName?
+      .scrubHtml(removeReactIds)
 }

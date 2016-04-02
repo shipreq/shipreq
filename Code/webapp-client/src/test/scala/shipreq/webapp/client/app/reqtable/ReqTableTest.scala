@@ -15,7 +15,6 @@ import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.client.data._
 import shipreq.webapp.client.feature.ContentEditorFeature.EditFieldKey
 import shipreq.webapp.client.feature._
-import shipreq.webapp.client.test.DomZipper.Implicits._
 import shipreq.webapp.client.test._
 import shipreq.webapp.client.widgets.high.ProjectWidgets
 import utest._
@@ -91,11 +90,11 @@ object ReqTableTest extends TestSuite {
       ReqTable.State.init(cd, HideDead, None))
 
     ReactTestUtils.withRenderedIntoDocument(outer(initialState)) { c =>
-      val ref = Ref(c zoomL State.reqTable, cp)
-      def newObs = new ReqTableObs(cp, DomZipper(c))
-      val t = plan.addInvariants(invariants).test(Observer watch newObs)
-      val r = t.run(ref)
-      r.assert()
+      def observe() = new ReqTableObs(cp, reactDomZipper(c).asHtml)
+      val ref       = Ref(c zoomL State.reqTable, cp)
+      val test      = plan.addInvariants(invariants).test(Observer watch observe())
+      val result    = test.run(ref)
+      result.assert()
     }
   }
 

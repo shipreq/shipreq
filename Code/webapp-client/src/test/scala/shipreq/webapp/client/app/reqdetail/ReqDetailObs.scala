@@ -9,7 +9,6 @@ import shipreq.webapp.base.data.{Dead, Live}
 import shipreq.webapp.client.data.{ShowDead, FilterDead}
 import shipreq.webapp.client.widgets.high.DeletionFormObs
 import shipreq.webapp.client.test._
-import DomZipper.Implicits._
 import ReqDetailTestDsl.Mode
 import ReqDetailObs.NAE
 
@@ -30,9 +29,9 @@ object ReqDetailObs {
   val TreeNames = NAE(useCaseStepTreeN, useCaseStepTreeA, useCaseStepTreeE)
 }
 
-final class ReqDetailObs($: DomZipper) {
+final class ReqDetailObs($: HtmlDomZipper) {
 
-  private val errorRoot = $.down("h5")(DomZipper.ReturnOption)
+  private val errorRoot = $.failToOption("h5")
 
   object error {
     val reason = errorRoot.get.innerText
@@ -41,23 +40,23 @@ final class ReqDetailObs($: DomZipper) {
   val deletionForm = DeletionFormObs.option($)
 
   object generic {
-    val headerRow = $.down(">div")
+    val headerRow = $(">div")
 
-    val pubid = headerRow.down(">*", 1 of 2).innerText.replace(":", "").trim
+    val pubid = headerRow(">*", 1 of 2).innerText.replace(":", "").trim
 
-    val titleDom = headerRow.down(">*", 2 of 2).asHtml.dom
+    val titleDom = headerRow(">*", 2 of 2).asHtml.dom
 
-    val table = $.down(">table")
+    val table = $(">table")
 
-    val filterDeadInput = $.down(">label input").domAs[html.Input]: html.Input
+    val filterDeadInput = $(">label input").domAs[html.Input]
 
     val filterDead = ShowDead <~ filterDeadInput.checked
 
     val filterDeadLocked = filterDeadInput.disabled
 
-    val fields: Map[String, DomZipperAt[html.TableCell]] =
-      table.down(">tbody").collect1n(">tr")
-        .map(z => z.down(">th").innerText -> z.down(">td").as[html.TableCell])
+    val fields: Map[String, HtmlDomZipperAt[html.TableCell]] =
+      table(">tbody").collect1n(">tr")
+        .mapZippers(z => z(">th").innerText -> z(">td").as[html.TableCell])
         .toMap
 
     val lifeRow = fields(UiText.Life.field)
@@ -73,7 +72,7 @@ final class ReqDetailObs($: DomZipper) {
     }
 
     val lifeChangeButton: Option[html.Button] =
-      lifeRow.collect01("button").as[html.Button].get()
+      lifeRow.collect01("button").as[html.Button].doms
   }
 
   object uc {
@@ -82,17 +81,17 @@ final class ReqDetailObs($: DomZipper) {
     val treeCells = ReqDetailObs.TreeNames.map(fields)
 
     val stepRows: NAE[Vector[StepRow]] =
-      treeCells.map(_.collect1n(">div").map(StepRow))
+      treeCells.map(_.collect1n(">div").mapZippers(StepRow))
 
-    case class StepRow($: DomZipper) {
+    case class StepRow($: HtmlDomZipper) {
       private def ctrl(label: String, label2: String = null): html.Button = {
         val ls  = label :: Option(label2).toList
         val sel = ls.map(l => s"button:contains('$l')") mkString ","
-        $.down(sel).domAs[html.Button]
+        $(sel).domAs[html.Button]
       }
 
       val title: Option[String] =
-        $.collect01(s"*[data-step-label]").asHtml.mapDom(_.title)
+        $.collect01(s"*[data-step-label]").asHtml.mapDoms(_.title)
 
       lazy val del   = ctrl("-")
       lazy val left  = ctrl("«", "↓")
@@ -114,7 +113,7 @@ final class ReqDetailObs($: DomZipper) {
   }
 
   val editables =
-    $.editables0n.get().filterNot(_ == Try(generic.filterDeadInput).getOrElse(null))
+    $.editables0n.doms.filterNot(_ == Try(generic.filterDeadInput).getOrElse(null))
 
   val mode: Mode =
     if (errorRoot.isDefined)

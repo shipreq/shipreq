@@ -12,7 +12,6 @@ import shipreq.webapp.base.test.{MockRemotes, SampleProject5}
 import shipreq.webapp.client.app.reqdetail.{ReqDetailObs, ReqDetailTestDsl => RD}
 import shipreq.webapp.client.app.reqtable.{ReqTableObs, ReqTableTestDsl => RT}
 import shipreq.webapp.client.test._
-import DomZipper.Implicits._
 import ProjectSpaMain.{Page, Props, State}
 import TestState._
 
@@ -28,7 +27,7 @@ object ProjectSpaTestDsl {
 
   case class Ref(cd: TestClientData, svr: MockServer, tester: ComponentTester[Props, State, _, TopNode]) {
     def observe(): Obs = {
-      def inner = DomZipper(tester.component).down(">*", 2 of 2)
+      def inner = reactDomZipper(tester.component)(">*", 2 of 2).asHtml
       new Obs(
         cd.project(),
         Try(new ReqTableObs(svr, inner)),
