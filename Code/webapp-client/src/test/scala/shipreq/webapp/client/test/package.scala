@@ -1,11 +1,10 @@
 package shipreq.webapp.client
 
-import org.scalajs.dom.html
-import teststate.domzipper.{DomZipper => DZ}
-import teststate.typeclass.Show
+import testate.domzipper.{DomZipper => DZ}
+import testate.typeclass.Display
 
 package object test
-  extends teststate.domzipper.sizzle.Exports {
+  extends testate.domzipper.sizzle.Exports {
 
   object PrepareEnv {
     def apply(): Unit = ()
@@ -19,8 +18,8 @@ package object test
   }
 
   // TODO Hmmmm
-  implicit def showDomZipper[D <: DZ.Base, N <: DZ.NextBase, Out[_]]: Show[DZ[D, N, Out]] =
-    Show(_.describeLoc)
+  implicit def displayDomZipper[D <: DZ.Base, N <: DZ.NextBase, Out[_]]: Display[DZ[D, N, Out]] =
+    Display(_.describeLoc)
 
   import japgolly.scalajs.react._
 

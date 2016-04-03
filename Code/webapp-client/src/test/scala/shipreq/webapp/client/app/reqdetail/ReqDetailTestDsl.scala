@@ -18,7 +18,6 @@ object ReqDetailTestDsl {
     case object Delete extends Mode
     implicit def univEq: UnivEq[Mode] = UnivEq.derive
     implicit def equal : Equal [Mode] = Equal.by_==
-    implicit def show  : Show  [Mode] = Show.byToString
   }
 
   def unspecifiedState: State =

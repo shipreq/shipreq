@@ -3,11 +3,11 @@ package shipreq.webapp.client.test
 import shipreq.base.util.DebugImplicits
 
 object TestState
-  extends teststate.Exports
-     with teststate.TestStateScalaz
-     with teststate.TestStateNyaya
+  extends testate.Exports
+     with testate.TestStateScalaz
+     with testate.TestStateNyaya
      with DebugImplicits {
 
-  implicit val showTestReq: Show[TestClientProtocol.Req] =
-    Show(i => s"${i.r.fn}: ${i.input}")
+  implicit val displayTestReq: Display[TestClientProtocol.Req] =
+    Display(i => s"${i.r.fn}: ${i.input}")
 }

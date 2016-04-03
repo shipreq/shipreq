@@ -12,7 +12,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.client.app.Style
 import shipreq.webapp.client.data._
 import shipreq.webapp.client.test._
-import teststate.domzipper.DomZipper.EditableSel
+import testate.domzipper.DomZipper.EditableSel
 import TestState._
 
 object ReqTableTestDsl {
@@ -130,7 +130,7 @@ object ReqTableTestDsl {
         +> assertNotEditing)
 
     def enterValue(text: String, desc: String = "Enter value") =
-      *.action(s"$desc: ${text.show}")(ChangeEventData(text) simulate editor.run(_)) +>
+      *.action(s"$desc: ${text.display}")(ChangeEventData(text) simulate editor.run(_)) +>
         editorValue.assert(text)
 
     def modifyValue(mod: String => String, desc: String = "Modify value") =
@@ -301,5 +301,5 @@ object ReqTableTestDsl {
 
   val svrFailLast = *.action("Fail last server request.")(_.ref.svr.failLast())
 
-  val svrAssertLastTwoReqsEqual = svrLastTwoReqs.map(_.input)(Show.byToString).assert.equal(Equal.by_==, implicitly)
+  val svrAssertLastTwoReqsEqual = svrLastTwoReqs.map(_.input).assert.equal(Equal.by_==, implicitly)
 }
