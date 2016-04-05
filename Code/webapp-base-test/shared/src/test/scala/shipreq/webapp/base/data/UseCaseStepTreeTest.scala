@@ -3,9 +3,9 @@ package shipreq.webapp.base.data
 import nyaya.gen._
 import nyaya.prop._
 import nyaya.test.PropTest._
-import scalaz.std.list.listInstance
 import scalaz.{-\/, \/-}
 import utest._
+import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.BaseUtilGen
 import shipreq.base.util._
 import shipreq.webapp.base.RandomData

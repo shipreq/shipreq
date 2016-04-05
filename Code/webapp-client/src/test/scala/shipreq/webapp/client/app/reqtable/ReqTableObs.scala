@@ -2,8 +2,6 @@ package shipreq.webapp.client.app.reqtable
 
 import org.parboiled2.Parser.DeliveryScheme.Throw
 import org.scalajs.dom.html
-import shipreq.base.util.{UnivEq, univEqOps}
-import shipreq.base.util.UnivEq.{apply => _, force => _, _}
 import shipreq.webapp.client.data._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.client.app.Style

@@ -1,6 +1,7 @@
 package shipreq.webapp.base.protocol
 
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Text
 import boopickle._, BoopickleMacros._, BinCodecGeneric._, BinCodecData._, AtomPicklers.instances._
@@ -35,8 +36,8 @@ object UpdateContentCmd {
   case class ShiftUseCaseStepRight(id: UseCaseStepId) extends ForUseCaseStep
   case class DeleteUseCaseStep    (id: UseCaseStepId) extends ForUseCaseStep
 
-  implicit val equalForUseCaseStep  : UnivEq[ForUseCaseStep  ] = UnivEq.deriveAuto
-  implicit val equalUpdateContentCmd: UnivEq[UpdateContentCmd] = UnivEq.deriveAuto
+  implicit val equalForUseCaseStep  : UnivEq[ForUseCaseStep  ] = UnivEq.derive
+  implicit val equalUpdateContentCmd: UnivEq[UpdateContentCmd] = UnivEq.derive
 
   implicit val picklePatchReqTags         : Pickler[PatchReqTags         ] = pickleCaseClass
   implicit val picklePatchImplications    : Pickler[PatchImplications    ] = pickleCaseClass

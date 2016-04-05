@@ -3,7 +3,7 @@ package shipreq.webapp.client.app.reqdetail
 import org.scalajs.dom.html
 import scala.util.Try
 import shipreq.webapp.base.UiText
-import shipreq.base.util.univEqOps
+import shipreq.base.util.univeq._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data.{Dead, Live}
 import shipreq.webapp.client.data.{ShowDead, FilterDead}

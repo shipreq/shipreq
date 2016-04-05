@@ -2,7 +2,8 @@ package shipreq.webapp.client.app
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import shipreq.base.util.{NonEmptyVector, UnivEq}
+import shipreq.base.util.NonEmptyVector
+import shipreq.base.util.univeq._
 import shipreq.webapp.client.feature._
 import shipreq.webapp.client.lib.DataReusability._
 
@@ -39,8 +40,8 @@ package object reqtable {
   object FocusId {
     case class AtCell(row: Row.SourceId, col: Column) extends FocusId
     case class InCI(typ: CreationInterface.Type, col: Column) extends FocusId
-    implicit def equalityCI: UnivEq[InCI] = UnivEq.deriveAuto
-    implicit def equality: UnivEq[FocusId] = UnivEq.deriveAuto
+    implicit def equalityCI: UnivEq[InCI] = UnivEq.derive
+    implicit def equality: UnivEq[FocusId] = UnivEq.derive
   }
 
   val Preview = PreviewFeature.FixKey[FocusId]

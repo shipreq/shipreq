@@ -4,6 +4,7 @@ import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
 import scala.collection.GenTraversableLike
 import shipreq.base.util.IsoBool
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{LDStats, LDStat, Live}
 
 sealed trait FilterDead extends IsoBool[FilterDead] {
@@ -35,7 +36,7 @@ object FilterDead extends IsoBool.Object[FilterDead] {
 }
 
 case object HideDead extends FilterDead {
-  override val filter: Option[Live => Boolean] = Some(Live.equality.equal(Live, _))
+  override val filter: Option[Live => Boolean] = Some(_ ==* Live)
   override def ldStatAccessor[A] = _.live
 }
 

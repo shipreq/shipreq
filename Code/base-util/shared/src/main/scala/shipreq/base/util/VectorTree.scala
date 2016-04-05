@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import japgolly.univeq.UnivEq
 import monocle._
 import nyaya.prop.Prop
 import scala.annotation.tailrec

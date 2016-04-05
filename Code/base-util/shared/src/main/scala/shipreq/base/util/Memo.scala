@@ -1,5 +1,7 @@
 package shipreq.base.util
 
+import japgolly.univeq.UnivEq
+
 object Memo {
   // Because of annoying Intellij IDEA
   @inline private def platform: PlatformShared = shipreq.base.util.Platform

@@ -1,7 +1,7 @@
 package shipreq.webapp.base.data
 
 import scalaz.std.vector.vectorMonoid
-import shipreq.base.util.UnivEq
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.text.{Atom, Text}
 import Atom._
 import AtomScan.IssueLoc
@@ -26,9 +26,9 @@ object AtomScan {
   sealed trait IssueLoc
   case class InReq(id: ReqId)     extends IssueLoc
   case class InRCG(id: ReqCodeId) extends IssueLoc
-  implicit def issueLocEq: UnivEq[IssueLoc] = UnivEq.deriveAuto
+  implicit def issueLocEq: UnivEq[IssueLoc] = UnivEq.derive
 
-  private implicit val tagSetMonoid = UnivEq.setMonoid[ApplicableTagId]
+  private implicit val tagSetMonoid = monoidSet[ApplicableTagId]
 
   def apply(p: Project): AtomScan = {
     val tagRefs  = new LDStats.Builder[ReqId, Set[ApplicableTagId]]

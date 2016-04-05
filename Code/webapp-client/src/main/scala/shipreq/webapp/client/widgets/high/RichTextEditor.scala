@@ -5,8 +5,9 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import org.scalajs.dom
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{ValidUpdate, univEqOps}
+import shipreq.base.util.ValidUpdate
 import shipreq.base.util.ScalaExt._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.validation.ValidUpdateVR

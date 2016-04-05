@@ -3,6 +3,7 @@ package shipreq.webapp.base.test
 import nyaya.util.Multimap
 import scala.collection.generic.CanBuildFrom
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar, Text}
 import Field.ApplicableReqTypes

@@ -2,7 +2,7 @@ package shipreq.webapp.client.app.reqdetail
 
 import japgolly.scalajs.react.test.ReactTestUtils.Simulate
 import monocle.macros.Lenses
-import shipreq.base.util.{UnivEq, univEqOps}
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText

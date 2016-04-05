@@ -1,5 +1,7 @@
 package shipreq.base.util
 
+import japgolly.univeq.UnivEq
+
 object BiMap {
 
   private val empty_ = BiMap(Map.empty[Any, Any], Map.empty[Any, Any])(null, null)

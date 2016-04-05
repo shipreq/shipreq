@@ -4,6 +4,7 @@ import nyaya.util.Multimap
 import scalaz.\/
 import scalaz.syntax.equal._
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol._
@@ -11,7 +12,6 @@ import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.util.GenericDataMacros._
 import DataImplicits._
 import ScalaExt._
-import UnivEq.Implicits._
 import ValidUpdate._
 
 /**

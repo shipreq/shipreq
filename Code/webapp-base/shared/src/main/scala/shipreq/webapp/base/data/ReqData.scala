@@ -2,7 +2,8 @@ package shipreq.webapp.base.data
 
 import nyaya.util.Multimap
 import monocle.Lens
-import shipreq.base.util.{Optics, UnivEq}
+import shipreq.base.util.Optics
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.text.Text.Equality._
 
@@ -35,5 +36,5 @@ object ReqData {
 
   def emptyTags: Tags = Multimap.empty
 
-  implicit def equalityTags: UnivEq[Tags] = UnivEq.univEqMultimap
+  implicit def equalityTags: UnivEq[Tags] = univEqMultimap
 }

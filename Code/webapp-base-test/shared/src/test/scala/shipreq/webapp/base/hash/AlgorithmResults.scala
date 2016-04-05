@@ -1,6 +1,6 @@
 package shipreq.webapp.base.hash
 
-import shipreq.base.util.UnivEq
+import japgolly.univeq.UnivEq
 
 case class AlgorithmResults(booleanT     : Int,
                             booleanF     : Int,
@@ -16,7 +16,7 @@ case class AlgorithmResults(booleanT     : Int,
                             joinHashes   : Int)
 
 object AlgorithmResults {
-  implicit def equality = UnivEq.force[AlgorithmResults]
+  implicit def equality: UnivEq[AlgorithmResults] = UnivEq.derive
 
   def calc(a: Hash.Algorithm) = {
     import a._

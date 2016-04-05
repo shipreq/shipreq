@@ -3,6 +3,7 @@ package shipreq.webapp.base.filter
 import java.util.regex.Pattern
 import scalaz.{-\/, \/-, \/}
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data
 import shipreq.webapp.base.filter.{FilterSpec => S}
 

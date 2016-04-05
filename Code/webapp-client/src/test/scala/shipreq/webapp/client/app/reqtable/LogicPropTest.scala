@@ -8,6 +8,7 @@ import scalaz.{\/, \/-, -\/, Equal}
 import scalaz.std.AllInstances._
 import utest._
 import shipreq.base.util.ScalaExt._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Atom, PlainText, Text, TextSearch}

@@ -1,6 +1,9 @@
 package shipreq.base.util
 
+import japgolly.univeq.UnivEq
 import java.net.URL
+import scalaz.Order
+import scalaz.std.anyVal.intInstance
 import scala.collection.GenTraversable
 import scala.collection.immutable.TreeMap
 import scala.util.Try
@@ -180,6 +183,15 @@ object Util {
 
   def mapToOrder[A](as: TraversableOnce[A]): Map[A, Int] =
     as.toIterator.zipWithIndex.toMap
+
+  def univEqAndArbitraryOrder[A](values: Iterable[A]): UnivEq[A] with Order[A] = {
+    val fixedOrder = values.zipWithIndex.toMap
+    new UnivEq[A] with Order[A] {
+      @inline private[this] def int(s: A) = fixedOrder(s)
+      override def order(a: A, b: A) = Order[Int].order(int(a), int(b))
+      override def equal(a: A, b: A) = a == b
+    }
+  }
 }
 
 object ParseLong {

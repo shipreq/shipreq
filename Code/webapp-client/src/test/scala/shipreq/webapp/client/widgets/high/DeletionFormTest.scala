@@ -2,7 +2,7 @@ package shipreq.webapp.client.widgets.high
 
 import utest._
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{NonEmptySet, UnivEq, IMap, Util}
+import shipreq.base.util.{NonEmptySet, IMap, Util}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._
 import WebappTestUtil._

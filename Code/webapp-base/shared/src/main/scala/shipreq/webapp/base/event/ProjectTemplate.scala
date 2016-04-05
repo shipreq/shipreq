@@ -1,7 +1,8 @@
 package shipreq.webapp.base.event
 
 import scalaz.{-\/, \/-}
-import shipreq.base.util.{UnivEq, NonEmptyVector, NonEmptySet, ISubset}
+import shipreq.base.util.{NonEmptyVector, NonEmptySet, ISubset}
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.hash.HashRec
 import shipreq.webapp.base.util.GenericDataMacros._

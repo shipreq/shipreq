@@ -7,6 +7,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 import scalacss.ScalaCssReact._
 import scalaz.{\/, -\/, \/-}
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.{UpdateContentCmd, UpdateContentFn}

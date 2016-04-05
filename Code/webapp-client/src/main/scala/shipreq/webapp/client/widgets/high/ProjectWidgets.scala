@@ -3,6 +3,7 @@ package shipreq.webapp.client.widgets.high
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.univeq._
 import scalacss.ScalaCssReact._
 import scalacss.StyleA
 import scalajs.js.{undefined, UndefOr}

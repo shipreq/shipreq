@@ -3,7 +3,8 @@ package shipreq.webapp.client.app.reqtable
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
 import japgolly.scalajs.react.extra._
 import monocle.macros.Lenses
-import shipreq.base.util.{MutableArray, NonEmptyVector, UnivEq, univEqOps}
+import shipreq.base.util.{MutableArray, NonEmptyVector}
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.CreateContentCmd
@@ -39,7 +40,7 @@ object CreationInterface {
   case object Editing extends Status
   case object Locked extends Status
   case class Failed(reason: String) extends Status
-  implicit def statusEquality: UnivEq[Status] = UnivEq.deriveAuto
+  implicit def statusEquality: UnivEq[Status] = UnivEq.derive
 
   @Lenses
   case class CreateReqCodeGroupState(status: Status, reqCode: String, title: String)

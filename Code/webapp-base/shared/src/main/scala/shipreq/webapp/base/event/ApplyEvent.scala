@@ -4,7 +4,8 @@ import nyaya.prop.LogicPropExt
 import scala.annotation.tailrec
 import scalaz.{-\/, \/-, \/}
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{univEqOps, NonEmptyVector, Valid, UnivEq}
+import shipreq.base.util.{NonEmptyVector, Valid}
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{Project, DataProp}
 import shipreq.webapp.base.hash.HashRec
 import ApplyEventLib._, SE.SE

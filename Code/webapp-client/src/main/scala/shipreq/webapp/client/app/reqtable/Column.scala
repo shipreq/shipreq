@@ -3,6 +3,7 @@ package shipreq.webapp.client.app.reqtable
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{Dead, Live, Project, ProjectConfig, Field}
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data
@@ -171,7 +172,6 @@ object Column {
     }
 
     implicit val reusability: Reusability[NameResolver] = {
-      import UnivEq.Implicits._
       implicit val m: Reusability[Map[data.CustomFieldId, String]] = Reusability.byRefOrEqual
       Reusability.caseClass
     }

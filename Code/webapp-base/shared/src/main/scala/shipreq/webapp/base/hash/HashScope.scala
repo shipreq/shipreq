@@ -1,5 +1,6 @@
 package shipreq.webapp.base.hash
 
+import japgolly.univeq.UnivEq
 import shipreq.base.util._
 import shipreq.webapp.base.data.Project
 

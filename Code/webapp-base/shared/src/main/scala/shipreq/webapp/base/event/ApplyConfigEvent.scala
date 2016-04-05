@@ -2,12 +2,12 @@ package shipreq.webapp.base.event
 
 import scala.reflect.ClassTag
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.data.{Validators => V, _}
 import shipreq.webapp.base.util.GenericData
 import ApplyEventLib._, SE.SE
 import DataImplicits._
-import UnivEq.Implicits._
 
 trait ApplyConfigEvent {
   this: ApplyEvent =>

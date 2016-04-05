@@ -6,6 +6,7 @@ import nyaya.util.Multimap
 import scala.annotation.tailrec
 import scala.collection.AbstractIterator
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import SizeSpec.DisableDefault._
 
 object BaseUtilGen {

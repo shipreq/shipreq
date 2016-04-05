@@ -3,6 +3,7 @@ package shipreq.webapp.client.widgets.high
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import shipreq.base.util.{Ref => _, _}
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.validation.{Validator, ValidUpdateVR}

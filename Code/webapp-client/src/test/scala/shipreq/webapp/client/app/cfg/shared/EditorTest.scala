@@ -4,7 +4,6 @@ import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.raw.HTMLInputElement
 import scalaz.Equal
-import scalaz.std.AllInstances._
 import scalaz.Scalaz.Id
 import utest._
 import shipreq.base.util.ScalaExt._

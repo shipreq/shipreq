@@ -3,6 +3,7 @@ package shipreq.webapp.client.lib
 import scala.annotation.tailrec
 import scalacss.ScalaCssReact._
 import japgolly.scalajs.react._, vdom.prefix_<^._
+import japgolly.univeq._
 import scalajs.js.{UndefOr, undefined}
 import scalaz.{\/-, -\/, \/}
 import shapeless.syntax.singleton._

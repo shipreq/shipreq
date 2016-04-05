@@ -1,5 +1,7 @@
 package shipreq.base.util
 
+import japgolly.univeq.UnivEq
+
 trait PlatformShared {
 
   def memo[A: UnivEq, B](f: A => B): A => B

@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import japgolly.univeq.UnivEq
 import scala.collection.immutable.BitSet
 import scala.reflect.ClassTag
 import scalaz.Need

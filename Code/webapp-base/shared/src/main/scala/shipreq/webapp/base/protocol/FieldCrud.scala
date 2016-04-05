@@ -1,6 +1,7 @@
 package shipreq.webapp.base.protocol
 
-import shipreq.base.util.{UnivEq, RelPos => Pos}
+import shipreq.base.util.{RelPos => Pos}
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.DeletionAction
 import boopickle._, BoopickleMacros._, BinCodecGeneric._, BinCodecData._, BinCodecEvents._
@@ -46,7 +47,7 @@ object FieldCrud {
     final case class UpdateOrder (id: FieldId, newPos: Position)        extends CfgAction
     final case class Delete      (id: FieldId, action: DeletionAction)  extends CfgAction
 
-    implicit def equality: UnivEq[CfgAction] = UnivEq.deriveAuto
+    implicit def equality: UnivEq[CfgAction] = UnivEq.derive
 
     implicit val pickleFieldProtocolCfgAction: Pickler[CfgAction] = {
       implicit val pCreate       = pickleCaseClass[Create]

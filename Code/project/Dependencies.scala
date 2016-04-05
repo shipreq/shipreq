@@ -49,6 +49,12 @@ object Dependencies {
     val domZipperSizzle = mm("dom-zipper-sizzle")
   }
 
+  object UnivEq {
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "1.0.0")
+    val univeq = mm("univeq")
+    val scalaz = mm("univeq-scalaz") ++ univeq ++ Scalaz.core
+  }
+
   object React {
     private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "0.11.0-SNAPSHOT")
     val core    = mm("core")

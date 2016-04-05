@@ -1,6 +1,7 @@
 package shipreq.webapp.base.event
 
-import shipreq.base.util.{NonEmptyVector, UnivEq}
+import japgolly.univeq.UnivEq
+import shipreq.base.util.NonEmptyVector
 import shipreq.webapp.base.data.{Dead, Live}
 
 sealed abstract class DeletionAction {

@@ -7,6 +7,7 @@ import scalaz.{\/, \/-, -\/}
 import scalaz.syntax.either._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{Ref => _, _}
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar, PlainText, TextSearch}
 import shipreq.webapp.base.validation._

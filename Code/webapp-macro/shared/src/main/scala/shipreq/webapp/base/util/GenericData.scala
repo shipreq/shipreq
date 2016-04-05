@@ -1,7 +1,8 @@
 package shipreq.webapp.base.util
 
+import shipreq.base.util.univeq._
 import scalaz.{Equal, Order}
-import shipreq.base.util.{NonEmpty, IMap, NonEmptySet, UnivEq}
+import shipreq.base.util.{IMap, NonEmpty, NonEmptySet}
 
 abstract class GenericData {
 

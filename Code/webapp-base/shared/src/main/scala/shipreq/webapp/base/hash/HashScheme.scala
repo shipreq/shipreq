@@ -1,6 +1,7 @@
 package shipreq.webapp.base.hash
 
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 
 final case class HashSchemeId(value: Char) extends AnyVal
 

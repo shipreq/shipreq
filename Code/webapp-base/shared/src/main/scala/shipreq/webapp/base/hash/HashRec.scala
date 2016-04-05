@@ -1,12 +1,11 @@
 package shipreq.webapp.base.hash
 
 import scala.collection.immutable.ListSet
-import scalaz.syntax.equal._
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.ApplyEvent.LogicVer
 import HashRec.ValidationFailure
-import UnivEq.Implicits.univEqInt
 
 /**
  * Hash record.

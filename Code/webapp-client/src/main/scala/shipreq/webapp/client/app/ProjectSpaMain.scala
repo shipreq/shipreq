@@ -9,7 +9,8 @@ import org.scalajs.dom
 import scala.annotation.elidable
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{Intersection, UnivEq, univEqOps}
+import shipreq.base.util.Intersection
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{ReqId, ExternalPubid, ReqType, ReqTypePos}
 import shipreq.webapp.base.protocol.ProjectSPA
 import shipreq.webapp.base.text.{TextSearch, PlainText, Grammar}
@@ -60,7 +61,7 @@ object ProjectSpaMain {
     }
   }
 
-  implicit def pageEq: UnivEq[Page] = UnivEq.deriveAuto
+  implicit def pageEq: UnivEq[Page] = UnivEq.derive
 
   def determineBaseUrl(url: String) = {
     val pat = "^([^/#?]+//[^/#?]+/[^/#?]+/[^/#?]+)(?:[/#?].*|$)".r.pattern
@@ -89,7 +90,7 @@ object ProjectSpaMain {
   object FocusId {
     case class Content(row: Row.SourceId, f: EditFieldKey) extends FocusId
     case class ReqTableCI(value: reqtable.FocusId.InCI) extends FocusId
-    implicit def equality: UnivEq[FocusId] = UnivEq.deriveAuto
+    implicit def equality: UnivEq[FocusId] = UnivEq.derive
 
     val toReqTable = Intersection[FocusId, reqtable.FocusId] {
       case Content(r, f) => Column.EditFieldKeyIntersection.reverse.getOptionMap(f, reqtable.FocusId.AtCell(r, _))

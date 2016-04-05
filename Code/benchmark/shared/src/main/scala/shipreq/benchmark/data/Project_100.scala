@@ -29,7 +29,7 @@ import shipreq.base.util.ISubset
 import shipreq.base.util.NonEmptySet
 import shipreq.base.util.NonEmptyVector
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.UnivEq
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data.ReqCode.Trie.{Branch => τb, Value => τv}
 import shipreq.webapp.base.data.ReqType.Mnemonic

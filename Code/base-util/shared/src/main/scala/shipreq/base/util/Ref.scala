@@ -1,5 +1,7 @@
 package shipreq.base.util
 
+import japgolly.univeq.UnivEq
+
 /**
  * Wraps a value such that reference equality holds.
  *

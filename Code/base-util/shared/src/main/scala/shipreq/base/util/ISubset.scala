@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import japgolly.univeq.UnivEq
 import scala.collection.TraversableLike
 
 /**
@@ -26,5 +27,5 @@ object ISubset {
   final case class Not [A](values: NonEmptySet[A]) extends ISubset[A]
 
   @inline implicit def univEquality[A](implicit v: UnivEq[NonEmptySet[A]]): UnivEq[ISubset[A]] =
-    UnivEq.deriveAuto
+    UnivEq.derive
 }

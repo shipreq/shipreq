@@ -5,7 +5,7 @@ import nyaya.prop._
 import nyaya.gen.Gen
 import nyaya.test._
 import nyaya.test.PropTest._
-import shipreq.base.util.{MMTree, univEqOps}
+import shipreq.base.util.MMTree
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._

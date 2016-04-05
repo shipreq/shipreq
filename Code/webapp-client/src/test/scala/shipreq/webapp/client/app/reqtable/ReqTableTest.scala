@@ -7,7 +7,7 @@ import japgolly.scalajs.react.test._
 import monocle.macros.Lenses
 import nyaya.test.PropTest._
 import shipreq.base.test.JsEnv
-import shipreq.base.util.UnivEq.{apply => _, force => _}
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{PlainText, TextSearch}
@@ -18,7 +18,7 @@ import shipreq.webapp.client.feature._
 import shipreq.webapp.client.test._
 import shipreq.webapp.client.widgets.high.ProjectWidgets
 import utest._
-import TestState._
+import TestState.{scalazEqualFromTestate => _, _}
 import SampleProject.Values._
 
 object ReqTableTest extends TestSuite {

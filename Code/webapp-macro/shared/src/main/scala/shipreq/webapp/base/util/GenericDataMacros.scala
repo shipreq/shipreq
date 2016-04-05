@@ -89,7 +89,8 @@ class GenericDataMacroImplsW(val c: scala.reflect.macros.whitebox.Context) exten
         q"""
           object $objName extends $parent {
             import scalaz.{Equal, Order}
-            import shipreq.base.util.{NonEmptySet, UnivEq}
+            import shipreq.base.util.{NonEmptySet, Util}
+            import shipreq.base.util.univeq._
 
             sealed abstract class Attr extends AttrBase
             sealed abstract class Value extends ValueBase
@@ -97,7 +98,7 @@ class GenericDataMacroImplsW(val c: scala.reflect.macros.whitebox.Context) exten
             ..${flattenBlocks(attrDefns)}
 
             override implicit val equalityAttr: Order[Attr] with UnivEq[Attr] =
-              UnivEq.withArbitraryOrder(Vector(..$attrNames))
+              Util.univEqAndArbitraryOrder(Vector(..$attrNames))
 
             @inline override implicit def equalityValue: UnivEq[Value] = UnivEq.force
 

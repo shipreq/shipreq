@@ -1,7 +1,8 @@
 package shipreq.webapp.base
 
-import scalaz.{Equal, \/}
-import shipreq.base.util.{Digraph, MMTree, UnivEq, IMap}
+import scalaz.\/
+import shipreq.base.util.{Digraph, MMTree, IMap}
+import shipreq.base.util.univeq._
 
 package object data {
 

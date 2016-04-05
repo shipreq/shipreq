@@ -11,6 +11,7 @@ import scalaz.std.list.listInstance
 import scalaz.std.option.optionInstance
 import scalaz.std.vector.vectorInstance
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.AppConsts
 import shipreq.webapp.base.text.{Atom, Text}
 import DataImplicits._
@@ -18,7 +19,6 @@ import Debug._
 import MTrie.Ops
 import ScalaExt._
 import TaggedTypes.TaggedInt
-import UnivEq.Implicits._
 
 object DataProp {
   implicit def autoLiftL(e: Eval) = e.liftL

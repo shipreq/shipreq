@@ -2,8 +2,9 @@ package shipreq.webapp.client.widgets
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import shipreq.webapp.client.lib.ClientUtil
-import shipreq.base.util.{NonEmptySet, IMap, ISubset, UnivEq, univEqOps}
+import shipreq.base.util.{NonEmptySet, IMap, ISubset}
 import shipreq.base.util.ScalaExt._
+import shipreq.base.util.univeq._
 
 object ISubsetEditor {
 

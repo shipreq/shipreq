@@ -1,7 +1,7 @@
 package shipreq.webapp.base.protocol
 
 import scalaz.\&/
-import shipreq.base.util.UnivEq
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import boopickle._, BoopickleMacros._, BinCodecGeneric._, BinCodecData._
 import TagInTree.Relations

@@ -69,7 +69,7 @@ class UtilMacroImpls(val c: blackbox.Context) extends MacroUtils {
 
     val impl = q"""
       import shipreq.base.util.NonEmptySet
-      import shipreq.base.util.UnivEq.Implicits._
+      import shipreq.base.util.univeq._
       val from: $Adt => $T = $f
       val to: $T => $Adt = {case ..$toCases}
       val adts = NonEmptySet[$Adt](..$adtValues)

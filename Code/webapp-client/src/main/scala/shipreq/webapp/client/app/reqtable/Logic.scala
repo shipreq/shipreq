@@ -10,6 +10,7 @@ import scalaz.syntax.semigroup._
 import scalaz.syntax.traverse1._
 import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.FilterAst
 import shipreq.webapp.base.text.Atom.AnyIssue

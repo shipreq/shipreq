@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import japgolly.univeq.UnivEq
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.{Function => J8Fn}
 import scala.collection.immutable.IntMap

@@ -8,11 +8,11 @@ import scalaz.std.AllInstances._
 import nyaya.gen.Gen
 import shipreq.base.util.Debug._
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.base.test.WebappTestUtil
+import shipreq.webapp.base.test._
 import shipreq.webapp.client.app.cfg.shared._
 import RowStatus._
 
-object TestUtil extends WebappTestUtil {
+object TestUtil extends WebappTestUtil with WebappTestEquality {
 
   def assertRowStatusFailed(r: RowStatus): RowStatus.Failed =
     r match {

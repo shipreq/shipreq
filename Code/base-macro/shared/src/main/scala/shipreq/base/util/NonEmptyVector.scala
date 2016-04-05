@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import japgolly.univeq.UnivEq
 import scala.collection.{AbstractIterator, GenTraversableOnce}
 import scala.collection.generic.CanBuildFrom
 import scala.collection.immutable.Range
@@ -247,7 +248,8 @@ object NonEmptyVector extends NonEmptyVectorImplicits0 {
   def unwrapOption[A](o: Option[NonEmptyVector[A]]): Vector[A] =
     o.fold(Vector.empty[A])(_.whole)
 
-  implicit def univEq[A: UnivEq]: UnivEq[NonEmptyVector[A]] = UnivEq.force
+  implicit def univEq[A: UnivEq]: UnivEq[NonEmptyVector[A]] =
+    UnivEq.force
 
   implicit def semigroup[A]: Semigroup[NonEmptyVector[A]] =
     new Semigroup[NonEmptyVector[A]] {

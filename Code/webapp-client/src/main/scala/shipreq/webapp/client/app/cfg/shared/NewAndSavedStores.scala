@@ -1,10 +1,10 @@
 package shipreq.webapp.client.app.cfg.shared
 
+import japgolly.univeq.UnivEq
 import monocle.Lens
 import monocle.function.Field1.first
 import monocle.function.Field2.second
 import monocle.std.tuple2._
-import shipreq.base.util.UnivEq
 
 object NewAndSavedStores {
 

@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import japgolly.univeq.UnivEq
 import scala.collection.GenTraversableOnce
 import scala.collection.generic.CanBuildFrom
 import scalaz.Semigroup

@@ -3,8 +3,8 @@ package shipreq.webapp.client.feature
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.components.TriStateCheckbox
+import japgolly.univeq.UnivEq
 import monocle.Iso
-import shipreq.base.util.UnivEq
 import shipreq.webapp.client.data.{Off, On}
 import shipreq.webapp.client.widgets.Widgets
 import Selection._

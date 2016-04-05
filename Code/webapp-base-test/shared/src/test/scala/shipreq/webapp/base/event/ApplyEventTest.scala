@@ -10,7 +10,6 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.ApplyEvent.LogicVer
 import shipreq.webapp.base.hash._
 import shipreq.webapp.base.hash.HashTestUtil.hashSchemes
-import shipreq.base.util.univEqOps
 
 object ApplyEventTest extends TestSuite {
 

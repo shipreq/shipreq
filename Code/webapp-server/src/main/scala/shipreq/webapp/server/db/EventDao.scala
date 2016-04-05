@@ -3,6 +3,7 @@ package shipreq.webapp.server.db
 import scala.annotation.tailrec
 import scalaz.Isomorphism.<=>
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.hash._
 import shipreq.webapp.server.lib.Types.ProjectId

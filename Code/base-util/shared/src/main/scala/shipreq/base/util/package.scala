@@ -9,9 +9,6 @@ package object util {
   /** Faster than Vector(a) */
   @inline def Vector1[A](a: A): Vector[A] = Vector.empty :+ a
 
-  @inline implicit def univEqOps[A](a: A): UnivEq.Ops[A] =
-    new UnivEq.Ops(a)
-
   /**
     * Relative Position.
     *

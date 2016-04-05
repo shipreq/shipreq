@@ -5,8 +5,8 @@ import japgolly.scalajs.react.test.ReactTestUtils.Simulate
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.ext.{KeyCode, KeyValue}
 import org.scalajs.dom.html
-import shipreq.base.util.UnivEq.{apply => _, force => _}
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.app.Style

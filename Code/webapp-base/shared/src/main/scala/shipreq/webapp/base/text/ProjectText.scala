@@ -1,7 +1,7 @@
 package shipreq.webapp.base.text
 
-import scalaz.syntax.equal._
 import shipreq.base.util.{Memo, NonEmptySet, Util}
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.util.Must._
 import DataImplicits._

@@ -5,10 +5,10 @@ import monocle.macros.{Lenses, GenLens}
 import scala.collection.immutable.ListSet
 import scalaz.Equal
 import shipreq.base.util._
-import ScalaExt._
+import shipreq.base.util.univeq._
+import shipreq.base.util.ScalaExt._
 import TaggedTypes.{TaggedString, TaggedInt}
 import IndexLabel._
-import UnivEq.Implicits._
 
 // =====================================================================================================================
 // Types

@@ -4,8 +4,8 @@ import nyaya.prop.CycleDetector
 import monocle.Lens
 import monocle.macros.{Lenses, GenLens}
 import scala.annotation.tailrec
-import scalaz.syntax.equal._
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.base.util.TaggedTypes.TaggedInt
 
 sealed trait TagId extends TaggedInt

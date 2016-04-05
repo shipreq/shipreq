@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import shipreq.base.util.univeq._
 import nyaya.prop.{CycleFree, CycleDetector}
 import scala.collection.GenTraversable
 import scalaz.\/
@@ -55,7 +56,7 @@ object MMTree {
       tree
         .filter(_._2 contains id)
         .foldLeft(UnivEq.emptyMap: Parents[I]) {
-          case (m, (parent, sibs)) => m + (parent -> RelPos.get(sibs, id))
+          case (m, (parent, sibs)) => m.updated(parent, RelPos.get(sibs, id))
         }
 
     def derive[I: UnivEq](id: I, tree: Map[I, Vector[I]]): Relations[I] = {

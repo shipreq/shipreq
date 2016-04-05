@@ -1,8 +1,9 @@
 package shipreq.base.util
 
-import scalaz.{Order, Equal}
+import japgolly.univeq.UnivEq
+import scalaz.{Equal, Order}
 import scalaz.std.string.stringInstance
-import scalaz.std.anyVal.{shortInstance, longInstance, intInstance}
+import scalaz.std.anyVal.{intInstance, longInstance, shortInstance}
 
 object TaggedTypes {
 
@@ -57,8 +58,8 @@ object TaggedTypes {
       override def compare(x: T, y: T) = SO.compare(x.value, y.value)
     }
     object ScalazTC extends Order[T] with UnivEq[T] {
-//      override def equal(a1: T, a2: T) = O.equal(a1.value, a2.value)
-//      override def equalIsNatural      = O.equalIsNatural
+      override def equal(a1: T, a2: T) = a1 == a2
+      override def equalIsNatural      = true
       override def order(x: T, y: T)   = O.order(x.value, y.value)
     }
   }

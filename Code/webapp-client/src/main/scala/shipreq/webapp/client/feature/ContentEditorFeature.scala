@@ -7,6 +7,7 @@ import monocle.Lens
 import scala.annotation.elidable
 import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text._
@@ -81,7 +82,7 @@ object ContentEditorFeature {
     // case object DeletionReason extends EditFieldKey
 
     @inline implicit def equality: UnivEq[EditFieldKey] =
-      UnivEq.deriveAuto
+      UnivEq.derive
 
     implicit val reusability: Reusability[EditFieldKey] =
       Reusability.byEqual

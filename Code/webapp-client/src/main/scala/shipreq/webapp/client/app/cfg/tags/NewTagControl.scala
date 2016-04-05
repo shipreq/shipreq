@@ -1,6 +1,7 @@
 package shipreq.webapp.client.app.cfg.tags
 
 import japgolly.scalajs.react.Callback
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.TagType
 import shipreq.webapp.base.UiText
 import shipreq.webapp.client.data.Enabled

@@ -4,6 +4,7 @@ import monocle._
 import scala.reflect.ClassTag
 import scalaz.Equal
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.util.GenericData

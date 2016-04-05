@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 import scalaz.{Equal, \/-}
 import utest._
-import shipreq.base.util.UnivEq.Implicits._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.{FieldCrud, RemoteFn}

@@ -5,6 +5,7 @@ import scalaz.{\/, -\/, \/-, Equal}
 import scalaz.std.option.toRight
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.UtilMacros
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.util.Must._
 import DataImplicits._
 

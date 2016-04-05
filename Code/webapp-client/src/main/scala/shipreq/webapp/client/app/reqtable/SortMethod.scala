@@ -1,7 +1,7 @@
 package shipreq.webapp.client.app.reqtable
 
-import shipreq.base.util.{Util, NonEmptyVector, UnivEq}
-import shipreq.base.util.ScalaExt._
+import shipreq.base.util.{Util, NonEmptyVector}
+import shipreq.base.util.univeq._
 
 sealed trait SortMethod {
   def symbol: String

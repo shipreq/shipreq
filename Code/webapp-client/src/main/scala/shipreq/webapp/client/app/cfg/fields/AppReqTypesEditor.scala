@@ -1,10 +1,11 @@
 package shipreq.webapp.client.app.cfg.fields
 
 import japgolly.scalajs.react._, vdom.prefix_<^._
+import japgolly.univeq.UnivEq
 import monocle.Lens
 import monocle.std.map.atMap
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{UnivEq, IMap}
+import shipreq.base.util.IMap
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.app.Style
 import shipreq.webapp.client.app.cfg.shared.{FieldSet => _, _}

@@ -1,7 +1,7 @@
 package shipreq.webapp.base.protocol
 
 import boopickle.Pickler
-import shipreq.base.util.UnivEq
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.event.{VerifiedEvents, DeletionAction}
 import boopickle._, BoopickleMacros._, BinCodecGeneric._, BinCodecData._, BinCodecEvents._
 
@@ -41,7 +41,7 @@ object CrudAction {
   final case class Update[Id, V](id: Id, newValues: V)           extends CrudAction[Id, V]
   final case class Delete[Id, V](id: Id, action: DeletionAction) extends CrudAction[Id, V]
 
-  @inline implicit def equality[I: UnivEq, V: UnivEq]: UnivEq[CrudAction[I, V]] = UnivEq.deriveAuto
+  @inline implicit def equality[I: UnivEq, V: UnivEq]: UnivEq[CrudAction[I, V]] = UnivEq.derive
 
   def pickleCrudAction[I, V](implicit PI: Pickler[I], PV: Pickler[V]): Pickler[CrudAction[I, V]] = {
     implicit val create: Pickler[Create[I, V]] = pickleCaseClass

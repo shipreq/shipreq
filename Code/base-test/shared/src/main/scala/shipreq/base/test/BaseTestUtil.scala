@@ -3,7 +3,7 @@ package shipreq.base.test
 import scala.io.AnsiColor._
 import scalaz.{Equal, Order}
 import scalaz.std.string.stringInstance
-import shipreq.base.util.UnivEq
+import shipreq.base.util.univeq._
 import shipreq.base.util.ScalaExt._
 
 object BaseTestUtil extends BaseTestEquality with BaseTestUtil {
@@ -22,8 +22,13 @@ trait BaseTestUtil extends scalaz.syntax.ToEqualOps {
   implicit def BaseTestUtilOpsAny[A](a: A) =
     new BaseTestUtil.BaseTestUtilOpsAny(a)
 
-  def forceUnivEqOrderByToString[A]: Order[A] with UnivEq[A] =
-    UnivEq.withOrder(Order.orderBy(_.toString))
+  def forceUnivEqOrderByToString[A]: Order[A] with UnivEq[A] = {
+    val o = Order.orderBy((_: A).toString)
+    new Order[A] with UnivEq[A] {
+      override def order(a: A, b: A) = o.order(a, b)
+      override def equal(a: A, b: A) = a == b
+    }
+  }
 
   def assertEq[A: Equal](actual: A, expect: A): Unit =
     assertEqO(None, actual, expect)

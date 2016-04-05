@@ -2,7 +2,7 @@ package shipreq.webapp.base.event
 
 import scalaz.Equal
 import shipreq.base.util.UtilMacros
-import shipreq.base.util.UnivEq.Implicits._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.text.Text.Equality._
 
 object EventEquality extends EventEquality

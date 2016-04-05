@@ -2,7 +2,6 @@ package shipreq.webapp.client.app.cfg.shared
 
 import monocle.Lens
 import scalaz.Equal
-import scalaz.std.AllInstances._
 import utest._
 import nyaya.prop._
 import nyaya.gen._

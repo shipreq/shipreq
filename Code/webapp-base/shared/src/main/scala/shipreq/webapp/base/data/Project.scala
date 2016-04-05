@@ -4,8 +4,9 @@ import monocle.Lens
 import monocle.macros.Lenses
 import scalaz.{Equal, \/, -\/, \/-}
 import scalaz.std.anyVal.intInstance
-import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{TransitiveClosure, UtilMacros}
+import shipreq.base.util.ScalaExt._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.text.{Atom, Text}
 import shipreq.webapp.base.util.ShowSize
 import DataImplicits._

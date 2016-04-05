@@ -4,6 +4,7 @@ import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.RemoteFn
 import shipreq.webapp.base.text.{Atom, TextSearch, PlainText}

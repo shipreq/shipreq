@@ -4,8 +4,8 @@ import shipreq.base.util.DebugImplicits
 
 object TestState
   extends testate.Exports
-     with testate.TestStateScalaz
-     with testate.TestStateNyaya
+     with testate.TestateScalaz
+     with testate.TestateNyaya
      with DebugImplicits {
 
   implicit val displayTestReq: Display[TestClientProtocol.Req] =

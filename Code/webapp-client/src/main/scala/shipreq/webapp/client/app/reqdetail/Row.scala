@@ -2,7 +2,7 @@ package shipreq.webapp.client.app.reqdetail
 
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
-import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{CustomField => CF, StaticField => SF, Field}
 import shipreq.webapp.client.data.{FilterDead, ShowDead}
 import shipreq.webapp.client.lib.KeyGen
@@ -27,7 +27,7 @@ object Row {
   case class CustomField(f: CF) extends Row("f" + f.id.value)
 
   @inline implicit def equality: UnivEq[Row] =
-    UnivEq.deriveAuto
+    UnivEq.derive
 
   implicit val reusability: Reusability[Row] =
     Reusability.byEqual

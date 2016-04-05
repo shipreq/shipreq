@@ -5,6 +5,7 @@ import nyaya.util.Multimap
 import scala.annotation.tailrec
 import scalaz.std.option.optionInstance
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.data.{Validators => V, _}
 import shipreq.webapp.base.text.{Grammar, Text}

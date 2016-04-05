@@ -1,10 +1,10 @@
 package shipreq.webapp.client.widgets
 
 import japgolly.scalajs.react._, vdom.prefix_<^._
+import japgolly.univeq._
 import org.scalajs.dom
 import scalaz.Equal
 import scalaz.syntax.equal._
-import shipreq.base.util.UnivEq
 import shipreq.webapp.client.data.{Off, On}
 import shipreq.webapp.client.lib.DND
 

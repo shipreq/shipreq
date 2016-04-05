@@ -2,9 +2,10 @@ package shipreq.webapp.client.app.state
 
 import scalaz.Equal
 import scalaz.syntax.equal._
-import shipreq.base.util.UnivEq._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
+import UnivEq.emptySet
 
 case class Changes(ves: VerifiedEvents, p1: Project, p2: Project) {
   private var _customReqTypes  : Set[CustomReqTypeId  ] = emptySet

@@ -5,8 +5,9 @@ import monocle.macros.Lenses
 import scalaz.{Order, Ordering}
 import scalaz.std.anyVal.intInstance
 import scalaz.syntax.order._
-import shipreq.base.util.{UnivEq, NonEmptyVector}
+import shipreq.base.util.{NonEmptyVector, Util, UtilMacros}
 import shipreq.base.util.TaggedTypes._
+import shipreq.base.util.univeq._
 import ReqType.Mnemonic
 
 /** type [[ReqTypeId]] = [[StaticReqType]] | [[CustomReqTypeId]] */
@@ -56,12 +57,12 @@ object StaticReqType {
   }
 
   val values: NonEmptyVector[StaticReqType] =
-    NonEmptyVector(UseCase)
+    UtilMacros.adtValues[StaticReqType]
 
   val valueStream: Stream[StaticReqType] =
     values.toStream
 
-  implicit val order = UnivEq.withArbitraryOrder(values.whole)
+  implicit val order = Util.univEqAndArbitraryOrder(values.whole)
 
   lazy val mnemonics =
     values.foldLeft(UnivEq.emptySet[Mnemonic])(_ ++ _.allMnemonics)

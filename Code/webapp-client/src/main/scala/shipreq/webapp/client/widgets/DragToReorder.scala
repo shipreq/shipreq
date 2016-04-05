@@ -3,8 +3,8 @@ package shipreq.webapp.client.widgets
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.vdom.TagMod
 import org.scalajs.dom.raw.DragEffect
-import shipreq.base.util.{Memo, UnivEq, univEqOps}
-import shipreq.base.util.UnivEq.Implicits._
+import shipreq.base.util.Memo
+import shipreq.base.util.univeq._
 import shipreq.webapp.client.lib.DND
 import shipreq.webapp.client.lib.DomUtil._
 
@@ -37,7 +37,7 @@ object DragToReorder {
   private[DragToReorder] case object InParent       extends DragLoc
   private[DragToReorder] case class InChild(i: Int) extends DragLoc
 
-  private[DragToReorder] implicit def dragLocEquality: UnivEq[DragLoc] = UnivEq.deriveAuto
+  private[DragToReorder] implicit def dragLocEquality: UnivEq[DragLoc] = UnivEq.derive
 
   private[DragToReorder] var instanceCount = 0
 }

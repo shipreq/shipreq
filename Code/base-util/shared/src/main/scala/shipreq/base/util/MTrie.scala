@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import japgolly.univeq.UnivEq
 import scala.annotation.tailrec
 import scalaz.{Applicative, Order, Equal, Traverse}
 import scalaz.std.map.mapEqual

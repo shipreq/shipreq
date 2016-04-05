@@ -1,7 +1,8 @@
 package shipreq.webapp.base.text
 
 import monocle.Iso
-import shipreq.base.util.{NonEmptyVector, UnivEq}
+import shipreq.base.util.NonEmptyVector
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.{text => T}
 

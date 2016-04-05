@@ -4,6 +4,7 @@ import japgolly.scalajs.react._, vdom.prefix_<^._, MonocleReact._
 import japgolly.scalajs.react.experimental.StaticPropComponent
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.router.RouterCtl
+import japgolly.univeq._
 import monocle.Lens
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._

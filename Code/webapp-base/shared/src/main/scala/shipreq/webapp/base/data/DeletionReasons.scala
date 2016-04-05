@@ -2,7 +2,7 @@ package shipreq.webapp.base.data
 
 import nyaya.util.Multimap
 import shipreq.base.util.TaggedTypes.TaggedInt
-import shipreq.base.util.UnivEq
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.text.Text.DeletionReason
 import shipreq.webapp.base.text.Text.Equality._
 import DeletionReasons.ReqApplication
@@ -46,5 +46,5 @@ object DeletionReasons {
   def emptyReqApplication: ReqApplication =
     UnivEq.emptyMultimap
 
-  implicit def equality: UnivEq[DeletionReasons] = UnivEq.deriveAuto
+  implicit def equality: UnivEq[DeletionReasons] = UnivEq.derive
 }

@@ -10,10 +10,10 @@ import scala.scalajs.js
 import scalaz.{Equal, Semigroup, Monoid}
 import scalaz.std.map._
 import scalaz.syntax.semigroup._
-import shipreq.base.util.{UnivEq, Vector1}
+import shipreq.base.util.Vector1
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.util.ReqCodeTreeItem
-import UnivEq.Implicits._
 
 /**
  * Replacement values for a requirement at a specific row.

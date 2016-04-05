@@ -15,7 +15,8 @@ import scalaz.syntax.bind.ToBindOps
 import scalaz.syntax.equal._
 
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{MMTree, Memo, UnivEq, univEqOps}
+import shipreq.base.util.{MMTree, Memo}
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{TagId => Id, _}, DataImplicits._
 import shipreq.webapp.base.data.Validators.{tag => V}
 import shipreq.webapp.base.data.Validators.shared.HashRefKeyVS

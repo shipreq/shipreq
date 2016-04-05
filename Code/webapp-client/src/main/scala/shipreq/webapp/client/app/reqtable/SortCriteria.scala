@@ -4,8 +4,9 @@ import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
 import monocle.macros.Lenses
 import scala.annotation.tailrec
+import shipreq.base.util.NonEmptyVector
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{NonEmptyVector, UnivEq, univEqOps}
+import shipreq.base.util.univeq._
 
 sealed trait SortCriterion {
   def column: Column

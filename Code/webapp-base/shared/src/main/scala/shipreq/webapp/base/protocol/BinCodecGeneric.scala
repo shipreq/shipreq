@@ -6,6 +6,7 @@ import nyaya.util.{Multimap, MultiValues}
 import scalaz.{\/, -\/, \/-, \&/}
 import scalaz.Isomorphism.<=>
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import BoopickleMacros._
 
 object BinCodecGeneric extends BasicImplicitPicklers with TuplePicklers {

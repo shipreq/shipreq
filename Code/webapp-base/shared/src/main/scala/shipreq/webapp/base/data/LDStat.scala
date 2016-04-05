@@ -4,7 +4,7 @@ import scala.collection.{mutable, GenTraversable}
 import scalaz.{Monoid, Semigroup}
 import scalaz.std.anyVal.intInstance
 import scalaz.syntax.semigroup._
-import shipreq.base.util.UnivEq
+import shipreq.base.util.univeq._
 
 /**
  * Stats partitioned into Live & Dead.

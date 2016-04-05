@@ -24,7 +24,7 @@ object UseCaseStepUtils {
   implicit def univEqFakeStep: UnivEq[FakeStep] = UnivEq.derive
 
   def fakeStepEqByValue: Equal[FakeStep] =
-    univEqString.contramap((_: FakeStep).value)
+    Equal.equal[FakeStep](_.value ==* _.value)
 
   val TreeEqByFakeStepValue: Equal[VectorTree[FakeStep]] =
     VectorTree equalityForRoot fakeStepEqByValue

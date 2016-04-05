@@ -2,8 +2,8 @@ package shipreq.webapp.client.app.cfg.shared
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.ScalazReact._
+import japgolly.univeq.UnivEq
 import monocle.macros.Lenses
-import shipreq.base.util.UnivEq
 
 object TypicalStoresAndState {
   def apply[P, I](fields: FieldSet[P, I]) = new B[P, I, fields.type](fields)

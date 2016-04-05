@@ -2,7 +2,7 @@ package shipreq.webapp.base.data
 
 import monocle.macros.Lenses
 import shipreq.base.util.TaggedTypes._
-import shipreq.base.util.UnivEq
+import shipreq.base.util.univeq._
 
 final case class CustomIssueTypeId(value: Int) extends TaggedInt
 

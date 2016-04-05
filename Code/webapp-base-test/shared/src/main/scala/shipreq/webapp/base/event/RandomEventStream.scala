@@ -7,6 +7,7 @@ import scalaz.{-\/, BindRec}
 import shipreq.base.test.BaseUtilGen._
 import shipreq.base.test.IncCounter
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.hash._

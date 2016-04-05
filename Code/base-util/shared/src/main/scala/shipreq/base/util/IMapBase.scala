@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import japgolly.univeq.UnivEq
 import scala.annotation.elidable
 import scala.collection.GenTraversableOnce
 import scala.collection.generic.Subtractable

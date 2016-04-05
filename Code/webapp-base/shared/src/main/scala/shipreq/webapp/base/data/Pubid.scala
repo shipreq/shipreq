@@ -1,7 +1,7 @@
 package shipreq.webapp.base.data
 
 import nyaya.util.Multimap
-import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.base.util.TaggedTypes._
 
 /**

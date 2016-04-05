@@ -1,6 +1,6 @@
 package shipreq.webapp.base.protocol
 
-import shipreq.base.util.UnivEq, UnivEq.Implicits._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import boopickle._, BoopickleMacros._, BinCodecGeneric._, BinCodecData._, BinCodecEvents._, AtomPicklers.instances._

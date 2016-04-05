@@ -4,7 +4,7 @@ import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.extra._
 import scala.language.reflectiveCalls
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.UnivEq.Implicits._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.Validators.{customIssueType => V}
 import shipreq.webapp.base.data.Validators.shared.HashRefKeyVS

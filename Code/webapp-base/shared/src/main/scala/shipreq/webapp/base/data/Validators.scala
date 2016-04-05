@@ -7,7 +7,8 @@ import scalaz.std.stream._
 import scalaz.syntax.traverse._
 import shipreq.base.util.MTrie.Ops
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{Util, NonEmptyVector, UnivEq}
+import shipreq.base.util.{Util, NonEmptyVector}
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.ReqType.Mnemonic
 import shipreq.webapp.base.text.{Text, PlainText, Grammar}
 import shipreq.webapp.base.validation._

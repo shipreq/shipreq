@@ -7,6 +7,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.widgets.high.ProjectWidgets
 import shipreq.webapp.client.feature.{AsyncActionFeature, ContentEditorFeature}

@@ -7,6 +7,7 @@ import scalaz.Equal
 import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.text.Text, Text.Equality._
 import shipreq.webapp.base.util.Must._
 import DataImplicits._

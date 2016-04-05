@@ -1,10 +1,11 @@
 package shipreq.webapp.client.app.cfg.shared
 
 import japgolly.scalajs.react.ScalazReact._
+import japgolly.univeq._
 import monocle._
 import monocle.macros.GenLens
 import scalaz.Monad
-import shipreq.base.util.{UnivEq, IMap}
+import shipreq.base.util.IMap
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data.DataIdAux
 

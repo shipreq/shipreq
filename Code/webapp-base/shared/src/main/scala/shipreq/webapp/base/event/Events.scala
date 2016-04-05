@@ -2,12 +2,12 @@ package shipreq.webapp.base.event
 
 import nyaya.util.Multimap
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.util._
 import Text.{UseCaseStep => StepTitle, _}
 import Text.Equality._
-import UnivEq.Implicits._
 
 /**
  * A change to a [[Project]].

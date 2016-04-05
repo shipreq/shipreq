@@ -1,5 +1,7 @@
 package shipreq.base.util
 
+import japgolly.univeq.UnivEq
+
 /**
  * Record data as an effect for later retrieval. Mutable.
  *

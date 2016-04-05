@@ -6,7 +6,8 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.MonocleReact._
 import monocle.Lens
 import scala.annotation.elidable
-import shipreq.base.util.{Intersection, UnivEq}
+import shipreq.base.util.Intersection
+import shipreq.base.util.univeq._
 import shipreq.webapp.client.app.Assets
 import shipreq.webapp.client.data.TCB
 

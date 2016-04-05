@@ -9,6 +9,7 @@ import scalaz.{Equal, -\/, \/-, \/}
 import scalaz.syntax.bind.ToBindOps
 
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.Validators.{field => V}

@@ -7,7 +7,7 @@ import scalacss.ScalaCssReact._
 import scalaz.std.string.stringInstance
 import scalaz.std.tuple._
 
-import shipreq.base.util.UnivEq
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.data.Validators.{reqType => V}

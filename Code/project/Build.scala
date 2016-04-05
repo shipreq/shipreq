@@ -36,7 +36,7 @@ object ShipReq extends Build {
       .configureBoth(Common.macroModuleSettings)
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoTests))
-      .depsForBoth(Scalaz.core ++ Nyaya.util)
+      .depsForBoth(UnivEq.scalaz ++ Scalaz.core ++ Nyaya.util)
 
   lazy val baseUtilJvm = baseUtil.jvm
   lazy val baseUtilJs  = baseUtil.js
@@ -47,7 +47,7 @@ object ShipReq extends Build {
       .configureJs(Common.jsSettings(NoDom))
       .dependsOn(baseMacro)
       .depsForBoth(
-        Scalaz.effect ++ Nyaya.prop ++ Monocle.core ++
+        UnivEq.scalaz ++ Scalaz.effect ++ Nyaya.prop ++ Monocle.core ++
         testScope(μTest ++ Nyaya.test))
       .depsForJvm(
         SLF4J.api ++

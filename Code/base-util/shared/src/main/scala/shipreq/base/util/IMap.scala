@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import japgolly.univeq.UnivEq
 import monocle._
 import scalaz.{Applicative, Equal, Order, \/}
 import scalaz.std.option.toRight

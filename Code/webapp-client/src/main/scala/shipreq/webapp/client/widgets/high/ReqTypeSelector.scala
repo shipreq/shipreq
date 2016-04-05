@@ -5,6 +5,7 @@ import japgolly.scalajs.react.extra.{ExternalVar, Px}
 import japgolly.scalajs.react.vdom.prefix_<^._
 import org.scalajs.dom.raw.HTMLSelectElement
 import shipreq.base.util.NonEmptySet
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.data.{Enabled, TCB}

@@ -3,6 +3,7 @@ package shipreq.webapp.client.app.reqdetail
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
 import shipreq.base.util._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data
 import shipreq.webapp.base.data.CustomFieldId
 import shipreq.webapp.client.feature.ContentEditorFeature.EditFieldKey
@@ -36,7 +37,7 @@ object Cell {
   case class CustomField(id: CustomFieldId) extends Cell
 
   @inline implicit def equality: UnivEq[Cell] =
-    UnivEq.deriveAuto
+    UnivEq.derive
 
   implicit val reusability: Reusability[Cell] =
     Reusability.byEqual
