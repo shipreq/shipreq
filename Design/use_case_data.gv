@@ -2,31 +2,41 @@ digraph G {
 
 // =================================================================================================
 // Inheritence
+{
+node [style=filled fillcolor="#ffddff"]
 edge [style=dashed arrowhead=empty color=red]
 
 UseCaseId -> ReqId -> ReqOrSubReqId
 UseCaseStepId -> SubReqId -> ReqOrSubReqId
+}
 
 // =================================================================================================
 // Composition
+node [textalign=left fontname=monospace]
 edge [style=normal dir=back arrowtail=dot color=blue]
+
+
+UseCase           [label="UseCase\n\nid            : UseCaseId\lpos           : ReqTypePos\ltitle         : OptionalText\lstepsNA       : UseCaseSteps\lstepsE        : UseCaseSteps\lliveExplicitly: Live\l"]
+UseCases          [label="UseCases\n\nimap     : UseCaseIMap\lstepIndex: UseCases.StepIndex\lstepFlow : UseCases.StepFlow\l"]
+UseCaseStep       [label="UseCaseStep\n\nid   : UseCaseStepId\ltitle: OptionalText\l"]
+UseCaseSteps      [label="UseCaseSteps\n\ntree: UseCaseSteps.Tree"]
+UseCaseIMap       [label="UseCaseIMap\n\nIMap[UseCaseId, UseCase]"]
+UseCaseStepsTree  [label="UseCaseSteps.Tree\n\nVectorTree[UseCaseStep]"]
+UseCasesStepIndex [label="UseCases.StepIndex\n\nMap[UseCaseStepId, StepTreeKey]"]
+UseCasesStepFlow  [label="UseCases.StepFlow\n\nDigraph.BiDir[UseCaseStepId]"]
+StepTreeKey       [label="UseCases.StepTreeKey\n\nuseCaseId: UseCaseId\lfield    : StaticField.UseCaseStepTree\l"]
 
 UseCase -> UseCaseId
 UseCase -> UseCaseSteps [label="N+A"]
 UseCase -> UseCaseSteps [label="E"]
 
-UseCaseStepsTree [label="UseCaseSteps.Tree\nVectorTree[UseCaseStep]"]
 UseCaseSteps -> UseCaseStepsTree -> UseCaseStep -> UseCaseStepId
 
-UseCaseIMap
-UseCasesStepIndex [label="UseCases.StepIndex\nMap[UseCaseStepId, StepTreeKey]"]
-UseCasesStepFlow [label="UseCases.StepFlow\nDigraph.BiDir[UseCaseStepId]"]
 UseCases -> UseCaseIMap,UseCasesStepIndex,UseCasesStepFlow
 UseCaseIMap -> UseCase,UseCaseId
 UseCasesStepIndex -> UseCaseStepId,StepTreeKey
 UseCasesStepFlow -> UseCaseStepId
 
-StepTreeKey [label="UseCases.StepTreeKey"]
 StepTreeKey -> UseCaseId
 
 }
