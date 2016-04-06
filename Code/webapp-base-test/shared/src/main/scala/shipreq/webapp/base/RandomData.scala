@@ -806,8 +806,10 @@ object RandomData {
         )
 
       val ucs: UseCaseIMap = {
+        val uniqueIds = useCaseStepId.unique_!
+
         def stepGL(l: Live) =
-          useCaseStepId.unique_!.map(UseCaseStep(_, Vector.empty, l))
+          uniqueIds.map(UseCaseStep(_, Vector.empty, l))
 
         val stepG = live flatMap stepGL
 
@@ -989,11 +991,20 @@ object RandomData {
         val gLiveReqCodeGroup: Gen[LiveReqCodeGroup] =
           Gen.apply2(LiveReqCodeGroup.apply)(id, gGroupText)
 
+        val gDeadReqCodeGroup: Gen[DeadReqCodeGroup] =
+          Gen.apply2(DeadReqCodeGroup.apply)(id, gGroupText)
+
         val gDeadGroup: Gen[DeadGroup] =
-          Gen.apply2(DeadReqCodeGroup.apply)(id, gGroupText).option
+          gDeadReqCodeGroup.option
 
         val gInactive: Gen[Inactive] =
           Gen.apply2(Inactive.apply)(gDeadGroup, gReqInactive)
+            .flatMap(i =>
+              if (i.deadGroup.isEmpty && i.reqInactive.isEmpty)
+                gDeadReqCodeGroup.map(d => Inactive(Some(d), i.reqInactive))
+              else
+                Gen.pure(i)
+            )
 
         val gActiveGroup: Gen[ActiveGroup] =
           Gen.apply2(ActiveGroup.apply)(gLiveReqCodeGroup, gReqInactive)
@@ -1624,6 +1635,9 @@ object RandomData {
     val deleteUseCaseStep: Gen[DeleteUseCaseStep] =
       useCaseStepId map DeleteUseCaseStep
 
+    val restoreUseCaseStep: Gen[RestoreUseCaseStep] =
+      useCaseStepId map RestoreUseCaseStep
+
     val patchImplicationSrc: Gen[PatchImplicationSrc] =
       Gen.apply2(PatchImplicationSrc)(reqId, genNonEmptySetDiff(reqId))
 
@@ -1724,6 +1738,7 @@ object RandomData {
         case _: PatchReqTags          => patchReqTags
         case _: RepositionField       => repositionField
         case _: RestoreContent        => restoreContent
+        case _: RestoreUseCaseStep    => restoreUseCaseStep
         case _: SetCustomTextField    => setCustomTextField
         case _: SetGenericReqTitle    => setGenericReqTitle
         case _: SetGenericReqType     => setGenericReqType
