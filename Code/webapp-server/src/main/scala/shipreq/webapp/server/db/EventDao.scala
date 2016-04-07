@@ -219,8 +219,11 @@ object EventDbCodecs {
   implicit val pickleTagTreeChildren: ReadWriter[TagInTree.Children] =
     pickleTagId.vector
 
-  implicit val pickleVectorTreeParLoc: ReadWriter[VectorTree.ParentLocation] =
-    pickleInt.vectorNice
+  implicit val pickleVectorTreeParLoc: ReadWriter[VectorTree.ParentLocation] = {
+    val iso = VectorTree.ParentLocation.isoVector
+    val is = pickleInt.vectorNice
+    ReadWriter.xmap(iso.get)(iso.reverseGet)(is, is)
+  }
 
   private val reqCodeValueToString: ReqCode.Value => String =
     ReqCode.valueToStr(_, '.')

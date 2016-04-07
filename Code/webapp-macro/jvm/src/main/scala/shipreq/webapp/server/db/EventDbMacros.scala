@@ -341,10 +341,12 @@ class EventDbMacroImpls(val c: Context) extends MacroUtils with MPickleMacroUtil
       OptionalJsonObjectFieldHelper(q"nyaya.util.Multimap.empty: $t")
     else if (s matches "^shipreq.webapp.base.text.Text..+.OptionalText")
       OptionalJsonObjectFieldHelper(q"Vector.empty: $t")
+    else if (s endsWith "VectorTree.ParentLocation")
+      OptionalJsonObjectFieldHelper(q"shipreq.base.util.VectorTree.ParentLocation.Empty: $t")
     else if (!dealiased)
       optionalJsonObjectFieldHelper(t.dealias, true)
     else
-      fail(s"Don't know how to handle optional JSON field of type: $s")
+      fail(s"EventDbMacros doesn't know how create an empty: $s")
   }
 
   def quietRegistry[R: c.WeakTypeTag, W <: R: c.WeakTypeTag](typeIds: c.Expr[R => Short]): c.Expr[DbCodec.Registry[R, W]] = implRegistry[R, W](false)(typeIds)

@@ -10,6 +10,11 @@ import BoopickleMacros._
 
 object BinCodecData {
 
+  implicit val pickleVectorTreeLoc: Pickler[VectorTree.Location] = pickleNEV
+
+  implicit val pickleVectorTreeParentLoc: Pickler[VectorTree.ParentLocation] =
+    implicitly[Pickler[Vector[Int]]].imap(VectorTree.ParentLocation.isoVector)
+
   implicit val pickleLive         : Pickler[Live               ] = pickleBool(Live)
   implicit val pickleDirection    : Pickler[Direction          ] = pickleBool(Forwards)
   implicit val pickleImplRequired : Pickler[ImplicationRequired] = pickleBool(ImplicationRequired)

@@ -130,7 +130,7 @@ object VectorTreeTest extends TestSuite {
 
       def test(l: Int*)(expect: Option[VectorTree[Int]], subj: VectorTree[Int] = t): Unit =
         assertEq(l.mkString("."),
-          subj.modifyChildrenAt(l.toVector)(_.map(_.map(_ * 10))),
+          subj.modifyChildrenAt(ParentLocation fromVector l.toVector)(_.map(_.map(_ * 10))),
           expect)
 
       test(          )(Some(r(n(10, n(20, n(30))), n(90))))

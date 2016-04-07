@@ -9,6 +9,24 @@ import shipreq.webapp.base.text.{Grammar, Text}
 import Field.ApplicableReqTypes
 import ScalaExt._
 
+case class MakeEmpty[+A](empty: A) extends AnyVal
+
+object MakeEmpty {
+
+  implicit def emptyVTPL: MakeEmpty[VectorTree.ParentLocation] =
+    MakeEmpty(VectorTree.ParentLocation.Empty)
+
+  implicit def emptyVec[A]: MakeEmpty[Vector[A]] =
+    MakeEmpty(Vector.empty)
+
+  implicit def emptyList[A]: MakeEmpty[List[A]] =
+    MakeEmpty(Nil)
+
+  implicit def emptySet[A]: MakeEmpty[Set[A]] =
+    MakeEmpty(Set.empty)
+
+}
+
 trait UnsafeTypesLowPriority {
 //   implicit def autoSome[A, B](a: A)(implicit f: A => B): Option[B] = Some(f(a))
   implicit def autoSome[A](a: A): Option[A] = Some(a)
@@ -87,7 +105,7 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
   implicit def boolToMandatory(b: Boolean) = Mandatory <~ b
   implicit def boolToImplicationRequired(b: Boolean) = ImplicationRequired <~ b
 
-  def ∅[A](implicit cbf: CanBuildFrom[Nothing, Nothing, A]): A = cbf().result()
+  def ∅[A](implicit e: MakeEmpty[A]): A = e.empty
 
   def nesd[A: UnivEq](remove: A*)(add: A*): SetDiff.NE[A] = {
     val sd = SetDiff(removed = remove.toSet, add.toSet)

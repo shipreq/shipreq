@@ -11,6 +11,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.event._
+import VectorTree.LocationOps
 
 object UseCaseStepTreeTest extends TestSuite {
   import shipreq.webapp.base.data.{StaticField => SF}
@@ -61,7 +62,7 @@ object UseCaseStepTreeTest extends TestSuite {
       ( compare(f.canDelete(l),          DeleteUseCaseStep(id))
       & compare(f.canShiftLeft(l),       ShiftUseCaseStepLeft(id))
       & compare(f.canShiftRight(l, mdt), ShiftUseCaseStepRight(id))
-      & compare(f.canAdd(l),             AddUseCaseStep(nextStepId, uc.id, f, l.whole))
+      & compare(f.canAdd(l),             AddUseCaseStep(nextStepId, uc.id, f, l.asParentLoc))
       ).rename(s"${f.name} / $id / ${l.whole mkString "."}")
 
     def tree(f: UCF) = {

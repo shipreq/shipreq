@@ -318,7 +318,7 @@ trait ApplyContentEvent {
         _  ← ensureStepDoesntExist(step.id)
         uc ← ucIMap.need(e.ucId)
         _  ← ensureLiveReq(uc)
-        _  ← NonEmptyVector.maybe(e.at, append(uc))(insert(_, uc))
+        _  ← e.at.location.fold(append(uc))(insert(_, uc))
         _  ← postAddStep(e.ucId, e.id, e.field)
       } yield ()
     }

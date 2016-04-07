@@ -36,31 +36,32 @@ final case class VectorTree[+A](children: Children[A]) extends Parent[A] {
   def setChildren[B >: A](c: Children[B]): VectorTree[B] =
     VectorTree(c)
 
-  private def _modifyAt[B >: A, R](loc: ParentLocation)
+  private def _modifyAt[B >: A, R](ploc: ParentLocation)
                                   (mod: (Children[A], Int, Node[A]) => Option[Children[B]])
                                   (result: (Children[B], Node[A]) => R): Option[R] =
-    if (loc.isEmpty)
-      None
-    else {
-      val last = loc.length - 1
-      var old: Node[A] = null
+    ploc match {
+      case ParentLocation.Empty => None
+      case ParentLocation.At(locNE) =>
+        val loc = locNE.whole
+        val last = loc.length - 1
+        var old: Node[A] = null
 
-      @tailrec
-      def go[X](locInd: Int, ch: Children[A])(f: Children[B] => X): Option[X] = {
-        val i = loc(locInd)
-        if (ch isIndexValid i) {
-          val n = ch(i)
-          if (locInd == last) {
-            old = n
-            mod(ch, i, n) map f
+        @tailrec
+        def go[X](locInd: Int, ch: Children[A])(f: Children[B] => X): Option[X] = {
+          val i = loc(locInd)
+          if (ch isIndexValid i) {
+            val n = ch(i)
+            if (locInd == last) {
+              old = n
+              mod(ch, i, n) map f
+            } else
+              go(locInd + 1, n.children)(c2 => f(ch.updated(i, n.copy(children = c2))))
           } else
-            go(locInd + 1, n.children)(c2 => f(ch.updated(i, n.copy(children = c2))))
-        } else
-          None
-      }
+            None
+        }
 
-      go(0, children)(result(_, old))
-    }
+        go(0, children)(result(_, old))
+      }
 
   /**
    * @return `None` if nothing was changed.
@@ -75,22 +76,22 @@ final case class VectorTree[+A](children: Children[A]) extends Parent[A] {
    * @return `None` if nothing was changed.
    */
   def modifyChildrenAtA[B >: A](loc: ParentLocation)(f: Children[A] => Option[Children[B]]): Option[VectorTree[B]] =
-    _modifyAt[B, VectorTree[B]](loc :+ 0)((c, i, n) => f(c))((c, _) => VectorTree(c))
+    _modifyAt[B, VectorTree[B]](loc :+ 0 asParentLoc)((c, i, n) => f(c))((c, _) => VectorTree(c))
 
   def modifyNodeAt[B >: A](loc: Location)(f: Node[A] => Node[B]): Option[VectorTree[B]] =
-    _modifyAt[B, VectorTree[B]](loc.whole)((c, i, n) => Some(c.updated(i, f(n))))((c, _) => VectorTree(c))
+    _modifyAt[B, VectorTree[B]](loc.asParentLoc)((c, i, n) => Some(c.updated(i, f(n))))((c, _) => VectorTree(c))
 
   def modifyValueAt[B >: A](loc: Location)(f: A => B): Option[VectorTree[B]] =
     modifyNodeAt[B](loc)(n => n.copy(value = f(n.value)))
 
   def remove(loc: Location): Option[VectorTree[A]] =
-    _modifyAt(loc.whole)((c, i, _) => Some(c deleteOrNull i))((c, _) => VectorTree(c))
+    _modifyAt(loc.asParentLoc)((c, i, _) => Some(c deleteOrNull i))((c, _) => VectorTree(c))
 
   /**
    * The `O` suffix means "old", denoting that the old value is returned.
    */
   def removeNodeO(loc: Location): Option[(VectorTree[A], Node[A])] =
-    _modifyAt(loc.whole)((c, i, _) => Some(c deleteOrNull i))((c, o) => (VectorTree(c), o))
+    _modifyAt(loc.asParentLoc)((c, i, _) => Some(c deleteOrNull i))((c, o) => (VectorTree(c), o))
 
   def find(f: A => Boolean): Option[A] =
     locAndValueIterator((l, a) => if (f(a)) Some(a) else None).firstDefined
@@ -105,7 +106,7 @@ final case class VectorTree[+A](children: Children[A]) extends Parent[A] {
     locAndValueIterator((l, _) => l)
 
   def locAndValueIterator[B](f: (Location, A) => B): Iterator[B] =
-    childrenIterator(Vector.empty, f)
+    childrenIterator(ParentLocation.Empty, f)
 
   def subtreeLocAndValueIterator[B](rootIndices: TraversableOnce[Int], f: (Location, A) => B): Iterator[B] =
     rootIndices.toIterator.flatMap(i =>
@@ -154,7 +155,7 @@ final case class VectorTree[+A](children: Children[A]) extends Parent[A] {
       val w = at.whole
       val ip = w(at.length - 2)
       val ic = w(at.length - 1)
-      modifyChildrenAtA(w.dropRight(2))(ps =>
+      modifyChildrenAtA(ParentLocation fromVector w.dropRight(2))(ps =>
         ps.getFlatMap(ip)(p =>
           p.children.getFlatMap(ic) { c =>
             val left  = p.children take ic
@@ -274,7 +275,37 @@ object VectorTree extends VectorTreeLowPri {
 
   type Location = NonEmptyVector[Int]
 
-  type ParentLocation = Vector[Int]
+  sealed abstract class ParentLocation {
+    def :+(i: Int): Location
+    def isEmpty: Boolean
+    def location: Option[Location]
+  }
+
+  object ParentLocation {
+    case object Empty extends ParentLocation {
+      override def :+(i: Int) = NonEmptyVector one i
+      override def isEmpty    = true
+      override def location   = None
+    }
+    case class At(loc: Location) extends ParentLocation {
+      override def :+(i: Int) = loc :+ i
+      override def isEmpty    = false
+      override def location   = Some(loc)
+    }
+
+    implicit def univEq: UnivEq[ParentLocation] = UnivEq.derive
+
+    def fromVector(v: Vector[Int]): ParentLocation =
+      NonEmptyVector.maybe(v, Empty: ParentLocation)(At)
+
+    // Avoid putting toVector on ParLoc which encourages Vector prepending which uses another array chuck.
+    // toVector is only useful in codecs.
+    val isoVector: Iso[Vector[Int], ParentLocation] =
+      Iso(fromVector) {
+        case ParentLocation.Empty => Vector.empty
+        case ParentLocation.At(l) => l.whole
+      }
+  }
 
   def Location(head: Int, tail: Int*): Location =
     NonEmptyVector.varargs(head, tail: _*)
@@ -284,7 +315,10 @@ object VectorTree extends VectorTreeLowPri {
 
   @inline implicit class LocationOps(private val loc: Location) extends AnyVal {
     @inline def parent: ParentLocation =
-      loc.init
+      ParentLocation.fromVector(loc.init)
+
+    @inline def asParentLoc: ParentLocation =
+      ParentLocation.At(loc)
   }
 
   @inline def noChildren: Children[Nothing] =
@@ -400,10 +434,10 @@ object VectorTree extends VectorTreeLowPri {
           queue match {
             case Nil =>
               val n = children(index)
-              val p = NonEmptyVector.end(parent, index)
+              val p = parent :+ index
               val b = f(p, n.value)
               index += 1
-              val i = n.childrenIterator(p.whole, f)
+              val i = n.childrenIterator(p.asParentLoc, f)
               if (i.hasNext)
                 queue ::= i
               b
@@ -453,7 +487,7 @@ object VectorTree extends VectorTreeLowPri {
       Node(value, c)
 
     def locAndValueIterator[B](currentLocation: Location, f: (Location, A) => B): Iterator[B] =
-      Iterator.single(f(currentLocation, value)) ++ childrenIterator(currentLocation.whole, f)
+      Iterator.single(f(currentLocation, value)) ++ childrenIterator(currentLocation.asParentLoc, f)
 
     def lastLoc(loc: Location): Location =
       VectorTree.lastLoc(this, loc)

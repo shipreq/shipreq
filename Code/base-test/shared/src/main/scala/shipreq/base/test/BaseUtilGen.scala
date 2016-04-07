@@ -165,8 +165,10 @@ object BaseUtilGen {
     go(m)
   }
 
+  // -------------------------------------------------------------------------------------------------------------------
+  import VectorTree._
+
   def genVectorTree[A](genValue: Gen[A], maxDepth: Int)(implicit ss: SizeSpec): Gen[VectorTree[A]] = {
-    import VectorTree._
     def children(rem: Int): Gen[Children[A]] =
       if (rem == 0)
         Gen pure noChildren
@@ -175,17 +177,17 @@ object BaseUtilGen {
     children(maxDepth).map(VectorTree(_))
   }
 
-  def genVectorTreeLoc(implicit ss: SizeSpec): Gen[VectorTree.Location] =
+  def genVectorTreeLoc(implicit ss: SizeSpec): Gen[Location] =
     Gen.int.vector1(ss).map(NonEmptyVector.force)
 
-  def genVectorTreeParLoc(implicit ss: SizeSpec): Gen[VectorTree.ParentLocation] =
-    Gen.int.vector(ss)
+  def genVectorTreeParLoc(implicit ss: SizeSpec): Gen[ParentLocation] =
+    Gen.int.vector(ss).map(ParentLocation.fromVector)
 
   implicit class VectorTreeGenExt[A](private val tree: VectorTree[A]) extends AnyVal {
-    def genLocation: Option[Gen[VectorTree.Location]] =
+    def genLocation: Option[Gen[Location]] =
       Gen tryGenChoose tree.locIterator
 
-    def genParentLocation: Gen[VectorTree.ParentLocation] =
-      Gen chooseNE NonEmptyVector[VectorTree.ParentLocation](Vector.empty, tree.locIterator.map(_.whole).toVector)
+    def genParentLocation: Gen[ParentLocation] =
+      Gen chooseNE NonEmptyVector[ParentLocation](ParentLocation.Empty, tree.locIterator.map(_.asParentLoc).toVector)
   }
 }

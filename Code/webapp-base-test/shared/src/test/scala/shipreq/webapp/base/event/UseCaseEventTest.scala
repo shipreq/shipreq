@@ -39,6 +39,9 @@ object UseCaseEventTest extends TestSuite {
   val UC1 = expect()
   def V0 = Vector1(0)
 
+  implicit def autoVectorToParentLoc(v: Vector[Int]): VectorTree.ParentLocation =
+    VectorTree.ParentLocation fromVector v
+
   def addStepTo1 = AddUseCaseStep(4, 1, NCAC, ∅)
 
   def maxLenRange = 0 to AppConsts.useCaseStepsMaxLength

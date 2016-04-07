@@ -21,6 +21,7 @@ import shipreq.webapp.client.lib.DataReusability._
 import shipreq.webapp.client.protocol.{ServerCall, ClientProtocol}
 import shipreq.webapp.client.widgets.Checkbox
 import shipreq.webapp.client.widgets.high.{DeletionForm, ProjectWidgets}
+import VectorTree.LocationOps
 
 object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
   override protected def configureBackend = new Backend(_, _)
@@ -471,7 +472,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
               case Controls.Delete     => runAction(UpdateContentCmd.DeleteUseCaseStep    (step.id))
               case Controls.ShiftLeft  => runAction(UpdateContentCmd.ShiftUseCaseStepLeft (step.id))
               case Controls.ShiftRight => runAction(UpdateContentCmd.ShiftUseCaseStepRight(step.id))
-              case Controls.Add        => runAction(UpdateContentCmd.AddUseCaseStep(uc.id, f, loc.whole))
+              case Controls.Add        => runAction(UpdateContentCmd.AddUseCaseStep(uc.id, f, loc.asParentLoc))
             }
 
             val p = Controls.Props(delete     = f.canDelete(loc),
@@ -493,7 +494,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
         }).toReactNodeArray
 
         if (temp.tailStep) {
-          def cmd = UpdateContentCmd.AddUseCaseStep(uc.id, temp.field, Vector.empty)
+          def cmd = UpdateContentCmd.AddUseCaseStep(uc.id, temp.field, VectorTree.ParentLocation.Empty)
           val cb = runAction(cmd)
           val ctrls = Controls.addTailStep(cb).render
           x push <.div(*.container, ^.key := "TS", ctrls)
