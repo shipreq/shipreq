@@ -69,6 +69,9 @@ final class NonEmptyVector[+A](val head: A, val tail: Vector[A]) {
   def indices: Range =
     0 until length
 
+  def forall(f: A => Boolean): Boolean =
+    f(head) && tail.forall(f)
+
   def exists(f: A => Boolean): Boolean =
     f(head) || tail.exists(f)
 

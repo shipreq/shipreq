@@ -221,6 +221,34 @@ final case class VectorTree[+A](children: Children[A]) extends Parent[A] {
       Some(children(i).lastLoc(NonEmptyVector one i))
   }
 
+  def filter(f: A => NodeFilter): VectorTree[A] =
+    filterN(n => f(n.value))
+
+  def filterN(f: Node[A] => NodeFilter): VectorTree[A] =
+    if (children.isEmpty)
+      this
+    else
+      VectorTree(_filterChildren(f))
+
+  /**
+   * Partition locations.
+   *
+   * @return A map of current locations to would-be locations in a new vector tree.
+   *         Locations of removed items exist but map to dud (but unique and incremental) locations that contain a -1.
+   */
+  def partLocs(f: A => NodeFilter): Map[Location, Location] =
+    partLocsN(n => f(n.value))
+
+  def partLocsN(f: Node[A] => NodeFilter): Map[Location, Location] = {
+    var m = Map.empty[Location, Location]
+    import ParentLocation.{Empty => curLoc}
+    _partLocs(f, (a, b) => m = m.updated(a, b))(
+      cur = new IncLoc(curLoc),
+      bad = new IncLoc(curLoc :+ -1),
+      gud = new IncLoc(curLoc))
+    m
+  }
+
   def prettyPrintIndented(fmt: A => String = (_: A).toString,
                           indent: String = "  "): String =
     Util.quickSB(sb =>
@@ -319,6 +347,14 @@ object VectorTree extends VectorTreeLowPri {
 
     @inline def asParentLoc: ParentLocation =
       ParentLocation.At(loc)
+  }
+
+  sealed abstract class NodeFilter
+  object NodeFilter {
+    case object DiscardNodeAndChildren extends NodeFilter
+    case object KeepNode               extends NodeFilter
+    case object KeepNodeAndChildren    extends NodeFilter
+    implicit def univEq: UnivEq[NodeFilter] = UnivEq.derive
   }
 
   @inline def noChildren: Children[Nothing] =
@@ -473,7 +509,61 @@ object VectorTree extends VectorTreeLowPri {
 
       Dims(maxLength, maxDepth)
     }
+
+    protected final def _filterChildren(f: Node[A] => NodeFilter): Children[A] = {
+      val res = Vector.newBuilder[Node[A]]
+      children.foreach(n => f(n) match {
+        case NodeFilter.DiscardNodeAndChildren => ()
+        case NodeFilter.KeepNodeAndChildren    => res += n
+        case NodeFilter.KeepNode               => res += n.filterChildrenN(f)
+      })
+      res.result()
+    }
+
+    protected def _partLocs(f: Node[A] => NodeFilter, set: (Location, Location) => Unit)
+                           (cur: IncLoc, bad: IncLoc, gud: IncLoc): Unit = {
+      children.foreach { n =>
+        val curLoc = cur.next()
+        val hasChildren = n.children.nonEmpty
+
+        f(n) match {
+
+          case NodeFilter.KeepNode =>
+            val newLoc = gud.next()
+            set(curLoc, newLoc)
+            if (hasChildren)
+              n._partLocs(f, set)(
+                cur = new IncLoc(curLoc),
+                bad = new IncLoc(newLoc :+ -1),
+                gud = new IncLoc(newLoc))
+
+          case NodeFilter.DiscardNodeAndChildren =>
+            val newLoc = bad.next()
+            set(curLoc, newLoc)
+            if (hasChildren)
+              n._partLocs(alwaysDiscard, set)(
+                cur = new IncLoc(curLoc),
+                bad = new IncLoc(newLoc),
+                gud = null) // Using alwaysDiscard; null is safe.
+
+          case NodeFilter.KeepNodeAndChildren =>
+            val newLoc = gud.next()
+            set(curLoc, newLoc)
+            if (hasChildren)
+              n._partLocs(alwaysKeep, set)(
+                cur = new IncLoc(curLoc),
+                bad = null, // Using alwaysKeep; null is safe.
+                gud = new IncLoc(newLoc))
+        }
+      }
+    }
   }
+
+  private val alwaysDiscard: Any => NodeFilter =
+    _ => NodeFilter.DiscardNodeAndChildren
+
+  private val alwaysKeep: Any => NodeFilter =
+    _ => NodeFilter.KeepNodeAndChildren
 
   // ===================================================================================================================
 
@@ -491,6 +581,24 @@ object VectorTree extends VectorTreeLowPri {
 
     def lastLoc(loc: Location): Location =
       VectorTree.lastLoc(this, loc)
+
+    def filterChildren(f: A => NodeFilter): Node[A] =
+      filterChildrenN(n => f(n.value))
+
+    def filterChildrenN(f: Node[A] => NodeFilter): Node[A] =
+      if (children.isEmpty)
+        this
+      else
+        Node(value, _filterChildren(f))
+  }
+
+  private final class IncLoc(parent: ParentLocation) {
+    def this(loc: Location) = this(loc.asParentLoc)
+    private[this] var i = -1
+    def next(): Location = {
+      i += 1
+      parent :+ i
+    }
   }
 
   // ===================================================================================================================
