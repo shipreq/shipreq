@@ -78,7 +78,7 @@ object ShipReq extends Build {
         .settings(scalacOptions in Compile ~= removeValues("-deprecation"))
         .settings(scalacOptions in Compile += "-nowarn"))
       .configureJvm(_
-        .deps(providedScope(scalaTest ++ Specs2.combo))
+        .deps(providedScope(Specs2.combo))
         .dependsOn(baseDb % "provided"))
 
   // ===================================================================================================================
