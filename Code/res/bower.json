@@ -12,8 +12,11 @@
     "zeroclipboard": "*",
     "jquery.livequery": "*",
     "jquery.ui": "~1.10",
-    "react": "0.14.x",
+    "react": "15.x",
     "katex": "*",
     "react-collapse": "https://npmcdn.com/react-collapse/bower.zip"
+  },
+  "resolutions": {
+    "react": "15.x"
   }
 }
