@@ -96,18 +96,18 @@ object VectorTreeTest extends TestSuite {
   def filterAndPartLocs: PV =
     Prop.eval[VTI](t => testFilterAndPartLocsE(t, t.partLocs(filterInt)))
 
-  def testFilterAndPartLocsE(t: VectorTree[Int], m: Map[Location, Location]): EvalL = {
+  def testFilterAndPartLocsE(t: VectorTree[Int], m: Map[Location, PartialLocation]): EvalL = {
     val E = EvalOver(t)
     val k = t.filter(filterInt)
 
     val origToFiltered =
-      E.forall(m.iterator.filter(_._2.forall(_ >= 0)).toList) { case (l1, l2) =>
+      E.forall(m.iterator.filter(_._2.validity :: Valid).toList) { case (l1, l2) =>
         val orig = t.at(l1).map(_.value)
         E.test("Key exists in orig: " + l1, orig.isDefined) &
-        E.equal(s"$l1 → $l2", k.at(l2).map(_.value), expect = orig)
+        E.equal(s"$l1 → $l2", k.at(l2.value).map(_.value), expect = orig)
       }
 
-    val goodToOrigLoc = m.iterator.map(_.swap).toMap
+    val goodToOrigLoc = m.iterator.map { case (l, p) => (p.value, l) }.toMap
 
     val filteredToOrig =
       E.forall(k.locAndValueIterator((loc, v) => (loc, v)).toList) { case (loc, v) =>
@@ -132,7 +132,7 @@ object VectorTreeTest extends TestSuite {
       origToFiltered ∧ filteredToOrig ∧ filterEqualsRemove
   }
 
-  def testFilterAndPartLocs(t: VectorTree[Int], m: Map[Location, Location]): Unit =
+  def testFilterAndPartLocs(t: VectorTree[Int], m: Map[Location, PartialLocation]): Unit =
     () assertSatisfies Prop.eval(_ => testFilterAndPartLocsE(t, m))
 
 
@@ -168,10 +168,12 @@ object VectorTreeTest extends TestSuite {
           .toVector
 
     def loc: Location =
-      NonEmptyVector force
-        str.split('.').iterator
-          .map(s => if (s == "X") -1 else s.toInt)
-          .toVector
+      NonEmptyVector force str.split('.').iterator.map(_.toInt).toVector
+
+    def xloc: PartialLocation =
+      PartialLocation(
+        NonEmptyVector force
+          str.split('.').iterator.map(s => if (s == "X") -1 else s.toInt).toVector)
   }
 
   override def tests = TestSuite {
@@ -205,12 +207,12 @@ object VectorTreeTest extends TestSuite {
 
         val m = t.partLocs(filterInt)
         assertMap(m, Map(
-          "0".loc -> "0".loc,
-          "1".loc -> "X.0".loc,
-          "2".loc -> "1".loc,
-          "3".loc -> "X.1".loc,
-          "4".loc -> "X.2".loc,
-          "5".loc -> "2".loc))
+          "0".loc -> "0"  .xloc,
+          "1".loc -> "X.0".xloc,
+          "2".loc -> "1"  .xloc,
+          "3".loc -> "X.1".xloc,
+          "4".loc -> "X.2".xloc,
+          "5".loc -> "2"  .xloc))
         testFilterAndPartLocs(t, m)
       }
 
@@ -222,31 +224,31 @@ object VectorTreeTest extends TestSuite {
 
         val m = t.partLocs(filterInt)
         assertMap(m, Map(
-          "0"  .loc -> "0"    .loc,
-          "0.0".loc -> "0.0"  .loc,
-          "0.1".loc -> "0.X.0".loc,
-          "0.2".loc -> "0.X.1".loc,
-          "0.3".loc -> "0.1"  .loc,
-          "1"  .loc -> "X.0"  .loc,
-          "1.0".loc -> "X.0.0".loc,
-          "1.1".loc -> "X.0.1".loc,
-          "1.2".loc -> "X.0.2".loc,
-          "1.3".loc -> "X.0.3".loc,
-          "2"  .loc -> "X.1"  .loc,
-          "2.0".loc -> "X.1.0".loc,
-          "2.1".loc -> "X.1.1".loc,
-          "2.2".loc -> "X.1.2".loc,
-          "2.3".loc -> "X.1.3".loc,
-          "3"  .loc -> "1"    .loc,
-          "3.0".loc -> "1.0"  .loc,
-          "3.1".loc -> "1.X.0".loc,
-          "3.2".loc -> "1.X.1".loc,
-          "3.3".loc -> "1.1"  .loc,
-          "4"  .loc -> "X.2"  .loc,
-          "4.0".loc -> "X.2.0".loc,
-          "4.1".loc -> "X.2.1".loc,
-          "4.2".loc -> "X.2.2".loc,
-          "4.3".loc -> "X.2.3".loc))
+          "0"  .loc -> "0"    .xloc,
+          "0.0".loc -> "0.0"  .xloc,
+          "0.1".loc -> "0.X.0".xloc,
+          "0.2".loc -> "0.X.1".xloc,
+          "0.3".loc -> "0.1"  .xloc,
+          "1"  .loc -> "X.0"  .xloc,
+          "1.0".loc -> "X.0.0".xloc,
+          "1.1".loc -> "X.0.1".xloc,
+          "1.2".loc -> "X.0.2".xloc,
+          "1.3".loc -> "X.0.3".xloc,
+          "2"  .loc -> "X.1"  .xloc,
+          "2.0".loc -> "X.1.0".xloc,
+          "2.1".loc -> "X.1.1".xloc,
+          "2.2".loc -> "X.1.2".xloc,
+          "2.3".loc -> "X.1.3".xloc,
+          "3"  .loc -> "1"    .xloc,
+          "3.0".loc -> "1.0"  .xloc,
+          "3.1".loc -> "1.X.0".xloc,
+          "3.2".loc -> "1.X.1".xloc,
+          "3.3".loc -> "1.1"  .xloc,
+          "4"  .loc -> "X.2"  .xloc,
+          "4.0".loc -> "X.2.0".xloc,
+          "4.1".loc -> "X.2.1".xloc,
+          "4.2".loc -> "X.2.2".xloc,
+          "4.3".loc -> "X.2.3".xloc))
         testFilterAndPartLocs(t, m)
       }
     }

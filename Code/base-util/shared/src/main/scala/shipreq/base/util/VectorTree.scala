@@ -242,11 +242,11 @@ final case class VectorTree[+A](children: Children[A]) extends Parent[A] {
    * @return A map of current locations to would-be locations in a new vector tree.
    *         Locations of removed items exist but map to dud (but unique and incremental) locations that contain a -1.
    */
-  def partLocs(f: A => NodeFilter): Map[Location, Location] =
+  def partLocs(f: A => NodeFilter): Map[Location, PartialLocation] =
     partLocsN(n => f(n.value))
 
-  def partLocsN(f: Node[A] => NodeFilter): Map[Location, Location] = {
-    var m = Map.empty[Location, Location]
+  def partLocsN(f: Node[A] => NodeFilter): Map[Location, PartialLocation] = {
+    var m = Map.empty[Location, PartialLocation]
     import ParentLocation.{Empty => curLoc}
     _partLocs(f, (a, b) => m = m.updated(a, b))(
       cur = new IncLoc(curLoc),
@@ -309,6 +309,17 @@ object VectorTree extends VectorTreeLowPri {
 
   type Location = NonEmptyVector[Int]
 
+  def Location(head: Int, tail: Int*): Location =
+    NonEmptyVector.varargs(head, tail: _*)
+
+  @inline implicit class LocationOps(private val loc: Location) extends AnyVal {
+    @inline def parent: ParentLocation =
+      ParentLocation.fromVector(loc.init)
+
+    @inline def asParentLoc: ParentLocation =
+      ParentLocation.At(loc)
+  }
+
   sealed abstract class ParentLocation {
     def :+(i: Int): Location
     def isEmpty: Boolean
@@ -341,18 +352,24 @@ object VectorTree extends VectorTreeLowPri {
       }
   }
 
-  def Location(head: Int, tail: Int*): Location =
-    NonEmptyVector.varargs(head, tail: _*)
+  /**
+   * Partial location.
+   *
+   * The value may be a normal [[Location]] that points to a tree node,
+   * or it may include a -1 value to indicate that a node used to exist at a similar location but is now removed.
+   */
+  final case class PartialLocation(value: Location) extends AnyVal {
+    def validity: Validity =
+      Invalid <~ value.exists(_ < 0)
 
-  val root: Location =
-    NonEmptyVector one 0
-
-  @inline implicit class LocationOps(private val loc: Location) extends AnyVal {
-    @inline def parent: ParentLocation =
-      ParentLocation.fromVector(loc.init)
-
-    @inline def asParentLoc: ParentLocation =
-      ParentLocation.At(loc)
+    def total: Option[Location] =
+      validity match {
+        case Valid   => Some(value)
+        case Invalid => None
+      }
+  }
+  object PartialLocation {
+    implicit def univEq: UnivEq[PartialLocation] = UnivEq.derive
   }
 
   sealed abstract class NodeFilter
@@ -362,6 +379,9 @@ object VectorTree extends VectorTreeLowPri {
     case object KeepNodeAndChildren    extends NodeFilter
     implicit def univEq: UnivEq[NodeFilter] = UnivEq.derive
   }
+
+  val root: Location =
+    NonEmptyVector one 0
 
   @inline def noChildren: Children[Nothing] =
     Vector.empty
@@ -526,7 +546,7 @@ object VectorTree extends VectorTreeLowPri {
       res.result()
     }
 
-    protected def _partLocs(f: Node[A] => NodeFilter, set: (Location, Location) => Unit)
+    protected def _partLocs(f: Node[A] => NodeFilter, set: (Location, PartialLocation) => Unit)
                            (cur: IncLoc, bad: IncLoc, gud: IncLoc): Unit = {
       children.foreach { n =>
         val curLoc = cur.next()
@@ -536,7 +556,7 @@ object VectorTree extends VectorTreeLowPri {
 
           case NodeFilter.KeepNode =>
             val newLoc = gud.next()
-            set(curLoc, newLoc)
+            set(curLoc, PartialLocation(newLoc))
             if (hasChildren)
               n._partLocs(f, set)(
                 cur = new IncLoc(curLoc),
@@ -544,17 +564,17 @@ object VectorTree extends VectorTreeLowPri {
                 gud = new IncLoc(newLoc))
 
           case NodeFilter.DiscardNodeAndChildren =>
-            val newLoc = bad.next()
+            val newLoc = PartialLocation(bad.next())
             set(curLoc, newLoc)
             if (hasChildren)
               n._partLocs(alwaysDiscard, set)(
                 cur = new IncLoc(curLoc),
-                bad = new IncLoc(newLoc),
+                bad = new IncLoc(newLoc.value),
                 gud = null) // Using alwaysDiscard; null is safe.
 
           case NodeFilter.KeepNodeAndChildren =>
             val newLoc = gud.next()
-            set(curLoc, newLoc)
+            set(curLoc, PartialLocation(newLoc))
             if (hasChildren)
               n._partLocs(alwaysKeep, set)(
                 cur = new IncLoc(curLoc),
