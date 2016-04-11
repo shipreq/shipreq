@@ -1,11 +1,16 @@
 {
   "name": "react-height",
-  "version": "1.1.0",
+  "version": "2.1.0",
   "description": "Component-wrapper to determine and report children elements height",
-  "main": "react-height.js",
+  "main": [
+    "build/react-height.js",
+    "build/react-height.js.map",
+    "build/react-height.min.js",
+    "build/react-height.min.js.map"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/bower-registry/react-height.git"
+    "url": "https://github.com/nkbt/react-height.git"
   },
   "keywords": [
     "component",
@@ -20,7 +25,7 @@
   "license": "MIT",
   "homepage": "https://github.com/nkbt/react-height",
   "dependencies": {
-    "react": "^0.13 || ^0.14"
+    "react": "^0.14"
   },
   "ignore": [
     "**/.*",
@@ -29,13 +34,11 @@
     "test",
     "tests"
   ],
-  "_release": "1.1.0",
-  "_resolution": {
-    "type": "version",
-    "tag": "v1.1.0",
-    "commit": "dc4fd1b006b4ab5c44c7569f10d8da3399b4cb86"
+  "_cacheHeaders": {
+    "Content-Length": "16468",
+    "Content-Type": "application/zip; charset=utf-8"
   },
-  "_source": "git://github.com/bower-registry/react-height.git",
-  "_target": "^1.0.0",
-  "_originalSource": "react-height"
+  "_source": "https://npmcdn.com/react-height@^2/bower.zip",
+  "_target": "*",
+  "_originalSource": "https://npmcdn.com/react-height@^2/bower.zip"
 }

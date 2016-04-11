@@ -1,6 +1,6 @@
 {
   "name": "react-collapse",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Component-wrapper for collapse animation with react-motion for elements with variable (and dynamic) height",
   "main": [
     "build/react-collapse.js",
@@ -39,11 +39,10 @@
     "tests"
   ],
   "_cacheHeaders": {
-    "Content-Length": "22700",
+    "Content-Length": "23073",
     "Content-Type": "application/zip; charset=utf-8"
   },
   "_source": "https://npmcdn.com/react-collapse/bower.zip",
   "_target": "*",
-  "_originalSource": "https://npmcdn.com/react-collapse/bower.zip",
-  "_direct": true
+  "_originalSource": "https://npmcdn.com/react-collapse/bower.zip"
 }

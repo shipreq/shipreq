@@ -62,7 +62,7 @@ final class PreviewFeature[S, K]($: CompState.Access[S], lens: Lens[S, State[K]]
 
   def onBlur(k: K): Callback =
     $.state.flatMap(s =>
-      Callback.ifTrue(lens.get(s) exists hasKey(k),
+      Callback.when(lens.get(s) exists hasKey(k))(
         $.setState(lens.set(None)(s))))
 
   def onEdit(k: K): Callback =

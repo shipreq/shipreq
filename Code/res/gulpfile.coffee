@@ -86,7 +86,7 @@ devProdJs 'ws:project', 'project.js', (f) ->
     f(cfg_bower + 'react/react-dom-server')
     f(cfg_bower + 'jquery-textcomplete/dist/jquery.textcomplete')
     cfg_bower + 'react-motion/build/react-motion.js'
-    cfg_bower + 'react-height/react-height.js'
+    cfg_bower + 'react-height/build/react-height.js'
     f(cfg_bower + 'react-collapse/build/react-collapse')
   ]
 
@@ -113,11 +113,11 @@ gulp.task 'wc:testjs', ->
   nonRetardedSrc [
         cfg_bower + 'jquery/dist/jquery.min.js'
         cfg_bower + 'jquery-textcomplete/dist/jquery.textcomplete.min.js'
-        cfg_bower + 'react/react-with-addons.js'
+        cfg_bower + 'react/react-with-addons.js' # not .min because TestUtils is needed
         cfg_bower + 'react/react-dom.min.js'
         cfg_bower + 'react/react-dom-server.min.js'
         cfg_bower + 'react-motion/build/react-motion.js'
-        cfg_bower + 'react-height/react-height.js'
+        cfg_bower + 'react-height/build/react-height.min.js'
         cfg_bower + 'react-collapse/build/react-collapse.min.js'
       ]
     .pipe concat 'shipreq-client-test.js'

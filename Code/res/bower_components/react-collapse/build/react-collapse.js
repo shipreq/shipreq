@@ -7,7 +7,7 @@
 		exports["ReactCollapse"] = factory(require("react"), require("react-motion"), require("react-height"));
 	else
 		root["ReactCollapse"] = factory(root["React"], root["ReactMotion"], root["ReactHeight"]);
-})(this, function(__WEBPACK_EXTERNAL_MODULE_2__, __WEBPACK_EXTERNAL_MODULE_7__, __WEBPACK_EXTERNAL_MODULE_8__) {
+})(this, function(__WEBPACK_EXTERNAL_MODULE_2__, __WEBPACK_EXTERNAL_MODULE_6__, __WEBPACK_EXTERNAL_MODULE_7__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -68,21 +68,21 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 	
-	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-	
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
+	
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 	
 	var _react = __webpack_require__(2);
 	
 	var _react2 = _interopRequireDefault(_react);
 	
-	var _reactAddonsPureRenderMixin = __webpack_require__(3);
+	var _ReactComponentWithPureRenderMixin = __webpack_require__(3);
 	
-	var _reactMotion = __webpack_require__(7);
+	var _reactMotion = __webpack_require__(6);
 	
-	var _reactHeight = __webpack_require__(8);
+	var _reactHeight = __webpack_require__(7);
 	
 	var _reactHeight2 = _interopRequireDefault(_reactHeight);
 	
@@ -122,7 +122,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.setState({ isOpenedChanged: isOpened !== this.props.isOpened });
 	  },
 	
-	  shouldComponentUpdate: _reactAddonsPureRenderMixin.shouldComponentUpdate,
+	
+	  shouldComponentUpdate: _ReactComponentWithPureRenderMixin.shouldComponentUpdate,
 	
 	  onHeightReady: function onHeightReady(height) {
 	    if (this.renderStatic && this.props.isOpened) {
@@ -135,6 +136,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var isOpened = _props.isOpened;
 	    var springConfig = _props.springConfig;
 	    var isOpenedChanged = this.state.isOpenedChanged;
+	
 	
 	    var newHeight = isOpened ? Math.max(0, parseFloat(height)).toFixed(1) : stringHeight(0);
 	
@@ -155,7 +157,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var style = _props2.style;
 	    var children = _props2.children;
 	    var fixedHeight = _props2.fixedHeight;
-	    var springConfig = _props2.springConfig;
+	    var _ = _props2.springConfig;
 	    var keepCollapsedContent = _props2.keepCollapsedContent;
 	
 	    var props = _objectWithoutProperties(_props2, ['isOpened', 'style', 'children', 'fixedHeight', 'springConfig', 'keepCollapsedContent']);
@@ -201,15 +203,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	    );
 	  },
-	  renderHeightReporter: function renderHeightReporter() {
-	    var children = this.props.children;
-	
-	    return _react2.default.createElement(
-	      _reactHeight2.default,
-	      { onHeightReady: this.onHeightReady },
-	      children
-	    );
-	  },
 	  render: function render() {
 	    var _this2 = this;
 	
@@ -218,7 +211,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var style = _props3.style;
 	    var children = _props3.children;
 	    var fixedHeight = _props3.fixedHeight;
-	    var springConfig = _props3.springConfig;
+	    var _ = _props3.springConfig;
 	    var keepCollapsedContent = _props3.keepCollapsedContent;
 	
 	    var props = _objectWithoutProperties(_props3, ['isOpened', 'style', 'children', 'fixedHeight', 'springConfig', 'keepCollapsedContent']);
@@ -237,7 +230,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	
 	    // Cache Content so it is not re-rendered on each animation step
-	    var content = this.renderHeightReporter();
+	    var content = _react2.default.createElement(
+	      _reactHeight2.default,
+	      { onHeightReady: this.onHeightReady },
+	      children
+	    );
 	
 	    if (renderStatic) {
 	      var newStyle = { overflow: 'hidden', height: isOpened ? 'auto' : 0 };
@@ -307,14 +304,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(4);
-
-/***/ },
-/* 4 */
-/***/ function(module, exports, __webpack_require__) {
-
 	/**
-	 * Copyright 2013-2015, Facebook, Inc.
+	 * Copyright 2013-present, Facebook, Inc.
 	 * All rights reserved.
 	 *
 	 * This source code is licensed under the BSD-style license found in the
@@ -326,11 +317,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	'use strict';
 	
-	var shallowCompare = __webpack_require__(5);
+	var shallowCompare = __webpack_require__(4);
 	
 	/**
 	 * If your React component's render function is "pure", e.g. it will render the
-	 * same result given the same props and state, provide this Mixin for a
+	 * same result given the same props and state, provide this mixin for a
 	 * considerable performance boost.
 	 *
 	 * Most React components have pure render functions.
@@ -361,11 +352,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = ReactComponentWithPureRenderMixin;
 
 /***/ },
-/* 5 */
+/* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * Copyright 2013-2015, Facebook, Inc.
+	 * Copyright 2013-present, Facebook, Inc.
 	 * All rights reserved.
 	 *
 	 * This source code is licensed under the BSD-style license found in the
@@ -377,7 +368,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	'use strict';
 	
-	var shallowEqual = __webpack_require__(6);
+	var shallowEqual = __webpack_require__(5);
 	
 	/**
 	 * Does a shallow comparison for props and state.
@@ -390,25 +381,42 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = shallowCompare;
 
 /***/ },
-/* 6 */
+/* 5 */
 /***/ function(module, exports) {
 
 	/**
-	 * Copyright 2013-2015, Facebook, Inc.
+	 * Copyright (c) 2013-present, Facebook, Inc.
 	 * All rights reserved.
 	 *
 	 * This source code is licensed under the BSD-style license found in the
 	 * LICENSE file in the root directory of this source tree. An additional grant
 	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
-	 * @providesModule shallowEqual
 	 * @typechecks
 	 * 
 	 */
 	
+	/*eslint-disable no-self-compare */
+	
 	'use strict';
 	
 	var hasOwnProperty = Object.prototype.hasOwnProperty;
+	
+	/**
+	 * inlined Object.is polyfill to avoid requiring consumers ship their own
+	 * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is
+	 */
+	function is(x, y) {
+	  // SameValue algorithm
+	  if (x === y) {
+	    // Steps 1-5, 7-10
+	    // Steps 6.b-6.e: +0 != -0
+	    return x !== 0 || 1 / x === 1 / y;
+	  } else {
+	    // Step 6.a: NaN == NaN
+	    return x !== x && y !== y;
+	  }
+	}
 	
 	/**
 	 * Performs equality by iterating through keys on an object and returning false
@@ -416,7 +424,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Returns true when the values of all keys are strictly equal.
 	 */
 	function shallowEqual(objA, objB) {
-	  if (objA === objB) {
+	  if (is(objA, objB)) {
 	    return true;
 	  }
 	
@@ -432,9 +440,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	
 	  // Test for A's keys different from B.
-	  var bHasOwnProperty = hasOwnProperty.bind(objB);
 	  for (var i = 0; i < keysA.length; i++) {
-	    if (!bHasOwnProperty(keysA[i]) || objA[keysA[i]] !== objB[keysA[i]]) {
+	    if (!hasOwnProperty.call(objB, keysA[i]) || !is(objA[keysA[i]], objB[keysA[i]])) {
 	      return false;
 	    }
 	  }
@@ -445,16 +452,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = shallowEqual;
 
 /***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	module.exports = __WEBPACK_EXTERNAL_MODULE_6__;
+
+/***/ },
 /* 7 */
 /***/ function(module, exports) {
 
 	module.exports = __WEBPACK_EXTERNAL_MODULE_7__;
-
-/***/ },
-/* 8 */
-/***/ function(module, exports) {
-
-	module.exports = __WEBPACK_EXTERNAL_MODULE_8__;
 
 /***/ }
 /******/ ])

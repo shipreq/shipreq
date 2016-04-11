@@ -43,7 +43,7 @@ final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
       case class ColumnDom(outer: HtmlDomZipperAt[html.Label]) {
         val checkbox = outer("input").domAs[html.Input]
         val on       = On <~ checkbox.checked
-        val name     = outer(">span").innerHTML
+        val name     = outer.innerText
       }
 
       val entirety: Vector[ColumnDom] =

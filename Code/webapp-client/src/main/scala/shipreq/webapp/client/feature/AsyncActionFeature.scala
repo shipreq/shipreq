@@ -283,7 +283,7 @@ object AsyncActionFeature {
           new Impl($, i2 composeIntersection j, i1)
 
         override def setD1s(ks: Iterable[B2], value: => D0.State[F]): Callback =
-          Callback.ifTrue(ks.nonEmpty,
+          Callback.unless(ks.isEmpty)(
             $.modState { s =>
               val v = value
               ks.foldLeft(s)((q, b) => i2.reverse.fold(b, q.mod(_, _ setD1 v)) {

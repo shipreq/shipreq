@@ -1,8 +1,9 @@
 package shipreq.webapp.client.app.cfg.issues
 
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.test._
-import scalaz.std.anyVal._
+import org.scalajs.dom.html
 import shipreq.webapp.base.protocol.{CustomIssueTypeCrud, RemoteFn}
 import shipreq.webapp.base.test.SampleProject
 import shipreq.webapp.client.app.cfg.shared.Usage
@@ -26,7 +27,7 @@ object CustomIssueTypesTest extends TestSuite {
     def assertNoErrors() = assertEq("Error tag count", 0, errors.length)
     def assertError()    = assertEq("Error tag count", 1, errors.length)
 
-    val i = sole(Sizzle(":text[value=TO"+"DO]", c))
+    val i = sole(Sizzle(":text", c).filter(_.domCast[html.Input].value == "TO"+"DO"))
     assertNoErrors()
 
     // Uniqueness should extend over tag keys
