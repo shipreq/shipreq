@@ -22,11 +22,16 @@ package object test
     Display(_.describeLoc)
 
   import japgolly.scalajs.react._
+  import japgolly.scalajs.react.test._
 
-  def removeReactIds(html: String): String = // TODO Remove
-    html.replaceAll(""" data-reactid=".*?"""", "")
+  // TODO Move into DomZipper (?)
+  val _htmlCommentRegex = "<!--.*?-->".r
+
+  // TODO Move into scalajs-react (?)
+  val scrubReactHtml: String => String =
+    s => ReactTestUtils removeReactDataAttr _htmlCommentRegex.replaceAllIn(s, "")
 
   def reactDomZipper[D <: TopNode](c: CompScope.Mounted[D]): DomZipperAt[D] =
     DomZipper("React component", c.getDOMNode()) // TODO Can't we use .displayName?
-      .scrubHtml(removeReactIds)
+      .scrubHtml(scrubReactHtml)
 }

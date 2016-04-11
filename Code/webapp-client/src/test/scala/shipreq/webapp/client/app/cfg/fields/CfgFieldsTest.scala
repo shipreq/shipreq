@@ -2,9 +2,11 @@ package shipreq.webapp.client.app.cfg.fields
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
+import scala.scalajs.js.JSConverters._
+import org.scalajs.dom.Element
+import org.scalajs.dom.html.Input
 import scalaz.{Equal, \/-}
 import utest._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.{FieldCrud, RemoteFn}
@@ -70,11 +72,17 @@ object CfgFieldsTest extends TestSuite {
     assert(getNewRow.isEmpty)
 
     // Delete newly saved row
-    Simulation.click run sole(Sizzle("tr:has(:text[value=blahh]) button:contains('Delete')", c))
+    // Simulation.click run sole(Sizzle("tr:has(:text[value=blahh]) button:contains('Delete')", c))
+    Simulation.click run sole(
+      Sizzle("tr:has(:text)", c)
+        .toArray
+        .filter(Sizzle(":text", _).toArray.exists(_.domCast[Input].value == "blahh"))
+        .flatMap(Sizzle("button:contains('Delete')", _).toArray[Element])
+        .toJSArray)
     cp.assertReqsSent(2)
     cp.respondToLast(remote)(
       verifyEvents(clientData.project)(DeleteCustomField(666.CFText, Delete)))
 
-    assertEq(html, initialView)
+    assertEq(scrubReactHtml(html), scrubReactHtml(initialView))
   }
 }

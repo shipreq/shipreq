@@ -36,7 +36,7 @@ object AutoCompleteFeature {
                                          strategies: TextComplete.Strategies,
                                          onUpdate  : => (String => Callback))
                                         (implicit E: TextEditor.OfType[E]): Callback =
-    Callback.ifTrue(strategies.nonEmpty, Callback {
+    Callback.unless(strategies.isEmpty)(Callback {
       val tgt = js.Dynamic.global.$(target)
       TextComplete(tgt, strategies)
       TextComplete.onSelect(tgt) {
