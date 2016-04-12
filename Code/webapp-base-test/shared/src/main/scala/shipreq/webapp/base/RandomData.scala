@@ -489,6 +489,12 @@ object RandomData {
       v
     }
 
+    def useCaseStepRefs(s: Option[Gen[UseCaseStepId]])(implicit t: UseCaseStepRef): Vector[Gen[t.Atom]] = {
+      var v = Vector.empty[Gen[t.Atom]]
+      s.foreach(v :+= _ map t.UseCaseStepRef)
+      v
+    }
+
     def tagRef(g: Gen[ApplicableTagId])(implicit t: TagRef): Gen[t.TagRef] =
       g map t.TagRef
 
@@ -507,6 +513,7 @@ object RandomData {
       case _: Literal         # Literal
          | _: ReqRef          # ReqRef
          | _: ReqRef          # CodeRef
+         | _: UseCaseStepRef  # UseCaseStepRef
          | _: Issue           # Issue
          | _: PlainTextMarkup # WebAddress
          | _: PlainTextMarkup # EmailAddress
@@ -525,10 +532,10 @@ object RandomData {
     def noWhitespaceRight(a: String) = a + "r"
 
     val removeFromLiteralsR = {
-      val reqRefInside = """(?:[a-zA-Z]+\s*(?:-\s*)?\d+)"""
+      val reqOrStepRefInside = """(?:[a-zA-Z]+\s*(?:-\s*)?(?:\d+|X)(?:\s*\.\s*(?:\d+|X))*)"""
       val codeNode = """(?:[a-zA-Z0-9][a-zA-Z0-9_]*)"""
       val codeRefInside = s"(?:$codeNode(?:\\.$codeNode)*)"
-      ("""[#@]+|[a-z]://|\*( )|<math>|\[\s*(?:""" + s"$reqRefInside|$codeRefInside)\\s*\\]").r
+      ("""[#@]+|[a-z]://|\*( )|<math>|\[\s*(?:""" + s"$reqOrStepRefInside|$codeRefInside)\\s*\\]").r
     }
     def removeFromLiterals[L <: Literal#Literal](l: L): L =
       l.map(removeFromLiteralsR.replaceAllIn(_, "*$1"))
