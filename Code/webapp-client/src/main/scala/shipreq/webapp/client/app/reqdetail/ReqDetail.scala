@@ -119,9 +119,9 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
                                 leftIsDownAt: VectorTree.Location => Boolean,
                                 rightIsUpAt : VectorTree.Location => Boolean,
                                 tailStep    : Boolean) = {
-        val t = field.useCaseStepTree.get(uc)
-        val i = filter(t)
-        Temp(field, t, i, defaultFirst, leftIsDownAt, rightIsUpAt, tailStep)
+        val s = field.useCaseSteps.get(uc)
+        val i = filter(s.tree)
+        Temp(field, s, i, defaultFirst, leftIsDownAt, rightIsUpAt, tailStep)
       }
 
       val stepsN = stepTreeProps(
@@ -154,16 +154,19 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
         case uc: UseCase => Some(new UseCaseData(uc))
         case _           => None
       }
+
+    val useCaseStepFilter: VectorTree.PartialLocation => Boolean =
+      filterDead.filterFnA(Live whenValid _.validity)
   }
 
   case class Temp(field       : StaticField.UseCaseStepTree,
-                  tree        : UseCaseSteps.Tree,
+                  steps       : UseCaseSteps,
                   filter      : Range,
                   defaultFirst: Text.UseCaseTitle.OptionalText,
                   leftIsDownAt: VectorTree.Location => Boolean,
                   rightIsUpAt : VectorTree.Location => Boolean,
                   tailStep    : Boolean) {
-    val mdt = tree.maxDepthTree
+    val mdt = steps.tree.maxDepthTree
   }
 
   // TODO Better performance if cells are (components + shouldComponentRender) or cached
@@ -430,17 +433,26 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
         var first = temp.defaultFirst.nonEmpty
 
-        val x = temp.tree.subtreeLocAndValueIterator(temp.filter, (loc, step) => {
+        val x = temp.steps.tree.subtreeLocAndValueIterator[ReactTag](temp.filter, (loc, step) => {
 
-          val fullStepLabel = temp.field.stepLabel(pos, loc, mnemonicPrefix = false)
+          val partialLoc = temp.steps.partialLocs.forward(loc)
+          if (data.useCaseStepFilter(partialLoc)) {
+
+          val fullStepLabel = temp.field.stepLabel(pos, partialLoc, mnemonicPrefix = false)
 
           def header = {
-            val short = if (loc.length == 1)
-                fullStepLabel
-              else
-                temp.field.stepLabelsPerLevel(loc.length - 1).label(loc.last)
+            val depth = partialLoc.value.length // ≥ 1
+
+            val short = if (depth == 1)
+              fullStepLabel
+            else {
+              // Last node asserted to be ≥ 0 in PartialLocation
+              val i = partialLoc.value.last
+              temp.field.stepLabelsPerLevel(depth - 1).label(i)
+            }
+
             <.div(
-              *.header(loc.length - 1),
+              *.header(depth - 1),
               stepLabel,
               ^.title := fullStepLabel,
               short + ".")
@@ -490,8 +502,11 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
             header,
             body,
             ctrls)
-
-        }).toReactNodeArray
+        } else
+            null
+        })
+          .filter(_ ne null)
+          .toReactNodeArray
 
         if (temp.tailStep) {
           def cmd = UpdateContentCmd.AddUseCaseStep(uc.id, temp.field, VectorTree.ParentLocation.Empty)

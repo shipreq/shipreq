@@ -229,6 +229,8 @@ object UseCaseEventTest extends TestSuite {
     }
 
     'deleteUseCaseStep {
+      // That deletion is soft and restorable is tested in EventPropTests
+
       def create3 = Vector[ActiveEvent](
         emptyUC1,                                 // 1.0
         AddUseCaseStep(7, 1, NCAC, V0),           // 1.0.1
@@ -242,7 +244,7 @@ object UseCaseEventTest extends TestSuite {
       'notRootN      - assertFail("root")(emptyUC1, DeleteUseCaseStep(1))
       'okRootE       - testSteps(AddUseCaseStep(6, 1, EC, ∅), DeleteUseCaseStep(6))("0")()
 
-      'cascadeToFlow - {
+      'retainsFlow - {
         val es = create3 ++ Seq(
           AddUseCaseStep(9, 1, NCAC, V0),                 // add 1.1
           UpdateUseCaseStep(1, ^.FlowOut(nesd()(7))),     // 1.0     → [1.0.1]
@@ -251,17 +253,22 @@ object UseCaseEventTest extends TestSuite {
           UpdateUseCaseStep(9, ^.FlowOut(nesd()(1))),     // 1.1     → [1.0]
           DeleteUseCaseStep(7))                           // del 1.0.1
         val p = _assertPass(es: _*)
-        val e = UseCases.StepFlow.emptyUniDir.addPairs(9 -> 1) // 1.1 → [1.0]
-              .add(1, 0).delkv(0) // TODO temp hack. Fix Nyaya to remove keys with empty values.
+        val e = UseCases.StepFlow.emptyUniDir
+                  .addvs(1, Set(7))     // 1.0     → [1.0.1]
+                  .addvs(7, Set(9))     // 1.0.1   → [1.1]
+                  .addvs(8, Set(1,7,9)) // 1.0.1.a → [1.0, 1.0.1, 1.1]
+                  .addvs(9, Set(1))     // 1.1     → [1.0]
         assertEq(p.reqs.useCases.stepFlow.forwards, e)
       }
     }
+
+    // 'restoreUseCaseStep - tested in EventPropTests
 
     'updateUseCaseStep {
       'title {
         'ok {
           val p = _assertPass(emptyUC1, addStepTo1, setStepTitle4)
-          assertEq(p.reqs.useCases.imap.need(1).stepsNA.tree.find(_.id.value ==* 4).get.title, someStepText)
+          assertEq(p.reqs.useCases.imap.need(1).stepsNA.tree.findValue(_.id.value ==* 4).get.title, someStepText)
         }
         'stepNotFound - assertFail("found")(setStepTitle4)
         'ucIsDead     - assertFail("dead")(emptyUC1, addStepTo1, delUC1, setStepTitle4)

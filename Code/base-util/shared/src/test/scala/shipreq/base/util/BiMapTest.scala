@@ -5,12 +5,12 @@ import utest._
 object BiMapTest extends TestSuite {
   override def tests = TestSuite {
     "Adding & retrieving" - {
-      val b = new BiMapBuilder[String,Int]
+      val b = BiMap.newBuilder[String, Int]
       b += ("Three" -> 3)
       b("Two") = 2
-      val m = b.result
-      assert(m.ba(3) == "Three")
-      assert(m.ab("Two") == 2)
+      val m = b.result()
+      assert(m.backward(3) == "Three")
+      assert(m.forward("Two") == 2)
     }
   }
 }

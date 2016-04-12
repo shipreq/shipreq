@@ -9,6 +9,11 @@ import shipreq.webapp.base.util._
 import Text.{UseCaseStep => StepTitle, _}
 import Text.Equality._
 
+// TODO Redo events.
+// Remove DeletionAction - unnecessary coupling, makes harder to enable/disable feature, search by key in DB, etc.
+// Add vs Create.
+// Instead of VerbNoun it would be probably be better to have NounVerb.
+
 /**
  * A change to a [[Project]].
  *
@@ -189,6 +194,7 @@ case class UpdateUseCaseStep    (id: UseCaseStepId, vs: UseCaseStepGD.NonEmptyVa
 case class ShiftUseCaseStepLeft (id: UseCaseStepId)                                   extends ActiveEvent
 case class ShiftUseCaseStepRight(id: UseCaseStepId)                                   extends ActiveEvent
 case class DeleteUseCaseStep    (id: UseCaseStepId)                                   extends ActiveEvent
+case class RestoreUseCaseStep   (id: UseCaseStepId)                                   extends ActiveEvent
 
 // =====================================================================================================================
 // Content: ReqCode groups

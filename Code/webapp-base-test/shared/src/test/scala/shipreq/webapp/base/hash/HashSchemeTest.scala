@@ -97,17 +97,17 @@ object HashSchemeTest extends TestSuite {
         0x36b43113 ~ CfgReqTypes,
         0x7e949e3c ~ CfgTags,
         0x7801ef17 ~ Config,
-        0x7b08fe4b ~ Content,
+        0xcdffe5df ~ Content,
         0x17af358b ~ DeletionReasons,
         0x8090fed8 ~ GenericReqs,
         0x34c6056e ~ ImplicationData,
         0x719d13b1 ~ PubidRegister,
         0x6f1d8f9b ~ ReqCodes,
-        0xced74d4f ~ Reqs,
+        0x46717e98 ~ Reqs,
         0x174ee061 ~ TagData,
         0xcef27507 ~ TextFieldData,
-        0x08f463b3 ~ UseCases,
-        0x84b0a450 ~ WholeProject)
+        0x73fb17ff ~ UseCases,
+        0xaf320bd1 ~ WholeProject)
     }
   }
 }

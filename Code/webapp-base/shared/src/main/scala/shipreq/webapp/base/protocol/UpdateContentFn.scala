@@ -35,6 +35,7 @@ object UpdateContentCmd {
   case class ShiftUseCaseStepLeft (id: UseCaseStepId) extends ForUseCaseStep
   case class ShiftUseCaseStepRight(id: UseCaseStepId) extends ForUseCaseStep
   case class DeleteUseCaseStep    (id: UseCaseStepId) extends ForUseCaseStep
+  case class RestoreUseCaseStep   (id: UseCaseStepId) extends ForUseCaseStep
 
   implicit val equalForUseCaseStep  : UnivEq[ForUseCaseStep  ] = UnivEq.derive
   implicit val equalUpdateContentCmd: UnivEq[UpdateContentCmd] = UnivEq.derive
@@ -55,6 +56,7 @@ object UpdateContentCmd {
   implicit val pickleShiftUseCaseStepLeft : Pickler[ShiftUseCaseStepLeft ] = pickleCaseClass
   implicit val pickleShiftUseCaseStepRight: Pickler[ShiftUseCaseStepRight] = pickleCaseClass
   implicit val pickleDeleteUseCaseStep    : Pickler[DeleteUseCaseStep    ] = pickleCaseClass
+  implicit val pickleRestoreUseCaseStep   : Pickler[RestoreUseCaseStep   ] = pickleCaseClass
   implicit val pickleCmd                  : Pickler[UpdateContentCmd     ] = pickleADT
 }
 

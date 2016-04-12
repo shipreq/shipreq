@@ -376,6 +376,9 @@ object MakeEvent {
       case UpdateContentCmd.DeleteUseCaseStep(id) =>
         DeleteUseCaseStep(id)
 
+      case UpdateContentCmd.RestoreUseCaseStep(id) =>
+        RestoreUseCaseStep(id)
+
       case UpdateContentCmd.ShiftUseCaseStepLeft(id) =>
         ShiftUseCaseStepLeft(id)
 

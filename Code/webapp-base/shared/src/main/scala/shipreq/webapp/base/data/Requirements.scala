@@ -145,8 +145,19 @@ final case class UseCase(id            : UseCaseId,
   override def allowLiveChange(customReqTypes: CustomReqTypeIMap): Permission =
     Allow
 
+  // Every use case has a mandatory UC-N.0 step
+  def rootStep: UseCaseStep =
+    stepsNA.tree.children.head.value
+
   def stepIterator: Iterator[UseCaseStep] =
     stepsNA.tree.valueIterator ++ stepsE.tree.valueIterator
+
+//  def stepIteratorLive(liveFilter: Live): Iterator[UseCaseStep] =
+//    stepIteratorFiltered((_, l) => l :: liveFilter)
+
+  def stepIteratorFiltered(f: (UseCaseStep, Live) => Boolean): Iterator[UseCaseStep] =
+    stepsNA.tree.valueIterator.filter(s => f(s, s.live(stepsNA))) ++
+    stepsE .tree.valueIterator.filter(s => f(s, s.live(stepsE )))
 }
 
 object UseCase {
@@ -167,7 +178,13 @@ object UseCase {
 case class UseCaseStepId(value: Int) extends SubReqId
 
 @Lenses
-case class UseCaseStep(id: UseCaseStepId, title: Text.UseCaseStep.OptionalText)
+case class UseCaseStep(id            : UseCaseStepId,
+                       title         : Text.UseCaseStep.OptionalText,
+                       liveExplicitly: Live) {
+
+  def live(enclosingTree: UseCaseSteps): Live =
+    Live whenValid enclosingTree.stepPartialLocs.get(id).validity
+}
 
 object UseCaseStep {
   object IdAccess extends ObjDataId[UseCaseStep.type, UseCaseStep, UseCaseStepId] {
@@ -177,11 +194,29 @@ object UseCaseStep {
   implicit def equality: UnivEq[UseCaseStep] = UnivEq.derive
 }
 
+/**
+ * A tree of steps. Can correspond to one (EC) or more (NC + AC) fields.
+ */
 @Lenses
 case class UseCaseSteps(tree: UseCaseSteps.Tree) {
-//  lazy val withCtx: UseCaseStepWithCtx.ByStep =
-//    UseCaseStepWithCtx.emptyByStep ++
-//      tree.locAndValueIterator(UseCaseStepWithCtx.apply)
+  import VectorTree.{Location, PartialLocation}
+
+  lazy val stepLocs: BiMap[UseCaseStepId, Location] = {
+    val b = BiMap.newBuilder[UseCaseStepId, Location]
+    tree.foreach((l, s) => b.update(s.id, l))
+    b.result()
+  }
+
+  lazy val partialLocs: BiMap[Location, PartialLocation] =
+    BiMap(tree.partLocs(step =>
+      step.liveExplicitly match {
+        case Live => VectorTree.NodeFilter.KeepNode
+        case Dead => VectorTree.NodeFilter.DiscardNodeAndChildren
+      }
+    ))
+
+  lazy val stepPartialLocs: Iso[UseCaseStepId, PartialLocation] =
+    stepLocs.iso_! ^<-> partialLocs.iso_!
 }
 
 object UseCaseSteps {
@@ -192,35 +227,11 @@ object UseCaseSteps {
     UseCaseSteps(VectorTree.empty)
 
   def emptyRoot(id: UseCaseStepId): UseCaseSteps =
-    single(UseCaseStep(id, Text.UseCaseStep.empty))
+    single(UseCaseStep(id, Text.UseCaseStep.empty, Live))
 
   def single(s: UseCaseStep): UseCaseSteps =
     UseCaseSteps(VectorTree single s)
 }
-
-///**
-// * A [[UseCaseStep]] with context that clarifies it when viewed from at project-level, rather than the use-case-level.
-// *
-// * Always generated; never stored.
-// */
-//case class UseCaseStepWithCtx(loc: VectorTree.Location, step: UseCaseStep) {
-//  @inline def stepId = step.id
-//
-////  def label(mnemonicPrefix: Boolean): String =
-////    field.stepLabel(useCase.pos, loc, mnemonicPrefix)
-//}
-//
-//object UseCaseStepWithCtx {
-//  object IdAccess extends ObjDataId[UseCaseStepWithCtx.type, UseCaseStepWithCtx, UseCaseStepId] {
-//    override def id(d: UseCaseStepWithCtx) = d.stepId
-//    override val unapplyData: AnyRef => Option[UseCaseStepWithCtx] = {case r: UseCaseStepWithCtx => Some(r); case _ => None}
-//  }
-//
-//  type ByStep = IMap[UseCaseStepId, UseCaseStepWithCtx]
-//
-//  val emptyByStep: ByStep =
-//    IMap.empty(_.stepId)
-//}
 
 /**
  * @param stepIndex An index of all [[UseCaseStep]]s and the static portions of their locations.

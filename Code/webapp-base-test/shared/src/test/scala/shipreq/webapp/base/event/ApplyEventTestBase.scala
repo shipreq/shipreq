@@ -110,6 +110,7 @@ object ApplyEventTestFns {
          | _: PatchReqCodes
          | _: PatchReqTags
          | _: RepositionField
+         | _: RestoreUseCaseStep
          | _: SetCustomTextField
          | _: SetGenericReqTitle
          | _: SetGenericReqType

@@ -452,11 +452,18 @@ class ApplicableEventGen(p: Project) {
       g.map(id =>
         DeleteTag(id, deletionAction(cfg.tags.get(id).fold[Live](Live)(_.tag.live)))))
 
+  private def deletableRestorableUseCaseSteps(liveFilter: Live) =
+    liveUseCaseIterator.flatMap(uc =>
+      uc.stepIteratorFiltered((s, l) => l :: liveFilter && s.id !=* uc.rootStep.id))
+
   def deleteUseCaseStep: Option[Gen[DeleteUseCaseStep]] = {
-    val ids = liveUseCaseIterator.flatMap(uc =>
-      uc.stepsE.tree.valueIterator.map(_.id) ++
-      uc.stepsNA.tree.valueIterator.map(_.id).filter(_ !=* uc.stepsNA.tree.children.head.value.id))
+    val ids = deletableRestorableUseCaseSteps(Live).map(_.id)
     Gen.tryGenChooseLazily(ids).map(_ map DeleteUseCaseStep)
+  }
+
+  def restoreUseCaseStep: Option[Gen[RestoreUseCaseStep]] = {
+    val ids = deletableRestorableUseCaseSteps(Live).map(_.id)
+    Gen.tryGenChooseLazily(ids).map(_ map RestoreUseCaseStep)
   }
 
   private def patchImplications[A](cmd: (ReqId, SetDiff.NE[ReqId]) => A, dir: Direction): Option[Gen[A]] =
@@ -677,6 +684,7 @@ class ApplicableEventGen(p: Project) {
       case _: PatchReqTags          => patchReqTags
       case _: RepositionField       => repositionField
       case _: RestoreContent        => restoreContent
+      case _: RestoreUseCaseStep    => restoreUseCaseStep
       case _: SetCustomTextField    => setCustomTextField
       case _: SetGenericReqTitle    => setGenericReqTitle
       case _: SetGenericReqType     => setGenericReqType

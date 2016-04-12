@@ -3,6 +3,7 @@ package shipreq.base.util
 import nyaya.gen._
 import nyaya.prop._
 import nyaya.test.PropTest._
+import scala.annotation.tailrec
 import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.BaseUtilGen._
@@ -88,8 +89,55 @@ object VectorTreeTest extends TestSuite {
     })
   }
 
+  val filterInt: Int => NodeFilter =
+    i => if (i > 0) NodeFilter.KeepNode else NodeFilter.DiscardNodeAndChildren
+
+
+  def filterAndPartLocs: PV =
+    Prop.eval[VTI](t => testFilterAndPartLocsE(t, t.partLocs(filterInt)))
+
+  def testFilterAndPartLocsE(t: VectorTree[Int], m: Map[Location, PartialLocation]): EvalL = {
+    val E = EvalOver(t)
+    val k = t.filter(filterInt)
+
+    val origToFiltered =
+      E.forall(m.iterator.filter(_._2.validity :: Valid).toList) { case (l1, l2) =>
+        val orig = t.at(l1).map(_.value)
+        E.test("Key exists in orig: " + l1, orig.isDefined) &
+        E.equal(s"$l1 → $l2", k.at(l2.value).map(_.value), expect = orig)
+      }
+
+    val goodToOrigLoc = m.iterator.map { case (l, p) => (p.value, l) }.toMap
+
+    val filteredToOrig =
+      E.forall(k.locAndValueIterator((loc, v) => (loc, v)).toList) { case (loc, v) =>
+        E.equal(s"$v @ $loc", Some(v), t.at(goodToOrigLoc(loc)).map(_.value))
+      }
+
+//      k.locAndValueIterator((loc, v) =>
+//        E.equal(s"$v @ $loc", Some(v), t.at(goodToOrigLoc(loc)).map(_.value))
+//      ).foldLeft(E.pass)(_ & _)
+
+    val filterEqualsRemove = {
+      @tailrec def go(vt: VTI): VTI =
+        vt.findLoc(_ <= 0) match {
+          case Some(l) => go(vt.remove(l).get)
+          case None    => vt
+        }
+      val removed = go(t)
+      E.equal("filtered = each removed", k, removed)
+    }
+
+    E.equal("output size", m.size, t.locIterator.size) ∧ E.distinct("output", m.values) ∧
+      origToFiltered ∧ filteredToOrig ∧ filterEqualsRemove
+  }
+
+  def testFilterAndPartLocs(t: VectorTree[Int], m: Map[Location, PartialLocation]): Unit =
+    () assertSatisfies Prop.eval(_ => testFilterAndPartLocsE(t, m))
+
+
   def props: PV = "VectorTree props" rename_: (
-    valueIterator ∧ nodeValueIterator ∧ locAndValueIterator ∧ dims ∧ canShift ∧ maxDepthTree)
+    valueIterator ∧ nodeValueIterator ∧ locAndValueIterator ∧ dims ∧ canShift ∧ maxDepthTree ∧ filterAndPartLocs)
 
   // ===================================================================================================================
 
@@ -111,12 +159,21 @@ object VectorTreeTest extends TestSuite {
   }
 
   implicit class StrExt(private val str: String) extends AnyVal {
-    def toLoc: Location =
+    /** from the olden days. Expects UC# prefix, uses labels */
+    def ucLoc: Location =
       NonEmptyVector force
         str.split('.').iterator
           .drop(1)
           .zipWithIndex.map { case (s, level) => Labels(level).parse(s).get }
           .toVector
+
+    def loc: Location =
+      NonEmptyVector force str.split('.').iterator.map(_.toInt).toVector
+
+    def xloc: PartialLocation =
+      PartialLocation.detect(
+        NonEmptyVector force
+          str.split('.').iterator.map(s => if (s == "X") -1 else s.toInt).toVector)
   }
 
   override def tests = TestSuite {
@@ -141,6 +198,61 @@ object VectorTreeTest extends TestSuite {
       test(          )(None, r())
     }
 
+    'partLoc {
+      val l = Node(1, Vector.empty)
+      val d = Node(0, Vector.empty)
+
+      "1" - {
+        val t = VectorTree(Vector(l, d, l, d, d, l))
+
+        val m = t.partLocs(filterInt)
+        assertMap(m, Map(
+          "0".loc -> "0"  .xloc,
+          "1".loc -> "X.0".xloc,
+          "2".loc -> "1"  .xloc,
+          "3".loc -> "X.1".xloc,
+          "4".loc -> "X.2".xloc,
+          "5".loc -> "2"  .xloc))
+        testFilterAndPartLocs(t, m)
+      }
+
+      "2" - {
+        val lddl = Vector(l, d, d, l)
+        val l2 = Node(1, lddl)
+        val d2 = Node(0, lddl)
+        val t = VectorTree(Vector(l2, d2, d2, l2, d2))
+
+        val m = t.partLocs(filterInt)
+        assertMap(m, Map(
+          "0"  .loc -> "0"    .xloc,
+          "0.0".loc -> "0.0"  .xloc,
+          "0.1".loc -> "0.X.0".xloc,
+          "0.2".loc -> "0.X.1".xloc,
+          "0.3".loc -> "0.1"  .xloc,
+          "1"  .loc -> "X.0"  .xloc,
+          "1.0".loc -> "X.0.0".xloc,
+          "1.1".loc -> "X.0.1".xloc,
+          "1.2".loc -> "X.0.2".xloc,
+          "1.3".loc -> "X.0.3".xloc,
+          "2"  .loc -> "X.1"  .xloc,
+          "2.0".loc -> "X.1.0".xloc,
+          "2.1".loc -> "X.1.1".xloc,
+          "2.2".loc -> "X.1.2".xloc,
+          "2.3".loc -> "X.1.3".xloc,
+          "3"  .loc -> "1"    .xloc,
+          "3.0".loc -> "1.0"  .xloc,
+          "3.1".loc -> "1.X.0".xloc,
+          "3.2".loc -> "1.X.1".xloc,
+          "3.3".loc -> "1.1"  .xloc,
+          "4"  .loc -> "X.2"  .xloc,
+          "4.0".loc -> "X.2.0".xloc,
+          "4.1".loc -> "X.2.1".xloc,
+          "4.2".loc -> "X.2.2".xloc,
+          "4.3".loc -> "X.2.3".xloc))
+        testFilterAndPartLocs(t, m)
+      }
+    }
+
     // =================================================================================================================
     'insertAfter {
       import Steps._
@@ -155,7 +267,7 @@ object VectorTreeTest extends TestSuite {
 
       "tree is in initial state (1.0 & 1.0.1)" - {
         "insert before 1.0.1" -
-          test("1.0".toLoc, InitialTree,
+          test("1.0".ucLoc, InitialTree,
             """
               |1.0. Step:1.0
               |  1. N
@@ -163,7 +275,7 @@ object VectorTreeTest extends TestSuite {
             """.stripMargin)
 
         "insert after 1.0.1" -
-          test("1.0.1".toLoc, InitialTree,
+          test("1.0.1".ucLoc, InitialTree,
             """
               |1.0. Step:1.0
               |  1. Step:1
@@ -173,7 +285,7 @@ object VectorTreeTest extends TestSuite {
 
       "tree is in state: 1.0 & 1.1" - {
         "creates 1.0.1 after 1.0" -
-          test("1.0".toLoc, Tree_10_11,
+          test("1.0".ucLoc, Tree_10_11,
             """
               |1.0. Step:1.0
               |  1. N
@@ -181,7 +293,7 @@ object VectorTreeTest extends TestSuite {
             """.stripMargin)
 
         "creates 1.1.1 after 1.1" -
-          test("1.1".toLoc, Tree_10_11,
+          test("1.1".ucLoc, Tree_10_11,
             """
               |1.0. Step:1.0
               |1.1. Step:1.1
@@ -191,7 +303,7 @@ object VectorTreeTest extends TestSuite {
 
       "BigTree" - {
         "inserting after 1.0 (lvl 0) should create 1.0.1" -
-          test("1.0".toLoc, BigTree,
+          test("1.0".ucLoc, BigTree,
             """
               |1.0. Step:1.0
               |  1. N
@@ -220,7 +332,7 @@ object VectorTreeTest extends TestSuite {
             """.stripMargin)
 
         "inserting after 1.0.2 (lvl 1) should create 1.0.2.a" -
-          test("1.0.2".toLoc, BigTree,
+          test("1.0.2".ucLoc, BigTree,
             """
               |1.0. Step:1.0
               |  1. Step:1
@@ -249,7 +361,7 @@ object VectorTreeTest extends TestSuite {
             """.stripMargin)
 
         "inserting after 1.0.2.a (lvl 2) should create 1.0.2.a.i" -
-          test("1.0.2.a".toLoc, BigTree,
+          test("1.0.2.a".ucLoc, BigTree,
             """
               |1.0. Step:1.0
               |  1. Step:1
@@ -278,7 +390,7 @@ object VectorTreeTest extends TestSuite {
             """.stripMargin)
 
         "inserting after 1.0.2.a.i (lvl 3) should create 1.0.2.a.ii" -
-          test("1.0.2.a.i".toLoc, BigTree,
+          test("1.0.2.a.i".ucLoc, BigTree,
             """
               |1.0. Step:1.0
               |  1. Step:1
@@ -307,7 +419,7 @@ object VectorTreeTest extends TestSuite {
             """.stripMargin)
 
         "inserting after 1.0.2.c.ii (lvl 3) should create 1.0.2.c.iii" -
-          test("1.0.2.c.ii".toLoc, BigTree,
+          test("1.0.2.c.ii".ucLoc, BigTree,
             """
               |1.0. Step:1.0
               |  1. Step:1
@@ -336,7 +448,7 @@ object VectorTreeTest extends TestSuite {
             """.stripMargin)
 
         "inserting after 1.1 (lvl 0) should create 1.1.1" -
-          test("1.1".toLoc, BigTree,
+          test("1.1".ucLoc, BigTree,
             """
               |1.0. Step:1.0
               |  1. Step:1
@@ -365,7 +477,7 @@ object VectorTreeTest extends TestSuite {
             """.stripMargin)
 
         "inserting after 1.1.2 (lvl 1) should create 1.1.3" -
-          test("1.1.2".toLoc, BigTree,
+          test("1.1.2".ucLoc, BigTree,
             """
               |1.0. Step:1.0
               |  1. Step:1
@@ -406,7 +518,7 @@ object VectorTreeTest extends TestSuite {
       }
 
       "1.0.1" -
-        test("1.0.1".toLoc,
+        test("1.0.1".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:2
@@ -433,7 +545,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.0.2" -
-        test("1.0.2".toLoc,
+        test("1.0.2".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -452,7 +564,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.0.2.a" -
-        test("1.0.2.a".toLoc,
+        test("1.0.2.a".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -476,7 +588,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.0.2.a.i" -
-        test("1.0.2.a.i".toLoc,
+        test("1.0.2.a.i".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -503,7 +615,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.0.3.a.i" -
-        test("1.0.3.a.i".toLoc,
+        test("1.0.3.a.i".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -530,7 +642,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.1" -
-        test("1.1".toLoc,
+        test("1.1".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -554,7 +666,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.1.1" -
-        test("1.1.1".toLoc,
+        test("1.1.1".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -581,7 +693,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.1.3" -
-        test("1.1.3".toLoc,
+        test("1.1.3".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -608,7 +720,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.2" -
-        test("1.2".toLoc,
+        test("1.2".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -633,7 +745,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.2.2" -
-        test("1.2.2".toLoc,
+        test("1.2.2".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -713,7 +825,7 @@ object VectorTreeTest extends TestSuite {
       }
 
       "1.0.3.b" -
-        test("1.0.3.b".toLoc,
+        test("1.0.3.b".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -741,7 +853,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.0.3.a" -
-        test("1.0.3.a".toLoc,
+        test("1.0.3.a".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -769,7 +881,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.0.3.a.i" -
-        test("1.0.3.a.i".toLoc,
+        test("1.0.3.a.i".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -797,7 +909,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.0.2.a" -
-        test("1.0.2.a".toLoc,
+        test("1.0.2.a".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -825,7 +937,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.0.2.a.i" -
-        test("1.0.2.a.i".toLoc,
+        test("1.0.2.a.i".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -853,7 +965,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.0.2.a.ii" -
-        test("1.0.2.a.ii".toLoc,
+        test("1.0.2.a.ii".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -881,7 +993,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.0.2.a.iii" -
-        test("1.0.2.a.iii".toLoc,
+        test("1.0.2.a.iii".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -909,7 +1021,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.1.2" -
-        test("1.1.2".toLoc,
+        test("1.1.2".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -937,7 +1049,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.0.2.b" -
-        test("1.0.2.b".toLoc,
+        test("1.0.2.b".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -965,7 +1077,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.0.2" -
-        test("1.0.2".toLoc,
+        test("1.0.2".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -1004,7 +1116,7 @@ object VectorTreeTest extends TestSuite {
       }
 
       "1.0.2" -
-        test("1.0.2".toLoc,
+        test("1.0.2".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -1032,7 +1144,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.0.3" -
-        test("1.0.3".toLoc,
+        test("1.0.3".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -1060,7 +1172,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.0.3.b" -
-        test("1.0.3.b".toLoc,
+        test("1.0.3.b".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -1088,7 +1200,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.0.4" -
-        test("1.0.4".toLoc,
+        test("1.0.4".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -1116,7 +1228,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.1" -
-        test("1.1".toLoc,
+        test("1.1".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -1144,7 +1256,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.1.2" -
-        test("1.1.2".toLoc,
+        test("1.1.2".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1
@@ -1172,7 +1284,7 @@ object VectorTreeTest extends TestSuite {
           """.stripMargin)
 
       "1.1.3" -
-        test("1.1.3".toLoc,
+        test("1.1.3".ucLoc,
           """
             |1.0. Step:1.0
             |  1. Step:1

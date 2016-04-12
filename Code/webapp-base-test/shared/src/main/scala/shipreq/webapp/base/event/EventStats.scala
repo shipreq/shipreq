@@ -37,6 +37,7 @@ object EventStats {
       case _: PatchReqTags          => "PatchReqTags"
       case _: RepositionField       => "RepositionField"
       case _: RestoreContent        => "RestoreContent"
+      case _: RestoreUseCaseStep    => "RestoreUseCaseStep"
       case _: SetCustomTextField    => "SetCustomTextField"
       case _: SetGenericReqTitle    => "SetGenericReqTitle"
       case _: SetGenericReqType     => "SetGenericReqType"

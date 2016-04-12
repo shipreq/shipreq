@@ -445,7 +445,7 @@ object ShowSrcDataImp {
   }
 
   implicit val useCaseStep: ShowSrc[UseCaseStep] =
-    data((s, a) => s.cc2("UseCaseStep", UseCaseStep unapply a))
+    data((s, a) => s.cc3("UseCaseStep", UseCaseStep unapply a))
 
   implicit val useCaseStepsTree: ShowSrc[UseCaseSteps.Tree] =
     "useCaseStepTree" @@ vectorTree

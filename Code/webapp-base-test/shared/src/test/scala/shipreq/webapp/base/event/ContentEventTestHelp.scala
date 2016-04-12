@@ -166,21 +166,24 @@ object ContentEventTestHelp {
     assertEq(s"assertUC(${id.value})", d, Some(e))
   }
 
-  def assertUcSteps(s: UseCaseSteps.Tree, keys: String*): Unit =
-    assertUcStepsO(None, s, keys: _*)
+  def assertUcSteps(steps: UseCaseSteps, keys: String*): Unit =
+    assertUcStepsO(None, steps, keys: _*)
 
-  def assertUcSteps(name: => String, s: UseCaseSteps.Tree, keys: String*): Unit =
-    assertUcStepsO(Some(name), s, keys: _*)
+  def assertUcSteps(name: => String, steps: UseCaseSteps, keys: String*): Unit =
+    assertUcStepsO(Some(name), steps, keys: _*)
 
-  def assertUcStepsO(name: => Option[String], s: UseCaseSteps.Tree, keys: String*): Unit =
+  def assertUcStepsO(name: => Option[String], steps: UseCaseSteps, keys: String*): Unit =
     assertSetO(name,
-      s.locIterator.map(_.map(_.toString).mkString(".")).toSet,
+      steps.tree.filter(_.live(steps) match {
+        case Live => VectorTree.NodeFilter.KeepNode
+        case Dead => VectorTree.NodeFilter.DiscardNodeAndChildren
+      }).locIterator.map(_.map(_.toString).mkString(".")).toSet,
       keys.toSet)
 
   def assertAllUcSteps(uc: UseCase)(nc: String*)(e: String*): Unit = {
     def prefix = "UC-" + uc.pos.value + " "
-    assertUcSteps(prefix + "NC/AC", uc.stepsNA.tree, nc: _*)
-    assertUcSteps(prefix + "EC"   , uc.stepsE .tree, e: _*)
+    assertUcSteps(prefix + "NC/AC", uc.stepsNA, nc: _*)
+    assertUcSteps(prefix + "EC"   , uc.stepsE , e: _*)
   }
 
   def assertBadIdsRejected(f: Int => ActiveEvent)(implicit ie: InitialEvents): Unit =

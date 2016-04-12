@@ -16,20 +16,20 @@ private[taskman] object Serialisation {
   private def fieldRenamer[A: Manifest](m: BiMap[String, String]): FieldSerializer[A] =
     FieldSerializer({
       case p@(name, x) =>
-        Some(m.ab.get(name).fold(p)(newName => (newName, x)))
+        Some(m.forward.get(name).fold(p)(newName => (newName, x)))
     },{
       case f@JField(name, x) =>
-        m.ba.get(name).fold(f)(newName => JField(newName, x))
+        m.backward.get(name).fold(f)(newName => JField(newName, x))
     })
 
   implicit val formats: Formats = (
     Serialization.formats(NoTypeHints)
-      + fieldRenamer[RegistrationRequested]  (BiMap("email"->"e", "verifyEmailUrl"->"u"))
-      + fieldRenamer[RegistrationCompleted]  (BiMap("userId"->"u"))
-      + fieldRenamer[UserUpdated]            (BiMap("userId"->"u"))
-      + fieldRenamer[ReRegistrationAttempted](BiMap("email"->"e", "loginUrl"->"l"))
-      + fieldRenamer[PasswordResetRequested] (BiMap("email"->"e", "resetPasswordUrl"->"u"))
-      + fieldRenamer[LandingPageHit]         (BiMap("email"->"e", "name"->"n", "msg"->"m", "newsletter"->"w"))
+      + fieldRenamer[RegistrationRequested]  (BiMap(Map("email"->"e", "verifyEmailUrl"->"u")))
+      + fieldRenamer[RegistrationCompleted]  (BiMap(Map("userId"->"u")))
+      + fieldRenamer[UserUpdated]            (BiMap(Map("userId"->"u")))
+      + fieldRenamer[ReRegistrationAttempted](BiMap(Map("email"->"e", "loginUrl"->"l")))
+      + fieldRenamer[PasswordResetRequested] (BiMap(Map("email"->"e", "resetPasswordUrl"->"u")))
+      + fieldRenamer[LandingPageHit]         (BiMap(Map("email"->"e", "name"->"n", "msg"->"m", "newsletter"->"w")))
     )
 
   def serialise(m: Msg): Ser = JsonStr(write(m))

@@ -1,9 +1,6 @@
 UC Step Deletion
 ================
-1. Whole tree includes dead.
-2. Have filter to live tree for VectorTree.Locations to equal step label
-3. Need to add a scheme for referencing dead steps. UC-1.X.(1..n) so that refs to dead steps have something unique to display in text.
-4. Restore dead steps.
+1. Test references to steps going dead.
 
 Use Case Editor
 ===============

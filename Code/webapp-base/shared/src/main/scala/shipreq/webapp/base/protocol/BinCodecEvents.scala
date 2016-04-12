@@ -55,6 +55,7 @@ object BinCodecEvents {
   implicit val picklePatchReqTags         : Pickler[PatchReqTags         ] = pickleCaseClass
   implicit val pickleRepositionField      : Pickler[RepositionField      ] = pickleCaseClass
   implicit val pickleRestoreContent       : Pickler[RestoreContent       ] = pickleCaseClass
+  implicit val pickleRestoreUseCaseStep   : Pickler[RestoreUseCaseStep   ] = pickleCaseClass
   implicit val pickleSetCustomTextField   : Pickler[SetCustomTextField   ] = pickleCaseClass
   implicit val pickleSetGenericReqTitle   : Pickler[SetGenericReqTitle   ] = pickleCaseClass
   implicit val pickleSetGenericReqType    : Pickler[SetGenericReqType    ] = pickleCaseClass

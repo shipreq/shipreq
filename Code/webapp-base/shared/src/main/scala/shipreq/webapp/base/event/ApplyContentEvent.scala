@@ -216,6 +216,7 @@ trait ApplyContentEvent {
   object UseCaseEvents {
     import ContentCommon.{grIMap => _, _}
     import StaticField.{UseCaseStepTree => StepField, NormalAltStepTree => NCAC}
+    import VectorTree.Location
 
     val StepFlowUni: Lens[Project, UseCases.StepFlow.UniDir] =
       Project.useCases ^|-> UseCases.stepFlow ^<-> UseCases.StepFlow.biToUni
@@ -300,14 +301,15 @@ trait ApplyContentEvent {
     }
 
     def applyAddUseCaseStep(e: AddUseCaseStep): SE[Unit] = {
-      val step = UseCaseStep(e.id, Text.UseCaseStep.empty)
+      val step = UseCaseStep(e.id, Text.UseCaseStep.empty, Live)
       val tree = e.field.useCaseStepTree
 
-      def insert(loc: VectorTree.Location, uc: UseCase): SE[Unit] =
+      def insert(loc: Location, uc: UseCase): SE[Unit] =
         tree.modifyF(_.insertAfter(loc, step))(uc) match {
           case Some(uc2) => ucIMap addOrUpdate uc2
           case None =>
-            val locStr = e.field.stepLabel(uc.pos, loc, false)
+            val ploc = VectorTree.PartialLocation(loc, Valid)
+            val locStr = e.field.stepLabel(uc.pos, ploc, mnemonicPrefix = false)
             SE fail s"${show(step.id)} cannot be added to ${show(uc.id)} at location: $locStr"
         }
 
@@ -326,30 +328,37 @@ trait ApplyContentEvent {
     def needStepIndex(id: UseCaseStepId): SE[UseCases.StepTreeKey] =
       SE.get(_.reqs.useCases.stepIndex.get(id)) >>= (optionGet(_, s"${show(id)} not found."))
 
-    def modStep(id: UseCaseStepId)(mod: (UseCaseSteps.Tree, StepField, VectorTree.Location) => SE[UseCaseSteps.Tree]): SE[Unit] =
+    private def findStepModTree(id: UseCaseStepId)(mod: (UseCaseSteps, StepField, Location, UseCaseStep) => SE[UseCaseSteps.Tree]): SE[Unit] =
       needStepIndex(id) >>= { idx =>
         val ucId = idx.useCaseId
         val f    = idx.field
-        // It's fast to use locWhere below to find the step location rather than using some lazy index because
+        // It's fast to use findLoc below to find the step location rather than using some lazy index because
         // 1) The index would need to be recalculated every time a step in the tree is changed
         //    (meaning the index is only used once before being discarded).
-        // 2) locWhere will stop when it finds the step. An index scans the whole tree.
+        // 2) findLoc will stop when it finds the step. An index scans the whole tree.
         ucIMap.update(ucId, uc =>
           ensureLiveReq(uc) >>
-            optionGet(f.useCaseSteps.get(uc).tree.locWhere(_.id ==* id), s"${show(id)} not found.") >>= (loc =>
-            f.useCaseStepTree.modifyF[SE](mod(_, f, loc))(uc)))
+            optionGet(f.useCaseSteps.get(uc).tree.findLocAndValue(_.id ==* id), s"${show(id)} not found.") >>=
+              (ls => f.useCaseSteps.modifyF[SE](t => mod(t, f, ls._1, ls._2).map(UseCaseSteps(_)))(uc)))
       }
 
+    private def mapStep(id: UseCaseStepId)(mod: UseCaseStep => UseCaseStep): SE[Unit] =
+      findStepModTree(id)((steps, _, l, s) =>
+        setStep(steps.tree, l)(mod(s)))
+
+    private def setStep(t: UseCaseSteps.Tree, loc: Location)(s: UseCaseStep): SE[UseCaseSteps.Tree] =
+      optionGet(t.modifyValueAt(loc)(_ => s), badStepIndex(s.id, loc))
+
     def applyShiftUseCaseStepLeft(e: ShiftUseCaseStepLeft): SE[Unit] =
-      modStep(e.id)((t, _, l) =>
-        optionGet(t shiftLeft l, s"${show(e.id)} cannot be shifted left."))
+      findStepModTree(e.id)((s, _, l, _) =>
+        optionGet(s.tree shiftLeft l, s"${show(e.id)} cannot be shifted left."))
 
     def applyShiftUseCaseStepRight(e: ShiftUseCaseStepRight): SE[Unit] =
-      modStep(e.id)((t, _, l) =>
-        optionGet(t shiftRight l, s"${show(e.id)} cannot be shifted right."))
+      findStepModTree(e.id)((s, _, l, _) =>
+        optionGet(s.tree shiftRight l, s"${show(e.id)} cannot be shifted right."))
 
-    private def badStepIndex(id: UseCaseStepId) =
-      s"${show(id)} at index location."
+    private def badStepIndex(id: UseCaseStepId, loc: Location) =
+      s"${show(id)} expected at ${showLoc(loc)}."
 
     val applyUpdateUseCaseStep: UpdateUseCaseStep => SE[Unit] = {
       val ^ = UseCaseStepGD
@@ -373,8 +382,7 @@ trait ApplyContentEvent {
           }
 
       def updateTitle(id: UseCaseStepId, title: Text.UseCaseStep.OptionalText): SE[Unit] =
-        modStep(id)((t, _, l) =>
-          optionGet(t.modifyValueAt(l)(_.copy(title = title)), badStepIndex(id)))
+        mapStep(id)(_.copy(title = title))
 
       e => {
         val gd       = e.vs.value
@@ -385,25 +393,32 @@ trait ApplyContentEvent {
       }
     }
 
-    def isRoot(loc: VectorTree.Location): Boolean =
-      loc.head ==* 0 && loc.tail.isEmpty
-
-    private def postDelete(deleted: VectorTree.Node[UseCaseStep]): Project => Project =
-      Project.useCases.modify { ucs =>
-        val ids = deleted.valueIterator.map(_.id).toSet
-        val si2 = ucs.stepIndex -- ids
-        val sf2 = ucs.stepFlow.modify(_.delks(ids).delvs(ids))
-        ucs.copy(stepIndex = si2, stepFlow = sf2)
-      }
+//    private def postDelete(deleted: VectorTree.Node[UseCaseStep]): Project => Project =
+//      Project.useCases.modify { ucs =>
+//        val ids = deleted.valueIterator.map(_.id).toSet
+//        val si2 = ucs.stepIndex -- ids
+//        val sf2 = ucs.stepFlow.modify(_.delks(ids).delvs(ids))
+//        ucs.copy(stepIndex = si2, stepFlow = sf2)
+//      }
 
     def applyDeleteUseCaseStep(e: DeleteUseCaseStep): SE[Unit] =
-      modStep(e.id)((t1, f, l) =>
-        for {
-          _ <- whenUntrusted(SE.test(!(f ==* NCAC && isRoot(l)), "Root step cannot be deleted."))
-          g <- optionGet(t1.removeNodeO(l), badStepIndex(e.id))
-          _ ← postDelete(g._2)
-        } yield g._1
-      )
+      setUseCaseStepLive(e.id, Dead)
+//      mapStep(e.id)((tree, field, loc) =>
+//        for {
+//          _ <- whenUntrusted(SE.test(field.canDelete(loc) :: Allow, "Use case step cannot be deleted."))
+//          _ <- whenUntrusted(tree.)
+//          g <- optionGet(t1.removeNodeO(l), badStepIndex(e.id))
+//          _ ← postDelete(g._2)
+//        } yield g._1
+//      )
+
+    def applyRestoreUseCaseStep(e: RestoreUseCaseStep): SE[Unit] =
+      setUseCaseStepLive(e.id, Live)
+
+    private def setUseCaseStepLive(id: UseCaseStepId, life: Live): SE[Unit] =
+      findStepModTree(id)((steps, _, loc, step) =>
+        ensureLiveIsNot(step.live(steps))(life, show(id)) >>
+          setStep(steps.tree, loc)(step.copy(liveExplicitly = life)))
   }
 
   // ===================================================================================================================

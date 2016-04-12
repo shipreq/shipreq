@@ -21,7 +21,7 @@ object UseCaseStepTreeTest extends TestSuite {
     BaseUtilGen.counter().map(UseCaseStepId)
 
   val genUseCaseStep: Gen[UseCaseStep] =
-    genUseCaseStepId.map(UseCaseStep(_, Vector.empty))
+    genUseCaseStepId.map(UseCaseStep(_, Vector.empty, Live))
 
   def genUseCaseSteps(f: UCF): Gen[UseCaseSteps] =
     RandomData.useCaseSteps(genUseCaseStep, f)(0 to 4)

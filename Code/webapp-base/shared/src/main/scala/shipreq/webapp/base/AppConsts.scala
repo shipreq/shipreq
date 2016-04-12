@@ -31,4 +31,7 @@ object AppConsts {
    * Maximum number of children per parent (inclusive).
    */
   final val useCaseStepsMaxLength = 99
+
+  /** The X in 1.0.X.3 shown when steps are dead. */
+  final val useCaseStepsDeadNode = 'X'
 }

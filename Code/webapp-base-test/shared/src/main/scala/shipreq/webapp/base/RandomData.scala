@@ -152,7 +152,10 @@ object RandomData {
   def imapToMapLens[K, V] = Lens((_: IMap[K, V]).underlyingMap)(v => _ replaceUnderlying v)
 
   val live =
-    Gen.choose[Live](Live, Dead)
+    Gen.choose[Live](Live, Live, Live, Dead)
+
+//  val liveUsually =
+//    Gen.int.map(i => if ((i & 7) == 0) Dead else Live)
 
   val implicationRequired =
     Gen.choose[ImplicationRequired](ImplicationRequired, ImplicationRequired.Not)
@@ -714,11 +717,12 @@ object RandomData {
         case StaticField.NormalAltStepTree =>
           // Root step is required
           Gen { ctx =>
-            val t = gt run ctx
+            var t = gt run ctx
             if (t.isEmpty)
-              VectorTree.single(g run ctx)
-            else
-              t
+              t = VectorTree.single(g run ctx)
+            if (t.children.head.value.liveExplicitly :: Dead)
+              t.modifyValueAt(VectorTree.root)(UseCaseStep.liveExplicitly set Live) foreach (t = _)
+            t
           }
         case _ => gt
       }
@@ -802,8 +806,16 @@ object RandomData {
         )
 
       val ucs: UseCaseIMap = {
-        val stepG  = useCaseStepId.unique_! map (UseCaseStep(_, Vector.empty))
-        def stepsG(f: StaticField.UseCaseStepTree) = useCaseSteps(stepG, f)(0 to 4)
+        val uniqueIds = useCaseStepId.unique_!
+
+        def stepGL(l: Live) =
+          uniqueIds.map(UseCaseStep(_, Vector.empty, l))
+
+        val stepG = live flatMap stepGL
+
+        def stepsG(f: StaticField.UseCaseStepTree) =
+          useCaseSteps(stepG, f)(0 to 4)
+
         pr.value(StaticReqType.UseCase).iterator.zipWithIndex.foldLeft(emptyDataMap(UseCase)) { (m, x) =>
           val id = x._1.asInstanceOf[UseCaseId]
           val pos = ReqTypePos(x._2 + 1)
@@ -811,7 +823,9 @@ object RandomData {
             stepsNA <- stepsG(StaticField.NormalAltStepTree)
             stepsE  <- stepsG(StaticField.ExceptionStepTree)
             l       <- live
-          } yield UseCase(id, pos, Vector.empty, stepsNA, stepsE, l)
+          } yield
+            // Root existence guaranteed in useCaseSteps()
+            UseCase(id, pos, Vector.empty, stepsNA, stepsE, l)
           m + ucG.run(ctx)
         }
       }
@@ -977,11 +991,20 @@ object RandomData {
         val gLiveReqCodeGroup: Gen[LiveReqCodeGroup] =
           Gen.apply2(LiveReqCodeGroup.apply)(id, gGroupText)
 
+        val gDeadReqCodeGroup: Gen[DeadReqCodeGroup] =
+          Gen.apply2(DeadReqCodeGroup.apply)(id, gGroupText)
+
         val gDeadGroup: Gen[DeadGroup] =
-          Gen.apply2(DeadReqCodeGroup.apply)(id, gGroupText).option
+          gDeadReqCodeGroup.option
 
         val gInactive: Gen[Inactive] =
           Gen.apply2(Inactive.apply)(gDeadGroup, gReqInactive)
+            .flatMap(i =>
+              if (i.deadGroup.isEmpty && i.reqInactive.isEmpty)
+                gDeadReqCodeGroup.map(d => Inactive(Some(d), i.reqInactive))
+              else
+                Gen.pure(i)
+            )
 
         val gActiveGroup: Gen[ActiveGroup] =
           Gen.apply2(ActiveGroup.apply)(gLiveReqCodeGroup, gReqInactive)
@@ -1612,6 +1635,9 @@ object RandomData {
     val deleteUseCaseStep: Gen[DeleteUseCaseStep] =
       useCaseStepId map DeleteUseCaseStep
 
+    val restoreUseCaseStep: Gen[RestoreUseCaseStep] =
+      useCaseStepId map RestoreUseCaseStep
+
     val patchImplicationSrc: Gen[PatchImplicationSrc] =
       Gen.apply2(PatchImplicationSrc)(reqId, genNonEmptySetDiff(reqId))
 
@@ -1712,6 +1738,7 @@ object RandomData {
         case _: PatchReqTags          => patchReqTags
         case _: RepositionField       => repositionField
         case _: RestoreContent        => restoreContent
+        case _: RestoreUseCaseStep    => restoreUseCaseStep
         case _: SetCustomTextField    => setCustomTextField
         case _: SetGenericReqTitle    => setGenericReqTitle
         case _: SetGenericReqType     => setGenericReqType

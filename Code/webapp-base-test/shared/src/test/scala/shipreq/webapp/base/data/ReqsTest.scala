@@ -7,7 +7,7 @@ import nyaya.test._
 import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.BaseUtilGen._
-import shipreq.base.util.{VectorTree, NonEmptyVector}
+import shipreq.base.util.{NonEmptyVector, Valid, VectorTree}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
 
@@ -56,8 +56,9 @@ object ReqsTest extends TestSuite { // TODO Update for UCs
       implicit def str2loc(s: String) = NonEmptyVector force s.split('.').toVector.map(_.toInt)
 
       def test(f: StaticField.UseCaseStepTree, uc: ReqTypePos, l: VectorTree.Location, exp: String): Unit = {
-        assertEq(f.stepLabel(uc, l, false), exp)
-        assertEq(f.stepLabel(uc, l, true), "UC-" + exp)
+        val p = VectorTree.PartialLocation(l, Valid)
+        assertEq(f.stepLabel(uc, p, false), exp)
+        assertEq(f.stepLabel(uc, p, true), "UC-" + exp)
       }
 
       'na {

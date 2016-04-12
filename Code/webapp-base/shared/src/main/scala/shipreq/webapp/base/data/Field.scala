@@ -1,13 +1,14 @@
 package shipreq.webapp.base.data
 
 import monocle._
-import monocle.macros.{Lenses, GenLens}
+import monocle.macros.{GenLens, Lenses}
 import scala.collection.immutable.ListSet
 import scalaz.Equal
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.base.util.ScalaExt._
-import TaggedTypes.{TaggedString, TaggedInt}
+import shipreq.webapp.base.AppConsts
+import TaggedTypes.{TaggedInt, TaggedString}
 import IndexLabel._
 
 // =====================================================================================================================
@@ -150,7 +151,7 @@ object StaticField {
     val useCaseSteps: Lens[UseCase, UseCaseSteps]
     val useCaseStepTree: Lens[UseCase, UseCaseSteps.Tree] // Has to be lazy to be implemented here. No.
 
-    final def stepLabel(ucNumber: ReqTypePos, loc: VectorTree.Location, mnemonicPrefix: Boolean): String =
+    final def stepLabel(ucNumber: ReqTypePos, loc: VectorTree.PartialLocation, mnemonicPrefix: Boolean): String =
       Util.quickSB { sb =>
         @inline def sep = '.'
         if (mnemonicPrefix) {
@@ -162,9 +163,14 @@ object StaticField {
           sb append sep
           sb append p
         }
-        loc.foreachWithIndex { (index, level) =>
+        var level = 0
+        loc.value.foreach { index =>
           sb append sep
-          sb append stepLabelsPerLevel(level).label(index)
+          if (index < 0)
+            sb append AppConsts.useCaseStepsDeadNode
+          else
+            sb append stepLabelsPerLevel(level).label(index)
+          level += 1
         }
       }
 

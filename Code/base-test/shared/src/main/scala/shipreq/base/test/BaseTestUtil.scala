@@ -89,6 +89,27 @@ trait BaseTestUtil extends scalaz.syntax.ToEqualOps {
       fail("assertMultiline failed.")
     }
 
+  def assertMap[K, V: Equal](actual: Map[K, V], expect: Map[K, V]): Unit =
+    assertMapO(None, actual, expect)
+
+  def assertMap[K, V: Equal](name: => String, actual: Map[K, V], expect: Map[K, V]): Unit =
+    assertMapO(Some(name), actual, expect)
+
+  def assertMapO[K, V: Equal](name: => Option[String], actual: Map[K, V], expect: Map[K, V]): Unit = {
+    assertSet(name.fold("Map keys")(_ + " keys"), actual.keySet, expect.keySet)
+    val bad = actual.keysIterator.filter(k => actual(k) ≠ expect(k))
+    if (bad.nonEmpty) {
+      val x = bad.toVector
+      for (k <- x) {
+        println(s"MapKey: $k")
+        println(s"Expect: $BOLD$GREEN${expect(k)}$RESET")
+        println(s"Actual: $BOLD$RED${actual(k)}$RESET")
+        println()
+      }
+      fail(s"assertMap${name.fold("")("(" + _ + ")")} failed with ${x.length} value discrepancies.")
+    }
+  }
+
   def assertSet[A](actual: Set[A])(expect: A*): Unit = assertSet(actual, expect.toSet)
   def assertSet[A](actual: Set[A], expect: Set[A]): Unit = assertSetO(None, actual, expect)
   def assertSet[A](name: => String, actual: Set[A])(expect: A*): Unit = assertSet(name, actual, expect.toSet)

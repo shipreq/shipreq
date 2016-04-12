@@ -50,6 +50,7 @@ case class Changes(ves: VerifiedEvents, p1: Project, p2: Project) {
          | _: PatchReqTags
          | _: RepositionField
          | _: RestoreContent
+         | _: RestoreUseCaseStep
          | _: SetCustomTextField
          | _: SetGenericReqTitle
          | _: SetGenericReqType

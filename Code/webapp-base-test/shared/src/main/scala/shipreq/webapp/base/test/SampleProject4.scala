@@ -41,10 +41,11 @@ object SampleProject4 {
     }
 
     def newStep(id: Int = -1,
-                title: Text.UseCaseStep.OptionalText = Vector.empty): UseCaseStep = {
+                title: Text.UseCaseStep.OptionalText = Vector.empty,
+                live: Live = Live): UseCaseStep = {
       val i = UseCaseStepId(if (id > 0) id else (ic.useCaseStep + 1))
       ic = ic.copy(useCaseStep = ic.useCaseStep max i.value)
-      UseCaseStep(i, title)
+      UseCaseStep(i, title, live)
     }
 
     def rootOnlyStepTree(): UseCaseSteps.Tree =

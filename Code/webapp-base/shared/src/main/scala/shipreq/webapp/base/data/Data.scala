@@ -1,7 +1,7 @@
 package shipreq.webapp.base.data
 
 import shipreq.base.util.TaggedTypes._
-import shipreq.base.util.IsoBool
+import shipreq.base.util.{IsoBool, Valid, Validity}
 
 
 sealed abstract class Live extends IsoBool.WithBoolOps[Live] {
@@ -10,6 +10,7 @@ sealed abstract class Live extends IsoBool.WithBoolOps[Live] {
 case object Live extends Live with IsoBool.Object[Live] {
   override def positive = this
   override def negative = Dead
+  val whenValid = when(Valid)
 }
 case object Dead extends Live
 

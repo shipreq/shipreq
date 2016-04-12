@@ -583,6 +583,7 @@ object EventDbCodecs {
   implicit val dbCodecPatchReqTags         : DbCodec[PatchReqTags         ] = dbCodec2
   implicit val dbCodecRepositionField      : DbCodec[RepositionField      ] = dbCodec2
   implicit val dbCodecRestoreContent       : DbCodec[RestoreContent       ] = dbCodecJust('reqs_? -> "r", 'reqCodeGroups_? -> "c")
+  implicit val dbCodecRestoreUseCaseStep   : DbCodec[RestoreUseCaseStep   ] = dbCodecIdOnly
   implicit val dbCodecSetCustomTextField   : DbCodec[SetCustomTextField   ] = dbCodecIdAnd('fid -> "f", 'value -> "t")
   implicit val dbCodecSetGenericReqTitle   : DbCodec[SetGenericReqTitle   ] = dbCodec2
   implicit val dbCodecSetGenericReqType    : DbCodec[SetGenericReqType    ] = dbCodec2
@@ -631,6 +632,7 @@ object EventDbCodecs {
     case _: ShiftUseCaseStepLeft  => 254
     case _: ShiftUseCaseStepRight => 255
     case _: UpdateUseCaseStep     => 256
+    case _: RestoreUseCaseStep    => 257
 
     // Config
 

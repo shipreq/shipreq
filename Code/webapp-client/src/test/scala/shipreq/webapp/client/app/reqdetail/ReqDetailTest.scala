@@ -58,6 +58,8 @@ object ReqDetailTest extends TestSuite {
         +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.E.1")
         >> addStep("1.E.1")
         +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.E.1", "1.E.1.a")
+        >> filterDeadToggle
+        +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.X.1", "1.X.1.a", "1.E.1", "1.E.1.a")
     ))
 
     'deadExplicitly - test("MF-19")(Plan invariants testLifeRowInnerText("Dead.Resurrect"))
