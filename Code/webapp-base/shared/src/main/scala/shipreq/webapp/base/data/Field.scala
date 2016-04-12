@@ -168,9 +168,10 @@ object StaticField {
           sb append sep
           if (index < 0)
             sb append AppConsts.useCaseStepsDeadNode
-          else
+          else {
             sb append stepLabelsPerLevel(level).label(index)
-          level += 1
+            level += 1
+          }
         }
       }
 

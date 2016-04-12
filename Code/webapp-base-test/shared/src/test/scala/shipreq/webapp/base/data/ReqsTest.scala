@@ -3,13 +3,12 @@ package shipreq.webapp.base.data
 import nyaya.prop._
 import nyaya.gen._
 import nyaya.test.PropTest._
-import nyaya.test._
 import utest._
 import shipreq.base.test.BaseTestUtil._
-import shipreq.base.test.BaseUtilGen._
 import shipreq.base.util.{NonEmptyVector, Valid, VectorTree}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
+import VectorTree.PartialLocation
 
 object ReqsTest extends TestSuite { // TODO Update for UCs
 
@@ -53,29 +52,50 @@ object ReqsTest extends TestSuite { // TODO Update for UCs
     'ucStepLabels {
       import StaticField.{NormalAltStepTree => N, ExceptionStepTree => E}
       implicit def autoPos(i: Int) = ReqTypePos(i)
-      implicit def str2loc(s: String) = NonEmptyVector force s.split('.').toVector.map(_.toInt)
+      implicit def str2loc(s: String) = PartialLocation.detect(NonEmptyVector force
+        s.split('.').toVector.map(s => if (s == "X") -1 else s.toInt))
 
-      def test(f: StaticField.UseCaseStepTree, uc: ReqTypePos, l: VectorTree.Location, exp: String): Unit = {
-        val p = VectorTree.PartialLocation(l, Valid)
+      def test(f: StaticField.UseCaseStepTree, uc: ReqTypePos, p: PartialLocation, exp: String): Unit = {
         assertEq(f.stepLabel(uc, p, false), exp)
         assertEq(f.stepLabel(uc, p, true), "UC-" + exp)
       }
 
-      'na {
-        test(N, 7, "0",         "7.0")
-        test(N, 7, "0.0",       "7.0.1")
-        test(N, 7, "0.0.0",     "7.0.1.a")
-        test(N, 7, "0.0.0.0",   "7.0.1.a.i")
-        test(N, 7, "0.0.0.0.0", "7.0.1.a.i.1")
-        test(N, 3, "2.5.6.4.1", "3.2.6.g.v.2")
+      'live {
+        'na {
+          test(N, 7, "0",         "7.0")
+          test(N, 7, "0.0",       "7.0.1")
+          test(N, 7, "0.0.0",     "7.0.1.a")
+          test(N, 7, "0.0.0.0",   "7.0.1.a.i")
+          test(N, 7, "0.0.0.0.0", "7.0.1.a.i.1")
+          test(N, 3, "2.5.6.4.1", "3.2.6.g.v.2")
+        }
+        'e {
+          test(E, 7, "0",       "7.E.1")
+          test(E, 7, "0.0",     "7.E.1.a")
+          test(E, 7, "0.0.0",   "7.E.1.a.i")
+          test(E, 7, "0.0.0.0", "7.E.1.a.i.1")
+          test(E, 3, "5.6.4.1", "3.E.6.g.v.2")
+        }
       }
-      'e {
-        test(E, 7, "0",       "7.E.1")
-        test(E, 7, "0.0",     "7.E.1.a")
-        test(E, 7, "0.0.0",   "7.E.1.a.i")
-        test(E, 7, "0.0.0.0", "7.E.1.a.i.1")
-        test(E, 3, "5.6.4.1", "3.E.6.g.v.2")
+
+      'dead {
+        'na {
+          test(N, 7, "X.0",         "7.X.0")
+          test(N, 7, "0.X.0",       "7.0.X.1")
+          test(N, 7, "0.0.X.0",     "7.0.1.X.a")
+          test(N, 7, "0.0.0.X.0",   "7.0.1.a.X.i")
+          test(N, 7, "0.0.0.0.X.0", "7.0.1.a.i.X.1")
+          test(N, 3, "2.5.X.6.4.1", "3.2.6.X.g.v.2")
+        }
+        'e {
+          test(E, 7, "X.0",       "7.E.X.1")
+          test(E, 7, "0.X.0",     "7.E.1.X.a")
+          test(E, 7, "0.0.X.0",   "7.E.1.a.X.i")
+          test(E, 7, "0.0.0.X.0", "7.E.1.a.i.X.1")
+          test(E, 3, "5.6.X.4.1", "3.E.6.g.X.v.2")
+        }
       }
+
     }
   }
 }
