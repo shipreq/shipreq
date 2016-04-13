@@ -233,14 +233,4 @@ object Parsers {
     final def optionalText: Rule1[T#OptionalText] = rule(OWS ~ text(token) ~ EOI)
     final def nonEmptyText: Rule1[T#NonEmptyText] = rule(optionalText ~ popNEV)
   }
-
-  abstract class ReqTitle[_T <: Atom.ReqTitle](_t: _T, val project: Project, val input: ParserInput) extends TopBase(_t)
-    with SingleLine
-    with Issue
-    with ReqRef
-    with TagRef {
-
-    def hashToken = rule(hashRef ~ (tagRef | issueRef))
-    val token = () => rule(hashToken | reqRef | singleLine)
-  }
 }
