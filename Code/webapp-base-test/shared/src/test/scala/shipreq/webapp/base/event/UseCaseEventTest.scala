@@ -5,11 +5,13 @@ import utest._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.base.test.UnsafeTypes, UnsafeTypes._
+import shipreq.webapp.base.test.UnsafeTypes
 import shipreq.webapp.base.text.Text.{UseCaseTitle =>  UCT, UseCaseStep => UCST}
 import ApplyEventTestFns._
 import ContentEventTestHelp._
 import StaticField.{NormalAltStepTree => NCAC, ExceptionStepTree => EC}
+import UnsafeTypes._
+import UnsafeTypes.AutoNES._
 
 object UseCaseEventTest extends TestSuite {
   import CreateUseCaseGD._

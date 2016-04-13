@@ -10,6 +10,7 @@ import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.SampleProject
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.text.Text
+import AutoNES._
 import SampleProject.Values._
 
 object MakeEventTest extends TestSuite {

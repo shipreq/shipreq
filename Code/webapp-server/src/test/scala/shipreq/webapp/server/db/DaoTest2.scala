@@ -12,6 +12,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.hash.HashRec
 import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.test.UnsafeTypes.AutoNES._
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.server.test.TestDB
 import EventDao.EventSeq

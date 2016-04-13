@@ -3,7 +3,7 @@ package shipreq.webapp.base.test
 import nyaya.util.Multimap
 import scala.collection.generic.CanBuildFrom
 import shipreq.base.util._
-import shipreq.base.util.univeq._
+import shipreq.base.util.univeq.UnivEq
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar, Text}
 import Field.ApplicableReqTypes
@@ -28,8 +28,8 @@ object MakeEmpty {
 }
 
 trait UnsafeTypesLowPriority {
-//   implicit def autoSome[A, B](a: A)(implicit f: A => B): Option[B] = Some(f(a))
-  implicit def autoSome[A](a: A): Option[A] = Some(a)
+//   implicit def autoOption[A, B](a: A)(implicit f: A => B): Option[B] = Option(f(a))
+  implicit def autoOption[A](a: A): Option[A] = Option(a)
 }
 
 trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
@@ -90,10 +90,6 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
 
   implicit def autoNevWhole[A](as: NonEmptyVector[A]): Vector[A] = as.whole
   implicit def autoNesWhole[A](as: NonEmptySet[A]): Set[A] = as.whole
-
-  //  implicit def autoNes[A: UnivEq](a: A): NonEmptySet[A] = NonEmptySet one a
-  implicit def autoNes[A, B: UnivEq](a: A)(implicit ev: A => B): NonEmptySet[B] =
-    NonEmptySet one a
 
 //  implicit def autoSet[A, B: UnivEq](a: A)(implicit ev: A => B): Set[B] =
 //    Set(a)
@@ -173,13 +169,20 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
 }
 
 object UnsafeTypes extends UnsafeTypesMedPriority {
+
   implicit class UnsafeIntExt(val a: Int) extends AnyVal {
-    def AT = ApplicableTagId(a)
-    def TG = TagGroupId(a)
+    def AT     = ApplicableTagId(a)
+    def TG     = TagGroupId(a)
     def CFText = CustomField.Text.Id(a)
     def CFTag  = CustomField.Tag.Id(a)
     def CFImp  = CustomField.Implication.Id(a)
-    def GR = GenericReqId(a)
-    def UC = UseCaseId(a)
+    def GR     = GenericReqId(a)
+    def UC     = UseCaseId(a)
+  }
+
+  object AutoNES {
+    //  implicit def autoNes[A: UnivEq](a: A): NonEmptySet[A] = NonEmptySet one a
+    implicit def autoNes[A, B: UnivEq](a: A)(implicit ev: A => B): NonEmptySet[B] =
+      NonEmptySet one a
   }
 }

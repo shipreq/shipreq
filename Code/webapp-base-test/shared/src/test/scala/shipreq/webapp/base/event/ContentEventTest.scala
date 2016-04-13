@@ -12,6 +12,7 @@ import ApplyEventTestFns._
 import MTrie.Ops
 import Text.{GenericReqTitle => GRT, CustomTextField => CTF, InlineIssueDesc => IID, ReqCodeGroupTitle}
 import ContentEventTestHelp._
+import AutoNES._
 
 // TODO Test atom validity in all events that accept text
 
