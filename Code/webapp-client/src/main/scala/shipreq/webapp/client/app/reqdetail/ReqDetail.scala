@@ -8,7 +8,7 @@ import scalacss.ScalaCssReact._
 import scalaz.{\/, -\/, \/-}
 import shipreq.base.util._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.UiText
+import shipreq.webapp.base.{AppConsts, UiText}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.{UpdateContentCmd, UpdateContentFn}
 import shipreq.webapp.base.text.{PlainText, ProjectText, Text, TextSearch}
@@ -457,23 +457,36 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
           val fullStepLabel = temp.field.stepLabel(pos, partialLoc, mnemonicPrefix = false)
 
-          def header = {
-            val depth = partialLoc.value.length // ≥ 1
+          def header: ReactTag =
+            partialLoc.validity match {
+              case Valid =>
+                val depth = partialLoc.value.length // ≥ 1
 
-            val short = if (depth == 1)
-              fullStepLabel
-            else {
-              // Last node asserted to be ≥ 0 in PartialLocation
-              val i = partialLoc.value.last
-              temp.field.stepLabelsPerLevel(depth - 1).label(i)
+                val short = if (depth == 1)
+                  fullStepLabel
+                else {
+                  // Last node asserted to be ≥ 0 in PartialLocation
+                  val i = partialLoc.value.last
+                  temp.field.stepLabelsPerLevel(depth - 1).label(i)
+                }
+
+                <.div(
+                  *.header(depth - 1),
+                  stepLabel,
+                  ^.title := fullStepLabel,
+                  short + ".")
+
+              case Invalid =>
+                val badInd = partialLoc.value.whole.indexWhere(_ < 0)
+
+                <.div(
+                  *.header(badInd),
+                  stepLabel,
+                  ^.title := fullStepLabel,
+                  <.span(
+                    *.deadStepLabel,
+                    fullStepLabel.dropWhile(_ !=* AppConsts.useCaseStepsDeadNode) + "."))
             }
-
-            <.div(
-              *.header(depth - 1),
-              stepLabel,
-              ^.title := fullStepLabel,
-              short + ".")
-          }
 
           def body = {
 

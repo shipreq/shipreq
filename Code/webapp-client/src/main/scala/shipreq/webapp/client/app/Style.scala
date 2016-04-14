@@ -400,6 +400,10 @@ object Style extends StyleSheet.Inline {
         )
       )
 
+      val deadStepLabel = style(
+        color(c"#bbb"),
+        textDecoration := ^.lineThrough)
+
       val body = style(
         flexGrow(1))
 
