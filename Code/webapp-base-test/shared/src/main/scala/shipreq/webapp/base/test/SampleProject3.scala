@@ -16,13 +16,18 @@ import SampleProject.{project => project0, _}
  */
 object SampleProject3 {
 
+  trait Values extends SampleProject.Values {
+    val frs = (0 to 10).iterator.map(i => GenericReqId(i + 1000)).toVector
+    val mfs = (0 to 28).iterator.map(i => GenericReqId(i + 1100)).toVector
+    val cos = (0 to 10).iterator.map(i => GenericReqId(i + 1200)).toVector
+  }
+  object Values extends Values
+  import Values._
+
   lazy val project = {
     import SampleProject.Values._
     val List(p1,p3,p5) = List[ApplicableTagId](4,3,2)
     val (p2,p4) = (p3,p5)
-    val frs = (0 to 10).toVector.map(i => GenericReqId(i + 1000))
-    val mfs = (0 to 28).toVector.map(i => GenericReqId(i + 1100))
-    val cos = (0 to 10).toVector.map(i => GenericReqId(i + 1200))
 
     def fr1Desc = {
       import T.GenericReqTitle._

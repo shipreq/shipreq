@@ -6,7 +6,6 @@ import shipreq.base.util.VectorTree.{Location => Loc}
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.test.UnsafeTypes._
-import SampleProject.Values._
 import UseCases.StepFlow
 
 /**
@@ -15,10 +14,11 @@ import UseCases.StepFlow
  */
 object SampleProject4 {
 
-  trait Values extends SampleProject.Values {
+  trait Values extends SampleProject3.Values {
     val uc1 = UseCaseId(1203)
   }
   object Values extends Values
+  import SampleProject.Values._
 
   lazy val project = {
     val p   = SampleProject3.project

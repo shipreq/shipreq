@@ -14,7 +14,8 @@ import utest._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.{RandomData => $}
-import shipreq.webapp.base.test.{SampleProject, ProjectDsl, UnsafeTypes}
+import shipreq.webapp.base.test.{ProjectDsl, UnsafeTypes}
+import shipreq.webapp.base.test.{SampleProject6 => SP}
 import shipreq.webapp.base.test.WebappTestUtil._
 import Atom.AnyAtom
 
@@ -168,19 +169,21 @@ object ParsersTest extends TestSuite {
   val P = {
     import ProjectDsl._
     import UnsafeTypes._
-    import SampleProject.Values._
-    GReq(reqType = co, id = 31, title = "be fast").code("co2") + // code inversed: [CO-1] [co2] ReqCodeId = 1
-    GReq(reqType = co, id = 32, title = "be good").code("co1") + // code inversed: [CO-2] [co1] ReqCodeId = 2
-    GReq(reqType = fr, id = 11, title = "do stuff").code("here.i.am_3") +
-    GReq(reqType = fr, id = 12, title = "do more stuff") +
-    GReq(reqType = mf, id = 21, title = "Use Case Editor") +
-    GReq(reqType = mf, id = 22, title = "Templates") +
-    GReq(reqType = mf, id = 23, title = "Incompletions") ! SampleProject.project
+    import SP.Values._
+
+    // Create reqCodes that look like pubids
+    GReq(reqType = co, title = "be fast").code("co2") +
+    GReq(reqType = co, title = "be good").code("co1").code("here.i.am_3") !
+    SP.project
   }
   @inline val V = Vector
   @inline def NEV[A](h: A, t: A*) = NonEmptyVector(h, t: _*)
   @inline def LI[A <: AnyAtom](as: A*) = as.toVector
   @inline def L(s: String) = T.Literal(s)
+
+  val reqCode_co2      = ReqCodeId(9)
+  val reqCode_co1      = ReqCodeId(10)
+  val reqCode_hereiam3 = ReqCodeId(11)
 
   def propEmailAddress = parserProp("EmailAddress",
     (_: T.EmailAddress).value, T.parserI(P))(_.emailAddress.run())
@@ -209,6 +212,7 @@ object ParsersTest extends TestSuite {
     }
 
     'manual {
+      import SP.Values._
       import UnsafeTypes._
 
       def testT[A <: AnyAtom](p: Project, parse: Project => String => Vector[A], text: String)(as: A*): Unit = {
@@ -236,7 +240,7 @@ object ParsersTest extends TestSuite {
         'nl      - test("here\nthere")(L("here"), T.blankLine, L("there"))
         'nls     - test("here \n \n\n there")(L("here"), T.blankLine, L("there"))
         'listNL  - test("ok\n\n\n*   hehe \n \n\n  \n *  yay \n\n\n bye")(L("ok"), T.UnorderedList(NEV(LI(L("hehe")), LI(L("yay")))), L("bye"))
-        'codeRef - test("[ here . i . am_3 ]")(T.CodeRef(3))
+        'codeRef - test("[ here . i . am_3 ]")(T.CodeRef(reqCode_hereiam3))
         'headNL  - whitespaceCombos.foreach(w => test(w + "good")(T.Literal("good")))
         'tailNL  - whitespaceCombos.foreach(w => test("good" + w)(T.Literal("good")))
       }
@@ -247,15 +251,15 @@ object ParsersTest extends TestSuite {
       }
 
       'altForms {
-        'req - test("[fr1][fr 1][ fr - 2 ][Mf-1 ]")(T.ReqRef(11), T.ReqRef(11), T.ReqRef(12), T.ReqRef(21))
+        'req - test("[fr1][fr 1][ fr - 2 ][Mf-1 ]")(T.ReqRef(frs(1)), T.ReqRef(frs(1)), T.ReqRef(frs(2)), T.ReqRef(mfs(1)))
         'tag - test("#wip#DEFER#V3.x")(T.TagRef(11), T.TagRef(12), T.TagRef(26))
         'issue - test("#tbd{cool}#Todo#TBD { nice }")(
           T.Issue(2, Vector(I.Literal("cool"))), T.Issue(1, Vector.empty), T.Issue(2, Vector(I.Literal("nice"))))
       }
 
       'ambiguity {
-        'pubid - test("[CO1][co-1]")(T.ReqRef(31), T.ReqRef(31))
-        'code  - test("[co1][co2]")(T.CodeRef(2), T.CodeRef(1)) // codes inversed
+        'pubid - test("[CO1][co-1]")(T.ReqRef(cos(1)), T.ReqRef(cos(1)))
+        'code  - test("[co1][co2]")(T.CodeRef(reqCode_co1), T.CodeRef(reqCode_co2))
       }
     }
 
