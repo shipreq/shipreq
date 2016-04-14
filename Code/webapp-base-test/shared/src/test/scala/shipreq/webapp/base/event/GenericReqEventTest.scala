@@ -7,6 +7,7 @@ import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.text.Text.{GenericReqTitle => GRT}
 import ApplyEventTestFns._
+import AutoNES._
 import ContentEventTestHelp._
 
 object GenericReqEventTest extends TestSuite {

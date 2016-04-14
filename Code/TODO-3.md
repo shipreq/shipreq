@@ -1,8 +1,6 @@
 UC Step Refs
 ============
-1. Add text references to UC steps.
-2. Autocomplete for UC step refs.
-2. Test labels of refs to dead steps.
+1. Autocomplete for UC step refs.
 
 Use Case Step Flow
 ==================
@@ -42,4 +40,6 @@ Other (?)
 =========
 * Saved views.
 * Shares.
+* Ambiguity between [1.0.1] as UC ref or code ref.
+* Fix PubidRegister. Types are terrible.
 

@@ -13,6 +13,11 @@ trait IndexLabel {
   def label(index: Int): String
 
   /**
+   * Attempt to interpret a label.
+   *
+   * Parsing should be lenient and accept differences in case, trailing zeros, etc.
+   * Whitespace on the other hand shouldn't be considered.
+   *
    * @return Option(_ ≥ 0)
    */
   def parse(label: String): Option[Int]
@@ -32,7 +37,7 @@ object IndexLabel {
    */
   object NumericFrom0 extends IndexLabel {
     override def label(index: Int)    = index.toString
-    override def parse(label: String) = ParseInt.unapply(label)
+    override def parse(label: String) = ParseInt.unapply(label).filter(_ >= 0)
 
     // TODO Remove labelTmp & parseTmp
     override def labelTmp(index: Int)    = label(index)
@@ -47,7 +52,7 @@ object IndexLabel {
    */
   object NumericFrom1 extends IndexLabel {
     override def label(index: Int)    = (index + 1).toString
-    override def parse(label: String) = ParseInt.unapply(label).map(_ - 1)
+    override def parse(label: String) = ParseInt.unapply(label).map(_ - 1).filter(_ >= 0)
   }
 
   /**
@@ -58,7 +63,7 @@ object IndexLabel {
    */
   object Roman extends IndexLabel {
     override def label(index: Int)    = RomanNumeral(index + 1).toLowerCase
-    override def parse(label: String) = RomanNumeral.parse(label).map(_ - 1)
+    override def parse(label: String) = RomanNumeral.parse(label).map(_ - 1).filter(_ >= 0)
   }
 
   /**
@@ -90,7 +95,7 @@ object IndexLabel {
       var ok = true
       var sum = 0
       for (c <- label) {
-        val v = c - First + 1
+        val v = c.toLower - First + 1
         if (v <= 0 || v > 26)
           ok = false
         else

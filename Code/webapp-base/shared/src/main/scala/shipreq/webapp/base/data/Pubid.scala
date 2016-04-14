@@ -71,6 +71,18 @@ case class PubidRegister(value: Multimap[ReqTypeId, Vector, ReqId]) {
       case _: IndexOutOfBoundsException => None
     }
   }
+
+  // TODO Stop using same storage for ReqTypeId; too hard to encode in types. Have separate storage for GRs/UCs.
+  def getUseCaseId(pos: ReqTypePos): Option[UseCaseId] = {
+    val v = value(StaticReqType.UseCase)
+    val i = pos.value - 1
+    @inline def cast(r: ReqId) = r.asInstanceOf[UseCaseId]
+    try
+      Some(cast(v(i)))
+    catch {
+      case _: IndexOutOfBoundsException => None
+    }
+  }
 }
 
 object PubidRegister {

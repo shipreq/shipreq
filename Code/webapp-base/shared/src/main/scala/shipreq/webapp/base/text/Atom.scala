@@ -10,33 +10,36 @@ object Atom {
 
   sealed trait Type
   object Type {
-    case object Literal       extends Type
-    case object BlankLine     extends Type
-    case object ReqRef        extends Type
-    case object CodeRef       extends Type
-    case object Issue         extends Type
-    case object WebAddress    extends Type
-    case object EmailAddress  extends Type
-    case object MathTeX       extends Type
-    case object TagRef        extends Type
-    case object UnorderedList extends Type
+    case object Literal        extends Type
+    case object BlankLine      extends Type
+    case object ReqRef         extends Type
+    case object CodeRef        extends Type
+    case object UseCaseStepRef extends Type
+    case object Issue          extends Type
+    case object WebAddress     extends Type
+    case object EmailAddress   extends Type
+    case object MathTeX        extends Type
+    case object TagRef         extends Type
+    case object UnorderedList  extends Type
 
+    // UtilMacros.adtValues doesn't work here due to SI-7046.
     val values = NonEmptyVector[Type](
       Literal, WebAddress, EmailAddress, MathTeX,
-      ReqRef, CodeRef, TagRef, Issue,
+      ReqRef, CodeRef, UseCaseStepRef, TagRef, Issue,
       BlankLine, UnorderedList)
 
     val of: AnyAtom => Type = {
-      case _: Literal         # Literal       => Literal
-      case _: NewLine         # BlankLine     => BlankLine
-      case _: ReqRef          # ReqRef        => ReqRef
-      case _: ReqRef          # CodeRef       => CodeRef
-      case _: Issue           # Issue         => Issue
-      case _: PlainTextMarkup # WebAddress    => WebAddress
-      case _: PlainTextMarkup # EmailAddress  => EmailAddress
-      case _: PlainTextMarkup # MathTeX       => MathTeX
-      case _: TagRef          # TagRef        => TagRef
-      case _: ListMarkup      # UnorderedList => UnorderedList
+      case _: Literal         # Literal        => Literal
+      case _: NewLine         # BlankLine      => BlankLine
+      case _: ReqRef          # ReqRef         => ReqRef
+      case _: ReqRef          # CodeRef        => CodeRef
+      case _: UseCaseStepRef  # UseCaseStepRef => UseCaseStepRef
+      case _: Issue           # Issue          => Issue
+      case _: PlainTextMarkup # WebAddress     => WebAddress
+      case _: PlainTextMarkup # EmailAddress   => EmailAddress
+      case _: PlainTextMarkup # MathTeX        => MathTeX
+      case _: TagRef          # TagRef         => TagRef
+      case _: ListMarkup      # UnorderedList  => UnorderedList
     }
   }
 
@@ -108,11 +111,16 @@ object Atom {
   }
 
   trait ReqRef extends Base {
-    /** Reference to a requirement, like "UC-4" */
+    /** Reference to a requirement, like "UC-4". */
     case class ReqRef(value: ReqId) extends Atom
 
-    /** Reference to a [[ReqCode.Target]] */
+    /** Reference to a requirement via its [[ReqCode]]. */
     case class CodeRef(value: ReqCodeId) extends Atom
+  }
+
+  /** Reference to a UC step, like "UC-4.0.1.a". */
+  trait UseCaseStepRef extends Base {
+    case class UseCaseStepRef(value: UseCaseStepId) extends Atom
   }
 
   /** An inline tag, like "#pri=high" */
@@ -128,10 +136,12 @@ object Atom {
   UnivEq[ApplicableTagId]
   UnivEq[CustomIssueTypeId]
   UnivEq[ReqId]
+  UnivEq[UseCaseStepId]
 
   /** The main title/desc of a top-level requirement. */
   trait ReqTitle extends SingleLine
     with Issue
     with ReqRef
+    with UseCaseStepRef
     with TagRef
 }

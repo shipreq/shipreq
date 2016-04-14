@@ -6,7 +6,6 @@ import shipreq.base.util.VectorTree.{Location => Loc}
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.test.UnsafeTypes._
-import SampleProject.Values._
 import UseCases.StepFlow
 
 /**
@@ -14,6 +13,19 @@ import UseCases.StepFlow
  *   - UC-1 with some steps.
  */
 object SampleProject4 {
+
+  trait Values extends SampleProject3.Values {
+    val uc1 = UseCaseId(1203)
+
+    val step10_label = "1.0"
+    val step11_label = "1.0.1"
+    val step12_label = "1.0.2"
+    val step13_label = "1.0.3"
+    val step14_label = "1.1"
+    val step15_label = "1.1.1"
+  }
+  object Values extends Values
+  import SampleProject.Values._
 
   lazy val project = {
     val p   = SampleProject3.project
@@ -59,6 +71,7 @@ object SampleProject4 {
         .insertAfter(Loc(0, 1), newStep(13, title = "Still hungry?")).get // UC-n.0.3
         .append(                newStep(14, title = "Have no food") )     // UC-n.1
         .insertAfter(Loc(1)   , newStep(15, title = "Steal food")   ).get // UC-n.1.1
+
     val uc1 = addUseCase(title = "Eat food", ncac = ncac)
     // println(ncac.map(_.title.mkString(",")))
 
@@ -74,6 +87,6 @@ object SampleProject4 {
     p2
   }
 
-  lazy val plainText  = PlainText(project)
+  lazy val plainText  = PlainText(project, ProjectText.Context.None)
   lazy val textSearch = TextSearch(project, plainText)
 }

@@ -1,11 +1,14 @@
 package shipreq.webapp.base.text
 
-import org.parboiled2._
-import scala.annotation.switch
+import org.parboiled2.{CharPredicate => CP, _}
+import scala.annotation.{switch, tailrec}
 import scalaz.{\/, -\/, \/-}
 import shapeless._
-import shipreq.base.util.NonEmptyVector
+import shipreq.base.util.{NonEmptyVector, Validity, Valid, Invalid}
+import shipreq.base.util.VectorTree.PartialLocation
 import shipreq.base.util.ScalaExt._
+import shipreq.base.util.univeq._
+import shipreq.webapp.base.AppConsts
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar => G}
 import shipreq.webapp.base.util.ParsingUtil
@@ -74,10 +77,10 @@ object Parsers {
 
   // questionable: :;=?\/
   val emailCharArray = """!$%*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz~""".toCharArray
-  val emailCharL = CharPredicate(emailCharArray)
+  val emailCharL = CP(emailCharArray)
   val emailCharR = emailCharL -- '.'
 
-  val webAddressChar = CharPredicate.Visible -- ('{' :: '}' :: '[' :: ']' :: '<' :: '>' :: Nil)
+  val webAddressChar = CP.Visible -- ('{' :: '}' :: '[' :: ']' :: '<' :: '>' :: Nil)
 
   abstract class Base extends ParsingUtil {
     type T <: Atom.Base
@@ -191,6 +194,66 @@ object Parsers {
     override type T <: Atom.TagRef
 
     def tagRef = popPF[HashRefTarget, t.TagRef] { case -\/(tag) => t.TagRef(tag.id) }
+  }
+
+  trait UseCaseStepRef extends Base {
+    override type T <: Atom.UseCaseStepRef
+
+    import G.reflinkSurround.parsing.{prefix, suffix}
+
+    def useCaseStepRef: Rule1[t.Atom] = rule(
+      prefix ~ OWS                                                // [
+        ~ ((ch('U')|'u') ~ (ch('C')|'c') ~ OWS ~ ('-' ~ OWS).?).? // UC-
+        ~ reqTypePos ~ OWS                                        // 1
+        ~ ('.' ~ OWS ~ capture(CP.Alpha.+ | CP.Digit.+) ~ OWS).+  // .E.0.X.1.a.ii
+        ~ suffix                                                  // ]
+        ~> lookupStep ~ popOptional[UseCaseStepId] ~> t.UseCaseStepRef)
+
+    val lookupStep: (ReqTypePos, Seq[String]) => Option[UseCaseStepId] =
+      (pos, nodes) => {
+
+        var ns = nodes
+
+        val f =
+          nodes.headOption.flatMap { prefix0 =>
+            val prefix = prefix0.toUpperCase
+            StaticField.useCaseStepTrees.find(_.stepLabelPrefix.exists(_ ==* prefix))
+          } match {
+            case Some(sf) => ns = ns.tail; sf
+            case None     => StaticField.NormalAltStepTree
+          }
+
+        def parseNodes(f: StaticField.UseCaseStepTree): Option[PartialLocation] = {
+          val it = ns.iterator
+          @tailrec def go(q: Vector[Int], v: Validity, l: Int): Option[PartialLocation] =
+            if (it.hasNext) {
+              val node = it.next()
+
+              // Only match uppercase. Lowercase x is used in step labels & ambiguous.
+              if (node.length ==* 1 && node.charAt(0) ==* AppConsts.useCaseStepsDeadNode)
+                v match {
+                  case Valid   => go(q :+ -1, Invalid, l)
+                  case Invalid => None
+                }
+              else
+                f.stepLabelsPerLevel.get(l).flatMap(_ parse node) match {
+                  case Some(i) => go(q :+ i, v, l + 1)
+                  case None    => None
+                }
+            } else
+              NonEmptyVector.option(q)
+                .filter(_.last >= 0) // Last node must be valid
+                .map(PartialLocation(_, v))
+
+          go(Vector.empty, Valid, 0)
+        }
+
+        for {
+          uc ← project.reqs.getUseCaseByPos(pos)
+          pl ← parseNodes(f)
+          id ← f.useCaseSteps.get(uc).partialLocSteps.getOption(pl)
+        } yield id
+      }
   }
 
   trait Issue extends Base {

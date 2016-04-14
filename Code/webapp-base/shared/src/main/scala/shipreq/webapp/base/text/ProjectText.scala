@@ -9,10 +9,23 @@ import ProjectText.FormatAtomFn
 
 object ProjectText {
   type FormatAtomFn[Out] = (Live, Text.AnyOptional) => Out
-  @inline def apply[Out](project: Project, _format: FormatAtomFn[Out]): ProjectText[Out] =
-    new ProjectText[Out](project) {
-      override val format = _format
-    }
+
+  // -------------------------------------------------------------------------------------------------------------------
+
+  /**
+   * Depending on the context in which requirement data is being viewed, the data may need to be rendered differently.
+   */
+  sealed abstract class Context
+  object Context {
+
+    case object None extends Context
+
+    /**
+     * In the context of a single, specific use case, references to its own steps needn't be prefixed with the UC's
+     * pubid.
+     */
+    case class UseCase(id: UseCaseId) extends Context
+  }
 
   // -------------------------------------------------------------------------------------------------------------------
 
@@ -104,8 +117,10 @@ object ProjectText {
   }
 }
 
-abstract class ProjectText[Out](project: Project) {
+abstract class ProjectText[Out](project: Project, val ctx: ProjectText.Context) {
   final val cfg = project.config
+
+  def withCtx(newCtx: ProjectText.Context): ProjectText[Out]
 
   val format: FormatAtomFn[Out]
 

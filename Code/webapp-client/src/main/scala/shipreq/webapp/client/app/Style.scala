@@ -400,6 +400,10 @@ object Style extends StyleSheet.Inline {
         )
       )
 
+      val deadStepLabel = style(
+        color(c"#bbb"),
+        textDecoration := ^.lineThrough)
+
       val body = style(
         flexGrow(1))
 
@@ -459,6 +463,8 @@ object Style extends StyleSheet.Inline {
     )}
 
     def reqCodeGroupRef = reqRef
+
+    def useCaseStepRef = reqRef
 
     val math = style(margin.horizontal(0.8 ex))
     val mathFail = style(math, hasError)

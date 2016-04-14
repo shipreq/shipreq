@@ -304,16 +304,17 @@ object ShowSrcDataImp {
       ShowSrc { (s, atom) =>
         s append prefix
         atom match {
-          case a: NewLine         # BlankLine     => s append "blankLine"
-          case a: Literal         # Literal       => s.fn1("Literal", a.value)
-          case a: ReqRef          # ReqRef        => s.fn1("ReqRef", a.value)
-          case a: ReqRef          # CodeRef       => s.fn1("CodeRef", a.value)
-          case a: Issue           # Issue         => s.fn2("Issue", a.typ, a.desc)(implicitly, inlineIssueDescZ)
-          case a: PlainTextMarkup # WebAddress    => s.fn1("WebAddress", a.value)
-          case a: PlainTextMarkup # EmailAddress  => s.fn1("EmailAddress", a.value)
-          case a: PlainTextMarkup # MathTeX       => s.fn1("MathTeX", a.value)
-          case a: TagRef          # TagRef        => s.fn1("TagRef", a.value)
-          case a: ListMarkup      # UnorderedList => s.fn1("UnorderedList", a.items)(atoms10.narrow)
+          case a: NewLine         # BlankLine      => s append "blankLine"
+          case a: Literal         # Literal        => s.fn1("Literal", a.value)
+          case a: ReqRef          # ReqRef         => s.fn1("ReqRef", a.value)
+          case a: ReqRef          # CodeRef        => s.fn1("CodeRef", a.value)
+          case a: UseCaseStepRef  # UseCaseStepRef => s.fn1("UseCaseStepRef", a.value)
+          case a: Issue           # Issue          => s.fn2("Issue", a.typ, a.desc)(implicitly, inlineIssueDescZ)
+          case a: PlainTextMarkup # WebAddress     => s.fn1("WebAddress", a.value)
+          case a: PlainTextMarkup # EmailAddress   => s.fn1("EmailAddress", a.value)
+          case a: PlainTextMarkup # MathTeX        => s.fn1("MathTeX", a.value)
+          case a: TagRef          # TagRef         => s.fn1("TagRef", a.value)
+          case a: ListMarkup      # UnorderedList  => s.fn1("UnorderedList", a.items)(atoms10.narrow)
         }
       }
     atom1

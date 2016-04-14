@@ -13,7 +13,7 @@ import shipreq.base.util.Intersection
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{ReqId, ExternalPubid, ReqType, ReqTypePos}
 import shipreq.webapp.base.protocol.ProjectSPA
-import shipreq.webapp.base.text.{TextSearch, PlainText, Grammar}
+import shipreq.webapp.base.text.{Grammar, PlainText, ProjectText, TextSearch}
 import shipreq.webapp.client.app.cfg.shared.Usage
 import shipreq.webapp.client.app.state.{ClientData, Changes}
 import shipreq.webapp.client.data.{FilterDead, HideDead}
@@ -173,7 +173,7 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
         State.filterDead.set(fd) compose
         reqTableVS.modify(_ setFilterDead fd)))
 
-    val pxPlainText      = pxProject map PlainText.apply
+    val pxPlainText      = pxProject.map(PlainText(_, ProjectText.Context.None))
     val pxTextSearch     = Px.apply2(pxProject, pxPlainText)(TextSearch.apply)
     val pxProjectWidgets = Px.apply2(pxProject, pxPlainText)(ProjectWidgets(_, _, reqDetailRC))
 

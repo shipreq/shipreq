@@ -132,14 +132,15 @@ sealed abstract class DataHasher extends GenericDashHasher {
     override def sum[T <: Atom.Base](t: T)(f: t.Atom => Hash[t.Atom], i: t.Atom => Int, v: Vector[Hash[t.Atom]]): Hash[t.Atom] =
       Hash.fn[t.Atom](a => f(a) hash a)
 
-    override def blankLine   [T <: NewLine        ](t: T): Hash[t.BlankLine   ] = hashConstClass("BL")
-    override def literal     [T <: Literal        ](t: T): Hash[t.Literal     ] = withName("LI", hashCaseClass)
-    override def webAddress  [T <: PlainTextMarkup](t: T): Hash[t.WebAddress  ] = withName("WA", hashCaseClass)
-    override def emailAddress[T <: PlainTextMarkup](t: T): Hash[t.EmailAddress] = withName("EA", hashCaseClass)
-    override def mathTeX     [T <: PlainTextMarkup](t: T): Hash[t.MathTeX     ] = withName("MX", hashCaseClass)
-    override def reqRef      [T <: ReqRef         ](t: T): Hash[t.ReqRef      ] = withName("RR", hashCaseClass)
-    override def codeRef     [T <: ReqRef         ](t: T): Hash[t.CodeRef     ] = withName("CR", hashCaseClass)
-    override def tagRef      [T <: TagRef         ](t: T): Hash[t.TagRef      ] = withName("TR", hashCaseClass)
+    override def blankLine     [T <: NewLine        ](t: T): Hash[t.BlankLine     ] = hashConstClass("BL")
+    override def literal       [T <: Literal        ](t: T): Hash[t.Literal       ] = withName("LI", hashCaseClass)
+    override def webAddress    [T <: PlainTextMarkup](t: T): Hash[t.WebAddress    ] = withName("WA", hashCaseClass)
+    override def emailAddress  [T <: PlainTextMarkup](t: T): Hash[t.EmailAddress  ] = withName("EA", hashCaseClass)
+    override def mathTeX       [T <: PlainTextMarkup](t: T): Hash[t.MathTeX       ] = withName("MX", hashCaseClass)
+    override def reqRef        [T <: ReqRef         ](t: T): Hash[t.ReqRef        ] = withName("RR", hashCaseClass)
+    override def codeRef       [T <: ReqRef         ](t: T): Hash[t.CodeRef       ] = withName("CR", hashCaseClass)
+    override def useCaseStepRef[T <: UseCaseStepRef ](t: T): Hash[t.UseCaseStepRef] = withName("UR", hashCaseClass)
+    override def tagRef        [T <: TagRef         ](t: T): Hash[t.TagRef        ] = withName("TR", hashCaseClass)
 
     override def issue[T <: Issue](t: T)(implicit h: Hash[Text.InlineIssueDesc.OptionalText]): Hash[t.Issue] =
       withName("IS", hashCaseClass)

@@ -192,6 +192,21 @@ object UseCaseStep {
     override val unapplyData: AnyRef => Option[UseCaseStep] = {case r: UseCaseStep => Some(r); case _ => None}
   }
   implicit def equality: UnivEq[UseCaseStep] = UnivEq.derive
+
+  /**
+   * Focus on a particular [[UseCaseStep]] and provide related data.
+   */
+  final class Focus(useCases: UseCases, val id: UseCaseStepId) {
+            val key       = useCases.stepIndex(id)
+    @inline def field     = key.field
+    @inline def useCaseId = key.useCaseId
+            val uc        = useCases.imap.need(key.useCaseId)
+            val ucSteps   = key.field.useCaseSteps.get(uc)
+       lazy val loc       = ucSteps.stepLocs.forward(id)
+       lazy val ploc      = ucSteps.stepPartialLocs.get(id)
+       lazy val step      = ucSteps.tree.needAtLocation(loc)
+       lazy val live      = step.live(ucSteps)
+  }
 }
 
 /**
@@ -200,6 +215,9 @@ object UseCaseStep {
 @Lenses
 case class UseCaseSteps(tree: UseCaseSteps.Tree) {
   import VectorTree.{Location, PartialLocation}
+
+  def need(id: UseCaseStepId): UseCaseStep =
+    tree.needAtLocation(stepLocs.forward(id))
 
   lazy val stepLocs: BiMap[UseCaseStepId, Location] = {
     val b = BiMap.newBuilder[UseCaseStepId, Location]
@@ -217,6 +235,9 @@ case class UseCaseSteps(tree: UseCaseSteps.Tree) {
 
   lazy val stepPartialLocs: Iso[UseCaseStepId, PartialLocation] =
     stepLocs.iso_! ^<-> partialLocs.iso_!
+
+  lazy val partialLocSteps: Intersection[PartialLocation, UseCaseStepId] =
+    (stepLocs.intersection composeIntersection partialLocs.intersection).reverse
 }
 
 object UseCaseSteps {
@@ -244,6 +265,12 @@ object UseCaseSteps {
 case class UseCases(imap: UseCaseIMap, stepIndex: UseCases.StepIndex, stepFlow: UseCases.StepFlow) {
   def stepIterator: Iterator[UseCaseStep] =
     imap.valuesIterator.flatMap(_.stepIterator)
+
+  def focusStep(id: UseCaseStepId): UseCaseStep.Focus =
+    new UseCaseStep.Focus(this, id)
+
+  def needStep(id: UseCaseStepId): UseCaseStep =
+    stepIndex(id).need(imap).need(id)
 }
 
 object UseCases {
@@ -251,7 +278,10 @@ object UseCases {
   /**
    * Information sufficient to uniquely identify a step tree within a project.
    */
-  case class StepTreeKey(useCaseId: UseCaseId, field: StaticField.UseCaseStepTree)
+  case class StepTreeKey(useCaseId: UseCaseId, field: StaticField.UseCaseStepTree) {
+    def need(imap: UseCaseIMap): UseCaseSteps =
+      field.useCaseSteps.get(imap.need(useCaseId))
+  }
 
   implicit def equalStepTreeKey: UnivEq[StepTreeKey] = UnivEq.derive
 
@@ -328,6 +358,10 @@ case class Requirements(genericReqs: GenericReqIMap,
     IMap.empty[ReqId, Req](_.id) ++
       genericReqs.valuesIterator ++
       useCases.imap.valuesIterator
+
+
+  def getUseCaseByPos(pos: ReqTypePos): Option[UseCase] =
+    pubids.getUseCaseId(pos) flatMap useCases.imap.get
 
   def getReq[T <: ReqTypeId](id: ReqIdT[T]): Option[ReqT[T]] =
     id match {

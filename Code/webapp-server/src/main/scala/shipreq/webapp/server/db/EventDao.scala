@@ -305,6 +305,7 @@ object EventDbCodecs {
     private[this] final val ISSUEDESC = "?"
     private[this] final val REQREF    = "r"
     private[this] final val CODEREF   = "c"
+    private[this] final val UCSTEPREF = "u"
     private[this] final val TAGREF    = "t"
 
     override def sum[T <: Atom.Base](t: T)(f: t.Atom => ReadWriter[t.Atom], i: t.Atom => Int, all: Vector[ReadWriter[t.Atom]]): ReadWriter[t.Atom] = {
@@ -339,6 +340,10 @@ object EventDbCodecs {
     override def codeRef[T <: ReqRef](t: T): ReadWriter[t.CodeRef] = ReadWriter(
       a => strkeyW(CODEREF, a.value),
       { case Js.Obj((CODEREF, v)) => t.CodeRef(readJs[ReqCodeId](v)) })
+
+    override def useCaseStepRef[T <: UseCaseStepRef](t: T): ReadWriter[t.UseCaseStepRef] = ReadWriter(
+      a => strkeyW(UCSTEPREF, a.value),
+      { case Js.Obj((UCSTEPREF, v)) => t.UseCaseStepRef(readJs[UseCaseStepId](v)) })
 
     override def tagRef[T <: TagRef](t: T): ReadWriter[t.TagRef] = ReadWriter(
       a => strkeyW(TAGREF, a.value),

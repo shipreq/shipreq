@@ -14,14 +14,15 @@ trait AtomTC[TC[_]] {
 
   def sum[T <: Atom.Base](t: T)(f: t.Atom => TC[t.Atom], index: t.Atom => Int, all: Vector[TC[t.Atom]]): TC[t.Atom]
 
-  def blankLine    [T <: Atom.NewLine        ](t: T): TC[t.BlankLine   ]
-  def literal      [T <: Atom.Literal        ](t: T): TC[t.Literal     ]
-  def webAddress   [T <: Atom.PlainTextMarkup](t: T): TC[t.WebAddress  ]
-  def emailAddress [T <: Atom.PlainTextMarkup](t: T): TC[t.EmailAddress]
-  def mathTeX      [T <: Atom.PlainTextMarkup](t: T): TC[t.MathTeX     ]
-  def reqRef       [T <: Atom.ReqRef         ](t: T): TC[t.ReqRef      ]
-  def codeRef      [T <: Atom.ReqRef         ](t: T): TC[t.CodeRef     ]
-  def tagRef       [T <: Atom.TagRef         ](t: T): TC[t.TagRef      ]
+  def blankLine     [T <: Atom.NewLine        ](t: T): TC[t.BlankLine     ]
+  def literal       [T <: Atom.Literal        ](t: T): TC[t.Literal       ]
+  def webAddress    [T <: Atom.PlainTextMarkup](t: T): TC[t.WebAddress    ]
+  def emailAddress  [T <: Atom.PlainTextMarkup](t: T): TC[t.EmailAddress  ]
+  def mathTeX       [T <: Atom.PlainTextMarkup](t: T): TC[t.MathTeX       ]
+  def reqRef        [T <: Atom.ReqRef         ](t: T): TC[t.ReqRef        ]
+  def codeRef       [T <: Atom.ReqRef         ](t: T): TC[t.CodeRef       ]
+  def useCaseStepRef[T <: Atom.UseCaseStepRef ](t: T): TC[t.UseCaseStepRef]
+  def tagRef        [T <: Atom.TagRef         ](t: T): TC[t.TagRef        ]
 
   def issue        [T <: Atom.Issue     ](t: T)(implicit x: TC[Text.InlineIssueDesc.OptionalText]): TC[t.Issue]
   def unorderedList[T <: Atom.ListMarkup](t: T)(implicit x: TC[NonEmptyVector[t.ListItem]])       : TC[t.UnorderedList]

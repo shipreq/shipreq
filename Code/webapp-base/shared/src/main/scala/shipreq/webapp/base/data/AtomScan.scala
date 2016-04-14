@@ -2,8 +2,7 @@ package shipreq.webapp.base.data
 
 import scalaz.std.vector.vectorMonoid
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.text.{Atom, Text}
-import Atom._
+import shipreq.webapp.base.text.Atom._
 import AtomScan.IssueLoc
 
 /**
@@ -11,10 +10,11 @@ import AtomScan.IssueLoc
  *
  * @param codeRefs ReqCodes referenced in anything anywhere (including text in dead custom-text fields).
  */
-class AtomScan(val tagRefs : LDStats[ReqId, Set[ApplicableTagId]],
-               val issues  : LDStats[IssueLoc, Vector[AnyIssue]],
-               val reqRefs : Set[ReqId],
-               val codeRefs: Set[ReqCodeId]) {
+class AtomScan(val tagRefs        : LDStats[ReqId, Set[ApplicableTagId]],
+               val issues         : LDStats[IssueLoc, Vector[AnyIssue]],
+               val reqRefs        : Set[ReqId],
+               val codeRefs       : Set[ReqCodeId],
+               val useCaseStepRefs: Set[UseCaseStepId]) {
 
   lazy val issueCounts: LDStats[CustomIssueTypeId, Int] =
     issues.countByValues(_.toStream.map(_.typ))
@@ -31,10 +31,11 @@ object AtomScan {
   private implicit val tagSetMonoid = monoidSet[ApplicableTagId]
 
   def apply(p: Project): AtomScan = {
-    val tagRefs  = new LDStats.Builder[ReqId, Set[ApplicableTagId]]
-    val issues   = new LDStats.Builder[IssueLoc, Vector[AnyIssue]]
-    val reqRefs  = UnivEq.setBuilder[ReqId]
-    val codeRefs = UnivEq.setBuilder[ReqCodeId]
+    val tagRefs         = new LDStats.Builder[ReqId, Set[ApplicableTagId]]
+    val issues          = new LDStats.Builder[IssueLoc, Vector[AnyIssue]]
+    val reqRefs         = UnivEq.setBuilder[ReqId]
+    val codeRefs        = UnivEq.setBuilder[ReqCodeId]
+    val useCaseStepRefs = UnivEq.setBuilder[UseCaseStepId]
 
     def scan(live     : Live,
              reqId    : ReqId     = null,
@@ -54,6 +55,9 @@ object AtomScan {
 
           case a: ReqRef#CodeRef =>
             codeRefs += a.value
+
+          case a: UseCaseStepRef#UseCaseStepRef =>
+            useCaseStepRefs += a.value
 
           case a: Issue#Issue =>
             if (reqId     ne null) issues(InReq(reqId))    .mod(live)(_ :+ a)
@@ -97,6 +101,6 @@ object AtomScan {
     for (g <- p.reqCodes.groups)
       scan(g.live, reqCodeId = g.id)(g.title)
 
-    new AtomScan(tagRefs.result(), issues.result(), reqRefs.result(), codeRefs.result())
+    new AtomScan(tagRefs.result(), issues.result(), reqRefs.result(), codeRefs.result(), useCaseStepRefs.result())
   }
 }

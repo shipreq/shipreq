@@ -11,7 +11,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.{Atom, PlainText, Text, TextSearch}
+import shipreq.webapp.base.text.{Atom, PlainText, Text, TextSearch, ProjectText}
 import shipreq.webapp.client.app.reqtable.{SortCriterion => SC, Column => C}
 import shipreq.webapp.client.data.{FilterDead, ShowDead, HideDead}
 import shipreq.webapp.client.test.ClientTestSettings._
@@ -34,7 +34,7 @@ object LogicPropTest extends TestSuite {
       else
         _ => true
 
-    val plainText   = PlainText(p)
+    val plainText   = PlainText(p, ProjectText.Context.None)
     val textSearch  = TextSearch(p, plainText)
     val gathered    = Logic.gather(vs, p, plainText, textSearch)
     val gatheredG   = gathered.filterT[ReqRow]

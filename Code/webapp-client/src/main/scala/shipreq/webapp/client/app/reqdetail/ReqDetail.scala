@@ -8,10 +8,10 @@ import scalacss.ScalaCssReact._
 import scalaz.{\/, -\/, \/-}
 import shipreq.base.util._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.UiText
+import shipreq.webapp.base.{AppConsts, UiText}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.{UpdateContentCmd, UpdateContentFn}
-import shipreq.webapp.base.text.{Text, PlainText, TextSearch}
+import shipreq.webapp.base.text.{PlainText, ProjectText, Text, TextSearch}
 import shipreq.webapp.client.app.reqtable.ColumnRenderer.RenderDeletionReason // TODO No!
 import shipreq.webapp.client.app.state.ClientData
 import shipreq.webapp.client.app.Style.{reqdetail => *}
@@ -29,12 +29,12 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
   type InitEditor = ContentEditorFeature.D1.InitChild[Cell, Cell]
 
-  case class StaticProps(cd              : ClientData,
-                         cp              : ClientProtocol,
-                         updateContentFn : UpdateContentFn.Instance,
-                         pxPlainText     : Px[PlainText.ForProject],
-                         pxTextSearch    : Px[TextSearch],
-                         pxProjectWidgets: Px[ProjectWidgets])
+  case class StaticProps(cd                   : ClientData,
+                         cp                   : ClientProtocol,
+                         updateContentFn      : UpdateContentFn.Instance,
+                         pxPlainTextNoCtx     : Px[PlainText.ForProject],
+                         pxTextSearch         : Px[TextSearch],
+                         pxProjectWidgetsNoCtx: Px[ProjectWidgets])
 
   case class DynamicProps(extPubid  : ExternalPubid,
                           filterDead: ReusableVar[FilterDead],
@@ -56,7 +56,22 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
    *
    * Cached by its inputs.
    */
-  class Data(val project: Project, val req: Req, upstreamFD: FilterDead) {
+  class Data(sp: StaticProps, val project: Project, val req: Req, upstreamFD: FilterDead) {
+
+    val (pxPlainText, pxProjectWidgets) = {
+      val textCtx: Option[ProjectText.Context] = req match {
+        case uc: UseCase    => Some(ProjectText.Context.UseCase(uc.id))
+        case _ : GenericReq => None
+      }
+      var t = sp.pxPlainTextNoCtx
+      var w = sp.pxProjectWidgetsNoCtx
+      for (c <- textCtx) {
+        t = t.map(_ withCtx c)
+        w = Px.apply2(w, t)(_ withPlainText _)
+      }
+      (t, w)
+    }
+
     val live = req.live(project.config.customReqTypes)
 
     val filterDead = live match {
@@ -186,7 +201,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
         e <- pxExtPubid
         f <- pxUpstreamFD
       } yield
-        p.findReq(e).map(new Data(p, _, f))
+        p.findReq(e).map(new Data(SP, p, _, f))
 
     val filterDeadCheckbox =
       Checkbox.filterDead(v => $.props.flatMap(_.filterDead set v))
@@ -217,7 +232,9 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
       import data.req
 
       val static = Static(
-        initEditor.parent, initEditor.preview, pxProject, pxPlainText, pxProjectWidgets, pxTextSearch, updateIO)
+        initEditor.parent, initEditor.preview,
+        pxProject, data.pxPlainText, data.pxProjectWidgets, pxTextSearch,
+        updateIO)
 
       def generalImps(cell: Cell) = {
         val dir = cell.implicationDirection
@@ -265,7 +282,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
     def renderDetail(props: DynamicProps, data: Data): ReactElement = {
       import data.{project, req, pubidText}
 
-      val pw          = pxProjectWidgets.value()
+      val pw          = data.pxProjectWidgets.value()
       val state       = props.reqProps(req.id)
       val fieldName   = pxFieldNameFn.value()
       val editFeature = createEditFeature(state.initEditor, state.asyncFeature, data)
@@ -440,23 +457,36 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
           val fullStepLabel = temp.field.stepLabel(pos, partialLoc, mnemonicPrefix = false)
 
-          def header = {
-            val depth = partialLoc.value.length // ≥ 1
+          def header: ReactTag =
+            partialLoc.validity match {
+              case Valid =>
+                val depth = partialLoc.value.length // ≥ 1
 
-            val short = if (depth == 1)
-              fullStepLabel
-            else {
-              // Last node asserted to be ≥ 0 in PartialLocation
-              val i = partialLoc.value.last
-              temp.field.stepLabelsPerLevel(depth - 1).label(i)
+                val short = if (depth == 1)
+                  fullStepLabel
+                else {
+                  // Last node asserted to be ≥ 0 in PartialLocation
+                  val i = partialLoc.value.last
+                  temp.field.stepLabelsPerLevel(depth - 1).label(i)
+                }
+
+                <.div(
+                  *.header(depth - 1),
+                  stepLabel,
+                  ^.title := fullStepLabel,
+                  short + ".")
+
+              case Invalid =>
+                val badInd = partialLoc.value.whole.indexWhere(_ < 0)
+
+                <.div(
+                  *.header(badInd),
+                  stepLabel,
+                  ^.title := fullStepLabel,
+                  <.span(
+                    *.deadStepLabel,
+                    fullStepLabel.dropWhile(_ !=* AppConsts.useCaseStepsDeadNode) + "."))
             }
-
-            <.div(
-              *.header(depth - 1),
-              stepLabel,
-              ^.title := fullStepLabel,
-              short + ".")
-          }
 
           def body = {
 
@@ -537,7 +567,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
         import Px.AutoValue._
         val props1 = DeletionForm.initProps1(pxProject, NonEmptySet one id, Set.empty)
-        val props = DeletionForm.makeProps(props1, pxProjectWidgets, pxPlainText, pxTextSearch, run, clearModal)
+        val props = DeletionForm.makeProps(props1, pxProjectWidgetsNoCtx, pxPlainTextNoCtx, pxTextSearch, run, clearModal)
         Some(Modal(DeletionForm.Component(props)))
       } >>= setModal
 

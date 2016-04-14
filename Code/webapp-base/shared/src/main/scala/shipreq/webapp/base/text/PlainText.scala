@@ -3,6 +3,7 @@ package shipreq.webapp.base.text
 import scala.annotation.tailrec
 import shipreq.base.util.NonEmptyVector
 import shipreq.base.util.SafeStringOps._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar => G}
 import shipreq.webapp.base.util.ReqCodeTreeItem
@@ -69,13 +70,29 @@ object PlainText {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  type ForProject = ProjectText[String]
-
   private final val bullet = "* "
 
-  def apply(p: Project): ForProject = {
+  @inline def apply(p: Project, ctx: ProjectText.Context): ForProject =
+    new ForProject(p, ctx)
 
-    def codeRef(id: ReqCodeId): String = {
+  final class ForProject(p: Project, ctx: ProjectText.Context) extends ProjectText[String](p, ctx) {
+
+    override def withCtx(newCtx: ProjectText.Context): ForProject =
+      new ForProject(p, newCtx)
+
+    def useCaseStepLabel(id: UseCaseStepId): String =
+      useCaseStepLabel(p.reqs.useCases.focusStep(id))
+
+    def useCaseStepLabel(focus: UseCaseStep.Focus): String = {
+      import focus._
+      val mne  = ctx match {
+        case ProjectText.Context.None       => true
+        case ProjectText.Context.UseCase(i) => i !=* uc.id
+      }
+      field.stepLabel(uc.pubid.pos, ploc, mnemonicPrefix = mne)
+    }
+
+    private def codeRef(id: ReqCodeId): String = {
       import ProjectText.ReqCodeResolution._
       ProjectText.resolveReqCode(id, p.reqCodes) match {
         case ActiveCodeToReq     (c, _) => G reflinkSurround reqCode(c)
@@ -86,25 +103,28 @@ object PlainText {
       }
     }
 
-    def reqRef(req: ReqId): String = {
+    private def reqRef(req: ReqId): String = {
       val pid = p.reqs.req(req).pubid
       val rt  = p.config.reqType(pid.reqTypeId)
       G.reflinkSurround(pubid(rt, pid.pos))
     }
 
-    def tagRef(id: ApplicableTagId): String = {
+    private def useCaseStepRef(id: UseCaseStepId): String =
+      G.reflinkSurround(useCaseStepLabel(id))
+
+    private def tagRef(id: ApplicableTagId): String = {
       val t = p.config.atag(id)
       hashtag(t.key)
     }
 
-    def issue(id: CustomIssueTypeId, desc: Option[String]): String = {
+    private def issue(id: CustomIssueTypeId, desc: Option[String]): String = {
       val it = p.config.customIssueType(id)
       desc.foldLeft(hashtag(it.key))(_ ~ G.issueDescSurround(_))
     }
 
-    val outOfListNewline = "\n\n"
+    private val outOfListNewline = "\n\n"
 
-    val format: ProjectText.FormatAtomFn[String] = {
+    override val format: ProjectText.FormatAtomFn[String] = {
       def nest(acc: String, newline: String, live: Live, atoms: Vector[AnyAtom]): String = {
         @tailrec def go(acc: String, atoms: Vector[AnyAtom]): String =
           if (atoms.isEmpty)
@@ -113,16 +133,17 @@ object PlainText {
             val nextAtoms = atoms.tail
             import Atom._
             val cur = atoms.head match {
-              case a: Literal         # Literal       => a.value
-              case a: NewLine         # BlankLine     => newline
-              case a: ReqRef          # ReqRef        => reqRef(a.value)
-              case a: ReqRef          # CodeRef       => codeRef(a.value)
-              case a: Issue           # Issue         => issue(a.typ, a.desc.asOption map (run(live, _)))
-              case a: PlainTextMarkup # WebAddress    => a.value
-              case a: PlainTextMarkup # EmailAddress  => a.value
-              case a: PlainTextMarkup # MathTeX       => G.mathTexSurround(a.value)
-              case a: TagRef          # TagRef        => tagRef(a.value)
-              case a: ListMarkup      # UnorderedList =>
+              case a: Literal         # Literal        => a.value
+              case a: NewLine         # BlankLine      => newline
+              case a: ReqRef          # ReqRef         => reqRef(a.value)
+              case a: ReqRef          # CodeRef        => codeRef(a.value)
+              case a: UseCaseStepRef  # UseCaseStepRef => useCaseStepRef(a.value)
+              case a: Issue           # Issue          => issue(a.typ, a.desc.asOption map (run(live, _)))
+              case a: PlainTextMarkup # WebAddress     => a.value
+              case a: PlainTextMarkup # EmailAddress   => a.value
+              case a: PlainTextMarkup # MathTeX        => G.mathTexSurround(a.value)
+              case a: TagRef          # TagRef         => tagRef(a.value)
+              case a: ListMarkup      # UnorderedList  =>
                 val listNL = if (newline eq outOfListNewline) "\n  " else newline ~ "  "
                 val r = a.items.foldLeft("") { (q, li) =>
                   val pre = if (q.isEmpty && acc.isEmpty) bullet else q ~ newline ~ bullet
@@ -139,6 +160,5 @@ object PlainText {
       run
     }
 
-    ProjectText(p, format)
   }
 }

@@ -298,12 +298,7 @@ object DataProp {
           None
       })
 
-    def idsInStepFlow =
-      Prop.whitelist[T]("StepFlow ids")(
-        _.stepIndex.keySet,
-        _.stepFlow.memberIterator)
-
-    val all = stepIds ∧ stepIndex ∧ stepTrees ∧ idsInStepFlow
+    val all = stepIds ∧ stepIndex ∧ stepTrees
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -444,16 +439,17 @@ object DataProp {
     private val nop = Eval.pass()
 
     lazy val anyAtom: Prop[AnyAtom] = Prop.eval[AnyAtom] {
-      case a: Literal         # Literal       => literal(a)
-      case _: NewLine         # BlankLine     => nop
-      case a: PlainTextMarkup # WebAddress    => webAddress(a)
-      case a: PlainTextMarkup # EmailAddress  => emailAddress(a)
-      case a: PlainTextMarkup # MathTeX       => mathtex(a)
-      case a: ListMarkup      # UnorderedList => anyTextV(a.items.whole)
-      case _: ReqRef          # ReqRef        => nop
-      case _: ReqRef          # CodeRef       => nop
-      case a: Issue           # Issue         => anyText(a.desc)
-      case _: TagRef          # TagRef        => nop
+      case a: Literal         # Literal        => literal(a)
+      case _: NewLine         # BlankLine      => nop
+      case a: PlainTextMarkup # WebAddress     => webAddress(a)
+      case a: PlainTextMarkup # EmailAddress   => emailAddress(a)
+      case a: PlainTextMarkup # MathTeX        => mathtex(a)
+      case a: ListMarkup      # UnorderedList  => anyTextV(a.items.whole)
+      case _: ReqRef          # ReqRef         => nop
+      case _: ReqRef          # CodeRef        => nop
+      case _: UseCaseStepRef  # UseCaseStepRef => nop
+      case a: Issue           # Issue          => anyText(a.desc)
+      case _: TagRef          # TagRef         => nop
     } rename "AnyAtom"
 
     lazy val anyText: Prop[Text.AnyOptional] =
@@ -515,8 +511,12 @@ object DataProp {
   object project {
     type P = Project
 
-    case class Refs(fieldIds: Set[CustomFieldId], reqIds: Set[ReqId], reqCodeIds: Set[ReqCodeId],
-                    reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId])
+    case class Refs(fieldIds      : Set[CustomFieldId],
+                    reqIds        : Set[ReqId],
+                    reqCodeIds    : Set[ReqCodeId],
+                    useCaseStepIds: Set[UseCaseStepId],
+                    reqTypeIds    : Set[ReqTypeId],
+                    tagIds        : Set[TagId])
 
     def atoms: Prop[P] =
       Prop.eval[(String, Iterator[Text.AnyOptional])](t => text.anyTextI(t._2).rename(t._1))
@@ -542,6 +542,7 @@ object DataProp {
         p.config.fields.customFields.keySet,
         p.reqs.reqs.valuesIterator.map(_.id).toSet,
         p.reqCodes.idSet,
+        p.reqs.useCases.stepIterator.map(_.id).toSet,
         p.config.reqTypes.map(_.reqTypeId)(collection.breakOut),
         p.config.tags.keySet)
 
@@ -552,6 +553,7 @@ object DataProp {
 
       def validFieldIds   = whitelist(_._2.fieldIds) _
       def validReqIds     = whitelist(_._2.reqIds) _
+      def validUCStepIds  = whitelist(_._2.useCaseStepIds) _
       def validReqCodeIds = whitelist(_._2.reqCodeIds) _
       def validReqTypeIds = whitelist(_._2.reqTypeIds) _
       def validTagIds     = whitelist(_._2.tagIds) _
@@ -567,9 +569,11 @@ object DataProp {
       ∧ validReqIds    ("ReqData.implications",       _.implications.members)
       ∧ validReqIds    ("Atoms: ReqRefs",             _.atomScan.reqRefs)
       ∧ validReqCodeIds("Atoms: CodeRefs",            _.atomScan.codeRefs)
+      ∧ validUCStepIds ("Atoms: UseCaseStepRefs",     _.atomScan.useCaseStepRefs)
       ∧ validTagIds    ("Atoms: TagRefs",             _.atomScan.tagRefs.all.all)
       ∧ validIssueTypes("Atoms: Issues",              _.atomScan.issues.all.all.map(_.typ))
       ∧ validReqIds    ("DeletionReason reqIds",      _.deletionReasons.reqApplication.keys)
+      ∧ validUCStepIds ("UseCase step flow",          _.reqs.useCases.stepFlow.memberIterator)
       ).rename("Cross-constituent refs").contramap[P](_ mapStrengthR mkRefs)
     }
 

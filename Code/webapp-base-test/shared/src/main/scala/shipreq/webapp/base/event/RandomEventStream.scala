@@ -175,6 +175,9 @@ class ApplicableEventGen(p: Project) {
   lazy val liveUseCaseId: Option[Gen[UseCaseId]] =
     liveUseCase.map(_.map(_.id))
 
+  lazy val existingUseCaseStepId: Option[Gen[UseCaseStepId]] =
+    Gen.tryGenChoose(p.reqs.useCases.stepIterator.map(_.id))
+
   lazy val existingReqCodeId: Option[Gen[ReqCodeId]] =
     Gen.tryGenChoose(p.reqCodes.idList)
 
@@ -203,16 +206,16 @@ class ApplicableEventGen(p: Project) {
     Gen.tryGenChoose(cfg.customTextFields.filter(_.live(cfg) :: Live).map(_.id))
 
   def customTextFieldText =
-    TextGen.customTextFieldAtom(existingReqId, existingReqCodeId, existingCustomIssueTypeId, existingApplicableTagId).text
+    TextGen.customTextFieldAtom(existingReqId, existingUseCaseStepId, existingReqCodeId, existingCustomIssueTypeId, existingApplicableTagId).text
 
   lazy val newReqCodeIdAndValue =
     Gen.apply2(ReqCode.IdAndValue)(nextReqCodeId, reqCode.value)
 
   def reqCodeGroupTitle =
-    TextGen.reqCodeGroupTitleAtom(existingReqId, existingReqCodeId, existingCustomIssueTypeId).text
+    TextGen.reqCodeGroupTitleAtom(existingReqId, existingUseCaseStepId, existingReqCodeId, existingCustomIssueTypeId).text
 
   private lazy val genericReqTitleAtom =
-    TextGen.genericReqTitleAtom(existingReqId, existingReqCodeId, existingCustomIssueTypeId, existingApplicableTagId)
+    TextGen.genericReqTitleAtom(existingReqId, existingUseCaseStepId, existingReqCodeId, existingCustomIssueTypeId, existingApplicableTagId)
 
   def genericReqTitle =
     genericReqTitleAtom.text
@@ -221,10 +224,10 @@ class ApplicableEventGen(p: Project) {
     genericReqTitleAtom.text1(Text.GenericReqTitle)
 
   def deletionReason =
-    TextGen.deletionReasonAtom(existingReqId, existingReqCodeId, existingApplicableTagId).text
+    TextGen.deletionReasonAtom(existingReqId, existingUseCaseStepId, existingReqCodeId, existingApplicableTagId).text
 
   lazy val useCaseTitleAtom =
-    TextGen.useCaseTitleAtom(existingReqId, existingReqCodeId, existingCustomIssueTypeId, existingApplicableTagId)
+    TextGen.useCaseTitleAtom(existingReqId, existingUseCaseStepId, existingReqCodeId, existingCustomIssueTypeId, existingApplicableTagId)
 
   def useCaseTitle =
     useCaseTitleAtom.text
@@ -233,7 +236,7 @@ class ApplicableEventGen(p: Project) {
     useCaseTitleAtom.text1(Text.UseCaseTitle)
 
   def useCaseStepTitle =
-    TextGen.useCaseStepAtom(existingReqId, existingReqCodeId, existingCustomIssueTypeId, existingApplicableTagId).text
+    TextGen.useCaseStepAtom(existingReqId, existingUseCaseStepId, existingReqCodeId, existingCustomIssueTypeId, existingApplicableTagId).text
 
   object customIssueTypeGD extends GenericDataGen(CustomIssueTypeGD) {
     import gd._

@@ -14,14 +14,15 @@ import utest._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.{RandomData => $}
-import shipreq.webapp.base.test.{SampleProject, ProjectDsl, UnsafeTypes}
+import shipreq.webapp.base.test.{ProjectDsl, UnsafeTypes}
+import shipreq.webapp.base.test.{SampleProject6 => SP}
 import shipreq.webapp.base.test.WebappTestUtil._
 import Atom.AnyAtom
 
 object ParsersTest extends TestSuite {
 
   def quoteStr(s: String): String =
-    s"[${s.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")}]"
+    s"⟪${s.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")}⟫"
 
   def preprocessStr(s: String, lc: LineCardinality): String =
     String valueOf Parsers.preprocess(s, lc)
@@ -52,7 +53,7 @@ object ParsersTest extends TestSuite {
 
     val E = EvalOver(this)
 
-    val txt2str = PlainText(p).format(Live, _: Text.AnyOptional)
+    val txt2str = PlainText(p, ProjectText.Context.None).format(Live, _: Text.AnyOptional)
 
     val genericReqTitles =
       p.reqs.reqs.values
@@ -110,7 +111,7 @@ object ParsersTest extends TestSuite {
       count(src)
       val txt = txt2str(src)
       val parsed = Text.CustomTextField.parse(p)(txt)
-      cmp(s"[CustomTextField] toStr |> parse = id\n'''$txt'''", parsed, src)
+      cmp(s"[CustomTextField] toStr |> parse = id\n${quoteStr(txt)}", parsed, src)
     }
 
     def testStringML(in0: String) = {
@@ -168,19 +169,21 @@ object ParsersTest extends TestSuite {
   val P = {
     import ProjectDsl._
     import UnsafeTypes._
-    import SampleProject.Values._
-    GReq(reqType = co, id = 31, title = "be fast").code("co2") + // code inversed: [CO-1] [co2] ReqCodeId = 1
-    GReq(reqType = co, id = 32, title = "be good").code("co1") + // code inversed: [CO-2] [co1] ReqCodeId = 2
-    GReq(reqType = fr, id = 11, title = "do stuff").code("here.i.am_3") +
-    GReq(reqType = fr, id = 12, title = "do more stuff") +
-    GReq(reqType = mf, id = 21, title = "Use Case Editor") +
-    GReq(reqType = mf, id = 22, title = "Templates") +
-    GReq(reqType = mf, id = 23, title = "Incompletions") ! SampleProject.project
+    import SP.Values._
+
+    // Create reqCodes that look like pubids
+    GReq(reqType = co, title = "be fast").code("co2") +
+    GReq(reqType = co, title = "be good").code("co1").code("here.i.am_3") !
+    SP.project
   }
   @inline val V = Vector
   @inline def NEV[A](h: A, t: A*) = NonEmptyVector(h, t: _*)
   @inline def LI[A <: AnyAtom](as: A*) = as.toVector
   @inline def L(s: String) = T.Literal(s)
+
+  val reqCode_co2      = ReqCodeId(9)
+  val reqCode_co1      = ReqCodeId(10)
+  val reqCode_hereiam3 = ReqCodeId(11)
 
   def propEmailAddress = parserProp("EmailAddress",
     (_: T.EmailAddress).value, T.parserI(P))(_.emailAddress.run())
@@ -197,6 +200,9 @@ object ParsersTest extends TestSuite {
     words.toSet
   }
 
+  val optBool: List[Option[Boolean]] =
+    None :: Some(true) :: Some(false) :: Nil
+
   override val tests = TestSuite {
     'preprocess {
       // This isn't a standard trim - see preprocess() for explanation
@@ -209,17 +215,21 @@ object ParsersTest extends TestSuite {
     }
 
     'manual {
+      import SP.Values._
       import UnsafeTypes._
 
       def testT[A <: AnyAtom](p: Project, parse: Project => String => Vector[A], text: String)(as: A*): Unit = {
         val e = as.toVector
         assertEq(quoteStr(preprocessStr(text, MultiLine)), parse(p)(text), e)
-        val text2 = PlainText(p).format(Live, e)
+        val text2 = PlainText(p, ProjectText.Context.None).format(Live, e)
         assertEq(text2, parse(p)(text2), e)
       }
 
       def test(text: String)(as: T.Atom*): Unit =
         testT(P, T.parse, text)(as: _*)
+
+      def testLit(text: String): Unit =
+        test(text)(T.Literal(text))
 
       'hashHashHash -
         test("#v1.x#v1.0#TBD#TBD{ whatever}#pri=high")(
@@ -236,7 +246,7 @@ object ParsersTest extends TestSuite {
         'nl      - test("here\nthere")(L("here"), T.blankLine, L("there"))
         'nls     - test("here \n \n\n there")(L("here"), T.blankLine, L("there"))
         'listNL  - test("ok\n\n\n*   hehe \n \n\n  \n *  yay \n\n\n bye")(L("ok"), T.UnorderedList(NEV(LI(L("hehe")), LI(L("yay")))), L("bye"))
-        'codeRef - test("[ here . i . am_3 ]")(T.CodeRef(3))
+        'codeRef - test("[ here . i . am_3 ]")(T.CodeRef(reqCode_hereiam3))
         'headNL  - whitespaceCombos.foreach(w => test(w + "good")(T.Literal("good")))
         'tailNL  - whitespaceCombos.foreach(w => test("good" + w)(T.Literal("good")))
       }
@@ -246,16 +256,52 @@ object ParsersTest extends TestSuite {
         'between - test("before\n* mid\nafter")(L("before"), T.UnorderedList(NEV(LI(L("mid")))), L("after"))
       }
 
+      'useCaseStepRef {
+        def testU(id: UseCaseStepId, stepLabel: String): Unit = {
+          val expect = T.UseCaseStepRef(id)
+          for {
+            prefix   <- "" :: "UC-" :: "uc" :: " Uc - " :: Nil
+            suffix   <- "" :: " " :: Nil
+            dotNoise <- null :: " ." :: ". " :: "  .  " :: Nil
+            chCase   <- optBool
+            padZero  <- false :: true :: Nil
+          } {
+            var s = stepLabel
+            chCase match {
+              case Some(true)  => s = s.toLowerCase.replace(".x.", ".X.")
+              case Some(false) => s = s.toUpperCase
+              case None        => ()
+            }
+            if (dotNoise ne null) s = s.replace(".", dotNoise)
+            if (padZero) s = s.replaceAll("(?=\\d+)", "0")
+            s = "[" + prefix + s + suffix + "]"
+            test(s)(expect)
+          }
+        }
+
+        'liveN - testU(19, step19_label)
+        'liveE - testU(18, step18_label)
+        'deadN - testU(16, step16_label)
+        'deadN - testU(20, step20_label)
+        'deadE - testU(17, step17_label)
+
+        'endInX - testLit("[1.0.X]")
+        'negN1  - testLit("[1.-1]")
+        'negN2  - testLit("[1.0.-1]")
+        'negE1  - testLit("[1.E.-1]")
+        // should also test some invalid combinations
+      }
+
       'altForms {
-        'req - test("[fr1][fr 1][ fr - 2 ][Mf-1 ]")(T.ReqRef(11), T.ReqRef(11), T.ReqRef(12), T.ReqRef(21))
+        'req - test("[fr1][fr 1][ fr - 2 ][Mf-1 ]")(T.ReqRef(frs(1)), T.ReqRef(frs(1)), T.ReqRef(frs(2)), T.ReqRef(mfs(1)))
         'tag - test("#wip#DEFER#V3.x")(T.TagRef(11), T.TagRef(12), T.TagRef(26))
         'issue - test("#tbd{cool}#Todo#TBD { nice }")(
           T.Issue(2, Vector(I.Literal("cool"))), T.Issue(1, Vector.empty), T.Issue(2, Vector(I.Literal("nice"))))
       }
 
       'ambiguity {
-        'pubid - test("[CO1][co-1]")(T.ReqRef(31), T.ReqRef(31))
-        'code  - test("[co1][co2]")(T.CodeRef(2), T.CodeRef(1)) // codes inversed
+        'pubid - test("[CO1][co-1]")(T.ReqRef(cos(1)), T.ReqRef(cos(1)))
+        'code  - test("[co1][co2]")(T.CodeRef(reqCode_co1), T.CodeRef(reqCode_co2))
       }
     }
 
@@ -269,7 +315,7 @@ object ParsersTest extends TestSuite {
     // Eg. Dead text can have CodeRefs to dead codes.
     // Parsing text only happens to live text, and it only looks at active codes.
     'big {
-//      tester.bugHunt(0, 10000)(Prop eval (_.all)) //(DefaultSettings.propSettings.setSampleSize(1000).setSeed(1).setGenSize(4).setDebug.setSingleThreaded)
+//      tester.bugHunt(0, 10000)(Prop.eval(_.all))(DefaultSettings.propSettings.setSampleSize(1000).setSeed(1).setGenSize(4).setDebug.setSingleThreaded)
       tester.mustSatisfyE(_.all) //(DefaultSettings.propSettings.setSampleSize(20000).setDebug)
       println()
       val graphUnit = 1000 `JVM|JS` 10

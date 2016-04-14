@@ -75,6 +75,9 @@ final class NonEmptyVector[+A](val head: A, val tail: Vector[A]) {
   def exists(f: A => Boolean): Boolean =
     f(head) || tail.exists(f)
 
+  def find(f: A => Boolean): Option[A] =
+    if (f(head)) Some(head) else tail.find(f)
+
   def mapTail[B >: A](f: Vector[A] => Vector[B]): NonEmptyVector[B] =
     NonEmptyVector(head, f(tail))
 
@@ -256,6 +259,33 @@ object NonEmptyVector extends NonEmptyVectorImplicits0 {
 
   implicit def univEq[A: UnivEq]: UnivEq[NonEmptyVector[A]] =
     UnivEq.force
+
+  def newBuilder[A](head: A): Builder[A] =
+    new Builder(head)
+
+  def newBuilderNE[A](as: NonEmptyVector[A]): Builder[A] = {
+    val b = newBuilder(as.head)
+    b ++= as.tail
+    b
+  }
+
+  final class Builder[A](head: A) {
+    private[this] val tail = Vector.newBuilder[A]
+
+    def +=(a: A): Unit =
+      tail += a
+
+    def ++=(as: TraversableOnce[A]): Unit =
+      tail ++= as
+
+    def ++=(as: NonEmptyVector[A]): Unit = {
+      this += as.head
+      this ++= as.tail
+    }
+
+    def result(): NonEmptyVector[A] =
+      NonEmptyVector(head, tail.result())
+  }
 
   implicit def semigroup[A]: Semigroup[NonEmptyVector[A]] =
     new Semigroup[NonEmptyVector[A]] {

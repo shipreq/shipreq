@@ -482,18 +482,24 @@ object RandomData {
         plus.foldLeft[List[Gen.Freq[t.Atom]]](Nil)((q, o) =>
           o.fold(q)(g => (9, g) :: q)): _*)
 
-    def reqRefs(r: Option[Gen[ReqId]], c: Option[Gen[ReqCodeId]])(implicit t: ReqRef): Vector[Gen[t.Atom]] = {
-      var v = Vector.empty[Gen[t.Atom]]
-      r.foreach(v :+= _ map t.ReqRef)
-      c.foreach(v :+= _ map t.CodeRef)
-      v
+    def reqRefs(r: Option[Gen[ReqId]], c: Option[Gen[ReqCodeId]])(implicit t: ReqRef): List[Gen[t.Atom]] = {
+      var result = List.empty[Gen[t.Atom]]
+      r.foreach(result ::= _ map t.ReqRef)
+      c.foreach(result ::= _ map t.CodeRef)
+      result
     }
+
+    def useCaseStepRef(u: Gen[UseCaseStepId])(implicit t: UseCaseStepRef): Gen[t.Atom] =
+      u map t.UseCaseStepRef
 
     def tagRef(g: Gen[ApplicableTagId])(implicit t: TagRef): Gen[t.TagRef] =
       g map t.TagRef
 
-    def issue(i: Gen[CustomIssueTypeId], r: Option[Gen[ReqId]], c: Option[Gen[ReqCodeId]])(implicit t: Issue): Gen[t.Issue] =
-      Gen.apply2(t.Issue)(i, inlineIssueDescAtom(r, c).vector)
+    def issue(i: Gen[CustomIssueTypeId],
+              r: Option[Gen[ReqId]],
+              u: Option[Gen[UseCaseStepId]],
+              c: Option[Gen[ReqCodeId]])(implicit t: Issue): Gen[t.Issue] =
+      Gen.apply2(t.Issue)(i, inlineIssueDescAtom(r, u, c).vector)
 
     val isBlankLine: AnyAtom => Boolean = {
       case _: NewLine#BlankLine => true
@@ -507,6 +513,7 @@ object RandomData {
       case _: Literal         # Literal
          | _: ReqRef          # ReqRef
          | _: ReqRef          # CodeRef
+         | _: UseCaseStepRef  # UseCaseStepRef
          | _: Issue           # Issue
          | _: PlainTextMarkup # WebAddress
          | _: PlainTextMarkup # EmailAddress
@@ -525,10 +532,10 @@ object RandomData {
     def noWhitespaceRight(a: String) = a + "r"
 
     val removeFromLiteralsR = {
-      val reqRefInside = """(?:[a-zA-Z]+\s*(?:-\s*)?\d+)"""
+      val reqOrStepRefInside = """(?:[a-zA-Z]+\s*(?:-\s*)?(?:\d+|X)(?:\s*\.\s*(?:\d+|X))*)"""
       val codeNode = """(?:[a-zA-Z0-9][a-zA-Z0-9_]*)"""
       val codeRefInside = s"(?:$codeNode(?:\\.$codeNode)*)"
-      ("""[#@]+|[a-z]://|\*( )|<math>|\[\s*(?:""" + s"$reqRefInside|$codeRefInside)\\s*\\]").r
+      ("""[#@]+|[a-z]://|\*( )|<math>|\[\s*(?:""" + s"$reqOrStepRefInside|$codeRefInside)\\s*\\]").r
     }
     def removeFromLiterals[L <: Literal#Literal](l: L): L =
       l.map(removeFromLiteralsR.replaceAllIn(_, "*$1"))
@@ -624,64 +631,83 @@ object RandomData {
     // Specific text types
 
     def reqTitle(t: ReqTitle)(r: Option[Gen[ReqId]],
+                              u: Option[Gen[UseCaseStepId]],
                               c: Option[Gen[ReqCodeId]],
                               i: Option[Gen[CustomIssueTypeId]],
                               a: Option[Gen[ApplicableTagId]]): Gen[t.Atom] = {
       @inline implicit def tt: t.type = t
-      val x = singleLineGens(t)
-      val gs = x ++ x ++ reqRefs(r, c) ++ a.map(tagRef(_)) ++ i.map(issue(_, r, c))
-      Gen.chooseGenNE(gs)
+      val gs = NonEmptyVector newBuilderNE singleLineGens(t)
+      gs ++= reqRefs(r, c)
+      gs ++= u.map(useCaseStepRef(_))
+      gs ++= i.map(issue(_, r, u, c))
+      gs ++= a.map(tagRef(_))
+      Gen.chooseGenNE(gs.result())
     }
 
     def reqCodeGroupTitleAtom(r: Option[Gen[ReqId]],
+                              u: Option[Gen[UseCaseStepId]],
                               c: Option[Gen[ReqCodeId]],
                               i: Option[Gen[CustomIssueTypeId]]): Gen[ReqCodeGroupTitle.Atom] = {
       @inline implicit def t: ReqCodeGroupTitle.type = ReqCodeGroupTitle
-      val x = singleLineGens(t)
-      val gs = x ++ x ++ reqRefs(r, c) ++ i.map(issue(_, r, c))
-      Gen.chooseGenNE(gs)
+      val gs = NonEmptyVector newBuilderNE singleLineGens(t)
+      gs ++= reqRefs(r, c)
+      gs ++= u.map(useCaseStepRef(_))
+      gs ++= i.map(issue(_, r, u, c))
+      Gen.chooseGenNE(gs.result())
     }
 
     def genericReqTitleAtom = reqTitle(GenericReqTitle) _
 
     def useCaseTitleAtom = reqTitle(UseCaseTitle) _
 
-    def inlineIssueDescAtom(r: Option[Gen[ReqId]], c: Option[Gen[ReqCodeId]]): Gen[InlineIssueDesc.Atom] = {
+    def inlineIssueDescAtom(r: Option[Gen[ReqId]],
+                            u: Option[Gen[UseCaseStepId]],
+                            c: Option[Gen[ReqCodeId]]): Gen[InlineIssueDesc.Atom] = {
       @inline implicit def t: InlineIssueDesc.type = InlineIssueDesc
-      val gs = singleLineGens(t) ++ reqRefs(r, c)
-      Gen.chooseGenNE(gs)
+      val gs = NonEmptyVector newBuilderNE singleLineGens(t)
+      gs ++= reqRefs(r, c)
+      gs ++= u.map(useCaseStepRef(_))
+      Gen.chooseGenNE(gs.result())
     }
 
     def customTextFieldAtom(r: Option[Gen[ReqId]],
+                            u: Option[Gen[UseCaseStepId]],
                             c: Option[Gen[ReqCodeId]],
                             i: Option[Gen[CustomIssueTypeId]],
                             a: Option[Gen[ApplicableTagId]]): Gen[CustomTextField.Atom] = {
       implicit val t: CustomTextField.type = CustomTextField
-      var gs: Vector[Option[Gen[t.Atom]]] = reqRefs(r, c).map(_.some)
-      gs :+= i.map(issue(_, r, c))
-      gs :+= a.map(tagRef(_))
+      var gs: List[Option[Gen[t.Atom]]]
+           = reqRefs(r, c).map(_.some)
+      gs ::= u.map(useCaseStepRef(_))
+      gs ::= i.map(issue(_, r, u, c))
+      gs ::= a.map(tagRef(_))
       multiLinePlus(t)(gs: _*)
     }
 
     def deletionReasonAtom(r: Option[Gen[ReqId]],
+                           u: Option[Gen[UseCaseStepId]],
                            c: Option[Gen[ReqCodeId]],
                            a: Option[Gen[ApplicableTagId]]): Gen[DeletionReason.Atom] = {
       implicit val t: DeletionReason.type = DeletionReason
-      var gs: Vector[Option[Gen[t.Atom]]] = reqRefs(r, c).map(_.some)
-      gs :+= a.map(tagRef(_))
+      var gs: List[Option[Gen[t.Atom]]]
+           = reqRefs(r, c).map(_.some)
+      gs ::= u.map(useCaseStepRef(_))
+      gs ::= a.map(tagRef(_))
       multiLinePlus(t)(gs: _*)
     }
 
     def useCaseStepAtom(r: Option[Gen[ReqId]],
+                        u: Option[Gen[UseCaseStepId]],
                         c: Option[Gen[ReqCodeId]],
                         i: Option[Gen[CustomIssueTypeId]],
                         a: Option[Gen[ApplicableTagId]]): Gen[UseCaseStep.Atom] = {
-      implicit val t: UseCaseStep.type = UseCaseStep
-      var gs = singleLineGens(t)
+      @inline implicit def t: UseCaseStep.type = UseCaseStep
+      val gs = NonEmptyVector newBuilderNE singleLineGens(t)
       gs ++= reqRefs(r, c)
-      gs ++= i.map(issue(_, r, c))
+      gs ++= u.map(useCaseStepRef(_))
+      gs ++= i.map(issue(_, r, u, c))
       gs ++= a.map(tagRef(_))
-      Gen.chooseGenNE(gs)
+      Gen.chooseGenNE(gs.result())
     }
   }
 
@@ -831,7 +857,7 @@ object RandomData {
       }
 
       val ucStepIds: Vector[UseCaseStepId] =
-        UseCases.empty.copy(imap = ucs).stepIterator.map(_.id).toVector
+        ucs.valuesIterator.flatMap(_.stepIterator).map(_.id).toVector
 
       val stepFlow: UseCases.StepFlow =
         genDigraphBiO(Gen.tryGenChoose(ucStepIds))(implicitly, 0 to 4) run ctx
@@ -841,24 +867,26 @@ object RandomData {
   }
 
   def setReqText(reqs: Requirements,
+                 u   : Option[Gen[UseCaseStepId]],
                  c   : Option[Gen[ReqCodeId]],
                  i   : Option[Gen[CustomIssueTypeId]],
                  a   : Option[Gen[ApplicableTagId]]): Gen[Requirements] = {
     val r = Gen.tryGenChoose(reqs.reqs.keysIterator.toIndexedSeq)
-    setReqText(reqs, r, c, i, a)
+    setReqText(reqs, r, u, c, i, a)
   }
 
   def setReqText(reqs: Requirements,
                  r   : Option[Gen[ReqId]],
+                 u   : Option[Gen[UseCaseStepId]],
                  c   : Option[Gen[ReqCodeId]],
                  i   : Option[Gen[CustomIssueTypeId]],
                  a   : Option[Gen[ApplicableTagId]]): Gen[Requirements] =
     r match {
       case Some(g) =>
         setReqText(reqs,
-          TextGen.genericReqTitleAtom(Some(g), c, i, a).text,
-          TextGen.useCaseTitleAtom   (Some(g), c, i, a).text,
-          TextGen.useCaseStepAtom    (Some(g), c, i, a).text)
+          TextGen.genericReqTitleAtom(Some(g), u, c, i, a).text,
+          TextGen.useCaseTitleAtom   (Some(g), u, c, i, a).text,
+          TextGen.useCaseStepAtom    (Some(g), u, c, i, a).text)
       case None =>
         Gen pure reqs
     }
@@ -934,13 +962,14 @@ object RandomData {
 //    TextGen.customTextFieldAtom(reqIdG, reqCodeG, cissueG, tagG).ptext1(Text.CustomTextField)
 //  }
 
-  def reqFieldDataText2(reqs    : Set[ReqId],
-                        txtCols : Set[CustomField.Text.Id],
-                        reqCodeG: Option[Gen[ReqCodeId]],
-                        cissueG : Option[Gen[CustomIssueTypeId]],
-                        tagG    : Option[Gen[ApplicableTagId]]) = {
+  def reqFieldDataText2(reqs   : Set[ReqId],
+                        txtCols: Set[CustomField.Text.Id],
+                        u      : Option[Gen[UseCaseStepId]],
+                        c      : Option[Gen[ReqCodeId]],
+                        i      : Option[Gen[CustomIssueTypeId]],
+                        a      : Option[Gen[ApplicableTagId]]) = {
     val gr = Gen.tryGenChoose(reqs.toSeq)
-    reqFieldDataText(txtCols, reqs, TextGen.customTextFieldAtom(gr, reqCodeG, cissueG, tagG).ptext1(Text.CustomTextField))
+    reqFieldDataText(txtCols, reqs, TextGen.customTextFieldAtom(gr, u, c, i, a).ptext1(Text.CustomTextField))
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -1115,11 +1144,13 @@ object RandomData {
     val textColIds     = cfg.fields.customFields.values.filterT[CustomField.Text].map(_.id).toSet
     val reqIdSet       = reqsWithoutText.reqs.keySet
     val reqIdG         = Gen tryGenChoose reqIdSet.toIndexedSeq
-    val rcgTitleText   = TextGen.reqCodeGroupTitleAtom(reqIdG, activeCodeIdG, cissueIdG).text
-    val delReasonText  = TextGen.deletionReasonAtom(reqIdG, activeCodeIdG, atagIdG).text1(Text.DeletionReason)
+    def ucStepIds      = reqsWithoutText.useCases.stepIterator.map(_.id)
+    val ucStepIdG      = Gen tryGenChoose ucStepIds.toIndexedSeq
+    val rcgTitleText   = TextGen.reqCodeGroupTitleAtom(reqIdG, ucStepIdG, activeCodeIdG, cissueIdG).text
+    val delReasonText  = TextGen.deletionReasonAtom(reqIdG, ucStepIdG, activeCodeIdG, atagIdG).text1(Text.DeletionReason)
     for {
-      reqText   ← reqFieldDataText2(reqIdSet, textColIds, activeCodeIdG, cissueIdG, atagIdG)
-      reqs      ← setReqText(reqsWithoutText, reqIdG, activeCodeIdG, cissueIdG, atagIdG)
+      reqText   ← reqFieldDataText2(reqIdSet, textColIds, ucStepIdG, activeCodeIdG, cissueIdG, atagIdG)
+      reqs      ← setReqText(reqsWithoutText, reqIdG, ucStepIdG, activeCodeIdG, cissueIdG, atagIdG)
       reqCodes2 ← reqCode.updateGroupText(rcgTitleText)(reqCodes1.trie)
       dr        ← deletionReasons(reqIdG, delReasonText)
     } yield IdCeilings.supply(Project(cfg, reqs, ReqCodes(reqCodes2), reqText, reqTags, reqImps, dr, _))
@@ -1427,41 +1458,28 @@ object RandomData {
     val useCaseStepTreeField: Gen[StaticField.UseCaseStepTree] =
       Gen.chooseNE(StaticField.useCaseStepTrees)
 
-    val customTextField =
-      TextGen.customTextFieldAtom(Some(reqId), Some(reqCode.id), Some(customIssueTypeId), Some(applicableTagId)).text
+    private[this] val r = Some(reqId)
+    private[this] val u = Some(useCaseStepId)
+    private[this] val c = Some(reqCode.id)
+    private[this] val i = Some(customIssueTypeId)
+    private[this] val a = Some(applicableTagId)
 
-    val reqCodeGroupTitle =
-      TextGen.reqCodeGroupTitleAtom(Some(reqId), Some(reqCode.id), Some(customIssueTypeId)).text
-
-    val genericReqTitleAtom =
-      TextGen.genericReqTitleAtom(Some(reqId), Some(reqCode.id), Some(customIssueTypeId), Some(applicableTagId))
-
-    val genericReqTitle =
-      genericReqTitleAtom.text
-
-    val genericReqTitle1 =
-      genericReqTitleAtom.text1(Text.GenericReqTitle)
-
-    val useCaseTitleAtom =
-      TextGen.useCaseTitleAtom(Some(reqId), Some(reqCode.id), Some(customIssueTypeId), Some(applicableTagId))
-
-    val useCaseTitle =
-      useCaseTitleAtom.text
-
-    val useCaseTitle1 =
-      useCaseTitleAtom.text1(Text.UseCaseTitle)
-
-    val useCaseStepTextAtom =
-      TextGen.useCaseStepAtom(Some(reqId), Some(reqCode.id), Some(customIssueTypeId), Some(applicableTagId))
-
-    val useCaseStepText =
-      useCaseStepTextAtom.text
+    val customTextField     = TextGen.customTextFieldAtom(r, u, c, i, a).text
+    val reqCodeGroupTitle   = TextGen.reqCodeGroupTitleAtom(r, u, c, i).text
+    val genericReqTitleAtom = TextGen.genericReqTitleAtom(r, u, c, i, a)
+    val genericReqTitle     = genericReqTitleAtom.text
+    val genericReqTitle1    = genericReqTitleAtom.text1(Text.GenericReqTitle)
+    val useCaseTitleAtom    = TextGen.useCaseTitleAtom(r, u, c, i, a)
+    val useCaseTitle        = useCaseTitleAtom.text
+    val useCaseTitle1       = useCaseTitleAtom.text1(Text.UseCaseTitle)
+    val useCaseStepTextAtom = TextGen.useCaseStepAtom(r, u, c, i, a)
+    val useCaseStepText     = useCaseStepTextAtom.text
 
     val stepFlowSetDiff =
       genNonEmptySetDiff(useCaseStepId)
 
     val deletionReason =
-      TextGen.deletionReasonAtom(Some(reqId), Some(reqCode.id), Some(applicableTagId)).text
+      TextGen.deletionReasonAtom(r, u, c, a).text
 
     object customIssueTypeGD extends GenericDataGen(CustomIssueTypeGD) {
       import gd._

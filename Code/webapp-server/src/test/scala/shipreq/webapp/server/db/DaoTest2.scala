@@ -12,6 +12,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.hash.HashRec
 import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.test.UnsafeTypes.AutoNES._
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.server.test.TestDB
 import EventDao.EventSeq
@@ -191,7 +192,7 @@ object DaoTest2 extends TestSuite {
         //'repositionField        - demo(RandomData.events.repositionField       )
 
         'setCustomTextField {
-          testRW(SetCustomTextField(2345, CustomField.Text.Id(123), Text.CustomTextField.demo(9, 8, 7, 6)),
+          testRW(SetCustomTextField(2345, CustomField.Text.Id(123), Text.CustomTextField.demo(9, 8, 5, 7, 6)),
           205, 2345, 'g',
             """
               │{"f":123,"t":[
@@ -200,10 +201,11 @@ object DaoTest2 extends TestSuite {
               │"Here we go:",
               │{"*":[
               │["Req: ",{"r":9}],
+              │["UC Step Req: ",{"u":5}],
               │["Code: ",{"c":8}],
               │["Tag: ",{"t":7}],
               │["Issue(∅): ",{"i":6}],
-              │["Issue(∃): ",{"i":6,"?":["Need to finish ",{"r":9}," and ",{"c":8}]}],
+              │["Issue(∃): ",{"i":6,"?":["Need to finish ",{"r":9},", ",{"u":5}," and ",{"c":8}]}],
               │["Issue(∃): ",{"i":6,"?":["Ask ",{"@":"bob@gmail.com"}," about ",{"=":"e=mc^2"}]}],
               │[],
               │["Math: ",{"=":"f(x) = {x+1 \\over x - 1} + 9\\pi^2"}],

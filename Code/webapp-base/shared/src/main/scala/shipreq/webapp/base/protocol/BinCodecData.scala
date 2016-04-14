@@ -68,14 +68,15 @@ object BinCodecData {
         }
       }
 
-    override def blankLine   [T <: NewLine        ](t: T): Pickler[t.BlankLine   ] = ConstPickler(t.blankLine)
-    override def literal     [T <: Literal        ](t: T): Pickler[t.Literal     ] = pickleCaseClass
-    override def webAddress  [T <: PlainTextMarkup](t: T): Pickler[t.WebAddress  ] = pickleCaseClass
-    override def emailAddress[T <: PlainTextMarkup](t: T): Pickler[t.EmailAddress] = pickleCaseClass
-    override def mathTeX     [T <: PlainTextMarkup](t: T): Pickler[t.MathTeX     ] = pickleCaseClass
-    override def reqRef      [T <: ReqRef         ](t: T): Pickler[t.ReqRef      ] = pickleCaseClass
-    override def codeRef     [T <: ReqRef         ](t: T): Pickler[t.CodeRef     ] = pickleCaseClass
-    override def tagRef      [T <: TagRef         ](t: T): Pickler[t.TagRef      ] = pickleCaseClass
+    override def blankLine     [T <: NewLine        ](t: T): Pickler[t.BlankLine     ] = ConstPickler(t.blankLine)
+    override def literal       [T <: Literal        ](t: T): Pickler[t.Literal       ] = pickleCaseClass
+    override def webAddress    [T <: PlainTextMarkup](t: T): Pickler[t.WebAddress    ] = pickleCaseClass
+    override def emailAddress  [T <: PlainTextMarkup](t: T): Pickler[t.EmailAddress  ] = pickleCaseClass
+    override def mathTeX       [T <: PlainTextMarkup](t: T): Pickler[t.MathTeX       ] = pickleCaseClass
+    override def reqRef        [T <: ReqRef         ](t: T): Pickler[t.ReqRef        ] = pickleCaseClass
+    override def codeRef       [T <: ReqRef         ](t: T): Pickler[t.CodeRef       ] = pickleCaseClass
+    override def tagRef        [T <: TagRef         ](t: T): Pickler[t.TagRef        ] = pickleCaseClass
+    override def useCaseStepRef[T <: UseCaseStepRef ](t: T): Pickler[t.UseCaseStepRef] = pickleCaseClass
 
     override def issue[T <: Issue](t: T)(implicit h: Pickler[Text.InlineIssueDesc.OptionalText]): Pickler[t.Issue] =
       pickleCaseClass

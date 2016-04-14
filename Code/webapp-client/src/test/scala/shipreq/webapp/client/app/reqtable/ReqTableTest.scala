@@ -10,7 +10,7 @@ import shipreq.base.test.JsEnv
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._
-import shipreq.webapp.base.text.{PlainText, TextSearch}
+import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
 import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.client.data._
 import shipreq.webapp.client.feature.ContentEditorFeature.EditFieldKey
@@ -43,7 +43,7 @@ object ReqTableTest extends TestSuite {
     val cp = MockServer(cd)
     import cd.pxProject
 
-    val pxPlainText      = pxProject map PlainText.apply
+    val pxPlainText      = pxProject.map(PlainText(_, ProjectText.Context.None))
     val pxTextSearch     = Px.apply2(pxProject, pxPlainText)(TextSearch.apply)
     val pxProjectWidgets = Px.apply2(pxProject, pxPlainText)(ProjectWidgets(_, _, reqDetailRC))
 

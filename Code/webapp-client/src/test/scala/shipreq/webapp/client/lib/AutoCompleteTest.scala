@@ -11,7 +11,7 @@ import utest._
 import shipreq.base.util.MTrie.Ops
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._, WebappTestUtil._
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.base.text.{PlainText, ProjectText}
 import shipreq.webapp.client.data.{HideDead, Plain, Contextualise}
 import shipreq.webapp.client.feature.AutoCompleteFeature
 import shipreq.webapp.client.test.{PrepareEnv, Sizzle}
@@ -166,7 +166,7 @@ object AutoCompleteTest extends TestSuite {
     val p = Project.reqCodes.set(ReqCodes(fakeTrie))(SampleProject2.project)
     (DeadReqCode("dead.ref", oldReqId = 1, id = 90) + DeadReqCode("dead.group", id = 91)) ! p
   }
-  lazy val plainText2 = PlainText(project2)
+  lazy val plainText2 = PlainText(project2, ProjectText.Context.None)
 
   override def tests = TestSuite {
 

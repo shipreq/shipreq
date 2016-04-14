@@ -37,7 +37,14 @@ object ProjectWidgets {
 
 final class ProjectWidgets private(project    : Project,
                                    plainText  : PlainText.ForProject,
-                                   reqDetailRC: RouterCtl[ExternalPubid]) extends ProjectText[ReactTag](project) {
+                                   reqDetailRC: RouterCtl[ExternalPubid])
+    extends ProjectText[ReactTag](project, plainText.ctx) {
+
+  override def withCtx(newCtx: ProjectText.Context): ProjectWidgets =
+    withPlainText(plainText withCtx newCtx)
+
+  def withPlainText(newPlainText: PlainText.ForProject): ProjectWidgets =
+    new ProjectWidgets(project, newPlainText, reqDetailRC)
 
   private implicit def surroundDisplay(s: G.Surrounds) = s.display
 
@@ -193,6 +200,18 @@ final class ProjectWidgets private(project    : Project,
         rt.mnemonic.value)
     }
 
+  val useCaseStepRef: UseCaseStepId => ReactElement =
+    memo { id =>
+      val focus = project.reqs.useCases.focusStep(id)
+      val label = plainText.useCaseStepLabel(focus)
+      val title = plainText.format(focus.live, focus.step.title)
+      val ld    = deadValidity(Invalid)(focus.live)
+      <.span(
+        *.useCaseStepRef(ld),
+        ^.title := title,
+        label)
+    }
+
   private def tagWithoutStyle(c: Contextualise, t: ApplicableTag): ReactTag = {
     var desc = if (t.name.compareToIgnoreCase(t.key.value) == 0) "" else t.name
     for (d <- t.desc) {
@@ -239,16 +258,17 @@ final class ProjectWidgets private(project    : Project,
     import Atom._
 
     lazy val atom: AnyAtom => TagMod = {
-      case a: Literal         # Literal       => <.span(a.value)
-      case a: NewLine         # BlankLine     => <.div(*.blankLine)
-      case a: TagRef          # TagRef        => tagInText(live)(a.value)
-      case a: PlainTextMarkup # WebAddress    => <.a(^.href := a.value, a.value)
-      case a: PlainTextMarkup # EmailAddress  => <.a(^.href := "mailto:" ~ a.value, a.value)
-      case a: PlainTextMarkup # MathTeX       => katex(a)
-      case a: ListMarkup      # UnorderedList => <.ul(*.ul, a.items.whole.map(row => <.li(row map atom: _*)))
-      case a: ReqRef          # ReqRef        => reqRefInValidText(a.value)
-      case a: ReqRef          # CodeRef       => codeRef(a.value)
-      case a: Issue           # Issue         => issueO(live, a.typ, a.desc)
+      case a: Literal         # Literal        => <.span(a.value)
+      case a: NewLine         # BlankLine      => <.div(*.blankLine)
+      case a: TagRef          # TagRef         => tagInText(live)(a.value)
+      case a: PlainTextMarkup # WebAddress     => <.a(^.href := a.value, a.value)
+      case a: PlainTextMarkup # EmailAddress   => <.a(^.href := "mailto:" ~ a.value, a.value)
+      case a: PlainTextMarkup # MathTeX        => katex(a)
+      case a: ListMarkup      # UnorderedList  => <.ul(*.ul, a.items.whole.map(row => <.li(row map atom: _*)))
+      case a: ReqRef          # ReqRef         => reqRefInValidText(a.value)
+      case a: ReqRef          # CodeRef        => codeRef(a.value)
+      case a: UseCaseStepRef  # UseCaseStepRef => useCaseStepRef(a.value)
+      case a: Issue           # Issue          => issueO(live, a.typ, a.desc)
     }
 
     <.span(input map atom: _*)

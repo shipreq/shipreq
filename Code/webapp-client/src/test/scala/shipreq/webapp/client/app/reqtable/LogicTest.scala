@@ -10,7 +10,7 @@ import shipreq.base.util.NonEmptyVector
 import shipreq.webapp.base.{event => E}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.FilterAst
-import shipreq.webapp.base.text.{TextSearch, PlainText, Text}
+import shipreq.webapp.base.text.{TextSearch, PlainText, Text, ProjectText}
 import shipreq.webapp.base.test._, WebappTestUtil._
 import shipreq.webapp.base.util.ReqCodeTreeItem
 import shipreq.webapp.client.app.reqtable.{SortCriterion => SC, Column => C}
@@ -83,7 +83,7 @@ object LogicTest extends TestSuite {
   private var _pcache: List[PCache] = Nil
   private def pcache(p: Project): PCache =
     _pcache.find(_.p eq p).getOrElse {
-      val pt = PlainText(p)
+      val pt = PlainText(p, ProjectText.Context.None)
       val c = PCache(p, pt, TextSearch(p, pt))
       _pcache ::= c
       c
