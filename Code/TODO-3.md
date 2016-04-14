@@ -1,7 +1,6 @@
 UC Step Refs
 ============
 1. Autocomplete for UC step refs.
-1. Style UC step refs.
 
 Use Case Step Flow
 ==================
