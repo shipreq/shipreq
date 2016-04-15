@@ -1,0 +1,50 @@
+#!/bin/env scala
+// vim: set ft=scala :
+
+import language._
+import scala.annotation.tailrec
+
+//////////////////////////////////////////////////////////////////
+// val pat = """[\p{S}\p{P}]""".r.pattern
+val pat = """[\p{javaWhitespace}]""".r.pattern
+//////////////////////////////////////////////////////////////////
+
+val naughty = """-[]\""".toCharArray.map(_.toInt).toSet
+
+case class Rec(a: Int, b: Int, matched: Boolean)
+
+@tailrec
+def go(c: Int, max: Int, log: List[Rec]): List[Rec] =
+  if (c > max)
+    log
+  else {
+    val next = c+1
+    (pat matcher c.toChar.toString matches, log) match {
+      case (m, Rec(a,_,n) :: t) if m==n => go(next, max, Rec(a,c,m) :: t)
+      case (m, l)                       => go(next, max, Rec(c,c,m) :: l)
+    }
+  }
+
+val r = go(0,65535,Nil).reverse
+val rcount = r.length
+
+def showCS(recs: List[Rec]): Unit = {
+  var direct = Vector.empty[String]
+  var ranges = Vector.empty[String]
+  for (r <- recs)
+    if (r.b - r.a > 1)
+      ranges :+= s"(${r.a} to ${r.b})"
+    else {
+      direct :+= r.a.toString
+      if (r.a != r.b)
+        direct :+= r.b.toString
+    }
+  val d = (direct :+ "Nil").mkString("::")
+  val r = (ranges :+ "Nil").mkString("::")
+  println(s"new CharSubset($d, $r)")
+  println()
+}
+
+println()
+showCS(r.filter(_.matched))
+
