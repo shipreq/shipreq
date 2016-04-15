@@ -10,11 +10,14 @@ import shipreq.webapp.base.text.{Grammar => G}
 object ParsingUtil {
 
   // (0 to 65535).filter(i => java.lang.Character.isWhitespace(i.toChar)).map("\\u%04x".format(_)).mkString("\"","","\"")
-  val whitespace = CharPredicate("\u0009\u000a\u000b\u000c\u000d\u001c\u001d\u001e\u001f\u0020\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2008\u2009\u200a\u2028\u2029\u205f\u3000".toCharArray)
+  val Whitespace: CharPredicate =
+    CharPredicate("\u0009\u000a\u000b\u000c\u000d\u001c\u001d\u001e\u001f\u0020\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2008\u2009\u200a\u2028\u2029\u205f\u3000".toCharArray)
 
-  val nonWhitespace = whitespace.negated -- EOI
+  val NonWhitespace: CharPredicate =
+    Whitespace.negated -- EOI
 
-  val mkReqTypeMnemonicCI = G.reqTypeMnemonic.caseInsensitiveParsePost andThen ReqType.Mnemonic.apply
+  val mkReqTypeMnemonicCI: String => ReqType.Mnemonic =
+    G.reqTypeMnemonic.caseInsensitiveParsePost andThen ReqType.Mnemonic.apply
 
   val trim = (_: String).trim
 
