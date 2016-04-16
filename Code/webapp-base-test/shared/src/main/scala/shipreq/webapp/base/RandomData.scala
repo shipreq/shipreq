@@ -63,19 +63,12 @@ object RandomData {
       v
 
   // JS + Parboiled2 no like \u001e
-  val mkChar: Int => Char =
-    ((_: Int).toChar) `JVM|JS` ((i: Int) => if (i == 30) ' ' else i.toChar)
+  val fixGenChar: Gen[Char] => Gen[Char] =
+    ((g: Gen[Char]) => g) `JVM|JS` ((_: Gen[Char]).map(c => if (c == '\u001e') ' ' else c))
 
-//  val asciiChar                          : Gen[Char]   = Gen.chooseInt(1, 255) map mkChar
-//  def asciiString (implicit ss: SizeSpec): Gen[String] = asciiChar.string
-//  def asciiString1(implicit ss: SizeSpec): Gen[String] = asciiChar.string1
-
-  val unicodeChar   : Gen[Char]   = Gen.chooseInt(0, 0xd7ff) map mkChar
+  val unicodeChar   : Gen[Char]   = fixGenChar(Gen.unicode)
   val unicodeString : Gen[String] = unicodeChar.string
   val unicodeString1: Gen[String] = unicodeChar.string1
-//  val unicodeChar                          : Gen[Char]   = Gen.chooseInt(0, 0xd7ff) map mkChar
-//  def unicodeString (implicit ss: SizeSpec): Gen[String] = unicodeChar.string
-//  def unicodeString1(implicit ss: SizeSpec): Gen[String] = unicodeChar.string1
 
 //  private val _charPredAllChars = ('\u0001' to '\ud7ff').seq
   private val _charPredAllChars = ('\u0001' to '\u0100').seq
