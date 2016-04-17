@@ -183,7 +183,10 @@ case class UseCaseStep(id            : UseCaseStepId,
                        liveExplicitly: Live) {
 
   def live(enclosingTree: UseCaseSteps): Live =
-    Live whenValid enclosingTree.stepPartialLocs.get(id).validity
+    live(enclosingTree.stepPartialLocs.get(id))
+
+  def live(ploc: VectorTree.PartialLocation): Live =
+    Live whenValid ploc.validity
 }
 
 object UseCaseStep {

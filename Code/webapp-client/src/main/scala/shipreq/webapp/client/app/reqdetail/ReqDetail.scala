@@ -457,6 +457,8 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
           val fullStepLabel = temp.field.stepLabel(pos, partialLoc, mnemonicPrefix = false)
 
+          val live = step.live(partialLoc)
+
           def header: ReactTag =
             partialLoc.validity match {
               case Valid =>
@@ -499,6 +501,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
             val p =
             StepText.Props(step,
+                           live,
                            d,
                            flow,
                            pw,
@@ -517,7 +520,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
               case Controls.Add        => runAction(UpdateContentCmd.AddUseCaseStep(uc.id, f, loc.asParentLoc))
             }
 
-            val p = Controls.Props(delete     = f.canDelete(loc),
+            val p = Controls.Props(delete     = f.canDelete(loc), // TODO this is actually restore/delete now
                                    shiftLeft  = f.canShiftLeft(loc),
                                    leftIsDown = temp leftIsDownAt loc,
                                    shiftRight = f.canShiftRight(loc, mdt),

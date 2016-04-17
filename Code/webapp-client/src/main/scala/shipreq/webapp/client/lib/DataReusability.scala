@@ -50,7 +50,7 @@ object DataReusability {
   private[this] val taggedIntReuse = Reusability.byUnivEq[TaggedInt]
   implicit def reusabilityTaggedInt[T <: TaggedInt]: Reusability[T] = taggedIntReuse.narrow
 
-  implicit val reusabilityPermission: Reusability[Permission] = Reusability.byUnivEq
+  implicit def reusabilityIsoBool[B <: IsoBool[B]: UnivEq]: Reusability[B] = Reusability.byUnivEq
 
   implicit def reusabilityOptionalText[A <: Atom.AnyAtom]: Reusability[Vector[A]] = Reusability.byRefOrUnivEq
 
