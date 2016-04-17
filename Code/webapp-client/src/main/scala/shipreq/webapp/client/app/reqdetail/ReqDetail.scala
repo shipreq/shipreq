@@ -11,7 +11,7 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.{AppConsts, UiText}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.{UpdateContentCmd, UpdateContentFn}
-import shipreq.webapp.base.text.{PlainText, ProjectText, Text, TextSearch}
+import shipreq.webapp.base.text._
 import shipreq.webapp.client.app.reqtable.ColumnRenderer.RenderDeletionReason // TODO No!
 import shipreq.webapp.client.app.state.ClientData
 import shipreq.webapp.client.app.Style.{reqdetail => *}
@@ -455,86 +455,86 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
           val partialLoc = temp.steps.partialLocs.forward(loc)
           if (data.useCaseStepFilter(partialLoc)) {
 
-          val fullStepLabel = temp.field.stepLabel(pos, partialLoc, mnemonicPrefix = false)
+            val fullStepLabel = temp.field.stepLabel(pos, partialLoc, mnemonicPrefix = false)
 
-          val live = step.live(partialLoc)
+            val live = step.live(partialLoc)
 
-          def header: ReactTag =
-            partialLoc.validity match {
-              case Valid =>
-                val depth = partialLoc.value.length // ≥ 1
+            def label: ReactTag =
+              partialLoc.validity match {
+                case Valid =>
+                  val depth = partialLoc.value.length // ≥ 1
 
-                val short = if (depth == 1)
-                  fullStepLabel
-                else {
-                  // Last node asserted to be ≥ 0 in PartialLocation
-                  val i = partialLoc.value.last
-                  temp.field.stepLabelsPerLevel(depth - 1).label(i)
-                }
+                  val short = if (depth == 1)
+                    fullStepLabel
+                  else {
+                    // Last node asserted to be ≥ 0 in PartialLocation
+                    val i = partialLoc.value.last
+                    temp.field.stepLabelsPerLevel(depth - 1).label(i)
+                  }
 
-                <.div(
-                  *.header(depth - 1),
-                  stepLabel,
-                  ^.title := fullStepLabel,
-                  short + ".")
+                  <.div(
+                    *.header(depth - 1),
+                    stepLabel,
+                    ^.title := fullStepLabel,
+                    short + ".")
 
-              case Invalid =>
-                val badInd = partialLoc.value.whole.indexWhere(_ < 0)
+                case Invalid =>
+                  val badInd = partialLoc.value.whole.indexWhere(_ < 0)
 
-                <.div(
-                  *.header(badInd),
-                  stepLabel,
-                  ^.title := fullStepLabel,
-                  <.span(
-                    *.deadStepLabel,
-                    fullStepLabel.dropWhile(_ !=* AppConsts.useCaseStepsDeadNode) + "."))
+                  <.div(
+                    *.header(badInd),
+                    stepLabel,
+                    ^.title := fullStepLabel,
+                    <.span(
+                      *.deadStepLabel,
+                      fullStepLabel.dropWhile(_ !=* AppConsts.useCaseStepsDeadNode) + "."))
+              }
+
+            def text = {
+
+              // TODO Not like this
+              val defaultTitle = if (first) {
+                first = false
+                temp.defaultFirst
+              } else
+                Vector.empty
+
+              val p = StepText.Props(
+                step,
+                live,
+                defaultTitle,
+                flow,
+                pw,
+                None,           // TODO editState : ContentEditorFeature.D0.State,
+                None,           // TODO asyncState: AsyncActionFeature.D0.State[String],
+                Callback.empty) // TODO startEdit : Callback) {
+              p.render
             }
 
-          def body = {
+            def ctrls = {
+              import temp.{mdt, field => f}
+              val onAction: Controls.OnAction = {
+                case Controls.Delete     => runAction(UpdateContentCmd.DeleteUseCaseStep    (step.id))
+                case Controls.ShiftLeft  => runAction(UpdateContentCmd.ShiftUseCaseStepLeft (step.id))
+                case Controls.ShiftRight => runAction(UpdateContentCmd.ShiftUseCaseStepRight(step.id))
+                case Controls.Add        => runAction(UpdateContentCmd.AddUseCaseStep(uc.id, f, loc.asParentLoc))
+              }
 
-            // TODO Not like this
-            val d = if (first) {
-              first = false
-              temp.defaultFirst
-            } else
-              Vector.empty
-
-            val p =
-            StepText.Props(step,
-                           live,
-                           d,
-                           flow,
-                           pw,
-                           None,           // TODO editState : ContentEditorFeature.D0.State,
-                           None,           // TODO asyncState: AsyncActionFeature.D0.State[String],
-                           Callback.empty) // TODO startEdit : Callback) {
-            p.render
-          }
-
-          def ctrls = {
-            import temp.{mdt, field => f}
-            val onAction: Controls.OnAction = {
-              case Controls.Delete     => runAction(UpdateContentCmd.DeleteUseCaseStep    (step.id))
-              case Controls.ShiftLeft  => runAction(UpdateContentCmd.ShiftUseCaseStepLeft (step.id))
-              case Controls.ShiftRight => runAction(UpdateContentCmd.ShiftUseCaseStepRight(step.id))
-              case Controls.Add        => runAction(UpdateContentCmd.AddUseCaseStep(uc.id, f, loc.asParentLoc))
+              val p = Controls.Props(delete     = f.canDelete(loc), // TODO this is actually restore/delete now
+                                     shiftLeft  = f.canShiftLeft(loc),
+                                     leftIsDown = temp leftIsDownAt loc,
+                                     shiftRight = f.canShiftRight(loc, mdt),
+                                     rightIsUp  = temp rightIsUpAt loc,
+                                     add        = f.canAdd(loc),
+                                     onAction   = onAction)
+              p.render
             }
 
-            val p = Controls.Props(delete     = f.canDelete(loc), // TODO this is actually restore/delete now
-                                   shiftLeft  = f.canShiftLeft(loc),
-                                   leftIsDown = temp leftIsDownAt loc,
-                                   shiftRight = f.canShiftRight(loc, mdt),
-                                   rightIsUp  = temp rightIsUpAt loc,
-                                   add        = f.canAdd(loc),
-                                   onAction   = onAction)
-            p.render
-          }
-
-          <.div(*.container,
-            ^.key := fullStepLabel,
-            header,
-            body,
-            ctrls)
+            <.div(*.container,
+              ^.key := fullStepLabel,
+              label,
+              text,
+              ctrls)
         } else
             null
         })
