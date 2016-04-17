@@ -59,6 +59,11 @@ object Atom {
 
     final val NonEmptyIso: Iso[Option[NonEmptyText], OptionalText] =
       Iso[Option[NonEmptyText], OptionalText](_.fold(Vector.empty[Atom])(_.whole))(NonEmptyVector.option)
+
+    final def supportsPTM     = this match { case _: Atom.PlainTextMarkup => true; case _ => false }
+    final def supportsReqRefs = this match { case _: Atom.ReqRef          => true; case _ => false }
+    final def supportsTags    = this match { case _: Atom.TagRef          => true; case _ => false }
+    final def supportsIssues  = this match { case _: Atom.Issue           => true; case _ => false }
   }
 
   /** Literal text, like "hello there" */

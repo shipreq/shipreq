@@ -11,14 +11,34 @@ import shipreq.base.util._
 import shipreq.base.util.MTrie.Ops
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.{TextSearch, PlainText, Grammar}
+import shipreq.webapp.base.text.{Text, TextSearch, PlainText, Grammar}
 import shipreq.webapp.client.app.Style.{reqtable => *}
 import shipreq.webapp.client.jsfacade.{TextComplete => TC}
-import shipreq.webapp.client.data.{FilterDead, Plain, Contextualise}
-import shipreq.webapp.client.feature.AutoCompleteFeature.{Strategies, autoLiftSingleStrategy}
+import shipreq.webapp.client.data.{HideDead, FilterDead, Plain, Contextualise}
+import shipreq.webapp.client.feature.AutoCompleteFeature
+import AutoCompleteFeature.{Strategies, autoLiftSingleStrategy}
 import TC.{Query, Strategy}
 
 object AutoComplete {
+
+  def forRichText(text: Text.Generic)
+                 (p: Project, pt: PlainText.ForProject, ts: TextSearch): AutoCompleteFeature.ForChild = {
+    var ac = Vector.empty[Strategy]
+
+    ac ++= AutoComplete.hashtag(p, HideDead, issues = text.supportsIssues, tags = text.supportsTags)(Contextualise)
+
+    if (text.supportsReqRefs) {
+      ac ++= AutoComplete.reqCode.ref(p, pt)
+      ac ++= AutoComplete.req(ts, AutoComplete.reqItems(p, pt), Contextualise)
+    }
+
+    if (text.supportsPTM)
+      ac ++= AutoComplete.math
+
+    ac
+  }
+
+  // ===================================================================================================================
 
   private class Context(val prefixRegex: String,
                         val suffixRegex: String,

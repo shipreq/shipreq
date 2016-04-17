@@ -5,41 +5,18 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import org.scalajs.dom
 import scalacss.ScalaCssReact._
-import shipreq.base.util.ValidUpdate
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.validation.ValidUpdateVR
-import shipreq.webapp.client.jsfacade.TextComplete
 import shipreq.webapp.client.app.Style.{reqtable => *} // TODO Not anymore
-import shipreq.webapp.client.data.{Contextualise, HideDead}
 import shipreq.webapp.client.lib.AutoComplete
 import shipreq.webapp.client.lib.DataReusability._
 import shipreq.webapp.client.feature._
 import Text.Equality._
 
 sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, final val text: TextType) {
-  private def supportsPTM     = text match { case _: Atom.PlainTextMarkup => true; case _ => false }
-  private def supportsReqRefs = text match { case _: Atom.ReqRef          => true; case _ => false }
-  private def supportsTags    = text match { case _: Atom.TagRef          => true; case _ => false }
-  private def supportsIssues  = text match { case _: Atom.Issue           => true; case _ => false }
-
-  def mkAutoComplete(p: Project, pt: PlainText.ForProject, ts: TextSearch): AutoCompleteFeature.ForChild = {
-    var ac = Vector.empty[TextComplete.Strategy]
-
-    ac ++= AutoComplete.hashtag(p, HideDead, issues = supportsIssues, tags = supportsTags)(Contextualise)
-
-    if (supportsReqRefs) {
-      ac ++= AutoComplete.reqCode.ref(p, pt)
-      ac ++= AutoComplete.req(ts, AutoComplete.reqItems(p, pt), Contextualise)
-    }
-
-    if (supportsPTM)
-      ac ++= AutoComplete.math
-
-    ac
-  }
 
   /** Extra properties to apply to the tag. */
   type Extra = ValidUpdateVR[text.OptionalText] ~=> TagMod
@@ -83,7 +60,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     private val pxTextSearch = Px.bs($).propsA(_.textSearch)
 
     val pxAutoComplete =
-      Px.apply3(pxProject, pxPlainText, pxTextSearch)(mkAutoComplete)
+      Px.apply3(pxProject, pxPlainText, pxTextSearch)(AutoComplete.forRichText(text))
 
     val updateState: ReactEventTA => Callback =
       e => $.props >>= (p =>
