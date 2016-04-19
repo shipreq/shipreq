@@ -1,13 +1,9 @@
-UC Step Refs
-============
-1. Autocomplete for UC step refs.
-
-Use Case Step Flow
-==================
-1. Parse step-text + flow.
-2. Render step-text + flow.
-3. Edit step-text + flow.
-4. Autocomplete for UC step flow.
+Use Case Editor
+===============
+1. Fix ctrls: delete/restore button.
+1. Fix ctrls: disable on async.
+1. Tests for steps in UCE.
+2. Clean up ReqDetail and uce package.
 
 Graphs
 ======
@@ -16,10 +12,6 @@ Graphs
 2. Implication graph (single req on ReqDetail page)
 4. UC step graph (all UCs! …maybe)
 4. Imp graph (all reqs! …maybe)
-
-Req Table
-=========
-1. Test & fix focus handling on edit start/end.
 
 Finally
 =======
@@ -34,13 +26,16 @@ SubReq implication
 ==================
 1. Allow steps to imply other reqs.
 1. Allow reqs to imply UC steps (?).
-4. Autocomplete for above changes.
+
+Eventually
+==========
+* Autocomplete for UC step refs (in text & step flow).
+* Ambiguity between [1.0.1] as UC ref or code ref.
+* Fix PubidRegister. Types are terrible.
+* Stop using scalaz.std for Traverse[Vector/List] etc.
 
 Other (?)
 =========
 * Saved views.
 * Shares.
-* Ambiguity between [1.0.1] as UC ref or code ref.
-* Fix PubidRegister. Types are terrible.
-* Stop using scalaz.std for Traverse[Vector/List] etc.
 
