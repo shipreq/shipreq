@@ -42,4 +42,5 @@ Other (?)
 * Shares.
 * Ambiguity between [1.0.1] as UC ref or code ref.
 * Fix PubidRegister. Types are terrible.
+* Stop using scalaz.std for Traverse[Vector/List] etc.
 
