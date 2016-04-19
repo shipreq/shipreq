@@ -9,6 +9,9 @@ object IMap {
   implicit def equality[K: Order, V: Equal]: Equal[IMap[K, V]] =
     IMapBaseV.equality[K, V, IMap[K, V]]
 
+  implicit def univEq[K, V](implicit u: UnivEq[Map[K, V]]): UnivEq[IMap[K, V]] =
+    IMapBaseV.univEq[K, V, V, IMap[K, V]](u)
+
   def empty[K: UnivEq, V](k: V => K): IMap[K, V] =
     new IMap(k, Map.empty)
 
