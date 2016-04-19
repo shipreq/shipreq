@@ -453,6 +453,8 @@ object Style extends StyleSheet.Inline {
 
     val issue = style(hasError)
 
+    val erroneousUseCaseStepRef = style(hasError)
+
     val issueDesc = style(
       padding.horizontal(0.7 ex))
 

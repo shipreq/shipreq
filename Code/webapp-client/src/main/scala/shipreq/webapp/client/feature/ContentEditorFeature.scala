@@ -459,7 +459,7 @@ object ContentEditorFeature {
                 commitAbortK(T.lineCardinality, _)(cmd))
 
             val initialText: String =
-              pxPlainText.value().format(editor.hardcodedLive, initialValue)
+              pxPlainText.value().format(RichTextEditor.hardcodedLive, initialValue)
 
             rvarStrToStartEditFn(new State(_, Some(initialValue), focusId, extra), initialText)
           }

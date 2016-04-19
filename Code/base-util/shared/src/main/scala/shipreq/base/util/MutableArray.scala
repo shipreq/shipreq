@@ -19,6 +19,9 @@ final class MutableArray[A](val underlying: Array[Any]) {
   def array: Array[A] =
     underlying.asInstanceOf[Array[A]]
 
+  def widen[B >: A]: MutableArray[B] =
+    this.asInstanceOf[MutableArray[B]]
+
   def map[B](f: A => B): MutableArray[B] = {
     val a = array
     var i = length

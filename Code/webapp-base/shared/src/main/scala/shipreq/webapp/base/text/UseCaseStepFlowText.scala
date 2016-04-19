@@ -2,7 +2,7 @@ package shipreq.webapp.base.text
 
 import japgolly.univeq.UnivEq
 import org.parboiled2._
-import scalaz.{Applicative, Monoid, \/, \/-, -\/}
+import scalaz.{Applicative, Functor, Monoid, \/, \/-, -\/}
 import shipreq.base.util.{Backwards, Direction, Forwards}
 import shipreq.webapp.base.data.{Project, Requirements, UseCaseStepId}
 import shipreq.webapp.base.util.ParsingUtil
@@ -131,23 +131,32 @@ object UseCaseStepFlowText {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  // String
-  // parse -> Seq[Elem[String, String]]
+  case class TextAndFlow[T, S](text: T, flow: Direction => S) {
+    def fold[A](f: T => A)(g: (A, S) => A): A =
+      g(g(f(text), flow(Forwards)), flow(Backwards))
 
-  // 1. render - Seq[Elem[T.NonEmptyText, String \/ UseCaseStepId]]
-  // 2. update - Option[ Seq[Elem[T.NonEmptyText, UseCaseStepId]] ]
-  //             Option[ T.OptionalText, Dir => Set[UseCaseStepId] ]
+    def bimap[TT, SS](f: T => TT, g: S => SS): TextAndFlow[TT, SS] =
+      TextAndFlow(f(text), Direction.memo(g compose flow))
 
-//  1: Text.UseCaseStep.NonEmptyText
-/*
-  def renderable1[T <: Text.Generic](p: Project, t: T)(e: Elem[String, String]): Option[Elem[t.NonEmptyText, String \/ UseCaseStepId]] =
-    e.bimap(
-      t.parseNonEmpty(p)(_),
-      parseStep(p.reqs)(_).some)
+    def bimapD[TT, SS](f: T => TT, g: Direction => S => SS): TextAndFlow[TT, SS] =
+      TextAndFlow(f(text), Direction.memo(d => g(d)(flow(d))))
 
-//  def renderable[T <: Text.Generic](p: Project, t: T)(e: TraversableOnce[Elem[String, String]]): Iterator[Elem[t.NonEmptyText, String \/ UseCaseStepId]] =
-*/
-  case class TextAndFlow[T, S](text: T, flow: Direction => S)
+//    def compose[T2, S2, X, Y](that: TextAndFlow[T2, S2])
+//                             (f: (T, T2) => X, g: (S, S2) => Y): TextAndFlow[X, Y] =
+//      TextAndFlow(
+//        f(this.text, that.text),
+//        Direction.memo(d => g(this flow d, that flow d)))
+
+    def composeF[F[_], T2, S2, X, Y](that: F[TextAndFlow[T2, S2]])
+                                    (f: (T, F[T2]) => X, g: (S, F[S2]) => Y)
+                                    (implicit F: Functor[F]): TextAndFlow[X, Y] =
+      TextAndFlow(
+        f(this.text, F.map(that)(_.text)),
+        Direction.memo(d => g(this flow d, F.map(that)(_ flow d))))
+
+//    def zip[T2, S2, X, Y](that: TextAndFlow[T2, S2]): TextAndFlow[(T, T2), (S, S2)] =
+//      compose(that)((_, _), (_, _))
+  }
 
   def separateTextAndFlow[T, S](es: TraversableOnce[Elem[T, S]])(implicit M: Monoid[T]): TextAndFlow[T, Vector[S]] = {
     var t = M.zero

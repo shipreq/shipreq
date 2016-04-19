@@ -7,6 +7,7 @@ import japgolly.univeq._
 import scalacss.ScalaCssReact._
 import scalacss.StyleA
 import scalajs.js.{undefined, UndefOr}
+import scalaz.\/
 import shipreq.base.util._
 import shipreq.base.util.SafeStringOps._
 import shipreq.base.util.ScalaExt._
@@ -33,6 +34,11 @@ object ProjectWidgets {
     )
 
   val invalidWhenDead = deadValidity(Invalid)
+
+  val stepFlowArrow = Direction.memo[ReactTag] {
+    case Forwards  => <.span("→")
+    case Backwards => <.span("←")
+  }
 }
 
 final class ProjectWidgets private(project    : Project,
@@ -212,6 +218,10 @@ final class ProjectWidgets private(project    : Project,
         label)
     }
 
+  /** eg. "1.p" instead of "1.0" */
+  def erroneousUseCaseStepRef(s: String): ReactElement =
+  <.span(*.erroneousUseCaseStepRef, s)
+
   private def tagWithoutStyle(c: Contextualise, t: ApplicableTag): ReactTag = {
     var desc = if (t.name.compareToIgnoreCase(t.key.value) == 0) "" else t.name
     for (d <- t.desc) {
@@ -304,4 +314,43 @@ final class ProjectWidgets private(project    : Project,
       else
         flatReqCodes(flat)
     )
+
+  type UseCaseStep[S] = UseCaseStepFlowText.TextAndFlow[Text.UseCaseStep.OptionalText, S]
+
+  def useCaseStep(i: UseCaseStep[Set[UseCaseStepId]], l: Live): ReactElement =
+    useCaseStepA(i, l)(
+      MutableArray(_)
+        .sortBySchwartzian(project.reqs.useCases.focusStep(_).ploc)
+        .mapOut(useCaseStepRef))
+
+  def useCaseStepE[C[x] <: Traversable[x]](i: UseCaseStep[C[String \/ UseCaseStepId]], l: Live): ReactElement =
+    useCaseStepA(i, l)(
+      _.map(_.fold(erroneousUseCaseStepRef, useCaseStepRef))(collection.breakOut))
+
+  private def useCaseStepA[C[x] <: TraversableOnce[x], A](i: UseCaseStep[C[A]], l: Live)
+                                                         (f: C[A] => Seq[ReactElement]): ReactElement = {
+
+    val text = format(l, i.text)
+
+    def stepFlow(dir: Direction): Option[ReactElement] = {
+      val ca = i flow dir
+      if (ca.isEmpty)
+        None
+      else
+        Some(stepFlowArrow(dir)(f(ca)))
+    }
+
+    val fwd = stepFlow(Forwards)
+    val bck = stepFlow(Backwards)
+
+    if (fwd.isEmpty && bck.isEmpty)
+      text
+    else
+      <.table(
+        <.tbody(
+          <.tr(
+            <.td(text),
+            <.td(bck, fwd))))
+  }
+
 }

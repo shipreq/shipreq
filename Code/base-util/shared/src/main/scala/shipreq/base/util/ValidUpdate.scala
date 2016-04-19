@@ -41,6 +41,15 @@ sealed abstract class ValidUpdate[+E, +A] {
       case Failure(_)             => true
     }
 
+  final def isUnchanged: Boolean =
+    this match {
+      case Success(_) | Failure(_) => false
+      case Unchanged               => true
+    }
+
+  @inline final def isChanged: Boolean =
+    !isUnchanged
+
   /** [[Unchanged]] is considered valid. */
   final def validity: Validity =
     Invalid <~ isFailure

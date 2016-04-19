@@ -2,7 +2,7 @@ package shipreq.base.util
 
 import scalaz.\/
 
-sealed trait Validity extends IsoBool[Validity] {
+sealed trait Validity extends IsoBool[Validity] with IsoBool.WithBoolOps[Validity] {
   override final def companion = Validity
 }
 

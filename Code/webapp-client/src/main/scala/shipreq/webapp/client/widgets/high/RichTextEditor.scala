@@ -14,6 +14,7 @@ import shipreq.webapp.client.app.Style.{reqtable => *} // TODO Not anymore
 import shipreq.webapp.client.lib.AutoComplete
 import shipreq.webapp.client.lib.DataReusability._
 import shipreq.webapp.client.feature._
+import RichTextEditor.hardcodedLive
 import Text.Equality._
 
 sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, final val text: TextType) {
@@ -36,6 +37,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     val richText    = text.parse(project)(edit.value)
     val parseResult = Validators.genericRichText(plainText, richText)
     val validated   = EditValidationFeature.compareOption(parseResult)(preEditValue)
+    def showPreview = validated.value.isChanged
 
     def render = Component(this)
   }
@@ -45,16 +47,10 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
   private val editorRef = Ref[dom.html.TextArea]("i")
 
-  // This is an editor - you can't edit Dead stuff. Assume all content is Live.
-  @inline def hardcodedLive = Live
-
   val liveCorrect: EndoFn[String] =
-    text.lineCardinality match {
-      case SingleLine => RichTextEditor.correctSingleLineText
-      case MultiLine  => identity
-    }
+    RichTextEditor.liveCorrect(text)
 
-  class Backend($: BackendScope[Props, Unit]) {
+  final class Backend($: BackendScope[Props, Unit]) {
     private val pxProject    = Px.bs($).propsA(_.project)
     private val pxPlainText  = Px.bs($).propsA(_.plainText)
     private val pxTextSearch = Px.bs($).propsA(_.textSearch)
@@ -78,7 +74,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
           ^.onChange ==> updateState)
 
       def preview =
-        p.preview.reactCollapse(p.preEditValue.forall(p.richText !=* _))(
+        p.preview.reactCollapse(p.showPreview)(
           <.div(
             ^.ref := "p",
             "Preview",
@@ -106,6 +102,15 @@ object RichTextEditor {
     val r = "[\\r\\n]+".r
     r.replaceAllIn(_, " ")
   }
+
+  def liveCorrect(text: Text.Generic): EndoFn[String] =
+    text.lineCardinality match {
+      case SingleLine => RichTextEditor.correctSingleLineText
+      case MultiLine  => identity
+    }
+
+  // This is an editor - you can't edit Dead stuff. Assume all content is Live.
+  @inline def hardcodedLive = Live
 
   object GenericReqTitle extends RichTextEditor("GRT", Text.GenericReqTitle)
 

@@ -1,14 +1,15 @@
 package shipreq.webapp.client.lib
 
 import japgolly.scalajs.react.ScalazReact._
-import japgolly.scalajs.react.extra.Reusability
+import japgolly.scalajs.react.extra._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.RemoteFn
-import shipreq.webapp.base.text.{Atom, TextSearch, PlainText}
+import shipreq.webapp.base.text.{Atom, PlainText, TextSearch}
 import shipreq.webapp.base.text.Text.Equality._
+import shipreq.webapp.base.text.UseCaseStepFlowText.TextAndFlow
 import shipreq.webapp.client.widgets.high.ProjectWidgets
 
 object DataReusability {
@@ -70,4 +71,10 @@ object DataReusability {
 
   implicit val reusabilityUseCaseStepField: Reusability[StaticField.UseCaseStepTree] = Reusability.byUnivEq
 
+  implicit def reusabilityTextAndFlow[T: Reusability, S: Reusability]: Reusability[TextAndFlow[T, S]] =
+    Reusability.fn((x, y) => (x eq y) || (
+      (x.text            ~=~ y.text) &&
+      (x.flow(Forwards)  ~=~ y.flow(Forwards)) &&
+      (x.flow(Backwards) ~=~ y.flow(Backwards))
+    ))
 }
