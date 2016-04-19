@@ -4,6 +4,7 @@ import nyaya.gen._
 import nyaya.prop._
 import nyaya.test.PropTest._
 import scala.annotation.tailrec
+import scala.util.Random
 import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.BaseUtilGen._
@@ -250,6 +251,13 @@ object VectorTreeTest extends TestSuite {
           "4.2".loc -> "X.2.2".xloc,
           "4.3".loc -> "X.2.3".xloc))
         testFilterAndPartLocs(t, m)
+      }
+
+      'order {
+        val plocs = List("0.0", "0.0.0", "0.0.1", "0.1", "X.0", "X.0.0", "X.1", "0.X.0").map(_.xloc)
+        assertEq("id", plocs.sorted, plocs)
+        assertEq("reverse", plocs.reverse.sorted, plocs)
+        assertEq("shuffle", Random.shuffle(plocs).sorted, plocs)
       }
     }
 

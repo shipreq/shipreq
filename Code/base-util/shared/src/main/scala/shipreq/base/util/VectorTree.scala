@@ -376,6 +376,19 @@ object VectorTree extends VectorTreeLowPri {
   object PartialLocation {
     implicit def univEq: UnivEq[PartialLocation] = UnivEq.derive
 
+    implicit val ordering: Ordering[PartialLocation] =
+      new Ordering[PartialLocation] {
+        val byElems = Ordering.Iterable[Int]
+        override def compare(x: PartialLocation, y: PartialLocation): Int =
+          if (x.validity ==* y.validity)
+            byElems.compare(x.value.whole, y.value.whole)
+          else
+            x.validity match {
+              case Valid => -1
+              case _     =>  1
+            }
+      }
+
     def detect(value: Location): PartialLocation =
       apply(value, Invalid <~ value.exists(_ < 0))
   }
