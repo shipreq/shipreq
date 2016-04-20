@@ -174,6 +174,9 @@ final case class VectorTree[+A](children: Children[A]) extends Parent[A] {
       )
     }
 
+  @inline def shiftLeftV(at: Location, f: Location => Validity): Option[VectorTree[A]] =
+    shiftLeft(at)
+
   def shiftLeftIterator[B](f: (Location, A) => B): Iterator[B] =
     locAndValueIterator((_, _)).filter(p => canShiftLeft(p._1) :: Allow).map(f.tupled)
 
@@ -443,6 +446,9 @@ object VectorTree extends VectorTreeLowPri {
 
   def canShiftLeft(at: Location): Permission =
     Allow <~ (at.length >= 2)
+
+  @inline def canShiftLeftV(at: Location, f: Location => Validity): Permission =
+    canShiftLeft(at)
 
   def canShiftRight(at: Location): Permission =
     Allow <~ (at.last > 0)

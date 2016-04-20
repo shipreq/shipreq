@@ -136,24 +136,31 @@ object VectorTreeTest extends TestSuite {
     val lookupV: Location => Validity =
       m(_).validity
 
-    val shiftRightV =
+    def shiftV(name: String,
+               canFn: (Location, Location => Validity) => Permission,
+               shiftFn: (VTI, Location) => Option[VTI],
+               shiftVFn: (VTI, Location, Location => Validity) => Option[VTI]) =
       E.forall(allValid) { case (loc, ploc) =>
-        val can = VectorTree.canShiftRightV(loc, lookupV)
-        k.shiftRight(ploc.value) match {
+        val can = canFn(loc, lookupV)
+        shiftFn(k, ploc.value) match {
           case Some(k2) =>
-            val t2 = t.shiftRightV(loc, lookupV)
-            "ShiftRightV" rename_: (
+            val t2 = shiftVFn(t, loc, lookupV)
+            s"Shift${name}V" rename_: (
               E.equal("new tree size", t2.fold(-1)(_.locIterator.size), origSize)
-              & E.equal("new tree filtered", t2.map(_ filter filterInt), Some(k2))
-              & E.equal("canShiftRightV", can, Allow))
+                & E.equal("new tree filtered", t2.map(_ filter filterInt), Some(k2))
+                & E.equal(s"canShift${name}V", can, Allow))
           case None =>
-            E.equal("canShiftRightV", can, Deny)
+            E.equal(s"canShift${name}V", can, Deny)
         }
       }
 
+    val shiftLeftV = shiftV("Left", VectorTree.canShiftLeftV, _ shiftLeft _, _.shiftLeftV(_, _))
+    val shiftRightV = shiftV("Right", VectorTree.canShiftRightV, _ shiftRight _, _.shiftRightV(_, _))
+
     val outputSize = E.equal("output size", m.size, origSize)
 
-    outputSize ∧ E.distinct("output", m.values) ∧ origToFiltered ∧ filteredToOrig ∧ filterEqualsRemove ∧ shiftRightV
+    outputSize ∧ E.distinct("output", m.values) ∧ origToFiltered ∧ filteredToOrig ∧ filterEqualsRemove ∧
+      shiftLeftV ∧ shiftRightV
   }
 
   def testFilterAndPartLocs(t: VectorTree[Int], m: Map[Location, PartialLocation]): Unit =
