@@ -528,9 +528,9 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
                       case Live =>
                         Props.WhenLive(
-                          f.canDelete    (loc     ).option(runCtrl(DeleteUseCaseStep(id))),
-                          f.canShiftLeft (loc     ).option((temp.shiftLeftAt (loc), runCtrl(ShiftUseCaseStepLeft(id)))),
-                          f.canShiftRight(loc, mdt).option((temp.shiftRightAt(loc), runCtrl(ShiftUseCaseStepRight(id)))))
+                          f.canDelete(loc).option(runCtrl(DeleteUseCaseStep(id))),
+                          f.canShiftLeft(loc).option((temp.shiftLeftAt(loc), runCtrl(ShiftUseCaseStepLeft(id)))),
+                          f.canShiftRight(loc, temp.steps.locValidity, mdt).option((temp.shiftRightAt(loc), runCtrl(ShiftUseCaseStepRight(id)))))
 
                       case Dead =>
                         Props.WhenDead(runCtrl(RestoreUseCaseStep(id)))

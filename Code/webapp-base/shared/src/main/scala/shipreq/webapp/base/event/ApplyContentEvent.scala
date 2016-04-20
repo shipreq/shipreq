@@ -355,7 +355,7 @@ trait ApplyContentEvent {
 
     def applyShiftUseCaseStepRight(e: ShiftUseCaseStepRight): SE[Unit] =
       findStepModTree(e.id)((s, _, l, _) =>
-        optionGet(s.tree shiftRight l, s"${show(e.id)} cannot be shifted right."))
+        optionGet(s.tree.shiftRightV(l, s.locValidity), s"${show(e.id)} cannot be shifted right."))
 
     private def badStepIndex(id: UseCaseStepId, loc: Location) =
       s"${show(id)} expected at ${showLoc(loc)}."

@@ -267,6 +267,9 @@ case class UseCaseSteps(tree: UseCaseSteps.Tree) {
       }
     ))
 
+  val locValidity: Location => Validity =
+    l => partialLocs.forward(l).validity
+
   lazy val stepPartialLocs: Iso[UseCaseStepId, PartialLocation] =
     stepLocs.iso_! ^<-> partialLocs.iso_!
 

@@ -12,6 +12,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.event._
+import VectorTree.Location
 import VectorTree.LocationOps
 
 object UseCaseStepTreeTest extends TestSuite {
@@ -58,18 +59,19 @@ object UseCaseStepTreeTest extends TestSuite {
       }
     }
 
-    def step(f: UCF, l: VectorTree.Location, id: UseCaseStepId, mdt: VectorTree[Int]): EvalL =
-      ( compare(f.canDelete(l),          DeleteUseCaseStep(id))
-      & compare(f.canShiftLeft(l),       ShiftUseCaseStepLeft(id))
-      & compare(f.canShiftRight(l, mdt), ShiftUseCaseStepRight(id))
-      & compare(f.canAdd(l),             AddUseCaseStep(nextStepId, uc.id, f, l.asParentLoc))
+    def step(f: UCF, l: Location, v: Location => Validity, mdt: VectorTree[Int], id: UseCaseStepId): EvalL =
+      ( compare(f.canDelete(l),             DeleteUseCaseStep(id))
+      & compare(f.canShiftLeft(l),          ShiftUseCaseStepLeft(id))
+      & compare(f.canShiftRight(l, v, mdt), ShiftUseCaseStepRight(id))
+      & compare(f.canAdd(l),                AddUseCaseStep(nextStepId, uc.id, f, l.asParentLoc))
       ).rename(s"${f.name} / $id / ${l.whole mkString "."}")
 
     def tree(f: UCF) = {
-      val tree = f.useCaseStepTree.get(uc)
-      val mdt  = tree.maxDepthTree
-      val data = tree.locAndValueIterator((l, s) => (l, s.id)).toList
-      Eval.forall((), data)(x => step(f, x._1, x._2, mdt)).rename(f.name)
+      val steps = f.useCaseSteps.get(uc)
+      val tree  = steps.tree
+      val mdt   = tree.maxDepthTree
+      val data  = tree.locAndValueIterator((l, s) => (l, s.id)).toList
+      Eval.forall((), data)(x => step(f, x._1, steps.locValidity, mdt, x._2)).rename(f.name)
     }
 
     def all =
