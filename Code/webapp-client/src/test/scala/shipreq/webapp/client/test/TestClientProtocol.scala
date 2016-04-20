@@ -16,6 +16,9 @@ object TestClientProtocol {
     val success: r.fn.Output => TCB.Success
     val failure: Failed[r.fn.Failure] => TCB.Failure
 
+    override def toString =
+      s"Req($input)@${Integer.toHexString(##)}"
+
     def force(r2: RemoteFn.Instance) =
       this.asInstanceOf[Req {val r: r2.type}]
 
