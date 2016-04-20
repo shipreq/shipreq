@@ -1,6 +1,6 @@
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.8")
 
-libraryDependencies += "org.scala-js" %% "scalajs-env-selenium" % "0.1.1"
+libraryDependencies += "org.scala-js" %% "scalajs-env-selenium" % "0.1.2"
 
 // Web app support plugin for XSbt using Jetty Web Server
 addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "2.0.4")
