@@ -53,6 +53,12 @@ object IsoBool {
       b => if (b :: positive) p else n
     }
 
+    final def fold[A](a: A)(f: (A, B) => A): A =
+      f(f(a, positive), negative)
+
+    final def mapReduce[X, Y](m: B => X)(r: (X, X) => Y): Y =
+      r(m(positive), m(negative))
+
     final def forall(f: B => Boolean): Boolean =
       f(positive) && f(negative)
 
