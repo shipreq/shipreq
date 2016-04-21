@@ -94,6 +94,7 @@ final class ReqDetailObs($: HtmlDomZipper) {
         $.collect01(s"*[data-step-label]").asHtml.mapDoms(_.title)
 
       lazy val del   = ctrl("-")
+      lazy val rest  = ctrl("^")
       lazy val left  = ctrl("«", "↓")
       lazy val right = ctrl("»", "↑")
       lazy val add   = ctrl("+")

@@ -46,19 +46,23 @@ object ReqDetailTest extends TestSuite {
 
     'gr - test("FR-1")(Plan invariants testLifeRowInnerText("Alive.Kill"))
 
-    'uc - test("UC-1")(Plan.action(
-                                      allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.1", "1.1.1")
-        +> addTailStepEC           +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.1", "1.1.1", "1.E.1")
-        >> delStep("1.1")          +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.E.1")
-        >> shiftStepLeft("1.0.3")  +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.1", "1.E.1")
-        >> shiftStepRight("1.1")   +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.E.1")
-        >> addStep("1.E.1")        +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.E.1", "1.E.1.a")
-        >> filterDeadToggle        +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.X.0", "1.X.0.1", "1.E.1", "1.E.1.a")
-        >> filterDeadToggle
-        // These two test shiftRightV, not just shiftRight
-        >> delStep("1.0.2")        +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.E.1", "1.E.1.a")
-        >> shiftStepRight("1.0.2") +> allSteps.assert("1.0", "1.0.1", "1.0.1.a", "1.E.1", "1.E.1.a")
-    ))
+    'uc {
+      "1" - test("UC-1")(Plan.action(   allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.1", "1.1.1")
+          +> addTailStepEC           +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.1", "1.1.1", "1.E.1")
+          >> delStep("1.1")          +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.E.1")
+          >> shiftStepLeft("1.0.3")  +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.1", "1.E.1")
+          >> shiftStepRight("1.1")   +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.E.1")
+          >> addStep("1.E.1")        +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.E.1", "1.E.1.a")
+          >> filterDeadToggle        +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.X.0", "1.X.0.1", "1.E.1", "1.E.1.a")
+          >> filterDeadToggle
+          // These two test shiftRightV, not just shiftRight
+          >> delStep("1.0.2")        +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.E.1", "1.E.1.a")
+          >> shiftStepRight("1.0.2") +> allSteps.assert("1.0", "1.0.1", "1.0.1.a", "1.E.1", "1.E.1.a")
+          // Test restore
+          >> filterDeadToggle        +> allSteps.assert("1.0", "1.0.1", "1.0.1.a", "1.0.X.1", "1.X.0", "1.X.0.1", "1.E.1", "1.E.1.a")
+          >> restoreStep("1.X.0")    +> allSteps.assert("1.0", "1.0.1", "1.0.1.a", "1.0.X.1", "1.1", "1.1.1", "1.E.1", "1.E.1.a")
+      ))
+    }
 
     'deadExplicitly - test("MF-19")(Plan invariants testLifeRowInnerText("Dead.Resurrect"))
 

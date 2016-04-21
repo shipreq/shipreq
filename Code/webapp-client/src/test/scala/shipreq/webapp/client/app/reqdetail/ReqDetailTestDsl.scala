@@ -117,6 +117,9 @@ object ReqDetailTestDsl {
   def delStep(label: String): *.Action =
     *.action("Delete " + label)(i => clickEnabled(i.obs.uc.row(label).del))
 
+  def restoreStep(label: String): *.Action =
+    *.action("Restore " + label)(i => clickEnabled(i.obs.uc.row(label).rest))
+
   def shiftStepLeft(label: String): *.Action =
     *.action("ShiftLeft " + label)(i => clickEnabled(i.obs.uc.row(label).left))
 
