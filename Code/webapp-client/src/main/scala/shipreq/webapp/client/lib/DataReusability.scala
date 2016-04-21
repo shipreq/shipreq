@@ -73,10 +73,5 @@ object DataReusability {
 
   implicit val reusabilityUseCaseStepField: Reusability[StaticField.UseCaseStepTree] = Reusability.byUnivEq
 
-  implicit def reusabilityTextAndFlow[T: Reusability, S: Reusability]: Reusability[TextAndFlow[T, S]] =
-    Reusability.fn((x, y) => (x eq y) || (
-      (x.text            ~=~ y.text) &&
-      (x.flow(Forwards)  ~=~ y.flow(Forwards)) &&
-      (x.flow(Backwards) ~=~ y.flow(Backwards))
-    ))
+  implicit def reusabilityTextAndFlow[T: Reusability, S: Reusability]: Reusability[TextAndFlow[T, S]] = Reusability.caseClass
 }
