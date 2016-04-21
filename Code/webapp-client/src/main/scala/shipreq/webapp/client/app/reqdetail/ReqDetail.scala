@@ -183,7 +183,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
                   tailStep    : Boolean) {
     val mdt = steps.tree.maxDepthTree
 
-    import shipreq.webapp.client.app.reqdetail.uce.Controls.Props._
+    import shipreq.webapp.client.app.reqdetail.UseCaseStepControls.Props._
 
     def shiftLeftAt(loc: VectorTree.Location): ShiftLeft =
       if (leftIsDownAt(loc)) ShiftDown else ShiftLeft
@@ -407,30 +407,6 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
           case Row.UseCaseStepsA => renderStepTree(data.useCaseData.get.stepsA)
           case Row.UseCaseStepsE => renderStepTree(data.useCaseData.get.stepsE)
 
-            /*
-            val uc = data.req match {
-              case x: UseCase => x
-              case x => sys error s"Not a use case: $x"
-            }
-            // TODO UseCaseSteps isn't needed it seems
-            val tree = f.useCaseStepTree.get(uc)
-            val rows =
-              tree.locAndValueIterator((loc, step) => UseCaseStepEditor.Props(
-                             uc.pubid.pos, // pos       : ReqTypePos,
-                             loc, // loc       : VectorTree.Location,
-                             step, // step      : UseCaseStep,
-                             data.project.reqs.useCases.stepFlow, // flow      : UseCases.StepFlow,
-                             ReusableFn(_.toString), // stepLabel : UseCaseStepId ~=> String,
-                             f, // field     : StaticField.UseCaseStepTree,
-                             pw, // widgets   : ProjectWidgets,
-                             None, // editState : ContentEditorFeature.D0.State,
-                             None, // asyncState: AsyncActionFeature.D0.State[String],
-                             Callback.empty, // startEdit : Callback,
-                             _ => Callback.empty) // update    : UpdateContentCmd.ForUseCaseStep => Callback
-              .render)
-            rows.toReactNodeArray
-            */
-
           case Row.DeletionReason =>
             RenderDeletionReason.req(project, pw, req)
 
@@ -456,7 +432,6 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
       // TODO Move
       def renderStepTree(temp: Temp) = {
         import shipreq.webapp.client.app.Style.reqdetail.{useCaseStep => *}
-        import uce._
         import UseCaseStepFlowText.TextAndFlow
         val uc = data.useCaseData.get.uc
         val pos = uc.pubid.pos
@@ -517,7 +492,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
             def ctrls = {
               import temp.{mdt, field => f}
-              import Controls.Props
+              import UseCaseStepControls.Props
               import UpdateContentCmd._
 
               val props: Props = uc.liveUC match {
@@ -572,7 +547,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
           val cell = Cell.AddUseCaseTailStep(temp.row)
           val cb   = runAction(cell, cmd)
           val a    = state.async(cell)
-          val ctrls = Controls.Props.tailStep(cb, a).render
+          val ctrls = UseCaseStepControls.Props.tailStep(cb, a).render
           x push <.div(*.container, ^.key := "TS", ctrls)
         }
 

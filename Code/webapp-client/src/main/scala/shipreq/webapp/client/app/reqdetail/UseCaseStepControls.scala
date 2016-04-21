@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.reqdetail.uce
+package shipreq.webapp.client.app.reqdetail
 
 import shipreq.webapp.client.app.Style.reqdetail.{useCaseStep => *}
 import scalacss.ScalaCssReact._
@@ -14,7 +14,7 @@ import shipreq.webapp.client.feature.AsyncActionFeature
   *
   *     [-] [«] [»] [+]
   */
-object Controls {
+object UseCaseStepControls {
 
   private val tagBase    = <.button(*.ctrl)
   private val tagBlank   = tagBase(^.visibility.hidden)
@@ -114,7 +114,7 @@ object Controls {
     }
   }
 
-  val Component = ReactComponentB[Props]("StepCtrls")
+  val Component = ReactComponentB[Props]("UseCaseStepControls")
     .renderBackend[Backend]
 //    .configure(Reusability.shouldComponentUpdate)
     .build
