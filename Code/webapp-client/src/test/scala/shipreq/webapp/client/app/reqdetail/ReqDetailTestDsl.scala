@@ -45,7 +45,7 @@ object ReqDetailTestDsl {
     *.focus("Error reason").value(_.obs.error.reason).assert(e)
 
   val allSteps =
-    *.focus("All steps").collection(_.obs.uc.stepTitles)
+    *.focus("All steps").collection(_.obs.uc.stepLabels)
 
   val filterDead =
     *.focus("FilterDead").value(_.obs.generic.filterDead)

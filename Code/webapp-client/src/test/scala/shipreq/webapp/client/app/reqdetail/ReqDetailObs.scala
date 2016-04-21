@@ -90,7 +90,7 @@ final class ReqDetailObs($: HtmlDomZipper) {
         $(sel).domAs[html.Button]
       }
 
-      val title: Option[String] =
+      val label: Option[String] =
         $.collect01(s"*[data-step-label]").asHtml.mapDoms(_.title)
 
       lazy val del   = ctrl("-")
@@ -101,13 +101,13 @@ final class ReqDetailObs($: HtmlDomZipper) {
     }
 
     def row(label: String): StepRow =
-      stepRows.get(_.find(_.title.exists(_ ==* label))) getOrElse sys.error("Step row not found: " + label)
+      stepRows.get(_.find(_.label.exists(_ ==* label))) getOrElse sys.error("Step row not found: " + label)
 
-    val treeStepTitles: NAE[Vector[String]] =
-      stepRows.map(_.flatMap(_.title.toVector))
+    val treeStepLabels: NAE[Vector[String]] =
+      stepRows.map(_.flatMap(_.label.toVector))
 
-    val stepTitles: Vector[String] =
-      treeStepTitles.reduce(_ ++ _)
+    val stepLabels: Vector[String] =
+      treeStepLabels.reduce(_ ++ _)
 
     def tailStepRowAC = stepRows.alt.last
     def tailStepRowEC = stepRows.exception.last
