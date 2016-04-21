@@ -127,41 +127,14 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
         sortPubids(customImpLookup(f)(req.id)))
 
     final class UseCaseData(val uc: UseCase) {
-
-      private def stepTreeProps(row         : Row.UseCaseSteps,
-                                field       : StaticField.UseCaseStepTree,
-                                filter      : UseCaseSteps.Tree => Range,
-                                leftIsDownAt: VectorTree.Location => Boolean,
-                                rightIsUpAt : VectorTree.Location => Boolean,
-                                tailStep    : Boolean) = {
-        val s = field.useCaseSteps.get(uc)
-        val i = filter(s.tree)
-        Temp(row, field, s, i, leftIsDownAt, rightIsUpAt, tailStep)
+      private def stepTreeProps(row: Row.UseCaseSteps) = {
+        val steps = row.field.useCaseSteps.get(uc)
+        val range = row.treeFilter(steps.tree)
+        StepData(row, steps, range)
       }
-
-      val stepsN = stepTreeProps(
-        Row.UseCaseStepsN,
-        StaticField.NormalAltStepTree,
-        _ => 0 to 0,
-        _ => false, // l => l.length ==* 2 && l.tail.head !=* 0, ← Correct but bad UX
-        _ => false,
-        false)
-
-      val stepsA = stepTreeProps(
-        Row.UseCaseStepsA,
-        StaticField.NormalAltStepTree,
-        1 until _.children.length,
-        _ => false,
-        _ ==* (NonEmptyVector one 1),
-        true)
-
-      val stepsE = stepTreeProps(
-        Row.UseCaseStepsE,
-        StaticField.ExceptionStepTree,
-        _.children.indices,
-        _ => false,
-        _ => false,
-        true)
+      val stepsN = stepTreeProps(Row.UseCaseStepsN)
+      val stepsA = stepTreeProps(Row.UseCaseStepsA)
+      val stepsE = stepTreeProps(Row.UseCaseStepsE)
     }
 
     val useCaseData: Option[UseCaseData] =
@@ -174,22 +147,9 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
       filterDead.filterFnA(Live whenValid _.validity)
   }
 
-  case class Temp(row         : Row.UseCaseSteps,
-                  field       : StaticField.UseCaseStepTree,
-                  steps       : UseCaseSteps,
-                  filter      : Range,
-                  leftIsDownAt: VectorTree.Location => Boolean,
-                  rightIsUpAt : VectorTree.Location => Boolean,
-                  tailStep    : Boolean) {
+  case class StepData(row: Row.UseCaseSteps, steps: UseCaseSteps, filter: Range) {
+    @inline def field = row.field
     val mdt = steps.tree.maxDepthTree
-
-    import shipreq.webapp.client.app.reqdetail.UseCaseStepControls.Props._
-
-    def shiftLeftAt(loc: VectorTree.Location): ShiftLeft =
-      if (leftIsDownAt(loc)) ShiftDown else ShiftLeft
-
-    def shiftRightAt(loc: VectorTree.Location): ShiftRight =
-      if (rightIsUpAt(loc)) ShiftUp else ShiftRight
   }
 
   // TODO Better performance if cells are (components + shouldComponentRender) or cached
@@ -430,20 +390,22 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
         }
 
       // TODO Move
-      def renderStepTree(temp: Temp) = {
+      def renderStepTree(stepData: StepData) = {
         import shipreq.webapp.client.app.Style.reqdetail.{useCaseStep => *}
         import UseCaseStepFlowText.TextAndFlow
+        import stepData.{steps, field, row}
+
         val uc = data.useCaseData.get.uc
         val pos = uc.pubid.pos
         val flow = data.project.reqs.useCases.stepFlow
 
-        val x = temp.steps.tree.subtreeLocAndValueIterator[ReactTag](temp.filter, (loc, step) => {
+        val x = steps.tree.subtreeLocAndValueIterator[ReactTag](stepData.filter, (loc, step) => {
           val id = step.id
 
-          val partialLoc = temp.steps.partialLocs.forward(loc)
+          val partialLoc = steps.partialLocs.forward(loc)
           if (data.useCaseStepFilter(partialLoc)) {
 
-            val fullStepLabel = temp.field.stepLabel(pos, partialLoc, mnemonicPrefix = false)
+            val fullStepLabel = field.stepLabel(pos, partialLoc, mnemonicPrefix = false)
 
             val live = UseCaseStep.live(uc, partialLoc)
 
@@ -457,7 +419,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
                   else {
                     // Last node asserted to be ≥ 0 in PartialLocation
                     val i = partialLoc.value.last
-                    temp.field.stepLabelsPerLevel(depth - 1).label(i)
+                    field.stepLabelsPerLevel(depth - 1).label(i)
                   }
 
                   <.div(
@@ -491,7 +453,6 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
                   pw.useCaseStep(live, TextAndFlow(step.titleA(uc), flow(_)(id)))))
 
             def ctrls = {
-              import temp.{mdt, field => f}
               import UseCaseStepControls.Props
               import UpdateContentCmd._
 
@@ -504,10 +465,19 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
                     val p: Props.Self = live match {
 
                       case Live =>
-                        Props.WhenLive(
-                          f.canDelete(loc).option(runCtrl(DeleteUseCaseStep(id))),
-                          f.canShiftLeft(loc).option((temp.shiftLeftAt(loc), runCtrl(ShiftUseCaseStepLeft(id)))),
-                          f.canShiftRight(loc, temp.steps.locValidity, mdt).option((temp.shiftRightAt(loc), runCtrl(ShiftUseCaseStepRight(id)))))
+                        val delete = field
+                          .canDelete(loc)
+                          .option(runCtrl(DeleteUseCaseStep(id)))
+
+                        val shiftLeft = field
+                          .canShiftLeft(loc)
+                          .option((Props.ShiftLeft, runCtrl(ShiftUseCaseStepLeft(id))))
+
+                        val shiftRight = field
+                          .canShiftRight(loc, steps.locValidity, stepData.mdt)
+                          .option((Props.ShiftRight, runCtrl(ShiftUseCaseStepRight(id))))
+
+                        Props.WhenLive(delete, shiftLeft, shiftRight)
 
                       case Dead =>
                         Props.WhenDead(runCtrl(RestoreUseCaseStep(id)))
@@ -515,16 +485,16 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
                     Some((p, state.async(cell)))
                   }
 
-                  val add = f.canAdd(loc).option {
+                  val add = field.canAdd(loc).option {
                     val cell = Cell.AddUseCaseStep(id)
                     val a    = state.async(cell)
-                    val cb   = runAction(cell, AddUseCaseStep(uc.id, f, loc.asParentLoc))
+                    val cb   = runAction(cell, AddUseCaseStep(uc.id, field, loc.asParentLoc))
                     (cb, a)
                   }
 
                   Props(self, add)
 
-                case Dead => // ← UseCase, not step
+                case Dead => // UseCase itself is dead
                   Props.none
               }
 
@@ -542,11 +512,11 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
           .filter(_ ne null)
           .toReactNodeArray
 
-        if (temp.tailStep) {
-          def cmd  = UpdateContentCmd.AddUseCaseStep(uc.id, temp.field, VectorTree.ParentLocation.Empty)
-          val cell = Cell.AddUseCaseTailStep(temp.row)
-          val cb   = runAction(cell, cmd)
-          val a    = state.async(cell)
+        if (row.tailStep) {
+          def cmd   = UpdateContentCmd.AddUseCaseStep(uc.id, field, VectorTree.ParentLocation.Empty)
+          val cell  = Cell.AddUseCaseTailStep(row)
+          val cb    = runAction(cell, cmd)
+          val a     = state.async(cell)
           val ctrls = UseCaseStepControls.Props.tailStep(cb, a).render
           x push <.div(*.container, ^.key := "TS", ctrls)
         }

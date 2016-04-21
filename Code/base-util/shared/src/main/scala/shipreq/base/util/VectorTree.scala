@@ -227,7 +227,7 @@ final case class VectorTree[+A](children: Children[A]) extends Parent[A] {
   def shiftRightIterator[B](f: (Location, A) => B): Iterator[B] =
     locAndValueIterator((_, _)).filter(p => canShiftRight(p._1) :: Allow).map(f.tupled)
 
-  def maxDepthTree: VectorTree[Int] = {
+  lazy val maxDepthTree: VectorTree[Int] = {
     val leaf: Node[Int] =
       VectorTree.leaf(0)
 
