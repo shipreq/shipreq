@@ -80,7 +80,7 @@ object UseCaseStepFlowText {
         ~> Elem.Arrow)
 
     def step: Rule1[Elem.Step[String]] =
-      rule(capture(NonWhitespace.+) ~> (Elem.Step(_: String)))
+      rule(capture(oneOrMore(!(ch(EOI) | Whitespace | arrow) ~ ANY)) ~> (Elem.Step(_: String)))
 
     def flowClause: Rule1[Seq[Elem.Flow[String]]] =
       rule(

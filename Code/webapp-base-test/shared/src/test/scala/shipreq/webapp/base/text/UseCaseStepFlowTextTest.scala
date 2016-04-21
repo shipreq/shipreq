@@ -97,7 +97,7 @@ object UseCaseStepFlowTextTest extends TestSuite {
 
     'spotCheck {
       import Elem._
-      val input = " let's try --> 1 <-- 2 -->3  4.\ncool\nand also <--- --> 5 "
+      val input = " let's try -->1<-- 2 -->3  4.\ncool\nand also <--- --> 5 "
       val parsed = UseCaseStepFlowText.parse(input).toList
       assertEq(parsed, expect = List(
         Text(" let's try "),

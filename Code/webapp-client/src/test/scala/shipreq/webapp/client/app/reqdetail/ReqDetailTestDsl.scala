@@ -1,8 +1,10 @@
 package shipreq.webapp.client.app.reqdetail
 
+import japgolly.scalajs.react.test._
 import japgolly.scalajs.react.test.ReactTestUtils.Simulate
 import monocle.macros.Lenses
 import org.scalajs.dom.html
+import shipreq.base.test.BaseTestUtil.quoteStringForDisplay
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
@@ -125,6 +127,27 @@ object ReqDetailTestDsl {
 
   def shiftStepRight(label: String): *.Action =
     *.action("ShiftRight " + label)(i => clickEnabled(i.obs.uc.row(label).right))
+
+  def stepText(label: String) =
+    *.focus(label + " text").value(_.obs.uc.row(label).text)
+
+  def doubleClickStepText(label: String): *.Action =
+    *.action(s"Double-click $label text")(Simulate doubleClick _.obs.uc.row(label).textContainer.dom)
+
+  def editStepText(label: String, newValue: String): *.Action =
+    (doubleClickStepText(label)
+      +> editorCount.assert.increment
+      >> setStepTextEditValue(label, newValue)
+      >> commitStepTextEdit(label)
+      +> editorCount.assert.decrement
+    ).group(s"Edit $label text to ${quoteStringForDisplay(newValue)}")
+
+  def setStepTextEditValue(label: String, newValue: String): *.Action =
+    *.action(s"Set $label text to ${quoteStringForDisplay(newValue)}")(
+      ChangeEventData(newValue) simulate _.obs.uc.row(label).textEditor)
+
+  def commitStepTextEdit(label: String): *.Action =
+    *.action("Commit $label text edit")(CtrlEnter simulateKeyDown _.obs.uc.row(label).textEditor)
 
   val filterDeadToggle =
     *.action("Toggle FilterDead")(Simulate change _.obs.generic.filterDeadInput)

@@ -287,6 +287,9 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
     def focus: Callback = Callback.empty // TODO
 
+    val stepLabelMarker = ReactAttr.devOnly("data-step-label") := 1
+    val stepTextMarker = ReactAttr.devOnly("data-step-text") := 1
+
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     def renderDetail(props: DynamicProps, data: Data): ReactElement = {
       import data.{project, req, pubidText}
@@ -459,8 +462,6 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
         val pos = uc.pubid.pos
         val flow = data.project.reqs.useCases.stepFlow
 
-        val stepLabelMarker = ReactAttr.devOnly("data-step-label") := 1
-
         val x = temp.steps.tree.subtreeLocAndValueIterator[ReactTag](temp.filter, (loc, step) => {
           val id = step.id
 
@@ -509,6 +510,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
             def text =
               <.div(*.body,
+                stepTextMarker,
                 renderAsyncEditorOrValue(
                   Cell.UseCaseStep(id),
                   pw.useCaseStep(live, TextAndFlow(step.titleA(uc), flow(_)(id)))))

@@ -47,7 +47,7 @@ object ReqDetailTest extends TestSuite {
     'gr - test("FR-1")(Plan invariants testLifeRowInnerText("Alive.Kill"))
 
     'uc {
-      "1" - test("UC-1")(Plan.action(   allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.1", "1.1.1")
+      'tree - test("UC-1")(Plan.action( allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.1", "1.1.1")
           +> addTailStepEC           +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.1", "1.1.1", "1.E.1")
           >> delStep("1.1")          +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.E.1")
           >> shiftStepLeft("1.0.3")  +> allSteps.assert("1.0", "1.0.1", "1.0.2", "1.1", "1.E.1")
@@ -61,6 +61,23 @@ object ReqDetailTest extends TestSuite {
           // Test restore
           >> filterDeadToggle        +> allSteps.assert("1.0", "1.0.1", "1.0.1.a", "1.0.X.1", "1.X.0", "1.X.0.1", "1.E.1", "1.E.1.a")
           >> restoreStep("1.X.0")    +> allSteps.assert("1.0", "1.0.1", "1.0.1.a", "1.0.X.1", "1.1", "1.1.1", "1.E.1", "1.E.1.a")
+      ))
+
+      'text - test("UC-1")(Plan.action(
+        (stepText("1.1").assert("Have no food")
+          & stepText("1.0.2").assert("Put in mouth←1.1.1")
+          & stepText("1.1.1").assert("Steal food→1.0.2")
+          ) +> *.emptyAction // TODO TEST-STATE BUG!
+
+          >> editStepText("1.1", "No food? --> 1.0.2 <-- 1.1.1 ")
+          +> stepText("1.1").assert("No food?←1.1.1→1.0.2")
+          +> stepText("1.0.2").assert("Put in mouth←1.11.1.1")
+          +> stepText("1.1.1").assert("Steal food→1.0.21.1")
+
+          >> editStepText("1.1", "No food? <--1.0.2-->1.1.1")
+          +> stepText("1.1").assert("No food?←1.0.2→1.1.1")
+          +> stepText("1.0.2").assert("Put in mouth←1.1.1→1.1")
+          +> stepText("1.1.1").assert("Steal food←1.1→1.0.2")
       ))
     }
 

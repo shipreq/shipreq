@@ -93,6 +93,12 @@ final class ReqDetailObs($: HtmlDomZipper) {
       val label: Option[String] =
         $.collect01(s"*[data-step-label]").asHtml.mapDoms(_.title)
 
+      lazy val textContainer = $(s"*[data-step-text]").asHtml
+
+      lazy val text = textContainer.innerText
+
+      lazy val textEditor = textContainer("textarea").domAs[html.TextArea]
+
       lazy val del   = ctrl("-")
       lazy val rest  = ctrl("^")
       lazy val left  = ctrl("«", "↓")

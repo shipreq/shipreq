@@ -68,10 +68,6 @@ object ReqTableTestDsl {
     "." + Style.reqtable.cellEditor(Invalid).className.value +
     ",." + Style.reqtable.cellEditorErrMsg.className.value
 
-  val ctrlEnter = KeyboardEventData(key = KeyValue.Enter, keyCode = KeyCode.Enter, ctrlKey = true)
-
-  val escape = KeyboardEventData(key = KeyValue.Escape, keyCode = KeyCode.Escape)
-
   sealed abstract class CellState
   case object Normal  extends CellState
   case object Editing extends CellState
@@ -144,10 +140,10 @@ object ReqTableTestDsl {
     def testInvalid(text: String) = enterValue(text, "Enter invalid value") +> editorValidity.assert(Invalid)
 
     val commit =
-      *.action("Press Ctrl-Enter.")(ctrlEnter simulateKeyDown editor.run(_)) +> assertNotEditing
+      *.action("Press Ctrl-Enter.")(CtrlEnter simulateKeyDown editor.run(_)) +> assertNotEditing
 
     val abortEdit =
-      *.action("Press Escape.")(escape simulateKeyDown editor.run(_)) +> assertState(Normal)
+      *.action("Press Escape.")(Escape simulateKeyDown editor.run(_)) +> assertState(Normal)
 
     val clickRetry =
       *.action("Click Retry.")(Simulate click retryButton.run(_))
