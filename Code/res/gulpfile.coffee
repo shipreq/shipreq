@@ -50,7 +50,7 @@ gulp.task 'ws:clean', ->
 
 gulp.task 'ws:vendor', ->
   nonRetardedSrc [
-      cfg_bower + 'katex/dist/**/*'
+      cfg_bower + 'KaTeX/dist/**/*'
       '!**/*.md'
       cfg_bower + 'zeroclipboard/ZeroClipboard.swf'
     ]
