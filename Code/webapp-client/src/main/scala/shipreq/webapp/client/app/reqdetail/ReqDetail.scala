@@ -20,7 +20,6 @@ import shipreq.webapp.client.lib.DataReusability._
 import shipreq.webapp.client.protocol.{ServerCall, ClientProtocol}
 import shipreq.webapp.client.widgets.Checkbox
 import shipreq.webapp.client.widgets.high.{DeletionForm, ProjectWidgets}
-import VectorTree.LocationOps
 
 object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
   override protected def configureBackend = new Backend(_, _)
@@ -259,9 +258,6 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
       val fieldName   = pxFieldNameFn.value()
       val editFeature = createEditFeature(state.initEditor, state.asyncFeature, data)
       val runCmd      = this.runCmd(req.id)
-
-      def runAction(cell: Cell, cmd: UpdateContentCmd): Callback =
-        state.asyncFeature(cell).wrapAsync((s, f) => updateIO(cmd, s, f))
 
       def renderAsyncEditorOrValue(cell: Cell, view: => TagMod): TagMod = {
         def startEdit = editFeature(cell).startEdit(focus)
