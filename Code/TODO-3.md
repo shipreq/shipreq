@@ -1,8 +1,3 @@
-Use Case Editor
-===============
-1. Tests for steps in UCE.
-2. Clean up ReqDetail and uce package.
-
 Graphs
 ======
 1. Graphviz & webworker
