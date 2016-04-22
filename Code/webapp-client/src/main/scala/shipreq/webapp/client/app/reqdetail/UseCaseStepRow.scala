@@ -9,11 +9,9 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.AppConsts
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
-import shipreq.webapp.base.text._
 import shipreq.webapp.client.app.Style.reqdetail.{useCaseStep => *}
 import shipreq.webapp.client.feature._
 import shipreq.webapp.client.lib.DataReusability._
-import UseCaseStepFlowText.TextAndFlow
 import VectorTree.{PartialLocation, LocationOps}
 
 object UseCaseStepRow {
@@ -71,11 +69,6 @@ object UseCaseStepRow {
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-//  def text(pw: ProjectWidgets, live: Live, textAndFlow: TextAndFlow[Text.AnyOptional, Set[UseCaseStepId]]) =
-//    pw.useCaseStep(live, textAndFlow)
-
-  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-
   object LiveControls {
     final case class Props(ucId           : UseCaseId,
                            field          : StaticField.UseCaseStepTree,
@@ -123,14 +116,4 @@ object UseCaseStepRow {
       .configure(Reusability.shouldComponentUpdate)
       .build
   }
-
-  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-
-//  def row =
-//    <.div(*.container,
-//      ^.key := fullStepLabel,
-//      label,
-//      text,
-//      ctrls)
-
 }
