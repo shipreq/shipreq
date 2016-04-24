@@ -8,7 +8,7 @@ import org.scalajs.sbtplugin.cross.{CrossProject, CrossType}
 import ScalaJSPlugin.autoImport.{crossProject => _, _}
 import DependencyLib.JVM
 
-object ShipReq extends Build {
+object ShipReq {
 
   def project(dir: String) =
     Project(dir, file(dir))
