@@ -4,6 +4,11 @@ import scalajs.js.annotation._
 import shipreq.webapp.client.ww.api._
 import Server.codec.Writer
 
+/**
+ * Initialises the WebWorker thread.
+ *
+ * @since 25/05/2016
+ */
 @JSExport("Main")
 object Main {
 
@@ -18,9 +23,10 @@ object Main {
   }
 
   object Handler extends Handler[Cmd] {
+    import Cmd._
     override def apply[R](cmd: Cmd[R]): R =
       cmd match {
-        case Cmd.GraphUseCaseSteps(_, _) => SVG("qwe")
+        case GraphUseCaseStepFlow(ucId, useCases) => Graphs.useCaseStepFlow(ucId, useCases)
       }
   }
 }

@@ -14,10 +14,10 @@ sealed abstract class Cmd[Result](implicit r: Pickler[Result]) {
 }
 
 object Cmd {
-  case class GraphUseCaseSteps(id: UseCaseId, useCases: UseCases) extends Cmd[SVG]
+  case class GraphUseCaseStepFlow(id: UseCaseId, useCases: UseCases) extends Cmd[SVG]
 
-  implicit val pickleGraphUseCaseSteps: Pickler[GraphUseCaseSteps] = pickleCaseClass
-  implicit val pickleCmd              : Pickler[Cmd[_]           ] = pickleADT
+  implicit val pickleGraphUseCaseStepFlow: Pickler[GraphUseCaseStepFlow] = pickleCaseClass
+  implicit val pickleCmd                 : Pickler[Cmd[_]              ] = pickleADT
 }
 
 case class SVG(content: String) extends AnyVal
