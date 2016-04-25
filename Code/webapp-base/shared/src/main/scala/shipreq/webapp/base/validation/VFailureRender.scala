@@ -1,6 +1,6 @@
 package shipreq.webapp.base.validation
 
-import scalaz.{Cord, Monoid}
+import scalaz.Monoid
 import scalaz.old.NonEmptyList
 import scalaz.std.list.listInstance
 import scalaz.syntax.foldable._
@@ -38,12 +38,12 @@ trait GenericVFailureRenderer {
 }
 
 object VFailureTextRenderer extends GenericVFailureRenderer {
-  val CR2: Cord = "\n\n"
-  val FI: Cord = "\n  - "
-  override type I = Cord
+  def CR2 = "\n\n"
+  def FI = "\n  - "
+  override type I = String
   override type O = String
-  override implicit def iMonoid = Cord.CordMonoid
-  override protected def finalise(i: I) = i.toString
+  override implicit def iMonoid = scalaz.std.string.stringInstance
+  override protected def finalise(i: I) = i
 
   override protected def renderTopLevelN(is: List[I]) =
     is intercalate CR2
@@ -52,10 +52,10 @@ object VFailureTextRenderer extends GenericVFailureRenderer {
     s"$name $e"
 
   override protected def renderFieldErrorN(name: String, es: NonEmptyList[ErrorMsg]) =
-    Cord(name) ++ es.foldMap(renderSubFailItem)
+    name + es.foldMap(renderSubFailItem)
 
   private def renderSubFailItem(e: ErrorMsg): I =
-    FI ++ render(e)
+    FI + render(e)
 
   override protected def render(e: ErrorMsg) =
     e

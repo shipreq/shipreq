@@ -8,7 +8,7 @@ import scala.collection.concurrent.TrieMap
 import scala.reflect.ClassTag
 import scala.util.hashing.Hashing
 import scala.util.Random
-import scalaz.{Memo, Cord}
+import scalaz.Memo
 
 import shipreq.base.util.log.HasLogger
 import shipreq.webapp.server.app.AppConfig
@@ -19,8 +19,6 @@ import AppConfig._
 object Misc extends Misc {
 
   val RNG = new Random()
-
-  val SingleSpace = Cord(" ")
 
   val NoEffect1: (Any => Unit) = _ => ()
 

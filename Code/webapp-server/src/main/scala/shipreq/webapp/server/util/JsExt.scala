@@ -7,7 +7,6 @@ import net.liftweb.json.Formats
 import net.liftweb.json.Serialization.{write => jsonWrite}
 import net.liftweb.util.Helpers._
 import scala.xml.NodeSeq
-import scalaz.Cord
 
 /**
  * Custom Javascript and JQuery extensions.
@@ -32,8 +31,6 @@ object JsExt {
   }
 
   trait JsMethod extends JsExp with JsMember
-
-  implicit def cord2jsExp(c: Cord): JsExp = JE.Str(c.toString)
 
   /**
    * Many jQuery functions allow the last argument to be a callback that is invoked when the function completes.
@@ -232,7 +229,6 @@ object JsExt {
   /** Invokes a JavaScript trigger that expects textual data. */
   case class JsTextTrigger(triggerName: String) extends JsTrigger(triggerName) {
     def trigger(text: String): JsCmd = go(JE.Str(text))
-    def trigger(text: Cord): JsCmd = go(text)
   }
 
   /** Invokes a JavaScript trigger that expects a string of HTML. */
