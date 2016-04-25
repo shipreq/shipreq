@@ -170,7 +170,7 @@ object ShipReq {
       .aggregate(
         webappMacroJvm, webappBaseJvm, webappBaseServerJvm, webappBaseTestJvm,
         webappMacroJs , webappBaseJs , webappBaseServerJs , webappBaseTestJs ,
-        webappClient, webappClientWW,
+        webappClientWwApi, webappClientWw, webappClient,
         webappServer)
 
   lazy val webappSettings =
@@ -242,11 +242,10 @@ object ShipReq {
       .depsForBoth(μTest ++ Nyaya.test)
       .dependsOn(baseTest, webappBase, webappBaseServer)
 
-  // WW = WebWorker
-  lazy val webappClientWW =
-    project("webapp-client-ww")
+  lazy val webappClientWwApi =
+    project("webapp-client-ww-api")
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(baseUtilJs, webappBaseJs, webappBaseTestJs % "test->compile")
+      .dependsOn(webappBaseJs)
       .depsForJs(
         Scalaz.core ++ Monocle.macros ++ boopickle ++ scalajsDom ++
         testScope(μTest ++ Nyaya.test))
@@ -254,7 +253,19 @@ object ShipReq {
         Common.jsSettings(NeedDom),
         webappSettings,
         useMacroParadise,
-        // Common.jsFastDevSettings,
+        dontInline) // probably crashes, try with Scala 2.12
+
+  lazy val webappClientWw =
+    project("webapp-client-ww")
+      .enablePlugins(ScalaJSPlugin)
+      .dependsOn(baseUtilJs, webappClientWwApi, webappBaseTestJs % "test->compile")
+      .depsForJs(
+        Scalaz.core ++ Monocle.macros ++ boopickle ++ scalajsDom ++
+        testScope(μTest ++ Nyaya.test))
+      .configure(
+        Common.jsSettings(NeedDom),
+        webappSettings,
+        useMacroParadise,
         dontInline) // probably crashes, try with Scala 2.12
     .settings(
       scalaJSOutputWrapper := ("", "Main().main();"))
@@ -262,7 +273,7 @@ object ShipReq {
   lazy val webappClient =
     project("webapp-client")
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(baseUtilJs, webappBaseJs, webappBaseTestJs % "test->compile")
+      .dependsOn(baseUtilJs, webappBaseJs, webappClientWwApi, webappBaseTestJs % "test->compile")
       .depsForJs(
         Scalaz.effect ++ React.most ++ Monocle.macros ++ ScalaCSS.react ++
         μPickle ++ shapeless ++ Nyaya.prop ++ parboiled ++ boopickle ++
