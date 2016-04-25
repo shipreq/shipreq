@@ -23,28 +23,35 @@ object WebappServer {
 
       cleanFiles ++= {
         val webapp = (sourceDirectory in webappPrepare).value
-        Seq(
-          webapp / "dev/client.js",
-          webapp / "dev/webapp-client-fastopt.js.map", // This exact filename is specified at end of client.js
-          webapp / "a/client.js")
+        def sjs(name: String, sourceMap: String): Seq[File] =
+          Seq(
+            webapp / s"dev/$name.js",
+            webapp / s"dev/$sourceMap-fastopt.js.map",
+            webapp / s"a/$name.js")
+
+        sjs("client", "webapp-client") ++ sjs("ww", "webapp-client-ww")
       },
 
       copyClientJs := {
         implicit val log = streams.value.log
         val webapp = (sourceDirectory in webappPrepare).value
 
-        (scalaJSLinkedFile in Compile in webappClient).value match {
-          case f: FileVirtualJSFile =>
-            if (devMode) {
-              fileSync(f.file         , webapp / "dev/client.js"                   , mandatory = true)
-              fileSync(f.sourceMapFile, webapp / "dev/webapp-client-fastopt.js.map", mandatory = false)
-            } else {
-              fileSync(f.file, webapp / "a/client.js", mandatory = true)
-            }
+        def syncSJS(jsf: VirtualJSFile, name: String): Unit =
+          jsf match {
+            case f: FileVirtualJSFile =>
+              if (devMode) {
+                fileSync(f.file         , webapp / s"dev/$name.js"                , mandatory = true)
+                fileSync(f.sourceMapFile, webapp / "dev" / f.sourceMapFile.getName, mandatory = false)
+                // This exact filename is specified at end of js ↑
+              } else {
+                fileSync(f.file, webapp / s"a/$name.js", mandatory = true)
+              }
+            case other =>
+              sys.error("Unsupported virtual file type: " + other)
+          }
 
-          case other =>
-            sys.error("Unsupported virtual file type: " + other)
-        }
+        syncSJS((scalaJSLinkedFile in Compile in webappClient).value, "client")
+        syncSJS((scalaJSLinkedFile in Compile in webappClientWw).value, "ww")
       },
 
       { val k = Keys.`package`; k <<= k.dependsOn(copyClientJs) },
