@@ -119,10 +119,9 @@ object Dependencies {
   val scalajsDom       = jsOnly("org.scala-js"                          %%%! "scalajs-dom" % "0.9.0")
   val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %%%! "benchmark"   % "0.2.3")
 
-  val parboiled = jvmAndJsFork("org.parboiled", "parboiled", "2.1.0")("com.github.japgolly.fork.parboiled")
-
   val boopickle = jvmAndJs("me.chrons",                        "boopickle", "1.1.0")
-  val shapeless = jvmAndJs("com.chuusai",                      "shapeless", "2.2.5")
+  val parboiled = jvmAndJs("org.parboiled",                    "parboiled", "2.1.3")
+  val shapeless = jvmAndJs("com.chuusai",                      "shapeless", "2.3.0")
   val μPickle   = jvmAndJs("com.github.japgolly.fork.upickle", "upickle",   "custom-5")
   val μTest     = jvmAndJs("com.lihaoyi",                      "utest",     "0.3.1")
 
