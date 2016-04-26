@@ -1,5 +1,7 @@
 package shipreq.webapp.base
 
+import shipreq.webapp.base.data.StaticFieldType
+
 object UiText {
 
   def mathFailed = "{Invalid expression}"
@@ -29,28 +31,29 @@ object UiText {
   }
 
   object FieldNames {
-    def hashRefKey          = "Key"
-    def fieldRefKey         = hashRefKey
-    def reqCode             = "Code"
-    def reqCodes            = "Codes"
-    def reqCodeNode         = "Code node"
-    def name                = "Name"
-    def desc                = "Description"
-    def mnemonic            = "Mnemonic"
-    def mutexChildren       = "Choice"
-    def fieldType           = "Type"
-    def mandatory           = "Mandatory"
-    def applicableReqTypes  = "Req Types"
-    def dndDragHandleHeader = ""
-    def usage               = "Usage"
-    def implicationRequired = "Implication Required"
-    def reqType             = "Type"
-    def tags                = "Tags"
-    def implications        = "Implications"
-    def useCaseStepTreeN    = "Normal Course"
-    def useCaseStepTreeA    = "Alternative Courses"
-    def useCaseStepTreeE    = "Exceptions"
-    def deletionReason      = "Deletion Reason"
+    def hashRefKey           = "Key"
+    def fieldRefKey          = hashRefKey
+    def reqCode              = "Code"
+    def reqCodes             = "Codes"
+    def reqCodeNode          = "Code node"
+    def name                 = "Name"
+    def desc                 = "Description"
+    def mnemonic             = "Mnemonic"
+    def mutexChildren        = "Choice"
+    def fieldType            = "Type"
+    def mandatory            = "Mandatory"
+    def applicableReqTypes   = "Req Types"
+    def dndDragHandleHeader  = ""
+    def usage                = "Usage"
+    def implicationRequired  = "Implication Required"
+    def reqType              = "Type"
+    def tags                 = "Tags"
+    def implications         = "Implications"
+    def useCaseStepTreeN     = "Normal Course"
+    def useCaseStepTreeA     = "Alternative Courses"
+    def useCaseStepTreeE     = "Exceptions"
+    def useCaseStepFlowGraph = StaticFieldType.StepGraph.name
+    def deletionReason       = "Deletion Reason"
   }
 
   object Cfg {

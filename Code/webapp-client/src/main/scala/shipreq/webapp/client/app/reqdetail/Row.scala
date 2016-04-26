@@ -1,6 +1,5 @@
 package shipreq.webapp.client.app.reqdetail
 
-import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{CustomField => CF, StaticField => SF, Field, UseCaseSteps}
@@ -46,6 +45,7 @@ object Row {
   case object Code              extends Row(autoKey)
   case object Tags              extends Row(autoKey)
   case object Implications      extends Row(autoKey)
+  case object StepGraph         extends Row("f")
   case class CustomField(f: CF) extends Row("f" + f.id.value)
 
   @inline implicit def univEqUseCaseSteps: UnivEq[UseCaseSteps] =
@@ -79,6 +79,6 @@ object Row {
     case f: CF                => CustomField(f) :: Nil
     case SF.NormalAltStepTree => UseCaseStepsN :: UseCaseStepsA :: Nil
     case SF.ExceptionStepTree => UseCaseStepsE :: Nil
-    case SF.StepGraph         => Nil // TODO ======================================
+    case SF.StepGraph         => StepGraph :: Nil
   }
 }

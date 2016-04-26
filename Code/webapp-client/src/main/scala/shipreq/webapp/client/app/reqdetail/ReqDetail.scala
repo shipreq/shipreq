@@ -17,9 +17,9 @@ import shipreq.webapp.client.app.Style.{reqdetail => *}
 import shipreq.webapp.client.data._
 import shipreq.webapp.client.feature._
 import shipreq.webapp.client.lib.DataReusability._
-import shipreq.webapp.client.protocol.{ServerCall, ClientProtocol}
+import shipreq.webapp.client.protocol.{ClientProtocol, ServerCall}
 import shipreq.webapp.client.widgets.Checkbox
-import shipreq.webapp.client.widgets.high.{DeletionForm, ProjectWidgets}
+import shipreq.webapp.client.widgets.high.{DeletionForm, ProjectWidgets, UseCaseStepFlowGraph}
 
 object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
   override protected def configureBackend = new Backend(_, _)
@@ -303,6 +303,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
           case Row.UseCaseStepsA  => UiText.FieldNames.useCaseStepTreeA
           case Row.UseCaseStepsE  => UiText.FieldNames.useCaseStepTreeE
           case Row.DeletionReason => UiText.FieldNames.deletionReason
+          case Row.StepGraph      => UiText.FieldNames.useCaseStepFlowGraph
           case Row.Life           => UiText.Life.field
         }
 
@@ -363,6 +364,10 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
           case Row.UseCaseStepsN => val d = data.useCaseData.get; renderStepTree(d, d.stepsN)
           case Row.UseCaseStepsA => val d = data.useCaseData.get; renderStepTree(d, d.stepsA)
           case Row.UseCaseStepsE => val d = data.useCaseData.get; renderStepTree(d, d.stepsE)
+
+          case Row.StepGraph =>
+            val ucId = data.useCaseData.get.uc.id
+            UseCaseStepFlowGraph.Props(ucId, project.reqs.useCases).render
 
           case Row.DeletionReason =>
             RenderDeletionReason.req(project, pw, req)
