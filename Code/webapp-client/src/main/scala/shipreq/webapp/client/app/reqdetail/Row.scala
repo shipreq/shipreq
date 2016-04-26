@@ -18,25 +18,25 @@ object Row {
 
   sealed abstract class UseCaseSteps(_key: String) extends Row(_key) {
     def field     : SF.UseCaseStepTree
-    val treeFilter: UseCaseSteps.Tree => Range
+    def treeFilter: UseCaseSteps.Tree => Range
     def tailStep  : Boolean
   }
 
   case object UseCaseStepsN extends UseCaseSteps("n") {
     override def field      = SF.NormalAltStepTree
-    override val treeFilter = Function.const(0 to 0) _
+    override def treeFilter = SF.NormalAltStepTree.treeFilterN
     override def tailStep   = false
   }
 
   case object UseCaseStepsA extends UseCaseSteps("a") {
     override def field      = SF.NormalAltStepTree
-    override val treeFilter = 1 until (_: UseCaseSteps.Tree).children.length
+    override def treeFilter = SF.NormalAltStepTree.treeFilterA
     override def tailStep   = true
   }
 
   case object UseCaseStepsE extends UseCaseSteps("e") {
-    override def field = SF.ExceptionStepTree
-    override val treeFilter = (_: UseCaseSteps.Tree).children.indices
+    override def field      = SF.ExceptionStepTree
+    override def treeFilter = SF.ExceptionStepTree.treeFilter
     override def tailStep   = true
   }
 

@@ -225,6 +225,9 @@ object StaticField {
 
     override def canDelete(loc: VectorTree.Location) =
       Deny <~ (loc ==* VectorTree.root)
+
+    val treeFilterN: UseCaseSteps.Tree => Range = Function.const(0 to 0)
+    val treeFilterA: UseCaseSteps.Tree => Range = 1 until _.children.length
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -247,6 +250,8 @@ object StaticField {
 
     override def canDelete(loc: VectorTree.Location) =
       Allow
+
+    val treeFilter: UseCaseSteps.Tree => Range = _.children.indices
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
