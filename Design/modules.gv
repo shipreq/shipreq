@@ -34,6 +34,8 @@ subgraph cluster_t {
     fillcolor=white node[fillcolor="#99ccee"]
     webapp [label="[aggregate]\nwebapp" fillcolor="#ffff80"]
     webappBack [label="webapp-server"]
+    webappClientWwApi [label="webapp-client-ww-api\n(JS)"]
+    webappClientWw [label="webapp-client-ww\n(JS)"]
     webappFront [label="webapp-client\n(JS)"]
     webappShared [label="webapp-base\n(Scala & JS)"]
   }
@@ -71,9 +73,11 @@ taskmanServerImpl -> taskmanServerLogic,taskmanApi,taskmanDb
 taskmanServer -> taskmanServerImpl
 webappBack:e -> baseDb
 webappBack -> taskmanApi
-webappFront -> webappShared
+webappFront -> webappShared,webappClientWwApi
+webappClientWw -> webappClientWwApi
+webappClientWwApi -> webappShared
 webappBack -> webappShared
-webappBack -> webappFront [style=dashed]
+webappBack -> webappFront,webappClientWw [style=dashed]
 webappShared -> baseRaw
 
 benchmarkJvm,benchmarkJs -> benchmarkShared
@@ -87,7 +91,7 @@ edge[dir=forward style=dashed arrowhead=vee color="#aaaaaa"]
 taskmanApi -> taskmanApiLogic,taskmanApiImpl
 taskmanServer -> taskmanServerLogic,taskmanServerImpl,taskmanDb
 taskman -> taskmanApi,taskmanServer
-webapp -> webappFront,webappBack
+webapp -> webappFront,webappBack,webappClientWw
 base -> baseUtil,baseDb,baseTest
 benchmark -> benchmarkJvm,benchmarkJs
 root -> base,webapp,taskman,benchmark,utils
