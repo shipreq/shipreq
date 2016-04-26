@@ -1,11 +1,9 @@
 #!/usr/bin/runghc
 
-import Control.Applicative
 import Control.Monad
 import Data.List
 import qualified Data.Map.Strict as M
 import Data.Maybe
-import Data.Monoid
 import System.Directory
 import System.Posix.Files
 import System.Process
@@ -50,8 +48,8 @@ parseCloc a = parse $ listToMaybe $ filter (isPrefixOf "Scala") $ lines a
 
 groups = ["base", "taskman", "webapp", "utils"]
 pathPrefixes = ["", "shared/", "jvm/", "js/"]
-mainPaths = fmap (\x -> x ++ "src/main/scala") pathPrefixes
-testPaths = fmap (\x -> x ++ "src/test/scala") pathPrefixes
+mainPaths = fmap (++"src/main/scala") pathPrefixes
+testPaths = fmap (++"src/test/scala") pathPrefixes
 
 type Group = String
 type Module = String
@@ -86,7 +84,7 @@ statForModule dirs m = cloc $ map (joinDirs m) dirs
 statsForModule :: Module -> IO Stats
 statsForModule m = do a <- statForModule mainPaths m
                       b <- statForModule testPaths m
-                      return $ if isSuffixOf "-test" m
+                      return $ if "-test" `isSuffixOf` m
                         then (emptyStat, mappend a b)
                         else (a,b)
 
@@ -140,7 +138,7 @@ tdeps'' :: [String] -> String -> ([String],[String])
 tdeps'' done dep = let
     t     = M.findWithDefault [] dep deps
     done' = done ++ [dep]
-    new   = filter (flip notElem done') t
+    new   = filter (`notElem` done') t
   in (done', new)
 
 extractModuleStats :: [GroupD] -> String -> Stats
@@ -214,7 +212,7 @@ topLevelModuleStatReportS = "--------------------------------\n"
 topLevelModuleStatReportH = "Module            Files      LoC\n"++topLevelModuleStatReportS
 fmtTopLevelModuleStat (m,s) = printf "%-16s  %5d  %7d\n" m (files s) (loc s)
 topLevelModuleStatReport gs =
-  topLevelModuleStatReportH ++ (concatMap fmtTopLevelModuleStat $ topLevelModuleStats gs) ++ topLevelModuleStatReportS
+  topLevelModuleStatReportH ++ concatMap fmtTopLevelModuleStat (topLevelModuleStats gs) ++ topLevelModuleStatReportS
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -227,15 +225,15 @@ customiseDetailedView gs = let f g@ GroupD {gname="webapp"} = customiseDetailedV
                                f g@ GroupD {}               = g
                             in map f gs
 
-customiseDetailedView' g = let named n     = (\x -> n == (fst x))
+customiseDetailedView' g = let named n x   = n == fst x
                                get name    = head $ filter (named name) (modstats g)
                                nBaseTest   = "webapp-base-test"
                                nBase       = "webapp-base"
                                sBaseTest   = mergeStatsR $ snd $ get nBaseTest
                                sBase       = snd $ get nBase
                                merged      = ("webapp-base{,-test}", mappend sBase sBaseTest)
-                               removeOld   = filter (\x -> not $ or $ map (\n -> named n x) [nBaseTest, nBase]) (modstats g)
-                            in GroupD {gname = "webapp", modstats = [merged] ++ removeOld}
+                               removeOld   = filter (\x -> not $ any (`named` x) [nBaseTest, nBase]) (modstats g)
+                            in GroupD {gname = "webapp", modstats = merged : removeOld}
 
 ------------------------------------------------------------------------------------------------------------------------
 
