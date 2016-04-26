@@ -107,7 +107,9 @@ gatherAllStats = do dirs <- dirsIn "."
 
 deps = M.fromList [
          ("webapp-server",         ["webapp-base-test", "base-db", "taskman-api"]) ,
-         ("webapp-client",         ["webapp-base-test", "base-util"]) ,
+         ("webapp-client-ww-api",  ["webapp-base"]) ,
+         ("webapp-client-ww",      ["webapp-base-test", "webapp-client-ww-api"]) ,
+         ("webapp-client",         ["webapp-base-test", "base-util", "webapp-client-ww-api"]) ,
          ("webapp-base-test",      ["webapp-base-server"]) ,
          ("webapp-base-server",    ["webapp-base"]),
          ("webapp-base",           ["webapp-macro", "base-util"]) ,
@@ -123,7 +125,7 @@ deps = M.fromList [
          ("base-db",               ["base-util"]) ,
          ("base-util",             ["base-macro"]) ]
 
-topLevelModules = ["taskman", "webapp-client", "webapp-server"]
+topLevelModules = ["taskman", "webapp-client", "webapp-client-ww", "webapp-server"]
 
 tdeps :: String -> [String]
 tdeps d = sort $ tdeps' [] [d]
