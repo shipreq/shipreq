@@ -1,10 +1,8 @@
 Graphs
 ======
-1. Graphviz & webworker
-2. UC step graph (single UC)
-2. Implication graph (single req on ReqDetail page)
-4. UC step graph (all UCs! …maybe)
-4. Imp graph (all reqs! …maybe)
+1. Implication graph (single req on ReqDetail page)
+2. UC step graph (all UCs! …maybe)
+2. Imp graph (all reqs! …maybe)
 
 Finally
 =======
