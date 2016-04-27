@@ -1,0 +1,64 @@
+digraph G {
+rankdir=LR
+
+1 [label="Why am I tracking issues?\n\nTo remember to change\nthings later"]
+
+21 [label="Without changes,\nusers could have bad exp"]
+22 [label="Without changes,\nmaintenance & dev could\nbecome harder"]
+1 -> 21,22
+
+31 [label="User-instigated action\ndoesn't complete\nsuccessfully"]
+32 [label="User can't do\nwhat they want"]
+33 [label="UX is shit\n(eg. poor UI, too slow)"]
+21 -> 31,32,33
+
+34 [label="Code too __\nto build on"]
+35 [label="Servers max out"]
+36 [label="Manual ops work"]
+22 -> 34,35,36
+
+41 [label="Frontend/backend error"]
+48 [label="Logic error"]
+31 -> 41,48
+
+42 [label="Missing functionality"]
+32 -> 42
+
+43 [label="Bad UI"]
+44 [label="Bad performance"]
+33 -> 42,43,44
+
+45 [label="Code needs rewrite"]
+46 [label="Additional code\nand/or refactoring\nrequired"]
+34 -> 45,46
+
+35 -> 44,46
+
+47 [label="Manual work should\nbe avoided."]
+36 -> 41,42,47
+
+51 [label="Code not robust enough"]
+52 [label="Bug"]
+41 -> 51,52
+
+53 [label="Not high priority"]
+54 [label="Haven't had the time /\nIt's queued to do"]
+42 -> 53,54
+
+55 [label="Temporarily pending\nfuture changes"]
+43 -> 53,54,55
+
+56 [label="Optimisation required\n(could be code, DB indicies,\nsvr config)"]
+44 -> 52,56
+
+57 [label="Flawed design.\nWrong abstraction\nUsage changed\nScope changed"]
+45 -> 57
+
+46 -> 51,52,57
+
+58 [label="I'm time-poor"]
+47 -> 58
+
+48 -> 51,52
+
+}

@@ -4,7 +4,16 @@ Ideas
 This is where loose ideas live temporarily until they become concrete enough for a proper home.
 
 Major features should be in `major_features.ods`.
-Smaller features should be in `Code/TODO.md`.
+Smaller features should be in `todo.md`.
+
+* TODOs due to MF intersection problems.
+  where/how to store intersection problems?
+  Neither loose nor in-req incmps seem to be enough for intersection probs.
+
+* If a field column over a tag group exists and is marked applicable only to a
+  subset of reqtypes, what should happen when related tags are applied to
+  excluded reqtypes? They'll be displayed in the Tags column; should they be
+  marked as issues?
 
 
 * Link (UC-to-UC)
@@ -30,6 +39,7 @@ Smaller features should be in `Code/TODO.md`.
 * Talk to moronic Agilists. Find out what they need, determine feasability & what's missing.
 
 user stories, how to cater for them? Will likely share most of UC functionality.
+
 
 Ideas from reading Software Requirements 3rd Ed
 ===============================================
