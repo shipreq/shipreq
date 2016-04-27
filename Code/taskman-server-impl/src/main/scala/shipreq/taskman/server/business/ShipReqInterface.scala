@@ -10,9 +10,11 @@ object ShipReqInterface {
     import scala.slick.jdbc.StaticQuery.{query, queryNA}
     import shipreq.base.db.SqlHelpers._
 
-    implicit val (ui1, ui2, ui3, ui4) = sqlAccessors[UserId]
-    implicit val (ea1, ea2, ea3, ea4) = sqlAccessors[EmailAddr]
-    implicit val GR_ShipReqUser = GetResult(r => ShipReqUser(r.<<, r.<<, r.<<, r.<<, r.<<))
+    implicit val dbCodecUserId    = DbCodec.WithOption.caseClass[UserId]
+    implicit val dbCodecEmailAddr = DbCodec.WithOption.caseClass[EmailAddr]
+
+    implicit val GR_ShipReqUser: GetResult[ShipReqUser] =
+      GetResult(r => ShipReqUser(r.<<, r.<<, r.<<, r.<<, r.<<))
 
     // ---------------------------------------------------------------------------------------------
 

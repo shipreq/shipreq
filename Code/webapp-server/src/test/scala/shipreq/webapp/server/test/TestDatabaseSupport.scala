@@ -10,6 +10,7 @@ import scala.slick.jdbc.StaticQuery.{queryNA, query, updateNA, update}
 import scala.slick.jdbc.JdbcBackend.{Database, Session}
 import scalaz.Need
 
+import shipreq.base.db.SqlHelpers._
 import shipreq.taskman.api.UserId
 import app.{Defaults, DI}
 import db.{AdminDao, DaoS, DaoT, DaoProvider, DB}

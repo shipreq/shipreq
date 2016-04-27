@@ -54,7 +54,10 @@ object ShipReq {
 
   lazy val baseDb =
     project("base-db")
-      .configure(Common.settings, Common.jvmSettings)
+      .configure(
+        Common.settings,
+        Common.jvmSettings,
+        Common.macroModuleSettings)
       .deps(
         postgresql ++ slick ++ hikariCP ++ flyway ++ logback ++
         providedScope(jodaTime))

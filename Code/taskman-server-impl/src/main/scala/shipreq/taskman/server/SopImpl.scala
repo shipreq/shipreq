@@ -39,8 +39,11 @@ object SopImpl {
     import shipreq.base.db.SqlHelpers._
     import shipreq.base.db.JodaTimeSqlHelpers._
 
-    implicit val GR_JsonMsg = GR_Json[Msg]
-    implicit val SP_JsonMsg = SP_Json[Msg]
+    implicit val dbCodecWorkerId = DbCodec.WithOption.caseClass[WorkerId].writeOnly
+    implicit val dbCodecNodeId   = DbCodec.WithOption.caseClass[NodeId]
+    implicit val dbCodecMsg      = DbCodec.WithOption.json[Msg]
+    implicit val dbCodecMsgId    = DbCodec.caseClass[MsgId]
+    implicit val dbCodecPriority = DbCodec.caseClass[Priority]
 
     implicit object SP_ArchiveIntent extends SetParameter[ArchiveIntent] {
       def apply(v: ArchiveIntent, pp: PositionedParameters): Unit = {
@@ -49,32 +52,8 @@ object SopImpl {
       }
     }
 
-    implicit val GR_MsgId = GetResult(r => MsgId(r.<<))
-    implicit object SP_MsgId extends SetParameter[MsgId] {
-      def apply(v: MsgId, pp: PositionedParameters): Unit = pp setLong v.value
-    }
-
-    implicit val GR_NodeId = GetResult(r => NodeId(r.<<))
-    implicit object SP_NodeId extends SetParameter[NodeId] {
-      def apply(v: NodeId, pp: PositionedParameters): Unit = pp setInt v.value
-    }
-    implicit object SP_NodeIdO extends SetParameter[Option[NodeId]] {
-      def apply(v: Option[NodeId], pp: PositionedParameters): Unit = pp setIntOption v.map(_.value)
-    }
-
-    implicit object SP_WorkerId extends SetParameter[WorkerId] {
-      def apply(v: WorkerId, pp: PositionedParameters): Unit = pp setShort v.value
-    }
-    implicit object SP_WorkerIdO extends SetParameter[Option[WorkerId]] {
-      def apply(v: Option[WorkerId], pp: PositionedParameters): Unit = pp setShortOption v.map(_.value)
-    }
-
-    implicit val GR_Priority = GetResult(r => Priority(r.<<))
-    implicit object SP_Priority extends SetParameter[Priority] {
-      def apply(v: Priority, pp: PositionedParameters): Unit = pp setShort v.value
-    }
-
-    implicit val GR_MsgHeader = GetResult(r => MsgHeader(r.<<, r.<<, r.<<))
+    implicit val GR_MsgHeader: GetResult[MsgHeader] =
+      GetResult(r => MsgHeader(r.<<, r.<<, r.<<))
 
     // -----------------------------------------------------------------------------------------------------------------
 
@@ -192,7 +171,7 @@ object SopImpl {
 
     def failAndRetry(n: NodeId, w: WorkerId, m: MsgId, delay: Period): Unit =
       failAndRetryQ(delay, n, w, m).first
-    
+
     def archiveMsg(n: NodeId, w: WorkerId, m: MsgId, status: ArchiveIntent): Unit =
       archiveMsgQ(n, w, m, status).first
 

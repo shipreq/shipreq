@@ -8,6 +8,7 @@ import org.specs2.time.NoTimeConversions
 import scala.slick.jdbc.StaticQuery.query
 import scala.util.Random
 import shipreq.base.db.JodaTimeSqlHelpers._
+import shipreq.base.db.SqlHelpers._
 import shipreq.base.test.specs2.db.DatabaseTest
 import shipreq.base.util.jodatime.JodaTimeHelpers._
 import shipreq.base.util.ScalaExt._

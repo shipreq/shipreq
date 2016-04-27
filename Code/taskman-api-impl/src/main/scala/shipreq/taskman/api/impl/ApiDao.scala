@@ -9,8 +9,8 @@ private[api] class ApiSql(prefix: String) {
   import scala.slick.jdbc.{GetResult, SetParameter}
   import scala.slick.jdbc.StaticQuery.{query, update}
 
-  implicit val (jm1, jm2, jm3, jm4) = sqlAccessorsJson[Msg]
-  implicit val (mi1, mi2, mi3, mi4) = sqlAccessors[MsgId]
+  implicit val dbCodecMsg   = DbCodec.WithOption.json[Msg]
+  implicit val dbCodecMsgId = DbCodec.caseClass[MsgId]
 
   // Matches on db enum: msg_status_v01
   implicit val GR_MsgStatus: GetResult[Option[MsgStatus]] = implicitly[GetResult[String]] andThen {
