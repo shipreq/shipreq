@@ -5,8 +5,6 @@ CREATE TABLE event (
   data_id      INTEGER     NULL,
   data_id_type "char"      NOT NULL,
   data         JSON        NULL,
-  hash_scheme  SMALLINT    NOT NULL CHECK (hash_scheme > 0),
-  hash         INTEGER     NOT NULL,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (project_id, seq));
 
