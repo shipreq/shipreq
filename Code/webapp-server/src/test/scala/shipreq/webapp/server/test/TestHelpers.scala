@@ -1,18 +1,12 @@
-package shipreq.webapp.server
-package test
+package shipreq.webapp.server.test
 
 import java.io.File
 import org.apache.commons.io.FileUtils
 import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc.UsernamePasswordToken
-import org.mockito.Mockito.when
-import org.mockito.invocation.InvocationOnMock
-import org.mockito.stubbing.Answer
 import org.scalatest.{BeforeAndAfterEach, Suite, BeforeAndAfterAll}
 import org.scalatest.Matchers
-import org.scalatest.matchers.{Matcher, MatchResult}
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.prop.Tables.Table
 import net.liftweb.common.{Logger, Failure, Box, Empty}
 import net.liftweb.http.{ResponseShortcutException, S, LiftSession, LiftRules}
 import net.liftweb.http.js.JsCmd
@@ -20,21 +14,15 @@ import net.liftweb.mocks.MockHttpServletRequest
 import net.liftweb.mockweb.MockWeb
 import net.liftweb.util.StringHelpers
 import net.liftweb.util.Helpers.stringToSuper
-import shipreq.taskman.api.{EmailAddr, UserId}
-import scalaz.{Lens, Value}
-import scalaz.old.NonEmptyList
 import scala.annotation.tailrec
 import scala.util.Random
-
 import shipreq.base.util._
-import db._
-import security.SecurityProvider
-import util._
-
-import app.DI
-import lib.Types._
-import LensFns._
-import ScalaExt._
+import shipreq.taskman.api.{EmailAddr, UserId}
+import shipreq.webapp.server.db._
+import shipreq.webapp.server.security.SecurityProvider
+import shipreq.webapp.server.app.DI
+import shipreq.webapp.server.data._
+import shipreq.webapp.server.lib.Types._
 
 case class FixedUser(ud: Option[UserDescriptor]) extends SecurityProvider {
   override def loggedInUser = ud

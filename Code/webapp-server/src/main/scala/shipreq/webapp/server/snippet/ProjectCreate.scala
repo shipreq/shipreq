@@ -6,12 +6,12 @@ import net.liftweb.util.Helpers._
 import shipreq.taskman.api.UserId
 import shipreq.webapp.base.event.{ApplyTemplate, ProjectTemplate}
 import shipreq.webapp.server.app.AppSiteMap
+import shipreq.webapp.server.data.ProjectId
 import shipreq.webapp.server.db.CreateProjectResult._
 import shipreq.webapp.server.db.DaoT
 import shipreq.webapp.server.db.EventDao.EventSeq
 import shipreq.webapp.server.feature.validation.Validators
 import shipreq.webapp.server.lib.{FormVar, SingleOpStatefulSnippet}
-import shipreq.webapp.server.lib.Types.ProjectId
 import shipreq.webapp.server.util.HtmlTransformExt.ajaxSubmitOnClick
 
 /**

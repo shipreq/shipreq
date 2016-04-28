@@ -5,6 +5,7 @@ import org.postgresql.util.PSQLException
 import scala.slick.jdbc.JdbcBackend.Session
 import shipreq.base.util.TaggedTypes.JsonStr
 import shipreq.taskman.api.{UserId, EmailAddr}
+import shipreq.webapp.server.data._
 import shipreq.webapp.server.lib.Misc.retry
 import shipreq.webapp.server.lib.Types._
 import shipreq.webapp.server.security.PasswordAndSalt

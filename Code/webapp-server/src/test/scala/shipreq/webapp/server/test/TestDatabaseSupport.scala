@@ -1,5 +1,4 @@
-package shipreq.webapp.server
-package test
+package shipreq.webapp.server.test
 
 import com.googlecode.flyway.core.dbsupport.{SqlScript, DbSupportFactory}
 import org.apache.commons.io.IOUtils
@@ -9,15 +8,15 @@ import shipreq.base.util.{ThreadLocalRes, AsciiTable}
 import scala.slick.jdbc.StaticQuery.{queryNA, query, updateNA, update}
 import scala.slick.jdbc.JdbcBackend.{Database, Session}
 import scalaz.Need
-
 import shipreq.base.db.SqlHelpers._
 import shipreq.taskman.api.UserId
-import app.{Defaults, DI}
-import db.{AdminDao, DaoS, DaoT, DaoProvider, DB}
-import db.SqlHelpers._
-import lib.Types._
-import feature.validation.Validators
-import security.PasswordAndSalt
+import shipreq.webapp.server.app.{Defaults, DI}
+import shipreq.webapp.server.data._
+import shipreq.webapp.server.db
+import shipreq.webapp.server.db.{AdminDao, DaoS, DaoT, DaoProvider, DB}
+import shipreq.webapp.server.db.SqlHelpers._
+import shipreq.webapp.server.feature.validation.Validators
+import shipreq.webapp.server.security.PasswordAndSalt
 
 object TestDB {
 

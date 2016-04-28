@@ -4,6 +4,7 @@ import scala.slick.jdbc.{GetResult, SetParameter, PositionedResult, PositionedPa
 import shipreq.base.db.SqlHelpers.{DbCodec => DBC, _}
 import shipreq.base.db.JodaTimeSqlHelpers._
 import shipreq.taskman.api.{EmailAddr, UserId}
+import shipreq.webapp.server.data._
 import shipreq.webapp.server.lib.Types._
 import shipreq.webapp.server.security.PasswordAndSalt
 

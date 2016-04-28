@@ -13,6 +13,7 @@ import scalaz.old.NonEmptyList
 
 import shipreq.webapp.base.AppConsts
 import AppConfig.BaseUrl
+import shipreq.webapp.server.data._
 import shipreq.webapp.server.lib.Misc
 import shipreq.webapp.server.lib.Types._
 import shipreq.webapp.server.feature.{SessionStats, DiagnosticEndpoints, Navbar, NavbarElem}

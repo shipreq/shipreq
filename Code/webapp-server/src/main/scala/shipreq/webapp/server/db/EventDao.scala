@@ -6,7 +6,7 @@ import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.hash._
-import shipreq.webapp.server.lib.Types.ProjectId
+import shipreq.webapp.server.data.ProjectId
 import ApplyEvent.LogicVer
 import EventDao.EventSeq
 

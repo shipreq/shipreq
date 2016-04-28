@@ -37,8 +37,3 @@ case class UsrCount(registered: Long, total: Long) {
   def pending = total - registered
 }
 
-// ===================================================================================================================
-// Project
-
-case class Project(id: ProjectId, name: String, owner: UserId)
-

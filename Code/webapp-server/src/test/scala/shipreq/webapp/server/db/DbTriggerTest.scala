@@ -1,11 +1,8 @@
 package shipreq.webapp.server.db
 
 import org.scalatest.FunSpec
-import shipreq.webapp.server.lib.Types.ProjectId
-import scala.slick.jdbc.StaticQuery.{queryNA, updateNA, update => updateQ, query => queryQ}
-import org.postgresql.util.PSQLException
+import scala.slick.jdbc.StaticQuery.{queryNA, query => queryQ, update => updateQ}
 import shipreq.taskman.api.UserId
-import shipreq.webapp.server.db.SqlHelpers._
 import shipreq.webapp.server.test.TestDatabaseSupport
 
 class DbTriggerTest extends FunSpec with TestDatabaseSupport {

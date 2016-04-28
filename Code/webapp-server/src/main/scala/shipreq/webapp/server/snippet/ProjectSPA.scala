@@ -12,8 +12,8 @@ import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.{ProjectSPA => SpaFns, _}
 import shipreq.webapp.base.server._
 import shipreq.webapp.server.app.DI
+import shipreq.webapp.server.data.ProjectId
 import shipreq.webapp.server.db.EventDao.EventSeq
-import shipreq.webapp.server.lib.Types.ProjectId
 import shipreq.webapp.server.lib.{SingleOpStatefulSnippet, Taskman}
 import shipreq.webapp.server.protocol._
 

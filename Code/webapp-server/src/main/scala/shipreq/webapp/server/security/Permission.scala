@@ -4,8 +4,9 @@ package security
 import scalaz.{Name, Semigroup}
 import net.liftweb.common.Logger
 import net.liftweb.http.RequestVar
-import app.DI
-import db.{UserDescriptor, Project}
+import shipreq.webapp.server.data._
+import shipreq.webapp.server.app.DI
+import shipreq.webapp.server.db.UserDescriptor
 import Permission._
 
 object Permission {

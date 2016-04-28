@@ -45,7 +45,7 @@ object Navbar {
   case object CurrentProject extends NavbarElem {
     def project               = RequestVars.Project.get.value
     def link: Elem            = <a class="project">{project.name}</a>
-    override def render       = link % Attribute("href", Text(AppSiteMap.Project.relativeUrl(project)), Null)
+    override def render       = link % Attribute("href", Text(AppSiteMap.Project.relativeUrl(project.id)), Null)
     override def renderActive = link % DudLinkAttr
   }
 

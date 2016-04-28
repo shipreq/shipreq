@@ -1,9 +1,9 @@
 package shipreq.webapp.server.db
 
 import net.liftweb.actor.SpecializedLiftActor
-import shipreq.webapp.server.app.DI
-import shipreq.webapp.server.lib.Types._
 import scala.slick.jdbc.JdbcBackend.Session
+import shipreq.webapp.server.app.DI
+import shipreq.webapp.server.data.ProjectId
 import AsyncDb._
 
 object AsyncDb {

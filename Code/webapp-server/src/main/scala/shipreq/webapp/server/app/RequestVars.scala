@@ -1,13 +1,12 @@
-package shipreq.webapp.server
-package app
+package shipreq.webapp.server.app
 
 import scalaz.{Name, Need}
 import net.liftweb.common.Logger
 import net.liftweb.http.RequestVar
-import db.{DaoS, Project}
-import lib.SnippetHelpers._
-import lib.Types._
-import feature.Navbar
+import shipreq.webapp.server.data._
+import shipreq.webapp.server.db.DaoS
+import shipreq.webapp.server.lib.SnippetHelpers._
+import shipreq.webapp.server.feature.Navbar
 
 object RequestVars extends Logger with DI {
 
