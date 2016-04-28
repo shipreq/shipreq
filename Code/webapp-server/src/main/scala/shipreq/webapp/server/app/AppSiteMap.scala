@@ -13,10 +13,11 @@ import scalaz.old.NonEmptyList
 
 import shipreq.webapp.base.AppConsts
 import AppConfig.BaseUrl
-import lib.Misc
-import lib.Types._
-import feature.{SessionStats, DiagnosticEndpoints, ExternalId, Navbar, NavbarElem}
-import security.{Permissions, Permission, Oshiro}
+import shipreq.webapp.server.lib.Misc
+import shipreq.webapp.server.lib.Types._
+import shipreq.webapp.server.feature.{SessionStats, DiagnosticEndpoints, Navbar, NavbarElem}
+import shipreq.webapp.server.security.{Permissions, Permission, Oshiro}
+import shipreq.webapp.server.util.ExternalId
 import Permission.RequestVarPermExt
 
 object AppSiteMap {
@@ -64,7 +65,7 @@ object AppSiteMap {
     )
 
   val Project: PM[ProjectId] = (
-    MenuWithIdParam(ExternalId.Project)("project_spa") / "project" / * / **
+    MenuWithIdParam(ProjectId.Extern)("project_spa") / "project" / * / **
     >> TitleFromProjectName
     >> AuthenticationRequired >> ProjectPermissionRequired
     >> UseTemplate("loggedin/project_spa")
@@ -194,8 +195,8 @@ object AppSiteMap {
 
   private def TitleFromProjectName[T] = DynamicTitle[T](mkTitle(projectName))
 
-  private def MenuWithIdParam[Id <: AnyRef](c: ExternalId.Converter[Id])(name: String) =
-    Menu.param[Id](name, "", c.parseB, c.toExternal(_).value)
+  private def MenuWithIdParam[Id <: AnyRef](scheme: ExternalId.Scheme[Id])(name: String) =
+    Menu.param[Id](name, "", scheme.parseB, scheme.toExternal(_).value)
 
   private def splitPath(path: String): List[String] =
     path.split("/").toList

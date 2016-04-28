@@ -1,4 +1,4 @@
-package shipreq.webapp.server.feature
+package shipreq.webapp.server.util
 
 //import org.scalacheck.Prop._
 //import org.scalatest.FunSuite

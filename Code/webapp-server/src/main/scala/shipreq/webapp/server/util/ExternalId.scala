@@ -1,16 +1,19 @@
-package shipreq.webapp.server.feature
+package shipreq.webapp.server.util
 
 import net.liftweb.common.{Full, Empty, Box}
-import shipreq.webapp.server.util.BaseX
-import shipreq.webapp.server.lib.Types._
 
 case class ExternalId[I](value: String) extends AnyVal
 
+/**
+ * Generate a dictionary string using:
+ *    scala.util.Random.shuffle("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".toList).mkString
+ */
 object ExternalId {
-  // util.Random.shuffle(x.toList).mkString
-  final val Project = new Converter[ProjectId](_.value, ProjectId.apply)("F4XBvt0i2cnHQ6dIaAomLjPE3MOrsbxReq1W9pgZyzNY7SkGf5UlwJCTKuVD8h")
 
-  final class Converter[I](il: I => Long, li: Long => I)(val dictionaryStr: String) {
+  def scheme[Id](li: Long => Id)(il: Id => Long)(dictStr: String): Scheme[Id] =
+    new Scheme(il, li, dictStr)
+
+  final class Scheme[I](il: I => Long, li: Long => I, dictionaryStr: String) {
     import Internal._
 
     type E = ExternalId[I]
