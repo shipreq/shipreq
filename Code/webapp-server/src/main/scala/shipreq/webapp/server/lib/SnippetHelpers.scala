@@ -3,13 +3,14 @@ package shipreq.webapp.server.lib
 import net.liftweb.common.{Box, Empty, Full, ParamFailure, Failure => FailBox}
 import net.liftweb.http._
 import net.liftweb.http.js.JsCmds.Noop
-import net.liftweb.http.js.{JsCmd, JsExp}
+import net.liftweb.http.js.{JsCmd, JsCmds, JsExp}
 import net.liftweb.json.{NoTypeHints, Serialization, Serializer}
 import net.liftweb.sitemap.Menu
 import net.liftweb.util.Props
 import scala.slick.jdbc.JdbcBackend.Session
 import scala.xml.{Elem, NodeSeq, Text, UnprefixedAttribute}
 import scalaz.Monoid
+import scalaz.syntax.semigroup._
 import shipreq.base.util.ScalaExt.EndoFn
 import shipreq.base.util.TaggedTypes.{JsonStr, TaggedString}
 import shipreq.base.util.log.HasLogger
@@ -20,8 +21,6 @@ import shipreq.webapp.server.app.{AppSiteMap, DI}
 import shipreq.webapp.server.data.UserDescriptor
 import shipreq.webapp.server.db.DaoS
 import shipreq.webapp.server.feature.validation.VFailureHtmlRenderer
-import shipreq.webapp.server.lib.ScalazSubset._
-import shipreq.webapp.server.lib.Types._
 import shipreq.webapp.server.snippet.{AlertTypeError, AlertTypeSuccess, Notices}
 import shipreq.webapp.server.util.ErrorMessages
 import shipreq.webapp.server.util.HttpResponses.ShouldNeverHappenResponse
@@ -52,9 +51,19 @@ object SnippetHelpers extends StaticSnippetHelpers {
   }
 
   final val DefaultJsonFormat = Serialization.formats(NoTypeHints) + JqExprJsonSerializer + NodeSeqJsonSerializer
+
+  implicit object JsCmdMonoid extends Monoid[JsCmd] {
+    import JsCmds.{_Noop => Noop}
+
+    override def zero = Noop
+    override def append(a: JsCmd, b: => JsCmd) =
+      if (a eq Noop) b
+      else if (b eq Noop) a
+      else a & b
+  }
 }
 
-import shipreq.webapp.server.lib.SnippetHelpers.{ErrorAlertId, NoticeContainerExp}
+import SnippetHelpers.{ErrorAlertId, JsCmdMonoid, NoticeContainerExp}
 
 // =====================================================================================================================
 
