@@ -102,7 +102,7 @@ object WebappServer {
     .enablePlugins(JettyPlugin, WarPlugin)
     .dependsOn(baseDb, taskmanApi, webappBaseJvm, webappBaseServerJvm)
     .deps(
-      Scalaz.core ++ Lift.webkit ++ Shiro.all ++ scalate ++ commonsLang ++ guava ++
+      Scalaz.core ++ Lift.webkit ++ Shiro.all ++ scalate ++ commonsLang ++
       testScope(μTest ++ scalaTest ++ scalaCheck ++ mockito ++ Lift.testkit ++ commonsIo ++ twitterEval) ++
       (LibJetty.webapp % "test") ++
       (LibJetty.servletApi % "test,provided"))

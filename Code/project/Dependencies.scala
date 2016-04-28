@@ -130,8 +130,6 @@ object Dependencies {
   val javaMail    = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.5.4")
   val jodaTime    = jvmOnly("joda-time"                   % "joda-time"             % "2.3") ++
                     jvmOnly("org.joda"                    % "joda-convert"          % "1.2")
-  val guava       = jvmOnly("com.google.guava"            % "guava"                 % "18.0") ++
-                    jvmOnly("com.google.code.findbugs"    % "jsr305"                % "2.0.3") // cos Scala whinges if annotations not found
   val postgresql  = jvmOnly("org.postgresql"              % "postgresql"            % "9.4.1207")
   val slick       = jvmOnly("com.typesafe.slick"         %% "slick"                 % "2.1.0")
   val hikariCP    = jvmOnly("com.zaxxer"                  % "HikariCP"              % "2.4.3")
