@@ -4,7 +4,6 @@ import org.scalatest.FunSpec
 import slick.jdbc.StaticQuery.{queryNA, updateNA}
 import shipreq.taskman.api.UserId
 import shipreq.webapp.server.data._
-import shipreq.webapp.server.lib.Types._
 import shipreq.webapp.server.security.PasswordAndSalt
 import shipreq.webapp.server.snippet.ResetPassword
 import shipreq.webapp.server.test.TestDatabaseSupport

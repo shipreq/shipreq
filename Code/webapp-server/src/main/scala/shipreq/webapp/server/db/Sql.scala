@@ -1,16 +1,13 @@
-package shipreq.webapp.server
-package db
+package shipreq.webapp.server.db
 
 import org.joda.time.DateTime
 import scala.slick.jdbc.StaticQuery
-import shipreq.base.util.TaggedTypes.JsonStr
 import shipreq.base.db.SqlHelpers._
 import shipreq.base.db.JodaTimeSqlHelpers._
 import shipreq.taskman.api.{EmailAddr, UserId}
-import shipreq.webapp.base.event.{VerifiedEvent, ActiveEvent, Event}
+import shipreq.webapp.base.event.{ActiveEvent, Event}
 import shipreq.webapp.base.hash.HashRec
 import shipreq.webapp.server.data._
-import shipreq.webapp.server.lib.Types._
 import shipreq.webapp.server.security.PasswordAndSalt
 import StaticQuery.{query, queryNA, update, updateNA}
 import SqlHelpers._

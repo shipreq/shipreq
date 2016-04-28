@@ -1,7 +1,7 @@
 package shipreq.webapp.server.lib
 
 import net.liftweb.http.S
-import org.joda.time.{DateTimeUtils, Period, DateTime}
+import org.joda.time.{DateTime, DateTimeUtils, Period}
 import org.joda.time.format.DateTimeFormat
 import scala.annotation.tailrec
 import scala.collection.concurrent.TrieMap
@@ -9,11 +9,9 @@ import scala.reflect.ClassTag
 import scala.util.hashing.Hashing
 import scala.util.Random
 import scalaz.Memo
-
 import shipreq.base.util.log.HasLogger
 import shipreq.webapp.server.app.AppConfig
-import Types._
-import AppConfig._
+import shipreq.webapp.server.data.ISO8601
 
 // TODO shipreq.webapp.server.lib.Misc should be salvaged and pruned
 object Misc extends Misc {
@@ -64,7 +62,7 @@ trait Misc extends HasLogger {
   def isExpired_?(startTime: DateTime, timeToLive: Period, now: Long = DateTimeUtils.currentTimeMillis): Boolean =
     startTime plus timeToLive isBefore now
 
-  def randomConfirmationToken = randomString(ConfirmationTokenLength)
+  def randomConfirmationToken = randomString(AppConfig.ConfirmationTokenLength)
 
   def randomString(length: Int): String = RNG.alphanumeric.take(length).mkString
 

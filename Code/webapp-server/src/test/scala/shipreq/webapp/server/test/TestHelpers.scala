@@ -22,7 +22,6 @@ import shipreq.webapp.server.db._
 import shipreq.webapp.server.security.SecurityProvider
 import shipreq.webapp.server.app.DI
 import shipreq.webapp.server.data._
-import shipreq.webapp.server.lib.Types._
 
 case class FixedUser(ud: Option[UserDescriptor]) extends SecurityProvider {
   override def loggedInUser = ud

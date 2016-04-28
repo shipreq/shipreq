@@ -2,7 +2,6 @@ package shipreq.webapp.server.data
 
 import org.joda.time.DateTime
 import shipreq.taskman.api.{EmailAddr, UserId}
-import shipreq.webapp.server.lib.Types.ISO8601
 import shipreq.webapp.server.security.PasswordAndSalt
 
 case class Username(value: String) extends AnyVal
@@ -25,6 +24,9 @@ object UserDescriptor {
 }
 
 case class UserDetail(name: String, newsletter: Boolean)
+
+/** Marks a string as being an ISO-8601 representation of a datetime. */
+case class ISO8601(value: String) extends AnyVal
 
 case class UserSupplementalInfo(ps: PasswordAndSalt, registeredAt: ISO8601)
 

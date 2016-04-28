@@ -1,18 +1,6 @@
-package shipreq.webapp.server
-package test
+package shipreq.webapp.server.test
 
-import net.liftweb.common.Logger
-import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.{Prop, Arbitrary, Gen}
-import scala.annotation.tailrec
-import scala.util.matching.Regex
-import scalaz.Memo
-
-import shipreq.webapp.base.util.TextMod
-import lib.Misc.filterCovar
-import lib.Types._
-import feature.validation.Validators
-
+/*
 object DataGenerators extends Logger {
   import TestHelpers._
 
@@ -95,3 +83,4 @@ object DataGenerators extends Logger {
 
   def mkStringWithWhitespace(gxs: Gen[List[String]]): Gen[String] = mkStringWithGen(gxs, whitespace)
 }
+*/
