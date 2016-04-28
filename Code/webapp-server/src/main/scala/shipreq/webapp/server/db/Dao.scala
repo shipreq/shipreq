@@ -3,7 +3,6 @@ package shipreq.webapp.server.db
 import net.liftweb.util.Helpers.nextFuncName
 import org.postgresql.util.PSQLException
 import scala.slick.jdbc.JdbcBackend.Session
-import shipreq.base.util.TaggedTypes.JsonStr
 import shipreq.taskman.api.{UserId, EmailAddr}
 import shipreq.webapp.server.data._
 import shipreq.webapp.server.lib.Misc.retry
@@ -155,7 +154,6 @@ sealed trait DaoS {
  * All database interfacing methods, including those that require a transaction.
  */
 sealed trait DaoT extends DaoS with EventDao {
-  import shipreq.webapp.server.lib.Misc.ShortExt
   import Sql._
 
   def performUserRegistration(token: String)(
