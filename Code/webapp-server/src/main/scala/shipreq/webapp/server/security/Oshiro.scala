@@ -3,7 +3,7 @@ package shipreq.webapp.server.security
 import org.apache.shiro.SecurityUtils
 import org.apache.shiro.config.IniSecurityManagerFactory
 import org.apache.shiro.crypto.SecureRandomNumberGenerator
-import shipreq.webapp.server.app.ServerConfig
+import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.data.UserDescriptor
 
 /**

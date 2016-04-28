@@ -9,7 +9,8 @@ import org.joda.time.DateTime
 import shipreq.base.util.ScalaExt._
 import shipreq.taskman.api.{EmailAddr, Msg, UserId}
 import shipreq.webapp.base.validation.ValidationResult
-import shipreq.webapp.server.app.{ServerConfig, AppSiteMap}
+import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.app.AppSiteMap
 import shipreq.webapp.server.data.UserRegistrationInfo
 import shipreq.webapp.server.lib.{FormVar, SingleOpStatefulSnippet, SnippetHelpers}
 import shipreq.webapp.server.db.{DaoT, UserRegistrationResult}

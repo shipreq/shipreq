@@ -1,11 +1,11 @@
 package shipreq.webapp.server.snippet
 
-import shipreq.webapp.server.app.ServerConfig
 import shipreq.webapp.server.util.{CacheFn, NonEmptyTemplate}
 import net.liftweb.common.Logger
 import net.liftweb.util.Helpers._
 import scala.util.Random
-import scala.xml.{NodeSeq, Elem, Node}
+import scala.xml.{Elem, Node, NodeSeq}
+import shipreq.webapp.server.ServerConfig
 
 object Quotes extends Logger {
 

@@ -1,11 +1,11 @@
-package shipreq.webapp.server.app
+package shipreq.webapp.server
 
 import net.liftweb.util.Helpers._
 import org.joda.time.Period
 import shipreq.base.util.ExternalValueReader._
 import shipreq.base.util.jodatime.JodaTimeValueRetrievers
-import shipreq.webapp.server.util.PropsRetrievers._
 import shipreq.webapp.server.util.ExpireAfter
+import shipreq.webapp.server.util.PropsRetrievers._
 
 object ServerConfig {
   implicit def PropScope = scopeByNS("shipreq")

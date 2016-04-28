@@ -1,5 +1,4 @@
-package shipreq.webapp.server
-package snippet
+package shipreq.webapp.server.snippet
 
 import net.liftweb.http.{ResponseShortcutException, S}
 import net.liftweb.util.Helpers.intToTimeSpanBuilder
@@ -7,17 +6,16 @@ import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc.UsernamePasswordToken
 import org.postgresql.util.PSQLException
 import org.scalatest.FunSpec
-
 import shipreq.base.util.ScalaExt._
-import security.Oshiro
-import test.TestDatabaseSupport
-import test.fixture.UserFixture
-import util.NonEmptyTemplate
-import app.ServerConfig
-import Register._
-import shipreq.webapp.server.test.T2._
 import shipreq.taskman.api.Msg.RegistrationRequested
+import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.feature.validation.Validators
+import shipreq.webapp.server.security.Oshiro
+import shipreq.webapp.server.snippet.Register._
+import shipreq.webapp.server.test.T2._
+import shipreq.webapp.server.test.TestDatabaseSupport
+import shipreq.webapp.server.test.fixture.UserFixture
+import shipreq.webapp.server.util.NonEmptyTemplate
 
 class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixture {
 

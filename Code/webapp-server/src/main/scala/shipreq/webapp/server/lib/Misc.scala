@@ -9,7 +9,7 @@ import scala.util.hashing.Hashing
 import scala.util.Random
 import scalaz.Memo
 import shipreq.base.util.log.HasLogger
-import shipreq.webapp.server.app.ServerConfig
+import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.data.ISO8601
 
 object Misc extends Misc {

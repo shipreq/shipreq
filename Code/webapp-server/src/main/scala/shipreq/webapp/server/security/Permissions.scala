@@ -1,8 +1,7 @@
-package shipreq.webapp.server
-package security
+package shipreq.webapp.server.security
 
+import shipreq.webapp.server.ServerConfig
 import Permission.Ctx
-import app.ServerConfig
 
 object Permissions {
 

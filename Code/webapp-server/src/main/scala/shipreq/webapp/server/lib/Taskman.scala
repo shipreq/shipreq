@@ -6,10 +6,11 @@ import shipreq.base.db.SingleConnDatabase
 import shipreq.base.util.Error
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.impl.TaskmanApi
-import shipreq.taskman.api.{MsgId, Msg, ApiOp}
+import shipreq.taskman.api.{ApiOp, Msg, MsgId}
 import shipreq.taskman.api.Msg.WebappErrorOccurred
 import shipreq.webapp.base.WebappConfig
-import shipreq.webapp.server.app.{DI, ServerConfig}
+import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.app.DI
 import shipreq.webapp.server.security.Oshiro
 import ApiOp._
 

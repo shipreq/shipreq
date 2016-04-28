@@ -6,7 +6,8 @@ import net.liftweb.http.provider.HTTPParam
 import net.liftweb.util.Props
 import net.liftweb.util.Props.RunModes.Test
 import shipreq.webapp.base.WebappConfig
-import shipreq.webapp.server.app.{ExceptionHandler, DI, Defaults, AppSiteMap}
+import shipreq.webapp.server.ServerConfig
+import shipreq.webapp.server.app.{AppSiteMap, DI, Defaults, ExceptionHandler}
 import shipreq.webapp.server.db.DB
 import shipreq.webapp.server.feature.SessionStats
 import shipreq.webapp.server.lib.Taskman
@@ -88,7 +89,7 @@ class Boot extends DI {
   }
 
   def logImportantSettings(): Unit = {
-    import shipreq.webapp.server.app.ServerConfig._
+    import ServerConfig._
     logger.info(s"Signup allowed: ${AllowRegister()}")
   }
 }
