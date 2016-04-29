@@ -16,3 +16,7 @@ On success
 * It took Steven Erikson 10 years to find a publisher for Gardens of the Moon.
 * J. K. Rowling was rejected by 12 publishers before publishing Harry Potter #1.
 
+On stragery
+===========
+* Victorious warriors win first and then go to war, while defeated warriors go to war first and then seek to win.
+
