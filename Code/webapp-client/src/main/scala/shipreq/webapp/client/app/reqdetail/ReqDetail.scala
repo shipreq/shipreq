@@ -5,15 +5,16 @@ import japgolly.scalajs.react.experimental.StaticPropComponent
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import scalacss.ScalaCssReact._
-import scalaz.{\/, -\/, \/-}
+import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.{UpdateContentCmd, UpdateContentFn}
 import shipreq.webapp.base.text._
-import shipreq.webapp.client.app.reqtable.ColumnRenderer.RenderDeletionReason // TODO No!
+import shipreq.webapp.client.app.reqtable.ColumnRenderer.RenderDeletionReason
 import shipreq.webapp.client.app.state.ClientData
 import shipreq.webapp.client.app.Style.{reqdetail => *}
+import shipreq.webapp.client.app.WebWorkerClient
 import shipreq.webapp.client.data._
 import shipreq.webapp.client.feature._
 import shipreq.webapp.client.lib.DataReusability._
@@ -29,6 +30,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
   case class StaticProps(cd                   : ClientData,
                          cp                   : ClientProtocol,
+                         webWorker            : WebWorkerClient,
                          updateContentFn      : UpdateContentFn.Instance,
                          pxPlainTextNoCtx     : Px[PlainText.ForProject],
                          pxTextSearch         : Px[TextSearch],
@@ -367,7 +369,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
           case Row.StepGraph =>
             val ucId = data.useCaseData.get.uc.id
-            UseCaseStepFlowGraph.Props(ucId, project.reqs.useCases).render
+            UseCaseStepFlowGraph.Props(ucId, project.reqs.useCases, webWorker).render
 
           case Row.DeletionReason =>
             RenderDeletionReason.req(project, pw, req)

@@ -323,7 +323,7 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
     }
 
     val reqDetail = ReqDetail(ReqDetail.StaticProps(
-      cd, cp, r.updateContent,
+      cd, cp, WebWorkerClient.Instance, r.updateContent,
       pxPlainText, pxTextSearch, pxProjectWidgets))
 
     val reqDetailSetState: ReqDetail.State ~=> Callback =

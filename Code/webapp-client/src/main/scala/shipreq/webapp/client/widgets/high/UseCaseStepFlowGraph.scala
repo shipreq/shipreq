@@ -10,7 +10,9 @@ import shipreq.webapp.client.ww.api._
 
 object UseCaseStepFlowGraph {
 
-  final case class Props(id: UseCaseId, useCases: UseCases) {
+  final case class Props(id       : UseCaseId,
+                         useCases : UseCases,
+                         webWorker: WebWorkerClient) {
     @inline def render = Component(this)
   }
 
@@ -27,7 +29,7 @@ object UseCaseStepFlowGraph {
   final class Backend($: BackendScope[Props, State]) {
 
     def refresh(p: Props): Callback =
-      WebWorkerClient.postCB(Cmd.GraphUseCaseStepFlow(p.id, p.useCases))(svg =>
+      p.webWorker.postCB(Cmd.GraphUseCaseStepFlow(p.id, p.useCases))(svg =>
         $.setState(Some(svg)))
 
     def render(p: Props, s: State): ReactElement =
