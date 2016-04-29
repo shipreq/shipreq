@@ -5,7 +5,7 @@ import japgolly.scalajs.react._, vdom.prefix_<^._
 import shipreq.base.util.{Ref => _, _}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.Grammar
+import shipreq.webapp.base.text.GrammarSpec.SeqFormat
 import shipreq.webapp.base.validation.{Validator, ValidUpdateVR}
 import shipreq.webapp.client.feature._
 import shipreq.webapp.client.lib.DataReusability._
@@ -99,7 +99,7 @@ object ReqCodeEditor {
 
     override val textEditor = TextEditor.TextArea
 
-    val seqFmt = Grammar.SeqFormat(_.trim, "\\s*[\n\r]\\s*".r.pattern, identity, _.isEmpty, _ mkString "\n")
+    val seqFmt = SeqFormat(_.trim, "\\s*[\n\r]\\s*".r.pattern, identity, _.isEmpty, _ mkString "\n")
 
     override val validator =
       Validator.seqText(seqFmt)(V.code.correctAndValidate _ curried)

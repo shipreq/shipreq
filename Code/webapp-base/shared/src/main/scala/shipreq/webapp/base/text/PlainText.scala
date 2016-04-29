@@ -6,6 +6,7 @@ import shipreq.base.util.SafeStringOps._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar => G}
+import shipreq.webapp.base.text.GrammarSpec.Surrounds
 import shipreq.webapp.base.util.ReqCodeTreeItem
 import Atom.AnyAtom
 
@@ -16,7 +17,7 @@ object PlainText {
 
   // ScalaJS StringBuilder just uses String concatenation so fuck it.
 
-  private implicit def surroundDisplay(s: Grammar.Surrounds) = s.display
+  private implicit def surroundDisplay(s: Surrounds) = s.display
 
   private implicit class OptionalTextOps[T <: Text.Generic](val _t: T#OptionalText) extends AnyVal {
     @inline def asOption: Option[_t.type] =

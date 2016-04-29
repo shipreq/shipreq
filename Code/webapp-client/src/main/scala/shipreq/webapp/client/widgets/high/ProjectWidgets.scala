@@ -52,7 +52,7 @@ final class ProjectWidgets private(project    : Project,
   def withPlainText(newPlainText: PlainText.ForProject): ProjectWidgets =
     new ProjectWidgets(project, newPlainText, reqDetailRC)
 
-  private implicit def surroundDisplay(s: G.Surrounds) = s.display
+  private implicit def surroundDisplay(s: GrammarSpec.Surrounds) = s.display
 
   @inline private def memo[A: UnivEq](f: A => ReactElement) = Memo(f)
 

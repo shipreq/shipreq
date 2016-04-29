@@ -28,7 +28,7 @@ import shipreq.webapp.base.data._, ReqType.Mnemonic, Field.ApplicableReqTypes
 import shipreq.webapp.base.event.ApplyEvent.LogicVer
 import shipreq.webapp.base.event.DeletionAction
 import shipreq.webapp.base.test._
-import shipreq.webapp.base.text.{Text, Grammar}
+import shipreq.webapp.base.text.{Text, Grammar, GrammarSpec}
 import shipreq.webapp.base.util.GenericData
 import shipreq.base.util.UtilMacros._
 import DataImplicits._
@@ -78,10 +78,10 @@ object RandomData {
     //Gen.choose_!(_charPredAllChars filter p.apply)
     Gen.chooseArray_!((_charPredAllChars filter p.apply).toArray)
 
-  def grammarChars(c: Grammar.Chars): Gen[Char] =
+  def grammarChars(c: GrammarSpec.Chars): Gen[Char] =
     Gen.chooseChar(c.ch1, c.chn, c.rs: _*)
 
-  def grammarStr1[G](g: G)(f: G => Grammar.Chars, w: G => Grammar.Chars, l: G => Grammar.Length): Gen[String] =
+  def grammarStr1[G](g: G)(f: G => GrammarSpec.Chars, w: G => GrammarSpec.Chars, l: G => GrammarSpec.Length): Gen[String] =
     for {
       h <- grammarChars(f(g))
       t <- grammarChars(w(g)).list(0 to l(g).minus1.max)
@@ -97,7 +97,7 @@ object RandomData {
   def CaseInsensitive(s: String): CaseInsensitive =
     new CaseInsensitive(s.toLowerCase, s)
 
-  def legalGrammar[G](g: G)(first: G => Grammar.Chars, rest: G => Grammar.Chars): Stream[String] = {
+  def legalGrammar[G](g: G)(first: G => GrammarSpec.Chars, rest: G => GrammarSpec.Chars): Stream[String] = {
     val g1 = first(g).toStream.map(_.toString)
     val gn = rest(g).toStream.map(_.toString)
     def grow(ss: Stream[String]): Stream[String] = {
@@ -107,14 +107,14 @@ object RandomData {
     grow(g1)
   }
 
-  def grammarFixer[G](g: G)(first: G => Grammar.Chars, rest: G => Grammar.Chars) = {
+  def grammarFixer[G](g: G)(first: G => GrammarSpec.Chars, rest: G => GrammarSpec.Chars) = {
     val all = legalGrammar(g)(first, rest)
     def fix(used: Set[String]): String =
       all.filter(!used.contains(_)).head
     Distinct.Fixer.lift(fix)
   }
 
-  def grammarFixerIgnoreCase[G](g: G)(first: G => Grammar.Chars, rest: G => Grammar.Chars) = {
+  def grammarFixerIgnoreCase[G](g: G)(first: G => GrammarSpec.Chars, rest: G => GrammarSpec.Chars) = {
     val all = legalGrammar(g)(first, rest) map CaseInsensitive
     def fix(used: Set[CaseInsensitive]): CaseInsensitive =
       all.filter(!used.contains(_)).head
@@ -157,7 +157,7 @@ object RandomData {
     Gen.choose[Mandatory](Mandatory, Mandatory.Not)
 
   val hashRefKey: Gen[HashRefKey] =
-    grammarStr1(Grammar.hashRefKey)(_.firstChar, _.allChars, _.length) map HashRefKey
+    grammarStr1(Grammar.hashRefKey)(_.firstChar, _.tailChars, _.length) map HashRefKey
 
   val deletionAction =
     Gen.chooseNE(DeletionAction.values)
@@ -321,7 +321,7 @@ object RandomData {
     Gen.chooseGen(customFieldTextId, customFieldTagId, customFieldImplicationId)
 
   val fieldRefKey =
-    grammarStr1(Grammar.fieldRefKey)(_.firstChar, _.allChars, _.length) map FieldRefKey
+    grammarStr1(Grammar.fieldRefKey)(_.firstChar, _.tailChars, _.length) map FieldRefKey
 
   def customFieldType =
     Gen.chooseNE(CustomFieldType.values)
@@ -972,7 +972,7 @@ object RandomData {
     import ReqCode._
 
     val node: Gen[Node] =
-      grammarStr1(Grammar.reqCode)(_.firstChar, _.allChars, _.nodeLength) map Node.applyFn
+      grammarStr1(Grammar.reqCode)(_.firstChar, _.tailChars, _.nodeLength) map Node.applyFn
 
     val value: Gen[Value] =
       node.nev(1 to Grammar.reqCode.maxNodes)
@@ -1072,7 +1072,7 @@ object RandomData {
   // Project
 
   lazy val hashRefFixer =
-    grammarFixerIgnoreCase(Grammar.hashRefKey)(_.firstChar, _.allChars)
+    grammarFixerIgnoreCase(Grammar.hashRefKey)(_.firstChar, _.tailChars)
       .xmap(HashRefKey.apply)(_.value)
 
   def distinctHashRefKeys = {

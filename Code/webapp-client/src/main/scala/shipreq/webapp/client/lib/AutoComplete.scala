@@ -11,7 +11,7 @@ import shipreq.base.util._
 import shipreq.base.util.MTrie.Ops
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.{Text, TextSearch, PlainText, Grammar}
+import shipreq.webapp.base.text.{Grammar, GrammarSpec, PlainText, Text, TextSearch}
 import shipreq.webapp.client.app.Style.{reqtable => *}
 import shipreq.webapp.client.jsfacade.{TextComplete => TC}
 import shipreq.webapp.client.data.{HideDead, FilterDead, Plain, Contextualise}
@@ -64,7 +64,7 @@ object AutoComplete {
   }
 
   private object Context {
-    def apply(s: Grammar.Surrounds): Context = {
+    def apply(s: GrammarSpec.Surrounds): Context = {
       val (a, b) = s.parsing.regexEscapeAndWrap
       new Context(a, b, s.display.apply)
     }
@@ -80,7 +80,7 @@ object AutoComplete {
 
   def hashtag(legal: Stream[HashRefKey]): Contextualise => Strategies = {
     import Grammar.{hashRefKey => G}
-    val mainRegex = s"(|${G.firstChar.one}${G.allChars.*})$$"
+    val mainRegex = s"(|${G.firstChar.one}${G.tailChars.*})$$"
     val searchFn  = TC.caseInsensitiveContains(legal.map(_.value).sorted)
     hashtagContext.strategy(mainRegex, searchFn)(identity, "")(_)
   }
@@ -165,7 +165,7 @@ object AutoComplete {
     private val sepStr = G.nodeSeparator.toString
     private val sep    = Util regexEscapeAndWrap sepStr
     private val sepR   = sep.r
-    private val node   = s"(?:${G.firstChar.one}${G.allChars.*})"
+    private val node   = s"(?:${G.firstChar.one}${G.tailChars.*})"
 
     /**
      * Matches ReqCode prefixes. eg. "1.2" of "1.2.3.4".

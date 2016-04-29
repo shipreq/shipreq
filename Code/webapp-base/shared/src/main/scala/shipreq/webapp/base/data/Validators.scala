@@ -40,7 +40,7 @@ object Validators {
 
     // DD-18: Hashtag-like refkeys (groupings, incmp) must match this format: /[A-Za-z0-9][A-Za-z0-9_-=.]*/
     val hashRefKeyU =
-      G.allChars.rule
+      G.tailChars.rule
         .addRule(G.length.rule)
         .correct(noWhitespace.compose)
         .constraint(c => nonEmpty >> (G.firstChar.constraint + c))
@@ -140,7 +140,7 @@ object Validators {
 
     // DD-20: Field refkeys must match this format: /[a-z][a-z0-9_]*/
     val keyU =
-      G.allChars.rule
+      G.tailChars.rule
         .addRule(G.length.rule)
         .liveCorrect(lowerCase.andThen)
         .correct(_ andThen noWhitespace)
@@ -215,7 +215,7 @@ object Validators {
     import ReqCode._
 
     val node: ValidatorU[String, String, Node] =
-      G.allChars.rule
+      G.tailChars.rule
         .addRule(G.nodeLength.rule)
         .liveCorrect(squashUnderscores andThen lowerCase andThen _)
         .correct(_ andThen noWhitespace)

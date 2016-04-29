@@ -6,6 +6,7 @@ import shipreq.base.util.{NonEmptySet, NonEmptyVector}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{ReqTypePos, ReqType}
 import shipreq.webapp.base.text.{Grammar => G}
+import shipreq.webapp.base.text.GrammarSpec._
 
 object ParsingUtil {
 
@@ -73,7 +74,7 @@ abstract class ParsingUtil extends Parser {
   def popNES[A: UnivEq]: RuleAB[Set[A], NonEmptySet[A]] =
     rule(run((v: Set[A]) => test(v.nonEmpty) ~ push(NonEmptySet(v.head, v.tail))))
 
-  def grammarStr[G](g: G)(f: G => G.FirstChar, w: G => G.CharWhitelist, l: G => G.Length): Rule0 =
+  def grammarStr[G](g: G)(f: G => FirstChar, w: G => CharWhitelist, l: G => Length): Rule0 =
     rule( f(g).charPredicate ~ (l(g).minus1 times w(g).charPredicate) )
 
   def nonGreedyCapture(stopAt: () => Rule0): Rule1[String] =
@@ -82,10 +83,10 @@ abstract class ParsingUtil extends Parser {
 //  def surroundedBy(s: () => Rule0): Rule1[String] =
 //    rule(s() ~ nonGreedyCapture(s))
 
-  def surround(s: G.Surrounds): Rule1[String] =
+  def surround(s: Surrounds): Rule1[String] =
     surround(s.parsing)
 
-  def surround(s: G.Surround): Rule1[String] = {
+  def surround(s: Surround): Rule1[String] = {
     val end = () => rule(s.suffix)
     rule(s.prefix ~ nonGreedyCapture(end) ~> trim)
   }
@@ -100,8 +101,8 @@ abstract class ParsingUtil extends Parser {
     rule(int1n ~> ReqTypePos)
 
   def hashRefStr: Rule1[String] =
-    rule(G.hashRefKey.prefix ~ capture(grammarStr(G.hashRefKey)(_.firstChar, _.allChars, _.length)))
+    rule(G.hashRefKey.prefix ~ capture(grammarStr(G.hashRefKey)(_.firstChar, _.tailChars, _.length)))
 
   def hashRefStr_! : Rule1[String] =
-    rule(G.hashRefKey.prefix ~!~ capture(grammarStr(G.hashRefKey)(_.firstChar, _.allChars, _.length)))
+    rule(G.hashRefKey.prefix ~!~ capture(grammarStr(G.hashRefKey)(_.firstChar, _.tailChars, _.length)))
 }

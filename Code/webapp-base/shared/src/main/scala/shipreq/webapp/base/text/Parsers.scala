@@ -175,7 +175,7 @@ object Parsers {
         ~> lookupReq ~ popOptional[ReqId] ~> t.ReqRef)
 
     def reqCodeNode: Rule1[Node] = rule(
-      capture(grammarStr(G.reqCode)(_.firstChar, _.allChars, _.nodeLength)) ~> Node.applyFn)
+      capture(grammarStr(G.reqCode)(_.firstChar, _.tailChars, _.nodeLength)) ~> Node.applyFn)
 
     // Could be optimised to lookup each node as parsed and fail early
     def codeRef: Rule1[t.CodeRef] = rule(
