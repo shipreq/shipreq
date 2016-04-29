@@ -12,14 +12,17 @@ node[fillcolor="#FFEDE2"]
 1[label="MF-3"]
 
 // Direct parents
+{
+rank=same
 node[fillcolor="#FFC19C"]
 2[label="BR-15"]
 3[label="FR-3"]
+}
 
 // Direct children
-node[fillcolor="#7692B7"]
 {
-node[fontcolor=white]
+rank=same
+node[fillcolor="#7692B7" fontcolor=white]
 4[label="FR-4"]
 5[label="FR-6"]
 6[label="FR-8"]
@@ -32,12 +35,14 @@ node[fillcolor="#D6E1EF"]
 9[label="FR-24"]
 
 edge[color="#FFC19C"]
+2->1 [constraint=0]
 1->3
 edge[color="#C27040"]
 2,3->F
 edge[color="#31537F"]
 F->4,5,6
 edge[color="#7692B7"]
+4->5
 6->7,8
 8->9
 }

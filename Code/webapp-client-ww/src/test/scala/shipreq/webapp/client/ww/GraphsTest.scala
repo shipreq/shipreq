@@ -83,11 +83,16 @@ object GraphsTest extends TestSuite {
           |21[label="BR-1"]
           |
           |// Direct parents
+          |{
+          |rank=same;
           |node[fillcolor="#FFC19C"]
           |22[label="BR-2"]
+          |}
           |
           |// Direct children
-          |{node[fillcolor="#7692B7" fontcolor=white]
+          |{
+          |rank=same;
+          |node[fillcolor="#7692B7" fontcolor=white]
           |14[label="MF-4"]
           |34[label="FR-4"]
           |}

@@ -60,7 +60,7 @@ object Graphs {
     }
   }
 
-  def flow(from: TraversableOnce[String], to: TraversableOnce[String], dir: Direction = Forwards)(implicit sb: StringBuilder): Unit =
+  def flow(from: TraversableOnce[String], to: TraversableOnce[String], dir: Direction = Forwards)(implicit sb: StringBuilder): Boolean =
     if (from.nonEmpty && to.nonEmpty) {
       var a = from
       var b = to
@@ -71,8 +71,9 @@ object Graphs {
       intercalate(a, sb append ',')(sb append _)
       sb append "->"
       intercalate(b, sb append ',')(sb append _)
-      sb append ';'
-    }
+      true
+    } else
+      false
 
   private type Content = () => Unit
 
@@ -246,8 +247,13 @@ object Graphs {
         val direct   = graph(focus).filter(filter)
         val indirect = DeclAndFlow(List.newBuilder[ReqId], List.newBuilder[Content])
 
-        def flow2(from: String, to: TraversableOnce[ReqId]): Content =
-          () => flow(from :: Nil, to.toIterator.map(_.value.toString), dir)
+        def flow2(from: String, to: TraversableOnce[ReqId], unconstrain: Boolean): Content =
+          () => if (flow(from :: Nil, to.toIterator.map(_.value.toString), dir)) {
+            if (unconstrain)
+              sb append "[constraint=0]"
+            else
+              sb append ';'
+          }
 
         @tailrec
         def go(queue: List[ReqId], queueNext: Set[ReqId], seen: Set[ReqId]): Unit =
@@ -263,14 +269,16 @@ object Graphs {
                 val next = graph(id).filter(filter)
                 if (!direct.contains(id))
                   indirect.decl += id
-                indirect.flow += flow2(id.value.toString, next)
+                val (x, y) = next.partition(direct.contains)
+                indirect.flow += flow2(id.value.toString, x, true)
+                indirect.flow += flow2(id.value.toString, y, false)
                 go(queue2, queueNext ++ next, seen + id)
               }
           }
 
         go(Nil, direct, Set.empty)
 
-        val d = DeclAndFlow(direct, flow2(Focus, direct))
+        val d = DeclAndFlow(direct, flow2(Focus, direct, false))
         val i = indirect.bimap(_.result(), _.result())
         DirectAndIndirect(d, i)
       }
@@ -288,10 +296,10 @@ object Graphs {
       setLabel(pubid(focus))
       sb append ']'
 
-      sb append """node[fillcolor="#FFEDE2"]""";                 declare(backwards.indirect.decl)
-      sb append """node[fillcolor="#FFC19C"]""";                 declare(backwards.direct.decl)
-      attrGroup("""node[fillcolor="#7692B7" fontcolor=white]""")(declare(forwards .direct.decl))
-      sb append """node[fillcolor="#D6E1EF"]""";                 declare(forwards .indirect.decl)
+      sb append """node[fillcolor="#FFEDE2"]""";                           declare(backwards.indirect.decl)
+      attrGroup("""rank=same;node[fillcolor="#FFC19C"]"""                )(declare(backwards.direct.decl))
+      attrGroup("""rank=same;node[fillcolor="#7692B7" fontcolor=white]""")(declare(forwards .direct.decl))
+      sb append """node[fillcolor="#D6E1EF"]""";                           declare(forwards .indirect.decl)
 
       sb append """edge[color="#FFC19C"]"""; backwards.indirect.flow.foreach(_())
       sb append """edge[color="#C27040"]"""; backwards.direct.flow()
