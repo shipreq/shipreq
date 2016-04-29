@@ -11,6 +11,7 @@ import shipreq.webapp.base.text.{Atom, PlainText, TextSearch}
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.text.UseCaseStepFlowText.TextAndFlow
 import shipreq.webapp.client.widgets.high.ProjectWidgets
+import shipreq.webapp.client.ww.api.SVG
 
 object DataReusability {
 
@@ -74,4 +75,7 @@ object DataReusability {
   implicit val reusabilityUseCaseStepField: Reusability[StaticField.UseCaseStepTree] = Reusability.byUnivEq
 
   implicit def reusabilityTextAndFlow[T: Reusability, S: Reusability]: Reusability[TextAndFlow[T, S]] = Reusability.caseClass
+
+  implicit val reusabilitySVG: Reusability[SVG] = Reusability.caseClass
+
 }
