@@ -13,7 +13,7 @@ object TransitiveClosureTest extends TestSuite {
 
   case class Tester(tt: TagTree) {
     val E  = EvalOver(this)
-    val tc = TransitiveClosure.auto(tt.valuesIterator.map(_.id))(tt.need(_).children, _ => true)
+    val tc = TransitiveClosure.auto(tt.valuesIterator.map(_.id))(tt.need(_).children)
 
     def test =
       E.forall(tt.values.toStream) { t =>

@@ -4,14 +4,37 @@ import japgolly.univeq.UnivEq
 import scala.collection.immutable.BitSet
 import scala.reflect.ClassTag
 import scalaz.Need
+import TransitiveClosure.Filter
 
 object TransitiveClosure {
-  def auto[A: UnivEq: ClassTag](as: TraversableOnce[A])(directChildren: A => Iterable[A], follow: A => Boolean) = {
+  def auto[A: UnivEq: ClassTag](as            : TraversableOnce[A])
+                               (directChildren: A => Iterable[A],
+                                filter        : A => Filter = Filter.followAll) = {
+
     val map = as.toIterator.zipWithIndex.toMap
     val array = new Array[A](map.size)
     for ((k,v) <- map)
       array(v) = k
-    new TransitiveClosure(map.apply, array.apply, array.length, directChildren, follow)
+    new TransitiveClosure(map.apply, array.apply, array.length, directChildren, filter)
+  }
+
+  sealed abstract class Filter
+  object Filter {
+
+    /** Include the subject node and follow its vertices. */
+    case object Follow extends Filter
+
+    /** Include the subject node but do not follow its vertices. */
+    case object Terminal extends Filter
+
+    /** Exclude the subject node and its vertices. */
+    case object Exclude extends Filter
+
+    val followAll: Any => Filter =
+      _ => Follow
+
+    def terminalSet[A](terminals: Set[A]): A => Filter =
+      a => if (terminals.contains(a)) Terminal else Follow
   }
 }
 
@@ -27,14 +50,12 @@ object TransitiveClosure {
  * @param a2i Global index of a node.
  * @param i2a Node at global index.
  * @param directChildren Each direct child of a given node. Non-transitive; don't return self.
- * @param follow Whether or not transitivity holds for a given node.
- *               When false, the node is added but its children are not followed.
  */
 final class TransitiveClosure[A: UnivEq](a2i           : A => Int,
                                          i2a           : Int => A,
                                          size          : Int,
                                          directChildren: A => Iterable[A],
-                                         follow        : A => Boolean) {
+                                         filter        : A => Filter) {
 
   private val closure: Array[Need[BitSet]] =
     new Array(size)
@@ -45,11 +66,11 @@ final class TransitiveClosure[A: UnivEq](a2i           : A => Int,
       val a = i2a(i)
       val z = BitSet.empty + i
       directChildren(a).foldLeft(z){ (q, c) =>
-        val j = a2i(c)
-        if (follow(c))
-          q ++ tc(j)
-        else
-          q + j
+        filter(c) match {
+          case Filter.Follow   => q ++ tc(a2i(c))
+          case Filter.Terminal => q + a2i(c)
+          case Filter.Exclude  => q
+        }
       }
     }
   }

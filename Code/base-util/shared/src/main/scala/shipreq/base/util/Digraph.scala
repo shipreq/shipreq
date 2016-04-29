@@ -32,6 +32,12 @@ object Digraph {
         case Backwards => backwards
       }
 
+    def transitiveClosure(dir   : Direction,
+                          keys  : TraversableOnce[A],
+                          filter: A => TransitiveClosure.Filter = TransitiveClosure.Filter.followAll)
+                         (implicit ct: ClassTag[A]): TransitiveClosure[A] =
+      TransitiveClosure.auto(keys)(apply(dir).apply, filter)
+
     def memberIterator: Iterator[A] =
       Digraph.memberIterator(forwards)
 
@@ -55,9 +61,6 @@ object Digraph {
 
   def biToUni[A: UnivEq]: Iso[BiDir[A], UniDir[A]] =
     Iso((_: BiDir[A]).forwards)(BiDir(_))
-
-  def transitiveClosure[A: UnivEq : ClassTag](keys: Iterable[A], dead: Set[A], dag: UniDir[A]): TransitiveClosure[A] =
-    TransitiveClosure.auto[A](keys)(dag.apply, !dead.contains(_))
 
   def memberIterator[A](dag: UniDir[A]): Iterator[A] =
     dag.m.iterator.flatMap(e =>
@@ -87,9 +90,6 @@ object Digraph {
 
     final val biToUni: Iso[BiDir, UniDir] =
       Digraph.biToUni
-
-    final def transitiveClosure(keys: Iterable[A], dead: Set[A], dag: UniDir): TransitiveClosure[A] =
-      Digraph.transitiveClosure(keys, dead, dag)
   }
 
   // ===================================================================================================================

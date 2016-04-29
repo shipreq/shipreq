@@ -2,9 +2,9 @@ package shipreq.webapp.base.data
 
 import monocle.Lens
 import monocle.macros.Lenses
-import scalaz.{Equal, \/, -\/, \/-}
+import scalaz.{-\/, Equal, \/, \/-}
 import scalaz.std.anyVal.intInstance
-import shipreq.base.util.{TransitiveClosure, UtilMacros}
+import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.text.{Atom, Text}
@@ -101,7 +101,7 @@ final case class Project(config         : ProjectConfig,
    * Note: Dead reqs are included (reflexively and when direct implications) but are not followed.
    */
   lazy val implicationSrcToTgtTC: TransitiveClosure[ReqId] =
-    implicationTransitiveClosure(_.forwards)
+    implicationTransitiveClosure(Forwards)
 
   /**
    * Transitive closure of implications going target → source.
@@ -109,13 +109,10 @@ final case class Project(config         : ProjectConfig,
    * Note: Dead reqs are included (reflexively and when direct implications) but are not followed.
    */
   lazy val implicationTgtToSrcTC: TransitiveClosure[ReqId] =
-    implicationTransitiveClosure(_.backwards)
+    implicationTransitiveClosure(Backwards)
 
-  private def implicationTransitiveClosure(f: Implications => Implications.UniDir): TransitiveClosure[ReqId] =
-    Implications.transitiveClosure(
-      reqs.reqs.keys,
-      deadReqIds,
-      f(implications))
+  private def implicationTransitiveClosure(dir: Direction): TransitiveClosure[ReqId] =
+    implications.transitiveClosure(dir, reqs.reqs.keys, TransitiveClosure.Filter terminalSet deadReqIds)
 
   def findReq(externalPubid: ExternalPubid): PubidQueryError \/ Req =
     findReq(externalPubid.mnemonic, externalPubid.pos)

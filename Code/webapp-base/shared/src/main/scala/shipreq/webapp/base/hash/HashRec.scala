@@ -119,7 +119,7 @@ object HashRec {
     type Lookup = HashScope => Set[HashScope]
 
     def mkReflSubsets(directNonReflSubsets: Lookup): Lookup = {
-      val tc = TransitiveClosure.auto(all.whole)(directNonReflSubsets, _ => true)
+      val tc = TransitiveClosure.auto(all.whole)(directNonReflSubsets)
       all.iterator.map(s => (s, tc(s))).toMap.apply
     }
 
