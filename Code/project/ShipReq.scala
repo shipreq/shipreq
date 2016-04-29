@@ -186,8 +186,7 @@ object ShipReq {
     addCommandAliases(
       "ctbc"-> ";clean ;tbc",                                              // Clean Test Base & Client
       "tbc" -> s";$WT/test:compile ;$WC/test:compile ;$WT/test ;$WC/test", // Test Base & Client
-      "js"  -> s";$WC/fastOptJS ;$WS/copyClientJs",                        // compile JavaScript
-      "jsp" -> s";$WC/fastOptJS ;$WS/webappPrepare",                       // compile JavaScript, auto deploy
+      "js"  -> s"$WS/webappPrepare",                                       // compile JavaScript
       "up"  -> s";$WS/jetty:stop  ;$WS/jetty:start",                       // webapp: UP
       "d"   -> s"$WS/jetty:stop",                                          // webapp: Down
       "wd"  -> ";up ;~js")                                                 // WebDev
