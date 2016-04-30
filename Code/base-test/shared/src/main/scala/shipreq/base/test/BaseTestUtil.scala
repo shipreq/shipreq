@@ -80,11 +80,13 @@ trait BaseTestUtil extends scalaz.syntax.ToEqualOps {
       val List(maxA,maxE) = AE.map(x => (0 #:: x.map(_.length).toStream).max)
       val maxL = lim.toString.length
       println("A|E")
-      val fmt = s"%${maxL}d: %-${maxA}s |%s| %s\n"
+      val fmt = s"%s%${maxL}d: %-${maxA}s |%s| %s$RESET\n"
       for (i <- (0 until lim)) {
         val List(a, e) = AE.map(s => if (i >= s.length) "" else s(i))
-        val cmp = if (a == e) " " else "≠"
-        printf(fmt, i + 1, a, cmp, e)
+        val ok = a == e
+        val cmp = if (ok) " " else "≠"
+        val col = if (ok) BOLD + BLACK else WHITE
+        printf(fmt, col, i + 1, a, cmp, e)
       }
       println()
       fail("assertMultiline failed.")
