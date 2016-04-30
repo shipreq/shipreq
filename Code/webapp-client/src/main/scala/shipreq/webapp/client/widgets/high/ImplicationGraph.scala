@@ -11,6 +11,7 @@ import shipreq.webapp.client.ww.api.Cmd
 object ImplicationGraph {
 
   final case class Props(focus         : ReqId,
+                         filterDead    : FilterDead,
                          imps          : Implications.BiDir,
                          reqs          : Requirements,
                          customReqTypes: CustomReqTypeIMap,
@@ -19,8 +20,8 @@ object ImplicationGraph {
   }
 
   object Props {
-    def fromProject(focus: ReqId, p: Project, w: WebWorkerClient): Props =
-      Props(focus, p.implications, p.reqs, p.config.customReqTypes, w)
+    def fromProject(focus: ReqId, filterDead: FilterDead, p: Project, w: WebWorkerClient): Props =
+      Props(focus, filterDead, p.implications, p.reqs, p.config.customReqTypes, w)
   }
 
   implicit val reusabilityProps: Reusability[Props] = {
@@ -32,7 +33,7 @@ object ImplicationGraph {
 
   final class Backend($: BackendScope[Props, State]) extends GraphBackend($) {
     override def cmd(p: Props) =
-      Cmd.GraphReqImplications(p.focus, p.imps, p.reqs, p.customReqTypes)
+      Cmd.GraphReqImplications(p.focus, p.filterDead, p.imps, p.reqs, p.customReqTypes)
   }
 
   val Component = ReactComponentB[Props]("ImplicationGraph")

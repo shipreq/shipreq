@@ -21,6 +21,7 @@ object BinCodecData {
   implicit val pickleMandatory    : Pickler[Mandatory          ] = pickleBool(Mandatory)
   implicit val pickleDeletable    : Pickler[Deletable          ] = pickleBool(Deletable)
   implicit val pickleMutexChildren: Pickler[MutexChildren      ] = pickleBool(MutexChildren)
+  implicit val pickleFilterDead   : Pickler[FilterDead         ] = pickleBool(ShowDead)
 
   implicit val pickleUseCaseId                = pickleTaggedI(UseCaseId                 ).reuseByUnivEq
   implicit val pickleUseCaseStepId            = pickleTaggedI(UseCaseStepId             ).reuseByUnivEq

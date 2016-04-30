@@ -17,6 +17,7 @@ object Cmd {
   case class GraphUseCaseStepFlow(id: UseCaseId, useCases: UseCases) extends Cmd[SVG]
 
   case class GraphReqImplications(focus         : ReqId,
+                                  filterDead    : FilterDead,
                                   imps          : Implications.BiDir,
                                   reqs          : Requirements,
                                   customReqTypes: CustomReqTypeIMap) extends Cmd[SVG]

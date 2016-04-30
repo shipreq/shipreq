@@ -362,7 +362,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
                 one(Cell.ImplicationTgt)))
 
           case Row.ImplicationGraph =>
-            ImplicationGraph.Props.fromProject(req.id, project, webWorker).render
+            ImplicationGraph.Props.fromProject(req.id, data.filterDead, project, webWorker).render
 
           case Row.CustomField(f: CustomField.Implication) =>
             renderImpCell(Cell.CustomField(f.id), data.customImps(f))

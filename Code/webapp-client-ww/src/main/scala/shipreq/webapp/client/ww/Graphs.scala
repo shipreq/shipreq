@@ -60,20 +60,20 @@ object Graphs {
     }
   }
 
-  def flow(from: TraversableOnce[String], to: TraversableOnce[String], dir: Direction = Forwards)(implicit sb: StringBuilder): Boolean =
-    if (from.nonEmpty && to.nonEmpty) {
-      var a = from
-      var b = to
-      if (dir :: Backwards) {
-        a = to
-        b = from
-      }
-      intercalate(a, sb append ',')(sb append _)
-      sb append "->"
-      intercalate(b, sb append ',')(sb append _)
-      true
-    } else
-      false
+  def flowS(from: String, dir: Direction, to: String)(implicit sb: StringBuilder): Unit =
+    flowSB(sb append from, dir, sb append to)
+
+  def flowSB(from: => Unit, dir: Direction, to: => Unit)(implicit sb: StringBuilder): Unit =
+    dir match {
+      case Forwards  => from; arrow(); to
+      case Backwards => to  ; arrow(); from
+    }
+
+  def arrow()(implicit sb: StringBuilder): Unit =
+    sb append "->"
+
+  def eol()(implicit sb: StringBuilder): Unit =
+    sb append ';'
 
   private type Content = () => Unit
 
@@ -162,10 +162,10 @@ object Graphs {
               if (first)
                 first = false
               else
-                sb append ';'
+                eol()
             } else
               // Flow continuation
-              sb append "->"
+              arrow()
 
             sb append node
           }
@@ -179,10 +179,8 @@ object Graphs {
           toStepId <- flow(fromStep.id)
           toNode   <- getNode(toStepId)
         } {
-          sb append fromNode
-          sb append "->"
-          sb append toNode
-          sb append ';'
+          flowS(fromNode, Forwards, toNode)
+          eol()
         }
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -208,9 +206,9 @@ object Graphs {
 
       attrGroup("edge[weight=9]") {
         sb append StartNode
-        sb append "->"
+        arrow()
         implicitFlow(stepsNA, NA, NA.treeFilterN)
-        sb append "->"
+        arrow()
         sb append EndNode
       }
 
@@ -224,12 +222,23 @@ object Graphs {
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  // TODO implication graphs ignore dead reqs
-  def implicationFocused(focus: ReqId, imps: Implications.BiDir, reqs: Requirements, customReqTypes: CustomReqTypeIMap): DOT = {
+  def implicationFocused(focus: ReqId, fd: FilterDead, p: Project): DOT =
+    implicationFocused(focus, fd, p.implications, p.reqs, p.config.customReqTypes)
+
+  def implicationFocused(focus: ReqId, fd: FilterDead,
+                         imps: Implications.BiDir, reqs: Requirements, customReqTypes: CustomReqTypeIMap): DOT = {
     val Focus = "F"
 
-    val filter: ReqId => Boolean =
-      Memo(id => reqs.req(id).live(customReqTypes) :: Live)
+    val live: ReqId => Live =
+      Memo(reqs.req(_).live(customReqTypes))
+
+    val focusLive = live(focus)
+
+    val filter: Set[ReqId] => Set[ReqId] =
+      fd match {
+        case ShowDead => identity
+        case HideDead => _.filter(live(_) :: Live)
+      }
 
     val pubid: ReqId => String =
       PlainText.pubidByReqId(_, reqs, customReqTypes)
@@ -240,19 +249,26 @@ object Graphs {
         for (id <- ids) {
           sb append id.value
           labelAttr(pubid(id))
+          if (live(id) :: Dead)
+            sb append """[fillcolor="#dddddd" color="#777777" fontcolor="#666666"]"""
         }
 
       def traverse(dir: Direction) = {
         val graph    = imps(dir)
-        val direct   = graph(focus).filter(filter)
+        val direct   = filter(graph(focus))
         val indirect = DeclAndFlow(List.newBuilder[ReqId], List.newBuilder[Content])
 
-        def flow2(from: String, to: TraversableOnce[ReqId], unconstrain: Boolean): Content =
-          () => if (flow(from :: Nil, to.toIterator.map(_.value.toString), dir)) {
+        def flow(from: String, fromLive: Live, to: ReqId, unconstrain: Boolean): Content =
+          () => {
+            flowS(from, dir, to.value.toString)
+
+            if (fromLive :: Dead || live(to) :: Dead)
+              sb append """[color="#bbbbbb" style=dashed]"""
+
             if (unconstrain)
               sb append "[constraint=0]"
             else
-              sb append ';'
+              eol()
           }
 
         @tailrec
@@ -262,23 +278,25 @@ object Graphs {
               if (queueNext.nonEmpty)
                 go(queueNext.toList, Set.empty, seen)
 
-            case id :: queue2 =>
-              if (seen.contains(id))
+            case fromId :: queue2 =>
+              if (seen.contains(fromId))
                 go(queue2, queueNext, seen)
               else {
-                val next = graph(id).filter(filter)
-                if (!direct.contains(id))
-                  indirect.decl += id
-                val (x, y) = next.partition(direct.contains)
-                indirect.flow += flow2(id.value.toString, x, true)
-                indirect.flow += flow2(id.value.toString, y, false)
-                go(queue2, queueNext ++ next, seen + id)
+                val toIds = filter(graph(fromId))
+
+                if (!direct.contains(fromId))
+                  indirect.decl += fromId
+
+                for (toId <- toIds)
+                  indirect.flow += flow(fromId.value.toString, live(fromId), toId, direct contains toId)
+
+                go(queue2, queueNext ++ toIds, seen + fromId)
               }
           }
 
         go(Nil, direct, Set.empty)
 
-        val d = DeclAndFlow(direct, flow2(Focus, direct, false))
+        val d = DeclAndFlow(direct, direct.iterator.map(flow(Focus, focusLive, _, false)))
         val i = indirect.bimap(_.result(), _.result())
         DirectAndIndirect(d, i)
       }
@@ -297,13 +315,13 @@ object Graphs {
       sb append ']'
 
       sb append """node[fillcolor="#FFEDE2"]""";                           declare(backwards.indirect.decl)
-      attrGroup("""rank=same;node[fillcolor="#FFC19C"]"""                )(declare(backwards.direct.decl))
-      attrGroup("""rank=same;node[fillcolor="#7692B7" fontcolor=white]""")(declare(forwards .direct.decl))
+      attrGroup("""rank=same;node[fillcolor="#FFC19C"]"""                )(declare(backwards.direct  .decl))
+      attrGroup("""rank=same;node[fillcolor="#7692B7" fontcolor=white]""")(declare(forwards .direct  .decl))
       sb append """node[fillcolor="#D6E1EF"]""";                           declare(forwards .indirect.decl)
 
       sb append """edge[color="#FFC19C"]"""; backwards.indirect.flow.foreach(_())
-      sb append """edge[color="#C27040"]"""; backwards.direct.flow()
-      sb append """edge[color="#31537F"]"""; forwards .direct.flow()
+      sb append """edge[color="#C27040"]"""; backwards.direct  .flow.foreach(_())
+      sb append """edge[color="#31537F"]"""; forwards .direct  .flow.foreach(_())
       sb append """edge[color="#7692B7"]"""; forwards .indirect.flow.foreach(_())
     }
   }
