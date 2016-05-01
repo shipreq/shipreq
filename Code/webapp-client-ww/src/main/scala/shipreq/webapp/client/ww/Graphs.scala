@@ -223,14 +223,14 @@ object Graphs {
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   def implicationFocused(focus: ReqId, fd: FilterDead, p: Project): DOT =
-    implicationFocused(focus, fd, p.implications, p.reqs, p.config.customReqTypes)
+    implicationFocused(focus, fd, p.implications, p.reqs, p.config.reqTypes)
 
   def implicationFocused(focus: ReqId, fd: FilterDead,
-                         imps: Implications.BiDir, reqs: Requirements, customReqTypes: CustomReqTypeIMap): DOT = {
+                         imps: Implications.BiDir, reqs: Requirements, reqTypes: ReqTypes): DOT = {
     val Focus = "F"
 
     val live: ReqId => Live =
-      Memo(reqs.req(_).live(customReqTypes))
+      Memo(reqs.req(_).live(reqTypes))
 
     val focusLive = live(focus)
 
@@ -241,7 +241,7 @@ object Graphs {
       }
 
     val pubid: ReqId => String =
-      PlainText.pubidByReqId(_, reqs, customReqTypes)
+      PlainText.pubidByReqId(_, reqs, reqTypes)
 
     digraph { implicit sb =>
 

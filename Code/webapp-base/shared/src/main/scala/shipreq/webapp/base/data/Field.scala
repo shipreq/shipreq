@@ -103,8 +103,8 @@ object Field {
 
   implicit lazy val applicableReqTypesEquality: UnivEq[ApplicableReqTypes] = implicitly
 
-  def name(customReqTypes: CustomReqTypeIMap, tags: TagTree): Field => String = {
-    val cn: CustomField => String = CustomField.name(customReqTypes, tags)
+  def name(reqTypes: ReqTypes, tags: TagTree): Field => String = {
+    val cn: CustomField => String = CustomField.name(reqTypes, tags)
     val fn: Field       => String = {
       case f: StaticField => f.name
       case f: CustomField => cn(f)
@@ -113,7 +113,7 @@ object Field {
   }
 
   def nameP(p: Project): Field => String =
-    name(p.config.customReqTypes, p.config.tags)
+    name(p.config.reqTypes, p.config.tags)
 }
 
 import Field.ApplicableReqTypes
@@ -370,8 +370,8 @@ object CustomField {
     override def independentName = None
     override def keyO = None
 
-    def name(customReqTypes: CustomReqTypeIMap): String =
-      ReqType.name(customReqTypes)(reqTypeId)
+    def name(reqTypes: ReqTypes): String =
+      ReqType.name(reqTypes)(reqTypeId)
 
     override def live(cfg: ProjectConfig) =
       liveExplicitly & cfg.live(reqTypeId)
@@ -415,13 +415,13 @@ object CustomField {
     case f: Implication => f.copy(liveExplicitly = n)
   })
 
-  def name(customReqTypes: CustomReqTypeIMap, tags: TagTree): CustomField => String = {
+  def name(reqTypes: ReqTypes, tags: TagTree): CustomField => String = {
     case f: Text        => f.name
     case f: Tag         => f.name(tags)
-    case f: Implication => f.name(customReqTypes)
+    case f: Implication => f.name(reqTypes)
   }
 
-  def nameP(p: Project) = name(p.config.customReqTypes, p.config.tags)
+  def nameP(p: Project) = name(p.config.reqTypes, p.config.tags)
 
   implicit def equalImplication: UnivEq[Implication] = UnivEq.derive
   implicit def equalTag        : UnivEq[Tag]         = UnivEq.derive

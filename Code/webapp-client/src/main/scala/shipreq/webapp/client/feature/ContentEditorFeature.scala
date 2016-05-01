@@ -169,7 +169,7 @@ object ContentEditorFeature {
           pxProject.map { p =>
             val r = p.reqs.req(id)
 
-            def isLive = r.live(p.config.customReqTypes) :: Live
+            def isLive = r.live(p.config.reqTypes) :: Live
 
             def isFieldApplicable =
               (ofid match {
@@ -347,7 +347,7 @@ object ContentEditorFeature {
 
         def apply(req: GenericReq): StartEditFn = {
           val id        = req.id
-          val initial   = pxProject.value().config.reqTypeC(req.reqTypeId)
+          val initial   = pxProject.value().config.reqTypes.custom.need(req.reqTypeId)
           val pxChoices = ReqTypeSelector.pxChoices(initial, pxCustomReqTypes)
 
           val is = new State(ignoreEqual(initial), initial, pxChoices, t => UpdateContentCmd.SetGenericReqType(id, t.id))

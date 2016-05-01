@@ -66,7 +66,7 @@ object ProjectDslInternals {
 
   def projectState(p: Project) = ProjectState(p,
     nextId         = p.reqs.reqs.keySet.ifelse(_.isEmpty, _ => 1, _.max.value),
-    defaultReqType = p.config.customReqTypes.values.headOption.map(_.id),
+    defaultReqType = p.config.reqTypes.custom.values.headOption.map(_.id),
     reqs           = p.reqs.genericReqs,
     pubids         = p.reqs.pubids,
     reqCodeTrie    = p.reqCodes.trie,

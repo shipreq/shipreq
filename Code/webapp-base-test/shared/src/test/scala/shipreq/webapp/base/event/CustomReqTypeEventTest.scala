@@ -47,7 +47,7 @@ object CustomReqTypeEventTest extends TestSuite with CustomReqTypeEvents {
     'update {
       'ok - {
         var es = Vector(c1, u1)
-        def r = _assertPass(es: _*).config.customReqTypes.get(1).get
+        def r = _assertPass(es: _*).config.reqTypes.custom.get(1).get
         assertEq(r, CustomReqType(1, "M", Set("MF"), mfName, ImplicationRequired, Live))
 
         es :+= UpdateCustomReqType(1, nev(Mnemonic("X"), Name("xxx")))
@@ -86,7 +86,7 @@ object CustomReqTypeEventTest extends TestSuite with CustomReqTypeEvents {
         def test(grLiveImp: Live)(e: Event): Unit =
           t(e) { name =>
             val r = t.p.reqs.genericReqs.need(reqId)
-            assertEq(s"$name - req.live", r live t.p.config.customReqTypes, grLiveImp)
+            assertEq(s"$name - req.live", r live t.p.config.reqTypes, grLiveImp)
             assertEq(s"$name - req.expLive", r.liveExplicitly, Live)
             assertEq(s"$name - RC.active?", t.p.reqCodes(rc.value).isActive, grLiveImp :: Live)
           }

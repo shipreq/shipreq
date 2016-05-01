@@ -99,7 +99,7 @@ object Parsers {
 
     val lookupReq: (ReqType.Mnemonic, ReqTypePos) => Option[ReqId] =
       (m, n) =>
-        project.config.reqTypesByMnemonic.get(m)
+        project.config.reqTypes.allByMnemonic.get(m)
           .map(t => PubidT(t.reqTypeId, n))
           .flatMap(project.reqs.pubids.apply)
 

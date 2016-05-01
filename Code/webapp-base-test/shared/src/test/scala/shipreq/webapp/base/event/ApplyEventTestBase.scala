@@ -130,7 +130,7 @@ object ApplyEventTestFns {
 
     val cfg = p.config
     assertEq("Σ CustomIssueTypes", cfg.customIssueTypes.size, customIssueTypes)
-    assertEq("Σ CustomReqTypes", cfg.customReqTypes.size, customReqTypes)
+    assertEq("Σ CustomReqTypes", cfg.reqTypes.custom.size, customReqTypes)
     assertEq("Σ Tags", tags, cfg.tags.size)
     assertEq("Σ CustomFields", customFields, cfg.fields.customFields.size)
     assertEq("Σ Generic Reqs", genericReqs, p.reqs.genericReqs.size)

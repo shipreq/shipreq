@@ -82,7 +82,7 @@ object MakeEvent {
         CreateCustomReqType(id, values)
 
       case CrudAction.Update(id, vs) =>
-        project.config.reqType(id) match {
+        project.config.reqTypes.need(id) match {
           case cur: CustomReqType =>
             val (mnemonic, name, imp) = vs
             val vs2 = gdUnequalValues(CustomReqTypeGD, cur, "")

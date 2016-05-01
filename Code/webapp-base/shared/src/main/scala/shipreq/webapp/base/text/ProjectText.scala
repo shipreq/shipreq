@@ -101,9 +101,9 @@ object ProjectText {
           import GenericReq.ImplicitLiveStatus._
           r.liveExplicitly match { // explicit must be checked before implicit
             case Live =>
-              r.implicitLiveStatus(p.config.customReqTypes) match {
+              r.implicitLiveStatus(p.config.reqTypes) match {
                 case NoImpact      => `n/a` // req is live
-                case ReqTypeIsDead => reqTypeIsDead(pt, p.config.reqType(r.pubid.reqTypeId))
+                case ReqTypeIsDead => reqTypeIsDead(pt, p.config.reqTypes.need(r.pubid.reqTypeId))
               }
             case Dead => latestReason(pt, r.id)
           }
@@ -133,7 +133,7 @@ abstract class ProjectText[Out](project: Project, val ctx: ProjectText.Context) 
 
   val reqTitle: Req => Out =
     memoByReqId {
-      case gr: GenericReq => format(gr live cfg.customReqTypes, gr.title)
+      case gr: GenericReq => format(gr live cfg.reqTypes, gr.title)
       case uc: UseCase    => format(uc.liveUC, uc.title)
     }
 
@@ -150,7 +150,7 @@ abstract class ProjectText[Out](project: Project, val ctx: ProjectText.Context) 
         case Some(m) =>
           val liveField = cfg.fields.customFields.need(fid).live(cfg)
           memoByReqId(r =>
-            m.get(r.id) map (format1(liveField & r.live(cfg.customReqTypes), _)))
+            m.get(r.id) map (format1(liveField & r.live(cfg.reqTypes), _)))
         case None =>
           Function const None
       }

@@ -48,7 +48,7 @@ object HashScope {
       case WholeProject    => h.hashProject          hash p
       case Config          => h.hashProjectConfig    hash p.config
       case CfgIssueTypes   => h.hashCustomIssueTypes hash p.config.customIssueTypes
-      case CfgReqTypes     => h.hashCustomReqTypes   hash p.config.customReqTypes
+      case CfgReqTypes     => h.hashReqTypes         hash p.config.reqTypes
       case CfgFields       => h.hashFieldSet         hash p.config.fields
       case CfgTags         => h.hashTagTree          hash p.config.tags
       case Content         => h.hashProjectContent   hash p

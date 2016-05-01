@@ -2,12 +2,15 @@
 package shipreq.webapp.base.data
 
 import monocle.macros.Lenses
-import scalaz.{Order, Ordering}
+import scalaz.Order
 import scalaz.std.anyVal.intInstance
 import scalaz.syntax.order._
-import shipreq.base.util.{NonEmptyVector, Util, UtilMacros}
+import shipreq.base.util._
+import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes._
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.util.Must._
+import DataImplicits._
 import ReqType.Mnemonic
 
 /** type [[ReqTypeId]] = [[StaticReqType]] | [[CustomReqTypeId]] */
@@ -34,8 +37,8 @@ sealed trait ReqType {
 object ReqType extends ReqTypeEquality {
   final case class Mnemonic(value: String) extends TaggedString
 
-  def name(customReqTypes: CustomReqTypeIMap): ReqTypeId => String =
-    _.foldId(_.name, customReqTypes.need(_).name)
+  def name(reqTypes: ReqTypes): ReqTypeId => String =
+    _.foldId(_.name, reqTypes.need(_).name)
 }
 
 // =====================================================================================================================
@@ -58,9 +61,6 @@ object StaticReqType {
 
   val values: NonEmptyVector[StaticReqType] =
     UtilMacros.adtValues[StaticReqType]
-
-  val valueStream: Stream[StaticReqType] =
-    values.toStream
 
   implicit val order = Util.univEqAndArbitraryOrder(values.whole)
 
@@ -101,6 +101,51 @@ object CustomReqType {
 
 // =====================================================================================================================
 
+@Lenses
+final case class ReqTypes(custom: IMap[CustomReqTypeId, CustomReqType]) {
+
+  def need(i: ReqTypeId): ReqType =
+    i.foldId[ReqType](identity, custom.need)
+
+  val liveCustomReqTypes: Vector[CustomReqType] =
+    custom.valuesIterator.filter(_.live :: Live).toVector
+
+  val all: NonEmptyVector[ReqType] =
+    StaticReqType.values ++ custom.valuesIterator
+
+  lazy val allByMnemonic: Map[ReqType.Mnemonic, ReqType] =
+    all.iterator.flatMap(t => t.allMnemonics.iterator.map((_, t))).toMap
+
+  lazy val order: Map[ReqTypeId, Int] =
+    MutableArray(all.whole)
+      .sortBySchwartzian(_.mnemonic.value)
+      .map(_.reqTypeId)
+      .iterator
+      .zipWithIndex
+      .toMap
+
+  lazy val pubidOrdering: Ordering[Pubid] =
+    new Ordering[Pubid] {
+      val rto = order
+      override def compare(x: Pubid, y: Pubid): Int =
+        (rto(x.reqTypeId) - rto(y.reqTypeId)) match {
+          case 0 => x.pos.value - y.pos.value
+          case n => n
+        }
+    }
+}
+
+object ReqTypes {
+  val empty: ReqTypes =
+    ReqTypes(emptyDataMap(CustomReqType))
+
+  implicit def univEq: UnivEq[ReqTypes] = UnivEq.derive
+
+  type Custom = IMap[CustomReqTypeId, CustomReqType]
+}
+
+// =====================================================================================================================
+
 sealed trait ReqTypeEquality {
   final implicit def univEq: UnivEq[ReqType] = UnivEq.derive
 }
@@ -111,8 +156,8 @@ object ReqTypeId {
     override def order(a: ReqTypeId, b: ReqTypeId) = (a, b) match {
         case (x: CustomReqTypeId, y: CustomReqTypeId) => Order[CustomReqTypeId].order(x, y)
         case (x: StaticReqType  , y: StaticReqType  ) => StaticReqType.order(x, y)
-        case (x: StaticReqType  , y: CustomReqTypeId) => Ordering.LT
-        case (x: CustomReqTypeId, y: StaticReqType  ) => Ordering.GT
+        case (x: StaticReqType  , y: CustomReqTypeId) => scalaz.Ordering.LT
+        case (x: CustomReqTypeId, y: StaticReqType  ) => scalaz.Ordering.GT
       }
   }
 }

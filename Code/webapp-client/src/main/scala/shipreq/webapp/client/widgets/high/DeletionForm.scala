@@ -87,13 +87,13 @@ object DeletionForm {
     val imps_>    = p.implications.forwards
     val imps_<    = p.implications.backwards
 
-    val reqOrder = Ordering.by((_: Req).pubid)(p.config.pubidOrdering)
+    val reqOrder = Ordering.by((_: Req).pubid)(p.config.reqTypes.pubidOrdering)
 
     def sortReqs(a: Array[Req]): Unit =
       java.util.Arrays.sort(a, reqOrder)
 
     val reqFilter: Req => Boolean =
-      _.live(p.config.customReqTypes) :: Live
+      _.live(p.config.reqTypes) :: Live
 
     def lookupAll(reqIds: TraversableOnce[ReqId]): Array[Req] = {
       val a = reqIds.toIterator.map(lookupReq).filter(reqFilter).toArray
@@ -134,7 +134,7 @@ object DeletionForm {
 
     // Copy-paste with Backend#render
     def liveGivenState(r: Req): Live =
-      (Dead <~ select.contains(r.id)) & r.live(p.config.customReqTypes)
+      (Dead <~ select.contains(r.id)) & r.live(p.config.reqTypes)
 
     // Decide which implied reqs to recommend cascading deletion
     // (I'm sure there's a smarter way but this will do)
@@ -295,7 +295,7 @@ object DeletionForm {
 
     val project = $.props.map(_.project).runNow()
     val widgets = $.props.map(_.widgets).runNow()
-    val customReqTypes = project.config.customReqTypes
+    val customReqTypes = project.config.reqTypes
 
     val visibleRCGs: Set[ReqCodeId] = $.props.runNow().deletableGroups.map(_.id)(collection.breakOut)
 

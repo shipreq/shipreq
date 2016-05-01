@@ -122,7 +122,8 @@ object BinCodecData {
   implicit val pickleCustomIssueType : Pickler[CustomIssueType    ] = pickleCaseClass
   implicit val pickleCustomIssueTypes: Pickler[CustomIssueTypeIMap] = pickleIMapD
   implicit val pickleCustomReqType   : Pickler[CustomReqType      ] = pickleCaseClass
-  implicit val pickleCustomReqTypes  : Pickler[CustomReqTypeIMap  ] = pickleIMapD
+  implicit val pickleCustomReqTypes  : Pickler[ReqTypes.Custom    ] = pickleIMapD
+  implicit val pickleReqTypes        : Pickler[ReqTypes           ] = pickleCaseClass
 
   implicit val pickleTagId        : Pickler[TagId        ] = pickleADT
   implicit val pickleApplicableTag: Pickler[ApplicableTag] = pickleCaseClass

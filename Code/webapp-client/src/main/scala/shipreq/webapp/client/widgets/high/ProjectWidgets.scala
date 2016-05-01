@@ -134,7 +134,7 @@ final class ProjectWidgets private(project    : Project,
     type TitleFn = Req => Option[String]
 
     private val defaultLiveFn: LiveFn =
-      _.live(project.config.customReqTypes)
+      _.live(project.config.reqTypes)
 
     private val defaultTitleFn: TitleFn =
       r => Some(plainText.reqTitle(r))
@@ -170,7 +170,7 @@ final class ProjectWidgets private(project    : Project,
 
     def toRef(c: ReqCode.Value, r: ReqId): ReactElement = {
       val req = project.reqs.req(r)
-      ref(c, *.reqRef(req live project.config.customReqTypes), plainText reqTitle req)
+      ref(c, *.reqRef(req live project.config.reqTypes), plainText reqTitle req)
     }
 
     def toGroup(c: ReqCode.Value, g: ReqCodeGroup): ReactElement =
@@ -193,13 +193,13 @@ final class ProjectWidgets private(project    : Project,
 
   val reqTypeFull: ReqTypeId => ReactElement =
     id => {
-      val rt = project.config.reqType(id)
+      val rt = project.config.reqTypes.need(id)
       <.span(s"${rt.mnemonic.value}: ${rt.name}")
     }
 
   val reqTypeShort: ReqTypeId => ReactElement =
     memo { id =>
-      val rt = project.config.reqType(id)
+      val rt = project.config.reqTypes.need(id)
       <.span(
         *.reqTypeShort(rt.live),
         ^.title := rt.name,

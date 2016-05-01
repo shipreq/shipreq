@@ -14,16 +14,16 @@ object ProjectConfig {
 
   val empty: ProjectConfig = {
     val cit = emptyDataMap(CustomIssueType)
-    val crt = emptyDataMap(CustomReqType)
+    val rt  = ReqTypes.empty
     val fs  = FieldSet(emptyDataMap(CustomField), StaticField.values.whole)
     val tt  = TagTree.empty
-    ProjectConfig(cit, crt, fs, tt)
+    ProjectConfig(cit, rt, fs, tt)
   }
 }
 
 @Lenses
 final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
-                               customReqTypes  : CustomReqTypeIMap,
+                               reqTypes        : ReqTypes,
                                fields          : FieldSet,
                                tags            : TagTree) {
 
@@ -76,42 +76,6 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
   lazy val liveCustomTextFields =
     customTextFields.filter(_.live(this) :: Live)
 
-  def reqType(i: ReqTypeId): ReqType =
-    i.foldId[ReqType](identity, customReqTypes.need)
-
-  def reqTypeC(i: CustomReqTypeId): CustomReqType =
-    reqType(i) match {
-      case c: CustomReqType => c
-      case f                => mustNotHappen(s"$f must be a CustomReqType")
-    }
-
-  lazy val liveCustomReqTypes: Stream[CustomReqType] =
-    customReqTypes.values.toStream.filter(_.live :: Live)
-
-  lazy val reqTypes: Stream[ReqType] =
-    (customReqTypes.values.toStream: Stream[ReqType]) append
-      (StaticReqType.valueStream   : Stream[ReqType])
-
-  lazy val reqTypesByMnemonic: Map[ReqType.Mnemonic, ReqType] =
-    reqTypes.flatMap(t => t.allMnemonics.toStream.map((_, t))).toMap
-
-  lazy val reqTypeOrder: Map[ReqTypeId, Int] =
-    reqTypes.map(_.tmap2(_.mnemonic.value, _.reqTypeId))
-      .sortBy(_._1)
-      .map(_._2)
-      .zipWithIndex
-      .toMap
-
-  lazy val pubidOrdering: Ordering[Pubid] =
-    new Ordering[Pubid] {
-      val rto = reqTypeOrder
-      override def compare(x: Pubid, y: Pubid): Int =
-        (rto(x.reqTypeId) - rto(y.reqTypeId)) match {
-          case 0 => x.pos.value - y.pos.value
-          case n => n
-        }
-    }
-
   lazy val liveTagFieldDistribution =
     TagFieldDistribution(this, _.live(this) :: Live)
 
@@ -130,7 +94,6 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
   def hashRefLookup(key: String): Option[HashRefTarget] =
     hashRefLookupM.get(key.toLowerCase)
 
-  def live(id: TagId          ): Live = tags.need(id).tag.live
-  def live(id: ReqTypeId      ): Live = id.foldId(_.live, live)
-  def live(id: CustomReqTypeId): Live = customReqTypes.need(id).live
+  def live(id: TagId    ): Live = tags.need(id).tag.live
+  def live(id: ReqTypeId): Live = reqTypes.need(id).live
 }

@@ -55,7 +55,7 @@ object ParsersTest extends TestSuite {
     val genericReqTitles =
       p.reqs.reqs.values
         .filterT[GenericReq]
-        //.filter(_.live(p.config.customReqTypes) :: Live)
+        //.filter(_.live(p.config.reqTypes) :: Live)
         .map(_.title)
 
     val customTextFieldValues =

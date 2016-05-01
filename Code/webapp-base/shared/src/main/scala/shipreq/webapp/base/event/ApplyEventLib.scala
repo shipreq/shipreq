@@ -103,7 +103,7 @@ private[event] object ApplyEventLib {
     whenUntrusted(
       for {
         p  <- SE.get
-        rt <- imapNeed(p.config.customReqTypes)(id)
+        rt <- imapNeed(p.config.reqTypes.custom)(id)
         _  <- ensureLive(rt.live)(show(id))
       } yield ())
 

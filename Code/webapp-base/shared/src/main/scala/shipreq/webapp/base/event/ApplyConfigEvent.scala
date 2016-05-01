@@ -50,7 +50,7 @@ trait ApplyConfigEvent {
   object CustomReqTypeEvents {
     val ^    = CustomReqTypeGD
     val GD   = GenericDataApp[CustomReqType](^)
-    val imap = IMapStoreL(Project.customReqTypes)(CustomReqType.live)
+    val imap = IMapStoreL(Project.reqTypes ^|-> ReqTypes.custom)(CustomReqType.live)
 
     val validateName     = validateA(V.reqType.nameU, FieldNames.name)
     val validateMnemonic = validateI(V.reqType.mnemonicU, FieldNames.mnemonic)(_.value)

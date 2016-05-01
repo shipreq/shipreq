@@ -214,7 +214,7 @@ object Sorter {
     val applicability = Applicability(p)
 
     @inline def reqTypesToMnemonicOrder =
-      p.config.reqTypeOrder
+      p.config.reqTypes.order
 
     lazy val tagByNameOrder: TagOrder =
       DataLogic.tagOrderByName(p.config.tags)

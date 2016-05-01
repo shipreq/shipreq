@@ -46,7 +46,7 @@ object ReqTypeSelector {
   // ===================================================================================================================
 
   def pxCustomReqTypes(p: Px[Project]): Px[Set[A]] =
-    p.map(_.config.customReqTypes.values.toSet)
+    p.map(_.config.reqTypes.custom.values.toSet)
 
   def pxChoices(initial: A, pxCustomReqTypes: Px[Set[A]]): Px[NonEmptySet[A]] =
     pxCustomReqTypes

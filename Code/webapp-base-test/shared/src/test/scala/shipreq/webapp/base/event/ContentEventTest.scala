@@ -624,8 +624,8 @@ object ContentEventTest extends TestSuite {
 
             def req(id: GenericReqId): R =
               p.reqs.genericReqs.need(id) match {
-                case r if r.live(p.config.customReqTypes) :: Live => live
-                case _                                            => fmt(p.deletionReasons getLatest id)
+                case r if r.live(p.config.reqTypes) :: Live => live
+                case _                                      => fmt(p.deletionReasons getLatest id)
               }
 
             // RCGs don't get reasons

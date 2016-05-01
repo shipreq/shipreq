@@ -64,7 +64,6 @@ package object data {
 
   type HashRefTarget       = ApplicableTag \/ CustomIssueType
   type CustomIssueTypeIMap = IMap[CustomIssueTypeId, CustomIssueType]
-  type CustomReqTypeIMap   = IMap[CustomReqTypeId, CustomReqType]
   type TagTree             = IMap[TagId, TagInTree]
   type GenericReqIMap      = IMap[GenericReqId, GenericReq]
   type UseCaseIMap         = IMap[UseCaseId, UseCase]

@@ -73,7 +73,7 @@ object FilterAst {
     @inline implicit def autoR(a: FilterAst): R = \/-(a)
     @inline def error(msg: String) = -\/(msg)
 
-    val reqTypesByMnemonic = p.config.reqTypesByMnemonic
+    val reqTypesByMnemonic = p.config.reqTypes.allByMnemonic
 
     def byAttr(f: Attr => FilterAst, n: String): R =
       Attr(n) match {

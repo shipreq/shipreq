@@ -497,8 +497,11 @@ object ShowSrcDataImp {
   implicit val customReqType: ShowSrc[CustomReqType] =
     data((s, a) => s.cc6("CustomReqType", CustomReqType unapply a))
 
-  implicit val customReqTypeIMap: ShowSrc[CustomReqTypeIMap] =
+  implicit val customReqTypeIMap: ShowSrc[ReqTypes.Custom] =
     "customReqTypes" @@ imapI("CustomReqType")
+
+  implicit val reqTypes: ShowSrc[ReqTypes] =
+    data((s, a) => s.cc1("ReqTypes", ReqTypes unapply a))
 
   implicit val applicableReqTypes: ShowSrc[Field.ApplicableReqTypes] = isubset
 

@@ -71,7 +71,7 @@ class CreationInterface($               : CompState.Access[State],
       val blank = Choice[SelType](None, "", Enabled)
       val rcg   = Choice[SelType](Some(ReqCodeGroupType), UiText.reqCodeGroup, Enabled)
       val uc    = Choice[SelType](Some(UseCaseType), UiText.useCase, Enabled)
-      val grs   = MutableArray(p.config.liveCustomReqTypes)
+      val grs   = MutableArray(p.config.reqTypes.liveCustomReqTypes)
                     .map(rt => Choice[SelType](Some(GenericReqType(rt.id)), rt.fullName, Enabled))
                     .sortBy(_.label)
       NonEmptyVector(blank) ++ grs.array :+ uc :+ rcg

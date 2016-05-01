@@ -32,7 +32,7 @@ trait ApplyContentEvent {
 
     def ensureLiveReq(req: Req): SE[Unit] =
       whenUntrusted(
-        SE.test(p => req.live(p.config.customReqTypes) :: Live, s"${show(req)} is dead."))
+        SE.test(p => req.live(p.config.reqTypes) :: Live, s"${show(req)} is dead."))
 
     def ensureLiveTextFieldId(id: CustomField.Text.Id): SE[Unit] =
       whenUntrusted(

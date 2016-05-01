@@ -75,7 +75,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
       (t, w)
     }
 
-    val live = req.live(project.config.customReqTypes)
+    val live = req.live(project.config.reqTypes)
 
     val filterDead = live match {
       case Live => upstreamFD
@@ -390,7 +390,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
               case Dead =>
                 TagMod(
                   UiText.Life.dead + ".",
-                  req.allowLiveChange(project.config.customReqTypes).option(
+                  req.allowLiveChange(project.config.reqTypes).option(
                     <.button(
                       ^.onClick --> restore(req.id),
                       UiText.Life.restore)))

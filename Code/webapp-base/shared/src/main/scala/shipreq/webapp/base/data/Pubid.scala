@@ -22,7 +22,7 @@ final case class ReqTypePos(value: Int) extends TaggedInt
  */
 final case class PubidT[+T <: ReqTypeId](reqTypeId: T, pos: ReqTypePos) {
   def external(p: Project): ExternalPubid = {
-    val rt = p.config.reqType(reqTypeId)
+    val rt = p.config.reqTypes.need(reqTypeId)
     ExternalPubid(rt.mnemonic, pos)
   }
 }

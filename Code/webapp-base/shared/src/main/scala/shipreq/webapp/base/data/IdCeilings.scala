@@ -54,7 +54,7 @@ object IdCeilings {
     def imapKeys[K <: TaggedInt](m: IMap[K, _]) = maxOf(m.keysIterator)
     IdCeilings(
       customIssueType = imapKeys(p.config.customIssueTypes),
-      customReqType   = imapKeys(p.config.customReqTypes),
+      customReqType   = imapKeys(p.config.reqTypes.custom),
       customField     = imapKeys(p.config.fields.customFields),
       tag             = imapKeys(p.config.tags),
       req             = imapKeys(p.reqs.genericReqs) max imapKeys(p.reqs.useCases.imap),

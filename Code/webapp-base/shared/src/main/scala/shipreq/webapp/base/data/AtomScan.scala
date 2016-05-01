@@ -75,7 +75,7 @@ object AtomScan {
     }
 
     // Parse reqs
-    val rts = p.config.customReqTypes
+    val rts = p.config.reqTypes
     p.reqs.reqs.values.foreach {
 
       case r: GenericReq =>

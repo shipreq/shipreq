@@ -9,8 +9,9 @@ import shipreq.webapp.base.text.Text
 object TestOptics {
 
   val customReqTypesLive: Traversal[Project, Live] =
-    Project.customReqTypes ^|->>
-    IMap.traversal         ^|->
+    Project.reqTypes ^|->
+    ReqTypes.custom  ^|->>
+    IMap.traversal   ^|->
     CustomReqType.live
 
 

@@ -69,12 +69,12 @@ object GenerateProject {
     val reqTypeIds      = StaticReqType.values ++ reqtypes.keys
     val reqTypeIdSet    = reqTypeIds.whole.toSet
     val fields          = sample($.fieldSet2(reqTypeIdSet, tags.keySet, reqtypes.keySet), Size.CfgFields)
-    val cfg             = ProjectConfig(issues, reqtypes, fields, tags)
+    val cfg             = ProjectConfig(issues, ReqTypes(reqtypes), fields, tags)
     val atagIds         = cfg.tags.valuesIterator.map(_.tag).filterT[ApplicableTag].map(_.id).toSet
     val reqsWithoutText = firstSample($.reqsWithoutText(cfg, genericReqCount, useCaseCount), 20)
     val reqIdSet        = reqsWithoutText.reqs.keySet
     val reqIdG          = Gen tryGenChoose reqIdSet.toIndexedSeq
-    val liveReqIds      = reqsWithoutText.reqs.valuesIterator.filter(_.live(cfg.customReqTypes) :: Live).map(_.id)
+    val liveReqIds      = reqsWithoutText.reqs.valuesIterator.filter(_.live(cfg.reqTypes) :: Live).map(_.id)
     val liveReqIdG      = Gen tryGenChoose liveReqIds.toIndexedSeq
     val reqCodeDataG    = $.reqCode.data(liveReqIdG, reqIdG)
     val reqCodesG       = $.reqCodes($.reqCode.trie(reqCodeDataG, Size.ReqCodeDepth))

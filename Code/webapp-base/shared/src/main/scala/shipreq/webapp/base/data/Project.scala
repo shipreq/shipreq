@@ -13,7 +13,7 @@ import DataImplicits._
 
 object Project {
   val customIssueTypes    : Lens[Project, CustomIssueTypeIMap] = config ^|-> ProjectConfig.customIssueTypes
-  val customReqTypes      : Lens[Project, CustomReqTypeIMap  ] = config ^|-> ProjectConfig.customReqTypes
+  val reqTypes            : Lens[Project, ReqTypes           ] = config ^|-> ProjectConfig.reqTypes
   val fields              : Lens[Project, FieldSet           ] = config ^|-> ProjectConfig.fields
   val tags                : Lens[Project, TagTree            ] = config ^|-> ProjectConfig.tags
   val genericReqs         : Lens[Project, GenericReqIMap     ] = reqs ^|-> Requirements.genericReqs
@@ -60,7 +60,7 @@ final case class Project(config         : ProjectConfig,
     //ShowSize(this).showTree
 
   lazy val deadReqIds: Set[ReqId] =
-    reqs.reqs.filterV(_.live(config.customReqTypes) :: Dead).keySet
+    reqs.reqs.filterV(_.live(config.reqTypes) :: Dead).keySet
 
   lazy val deadReqCount: Int =
     deadReqIds.size
@@ -68,7 +68,7 @@ final case class Project(config         : ProjectConfig,
   lazy val reqTypeCount: LDStats[ReqTypeId, Int] = {
     val b = new LDStats.Builder[ReqTypeId, Int]
     for (r <- reqs.reqs.values) {
-      val live = r.live(config.customReqTypes)
+      val live = r.live(config.reqTypes)
       b(r.reqTypeId).mod(live)(_ + 1)
     }
     b.result()
@@ -118,7 +118,7 @@ final case class Project(config         : ProjectConfig,
     findReq(externalPubid.mnemonic, externalPubid.pos)
 
   def findReq(mnemonic: ReqType.Mnemonic, pos: ReqTypePos): PubidQueryError \/ Req =
-    config.reqTypesByMnemonic.get(mnemonic) match {
+    config.reqTypes.allByMnemonic.get(mnemonic) match {
       case None =>
         -\/(PubidQueryError.InvalidReqType)
       case Some(rt) =>

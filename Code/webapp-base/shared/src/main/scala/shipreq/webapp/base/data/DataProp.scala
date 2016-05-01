@@ -107,16 +107,16 @@ object DataProp {
   }
 
   object customReqTypes {
-    type T = CustomReqTypeIMap
+    type T = ReqTypes
 
     def uniqueMnemonics =
-      Prop.distinctI("mnemonic", (_: T).valuesIterator.flatMap(_.allMnemonics).map(_.value))
+      Prop.distinctI("mnemonic", (_: T).custom.valuesIterator.flatMap(_.allMnemonics).map(_.value))
 
     def uniqueNames =
-      Prop.distinctI("name", (_: T).valuesIterator.map(_.name))
+      Prop.distinctI("name", (_: T).custom.valuesIterator.map(_.name))
 
     def each =
-      customReqType.all.forall[T, Iterator](_.valuesIterator)
+      customReqType.all.forall[T, Iterator](_.custom.valuesIterator)
 
     val all =
       (uniqueMnemonics ∧ uniqueNames ∧ each) rename "CustomReqTypes"
@@ -466,7 +466,7 @@ object DataProp {
 
     def constituents = (
         customIssueTypes.all.contramap[P](_.customIssueTypes)
-      ∧   customReqTypes.all.contramap[P](_.customReqTypes)
+      ∧   customReqTypes.all.contramap[P](_.reqTypes)
       ∧           fields.all.contramap[P](_.fields)
       ∧             tags.all.contramap[P](_.tags)
     ) rename "constituents"
@@ -481,7 +481,7 @@ object DataProp {
       type TR = (P, Refs)
 
       def mkRefs(p: ProjectConfig): Refs = Refs(
-        p.reqTypes.map(_.reqTypeId)(collection.breakOut),
+        p.reqTypes.all.whole.map(_.reqTypeId)(collection.breakOut),
         p.tags.keySet)
 
       def whitelist[A](refs: TR => Set[A])(name: String, test: P => TraversableOnce[A]) =
@@ -529,7 +529,7 @@ object DataProp {
 
     def liveReqCodeRequiresLiveTarget =
       Prop.whitelist[Project]("Live ReqCode requires Live Target")(
-        p => p.reqs.reqs.valuesIterator.filter(_.live(p.config.customReqTypes) :: Live).map(_.id).toSet,
+        p => p.reqs.reqs.valuesIterator.filter(_.live(p.config.reqTypes) :: Live).map(_.id).toSet,
         _.reqCodes.activeReqCodesByReqId.keySet)
 
     def validRefs = {
@@ -541,7 +541,7 @@ object DataProp {
         p.reqs.reqs.valuesIterator.map(_.id).toSet,
         p.reqCodes.idSet,
         p.reqs.useCases.stepIterator.map(_.id).toSet,
-        p.config.reqTypes.map(_.reqTypeId)(collection.breakOut),
+        p.config.reqTypes.all.whole.map(_.reqTypeId)(collection.breakOut),
         p.config.tags.keySet)
 
       def whitelist[A](refs: TR => Set[A])(name: String, test: P => TraversableOnce[A]) =

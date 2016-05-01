@@ -129,7 +129,7 @@ object ShowSize {
   implicit def customIssueTypes: ShowSize[CustomIssueTypeIMap] =
     ShowSize.lift(m => Node("Custom issue types", m.size))
 
-  implicit def customReqTypes: ShowSize[CustomReqTypeIMap] =
+  implicit def customReqTypes: ShowSize[ReqTypes.Custom] =
     ShowSize.lift(m => Node("Custom req types", m.size))
 
   implicit def fieldSet: ShowSize[FieldSet] =
@@ -184,7 +184,7 @@ object ShowSize {
       })
 
   implicit def projectConfig: ShowSize[ProjectConfig] =
-    ShowSize.data4("Project config", _.customIssueTypes, _.customReqTypes, _.fields, _.tags)
+    ShowSize.data4("Project config", _.customIssueTypes, _.reqTypes.custom, _.fields, _.tags)
 
   def projectContent: ShowSize[Project] =
     ShowSize.data5("Project content", _.reqs, _.reqCodes, _.reqText, _.reqTags, _.implications)

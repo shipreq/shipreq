@@ -222,9 +222,9 @@ private[fields] object MainTable {
 
     val fieldOrder = project.config.fields.order
 
-    val appReqTypesEditor = new AppReqTypesEditor(project.config.customReqTypes.values)
+    val appReqTypesEditor = new AppReqTypesEditor(project.config.reqTypes.custom.values)
     val tagSelector       = SelectOneStartNone.tag(project.config.tags)
-    val reqTypeSelector   = SelectOneStartNone.reqType(project.config.reqTypes)
+    val reqTypeSelector   = SelectOneStartNone.reqType(project.config.reqTypes.all.whole)
 
     val reqtypesE = appReqTypesEditor.editor($ zoomL State.appReqTypeStates)
                       .cmapA[(V.S, ApplicableReqTypes)](_.map1(_._2))
@@ -261,7 +261,7 @@ private[fields] object MainTable {
           case CustomFieldType.Tag         => project.config.tags.values.toStream
                                                 .filter(TagInTree.filterLive)
                                                 .exists(t => !s.tagFieldTagIds.contains(t.id))
-          case CustomFieldType.Implication => project.config.reqTypes
+          case CustomFieldType.Implication => project.config.reqTypes.all.whole
                                                 .filter(_.live :: Live)
                                                 .exists(r => !s.implFieldReqTypeIds.contains(r.reqTypeId))
         }
@@ -572,7 +572,7 @@ private[fields] object MainTable {
       override def renderDead(s: S, dragHandle: ReactTag, rs: RowStatus, f: CustomField.Implication, restoreButton: TagMod): ReactTag =
         renderRow(rs)(
           dragHandle = dragHandle,
-          name       = f.name(project.config.customReqTypes),
+          name       = f.name(project.config.reqTypes),
           refkey     = unusedField,
           mandatory  = staticMandatoryCheckbox(f.mandatory),
           reqtypes   = appReqTypesEditor.renderReadOnly(f.reqTypes),

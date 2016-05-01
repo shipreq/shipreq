@@ -87,7 +87,7 @@ object DataLogic {
   // Implications
 
   def impValueFilter(pc: ProjectConfig, fd: FilterDead): Req => Boolean =
-    fd.filterFnA((_: Req).live(pc.customReqTypes))
+    fd.filterFnA((_: Req).live(pc.reqTypes))
 
   def customFieldImps(p: Project, filter: Req => Boolean): CustomField.Implication => ReqId => Set[Pubid] =
     f => {
@@ -107,7 +107,7 @@ object DataLogic {
 //    id => f(pc.customField(id))
 
   def pubidSortKeyFn(pc: ProjectConfig): Pubid => (Int, Int) = {
-    val reqTypeOrder = pc.reqTypeOrder
+    val reqTypeOrder = pc.reqTypes.order
     p => (reqTypeOrder(p.reqTypeId), p.pos.value)
   }
 }

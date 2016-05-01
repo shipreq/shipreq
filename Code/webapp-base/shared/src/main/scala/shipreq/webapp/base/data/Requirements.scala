@@ -44,10 +44,10 @@ sealed abstract class ReqT[+RT <: ReqTypeId] {
   val pubid: PubidT[RT]
   val title: Text.AnyOptional
 
-  def live(customReqTypes: CustomReqTypeIMap): Live
+  def live(reqTypes: ReqTypes): Live
 
   /** Can this req's (explicit-) live state be changed? */
-  def allowLiveChange(customReqTypes: CustomReqTypeIMap): Permission
+  def allowLiveChange(reqTypes: ReqTypes): Permission
 
   @inline final def reqTypeId: RT =
     pubid.reqTypeId
@@ -78,17 +78,17 @@ final case class GenericReq(id            : GenericReqId,
 
   import GenericReq.ImplicitLiveStatus
 
-  def implicitLiveStatus(customReqTypes: CustomReqTypeIMap): ImplicitLiveStatus =
-    customReqTypes.need(pubid.reqTypeId).live match {
+  def implicitLiveStatus(reqTypes: ReqTypes): ImplicitLiveStatus =
+    reqTypes.need(pubid.reqTypeId).live match {
       case Live => ImplicitLiveStatus.NoImpact
       case Dead => ImplicitLiveStatus.ReqTypeIsDead
     }
 
-  override def live(customReqTypes: CustomReqTypeIMap): Live =
-    liveExplicitly & implicitLiveStatus(customReqTypes).live
+  override def live(reqTypes: ReqTypes): Live =
+    liveExplicitly & implicitLiveStatus(reqTypes).live
 
-  override def allowLiveChange(customReqTypes: CustomReqTypeIMap): Permission =
-    implicitLiveStatus(customReqTypes) match {
+  override def allowLiveChange(reqTypes: ReqTypes): Permission =
+    implicitLiveStatus(reqTypes) match {
       case ImplicitLiveStatus.NoImpact      => Allow
       case ImplicitLiveStatus.ReqTypeIsDead => Deny
     }
@@ -139,10 +139,10 @@ final case class UseCase(id            : UseCaseId,
   @inline def liveUC: Live =
     liveExplicitly
 
-  override def live(customReqTypes: CustomReqTypeIMap): Live =
+  override def live(reqTypes: ReqTypes): Live =
     liveUC
 
-  override def allowLiveChange(customReqTypes: CustomReqTypeIMap): Permission =
+  override def allowLiveChange(reqTypes: ReqTypes): Permission =
     Allow
 
   // Every use case has a mandatory UC-N.0 step

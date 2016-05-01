@@ -150,22 +150,22 @@ class ApplicableEventGen(p: Project) {
     }
 
   lazy val liveCustomReqTypeId: Option[Gen[CustomReqTypeId]] =
-    Gen.tryGenChoose(cfg.customReqTypes.valuesIterator.filter(_.live :: Live).map(_.id))
+    Gen.tryGenChoose(cfg.reqTypes.custom.valuesIterator.filter(_.live :: Live).map(_.id))
 
   lazy val applicableReqTypes: Gen[Field.ApplicableReqTypes] =
-    RandomData.applicableReqTypes(cfg.customReqTypes.keySet)
+    RandomData.applicableReqTypes(cfg.reqTypes.custom.keySet)
 
   lazy val existingReqId: Option[Gen[ReqId]] =
     Gen.tryGenChoose(p.reqs.reqs.keysIterator)
 
   lazy val liveReqIds: Vector[ReqId] =
-    p.reqs.reqs.valuesIterator.filter(_.live(cfg.customReqTypes) :: Live).map(_.id).toVector
+    p.reqs.reqs.valuesIterator.filter(_.live(cfg.reqTypes) :: Live).map(_.id).toVector
 
   lazy val liveReqId: Option[Gen[ReqId]] =
     Gen.tryGenChoose(liveReqIds)
 
   lazy val liveGenericReqId: Option[Gen[GenericReqId]] =
-    Gen.tryGenChoose(p.reqs.genericReqs.valuesIterator.filter(_.live(cfg.customReqTypes) :: Live).map(_.id))
+    Gen.tryGenChoose(p.reqs.genericReqs.valuesIterator.filter(_.live(cfg.reqTypes) :: Live).map(_.id))
 
   def liveUseCaseIterator: Iterator[UseCase] =
     p.reqs.useCases.imap.valuesIterator.filter(_.liveUC :: Live)
@@ -283,7 +283,7 @@ class ApplicableEventGen(p: Project) {
 
     private def liveReqTypes: Iterator[ReqTypeId] =
       StaticReqType.values.iterator.map(_.reqTypeId) ++
-      cfg.customReqTypes.valuesIterator.filter(_.live :: Live).map(_.id)
+      cfg.reqTypes.custom.valuesIterator.filter(_.live :: Live).map(_.id)
 
     private def reqTypeId: Option[Gen[ReqTypeId]] =
       Gen.tryGenChoose(liveReqTypes.filterNot(reqTypesUsedInFields.contains))
@@ -439,7 +439,7 @@ class ApplicableEventGen(p: Project) {
 
   def deleteCustomReqType: Option[Gen[DeleteCustomReqType]] =
     liveCustomReqTypeId.map(_.map(id =>
-      DeleteCustomReqType(id, deletionAction(cfg.customReqTypes.need(id).live))))
+      DeleteCustomReqType(id, deletionAction(cfg.reqTypes.need(id).live))))
 
   def deleteReqCodeGroups: Option[Gen[DeleteReqCodeGroups]] =
     liveReqCodeGroupId.map(_.nes map DeleteReqCodeGroups)
@@ -531,8 +531,8 @@ class ApplicableEventGen(p: Project) {
   def restoreContent: Option[Gen[RestoreContent]] = {
     val restorableReqIds = Gen.tryGenChoose[ReqId](
       p.reqs.reqs.valuesIterator.filter {
-        case g: GenericReq => (g.liveExplicitly :: Dead) && (g.copy(liveExplicitly = Live).live(cfg.customReqTypes) :: Live)
-        case u: UseCase    => (u.liveExplicitly :: Dead) && (u.copy(liveExplicitly = Live).live(cfg.customReqTypes) :: Live)
+        case g: GenericReq => (g.liveExplicitly :: Dead) && (g.copy(liveExplicitly = Live).live(cfg.reqTypes) :: Live)
+        case u: UseCase    => (u.liveExplicitly :: Dead) && (u.copy(liveExplicitly = Live).live(cfg.reqTypes) :: Live)
       }.map(_.id).toVector)
     if (restorableReqIds.isEmpty && deadReqCodeGroupId.isEmpty)
       None

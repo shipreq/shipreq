@@ -28,7 +28,7 @@ object ShowSrcTest extends TestSuite {
             assertEq(ShowSrc.generateExpr(expect), actual, expect)
           }
           check(_.config.customIssueTypes)
-          check(_.config.customReqTypes)
+          check(_.config.reqTypes)
           check(_.config.tags)
           check(_.config.fields)
           check(_.reqs)

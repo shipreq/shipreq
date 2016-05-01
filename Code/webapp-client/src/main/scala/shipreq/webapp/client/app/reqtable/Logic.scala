@@ -192,7 +192,7 @@ private[reqtable] object Logic {
     //
     // * The Tags column is not expanded. Only custom tag columns are.
 
-    val filterDeadReq = vs.filterDead.filterFnA[Req](_ live p.config.customReqTypes)
+    val filterDeadReq = vs.filterDead.filterFnA[Req](_ live p.config.reqTypes)
     val filterDeadRCG = vs.filterDead.filterFnA[ReqCodeGroup](_.live)
     val filterDead    = Filter(filterDeadReq, filterDeadRCG)
     val tagFieldDist  = DataLogic.tagFieldDist(p.config, vs.filterDead, vs isVisible Column.CustomField(_, Dead))
@@ -261,7 +261,7 @@ private[reqtable] object Logic {
       for (r <- p.reqs.reqs.values)
         if (filter a r) {
           val id = r.id
-          val live = r live p.config.customReqTypes
+          val live = r live p.config.reqTypes
 
           // Expansion
           val impSrcs = expandImpSrcs(() => pImplications.backwards(id) |> pubids)

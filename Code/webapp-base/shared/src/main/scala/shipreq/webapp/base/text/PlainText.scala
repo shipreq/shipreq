@@ -51,18 +51,18 @@ object PlainText {
     G.hashRefKey.prefix ~ key.value
 
   def pubidByReqId(id: ReqId, p: Project): String =
-    pubidByReqId(id, p.reqs, p.config.customReqTypes)
+    pubidByReqId(id, p.reqs, p.config.reqTypes)
 
-  def pubidByReqId(id: ReqId, reqs: Requirements, customReqTypes: CustomReqTypeIMap): String = {
+  def pubidByReqId(id: ReqId, reqs: Requirements, reqTypes: ReqTypes): String = {
     val pid = reqs.req(id).pubid
-    pubid(pid, customReqTypes)
+    pubid(pid, reqTypes)
   }
 
   def pubid(pid: Pubid, p: Project): String =
-    pubid(pid, p.config.customReqTypes)
+    pubid(pid, p.config.reqTypes)
 
-  def pubid(pid: Pubid, customReqTypes: CustomReqTypeIMap): String = {
-    val rt = pid.reqTypeId.foldId(identity, customReqTypes.need)
+  def pubid(pid: Pubid, reqTypes: ReqTypes): String = {
+    val rt = pid.reqTypeId.foldId(identity, reqTypes.need)
     pubid(rt, pid.pos)
   }
 
@@ -112,7 +112,7 @@ object PlainText {
 
     private def reqRef(req: ReqId): String = {
       val pid = p.reqs.req(req).pubid
-      val rt  = p.config.reqType(pid.reqTypeId)
+      val rt  = p.config.reqTypes.need(pid.reqTypeId)
       G.reflinkSurround(pubid(rt, pid.pos))
     }
 
