@@ -76,7 +76,7 @@ object AtomScan {
 
     // Parse reqs
     val rts = p.config.reqTypes
-    p.reqs.reqs.values.foreach {
+    p.reqs.reqIterator.foreach {
 
       case r: GenericReq =>
         scan(r.live(rts), reqId = r.id)(r.title)

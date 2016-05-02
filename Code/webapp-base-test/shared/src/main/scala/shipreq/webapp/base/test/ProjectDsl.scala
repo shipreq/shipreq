@@ -65,7 +65,7 @@ object ProjectDslInternals {
   private def succ[A](old: A, n: A) = n // obsolete. Used to increse Rev
 
   def projectState(p: Project) = ProjectState(p,
-    nextId         = p.reqs.reqs.keySet.ifelse(_.isEmpty, _ => 1, _.max.value),
+    nextId         = p.reqs.idIterator.ifelse(_.isEmpty, _ => 1, _.max.value),
     defaultReqType = p.config.reqTypes.custom.values.headOption.map(_.id),
     reqs           = p.reqs.genericReqs,
     pubids         = p.reqs.pubids,

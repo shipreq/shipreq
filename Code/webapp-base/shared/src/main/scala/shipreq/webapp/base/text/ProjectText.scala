@@ -142,7 +142,7 @@ abstract class ProjectText[Out](project: Project, val ctx: ProjectText.Context) 
       format(g.live, g.title))
 
   def reqTitleById(id: ReqId): Out =
-    reqTitle(project.reqs.req(id))
+    reqTitle(project.reqs.need(id))
 
   val customTextField: CustomField.Text.Id => Req => Option[Out] =
     Memo { fid =>

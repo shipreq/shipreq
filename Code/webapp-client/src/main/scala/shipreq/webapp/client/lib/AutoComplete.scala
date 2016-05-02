@@ -113,7 +113,7 @@ object AutoComplete {
   private val reflinkContext = Context(Grammar.reflinkSurround)
 
   def reqItems(p: Project, pt: PlainText.ForProject): Stream[ReqItem] =
-    reqItems(p, pt, p.reqs.reqs.values.toStream)
+    reqItems(p, pt, p.reqs.reqIterator.toStream)
 
   def reqItems(p: Project, pt: PlainText.ForProject, legal: Stream[Req]): Stream[ReqItem] = {
     legal.filter(_.live(p.config.reqTypes) :: Live)

@@ -83,9 +83,8 @@ object DeletionForm {
   // ===================================================================================================================
 
   private def calcDeletableReqs(p: Project, directSel: NonEmptySet[ReqId]): DeletableReqs = {
-    val lookupReq = p.reqs.reqs.need _
-    val imps_>    = p.implications.forwards
-    val imps_<    = p.implications.backwards
+    val imps_> = p.implications.forwards
+    val imps_< = p.implications.backwards
 
     val reqOrder = Ordering.by((_: Req).pubid)(p.config.reqTypes.pubidOrdering)
 
@@ -96,7 +95,7 @@ object DeletionForm {
       _.live(p.config.reqTypes) :: Live
 
     def lookupAll(reqIds: TraversableOnce[ReqId]): Array[Req] = {
-      val a = reqIds.toIterator.map(lookupReq).filter(reqFilter).toArray
+      val a = reqIds.toIterator.map(p.reqs.need).filter(reqFilter).toArray
       sortReqs(a)
       a
     }

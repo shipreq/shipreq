@@ -54,7 +54,7 @@ object PlainText {
     pubidByReqId(id, p.reqs, p.config.reqTypes)
 
   def pubidByReqId(id: ReqId, reqs: Requirements, reqTypes: ReqTypes): String = {
-    val pid = reqs.req(id).pubid
+    val pid = reqs.need(id).pubid
     pubid(pid, reqTypes)
   }
 
@@ -111,7 +111,7 @@ object PlainText {
     }
 
     private def reqRef(req: ReqId): String = {
-      val pid = p.reqs.req(req).pubid
+      val pid = p.reqs.need(req).pubid
       val rt  = p.config.reqTypes.need(pid.reqTypeId)
       G.reflinkSurround(pubid(rt, pid.pos))
     }

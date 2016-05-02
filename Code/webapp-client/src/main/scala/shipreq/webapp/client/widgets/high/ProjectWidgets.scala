@@ -96,7 +96,7 @@ final class ProjectWidgets private(project    : Project,
 
     private val memo: ReqId => Out =
       Memo { reqId =>
-        val req   = project.reqs.req(reqId)
+        val req   = project.reqs.need(reqId)
         val ep    = req.pubid.external(project)
         val txt   = label(ep)
         val live  = liveFn(req)
@@ -169,7 +169,7 @@ final class ProjectWidgets private(project    : Project,
     implicit def liveWithValidity(a: Live) = invalidWhenDead(a)
 
     def toRef(c: ReqCode.Value, r: ReqId): ReactElement = {
-      val req = project.reqs.req(r)
+      val req = project.reqs.need(r)
       ref(c, *.reqRef(req live project.config.reqTypes), plainText reqTitle req)
     }
 

@@ -218,7 +218,7 @@ private[reqtable] object Logic {
     val multiValuesFn = this.multiValuesFn(tagFieldDist, tagLookup)
 
     def pubid(reqId: ReqId): Option[Pubid] = {
-      val req = p.reqs.req(reqId)
+      val req = p.reqs.need(reqId)
       if (filterDead a req)
         Some(req.pubid)
       else
@@ -257,7 +257,7 @@ private[reqtable] object Logic {
       val seeExpandedCodes = codesSeen.addFn[Expanded[ReqCode.Value]](add => _.foreach(_ foreach add))
 
       // Add requirements
-      for (r <- p.reqs.reqs.values)
+      for (r <- p.reqs.reqIterator)
         if (filter a r) {
           val id = r.id
           val live = r live p.config.reqTypes
@@ -581,7 +581,7 @@ private[reqtable] object Logic {
     }
 
     val totalDead = p.deadReqCount
-    val totalLive = p.reqs.reqs.size - totalDead
+    val totalLive = p.reqs.size - totalDead
 
     TableStats(vs.filterDead,
       liveVisibleReqs  = _liveVisibleReqs,

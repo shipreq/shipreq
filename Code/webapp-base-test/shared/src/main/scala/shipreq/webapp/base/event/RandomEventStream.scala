@@ -156,7 +156,7 @@ class ApplicableEventGen(p: Project) {
     RandomData.applicableReqTypes(cfg.reqTypes.custom.keySet)
 
   lazy val existingReqId: Option[Gen[ReqId]] =
-    Gen.tryGenChoose(p.reqs.reqs.keysIterator)
+    Gen.tryGenChoose(p.reqs.idIterator)
 
   lazy val liveReqIds: Vector[ReqId] =
     p.reqs.reqIterator.filter(_.live(cfg.reqTypes) :: Live).map(_.id).toVector

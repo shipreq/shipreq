@@ -167,7 +167,7 @@ object ContentEditorFeature {
       val pxAllowEdit: Px[Permission] = {
         def liveReq(id: ReqId, ofid: Option[FieldId]): Px[Permission] =
           pxProject.map { p =>
-            val r = p.reqs.req(id)
+            val r = p.reqs.need(id)
 
             def isLive = r.live(p.config.reqTypes) :: Live
 

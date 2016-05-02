@@ -53,7 +53,7 @@ final case class ExternalPubid(mnemonic: ReqType.Mnemonic, pos: ReqTypePos) {
         val i = pos.value - 1
         val register = reqs.pubids.value(rt.reqTypeId)
         if (register.isIndexValid(i))
-          \/-(reqs req register(i))
+          \/-(reqs need register(i))
         else
           -\/(LookupFailure.InvalidPos(rt, register.length))
     }

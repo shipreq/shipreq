@@ -390,32 +390,38 @@ case class Requirements(genericReqs: GenericReqIMap,
                         useCases   : UseCases,
                         pubids     : PubidRegister) {
 
-  def isEmpty = reqs.isEmpty
+  def isEmpty = reqIterator.isEmpty
   def nonEmpty = !isEmpty
+
+  def idIterator: Iterator[ReqId] =
+    reqIterator.map(_.id)
 
   def reqIterator: Iterator[Req] =
     genericReqs.valuesIterator ++
     useCases.imap.valuesIterator
 
-  lazy val reqs: IMap[ReqId, Req] =
-    IMap.empty[ReqId, Req](_.id) ++ reqIterator
+  lazy val size: Int =
+    genericReqs.size + useCases.imap.size
 
   def getUseCaseByPos(pos: ReqTypePos): Option[UseCase] =
     pubids.getUseCaseId(pos) flatMap useCases.imap.get
 
-  def getReq[T <: ReqTypeId](id: ReqIdT[T]): Option[ReqT[T]] =
+  def get[T <: ReqTypeId](id: ReqIdT[T]): Option[ReqT[T]] =
     id match {
       case i: GenericReqId => genericReqs.get(i)
       case i: UseCaseId    => useCases.imap.get(i)
     }
 
+  def need[T <: ReqTypeId](id: ReqIdT[T]): ReqT[T] =
+    id match {
+      case i: GenericReqId => genericReqs.need(i)
+      case i: UseCaseId    => useCases.imap.need(i)
+    }
+
   def getReqByPubid[T <: ReqTypeId](id: PubidT[T]): Option[ReqT[T]] =
-    pubids(id) flatMap getReq
+    pubids(id) flatMap get
 
-  def req[T <: ReqTypeId](id: ReqIdT[T]): ReqT[T] =
-    getReq(id) mustExistElse s"Req $id not found."
-
-  def reqByPubid[T <: ReqTypeId](id: PubidT[T]): ReqT[T] =
+  def needByPubid[T <: ReqTypeId](id: PubidT[T]): ReqT[T] =
     getReqByPubid(id) mustExistElse s"Req for $id not found."
 
   def reqIdByPubid[T <: ReqTypeId](id: PubidT[T]): ReqIdT[T] =

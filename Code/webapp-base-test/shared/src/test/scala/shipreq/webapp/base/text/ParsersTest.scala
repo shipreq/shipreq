@@ -53,10 +53,11 @@ object ParsersTest extends TestSuite {
     val txt2str = PlainText(p, ProjectText.Context.None).format(Live, _: Text.AnyOptional)
 
     val genericReqTitles =
-      p.reqs.reqs.values
+      p.reqs.reqIterator
         .filterT[GenericReq]
         //.filter(_.live(p.config.reqTypes) :: Live)
         .map(_.title)
+        .toList
 
     val customTextFieldValues =
       p.reqText.values.toStream.flatMap(_.values.toStream)

@@ -54,14 +54,14 @@ final case class Project(config         : ProjectConfig,
     //ShowSize(this).showTree
 
   lazy val deadReqIds: Set[ReqId] =
-    reqs.reqs.filterV(_.live(config.reqTypes) :: Dead).keySet
+    reqs.reqIterator.filter(_.live(config.reqTypes) :: Dead).map(_.id).toSet
 
   lazy val deadReqCount: Int =
     deadReqIds.size
 
   lazy val reqTypeCount: LDStats[ReqTypeId, Int] = {
     val b = new LDStats.Builder[ReqTypeId, Int]
-    for (r <- reqs.reqs.values) {
+    for (r <- reqs.reqIterator) {
       val live = r.live(config.reqTypes)
       b(r.reqTypeId).mod(live)(_ + 1)
     }
@@ -106,5 +106,5 @@ final case class Project(config         : ProjectConfig,
     implicationTransitiveClosure(Backwards)
 
   private def implicationTransitiveClosure(dir: Direction): TransitiveClosure[ReqId] =
-    implications.transitiveClosure(dir, reqs.reqs.keys, TransitiveClosure.Filter terminalSet deadReqIds)
+    implications.transitiveClosure(dir, reqs.idIterator, TransitiveClosure.Filter terminalSet deadReqIds)
 }

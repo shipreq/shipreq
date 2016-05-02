@@ -45,7 +45,7 @@ object ImplicationEditor {
 
   def initialValueForCustomColumn(p: Project, fid: CustomField.Implication.Id, id: ReqId): List[Pubid] =
     MutableArray(p.implications.backwards(id))
-      .map(p.reqs.req(_).pubid)
+      .map(p.reqs.need(_).pubid)
       .sortBySchwartzian(DataLogic.pubidSortKeyFn(p.config))
       .to[List]
 
@@ -53,7 +53,7 @@ object ImplicationEditor {
     val reqs = {
       val legal = initial.foldLeft(l.legal.map(_.reqId).toSet)(_ - _._1)
       initial.fold(Stream.empty[Pubid])(_._2.toStream)
-        .map(p.reqs.reqByPubid)
+        .map(p.reqs.needByPubid)
         .filter(legal contains _.id)
     }
 

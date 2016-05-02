@@ -29,7 +29,7 @@ object LogicPropTest extends TestSuite {
 
     val expectVisible: ReqId => Boolean =
       if (vs.filterDead == HideDead)
-        id => p.reqs.req(id).live(p.config.reqTypes) :: Live
+        id => p.reqs.need(id).live(p.config.reqTypes) :: Live
       else
         _ => true
 
@@ -39,7 +39,7 @@ object LogicPropTest extends TestSuite {
     val gatheredG   = gathered.filterT[ReqRow]
     val rowReqCodes = gathered.flatMap(codesInRow(_).toStream)
     val rowGReqIds  = gatheredG.map(_.req.id).toSet
-    val srcGReqIds  = p.reqs.reqs.keys.filterT[GenericReqId].filter(expectVisible).toSet
+    val srcGReqIds  = p.reqs.idIterator.filterT[GenericReqId].filter(expectVisible).toSet
     val finalRows   = Logic.rowsForTable(vs, p, plainText, textSearch)
     val tableStats  = Logic.stats(vs, p, finalRows)
 

@@ -135,7 +135,7 @@ object ApplyEventTestFns {
     assertEq("Σ CustomFields", customFields, cfg.fields.customFields.size)
     assertEq("Σ Generic Reqs", genericReqs, p.reqs.genericReqs.size)
     assertEq("Σ Use Cases", useCases, p.reqs.useCases.imap.size)
-    assertEq("Σ Reqs", genericReqs + useCases, p.reqs.reqs.size)
+    assertEq("Σ Reqs", genericReqs + useCases, p.reqs.size)
     assertEq("Σ ReqCodeGroups (active)", activeRCGs, p.reqCodes.groups.count(_.live :: Live))
     assertEq("Σ DeletionReasons", delReasons, p.deletionReasons.reasons.size)
     validateIdCeilings(p)

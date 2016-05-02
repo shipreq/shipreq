@@ -229,7 +229,7 @@ object Graphs {
 
   private final class ImpHelpers(fd: FilterDead, reqs: Requirements, reqTypes: ReqTypes)(implicit sb: StringBuilder) {
     val live: ReqId => Live =
-      Memo(reqs.req(_).live(reqTypes))
+      Memo(reqs.need(_).live(reqTypes))
 
     val filterIdSet: Set[ReqId] => Set[ReqId] =
       fd(_)(live)

@@ -124,7 +124,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
         sortPubids(
           project.implications(dir)(req.id)
             .iterator
-            .map(project.reqs.req)
+            .map(project.reqs.need)
             .filter(impFilter)
             .map(_.pubid)))
 
