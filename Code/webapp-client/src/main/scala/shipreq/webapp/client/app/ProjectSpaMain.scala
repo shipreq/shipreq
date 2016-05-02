@@ -11,15 +11,15 @@ import scalacss.Defaults._
 import scalacss.ScalaCssReact._
 import shipreq.base.util.Intersection
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.data.{ReqId, ExternalPubid, ReqType, ReqTypePos, FilterDead, HideDead}
+import shipreq.webapp.base.data.{ExternalPubid, FilterDead, HideDead, ReqId, ReqType, ReqTypePos}
 import shipreq.webapp.base.protocol.ProjectSPA
-import shipreq.webapp.base.text.{Grammar, PlainText, ProjectText, TextSearch}
+import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
 import shipreq.webapp.client.app.cfg.shared.Usage
-import shipreq.webapp.client.app.state.{ClientData, Changes}
+import shipreq.webapp.client.app.state.{Changes, ClientData}
 import shipreq.webapp.client.feature._
 import shipreq.webapp.client.lib.DataReusability._
 import shipreq.webapp.client.protocol.ClientProtocol
-import shipreq.webapp.client.widgets.high.ProjectWidgets
+import shipreq.webapp.client.widgets.high.{ImplicationGraph, ProjectWidgets}
 import ContentEditorFeature.EditFieldKey
 
 object ProjectSpaMain {
@@ -48,6 +48,7 @@ object ProjectSpaMain {
     case object CfgReqTypes extends Page
     case object CfgTags     extends Page
     case object ReqTable    extends Page
+    case object ImpGraph    extends Page
 
     case class ReqDetail(pubid: ExternalPubid) extends Page {
       @elidable(elidable.INFO)
@@ -75,7 +76,7 @@ object ProjectSpaMain {
     .render_P { ctl =>
       import Page._
       <.ul(
-        Vector(ReqTable, CfgFields, CfgIssues, CfgReqTypes, CfgTags).map(p =>
+        Vector(ReqTable, ImpGraph, CfgFields, CfgIssues, CfgReqTypes, CfgTags).map(p =>
           <.li(ctl.link(p)(p.toString))))
     }
     .build
@@ -210,6 +211,7 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
 
       ( staticPage(root           , Index      )
       | staticPage(reqTablePath   , ReqTable   )
+      | staticPage("/imps"        , ImpGraph   )
       | staticPage("/cfg/fields"  , CfgFields  )
       | staticPage("/cfg/issues"  , CfgIssues  )
       | staticPage("/cfg/reqtypes", CfgReqTypes)
@@ -321,8 +323,10 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
       pxReqDetailReqProps.value().get(s)
     }
 
+    def ww = WebWorkerClient.Instance
+
     val reqDetail = ReqDetail(ReqDetail.StaticProps(
-      cd, cp, reqDetailRC, WebWorkerClient.Instance, r.updateContent,
+      cd, cp, reqDetailRC, ww, r.updateContent,
       pxPlainText, pxTextSearch, pxProjectWidgets))
 
     val reqDetailSetState: ReqDetail.State ~=> Callback =
@@ -377,6 +381,16 @@ final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
             reqDetailReqPropsFn(s),
             ReusableVar(s.reqDetail)(reqDetailSetState))
           layout(reqDetail(props), Page.ReqTable)
+
+        case Page.ImpGraph =>
+          val p = cd.project()
+          val ig = ImplicationGraph.Props(
+            None, s.filterDead,
+            p.implications, p.reqs, p.config.reqTypes,
+            pxPlainText.value(),
+            reqDetailRC,
+            ww)
+          layout(ig.render)
       }
     }
 
