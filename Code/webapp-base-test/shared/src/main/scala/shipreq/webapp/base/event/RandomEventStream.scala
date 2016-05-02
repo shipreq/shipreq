@@ -159,7 +159,7 @@ class ApplicableEventGen(p: Project) {
     Gen.tryGenChoose(p.reqs.reqs.keysIterator)
 
   lazy val liveReqIds: Vector[ReqId] =
-    p.reqs.reqs.valuesIterator.filter(_.live(cfg.reqTypes) :: Live).map(_.id).toVector
+    p.reqs.reqIterator.filter(_.live(cfg.reqTypes) :: Live).map(_.id).toVector
 
   lazy val liveReqId: Option[Gen[ReqId]] =
     Gen.tryGenChoose(liveReqIds)
@@ -530,7 +530,7 @@ class ApplicableEventGen(p: Project) {
 
   def restoreContent: Option[Gen[RestoreContent]] = {
     val restorableReqIds = Gen.tryGenChoose[ReqId](
-      p.reqs.reqs.valuesIterator.filter {
+      p.reqs.reqIterator.filter {
         case g: GenericReq => (g.liveExplicitly :: Dead) && (g.copy(liveExplicitly = Live).live(cfg.reqTypes) :: Live)
         case u: UseCase    => (u.liveExplicitly :: Dead) && (u.copy(liveExplicitly = Live).live(cfg.reqTypes) :: Live)
       }.map(_.id).toVector)

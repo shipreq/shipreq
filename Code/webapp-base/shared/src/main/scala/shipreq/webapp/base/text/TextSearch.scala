@@ -233,7 +233,7 @@ final class TextSearch(project: Project,  plainText: PlainText.ForProject) {
         ))
         IndexEntryR(r, title, textFields)
       }
-      project.reqs.reqs.valuesIterator map each
+      project.reqs.reqIterator map each
     }
 
     def indexValuesG: Iterator[IndexEntryG] = {

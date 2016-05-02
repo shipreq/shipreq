@@ -210,7 +210,7 @@ object DataProp {
       uniqueNonNegIntsT[Set, ReqId]("req IDs").contramap[T](_.reqs.keySet)
 
     def reqPubidsInRegister =
-      Prop.forall((_: T).reqs.valuesIterator)(t =>
+      Prop.forall((_: T).reqIterator)(t =>
         Prop.equal[Req]("Req's pubid refers to itself in the Pubid register")(
           _.id.some,
           r => t.pubids(r.pubid)))
@@ -529,7 +529,7 @@ object DataProp {
 
     def liveReqCodeRequiresLiveTarget =
       Prop.whitelist[Project]("Live ReqCode requires Live Target")(
-        p => p.reqs.reqs.valuesIterator.filter(_.live(p.config.reqTypes) :: Live).map(_.id).toSet,
+        p => p.reqs.reqIterator.filter(_.live(p.config.reqTypes) :: Live).map(_.id).toSet,
         _.reqCodes.activeReqCodesByReqId.keySet)
 
     def validRefs = {
@@ -538,7 +538,7 @@ object DataProp {
 
       def mkRefs(p: Project): Refs = Refs(
         p.config.fields.customFields.keySet,
-        p.reqs.reqs.valuesIterator.map(_.id).toSet,
+        p.reqs.reqIterator.map(_.id).toSet,
         p.reqCodes.idSet,
         p.reqs.useCases.stepIterator.map(_.id).toSet,
         p.config.reqTypes.all.whole.map(_.reqTypeId)(collection.breakOut),

@@ -1158,7 +1158,7 @@ object RandomData {
       reqsWithoutText ← reqsWithoutText(cfg, reqCount, ucCount)
       reqIdSet        = reqsWithoutText.reqs.keySet
       reqIdG          = Gen tryGenChoose reqIdSet.toIndexedSeq
-      liveReqIds      = reqsWithoutText.reqs.valuesIterator.filter(_.live(cfg.reqTypes) :: Live).map(_.id)
+      liveReqIds      = reqsWithoutText.reqIterator.filter(_.live(cfg.reqTypes) :: Live).map(_.id)
       liveReqIdG      = Gen tryGenChoose liveReqIds.toIndexedSeq
       reqCodeDataG    = reqCode.data(liveReqIdG, reqIdG)(0 to (3 `JVM|JS` 2))
       reqCodes        ← reqCodes(reqCode.trie(reqCodeDataG, 2 `JVM|JS` 2))

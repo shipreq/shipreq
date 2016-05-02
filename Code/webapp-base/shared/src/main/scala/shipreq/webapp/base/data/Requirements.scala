@@ -393,11 +393,12 @@ case class Requirements(genericReqs: GenericReqIMap,
   def isEmpty = reqs.isEmpty
   def nonEmpty = !isEmpty
 
-  lazy val reqs: IMap[ReqId, Req] =
-    IMap.empty[ReqId, Req](_.id) ++
-      genericReqs.valuesIterator ++
-      useCases.imap.valuesIterator
+  def reqIterator: Iterator[Req] =
+    genericReqs.valuesIterator ++
+    useCases.imap.valuesIterator
 
+  lazy val reqs: IMap[ReqId, Req] =
+    IMap.empty[ReqId, Req](_.id) ++ reqIterator
 
   def getUseCaseByPos(pos: ReqTypePos): Option[UseCase] =
     pubids.getUseCaseId(pos) flatMap useCases.imap.get
@@ -421,6 +422,6 @@ case class Requirements(genericReqs: GenericReqIMap,
     pubids(id) mustExistElse s"Req for $id not found."
 
   lazy val reqsByType: Multimap[ReqTypeId, Vector, Req] =
-    reqs.valuesIterator.foldLeft(UnivEq.emptyMultimap[ReqTypeId, Vector, Req])((q, r) =>
+    reqIterator.foldLeft(UnivEq.emptyMultimap[ReqTypeId, Vector, Req])((q, r) =>
       q.add(r.reqTypeId, r))
 }
