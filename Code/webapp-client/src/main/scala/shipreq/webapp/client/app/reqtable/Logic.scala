@@ -16,7 +16,6 @@ import shipreq.webapp.base.filter.FilterAst
 import shipreq.webapp.base.text.Atom.AnyIssue
 import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.base.util.ReqCodeTreeItem
-import shipreq.webapp.client.data.DataLogic
 import DataImplicits._
 import DataLogic.{ReqTags, TagLookup}
 import MTrie.Ops

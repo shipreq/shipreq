@@ -11,7 +11,6 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.client.app.reqtable.{SortMethod => SM, SortCriterion => SC, Column => C}
-import shipreq.webapp.client.data.DataLogic
 import ColumnRenderer.SortableDeletionReason
 import SortMethod.{Asc, AscThenBlanks, BlanksThenAsc}
 

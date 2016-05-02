@@ -1,8 +1,7 @@
-package shipreq.webapp.client.data
+package shipreq.webapp.base.data
 
 import shipreq.base.util.{MutableArray, Memo, Util}
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.base.data._
 import DataImplicits._
 
 object DataLogic {
