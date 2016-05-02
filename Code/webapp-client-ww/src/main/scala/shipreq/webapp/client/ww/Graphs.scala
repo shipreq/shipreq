@@ -349,31 +349,25 @@ object Graphs {
       val impHelpers = new ImpHelpers(fd, reqs, reqTypes)
       import impHelpers._
 
-      val (reqTypesWithReqs: Map[ReqTypeId, Int], reqsByReqType) = {
-        var x = UnivEq.emptySet[ReqTypeId]
-        var y = UnivEq.emptyMultimap[ReqTypeId, List, ReqId]
-        for (req <- reqs.reqIterator) {
-          val rt = req.reqTypeId
+      // Add to reqTypesWithReqs regardless of live status so that colours don't change when user toggles the
+      // FilterDead setting. Colours jumping around it's a needless cognitive burden when you're trying to analyse
+      // the graph.
+      val reqTypesWithReqs: Map[ReqTypeId, Int] =
+        MutableArray(reqs.reqsByType.keys)
+          .sortBy(reqTypes.order) // Deterministic (and stable until config changes) order of colours
+          .iterator
+          .zipWithIndex
+          .toMap
 
-          // Add to reqTypesWithReqs regardless of live status so that colours don't change when user toggles the
-          // FilterDead setting. Colours jumping around it's a needless cognitive burden when you're trying to analyse
-          // the graph.
-          if (!x.contains(rt))
-            x += rt
-
-          if (fd :: ShowDead || req.live(reqTypes) :: Live)
-            y = y.add(rt, req.id)
-        }
-
-        // Deterministic (and stable until config changes) order of colours
-        val x2 = MutableArray(x).sortBy(reqTypes.order).iterator.zipWithIndex.toMap
-
-        (x2, y)
+      val reqsByReqType = {
+        var x = reqs.reqsByType
+        if (fd :: HideDead)
+          for (rt <- x.keys)
+            x = x.mod(rt, _.filter(_.live(reqTypes) :: Live))
+        x
       }
 
-      val impReqResult = DataLogic.requiringImplication(reqTypes, imps,
-        // Filter Live *regardless* of FilterDead here ↘
-        id => reqsByReqType(id).iterator.filter(live(_) :: Live))
+      val impReqResult = DataLogic.requiringImplication(reqTypes, imps, reqs)
 
       val colourFn =
         DistinctColours("ffffff", reqTypesWithReqs.size, "ffffff")
@@ -415,12 +409,12 @@ object Graphs {
       sb append """edge[color="#333333"]"""
 
       // Declare nodes
-      for ((reqType, reqIds) <- nodeData) {
+      for ((reqType, reqs) <- nodeData) {
         val color = colourFn(reqTypesWithReqs(reqType))
         sb append """node[fillcolor="#"""
         sb append color
         sb append """"]"""
-        declare(reqIds)
+        declare(reqs.iterator.map(_.id))
       }
 
       // Implication required
