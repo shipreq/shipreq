@@ -1,0 +1,160 @@
+digraph G {
+node[style=filled]
+
+// -----------------------------------------------------------
+// C 0.2 - 1.7
+// L 0.9 - 1.5
+
+node[fillcolor="#E0AC5E"]
+71 [label="MF-1"]
+72 [label="MF-2"]
+73 [label="MF-3"]
+733 [label="UC-3"]
+
+node[fillcolor="#CCA6CB"]
+711 [label="FR-1"]
+712 [label="FR-2"]
+713 [label="FR-3"]
+
+node[fillcolor="#A2D860"]
+721 [label="BR-1"]
+722 [label="BR-2"]
+723 [label="BR-3"]
+
+node[fillcolor="#8AD2BA"]
+731 [label="UC-1"]
+732 [label="UC-2"]
+
+71->72->733->712
+72->713,731,732
+71->73->722,721,711
+721->722,723
+723->731,711
+713->732
+
+// -----------------------------------------------------------
+// C 0.2 - 3.0
+// L 0.9 - 1.5
+
+node[fillcolor="#DFAB62"]
+91 [label="MF-1"]
+92 [label="MF-2"]
+93 [label="MF-3"]
+933 [label="UC-3"]
+
+node[fillcolor="#CF9ED3"]
+911 [label="FR-1"]
+912 [label="FR-2"]
+913 [label="FR-3"]
+
+node[fillcolor="#9BD858"]
+921 [label="BR-1"]
+922 [label="BR-2"]
+923 [label="BR-3"]
+
+node[fillcolor="#90D1BA"]
+931 [label="UC-1"]
+932 [label="UC-2"]
+
+91->92->933->912
+92->913,931,932
+91->93->922,921,911
+921->922,923
+923->931,911
+913->932
+
+// -----------------------------------------------------------
+// C 0.2 - 3.0
+// L 0.925 - 1.5
+
+node[fillcolor="#91D8C0"]
+51 [label="MF-1"]
+52 [label="MF-2"]
+53 [label="MF-3"]
+533 [label="UC-3"]
+
+node[fillcolor="#E0C162"]
+511 [label="FR-1"]
+512 [label="FR-2"]
+513 [label="FR-3"]
+
+node[fillcolor="#D5AED2"]
+521 [label="BR-1"]
+522 [label="BR-2"]
+523 [label="BR-3"]
+
+node[fillcolor="#8FDE5E"]
+531 [label="UC-1"]
+532 [label="UC-2"]
+
+51->52->533->512
+52->513,531,532
+51->53->522,521,511
+521->522,523
+523->531,511
+513->532
+
+// -----------------------------------------------------------
+// C 0.2 - 3.0
+// L 0.95 - 1.5
+
+node[fillcolor="#91D9BC"]
+61 [label="MF-1"]
+62 [label="MF-2"]
+63 [label="MF-3"]
+633 [label="UC-3"]
+
+node[fillcolor="#93DF58"]
+611 [label="FR-1"]
+612 [label="FR-2"]
+613 [label="FR-3"]
+
+node[fillcolor="#D1B0D4"]
+621 [label="BR-1"]
+622 [label="BR-2"]
+623 [label="BR-3"]
+
+node[fillcolor="#DFBE64"]
+631 [label="UC-1"]
+632 [label="UC-2"]
+
+61->62->633->612
+62->613,631,632
+61->63->622,621,611
+621->622,623
+623->631,611
+613->632
+
+// -----------------------------------------------------------
+// C 0.2 - 3.0
+// L 1.0 - 1.5
+
+node[fillcolor="#D5B4D4"]
+81 [label="MF-1"]
+82 [label="MF-2"]
+83 [label="MF-3"]
+833 [label="UC-3"]
+
+node[fillcolor="#91E15B"]
+811 [label="FR-1"]
+812 [label="FR-2"]
+813 [label="FR-3"]
+
+node[fillcolor="#93DDBE"]
+821 [label="BR-1"]
+822 [label="BR-2"]
+823 [label="BR-3"]
+
+node[fillcolor="#E1C662"]
+831 [label="UC-1"]
+832 [label="UC-2"]
+
+81->82->833->812
+82->813,831,832
+81->83->822,821,811
+821->822,823
+823->831,811
+813->832
+
+
+}

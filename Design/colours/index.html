@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Distinct Colour generator</title>
+    <script type="text/javascript" src="chroma-0.3.0.js"></script>
+    <script type="text/javascript" src="palette-gen.js"></script>
+</head>
+<body>
+
+<a href="http://tools.medialab.sciences-po.fr/iwanthue/">http://tools.medialab.sciences-po.fr/iwanthue/</a>
+
+<pre id="results">
+ultraPrecision = true; reps = 100
+genRange(2,32)
+
+Results
+=======
+
+</pre>
+
+
+
+<script type="text/javascript">
+  var reps           = 50
+  var ultraPrecision = false
+
+  const filter = function(color){
+    const hcl = color.hcl();
+    return hcl[0]>=0 && hcl[0]<=360
+      && hcl[1]>=0.2 && hcl[1]<=3
+      && hcl[2]>=0.93 && hcl[2]<=1.5;
+  }
+
+  const results = document.getElementById("results")
+
+  function print(s) {
+    results.appendChild(document.createTextNode(s+"\n"))
+  }
+
+  function gen(n) {
+    console.log("Generating " + n + " colours...")
+    const start = performance.now();
+
+    var colours = paletteGenerator.generate(n,filter,false,reps,ultraPrecision,'Default');
+    colours = paletteGenerator.diffSort(colours, 'Default');
+
+    const end = performance.now();
+    const time = end - start;
+    console.log("Generated " + n + " colours in " + Math.round(time)/1000 + " sec.")
+
+    var s = ''
+    for (const c of colours) s += c.hex().substring(1)
+
+    const code = "\"" + s + "\","
+    console.log(code)
+
+    print(code)
+  }
+
+  function genRange(from,to) {
+    print("// [" + from + "," + to + "]")
+    for (var i = from; i <= to; i++)
+      gen(i);
+  }
+</script>
+
+</body>
+</html>

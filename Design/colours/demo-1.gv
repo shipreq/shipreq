@@ -1,0 +1,164 @@
+digraph G {
+node[style=filled]
+
+// Settings are for http://tools.medialab.sciences-po.fr/iwanthue/
+// H   0 - 360
+
+/*
+// -----------------------------------------------------------
+// C 0.2 - 3.0
+// L 1.1 - 1.5
+
+node[fillcolor="#7FCAB9"]
+61 [label="MF-1"]
+62 [label="MF-2"]
+63 [label="MF-3"]
+633 [label="UC-3"]
+
+node[fillcolor="#DD9A59"]
+611 [label="FR-1"]
+612 [label="FR-2"]
+613 [label="FR-3"]
+
+node[fillcolor="#C892CE"]
+621 [label="BR-1"]
+622 [label="BR-2"]
+623 [label="BR-3"]
+
+node[fillcolor="#9AD358"]
+631 [label="UC-1"]
+632 [label="UC-2"]
+
+61->62->633->612
+62->613,631,632
+61->63->622,621,611
+621->622,623
+623->631,611
+613->632
+*/
+
+// -----------------------------------------------------------
+// C 0.4 - 1.8
+// L 0.8 - 1.5
+
+node[fillcolor="#DE955C"]
+1 [label="MF-1"]
+2 [label="MF-2"]
+3 [label="MF-3"]
+33 [label="UC-3"]
+
+node[fillcolor="#BE9FCE"]
+11 [label="FR-1"]
+12 [label="FR-2"]
+13 [label="FR-3"]
+
+node[fillcolor="#A9D151"]
+21 [label="BR-1"]
+22 [label="BR-2"]
+23 [label="BR-3"]
+
+node[fillcolor="#80CFA9"]
+31 [label="UC-1"]
+32 [label="UC-2"]
+
+1->2->33->12
+2->13,31,32
+1->3->22,21,11
+21->22,23
+23->31,11
+13->32
+
+// -----------------------------------------------------------
+// C 0.2 - 1.7
+// L 0.9 - 1.5
+
+node[fillcolor="#E0AC5E"]
+91 [label="MF-1"]
+92 [label="MF-2"]
+93 [label="MF-3"]
+933 [label="UC-3"]
+
+node[fillcolor="#CCA6CB"]
+911 [label="FR-1"]
+912 [label="FR-2"]
+913 [label="FR-3"]
+
+node[fillcolor="#A2D860"]
+921 [label="BR-1"]
+922 [label="BR-2"]
+923 [label="BR-3"]
+
+node[fillcolor="#8AD2BA"]
+931 [label="UC-1"]
+932 [label="UC-2"]
+
+91->92->933->912
+92->913,931,932
+91->93->922,921,911
+921->922,923
+923->931,911
+913->932
+
+// -----------------------------------------------------------
+// C 0.2 - 3.0
+// L 0.9 - 1.5
+
+node[fillcolor="#E1C662"]
+81 [label="MF-1"]
+82 [label="MF-2"]
+83 [label="MF-3"]
+833 [label="UC-3"]
+
+node[fillcolor="#D7B3D3"]
+811 [label="FR-1"]
+812 [label="FR-2"]
+813 [label="FR-3"]
+
+node[fillcolor="#91E160"]
+821 [label="BR-1"]
+822 [label="BR-2"]
+823 [label="BR-3"]
+
+node[fillcolor="#94DCC3"]
+831 [label="UC-1"]
+832 [label="UC-2"]
+
+81->82->833->812
+82->813,831,832
+81->83->822,821,811
+821->822,823
+823->831,811
+813->832
+
+// -----------------------------------------------------------
+// C 0.2 - 3.0
+// L 1.1 - 1.5
+
+node[fillcolor="#D7DB99"]
+71 [label="MF-1"]
+72 [label="MF-2"]
+73 [label="MF-3"]
+733 [label="UC-3"]
+
+node[fillcolor="#B7DAE1"]
+711 [label="FR-1"]
+712 [label="FR-2"]
+713 [label="FR-3"]
+
+node[fillcolor="#D1E148"]
+721 [label="BR-1"]
+722 [label="BR-2"]
+723 [label="BR-3"]
+
+node[fillcolor="#7AEB87"]
+731 [label="UC-1"]
+732 [label="UC-2"]
+
+71->72->733->712
+72->713,731,732
+71->73->722,721,711
+721->722,723
+723->731,711
+713->732
+
+}
