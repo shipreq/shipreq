@@ -28,9 +28,9 @@ object ColumnRenderer {
     def render: ReactElement
   }
 
-  case class Render(fn: () => ReactElement) extends View {
-    override def render = fn()
-  }
+  // This could be lazy but 99% of the time, the view is displayed. May as well reduce the overhead of the 99% and have
+  // this be strict.
+  case class Render(render: ReactElement) extends View
 
   case object `N/A` extends View {
     val tag: ReactTag =
@@ -105,7 +105,7 @@ class ColumnRenderers(project: Project, pw: ProjectWidgets) {
     }
 
   private def maybeEmpty[A](lens: Optional[Row, Vector[A]], r: Row)(f: Vector[A] => ReactElement): View =
-    render(lens.getOption(r).filter(_.nonEmpty).fold(empty)(f))
+    Render(lens.getOption(r).filter(_.nonEmpty).fold(empty)(f))
 
 //  @deprecated("placeholder is for dev purposes only.", "")
 //  private def placeholder =
@@ -114,28 +114,25 @@ class ColumnRenderers(project: Project, pw: ProjectWidgets) {
   private val pubidColumnValue =
     pw.PubidFormat(Plain, *.pubidColumnValue(_), titleFn = _ => None)
 
-  private def render(e: => ReactElement): View =
-    Render(() => e)
-
   private def pubid = make {
-    case r: ReqRow          => render(pubidColumnValue(r.req))
+    case r: ReqRow          => Render(pubidColumnValue(r.req))
     case _: ReqCodeGroupRow => `N/A`
   }
 
   private def reqType = make {
-    case r: ReqRow          => render(pw.reqTypeShort(r.req.reqTypeId))
+    case r: ReqRow          => Render(pw.reqTypeShort(r.req.reqTypeId))
     case _: ReqCodeGroupRow => `N/A`
   }
 
   private def code = make {
-    case ReqRow(_, _, exp, _, _)        => render(pw.reqCodes(exp.reqCodeTree, exp.reqCodes))
-    case ReqCodeGroupRow(_, _, Some(t)) => render(pw.reqCodeTreeItem(t))
-    case ReqCodeGroupRow(_, c, None)    => render(pw.flatReqCode(c))
+    case ReqRow(_, _, exp, _, _)        => Render(pw.reqCodes(exp.reqCodeTree, exp.reqCodes))
+    case ReqCodeGroupRow(_, _, Some(t)) => Render(pw.reqCodeTreeItem(t))
+    case ReqCodeGroupRow(_, c, None)    => Render(pw.flatReqCode(c))
   }
 
   private def title = make {
-    case r: ReqRow          => render(pw.reqTitle(r.req))
-    case r: ReqCodeGroupRow => render(pw.reqCodeGroupTitle(r.group))
+    case r: ReqRow          => Render(pw.reqTitle(r.req))
+    case r: ReqCodeGroupRow => Render(pw.reqCodeGroupTitle(r.group))
   }
 
   private def imps(lens: Optional[Row, Vector[Pubid]]) = make {
@@ -151,13 +148,13 @@ class ColumnRenderers(project: Project, pw: ProjectWidgets) {
   private def cfText(id: CustomField.Text.Id) = {
     val f = pw.customTextField(id)
     make {
-      case r: ReqRow          => render(f(r.req).fold(empty)(w => w))
+      case r: ReqRow          => Render(f(r.req).fold(empty)(w => w))
       case _: ReqCodeGroupRow => `N/A`
     }
   }
 
   private def deletionReason = make {
-    case r: ReqRow          => render(RenderDeletionReason.req(project, pw, r.req))
-    case _: ReqCodeGroupRow => render(RenderDeletionReason.reqCodeGroup)
+    case r: ReqRow          => Render(RenderDeletionReason.req(project, pw, r.req))
+    case _: ReqCodeGroupRow => Render(RenderDeletionReason.reqCodeGroup)
   }
 }
