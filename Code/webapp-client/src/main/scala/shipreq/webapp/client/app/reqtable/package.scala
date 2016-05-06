@@ -21,12 +21,6 @@ package object reqtable {
   type RowSelection        = Selection[Row.SourceId]
   type RowSelectionVisible = Selection.LegalWithUpdateFn[Row.SourceId]
 
-  implicit def reusabilityCR: Reusability[ColumnRenderer] =
-    Reusability.byRef // TODO This is a problem
-
-  implicit val reusabilityCRs: Reusability[NonEmptyVector[ColumnRenderer]] =
-    Reusability.byRef || reusabilityNonEmptyVector
-
   implicit val reusabilityCs: Reusability[NonEmptyVector[Column]] =
     Reusability.byRef || reusabilityNonEmptyVector
 

@@ -1,5 +1,6 @@
 package shipreq.webapp.client.app.reqtable
 
+import scalacss.Domain
 import scalacss.ScalaCssReact._
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
@@ -167,8 +168,8 @@ object Table {
   def renderRow(p: RowProps): ReactTagOf[dom.html.TableRow] = {
     val row = p.row
 
-    val rowStatus: ColumnRenderer.Status =
-      if (row.live :: Dead) ColumnRenderer.DeadRow else ColumnRenderer.Normal
+    val rowStatus: CellStatus =
+      if (row.live :: Dead) CellStatus.DeadRow else CellStatus.Normal
 
     def selCellKeyDown(e: ReactKeyboardEventH): Callback =
       focusKeyHandlers(e)
@@ -222,6 +223,14 @@ object Table {
   // ===================================================================================================================
   // Cells
 
+  sealed trait CellStatus
+  object CellStatus {
+    case object Normal  extends CellStatus
+    case object DeadRow extends CellStatus
+    case object `N/A`   extends CellStatus
+    val domain = Domain.ofValues[CellStatus](Normal, DeadRow, `N/A`)
+  }
+
   case class CellProps(row       : Row,
                        cr        : ColumnRenderer,
                        cellEditor: ContentEditorFeature.D0.State,
@@ -272,14 +281,22 @@ object Table {
       $.props >>= (_ startEdit focus)
 
     def render(p: CellProps) = {
-      val (status, roView) = p.cr.render(p.row)
-      // TODO roView should be non-strict or a fn
+      val view = p.cr.view(p.row)
+
+      val status: CellStatus =
+        view match {
+          case ColumnRenderer.`N/A` => CellStatus.`N/A`
+          case _: ColumnRenderer.Render => p.row.live match {
+            case Live => CellStatus.Normal
+            case Dead => CellStatus.DeadRow
+          }
+        }
 
       cellBase(
         *.cell(status),
         ^.onDblClick --> startEdit,
         ^.onKeyDown ==> onKeyDown,
-        p.asyncState renderOr (p.cellEditor renderOr roView))
+        p.asyncState renderOr (p.cellEditor renderOr view.render))
     }
   }
 

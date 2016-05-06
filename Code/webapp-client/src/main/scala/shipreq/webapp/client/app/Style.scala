@@ -84,7 +84,8 @@ object Style extends StyleSheet.Inline {
 
   // ===================================================================================================================
   object reqtable {
-    import shipreq.webapp.client.app.reqtable.{Column, ColumnRenderer}
+    import shipreq.webapp.client.app.reqtable.Column
+    import shipreq.webapp.client.app.reqtable.Table.CellStatus
 
     val pubidColumnValue = styleF(D.live)(a => styleS(
       display.inline,
@@ -245,17 +246,17 @@ object Style extends StyleSheet.Inline {
     val selectionRowHeader = style(
       columnHeaderBase)
 
-    val cell = styleF(ColumnRenderer.statusDomain){ status =>
+    val cell = styleF(CellStatus.domain){ status =>
       styleS(
         border(1 px, solid, c"#ccc"),
         &.focus(
           backgroundColor(c"#e9e9ff")),
         (status match {
-          case ColumnRenderer.Normal => mixin(
+          case CellStatus.Normal => mixin(
             padding(v = 2.px, h = 4.px))
-          case ColumnRenderer.DeadRow => mixin(
+          case CellStatus.DeadRow => mixin(
             padding(v = 2.px, h = 4.px), backgroundColor(c"#eee"))
-          case ColumnRenderer.`N/A` => mixin(
+          case CellStatus.`N/A` => mixin(
             padding.`0`,
             backgroundColor(c"#eee"),
             textAlign.center,

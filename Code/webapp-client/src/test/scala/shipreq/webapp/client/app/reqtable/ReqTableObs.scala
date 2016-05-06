@@ -137,9 +137,9 @@ final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
     def column(name: String): ColumnDom =
       findOne(name, columnDoms)(_.name)
 
-    import ColumnRenderer.{Status, Normal, DeadRow}
+    import Table.CellStatus
 
-    private def cell(s: Status): String =
+    private def cell(s: CellStatus): String =
       "td." + Style.reqtable.cell(s).className.value
 
 //    private def cell(s: Status, focus: Boolean): String =  {
@@ -157,12 +157,12 @@ final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
 //    private def byFocus(focus: Boolean, wrap: String => String): String =
 //      ColumnRenderer.statusDomain.toStream.map(s => wrap(cell(s, focus))).mkString(",")
 
-    private def byStatus(s: Status, wrap: String => String): String =
+    private def byStatus(s: CellStatus, wrap: String => String): String =
       wrap(cell(s))
 
     val allRows  = tbody collect0n ">tr" doms
-    val deadRows = tbody collect0n byStatus(DeadRow, row) doms
-    val liveRows = tbody collect0n byStatus(Normal, row) doms
+    val deadRows = tbody collect0n byStatus(CellStatus.DeadRow, row) doms
+    val liveRows = tbody collect0n byStatus(CellStatus.Normal, row) doms
 //    val focusRow = tbody downO byFocus(true, row)
 //    val focus    = tbody downO byFocus(true, identity)
 //
