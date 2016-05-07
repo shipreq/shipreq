@@ -1,7 +1,7 @@
 package shipreq.webapp.client.app.reqtable
 
 import org.parboiled2.Parser.DeliveryScheme.Throw
-import org.scalajs.dom.html
+import org.scalajs.dom.{document, html}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.client.app.Style
@@ -27,6 +27,8 @@ object ReqTableObs {
  */
 final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
   import ReqTableObs._
+
+  val activeElement = document.activeElement
 
   val svrReqs = cp.reqs
 
@@ -119,14 +121,16 @@ final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
 
   object table {
     val $ = ReqTableObs.this.$("ReqTable", ">table", 2 of 2)
+    val thead = $("ReqTable", ">thead")
     val tbody = $("ReqTable", ">tbody")
 
-    case class ColumnDom(headerCell: html.TableCell) {
+    case class ColumnDom(zipper: HtmlDomZipperAt[html.TableCell]) {
+      val headerCell = zipper.dom
       val name = headerCell.textContent
     }
 
     val columnDoms: Vector[ColumnDom] =
-      $(">thead").collect1n("th").as[html.TableCell].mapDoms(ColumnDom)
+      thead.collect1n("th").as[html.TableCell].mapZippers(ColumnDom)
 
     val columns: Vector[String] =
       columnDoms map (_.name)
@@ -193,14 +197,25 @@ final class ReqTableObs(cp: TestClientProtocol, $: HtmlDomZipper) {
     def cell(loc: CellLoc): HtmlDomZipperAt[html.TableCell] =
       cell(row = loc.row, col = loc.col)
 
-    def cell(row: Int, col: Int): HtmlDomZipperAt[html.TableCell] =
-      tbody(s">tr:nth-child(${row + 1}) >td:nth-child(${col + 1})").as[html.TableCell]
+    def cell(row: Int, col: Int): HtmlDomZipperAt[html.TableCell] = {
+      var c = col
+      if (c < 0) c += columns.length
+      var r = row
+      if (r < 0) r += allRows.size
+      tbody(s">tr:nth-child(${r + 1}) >td:nth-child(${c + 1})").as[html.TableCell]
+    }
 
     def cell(pubid: String, col: String): HtmlDomZipperAt[html.TableCell] =
       cell(cellLoc(pubid, col))
 
     def cellLoc(pubid: String, col: String): CellLoc =
       CellLoc(row = rowIndexByPubid(pubid), columnIndex(col))
+
+    def rowSelectionInput(row: Int): html.Input =
+      cell(row, 0)("input[type=checkbox]").domAs[html.Input]
+
+    lazy val allRowSelectionInput: html.Input =
+      columnDoms(0).zipper("input[type=checkbox]").domAs[html.Input]
 
     lazy val entireContent =
       tbody.collect0n(">tr").zippers.iterator

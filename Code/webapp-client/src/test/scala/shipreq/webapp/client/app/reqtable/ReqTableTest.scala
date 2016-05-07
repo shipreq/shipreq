@@ -35,9 +35,15 @@ object ReqTableTest extends TestSuite {
                    reqTable    : ReqTable.State)
 
   def runTest(plan: *.Plan): Unit =
-    runTest(plan withInitialState SampleProject3.project)
+    runTest(plan, false)
 
-  def runTest(plan: *.PlanWithInitialState): Unit = {
+  def runTest(plan: *.PlanWithInitialState): Unit =
+    runTest(plan, false)
+
+  def runTest(plan: *.Plan, testsFocus: Boolean): Unit =
+    runTest(plan withInitialState SampleProject3.project, testsFocus)
+
+  def runTest(plan: *.PlanWithInitialState, testsFocus: Boolean) = {
     val reqDetailRC = MockRouterCtl[ExternalPubid]()
     val cd = TestClientData(plan.initialState)
     val cp = MockServer(cd)
@@ -89,7 +95,7 @@ object ReqTableTest extends TestSuite {
       PreviewFeature.initState,
       ReqTable.State.init(cd, HideDead, None))
 
-    ReactTestUtils.withRenderedIntoDocument(outer(initialState)) { c =>
+    ReactTestUtils.withRendered(outer(initialState), testsFocus) { c =>
       def observe() = new ReqTableObs(cp, c.htmlDomZipper)
       val ref       = Ref(c zoomL State.reqTable, cp)
       val test      = plan.addInvariants(invariants).test(Observer watch observe())
@@ -337,6 +343,31 @@ object ReqTableTest extends TestSuite {
     ) named s"NOP edits: $pubid/$col"
   }
 
+  def testKeyboardNavigation = Plan.action(
+    setFocus(_.table.cell(1, 1).dom)
+      >> press(DownKey)   +> activeElement.assert.equalBy(_.obs.table.cell(2, 1).dom)
+      >> press(RightKey)  +> activeElement.assert.equalBy(_.obs.table.cell(2, 2).dom)
+      >> press(UpKey)     +> activeElement.assert.equalBy(_.obs.table.cell(1, 2).dom)
+      >> press(LeftKey)   +> activeElement.assert.equalBy(_.obs.table.cell(1, 1).dom)
+      >> press(End)       +> activeElement.assert.equalBy(_.obs.table.cell(1, -1).dom)
+      >> press(Home)      +> activeElement.assert.equalBy(_.obs.table.rowSelectionInput(1))
+      >> press(LeftKey)   +> activeElement.assert.equalBy(_.obs.table.cell(1, -1).dom)
+      >> press(RightKey)  +> activeElement.assert.equalBy(_.obs.table.rowSelectionInput(1))
+      >> press(DownKey)   +> activeElement.assert.equalBy(_.obs.table.rowSelectionInput(2))
+      >> press(End.ctrl)  +> activeElement.assert.equalBy(_.obs.table.cell(-1, -1).dom)
+      >> press(Home.ctrl) +> activeElement.assert.equalBy(_.obs.table.allRowSelectionInput)
+      >> press(LeftKey)   +> activeElement.assert.equalBy(_.obs.table.columnDoms.last.headerCell)
+      >> press(RightKey)  +> activeElement.assert.equalBy(_.obs.table.allRowSelectionInput)
+      >> press(RightKey)  +> activeElement.assert.equalBy(_.obs.table.columnDoms(1).headerCell)
+      >> press(DownKey)   +> activeElement.assert.equalBy(_.obs.table.cell(0, 1).dom)
+      >> press(UpKey)     +> activeElement.assert.equalBy(_.obs.table.columnDoms(1).headerCell)
+      >> press(UpKey)     +> activeElement.assert.equalBy(_.obs.table.cell(-1, 1).dom)
+      >> press(RightKey)  +> activeElement.assert.equalBy(_.obs.table.cell(-1, 2).dom)
+      >> press(RightKey)  +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3).dom) // The Title column
+      >> press(F2)        +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3)("textarea").dom)
+      // TODO Test jumping from textarea ↔ table
+  ) named "Keyboard navigation"
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   override def tests = TestSuite {
@@ -372,5 +403,6 @@ object ReqTableTest extends TestSuite {
       }
     }
 
+    'kbNav - runTest(testKeyboardNavigation, true)
   }
 }

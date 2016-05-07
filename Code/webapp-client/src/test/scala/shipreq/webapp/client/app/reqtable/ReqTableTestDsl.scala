@@ -3,7 +3,6 @@ package shipreq.webapp.client.app.reqtable
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test.ReactTestUtils.Simulate
 import japgolly.scalajs.react.test._
-import org.scalajs.dom.ext.{KeyCode, KeyValue}
 import org.scalajs.dom.html
 import shipreq.base.util._
 import shipreq.base.util.univeq._
@@ -61,6 +60,8 @@ object ReqTableTestDsl {
 
   val svrLastTwoReqs =
     *.focus("Retry requests").compare(_.obs.svrReqs.last, _.obs.svrReqs.init.last)
+
+  val activeElement = *.focus("activeElement").value(_.obs.activeElement)
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -140,7 +141,7 @@ object ReqTableTestDsl {
     def testInvalid(text: String) = enterValue(text, "Enter invalid value") +> editorValidity.assert(Invalid)
 
     val commit =
-      *.action("Press Ctrl-Enter.")(CtrlEnter simulateKeyDown editor.run(_)) +> assertNotEditing
+      *.action("Press Ctrl-Enter.")(Enter.ctrl simulateKeyDown editor.run(_)) +> assertNotEditing
 
     val abortEdit =
       *.action("Press Escape.")(Escape simulateKeyDown editor.run(_)) +> assertState(Normal)
@@ -151,7 +152,6 @@ object ReqTableTestDsl {
     val clickAbort =
       *.action("Click Abort.")(Simulate click abortButton.run(_))
   }
-
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Invariants
@@ -298,4 +298,11 @@ object ReqTableTestDsl {
   val svrFailLast = *.action("Fail last server request.")(_.ref.svr.failLast())
 
   val svrAssertLastTwoReqsEqual = svrLastTwoReqs.map(_.input).assert.equal(Equal.by_==, implicitly)
+
+  def setFocus(f: ReqTableObs => html.Element): *.Actions =
+    *.action("Set focus")(i => f(i.obs).focus()) +>
+      activeElement.assert.equalBy(i => f(i.obs))
+
+  def press(k: KeyboardEventData): *.Actions =
+    *.action(s"Press ${k.desc}.")(k simulateKeyDownPressUp _.obs.activeElement)
 }
