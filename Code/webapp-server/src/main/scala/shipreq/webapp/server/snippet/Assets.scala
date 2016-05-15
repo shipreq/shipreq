@@ -44,7 +44,7 @@ object Assets extends DispatchSnippet with SnippetHelpers {
   val project = staticHtml(Seq(
     css("app.css"),
     js("project.js"),
-    js("client.js")) ++
+    js("client-project.js")) ++
     katex(null))
 
   val sir = staticHtml(Seq(

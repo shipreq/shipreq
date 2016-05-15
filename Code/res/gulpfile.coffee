@@ -9,7 +9,8 @@ rename    = require 'gulp-rename'
 uglify    = require 'gulp-uglify'
 
 cfg_bower        = 'bower_components/'
-cfg_wc_root      = '../webapp-client-project/'
+cfg_wch_root     = '../webapp-client-home/'
+cfg_wcp_root     = '../webapp-client-project/'
 cfg_ws_root      = '../webapp-server/'
 cfg_ws_webapp    = cfg_ws_root + 'src/main/webapp/'
 cfg_ws_dev       = cfg_ws_webapp + 'dev/'
@@ -126,7 +127,8 @@ gulp.task 'wc:testjs', ->
       ]
     .pipe concat 'shipreq-client-test.js'
     .pipe uglify()
-    .pipe gulp.dest cfg_wc_root + 'src/test/resources'
+    .pipe gulp.dest cfg_wch_root + 'src/test/resources'
+    .pipe gulp.dest cfg_wcp_root + 'src/test/resources'
 
 gulp.task 'wc', ['wc:testjs']
 
