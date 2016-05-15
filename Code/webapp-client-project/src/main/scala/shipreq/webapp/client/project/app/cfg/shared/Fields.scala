@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.cfg.shared
+package shipreq.webapp.client.project.app.cfg.shared
 
 import monocle.{Iso, Lens}
 import shipreq.base.util.ScalaExt._

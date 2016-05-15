@@ -1,4 +1,4 @@
-package shipreq.webapp.client.feature
+package shipreq.webapp.client.project.feature
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
@@ -11,11 +11,11 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text._
-import shipreq.webapp.client.data.TCB
-import shipreq.webapp.client.lib.DataReusability._
-import shipreq.webapp.client.lib.KeyHandlers
-import shipreq.webapp.client.protocol.ServerCall
-import shipreq.webapp.client.widgets.high.ProjectWidgets
+import shipreq.webapp.client.project.data.TCB
+import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.project.lib.KeyHandlers
+import shipreq.webapp.client.project.protocol.ServerCall
+import shipreq.webapp.client.project.widgets.high.ProjectWidgets
 
 /**
  * Provides optional editors for parts of a project's content.
@@ -291,7 +291,7 @@ object ContentEditorFeature {
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
       object EditReqCodes {
-        import shipreq.webapp.client.widgets.high.ReqCodeEditor
+        import shipreq.webapp.client.project.widgets.high.ReqCodeEditor
 
         private def trie() = pxProject.value().reqCodes.trie
 
@@ -336,7 +336,7 @@ object ContentEditorFeature {
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
       object EditReqType {
-        import shipreq.webapp.client.widgets.high.ReqTypeSelector
+        import shipreq.webapp.client.project.widgets.high.ReqTypeSelector
         import ReqTypeSelector.A
 
         val pxCustomReqTypes = ReqTypeSelector.pxCustomReqTypes(pxProject)
@@ -373,7 +373,7 @@ object ContentEditorFeature {
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
       object EditImplications {
-        import shipreq.webapp.client.widgets.high.ImplicationEditor
+        import shipreq.webapp.client.project.widgets.high.ImplicationEditor
         import ImplicationEditor.{Lookup, ValidationFn}
 
         val pxLookupAll = Px.apply2(pxProject, pxPlainText)(ImplicationEditor.Lookup.all)
@@ -420,7 +420,7 @@ object ContentEditorFeature {
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
       object EditTags {
-        import shipreq.webapp.client.widgets.high.TagEditor
+        import shipreq.webapp.client.project.widgets.high.TagEditor
         import TagEditor.Lookup
 
         def apply(req: Req, fid: Option[CustomField.Tag.Id]): StartEditFn = {
@@ -453,7 +453,7 @@ object ContentEditorFeature {
 
       object EditRichText {
         import shipreq.webapp.base.text._
-        import shipreq.webapp.client.widgets.high.RichTextEditor
+        import shipreq.webapp.client.project.widgets.high.RichTextEditor
 
         abstract class Base[T <: Text.Generic](val editor: RichTextEditor[T]) {
           val T: editor.text.type = editor.text
@@ -525,8 +525,8 @@ object ContentEditorFeature {
 
       object EditUseCaseStep {
         import shipreq.webapp.base.event.UseCaseStepGD
-        import shipreq.webapp.client.widgets.high.RichTextEditor.hardcodedLive
-        import shipreq.webapp.client.widgets.high.UseCaseStepEditor
+        import shipreq.webapp.client.project.widgets.high.RichTextEditor.hardcodedLive
+        import shipreq.webapp.client.project.widgets.high.UseCaseStepEditor
         import UseCaseStepFlowText.TextAndFlow
 
         def apply(id: UseCaseStepId, focusId: P): StartEditFn = {

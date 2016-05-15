@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.reqtable
+package shipreq.webapp.client.project.app.reqtable
 
 import monocle.Optional
 import scalacss.ScalaCssReact._
@@ -8,10 +8,10 @@ import shipreq.base.util.{Memo, NonEmptyVector}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.ProjectText
-import shipreq.webapp.client.app.Style.{reqtable => *}
-import shipreq.webapp.client.data.Plain
-import shipreq.webapp.client.lib.DataReusability._
-import shipreq.webapp.client.widgets.high.ProjectWidgets
+import shipreq.webapp.client.project.app.Style.{reqtable => *}
+import shipreq.webapp.client.project.data.Plain
+import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.project.widgets.high.ProjectWidgets
 import ColumnRenderer._
 
 final class ColumnRenderer(val column: Column,

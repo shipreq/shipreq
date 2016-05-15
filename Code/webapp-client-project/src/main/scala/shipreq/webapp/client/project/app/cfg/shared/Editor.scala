@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.cfg.shared
+package shipreq.webapp.client.project.app.cfg.shared
 
 import japgolly.scalajs.react.ScalazReact.ReactST
 import scalaz._

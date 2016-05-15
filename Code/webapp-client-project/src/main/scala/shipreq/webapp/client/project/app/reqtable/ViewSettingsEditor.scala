@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.reqtable
+package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
@@ -7,9 +7,9 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util.NonEmptySet
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.ProjectConfig
-import shipreq.webapp.client.app.Style.{reqtable => *}
-import shipreq.webapp.client.lib.DataReusability._
-import shipreq.webapp.client.widgets.Checkbox
+import shipreq.webapp.client.project.app.Style.{reqtable => *}
+import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.project.widgets.Checkbox
 
 object ViewSettingsEditor {
 

@@ -1,11 +1,11 @@
-package shipreq.webapp.client.app.cfg.shared
+package shipreq.webapp.client.project.app.cfg.shared
 
 import japgolly.scalajs.react.{Callback, CallbackTo}
 import japgolly.scalajs.react.ScalazReact._
 import utest._
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.client.data.TCB
-import shipreq.webapp.client.test.TestUtil._
+import shipreq.webapp.client.project.data.TCB
+import shipreq.webapp.client.project.test.TestUtil._
 
 object DeletionTest extends TestSuite {
 

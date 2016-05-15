@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.reqdetail
+package shipreq.webapp.client.project.app.reqdetail
 
 import japgolly.scalajs.react.test._
 import japgolly.scalajs.react.test.ReactTestUtils.Simulate
@@ -9,7 +9,7 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
-import shipreq.webapp.client.test.TestState._
+import shipreq.webapp.client.project.test.TestState._
 
 object ReqDetailTestDsl {
 

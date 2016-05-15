@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.reqtable
+package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
 import japgolly.scalajs.react.extra._
@@ -9,10 +9,10 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.CreateContentCmd
 import shipreq.webapp.base.text.{PlainText, TextSearch}
-import shipreq.webapp.client.data.{Enabled, TCB}
-import shipreq.webapp.client.protocol.ServerCall
-import shipreq.webapp.client.widgets._
-import shipreq.webapp.client.widgets.high._
+import shipreq.webapp.client.project.data.{Enabled, TCB}
+import shipreq.webapp.client.project.protocol.ServerCall
+import shipreq.webapp.client.project.widgets._
+import shipreq.webapp.client.project.widgets.high._
 import SelectOne.{Choice, Choices}
 import UnivEq.univEqOption
 

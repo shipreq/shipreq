@@ -1,13 +1,13 @@
-package shipreq.webapp.client.app.reqtable
+package shipreq.webapp.client.project.app.reqtable
 
 import org.parboiled2.Parser.DeliveryScheme.Throw
 import org.scalajs.dom.{document, html}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.client.app.Style
-import shipreq.webapp.client.data._
-import shipreq.webapp.client.test._
-import shipreq.webapp.client.widgets.Checkbox
+import shipreq.webapp.client.project.app.Style
+import shipreq.webapp.client.project.data._
+import shipreq.webapp.client.project.test._
+import shipreq.webapp.client.project.widgets.Checkbox
 import TestState._
 
 object ReqTableObs {

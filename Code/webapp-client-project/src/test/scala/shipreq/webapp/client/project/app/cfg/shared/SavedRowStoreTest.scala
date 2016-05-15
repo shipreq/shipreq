@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.cfg.shared
+package shipreq.webapp.client.project.app.cfg.shared
 
 import monocle.Lens
 import scalaz.Equal
@@ -6,8 +6,8 @@ import utest._
 import nyaya.prop._
 import nyaya.gen._
 import nyaya.test._
-import shipreq.webapp.client.test.ClientTestSettings._
-import shipreq.webapp.client.test.TestUtil._
+import shipreq.webapp.client.project.test.ClientTestSettings._
+import shipreq.webapp.client.project.test.TestUtil._
 import RowStatus._
 import SavedRowStore.{Row, SS}
 

@@ -1,4 +1,4 @@
-package shipreq.webapp.client.feature
+package shipreq.webapp.client.project.feature
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
@@ -6,8 +6,8 @@ import org.scalajs.dom.html
 import scala.scalajs.js
 import shipreq.base.util.ScalaExt.EndoFn
 import shipreq.base.util.Vector1
-import shipreq.webapp.client.jsfacade.TextComplete
-import shipreq.webapp.client.lib.TextEditor
+import shipreq.webapp.client.project.jsfacade.TextComplete
+import shipreq.webapp.client.project.lib.TextEditor
 
 /**
  * Usage

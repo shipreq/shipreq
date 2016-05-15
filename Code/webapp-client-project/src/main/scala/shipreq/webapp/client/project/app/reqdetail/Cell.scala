@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.reqdetail
+package shipreq.webapp.client.project.app.reqdetail
 
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
@@ -6,8 +6,8 @@ import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data
 import shipreq.webapp.base.data.{CustomFieldId, UseCaseStepId}
-import shipreq.webapp.client.feature.ContentEditorFeature.EditFieldKey
-import shipreq.webapp.client.lib.DataReusability._
+import shipreq.webapp.client.project.feature.ContentEditorFeature.EditFieldKey
+import shipreq.webapp.client.project.lib.DataReusability._
 
 sealed abstract class Cell {
   import Cell._

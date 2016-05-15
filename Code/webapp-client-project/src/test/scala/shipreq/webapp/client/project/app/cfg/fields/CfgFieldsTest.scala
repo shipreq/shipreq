@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.cfg.fields
+package shipreq.webapp.client.project.app.cfg.fields
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
@@ -12,9 +12,9 @@ import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.{FieldCrud, RemoteFn}
 import shipreq.webapp.base.test.{SampleProject => S}
 import shipreq.webapp.base.test.UnsafeTypes._
-import shipreq.webapp.client.lib.DataReusability._
-import shipreq.webapp.client.test.TestUtil._
-import shipreq.webapp.client.test._
+import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.project.test.TestUtil._
+import shipreq.webapp.client.project.test._
 import MainTable.State
 import TestState.htmlScrub
 

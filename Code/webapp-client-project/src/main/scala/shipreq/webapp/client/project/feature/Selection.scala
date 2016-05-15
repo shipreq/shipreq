@@ -1,12 +1,12 @@
-package shipreq.webapp.client.feature
+package shipreq.webapp.client.project.feature
 
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.components.TriStateCheckbox
 import japgolly.univeq.UnivEq
 import monocle.Iso
-import shipreq.webapp.client.data.{Off, On}
-import shipreq.webapp.client.widgets.Widgets
+import shipreq.webapp.client.project.data.{Off, On}
+import shipreq.webapp.client.project.widgets.Widgets
 import Selection._
 
 /**

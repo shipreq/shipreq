@@ -1,4 +1,4 @@
-package shipreq.webapp.client.lib
+package shipreq.webapp.client.project.lib
 
 import scalaz._
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._

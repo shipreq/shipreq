@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.reqtable
+package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
@@ -8,8 +8,8 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data
 import shipreq.webapp.base.UiText.ColumnNames
-import shipreq.webapp.client.lib.KeyGen
-import shipreq.webapp.client.feature.ContentEditorFeature.EditFieldKey
+import shipreq.webapp.client.project.lib.KeyGen
+import shipreq.webapp.client.project.feature.ContentEditorFeature.EditFieldKey
 
 sealed trait Column {
   // Ensure correct attribute traits are mixed in

@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app
+package shipreq.webapp.client.project.app
 
 import japgolly.scalajs.react.vdom.prefix_<^.{^ => ^^, _}
 import scalacss.Defaults._
@@ -7,8 +7,8 @@ import scalacss.{PseudoElement, Pseudo, StyleS}
 import shipreq.base.util._
 import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.data.{StaticField, Live, Dead}
-import shipreq.webapp.client.data._
-import shipreq.webapp.client.widgets._
+import shipreq.webapp.client.project.data._
+import shipreq.webapp.client.project.widgets._
 
 object Style extends StyleSheet.Inline {
   import dsl._
@@ -84,8 +84,8 @@ object Style extends StyleSheet.Inline {
 
   // ===================================================================================================================
   object reqtable {
-    import shipreq.webapp.client.app.reqtable.Column
-    import shipreq.webapp.client.app.reqtable.Table.CellStatus
+    import shipreq.webapp.client.project.app.reqtable.Column
+    import shipreq.webapp.client.project.app.reqtable.Table.CellStatus
 
     val pubidColumnValue = styleF(D.live)(a => styleS(
       display.inline,

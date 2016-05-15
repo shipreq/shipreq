@@ -1,4 +1,4 @@
-package shipreq.webapp.client.feature
+package shipreq.webapp.client.project.feature
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.Reusability
@@ -8,8 +8,8 @@ import monocle.Lens
 import scala.annotation.elidable
 import shipreq.base.util.Intersection
 import shipreq.base.util.univeq._
-import shipreq.webapp.client.app.Assets
-import shipreq.webapp.client.data.TCB
+import shipreq.webapp.client.project.app.Assets
+import shipreq.webapp.client.project.data.TCB
 
 /**
   * Provides the following functionality around async actions:

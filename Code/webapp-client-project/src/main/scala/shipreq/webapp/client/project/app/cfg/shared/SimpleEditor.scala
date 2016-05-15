@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.cfg.shared
+package shipreq.webapp.client.project.app.cfg.shared
 
 import japgolly.scalajs.react.{Callback, CallbackTo, ReactElement}
 import japgolly.scalajs.react.ScalazReact._

@@ -1,4 +1,4 @@
-package shipreq.webapp.client.feature
+package shipreq.webapp.client.project.feature
 
 import japgolly.scalajs.react._, ScalazReact._
 import japgolly.scalajs.react.extra.Reusability
@@ -6,7 +6,7 @@ import monocle.Lens
 import scalaz.Equal
 import scalaz.std.option.optionEqual
 import shipreq.base.util.Intersection
-import shipreq.webapp.client.jsfacade.ReactCollapse
+import shipreq.webapp.client.project.jsfacade.ReactCollapse
 import PreviewFeature._
 
 /**

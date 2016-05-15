@@ -1,7 +1,7 @@
-package shipreq.webapp.client.lib
+package shipreq.webapp.client.project.lib
 
 import scalaz.std.AllInstances._
-import shipreq.webapp.client.test.TestUtil._
+import shipreq.webapp.client.project.test.TestUtil._
 import utest._
 
 object DNDTest extends TestSuite {

@@ -1,4 +1,4 @@
-package shipreq.webapp.client.widgets
+package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import org.scalajs.dom.raw.HTMLSelectElement
@@ -6,7 +6,7 @@ import scala.scalajs.js
 import scalaz.Equal
 import shipreq.base.util.{NonEmptyVector, ParseInt}
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.client.data.{Disabled, Enabled}
+import shipreq.webapp.client.project.data.{Disabled, Enabled}
 
 object SelectOne {
 

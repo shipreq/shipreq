@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.cfg.issues
+package shipreq.webapp.client.project.app.cfg.issues
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -7,10 +7,10 @@ import org.scalajs.dom.html
 import shipreq.webapp.base.data.{FilterDead, HideDead}
 import shipreq.webapp.base.protocol.{CustomIssueTypeCrud, RemoteFn}
 import shipreq.webapp.base.test.SampleProject
-import shipreq.webapp.client.app.cfg.shared.Usage
-import shipreq.webapp.client.lib.DataReusability._
-import shipreq.webapp.client.test.TestUtil._
-import shipreq.webapp.client.test._
+import shipreq.webapp.client.project.app.cfg.shared.Usage
+import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.project.test.TestUtil._
+import shipreq.webapp.client.project.test._
 import utest._
 
 object CustomIssueTypesTest extends TestSuite {

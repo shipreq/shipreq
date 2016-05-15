@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app
+package shipreq.webapp.client.project.app
 
 import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.extra.Reusability

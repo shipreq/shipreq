@@ -1,4 +1,4 @@
-package shipreq.webapp.client.lib
+package shipreq.webapp.client.project.lib
 
 import japgolly.scalajs.react._
 import scala.annotation.tailrec

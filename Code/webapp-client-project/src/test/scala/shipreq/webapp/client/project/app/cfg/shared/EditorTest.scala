@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.cfg.shared
+package shipreq.webapp.client.project.app.cfg.shared
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.test._
@@ -8,9 +8,9 @@ import scalaz.Scalaz.Id
 import utest._
 import shipreq.base.util.ScalaExt._
 import Editors._
-import shipreq.webapp.client.test.Sizzle
-import shipreq.webapp.client.test.TestUtil._
-import shipreq.webapp.client.test.SampleDataPerson._
+import shipreq.webapp.client.project.test.Sizzle
+import shipreq.webapp.client.project.test.TestUtil._
+import shipreq.webapp.client.project.test.SampleDataPerson._
 import NewAndSavedRowState._
 
 object EditorTest extends TestSuite {

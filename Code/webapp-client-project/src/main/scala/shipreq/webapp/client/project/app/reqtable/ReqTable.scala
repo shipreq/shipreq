@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.reqtable
+package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, MonocleReact._
 import japgolly.scalajs.react.experimental.StaticPropComponent
@@ -13,11 +13,11 @@ import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.{FilterAst, FilterSpec}
 import shipreq.webapp.base.text.{TextSearch, PlainText}
-import shipreq.webapp.client.app.state.{Changes, ClientData}
-import shipreq.webapp.client.app.Style.{reqtable => *}
-import shipreq.webapp.client.feature._
-import shipreq.webapp.client.protocol.{ClientProtocol, ServerCall}
-import shipreq.webapp.client.widgets.high.ProjectWidgets
+import shipreq.webapp.client.project.app.state.{Changes, ClientData}
+import shipreq.webapp.client.project.app.Style.{reqtable => *}
+import shipreq.webapp.client.project.feature._
+import shipreq.webapp.client.project.protocol.{ClientProtocol, ServerCall}
+import shipreq.webapp.client.project.widgets.high.ProjectWidgets
 
 object ReqTable extends StaticPropComponent.Template("ReqTable") {
   override protected def configureBackend = new Backend(_, _)

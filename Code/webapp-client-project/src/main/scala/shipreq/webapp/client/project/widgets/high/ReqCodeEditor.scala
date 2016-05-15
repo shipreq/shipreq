@@ -1,4 +1,4 @@
-package shipreq.webapp.client.widgets.high
+package shipreq.webapp.client.project.widgets.high
 
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react._, vdom.prefix_<^._
@@ -7,9 +7,9 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.GrammarSpec.SeqFormat
 import shipreq.webapp.base.validation.{Validator, ValidUpdateVR}
-import shipreq.webapp.client.feature._
-import shipreq.webapp.client.lib.DataReusability._
-import shipreq.webapp.client.lib.{AutoComplete, TextEditor}
+import shipreq.webapp.client.project.feature._
+import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.project.lib.{AutoComplete, TextEditor}
 import Validators.{reqCode => V}
 
 sealed abstract class ReqCodeEditor[In: Reusability, Out] {

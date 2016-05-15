@@ -1,13 +1,13 @@
-package shipreq.webapp.client.app.cfg.issues
+package shipreq.webapp.client.project.app.cfg.issues
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.extra.OnUnmount
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.protocol.ReqTypeImplicationMod
-import shipreq.webapp.client.app.state.{ClientData, ChangeListener}
-import shipreq.webapp.client.app.cfg.shared._
-import shipreq.webapp.client.data.On
-import shipreq.webapp.client.protocol.ClientProtocol
+import shipreq.webapp.client.project.app.state.{ClientData, ChangeListener}
+import shipreq.webapp.client.project.app.cfg.shared._
+import shipreq.webapp.client.project.data.On
+import shipreq.webapp.client.project.protocol.ClientProtocol
 import ReqType.Mnemonic
 
 private[issues] object ReqTypeImplication {

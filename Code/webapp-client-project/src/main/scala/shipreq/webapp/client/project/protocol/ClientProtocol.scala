@@ -1,11 +1,11 @@
-package shipreq.webapp.client.protocol
+package shipreq.webapp.client.project.protocol
 
 import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.extra.Reusability
 import scalaz.{-\/, \/-, \/}
 import shipreq.webapp.base.protocol.{GenericFailure, RemoteFn}
-import shipreq.webapp.client.data.TCB
-import shipreq.webapp.client.lib.Logger
+import shipreq.webapp.client.project.data.TCB
+import shipreq.webapp.client.project.lib.Logger
 import ClientProtocol._
 
 trait ClientProtocol {

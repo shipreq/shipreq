@@ -1,4 +1,4 @@
-package shipreq.webapp.client.test
+package shipreq.webapp.client.project.test
 
 import japgolly.scalajs.react._
 import scalaz.\/-
@@ -7,8 +7,8 @@ import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.VerifiedEvents
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.server._
-import shipreq.webapp.client.app.state.ClientData
-import shipreq.webapp.client.data.TCB
+import shipreq.webapp.client.project.app.state.ClientData
+import shipreq.webapp.client.project.data.TCB
 import TestClientProtocol.Req
 
 class MockServer(project: CallbackTo[Project], update: VerifiedEvents => Callback) extends TestClientProtocol {

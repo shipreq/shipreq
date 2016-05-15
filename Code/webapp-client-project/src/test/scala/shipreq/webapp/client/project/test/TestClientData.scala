@@ -1,12 +1,12 @@
-package shipreq.webapp.client.test
+package shipreq.webapp.client.project.test
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.Px
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.client.app.state.{Changes, ClientData}
-import shipreq.webapp.client.lib.DataReusability.reusabilityProject
+import shipreq.webapp.client.project.app.state.{Changes, ClientData}
+import shipreq.webapp.client.project.lib.DataReusability.reusabilityProject
 import scalaz.{-\/, \/, \/-}
 
 final class TestClientData(init: Project) extends ClientData {

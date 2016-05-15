@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.reqtable
+package shipreq.webapp.client.project.app.reqtable
 
 import monocle.Optional
 import monocle.function.Index.index
@@ -10,7 +10,7 @@ import shipreq.base.util.MutableArray
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
-import shipreq.webapp.client.app.reqtable.{SortMethod => SM, SortCriterion => SC, Column => C}
+import shipreq.webapp.client.project.app.reqtable.{SortMethod => SM, SortCriterion => SC, Column => C}
 import ColumnRenderer.SortableDeletionReason
 import SortMethod.{Asc, AscThenBlanks, BlanksThenAsc}
 

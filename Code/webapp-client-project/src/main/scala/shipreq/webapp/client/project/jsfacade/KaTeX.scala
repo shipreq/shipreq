@@ -1,4 +1,4 @@
-package shipreq.webapp.client.jsfacade
+package shipreq.webapp.client.project.jsfacade
 
 import scalajs.js.annotation.JSName
 import scalajs.js._

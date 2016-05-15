@@ -1,13 +1,13 @@
-package shipreq.webapp.client.app.cfg.tags
+package shipreq.webapp.client.project.app.cfg.tags
 
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import shipreq.base.util.NonEmptyVector
 import scalaz.Equal
 import scalaz.std.option.optionEqual
 import shipreq.webapp.base.data.{TagId => Id, _}
-import shipreq.webapp.client.data.{Disabled, Enabled}
-import shipreq.webapp.client.lib.DND
-import shipreq.webapp.client.widgets.SelectOne
+import shipreq.webapp.client.project.data.{Disabled, Enabled}
+import shipreq.webapp.client.project.lib.DND
+import shipreq.webapp.client.project.widgets.SelectOne
 import SelectOne.Choice
 
 private[tags] object DetailPane {

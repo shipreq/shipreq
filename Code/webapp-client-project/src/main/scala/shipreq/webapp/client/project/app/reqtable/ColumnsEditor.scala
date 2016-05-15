@@ -1,12 +1,12 @@
-package shipreq.webapp.client.app.reqtable
+package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import shipreq.base.util.NonEmptySet
-import shipreq.webapp.client.data.{Enabled, On}
-import shipreq.webapp.client.lib.DataReusability._
-import shipreq.webapp.client.widgets.CheckboxList
+import shipreq.webapp.client.project.data.{Enabled, On}
+import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.project.widgets.CheckboxList
 
 object ColumnsEditor {
 

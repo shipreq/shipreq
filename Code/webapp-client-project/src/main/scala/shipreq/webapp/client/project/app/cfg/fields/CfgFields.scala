@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.cfg.fields
+package shipreq.webapp.client.project.app.cfg.fields
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
 import japgolly.scalajs.react.extra._
@@ -16,13 +16,13 @@ import shipreq.webapp.base.data.Validators.{field => V}
 import shipreq.webapp.base.event.{DeletionAction, Delete, Restore}
 import shipreq.webapp.base.protocol.FieldCrud
 import shipreq.webapp.base.UiText, UiText.FieldNames
-import shipreq.webapp.client.app.cfg.shared.{FieldSet => _, _}
-import shipreq.webapp.client.app.state.{ClientData, ChangeListener}
-import shipreq.webapp.client.data._
-import shipreq.webapp.client.lib.DataReusability._
-import shipreq.webapp.client.lib.DND
-import shipreq.webapp.client.protocol.ClientProtocol
-import shipreq.webapp.client.widgets._
+import shipreq.webapp.client.project.app.cfg.shared.{FieldSet => _, _}
+import shipreq.webapp.client.project.app.state.{ClientData, ChangeListener}
+import shipreq.webapp.client.project.data._
+import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.project.lib.DND
+import shipreq.webapp.client.project.protocol.ClientProtocol
+import shipreq.webapp.client.project.widgets._
 import Field.ApplicableReqTypes
 
 object CfgFields {

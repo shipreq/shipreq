@@ -1,10 +1,10 @@
-package shipreq.webapp.client.app.cfg.shared
+package shipreq.webapp.client.project.app.cfg.shared
 
 import japgolly.scalajs.react._, ScalazReact._
 import japgolly.scalajs.react.extra.{Reusability, Px}
 import scalaz.Equal
 import shipreq.webapp.base.validation.Validator
-import shipreq.webapp.client.lib.CrudActionIO
+import shipreq.webapp.client.project.lib.CrudActionIO
 import Persistence.Realise
 
 /**

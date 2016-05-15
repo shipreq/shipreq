@@ -1,4 +1,4 @@
-package shipreq.webapp.client.lib
+package shipreq.webapp.client.project.lib
 package edit
 
 import japgolly.scalajs.react._
@@ -12,9 +12,9 @@ import shipreq.base.util.MTrie.Ops
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._, WebappTestUtil._
 import shipreq.webapp.base.text.{PlainText, ProjectText}
-import shipreq.webapp.client.data.{Plain, Contextualise}
-import shipreq.webapp.client.feature.AutoCompleteFeature
-import shipreq.webapp.client.test.{PrepareEnv, Sizzle}
+import shipreq.webapp.client.project.data.{Plain, Contextualise}
+import shipreq.webapp.client.project.feature.AutoCompleteFeature
+import shipreq.webapp.client.project.test.{PrepareEnv, Sizzle}
 import SampleProject3._
 
 object AutoCompleteTest extends TestSuite {

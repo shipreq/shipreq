@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.cfg.fields
+package shipreq.webapp.client.project.app.cfg.fields
 
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.univeq.UnivEq
@@ -7,10 +7,10 @@ import monocle.std.map.atMap
 import scalacss.ScalaCssReact._
 import shipreq.base.util.IMap
 import shipreq.webapp.base.data._
-import shipreq.webapp.client.app.Style
-import shipreq.webapp.client.app.cfg.shared.{FieldSet => _, _}
-import shipreq.webapp.client.lib.Logger
-import shipreq.webapp.client.widgets.ISubsetEditor
+import shipreq.webapp.client.project.app.Style
+import shipreq.webapp.client.project.app.cfg.shared.{FieldSet => _, _}
+import shipreq.webapp.client.project.lib.Logger
+import shipreq.webapp.client.project.widgets.ISubsetEditor
 import Field.ApplicableReqTypes
 import ISubsetEditor._
 

@@ -1,4 +1,4 @@
-package shipreq.webapp.client.data
+package shipreq.webapp.client.project.data
 
 import japgolly.scalajs.react._
 

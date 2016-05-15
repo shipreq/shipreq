@@ -1,4 +1,4 @@
-package shipreq.webapp.client.test
+package shipreq.webapp.client.project.test
 
 import org.parboiled2._
 

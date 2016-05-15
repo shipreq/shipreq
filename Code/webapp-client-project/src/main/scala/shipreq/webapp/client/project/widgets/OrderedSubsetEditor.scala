@@ -1,12 +1,12 @@
-package shipreq.webapp.client.widgets
+package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.univeq._
 import org.scalajs.dom
 import scalaz.Equal
 import scalaz.syntax.equal._
-import shipreq.webapp.client.data.{Off, On}
-import shipreq.webapp.client.lib.DND
+import shipreq.webapp.client.project.data.{Off, On}
+import shipreq.webapp.client.project.lib.DND
 
 /**
  * Something like this:

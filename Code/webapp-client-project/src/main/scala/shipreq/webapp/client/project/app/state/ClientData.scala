@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.state
+package shipreq.webapp.client.project.app.state
 
 import japgolly.scalajs.react.{CallbackTo, Callback}
 import japgolly.scalajs.react.extra.{Px, Reusability, Broadcaster}
@@ -6,10 +6,10 @@ import scalaz.{-\/, \/-}
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.{ApplyEvent, VerifiedEvents}
 import shipreq.webapp.base.protocol.ProjectInit
-import shipreq.webapp.client.data.TCB
-import shipreq.webapp.client.lib.DataReusability.reusabilityProject
-import shipreq.webapp.client.lib.Logger
-import shipreq.webapp.client.protocol.ClientProtocol
+import shipreq.webapp.client.project.data.TCB
+import shipreq.webapp.client.project.lib.DataReusability.reusabilityProject
+import shipreq.webapp.client.project.lib.Logger
+import shipreq.webapp.client.project.protocol.ClientProtocol
 
 abstract class ClientData extends Broadcaster[Changes] {
   val pxProject: Px[Project]

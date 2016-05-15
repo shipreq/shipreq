@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app
+package shipreq.webapp.client.project.app
 
 import japgolly.scalajs.react.vdom.prefix_<^._
 import shipreq.webapp.base.WebappConfig.assetPath

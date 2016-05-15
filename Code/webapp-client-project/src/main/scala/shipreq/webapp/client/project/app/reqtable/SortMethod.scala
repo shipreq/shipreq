@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.reqtable
+package shipreq.webapp.client.project.app.reqtable
 
 import shipreq.base.util.{Util, NonEmptyVector}
 import shipreq.base.util.univeq._

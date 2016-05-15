@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app
+package shipreq.webapp.client.project.app
 
 import japgolly.scalajs.react.test._
 import utest._
@@ -6,9 +6,9 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{ShowDead, HideDead}
 import shipreq.webapp.base.event.{Delete, DeleteCustomField}
 import shipreq.webapp.base.test._
-import shipreq.webapp.client.app.reqtable.{ReqTableTestDsl => RT}
-import shipreq.webapp.client.app.reqdetail.{ReqDetailTestDsl => RD}
-import shipreq.webapp.client.test._
+import shipreq.webapp.client.project.app.reqtable.{ReqTableTestDsl => RT}
+import shipreq.webapp.client.project.app.reqdetail.{ReqDetailTestDsl => RD}
+import shipreq.webapp.client.project.test._
 import ProjectSpaMain.{Page, Props}
 import SampleProject.Values.priField
 import TestState._

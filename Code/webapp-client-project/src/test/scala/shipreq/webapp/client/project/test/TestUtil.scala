@@ -1,4 +1,4 @@
-package shipreq.webapp.client.test
+package shipreq.webapp.client.project.test
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import org.scalajs.dom, dom.{EventTarget, KeyboardEvent}
@@ -9,7 +9,7 @@ import nyaya.gen.Gen
 import shipreq.base.util.Debug._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.test._
-import shipreq.webapp.client.app.cfg.shared._
+import shipreq.webapp.client.project.app.cfg.shared._
 import RowStatus._
 
 object TestUtil extends WebappTestUtil with WebappTestEquality {

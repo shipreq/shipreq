@@ -1,9 +1,9 @@
-package shipreq.webapp.client.app.cfg
+package shipreq.webapp.client.project.app.cfg
 
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{CallbackTo, Callback, ReactElement}
 import shipreq.webapp.base.UiText
-import shipreq.webapp.client.app.Assets
+import shipreq.webapp.client.project.app.Assets
 
 package object shared extends EditorExt {
 

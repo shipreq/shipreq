@@ -1,4 +1,4 @@
-package shipreq.webapp.client.feature
+package shipreq.webapp.client.project.feature
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -7,7 +7,7 @@ import scalacss.ScalaCssReact._
 import scalaz.Equal
 import shipreq.base.util._
 import shipreq.webapp.base.validation._
-import shipreq.webapp.client.app.Style.{reqtable => *}
+import shipreq.webapp.client.project.app.Style.{reqtable => *}
 
 case class EditValidationFeature[+E, +A](value        : ValidUpdate[E, A],
                                          renderFailure: Option[ReactElement])

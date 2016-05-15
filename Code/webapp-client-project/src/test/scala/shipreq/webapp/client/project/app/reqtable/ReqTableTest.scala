@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.reqtable
+package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
@@ -12,11 +12,11 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
 import shipreq.webapp.base.UiText.ColumnNames
-import shipreq.webapp.client.data._
-import shipreq.webapp.client.feature.ContentEditorFeature.EditFieldKey
-import shipreq.webapp.client.feature._
-import shipreq.webapp.client.test._
-import shipreq.webapp.client.widgets.high.ProjectWidgets
+import shipreq.webapp.client.project.data._
+import shipreq.webapp.client.project.feature.ContentEditorFeature.EditFieldKey
+import shipreq.webapp.client.project.feature._
+import shipreq.webapp.client.project.test._
+import shipreq.webapp.client.project.widgets.high.ProjectWidgets
 import utest._
 import TestState.{scalazEqualFromTestState => _, _}
 import SampleProject.Values._

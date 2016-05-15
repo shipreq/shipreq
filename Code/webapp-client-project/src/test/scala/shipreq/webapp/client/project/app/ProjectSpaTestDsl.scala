@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app
+package shipreq.webapp.client.project.app
 
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
@@ -9,9 +9,9 @@ import shipreq.base.util.Debug._
 import shipreq.webapp.base.data.{ExternalPubid, Project}
 import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.test.{MockRemotes, SampleProject5}
-import shipreq.webapp.client.app.reqdetail.{ReqDetailObs, ReqDetailTestDsl => RD}
-import shipreq.webapp.client.app.reqtable.{ReqTableObs, ReqTableTestDsl => RT}
-import shipreq.webapp.client.test._
+import shipreq.webapp.client.project.app.reqdetail.{ReqDetailObs, ReqDetailTestDsl => RD}
+import shipreq.webapp.client.project.app.reqtable.{ReqTableObs, ReqTableTestDsl => RT}
+import shipreq.webapp.client.project.test._
 import ProjectSpaMain.{Page, Props, State}
 import TestState._
 

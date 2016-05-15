@@ -1,4 +1,4 @@
-package shipreq.webapp.client.widgets.high
+package shipreq.webapp.client.project.widgets.high
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, MonocleReact._
 import japgolly.scalajs.react.extra._
@@ -12,10 +12,10 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd.DeleteReqs
 import shipreq.webapp.base.text.{TextSearch, PlainText}
-import shipreq.webapp.client.app.Style.reqtable.{deleteRestore => *}
-import shipreq.webapp.client.data.Plain
-import shipreq.webapp.client.feature.{PreviewFeature, Selection}
-import shipreq.webapp.client.widgets.Widgets
+import shipreq.webapp.client.project.app.Style.reqtable.{deleteRestore => *}
+import shipreq.webapp.client.project.data.Plain
+import shipreq.webapp.client.project.feature.{PreviewFeature, Selection}
+import shipreq.webapp.client.project.widgets.Widgets
 import MTrie.Ops
 
 object DeletionForm {

@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.state
+package shipreq.webapp.client.project.app.state
 
 import scalaz.Equal
 import scalaz.syntax.equal._

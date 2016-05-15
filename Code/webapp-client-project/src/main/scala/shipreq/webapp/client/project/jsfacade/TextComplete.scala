@@ -1,4 +1,4 @@
-package shipreq.webapp.client.jsfacade
+package shipreq.webapp.client.project.jsfacade
 
 import scalajs.js.{Function0 => JFn0, Function1 => JFn1, Function2 => JFn2, Function3 => JFn3, _}
 import scalajs.js.{Any => JAny, Array => JArray, _}

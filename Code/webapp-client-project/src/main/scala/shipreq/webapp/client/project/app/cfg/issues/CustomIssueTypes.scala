@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.cfg.issues
+package shipreq.webapp.client.project.app.cfg.issues
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.extra._
@@ -12,12 +12,12 @@ import shipreq.webapp.base.filter.FilterSpec
 import shipreq.webapp.base.protocol.CustomIssueTypeCrud
 import shipreq.webapp.base.util.TextMod
 import shipreq.webapp.base.UiText.FieldNames
-import shipreq.webapp.client.app.ProjectSpaMain
-import shipreq.webapp.client.app.cfg.shared._
-import shipreq.webapp.client.app.state.{ClientData, ChangeListener}
-import shipreq.webapp.client.lib.CrudActionIO
-import shipreq.webapp.client.lib.DataReusability._
-import shipreq.webapp.client.protocol.ClientProtocol
+import shipreq.webapp.client.project.app.ProjectSpaMain
+import shipreq.webapp.client.project.app.cfg.shared._
+import shipreq.webapp.client.project.app.state.{ClientData, ChangeListener}
+import shipreq.webapp.client.project.lib.CrudActionIO
+import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.project.protocol.ClientProtocol
 import DataImplicits._
 
 private[issues] object CustomIssueTypes {

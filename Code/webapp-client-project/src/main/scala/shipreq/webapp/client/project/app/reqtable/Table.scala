@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.reqtable
+package shipreq.webapp.client.project.app.reqtable
 
 import scalacss.Domain
 import scalacss.ScalaCssReact._
@@ -9,10 +9,10 @@ import org.scalajs.dom.ext.KeyCode
 import shipreq.base.util.NonEmptyVector
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
-import shipreq.webapp.client.app.Style.{reqtable => *}
-import shipreq.webapp.client.feature.{AsyncActionFeature, ContentEditorFeature}
-import shipreq.webapp.client.lib._
-import shipreq.webapp.client.widgets.DragToReorder
+import shipreq.webapp.client.project.app.Style.{reqtable => *}
+import shipreq.webapp.client.project.feature.{AsyncActionFeature, ContentEditorFeature}
+import shipreq.webapp.client.project.lib._
+import shipreq.webapp.client.project.widgets.DragToReorder
 import AsyncActionFeature.{Locked, renderLocked}
 import DataReusability._
 import DomUtil._

@@ -1,4 +1,4 @@
-package shipreq.webapp.client.widgets.high
+package shipreq.webapp.client.project.widgets.high
 
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react._, vdom.prefix_<^._
@@ -11,10 +11,10 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar, PlainText, TextSearch}
 import shipreq.webapp.base.validation._
-import shipreq.webapp.client.data.Plain
-import shipreq.webapp.client.lib.AutoComplete
-import shipreq.webapp.client.lib.DataReusability._
-import shipreq.webapp.client.feature.{EditValidationFeature, AutoCompleteFeature}
+import shipreq.webapp.client.project.data.Plain
+import shipreq.webapp.client.project.lib.AutoComplete
+import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.project.feature.{EditValidationFeature, AutoCompleteFeature}
 import AutoComplete.ReqItem
 import DataImplicits._
 

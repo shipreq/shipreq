@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.reqtable
+package shipreq.webapp.client.project.app.reqtable
 
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
@@ -10,12 +10,12 @@ import scalaz.{-\/, \/-}
 import shipreq.base.util.Valid
 import shipreq.webapp.base.data.{Project, ShowDead}
 import shipreq.webapp.base.filter._
-import shipreq.webapp.client.app.Style.reqtable.{filterEditor => *}
-import shipreq.webapp.client.jsfacade.{TextComplete => TC}
-import shipreq.webapp.client.lib.AutoComplete
-import shipreq.webapp.client.lib.DataReusability._
-import shipreq.webapp.client.data.Contextualise
-import shipreq.webapp.client.feature.AutoCompleteFeature
+import shipreq.webapp.client.project.app.Style.reqtable.{filterEditor => *}
+import shipreq.webapp.client.project.jsfacade.{TextComplete => TC}
+import shipreq.webapp.client.project.lib.AutoComplete
+import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.project.data.Contextualise
+import shipreq.webapp.client.project.feature.AutoCompleteFeature
 
 object FilterEditor {
 

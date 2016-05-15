@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.cfg.shared
+package shipreq.webapp.client.project.app.cfg.shared
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import japgolly.scalajs.react.extra._
@@ -6,7 +6,7 @@ import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.webapp.base.data.{Live, Dead, DataIdAux, FilterDead}
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.event.{Delete, Restore}
-import shipreq.webapp.client.widgets.Checkbox
+import shipreq.webapp.client.project.widgets.Checkbox
 
 // TODO So many c.state.runNow()s in CfgTable
 object CfgTable {

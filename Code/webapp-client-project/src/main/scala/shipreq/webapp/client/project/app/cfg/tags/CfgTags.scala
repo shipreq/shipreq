@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.cfg.tags
+package shipreq.webapp.client.project.app.cfg.tags
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._, MonocleReact._
 import japgolly.scalajs.react.extra._
@@ -23,13 +23,13 @@ import shipreq.webapp.base.data.Validators.shared.HashRefKeyVS
 import shipreq.webapp.base.event.{Delete, Restore}
 import shipreq.webapp.base.protocol.TagCrud
 import shipreq.webapp.base.UiText.FieldNames
-import shipreq.webapp.client.app.cfg.shared._
-import shipreq.webapp.client.app.state.{ClientData, ChangeListener}
-import shipreq.webapp.client.data.{TCB, Disabled, On}
-import shipreq.webapp.client.lib.DataReusability._
-import shipreq.webapp.client.lib.{DND, CrudActionIO}
-import shipreq.webapp.client.protocol.ClientProtocol
-import shipreq.webapp.client.widgets.Checkbox
+import shipreq.webapp.client.project.app.cfg.shared._
+import shipreq.webapp.client.project.app.state.{ClientData, ChangeListener}
+import shipreq.webapp.client.project.data.{TCB, Disabled, On}
+import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.project.lib.{DND, CrudActionIO}
+import shipreq.webapp.client.project.protocol.ClientProtocol
+import shipreq.webapp.client.project.widgets.Checkbox
 import FlatTag.FilterPolicy
 import TagInTree.Relations
 

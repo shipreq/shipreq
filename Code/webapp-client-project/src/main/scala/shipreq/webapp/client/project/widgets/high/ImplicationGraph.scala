@@ -1,4 +1,4 @@
-package shipreq.webapp.client.widgets.high
+package shipreq.webapp.client.project.widgets.high
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
@@ -7,10 +7,10 @@ import org.scalajs.dom._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
-import shipreq.webapp.client.app.WebWorkerClient
-import shipreq.webapp.client.lib.DataReusability._
-import shipreq.webapp.client.lib.DomUtil._
-import shipreq.webapp.client.widgets.GraphComponent._
+import shipreq.webapp.client.project.app.WebWorkerClient
+import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.project.lib.DomUtil._
+import shipreq.webapp.client.project.widgets.GraphComponent._
 import shipreq.webapp.client.ww.api.Cmd
 
 object ImplicationGraph {

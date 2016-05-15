@@ -1,4 +1,4 @@
-package shipreq.webapp.client.widgets.high
+package shipreq.webapp.client.project.widgets.high
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
@@ -10,10 +10,10 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.validation.ValidUpdateVR
-import shipreq.webapp.client.app.Style.{reqtable => *} // TODO Not anymore
-import shipreq.webapp.client.lib.AutoComplete
-import shipreq.webapp.client.lib.DataReusability._
-import shipreq.webapp.client.feature._
+import shipreq.webapp.client.project.app.Style.{reqtable => *} // TODO Not anymore
+import shipreq.webapp.client.project.lib.AutoComplete
+import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.project.feature._
 import RichTextEditor.hardcodedLive
 import Text.Equality._
 

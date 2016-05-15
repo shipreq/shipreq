@@ -1,4 +1,4 @@
-package shipreq.webapp.client.lib
+package shipreq.webapp.client.project.lib
 
 import japgolly.scalajs.react.ScalazReact._
 import japgolly.scalajs.react.extra._
@@ -10,7 +10,7 @@ import shipreq.webapp.base.protocol.RemoteFn
 import shipreq.webapp.base.text.{Atom, PlainText, TextSearch}
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.text.UseCaseStepFlowText.TextAndFlow
-import shipreq.webapp.client.widgets.high.ProjectWidgets
+import shipreq.webapp.client.project.widgets.high.ProjectWidgets
 import shipreq.webapp.client.ww.api.SVG
 
 object DataReusability {

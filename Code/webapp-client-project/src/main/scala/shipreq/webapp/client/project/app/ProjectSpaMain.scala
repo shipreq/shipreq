@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app
+package shipreq.webapp.client.project.app
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, MonocleReact._
 import japgolly.scalajs.react.extra._
@@ -14,12 +14,12 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{ExternalPubid, FilterDead, HideDead, ReqId, ReqType, ReqTypePos}
 import shipreq.webapp.base.protocol.ProjectSPA
 import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
-import shipreq.webapp.client.app.cfg.shared.Usage
-import shipreq.webapp.client.app.state.{Changes, ClientData}
-import shipreq.webapp.client.feature._
-import shipreq.webapp.client.lib.DataReusability._
-import shipreq.webapp.client.protocol.ClientProtocol
-import shipreq.webapp.client.widgets.high.{ImplicationGraph, ProjectWidgets}
+import shipreq.webapp.client.project.app.cfg.shared.Usage
+import shipreq.webapp.client.project.app.state.{Changes, ClientData}
+import shipreq.webapp.client.project.feature._
+import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.project.protocol.ClientProtocol
+import shipreq.webapp.client.project.widgets.high.{ImplicationGraph, ProjectWidgets}
 import ContentEditorFeature.EditFieldKey
 
 object ProjectSpaMain {
@@ -106,7 +106,7 @@ object ProjectSpaMain {
   sealed abstract class AsyncKey
   object AsyncKey {
     import shipreq.webapp.base.data.{CustomFieldId, UseCaseStepId, Live, Dead}
-    import shipreq.webapp.client.app.reqdetail.Row.UseCaseSteps
+    import shipreq.webapp.client.project.app.reqdetail.Row.UseCaseSteps
 
     case object ReqType                              extends AsyncKey
     case object Code                                 extends AsyncKey
@@ -126,7 +126,7 @@ object ProjectSpaMain {
     implicit val reusability: Reusability[AsyncKey] =
       Reusability.byUnivEq
 
-    import shipreq.webapp.client.app.reqtable.Column
+    import shipreq.webapp.client.project.app.reqtable.Column
     val ToReqTable = Intersection[AsyncKey, Column] {
       case ReqType               => Some(Column.ReqType              )
       case Code                  => Some(Column.Code                 )
@@ -152,7 +152,7 @@ object ProjectSpaMain {
            | Column.CustomField(_, Dead)  => None
     }
 
-    import shipreq.webapp.client.app.reqdetail.Cell
+    import shipreq.webapp.client.project.app.reqdetail.Cell
     val ToReqDetail = Intersection[AsyncKey, Cell] {
       case ReqType               => Some(Cell.ReqType              )
       case Code                  => Some(Cell.Code                 )

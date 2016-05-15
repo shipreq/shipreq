@@ -1,4 +1,4 @@
-package shipreq.webapp.client.widgets.high
+package shipreq.webapp.client.project.widgets.high
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
@@ -9,10 +9,10 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Grammar.{hashRefKey => G}
 import shipreq.webapp.base.validation._
-import shipreq.webapp.client.data.Plain
-import shipreq.webapp.client.feature._
-import shipreq.webapp.client.lib.AutoComplete
-import shipreq.webapp.client.lib.DataReusability._
+import shipreq.webapp.client.project.data.Plain
+import shipreq.webapp.client.project.feature._
+import shipreq.webapp.client.project.lib.AutoComplete
+import shipreq.webapp.client.project.lib.DataReusability._
 
 object TagEditor {
 

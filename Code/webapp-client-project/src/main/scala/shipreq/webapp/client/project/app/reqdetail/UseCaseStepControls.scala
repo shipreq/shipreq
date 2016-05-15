@@ -1,13 +1,13 @@
-package shipreq.webapp.client.app.reqdetail
+package shipreq.webapp.client.project.app.reqdetail
 
-import shipreq.webapp.client.app.Style.reqdetail.{useCaseStep => *}
+import shipreq.webapp.client.project.app.Style.reqdetail.{useCaseStep => *}
 import scalacss.ScalaCssReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
 import shipreq.webapp.base.UiText
-import shipreq.webapp.client.lib.DataReusability._
-import shipreq.webapp.client.feature.AsyncActionFeature
+import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.project.feature.AsyncActionFeature
 
 /**
   * Draws the buttons to the right of each step:

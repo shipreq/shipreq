@@ -1,11 +1,11 @@
-package shipreq.webapp.client.app.cfg.tags
+package shipreq.webapp.client.project.app.cfg.tags
 
 import japgolly.scalajs.react.Callback
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.TagType
 import shipreq.webapp.base.UiText
-import shipreq.webapp.client.data.Enabled
-import shipreq.webapp.client.widgets.{SelectInvoke, SelectOne}
+import shipreq.webapp.client.project.data.Enabled
+import shipreq.webapp.client.project.widgets.{SelectInvoke, SelectOne}
 import SelectOne.Choice
 
 private[tags] object NewTagControl {

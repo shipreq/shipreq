@@ -1,10 +1,10 @@
-package shipreq.webapp.client.widgets
+package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
-import shipreq.webapp.client.data.{Disabled, Enabled, On}
-import shipreq.webapp.client.lib.DataReusability._
+import shipreq.webapp.client.project.data.{Disabled, Enabled, On}
+import shipreq.webapp.client.project.lib.DataReusability._
 
 object CheckboxList {
   case class Item[A](value: A, label: String, on: On, enabled: Enabled)

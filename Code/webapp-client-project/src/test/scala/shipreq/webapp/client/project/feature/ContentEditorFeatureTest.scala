@@ -1,4 +1,4 @@
-package shipreq.webapp.client.feature
+package shipreq.webapp.client.project.feature
 
 import monocle.Prism
 import shipreq.base.test.BaseTestUtil._

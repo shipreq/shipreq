@@ -1,4 +1,4 @@
-package shipreq.webapp.client.jsfacade
+package shipreq.webapp.client.project.jsfacade
 
 import japgolly.scalajs.react._
 import scalajs.js.{undefined, Dictionary, Dynamic, Object, UndefOr}

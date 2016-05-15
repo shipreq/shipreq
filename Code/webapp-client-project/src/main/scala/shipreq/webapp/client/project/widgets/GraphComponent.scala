@@ -1,9 +1,9 @@
-package shipreq.webapp.client.widgets
+package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import japgolly.scalajs.react.extra._
-import shipreq.webapp.client.app.WebWorkerClient
-import shipreq.webapp.client.lib.DataReusability._
+import shipreq.webapp.client.project.app.WebWorkerClient
+import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.ww.api._
 
 /**

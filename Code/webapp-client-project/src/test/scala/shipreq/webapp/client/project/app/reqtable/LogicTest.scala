@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.reqtable
+package shipreq.webapp.client.project.app.reqtable
 
 import monocle.Optional
 import scala.annotation.tailrec
@@ -13,7 +13,7 @@ import shipreq.webapp.base.filter.FilterAst
 import shipreq.webapp.base.text.{TextSearch, PlainText, Text, ProjectText}
 import shipreq.webapp.base.test._, WebappTestUtil._
 import shipreq.webapp.base.util.ReqCodeTreeItem
-import shipreq.webapp.client.app.reqtable.{SortCriterion => SC, Column => C}
+import shipreq.webapp.client.project.app.reqtable.{SortCriterion => SC, Column => C}
 import SortMethod._
 
 object LogicTestUtil {

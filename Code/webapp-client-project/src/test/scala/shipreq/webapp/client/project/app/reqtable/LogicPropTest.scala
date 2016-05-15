@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.reqtable
+package shipreq.webapp.client.project.app.reqtable
 
 import nyaya.gen.Gen
 import nyaya.prop._
@@ -12,8 +12,8 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Atom, PlainText, Text, TextSearch, ProjectText}
-import shipreq.webapp.client.app.reqtable.{SortCriterion => SC, Column => C}
-import shipreq.webapp.client.test.ClientTestSettings._
+import shipreq.webapp.client.project.app.reqtable.{SortCriterion => SC, Column => C}
+import shipreq.webapp.client.project.test.ClientTestSettings._
 import SortMethod._
 import Sorter._
 import Text.Equality._

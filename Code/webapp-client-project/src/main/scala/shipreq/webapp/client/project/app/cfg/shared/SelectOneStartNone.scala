@@ -1,10 +1,10 @@
-package shipreq.webapp.client.app.cfg.shared
+package shipreq.webapp.client.project.app.cfg.shared
 
 import scalaz.Equal
 import scalaz.std.option._
 import shipreq.base.util.NonEmptyVector
-import shipreq.webapp.client.data.Enabled
-import shipreq.webapp.client.widgets.SelectOne
+import shipreq.webapp.client.project.data.Enabled
+import shipreq.webapp.client.project.widgets.SelectOne
 import SelectOne.{Props, Choice}
 
 /**

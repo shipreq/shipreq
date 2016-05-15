@@ -1,4 +1,4 @@
-package shipreq.webapp.client.test
+package shipreq.webapp.client.project.test
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import monocle.macros.Lenses
@@ -10,8 +10,8 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.util.TextMod._
 import shipreq.webapp.base.validation.Constraints._
 import shipreq.webapp.base.validation._
-import shipreq.webapp.client.app.cfg.shared._
-import shipreq.webapp.client.data.TCB
+import shipreq.webapp.client.project.app.cfg.shared._
+import shipreq.webapp.client.project.data.TCB
 import Editors._
 
 object SampleDataPerson {

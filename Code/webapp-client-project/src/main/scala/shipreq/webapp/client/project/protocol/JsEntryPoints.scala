@@ -1,11 +1,11 @@
-package shipreq.webapp.client.protocol
+package shipreq.webapp.client.project.protocol
 
 import boopickle.UnpickleImpl
 import japgolly.scalajs.react.Callback
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExport
 import shipreq.webapp.base.protocol.{JsEntryPoint => EP}
-import shipreq.webapp.client.app
+import shipreq.webapp.client.project.app
 
 @JSExport(EP.client)
 object JsEntryPoints {

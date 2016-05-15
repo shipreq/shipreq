@@ -1,4 +1,4 @@
-package shipreq.webapp.client.app.reqdetail
+package shipreq.webapp.client.project.app.reqdetail
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
@@ -10,10 +10,10 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text._
-import shipreq.webapp.client.app.Style.reqdetail.{useCaseStep => *}
-import shipreq.webapp.client.data._
-import shipreq.webapp.client.feature._
-import shipreq.webapp.client.lib.DataReusability._
+import shipreq.webapp.client.project.app.Style.reqdetail.{useCaseStep => *}
+import shipreq.webapp.client.project.data._
+import shipreq.webapp.client.project.feature._
+import shipreq.webapp.client.project.lib.DataReusability._
 import UseCaseStepFlowText.TextAndFlow
 
 object UseCaseStepTree {

@@ -1,11 +1,11 @@
-package shipreq.webapp.client.app
+package shipreq.webapp.client.project.app
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import shipreq.base.util.NonEmptyVector
 import shipreq.base.util.univeq._
-import shipreq.webapp.client.feature._
-import shipreq.webapp.client.lib.DataReusability._
+import shipreq.webapp.client.project.feature._
+import shipreq.webapp.client.project.lib.DataReusability._
 
 /**
  * Requirements Table.
@@ -25,7 +25,7 @@ package object reqtable {
     Reusability.byRef || reusabilityNonEmptyVector
 
   @inline def shouldComponentUpdate[P: Reusability, S: Reusability, B, N <: TopNode] =
-    shipreq.webapp.client.app.shouldComponentUpdate[P, S, B, N]
+    shipreq.webapp.client.project.app.shouldComponentUpdate[P, S, B, N]
     // Reusability.shouldComponentUpdateWithOverlay[P, S, B, N]
 
   // -----------------------------------------------------------------------------------------------

@@ -1,9 +1,9 @@
-package shipreq.webapp.client.widgets.high
+package shipreq.webapp.client.project.widgets.high
 
 import scalaz.std.string._
 import utest._
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.client.test.PrepareEnv
+import shipreq.webapp.client.project.test.PrepareEnv
 
 object ReqCodeEditorTest extends TestSuite {
   PrepareEnv()
