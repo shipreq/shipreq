@@ -36,7 +36,9 @@ subgraph cluster_t {
     webappBack [label="webapp-server"]
     webappClientWwApi [label="webapp-client-ww-api\n(JS)"]
     webappClientWw [label="webapp-client-ww\n(JS)"]
-    webappFront [label="webapp-client\n(JS)"]
+    webappClientProject [label="webapp-client-project\n(JS)"]
+    webappClientHome [label="webapp-client-home\n(JS)"]
+    webappClientBase [label="webapp-client-base\n(JS)"]
     webappShared [label="webapp-base\n(Scala & JS)"]
   }
 
@@ -73,16 +75,18 @@ taskmanServerImpl -> taskmanServerLogic,taskmanApi,taskmanDb
 taskmanServer -> taskmanServerImpl
 webappBack:e -> baseDb
 webappBack -> taskmanApi
-webappFront -> webappShared,webappClientWwApi
+webappClientBase -> webappShared
+webappClientHome -> webappClientBase
+webappClientProject -> webappClientWwApi,webappClientBase
 webappClientWw -> webappClientWwApi
 webappClientWwApi -> webappShared
 webappBack -> webappShared
-webappBack -> webappFront,webappClientWw [style=dashed]
+webappBack -> webappClientHome,webappClientProject,webappClientWw [style=dashed]
 webappShared -> baseRaw
 
 benchmarkJvm,benchmarkJs -> benchmarkShared
 benchmarkJvm -> webappBack
-benchmarkJs -> webappFront
+benchmarkJs -> webappClientProject
 
 utils -> webappShared
 
@@ -91,7 +95,7 @@ edge[dir=forward style=dashed arrowhead=vee color="#aaaaaa"]
 taskmanApi -> taskmanApiLogic,taskmanApiImpl
 taskmanServer -> taskmanServerLogic,taskmanServerImpl,taskmanDb
 taskman -> taskmanApi,taskmanServer
-webapp -> webappFront,webappBack,webappClientWw
+webapp -> webappClientProject,webappClientHome,webappBack,webappClientWw
 base -> baseUtil,baseDb,baseTest
 benchmark -> benchmarkJvm,benchmarkJs
 root -> base,webapp,taskman,benchmark,utils
