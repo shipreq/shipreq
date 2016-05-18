@@ -1,0 +1,66 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title SHIPREQ UI PROTOTYPE: Account
+    %script{src: "node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "semantic/dist/semantic.min.js"}
+    :css
+      body {padding:1rem}
+
+  %body
+
+    .ui.menu.borderless.fixed.inverted
+      %a.item{href: "projects.haml.html"}
+        %img{src: "logo-only-dark2.svg"}
+
+      .item
+        .ui.breadcrumb
+          .section Account
+
+      .item.ui.right.dropdown.simple
+        @japgolly
+        -# %i.dropdown.icon
+        .menu
+          .item.active Account
+          .item Logout
+
+    .ui.container{style: "margin-top:4.5rem"}
+      %form.ui.form
+
+        %h4.ui.dividing.header Account
+
+        .field.required
+          %label Name
+          .two.fields
+            .field
+              %input{type: "text", placeholder: "First Name", value: "Bob"}
+            .field.error
+              %input{type: "text", placeholder: "Last Name"}
+              .ui.pointing.red.basic.label
+                Can't be blank.
+
+        .field.required
+          %label Username
+          %input{type: "text", placeholder: "japgolly", readonly: "readonly"}
+
+        .field.required
+          %label Email
+          %input{type: "email", placeholder: "japgolly@gmail.com", readonly: "readonly"}
+
+        .field.required
+          %label Password
+          .two.fields
+            .field
+              %input{type: "password", placeholder: "**********", readonly: "readonly"}
+            .field
+              %button.ui.button Change
+
+        %h4.ui.dividing.header Notifications
+
+        .ui.segment
+          .field
+            .ui.toggle.checkbox
+              %input{type: "checkbox", checked: "checked"}
+              %label Subscribe to newsletter.

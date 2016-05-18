@@ -11,7 +11,10 @@
 
   %body
 
-    .ui.menu.borderless
+    .ui.menu.borderless.fixed.inverted
+      .item
+        %img{src: "logo-only-dark2.svg"}
+
       .item
         .ui.breadcrumb
           .section Projects
@@ -20,25 +23,26 @@
         @japgolly
         -# %i.dropdown.icon
         .menu
-          .item Account
+          %a.item{href: "account.haml.html"} Account
           .item Logout
 
-    .ui.container{style: "margin-top:2rem"}
+    .ui.container{style: "margin-top:4rem"}
       %div
         .ui.action.input
           %input{type: "text", placeholder: "New project name..."}
           %button.ui.button.primary Create
-      %div
-        .ui.action.input.error
-          %input{type: "text", placeholder: "New project name...", value: "Cardboard"}
-          %button.ui.button.disabled.negative Create
-      .ui.pointing.red.basic.label
-        That name is taken.
+      -# %div
+      -#   .ui.action.input.error
+      -#     %input{type: "text", placeholder: "New project name...", value: "Cardboard"}
+      -#     %button.ui.button.disabled.negative Create
+      -# .ui.pointing.red.basic.label
+      -#   That name is taken.
 
-    .ui.container{style: "margin-top:3rem"}
+      .ui.divider{style: "margin:2rem 0"}
+
       .ui.divided.link.items
 
-        %a.item{href: "project-reqtable.haml.html"}
+        %a.item{href: "project-index.haml.html"}
           .content.middle.aligned
             .header
               CardBoard

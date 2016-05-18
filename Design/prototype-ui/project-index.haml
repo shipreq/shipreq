@@ -1,0 +1,114 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title SHIPREQ UI PROTOTYPE: Project page
+    %script{src: "node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "semantic/dist/semantic.min.js"}
+    :css
+      body {padding:1rem}
+      .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+      .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+      .content.pic {text-align:center}
+      h2.ui.header {margin-top: 2em; padding-bottom: 0.3em !important}
+
+  %body
+
+    .ui.menu.borderless.fixed.inverted
+      .item
+        %img{src: "logo-only-dark2.svg"}
+
+      .item
+        .ui.breadcrumb
+          %a.section{href: "projects.haml.html"} Projects
+          %i.divider.icon.right.angle
+          .ui.dropdown.inline
+            CardBoard&nbsp;
+            %i.icon.dropdown
+            .menu
+              .item.active CardBoard
+              .item ShipReq
+
+      .item.ui.right.dropdown.simple
+        @japgolly
+        -# %i.dropdown.icon
+        .menu
+          %a.item{href: "account.haml.html"} Account
+          .item Logout
+
+    .ui.container{style: "margin-top:5rem"}
+
+      %h2.ui.dividing.header
+        %i.icon.file.text.outline
+        .content Content
+
+      .ui.cards
+
+        .ui.card.blue
+          .content.pic
+            %i.icon.cubes.huge
+            -# %i.icon.table.huge
+          .content
+            .header Req Table
+            .description View and edit all reqs.
+
+        .ui.card.blue
+          .content.pic.blurring.omg-dimmable
+            .ui.inverted.dimmer
+              .content
+                .center
+                  .ui.search
+                    .ui.icon.input
+                      %input.prompt{type: "text", size: "18"}/
+                      %i.icon.search
+            %i.icon.cube.huge
+            -# %i.icon.file.text.outline.huge
+          .content
+            .header Req Lookup
+            .description View and edit a single req.
+
+        .ui.card.blue
+          .content.pic
+            %i.icon.share.alternate.huge
+          .content
+            .header Implication Graph
+            .description ???
+
+      %h2.ui.dividing.header
+        %i.icon.setting
+        .content Configuration
+
+      .ui.cards
+
+        .ui.card.yellow
+          .content.pic
+            %i.icon.list.layout.huge.grey
+          .content
+            .header Fields
+            .description ???
+
+        .ui.card.yellow
+          .content.pic
+            %i.icon.warning.sign.huge.grey
+          .content
+            .header Issues
+            .description ???
+
+        .ui.card.yellow
+          .content.pic
+            %i.icon.inbox.huge.grey
+          .content
+            .header Req Types
+            .description ???
+
+        .ui.card.yellow
+          .content.pic
+            %i.icon.tags.huge.grey
+          .content
+            .header Tags
+            .description ???
+
+  :javascript
+    $('.ui.dropdown').dropdown();
+    $('.omg-dimmable').dimmer({on: 'hover'});
