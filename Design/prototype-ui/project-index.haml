@@ -2,7 +2,7 @@
 %html
   %head
     -# %meta(http-equiv="refresh" content="1")
-    %title SHIPREQ UI PROTOTYPE: Project page
+    %title CardBoard | ShipReq
     %script{src: "node_modules/jquery/dist/jquery.min.js"}
     %link{href:  "semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
     %script{src: "semantic/dist/semantic.min.js"}
@@ -10,8 +10,11 @@
       body {padding:1rem}
       .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
       .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
-      .content.pic {text-align:center}
-      h2.ui.header {margin-top: 2em; padding-bottom: 0.3em !important}
+
+      h3.ui.header {margin-top: 2em; padding-bottom: 0.3em !important}
+
+      .content.pic {text-align:center; padding-top:2.2em !important}
+      .content.pic > i {font-size:3rem}
 
   %body
 
@@ -37,18 +40,44 @@
           %a.item{href: "account.haml.html"} Account
           .item Logout
 
+    -# =============================================================================================
     .ui.container{style: "margin-top:5rem"}
 
-      %h2.ui.dividing.header
+      %div{style: "display:flex"}
+        %div{style: "flex-grow:1"}
+          %h1.ui.header.red{style: "margin-bottom:0"}
+            CardBoard
+          .ui.meta{style: "margin: .5em 0; font-size: 1em; line-height: 1em; color: rgba(0,0,0,.6);"}
+            Updated&nbsp;
+            %time{datetime: "2015-12-17T09:24:17Z", title: "December 17, 2015"} 4 months ago.
+        %div
+          .ui.statistics.tiny
+            .statistic
+              .value
+                %i.icon.write
+                &nbsp;209
+              .label changes
+            .statistic
+              .value
+                %i.icon.cubes
+                &nbsp;39
+              .label reqs
+            -# .statistic
+            -#   .value
+            -#     %i.icon.database
+            -#     &nbsp;67.2
+            -#   .label KB
+
+      %h3.ui.dividing.header
         %i.icon.file.text.outline
         .content Content
 
-      .ui.cards
+      .ui.cards.three
 
-        .ui.card.blue
+        .ui.card.blue{onclick: "location.href='project-reqtable.haml.html'", style: "cursor:pointer"}
           .content.pic
-            %i.icon.cubes.huge
-            -# %i.icon.table.huge
+            %i.icon.cubes
+            -# %i.icon.table
           .content
             .header Req Table
             .description View and edit all reqs.
@@ -62,49 +91,49 @@
                     .ui.icon.input
                       %input.prompt{type: "text", size: "18"}/
                       %i.icon.search
-            %i.icon.cube.huge
-            -# %i.icon.file.text.outline.huge
+            %i.icon.cube
+            -# %i.icon.file.text.outline
           .content
             .header Req Lookup
             .description View and edit a single req.
 
         .ui.card.blue
           .content.pic
-            %i.icon.share.alternate.huge
+            %i.icon.share.alternate
           .content
             .header Implication Graph
             .description ???
 
-      %h2.ui.dividing.header
+      %h3.ui.dividing.header
         %i.icon.setting
         .content Configuration
 
-      .ui.cards
+      .ui.cards.three
 
         .ui.card.yellow
           .content.pic
-            %i.icon.list.layout.huge.grey
+            %i.icon.list.layout.grey
           .content
             .header Fields
             .description ???
 
         .ui.card.yellow
           .content.pic
-            %i.icon.warning.sign.huge.grey
+            %i.icon.warning.sign.grey
           .content
             .header Issues
             .description ???
 
         .ui.card.yellow
           .content.pic
-            %i.icon.inbox.huge.grey
+            %i.icon.inbox.grey
           .content
             .header Req Types
             .description ???
 
         .ui.card.yellow
           .content.pic
-            %i.icon.tags.huge.grey
+            %i.icon.tags.grey
           .content
             .header Tags
             .description ???

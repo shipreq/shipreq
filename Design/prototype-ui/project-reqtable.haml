@@ -2,22 +2,50 @@
 %html
   %head
     -# %meta(http-equiv="refresh" content="1")
-    %title SHIPREQ UI PROTOTYPE: ReqTable page
+    %title CardBoard Req Table | ShipReq
     %script{src: "node_modules/jquery/dist/jquery.min.js"}
     %link{href:  "semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
-    %script{src: "semantic/dist/semantic.min.js"}
+    %script{src: "semantic/dist/semantic.js"}
     :css
       body {padding:1rem}
+      .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+      .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+
+      h3.ui.header {margin-top: 2em; padding-bottom: 0.3em !important}
+
+      .content.pic {text-align:center; padding-top:2.2em !important}
+      .content.pic > i {font-size:3rem}
+
+      /** workaround for https://github.com/Semantic-Org/Semantic-UI/issues/2978 */
+      .active-hack {font-weight:700!important; box-shadow: none!important;}
+      .active-hack.red {border-color: #DB2828!important; color: #DB2828!important;}
+      .active-hack.orange {border-color: #F2711C!important; color: #F2711C!important;}
+
+      #view-ctrls > div:not(:first-child) {margin-left: 1em}
+      .sort > button {margin-left: 1ex !important}
+      #cols-popup label {white-space: nowrap !important}
+
+      .status i {margin-right:0}
+
+      #reqtable > thead > tr > th {padding: 4px}
+      #reqtable > tbody > tr > td {padding: 4px}
+      #reqtable a:hover {text-decoration: underline}
+      #reqtable .selcol {width: 24px !important; text-align: center}
+      .is-tag {padding: 4px 6px !important}
+      .tagRef {color:#2185D0!important}
+      .issueRef {color:#db2828!important}
 
   %body
 
-    .ui.menu.borderless
+    .ui.menu.borderless.fixed.inverted
       .item
-        -# Projects
+        %img{src: "logo-only-dark2.svg"}
+
+      .item
         .ui.breadcrumb
-          %a.section Projects
+          %a.section{href: "projects.haml.html"} Projects
           %i.divider.icon.right.angle
-          %a.section CardBoard
+          %a.section{href: "project-index.haml.html"} CardBoard
           .ui.dropdown.inline
             &nbsp;
             %i.icon.dropdown
@@ -27,15 +55,16 @@
           %i.divider.icon.right.angle
           .section // .active
             .ui.dropdown.inline
-              ReqTable
+              Req Table
               &nbsp;
               %i.icon.dropdown
               .menu
                 .header Content
                 .item Implication Graph
                 .item.active ReqTable
-                .header Settings
+                .header Configuration
                 .item Fields
+                .item Issues
                 .item Req Types
                 .item Tags
 
@@ -43,8 +72,279 @@
         @japgolly
         -# %i.dropdown.icon
         .menu
-          .item Account
+          %a.item{href: "account.haml.html"} Account
           .item Logout
 
+    -# =============================================================================================
+    %main{style: "margin-top:4rem"}
+
+      .ui.secondary.pointing.menu
+        %a.item.ui.dropdown.onhover{onclick: "alert('This would now set view to Default')"}
+          Default
+          .menu
+            .item
+              %i.icon.write
+              Rename...
+            .item
+              %i.icon.save
+              Replace with current
+            .item
+              %i.icon.star
+              Set as default
+            .item
+              %i.icon.trash
+              Delete
+        %a.item High-level
+        %a.item  Low-level
+        .item.orange.ui.dropdown.onhover.active-hack
+          Unsaved view
+          -# %button.ui.button.icon{style: "margin-left: 1ex"}
+            %i.icon.save
+          -# %i.icon.dropdown
+          .menu
+            .item Save as...
+
+        .right.menu
+          #omfg2.item{style: "padding-right:0 !important", onclick: '$("#omfg2 > *").toggle()'}
+            %button.ui.button.icon.has-popup{data-content: "Click to show deleted content."}
+              %i.icon.trash.outline.large.grey
+            %button.ui.button.icon.red.has-popup{data-content: "Showing deleted content.", style: "display:none"}
+              %i.icon.trash.outline.large.white
+
+      -# =============================================================================================
+      %section#view-ctrls{style: "display:flex; align-content: center; margin-top: 2em"}
+        .sort
+          Sort:
+          %button.ui.button.right.labeled.icon.tiny.basic
+            %i.icon.sort.descending
+            Priority
+          %button.ui.button.right.labeled.icon.tiny.basic
+            %i.icon.sort.ascending
+            ID
+
+        .item.space{style: "flex-grow: 1"}
+
+        .item.filter
+          .ui.left.icon.input.right.action
+            %i.icon.filter
+            %input{type: "text", placeholder: "Filter..."}
+            .ui.button.icon
+              %i.icon.help.circle
+
+        .item
+          -# .ui.right.pointing.dropdown.icon.button
+            %i.icon.columns
+            .menu
+              .item
+                .ui.checkbox
+                  %input{type: "checkbox"}
+                  %label omg
+              .item
+                .ui.checkbox
+                  %input{type: "checkbox", checked: "checked"}
+                  %label omg2
+          %button.ui.icon.button#cols-button
+            %i.icon.columns
+          .ui.popup#cols-popup
+            %div
+              .ui.checkbox
+                %input{type: "checkbox"}
+                %label Actors
+            %div
+              .ui.checkbox
+                %input{type: "checkbox", checked: "checked"}
+                %label ID
+            %div
+              .ui.checkbox
+                %input{type: "checkbox"}
+                %label Fart
+            %div
+              .ui.checkbox
+                %input{type: "checkbox", checked: "checked"}
+                %label Major Feature
+            %div
+              .ui.checkbox
+                %input{type: "checkbox", checked: "checked"}
+                %label Tags
+
+      -# .ui.menu.borderless
+        .item.sort
+          Sort:
+          %button.ui.button.right.labeled.icon.tiny
+            %i.icon.sort.descending
+            Priority
+          %button.ui.button.right.labeled.icon.tiny
+            %i.icon.sort.ascending
+            ID
+
+        .right.menu
+
+          .item
+            .ui.left.icon.input.right.action
+              %i.icon.filter
+              %input{type: "text", placeholder: "Filter..."}
+              .ui.button.icon
+                %i.icon.help.circle
+
+          .item
+            -# .ui.right.pointing.dropdown.icon.button
+              %i.icon.columns
+              .menu
+                .item
+                  .ui.checkbox
+                    %input{type: "checkbox"}
+                    %label omg
+                .item
+                  .ui.checkbox
+                    %input{type: "checkbox", checked: "checked"}
+                    %label omg2
+            %button.ui.icon.button#cols-button
+              %i.icon.columns
+            .ui.popup#cols-popup
+              %div
+                .ui.checkbox
+                  %input{type: "checkbox"}
+                  %label Actors
+              %div
+                .ui.checkbox
+                  %input{type: "checkbox", checked: "checked"}
+                  %label ID
+              %div
+                .ui.checkbox
+                  %input{type: "checkbox"}
+                  %label Fart
+              %div
+                .ui.checkbox
+                  %input{type: "checkbox", checked: "checked"}
+                  %label Major Feature
+              %div
+                .ui.checkbox
+                  %input{type: "checkbox", checked: "checked"}
+                  %label Tags
+
+      -# =============================================================================================
+      %section#action-ctrls{style: "display:flex; align-content: center; margin: 2em 0"}
+        %div
+          .ui.labeled.button
+            %button.ui.button.green
+              %i.icon.plus
+              New
+            -# .ui.floating.dropdown.labeled.search.button.label
+            .ui.dropdown.label{style: "background-color: #00a632; color: #EEE;"}
+              UC
+              %i.icon.dropdown
+              .menu
+                .item BL: Business Rule
+                .item BR: Business Requirement
+                .item MF: Major Feature
+                .item UC: Use Case
+                .item Code group
+        -# %div
+          -# .ui.action.input
+          .ui.right.labeled.input
+            -# %button.ui.button Create
+            %input.ui.button{type: "submit", value: "Create"}
+            -# .ui.floating.dropdown.labeled.search.button.label
+            -# .ui.basic.floating.dropdown.button
+              .text UC
+              %i.icon.dropdown
+              .menu
+                .item BL: Business Rule
+                .item BR: Business Requirement
+                .item MF: Major Feature
+                .item UC: Use Case
+                .item Code group
+            .ui.dropdown.label
+              .text UC
+              %i.icon.dropdown
+              .menu
+                .item BL: Business Rule
+                .item BR: Business Requirement
+                .item MF: Major Feature
+                .item UC: Use Case
+                .item Code group
+        %div
+          %button.ui.button
+            %i.icon.trash
+            Delete (5)
+        %div
+          %button.ui.button
+            %i.icon.undo
+            Restore (2)
+        %div.status{style: "text-align: right; flex-grow: 1"}
+          -# Showing 21 rows: 19 reqs (17 live + 3 dead - 1 filtered) + 2 dups.
+          = "Showing 24 rows: 19"
+          %i.icon.cubes{title: "requirements"}
+          = " (17 + 3"
+          %i.icon.trash.outline{title: "deleted"}
+          = " - 1"
+          %i.icon.filter{title: "excluded by the filter"}
+          = " + 2"
+          %i.icon.copy{title: "reappearances due to sorting"}
+          = ") + 3"
+          %i.icon.folder.outline{title: "code groups"}
+          .
+          %br/
+          %i.icon.checkmark.box{title: "selected"}
+          = "5."
+
+      -# =============================================================================================
+      %table#reqtable.ui.table.celled.compact.unstackable.selectable
+        %thead
+          %tr
+            %th.selcol
+              %input{type: "checkbox"}
+            %th ID
+            %th Title
+            %th Priority
+            %th Major Feature
+            %th Tags
+        %tbody
+          %tr
+            %td.selcol
+              %input{type: "checkbox"}
+            %td
+              %a{href:"#"} FR-1
+            %td
+              = "Fix "
+              %span.tagRef focus
+              = " and keyboard nav."
+            %td
+              .ui.label.blue.is-tag should
+            %td
+              %a{href:"#"} MF-7
+            %td
+              .ui.label.blue.is-tag bug
+              .ui.label.blue.is-tag focus
+          %tr
+            %td.selcol
+              %input{type: "checkbox"}
+            %td
+              %a{href:"#"} FR-2
+            %td
+              = "Do more stuff! "
+              %span.issueRef
+                \#TODO
+            %td
+              .ui.label.blue.is-tag must
+            %td
+              %a{href:"#"} MF-7
+              = ", "
+              %a{href:"#"} MF-9
+            %td
+
   :javascript
-    $('.ui.dropdown').dropdown();
+    $('.ui.dropdown:not(.onhover)').dropdown();
+    $('.ui.dropdown.onhover').dropdown({on:"hover", delay: { show: 400 }});
+    $('.ui.has-popup').popup({delay: { show: 400, hide: 0 }});
+    $('#cols-button')
+      .popup({
+        inline   : true,
+        hoverable: true,
+        position : 'left center',
+        delay: {
+          show: 200,
+          hide: 300
+        }
+      })
+    ;
