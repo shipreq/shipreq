@@ -9,7 +9,6 @@ rename    = require 'gulp-rename'
 uglify    = require 'gulp-uglify'
 
 cfg_npm          = 'node_modules/'
-cfg_bower        = 'bower_components/'
 cfg_wch_root     = '../webapp-client-home/'
 cfg_wcp_root     = '../webapp-client-project/'
 cfg_ws_root      = '../webapp-server/'
@@ -43,8 +42,6 @@ devProdJs = (name, outfile, srcs) ->
 
 # ======================================================================================================================
 # webapp-server
-#
-# TODO: bootstrap.less expects Dejavu fonts. From memory it was so that the UC arrows work on windows.
 
 gulp.task 'ws:clean', ->
   dirs = [cfg_ws_dev, cfg_ws_prod]
@@ -54,31 +51,13 @@ gulp.task 'ws:vendor', ->
   nonRetardedSrc [
       cfg_npm + 'katex/dist/**/*'
       '!**/*.md'
-      cfg_bower + 'zeroclipboard/ZeroClipboard.swf'
-      'vendor/**/*'
     ]
     .pipe gulp.dest cfg_ws_dev
     .pipe gulp.dest cfg_ws_prod
 
 devProdJs 'ws:anon', 'anon.js', (f) ->
   [
-    cfg_ws_customJs + 'google-analytics.js'
     cfg_npm + 'jquery/dist/jquery.min.js'
-    cfg_bower + 'bootstrap/js/alert.js'
-    cfg_bower + 'bootstrap/js/dropdown.js'
-    cfg_bower + 'bootstrap/js/modal.js'
-    cfg_bower + 'bootstrap/js/tab.js'
-    cfg_bower + 'bootstrap/js/transition.js'
-    cfg_bower + 'jquery.ui/ui/jquery.ui.core.js'
-    cfg_bower + 'jquery.ui/ui/jquery.ui.effect.js'
-    cfg_bower + 'jquery.ui/ui/jquery.ui.effect-drop.js'
-    cfg_bower + 'jquery.ui/ui/jquery.ui.effect-fade.js'
-    cfg_bower + 'jquery.ui/ui/jquery.ui.effect-highlight.js'
-    cfg_bower + 'jquery.ui/ui/jquery.ui.effect-slide.js'
-    cfg_bower + 'jquery-autosize/jquery.autosize.min.js'
-    cfg_bower + 'jquery-timeago/jquery.timeago.js'
-    cfg_bower + 'jquery.livequery/dist/jquery.livequery.min.js'
-    cfg_bower + 'jquery-rangyinputs/rangyinputs-jquery.js'
   ]
 
 devProdJs 'ws:project', 'project.js', (f) ->
@@ -95,7 +74,7 @@ devProdJs 'ws:project', 'project.js', (f) ->
 
 gulp.task 'ws:css', ->
   nonRetardedSrc cfg_ws_customCss + '*.less'
-    .pipe less paths: [cfg_bower + 'bootstrap/less', cfg_ws_customCss + 'include']
+    .pipe less()
     .pipe gulp.dest cfg_ws_dev
     .pipe minifycss()
     .pipe gulp.dest cfg_ws_prod

@@ -1,10 +1,4 @@
 @charset "UTF-8";
-@import "bootstrap.less";
-
-// Bootstrap fix
-.navbar-nav.navbar-right:last-child {
-  margin-right: 0 !important;
-}
 
 // =====================================================================================================================
 // Generic & shared
@@ -43,27 +37,6 @@ abbr.timeago[title] { border-bottom: none !important }
   &#register1Form { width: 44ex }
   &#resetpw1Form  { width: 54ex }
   &#resetpw2Form  { width: 90ex }
-}
-
-.flowgraph svg {
-  //vertical-align: top;
-  //max-width:100%;
-  //width:auto;
-  max-width: 100% !important; // Set a maximum relative to the parent
-  width: auto\9 !important; // IE7-8 need help adjusting responsive images
-  //height: auto; // Scale the height according to the width, otherwise you get stretching
-  border: 0;
-  //display: block;
-  -ms-interpolation-mode: bicubic;
-  cursor:default;
-}
-
-[data-clipboard-text], [data-clipboard-target] {cursor:pointer}
-
-time.showdate, time.showdatetime {
-  border-bottom: 1px dotted #aaa;
-  //box-sizing: border-box;
-  cursor: help;
 }
 
 .dropdown-menu > li {
@@ -186,197 +159,6 @@ html, body { height: 100% } // Cannot have any padding or margin here
   }
 }
 
-#project-list {
-  margin-top: 3em;
-  li {
-    margin-top: 1.8em;
-    .title {font-size: 250%}
-    .details {
-      color: #333;
-      .t {color: #777;}
-    }
-  }
-}
-
-#project-title {
-  margin-bottom: 1.8ex;
-  h1 {margin-bottom: 0}
-  input.title {font-weight:bold}
-}
-
-#project-body {
-  margin-top: 6ex;
-  .tab-pane {margin-top:3ex}
-}
-
-#useracct-hub {
-  .rctl { text-align: right; }
-  .newsletter label { font-weight:normal; }
-  #useracct-ctls { text-align: right; }
-}
-
-#usecase-list {
-  margin-top: 4ex;
-  table {
-    width: 100%
-  }
-  td.l {
-    vertical-align: top;
-    text-align: right;
-    padding-right: 1.6ex;
-    width: 17ex
-  }
-  td.r {
-    vertical-align: top;
-    padding-bottom: 2ex;
-  }
-  .view-mode .view {
-    a.title {
-      font-size: 120%;
-      line-height: 1em;
-      font-weight: bold
-    }
-    .detail {
-      font-size: 70%;
-      color: #888
-    }
-  }
-}
-
-#share-create {
-  h1 { margin-bottom: 1em }
-  .form-group.submit { text-align: right }
-}
-
-#share-list{
-  h3 {font-weight:bold}
-  .name a {font-size:140%; font-weight:bold}
-  .url {
-    width: 56ex;
-    margin-top: 0.2ex;
-    .urltxt {
-      font-family: monospace;
-      background: white;
-      cursor: text
-    }
-  }
-  .url + .under {margin-top:0.5ex}
-  .under {font-size:100%; color:#888; }
-  .share {padding-top:4.4ex}
-  table {width:100%}
-  td.l {
-    vertical-align: top;
-    text-align: right;
-    padding-top: 0.6ex;
-    padding-right: 2.4ex;
-    width: 15ex;
-  }
-  td.r {
-    vertical-align: top;
-  }
-}
-
-.hasPublishedFVs .fvpub {
-  .bad.ref {
-    color:#c00;
-    cursor:no-drop;
-  }
-  ul {padding-left:2ex}
-  .wouldbelink {color: #428bca} // TODO should this be @brand-primary?
-}
-
-.ucs-published {
-  color:#222;
-  margin: 0.8em auto 0 auto;
-  padding: 2ex 6ex 6ex 6ex;
-  max-width: 144ex;
-  h2,h3 {color:#000}
-
-  & > header {
-    //margin-bottom:3em;
-    h1 { margin-top:0; font-weight: bold; }
-  }
-
-  & > .last-updated {
-    margin-top: 1.7em;
-    padding-bottom: 0.8em;
-    text-align: right;
-    font-size: 80%;
-    &, * { color:#666 !important; }
-
-    &:first-child {
-      // When there is no header above it, ie. on the read-own-ucs page, but not the share-view page
-      float:right;
-    }
-  }
-
-  nav {
-    ol {margin-left:1ex}
-    a {font-size:110%; line-height:1.6em}
-  }
-
-  & > .none {
-    text-align: center;
-    margin-top: 10em;
-    font-style: italic;
-  }
-
-  main {
-    clear: both;
-    margin-top:5em;
-    article + article {margin-top:8em}
-
-    .fvs {
-      width: 100%;
-      table-layout: fixed; // Prevents Firefox from ignoring max-width on flow graphs
-
-      th, td {vertical-align:top; text-align: left;}
-      & > tr {border-top:1px solid #ccc; border-bottom:1px solid #ccc}
-      & > tr > th {width:18ex; font-weight:normal}
-      & > tr > td {padding-left:2ex}
-      & > tr > th , & > tr > td {padding-top:0.3ex; padding-bottom:0.3ex}
-
-      tr.rev {
-        margin-bottom:0 !important;
-        border-bottom:none !important;
-        &>th,&>td { padding-top:0.3em;}
-      }
-      tr.lastupdated {
-        margin-top:0 !important;
-        border-top:none !important;
-        th { padding-bottom:0.3em !important;}
-      }
-      tr.rev, tr.lastupdated {
-        &>th,&>td {
-          line-height: 1.1em !important;
-        }
-      }
-
-      .uc.outofscope { color: #c00; }
-
-      a.step:not(:hover), a.uc:not(:hover) {border-bottom:1px dotted}
-      .steps {
-        th {white-space:nowrap}
-        td {width:100%}
-        * {line-height:1.168em}
-        .lvl-0 > tbody > tr:not(.ind) td {font-weight:bold; padding-left:0.5ex}
-        //.lvl-0 > tbody > tr.ind + tr:not(.ind) {td,th {padding-top:0.5em}}
-        .ind table {margin-left:2ex}
-        .ind .ind table {margin-left:5ex}
-        .ind th {font-weight:normal}
-        .ind td {padding-left:1.2ex}
-        .highlight {background:#ffc}
-        .flow {
-          font-family: _dejavu;
-          * {
-            // Refs needn't use DejaVu
-            font-family: @font-family-sans-serif;
-          }
-        }
-      }
-    }
-  }
-}
 
 blockquote.rndquote {
   max-width: 94ex;
@@ -460,8 +242,9 @@ blockquote.rndquote {
 
 // Landing page
 #lp {
-//  * {border:1px solid #555}
+//   {border:1px solid #555}
 //  background: #ffdddd;
+
   @lp-width: 1024px;
   width: @lp-width;
   margin: 12px auto 0 auto;
@@ -475,7 +258,7 @@ blockquote.rndquote {
   }
   #logo-sub {
     clear: both;
-    font-family: @font-family-serif;
+    // font-family: @font-family-serif;
     font-size: 30px;
     color: #252a2f;
   }
