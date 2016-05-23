@@ -96,10 +96,7 @@ object WebappServer {
       parallelExecution            := false) // TODO erm... why?
     ): _*)
 
-  def consoleCmds = """
-      import scalaz._, shipreq.base.util._, shipreq.webapp._, db._, lib.Types._, feature.uc, uc._, uc.field._, uc.step._, uc.text._, FreeTextTerms._, util._
-      def initlift() = {val b = new bootstrap.liftweb.Boot; b.configureLift; b}
-                    """
+  def consoleCmds = "def initLift() = {val b = new bootstrap.liftweb.Boot; b.configureLift; b}"
 
   def apply = (_: Project)
     .enablePlugins(JettyPlugin, WarPlugin)
@@ -118,7 +115,6 @@ object WebappServer {
       testSettings,
       dontInline) // crashes scalac 2.11.7
     .settings(
-      addCommandAlias("livejs", "~;clear;jsp"),
       containerLibs in Jetty := LibJetty.runner(JVM).map(_.intransitive()),
       javaOptions in Jetty += "-Xmx1g",
       initialCommands += consoleCmds,
