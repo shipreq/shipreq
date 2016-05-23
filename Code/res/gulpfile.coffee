@@ -53,6 +53,7 @@ gulp.task 'ws:vendor', ->
       '!**/*.md'
       'semantic/dist/semantic.min.css'
       'semantic/dist/semantic.min.js'
+      'vendor/**/*'
     ]
     .pipe gulp.dest cfg_ws_dev
     .pipe gulp.dest cfg_ws_prod
