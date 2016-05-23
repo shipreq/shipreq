@@ -19,39 +19,30 @@ object Assets extends DispatchSnippet with SnippetHelpers {
     staticHtml(<img src={assetPath_/ + path} alt={alt} />)
 
   override def dispatch = {
-    case "favicon"     => favicon
-    case "anon"        => anon
-    case "homeSPA"     => homeSPA
-    case "projectSPA"  => projectSPA
-    case "katex"       => katex
-    case "sir"         => sir
-    case "shipreq-png" => shipreqPng // TODO landing page pic
+    case "favicon"      => Favicon
+    case "public"       => Public
+    case "homeSPA"      => HomeSPA
+    case "projectSPA"   => ProjectSPA
+    case "katex"        => Katex
+    case "sir"          => Sir
+    case "shipreq-huge" => ShipreqHuge
   }
 
-  val favicon = staticHtml(
-      <link href={assetPath_/ + "favicon.ico"} type="image/x-icon" rel="icon"/>)
+  val Favicon = staticHtml(<link href={assetPath_/ + "favicon.ico"} type="image/x-icon" rel="icon"/>)
 
-  val shipreqPng =
-    png("shipreq.png", "ShipReq")
+  val ShipreqHuge = png("shipreq-huge.png", "ShipReq")
 
-  val katex = staticHtml(Seq(
-    js ("katex.min.js"),
-    css("katex.min.css")))
+  val PublicDepsJs = js("public-deps.js")
 
-  val anon = staticHtml(Seq(
-    js ("anon.js"),
-    css("app.css")))
+  val MemberDepsJs = js("member-deps.js")
 
-  val homeSPA = staticHtml(Seq(
-    js("project.js"), // TODO Rename. More like member-deps
-    js("client-home.js")) ++
-    katex(null))
+  val Katex = staticHtml(Seq(js("katex.min.js"), css("katex.min.css")))
 
-  val projectSPA = staticHtml(Seq(
-    js("project.js"),
-    js("client-project.js")) ++
-    katex(null))
+  val Public = staticHtml(Seq(PublicDepsJs, css("public.css")))
 
-  val sir = staticHtml(Seq(
-    css("sir.css")))
+  val HomeSPA = staticHtml(Seq(MemberDepsJs, js("client-home.js")) ++ Katex(null))
+
+  val ProjectSPA = staticHtml(Seq(MemberDepsJs, js("client-project.js")) ++ Katex(null))
+
+  val Sir = staticHtml(Seq(css("sir.css")))
 }

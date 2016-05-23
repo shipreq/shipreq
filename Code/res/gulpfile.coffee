@@ -57,12 +57,12 @@ gulp.task 'ws:vendor', ->
     .pipe gulp.dest cfg_ws_dev
     .pipe gulp.dest cfg_ws_prod
 
-devProdJs 'ws:anon', 'anon.js', (f) ->
+devProdJs 'ws:public', 'public-deps.js', (f) ->
   [
     cfg_npm + 'jquery/dist/jquery.min.js'
   ]
 
-devProdJs 'ws:project', 'project.js', (f) ->
+devProdJs 'ws:member', 'member-deps.js', (f) ->
   [
       cfg_npm + 'jquery/dist/jquery.min.js'
     f(cfg_npm + 'react/dist/react', '-with-addons')
@@ -87,7 +87,7 @@ gulp.task 'ws:images', ->
     .pipe gulp.dest cfg_ws_prod
 
 gulp.task 'ws:js', [], ->
-  gulp.start ['ws:anon', 'ws:project']
+  gulp.start ['ws:public', 'ws:member']
 
 gulp.task 'ws', ['ws:clean'], ->
   gulp.start ['ws:vendor', 'ws:js', 'ws:css', 'ws:images']
