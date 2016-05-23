@@ -8,6 +8,7 @@ minifycss = require 'gulp-minify-css'
 rename    = require 'gulp-rename'
 uglify    = require 'gulp-uglify'
 
+cfg_npm          = 'node_modules/'
 cfg_bower        = 'bower_components/'
 cfg_wch_root     = '../webapp-client-home/'
 cfg_wcp_root     = '../webapp-client-project/'
@@ -51,7 +52,7 @@ gulp.task 'ws:clean', ->
 
 gulp.task 'ws:vendor', ->
   nonRetardedSrc [
-      cfg_bower + 'KaTeX/dist/**/*'
+      cfg_npm + 'katex/dist/**/*'
       '!**/*.md'
       cfg_bower + 'zeroclipboard/ZeroClipboard.swf'
       'vendor/**/*'
@@ -62,7 +63,7 @@ gulp.task 'ws:vendor', ->
 devProdJs 'ws:anon', 'anon.js', (f) ->
   [
     cfg_ws_customJs + 'google-analytics.js'
-    cfg_bower + 'jquery/dist/jquery.min.js'
+    cfg_npm + 'jquery/dist/jquery.min.js'
     cfg_bower + 'bootstrap/js/alert.js'
     cfg_bower + 'bootstrap/js/dropdown.js'
     cfg_bower + 'bootstrap/js/modal.js'
@@ -82,14 +83,14 @@ devProdJs 'ws:anon', 'anon.js', (f) ->
 
 devProdJs 'ws:project', 'project.js', (f) ->
   [
-    cfg_bower + 'jquery/dist/jquery.min.js'
-    f(cfg_bower + 'react/react', '-with-addons')
-    f(cfg_bower + 'react/react-dom')
-    f(cfg_bower + 'react/react-dom-server')
-    f(cfg_bower + 'jquery-textcomplete/dist/jquery.textcomplete')
-    cfg_bower + 'react-motion/build/react-motion.js'
-    cfg_bower + 'react-height/build/react-height.js'
-    f(cfg_bower + 'react-collapse/build/react-collapse')
+      cfg_npm + 'jquery/dist/jquery.min.js'
+    f(cfg_npm + 'react/dist/react', '-with-addons')
+    f(cfg_npm + 'react-dom/dist/react-dom')
+    f(cfg_npm + 'react-dom/dist/react-dom-server')
+    f(cfg_npm + 'jquery-textcomplete/dist/jquery.textcomplete')
+      cfg_npm + 'react-motion/build/react-motion.js'
+      cfg_npm + 'react-height/build/react-height.js'
+    f(cfg_npm + 'react-collapse/build/react-collapse')
   ]
 
 gulp.task 'ws:css', ->
@@ -116,14 +117,14 @@ gulp.task 'ws', ['ws:clean'], ->
 # create JS for unit tests
 gulp.task 'wc:testjs', ->
   nonRetardedSrc [
-        cfg_bower + 'jquery/dist/jquery.min.js'
-        cfg_bower + 'jquery-textcomplete/dist/jquery.textcomplete.min.js'
-        cfg_bower + 'react/react-with-addons.js' # not .min because TestUtils is needed
-        cfg_bower + 'react/react-dom.min.js'
-        cfg_bower + 'react/react-dom-server.min.js'
-        cfg_bower + 'react-motion/build/react-motion.js'
-        cfg_bower + 'react-height/build/react-height.min.js'
-        cfg_bower + 'react-collapse/build/react-collapse.min.js'
+        cfg_npm + 'jquery/dist/jquery.min.js'
+        cfg_npm + 'jquery-textcomplete/dist/jquery.textcomplete.min.js'
+        cfg_npm + 'react/dist/react-with-addons.js' # not .min because TestUtils is needed
+        cfg_npm + 'react-dom/dist/react-dom.min.js'
+        cfg_npm + 'react-dom/dist/react-dom-server.min.js'
+        cfg_npm + 'react-motion/build/react-motion.js'
+        cfg_npm + 'react-height/build/react-height.min.js'
+        cfg_npm + 'react-collapse/build/react-collapse.min.js'
       ]
     .pipe concat 'shipreq-client-test.js'
     .pipe uglify()

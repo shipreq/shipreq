@@ -1,16 +1,28 @@
 {
-  "name": "shipreq",
-  "version": "2.0.0",
+  "name"    : "shipreq",
+  "version" : "2.0.0",
+  "private" : true,
+  "license" : "UNLICENSED",
+
+  "dependencies": {
+    "jquery"              : "2.1.4",
+    "jquery-textcomplete" : "0.7.2",
+    "katex"               : "0.6.0",
+    "react"               : "15.0.1",
+    "react-dom"           : "15.0.1",
+    "react-collapse"      : "2.1.0",
+    "react-height"        : "2.1.0",
+    "react-motion"        : "0.3.1"},
+
   "devDependencies": {
-    "coffee-script": "^1.10.0",
-    "del": "^2.1.0",
-    "gulp": "^3.9.0",
-    "gulp-concat": "^2.6.0",
-    "gulp-debug": "^2.1.2",
-    "gulp-expect-file": "0.0.7",
-    "gulp-less": "^3.0.5",
-    "gulp-minify-css": "^1.2.1",
-    "gulp-rename": "^1.2.2",
-    "gulp-uglify": "^1.5.1"
-  }
+    "coffee-script"    : "^1.10.0",
+    "del"              : "^2.1.0",
+    "gulp"             : "^3.9.0",
+    "gulp-concat"      : "^2.6.0",
+    "gulp-debug"       : "^2.1.2",
+    "gulp-expect-file" :  "0.0.7",
+    "gulp-less"        : "^3.0.5",
+    "gulp-minify-css"  : "^1.2.1",
+    "gulp-rename"      : "^1.2.2",
+    "gulp-uglify"      : "^1.5.1"}
 }
