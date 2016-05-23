@@ -51,6 +51,8 @@ gulp.task 'ws:vendor', ->
   nonRetardedSrc [
       cfg_npm + 'katex/dist/**/*'
       '!**/*.md'
+      'semantic/dist/semantic.min.css'
+      'semantic/dist/semantic.min.js'
     ]
     .pipe gulp.dest cfg_ws_dev
     .pipe gulp.dest cfg_ws_prod
