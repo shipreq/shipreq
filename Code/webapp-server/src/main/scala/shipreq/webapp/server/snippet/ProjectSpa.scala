@@ -9,7 +9,7 @@ import shipreq.base.util._
 import shipreq.base.util.log.HasLogger
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.protocol.{ProjectSPA => SpaFns, _}
+import shipreq.webapp.base.protocol.{ProjectSpa => SpaFns, _}
 import shipreq.webapp.base.server._
 import shipreq.webapp.server.app.DI
 import shipreq.webapp.server.data.ProjectId
@@ -17,7 +17,7 @@ import shipreq.webapp.server.db.EventDao.EventSeq
 import shipreq.webapp.server.lib.{SingleOpStatefulSnippet, Taskman}
 import shipreq.webapp.server.protocol._
 
-object ProjectSPA extends DI with HasLogger {
+object ProjectSpa extends DI with HasLogger {
 
   case class State(project: Project, seq: EventSeq)
 
@@ -49,10 +49,10 @@ object ProjectSPA extends DI with HasLogger {
 }
 
 
-class ProjectSPA(projectId: ProjectId) extends SingleOpStatefulSnippet {
-  import ProjectSPA._
+class ProjectSpa(projectId: ProjectId) extends SingleOpStatefulSnippet {
+  import ProjectSpa._
 
-  // TODO ProjectSPA needs thread-safety. Invalid hash generation is possible!!!
+  // TODO ProjectSpa needs thread-safety. Invalid hash generation is possible!!!
 
   // val project = RequestVars.Project.get.value
 

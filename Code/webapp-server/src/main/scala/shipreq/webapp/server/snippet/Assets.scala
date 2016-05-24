@@ -22,7 +22,7 @@ object Assets extends DispatchSnippet with SnippetHelpers {
     case "favicon"      => Favicon
     case "public"       => Public
     case "homeSPA"      => HomeSPA
-    case "projectSPA"   => ProjectSPA
+    case "projectSpa"   => ProjectSpa
     case "katex"        => Katex
     case "sir"          => Sir
     case "shipreq-huge" => ShipreqHuge
@@ -42,7 +42,7 @@ object Assets extends DispatchSnippet with SnippetHelpers {
 
   val HomeSPA = staticHtml(Seq(MemberDepsJs, js("client-home.js")) ++ Katex(null))
 
-  val ProjectSPA = staticHtml(Seq(MemberDepsJs, js("client-project.js")) ++ Katex(null))
+  val ProjectSpa = staticHtml(Seq(MemberDepsJs, js("client-project.js")) ++ Katex(null))
 
   val Sir = staticHtml(Seq(css("sir.css")))
 }

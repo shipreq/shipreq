@@ -14,7 +14,7 @@ object FieldMandatorinessMod extends RemoteFn.ToVE[(CustomFieldId, Mandatory)]
 
 object ReqTypeImplicationMod extends RemoteFn.ToVE[(CustomReqTypeId, ImplicationRequired)]
 
-case class ProjectSPA(projectInit:   ProjectInit          .Instance,
+case class ProjectSpa(projectInit:   ProjectInit          .Instance,
                       issueTypeCrud: CustomIssueTypeCrud  .Instance,
                       reqTypeCrud:   CustomReqTypeCrud    .Instance,
                       reqTypeImpMod: ReqTypeImplicationMod.Instance,

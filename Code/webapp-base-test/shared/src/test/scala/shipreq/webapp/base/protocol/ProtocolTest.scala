@@ -19,7 +19,7 @@ import $.TextGenExt
 
 object ProtocolTest extends TestSuite {
 
-  implicit val equalProjectSPA: Equal[ProjectSPA] =
+  implicit val equalProjectSpa: Equal[ProjectSpa] =
     UtilMacros.deriveEqual
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -95,7 +95,7 @@ object ProtocolTest extends TestSuite {
       def test[I: Equal](ep: ClientFnDecl[I], name: String)(g: Gen[I]): Unit =
         kitCF(ep, name).propI mustBeSatisfiedBy g
 
-      'ProjectSpa - test(ClientFnDecl.ProjectSpa, "ProjectSpa")($.routines.projectSPA)
+      'ProjectSpa - test(ClientFnDecl.ProjectSpa, "ProjectSpa")($.routines.projectSpa)
     }
 
     'Codecs {

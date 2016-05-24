@@ -26,7 +26,7 @@ object ReqTableTest extends TestSuite {
 
   PrepareEnv()
 
-  val remotes = MockRemotes.projectSPA
+  val remotes = MockRemotes.projectSpa
 
   @Lenses
   case class State(editStates  : ContentEditorFeature.D2.State.Simple[Row.SourceId, EditFieldKey],

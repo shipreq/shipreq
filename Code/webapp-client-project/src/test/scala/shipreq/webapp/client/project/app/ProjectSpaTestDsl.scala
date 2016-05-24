@@ -101,7 +101,7 @@ object ProjectSpaTestDsl {
             : Unit = {
     val cd   = TestClientData(project)
     val svr  = MockServer(cd)
-    val spa  = new Main(MockRemotes.projectSPA, svr, cd)
+    val spa  = new Main(MockRemotes.projectSpa, svr, cd)
     val rc   = MockRouterCtl[Page]()
     val init = TestState(page, cd.project(), rd)
 

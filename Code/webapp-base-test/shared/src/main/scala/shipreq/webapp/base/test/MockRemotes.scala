@@ -4,8 +4,8 @@ import shipreq.webapp.base.protocol._
 
 object MockRemotes {
 
-  lazy val projectSPA =
-    ProjectSPA(RemoteFn.Instance("projectInit"  , ProjectInit          ),
+  lazy val projectSpa =
+    ProjectSpa(RemoteFn.Instance("projectInit"  , ProjectInit          ),
                RemoteFn.Instance("issueTypeCrud", CustomIssueTypeCrud  ),
                RemoteFn.Instance("reqTypeCrud"  , CustomReqTypeCrud    ),
                RemoteFn.Instance("reqTypeImpMod", ReqTypeImplicationMod),
