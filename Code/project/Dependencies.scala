@@ -119,8 +119,9 @@ object Dependencies {
     val servletApi = jvmOnly("javax.servlet" % "javax.servlet-api" % "3.1.0")
   }
 
-  val scalajsDom       = jsOnly("org.scala-js"                          %%%! "scalajs-dom" % "0.9.0")
-  val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %%%! "benchmark"   % "0.2.3")
+  val scalajsDom       = jsOnly("org.scala-js"                          %%%! "scalajs-dom"       % "0.9.0")
+//val scalajsJavaTime  = jsOnly("org.scala-js"                          %%%! "scalajs-java-time" % "0.1.0")
+  val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %%%! "benchmark"         % "0.2.3")
 
   val boopickle = jvmAndJs("me.chrons",                        "boopickle", "1.1.0")
   val parboiled = jvmAndJs("org.parboiled",                    "parboiled", "2.1.3")
@@ -148,5 +149,11 @@ object Dependencies {
   val scalaCheck  = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.11.3")
 
   val macroParadise = compilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
-  def useMacroParadise = (_: Project).settings(addCompilerPlugin(macroParadise))
+  val useMacroParadise = (_: Project).settings(addCompilerPlugin(macroParadise))
+
+  import sbt.Keys._
+  def useLocalJar(filename: String) =
+    (_: Project).settings(unmanagedJars in Compile += baseDirectory.value / ".." / "lib" / filename)
+
+  val useJavaTimeJS = useLocalJar("scalajs-java-time_sjs0.6_2.11-0.1.1-SNAPSHOT.jar")
 }
