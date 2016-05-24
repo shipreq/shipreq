@@ -12,7 +12,6 @@ import shipreq.webapp.base.filter.FilterSpec
 import shipreq.webapp.base.protocol.CustomIssueTypeCrud
 import shipreq.webapp.base.util.TextMod
 import shipreq.webapp.base.UiText.FieldNames
-import shipreq.webapp.client.project.app.ProjectSpaMain
 import shipreq.webapp.client.project.app.cfg.shared._
 import shipreq.webapp.client.project.app.state.{ClientData, ChangeListener}
 import shipreq.webapp.client.project.lib.CrudActionIO

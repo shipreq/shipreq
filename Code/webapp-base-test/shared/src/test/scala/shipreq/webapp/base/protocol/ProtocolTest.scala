@@ -29,9 +29,9 @@ object ProtocolTest extends TestSuite {
     new KitIO[Input, Output]("Routines." + r.getClass.getSimpleName.replace("$",""))
   }
 
-  def kitEP[I](ep: JsEntryPoint[I, Unit], name: String) = {
-    import ep.pi
-    new KitIO[I, Unit]("JsEntryPoint." + name)
+  def kitCF[I](c: ClientFnDecl[I], name: String) = {
+    import c.pickler
+    new KitIO[I, Unit]("ClientFnDecl." + name)
   }
 
   class KitIO[I: Pickler, O: Pickler](subject: String) {
@@ -91,11 +91,11 @@ object ProtocolTest extends TestSuite {
       'FieldCrud           - testCrud(FieldCrud.Fn       )($.protocol.fieldCfgAction.any)
     }
 
-    'JsEntryPoints {
-      import JsEntryPoint._
-      def test[I: Equal](ep: JsEntryPoint[I, Unit], name: String)(g: Gen[I]): Unit = kitEP(ep, name).propI mustBeSatisfiedBy g
+    'ClientFnDecls {
+      def test[I: Equal](ep: ClientFnDecl[I], name: String)(g: Gen[I]): Unit =
+        kitCF(ep, name).propI mustBeSatisfiedBy g
 
-      'project - test(project, "project")($.routines.projectSPA)
+      'ProjectSpa - test(ClientFnDecl.ProjectSpa, "ProjectSpa")($.routines.projectSPA)
     }
 
     'Codecs {

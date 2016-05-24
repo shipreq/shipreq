@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.app.reqdetail
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.text.PlainText
-import shipreq.webapp.client.project.app.ProjectSpaMain.Page
+import shipreq.webapp.client.project.app.Main.Page
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.test._
 import TestState._

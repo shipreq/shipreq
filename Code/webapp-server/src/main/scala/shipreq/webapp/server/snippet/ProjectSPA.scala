@@ -131,5 +131,5 @@ class ProjectSPA(projectId: ProjectId) extends SingleOpStatefulSnippet {
   }
 
   override def render =
-    "*" #> ServerProtocol.invokeClientHtml(JsEntryPoint.project)(spaFns)
+    "*" #> ClientFn.ProjectSpa.runOnLoadHtml(spaFns)
 }

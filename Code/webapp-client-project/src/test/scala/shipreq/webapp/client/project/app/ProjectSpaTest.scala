@@ -9,7 +9,7 @@ import shipreq.webapp.base.test._
 import shipreq.webapp.client.project.app.reqtable.{ReqTableTestDsl => RT}
 import shipreq.webapp.client.project.app.reqdetail.{ReqDetailTestDsl => RD}
 import shipreq.webapp.client.project.test._
-import ProjectSpaMain.{Page, Props}
+import Main.{Page, Props}
 import SampleProject.Values.priField
 import TestState._
 import UnsafeTypes._

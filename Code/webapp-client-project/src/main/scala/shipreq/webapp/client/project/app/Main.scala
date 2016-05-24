@@ -9,30 +9,32 @@ import org.scalajs.dom
 import scala.annotation.elidable
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
+import scalajs.js.annotation.JSExport
 import shipreq.base.util.Intersection
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{ExternalPubid, FilterDead, HideDead, ReqId, ReqType, ReqTypePos}
-import shipreq.webapp.base.protocol.ProjectSPA
+import shipreq.webapp.base.protocol.{ClientFnDecl, ProjectSPA}
 import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
 import shipreq.webapp.client.project.app.cfg.shared.Usage
 import shipreq.webapp.client.project.app.state.{Changes, ClientData}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.protocol.ClientProtocol
+import shipreq.webapp.client.project.protocol.{ClientFnImpl, ClientProtocol}
 import shipreq.webapp.client.project.widgets.high.{ImplicationGraph, ProjectWidgets}
 import ContentEditorFeature.EditFieldKey
 
-object ProjectSpaMain {
+@JSExport(ClientFnDecl.ProjectSpaName)
+object Main extends ClientFnImpl(ClientFnDecl.ProjectSpa) {
 
-  def main(remotes: ProjectSPA): Callback = {
+  override def run(remotes: ProjectSPA): Unit = {
     val cp = ClientProtocol.Default
     ClientData.init(cp, remotes.projectInit, cd => Callback {
       Style.addToDocument()
-      val main    = new ProjectSpaMain(remotes, cp, cd)
+      val main    = new Main(remotes, cp, cd)
       val baseUrl = determineBaseUrl(dom.window.location.href)
       val router  = Router(baseUrl, main.routerConfig)
       router() render dom.document.getElementById("tgt")
-    })
+    }).runNow()
   }
 
   // ===================================================================================================================
@@ -191,8 +193,8 @@ object ProjectSpaMain {
 
 
 // =====================================================================================================================
-final class ProjectSpaMain(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
-  import ProjectSpaMain._
+final class Main(r: ProjectSPA, cp: ClientProtocol, cd: ClientData) {
+  import Main._
 
   def routerConfig =
     RouterConfigDsl[Page].buildConfig { dsl =>

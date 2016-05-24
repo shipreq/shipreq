@@ -2,22 +2,13 @@ package shipreq.webapp.server.protocol
 
 import boopickle._
 import java.nio.ByteBuffer
-import java.util.Base64
 import net.liftweb.common.{Empty, Failure => BoxFailure, Full}
 import net.liftweb.http.{BadResponse, InternalServerErrorResponse, LiftResponse, S}
 import scalaz.{-\/, \/, \/-}
-import shipreq.base.util.Util.quickSB
 import shipreq.base.util.log.HasLogger
-import shipreq.webapp.base.protocol.{JsEntryPoint, RemoteFn}
+import shipreq.webapp.base.protocol.RemoteFn
 
 object ServerProtocol extends HasLogger {
-
-  def binaryToBase64(bb: ByteBuffer): String = {
-    val size = bb.limit()
-    val a = new Array[Byte](size)
-    bb.array().copyToArray(a, 0, size)
-    Base64.getEncoder.encodeToString(a)
-  }
 
   def remoteFn(fn: RemoteFn)(localFn: fn.Input => fn.Response): fn.Instance = {
     import fn._
@@ -74,27 +65,4 @@ object ServerProtocol extends HasLogger {
 
     RemoteFn.Instance(fnName, fn)
   }
-
-  def invokeClientJs[I, O](ep: JsEntryPoint[I, O])(i: I): String = {
-    @inline def runOnWindowLoad(f: StringBuilder => Unit): StringBuilder => Unit = sb => {
-      sb append "window.onload = function(){"
-      f(sb)
-      sb append "};"
-    }
-    import ep.pi
-    @inline def callClient(n: String, i: I): StringBuilder => Unit = sb => {
-      sb append JsEntryPoint.client
-      sb append "()."
-      sb append n
-      sb append '('
-      sb append '"'
-      sb append binaryToBase64(PickleImpl.intoBytes(i))
-      sb append '"'
-      sb append ')'
-    }
-    quickSB(runOnWindowLoad(callClient(ep.name, i)))
-  }
-
-  def invokeClientHtml[I, O](f: JsEntryPoint[I, O])(i: I) =
-    <script type="text/javascript">{invokeClientJs(f)(i)}</script>
 }
