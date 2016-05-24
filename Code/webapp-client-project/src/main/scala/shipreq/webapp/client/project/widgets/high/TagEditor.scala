@@ -9,7 +9,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Grammar.{hashRefKey => G}
 import shipreq.webapp.base.validation._
-import shipreq.webapp.client.project.data.Plain
+import shipreq.webapp.client.base.data.Plain
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.AutoComplete
 import shipreq.webapp.client.project.lib.DataReusability._

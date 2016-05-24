@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.lib
+package shipreq.webapp.client.base.lib
 
 /**
  * Generate React keys.

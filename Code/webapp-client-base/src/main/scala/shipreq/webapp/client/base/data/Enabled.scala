@@ -1,8 +1,8 @@
-package shipreq.webapp.client.project.data
+package shipreq.webapp.client.base.data
 
 import japgolly.scalajs.react.extra.Reusability
 import shipreq.base.util.IsoBool
-import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.base.lib.DataReusability._
 
 sealed trait Enabled extends IsoBool[Enabled] {
   override final def companion = Enabled

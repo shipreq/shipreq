@@ -4,8 +4,9 @@ import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.extra.Reusability
 import shipreq.webapp.base.event.VerifiedEvents
 import shipreq.webapp.base.protocol._
+import shipreq.webapp.client.base.data.TCB
+import shipreq.webapp.client.base.protocol._
 import shipreq.webapp.client.project.app.state.ClientData
-import shipreq.webapp.client.project.data.TCB
 
 final class ServerCall[-Input](val fn: (Input, TCB.Success, String => TCB.Failure) => Callback) extends AnyVal {
   @inline def apply(i: Input, s: TCB.Success, f: String => TCB.Failure): Callback =

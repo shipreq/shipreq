@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.protocol
+package shipreq.webapp.client.base.protocol
 
 import boopickle.UnpickleImpl
 import scala.scalajs.js.annotation.JSExport

@@ -12,9 +12,9 @@ import shipreq.base.util.MTrie.Ops
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar, GrammarSpec, PlainText, Text, TextSearch}
+import shipreq.webapp.client.base.data.{Contextualise, Plain}
 import shipreq.webapp.client.project.app.Style.{reqtable => *}
 import shipreq.webapp.client.project.jsfacade.{TextComplete => TC}
-import shipreq.webapp.client.project.data.{Contextualise, Plain}
 import shipreq.webapp.client.project.feature.AutoCompleteFeature
 import AutoCompleteFeature.{Strategies, autoLiftSingleStrategy}
 import TC.{Query, Strategy}

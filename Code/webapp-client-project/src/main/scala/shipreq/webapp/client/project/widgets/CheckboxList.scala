@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.widgets
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
-import shipreq.webapp.client.project.data.{Disabled, Enabled, On}
+import shipreq.webapp.client.base.data.{Disabled, Enabled, On}
 import shipreq.webapp.client.project.lib.DataReusability._
 
 object CheckboxList {

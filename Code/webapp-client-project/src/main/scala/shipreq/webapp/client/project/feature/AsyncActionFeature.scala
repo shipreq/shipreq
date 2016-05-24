@@ -8,8 +8,8 @@ import monocle.Lens
 import scala.annotation.elidable
 import shipreq.base.util.Intersection
 import shipreq.base.util.univeq._
+import shipreq.webapp.client.base.data.TCB
 import shipreq.webapp.client.project.app.Assets
-import shipreq.webapp.client.project.data.TCB
 
 /**
   * Provides the following functionality around async actions:

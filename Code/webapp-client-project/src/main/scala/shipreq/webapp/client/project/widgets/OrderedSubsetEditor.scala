@@ -5,7 +5,7 @@ import japgolly.univeq._
 import org.scalajs.dom
 import scalaz.Equal
 import scalaz.syntax.equal._
-import shipreq.webapp.client.project.data.{Off, On}
+import shipreq.webapp.client.base.data.{Off, On}
 import shipreq.webapp.client.project.lib.DND
 
 /**

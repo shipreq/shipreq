@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import shipreq.base.util.NonEmptySet
-import shipreq.webapp.client.project.data.{Enabled, On}
+import shipreq.webapp.client.base.data.{Enabled, On}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.CheckboxList
 

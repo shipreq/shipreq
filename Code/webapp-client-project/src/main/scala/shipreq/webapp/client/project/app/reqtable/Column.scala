@@ -8,7 +8,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data
 import shipreq.webapp.base.UiText.ColumnNames
-import shipreq.webapp.client.project.lib.KeyGen
+import shipreq.webapp.client.base.lib.KeyGen
 import shipreq.webapp.client.project.feature.ContentEditorFeature.EditFieldKey
 
 sealed trait Column {

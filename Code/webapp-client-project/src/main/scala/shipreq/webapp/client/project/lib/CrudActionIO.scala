@@ -5,8 +5,8 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.DeletionAction
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.client.project.app.state.ClientData
-import shipreq.webapp.client.project.data.TCB
-import shipreq.webapp.client.project.protocol.ClientProtocol
+import shipreq.webapp.client.base.data.TCB
+import shipreq.webapp.client.base.protocol.ClientProtocol
 import DataImplicits._
 
 object CrudActionIO {

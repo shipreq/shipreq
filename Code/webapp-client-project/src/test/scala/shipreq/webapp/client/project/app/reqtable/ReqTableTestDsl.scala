@@ -8,8 +8,8 @@ import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
+import shipreq.webapp.client.base.data._
 import shipreq.webapp.client.project.app.Style
-import shipreq.webapp.client.project.data._
 import shipreq.webapp.client.project.test._
 import teststate.domzipper.DomZipper.EditableSel
 import TestState._

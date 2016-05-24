@@ -7,7 +7,7 @@ import scalacss.{PseudoElement, Pseudo, StyleS}
 import shipreq.base.util._
 import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.data.{StaticField, Live, Dead}
-import shipreq.webapp.client.project.data._
+import shipreq.webapp.client.base.data._
 import shipreq.webapp.client.project.widgets._
 
 object Style extends StyleSheet.Inline {

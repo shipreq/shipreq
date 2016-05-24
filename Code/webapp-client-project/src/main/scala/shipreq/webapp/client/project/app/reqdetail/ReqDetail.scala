@@ -12,14 +12,15 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.{UpdateContentCmd, UpdateContentFn}
 import shipreq.webapp.base.text._
+import shipreq.webapp.client.base.data._
+import shipreq.webapp.client.base.protocol.ClientProtocol
 import shipreq.webapp.client.project.app.reqtable.ColumnRenderer.RenderDeletionReason
 import shipreq.webapp.client.project.app.state.ClientData
 import shipreq.webapp.client.project.app.Style.{reqdetail => *}
 import shipreq.webapp.client.project.app.WebWorkerClient
-import shipreq.webapp.client.project.data._
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.protocol.{ClientProtocol, ServerCall}
+import shipreq.webapp.client.project.protocol.ServerCall
 import shipreq.webapp.client.project.widgets.Checkbox
 import shipreq.webapp.client.project.widgets.high.{DeletionForm, ImplicationGraph, ProjectWidgets, UseCaseStepFlowGraph}
 import ExternalPubid.LookupFailure

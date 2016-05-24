@@ -16,7 +16,8 @@ import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.client.project.app.state.{Changes, ClientData}
 import shipreq.webapp.client.project.app.Style.{reqtable => *}
 import shipreq.webapp.client.project.feature._
-import shipreq.webapp.client.project.protocol.{ClientProtocol, ServerCall}
+import shipreq.webapp.client.base.protocol.ClientProtocol
+import shipreq.webapp.client.project.protocol.ServerCall
 import shipreq.webapp.client.project.widgets.high.ProjectWidgets
 
 object ReqTable extends StaticPropComponent.Template("ReqTable") {

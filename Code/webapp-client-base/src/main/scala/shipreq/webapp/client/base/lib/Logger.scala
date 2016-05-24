@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.lib
+package shipreq.webapp.client.base.lib
 
 import japgolly.scalajs.react.Callback
 import org.scalajs.dom.console

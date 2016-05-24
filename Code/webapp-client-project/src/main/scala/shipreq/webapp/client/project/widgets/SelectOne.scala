@@ -6,7 +6,7 @@ import scala.scalajs.js
 import scalaz.Equal
 import shipreq.base.util.{NonEmptyVector, ParseInt}
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.client.project.data.{Disabled, Enabled}
+import shipreq.webapp.client.base.data.{Disabled, Enabled}
 
 object SelectOne {
 

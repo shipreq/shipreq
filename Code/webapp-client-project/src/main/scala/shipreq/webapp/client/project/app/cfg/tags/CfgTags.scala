@@ -23,12 +23,12 @@ import shipreq.webapp.base.data.Validators.shared.HashRefKeyVS
 import shipreq.webapp.base.event.{Delete, Restore}
 import shipreq.webapp.base.protocol.TagCrud
 import shipreq.webapp.base.UiText.FieldNames
+import shipreq.webapp.client.base.data.{TCB, Disabled, On}
+import shipreq.webapp.client.base.protocol.ClientProtocol
 import shipreq.webapp.client.project.app.cfg.shared._
 import shipreq.webapp.client.project.app.state.{ClientData, ChangeListener}
-import shipreq.webapp.client.project.data.{TCB, Disabled, On}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.{DND, CrudActionIO}
-import shipreq.webapp.client.project.protocol.ClientProtocol
 import shipreq.webapp.client.project.widgets.Checkbox
 import FlatTag.FilterPolicy
 import TagInTree.Relations

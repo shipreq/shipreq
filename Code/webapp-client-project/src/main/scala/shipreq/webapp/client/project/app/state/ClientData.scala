@@ -6,10 +6,10 @@ import scalaz.{-\/, \/-}
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.{ApplyEvent, VerifiedEvents}
 import shipreq.webapp.base.protocol.ProjectInit
-import shipreq.webapp.client.project.data.TCB
+import shipreq.webapp.client.base.data.TCB
+import shipreq.webapp.client.base.lib.Logger
+import shipreq.webapp.client.base.protocol.ClientProtocol
 import shipreq.webapp.client.project.lib.DataReusability.reusabilityProject
-import shipreq.webapp.client.project.lib.Logger
-import shipreq.webapp.client.project.protocol.ClientProtocol
 
 abstract class ClientData extends Broadcaster[Changes] {
   val pxProject: Px[Project]

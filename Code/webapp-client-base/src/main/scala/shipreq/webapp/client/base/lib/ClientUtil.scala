@@ -1,9 +1,7 @@
-package shipreq.webapp.client.project.lib
+package shipreq.webapp.client.base.lib
 
 import japgolly.scalajs.react._, vdom.prefix_<^._
 import shipreq.base.util.NonEmptyVector
-import shipreq.webapp.client.project.data.{On, Off}
-import shipreq.webapp.client.project.widgets.Widgets
 
 object ClientUtil {
 

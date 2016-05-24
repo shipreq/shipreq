@@ -16,12 +16,12 @@ import shipreq.webapp.base.data.Validators.{field => V}
 import shipreq.webapp.base.event.{DeletionAction, Delete, Restore}
 import shipreq.webapp.base.protocol.FieldCrud
 import shipreq.webapp.base.UiText, UiText.FieldNames
+import shipreq.webapp.client.base.data._
+import shipreq.webapp.client.base.protocol.ClientProtocol
 import shipreq.webapp.client.project.app.cfg.shared.{FieldSet => _, _}
 import shipreq.webapp.client.project.app.state.{ClientData, ChangeListener}
-import shipreq.webapp.client.project.data._
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.DND
-import shipreq.webapp.client.project.protocol.ClientProtocol
 import shipreq.webapp.client.project.widgets._
 import Field.ApplicableReqTypes
 

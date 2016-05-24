@@ -13,13 +13,13 @@ import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.data.Validators.{reqType => V}
 import shipreq.webapp.base.filter.FilterSpec
 import shipreq.webapp.base.protocol.CustomReqTypeCrud
+import shipreq.webapp.client.base.data.On
+import shipreq.webapp.client.base.protocol.ClientProtocol
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.app.cfg.shared._
 import shipreq.webapp.client.project.app.state.{ClientData, ChangeListener}
-import shipreq.webapp.client.project.data.On
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.CrudActionIO
-import shipreq.webapp.client.project.protocol.ClientProtocol
 import shipreq.webapp.client.project.widgets.Widgets
 
 object CfgReqTypes {

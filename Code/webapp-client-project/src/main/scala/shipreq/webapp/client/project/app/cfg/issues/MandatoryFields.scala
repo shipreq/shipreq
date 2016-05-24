@@ -5,11 +5,11 @@ import japgolly.scalajs.react.extra.{Px, OnUnmount}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._, DataImplicits._
 import shipreq.webapp.base.protocol.FieldMandatorinessMod
+import shipreq.webapp.client.base.data.On
+import shipreq.webapp.client.base.protocol.ClientProtocol
 import shipreq.webapp.client.project.app.state.{ClientData, ChangeListener}
 import shipreq.webapp.client.project.app.cfg.shared._
-import shipreq.webapp.client.project.data.On
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.protocol.ClientProtocol
 
 private[issues] object MandatoryFields {
 

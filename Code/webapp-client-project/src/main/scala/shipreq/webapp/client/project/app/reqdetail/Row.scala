@@ -5,7 +5,7 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{CustomField => CF, StaticField => SF}
 import shipreq.webapp.base.data.{Field, UseCaseSteps, FilterDead, ShowDead}
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.lib.KeyGen
+import shipreq.webapp.client.base.lib.KeyGen
 
 sealed abstract class Row(_key: String) {
   /** A value that can be passed to React to quickly identify columns. */

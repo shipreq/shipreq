@@ -8,7 +8,7 @@ import shipreq.base.util.NonEmptySet
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
-import shipreq.webapp.client.project.data.{Enabled, TCB}
+import shipreq.webapp.client.base.data.{Enabled, TCB}
 import shipreq.webapp.client.project.widgets.SelectOne
 import SelectOne.Choice
 

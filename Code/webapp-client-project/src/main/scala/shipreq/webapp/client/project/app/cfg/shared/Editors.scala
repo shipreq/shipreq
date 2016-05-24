@@ -2,8 +2,8 @@ package shipreq.webapp.client.project.app.cfg.shared
 
 import japgolly.scalajs.react._, vdom.prefix_<^._, ScalazReact._
 import org.scalajs.dom.ext.KeyValue
-import shipreq.webapp.client.project.data.On
-import shipreq.webapp.client.project.lib.ClientUtil.textChangeRecv
+import shipreq.webapp.client.base.data.On
+import shipreq.webapp.client.base.lib.ClientUtil.textChangeRecv
 import shipreq.webapp.client.project.widgets.Widgets.checkbox
 import SimpleEditor._
 

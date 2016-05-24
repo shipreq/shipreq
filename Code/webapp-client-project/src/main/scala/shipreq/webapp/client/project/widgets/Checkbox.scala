@@ -5,7 +5,7 @@ import japgolly.scalajs.react.extra._
 import shipreq.base.util.IsoBool
 import shipreq.webapp.base.data.{FilterDead, ShowDead}
 import shipreq.webapp.base.UiText
-import shipreq.webapp.client.project.data.On
+import shipreq.webapp.client.base.data.On
 
 object Checkbox {
 

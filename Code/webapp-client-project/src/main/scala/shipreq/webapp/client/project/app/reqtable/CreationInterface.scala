@@ -9,7 +9,7 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.CreateContentCmd
 import shipreq.webapp.base.text.{PlainText, TextSearch}
-import shipreq.webapp.client.project.data.{Enabled, TCB}
+import shipreq.webapp.client.base.data.{Enabled, TCB}
 import shipreq.webapp.client.project.protocol.ServerCall
 import shipreq.webapp.client.project.widgets._
 import shipreq.webapp.client.project.widgets.high._

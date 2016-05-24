@@ -11,7 +11,7 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text._
-import shipreq.webapp.client.project.data.TCB
+import shipreq.webapp.client.base.data.TCB
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.KeyHandlers
 import shipreq.webapp.client.project.protocol.ServerCall

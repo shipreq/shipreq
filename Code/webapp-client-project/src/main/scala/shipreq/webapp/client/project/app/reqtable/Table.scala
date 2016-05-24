@@ -11,6 +11,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.project.app.Style.{reqtable => *}
 import shipreq.webapp.client.project.feature.{AsyncActionFeature, ContentEditorFeature}
+import shipreq.webapp.client.base.lib.{DataReusability => _, _}
 import shipreq.webapp.client.project.lib._
 import shipreq.webapp.client.project.widgets.DragToReorder
 import AsyncActionFeature.{Locked, renderLocked}

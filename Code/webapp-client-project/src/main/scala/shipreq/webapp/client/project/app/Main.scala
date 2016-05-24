@@ -15,11 +15,11 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{ExternalPubid, FilterDead, HideDead, ReqId, ReqType, ReqTypePos}
 import shipreq.webapp.base.protocol.{ClientFnDecl, ProjectSPA}
 import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
+import shipreq.webapp.client.base.protocol.{ClientFnImpl, ClientProtocol}
 import shipreq.webapp.client.project.app.cfg.shared.Usage
 import shipreq.webapp.client.project.app.state.{Changes, ClientData}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.protocol.{ClientFnImpl, ClientProtocol}
 import shipreq.webapp.client.project.widgets.high.{ImplicationGraph, ProjectWidgets}
 import ContentEditorFeature.EditFieldKey
 

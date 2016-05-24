@@ -5,7 +5,7 @@ import shipreq.base.util.NonEmptyVector
 import scalaz.Equal
 import scalaz.std.option.optionEqual
 import shipreq.webapp.base.data.{TagId => Id, _}
-import shipreq.webapp.client.project.data.{Disabled, Enabled}
+import shipreq.webapp.client.base.data.{Disabled, Enabled}
 import shipreq.webapp.client.project.lib.DND
 import shipreq.webapp.client.project.widgets.SelectOne
 import SelectOne.Choice

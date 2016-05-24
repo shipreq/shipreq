@@ -12,8 +12,8 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd.DeleteReqs
 import shipreq.webapp.base.text.{TextSearch, PlainText}
+import shipreq.webapp.client.base.data.Plain
 import shipreq.webapp.client.project.app.Style.reqtable.{deleteRestore => *}
-import shipreq.webapp.client.project.data.Plain
 import shipreq.webapp.client.project.feature.{PreviewFeature, Selection}
 import shipreq.webapp.client.project.widgets.Widgets
 import MTrie.Ops
