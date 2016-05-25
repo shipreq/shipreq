@@ -1225,7 +1225,7 @@ object RandomData {
       remoteFnKey.map(RemoteFn.Instance(_, f))
 
     val projectSpa =
-      Gen.apply9(ProjectSpa.apply)(
+      Gen.apply9(InitDataForProjectSpa.apply)(
         remoteFn(ProjectInit),
         remoteFn(CustomIssueTypeCrud),
         remoteFn(CustomReqTypeCrud),

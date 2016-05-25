@@ -18,7 +18,7 @@ object ClientFnDecl {
     new ClientFnDecl(objectName, DefaultMethodName)(PI)
 
   final val ProjectSpaName = "P_p"
-  val ProjectSpa = ClientFnDecl[ProjectSpa](ProjectSpaName)
+  val ProjectSpa = ClientFnDecl[InitDataForProjectSpa](ProjectSpaName)
 
   final val HomeSpaName = "H_h"
   val HomeSpa = ClientFnDecl[InitDataForHomeSpa](HomeSpaName)

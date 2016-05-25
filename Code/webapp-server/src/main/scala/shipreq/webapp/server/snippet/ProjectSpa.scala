@@ -6,7 +6,7 @@ import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.protocol.{ProjectSpa => SpaFns, _}
+import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.server._
 import shipreq.webapp.server.data.ProjectId
 import shipreq.webapp.server.db.DaoT
@@ -113,7 +113,7 @@ class ProjectSpa(projectId: ProjectId) extends SingleOpStatefulSnippet {
     }
   }
 
-  val spaFns = {
+  val initData = {
     import ServerProtocol.remoteFn
 
     val projectInit = remoteFn(ProjectInit)(
@@ -143,7 +143,7 @@ class ProjectSpa(projectId: ProjectId) extends SingleOpStatefulSnippet {
     val updateContent = remoteFn(UpdateContentFn)(
       i => updateProject(MakeEvent.updateContent(i, _)))
 
-    SpaFns(
+    InitDataForProjectSpa (
       projectInit,
       customIssueTypeCrud,
       customReqTypeCrud,
@@ -156,5 +156,5 @@ class ProjectSpa(projectId: ProjectId) extends SingleOpStatefulSnippet {
   }
 
   override def render =
-    "*" #> ClientFn.ProjectSpa.runOnLoadHtml(spaFns)
+    "*" #> ClientFn.ProjectSpa.runOnLoadHtml(initData)
 }

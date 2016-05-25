@@ -13,7 +13,7 @@ import scalajs.js.annotation.JSExport
 import shipreq.base.util.Intersection
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{ExternalPubid, FilterDead, HideDead, ReqId, ReqType, ReqTypePos}
-import shipreq.webapp.base.protocol.{ClientFnDecl, ProjectSpa}
+import shipreq.webapp.base.protocol.{ClientFnDecl, InitDataForProjectSpa}
 import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
 import shipreq.webapp.client.base.protocol.{ClientFnImpl, ClientProtocol}
 import shipreq.webapp.client.project.app.cfg.shared.Usage
@@ -26,7 +26,7 @@ import ContentEditorFeature.EditFieldKey
 @JSExport(ClientFnDecl.ProjectSpaName)
 object Main extends ClientFnImpl(ClientFnDecl.ProjectSpa) {
 
-  override def run(remotes: ProjectSpa): Unit = {
+  override def run(remotes: InitDataForProjectSpa): Unit = {
     val cp = ClientProtocol.Default
     ClientData.init(cp, remotes.projectInit, cd => Callback {
       Style.addToDocument()
@@ -193,7 +193,7 @@ object Main extends ClientFnImpl(ClientFnDecl.ProjectSpa) {
 
 
 // =====================================================================================================================
-final class Main(r: ProjectSpa, cp: ClientProtocol, cd: ClientData) {
+final class Main(r: InitDataForProjectSpa, cp: ClientProtocol, cd: ClientData) {
   import Main._
 
   def routerConfig =

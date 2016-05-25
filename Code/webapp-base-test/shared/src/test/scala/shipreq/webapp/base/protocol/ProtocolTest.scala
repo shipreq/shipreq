@@ -19,7 +19,7 @@ import $.TextGenExt
 
 object ProtocolTest extends TestSuite {
 
-  implicit val equalProjectSpa: Equal[ProjectSpa] =
+  implicit val equalProjectSpa: Equal[InitDataForProjectSpa] =
     UtilMacros.deriveEqual
 
   // -------------------------------------------------------------------------------------------------------------------
