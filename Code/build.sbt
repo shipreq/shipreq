@@ -1,45 +1,45 @@
 name      := "ShipReq"
 startYear := Some(2013)
 
-val root                = ShipReq.root
+val root                = ShipReqBuild.root
 
-val base                = ShipReq.base
-val baseMacroJvm        = ShipReq.baseMacroJvm
-val baseMacroJs         = ShipReq.baseMacroJs
-val baseUtilJvm         = ShipReq.baseUtilJvm
-val baseUtilJs          = ShipReq.baseUtilJs
-val baseDb              = ShipReq.baseDb
-val baseTestJvm         = ShipReq.baseTestJvm
-val baseTestJs          = ShipReq.baseTestJs
+val base                = ShipReqBuild.base
+val baseMacroJvm        = ShipReqBuild.baseMacroJvm
+val baseMacroJs         = ShipReqBuild.baseMacroJs
+val baseUtilJvm         = ShipReqBuild.baseUtilJvm
+val baseUtilJs          = ShipReqBuild.baseUtilJs
+val baseDb              = ShipReqBuild.baseDb
+val baseTestJvm         = ShipReqBuild.baseTestJvm
+val baseTestJs          = ShipReqBuild.baseTestJs
 
-val taskman             = ShipReq.taskman
-val taskmanApiLogic     = ShipReq.taskmanApiLogic
-val taskmanApiImpl      = ShipReq.taskmanApiImpl
-val taskmanApi          = ShipReq.taskmanApi
-val taskmanServerLogic  = ShipReq.taskmanServerLogic
-val taskmanServerSchema = ShipReq.taskmanServerSchema
-val taskmanServerImpl   = ShipReq.taskmanServerImpl
-val taskmanServer       = ShipReq.taskmanServer
+val taskman             = ShipReqBuild.taskman
+val taskmanApiLogic     = ShipReqBuild.taskmanApiLogic
+val taskmanApiImpl      = ShipReqBuild.taskmanApiImpl
+val taskmanApi          = ShipReqBuild.taskmanApi
+val taskmanServerLogic  = ShipReqBuild.taskmanServerLogic
+val taskmanServerSchema = ShipReqBuild.taskmanServerSchema
+val taskmanServerImpl   = ShipReqBuild.taskmanServerImpl
+val taskmanServer       = ShipReqBuild.taskmanServer
 
-val webapp              = ShipReq.webapp
-val webappMacroJvm      = ShipReq.webappMacroJvm
-val webappMacroJs       = ShipReq.webappMacroJs
-val webappBaseJvm       = ShipReq.webappBaseJvm
-val webappBaseJs        = ShipReq.webappBaseJs
-val webappBaseServerJvm = ShipReq.webappBaseServerJvm
-val webappBaseServerJs  = ShipReq.webappBaseServerJs
-val webappBaseTestJvm   = ShipReq.webappBaseTestJvm
-val webappBaseTestJs    = ShipReq.webappBaseTestJs
-val webappClient        = ShipReq.webappClient
-val webappClientBase    = ShipReq.webappClientBase
-val webappClientHome    = ShipReq.webappClientHome
-val webappClientWwApi   = ShipReq.webappClientWwApi
-val webappClientWw      = ShipReq.webappClientWw
-val webappClientProject = ShipReq.webappClientProject
-val webappServer        = ShipReq.webappServer
+val webapp              = WebappBuild.webapp
+val webappMacroJvm      = WebappBuild.webappMacroJvm
+val webappMacroJs       = WebappBuild.webappMacroJs
+val webappBaseJvm       = WebappBuild.webappBaseJvm
+val webappBaseJs        = WebappBuild.webappBaseJs
+val webappBaseServerJvm = WebappBuild.webappBaseServerJvm
+val webappBaseServerJs  = WebappBuild.webappBaseServerJs
+val webappBaseTestJvm   = WebappBuild.webappBaseTestJvm
+val webappBaseTestJs    = WebappBuild.webappBaseTestJs
+val webappClient        = WebappBuild.webappClient
+val webappClientBase    = WebappBuild.webappClientBase
+val webappClientHome    = WebappBuild.webappClientHome
+val webappClientWwApi   = WebappBuild.webappClientWwApi
+val webappClientWw      = WebappBuild.webappClientWw
+val webappClientProject = WebappBuild.webappClientProject
+val webappServer        = WebappBuild.webappServer
 
-val utils               = ShipReq.utils
+val utils               = ShipReqBuild.utils
 
-val benchmarkJvm        = ShipReq.benchmarkJvm
-val benchmarkJs         = ShipReq.benchmarkJs
+val benchmarkJvm        = ShipReqBuild.benchmarkJvm
+val benchmarkJs         = ShipReqBuild.benchmarkJs
 

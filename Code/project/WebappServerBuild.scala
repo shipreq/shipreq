@@ -7,14 +7,15 @@ import Common.Values.{devMode, releaseMode}
 import Dependencies._
 import DependencyLib.JVM
 import ScalaJSPlugin.autoImport.{crossProject => _, _}
-import ShipReq._
+import ShipReqBuild._
+import WebappBuild._
 
 import com.earldouglas.xwp._
 import ContainerPlugin.autoImport._
 import JettyPlugin    .autoImport._
 import WebappPlugin   .autoImport._
 
-object WebappServer {
+object WebappServerBuild {
 
   lazy val copyClientJs = taskKey[Unit]("Copies required webapp client resources.")
 
