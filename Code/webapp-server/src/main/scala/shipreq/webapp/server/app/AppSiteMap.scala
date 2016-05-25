@@ -78,12 +78,12 @@ object AppSiteMap {
 
   val Project: PM[ProjectId] =
     (MenuWithIdParam(ProjectId.Extern)("project") / "project" / * / **
-      >> TitleFromProjectName
+      >> StaticTitle(mkTitle("Project"))
       >> AuthenticationRequired >> ProjectPermissionRequired
       >> UseTemplate("members/project")
       >> PerformEffects {
            RequestVars.ProjectId.setByParam(Project, "Project --> ProjectId")
-           RequestVars.Project.deriveFromProjectId()
+           RequestVars.ProjectOwner.loadFromProjectId()
          })
 
   val AdminStats =
@@ -208,10 +208,10 @@ object AppSiteMap {
   private def pageWithStaticUrl(name: String, title: String, linkText: String)(f: Menu.PreMenu => Menu.Menuable): Menu.Menuable =
     f(Menu(name, linkText)) >> StaticTitle(title)
 
-  private def TitleFromProjectName[T] =
-    DynamicTitle[T](mkTitle(RequestVars.Project.get.value.name))
+//  private def TitleFromProjectName[T] =
+//    DynamicTitle[T](mkTitle(RequestVars.Project.get.value.name))
 
-  private def MenuWithIdParam[Id <: AnyRef](scheme: ExternalId.Scheme[Id])(name: String) =
+  private def MenuWithIdParam[Id <: AnyRef](scheme: ExternalId.Scheme[_, Id])(name: String) =
     Menu.param[Id](name, "", scheme.parseB, scheme.toExternal(_).value)
 
   private def splitPath(path: String): List[String] =
@@ -236,7 +236,11 @@ object AppSiteMap {
     If(() => checker.isPass, () => failResp)
 
   private def ProjectPermissionRequired =
-    PermissionRequired(Permissions.accessProject.using(project = RequestVars.Project.some))
+    PermissionRequired {
+      val p = RequestVars.ProjectId.get.value
+      val u = RequestVars.ProjectOwner.get.value
+      Permissions.accessProject.using(project = Some(ProjectId.AndOwner(p, u)))
+    }
 
   private def AdminOnly =
     Test(_ => Permissions.admin.using().isPass)

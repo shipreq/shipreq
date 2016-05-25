@@ -3,7 +3,8 @@ package shipreq.webapp.server.app
 import scalaz.{Name, Need}
 import net.liftweb.common.Logger
 import net.liftweb.http.RequestVar
-import shipreq.webapp.server.data._
+import shipreq.taskman.api.UserId
+import shipreq.webapp.server.data
 import shipreq.webapp.server.db.DaoS
 import shipreq.webapp.server.lib.SnippetHelpers._
 
@@ -12,12 +13,11 @@ object RequestVars extends Logger with DI {
   // -------------------------------------------------------------------------------------------------------------------
   // Manually set
 
-  object ProjectId extends RequestVar[Name[ProjectId]](fail("ProjectId")) {
-    def deriveFromProject(): Unit = ProjectId.set(Need(Project.get.value.id))
-  }
+  object ProjectId extends RequestVar[Name[data.ProjectId]](fail("ProjectId"))
 
-  object Project extends RequestVar[Name[Project]](fail("SoleProject")) {
-    def deriveFromProjectId(): Unit = Project.set(requireDbData("Project")(_.findProject(ProjectId.get.value)))
+  object ProjectOwner extends RequestVar[Name[UserId]](fail("ProjectOwner")) {
+    def loadFromProjectId(): Unit =
+      set(requireDbData("ProjectOwner")(_.findProjectOwner(ProjectId.get.value)))
   }
 
   // -------------------------------------------------------------------------------------------------------------------

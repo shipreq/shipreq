@@ -16,9 +16,8 @@ object Permission {
     override def append(a: Permission, b: => Permission) = a & b
   }
 
-  final case class Ctx(
-    user: Option[UserDescriptor],
-    project: Option[Project])
+  final case class Ctx(user   : Option[UserDescriptor],
+                       project: Option[ProjectId.AndOwner])
 
   sealed trait Pass
   private val SomePass = Some(new Pass{})
@@ -50,10 +49,8 @@ trait Permission {
   def &(that: Permission): Permission =
     if (this eq that) this else new AndPermission(this, that)
 
-  final def using(
-    user: Option[UserDescriptor] = DI.SecurityProvider.vend.loggedInUser,
-    project: Option[Project] = None
-    ) =
+  final def using(user   : Option[UserDescriptor]     = DI.SecurityProvider.vend.loggedInUser,
+                  project: Option[ProjectId.AndOwner] = None) =
     new Checker(Ctx(user, project), this)
 
   def warnOnFailure: Boolean

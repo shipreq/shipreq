@@ -12,6 +12,9 @@ import shipreq.webapp.base.util.ShowSize
 import DataImplicits._
 
 object Project {
+  type XId  = ExternalId[Project]
+  type Name = String
+
   val customIssueTypes    : Lens[Project, CustomIssueTypeIMap] = config ^|-> ProjectConfig.customIssueTypes
   val reqTypes            : Lens[Project, ReqTypes           ] = config ^|-> ProjectConfig.reqTypes
   val fields              : Lens[Project, FieldSet           ] = config ^|-> ProjectConfig.fields

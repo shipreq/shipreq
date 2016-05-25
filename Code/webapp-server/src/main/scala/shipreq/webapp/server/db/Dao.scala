@@ -144,16 +144,16 @@ sealed trait DaoS {
     })(NameAlreadyInUse)
   }
 
-  def updateProject(id: ProjectId, usrId: UserId, name: String): UpdateProjectResult = {
-    import UpdateProjectResult._
-    saveProject[UpdateProjectResult](name, name => {
+  def renameProject(id: ProjectId, usrId: UserId)(name: String): RenameProjectResult = {
+    import RenameProjectResult._
+    saveProject[RenameProjectResult](name, name => {
       if (RenameProject(name, id, usrId).first == 0) ProjectNotFound
       else DbSuccess
     })(NameAlreadyInUse)
   }
 
-  def findProject(id: ProjectId): Option[Project] =
-    FindProject(id).firstOption
+  def findProjectOwner(id: ProjectId): Option[UserId] =
+    FindProjectOwner(id).firstOption
 
 //  def deleteProjectSoft(id: ProjectId): Unit =
 //    DeleteProjectSoft(nextFuncName, id).execute
@@ -233,9 +233,9 @@ object CreateProjectResult {
   case object NameAlreadyInUse extends CreateProjectResult
 }
 
-sealed trait UpdateProjectResult
-object UpdateProjectResult {
-  case object DbSuccess extends UpdateProjectResult
-  case object NameAlreadyInUse extends UpdateProjectResult
-  case object ProjectNotFound extends UpdateProjectResult
+sealed trait RenameProjectResult
+object RenameProjectResult {
+  case object DbSuccess extends RenameProjectResult
+  case object NameAlreadyInUse extends RenameProjectResult
+  case object ProjectNotFound extends RenameProjectResult
 }

@@ -92,11 +92,11 @@ private[db] object Sql {
   val CreateProject = query[(UserId, String), ProjectId](
     "INSERT INTO project(usr_id, name) VALUES(?,?) RETURNING id")
 
-  private val project_* = s"id,name,usr_id"
+//  private val project_* = s"id,name,usr_id"
 //  private val projectIsDead = "deleted_at IS NOT NULL"
   private val projectIsLive = "deleted_at IS NULL"
 
-  val FindProject = query[ProjectId, Project](s"SELECT ${project_*} FROM project WHERE id=? AND $projectIsLive")
+  val FindProjectOwner = query[ProjectId, UserId](s"SELECT usr_id FROM project WHERE id=? AND $projectIsLive")
 
   val RenameProject = update[(String, ProjectId, UserId)](
     "UPDATE project SET name=? WHERE id=? AND usr_id=?")

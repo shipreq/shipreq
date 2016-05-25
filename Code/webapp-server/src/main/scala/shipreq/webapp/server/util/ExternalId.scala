@@ -1,8 +1,7 @@
 package shipreq.webapp.server.util
 
-import net.liftweb.common.{Full, Empty, Box}
-
-case class ExternalId[I](value: String) extends AnyVal
+import net.liftweb.common.{Box, Empty, Full}
+import shipreq.webapp.base.data.{ExternalId => XId}
 
 /**
  * Generate a dictionary string using:
@@ -10,29 +9,29 @@ case class ExternalId[I](value: String) extends AnyVal
  */
 object ExternalId {
 
-  def scheme[Id](li: Long => Id)(il: Id => Long)(dictStr: String): Scheme[Id] =
+  def scheme[T, Id](li: Long => Id, il: Id => Long, dictStr: String): Scheme[T, Id] =
     new Scheme(il, li, dictStr)
 
-  final class Scheme[I](il: I => Long, li: Long => I, dictionaryStr: String) {
+  final class Scheme[T, Id](il: Id => Long, li: Long => Id, dictStr: String) {
     import Internal._
 
-    type E = ExternalId[I]
+    type ExtId = XId[T]
 
-    private[this] val base62 = new BaseX(dictionaryStr, 4)
+    private[this] val base62 = new BaseX(dictStr, 4)
     require(base62.base.longValue == 62)
 
-    @inline def apply(internal: I): E =
+    @inline def apply(internal: Id): ExtId =
       toExternal(internal)
 
-    def toExternal(internal: I): E = {
+    def toExternal(internal: Id): ExtId = {
       var (a, b) = splitLong(il(internal))
       b = xorness(b)
       b = shuffleBitsObfuscate(b)
       val x = joinInts(a, b)
-      ExternalId(base62 encode x)
+      XId(base62 encode x)
     }
 
-    private def parse(external: String): I = {
+    private def parse(external: String): Id = {
       val y = base62.decode(external)
       var (a, b) = splitLong(y)
       b = shuffleBitsRestore(b)
@@ -43,9 +42,9 @@ object ExternalId {
     def isValidExternalId(str: String): Boolean =
       ExternalIdRegex.matcher(str).matches
 
-    def parseO(ext: String)     : Option[I] = if (isValidExternalId(ext)) Some(parse(ext)) else None
-    def parseB(ext: String)     : Box[I]    = if (isValidExternalId(ext)) Full(parse(ext)) else Empty
-    def parseB(str: Box[String]): Box[I]    = str.flatMap(parseB)
+    def parseO(ext: String)     : Option[Id] = if (isValidExternalId(ext)) Some(parse(ext)) else None
+    def parseB(ext: String)     : Box[Id]    = if (isValidExternalId(ext)) Full(parse(ext)) else Empty
+    def parseB(str: Box[String]): Box[Id]    = str.flatMap(parseB)
   }
 
   private object Internal {

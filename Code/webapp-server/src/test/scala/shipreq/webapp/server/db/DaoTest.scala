@@ -65,30 +65,30 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
       }
     }
 
-    describe("update") {
-      import UpdateProjectResult._
-
-      it("should update the project name") {
-        val (u, p) = newUserAndProject("A")
-        assertTableDiffs()(dao.updateProject(p, u, "B")) ==== DbSuccess
-        dao.findProject(p).get.name ==== "B"
-      }
-
-      it("should reject duplicate names") {
-        val (u, p1) = newUserAndProject("A")
-        val p2 = dao.createProject(u, "B").gimme
-        dao.updateProject(p2, u, "A") ==== NameAlreadyInUse
-      }
-
-      it("should fail when project not found") {
-        dao.updateProject(ProjectId(0), UserId(0), "A") ==== ProjectNotFound
-      }
-
-      it("should fail when project doesnt belong to user") {
-        val (u, p) = newUserAndProject("A")
-        dao.updateProject(p, newUserId(), "B") ==== ProjectNotFound
-      }
-    }
+//    describe("rename") {
+//      import UpdateProjectResult._
+//
+//      it("should update the project name") {
+//        val (u, p) = newUserAndProject("A")
+//        assertTableDiffs()(dao.updateProject(p, u, "B")) ==== DbSuccess
+//        dao.findProject(p).get.name ==== "B"
+//      }
+//
+//      it("should reject duplicate names") {
+//        val (u, p1) = newUserAndProject("A")
+//        val p2 = dao.createProject(u, "B").gimme
+//        dao.updateProject(p2, u, "A") ==== NameAlreadyInUse
+//      }
+//
+//      it("should fail when project not found") {
+//        dao.updateProject(ProjectId(0), UserId(0), "A") ==== ProjectNotFound
+//      }
+//
+//      it("should fail when project doesnt belong to user") {
+//        val (u, p) = newUserAndProject("A")
+//        dao.updateProject(p, newUserId(), "B") ==== ProjectNotFound
+//      }
+//    }
 
 //    def afterDeletion: (UserId, ProjectId, ProjectId) = {
 //      val (uid, p1) = newUserAndProject("wow")
