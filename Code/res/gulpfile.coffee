@@ -67,6 +67,7 @@ devProdJs 'ws:public', 'public-deps.js', (f) ->
 devProdJs 'ws:member', 'member-deps.js', (f) ->
   [
       cfg_npm + 'jquery/dist/jquery.min.js'
+      cfg_npm + 'moment/min/moment.min.js'
     f(cfg_npm + 'react/dist/react', '-with-addons')
     f(cfg_npm + 'react-dom/dist/react-dom')
     f(cfg_npm + 'react-dom/dist/react-dom-server')
@@ -103,6 +104,7 @@ gulp.task 'wc:testjs', ->
   nonRetardedSrc [
         cfg_npm + 'jquery/dist/jquery.min.js'
         cfg_npm + 'jquery-textcomplete/dist/jquery.textcomplete.min.js'
+        cfg_npm + 'moment/min/moment.min.js'
         cfg_npm + 'react/dist/react-with-addons.js' # not .min because TestUtils is needed
         cfg_npm + 'react-dom/dist/react-dom.min.js'
         cfg_npm + 'react-dom/dist/react-dom-server.min.js'

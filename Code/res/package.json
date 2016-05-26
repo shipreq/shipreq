@@ -8,6 +8,7 @@
     "jquery"              : "2.1.4",
     "jquery-textcomplete" : "0.7.2",
     "katex"               : "0.6.0",
+    "moment"              : "2.13.0",
     "react"               : "15.0.1",
     "react-dom"           : "15.0.1",
     "react-collapse"      : "2.2.3",
