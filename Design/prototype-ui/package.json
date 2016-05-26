@@ -2,6 +2,10 @@
   "name": "prototype",
   "version": "0.0.0",
   "devDependencies": {
+    "grunt": "*",
+    "grunt-contrib-watch": "*",
+    "grunt-haml": "^0.9.0",
+    "matchdep": "*",
     "gulp": "^3.9.1"
   },
   "dependencies": {
