@@ -3,6 +3,7 @@ concat    = require 'gulp-concat'
 debug     = require 'gulp-debug'
 del       = require 'del'
 expect    = require 'gulp-expect-file'
+imagemin  = require 'gulp-imagemin'
 less      = require 'gulp-less'
 minifycss = require 'gulp-minify-css'
 rename    = require 'gulp-rename'
@@ -84,6 +85,7 @@ gulp.task 'ws:css', ->
 
 gulp.task 'ws:images', ->
   gulp.src 'images/**/*'
+    .pipe imagemin()
     .pipe gulp.dest cfg_ws_dev
     .pipe gulp.dest cfg_ws_prod
 
