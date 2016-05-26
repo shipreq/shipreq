@@ -125,7 +125,7 @@ private[db] object Sql {
               count(CASE type_id $reqCreationCriteria ELSE NULL END) reqs,
               max(event.created_at) last_updated_at
             FROM event
-            WHERE project_id IN (select id FROM ps)
+            WHERE project_id IN (select id FROM ps) AND seq != 0
             GROUP BY project_id)
         SELECT ps.id, ps.name, COALESCE(es.events, 0), COALESCE(es.reqs, 0), ps.created_at, es.last_updated_at
         FROM ps
