@@ -6,17 +6,19 @@ object UiText {
 
   def mathFailed = "{Invalid expression}"
 
-  @inline implicit class EnglishIntExt(val _i: Int) extends AnyVal {
-    def unitsOf(name: String, pluralised: String = null): String = {
-      val units =
-        if (_i == 1)
-          name
-        else if (pluralised ne null)
-          pluralised
-        else
-          name + "s"
-      s"${_i} $units"
-    }
+  @inline implicit class EnglishStringExt(private val self: String) extends AnyVal {
+    def pluralise(i: Int, pluralised: String = null): String =
+      if (i == 1)
+        self
+      else if (pluralised ne null)
+        pluralised
+      else
+        self + "s"
+  }
+
+  @inline implicit class EnglishIntExt(private val self: Int) extends AnyVal {
+    def unitsOf(name: String, pluralised: String = null): String =
+      name.pluralise(self, pluralised)
   }
 
   object ColumnNames {

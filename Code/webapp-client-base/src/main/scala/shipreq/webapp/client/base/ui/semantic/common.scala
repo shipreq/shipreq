@@ -2,10 +2,6 @@ package shipreq.webapp.client.base.ui.semantic
 
 import japgolly.univeq.UnivEq
 
-sealed abstract class IsActive(c: ClassName) extends HasClass(c)
-case object Active   extends IsActive("active")
-case object Inactive extends IsActive(NoClass)
-
 sealed abstract class Size(c: ClassName) extends HasClass(c)
 object Size {
   case object Mini    extends Size("mini")

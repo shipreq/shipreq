@@ -11,5 +11,9 @@ object ProjectCatalogue {
                   eventCount   : Int,
                   reqCount     : Int,
                   createdAt    : Instant,
-                  lastUpdatedAt: Option[Instant])
+                  lastUpdatedAt: Option[Instant]) {
+
+    def lastUpdatedOrCreatedAt: Instant =
+      lastUpdatedAt.getOrElse(createdAt)
+  }
 }
