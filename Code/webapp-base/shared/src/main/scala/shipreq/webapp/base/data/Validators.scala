@@ -34,6 +34,9 @@ object Validators {
       pt.format(Live, txt).length <= WebappConfig.largeTextMaxLength,
       txt, VFailure.looseMsg("Text too large.")) // english
 
+  // TODO Make vals lazy
+  lazy val projectName = mandatoryShortText("Project name")
+
   // ===================================================================================================================
   object shared {
     import Grammar.{hashRefKey => G}

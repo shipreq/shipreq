@@ -93,12 +93,6 @@ object Validators {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  object project {
-    val name = mandatoryShortText("Project name")
-  }
-
-  // -------------------------------------------------------------------------------------------------------------------
-
   object landingPage {
     def name = humanFullName
     def email = Validators.email

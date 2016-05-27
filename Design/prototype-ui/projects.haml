@@ -19,29 +19,58 @@
         .ui.breadcrumb
           .section Projects
 
-      .item.ui.right.dropdown.simple
-        @japgolly
-        -# %i.dropdown.icon
-        .menu
-          %a.item{href: "account.haml.html"} Account
-          .item Logout
+      .right.menu
+        .item
+          @japgolly
+
+        .item.ui.dropdown.simple
+          @japgolly
+          -# %i.dropdown.icon
+          .menu
+            %a.item{href: "account.haml.html"} Account
+            .item Logout
 
     .ui.container{style: "margin-top:4rem"}
       %div
         .ui.action.input
           %input{type: "text", placeholder: "New project name..."}
+          %button.ui.button.primary.disabled Create
+      %div
+        .ui.action.input
+          %input{type: "text", placeholder: "New project name...", value: "Phaarrt"}
           %button.ui.button.primary Create
-      -# %div
-      -#   .ui.action.input.error
-      -#     %input{type: "text", placeholder: "New project name...", value: "Cardboard"}
-      -#     %button.ui.button.disabled.negative Create
-      -# .ui.pointing.red.basic.label
-      -#   That name is taken.
+      %div
+        %div
+          .ui.action.input.error
+            %input{type: "text", placeholder: "New project name...", value: "Cardboard"}
+            %button.ui.button.disabled.negative Create
+        .ui.pointing.red.basic.label
+          That name is taken.
 
       .ui.divider{style: "margin:2rem 0"}
 
-      .ui.divided.link.items
+      %div{style: "display:flex"}
+        %div{style: "flex-grow:1"}
+          %h1.ui.header{style: "margin-bottom:0"}
+            %a{href: "project-index.haml.html"}
+              CardBoard
+          .ui.meta{style: "margin: .5em 0; line-height: 1em; color: rgba(0,0,0,.6);"}
+            Updated&nbsp;
+            %time{datetime: "2015-12-17T09:24:17Z", title: "December 17, 2015"} 4 months ago.
+        %div
+          .ui.statistics.tiny
+            .statistic
+              .value
+                %i.icon.write
+                &nbsp;209
+              .label changes
+            .statistic
+              .value
+                %i.icon.cubes
+                &nbsp;39
+              .label reqs
 
+      .ui.divided.link.items
         %a.item{href: "project-index.haml.html"}
           .content.middle.aligned
             .header

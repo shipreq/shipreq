@@ -10,12 +10,12 @@ import scala.slick.jdbc.JdbcBackend.{Database, Session}
 import scalaz.Need
 import shipreq.base.db.SqlHelpers._
 import shipreq.taskman.api.UserId
+import shipreq.webapp.base.data.Validators
 import shipreq.webapp.server.app.{Defaults, DI}
 import shipreq.webapp.server.data._
 import shipreq.webapp.server.db
 import shipreq.webapp.server.db.{AdminDao, DaoS, DaoT, DaoProvider, DB}
 import shipreq.webapp.server.db.SqlHelpers._
-import shipreq.webapp.server.feature.validation.Validators
 import shipreq.webapp.server.security.PasswordAndSalt
 
 object TestDB {
@@ -219,7 +219,7 @@ trait TestDatabaseHelpers extends TestHelpers2 {
   }
 
   def randomProjectName: String =
-    findSuitable(Validators.project.name.correctAndValidateU(randomStr))(_.isSuccess).getOrElse(???)
+    findSuitable(Validators.projectName.correctAndValidateU(randomStr))(_.isSuccess).getOrElse(???)
 
   def newProjectId(userId: UserId = getOrCreateUserId): ProjectId =
     dao.createProject(userId, randomProjectName).gimme

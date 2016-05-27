@@ -4,6 +4,7 @@ import org.scalatest.FunSuite
 import org.scalatest.Matchers
 import org.scalatest.prop._
 import scalaz.{Failure, Success}
+import shipreq.webapp.base.data.{Validators => V2}
 import shipreq.webapp.base.WebappConfig._
 import shipreq.webapp.base.validation._
 import shipreq.webapp.server.security.PasswordAndSalt
@@ -118,7 +119,7 @@ class ValidatorTest extends FunSuite with Matchers with PropertyChecks {
   }
 
   test("MandatoryShortText") {
-    testCV(V.project.name, Table(("IN", "CORRECTED", "FAILURE")
+    testCV(V2.projectName, Table(("IN", "CORRECTED", "FAILURE")
       , ("", None, Some("blank"))
       , ("  ", Some(""), Some("blank"))
       , ("hello", None, None)
