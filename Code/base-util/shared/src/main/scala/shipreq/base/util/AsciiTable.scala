@@ -19,7 +19,7 @@ object AsciiTable {
     // Number of rows
     val rowCount = table.size
     // Maximum text length for each column
-    val maxColLengths = table.transpose.map(_.map(_.size).max)
+    val maxColLengths = table.transpose.map(_.map(s => if (s eq null) 4 else s.length).max)
 
     // String builder which will be filled row by row as we progress through
     // the table.
@@ -64,9 +64,11 @@ object AsciiTable {
 
     def addRow(row: Seq[String]) {
       sb.append(ColumnBorder)
-      for (column <- 0 until maxColLengths.size) {
-        val cell = row(column)
-        val ws = maxColLengths(column) - cell.size + 2
+      for (column <- maxColLengths.indices) {
+        var cell = row(column)
+        if (cell eq null)
+          cell = "null"
+        val ws = maxColLengths(column) - cell.length + 2
 
         sb.append(" " * (ws/2))
         sb.append(cell)
