@@ -34,7 +34,7 @@ object BaseUtilGen {
       liftIterator_!(uniqueIterator)
 
     def uniqueIterator(implicit ev: UnivEq[A]): Gen[Iterator[A]] = {
-      val MaxTries = 1000
+      val MaxTries = 2000
       Gen { ctx =>
         new AbstractIterator[A] {
           val seen = UnivEq.emptyMutableSet[A]
