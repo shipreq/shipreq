@@ -1,1 +1,0 @@
-ALTER TABLE project ADD COLUMN deleted_at TIMESTAMPTZ NULL;

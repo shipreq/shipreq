@@ -131,36 +131,14 @@ sealed trait DaoS {
   // ===================================================================================================================
   // Project
 
-  private[this] def saveProject[R](name: String, saveFn: String => R)(nameAlreadyInUse: R): R =
-    try saveFn(name)
-    catch {
-      case e: PSQLException if e.getMessage.contains("_usr_id_name_") => nameAlreadyInUse
-    }
-
-  def createProject(usrId: UserId, name: String): CreateProjectResult = {
-    import CreateProjectResult._
-    saveProject[CreateProjectResult](name, name => {
-      val id = CreateProject(usrId, name).first
-      DbSuccess(id)
-    })(NameAlreadyInUse)
-  }
-
-  def renameProject(id: ProjectId, usrId: UserId)(name: String): RenameProjectResult = {
-    import RenameProjectResult._
-    saveProject[RenameProjectResult](name, name => {
-      if (RenameProject(name, id, usrId).first == 0) ProjectNotFound
-      else DbSuccess
-    })(NameAlreadyInUse)
-  }
+  def createProject(usrId: UserId): ProjectId =
+    CreateProject(usrId).first
 
   def findProjectOwner(id: ProjectId): Option[UserId] =
     FindProjectOwner(id).firstOption
 
   def getProjectCatalogue(usrId: UserId): ProjectCatalogue =
     ProjectCatalogue(GetProjectCatalogue(usrId).list)
-
-//  def deleteProjectSoft(id: ProjectId): Unit =
-//    DeleteProjectSoft(nextFuncName, id).execute
 }
 
 // #####################################################################################################################
@@ -229,17 +207,4 @@ object UserRegistrationResult {
   case class DbSuccess(userId: UserId) extends UserRegistrationResult
   case object NoMatchingConfToken extends UserRegistrationResult
   case object UsernameTaken extends UserRegistrationResult
-}
-
-sealed trait CreateProjectResult
-object CreateProjectResult {
-  case class DbSuccess(id: ProjectId) extends CreateProjectResult
-  case object NameAlreadyInUse extends CreateProjectResult
-}
-
-sealed trait RenameProjectResult
-object RenameProjectResult {
-  case object DbSuccess extends RenameProjectResult
-  case object NameAlreadyInUse extends RenameProjectResult
-  case object ProjectNotFound extends RenameProjectResult
 }

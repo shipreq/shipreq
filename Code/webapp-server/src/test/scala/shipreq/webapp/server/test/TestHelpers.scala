@@ -218,13 +218,6 @@ trait TestHelpers2 extends MockitoSugar with Matchers with DebugImplicits with L
       case r => fail(s"Failure expected. Got: $r")
     }
   }
-
-  implicit class CreateProjectResultExt(r: CreateProjectResult) {
-    def gimme: ProjectId = r match {
-      case CreateProjectResult.DbSuccess(x) => x
-      case x => fail("Failed to create random project id: " + x)
-    }
-  }
 }
 
 object TestHelpers extends TestHelpers2 {

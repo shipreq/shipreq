@@ -6,6 +6,7 @@ import slick.jdbc.StaticQuery.{queryNA, update, updateNA}
 import shipreq.base.db.SqlHelpers._
 import shipreq.taskman.api.UserId
 import shipreq.webapp.server.data._
+import shipreq.webapp.server.db.EventDao.EventSeq
 import shipreq.webapp.server.security.PasswordAndSalt
 import shipreq.webapp.server.snippet.ResetPassword
 import shipreq.webapp.server.test.TestDatabaseSupport
@@ -43,25 +44,16 @@ class DaoTest extends FunSpec with TestDatabaseSupport {
   describe("Project") {
     import Tables.{Project => TProject}
 
-    def newUserAndProject(projectName: String) = {
-      val u = newUserId()
-      val p = dao.createProject(u, projectName).gimme
-      (u, p)
-    }
+//    def newUserAndProject() = {
+//      val u = newUserId()
+//      val p = dao.createProject(u)
+//      (u, p)
+//    }
 
     describe("create") {
-      import CreateProjectResult._
-
       it("should create a new project") {
         val u = newUserId()
-        assertTableDiffs(TProject -> 1) {dao.createProject(u, "Blah")}
-      }
-
-      it("should reject duplicate project names") {
-        val t = "Yay"
-        val (u, _) = newUserAndProject(t)
-        val (_, _) = newUserAndProject(t)
-        dao.createProject(u, t) ==== NameAlreadyInUse
+        assertTableDiffs(TProject -> 1) {dao.createProject(u)}
       }
     }
 

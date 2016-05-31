@@ -9,6 +9,7 @@ import scala.slick.jdbc.StaticQuery.{queryNA, query, updateNA, update}
 import scala.slick.jdbc.JdbcBackend.{Database, Session}
 import scalaz.Need
 import shipreq.base.db.SqlHelpers._
+import shipreq.base.util.univeq._
 import shipreq.taskman.api.UserId
 import shipreq.webapp.base.data.Validators
 import shipreq.webapp.server.app.{Defaults, DI}
@@ -156,6 +157,7 @@ trait TestDatabaseHelpers extends TestHelpers2 {
     object UsrhName extends Table {def name = "usrh_name"}
     val All = List(Project, Usr, UsrLoginLog, Usrd, UsrhName)
   }
+  implicit def univEqTable: UnivEq[Table] = UnivEq.force
 
   def countAllTableRows = Tables.All.map(t => (t -> countRowsIn(t))).toMap
 
@@ -179,7 +181,7 @@ trait TestDatabaseHelpers extends TestHelpers2 {
     val fullExp = expectations ++ unspecTables
     val fullExpMap = fullExp.toMap
 
-    if (diff != fullExp) {
+    if (diff !=* fullExpMap) {
       val badKeys = diff.keys.filter(k => diff(k) != fullExpMap(k)).toSet
       val a = diff.filter(e => badKeys.contains(e._1))
       val e= fullExpMap.filter(e => badKeys.contains(e._1))
@@ -221,11 +223,11 @@ trait TestDatabaseHelpers extends TestHelpers2 {
   def randomProjectName: String =
     findSuitable(Validators.projectName.correctAndValidateU(randomStr))(_.isSuccess).getOrElse(???)
 
-  def newProjectId(userId: UserId = getOrCreateUserId): ProjectId =
-    dao.createProject(userId, randomProjectName).gimme
+  def newProjectId(userId: UserId = getOrCreateUserId()): ProjectId =
+    dao.createProject(userId)
 
   def getOrCreateUserId(): UserId =
-    queryNA[UserId]("select id from usr where username is not null").firstOption.getOrElse(newUserId)
+    queryNA[UserId]("select id from usr where username is not null").firstOption getOrElse newUserId()
 
   def newUserId(): UserId =
     query[(String,String),UserId]("INSERT INTO usr(username, email, password, password_salt, password_changed_at, confirmation_sent_at, confirmed_at) VALUES(?,?,0,0,NOW(),NOW(),NOW()) RETURNING id")

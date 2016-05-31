@@ -90,14 +90,13 @@ private[db] object Sql {
   // ###################################################################################################################
   // Project
 
-  val CreateProject = query[(UserId, String), ProjectId](
-    "INSERT INTO project(usr_id, name) VALUES(?,?) RETURNING id")
+  val CreateProject = query[UserId, ProjectId](
+    "INSERT INTO project(usr_id) VALUES(?) RETURNING id")
 
-//  private val project_* = s"id,name,usr_id"
-//  private val projectIsDead = "deleted_at IS NOT NULL"
-  private val projectIsLive = "deleted_at IS NULL"
+  val FindProjectOwner = query[ProjectId, UserId]("SELECT usr_id FROM project WHERE id=?")
 
-  val FindProjectOwner = query[ProjectId, UserId](s"SELECT usr_id FROM project WHERE id=? AND $projectIsLive")
+  private def eventTypeId(e: ActiveEvent): Short =
+    EventDbCodecs.eventCodecRegistry.writer(e)._1
 
   val GetProjectCatalogue = {
     import shipreq.webapp.base.event._
@@ -107,37 +106,49 @@ private[db] object Sql {
       UseCaseCreate(null, null, null))
 
     val reqCreationTypeIds: List[Short] =
-      reqCreationEvents.map(EventDbCodecs.eventCodecRegistry.writer(_)._1)
+      reqCreationEvents.map(eventTypeId)
 
-    val reqCreationCriteria: String =
-      reqCreationTypeIds
-        .map(id => s"WHEN $id THEN 1")
-        .mkString(" ")
+    val projectNameSetId: Short =
+      eventTypeId(ProjectNameSet(null))
 
     query[UserId, ProjectCatalogue.Item](
       s"""
         WITH
-          ps AS (SELECT id, name, created_at from project where usr_id=?),
+          ps AS (
+            SELECT id, created_at
+            FROM project
+            WHERE usr_id=?
+          ),
           es AS (
             SELECT
               project_id,
               count(*) events,
-              count(CASE type_id $reqCreationCriteria ELSE NULL END) reqs,
+              count(*) FILTER (WHERE type_id IN (${reqCreationTypeIds mkString ","})) reqs,
               max(event.created_at) last_updated_at
             FROM event
-            WHERE project_id IN (select id FROM ps) AND seq != 0
-            GROUP BY project_id)
-        SELECT ps.id, ps.name, COALESCE(es.events, 0), COALESCE(es.reqs, 0), ps.created_at, es.last_updated_at
+            WHERE project_id IN (select id FROM ps) AND seq > 1
+            GROUP BY project_id
+          ),
+          ns AS (
+            SELECT DISTINCT ON (project_id)
+              project_id,
+              (e.data#>>'{}')::varchar "name"
+            FROM event e
+            WHERE project_id IN (select id FROM ps) AND type_id=$projectNameSetId
+            ORDER BY project_id, seq DESC
+          )
+        SELECT
+          ps.id,
+          ns.name,
+          COALESCE(es.events,0),
+          COALESCE(es.reqs,0),
+          ps.created_at,
+          es.last_updated_at
         FROM ps
-        LEFT JOIN es ON id=project_id
+        LEFT JOIN es ON id=es.project_id
+        LEFT JOIN ns ON id=ns.project_id
       """.sql)
   }
-
-  val RenameProject = update[(String, ProjectId, UserId)](
-    "UPDATE project SET name=? WHERE id=? AND usr_id=?")
-
-//  val DeleteProjectSoft = update[(String, ProjectId)]("UPDATE project SET name=?, deleted_at=NOW() where id=?")
-//  @Delete val DeleteProjectHard = update[ProjectId](s"DELETE FROM project where id=? and $projectIsDead")
 
   // ###################################################################################################################
   // Events
