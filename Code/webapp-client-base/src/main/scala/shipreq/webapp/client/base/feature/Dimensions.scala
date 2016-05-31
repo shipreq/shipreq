@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.feature
+package shipreq.webapp.client.base.feature
 
 import org.scalajs.dom.console
 import scala.annotation.elidable

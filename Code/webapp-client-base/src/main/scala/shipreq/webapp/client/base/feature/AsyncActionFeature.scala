@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.feature
+package shipreq.webapp.client.base.feature
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.Reusability
@@ -9,7 +9,6 @@ import scala.annotation.elidable
 import shipreq.base.util.Intersection
 import shipreq.base.util.univeq._
 import shipreq.webapp.client.base.data.TCB
-import shipreq.webapp.client.project.app.Assets
 
 /**
   * Provides the following functionality around async actions:
@@ -57,7 +56,7 @@ object AsyncActionFeature {
     Reusability.byRef
 
   def renderLocked =
-    Assets.spinner
+    <.div("LOCKED") // TODO Temp
 
   type AsyncCall[+F] = (TCB.Success, F => TCB.Failure) => Callback
 

@@ -2,7 +2,6 @@ package shipreq.webapp.client.project.feature
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.ScalazReact._
 import monocle.Lens
 import scala.annotation.elidable
 import shipreq.base.util._
@@ -12,6 +11,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text._
 import shipreq.webapp.client.base.data.TCB
+import shipreq.webapp.client.base.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.KeyHandlers
 import shipreq.webapp.client.project.protocol.ServerCall

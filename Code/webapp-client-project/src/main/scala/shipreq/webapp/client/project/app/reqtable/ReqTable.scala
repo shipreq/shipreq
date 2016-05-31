@@ -9,14 +9,15 @@ import monocle.Lens
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import scalaz.{\/-, -\/}
-import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.{FilterAst, FilterSpec}
+import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.text.{TextSearch, PlainText}
+import shipreq.webapp.client.base.feature.AsyncActionFeature
+import shipreq.webapp.client.base.protocol.ClientProtocol
 import shipreq.webapp.client.project.app.state.{Changes, ClientData}
 import shipreq.webapp.client.project.app.Style.{reqtable => *}
 import shipreq.webapp.client.project.feature._
-import shipreq.webapp.client.base.protocol.ClientProtocol
 import shipreq.webapp.client.project.protocol.ServerCall
 import shipreq.webapp.client.project.widgets.high.ProjectWidgets
 

@@ -9,7 +9,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text.{TextSearch, PlainText}
 import shipreq.webapp.client.base.data.TCB
-import shipreq.webapp.client.project.feature.AsyncActionFeature
+import shipreq.webapp.client.base.feature.AsyncActionFeature
 import shipreq.webapp.client.project.feature.Modal
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.protocol.ServerCall

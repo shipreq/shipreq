@@ -9,8 +9,8 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.UpdateContentCmd
+import shipreq.webapp.client.base.feature.AsyncActionFeature
 import shipreq.webapp.client.project.app.Style.reqdetail.{useCaseStep => *}
-import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
 import VectorTree.{PartialLocation, LocationOps}
 

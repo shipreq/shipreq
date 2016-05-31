@@ -13,6 +13,7 @@ import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
 import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.client.base.data._
+import shipreq.webapp.client.base.feature.AsyncActionFeature
 import shipreq.webapp.client.project.feature.ContentEditorFeature.EditFieldKey
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.test._

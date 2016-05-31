@@ -13,6 +13,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.{UpdateContentCmd, UpdateContentFn}
 import shipreq.webapp.base.text._
 import shipreq.webapp.client.base.data._
+import shipreq.webapp.client.base.feature.AsyncActionFeature
 import shipreq.webapp.client.base.protocol.ClientProtocol
 import shipreq.webapp.client.project.app.reqtable.ColumnRenderer.RenderDeletionReason
 import shipreq.webapp.client.project.app.state.ClientData

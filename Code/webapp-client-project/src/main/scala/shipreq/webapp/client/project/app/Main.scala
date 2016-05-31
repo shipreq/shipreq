@@ -15,6 +15,7 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{ExternalPubid, FilterDead, HideDead, ReqId, ReqType, ReqTypePos}
 import shipreq.webapp.base.protocol.{ClientFnDecl, InitDataForProjectSpa}
 import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
+import shipreq.webapp.client.base.feature._
 import shipreq.webapp.client.base.protocol.{ClientFnImpl, ClientProtocol}
 import shipreq.webapp.client.project.app.cfg.shared.Usage
 import shipreq.webapp.client.project.app.state.{Changes, ClientData}
