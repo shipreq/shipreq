@@ -21,17 +21,21 @@ object Project {
   val tags                : Lens[Project, TagTree            ] = config ^|-> ProjectConfig.tags
   val genericReqs         : Lens[Project, GenericReqIMap     ] = reqs ^|-> Requirements.genericReqs
   val useCases            : Lens[Project, UseCases           ] = reqs ^|-> Requirements.useCases
+  val pubidRegister       : Lens[Project, PubidRegister      ] = reqs ^|-> Requirements.pubids
+  val reqCodeTrie         : Lens[Project, ReqCode.Trie       ] = reqCodes ^|-> ReqCodes.trie
+  val implicationsSrcToTgt: Lens[Project, Implications.UniDir] = implications ^<-> Implications.biToUni
   val useCaseIMap         : Lens[Project, UseCaseIMap        ] = useCases ^|-> UseCases.imap
   val useCaseStepIndex    : Lens[Project, UseCases.StepIndex ] = useCases ^|-> UseCases.stepIndex
-  val pubidRegister       : Lens[Project, PubidRegister      ] = reqs ^|-> Requirements.pubids
-  val implicationsSrcToTgt: Lens[Project, Implications.UniDir] = implications ^<-> Implications.biToUni
-  val reqCodeTrie         : Lens[Project, ReqCode.Trie       ] = reqCodes ^|-> ReqCodes.trie
 
   import ReqData._ // for equality
   implicit lazy val equality: Equal[Project] = UtilMacros.deriveEqual
 
+  val defaultName: Name =
+    "Untitled"
+
   val empty: Project =
     Project(
+      defaultName,
       ProjectConfig.empty,
       Requirements.empty,
       ReqCodes.empty,
@@ -43,7 +47,8 @@ object Project {
 }
 
 @Lenses
-final case class Project(config         : ProjectConfig,
+final case class Project(name           : Project.Name,
+                         config         : ProjectConfig,
                          reqs           : Requirements,
                          reqCodes       : ReqCodes,
                          reqText        : ReqData.Text,

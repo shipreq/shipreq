@@ -71,7 +71,7 @@ object HashSchemeTest extends TestSuite {
         0x46a5c86e ~ TagData,
         0xc32727ce ~ TextFieldData,
         0x43b92d0f ~ UseCases,
-        0x3b2e94e1 ~ WholeProject)
+        0x6599c3ea ~ WholeProject)
 
       'P3 - assertHashes(hL, P3,
         0x3e1ac0cb ~ CfgFields,
@@ -89,7 +89,7 @@ object HashSchemeTest extends TestSuite {
         0x174ee061 ~ TagData,
         0xc32727ce ~ TextFieldData, // Note: same as empty, P3 doesn't use
         0x43b92d0f ~ UseCases,      // Note: same as empty, P3 doesn't use
-        0x8ba09927 ~ WholeProject)
+        0xc0be342f ~ WholeProject)
 
       'P4 - assertHashes(hL, P4,
         0x3e1ac0cb ~ CfgFields,
@@ -107,7 +107,7 @@ object HashSchemeTest extends TestSuite {
         0x174ee061 ~ TagData,
         0xcef27507 ~ TextFieldData,
         0x73fb17ff ~ UseCases,
-        0xaf320bd1 ~ WholeProject)
+        0xba91fc3c ~ WholeProject)
     }
   }
 }

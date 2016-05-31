@@ -35,6 +35,7 @@ object EventStats {
       case _: GenericReqCreate       => "GenericReqCreate"
       case _: GenericReqTitleSet     => "GenericReqTitleSet"
       case _: GenericReqTypeSet      => "GenericReqTypeSet"
+      case _: ProjectNameSet         => "ProjectNameSet"
       case _: ProjectTemplateApply   => "ProjectTemplateApply"
       case _: ReqCodeGroupCreate     => "ReqCodeGroupCreate"
       case _: ReqCodeGroupsDelete    => "ReqCodeGroupsDelete"

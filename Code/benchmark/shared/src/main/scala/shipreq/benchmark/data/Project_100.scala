@@ -759,6 +759,7 @@ object Project_100 {
   val project: Project =
     IdCeilings.supply(
       Project(
+        Project.defaultName,
         ProjectConfig(
           customIssueTypes,
           ReqTypes(customReqTypes),

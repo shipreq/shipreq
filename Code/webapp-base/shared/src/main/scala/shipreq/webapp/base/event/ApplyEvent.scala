@@ -51,7 +51,10 @@ object ApplyEvent {
   }
 }
 
-final class ApplyEvent(implicit val trust: Trust) extends ApplyConfigEvent with ApplyContentEvent {
+final class ApplyEvent(implicit val trust: Trust)
+    extends ApplyConfigEvent
+       with ApplyContentEvent
+       with ApplyOtherEvent {
 
   def apply(events: Events)(p: Project): Result =
     applyAllSafe(events) exec p
@@ -191,6 +194,7 @@ final class ApplyEvent(implicit val trust: Trust) extends ApplyConfigEvent with 
       case e: GenericReqCreate       => GenericReqEvents       applyGenericReqCreate      e
       case e: GenericReqTitleSet     => GenericReqEvents       applyGenericReqTitleSet    e
       case e: GenericReqTypeSet      => GenericReqEvents       applyGenericReqTypeSet     e
+      case e: ProjectNameSet         => OtherEvents            applyProjectNameSet        e
       case e: ReqCodeGroupCreate     => ReqCodeGroupEvents     applyCreate                e
       case e: ReqCodeGroupsDelete    => ReqCodeGroupEvents     applyDelete                e
       case e: ReqCodeGroupUpdate     => ReqCodeGroupEvents     applyUpdate                e

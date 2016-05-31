@@ -9,23 +9,17 @@ import shipreq.webapp.base.util._
 import Text.{UseCaseStep => StepTitle, _}
 import Text.Equality._
 
-// TODO Redo events.
-// Remove DeletionAction - unnecessary coupling, makes harder to enable/disable feature, search by key in DB, etc.
-// Add vs Create.
-// Instead of VerbNoun it would be probably be better to have NounVerb.
-
 /*
-Style Guide
-===========
-
+===============
+= Style Guide =
+===============
 Event names are in the form <noun> <verb>.
 Create/Add: Use Create when a new id is consumed, use Add otherwise.
 Update/Patch: Use Update when replacement values are provided in full, use Patch when diffs are provided.
 Delete and Restore are separate events.
 Prefer combination: Create/Delete/Restore
 Prefer combination: Add/Remove
-
- */
+*/
 
 /**
  * A change to a [[Project]].
@@ -42,6 +36,11 @@ sealed trait Event
  * (Events can be retired over time.)
  */
 sealed trait ActiveEvent extends Event
+
+// =====================================================================================================================
+// Cosmetic. No impact on content (or config).
+
+final case class ProjectNameSet(name: String) extends ActiveEvent
 
 // =====================================================================================================================
 // Config: Templates

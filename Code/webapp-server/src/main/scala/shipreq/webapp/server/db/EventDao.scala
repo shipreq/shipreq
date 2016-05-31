@@ -590,6 +590,7 @@ object EventDbCodecs {
   implicit val dbCodecGenericReqCreate      : DbCodec[GenericReqCreate      ] = dbCodecIdGdAnd('vs, 'rt -> "T")
   implicit val dbCodecGenericReqTitleSet    : DbCodec[GenericReqTitleSet    ] = dbCodec2
   implicit val dbCodecGenericReqTypeSet     : DbCodec[GenericReqTypeSet     ] = dbCodec2
+  implicit val dbCodecProjectNameSet        : DbCodec[ProjectNameSet        ] = dbCodecDataOnly
   implicit val dbCodecProjectTemplateApply  : DbCodec[ProjectTemplateApply  ] = dbCodecDataOnly
   implicit val dbCodecReqCodeGroupCreate    : DbCodec[ReqCodeGroupCreate    ] = dbCodec2
   implicit val dbCodecReqCodeGroupsDelete   : DbCodec[ReqCodeGroupsDelete   ] = dbCodecDataOnly
@@ -613,7 +614,7 @@ object EventDbCodecs {
   implicit val dbCodecUseCaseTitleSet       : DbCodec[UseCaseTitleSet       ] = dbCodec2
 
   /**
-   * Assigns each event a `type_id`.
+   * Assigns each event a `type_id` ∈ [0,32767].
    *
    * This is only seen by the DB and doesn't affect binary codecs, thus there's no need to keep IDs in [0,127] for
    * efficient BooPickle int encoding.
@@ -688,6 +689,12 @@ object EventDbCodecs {
     case _: FieldCustomTagUpdate   => 1133
     case _: FieldCustomTextCreate  => 1134
     case _: FieldCustomTextUpdate  => 1135
+
+    // =====================================
+    // Cosmetic. No impact on content/config
+    // =====================================
+
+    case _: ProjectNameSet         => 2000
   }
 }
 

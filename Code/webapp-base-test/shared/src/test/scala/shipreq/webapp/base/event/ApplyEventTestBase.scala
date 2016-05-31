@@ -113,6 +113,7 @@ object ApplyEventTestFns {
          | _: FieldStaticRemove
          | _: GenericReqTitleSet
          | _: GenericReqTypeSet
+         | _: ProjectNameSet
          | _: ReqCodeGroupUpdate
          | _: ReqCodesPatch
          | _: ReqFieldCustomTextSet

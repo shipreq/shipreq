@@ -32,6 +32,7 @@ trait EventEquality {
   implicit val equalGenericReqCreate      : Equal[GenericReqCreate      ] = UtilMacros.deriveEqual
   implicit val equalGenericReqTitleSet    : Equal[GenericReqTitleSet    ] = UtilMacros.deriveEqual
   implicit val equalGenericReqTypeSet     : Equal[GenericReqTypeSet     ] = UtilMacros.deriveEqual
+  implicit val equalProjectNameSet        : Equal[ProjectNameSet        ] = UtilMacros.deriveEqual
   implicit val equalProjectTemplateApply  : Equal[ProjectTemplateApply  ] = UtilMacros.deriveEqual
   implicit val equalReqCodeGroupCreate    : Equal[ReqCodeGroupCreate    ] = UtilMacros.deriveEqual
   implicit val equalReqCodeGroupsDelete   : Equal[ReqCodeGroupsDelete   ] = UtilMacros.deriveEqual

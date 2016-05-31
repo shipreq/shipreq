@@ -1141,11 +1141,23 @@ object RandomData {
     val rcgTitleText   = TextGen.reqCodeGroupTitleAtom(reqIdG, ucStepIdG, activeCodeIdG, cissueIdG).text
     val delReasonText  = TextGen.deletionReasonAtom(reqIdG, ucStepIdG, activeCodeIdG, atagIdG).text1(Text.DeletionReason)
     for {
+      name      ← projectName
       reqText   ← reqFieldDataText2(reqIdSet, textColIds, ucStepIdG, activeCodeIdG, cissueIdG, atagIdG)
       reqs      ← setReqText(reqsWithoutText, reqIdG, ucStepIdG, activeCodeIdG, cissueIdG, atagIdG)
       reqCodes2 ← reqCode.updateGroupText(rcgTitleText)(reqCodes1.trie)
       dr        ← deletionReasons(reqIdG, delReasonText)
-    } yield IdCeilings.supply(Project(cfg, reqs, ReqCodes(reqCodes2), reqText, reqTags, reqImps, dr, _))
+    } yield
+      IdCeilings.supply(
+        Project(
+          name,
+          cfg,
+          reqs,
+          ReqCodes(reqCodes2),
+          reqText,
+          reqTags,
+          reqImps,
+          dr,
+          _))
   }
 
   lazy val project: Gen[Project] =
@@ -1165,6 +1177,9 @@ object RandomData {
       reqImps         ← reqFieldDataImplications(reqIdSet)
       p               ← genProject(cfg, reqsWithoutText, reqCodes, reqTags, reqImps)
     } yield p
+
+  def projectName: Gen[Project.Name] =
+    shortText1
 
   // ===================================================================================================================
   // Protocol
@@ -1730,6 +1745,9 @@ object RandomData {
     val genUseCaseStepUpdate: Gen[UseCaseStepUpdate] =
       Gen.apply2(UseCaseStepUpdate)(useCaseStepId, useCaseStepGD.nonEmptyValues)
 
+    val genProjectNameSet: Gen[ProjectNameSet] =
+      projectName map ProjectNameSet
+
     val activeEventGens: NonEmptyVector[Gen[ActiveEvent]] =
       valuesForAdt[ActiveEvent, Gen[ActiveEvent]] {
         case _: ApplicableTagCreate    => genApplicableTagCreate
@@ -1757,6 +1775,7 @@ object RandomData {
         case _: GenericReqCreate       => genGenericReqCreate
         case _: GenericReqTitleSet     => genGenericReqTitleSet
         case _: GenericReqTypeSet      => genGenericReqTypeSet
+        case _: ProjectNameSet         => genProjectNameSet
         case _: ProjectTemplateApply   => genProjectTemplateApply
         case _: ReqCodeGroupCreate     => genReqCodeGroupCreate
         case _: ReqCodeGroupsDelete    => genReqCodeGroupsDelete

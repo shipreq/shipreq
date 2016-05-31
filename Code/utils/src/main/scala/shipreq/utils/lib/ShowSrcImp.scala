@@ -573,6 +573,6 @@ object ShowSrcDataImp {
 //    source((s, a) => s.cc4("ProjectConfig", ProjectConfig unapply a))
 
   implicit val project: ShowSrc[Project] =
-    data((s, a) => s.cc8("Project", Project unapply a, "\n  "))
+    data((s, a) => s.cc9("Project", Project unapply a, "\n  "))
 //    source((s, a) => s.cc6("Project", Project unapply a))
 }

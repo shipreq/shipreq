@@ -655,6 +655,9 @@ class ApplicableEventGen(p: Project) {
       } yield UseCaseStepUpdate(step.id, vs)
     )
 
+  def genProjectNameSet: Gen[ProjectNameSet] =
+    RandomData.projectName.map(Some(_).filter(_ !=* p.name)).optionGet map ProjectNameSet
+
   val possibleEventGens: NonEmptyVector[Option[Gen[Event]]] =
     valuesForAdt[Event, Option[Gen[Event]]] {
       case _: ApplicableTagCreate    => genApplicableTagCreate
@@ -682,6 +685,7 @@ class ApplicableEventGen(p: Project) {
       case _: GenericReqCreate       => genGenericReqCreate
       case _: GenericReqTitleSet     => genGenericReqTitleSet
       case _: GenericReqTypeSet      => genGenericReqTypeSet
+      case _: ProjectNameSet         => genProjectNameSet
       case _: ProjectTemplateApply   => genProjectTemplateApply
       case _: ReqCodeGroupCreate     => genReqCodeGroupCreate
       case _: ReqCodeGroupsDelete    => genReqCodeGroupsDelete
