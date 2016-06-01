@@ -20,7 +20,7 @@ object CustomIssueTypesTest extends TestSuite {
     val filterDead = ReactTestVar[FilterDead](HideDead)
     val remote     = RemoteFn.Instance("x", CustomIssueTypeCrud)
     val clientData = TestClientData(SampleProject.project)
-    val cp         = new TestClientProtocol
+    val cp         = new TestClientProtocol(true)
     val props      = new CustomIssueTypes.Props(cp, remote, clientData, filterDead.reusableVar(), Usage.Show((_, _) => <.a))
     val re         = props.component
     val c          = ReactTestUtils.renderIntoDocument(re)

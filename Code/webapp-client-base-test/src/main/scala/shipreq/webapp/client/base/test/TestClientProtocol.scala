@@ -33,14 +33,14 @@ object TestClientProtocol {
   }
 }
 
-class TestClientProtocol extends ClientProtocol {
+class TestClientProtocol(autoRespondArg: Boolean) extends ClientProtocol {
 
   var reqs = Vector.empty[Req]
 
   def reset(): Unit =
     reqs = Vector.empty
 
-  var autoRespond = true
+  var autoRespond = autoRespondArg
 
   def autoResponse(r: Req): Callback =
     Callback.empty

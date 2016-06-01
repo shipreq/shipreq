@@ -12,7 +12,7 @@ import shipreq.webapp.client.base.test._
 import shipreq.webapp.client.project.app.state.ClientData
 import TestClientProtocol.Req
 
-class MockServer(project: CallbackTo[Project], update: VerifiedEvents => Callback) extends TestClientProtocol {
+class MockServer(project: CallbackTo[Project], update: VerifiedEvents => Callback) extends TestClientProtocol(true) {
 
   type Attempt = PartialFunction[(RemoteFn, Any, Project), MakeEvent.Result]
 
