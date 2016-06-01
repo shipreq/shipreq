@@ -95,7 +95,7 @@ object ReqTableTestDsl {
     val editorValue = editor.map(_.value)                            rename "Editor value"
 
     private val _editing = cell.map(_ exists editorCss)      rename "Editing"
-    private val _locked  = cell.map(_ exists "img")          rename "Locked"
+    private val _locked  = cell.map(_ exists ".locked")      rename "Locked"
     private val _failed  = cell.map(_ exists retryButtonCss) rename "Async failure"
 
     val editorValidity = *.focus("Editor validity").value(Invalid <~ cell.run(_).exists(editorInvalidSel))
