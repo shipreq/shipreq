@@ -12,11 +12,12 @@ import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.{FieldCrud, RemoteFn}
 import shipreq.webapp.base.test.{SampleProject => S}
 import shipreq.webapp.base.test.UnsafeTypes._
+import shipreq.webapp.client.base.test.TestClientProtocol
+import shipreq.webapp.client.base.test.TestState.htmlScrub
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.test.TestUtil._
 import shipreq.webapp.client.project.test._
 import MainTable.State
-import TestState.htmlScrub
 
 object CfgFieldsTest extends TestSuite {
   PrepareEnv()

@@ -8,6 +8,7 @@ import shipreq.webapp.base.event.VerifiedEvents
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.server._
 import shipreq.webapp.client.base.data.TCB
+import shipreq.webapp.client.base.test._
 import shipreq.webapp.client.project.app.state.ClientData
 import TestClientProtocol.Req
 

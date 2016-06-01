@@ -5,7 +5,6 @@ import japgolly.scalajs.react.test._
 import org.scalajs.dom.Element
 import org.scalajs.dom.raw.{HTMLElement, HTMLInputElement}
 import scala.annotation.tailrec
-import scalaz.std.AllInstances._
 import utest._
 import shipreq.base.util.MMTree
 import shipreq.base.util.ScalaExt._
@@ -14,6 +13,7 @@ import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.{TagCrud, RemoteFn}, TagCrud._
 import shipreq.webapp.base.test.{SampleProject => S}, S.Values._
 import shipreq.webapp.base.test.UnsafeTypes._
+import shipreq.webapp.client.base.test.TestClientProtocol
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.test._
 import DataImplicits._

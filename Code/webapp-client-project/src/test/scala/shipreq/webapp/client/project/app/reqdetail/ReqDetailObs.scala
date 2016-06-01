@@ -4,10 +4,9 @@ import org.scalajs.dom.html
 import scala.util.Try
 import shipreq.webapp.base.UiText
 import shipreq.base.util.univeq._
-import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data.{Dead, Live, ShowDead, FilterDead}
+import shipreq.webapp.client.base.test.TestState._
 import shipreq.webapp.client.project.widgets.high.DeletionFormObs
-import shipreq.webapp.client.project.test.TestState._
 import ReqDetailTestDsl.Mode
 import ReqDetailObs.NAE
 

@@ -6,12 +6,12 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{ShowDead, HideDead}
 import shipreq.webapp.base.event.FieldCustomDelete
 import shipreq.webapp.base.test._
+import shipreq.webapp.client.base.test.TestState._
 import shipreq.webapp.client.project.app.reqtable.{ReqTableTestDsl => RT}
 import shipreq.webapp.client.project.app.reqdetail.{ReqDetailTestDsl => RD}
 import shipreq.webapp.client.project.test._
 import Main.{Page, Props}
 import SampleProject.Values.priField
-import TestState._
 import UnsafeTypes._
 
 object ProjectSpaTest extends TestSuite {

@@ -41,7 +41,7 @@ object WebappBuild {
     project("webapp-client")
       .configure(webappSettings)
       .aggregate(
-        webappClientBase,
+        webappClientBase, webappClientBaseTest,
         webappClientHome,
         webappClientWwApi, webappClientWw, webappClientProject)
 
@@ -103,10 +103,7 @@ object WebappBuild {
       .dependsOn(baseUtilJs, webappBaseJs, webappBaseTestJs % "test->compile")
       .depsForJs(
         Scalaz.effect ++ React.most ++ Monocle.macros ++ ScalaCSS.react ++
-        μPickle ++ boopickle ++
-        testScope(
-          TestState.nyaya ++ TestState.domZipperSizzle ++ TestState.scalajsReact ++
-          React.test ++ μTest ++ Nyaya.test))
+        μPickle ++ boopickle)
       .configure(
         Common.jsSettings(NeedDom),
         webappSettings,
@@ -114,10 +111,24 @@ object WebappBuild {
         // Common.jsFastDevSettings,
         dontInline) // probably crashes, try with Scala 2.12
 
+  lazy val webappClientBaseTest =
+    project("webapp-client-base-test")
+      .enablePlugins(ScalaJSPlugin)
+      .dependsOn(webappClientBase, webappBaseServerJs, webappBaseTestJs)
+      .depsForJs(
+        TestState.nyaya ++ TestState.domZipperSizzle ++ TestState.scalajsReact ++
+        React.test ++ μTest ++ Nyaya.test)
+      .configure(
+        Common.jsSettings(NeedDom),
+        webappSettings,
+        useMacroParadise,
+        // Common.jsFastDevSettings,
+        dontInline)
+
   lazy val webappClientHome =
     project("webapp-client-home")
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(webappClientBase, webappBaseTestJs % "test->compile")
+      .dependsOn(webappClientBase, webappClientBaseTest % "test->compile")
       .depsForJs(
         Scalaz.effect ++ React.most ++ Monocle.macros ++ ScalaCSS.react ++
         μPickle ++ boopickle ++
@@ -148,7 +159,7 @@ object WebappBuild {
   lazy val webappClientWw =
     project("webapp-client-ww")
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(webappClientWwApi, webappBaseTestJs % "test->compile")
+      .dependsOn(webappClientWwApi, webappClientBaseTest % "test->compile")
       .depsForJs(
         boopickle ++ scalajsDom ++
         testScope(μTest))
@@ -162,7 +173,7 @@ object WebappBuild {
   lazy val webappClientProject =
     project("webapp-client-project")
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(webappClientBase, webappClientWwApi, webappBaseTestJs % "test->compile")
+      .dependsOn(webappClientBase, webappClientWwApi, webappClientBaseTest % "test->compile")
       .depsForJs(
         Scalaz.effect ++ React.most ++ Monocle.macros ++ ScalaCSS.react ++
         μPickle ++ boopickle ++ shapeless ++ Nyaya.prop ++ parboiled ++

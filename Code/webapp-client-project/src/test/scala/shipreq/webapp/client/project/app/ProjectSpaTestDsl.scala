@@ -9,6 +9,7 @@ import shipreq.base.util.Debug._
 import shipreq.webapp.base.data.{ExternalPubid, Project}
 import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.test.{MockRemotes, SampleProject5}
+import shipreq.webapp.client.base.test._
 import shipreq.webapp.client.project.app.reqdetail.{ReqDetailObs, ReqDetailTestDsl => RD}
 import shipreq.webapp.client.project.app.reqtable.{ReqTableObs, ReqTableTestDsl => RT}
 import shipreq.webapp.client.project.test._

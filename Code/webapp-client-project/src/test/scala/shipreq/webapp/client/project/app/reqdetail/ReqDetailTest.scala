@@ -3,10 +3,10 @@ package shipreq.webapp.client.project.app.reqdetail
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.client.base.test.TestState._
 import shipreq.webapp.client.project.app.Main.Page
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.test._
-import TestState._
 import utest._
 
 object ReqDetailTest extends TestSuite {

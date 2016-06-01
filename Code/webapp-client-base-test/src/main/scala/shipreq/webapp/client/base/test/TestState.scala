@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.test
+package shipreq.webapp.client.base.test
 
 import japgolly.scalajs.react.test._
 import japgolly.univeq.UnivEq

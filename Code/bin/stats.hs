@@ -104,32 +104,33 @@ gatherAllStats = do dirs <- dirsIn "."
 -- Top-level module stats
 
 deps = M.fromList [
-         ("webapp-server",         ["webapp-base-test", "base-db", "taskman-api"]) ,
-         ("webapp-client-base",    ["webapp-base-test", "base-util"]) ,
-         ("webapp-client-home",    ["webapp-client-base"]) ,
-         ("webapp-client-ww-api",  ["webapp-base"]) ,
-         ("webapp-client-ww",      ["webapp-base-test", "webapp-client-ww-api"]) ,
-         ("webapp-client-project", ["webapp-client-base", "webapp-client-ww-api"]) ,
-         ("webapp-base-test",      ["webapp-base-server"]) ,
-         ("webapp-base-server",    ["webapp-base"]),
-         ("webapp-base",           ["webapp-macro", "base-util"]) ,
-         ("webapp-macro",          ["base-util"]) ,
-         ("taskman",               ["taskman-api", "taskman-server"]) ,
-         ("taskman-api",           ["taskman-api-impl", "taskman-api-logic"]) ,
-         ("taskman-api-impl",      ["taskman-api-logic"]) ,
-         ("taskman-api-logic",     ["base-util"]) ,
-         ("taskman-server",        ["taskman-server-logic", "taskman-server-schema", "taskman-server-impl"]) ,
-         ("taskman-server-impl",   ["taskman-server-logic", "taskman-server-schema", "taskman-api"]) ,
-         ("taskman-server-schema", ["base-db"]) ,
-         ("taskman-server-logic",  ["taskman-api-logic"]) ,
-         ("base-db",               ["base-util"]) ,
-         ("base-util",             ["base-macro"]) ]
+         ("webapp-server",           ["webapp-base-test", "base-db", "taskman-api"]) ,
+         ("webapp-client-base",      ["webapp-base-test", "base-util"]) ,
+         ("webapp-client-base-test", ["webapp-base-test", "webapp-client-base"]) ,
+         ("webapp-client-home",      ["webapp-client-base-test"]) ,
+         ("webapp-client-ww-api",    ["webapp-base"]) ,
+         ("webapp-client-ww",        ["webapp-client-base-test", "webapp-client-ww-api"]) ,
+         ("webapp-client-project",   ["webapp-client-base-test", "webapp-client-ww-api"]) ,
+         ("webapp-base-test",        ["webapp-base-server"]) ,
+         ("webapp-base-server",      ["webapp-base"]),
+         ("webapp-base",             ["webapp-macro", "base-util"]) ,
+         ("webapp-macro",            ["base-util"]) ,
+         ("taskman",                 ["taskman-api", "taskman-server"]) ,
+         ("taskman-api",             ["taskman-api-impl", "taskman-api-logic"]) ,
+         ("taskman-api-impl",        ["taskman-api-logic"]) ,
+         ("taskman-api-logic",       ["base-util"]) ,
+         ("taskman-server",          ["taskman-server-logic", "taskman-server-schema", "taskman-server-impl"]) ,
+         ("taskman-server-impl",     ["taskman-server-logic", "taskman-server-schema", "taskman-api"]) ,
+         ("taskman-server-schema",   ["base-db"]) ,
+         ("taskman-server-logic",    ["taskman-api-logic"]) ,
+         ("base-db",                 ["base-util"]) ,
+         ("base-util",               ["base-macro"]) ]
 
 topLevelModules = [
   "taskman",
   "webapp-client-home",
-  "webapp-client-project",
   "webapp-client-ww",
+  "webapp-client-project",
   "webapp-server"]
 
 tdeps :: String -> [String]
@@ -159,9 +160,9 @@ topLevelModuleStats gs = map (ap (,) (fst . extractModuleStatsT gs)) topLevelMod
 ------------------------------------------------------------------------------------------------------------------------
 -- Printing stats
 
-header = "                      |       Files     |            LoC\n"
-       ++"                      |    M    T    ∑  |      M      T      ∑  (T:M)\n"
-sepLine= "----------------------+-----------------+----------------------------\n"
+header = "                            |       Files     |            LoC\n"
+       ++"                            |    M    T    ∑  |      M      T      ∑  (T:M)\n"
+sepLine= "----------------------------+-----------------+----------------------------\n"
 
 float i = fromIntegral i :: Float
 
@@ -171,7 +172,7 @@ testRatioS (Stat _ 0, _) = " - "
 testRatioS s = printf "%.1f" $ testRatio s
 
 fmtGroup (GroupD _ ms) = map fmtMS ms
-fmtMS (m,s) = printf "%-21s | %s  | %s  (%s)\n" m (fmtPF s) (fmtPL s) (testRatioS s)
+fmtMS (m,s) = printf "%-27s | %s  | %s  (%s)\n" m (fmtPF s) (fmtPL s) (testRatioS s)
 
 fmtP :: String -> (Stat -> Int) -> Stats -> String
 fmtP prec f (a,b) =
@@ -198,7 +199,7 @@ fmtBreakdowns = intercalate sepLine
 
 -- Logic vs Impl
 
-headerIL = "Logic & Impl          |    L    I    ∑  |      L      I      ∑  (I:L)\n"
+headerIL = "Logic & Impl            |    L    I    ∑  |      L      I      ∑  (I:L)\n"
 
 modulesWithSuffix suf = filter (isSuffixOf suf . fst) . concatMap modstats
 
@@ -223,22 +224,34 @@ topLevelModuleStatReport gs =
 
 ------------------------------------------------------------------------------------------------------------------------
 
-customiseDetailedView  :: [GroupD] -> [GroupD]
-customiseDetailedView' :: GroupD -> GroupD
+customiseDetailedView :: [GroupD] -> [GroupD]
+customiseDetailedView gs =
+  let w1                           = customiseDetailedView' "webapp" "webapp-base"
+      w2                           = customiseDetailedView' "webapp" "webapp-client-base"
+      f g@ GroupD {gname="webapp"} = (w1 . w2) g
+      f g@ GroupD {}               = g
+  in map f gs
 
-customiseDetailedView gs = let f g@ GroupD {gname="webapp"} = customiseDetailedView' g
-                               f g@ GroupD {}               = g
-                            in map f gs
+customiseDetailedView' :: String -> String -> GroupD -> GroupD
+customiseDetailedView' gName' nBase g =
+  let named n x   = n == fst x
+      get name    = head $ filter (named name) (modstats g)
+      nBaseTest   = nBase ++ "-test"
+      sBaseTest   = mergeStatsR $ snd $ get nBaseTest
+      sBase       = snd $ get nBase
+      merged      = (nBase ++ "{,-test}", mappend sBase sBaseTest)
+      removeOld   = filter (\x -> not $ any (`named` x) [nBaseTest, nBase]) (modstats g)
+  in GroupD {gname = gName', modstats = merged : removeOld}
 
-customiseDetailedView' g = let named n x   = n == fst x
-                               get name    = head $ filter (named name) (modstats g)
-                               nBaseTest   = "webapp-base-test"
-                               nBase       = "webapp-base"
-                               sBaseTest   = mergeStatsR $ snd $ get nBaseTest
-                               sBase       = snd $ get nBase
-                               merged      = ("webapp-base{,-test}", mappend sBase sBaseTest)
-                               removeOld   = filter (\x -> not $ any (`named` x) [nBaseTest, nBase]) (modstats g)
-                            in GroupD {gname = "webapp", modstats = merged : removeOld}
+-- customiseDetailedView' g = let named n x   = n == fst x
+--                                get name    = head $ filter (named name) (modstats g)
+--                                nBaseTest   = "webapp-base-test"
+--                                nBase       = "webapp-base"
+--                                sBaseTest   = mergeStatsR $ snd $ get nBaseTest
+--                                sBase       = snd $ get nBase
+--                                merged      = ("webapp-base{,-test}", mappend sBase sBaseTest)
+--                                removeOld   = filter (\x -> not $ any (`named` x) [nBaseTest, nBase]) (modstats g)
+--                             in GroupD {gname = "webapp", modstats = merged : removeOld}
 
 ------------------------------------------------------------------------------------------------------------------------
 

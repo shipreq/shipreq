@@ -1,13 +1,13 @@
-package shipreq.webapp.client.project.test
+package shipreq.webapp.client.base.test
 
 import japgolly.scalajs.react.Callback
 import scalaz.{-\/, Equal}
-import scalaz.std.AllInstances._
+import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.protocol.RemoteFn
 import shipreq.webapp.client.base.data.TCB
 import shipreq.webapp.client.base.protocol.ClientProtocol
 import shipreq.webapp.client.base.protocol.ClientProtocol.Failed
-import shipreq.webapp.client.project.test.TestUtil._
+import TestClientProtocol.Req
 
 object TestClientProtocol {
   trait Req {
@@ -33,8 +33,6 @@ object TestClientProtocol {
         sys error "Request has already been responded to."
   }
 }
-
-import TestClientProtocol.Req
 
 class TestClientProtocol extends ClientProtocol {
 

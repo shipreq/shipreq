@@ -1,15 +1,17 @@
 digraph G {
-rankdir=BT edge[dir=back] node[style=filled]
+rankdir=BT node[style=filled]
 
 edge[color="#cc0000"]
 
 subgraph cluster_base {
   style=filled fillcolor="#f4fff4" node[fillcolor="#bbffbb"]
   base [label="[aggregate]\nbase" fillcolor="#cccccc"]
-  baseRaw [label="base-util-sjs\n(Scala & JS)"]
-  baseUtil [label="base-util"]
-  baseDb [label="base-db"]
-  baseTest [label="base-test"]
+  baseMacro [label="base-macro\n(Scala & JS)"]
+  baseUtil [label="base-util\n(Scala & JS)"]
+  baseDb [label="base-db\n(JVM)"]
+
+  node[fillcolor=white color=darkgreen]
+  baseTest [label="base-test\n(Scala & JS)"]
 }
 
 subgraph cluster_t {
@@ -33,13 +35,19 @@ subgraph cluster_t {
   subgraph cluster_w {
     fillcolor=white node[fillcolor="#99ccee"]
     webapp [label="[aggregate]\nwebapp" fillcolor="#ffff80"]
-    webappBack [label="webapp-server"]
+    webappMacro [label="webapp-macro\n(Scala & JS)"]
+    webappBase [label="webapp-base\n(Scala & JS)"]
+    webappBaseServer [label="webapp-base-server\n(Scala & JS)"]
+    webappClientBase [label="webapp-client-base\n(JS)"]
+    webappClientHome [label="webapp-client-home\n(JS)"]
     webappClientWwApi [label="webapp-client-ww-api\n(JS)"]
     webappClientWw [label="webapp-client-ww\n(JS)"]
     webappClientProject [label="webapp-client-project\n(JS)"]
-    webappClientHome [label="webapp-client-home\n(JS)"]
-    webappClientBase [label="webapp-client-base\n(JS)"]
-    webappShared [label="webapp-base\n(Scala & JS)"]
+    webappServer [label="webapp-server"]
+
+    node[fillcolor=white color=blue]
+    webappBaseTest [label="webapp-base-test\n(Scala & JS)"]
+    webappClientBaseTest [label="webapp-client-base-test\n(JS)"]
   }
 
   taskman [label="[aggregate]\ntaskman" fillcolor="#ffff80"]
@@ -59,13 +67,14 @@ subgraph cluster_supp {
 root [label="[aggregate]\nroot" fillcolor="#cccccc"]
 
 // Deps
-baseUtil -> baseRaw
+baseUtil -> baseMacro
 baseDb -> baseUtil
-baseTest -> baseUtil
-baseTest -> baseDb [style=dashed label="provided"]
+baseTest -> baseUtil [color="#111111"]
+baseTest -> baseDb [color="#111111" style=dashed label="provided"]
+
 taskmanDb -> baseDb
 taskmanApiLogic -> baseUtil
-taskmanApiImpl -> taskmanApiLogic,baseDb [minlen=2]
+taskmanApiImpl -> taskmanApiLogic,baseDb //[minlen=2]
 taskmanApiImpl -> taskmanApiLogic [color="#111111" style=dashed label="test-lib"]
 taskmanApiImpl -> taskmanDb       [color="#111111" style=dashed label="test"]
 taskmanApiImpl -> baseTest        [color="#111111" style=dashed label="test"]
@@ -73,30 +82,38 @@ taskmanApi -> taskmanApiImpl
 taskmanServerLogic -> taskmanApiLogic
 taskmanServerImpl -> taskmanServerLogic,taskmanApi,taskmanDb
 taskmanServer -> taskmanServerImpl
-webappBack:e -> baseDb
-webappBack -> taskmanApi
-webappClientBase -> webappShared
+
+webappMacro -> baseUtil
+webappBase -> webappMacro
+webappBaseServer -> webappBase
+webappBaseTest -> baseTest,webappBaseServer [color="#111111"]
+webappClientBase -> webappBase
+webappClientBase -> webappBaseTest [color="#111111" style=dashed label="test"]
+webappClientBaseTest -> webappClientBase,webappBaseTest [color="#111111"]
 webappClientHome -> webappClientBase
-webappClientProject -> webappClientWwApi,webappClientBase
+webappClientHome -> webappClientBaseTest [color="#111111" style=dashed label="test"]
+webappClientWwApi -> webappBase
 webappClientWw -> webappClientWwApi
-webappClientWwApi -> webappShared
-webappBack -> webappShared
-webappBack -> webappClientHome,webappClientProject,webappClientWw [style=dashed]
-webappShared -> baseRaw
+webappClientWw -> webappClientBaseTest [color="#111111" style=dashed label="test"]
+webappClientProject -> webappClientBase,webappClientWwApi
+webappClientProject -> webappClientBaseTest [color="#111111" style=dashed label="test"]
+webappServer -> taskmanApi,webappBase,webappBaseServer
+webappServer:e -> baseDb
+webappServer -> webappClientHome,webappClientProject,webappClientWw [style=dashed]
 
 benchmarkJvm,benchmarkJs -> benchmarkShared
-benchmarkJvm -> webappBack
+benchmarkJvm -> webappServer
 benchmarkJs -> webappClientProject
 
-utils -> webappShared
+utils -> webappBase
 
 // Aggregation
 edge[dir=forward style=dashed arrowhead=vee color="#aaaaaa"]
 taskmanApi -> taskmanApiLogic,taskmanApiImpl
 taskmanServer -> taskmanServerLogic,taskmanServerImpl,taskmanDb
 taskman -> taskmanApi,taskmanServer
-webapp -> webappClientProject,webappClientHome,webappBack,webappClientWw
-base -> baseUtil,baseDb,baseTest
+webapp -> webappClientProject,webappClientHome,webappServer,webappClientWw
+base -> baseUtil,baseDb,baseTest,baseMacro
 benchmark -> benchmarkJvm,benchmarkJs
 root -> base,webapp,taskman,benchmark,utils
 }

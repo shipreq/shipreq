@@ -9,7 +9,7 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
-import shipreq.webapp.client.project.test.TestState._
+import shipreq.webapp.client.base.test.TestState._
 
 object ReqDetailTestDsl {
 
