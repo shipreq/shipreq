@@ -30,12 +30,15 @@ object Project {
   import ReqData._ // for equality
   implicit lazy val equality: Equal[Project] = UtilMacros.deriveEqual
 
-  val defaultName: Name =
-    "Untitled"
+  // Not allowed by validator.
+  // This ensures that initial ProjectNameSet events (generated on project creation) apply instead of being discarded
+  // as NO-OPs due to the hashcodes being unchanged before and after.
+  final val emptyProjectName: Name =
+    ""
 
   val empty: Project =
     Project(
-      defaultName,
+      emptyProjectName,
       ProjectConfig.empty,
       Requirements.empty,
       ReqCodes.empty,

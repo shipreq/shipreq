@@ -42,4 +42,10 @@ trait WebappTestUtil extends BaseTestUtil {
 
   def applyEventsSuccessfully(p: Project, es: Event*): Project =
     es.foldLeft(p)(applyEventSuccessfully)
+
+  def applyVerifiedEventSuccessfully(p: Project, e: VerifiedEvent): Project =
+    ApplyEvent.untrusted.applyVerified(e :: Nil)(p).fold(sys.error, identity)
+
+  def applyVerifiedEventSuccessfully(p: Project, es: VerifiedEvent*): Project =
+    es.foldLeft(p)(applyVerifiedEventSuccessfully)
 }

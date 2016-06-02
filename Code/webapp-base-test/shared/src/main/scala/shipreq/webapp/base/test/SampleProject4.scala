@@ -80,6 +80,7 @@ object SampleProject4 {
     sf = sf.addPairs(13 -> 11, 15 -> 12)
 
     val p2 = p.copy(
+      name       = "Sample Project 4(+)",
       reqs       = Requirements(p.reqs.genericReqs, UseCases.Stateless(ucs, StepFlow BiDir sf).withState, pr),
       reqText    = rt,
       idCeilings = ic)

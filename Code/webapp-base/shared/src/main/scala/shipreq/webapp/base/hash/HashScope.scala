@@ -23,6 +23,7 @@ object HashScope {
   case object     TagData         extends HashScope
   case object     ImplicationData extends HashScope
   case object     DeletionReasons extends HashScope
+  case object   Other             extends HashScope
 
   implicit def equality: UnivEq[HashScope] = UnivEq.derive
 
@@ -41,7 +42,8 @@ object HashScope {
     TextFieldData  ,
     TagData        ,
     ImplicationData,
-    DeletionReasons)
+    DeletionReasons,
+    Other          )
 
   def hash(scope: HashScope, h: DataHasher, p: Project): Int =
     scope match {
@@ -61,5 +63,6 @@ object HashScope {
       case TagData         => h.hashReqDataTags      hash p.reqTags
       case ImplicationData => h.hashImplications     hash p.implications
       case DeletionReasons => h.hashDeletionReasons  hash p.deletionReasons
+      case Other           => h.hashProjectOther     hash p
     }
 }

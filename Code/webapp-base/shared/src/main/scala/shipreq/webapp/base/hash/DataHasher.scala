@@ -221,8 +221,28 @@ sealed abstract class DataHasher extends GenericDashHasher {
 
   implicit val hashIdCeilings    : Hash[IdCeilings   ] = hashCaseClass
   implicit val hashProjectConfig : Hash[ProjectConfig] = hashCaseClass
-           val hashProjectContent: Hash[Project      ] = hashCaseClassExcept('name, 'config)
-  implicit val hashProject       : Hash[Project      ] = hashCaseClass
+
+  val hashProjectContent: Hash[Project] =
+    hashCaseClassExcept('name, 'config)
+
+  val hashProjectOther: Hash[Project] =
+    hashCaseClassExcept(
+      // name is included
+      'config         ,
+      'reqs           ,
+      'reqCodes       ,
+      'reqText        ,
+      'reqTags        ,
+      'implications   ,
+      'deletionReasons,
+      'idCeilings     )
+
+  implicit val hashProject: Hash[Project] =
+    Hash.fn[Project](p => joinHashes(
+      hashProjectContent.hash(p)        ::
+      hashProjectConfig .hash(p.config) ::
+      hashProjectOther  .hash(p)        ::
+      Nil))
 }
 
 final class DataHasherCurrent(protected val algorithm: Hash.Algorithm) extends DataHasher

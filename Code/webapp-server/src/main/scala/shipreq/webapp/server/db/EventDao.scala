@@ -735,6 +735,7 @@ object EventSqlHelpers {
       case HashScope.TagData         => 't'
       case HashScope.ImplicationData => 'i'
       case HashScope.DeletionReasons => 'd'
+      case HashScope.Other           => '0'
     }
   implicit val GR_HashScope = GetResult(r => charToHashScope(r.nextPgChar()))
   implicit object SP_HashScope extends SetParameter[HashScope] {

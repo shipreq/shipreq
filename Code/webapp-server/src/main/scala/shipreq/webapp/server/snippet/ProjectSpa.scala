@@ -35,7 +35,7 @@ object ProjectSpa {
 
   def loadProjectEvents(dao: DaoT, projectId: ProjectId): LoadErrors \/ State = {
     val es = dao.findAllEvents(projectId)
-    ApplyEvent.trusted.applyVerified(es.toStream.map(_._2))(Project.empty) match {
+    ApplyEvent.trusted.applyVerified(es.map(_._2))(Project.empty) match {
 
       case \/-(p) =>
         val seq = es.lastOption.fold(EventSeq(0))(_._1) // If empty, next will be 1. Nice to reserve 0 for ApplyTemplate.

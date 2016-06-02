@@ -23,9 +23,7 @@ object SqlHelpers {
 
   implicit val GR_ProjectCatalogueItem =
     GetResult(r => ProjectCatalogue.Item(
-      ProjectId.Extern(r.<<),
-      r.nextStringOption() getOrElse Project.defaultName,
-      r.<<, r.<<, r.<<, r.<<))
+      ProjectId.Extern(r.<<), r.<<, r.<<, r.<<, r.<<, r.<<))
 
   implicit object SP_PasswordAndSalt extends SetParameter[PasswordAndSalt] {
     def apply(v: PasswordAndSalt, pp: PositionedParameters) {

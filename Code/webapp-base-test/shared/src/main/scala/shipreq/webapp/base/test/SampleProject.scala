@@ -93,7 +93,7 @@ object SampleProject {
 
   lazy val project = IdCeilings.supply(
     Project(
-      Project.defaultName,
+      "Sample Project",
       projectConfig,
       reqs,
       reqCodes,

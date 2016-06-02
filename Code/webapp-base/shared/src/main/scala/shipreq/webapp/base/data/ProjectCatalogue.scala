@@ -19,6 +19,7 @@ object ProjectCatalogue {
       lastUpdatedAt.getOrElse(createdAt)
   }
 
-  implicit def univEqItem: UnivEq[Item] =
-    UnivEq.derive
+  implicit def univEqItem: UnivEq[Item] = UnivEq.derive
+
+  implicit def univEqPC: UnivEq[ProjectCatalogue] = UnivEq.derive
 }

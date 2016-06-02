@@ -124,7 +124,7 @@ object HashRec {
     }
 
     val latest = mkReflSubsets {
-      case WholeProject    => Set(Config, Content)
+      case WholeProject    => Set(Config, Content, Other)
       case Config          => Set(CfgIssueTypes, CfgReqTypes, CfgFields, CfgTags)
       case Content         => Set(Reqs, ReqCodes, TextFieldData, TagData, ImplicationData, DeletionReasons)
       case Reqs            => Set(GenericReqs, UseCases, PubidRegister)
@@ -139,7 +139,8 @@ object HashRec {
          | TextFieldData
          | TagData
          | ImplicationData
-         | DeletionReasons => Set.empty
+         | DeletionReasons
+         | Other           => Set.empty
     }
 
     // The original idea was that logicVer and hashScheme would be used to affect the results here.

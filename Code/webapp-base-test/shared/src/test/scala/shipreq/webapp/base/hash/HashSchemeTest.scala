@@ -18,7 +18,7 @@ object HashSchemeTest extends TestSuite {
 
   lazy val Vector(hL) = HashScheme.all.whole
 
-  val P0 = Project.empty
+  val PE = Project.empty.copy(name = "Empty")
   lazy val P3 = SampleProject3.project
   lazy val P4 = SampleProject4.project
 
@@ -38,7 +38,7 @@ object HashSchemeTest extends TestSuite {
 
   def assertHashes(h: HashScheme, p: Project, ts: (HashScope, Int)*): Unit = {
     def nameH = if (h eq hL) "latest" else h.toString
-    def nameP = if (p eq P0) "P0" else if (p eq P3) "P3" else if (p eq P4) "P4" else p.toString
+    def nameP = if (p eq PE) "PE" else if (p eq P3) "P3" else if (p eq P4) "P4" else p.toString
     def name = s"$nameH : $nameP"
     var a = makeSet(hashes(h, p))
     var e = makeSet(ts.toMap)
@@ -55,7 +55,7 @@ object HashSchemeTest extends TestSuite {
 
   override def tests = TestSuite {
     'latest - {
-      'P0 - assertHashes(hL, P0,
+      'PE - assertHashes(hL, PE,
         0x19f80db3 ~ CfgFields,
         0x8929e247 ~ CfgIssueTypes,
         0x53a65700 ~ CfgReqTypes,
@@ -71,7 +71,8 @@ object HashSchemeTest extends TestSuite {
         0x46a5c86e ~ TagData,
         0xc32727ce ~ TextFieldData,
         0x43b92d0f ~ UseCases,
-        0x6599c3ea ~ WholeProject)
+        0x969d43a3 ~ Other,
+        0x5e028afd ~ WholeProject)
 
       'P3 - assertHashes(hL, P3,
         0x3e1ac0cb ~ CfgFields,
@@ -89,7 +90,8 @@ object HashSchemeTest extends TestSuite {
         0x174ee061 ~ TagData,
         0xc32727ce ~ TextFieldData, // Note: same as empty, P3 doesn't use
         0x43b92d0f ~ UseCases,      // Note: same as empty, P3 doesn't use
-        0xc0be342f ~ WholeProject)
+        0x3ae9403b ~ Other,
+        0xb0dc05f9 ~ WholeProject)
 
       'P4 - assertHashes(hL, P4,
         0x3e1ac0cb ~ CfgFields,
@@ -107,7 +109,8 @@ object HashSchemeTest extends TestSuite {
         0x174ee061 ~ TagData,
         0xcef27507 ~ TextFieldData,
         0x73fb17ff ~ UseCases,
-        0xba91fc3c ~ WholeProject)
+        0x537726aa ~ Other,
+        0x4fabc820 ~ WholeProject)
     }
   }
 }

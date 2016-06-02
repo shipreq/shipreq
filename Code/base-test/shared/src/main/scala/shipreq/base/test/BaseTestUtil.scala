@@ -16,6 +16,18 @@ object BaseTestUtil extends BaseTestEquality with BaseTestUtil {
     def assertEqN(name: => String, expect: A)(implicit e: Equal[A]): Unit =
       BaseTestUtil.assertEq(name, a, expect)
   }
+
+  class FieldAssert[A](actual: A, expect: A) {
+    def assertEq[B: Equal](f: A => B) = {
+      BaseTestUtil.assertEq(f(actual), f(expect))
+      this
+    }
+    def assertEq[B: Equal](name: => String, f: A => B) = {
+      BaseTestUtil.assertEq(name, f(actual), f(expect))
+      this
+    }
+
+  }
 }
 
 trait BaseTestUtil extends scalaz.syntax.ToEqualOps {
@@ -30,6 +42,9 @@ trait BaseTestUtil extends scalaz.syntax.ToEqualOps {
       override def equal(a: A, b: A) = a == b
     }
   }
+
+  def assertFields[A](actual: A, expect: A) =
+    new BaseTestUtil.FieldAssert(actual, expect)
 
   def assertEq[A: Equal](actual: A, expect: A): Unit =
     assertEqO(None, actual, expect)
