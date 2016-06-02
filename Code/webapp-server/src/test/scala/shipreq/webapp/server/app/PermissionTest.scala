@@ -3,15 +3,19 @@ package shipreq.webapp.server.app
 import org.apache.commons.httpclient.{HttpMethodBase, HttpClient}
 import org.scalatest.FunSpec
 import shipreq.webapp.server.test.LiveTest
-import shipreq.webapp.server.test.fixture.UserFixture
+import shipreq.webapp.server.test.UserFixture
 import AppSiteMap._
 import Implicits._
+import UserFixture.TestUser
 
-class PermissionTest extends FunSpec with LiveTest with UserFixture {
+class PermissionTest extends FunSpec with LiveTest {
+
+  lazy val uf = UserFixture(newSession())
+  import uf.{user1, user2}
 
   override def beforeAll() {
     super.beforeAll()
-    initUserFixtureWithoutTransaction()
+    uf.setup()
   }
 
   implicit override def responseCapture(fullUrl: String, httpClient: HttpClient, getter: HttpMethodBase) = {
@@ -27,7 +31,7 @@ class PermissionTest extends FunSpec with LiveTest with UserFixture {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  lazy val pid = newProjectId(user1.id)
+  lazy val pid = uf.toDbUtil.newProjectId(user1.id)
 
   describe("/") {
     val member = "client-home.js"
@@ -35,12 +39,12 @@ class PermissionTest extends FunSpec with LiveTest with UserFixture {
 
     it("anon") {
       val r = get("/") ! 200
-      r.responseText should (include(anon) and not include(member))
+      r.responseText should (include(anon) and not include member)
     }
 
     it("auth") {
       val r = doLogin(user1).get("/") ! 200
-      r.responseText should (include(member) and not include(anon))
+      r.responseText should (include(member) and not include anon)
     }
   }
 

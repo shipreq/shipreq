@@ -2,55 +2,48 @@ package shipreq.webapp.server
 package security
 
 import org.apache.shiro.authc._
-import org.scalatest.{BeforeAndAfterAll, FunSpec}
-import test.TestDatabaseSupport
-import test.fixture.UserFixture
+import utest._
+import shipreq.webapp.server.test.UserFixture
+import shipreq.webapp.server.test.WebappServerTestUtil._
 
-class OshiroTest extends FunSpec with TestDatabaseSupport with BeforeAndAfterAll with UserFixture {
+object OshiroTest extends TestSuite {
 
-  override val wrapTestsInTransaction = false
+  def inEnv[A](f: UserFixture => A): A =
+    withOshiro(UserFixture.Session(f))
 
-  override def beforeAll {
-    super.beforeAll
-    initUserFixtureWithoutTransaction
-  }
+  override def tests = TestSuite {
 
-  override def afterAll {
-    deleteUserFixtureWithoutTransaction
-    super.afterAll
-  }
+    'Authentication {
+      'allowUsername - inEnv { uf =>
+        login(uf.user1.username.value, uf.user1.password)
+      }
 
-  describe("Authentication") {
-    it("should allow users by username") {
-      login(user1.username.value, user1.password)
+      'allowEmail - inEnv { uf =>
+        login(uf.user1.email.value, uf.user1.password)
+      }
+
+      'notFound - inEnv { uf =>
+        intercept[UnknownAccountException](login("blah", uf.user1.password))
+      }
+
+      'badPassword - inEnv { uf =>
+        intercept[IncorrectCredentialsException](login(uf.user1.username.value, uf.user2.password))
+      }
+
+      'unregistered - inEnv { uf =>
+        intercept[UnknownAccountException](login(uf.userWithCurrentToken.email.value, ""))
+      }
     }
 
-    it("should allow users by email address") {
-      login(user1.email.value, user1.password)
+    'loggedInUser {
+      'anon - inEnv(_ =>
+        assertNotLoggedIn())
+
+      'loggedIn - inEnv { uf =>
+        login(uf.user1.username.value, uf.user1.password)
+        assertUserLoggedIn(uf.user1.toUserDescriptor)
+      }
     }
 
-    it("should deny when username/email doesnt exist") {
-      intercept[UnknownAccountException](login("blah", user1.password))
-    }
-
-    it("should deny when password is incorrect") {
-      intercept[IncorrectCredentialsException](login(user1.username.value, user2.password))
-    }
-
-    it("should deny when user hasnt completed registration") {
-      intercept[UnknownAccountException](login(userWithCurrentToken.email.value, ""))
-    }
-  }
-
-  describe("loggedInUser") {
-    it("should return None when no user logged in") {
-      logout
-      Oshiro.loggedInUser should be(None)
-    }
-
-    it("should return user details when logged in") {
-      login(user1.username.value, user1.password)
-      Oshiro.loggedInUser should be(Some(user1.toUserDescriptor))
-    }
   }
 }

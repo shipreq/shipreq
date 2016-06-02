@@ -1,15 +1,19 @@
 package shipreq.webapp.server.lib
 
-import org.scalatest.{Matchers, FunSuite}
+import utest._
+import shipreq.base.test.BaseTestUtil._
 
-class ShareUrlTokenGenTest extends FunSuite with Matchers {
+object ShareUrlTokenGenTest extends TestSuite {
+
   def next = ShareUrlTokenGen.fn()
 
-  test("Size") {
-    next.value.size shouldBe ShareUrlTokenGen.len
-  }
-  test("Random") {
-    val ts = (1 to 100).toList.map(_ => next).distinct
-    ts.size should be > 95
+  override def tests = TestSuite {
+
+    'size - assertEq(next.value.length, ShareUrlTokenGen.len)
+
+    'random {
+      val ts = (1 to 100).toList.map(_ => next).distinct
+      assert(ts.size > 95)
+    }
   }
 }

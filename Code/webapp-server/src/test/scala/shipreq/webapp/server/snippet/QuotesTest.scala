@@ -1,9 +1,9 @@
 package shipreq.webapp.server.snippet
 
-import shipreq.webapp.server.test.TestHelpers
 import org.scalatest.FunSuite
+import org.scalatest.Matchers._
 
-class QuotesTest extends FunSuite with TestHelpers {
+class QuotesTest extends FunSuite {
 
   test("All quotes should be single elem blockquotes") {
     for (q <- Quotes.quotes) {

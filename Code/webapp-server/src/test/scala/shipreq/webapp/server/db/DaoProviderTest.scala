@@ -1,21 +1,17 @@
 package shipreq.webapp.server.db
 
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
-import org.scalatest.Matchers
-import shipreq.webapp.server.test.TestDB
+import utest._
+import shipreq.base.test.BaseTestUtil._
+import shipreq.webapp.server.test.TestDb
 
-class DaoProviderTest extends FunSuite with Matchers with BeforeAndAfterAll {
+object DaoProviderTest extends TestSuite {
+
+  TestDb.init()
 
   def dp = DB.DaoProvider
 
-  override def beforeAll() {
-    TestDB.init()
-  }
-
-  test("New session should not be in a transaction") {
-    dp.withSession(_.session.conn.getAutoCommit shouldBe true)
-  }
-  test("New transaction should be in a transaction") {
-    dp.withTransaction(_.session.conn.getAutoCommit shouldBe false)
+  override def tests = TestSuite {
+    'withSession - assertEq(dp.withSession(_.session.conn.getAutoCommit), true)
+    'withTransaction - assertEq(dp.withTransaction(_.session.conn.getAutoCommit), false)
   }
 }

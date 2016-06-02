@@ -32,6 +32,14 @@ class Jetty(val port: Int) extends Logger {
     server = None
   }
 
+  private def createTempDir(prefix: String, suffix: String = ""): File = {
+    val tmpDir = File.createTempFile(prefix, suffix)
+    tmpDir.delete
+    tmpDir.mkdir
+    FileUtils.forceDeleteOnExit(tmpDir)
+    tmpDir
+  }
+
   private def newServer: Server = {
     info("Starting Jetty")
 
@@ -44,7 +52,7 @@ class Jetty(val port: Int) extends Logger {
 
     // Manually create an exploded WAR
     // Could use sbt or a real WAR but then we can't easily/quickly run single tests from IDE
-    val tmpWarDir = TestHelpers.createTempDir("usecase-test-war")
+    val tmpWarDir = createTempDir("shipreq-server-test-war")
     FileUtils.copyDirectory(file("src/main/webapp"), tmpWarDir)
     FileUtils.copyDirectory(file(s"/tmp/shipreq.sbt/webapp-server/target/scala-$scalaVersion/resource_managed/main"), tmpWarDir)
 

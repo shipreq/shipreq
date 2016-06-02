@@ -44,9 +44,11 @@ case class NonEmptyTemplate(content: NodeSeq) {
 
 object NonEmptyTemplate {
 
-  def load(path: List[String]): NonEmptyTemplate = NonEmptyTemplate(Templates(path).openOr(NodeSeq.Empty)).clearClearable
+  def load(path: List[String]): NonEmptyTemplate =
+    NonEmptyTemplate(Templates(path).openOr(NodeSeq.Empty)).clearClearable
 
-  def load(path: String): NonEmptyTemplate = load(path.split('/').toList)
+  def load(path: String): NonEmptyTemplate =
+    load(path.split('/').toList)
 
   val RemoveId = "* [id]" #> (None : Option[String])
 }

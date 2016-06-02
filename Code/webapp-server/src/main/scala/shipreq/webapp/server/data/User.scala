@@ -1,5 +1,6 @@
 package shipreq.webapp.server.data
 
+import japgolly.univeq.UnivEq
 import org.joda.time.DateTime
 import shipreq.taskman.api.{EmailAddr, UserId}
 import shipreq.webapp.base.data.Username
@@ -14,6 +15,9 @@ case class UserDescriptor(id      : UserId,
 }
 
 object UserDescriptor {
+
+  implicit def univEq: UnivEq[UserDescriptor] = UnivEq.derive
+
   def roleStr(roles: Set[String]): Option[String] =
     if (roles.isEmpty)
       None

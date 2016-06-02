@@ -1,9 +1,9 @@
 package shipreq.webapp.server.snippet
 
-import shipreq.webapp.server.test.TestHelpers
 import org.scalatest.FunSpec
+import org.scalatest.Matchers._
 
-class PageLinkTest extends FunSpec with TestHelpers {
+class PageLinkTest extends FunSpec {
 
   describe("Linking to a page") {
     it("should render a link to the expected page") {

@@ -1,18 +1,16 @@
 package shipreq.webapp.server.lib
 
-import org.scalatest.FunSpec
-import org.scalatest.Matchers
-import net.liftweb.util.Helpers._
+import utest._
+import shipreq.base.test.BaseTestUtil._
+import shipreq.webapp.server.lib.Misc._
 
-class MiscTest extends FunSpec with Matchers with Misc {
+object MiscTest extends TestSuite {
 
-  describe("filterCovar()") {} // TODO
-
-  describe("#randomConfirmationToken") {
-    it("should return different values each time") {
-      randomConfirmationToken should not be(randomConfirmationToken)
-      randomConfirmationToken should not be(randomConfirmationToken)
-      randomConfirmationToken should not be(randomConfirmationToken)
+  override def tests = TestSuite {
+    'randomConfirmationToken {
+      assert(randomConfirmationToken !=* randomConfirmationToken)
+      assert(randomConfirmationToken !=* randomConfirmationToken)
+      assert(randomConfirmationToken !=* randomConfirmationToken)
     }
   }
 }

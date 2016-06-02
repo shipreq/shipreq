@@ -5,117 +5,25 @@ import net.liftweb.util.Helpers.intToTimeSpanBuilder
 import org.apache.shiro.SecurityUtils
 import org.apache.shiro.authc.UsernamePasswordToken
 import org.postgresql.util.PSQLException
-import org.scalatest.FunSpec
+import utest._
 import shipreq.base.util.ScalaExt._
 import shipreq.taskman.api.Msg.RegistrationRequested
 import shipreq.webapp.server.ServerConfig
 import shipreq.webapp.server.feature.validation.Validators
 import shipreq.webapp.server.security.Oshiro
 import shipreq.webapp.server.snippet.Register._
-import shipreq.webapp.server.test.T2._
-import shipreq.webapp.server.test.TestDatabaseSupport
-import shipreq.webapp.server.test.fixture.UserFixture
-import shipreq.webapp.server.util.NonEmptyTemplate
+import shipreq.webapp.server.test.SnippetTestUtil._
+import shipreq.webapp.server.test.WebappServerTestUtil._
+import shipreq.webapp.server.test._
 
-class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixture {
+object RegisterSnippetTest extends TestSuite {
 
-  override def beforeEachWithDao() {
-    initUserFixture(session)
-  }
-
-  lazy val reg1html = NonEmptyTemplate.load("public/register1").get
+  lazy val reg1html = requireTemplate("public/register1")
 
   def assertSingleError(substring: String) {
-    S.errors.size should be(1)
-    S.errors(0)._1.toString.toLowerCase should include(substring.toLowerCase)
+    assertEq(S.errors.size, 1)
+    assertContainsCI(S.errors.head._1.toString, substring)
   }
-
-  describe("isTokenExpired") {
-    it("should consider 1-day-old valid") {
-      isTokenExpired(1.day.ago) should be(false)
-    }
-    it("should consider 1-week-old expired") {
-      isTokenExpired(1.week.ago) should be(true)
-    }
-  }
-
-  describe("Register1.render") {
-    def test(config: Boolean, allowed: Boolean): Unit = inMockSession {
-      val orig = ServerConfig.AllowRegister
-      try {
-        ServerConfig.AllowRegister = () => config
-        val x = Register1.render(reg1html)
-        val h = x.toString
-        h.contains("register1Form") shouldBe allowed
-        h.contains("registrationDisabled") shouldBe (!allowed)
-      } finally {
-        ServerConfig.AllowRegister = orig
-      }
-    }
-
-    it("should allow registration to anonymous user when config on") {
-      test(true, true)
-    }
-    it("should deny registration to anonymous user when config off") {
-      test(false, false)
-    }
-    it("should deny registration to non-admin user when config off") {
-      login(user2)
-      test(false, false)
-    }
-    it("should allow registration to admin even when config off") {
-      login(user1)
-      test(false, true)
-    }
-  }
-
-  describe("Register1.onSubmit") {
-
-    def test(email: String, usrTableDiff: Int) =
-      withTestTaskman {
-        assertTableDiffs(Tables.Usr -> usrTableDiff) {
-          Register1.perform(Validators.email.correctAndValidateU(email))
-    }}
-
-    def testSuccess(email: String, usrTableDiff: Int, tokenChange: Boolean) {
-      val tokenBefore = lookupConfirmationToken(email)
-      val (r, tt) = test(email, usrTableDiff)
-      r.assertJsAlert(None)
-      val token = lookupConfirmationToken(email)
-      token should not be ('empty)
-      if (tokenChange)
-        token should not be (tokenBefore)
-      else
-        token should be(tokenBefore)
-      SubmittedOneTask{ case RegistrationRequested(_,url) => () => url should include(token.get) } test tt
-    }
-
-    it("when email is invalid -- should reject request") {
-      val (r, tt) = test("not_an_email", 0)
-      r.assertJsAlert(Some("Email"))
-      NoTasksSubmitted.test(tt)
-    }
-
-    it("when a pending, valid token exists -- should resend email") {
-      testSuccess(userWithCurrentToken.email.value, 0, false)
-    }
-
-    it("when a pending, expired token exists -- should create a new token and email") {
-      testSuccess(userWithExpiredToken.email.value, 0, true)
-    }
-
-    it("when a email is valid and new -- should create a user, token and send email") {
-      testSuccess("blarrr@yay.com", 1, true)
-    }
-
-    it("when a email belongs to registered account -- should email with link to reset password") {
-      val (r, tt) = test(user1.email.value, 0)
-      r.assertJsAlert(None)
-      SubmittedOneTask(ReRegistrationAttemptedT) test tt
-    }
-  }
-
-  // ===================================================================================================================
 
   class Reg2Tester(token: String) {
     val snippet = new Register2(token)
@@ -135,123 +43,233 @@ class RegisterSnippetTest extends FunSpec with TestDatabaseSupport with UserFixt
     }
   }
 
-  describe("Register2.validateToken") {
-    it("should redirect to Register1 with error when token is invalid") {
-      inMockSession {
-        intercept[ResponseShortcutException] {new Reg2Tester("blah").snippet.validateToken_!}
-        assertSingleError("invalid")
-      }
+  override def tests = TestSuite {
+    PrepareEnv()
+
+    'isTokenExpired {
+      'oneDay  - assertEq(isTokenExpired(1.day.ago), false)
+      'oneWeek - assertEq(isTokenExpired(1.week.ago), true)
     }
 
-    it("should redirect to Register1 with error when token has expired") {
-      inMockSession {
-        intercept[ResponseShortcutException] {new Reg2Tester(userWithExpiredToken.token).snippet.validateToken_!}
-        assertSingleError("expired")
-      }
-    }
+    'Register1 {
 
-    it("should render new-user form when token is valid") {
-      inMockSession {
-        new Reg2Tester(userWithCurrentToken.token).snippet.validateToken_!
-        S.errors shouldBe empty
-      }
-    }
-  }
+      'render - {
+        def test(config: Boolean, allowed: Boolean): Unit =
+          inMockSession {
+            val orig = ServerConfig.AllowRegister
+            try {
+              ServerConfig.AllowRegister = () => config
+              val x = Register1.render(reg1html)
+              val h = x.toString
+              assertEq(h contains "register1Form", allowed)
+              assertEq(h contains "registrationDisabled", !allowed)
+            } finally {
+              ServerConfig.AllowRegister = orig
+            }
+          }
 
-  describe("Register2 POST") {
-    def tester = {
-      val t = new Reg2Tester(userWithCurrentToken.token)
-      t name_=      "John Stuff"
-      t username_=  "crazy50"
-      t password1_= "abcd5678"
-      t password2_= "abcd5678"
-      t tos_=       true
-      t
-    }
+        "allow registration to anonymous user when config on" - {
+          test(true, true)
+        }
+        "deny registration to anonymous user when config off" - {
+          test(false, false)
+        }
+        "deny registration to non-admin user when config off" - {
+          UserFixture.Session(_.user2.withLoggedIn(test(false, false)))
+        }
+        "allow registration to admin even when config off" - {
+          UserFixture.Session(_.user1.withLoggedIn(test(false, true)))
+        }
+      } // render
 
-    def assertUnconfirmed() {
-      val reg = dao.findUserRegistrationInfo(userWithCurrentToken.email).get
-      reg.confirmationSentAt should be(Some(userWithCurrentToken.tokenCreatedAt))
-      reg.confirmedAt should be(None)
-      reg.confirmationToken should be(Some(userWithCurrentToken.token))
-    }
+      'onSubmit {
+        def test(dbu: DbUtil, email: String, usrTableDiff: Int) =
+          withTestTaskman(
+            dbu.assertRowCountChanges(DbTable.Usr -> usrTableDiff)(
+              Register1.perform(Validators.email.correctAndValidateU(email))))
 
-    def testFailure(mutate: Reg2Tester => Any) {
-      val t = tester
-      mutate(t)
-      val js = t.onSubmitF()
-      assertUnconfirmed()
-      js.assertJsAlert(Some(""))
-    }
+        def testSuccess(emailFn: UserFixture => String, usrTableDiff: Int, tokenChange: Boolean): Unit =
+          UserFixture.Transaction { uf =>
+            val dbu = uf.toDbUtil
+            val email = emailFn(uf)
+            val tokenBefore = dbu.lookupConfirmationToken(email)
+            val (r, tt) = test(dbu, email, usrTableDiff)
+            r.assertJsAlert(None)
+            val token = dbu.lookupConfirmationToken(email)
+            assert(token.isDefined)
+            assert((token !=* tokenBefore) ==* tokenChange)
+            SubmittedOneTask{ case RegistrationRequested(_,url) => () => assertContains(url, token.get) } test tt
+          }
 
-    it("should reject an invalid name") {
-      testFailure(_ name_= "9000")
-    }
+        "when email is invalid -- should reject request" - {
+          val (r, tt) = TestDb.DbUtil(test(_, "not_an_email", 0))
+          r.assertJsAlert(Some("Email"))
+          NoTasksSubmitted.test(tt)
+        }
 
-    it("should reject an invalid username") {
-      testFailure(_ username_= "9000")
-    }
+        "when a pending, valid token exists -- should resend email" - {
+          testSuccess(_.userWithCurrentToken.email.value, 0, false)
+        }
 
-    it("should reject an invalid password") {
-      testFailure(_ password2_= "abcd")
-    }
+        "when a pending, expired token exists -- should create a new token and email" - {
+          testSuccess(_.userWithExpiredToken.email.value, 0, true)
+        }
 
-    it("should reject when passwords dont match") {
-      testFailure(_ password1_= "987654321zcbsdfg")
-    }
+        "when a email is valid and new -- should create a user, token and send email" - {
+          testSuccess(_ => "blarrr@yay.com", 1, true)
+        }
 
-    it("should reject a taken username") {
-      val t = tester
-      t username_= user2.username.value
-      t.onSubmitF()
-      try {assertUnconfirmed()}
-      catch {case e: PSQLException if e.getMessage.contains("transaction is aborted") =>}
-    }
+        "when a email belongs to registered account -- should email with link to reset password" - {
+          val (r, tt) = UserFixture.Transaction(uf => test(uf.toDbUtil, uf.user1.email.value, 0))
+          r.assertJsAlert(None)
+          SubmittedOneTask(ReRegistrationAttemptedT) test tt
+        }
+      } // onSubmit
 
-    it("should reject without ToS agreement") {
-      testFailure(_ tos_= false)
-    }
+    } // Register1
 
-    describe("when form details valid") {
-      it("should create user") {
-        tester.onSubmit()
-        val reg = dao.findUserRegistrationInfo(userWithCurrentToken.email).get
-        reg.confirmationSentAt should be(Some(userWithCurrentToken.tokenCreatedAt))
-        reg.confirmedAt should not be (None)
-        reg.confirmedAt.get.after(1.minute.ago) should be(true)
-        reg.confirmationToken should be(None)
+    'Register2 {
 
-        val (user, pwd) = dao.findUserDescAndCredentials(userWithCurrentToken.email.value).get
-        user.username.value shouldEqual "crazy50"
-        pwd.hashedPassword.value should not be("abcd5678")
-      }
+      'validateToken {
+        def inEnv[A](f: UserFixture => A): A =
+          inMockSession(UserFixture.Transaction(f))
 
-      it("should login") {
-        Oshiro.loggedInUser should be(None)
-        tester.onSubmit()
-        Oshiro.loggedInUser should not be (None)
-        val user = Oshiro.loggedInUser.get
-        user.username.value shouldEqual "crazy50"
-        user.email should be(userWithCurrentToken.email)
-      }
+        "redirect to Register1 with error when token is invalid" - {
+          inEnv { _ =>
+            intercept[ResponseShortcutException] {new Reg2Tester("blah").snippet.validateToken_!()}
+            assertSingleError("invalid")
+          }
+        }
 
-      it("should hash password so that login auth works with same plaintext password") {
-        val subj = SecurityUtils.getSubject
-        tester.onSubmit()
-        subj.logout()
-        subj.login(new UsernamePasswordToken("crazy50", "abcd5678"))
-      }
+        "redirect to Register1 with error when token has expired" - {
+          inEnv { uf =>
+            intercept[ResponseShortcutException] {new Reg2Tester(uf.userWithExpiredToken.token).snippet.validateToken_!()}
+            assertSingleError("expired")
+          }
+        }
 
-      it("should hide the form and show the success") {
-        val (js, _) = tester.onSubmit()
-        js.assertJsAlert(None)
-        js.toJsCmd should include("toggle")
-      }
+        "render new-user form when token is valid" - {
+          inEnv { uf =>
+            new Reg2Tester(uf.userWithCurrentToken.token).snippet.validateToken_!()
+            assert(S.errors.isEmpty)
+          }
+        }
+      } // validateToken
 
-      it("should submit a msg to taskman") {
-        val (_, tt) = tester.onSubmit()
-        SubmittedOneTask(RegistrationCompletedT) test tt
-      }
-    }
+      'POST {
+        def inEnv[A](f: UserFixture => A): A =
+          withOshiro(UserFixture.Transaction(f))
+
+        def tester(uf: UserFixture) = {
+          val t = new Reg2Tester(uf.userWithCurrentToken.token)
+          t name_=      "John Stuff"
+          t username_=  "crazy50"
+          t password1_= "abcd5678"
+          t password2_= "abcd5678"
+          t tos_=       true
+          t
+        }
+
+        'failure {
+          def assertUnconfirmed(uf: UserFixture) {
+            val reg = uf.toDbUtil.dao.findUserRegistrationInfo(uf.userWithCurrentToken.email).get
+            assertEq(reg.confirmationSentAt, Some(uf.userWithCurrentToken.tokenCreatedAt))
+            assertEq(reg.confirmationToken, Some(uf.userWithCurrentToken.token))
+            assertEq(reg.confirmedAt, None)
+          }
+
+          def testFailure(mutate: Reg2Tester => Any)(uf: UserFixture) {
+            val t = tester(uf)
+            mutate(t)
+            val js = t.onSubmitF()
+            assertUnconfirmed(uf)
+            js.assertJsAlert(Some(""))
+          }
+
+          "reject an invalid name" - {
+            inEnv(testFailure(_ name_= "9000"))
+          }
+
+          "reject an invalid username" - {
+            inEnv(testFailure(_ username_= "9000"))
+          }
+
+          "reject an invalid password" - {
+            inEnv(testFailure(_ password2_= "abcd"))
+          }
+
+          "reject when passwords dont match" - {
+            inEnv(testFailure(_ password1_= "987654321zcbsdfg"))
+          }
+
+          "reject a taken username" - {
+            inEnv { uf =>
+              val t = tester(uf)
+              t username_= uf.user2.username.value
+              t.onSubmitF()
+              try {assertUnconfirmed(uf)}
+              catch {case e: PSQLException if e.getMessage.contains("transaction is aborted") => }
+            }
+          }
+
+          "reject without ToS agreement" - {
+            inEnv(testFailure(_ tos_= false))
+          }
+        }
+
+        'success {
+          "create user" - {
+            inEnv { uf =>
+              tester(uf).onSubmit()
+              val reg = uf.toDbUtil.dao.findUserRegistrationInfo(uf.userWithCurrentToken.email).get
+              assertEq(reg.confirmationSentAt, Some(uf.userWithCurrentToken.tokenCreatedAt))
+              assertEq(reg.confirmationToken, None)
+              assertEq(reg.confirmedAt.get.isAfter(1.minute.ago.toMillis), true)
+              assert(reg.confirmedAt.isDefined)
+
+              val (user, pwd) = uf.toDbUtil.dao.findUserDescAndCredentials(uf.userWithCurrentToken.email.value).get
+              assertEq(user.username.value, "crazy50")
+              assert(pwd.hashedPassword.value !=* "abcd5678")
+            }
+          }
+
+          "login" - {
+            inEnv { uf =>
+              assertNotLoggedIn()
+              tester(uf).onSubmit()
+              val user = assertLoggedIn()
+              assertEq(user.username.value, "crazy50")
+              assertEq(user.email, uf.userWithCurrentToken.email)
+            }
+          }
+
+          "hash password so that login auth works with same plaintext password" - {
+            inEnv { uf =>
+              val subj = SecurityUtils.getSubject
+              tester(uf).onSubmit()
+              subj.logout()
+              subj.login(new UsernamePasswordToken("crazy50", "abcd5678"))
+            }
+          }
+
+          "hide the form and show the success" - {
+            inEnv { uf =>
+              val (js, _) = tester(uf).onSubmit()
+              js.assertJsAlert(None)
+              assertContains(js.toJsCmd, "toggle")
+            }
+          }
+
+          "submit a msg to taskman" - {
+            inEnv { uf =>
+              val (_, tt) = tester(uf).onSubmit()
+              SubmittedOneTask(RegistrationCompletedT) test tt
+            }
+          }
+        }
+
+      } // POST
+
+    } // Register2
   }
 }

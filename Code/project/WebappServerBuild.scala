@@ -94,7 +94,7 @@ object WebappServerBuild {
       fork                         := true,
       javaOptions                  += "-Drun.mode=test",
       unmanagedResourceDirectories += baseDirectory.value / "src/main/webapp", // So templates load
-      parallelExecution            := false) // TODO erm... why?
+      parallelExecution            := false) // Due to UserFixture+Oshiro and LiveTest
     ): _*)
 
   def consoleCmds = "def initLift() = {val b = new bootstrap.liftweb.Boot; b.configureLift; b}"

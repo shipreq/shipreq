@@ -9,31 +9,31 @@ import net.liftweb.json._
 /**
  * A test case that requires connectivity to a running Jetty instance.
  */
-trait LiveTest extends TestHelpers with TestKit with LiveTestHelpers with BeforeAndAfterAll with TestDatabaseSupport {
+trait LiveTest extends TestKit with LiveTestHelpers with BeforeAndAfterAll with Matchers {
   self: Suite =>
 
   private def jetty = TestJetty
 
   override def baseUrl = jetty.url
 
-  override val wrapTestsInTransaction = false
-
   implicit val reportError = new ReportFailure {
     def fail(msg: String): Nothing = self.fail(s"Error: '$msg'")
   }
 
   override def beforeAll(): Unit = {
-    TestDB.init()
+    TestDb.init()
     jetty.start()
   }
 
   override def afterAll(): Unit = {
-    TestDB.reinitOnNextUse()
+    TestDb.reinitOnNextUse()
   }
 }
 
 trait LiveTestHelpers {
   self: TestKit with Matchers =>
+
+  def newSession() = TestDb.Slick.createSession()
 
   implicit val JsonFormats = DefaultFormats.lossless
 

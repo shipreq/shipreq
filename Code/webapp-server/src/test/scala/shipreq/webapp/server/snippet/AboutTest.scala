@@ -1,12 +1,12 @@
 package shipreq.webapp.server.snippet
 
-import shipreq.webapp.server.test.TestDatabaseSupport
-import shipreq.webapp.server.util.NonEmptyTemplate
 import org.scalatest.FunSuite
+import org.scalatest.Matchers._
+import shipreq.webapp.server.test.SnippetTestUtil._
 
-class AboutTest extends FunSuite with TestDatabaseSupport {
+class AboutTest extends FunSuite {
 
-  lazy val template = NonEmptyTemplate.load("about").get
+  lazy val template = requireTemplate("about")
 
   test("Page should render without errors") {
     val html = (new About).attribution(template).toString

@@ -7,12 +7,11 @@ import org.scalatest.FunSpec
 import shipreq.taskman.api.{EmailAddr, UserId}
 import shipreq.webapp.server.data.{ResetPasswordInfo, UserRegistrationInfo}
 import shipreq.webapp.server.db.DaoT
-import shipreq.webapp.server.test.T2._
-import shipreq.webapp.server.test.{MockDaoProvider, TestHelpers}
-import shipreq.webapp.server.util.NonEmptyTemplate
 import shipreq.webapp.server.feature.validation.Validators
+import shipreq.webapp.server.test.MockDaoProvider
+import shipreq.webapp.server.test.SnippetTestUtil._
 
-class ResetPasswordTest extends FunSpec with TestHelpers {
+class ResetPasswordTest extends FunSpec {
 
   val validEmail = "hehe@yay.com"
 
@@ -98,7 +97,7 @@ class ResetPasswordTest extends FunSpec with TestHelpers {
   }
 
   describe("ResetPassword2.render") {
-    lazy val template = NonEmptyTemplate.load("public/resetpw2").get
+    lazy val template = requireTemplate("public/resetpw2")
 
     def findToken(r: Option[DateTime]): DbSetup =
       new DbSetup {override def setup(d: DaoT) = when(d.findResetPasswordTokenIssuedDate(any)) thenReturn r}
