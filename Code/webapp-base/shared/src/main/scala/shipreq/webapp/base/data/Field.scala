@@ -456,7 +456,7 @@ case class FieldSet(customFields: FieldSet.CustomFields,
     }
 
   def staticFieldIterator: Iterator[StaticField] =
-    order.filterTI[StaticField]
+    order.filterT[StaticField]
 
   def staticFieldSet: ListSet[StaticField] =
     staticFieldIterator.to

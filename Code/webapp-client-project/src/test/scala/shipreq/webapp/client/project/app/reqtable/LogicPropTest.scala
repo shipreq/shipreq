@@ -36,8 +36,8 @@ object LogicPropTest extends TestSuite {
     val plainText   = PlainText(p, ProjectText.Context.None)
     val textSearch  = TextSearch(p, plainText)
     val gathered    = Logic.gather(vs, p, plainText, textSearch)
-    val gatheredG   = gathered.filterT[ReqRow]
-    val rowReqCodes = gathered.flatMap(codesInRow(_).toStream)
+    val gatheredG   = gathered.filterT[ReqRow].toList
+    val rowReqCodes = gathered.flatMap(codesInRow)
     val rowGReqIds  = gatheredG.map(_.req.id).toSet
     val srcGReqIds  = p.reqs.idIterator.filterT[GenericReqId].filter(expectVisible).toSet
     val finalRows   = Logic.rowsForTable(vs, p, plainText, textSearch)
@@ -57,10 +57,10 @@ object LogicPropTest extends TestSuite {
     // Gathering
 
     def noEmptyAndNonEmptyReqCodesMixed = {
-      val data: Stream[Vector[Vector[ReqCode.Value]]] =
+      val data: List[Vector[Vector[ReqCode.Value]]] =
         Multimap.empty[ReqId, Vector, Vector[ReqCode.Value]]
           .addPairs(gatheredG.map(r => (r.req.id, r.exp.reqCodes)): _*)
-          .m.values.toStream
+          .m.values.toList
       E.forall(data)(l =>
         E.test("Either all empty or all non-empty", !(l.exists(_.isEmpty) && l.exists(_.nonEmpty))))
     }
