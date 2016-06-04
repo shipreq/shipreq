@@ -66,17 +66,26 @@
         border-color:rgba(255, 166, 34, .5) !important;
       }
 
+      .edit-notes {
+        text-align:right;
+          font-size: 0.75rem;
+          line-height: 1em;
+          margin-bottom: 1rem;
+          color: #4c4c4c;
+      }
+
       .mid-edit {padding:1ex !important}
       .mid-edit textarea:focus {border-width:2px !important; border-color:rgba(255, 166, 34, 1) !important}
-      .preview-cont {margin:0.3ex 0 0 0 !important}
+      .preview-cont {margin:0 !important}
       .preview-header {padding-top: 0.3em !important; padding-bottom: 0.3em !important}
       .preview-body {
         background-clip: border-box !important;
         background-color: rgba(0, 0, 0, 0)  !important;
-        background-image: repeating-linear-gradient(-225deg, rgba(0, 0, 0, 0),
+        background-image: repeating-linear-gradient(-225deg,
+          rgba(0, 0, 0, 0),
           rgba(0, 0, 0, 0)         5ex,
-          rgba(33, 186, 67, 0.06)  5ex,
-          rgba(33, 186, 67, 0.06) 10ex) !important;
+          rgba(33, 186, 67, 0.07)  5ex,
+          rgba(33, 186, 67, 0.07) 10ex) !important;
         background-origin: padding-box  !important;
       }
 
@@ -347,6 +356,7 @@
             %th Major Feature
             %th Tags
         %tbody
+
           %tr
             %td.selcol
               %input{type: "checkbox"}
@@ -363,6 +373,7 @@
             %td.inline-edit
               .ui.label.blue.is-tag bug
               .ui.label.blue.is-tag focus
+
           %tr
             %td.selcol
               %input{type: "checkbox"}
@@ -379,16 +390,19 @@
               = ", "
               %a{href:"#"} MF-9
             %td.inline-edit
+
           %tr
             %td.selcol
               %input{type: "checkbox"}
             %td
               %a{href:"#"} FR-3
             %td.mid-edit
-              %textarea.texteditor
+              %textarea.texteditor{autofocus: "1"}
                 This, [fr3], is an item being edited.
+              .edit-notes
+                -# enter for new line, ctrl-enter to save, escape to cancel.
+                ctrl-enter to save, escape to cancel.
               .ui.segments.preview-cont.raised
-                -# .ui.segment.preview-header.tertiary.inverted.teal
                 .ui.segment.preview-header.inverted.green
                   Preview
                 .ui.segment.preview-body
@@ -400,6 +414,7 @@
             %td.inline-edit
             %td.inline-edit
               .ui.label.blue.is-tag bug
+
           %tr
             %td.selcol
               %input{type: "checkbox"}
@@ -408,12 +423,27 @@
             %td.inline-edit
               Ummm....?
             %td.inline-edit
-              .ui.label.blue.is-tag must
             %td
               .texteditor{style:"border-style:dashed!important"}
                 %i.icon.spinner.loading
                 %span{style:"color:#999"} MF-3, MF-6
             %td.inline-edit
+
+          %tr
+            %td.selcol
+              %input{type: "checkbox"}
+            %td
+              %a{href:"#"} FR-5
+            %td.mid-edit
+              %textarea.texteditor
+                This, [fr5], is an item that experienced ajax failure.
+              .ui.pointing.label.red
+                AJAX failure occurred.
+            %td.inline-edit
+              .ui.label.blue.is-tag must
+            %td.inline-edit
+            %td.inline-edit
+              .ui.label.blue.is-tag bug
 
   :javascript
     $('.ui.dropdown:not(.onhover)').dropdown();
