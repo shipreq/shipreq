@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html><head><title>CardBoard Req Table | ShipReq</title><script src="node_modules/jquery/dist/jquery.min.js"></script><link href="semantic/dist/semantic.min.css" rel="stylesheet" type="text/css" /><script src="semantic/dist/semantic.js"></script><style type="text/css">
+body {padding:1rem}
+.ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+.ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+
+h3.ui.header {margin-top: 2em; padding-bottom: 0.3em !important}
+
+.content.pic {text-align:center; padding-top:2.2em !important}
+.content.pic > i {font-size:3rem}
+
+/** workaround for https://github.com/Semantic-Org/Semantic-UI/issues/2978 */
+.active-hack {font-weight:700!important; box-shadow: none!important;}
+.active-hack.red {border-color: #DB2828!important; color: #DB2828!important;}
+.active-hack.orange {border-color: #F2711C!important; color: #F2711C!important;}
+
+#view-ctrls > div:not(:first-child) {margin-left: 1em}
+.sort > button {margin-left: 1ex !important}
+#cols-popup label {white-space: nowrap !important}
+
+.status i {margin-right:0}
+
+.sortCriterion:not(i) {cursor:move}
+
+#reqtable > thead > tr > th {padding: 4px}
+#reqtable > tbody > tr > td {padding: 4px}
+#reqtable a:hover {text-decoration: underline}
+#reqtable .selcol {width: 24px !important; text-align: center}
+.is-tag {padding: 4px 6px !important}
+.tagRef {color:#2185D0!important}
+.issueRef {color:#db2828!important}
+
+.inline-edit:hover {
+  cursor:pointer;
+  outline:dotted 2px #FFA622;
+  background: #fff4e3 !important;
+  }
+.can-focus:hover {
+/*
+  xcursor:pointer;
+  xoutline:solid 1px #00b5ad;
+  outline:solid 1px #a333c8;
+*/
+}
+.has-focus {
+  xoutline:solid 2px #00b5ad;
+  outline:solid 2px #a333c8;
+  xoutline:solid 2px #6435c9;
+}
+
+#reqtableX >tbody >tr:hover > td {background: rgba(0,15,30,.03)}
+
+.texteditor {
+  width:100%;
+  margin: 0;
+  -webkit-appearance: none;
+  tap-highlight-color: rgba(255,255,255,0);
+  padding: .78571429em 1em;
+  background: #fff;
+  border: 1px solid rgba(34,36,38,.15);
+  outline: 0;
+  color: rgba(0,0,0,.87);
+  border-radius: .28571429rem;
+  box-shadow: 0 0 0 0 rgba(0, 0, 0, 0) inset;
+  -webkit-transition: color .1s ease,border-color .1s ease;
+  transition: color .1s ease,border-color .1s ease;
+  font-size: 1em;
+  line-height: 1.2857;
+
+  /*overflow: scroll;*/
+  resize: none;
+
+  padding:.3em .4em !important;
+  background: #fff4e3 !important;
+  xborder-color:#FFA622 !important;
+  border-color:rgba(255, 166, 34, .5) !important;
+}
+
+.edit-notes {
+  text-align:right;
+    font-size: 0.75rem;
+    line-height: 1em;
+    margin-bottom: 1rem;
+    color: #4c4c4c;
+}
+
+.mid-edit {padding:1ex !important}
+.mid-edit textarea:focus {border-width:2px !important; border-color:rgba(255, 166, 34, 1) !important}
+.preview-cont {margin:0 !important}
+.preview-header {padding-top: 0.3em !important; padding-bottom: 0.3em !important}
+.preview-body {
+  background-clip: border-box !important;
+  background-color: rgba(0, 0, 0, 0)  !important;
+  background-image: repeating-linear-gradient(-225deg,
+    rgba(0, 0, 0, 0),
+    rgba(0, 0, 0, 0)         5ex,
+    rgba(33, 186, 67, 0.07)  5ex,
+    rgba(33, 186, 67, 0.07) 10ex) !important;
+  background-origin: padding-box  !important;
+}
+
+</style></head><body><div class="ui menu borderless fixed inverted"><div class="item"><img src="logo-only-dark2.svg" /></div><div class="item"><div class="ui breadcrumb"><a href="projects.haml.html" class="section">Projects</a><i class="divider icon right angle"></i><a href="project-index.haml.html" class="section">CardBoard</a><div class="ui dropdown inline">&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="item active">CardBoard</div><div class="item">ShipReq</div></div></div><i class="divider icon right angle"></i><div class="section"><!--/ .active--><div class="ui dropdown inline">Req Table&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="header">Content</div><div class="item">Implication Graph</div><div class="item active">ReqTable</div><div class="header">Configuration</div><div class="item">Fields</div><div class="item">Issues</div><div class="item">Req Types</div><div class="item">Tags</div></div></div></div></div></div><div class="item ui right dropdown simple">@japgolly<div class="menu"><a href="account.haml.html" class="item">Account</a><div class="item">Logout</div></div></div></div><main style="margin-top:4rem"><div class="ui secondary pointing menu"><a onclick="alert('This would now set view to Default')" class="item ui dropdown onhover"><i class="icon star yellow"></i>Default<div class="menu"><div class="item"><i class="icon write"></i>Rename...</div><div class="item"><i class="icon save"></i>Replace with current</div><div class="item"><i class="icon star"></i>Set as default</div><div class="item"><i class="icon trash"></i>Delete</div></div></a><a href="project-reqtable.haml.html" class="item">High-level</a><a class="item">Low-level</a><div class="item orange ui dropdown onhover active-hack">Unsaved view<div class="menu"><div class="item">Save as...</div></div></div><div class="right menu"><div style="padding-right:0 !important" onclick="$(&quot;#omfg2 &gt; *&quot;).toggle()" class="item" id="omfg2"><button data-content="Click to show deleted content." class="ui button icon has-popup"><i class="icon trash outline large grey"></i></button><button data-content="Showing deleted content." style="display:none" class="ui button icon red has-popup"><i class="icon trash outline large white"></i></button></div></div></div><section style="display:flex; align-content: center; margin: 2em 0" id="action-ctrls"><div><div class="ui labeled button"><button class="ui button green"><i class="icon plus"></i>New</button><div style="background-color: #00a632; color: #EEE;" class="ui dropdown label">UC<i class="icon dropdown"></i><div class="menu"><div class="item">BL: Business Rule</div><div class="item">BR: Business Requirement</div><div class="item">MF: Major Feature</div><div class="item">UC: Use Case</div><div class="item">Code group</div></div></div></div></div><div style="text-align: right; flex-grow: 1" class="status">Showing 0 rows: 0 <i title="requirements" class="icon cubes"></i> (3 - 3<i title="deleted" class="icon trash outline"></i>).</div></section><div class="ui icon message warning"><i class="icon trash outline"></i><div class="content"><div class="header">No live content.</div><p>Create new content (above) or enable display of dead content (via the <i class="icon trash outline"></i>button in the top-right).</p></div></div></main></body>
+<script type="text/javascript">
+//<![CDATA[
+$('.ui.multiple.dropdown')
+  .find('.menu > .item > .ui.dropdown, .menu > .item.ui.dropdown, > .ui.dropdown:not(.simple), .inline.dropdown, .icon.buttons .button, .form .dropdown.selection')
+  .dropdown();
+
+$('.ui.dropdown:not(.onhover)').dropdown();
+$('.ui.dropdown.onhover').dropdown({on:"hover", delay: { show: 400 }});
+$('.ui.has-popup').popup({delay: { show: 400, hide: 0 }});
+$('#cols-button')
+  .popup({
+    inline   : true,
+    hoverable: true,
+    position : 'left center',
+    delay: {
+      show: 200,
+      hide: 300
+    }
+  })
+;
+//]]>
+</script>
+</html>

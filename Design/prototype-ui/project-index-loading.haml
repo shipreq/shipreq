@@ -1,0 +1,170 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title CardBoard | ShipReq
+    %script{src: "node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "semantic/dist/semantic.min.js"}
+    :css
+      body {padding:1rem}
+      .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+      .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+
+      h1.ui.header {margin-bottom:0; margin-right:1em; color:#d00}
+      .inline-edit:hover {cursor:pointer; outline:dotted 2px #FFA622; background: #fff4e3 !important}
+
+      h3.ui.header {margin-top: 2em; padding-bottom: 0.3em !important}
+
+      .content.pic {text-align:center; padding-top:2.2em !important}
+      .content.pic > i {font-size:3rem}
+
+  %body
+
+    .ui.menu.borderless.fixed.inverted
+      .item
+        %img{src: "logo-only-dark2.svg"}
+
+      .item
+        .ui.breadcrumb
+          %a.section{href: "projects.haml.html"} Projects
+          %i.divider.icon.right.angle
+          .ui.dropdown.inline
+            CardBoard&nbsp;
+            %i.icon.dropdown
+            .menu
+              .item.active CardBoard
+              .item ShipReq
+
+      .item.ui.right.dropdown.simple
+        @japgolly
+        -# %i.dropdown.icon
+        .menu
+          %a.item{href: "account.haml.html"} Account
+          .item Logout
+
+    -# =============================================================================================
+    .ui.container{style: "margin-top:5rem"}
+
+      %div{style: "display:flex"}
+        %div{style: "flex-grow:1"}
+          %h1.ui.header
+            CardBoard
+          .ui.meta{style: "margin: .5em 0; font-size: 1em; line-height: 1em; color: rgba(0,0,0,.6);"}
+            Updated&nbsp;
+            %time{datetime: "2015-12-17T09:24:17Z", title: "December 17, 2015"} 4 months ago.
+        %div
+          .ui.statistics.tiny
+            .statistic
+              .value
+                %i.icon.write
+                &nbsp;209
+              .label changes
+            .statistic
+              .value
+                %i.icon.cubes
+                &nbsp;39
+              .label reqs
+            -# .statistic
+            -#   .value
+            -#     %i.icon.database
+            -#     &nbsp;67.2
+            -#   .label KB
+
+
+      -# =============================================================================================
+
+      -# .ui.segment.basic
+        %h3.ui.dividing.header
+          %i.icon.file.text.outline
+          .content Content
+
+        .ui.cards.three
+
+          .ui.card.blue{onclick: "location.href='project-reqtable.haml.html'", style: "cursor:pointer"}
+            .content.pic
+              %i.icon.cubes
+              -# %i.icon.table
+            .content
+              .header Req Table
+              .description View and edit all reqs.
+
+          .ui.card.blue
+            .content.pic.blurring.omg-dimmable
+              .ui.inverted.dimmer
+                .content
+                  .center
+                    .ui.search
+                      .ui.icon.input
+                        %input.prompt{type: "text", size: "18"}/
+                        %i.icon.search
+              %i.icon.cube
+              -# %i.icon.file.text.outline
+            .content
+              .header Req Lookup
+              .description View and edit a single req.
+
+          .ui.card.blue
+            .content.pic
+              %i.icon.share.alternate
+            .content
+              .header Implication Graph
+              .description ???
+
+        %h3.ui.dividing.header
+          %i.icon.setting
+          .content Configuration
+
+        .ui.cards.three
+
+          .ui.card.yellow
+            .content.pic
+              %i.icon.list.layout.grey
+            .content
+              .header Fields
+              .description ???
+
+          .ui.card.yellow
+            .content.pic
+              %i.icon.warning.sign.grey
+            .content
+              .header Issues
+              .description ???
+
+          .ui.card.yellow
+            .content.pic
+              %i.icon.inbox.grey
+            .content
+              .header Req Types
+              .description ???
+
+          .ui.card.yellow
+            .content.pic
+              %i.icon.tags.grey
+            .content
+              .header Tags
+              .description ???
+        .ui.active.dimmer.inverted
+          .ui.text.loader.large(style="font-weight:bold")
+            Loading...
+
+      .ui.segment.basic(style="height:20rem")
+        .ui.active.dimmer.inverted
+          .ui.text.loader.large
+            Loading...
+
+      -# .ui.icon.message
+        %i.icon.notched.circle.loading
+        .content
+          .header Loading...
+
+      .ui.icon.message.negative(style="margin-top:4rem")
+        %i.icon.warning.circle
+        .content
+          .header Error loading project
+          %p Couldn't connect to server.
+
+
+  :javascript
+    $('.ui.dropdown').dropdown();
+    $('.omg-dimmable').dimmer({on: 'hover'});

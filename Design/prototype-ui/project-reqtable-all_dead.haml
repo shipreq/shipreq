@@ -30,7 +30,7 @@
       .sortCriterion:not(i) {cursor:move}
 
       #reqtable > thead > tr > th {padding: 4px}
-      #reqtable > tbody > tr > td {padding: 4px; vertical-align:top}
+      #reqtable > tbody > tr > td {padding: 4px}
       #reqtable a:hover {text-decoration: underline}
       #reqtable .selcol {width: 24px !important; text-align: center}
       .is-tag {padding: 4px 6px !important}
@@ -166,8 +166,8 @@
             .item
               %i.icon.trash
               Delete
-        %a.item High-level
-        %a.item(href="project-reqtable-empty.haml.html") Low-level
+        %a.item(href="project-reqtable.haml.html") High-level
+        %a.item Low-level
         .item.orange.ui.dropdown.onhover.active-hack
           Unsaved view
           -# %button.ui.button.icon{style: "margin-left: 1ex"}
@@ -224,33 +224,27 @@
                 .item MF: Major Feature
                 .item UC: Use Case
                 .item Code group
-        %div
+        -# %div
           %button.ui.button
             %i.icon.trash
             Delete (5)
-        %div
+        -# %div
           %button.ui.button
             %i.icon.undo
             Restore (2)
         %div.status{style: "text-align: right; flex-grow: 1"}
           -# Showing 21 rows: 19 reqs (17 live + 3 dead - 1 filtered) + 2 dups.
-          = "Showing 24 rows: 19"
+          = "Showing 0 rows: 0 "
           %i.icon.cubes{title: "requirements"}
-          = " (17 + 3"
+          = " (3 - 3"
           %i.icon.trash.outline{title: "deleted"}
-          = " - 1"
-          %i.icon.filter{title: "excluded by the filter"}
-          = " + 2"
-          %i.icon.copy{title: "reappearances due to sorting"}
-          = ") + 3"
-          %i.icon.folder.outline{title: "code groups"}
-          .
-          %br/
-          %i.icon.checkmark.box{title: "selected"}
-          = "5."
+          = ")."
+          -# %br/
+          -# %i.icon.checkmark.box{title: "selected"}
+          -# = "5."
 
       -# =============================================================================================
-      %section#view-ctrls{style: "display:flex; align-content: center; margin-top: 2em"}
+      -# %section#view-ctrls{style: "display:flex; align-content: center; margin-top: 2em"}
         .sort
           Sort:
           %button.ui.button.right.labeled.icon.tiny.basic.sortCriterion
@@ -361,8 +355,17 @@
                   %label Tags
 
       -# =============================================================================================
-      -# %table#reqtable.ui.table.celled.compact.unstackable.selectable
-      %table#reqtable.ui.table.celled.compact.unstackable
+
+      .ui.icon.message.warning
+        %i.icon.trash.outline
+        .content
+          .header No live content.
+          %p
+            = "Create new content (above) or enable display of dead content (via the "
+            %i.icon.trash.outline
+            button in the top-right).
+
+      -# %table#reqtable.ui.table.celled.compact.unstackable
         %thead
           %tr
             %th.selcol
@@ -373,164 +376,8 @@
             %th Major Feature
             %th Tags
         %tbody
-
           %tr
             %td.selcol.can-focus
-              %input{type: "checkbox"}
-            %td.has-focus
-              %a{href:"#"} FR-1
-            %td.inline-edit
-              = "Fix "
-              %span.tagRef focus
-              = " and keyboard nav."
-            %td.inline-edit
-              .ui.label.blue.is-tag should
-            %td.inline-edit
-              %a{href:"#"} MF-7
-            %td.inline-edit
-              .ui.label.blue.is-tag bug
-              .ui.label.blue.is-tag focus
-
-          %tr
-            %td.selcol.can-focus
-              %input{type: "checkbox"}
-            %td.can-focus
-              %a{href:"#"} FR-2
-            %td.inline-edit
-              = "Do more stuff! "
-              %span.issueRef
-                \#TODO
-            %td.inline-edit
-              .ui.label.blue.is-tag must
-            %td.inline-edit
-              %a{href:"#"} MF-7
-              = ", "
-              %a{href:"#"} MF-9
-            %td.inline-edit
-
-          %tr
-            %td.selcol.can-focus
-              %input{type: "checkbox"}
-            %td.can-focus
-              %a{href:"#"} FR-3
-            %td.mid-edit
-              %textarea.texteditor{autofocus: "1"}
-                This, [fr3], is an item being edited.
-              .edit-notes
-                -# enter for new line, ctrl-enter to save, escape to cancel.
-                ctrl-enter to save, escape to cancel.
-              .ui.segments.preview-cont.raised
-                .ui.segment.preview-header.inverted.green
-                  Preview
-                .ui.segment.preview-body
-                  = "This, "
-                  %a{href:"#"} FR-3
-                  , is an item being edited.
-            %td.inline-edit
-              .ui.label.blue.is-tag must
-            %td.inline-edit
-            %td.inline-edit
-              .ui.label.blue.is-tag bug
-
-          %tr
-            %td.selcol.can-focus
-              %input{type: "checkbox"}
-            %td.can-focus
-              %a{href:"#"} FR-4
-            %td.inline-edit
-              Ummm....?
-            %td.inline-edit
-            %td
-              .texteditor{style:"border-style:dashed!important"}
-                %i.icon.spinner.loading
-                %span{style:"color:#999"} MF-3, MF-6
-            %td.inline-edit
-
-          %tr
-            %td.selcol.can-focus
-              %input{type: "checkbox"}
-            %td.can-focus
-              %a{href:"#"} FR-5
-            %td.mid-edit
-              %textarea.texteditor
-                This, [fr5], is an item that experienced ajax failure.
-              .ui.pointing.label.red
-                AJAX failure occurred.
-            %td.mid-edit
-              .ui.input.error
-                %input(type="text" value="must shuld" style="padding: .3em .4em !important")
-              .ui.pointing.label.red
-                Invalid value: shuld
-            %td.mid-edit
-              -# %select.ui.selection.dropdown{multiple:"multiple"}
-                %option{value: "1"} MF-1: Use Case Editor
-                %option{value: "2"} MF-2: Anonymous Share
-                %option{value: "3"} MF-3: Export (Read UCs, PDF, DOC, MD, TXT, XLS)
-                %option{value: "4"} MF-4: Templates
-                %option{value: "5"} MF-5: Field Customisation
-                %option{value: "6"} MF-6: Incompletions
-                %option{value: "7"} MF-7: Organisation
-                %option{value: "8"} MF-8: History/Audit
-                %option{value: "9"} MF-9: Collaboration: authoring
-                %option{value: "10"} MF-10: Collaboration: stakeholders
-                %option{value: "11"} MF-11: Collaboration: change mgnt & approval
-                %option{value: "12"} MF-12: Low-level Requirements (CO, FR, BR, etc.)
-                %option{value: "13"} MF-13: Requirement Relationships
-                %option{value: "14"} MF-14: Text-generated Diagrams
-                %option{value: "15"} MF-15: Matrixes
-                %option{value: "16"} MF-16: CRUDL Matrix
-                %option{value: "17"} MF-17: Undo & Auto-save
-                %option{value: "18"} MF-18: Data dictionary
-                %option{value: "19"} MF-19: Glossary
-                %option{value: "20"} MF-20: Generic artifact storage (DOC, PDF, PNG, XLS)
-                %option{value: "21"} MF-21: Doc authoring (V&S, URD, SRS)
-                %option{value: "22"} MF-22: High-level Requirements
-                %option{value: "23"} MF-23: Import external requirements
-                %option{value: "24"} MF-24: Requirement Lint
-                %option{value: "25"} MF-25: Search
-                %option{value: "26"} MF-26: Mass text modification (replace)
-                %option{value: "27"} MF-27: External references
-                %option{value: "28"} MF-28: Entities
-              .ui.multiple.dropdown
-                %input(type="hidden" value="")
-                %i.icon.dropdown
-                %span.text Dropdown.<br>Rejected,<br>at least for now.
-                .menu
-                  .ui.icon.search.input
-                    %i.icon.search
-                    %input(type="text" placeholder="Filter...")
-                  .divider
-                  .scrolling.menu
-                    .item(data-value="1") MF-1: Use Case Editor
-                    .item(data-value="2") MF-2: Anonymous Share
-                    .item(data-value="3") MF-3: Export (Read UCs, PDF, DOC, MD, TXT, XLS)
-                    .item(data-value="4") MF-4: Templates
-                    .item(data-value="5") MF-5: Field Customisation
-                    .item(data-value="6") MF-6: Incompletions
-                    .item(data-value="7") MF-7: Organisation
-                    .item(data-value="8") MF-8: History/Audit
-                    .item(data-value="9") MF-9: Collaboration: authoring
-                    .item(data-value="10") MF-10: Collaboration: stakeholders
-                    .item(data-value="11") MF-11: Collaboration: change mgnt & approval
-                    .item(data-value="12") MF-12: Low-level Requirements (CO, FR, BR, etc.)
-                    .item(data-value="13") MF-13: Requirement Relationships
-                    .item(data-value="14") MF-14: Text-generated Diagrams
-                    .item(data-value="15") MF-15: Matrixes
-                    .item(data-value="16") MF-16: CRUDL Matrix
-                    .item(data-value="17") MF-17: Undo & Auto-save
-                    .item(data-value="18") MF-18: Data dictionary
-                    .item(data-value="19") MF-19: Glossary
-                    .item(data-value="20") MF-20: Generic artifact storage (DOC, PDF, PNG, XLS)
-                    .item(data-value="21") MF-21: Doc authoring (V&S, URD, SRS)
-                    .item(data-value="22") MF-22: High-level Requirements
-                    .item(data-value="23") MF-23: Import external requirements
-                    .item(data-value="24") MF-24: Requirement Lint
-                    .item(data-value="25") MF-25: Search
-                    .item(data-value="26") MF-26: Mass text modification (replace)
-                    .item(data-value="27") MF-27: External references
-                    .item(data-value="28") MF-28: Entities
-            %td.inline-edit
-              .ui.label.blue.is-tag bug
 
   :javascript
     $('.ui.multiple.dropdown')

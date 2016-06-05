@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html><head><title>CardBoard | ShipReq</title><script src="node_modules/jquery/dist/jquery.min.js"></script><link href="semantic/dist/semantic.min.css" rel="stylesheet" type="text/css" /><script src="semantic/dist/semantic.min.js"></script><style type="text/css">
+body {padding:1rem}
+.ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+.ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+
+h1.ui.header {margin-bottom:0; margin-right:1em; color:#d00}
+.inline-edit:hover {cursor:pointer; outline:dotted 2px #FFA622; background: #fff4e3 !important}
+
+h3.ui.header {margin-top: 2em; padding-bottom: 0.3em !important}
+
+.content.pic {text-align:center; padding-top:2.2em !important}
+.content.pic > i {font-size:3rem}
+
+</style></head><body><div class="ui menu borderless fixed inverted"><div class="item"><img src="logo-only-dark2.svg" /></div><div class="item"><div class="ui breadcrumb"><a href="projects.haml.html" class="section">Projects</a><i class="divider icon right angle"></i><div class="ui dropdown inline">CardBoard&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="item active">CardBoard</div><div class="item">ShipReq</div></div></div></div></div><div class="item ui right dropdown simple">@japgolly<div class="menu"><a href="account.haml.html" class="item">Account</a><div class="item">Logout</div></div></div></div><div style="margin-top:5rem" class="ui container"><div style="display:flex"><div style="flex-grow:1"><h1 class="ui header">CardBoard</h1><div style="margin: .5em 0; font-size: 1em; line-height: 1em; color: rgba(0,0,0,.6);" class="ui meta">Updated&nbsp;<time datetime="2015-12-17T09:24:17Z" title="December 17, 2015">4 months ago.</time></div></div><div><div class="ui statistics tiny"><div class="statistic"><div class="value"><i class="icon write"></i>&nbsp;209</div><div class="label">changes</div></div><div class="statistic"><div class="value"><i class="icon cubes"></i>&nbsp;39</div><div class="label">reqs</div></div></div></div></div><div style="height:20rem" class="ui segment basic"><div class="ui active dimmer inverted"><div class="ui text loader large">Loading...</div></div></div><div style="margin-top:4rem" class="ui icon message negative"><i class="icon warning circle"></i><div class="content"><div class="header">Error loading project</div><p>Couldn't connect to server.</p></div></div></div></body>
+<script type="text/javascript">
+//<![CDATA[
+$('.ui.dropdown').dropdown();
+$('.omg-dimmable').dimmer({on: 'hover'});
+//]]>
+</script>
+</html>
