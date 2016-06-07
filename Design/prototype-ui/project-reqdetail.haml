@@ -1,0 +1,386 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title FR-1: Fix focus and keyboard nav. | CardBoard | ShipReq
+    %script{src: "node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "semantic/dist/semantic.js"}
+    :css
+      body {padding:1rem}
+      .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+      .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+
+      h3.ui.header {margin-top: 2em; padding-bottom: 0.3em !important}
+
+      .content.pic {text-align:center; padding-top:2.2em !important}
+      .content.pic > i {font-size:3rem}
+
+      /** workaround for https://github.com/Semantic-Org/Semantic-UI/issues/2978 */
+      .active-hack {font-weight:700!important; box-shadow: none!important;}
+      .active-hack.red {border-color: #DB2828!important; color: #DB2828!important;}
+      .active-hack.orange {border-color: #F2711C!important; color: #F2711C!important;}
+
+      #view-ctrls > div:not(:first-child) {margin-left: 1em}
+      .sort > button {margin-left: 1ex !important}
+      #cols-popup label {white-space: nowrap !important}
+
+      .status i {margin-right:0}
+
+      .sortCriterion:not(i) {cursor:move}
+
+      #reqtable > thead > tr > th {padding: 4px}
+      #reqtable > tbody > tr > td {padding: 4px; vertical-align:top}
+      #reqtable a:hover {text-decoration: underline}
+      #reqtable .selcol {width: 24px !important; text-align: center}
+      .is-tag {padding: 4px 6px !important}
+      .tagRef {color:#2185D0!important}
+      .issueRef {color:#db2828!important}
+
+      #reqtable > tbody > tr > td:nth-child(2) {white-space:nowrap}
+
+      .inline-edit:hover {
+        cursor:pointer;
+        outline:dotted 2px #FFA622;
+        background: #fff4e3 !important;
+      }
+      .can-focus:hover {
+      /*
+        xcursor:pointer;
+        xoutline:solid 1px #00b5ad;
+        outline:solid 1px #a333c8;
+      */
+      }
+      .has-focus {
+        xoutline:solid 2px #00b5ad;
+        outline:solid 2px #a333c8;
+        xoutline:solid 2px #6435c9;
+      }
+
+      #reqtableX >tbody >tr:hover > td {background: rgba(0,15,30,.03)}
+
+      .texteditor {
+        width:100%;
+        margin: 0;
+        -webkit-appearance: none;
+        tap-highlight-color: rgba(255,255,255,0);
+        padding: .78571429em 1em;
+        background: #fff;
+        border: 1px solid rgba(34,36,38,.15);
+        outline: 0;
+        color: rgba(0,0,0,.87);
+        border-radius: .28571429rem;
+        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0) inset;
+        -webkit-transition: color .1s ease,border-color .1s ease;
+        transition: color .1s ease,border-color .1s ease;
+        font-size: 1em;
+        line-height: 1.2857;
+
+        /*overflow: scroll;*/
+        resize: none;
+
+        padding:.3em .4em !important;
+        background: #fff4e3 !important;
+        xborder-color:#FFA622 !important;
+        border-color:rgba(255, 166, 34, .5) !important;
+      }
+
+      .edit-notes {
+        text-align:right;
+          font-size: 0.75rem;
+          line-height: 1em;
+          margin-bottom: 1rem;
+          color: #4c4c4c;
+      }
+
+      .mid-edit {padding:1ex !important}
+      .mid-edit textarea:focus {border-width:2px !important; border-color:rgba(255, 166, 34, 1) !important}
+      .preview-cont {margin:0 !important}
+      .preview-header {padding-top: 0.3em !important; padding-bottom: 0.3em !important}
+      .preview-body {
+        background-clip: border-box !important;
+        background-color: rgba(0, 0, 0, 0)  !important;
+        background-image: repeating-linear-gradient(-225deg,
+          rgba(0, 0, 0, 0),
+          rgba(0, 0, 0, 0)         5ex,
+          rgba(33, 186, 67, 0.07)  5ex,
+          rgba(33, 186, 67, 0.07) 10ex) !important;
+        background-origin: padding-box  !important;
+      }
+
+      #detail {
+        margin-top: 1.5rem;
+        border-radius: 0.28571429rem;
+        box-shadow: none;
+        border-collapse: separate;
+        border-spacing: 0px;
+        width:100%;
+        border: 1px solid rgba(34, 36, 38, 0.15);
+      }
+      #detail >tbody >tr >th {
+        text-align:left;
+        white-space:nowrap;
+        background:rgba(0,0,0,.04);
+      }
+      #detail >tbody >tr >td {
+        width:100%;
+        border-left: 1px solid rgba(34, 36, 38, 0.1);
+      }
+      #detail >tbody >tr >* {
+        padding: 0.6rem 0.7rem;
+        vertical-align: top;
+      }
+      #detail >tbody >tr:not(:first-child) >* {
+        border-top: 1px solid rgba(34, 36, 38, 0.1);
+      }
+
+      #imps1 .impHalf {width:50%; text-align: center}
+
+  %body
+
+    .ui.menu.borderless.fixed.inverted
+      .item
+        %img{src: "logo-only-dark2.svg"}
+
+      .item
+        .ui.breadcrumb
+          %a.section{href: "projects.haml.html"} Projects
+          %i.divider.icon.right.angle
+          %a.section{href: "project-index.haml.html"} CardBoard
+          .ui.dropdown.inline
+            &nbsp;
+            %i.icon.dropdown
+            .menu
+              .item.active CardBoard
+              .item ShipReq
+          %i.divider.icon.right.angle
+          .section // .active
+            %a.section{href: "project-reqtable.haml.html"} Req Table
+            .ui.dropdown.inline
+              &nbsp;
+              %i.icon.dropdown
+              .menu
+                .header Content
+                .item Implication Graph
+                .item ReqTable
+                .header Configuration
+                .item Fields
+                .item Issues
+                .item Req Types
+                .item Tags
+          %i.divider.icon.right.angle
+          .section.active FR-1
+
+      .item.ui.right.dropdown.simple
+        @japgolly
+        -# %i.dropdown.icon
+        .menu
+          %a.item{href: "account.haml.html"} Account
+          .item Logout
+
+    -# =============================================================================================
+    %main{style: "margin-top:4rem"}
+
+      %section(style="display:flex")
+        %div(style="padding-right:0.4rem")
+          %h1.ui.header(style="margin:0") FR-1:
+        %div.inline-edit(style="flex-grow:1; padding-left:0.3rem")
+          %h1.ui.header(style="margin:0")
+            = "Fix "
+            %span.tagRef focus
+            = " and keyboard nav."
+        %div(style="padding-left:1.5rem")
+          #omfg2.item{style: "padding-right:0 !important", onclick: '$("#omfg2 > *").toggle()'}
+            %button.ui.button.icon.has-popup{data-content: "Click to show deleted content."}
+              %i.icon.trash.outline.large.grey
+            %button.ui.button.icon.red.has-popup{data-content: "Showing deleted content.", style: "display:none"}
+              %i.icon.trash.outline.large.white
+
+      -# =============================================================================================
+      -# %table#detail.ui.table.celled.compact.unstackable
+      %table#detail
+        %tbody
+
+          %tr
+            %th Type
+            %td.inline-edit FR: Functional Requirement
+
+          %tr
+            %th Live
+            %td(style="vertical-align:middle")
+              %span(style="padding-right:1em") Live.
+              -# %button.ui.button.icon.small.has-popup{data-content: "Click to delete this requirement."}
+                %i.icon.trash.outline.large.red
+              .ui.button.red.basic(style="xfloat:right" onclick="location.href = 'project-reqdetail-dead.haml.html'")
+                %i.icon.trash
+                Delete
+
+          %tr
+            %th Codes
+            %td.inline-edit(style="font-family:monospace; white-space:nowrap")
+              backend.keyboard.focus
+
+          %tr
+            %th Tags
+            %td.inline-edit
+              .ui.label.blue.is-tag bug
+              .ui.label.blue.is-tag focus
+
+          %tr
+            %th Implications
+            %td
+
+              %table#imps1
+                %tbody
+                  %tr
+                    %td.inline-edit.impHalf
+                      %a(href="#" title="Fix stuff") BL-1
+                      = ", "
+                      %a(href="#" title="Create stuff") CO-1
+                      = ", "
+                      %a(href="#" title="Sell stuff") MF-3
+                    %td(style="font-weight:bold; padding:0 1ex; white-space:nowrap") → FR-1 →
+                    %td.inline-edit.impHalf
+                      %a(href="#" title="I have no money") CO-2
+
+              -# %div(style="position: relative")
+                .inline-edit asdfasdfsda
+                .ui.vertical.divider → FR-1 →
+                .inline-edit asdfasdfsda
+
+              -# .ui.grid.two.column.very.relaxed.middle.aligned(style="position: relative")
+                .column.inline-edit asdfasdfsda
+                .ui.vertical.divider → FR-1 →
+                .column.inline-edit asdfasdfsda
+
+          %tr
+            %th Implication Graph
+            %td
+              -# No implications.
+              <div><!--?xml version="1.0" encoding="UTF-8" standalone="no"?-->
+              <svg width="378pt" height="152pt" viewBox="0.00 0.00 378.00 152.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+              <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 148)">
+              <polygon fill="white" stroke="white" points="-4,5 -4,-148 375,-148 375,5 -4,5"></polygon>
+              <g id="node1" class="node" style="cursor: default;">
+              <ellipse fill="none" stroke="#333333" stroke-width="2" cx="236" cy="-72" rx="31.339" ry="18"></ellipse>
+              <text text-anchor="middle" x="236" y="-67.8" font-family="Times,serif" font-size="14.00">BL-2</text>
+              </g>
+              <g id="node7" class="node" style="cursor: pointer;">
+              <ellipse fill="#7692b7" stroke="#333333" cx="337" cy="-72" rx="32.4827" ry="18"></ellipse>
+              <text text-anchor="middle" x="337" y="-67.8" font-family="Times,serif" font-size="14.00" fill="white">CO-2</text>
+              <title>I really have no money</title></g>
+              <g id="edge7" class="edge">
+              <path fill="none" stroke="#31537f" d="M267.511,-72C275.923,-72 285.197,-72 294.132,-72"></path>
+              <polygon fill="#31537f" stroke="#31537f" points="294.392,-75.5001 304.392,-72 294.392,-68.5001 294.392,-75.5001"></polygon>
+              </g>
+              <g id="node2" class="node" style="cursor: pointer;">
+              <ellipse fill="#ffede2" stroke="#333333" cx="33" cy="-72" rx="33.0643" ry="18"></ellipse>
+              <text text-anchor="middle" x="33" y="-67.8" font-family="Times,serif" font-size="14.00">MF-1</text>
+              <title>Fix stuff</title></g>
+              <g id="node4" class="node" style="cursor: pointer;">
+              <ellipse fill="#ffc19c" stroke="#333333" cx="135" cy="-126" rx="33.0643" ry="18"></ellipse>
+              <text text-anchor="middle" x="135" y="-121.8" font-family="Times,serif" font-size="14.00">MF-3</text>
+              <title>Sell stuff</title></g>
+              <g id="edge1" class="edge">
+              <path fill="none" stroke="#ffc19c" d="M57.1934,-84.5244C70.4457,-91.6807 87.2651,-100.763 101.784,-108.603"></path>
+              <polygon fill="#ffc19c" stroke="#ffc19c" points="100.47,-111.872 110.932,-113.544 103.796,-105.712 100.47,-111.872"></polygon>
+              </g>
+              <g id="node5" class="node" style="cursor: pointer;">
+              <ellipse fill="#ffc19c" stroke="#333333" cx="135" cy="-72" rx="31.339" ry="18"></ellipse>
+              <text text-anchor="middle" x="135" y="-67.8" font-family="Times,serif" font-size="14.00">BL-1</text>
+              <title>This is a business rule.</title></g>
+              <g id="edge3" class="edge">
+              <path fill="none" stroke="#ffc19c" d="M66.1911,-72C74.9027,-72 84.444,-72 93.5468,-72"></path>
+              <polygon fill="#ffc19c" stroke="#ffc19c" points="93.5703,-75.5001 103.57,-72 93.5702,-68.5001 93.5703,-75.5001"></polygon>
+              </g>
+              <g id="node3" class="node" style="cursor: pointer;">
+              <ellipse fill="#ffede2" stroke="#333333" cx="33" cy="-126" rx="33.0643" ry="18"></ellipse>
+              <text text-anchor="middle" x="33" y="-121.8" font-family="Times,serif" font-size="14.00">MF-2</text>
+              <title>Create stuff</title></g>
+              <g id="edge2" class="edge">
+              <path fill="none" stroke="#ffc19c" d="M66.1911,-126C74.3094,-126 83.1483,-126 91.6814,-126"></path>
+              <polygon fill="#ffc19c" stroke="#ffc19c" points="91.8693,-129.5 101.869,-126 91.8692,-122.5 91.8693,-129.5"></polygon>
+              </g>
+              <g id="edge4" class="edge">
+              <path fill="none" stroke="#c27040" d="M158.961,-113.476C172.175,-106.268 188.971,-97.107 203.414,-89.2287"></path>
+              <polygon fill="#c27040" stroke="#c27040" points="205.401,-92.1315 212.504,-84.2703 202.049,-85.9862 205.401,-92.1315"></polygon>
+              </g>
+              <g id="edge5" class="edge">
+              <path fill="none" stroke="#c27040" d="M166.511,-72C175.262,-72 184.946,-72 194.211,-72"></path>
+              <polygon fill="#c27040" stroke="#c27040" points="194.419,-75.5001 204.419,-72 194.419,-68.5001 194.419,-75.5001"></polygon>
+              </g>
+              <g id="node6" class="node" style="cursor: pointer;">
+              <ellipse fill="#ffc19c" stroke="#333333" cx="135" cy="-18" rx="32.4827" ry="18"></ellipse>
+              <text text-anchor="middle" x="135" y="-13.8" font-family="Times,serif" font-size="14.00">CO-1</text>
+              <title>I have no money</title></g>
+              <g id="edge6" class="edge">
+              <path fill="none" stroke="#c27040" d="M158.961,-30.5244C172.175,-37.7318 188.971,-46.893 203.414,-54.7713"></path>
+              <polygon fill="#c27040" stroke="#c27040" points="202.049,-58.0138 212.504,-59.7297 205.401,-51.8685 202.049,-58.0138"></polygon>
+              </g> </g> </svg> </div>
+
+          %tr
+            %th Detail
+            %td.inline-edit
+              This is an example of a requirement having:
+              %ul
+                %li Rich text
+                %li Multi-line markup
+
+          %tr
+            %th Major Feature
+            %td.inline-edit
+              %a(href="#" title="Fix stuff") MF-1
+              = ", "
+              %a(href="#" title="Create stuff") MF-2
+              = ", "
+              %a(href="#" title="Sell stuff") MF-3
+              .
+
+          %tr
+            %th Priority
+            %td.inline-edit
+
+          %tr
+            %th Status
+            %td.inline-edit
+              .ui.label.blue.is-tag Client
+              .ui.label.blue.is-tag WIP
+
+          %tr
+            %th Version
+            %td.inline-edit
+              .ui.label.blue.is-tag v1.0
+
+
+  :javascript
+    $('.ui.multiple.dropdown')
+      .find('.menu > .item > .ui.dropdown, .menu > .item.ui.dropdown, > .ui.dropdown:not(.simple), .inline.dropdown, .icon.buttons .button, .form .dropdown.selection')
+      .dropdown();
+
+    $('.ui.dropdown:not(.onhover)').dropdown();
+    $('.ui.dropdown.onhover').dropdown({on:"hover", delay: { show: 400 }});
+    $('.ui.has-popup').popup({delay: { show: 400, hide: 0 }});
+    $('#cols-button')
+      .popup({
+        inline   : true,
+        hoverable: true,
+        position : 'left center',
+        delay: {
+          show: 200,
+          hide: 300
+        }
+      })
+    ;
+
+    $('.ui.modal').modal();
+    $('.ui.accordion').accordion('open');
+
+    // $('.ui.modal').modal('show');
+
+    /*
+    $('.inline-edit > a').on('mouseover', function(){
+      $(this).parent().removeClass('inline-edit');
+    }).on('mouseout', function(){
+      $(this).parent().addClass('inline-edit');
+    })
+    */
