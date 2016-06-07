@@ -146,11 +146,11 @@
 
       #header .header {
         text-decoration: line-through;
-        opacity: 0.5;
+        opacity: 0.4;
       }
 
-      .deadLink {text-decoration:line-through; color:rgba(0,0,0,.25); display:inline}
-      .deadLink > span {color:rgba(0,0,0,.5)}
+      .deadThing {text-decoration:line-through; color:rgba(0,0,0,.2); display:inline}
+      .deadThing > span {color:rgba(0,0,0,.3)}
 
   %body
 
@@ -218,6 +218,10 @@
             %th Type
             %td FR: Functional Requirement
 
+          %tr
+            %th Past IDs
+            %td .deadThing %span CO-5
+
           %tr.life
             %th.life Live
             %td.life(style="vertical-align:middle")
@@ -231,7 +235,7 @@
           %tr
             %th Codes
             %td(style="font-family:monospace; white-space:nowrap")
-              .deadLink %span backend.keyboard.focus
+              .deadThing %span backend.keyboard.focus
 
           %tr
             %th Tags
@@ -347,7 +351,7 @@
               = ", "
               %a(href="#" title="Sell stuff") MF-3
               = ", "
-              %a.deadLink(href="#" title="Do stuff to stuff") %span MF-8
+              %a.deadThing(href="#" title="Do stuff to stuff") %span MF-8
               .
 
           %tr

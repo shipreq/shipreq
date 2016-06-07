@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html><head><title>CardBoard Req Table | ShipReq</title><script src="node_modules/jquery/dist/jquery.min.js"></script><link href="semantic/dist/semantic.min.css" rel="stylesheet" type="text/css" /><script src="semantic/dist/semantic.js"></script><style type="text/css">
+body {padding:1rem}
+.ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+.ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+
+h3.ui.header {margin-top: 2em; padding-bottom: 0.3em !important}
+
+.content.pic {text-align:center; padding-top:2.2em !important}
+.content.pic > i {font-size:3rem}
+
+/** workaround for https://github.com/Semantic-Org/Semantic-UI/issues/2978 */
+.active-hack {font-weight:700!important; box-shadow: none!important;}
+.active-hack.red {border-color: #DB2828!important; color: #DB2828!important;}
+.active-hack.orange {border-color: #F2711C!important; color: #F2711C!important;}
+
+#view-ctrls > div:not(:first-child) {margin-left: 1em}
+.sort > button {margin-left: 1ex !important}
+#cols-popup label {white-space: nowrap !important}
+
+.status i {margin-right:0}
+
+.sortCriterion:not(i) {cursor:move}
+
+#reqtable > thead > tr > th {padding: 4px}
+#reqtable > tbody > tr > td {padding: 4px; vertical-align:top}
+#reqtable a:hover {text-decoration: underline}
+#reqtable .selcol {width: 24px !important; text-align: center}
+.is-tag {padding: 4px 6px !important}
+.is-tag.dead {text-decoration: line-through;}
+.tagRef {color:#2185D0!important}
+.issueRef {color:#db2828!important}
+
+#reqtable > tbody > tr > td:nth-child(2) {white-space:nowrap}
+
+#filter-help .h {font-weight:bold}
+#filter-help table {margin-bottom:1em}
+#filter-help tr:nth-child(odd)  td.e {background:#fffde8}
+#filter-help tr:nth-child(even) td.e {background:#def2fc}
+#filter-help tr:nth-child(odd)  td.d {background:#fcf8e3}
+#filter-help tr:nth-child(even) td.d {background:#d9edf7}
+#filter-help .d {}
+#filter-help .d code {background:#fff; font-family: monospace}
+#filter-help .e {font-family: monospace; white-space:nowrap; color:#f39}
+
+.inline-edit:hover {
+  cursor:pointer;
+  outline:dotted 2px #FFA622;
+  background: #fff4e3 !important;
+  }
+.can-focus:hover {
+/*
+  xcursor:pointer;
+  xoutline:solid 1px #00b5ad;
+  outline:solid 1px #a333c8;
+*/
+}
+.has-focus {
+  xoutline:solid 2px #00b5ad;
+  outline:solid 2px #a333c8;
+  xoutline:solid 2px #6435c9;
+}
+
+#reqtableX >tbody >tr:hover > td {background: rgba(0,15,30,.03)}
+
+.texteditor {
+  width:100%;
+  margin: 0;
+  -webkit-appearance: none;
+  tap-highlight-color: rgba(255,255,255,0);
+  padding: .78571429em 1em;
+  background: #fff;
+  border: 1px solid rgba(34,36,38,.15);
+  outline: 0;
+  color: rgba(0,0,0,.87);
+  border-radius: .28571429rem;
+  box-shadow: 0 0 0 0 rgba(0, 0, 0, 0) inset;
+  -webkit-transition: color .1s ease,border-color .1s ease;
+  transition: color .1s ease,border-color .1s ease;
+  font-size: 1em;
+  line-height: 1.2857;
+
+  /*overflow: scroll;*/
+  resize: none;
+
+  padding:.3em .4em !important;
+  background: #fff4e3 !important;
+  xborder-color:#FFA622 !important;
+  border-color:rgba(255, 166, 34, .5) !important;
+}
+
+.edit-notes {
+  text-align:right;
+    font-size: 0.75rem;
+    line-height: 1em;
+    margin-bottom: 1rem;
+    color: #4c4c4c;
+}
+
+.mid-edit {padding:1ex !important}
+.mid-edit textarea:focus {border-width:2px !important; border-color:rgba(255, 166, 34, 1) !important}
+.preview-cont {margin:0 !important}
+.preview-header {padding-top: 0.3em !important; padding-bottom: 0.3em !important}
+.preview-body {
+  background-clip: border-box !important;
+  background-color: rgba(0, 0, 0, 0)  !important;
+  background-image: repeating-linear-gradient(-225deg,
+    rgba(0, 0, 0, 0),
+    rgba(0, 0, 0, 0)         5ex,
+    rgba(33, 186, 67, 0.07)  5ex,
+    rgba(33, 186, 67, 0.07) 10ex) !important;
+  background-origin: padding-box  !important;
+}
+
+.deadThing {text-decoration:line-through; color:rgba(0,0,0,.2); display:inline}
+.deadThing > span {color:rgba(0,0,0,.3)}
+
+tr.deadRow > td {
+  /* Same as #detail >tbody >tr >td:not(.life) in project-reqdetail-dead.haml */
+  background:rgba(0,0,0,.04);
+}
+
+</style></head><body><div class="ui menu borderless fixed inverted"><div class="item"><img src="logo-only-dark2.svg" /></div><div class="item"><div class="ui breadcrumb"><a href="projects.haml.html" class="section">Projects</a><i class="divider icon right angle"></i><a href="project-index.haml.html" class="section">CardBoard</a><div class="ui dropdown inline">&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="item active">CardBoard</div><div class="item">ShipReq</div></div></div><i class="divider icon right angle"></i><div class="section"><!--/ .active--><div class="ui dropdown inline">Req Table&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="header">Content</div><div class="item">Implication Graph</div><div class="item active">ReqTable</div><div class="header">Configuration</div><div class="item">Fields</div><div class="item">Issues</div><div class="item">Req Types</div><div class="item">Tags</div></div></div></div></div></div><div class="item ui right dropdown simple">@japgolly<div class="menu"><a href="account.haml.html" class="item">Account</a><div class="item">Logout</div></div></div></div><main style="margin-top:4rem"><div class="ui secondary pointing menu"><a onclick="alert('This would now set view to Default')" class="item ui dropdown onhover"><i class="icon star yellow"></i>Default<div class="menu"><div class="item"><i class="icon write"></i>Rename...</div><div class="item"><i class="icon save"></i>Replace with current</div><div class="item"><i class="icon star"></i>Set as default</div><div class="item"><i class="icon trash"></i>Delete</div></div></a><a href="project-reqtable.haml.html" class="item">High-level</a><a href="project-reqtable-empty.haml.html" class="item">Low-level</a><div class="item orange ui dropdown onhover active-hack">Unsaved view<div class="menu"><div class="item">Save as...</div></div></div><div class="right menu"><div style="padding-right:0 !important" onclick="$(&quot;#omfg2 &gt; *&quot;).toggle()" class="item" id="omfg2"><button data-content="Showing deleted content." class="ui button icon red has-popup"><i class="icon trash outline large white"></i></button><button data-content="Click to show deleted content." style="display:none" class="ui button icon has-popup"><i class="icon trash outline large grey"></i></button></div></div></div><section style="display:flex; align-content: center; margin: 2em 0" id="action-ctrls"><div><div class="ui labeled button"><a href="project-reqtable-new.haml.html" class="ui button green"><i class="icon plus"></i>New</a><div style="background-color: #00a632; color: #EEE;" class="ui dropdown label">UC<i class="icon dropdown"></i><div class="menu"><div class="item">BL: Business Rule</div><div class="item">BR: Business Requirement</div><div class="item">MF: Major Feature</div><div class="item">UC: Use Case</div><div class="item">Code group</div></div></div></div></div><div style="text-align: right; flex-grow: 1" class="status">Showing 20 rows: 20 <i title="requirements" class="icon cubes"></i> (17 + 3<i title="deleted" class="icon trash outline"></i>).</div></section><section style="display:flex; align-content: center; margin-top: 2em" id="view-ctrls"><div class="sort">Sort:<button class="ui button right labeled icon tiny basic sortCriterion"><i class="icon sort descending"></i>Priority</button><button class="ui button right labeled icon tiny basic sortCriterion"><i class="icon sort ascending"></i>ID</button></div><div style="flex-grow: 1" class="item space"></div><div class="item filter"><div class="ui left icon input right action"><i class="icon filter"></i><input type="text" placeholder="Filter..." /><div onclick="$('#filter-help').modal('show')" class="ui button icon"><i class="icon help circle"></i></div></div></div><div class="item"><button class="ui icon button" id="cols-button"><i class="icon columns"></i></button><div class="ui popup" id="cols-popup"><div><div class="ui checkbox"><input type="checkbox" /><label>Actors</label></div></div><div><div class="ui checkbox"><input type="checkbox" checked="checked" /><label>ID</label></div></div><div><div class="ui checkbox"><input type="checkbox" /><label>Fart</label></div></div><div><div class="ui checkbox"><input type="checkbox" checked="checked" /><label>Major Feature</label></div></div><div><div class="ui checkbox"><input type="checkbox" checked="checked" /><label>Tags</label></div></div></div></div></section><table class="ui table celled compact unstackable" id="reqtable"><thead><tr><th class="selcol"><input type="checkbox" /></th><th>ID</th><th>Title</th><th>Priority</th><th>Major Feature</th><th>Tags</th></tr></thead><tbody><tr><td class="selcol can-focus"><input type="checkbox" /></td><td class="can-focus"><a href="project-reqdetail.haml.html">FR-1</a></td><td class="inline-edit">Fix <span class="tagRef">focus</span> and keyboard nav.</td><td class="inline-edit"><div class="ui label blue is-tag">should</div></td><td class="inline-edit"><a href="#">MF-7</a></td><td class="inline-edit"><div class="ui label blue is-tag">bug</div><div class="ui label blue is-tag">focus</div></td></tr><tr><td class="selcol can-focus"><input type="checkbox" /></td><td class="can-focus"><a href="#">FR-2</a></td><td class="inline-edit">Do more stuff! <span class="issueRef">#TODO</span></td><td class="inline-edit"><div class="ui label blue is-tag">must</div></td><td class="inline-edit"><a href="#">MF-7</a>, <a href="#">MF-9</a></td><td class="inline-edit"></td></tr><tr class="deadRow"><td class="selcol can-focus"><input type="checkbox" /></td><td class="can-focus"><a href="#" class="deadThing"><span>FR-3</span></a></td><td class="inline-edit">This, <a href="#" class="deadThing"><span>FR-3</span></a>, is an item being edited.</td><td class="inline-edit"><div class="ui label blue is-tag">must</div></td><td class="inline-edit"></td><td class="inline-edit"><div class="ui label grey is-tag dead">backend</div><div class="ui label blue is-tag">bug</div></td></tr><tr><td class="selcol can-focus"><input type="checkbox" /></td><td class="can-focus"><a href="#">FR-4</a></td><td class="inline-edit">Ummm....?</td><td class="inline-edit"></td><td class="inline-edit"></td><td class="inline-edit"></td></tr></tbody></table></main></body>
+<script type="text/javascript">
+//<![CDATA[
+$('.ui.multiple.dropdown')
+  .find('.menu > .item > .ui.dropdown, .menu > .item.ui.dropdown, > .ui.dropdown:not(.simple), .inline.dropdown, .icon.buttons .button, .form .dropdown.selection')
+  .dropdown();
+
+$('.ui.dropdown:not(.onhover)').dropdown();
+$('.ui.dropdown.onhover').dropdown({on:"hover", delay: { show: 400 }});
+$('.ui.has-popup').popup({delay: { show: 400, hide: 0 }});
+$('#cols-button')
+  .popup({
+    inline   : true,
+    hoverable: true,
+    position : 'left center',
+    delay: {
+      show: 200,
+      hide: 300
+    }
+  })
+;
+
+$('.ui.modal').modal();
+$('.ui.accordion').accordion('open');
+
+// $('.ui.modal').modal('show');
+//]]>
+</script>
+</html>

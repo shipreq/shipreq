@@ -178,7 +178,7 @@
             .item
               %i.icon.trash
               Delete
-        %a.item High-level
+        %a.item(href="project-reqtable-dead.haml.html") High-level
         %a.item(href="project-reqtable-empty.haml.html") Low-level
         .item.orange.ui.dropdown.onhover.active-hack
           Unsaved view
@@ -222,11 +222,9 @@
             Restore (2)
         %div.status{style: "text-align: right; flex-grow: 1"}
           -# Showing 21 rows: 19 reqs (17 live + 3 dead - 1 filtered) + 2 dups.
-          = "Showing 24 rows: 19"
+          = "Showing 21 rows: 18"
           %i.icon.cubes{title: "requirements"}
-          = " (17 + 3"
-          %i.icon.trash.outline{title: "deleted"}
-          = " - 1"
+          = " (17 - 1"
           %i.icon.filter{title: "excluded by the filter"}
           = " + 2"
           %i.icon.copy{title: "reappearances due to sorting"}
