@@ -124,9 +124,6 @@ class FilterParser(val input: ParserInput) extends ParsingUtil {
       ('s' ~ push(mkImplies)) | ("dBy" ~ push(mkImpliedBy))
       ) ~ ':' ~!~ reqs ~ end ~> mkImplication)
 
-  def not: Rule1[FilterSpec] =
-    rule('-' ~!~ (('-' ~!~ expr) | (expr ~> Not)))
-
   def positive: Rule1[FilterSpec] =
     rule(allOf | anyOf | quotedText | regex | hashRef | presence | lack | implication | reqType | simpleText)
 

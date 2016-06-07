@@ -21,6 +21,8 @@ object FilterAst {
     case object AnyIssue extends Attr("issues", "issue")
     case object AnyTag   extends Attr("tags", "tag")
 
+    implicit def univEq: UnivEq[Attr] = UnivEq.derive
+
     val values: NonEmptyVector[Attr] =
       UtilMacros.adtValues[Attr]
 
@@ -50,12 +52,13 @@ object FilterAst {
   case class TextPattern(pattern: Pattern) extends FilterAst {
     override def hashCode = pattern.pattern.##
     override def equals(o: Any) = o match {
-      case TextPattern(q) => (pattern.pattern == q.pattern) && (pattern.flags == q.flags)
+      case TextPattern(q) => (pattern.pattern ==* q.pattern) && (pattern.flags ==* q.flags)
       case _              => false
     }
   }
+  implicit def univEqTextPattern: UnivEq[TextPattern] = UnivEq.force
 
-  implicit def equality: UnivEq[FilterAst] = UnivEq.force
+  implicit def univEq: UnivEq[FilterAst] = UnivEq.derive
 
   // -------------------------------------------------------------------------------------------------------------------
 
