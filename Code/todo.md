@@ -1,11 +1,7 @@
 * Group req types in filter from ALL to ANY.
 * Say "no implications" in imp graph
-* Show dead IDs on ReqDetail screen.
-* Show dead IDs on ReqTable screen.
 
 * Determine UI for:
-  * General
-    * rich text editor help
   * Deletion screen
   * Cfg Fields
   * Cfg Issues

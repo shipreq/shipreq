@@ -40,15 +40,15 @@
 
       #reqtable > tbody > tr > td:nth-child(2) {white-space:nowrap}
 
-      #filter-help .h {font-weight:bold}
-      #filter-help table {margin-bottom:1em}
-      #filter-help tr:nth-child(odd)  td.e {background:#fffde8}
-      #filter-help tr:nth-child(even) td.e {background:#def2fc}
-      #filter-help tr:nth-child(odd)  td.d {background:#fcf8e3}
-      #filter-help tr:nth-child(even) td.d {background:#d9edf7}
-      #filter-help .d {}
-      #filter-help .d code {background:#fff; font-family: monospace}
-      #filter-help .e {font-family: monospace; white-space:nowrap; color:#f39}
+      .syntax-help .h {font-weight:bold}
+      .syntax-help table {margin-bottom:1em}
+      .syntax-help tr:nth-child(odd)  td.e {background:#fffde8}
+      .syntax-help tr:nth-child(even) td.e {background:#def2fc}
+      .syntax-help tr:nth-child(odd)  td.d {background:#fcf8e3}
+      .syntax-help tr:nth-child(even) td.d {background:#d9edf7}
+      .syntax-help .d {}
+      .syntax-help .d code {background:#fff; font-family: monospace}
+      .syntax-help .e {font-family: monospace; white-space:nowrap; color:#f39}
 
       .inline-edit:hover {
         cursor:pointer;
@@ -127,6 +127,8 @@
       .reqtype .ui.buttons button:first-child:hover {color:#21BA45}
       .reqtype .ui.buttons button:last-child:hover {color:#DB2828}
 
+      .blueHover:hover {color:#2185D0!important}
+
   %body
 
     .ui.menu.borderless.fixed.inverted
@@ -166,6 +168,274 @@
         .menu
           %a.item{href: "account.haml.html"} Account
           .item Logout
+
+    -# =============================================================================================
+
+    .ui.long.modal.syntax-help#filter-help
+      %i.close.icon
+      .header Filter Help
+      .content
+        -# %table.ui.celled.table.blue
+          %thead
+            %tr
+              %th(colspan=2) Text
+          %tbody
+            %tr
+              %td.d
+                To find requirements that contain a certain word somewhere in its text, just type the word you're looking for.
+                =" This is case-insensitive, so it doesn't matter whether text is upper- or lower-case."
+              %td.e dividend
+            %tr
+              %td.d
+                To search for a phrase or sequence of words, surround the search phrase with one of the following:
+                %ol
+                  %li quotation marks (<code>"</code>)
+                  %li single quotation marks (<code>'</code>)
+                  %li backticks (<code>&#96;</code>)
+                As above, this is case-insensitive, so it doesn't matter whether text is upper- or lower-case.
+              %td.e
+                "end of day"<br>
+                'end of day'<br>
+                `end of day`
+            %tr
+              %td.d
+                You can also use <a href="http://www.regular-expressions.info/">regular expressions</a> to search requirement text.
+                Unlike above, this is case-sensitive unless you specify the case-insensitivity flag: <code>(?i)</code>.
+              %td.e
+                ="/.*end[ -]*of[ -]*day.*/<br>/(?i).*end[ -]*of[ -]*day.*/"
+
+        .ui.styled.accordion.fluid
+          .title.active
+            %i.dropdown.icon
+            Text
+          .content.active
+            %table.ui.celled.table
+              %tbody
+                %tr
+                  %td.d
+                    To find requirements that contain a certain word somewhere in its text, just type the word you're looking for.
+                    =" This is case-insensitive, so it doesn't matter whether text is upper- or lower-case."
+                  %td.e dividend
+                %tr
+                  %td.d
+                    To search for a phrase or sequence of words, surround the search phrase with one of the following:
+                    %ol
+                      %li quotation marks (<code>"</code>)
+                      %li single quotation marks (<code>'</code>)
+                      %li backticks (<code>&#96;</code>)
+                    As above, this is case-insensitive, so it doesn't matter whether text is upper- or lower-case.
+                  %td.e
+                    "end of day"<br>
+                    'end of day'<br>
+                    `end of day`
+                %tr
+                  %td.d
+                    You can also use <a href="http://www.regular-expressions.info/">regular expressions</a> to search requirement text.
+                    Unlike above, this is case-sensitive unless you specify the case-insensitivity flag: <code>(?i)</code>.
+                  %td.e
+                    ="/.*end[ -]*of[ -]*day.*/<br>/(?i).*end[ -]*of[ -]*day.*/"
+
+          .title
+            %i.dropdown.icon
+            Issues &amp; Tags
+          .content
+            %table.ui.celled.table
+              %tbody
+                %tr
+                  %td.d
+                    To find requirements that have a certain issue or tag, enter <code>#</code> followed by the issue or tag.
+                  %td.e
+                    ="#draft"
+                %tr
+                  %td.d
+                    You can also filter by whether a requirement has any issues or any tags by specifying <code>has:</code> followed by either:
+                    %ol
+                      %li %code issues
+                      %li %code tags
+                    As above, this is case-insensitive, so it doesn't matter whether text is upper- or lower-case.
+                  %td.e
+                    has:issues<br>
+                    has:tags<br>
+                %tr
+                  %td.d
+                    Like above, you can also search for requirements that <em>don't<em> have any issues or tags by changing <code>has</code> to <code>no</code>.
+                  %td.e
+                    no:issues<br>
+                    no:tags<br>
+
+          .title
+            %i.dropdown.icon
+            Req Type
+          .content
+            %table.ui.celled.table
+              %tbody
+                %tr
+                  %td.d
+                    To filter requirements by a certain req-type, enter the req-type's mnemonic (in upper-case).
+                  %td.e
+                    ="FR"
+
+          .title
+            %i.dropdown.icon
+            Implication
+          .content
+            %table.ui.celled.table
+              %tbody
+                %tr
+                  %td.d
+                    To filter requirements by their implications, start with <code>implies:</code> or <code>impliedBy:</code>, then enter a list of requirements seperated by a comma (with no spaces in between).
+                  %td.e
+                    ="impliedBy:MF-3<br>"
+                    ="implies:CO-3,FR-20"
+                %tr
+                  %td.d
+                    To specify a type of subject (eg. show me everything implied by BR business rules), just enter the req-type.
+                  %td.e
+                    impliedBy:BR
+                %tr
+                  %td.d
+                    To specify a number of subjects of the same type, surround the numbers with braces (<code>{...}</code>) and separate by commas. You can also use a dash for a range.
+                  %td.e
+                    implies:FR-{1,3,5,7}<br>
+                    implies:FR-{10-20}
+                %tr
+                  %td.d
+                    When multiple requirements are specified, the filter matches if a any match.<br>
+                    So <code>impliedBy:MF-{1,2}</code> will match everything that implied by MF-1 and everything implied by MF-2.<br>
+                    To match all instead of any, use multiple terms.
+                    So <code>impliedBy:MF-1 impliedBy:MF-2</code> will match everything that implied by both MF-1 and MF-2.<br>
+                  %td.e
+                    impliedBy:MF-1 impliedBy:MF-2
+                %tr
+                  %td.d
+                    Finally, all of the above abilities can be combined; separate by comma as usual.
+                  %td.e
+                    impliedBy:MF,FR-{1-10,20,30},CO-7
+
+          .title
+            %i.dropdown.icon
+            Negation & Combination
+          .content
+            %table.ui.celled.table
+              %tbody
+                %tr
+                  %td.d
+                    To negate a clause, enter a minus (<code>-</code>) before it.<br>
+                    This works for anything, including text searches.
+                  %td.e
+                    ="-dividend<br>"
+                    ="-#draft<br>"
+                    ="-impliedBy:MF<br>"
+                    ="-(#v1.0 #released)"
+                %tr
+                  %td.d
+                    To specify multiple mandatory criteria, separate them by a space. Every criterion will need to match for a requirement to be allowed by the filter.
+                    Optionally, you can wrap them in parenthesis (<code>(...)</code>) and treat it as a single clause which can then be negated.
+                  %td.e
+                    ="#v1.0 #released<br>"
+                    ="(#v1.0 #released)<br>"
+                %tr
+                  %td.d
+                    While the above requires that all criteria need match, you can also specify that any need match. In order words, at least one criterion will need to match.<br>
+                    To do so, wrap criteria in braces (<code>{...}</code>).<br>
+                    For example, <code>{#v1.0 #v1.1}</code> will match:
+                    %ul
+                      %li requirements tagged with v1.0
+                      %li requirements tagged with v1.1
+                      %li requirements tagged with v1.0 and v1.1
+                  %td.e
+                    {MF FR}<br>
+                    {has:issues #bug}
+
+          .title
+            %i.dropdown.icon
+            Advanced Examples
+          .content
+            %table.ui.celled.table
+              %tbody
+                %tr
+                  %td.d
+                    The example to the right selects all released functional requirements (FR) and use cases (UC), that either:
+                    %ul
+                      %li have open issues but no #bug tag.
+                      %li don't have an implying major feature (MF).
+                  %td.e
+                    ="#released {FR UC}<br>{(has:issues -#bug) -impliedBy:MF}"
+
+    -# =============================================================================================
+
+    .ui.long.modal.syntax-help#richTextEditor-help
+      %i.close.icon
+      .header Rich Text Editor Help
+      .content
+        .ui.styled.accordion.fluid
+          .title.active
+            %i.dropdown.icon
+            References
+          .content.active
+            %table.ui.celled.table
+              %tbody
+                %tr
+                  %td.d Requirements can be referenced by putting the ID inside square brackets.
+                  %td.e [FR-3]
+                %tr
+                  %td.d Use case steps can be referenced by putting the use case ID and step number, inside square brackets.
+                  %td.e [UC-2.0.3.a]
+                %tr
+                  %td.d Codes can be referenced by putting the code inside square brackets.
+                  %td.e [backend.backup.times]
+
+          .title
+            %i.dropdown.icon
+            Issues &amp; Tags
+          .content
+            %table.ui.celled.table
+              %tbody
+                %tr
+                  %td.d
+                    Issues can be declared in text by typing a hash (<code>#</code>) followed by the issue.
+                  %td.e
+                    ="#issue"
+                %tr
+                  %td.d Tags can be declared in text by typing a hash (<code>#</code>) followed by the tag.
+                  %td.e
+                    ="#tag"
+
+          .title
+            %i.dropdown.icon
+            Multiline
+          .content
+            %table.ui.celled.table
+              %tbody
+                %tr
+                  %td.d A list of bullet points can be created by starting new lines with an asterix (<code>*</code>) followed by a space.
+                  %td.e
+                    ="* item 1<br>* item 2"
+
+          .title
+            %i.dropdown.icon
+            Other
+          .content
+            %table.ui.celled.table
+              %tbody
+                %tr
+                  %td.d URLs are detected automatically, and presented as links.
+                  %td.e https://google.com
+                %tr
+                  %td.d Emails are detected automatically, and presented as links.
+                  %td.e bob@bobs-office-supplies.com
+                %tr
+                  %td.d
+                    Mathematical expressions can be entered in TeX format, by surrounding in <code>&lt;math&gt;...&lt;/math&gt;</code>.
+                    %br
+                    %br
+                    ="For more detail, see "
+                    %a(href="https://khan.github.io/KaTeX/" target="_blank") KaTeX
+                    =" or "
+                    %a(href="http://utensil-site.github.io/available-in-katex/" target="_blank") Symbols and Functions in KaTeX
+                    .
+                  %td.e
+                    &lt;math&gt;{1 \over n} + x^2&lt;/math&gt;
 
     -# =============================================================================================
     %main{style: "margin-top:4rem"}
@@ -238,7 +508,7 @@
           = " + 2"
           %i.icon.copy{title: "reappearances due to sorting"}
           = ") + 3"
-          %i.icon.folder.outline{title: "code groups"}
+          %i.icon.open.folder.outline{title: "code groups"}
           .
           %br/
           %i.icon.checkmark.box{title: "selected"}
@@ -288,197 +558,6 @@
               .ui.checkbox
                 %input{type: "checkbox", checked: "checked"}
                 %label Tags
-
-      .ui.long.modal#filter-help
-        %i.close.icon
-        .header Filter Help
-        .content
-          -# %table.ui.celled.table.blue
-            %thead
-              %tr
-                %th(colspan=2) Text
-            %tbody
-              %tr
-                %td.d
-                  To find requirements that contain a certain word somewhere in its text, just type the word you're looking for.
-                  =" This is case-insensitive, so it doesn't matter whether text is upper- or lower-case."
-                %td.e dividend
-              %tr
-                %td.d
-                  To search for a phrase or sequence of words, surround the search phrase with one of the following:
-                  %ol
-                    %li quotation marks (<code>"</code>)
-                    %li single quotation marks (<code>'</code>)
-                    %li backticks (<code>&#96;</code>)
-                  As above, this is case-insensitive, so it doesn't matter whether text is upper- or lower-case.
-                %td.e
-                  "end of day"<br>
-                  'end of day'<br>
-                  `end of day`
-              %tr
-                %td.d
-                  You can also use <a href="http://www.regular-expressions.info/">regular expressions</a> to search requirement text.
-                  Unlike above, this is case-sensitive unless you specify the case-insensitivity flag: <code>(?i)</code>.
-                %td.e
-                  ="/.*end[ -]*of[ -]*day.*/<br>/(?i).*end[ -]*of[ -]*day.*/"
-          .ui.styled.accordion.fluid
-
-            .title.active
-              %i.dropdown.icon
-              Text
-            .content.active
-              %table.ui.celled.table
-                %tbody
-                  %tr
-                    %td.d
-                      To find requirements that contain a certain word somewhere in its text, just type the word you're looking for.
-                      =" This is case-insensitive, so it doesn't matter whether text is upper- or lower-case."
-                    %td.e dividend
-                  %tr
-                    %td.d
-                      To search for a phrase or sequence of words, surround the search phrase with one of the following:
-                      %ol
-                        %li quotation marks (<code>"</code>)
-                        %li single quotation marks (<code>'</code>)
-                        %li backticks (<code>&#96;</code>)
-                      As above, this is case-insensitive, so it doesn't matter whether text is upper- or lower-case.
-                    %td.e
-                      "end of day"<br>
-                      'end of day'<br>
-                      `end of day`
-                  %tr
-                    %td.d
-                      You can also use <a href="http://www.regular-expressions.info/">regular expressions</a> to search requirement text.
-                      Unlike above, this is case-sensitive unless you specify the case-insensitivity flag: <code>(?i)</code>.
-                    %td.e
-                      ="/.*end[ -]*of[ -]*day.*/<br>/(?i).*end[ -]*of[ -]*day.*/"
-
-            .title
-              %i.dropdown.icon
-              Issues &amp; Tags
-            .content
-              %table.ui.celled.table
-                %tbody
-                  %tr
-                    %td.d
-                      To find requirements that have a certain issue or tag, enter <code>#</code> followed by the issue or tag.
-                    %td.e
-                      ="#draft"
-                  %tr
-                    %td.d
-                      You can also filter by whether a requirement has any issues or any tags by specifying <code>has:</code> followed by either:
-                      %ol
-                        %li %code issues
-                        %li %code tags
-                      As above, this is case-insensitive, so it doesn't matter whether text is upper- or lower-case.
-                    %td.e
-                      has:issues<br>
-                      has:tags<br>
-                  %tr
-                    %td.d
-                      Like above, you can also search for requirements that <em>don't<em> have any issues or tags by changing <code>has</code> to <code>no</code>.
-                    %td.e
-                      no:issues<br>
-                      no:tags<br>
-
-            .title
-              %i.dropdown.icon
-              Req Type
-            .content
-              %table.ui.celled.table
-                %tbody
-                  %tr
-                    %td.d
-                      To filter requirements by a certain req-type, enter the req-type's mnemonic (in upper-case).
-                    %td.e
-                      ="FR"
-
-            .title
-              %i.dropdown.icon
-              Implication
-            .content
-              %table.ui.celled.table
-                %tbody
-                  %tr
-                    %td.d
-                      To filter requirements by their implications, start with <code>implies:</code> or <code>impliedBy:</code>, then enter a list of requirements seperated by a comma (with no spaces in between).
-                    %td.e
-                      ="impliedBy:MF-3<br>"
-                      ="implies:CO-3,FR-20"
-                  %tr
-                    %td.d
-                      To specify a type of subject (eg. show me everything implied by BR business rules), just enter the req-type.
-                    %td.e
-                      impliedBy:BR
-                  %tr
-                    %td.d
-                      To specify a number of subjects of the same type, surround the numbers with braces (<code>{...}</code>) and separate by commas. You can also use a dash for a range.
-                    %td.e
-                      implies:FR-{1,3,5,7}<br>
-                      implies:FR-{10-20}
-                  %tr
-                    %td.d
-                      When multiple requirements are specified, the filter matches if a any match.<br>
-                      So <code>impliedBy:MF-{1,2}</code> will match everything that implied by MF-1 and everything implied by MF-2.<br>
-                      To match all instead of any, use multiple terms.
-                      So <code>impliedBy:MF-1 impliedBy:MF-2</code> will match everything that implied by both MF-1 and MF-2.<br>
-                    %td.e
-                      impliedBy:MF-1 impliedBy:MF-2
-                  %tr
-                    %td.d
-                      Finally, all of the above abilities can be combined; separate by comma as usual.
-                    %td.e
-                      impliedBy:MF,FR-{1-10,20,30},CO-7
-
-            .title
-              %i.dropdown.icon
-              Negation & Combination
-            .content
-              %table.ui.celled.table
-                %tbody
-                  %tr
-                    %td.d
-                      To negate a clause, enter a minus (<code>-</code>) before it.<br>
-                      This works for anything, including text searches.
-                    %td.e
-                      ="-dividend<br>"
-                      ="-#draft<br>"
-                      ="-impliedBy:MF<br>"
-                      ="-(#v1.0 #released)"
-                  %tr
-                    %td.d
-                      To specify multiple mandatory criteria, separate them by a space. Every criterion will need to match for a requirement to be allowed by the filter.
-                      Optionally, you can wrap them in parenthesis (<code>(...)</code>) and treat it as a single clause which can then be negated.
-                    %td.e
-                      ="#v1.0 #released<br>"
-                      ="(#v1.0 #released)<br>"
-                  %tr
-                    %td.d
-                      While the above requires that all criteria need match, you can also specify that any need match. In order words, at least one criterion will need to match.<br>
-                      To do so, wrap criteria in braces (<code>{...}</code>).<br>
-                      For example, <code>{#v1.0 #v1.1}</code> will match:
-                      %ul
-                        %li requirements tagged with v1.0
-                        %li requirements tagged with v1.1
-                        %li requirements tagged with v1.0 and v1.1
-                    %td.e
-                      {MF FR}<br>
-                      {has:issues #bug}
-
-            .title
-              %i.dropdown.icon
-              Advanced Examples
-            .content
-              %table.ui.celled.table
-                %tbody
-                  %tr
-                    %td.d
-                      The example to the right selects all released functional requirements (FR) and use cases (UC), that either:
-                      %ul
-                        %li have open issues but no #bug tag.
-                        %li don't have an implying major feature (MF).
-                    %td.e
-                      ="#released {FR UC}<br>{(has:issues -#bug) -impliedBy:MF}"
 
       -# =============================================================================================
       %table#reqtable.ui.table.celled.compact.unstackable
@@ -538,6 +617,8 @@
               .edit-notes
                 -# enter for new line, ctrl-enter to save, escape to cancel.
                 ctrl-enter to save, escape to cancel.
+                &nbsp;
+                %i.icon.help.circle.blueHover(style="cursor:pointer" onclick="$('#richTextEditor-help').modal('show')")
               .ui.segments.preview-cont.raised
                 .ui.segment.preview-header.inverted.green
                   Preview
