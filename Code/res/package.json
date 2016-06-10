@@ -27,5 +27,6 @@
     "gulp-minify-css"  : "*",
     "gulp-rename"      : "*",
     "gulp"             : "*",
-    "gulp-uglify"      : "*"}
+    "gulp-uglify"      : "*",
+    "json5"            : "*"}
 }
