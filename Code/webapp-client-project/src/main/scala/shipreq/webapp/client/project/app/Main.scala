@@ -22,7 +22,6 @@ object Main extends ClientFnImpl(ClientFnDecl.ProjectSpa) {
   }
 
   override def run(initData: InitDataForProjectSpa): Unit = {
-    println(initData.project)
 
     val cp = ClientProtocol.Default
     BaseStyles.addToDocument()

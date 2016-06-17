@@ -6,10 +6,11 @@ import scala.scalajs.js
 /** Wrapper for JQuery with Semantic UI extensions.
   */
 @js.native
-private[semantic] trait JQuery extends js.Object {
+trait JQuery extends js.Object {
 
   def find(sel: String): JQuery = js.native
 
+  def dimmer  (options: js.Object = js.native): Unit = js.native
   def dropdown(options: js.Object = js.native): Unit = js.native
 }
 

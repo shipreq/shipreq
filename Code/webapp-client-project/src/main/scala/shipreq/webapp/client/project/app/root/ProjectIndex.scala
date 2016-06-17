@@ -3,9 +3,13 @@ package shipreq.webapp.client.project.app.root
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.univeq._
-import Routes.{Page, RouterCtl}
+import scala.scalajs.js
+import scalacss.ScalaCssReact._
 import shipreq.base.util.{Intersection, NonEmptyVector}
-import shipreq.webapp.client.base.ui.semantic.{Colour, Dropdown, Icon}
+import shipreq.webapp.client.base.ui.BaseStyles
+import shipreq.webapp.client.base.ui.semantic.{Colour, Dropdown, Header, Icon, JQuery, UsesSemanticUiManually}
+import shipreq.webapp.client.project.app.Style.{index => *}
+import Routes.{Page, RouterCtl}
 
 object ProjectIndex {
 
@@ -13,33 +17,34 @@ object ProjectIndex {
                              final val icon    : Icon,
                              final val subtitle: String)
   object Item {
-    case object ReqTable    extends Item("Req Table"        , Icon.Cubes         , "View and edit all reqs.")
-    case object ReqDetail   extends Item("Req Lookup"       , Icon.Cube          , "View and edit a single req.")
-    case object ImpGraph    extends Item("Implication Graph", Icon.ShareAlternate, "TODO")
-    case object CfgFields   extends Item("Fields"           , Icon.ListLayout    , "TODO")
-    case object CfgIssues   extends Item("Issues"           , Icon.WarningSign   , "TODO")
-    case object CfgReqTypes extends Item("Req Types"        , Icon.Inbox         , "TODO")
-    case object CfgTags     extends Item("Tags"             , Icon.Tags          , "TODO")
+
+    sealed abstract class WithPage(title   : String,
+                                   icon    : Icon,
+                                   val page: Page,
+                                   subtitle: String) extends Item(title, icon, subtitle)
+
+    case object ReqTable    extends WithPage("Req Table"        , Icon.Cubes         , Page.ReqTable   , "View and edit all reqs.")
+    case object ImpGraph    extends WithPage("Implication Graph", Icon.ShareAlternate, Page.ImpGraph   , "TODO")
+    case object CfgFields   extends WithPage("Fields"           , Icon.ListLayout    , Page.CfgFields  , "TODO")
+    case object CfgIssues   extends WithPage("Issues"           , Icon.WarningSign   , Page.CfgIssues  , "TODO")
+    case object CfgReqTypes extends WithPage("Req Types"        , Icon.Inbox         , Page.CfgReqTypes, "TODO")
+    case object CfgTags     extends WithPage("Tags"             , Icon.Tags          , Page.CfgTags    , "TODO")
+    case object ReqDetail   extends Item    ("Req Lookup"       , Icon.Cube          , "View and edit a single req.")
 
     implicit def univEq: UnivEq[Item] = UnivEq.derive
 
     val ToPage: Intersection[Item, Page] =
       Intersection[Item, Page] {
-        case ReqTable     => Some(Page.ReqTable)
-        case ReqDetail    => None
-        case ImpGraph     => Some(Page.ImpGraph)
-        case CfgFields    => Some(Page.CfgFields)
-        case CfgIssues    => Some(Page.CfgIssues)
-        case CfgReqTypes  => Some(Page.CfgReqTypes)
-        case CfgTags      => Some(Page.CfgTags)
+        case w: WithPage => Some(w.page)
+        case ReqDetail   => None
       } {
         case Page.ReqTable     => Some(ReqTable)
-        case Page.ReqDetail(_) => Some(ReqDetail)
         case Page.ImpGraph     => Some(ImpGraph)
         case Page.CfgFields    => Some(CfgFields)
         case Page.CfgIssues    => Some(CfgIssues)
         case Page.CfgReqTypes  => Some(CfgReqTypes)
         case Page.CfgTags      => Some(CfgTags)
+        case Page.ReqDetail(_) => Some(ReqDetail)
         case Page.Index        => None
       }
   }
@@ -80,88 +85,73 @@ object ProjectIndex {
       )
     ).toList
 
-  /*
-      %h3.ui.dividing.header
-        %i.icon.file.text.outline
-        .content Content
+  @UsesSemanticUiManually
+  final class Backend($: BackendScope[Props, Unit]) {
 
-      .ui.cards.three
+    val headerStyle = Header.Style(Header.Type.H3, Header.Attr.Dividing, other = *.header)
 
-        .ui.card.blue{onclick: "location.href='project-reqtable.haml.html'", style: "cursor:pointer"}
-          .content.pic
-            %i.icon.cubes
-            -# %i.icon.table
-          .content
-            .header Req Table
-            .description View and edit all reqs.
+    private val dimIt = "xd"
 
-        .ui.card.blue
-          .content.pic.blurring.omg-dimmable
-            .ui.inverted.dimmer
-              .content
-                .center
-                  .ui.search
-                    .ui.icon.input
-                      %input.prompt{type: "text", size: "18"}/
-                      %i.icon.search
-            %i.icon.cube
-            -# %i.icon.file.text.outline
-          .content
-            .header Req Lookup
-            .description View and edit a single req.
+    def enableDimmer: Callback =
+      Callback {
+        val opt = js.Dynamic.literal(on = "hover")
+        JQuery($.getDOMNode()).find("." + dimIt).dimmer(opt)
+      }
 
-        .ui.card.blue
-          .content.pic
-            %i.icon.share.alternate
-          .content
-            .header Implication Graph
-            .description ???
+    def renderCard(cat: Category, item: Item, rc: RouterCtl): TagMod = {
+      val base = <.div(^.cls := "ui card " + (cat.cardColour.cls: String))
 
-      %h3.ui.dividing.header
-        %i.icon.setting
-        -# %i.icon.ellipsis.vertical
-        .content Configuration
+      val iconCont = <.div(^.cls := "content", *.cardIconCont)
 
-      .ui.cards.three
+      val icon = item.icon.withColour(cat.iconColour).tag(*.cardIcon)
 
-        .ui.card.yellow
-          .content.pic
-            %i.icon.list.layout.grey
-          .content
-            .header Fields
-            .description ???
+      val contentTag =
+        <.div(^.cls := "content",
+          <.div(^.cls := "header", item.title),
+          <.div(^.cls := "description", item.subtitle))
 
-        .ui.card.yellow
-          .content.pic
-            %i.icon.warning.sign.grey
-          .content
-            .header Issues
-            .description ???
+      item match {
+        case i: Item.WithPage =>
+          base(
+            *.linkCard,
+            rc.setOnLinkClick(i.page),
+            iconCont(icon),
+            contentTag)
 
-        .ui.card.yellow
-          .content.pic
-            %i.icon.inbox.grey
-          .content
-            .header Req Types
-            .description ???
-
-        .ui.card.yellow
-          .content.pic
-            %i.icon.tags.grey
-          .content
-            .header Tags
-            .description ???
-
-  :javascript
-    $('.omg-dimmable').dimmer({on: 'hover'});
-   */
-
-  val Component = ReactComponentB[RouterCtl]("ProjectHome")
-    .render_P { ctl =>
-      import Page._
-      <.ul(
-        Vector(ReqTable, ImpGraph, CfgFields, CfgIssues, CfgReqTypes, CfgTags).map(p =>
-          <.li(ctl.link(p)(p.toString))))
+        case i@Item.ReqDetail =>
+          base(
+            iconCont(^.cls := ("blurring " + dimIt),
+              <.div(^.cls := "ui inverted dimmer",
+                <.div(^.cls := "content",
+                  <.div(^.cls := "center",
+                    <.div(^.cls := "ui search",
+                      <.div(^.cls := "ui icon input",
+                        <.input.text(^.cls := "prompt", ^.size := 18),
+                        Icon.Search.tag))))),
+              icon),
+            contentTag)
+      }
     }
+
+    def renderCategory(cat: Category, rc: RouterCtl): TagMod = {
+      val header = Header(headerStyle, cat.icon, cat.title)
+
+      val cards = <.div(^.cls := "ui cards three", *.cardsCont,
+        cat.items.whole.map(renderCard(cat, _, rc)))
+
+      header + cards
+    }
+
+    def render(rc: RouterCtl): ReactElement =
+      <.main(
+        BaseStyles.maxWidthContainer,
+        Category.All.foldLeft(EmptyTag)((q, c) => q + renderCategory(c, rc)))
+  }
+
+  type Props = RouterCtl
+
+  val Component = ReactComponentB[Props]("ProjectIndex")
+    .renderBackend[Backend]
+    .componentDidMount(_.backend.enableDimmer)
     .build
 }

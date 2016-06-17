@@ -74,6 +74,29 @@ object Style extends StyleSheet.Inline {
     hasError)
 
   // ===================================================================================================================
+  object index {
+
+    val header = style(
+      marginTop(1.8 em).important,
+      marginBottom(0.2 em).important,
+      paddingTop(0.8 em).important,
+      paddingBottom(0.3 em).important)
+
+    val cardsCont = style(
+      marginTop(`0`).important)
+
+    val linkCard = style(
+      cursor.pointer)
+
+    val cardIconCont = style(
+      textAlign.center,
+      paddingTop(2.4 em).important)
+
+    val cardIcon = style(
+      fontSize(3 rem).important)
+  }
+
+  // ===================================================================================================================
   // Config screens
   object cfg {
 
@@ -497,6 +520,7 @@ object Style extends StyleSheet.Inline {
   // ===================================================================================================================
 
   initInnerObjects(
+    index.header,
     cfg.deadMnemonic,
     reqtable.sortEditor.dragArea,
     reqtable.sortCriteriaEditor.conclusiveColumnName,

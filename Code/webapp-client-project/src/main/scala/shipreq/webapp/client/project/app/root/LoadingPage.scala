@@ -2,10 +2,9 @@ package shipreq.webapp.client.project.app.root
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
-import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data.{ProjectCatalogue, Username}
-import shipreq.webapp.client.base.ui.semantic.Breadcrumb
-import shipreq.webapp.client.base.ui.{BaseStyles, MemberNavBar, ProjectItem, inlineStyle}
+import shipreq.webapp.client.base.ui.semantic.{Breadcrumb, UsesSemanticUiManually}
+import shipreq.webapp.client.base.ui.{BaseStyles, MemberNavBar, inlineStyle}
 
 object LoadingPage {
 
@@ -14,6 +13,7 @@ object LoadingPage {
     @inline def render = Component(this)
   }
 
+  @UsesSemanticUiManually
   final class Backend($: BackendScope[Props, Unit]) {
 
     def render(p: Props): ReactElement =

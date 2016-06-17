@@ -62,4 +62,6 @@ package object semantic {
     def <+(h: HasClass) =
       self addClass h.cls
   }
+
+  final class UsesSemanticUiManually extends scala.annotation.StaticAnnotation
 }
