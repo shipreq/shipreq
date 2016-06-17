@@ -8,7 +8,7 @@ cat res/semantic/src/themes/default/elements/icon.overrides \
   | grep -e 'i\.icon\.[^ ]*:\(before\|after\)' \
   | perl -pe 's/:.+//; s/i\.icon\.//; s/\./ /g' \
   | sort -u \
-  | perl -pe 's/^(.+)$/$1! extends Icon("$1")/' \
+  | perl -pe 's/^(.+)$/$1! extends Unmodified("$1")/' \
   | perl -pe "$x$x$x$x$x"' s/^(.)/\u$1/; s/^(.+)!/case object $1!/' \
   | column -t -o ' ' -s !
 
