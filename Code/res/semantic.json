@@ -35,6 +35,7 @@
         "statistic",
         "dimmer",
         "dropdown",
+        "search",
         "transition"
     ],
     "version": "2.1.8"

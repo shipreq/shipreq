@@ -59,7 +59,7 @@
     //"popup",
     //"progress",
     //"rating",
-    //"search",
+    "search",      // Used in ProjectIndex → ReqDetail card → search prompt
     //"shape",
     //"sidebar",
     //"sticky",
