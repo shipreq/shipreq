@@ -5,7 +5,6 @@ import scalajs.LinkingInfo.productionMode
 import scala.collection.mutable
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
-import scalajs.js
 import Protocol._
 
 trait Client[Cmd[_], R[_]] {
@@ -25,7 +24,6 @@ object Client extends Settings {
       if (productionMode || !navigator.userAgent.contains("Phantom"))
         worker.onerror = (e: ErrorEvent) => onError(e.message)
       worker.onmessage = Interface.onMessageFn(hnd)
-        .asInstanceOf[js.Function1[js.Any, Unit]] // TODO Remove after scala-dom-js upgrade
     }
 
     override def post(msg: Message[Encoded]): Unit =

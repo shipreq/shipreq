@@ -103,7 +103,7 @@ object WebappBuild {
       .enablePlugins(ScalaJSPlugin)
       .dependsOn(baseUtilJs, webappBaseJs, webappBaseTestJs % "test->compile")
       .depsForJs(
-        Scalaz.effect ++ React.most ++ Monocle.macros ++ ScalaCSS.react ++
+        Scalaz.effect ++ React.most ++ Monocle.macros ++ ScalaCSS.react ++ scalajsDom ++
         μPickle ++ boopickle)
       .configure(
         Common.jsSettings(NeedDom),
@@ -176,7 +176,7 @@ object WebappBuild {
       .enablePlugins(ScalaJSPlugin)
       .dependsOn(webappClientBase, webappClientWwApi, webappClientBaseTest % "test->compile")
       .depsForJs(
-        Scalaz.effect ++ React.most ++ Monocle.macros ++ ScalaCSS.react ++
+        Scalaz.effect ++ React.most ++ Monocle.macros ++ ScalaCSS.react ++ scalajsDom ++
         μPickle ++ boopickle ++ shapeless ++ Nyaya.prop ++ parboiled ++
         testScope(
           TestState.nyaya ++ TestState.domZipperSizzle ++ TestState.scalajsReact ++
