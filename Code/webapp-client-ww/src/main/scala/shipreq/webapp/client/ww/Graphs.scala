@@ -90,7 +90,8 @@ object Graphs {
     sb append "->"
 
   def eol()(implicit sb: StringBuilder): Unit =
-    sb append ';'
+    if (sb.last !=* ';') // Guess what? ;; causes Viz.JS to crash! (GraphViz itself is ok with it.)
+      sb append ';'
 
   def eolAfterChange(body: => Unit)(implicit sb: StringBuilder): Unit = {
     val before = sb.length
@@ -125,10 +126,32 @@ object Graphs {
     val StartNode = "S"
     val EndNode   = "E"
 
-    val uc      = useCases.imap.need(id)
-    val stepsNA = NA.useCaseSteps get uc
-    val stepsE  = E .useCaseSteps get uc
-    val flow    = useCases.stepFlow.forwards: Digraph.UniDir[UseCaseStepId]
+    val uc       = useCases.imap.need(id)
+    val stepsNA  = NA.useCaseSteps get uc
+    val stepsE   = E .useCaseSteps get uc
+    val flow     = useCases.stepFlow.forwards : Digraph.UniDir[UseCaseStepId]
+    val flowBack = useCases.stepFlow.backwards: Digraph.UniDir[UseCaseStepId]
+
+    sealed abstract class ImplicitFlow {
+      def link(flow: => Set[_]): Boolean
+    }
+    object ImplicitFlow {
+
+      /** Always link a node to another. */
+      case object Force extends ImplicitFlow {
+        override def link(flow: => Set[_]) = true
+      }
+
+      /** Only link a node to another if it doesn't have any manual flow specified. */
+      case object Default extends ImplicitFlow {
+        override def link(flow: => Set[_]) = flow.isEmpty
+      }
+
+      /** Never link a node to another. */
+      case object Never extends ImplicitFlow {
+        override def link(flow: => Set[_]) = false
+      }
+    }
 
     digraph { implicit sb =>
 
@@ -179,24 +202,44 @@ object Graphs {
         if (fs.nonEmpty)
           attrGroup(attr)(fs.foreach(_()))
 
-      def implicitFlow(steps: UseCaseSteps, field: F, tf: UseCaseSteps.Tree => Range): Unit = {
-        var first = true
+      def implicitFlow(steps    : UseCaseSteps,
+                       field    : F,
+                       tf       : UseCaseSteps.Tree => Range,
+                       fromStart: ImplicitFlow,
+                       toEnd    : ImplicitFlow): Unit = {
+
+        var prevStep: UseCaseStep = null
+
+        def handleEnd(): Unit =
+          if (prevStep ne null) {
+            if (toEnd.link(flow(prevStep.id))) {
+              arrow()
+              sb append EndNode
+            }
+            eol()
+            prevStep = null
+          }
+
         steps.tree.subtreeLocAndValueIterator(tf(steps.tree), (loc, step) =>
           for (node <- getNode(step.id)) {
 
+            // Beginning of new flow (eg. n.1, n.2, n.3, n.E.1, n.E.2)
             if (loc.tail.isEmpty) {
-              // Beginning of a new flow
-              if (first)
-                first = false
-              else
-                eol()
+              handleEnd()
+              if (fromStart.link(flowBack(step.id))) {
+                sb append StartNode
+                arrow()
+              }
             } else
-              // Flow continuation
+              // Flow continuation (1->2->...)
               arrow()
 
             sb append node
+            prevStep = step
           }
         ).drain()
+
+        handleEnd()
       }
 
       def explicitFlow(tree: UseCaseSteps.Tree): Unit =
@@ -232,16 +275,11 @@ object Graphs {
         "node[fillcolor=tomato style=filled shape=octagon]",
         initSubtreeNodes(stepsE, E, E.treeFilter).map(_._2))
 
-      attrGroup("edge[weight=9]") {
-        sb append StartNode
-        arrow()
-        implicitFlow(stepsNA, NA, NA.treeFilterN)
-        arrow()
-        sb append EndNode
-      }
+      attrGroup("edge[weight=9]")(
+        implicitFlow(stepsNA, NA, NA.treeFilterN, ImplicitFlow.Force, ImplicitFlow.Force))
 
-      eolAfterChange(implicitFlow(stepsNA, NA, NA.treeFilterA))
-      eolAfterChange(implicitFlow(stepsE , E , E .treeFilter ))
+      eolAfterChange(implicitFlow(stepsNA, NA, NA.treeFilterA, ImplicitFlow.Default, ImplicitFlow.Default))
+      eolAfterChange(implicitFlow(stepsE , E , E .treeFilter , ImplicitFlow.Default, ImplicitFlow.Default))
 
       explicitFlow(stepsNA.tree)
       explicitFlow(stepsE .tree)

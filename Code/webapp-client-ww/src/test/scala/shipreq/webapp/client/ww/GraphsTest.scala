@@ -53,7 +53,7 @@ object GraphsTest extends TestSuite {
             |  2[label="1.0"]
             |}
             |
-            |{edge[weight=9]S->2->E}
+            |{edge[weight=9]S->2->E;}
             |
             |}
           """.stripMargin)
@@ -91,9 +91,9 @@ object GraphsTest extends TestSuite {
             |  18[label="1.E.1"]
             |}
             |
-            |{edge[weight=9]S->10->11->12->19->13->E}
-            |14->15;
-            |18;
+            |{edge[weight=9]S->10->11->12->19->13->E;}
+            |S->14->15;
+            |S->18->E;
             |
             |15->12;
             |13->11;
