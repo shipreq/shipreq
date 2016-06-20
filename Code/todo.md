@@ -2,16 +2,15 @@
   * Breadcrumb link colours
   * Project title + stats
   * Project title editor
-  * Req lookup search
-  * Item subtitles
 * Stop using old layout / remove ← Back links
-
+* Handle project load failure
 
 * Group req types in filter from ALL to ANY.
 * Say "no implications" in imp graph
 
 * Determine UI for:
   * ReqDetail load failure
+  * Imp graph
   * Deletion screen
   * Cfg Fields
   * Cfg Issues
