@@ -1,3 +1,4 @@
+.textcomplete-dropdown{box-shadow:0 0 3px 0 rgba(0,0,0,.08);border-radius:.28571429rem .28571429rem 0 0;min-width:max-content;margin:0;padding:0;background:#fff;font-size:1em;text-shadow:none;text-align:left;border:1px solid rgba(34,36,38,.15)}.textcomplete-item{position:relative;border:none;height:auto;text-align:left;border-top:none;padding:.6rem .9rem!important;box-shadow:none}.textcomplete-item,.textcomplete-item a{cursor:pointer;display:block;line-height:1em;color:rgba(0,0,0,.87);font-size:1rem;text-transform:none;font-weight:400;white-space:nowrap}.textcomplete-item.active{background:rgba(0,0,0,.05)}.textcomplete-item.active,.textcomplete-item.active a{color:rgba(0,0,0,.95)}
  /*
  * # Semantic UI - 2.1.8
  * https://github.com/Semantic-Org/Semantic-UI

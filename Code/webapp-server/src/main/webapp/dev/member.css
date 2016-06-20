@@ -1,3 +1,102 @@
+/*
+These are styles for https://github.com/yuku-t/jquery-textcomplete
+
+The plugin doesn't come with any styles but it's classes work such that if bootstrap (css)
+is loaded, it is styled correctly.
+
+These styles are copy-pasted from Semantic UI dropdowns and fitted to jquery-textcomplete.
+*/
+
+.textcomplete-dropdown {
+  box-shadow: 0 0 3px 0 rgba(0,0,0,.08);
+  border-radius: .28571429rem .28571429rem 0 0;
+  min-width: max-content;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  font-size: 1em;
+  text-shadow: none;
+  text-align: left;
+  border: 1px solid rgba(34,36,38,.15);
+}
+
+.textcomplete-item {
+  position: relative;
+  border: none;
+  height: auto;
+  text-align: left;
+  border-top: none;
+  padding: .6rem .9rem!important; /* My padding, smaller than SemanticUI's. */
+  box-shadow: none;
+}
+
+.textcomplete-item, .textcomplete-item a {
+  cursor: pointer;
+  display: block;
+  line-height: 1em;
+  color: rgba(0,0,0,.87);
+  font-size: 1rem;
+  text-transform: none;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.textcomplete-item.active {
+  background: rgba(0,0,0,.05);
+}
+.textcomplete-item.active, .textcomplete-item.active a {
+  color: rgba(0,0,0,.95);
+}
+
+/*
+For reference, these are the applied bootstrap styles:
+
+.dropdown-menu {
+  float: left;
+  min-width: 160px;
+  padding: 5px 0;
+  margin: 2px 0 0;
+  font-size: 14px;
+  text-align: left;
+  list-style: none;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid rgba(0,0,0,.15);
+  border-radius: 4px;
+  box-shadow: 0 6px 12px rgba(0,0,0,.175);
+
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  display: none;
+  -webkit-background-clip: padding-box;
+  border: 1px solid #ccc;
+  -webkit-box-shadow: 0 6px 12px rgba(0,0,0,.175);
+
+* {
+  box-sizing: border-box;
+
+li {
+  display: list-item;
+
+.dropdown-menu>.active>a, .dropdown-menu>.active>a:hover, .dropdown-menu>.active>a:focus {
+  color: #fff;
+  text-decoration: none;
+  background-color: #428bca;
+  outline: 0;
+}
+.dropdown-menu>li>a {
+  display: block;
+  padding: 3px 20px;
+  clear: both;
+  font-weight: 400;
+  line-height: 1.42857143;
+  color: #333;
+  white-space: nowrap;
+}
+*/
+
  /*
  * # Semantic UI - 2.1.8
  * https://github.com/Semantic-Org/Semantic-UI

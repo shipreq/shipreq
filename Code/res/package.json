@@ -20,6 +20,7 @@
   "devDependencies": {
     "coffee-script"    : "*",
     "del"              : "*",
+    "event-stream"     : "*",
     "gulp-concat"      : "*",
     "gulp-debug"       : "*",
     "gulp-expect-file" : "*",

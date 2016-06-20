@@ -1,13 +1,14 @@
-gulp      = require 'gulp'
-concat    = require 'gulp-concat'
-debug     = require 'gulp-debug'
-del       = require 'del'
-expect    = require 'gulp-expect-file'
-imagemin  = require 'gulp-imagemin'
-less      = require 'gulp-less'
-minifycss = require 'gulp-minify-css'
-rename    = require 'gulp-rename'
-uglify    = require 'gulp-uglify'
+gulp        = require 'gulp'
+concat      = require 'gulp-concat'
+debug       = require 'gulp-debug'
+del         = require 'del'
+eventStream = require 'event-stream'
+expect      = require 'gulp-expect-file'
+imagemin    = require 'gulp-imagemin'
+less        = require 'gulp-less'
+minifycss   = require 'gulp-minify-css'
+rename      = require 'gulp-rename'
+uglify      = require 'gulp-uglify'
 
 cfg_npm          = 'node_modules/'
 cfg_wch_root     = '../webapp-client-home/'
@@ -16,7 +17,6 @@ cfg_ws_root      = '../webapp-server/'
 cfg_ws_webapp    = cfg_ws_root + 'src/main/webapp/'
 cfg_ws_dev       = cfg_ws_webapp + 'dev/'
 cfg_ws_prod      = cfg_ws_webapp + 'a/'
-cfg_ws_customJs  = cfg_ws_root + 'src/main/javascript/'
 cfg_ws_customCss = cfg_ws_root + 'src/main/styles/'
 
 nonRetardedSrc = (a) -> gulp.src(a).pipe expect a
@@ -52,7 +52,6 @@ gulp.task 'ws:vendor:1', ->
   nonRetardedSrc [
       cfg_npm + 'katex/dist/**/*'
       '!**/*.md'
-      'semantic/dist/semantic.min.css'
       'vendor/**/*'
     ]
     .pipe gulp.dest cfg_ws_dev
@@ -70,6 +69,18 @@ devProdJs 'ws:public', 'public-deps.js', (f) ->
   [
     cfg_npm + 'jquery/dist/jquery.min.js'
   ]
+
+gulp.task 'ws:member:css', [], ->
+  semantic = nonRetardedSrc ['semantic/dist/semantic.min.css']
+  custom   = nonRetardedSrc ['custom-css/textcomplete.css']
+  name     = 'member.css'
+  dev = eventStream.merge(semantic, custom)
+    .pipe concat name
+    .pipe gulp.dest cfg_ws_dev
+  prod = eventStream.merge(semantic, custom .pipe minifycss())
+    .pipe concat name
+    .pipe gulp.dest cfg_ws_prod
+  eventStream.merge(dev, prod)
 
 devProdJs 'ws:member:init', 'member-deps-init.js', (f) ->
   [
@@ -91,7 +102,7 @@ devProdJs 'ws:member:next', 'member-deps-next.js', (f) ->
   ]
 
 gulp.task 'ws:member', [], ->
-  gulp.start ['ws:member:init', 'ws:member:next']
+  gulp.start ['ws:member:css', 'ws:member:init', 'ws:member:next']
 
 gulp.task 'ws:css', ->
   nonRetardedSrc cfg_ws_customCss + '*.less'
@@ -101,7 +112,7 @@ gulp.task 'ws:css', ->
     .pipe gulp.dest cfg_ws_prod
 
 gulp.task 'ws:images', ->
-  gulp.src 'images/**/*'
+  gulp.src 'custom-images/**/*'
     .pipe imagemin()
     .pipe gulp.dest cfg_ws_dev
     .pipe gulp.dest cfg_ws_prod

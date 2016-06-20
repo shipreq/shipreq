@@ -97,7 +97,7 @@ object Assets extends DispatchSnippet {
   val ShipreqHuge = Image("shipreq-huge.png", "ShipReq")
 
   val MemberDeps = InitAndNext(
-    JS("member-deps-init.js") ++ CSS("semantic.min.css"),
+    JS("member-deps-init.js") ++ CSS("member.css"),
     JS("member-deps-next.js") ++ Katex)
 
   // ------------
