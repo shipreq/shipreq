@@ -5,8 +5,8 @@
   "license" : "UNLICENSED",
 
   "dependencies": {
-    "jquery"              : "2.1.4",
-    "jquery-textcomplete" : "0.7.2",
+    "jquery"              : "2.2.4",
+    "jquery-textcomplete" : "1.4.0",
     "katex"               : "0.6.0",
     "loadjs"              : "2.1.0",
     "moment"              : "2.13.0",
