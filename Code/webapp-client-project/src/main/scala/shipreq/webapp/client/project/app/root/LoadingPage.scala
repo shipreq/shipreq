@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import shipreq.webapp.base.data.{ProjectCatalogue, Username}
 import shipreq.webapp.client.base.ui.semantic.{Breadcrumb, UsesSemanticUiManually}
-import shipreq.webapp.client.base.ui.{BaseStyles, MemberNavBar, inlineStyle}
+import shipreq.webapp.client.base.ui.{BaseStyles, MemberNavBar}
 
 object LoadingPage {
 
@@ -32,7 +32,7 @@ object LoadingPage {
 
           <.div(
             ^.cls := "ui segment basic",
-            inlineStyle(_.literal("height" -> "20rem")),
+            ^.height := "20rem",
             <.div(
               ^.cls := "ui text loader large active",
               "Loading..."))))

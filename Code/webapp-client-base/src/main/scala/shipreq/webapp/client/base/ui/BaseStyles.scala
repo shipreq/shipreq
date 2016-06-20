@@ -35,21 +35,18 @@ object BaseStyles extends StyleSheet.Inline {
   }
 
   val navBarContainer =
-    inlineStyle(_.literal(
-      "marginBottom" -> "5rem"))
+    ^^.marginBottom := "5rem"
 
   val breadcrumbDivider =
-    inlineStyle(_.literal(
-      "color"       -> "#ddd",
-      "marginLeft"  -> "0.8em",
-      "marginRight" -> "0.8em"))
+    (^^.color       := "#ddd") +
+    (^^.marginLeft  := "0.8em") +
+    (^^.marginRight := "0.8em")
 
   val maxWidthContainer =
-    inlineStyle(_.literal(
-      "marginLeft"   -> "auto",
-      "marginRight"  -> "auto",
-      "paddingLeft"  -> "1em",
-      "paddingRight" -> "1em",
-      "maxWidth"     -> "calc(723px + 2em)",
-      "width"        -> "100%"))
+    (^^.marginLeft   := "auto") +
+    (^^.marginRight  := "auto") +
+    (^^.paddingLeft  := "1em") +
+    (^^.paddingRight := "1em") +
+    (^^.maxWidth     := "calc(723px + 2em)") +
+    (^^.width        := "100%")
 }

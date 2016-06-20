@@ -4,7 +4,6 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.html
-import shipreq.webapp.client.base.ui.inlineStyle
 
 /** http://semantic-ui.com/collections/breadcrumb.html
   */
@@ -31,7 +30,7 @@ object Breadcrumb {
     private val divider      = divCls("divider")
     private val dropdown     = divCls("ui dropdown inline")
     private val dropdownMenu = divCls("menu")
-    private val nbsp         = <.span(inlineStyle(_.literal(width = "1ex", display = "inline-block")))
+    private val nbsp         = <.span(^.width := "1ex", ^.display := "inline-block")
 
     case class Div(content: TagMod, state: ItemState = ItemState.Default) extends Item {
       override val tag = divSection(content) <+ state
