@@ -35,7 +35,7 @@ class PermissionTest extends FunSpec with LiveTest {
   lazy val pid = uf.toDbUtil.newProjectId(user1.id)
 
   describe("/") {
-    val member = Assets.KatexJS.path
+    val member = Assets.MemberDeps.next.assets.head.path
     val anon   = "/login"
 
     it("anon") {

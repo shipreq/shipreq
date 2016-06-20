@@ -50,7 +50,7 @@ trait LiveTestHelpers {
 
     def shouldRedirectTo(url: String)(implicit errorFunc: ReportFailure) = {
       shouldRedirect
-      asHttpResponse.headers.get("Location").flatMap(_.headOption) shouldBe Some(url)
+      asHttpResponse.headers.get("Location").flatMap(_.headOption).map(_.replaceFirst("#.*", "")) shouldBe Some(url)
       asHttpResponse
     }
   }
