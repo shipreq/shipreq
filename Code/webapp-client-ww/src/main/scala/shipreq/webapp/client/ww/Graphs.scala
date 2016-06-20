@@ -50,16 +50,32 @@ object Graphs {
       setLabel(label)
     }
 
-  private def intercalate[A](as: TraversableOnce[A], between: => Unit)(f: A => Unit): Unit = {
-    var first = true
-    for (a <- as) {
-      if (first)
-        first = false
-      else
-        between
-      f(a)
+  /*
+  Having flow like `1 -> 2,3,4` works fine in the latest versions of GraphViz, but (sometimes) causes problems with the
+  version used in Viz.js. Instead they need to be broken into `1->2; 1->3; 1->4`.
+
+  This is a graph that causes viz.js problems:
+    digraph G{rankdir=TB;node[style=filled color="#333333"]edge[color="#333333"]node[fillcolor="#91D5BC"]1[label="BL-1"]node[fillcolor="#94DD59"]7[label="CO-1"]8[label="CO-2"]node[fillcolor="#D0A9D4"]5[label="MF-3"]6[label="MF-4"]3[label="MF-1"]4[label="MF-2"]node[fillcolor="#DFB863"]9[label="UC-1"]10[label="UC-2"]11[label="UC-3"]5->6;10->11;9->11,10;3->5,1;11->1;4->5;}
+  */
+//  private def intercalate[A](as: TraversableOnce[A], between: => Unit)(f: A => Unit): Unit = {
+//    var first = true
+//    for (a <- as) {
+//      if (first)
+//        first = false
+//      else
+//        between
+//      f(a)
+//    }
+//  }
+
+  def flowOneToMany[A](fromId: A, toIds: TraversableOnce[A])(id: A => Unit, atEnd: => Unit)(implicit sb: StringBuilder): Unit =
+    for (toId <- toIds) {
+      id(fromId)
+      arrow()
+      id(toId)
+      atEnd
+      eol()
     }
-  }
 
   def flowS(from: String, dir: Direction, to: String)(implicit sb: StringBuilder): Unit =
     flowSB(sb append from, dir, sb append to)
@@ -244,9 +260,12 @@ object Graphs {
     val pubid: ReqId => String =
       PlainText.pubidByReqId(_, reqs, reqTypes)
 
+    val nodeName: ReqId => String = _.value.toString
+    val node    : ReqId => Unit   = sb append _.value
+
     def declare(ids: TraversableOnce[ReqId]): Unit =
       for (id <- ids) {
-        sb append id.value
+        node(id)
         labelAttr(pubid(id))
         if (live(id) :: Dead)
           sb append """[fillcolor="#dddddd" color="#777777" fontcolor="#666666"]"""
@@ -279,7 +298,7 @@ object Graphs {
 
         def flow(from: String, fromLive: Live, to: ReqId, unconstrain: Boolean): Content =
           () => {
-            flowS(from, dir, to.value.toString)
+            flowS(from, dir, nodeName(to))
 
             if (fromLive :: Dead || live(to) :: Dead)
               deadLink()
@@ -307,7 +326,7 @@ object Graphs {
 
                 val toIds = filterIdSet(graph(fromId))
                 for (toId <- toIds)
-                  indirect.flow += flow(fromId.value.toString, live(fromId), toId, direct contains toId)
+                  indirect.flow += flow(nodeName(fromId), live(fromId), toId, direct contains toId)
 
                 go(queue2, queueNext ++ toIds, seen + fromId)
               }
@@ -384,16 +403,14 @@ object Graphs {
           .sortBy(x => reqTypes.order(x._1))
           .iterator
 
-      def flow(fromId: ReqId, fromLive: Live, toIds: TraversableOnce[ReqId], toLive: Live): Unit =
-        if (toIds.nonEmpty) {
-          sb append fromId.value
-          arrow()
-          intercalate(toIds, sb append ',')(sb append _.value)
+      def flow(fromId: ReqId, fromLive: Live, toIds: TraversableOnce[ReqId], toLive: Live): Unit = {
+        val atEnd: () => Unit =
           fromLive & toLive match {
-            case Live => eol()
-            case Dead => deadLink()
+            case Live => () => ()
+            case Dead => () => deadLink()
           }
-        }
+        flowOneToMany(fromId, toIds)(node, atEnd())
+      }
 
       def allFlow(graph: Implications.UniDir): Unit =
         for ((fromId, toIds) <- graph.iterator) {
@@ -427,10 +444,8 @@ object Graphs {
       // Implication required
       if (impReqResult.badIds.nonEmpty)
         attrGroup("edge[color=\"#dd0000\"]") {
-          sb append "R[shape=octagon fillcolor=red fontcolor=white margin=0 fontsize=18 label=\"?\"]R"
-          arrow()
-          intercalate(impReqResult.badIds, sb append ',')(sb append _.value)
-          eol()
+          sb append "R[shape=octagon fillcolor=red fontcolor=white margin=0 fontsize=18 label=\"?\"]"
+          flowOneToMany("R", impReqResult.badIds.iterator map nodeName)(sb append _, ())
           allFlow(impReqResult.badImpGraph.forwards)
         }
 

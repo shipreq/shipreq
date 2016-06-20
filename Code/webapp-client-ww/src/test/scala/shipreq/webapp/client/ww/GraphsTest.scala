@@ -266,8 +266,10 @@ object GraphsTest extends TestSuite {
             |$mf5[label="MF-5"]
             |
             |$mf4->$fr6;
-            |$br1->$mf2,$br2;
-            |$mf3->$mf4,$fr4;
+            |$br1->$mf2;
+            |$br1->$br2;
+            |$mf3->$mf4;
+            |$mf3->$fr4;
             |$fr2->$fr3;
             |$fr4->$fr5;
             |$br2->$mf3;
@@ -307,10 +309,11 @@ object GraphsTest extends TestSuite {
             |$mf1[label="MF-1"]
             |$mf5[label="MF-5"]
             |
-            |$mf4->$fr6[color="#bbbbbb" style=dashed]
-            |$br1->$mf2,$br2;
+            |$mf4->$fr6[color="#bbbbbb" style=dashed];
+            |$br1->$mf2;
+            |$br1->$br2;
             |$mf3->$fr4;
-            |$mf3->$mf4[color="#bbbbbb" style=dashed]
+            |$mf3->$mf4[color="#bbbbbb" style=dashed];
             |$fr2->$fr3;
             |$fr4->$fr5;
             |$br2->$mf3;
@@ -349,7 +352,8 @@ object GraphsTest extends TestSuite {
             |$mf1[label="MF-1"]
             |$mf5[label="MF-5"]
             |
-            |$br1->$mf2,$br2;
+            |$br1->$mf2;
+            |$br1->$br2;
             |$mf3->$fr4;
             |$fr2->$fr3;
             |$fr4->$fr5;
@@ -421,13 +425,18 @@ object GraphsTest extends TestSuite {
             |
             |{edge[color="#dd0000"]
             |R[shape=octagon fillcolor=red fontcolor=white margin=0 fontsize=18 label="?"]
-            |R->$fr7,$fr8;
-            |$fr7->$fr8,$fr9;
+            |R->$fr7;
+            |R->$fr8;
+            |$fr7->$fr8;
+            |$fr7->$fr9;
             |}
             |
             |$mf4->$fr6;
-            |$br1->$br2,$mf2,$fr9;
-            |$mf3->$mf4,$fr4;
+            |$br1->$br2;
+            |$br1->$mf2;
+            |$br1->$fr9;
+            |$mf3->$mf4;
+            |$mf3->$fr4;
             |$fr2->$fr3;
             |$fr4->$fr5;
             |$br2->$mf3;

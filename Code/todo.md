@@ -5,7 +5,6 @@
   * Req lookup search
   * Item subtitles
 * Stop using old layout / remove ← Back links
-* Impgraph error in ScalaCSS project
 
 
 * Group req types in filter from ALL to ANY.
