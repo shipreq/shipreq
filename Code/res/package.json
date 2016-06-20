@@ -10,11 +10,11 @@
     "katex"               : "0.6.0",
     "loadjs"              : "2.1.0",
     "moment"              : "2.13.0",
-    "react"               : "15.0.1",
-    "react-dom"           : "15.0.1",
-    "react-collapse"      : "2.2.3",
+    "react"               : "15.1.0",
+    "react-dom"           : "15.1.0",
+    "react-collapse"      : "2.2.4",
     "react-height"        : "2.1.0",
-    "react-motion"        : "0.4.3",
+    "react-motion"        : "0.4.4",
     "semantic-ui"         : "2.1.8"},
 
   "devDependencies": {
