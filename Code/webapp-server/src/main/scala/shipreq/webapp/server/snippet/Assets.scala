@@ -14,11 +14,16 @@ sealed trait Asset {
 }
 
 object Asset {
-  final class JS(val path: String) extends Asset {
+  /** Loadable via loadjs */
+  sealed trait LoadJsOk extends Asset {
+    val path: String
+  }
+
+  final class JS(val path: String) extends LoadJsOk {
     override val tag = <script type="text/javascript" src={path}></script>
   }
 
-  final class CSS(val path: String) extends Asset {
+  final class CSS(val path: String) extends LoadJsOk {
     override val tag = <link data-lift="head" type="text/css" rel="stylesheet" href={path}/>
   }
 
@@ -52,13 +57,13 @@ object Asset {
     * @param init Assets to load immediately and synchronously on page load.
     * @param next JS to load asynchronously after the page has loaded.
     */
-  case class InitAndNext[I <: Asset](init: Bundle[I], next: Bundle[JS]) {
+  case class InitAndNext[I <: Asset](init: Bundle[I], next: Bundle[LoadJsOk]) {
     val all = init ++ next
 
     val nextPathsArray: String =
       next.assets.iterator.map("'" + _.path + "'").mkString("[", ",", "]")
 
-    def addNext(js: Bundle[JS]): InitAndNext[I] =
+    def addNext(js: Bundle[LoadJsOk]): InitAndNext[I] =
       InitAndNext(init, next ++ js)
   }
 }
@@ -92,8 +97,8 @@ object Assets extends DispatchSnippet {
   val ShipreqHuge = Image("shipreq-huge.png", "ShipReq")
 
   val MemberDeps = InitAndNext(
-    JS("member-deps-init.js") ++ KatexCSS ++ CSS("semantic.min.css"),
-    JS("member-deps-next.js") ++ KatexJS)
+    JS("member-deps-init.js") ++ CSS("semantic.min.css"),
+    JS("member-deps-next.js") ++ Katex)
 
   // ------------
   // - Specific -

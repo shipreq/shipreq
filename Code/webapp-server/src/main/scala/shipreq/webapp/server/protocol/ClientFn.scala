@@ -36,9 +36,9 @@ final class ClientFn[I](decl: ClientFnDecl[I]) {
       sb append name
       sb append "');loadjs.ready('"
       sb append name
-      sb append "',function(){"
+      sb append "',{success:function(){"
       onReady(sb)
-      sb append "});"
+      sb append "}});"
     }
 
   private val runCmdHead =

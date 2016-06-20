@@ -76,36 +76,52 @@ function publish(bundleId, pathsNotFound) {
 
 
 /**
- * Load individual JavaScript file.
+ * Load individual file.
  * @param {string} path - The file path
  * @param {Function} callbackFn - The callback function
  */
-function loadScript(path, callbackFn) {
+function loadFile(path, callbackFn, async) {
   var doc = document,
-      s = doc.createElement('script');
+      e;
 
-  s.src = path;
+  if (/\.css$/.test(path)) {
+    // css
+    e = doc.createElement('link');
+    e.rel = 'stylesheet';
+    e.href = path;
+  } else {
+    // javascript
+    e = doc.createElement('script');
+    e.src = path;
+    e.async = (async === undefined) ? true : async;
+  }
   
-  s.onload = s.onerror = s.onbeforeload = function(ev) {
+  e.onload = e.onerror = e.onbeforeload = function(ev) {
+    var result = ev.type[0];
+
+    // treat empty stylesheets as failures (to get around lack of onerror
+    // support in IE
+    if (e.sheet && !e.sheet.cssRules.length) result = 'e';
+
     // execute callback
-    callbackFn(path, ev.type[0], ev.defaultPrevented);
+    callbackFn(path, result, ev.defaultPrevented);
   };
   
   // add to document
-  doc.head.appendChild(s);
+  doc.head.appendChild(e);
 }
 
 
 /**
- * Load multiple JavaScript files.
+ * Load multiple files.
  * @param {string[]} paths - The file paths
  * @param {Function} callbackFn - The callback function
  */
-function loadScripts(paths, callbackFn) {
+function loadFiles(paths, callbackFn, async) {
   // listify paths
   paths = paths.push ? paths : [paths];
   
-  var i = paths.length, numWaiting = i, pathsNotFound = [], fn;
+  var numWaiting = paths.length, x = numWaiting, pathsNotFound = [], fn, i;
   
   // define callback function
   fn = function(path, result, defaultPrevented) {
@@ -124,7 +140,7 @@ function loadScripts(paths, callbackFn) {
   };
   
   // load scripts
-  while (i--) loadScript(paths[i], fn);
+  for (i=0; i < x; i++) loadFile(paths[i], fn, async);
 }
 
 
@@ -135,48 +151,47 @@ function loadScripts(paths, callbackFn) {
  * @param {Function} [arg2] - The success or fail callback
  * @param {Function} [arg3] - The fail callback
  */
-function loadjs(paths, arg1, arg2, arg3) {
-  var bundleId, successFn, failFn;
+function loadjs(paths, arg1, arg2) {
+  var bundleId, args;
   
-  // bundleId
-  if (arg1 && !arg1.call) bundleId = arg1;
-  
-  // successFn, failFn
-  successFn = bundleId ? arg2 : arg1;
-  failFn = bundleId ? arg3 : arg2;
+  // bundleId (if string)
+  if (arg1 && arg1.trim) bundleId = arg1;
+
+  // args (default is {})
+  args = (bundleId ? arg2 : arg1) || {};
   
   // throw error if bundle is already defined
   if (bundleId) {
     if (bundleId in bundleIdCache) {
-      throw new Error("LoadJS: Bundle already defined");
+      throw new Error("LoadJS");
     } else {
       bundleIdCache[bundleId] = true;
     }
   }
   
   // load scripts
-  loadScripts(paths, function(pathsNotFound) {
-    if (pathsNotFound.length) (failFn || devnull)(pathsNotFound);
-    else (successFn || devnull)();
-    
+  loadFiles(paths, function(pathsNotFound) {
+    // success and fail callbacks
+    if (pathsNotFound.length) (args.fail || devnull)(pathsNotFound);
+    else (args.success || devnull)();
+
     // publish bundle load event
     publish(bundleId, pathsNotFound);
-  });
+  }, args.async);
 }
 
 
 /**
  * Execute callbacks when dependencies have been satisfied.
  * @param {(string|string[])} deps - List of bundle ids
- * @param {Function} [successFn] - Success callback
- * @param {Function} [failFn] - Fail callback
+ * @param {Object} args - success/fail arguments
  */
-loadjs.ready = function (deps, successFn, failFn) {
+loadjs.ready = function (deps, args) {
   // subscribe to bundle load event
   subscribe(deps, function(depsNotFound) {
     // execute callbacks
-    if (depsNotFound.length) (failFn || devnull)(depsNotFound);
-    else (successFn || devnull)();
+    if (depsNotFound.length) (args.fail || devnull)(depsNotFound);
+    else (args.success || devnull)();
   });
   
   return loadjs;
