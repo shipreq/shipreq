@@ -30,6 +30,18 @@ Prefer combination: Add/Remove
  */
 sealed trait Event
 
+object Event {
+
+  def reqCreationEventFilter: Event => Boolean = {
+    case _: GenericReqCreate
+       | _: UseCaseCreate => true
+    case _ => false
+  } // ↑ keep in sync ↓
+  def reqCreationEventSamples = List[ActiveEvent](
+    GenericReqCreate(null, null, null),
+    UseCaseCreate(null, null, null))
+}
+
 /**
  * Events of which new instances can be created.
  *

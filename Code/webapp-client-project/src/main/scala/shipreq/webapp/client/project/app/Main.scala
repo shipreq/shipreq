@@ -27,7 +27,7 @@ object Main extends ClientFnImpl(ClientFnDecl.ProjectSpa) {
     BaseStyles.addToDocument()
     Style.addToDocument()
 
-    ClientData.init(cp, initData.projectInit, cd => Callback {
+    ClientData.init(initData.project, cp, initData.projectInit, cd => Callback {
       val root    = new LoadedRoot(initData, cp, cd)
       val baseUrl = determineBaseUrl(dom.window.location.href)
       val router  = Router(baseUrl, Routes.routerConfig(root))

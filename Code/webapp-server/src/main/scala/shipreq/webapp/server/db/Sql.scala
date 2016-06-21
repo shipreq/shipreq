@@ -101,12 +101,8 @@ private[db] object Sql {
   private def projectCatalogueSql(projectCond: String) = {
     import shipreq.webapp.base.event._
 
-    val reqCreationEvents = List[ActiveEvent](
-      GenericReqCreate(null, null, null),
-      UseCaseCreate(null, null, null))
-
     val reqCreationTypeIds: List[Short] =
-      reqCreationEvents.map(eventTypeId)
+      Event.reqCreationEventSamples.map(eventTypeId)
 
     val projectNameSetId: Short =
       eventTypeId(ProjectNameSet(null))

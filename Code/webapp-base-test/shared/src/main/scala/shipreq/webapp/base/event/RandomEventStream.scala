@@ -68,11 +68,11 @@ object RandomEventStream {
       ss.gen.flatMap(size =>
         Vector.fill(size)(verifiedEvent).sequenceU.run(p)))
 
-  def entireEventStream(implicit ss: SizeSpec): Gen[(Project, VerifiedEvents)] =
+  def entireEventStream(implicit ss: SizeSpec): Gen[(Project, VerifiedEvents, VerifiedEvents)] =
     for {
       (p1, e1) <- initialEvents
       (p2, e2) <- verifiedEvents(ss).run(p1)
-    } yield (p2, e1 ++ e2)
+    } yield (p2, e1, e2)
 
 //  def applicableEventS[S](observe: ObserveFn[S]): StateGen[(S, Project), Event] =
 //    StateGen(sp =>

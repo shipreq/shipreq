@@ -6,7 +6,7 @@ import japgolly.univeq._
 import scala.scalajs.js
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{Intersection, NonEmptyVector}
-import shipreq.webapp.client.base.ui.BaseStyles
+import shipreq.webapp.client.base.ui.{BaseStyles, ProjectItem}
 import shipreq.webapp.client.base.ui.semantic.{Colour, Dropdown, Header, Icon, JQuery, UsesSemanticUiManually}
 import shipreq.webapp.client.project.app.Style.{index => *}
 import Routes.{Page, RouterCtl}
@@ -145,10 +145,13 @@ object ProjectIndex {
     def render(p: Props): ReactElement =
       <.main(
         BaseStyles.maxWidthContainer,
+        ProjectItem.render(p.pi),
         Category.All.foldLeft(EmptyTag)((q, c) => q + renderCategory(p, c)))
   }
 
-  case class Props(reqLookup: ReqLookupPrompt.Props, rc: RouterCtl) {
+  case class Props(reqLookup: ReqLookupPrompt.Props,
+                   pi: ProjectItem.Props,
+                   rc: RouterCtl) {
     @inline def render = Component(this)
   }
 

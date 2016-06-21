@@ -1,5 +1,7 @@
 package shipreq.webapp.base.test
 
+import java.time.Instant
+import java.time.temporal.ChronoUnit._
 import shipreq.base.test._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.data._
@@ -18,6 +20,15 @@ trait WebappTestEquality
 object WebappTestUtil extends WebappTestEquality with WebappTestUtil
 
 trait WebappTestUtil extends BaseTestUtil {
+
+  def summariseProject(p: Project, eventCount: Int = 123): ProjectCatalogue.Item =
+    ProjectCatalogue.Item(
+      ExternalId("t3sT"),
+      p.name,
+      eventCount,
+      p.reqs.size,
+      Instant.now().minus(28, DAYS),
+      Some(Instant.now().minus(1, DAYS)))
 
   def verifyEvent(p: Project, e: Event): VerifiedEvent =
     _verifyEvent(p, e)._2

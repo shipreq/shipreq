@@ -146,7 +146,8 @@ final class LoadedRoot(val initData: InitDataForProjectSpa, cp: ClientProtocol, 
             ExternalVar(s.reqLookup)($.zoomL(State.reqLookup) setState _),
             Allow <~ _.lookup(cd.project()).isRight,
             e => routerCtl.set(Page.ReqDetail(e)))
-          ProjectIndex.Props(rl, routerCtl).render
+
+          ProjectIndex.Props(rl, cd.projectSummary(), routerCtl).render
 
         case Page.CfgFields =>
           layout(cfg.fields.CfgFields.Props(cp, initData.fieldCrud, cd, fd).component)
