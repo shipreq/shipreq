@@ -12,7 +12,7 @@ import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text._
 import shipreq.webapp.client.base.data.TCB
 import shipreq.webapp.client.base.feature._
-import shipreq.webapp.client.base.lib.KeyHandler
+import shipreq.webapp.client.base.lib.{KeyHandler, KeyboardTheme}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.protocol.ServerCall
 import shipreq.webapp.client.project.widgets.high.ProjectWidgets
@@ -259,14 +259,14 @@ object ContentEditorFeature {
         async.wrapAsync((s, f) => saveIO(cmd, s >> abort, f))
 
       private def commitK[A, B](lc: LineCardinality, v: ValidUpdate[Any, A])(cmd: A => UpdateContentCmd): List[KeyHandler] =
-        KeyHandler.commit(v match {
+        KeyboardTheme.commit(v match {
           case ValidUpdate.Success(a) => Some(commit(cmd(a)))
           case ValidUpdate.Unchanged  => Some(abort)
           case ValidUpdate.Failure(_) => None
         }, lc)
 
       private def commitAbortK[A, B](lc: LineCardinality, v: ValidUpdate[Any, A])(cmd: A => UpdateContentCmd): List[KeyHandler] =
-        KeyHandler.abort(abort) :: commitK(lc, v)(cmd)
+        KeyboardTheme.abort(abort) :: commitK(lc, v)(cmd)
 
       /**
        * Instance of [[EditorInstance]] that ensures editing is allowed before rendering.

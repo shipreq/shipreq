@@ -3,12 +3,8 @@ package shipreq.webapp.client.base.lib
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.univeq._
-import org.scalajs.dom.ext.KeyCode
 import scala.collection.immutable.ListSet
-import scalaz.\/
-import shipreq.base.util.ScalaExt._
-import shipreq.webapp.base.text.{LineCardinality, MultiLine, SingleLine}
-import KeyHandler._
+import shipreq.webapp.client.base.lib.KeyHandler._
 
 case class KeyHandler(criteria: Criteria, response: Response) {
   def asEventDefault: KeyHandler =
@@ -104,29 +100,6 @@ object KeyHandler {
         val combinedResponse: ReactKeyboardEvent => Callback =
           e => Callback.sequence(responses.map(_(e)))
         q + (et.domKey ==> combinedResponse)
-    }
-  }
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  val Escape    = Criterion(EventType.KeyDown , KeyCode.Escape)
-  val Enter     = Criterion(EventType.KeyPress, KeyCode.Enter)
-  val CtrlEnter = Criterion(EventType.KeyDown , KeyCode.Enter, ModKey.Ctrl)
-
-  def abort(abort: => Callback): KeyHandler =
-    Escape.handle(abort)
-
-  /**
-    * - Enter either inserts a newline, or commits.
-    * - Ctrl-enter commits.
-    */
-  def commit(commit: => Option[Callback], lc: LineCardinality): List[KeyHandler] = {
-    val base = CtrlEnter.handle(Callback sequenceO commit)
-
-    // If enter unused, use for commit too
-    lc match {
-      case SingleLine => Enter.handle(base.response) :: base :: Nil
-      case MultiLine  => base :: Nil
     }
   }
 }
