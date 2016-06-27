@@ -76,6 +76,9 @@ object BaseStyles extends StyleSheet.Inline {
         color(c"#525456"),
         textDecoration := "underline")))
 
+  val fullWidthContainer = style(
+    margin.horizontal(1 rem))
+
   val navBarContainer =
     ^^.marginBottom := "5rem"
 

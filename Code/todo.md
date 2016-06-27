@@ -2,7 +2,6 @@
 * Say "no implications" in imp graph
 
 * Determine UI for:
-  * Imp graph
   * ReqDetail load failure
   * Deletion screen
   * Cfg Fields
@@ -11,7 +10,6 @@
   * Cfg Tags
 
 * Implement UI for:
-  * Imp graph
   * ReqDetail
   * Deletion screen
   * Cfg Fields

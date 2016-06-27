@@ -113,6 +113,17 @@ object Style extends StyleSheet.Inline {
   }
 
   // ===================================================================================================================
+  object impgraphPage {
+
+    val filterDeadButton = style(
+      textAlign.right)
+
+    val graph = style(
+      textAlign.center,
+      margin.horizontal(auto))
+  }
+
+  // ===================================================================================================================
   // Config screens
   object cfg {
 
@@ -537,6 +548,7 @@ object Style extends StyleSheet.Inline {
 
   initInnerObjects(
     home.cardHeader,
+    impgraphPage.graph,
     cfg.deadMnemonic,
     reqtable.sortEditor.dragArea,
     reqtable.sortCriteriaEditor.conclusiveColumnName,

@@ -12,7 +12,7 @@ import shipreq.webapp.client.base.feature._
 import shipreq.webapp.client.base.protocol.ClientProtocol
 import shipreq.webapp.client.base.ui.ProjectItem
 import shipreq.webapp.client.project.app.state._
-import shipreq.webapp.client.project.app.{WebWorkerClient, cfg, reqdetail, reqtable}
+import shipreq.webapp.client.project.app._
 import shipreq.webapp.client.project.app.reqdetail.ReqDetail
 import shipreq.webapp.client.project.app.reqtable.ReqTable
 import shipreq.webapp.client.project.app.cfg.shared.Usage
@@ -195,12 +195,13 @@ final class LoadedRoot(initData: InitDataForProjectSpa, cp: ClientProtocol, cd: 
 
         case Page.ImpGraph =>
           val p = cd.project()
-          ImplicationGraph.Props(
+          val g = ImplicationGraph.Props(
             None, s.filterDead,
             p.implications, p.reqs, p.config.reqTypes,
             pxPlainText.value(),
             reqDetailRC,
-            ww).render
+            ww)
+          ImplicationGraphPage.Props(g, setFilterDead).render
       }
 
       Layout.Props(initData.username, cd.projectSummary(), routerCtl, p.page, content).render

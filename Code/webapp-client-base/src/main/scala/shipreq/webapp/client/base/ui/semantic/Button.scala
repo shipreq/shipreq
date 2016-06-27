@@ -17,12 +17,13 @@ object Button {
 
   sealed abstract class Type(cls: ClassName) extends HasClass(cls)
   object Type {
-    case object Default   extends Type(NoClass)
-    case object Basic     extends Type("basic")
-    case object Primary   extends Type("primary")
-    case object Secondary extends Type("secondary")
-    case object Positive  extends Type("positive")
-    case object Negative  extends Type("negative")
+    case object Default              extends Type(NoClass)
+    case object Basic                extends Type("basic")
+    case object Primary              extends Type("primary")
+    case object Secondary            extends Type("secondary")
+    case object Positive             extends Type("positive")
+    case object Negative             extends Type("negative")
+    case class  IconOnly(icon: Icon) extends Type("icon")
     implicit def univEq: UnivEq[Type] = UnivEq.derive
   }
 
@@ -44,8 +45,15 @@ case class Button(attr  : Multiple[Attr] = Multiple.empty,
 
   val tag = {
     var t = <.button(^.cls := "ui button" <+ attr <+ tipe <+ state <+ colour <+ size)
+
     if (state.disable)
       t = t(^.disabled := "disabled")
+
+    tipe match {
+      case Type.IconOnly(i) => t = t(i.tag)
+      case _ => ()
+    }
+
     t
   }
 }

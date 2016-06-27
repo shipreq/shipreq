@@ -17,6 +17,7 @@ object Colour {
   case object Brown   extends Colour("brown")
   case object Grey    extends Colour("grey")
   case object Black   extends Colour("black")
+  case object White   extends Colour("white")
   case object Default extends Colour(NoClass)
   implicit def univEq: UnivEq[Colour] = UnivEq.derive
 }
