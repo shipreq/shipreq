@@ -17,14 +17,12 @@ object Button {
 
   sealed abstract class Type(cls: ClassName) extends HasClass(cls)
   object Type {
-    case object Default              extends Type(NoClass)
-    case object Basic                extends Type("basic")
-    case object Primary              extends Type("primary")
-    case object Secondary            extends Type("secondary")
-    case object Positive             extends Type("positive")
-    case object Negative             extends Type("negative")
-    case class  IconOnly(icon: Icon) extends Type("icon")
-    implicit def univEq: UnivEq[Type] = UnivEq.derive
+    case object Default                                    extends Type(NoClass)
+    case object Basic                                      extends Type("basic")
+    case class  BasicIconAndText(icon: Icon, text: TagMod) extends Type("basic")
+    case class  IconAndText     (icon: Icon, text: TagMod) extends Type(NoClass)
+    case class  IconOnly        (icon: Icon)               extends Type("icon")
+    // implicit def univEq: UnivEq[Type] = UnivEq.derive
   }
 
   sealed abstract class State(c: ClassName, val disable: Boolean) extends HasClass(c)
@@ -40,7 +38,7 @@ object Button {
 case class Button(attr  : Multiple[Attr] = Multiple.empty,
                   tipe  : Type           = Type.Default,
                   state : State          = State.Default,
-                  colour: Colour         = Colour.Default,
+                  colour: ColourPlus     = ColourPlus.Default,
                   size  : Size           = Size.Default) {
 
   val tag = {
@@ -49,9 +47,11 @@ case class Button(attr  : Multiple[Attr] = Multiple.empty,
     if (state.disable)
       t = t(^.disabled := "disabled")
 
-    tipe match {
-      case Type.IconOnly(i) => t = t(i.tag)
-      case _ => ()
+    t = tipe match {
+      case Type.BasicIconAndText(i, x) => t(i.tag, x)
+      case Type.IconAndText     (i, x) => t(i.tag, x)
+      case Type.IconOnly        (i)    => t(i.tag)
+      case _                           => t
     }
 
     t

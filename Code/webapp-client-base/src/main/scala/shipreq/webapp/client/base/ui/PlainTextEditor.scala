@@ -182,10 +182,10 @@ object PlainTextEditor {
     //  implicit val reusabilityProps: Reusability[Props] =
     //    Reusability.caseClass
 
-    val buttonOk       = Button(tipe = Button.Type.Primary)
-    val buttonDisabled = Button(tipe = Button.Type.Primary,  state = Button.State.Disabled)
-    val buttonError    = Button(tipe = Button.Type.Negative, state = Button.State.Disabled)
-    val buttonLoading  = Button(tipe = Button.Type.Primary,  state = Button.State.Loading)
+    val buttonOk       = Button(colour = ColourPlus.Primary)
+    val buttonDisabled = Button(colour = ColourPlus.Primary,  state = Button.State.Disabled)
+    val buttonError    = Button(colour = ColourPlus.Negative, state = Button.State.Disabled)
+    val buttonLoading  = Button(colour = ColourPlus.Primary,  state = Button.State.Loading)
 
     final class Backend($: BackendScope[Props, Unit]) {
 

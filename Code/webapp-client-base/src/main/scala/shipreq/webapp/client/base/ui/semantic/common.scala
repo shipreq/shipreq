@@ -2,8 +2,19 @@ package shipreq.webapp.client.base.ui.semantic
 
 import japgolly.univeq.UnivEq
 
-sealed abstract class Colour(c: ClassName) extends HasClass(c)
+sealed abstract class ColourPlus(c: ClassName) extends HasClass(c)
+object ColourPlus {
+  @inline def Default: ColourPlus = Colour.Default
+  case object Primary   extends ColourPlus("primary")
+  case object Secondary extends ColourPlus("secondary")
+  case object Positive  extends ColourPlus("positive")
+  case object Negative  extends ColourPlus("negative")
+  implicit def univEq: UnivEq[ColourPlus] = UnivEq.derive
+}
+
+sealed abstract class Colour(c: ClassName) extends ColourPlus(c)
 object Colour {
+  case object Default extends Colour(NoClass)
   case object Red     extends Colour("red")
   case object Orange  extends Colour("orange")
   case object Yellow  extends Colour("yellow")
@@ -18,7 +29,6 @@ object Colour {
   case object Grey    extends Colour("grey")
   case object Black   extends Colour("black")
   case object White   extends Colour("white")
-  case object Default extends Colour(NoClass)
   implicit def univEq: UnivEq[Colour] = UnivEq.derive
 }
 

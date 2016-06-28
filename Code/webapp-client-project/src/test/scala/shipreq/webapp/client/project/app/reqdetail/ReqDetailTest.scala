@@ -1,13 +1,14 @@
 package shipreq.webapp.client.project.app.reqdetail
 
+import utest._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.base.UiText
 import shipreq.webapp.client.base.test.TestState._
 import shipreq.webapp.client.project.app.root.Routes.Page
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.test._
-import utest._
 
 object ReqDetailTest extends TestSuite {
   import ReqDetailTestDsl._
@@ -38,12 +39,16 @@ object ReqDetailTest extends TestSuite {
   val reporterFieldExistence =
     visibleFields.assert.existenceOf("Reporter")(_.obs.generic.filterDead :: ShowDead)
 
+  val liveCanDelete  = UiText.Life.live + "." + UiText.Life.delete
+  val deadCanRestore = UiText.Life.dead + "." + UiText.Life.restore
+  val deadNoRestore  = UiText.Life.dead + "."
+
   override def tests = TestSuite {
 
     'badReqType - testError("QL-1", "Type QL not found.")
     'badReq     - testError("FR-9", "FR-9 not found.")
 
-    'gr - test("FR-1")(Plan invariants testLifeRowInnerText("Alive.Kill"))
+    'gr - test("FR-1")(Plan invariants testLifeRowInnerText(liveCanDelete))
 
     'uc {
       'tree - test("UC-1")(Plan.action( allSteps.assert("1.0", "1.0.1", "1.0.2", "1.0.3", "1.1", "1.1.1")
@@ -79,11 +84,11 @@ object ReqDetailTest extends TestSuite {
       ))
     }
 
-    'deadExplicitly - test("MF-19")(Plan invariants testLifeRowInnerText("Dead.Resurrect"))
+    'deadExplicitly - test("MF-19")(Plan invariants testLifeRowInnerText(deadCanRestore))
 
-    'deadImplicitly - test("SI-1")(Plan invariants testLifeRowInnerText("Dead."))
+    'deadImplicitly - test("SI-1")(Plan invariants testLifeRowInnerText(deadNoRestore))
 
-    'deadImplicitlyAndExplicitly - test("SI-2")(Plan invariants testLifeRowInnerText("Dead."))
+    'deadImplicitlyAndExplicitly - test("SI-2")(Plan invariants testLifeRowInnerText(deadNoRestore))
 
     'deadFields - test("UC-1")(Plan.action(
       filterDeadToggle

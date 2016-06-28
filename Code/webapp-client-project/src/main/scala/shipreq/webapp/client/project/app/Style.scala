@@ -401,25 +401,34 @@ object Style extends StyleSheet.Inline {
     val headerFilterDeadButton = style(
       paddingLeft(pageMargin))
 
-    val mainTable = style(
+    private def innerCellBorderColour =
+      rgba(34, 36, 38, 0.1)
+
+    val detailTable = style(
+      border(1 px, solid, rgba(34, 36, 38, 0.15)),
+      borderCollapse.separate,
+      borderRadius(0.28571429 rem),
+      borderSpacing(`0`),
+      boxShadow := "none",
+      marginTop(1.5 rem),
       width(100 %%),
-      marginTop(2 em))
 
-    private def padSizeL = 0.8 ex
+      unsafeChild(">tbody >tr >*")(
+        padding(0.6 rem, 0.7 rem),
+        verticalAlign.top),
 
-    def rowCell = styleS(
-      padding.vertical(0.4 em),
-      paddingLeft(padSizeL))
+      unsafeChild(">tbody >tr:not(:first-child) >*")(
+        borderTop(1 px, solid, innerCellBorderColour)),
 
-    val rowTitle = style(
-      rowCell,
-      whiteSpace.pre,
-      paddingRight(1.4 ex))
+      unsafeChild(">tbody >tr >th")(
+        textAlign.left,
+        wordWrap.breakWord,
+        //whiteSpace.nowrap,
+        backgroundColor(rgba(0, 0, 0, .04))),
 
-    val rowValue = style(
-      rowCell,
-      paddingRight(padSizeL),
-      width(100 %%))
+      unsafeChild(">tbody >tr >td")(
+        borderLeft(1 px, solid, innerCellBorderColour),
+        width(100 %%)))
 
     val generalImpsCont = style(
       display.flex,
@@ -561,7 +570,7 @@ object Style extends StyleSheet.Inline {
     reqtable.filterEditor.errorMsg,
     reqtable.table,
     reqtable.deleteRestore.impliedByItem(Live),
-    reqdetail.mainTable,
+    reqdetail.detailTable,
     reqdetail.useCaseStep.container,
     widgets.issue)
 //  ConsoleIO(_.log(render[String])).unsafePerformIO()

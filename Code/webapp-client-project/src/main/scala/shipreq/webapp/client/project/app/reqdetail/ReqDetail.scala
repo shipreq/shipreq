@@ -24,7 +24,7 @@ import shipreq.webapp.client.project.app.WebWorkerClient
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.protocol.ServerCall
-import shipreq.webapp.client.project.widgets.FilterDeadButton
+import shipreq.webapp.client.project.widgets.{FilterDeadButton, LifeButton}
 import shipreq.webapp.client.project.widgets.high.{DeletionForm, ImplicationGraph, ProjectWidgets, UseCaseStepFlowGraph}
 import ExternalPubid.LookupFailure
 
@@ -290,20 +290,15 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
             FilterDeadButton.whenLive(data.live)(ReusableVar(props.filterDead.value)(setFilterDead))))
 
       def renderRows =
-        <.table(
-          *.mainTable,
+        <.table(*.detailTable,
           <.tbody(
             data.rows.iterator.map(renderRow)))
 
       def renderRow(row: Row): ReactElement =
         <.tr(
           ^.key := row.key,
-          <.th(
-            *.rowTitle,
-            renderRowTitle(row)),
-          <.td(
-            *.rowValue,
-            renderRowData(row)))
+          <.th(renderRowTitle(row)),
+          <.td(renderRowData(row)))
 
       def renderRowTitle(row: Row): ReactNode =
         row match {
@@ -398,19 +393,10 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
           case Row.Life =>
             data.live match {
               case Live =>
-                TagMod(
-                  UiText.Life.live + ".",
-                  <.button(
-                    ^.onClick --> delete(req.id),
-                    UiText.Life.delete))
-
+                LifeButton.Delete withStatusOnLeft delete(req.id)
               case Dead =>
-                TagMod(
-                  UiText.Life.dead + ".",
-                  req.allowLiveChange(project.config.reqTypes).option(
-                    <.button(
-                      ^.onClick --> restore(req.id),
-                      UiText.Life.restore)))
+                LifeButton.Restore.withStatusOnLeft(
+                  req.allowLiveChange(project.config.reqTypes) option restore(req.id))
             }
         }
 

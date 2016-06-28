@@ -1,6 +1,6 @@
 package shipreq.webapp.base
 
-import shipreq.webapp.base.data.{StaticField, StaticFieldType}
+import shipreq.webapp.base.data.{Dead, Live, StaticField, StaticFieldType}
 
 object UiText {
 
@@ -66,21 +66,18 @@ object UiText {
   }
 
   object Life {
-    /*
-    def field    = "Active Status"
-    def live     = "Active"
+    def status(l: Live): String =
+      l match {
+        case Live => live
+        case Dead => dead
+      }
+
+    def field    = "Live Status"
+    def live     = "Live"
     def dead     = "Deleted"
     def delete   = "Delete"
     def restore  = "Restore"
     def showDead = "Show deleted content."
-    */
-
-    def field    = "Life Status"
-    def live     = "Alive"
-    def dead     = "Dead"
-    def delete   = "Kill"
-    def restore  = "Resurrect"
-    def showDead = "Show dead content."
   }
 
   def reqCodeGroup = "Code Group"
