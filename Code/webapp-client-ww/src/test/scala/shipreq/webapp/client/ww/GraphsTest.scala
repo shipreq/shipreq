@@ -44,7 +44,7 @@ object GraphsTest extends TestSuite {
         val actual = Graphs.useCaseStepFlow(uc, project.reqs.useCases)
         val expect = DOT(
           """
-            |digraph G{rankdir=LR;ranksep=0.28;
+            |digraph G{bgcolor=transparent;rankdir=LR;ranksep=0.28;
             |
             |S[shape=circle style=filled color=black fontsize=1 height=.3]
             |E[shape=doublecircle style=filled color=black fontsize=1 height=.3]
@@ -65,7 +65,7 @@ object GraphsTest extends TestSuite {
         val actual = Graphs.useCaseStepFlow(uc1, project.reqs.useCases)
         val expect = DOT(
           """
-            |digraph G{rankdir=LR;ranksep=0.28;
+            |digraph G{bgcolor=transparent;rankdir=LR;ranksep=0.28;
             |
             |S[shape=circle style=filled color=black fontsize=1 height=.3]
             |E[shape=doublecircle style=filled color=black fontsize=1 height=.3]
@@ -112,7 +112,7 @@ object GraphsTest extends TestSuite {
         val actual = Graphs.implicationFocused(mf3, HideDead, project)
         val expect = DOT(
           """
-            |digraph G{rankdir=LR;
+            |digraph G{bgcolor=transparent;rankdir=LR;
             |node[style=filled color="#333333"]
             |
             |F[style=bold fillcolor="#cccccc" label="MF-3"]
@@ -155,7 +155,7 @@ object GraphsTest extends TestSuite {
         val actual = Graphs.implicationFocused(mf3, HideDead, SIG_deadMF4)
         val expect = DOT(
           """
-            |digraph G{rankdir=LR;
+            |digraph G{bgcolor=transparent;rankdir=LR;
             |node[style=filled color="#333333"]
             |
             |F[style=bold fillcolor="#cccccc" label="MF-3"]
@@ -194,7 +194,7 @@ object GraphsTest extends TestSuite {
         val actual = Graphs.implicationFocused(mf3, ShowDead, SIG_deadMF4)
         val expect = DOT(
           """
-            |digraph G{rankdir=LR;
+            |digraph G{bgcolor=transparent;rankdir=LR;
             |node[style=filled color="#333333"]
             |
             |F[style=bold fillcolor="#cccccc" label="MF-3"]
@@ -242,7 +242,7 @@ object GraphsTest extends TestSuite {
         val actual = Graphs.implicationAll(HideDead, project)
         val expect = DOT(
           s"""
-            |digraph G{rankdir=TB;
+            |digraph G{bgcolor=transparent;rankdir=TB;
             |node[style=filled color="#333333"]
             |edge[color="#333333"]
             |
@@ -286,7 +286,7 @@ object GraphsTest extends TestSuite {
         val actual = Graphs.implicationAll(ShowDead, SIG_deadMF4)
         val expect = DOT(
           s"""
-            |digraph G{rankdir=TB;
+            |digraph G{bgcolor=transparent;rankdir=TB;
             |node[style=filled color="#333333"]
             |edge[color="#333333"]
             |
@@ -330,7 +330,7 @@ object GraphsTest extends TestSuite {
         val actual = Graphs.implicationAll(HideDead, SIG_deadMF4)
         val expect = DOT(
           s"""
-            |digraph G{rankdir=TB;
+            |digraph G{bgcolor=transparent;rankdir=TB;
             |node[style=filled color="#333333"]
             |edge[color="#333333"]
             |
@@ -395,7 +395,7 @@ object GraphsTest extends TestSuite {
         val actual = Graphs.implicationAll(ShowDead, p)
         val expect = DOT(
           s"""
-            |digraph G{rankdir=TB;
+            |digraph G{bgcolor=transparent;rankdir=TB;
             |node[style=filled color="#333333"]
             |edge[color="#333333"]
             |

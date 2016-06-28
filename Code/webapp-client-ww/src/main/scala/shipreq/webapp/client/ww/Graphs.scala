@@ -14,7 +14,10 @@ object Graphs {
 
   private def digraph(f: StringBuilder => Unit): DOT = {
     implicit val sb = new StringBuilder
-    group("digraph G")(f(sb))
+    group("digraph G"){
+      sb append "bgcolor=transparent;"
+      f(sb)
+    }
     DOT(sb.result())
   }
 

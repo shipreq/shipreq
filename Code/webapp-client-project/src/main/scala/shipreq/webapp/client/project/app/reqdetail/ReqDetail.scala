@@ -257,8 +257,8 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    private val headerStyle =
-      Header.Style(Header.Type.H1, other = *.headerH1Margin)
+    private val headerStyle: Live => Header.Style =
+      Live.memo(l => Header.Style(Header.Type.H1, other = *.headerText(l)))
 
     def renderDetail(props: DynamicProps, data: Data): ReactElement = {
       import data.{project, req, pubidText}
@@ -276,18 +276,23 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
           state.async(cell) renderOr (state.edit(cell) renderOr view))
       }
 
-      def renderHeader: ReactElement =
+      def renderHeader: ReactElement = {
+        val hstyle = headerStyle(data.live)
+
         <.div(*.headerRow,
 
           <.div(*.headerPubid,
-            Header(headerStyle, pubidText + ":")),
+            Header(hstyle, pubidText + ":")),
 
           <.div(*.headerTitle,
             renderAsyncEditorOrValue(Cell.Title,
-              Header(headerStyle, pw.reqTitle(req)))),
+              Header(hstyle, pw.reqTitle(req)))),
 
           <.div(*.headerFilterDeadButton,
             FilterDeadButton.whenLive(data.live)(ReusableVar(props.filterDead.value)(setFilterDead))))
+      }
+
+      val keyCell = <.th(*.detailTableKey(data.live))
 
       def renderRows =
         <.table(*.detailTable,
@@ -297,7 +302,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
       def renderRow(row: Row): ReactElement =
         <.tr(
           ^.key := row.key,
-          <.th(renderRowTitle(row)),
+          keyCell(renderRowTitle(row)),
           <.td(renderRowData(row)))
 
       def renderRowTitle(row: Row): ReactNode =
@@ -324,8 +329,10 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
       // TODO Much much overlap with Table.CellProps
       // TODO Test that this applies applicability
       // TODO Test can't edit dead req
-      def renderRowData(row: Row): TagMod =
-        row match {
+      def renderRowData(row: Row): TagMod = {
+        var liveStyle = data.live
+
+        val content: TagMod = row match {
 
           case Row.CustomField(f: CustomField.Text) =>
             renderAsyncEditorOrValue(
@@ -391,6 +398,7 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
             RenderDeletionReason.req(project, pw, req)
 
           case Row.Life =>
+            liveStyle = Live // When req is dead, user can still Restore it, thus this cell shouldn't appear dead
             data.live match {
               case Live =>
                 LifeButton.Delete withStatusOnLeft delete(req.id)
@@ -399,6 +407,9 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
                   req.allowLiveChange(project.config.reqTypes) option restore(req.id))
             }
         }
+
+        content + *.detailTableValue(liveStyle)
+      }
 
       def renderStepTree(ucData: UseCaseData, stepData: UseCaseStepTree.StepData) = {
         val renderBody: UseCaseStepTree.RenderBodyFn = (id, live, textAndFlow) =>

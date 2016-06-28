@@ -388,15 +388,18 @@ object Style extends StyleSheet.Inline {
     val headerRow = style(
       display.flex)
 
-    val headerH1Margin = style(
-      margin(`0`).important)
-
     val headerPubid = style(
       paddingRight(0.4 rem))
 
     val headerTitle = style(
       flexGrow(1),
       paddingLeft(0.4 rem))
+
+    val headerText = styleF(D.live)(live => styleS(
+      margin(`0`).important,
+      mixinIf(live :: Dead)(
+        textDecoration := "line-through",
+        opacity(0.4))))
 
     val headerFilterDeadButton = style(
       paddingLeft(pageMargin))
@@ -413,22 +416,32 @@ object Style extends StyleSheet.Inline {
       marginTop(1.5 rem),
       width(100 %%),
 
-      unsafeChild(">tbody >tr >*")(
-        padding(0.6 rem, 0.7 rem),
-        verticalAlign.top),
-
       unsafeChild(">tbody >tr:not(:first-child) >*")(
         borderTop(1 px, solid, innerCellBorderColour)),
 
-      unsafeChild(">tbody >tr >th")(
-        textAlign.left,
-        wordWrap.breakWord,
-        //whiteSpace.nowrap,
-        backgroundColor(rgba(0, 0, 0, .04))),
-
       unsafeChild(">tbody >tr >td")(
-        borderLeft(1 px, solid, innerCellBorderColour),
-        width(100 %%)))
+        borderLeft(1 px, solid, innerCellBorderColour)))
+
+    private def detailTableCell = mixin(
+      padding(0.6 rem, 0.7 rem),
+      verticalAlign.top)
+
+    val detailTableKey = styleF(D.live)(live => styleS(
+      detailTableCell,
+      textAlign.left,
+      wordWrap.breakWord,
+      // whiteSpace.nowrap,
+      backgroundColor(
+        live match {
+          case Live => rgba(0, 0, 0, .04)
+          case Dead => rgba(0, 0, 0, .09)
+        }
+      )))
+
+    val detailTableValue = styleF(D.live)(live => styleS(
+      detailTableCell,
+      width(100 %%),
+      mixinIf(live :: Dead)(backgroundColor(rgba(0, 0, 0, .04)))))
 
     val generalImpsCont = style(
       display.flex,
