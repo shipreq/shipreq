@@ -5,6 +5,7 @@
   "license" : "UNLICENSED",
 
   "dependencies": {
+    "autosize"            : "3.0.15",
     "jquery"              : "2.2.4",
     "jquery-textcomplete" : "1.4.0",
     "katex"               : "0.6.0",

@@ -95,11 +95,12 @@ devProdJs 'ws:member:init', 'member-deps-init.js', (f) ->
 
 devProdJs 'ws:member:next', 'member-deps-next.js', (f) ->
   [
+    f(cfg_npm + 'autosize/dist/autosize')
+    f(cfg_npm + 'jquery-textcomplete/dist/jquery.textcomplete')
       cfg_npm + 'moment/min/moment.min.js'
     f(cfg_npm + 'react/dist/react', '-with-addons')
     f(cfg_npm + 'react-dom/dist/react-dom')
     f(cfg_npm + 'react-dom/dist/react-dom-server')
-    f(cfg_npm + 'jquery-textcomplete/dist/jquery.textcomplete')
       cfg_npm + 'react-motion/build/react-motion.js'
       cfg_npm + 'react-height/build/react-height.js'
     f(cfg_npm + 'react-collapse/build/react-collapse')
@@ -133,6 +134,7 @@ gulp.task 'ws', ['ws:clean'], ->
 # create JS for unit tests
 gulp.task 'wc:testjs', ->
   nonRetardedSrc [
+        cfg_npm + 'autosize/dist/autosize.min.js'
         cfg_npm + 'jquery/dist/jquery.min.js'
         cfg_npm + 'jquery-textcomplete/dist/jquery.textcomplete.min.js'
         cfg_npm + 'moment/min/moment.min.js'
