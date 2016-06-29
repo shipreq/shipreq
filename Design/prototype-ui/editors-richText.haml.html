@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html><head><title>CardBoard | ShipReq</title><script src="node_modules/jquery/dist/jquery.min.js"></script><link href="semantic/dist/semantic.css" rel="stylesheet" type="text/css" /><script src="semantic/dist/semantic.js"></script><script src="node_modules/autosize/dist/autosize.js"></script><style type="text/css">
+body {padding:1rem}
+.ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+.ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+.ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+h1.ui.header {margin-bottom:0; margin-right:1em; color:#d00}
+.inline-edit:hover {cursor:pointer; outline:dotted 2px #FFA622; background: #fff4e3 !important}
+
+h3.ui.header {margin-top: 2em; padding-bottom: 0.3em !important}
+
+.content.pic {text-align:center; padding-top:2.2em !important}
+.content.pic > i {font-size:3rem}
+
+#egs td:nth-child(2), #egs td:nth-child(3) {padding:2em; vertical-align:top}
+#egs td:nth-child(3) {padding-left:0!important}
+
+.edit-notes {
+  text-align:right;
+  font-size: 0.75rem;
+  line-height: 1em;
+  color: #a4a6a8;
+}
+/*
+.edit-notes:not(:first-child) {
+  margin-top: 0.4em;
+}
+.edit-notes:not(:last-child) {
+  margin-bottom: 0.4em;
+}
+*/
+.edit-notes a {
+  cursor:pointer;
+}
+.edit-notes a:not(:hover) {
+  color:inherit;
+  border-bottom: solid 1px #e0e2e4;
+}
+.edit-notes a:hover {
+  xxxcolor:#525456;
+  color:#2185D0;
+  text-decoration: underline;
+}
+
+.edit-notes > *:not(:last-child) {
+  margin-right: 1.1ex;
+}
+.edit-notes > i.icon:last-child {
+  margin-right: 0!important;
+}
+
+.blueHover:hover {color:#2185D0!important}
+
+.Xedit-notes {
+  text-align:right;
+    font-size: 0.75rem;
+    line-height: 1em;
+    margin-bottom: 1rem;
+    color: #4c4c4c;
+}
+
+.texteditor {
+  width:100%;
+  margin: 0;
+  -webkit-appearance: none;
+  border: 1px solid rgba(34,36,38,.15);
+  outline: 0;
+  color: rgba(0,0,0,.87);
+  border-radius: .28571429rem;
+  box-shadow: 0 0 0 0 rgba(0, 0, 0, 0) inset;
+  xxxtransition: all 0.1s ease;
+  transition: color .1s ease,border-color .1s ease;
+  font-size: 1em;
+  line-height: 1.2857;
+
+  /*overflow: scroll;*/
+  resize: none;
+
+  padding:.3em .4em;
+  background: #fff4e3; /* rgb(255,244,227) */
+  border-color:rgba(255, 166, 34, .5);
+}
+
+.texteditor.disabled {border-style:dashed; background:rgba(255,244,227,0.7)}
+.texteditor.disabled .value {opacity:0.5}
+
+.texteditor.error {
+  background-color: #FFF6F6;
+  border-color: #E0B4B4;
+  color: #9F3A38;
+}
+
+.texteditor:not(.error):focus {
+  border-color:rgb(255, 166, 34);
+  box-shadow:0 0 1ex rgba(255, 166, 34, 0.5);
+}
+.texteditor.error:focus {
+  box-shadow:0 0 1ex rgba(224,180,180,0.5);
+}
+
+.preview-cont {margin:1rem 0 0 0 !important}
+.preview-header {padding-top: 0.3em !important; padding-bottom: 0.3em !important}
+.preview-body {
+  background-clip: border-box !important;
+  background-color: rgba(0, 0, 0, 0)  !important;
+  background-image: repeating-linear-gradient(-225deg,
+    rgba(0, 0, 0, 0),
+    rgba(0, 0, 0, 0)         5ex,
+    rgba(33, 186, 67, 0.07)  5ex,
+    rgba(33, 186, 67, 0.07) 10ex) !important;
+  background-origin: padding-box  !important;
+}
+
+.InTransit > td > div {display:flex; width:100%}
+.InTransit > td > div > *:nth-child(2) {flex-grow:1}
+
+
+</style></head><body><nav style="margin-bottom:5rem"><div class="ui menu borderless fixed inverted"><div class="item"><img src="logo-only-dark2.svg" /></div><div class="item"><div class="ui breadcrumb"><a href="projects.haml.html" class="section">Projects</a><i class="divider icon right angle"></i><div class="ui dropdown inline">CardBoard&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="item active">CardBoard</div><div class="item">ShipReq</div></div></div></div></div><div class="item ui right dropdown simple">@japgolly<div class="menu"><a href="account.haml.html" class="item">Account</a><div class="item">Logout</div></div></div></div></nav><div style="max-width: 723px! important" class="ui container"></div><table class="ui definition table" id="egs"><tbody><tr><td>Blank</td><td style="width:50%"><textarea rows="1" class="texteditor"></textarea><div class="edit-notes"><span>ctrl-enter to <a>save</a>,</span><span>esc to <a>cancel</a>.</span><i style="cursor:pointer" onclick="$('#richTextEditor-help').modal('show')" class="icon help circle blueHover"></i></div></td><td style="width:50%"><textarea rows="3" class="texteditor"></textarea><div class="edit-notes"><span>enter for new line,</span><span>ctrl-enter to <a>save</a>,</span><span>esc to <a>cancel</a>.</span><i style="cursor:pointer" onclick="$('#richTextEditor-help').modal('show')" class="icon help circle blueHover"></i></div></td></tr><tr><td>Ready</td><td><textarea rows="1" class="texteditor">This, [fr3], is an item being edited.</textarea><div class="edit-notes"><span>ctrl-enter to <a>save</a>,</span><span>esc to <a>cancel</a>.</span><i style="cursor:pointer" onclick="$('#richTextEditor-help').modal('show')" class="icon help circle blueHover"></i></div><div class="ui segments preview-cont raised"><div class="ui segment preview-header inverted green">Preview</div><div class="ui segment preview-body">This, <a href="#">FR-3</a>, is an item being edited.</div></div></td><td><textarea rows="3" autofocus="1" class="texteditor">This, [fr3], is an item being edited.
+
+It has multiple lines.</textarea><div class="edit-notes"><span>enter for new line,</span><span>ctrl-enter to <a>save</a>,</span><span>esc to <a>cancel</a>.</span><i style="cursor:pointer" onclick="$('#richTextEditor-help').modal('show')" class="icon help circle blueHover"></i></div><div class="ui segments preview-cont raised"><div class="ui segment preview-header inverted green">Preview</div><div class="ui segment preview-body">This, <a href="#">FR-3</a>, is an item being edited.<br /><br />It has multiple lines.</div></div></td></tr><tr><td>Ready<br>(long lines)</td><td><textarea rows="1" class="texteditor">This, [fr3], is an item being edited and edited and edited and edited and edited and edited and edited and edited.</textarea><div class="edit-notes"><span>ctrl-enter to <a>save</a>,</span><span>esc to <a>cancel</a>.</span><i style="cursor:pointer" onclick="$('#richTextEditor-help').modal('show')" class="icon help circle blueHover"></i></div><div class="ui segments preview-cont raised"><div class="ui segment preview-header inverted green">Preview</div><div class="ui segment preview-body">This, <a href="#">FR-3</a>, is an item being edited and edited and edited and edited and edited and edited and edited and edited.</div></div></td><td><textarea rows="3" autofocus="1" class="texteditor">This, [fr3], is an item being edited and edited and edited and edited and edited and edited and edited and edited.
+
+It has multiple lines.</textarea><div class="edit-notes"><span>enter for new line,</span><span>ctrl-enter to <a>save</a>,</span><span>esc to <a>cancel</a>.</span><i style="cursor:pointer" onclick="$('#richTextEditor-help').modal('show')" class="icon help circle blueHover"></i></div><div class="ui segments preview-cont raised"><div class="ui segment preview-header inverted green">Preview</div><div class="ui segment preview-body">This, <a href="#">FR-3</a>, is an item being edited and edited and edited and edited and edited and edited and edited and edited.<br /><br />It has multiple lines.</div></div></td></tr><tr class="InTransit"><td>InTransit</td><td><div class="texteditor disabled"><div><i class="icon loading circle notched"></i></div><div class="value">This, <a href="#">FR-3</a>, is an item being edited.</div></div></td><td><div class="texteditor disabled"><div><i class="icon loading circle notched"></i></div><div class="value">This, <a href="#">FR-3</a>, is an item being edited and edited and edited and edited and edited and edited and edited and edited.<br /><br />It has multiple lines.</div></div></td></tr><tr><td>InputError</td><td><textarea rows="1" class="texteditor error">This, [fr3], is an item being edited.</textarea><div class="ui pointing label red">Invalid hoodie hardie.</div></td><td><textarea rows="3" autofocus="1" class="texteditor error">This, [fr3], is an item being edited.
+
+It has multiple lines.</textarea><div class="ui pointing label red">Invalid gobbldygoop.</div></td></tr><tr><td>AsyncError</td><td><textarea rows="1" class="texteditor">This, [fr3], is an item being edited.</textarea><div class="ui pointing label red">AJAX failure occurred.</div></td><td><textarea rows="3" autofocus="1" class="texteditor">This, [fr3], is an item being edited.
+
+It has multiple lines.</textarea><div class="ui pointing label red">AJAX failure occurred.</div></td></tr><tr><td>Notes</td><td>(Min) rows=1. Text wraps around & TA grows.</td><td>(Min) rows=3. Text wraps around & TA grows.</td></tr></tbody></table></body>
+<script type="text/javascript">
+//<![CDATA[
+autosize(document.querySelectorAll('textarea'));
+//]]>
+</script>
+</html>
