@@ -298,7 +298,7 @@ object Table {
         *.cell(status),
         ^.onDblClick --> startEdit,
         ^.onKeyDown ==> onKeyDown,
-        p.asyncState renderOr (p.cellEditor renderOr view.render))
+        p.cellEditor.renderOr(p.asyncState)(view.render))
     }
   }
 

@@ -2,6 +2,7 @@
 * Say "no implications" in imp graph
 
 * Determine UI for:
+  * ReqTable rowlocking async
   * ReqDetail load failure
   * Deletion screen
   * Cfg Fields

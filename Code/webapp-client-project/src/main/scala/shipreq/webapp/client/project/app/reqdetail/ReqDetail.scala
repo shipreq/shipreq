@@ -272,7 +272,9 @@ object ReqDetail extends StaticPropComponent.Template("ReqDetail") {
       def renderAsyncEditorOrValue(cell: Cell, view: => TagMod): TagMod = {
         def startEdit    = editFeature(cell).startEdit(focus)
         def editableView = view + EditTheme.editableInline(startEdit)
-        state.async(cell) renderOr (state.edit(cell) renderOr editableView)
+        val async        = state.async(cell)
+        val editor       = state.edit(cell)
+        editor.renderOr(async)(editableView)
       }
 
       def renderHeader: ReactElement = {

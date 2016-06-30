@@ -21,20 +21,23 @@ import RichTextEditor2.hardcodedLive
 
 sealed abstract class RichTextEditor2[TextType <: Text.Generic](name: String, final val text: TextType) {
 
+  type Commit = text.OptionalText ~=> Callback
 
   case class Props(project       : Project,
                    plainText     : PlainText.ForProject,
                    textSearch    : TextSearch,
                    projectWidgets: ProjectWidgets,
                    edit          : ReusableVar[String],
-                   status        : EditorStatus,
+                   asyncStatus   : Option[EditorStatus.Async],
                    abort         : Callback,
+                   commit        : Commit,
                    preview       : PreviewFeature.ForChild,
                    preEditValue  : Option[text.OptionalText]) {
 
     val richText    = text.parse(project)(edit.value)
     val parseResult = Validators.genericRichText(plainText, richText)
     val validated   = EditValidationFeature.compareOption(parseResult)(preEditValue)
+    val status      = asyncStatus getOrElse EditorStatus.validationResult(parseResult)(commit)
     def showPreview = validated.value.isChanged
 
     def render = Component(this)
@@ -84,7 +87,6 @@ sealed abstract class RichTextEditor2[TextType <: Text.Generic](name: String, fi
     def getTextarea() =
       editorRef($).get.getDOMNode()
 
-    // TODO should auto-focus generically on componentDidMount
     def render(p: Props) = {
 
       def editor(extra: TagMod): ReactElement =
@@ -95,7 +97,9 @@ sealed abstract class RichTextEditor2[TextType <: Text.Generic](name: String, fi
           extra)
 
       def instructions =
-        KeyboardTheme.instructionsForCommitAbort(p.status.getCommit, p.abort, text.lineCardinality)
+        KeyboardTheme.instructionsForCommitAbort(p.status.getCommit, p.abort, text.lineCardinality)(
+          ^.textAlign.right
+        )
 
       def richText =
         p.projectWidgets.format(hardcodedLive, p.richText)
@@ -107,19 +111,8 @@ sealed abstract class RichTextEditor2[TextType <: Text.Generic](name: String, fi
             "Preview",
             <.div(*.textEditPreview, richText)))
 
-//      <.div(
-//        editor,
-//        p.validated.renderFailure,
-//        preview)
-
       p.status match {
-        case EditorStatus.Ignore =>
-          <.div(
-            editor(EmptyTag),
-            instructions)
-          // TODO No preview here - test it shows/hides ok and feels ok
-
-        case EditorStatus.Valid(_) =>
+        case EditorStatus.Ignore | EditorStatus.Valid(_) =>
           <.div(
             editor(EmptyTag),
             instructions,

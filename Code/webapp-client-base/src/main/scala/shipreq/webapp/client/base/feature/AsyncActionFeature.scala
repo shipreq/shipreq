@@ -47,16 +47,11 @@ object AsyncActionFeature {
       }
   }
 
-  @inline implicit class AAFState0Ops(private val s: D0.State[String]) extends AnyVal {
-    def renderOr[A](a: => A)(implicit ev: ReactElement => A): A =
-      s.fold(a)(x => ev(x.render))
-  }
-
   implicit def reusabilityStatus[F]: Reusability[Status[F]] =
     Reusability.byRef
 
   def renderLocked =
-    <.div(^.cls := "locked", "LOCKED") // TODO Temp
+    <.div(^.cls := "locked", "LOCKED") // TODO Remove all render stuff from AsyncActionFeature
 
   type AsyncCall[+F] = (TCB.Success, F => TCB.Failure) => Callback
 
