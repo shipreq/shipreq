@@ -7,6 +7,7 @@ import japgolly.univeq.UnivEq
 sealed abstract class Icon(val clsName: ClassName) {
   final val tag = <.i(^.cls := ("icon " + clsName))
 
+  def loading                   : Icon.Modified
   def withColour(colour: Colour): Icon.Modified
   def withSize  (size  : Size  ): Icon.Modified
 }
@@ -15,11 +16,17 @@ sealed abstract class Icon(val clsName: ClassName) {
 object Icon {
 
   sealed abstract class Unmodified(c: ClassName) extends Icon(c) {
-    override def withColour(colour: Colour) = Icon.Modified(this, colour, Size.Default)
-    override def withSize  (size  : Size  ) = Icon.Modified(this, Colour.Default, size)
+    override def loading                    = Icon.Modified(this, load = true)
+    override def withColour(colour: Colour) = Icon.Modified(this, colour = colour)
+    override def withSize  (size  : Size  ) = Icon.Modified(this, size = size)
   }
 
-  case class Modified(u: Unmodified, colour: Colour, size: Size) extends Icon(u.clsName <+ colour <+ size) {
+  case class Modified(u      : Unmodified,
+                      colour : Colour  = Colour.Default,
+                      load   : Boolean = false,
+                      size   : Size    = Size.Default)
+      extends Icon(u.clsName.maybe(load, "loading") <+ colour <+ size) {
+    override def loading               = copy(load = true)
     override def withColour(c: Colour) = copy(colour = c)
     override def withSize  (s: Size  ) = copy(size   = s)
   }

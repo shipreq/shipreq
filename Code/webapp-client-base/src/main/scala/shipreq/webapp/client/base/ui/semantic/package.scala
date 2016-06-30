@@ -13,6 +13,12 @@ package object semantic {
 
   @inline implicit class ClassNameExt(private val self: ClassName) extends AnyVal {
 
+    def maybe(when: Boolean, add: ClassName): ClassName =
+      if (when)
+        self + " " + add
+      else
+        self
+
     def <+(h: HasClass): ClassName =
       // lol simple. extra spaces don't matter.
       self + " " + h.cls
