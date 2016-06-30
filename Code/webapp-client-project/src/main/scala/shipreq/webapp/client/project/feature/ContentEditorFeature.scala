@@ -258,8 +258,8 @@ object ContentEditorFeature {
       private def commit(cmd: UpdateContentCmd): Callback =
         async.wrapAsync((s, f) => saveIO(cmd, s >> abort, f))
 
-      private def commitK[A, B](lc: LineCardinality, v: ValidUpdate[Any, A])(cmd: A => UpdateContentCmd): KeyHandlers =
-        KeyboardTheme.commit(v match {
+      private def commitK[A, B](lc: LineCardinality, v: ValidUpdate[Any, A])(cmd: A => UpdateContentCmd): KeyHandler =
+        KeyboardTheme.commitO(v match {
           case ValidUpdate.Success(a) => Some(commit(cmd(a)))
           case ValidUpdate.Unchanged  => Some(abort)
           case ValidUpdate.Failure(_) => None

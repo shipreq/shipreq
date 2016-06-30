@@ -6,10 +6,10 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 import monocle.Lens
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
-import shipreq.webapp.base.{URLs, UiText}
+import shipreq.webapp.base.URLs
 import shipreq.webapp.base.UiText.EnglishStringExt
 import shipreq.webapp.base.data.{ProjectCatalogue, Validators}
-import shipreq.webapp.client.base.feature.AsyncActionFeature
+import shipreq.webapp.client.base.feature.{AsyncActionFeature, EditorStatus}
 import shipreq.webapp.client.base.jsfacade.MomentJs
 import shipreq.webapp.client.base.ui.semantic.{Icon, Size, Statistic, StatisticGroup}
 import BaseStyles.{projectItems => *}
@@ -110,20 +110,16 @@ object ProjectItem {
           p.item.name
         ) + ProjectItem.renderMeta(p.item)
 
-      def renderEditor(p: Props, s: EditState): TagMod = {
-        def state = PlainTextEditor.State.validator(Validators.projectName)(
-          s.edit, _ => false, p.renameProjectIO)
-
+      def renderEditor(p: Props, s: EditState): TagMod =
         PlainTextEditor.TempBasic.Props.asyncAware(
-          text          = s.edit,
-          updateText    = updateEditText,
-          asyncState    = s.async,
-          asyncFeature  = p.asyncFeature,
-          nonAsyncState = state,
-          abort         = abortFn,
-          inputContMod  = inputContMod)
+          text           = s.edit,
+          updateText     = updateEditText,
+          asyncState     = s.async,
+          asyncFeature   = p.asyncFeature,
+          nonAsyncStatus = EditorStatus.validate(Validators.projectName)(s.edit, p.renameProjectIO),
+          abort          = abortFn,
+          inputContMod   = inputContMod)
           .render
-      }
 
       def render(p: Props): ReactElement =
         ProjectItem.renderLeftContent(p.item)(

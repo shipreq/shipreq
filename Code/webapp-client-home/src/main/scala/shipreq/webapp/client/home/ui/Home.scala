@@ -9,7 +9,7 @@ import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data.{ProjectCatalogue, Username, Validators}
 import shipreq.webapp.base.protocol.InitDataForHomeSpa
 import shipreq.webapp.client.base.ClientConfig
-import shipreq.webapp.client.base.feature.AsyncActionFeature
+import shipreq.webapp.client.base.feature.{AsyncActionFeature, EditorStatus}
 import shipreq.webapp.client.base.protocol.ClientProtocol
 import shipreq.webapp.client.base.ui.{BaseStyles, MemberNavBar, PlainTextEditor, ProjectItem}
 import shipreq.webapp.client.base.ui.semantic.Breadcrumb
@@ -87,9 +87,7 @@ object HomeContent {
       val menu = MemberNavBar.Props(p.username, navBarLeft, Nil).render
 
       val projectCreate = {
-        import PlainTextEditor.State
-
-        def state = State.validator(Validators.projectName)(
+        def status = EditorStatus.ignoreOrValidate(Validators.projectName)(
           p.createProjectText.value,
           _.isEmpty,
           p.createProjectIO)
@@ -99,7 +97,7 @@ object HomeContent {
           p.createProjectText.set,
           p.createProjectAS,
           p.createProjectAF,
-          state,
+          status,
           buttonLabel = "Create",
           inputMod = inputMod)
           .render

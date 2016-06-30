@@ -18,6 +18,8 @@ object KeyboardTheme {
 
   @inline def abortCriterion = Escape
 
+  // TODO Change `=> Callback` to just `Callback`, here & in KeyHandlers
+
   def abort(abort: => Callback): KeyHandler =
     abortCriterion.handle(abort)
 
@@ -29,11 +31,14 @@ object KeyboardTheme {
     */
   @inline def commitCriterion = CtrlEnter
 
-  def commit(commit: => Option[Callback], lc: LineCardinality): KeyHandlers = {
+  def commitO(commit: => Option[Callback], lc: LineCardinality): KeyHandler = {
     // LineCardinality is no longer used here but will be kept as an arg for a while longer until confidence in the new
     // style commit criteria is established.
-    commitCriterion.handle(Callback sequenceO commit).toKeyHandlers
+    commitCO(CallbackTo(commit), lc)
   }
+
+  def commitCO(commit: CallbackTo[Option[Callback]], lc: LineCardinality): KeyHandler =
+    commitCriterion.handle(commit >>= (Callback.sequenceO(_)))
 
   def instructionsForCommitAbort(commit: Option[Callback],  abort: Callback): ReactTag = {
     var save: ReactNode = "save"

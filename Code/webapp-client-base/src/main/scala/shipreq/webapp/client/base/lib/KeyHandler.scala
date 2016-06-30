@@ -130,6 +130,8 @@ case class KeyHandlers(handlers: List[KeyHandler]) extends AnyVal {
 
 object KeyHandlers {
 
+  def empty = KeyHandlers(Nil)
+
   @inline implicit def autoToRect(k: KeyHandlers): TagMod =
     k.toReact
 
