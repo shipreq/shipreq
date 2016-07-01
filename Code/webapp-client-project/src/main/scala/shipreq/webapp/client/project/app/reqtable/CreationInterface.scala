@@ -161,9 +161,10 @@ class CreationInterface($               : CompState.Access[State],
           pxTextSearch,
           pxProjectWidgets,
           ReusableVar(state.title)(setTitle),
-          previewFeature.forChild(titleFocus, p.previewState),
           None,
-          _noExtra)
+          None,
+          previewFeature.forChild(titleFocus, p.previewState),
+          None)
 
       val create: Option[Callback] =
         for {
@@ -283,9 +284,10 @@ class CreationInterface($               : CompState.Access[State],
           pxTextSearch,
           pxProjectWidgets,
           ReusableVar(state.title)(setTitle),
-          previewFeature.forChild(titleFocus, p.previewState),
           None,
-          _noExtra)
+          None,
+          previewFeature.forChild(titleFocus, p.previewState),
+          None)
 
       val create: Option[Callback] =
         for {
@@ -335,9 +337,10 @@ class CreationInterface($               : CompState.Access[State],
           pxTextSearch,
           pxProjectWidgets,
           ReusableVar(state.title)(setTitle),
-          previewFeature.forChild(titleFocus, p.previewState),
           None,
-          _noExtra)
+          None,
+          previewFeature.forChild(titleFocus, p.previewState),
+          None)
 
       val create: Option[Callback] =
         for {

@@ -87,4 +87,9 @@ object TestUtil extends WebappTestUtil with WebappTestEquality {
     o.stopPropagation = stopPropagation
     o.asInstanceOf[dom.KeyboardEvent]
   }
+
+  def removeEditInstructionText(s: String): String =
+    s.replace("esc to cancel.", "")
+      .replace("ctrl-enter to save,", "")
+      .replace("enter for new line,", "")
 }

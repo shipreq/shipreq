@@ -47,6 +47,11 @@ object AsyncActionFeature {
       }
   }
 
+  @inline implicit class AAFState0Ops(private val s: D0.State[String]) extends AnyVal {
+    def renderOr[A](a: => A)(implicit ev: ReactElement => A): A =
+      s.fold(a)(x => ev(x.render))
+  }
+
   implicit def reusabilityStatus[F]: Reusability[Status[F]] =
     Reusability.byRef
 

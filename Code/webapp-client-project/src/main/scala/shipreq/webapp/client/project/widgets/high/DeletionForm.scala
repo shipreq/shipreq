@@ -311,12 +311,13 @@ object DeletionForm {
         textSearch     = p.textSearch,
         projectWidgets = p.widgets,
         edit           = ReusableVar(s.reason)(setReason),
+        asyncStatus    = None,
+        abortCommit    = None,
         preview        = PreviewFeature.AlwaysShow,
-        preEditValue   = None,
-        extra          = RichTextEditor.DeletionReason.noExtra)
+        preEditValue   = None)
 
     val cancelButton: ReactElement =
-      <.button(^.onClick --> $.props.flatMap(_.cancel), "Cancel")
+      <.button(^.onClick --> $.props.flatMap(_.cancel), UiText.buttonAbortChange)
 
     // -----------------------------------------------------------------------------------------------------------------
     def renderReqs(p: Props, s: State): TagMod = {

@@ -1,8 +1,17 @@
 * Group req types in filter from ALL to ANY.
 * Say "no implications" in imp graph
 
+Integrate async into ContentEditorFeature rendering
+  * Redo ReqTable rowlocking async
+  * Remove rendering from AAF
+  * Each editor in ContentEditorFeature will need to handle async rendering now.
+    It used to expect usage: A renderOr E renderOr V
+    New use is: E renderOr V
+    Remove: commitK, commitAbortK
+    Remove or revise: renderStatic, renderDynamic
+    Don't forget UseCaseStepEditor!
+
 * Determine UI for:
-  * ReqTable rowlocking async
   * ReqDetail load failure
   * Deletion screen
   * Cfg Fields

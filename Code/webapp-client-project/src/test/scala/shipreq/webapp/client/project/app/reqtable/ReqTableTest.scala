@@ -283,7 +283,7 @@ object ReqTableTest extends TestSuite {
 
     val editChangeCommit = (
       startEdit
-        +> cellText.assert("Incompletions")
+        +> cellText.map(TestUtil.removeEditInstructionText).assert("Incompletions")
         >> enterValue(newValue)
         >> commit
         +> svrReqs.assert.increment

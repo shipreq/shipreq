@@ -10,7 +10,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.text._
 import shipreq.webapp.client.base.feature.EditorStatus
-import shipreq.webapp.client.base.lib.KeyboardTheme
+import shipreq.webapp.client.base.lib.{AbortCommit => AbortCommit2, KeyboardTheme}
 import shipreq.webapp.client.base.ui.AutosizeTextarea
 import shipreq.webapp.client.base.ui.semantic.{Colour, Icon, Label}
 import shipreq.webapp.client.project.app.Style.{reqtable => *}
@@ -21,7 +21,8 @@ import RichTextEditor.hardcodedLive
 
 sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, final val text: TextType) {
 
-  type Commit = text.OptionalText ~=> Callback
+  type CommitFn    = text.OptionalText ~=> Callback
+  type AbortCommit = Option[AbortCommit2[Callback, CommitFn]]
 
   case class Props(project       : Project,
                    plainText     : PlainText.ForProject,
@@ -29,14 +30,15 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
                    projectWidgets: ProjectWidgets,
                    edit          : ReusableVar[String],
                    asyncStatus   : Option[EditorStatus.Async],
-                   abort         : Callback,
-                   commit        : Commit,
+                   abortCommit   : AbortCommit,
                    preview       : PreviewFeature.ForChild,
                    preEditValue  : Option[text.OptionalText]) {
 
     val richText    = text.parse(project)(edit.value)
     val parseResult = Validators.genericRichText(plainText, richText)
     val validated   = EditValidationFeature.compareOption(parseResult)(preEditValue)
+    def abort       = abortCommit.fold(Callback.empty)(_.abort)
+    def commit      = (t: text.OptionalText) => abortCommit.fold(Callback.empty)(_ commit t)
     val status      = asyncStatus getOrElse EditorStatus.validationResult(parseResult)(commit)
     def showPreview = validated.value.isChanged
 

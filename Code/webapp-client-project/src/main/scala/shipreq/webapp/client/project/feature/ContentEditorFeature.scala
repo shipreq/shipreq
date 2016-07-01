@@ -13,7 +13,7 @@ import shipreq.webapp.base.protocol.UpdateContentCmd
 import shipreq.webapp.base.text._
 import shipreq.webapp.client.base.data.TCB
 import shipreq.webapp.client.base.feature._
-import shipreq.webapp.client.base.lib.{KeyHandler, KeyHandlers, KeyboardTheme}
+import shipreq.webapp.client.base.lib.{AbortCommit, KeyHandler, KeyHandlers, KeyboardTheme}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.protocol.ServerCall
 import shipreq.webapp.client.project.widgets.high.ProjectWidgets
@@ -279,11 +279,13 @@ object ContentEditorFeature {
 
         protected val renderImpl: RenderImpl
 
-        protected def renderStatic[A](a: A)(implicit e: A => ReactElement): RenderImpl =
-          Function const CallbackTo.pure(Some(e(a)))
+        protected def renderStatic[A](a: A)(implicit e: A => ReactElement): RenderImpl = {
+          val r = CallbackTo.pure(Some(e(a)))
+          _.renderOr(r)(t => CallbackTo.pure(Some(t)))
+        }
 
         protected def renderDynamic[A](a: => A)(implicit e: A => ReactElement): RenderImpl =
-          _ => CallbackTo(Some(e(a)))
+          as => CallbackTo(Some(as renderOr e(a)))
 
         final override def render(as: AsyncState) =
           // Looks like this could block async but not so. Can't go from edit → async → notAllowed.
@@ -467,19 +469,19 @@ object ContentEditorFeature {
                         initialValue: T.OptionalText,
                         focusId     : P): StartEditFn = {
 
-            val commitFn: editor.Commit =
-              ReusableFn(v => commit(cmd(v)))
+            val abortCommit: editor.AbortCommit =
+              Some(AbortCommit(abort, ReusableFn(v => commit(cmd(v)))))
 
             val initialText: String =
               pxPlainText.value().format(RichTextEditor.hardcodedLive, initialValue)
 
-            rvarStrToStartEditFn(new State(_, Some(initialValue), focusId, commitFn), initialText)
+            rvarStrToStartEditFn(new State(_, Some(initialValue), focusId, abortCommit), initialText)
           }
 
-          private class State(rvar    : ReusableVar[String],
-                              initial : Some[T.OptionalText],
-                              focusId : P,
-                              commitFn: editor.Commit) extends EditorInstanceImpl {
+          private class State(rvar       : ReusableVar[String],
+                              initial    : Some[T.OptionalText],
+                              focusId    : P,
+                              abortCommit: editor.AbortCommit) extends EditorInstanceImpl {
 
             override val renderImpl: RenderImpl =
               as => $.state.map { s =>
@@ -487,7 +489,7 @@ object ContentEditorFeature {
                 val props = editor.Props(
                   pxProject, pxPlainText, pxTextSearch, pxProjectWidgets,
                   rvar,
-                  EditorStatus.async(as, async), abort, commitFn,
+                  EditorStatus.async(as, async), abortCommit,
                   previewFeature.forChild(focusId, s), initial)
                 Some(props.render: ReactElement)
               }

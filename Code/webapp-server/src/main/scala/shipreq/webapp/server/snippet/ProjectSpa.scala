@@ -79,7 +79,7 @@ class ProjectSpa(projectId: ProjectId) extends SingleOpStatefulSnippet {
 
   private def updateProject(f: Project => MakeEvent.Result): GenericFailure \/ VerifiedEvents =
     mutex {
-      // Thread.sleep(2000)
+       Thread.sleep(2000)
       // sys error "NO!"
       val curState = state.get()
       val event = f(curState.project)
