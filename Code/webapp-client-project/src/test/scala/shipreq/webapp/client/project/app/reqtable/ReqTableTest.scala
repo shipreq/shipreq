@@ -291,10 +291,8 @@ object ReqTableTest extends TestSuite {
         >> assertCantStartEdit
       ) group "editChangeCommit"
 
-    val fail = (
-      svrFailLast
-        +> assertState(Failed) // Should be in failed state after I/O failure
-        >> assertCantStartEdit)
+    val fail =
+      svrFailLast +> assertState(Failed) // Should be in failed state after I/O failure
 
     val retry = (
       clickRetry
@@ -303,22 +301,12 @@ object ReqTableTest extends TestSuite {
         +> svrAssertLastTwoReqsEqual
       )
 
-    val cancelSaveCommitAgain = (
-      clickAbort
-        +> assertState(Editing)
-        +> editorValue.assert(newValue)
-        >> commit
-        +> assertState(Locked)
-        +> svrReqs.assert.increment
-        +> svrAssertLastTwoReqsEqual
-      ) group "cancelSaveCommitAgain"
-
     val saveSucceeds =
       svrAutoRespondToLast +> assertState(Normal)
 
     Plan.action(
       svrDisableAutoRespond >>
-      editChangeCommit >> fail >> retry >> fail >> cancelSaveCommitAgain >> saveSucceeds)
+      editChangeCommit >> fail >> retry >> fail >> retry >> saveSucceeds)
   }
 
   val nopMod = ("No change.", (s: String) => s)

@@ -1,5 +1,6 @@
 * Group req types in filter from ALL to ANY.
 * Say "no implications" in imp graph
+* Remove unused styles
 
 Integrate async into ContentEditorFeature rendering
   * Redo ReqTable rowlocking async

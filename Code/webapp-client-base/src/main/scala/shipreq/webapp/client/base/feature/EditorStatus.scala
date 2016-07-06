@@ -2,7 +2,8 @@ package shipreq.webapp.client.base.feature
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
-import shipreq.webapp.base.validation.{ValidationResult, ValidatorU}
+import shipreq.base.util.ValidUpdate
+import shipreq.webapp.base.validation.{VFailure, ValidationResult, ValidatorU}
 import EditorStatus._
 
 /** Editors in ShipReq can be in a variety of states:
@@ -85,6 +86,16 @@ object EditorStatus {
       case scalaz.Success(v)   => Valid(commit(v))
       case scalaz.Failure(err) => Invalid(err.toText)
     }
+
+  def validUpdate[E, A](vu: ValidUpdate[E, A])(commit: A => Callback, unchanged: Callback)(implicit fmtErr: E => TagMod): Sync =
+    vu match {
+      case ValidUpdate.Success(a) => Valid(commit(a))
+      case ValidUpdate.Unchanged  => Valid(unchanged)
+      case ValidUpdate.Failure(e) => Invalid(fmtErr(e))
+    }
+
+  def validUpdateV[A](vu: ValidUpdate[VFailure, A])(commit: A => Callback, unchanged: Callback): Sync =
+    validUpdate(vu)(commit, unchanged)(_.toText)
 
   def async[A, I](as: AsyncActionFeature.D0.State[A],
                   af: AsyncActionFeature.D0.Feature[A])

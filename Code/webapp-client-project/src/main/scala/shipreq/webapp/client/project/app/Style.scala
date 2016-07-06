@@ -1,12 +1,13 @@
 package shipreq.webapp.client.project.app
 
 import japgolly.scalajs.react.vdom.prefix_<^.{^ => ^^, _}
+import japgolly.univeq._
 import scalacss.Defaults._
 import scalacss.ScalaCssReact._
-import scalacss.{PseudoElement, Pseudo, StyleS}
+import scalacss.{Pseudo, PseudoElement, StyleS}
 import shipreq.base.util._
 import shipreq.webapp.base.text.Grammar
-import shipreq.webapp.base.data.{StaticField, Live, Dead}
+import shipreq.webapp.base.data.{Dead, Live, StaticField}
 import shipreq.webapp.client.base.data._
 import shipreq.webapp.client.base.ui.BaseStyles.pageMargin
 import shipreq.webapp.client.project.widgets._
@@ -14,12 +15,32 @@ import shipreq.webapp.client.project.widgets._
 object Style extends StyleSheet.Inline {
   import dsl._
 
+  sealed abstract class EditorState
+  object EditorState {
+    case object Valid     extends EditorState
+    case object Invalid   extends EditorState
+    case object InTransit extends EditorState
+
+    implicit def univEq: UnivEq[EditorState] = UnivEq.derive
+
+    implicit def fromValidity(v: Validity): EditorState =
+      v match {
+        case shipreq.base.util.Valid   => Valid
+        case shipreq.base.util.Invalid => Invalid
+      }
+  }
+
   /** Domains */
   object D {
     val live     = Domain.ofValues[Live]    (Live, Dead)
     val validity = Domain.ofValues[Validity](Valid, Invalid)
     val enabled  = Domain.ofValues[Enabled] (Enabled, Disabled)
     val on       = Domain.ofValues[On]      (On, Off)
+
+    val editorState = Domain.ofValues[EditorState](
+      EditorState.Valid,
+      EditorState.Invalid,
+      EditorState.InTransit)
 
     val dragStatus = {
       import DragToReorder._
@@ -316,6 +337,7 @@ object Style extends StyleSheet.Inline {
       )
     }
 
+    // TODO This has  been replaced by textEditor right?
     val cellEditor = styleF(D.validity)(v => styleS(
 //      borderRadius(4 px),
       width(100 %%),
@@ -343,6 +365,7 @@ object Style extends StyleSheet.Inline {
       overflow.hidden,
       maxWidth(36 ex))
 
+    // TODO deprecate
     val textEditPreview = style(
       padding(h = 0.8.ex, v = 0.2.em),
       border(solid, 1 px, c"#222"),
@@ -500,6 +523,68 @@ object Style extends StyleSheet.Inline {
 
   // ===================================================================================================================
   object widgets {
+
+    val textEditor = styleF(D.editorState) { state =>
+      styleS(
+        width(100 %%),
+        margin(`0`),
+        padding(.3 em,.4 em),
+        outlineStyle.none,
+        boxShadow := "0 0 0 0 rgba(0, 0, 0, 0) inset",
+        transition := "color .1s ease,border-color .1s ease",
+        fontSize(1 em),
+        lineHeight(1.2857),
+        // overflow: scroll - autosize avoids this
+        resize.none,
+        color(state match {
+          case EditorState.Valid
+             | EditorState.InTransit => rgba(0, 0, 0, .87)
+          case EditorState.Invalid   => c"#9F3A38"
+        }),
+        backgroundColor(state match {
+          case EditorState.Valid     => c"#fff4e3"
+          case EditorState.Invalid   => c"#FFF6F6"
+          case EditorState.InTransit => rgba(255,244,227,0.7)
+        }),
+        borderWidth(1 px),
+        borderStyle(state match {
+          case EditorState.Valid
+             | EditorState.Invalid   => solid
+          case EditorState.InTransit => dashed
+        }),
+        borderRadius(.28571429 rem),
+        borderColor(state match {
+          case EditorState.Valid
+             | EditorState.InTransit => rgba(255, 166, 34, .5)
+          case EditorState.Invalid   => c"#E0B4B4"
+        }),
+        mixinIf(state ==* EditorState.InTransit)(display.flex),
+        &.focus(
+          (state match {
+            case EditorState.Valid     => styleS(borderColor(rgb(255, 166, 34)), boxShadow := "0 0 1ex rgba(255,166,34,0.5)")
+            case EditorState.Invalid   => styleS(boxShadow := "0 0 1ex rgba(224,180,180,.5)")
+            case EditorState.InTransit => styleS()
+          }): StyleS
+        )
+      )
+    }
+
+    val textEditorInTransitValue = style(
+      flexGrow(1),
+      opacity(0.5))
+
+    val richTextPreview = style(
+      addClassNames("ui", "segments", "raised"))
+
+    val richTextPreviewHeader = style(
+      addClassNames("ui", "segment", "inverted", "green"),
+      paddingTop(0.3 em).important,
+      paddingBottom(0.3 em).important)
+
+    val richTextPreviewBody = style(
+      addClassNames("ui", "segment"),
+      (backgroundImage := "repeating-linear-gradient(-225deg,rgba(0,0,0,0),rgba(0,0,0,0)5ex,rgba(33,186,67,.07)5ex,rgba(33,186,67,.07)10ex)")
+        .important)
 
     private val refColour = color(c"#2363A1")
 

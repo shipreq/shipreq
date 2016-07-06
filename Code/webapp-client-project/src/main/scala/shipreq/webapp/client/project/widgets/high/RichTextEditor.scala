@@ -4,16 +4,17 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import scalacss.ScalaCssReact._
+import shipreq.base.util.{Invalid, Valid, Validity}
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.text._
 import shipreq.webapp.client.base.feature.EditorStatus
-import shipreq.webapp.client.base.lib.{AbortCommit => AbortCommit2, KeyboardTheme}
+import shipreq.webapp.client.base.lib.{KeyboardTheme, AbortCommit => AbortCommit2}
 import shipreq.webapp.client.base.ui.AutosizeTextarea
 import shipreq.webapp.client.base.ui.semantic.{Colour, Icon, Label}
-import shipreq.webapp.client.project.app.Style.{reqtable => *}
+import shipreq.webapp.client.project.app.Style, Style.{widgets => *}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.AutoComplete
 import shipreq.webapp.client.project.lib.DataReusability._
@@ -39,7 +40,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     val validated   = EditValidationFeature.compareOption(parseResult)(preEditValue)
     def abort       = abortCommit.fold(Callback.empty)(_.abort)
     def commit      = (t: text.OptionalText) => abortCommit.fold(Callback.empty)(_ commit t)
-    val status      = asyncStatus getOrElse EditorStatus.validationResult(parseResult)(commit)
+    val status      = asyncStatus getOrElse EditorStatus.validUpdateV(validated)(commit, abort)
     def showPreview = validated.value.isChanged
 
     def render = Component(this)
@@ -91,12 +92,11 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
     def render(p: Props) = {
 
-      def editor(extra: TagMod): ReactElement =
+      def editor(validity: Validity): ReactElement =
         AutosizeTextarea.withRef(editorRef)(
-          *.cellEditor(p.validated.validity),
+          *.textEditor(p.validated.validity),
           ^.value := p.edit.value,
-          textareaConst,
-          extra)
+          textareaConst)
 
       def instructions =
         KeyboardTheme.instructionsForCommitAbort(p.status.getCommit, p.abort, text.lineCardinality)(
@@ -108,39 +108,33 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
       def preview =
         p.preview.reactCollapse(p.showPreview)(
-          <.div(
-            ^.ref := "p",
-            "Preview",
-            <.div(*.textEditPreview, richText)))
+          <.div(*.richTextPreview, ^.ref := "p",
+            <.div(*.richTextPreviewHeader, "Preview"),
+            <.div(*.richTextPreviewBody, richText)))
 
       p.status match {
         case EditorStatus.Ignore | EditorStatus.Valid(_) =>
           <.div(
-            editor(EmptyTag),
+            editor(Valid),
             instructions,
             preview)
 
         case EditorStatus.Invalid(err) =>
           <.div(
-            editor(EmptyTag), // TODO add error background
+            editor(Invalid), // TODO add error background
             errorPointingUp(err),
             preview)
 
         case EditorStatus.AsyncError(err, _, _) =>
           <.div(
-            editor(EmptyTag),
+            editor(Valid),
             errorPointingUp(err),
             preview)
 
         case EditorStatus.InTransit =>
-//            %div.texteditor.disabled
-//              %div
-//                %i.icon.loading.circle.notched
-//              %div.value
-//                richText
-          <.div(
+          <.div(*.textEditor(Style.EditorState.InTransit),
             <.div(Icon.CircleNotched.loading.tag),
-            <.div(richText))
+            <.div(*.textEditorInTransitValue, richText))
       }
 
     }

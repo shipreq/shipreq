@@ -81,11 +81,13 @@ sealed abstract class ValidUpdate[+E, +A] {
 
 object ValidUpdate {
 
-  case class Success[+A](update: A) extends ValidUpdate[Nothing, A]
+  sealed abstract class NonFailure[+A] extends ValidUpdate[Nothing, A]
+
+  case class Success[+A](update: A) extends NonFailure[A]
+
+  case object Unchanged extends NonFailure[Nothing]
 
   case class Failure[+E](failure: E) extends ValidUpdate[E, Nothing]
-
-  case object Unchanged extends ValidUpdate[Nothing, Nothing]
 
   import scalaz.{\/, \/-, -\/, Validation}
 

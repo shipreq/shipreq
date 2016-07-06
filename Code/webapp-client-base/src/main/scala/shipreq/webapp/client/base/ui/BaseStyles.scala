@@ -68,8 +68,8 @@ object BaseStyles extends StyleSheet.Inline {
       fontSize(0.75 rem),
       lineHeight(1 em),
       textColour,
-      &.not(_.firstChild)(marginTop(editorInstructionMarginV)),
-      &.not(_.lastChild)(marginBottom(editorInstructionMarginV)))
+      textAlign.right,
+      marginBottom(editorInstructionMarginV))
 
     val clause = style(
       &.not(_.lastChild)(
